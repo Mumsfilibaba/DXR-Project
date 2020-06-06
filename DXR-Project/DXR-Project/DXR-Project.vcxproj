@@ -123,6 +123,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="D3D12\D3D12GraphicsDevice.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Windows\WindowsApplication.cpp" />
     <ClCompile Include="Windows\WindowsWindow.cpp" />
