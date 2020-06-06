@@ -27,7 +27,7 @@ bool WindowsWindow::Init(Uint16 Width, Uint16 Height)
 	hWindow = ::CreateWindowEx(0, "WinClass", "DXR", dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, hInstance, NULL);
 	if (hWindow == NULL)
 	{
-		::OutputDebugString("[WindowsWindow]: Failed to create window");
+		::OutputDebugString("[WindowsWindow]: Failed to create window\n");
 		return false;
 	}
 	else

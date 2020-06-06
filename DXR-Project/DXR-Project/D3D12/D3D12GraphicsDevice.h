@@ -6,6 +6,8 @@
 
 #include <wrl/client.h>
 
+#include "../Types.h"
+
 class D3D12GraphicsDevice
 {
 	D3D12GraphicsDevice(D3D12GraphicsDevice&& Other) = delete;
@@ -18,9 +20,9 @@ public:
 	D3D12GraphicsDevice();
 	~D3D12GraphicsDevice();
 
-	bool Init();
+	bool Init(bool DebugEnable);
 
-	static D3D12GraphicsDevice* Create();
+	static D3D12GraphicsDevice* Create(bool DebugEnable);
 	static D3D12GraphicsDevice* Get();
 
 private:
@@ -28,9 +30,16 @@ private:
 	bool ChooseAdapter();
 
 private:
-	Microsoft::WRL::ComPtr<IDXGIFactory2>	Factory = nullptr;
-	Microsoft::WRL::ComPtr<IDXGIAdapter1>	Adapter = nullptr;
+	Microsoft::WRL::ComPtr<IDXGIFactory2>	Factory	= nullptr;
+	Microsoft::WRL::ComPtr<IDXGIAdapter1>	Adapter	= nullptr;
 	Microsoft::WRL::ComPtr<ID3D12Device>	Device	= nullptr;
+
+	bool IsDebugEnabled		= false;
+	bool IsTearingSupported = false;
+
+	Uint32 AdapterID = 0;
+
+	D3D_FEATURE_LEVEL MinFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
 	static std::unique_ptr<D3D12GraphicsDevice> D3D12Device;
 };

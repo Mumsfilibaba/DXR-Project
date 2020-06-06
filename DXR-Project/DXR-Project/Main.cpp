@@ -10,7 +10,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	WindowsWindow* Window = App->CreateWindow(1280, 720);
 	Window->Show();
 
-	D3D12GraphicsDevice* Device = D3D12GraphicsDevice::Create();
+	D3D12GraphicsDevice* Device = D3D12GraphicsDevice::Create(true);
 
 	bool IsRunning = true;
 	while (IsRunning)
