@@ -4,6 +4,7 @@
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, int cmdShow)
 {
 	WindowsApplication* App = WindowsApplication::Create(hInstance);
+
 	WindowsWindow* Window = App->CreateWindow(1280, 720);
 	Window->Show();
 
@@ -13,6 +14,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 		IsRunning = App->Tick();
 	}
 
-	delete Window;
 	return 0;
 }

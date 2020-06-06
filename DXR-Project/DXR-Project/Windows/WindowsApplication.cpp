@@ -55,13 +55,13 @@ bool WindowsApplication::RegisterWindowClass()
 	wc.hInstance		= hInstance;
 	wc.lpszClassName	= "WinClass";
 	wc.hbrBackground	= static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
-	wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
+	wc.hCursor			= ::LoadCursor(NULL, IDC_ARROW);
 	wc.lpfnWndProc		= WindowsApplication::MessageProc;
 
 	ATOM classAtom = ::RegisterClass(&wc);
 	if (classAtom == 0)
 	{
-		OutputDebugString("[WindowsApplication]: Failed to register WindowProc");
+		::OutputDebugString("[WindowsApplication]: Failed to register WindowProc");
 		return false;
 	}
 	else
@@ -72,12 +72,18 @@ bool WindowsApplication::RegisterWindowClass()
 
 WindowsApplication::~WindowsApplication()
 {
+	for (WindowsWindow* WindowToDelete : Windows)
+	{
+		delete WindowToDelete;
+	}
+
+	Windows.clear();
 }
 
 WindowsWindow* WindowsApplication::CreateWindow(Uint16 Width, Uint16 Height)
 {
 	WindowsWindow* NewWindow = new WindowsWindow();
-	if (NewWindow->Create(Width, Height))
+	if (NewWindow->Init(Width, Height))
 	{
 		AddWindow(NewWindow);
 		return NewWindow;
@@ -127,11 +133,11 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 	switch (uMessage)
 	{
 	case WM_DESTROY: 
-		PostQuitMessage(0);
+		::PostQuitMessage(0);
 		return 0;
 	}
 
-	return DefWindowProc(hWnd, uMessage, wParam, lParam);
+	return ::DefWindowProc(hWnd, uMessage, wParam, lParam);
 }
 
 LRESULT WindowsApplication::MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)

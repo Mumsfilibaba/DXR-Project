@@ -15,7 +15,7 @@ public:
 	WindowsWindow();
 	~WindowsWindow();
 
-	bool Create(Uint16 Width, Uint16 Height);
+	bool Init(Uint16 Width, Uint16 Height);
 
 	void Show();
 

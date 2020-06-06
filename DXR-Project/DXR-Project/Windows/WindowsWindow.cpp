@@ -14,7 +14,7 @@ WindowsWindow::~WindowsWindow()
 	}
 }
 
-bool WindowsWindow::Create(Uint16 Width, Uint16 Height)
+bool WindowsWindow::Init(Uint16 Width, Uint16 Height)
 {
 	DWORD	dwStyle		= WS_OVERLAPPEDWINDOW;
 	RECT	clientRect	= { 0, 0, LONG(Width), LONG(Height) };
@@ -27,7 +27,7 @@ bool WindowsWindow::Create(Uint16 Width, Uint16 Height)
 	hWindow = ::CreateWindowEx(0, "WinClass", "DXR", dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, hInstance, NULL);
 	if (hWindow == NULL)
 	{
-		OutputDebugString("[WindowsWindow]: Failed to create window");
+		::OutputDebugString("[WindowsWindow]: Failed to create window");
 		return false;
 	}
 	else
