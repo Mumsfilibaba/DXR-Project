@@ -1,0 +1,12 @@
+
+*.ipch
+*.exe
+*.pdb
+*.ilk
+*.tlog
+*.log
+*.obj
+*.idb
+*.opendb
+DXR-Project/.vs/DXR-Project/v16/.suo
+*.db
