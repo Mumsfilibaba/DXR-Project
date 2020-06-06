@@ -1,21 +1,45 @@
 #pragma once
 #include "Windows.h"
 
+#include "../Types.h"
+
+#include <memory>
+#include <vector>
+
+class WindowsWindow;
+
 class WindowsApplication
 {
-public:
-	static WindowsApplication* Create(HINSTANCE hInstance);
-	static WindowsApplication* Get();
-
-private:
 	WindowsApplication(WindowsApplication&& Other)		= delete;
 	WindowsApplication(const WindowsApplication& Other)	= delete;
 
 	WindowsApplication& operator=(WindowsApplication&& Other)		= delete;
 	WindowsApplication& operator=(const WindowsApplication& Other)	= delete;
 
-	WindowsApplication(HINSTANCE hInstance);
+public:
 	~WindowsApplication();
+
+	WindowsWindow* CreateWindow(Uint16 Width, Uint16 Height);
+	WindowsWindow* GetWindowFromHWND(HWND hWindow);
+
+	bool Tick();
+
+	HINSTANCE GetInstance()
+	{
+		return hInstance;
+	}
+
+	static WindowsApplication* Create(HINSTANCE hInstance);
+	static WindowsApplication* Get();
+
+private:
+	WindowsApplication(HINSTANCE hInstance);
+	
+	bool Create();
+
+	void AddWindow(WindowsWindow* NewWindow);
+
+	bool RegisterWindowClass();
 
 	LRESULT ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
@@ -24,5 +48,7 @@ private:
 private:
 	HINSTANCE hInstance = 0;
 
-	static WindowsApplication* WinApplication;
+	std::vector<WindowsWindow*> Windows;
+
+	static std::unique_ptr<WindowsApplication> WinApplication;
 };
