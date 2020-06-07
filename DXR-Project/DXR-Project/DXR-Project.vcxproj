@@ -123,12 +123,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="D3D12\D3D12CommandQueue.cpp" />
+    <ClCompile Include="D3D12\D3D12DescriptorHeap.cpp" />
     <ClCompile Include="D3D12\D3D12GraphicsDevice.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Windows\WindowsApplication.cpp" />
     <ClCompile Include="Windows\WindowsWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="D3D12\D3D12CommandQueue.h" />
+    <ClInclude Include="D3D12\D3D12DescriptorHeap.h" />
     <ClInclude Include="D3D12\D3D12GraphicsDevice.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="Windows\Windows.h" />

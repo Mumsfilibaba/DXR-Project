@@ -16,10 +16,22 @@ D3D12GraphicsDevice::D3D12GraphicsDevice()
 
 D3D12GraphicsDevice::~D3D12GraphicsDevice()
 {
+	using namespace Microsoft::WRL;
+
+	if (IsDebugEnabled)
+	{
+		ComPtr<ID3D12DebugDevice> DebugDevice;
+		if (SUCCEEDED(Device.As<ID3D12DebugDevice>(&DebugDevice)))
+		{
+			DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
+		}
+	}
 }
 
 bool D3D12GraphicsDevice::Init(bool DebugEnable)
 {
+	using namespace Microsoft::WRL;
+
 	// Enable Debug
 	IsDebugEnabled = DebugEnable;
 
@@ -35,6 +47,61 @@ bool D3D12GraphicsDevice::Init(bool DebugEnable)
 	}
 
 	// Create Device
+	if (FAILED(D3D12CreateDevice(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
+	{
+		::MessageBox(0, "Failed to create D3D12Device", "ERROR", MB_OK | MB_ICONERROR);
+		return false;
+	}
+	else
+	{
+		::OutputDebugString("[D3D12GraphicsDevice]: Created D3D12Device\n");
+	}
+
+	// Configure debug device (if active).
+	if (IsDebugEnabled)
+	{
+		ComPtr<ID3D12InfoQueue> InfoQueue;
+		if (SUCCEEDED(Device.As(&InfoQueue)))
+		{
+			InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+			InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+
+			D3D12_MESSAGE_ID Hide[] =
+			{
+				D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
+				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
+			};
+
+			D3D12_INFO_QUEUE_FILTER Filter = { };
+			Filter.DenyList.NumIDs	= _countof(Hide);
+			Filter.DenyList.pIDList = Hide;
+			InfoQueue->AddStorageFilterEntries(&Filter);
+		}
+	}
+
+	// Determine maximum supported feature level for this device
+	static const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
+	{
+		D3D_FEATURE_LEVEL_12_1,
+		D3D_FEATURE_LEVEL_12_0,
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+	};
+
+	D3D12_FEATURE_DATA_FEATURE_LEVELS FeatureLevels =
+	{
+		_countof(SupportedFeatureLevels), SupportedFeatureLevels, D3D_FEATURE_LEVEL_11_0
+	};
+
+	HRESULT hResult = Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
+	if (SUCCEEDED(hResult))
+	{
+		ActiveFeatureLevel = FeatureLevels.MaxSupportedFeatureLevel;
+	}
+	else
+	{
+		ActiveFeatureLevel = MinFeatureLevel;
+	}
 
 	return true;
 }
@@ -145,9 +212,9 @@ bool D3D12GraphicsDevice::ChooseAdapter()
 			return false;
 		}
 
+		// Don't select the Basic Render Driver adapter.
 		if (Desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
 		{
-			// Don't select the Basic Render Driver adapter.
 			continue;
 		}
 
@@ -155,11 +222,11 @@ bool D3D12GraphicsDevice::ChooseAdapter()
 		if (SUCCEEDED(D3D12CreateDevice(TempAdapter.Get(), MinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
 		{
 			AdapterID = ID;
-#ifdef _DEBUG
-			wchar_t Buff[256] = {};
-			swprintf_s(Buff, L"Direct3D Adapter (%u): VID:%04X, PID:%04X - %ls\n", AdapterID, Desc.VendorId, Desc.DeviceId, Desc.Description);
-			OutputDebugStringW(Buff);
-#endif
+
+			char Buff[256] = {};
+			sprintf_s(Buff, "Direct3D Adapter (%u): %ls\n", AdapterID, Desc.Description);
+			::OutputDebugString(Buff);
+
 			break;
 		}
 	}
