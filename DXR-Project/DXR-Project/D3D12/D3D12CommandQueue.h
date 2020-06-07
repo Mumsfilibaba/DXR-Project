@@ -19,6 +19,11 @@ public:
 
 	bool Init();
 
+	ID3D12CommandQueue* GetQueue() const
+	{
+		return Queue.Get();
+	}
+
 private:
 	D3D12GraphicsDevice*						Device = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue>	Queue;

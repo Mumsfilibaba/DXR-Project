@@ -4,6 +4,7 @@
 #include "D3D12/D3D12GraphicsDevice.h"
 #include "D3D12/D3D12CommandQueue.h"
 #include "D3D12/D3D12DescriptorHeap.h"
+#include "D3D12/D3D12SwapChain.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, int cmdShow)
 {
@@ -23,12 +24,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	D3D12DescriptorHeap* DsvHeap = new D3D12DescriptorHeap(Device);
 	DsvHeap->Init(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
+	D3D12SwapChain* SwapChain = new D3D12SwapChain(Device);
+	SwapChain->Init(Window, Queue);
+
 	bool IsRunning = true;
 	while (IsRunning)
 	{
 		IsRunning = App->Tick();
 	}
 
+	delete SwapChain;
 	delete DsvHeap;
 	delete RtvHeap;
 	delete Queue;

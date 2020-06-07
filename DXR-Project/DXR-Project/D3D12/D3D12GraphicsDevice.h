@@ -27,6 +27,11 @@ public:
 		return Device.Get();
 	}
 
+	IDXGIFactory2* GetFactory() const
+	{
+		return Factory.Get();
+	}
+
 	static D3D12GraphicsDevice* Create(bool DebugEnable);
 	static D3D12GraphicsDevice* Get();
 

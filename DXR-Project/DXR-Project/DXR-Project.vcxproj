@@ -126,6 +126,7 @@
     <ClCompile Include="D3D12\D3D12CommandQueue.cpp" />
     <ClCompile Include="D3D12\D3D12DescriptorHeap.cpp" />
     <ClCompile Include="D3D12\D3D12GraphicsDevice.cpp" />
+    <ClCompile Include="D3D12\D3D12SwapChain.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Windows\WindowsApplication.cpp" />
     <ClCompile Include="Windows\WindowsWindow.cpp" />
@@ -134,6 +135,7 @@
     <ClInclude Include="D3D12\D3D12CommandQueue.h" />
     <ClInclude Include="D3D12\D3D12DescriptorHeap.h" />
     <ClInclude Include="D3D12\D3D12GraphicsDevice.h" />
+    <ClInclude Include="D3D12\D3D12SwapChain.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="Windows\Windows.h" />
     <ClInclude Include="Windows\WindowsApplication.h" />
