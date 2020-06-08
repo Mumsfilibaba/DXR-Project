@@ -1,8 +1,8 @@
 #include "D3D12DescriptorHeap.h"
-#include "D3D12GraphicsDevice.h"
+#include "D3D12Device.h"
 
-D3D12DescriptorHeap::D3D12DescriptorHeap(D3D12GraphicsDevice* Device)
-	: Device(Device)
+D3D12DescriptorHeap::D3D12DescriptorHeap(D3D12Device* Device)
+	: D3D12DeviceChild(Device)
 {
 }
 

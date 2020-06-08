@@ -1,4 +1,4 @@
-#include "D3D12GraphicsDevice.h"
+#include "D3D12Device.h"
 
 #include <dxgidebug.h>
 
@@ -10,25 +10,25 @@
 * Members
 */
 
-D3D12GraphicsDevice::D3D12GraphicsDevice()
+D3D12Device::D3D12Device()
 {
 }
 
-D3D12GraphicsDevice::~D3D12GraphicsDevice()
+D3D12Device::~D3D12Device()
 {
 	using namespace Microsoft::WRL;
 
 	if (IsDebugEnabled)
 	{
 		ComPtr<ID3D12DebugDevice> DebugDevice;
-		if (SUCCEEDED(Device.As<ID3D12DebugDevice>(&DebugDevice)))
+		if (SUCCEEDED(D3DDevice.As<ID3D12DebugDevice>(&DebugDevice)))
 		{
 			DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
 		}
 	}
 }
 
-bool D3D12GraphicsDevice::Init(bool DebugEnable)
+bool D3D12Device::Init(bool DebugEnable)
 {
 	using namespace Microsoft::WRL;
 
@@ -47,7 +47,7 @@ bool D3D12GraphicsDevice::Init(bool DebugEnable)
 	}
 
 	// Create Device
-	if (FAILED(D3D12CreateDevice(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
+	if (FAILED(D3D12CreateDevice(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&D3DDevice))))
 	{
 		::MessageBox(0, "Failed to create D3D12Device", "ERROR", MB_OK | MB_ICONERROR);
 		return false;
@@ -61,7 +61,7 @@ bool D3D12GraphicsDevice::Init(bool DebugEnable)
 	if (IsDebugEnabled)
 	{
 		ComPtr<ID3D12InfoQueue> InfoQueue;
-		if (SUCCEEDED(Device.As(&InfoQueue)))
+		if (SUCCEEDED(D3DDevice.As(&InfoQueue)))
 		{
 			InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
 			InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
@@ -93,7 +93,7 @@ bool D3D12GraphicsDevice::Init(bool DebugEnable)
 		_countof(SupportedFeatureLevels), SupportedFeatureLevels, D3D_FEATURE_LEVEL_11_0
 	};
 
-	HRESULT hResult = Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
+	HRESULT hResult = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
 	if (SUCCEEDED(hResult))
 	{
 		ActiveFeatureLevel = FeatureLevels.MaxSupportedFeatureLevel;
@@ -110,14 +110,14 @@ bool D3D12GraphicsDevice::Init(bool DebugEnable)
 * Static
 */
 
-std::unique_ptr<D3D12GraphicsDevice> D3D12GraphicsDevice::D3D12Device = nullptr;
+std::unique_ptr<D3D12Device> D3D12Device::Device = nullptr;
 
-D3D12GraphicsDevice* D3D12GraphicsDevice::Create(bool DebugEnable)
+D3D12Device* D3D12Device::Create(bool DebugEnable)
 {
-	D3D12Device.reset(new D3D12GraphicsDevice());
-	if (D3D12Device->Init(DebugEnable))
+	Device.reset(new D3D12Device());
+	if (Device->Init(DebugEnable))
 	{
-		return D3D12Device.get();
+		return Device.get();
 	}
 	else
 	{
@@ -125,12 +125,12 @@ D3D12GraphicsDevice* D3D12GraphicsDevice::Create(bool DebugEnable)
 	}
 }
 
-D3D12GraphicsDevice* D3D12GraphicsDevice::Get()
+D3D12Device* D3D12Device::Get()
 {
-	return D3D12Device.get();
+	return Device.get();
 }
 
-bool D3D12GraphicsDevice::CreateFactory()
+bool D3D12Device::CreateFactory()
 {
 	using namespace Microsoft::WRL;
 
@@ -177,14 +177,11 @@ bool D3D12GraphicsDevice::CreateFactory()
 		}
 		else
 		{
-			BOOL AllowTearing = FALSE;
 			HRESULT hResult = Factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &AllowTearing, sizeof(AllowTearing));
 			if (SUCCEEDED(hResult))
 			{
 				if (AllowTearing)
 				{
-					IsTearingSupported = true;
-
 					::OutputDebugString("[D3D12GraphicsDevice]: Tearing is supported\n");
 				}
 				else
@@ -198,7 +195,7 @@ bool D3D12GraphicsDevice::CreateFactory()
 	return true;
 }
 
-bool D3D12GraphicsDevice::ChooseAdapter()
+bool D3D12Device::ChooseAdapter()
 {
 	using namespace Microsoft::WRL;
 

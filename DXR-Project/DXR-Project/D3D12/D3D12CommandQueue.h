@@ -1,11 +1,7 @@
 #pragma once
-#include <d3d12.h>
+#include "D3D12DeviceChild.h"
 
-#include <wrl/client.h>
-
-class D3D12GraphicsDevice;
-
-class D3D12CommandQueue
+class D3D12CommandQueue : public D3D12DeviceChild
 {
 	D3D12CommandQueue(D3D12CommandQueue&& Other)		= delete;
 	D3D12CommandQueue(const D3D12CommandQueue& Other)	= delete;
@@ -14,7 +10,7 @@ class D3D12CommandQueue
 	D3D12CommandQueue& operator=(const D3D12CommandQueue& Other)	= delete;
 
 public:
-	D3D12CommandQueue(D3D12GraphicsDevice* Device);
+	D3D12CommandQueue(D3D12Device* Device);
 	~D3D12CommandQueue();
 
 	bool Init();
@@ -25,7 +21,6 @@ public:
 	}
 
 private:
-	D3D12GraphicsDevice*						Device = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12CommandQueue>	Queue;
+	Microsoft::WRL::ComPtr<ID3D12CommandQueue> Queue;
 };
 

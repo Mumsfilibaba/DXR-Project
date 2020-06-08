@@ -8,23 +8,23 @@
 
 #include "../Types.h"
 
-class D3D12GraphicsDevice
+class D3D12Device
 {
-	D3D12GraphicsDevice(D3D12GraphicsDevice&& Other)		= delete;
-	D3D12GraphicsDevice(const D3D12GraphicsDevice& Other)	= delete;
+	D3D12Device(D3D12Device&& Other)		= delete;
+	D3D12Device(const D3D12Device& Other)	= delete;
 
-	D3D12GraphicsDevice& operator=(D3D12GraphicsDevice&& Other)			= delete;
-	D3D12GraphicsDevice& operator=(const D3D12GraphicsDevice& Other)	= delete;
+	D3D12Device& operator=(D3D12Device&& Other)			= delete;
+	D3D12Device& operator=(const D3D12Device& Other)	= delete;
 
 public:
-	D3D12GraphicsDevice();
-	~D3D12GraphicsDevice();
+	D3D12Device();
+	~D3D12Device();
 
 	bool Init(bool DebugEnable);
 
 	ID3D12Device* GetDevice() const
 	{
-		return Device.Get();
+		return D3DDevice.Get();
 	}
 
 	IDXGIFactory2* GetFactory() const
@@ -32,8 +32,13 @@ public:
 		return Factory.Get();
 	}
 
-	static D3D12GraphicsDevice* Create(bool DebugEnable);
-	static D3D12GraphicsDevice* Get();
+	bool IsTearingSupported() const
+	{
+		return AllowTearing;
+	}
+
+	static D3D12Device* Create(bool DebugEnable);
+	static D3D12Device* Get();
 
 private:
 	bool CreateFactory();
@@ -42,15 +47,15 @@ private:
 private:
 	Microsoft::WRL::ComPtr<IDXGIFactory2>	Factory;
 	Microsoft::WRL::ComPtr<IDXGIAdapter1>	Adapter;
-	Microsoft::WRL::ComPtr<ID3D12Device>	Device;
+	Microsoft::WRL::ComPtr<ID3D12Device>	D3DDevice;
 
 	bool IsDebugEnabled		= false;
-	bool IsTearingSupported = false;
+	BOOL AllowTearing		= FALSE;
 
 	Uint32 AdapterID = 0;
 
 	D3D_FEATURE_LEVEL MinFeatureLevel		= D3D_FEATURE_LEVEL_11_0;
 	D3D_FEATURE_LEVEL ActiveFeatureLevel	= D3D_FEATURE_LEVEL_11_0;
 
-	static std::unique_ptr<D3D12GraphicsDevice> D3D12Device;
+	static std::unique_ptr<D3D12Device> Device;
 };

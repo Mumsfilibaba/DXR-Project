@@ -123,18 +123,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="D3D12\D3D12CommandAllocator.cpp" />
+    <ClCompile Include="D3D12\D3D12CommandList.cpp" />
     <ClCompile Include="D3D12\D3D12CommandQueue.cpp" />
     <ClCompile Include="D3D12\D3D12DescriptorHeap.cpp" />
-    <ClCompile Include="D3D12\D3D12GraphicsDevice.cpp" />
+    <ClCompile Include="D3D12\D3D12Device.cpp" />
+    <ClCompile Include="D3D12\D3D12Fence.cpp" />
     <ClCompile Include="D3D12\D3D12SwapChain.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Windows\WindowsApplication.cpp" />
     <ClCompile Include="Windows\WindowsWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="D3D12\D3D12CommandAllocator.h" />
+    <ClInclude Include="D3D12\D3D12CommandList.h" />
     <ClInclude Include="D3D12\D3D12CommandQueue.h" />
     <ClInclude Include="D3D12\D3D12DescriptorHeap.h" />
-    <ClInclude Include="D3D12\D3D12GraphicsDevice.h" />
+    <ClInclude Include="D3D12\D3D12Device.h" />
+    <ClInclude Include="D3D12\D3D12DeviceChild.h" />
+    <ClInclude Include="D3D12\D3D12Fence.h" />
     <ClInclude Include="D3D12\D3D12SwapChain.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="Windows\Windows.h" />

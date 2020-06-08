@@ -1,13 +1,9 @@
 #pragma once
-#include <d3d12.h>
-
-#include <wrl/client.h>
+#include "D3D12DeviceChild.h"
 
 #include "../Types.h"
 
-class D3D12GraphicsDevice;
-
-class D3D12DescriptorHeap
+class D3D12DescriptorHeap : public D3D12DeviceChild
 {
 	D3D12DescriptorHeap(D3D12DescriptorHeap&& Other)		= delete;
 	D3D12DescriptorHeap(const D3D12DescriptorHeap& Other)	= delete;
@@ -16,7 +12,7 @@ class D3D12DescriptorHeap
 	D3D12DescriptorHeap& operator=(const D3D12DescriptorHeap& Other)	= delete;
 
 public:
-	D3D12DescriptorHeap(D3D12GraphicsDevice* Device);
+	D3D12DescriptorHeap(D3D12Device* Device);
 	~D3D12DescriptorHeap();
 
 	bool Init(D3D12_DESCRIPTOR_HEAP_TYPE Type, Uint32 DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
@@ -27,8 +23,6 @@ public:
 	}
 
 private:
-	D3D12GraphicsDevice*							Device = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	Heap;
-
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> Heap;
 	Uint64 DescriptorSize = 0;
 };
