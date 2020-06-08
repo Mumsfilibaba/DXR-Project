@@ -24,3 +24,8 @@ bool D3D12CommandAllocator::Init(D3D12_COMMAND_LIST_TYPE Type)
 		return false;
 	}
 }
+
+bool D3D12CommandAllocator::Reset()
+{
+	return Allocator->Reset();
+}

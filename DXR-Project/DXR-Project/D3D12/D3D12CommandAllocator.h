@@ -15,6 +15,8 @@ public:
 
 	bool Init(D3D12_COMMAND_LIST_TYPE Type);
 
+	bool Reset();
+
 	ID3D12CommandAllocator* GetAllocator() const
 	{
 		return Allocator.Get();

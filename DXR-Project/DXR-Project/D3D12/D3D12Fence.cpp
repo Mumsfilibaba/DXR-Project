@@ -13,9 +13,7 @@ D3D12Fence::~D3D12Fence()
 
 bool D3D12Fence::Init(Uint64 InitalValue)
 {
-	FenceValue = InitalValue;
-
-	HRESULT hResult = Device->GetDevice()->CreateFence(FenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
+	HRESULT hResult = Device->GetDevice()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
 	if (SUCCEEDED(hResult))
 	{
 		::OutputDebugString("[D3D12Fence]: Created Fence\n");
@@ -35,5 +33,27 @@ bool D3D12Fence::Init(Uint64 InitalValue)
 	{
 		::OutputDebugString("[D3D12Fence]: Failed to create Fence\n");
 		return false;
+	}
+}
+
+bool D3D12Fence::WaitForValue(Uint64 FenceValue)
+{
+	if (Fence->GetCompletedValue() < FenceValue)
+	{
+		HRESULT hResult = Fence->SetEventOnCompletion(FenceValue, Event);
+		if (SUCCEEDED(hResult))
+		{
+			WaitForSingleObjectEx(Event, INFINITE, FALSE);
+			return true;
+		}
+		else
+		{
+			return false;
+	
+		}
+	}
+	else
+	{
+		return true;
 	}
 }

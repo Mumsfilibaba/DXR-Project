@@ -17,8 +17,14 @@ public:
 
 	bool Init(Uint64 InitalValue);
 
+	bool WaitForValue(Uint64 FenceValue);
+
+	ID3D12Fence* GetFence() const
+	{
+		return Fence.Get();
+	}
+
 private:
 	Microsoft::WRL::ComPtr<ID3D12Fence> Fence;
-	Uint64 FenceValue	= 0;
-	HANDLE Event		= 0;
+	HANDLE Event = 0;
 };

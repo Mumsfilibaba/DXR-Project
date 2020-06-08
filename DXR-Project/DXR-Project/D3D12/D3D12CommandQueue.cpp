@@ -1,5 +1,7 @@
 #include "D3D12CommandQueue.h"
 #include "D3D12Device.h"
+#include "D3D12CommandList.h"
+#include "D3D12Fence.h"
 
 D3D12CommandQueue::D3D12CommandQueue(D3D12Device* Device)
 	: D3D12DeviceChild(Device)
@@ -30,4 +32,15 @@ bool D3D12CommandQueue::Init()
 		::OutputDebugString("[D3D12CommandQueue]: Failed to create CommandQueue\n");
 		return false;
 	}
+}
+
+bool D3D12CommandQueue::SignalFence(D3D12Fence* Fence, Uint64 FenceValue)
+{
+	return SUCCEEDED(Queue->Signal(Fence->GetFence(), FenceValue));
+}
+
+void D3D12CommandQueue::ExecuteCommandList(D3D12CommandList* CommandList)
+{
+	ID3D12CommandList* CommandLists[] = { CommandList->GetCommandList() };
+	Queue->ExecuteCommandLists(1, CommandLists);
 }

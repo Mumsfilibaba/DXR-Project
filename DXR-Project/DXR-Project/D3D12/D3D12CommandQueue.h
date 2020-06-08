@@ -1,6 +1,8 @@
 #pragma once
 #include "D3D12DeviceChild.h"
 
+#include "../Types.h"
+
 class D3D12CommandQueue : public D3D12DeviceChild
 {
 	D3D12CommandQueue(D3D12CommandQueue&& Other)		= delete;
@@ -14,6 +16,10 @@ public:
 	~D3D12CommandQueue();
 
 	bool Init();
+	
+	bool SignalFence(class D3D12Fence* Fence, Uint64 FenceValue);
+
+	void ExecuteCommandList(class D3D12CommandList* CommandList);
 
 	ID3D12CommandQueue* GetQueue() const
 	{

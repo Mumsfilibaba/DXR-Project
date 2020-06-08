@@ -24,17 +24,29 @@ public:
 
 	bool Init(WindowsWindow* Window, D3D12CommandQueue* Queue);
 
+	bool Present(Uint32 SyncInterval);
+
+	Uint32 GetCurrentBackBufferIndex() const;
+
+	ID3D12Resource* GetSurfaceResource(Uint32 SurfaceIndex) const
+	{
+		return BackBuffers[SurfaceIndex].Get();
+	}
+
+	DXGI_FORMAT GetSurfaceFormat() const
+	{
+		return DXGI_FORMAT_R8G8B8A8_UNORM;
+	}
+
 	Uint32 GetSurfaceCount() const
 	{
-		return BackBufferCount;
+		return 3;
 	}
 
 private:
 	void RetriveSwapChainSurfaces();
 
 private:
-	Microsoft::WRL::ComPtr<IDXGISwapChain1>				SwapChain;
+	Microsoft::WRL::ComPtr<IDXGISwapChain3>				SwapChain;
 	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> BackBuffers;
-
-	const Uint32 BackBufferCount = 3;
 };
