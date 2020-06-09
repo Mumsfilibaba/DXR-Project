@@ -1,4 +1,5 @@
 #include "D3D12Device.h"
+#include "D3D12ShaderCompiler.h"
 
 #include <dxgidebug.h>
 
@@ -101,6 +102,14 @@ bool D3D12Device::Init(bool DebugEnable)
 	else
 	{
 		ActiveFeatureLevel = MinFeatureLevel;
+	}
+
+
+	// Create ShaderCompiler
+	D3D12ShaderCompiler* ShaderCompiler = D3D12ShaderCompiler::Create();
+	if (!ShaderCompiler)
+	{
+		return false;
 	}
 
 	return true;

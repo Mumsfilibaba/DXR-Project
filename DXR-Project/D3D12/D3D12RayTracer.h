@@ -19,4 +19,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Device5>				DXRDevice;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	DXRCommandList;
 	Microsoft::WRL::ComPtr<ID3D12StateObject>			DXRStateObject;
+	Microsoft::WRL::ComPtr<ID3D12RootSignature>			GlobalRootSignature;
+
+	class D3D12DescriptorHeap*	ResourceHeap	= nullptr;
+	class D3D12Texture*			ResultTexture	= nullptr;
 };
