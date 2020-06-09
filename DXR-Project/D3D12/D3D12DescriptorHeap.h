@@ -1,7 +1,7 @@
 #pragma once
 #include "D3D12DeviceChild.h"
 
-#include "../Types.h"
+#include "Types.h"
 
 class D3D12DescriptorHeap : public D3D12DeviceChild
 {

@@ -1,12 +1,13 @@
 #pragma once
 #include "Windows.h"
 
-#include "../Types.h"
+#include "Types.h"
 
 #include <memory>
 #include <vector>
 
 class WindowsWindow;
+class EventHandler;
 
 class WindowsApplication
 {
@@ -23,6 +24,13 @@ public:
 	WindowsWindow* GetWindowFromHWND(HWND hWindow);
 
 	bool Tick();
+
+	void SetEventHandler(EventHandler* NewMessageHandler);
+	
+	EventHandler* GetEventHandler() const
+	{
+		return MessageHandler;
+	}
 
 	HINSTANCE GetInstance()
 	{
@@ -46,7 +54,8 @@ private:
 	static LRESULT MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
 private:
-	HINSTANCE hInstance = 0;
+	HINSTANCE		hInstance		= 0;
+	EventHandler*	MessageHandler	= nullptr;
 
 	std::vector<WindowsWindow*> Windows;
 

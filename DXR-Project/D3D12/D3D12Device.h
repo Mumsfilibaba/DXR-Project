@@ -6,7 +6,7 @@
 
 #include <wrl/client.h>
 
-#include "../Types.h"
+#include "Types.h"
 
 class D3D12Device
 {

@@ -1,6 +1,10 @@
 #include "WindowsApplication.h"
 #include "WindowsWindow.h"
 
+#include "Application/EventHandler.h"
+
+#include <windowsx.h>
+
 std::unique_ptr<WindowsApplication> WindowsApplication::WinApplication = nullptr;
 
 /*
@@ -124,20 +128,45 @@ bool WindowsApplication::Tick()
 	return true;
 }
 
+void WindowsApplication::SetEventHandler(EventHandler* NewMessageHandler)
+{
+	MessageHandler = NewMessageHandler;
+}
+
 /*
 * MessageProc
 */
 
 LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
+	WindowsWindow* Window = GetWindowFromHWND(hWnd);
 	switch (uMessage)
 	{
-	case WM_DESTROY: 
-		::PostQuitMessage(0);
-		return 0;
+		case WM_DESTROY:
+		{
+			::PostQuitMessage(0);
+			return 0;
+		}
+
+		case WM_SIZE:
+		{
+			if (Window)
+			{
+				const Uint16 Width	= LOWORD(lParam);
+				const Uint16 Height = HIWORD(lParam);
+
+				MessageHandler->OnWindowResize(Window, Width, Height);
+			}
+
+			return 0;
+		}
+
+		default:
+		{
+			return ::DefWindowProc(hWnd, uMessage, wParam, lParam);
+		}
 	}
 
-	return ::DefWindowProc(hWnd, uMessage, wParam, lParam);
 }
 
 LRESULT WindowsApplication::MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)

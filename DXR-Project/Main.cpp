@@ -8,10 +8,21 @@
 #include "D3D12/D3D12CommandAllocator.h"
 #include "D3D12/D3D12CommandList.h"
 #include "D3D12/D3D12Fence.h"
+#include "D3D12/D3D12RayTracer.h"
+
+#include "Application/EventHandler.h"
+
+class A : public EventHandler
+{
+};
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, int cmdShow)
 {
 	WindowsApplication* App = WindowsApplication::Create(hInstance);
+
+	A* Test = new A();
+	
+	App->SetEventHandler(Test);
 
 	WindowsWindow* Window = App->CreateWindow(1280, 720);
 	Window->Show();
@@ -57,6 +68,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	D3D12Fence* Fence = new D3D12Fence(Device);
 	Fence->Init(0);
 
+	D3D12RayTracer* RayTracer = new D3D12RayTracer(Device);
+	RayTracer->Init(CommandList);
+
 	// Run-Loop
 	Uint64 BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 	std::vector<Uint64> FenceValues(BackBufferCount);
@@ -101,12 +115,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 		delete Allocator;
 	}
 
+	delete RayTracer;
 	delete Fence;
 	delete CommandList;
 	delete SwapChain;
 	delete DsvHeap;
 	delete RtvHeap;
 	delete Queue;
+	delete Test;
 
 	return 0;
 }

@@ -1,13 +1,13 @@
+# Ignore all Visual Studio project and solution files
+*.sln
+*.vcxproj*
 
-*.ipch
-*.exe
-*.pdb
-*.ilk
-*.tlog
-*.log
-*.obj
-*.idb
-*.opendb
-DXR-Project/.vs/DXR-Project/v16/.suo
-*.db
-*.txt
+#Ignore visual studio hint files
+*.hint
+
+# Ignore all files in the .vs- and .vscode- folders (Created by Visual Studio)
+.vs/
+.vscode/
+
+# Ignore all compiled files
+Build/

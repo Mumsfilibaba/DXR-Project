@@ -1,7 +1,7 @@
 #pragma once
 #include "D3D12DeviceChild.h"
 
-#include "../Types.h"
+#include "Types.h"
 
 #include <dxgi1_6.h>
 
