@@ -11,6 +11,8 @@
 
 #include "Meshes/Vertex.h"
 
+#include <DirectXMath.h>
+
 D3D12RayTracer::D3D12RayTracer(D3D12Device* Device)
 	: D3D12DeviceChild(Device)
 {
