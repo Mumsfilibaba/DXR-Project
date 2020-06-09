@@ -10,14 +10,18 @@
 #include "D3D12/D3D12Fence.h"
 #include "D3D12/D3D12RayTracer.h"
 
-#include "Application/EventHandler.h"
+#include "Application/GenericEventHandler.h"
 
-class A : public EventHandler
+class A : public GenericEventHandler
 {
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, int cmdShow)
 {
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(cmdLine);
+	UNREFERENCED_PARAMETER(cmdShow);
+
 	WindowsApplication* App = WindowsApplication::Create(hInstance);
 
 	A* Test = new A();
@@ -69,10 +73,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	Fence->Init(0);
 
 	D3D12RayTracer* RayTracer = new D3D12RayTracer(Device);
-	RayTracer->Init(CommandList);
+	RayTracer->Init(CommandList, Queue);
 
 	// Run-Loop
-	Uint64 BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
+	Uint32 BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 	std::vector<Uint64> FenceValues(BackBufferCount);
 
 	bool IsRunning = true;
@@ -84,12 +88,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 		Allocators[BackBufferIndex]->Reset();
 		CommandList->Reset(Allocators[BackBufferIndex]);
 		
-		CommandList->TransitionResourceState(SwapChain->GetSurfaceResource(BackBufferIndex), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-		const Float32 ClearColor[4] = { 0.3921f, 0.5843f, 0.9394f, 1.0f };
-		CommandList->ClearRenderTargetView(BackBufferHandles[BackBufferIndex], ClearColor);
-
-		CommandList->TransitionResourceState(SwapChain->GetSurfaceResource(BackBufferIndex), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		RayTracer->Render(SwapChain->GetSurfaceResource(BackBufferIndex));
 
 		CommandList->Close();
 

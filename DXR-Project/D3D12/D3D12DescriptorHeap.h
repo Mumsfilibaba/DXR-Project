@@ -5,12 +5,6 @@
 
 class D3D12DescriptorHeap : public D3D12DeviceChild
 {
-	D3D12DescriptorHeap(D3D12DescriptorHeap&& Other)		= delete;
-	D3D12DescriptorHeap(const D3D12DescriptorHeap& Other)	= delete;
-
-	D3D12DescriptorHeap& operator=(D3D12DescriptorHeap&& Other)			= delete;
-	D3D12DescriptorHeap& operator=(const D3D12DescriptorHeap& Other)	= delete;
-
 public:
 	D3D12DescriptorHeap(D3D12Device* Device);
 	~D3D12DescriptorHeap();
@@ -22,6 +16,11 @@ public:
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart() const;
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleAt(Uint32 DescriptorIndex) const;
+
+	ID3D12DescriptorHeap* GetHeap() const
+	{
+		return Heap.Get();
+	}
 
 	Uint64 GetDescriptorSize() const
 	{

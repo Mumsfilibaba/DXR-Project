@@ -5,12 +5,6 @@
 
 class WindowsWindow
 {
-	WindowsWindow(WindowsWindow&& Other)		= delete;
-	WindowsWindow(const WindowsWindow& Other)	= delete;
-
-	WindowsWindow& operator=(WindowsWindow&& Other)			= delete;
-	WindowsWindow& operator=(const WindowsWindow& Other)	= delete;
-
 public:
 	WindowsWindow();
 	~WindowsWindow();
@@ -19,7 +13,7 @@ public:
 
 	void Show();
 
-	HWND GetHandle()
+	HWND GetHandle() const
 	{
 		return hWindow;
 	}

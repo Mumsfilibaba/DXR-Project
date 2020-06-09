@@ -214,7 +214,7 @@ bool D3D12Device::ChooseAdapter()
 		DXGI_ADAPTER_DESC1 Desc;
 		if (FAILED(TempAdapter->GetDesc1(&Desc)))
 		{
-			::OutputDebugString("[D3D12GraphicsDevice]: Failed to retrive DXGI_ADAPTER_DESC1");
+			::OutputDebugString("[D3D12GraphicsDevice]: Failed to retrive DXGI_ADAPTER_DESC1\n");
 			return false;
 		}
 

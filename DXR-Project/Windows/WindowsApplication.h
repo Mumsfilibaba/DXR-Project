@@ -7,16 +7,10 @@
 #include <vector>
 
 class WindowsWindow;
-class EventHandler;
+class GenericEventHandler;
 
 class WindowsApplication
 {
-	WindowsApplication(WindowsApplication&& Other)		= delete;
-	WindowsApplication(const WindowsApplication& Other)	= delete;
-
-	WindowsApplication& operator=(WindowsApplication&& Other)		= delete;
-	WindowsApplication& operator=(const WindowsApplication& Other)	= delete;
-
 public:
 	~WindowsApplication();
 
@@ -25,11 +19,11 @@ public:
 
 	bool Tick();
 
-	void SetEventHandler(EventHandler* NewMessageHandler);
+	void SetEventHandler(GenericEventHandler* NewEventHandler);
 	
-	EventHandler* GetEventHandler() const
+	GenericEventHandler* GetEventHandler() const
 	{
-		return MessageHandler;
+		return EventHandler;
 	}
 
 	HINSTANCE GetInstance()
@@ -54,8 +48,8 @@ private:
 	static LRESULT MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
 private:
-	HINSTANCE		hInstance		= 0;
-	EventHandler*	MessageHandler	= nullptr;
+	HINSTANCE				hInstance		= 0;
+	GenericEventHandler*	EventHandler	= nullptr;
 
 	std::vector<WindowsWindow*> Windows;
 

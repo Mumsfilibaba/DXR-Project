@@ -7,12 +7,6 @@ class D3D12CommandAllocator;
 
 class D3D12CommandList : public D3D12DeviceChild
 {
-	D3D12CommandList(D3D12CommandList&& Other)		= delete;
-	D3D12CommandList(const D3D12CommandList& Other) = delete;
-
-	D3D12CommandList& operator=(D3D12CommandList&& Other)		= delete;
-	D3D12CommandList& operator=(const D3D12CommandList& Other)	= delete;
-
 public:
 	D3D12CommandList(D3D12Device* Device);
 	~D3D12CommandList();

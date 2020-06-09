@@ -85,7 +85,7 @@ void D3D12SwapChain::RetriveSwapChainSurfaces()
 		}
 		else
 		{
-			::OutputDebugString("[D3D12SwapChain]: Failed to retrive SwapChain Buffer");
+			::OutputDebugString("[D3D12SwapChain]: Failed to retrive SwapChain Buffer\n");
 			break;
 		}
 	}

@@ -10,12 +10,6 @@
 
 class D3D12Device
 {
-	D3D12Device(D3D12Device&& Other)		= delete;
-	D3D12Device(const D3D12Device& Other)	= delete;
-
-	D3D12Device& operator=(D3D12Device&& Other)			= delete;
-	D3D12Device& operator=(const D3D12Device& Other)	= delete;
-
 public:
 	D3D12Device();
 	~D3D12Device();

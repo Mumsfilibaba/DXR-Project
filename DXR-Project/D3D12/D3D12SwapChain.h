@@ -12,12 +12,6 @@ class D3D12CommandQueue;
 
 class D3D12SwapChain : public D3D12DeviceChild
 {
-	D3D12SwapChain(D3D12SwapChain&& Other)		= delete;
-	D3D12SwapChain(const D3D12SwapChain& Other)	= delete;
-
-	D3D12SwapChain& operator=(D3D12SwapChain&& Other)		= delete;
-	D3D12SwapChain& operator=(const D3D12SwapChain& Other)	= delete;
-
 public:
 	D3D12SwapChain(D3D12Device* Device);
 	~D3D12SwapChain();

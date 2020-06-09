@@ -6,12 +6,6 @@
 
 class D3D12ShaderCompiler
 {
-	D3D12ShaderCompiler(D3D12ShaderCompiler&& Other)		= delete;
-	D3D12ShaderCompiler(const D3D12ShaderCompiler& Other)	= delete;
-
-	D3D12ShaderCompiler& operator=(D3D12ShaderCompiler&& Other)			= delete;
-	D3D12ShaderCompiler& operator=(const D3D12ShaderCompiler& Other)	= delete;
-
 public:
 	~D3D12ShaderCompiler();
 

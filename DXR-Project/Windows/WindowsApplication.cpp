@@ -1,7 +1,7 @@
 #include "WindowsApplication.h"
 #include "WindowsWindow.h"
 
-#include "Application/EventHandler.h"
+#include "Application/GenericEventHandler.h"
 
 #include <windowsx.h>
 
@@ -128,9 +128,9 @@ bool WindowsApplication::Tick()
 	return true;
 }
 
-void WindowsApplication::SetEventHandler(EventHandler* NewMessageHandler)
+void WindowsApplication::SetEventHandler(GenericEventHandler* NewMessageHandler)
 {
-	MessageHandler = NewMessageHandler;
+	EventHandler = NewMessageHandler;
 }
 
 /*
@@ -155,7 +155,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 				const Uint16 Width	= LOWORD(lParam);
 				const Uint16 Height = HIWORD(lParam);
 
-				MessageHandler->OnWindowResize(Window, Width, Height);
+				EventHandler->OnWindowResize(Window, Width, Height);
 			}
 
 			return 0;
