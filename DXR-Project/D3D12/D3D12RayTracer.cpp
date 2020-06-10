@@ -9,7 +9,7 @@
 #include "D3D12AccelerationStructure.h"
 #include "HeapProps.h"
 
-#include "Meshes/Vertex.h"
+#include "Meshes/MeshFactory.h"
 
 #include <DirectXMath.h>
 
@@ -23,6 +23,7 @@ D3D12RayTracer::~D3D12RayTracer()
 	SAFEDELETE(ResourceHeap);
 	SAFEDELETE(ResultTexture);
 	SAFEDELETE(VertexBuffer);
+	SAFEDELETE(IndexBuffer);
 	SAFEDELETE(TopLevelAS);
 	SAFEDELETE(BottomLevelAS);
 }
@@ -56,7 +57,7 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 	// Create image
 	DXGI_FORMAT ImageFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	ResultTexture = new D3D12Texture(Device);
-	if (!ResultTexture->Init(ImageFormat, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, 1280, 720, HeapProps::DefaultHeap()))
+	if (!ResultTexture->Init(ImageFormat, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, 1920, 1080, HeapProps::DefaultHeap()))
 	{
 		return false;
 	}
@@ -70,20 +71,31 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 	OutputCPUHandle = ResourceHeap->GetCPUDescriptorHandleAt(0);
 	DXRDevice->CreateUnorderedAccessView(ResultTexture->GetResource(), nullptr, &UavView, OutputCPUHandle);
 
-	// Create vertexbuffer
-	VertexBuffer = new D3D12Buffer(Device);
-	if (VertexBuffer->Init(D3D12_RESOURCE_FLAG_NONE, sizeof(Vertex) * 3, D3D12_RESOURCE_STATE_GENERIC_READ, HeapProps::UploadHeap()))
-	{
-		Vertex Vertices[3] =
-		{
-			{  0.0f,    1.0f, 0.0f },
-			{  0.866f, -0.5f, 0.0f },
-			{ -0.866f, -0.5f, 0.0f }
-		}; 
+	// Create mesh
+	MeshData Mesh = MeshFactory::CreateSphere(3);
 
+	// Create vertexbuffer
+	Uint64 BufferSizeInBytes = sizeof(Vertex) * static_cast<Uint64>(Mesh.Vertices.size());
+	VertexBuffer = new D3D12Buffer(Device);
+	if (VertexBuffer->Init(D3D12_RESOURCE_FLAG_NONE, BufferSizeInBytes, D3D12_RESOURCE_STATE_GENERIC_READ, HeapProps::UploadHeap()))
+	{
 		void* BufferMemory = VertexBuffer->Map();
-		memcpy(BufferMemory, Vertices, sizeof(Vertices));
+		memcpy(BufferMemory, Mesh.Vertices.data(), BufferSizeInBytes);
 		VertexBuffer->Unmap();
+	}
+	else
+	{
+		return false;
+	}
+
+	// Create indexbuffer
+	BufferSizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Mesh.Indices.size());
+	IndexBuffer = new D3D12Buffer(Device);
+	if (IndexBuffer->Init(D3D12_RESOURCE_FLAG_NONE, BufferSizeInBytes, D3D12_RESOURCE_STATE_GENERIC_READ, HeapProps::UploadHeap()))
+	{
+		void* BufferMemory = IndexBuffer->Map();
+		memcpy(BufferMemory, Mesh.Indices.data(), BufferSizeInBytes);
+		IndexBuffer->Unmap();
 	}
 	else
 	{
@@ -99,23 +111,26 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 
 	// Bottom Level
 	{
-		D3D12_RAYTRACING_GEOMETRY_DESC GeomDesc[1] = {};
-		GeomDesc[0].Type									= D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-		GeomDesc[0].Triangles.VertexBuffer.StartAddress		= VertexBuffer->GetVirtualAddress();
-		GeomDesc[0].Triangles.VertexBuffer.StrideInBytes	= sizeof(Vertex);
-		GeomDesc[0].Triangles.VertexFormat					= DXGI_FORMAT_R32G32B32_FLOAT;
-		GeomDesc[0].Triangles.VertexCount					= 3;
-		GeomDesc[0].Flags									= D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+		D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc = {};
+		GeometryDesc.Type									= D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+		GeometryDesc.Triangles.VertexBuffer.StartAddress	= VertexBuffer->GetVirtualAddress();
+		GeometryDesc.Triangles.VertexBuffer.StrideInBytes	= sizeof(Vertex);
+		GeometryDesc.Triangles.VertexFormat					= DXGI_FORMAT_R32G32B32_FLOAT;
+		GeometryDesc.Triangles.VertexCount					= static_cast<Uint32>(Mesh.Vertices.size());
+		GeometryDesc.Triangles.IndexFormat					= DXGI_FORMAT_R32_UINT;
+		GeometryDesc.Triangles.IndexBuffer					= IndexBuffer->GetVirtualAddress();
+		GeometryDesc.Triangles.IndexCount					= static_cast<Uint32>(Mesh.Indices.size());
+		GeometryDesc.Flags									= D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
 		// Get the size requirements for the scratch and AS buffers
 		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs = {};
 		Inputs.DescsLayout		= D3D12_ELEMENTS_LAYOUT_ARRAY;
 		Inputs.Flags			= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-		Inputs.NumDescs			= ARRAYSIZE(GeomDesc);
-		Inputs.pGeometryDescs	= GeomDesc;
+		Inputs.NumDescs			= 1;
+		Inputs.pGeometryDescs	= &GeometryDesc;
 		Inputs.Type				= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 
-		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO Info = {};
+		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO Info = { };
 		DXRDevice->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
 
 		// Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
@@ -173,20 +188,19 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 		for (Int32 i = 0; i < InstanceCount; i++)
 		{
 			InstanceDesc->InstanceID							= i;	// Exposed to the shader via InstanceID()
-			InstanceDesc->InstanceContributionToHitGroupIndex	= i;	// Offset inside the shader-table. we only have a single geometry, so the offset 0
+			InstanceDesc->InstanceContributionToHitGroupIndex	= 0;	// Offset inside the shader-table. we only have a single geometry, so the offset 0
 			InstanceDesc->Flags									= D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 
-			//apply transform
-			//XMFLOAT3X4 m;
-			//XMStoreFloat3x4(&m, XMMatrixRotationY(i * 0.25f + rotY) * XMMatrixTranslation(-1.0f + i, 0, 0));
-			Float32 m[3][4]
-			{
-				{ 1.0f, 0.0f, 0.0f, 0.0f },
-				{ 0.0f, 1.0f, 0.0f, 0.0f },
-				{ 0.0f, 0.0f, 1.0f, 0.0f }
-			};
 
-			memcpy(InstanceDesc->Transform, m, sizeof(InstanceDesc->Transform));
+			// Apply transform
+			XMFLOAT3X4 m
+			(
+				1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 1.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 1.0f, 0.0f
+			);
+			XMStoreFloat3x4(&m, XMMatrixTranslation(-2.0f + (i * 2.0f), 0, 0));
+			memcpy(InstanceDesc->Transform, &m, sizeof(InstanceDesc->Transform));
 
 			InstanceDesc->AccelerationStructure		= BottomLevelAS->ResultBuffer->GetVirtualAddress();
 			InstanceDesc->InstanceMask				= 0xFF;
@@ -637,8 +651,8 @@ void D3D12RayTracer::Render(ID3D12Resource* BackBuffer)
 	TransitionResourceState(DXRCommandList.Get(), ResultTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-	raytraceDesc.Width	= 1280;
-	raytraceDesc.Height = 720;
+	raytraceDesc.Width	= 1920;
+	raytraceDesc.Height = 1080;
 	raytraceDesc.Depth	= 1;
 
 	// Set shader tables

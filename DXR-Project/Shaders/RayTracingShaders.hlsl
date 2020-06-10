@@ -1,5 +1,5 @@
-RaytracingAccelerationStructure g_RayTracingScene	: register(t0);
-RWTexture2D<float4>				g_Output			: register(u0);
+RaytracingAccelerationStructure g_RayTracingScene	: register(t0, space0);
+RWTexture2D<float4>				g_Output			: register(u0, space0);
 
 struct RayPayload
 {
@@ -20,7 +20,7 @@ void RayGen()
 
 	RayDesc Ray;
 	Ray.Origin		= float3(0.0f, 0.0f, -2.0f);
-	Ray.Direction	= normalize(float3(Dir.x * AspectRatio, -Dir.y, 1));
+	Ray.Direction	= normalize(float3(Dir.x * AspectRatio, -Dir.y, 1.0f));
 
 	Ray.TMin = 0;
 	Ray.TMax = 100000;

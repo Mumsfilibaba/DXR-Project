@@ -40,6 +40,7 @@ private:
 	class D3D12Texture*			ResultTexture	= nullptr;
 
 	D3D12Buffer*				VertexBuffer	= nullptr;
+	D3D12Buffer*				IndexBuffer		= nullptr;
 	D3D12AccelerationStructure* TopLevelAS		= nullptr;
 	D3D12AccelerationStructure* BottomLevelAS	= nullptr;
 

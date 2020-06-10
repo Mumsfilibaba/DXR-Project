@@ -19,8 +19,8 @@ bool D3D12SwapChain::Init(WindowsWindow* Window, D3D12CommandQueue* Queue)
 
 	// Create a descriptor for the swap chain.
 	DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
-	SwapChainDesc.Width					= 0;
-	SwapChainDesc.Height				= 0;
+	SwapChainDesc.Width					= 1920;
+	SwapChainDesc.Height				= 1080;
 	SwapChainDesc.Format				= GetSurfaceFormat();
 	SwapChainDesc.BufferUsage			= DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	SwapChainDesc.BufferCount			= GetSurfaceCount();
