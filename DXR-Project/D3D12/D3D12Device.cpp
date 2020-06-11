@@ -56,6 +56,13 @@ bool D3D12Device::Init(bool DebugEnable)
 	else
 	{
 		::OutputDebugString("[D3D12GraphicsDevice]: Created D3D12Device\n");
+
+		// Get DXR Interfaces
+		if (FAILED(D3DDevice.As<ID3D12Device5>(&DXRDevice)))
+		{
+			::OutputDebugString("[D3D12RayTracer]: Failed to retrive DXR-Device\n");
+			return false;
+		}
 	}
 
 	// Configure debug device (if active).

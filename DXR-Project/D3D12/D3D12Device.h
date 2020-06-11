@@ -21,6 +21,11 @@ public:
 		return D3DDevice.Get();
 	}
 
+	ID3D12Device5* GetDXRDevice() const
+	{
+		return DXRDevice.Get();
+	}
+
 	IDXGIFactory2* GetFactory() const
 	{
 		return Factory.Get();
@@ -42,6 +47,7 @@ private:
 	Microsoft::WRL::ComPtr<IDXGIFactory2>	Factory;
 	Microsoft::WRL::ComPtr<IDXGIAdapter1>	Adapter;
 	Microsoft::WRL::ComPtr<ID3D12Device>	D3DDevice;
+	Microsoft::WRL::ComPtr<ID3D12Device5>	DXRDevice;
 
 	bool IsDebugEnabled		= false;
 	BOOL AllowTearing		= FALSE;

@@ -1,4 +1,4 @@
-#include "Meshes/MeshFactory.h"
+#include "Rendering/MeshFactory.h"
 
 //#include <assimp/Importer.hpp>
 //#include <assimp/scene.h>
@@ -157,28 +157,28 @@ MeshData MeshFactory::CreateCube(Float32 Width, Float32 Height, Float32 Depth) n
 	Cube.Indices =
 	{
 		// FRONT FACE
-		2, 1, 0,
-		2, 3, 1,
+		0, 1, 2,
+		1, 3, 2,
 
 		// BACK FACE
-		6, 5, 4,
-		6, 7, 5,
+		5, 5, 6,
+		5, 7, 6,
 
 		// RIGHT FACE
-		10, 9, 8,
-		10, 11, 9,
+		8, 9, 10,
+		9, 11, 10,
 
 		// LEFT FACE
-		12, 13, 14,
-		13, 15, 14,
+		14, 13, 12,
+		14, 15, 13,
 
 		// TOP FACE
-		18, 17, 16,
-		18, 19, 17,
+		16, 17, 18,
+		17, 19, 18,
 
 		// BOTTOM FACE
-		22, 21, 20,
-		22, 23, 21
+		20, 21, 22,
+		21, 23, 22
 	};
 
 	return Cube;
@@ -244,45 +244,45 @@ MeshData MeshFactory::CreateSphere(Uint32 Subdivisions, Float32 Radius) noexcept
 
 	// VERTICES
 	Float32 T = (1.0f + sqrt(5.0f)) / 2.0f;
-	Sphere.Vertices[0].Position		= XMFLOAT3(-1.0f, T, 0.0f);
-	Sphere.Vertices[1].Position		= XMFLOAT3(1.0f, T, 0.0f);
-	Sphere.Vertices[2].Position		= XMFLOAT3(-1.0f, -T, 0.0f);
-	Sphere.Vertices[3].Position		= XMFLOAT3(1.0f, -T, 0.0f);
-	Sphere.Vertices[4].Position		= XMFLOAT3(0.0f, -1.0f, T);
-	Sphere.Vertices[5].Position		= XMFLOAT3(0.0f, 1.0f, T);
-	Sphere.Vertices[6].Position		= XMFLOAT3(0.0f, -1.0f, -T);
-	Sphere.Vertices[7].Position		= XMFLOAT3(0.0f, 1.0f, -T);
-	Sphere.Vertices[8].Position		= XMFLOAT3(T, 0.0f, -1.0f);
-	Sphere.Vertices[9].Position		= XMFLOAT3(T, 0.0f, 1.0f);
-	Sphere.Vertices[10].Position	= XMFLOAT3(-T, 0.0f, -1.0f);
-	Sphere.Vertices[11].Position	= XMFLOAT3(-T, 0.0f, 1.0f);
+	Sphere.Vertices[0].Position		= XMFLOAT3(-1.0f,  T,     0.0f);
+	Sphere.Vertices[1].Position		= XMFLOAT3( 1.0f,  T,     0.0f);
+	Sphere.Vertices[2].Position		= XMFLOAT3(-1.0f, -T,     0.0f);
+	Sphere.Vertices[3].Position		= XMFLOAT3( 1.0f, -T,     0.0f);
+	Sphere.Vertices[4].Position		= XMFLOAT3( 0.0f, -1.0f,  T);
+	Sphere.Vertices[5].Position		= XMFLOAT3( 0.0f,  1.0f,  T);
+	Sphere.Vertices[6].Position		= XMFLOAT3( 0.0f, -1.0f, -T);
+	Sphere.Vertices[7].Position		= XMFLOAT3( 0.0f,  1.0f, -T);
+	Sphere.Vertices[8].Position		= XMFLOAT3( T,     0.0f, -1.0f);
+	Sphere.Vertices[9].Position		= XMFLOAT3( T,     0.0f,  1.0f);
+	Sphere.Vertices[10].Position	= XMFLOAT3(-T,     0.0f, -1.0f);
+	Sphere.Vertices[11].Position	= XMFLOAT3(-T,     0.0f,  1.0f);
 
 	// INDICIES
 	Sphere.Indices =
 	{
-		5, 11, 0,
-		1, 5, 0,
-		7, 1, 0,
-		10, 7, 0,
-		11, 10, 0,
+		0, 11, 5,
+		0, 5,  1,
+		0, 1,  7,
+		0, 7,  10,
+		0, 10, 11,
 
-		9, 5, 1,
-		4, 11, 5,
-		2, 10, 11,
-		6, 7, 10,
-		8, 1, 7,
+		1,  5,  9,
+		5,  11, 4,
+		11, 10, 2,
+		10, 7,  6,
+		7,  1,  8,
 
-		4, 9, 3,
-		2, 4, 3,
-		6, 2, 3,
-		8, 6, 3,
-		9, 8, 3,
+		3, 9, 4,
+		3, 4, 2,
+		3, 2, 6,
+		3, 6, 8,
+		3, 8, 9,
 
-		5, 9, 4,
-		11, 4, 2,
-		10, 2, 6,
-		7, 6, 8,
-		1, 8, 9
+		4, 9, 5,
+		2, 4, 11,
+		6, 2, 10,
+		8, 6, 7,
+		9, 8, 1,
 	};
 
 	if (Subdivisions > 0)
@@ -596,8 +596,8 @@ void MeshFactory::Subdivide(MeshData& OutData, Uint32 Subdivisions) noexcept
 	Uint32 IndexCount		= 0;
 	Uint32 VertexCount		= 0;
 	Uint32 OldVertexCount	= 0;
-	OutData.Vertices.reserve((OutData.Vertices.size() * size_t(pow(2, Subdivisions))));
-	OutData.Indices.reserve((OutData.Indices.size() * size_t(pow(4, Subdivisions))));
+	OutData.Vertices.reserve((OutData.Vertices.size() * static_cast<size_t>(pow(2, Subdivisions))));
+	OutData.Indices.reserve((OutData.Indices.size() * static_cast<size_t>(pow(4, Subdivisions))));
 
 	for (Uint32 i = 0; i < Subdivisions; i++)
 	{
@@ -734,9 +734,13 @@ void MeshFactory::Optimize(MeshData& OutData, Uint32 StartVertex) noexcept
 					for (k = 0; k < IndexCount; k++)
 					{
 						if (OutData.Indices[k] == i)
+						{
 							OutData.Indices[k] = j;
+						}
 						else if (OutData.Indices[k] > i)
+						{
 							OutData.Indices[k]--;
+						}
 					}
 
 					i--;

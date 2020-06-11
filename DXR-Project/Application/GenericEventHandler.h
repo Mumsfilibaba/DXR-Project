@@ -15,6 +15,14 @@ public:
 	{
 	}
 
+	virtual void OnKeyDown(Uint32 KeyCode)
+	{
+	}
+
+	virtual void OnMouseMove(Int32 x, Int32 y)
+	{
+	}
+
 protected:
 	GenericEventHandler() = default;
 };

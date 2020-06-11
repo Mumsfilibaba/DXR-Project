@@ -161,6 +161,21 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 			return 0;
 		}
 
+		case WM_KEYDOWN:
+		{
+			EventHandler->OnKeyDown(static_cast<Uint32>(wParam));
+			return 0;
+		}
+
+		case WM_MOUSEMOVE:
+		{
+			const Int32 x = GET_X_LPARAM(lParam);
+			const Int32 y = GET_Y_LPARAM(lParam);
+
+			EventHandler->OnMouseMove(x, y);
+			return 0;
+		}
+
 		default:
 		{
 			return ::DefWindowProc(hWnd, uMessage, wParam, lParam);

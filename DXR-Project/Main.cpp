@@ -24,14 +24,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 
 	WindowsApplication* App = WindowsApplication::Create(hInstance);
 
-	A* Test = new A();
-	
-	App->SetEventHandler(Test);
+	D3D12Device*	Device = D3D12Device::Create(true);
+	D3D12RayTracer* RayTracer = new D3D12RayTracer(Device);
+	App->SetEventHandler(RayTracer);
 
 	WindowsWindow* Window = App->CreateWindow(1280, 720);
 	Window->Show();
-
-	D3D12Device* Device = D3D12Device::Create(true);
 
 	D3D12CommandQueue* Queue = new D3D12CommandQueue(Device);
 	Queue->Init();
@@ -72,7 +70,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	D3D12Fence* Fence = new D3D12Fence(Device);
 	Fence->Init(0);
 
-	D3D12RayTracer* RayTracer = new D3D12RayTracer(Device);
+	// Init raytracer last
 	RayTracer->Init(CommandList, Queue);
 
 	// Run-Loop
@@ -88,7 +86,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 		Allocators[BackBufferIndex]->Reset();
 		CommandList->Reset(Allocators[BackBufferIndex]);
 		
-		RayTracer->Render(SwapChain->GetSurfaceResource(BackBufferIndex));
+		RayTracer->Render(SwapChain->GetSurfaceResource(BackBufferIndex), CommandList);
 
 		CommandList->Close();
 
@@ -121,7 +119,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	delete DsvHeap;
 	delete RtvHeap;
 	delete Queue;
-	delete Test;
 
 	return 0;
 }

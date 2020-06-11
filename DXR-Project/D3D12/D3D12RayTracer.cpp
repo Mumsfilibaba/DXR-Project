@@ -9,7 +9,9 @@
 #include "D3D12AccelerationStructure.h"
 #include "HeapProps.h"
 
-#include "Meshes/MeshFactory.h"
+#include "Windows/Windows.h"
+
+#include "Rendering/MeshFactory.h"
 
 #include <DirectXMath.h>
 
@@ -31,21 +33,6 @@ D3D12RayTracer::~D3D12RayTracer()
 bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* CommandQueue)
 {
 	using namespace Microsoft::WRL;
-
-	// Get DXR Interfaces 
-	ComPtr<ID3D12Device> MainDevice(Device->GetDevice());
-	if (FAILED(MainDevice.As<ID3D12Device5>(&DXRDevice)))
-	{
-		::OutputDebugString("[D3D12RayTracer]: Failed to retrive DXR-Device\n");
-		return false;
-	}
-
-	ComPtr<ID3D12CommandList> MainCommandList(CommandList->GetCommandList());
-	if (FAILED(MainCommandList.As<ID3D12GraphicsCommandList4>(&DXRCommandList)))
-	{
-		::OutputDebugString("[D3D12RayTracer]: Failed to retrive DXR-CommandList\n");
-		return false;
-	}
 
 	// Create DescriptorHeap
 	ResourceHeap = new D3D12DescriptorHeap(Device);
@@ -69,7 +56,7 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 	UavView.Texture2D.PlaneSlice	= 0;
 
 	OutputCPUHandle = ResourceHeap->GetCPUDescriptorHandleAt(0);
-	DXRDevice->CreateUnorderedAccessView(ResultTexture->GetResource(), nullptr, &UavView, OutputCPUHandle);
+	Device->GetDevice()->CreateUnorderedAccessView(ResultTexture->GetResource(), nullptr, &UavView, OutputCPUHandle);
 
 	// Create mesh
 	MeshData Mesh = MeshFactory::CreateSphere(3);
@@ -102,12 +89,36 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 		return false;
 	}
 
+	// Create CameraBuffer
+	SceneCamera = Camera();
+
+	BufferSizeInBytes = 256; // Must be multiple of 256
+	CameraBuffer = new D3D12Buffer(Device);
+	if (CameraBuffer->Init(D3D12_RESOURCE_FLAG_NONE, BufferSizeInBytes, D3D12_RESOURCE_STATE_GENERIC_READ, HeapProps::UploadHeap()))
+	{
+		void* BufferMemory = CameraBuffer->Map();
+		memcpy(BufferMemory, &SceneCamera, sizeof(Camera));
+		CameraBuffer->Unmap();
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC CameraViewDesc = { };
+		CameraViewDesc.BufferLocation	= CameraBuffer->GetVirtualAddress();
+		CameraViewDesc.SizeInBytes		= BufferSizeInBytes;
+
+		CameraBufferGPUHandle = ResourceHeap->GetGPUDescriptorHandleAt(4);
+		CameraBufferCPUHandle = ResourceHeap->GetCPUDescriptorHandleAt(4);
+		Device->GetDevice()->CreateConstantBufferView(&CameraViewDesc, CameraBufferCPUHandle);
+	}
+	else
+	{
+		return false;
+	}
+
+
 	// Build Acceleration Structures
 	D3D12CommandAllocator* CommandAllocator = new D3D12CommandAllocator(Device);
 	CommandAllocator->Init(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	CommandAllocator->Reset();
-
-	DXRCommandList->Reset(CommandAllocator->GetAllocator(), nullptr);
+	CommandList->Reset(CommandAllocator);
 
 	// Bottom Level
 	{
@@ -131,7 +142,7 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 		Inputs.Type				= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 
 		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO Info = { };
-		DXRDevice->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
+		Device->GetDXRDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
 
 		// Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
 		BottomLevelAS = new D3D12AccelerationStructure(Device);
@@ -147,13 +158,10 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 		AccelerationStructureDesc.DestAccelerationStructureData		= BottomLevelAS->ResultBuffer->GetVirtualAddress();
 		AccelerationStructureDesc.ScratchAccelerationStructureData	= BottomLevelAS->ScratchBuffer->GetVirtualAddress();
 
-		DXRCommandList->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
+		CommandList->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc);
 
 		// We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
-		D3D12_RESOURCE_BARRIER UavBarrier = {};
-		UavBarrier.Type				= D3D12_RESOURCE_BARRIER_TYPE_UAV;
-		UavBarrier.UAV.pResource	= BottomLevelAS->ResultBuffer->GetResource();
-		DXRCommandList->ResourceBarrier(1, &UavBarrier);
+		CommandList->UnorderedAccessBarrier(BottomLevelAS->ResultBuffer->GetResource());
 	}
 
 	// Top Level
@@ -168,7 +176,7 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 		Inputs.Type			= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
 		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO Info;
-		DXRDevice->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
+		Device->GetDXRDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
 
 		// Create the buffers
 		TopLevelAS = new D3D12AccelerationStructure(Device);
@@ -183,14 +191,11 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 
 		D3D12_RAYTRACING_INSTANCE_DESC* InstanceDesc = reinterpret_cast<D3D12_RAYTRACING_INSTANCE_DESC*>(TopLevelAS->InstanceBuffer->Map());
 
-		//static float rotY = 0;
-		//rotY += 0.001f;
 		for (Int32 i = 0; i < InstanceCount; i++)
 		{
 			InstanceDesc->InstanceID							= i;	// Exposed to the shader via InstanceID()
 			InstanceDesc->InstanceContributionToHitGroupIndex	= 0;	// Offset inside the shader-table. we only have a single geometry, so the offset 0
 			InstanceDesc->Flags									= D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-
 
 			// Apply transform
 			XMFLOAT3X4 m
@@ -218,29 +223,46 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 		AccelerationStructureDesc.DestAccelerationStructureData		= TopLevelAS->ResultBuffer->GetVirtualAddress();
 		AccelerationStructureDesc.ScratchAccelerationStructureData	= TopLevelAS->ScratchBuffer->GetVirtualAddress();
 
-		DXRCommandList->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
+		CommandList->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc);
 
 		// UAV barrier needed before using the acceleration structures in a raytracing operation
-		D3D12_RESOURCE_BARRIER UavBarrier = {};
-		UavBarrier.Type				= D3D12_RESOURCE_BARRIER_TYPE_UAV;
-		UavBarrier.UAV.pResource	= TopLevelAS->ResultBuffer->GetResource();
-		DXRCommandList->ResourceBarrier(1, &UavBarrier);
+		CommandList->UnorderedAccessBarrier(TopLevelAS->ResultBuffer->GetResource());
 	}
 
-	DXRCommandList->Close();
-
-	ID3D12CommandList* CommandLists[] = { DXRCommandList.Get() };
-	CommandQueue->GetQueue()->ExecuteCommandLists(1, CommandLists);
+	CommandList->Close();
+	CommandQueue->ExecuteCommandList(CommandList);
 
 	//delete CommandAllocator;
 
+	// AccelerationStructure
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
 	SrvDesc.ViewDimension								= D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
 	SrvDesc.Shader4ComponentMapping						= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.RaytracingAccelerationStructure.Location	= TopLevelAS->ResultBuffer->GetVirtualAddress();
 
 	AccelerationStructureCPUHandle = ResourceHeap->GetCPUDescriptorHandleAt(1);
-	DXRDevice->CreateShaderResourceView(nullptr, &SrvDesc, AccelerationStructureCPUHandle);
+	Device->GetDevice()->CreateShaderResourceView(nullptr, &SrvDesc, AccelerationStructureCPUHandle);
+
+	// VertexBuffer
+	SrvDesc.Format						= DXGI_FORMAT_UNKNOWN;
+	SrvDesc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
+	SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	SrvDesc.Buffer.FirstElement			= 0;
+	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
+	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Mesh.Vertices.size());
+	SrvDesc.Buffer.StructureByteStride	= sizeof(Vertex);
+
+	VertexBufferCPUHandle = ResourceHeap->GetCPUDescriptorHandleAt(2);
+	Device->GetDevice()->CreateShaderResourceView(VertexBuffer->GetResource(), &SrvDesc, VertexBufferCPUHandle);
+
+	// IndexBuffer
+	SrvDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
+	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
+	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Mesh.Indices.size());
+	SrvDesc.Buffer.StructureByteStride	= 0;
+
+	IndexBufferCPUHandle = ResourceHeap->GetCPUDescriptorHandleAt(3);
+	Device->GetDevice()->CreateShaderResourceView(IndexBuffer->GetResource(), &SrvDesc, IndexBufferCPUHandle);
 
 	// Vector for all subobjects
 	std::vector<D3D12_STATE_SUBOBJECT> SubObjects;
@@ -285,48 +307,49 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 
 	// Init RayGen local root signature
 	ComPtr<ID3D12RootSignature> RayGenLocalRoot;
-
-	D3D12_DESCRIPTOR_RANGE Ranges[2] = {};
-	
-	// Output
-	Ranges[0].BaseShaderRegister				= 0;
-	Ranges[0].NumDescriptors					= 1;
-	Ranges[0].RegisterSpace						= 0;
-	Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-	Ranges[0].OffsetInDescriptorsFromTableStart = 0;
-
-	// AccelerationStructure
-	Ranges[1].BaseShaderRegister				= 0;
-	Ranges[1].NumDescriptors					= 1;
-	Ranges[1].RegisterSpace						= 0;
-	Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	Ranges[1].OffsetInDescriptorsFromTableStart = 1;
-
-	D3D12_ROOT_PARAMETER RootParams[1] = { };
-	RootParams[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	RootParams[0].DescriptorTable.NumDescriptorRanges	= _countof(Ranges);
-	RootParams[0].DescriptorTable.pDescriptorRanges		= Ranges;
-
-	D3D12_ROOT_SIGNATURE_DESC RayGenLocalRootDesc = {};
-	RayGenLocalRootDesc.NumParameters	= _countof(RootParams);
-	RayGenLocalRootDesc.pParameters		= RootParams;
-	RayGenLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
-
-	ComPtr<ID3DBlob> SignatureBlob;
-	ComPtr<ID3DBlob> ErrorBlob;
-	HRESULT hResult = D3D12SerializeRootSignature(&RayGenLocalRootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
-	if (FAILED(hResult))
 	{
-		::OutputDebugString("[D3D12RayTracer]: D3D12SerializeRootSignature failed with following error:\n");
-		::OutputDebugString(reinterpret_cast<LPCSTR>(ErrorBlob->GetBufferPointer()));
-		return false;
-	}
+		D3D12_DESCRIPTOR_RANGE Ranges[2] = {};
 
-	hResult = DXRDevice->CreateRootSignature(0, SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize(), IID_PPV_ARGS(&RayGenLocalRoot));
-	if (FAILED(hResult))
-	{
-		::OutputDebugString("[D3D12RayTracer]: FAILED to create local RootSignature\n");
-		return false;
+		// Output
+		Ranges[0].BaseShaderRegister				= 0;
+		Ranges[0].NumDescriptors					= 1;
+		Ranges[0].RegisterSpace						= 0;
+		Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+		Ranges[0].OffsetInDescriptorsFromTableStart	= 0;
+
+		// AccelerationStructure
+		Ranges[1].BaseShaderRegister				= 0;
+		Ranges[1].NumDescriptors					= 1;
+		Ranges[1].RegisterSpace						= 0;
+		Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[1].OffsetInDescriptorsFromTableStart	= 1;
+
+		D3D12_ROOT_PARAMETER RootParams = { };
+		RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		RootParams.DescriptorTable.NumDescriptorRanges	= _countof(Ranges);
+		RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
+
+		D3D12_ROOT_SIGNATURE_DESC RayGenLocalRootDesc = {};
+		RayGenLocalRootDesc.NumParameters	= 1;
+		RayGenLocalRootDesc.pParameters		= &RootParams;
+		RayGenLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+
+		ComPtr<ID3DBlob> SignatureBlob;
+		ComPtr<ID3DBlob> ErrorBlob;
+		HRESULT hResult = D3D12SerializeRootSignature(&RayGenLocalRootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
+		if (FAILED(hResult))
+		{
+			::OutputDebugString("[D3D12RayTracer]: D3D12SerializeRootSignature failed with following error:\n");
+			::OutputDebugString(reinterpret_cast<LPCSTR>(ErrorBlob->GetBufferPointer()));
+			return false;
+		}
+
+		hResult = Device->GetDevice()->CreateRootSignature(0, SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize(), IID_PPV_ARGS(&RayGenLocalRoot));
+		if (FAILED(hResult))
+		{
+			::OutputDebugString("[D3D12RayTracer]: FAILED to create local RootSignature\n");
+			return false;
+		}
 	}
 
 	RayGenLocalRoot->SetName(L"RayGen Local RootSignature");
@@ -355,25 +378,56 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 
 	// Init hit group local root signature
 	ComPtr<ID3D12RootSignature> HitGroupLocalRoot;
-	
-	D3D12_ROOT_SIGNATURE_DESC HitGroupRootDesc = {};
-	HitGroupRootDesc.NumParameters	= 0;
-	HitGroupRootDesc.pParameters	= nullptr;
-	HitGroupRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
-
-	hResult = D3D12SerializeRootSignature(&HitGroupRootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
-	if (FAILED(hResult))
 	{
-		::OutputDebugString("[D3D12RayTracer]: D3D12SerializeRootSignature failed with following error:\n");
-		::OutputDebugString(reinterpret_cast<LPCSTR>(ErrorBlob->GetBufferPointer()));
-		return false;
-	}
+		D3D12_DESCRIPTOR_RANGE Ranges[3] = {};
 
-	hResult = DXRDevice->CreateRootSignature(0, SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize(), IID_PPV_ARGS(&HitGroupLocalRoot));
-	if (FAILED(hResult))
-	{
-		::OutputDebugString("[D3D12RayTracer]: FAILED to create local RootSignature\n");
-		return false;
+		// AccelerationStructure
+		Ranges[0].BaseShaderRegister				= 0;
+		Ranges[0].NumDescriptors					= 1;
+		Ranges[0].RegisterSpace						= 0;
+		Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[0].OffsetInDescriptorsFromTableStart	= 0;
+
+		// VertexBuffer
+		Ranges[1].BaseShaderRegister				= 1;
+		Ranges[1].NumDescriptors					= 1;
+		Ranges[1].RegisterSpace						= 0;
+		Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[1].OffsetInDescriptorsFromTableStart	= 1;
+
+		// IndexBuffer
+		Ranges[2].BaseShaderRegister				= 2;
+		Ranges[2].NumDescriptors					= 1;
+		Ranges[2].RegisterSpace						= 0;
+		Ranges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[2].OffsetInDescriptorsFromTableStart	= 2;
+
+		D3D12_ROOT_PARAMETER RootParams = { };
+		RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		RootParams.DescriptorTable.NumDescriptorRanges = _countof(Ranges);
+		RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
+
+		D3D12_ROOT_SIGNATURE_DESC HitGroupRootDesc = {};
+		HitGroupRootDesc.NumParameters	= 1;
+		HitGroupRootDesc.pParameters	= &RootParams;
+		HitGroupRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+
+		ComPtr<ID3DBlob> SignatureBlob;
+		ComPtr<ID3DBlob> ErrorBlob;
+		HRESULT hResult = D3D12SerializeRootSignature(&HitGroupRootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
+		if (FAILED(hResult))
+		{
+			::OutputDebugString("[D3D12RayTracer]: D3D12SerializeRootSignature failed with following error:\n");
+			::OutputDebugString(reinterpret_cast<LPCSTR>(ErrorBlob->GetBufferPointer()));
+			return false;
+		}
+
+		hResult = Device->GetDevice()->CreateRootSignature(0, SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize(), IID_PPV_ARGS(&HitGroupLocalRoot));
+		if (FAILED(hResult))
+		{
+			::OutputDebugString("[D3D12RayTracer]: FAILED to create local RootSignature\n");
+			return false;
+		}
 	}
 
 	HitGroupLocalRoot->SetName(L"HitGroup Local RootSignature");
@@ -402,25 +456,28 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 
 	// Init miss local root signature
 	ComPtr<ID3D12RootSignature> MissLocalRoot;
-
-	D3D12_ROOT_SIGNATURE_DESC MissLocalRootDesc = {};
-	MissLocalRootDesc.NumParameters	= 0;
-	MissLocalRootDesc.pParameters	= nullptr;
-	MissLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
-
-	hResult = D3D12SerializeRootSignature(&MissLocalRootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
-	if (FAILED(hResult))
 	{
-		::OutputDebugString("[D3D12RayTracer]: D3D12SerializeRootSignature failed with following error:\n");
-		::OutputDebugString(reinterpret_cast<LPCSTR>(ErrorBlob->GetBufferPointer()));
-		return false;
-	}
+		D3D12_ROOT_SIGNATURE_DESC MissLocalRootDesc = {};
+		MissLocalRootDesc.NumParameters	= 0;
+		MissLocalRootDesc.pParameters	= nullptr;
+		MissLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
-	hResult = DXRDevice->CreateRootSignature(0, SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize(), IID_PPV_ARGS(&MissLocalRoot));
-	if (FAILED(hResult))
-	{
-		::OutputDebugString("[D3D12RayTracer]: FAILED to create local RootSignature\n");
-		return false;
+		ComPtr<ID3DBlob> SignatureBlob;
+		ComPtr<ID3DBlob> ErrorBlob;
+		HRESULT hResult = D3D12SerializeRootSignature(&MissLocalRootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
+		if (FAILED(hResult))
+		{
+			::OutputDebugString("[D3D12RayTracer]: D3D12SerializeRootSignature failed with following error:\n");
+			::OutputDebugString(reinterpret_cast<LPCSTR>(ErrorBlob->GetBufferPointer()));
+			return false;
+		}
+
+		hResult = Device->GetDevice()->CreateRootSignature(0, SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize(), IID_PPV_ARGS(&MissLocalRoot));
+		if (FAILED(hResult))
+		{
+			::OutputDebugString("[D3D12RayTracer]: FAILED to create local RootSignature\n");
+			return false;
+		}
 	}
 
 	MissLocalRoot->SetName(L"Miss Local RootSignature");
@@ -450,7 +507,7 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 	// Init shader config
 	D3D12_RAYTRACING_SHADER_CONFIG ShaderConfig = {};
 	ShaderConfig.MaxAttributeSizeInBytes	= sizeof(Float32) * 2;
-	ShaderConfig.MaxPayloadSizeInBytes		= sizeof(Float32) * 3;
+	ShaderConfig.MaxPayloadSizeInBytes		= sizeof(Float32) * 3 + sizeof(Uint32);
 
 	{
 		D3D12_STATE_SUBOBJECT ShaderConfigSubObject = { };
@@ -476,7 +533,7 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 
 	// Init pipeline config
 	D3D12_RAYTRACING_PIPELINE_CONFIG PipelineConfig;
-	PipelineConfig.MaxTraceRecursionDepth = 1;
+	PipelineConfig.MaxTraceRecursionDepth = 4;
 
 	{
 		D3D12_STATE_SUBOBJECT PipelineConfigSubObject = { };
@@ -486,24 +543,42 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 	}
 
 	// Init global root signature
-	D3D12_ROOT_SIGNATURE_DESC GlobalRootDesc = {};
-	GlobalRootDesc.NumParameters	= 0;
-	GlobalRootDesc.pParameters		= nullptr;
-	GlobalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_NONE;
-
-	hResult = D3D12SerializeRootSignature(&GlobalRootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
-	if (FAILED(hResult))
 	{
-		::OutputDebugString("[D3D12RayTracer]: D3D12SerializeRootSignature failed with following error:\n");
-		::OutputDebugString(reinterpret_cast<LPCSTR>(ErrorBlob->GetBufferPointer()));
-		return false;
-	}
+		D3D12_DESCRIPTOR_RANGE Ranges[1] = {};
 
-	hResult = DXRDevice->CreateRootSignature(0, SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize(), IID_PPV_ARGS(&GlobalRootSignature));
-	if (FAILED(hResult))
-	{
-		::OutputDebugString("[D3D12RayTracer]: FAILED to create global RootSignature\n");
-		return false;
+		// Camera Buffer
+		Ranges[0].BaseShaderRegister				= 0;
+		Ranges[0].NumDescriptors					= 1;
+		Ranges[0].RegisterSpace						= 0;
+		Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		Ranges[0].OffsetInDescriptorsFromTableStart = 0;
+
+		D3D12_ROOT_PARAMETER RootParams = { };
+		RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		RootParams.DescriptorTable.NumDescriptorRanges	= _countof(Ranges);
+		RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
+
+		D3D12_ROOT_SIGNATURE_DESC GlobalRootDesc = {};
+		GlobalRootDesc.NumParameters	= 1;
+		GlobalRootDesc.pParameters		= &RootParams;
+		GlobalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_NONE;
+
+		ComPtr<ID3DBlob> SignatureBlob;
+		ComPtr<ID3DBlob> ErrorBlob;
+		HRESULT hResult = D3D12SerializeRootSignature(&GlobalRootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
+		if (FAILED(hResult))
+		{
+			::OutputDebugString("[D3D12RayTracer]: D3D12SerializeRootSignature failed with following error:\n");
+			::OutputDebugString(reinterpret_cast<LPCSTR>(ErrorBlob->GetBufferPointer()));
+			return false;
+		}
+
+		hResult = Device->GetDevice()->CreateRootSignature(0, SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize(), IID_PPV_ARGS(&GlobalRootSignature));
+		if (FAILED(hResult))
+		{
+			::OutputDebugString("[D3D12RayTracer]: FAILED to create global RootSignature\n");
+			return false;
+		}
 	}
 
 	GlobalRootSignature->SetName(L"Global RootSignature");
@@ -521,7 +596,7 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 	RayTracingPipeline.NumSubobjects	= static_cast<Uint32>(SubObjects.size());
 	RayTracingPipeline.pSubobjects		= SubObjects.data();
 	
-	hResult = DXRDevice->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&DXRStateObject));
+	HRESULT hResult = Device->GetDXRDevice()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&DXRStateObject));
 	if (SUCCEEDED(hResult))
 	{
 		::OutputDebugString("[D3D12RayTracer]: Created RayTracing PipelineState\n");
@@ -553,12 +628,12 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 		} TableData;
 
 		memcpy(TableData.ShaderIdentifier, DXRStateProperties->GetShaderIdentifier(L"RayGen"), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-		TableData.RTVDescriptor = ResourceHeap->GetCPUDescriptorHandleForHeapStart().ptr;
+		TableData.RTVDescriptor	= ResourceHeap->GetGPUDescriptorHandleAt(0).ptr;
 
 		// How big is the biggest?
 		union MaxSize
 		{
-			RAY_GEN_SHADER_TABLE_DATA data0;
+			RAY_GEN_SHADER_TABLE_DATA Data0;
 		};
 
 		RayGenTable.StrideInBytes	= sizeof(MaxSize);
@@ -584,7 +659,7 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 		// How big is the biggest?
 		union MaxSize
 		{
-			MISS_SHADER_TABLE_DATA data0;
+			MISS_SHADER_TABLE_DATA Data0;
 		};
 
 		MissTable.StrideInBytes = sizeof(MaxSize);
@@ -603,14 +678,17 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 		struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) HIT_GROUP_SHADER_TABLE_DATA
 		{
 			Uint8 ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
+			UINT64 ASDescriptor;
 		} TableData;
+
+		TableData.ASDescriptor = ResourceHeap->GetGPUDescriptorHandleAt(1).ptr;
 
 		memcpy(TableData.ShaderIdentifier, DXRStateProperties->GetShaderIdentifier(L"HitGroup"), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 		// How big is the biggest?
 		union MaxSize
 		{
-			HIT_GROUP_SHADER_TABLE_DATA data0;
+			HIT_GROUP_SHADER_TABLE_DATA Data0;
 		};
 
 		HitTable.StrideInBytes	= sizeof(MaxSize);
@@ -627,29 +705,18 @@ bool D3D12RayTracer::Init(D3D12CommandList* CommandList, D3D12CommandQueue* Comm
 	return true;
 }
 
-static void TransitionResourceState(ID3D12GraphicsCommandList4* CommandList, ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
-{
-	D3D12_RESOURCE_BARRIER Barrier = { };
-	Barrier.Type					= D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	Barrier.Flags					= D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	Barrier.Transition.pResource	= Resource;
-	Barrier.Transition.Subresource	= D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	Barrier.Transition.StateBefore	= BeforeState;
-	Barrier.Transition.StateAfter	= AfterState;
-
-	CommandList->ResourceBarrier(1, &Barrier);
-}
-
-
-void D3D12RayTracer::Render(ID3D12Resource* BackBuffer)
+void D3D12RayTracer::Render(ID3D12Resource* BackBuffer, D3D12CommandList* CommandList)
 {
 	//Set constant buffer descriptor heap
-	ID3D12DescriptorHeap* descriptorHeaps[] = { ResourceHeap->GetHeap() };
-	DXRCommandList->SetDescriptorHeaps(ARRAYSIZE(descriptorHeaps), descriptorHeaps);
+	ID3D12DescriptorHeap* DescriptorHeaps[] = { ResourceHeap->GetHeap() };
+	CommandList->SetDescriptorHeaps(DescriptorHeaps, ARRAYSIZE(DescriptorHeaps));
 
-	// Let's raytrace
-	TransitionResourceState(DXRCommandList.Get(), ResultTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	
+	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	void* BufferMemory = CameraBuffer->Map();
+	memcpy(BufferMemory, &SceneCamera, sizeof(Camera));
+	CameraBuffer->Unmap();
+
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
 	raytraceDesc.Width	= 1920;
 	raytraceDesc.Height = 1080;
@@ -668,18 +735,93 @@ void D3D12RayTracer::Render(ID3D12Resource* BackBuffer)
 	raytraceDesc.HitGroupTable.SizeInBytes		= HitTable.SizeInBytes;
 
 	// Bind the empty root signature
-	DXRCommandList->SetComputeRootSignature(GlobalRootSignature.Get());
+	CommandList->SetComputeRootSignature(GlobalRootSignature.Get());
+	CommandList->SetComputeRootDescriptorTable(CameraBufferGPUHandle, 0);
 
 	// Dispatch
-	DXRCommandList->SetPipelineState1(DXRStateObject.Get());
-	DXRCommandList->DispatchRays(&raytraceDesc);
+	CommandList->SetStateObject(DXRStateObject.Get());
+	CommandList->DispatchRays(&raytraceDesc);
 
 	// Copy the results to the back-buffer
-	TransitionResourceState(DXRCommandList.Get(), ResultTexture->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	TransitionResourceState(DXRCommandList.Get(), BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-	
-	DXRCommandList->CopyResource(BackBuffer, ResultTexture->GetResource());
+	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+
+	CommandList->CopyResource(BackBuffer, ResultTexture->GetResource());
 
 	// Indicate that the back buffer will now be used to present.
-	TransitionResourceState(DXRCommandList.Get(), BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
+	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
+}
+
+void D3D12RayTracer::OnKeyDown(Uint32 KeyCode)
+{
+	if (KeyCode == VK_ESCAPE)
+	{
+		IsCameraAcive = !IsCameraAcive;
+	}
+	else if (KeyCode == VK_RIGHT)
+	{
+		SceneCamera.Rotate(0.0f, -0.01f, 0.0f);
+	}
+	else if (KeyCode == VK_LEFT)
+	{
+		SceneCamera.Rotate(0.0f, 0.01f, 0.0f);
+	}
+	else if (KeyCode == VK_UP)
+	{
+		SceneCamera.Rotate(-0.01f, 0.0f, 0.0f);
+	}
+	else if (KeyCode == VK_DOWN)
+	{
+		SceneCamera.Rotate(0.01f, 0.0f, 0.0f);
+	}
+	// W
+	else if (KeyCode == 0x57)
+	{
+		SceneCamera.Move(0.0f, 0.0f, 0.01f);
+	}
+	// S
+	else if (KeyCode == 0x53)
+	{
+		SceneCamera.Move(0.0f, 0.0f, -0.01f);
+	}
+	// A
+	else if (KeyCode == 0x41)
+	{
+		SceneCamera.Move(0.01f, 0.0f, 0.0f);
+	}
+	// D
+	else if (KeyCode == 0x44)
+	{
+		SceneCamera.Move(-0.01f, 0.0f, 0.0f);
+	}
+	// Q
+	else if (KeyCode == 0x51)
+	{
+		SceneCamera.Move(0.0f, 0.01f, 0.0f);
+	}
+	// E
+	else if (KeyCode == 0x45)
+	{
+		SceneCamera.Move(0.0f, -0.01f, 0.0f);
+	}
+
+	SceneCamera.UpdateMatrices();
+}
+
+void D3D12RayTracer::OnMouseMove(Int32 x, Int32 y)
+{
+	if (IsCameraAcive)
+	{
+		static Int32 OldX = x;
+		static Int32 OldY = y;
+
+		const Int32 DeltaX = OldX - x;
+		const Int32 DeltaY = y - OldY;
+
+		SceneCamera.Rotate(XMConvertToRadians(static_cast<Float32>(DeltaY)), XMConvertToRadians(static_cast<Float32>(DeltaX)), 0.0f);
+		SceneCamera.UpdateMatrices();
+
+		OldX = x;
+		OldY = y;
+	}
 }
