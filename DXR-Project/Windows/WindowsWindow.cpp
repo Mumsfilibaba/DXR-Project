@@ -23,7 +23,7 @@ bool WindowsWindow::Init(Uint16 Width, Uint16 Height)
 	INT nWidth	= clientRect.right - clientRect.left;
 	INT nHeight = clientRect.bottom - clientRect.top;
 
-	HINSTANCE hInstance = WindowsApplication::Get()->GetInstance();
+	HINSTANCE hInstance = GlobalWindowsApplication->GetInstance();
 	hWindow = ::CreateWindowEx(0, "WinClass", "DXR", dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, hInstance, NULL);
 	if (hWindow == NULL)
 	{

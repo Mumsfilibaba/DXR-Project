@@ -1,32 +1,27 @@
 #include "WindowsApplication.h"
 #include "WindowsWindow.h"
 
-#include "Application/GenericEventHandler.h"
+#include "Application/EventHandler.h"
 
 #include <windowsx.h>
-
-std::unique_ptr<WindowsApplication> WindowsApplication::WinApplication = nullptr;
 
 /*
 * Static
 */
 
+WindowsApplication* GlobalWindowsApplication = nullptr;
+
 WindowsApplication* WindowsApplication::Create(HINSTANCE hInstance)
 {
-	WinApplication.reset(new WindowsApplication(hInstance));
-	if (WinApplication->Create())
+	GlobalWindowsApplication = new WindowsApplication(hInstance);
+	if (GlobalWindowsApplication->Create())
 	{
-		return WinApplication.get();
+		return GlobalWindowsApplication;
 	}
 	else
 	{
 		return nullptr;
 	}
-}
-
-WindowsApplication* WindowsApplication::Get()
-{
-	return WinApplication.get();
 }
 
 /*
@@ -48,7 +43,7 @@ bool WindowsApplication::Create()
 	return true;
 }
 
-void WindowsApplication::AddWindow(WindowsWindow* NewWindow)
+void WindowsApplication::AddWindow(std::shared_ptr<WindowsWindow>& NewWindow)
 {
 	Windows.emplace_back(NewWindow);
 }
@@ -76,17 +71,11 @@ bool WindowsApplication::RegisterWindowClass()
 
 WindowsApplication::~WindowsApplication()
 {
-	for (WindowsWindow* WindowToDelete : Windows)
-	{
-		delete WindowToDelete;
-	}
-
-	Windows.clear();
 }
 
-WindowsWindow* WindowsApplication::CreateWindow(Uint16 Width, Uint16 Height)
+std::shared_ptr<WindowsWindow> WindowsApplication::CreateWindow(Uint16 Width, Uint16 Height)
 {
-	WindowsWindow* NewWindow = new WindowsWindow();
+	std::shared_ptr<WindowsWindow> NewWindow = std::shared_ptr<WindowsWindow>(new WindowsWindow());
 	if (NewWindow->Init(Width, Height))
 	{
 		AddWindow(NewWindow);
@@ -98,13 +87,13 @@ WindowsWindow* WindowsApplication::CreateWindow(Uint16 Width, Uint16 Height)
 	}
 }
 
-WindowsWindow* WindowsApplication::GetWindowFromHWND(HWND hWindow)
+std::shared_ptr<WindowsWindow> WindowsApplication::GetWindowFromHWND(HWND hWindow)
 {
-	for (WindowsWindow* Window : Windows)
+	for (std::shared_ptr<WindowsWindow>& CurrentWindow : Windows)
 	{
-		if (Window->GetHandle() == hWindow)
+		if (CurrentWindow->GetHandle() == hWindow)
 		{
-			return Window;
+			return CurrentWindow;
 		}
 	}
 
@@ -128,9 +117,9 @@ bool WindowsApplication::Tick()
 	return true;
 }
 
-void WindowsApplication::SetEventHandler(GenericEventHandler* NewMessageHandler)
+void WindowsApplication::SetEventHandler(std::shared_ptr<EventHandler> NewMessageHandler)
 {
-	EventHandler = NewMessageHandler;
+	MessageEventHandler = NewMessageHandler;
 }
 
 /*
@@ -139,7 +128,7 @@ void WindowsApplication::SetEventHandler(GenericEventHandler* NewMessageHandler)
 
 LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
-	WindowsWindow* Window = GetWindowFromHWND(hWnd);
+	std::shared_ptr<WindowsWindow> MessageWindow = GetWindowFromHWND(hWnd);
 	switch (uMessage)
 	{
 		case WM_DESTROY:
@@ -150,12 +139,12 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 
 		case WM_SIZE:
 		{
-			if (Window)
+			if (MessageWindow)
 			{
 				const Uint16 Width	= LOWORD(lParam);
 				const Uint16 Height = HIWORD(lParam);
 
-				EventHandler->OnWindowResize(Window, Width, Height);
+				MessageEventHandler->OnWindowResize(MessageWindow.get(), Width, Height);
 			}
 
 			return 0;
@@ -163,7 +152,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 
 		case WM_KEYDOWN:
 		{
-			EventHandler->OnKeyDown(static_cast<Uint32>(wParam));
+			MessageEventHandler->OnKeyDown(static_cast<Uint32>(wParam));
 			return 0;
 		}
 
@@ -172,7 +161,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 			const Int32 x = GET_X_LPARAM(lParam);
 			const Int32 y = GET_Y_LPARAM(lParam);
 
-			EventHandler->OnMouseMove(x, y);
+			MessageEventHandler->OnMouseMove(x, y);
 			return 0;
 		}
 
@@ -186,5 +175,5 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 
 LRESULT WindowsApplication::MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
-	return WinApplication->ApplicationProc(hWnd, uMessage, wParam, lParam);
+	return GlobalWindowsApplication->ApplicationProc(hWnd, uMessage, wParam, lParam);
 }

@@ -10,21 +10,21 @@ D3D12Buffer::~D3D12Buffer()
 {
 }
 
-bool D3D12Buffer::Init(D3D12_RESOURCE_FLAGS Flags, Uint64 SizeInBytes, D3D12_RESOURCE_STATES InitalState, D3D12_HEAP_PROPERTIES HeapProperties)
+bool D3D12Buffer::Init(const BufferProperties& Properties)
 {
 	D3D12_RESOURCE_DESC Desc = {};
 	Desc.DepthOrArraySize	= 1;
 	Desc.Dimension			= D3D12_RESOURCE_DIMENSION_BUFFER;
-	Desc.Flags				= Flags;
+	Desc.Flags				= Properties.Flags;
 	Desc.Format				= DXGI_FORMAT_UNKNOWN;
 	Desc.Height				= 1;
 	Desc.Layout				= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	Desc.MipLevels			= 1;
 	Desc.SampleDesc.Count	= 1;
 	Desc.SampleDesc.Quality = 0;
-	Desc.Width				= SizeInBytes;
+	Desc.Width				= Properties.SizeInBytes;
 
-	HRESULT hResult = Device->GetDevice()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, InitalState, nullptr, IID_PPV_ARGS(&Buffer));
+	HRESULT hResult = Device->GetDevice()->CreateCommittedResource(&Properties.HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, Properties.InitalState, nullptr, IID_PPV_ARGS(&Buffer));
 	if (SUCCEEDED(hResult))
 	{
 		::OutputDebugString("[D3D12Buffer]: Created Buffer\n");

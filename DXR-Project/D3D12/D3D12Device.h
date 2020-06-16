@@ -8,6 +8,8 @@
 
 #include "Types.h"
 
+class D3D12DescriptorHeap;
+
 class D3D12Device
 {
 public:
@@ -36,8 +38,12 @@ public:
 		return AllowTearing;
 	}
 
+	D3D12DescriptorHeap* GetGlobalResourceDescriptorHeap() const
+	{
+		return GlobalResourceDescriptorHeap;
+	}
+
 	static D3D12Device* Create(bool DebugEnable);
-	static D3D12Device* Get();
 
 private:
 	bool CreateFactory();
@@ -57,5 +63,5 @@ private:
 	D3D_FEATURE_LEVEL MinFeatureLevel		= D3D_FEATURE_LEVEL_11_0;
 	D3D_FEATURE_LEVEL ActiveFeatureLevel	= D3D_FEATURE_LEVEL_11_0;
 
-	static std::unique_ptr<D3D12Device> Device;
+	D3D12DescriptorHeap* GlobalResourceDescriptorHeap = nullptr;
 };

@@ -2,14 +2,14 @@
 #include "Types.h"
 
 #pragma warning(push)
-#pragma warning(disable : 4100)
+#pragma warning(disable : 4100) // Disable unreferenced variable
 
 class WindowsWindow;
 
-class GenericEventHandler
+class EventHandler
 {
 public:
-	virtual ~GenericEventHandler() = default;
+	virtual ~EventHandler() = default;
 
 	virtual void OnWindowResize(WindowsWindow* Window, Uint16 Width, Uint16 Height)
 	{
@@ -24,7 +24,7 @@ public:
 	}
 
 protected:
-	GenericEventHandler() = default;
+	EventHandler() = default;
 };
 
 #pragma warning(pop)

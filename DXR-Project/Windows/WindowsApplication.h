@@ -7,23 +7,23 @@
 #include <vector>
 
 class WindowsWindow;
-class GenericEventHandler;
+class EventHandler;
 
 class WindowsApplication
 {
 public:
 	~WindowsApplication();
 
-	WindowsWindow* CreateWindow(Uint16 Width, Uint16 Height);
-	WindowsWindow* GetWindowFromHWND(HWND hWindow);
+	std::shared_ptr<WindowsWindow> CreateWindow(Uint16 Width, Uint16 Height);
+	std::shared_ptr<WindowsWindow> GetWindowFromHWND(HWND hWindow);
 
 	bool Tick();
 
-	void SetEventHandler(GenericEventHandler* NewEventHandler);
+	void SetEventHandler(std::shared_ptr<EventHandler> NewEventHandler);
 	
-	GenericEventHandler* GetEventHandler() const
+	std::shared_ptr<EventHandler> GetEventHandler() const
 	{
-		return EventHandler;
+		return MessageEventHandler;
 	}
 
 	HINSTANCE GetInstance()
@@ -32,14 +32,13 @@ public:
 	}
 
 	static WindowsApplication* Create(HINSTANCE hInstance);
-	static WindowsApplication* Get();
 
 private:
 	WindowsApplication(HINSTANCE hInstance);
 	
 	bool Create();
 
-	void AddWindow(WindowsWindow* NewWindow);
+	void AddWindow(std::shared_ptr<WindowsWindow>& NewWindow);
 
 	bool RegisterWindowClass();
 
@@ -48,10 +47,10 @@ private:
 	static LRESULT MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
 private:
-	HINSTANCE				hInstance		= 0;
-	GenericEventHandler*	EventHandler	= nullptr;
+	HINSTANCE						hInstance			= 0;
+	std::shared_ptr<EventHandler>	MessageEventHandler	= nullptr;
 
-	std::vector<WindowsWindow*> Windows;
-
-	static std::unique_ptr<WindowsApplication> WinApplication;
+	std::vector<std::shared_ptr<WindowsWindow>> Windows;
 };
+
+extern WindowsApplication* GlobalWindowsApplication;

@@ -1,5 +1,8 @@
 #include "D3D12Device.h"
 #include "D3D12ShaderCompiler.h"
+#include "D3D12DescriptorHeap.h"
+
+#include "Defines.h"
 
 #include <dxgidebug.h>
 
@@ -18,6 +21,8 @@ D3D12Device::D3D12Device()
 D3D12Device::~D3D12Device()
 {
 	using namespace Microsoft::WRL;
+
+	SAFEDELETE(GlobalResourceDescriptorHeap);
 
 	if (IsDebugEnabled)
 	{
@@ -119,6 +124,13 @@ bool D3D12Device::Init(bool DebugEnable)
 		return false;
 	}
 
+	// Create Global DescriptorHeap
+	GlobalResourceDescriptorHeap = new D3D12DescriptorHeap(this);
+	if (!GlobalResourceDescriptorHeap->Init(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 8, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE))
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -126,24 +138,17 @@ bool D3D12Device::Init(bool DebugEnable)
 * Static
 */
 
-std::unique_ptr<D3D12Device> D3D12Device::Device = nullptr;
-
 D3D12Device* D3D12Device::Create(bool DebugEnable)
 {
-	Device.reset(new D3D12Device());
-	if (Device->Init(DebugEnable))
+	D3D12Device* NewDevice = new D3D12Device();
+	if (NewDevice->Init(DebugEnable))
 	{
-		return Device.get();
+		return NewDevice;
 	}
 	else
 	{
 		return nullptr;
 	}
-}
-
-D3D12Device* D3D12Device::Get()
-{
-	return Device.get();
 }
 
 bool D3D12Device::CreateFactory()
