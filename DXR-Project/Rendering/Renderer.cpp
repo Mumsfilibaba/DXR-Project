@@ -160,7 +160,7 @@ Renderer* Renderer::Get()
 bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 {
 	Device = std::shared_ptr<D3D12Device>(D3D12Device::Create(true));
-	if (!Device->Init(true))
+	if (!Device)
 	{
 		return false;
 	}
@@ -253,6 +253,7 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 
 	// Create mesh
 	MeshData Mesh = MeshFactory::CreateSphere(3);
+	MeshData Cube = MeshFactory::CreateCube();
 
 	// Create CameraBuffer
 	SceneCamera = Camera();
@@ -285,12 +286,25 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 
 	// Create vertexbuffer
 	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(Mesh.Vertices.size());
-	std::shared_ptr<D3D12Buffer> VertexBuffer = std::make_shared<D3D12Buffer>(Device.get());
-	if (VertexBuffer->Init(BufferProps))
+	std::shared_ptr<D3D12Buffer> MeshVertexBuffer = std::make_shared<D3D12Buffer>(Device.get());
+	if (MeshVertexBuffer->Init(BufferProps))
 	{
-		void* BufferMemory = VertexBuffer->Map();
+		void* BufferMemory = MeshVertexBuffer->Map();
 		memcpy(BufferMemory, Mesh.Vertices.data(), BufferProps.SizeInBytes);
-		VertexBuffer->Unmap();
+		MeshVertexBuffer->Unmap();
+	}
+	else
+	{
+		return false;
+	}
+
+	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(Cube.Vertices.size());
+	std::shared_ptr<D3D12Buffer> CubeVertexBuffer = std::make_shared<D3D12Buffer>(Device.get());
+	if (CubeVertexBuffer->Init(BufferProps))
+	{
+		void* BufferMemory = CubeVertexBuffer->Map();
+		memcpy(BufferMemory, Cube.Vertices.data(), BufferProps.SizeInBytes);
+		CubeVertexBuffer->Unmap();
 	}
 	else
 	{
@@ -299,12 +313,25 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 
 	// Create indexbuffer
 	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Mesh.Indices.size());
-	std::shared_ptr<D3D12Buffer> IndexBuffer = std::make_shared<D3D12Buffer>(Device.get());
-	if (IndexBuffer->Init(BufferProps))
+	std::shared_ptr<D3D12Buffer> MeshIndexBuffer = std::make_shared<D3D12Buffer>(Device.get());
+	if (MeshIndexBuffer->Init(BufferProps))
 	{
-		void* BufferMemory = IndexBuffer->Map();
+		void* BufferMemory = MeshIndexBuffer->Map();
 		memcpy(BufferMemory, Mesh.Indices.data(), BufferProps.SizeInBytes);
-		IndexBuffer->Unmap();
+		MeshIndexBuffer->Unmap();
+	}
+	else
+	{
+		return false;
+	}
+
+	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Cube.Indices.size());
+	std::shared_ptr<D3D12Buffer> CubeIndexBuffer = std::make_shared<D3D12Buffer>(Device.get());
+	if (CubeIndexBuffer->Init(BufferProps))
+	{
+		void* BufferMemory = CubeIndexBuffer->Map();
+		memcpy(BufferMemory, Cube.Indices.data(), BufferProps.SizeInBytes);
+		CubeIndexBuffer->Unmap();
 	}
 	else
 	{
@@ -315,9 +342,12 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 	CommandAllocators[0]->Reset();
 	CommandList->Reset(CommandAllocators[0].get());
 
-	// Create BLAS
+	// Create BLAS:es
 	std::shared_ptr<D3D12RayTracingGeometry> MeshGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());
-	MeshGeometry->Init(CommandList.get(), VertexBuffer, static_cast<Uint32>(Mesh.Vertices.size()), IndexBuffer, static_cast<Uint64>(Mesh.Indices.size()));
+	MeshGeometry->Init(CommandList.get(), MeshVertexBuffer, static_cast<Uint32>(Mesh.Vertices.size()), MeshIndexBuffer, static_cast<Uint64>(Mesh.Indices.size()));
+
+	std::shared_ptr<D3D12RayTracingGeometry> CubeGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());
+	CubeGeometry->Init(CommandList.get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.size()), CubeIndexBuffer, static_cast<Uint64>(Cube.Indices.size()));
 
 	XMFLOAT3X4 Matrix;
 	std::vector<D3D12RayTracingGeometryInstance> Instances;
@@ -358,7 +388,7 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 	SrvDesc.Buffer.StructureByteStride	= sizeof(Vertex);
 
 	VertexBufferCPUHandle = Device->GetGlobalResourceDescriptorHeap()->GetCPUDescriptorHandleAt(2);
-	Device->GetDevice()->CreateShaderResourceView(VertexBuffer->GetResource(), &SrvDesc, VertexBufferCPUHandle);
+	Device->GetDevice()->CreateShaderResourceView(MeshVertexBuffer->GetResource(), &SrvDesc, VertexBufferCPUHandle);
 
 	// IndexBuffer
 	SrvDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
@@ -367,7 +397,7 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 	SrvDesc.Buffer.StructureByteStride	= 0;
 
 	IndexBufferCPUHandle = Device->GetGlobalResourceDescriptorHeap()->GetCPUDescriptorHandleAt(3);
-	Device->GetDevice()->CreateShaderResourceView(IndexBuffer->GetResource(), &SrvDesc, IndexBufferCPUHandle);
+	Device->GetDevice()->CreateShaderResourceView(MeshIndexBuffer->GetResource(), &SrvDesc, IndexBufferCPUHandle);
 
 	// Create PipelineState
 	PipelineState = std::make_shared<D3D12RayTracingPipelineState>(Device.get());

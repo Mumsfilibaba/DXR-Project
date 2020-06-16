@@ -321,7 +321,7 @@ bool D3D12RayTracingPipelineState::CreatePipeline()
 
 	// Init pipeline config
 	D3D12_RAYTRACING_PIPELINE_CONFIG PipelineConfig;
-	PipelineConfig.MaxTraceRecursionDepth = 4;
+	PipelineConfig.MaxTraceRecursionDepth = 2;
 
 	{
 		D3D12_STATE_SUBOBJECT PipelineConfigSubObject = { };

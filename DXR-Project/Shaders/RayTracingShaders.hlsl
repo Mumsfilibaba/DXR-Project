@@ -159,7 +159,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 
 	// Send a new ray for reflection
 	float3 ReflectedColor = float3(0.0f, 0.0f, 0.0f);
-	if (PayLoad.CurrentRecursionDepth < 4)
+	if (PayLoad.CurrentRecursionDepth < 2)
 	{
 		RayDesc Ray;
 		Ray.Origin		= HitPosition;
