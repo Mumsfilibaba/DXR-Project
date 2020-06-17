@@ -81,6 +81,9 @@ void Renderer::Tick()
 
 void Renderer::OnResize(Int32 NewWidth, Int32 NewHeight)
 {
+	WaitForPendingFrames();
+
+	SwapChain->Resize(NewWidth, NewHeight);
 }
 
 void Renderer::OnKeyDown(Uint32 KeyCode)
@@ -407,4 +410,12 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	return true;
+}
+
+void Renderer::WaitForPendingFrames()
+{
+	for (Uint64 Value : FenceValues)
+	{
+		Fence->WaitForValue(Value);
+	}
 }

@@ -34,6 +34,8 @@ public:
 private:
 	bool Init(std::shared_ptr<WindowsWindow> RendererWindow);
 
+	void WaitForPendingFrames();
+
 private:
 	std::shared_ptr<D3D12Device>			Device				= nullptr;
 	std::shared_ptr<D3D12CommandQueue>		Queue				= nullptr;

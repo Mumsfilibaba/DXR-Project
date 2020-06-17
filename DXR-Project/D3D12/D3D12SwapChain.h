@@ -18,6 +18,8 @@ public:
 
 	bool Init(WindowsWindow* Window, D3D12CommandQueue* Queue);
 
+	bool Resize(Int32 NewWidth, Int32 NewHeight);
+
 	bool Present(Uint32 SyncInterval);
 
 	Uint32 GetCurrentBackBufferIndex() const;
@@ -39,8 +41,13 @@ public:
 
 private:
 	void RetriveSwapChainSurfaces();
+	void ReleaseSurfaces();
 
 private:
 	Microsoft::WRL::ComPtr<IDXGISwapChain3>				SwapChain;
 	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> BackBuffers;
+
+	Uint32 Width	= 0;
+	Uint32 Height	= 0;
+	Uint32 Flags	= 0;
 };

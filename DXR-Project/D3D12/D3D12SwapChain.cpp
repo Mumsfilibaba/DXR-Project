@@ -17,10 +17,19 @@ bool D3D12SwapChain::Init(WindowsWindow* Window, D3D12CommandQueue* Queue)
 {
 	using namespace Microsoft::WRL;
 
+	// Save the flags used
+	Flags = Device->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+
+	WindowShape Shape;
+	Window->GetWindowShape(Shape);
+
+	Width	= Shape.Width;
+	Height	= Shape.Height;
+
 	// Create a descriptor for the swap chain.
 	DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
-	SwapChainDesc.Width					= 1920;
-	SwapChainDesc.Height				= 1080;
+	SwapChainDesc.Width					= Width;
+	SwapChainDesc.Height				= Height;
 	SwapChainDesc.Format				= GetSurfaceFormat();
 	SwapChainDesc.BufferUsage			= DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	SwapChainDesc.BufferCount			= GetSurfaceCount();
@@ -29,7 +38,7 @@ bool D3D12SwapChain::Init(WindowsWindow* Window, D3D12CommandQueue* Queue)
 	SwapChainDesc.Scaling				= DXGI_SCALING_STRETCH;
 	SwapChainDesc.SwapEffect			= DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	SwapChainDesc.AlphaMode				= DXGI_ALPHA_MODE_IGNORE;
-	SwapChainDesc.Flags					= Device->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+	SwapChainDesc.Flags					= Flags;
 
 	ComPtr<IDXGISwapChain1> TempSwapChain;
 	HRESULT hResult = Device->GetFactory()->CreateSwapChainForHwnd(Queue->GetQueue(), Window->GetHandle(), &SwapChainDesc, nullptr, nullptr, &TempSwapChain);
@@ -55,6 +64,34 @@ bool D3D12SwapChain::Init(WindowsWindow* Window, D3D12CommandQueue* Queue)
 	else
 	{
 		::OutputDebugString("[D3D12SwapChain]: Failed to create SwapChain\n");
+		return false;
+	}
+}
+
+bool D3D12SwapChain::Resize(Int32 NewWidth, Int32 NewHeight)
+{
+	if (NewWidth == 0 || NewHeight == 0)
+	{
+		::OutputDebugString("[D3D12SwapChain]: Resize failed. Width or Height cannot be zero\n");
+		return false;
+	}
+
+	if (NewWidth == Width && NewHeight == Height)
+	{
+		::OutputDebugString("[D3D12SwapChain]: Resize failed. Width or Height is the same\n");
+		return false;
+	}
+
+	ReleaseSurfaces();
+
+	HRESULT Result = SwapChain->ResizeBuffers1(0, NewWidth, NewHeight, DXGI_FORMAT_UNKNOWN, Flags, nullptr, nullptr);
+	if (SUCCEEDED(Result))
+	{
+
+		return true;
+	}
+	else
+	{
 		return false;
 	}
 }
@@ -88,5 +125,15 @@ void D3D12SwapChain::RetriveSwapChainSurfaces()
 			::OutputDebugString("[D3D12SwapChain]: Failed to retrive SwapChain Buffer\n");
 			break;
 		}
+	}
+}
+
+void D3D12SwapChain::ReleaseSurfaces()
+{
+	using namespace Microsoft::WRL;
+
+	for (ComPtr<ID3D12Resource>& Surface : BackBuffers)
+	{
+		Surface.Reset();
 	}
 }

@@ -16,12 +16,11 @@ WindowsWindow::~WindowsWindow()
 
 bool WindowsWindow::Init(Uint16 Width, Uint16 Height)
 {
-	DWORD	dwStyle		= WS_OVERLAPPEDWINDOW;
-	RECT	clientRect	= { 0, 0, LONG(Width), LONG(Height) };
-	::AdjustWindowRect(&clientRect, dwStyle, FALSE);
+	RECT ClientRect = { 0, 0, static_cast<LONG>(Width), static_cast<LONG>(Height) };
+	::AdjustWindowRect(&ClientRect, dwStyle, FALSE);
 
-	INT nWidth	= clientRect.right - clientRect.left;
-	INT nHeight = clientRect.bottom - clientRect.top;
+	INT nWidth	= ClientRect.right	- ClientRect.left;
+	INT nHeight = ClientRect.bottom - ClientRect.top;
 
 	HINSTANCE hInstance = GlobalWindowsApplication->GetInstance();
 	hWindow = ::CreateWindowEx(0, "WinClass", "DXR", dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, hInstance, NULL);
@@ -40,4 +39,20 @@ bool WindowsWindow::Init(Uint16 Width, Uint16 Height)
 void WindowsWindow::Show()
 {
 	::ShowWindow(hWindow, SW_NORMAL);
+}
+
+void WindowsWindow::GetWindowShape(WindowShape& OutWindowShape)
+{
+	RECT Rect = { };
+	if (::GetWindowRect(hWindow, &Rect) != 0)
+	{
+		OutWindowShape.x = Rect.left;
+		OutWindowShape.y = Rect.top;
+	}
+
+	if (::GetClientRect(hWindow, &Rect) != 0)
+	{
+		OutWindowShape.Width	= Rect.right  - Rect.left;
+		OutWindowShape.Height	= Rect.bottom - Rect.top;
+	}
 }

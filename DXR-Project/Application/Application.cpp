@@ -43,12 +43,18 @@ Application* Application::Get()
 
 void Application::OnWindowResize(WindowsWindow* Window, Uint16 Width, Uint16 Height)
 {
-	Renderer::Get()->OnResize(Width, Height);
+	if (Renderer::Get())
+	{
+		Renderer::Get()->OnResize(Width, Height);
+	}
 }
 
 void Application::OnKeyDown(Uint32 KeyCode)
 {
-	Renderer::Get()->OnKeyDown(KeyCode);
+	if (Renderer::Get())
+	{
+		Renderer::Get()->OnKeyDown(KeyCode);
+	}
 }
 
 void Application::OnMouseMove(Int32 x, Int32 y)
