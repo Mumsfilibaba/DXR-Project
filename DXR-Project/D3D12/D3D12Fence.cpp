@@ -38,22 +38,14 @@ bool D3D12Fence::Initialize(Uint64 InitalValue)
 
 bool D3D12Fence::WaitForValue(Uint64 FenceValue)
 {
-	if (Fence->GetCompletedValue() < FenceValue)
+	HRESULT hResult = Fence->SetEventOnCompletion(FenceValue, Event);
+	if (SUCCEEDED(hResult))
 	{
-		HRESULT hResult = Fence->SetEventOnCompletion(FenceValue, Event);
-		if (SUCCEEDED(hResult))
-		{
-			WaitForSingleObjectEx(Event, INFINITE, FALSE);
-			return true;
-		}
-		else
-		{
-			return false;
-	
-		}
+		WaitForSingleObjectEx(Event, INFINITE, FALSE);
+		return true;
 	}
 	else
 	{
-		return true;
+		return false;
 	}
 }

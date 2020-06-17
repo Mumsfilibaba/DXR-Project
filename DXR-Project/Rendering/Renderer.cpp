@@ -17,8 +17,6 @@ Renderer::~Renderer()
 
 void Renderer::Tick()
 {
-	return;
-
 	Uint32			BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 	ID3D12Resource*	BackBuffer		= SwapChain->GetSurfaceResource(BackBufferIndex);
 
@@ -35,23 +33,23 @@ void Renderer::Tick()
 	memcpy(BufferMemory, &SceneCamera, sizeof(Camera));
 	CameraBuffer->Unmap();
 
-	//D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-	//raytraceDesc.Width	= SwapChain->GetWidth();
-	//raytraceDesc.Height	= SwapChain->GetHeight();
-	//raytraceDesc.Depth	= 1;
+	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
+	raytraceDesc.Width	= SwapChain->GetWidth();
+	raytraceDesc.Height	= SwapChain->GetHeight();
+	raytraceDesc.Depth	= 1;
 
-	//// Set shader tables
-	//raytraceDesc.RayGenerationShaderRecord	= PipelineState->GetRayGenerationShaderRecord();
-	//raytraceDesc.MissShaderTable			= PipelineState->GetMissShaderTable();
-	//raytraceDesc.HitGroupTable				= PipelineState->GetHitGroupTable();
+	// Set shader tables
+	raytraceDesc.RayGenerationShaderRecord	= PipelineState->GetRayGenerationShaderRecord();
+	raytraceDesc.MissShaderTable			= PipelineState->GetMissShaderTable();
+	raytraceDesc.HitGroupTable				= PipelineState->GetHitGroupTable();
 
-	//// Bind the empty root signature
-	//CommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
-	//CommandList->SetComputeRootDescriptorTable(CameraBufferGPUHandle, 0);
+	// Bind the empty root signature
+	CommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
+	CommandList->SetComputeRootDescriptorTable(CameraBufferGPUHandle, 0);
 
-	//// Dispatch
-	//CommandList->SetStateObject(PipelineState->GetStateObject());
-	//CommandList->DispatchRays(&raytraceDesc);
+	// Dispatch
+	CommandList->SetStateObject(PipelineState->GetStateObject());
+	CommandList->DispatchRays(&raytraceDesc);
 
 	// Copy the results to the back-buffer
 	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
@@ -320,8 +318,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 		return false;
 	}
 
-
-	return true;
+	//return true;
 
 	// Build Acceleration Structures
 	CommandAllocators[0]->Reset();
@@ -441,8 +438,11 @@ void Renderer::CreateRenderTargetViews()
 
 void Renderer::WaitForPendingFrames()
 {
-	for (Uint64 Value : FenceValues)
+	const Uint32 BackBufferIndex	= SwapChain->GetCurrentBackBufferIndex();
+	const Uint64 CurrentFenceValue	= FenceValues[BackBufferIndex];
+	Queue->SignalFence(Fence.get(), CurrentFenceValue);
+	if (Fence->WaitForValue(CurrentFenceValue))
 	{
-		Fence->WaitForValue(Value);
+		FenceValues[BackBufferIndex]++;
 	}
 }
