@@ -21,7 +21,8 @@ public:
 
 public:
 	virtual void OnWindowResize(WindowsWindow* Window, Uint16 Width, Uint16 Height)	override;
-	virtual void OnKeyDown(Uint32 KeyCode)											override;
+	virtual void OnKeyUp(EKey KeyCode)												override;
+	virtual void OnKeyDown(EKey KeyCode)											override;
 	virtual void OnMouseMove(Int32 x, Int32 y)										override;
 
 private:

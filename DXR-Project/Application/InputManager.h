@@ -1,26 +1,26 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
-
-enum Key : Uint16
-{
-
-};
+#include "InputCodes.h"
 
 class InputManager
 {
 public:
-	InputManager();
-	~InputManager();
+	EKey	ConvertFromKeyCode(Uint32 KeyCode);
+	Uint32	ConvertToKeyCode(EKey Key);
 
-	void RegisterKeyUp();
-	void RegisterKeyDown();
+	void RegisterKeyUp(EKey KeyCode);
+	void RegisterKeyDown(EKey KeyCode);
 
-	bool IsKeyUp(Key KeyCode);
-	bool IsKeyDown(Key KeyCode);
+	bool IsKeyUp(EKey KeyCode);
+	bool IsKeyDown(EKey KeyCode);
 
 	static InputManager& Get();
 
 private:
-	bool KeyState[];
+	InputManager();
+	~InputManager();
+
+	void InitializeKeyMappings();
+
+private:
+	bool KeyStates[EKey::KEY_COUNT];
 };

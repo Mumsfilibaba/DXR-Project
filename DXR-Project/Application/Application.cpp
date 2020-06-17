@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "InputManager.h"
 
 #include "Rendering/Renderer.h"
 
@@ -49,8 +50,15 @@ void Application::OnWindowResize(WindowsWindow* Window, Uint16 Width, Uint16 Hei
 	}
 }
 
-void Application::OnKeyDown(Uint32 KeyCode)
+void Application::OnKeyUp(EKey KeyCode)
 {
+	InputManager::Get().RegisterKeyUp(KeyCode);
+}
+
+void Application::OnKeyDown(EKey KeyCode)
+{
+	InputManager::Get().RegisterKeyDown(KeyCode);
+
 	if (Renderer::Get())
 	{
 		Renderer::Get()->OnKeyDown(KeyCode);

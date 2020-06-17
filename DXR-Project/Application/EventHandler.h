@@ -1,5 +1,5 @@
 #pragma once
-#include "Types.h"
+#include "InputCodes.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
@@ -15,7 +15,11 @@ public:
 	{
 	}
 
-	virtual void OnKeyDown(Uint32 KeyCode)
+	virtual void OnKeyUp(EKey KeyCode)
+	{
+	}
+
+	virtual void OnKeyDown(EKey KeyCode)
 	{
 	}
 

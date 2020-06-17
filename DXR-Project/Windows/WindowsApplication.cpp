@@ -2,6 +2,7 @@
 #include "WindowsWindow.h"
 
 #include "Application/EventHandler.h"
+#include "Application/InputManager.h"
 
 #include <windowsx.h>
 
@@ -150,9 +151,19 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 			return 0;
 		}
 
+		case WM_SYSKEYUP:
+		case WM_KEYUP:
+		{
+			EKey Key = InputManager::Get().ConvertFromKeyCode(static_cast<Uint32>(wParam));
+			MessageEventHandler->OnKeyUp(Key);
+			return 0;
+		}
+
+		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
 		{
-			MessageEventHandler->OnKeyDown(static_cast<Uint32>(wParam));
+			EKey Key = InputManager::Get().ConvertFromKeyCode(static_cast<Uint32>(wParam));
+			MessageEventHandler->OnKeyDown(Key);
 			return 0;
 		}
 

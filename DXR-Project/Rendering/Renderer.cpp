@@ -4,6 +4,8 @@
 #include "D3D12/D3D12Texture.h"
 #include "D3D12/HeapProps.h"
 
+#include "Application/InputManager.h"
+
 std::unique_ptr<Renderer> Renderer::RendererInstance = nullptr;
 
 Renderer::Renderer()
@@ -17,6 +19,59 @@ Renderer::~Renderer()
 
 void Renderer::Tick()
 {
+	if (InputManager::Get().IsKeyDown(EKey::KEY_ESCAPE))
+	{
+		IsCameraAcive = !IsCameraAcive;
+	}
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_RIGHT))
+	{
+		SceneCamera.Rotate(0.0f, -0.01f, 0.0f);
+	}
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_LEFT))
+	{
+		SceneCamera.Rotate(0.0f, 0.01f, 0.0f);
+	}
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_UP))
+	{
+		SceneCamera.Rotate(-0.01f, 0.0f, 0.0f);
+	}
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_DOWN))
+	{
+		SceneCamera.Rotate(0.01f, 0.0f, 0.0f);
+	}
+	// W
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_W))
+	{
+		SceneCamera.Move(0.0f, 0.0f, 0.01f);
+	}
+	// S
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_S))
+	{
+		SceneCamera.Move(0.0f, 0.0f, -0.01f);
+	}
+	// A
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_A))
+	{
+		SceneCamera.Move(0.01f, 0.0f, 0.0f);
+	}
+	// D
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_D))
+	{
+		SceneCamera.Move(-0.01f, 0.0f, 0.0f);
+	}
+	// Q
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_Q))
+	{
+		SceneCamera.Move(0.0f, 0.01f, 0.0f);
+	}
+	// E
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_E))
+	{
+		SceneCamera.Move(0.0f, -0.01f, 0.0f);
+	}
+
+	SceneCamera.UpdateMatrices();
+
 	Uint32			BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 	ID3D12Resource*	BackBuffer		= SwapChain->GetSurfaceResource(BackBufferIndex);
 
@@ -93,58 +148,7 @@ void Renderer::OnResize(Int32 NewWidth, Int32 NewHeight)
 
 void Renderer::OnKeyDown(Uint32 KeyCode)
 {
-	if (KeyCode == VK_ESCAPE)
-	{
-		IsCameraAcive = !IsCameraAcive;
-	}
-	else if (KeyCode == VK_RIGHT)
-	{
-		SceneCamera.Rotate(0.0f, -0.01f, 0.0f);
-	}
-	else if (KeyCode == VK_LEFT)
-	{
-		SceneCamera.Rotate(0.0f, 0.01f, 0.0f);
-	}
-	else if (KeyCode == VK_UP)
-	{
-		SceneCamera.Rotate(-0.01f, 0.0f, 0.0f);
-	}
-	else if (KeyCode == VK_DOWN)
-	{
-		SceneCamera.Rotate(0.01f, 0.0f, 0.0f);
-	}
-	// W
-	else if (KeyCode == 0x57)
-	{
-		SceneCamera.Move(0.0f, 0.0f, 0.01f);
-	}
-	// S
-	else if (KeyCode == 0x53)
-	{
-		SceneCamera.Move(0.0f, 0.0f, -0.01f);
-	}
-	// A
-	else if (KeyCode == 0x41)
-	{
-		SceneCamera.Move(0.01f, 0.0f, 0.0f);
-	}
-	// D
-	else if (KeyCode == 0x44)
-	{
-		SceneCamera.Move(-0.01f, 0.0f, 0.0f);
-	}
-	// Q
-	else if (KeyCode == 0x51)
-	{
-		SceneCamera.Move(0.0f, 0.01f, 0.0f);
-	}
-	// E
-	else if (KeyCode == 0x45)
-	{
-		SceneCamera.Move(0.0f, -0.01f, 0.0f);
-	}
-
-	SceneCamera.UpdateMatrices();
+	
 }
 
 Renderer* Renderer::Create(std::shared_ptr<WindowsWindow> RendererWindow)
