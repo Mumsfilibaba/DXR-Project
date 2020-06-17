@@ -10,7 +10,7 @@ D3D12DescriptorHeap::~D3D12DescriptorHeap()
 {
 }
 
-bool D3D12DescriptorHeap::Init(D3D12_DESCRIPTOR_HEAP_TYPE Type, Uint32 DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAGS Flags)
+bool D3D12DescriptorHeap::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE Type, Uint32 DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAGS Flags)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC HeapDesc = {};
 	HeapDesc.Flags				= Flags;

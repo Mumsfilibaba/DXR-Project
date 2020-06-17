@@ -7,7 +7,7 @@ public:
 	D3D12CommandAllocator(D3D12Device* Device);
 	~D3D12CommandAllocator();
 
-	bool Init(D3D12_COMMAND_LIST_TYPE Type);
+	bool Initialize(D3D12_COMMAND_LIST_TYPE Type);
 
 	bool Reset();
 

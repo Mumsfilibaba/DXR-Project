@@ -10,7 +10,7 @@ D3D12Buffer::~D3D12Buffer()
 {
 }
 
-bool D3D12Buffer::Init(const BufferProperties& Properties)
+bool D3D12Buffer::Initialize(const BufferProperties& Properties)
 {
 	D3D12_RESOURCE_DESC Desc = {};
 	Desc.DepthOrArraySize	= 1;

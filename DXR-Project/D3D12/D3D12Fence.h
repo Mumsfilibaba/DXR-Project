@@ -9,7 +9,7 @@ public:
 	D3D12Fence(D3D12Device* Device);
 	~D3D12Fence();
 
-	bool Init(Uint64 InitalValue);
+	bool Initialize(Uint64 InitalValue);
 
 	bool WaitForValue(Uint64 FenceValue);
 

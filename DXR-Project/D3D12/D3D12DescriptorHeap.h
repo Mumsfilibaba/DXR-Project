@@ -9,7 +9,7 @@ public:
 	D3D12DescriptorHeap(D3D12Device* Device);
 	~D3D12DescriptorHeap();
 
-	bool Init(D3D12_DESCRIPTOR_HEAP_TYPE Type, Uint32 DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
+	bool Initialize(D3D12_DESCRIPTOR_HEAP_TYPE Type, Uint32 DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
 
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart() const;
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleAt(Uint32 DescriptorIndex) const;

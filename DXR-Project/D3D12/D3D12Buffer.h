@@ -17,7 +17,7 @@ public:
 	D3D12Buffer(D3D12Device* Device);
 	~D3D12Buffer();
 
-	bool Init(const BufferProperties& Properties);
+	bool Initialize(const BufferProperties& Properties);
 
 	void* Map();
 	void Unmap();

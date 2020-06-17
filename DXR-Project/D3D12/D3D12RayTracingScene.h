@@ -18,7 +18,7 @@ public:
 	D3D12RayTracingGeometry(D3D12Device* Device);
 	~D3D12RayTracingGeometry();
 
-	bool Init(D3D12CommandList* CommandList, std::shared_ptr<D3D12Buffer> VertexBuffer, Uint32 VertexCount, std::shared_ptr<D3D12Buffer> IndexBuffer, Uint32 IndexCount);
+	bool Initialize(D3D12CommandList* CommandList, std::shared_ptr<D3D12Buffer> VertexBuffer, Uint32 VertexCount, std::shared_ptr<D3D12Buffer> IndexBuffer, Uint32 IndexCount);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress() const;
 
@@ -54,7 +54,7 @@ public:
 	D3D12RayTracingScene(D3D12Device* Device);
 	~D3D12RayTracingScene();
 
-	bool Init(D3D12CommandList* CommandList, std::vector<D3D12RayTracingGeometryInstance>& Instances);
+	bool Initialize(D3D12CommandList* CommandList, std::vector<D3D12RayTracingGeometryInstance>& Instances);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress()		const;
 

@@ -17,6 +17,8 @@ Renderer::~Renderer()
 
 void Renderer::Tick()
 {
+	return;
+
 	Uint32			BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 	ID3D12Resource*	BackBuffer		= SwapChain->GetSurfaceResource(BackBufferIndex);
 
@@ -33,23 +35,23 @@ void Renderer::Tick()
 	memcpy(BufferMemory, &SceneCamera, sizeof(Camera));
 	CameraBuffer->Unmap();
 
-	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-	raytraceDesc.Width	= 1920;
-	raytraceDesc.Height	= 1080;
-	raytraceDesc.Depth	= 1;
+	//D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
+	//raytraceDesc.Width	= SwapChain->GetWidth();
+	//raytraceDesc.Height	= SwapChain->GetHeight();
+	//raytraceDesc.Depth	= 1;
 
-	// Set shader tables
-	raytraceDesc.RayGenerationShaderRecord	= PipelineState->GetRayGenerationShaderRecord();
-	raytraceDesc.MissShaderTable			= PipelineState->GetMissShaderTable();
-	raytraceDesc.HitGroupTable				= PipelineState->GetHitGroupTable();
+	//// Set shader tables
+	//raytraceDesc.RayGenerationShaderRecord	= PipelineState->GetRayGenerationShaderRecord();
+	//raytraceDesc.MissShaderTable			= PipelineState->GetMissShaderTable();
+	//raytraceDesc.HitGroupTable				= PipelineState->GetHitGroupTable();
 
-	// Bind the empty root signature
-	CommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
-	CommandList->SetComputeRootDescriptorTable(CameraBufferGPUHandle, 0);
+	//// Bind the empty root signature
+	//CommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
+	//CommandList->SetComputeRootDescriptorTable(CameraBufferGPUHandle, 0);
 
-	// Dispatch
-	CommandList->SetStateObject(PipelineState->GetStateObject());
-	CommandList->DispatchRays(&raytraceDesc);
+	//// Dispatch
+	//CommandList->SetStateObject(PipelineState->GetStateObject());
+	//CommandList->DispatchRays(&raytraceDesc);
 
 	// Copy the results to the back-buffer
 	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
@@ -84,6 +86,11 @@ void Renderer::OnResize(Int32 NewWidth, Int32 NewHeight)
 	WaitForPendingFrames();
 
 	SwapChain->Resize(NewWidth, NewHeight);
+	CreateRenderTargetViews();
+
+	SAFEDELETE(ResultTexture);
+
+	CreateResultTexture();
 }
 
 void Renderer::OnKeyDown(Uint32 KeyCode)
@@ -145,7 +152,7 @@ void Renderer::OnKeyDown(Uint32 KeyCode)
 Renderer* Renderer::Create(std::shared_ptr<WindowsWindow> RendererWindow)
 {
 	RendererInstance = std::make_unique<Renderer>();
-	if (RendererInstance->Init(RendererWindow))
+	if (RendererInstance->Initialize(RendererWindow))
 	{
 		return RendererInstance.get();
 	}
@@ -160,7 +167,7 @@ Renderer* Renderer::Get()
 	return RendererInstance.get();
 }
 
-bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
+bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 {
 	Device = std::shared_ptr<D3D12Device>(D3D12Device::Create(true));
 	if (!Device)
@@ -169,90 +176,62 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	Queue = std::make_shared<D3D12CommandQueue>(Device.get());
-	if (!Queue->Init())
+	if (!Queue->Initialize())
 	{
 		return false;
 	}
 
 	RenderTargetHeap = std::make_shared<D3D12DescriptorHeap>(Device.get());
-	if (!RenderTargetHeap->Init(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 3, D3D12_DESCRIPTOR_HEAP_FLAG_NONE))
+	if (!RenderTargetHeap->Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 3, D3D12_DESCRIPTOR_HEAP_FLAG_NONE))
 	{
 		return false;
 	}
 
 	DepthStencilHeap = std::make_shared<D3D12DescriptorHeap>(Device.get());
-	if (!DepthStencilHeap->Init(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_NONE))
+	if (!DepthStencilHeap->Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_NONE))
 	{
 		return false;
 	}
 
 	SwapChain = std::make_shared<D3D12SwapChain>(Device.get());
-	if (!SwapChain->Init(RendererWindow.get(), Queue.get()))
+	if (!SwapChain->Initialize(RendererWindow.get(), Queue.get()))
 	{
 		return false;
 	}
 
 	const Uint32 BackBufferCount = SwapChain->GetSurfaceCount();
 	CommandAllocators.resize(BackBufferCount);
-
-	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> BackBufferHandles(BackBufferCount);
 	for (Uint32 i = 0; i < BackBufferCount; i++)
 	{
 		CommandAllocators[i] = std::make_shared<D3D12CommandAllocator>(Device.get());
-		if (!CommandAllocators[i]->Init(D3D12_COMMAND_LIST_TYPE_DIRECT))
+		if (!CommandAllocators[i]->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
 		{
 			return false;
 		}
-
-		D3D12_RENDER_TARGET_VIEW_DESC RtvDesc = { };
-		RtvDesc.ViewDimension			= D3D12_RTV_DIMENSION_TEXTURE2D;
-		RtvDesc.Format					= SwapChain->GetSurfaceFormat();
-		RtvDesc.Texture2D.MipSlice		= 0;
-		RtvDesc.Texture2D.PlaneSlice	= 0;
-
-		D3D12_CPU_DESCRIPTOR_HANDLE Handle = RenderTargetHeap->GetCPUDescriptorHandleAt(i);
-		Device->GetDevice()->CreateRenderTargetView(SwapChain->GetSurfaceResource(i), &RtvDesc, Handle);
-
-		BackBufferHandles[i] = Handle;
 	}
 
+	// Create RenderTargetViews
+	CreateRenderTargetViews();
+
 	CommandList = std::make_shared<D3D12CommandList>(Device.get());
-	if (!CommandList->Init(D3D12_COMMAND_LIST_TYPE_DIRECT, CommandAllocators[0].get(), nullptr))
+	if (!CommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, CommandAllocators[0].get(), nullptr))
 	{
 		return false;
 	}
 
 	Fence = std::make_shared<D3D12Fence>(Device.get());
-	if (!Fence->Init(0))
+	if (!Fence->Initialize(0))
 	{
 		return false;
 	}
 
 	FenceValues.resize(SwapChain->GetSurfaceCount());
 
-
 	// Create image
-	TextureProperties OutputProperties = { };
-	OutputProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	OutputProperties.Width			= 1920;
-	OutputProperties.Height			= 1080;
-	OutputProperties.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
-	OutputProperties.HeapProperties = HeapProps::DefaultHeap();
-
-	ResultTexture = new D3D12Texture(Device.get());
-	if (!ResultTexture->Init(OutputProperties))
+	if (!CreateResultTexture())
 	{
 		return false;
 	}
-
-	D3D12_UNORDERED_ACCESS_VIEW_DESC UavView = { };
-	UavView.Format					= OutputProperties.Format;
-	UavView.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
-	UavView.Texture2D.MipSlice		= 0;
-	UavView.Texture2D.PlaneSlice	= 0;
-
-	OutputCPUHandle = Device->GetGlobalResourceDescriptorHeap()->GetCPUDescriptorHandleAt(0);
-	Device->GetDevice()->CreateUnorderedAccessView(ResultTexture->GetResource(), nullptr, &UavView, OutputCPUHandle);
 
 	// Create mesh
 	MeshData Mesh = MeshFactory::CreateSphere(3);
@@ -268,7 +247,7 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 	BufferProps.HeapProperties	= HeapProps::UploadHeap();
 
 	CameraBuffer = std::make_shared<D3D12Buffer>(Device.get());
-	if (CameraBuffer->Init(BufferProps))
+	if (CameraBuffer->Initialize(BufferProps))
 	{
 		void* BufferMemory = CameraBuffer->Map();
 		memcpy(BufferMemory, &SceneCamera, sizeof(Camera));
@@ -290,7 +269,7 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 	// Create vertexbuffer
 	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(Mesh.Vertices.size());
 	std::shared_ptr<D3D12Buffer> MeshVertexBuffer = std::make_shared<D3D12Buffer>(Device.get());
-	if (MeshVertexBuffer->Init(BufferProps))
+	if (MeshVertexBuffer->Initialize(BufferProps))
 	{
 		void* BufferMemory = MeshVertexBuffer->Map();
 		memcpy(BufferMemory, Mesh.Vertices.data(), BufferProps.SizeInBytes);
@@ -303,7 +282,7 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 
 	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(Cube.Vertices.size());
 	std::shared_ptr<D3D12Buffer> CubeVertexBuffer = std::make_shared<D3D12Buffer>(Device.get());
-	if (CubeVertexBuffer->Init(BufferProps))
+	if (CubeVertexBuffer->Initialize(BufferProps))
 	{
 		void* BufferMemory = CubeVertexBuffer->Map();
 		memcpy(BufferMemory, Cube.Vertices.data(), BufferProps.SizeInBytes);
@@ -317,7 +296,7 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 	// Create indexbuffer
 	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Mesh.Indices.size());
 	std::shared_ptr<D3D12Buffer> MeshIndexBuffer = std::make_shared<D3D12Buffer>(Device.get());
-	if (MeshIndexBuffer->Init(BufferProps))
+	if (MeshIndexBuffer->Initialize(BufferProps))
 	{
 		void* BufferMemory = MeshIndexBuffer->Map();
 		memcpy(BufferMemory, Mesh.Indices.data(), BufferProps.SizeInBytes);
@@ -330,7 +309,7 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 
 	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Cube.Indices.size());
 	std::shared_ptr<D3D12Buffer> CubeIndexBuffer = std::make_shared<D3D12Buffer>(Device.get());
-	if (CubeIndexBuffer->Init(BufferProps))
+	if (CubeIndexBuffer->Initialize(BufferProps))
 	{
 		void* BufferMemory = CubeIndexBuffer->Map();
 		memcpy(BufferMemory, Cube.Indices.data(), BufferProps.SizeInBytes);
@@ -341,16 +320,19 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 		return false;
 	}
 
+
+	return true;
+
 	// Build Acceleration Structures
 	CommandAllocators[0]->Reset();
 	CommandList->Reset(CommandAllocators[0].get());
 
-	// Create BLAS:es
+	// Create BLAS
 	std::shared_ptr<D3D12RayTracingGeometry> MeshGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());
-	MeshGeometry->Init(CommandList.get(), MeshVertexBuffer, static_cast<Uint32>(Mesh.Vertices.size()), MeshIndexBuffer, static_cast<Uint64>(Mesh.Indices.size()));
+	MeshGeometry->Initialize(CommandList.get(), MeshVertexBuffer, static_cast<Uint32>(Mesh.Vertices.size()), MeshIndexBuffer, static_cast<Uint64>(Mesh.Indices.size()));
 
 	std::shared_ptr<D3D12RayTracingGeometry> CubeGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());
-	CubeGeometry->Init(CommandList.get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.size()), CubeIndexBuffer, static_cast<Uint64>(Cube.Indices.size()));
+	CubeGeometry->Initialize(CommandList.get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.size()), CubeIndexBuffer, static_cast<Uint64>(Cube.Indices.size()));
 
 	XMFLOAT3X4 Matrix;
 	std::vector<D3D12RayTracingGeometryInstance> Instances;
@@ -371,7 +353,7 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 
 	// Create TLAS
 	Scene = std::make_shared<D3D12RayTracingScene>(Device.get());
-	Scene->Init(CommandList.get(), Instances);
+	Scene->Initialize(CommandList.get(), Instances);
 
 	CommandList->Close();
 	Queue->ExecuteCommandList(CommandList.get());
@@ -404,12 +386,57 @@ bool Renderer::Init(std::shared_ptr<WindowsWindow> RendererWindow)
 
 	// Create PipelineState
 	PipelineState = std::make_shared<D3D12RayTracingPipelineState>(Device.get());
-	if (!PipelineState->Init())
+	if (!PipelineState->Initialize())
 	{
 		return false;
 	}
 
 	return true;
+}
+
+bool Renderer::CreateResultTexture()
+{
+	TextureProperties OutputProperties = { };
+	OutputProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	OutputProperties.Width			= SwapChain->GetWidth();
+	OutputProperties.Height			= SwapChain->GetHeight();
+	OutputProperties.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
+	OutputProperties.HeapProperties	= HeapProps::DefaultHeap();
+
+	ResultTexture = new D3D12Texture(Device.get());
+	if (!ResultTexture->Initialize(OutputProperties))
+	{
+		return false;
+	}
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC UavView = { };
+	UavView.Format					= OutputProperties.Format;
+	UavView.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
+	UavView.Texture2D.MipSlice		= 0;
+	UavView.Texture2D.PlaneSlice	= 0;
+
+	OutputCPUHandle = Device->GetGlobalResourceDescriptorHeap()->GetCPUDescriptorHandleAt(0);
+	Device->GetDevice()->CreateUnorderedAccessView(ResultTexture->GetResource(), nullptr, &UavView, OutputCPUHandle);
+	
+	return true;
+}
+
+void Renderer::CreateRenderTargetViews()
+{
+	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> BackBufferHandles(SwapChain->GetSurfaceCount());
+	for (Uint32 i = 0; i < SwapChain->GetSurfaceCount(); i++)
+	{
+		D3D12_RENDER_TARGET_VIEW_DESC RtvDesc = { };
+		RtvDesc.ViewDimension			= D3D12_RTV_DIMENSION_TEXTURE2D;
+		RtvDesc.Format					= SwapChain->GetSurfaceFormat();
+		RtvDesc.Texture2D.MipSlice		= 0;
+		RtvDesc.Texture2D.PlaneSlice	= 0;
+
+		D3D12_CPU_DESCRIPTOR_HANDLE Handle = RenderTargetHeap->GetCPUDescriptorHandleAt(i);
+		Device->GetDevice()->CreateRenderTargetView(SwapChain->GetSurfaceResource(i), &RtvDesc, Handle);
+
+		BackBufferHandles[i] = Handle;
+	}
 }
 
 void Renderer::WaitForPendingFrames()

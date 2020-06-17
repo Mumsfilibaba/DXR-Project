@@ -32,31 +32,33 @@ public:
 	static Renderer* Get();
 	
 private:
-	bool Init(std::shared_ptr<WindowsWindow> RendererWindow);
+	bool Initialize(std::shared_ptr<WindowsWindow> RendererWindow);
+	bool CreateResultTexture();
+	void CreateRenderTargetViews();
 
 	void WaitForPendingFrames();
 
 private:
-	std::shared_ptr<D3D12Device>			Device				= nullptr;
-	std::shared_ptr<D3D12CommandQueue>		Queue				= nullptr;
-	std::shared_ptr<D3D12CommandList>		CommandList			= nullptr;
-	std::shared_ptr<D3D12DescriptorHeap>	RenderTargetHeap	= nullptr;
-	std::shared_ptr<D3D12DescriptorHeap>	DepthStencilHeap	= nullptr;
-	std::shared_ptr<D3D12Fence>				Fence				= nullptr;
-	std::shared_ptr<D3D12SwapChain>			SwapChain			= nullptr;
+	std::shared_ptr<D3D12Device>			Device;
+	std::shared_ptr<D3D12CommandQueue>		Queue;
+	std::shared_ptr<D3D12CommandList>		CommandList;
+	std::shared_ptr<D3D12DescriptorHeap>	RenderTargetHeap;
+	std::shared_ptr<D3D12DescriptorHeap>	DepthStencilHeap;
+	std::shared_ptr<D3D12Fence>				Fence;
+	std::shared_ptr<D3D12SwapChain>			SwapChain;
 
 	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>			BackBufferHandles;
 	std::vector<Uint64>									FenceValues;
 
-	class D3D12Texture* ResultTexture = nullptr;
+	class D3D12Texture* ResultTexture;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE VertexBufferCPUHandle;
 	D3D12_CPU_DESCRIPTOR_HANDLE IndexBufferCPUHandle;
 
-	std::shared_ptr<D3D12Buffer>					CameraBuffer	= nullptr;
-	std::shared_ptr<D3D12RayTracingScene>			Scene			= nullptr;
-	std::shared_ptr<D3D12RayTracingPipelineState>	PipelineState	= nullptr;
+	std::shared_ptr<D3D12Buffer>					CameraBuffer;
+	std::shared_ptr<D3D12RayTracingScene>			Scene;
+	std::shared_ptr<D3D12RayTracingPipelineState>	PipelineState;
 
 	Camera SceneCamera;
 

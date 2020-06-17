@@ -11,7 +11,7 @@ D3D12Fence::~D3D12Fence()
 	::CloseHandle(Event);
 }
 
-bool D3D12Fence::Init(Uint64 InitalValue)
+bool D3D12Fence::Initialize(Uint64 InitalValue)
 {
 	HRESULT hResult = Device->GetDevice()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
 	if (SUCCEEDED(hResult))

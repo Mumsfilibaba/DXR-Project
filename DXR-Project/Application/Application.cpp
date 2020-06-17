@@ -26,7 +26,7 @@ std::shared_ptr<WindowsWindow> Application::GetWindow()
 Application* Application::Create()
 {
 	ApplicationInstance = std::make_unique<Application>();
-	if (ApplicationInstance->Init())
+	if (ApplicationInstance->Initialize())
 	{
 		return ApplicationInstance.get();
 	}
@@ -61,7 +61,7 @@ void Application::OnMouseMove(Int32 x, Int32 y)
 {
 }
 
-bool Application::Init()
+bool Application::Initialize()
 {
 	// Application
 	HINSTANCE hInstance = static_cast<HINSTANCE>(GetModuleHandle(NULL));

@@ -13,7 +13,7 @@ D3D12SwapChain::~D3D12SwapChain()
 {
 }
 
-bool D3D12SwapChain::Init(WindowsWindow* Window, D3D12CommandQueue* Queue)
+bool D3D12SwapChain::Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue)
 {
 	using namespace Microsoft::WRL;
 
@@ -84,10 +84,13 @@ bool D3D12SwapChain::Resize(Int32 NewWidth, Int32 NewHeight)
 
 	ReleaseSurfaces();
 
-	HRESULT Result = SwapChain->ResizeBuffers1(0, NewWidth, NewHeight, DXGI_FORMAT_UNKNOWN, Flags, nullptr, nullptr);
+	HRESULT Result = SwapChain->ResizeBuffers(0, NewWidth, NewHeight, DXGI_FORMAT_UNKNOWN, Flags);
 	if (SUCCEEDED(Result))
 	{
+		Width	= NewWidth;
+		Height	= NewHeight;
 
+		RetriveSwapChainSurfaces();
 		return true;
 	}
 	else
@@ -110,7 +113,10 @@ void D3D12SwapChain::RetriveSwapChainSurfaces()
 {
 	using namespace Microsoft::WRL;
 
-	BackBuffers.resize(GetSurfaceCount());
+	if (BackBuffers.size() < GetSurfaceCount())
+	{
+		BackBuffers.resize(GetSurfaceCount());
+	}
 
 	Uint32 BufferID = 0;
 	for (ComPtr<ID3D12Resource>& Buffer : BackBuffers)

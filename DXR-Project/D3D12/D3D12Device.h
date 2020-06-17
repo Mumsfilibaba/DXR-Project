@@ -16,7 +16,7 @@ public:
 	D3D12Device();
 	~D3D12Device();
 
-	bool Init(bool DebugEnable);
+	bool Initialize(bool DebugEnable);
 
 	ID3D12Device* GetDevice() const
 	{
@@ -55,8 +55,9 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Device>	D3DDevice;
 	Microsoft::WRL::ComPtr<ID3D12Device5>	DXRDevice;
 
-	bool IsDebugEnabled		= false;
-	BOOL AllowTearing		= FALSE;
+	bool DebugEnabled			= false;
+	bool RayTracingSupported	= false;
+	BOOL AllowTearing			= FALSE;
 
 	Uint32 AdapterID = 0;
 

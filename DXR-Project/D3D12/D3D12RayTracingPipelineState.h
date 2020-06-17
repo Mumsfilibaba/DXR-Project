@@ -24,7 +24,7 @@ public:
 	D3D12RayTracingPipelineState(D3D12Device* Device);
 	~D3D12RayTracingPipelineState();
 
-	bool Init();
+	bool Initialize();
 
 	ID3D12StateObject* GetStateObject() const
 	{

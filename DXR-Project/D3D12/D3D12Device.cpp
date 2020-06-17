@@ -24,7 +24,7 @@ D3D12Device::~D3D12Device()
 
 	SAFEDELETE(GlobalResourceDescriptorHeap);
 
-	if (IsDebugEnabled)
+	if (DebugEnabled)
 	{
 		ComPtr<ID3D12DebugDevice> DebugDevice;
 		if (SUCCEEDED(D3DDevice.As<ID3D12DebugDevice>(&DebugDevice)))
@@ -34,12 +34,12 @@ D3D12Device::~D3D12Device()
 	}
 }
 
-bool D3D12Device::Init(bool DebugEnable)
+bool D3D12Device::Initialize(bool DebugEnable)
 {
 	using namespace Microsoft::WRL;
 
 	// Enable Debug
-	IsDebugEnabled = DebugEnable;
+	DebugEnabled = DebugEnable;
 
 	// Start Initialization of D3D12-Device
 	if (!CreateFactory())
@@ -71,7 +71,7 @@ bool D3D12Device::Init(bool DebugEnable)
 	}
 
 	// Configure debug device (if active).
-	if (IsDebugEnabled)
+	if (DebugEnabled)
 	{
 		ComPtr<ID3D12InfoQueue> InfoQueue;
 		if (SUCCEEDED(D3DDevice.As(&InfoQueue)))
@@ -126,7 +126,7 @@ bool D3D12Device::Init(bool DebugEnable)
 
 	// Create Global DescriptorHeap
 	GlobalResourceDescriptorHeap = new D3D12DescriptorHeap(this);
-	if (!GlobalResourceDescriptorHeap->Init(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 8, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE))
+	if (!GlobalResourceDescriptorHeap->Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 8, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE))
 	{
 		return false;
 	}
@@ -141,7 +141,7 @@ bool D3D12Device::Init(bool DebugEnable)
 D3D12Device* D3D12Device::Create(bool DebugEnable)
 {
 	D3D12Device* NewDevice = new D3D12Device();
-	if (NewDevice->Init(DebugEnable))
+	if (NewDevice->Initialize(DebugEnable))
 	{
 		return NewDevice;
 	}
@@ -157,7 +157,7 @@ bool D3D12Device::CreateFactory()
 
 	// Enable debuglayer
 	Uint32 DebugFlags = 0;
-	if (IsDebugEnabled)
+	if (DebugEnabled)
 	{
 		ComPtr<ID3D12Debug> DebugInterface;
 		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))

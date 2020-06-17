@@ -10,7 +10,7 @@ public:
 	D3D12CommandList(D3D12Device* Device);
 	~D3D12CommandList();
 
-	bool Init(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline);
+	bool Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline);
 
 	bool Reset(D3D12CommandAllocator* Allocator)
 	{

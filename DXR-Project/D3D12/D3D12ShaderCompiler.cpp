@@ -19,7 +19,7 @@ D3D12ShaderCompiler::~D3D12ShaderCompiler()
 {
 }
 
-bool D3D12ShaderCompiler::Init()
+bool D3D12ShaderCompiler::Initialize()
 {
 	HRESULT hResult = ::DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&DxCompiler));
 	if (SUCCEEDED(hResult))
@@ -132,7 +132,7 @@ std::unique_ptr<D3D12ShaderCompiler> D3D12ShaderCompiler::CompilerInstance = nul
 D3D12ShaderCompiler* D3D12ShaderCompiler::Create()
 {
 	CompilerInstance.reset(new D3D12ShaderCompiler());
-	if (CompilerInstance->Init())
+	if (CompilerInstance->Initialize())
 	{
 		return CompilerInstance.get();
 	}

@@ -12,7 +12,7 @@ D3D12CommandQueue::~D3D12CommandQueue()
 {
 }
 
-bool D3D12CommandQueue::Init()
+bool D3D12CommandQueue::Initialize()
 {
 	// Create the command queue.
 	D3D12_COMMAND_QUEUE_DESC QueueDesc = {};

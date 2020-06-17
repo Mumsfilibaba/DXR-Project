@@ -10,7 +10,7 @@ D3D12CommandAllocator::~D3D12CommandAllocator()
 {
 }
 
-bool D3D12CommandAllocator::Init(D3D12_COMMAND_LIST_TYPE Type)
+bool D3D12CommandAllocator::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 {
 	HRESULT hResult = Device->GetDevice()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
 	if (SUCCEEDED(hResult))

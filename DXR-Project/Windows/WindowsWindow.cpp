@@ -14,7 +14,7 @@ WindowsWindow::~WindowsWindow()
 	}
 }
 
-bool WindowsWindow::Init(Uint16 Width, Uint16 Height)
+bool WindowsWindow::Initialize(WindowsApplication* InOwnerApplication, Uint16 Width, Uint16 Height)
 {
 	RECT ClientRect = { 0, 0, static_cast<LONG>(Width), static_cast<LONG>(Height) };
 	::AdjustWindowRect(&ClientRect, dwStyle, FALSE);
@@ -22,10 +22,12 @@ bool WindowsWindow::Init(Uint16 Width, Uint16 Height)
 	INT nWidth	= ClientRect.right	- ClientRect.left;
 	INT nHeight = ClientRect.bottom - ClientRect.top;
 
-	HINSTANCE hInstance = GlobalWindowsApplication->GetInstance();
+	HINSTANCE hInstance = InOwnerApplication->GetInstance();
 	hWindow = ::CreateWindowEx(0, "WinClass", "DXR", dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, hInstance, NULL);
 	if (hWindow == NULL)
 	{
+		OwnerApplication = InOwnerApplication;
+
 		::OutputDebugString("[WindowsWindow]: Failed to create window\n");
 		return false;
 	}

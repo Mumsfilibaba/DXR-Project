@@ -16,7 +16,7 @@ public:
 	D3D12SwapChain(D3D12Device* Device);
 	~D3D12SwapChain();
 
-	bool Init(WindowsWindow* Window, D3D12CommandQueue* Queue);
+	bool Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue);
 
 	bool Resize(Int32 NewWidth, Int32 NewHeight);
 
@@ -37,6 +37,16 @@ public:
 	Uint32 GetSurfaceCount() const
 	{
 		return 3;
+	}
+
+	Uint32 GetWidth() const
+	{
+		return Width;
+	}
+
+	Uint32 GetHeight() const
+	{
+		return Height;
 	}
 
 private:

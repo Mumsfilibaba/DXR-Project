@@ -17,7 +17,7 @@ public:
 private:
 	D3D12ShaderCompiler();
 
-	bool Init();
+	bool Initialize();
 
 private:
 	Microsoft::WRL::ComPtr<IDxcCompiler>		DxCompiler;

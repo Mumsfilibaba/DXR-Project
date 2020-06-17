@@ -76,7 +76,7 @@ WindowsApplication::~WindowsApplication()
 std::shared_ptr<WindowsWindow> WindowsApplication::CreateWindow(Uint16 Width, Uint16 Height)
 {
 	std::shared_ptr<WindowsWindow> NewWindow = std::shared_ptr<WindowsWindow>(new WindowsWindow());
-	if (NewWindow->Init(Width, Height))
+	if (NewWindow->Initialize(this, Width, Height))
 	{
 		AddWindow(NewWindow);
 		return NewWindow;

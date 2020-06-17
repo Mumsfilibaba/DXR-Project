@@ -12,13 +12,15 @@ public:
 	Int16	y;
 };
 
+class WindowsApplication;
+
 class WindowsWindow
 {
 public:
 	WindowsWindow();
 	~WindowsWindow();
 
-	bool Init(Uint16 Width, Uint16 Height);
+	bool Initialize(WindowsApplication* InOwnerApplication, Uint16 Width, Uint16 Height);
 
 	void Show();
 
@@ -30,6 +32,8 @@ public:
 	}
 
 private:
+	WindowsApplication* OwnerApplication = nullptr;
+
 	HWND	hWindow = 0;
 	DWORD	dwStyle = WS_OVERLAPPEDWINDOW;
 };

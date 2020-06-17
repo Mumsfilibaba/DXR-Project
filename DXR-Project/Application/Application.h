@@ -25,7 +25,7 @@ public:
 	virtual void OnMouseMove(Int32 x, Int32 y)										override;
 
 private:
-	bool Init();
+	bool Initialize();
 
 protected:
 	std::shared_ptr<WindowsWindow>	Window				= nullptr;

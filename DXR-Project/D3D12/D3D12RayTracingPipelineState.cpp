@@ -18,7 +18,7 @@ D3D12RayTracingPipelineState::~D3D12RayTracingPipelineState()
 {
 }
 
-bool D3D12RayTracingPipelineState::Init()
+bool D3D12RayTracingPipelineState::Initialize()
 {
 	if (!CreatePipeline())
 	{
@@ -440,7 +440,7 @@ bool D3D12RayTracingPipelineState::CreateBindingTable()
 		BufferProps.HeapProperties	= HeapProps::UploadHeap();
 
 		RayGenTable.Resource = new D3D12Buffer(Device);
-		RayGenTable.Resource->Init(BufferProps);
+		RayGenTable.Resource->Initialize(BufferProps);
 
 		// Map the buffer
 		void* Data = RayGenTable.Resource->Map();
@@ -473,7 +473,7 @@ bool D3D12RayTracingPipelineState::CreateBindingTable()
 		BufferProps.HeapProperties	= HeapProps::UploadHeap();
 
 		MissTable.Resource = new D3D12Buffer(Device);
-		MissTable.Resource->Init(BufferProps);
+		MissTable.Resource->Initialize(BufferProps);
 
 		// Map the buffer
 		void* Data = MissTable.Resource->Map();
@@ -508,7 +508,7 @@ bool D3D12RayTracingPipelineState::CreateBindingTable()
 		BufferProps.HeapProperties	= HeapProps::UploadHeap();
 
 		HitTable.Resource = new D3D12Buffer(Device);
-		HitTable.Resource->Init(BufferProps);
+		HitTable.Resource->Initialize(BufferProps);
 
 		// Map the buffer
 		void* Data = HitTable.Resource->Map();

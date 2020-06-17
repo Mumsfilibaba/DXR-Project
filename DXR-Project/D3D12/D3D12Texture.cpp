@@ -10,7 +10,7 @@ D3D12Texture::~D3D12Texture()
 {
 }
 
-bool D3D12Texture::Init(const TextureProperties& Properties)
+bool D3D12Texture::Initialize(const TextureProperties& Properties)
 {
 	D3D12_RESOURCE_DESC Desc = {};
 	Desc.DepthOrArraySize	= 1;

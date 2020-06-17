@@ -17,7 +17,7 @@ D3D12RayTracingGeometry::~D3D12RayTracingGeometry()
 	SAFEDELETE(ResultBuffer);
 }
 
-bool D3D12RayTracingGeometry::Init(D3D12CommandList* InCommandList, std::shared_ptr<D3D12Buffer> InVertexBuffer, Uint32 VertexCount, std::shared_ptr<D3D12Buffer> InIndexBuffer, Uint32 IndexCount)
+bool D3D12RayTracingGeometry::Initialize(D3D12CommandList* InCommandList, std::shared_ptr<D3D12Buffer> InVertexBuffer, Uint32 VertexCount, std::shared_ptr<D3D12Buffer> InIndexBuffer, Uint32 IndexCount)
 {
 	D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc = {};
 	GeometryDesc.Type									= D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
@@ -49,7 +49,7 @@ bool D3D12RayTracingGeometry::Init(D3D12CommandList* InCommandList, std::shared_
 	BufferProps.HeapProperties	= HeapProps::DefaultHeap();
 
 	ScratchBuffer = new D3D12Buffer(Device);
-	if (!ScratchBuffer->Init(BufferProps))
+	if (!ScratchBuffer->Initialize(BufferProps))
 	{
 		return false;
 	}
@@ -58,7 +58,7 @@ bool D3D12RayTracingGeometry::Init(D3D12CommandList* InCommandList, std::shared_
 	BufferProps.InitalState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 
 	ResultBuffer = new D3D12Buffer(Device);
-	if (!ResultBuffer->Init(BufferProps))
+	if (!ResultBuffer->Initialize(BufferProps))
 	{
 		return false;
 	}
@@ -102,7 +102,7 @@ D3D12RayTracingScene::~D3D12RayTracingScene()
 	SAFEDELETE(InstanceBuffer);
 }
 
-bool D3D12RayTracingScene::Init(D3D12CommandList* InCommandList, std::vector<D3D12RayTracingGeometryInstance>& InInstances)
+bool D3D12RayTracingScene::Initialize(D3D12CommandList* InCommandList, std::vector<D3D12RayTracingGeometryInstance>& InInstances)
 {
 	const Uint32 InstanceCount = static_cast<Uint32>(InInstances.size());
 
@@ -124,7 +124,7 @@ bool D3D12RayTracingScene::Init(D3D12CommandList* InCommandList, std::vector<D3D
 	BufferProps.HeapProperties	= HeapProps::DefaultHeap();
 
 	ScratchBuffer = new D3D12Buffer(Device);
-	if (!ScratchBuffer->Init(BufferProps))
+	if (!ScratchBuffer->Initialize(BufferProps))
 	{
 		return false;
 	}
@@ -133,7 +133,7 @@ bool D3D12RayTracingScene::Init(D3D12CommandList* InCommandList, std::vector<D3D
 	BufferProps.InitalState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 
 	ResultBuffer = new D3D12Buffer(Device);
-	if (!ResultBuffer->Init(BufferProps))
+	if (!ResultBuffer->Initialize(BufferProps))
 	{
 		return false;
 	}
@@ -144,7 +144,7 @@ bool D3D12RayTracingScene::Init(D3D12CommandList* InCommandList, std::vector<D3D
 	BufferProps.HeapProperties	= HeapProps::UploadHeap();
 
 	InstanceBuffer = new D3D12Buffer(Device);
-	if(!InstanceBuffer->Init(BufferProps))
+	if(!InstanceBuffer->Initialize(BufferProps))
 	{
 		return false;
 	}

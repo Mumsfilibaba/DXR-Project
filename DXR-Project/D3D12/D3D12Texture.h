@@ -18,7 +18,7 @@ public:
 	D3D12Texture(D3D12Device* Device);
 	~D3D12Texture();
 
-	bool Init(const TextureProperties& Properties);
+	bool Initialize(const TextureProperties& Properties);
 
 	ID3D12Resource1* GetResource() const
 	{
