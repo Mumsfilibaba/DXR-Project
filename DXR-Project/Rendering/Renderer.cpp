@@ -23,7 +23,8 @@ void Renderer::Tick()
 	{
 		IsCameraAcive = !IsCameraAcive;
 	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_RIGHT))
+
+	if (InputManager::Get().IsKeyDown(EKey::KEY_RIGHT))
 	{
 		SceneCamera.Rotate(0.0f, -0.01f, 0.0f);
 	}
@@ -31,7 +32,8 @@ void Renderer::Tick()
 	{
 		SceneCamera.Rotate(0.0f, 0.01f, 0.0f);
 	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_UP))
+
+	if (InputManager::Get().IsKeyDown(EKey::KEY_UP))
 	{
 		SceneCamera.Rotate(-0.01f, 0.0f, 0.0f);
 	}
@@ -39,32 +41,30 @@ void Renderer::Tick()
 	{
 		SceneCamera.Rotate(0.01f, 0.0f, 0.0f);
 	}
-	// W
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_W))
+
+	if (InputManager::Get().IsKeyDown(EKey::KEY_W))
 	{
 		SceneCamera.Move(0.0f, 0.0f, 0.01f);
 	}
-	// S
 	else if (InputManager::Get().IsKeyDown(EKey::KEY_S))
 	{
 		SceneCamera.Move(0.0f, 0.0f, -0.01f);
 	}
-	// A
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_A))
+	
+	
+	if (InputManager::Get().IsKeyDown(EKey::KEY_A))
 	{
 		SceneCamera.Move(0.01f, 0.0f, 0.0f);
 	}
-	// D
 	else if (InputManager::Get().IsKeyDown(EKey::KEY_D))
 	{
 		SceneCamera.Move(-0.01f, 0.0f, 0.0f);
 	}
-	// Q
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_Q))
+	
+	if (InputManager::Get().IsKeyDown(EKey::KEY_Q))
 	{
 		SceneCamera.Move(0.0f, 0.01f, 0.0f);
 	}
-	// E
 	else if (InputManager::Get().IsKeyDown(EKey::KEY_E))
 	{
 		SceneCamera.Move(0.0f, -0.01f, 0.0f);
@@ -77,6 +77,7 @@ void Renderer::Tick()
 
 	CommandAllocators[BackBufferIndex]->Reset();
 	CommandList->Reset(CommandAllocators[BackBufferIndex].get());
+	UploadBuffers[BackBufferIndex]->Reset();
 
 	//Set constant buffer descriptor heap
 	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalResourceDescriptorHeap()->GetHeap() };
@@ -84,9 +85,13 @@ void Renderer::Tick()
 
 	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-	void* BufferMemory = CameraBuffer->Map();
-	memcpy(BufferMemory, &SceneCamera, sizeof(Camera));
-	CameraBuffer->Unmap();
+	Uint64 Offset = UploadBuffers[BackBufferIndex]->GetOffset();
+	void* CameraMemory = UploadBuffers[BackBufferIndex]->Allocate(sizeof(Camera));
+	memcpy(CameraMemory, &SceneCamera, sizeof(Camera));
+	
+	CommandList->TransitionBarrier(CameraBuffer->GetResource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+	CommandList->CopyBuffer(CameraBuffer->GetResource(), 0, UploadBuffers[BackBufferIndex]->GetResource(), Offset, sizeof(Camera));
+	CommandList->TransitionBarrier(CameraBuffer->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
 	raytraceDesc.Width	= SwapChain->GetWidth();
@@ -115,6 +120,7 @@ void Renderer::Tick()
 	// Indicate that the back buffer will now be used to present.
 	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
 
+	UploadBuffers[BackBufferIndex]->Close();
 	CommandList->Close();
 
 	// Execute
@@ -203,10 +209,18 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 
 	const Uint32 BackBufferCount = SwapChain->GetSurfaceCount();
 	CommandAllocators.resize(BackBufferCount);
+	UploadBuffers.resize(BackBufferCount);
+
 	for (Uint32 i = 0; i < BackBufferCount; i++)
 	{
 		CommandAllocators[i] = std::make_shared<D3D12CommandAllocator>(Device.get());
 		if (!CommandAllocators[i]->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
+		{
+			return false;
+		}
+
+		UploadBuffers[i] = std::make_shared<D3D12UploadStack>();
+		if (!UploadBuffers[i]->Initialize(Device.get()))
 		{
 			return false;
 		}
@@ -245,16 +259,12 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	BufferProperties BufferProps = { };
 	BufferProps.SizeInBytes		= 256; // Must be multiple of 256
 	BufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-	BufferProps.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
-	BufferProps.HeapProperties	= HeapProps::UploadHeap();
+	BufferProps.InitalState		= D3D12_RESOURCE_STATE_COMMON;
+	BufferProps.HeapProperties	= HeapProps::DefaultHeap();
 
 	CameraBuffer = std::make_shared<D3D12Buffer>(Device.get());
 	if (CameraBuffer->Initialize(BufferProps))
 	{
-		void* BufferMemory = CameraBuffer->Map();
-		memcpy(BufferMemory, &SceneCamera, sizeof(Camera));
-		CameraBuffer->Unmap();
-
 		D3D12_CONSTANT_BUFFER_VIEW_DESC CameraViewDesc = { };
 		CameraViewDesc.BufferLocation	= CameraBuffer->GetVirtualAddress();
 		CameraViewDesc.SizeInBytes		= static_cast<Uint32>(BufferProps.SizeInBytes);
@@ -269,7 +279,10 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	// Create vertexbuffer
-	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(Mesh.Vertices.size());
+	BufferProps.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
+	BufferProps.SizeInBytes		= sizeof(Vertex) * static_cast<Uint64>(Mesh.Vertices.size());
+	BufferProps.HeapProperties	= HeapProps::UploadHeap();
+
 	std::shared_ptr<D3D12Buffer> MeshVertexBuffer = std::make_shared<D3D12Buffer>(Device.get());
 	if (MeshVertexBuffer->Initialize(BufferProps))
 	{
@@ -327,6 +340,8 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	// Build Acceleration Structures
 	CommandAllocators[0]->Reset();
 	CommandList->Reset(CommandAllocators[0].get());
+
+	CommandList->TransitionBarrier(CameraBuffer->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	// Create BLAS
 	std::shared_ptr<D3D12RayTracingGeometry> MeshGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());

@@ -53,6 +53,13 @@ public:
 		DeferredResourceBarriers.push_back(Barrier);
 	}
 
+	void CopyBuffer(ID3D12Resource* Destination, Uint64 DestinationOffset, ID3D12Resource* Source, Uint64 SourceOffset, Uint64 SizeInBytes)
+	{
+		FlushDeferredResourceBarriers();
+
+		CommandList->CopyBufferRegion(Destination, DestinationOffset, Source, SourceOffset, SizeInBytes);
+	}
+
 	void CopyResource(ID3D12Resource* Destination, ID3D12Resource* Source)
 	{
 		FlushDeferredResourceBarriers();

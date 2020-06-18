@@ -9,6 +9,7 @@
 #include "D3D12/D3D12Buffer.h"
 #include "D3D12/D3D12RayTracingScene.h"
 #include "D3D12/D3D12RayTracingPipelineState.h"
+#include "D3D12/D3D12UploadStack.h"
 
 #include "Windows/WindowsWindow.h"
 
@@ -33,6 +34,7 @@ public:
 	
 private:
 	bool Initialize(std::shared_ptr<WindowsWindow> RendererWindow);
+
 	bool CreateResultTexture();
 	void CreateRenderTargetViews();
 
@@ -59,6 +61,8 @@ private:
 	std::shared_ptr<D3D12Buffer>					CameraBuffer;
 	std::shared_ptr<D3D12RayTracingScene>			Scene;
 	std::shared_ptr<D3D12RayTracingPipelineState>	PipelineState;
+
+	std::vector<std::shared_ptr<D3D12UploadStack>> UploadBuffers;
 
 	Camera SceneCamera;
 

@@ -129,6 +129,8 @@ void WindowsApplication::SetEventHandler(std::shared_ptr<EventHandler> NewMessag
 
 LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
+	constexpr Uint16 SCAN_CODE_MASK = 0x01ff;
+
 	std::shared_ptr<WindowsWindow> MessageWindow = GetWindowFromHWND(hWnd);
 	switch (uMessage)
 	{
@@ -154,7 +156,8 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		case WM_SYSKEYUP:
 		case WM_KEYUP:
 		{
-			EKey Key = InputManager::Get().ConvertFromKeyCode(static_cast<Uint32>(wParam));
+			const Uint32	ScanCode	= static_cast<Uint32>(HIWORD(lParam) & SCAN_CODE_MASK);
+			const EKey		Key			= InputManager::Get().ConvertFromKeyCode(ScanCode);
 			MessageEventHandler->OnKeyUp(Key);
 			return 0;
 		}
@@ -162,7 +165,8 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
 		{
-			EKey Key = InputManager::Get().ConvertFromKeyCode(static_cast<Uint32>(wParam));
+			const Uint32	ScanCode	= static_cast<Uint32>(HIWORD(lParam) & SCAN_CODE_MASK);
+			const EKey		Key			= InputManager::Get().ConvertFromKeyCode(ScanCode);
 			MessageEventHandler->OnKeyDown(Key);
 			return 0;
 		}

@@ -19,8 +19,10 @@ private:
 	InputManager();
 	~InputManager();
 
-	void InitializeKeyMappings();
+	void InitializeKeyTables();
 
 private:
-	bool KeyStates[EKey::KEY_COUNT];
+	bool	KeyStates[EKey::KEY_COUNT];
+	EKey	ScanCodeTable[512];
+	Uint16	KeyTable[512];
 };
