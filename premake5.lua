@@ -67,6 +67,7 @@ workspace "DXR-Project"
 
 	-- Dependencies
 	group "Dependencies"
+		include "Dependencies/imgui"
 	group ""
 
     -- Engine Project
@@ -107,6 +108,16 @@ workspace "DXR-Project"
         {	
             "**.hlsl",
         }
+
+		sysincludedirs
+		{
+			"Dependencies/imgui",
+		}
+        
+		links 
+		{ 
+			"ImGui",
+		}
 
         -- Includes
 		includedirs
