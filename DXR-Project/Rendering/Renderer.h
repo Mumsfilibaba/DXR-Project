@@ -43,6 +43,8 @@ private:
 
 	void WaitForPendingFrames();
 
+	void TraceRays(ID3D12Resource* BackBuffer, D3D12CommandList* CommandList);
+
 private:
 	std::shared_ptr<D3D12Device>			Device;
 	std::shared_ptr<D3D12CommandQueue>		Queue;

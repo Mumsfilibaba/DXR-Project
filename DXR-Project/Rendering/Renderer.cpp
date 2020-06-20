@@ -46,7 +46,6 @@ void Renderer::Tick()
 		SceneCamera.Move(0.0f, 0.0f, -0.01f);
 	}
 	
-	
 	if (InputManager::Get().IsKeyDown(EKey::KEY_A))
 	{
 		SceneCamera.Move(0.01f, 0.0f, 0.0f);
@@ -77,8 +76,6 @@ void Renderer::Tick()
 	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalResourceDescriptorHeap()->GetHeap() };
 	CommandList->SetDescriptorHeaps(DescriptorHeaps, ARRAYSIZE(DescriptorHeaps));
 
-	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
 	Uint64 Offset = UploadBuffers[CurrentBackBufferIndex]->GetOffset();
 	void* CameraMemory = UploadBuffers[CurrentBackBufferIndex]->Allocate(sizeof(Camera));
 	memcpy(CameraMemory, &SceneCamera, sizeof(Camera));
@@ -87,32 +84,19 @@ void Renderer::Tick()
 	CommandList->CopyBuffer(CameraBuffer->GetResource(), 0, UploadBuffers[CurrentBackBufferIndex]->GetResource(), Offset, sizeof(Camera));
 	CommandList->TransitionBarrier(CameraBuffer->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-	raytraceDesc.Width	= SwapChain->GetWidth();
-	raytraceDesc.Height	= SwapChain->GetHeight();
-	raytraceDesc.Depth	= 1;
+	if (false)
+	{
+		TraceRays(BackBuffer, CommandList.get());
+	}
+	else
+	{
+		CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		
+		const Float32 ClearColor[4] = { 0.3921f, 0.5843f, 0.9394f, 1.0f };
+		CommandList->ClearRenderTargetView(BackBufferHandles[CurrentBackBufferIndex], ClearColor);
 
-	// Set shader tables
-	raytraceDesc.RayGenerationShaderRecord	= PipelineState->GetRayGenerationShaderRecord();
-	raytraceDesc.MissShaderTable			= PipelineState->GetMissShaderTable();
-	raytraceDesc.HitGroupTable				= PipelineState->GetHitGroupTable();
-
-	// Bind the empty root signature
-	CommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
-	CommandList->SetComputeRootDescriptorTable(CameraBufferGPUHandle, 0);
-
-	// Dispatch
-	CommandList->SetStateObject(PipelineState->GetStateObject());
-	CommandList->DispatchRays(&raytraceDesc);
-
-	// Copy the results to the back-buffer
-	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-
-	CommandList->CopyResource(BackBuffer, ResultTexture->GetResource());
-
-	// Indicate that the back buffer will now be used to present.
-	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
+		CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	}
 
 	UploadBuffers[CurrentBackBufferIndex]->Close();
 	CommandList->Close();
@@ -134,6 +118,38 @@ void Renderer::Tick()
 	}
 }
 
+void Renderer::TraceRays(ID3D12Resource* BackBuffer, D3D12CommandList* CommandList)
+{
+	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
+	raytraceDesc.Width	= SwapChain->GetWidth();
+	raytraceDesc.Height = SwapChain->GetHeight();
+	raytraceDesc.Depth	= 1;
+
+	// Set shader tables
+	raytraceDesc.RayGenerationShaderRecord = PipelineState->GetRayGenerationShaderRecord();
+	raytraceDesc.MissShaderTable = PipelineState->GetMissShaderTable();
+	raytraceDesc.HitGroupTable = PipelineState->GetHitGroupTable();
+
+	// Bind the empty root signature
+	CommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
+	CommandList->SetComputeRootDescriptorTable(CameraBufferGPUHandle, 0);
+
+	// Dispatch
+	CommandList->SetStateObject(PipelineState->GetStateObject());
+	CommandList->DispatchRays(&raytraceDesc);
+
+	// Copy the results to the back-buffer
+	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+
+	CommandList->CopyResource(BackBuffer, ResultTexture->GetResource());
+
+	// Indicate that the back buffer will now be used to present.
+	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
+}
+
 void Renderer::OnResize(Int32 NewWidth, Int32 NewHeight)
 {
 	WaitForPendingFrames();
@@ -144,8 +160,6 @@ void Renderer::OnResize(Int32 NewWidth, Int32 NewHeight)
 	SAFEDELETE(ResultTexture);
 
 	CreateResultTexture();
-
-	SceneCamera.
 
 	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 }
@@ -358,7 +372,8 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 		return false;
 	}
 
-	//return true;
+	// Return before createing accelerationstructure
+	return true;
 
 	// Build Acceleration Structures
 	CommandAllocators[0]->Reset();
@@ -462,7 +477,7 @@ bool Renderer::CreateResultTexture()
 
 void Renderer::CreateRenderTargetViews()
 {
-	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> BackBufferHandles(SwapChain->GetSurfaceCount());
+	BackBufferHandles = std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>(SwapChain->GetSurfaceCount());
 	for (Uint32 i = 0; i < SwapChain->GetSurfaceCount(); i++)
 	{
 		D3D12_RENDER_TARGET_VIEW_DESC RtvDesc = { };
