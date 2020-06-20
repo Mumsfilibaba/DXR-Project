@@ -13,6 +13,8 @@
 
 #include "Windows/WindowsWindow.h"
 
+#include "Application/InputCodes.h"
+
 #include <memory>
 #include <vector>
 
@@ -27,7 +29,8 @@ public:
 	void Tick();
 	
 	void OnResize(Int32 NewWidth, Int32 NewHeight);
-	void OnKeyDown(Uint32 KeyCode);
+	void OnMouseMove(Int32 X, Int32 Y);
+	void OnKeyDown(EKey KeyCode);
 
 	static Renderer* Create(std::shared_ptr<WindowsWindow> RendererWindow);
 	static Renderer* Get();
@@ -51,7 +54,9 @@ private:
 
 	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>			BackBufferHandles;
-	std::vector<Uint64>									FenceValues;
+	
+	std::vector<Uint64>	FenceValues;
+	Uint32				CurrentBackBufferIndex = 0;
 
 	class D3D12Texture* ResultTexture;
 
@@ -75,23 +80,3 @@ private:
 
 	static std::unique_ptr<Renderer> RendererInstance;
 };
-
-
-//
-//void D3D12RayTracer::OnMouseMove(Int32 x, Int32 y)
-//{
-//	if (IsCameraAcive)
-//	{
-//		static Int32 OldX = x;
-//		static Int32 OldY = y;
-//
-//		const Int32 DeltaX = OldX - x;
-//		const Int32 DeltaY = y - OldY;
-//
-//		SceneCamera.Rotate(XMConvertToRadians(static_cast<Float32>(DeltaY)), XMConvertToRadians(static_cast<Float32>(DeltaX)), 0.0f);
-//		SceneCamera.UpdateMatrices();
-//
-//		OldX = x;
-//		OldY = y;
-//	}
-//}

@@ -15,16 +15,16 @@ public:
 
 	void Move(Float32 x, Float32 y, Float32 z)
 	{
-		XMVECTOR XmPosition = XMLoadFloat3(&Position);
-		XMVECTOR XmRight = XMLoadFloat3(&Right);
-		XMVECTOR XmUp = XMLoadFloat3(&Up);
-		XMVECTOR XmForward = XMLoadFloat3(&Forward);
-		XmRight = XMVectorScale(XmRight, x);
-		XmUp = XMVectorScale(XmUp, y);
-		XmForward = XMVectorScale(XmForward, z);
-		XmPosition = XMVectorAdd(XmPosition, XmRight);
-		XmPosition = XMVectorAdd(XmPosition, XmUp);
-		XmPosition = XMVectorAdd(XmPosition, XmForward);
+		XMVECTOR XmPosition	= XMLoadFloat3(&Position);
+		XMVECTOR XmRight	= XMLoadFloat3(&Right);
+		XMVECTOR XmUp		= XMLoadFloat3(&Up);
+		XMVECTOR XmForward	= XMLoadFloat3(&Forward);
+		XmRight				= XMVectorScale(XmRight, x);
+		XmUp				= XMVectorScale(XmUp, y);
+		XmForward			= XMVectorScale(XmForward, z);
+		XmPosition			= XMVectorAdd(XmPosition, XmRight);
+		XmPosition			= XMVectorAdd(XmPosition, XmUp);
+		XmPosition			= XMVectorAdd(XmPosition, XmForward);
 
 		XMStoreFloat3(&Position, XmPosition);
 	}
@@ -33,14 +33,14 @@ public:
 	{
 		XMMATRIX RotationMatrix = XMMatrixRotationRollPitchYaw(Pitch, Yaw, Roll);
 
-		XMVECTOR XmForward = XMLoadFloat3(&Forward);
-		XmForward = XMVector3Transform(XmForward, RotationMatrix);
+		XMVECTOR XmForward	= XMLoadFloat3(&Forward);
+		XmForward			= XMVector3Transform(XmForward, RotationMatrix);
 
-		XMVECTOR XmUp = XMLoadFloat3(&Up);
-		XmUp = XMVector3Transform(XmUp, RotationMatrix);
+		XMVECTOR XmUp	= XMLoadFloat3(&Up);
+		XmUp			= XMVector3Transform(XmUp, RotationMatrix);
 
-		XMVECTOR XmRight = XMLoadFloat3(&Right);
-		XmRight = XMVector3Transform(XmRight, RotationMatrix);
+		XMVECTOR XmRight	= XMLoadFloat3(&Right);
+		XmRight				= XMVector3Transform(XmRight, RotationMatrix);
 
 		XMStoreFloat3(&Forward, XmForward);
 		XMStoreFloat3(&Up, XmUp);
@@ -53,17 +53,17 @@ public:
 
 	void UpdateMatrices()
 	{
-		Float32 Fov = XMConvertToRadians(90.0f);
+		Float32 Fov			= XMConvertToRadians(90.0f);
 		XMMATRIX Projection = XMMatrixPerspectiveFovRH(Fov, 1920.0f / 1080.0f, 0.01f, 100.0f);
 
 		XMVECTOR XmPosition = XMLoadFloat3(&Position);
-		XMVECTOR XmForward = XMLoadFloat3(&Forward);
-		XMVECTOR XmUp = XMLoadFloat3(&Up);
-		XMVECTOR At = XMVectorAdd(XmPosition, XmForward);
-		XMMATRIX View = XMMatrixLookAtRH(XmPosition, At, XmUp);
+		XMVECTOR XmForward	= XMLoadFloat3(&Forward);
+		XMVECTOR XmUp		= XMLoadFloat3(&Up);
+		XMVECTOR At			= XMVectorAdd(XmPosition, XmForward);
+		XMMATRIX View		= XMMatrixLookAtRH(XmPosition, At, XmUp);
 
-		XMMATRIX XmViewProjection = XMMatrixMultiply(View, Projection);
-		XMMATRIX XmViewProjectionInverse = XMMatrixInverse(nullptr, XmViewProjection);
+		XMMATRIX XmViewProjection			= XMMatrixMultiply(View, Projection);
+		XMMATRIX XmViewProjectionInverse	= XMMatrixInverse(nullptr, XmViewProjection);
 
 		XMStoreFloat4x4(&ViewProjection, XMMatrixTranspose(XmViewProjection));
 		XMStoreFloat4x4(&ViewProjectionInverse, XMMatrixTranspose(XmViewProjectionInverse));

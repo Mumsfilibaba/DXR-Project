@@ -11,7 +11,7 @@ class EventHandler
 public:
 	virtual ~EventHandler() = default;
 
-	virtual void OnWindowResize(WindowsWindow* Window, Uint16 Width, Uint16 Height)
+	virtual void OnWindowResize(std::shared_ptr<WindowsWindow>& Window, Uint16 Width, Uint16 Height)
 	{
 	}
 
@@ -23,7 +23,7 @@ public:
 	{
 	}
 
-	virtual void OnMouseMove(Int32 x, Int32 y)
+	virtual void OnMouseMove(Int32 X, Int32 Y)
 	{
 	}
 

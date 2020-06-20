@@ -19,11 +19,6 @@ Renderer::~Renderer()
 
 void Renderer::Tick()
 {
-	if (InputManager::Get().IsKeyDown(EKey::KEY_ESCAPE))
-	{
-		IsCameraAcive = !IsCameraAcive;
-	}
-
 	if (InputManager::Get().IsKeyDown(EKey::KEY_RIGHT))
 	{
 		SceneCamera.Rotate(0.0f, -0.01f, 0.0f);
@@ -72,12 +67,11 @@ void Renderer::Tick()
 
 	SceneCamera.UpdateMatrices();
 
-	Uint32			BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
-	ID3D12Resource*	BackBuffer		= SwapChain->GetSurfaceResource(BackBufferIndex);
+	ID3D12Resource*	BackBuffer = SwapChain->GetSurfaceResource(CurrentBackBufferIndex);
 
-	CommandAllocators[BackBufferIndex]->Reset();
-	CommandList->Reset(CommandAllocators[BackBufferIndex].get());
-	UploadBuffers[BackBufferIndex]->Reset();
+	CommandAllocators[CurrentBackBufferIndex]->Reset();
+	CommandList->Reset(CommandAllocators[CurrentBackBufferIndex].get());
+	UploadBuffers[CurrentBackBufferIndex]->Reset();
 
 	//Set constant buffer descriptor heap
 	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalResourceDescriptorHeap()->GetHeap() };
@@ -85,12 +79,12 @@ void Renderer::Tick()
 
 	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-	Uint64 Offset = UploadBuffers[BackBufferIndex]->GetOffset();
-	void* CameraMemory = UploadBuffers[BackBufferIndex]->Allocate(sizeof(Camera));
+	Uint64 Offset = UploadBuffers[CurrentBackBufferIndex]->GetOffset();
+	void* CameraMemory = UploadBuffers[CurrentBackBufferIndex]->Allocate(sizeof(Camera));
 	memcpy(CameraMemory, &SceneCamera, sizeof(Camera));
 	
 	CommandList->TransitionBarrier(CameraBuffer->GetResource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	CommandList->CopyBuffer(CameraBuffer->GetResource(), 0, UploadBuffers[BackBufferIndex]->GetResource(), Offset, sizeof(Camera));
+	CommandList->CopyBuffer(CameraBuffer->GetResource(), 0, UploadBuffers[CurrentBackBufferIndex]->GetResource(), Offset, sizeof(Camera));
 	CommandList->TransitionBarrier(CameraBuffer->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
@@ -120,7 +114,7 @@ void Renderer::Tick()
 	// Indicate that the back buffer will now be used to present.
 	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
 
-	UploadBuffers[BackBufferIndex]->Close();
+	UploadBuffers[CurrentBackBufferIndex]->Close();
 	CommandList->Close();
 
 	// Execute
@@ -130,13 +124,13 @@ void Renderer::Tick()
 	SwapChain->Present(1);
 
 	// Wait for next frame
-	const Uint64 CurrentFenceValue = FenceValues[BackBufferIndex];
+	const Uint64 CurrentFenceValue = FenceValues[CurrentBackBufferIndex];
 	Queue->SignalFence(Fence.get(), CurrentFenceValue);
 
-	BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
+	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 	if (Fence->WaitForValue(CurrentFenceValue))
 	{
-		FenceValues[BackBufferIndex] = CurrentFenceValue + 1;
+		FenceValues[CurrentBackBufferIndex] = CurrentFenceValue + 1;
 	}
 }
 
@@ -150,11 +144,36 @@ void Renderer::OnResize(Int32 NewWidth, Int32 NewHeight)
 	SAFEDELETE(ResultTexture);
 
 	CreateResultTexture();
+
+	SceneCamera.
+
+	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 }
 
-void Renderer::OnKeyDown(Uint32 KeyCode)
+void Renderer::OnMouseMove(Int32 X, Int32 Y)
 {
-	
+	if (IsCameraAcive)
+	{
+		static Int32 OldX = X;
+		static Int32 OldY = Y;
+
+		const Int32 DeltaX = OldX - X;
+		const Int32 DeltaY = Y - OldY;
+
+		SceneCamera.Rotate(XMConvertToRadians(static_cast<Float32>(DeltaY)), XMConvertToRadians(static_cast<Float32>(DeltaX)), 0.0f);
+		SceneCamera.UpdateMatrices();
+
+		OldX = X;
+		OldY = Y;
+	}
+}
+
+void Renderer::OnKeyDown(EKey KeyCode)
+{
+	if (InputManager::Get().IsKeyDown(EKey::KEY_ESCAPE))
+	{
+		IsCameraAcive = !IsCameraAcive;
+	}
 }
 
 Renderer* Renderer::Create(std::shared_ptr<WindowsWindow> RendererWindow)
@@ -205,6 +224,10 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	if (!SwapChain->Initialize(RendererWindow.get(), Queue.get()))
 	{
 		return false;
+	}
+	else
+	{
+		CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 	}
 
 	const Uint32 BackBufferCount = SwapChain->GetSurfaceCount();
@@ -457,11 +480,11 @@ void Renderer::CreateRenderTargetViews()
 
 void Renderer::WaitForPendingFrames()
 {
-	const Uint32 BackBufferIndex	= SwapChain->GetCurrentBackBufferIndex();
-	const Uint64 CurrentFenceValue	= FenceValues[BackBufferIndex];
+	const Uint64 CurrentFenceValue = FenceValues[CurrentBackBufferIndex];
+
 	Queue->SignalFence(Fence.get(), CurrentFenceValue);
 	if (Fence->WaitForValue(CurrentFenceValue))
 	{
-		FenceValues[BackBufferIndex]++;
+		FenceValues[CurrentBackBufferIndex]++;
 	}
 }

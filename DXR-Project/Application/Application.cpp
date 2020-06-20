@@ -42,7 +42,7 @@ Application* Application::Get()
 	return ApplicationInstance.get();
 }
 
-void Application::OnWindowResize(WindowsWindow* Window, Uint16 Width, Uint16 Height)
+void Application::OnWindowResize(std::shared_ptr<WindowsWindow>& Window, Uint16 Width, Uint16 Height)
 {
 	if (Renderer::Get())
 	{
@@ -65,8 +65,12 @@ void Application::OnKeyDown(EKey KeyCode)
 	}
 }
 
-void Application::OnMouseMove(Int32 x, Int32 y)
+void Application::OnMouseMove(Int32 X, Int32 Y)
 {
+	if (Renderer::Get())
+	{
+		Renderer::Get()->OnMouseMove(X, Y);
+	}
 }
 
 bool Application::Initialize()

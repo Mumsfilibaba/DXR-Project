@@ -147,7 +147,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 				const Uint16 Width	= LOWORD(lParam);
 				const Uint16 Height = HIWORD(lParam);
 
-				MessageEventHandler->OnWindowResize(MessageWindow.get(), Width, Height);
+				MessageEventHandler->OnWindowResize(MessageWindow, Width, Height);
 			}
 
 			return 0;
