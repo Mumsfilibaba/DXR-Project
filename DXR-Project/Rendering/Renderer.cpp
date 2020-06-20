@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "MeshFactory.h"
+#include "GuiContext.h"
 
 #include "D3D12/D3D12Texture.h"
 #include "D3D12/HeapProps.h"
@@ -91,12 +92,14 @@ void Renderer::Tick()
 	else
 	{
 		CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		
-		const Float32 ClearColor[4] = { 0.3921f, 0.5843f, 0.9394f, 1.0f };
-		CommandList->ClearRenderTargetView(BackBufferHandles[CurrentBackBufferIndex], ClearColor);
-
-		CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	}
+
+	const Float32 ClearColor[4] = { 0.3921f, 0.5843f, 0.9394f, 1.0f };
+	CommandList->ClearRenderTargetView(BackBufferHandles[CurrentBackBufferIndex], ClearColor);
+
+	GuiContext::Get()->Render(CommandList.get());
+
+	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
 	UploadBuffers[CurrentBackBufferIndex]->Close();
 	CommandList->Close();
@@ -147,7 +150,7 @@ void Renderer::TraceRays(ID3D12Resource* BackBuffer, D3D12CommandList* CommandLi
 	CommandList->CopyResource(BackBuffer, ResultTexture->GetResource());
 
 	// Indicate that the back buffer will now be used to present.
-	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
+	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }
 
 void Renderer::OnResize(Int32 NewWidth, Int32 NewHeight)

@@ -1,7 +1,7 @@
 #include "Application/Application.h"
 
 #include "Rendering/Renderer.h"
-#include "Rendering/ImGuiContext.h"
+#include "Rendering/GuiContext.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
@@ -37,6 +37,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	while (IsRunning)
 	{
 		IsRunning = App->Tick();
+
+		GuiContext::Get()->BeginFrame();
+
+		ImGui::ShowDemoWindow();
+
+		GuiContext::Get()->EndFrame();
+
 		Renderer::Get()->Tick();
 	}
 
