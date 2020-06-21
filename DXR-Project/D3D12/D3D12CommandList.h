@@ -88,6 +88,13 @@ public:
 		DXRCommandList->DispatchRays(Desc);
 	}
 
+	void DrawIndexedInstanced(Uint32 IndexCountPerInstance, Uint32 InstanceCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation, Uint32 StartInstanceLocation)
+	{
+		FlushDeferredResourceBarriers();
+
+		CommandList->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+	}
+
 	void SetDescriptorHeaps(ID3D12DescriptorHeap* const* DescriptorHeaps, Uint32 DescriptorHeapCount)
 	{
 		CommandList->SetDescriptorHeaps(DescriptorHeapCount, DescriptorHeaps);
@@ -98,14 +105,69 @@ public:
 		DXRCommandList->SetPipelineState1(StateObject);
 	}
 
+	void SetPipelineState(ID3D12PipelineState* PipelineState)
+	{
+		DXRCommandList->SetPipelineState(PipelineState);
+	}
+
 	void SetComputeRootSignature(ID3D12RootSignature* RootSignature)
 	{
 		CommandList->SetComputeRootSignature(RootSignature);
 	}
 
+	void SetGraphicsRootSignature(ID3D12RootSignature* RootSignature)
+	{
+		CommandList->SetGraphicsRootSignature(RootSignature);
+	}
+
 	void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, Uint32 RootParameterIndex)
 	{
 		CommandList->SetComputeRootDescriptorTable(RootParameterIndex, BaseDescriptor);
+	}
+
+	void SetGraphicsRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, Uint32 RootParameterIndex)
+	{
+		CommandList->SetGraphicsRootDescriptorTable(RootParameterIndex, BaseDescriptor);
+	}
+
+	void SetGraphicsRoot32BitConstants(const void* SourceData, Uint32 Num32BitValues, Uint32 DestOffsetIn32BitValues, Uint32 RootParameterIndex)
+	{
+		CommandList->SetGraphicsRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
+	}
+
+	void IASetVertexBuffers(Uint32 StartSlot, const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, Uint32 VertexBufferViewCount)
+	{
+		CommandList->IASetVertexBuffers(StartSlot, VertexBufferViewCount, VertexBufferViews);
+	}
+
+	void IASetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW* IndexBufferView)
+	{
+		CommandList->IASetIndexBuffer(IndexBufferView);
+	}
+
+	void IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology)
+	{
+		CommandList->IASetPrimitiveTopology(PrimitiveTopology);
+	}
+
+	void RSSetViewports(const D3D12_VIEWPORT* Viewports, Uint32 ViewportCount)
+	{
+		CommandList->RSSetViewports(ViewportCount, Viewports);
+	}
+
+	void RSSetScissorRects(const D3D12_RECT* ScissorRects, Uint32 ScissorRectCount)
+	{
+		CommandList->RSSetScissorRects(ScissorRectCount, ScissorRects);
+	}
+
+	void OMSetBlendFactor(const Float32 BlendFactor[4])
+	{
+		CommandList->OMSetBlendFactor(BlendFactor);
+	}
+
+	void OMSetRenderTargets(const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors, Uint32 RenderTargetCount, bool ContiguousDescriptorRange, const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptors)
+	{
+		CommandList->OMSetRenderTargets(RenderTargetCount, RenderTargetDescriptors, ContiguousDescriptorRange, DepthStencilDescriptors);
 	}
 
 	void FlushDeferredResourceBarriers()

@@ -116,6 +116,16 @@ bool D3D12Device::Initialize(bool DebugEnable)
 		ActiveFeatureLevel = MinFeatureLevel;
 	}
 
+	// Check for Ray-Tracing support
+	D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5 = { };
+	hResult = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+	if (SUCCEEDED(hResult))
+	{
+		if (Features5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+		{
+			RayTracingSupported = true;
+		}
+	}
 
 	// Create ShaderCompiler
 	D3D12ShaderCompiler* ShaderCompiler = D3D12ShaderCompiler::Create();

@@ -57,14 +57,14 @@ bool D3D12ShaderCompiler::Initialize()
 	}
 }
 
-IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, const std::string& Entrypoint, const std::string& TargetProfile)
+IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& InFilepath, const std::string& InEntrypoint, const std::string& InTargetProfile)
 {
 	using namespace Microsoft::WRL;
 
 	// Convert to wide
-	std::wstring WideFilePath		= std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(Filepath.c_str());
-	std::wstring WideEntrypoint		= std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(Entrypoint.c_str());
-	std::wstring WideTargetProfile	= std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(TargetProfile.c_str());
+	std::wstring WideFilePath		= ConvertToWide(InFilepath);
+	std::wstring WideEntrypoint		= ConvertToWide(InEntrypoint);
+	std::wstring WideTargetProfile	= ConvertToWide(InTargetProfile);
 
 	// Create SourceBlob
 	ComPtr<IDxcBlobEncoding> SourceBlob;
@@ -75,19 +75,44 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, cons
 		return nullptr;
 	}
 
+	return InternalCompileFromSource(SourceBlob.Get(), WideFilePath.c_str(), WideEntrypoint.c_str(), WideTargetProfile.c_str());
+}
+
+IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& InSource, const std::string& InEntrypoint, const std::string& InTargetProfile)
+{
+	using namespace Microsoft::WRL;
+
+	std::wstring WideEntrypoint		= ConvertToWide(InEntrypoint);
+	std::wstring WideTargetProfile	= ConvertToWide(InTargetProfile);
+
+	// Create SourceBlob
+	ComPtr<IDxcBlobEncoding> SourceBlob;
+	HRESULT hResult = DxLibrary->CreateBlobWithEncodingOnHeapCopy(InSource.c_str(), sizeof(Char) * static_cast<Uint32>(InSource.size()), CP_UTF8, &SourceBlob);
+	if (FAILED(hResult))
+	{
+		::OutputDebugString("[D3D12ShaderCompiler]: Failed to create Source Data\n");
+		return nullptr;
+	}
+
+	return InternalCompileFromSource(SourceBlob.Get(), nullptr, WideEntrypoint.c_str(), WideTargetProfile.c_str());
+}
+
+IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* InSourceBlob, LPCWSTR InFilePath, LPCWSTR InEntrypoint, LPCWSTR InTargetProfile)
+{
+	using namespace Microsoft::WRL;
+
 	// Compile
 	ComPtr<IDxcOperationResult> Result;
-	hResult = DxCompiler->Compile(SourceBlob.Get(), WideFilePath.c_str(), WideEntrypoint.c_str(), WideTargetProfile.c_str(), nullptr, 0, nullptr, 0, DxIncludeHandler.Get(), &Result);
+	HRESULT hResult = DxCompiler->Compile(InSourceBlob, InFilePath, InEntrypoint, InTargetProfile, nullptr, 0, nullptr, 0, DxIncludeHandler.Get(), &Result);
 	if (FAILED(hResult))
 	{
 		::OutputDebugString("[D3D12ShaderCompiler]: Failed to Compile\n");
 		return nullptr;
 	}
 
-	HRESULT hCompileResult;
-	if (SUCCEEDED(Result->GetStatus(&hCompileResult)))
+	if (SUCCEEDED(Result->GetStatus(&hResult)))
 	{
-		if (SUCCEEDED(hCompileResult))
+		if (SUCCEEDED(hResult))
 		{
 			IDxcBlob* CompiledBlob = nullptr;
 			if (SUCCEEDED(Result->GetResult(&CompiledBlob)))

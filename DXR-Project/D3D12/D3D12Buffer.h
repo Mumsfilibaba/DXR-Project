@@ -36,4 +36,5 @@ public:
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12Resource1> Buffer;
+	Uint64									SizeInBytes = 0;
 };

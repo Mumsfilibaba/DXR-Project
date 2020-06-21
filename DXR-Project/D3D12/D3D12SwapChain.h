@@ -16,9 +16,9 @@ public:
 	D3D12SwapChain(D3D12Device* Device);
 	~D3D12SwapChain();
 
-	bool Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue);
+	bool Initialize(WindowsWindow* InWindow, D3D12CommandQueue* InQueue);
 
-	bool Resize(Int32 NewWidth, Int32 NewHeight);
+	bool Resize(Uint32 NewWidth, Uint32 NewHeight);
 
 	bool Present(Uint32 SyncInterval);
 

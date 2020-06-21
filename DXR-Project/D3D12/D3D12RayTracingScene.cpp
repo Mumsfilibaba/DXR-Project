@@ -156,7 +156,7 @@ bool D3D12RayTracingScene::Initialize(D3D12CommandList* InCommandList, std::vect
 
 	// Map and set each instance matrix
 	D3D12_RAYTRACING_INSTANCE_DESC* InstanceDesc = reinterpret_cast<D3D12_RAYTRACING_INSTANCE_DESC*>(InstanceBuffer->Map());
-	for (Int32 i = 0; i < InstanceCount; i++)
+	for (Uint32 i = 0; i < InstanceCount; i++)
 	{
 		InstanceDesc->InstanceID							= i;	// Exposed to the shader via InstanceID()
 		InstanceDesc->InstanceContributionToHitGroupIndex	= 0;	// Offset inside the shader-table. We only have a single geometry, so the offset 0

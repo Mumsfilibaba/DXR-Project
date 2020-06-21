@@ -38,6 +38,11 @@ public:
 		return AllowTearing;
 	}
 
+	bool IsRayTracingSupported() const
+	{
+		return RayTracingSupported;
+	}
+
 	D3D12DescriptorHeap* GetGlobalResourceDescriptorHeap() const
 	{
 		return GlobalResourceDescriptorHeap;

@@ -20,10 +20,12 @@ public:
 	static Application* Get();
 
 public:
-	virtual void OnWindowResize(std::shared_ptr<WindowsWindow>& Window, Uint16 Width, Uint16 Height)	override;
-	virtual void OnKeyUp(EKey KeyCode)												override;
-	virtual void OnKeyDown(EKey KeyCode)											override;
-	virtual void OnMouseMove(Int32 X, Int32 Y)										override;
+	virtual void OnWindowResize(std::shared_ptr<WindowsWindow>& InWindow, Uint16 Width, Uint16 Height)	override;
+	virtual void OnKeyUp(EKey KeyCode)																	override;
+	virtual void OnKeyDown(EKey KeyCode)																override;
+	virtual void OnMouseMove(Int32 X, Int32 Y)															override;
+	virtual void OnMouseButtonReleased(EMouseButton Button)												override;
+	virtual void OnMouseButtonPressed(EMouseButton Button)												override;
 
 private:
 	bool Initialize();

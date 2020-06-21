@@ -15,6 +15,8 @@ D3D12Buffer::~D3D12Buffer()
 
 bool D3D12Buffer::Initialize(const BufferProperties& InProperties)
 {
+	SizeInBytes = InProperties.SizeInBytes;
+
 	D3D12_RESOURCE_DESC Desc = {};
 	Desc.DepthOrArraySize	= 1;
 	Desc.Dimension			= D3D12_RESOURCE_DIMENSION_BUFFER;
@@ -25,7 +27,7 @@ bool D3D12Buffer::Initialize(const BufferProperties& InProperties)
 	Desc.MipLevels			= 1;
 	Desc.SampleDesc.Count	= 1;
 	Desc.SampleDesc.Quality = 0;
-	Desc.Width				= InProperties.SizeInBytes;
+	Desc.Width				= SizeInBytes;
 
 	HRESULT hResult = Device->GetDevice()->CreateCommittedResource(&InProperties.HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, InProperties.InitalState, nullptr, IID_PPV_ARGS(&Buffer));
 	if (SUCCEEDED(hResult))

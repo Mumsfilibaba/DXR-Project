@@ -27,6 +27,14 @@ public:
 	{
 	}
 
+	virtual void OnMouseButtonReleased(EMouseButton Button)
+	{
+	}
+
+	virtual void OnMouseButtonPressed(EMouseButton Button)
+	{
+	}
+
 protected:
 	EventHandler() = default;
 };

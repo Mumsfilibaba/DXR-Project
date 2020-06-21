@@ -3,7 +3,7 @@
 
 #include <wrl/client.h>
 
-#include <string>
+#include "STL/String.h"
 
 class D3D12Device;
 
@@ -11,22 +11,22 @@ class D3D12DeviceChild
 {
 public:
 	D3D12DeviceChild(D3D12Device* InDevice)
-		: ParentDevice(InDevice)
+		: Device(InDevice)
 	{
 	}
 
 	~D3D12DeviceChild()
 	{
-		ParentDevice = nullptr;
+		Device = nullptr;
 	}
 
 	virtual void SetName(const std::string& InName) = 0;
 
-	inline D3D12Device* GetDevice() const
+	D3D12Device* GetDevice() const
 	{
-		return ParentDevice;
+		return Device;
 	}
 
 protected:
-	D3D12Device* ParentDevice = nullptr;
+	D3D12Device* Device = nullptr;
 };

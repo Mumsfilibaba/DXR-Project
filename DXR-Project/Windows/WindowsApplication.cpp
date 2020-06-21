@@ -129,7 +129,8 @@ void WindowsApplication::SetEventHandler(std::shared_ptr<EventHandler> NewMessag
 
 LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
-	constexpr Uint16 SCAN_CODE_MASK = 0x01ff;
+	constexpr Uint16 SCAN_CODE_MASK		= 0x01ff;
+	constexpr Uint16 BACK_BUTTON_MASK	= 0x0001;
 
 	std::shared_ptr<WindowsWindow> MessageWindow = GetWindowFromHWND(hWnd);
 	switch (uMessage)
@@ -178,6 +179,68 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 
 			MessageEventHandler->OnMouseMove(x, y);
 			return 0;
+		}
+
+		case WM_LBUTTONDOWN:
+		case WM_MBUTTONDOWN:
+		case WM_RBUTTONDOWN:
+		case WM_XBUTTONDOWN:
+		{
+			EMouseButton Button = EMouseButton::MOUSE_BUTTON_UNKNOWN;
+			if (uMessage == WM_LBUTTONDOWN)
+			{
+				Button = EMouseButton::MOUSE_BUTTON_LEFT;
+			}
+			else if (uMessage == WM_MBUTTONDOWN)
+			{
+				Button = EMouseButton::MOUSE_BUTTON_MIDDLE;
+			}
+			else if (uMessage == WM_RBUTTONDOWN)
+			{
+				Button = EMouseButton::MOUSE_BUTTON_RIGHT;
+			}
+			else if (GET_XBUTTON_WPARAM(wParam) == BACK_BUTTON_MASK)
+			{
+				Button = EMouseButton::MOUSE_BUTTON_BACK;
+			}
+			else
+			{
+				Button = EMouseButton::MOUSE_BUTTON_FORWARD;
+			}
+
+			MessageEventHandler->OnMouseButtonPressed(Button);
+			break;
+		}
+
+		case WM_LBUTTONUP:
+		case WM_MBUTTONUP:
+		case WM_RBUTTONUP:
+		case WM_XBUTTONUP:
+		{
+			EMouseButton Button = EMouseButton::MOUSE_BUTTON_UNKNOWN;
+			if (uMessage == WM_LBUTTONUP)
+			{
+				Button = EMouseButton::MOUSE_BUTTON_LEFT;
+			}
+			else if (uMessage == WM_MBUTTONUP)
+			{
+				Button = EMouseButton::MOUSE_BUTTON_MIDDLE;
+			}
+			else if (uMessage == WM_RBUTTONUP)
+			{
+				Button = EMouseButton::MOUSE_BUTTON_RIGHT;
+			}
+			else if (GET_XBUTTON_WPARAM(wParam) == BACK_BUTTON_MASK)
+			{
+				Button = EMouseButton::MOUSE_BUTTON_BACK;
+			}
+			else
+			{
+				Button = EMouseButton::MOUSE_BUTTON_FORWARD;
+			}
+
+			MessageEventHandler->OnMouseButtonReleased(Button);
+			break;
 		}
 
 		default:

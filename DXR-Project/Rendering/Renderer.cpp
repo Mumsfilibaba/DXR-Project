@@ -85,17 +85,20 @@ void Renderer::Tick()
 	CommandList->CopyBuffer(CameraBuffer->GetResource(), 0, UploadBuffers[CurrentBackBufferIndex]->GetResource(), Offset, sizeof(Camera));
 	CommandList->TransitionBarrier(CameraBuffer->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-	if (false)
+	if (Device->IsRayTracingSupported())
 	{
 		TraceRays(BackBuffer, CommandList.get());
 	}
 	else
 	{
 		CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+		const Float32 ClearColor[4] = { 0.3921f, 0.5843f, 0.9394f, 1.0f };
+		CommandList->ClearRenderTargetView(BackBufferHandles[CurrentBackBufferIndex], ClearColor);
 	}
 
-	const Float32 ClearColor[4] = { 0.3921f, 0.5843f, 0.9394f, 1.0f };
-	CommandList->ClearRenderTargetView(BackBufferHandles[CurrentBackBufferIndex], ClearColor);
+	D3D12_CPU_DESCRIPTOR_HANDLE RenderTarget = BackBufferHandles[CurrentBackBufferIndex];
+	CommandList->OMSetRenderTargets(&RenderTarget, 1, false, nullptr);
 
 	GuiContext::Get()->Render(CommandList.get());
 
@@ -121,9 +124,9 @@ void Renderer::Tick()
 	}
 }
 
-void Renderer::TraceRays(ID3D12Resource* BackBuffer, D3D12CommandList* CommandList)
+void Renderer::TraceRays(ID3D12Resource* InBackBuffer, D3D12CommandList* InCommandList)
 {
-	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	InCommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
 	raytraceDesc.Width	= SwapChain->GetWidth();
@@ -136,21 +139,21 @@ void Renderer::TraceRays(ID3D12Resource* BackBuffer, D3D12CommandList* CommandLi
 	raytraceDesc.HitGroupTable = PipelineState->GetHitGroupTable();
 
 	// Bind the empty root signature
-	CommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
-	CommandList->SetComputeRootDescriptorTable(CameraBufferGPUHandle, 0);
+	InCommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
+	InCommandList->SetComputeRootDescriptorTable(CameraBufferGPUHandle, 0);
 
 	// Dispatch
-	CommandList->SetStateObject(PipelineState->GetStateObject());
-	CommandList->DispatchRays(&raytraceDesc);
+	InCommandList->SetStateObject(PipelineState->GetStateObject());
+	InCommandList->DispatchRays(&raytraceDesc);
 
 	// Copy the results to the back-buffer
-	CommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+	InCommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	InCommandList->TransitionBarrier(InBackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	CommandList->CopyResource(BackBuffer, ResultTexture->GetResource());
+	InCommandList->CopyResource(InBackBuffer, ResultTexture->GetResource());
 
 	// Indicate that the back buffer will now be used to present.
-	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	InCommandList->TransitionBarrier(InBackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }
 
 void Renderer::OnResize(Int32 NewWidth, Int32 NewHeight)
@@ -187,7 +190,7 @@ void Renderer::OnMouseMove(Int32 X, Int32 Y)
 
 void Renderer::OnKeyDown(EKey KeyCode)
 {
-	if (InputManager::Get().IsKeyDown(EKey::KEY_ESCAPE))
+	if (KeyCode == EKey::KEY_ESCAPE)
 	{
 		IsCameraAcive = !IsCameraAcive;
 	}
@@ -376,7 +379,10 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	// Return before createing accelerationstructure
-	return true;
+	if (!Device->IsRayTracingSupported())
+	{
+		return true;
+	}
 
 	// Build Acceleration Structures
 	CommandAllocators[0]->Reset();
