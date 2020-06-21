@@ -49,3 +49,8 @@ bool D3D12Fence::WaitForValue(Uint64 FenceValue)
 		return false;
 	}
 }
+
+void D3D12Fence::SetName(const std::string& InName)
+{
+	Fence->SetName(ConvertToWide(InName).c_str());
+}

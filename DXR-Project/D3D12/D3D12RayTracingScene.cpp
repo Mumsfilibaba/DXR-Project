@@ -86,6 +86,11 @@ D3D12_GPU_VIRTUAL_ADDRESS D3D12RayTracingGeometry::GetVirtualAddress() const
 	return ResultBuffer->GetVirtualAddress();
 }
 
+void D3D12RayTracingGeometry::SetName(const std::string& InName)
+{
+	ResultBuffer->SetName(InName);
+}
+
 /*
 * RayTracingScene
 */
@@ -196,4 +201,9 @@ bool D3D12RayTracingScene::Initialize(D3D12CommandList* InCommandList, std::vect
 D3D12_GPU_VIRTUAL_ADDRESS D3D12RayTracingScene::GetVirtualAddress() const
 {
 	return ResultBuffer->GetVirtualAddress();
+}
+
+void D3D12RayTracingScene::SetName(const std::string& InName)
+{
+	ResultBuffer->SetName(InName);
 }

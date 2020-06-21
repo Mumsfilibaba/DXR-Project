@@ -25,7 +25,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	}
 
 	// ImGui
-	GuiContext* GUIContext = GuiContext::Create();
+	GuiContext* GUIContext = GuiContext::Create(Renderer->GetDevice());
 	if (!GUIContext)
 	{
 		::MessageBox(0, "Failed to create ImGuiContext", "ERROR", MB_ICONERROR);

@@ -56,3 +56,8 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeap::GetCPUDescriptorHandleAt(Uint32
 	Handle.ptr += GetDescriptorSize() * DescriptorIndex;
 	return Handle;
 }
+
+void D3D12DescriptorHeap::SetName(const std::string& InName)
+{
+	Heap->SetName(ConvertToWide(InName).c_str());
+}

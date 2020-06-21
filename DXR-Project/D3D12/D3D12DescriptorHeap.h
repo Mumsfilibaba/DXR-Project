@@ -6,7 +6,7 @@
 class D3D12DescriptorHeap : public D3D12DeviceChild
 {
 public:
-	D3D12DescriptorHeap(D3D12Device* Device);
+	D3D12DescriptorHeap(D3D12Device* InDevice);
 	~D3D12DescriptorHeap();
 
 	bool Initialize(D3D12_DESCRIPTOR_HEAP_TYPE Type, Uint32 DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
@@ -26,6 +26,10 @@ public:
 	{
 		return DescriptorSize;
 	}
+	
+public:
+	// DeviceChild Interface
+	virtual void SetName(const std::string& InName) override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> Heap;

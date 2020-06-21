@@ -220,7 +220,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	Queue = std::make_shared<D3D12CommandQueue>(Device.get());
-	if (!Queue->Initialize())
+	if (!Queue->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
 	{
 		return false;
 	}

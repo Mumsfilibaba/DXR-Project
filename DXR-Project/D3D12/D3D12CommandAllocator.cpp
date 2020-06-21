@@ -1,8 +1,8 @@
 #include "D3D12CommandAllocator.h"
 #include "D3D12Device.h"
 
-D3D12CommandAllocator::D3D12CommandAllocator(D3D12Device* Device)
-	: D3D12DeviceChild(Device)
+D3D12CommandAllocator::D3D12CommandAllocator(D3D12Device* InDevice)
+	: D3D12DeviceChild(InDevice)
 {
 }
 
@@ -28,4 +28,9 @@ bool D3D12CommandAllocator::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 bool D3D12CommandAllocator::Reset()
 {
 	return Allocator->Reset();
+}
+
+void D3D12CommandAllocator::SetName(const std::string& InName)
+{
+	Allocator->SetName(ConvertToWide(InName).c_str());
 }

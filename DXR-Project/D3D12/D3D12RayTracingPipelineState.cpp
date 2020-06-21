@@ -48,6 +48,11 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingPipelineState::GetHitG
 	return { HitTable.Resource->GetVirtualAddress(), HitTable.SizeInBytes, HitTable.StrideInBytes };
 }
 
+void D3D12RayTracingPipelineState::SetName(const std::string& InName)
+{
+	DXRStateObject->SetName(ConvertToWide(InName).c_str());
+}
+
 bool D3D12RayTracingPipelineState::CreatePipeline()
 {
 	using namespace Microsoft::WRL;

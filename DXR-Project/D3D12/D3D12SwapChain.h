@@ -49,6 +49,10 @@ public:
 		return Height;
 	}
 
+public:
+	// DeviceChild Interface
+	virtual void SetName(const std::string& InName) override;
+
 private:
 	void RetriveSwapChainSurfaces();
 	void ReleaseSurfaces();

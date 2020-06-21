@@ -28,6 +28,11 @@ public:
 	
 	void Tick();
 	
+	std::shared_ptr<D3D12Device> GetDevice() const
+	{
+		return Device;
+	}
+
 	void OnResize(Int32 NewWidth, Int32 NewHeight);
 	void OnMouseMove(Int32 X, Int32 Y);
 	void OnKeyDown(EKey KeyCode);

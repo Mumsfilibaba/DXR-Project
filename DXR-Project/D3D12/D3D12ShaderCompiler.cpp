@@ -2,9 +2,6 @@
 
 #include "Types.h"
 
-#include <codecvt>
-#include <locale>
-
 #pragma comment(lib, "dxcompiler.lib")
 
 /*

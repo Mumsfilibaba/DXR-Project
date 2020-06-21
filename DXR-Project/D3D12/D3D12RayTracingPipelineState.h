@@ -21,7 +21,7 @@ public:
 class D3D12RayTracingPipelineState : public D3D12DeviceChild
 {
 public:
-	D3D12RayTracingPipelineState(D3D12Device* Device);
+	D3D12RayTracingPipelineState(D3D12Device* InDevice);
 	~D3D12RayTracingPipelineState();
 
 	bool Initialize();
@@ -39,6 +39,10 @@ public:
 	D3D12_GPU_VIRTUAL_ADDRESS_RANGE				GetRayGenerationShaderRecord()	const;
 	D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE	GetMissShaderTable()			const;
 	D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE	GetHitGroupTable()				const;
+
+public:
+	// DeviceChild Interface
+	virtual void SetName(const std::string& InName) override;
 
 private:
 	bool CreatePipeline();

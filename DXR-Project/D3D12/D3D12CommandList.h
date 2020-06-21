@@ -7,14 +7,14 @@
 class D3D12CommandList : public D3D12DeviceChild
 {
 public:
-	D3D12CommandList(D3D12Device* Device);
+	D3D12CommandList(D3D12Device* InDevice);
 	~D3D12CommandList();
 
-	bool Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline);
+	bool Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* InAllocator, ID3D12PipelineState* InitalPipeline);
 
-	bool Reset(D3D12CommandAllocator* Allocator)
+	bool Reset(D3D12CommandAllocator* InAllocator)
 	{
-		return SUCCEEDED(CommandList->Reset(Allocator->GetAllocator(), nullptr));
+		return SUCCEEDED(CommandList->Reset(InAllocator->GetAllocator(), nullptr));
 	}
 
 	bool Close()
@@ -58,6 +58,13 @@ public:
 		FlushDeferredResourceBarriers();
 
 		CommandList->CopyBufferRegion(Destination, DestinationOffset, Source, SourceOffset, SizeInBytes);
+	}
+
+	void CopyTextureRegion(const D3D12_TEXTURE_COPY_LOCATION* InDestination, Uint32 X, Uint32 Y, Uint32 Z, const D3D12_TEXTURE_COPY_LOCATION* InSource, const D3D12_BOX* InSourceBox)
+	{
+		FlushDeferredResourceBarriers();
+
+		CommandList->CopyTextureRegion(InDestination, X, Y, Z, InSource, InSourceBox);
 	}
 
 	void CopyResource(ID3D12Resource* Destination, ID3D12Resource* Source)
@@ -114,6 +121,10 @@ public:
 	{
 		return CommandList.Get();
 	}
+
+public:
+	// DeviceChild
+	virtual void SetName(const std::string& InName) override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>	CommandList;

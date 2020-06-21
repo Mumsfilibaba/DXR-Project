@@ -18,6 +18,10 @@ public:
 		return Fence.Get();
 	}
 
+public:
+	// DeviceChild Interface
+	virtual void SetName(const std::string& InName) override;
+
 private:
 	Microsoft::WRL::ComPtr<ID3D12Fence> Fence;
 	HANDLE Event = 0;

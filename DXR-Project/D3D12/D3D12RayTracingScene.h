@@ -22,6 +22,10 @@ public:
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress() const;
 
+public:
+	// DeviceChild Interface
+	virtual void SetName(const std::string& InName) override;
+
 private:
 	std::shared_ptr<D3D12Buffer> VertexBuffer	= nullptr;
 	std::shared_ptr<D3D12Buffer> IndexBuffer	= nullptr;
@@ -67,6 +71,10 @@ public:
 	{
 		return GPUHandle;
 	}
+
+public:
+	// DeviceChild Interface
+	virtual void SetName(const std::string& InName) override;
 
 private:
 	D3D12Buffer* ResultBuffer	= nullptr;
