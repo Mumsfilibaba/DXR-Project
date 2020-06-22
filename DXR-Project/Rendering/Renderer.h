@@ -20,6 +20,8 @@
 
 #include "Camera.h"
 
+class D3D12Texture;
+
 class Renderer
 {
 public:
@@ -62,10 +64,12 @@ private:
 	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>			BackBufferHandles;
 	
+	std::shared_ptr<D3D12Texture> Panorama;
+
 	std::vector<Uint64>	FenceValues;
 	Uint32				CurrentBackBufferIndex = 0;
 
-	class D3D12Texture* ResultTexture;
+	D3D12Texture* ResultTexture;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE VertexBufferCPUHandle;
 	D3D12_CPU_DESCRIPTOR_HANDLE IndexBufferCPUHandle;

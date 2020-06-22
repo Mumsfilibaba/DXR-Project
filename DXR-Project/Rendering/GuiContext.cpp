@@ -430,7 +430,7 @@ bool GuiContext::CreateFontTexture()
 	UploadBufferProps.SizeInBytes		= UploadSize;
 	UploadBufferProps.HeapProperties	= HeapProps::UploadHeap();
 
-	std::shared_ptr<D3D12Buffer> UploadBuffer = std::shared_ptr<D3D12Buffer>(new D3D12Buffer(Device.get()));
+	std::unique_ptr<D3D12Buffer> UploadBuffer = std::unique_ptr<D3D12Buffer>(new D3D12Buffer(Device.get()));
 	if (UploadBuffer->Initialize(UploadBufferProps))
 	{
 		void* Memory = UploadBuffer->Map();
@@ -445,25 +445,25 @@ bool GuiContext::CreateFontTexture()
 		return false;
 	}
 
-	std::shared_ptr<D3D12Fence> Fence = std::shared_ptr<D3D12Fence>(new D3D12Fence(Device.get()));
+	std::unique_ptr<D3D12Fence> Fence = std::unique_ptr<D3D12Fence>(new D3D12Fence(Device.get()));
 	if (!Fence->Initialize(0))
 	{
 		return false;
 	}
 
-	std::shared_ptr<D3D12CommandAllocator> Allocator = std::shared_ptr<D3D12CommandAllocator>(new D3D12CommandAllocator(Device.get()));
+	std::unique_ptr<D3D12CommandAllocator> Allocator = std::unique_ptr<D3D12CommandAllocator>(new D3D12CommandAllocator(Device.get()));
 	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
 	{
 		return false;
 	}
 
-	std::shared_ptr<D3D12CommandList> CommandList = std::shared_ptr<D3D12CommandList>(new D3D12CommandList(Device.get()));
+	std::unique_ptr<D3D12CommandList> CommandList = std::unique_ptr<D3D12CommandList>(new D3D12CommandList(Device.get()));
 	if (!CommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator.get(), nullptr))
 	{
 		return false;
 	}
 
-	std::shared_ptr<D3D12CommandQueue> Queue = std::shared_ptr<D3D12CommandQueue>(new D3D12CommandQueue(Device.get()));
+	std::unique_ptr<D3D12CommandQueue> Queue = std::unique_ptr<D3D12CommandQueue>(new D3D12CommandQueue(Device.get()));
 	if (!Queue->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
 	{
 		return false;

@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "MeshFactory.h"
+#include "TextureFactory.h"
 #include "GuiContext.h"
 
 #include "D3D12/D3D12Texture.h"
@@ -376,6 +377,13 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	else
 	{
 		return false;
+	}
+
+	// Create Texture Cube
+	Panorama = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/arches.hdr"));
+	if (!Panorama)
+	{
+		return false;	
 	}
 
 	// Return before createing accelerationstructure

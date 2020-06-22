@@ -112,6 +112,7 @@ workspace "DXR-Project"
 		sysincludedirs
 		{
 			"Dependencies/imgui",
+			"Dependencies/stb_image",
 		}
         
 		links 
