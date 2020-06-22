@@ -1,3 +1,6 @@
+# Settings Files
+*.ini
+
 # Ignore all Visual Studio project and solution files
 *.sln
 *.vcxproj*
