@@ -16,6 +16,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 		return -1;
 	}
 
+	InitializeCursors();
+
 	// Renderer
 	Renderer* Renderer = Renderer::Create(App->GetWindow());
 	if (!Renderer)

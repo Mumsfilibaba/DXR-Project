@@ -5,21 +5,26 @@
 #pragma warning(disable : 4100) // Disable unreferenced variable
 
 class WindowsWindow;
+class ModifierKeyState;
 
 class EventHandler
 {
 public:
 	virtual ~EventHandler() = default;
 
-	virtual void OnWindowResize(std::shared_ptr<WindowsWindow>& InWindow, Uint16 InWidth, Uint16 InHeight)
+	virtual void OnWindowResized(std::shared_ptr<WindowsWindow>& InWindow, Uint16 InWidth, Uint16 InHeight)
 	{
 	}
 
-	virtual void OnKeyUp(EKey InKeyCode)
+	virtual void OnKeyReleased(EKey InKeyCode, const ModifierKeyState& InModierKeyState)
 	{
 	}
 
-	virtual void OnKeyDown(EKey InKeyCode)
+	virtual void OnKeyPressed(EKey InKeyCode, const ModifierKeyState& InModierKeyState)
+	{
+	}
+
+	virtual void OnCharacterInput(Uint32 Character)
 	{
 	}
 
@@ -27,11 +32,15 @@ public:
 	{
 	}
 
-	virtual void OnMouseButtonReleased(EMouseButton InButton)
+	virtual void OnMouseButtonReleased(EMouseButton InButton, const ModifierKeyState& InModierKeyState)
 	{
 	}
 
-	virtual void OnMouseButtonPressed(EMouseButton InButton)
+	virtual void OnMouseButtonPressed(EMouseButton InButton, const ModifierKeyState& InModierKeyState)
+	{
+	}
+
+	virtual void OnMouseScrolled(Float32 InHorizontalDelta, Float32 InVerticalDelta)
 	{
 	}
 

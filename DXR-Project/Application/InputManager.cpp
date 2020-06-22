@@ -171,12 +171,12 @@ void InputManager::RegisterKeyDown(EKey KeyCode)
 	KeyStates[KeyCode] = true;
 }
 
-bool InputManager::IsKeyUp(EKey KeyCode)
+bool InputManager::IsKeyUp(EKey KeyCode) const
 {
 	return KeyStates[KeyCode] == false;
 }
 
-bool InputManager::IsKeyDown(EKey KeyCode)
+bool InputManager::IsKeyDown(EKey KeyCode) const
 {
 	return KeyStates[KeyCode] == true;
 }

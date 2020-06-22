@@ -5,6 +5,7 @@
 #include "Types.h"
 
 #include "Application/InputCodes.h"
+#include "Application/Clock.h"
 
 class D3D12Device;
 class D3D12Texture;
@@ -23,19 +24,22 @@ public:
 
 	void Render(class D3D12CommandList* InCommandList);
 
-	void OnMouseMove(Int32 X, Int32 Y);
-	void OnKeyDown(EKey KeyCode);
-	void OnKeyUp(EKey KeyCode);
-	void OnMouseButtonPressed(EMouseButton Button);
-	void OnMouseButtonReleased(EMouseButton Button);
-
-	ImGuiContext* GetCurrentContext() const
+	FORCEINLINE ImGuiContext* GetCurrentContext() const
 	{
 		return Context;
 	}
 
 	static GuiContext* Create(std::shared_ptr<D3D12Device>& InDevice);
 	static GuiContext* Get();
+
+public:
+	// EventHandling
+	void OnKeyPressed(EKey KeyCode);
+	void OnKeyReleased(EKey KeyCode);
+	void OnMouseButtonPressed(EMouseButton Button);
+	void OnMouseButtonReleased(EMouseButton Button);
+	void OnMouseScrolled(Float32 InHorizontalDelta, Float32 InVerticalDelta);
+	void OnCharacterInput(Uint32 Character);
 
 private:
 	bool Initialize(std::shared_ptr<D3D12Device>& InDevice);
@@ -48,6 +52,8 @@ private:
 	ImGuiContext*					Context		= nullptr;
 	std::shared_ptr<D3D12Device>	Device		= nullptr;
 	std::shared_ptr<D3D12Texture>	FontTexture	= nullptr;
+
+	Clock FrameClock;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE FontTextureCPUHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE FontTextureGPUHandle;

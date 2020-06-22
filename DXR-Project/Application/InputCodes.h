@@ -156,6 +156,17 @@ enum EMouseButton : Uint8
 	MOUSE_BUTTON_COUNT	= MOUSE_BUTTON_LAST + 1
 };
 
+enum EModifierFlag
+{
+	MODIFIER_FLAG_NONE			= 0,
+	MODIFIER_FLAG_CTRL			= FLAG(1),
+	MODIFIER_FLAG_ALT			= FLAG(2),
+	MODIFIER_FLAG_SHIFT			= FLAG(3),
+	MODIFIER_FLAG_CAPS_LOCK		= FLAG(4),
+	MODIFIER_FLAG_SUPER			= FLAG(5),
+	MODIFIER_FLAG_NUM_LOCK		= FLAG(6),
+};
+
 inline const char* KeyToString(EKey key)
 {
 	switch (key)

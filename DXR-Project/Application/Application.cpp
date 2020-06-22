@@ -20,14 +20,29 @@ bool Application::Tick()
 	return PlatformApplication->Tick();
 }
 
+void Application::SetCursor(std::shared_ptr<WindowsCursor> InCursor)
+{
+	PlatformApplication->SetCursor(InCursor);
+}
+
 void Application::SetActiveWindow(std::shared_ptr<WindowsWindow>& InActiveWindow)
 {
 	PlatformApplication->SetActiveWindow(InActiveWindow);
 }
 
-void Application::SetCapture(std::shared_ptr<WindowsWindow>& InCapture)
+void Application::SetCapture(std::shared_ptr<WindowsWindow> InCapture)
 {
 	PlatformApplication->SetCapture(InCapture);
+}
+
+void Application::SetCursorPos(std::shared_ptr<WindowsWindow>& InRelativeWindow, Int32 InX, Int32 InY)
+{
+	PlatformApplication->SetCursorPos(InRelativeWindow, InX, InY);
+}
+
+ModifierKeyState Application::GetModifierKeyState() const
+{
+	return PlatformApplication->GetModifierKeyState();
 }
 
 std::shared_ptr<WindowsWindow> Application::GetWindow() const
@@ -43,6 +58,11 @@ std::shared_ptr<WindowsWindow> Application::GetActiveWindow() const
 std::shared_ptr<WindowsWindow> Application::GetCapture() const
 {
 	return PlatformApplication->GetCapture();
+}
+
+void Application::GetCursorPos(std::shared_ptr<WindowsWindow>& InRelativeWindow, Int32& OutX, Int32& OutY) const
+{
+	PlatformApplication->GetCursorPos(InRelativeWindow, OutX, OutY);
 }
 
 Application* Application::Create()
@@ -63,7 +83,7 @@ Application* Application::Get()
 	return Instance.get();
 }
 
-void Application::OnWindowResize(std::shared_ptr<WindowsWindow>& InWindow, Uint16 InWidth, Uint16 InHeight)
+void Application::OnWindowResized(std::shared_ptr<WindowsWindow>& InWindow, Uint16 InWidth, Uint16 InHeight)
 {
 	if (Renderer::Get())
 	{
@@ -71,28 +91,28 @@ void Application::OnWindowResize(std::shared_ptr<WindowsWindow>& InWindow, Uint1
 	}
 }
 
-void Application::OnKeyUp(EKey InKeyCode)
+void Application::OnKeyReleased(EKey InKeyCode, const ModifierKeyState& InModierKeyState)
 {
 	InputManager::Get().RegisterKeyUp(InKeyCode);
 
 	if (GuiContext::Get())
 	{
-		GuiContext::Get()->OnKeyUp(InKeyCode);
+		GuiContext::Get()->OnKeyReleased(InKeyCode);
 	}
 }
 
-void Application::OnKeyDown(EKey InKeyCode)
+void Application::OnKeyPressed(EKey InKeyCode, const ModifierKeyState& InModierKeyState)
 {
 	InputManager::Get().RegisterKeyDown(InKeyCode);
 
 	if (Renderer::Get())
 	{
-		Renderer::Get()->OnKeyDown(InKeyCode);
+		Renderer::Get()->OnKeyPressed(InKeyCode);
 	}
 
 	if (GuiContext::Get())
 	{
-		GuiContext::Get()->OnKeyDown(InKeyCode);
+		GuiContext::Get()->OnKeyPressed(InKeyCode);
 	}
 }
 
@@ -102,26 +122,50 @@ void Application::OnMouseMove(Int32 InX, Int32 InY)
 	{
 		Renderer::Get()->OnMouseMove(InX, InY);
 	}
-
-	if (GuiContext::Get())
-	{
-		GuiContext::Get()->OnMouseMove(InX, InY);
-	}
 }
 
-void Application::OnMouseButtonReleased(EMouseButton InButton)
+void Application::OnMouseButtonReleased(EMouseButton InButton, const ModifierKeyState& InModierKeyState)
 {
+	std::shared_ptr<WindowsWindow> CaptureWindow = GetCapture();
+	if (CaptureWindow)
+	{
+		SetCapture(nullptr);
+	}
+
 	if (GuiContext::Get())
 	{
 		GuiContext::Get()->OnMouseButtonReleased(InButton);
 	}
 }
 
-void Application::OnMouseButtonPressed(EMouseButton InButton)
+void Application::OnMouseButtonPressed(EMouseButton InButton, const ModifierKeyState& InModierKeyState)
 {
+	std::shared_ptr<WindowsWindow> CaptureWindow = GetCapture();
+	if (!CaptureWindow)
+	{
+		std::shared_ptr<WindowsWindow> ActiveWindow = GetActiveWindow();
+		SetCapture(ActiveWindow);
+	}
+
 	if (GuiContext::Get())
 	{
 		GuiContext::Get()->OnMouseButtonPressed(InButton);
+	}
+}
+
+void Application::OnMouseScrolled(Float32 InHorizontalDelta, Float32 InVerticalDelta)
+{
+	if (GuiContext::Get())
+	{
+		GuiContext::Get()->OnMouseScrolled(InHorizontalDelta, InVerticalDelta);
+	}
+}
+
+void Application::OnCharacterInput(Uint32 Character)
+{
+	if (GuiContext::Get())
+	{
+		GuiContext::Get()->OnCharacterInput(Character);
 	}
 }
 

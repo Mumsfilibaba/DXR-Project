@@ -51,12 +51,69 @@ void GuiContext::BeginFrame()
 {
 	ImGuiIO& IO = ImGui::GetIO();
 	
+	// Get deltatime
+	FrameClock.Tick();
+
+	Timestamp Delta = FrameClock.GetDeltaTime();
+	IO.DeltaTime	= static_cast<Float32>(Delta.AsSeconds());
+
+	// Set Mouseposition
+	std::shared_ptr<WindowsWindow> Window = Application::Get()->GetWindow();
+	if (IO.WantSetMousePos)
+	{
+		Application::Get()->SetCursorPos(Window, IO.MousePos.x, IO.MousePos.y);
+	}
+
 	// Get the display size
-	WindowShape WindowShape;
-	Application::Get()->GetWindow()->GetWindowShape(WindowShape);
+	WindowShape CurrentWindowShape;
+	Window->GetWindowShape(CurrentWindowShape);
 
-	IO.DisplaySize = ImVec2(WindowShape.Width, WindowShape.Height);
+	IO.DisplaySize = ImVec2(CurrentWindowShape.Width, CurrentWindowShape.Height);
 
+	// Get Mouseposition
+	Int32 X = 0;
+	Int32 Y = 0;
+	Application::Get()->GetCursorPos(Window, X, Y);
+
+	IO.MousePos = ImVec2(static_cast<Float32>(X), static_cast<Float32>(Y));
+
+	// Check modifer keys
+	ModifierKeyState KeyState = Application::Get()->GetModifierKeyState();
+	IO.KeyCtrl	= KeyState.IsCtrlDown();
+	IO.KeyShift = KeyState.IsShiftDown();
+	IO.KeyAlt	= KeyState.IsAltDown();
+	IO.KeySuper = KeyState.IsSuperKeyDown();
+
+	// Set MouseCursor
+	if (!(IO.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange))
+	{
+		ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
+		if (ImguiCursor == ImGuiMouseCursor_None || IO.MouseDrawCursor)
+		{
+			Application::Get()->SetCursor(nullptr);
+		}
+		else
+		{
+			// Show OS mouse cursor
+			std::shared_ptr<WindowsCursor> Cursor = CursorArrow;
+			switch (ImguiCursor)
+			{
+			case ImGuiMouseCursor_Arrow:		Cursor = CursorArrow;						break;
+			case ImGuiMouseCursor_TextInput:	Cursor = CursorTextInput;					break;
+			case ImGuiMouseCursor_ResizeAll:	Cursor = CursorResizeAll;					break;
+			case ImGuiMouseCursor_ResizeEW:		Cursor = CursorResizeEastWest;				break;
+			case ImGuiMouseCursor_ResizeNS:		Cursor = CursorResizeNorthSouth;			break;
+			case ImGuiMouseCursor_ResizeNESW:	Cursor = CursorResizeNorthEastSouthWest;	break;
+			case ImGuiMouseCursor_ResizeNWSE:	Cursor = CursorResizeNorthWestSouthEast;	break;
+			case ImGuiMouseCursor_Hand:			Cursor = CursorHand;						break;
+			case ImGuiMouseCursor_NotAllowed:	Cursor = CursorNotAllowed;					break;
+			}
+
+			Application::Get()->SetCursor(Cursor);
+		}
+	}
+
+	// Begin new frame
 	ImGui::NewFrame();
 }
 
@@ -192,21 +249,13 @@ void GuiContext::Render(D3D12CommandList* CommandList)
 	}
 }
 
-void GuiContext::OnMouseMove(Int32 X, Int32 Y)
-{
-	ImGuiIO& IO = ImGui::GetIO();
-	IO.MousePos = ImVec2(static_cast<Float32>(X), static_cast<Float32>(Y));
-
-	::OutputDebugString(("MouseMove: x:" + std::to_string(X) + ", y:" + std::to_string(Y) + "\n").c_str());
-}
-
-void GuiContext::OnKeyDown(EKey KeyCode)
+void GuiContext::OnKeyPressed(EKey KeyCode)
 {
 	ImGuiIO& IO = ImGui::GetIO();
 	IO.KeysDown[KeyCode] = true;
 }
 
-void GuiContext::OnKeyUp(EKey KeyCode)
+void GuiContext::OnKeyReleased(EKey KeyCode)
 {
 	ImGuiIO& IO = ImGui::GetIO();
 	IO.KeysDown[KeyCode] = false;
@@ -268,6 +317,19 @@ void GuiContext::OnMouseButtonReleased(EMouseButton Button)
 	IO.MouseDown[ButtonIndex] = false;
 }
 
+void GuiContext::OnMouseScrolled(Float32 InHorizontalDelta, Float32 InVerticalDelta)
+{
+	ImGuiIO& IO = ImGui::GetIO();
+	IO.MouseWheel	+= InVerticalDelta;
+	IO.MouseWheelH	+= InHorizontalDelta;
+}
+
+void GuiContext::OnCharacterInput(Uint32 Character)
+{
+	ImGuiIO& IO = ImGui::GetIO();
+	IO.AddInputCharacter(Character);
+}
+
 bool GuiContext::Initialize(std::shared_ptr<D3D12Device>& InDevice)
 {
 	// Save device so that we can create resource on the GPU
@@ -285,7 +347,9 @@ bool GuiContext::Initialize(std::shared_ptr<D3D12Device>& InDevice)
 	IO.BackendFlags			|= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
 	IO.BackendFlags			|= ImGuiBackendFlags_HasSetMousePos;          // We can honor IO.WantSetMousePos requests (optional, rarely used)
 	IO.BackendPlatformName	= "Windows";
-	IO.ImeWindowHandle		= 0;
+	
+	std::shared_ptr<WindowsWindow> Window = Application::Get()->GetWindow();
+	IO.ImeWindowHandle = Window->GetHandle();
 
 	// Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
 	IO.KeyMap[ImGuiKey_Tab]			= EKey::KEY_TAB;

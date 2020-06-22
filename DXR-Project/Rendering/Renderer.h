@@ -28,14 +28,14 @@ public:
 	
 	void Tick();
 	
-	std::shared_ptr<D3D12Device> GetDevice() const
+	FORCEINLINE std::shared_ptr<D3D12Device> GetDevice() const
 	{
 		return Device;
 	}
 
 	void OnResize(Int32 NewWidth, Int32 NewHeight);
 	void OnMouseMove(Int32 X, Int32 Y);
-	void OnKeyDown(EKey KeyCode);
+	void OnKeyPressed(EKey KeyCode);
 
 	static Renderer* Create(std::shared_ptr<WindowsWindow> RendererWindow);
 	static Renderer* Get();

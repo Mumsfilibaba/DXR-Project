@@ -10,8 +10,8 @@ public:
 	void RegisterKeyUp(EKey KeyCode);
 	void RegisterKeyDown(EKey KeyCode);
 
-	bool IsKeyUp(EKey KeyCode);
-	bool IsKeyDown(EKey KeyCode);
+	bool IsKeyUp(EKey KeyCode)		const;
+	bool IsKeyDown(EKey KeyCode)	const;
 
 	static InputManager& Get();
 

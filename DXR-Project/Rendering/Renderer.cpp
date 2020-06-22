@@ -111,7 +111,7 @@ void Renderer::Tick()
 	Queue->ExecuteCommandList(CommandList.get());
 
 	// Present
-	SwapChain->Present(1);
+	SwapChain->Present(0);
 
 	// Wait for next frame
 	const Uint64 CurrentFenceValue = FenceValues[CurrentBackBufferIndex];
@@ -134,9 +134,9 @@ void Renderer::TraceRays(ID3D12Resource* InBackBuffer, D3D12CommandList* InComma
 	raytraceDesc.Depth	= 1;
 
 	// Set shader tables
-	raytraceDesc.RayGenerationShaderRecord = PipelineState->GetRayGenerationShaderRecord();
-	raytraceDesc.MissShaderTable = PipelineState->GetMissShaderTable();
-	raytraceDesc.HitGroupTable = PipelineState->GetHitGroupTable();
+	raytraceDesc.RayGenerationShaderRecord	= PipelineState->GetRayGenerationShaderRecord();
+	raytraceDesc.MissShaderTable			= PipelineState->GetMissShaderTable();
+	raytraceDesc.HitGroupTable				= PipelineState->GetHitGroupTable();
 
 	// Bind the empty root signature
 	InCommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
@@ -188,7 +188,7 @@ void Renderer::OnMouseMove(Int32 X, Int32 Y)
 	}
 }
 
-void Renderer::OnKeyDown(EKey KeyCode)
+void Renderer::OnKeyPressed(EKey KeyCode)
 {
 	if (KeyCode == EKey::KEY_ESCAPE)
 	{

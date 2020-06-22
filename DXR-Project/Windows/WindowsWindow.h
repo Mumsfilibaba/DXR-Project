@@ -1,6 +1,6 @@
 #pragma once
 #include "Windows.h"
-
+#include "Defines.h"
 #include "Types.h"
 
 struct WindowShape
@@ -26,7 +26,7 @@ public:
 
 	void GetWindowShape(WindowShape& OutWindowShape);
 	
-	HWND GetHandle() const
+	FORCEINLINE HWND GetHandle() const
 	{
 		return hWindow;
 	}
