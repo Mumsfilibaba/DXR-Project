@@ -47,7 +47,7 @@ std::shared_ptr<WindowsWindow> Application::GetCapture() const
 
 Application* Application::Create()
 {
-	Instance = std::make_unique<Application>();
+	Instance = std::shared_ptr<Application>(new Application());
 	if (Instance->Initialize())
 	{
 		return Instance.get();
