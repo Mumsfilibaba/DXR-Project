@@ -11,27 +11,27 @@ class EventHandler
 public:
 	virtual ~EventHandler() = default;
 
-	virtual void OnWindowResize(std::shared_ptr<WindowsWindow>& Window, Uint16 Width, Uint16 Height)
+	virtual void OnWindowResize(std::shared_ptr<WindowsWindow>& InWindow, Uint16 InWidth, Uint16 InHeight)
 	{
 	}
 
-	virtual void OnKeyUp(EKey KeyCode)
+	virtual void OnKeyUp(EKey InKeyCode)
 	{
 	}
 
-	virtual void OnKeyDown(EKey KeyCode)
+	virtual void OnKeyDown(EKey InKeyCode)
 	{
 	}
 
-	virtual void OnMouseMove(Int32 X, Int32 Y)
+	virtual void OnMouseMove(Int32 InX, Int32 InY)
 	{
 	}
 
-	virtual void OnMouseButtonReleased(EMouseButton Button)
+	virtual void OnMouseButtonReleased(EMouseButton InButton)
 	{
 	}
 
-	virtual void OnMouseButtonPressed(EMouseButton Button)
+	virtual void OnMouseButtonPressed(EMouseButton InButton)
 	{
 	}
 

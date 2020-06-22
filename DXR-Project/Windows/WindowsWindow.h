@@ -20,7 +20,7 @@ public:
 	WindowsWindow();
 	~WindowsWindow();
 
-	bool Initialize(WindowsApplication* InOwnerApplication, Uint16 Width, Uint16 Height);
+	bool Initialize(WindowsApplication* InOwnerApplication, Uint16 InWidth, Uint16 InHeight);
 
 	void Show();
 

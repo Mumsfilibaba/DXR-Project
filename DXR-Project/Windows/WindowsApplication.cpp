@@ -44,22 +44,22 @@ bool WindowsApplication::Create()
 	return true;
 }
 
-void WindowsApplication::AddWindow(std::shared_ptr<WindowsWindow>& NewWindow)
+void WindowsApplication::AddWindow(std::shared_ptr<WindowsWindow>& InWindow)
 {
-	Windows.emplace_back(NewWindow);
+	Windows.emplace_back(InWindow);
 }
 
 bool WindowsApplication::RegisterWindowClass()
 {
-	WNDCLASS wc = { };
-	wc.hInstance		= hInstance;
-	wc.lpszClassName	= "WinClass";
-	wc.hbrBackground	= static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
-	wc.hCursor			= ::LoadCursor(NULL, IDC_ARROW);
-	wc.lpfnWndProc		= WindowsApplication::MessageProc;
+	WNDCLASS WindowClass = { };
+	WindowClass.hInstance		= hInstance;
+	WindowClass.lpszClassName	= "WinClass";
+	WindowClass.hbrBackground	= static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
+	WindowClass.hCursor			= ::LoadCursor(NULL, IDC_ARROW);
+	WindowClass.lpfnWndProc		= WindowsApplication::MessageProc;
 
-	ATOM classAtom = ::RegisterClass(&wc);
-	if (classAtom == 0)
+	ATOM ClassAtom = ::RegisterClass(&WindowClass);
+	if (ClassAtom == 0)
 	{
 		::OutputDebugString("[WindowsApplication]: Failed to register WindowClass\n");
 		return false;
@@ -74,10 +74,10 @@ WindowsApplication::~WindowsApplication()
 {
 }
 
-std::shared_ptr<WindowsWindow> WindowsApplication::CreateWindow(Uint16 Width, Uint16 Height)
+std::shared_ptr<WindowsWindow> WindowsApplication::CreateWindow(Uint16 InWidth, Uint16 InHeight)
 {
 	std::shared_ptr<WindowsWindow> NewWindow = std::shared_ptr<WindowsWindow>(new WindowsWindow());
-	if (NewWindow->Initialize(this, Width, Height))
+	if (NewWindow->Initialize(this, InWidth, InHeight))
 	{
 		AddWindow(NewWindow);
 		return NewWindow;
@@ -88,9 +88,9 @@ std::shared_ptr<WindowsWindow> WindowsApplication::CreateWindow(Uint16 Width, Ui
 	}
 }
 
-std::shared_ptr<WindowsWindow> WindowsApplication::GetWindowFromHWND(HWND hWindow)
+std::shared_ptr<WindowsWindow> WindowsApplication::GetWindowFromHWND(HWND hWindow) const
 {
-	for (std::shared_ptr<WindowsWindow>& CurrentWindow : Windows)
+	for (const std::shared_ptr<WindowsWindow>& CurrentWindow : Windows)
 	{
 		if (CurrentWindow->GetHandle() == hWindow)
 		{
@@ -99,6 +99,18 @@ std::shared_ptr<WindowsWindow> WindowsApplication::GetWindowFromHWND(HWND hWindo
 	}
 
 	return nullptr;
+}
+
+std::shared_ptr<WindowsWindow> WindowsApplication::GetActiveWindow() const
+{
+	HWND hActiveWindow = ::GetForegroundWindow();
+	return GetWindowFromHWND(hActiveWindow);
+}
+
+std::shared_ptr<WindowsWindow> WindowsApplication::GetCapture() const
+{
+	HWND hCapture = ::GetCapture();
+	return GetWindowFromHWND(hCapture);
 }
 
 bool WindowsApplication::Tick()
@@ -118,9 +130,22 @@ bool WindowsApplication::Tick()
 	return true;
 }
 
-void WindowsApplication::SetEventHandler(std::shared_ptr<EventHandler> NewMessageHandler)
+void WindowsApplication::SetActiveWindow(std::shared_ptr<WindowsWindow>& InActiveWindow)
 {
-	MessageEventHandler = NewMessageHandler;
+	HWND hActiveWindow = InActiveWindow->GetHandle();
+	if (::IsWindow(hActiveWindow))
+	{
+		::SetActiveWindow(hActiveWindow);
+	}
+}
+
+void WindowsApplication::SetCapture(std::shared_ptr<WindowsWindow>& InCaptureWindow)
+{
+	HWND hCapture = InCaptureWindow->GetHandle();
+	if (::IsWindow(hCapture))
+	{
+		::SetCapture(hCapture);
+	}
 }
 
 /*

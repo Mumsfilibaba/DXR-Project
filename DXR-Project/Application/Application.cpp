@@ -4,7 +4,7 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/GuiContext.h"
 
-std::shared_ptr<Application> Application::ApplicationInstance = nullptr;
+std::shared_ptr<Application> Application::Instance = nullptr;
 
 Application::Application()
 {
@@ -20,17 +20,37 @@ bool Application::Tick()
 	return PlatformApplication->Tick();
 }
 
-std::shared_ptr<WindowsWindow> Application::GetWindow()
+void Application::SetActiveWindow(std::shared_ptr<WindowsWindow>& InActiveWindow)
+{
+	PlatformApplication->SetActiveWindow(InActiveWindow);
+}
+
+void Application::SetCapture(std::shared_ptr<WindowsWindow>& InCapture)
+{
+	PlatformApplication->SetCapture(InCapture);
+}
+
+std::shared_ptr<WindowsWindow> Application::GetWindow() const
 {
 	return Window;
 }
 
+std::shared_ptr<WindowsWindow> Application::GetActiveWindow() const
+{
+	return PlatformApplication->GetActiveWindow();
+}
+
+std::shared_ptr<WindowsWindow> Application::GetCapture() const
+{
+	return PlatformApplication->GetCapture();
+}
+
 Application* Application::Create()
 {
-	ApplicationInstance = std::make_unique<Application>();
-	if (ApplicationInstance->Initialize())
+	Instance = std::make_unique<Application>();
+	if (Instance->Initialize())
 	{
-		return ApplicationInstance.get();
+		return Instance.get();
 	}
 	else
 	{
@@ -40,68 +60,68 @@ Application* Application::Create()
 
 Application* Application::Get()
 {
-	return ApplicationInstance.get();
+	return Instance.get();
 }
 
-void Application::OnWindowResize(std::shared_ptr<WindowsWindow>& InWindow, Uint16 Width, Uint16 Height)
+void Application::OnWindowResize(std::shared_ptr<WindowsWindow>& InWindow, Uint16 InWidth, Uint16 InHeight)
 {
 	if (Renderer::Get())
 	{
-		Renderer::Get()->OnResize(Width, Height);
+		Renderer::Get()->OnResize(InWidth, InHeight);
 	}
 }
 
-void Application::OnKeyUp(EKey KeyCode)
+void Application::OnKeyUp(EKey InKeyCode)
 {
-	InputManager::Get().RegisterKeyUp(KeyCode);
+	InputManager::Get().RegisterKeyUp(InKeyCode);
 
 	if (GuiContext::Get())
 	{
-		GuiContext::Get()->OnKeyUp(KeyCode);
+		GuiContext::Get()->OnKeyUp(InKeyCode);
 	}
 }
 
-void Application::OnKeyDown(EKey KeyCode)
+void Application::OnKeyDown(EKey InKeyCode)
 {
-	InputManager::Get().RegisterKeyDown(KeyCode);
+	InputManager::Get().RegisterKeyDown(InKeyCode);
 
 	if (Renderer::Get())
 	{
-		Renderer::Get()->OnKeyDown(KeyCode);
+		Renderer::Get()->OnKeyDown(InKeyCode);
 	}
 
 	if (GuiContext::Get())
 	{
-		GuiContext::Get()->OnKeyDown(KeyCode);
+		GuiContext::Get()->OnKeyDown(InKeyCode);
 	}
 }
 
-void Application::OnMouseMove(Int32 X, Int32 Y)
+void Application::OnMouseMove(Int32 InX, Int32 InY)
 {
 	if (Renderer::Get())
 	{
-		Renderer::Get()->OnMouseMove(X, Y);
+		Renderer::Get()->OnMouseMove(InX, InY);
 	}
 
 	if (GuiContext::Get())
 	{
-		GuiContext::Get()->OnMouseMove(X, Y);
-	}
-}
-
-void Application::OnMouseButtonReleased(EMouseButton Button)
-{
-	if (GuiContext::Get())
-	{
-		GuiContext::Get()->OnMouseButtonReleased(Button);
+		GuiContext::Get()->OnMouseMove(InX, InY);
 	}
 }
 
-void Application::OnMouseButtonPressed(EMouseButton Button)
+void Application::OnMouseButtonReleased(EMouseButton InButton)
 {
 	if (GuiContext::Get())
 	{
-		GuiContext::Get()->OnMouseButtonPressed(Button);
+		GuiContext::Get()->OnMouseButtonReleased(InButton);
+	}
+}
+
+void Application::OnMouseButtonPressed(EMouseButton InButton)
+{
+	if (GuiContext::Get())
+	{
+		GuiContext::Get()->OnMouseButtonPressed(InButton);
 	}
 }
 
@@ -112,7 +132,7 @@ bool Application::Initialize()
 	PlatformApplication = WindowsApplication::Create(hInstance);
 	if (PlatformApplication)
 	{
-		PlatformApplication->SetEventHandler(std::shared_ptr<EventHandler>(ApplicationInstance));
+		PlatformApplication->SetEventHandler(std::shared_ptr<EventHandler>(Instance));
 	}
 	else
 	{

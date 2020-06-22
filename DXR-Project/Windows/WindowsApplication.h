@@ -14,13 +14,22 @@ class WindowsApplication
 public:
 	~WindowsApplication();
 
-	std::shared_ptr<WindowsWindow> CreateWindow(Uint16 Width, Uint16 Height);
-	std::shared_ptr<WindowsWindow> GetWindowFromHWND(HWND hWindow);
+	std::shared_ptr<WindowsWindow> CreateWindow(Uint16 InWidth, Uint16 InHeight);
 
 	bool Tick();
 
-	void SetEventHandler(std::shared_ptr<EventHandler> NewEventHandler);
-	
+	void SetActiveWindow(std::shared_ptr<WindowsWindow>& InActiveWindow);
+	void SetCapture(std::shared_ptr<WindowsWindow>& InCaptureWindow);
+
+	std::shared_ptr<WindowsWindow> GetWindowFromHWND(HWND hWindow)	const;
+	std::shared_ptr<WindowsWindow> GetActiveWindow()				const;
+	std::shared_ptr<WindowsWindow> GetCapture()						const;
+
+	void SetEventHandler(std::shared_ptr<EventHandler>& InEventHandler)
+	{
+		MessageEventHandler = InEventHandler;
+	}
+
 	std::shared_ptr<EventHandler> GetEventHandler() const
 	{
 		return MessageEventHandler;
@@ -38,7 +47,7 @@ private:
 	
 	bool Create();
 
-	void AddWindow(std::shared_ptr<WindowsWindow>& NewWindow);
+	void AddWindow(std::shared_ptr<WindowsWindow>& InWindow);
 
 	bool RegisterWindowClass();
 

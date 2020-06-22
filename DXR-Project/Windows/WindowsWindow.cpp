@@ -14,9 +14,9 @@ WindowsWindow::~WindowsWindow()
 	}
 }
 
-bool WindowsWindow::Initialize(WindowsApplication* InOwnerApplication, Uint16 Width, Uint16 Height)
+bool WindowsWindow::Initialize(WindowsApplication* InOwnerApplication, Uint16 InWidth, Uint16 InHeight)
 {
-	RECT ClientRect = { 0, 0, static_cast<LONG>(Width), static_cast<LONG>(Height) };
+	RECT ClientRect = { 0, 0, static_cast<LONG>(InWidth), static_cast<LONG>(InHeight) };
 	::AdjustWindowRect(&ClientRect, dwStyle, FALSE);
 
 	INT nWidth	= ClientRect.right	- ClientRect.left;
