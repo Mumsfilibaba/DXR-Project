@@ -6,6 +6,7 @@
 
 D3D12Buffer::D3D12Buffer(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
+	, Buffer(nullptr)
 {
 }
 

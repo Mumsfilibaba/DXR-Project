@@ -15,6 +15,10 @@
 */
 
 D3D12Device::D3D12Device()
+	: Factory(nullptr)
+	, Adapter(nullptr)
+	, D3DDevice(nullptr)
+	, DXRDevice(nullptr)
 {
 }
 

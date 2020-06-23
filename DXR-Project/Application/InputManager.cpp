@@ -1,6 +1,9 @@
 #include "InputManager.h"
 
 InputManager::InputManager()
+	: KeyStates()
+	, ScanCodeTable()
+	, KeyTable()
 {
 	for (Uint32 i = 0; i < EKey::KEY_COUNT; i++)
 	{

@@ -19,7 +19,7 @@ public:
 
 	bool Initialize(const GraphicsPipelineStateProperties& InProperties);
 
-	ID3D12PipelineState* GetPipelineState() const
+	FORCEINLINE ID3D12PipelineState* GetPipelineState() const
 	{
 		return PipelineState.Get();
 	}

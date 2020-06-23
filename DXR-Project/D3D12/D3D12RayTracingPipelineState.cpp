@@ -11,6 +11,11 @@ const LPCWSTR HitGroupName			= L"HitGroup";
 
 D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(D3D12Device* Device)
 	: D3D12DeviceChild(Device)
+	, GlobalRootSignature(nullptr)
+	, DXRStateObject(nullptr)
+	, RayGenTable()
+	, MissTable()
+	, HitTable()
 {
 }
 

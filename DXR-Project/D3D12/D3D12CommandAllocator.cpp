@@ -3,6 +3,7 @@
 
 D3D12CommandAllocator::D3D12CommandAllocator(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
+	, Allocator(nullptr)
 {
 }
 

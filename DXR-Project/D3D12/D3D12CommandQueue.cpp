@@ -5,6 +5,7 @@
 
 D3D12CommandQueue::D3D12CommandQueue(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
+	, Queue(nullptr)
 {
 }
 

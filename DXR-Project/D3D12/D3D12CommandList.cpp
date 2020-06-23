@@ -4,6 +4,9 @@
 
 D3D12CommandList::D3D12CommandList(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
+	, CommandList(nullptr)
+	, DXRCommandList(nullptr)
+	, DeferredResourceBarriers()
 {
 }
 

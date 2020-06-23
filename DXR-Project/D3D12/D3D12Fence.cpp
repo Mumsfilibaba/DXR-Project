@@ -3,6 +3,7 @@
 
 D3D12Fence::D3D12Fence(D3D12Device* Device)
 	: D3D12DeviceChild(Device)
+	, Fence(nullptr)
 {
 }
 

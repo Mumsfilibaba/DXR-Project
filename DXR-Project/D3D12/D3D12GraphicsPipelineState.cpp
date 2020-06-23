@@ -4,6 +4,7 @@
 
 D3D12GraphicsPipelineState::D3D12GraphicsPipelineState(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
+	, PipelineState(nullptr)
 {
 }
 
