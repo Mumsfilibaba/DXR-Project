@@ -24,27 +24,27 @@ public:
 
 	Uint32 GetCurrentBackBufferIndex() const;
 
-	ID3D12Resource* GetSurfaceResource(Uint32 SurfaceIndex) const
+	FORCEINLINE ID3D12Resource* GetSurfaceResource(Uint32 SurfaceIndex) const
 	{
 		return BackBuffers[SurfaceIndex].Get();
 	}
 
-	DXGI_FORMAT GetSurfaceFormat() const
+	FORCEINLINE DXGI_FORMAT GetSurfaceFormat() const
 	{
 		return DXGI_FORMAT_R8G8B8A8_UNORM;
 	}
 
-	Uint32 GetSurfaceCount() const
+	FORCEINLINE Uint32 GetSurfaceCount() const
 	{
 		return 3;
 	}
 
-	Uint32 GetWidth() const
+	FORCEINLINE Uint32 GetWidth() const
 	{
 		return Width;
 	}
 
-	Uint32 GetHeight() const
+	FORCEINLINE Uint32 GetHeight() const
 	{
 		return Height;
 	}

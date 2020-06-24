@@ -26,12 +26,12 @@ public:
 
 	bool Initialize();
 
-	ID3D12StateObject* GetStateObject() const
+	FORCEINLINE ID3D12StateObject* GetStateObject() const
 	{
 		return DXRStateObject.Get();
 	}
 
-	ID3D12RootSignature* GetGlobalRootSignature() const
+	FORCEINLINE ID3D12RootSignature* GetGlobalRootSignature() const
 	{
 		return GlobalRootSignature.Get();
 	}

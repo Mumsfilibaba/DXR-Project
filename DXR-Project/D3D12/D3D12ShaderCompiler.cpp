@@ -9,6 +9,10 @@
 */
 
 D3D12ShaderCompiler::D3D12ShaderCompiler()
+	: DxCompiler(nullptr)
+	, DxLibrary(nullptr)
+	, DxLinker(nullptr)
+	, DxIncludeHandler(nullptr)
 {
 }
 

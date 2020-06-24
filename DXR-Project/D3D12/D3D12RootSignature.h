@@ -9,7 +9,7 @@ public:
 
 	bool Initialize();
 
-	ID3D12RootSignature* GetRootSignature() const
+	FORCEINLINE ID3D12RootSignature* GetRootSignature() const
 	{
 		return RootSignature.Get();
 	}
@@ -19,5 +19,5 @@ public:
 	virtual void SetName(const std::string& InName) override;
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignature = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignature;
 };

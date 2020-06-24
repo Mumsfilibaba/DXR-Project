@@ -6,6 +6,8 @@
 
 D3D12SwapChain::D3D12SwapChain(D3D12Device* Device)
 	: D3D12DeviceChild(Device)
+	, SwapChain(nullptr),
+	, BackBuffers()
 {
 }
 

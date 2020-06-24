@@ -3,6 +3,7 @@
 
 D3D12RootSignature::D3D12RootSignature(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
+	, RootSignature(nullptr)
 {
 }
 

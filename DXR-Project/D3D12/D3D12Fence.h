@@ -13,7 +13,7 @@ public:
 
 	bool WaitForValue(Uint64 FenceValue);
 
-	ID3D12Fence* GetFence() const
+	FORCEINLINE ID3D12Fence* GetFence() const
 	{
 		return Fence.Get();
 	}

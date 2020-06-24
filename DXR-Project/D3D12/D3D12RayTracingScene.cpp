@@ -6,6 +6,10 @@
 
 #include "Rendering/MeshFactory.h"
 
+/*
+* D3D12RayTracingGeometry
+*/
+
 D3D12RayTracingGeometry::D3D12RayTracingGeometry(D3D12Device* Device)
 	: D3D12DeviceChild(Device)
 {
@@ -97,6 +101,7 @@ void D3D12RayTracingGeometry::SetName(const std::string& InName)
 
 D3D12RayTracingScene::D3D12RayTracingScene(D3D12Device* Device)
 	: D3D12DeviceChild(Device)
+	, Instances()
 {
 }
 
