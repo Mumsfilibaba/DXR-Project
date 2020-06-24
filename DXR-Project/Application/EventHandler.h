@@ -12,15 +12,15 @@ class EventHandler
 public:
 	virtual ~EventHandler() = default;
 
-	virtual void OnWindowResized(std::shared_ptr<WindowsWindow>& InWindow, Uint16 InWidth, Uint16 InHeight)
+	virtual void OnWindowResized(std::shared_ptr<WindowsWindow>& Window, Uint16 Width, Uint16 Height)
 	{
 	}
 
-	virtual void OnKeyReleased(EKey InKeyCode, const ModifierKeyState& InModierKeyState)
+	virtual void OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)
 	{
 	}
 
-	virtual void OnKeyPressed(EKey InKeyCode, const ModifierKeyState& InModierKeyState)
+	virtual void OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState)
 	{
 	}
 
@@ -28,19 +28,19 @@ public:
 	{
 	}
 
-	virtual void OnMouseMove(Int32 InX, Int32 InY)
+	virtual void OnMouseMove(Int32 X, Int32 Y)
 	{
 	}
 
-	virtual void OnMouseButtonReleased(EMouseButton InButton, const ModifierKeyState& InModierKeyState)
+	virtual void OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState)
 	{
 	}
 
-	virtual void OnMouseButtonPressed(EMouseButton InButton, const ModifierKeyState& InModierKeyState)
+	virtual void OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState)
 	{
 	}
 
-	virtual void OnMouseScrolled(Float32 InHorizontalDelta, Float32 InVerticalDelta)
+	virtual void OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta)
 	{
 	}
 

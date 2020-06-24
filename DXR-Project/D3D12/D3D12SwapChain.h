@@ -13,12 +13,12 @@ class D3D12CommandQueue;
 class D3D12SwapChain : public D3D12DeviceChild
 {
 public:
-	D3D12SwapChain(D3D12Device* Device);
+	D3D12SwapChain(D3D12Device* InDevice);
 	~D3D12SwapChain();
 
-	bool Initialize(WindowsWindow* InWindow, D3D12CommandQueue* InQueue);
+	bool Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue);
 
-	bool Resize(Uint32 NewWidth, Uint32 NewHeight);
+	bool Resize(Uint32 InWidth, Uint32 InHeight);
 
 	bool Present(Uint32 SyncInterval);
 
@@ -51,7 +51,7 @@ public:
 
 public:
 	// DeviceChild Interface
-	virtual void SetName(const std::string& InName) override;
+	virtual void SetName(const std::string& Name) override;
 
 private:
 	void RetriveSwapChainSurfaces();

@@ -16,12 +16,12 @@ public:
 
 	void* Allocate(Uint64 SizeInBytes);
 
-	ID3D12Resource* GetResource() const
+	FORCEINLINE D3D12Buffer* GetBuffer() const
 	{
-		return Buffer->GetResource();
+		return Buffer.get();
 	}
 
-	Uint64 GetOffset() const
+	FORCEINLINE Uint64 GetOffset() const
 	{
 		return Offset;
 	}

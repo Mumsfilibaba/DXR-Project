@@ -15,12 +15,12 @@ public:
 
 	FORCEINLINE HCURSOR GetCursor() const
 	{
-		return Cursor;
+		return CursorHandle;
 	}
 
 private:
-	HCURSOR Cursor		= 0;
-	LPCSTR	CursorName	= nullptr;
+	HCURSOR CursorHandle	= 0;
+	LPCSTR	CursorName		= nullptr;
 };
 
 /*

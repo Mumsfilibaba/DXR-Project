@@ -11,18 +11,18 @@ public:
 
 	bool Initialize(D3D12_COMMAND_LIST_TYPE Type);
 	
-	bool SignalFence(class D3D12Fence* InFence, Uint64 FenceValue);
+	bool SignalFence(class D3D12Fence* Fence, Uint64 FenceValue);
 
-	void ExecuteCommandList(class D3D12CommandList* InCommandList);
+	void ExecuteCommandList(class D3D12CommandList* CommandList);
 
-	ID3D12CommandQueue* GetQueue() const
+	FORCEINLINE ID3D12CommandQueue* GetQueue() const
 	{
 		return Queue.Get();
 	}
 
 public:
 	// DeviceChild
-	virtual void SetName(const std::string& InName) override;
+	virtual void SetName(const std::string& Name) override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> Queue;

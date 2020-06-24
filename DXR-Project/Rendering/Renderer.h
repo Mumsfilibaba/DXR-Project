@@ -35,15 +35,15 @@ public:
 		return Device;
 	}
 
-	void OnResize(Int32 NewWidth, Int32 NewHeight);
+	void OnResize(Int32 Width, Int32 Height);
 	void OnMouseMove(Int32 X, Int32 Y);
 	void OnKeyPressed(EKey KeyCode);
 
-	static Renderer* Create(std::shared_ptr<WindowsWindow> RendererWindow);
+	static Renderer* Make(std::shared_ptr<WindowsWindow>& RendererWindow);
 	static Renderer* Get();
 	
 private:
-	bool Initialize(std::shared_ptr<WindowsWindow> RendererWindow);
+	bool Initialize(std::shared_ptr<WindowsWindow>& RendererWindow);
 
 	bool CreateResultTexture();
 	void CreateRenderTargetViews();

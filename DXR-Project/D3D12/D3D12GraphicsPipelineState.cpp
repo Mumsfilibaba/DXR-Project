@@ -12,7 +12,7 @@ D3D12GraphicsPipelineState::~D3D12GraphicsPipelineState()
 {
 }
 
-bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStateProperties& InProperties)
+bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStateProperties& Properties)
 {
 	struct PipelineStream
 	{
@@ -57,12 +57,12 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	Pipeline.InputLayout.NumElements			= ARRAYSIZE(InputElementDesc);
 
 	D3D12_SHADER_BYTECODE& VertexShader = Pipeline.VertexShader;
-	VertexShader.pShaderBytecode	= reinterpret_cast<void*>(InProperties.VSBlob->GetBufferPointer());
-	VertexShader.BytecodeLength		= InProperties.VSBlob->GetBufferSize();
+	VertexShader.pShaderBytecode	= reinterpret_cast<void*>(Properties.VSBlob->GetBufferPointer());
+	VertexShader.BytecodeLength		= Properties.VSBlob->GetBufferSize();
 
 	D3D12_SHADER_BYTECODE& PixelShader = Pipeline.PixelShader;
-	PixelShader.pShaderBytecode	= reinterpret_cast<void*>(InProperties.PSBlob->GetBufferPointer());
-	PixelShader.BytecodeLength	= InProperties.PSBlob->GetBufferSize();
+	PixelShader.pShaderBytecode	= reinterpret_cast<void*>(Properties.PSBlob->GetBufferPointer());
+	PixelShader.BytecodeLength	= Properties.PSBlob->GetBufferSize();
 
 	D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = Pipeline.RenderTargetInfo;
 	RenderTargetInfo.RTFormats[0]		= DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -101,7 +101,7 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	BlendStateDesc.RenderTarget[0].BlendOpAlpha				= D3D12_BLEND_OP_ADD;
 	BlendStateDesc.RenderTarget[0].RenderTargetWriteMask	= D3D12_COLOR_WRITE_ENABLE_ALL;
 
-	Pipeline.RootSignature			= InProperties.RootSignature->GetRootSignature();
+	Pipeline.RootSignature			= Properties.RootSignature->GetRootSignature();
 	Pipeline.PrimitiveTopologyType	= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	const D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc = { sizeof(PipelineStream), &Pipeline };

@@ -11,7 +11,6 @@
 #include "D3D12/D3D12Device.h"
 #include "D3D12/D3D12Buffer.h"
 #include "D3D12/D3D12RootSignature.h"
-#include "D3D12/HeapProps.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 #include "D3D12/D3D12DescriptorHeap.h"
 
@@ -29,10 +28,10 @@ GuiContext::~GuiContext()
 	ImGui::DestroyContext(Context);
 }
 
-GuiContext* GuiContext::Create(std::shared_ptr<D3D12Device>& InDevice)
+GuiContext* GuiContext::Make(std::shared_ptr<D3D12Device>& Device)
 {
 	Instance = std::unique_ptr<GuiContext>(new GuiContext());
-	if (Instance->Initialize(InDevice))
+	if (Instance->Initialize(Device))
 	{
 		return Instance.get();
 	}
@@ -169,7 +168,7 @@ void GuiContext::Render(D3D12CommandList* CommandList)
 	D3D12_VERTEX_BUFFER_VIEW VertexBufferView = { };
 	ZERO_MEMORY(&VertexBufferView, sizeof(D3D12_VERTEX_BUFFER_VIEW));
 
-	VertexBufferView.BufferLocation = VertexBuffer->GetVirtualAddress();
+	VertexBufferView.BufferLocation = VertexBuffer->GetGPUVirtualAddress();
 	VertexBufferView.SizeInBytes	= DrawData->TotalVtxCount * Stride;
 	VertexBufferView.StrideInBytes	= Stride;
 	CommandList->IASetVertexBuffers(0, &VertexBufferView, 1);
@@ -177,7 +176,7 @@ void GuiContext::Render(D3D12CommandList* CommandList)
 	D3D12_INDEX_BUFFER_VIEW IndexBufferView;
 	ZERO_MEMORY(&IndexBufferView, sizeof(D3D12_INDEX_BUFFER_VIEW));
 
-	IndexBufferView.BufferLocation	= IndexBuffer->GetVirtualAddress();
+	IndexBufferView.BufferLocation	= IndexBuffer->GetGPUVirtualAddress();
 	IndexBufferView.SizeInBytes		= DrawData->TotalIdxCount * sizeof(ImDrawIdx);
 	IndexBufferView.Format			= sizeof(ImDrawIdx) == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 	CommandList->IASetIndexBuffer(&IndexBufferView);
@@ -317,11 +316,11 @@ void GuiContext::OnMouseButtonReleased(EMouseButton Button)
 	IO.MouseDown[ButtonIndex] = false;
 }
 
-void GuiContext::OnMouseScrolled(Float32 InHorizontalDelta, Float32 InVerticalDelta)
+void GuiContext::OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta)
 {
 	ImGuiIO& IO = ImGui::GetIO();
-	IO.MouseWheel	+= InVerticalDelta;
-	IO.MouseWheelH	+= InHorizontalDelta;
+	IO.MouseWheel	+= VerticalDelta;
+	IO.MouseWheelH	+= HorizontalDelta;
 }
 
 void GuiContext::OnCharacterInput(Uint32 Character)
@@ -410,12 +409,12 @@ bool GuiContext::CreateFontTexture()
 	Uint32 UploadSize	= Height * UploadPitch;
 
 	TextureProperties FontTextureProps = { };
-	FontTextureProps.Name			= "FontTexture";
-	FontTextureProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-	FontTextureProps.Width			= Width;
-	FontTextureProps.Height			= Height;
-	FontTextureProps.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
-	FontTextureProps.HeapProperties	= HeapProps::DefaultHeap();
+	FontTextureProps.Name		= "FontTexture";
+	FontTextureProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
+	FontTextureProps.Width		= Width;
+	FontTextureProps.Height		= Height;
+	FontTextureProps.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
+	FontTextureProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 	FontTexture = std::shared_ptr<D3D12Texture>(new D3D12Texture(Device.get()));
 	if (!FontTexture->Initialize(FontTextureProps))
@@ -424,11 +423,11 @@ bool GuiContext::CreateFontTexture()
 	}
 
 	BufferProperties UploadBufferProps = { };
-	UploadBufferProps.Name				= "UploadBuffer";
-	UploadBufferProps.Flags				= D3D12_RESOURCE_FLAG_NONE;
-	UploadBufferProps.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
-	UploadBufferProps.SizeInBytes		= UploadSize;
-	UploadBufferProps.HeapProperties	= HeapProps::UploadHeap();
+	UploadBufferProps.Name			= "UploadBuffer";
+	UploadBufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
+	UploadBufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
+	UploadBufferProps.SizeInBytes	= UploadSize;
+	UploadBufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 	std::unique_ptr<D3D12Buffer> UploadBuffer = std::unique_ptr<D3D12Buffer>(new D3D12Buffer(Device.get()));
 	if (UploadBuffer->Initialize(UploadBufferProps))
@@ -472,7 +471,7 @@ bool GuiContext::CreateFontTexture()
 	Allocator->Reset();
 	CommandList->Reset(Allocator.get());
 
-	CommandList->TransitionBarrier(FontTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+	CommandList->TransitionBarrier(FontTexture.get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
 	
 	D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
 	SourceLocation.pResource							= UploadBuffer->GetResource();
@@ -489,7 +488,7 @@ bool GuiContext::CreateFontTexture()
 	DestLocation.SubresourceIndex	= 0;
 	
 	CommandList->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
-	CommandList->TransitionBarrier(FontTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(FontTexture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	CommandList->Close();
 
@@ -596,11 +595,11 @@ bool GuiContext::CreatePipeline()
 bool GuiContext::CreateBuffers()
 {
 	BufferProperties BufferProps = { };
-	BufferProps.Name			= "ImGui VertexBuffer";
-	BufferProps.SizeInBytes		= 1024 * 1024 * 8;
-	BufferProps.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
-	BufferProps.HeapProperties	= HeapProps::UploadHeap();
-	BufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
+	BufferProps.Name		= "ImGui VertexBuffer";
+	BufferProps.SizeInBytes	= 1024 * 1024 * 8;
+	BufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
+	BufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
+	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 	
 	// VertexBuffer
 	VertexBuffer = std::shared_ptr<D3D12Buffer>(new D3D12Buffer(Device.get()));

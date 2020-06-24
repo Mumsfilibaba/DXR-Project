@@ -1,7 +1,8 @@
 #pragma once
-#include "D3D12DeviceChild.h"
+#include "D3D12Resource.h"
 
-#include "Types.h"
+class D3D12ShaderResourceView;
+class D3D12UnorderedAccessView;
 
 struct TextureProperties
 {
@@ -10,26 +11,39 @@ struct TextureProperties
 	D3D12_RESOURCE_FLAGS	Flags;
 	Uint16					Width; 
 	Uint16					Height;
-	D3D12_HEAP_PROPERTIES	HeapProperties;
+	D3D12_RESOURCE_STATES	InitalState;
+	EMemoryType				MemoryType;
 };
 
-class D3D12Texture : public D3D12DeviceChild
+class D3D12Texture : public D3D12Resource
 {
 public:
 	D3D12Texture(D3D12Device* InDevice);
 	~D3D12Texture();
 
-	bool Initialize(const TextureProperties& InProperties);
+	bool Initialize(const TextureProperties& Properties);
 
-	ID3D12Resource1* GetResource() const
+	FORCEINLINE void SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView>& InShaderResourceView)
 	{
-		return Texture.Get();
+		ShaderResourceView = InShaderResourceView;
 	}
 
-public:
-	// DeviceChild Interface
-	virtual void SetName(const std::string& InName) override;
+	FORCEINLINE std::shared_ptr<D3D12ShaderResourceView> GetShaderResourceView() const
+	{
+		return ShaderResourceView;
+	}
+
+	FORCEINLINE void SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView>& InUnorderedAccessView)
+	{
+		UnorderedAccessView = InUnorderedAccessView;
+	}
+
+	FORCEINLINE std::shared_ptr<D3D12UnorderedAccessView> GetUnorderedAccessView() const
+	{
+		return UnorderedAccessView;
+	}
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12Resource1> Texture;
+	std::shared_ptr<D3D12ShaderResourceView> ShaderResourceView;
+	std::shared_ptr<D3D12UnorderedAccessView> UnorderedAccessView;
 };

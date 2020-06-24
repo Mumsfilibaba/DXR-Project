@@ -9,8 +9,8 @@ const LPCWSTR MissShaderName		= L"Miss";
 const LPCWSTR ClosestHitShaderName	= L"ClosestHit";
 const LPCWSTR HitGroupName			= L"HitGroup";
 
-D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(D3D12Device* Device)
-	: D3D12DeviceChild(Device)
+D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(D3D12Device* InDevice)
+	: D3D12DeviceChild(InDevice)
 	, GlobalRootSignature(nullptr)
 	, DXRStateObject(nullptr)
 	, RayGenTable()
@@ -169,8 +169,8 @@ bool D3D12RayTracingPipelineState::CreatePipeline()
 
 	{
 		D3D12_STATE_SUBOBJECT RayGenLocalRootAssociationSubObject = { };
-		RayGenLocalRootAssociationSubObject.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-		RayGenLocalRootAssociationSubObject.pDesc = &RayGenLocalRootAssociation;
+		RayGenLocalRootAssociationSubObject.Type	= D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
+		RayGenLocalRootAssociationSubObject.pDesc	= &RayGenLocalRootAssociation;
 		SubObjects.push_back(RayGenLocalRootAssociationSubObject);
 	}
 
@@ -383,8 +383,8 @@ bool D3D12RayTracingPipelineState::CreatePipeline()
 
 	{
 		D3D12_STATE_SUBOBJECT GlobalRootSubObject = { };
-		GlobalRootSubObject.Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
-		GlobalRootSubObject.pDesc = GlobalRootSignature.GetAddressOf();
+		GlobalRootSubObject.Type	= D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
+		GlobalRootSubObject.pDesc	= GlobalRootSignature.GetAddressOf();
 		SubObjects.push_back(GlobalRootSubObject);
 	}
 

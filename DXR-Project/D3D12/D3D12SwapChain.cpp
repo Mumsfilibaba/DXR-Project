@@ -4,9 +4,9 @@
 
 #include "../Windows/WindowsWindow.h"
 
-D3D12SwapChain::D3D12SwapChain(D3D12Device* Device)
-	: D3D12DeviceChild(Device)
-	, SwapChain(nullptr),
+D3D12SwapChain::D3D12SwapChain(D3D12Device* InDevice)
+	: D3D12DeviceChild(InDevice)
+	, SwapChain(nullptr)
 	, BackBuffers()
 {
 }
@@ -15,7 +15,7 @@ D3D12SwapChain::~D3D12SwapChain()
 {
 }
 
-bool D3D12SwapChain::Initialize(WindowsWindow* InWindow, D3D12CommandQueue* InQueue)
+bool D3D12SwapChain::Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue)
 {
 	using namespace Microsoft::WRL;
 
@@ -23,7 +23,7 @@ bool D3D12SwapChain::Initialize(WindowsWindow* InWindow, D3D12CommandQueue* InQu
 	Flags = Device->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 	WindowShape Shape;
-	InWindow->GetWindowShape(Shape);
+	Window->GetWindowShape(Shape);
 
 	Width	= Shape.Width;
 	Height	= Shape.Height;
@@ -43,14 +43,14 @@ bool D3D12SwapChain::Initialize(WindowsWindow* InWindow, D3D12CommandQueue* InQu
 	SwapChainDesc.Flags					= Flags;
 
 	ComPtr<IDXGISwapChain1> TempSwapChain;
-	HRESULT hResult = Device->GetFactory()->CreateSwapChainForHwnd(InQueue->GetQueue(), InWindow->GetHandle(), &SwapChainDesc, nullptr, nullptr, &TempSwapChain);
+	HRESULT hResult = Device->GetFactory()->CreateSwapChainForHwnd(Queue->GetQueue(), Window->GetHandle(), &SwapChainDesc, nullptr, nullptr, &TempSwapChain);
 	if (SUCCEEDED(hResult))
 	{
 		hResult = TempSwapChain.As<IDXGISwapChain3>(&SwapChain);
 		if (SUCCEEDED(hResult))
 		{
 			// Disable Alt+Enter for this SwapChain/Window
-			Device->GetFactory()->MakeWindowAssociation(InWindow->GetHandle(), DXGI_MWA_NO_ALT_ENTER);
+			Device->GetFactory()->MakeWindowAssociation(Window->GetHandle(), DXGI_MWA_NO_ALT_ENTER);
 
 			RetriveSwapChainSurfaces();
 
@@ -70,15 +70,15 @@ bool D3D12SwapChain::Initialize(WindowsWindow* InWindow, D3D12CommandQueue* InQu
 	}
 }
 
-bool D3D12SwapChain::Resize(Uint32 NewWidth, Uint32 NewHeight)
+bool D3D12SwapChain::Resize(Uint32 InWidth, Uint32 InHeight)
 {
-	if (NewWidth == 0 || NewHeight == 0)
+	if (InWidth == 0 || InHeight == 0)
 	{
 		::OutputDebugString("[D3D12SwapChain]: Resize failed. Width or Height cannot be zero\n");
 		return false;
 	}
 
-	if (NewWidth == Width && NewHeight == Height)
+	if (InWidth == Width && InHeight == Height)
 	{
 		::OutputDebugString("[D3D12SwapChain]: Resize failed. Width or Height is the same\n");
 		return false;
@@ -86,11 +86,11 @@ bool D3D12SwapChain::Resize(Uint32 NewWidth, Uint32 NewHeight)
 
 	ReleaseSurfaces();
 
-	HRESULT Result = SwapChain->ResizeBuffers(0, NewWidth, NewHeight, DXGI_FORMAT_UNKNOWN, Flags);
+	HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
 	if (SUCCEEDED(Result))
 	{
-		Width	= NewWidth;
-		Height	= NewHeight;
+		Width	= InWidth;
+		Height	= InHeight;
 
 		RetriveSwapChainSurfaces();
 		return true;
@@ -111,7 +111,7 @@ bool D3D12SwapChain::Present(Uint32 SyncInterval)
 	return SUCCEEDED(SwapChain->Present(SyncInterval, 0));
 }
 
-void D3D12SwapChain::SetName(const std::string& InName)
+void D3D12SwapChain::SetName(const std::string& Name)
 {
 	// TODO: SetName for swapchain
 }

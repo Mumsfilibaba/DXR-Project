@@ -35,18 +35,18 @@ bool D3D12CommandQueue::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 	}
 }
 
-bool D3D12CommandQueue::SignalFence(D3D12Fence* InFence, Uint64 FenceValue)
+bool D3D12CommandQueue::SignalFence(D3D12Fence* Fence, Uint64 FenceValue)
 {
-	return SUCCEEDED(Queue->Signal(InFence->GetFence(), FenceValue));
+	return SUCCEEDED(Queue->Signal(Fence->GetFence(), FenceValue));
 }
 
-void D3D12CommandQueue::ExecuteCommandList(D3D12CommandList* InCommandList)
+void D3D12CommandQueue::ExecuteCommandList(D3D12CommandList* CommandList)
 {
-	ID3D12CommandList* CommandLists[] = { InCommandList->GetCommandList() };
+	ID3D12CommandList* CommandLists[] = { CommandList->GetCommandList() };
 	Queue->ExecuteCommandLists(1, CommandLists);
 }
 
-void D3D12CommandQueue::SetName(const std::string& InName)
+void D3D12CommandQueue::SetName(const std::string& Name)
 {
-	Queue->SetName(ConvertToWide(InName).c_str());
+	Queue->SetName(ConvertToWide(Name).c_str());
 }

@@ -13,7 +13,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// Application
-	Application* App = Application::Create();
+	Application* App = Application::Make();
 	if (!App)
 	{
 		::MessageBox(0, "Failed to create Application", "ERROR", MB_ICONERROR);
@@ -23,7 +23,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	InitializeCursors();
 
 	// Renderer
-	Renderer* Renderer = Renderer::Create(App->GetWindow());
+	Renderer* Renderer = Renderer::Make(App->GetWindow());
 	if (!Renderer)
 	{
 		::MessageBox(0, "Failed to create Renderer", "ERROR", MB_ICONERROR);
@@ -31,7 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	}
 
 	// ImGui
-	GuiContext* GUIContext = GuiContext::Create(Renderer->GetDevice());
+	GuiContext* GUIContext = GuiContext::Make(Renderer->GetDevice());
 	if (!GUIContext)
 	{
 		::MessageBox(0, "Failed to create ImGuiContext", "ERROR", MB_ICONERROR);

@@ -110,9 +110,9 @@ MeshData MeshFactory::CreateFromFile(const std::string& Filename, bool MergeMesh
 
 MeshData MeshFactory::CreateCube(Float32 Width, Float32 Height, Float32 Depth) noexcept
 {
-	Float32 HalfWitdth	= Width * 0.5f;
-	Float32 HalfHeight	= Height * 0.5f;
-	Float32 HalfDepth	= Depth * 0.5f;
+	const Float32 HalfWitdth	= Width * 0.5f;
+	const Float32 HalfHeight	= Height * 0.5f;
+	const Float32 HalfDepth		= Depth * 0.5f;
 
 	MeshData Cube;
 	Cube.Vertices =

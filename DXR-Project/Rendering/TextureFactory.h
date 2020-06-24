@@ -10,5 +10,5 @@ class D3D12Texture;
 class TextureFactory
 {
 public:
-	static D3D12Texture* LoadFromFile(D3D12Device* InDevice, const std::string& InFilepath);
+	static D3D12Texture* LoadFromFile(D3D12Device* Device, const std::string& Filepath);
 };

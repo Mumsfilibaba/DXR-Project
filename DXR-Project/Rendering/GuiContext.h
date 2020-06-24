@@ -22,14 +22,14 @@ public:
 	void BeginFrame();
 	void EndFrame();
 
-	void Render(class D3D12CommandList* InCommandList);
+	void Render(class D3D12CommandList* CommandList);
 
 	FORCEINLINE ImGuiContext* GetCurrentContext() const
 	{
 		return Context;
 	}
 
-	static GuiContext* Create(std::shared_ptr<D3D12Device>& InDevice);
+	static GuiContext* Make(std::shared_ptr<D3D12Device>& Device);
 	static GuiContext* Get();
 
 public:
@@ -38,7 +38,7 @@ public:
 	void OnKeyReleased(EKey KeyCode);
 	void OnMouseButtonPressed(EMouseButton Button);
 	void OnMouseButtonReleased(EMouseButton Button);
-	void OnMouseScrolled(Float32 InHorizontalDelta, Float32 InVerticalDelta);
+	void OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta);
 	void OnCharacterInput(Uint32 Character);
 
 private:

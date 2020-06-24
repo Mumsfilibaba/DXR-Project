@@ -1,4 +1,7 @@
 #pragma once
+#include "Defines.h"
+#include "Types.h"
+
 #include <d3d12.h>
 
 #include <wrl/client.h>
@@ -22,7 +25,7 @@ public:
 
 	virtual void SetName(const std::string& InName) = 0;
 
-	D3D12Device* GetDevice() const
+	FORCEINLINE D3D12Device* GetDevice() const
 	{
 		return Device;
 	}

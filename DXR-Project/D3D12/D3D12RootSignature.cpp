@@ -83,7 +83,7 @@ bool D3D12RootSignature::Initialize()
 	}
 }
 
-void D3D12RootSignature::SetName(const std::string& InName)
+void D3D12RootSignature::SetName(const std::string& Name)
 {
-	RootSignature->SetName(ConvertToWide(InName).c_str());
+	RootSignature->SetName(ConvertToWide(Name).c_str());
 }

@@ -4,14 +4,14 @@
 class InputManager
 {
 public:
-	EKey	ConvertFromKeyCode(Uint32 KeyCode);
-	Uint32	ConvertToKeyCode(EKey Key);
+	EKey	ConvertFromKeyCode(Uint32 InKeyCode);
+	Uint32	ConvertToKeyCode(EKey InKey);
 
-	void RegisterKeyUp(EKey KeyCode);
-	void RegisterKeyDown(EKey KeyCode);
+	void RegisterKeyUp(EKey InKeyCode);
+	void RegisterKeyDown(EKey InKeyCode);
 
-	bool IsKeyUp(EKey KeyCode)		const;
-	bool IsKeyDown(EKey KeyCode)	const;
+	bool IsKeyUp(EKey InKeyCode)		const;
+	bool IsKeyDown(EKey InKeyCode)	const;
 
 	static InputManager& Get();
 

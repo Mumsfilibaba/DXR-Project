@@ -12,20 +12,20 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* InDevice, const std::string& InFilepath)
+D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::string& Filepath)
 {
 	Int32 Width			= 0;
 	Int32 Height		= 0;
 	Int32 ChannelCount	= 0;
-	std::unique_ptr<Byte> Pixels = std::unique_ptr<Byte>(stbi_load(InFilepath.c_str(), &Width, &Height, &ChannelCount, 4));
+	std::unique_ptr<Byte> Pixels = std::unique_ptr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 4));
 	if (!Pixels)
 	{
-		::OutputDebugString(("[TextureFactory]: Failed to load image '" + InFilepath + "'\n").c_str());
+		::OutputDebugString(("[TextureFactory]: Failed to load image '" + Filepath + "'\n").c_str());
 		return nullptr;
 	}
 	else
 	{
-		::OutputDebugString(("[TextureFactory]: Load image '" + InFilepath + "'\n").c_str());
+		::OutputDebugString(("[TextureFactory]: Load image '" + Filepath + "'\n").c_str());
 	}
 
 	TextureProperties TextureProps = { };
@@ -35,7 +35,7 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* InDevice, const std::str
 	TextureProps.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
 	TextureProps.HeapProperties = HeapProps::DefaultHeap();
 
-	std::unique_ptr<D3D12Texture> Texture = std::unique_ptr<D3D12Texture>(new D3D12Texture(InDevice));
+	std::unique_ptr<D3D12Texture> Texture = std::unique_ptr<D3D12Texture>(new D3D12Texture(Device));
 	if (!Texture->Initialize(TextureProps))
 	{
 		return nullptr;
@@ -51,7 +51,7 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* InDevice, const std::str
 	UploadBufferProps.SizeInBytes		= UploadSize;
 	UploadBufferProps.HeapProperties	= HeapProps::UploadHeap();
 
-	std::unique_ptr<D3D12Buffer> UploadBuffer = std::unique_ptr<D3D12Buffer>(new D3D12Buffer(InDevice));
+	std::unique_ptr<D3D12Buffer> UploadBuffer = std::unique_ptr<D3D12Buffer>(new D3D12Buffer(Device));
 	if (UploadBuffer->Initialize(UploadBufferProps))
 	{
 		void* Memory = UploadBuffer->Map();
@@ -66,25 +66,25 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* InDevice, const std::str
 		return nullptr;
 	}
 
-	std::unique_ptr<D3D12Fence> Fence = std::unique_ptr<D3D12Fence>(new D3D12Fence(InDevice));
+	std::unique_ptr<D3D12Fence> Fence = std::unique_ptr<D3D12Fence>(new D3D12Fence(Device));
 	if (!Fence->Initialize(0))
 	{
 		return nullptr;
 	}
 
-	std::unique_ptr<D3D12CommandAllocator> Allocator = std::unique_ptr<D3D12CommandAllocator>(new D3D12CommandAllocator(InDevice));
+	std::unique_ptr<D3D12CommandAllocator> Allocator = std::unique_ptr<D3D12CommandAllocator>(new D3D12CommandAllocator(Device));
 	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
 	{
 		return nullptr;
 	}
 
-	std::unique_ptr<D3D12CommandList> CommandList = std::unique_ptr<D3D12CommandList>(new D3D12CommandList(InDevice));
+	std::unique_ptr<D3D12CommandList> CommandList = std::unique_ptr<D3D12CommandList>(new D3D12CommandList(Device));
 	if (!CommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator.get(), nullptr))
 	{
 		return nullptr;
 	}
 
-	std::unique_ptr<D3D12CommandQueue> Queue = std::unique_ptr<D3D12CommandQueue>(new D3D12CommandQueue(InDevice));
+	std::unique_ptr<D3D12CommandQueue> Queue = std::unique_ptr<D3D12CommandQueue>(new D3D12CommandQueue(Device));
 	if (!Queue->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
 	{
 		return nullptr;

@@ -4,7 +4,7 @@
 #include "GuiContext.h"
 
 #include "D3D12/D3D12Texture.h"
-#include "D3D12/HeapProps.h"
+#include "D3D12/D3D12Views.h"
 
 #include "Application/InputManager.h"
 
@@ -82,9 +82,9 @@ void Renderer::Tick()
 	void* CameraMemory = UploadBuffers[CurrentBackBufferIndex]->Allocate(sizeof(Camera));
 	memcpy(CameraMemory, &SceneCamera, sizeof(Camera));
 	
-	CommandList->TransitionBarrier(CameraBuffer->GetResource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	CommandList->CopyBuffer(CameraBuffer->GetResource(), 0, UploadBuffers[CurrentBackBufferIndex]->GetResource(), Offset, sizeof(Camera));
-	CommandList->TransitionBarrier(CameraBuffer->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	CommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+	CommandList->CopyBuffer(CameraBuffer.get(), 0, UploadBuffers[CurrentBackBufferIndex]->GetBuffer(), Offset, sizeof(Camera));
+	CommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	if (Device->IsRayTracingSupported())
 	{
@@ -125,9 +125,9 @@ void Renderer::Tick()
 	}
 }
 
-void Renderer::TraceRays(ID3D12Resource* InBackBuffer, D3D12CommandList* InCommandList)
+void Renderer::TraceRays(ID3D12Resource* BackBuffer, D3D12CommandList* CommandList)
 {
-	InCommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	CommandList->TransitionBarrier(ResultTexture.get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
 	raytraceDesc.Width	= SwapChain->GetWidth();
@@ -140,28 +140,28 @@ void Renderer::TraceRays(ID3D12Resource* InBackBuffer, D3D12CommandList* InComma
 	raytraceDesc.HitGroupTable				= PipelineState->GetHitGroupTable();
 
 	// Bind the empty root signature
-	InCommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
-	InCommandList->SetComputeRootDescriptorTable(CameraBufferGPUHandle, 0);
+	CommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
+	CommandList->SetComputeRootDescriptorTable(CameraBufferGPUHandle, 0);
 
 	// Dispatch
-	InCommandList->SetStateObject(PipelineState->GetStateObject());
-	InCommandList->DispatchRays(&raytraceDesc);
+	CommandList->SetStateObject(PipelineState->GetStateObject());
+	CommandList->DispatchRays(&raytraceDesc);
 
 	// Copy the results to the back-buffer
-	InCommandList->TransitionBarrier(ResultTexture->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	InCommandList->TransitionBarrier(InBackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+	CommandList->TransitionBarrier(ResultTexture.get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	InCommandList->CopyResource(InBackBuffer, ResultTexture->GetResource());
+	CommandList->CopyResource(BackBuffer, ResultTexture.get());
 
 	// Indicate that the back buffer will now be used to present.
-	InCommandList->TransitionBarrier(InBackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	CommandList->TransitionBarrier(BackBuffer.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }
 
-void Renderer::OnResize(Int32 NewWidth, Int32 NewHeight)
+void Renderer::OnResize(Int32 Width, Int32 Height)
 {
 	WaitForPendingFrames();
 
-	SwapChain->Resize(NewWidth, NewHeight);
+	SwapChain->Resize(Width, Height);
 	CreateRenderTargetViews();
 
 	SAFEDELETE(ResultTexture);
@@ -197,7 +197,7 @@ void Renderer::OnKeyPressed(EKey KeyCode)
 	}
 }
 
-Renderer* Renderer::Create(std::shared_ptr<WindowsWindow> RendererWindow)
+Renderer* Renderer::Make(std::shared_ptr<WindowsWindow>& RendererWindow)
 {
 	RendererInstance = std::make_unique<Renderer>();
 	if (RendererInstance->Initialize(RendererWindow))
@@ -215,9 +215,9 @@ Renderer* Renderer::Get()
 	return RendererInstance.get();
 }
 
-bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
+bool Renderer::Initialize(std::shared_ptr<WindowsWindow>& RendererWindow)
 {
-	Device = std::shared_ptr<D3D12Device>(D3D12Device::Create(true));
+	Device = std::shared_ptr<D3D12Device>(D3D12Device::Make(true));
 	if (!Device)
 	{
 		return false;
@@ -304,13 +304,13 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	BufferProps.SizeInBytes		= 256; // Must be multiple of 256
 	BufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
 	BufferProps.InitalState		= D3D12_RESOURCE_STATE_COMMON;
-	BufferProps.HeapProperties	= HeapProps::DefaultHeap();
+	BufferProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 
 	CameraBuffer = std::make_shared<D3D12Buffer>(Device.get());
 	if (CameraBuffer->Initialize(BufferProps))
 	{
 		D3D12_CONSTANT_BUFFER_VIEW_DESC CameraViewDesc = { };
-		CameraViewDesc.BufferLocation	= CameraBuffer->GetVirtualAddress();
+		CameraViewDesc.BufferLocation	= CameraBuffer->GetGPUVirtualAddress();
 		CameraViewDesc.SizeInBytes		= static_cast<Uint32>(BufferProps.SizeInBytes);
 
 		CameraBufferGPUHandle = Device->GetGlobalResourceDescriptorHeap()->GetGPUDescriptorHandleAt(4);
@@ -325,7 +325,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	// Create vertexbuffer
 	BufferProps.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
 	BufferProps.SizeInBytes		= sizeof(Vertex) * static_cast<Uint64>(Mesh.Vertices.size());
-	BufferProps.HeapProperties	= HeapProps::UploadHeap();
+	BufferProps.MemoryType		= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 	std::shared_ptr<D3D12Buffer> MeshVertexBuffer = std::make_shared<D3D12Buffer>(Device.get());
 	if (MeshVertexBuffer->Initialize(BufferProps))
@@ -396,7 +396,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	CommandAllocators[0]->Reset();
 	CommandList->Reset(CommandAllocators[0].get());
 
-	CommandList->TransitionBarrier(CameraBuffer->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	CommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	// Create BLAS
 	std::shared_ptr<D3D12RayTracingGeometry> MeshGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());
@@ -472,7 +472,7 @@ bool Renderer::CreateResultTexture()
 	OutputProperties.Width			= SwapChain->GetWidth();
 	OutputProperties.Height			= SwapChain->GetHeight();
 	OutputProperties.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
-	OutputProperties.HeapProperties	= HeapProps::DefaultHeap();
+	OutputProperties.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 
 	ResultTexture = new D3D12Texture(Device.get());
 	if (!ResultTexture->Initialize(OutputProperties))
@@ -480,15 +480,15 @@ bool Renderer::CreateResultTexture()
 		return false;
 	}
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC UavView = { };
-	UavView.Format					= OutputProperties.Format;
-	UavView.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
-	UavView.Texture2D.MipSlice		= 0;
-	UavView.Texture2D.PlaneSlice	= 0;
+	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVView = { };
+	UAVView.Format					= OutputProperties.Format;
+	UAVView.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
+	UAVView.Texture2D.MipSlice		= 0;
+	UAVView.Texture2D.PlaneSlice	= 0;
 
-	OutputCPUHandle = Device->GetGlobalResourceDescriptorHeap()->GetCPUDescriptorHandleAt(0);
-	Device->GetDevice()->CreateUnorderedAccessView(ResultTexture->GetResource(), nullptr, &UavView, OutputCPUHandle);
-	
+	std::shared_ptr<D3D12UnorderedAccessView> UAV(new D3D12UnorderedAccessView(Device.get(), nullptr, nullptr, &UAVView));
+	ResultTexture->SetUnorderedAccessView(UAV);
+
 	return true;
 }
 

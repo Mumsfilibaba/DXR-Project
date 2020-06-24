@@ -1,8 +1,8 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Device.h"
 
-D3D12DescriptorHeap::D3D12DescriptorHeap(D3D12Device* Device)
-	: D3D12DeviceChild(Device)
+D3D12DescriptorHeap::D3D12DescriptorHeap(D3D12Device* InDevice)
+	: D3D12DeviceChild(InDevice)
 	, Heap(nullptr)
 {
 }
@@ -23,8 +23,21 @@ bool D3D12DescriptorHeap::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE Type, Uint32 Des
 	if (SUCCEEDED(hResult))
 	{
 		DescriptorSize = Device->GetDevice()->GetDescriptorHandleIncrementSize(Type);
-
 		::OutputDebugString("[D3D12DescrtiptorHeap]: Created DescriptorHeap\n");
+
+		// Create Handles
+		D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle = Heap->GetCPUDescriptorHandleForHeapStart();
+		D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle = Heap->GetGPUDescriptorHandleForHeapStart();
+		FreeHandles.reserve(DescriptorCount);
+
+		for (Uint32 Index = 0; Index < DescriptorCount; Index++)
+		{
+			FreeHandles.emplace_back(CPUHandle, GPUHandle);
+
+			CPUHandle.ptr += GetDescriptorSize() * Index;
+			GPUHandle.ptr += GetDescriptorSize() * Index;
+		}
+
 		return true;
 	}
 	else
@@ -34,28 +47,17 @@ bool D3D12DescriptorHeap::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE Type, Uint32 Des
 	}
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE D3D12DescriptorHeap::GetGPUDescriptorHandleForHeapStart() const
+D3D12DescriptorHandle D3D12DescriptorHeap::Allocate()
 {
-	return Heap->GetGPUDescriptorHandleForHeapStart();
-}
+	D3D12DescriptorHandle Handle = FreeHandles.front();
+	FreeHandles.erase(FreeHandles.begin());
 
-D3D12_GPU_DESCRIPTOR_HANDLE D3D12DescriptorHeap::GetGPUDescriptorHandleAt(Uint32 DescriptorIndex) const
-{
-	D3D12_GPU_DESCRIPTOR_HANDLE Handle = GetGPUDescriptorHandleForHeapStart();
-	Handle.ptr += GetDescriptorSize() * DescriptorIndex;
 	return Handle;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart() const
+void D3D12DescriptorHeap::Free(const D3D12DescriptorHandle& DescriptorHandle)
 {
-	return Heap->GetCPUDescriptorHandleForHeapStart();
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12DescriptorHeap::GetCPUDescriptorHandleAt(Uint32 DescriptorIndex) const
-{
-	D3D12_CPU_DESCRIPTOR_HANDLE Handle = GetCPUDescriptorHandleForHeapStart();
-	Handle.ptr += GetDescriptorSize() * DescriptorIndex;
-	return Handle;
+	FreeHandles.emplace_back(DescriptorHandle);
 }
 
 void D3D12DescriptorHeap::SetName(const std::string& InName)

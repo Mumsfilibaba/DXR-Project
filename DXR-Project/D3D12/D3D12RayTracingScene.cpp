@@ -10,8 +10,8 @@
 * D3D12RayTracingGeometry
 */
 
-D3D12RayTracingGeometry::D3D12RayTracingGeometry(D3D12Device* Device)
-	: D3D12DeviceChild(Device)
+D3D12RayTracingGeometry::D3D12RayTracingGeometry(D3D12Device* InDevice)
+	: D3D12DeviceChild(InDevice)
 {
 }
 
@@ -21,17 +21,17 @@ D3D12RayTracingGeometry::~D3D12RayTracingGeometry()
 	SAFEDELETE(ResultBuffer);
 }
 
-bool D3D12RayTracingGeometry::Initialize(D3D12CommandList* InCommandList, std::shared_ptr<D3D12Buffer> InVertexBuffer, Uint32 VertexCount, std::shared_ptr<D3D12Buffer> InIndexBuffer, Uint32 IndexCount)
+bool D3D12RayTracingGeometry::Initialize(D3D12CommandList* CommandList, std::shared_ptr<D3D12Buffer>& InVertexBuffer, Uint32 InVertexCount, std::shared_ptr<D3D12Buffer>& InIndexBuffer, Uint32 InIndexCount)
 {
 	D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc = {};
 	GeometryDesc.Type									= D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
 	GeometryDesc.Triangles.VertexBuffer.StartAddress	= InVertexBuffer->GetVirtualAddress();
 	GeometryDesc.Triangles.VertexBuffer.StrideInBytes	= sizeof(Vertex);
 	GeometryDesc.Triangles.VertexFormat					= DXGI_FORMAT_R32G32B32_FLOAT;
-	GeometryDesc.Triangles.VertexCount					= VertexCount;
+	GeometryDesc.Triangles.VertexCount					= InVertexCount;
 	GeometryDesc.Triangles.IndexFormat					= DXGI_FORMAT_R32_UINT;
 	GeometryDesc.Triangles.IndexBuffer					= InIndexBuffer->GetVirtualAddress();
-	GeometryDesc.Triangles.IndexCount					= IndexCount;
+	GeometryDesc.Triangles.IndexCount					= InIndexCount;
 	GeometryDesc.Flags									= D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
 	// Get the size requirements for the scratch and AS buffers
@@ -73,14 +73,16 @@ bool D3D12RayTracingGeometry::Initialize(D3D12CommandList* InCommandList, std::s
 	AccelerationStructureDesc.DestAccelerationStructureData		= ResultBuffer->GetVirtualAddress();
 	AccelerationStructureDesc.ScratchAccelerationStructureData	= ScratchBuffer->GetVirtualAddress();
 
-	InCommandList->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc);
+	CommandList->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc);
 
 	// We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
-	InCommandList->UnorderedAccessBarrier(ResultBuffer->GetResource());
+	CommandList->UnorderedAccessBarrier(ResultBuffer->GetResource());
 
 	// Keep instance of buffers
 	VertexBuffer	= InVertexBuffer;
 	IndexBuffer		= InIndexBuffer;
+	VertexCount		= InVertexCount;
+	IndexCount		= InIndexCount;
 	
 	return true;
 }
@@ -90,17 +92,17 @@ D3D12_GPU_VIRTUAL_ADDRESS D3D12RayTracingGeometry::GetVirtualAddress() const
 	return ResultBuffer->GetVirtualAddress();
 }
 
-void D3D12RayTracingGeometry::SetName(const std::string& InName)
+void D3D12RayTracingGeometry::SetName(const std::string& Name)
 {
-	ResultBuffer->SetName(InName);
+	ResultBuffer->SetName(Name);
 }
 
 /*
 * RayTracingScene
 */
 
-D3D12RayTracingScene::D3D12RayTracingScene(D3D12Device* Device)
-	: D3D12DeviceChild(Device)
+D3D12RayTracingScene::D3D12RayTracingScene(D3D12Device* InDevice)
+	: D3D12DeviceChild(InDevice)
 	, Instances()
 {
 }
@@ -112,7 +114,7 @@ D3D12RayTracingScene::~D3D12RayTracingScene()
 	SAFEDELETE(InstanceBuffer);
 }
 
-bool D3D12RayTracingScene::Initialize(D3D12CommandList* InCommandList, std::vector<D3D12RayTracingGeometryInstance>& InInstances)
+bool D3D12RayTracingScene::Initialize(D3D12CommandList* CommandList, std::vector<D3D12RayTracingGeometryInstance>& InInstances)
 {
 	const Uint32 InstanceCount = static_cast<Uint32>(InInstances.size());
 
@@ -185,10 +187,10 @@ bool D3D12RayTracingScene::Initialize(D3D12CommandList* InCommandList, std::vect
 	AccelerationStructureDesc.Inputs.InstanceDescs				= InstanceBuffer->GetVirtualAddress();
 	AccelerationStructureDesc.DestAccelerationStructureData		= ResultBuffer->GetVirtualAddress();
 	AccelerationStructureDesc.ScratchAccelerationStructureData	= ScratchBuffer->GetVirtualAddress();
-	InCommandList->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc);
+	CommandList->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc);
 
 	// UAV barrier needed before using the acceleration structures in a raytracing operation
-	InCommandList->UnorderedAccessBarrier(ResultBuffer->GetResource());
+	CommandList->UnorderedAccessBarrier(ResultBuffer->GetResource());
 
 	// Copy the instances
 	Instances = InInstances;
@@ -208,7 +210,7 @@ D3D12_GPU_VIRTUAL_ADDRESS D3D12RayTracingScene::GetVirtualAddress() const
 	return ResultBuffer->GetVirtualAddress();
 }
 
-void D3D12RayTracingScene::SetName(const std::string& InName)
+void D3D12RayTracingScene::SetName(const std::string& Name)
 {
-	ResultBuffer->SetName(InName);
+	ResultBuffer->SetName(Name);
 }

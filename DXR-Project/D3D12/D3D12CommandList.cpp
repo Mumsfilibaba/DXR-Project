@@ -14,9 +14,9 @@ D3D12CommandList::~D3D12CommandList()
 {
 }
 
-bool D3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* InAllocator, ID3D12PipelineState* InitalPipeline)
+bool D3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline)
 {
-	HRESULT hResult = Device->GetDevice()->CreateCommandList(0, Type, InAllocator->GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CommandList));
+	HRESULT hResult = Device->GetDevice()->CreateCommandList(0, Type, Allocator->GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CommandList));
 	if (SUCCEEDED(hResult))
 	{
 		CommandList->Close();
@@ -37,7 +37,7 @@ bool D3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllo
 	}
 }
 
-void D3D12CommandList::SetName(const std::string& InName)
+void D3D12CommandList::SetName(const std::string& Name)
 {
-	CommandList->SetName(ConvertToWide(InName).c_str());
+	CommandList->SetName(ConvertToWide(Name).c_str());
 }

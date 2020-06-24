@@ -13,7 +13,7 @@ D3D12View::D3D12View(D3D12Device* InDevice, ID3D12Resource* InResource)
 {
 }
 
-void D3D12View::SetName(const std::string& InName)
+void D3D12View::SetName(const std::string& Name)
 {
 	// Empty for now
 }

@@ -5,23 +5,26 @@ class Camera
 {
 public:
 	Camera()
-		: Position(0.0f, 0.0f, -2.0f),
-		Right(1.0f, 0.0f, 0.0f),
-		Up(0.0f, 1.0f, 0.0f),
-		Forward(0.0f, 0.0f, 1.0f)
+		: ViewProjection()
+		, ViewProjectionInverse()
+		, Position(0.0f, 0.0f, -2.0f)
+		, Right(1.0f, 0.0f, 0.0f)
+		, Up(0.0f, 1.0f, 0.0f)
+		, Forward(0.0f, 0.0f, 1.0f)
+		, Rotation()
 	{
 		UpdateMatrices();
 	}
 
-	void Move(Float32 x, Float32 y, Float32 z)
+	void Move(Float32 X, Float32 Y, Float32 Z)
 	{
 		XMVECTOR XmPosition	= XMLoadFloat3(&Position);
 		XMVECTOR XmRight	= XMLoadFloat3(&Right);
 		XMVECTOR XmUp		= XMLoadFloat3(&Up);
 		XMVECTOR XmForward	= XMLoadFloat3(&Forward);
-		XmRight				= XMVectorScale(XmRight, x);
-		XmUp				= XMVectorScale(XmUp, y);
-		XmForward			= XMVectorScale(XmForward, z);
+		XmRight				= XMVectorScale(XmRight, X);
+		XmUp				= XMVectorScale(XmUp, Y);
+		XmForward			= XMVectorScale(XmForward, Z);
 		XmPosition			= XMVectorAdd(XmPosition, XmRight);
 		XmPosition			= XMVectorAdd(XmPosition, XmUp);
 		XmPosition			= XMVectorAdd(XmPosition, XmForward);

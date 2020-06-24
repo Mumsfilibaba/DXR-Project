@@ -1,8 +1,8 @@
 #include "D3D12Fence.h"
 #include "D3D12Device.h"
 
-D3D12Fence::D3D12Fence(D3D12Device* Device)
-	: D3D12DeviceChild(Device)
+D3D12Fence::D3D12Fence(D3D12Device* InDevice)
+	: D3D12DeviceChild(InDevice)
 	, Fence(nullptr)
 {
 }
@@ -51,7 +51,7 @@ bool D3D12Fence::WaitForValue(Uint64 FenceValue)
 	}
 }
 
-void D3D12Fence::SetName(const std::string& InName)
+void D3D12Fence::SetName(const std::string& Name)
 {
-	Fence->SetName(ConvertToWide(InName).c_str());
+	Fence->SetName(ConvertToWide(Name).c_str());
 }

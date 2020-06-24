@@ -1,4 +1,5 @@
 #pragma once
+#include "Defines.h"
 #include "Types.h"
 
 #include <DirectXMath.h>
@@ -11,7 +12,7 @@ struct Vertex
 	XMFLOAT3 Tangent;
 	XMFLOAT2 TexCoord;
 
-	inline bool operator==(const Vertex& Other)
+	FORCEINLINE bool operator==(const Vertex& Other)
 	{
 		return
 			((Position.x	== Other.Position.x)	&& (Position.y	== Other.Position.y)	&& (Position.z	== Other.Position.z))	&&

@@ -6,11 +6,11 @@
 WindowsCursor::WindowsCursor(LPCSTR InCursorName)
 	: CursorName(InCursorName)
 {
-	Cursor = ::LoadCursor(0, InCursorName);
+	CursorHandle = ::LoadCursor(0, InCursorName);
 }
 
 WindowsCursor::WindowsCursor(HCURSOR InCursorHandle)
-	: Cursor(InCursorHandle)
+	: CursorHandle(InCursorHandle)
 {
 }
 
@@ -18,7 +18,7 @@ WindowsCursor::~WindowsCursor()
 {
 	if (!CursorName)
 	{
-		::DestroyCursor(Cursor);
+		::DestroyCursor(CursorHandle);
 	}
 }
 

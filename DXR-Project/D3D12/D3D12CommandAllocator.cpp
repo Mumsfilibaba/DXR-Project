@@ -31,7 +31,7 @@ bool D3D12CommandAllocator::Reset()
 	return Allocator->Reset();
 }
 
-void D3D12CommandAllocator::SetName(const std::string& InName)
+void D3D12CommandAllocator::SetName(const std::string& Name)
 {
-	Allocator->SetName(ConvertToWide(InName).c_str());
+	Allocator->SetName(ConvertToWide(Name).c_str());
 }

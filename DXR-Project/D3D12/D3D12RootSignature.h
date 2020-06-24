@@ -16,7 +16,7 @@ public:
 
 public:
 	// DeviceChild Interface
-	virtual void SetName(const std::string& InName) override;
+	virtual void SetName(const std::string& Name) override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignature;

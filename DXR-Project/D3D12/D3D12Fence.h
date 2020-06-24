@@ -6,7 +6,7 @@
 class D3D12Fence : public D3D12DeviceChild
 {
 public:
-	D3D12Fence(D3D12Device* Device);
+	D3D12Fence(D3D12Device* InDevice);
 	~D3D12Fence();
 
 	bool Initialize(Uint64 InitalValue);
@@ -20,7 +20,7 @@ public:
 
 public:
 	// DeviceChild Interface
-	virtual void SetName(const std::string& InName) override;
+	virtual void SetName(const std::string& Name) override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12Fence> Fence;

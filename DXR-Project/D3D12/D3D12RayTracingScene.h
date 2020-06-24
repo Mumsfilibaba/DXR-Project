@@ -16,16 +16,16 @@ class D3D12CommandList;
 class D3D12RayTracingGeometry : public D3D12DeviceChild
 {
 public:
-	D3D12RayTracingGeometry(D3D12Device* Device);
+	D3D12RayTracingGeometry(D3D12Device* InDevice);
 	~D3D12RayTracingGeometry();
 
-	bool Initialize(D3D12CommandList* CommandList, std::shared_ptr<D3D12Buffer> VertexBuffer, Uint32 VertexCount, std::shared_ptr<D3D12Buffer> IndexBuffer, Uint32 IndexCount);
+	bool Initialize(D3D12CommandList* CommandList, std::shared_ptr<D3D12Buffer>& InVertexBuffer, Uint32 InVertexCount, std::shared_ptr<D3D12Buffer>& IndexBuffer, Uint32 InIndexCount);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress() const;
 
 public:
 	// DeviceChild Interface
-	virtual void SetName(const std::string& InName) override;
+	virtual void SetName(const std::string& Name) override;
 
 private:
 	std::shared_ptr<D3D12Buffer> VertexBuffer	= nullptr;
@@ -33,6 +33,9 @@ private:
 	
 	D3D12Buffer* ResultBuffer	= nullptr;
 	D3D12Buffer* ScratchBuffer	= nullptr;
+	
+	Uint32 VertexCount	= 0;
+	Uint32 IndexCount	= 0;
 };
 
 /*
@@ -42,9 +45,13 @@ private:
 class D3D12RayTracingGeometryInstance
 {
 public:
-	D3D12RayTracingGeometryInstance(std::shared_ptr<D3D12RayTracingGeometry> Geometry, XMFLOAT3X4 Transform)
-		: Geometry(Geometry)
-		, Transform(Transform)
+	D3D12RayTracingGeometryInstance(std::shared_ptr<D3D12RayTracingGeometry>& InGeometry, XMFLOAT3X4 InTransform)
+		: Geometry(InGeometry)
+		, Transform(InTransform)
+	{
+	}
+
+	~D3D12RayTracingGeometryInstance()
 	{
 	}
 
@@ -60,16 +67,16 @@ public:
 class D3D12RayTracingScene : public D3D12DeviceChild
 {
 public:
-	D3D12RayTracingScene(D3D12Device* Device);
+	D3D12RayTracingScene(D3D12Device* InDevice);
 	~D3D12RayTracingScene();
 
-	bool Initialize(D3D12CommandList* CommandList, std::vector<D3D12RayTracingGeometryInstance>& Instances);
+	bool Initialize(D3D12CommandList* CommandList, std::vector<D3D12RayTracingGeometryInstance>& InInstances);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress() const;
 
 public:
 	// DeviceChild Interface
-	virtual void SetName(const std::string& InName) override;
+	virtual void SetName(const std::string& Name) override;
 
 private:
 	D3D12Buffer*				ResultBuffer	= nullptr;

@@ -47,11 +47,11 @@ class D3D12View : public D3D12DeviceChild
 {
 public:
 	// DeviceChild Interface
-	virtual void SetName(const std::string& InName) override;
+	virtual void SetName(const std::string& Name) override;
 
 protected:
 	D3D12View(D3D12Device* InDevice, ID3D12Resource* InResource);
-	~D3D12View() = default;
+	~D3D12View();
 
 	FORCEINLINE ID3D12Resource* GetResource() const
 	{

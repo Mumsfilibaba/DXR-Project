@@ -13,44 +13,45 @@ class D3D12DescriptorHeap;
 class D3D12Device
 {
 public:
-	D3D12Device();
 	~D3D12Device();
 
 	bool Initialize(bool DebugEnable);
 
-	ID3D12Device* GetDevice() const
+	FORCEINLINE ID3D12Device* GetDevice() const
 	{
 		return D3DDevice.Get();
 	}
 
-	ID3D12Device5* GetDXRDevice() const
+	FORCEINLINE ID3D12Device5* GetDXRDevice() const
 	{
 		return DXRDevice.Get();
 	}
 
-	IDXGIFactory2* GetFactory() const
+	FORCEINLINE IDXGIFactory2* GetFactory() const
 	{
 		return Factory.Get();
 	}
 
-	bool IsTearingSupported() const
+	FORCEINLINE bool IsTearingSupported() const
 	{
 		return AllowTearing;
 	}
 
-	bool IsRayTracingSupported() const
+	FORCEINLINE bool IsRayTracingSupported() const
 	{
 		return RayTracingSupported;
 	}
 
-	D3D12DescriptorHeap* GetGlobalResourceDescriptorHeap() const
+	FORCEINLINE D3D12DescriptorHeap* GetGlobalResourceDescriptorHeap() const
 	{
 		return GlobalResourceDescriptorHeap;
 	}
 
-	static D3D12Device* Create(bool DebugEnable);
+	static D3D12Device* Make(bool DebugEnable);
 
 private:
+	D3D12Device();
+
 	bool CreateFactory();
 	bool ChooseAdapter();
 

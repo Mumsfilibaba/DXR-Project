@@ -132,7 +132,7 @@ bool D3D12Device::Initialize(bool DebugEnable)
 	}
 
 	// Create ShaderCompiler
-	D3D12ShaderCompiler* ShaderCompiler = D3D12ShaderCompiler::Create();
+	D3D12ShaderCompiler* ShaderCompiler = D3D12ShaderCompiler::Make();
 	if (!ShaderCompiler)
 	{
 		return false;
@@ -152,7 +152,7 @@ bool D3D12Device::Initialize(bool DebugEnable)
 * Static
 */
 
-D3D12Device* D3D12Device::Create(bool DebugEnable)
+D3D12Device* D3D12Device::Make(bool DebugEnable)
 {
 	D3D12Device* NewDevice = new D3D12Device();
 	if (NewDevice->Initialize(DebugEnable))

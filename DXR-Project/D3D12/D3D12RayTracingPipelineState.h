@@ -42,7 +42,7 @@ public:
 
 public:
 	// DeviceChild Interface
-	virtual void SetName(const std::string& InName) override;
+	virtual void SetName(const std::string& Name) override;
 
 private:
 	bool CreatePipeline();
