@@ -32,3 +32,47 @@ private:
 
 	Uint64 DescriptorSize = 0;
 };
+
+/*
+* D3D12OfflineDescriptorHeap
+*/
+
+class D3D12OfflineDescriptorHeap : public D3D12DeviceChild
+{
+	struct FreeRange
+	{
+		D3D12_CPU_DESCRIPTOR_HANDLE Begin;
+		D3D12_CPU_DESCRIPTOR_HANDLE End;
+	};
+
+	struct DescriptorHeap
+	{
+	public:
+		DescriptorHeap() = default;
+		DescriptorHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& InHeap, FreeRange FirstRange)
+			: Heap(InHeap)
+			, FreeList()
+		{
+			FreeList.emplace_back(FirstRange);
+		}
+
+	public:
+		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	Heap;
+		std::vector<FreeRange>							FreeList;
+	};
+
+public:
+	D3D12OfflineDescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
+	~D3D12OfflineDescriptorHeap();
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Allocate(Uint32& OutHeapIndex);
+	void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, Uint32 HeapIndex);
+
+private:
+	void AllocateHeap();
+
+private:
+	std::vector<DescriptorHeap> Heaps;
+	D3D12_DESCRIPTOR_HEAP_TYPE	Type;
+	Uint32						DescriptorSize = 0;
+};
