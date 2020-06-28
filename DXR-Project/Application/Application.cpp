@@ -83,8 +83,10 @@ Application* Application::Get()
 	return Instance.get();
 }
 
-void Application::OnWindowResized(std::shared_ptr<WindowsWindow>& Window, Uint16 Width, Uint16 Height)
+void Application::OnWindowResized(std::shared_ptr<WindowsWindow>& InWindow, Uint16 Width, Uint16 Height)
 {
+	UNREFERENCED_PARAMETER(InWindow);
+
 	if (Renderer::Get())
 	{
 		Renderer::Get()->OnResize(Width, Height);
@@ -93,6 +95,8 @@ void Application::OnWindowResized(std::shared_ptr<WindowsWindow>& Window, Uint16
 
 void Application::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)
 {
+	UNREFERENCED_PARAMETER(ModierKeyState);
+
 	InputManager::Get().RegisterKeyUp(KeyCode);
 
 	if (GuiContext::Get())
@@ -103,6 +107,8 @@ void Application::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyS
 
 void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState)
 {
+	UNREFERENCED_PARAMETER(ModierKeyState);
+
 	InputManager::Get().RegisterKeyDown(KeyCode);
 
 	if (Renderer::Get())
@@ -126,6 +132,8 @@ void Application::OnMouseMove(Int32 X, Int32 Y)
 
 void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState)
 {
+	UNREFERENCED_PARAMETER(ModierKeyState);
+
 	std::shared_ptr<WindowsWindow> CaptureWindow = GetCapture();
 	if (CaptureWindow)
 	{
@@ -140,6 +148,8 @@ void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeySt
 
 void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState)
 {
+	UNREFERENCED_PARAMETER(ModierKeyState);
+
 	std::shared_ptr<WindowsWindow> CaptureWindow = GetCapture();
 	if (!CaptureWindow)
 	{

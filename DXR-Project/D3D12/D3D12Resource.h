@@ -15,8 +15,10 @@ class D3D12Resource : public D3D12DeviceChild
 {
 public:
 	D3D12Resource(D3D12Device* InDevice);
-	~D3D12Resource();
+	virtual ~D3D12Resource();
 
+	virtual bool Initialize(ID3D12Resource* InResource);
+	
 	FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
 	{
 		return Resource->GetGPUVirtualAddress();
@@ -27,7 +29,7 @@ public:
 		return Resource.Get();
 	}
 
-	FORCEINLINE void SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView>& InShaderResourceView)
+	FORCEINLINE void SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView> InShaderResourceView)
 	{
 		ShaderResourceView = InShaderResourceView;
 	}
@@ -37,7 +39,7 @@ public:
 		return ShaderResourceView;
 	}
 
-	FORCEINLINE void SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView>& InUnorderedAccessView)
+	FORCEINLINE void SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView> InUnorderedAccessView)
 	{
 		UnorderedAccessView = InUnorderedAccessView;
 	}

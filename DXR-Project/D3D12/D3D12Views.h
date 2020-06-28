@@ -1,20 +1,28 @@
 #pragma once
-#include "D3D12DeviceChild.h"
+#include "Defines.h"
+#include "Types.h"
+
+#include <d3d12.h>
+
+#include <wrl/client.h>
 
 /*
 * D3D12View
 */
 
+class D3D12Device;
 class D3D12OfflineDescriptorHeap;
 
-class D3D12View : public D3D12DeviceChild
+class D3D12View
 {
 public:
 	D3D12View(D3D12Device* InDevice, ID3D12Resource* InResource);
 	virtual ~D3D12View();
 
-	// DeviceChild Interface
-	virtual void SetName(const std::string& Name) override;
+	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
+	{
+		return OfflineHandle;
+	}
 
 	FORCEINLINE ID3D12Resource* GetResource() const
 	{
@@ -22,6 +30,8 @@ public:
 	}
 
 protected:
+	D3D12Device* Device = nullptr;
+
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
 	
 	D3D12OfflineDescriptorHeap* Heap				= nullptr;
@@ -71,7 +81,7 @@ public:
 	D3D12UnorderedAccessView(D3D12Device* InDevice, ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc);
 	~D3D12UnorderedAccessView() = default;
 
-	void CreateView(ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc);
+	void CreateView(ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc);
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12Resource>	CounterResource;

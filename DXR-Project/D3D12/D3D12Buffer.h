@@ -10,6 +10,8 @@ struct BufferProperties
 	EMemoryType				MemoryType;
 };
 
+class D3D12ConstantBufferView;
+
 class D3D12Buffer : public D3D12Resource
 {
 public:
@@ -21,6 +23,18 @@ public:
 	void* Map();
 	void Unmap();
 
+	FORCEINLINE void SetConstantBufferView(std::shared_ptr<D3D12ConstantBufferView> InConstantBufferView)
+	{
+		ConstantBufferView = InConstantBufferView;
+	}
+
+	FORCEINLINE std::shared_ptr<D3D12ConstantBufferView> GetConstantBufferView() const
+	{
+		return ConstantBufferView;
+	}
+
 private:
+	std::shared_ptr<D3D12ConstantBufferView> ConstantBufferView;
+
 	Uint64 SizeInBytes = 0;
 };

@@ -43,6 +43,12 @@ bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* Desc, D3D12_RESOUR
 	return SUCCEEDED(hResult);
 }
 
+bool D3D12Resource::Initialize(ID3D12Resource* InResource)
+{
+	Resource = InResource;
+	return Resource != nullptr;
+}
+
 void D3D12Resource::SetName(const std::string& Name)
 {
 	std::wstring WideName = ConvertToWide(Name);

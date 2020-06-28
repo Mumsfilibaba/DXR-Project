@@ -46,11 +46,10 @@ private:
 	bool Initialize(std::shared_ptr<WindowsWindow>& RendererWindow);
 
 	bool CreateResultTexture();
-	void CreateRenderTargetViews();
 
 	void WaitForPendingFrames();
 
-	void TraceRays(ID3D12Resource* BackBuffer, D3D12CommandList* CommandList);
+	void TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* CommandList);
 
 private:
 	std::shared_ptr<D3D12Device>			Device;
@@ -62,8 +61,6 @@ private:
 	std::shared_ptr<D3D12SwapChain>			SwapChain;
 
 	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
-	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>			BackBufferHandles;
-	std::vector<std::shared_ptr<D3D12RenderTargetView>> BackBufferViews;
 
 	std::shared_ptr<D3D12Texture> Panorama;
 

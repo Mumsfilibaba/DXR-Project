@@ -1,7 +1,6 @@
 #pragma once
-#include "D3D12DeviceChild.h"
-
-#include "Types.h"
+#include "D3D12Texture.h"
+#include "D3D12Views.h"
 
 #include <dxgi1_6.h>
 
@@ -24,9 +23,9 @@ public:
 
 	Uint32 GetCurrentBackBufferIndex() const;
 
-	FORCEINLINE ID3D12Resource* GetSurfaceResource(Uint32 SurfaceIndex) const
+	FORCEINLINE D3D12Texture* GetSurfaceResource(Uint32 SurfaceIndex) const
 	{
-		return BackBuffers[SurfaceIndex].Get();
+		return BackBuffers[SurfaceIndex].get();
 	}
 
 	FORCEINLINE DXGI_FORMAT GetSurfaceFormat() const
@@ -58,8 +57,10 @@ private:
 	void ReleaseSurfaces();
 
 private:
-	Microsoft::WRL::ComPtr<IDXGISwapChain3>				SwapChain;
-	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> BackBuffers;
+	Microsoft::WRL::ComPtr<IDXGISwapChain3>		SwapChain;
+	
+	std::vector<std::shared_ptr<D3D12Texture>>			BackBuffers;
+	std::vector<std::shared_ptr<D3D12RenderTargetView>>	BackBuffersViews;
 
 	Uint32 Width	= 0;
 	Uint32 Height	= 0;

@@ -23,22 +23,22 @@ public:
 
 	bool Initialize(const TextureProperties& Properties);
 
-	FORCEINLINE void SetShaderResourceView(std::shared_ptr<D3D12RenderTargetView>& InRenderTargetView)
+	FORCEINLINE void SetRenderTargetView(std::shared_ptr<D3D12RenderTargetView> InRenderTargetView)
 	{
 		RenderTargetView = InRenderTargetView;
 	}
 
-	FORCEINLINE std::shared_ptr<D3D12RenderTargetView> GetShaderResourceView() const
+	FORCEINLINE std::shared_ptr<D3D12RenderTargetView> GetRenderTargetView() const
 	{
 		return RenderTargetView;
 	}
 
-	FORCEINLINE void SetUnorderedAccessView(std::shared_ptr<D3D12DepthStencilView>& InDepthStencilView)
+	FORCEINLINE void SetDepthStencilView(std::shared_ptr<D3D12DepthStencilView> InDepthStencilView)
 	{
 		DepthStencilView = InDepthStencilView;
 	}
 
-	FORCEINLINE std::shared_ptr<D3D12DepthStencilView> GetUnorderedAccessView() const
+	FORCEINLINE std::shared_ptr<D3D12DepthStencilView> GetDepthStencilView() const
 	{
 		return DepthStencilView;
 	}

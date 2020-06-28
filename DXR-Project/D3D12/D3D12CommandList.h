@@ -1,5 +1,6 @@
 #pragma once
 #include "D3D12Resource.h"
+#include "D3D12Views.h"
 #include "D3D12CommandAllocator.h"
 
 class D3D12CommandList : public D3D12DeviceChild
@@ -22,11 +23,11 @@ public:
 		return SUCCEEDED(CommandList->Close());
 	}
 
-	FORCEINLINE void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE View, const Float32 ClearColor[4])
+	FORCEINLINE void ClearRenderTargetView(const D3D12RenderTargetView* View, const Float32 ClearColor[4])
 	{
 		FlushDeferredResourceBarriers();
 
-		CommandList->ClearRenderTargetView(View, ClearColor, 0, nullptr);
+		CommandList->ClearRenderTargetView(View->GetOfflineHandle(), ClearColor, 0, nullptr);
 	}
 
 	FORCEINLINE void TransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
@@ -163,9 +164,23 @@ public:
 		CommandList->OMSetBlendFactor(BlendFactor);
 	}
 
-	FORCEINLINE void OMSetRenderTargets(const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors, Uint32 RenderTargetCount, bool ContiguousDescriptorRange, const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptors)
+	FORCEINLINE void OMSetRenderTargets(const D3D12RenderTargetView* const * RenderTargetViews, Uint32 RenderTargetCount, const D3D12DepthStencilView* DepthStencilView)
 	{
-		CommandList->OMSetRenderTargets(RenderTargetCount, RenderTargetDescriptors, ContiguousDescriptorRange, DepthStencilDescriptors);
+		for (Uint32 I = 0; I < RenderTargetCount; I++)
+		{
+			VALIDATE(RenderTargetViews[I] != nullptr);
+			RenderTargetHandles[I] = RenderTargetViews[I]->GetOfflineHandle();
+		}
+
+		if (DepthStencilView)
+		{
+			D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilHandle = DepthStencilView->GetOfflineHandle();
+			CommandList->OMSetRenderTargets(RenderTargetCount, RenderTargetHandles, FALSE, &DepthStencilHandle);
+		}
+		else
+		{
+			CommandList->OMSetRenderTargets(RenderTargetCount, RenderTargetHandles, FALSE, nullptr);
+		}
 	}
 
 	FORCEINLINE void FlushDeferredResourceBarriers()
@@ -191,4 +206,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	DXRCommandList;
 
 	std::vector<D3D12_RESOURCE_BARRIER> DeferredResourceBarriers;
+	
+	// There can maximum be 8 rendertargets at one time 
+	D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetHandles[8];
 };

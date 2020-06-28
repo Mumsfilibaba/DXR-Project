@@ -9,6 +9,7 @@
 #include "Types.h"
 
 class D3D12DescriptorHeap;
+class D3D12OfflineDescriptorHeap;
 
 class D3D12Device
 {

@@ -81,7 +81,7 @@ public:
 	void SetCursorPos(std::shared_ptr<WindowsWindow>& RelativeWindow, Int32 X, Int32 Y);
 	void GetCursorPos(std::shared_ptr<WindowsWindow>& RelativeWindow, Int32& OutX, Int32& OutY) const;
 
-	FORCEINLINE void SetEventHandler(std::shared_ptr<EventHandler>& InMessageHandler)
+	FORCEINLINE void SetEventHandler(std::shared_ptr<EventHandler> InMessageHandler)
 	{
 		MessageHandler = InMessageHandler;
 	}

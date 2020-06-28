@@ -31,7 +31,7 @@ public:
 
 public:
 	// EventHandler Interface
-	virtual void OnWindowResized(std::shared_ptr<WindowsWindow>& Window, Uint16 Width, Uint16 Height)		override;
+	virtual void OnWindowResized(std::shared_ptr<WindowsWindow>& InWindow, Uint16 Width, Uint16 Height)		override;
 	virtual void OnKeyReleased(EKey InKeyCode, const ModifierKeyState& ModierKeyState)						override;
 	virtual void OnKeyPressed(EKey InKeyCode, const ModifierKeyState& ModierKeyState)						override;
 	virtual void OnMouseMove(Int32 X, Int32 Y)																override;

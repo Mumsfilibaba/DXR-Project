@@ -7,7 +7,6 @@
 #include "D3D12/D3D12CommandAllocator.h"
 #include "D3D12/D3D12CommandQueue.h"
 #include "D3D12/D3D12Fence.h"
-#include "D3D12/HeapProps.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -25,15 +24,20 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::strin
 	}
 	else
 	{
-		::OutputDebugString(("[TextureFactory]: Load image '" + Filepath + "'\n").c_str());
+		::OutputDebugString(("[TextureFactory]: Loaded image '" + Filepath + "'\n").c_str());
 	}
 
+	
+}
+
+D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pixels, Uint32 Width, Uint32 Height)
+{
 	TextureProperties TextureProps = { };
-	TextureProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-	TextureProps.Width			= Width;
-	TextureProps.Height			= Height;
-	TextureProps.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
-	TextureProps.HeapProperties = HeapProps::DefaultHeap();
+	TextureProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
+	TextureProps.Width		= Width;
+	TextureProps.Height		= Height;
+	TextureProps.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
+	TextureProps.MemoryType = EMemoryType::MEMORY_TYPE_DEFAULT;
 
 	std::unique_ptr<D3D12Texture> Texture = std::unique_ptr<D3D12Texture>(new D3D12Texture(Device));
 	if (!Texture->Initialize(TextureProps))
@@ -45,11 +49,11 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::strin
 	Uint32 UploadSize	= Height * UploadPitch;
 
 	BufferProperties UploadBufferProps = { };
-	UploadBufferProps.Name				= "UploadBuffer";
-	UploadBufferProps.Flags				= D3D12_RESOURCE_FLAG_NONE;
-	UploadBufferProps.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
-	UploadBufferProps.SizeInBytes		= UploadSize;
-	UploadBufferProps.HeapProperties	= HeapProps::UploadHeap();
+	UploadBufferProps.Name			= "UploadBuffer";
+	UploadBufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
+	UploadBufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
+	UploadBufferProps.SizeInBytes	= UploadSize;
+	UploadBufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 	std::unique_ptr<D3D12Buffer> UploadBuffer = std::unique_ptr<D3D12Buffer>(new D3D12Buffer(Device));
 	if (UploadBuffer->Initialize(UploadBufferProps))
@@ -57,7 +61,7 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::strin
 		void* Memory = UploadBuffer->Map();
 		for (Int32 Y = 0; Y < Height; Y++)
 		{
-			memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(Memory) + Y * UploadPitch), Pixels.get() + Y * Width * 4, Width * 4);
+			memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(Memory) + Y * UploadPitch), Pixels + Y * Width * 4, Width * 4);
 		}
 		UploadBuffer->Unmap();
 	}
@@ -93,7 +97,7 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::strin
 	Allocator->Reset();
 	CommandList->Reset(Allocator.get());
 
-	CommandList->TransitionBarrier(Texture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
 
 	D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
 	SourceLocation.pResource							= UploadBuffer->GetResource();
@@ -110,7 +114,7 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::strin
 	DestLocation.SubresourceIndex	= 0;
 
 	CommandList->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
-	CommandList->TransitionBarrier(Texture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	CommandList->Close();
 
@@ -127,10 +131,7 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::strin
 	SrvDesc.Texture2D.MipLevels			= 1;
 	SrvDesc.Texture2D.MostDetailedMip	= 0;
 
-	//FontTextureCPUHandle = InDevice->GetGlobalResourceDescriptorHeap()->GetCPUDescriptorHandleAt(5);
-	//FontTextureGPUHandle = InDevice->GetGlobalResourceDescriptorHeap()->GetGPUDescriptorHandleAt(5);
-
-	//InDevice->GetDevice()->CreateShaderResourceView(Texture->GetResource(), &SrvDesc, FontTextureCPUHandle);
+	Texture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, Texture.get(), &SrvDesc));
 
 	return Texture.release();
 }
