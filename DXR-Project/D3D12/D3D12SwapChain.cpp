@@ -2,7 +2,7 @@
 #include "D3D12Device.h"
 #include "D3D12CommandQueue.h"
 
-#include "../Windows/WindowsWindow.h"
+#include "Windows/WindowsWindow.h"
 
 D3D12SwapChain::D3D12SwapChain(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
@@ -19,7 +19,7 @@ bool D3D12SwapChain::Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue)
 {
 	using namespace Microsoft::WRL;
 
-	// Save the flags used
+	// Save the flags
 	Flags = Device->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 	WindowShape Shape;

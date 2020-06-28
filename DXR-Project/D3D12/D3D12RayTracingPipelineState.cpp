@@ -2,7 +2,6 @@
 #include "D3D12ShaderCompiler.h"
 #include "D3D12Device.h"
 #include "D3D12DescriptorHeap.h"
-#include "HeapProps.h"
 
 const LPCWSTR RayGenShaderName		= L"RayGen";
 const LPCWSTR MissShaderName		= L"Miss";
@@ -40,17 +39,17 @@ bool D3D12RayTracingPipelineState::Initialize()
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE D3D12RayTracingPipelineState::GetRayGenerationShaderRecord() const
 {
-	return { RayGenTable.Resource->GetVirtualAddress(), RayGenTable.SizeInBytes };
+	return { RayGenTable.Resource->GetGPUVirtualAddress(), RayGenTable.SizeInBytes };
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingPipelineState::GetMissShaderTable() const
 {
-	return { MissTable.Resource->GetVirtualAddress(), MissTable.SizeInBytes, MissTable.StrideInBytes };
+	return { MissTable.Resource->GetGPUVirtualAddress(), MissTable.SizeInBytes, MissTable.StrideInBytes };
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingPipelineState::GetHitGroupTable() const
 {
-	return { HitTable.Resource->GetVirtualAddress(), HitTable.SizeInBytes, HitTable.StrideInBytes };
+	return { HitTable.Resource->GetGPUVirtualAddress(), HitTable.SizeInBytes, HitTable.StrideInBytes };
 }
 
 void D3D12RayTracingPipelineState::SetName(const std::string& InName)

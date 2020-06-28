@@ -1,7 +1,5 @@
 #include "D3D12UploadStack.h"
 
-#include "HeapProps.h"
-
 D3D12UploadStack::D3D12UploadStack()
 {
 }
