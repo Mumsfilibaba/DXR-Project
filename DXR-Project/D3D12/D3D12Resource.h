@@ -8,6 +8,9 @@ enum class EMemoryType : Uint32
 	MEMORY_TYPE_DEFAULT	= 2,
 };
 
+class D3D12ShaderResourceView;
+class D3D12UnorderedAccessView;
+
 class D3D12Resource : public D3D12DeviceChild
 {
 public:
@@ -24,6 +27,26 @@ public:
 		return Resource.Get();
 	}
 
+	FORCEINLINE void SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView>& InShaderResourceView)
+	{
+		ShaderResourceView = InShaderResourceView;
+	}
+
+	FORCEINLINE std::shared_ptr<D3D12ShaderResourceView> GetShaderResourceView() const
+	{
+		return ShaderResourceView;
+	}
+
+	FORCEINLINE void SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView>& InUnorderedAccessView)
+	{
+		UnorderedAccessView = InUnorderedAccessView;
+	}
+
+	FORCEINLINE std::shared_ptr<D3D12UnorderedAccessView> GetUnorderedAccessView() const
+	{
+		return UnorderedAccessView;
+	}
+
 public:
 	// DeviceChild Interface
 	virtual void SetName(const std::string& Name) override;
@@ -33,4 +56,7 @@ protected:
 
 protected:
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
+
+	std::shared_ptr<D3D12ShaderResourceView>	ShaderResourceView;
+	std::shared_ptr<D3D12UnorderedAccessView>	UnorderedAccessView;
 };

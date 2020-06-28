@@ -42,9 +42,24 @@ public:
 		return RayTracingSupported;
 	}
 
-	FORCEINLINE D3D12DescriptorHeap* GetGlobalResourceDescriptorHeap() const
+	FORCEINLINE D3D12OfflineDescriptorHeap* GetGlobalResourceDescriptorHeap() const
 	{
 		return GlobalResourceDescriptorHeap;
+	}
+
+	FORCEINLINE D3D12OfflineDescriptorHeap* GetGlobalRenderTargetDescriptorHeap() const
+	{
+		return GlobalRenderTargetDescriptorHeap;
+	}
+
+	FORCEINLINE D3D12OfflineDescriptorHeap* GetGlobalDepthStencilDescriptorHeap() const
+	{
+		return GlobalDepthStencilDescriptorHeap;
+	}
+
+	FORCEINLINE D3D12OfflineDescriptorHeap* GetGlobalSamplerDescriptorHeap() const
+	{
+		return GlobalSamplerDescriptorHeap;
 	}
 
 	static D3D12Device* Make(bool DebugEnable);
@@ -70,5 +85,8 @@ private:
 	D3D_FEATURE_LEVEL MinFeatureLevel		= D3D_FEATURE_LEVEL_11_0;
 	D3D_FEATURE_LEVEL ActiveFeatureLevel	= D3D_FEATURE_LEVEL_11_0;
 
-	D3D12DescriptorHeap* GlobalResourceDescriptorHeap = nullptr;
+	D3D12OfflineDescriptorHeap* GlobalResourceDescriptorHeap		= nullptr;
+	D3D12OfflineDescriptorHeap* GlobalRenderTargetDescriptorHeap	= nullptr;
+	D3D12OfflineDescriptorHeap* GlobalDepthStencilDescriptorHeap	= nullptr;
+	D3D12OfflineDescriptorHeap* GlobalSamplerDescriptorHeap			= nullptr;
 };

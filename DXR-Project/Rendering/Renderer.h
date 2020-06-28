@@ -63,7 +63,8 @@ private:
 
 	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>			BackBufferHandles;
-	
+	std::vector<std::shared_ptr<D3D12RenderTargetView>> BackBufferViews;
+
 	std::shared_ptr<D3D12Texture> Panorama;
 
 	std::vector<Uint64>	FenceValues;
@@ -82,9 +83,8 @@ private:
 
 	Camera SceneCamera;
 
-	D3D12_GPU_DESCRIPTOR_HANDLE CameraBufferGPUHandle;
+	std::shared_ptr<D3D12ConstantBufferView> CameraBufferView;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE CameraBufferCPUHandle;
 	D3D12_CPU_DESCRIPTOR_HANDLE OutputCPUHandle;
 
 	bool IsCameraAcive = false;

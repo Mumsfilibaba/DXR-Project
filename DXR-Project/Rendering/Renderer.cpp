@@ -313,9 +313,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow>& RendererWindow)
 		CameraViewDesc.BufferLocation	= CameraBuffer->GetGPUVirtualAddress();
 		CameraViewDesc.SizeInBytes		= static_cast<Uint32>(BufferProps.SizeInBytes);
 
-		CameraBufferGPUHandle = Device->GetGlobalResourceDescriptorHeap()->GetGPUDescriptorHandleAt(4);
-		CameraBufferCPUHandle = Device->GetGlobalResourceDescriptorHeap()->GetCPUDescriptorHandleAt(4);
-		Device->GetDevice()->CreateConstantBufferView(&CameraViewDesc, CameraBufferCPUHandle);
+		CameraBufferView = std::make_shared<D3D12ConstantBufferView>(Device.get(), CameraBuffer, &CameraViewDesc);
 	}
 	else
 	{

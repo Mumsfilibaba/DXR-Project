@@ -138,12 +138,11 @@ bool D3D12Device::Initialize(bool DebugEnable)
 		return false;
 	}
 
-	// Create Global DescriptorHeap
-	GlobalResourceDescriptorHeap = new D3D12DescriptorHeap(this);
-	if (!GlobalResourceDescriptorHeap->Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 8, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE))
-	{
-		return false;
-	}
+	// Create Global DescriptorHeaps
+	GlobalResourceDescriptorHeap		= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	GlobalRenderTargetDescriptorHeap	= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	GlobalDepthStencilDescriptorHeap	= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	GlobalSamplerDescriptorHeap			= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 	return true;
 }

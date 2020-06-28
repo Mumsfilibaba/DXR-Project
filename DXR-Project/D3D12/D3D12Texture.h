@@ -1,9 +1,6 @@
 #pragma once
 #include "D3D12Resource.h"
 
-class D3D12ShaderResourceView;
-class D3D12UnorderedAccessView;
-
 struct TextureProperties
 {
 	std::string				Name;
@@ -15,6 +12,9 @@ struct TextureProperties
 	EMemoryType				MemoryType;
 };
 
+class D3D12RenderTargetView;
+class D3D12DepthStencilView;
+
 class D3D12Texture : public D3D12Resource
 {
 public:
@@ -23,27 +23,27 @@ public:
 
 	bool Initialize(const TextureProperties& Properties);
 
-	FORCEINLINE void SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView>& InShaderResourceView)
+	FORCEINLINE void SetShaderResourceView(std::shared_ptr<D3D12RenderTargetView>& InRenderTargetView)
 	{
-		ShaderResourceView = InShaderResourceView;
+		RenderTargetView = InRenderTargetView;
 	}
 
-	FORCEINLINE std::shared_ptr<D3D12ShaderResourceView> GetShaderResourceView() const
+	FORCEINLINE std::shared_ptr<D3D12RenderTargetView> GetShaderResourceView() const
 	{
-		return ShaderResourceView;
+		return RenderTargetView;
 	}
 
-	FORCEINLINE void SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView>& InUnorderedAccessView)
+	FORCEINLINE void SetUnorderedAccessView(std::shared_ptr<D3D12DepthStencilView>& InDepthStencilView)
 	{
-		UnorderedAccessView = InUnorderedAccessView;
+		DepthStencilView = InDepthStencilView;
 	}
 
-	FORCEINLINE std::shared_ptr<D3D12UnorderedAccessView> GetUnorderedAccessView() const
+	FORCEINLINE std::shared_ptr<D3D12DepthStencilView> GetUnorderedAccessView() const
 	{
-		return UnorderedAccessView;
+		return DepthStencilView;
 	}
 
-private:
-	std::shared_ptr<D3D12ShaderResourceView> ShaderResourceView;
-	std::shared_ptr<D3D12UnorderedAccessView> UnorderedAccessView;
+protected:
+	std::shared_ptr<D3D12RenderTargetView> RenderTargetView;
+	std::shared_ptr<D3D12DepthStencilView> DepthStencilView;
 };

@@ -3,6 +3,8 @@
 
 D3D12Texture::D3D12Texture(D3D12Device* InDevice)
 	: D3D12Resource(InDevice)
+	, RenderTargetView()
+	, DepthStencilView()
 {
 }
 

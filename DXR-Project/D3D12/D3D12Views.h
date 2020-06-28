@@ -2,56 +2,19 @@
 #include "D3D12DeviceChild.h"
 
 /*
-* D3D12DescriptorHandle
-*/
-
-class D3D12DescriptorHandle
-{
-public:
-	D3D12DescriptorHandle::D3D12DescriptorHandle()
-		: CPUHandle({ 0 })
-		, GPUHandle({ 0 })
-	{
-	}
-
-	D3D12DescriptorHandle::D3D12DescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE InCPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE InGPUHandle)
-		: CPUHandle(InCPUHandle)
-		, GPUHandle(InGPUHandle)
-	{
-	}
-
-	D3D12DescriptorHandle::~D3D12DescriptorHandle()
-	{
-	}
-
-	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle() const
-	{
-		return CPUHandle;
-	}
-
-	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle() const
-	{
-		return GPUHandle;
-	}
-
-private:
-	D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle;
-};
-
-/*
 * D3D12View
 */
+
+class D3D12OfflineDescriptorHeap;
 
 class D3D12View : public D3D12DeviceChild
 {
 public:
+	D3D12View(D3D12Device* InDevice, ID3D12Resource* InResource);
+	virtual ~D3D12View();
+
 	// DeviceChild Interface
 	virtual void SetName(const std::string& Name) override;
-
-protected:
-	D3D12View(D3D12Device* InDevice, ID3D12Resource* InResource);
-	~D3D12View();
 
 	FORCEINLINE ID3D12Resource* GetResource() const
 	{
@@ -59,8 +22,27 @@ protected:
 	}
 
 protected:
-	D3D12DescriptorHandle					Descriptor;
-	Microsoft::WRL::ComPtr<ID3D12Resource>	Resource;
+	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
+	
+	D3D12OfflineDescriptorHeap* Heap				= nullptr;
+	Uint32						OfflineHeapIndex	= 0;
+	D3D12_CPU_DESCRIPTOR_HANDLE	OfflineHandle;
+};
+
+/*
+* D3D12ConstantBufferView
+*/
+
+class D3D12ConstantBufferView : public D3D12View
+{
+public:
+	D3D12ConstantBufferView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc);
+	~D3D12ConstantBufferView() = default;
+
+	void CreateView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc);
+
+private:
+	D3D12_CONSTANT_BUFFER_VIEW_DESC Desc;
 };
 
 /*
@@ -72,6 +54,8 @@ class D3D12ShaderResourceView : public D3D12View
 public:
 	D3D12ShaderResourceView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc);
 	~D3D12ShaderResourceView() = default;
+
+	void CreateView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc);
 
 private:
 	D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
@@ -86,6 +70,8 @@ class D3D12UnorderedAccessView : public D3D12View
 public:
 	D3D12UnorderedAccessView(D3D12Device* InDevice, ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc);
 	~D3D12UnorderedAccessView() = default;
+
+	void CreateView(ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc);
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12Resource>	CounterResource;
@@ -102,6 +88,8 @@ public:
 	D3D12RenderTargetView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC* InDesc);
 	~D3D12RenderTargetView() = default;
 
+	void CreateView(ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC* InDesc);
+
 private:
 	D3D12_RENDER_TARGET_VIEW_DESC Desc;
 };
@@ -115,6 +103,8 @@ class D3D12DepthStencilView : public D3D12View
 public:
 	D3D12DepthStencilView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc);
 	~D3D12DepthStencilView() = default;
+
+	void CreateView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc);
 
 private:
 	D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
