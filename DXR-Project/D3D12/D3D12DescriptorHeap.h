@@ -74,6 +74,55 @@ private:
 };
 
 /*
+* D3D12OnlineDescriptorHeap
+*/
+
+class D3D12OnlineDescriptorHeap : public D3D12DeviceChild
+{
+public:
+	D3D12OnlineDescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
+	~D3D12OnlineDescriptorHeap();
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Allocate(Uint32& OutHeapIndex);
+	void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, Uint32 HeapIndex);
+
+	virtual void SetName(const std::string& InName) override;
+
+	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSlotAt(Uint32 Slot) const
+	{
+		return { CPUHeapStart.ptr + (Slot * DescriptorSize) };
+	}
+
+	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUSlotAt(Uint32 Slot) const
+	{
+		return { GPUHeapStart.ptr + (Slot * DescriptorSize) };
+	}
+
+	FORCEINLINE Uint32 GetDescriptorSize() const
+	{
+		return DescriptorSize;
+	}
+	
+	FORCEINLINE ID3D12DescriptorHeap* GetHeap() const
+	{
+		return Heap.Get();
+	}
+
+private:
+	void AllocateHeap();
+
+private:
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> Heap;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE	CPUHeapStart;
+	D3D12_GPU_DESCRIPTOR_HANDLE	GPUHeapStart;
+	D3D12_DESCRIPTOR_HEAP_TYPE	Type;
+
+	Uint32 DescriptorSize	= 0;
+	Uint32 CurrentSlot		= 0;
+};
+
+/*
 * D3D12DescriptorTable
 */
 
@@ -83,7 +132,7 @@ public:
 	D3D12DescriptorTable(D3D12Device* InDevice);
 	~D3D12DescriptorTable();
 
-	void SetViewAtSlot(D3D12View* View, Uint32 SlotIndex);
+	void SetViewAtSlot(class D3D12View* View, Uint32 SlotIndex);
 
 	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetTableStartHandle() const
 	{
