@@ -79,10 +79,10 @@ public:
 	virtual void SetName(const std::string& Name) override;
 
 private:
-	D3D12Buffer*				ResultBuffer	= nullptr;
-	D3D12Buffer*				ScratchBuffer	= nullptr;
-	D3D12Buffer*				InstanceBuffer	= nullptr;
-	D3D12ShaderResourceView*	View			= nullptr;
+	D3D12Buffer*	ResultBuffer	= nullptr;
+	D3D12Buffer*	ScratchBuffer	= nullptr;
+	D3D12Buffer*	InstanceBuffer	= nullptr;
 
-	std::vector<D3D12RayTracingGeometryInstance> Instances;
+	std::shared_ptr<D3D12ShaderResourceView>		View;
+	std::vector<D3D12RayTracingGeometryInstance>	Instances;
 };

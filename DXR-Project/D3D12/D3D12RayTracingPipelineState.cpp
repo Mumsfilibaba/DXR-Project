@@ -431,7 +431,7 @@ bool D3D12RayTracingPipelineState::CreateBindingTable()
 		} TableData;
 
 		memcpy(TableData.ShaderIdentifier, StateProperties->GetShaderIdentifier(RayGenShaderName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-		TableData.RTVDescriptor = Device->GetGlobalResourceDescriptorHeap()->GetGPUDescriptorHandleAt(0).ptr;
+		// TableData.RTVDescriptor = Device->GetGlobalResourceDescriptorHeap()->GetGPUDescriptorHandleAt(0).ptr;
 
 		// How big is the biggest?
 		union MaxSize
@@ -443,10 +443,10 @@ bool D3D12RayTracingPipelineState::CreateBindingTable()
 		RayGenTable.SizeInBytes		= RayGenTable.StrideInBytes * 1; //<-- only one for now...
 
 		BufferProperties BufferProps = { };
-		BufferProps.SizeInBytes		= RayGenTable.SizeInBytes;
-		BufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-		BufferProps.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
-		BufferProps.HeapProperties	= HeapProps::UploadHeap();
+		BufferProps.SizeInBytes	= RayGenTable.SizeInBytes;
+		BufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
+		BufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
+		BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 		RayGenTable.Resource = new D3D12Buffer(Device);
 		RayGenTable.Resource->Initialize(BufferProps);
@@ -476,10 +476,10 @@ bool D3D12RayTracingPipelineState::CreateBindingTable()
 		MissTable.SizeInBytes	= MissTable.StrideInBytes * 1; //<-- only one for now...
 
 		BufferProperties BufferProps = { };
-		BufferProps.SizeInBytes		= MissTable.SizeInBytes;
-		BufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-		BufferProps.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
-		BufferProps.HeapProperties	= HeapProps::UploadHeap();
+		BufferProps.SizeInBytes	= MissTable.SizeInBytes;
+		BufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
+		BufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
+		BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 		MissTable.Resource = new D3D12Buffer(Device);
 		MissTable.Resource->Initialize(BufferProps);
@@ -498,7 +498,7 @@ bool D3D12RayTracingPipelineState::CreateBindingTable()
 			UINT64 ASDescriptor;
 		} TableData;
 
-		TableData.ASDescriptor = Device->GetGlobalResourceDescriptorHeap()->GetGPUDescriptorHandleAt(1).ptr;
+		//TableData.ASDescriptor = Device->GetGlobalResourceDescriptorHeap()->GetGPUDescriptorHandleAt(1).ptr;
 		memcpy(TableData.ShaderIdentifier, StateProperties->GetShaderIdentifier(HitGroupName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 		// How big is the biggest?
@@ -511,10 +511,10 @@ bool D3D12RayTracingPipelineState::CreateBindingTable()
 		HitTable.SizeInBytes = HitTable.StrideInBytes * 1; //<-- only one for now...
 
 		BufferProperties BufferProps = { };
-		BufferProps.SizeInBytes		= HitTable.SizeInBytes;
-		BufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-		BufferProps.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
-		BufferProps.HeapProperties	= HeapProps::UploadHeap();
+		BufferProps.SizeInBytes	= HitTable.SizeInBytes;
+		BufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
+		BufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
+		BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 		HitTable.Resource = new D3D12Buffer(Device);
 		HitTable.Resource->Initialize(BufferProps);

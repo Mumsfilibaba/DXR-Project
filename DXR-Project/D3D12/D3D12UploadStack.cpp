@@ -13,10 +13,10 @@ bool D3D12UploadStack::Initialize(D3D12Device* Device)
 	BufferSize = 1024 * 1024;
 
 	BufferProperties Properties = { };
-	Properties.Flags			= D3D12_RESOURCE_FLAG_NONE;
-	Properties.HeapProperties	= HeapProps::UploadHeap();
-	Properties.SizeInBytes		= BufferSize;
-	Properties.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
+	Properties.Flags		= D3D12_RESOURCE_FLAG_NONE;
+	Properties.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
+	Properties.SizeInBytes	= BufferSize;
+	Properties.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
 
 	Buffer = std::shared_ptr<D3D12Buffer>(new D3D12Buffer(Device));
 	if (!Buffer->Initialize(Properties))

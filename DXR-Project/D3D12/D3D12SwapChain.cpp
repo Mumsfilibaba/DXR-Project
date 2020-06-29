@@ -142,7 +142,7 @@ void D3D12SwapChain::RetriveSwapChainSurfaces()
 				Buffer = std::shared_ptr<D3D12Texture>(new D3D12Texture(Device));
 			}
 
-			if (Buffer->Initialize(Resource.Get()))
+			if (Buffer->D3D12Resource::Initialize(Resource.Get()))
 			{
 				D3D12_RENDER_TARGET_VIEW_DESC RtvDesc = { };
 				RtvDesc.ViewDimension			= D3D12_RTV_DIMENSION_TEXTURE2D;

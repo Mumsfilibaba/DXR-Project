@@ -228,18 +228,6 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow>& RendererWindow)
 		return false;
 	}
 
-	RenderTargetHeap = std::make_shared<D3D12DescriptorHeap>(Device.get());
-	if (!RenderTargetHeap->Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 3, D3D12_DESCRIPTOR_HEAP_FLAG_NONE))
-	{
-		return false;
-	}
-
-	DepthStencilHeap = std::make_shared<D3D12DescriptorHeap>(Device.get());
-	if (!DepthStencilHeap->Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_NONE))
-	{
-		return false;
-	}
-
 	SwapChain = std::make_shared<D3D12SwapChain>(Device.get());
 	if (!SwapChain->Initialize(RendererWindow.get(), Queue.get()))
 	{

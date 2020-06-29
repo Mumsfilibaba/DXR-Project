@@ -72,3 +72,27 @@ private:
 	D3D12_DESCRIPTOR_HEAP_TYPE	Type;
 	Uint32						DescriptorSize = 0;
 };
+
+/*
+* D3D12DescriptorTable
+*/
+
+class D3D12DescriptorTable
+{
+public:
+	D3D12DescriptorTable(D3D12Device* InDevice);
+	~D3D12DescriptorTable();
+
+	void SetViewAtSlot(D3D12View* View, Uint32 SlotIndex);
+
+	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetTableStartHandle() const
+	{
+		return TableStart;
+	}
+
+private:
+	D3D12Device* Device = nullptr;
+	
+	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> CpuHandles;
+	D3D12_GPU_DESCRIPTOR_HANDLE TableStart;
+};
