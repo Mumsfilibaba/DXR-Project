@@ -10,6 +10,7 @@
 
 class D3D12DescriptorHeap;
 class D3D12OfflineDescriptorHeap;
+class D3D12OnlineDescriptorHeap;
 
 class D3D12Device
 {
@@ -63,6 +64,11 @@ public:
 		return GlobalSamplerDescriptorHeap;
 	}
 
+	FORCEINLINE D3D12OnlineDescriptorHeap* GetGlobalOnlineResourceHeap() const
+	{
+		return GlobalOnlineResourceHeap;
+	}
+
 	static D3D12Device* Make(bool DebugEnable);
 
 private:
@@ -90,4 +96,6 @@ private:
 	D3D12OfflineDescriptorHeap* GlobalRenderTargetDescriptorHeap	= nullptr;
 	D3D12OfflineDescriptorHeap* GlobalDepthStencilDescriptorHeap	= nullptr;
 	D3D12OfflineDescriptorHeap* GlobalSamplerDescriptorHeap			= nullptr;
+
+	D3D12OnlineDescriptorHeap* GlobalOnlineResourceHeap = nullptr;
 };

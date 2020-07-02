@@ -21,11 +21,10 @@ public:
 
 	bool Initialize(D3D12CommandList* CommandList, std::shared_ptr<D3D12Buffer>& InVertexBuffer, Uint32 InVertexCount, std::shared_ptr<D3D12Buffer>& IndexBuffer, Uint32 InIndexCount);
 
-	D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress() const;
-
-public:
 	// DeviceChild Interface
 	virtual void SetName(const std::string& Name) override;
+
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
 
 private:
 	std::shared_ptr<D3D12Buffer> VertexBuffer	= nullptr;
@@ -72,11 +71,15 @@ public:
 
 	bool Initialize(D3D12CommandList* CommandList, std::vector<D3D12RayTracingGeometryInstance>& InInstances);
 
-	D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress() const;
-
-public:
 	// DeviceChild Interface
 	virtual void SetName(const std::string& Name) override;
+
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
+	
+	FORCEINLINE D3D12ShaderResourceView* GetShaderResourceView() const
+	{
+		return View.get();
+	}
 
 private:
 	D3D12Buffer*	ResultBuffer	= nullptr;

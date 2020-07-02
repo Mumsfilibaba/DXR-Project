@@ -80,11 +80,12 @@ private:
 class D3D12OnlineDescriptorHeap : public D3D12DeviceChild
 {
 public:
-	D3D12OnlineDescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
+	D3D12OnlineDescriptorHeap(D3D12Device* InDevice, Uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
 	~D3D12OnlineDescriptorHeap();
 
-	D3D12_CPU_DESCRIPTOR_HANDLE Allocate(Uint32& OutHeapIndex);
-	void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, Uint32 HeapIndex);
+	bool Initialize();
+	
+	Uint32 AllocateSlots(Uint32 NumSlots);
 
 	virtual void SetName(const std::string& InName) override;
 
@@ -109,9 +110,6 @@ public:
 	}
 
 private:
-	void AllocateHeap();
-
-private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> Heap;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE	CPUHeapStart;
@@ -120,6 +118,7 @@ private:
 
 	Uint32 DescriptorSize	= 0;
 	Uint32 CurrentSlot		= 0;
+	Uint32 DescriptorCount	= 0;
 };
 
 /*
@@ -129,19 +128,34 @@ private:
 class D3D12DescriptorTable
 {
 public:
-	D3D12DescriptorTable(D3D12Device* InDevice);
+	D3D12DescriptorTable(D3D12Device* InDevice, Uint32 InDescriptorCount);
 	~D3D12DescriptorTable();
 
-	void SetViewAtSlot(class D3D12View* View, Uint32 SlotIndex);
+	void SetUnorderedAccessView(class D3D12UnorderedAccessView* View, Uint32 SlotIndex);
+	void SetConstantBufferView(class D3D12ConstantBufferView* View, Uint32 SlotIndex);
+	void SetShaderResourceView(class D3D12ShaderResourceView* View, Uint32 SlotIndex);
 
-	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetTableStartHandle() const
+	void CopyDescriptors();
+
+	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUTableStartHandle() const
 	{
-		return TableStart;
+		return CPUTableStart;
+	}
+
+	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUTableStartHandle() const
+	{
+		return GPUTableStart;
 	}
 
 private:
 	D3D12Device* Device = nullptr;
 	
-	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> CpuHandles;
-	D3D12_GPU_DESCRIPTOR_HANDLE TableStart;
+	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> OfflineHandles;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE	CPUTableStart;
+	D3D12_GPU_DESCRIPTOR_HANDLE	GPUTableStart;
+
+	Uint32	StartDescriptorSlot	= 0;
+	Uint32	DescriptorCount		= 0;
+	bool	IsDirty				= true;
 };

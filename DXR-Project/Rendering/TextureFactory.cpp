@@ -27,7 +27,7 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::strin
 		::OutputDebugString(("[TextureFactory]: Loaded image '" + Filepath + "'\n").c_str());
 	}
 
-	
+	return LoadFromMemory(Device, Pixels.get(), Width, Height);
 }
 
 D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pixels, Uint32 Width, Uint32 Height)
@@ -131,7 +131,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	SrvDesc.Texture2D.MipLevels			= 1;
 	SrvDesc.Texture2D.MostDetailedMip	= 0;
 
-	Texture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, Texture.get(), &SrvDesc));
+	Texture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, Texture->GetResource(), &SrvDesc));
 
 	return Texture.release();
 }

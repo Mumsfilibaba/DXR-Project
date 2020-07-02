@@ -18,6 +18,11 @@ D3D12View::~D3D12View()
 	Heap->Free(OfflineHandle, OfflineHeapIndex);
 }
 
+void D3D12View::ResetResource()
+{
+	Resource.Reset();
+}
+
 /*
 * D3D12ConstantBufferView
 */

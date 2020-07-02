@@ -94,13 +94,13 @@ void WindowsWindow::GetWindowShape(WindowShape& OutWindowShape)
 	RECT Rect = { };
 	if (::GetWindowRect(hWindow, &Rect) != 0)
 	{
-		OutWindowShape.X = Rect.left;
-		OutWindowShape.Y = Rect.top;
+		OutWindowShape.X = static_cast<Uint16>(Rect.left);
+		OutWindowShape.Y = static_cast<Uint16>(Rect.top);
 	}
 
 	if (::GetClientRect(hWindow, &Rect) != 0)
 	{
-		OutWindowShape.Width	= Rect.right  - Rect.left;
-		OutWindowShape.Height	= Rect.bottom - Rect.top;
+		OutWindowShape.Width	= static_cast<Uint16>(Rect.right  - Rect.left);
+		OutWindowShape.Height	= static_cast<Uint16>(Rect.bottom - Rect.top);
 	}
 }

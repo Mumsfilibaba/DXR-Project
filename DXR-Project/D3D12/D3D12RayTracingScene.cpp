@@ -86,7 +86,7 @@ bool D3D12RayTracingGeometry::Initialize(D3D12CommandList* CommandList, std::sha
 	return true;
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS D3D12RayTracingGeometry::GetVirtualAddress() const
+D3D12_GPU_VIRTUAL_ADDRESS D3D12RayTracingGeometry::GetGPUVirtualAddress() const
 {
 	return ResultBuffer->GetGPUVirtualAddress();
 }
@@ -169,7 +169,7 @@ bool D3D12RayTracingScene::Initialize(D3D12CommandList* CommandList, std::vector
 		InstanceDesc->Flags									= D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 
 		D3D12RayTracingGeometryInstance& Instance = InInstances[i];
-		InstanceDesc->AccelerationStructure		= Instance.Geometry->GetVirtualAddress();
+		InstanceDesc->AccelerationStructure		= Instance.Geometry->GetGPUVirtualAddress();
 		InstanceDesc->InstanceMask				= 0xFF;
 
 		memcpy(InstanceDesc->Transform, &Instance.Transform, sizeof(InstanceDesc->Transform));
@@ -201,9 +201,11 @@ bool D3D12RayTracingScene::Initialize(D3D12CommandList* CommandList, std::vector
 	SrvDesc.RaytracingAccelerationStructure.Location	= ResultBuffer->GetGPUVirtualAddress();
 
 	View = std::make_shared<D3D12ShaderResourceView>(Device, ResultBuffer->GetResource(), &SrvDesc);
+
+	return true;
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS D3D12RayTracingScene::GetVirtualAddress() const
+D3D12_GPU_VIRTUAL_ADDRESS D3D12RayTracingScene::GetGPUVirtualAddress() const
 {
 	return ResultBuffer->GetGPUVirtualAddress();
 }

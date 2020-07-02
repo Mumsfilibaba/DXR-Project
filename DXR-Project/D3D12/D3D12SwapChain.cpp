@@ -180,4 +180,9 @@ void D3D12SwapChain::ReleaseSurfaces()
 	{
 		Buffer.reset();
 	}
+
+	for (std::shared_ptr<D3D12RenderTargetView>& View : BackBuffersViews)
+	{
+		View->ResetResource();
+	}
 }

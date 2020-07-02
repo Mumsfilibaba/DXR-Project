@@ -75,8 +75,8 @@ void Renderer::Tick()
 	UploadBuffers[CurrentBackBufferIndex]->Reset();
 
 	//Set constant buffer descriptor heap
-	//ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalResourceDescriptorHeap()->GetHeap() };
-	//CommandList->SetDescriptorHeaps(DescriptorHeaps, ARRAYSIZE(DescriptorHeaps));
+	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
+	CommandList->SetDescriptorHeaps(DescriptorHeaps, ARRAYSIZE(DescriptorHeaps));
 
 	Uint64 Offset = UploadBuffers[CurrentBackBufferIndex]->GetOffset();
 	void* CameraMemory = UploadBuffers[CurrentBackBufferIndex]->Allocate(sizeof(Camera));
@@ -125,9 +125,9 @@ void Renderer::Tick()
 	}
 }
 
-void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* CommandList)
+void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandList)
 {
-	CommandList->TransitionBarrier(ResultTexture, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	InCommandList->TransitionBarrier(ResultTexture, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
 	raytraceDesc.Width	= SwapChain->GetWidth();
@@ -140,21 +140,21 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* CommandList
 	raytraceDesc.HitGroupTable				= PipelineState->GetHitGroupTable();
 
 	// Bind the empty root signature
-	CommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
+	InCommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
 	//CommandList->SetComputeRootDescriptorTable(CameraBuffer->GetConstantBufferView()->GetOfflineHandle(), 0);
 
 	// Dispatch
-	CommandList->SetStateObject(PipelineState->GetStateObject());
-	CommandList->DispatchRays(&raytraceDesc);
+	InCommandList->SetStateObject(PipelineState->GetStateObject());
+	InCommandList->DispatchRays(&raytraceDesc);
 
 	// Copy the results to the back-buffer
-	CommandList->TransitionBarrier(ResultTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+	InCommandList->TransitionBarrier(ResultTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	InCommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	CommandList->CopyResource(BackBuffer, ResultTexture);
+	InCommandList->CopyResource(BackBuffer, ResultTexture);
 
 	// Indicate that the back buffer will now be used to present.
-	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	InCommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }
 
 void Renderer::OnResize(Int32 Width, Int32 Height)
@@ -196,7 +196,7 @@ void Renderer::OnKeyPressed(EKey KeyCode)
 	}
 }
 
-Renderer* Renderer::Make(std::shared_ptr<WindowsWindow>& RendererWindow)
+Renderer* Renderer::Make(std::shared_ptr<WindowsWindow> RendererWindow)
 {
 	RendererInstance = std::make_unique<Renderer>();
 	if (RendererInstance->Initialize(RendererWindow))
@@ -214,7 +214,7 @@ Renderer* Renderer::Get()
 	return RendererInstance.get();
 }
 
-bool Renderer::Initialize(std::shared_ptr<WindowsWindow>& RendererWindow)
+bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 {
 	Device = std::shared_ptr<D3D12Device>(D3D12Device::Make(true));
 	if (!Device)
@@ -297,7 +297,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow>& RendererWindow)
 		CameraViewDesc.BufferLocation	= CameraBuffer->GetGPUVirtualAddress();
 		CameraViewDesc.SizeInBytes		= static_cast<Uint32>(BufferProps.SizeInBytes);
 
-		CameraBuffer->SetConstantBufferView(std::make_shared<D3D12ConstantBufferView>(Device.get(), CameraBuffer, &CameraViewDesc));
+		CameraBuffer->SetConstantBufferView(std::make_shared<D3D12ConstantBufferView>(Device.get(), CameraBuffer->GetResource(), &CameraViewDesc));
 	}
 	else
 	{

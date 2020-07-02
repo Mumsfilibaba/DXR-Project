@@ -19,6 +19,8 @@ public:
 	D3D12View(D3D12Device* InDevice, ID3D12Resource* InResource);
 	virtual ~D3D12View();
 
+	void ResetResource();
+
 	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
 	{
 		return OfflineHandle;

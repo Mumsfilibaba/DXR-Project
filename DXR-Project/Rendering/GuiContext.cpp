@@ -30,7 +30,7 @@ GuiContext::~GuiContext()
 	ImGui::DestroyContext(Context);
 }
 
-GuiContext* GuiContext::Make(std::shared_ptr<D3D12Device>& Device)
+GuiContext* GuiContext::Make(std::shared_ptr<D3D12Device> Device)
 {
 	Instance = std::unique_ptr<GuiContext>(new GuiContext());
 	if (Instance->Initialize(Device))
@@ -62,7 +62,7 @@ void GuiContext::BeginFrame()
 	std::shared_ptr<WindowsWindow> Window = Application::Get()->GetWindow();
 	if (IO.WantSetMousePos)
 	{
-		Application::Get()->SetCursorPos(Window, IO.MousePos.x, IO.MousePos.y);
+		Application::Get()->SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
 	}
 
 	// Get the display size
@@ -238,7 +238,7 @@ void GuiContext::Render(D3D12CommandList* CommandList)
 					static_cast<LONG>(Cmd->ClipRect.w - ClipOff.y) 
 				};
 				
-				CommandList->SetGraphicsRootDescriptorTable(FontTextureGPUHandle, 1);
+				CommandList->SetGraphicsRootDescriptorTable(DescriptorTable->GetGPUTableStartHandle(), 1);
 				CommandList->RSSetScissorRects(&ScissorRect, 1);
 
 				CommandList->DrawIndexedInstanced(Cmd->ElemCount, 1, Cmd->IdxOffset + GlobalIndexOffset, Cmd->VtxOffset + GlobalVertexOffset, 0);
@@ -331,7 +331,7 @@ void GuiContext::OnCharacterInput(Uint32 Character)
 	IO.AddInputCharacter(Character);
 }
 
-bool GuiContext::Initialize(std::shared_ptr<D3D12Device>& InDevice)
+bool GuiContext::Initialize(std::shared_ptr<D3D12Device> InDevice)
 {
 	// Save device so that we can create resource on the GPU
 	Device = InDevice;
@@ -410,6 +410,10 @@ bool GuiContext::CreateFontTexture()
 	FontTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Device.get(), Pixels, Width, Height));
 	if (FontTexture)
 	{
+		DescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 1);
+		DescriptorTable->SetShaderResourceView(FontTexture->GetShaderResourceView().get(), 0);
+		DescriptorTable->CopyDescriptors();
+
 		return true;
 	}
 	else
