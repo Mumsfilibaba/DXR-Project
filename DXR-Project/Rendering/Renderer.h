@@ -52,37 +52,29 @@ private:
 	void TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* CommandList);
 
 private:
-	std::shared_ptr<D3D12Device>			Device;
-	std::shared_ptr<D3D12CommandQueue>		Queue;
-	std::shared_ptr<D3D12CommandList>		CommandList;
-	std::shared_ptr<D3D12DescriptorHeap>	RenderTargetHeap;
-	std::shared_ptr<D3D12DescriptorHeap>	DepthStencilHeap;
-	std::shared_ptr<D3D12Fence>				Fence;
-	std::shared_ptr<D3D12SwapChain>			SwapChain;
+	std::shared_ptr<D3D12Device>		Device;
+	std::shared_ptr<D3D12CommandQueue>	Queue;
+	std::shared_ptr<D3D12CommandQueue>	ComputeQueue;
+	std::shared_ptr<D3D12CommandList>	CommandList;
+	std::shared_ptr<D3D12Fence>			Fence;
+	std::shared_ptr<D3D12SwapChain>		SwapChain;
 
 	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
 
 	std::shared_ptr<D3D12Texture> Panorama;
+	std::shared_ptr<D3D12Texture> ResultTexture;
 
 	std::vector<Uint64>	FenceValues;
 	Uint32				CurrentBackBufferIndex = 0;
 
-	D3D12Texture* ResultTexture;
-
-	D3D12_CPU_DESCRIPTOR_HANDLE VertexBufferCPUHandle;
-	D3D12_CPU_DESCRIPTOR_HANDLE IndexBufferCPUHandle;
-
 	std::shared_ptr<D3D12Buffer>					CameraBuffer;
 	std::shared_ptr<D3D12RayTracingScene>			Scene;
 	std::shared_ptr<D3D12RayTracingPipelineState>	PipelineState;
+	std::shared_ptr<D3D12ConstantBufferView> CameraBufferView;	
 
 	std::vector<std::shared_ptr<D3D12UploadStack>> UploadBuffers;
 
 	Camera SceneCamera;
-
-	std::shared_ptr<D3D12ConstantBufferView> CameraBufferView;
-
-	D3D12_CPU_DESCRIPTOR_HANDLE OutputCPUHandle;
 
 	bool IsCameraAcive = false;
 

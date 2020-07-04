@@ -16,7 +16,6 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
-	SAFEDELETE(ResultTexture);
 }
 
 void Renderer::Tick()
@@ -127,7 +126,7 @@ void Renderer::Tick()
 
 void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandList)
 {
-	InCommandList->TransitionBarrier(ResultTexture, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	InCommandList->TransitionBarrier(ResultTexture.get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
 	raytraceDesc.Width	= SwapChain->GetWidth();
@@ -148,10 +147,10 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 	InCommandList->DispatchRays(&raytraceDesc);
 
 	// Copy the results to the back-buffer
-	InCommandList->TransitionBarrier(ResultTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	InCommandList->TransitionBarrier(ResultTexture.get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	InCommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	InCommandList->CopyResource(BackBuffer, ResultTexture);
+	InCommandList->CopyResource(BackBuffer, ResultTexture.get());
 
 	// Indicate that the back buffer will now be used to present.
 	InCommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -163,7 +162,7 @@ void Renderer::OnResize(Int32 Width, Int32 Height)
 
 	SwapChain->Resize(Width, Height);
 
-	SAFEDELETE(ResultTexture);
+	ResultTexture.reset();
 
 	CreateResultTexture();
 
@@ -454,7 +453,7 @@ bool Renderer::CreateResultTexture()
 	OutputProperties.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
 	OutputProperties.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 
-	ResultTexture = new D3D12Texture(Device.get());
+	ResultTexture = std::shared_ptr<D3D12Texture>(new D3D12Texture(Device.get()));
 	if (!ResultTexture->Initialize(OutputProperties))
 	{
 		return false;
