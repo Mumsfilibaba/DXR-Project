@@ -4,6 +4,8 @@
 
 #include <wrl/client.h>
 
+class D3D12DescriptorTable;
+
 struct ShaderBindingTableData
 {
 public:
@@ -24,7 +26,7 @@ public:
 	D3D12RayTracingPipelineState(D3D12Device* InDevice);
 	~D3D12RayTracingPipelineState();
 
-	bool Initialize();
+	bool Initialize(std::shared_ptr<D3D12DescriptorTable> InRayGenDescriptorTable, std::shared_ptr<D3D12DescriptorTable> InClosestHitDescriptorTable);
 
 	// DeviceChild Interface
 	virtual void SetName(const std::string& Name) override;
@@ -50,6 +52,9 @@ private:
 private:
 	Microsoft::WRL::ComPtr<ID3D12RootSignature>	GlobalRootSignature;
 	Microsoft::WRL::ComPtr<ID3D12StateObject>	DXRStateObject;
+
+	std::shared_ptr<D3D12DescriptorTable> RayGenDescriptorTable;
+	std::shared_ptr<D3D12DescriptorTable> ClosestHitDescriptorTable;
 
 	ShaderBindingTableData RayGenTable;
 	ShaderBindingTableData MissTable;

@@ -44,12 +44,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	{
 		IsRunning = App->Tick();
 
-		GuiContext::Get()->BeginFrame();
-
-		ImGui::ShowDemoWindow();
-
-		GuiContext::Get()->EndFrame();
-
 		Renderer::Get()->Tick();
 	}
 

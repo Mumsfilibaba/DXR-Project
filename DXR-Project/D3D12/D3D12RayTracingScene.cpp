@@ -200,7 +200,7 @@ bool D3D12RayTracingScene::Initialize(D3D12CommandList* CommandList, std::vector
 	SrvDesc.Shader4ComponentMapping						= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.RaytracingAccelerationStructure.Location	= ResultBuffer->GetGPUVirtualAddress();
 
-	View = std::make_shared<D3D12ShaderResourceView>(Device, ResultBuffer->GetResource(), &SrvDesc);
+	View = std::make_shared<D3D12ShaderResourceView>(Device, nullptr, &SrvDesc);
 
 	return true;
 }

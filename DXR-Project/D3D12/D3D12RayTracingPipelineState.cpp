@@ -12,6 +12,8 @@ D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(D3D12Device* InDevice
 	: D3D12DeviceChild(InDevice)
 	, GlobalRootSignature(nullptr)
 	, DXRStateObject(nullptr)
+	, RayGenDescriptorTable(nullptr)
+	, ClosestHitDescriptorTable(nullptr)
 	, RayGenTable()
 	, MissTable()
 	, HitTable()
@@ -22,8 +24,11 @@ D3D12RayTracingPipelineState::~D3D12RayTracingPipelineState()
 {
 }
 
-bool D3D12RayTracingPipelineState::Initialize()
+bool D3D12RayTracingPipelineState::Initialize(std::shared_ptr<D3D12DescriptorTable> InRayGenDescriptorTable, std::shared_ptr<D3D12DescriptorTable> InClosestHitDescriptorTable)
 {
+	RayGenDescriptorTable		= InRayGenDescriptorTable;
+	ClosestHitDescriptorTable	= InClosestHitDescriptorTable;
+
 	if (!CreatePipeline())
 	{
 		return false;
@@ -73,6 +78,8 @@ bool D3D12RayTracingPipelineState::CreatePipeline()
 		L"Miss",		nullptr, D3D12_EXPORT_FLAG_NONE,
 		L"ClosestHit",	nullptr, D3D12_EXPORT_FLAG_NONE,
 	};
+
+	VALIDATE(RayTracingShaders);
 
 	D3D12_DXIL_LIBRARY_DESC DxilLibraryDesc = { };
 	DxilLibraryDesc.DXILLibrary.pShaderBytecode = RayTracingShaders->GetBufferPointer();
@@ -186,14 +193,14 @@ bool D3D12RayTracingPipelineState::CreatePipeline()
 		Ranges[0].OffsetInDescriptorsFromTableStart = 0;
 
 		// VertexBuffer
-		Ranges[1].BaseShaderRegister				= 1;
+		Ranges[1].BaseShaderRegister				= 2;
 		Ranges[1].NumDescriptors					= 1;
 		Ranges[1].RegisterSpace						= 0;
 		Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		Ranges[1].OffsetInDescriptorsFromTableStart = 1;
 
 		// IndexBuffer
-		Ranges[2].BaseShaderRegister				= 2;
+		Ranges[2].BaseShaderRegister				= 3;
 		Ranges[2].NumDescriptors					= 1;
 		Ranges[2].RegisterSpace						= 0;
 		Ranges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -341,7 +348,7 @@ bool D3D12RayTracingPipelineState::CreatePipeline()
 
 	// Init global root signature
 	{
-		D3D12_DESCRIPTOR_RANGE Ranges[1] = {};
+		D3D12_DESCRIPTOR_RANGE Ranges[2] = {};
 
 		// Camera Buffer
 		Ranges[0].BaseShaderRegister				= 0;
@@ -350,15 +357,35 @@ bool D3D12RayTracingPipelineState::CreatePipeline()
 		Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 		Ranges[0].OffsetInDescriptorsFromTableStart = 0;
 
+		// Skybox
+		Ranges[1].BaseShaderRegister				= 1;
+		Ranges[1].NumDescriptors					= 1;
+		Ranges[1].RegisterSpace						= 0;
+		Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[1].OffsetInDescriptorsFromTableStart = 1;
+
 		D3D12_ROOT_PARAMETER RootParams = { };
 		RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		RootParams.DescriptorTable.NumDescriptorRanges	= _countof(Ranges);
 		RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
 
+		D3D12_STATIC_SAMPLER_DESC Sampler = { };
+		Sampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
+		Sampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Sampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Sampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Sampler.Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		Sampler.ShaderRegister		= 0;
+		Sampler.RegisterSpace		= 0;
+		Sampler.MinLOD				= 0.0f;
+		Sampler.MaxLOD				= FLT_MAX;
+
 		D3D12_ROOT_SIGNATURE_DESC GlobalRootDesc = {};
-		GlobalRootDesc.NumParameters	= 1;
-		GlobalRootDesc.pParameters		= &RootParams;
-		GlobalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_NONE;
+		GlobalRootDesc.NumStaticSamplers	= 1;
+		GlobalRootDesc.pStaticSamplers		= &Sampler;
+		GlobalRootDesc.NumParameters		= 1;
+		GlobalRootDesc.pParameters			= &RootParams;
+		GlobalRootDesc.Flags				= D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
 		ComPtr<ID3DBlob> SignatureBlob;
 		ComPtr<ID3DBlob> ErrorBlob;
@@ -426,12 +453,12 @@ bool D3D12RayTracingPipelineState::CreateBindingTable()
 	{
 		struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) RAY_GEN_SHADER_TABLE_DATA
 		{
-			Uint8	ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
-			UINT64	RTVDescriptor;
+			Uint8 ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
+			D3D12_GPU_DESCRIPTOR_HANDLE	RTVDescriptor;
 		} TableData;
 
+		TableData.RTVDescriptor = RayGenDescriptorTable->GetGPUTableStartHandle();
 		memcpy(TableData.ShaderIdentifier, StateProperties->GetShaderIdentifier(RayGenShaderName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-		// TableData.RTVDescriptor = Device->GetGlobalResourceDescriptorHeap()->GetGPUDescriptorHandleAt(0).ptr;
 
 		// How big is the biggest?
 		union MaxSize
@@ -440,7 +467,7 @@ bool D3D12RayTracingPipelineState::CreateBindingTable()
 		};
 
 		RayGenTable.StrideInBytes	= sizeof(MaxSize);
-		RayGenTable.SizeInBytes		= RayGenTable.StrideInBytes * 1; //<-- only one for now...
+		RayGenTable.SizeInBytes		= RayGenTable.StrideInBytes;
 
 		BufferProperties BufferProps = { };
 		BufferProps.SizeInBytes	= RayGenTable.SizeInBytes;
@@ -495,10 +522,10 @@ bool D3D12RayTracingPipelineState::CreateBindingTable()
 		struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) HIT_GROUP_SHADER_TABLE_DATA
 		{
 			Uint8 ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
-			UINT64 ASDescriptor;
+			D3D12_GPU_DESCRIPTOR_HANDLE ASDescriptor;
 		} TableData;
 
-		//TableData.ASDescriptor = Device->GetGlobalResourceDescriptorHeap()->GetGPUDescriptorHandleAt(1).ptr;
+		TableData.ASDescriptor = ClosestHitDescriptorTable->GetGPUTableStartHandle();
 		memcpy(TableData.ShaderIdentifier, StateProperties->GetShaderIdentifier(HitGroupName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 		// How big is the biggest?

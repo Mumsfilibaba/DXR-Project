@@ -19,12 +19,20 @@ public:
 
 	virtual bool Initialize(ID3D12Resource* InResource);
 	
+	// DeviceChild Interface
+	virtual void SetName(const std::string& Name) override;
+
 	void SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex);
 	void SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex);
 
 	FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
 	{
 		return Resource->GetGPUVirtualAddress();
+	}
+
+	FORCEINLINE const D3D12_RESOURCE_DESC& GetDesc() const
+	{
+		return Desc;
 	}
 
 	FORCEINLINE ID3D12Resource* GetResource() const
@@ -42,16 +50,14 @@ public:
 		return UnorderedAccessViews[SubresourceIndex];
 	}
 
-public:
-	// DeviceChild Interface
-	virtual void SetName(const std::string& Name) override;
-	
 protected:
-	bool CreateResource(const D3D12_RESOURCE_DESC* Desc, D3D12_RESOURCE_STATES InitalState, EMemoryType MemoryType);
+	bool CreateResource(const D3D12_RESOURCE_DESC* InDesc, D3D12_RESOURCE_STATES InitalState, EMemoryType MemoryType);
 
 protected:
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
 
 	std::vector<std::shared_ptr<D3D12ShaderResourceView>>	ShaderResourceViews;
 	std::vector<std::shared_ptr<D3D12UnorderedAccessView>>	UnorderedAccessViews;
+
+	D3D12_RESOURCE_DESC Desc;
 };

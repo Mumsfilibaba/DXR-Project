@@ -17,7 +17,22 @@ Application::~Application()
 
 bool Application::Tick()
 {
-	return PlatformApplication->Tick();
+	bool ShouldExit = PlatformApplication->Tick();
+
+	GuiContext::Get()->BeginFrame();
+	Timer.Tick();
+
+	ImGui::Begin("DebugWindow", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+	
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+	ImGui::Text("Frametime: %.4f ms", Timer.GetDeltaTime().AsMilliSeconds());
+	ImGui::PopStyleColor();
+
+	ImGui::End();
+
+	GuiContext::Get()->EndFrame();
+
+	return ShouldExit;
 }
 
 void Application::SetCursor(std::shared_ptr<WindowsCursor> Cursor)
@@ -196,8 +211,8 @@ bool Application::Initialize()
 	// Window
 	WindowProperties WindowProperties;
 	WindowProperties.Title	= "DXR";
-	WindowProperties.Width	= 1280;
-	WindowProperties.Height = 720;
+	WindowProperties.Width	= 1920;
+	WindowProperties.Height = 1080;
 	WindowProperties.Style	=	WINDOW_STYLE_FLAG_TITLED | WINDOW_STYLE_FLAG_CLOSABLE | 
 								WINDOW_STYLE_FLAG_MINIMIZABLE | WINDOW_STYLE_FLAG_MAXIMIZABLE |
 								WINDOW_STYLE_FLAG_RESIZEABLE;
@@ -211,6 +226,9 @@ bool Application::Initialize()
 	{
 		return false;
 	}
+
+	// Reset timer before starting
+	Timer.Reset();
 
 	return true;
 }

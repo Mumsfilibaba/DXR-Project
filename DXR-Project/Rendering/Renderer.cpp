@@ -20,49 +20,53 @@ Renderer::~Renderer()
 
 void Renderer::Tick()
 {
+	Frameclock.Tick();
+
+	const float Delta = Frameclock.GetDeltaTime().AsSeconds();
+	const float Speed = 1.0f;
 	if (InputManager::Get().IsKeyDown(EKey::KEY_RIGHT))
 	{
-		SceneCamera.Rotate(0.0f, -0.01f, 0.0f);
+		SceneCamera.Rotate(0.0f, -Speed * Delta, 0.0f);
 	}
 	else if (InputManager::Get().IsKeyDown(EKey::KEY_LEFT))
 	{
-		SceneCamera.Rotate(0.0f, 0.01f, 0.0f);
+		SceneCamera.Rotate(0.0f, Speed * Delta, 0.0f);
 	}
 
 	if (InputManager::Get().IsKeyDown(EKey::KEY_UP))
 	{
-		SceneCamera.Rotate(-0.01f, 0.0f, 0.0f);
+		SceneCamera.Rotate(-Speed * Delta, 0.0f, 0.0f);
 	}
 	else if (InputManager::Get().IsKeyDown(EKey::KEY_DOWN))
 	{
-		SceneCamera.Rotate(0.01f, 0.0f, 0.0f);
+		SceneCamera.Rotate(Speed * Delta, 0.0f, 0.0f);
 	}
 
 	if (InputManager::Get().IsKeyDown(EKey::KEY_W))
 	{
-		SceneCamera.Move(0.0f, 0.0f, 0.01f);
+		SceneCamera.Move(0.0f, 0.0f, Speed * Delta);
 	}
 	else if (InputManager::Get().IsKeyDown(EKey::KEY_S))
 	{
-		SceneCamera.Move(0.0f, 0.0f, -0.01f);
+		SceneCamera.Move(0.0f, 0.0f, -Speed * Delta);
 	}
 	
 	if (InputManager::Get().IsKeyDown(EKey::KEY_A))
 	{
-		SceneCamera.Move(0.01f, 0.0f, 0.0f);
+		SceneCamera.Move(Speed * Delta, 0.0f, 0.0f);
 	}
 	else if (InputManager::Get().IsKeyDown(EKey::KEY_D))
 	{
-		SceneCamera.Move(-0.01f, 0.0f, 0.0f);
+		SceneCamera.Move(-Speed * Delta, 0.0f, 0.0f);
 	}
 	
 	if (InputManager::Get().IsKeyDown(EKey::KEY_Q))
 	{
-		SceneCamera.Move(0.0f, 0.01f, 0.0f);
+		SceneCamera.Move(0.0f, Speed * Delta, 0.0f);
 	}
 	else if (InputManager::Get().IsKeyDown(EKey::KEY_E))
 	{
-		SceneCamera.Move(0.0f, -0.01f, 0.0f);
+		SceneCamera.Move(0.0f, -Speed * Delta, 0.0f);
 	}
 
 	SceneCamera.UpdateMatrices();
@@ -140,7 +144,7 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 
 	// Bind the empty root signature
 	InCommandList->SetComputeRootSignature(PipelineState->GetGlobalRootSignature());
-	//CommandList->SetComputeRootDescriptorTable(CameraBuffer->GetConstantBufferView()->GetOfflineHandle(), 0);
+	InCommandList->SetComputeRootDescriptorTable(GlobalDescriptorTable->GetGPUTableStartHandle(), 0);
 
 	// Dispatch
 	InCommandList->SetStateObject(PipelineState->GetStateObject());
@@ -410,8 +414,8 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	// Create TLAS
-	Scene = std::make_shared<D3D12RayTracingScene>(Device.get());
-	Scene->Initialize(CommandList.get(), Instances);
+	RayTracingScene = std::make_shared<D3D12RayTracingScene>(Device.get());
+	RayTracingScene->Initialize(CommandList.get(), Instances);
 
 	CommandList->Close();
 	Queue->ExecuteCommandList(CommandList.get());
@@ -438,9 +442,25 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	SrvDesc.Buffer.StructureByteStride	= 0;
 	MeshIndexBuffer->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), MeshIndexBuffer->GetResource(), &SrvDesc), 0);
 
+	std::shared_ptr<D3D12DescriptorTable> RayGenDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 2);
+	RayGenDescriptorTable->SetUnorderedAccessView(ResultTexture->GetUnorderedAccessView(0).get(), 0);
+	RayGenDescriptorTable->SetShaderResourceView(RayTracingScene->GetShaderResourceView(), 1);
+	RayGenDescriptorTable->CopyDescriptors();
+
+	std::shared_ptr<D3D12DescriptorTable> ClosestHitDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 3);
+	ClosestHitDescriptorTable->SetShaderResourceView(RayTracingScene->GetShaderResourceView(), 0);
+	ClosestHitDescriptorTable->SetShaderResourceView(MeshVertexBuffer->GetShaderResourceView(0).get(), 1);
+	ClosestHitDescriptorTable->SetShaderResourceView(MeshIndexBuffer->GetShaderResourceView(0).get(), 2);
+	ClosestHitDescriptorTable->CopyDescriptors();
+
+	GlobalDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 2);
+	GlobalDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 0);
+	GlobalDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).get(), 1);
+	GlobalDescriptorTable->CopyDescriptors();
+
 	// Create PipelineState
 	PipelineState = std::make_shared<D3D12RayTracingPipelineState>(Device.get());
-	if (!PipelineState->Initialize())
+	if (!PipelineState->Initialize(RayGenDescriptorTable, ClosestHitDescriptorTable))
 	{
 		return false;
 	}
@@ -451,12 +471,14 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 bool Renderer::CreateResultTexture()
 {
 	TextureProperties OutputProperties = { };
-	OutputProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	OutputProperties.Width			= SwapChain->GetWidth();
-	OutputProperties.Height			= SwapChain->GetHeight();
-	OutputProperties.ArrayCount		= 1;
-	OutputProperties.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
-	OutputProperties.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
+	OutputProperties.DebugName	= "RayTracing Output";
+	OutputProperties.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	OutputProperties.Width		= SwapChain->GetWidth();
+	OutputProperties.Height		= SwapChain->GetHeight();
+	OutputProperties.MipLevels	= 1;
+	OutputProperties.ArrayCount	= 1;
+	OutputProperties.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
+	OutputProperties.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 
 	ResultTexture = std::shared_ptr<D3D12Texture>(new D3D12Texture(Device.get()));
 	if (!ResultTexture->Initialize(OutputProperties))

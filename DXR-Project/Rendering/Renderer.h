@@ -13,6 +13,7 @@
 
 #include "Windows/WindowsWindow.h"
 
+#include "Application/Clock.h"
 #include "Application/InputCodes.h"
 
 #include <memory>
@@ -63,17 +64,19 @@ private:
 
 	std::shared_ptr<D3D12Texture> Skybox;
 	std::shared_ptr<D3D12Texture> ResultTexture;
+	
+	std::shared_ptr<D3D12DescriptorTable> GlobalDescriptorTable;
 
 	std::vector<Uint64>	FenceValues;
 	Uint32				CurrentBackBufferIndex = 0;
 
 	std::shared_ptr<D3D12Buffer>					CameraBuffer;
-	std::shared_ptr<D3D12RayTracingScene>			Scene;
+	std::shared_ptr<D3D12RayTracingScene>			RayTracingScene;
 	std::shared_ptr<D3D12RayTracingPipelineState>	PipelineState;
-	std::shared_ptr<D3D12ConstantBufferView> CameraBufferView;	
 
 	std::vector<std::shared_ptr<D3D12UploadStack>> UploadBuffers;
 
+	Clock Frameclock;
 	Camera SceneCamera;
 
 	bool IsCameraAcive = false;

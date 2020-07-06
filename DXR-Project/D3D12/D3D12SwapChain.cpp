@@ -113,7 +113,7 @@ bool D3D12SwapChain::Present(Uint32 SyncInterval)
 
 void D3D12SwapChain::SetName(const std::string& Name)
 {
-	// TODO: SetName for swapchain
+	SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, Name.size(), Name.data());
 }
 
 void D3D12SwapChain::RetriveSwapChainSurfaces()
@@ -159,6 +159,7 @@ void D3D12SwapChain::RetriveSwapChainSurfaces()
 					BackBuffersViews[BufferID]->CreateView(Resource.Get(), &RtvDesc);
 				}
 
+				Buffer->SetName("BackBuffer[" + std::to_string(BufferID) + "]");
 				Buffer->SetRenderTargetView(BackBuffersViews[BufferID]);
 			}
 

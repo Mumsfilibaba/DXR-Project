@@ -332,6 +332,14 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 	TextureProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 
+	std::unique_ptr<D3D12Texture> StagingTexture = std::unique_ptr<D3D12Texture>(new D3D12Texture(Device));
+	if (!StagingTexture->Initialize(TextureProps))
+	{
+		return nullptr;
+	}
+
+	TextureProps.Flags = D3D12_RESOURCE_FLAG_NONE;
+
 	std::unique_ptr<D3D12Texture> Texture = std::unique_ptr<D3D12Texture>(new D3D12Texture(Device));
 	if (!Texture->Initialize(TextureProps))
 	{
@@ -343,7 +351,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	UavDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 	UavDesc.Texture2DArray.ArraySize		= 6;
 	UavDesc.Texture2DArray.FirstArraySlice	= 0;
-	Texture->SetUnorderedAccessView(std::make_unique<D3D12UnorderedAccessView>(Device, nullptr, Texture->GetResource(), &UavDesc), 0);
+	StagingTexture->SetUnorderedAccessView(std::make_unique<D3D12UnorderedAccessView>(Device, nullptr, StagingTexture->GetResource(), &UavDesc), 0);
 
 	// Generate PipelineState at first run
 	if (!GlobalFactoryData.PanoramaPSO)
@@ -381,7 +389,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	SrvDescriptorTable->CopyDescriptors();
 
 	std::unique_ptr<D3D12DescriptorTable> UavDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device, 1);
-	UavDescriptorTable->SetUnorderedAccessView(Texture->GetUnorderedAccessView(0).get(), 0);
+	UavDescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).get(), 0);
 	UavDescriptorTable->CopyDescriptors();
 
 	std::unique_ptr<D3D12Fence> Fence = std::unique_ptr<D3D12Fence>(new D3D12Fence(Device));
@@ -413,7 +421,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	CommandList->Reset(Allocator.get());
 
 	CommandList->TransitionBarrier(PanoramaSource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(StagingTexture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
 	CommandList->SetPipelineState(GlobalFactoryData.PanoramaPSO->GetPipeline());
 	CommandList->SetComputeRootSignature(GlobalFactoryData.PanoramaRootSignature->GetRootSignature());
@@ -436,7 +444,12 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	CommandList->Dispatch(ThreadsX, ThreadsY, 6);
 
 	CommandList->TransitionBarrier(PanoramaSource, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(StagingTexture.get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+
+	CommandList->CopyResource(Texture.get(), StagingTexture.get());
+
+	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	CommandList->Close();
 

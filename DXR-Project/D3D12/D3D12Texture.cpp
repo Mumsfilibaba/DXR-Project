@@ -28,6 +28,8 @@ bool D3D12Texture::Initialize(const TextureProperties& Properties)
 
 	if (CreateResource(&Desc, Properties.InitalState, Properties.MemoryType))
 	{
+		SetName(Properties.DebugName);
+
 		::OutputDebugString("[D3D12Texture]: Created Buffer\n");
 		return true;
 	}

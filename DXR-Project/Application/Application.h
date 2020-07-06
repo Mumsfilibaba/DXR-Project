@@ -1,5 +1,6 @@
 #pragma once
 #include "EventHandler.h"
+#include "Clock.h"
 
 #include "Windows/WindowsWindow.h"
 #include "Windows/WindowsCursor.h"
@@ -48,6 +49,8 @@ private:
 protected:
 	std::shared_ptr<WindowsWindow>	Window				= nullptr;
 	WindowsApplication*				PlatformApplication = nullptr;
+
+	Clock Timer;
 
 	static std::shared_ptr<Application> Instance;
 };

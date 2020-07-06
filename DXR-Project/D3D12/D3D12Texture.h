@@ -3,7 +3,7 @@
 
 struct TextureProperties
 {
-	std::string				Name;
+	std::string				DebugName;
 	DXGI_FORMAT				Format;
 	D3D12_RESOURCE_FLAGS	Flags;
 	Uint16					Width; 

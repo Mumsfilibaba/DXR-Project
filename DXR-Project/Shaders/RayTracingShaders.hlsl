@@ -10,7 +10,11 @@ struct Camera
 };
 
 RaytracingAccelerationStructure Scene		: register(t0, space0);
-RWTexture2D<float4>				OutTexture	: register(u0, space0);
+
+TextureCube<float4>	Skybox	: register(t1, space0);
+SamplerState SkyboxSampler	: register(s0, space0);
+
+RWTexture2D<float4> OutTexture 	: register(u0, space0);
 
 ConstantBuffer<Camera> Camera : register(b0, space0);
 
@@ -23,8 +27,8 @@ struct Vertex
 	float2 TexCoord;
 };
 
-StructuredBuffer<Vertex>	Vertices	: register(t1, space0);
-ByteAddressBuffer			Indices		: register(t2, space0);
+StructuredBuffer<Vertex>	Vertices	: register(t2, space0);
+ByteAddressBuffer			InIndices	: register(t3, space0);
 
 // Helpers
 float3 WorldHitPosition()
@@ -122,7 +126,7 @@ void RayGen()
 [shader("miss")]
 void Miss(inout RayPayload PayLoad)
 {
-	PayLoad.Color = float3(0.3921f, 0.5843f, 0.9394f);
+	PayLoad.Color = Skybox.SampleLevel(SkyboxSampler, WorldRayDirection(), 0).rgb; // float3(0.3921f, 0.5843f, 0.9394f);
 }
 
 [shader("closesthit")]
@@ -135,7 +139,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	const uint BaseIndex			= PrimitiveIndex() * TriangleIndexStride;
 
 	// Load up three indices for the triangle.
-	const uint3 Indices = Indices.Load3(BaseIndex);
+	uint3 Indices = InIndices.Load3(BaseIndex);
 
 	// Constants
 	const float3 ObjectColor	= float3(1.0f, 0.0f, 0.0f);
