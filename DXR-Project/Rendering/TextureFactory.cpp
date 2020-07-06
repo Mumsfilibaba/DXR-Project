@@ -408,7 +408,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 		return nullptr;
 	}
 
-	// Generate
+	// Generate Cube
 	Allocator->Reset();
 	CommandList->Reset(Allocator.get());
 
@@ -434,8 +434,6 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	Uint32 ThreadsX = DivideByMultiple(CubeMapSize, 16);
 	Uint32 ThreadsY = DivideByMultiple(CubeMapSize, 16);
 	CommandList->Dispatch(ThreadsX, ThreadsY, 6);
-
-	//CommandList->UnorderedAccessBarrier(Texture.get());
 
 	CommandList->TransitionBarrier(PanoramaSource, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
