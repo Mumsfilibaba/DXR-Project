@@ -87,6 +87,13 @@ public:
 		DXRCommandList->DispatchRays(Desc);
 	}
 
+	FORCEINLINE void Dispatch(Uint32 ThreadGroupCountX, Uint32 ThreadGroupCountY, Uint32 ThreadGroupCountZ)
+	{
+		FlushDeferredResourceBarriers();
+
+		CommandList->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+	}
+
 	FORCEINLINE void DrawIndexedInstanced(Uint32 IndexCountPerInstance, Uint32 InstanceCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation, Uint32 StartInstanceLocation)
 	{
 		FlushDeferredResourceBarriers();
@@ -121,17 +128,26 @@ public:
 
 	FORCEINLINE void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, Uint32 RootParameterIndex)
 	{
+		FlushDeferredResourceBarriers();
+
 		CommandList->SetComputeRootDescriptorTable(RootParameterIndex, BaseDescriptor);
 	}
 
 	FORCEINLINE void SetGraphicsRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, Uint32 RootParameterIndex)
 	{
+		FlushDeferredResourceBarriers();
+
 		CommandList->SetGraphicsRootDescriptorTable(RootParameterIndex, BaseDescriptor);
 	}
 
 	FORCEINLINE void SetGraphicsRoot32BitConstants(const void* SourceData, Uint32 Num32BitValues, Uint32 DestOffsetIn32BitValues, Uint32 RootParameterIndex)
 	{
 		CommandList->SetGraphicsRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
+	}
+
+	FORCEINLINE void SetComputeRoot32BitConstants(const void* SourceData, Uint32 Num32BitValues, Uint32 DestOffsetIn32BitValues, Uint32 RootParameterIndex)
+	{
+		CommandList->SetComputeRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
 	}
 
 	FORCEINLINE void IASetVertexBuffers(Uint32 StartSlot, const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, Uint32 VertexBufferViewCount)

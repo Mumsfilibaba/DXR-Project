@@ -101,7 +101,13 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	BlendStateDesc.RenderTarget[0].BlendOpAlpha				= D3D12_BLEND_OP_ADD;
 	BlendStateDesc.RenderTarget[0].RenderTargetWriteMask	= D3D12_COLOR_WRITE_ENABLE_ALL;
 
-	Pipeline.RootSignature			= Properties.RootSignature->GetRootSignature();
+	// RootSignature
+	if (Properties.RootSignature)
+	{
+		Pipeline.RootSignature = Properties.RootSignature->GetRootSignature();
+	}
+
+	// Topology
 	Pipeline.PrimitiveTopologyType	= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	const D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc = { sizeof(PipelineStream), &Pipeline };

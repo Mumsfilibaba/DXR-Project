@@ -49,6 +49,26 @@ bool D3D12Resource::Initialize(ID3D12Resource* InResource)
 	return Resource != nullptr;
 }
 
+void D3D12Resource::SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex)
+{
+	if (SubresourceIndex >= ShaderResourceViews.size())
+	{
+		ShaderResourceViews.resize(SubresourceIndex + 1);
+	}
+
+	ShaderResourceViews[SubresourceIndex] = InShaderResourceView;
+}
+
+void D3D12Resource::SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex)
+{
+	if (SubresourceIndex >= UnorderedAccessViews.size())
+	{
+		UnorderedAccessViews.resize(SubresourceIndex + 1);
+	}
+
+	UnorderedAccessViews[SubresourceIndex] = InUnorderedAccessView;
+}
+
 void D3D12Resource::SetName(const std::string& Name)
 {
 	std::wstring WideName = ConvertToWide(Name);

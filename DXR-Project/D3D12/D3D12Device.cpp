@@ -1,8 +1,9 @@
+#include "Defines.h"
 #include "D3D12Device.h"
 #include "D3D12ShaderCompiler.h"
 #include "D3D12DescriptorHeap.h"
-
-#include "Defines.h"
+#include "D3D12ComputePipelineState.h"
+#include "D3D12RootSignature.h"
 
 #include <dxgidebug.h>
 

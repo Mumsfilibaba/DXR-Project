@@ -361,10 +361,16 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	// Create Texture Cube
-	Panorama = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/arches.hdr"));
+	std::unique_ptr<D3D12Texture> Panorama = std::unique_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/arches.hdr", 0));
 	if (!Panorama)
 	{
 		return false;	
+	}
+
+	Skybox = std::shared_ptr<D3D12Texture>(TextureFactory::CreateTextureCubeFromPanorma(Device.get(), Panorama.get(), 512));
+	if (!Skybox)
+	{
+		return false;
 	}
 
 	// Return before createing accelerationstructure
@@ -423,16 +429,14 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
 	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Mesh.Vertices.size());
 	SrvDesc.Buffer.StructureByteStride	= sizeof(Vertex);
-
-	MeshVertexBuffer->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), MeshVertexBuffer->GetResource(), &SrvDesc));
+	MeshVertexBuffer->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), MeshVertexBuffer->GetResource(), &SrvDesc), 0);
 
 	// IndexBuffer
 	SrvDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
 	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
 	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Mesh.Indices.size());
 	SrvDesc.Buffer.StructureByteStride	= 0;
-
-	MeshIndexBuffer->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), MeshIndexBuffer->GetResource(), &SrvDesc));
+	MeshIndexBuffer->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), MeshIndexBuffer->GetResource(), &SrvDesc), 0);
 
 	// Create PipelineState
 	PipelineState = std::make_shared<D3D12RayTracingPipelineState>(Device.get());
@@ -450,6 +454,7 @@ bool Renderer::CreateResultTexture()
 	OutputProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	OutputProperties.Width			= SwapChain->GetWidth();
 	OutputProperties.Height			= SwapChain->GetHeight();
+	OutputProperties.ArrayCount		= 1;
 	OutputProperties.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
 	OutputProperties.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 
@@ -465,7 +470,7 @@ bool Renderer::CreateResultTexture()
 	UAVView.Texture2D.MipSlice		= 0;
 	UAVView.Texture2D.PlaneSlice	= 0;
 
-	ResultTexture->SetUnorderedAccessView(std::make_shared<D3D12UnorderedAccessView>(Device.get(), nullptr, ResultTexture->GetResource(), &UAVView));
+	ResultTexture->SetUnorderedAccessView(std::make_shared<D3D12UnorderedAccessView>(Device.get(), nullptr, ResultTexture->GetResource(), &UAVView), 0);
 	return true;
 }
 

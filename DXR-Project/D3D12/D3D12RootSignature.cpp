@@ -69,8 +69,25 @@ bool D3D12RootSignature::Initialize()
 		::OutputDebugString(reinterpret_cast<const Char*>(ErrorBlob->GetBufferPointer()));
 		return false;
 	}
+	else
+	{
+		return Initialize(SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize());
+	}
+}
 
-	hResult = Device->GetDevice()->CreateRootSignature(0, SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize(), IID_PPV_ARGS(&RootSignature));
+bool D3D12RootSignature::Initialize(IDxcBlob* ShaderBlob)
+{
+	return Initialize(ShaderBlob->GetBufferPointer(), ShaderBlob->GetBufferSize());
+}
+
+void D3D12RootSignature::SetName(const std::string& Name)
+{
+	RootSignature->SetName(ConvertToWide(Name).c_str());
+}
+
+bool D3D12RootSignature::Initialize(const void* RootSignatureBlob, Uint32 BlobSizeInBytes)
+{
+	HRESULT hResult = Device->GetDevice()->CreateRootSignature(0, RootSignatureBlob, BlobSizeInBytes, IID_PPV_ARGS(&RootSignature));
 	if (SUCCEEDED(hResult))
 	{
 		::OutputDebugString("[D3D12RootSignature]: Created RootSignature\n");
@@ -81,9 +98,4 @@ bool D3D12RootSignature::Initialize()
 		::OutputDebugString("[D3D12RootSignature]: Failed to Create RootSignature\n");
 		return false;
 	}
-}
-
-void D3D12RootSignature::SetName(const std::string& Name)
-{
-	RootSignature->SetName(ConvertToWide(Name).c_str());
 }

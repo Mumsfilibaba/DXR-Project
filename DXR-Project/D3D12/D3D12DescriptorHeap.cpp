@@ -215,6 +215,7 @@ D3D12DescriptorTable::D3D12DescriptorTable(D3D12Device* InDevice, Uint32 InDescr
 
 D3D12DescriptorTable::~D3D12DescriptorTable()
 {
+	::OutputDebugString("Destroyed DescriptorTable\n");
 }
 
 void D3D12DescriptorTable::SetUnorderedAccessView(D3D12UnorderedAccessView* View, Uint32 SlotIndex)

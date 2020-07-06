@@ -11,6 +11,8 @@
 class D3D12DescriptorHeap;
 class D3D12OfflineDescriptorHeap;
 class D3D12OnlineDescriptorHeap;
+class D3D12ComputePipelineState;
+class D3D12RootSignature;
 
 class D3D12Device
 {

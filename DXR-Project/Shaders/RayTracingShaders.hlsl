@@ -9,10 +9,10 @@ struct Camera
 	float3		Up;
 };
 
-RaytracingAccelerationStructure g_RayTracingScene	: register(t0, space0);
-RWTexture2D<float4>				g_Output			: register(u0, space0);
+RaytracingAccelerationStructure Scene		: register(t0, space0);
+RWTexture2D<float4>				OutTexture	: register(u0, space0);
 
-ConstantBuffer<Camera> g_Camera : register(b0, space0);
+ConstantBuffer<Camera> Camera : register(b0, space0);
 
 // Geometry
 struct Vertex
@@ -23,8 +23,8 @@ struct Vertex
 	float2 TexCoord;
 };
 
-StructuredBuffer<Vertex>	g_Vertices	: register(t1, space0);
-ByteAddressBuffer			g_Indices	: register(t2, space0);
+StructuredBuffer<Vertex>	Vertices	: register(t1, space0);
+ByteAddressBuffer			Indices		: register(t2, space0);
 
 // Helpers
 float3 WorldHitPosition()
@@ -81,8 +81,8 @@ float3 CalculatePhongLighting(in float3 Albedo, in float3 Normal, in float Diffu
 // Shaders
 struct RayPayload
 {
-	float3 Color;
-	uint CurrentRecursionDepth;
+	float3	Color;
+	uint	CurrentRecursionDepth;
 };
 
 [shader("raygeneration")]
@@ -98,13 +98,13 @@ void RayGen()
 	ScreenPos.y = -ScreenPos.y;
 
 	// Unproject the pixel coordinate into a world positon.
-	float4x4 ProjectionToWorld = g_Camera.ViewProjectionInverse;
+	float4x4 ProjectionToWorld = Camera.ViewProjectionInverse;
 	float4 World = mul(float4(ScreenPos, 0.0f, 1.0f), ProjectionToWorld);
 	World.xyz /= World.w;
 
 	// Send inital ray
 	RayDesc Ray;
-	Ray.Origin		= g_Camera.Position;
+	Ray.Origin		= Camera.Position;
 	Ray.Direction	= normalize(World.xyz - Ray.Origin);
 
 	Ray.TMin = 0;
@@ -113,10 +113,10 @@ void RayGen()
 	RayPayload PayLoad;
 	PayLoad.CurrentRecursionDepth = 1;
 
-	TraceRay(g_RayTracingScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 0, 0, Ray, PayLoad);
+	TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 0, 0, Ray, PayLoad);
 
 	// Output Image
-	g_Output[DispatchIndex.xy] = float4(PayLoad.Color, 1.0f);
+	OutTexture[DispatchIndex.xy] = float4(PayLoad.Color, 1.0f);
 }
 
 [shader("miss")]
@@ -135,7 +135,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	const uint BaseIndex			= PrimitiveIndex() * TriangleIndexStride;
 
 	// Load up three indices for the triangle.
-	const uint3 Indices = g_Indices.Load3(BaseIndex);
+	const uint3 Indices = Indices.Load3(BaseIndex);
 
 	// Constants
 	const float3 ObjectColor	= float3(1.0f, 0.0f, 0.0f);
@@ -144,9 +144,9 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	// Retrieve corresponding vertex normals for the triangle vertices.
 	float3 TriangleNormals[3] =
 	{
-		g_Vertices[Indices[0]].Normal,
-		g_Vertices[Indices[1]].Normal,
-		g_Vertices[Indices[2]].Normal
+		Vertices[Indices[0]].Normal,
+		Vertices[Indices[1]].Normal,
+		Vertices[Indices[2]].Normal
 	};
 	
 	float3 BarycentricCoords	= float3(1.0f - IntersectionAttributes.barycentrics.x - IntersectionAttributes.barycentrics.y, IntersectionAttributes.barycentrics.x, IntersectionAttributes.barycentrics.y);
@@ -171,7 +171,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 		RayPayload ReflectancePayLoad;
 		ReflectancePayLoad.CurrentRecursionDepth = PayLoad.CurrentRecursionDepth + 1;
 
-		TraceRay(g_RayTracingScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 0, 0, Ray, ReflectancePayLoad);
+		TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 0, 0, Ray, ReflectancePayLoad);
 
 		ReflectedColor = ReflectancePayLoad.Color;
 	}

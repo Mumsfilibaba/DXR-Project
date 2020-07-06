@@ -15,14 +15,14 @@ D3D12Texture::~D3D12Texture()
 bool D3D12Texture::Initialize(const TextureProperties& Properties)
 {
 	D3D12_RESOURCE_DESC Desc = {};
-	Desc.DepthOrArraySize	= 1;
+	Desc.DepthOrArraySize	= Properties.ArrayCount;
 	Desc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	Desc.Format				= Properties.Format;
 	Desc.Flags				= Properties.Flags;
 	Desc.Width				= Properties.Width;
 	Desc.Height				= Properties.Height;
 	Desc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	Desc.MipLevels			= 1;
+	Desc.MipLevels			= Properties.MipLevels;
 	Desc.SampleDesc.Count	= 1;
 	Desc.SampleDesc.Quality = 0;
 

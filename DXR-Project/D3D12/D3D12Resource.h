@@ -19,6 +19,9 @@ public:
 
 	virtual bool Initialize(ID3D12Resource* InResource);
 	
+	void SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex);
+	void SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex);
+
 	FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
 	{
 		return Resource->GetGPUVirtualAddress();
@@ -29,24 +32,14 @@ public:
 		return Resource.Get();
 	}
 
-	FORCEINLINE void SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView> InShaderResourceView)
+	FORCEINLINE std::shared_ptr<D3D12ShaderResourceView> GetShaderResourceView(const Uint32 SubresourceIndex) const
 	{
-		ShaderResourceView = InShaderResourceView;
+		return ShaderResourceViews[SubresourceIndex];
 	}
 
-	FORCEINLINE std::shared_ptr<D3D12ShaderResourceView> GetShaderResourceView() const
+	FORCEINLINE std::shared_ptr<D3D12UnorderedAccessView> GetUnorderedAccessView(const Uint32 SubresourceIndex) const
 	{
-		return ShaderResourceView;
-	}
-
-	FORCEINLINE void SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView> InUnorderedAccessView)
-	{
-		UnorderedAccessView = InUnorderedAccessView;
-	}
-
-	FORCEINLINE std::shared_ptr<D3D12UnorderedAccessView> GetUnorderedAccessView() const
-	{
-		return UnorderedAccessView;
+		return UnorderedAccessViews[SubresourceIndex];
 	}
 
 public:
@@ -59,6 +52,6 @@ protected:
 protected:
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
 
-	std::shared_ptr<D3D12ShaderResourceView>	ShaderResourceView;
-	std::shared_ptr<D3D12UnorderedAccessView>	UnorderedAccessView;
+	std::vector<std::shared_ptr<D3D12ShaderResourceView>>	ShaderResourceViews;
+	std::vector<std::shared_ptr<D3D12UnorderedAccessView>>	UnorderedAccessViews;
 };

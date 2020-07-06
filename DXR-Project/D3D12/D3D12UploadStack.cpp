@@ -1,6 +1,7 @@
 #include "D3D12UploadStack.h"
 
 D3D12UploadStack::D3D12UploadStack()
+	: Buffer(nullptr)
 {
 }
 
@@ -23,8 +24,10 @@ bool D3D12UploadStack::Initialize(D3D12Device* Device)
 	{
 		return false;
 	}
-
-	return true;
+	else
+	{
+		return true;
+	}
 }
 
 void D3D12UploadStack::Reset()

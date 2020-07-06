@@ -407,11 +407,11 @@ bool GuiContext::CreateFontTexture()
 	Int32	Height	= 0;
 	IO.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-	FontTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Device.get(), Pixels, Width, Height));
+	FontTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Device.get(), Pixels, Width, Height, 0));
 	if (FontTexture)
 	{
 		DescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 1);
-		DescriptorTable->SetShaderResourceView(FontTexture->GetShaderResourceView().get(), 0);
+		DescriptorTable->SetShaderResourceView(FontTexture->GetShaderResourceView(0).get(), 0);
 		DescriptorTable->CopyDescriptors();
 
 		return true;

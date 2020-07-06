@@ -61,7 +61,7 @@ private:
 
 	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
 
-	std::shared_ptr<D3D12Texture> Panorama;
+	std::shared_ptr<D3D12Texture> Skybox;
 	std::shared_ptr<D3D12Texture> ResultTexture;
 
 	std::vector<Uint64>	FenceValues;
