@@ -26,6 +26,13 @@ public:
 
 	bool Initialize();
 
+	// DeviceChild Interface
+	virtual void SetName(const std::string& Name) override;
+
+	D3D12_GPU_VIRTUAL_ADDRESS_RANGE				GetRayGenerationShaderRecord()	const;
+	D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE	GetMissShaderTable()			const;
+	D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE	GetHitGroupTable()				const;
+
 	FORCEINLINE ID3D12StateObject* GetStateObject() const
 	{
 		return DXRStateObject.Get();
@@ -35,14 +42,6 @@ public:
 	{
 		return GlobalRootSignature.Get();
 	}
-
-	D3D12_GPU_VIRTUAL_ADDRESS_RANGE				GetRayGenerationShaderRecord()	const;
-	D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE	GetMissShaderTable()			const;
-	D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE	GetHitGroupTable()				const;
-
-public:
-	// DeviceChild Interface
-	virtual void SetName(const std::string& Name) override;
 
 private:
 	bool CreatePipeline();
