@@ -21,7 +21,7 @@ bool D3D12CommandAllocator::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 	}
 	else
 	{
-		::OutputDebugString("[D3D12CommandAllocator]: Failed to create CommandAllocator\n");
+		::OutputDebugString("[D3D12CommandAllocator]: FAILED to create CommandAllocator\n");
 		return false;
 	}
 }

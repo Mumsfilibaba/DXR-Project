@@ -22,7 +22,7 @@ bool D3D12Fence::Initialize(Uint64 InitalValue)
 		Event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 		if (Event == NULL)
 		{
-			::OutputDebugString("[D3D12Fence]: Failed to create Event\n");
+			::OutputDebugString("[D3D12Fence]: FAILED to create Event\n");
 			return false;
 		}
 		else
@@ -32,7 +32,7 @@ bool D3D12Fence::Initialize(Uint64 InitalValue)
 	}
 	else
 	{
-		::OutputDebugString("[D3D12Fence]: Failed to create Fence\n");
+		::OutputDebugString("[D3D12Fence]: FAILED to create Fence\n");
 		return false;
 	}
 }

@@ -16,11 +16,11 @@ bool D3D12ComputePipelineState::Initialize(const ComputePipelineStateProperties&
 {
 	struct PipelineStream
 	{
-		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0			= D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
-		ID3D12RootSignature*				RootSignature	= nullptr;
+		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
+		ID3D12RootSignature* RootSignature = nullptr;
 
 		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS;
-		D3D12_SHADER_BYTECODE				ComputeShader;
+		D3D12_SHADER_BYTECODE ComputeShader;
 	} Pipeline = { };
 
 	// RootSignature
@@ -44,7 +44,7 @@ bool D3D12ComputePipelineState::Initialize(const ComputePipelineStateProperties&
 	}
 	else
 	{
-		::OutputDebugString("[D3D12ComputePipeline]: Failed to Create PipelineState\n");
+		::OutputDebugString("[D3D12ComputePipeline]: FAILED to Create PipelineState\n");
 		return false;
 	}
 }

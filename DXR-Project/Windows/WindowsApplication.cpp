@@ -64,7 +64,7 @@ bool WindowsApplication::RegisterWindowClass()
 	ATOM ClassAtom = ::RegisterClass(&WindowClass);
 	if (ClassAtom == 0)
 	{
-		::OutputDebugString("[WindowsApplication]: Failed to register WindowClass\n");
+		::OutputDebugString("[WindowsApplication]: FAILED to register WindowClass\n");
 		return false;
 	}
 	else

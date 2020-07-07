@@ -4,15 +4,15 @@ struct Camera
 	float4x4	ViewProjection;
 	float4x4	ViewProjectionInverse;
 	float3		Position;
-	float3		Forward;
-	float3		Right;
-	float3		Up;
 };
 
-RaytracingAccelerationStructure Scene		: register(t0, space0);
+RaytracingAccelerationStructure Scene : register(t0, space0);
 
-TextureCube<float4>	Skybox	: register(t1, space0);
-SamplerState SkyboxSampler	: register(s0, space0);
+Texture2D<float4>	Albedo		: register(t4, space0);
+Texture2D<float4>	NormalMap	: register(t5, space0);
+TextureCube<float4>	Skybox		: register(t1, space0);
+
+SamplerState TextureSampler	: register(s0, space0);
 
 RWTexture2D<float4> OutTexture 	: register(u0, space0);
 
@@ -126,7 +126,7 @@ void RayGen()
 [shader("miss")]
 void Miss(inout RayPayload PayLoad)
 {
-	PayLoad.Color = Skybox.SampleLevel(SkyboxSampler, WorldRayDirection(), 0).rgb; // float3(0.3921f, 0.5843f, 0.9394f);
+	PayLoad.Color = Skybox.SampleLevel(TextureSampler, WorldRayDirection(), 0).rgb; // float3(0.3921f, 0.5843f, 0.9394f);
 }
 
 [shader("closesthit")]
@@ -142,7 +142,6 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	uint3 Indices = InIndices.Load3(BaseIndex);
 
 	// Constants
-	const float3 ObjectColor	= float3(1.0f, 0.0f, 0.0f);
 	const float3 LightPosition	= float3(0.0f, 3.0f, 0.0f);
 
 	// Retrieve corresponding vertex normals for the triangle vertices.
@@ -152,10 +151,43 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 		Vertices[Indices[1]].Normal,
 		Vertices[Indices[2]].Normal
 	};
+
+	float3 TriangleTangent[3] =
+	{
+		Vertices[Indices[0]].Tangent,
+		Vertices[Indices[1]].Tangent,
+		Vertices[Indices[2]].Tangent
+	};
+
+	float2 TriangleTexCoords[3] =
+	{
+		Vertices[Indices[0]].TexCoord,
+		Vertices[Indices[1]].TexCoord,
+		Vertices[Indices[2]].TexCoord
+	};
 	
-	float3 BarycentricCoords	= float3(1.0f - IntersectionAttributes.barycentrics.x - IntersectionAttributes.barycentrics.y, IntersectionAttributes.barycentrics.x, IntersectionAttributes.barycentrics.y);
-	float3 Normal				= (TriangleNormals[0] * BarycentricCoords.x) + (TriangleNormals[1] * BarycentricCoords.y) + (TriangleNormals[2] * BarycentricCoords.z);
+	float3 BarycentricCoords = float3(1.0f - IntersectionAttributes.barycentrics.x - IntersectionAttributes.barycentrics.y, IntersectionAttributes.barycentrics.x, IntersectionAttributes.barycentrics.y);
+	
+	float3 Normal = (TriangleNormals[0] * BarycentricCoords.x) + (TriangleNormals[1] * BarycentricCoords.y) + (TriangleNormals[2] * BarycentricCoords.z);
 	Normal = normalize(Normal);
+
+	float2 TexCoords = (TriangleTexCoords[0] * BarycentricCoords.x) + (TriangleTexCoords[1] * BarycentricCoords.y) + (TriangleTexCoords[2] * BarycentricCoords.z);
+	
+	// Use instanceID to determine if we should use normalmaps
+	if (InstanceID() == 1)
+	{
+		float3 Tangent= (TriangleTangent[0] * BarycentricCoords.x) + (TriangleTangent[1] * BarycentricCoords.y) + (TriangleTangent[2] * BarycentricCoords.z);
+		Tangent = normalize(Tangent);
+
+		float3 Bitangent = cross(Normal, Tangent);
+
+
+		float3 MappedNormal = NormalMap.SampleLevel(TextureSampler, TexCoords, 0).rgb;
+		MappedNormal = normalize((MappedNormal * 2.0f) - 1.0f);
+
+		float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
+		Normal = normalize(mul(TBN, (MappedNormal)));
+	}
 
 	float3	HitPosition		= WorldHitPosition();
 	float3	LightDirection	= normalize(LightPosition - HitPosition);
@@ -163,7 +195,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 
 	// Send a new ray for reflection
 	float3 ReflectedColor = float3(0.0f, 0.0f, 0.0f);
-	if (PayLoad.CurrentRecursionDepth < 2)
+	if (PayLoad.CurrentRecursionDepth < 4)
 	{
 		RayDesc Ray;
 		Ray.Origin		= HitPosition;
@@ -180,10 +212,11 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 		ReflectedColor = ReflectancePayLoad.Color;
 	}
 	
-	float3 FresnelReflect = FresnelReflectanceSchlick(WorldRayDirection(), Normal, ObjectColor);
+	float3 AlbedoColor		= Albedo.SampleLevel(TextureSampler, TexCoords, 0).rgb;
+	float3 FresnelReflect	= FresnelReflectanceSchlick(WorldRayDirection(), Normal, AlbedoColor);
 	ReflectedColor = FresnelReflect * ReflectedColor;
 
-	float3 PhongColor = CalculatePhongLighting(ObjectColor, Normal);
+	float3 PhongColor = CalculatePhongLighting(AlbedoColor, Normal);
 
 	// Add rays together
 	PayLoad.Color = PhongColor + ReflectedColor;

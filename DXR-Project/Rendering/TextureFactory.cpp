@@ -117,6 +117,22 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	SrvDesc.Texture2D.MostDetailedMip	= 0;
 	Texture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, Texture->GetResource(), &SrvDesc), 0);
 
+	std::unique_ptr<D3D12Texture> TempTexture;
+	if (GenerateMipLevels)
+	{
+		TextureProps.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+		TempTexture = std::unique_ptr<D3D12Texture>(new D3D12Texture(Device));
+		if (!TempTexture->Initialize(TextureProps))
+		{
+			return nullptr;
+		}
+		else
+		{
+			TempTexture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, TempTexture->GetResource(), &SrvDesc), 0);
+		}
+	}
+
 	// Create Resources for generating Miplevels
 	const Uint32 MipLevelsPerDispatch = 4;
 	Uint32 NumDispatches = MipLevels / MipLevelsPerDispatch;
@@ -292,7 +308,12 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 			RemainingMiplevels -= MipLevelsPerDispatch;
 		}
 
-		CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		CommandList->TransitionBarrier(TempTexture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+
+		CommandList->CopyResource(TempTexture.get(), Texture.get());
+		
+		CommandList->TransitionBarrier(TempTexture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 	else
 	{

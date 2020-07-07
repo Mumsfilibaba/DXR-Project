@@ -63,9 +63,12 @@ private:
 	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
 
 	std::shared_ptr<D3D12Texture> Skybox;
+	std::shared_ptr<D3D12Texture> Albedo;
+	std::shared_ptr<D3D12Texture> Normal;
 	std::shared_ptr<D3D12Texture> ResultTexture;
 	
-	std::shared_ptr<D3D12DescriptorTable> GlobalDescriptorTable;
+	std::shared_ptr<D3D12RootSignature>		GlobalRootSignature;
+	std::shared_ptr<D3D12DescriptorTable>	GlobalDescriptorTable;
 
 	std::vector<Uint64>	FenceValues;
 	Uint32				CurrentBackBufferIndex = 0;

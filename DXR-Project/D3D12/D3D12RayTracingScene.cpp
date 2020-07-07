@@ -2,6 +2,7 @@
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
 #include "D3D12DescriptorHeap.h"
+#include "D3D12RayTracingPipelineState.h"
 
 #include "Rendering/MeshFactory.h"
 
@@ -20,7 +21,7 @@ D3D12RayTracingGeometry::~D3D12RayTracingGeometry()
 	SAFEDELETE(ResultBuffer);
 }
 
-bool D3D12RayTracingGeometry::Initialize(D3D12CommandList* CommandList, std::shared_ptr<D3D12Buffer>& InVertexBuffer, Uint32 InVertexCount, std::shared_ptr<D3D12Buffer>& InIndexBuffer, Uint32 InIndexCount)
+bool D3D12RayTracingGeometry::BuildAccelerationStructure(D3D12CommandList* CommandList, std::shared_ptr<D3D12Buffer>& InVertexBuffer, Uint32 InVertexCount, std::shared_ptr<D3D12Buffer>& InIndexBuffer, Uint32 InIndexCount)
 {
 	D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc = {};
 	GeometryDesc.Type									= D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
@@ -111,9 +112,80 @@ D3D12RayTracingScene::~D3D12RayTracingScene()
 	SAFEDELETE(ScratchBuffer);
 	SAFEDELETE(ResultBuffer);
 	SAFEDELETE(InstanceBuffer);
+	SAFEDELETE(BindingTable);
 }
 
-bool D3D12RayTracingScene::Initialize(D3D12CommandList* CommandList, std::vector<D3D12RayTracingGeometryInstance>& InInstances)
+bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineState, std::vector<BindingTableEntry>& InBindingTableEntries, Uint32 InNumHitGroups)
+{
+	using namespace Microsoft::WRL;
+
+	// Create Shader Binding Table
+	ComPtr<ID3D12StateObject>			StateObject = PipelineState->GetStateObject();
+	ComPtr<ID3D12StateObjectProperties> StateProperties;
+	
+	HRESULT hResult = StateObject.As<ID3D12StateObjectProperties>(&StateProperties);
+	if (FAILED(hResult))
+	{
+		::OutputDebugString("[D3D12RayTracingScene]: FAILED to retrive PipelineState Properties\n");
+		return false;
+	}
+	else
+	{
+		::OutputDebugString("[D3D12RayTracingScene]: Retrived PipelineState Properties\n");
+	}
+
+	// Struct for each entry in shaderbinding table
+	struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) TableEntry
+	{
+		Byte ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
+		D3D12_GPU_DESCRIPTOR_HANDLE	DescriptorTable;
+	};
+
+	const Uint32 StrideInBytes	= sizeof(TableEntry);
+	const Uint32 SizeInBytes	= StrideInBytes * static_cast<Uint32>(InBindingTableEntries.size());
+	BindingTableStride = StrideInBytes;
+
+	BufferProperties BufferProps = { };
+	BufferProps.SizeInBytes = SizeInBytes;
+	BufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
+	BufferProps.InitalState = D3D12_RESOURCE_STATE_GENERIC_READ;
+	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
+
+	BindingTable = new D3D12Buffer(Device);
+	if (!BindingTable->Initialize(BufferProps))
+	{
+		::OutputDebugString("[D3D12RayTracingScene]: FAILED to create BindingTable\n");
+		return false;
+	}
+
+	// Map the buffer
+	Byte* Data = reinterpret_cast<Byte*>(BindingTable->Map());
+	for (BindingTableEntry& Entry : InBindingTableEntries)
+	{
+		TableEntry TableData;
+		if (Entry.DescriptorTable)
+		{
+			TableData.DescriptorTable = Entry.DescriptorTable->GetGPUTableStartHandle();
+		}
+		else
+		{
+			TableData.DescriptorTable = { 0 };
+		}
+
+		std::wstring WideShaderExportName = ConvertToWide(Entry.ShaderExportName);
+		memcpy(TableData.ShaderIdentifier, StateProperties->GetShaderIdentifier(WideShaderExportName.c_str()), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+
+		memcpy(Data, &TableData, StrideInBytes);
+		Data += StrideInBytes;
+	}
+	BindingTable->Unmap();
+
+	NumHitGroups		= InNumHitGroups;
+	BindingTableEntries	= InBindingTableEntries;
+	return true;
+}
+
+bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandList, std::vector<D3D12RayTracingGeometryInstance>& InInstances)
 {
 	const Uint32 InstanceCount = static_cast<Uint32>(InInstances.size());
 
@@ -164,8 +236,8 @@ bool D3D12RayTracingScene::Initialize(D3D12CommandList* CommandList, std::vector
 	D3D12_RAYTRACING_INSTANCE_DESC* InstanceDesc = reinterpret_cast<D3D12_RAYTRACING_INSTANCE_DESC*>(InstanceBuffer->Map());
 	for (Uint32 i = 0; i < InstanceCount; i++)
 	{
-		InstanceDesc->InstanceID							= i;	// Exposed to the shader via InstanceID()
-		InstanceDesc->InstanceContributionToHitGroupIndex	= 0;	// Offset inside the shader-table. We only have a single geometry, so the offset 0
+		InstanceDesc->InstanceID							= InInstances[i].InstanceID;
+		InstanceDesc->InstanceContributionToHitGroupIndex	= InInstances[i].HitGroupIndex;
 		InstanceDesc->Flags									= D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 
 		D3D12RayTracingGeometryInstance& Instance = InInstances[i];
@@ -208,6 +280,26 @@ bool D3D12RayTracingScene::Initialize(D3D12CommandList* CommandList, std::vector
 D3D12_GPU_VIRTUAL_ADDRESS D3D12RayTracingScene::GetGPUVirtualAddress() const
 {
 	return ResultBuffer->GetGPUVirtualAddress();
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS_RANGE D3D12RayTracingScene::GetRayGenerationShaderRecord() const
+{
+	const Uint64 BindingTableAdress = BindingTable->GetGPUVirtualAddress();
+	return { BindingTableAdress, BindingTableStride };
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingScene::GetHitGroupTable() const
+{
+	const Uint64 BindingTableAdress	= BindingTable->GetGPUVirtualAddress();
+	const Uint64 SizeInBytes		= (BindingTableStride * NumHitGroups);
+	return { BindingTableAdress + BindingTableStride, SizeInBytes, BindingTableStride };
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingScene::GetMissShaderTable() const
+{
+	const Uint64 BindingTableAdress		= BindingTable->GetGPUVirtualAddress();
+	const Uint64 HitGroupSizeInBytes	= (BindingTableStride * NumHitGroups);
+	return { BindingTableAdress + BindingTableStride + HitGroupSizeInBytes, BindingTableStride, BindingTableStride };
 }
 
 void D3D12RayTracingScene::SetName(const std::string& Name)

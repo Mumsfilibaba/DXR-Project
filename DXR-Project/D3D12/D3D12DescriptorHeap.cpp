@@ -177,7 +177,7 @@ bool D3D12OnlineDescriptorHeap::Initialize()
 	}
 	else
 	{
-		::OutputDebugString("[D3D12OnlineDescriptorHeap]: Failed to create DescriptorHeap\n");
+		::OutputDebugString("[D3D12OnlineDescriptorHeap]: FAILED to create DescriptorHeap\n");
 		return false;
 	}
 }
@@ -215,23 +215,31 @@ D3D12DescriptorTable::D3D12DescriptorTable(D3D12Device* InDevice, Uint32 InDescr
 
 D3D12DescriptorTable::~D3D12DescriptorTable()
 {
-	::OutputDebugString("Destroyed DescriptorTable\n");
 }
 
 void D3D12DescriptorTable::SetUnorderedAccessView(D3D12UnorderedAccessView* View, Uint32 SlotIndex)
 {
+	VALIDATE(View != nullptr);
+	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.size()));
+
 	OfflineHandles[SlotIndex] = View->GetOfflineHandle();
 	IsDirty = true;
 }
 
 void D3D12DescriptorTable::SetConstantBufferView(D3D12ConstantBufferView* View, Uint32 SlotIndex)
 {
+	VALIDATE(View != nullptr);
+	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.size()));
+
 	OfflineHandles[SlotIndex] = View->GetOfflineHandle();
 	IsDirty = true;
 }
 
 void D3D12DescriptorTable::SetShaderResourceView(D3D12ShaderResourceView* View, Uint32 SlotIndex)
 {
+	VALIDATE(View != nullptr);
+	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.size()));
+
 	OfflineHandles[SlotIndex] = View->GetOfflineHandle();
 	IsDirty = true;
 }

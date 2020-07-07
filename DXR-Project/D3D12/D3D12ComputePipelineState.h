@@ -5,9 +5,9 @@
 
 struct ComputePipelineStateProperties
 {
-	std::string					DebugName;
-	class D3D12RootSignature*	RootSignature	= nullptr;
-	IDxcBlob*					CSBlob			= nullptr;
+	std::string DebugName;
+	class D3D12RootSignature* RootSignature = nullptr;
+	IDxcBlob* CSBlob = nullptr;
 };
 
 class D3D12ComputePipelineState : public D3D12DeviceChild

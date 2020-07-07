@@ -1,6 +1,12 @@
 #pragma once
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN 1
+
+#ifndef NOMINMAX
+	#define NOMINMAX
+#endif
+
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN 1
+#endif
 
 #include <Windows.h>
 #include <windowsx.h>

@@ -161,7 +161,7 @@ MeshData MeshFactory::CreateCube(Float32 Width, Float32 Height, Float32 Depth) n
 		1, 3, 2,
 
 		// BACK FACE
-		5, 5, 6,
+		4, 5, 6,
 		5, 7, 6,
 
 		// RIGHT FACE

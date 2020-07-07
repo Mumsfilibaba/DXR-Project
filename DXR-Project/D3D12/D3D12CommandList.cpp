@@ -24,7 +24,7 @@ bool D3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllo
 
 		if (FAILED(CommandList.As<ID3D12GraphicsCommandList4>(&DXRCommandList)))
 		{
-			::OutputDebugString("[D3D12RayTracer]: Failed to retrive DXR-CommandList\n");
+			::OutputDebugString("[D3D12RayTracer]: FAILED to retrive DXR-CommandList\n");
 			return false;
 		}
 
@@ -32,7 +32,7 @@ bool D3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllo
 	}
 	else
 	{
-		::OutputDebugString("[D3D12CommandList]: Failed to create CommandList\n");
+		::OutputDebugString("[D3D12CommandList]: FAILED to create CommandList\n");
 		return false;
 	}
 }

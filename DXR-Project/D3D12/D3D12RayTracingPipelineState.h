@@ -4,20 +4,21 @@
 
 #include <wrl/client.h>
 
+#include <dxcapi.h>
+
 class D3D12DescriptorTable;
+class D3D12RootSignature;
 
-struct ShaderBindingTableData
+struct RayTracingPipelineStateProperties
 {
-public:
-	~ShaderBindingTableData()
-	{
-		SAFEDELETE(Resource);
-	}
+	std::string DebugName;
 
-public:
-	Uint64			SizeInBytes		= 0;
-	Uint32			StrideInBytes	= 0;
-	D3D12Buffer*	Resource		= nullptr;
+	D3D12RootSignature* RayGenRootSignature		= nullptr;
+	D3D12RootSignature* HitGroupRootSignature	= nullptr;
+	D3D12RootSignature* MissRootSignature		= nullptr;
+	D3D12RootSignature* GlobalRootSignature		= nullptr;
+
+	Uint32 MaxRecursions = 0;
 };
 
 class D3D12RayTracingPipelineState : public D3D12DeviceChild
@@ -26,37 +27,16 @@ public:
 	D3D12RayTracingPipelineState(D3D12Device* InDevice);
 	~D3D12RayTracingPipelineState();
 
-	bool Initialize(std::shared_ptr<D3D12DescriptorTable> InRayGenDescriptorTable, std::shared_ptr<D3D12DescriptorTable> InClosestHitDescriptorTable);
+	bool Initialize(const RayTracingPipelineStateProperties& Properties);
 
 	// DeviceChild Interface
 	virtual void SetName(const std::string& Name) override;
 
-	D3D12_GPU_VIRTUAL_ADDRESS_RANGE				GetRayGenerationShaderRecord()	const;
-	D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE	GetMissShaderTable()			const;
-	D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE	GetHitGroupTable()				const;
-
 	FORCEINLINE ID3D12StateObject* GetStateObject() const
 	{
-		return DXRStateObject.Get();
-	}
-
-	FORCEINLINE ID3D12RootSignature* GetGlobalRootSignature() const
-	{
-		return GlobalRootSignature.Get();
+		return StateObject.Get();
 	}
 
 private:
-	bool CreatePipeline();
-	bool CreateBindingTable();
-
-private:
-	Microsoft::WRL::ComPtr<ID3D12RootSignature>	GlobalRootSignature;
-	Microsoft::WRL::ComPtr<ID3D12StateObject>	DXRStateObject;
-
-	std::shared_ptr<D3D12DescriptorTable> RayGenDescriptorTable;
-	std::shared_ptr<D3D12DescriptorTable> ClosestHitDescriptorTable;
-
-	ShaderBindingTableData RayGenTable;
-	ShaderBindingTableData MissTable;
-	ShaderBindingTableData HitTable;
+	Microsoft::WRL::ComPtr<ID3D12StateObject> StateObject;
 };

@@ -433,8 +433,8 @@ bool GuiContext::CreatePipeline()
 	StaticSampler.MaxAnisotropy		= 0;
 	StaticSampler.ComparisonFunc	= D3D12_COMPARISON_FUNC_ALWAYS;
 	StaticSampler.BorderColor		= D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	StaticSampler.MinLOD			= 0.f;
-	StaticSampler.MaxLOD			= 0.f;
+	StaticSampler.MinLOD			= 0.0f;
+	StaticSampler.MaxLOD			= 0.0f;
 	StaticSampler.ShaderRegister	= 0;
 	StaticSampler.RegisterSpace		= 0;
 	StaticSampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
@@ -446,21 +446,31 @@ bool GuiContext::CreatePipeline()
 	DescRange.RegisterSpace						= 0;
 	DescRange.OffsetInDescriptorsFromTableStart	= 0;
 
-	DescriptorTableDesc TableDesc;
-	TableDesc.Ranges.emplace_back(DescRange);
-	TableDesc.Visibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	D3D12_ROOT_PARAMETER Parameters[2];
+	Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	Parameters[0].Constants.ShaderRegister	= 0;
+	Parameters[0].Constants.RegisterSpace	= 0;
+	Parameters[0].Constants.Num32BitValues	= 16;
+	Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_VERTEX;
 
-	RootSignatureDesc RootSignDesc;
-	RootSignDesc.DescriptorTables.emplace_back(TableDesc);
-	RootSignDesc.StaticSamplers.emplace_back(StaticSampler);
-	RootSignDesc.Flags =
+	Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	Parameters[1].DescriptorTable.NumDescriptorRanges	= 1;
+	Parameters[1].DescriptorTable.pDescriptorRanges		= &DescRange;
+	Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
+
+	D3D12_ROOT_SIGNATURE_DESC RootSignaturDesc;
+	RootSignaturDesc.NumParameters		= 2;
+	RootSignaturDesc.pParameters		= Parameters;
+	RootSignaturDesc.NumStaticSamplers	= 1;
+	RootSignaturDesc.pStaticSamplers	= &StaticSampler;
+	RootSignaturDesc.Flags =
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT	|
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS			|
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS		|
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
 	RootSignature = std::shared_ptr<D3D12RootSignature>(new D3D12RootSignature(Device.get()));
-	if (!RootSignature->Initialize(RootSignDesc))
+	if (!RootSignature->Initialize(RootSignaturDesc))
 	{
 		return false;
 	}

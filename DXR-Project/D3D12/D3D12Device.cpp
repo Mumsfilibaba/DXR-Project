@@ -191,7 +191,7 @@ bool D3D12Device::CreateFactory()
 		}
 		else
 		{
-			::OutputDebugString("[D3D12GraphicsDevice]: Failed to enable DebugLayer\n");
+			::OutputDebugString("[D3D12GraphicsDevice]: FAILED to enable DebugLayer\n");
 		}
 
 		ComPtr<IDXGIInfoQueue> InfoQueue;
@@ -202,14 +202,14 @@ bool D3D12Device::CreateFactory()
 		}
 		else
 		{
-			::OutputDebugString("[D3D12GraphicsDevice]: Failed to retrive InfoQueue\n");
+			::OutputDebugString("[D3D12GraphicsDevice]: FAILED to retrive InfoQueue\n");
 		}
 	}
 
 	// Create factory
 	if (FAILED(CreateDXGIFactory2(DebugFlags, IID_PPV_ARGS(&Factory))))
 	{
-		::OutputDebugString("[D3D12GraphicsDevice]: Failed to create factory\n");
+		::OutputDebugString("[D3D12GraphicsDevice]: FAILED to create factory\n");
 		return false;
 	}
 	else
@@ -218,7 +218,7 @@ bool D3D12Device::CreateFactory()
 		ComPtr<IDXGIFactory5> Factory5;
 		if (FAILED(Factory.As(&Factory5)))
 		{
-			::OutputDebugString("[D3D12GraphicsDevice]: Failed to retrive IDXGIFactory5\n");
+			::OutputDebugString("[D3D12GraphicsDevice]: FAILED to retrive IDXGIFactory5\n");
 			return false;
 		}
 		else
@@ -251,7 +251,7 @@ bool D3D12Device::ChooseAdapter()
 		DXGI_ADAPTER_DESC1 Desc;
 		if (FAILED(TempAdapter->GetDesc1(&Desc)))
 		{
-			::OutputDebugString("[D3D12GraphicsDevice]: Failed to retrive DXGI_ADAPTER_DESC1\n");
+			::OutputDebugString("[D3D12GraphicsDevice]: FAILED to retrive DXGI_ADAPTER_DESC1\n");
 			return false;
 		}
 
@@ -276,7 +276,7 @@ bool D3D12Device::ChooseAdapter()
 
 	if (!TempAdapter)
 	{
-		::OutputDebugString("[D3D12GraphicsDevice]: Failed to retrive adapter\n");
+		::OutputDebugString("[D3D12GraphicsDevice]: FAILED to retrive adapter\n");
 		return false;
 	}
 	else

@@ -119,12 +119,13 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	}
 	else 
 	{
-		::OutputDebugString("[D3D12GraphicsPipelineState]: Failed to Create PipelineState\n");
+		::OutputDebugString("[D3D12GraphicsPipelineState]: FAILED to Create PipelineState\n");
 		return false;
 	}
 }
 
 void D3D12GraphicsPipelineState::SetName(const std::string& InName)
 {
-	PipelineState->SetName(ConvertToWide(InName).c_str());
+	std::wstring WideName = ConvertToWide(InName);
+	PipelineState->SetName(WideName.c_str());
 }

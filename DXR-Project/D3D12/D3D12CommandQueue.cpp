@@ -26,7 +26,7 @@ bool D3D12CommandQueue::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 	HRESULT hResult = Device->GetDevice()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
 	if (FAILED(hResult))
 	{
-		::OutputDebugString("[D3D12CommandQueue]: Failed to create CommandQueue\n");
+		::OutputDebugString("[D3D12CommandQueue]: FAILED to create CommandQueue\n");
 		return false;
 	}
 	else

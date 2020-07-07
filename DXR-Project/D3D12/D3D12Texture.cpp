@@ -30,12 +30,12 @@ bool D3D12Texture::Initialize(const TextureProperties& Properties)
 	{
 		SetName(Properties.DebugName);
 
-		::OutputDebugString("[D3D12Texture]: Created Buffer\n");
+		::OutputDebugString("[D3D12Texture]: Created Texture\n");
 		return true;
 	}
 	else
 	{
-		::OutputDebugString("[D3D12Texture]: FAILED to create Buffer\n");
+		::OutputDebugString("[D3D12Texture]: FAILED to create Texture\n");
 		return false;
 	}
 }

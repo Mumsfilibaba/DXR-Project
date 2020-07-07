@@ -254,7 +254,7 @@ bool Application::Initialize()
 	Renderer* Renderer = Renderer::Make(GetWindow());
 	if (!Renderer)
 	{
-		::MessageBox(0, "Failed to create Renderer", "ERROR", MB_ICONERROR);
+		::MessageBox(0, "FAILED to create Renderer", "ERROR", MB_ICONERROR);
 		return -1;
 	}
 
@@ -262,7 +262,7 @@ bool Application::Initialize()
 	GuiContext* GUIContext = GuiContext::Make(Renderer->GetDevice());
 	if (!GUIContext)
 	{
-		::MessageBox(0, "Failed to create ImGuiContext", "ERROR", MB_ICONERROR);
+		::MessageBox(0, "FAILED to create ImGuiContext", "ERROR", MB_ICONERROR);
 		return -1;
 	}
 
