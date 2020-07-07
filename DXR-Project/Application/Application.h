@@ -13,6 +13,7 @@ class Application : public EventHandler
 public:
 	~Application();
 
+	void Run();
 	bool Tick();
 
 	void SetCursor(std::shared_ptr<WindowsCursor> Cursor);

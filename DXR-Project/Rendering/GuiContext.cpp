@@ -424,8 +424,43 @@ bool GuiContext::CreateFontTexture()
 
 bool GuiContext::CreatePipeline()
 {
+	D3D12_STATIC_SAMPLER_DESC StaticSampler = {};
+	StaticSampler.Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	StaticSampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	StaticSampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	StaticSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	StaticSampler.MipLODBias		= 0.0f;
+	StaticSampler.MaxAnisotropy		= 0;
+	StaticSampler.ComparisonFunc	= D3D12_COMPARISON_FUNC_ALWAYS;
+	StaticSampler.BorderColor		= D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	StaticSampler.MinLOD			= 0.f;
+	StaticSampler.MaxLOD			= 0.f;
+	StaticSampler.ShaderRegister	= 0;
+	StaticSampler.RegisterSpace		= 0;
+	StaticSampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+
+	D3D12_DESCRIPTOR_RANGE DescRange = {};
+	DescRange.RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	DescRange.NumDescriptors					= 1;
+	DescRange.BaseShaderRegister				= 0;
+	DescRange.RegisterSpace						= 0;
+	DescRange.OffsetInDescriptorsFromTableStart	= 0;
+
+	DescriptorTableDesc TableDesc;
+	TableDesc.Ranges.emplace_back(DescRange);
+	TableDesc.Visibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	RootSignatureDesc RootSignDesc;
+	RootSignDesc.DescriptorTables.emplace_back(TableDesc);
+	RootSignDesc.StaticSamplers.emplace_back(StaticSampler);
+	RootSignDesc.Flags =
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT	|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS			|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS		|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+
 	RootSignature = std::shared_ptr<D3D12RootSignature>(new D3D12RootSignature(Device.get()));
-	if (!RootSignature->Initialize())
+	if (!RootSignature->Initialize(RootSignDesc))
 	{
 		return false;
 	}

@@ -3,6 +3,8 @@
 
 #include "Types.h"
 
+class D3D12Fence;
+
 class D3D12CommandQueue : public D3D12DeviceChild
 {
 public:
@@ -11,7 +13,10 @@ public:
 
 	bool Initialize(D3D12_COMMAND_LIST_TYPE Type);
 	
-	bool SignalFence(class D3D12Fence* Fence, Uint64 FenceValue);
+	bool SignalFence(D3D12Fence* Fence, Uint64 FenceValue);
+	bool WaitForFence(D3D12Fence* Fence, Uint64 FenceValue);
+
+	void WaitForCompletion();
 
 	void ExecuteCommandList(class D3D12CommandList* CommandList);
 
@@ -26,5 +31,8 @@ public:
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> Queue;
+	std::unique_ptr<D3D12Fence> QueueFence;
+	
+	Uint64 FenceValue = 0;
 };
 

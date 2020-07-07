@@ -208,13 +208,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 		}
 	}
 
-	// Upload data 
-	std::unique_ptr<D3D12Fence> Fence = std::unique_ptr<D3D12Fence>(new D3D12Fence(Device));
-	if (!Fence->Initialize(0))
-	{
-		return nullptr;
-	}
-
+	// Upload data
 	std::unique_ptr<D3D12CommandAllocator> Allocator = std::unique_ptr<D3D12CommandAllocator>(new D3D12CommandAllocator(Device));
 	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
 	{
@@ -308,9 +302,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	CommandList->Close();
 
 	Queue->ExecuteCommandList(CommandList.get());
-	Queue->SignalFence(Fence.get(), 1);
-
-	Fence->WaitForValue(1);
+	Queue->WaitForCompletion();
 
 	return Texture.release();
 }
@@ -392,12 +384,6 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	UavDescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).get(), 0);
 	UavDescriptorTable->CopyDescriptors();
 
-	std::unique_ptr<D3D12Fence> Fence = std::unique_ptr<D3D12Fence>(new D3D12Fence(Device));
-	if (!Fence->Initialize(0))
-	{
-		return nullptr;
-	}
-
 	std::unique_ptr<D3D12CommandAllocator> Allocator = std::unique_ptr<D3D12CommandAllocator>(new D3D12CommandAllocator(Device));
 	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
 	{
@@ -454,9 +440,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	CommandList->Close();
 
 	Queue->ExecuteCommandList(CommandList.get());
-	Queue->SignalFence(Fence.get(), 1);
-
-	Fence->WaitForValue(1);
+	Queue->WaitForCompletion();
 
 	// ShaderResourceView
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };

@@ -15,22 +15,43 @@ Application::~Application()
 	SAFEDELETE(PlatformApplication);
 }
 
+void Application::Run()
+{
+	// Run-Loop
+	bool IsRunning = true;
+	while (IsRunning)
+	{
+		IsRunning = Tick();
+	}
+}
+
 bool Application::Tick()
 {
 	bool ShouldExit = PlatformApplication->Tick();
 
 	GuiContext::Get()->BeginFrame();
+
 	Timer.Tick();
 
-	ImGui::Begin("DebugWindow", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+	ImGui::SetNextWindowPos(ImVec2(10, 5));
+	ImGui::SetNextWindowSize(ImVec2(300, 1000));
+	ImGui::Begin("DebugWindow", nullptr, 
+		ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoSavedSettings);
 	
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
-	ImGui::Text("Frametime: %.4f ms", Timer.GetDeltaTime().AsMilliSeconds());
+
+	const Float64 Delta = Timer.GetDeltaTime().AsMilliSeconds();
+	ImGui::Text("Frametime: %.4f ms", Delta);
+	ImGui::Text("FPS: %d", static_cast<Uint32>(1000 / Delta));
 	ImGui::PopStyleColor();
 
 	ImGui::End();
 
 	GuiContext::Get()->EndFrame();
+
+	Renderer::Get()->Tick();
 
 	return ShouldExit;
 }
@@ -225,6 +246,24 @@ bool Application::Initialize()
 	else
 	{
 		return false;
+	}
+
+	InitializeCursors();
+
+	// Renderer
+	Renderer* Renderer = Renderer::Make(GetWindow());
+	if (!Renderer)
+	{
+		::MessageBox(0, "Failed to create Renderer", "ERROR", MB_ICONERROR);
+		return -1;
+	}
+
+	// ImGui
+	GuiContext* GUIContext = GuiContext::Make(Renderer->GetDevice());
+	if (!GUIContext)
+	{
+		::MessageBox(0, "Failed to create ImGuiContext", "ERROR", MB_ICONERROR);
+		return -1;
 	}
 
 	// Reset timer before starting

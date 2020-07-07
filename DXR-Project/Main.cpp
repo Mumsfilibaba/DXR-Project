@@ -19,35 +19,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 		::MessageBox(0, "Failed to create Application", "ERROR", MB_ICONERROR);
 		return -1;
 	}
-
-	InitializeCursors();
-
-	// Renderer
-	Renderer* Renderer = Renderer::Make(App->GetWindow());
-	if (!Renderer)
+	else
 	{
-		::MessageBox(0, "Failed to create Renderer", "ERROR", MB_ICONERROR);
-		return -1;
+		App->Run();
+		return 0;
 	}
-
-	// ImGui
-	GuiContext* GUIContext = GuiContext::Make(Renderer->GetDevice());
-	if (!GUIContext)
-	{
-		::MessageBox(0, "Failed to create ImGuiContext", "ERROR", MB_ICONERROR);
-		return -1;
-	}
-
-	// Run-Loop
-	bool IsRunning = true;
-	while (IsRunning)
-	{
-		IsRunning = App->Tick();
-
-		Renderer::Get()->Tick();
-	}
-
-	return 0;
 }
 
 #pragma warning(pop)
