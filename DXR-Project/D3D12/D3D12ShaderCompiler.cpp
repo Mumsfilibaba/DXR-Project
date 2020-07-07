@@ -2,11 +2,17 @@
 
 #include "Types.h"
 
-#pragma comment(lib, "dxcompiler.lib")
+struct CompilerData
+{
+	HMODULE DxCompilerDLL = 0;
+};
+
+static CompilerData GlobalCompilerData;
 
 /*
 * Members
 */
+
 
 D3D12ShaderCompiler::D3D12ShaderCompiler()
 	: DxCompiler(nullptr)
@@ -22,16 +28,33 @@ D3D12ShaderCompiler::~D3D12ShaderCompiler()
 
 bool D3D12ShaderCompiler::Initialize()
 {
-	HRESULT hResult = ::DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&DxCompiler));
+	if (!GlobalCompilerData.DxCompilerDLL)
+	{
+		GlobalCompilerData.DxCompilerDLL = LoadLibrary("dxcompiler.dll");
+		if (!GlobalCompilerData.DxCompilerDLL)
+		{
+			::MessageBox(0, "FAILED to load dxcompiler.dll", "ERROR", MB_OK);
+			return false;
+		}
+	}
+
+	DxcCreateInstanceProc DxcCreateInstance_ = reinterpret_cast<DxcCreateInstanceProc>(::GetProcAddress(GlobalCompilerData.DxCompilerDLL, "DxcCreateInstance"));
+	if (!DxcCreateInstance_)
+	{
+		::OutputDebugString("[D3D12ShaderCompiler]: FAILED to load DxcCreateInstance\n");
+		return false;
+	}
+	
+	HRESULT hResult = DxcCreateInstance_(CLSID_DxcCompiler, IID_PPV_ARGS(&DxCompiler));
 	if (SUCCEEDED(hResult))
 	{
-		hResult = ::DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&DxLibrary));
+		hResult = DxcCreateInstance_(CLSID_DxcLibrary, IID_PPV_ARGS(&DxLibrary));
 		if (SUCCEEDED(hResult))
 		{
 			hResult = DxLibrary->CreateIncludeHandler(&DxIncludeHandler);
 			if (SUCCEEDED(hResult))
 			{
-				hResult = ::DxcCreateInstance(CLSID_DxcLinker, IID_PPV_ARGS(&DxLinker));
+				hResult = DxcCreateInstance_(CLSID_DxcLinker, IID_PPV_ARGS(&DxLinker));
 				if (SUCCEEDED(hResult))
 				{
 					return true;

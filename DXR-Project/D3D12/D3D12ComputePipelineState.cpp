@@ -29,6 +29,8 @@ bool D3D12ComputePipelineState::Initialize(const ComputePipelineStateProperties&
 		Pipeline.RootSignature = Properties.RootSignature->GetRootSignature();
 	}
 	
+	VALIDATE(Properties.CSBlob);
+
 	// Shader
 	Pipeline.ComputeShader.BytecodeLength	= Properties.CSBlob->GetBufferSize();
 	Pipeline.ComputeShader.pShaderBytecode	= Properties.CSBlob->GetBufferPointer();
