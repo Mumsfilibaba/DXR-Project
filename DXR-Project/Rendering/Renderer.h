@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "Camera.h"
+#include "MeshFactory.h"
 
 class D3D12Texture;
 
@@ -46,7 +47,10 @@ public:
 private:
 	bool Initialize(std::shared_ptr<WindowsWindow> RendererWindow);
 
-	bool CreateResultTexture();
+	bool InitRayTracing();
+	bool InitDeferred();
+	bool InitGBuffer();
+	bool InitRayTracingTexture();
 
 	void WaitForPendingFrames();
 
@@ -62,10 +66,20 @@ private:
 
 	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
 
+	MeshData Mesh;
+	MeshData Cube;
+
+	std::shared_ptr<D3D12Buffer> MeshVertexBuffer;
+	std::shared_ptr<D3D12Buffer> MeshIndexBuffer;
+	std::shared_ptr<D3D12Buffer> CubeVertexBuffer;
+	std::shared_ptr<D3D12Buffer> CubeIndexBuffer;
+
 	std::shared_ptr<D3D12Texture> Skybox;
 	std::shared_ptr<D3D12Texture> Albedo;
 	std::shared_ptr<D3D12Texture> Normal;
 	std::shared_ptr<D3D12Texture> ResultTexture;
+
+	std::shared_ptr<D3D12Texture> GBuffer[4];
 	
 	std::shared_ptr<D3D12RootSignature>		GlobalRootSignature;
 	std::shared_ptr<D3D12DescriptorTable>	GlobalDescriptorTable;

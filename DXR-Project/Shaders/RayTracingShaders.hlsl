@@ -152,41 +152,47 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 		Vertices[Indices[2]].Normal
 	};
 
-	float3 TriangleTangent[3] =
-	{
-		Vertices[Indices[0]].Tangent,
-		Vertices[Indices[1]].Tangent,
-		Vertices[Indices[2]].Tangent
-	};
-
-	float2 TriangleTexCoords[3] =
-	{
-		Vertices[Indices[0]].TexCoord,
-		Vertices[Indices[1]].TexCoord,
-		Vertices[Indices[2]].TexCoord
-	};
-	
 	float3 BarycentricCoords = float3(1.0f - IntersectionAttributes.barycentrics.x - IntersectionAttributes.barycentrics.y, IntersectionAttributes.barycentrics.x, IntersectionAttributes.barycentrics.y);
 	
 	float3 Normal = (TriangleNormals[0] * BarycentricCoords.x) + (TriangleNormals[1] * BarycentricCoords.y) + (TriangleNormals[2] * BarycentricCoords.z);
 	Normal = normalize(Normal);
-
-	float2 TexCoords = (TriangleTexCoords[0] * BarycentricCoords.x) + (TriangleTexCoords[1] * BarycentricCoords.y) + (TriangleTexCoords[2] * BarycentricCoords.z);
 	
 	// Use instanceID to determine if we should use normalmaps
+	float3 AlbedoColor;
 	if (InstanceID() == 1)
 	{
+		float3 TriangleTangent[3] =
+		{
+			Vertices[Indices[0]].Tangent,
+			Vertices[Indices[1]].Tangent,
+			Vertices[Indices[2]].Tangent
+		};
+
+		float2 TriangleTexCoords[3] =
+		{
+			Vertices[Indices[0]].TexCoord,
+			Vertices[Indices[1]].TexCoord,
+			Vertices[Indices[2]].TexCoord
+		};
+
+		float2 TexCoords = (TriangleTexCoords[0] * BarycentricCoords.x) + (TriangleTexCoords[1] * BarycentricCoords.y) + (TriangleTexCoords[2] * BarycentricCoords.z);
+		
 		float3 Tangent= (TriangleTangent[0] * BarycentricCoords.x) + (TriangleTangent[1] * BarycentricCoords.y) + (TriangleTangent[2] * BarycentricCoords.z);
 		Tangent = normalize(Tangent);
 
 		float3 Bitangent = cross(Normal, Tangent);
 
-
 		float3 MappedNormal = NormalMap.SampleLevel(TextureSampler, TexCoords, 0).rgb;
 		MappedNormal = normalize((MappedNormal * 2.0f) - 1.0f);
 
+		AlbedoColor = Albedo.SampleLevel(TextureSampler, TexCoords, 0).rgb;
+
 		float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
 		Normal = normalize(mul(TBN, (MappedNormal)));
+	}
+	else
+	{
+		AlbedoColor = float3(0.5f, 0.0f, 0.0f);
 	}
 
 	float3	HitPosition		= WorldHitPosition();
@@ -212,7 +218,6 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 		ReflectedColor = ReflectancePayLoad.Color;
 	}
 	
-	float3 AlbedoColor		= Albedo.SampleLevel(TextureSampler, TexCoords, 0).rgb;
 	float3 FresnelReflect	= FresnelReflectanceSchlick(WorldRayDirection(), Normal, AlbedoColor);
 	ReflectedColor = FresnelReflect * ReflectedColor;
 
