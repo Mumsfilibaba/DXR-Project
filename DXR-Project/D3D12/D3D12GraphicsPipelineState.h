@@ -5,10 +5,17 @@
 
 struct GraphicsPipelineStateProperties
 {
-	std::string					Name;
-	class D3D12RootSignature*	RootSignature	= nullptr;
-	IDxcBlob*					VSBlob			= nullptr;
-	IDxcBlob*					PSBlob			= nullptr;
+	std::string					DebugName;
+	class D3D12RootSignature*	RootSignature		= nullptr;
+	IDxcBlob*					VSBlob				= nullptr;
+	IDxcBlob*					PSBlob				= nullptr;
+	D3D12_INPUT_ELEMENT_DESC*	InputElements		= nullptr;
+	Uint32						NumInputElements	= 0;
+	DXGI_FORMAT*				RTFormats			= nullptr;
+	Uint32						NumRenderTargets	= 0;
+	DXGI_FORMAT					DepthBufferFormat	= DXGI_FORMAT_UNKNOWN;
+	bool						EnableDepth			= false;
+	bool						EnableBlending		= false;
 };
 
 class D3D12GraphicsPipelineState : public D3D12DeviceChild

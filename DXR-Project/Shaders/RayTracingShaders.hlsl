@@ -59,7 +59,7 @@ float3 CalculateSpecularCoefficient(in float3 HitPosition, in float3 IncidentLig
 float3 CalculatePhongLighting(in float3 Albedo, in float3 Normal, in float DiffuseCoef = 1.0f, in float SpecularCoef = 1.0f, in float SpecularPower = 50.0f)
 {
 	const float3 ObjectColor	= float3(1.0f, 0.0f, 0.0f);
-	const float3 LightPosition	= float3(0.0f, 3.0f, 0.0f);
+	const float3 LightPosition	= float3(0.0f, 5.0f, -2.0f);
 	const float3 LightColor		= float3(1.0f, 1.0f, 1.0f);
 
 	float3 HitPosition		= WorldHitPosition();

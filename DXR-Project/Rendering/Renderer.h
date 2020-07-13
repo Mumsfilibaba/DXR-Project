@@ -8,7 +8,6 @@
 #include "D3D12/D3D12SwapChain.h"
 #include "D3D12/D3D12Buffer.h"
 #include "D3D12/D3D12RayTracingScene.h"
-#include "D3D12/D3D12RayTracingPipelineState.h"
 #include "D3D12/D3D12UploadStack.h"
 
 #include "Windows/WindowsWindow.h"
@@ -23,6 +22,8 @@
 #include "MeshFactory.h"
 
 class D3D12Texture;
+class D3D12GraphicsPipelineState;
+class D3D12RayTracingPipelineState;
 
 class Renderer
 {
@@ -69,6 +70,7 @@ private:
 	MeshData Mesh;
 	MeshData Cube;
 
+	std::shared_ptr<D3D12Buffer> CameraBuffer;
 	std::shared_ptr<D3D12Buffer> MeshVertexBuffer;
 	std::shared_ptr<D3D12Buffer> MeshIndexBuffer;
 	std::shared_ptr<D3D12Buffer> CubeVertexBuffer;
@@ -81,15 +83,20 @@ private:
 
 	std::shared_ptr<D3D12Texture> GBuffer[4];
 	
+	std::shared_ptr<D3D12RootSignature>		GeometryRootSignature;
+	std::shared_ptr<D3D12RootSignature>		LightRootSignature;
 	std::shared_ptr<D3D12RootSignature>		GlobalRootSignature;
 	std::shared_ptr<D3D12DescriptorTable>	GlobalDescriptorTable;
+	std::shared_ptr<D3D12DescriptorTable>	GeometryDescriptorTable;
+	std::shared_ptr<D3D12DescriptorTable>	LightDescriptorTable;
+	std::shared_ptr<D3D12RayTracingScene>	RayTracingScene;
+
+	std::shared_ptr<D3D12GraphicsPipelineState>		GeometryPSO;
+	std::shared_ptr<D3D12GraphicsPipelineState>		LightPassPSO;
+	std::shared_ptr<D3D12RayTracingPipelineState>	RaytracingPSO;
 
 	std::vector<Uint64>	FenceValues;
 	Uint32				CurrentBackBufferIndex = 0;
-
-	std::shared_ptr<D3D12Buffer>					CameraBuffer;
-	std::shared_ptr<D3D12RayTracingScene>			RayTracingScene;
-	std::shared_ptr<D3D12RayTracingPipelineState>	PipelineState;
 
 	std::vector<std::shared_ptr<D3D12UploadStack>> UploadBuffers;
 

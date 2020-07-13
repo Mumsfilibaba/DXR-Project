@@ -51,7 +51,7 @@ public:
 	}
 
 protected:
-	bool CreateResource(const D3D12_RESOURCE_DESC* InDesc, D3D12_RESOURCE_STATES InitalState, EMemoryType MemoryType);
+	bool CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D12_CLEAR_VALUE* OptimizedClearValue, D3D12_RESOURCE_STATES InitalState, EMemoryType MemoryType);
 
 protected:
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;

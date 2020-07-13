@@ -255,7 +255,7 @@ bool Application::Initialize()
 	if (!Renderer)
 	{
 		::MessageBox(0, "FAILED to create Renderer", "ERROR", MB_ICONERROR);
-		return -1;
+		return false;
 	}
 
 	// ImGui
@@ -263,7 +263,7 @@ bool Application::Initialize()
 	if (!GUIContext)
 	{
 		::MessageBox(0, "FAILED to create ImGuiContext", "ERROR", MB_ICONERROR);
-		return -1;
+		return false;
 	}
 
 	// Reset timer before starting

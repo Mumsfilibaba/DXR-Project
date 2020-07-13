@@ -154,8 +154,6 @@ void GuiContext::Render(D3D12CommandList* CommandList)
 
 	// Setup viewport
 	D3D12_VIEWPORT ViewPort = { };
-	ZERO_MEMORY(&ViewPort, sizeof(D3D12_VIEWPORT));
-
 	ViewPort.Width		= DrawData->DisplaySize.x;
 	ViewPort.Height		= DrawData->DisplaySize.y;
 	ViewPort.MinDepth	= 0.0f;
@@ -165,22 +163,19 @@ void GuiContext::Render(D3D12CommandList* CommandList)
 	CommandList->RSSetViewports(&ViewPort, 1);
 
 	// Bind shader and vertex buffers
-	Uint32 Stride = sizeof(ImDrawVert);
-	Uint32 Offset = 0;
-	D3D12_VERTEX_BUFFER_VIEW VertexBufferView = { };
-	ZERO_MEMORY(&VertexBufferView, sizeof(D3D12_VERTEX_BUFFER_VIEW));
+	const Uint32 Stride = sizeof(ImDrawVert);
 
+	D3D12_VERTEX_BUFFER_VIEW VertexBufferView = { };
 	VertexBufferView.BufferLocation = VertexBuffer->GetGPUVirtualAddress();
 	VertexBufferView.SizeInBytes	= DrawData->TotalVtxCount * Stride;
 	VertexBufferView.StrideInBytes	= Stride;
 	CommandList->IASetVertexBuffers(0, &VertexBufferView, 1);
 
 	D3D12_INDEX_BUFFER_VIEW IndexBufferView;
-	ZERO_MEMORY(&IndexBufferView, sizeof(D3D12_INDEX_BUFFER_VIEW));
-
 	IndexBufferView.BufferLocation	= IndexBuffer->GetGPUVirtualAddress();
 	IndexBufferView.SizeInBytes		= DrawData->TotalIdxCount * sizeof(ImDrawIdx);
 	IndexBufferView.Format			= sizeof(ImDrawIdx) == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+
 	CommandList->IASetIndexBuffer(&IndexBufferView);
 	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
@@ -531,11 +526,31 @@ bool GuiContext::CreatePipeline()
 		return false;
 	}
 
+	D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, pos)), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, uv)),  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, col)), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+
 	GraphicsPipelineStateProperties GuiPipelineProps = { };
-	GuiPipelineProps.Name			= "ImGui Pipeline";
-	GuiPipelineProps.RootSignature	= RootSignature.get();
-	GuiPipelineProps.VSBlob			= VSBlob;
-	GuiPipelineProps.PSBlob			= PSBlob;
+	GuiPipelineProps.DebugName			= "ImGui Pipeline";
+	GuiPipelineProps.RootSignature		= RootSignature.get();
+	GuiPipelineProps.VSBlob				= VSBlob;
+	GuiPipelineProps.PSBlob				= PSBlob;
+	GuiPipelineProps.InputElements		= InputElementDesc;
+	GuiPipelineProps.NumInputElements	= 3;
+	GuiPipelineProps.EnableDepth		= false;
+	GuiPipelineProps.DepthBufferFormat	= DXGI_FORMAT_UNKNOWN;
+	GuiPipelineProps.EnableBlending		= true;
+
+	DXGI_FORMAT Formats[] =
+	{
+		DXGI_FORMAT_R8G8B8A8_UNORM
+	};
+
+	GuiPipelineProps.RTFormats			= Formats;
+	GuiPipelineProps.NumRenderTargets	= 1;
 
 	PipelineState = std::shared_ptr<D3D12GraphicsPipelineState>(new D3D12GraphicsPipelineState(Device.get()));
 	if (!PipelineState->Initialize(GuiPipelineProps))

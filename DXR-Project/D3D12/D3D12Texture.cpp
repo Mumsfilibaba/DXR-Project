@@ -14,19 +14,19 @@ D3D12Texture::~D3D12Texture()
 
 bool D3D12Texture::Initialize(const TextureProperties& Properties)
 {
-	D3D12_RESOURCE_DESC Desc = {};
-	Desc.DepthOrArraySize	= Properties.ArrayCount;
-	Desc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	Desc.Format				= Properties.Format;
-	Desc.Flags				= Properties.Flags;
-	Desc.Width				= Properties.Width;
-	Desc.Height				= Properties.Height;
-	Desc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	Desc.MipLevels			= Properties.MipLevels;
-	Desc.SampleDesc.Count	= 1;
-	Desc.SampleDesc.Quality = 0;
+	D3D12_RESOURCE_DESC ResourceDesc = {};
+	ResourceDesc.DepthOrArraySize	= Properties.ArrayCount;
+	ResourceDesc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	ResourceDesc.Format				= Properties.Format;
+	ResourceDesc.Flags				= Properties.Flags;
+	ResourceDesc.Width				= Properties.Width;
+	ResourceDesc.Height				= Properties.Height;
+	ResourceDesc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	ResourceDesc.MipLevels			= Properties.MipLevels;
+	ResourceDesc.SampleDesc.Count	= 1;
+	ResourceDesc.SampleDesc.Quality = 0;
 
-	if (CreateResource(&Desc, Properties.InitalState, Properties.MemoryType))
+	if (CreateResource(&ResourceDesc, Properties.OptimizedClearValue, Properties.InitalState, Properties.MemoryType))
 	{
 		SetName(Properties.DebugName);
 

@@ -5,6 +5,8 @@
 #include "D3D12/D3D12Texture.h"
 #include "D3D12/D3D12Views.h"
 #include "D3D12/D3D12RootSignature.h"
+#include "D3D12/D3D12GraphicsPipelineState.h"
+#include "D3D12/D3D12RayTracingPipelineState.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
 #include "Application/InputManager.h"
@@ -23,7 +25,7 @@ void Renderer::Tick()
 {
 	Frameclock.Tick();
 
-	const Float32 Delta = Frameclock.GetDeltaTime().AsSeconds();
+	const Float32 Delta			= static_cast<Float32>(Frameclock.GetDeltaTime().AsSeconds());
 	const Float32 Speed			= 1.0f;
 	const Float32 RotationSpeed = 45.0f;
 	if (InputManager::Get().IsKeyDown(EKey::KEY_RIGHT))
@@ -98,9 +100,103 @@ void Renderer::Tick()
 	void* CameraMemory = UploadBuffers[CurrentBackBufferIndex]->Allocate(sizeof(CameraBufferDesc));
 	memcpy(CameraMemory, &CamBuff, sizeof(CameraBufferDesc));
 	
+	CommandList->TransitionBarrier(GBuffer[0].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	CommandList->TransitionBarrier(GBuffer[1].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	CommandList->TransitionBarrier(GBuffer[2].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
 	CommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	CommandList->CopyBuffer(CameraBuffer.get(), 0, UploadBuffers[CurrentBackBufferIndex]->GetBuffer(), Offset, sizeof(Camera));
 	CommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+	const Float32 BlackClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	CommandList->ClearRenderTargetView(GBuffer[0]->GetRenderTargetView().get(), BlackClearColor);
+	CommandList->ClearRenderTargetView(GBuffer[1]->GetRenderTargetView().get(), BlackClearColor);
+	CommandList->ClearRenderTargetView(GBuffer[2]->GetRenderTargetView().get(), BlackClearColor);
+	CommandList->ClearDepthStencilView(GBuffer[3]->GetDepthStencilView().get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
+
+	D3D12_VERTEX_BUFFER_VIEW VBO = { };
+	VBO.BufferLocation	= MeshVertexBuffer->GetGPUVirtualAddress();
+	VBO.SizeInBytes		= MeshVertexBuffer->GetSizeInBytes();
+	VBO.StrideInBytes	= sizeof(Vertex);
+	CommandList->IASetVertexBuffers(0, &VBO, 1);
+	
+	D3D12_INDEX_BUFFER_VIEW IBV = { };
+	IBV.BufferLocation	= MeshIndexBuffer->GetGPUVirtualAddress();
+	IBV.Format			= DXGI_FORMAT_R32_UINT;
+	IBV.SizeInBytes		= MeshIndexBuffer->GetSizeInBytes();
+	CommandList->IASetIndexBuffer(&IBV);
+
+	D3D12_VIEWPORT ViewPort = { };
+	ViewPort.Width		= static_cast<Float32>(SwapChain->GetWidth());
+	ViewPort.Height		= static_cast<Float32>(SwapChain->GetHeight());
+	ViewPort.MinDepth	= 0.0f;
+	ViewPort.MaxDepth	= 1.0f;
+	ViewPort.TopLeftX	= 0.0f;
+	ViewPort.TopLeftY	= 0.0f;
+	CommandList->RSSetViewports(&ViewPort, 1);
+
+	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	CommandList->SetPipelineState(GeometryPSO->GetPipelineState());
+	CommandList->SetGraphicsRootSignature(GeometryRootSignature->GetRootSignature());
+
+	const D3D12_RECT ScissorRect =
+	{
+		0,
+		0,
+		static_cast<LONG>(SwapChain->GetWidth()),
+		static_cast<LONG>(SwapChain->GetHeight())
+	};
+	CommandList->RSSetScissorRects(&ScissorRect, 1);
+
+	D3D12RenderTargetView* GBufferRTVS[] = 
+	{ 
+		GBuffer[0]->GetRenderTargetView().get(),
+		GBuffer[1]->GetRenderTargetView().get(),
+		GBuffer[2]->GetRenderTargetView().get()
+	};
+	CommandList->OMSetRenderTargets(GBufferRTVS, 3, GBuffer[3]->GetDepthStencilView().get());
+
+	CommandList->SetGraphicsRootDescriptorTable(GeometryDescriptorTable->GetGPUTableStartHandle(), 1);
+
+	constexpr Float32	SphereOffset	= 1.25f;
+	constexpr Uint32	SphereCountX	= 8;
+	constexpr Float32	StartPositionX	= (-static_cast<Float32>(SphereCountX) * SphereOffset) / 2.0f;
+	constexpr Uint32	SphereCountY	= 8;
+	constexpr Float32	StartPositionY	= (-static_cast<Float32>(SphereCountY) * SphereOffset) / 2.0f;
+	
+
+	struct PerObject
+	{
+		XMFLOAT4X4	Matrix;
+		Float32		Roughness	= 0.05f;
+		Float32		Metallic	= 0.0f;
+		Float32		AO			= 1.0f;
+	} PerObjectBuffer;
+
+	constexpr Float32 MetallicDelta		= 1.0f / SphereCountY;
+	constexpr Float32 RoughnessDelta	= 1.0f / SphereCountX;
+	for (Uint32 y = 0; y < SphereCountY; y++)
+	{
+		for (Uint32 x = 0; x < SphereCountX; x++)
+		{
+			XMStoreFloat4x4(&PerObjectBuffer.Matrix, XMMatrixTranspose(XMMatrixTranslation(StartPositionX + (x * SphereOffset), StartPositionY + (y * SphereOffset), 0)));
+			
+			CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 19, 0, 0);
+			CommandList->DrawIndexedInstanced(static_cast<Uint32>(Mesh.Indices.size()), 1, 0, 0, 0);
+			
+			PerObjectBuffer.Roughness += RoughnessDelta;
+		}
+		
+		PerObjectBuffer.Roughness = 0.05f;
+		PerObjectBuffer.Metallic += MetallicDelta;
+	}
+
+	CommandList->TransitionBarrier(GBuffer[0].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(GBuffer[1].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(GBuffer[2].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	if (Device->IsRayTracingSupported())
 	{
@@ -116,6 +212,17 @@ void Renderer::Tick()
 
 	D3D12RenderTargetView* RenderTarget[] = { BackBuffer->GetRenderTargetView().get() };
 	CommandList->OMSetRenderTargets(RenderTarget, 1, nullptr);
+
+	CommandList->RSSetViewports(&ViewPort, 1);
+	CommandList->RSSetScissorRects(&ScissorRect, 1);
+
+	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	CommandList->SetPipelineState(LightPassPSO->GetPipelineState());
+	CommandList->SetGraphicsRootSignature(LightRootSignature->GetRootSignature());
+	CommandList->SetGraphicsRootDescriptorTable(LightDescriptorTable->GetGPUTableStartHandle(), 0);
+
+	CommandList->DrawInstanced(3, 1, 0, 0);
 
 	GuiContext::Get()->Render(CommandList.get());
 
@@ -160,7 +267,7 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 	InCommandList->SetComputeRootDescriptorTable(GlobalDescriptorTable->GetGPUTableStartHandle(), 0);
 
 	// Dispatch
-	InCommandList->SetStateObject(PipelineState->GetStateObject());
+	InCommandList->SetStateObject(RaytracingPSO->GetStateObject());
 	InCommandList->DispatchRays(&raytraceDesc);
 
 	// Copy the results to the back-buffer
@@ -585,8 +692,8 @@ bool Renderer::InitRayTracing()
 	PipelineProperties.GlobalRootSignature		= GlobalRootSignature.get();
 	PipelineProperties.MaxRecursions			= 4;
 
-	PipelineState = std::make_shared<D3D12RayTracingPipelineState>(Device.get());
-	if (!PipelineState->Initialize(PipelineProperties))
+	RaytracingPSO = std::make_shared<D3D12RayTracingPipelineState>(Device.get());
+	if (!RaytracingPSO->Initialize(PipelineProperties))
 	{
 		return false;
 	}
@@ -599,10 +706,10 @@ bool Renderer::InitRayTracing()
 
 	// Create BLAS
 	std::shared_ptr<D3D12RayTracingGeometry> MeshGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());
-	MeshGeometry->BuildAccelerationStructure(CommandList.get(), MeshVertexBuffer, static_cast<Uint32>(Mesh.Vertices.size()), MeshIndexBuffer, static_cast<Uint64>(Mesh.Indices.size()));
+	MeshGeometry->BuildAccelerationStructure(CommandList.get(), MeshVertexBuffer, static_cast<Uint32>(Mesh.Vertices.size()), MeshIndexBuffer, static_cast<Uint32>(Mesh.Indices.size()));
 
 	std::shared_ptr<D3D12RayTracingGeometry> CubeGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());
-	CubeGeometry->BuildAccelerationStructure(CommandList.get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.size()), CubeIndexBuffer, static_cast<Uint64>(Cube.Indices.size()));
+	CubeGeometry->BuildAccelerationStructure(CommandList.get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.size()), CubeIndexBuffer, static_cast<Uint32>(Cube.Indices.size()));
 
 	XMFLOAT3X4 Matrix;
 	std::vector<D3D12RayTracingGeometryInstance> Instances;
@@ -638,7 +745,7 @@ bool Renderer::InitRayTracing()
 	BindingTableEntries.emplace_back("Miss", nullptr);
 
 	RayTracingScene = std::make_shared<D3D12RayTracingScene>(Device.get());
-	if (!RayTracingScene->Initialize(PipelineState.get(), BindingTableEntries, 2))
+	if (!RayTracingScene->Initialize(RaytracingPSO.get(), BindingTableEntries, 2))
 	{
 		return false;
 	}
@@ -699,6 +806,8 @@ bool Renderer::InitRayTracing()
 
 bool Renderer::InitDeferred()
 {
+	using namespace Microsoft::WRL;
+
 	// Start with the GBuffer
 	if (!InitGBuffer())
 	{
@@ -706,17 +815,210 @@ bool Renderer::InitDeferred()
 	}
 
 	// Init PipelineState
-	IDxcBlob* VSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/GeometryPass.hlsl", "VSMain", "vs_6_0");
+	ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/GeometryPass.hlsl", "VSMain", "vs_6_0");
 	if (!VSBlob)
 	{
 		return false;
 	}
 
-	IDxcBlob* PSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/GeometryPass.hlsl", "PSMain", "ps_6_0");
+	ComPtr<IDxcBlob> PSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/GeometryPass.hlsl", "PSMain", "ps_6_0");
 	if (!PSBlob)
 	{
 		return false;
 	}
+
+	// Init RootSignatures
+	{
+		D3D12_DESCRIPTOR_RANGE Ranges[1] = {};
+		// Camera Buffer
+		Ranges[0].BaseShaderRegister				= 1;
+		Ranges[0].NumDescriptors					= 1;
+		Ranges[0].RegisterSpace						= 0;
+		Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		Ranges[0].OffsetInDescriptorsFromTableStart = 0;
+
+		D3D12_ROOT_PARAMETER Parameters[2];
+		Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+		Parameters[0].Constants.ShaderRegister	= 0;
+		Parameters[0].Constants.RegisterSpace	= 0;
+		Parameters[0].Constants.Num32BitValues	= 19;
+		Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
+
+		Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		Parameters[1].DescriptorTable.NumDescriptorRanges	= 1;
+		Parameters[1].DescriptorTable.pDescriptorRanges		= Ranges;
+		Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_VERTEX;
+
+		D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
+		RootSignatureDesc.NumParameters		= 2;
+		RootSignatureDesc.pParameters		= Parameters;
+		RootSignatureDesc.NumStaticSamplers	= 0;
+		RootSignatureDesc.pStaticSamplers	= nullptr;
+		RootSignatureDesc.Flags				= 
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+
+		GeometryRootSignature = std::make_shared<D3D12RootSignature>(Device.get());
+		if (!GeometryRootSignature->Initialize(RootSignatureDesc))
+		{
+			return false;
+		}
+	}
+
+	{
+		D3D12_DESCRIPTOR_RANGE Ranges[5] = {};
+		// Albedo
+		Ranges[0].BaseShaderRegister				= 0;
+		Ranges[0].NumDescriptors					= 1;
+		Ranges[0].RegisterSpace						= 0;
+		Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[0].OffsetInDescriptorsFromTableStart = 0;
+
+		// Normal
+		Ranges[1].BaseShaderRegister				= 1;
+		Ranges[1].NumDescriptors					= 1;
+		Ranges[1].RegisterSpace						= 0;
+		Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[1].OffsetInDescriptorsFromTableStart	= 1;
+
+		// Material
+		Ranges[2].BaseShaderRegister				= 2;
+		Ranges[2].NumDescriptors					= 1;
+		Ranges[2].RegisterSpace						= 0;
+		Ranges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[2].OffsetInDescriptorsFromTableStart	= 2;
+
+		// Depth
+		Ranges[3].BaseShaderRegister				= 3;
+		Ranges[3].NumDescriptors					= 1;
+		Ranges[3].RegisterSpace						= 0;
+		Ranges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[3].OffsetInDescriptorsFromTableStart	= 3;
+
+		// Camera
+		Ranges[4].BaseShaderRegister				= 0;
+		Ranges[4].NumDescriptors					= 1;
+		Ranges[4].RegisterSpace						= 0;
+		Ranges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		Ranges[4].OffsetInDescriptorsFromTableStart	= 4;
+
+		D3D12_ROOT_PARAMETER Parameters[1];
+		Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		Parameters[0].DescriptorTable.NumDescriptorRanges	= 5;
+		Parameters[0].DescriptorTable.pDescriptorRanges		= Ranges;
+		Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		D3D12_STATIC_SAMPLER_DESC GBufferSampler = { };
+		GBufferSampler.Filter			= D3D12_FILTER_MIN_MAG_MIP_POINT;
+		GBufferSampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		GBufferSampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		GBufferSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		GBufferSampler.MipLODBias		= 0.0f;
+		GBufferSampler.MaxAnisotropy	= 0;
+		GBufferSampler.ComparisonFunc	= D3D12_COMPARISON_FUNC_ALWAYS;
+		GBufferSampler.BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		GBufferSampler.MinLOD			= 0.0f;
+		GBufferSampler.MaxLOD			= FLT_MAX;
+		GBufferSampler.ShaderRegister	= 0;
+		GBufferSampler.RegisterSpace	= 0;
+		GBufferSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+		D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
+		RootSignatureDesc.NumParameters			= 1;
+		RootSignatureDesc.pParameters			= Parameters;
+		RootSignatureDesc.NumStaticSamplers		= 1;
+		RootSignatureDesc.pStaticSamplers		= &GBufferSampler;
+		RootSignatureDesc.Flags					= 
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+
+		LightRootSignature = std::make_shared<D3D12RootSignature>(Device.get());
+		if (!LightRootSignature->Initialize(RootSignatureDesc))
+		{
+			return false;
+		}
+	}
+
+	// Init PipelineState
+	D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
+	{
+		{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 0,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 12,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT",	0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 24,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,	0, 36,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+
+	GraphicsPipelineStateProperties PSOProperties = { };
+	PSOProperties.DebugName			= "GeometryPass PipelineState";
+	PSOProperties.VSBlob			= VSBlob.Get();
+	PSOProperties.PSBlob			= PSBlob.Get();
+	PSOProperties.RootSignature		= GeometryRootSignature.get();
+	PSOProperties.InputElements		= InputElementDesc;
+	PSOProperties.NumInputElements	= 4;
+	PSOProperties.EnableDepth		= true;
+	PSOProperties.EnableBlending	= false;
+	PSOProperties.DepthBufferFormat = DXGI_FORMAT_D32_FLOAT;
+
+	DXGI_FORMAT Formats[] =
+	{
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		DXGI_FORMAT_R8G8B8A8_SNORM,
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+	};
+
+	PSOProperties.RTFormats			= Formats;
+	PSOProperties.NumRenderTargets	= 3;
+
+	GeometryPSO = std::make_shared<D3D12GraphicsPipelineState>(Device.get());
+	if (!GeometryPSO->Initialize(PSOProperties))
+	{
+		return false;
+	}
+
+	VSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/FullscreenVS.hlsl", "Main", "vs_6_0");
+	if (!VSBlob)
+	{
+		return false;
+	}
+
+	PSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/LightPassPS.hlsl", "Main", "ps_6_0");
+	if (!PSBlob)
+	{
+		return false;
+	}
+
+	PSOProperties.DebugName			= "LightPass PipelineState";
+	PSOProperties.VSBlob			= VSBlob.Get();
+	PSOProperties.PSBlob			= PSBlob.Get();
+	PSOProperties.RootSignature		= LightRootSignature.get();
+	PSOProperties.InputElements		= nullptr;
+	PSOProperties.NumInputElements	= 0;
+	PSOProperties.EnableDepth		= false;
+	PSOProperties.DepthBufferFormat = DXGI_FORMAT_UNKNOWN;
+	PSOProperties.RTFormats			= Formats;
+	PSOProperties.NumRenderTargets	= 1;
+
+	LightPassPSO = std::make_shared<D3D12GraphicsPipelineState>(Device.get());
+	if (!LightPassPSO->Initialize(PSOProperties))
+	{
+		return false;
+	}
+
+	// Init descriptortable
+	GeometryDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 1);
+	GeometryDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 0);
+	GeometryDescriptorTable->CopyDescriptors();
+	
+	LightDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 5);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).get(), 0);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).get(), 1);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).get(), 2);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).get(), 3);
+	LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 4);
+	LightDescriptorTable->CopyDescriptors();
 
 	return true;
 }
@@ -729,8 +1031,8 @@ bool Renderer::InitGBuffer()
 	GBufferProperties.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
 	GBufferProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 	GBufferProperties.ArrayCount	= 1;
-	GBufferProperties.Width			= SwapChain->GetWidth();
-	GBufferProperties.Height		= SwapChain->GetHeight();
+	GBufferProperties.Width			= static_cast<Uint16>(SwapChain->GetWidth());
+	GBufferProperties.Height		= static_cast<Uint16>(SwapChain->GetHeight());
 	GBufferProperties.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	GBufferProperties.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 	GBufferProperties.MipLevels		= 1;
@@ -764,6 +1066,10 @@ bool Renderer::InitGBuffer()
 
 	// Normal
 	GBufferProperties.DebugName = "GBuffer Normal";
+	GBufferProperties.Format	= DXGI_FORMAT_R8G8B8A8_SNORM;
+
+	SrvDesc.Format = GBufferProperties.Format;
+	RtvDesc.Format = GBufferProperties.Format;
 
 	GBuffer[1] = std::make_shared<D3D12Texture>(Device.get());
 	if (GBuffer[1]->Initialize(GBufferProperties))
@@ -778,6 +1084,10 @@ bool Renderer::InitGBuffer()
 
 	// Material Properties
 	GBufferProperties.DebugName = "GBuffer Material";
+	GBufferProperties.Format	= DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	SrvDesc.Format = GBufferProperties.Format;
+	RtvDesc.Format = GBufferProperties.Format;
 
 	GBuffer[2] = std::make_shared<D3D12Texture>(Device.get());
 	if (GBuffer[2]->Initialize(GBufferProperties))
@@ -791,14 +1101,21 @@ bool Renderer::InitGBuffer()
 	}
 
 	// DepthStencil
-	GBufferProperties.DebugName = "GBuffer DepthStencil";
+	GBufferProperties.DebugName	= "GBuffer DepthStencil";
 	GBufferProperties.Flags		= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-	GBufferProperties.Format	= DXGI_FORMAT_R24G8_TYPELESS;
+	GBufferProperties.Format	= DXGI_FORMAT_R32_TYPELESS;
+	
+	D3D12_CLEAR_VALUE ClearValue = { };
+	ClearValue.Format				= DXGI_FORMAT_D32_FLOAT;
+	ClearValue.DepthStencil.Depth	= 1.0f;
+	ClearValue.DepthStencil.Stencil	= 0;
+	
+	GBufferProperties.OptimizedClearValue = &ClearValue;
 
-	SrvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	SrvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC DsvDesc = { };
-	DsvDesc.Format				= DXGI_FORMAT_D24_UNORM_S8_UINT;
+	DsvDesc.Format				= DXGI_FORMAT_D32_FLOAT;
 	DsvDesc.ViewDimension		= D3D12_DSV_DIMENSION_TEXTURE2D;
 	DsvDesc.Texture2D.MipSlice	= 0;
 
@@ -821,8 +1138,8 @@ bool Renderer::InitRayTracingTexture()
 	TextureProperties OutputProperties = { };
 	OutputProperties.DebugName	= "RayTracing Output";
 	OutputProperties.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	OutputProperties.Width		= SwapChain->GetWidth();
-	OutputProperties.Height		= SwapChain->GetHeight();
+	OutputProperties.Width		= static_cast<Uint16>(SwapChain->GetWidth());
+	OutputProperties.Height		= static_cast<Uint16>(SwapChain->GetHeight());
 	OutputProperties.MipLevels	= 1;
 	OutputProperties.ArrayCount	= 1;
 	OutputProperties.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;

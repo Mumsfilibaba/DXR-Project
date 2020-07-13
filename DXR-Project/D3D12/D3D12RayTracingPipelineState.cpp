@@ -190,6 +190,8 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	HRESULT hResult = Device->GetDXRDevice()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&StateObject));
 	if (SUCCEEDED(hResult))
 	{
+		SetName(Properties.DebugName);
+
 		::OutputDebugString("[D3D12RayTracer]: Created RayTracing PipelineState\n");
 		return true;
 	}
@@ -202,5 +204,6 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 
 void D3D12RayTracingPipelineState::SetName(const std::string& InName)
 {
-	StateObject->SetName(ConvertToWide(InName).c_str());
+	std::wstring WideName = ConvertToWide(InName);
+	StateObject->SetName(WideName.c_str());
 }

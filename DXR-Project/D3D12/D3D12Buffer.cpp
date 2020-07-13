@@ -17,19 +17,19 @@ bool D3D12Buffer::Initialize(const BufferProperties& Properties)
 {
 	SizeInBytes = Properties.SizeInBytes;
 
-	D3D12_RESOURCE_DESC Desc	= {};
-	Desc.DepthOrArraySize		= 1;
-	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_BUFFER;
-	Desc.Flags					= Properties.Flags;
-	Desc.Format					= DXGI_FORMAT_UNKNOWN;
-	Desc.Height					= 1;
-	Desc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels				= 1;
-	Desc.SampleDesc.Count		= 1;
-	Desc.SampleDesc.Quality		= 0;
-	Desc.Width					= SizeInBytes;
+	D3D12_RESOURCE_DESC ResourceDesc = {};
+	ResourceDesc.DepthOrArraySize		= 1;
+	ResourceDesc.Dimension				= D3D12_RESOURCE_DIMENSION_BUFFER;
+	ResourceDesc.Flags					= Properties.Flags;
+	ResourceDesc.Format					= DXGI_FORMAT_UNKNOWN;
+	ResourceDesc.Height					= 1;
+	ResourceDesc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	ResourceDesc.MipLevels				= 1;
+	ResourceDesc.SampleDesc.Count		= 1;
+	ResourceDesc.SampleDesc.Quality		= 0;
+	ResourceDesc.Width					= SizeInBytes;
 
-	if (CreateResource(&Desc, Properties.InitalState, Properties.MemoryType))
+	if (CreateResource(&ResourceDesc, nullptr, Properties.InitalState, Properties.MemoryType))
 	{
 		::OutputDebugString("[D3D12Buffer]: Created Buffer\n");
 		return true;

@@ -60,7 +60,7 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::strin
 D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags)
 {
 	const bool GenerateMipLevels	= CreateFlags & ETextureFactoryFlags::TEXTURE_FACTORY_FLAGS_GENERATE_MIPS;
-	const Uint32 MipLevels			= GenerateMipLevels ? std::min<Uint32>(std::log2(Width), std::log2(Height)) : 1;
+	const Uint32 MipLevels			= GenerateMipLevels ? std::min<Uint32>(std::log2<Uint32>(Width), std::log2<Uint32>(Height)) : 1;
 	const DXGI_FORMAT Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	VALIDATE(MipLevels != 0);
@@ -68,10 +68,10 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	// Create texture
 	TextureProperties TextureProps = { };
 	TextureProps.Flags			= GenerateMipLevels ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_NONE;
-	TextureProps.Width			= Width;
-	TextureProps.Height			= Height;
+	TextureProps.Width			= static_cast<Uint16>(Width);
+	TextureProps.Height			= static_cast<Uint16>(Height);
 	TextureProps.ArrayCount		= 1;
-	TextureProps.MipLevels		= MipLevels;
+	TextureProps.MipLevels		= static_cast<Uint16>(MipLevels);
 	TextureProps.Format			= Format;
 	TextureProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
@@ -97,7 +97,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	if (UploadBuffer->Initialize(UploadBufferProps))
 	{
 		void* Memory = UploadBuffer->Map();
-		for (Int32 Y = 0; Y < Height; Y++)
+		for (Uint32 Y = 0; Y < Height; Y++)
 		{
 			memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(Memory) + Y * UploadPitch), Pixels + Y * Width * 4, Width * 4);
 		}
@@ -337,8 +337,8 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	// Create texture
 	TextureProperties TextureProps = { };
 	TextureProps.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	TextureProps.Width			= CubeMapSize;
-	TextureProps.Height			= CubeMapSize;
+	TextureProps.Width			= static_cast<Uint16>(CubeMapSize);
+	TextureProps.Height			= static_cast<Uint16>(CubeMapSize);
 	TextureProps.ArrayCount		= 6;
 	TextureProps.MipLevels		= 1;
 	TextureProps.Format			= Format;

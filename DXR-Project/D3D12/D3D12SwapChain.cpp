@@ -113,7 +113,7 @@ bool D3D12SwapChain::Present(Uint32 SyncInterval)
 
 void D3D12SwapChain::SetName(const std::string& Name)
 {
-	SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, Name.size(), Name.data());
+	SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Name.size()), Name.data());
 }
 
 void D3D12SwapChain::RetriveSwapChainSurfaces()

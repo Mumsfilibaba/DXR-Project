@@ -3,15 +3,16 @@
 
 struct TextureProperties
 {
-	std::string				DebugName;
-	DXGI_FORMAT				Format;
-	D3D12_RESOURCE_FLAGS	Flags;
-	Uint16					Width; 
-	Uint16					Height;
-	Uint16					ArrayCount;
-	Uint16					MipLevels;
-	D3D12_RESOURCE_STATES	InitalState;
-	EMemoryType				MemoryType;
+	std::string					DebugName;
+	DXGI_FORMAT					Format;
+	D3D12_RESOURCE_FLAGS		Flags;
+	Uint16						Width; 
+	Uint16						Height;
+	Uint16						ArrayCount;
+	Uint16						MipLevels;
+	D3D12_RESOURCE_STATES		InitalState;
+	const D3D12_CLEAR_VALUE*	OptimizedClearValue;
+	EMemoryType					MemoryType;
 };
 
 class D3D12RenderTargetView;

@@ -33,7 +33,7 @@ public:
 		return ConstantBufferView;
 	}
 
-	FORCEINLINE Uint64 GetSizeInBytes() const
+	FORCEINLINE Uint32 GetSizeInBytes() const
 	{
 		return SizeInBytes;
 	}
@@ -41,5 +41,5 @@ public:
 private:
 	std::shared_ptr<D3D12ConstantBufferView> ConstantBufferView;
 
-	Uint64 SizeInBytes = 0;
+	Uint32 SizeInBytes = 0;
 };

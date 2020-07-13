@@ -11,7 +11,7 @@ D3D12Resource::~D3D12Resource()
 {
 }
 
-bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* InDesc, D3D12_RESOURCE_STATES InitalState, EMemoryType MemoryType)
+bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D12_CLEAR_VALUE* OptimizedClearValue, D3D12_RESOURCE_STATES InitalState, EMemoryType MemoryType)
 {
 	// HeapProperties
 	D3D12_HEAP_PROPERTIES HeapProperties = { };
@@ -39,7 +39,7 @@ bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* InDesc, D3D12_RESO
 	}
 
 	// Create
-	HRESULT hResult = Device->GetDevice()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, InDesc, InitalState, nullptr, IID_PPV_ARGS(&Resource));
+	HRESULT hResult = Device->GetDevice()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, InDesc, InitalState, OptimizedClearValue, IID_PPV_ARGS(&Resource));
 	if (SUCCEEDED(hResult))
 	{
 		Desc = *InDesc;
