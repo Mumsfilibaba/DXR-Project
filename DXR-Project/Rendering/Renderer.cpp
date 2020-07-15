@@ -13,7 +13,7 @@
 
 std::unique_ptr<Renderer> Renderer::RendererInstance = nullptr;
 
-static const DXGI_FORMAT	NormalFormat		= DXGI_FORMAT_R10G10B10A2_UNORM;
+static const DXGI_FORMAT	NormalFormat		= DXGI_FORMAT_R16G16B16A16_UNORM;
 static const DXGI_FORMAT	DepthBufferFormat	= DXGI_FORMAT_D32_FLOAT;
 static const Uint32			PresentInterval		= 0;
 
