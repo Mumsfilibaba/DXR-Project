@@ -13,7 +13,7 @@
 
 std::unique_ptr<Renderer> Renderer::RendererInstance = nullptr;
 
-static const DXGI_FORMAT	NormalFormat		= DXGI_FORMAT_R8G8B8A8_UNORM;
+static const DXGI_FORMAT	NormalFormat		= DXGI_FORMAT_R10G10B10A2_UNORM;
 static const DXGI_FORMAT	DepthBufferFormat	= DXGI_FORMAT_D32_FLOAT;
 static const Uint32			PresentInterval		= 0;
 
@@ -325,9 +325,14 @@ void Renderer::OnResize(Int32 Width, Int32 Height)
 
 	SwapChain->Resize(Width, Height);
 
-	ResultTexture.reset();
+	if (Device->IsRayTracingSupported())
+	{
+		InitRayTracingTexture();
 
-	InitRayTracingTexture();
+
+	}
+
+	InitDeferred();
 
 	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 }
