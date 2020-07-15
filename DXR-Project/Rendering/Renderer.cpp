@@ -13,7 +13,8 @@
 
 std::unique_ptr<Renderer> Renderer::RendererInstance = nullptr;
 
-DXGI_FORMAT NormalFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
+static const DXGI_FORMAT	NormalFormat	= DXGI_FORMAT_R8G8B8A8_UNORM;
+static const Uint32			PresentInterval	= 1;
 
 Renderer::Renderer()
 {
@@ -239,7 +240,7 @@ void Renderer::Tick()
 	Queue->ExecuteCommandList(CommandList.get());
 
 	// Present
-	SwapChain->Present(0);
+	SwapChain->Present(PresentInterval);
 
 	// Wait for next frame
 	const Uint64 CurrentFenceValue = FenceValues[CurrentBackBufferIndex];

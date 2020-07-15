@@ -62,9 +62,9 @@ PSOutput PSMain(PSInput Input)
 {
 	const float3 ObjectColor = float3(1.0f, 0.0f, 0.0f);
 	
-    float3 Normal = Input.Normal;
+    float3 Normal = normalize(Input.Normal);
     Normal = (Normal + 1.0f) * 0.5f;
-	
+
 	PSOutput Output;
 	Output.Albedo	= float4(ObjectColor, 1.0f);
     Output.Normal	= float4(Normal, 1.0f);

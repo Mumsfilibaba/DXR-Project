@@ -22,7 +22,7 @@ ConstantBuffer<Camera> Camera : register(b0, space0);
 
 // Constants
 static const float	PI				= 3.14159265359f;
-static const float	MIN_VALUE		= 0.0000001f;
+static const float	MIN_VALUE		= 0.00000000001f;
 
 static const float3	LightPosition	= float3(0.0f, 10.0f, -10.0f);
 static const float3	LightColor		= float3(300.0f, 300.0f, 300.0f);
