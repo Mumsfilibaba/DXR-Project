@@ -159,6 +159,15 @@ bool D3D12Device::Initialize(bool DebugEnable)
 	return true;
 }
 
+std::string D3D12Device::GetAdapterName() const
+{
+	DXGI_ADAPTER_DESC Desc;
+	Adapter->GetDesc(&Desc);
+
+	std::wstring WideName = Desc.Description;
+	return ConvertToAscii(WideName);
+}
+
 /*
 * Static
 */

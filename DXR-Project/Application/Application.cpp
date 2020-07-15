@@ -42,9 +42,13 @@ bool Application::Tick()
 	
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
 
+	static std::string AdapterName = Renderer::Get()->GetDevice()->GetAdapterName();
+
 	const Float64 Delta = Timer.GetDeltaTime().AsMilliSeconds();
+	ImGui::Text("Adapter: %s", AdapterName.c_str());
 	ImGui::Text("Frametime: %.4f ms", Delta);
 	ImGui::Text("FPS: %d", static_cast<Uint32>(1000 / Delta));
+
 	ImGui::PopStyleColor();
 
 	ImGui::End();

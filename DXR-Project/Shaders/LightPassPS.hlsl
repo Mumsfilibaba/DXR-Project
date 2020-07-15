@@ -80,12 +80,6 @@ float4 Main(PSInput Input) : SV_TARGET
 	float2 TexCoord = Input.TexCoord;
 	TexCoord.y = 1.0f - TexCoord.y;
 	
-    float Depth = DepthStencil.Sample(GBufferSampler, TexCoord).r;
-    if (Depth >= 1.0f)
-    {
-        return float4(0.0f, 0.0f, 0.0f, 1.0f);
-    }
-	
 	float3 WorldPosition	= PositionFromDepth(TexCoord);
 	float3 SampledAlbedo	= Albedo.Sample(GBufferSampler, TexCoord).rgb;
 	float3 SampledNormal	= Normal.Sample(GBufferSampler, TexCoord).rgb;

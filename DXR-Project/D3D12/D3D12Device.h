@@ -21,6 +21,8 @@ public:
 
 	bool Initialize(bool DebugEnable);
 
+	std::string GetAdapterName() const;
+
 	FORCEINLINE ID3D12Device* GetDevice() const
 	{
 		return D3DDevice.Get();
