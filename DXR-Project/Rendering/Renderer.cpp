@@ -13,6 +13,8 @@
 
 std::unique_ptr<Renderer> Renderer::RendererInstance = nullptr;
 
+DXGI_FORMAT NormalFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
+
 Renderer::Renderer()
 {
 }
@@ -166,7 +168,6 @@ void Renderer::Tick()
 	constexpr Uint32	SphereCountY	= 8;
 	constexpr Float32	StartPositionY	= (-static_cast<Float32>(SphereCountY) * SphereOffset) / 2.0f;
 	
-
 	struct PerObject
 	{
 		XMFLOAT4X4	Matrix;
@@ -213,16 +214,19 @@ void Renderer::Tick()
 	D3D12RenderTargetView* RenderTarget[] = { BackBuffer->GetRenderTargetView().get() };
 	CommandList->OMSetRenderTargets(RenderTarget, 1, nullptr);
 
-	CommandList->RSSetViewports(&ViewPort, 1);
-	CommandList->RSSetScissorRects(&ScissorRect, 1);
+	if (!Device->IsRayTracingSupported())
+	{
+		CommandList->RSSetViewports(&ViewPort, 1);
+		CommandList->RSSetScissorRects(&ScissorRect, 1);
 
-	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	CommandList->SetPipelineState(LightPassPSO->GetPipelineState());
-	CommandList->SetGraphicsRootSignature(LightRootSignature->GetRootSignature());
-	CommandList->SetGraphicsRootDescriptorTable(LightDescriptorTable->GetGPUTableStartHandle(), 0);
+		CommandList->SetPipelineState(LightPassPSO->GetPipelineState());
+		CommandList->SetGraphicsRootSignature(LightRootSignature->GetRootSignature());
+		CommandList->SetGraphicsRootDescriptorTable(LightDescriptorTable->GetGPUTableStartHandle(), 0);
 
-	CommandList->DrawInstanced(3, 1, 0, 0);
+		CommandList->DrawInstanced(3, 1, 0, 0);
+	}
 
 	GuiContext::Get()->Render(CommandList.get());
 
@@ -917,10 +921,10 @@ bool Renderer::InitDeferred()
 		GBufferSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		GBufferSampler.MipLODBias		= 0.0f;
 		GBufferSampler.MaxAnisotropy	= 0;
-		GBufferSampler.ComparisonFunc	= D3D12_COMPARISON_FUNC_ALWAYS;
+		GBufferSampler.ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
 		GBufferSampler.BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 		GBufferSampler.MinLOD			= 0.0f;
-		GBufferSampler.MaxLOD			= FLT_MAX;
+		GBufferSampler.MaxLOD			= 0.0f;
 		GBufferSampler.ShaderRegister	= 0;
 		GBufferSampler.RegisterSpace	= 0;
 		GBufferSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
@@ -965,7 +969,7 @@ bool Renderer::InitDeferred()
 	DXGI_FORMAT Formats[] =
 	{
 		DXGI_FORMAT_R8G8B8A8_UNORM,
-		DXGI_FORMAT_R8G8B8A8_SNORM,
+		NormalFormat,
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 	};
 
@@ -1066,7 +1070,7 @@ bool Renderer::InitGBuffer()
 
 	// Normal
 	GBufferProperties.DebugName = "GBuffer Normal";
-	GBufferProperties.Format	= DXGI_FORMAT_R8G8B8A8_SNORM;
+	GBufferProperties.Format	= NormalFormat;
 
 	SrvDesc.Format = GBufferProperties.Format;
 	RtvDesc.Format = GBufferProperties.Format;

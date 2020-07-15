@@ -30,6 +30,13 @@ struct Vertex
 StructuredBuffer<Vertex>	Vertices	: register(t2, space0);
 ByteAddressBuffer			InIndices	: register(t3, space0);
 
+// Constants
+static const float PI			= 3.14159265359f;
+static const float MIN_VALUE	= 0.0000001f;
+
+static const float3 LightPosition	= float3(0.0f, 10.0f, -10.0f);
+static const float3 LightColor		= float3(300.0f, 300.0f, 300.0f);
+
 // Helpers
 float3 WorldHitPosition()
 {
@@ -40,6 +47,41 @@ float3 FresnelReflectanceSchlick(in float3 I, in float3 N, in float3 F0)
 {
 	float Cosi = saturate(dot(-I, N));
 	return F0 + (1 - F0) * pow(1 - Cosi, 5);
+}
+
+float3 FresnelSchlick(float CosTheta, float3 F0)
+{
+    return F0 + (1.0f - F0) * pow(1.0f - CosTheta, 5.0f);
+}
+
+float DistributionGGX(float3 N, float3 H, float Roughness)
+{
+    float A = Roughness * Roughness;
+    float A2 = A * A;
+    float NdotH = max(dot(N, H), 0.0f);
+    float NdotH2 = NdotH * NdotH;
+
+    float Nom = A2;
+    float Denom = (NdotH2 * (A2 - 1.0f) + 1.0f);
+    Denom = PI * Denom * Denom;
+
+    return Nom / max(Denom, MIN_VALUE);
+}
+
+float GeometrySchlickGGX(float NdotV, float Roughness)
+{
+    float R = (Roughness + 1.0f);
+    float K = (R * R) / 8.0f;
+
+    return NdotV / ((NdotV * (1.0f - K)) + K);
+}
+
+float GeometrySmith(float3 N, float3 V, float3 L, float Roughness)
+{
+    float NdotV = max(dot(N, V), 0.0f);
+    float NdotL = max(dot(N, L), 0.0f);
+
+    return GeometrySchlickGGX(NdotV, Roughness) * GeometrySchlickGGX(NdotL, Roughness);
 }
 
 // Diffuse lighting calculation.
@@ -58,10 +100,6 @@ float3 CalculateSpecularCoefficient(in float3 HitPosition, in float3 IncidentLig
 
 float3 CalculatePhongLighting(in float3 Albedo, in float3 Normal, in float DiffuseCoef = 1.0f, in float SpecularCoef = 1.0f, in float SpecularPower = 50.0f)
 {
-	const float3 ObjectColor	= float3(1.0f, 0.0f, 0.0f);
-	const float3 LightPosition	= float3(0.0f, 5.0f, -2.0f);
-	const float3 LightColor		= float3(1.0f, 1.0f, 1.0f);
-
 	float3 HitPosition		= WorldHitPosition();
 	float3 IncidentLightRay	= normalize(HitPosition - LightPosition);
 
@@ -119,8 +157,15 @@ void RayGen()
 
 	TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 0, 0, Ray, PayLoad);
 
+	// HDR tonemapping
+    float3 FinalColor = PayLoad.Color;
+    FinalColor = FinalColor / (FinalColor + float3(1.0f, 1.0f, 1.0f));
+    // Gamma correct
+    const float Gamma = 1.0f / 2.2f;
+    FinalColor = pow(FinalColor, float3(Gamma, Gamma, Gamma));
+	
 	// Output Image
-	OutTexture[DispatchIndex.xy] = float4(PayLoad.Color, 1.0f);
+    OutTexture[DispatchIndex.xy] = float4(FinalColor, 1.0f);
 }
 
 [shader("miss")]
@@ -140,9 +185,6 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 
 	// Load up three indices for the triangle.
 	uint3 Indices = InIndices.Load3(BaseIndex);
-
-	// Constants
-	const float3 LightPosition	= float3(0.0f, 3.0f, 0.0f);
 
 	// Retrieve corresponding vertex normals for the triangle vertices.
 	float3 TriangleNormals[3] =
@@ -195,11 +237,12 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 		AlbedoColor = float3(0.5f, 0.0f, 0.0f);
 	}
 
-	float3	HitPosition		= WorldHitPosition();
-	float3	LightDirection	= normalize(LightPosition - HitPosition);
-	float	LightStrength	= max(0.0f, dot(LightDirection, Normal));
-
 	// Send a new ray for reflection
+	const float3 HitPosition	= WorldHitPosition();
+    const float3 LightDir		= normalize(LightPosition - HitPosition);
+    const float3 ViewDir		= normalize(Camera.Position - HitPosition);
+    const float3 HalfVec		= normalize(ViewDir + LightDir);
+	
 	float3 ReflectedColor = float3(0.0f, 0.0f, 0.0f);
 	if (PayLoad.CurrentRecursionDepth < 4)
 	{
@@ -213,13 +256,13 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 		RayPayload ReflectancePayLoad;
 		ReflectancePayLoad.CurrentRecursionDepth = PayLoad.CurrentRecursionDepth + 1;
 
-		TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 0, 0, Ray, ReflectancePayLoad);
+		TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, ReflectancePayLoad);
 
 		ReflectedColor = ReflectancePayLoad.Color;
 	}
 	
-	float3 FresnelReflect	= FresnelReflectanceSchlick(WorldRayDirection(), Normal, AlbedoColor);
-	ReflectedColor = FresnelReflect * ReflectedColor;
+    float3 FresnelReflect = FresnelSchlick(saturate(dot(-WorldRayDirection(), Normal)), AlbedoColor);
+    ReflectedColor = FresnelReflect * ReflectedColor;
 
 	float3 PhongColor = CalculatePhongLighting(AlbedoColor, Normal);
 
