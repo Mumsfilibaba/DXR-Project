@@ -6,7 +6,7 @@ Camera::Camera()
 	: ViewProjection()
 	, ViewProjectionInverse()
 	, Position(0.0f, 0.0f, -2.0f)
-	, Right(1.0f, 0.0f, 0.0f)
+	, Right(-1.0f, 0.0f, 0.0f)
 	, Up(0.0f, 1.0f, 0.0f)
 	, Forward(0.0f, 0.0f, 1.0f)
 	, Rotation(0.0f, 0.0f, 0.0f)
@@ -62,9 +62,15 @@ void Camera::UpdateMatrices()
 	XMVECTOR At			= XMVectorAdd(XmPosition, XmForward);
 	XMMATRIX View		= XMMatrixLookAtLH(XmPosition, At, XmUp);
 
-	XMMATRIX XmViewProjection			= XMMatrixMultiply(View, Projection);
-	XMMATRIX XmViewProjectionInverse	= XMMatrixInverse(nullptr, XmViewProjection);
+	XMFLOAT3X3 TempView3x3;
+	XMStoreFloat3x3(&TempView3x3, View);
+	XMMATRIX View3x3 = XMLoadFloat3x3(&TempView3x3);
+
+	XMMATRIX XmViewProjection				= XMMatrixMultiply(View, Projection);
+	XMMATRIX XmViewProjectionInverse		= XMMatrixInverse(nullptr, XmViewProjection);
+	XMMATRIX XmViewProjectionNoTranslation	= XMMatrixMultiply(View3x3, Projection);
 
 	XMStoreFloat4x4(&ViewProjection, XMMatrixTranspose(XmViewProjection));
 	XMStoreFloat4x4(&ViewProjectionInverse, XMMatrixTranspose(XmViewProjectionInverse));
+	XMStoreFloat4x4(&ViewProjectionNoTranslation, XMMatrixTranspose(XmViewProjectionNoTranslation));
 }

@@ -242,6 +242,9 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     const float3 LightDir		= normalize(LightPosition - HitPosition);
     const float3 ViewDir		= normalize(Camera.Position - HitPosition);
     const float3 HalfVec		= normalize(ViewDir + LightDir);
+    const float Roughness		= 0.05f;
+    const float Metallic		= 1.0f;
+    const float AO				= 1.0f;
 	
 	float3 ReflectedColor = float3(0.0f, 0.0f, 0.0f);
 	if (PayLoad.CurrentRecursionDepth < 4)
@@ -264,8 +267,48 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     float3 FresnelReflect = FresnelSchlick(saturate(dot(-WorldRayDirection(), Normal)), AlbedoColor);
     ReflectedColor = FresnelReflect * ReflectedColor;
 
-	float3 PhongColor = CalculatePhongLighting(AlbedoColor, Normal);
+	//float3 PhongColor = CalculatePhongLighting(AlbedoColor, Normal);
 
+    float3 F0 = float3(0.04f, 0.04f, 0.04f);
+    F0 = lerp(F0, AlbedoColor, Metallic);
+
+    // Reflectance equation
+    float3 Lo = float3(0.0f, 0.0f, 0.0f);
+
+    // Calculate per-light radiance
+    float	Distance = length(LightPosition - HitPosition);
+    float	Attenuation = 1.0f / (Distance * Distance);
+    float3	Radiance	= LightColor * Attenuation;
+
+    // Cook-Torrance BRDF
+    float	NDF	= DistributionGGX(Normal, HalfVec, Roughness);
+    float	G	= GeometrySmith(Normal, ViewDir, LightDir, Roughness);
+    float3	F	= FresnelSchlick(saturate(dot(HalfVec, ViewDir)), F0);
+           
+    float3	Nominator	= NDF * G * F;
+    float	Denominator = 4.0f * max(dot(Normal, ViewDir), 0.0f) * max(dot(Normal, LightDir), 0.0f);
+    float3	Specular	= Nominator / max(Denominator, MIN_VALUE);
+        
+    // Ks is equal to Fresnel
+    float3 Ks = F;
+    // For energy conservation, the diffuse and specular light can't
+    // be above 1.0 (unless the surface emits light); to preserve this
+    // relationship the diffuse component (kD) should equal 1.0 - kS.
+    float3 Kd = float3(1.0f, 1.0f, 1.0f) - Ks;
+    // Multiply kD by the inverse metalness such that only non-metals 
+    // have diffuse lighting, or a linear blend if partly metal (pure metals
+    // have no diffuse light).
+    Kd *= 1.0f - Metallic;
+
+    // Scale light by NdotL
+    float NdotL = max(dot(Normal, LightDir), 0.0f);
+
+    // Add to outgoing radiance Lo
+    Lo += (((Kd * AlbedoColor) / PI) + Specular) * Radiance * NdotL;
+    
+    float3 Ambient	= float3(0.03f, 0.03f, 0.03f) * AlbedoColor * AO;
+    float3 Color	= Ambient + Lo;
+	
 	// Add rays together
-	PayLoad.Color = PhongColor + ReflectedColor;
+    PayLoad.Color = Color + ReflectedColor;
 }

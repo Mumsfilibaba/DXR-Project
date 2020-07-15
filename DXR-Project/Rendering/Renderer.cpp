@@ -13,8 +13,9 @@
 
 std::unique_ptr<Renderer> Renderer::RendererInstance = nullptr;
 
-static const DXGI_FORMAT	NormalFormat	= DXGI_FORMAT_R8G8B8A8_UNORM;
-static const Uint32			PresentInterval	= 1;
+static const DXGI_FORMAT	NormalFormat		= DXGI_FORMAT_R8G8B8A8_UNORM;
+static const DXGI_FORMAT	DepthBufferFormat	= DXGI_FORMAT_D32_FLOAT;
+static const Uint32			PresentInterval		= 0;
 
 Renderer::Renderer()
 {
@@ -227,6 +228,39 @@ void Renderer::Tick()
 		CommandList->SetGraphicsRootDescriptorTable(LightDescriptorTable->GetGPUTableStartHandle(), 0);
 
 		CommandList->DrawInstanced(3, 1, 0, 0);
+
+		D3D12_VERTEX_BUFFER_VIEW SkyboxVBO = { };
+		SkyboxVBO.BufferLocation	= SkyboxVertexBuffer->GetGPUVirtualAddress();
+		SkyboxVBO.SizeInBytes		= SkyboxVertexBuffer->GetSizeInBytes();
+		SkyboxVBO.StrideInBytes		= sizeof(Vertex);
+		CommandList->IASetVertexBuffers(0, &SkyboxVBO, 1);
+
+		D3D12_INDEX_BUFFER_VIEW SkyboxIBV = { };
+		SkyboxIBV.BufferLocation	= SkyboxIndexBuffer->GetGPUVirtualAddress();
+		SkyboxIBV.Format			= DXGI_FORMAT_R32_UINT;
+		SkyboxIBV.SizeInBytes		= SkyboxIndexBuffer->GetSizeInBytes();
+		CommandList->IASetIndexBuffer(&SkyboxIBV);
+
+		CommandList->SetPipelineState(SkyboxPSO->GetPipelineState());
+		CommandList->SetGraphicsRootSignature(SkyboxRootSignature->GetRootSignature());
+
+		struct SkyboxCameraBuffer
+		{
+			XMFLOAT4X4 Matrix;
+		} PerSkybox;
+
+		PerSkybox.Matrix = SceneCamera.GetViewProjectionWitoutTranslate();
+
+		CommandList->SetGraphicsRoot32BitConstants(&PerSkybox, 16, 0, 0);
+		CommandList->SetGraphicsRootDescriptorTable(SkyboxDescriptorTable->GetGPUTableStartHandle(), 1);
+
+		CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_READ);
+
+		CommandList->OMSetRenderTargets(RenderTarget, 1, GBuffer[3]->GetDepthStencilView().get());
+
+		CommandList->DrawIndexedInstanced(static_cast<Uint32>(SkyboxMesh.Indices.size()), 1, 0, 0, 0);
+
+		CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 
 	GuiContext::Get()->Render(CommandList.get());
@@ -400,8 +434,9 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	FenceValues.resize(SwapChain->GetSurfaceCount());
 
 	// Create mesh
-	Mesh = MeshFactory::CreateSphere(3);
-	Cube = MeshFactory::CreateCube();
+	Mesh		= MeshFactory::CreateSphere(3);
+	SkyboxMesh	= MeshFactory::CreateSphere(1);
+	Cube		= MeshFactory::CreateCube();
 
 	// Create CameraBuffer
 	SceneCamera = Camera();
@@ -456,6 +491,19 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 		return false;
 	}
 
+	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(SkyboxMesh.Vertices.size());
+	SkyboxVertexBuffer = std::make_shared<D3D12Buffer>(Device.get());
+	if (SkyboxVertexBuffer->Initialize(BufferProps))
+	{
+		void* BufferMemory = SkyboxVertexBuffer->Map();
+		memcpy(BufferMemory, SkyboxMesh.Vertices.data(), BufferProps.SizeInBytes);
+		SkyboxVertexBuffer->Unmap();
+	}
+	else
+	{
+		return false;
+	}
+
 	// Create indexbuffer
 	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Mesh.Indices.size());
 	MeshIndexBuffer = std::make_shared<D3D12Buffer>(Device.get());
@@ -477,6 +525,19 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 		void* BufferMemory = CubeIndexBuffer->Map();
 		memcpy(BufferMemory, Cube.Indices.data(), BufferProps.SizeInBytes);
 		CubeIndexBuffer->Unmap();
+	}
+	else
+	{
+		return false;
+	}
+
+	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(SkyboxMesh.Indices.size());
+	SkyboxIndexBuffer = std::make_shared<D3D12Buffer>(Device.get());
+	if (SkyboxIndexBuffer->Initialize(BufferProps))
+	{
+		void* BufferMemory = SkyboxIndexBuffer->Map();
+		memcpy(BufferMemory, SkyboxMesh.Indices.data(), BufferProps.SizeInBytes);
+		SkyboxIndexBuffer->Unmap();
 	}
 	else
 	{
@@ -873,6 +934,60 @@ bool Renderer::InitDeferred()
 	}
 
 	{
+		D3D12_DESCRIPTOR_RANGE Ranges[1] = {};
+		// Skybox Buffer
+		Ranges[0].BaseShaderRegister				= 0;
+		Ranges[0].NumDescriptors					= 1;
+		Ranges[0].RegisterSpace						= 0;
+		Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[0].OffsetInDescriptorsFromTableStart	= 0;
+
+		D3D12_ROOT_PARAMETER Parameters[2];
+		Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+		Parameters[0].Constants.ShaderRegister	= 0;
+		Parameters[0].Constants.RegisterSpace	= 0;
+		Parameters[0].Constants.Num32BitValues	= 16;
+		Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_VERTEX;
+
+		Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		Parameters[1].DescriptorTable.NumDescriptorRanges	= 1;
+		Parameters[1].DescriptorTable.pDescriptorRanges		= Ranges;
+		Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		D3D12_STATIC_SAMPLER_DESC SkyboxSampler = { };
+		SkyboxSampler.Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		SkyboxSampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		SkyboxSampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		SkyboxSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		SkyboxSampler.MipLODBias		= 0.0f;
+		SkyboxSampler.MaxAnisotropy		= 0;
+		SkyboxSampler.ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
+		SkyboxSampler.BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		SkyboxSampler.MinLOD			= 0.0f;
+		SkyboxSampler.MaxLOD			= 0.0f;
+		SkyboxSampler.ShaderRegister	= 0;
+		SkyboxSampler.RegisterSpace		= 0;
+		SkyboxSampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
+		RootSignatureDesc.NumParameters		= 2;
+		RootSignatureDesc.pParameters		= Parameters;
+		RootSignatureDesc.NumStaticSamplers	= 1;
+		RootSignatureDesc.pStaticSamplers	= &SkyboxSampler;
+		RootSignatureDesc.Flags				=
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+
+		SkyboxRootSignature = std::make_shared<D3D12RootSignature>(Device.get());
+		if (!SkyboxRootSignature->Initialize(RootSignatureDesc))
+		{
+			return false;
+		}
+	}
+
+	{
 		D3D12_DESCRIPTOR_RANGE Ranges[5] = {};
 		// Albedo
 		Ranges[0].BaseShaderRegister				= 0;
@@ -965,7 +1080,7 @@ bool Renderer::InitDeferred()
 	PSOProperties.NumInputElements	= 4;
 	PSOProperties.EnableDepth		= true;
 	PSOProperties.EnableBlending	= false;
-	PSOProperties.DepthBufferFormat = DXGI_FORMAT_D32_FLOAT;
+	PSOProperties.DepthBufferFormat = DepthBufferFormat;
 
 	DXGI_FORMAT Formats[] =
 	{
@@ -1012,6 +1127,37 @@ bool Renderer::InitDeferred()
 		return false;
 	}
 
+	VSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/Skybox.hlsl", "VSMain", "vs_6_0");
+	if (!VSBlob)
+	{
+		return false;
+	}
+
+	PSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/Skybox.hlsl", "PSMain", "ps_6_0");
+	if (!PSBlob)
+	{
+		return false;
+	}
+
+	PSOProperties.DebugName			= "Skybox PipelineState";
+	PSOProperties.VSBlob			= VSBlob.Get();
+	PSOProperties.PSBlob			= PSBlob.Get();
+	PSOProperties.RootSignature		= SkyboxRootSignature.get();
+	PSOProperties.InputElements		= InputElementDesc;
+	PSOProperties.NumInputElements	= 4;
+	PSOProperties.EnableDepth		= true;
+	PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	PSOProperties.DepthWriteMask	= D3D12_DEPTH_WRITE_MASK_ZERO;
+	PSOProperties.DepthBufferFormat = DepthBufferFormat;
+	PSOProperties.RTFormats			= Formats;
+	PSOProperties.NumRenderTargets	= 1;
+
+	SkyboxPSO = std::make_shared<D3D12GraphicsPipelineState>(Device.get());
+	if (!SkyboxPSO->Initialize(PSOProperties))
+	{
+		return false;
+	}
+
 	// Init descriptortable
 	GeometryDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 1);
 	GeometryDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 0);
@@ -1024,6 +1170,11 @@ bool Renderer::InitDeferred()
 	LightDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).get(), 3);
 	LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 4);
 	LightDescriptorTable->CopyDescriptors();
+
+	SkyboxDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 2);
+	SkyboxDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).get(), 0);
+	SkyboxDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 1);
+	SkyboxDescriptorTable->CopyDescriptors();
 
 	return true;
 }
@@ -1111,7 +1262,7 @@ bool Renderer::InitGBuffer()
 	GBufferProperties.Format	= DXGI_FORMAT_R32_TYPELESS;
 	
 	D3D12_CLEAR_VALUE ClearValue = { };
-	ClearValue.Format				= DXGI_FORMAT_D32_FLOAT;
+	ClearValue.Format				= DepthBufferFormat;
 	ClearValue.DepthStencil.Depth	= 1.0f;
 	ClearValue.DepthStencil.Stencil	= 0;
 	
@@ -1120,7 +1271,7 @@ bool Renderer::InitGBuffer()
 	SrvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC DsvDesc = { };
-	DsvDesc.Format				= DXGI_FORMAT_D32_FLOAT;
+	DsvDesc.Format				= DepthBufferFormat;
 	DsvDesc.ViewDimension		= D3D12_DSV_DIMENSION_TEXTURE2D;
 	DsvDesc.Texture2D.MipSlice	= 0;
 

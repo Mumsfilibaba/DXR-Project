@@ -68,11 +68,14 @@ private:
 	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
 
 	MeshData Mesh;
+	MeshData SkyboxMesh;
 	MeshData Cube;
 
 	std::shared_ptr<D3D12Buffer> CameraBuffer;
 	std::shared_ptr<D3D12Buffer> MeshVertexBuffer;
 	std::shared_ptr<D3D12Buffer> MeshIndexBuffer;
+	std::shared_ptr<D3D12Buffer> SkyboxVertexBuffer;
+	std::shared_ptr<D3D12Buffer> SkyboxIndexBuffer;
 	std::shared_ptr<D3D12Buffer> CubeVertexBuffer;
 	std::shared_ptr<D3D12Buffer> CubeIndexBuffer;
 
@@ -85,14 +88,17 @@ private:
 	
 	std::shared_ptr<D3D12RootSignature>		GeometryRootSignature;
 	std::shared_ptr<D3D12RootSignature>		LightRootSignature;
+	std::shared_ptr<D3D12RootSignature>		SkyboxRootSignature;
 	std::shared_ptr<D3D12RootSignature>		GlobalRootSignature;
 	std::shared_ptr<D3D12DescriptorTable>	GlobalDescriptorTable;
 	std::shared_ptr<D3D12DescriptorTable>	GeometryDescriptorTable;
 	std::shared_ptr<D3D12DescriptorTable>	LightDescriptorTable;
+	std::shared_ptr<D3D12DescriptorTable>	SkyboxDescriptorTable;
 	std::shared_ptr<D3D12RayTracingScene>	RayTracingScene;
 
 	std::shared_ptr<D3D12GraphicsPipelineState>		GeometryPSO;
 	std::shared_ptr<D3D12GraphicsPipelineState>		LightPassPSO;
+	std::shared_ptr<D3D12GraphicsPipelineState>		SkyboxPSO;
 	std::shared_ptr<D3D12RayTracingPipelineState>	RaytracingPSO;
 
 	std::vector<Uint64>	FenceValues;

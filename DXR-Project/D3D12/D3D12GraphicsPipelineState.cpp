@@ -82,8 +82,8 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 
 	D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc	= Pipeline.DepthStencilDesc;
 	DepthStencilDesc.DepthEnable				= Properties.EnableDepth;
-	DepthStencilDesc.DepthWriteMask				= D3D12_DEPTH_WRITE_MASK_ALL;
-	DepthStencilDesc.DepthFunc					= D3D12_COMPARISON_FUNC_LESS;
+	DepthStencilDesc.DepthWriteMask				= Properties.DepthWriteMask;
+	DepthStencilDesc.DepthFunc					= Properties.DepthFunc;
 	DepthStencilDesc.StencilEnable				= Properties.EnableDepth;
 	DepthStencilDesc.FrontFace.StencilFailOp	= DepthStencilDesc.FrontFace.StencilDepthFailOp = DepthStencilDesc.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
 	DepthStencilDesc.FrontFace.StencilFunc		= D3D12_COMPARISON_FUNC_ALWAYS;

@@ -16,6 +16,8 @@ struct GraphicsPipelineStateProperties
 	DXGI_FORMAT					DepthBufferFormat	= DXGI_FORMAT_UNKNOWN;
 	bool						EnableDepth			= false;
 	bool						EnableBlending		= false;
+	D3D12_DEPTH_WRITE_MASK		DepthWriteMask		= D3D12_DEPTH_WRITE_MASK_ALL;
+	D3D12_COMPARISON_FUNC		DepthFunc			= D3D12_COMPARISON_FUNC_LESS;
 };
 
 class D3D12GraphicsPipelineState : public D3D12DeviceChild

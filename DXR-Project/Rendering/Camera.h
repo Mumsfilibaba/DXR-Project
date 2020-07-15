@@ -23,6 +23,11 @@ public:
 		return ViewProjectionInverse;
 	}
 
+	FORCEINLINE XMFLOAT4X4 GetViewProjectionWitoutTranslate() const
+	{
+		return ViewProjectionNoTranslation;
+	}
+
 	FORCEINLINE XMFLOAT3 GetPosition() const
 	{
 		return Position;
@@ -31,6 +36,7 @@ public:
 private:
 	XMFLOAT4X4	ViewProjection;
 	XMFLOAT4X4	ViewProjectionInverse;
+	XMFLOAT4X4	ViewProjectionNoTranslation;
 	XMFLOAT3	Position;
 	XMFLOAT3	Rotation;
 	XMFLOAT3	Forward;
