@@ -18,6 +18,7 @@ struct GraphicsPipelineStateProperties
 	bool						EnableBlending		= false;
 	D3D12_DEPTH_WRITE_MASK		DepthWriteMask		= D3D12_DEPTH_WRITE_MASK_ALL;
 	D3D12_COMPARISON_FUNC		DepthFunc			= D3D12_COMPARISON_FUNC_LESS;
+	D3D12_CULL_MODE				CullMode			= D3D12_CULL_MODE_NONE;
 };
 
 class D3D12GraphicsPipelineState : public D3D12DeviceChild

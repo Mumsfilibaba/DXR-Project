@@ -113,10 +113,10 @@ void Renderer::Tick()
 	CommandList->CopyBuffer(CameraBuffer.get(), 0, UploadBuffers[CurrentBackBufferIndex]->GetBuffer(), Offset, sizeof(Camera));
 	CommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-	const Float32 BlackClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	CommandList->ClearRenderTargetView(GBuffer[0]->GetRenderTargetView().get(), BlackClearColor);
-	CommandList->ClearRenderTargetView(GBuffer[1]->GetRenderTargetView().get(), BlackClearColor);
-	CommandList->ClearRenderTargetView(GBuffer[2]->GetRenderTargetView().get(), BlackClearColor);
+	// const Float32 BlackClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	// CommandList->ClearRenderTargetView(GBuffer[0]->GetRenderTargetView().get(), BlackClearColor);
+	// CommandList->ClearRenderTargetView(GBuffer[1]->GetRenderTargetView().get(), BlackClearColor);
+	// CommandList->ClearRenderTargetView(GBuffer[2]->GetRenderTargetView().get(), BlackClearColor);
 	CommandList->ClearDepthStencilView(GBuffer[3]->GetDepthStencilView().get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 
 	D3D12_VERTEX_BUFFER_VIEW VBO = { };
@@ -127,8 +127,8 @@ void Renderer::Tick()
 	
 	D3D12_INDEX_BUFFER_VIEW IBV = { };
 	IBV.BufferLocation	= MeshIndexBuffer->GetGPUVirtualAddress();
-	IBV.Format			= DXGI_FORMAT_R32_UINT;
 	IBV.SizeInBytes		= MeshIndexBuffer->GetSizeInBytes();
+	IBV.Format			= DXGI_FORMAT_R32_UINT;
 	CommandList->IASetIndexBuffer(&IBV);
 
 	D3D12_VIEWPORT ViewPort = { };
@@ -1081,6 +1081,7 @@ bool Renderer::InitDeferred()
 	PSOProperties.EnableDepth		= true;
 	PSOProperties.EnableBlending	= false;
 	PSOProperties.DepthBufferFormat = DepthBufferFormat;
+	PSOProperties.CullMode			= D3D12_CULL_MODE_BACK;
 
 	DXGI_FORMAT Formats[] =
 	{
@@ -1120,6 +1121,7 @@ bool Renderer::InitDeferred()
 	PSOProperties.DepthBufferFormat = DXGI_FORMAT_UNKNOWN;
 	PSOProperties.RTFormats			= Formats;
 	PSOProperties.NumRenderTargets	= 1;
+	PSOProperties.CullMode			= D3D12_CULL_MODE_NONE;
 
 	LightPassPSO = std::make_shared<D3D12GraphicsPipelineState>(Device.get());
 	if (!LightPassPSO->Initialize(PSOProperties))

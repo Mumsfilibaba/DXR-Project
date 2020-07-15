@@ -69,7 +69,7 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 
 	D3D12_RASTERIZER_DESC& RasterizerDesc	= Pipeline.RasterizerDesc;
 	RasterizerDesc.FillMode					= D3D12_FILL_MODE_SOLID;
-	RasterizerDesc.CullMode					= D3D12_CULL_MODE_NONE;
+	RasterizerDesc.CullMode					= Properties.CullMode;
 	RasterizerDesc.FrontCounterClockwise	= FALSE;
 	RasterizerDesc.DepthBias				= D3D12_DEFAULT_DEPTH_BIAS;
 	RasterizerDesc.DepthBiasClamp			= D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
