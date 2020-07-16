@@ -28,8 +28,8 @@ public:
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
 
 private:
-	std::shared_ptr<D3D12Buffer> VertexBuffer	= nullptr;
-	std::shared_ptr<D3D12Buffer> IndexBuffer	= nullptr;
+	std::shared_ptr<D3D12Buffer> VertexBuffer;
+	std::shared_ptr<D3D12Buffer> IndexBuffer;
 	
 	D3D12Buffer* ResultBuffer	= nullptr;
 	D3D12Buffer* ScratchBuffer	= nullptr;

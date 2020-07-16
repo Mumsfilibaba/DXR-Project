@@ -16,8 +16,9 @@ enum ETextureFactoryFlags : Uint32
 class TextureFactory
 {
 public:
-	static D3D12Texture* LoadFromFile(D3D12Device* Device, const std::string& Filepath, Uint32 CreateFlags);
-	static D3D12Texture* LoadFromMemory(D3D12Device* Device, const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags);
+	// Supports R8G8B8A8 and R32G32B32A32 for now
+	static D3D12Texture* LoadFromFile(D3D12Device* Device, const std::string& Filepath, Uint32 CreateFlags, DXGI_FORMAT Format);
+	static D3D12Texture* LoadFromMemory(D3D12Device* Device, const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags, DXGI_FORMAT Format);
 
-	static D3D12Texture* CreateTextureCubeFromPanorma(D3D12Device* Device, D3D12Texture* PanoramaSource, Uint32 CubeMapSize);
+	static D3D12Texture* CreateTextureCubeFromPanorma(D3D12Device* Device, D3D12Texture* PanoramaSource, Uint32 CubeMapSize, DXGI_FORMAT Format);
 };

@@ -12,6 +12,8 @@
 
 D3D12RayTracingGeometry::D3D12RayTracingGeometry(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
+	, VertexBuffer(nullptr)
+	, IndexBuffer(nullptr)
 {
 }
 

@@ -6,12 +6,16 @@
 #include "Windows/WindowsCursor.h"
 #include "Windows/WindowsApplication.h"
 
+#include "Scene/Scene.h"
+
 #include <memory>
 
 class Application : public EventHandler
 {
 public:
 	~Application();
+
+	void Release();
 
 	void Run();
 	bool Tick();
@@ -48,10 +52,11 @@ private:
 	bool Initialize();
 
 protected:
-	std::shared_ptr<WindowsWindow>	Window				= nullptr;
-	WindowsApplication*				PlatformApplication = nullptr;
+	std::shared_ptr<WindowsWindow> Window = nullptr;
+	WindowsApplication*	PlatformApplication = nullptr;
 
 	Clock Timer;
+	Scene* CurrentScene = nullptr;
 
 	static std::shared_ptr<Application> Instance;
 };

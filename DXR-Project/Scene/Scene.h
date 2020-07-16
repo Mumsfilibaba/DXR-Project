@@ -9,6 +9,11 @@ public:
 
 	void AddActor(Actor* InActor);
 
+	FORCEINLINE const std::vector<Actor*> GetActors() const
+	{
+		return Actors;
+	}
+
 private:
 	std::vector<Actor*> Actors;
 };

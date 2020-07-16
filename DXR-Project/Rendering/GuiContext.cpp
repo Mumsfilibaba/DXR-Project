@@ -402,7 +402,7 @@ bool GuiContext::CreateFontTexture()
 	Int32	Height	= 0;
 	IO.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-	FontTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Device.get(), Pixels, Width, Height, 0));
+	FontTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Device.get(), Pixels, Width, Height, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (FontTexture)
 	{
 		DescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 1);

@@ -3,6 +3,7 @@
 
 #include "Rendering/Renderer.h"
 #include "Rendering/GuiContext.h"
+#include "Rendering/TextureFactory.h"
 
 std::shared_ptr<Application> Application::Instance = nullptr;
 
@@ -12,6 +13,11 @@ Application::Application()
 
 Application::~Application()
 {
+}
+
+void Application::Release()
+{
+	SAFEDELETE(CurrentScene);
 	SAFEDELETE(PlatformApplication);
 }
 
@@ -55,7 +61,7 @@ bool Application::Tick()
 
 	GuiContext::Get()->EndFrame();
 
-	Renderer::Get()->Tick();
+	Renderer::Get()->Tick(*CurrentScene);
 
 	return ShouldExit;
 }
@@ -269,6 +275,82 @@ bool Application::Initialize()
 		::MessageBox(0, "FAILED to create ImGuiContext", "ERROR", MB_ICONERROR);
 		return false;
 	}
+
+	// Initialize Scene
+	constexpr Float32	SphereOffset	= 1.25f;
+	constexpr Uint32	SphereCountX	= 8;
+	constexpr Float32	StartPositionX	= (-static_cast<Float32>(SphereCountX) * SphereOffset) / 2.0f;
+	constexpr Uint32	SphereCountY	= 8;
+	constexpr Float32	StartPositionY	= (-static_cast<Float32>(SphereCountY) * SphereOffset) / 2.0f;
+	constexpr Float32	MetallicDelta	= 1.0f / SphereCountY;
+	constexpr Float32	RoughnessDelta	= 1.0f / SphereCountX;
+	
+	std::shared_ptr<D3D12Texture> Albedo = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	if (!Albedo)
+	{
+		return false;
+	}
+
+	std::shared_ptr<D3D12Texture> Normal = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	if (!Normal)
+	{
+		return false;
+	}
+
+	Actor* NewActor = nullptr;
+	RenderComponent* NewComponent = nullptr;
+	CurrentScene = new Scene();
+
+	// Create Spheres
+	MeshData SphereMeshData = MeshFactory::CreateSphere(3);
+	std::shared_ptr<Mesh> SphereMesh = Mesh::Make(Renderer->GetDevice().get(), SphereMeshData);
+
+	XMFLOAT4X4 Matrix;
+	MaterialProperties MatProperties;
+	for (Uint32 y = 0; y < SphereCountY; y++)
+	{
+		for (Uint32 x = 0; x < SphereCountX; x++)
+		{
+			XMStoreFloat4x4(&Matrix, XMMatrixTranspose(XMMatrixTranslation(StartPositionX + (x * SphereOffset), StartPositionY + (y * SphereOffset), 0)));
+
+			NewActor = new Actor();
+			NewActor->SetTransform(Matrix);
+			CurrentScene->AddActor(NewActor);
+
+			NewComponent = new RenderComponent(NewActor);
+			NewComponent->Mesh		= SphereMesh;
+			NewComponent->Material	= std::make_shared<Material>(MatProperties);
+
+			NewActor->AddComponent(NewComponent);
+
+			MatProperties.Roughness += RoughnessDelta;
+		}
+
+		MatProperties.Roughness	= 0.05f;
+		MatProperties.Metallic	+= MetallicDelta;
+	}
+
+	// Create Other Meshes
+	MeshData CubeMeshData = MeshFactory::CreateCube();
+	
+	NewActor = new Actor();
+	CurrentScene->AddActor(NewActor);
+
+	XMStoreFloat4x4(&Matrix, XMMatrixTranspose(XMMatrixTranslation(0.0f, 0.0f, -2.0f)));
+	NewActor->SetTransform(Matrix);
+
+	MatProperties.AO		= 1.0f;
+	MatProperties.Metallic	= 0.0f;
+	MatProperties.Roughness = 0.5f;
+
+	NewComponent = new RenderComponent(NewActor);
+	NewComponent->Mesh		= Mesh::Make(Renderer->GetDevice().get(), CubeMeshData);
+	NewComponent->Material	= std::make_shared<Material>(MatProperties);
+
+	NewComponent->Material->AlbedoMap = Albedo;
+	NewComponent->Material->AlbedoMap = Normal;
+
+	NewActor->AddComponent(NewComponent);
 
 	// Reset timer before starting
 	Timer.Reset();

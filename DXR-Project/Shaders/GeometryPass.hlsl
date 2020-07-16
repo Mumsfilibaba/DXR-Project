@@ -16,6 +16,8 @@ struct Camera
 
 ConstantBuffer<Camera> Camera : register(b1, space0);
 
+static const float MIN_ROUGHNESS = 0.01f;
+
 // VertexShader
 struct VSInput
 {
@@ -65,9 +67,11 @@ PSOutput PSMain(PSInput Input)
     float3 Normal = normalize(Input.Normal);
     Normal = (Normal + 1.0f) * 0.5f;
 
+    const float FinalRoughness = max(Roughness, MIN_ROUGHNESS);
+	
 	PSOutput Output;
 	Output.Albedo	= float4(ObjectColor, 1.0f);
     Output.Normal	= float4(Normal, 1.0f);
-	Output.Material = float4(Roughness, Metallic, AO, 1.0f);
+    Output.Material = float4(FinalRoughness, Metallic, AO, 1.0f);
 	return Output;
 }

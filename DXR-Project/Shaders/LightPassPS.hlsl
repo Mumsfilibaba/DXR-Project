@@ -136,10 +136,12 @@ float4 Main(PSInput Input) : SV_TARGET
 	float3 Color	= Ambient + Lo;
 
     // HDR tonemapping
-	Color = Color / (Color + float3(1.0f, 1.0f, 1.0f));
+    const float INTENSITY	= 0.5f;
+    const float GAMMA		= 1.0f / 2.2f;
+	
+    Color = Color / (Color + float3(INTENSITY, INTENSITY, INTENSITY));
     // Gamma correct
-	const float Gamma = 1.0f / 2.2f;
-	Color = pow(Color, float3(Gamma, Gamma, Gamma));
+    Color = pow(Color, float3(GAMMA, GAMMA, GAMMA));
 
 	return float4(Color, 1.0f);
 }

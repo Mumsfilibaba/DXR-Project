@@ -10,6 +10,10 @@ RaytracingAccelerationStructure Scene : register(t0, space0);
 
 Texture2D<float4>	Albedo		: register(t4, space0);
 Texture2D<float4>	NormalMap	: register(t5, space0);
+
+// Texture2D<float4> GBufferNormal	: register(t6, space0);
+// Texture2D<float4> GBufferDepth	: register(t7, space0);
+
 TextureCube<float4>	Skybox		: register(t1, space0);
 
 SamplerState TextureSampler	: register(s0, space0);
@@ -31,8 +35,9 @@ StructuredBuffer<Vertex>	Vertices	: register(t2, space0);
 ByteAddressBuffer			InIndices	: register(t3, space0);
 
 // Constants
-static const float PI			= 3.14159265359f;
-static const float MIN_VALUE	= 0.0000001f;
+static const float PI				= 3.14159265359f;
+static const float MIN_VALUE		= 0.0000001f;
+static const float MIN_ROUGHNESS	= 0.01f;
 
 static const float3 LightPosition	= float3(0.0f, 10.0f, -10.0f);
 static const float3 LightColor		= float3(300.0f, 300.0f, 300.0f);
@@ -158,11 +163,13 @@ void RayGen()
 	TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 0, 0, Ray, PayLoad);
 
 	// HDR tonemapping
+    const float INTENSITY	= 0.5f;
+    const float GAMMA		= 1.0f / 2.2f;
+	
     float3 FinalColor = PayLoad.Color;
-    FinalColor = FinalColor / (FinalColor + float3(1.0f, 1.0f, 1.0f));
+    FinalColor = FinalColor / (FinalColor + float3(INTENSITY, INTENSITY, INTENSITY));
     // Gamma correct
-    const float Gamma = 1.0f / 2.2f;
-    FinalColor = pow(FinalColor, float3(Gamma, Gamma, Gamma));
+    FinalColor = pow(FinalColor, float3(GAMMA, GAMMA, GAMMA));
 	
 	// Output Image
     OutTexture[DispatchIndex.xy] = float4(FinalColor, 1.0f);
@@ -242,7 +249,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     const float3 LightDir		= normalize(LightPosition - HitPosition);
     const float3 ViewDir		= normalize(Camera.Position - HitPosition);
     const float3 HalfVec		= normalize(ViewDir + LightDir);
-    const float Roughness		= 0.05f;
+    const float Roughness		= max(0.05f, MIN_ROUGHNESS);
     const float Metallic		= 1.0f;
     const float AO				= 1.0f;
 	

@@ -22,6 +22,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	else
 	{
 		App->Run();
+		App->Release();
+
 		return 0;
 	}
 }

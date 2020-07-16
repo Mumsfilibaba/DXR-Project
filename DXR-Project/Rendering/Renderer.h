@@ -15,15 +15,45 @@
 #include "Application/Clock.h"
 #include "Application/InputCodes.h"
 
+#include "Scene/Actor.h"
+#include "Scene/Scene.h"
+
 #include <memory>
 #include <vector>
 
 #include "Camera.h"
 #include "MeshFactory.h"
+#include "Material.h"
+#include "Mesh.h"
 
 class D3D12Texture;
 class D3D12GraphicsPipelineState;
 class D3D12RayTracingPipelineState;
+
+/*
+* RenderComponent
+*/
+
+class RenderComponent : public Component
+{
+public:
+	RenderComponent(Actor* InOwningActor)
+		: Component(InOwningActor)
+		, Material(nullptr)
+		, Mesh(nullptr)
+	{
+	}
+
+	~RenderComponent() = default;
+
+public:
+	std::shared_ptr<Material>	Material;
+	std::shared_ptr<Mesh>		Mesh;
+};
+
+/*
+* Renderer
+*/
 
 class Renderer
 {
@@ -31,7 +61,7 @@ public:
 	Renderer();
 	~Renderer();
 	
-	void Tick();
+	void Tick(const Scene& CurrentScene);
 	
 	void OnResize(Int32 Width, Int32 Height);
 	void OnMouseMove(Int32 X, Int32 Y);
@@ -67,7 +97,7 @@ private:
 
 	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
 
-	MeshData Mesh;
+	MeshData Sphere;
 	MeshData SkyboxMesh;
 	MeshData Cube;
 
@@ -90,6 +120,7 @@ private:
 	std::shared_ptr<D3D12RootSignature>		LightRootSignature;
 	std::shared_ptr<D3D12RootSignature>		SkyboxRootSignature;
 	std::shared_ptr<D3D12RootSignature>		GlobalRootSignature;
+	std::shared_ptr<D3D12DescriptorTable>	RayGenDescriptorTable;
 	std::shared_ptr<D3D12DescriptorTable>	GlobalDescriptorTable;
 	std::shared_ptr<D3D12DescriptorTable>	GeometryDescriptorTable;
 	std::shared_ptr<D3D12DescriptorTable>	LightDescriptorTable;

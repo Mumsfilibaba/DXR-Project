@@ -256,8 +256,5 @@ void D3D12DescriptorTable::CopyDescriptors()
 
 		Device->GetDevice()->CopyDescriptors(1, &CPUTableStart, &DescriptorCount, DescriptorCount, OfflineHandles.data(), RangeSizes.data(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		IsDirty = false;
-
-		OfflineHandles.clear();
-		OfflineHandles.resize(DescriptorCount);
 	}
 }

@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "TextureFactory.h"
 #include "GuiContext.h"
+#include "Mesh.h"
 
 #include "D3D12/D3D12Texture.h"
 #include "D3D12/D3D12Views.h"
@@ -25,7 +26,7 @@ Renderer::~Renderer()
 {
 }
 
-void Renderer::Tick()
+void Renderer::Tick(const Scene& CurrentScene)
 {
 	Frameclock.Tick();
 
@@ -119,18 +120,6 @@ void Renderer::Tick()
 	// CommandList->ClearRenderTargetView(GBuffer[2]->GetRenderTargetView().get(), BlackClearColor);
 	CommandList->ClearDepthStencilView(GBuffer[3]->GetDepthStencilView().get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 
-	D3D12_VERTEX_BUFFER_VIEW VBO = { };
-	VBO.BufferLocation	= MeshVertexBuffer->GetGPUVirtualAddress();
-	VBO.SizeInBytes		= MeshVertexBuffer->GetSizeInBytes();
-	VBO.StrideInBytes	= sizeof(Vertex);
-	CommandList->IASetVertexBuffers(0, &VBO, 1);
-	
-	D3D12_INDEX_BUFFER_VIEW IBV = { };
-	IBV.BufferLocation	= MeshIndexBuffer->GetGPUVirtualAddress();
-	IBV.SizeInBytes		= MeshIndexBuffer->GetSizeInBytes();
-	IBV.Format			= DXGI_FORMAT_R32_UINT;
-	CommandList->IASetIndexBuffer(&IBV);
-
 	D3D12_VIEWPORT ViewPort = { };
 	ViewPort.Width		= static_cast<Float32>(SwapChain->GetWidth());
 	ViewPort.Height		= static_cast<Float32>(SwapChain->GetHeight());
@@ -164,36 +153,40 @@ void Renderer::Tick()
 
 	CommandList->SetGraphicsRootDescriptorTable(GeometryDescriptorTable->GetGPUTableStartHandle(), 1);
 
-	constexpr Float32	SphereOffset	= 1.25f;
-	constexpr Uint32	SphereCountX	= 8;
-	constexpr Float32	StartPositionX	= (-static_cast<Float32>(SphereCountX) * SphereOffset) / 2.0f;
-	constexpr Uint32	SphereCountY	= 8;
-	constexpr Float32	StartPositionY	= (-static_cast<Float32>(SphereCountY) * SphereOffset) / 2.0f;
-	
+	// Render all objects to the GBuffer
 	struct PerObject
 	{
 		XMFLOAT4X4	Matrix;
-		Float32		Roughness	= 0.05f;
-		Float32		Metallic	= 0.0f;
-		Float32		AO			= 1.0f;
+		Float32		Roughness;
+		Float32		Metallic;
+		Float32		AO;
 	} PerObjectBuffer;
 
-	constexpr Float32 MetallicDelta		= 1.0f / SphereCountY;
-	constexpr Float32 RoughnessDelta	= 1.0f / SphereCountX;
-	for (Uint32 y = 0; y < SphereCountY; y++)
+	for (Actor* CurrentActor : CurrentScene.GetActors())
 	{
-		for (Uint32 x = 0; x < SphereCountX; x++)
-		{
-			XMStoreFloat4x4(&PerObjectBuffer.Matrix, XMMatrixTranspose(XMMatrixTranslation(StartPositionX + (x * SphereOffset), StartPositionY + (y * SphereOffset), 0)));
-			
-			CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 19, 0, 0);
-			CommandList->DrawIndexedInstanced(static_cast<Uint32>(Mesh.Indices.size()), 1, 0, 0, 0);
-			
-			PerObjectBuffer.Roughness += RoughnessDelta;
-		}
+		RenderComponent* RComponent = reinterpret_cast<RenderComponent*>(CurrentActor->GetComponent());
+		Mesh* CurrentMesh = RComponent->Mesh.get();
+		Material* CurrentMaterial = RComponent->Material.get();
+
+		D3D12_VERTEX_BUFFER_VIEW VBO = { };
+		VBO.BufferLocation	= CurrentMesh->VertexBuffer->GetGPUVirtualAddress();
+		VBO.SizeInBytes		= CurrentMesh->VertexBuffer->GetSizeInBytes();
+		VBO.StrideInBytes	= sizeof(Vertex);
+		CommandList->IASetVertexBuffers(0, &VBO, 1);
+
+		D3D12_INDEX_BUFFER_VIEW IBV = { };
+		IBV.BufferLocation	= CurrentMesh->IndexBuffer->GetGPUVirtualAddress();
+		IBV.SizeInBytes		= CurrentMesh->IndexBuffer->GetSizeInBytes();
+		IBV.Format			= DXGI_FORMAT_R32_UINT;
+		CommandList->IASetIndexBuffer(&IBV);
+
+		PerObjectBuffer.Matrix		= CurrentActor->GetTransform();
+		PerObjectBuffer.Roughness	= CurrentMaterial->Properties.Roughness;
+		PerObjectBuffer.Metallic	= CurrentMaterial->Properties.Metallic;
+		PerObjectBuffer.AO			= CurrentMaterial->Properties.AO;
+		CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 19, 0, 0);
 		
-		PerObjectBuffer.Roughness = 0.05f;
-		PerObjectBuffer.Metallic += MetallicDelta;
+		CommandList->DrawIndexedInstanced(CurrentMesh->IndexCount, 1, 0, 0, 0);
 	}
 
 	CommandList->TransitionBarrier(GBuffer[0].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -201,6 +194,7 @@ void Renderer::Tick()
 	CommandList->TransitionBarrier(GBuffer[2].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
+	// RayTracing
 	if (Device->IsRayTracingSupported())
 	{
 		TraceRays(BackBuffer, CommandList.get());
@@ -216,6 +210,7 @@ void Renderer::Tick()
 	D3D12RenderTargetView* RenderTarget[] = { BackBuffer->GetRenderTargetView().get() };
 	CommandList->OMSetRenderTargets(RenderTarget, 1, nullptr);
 
+	// LightPass
 	if (!Device->IsRayTracingSupported())
 	{
 		CommandList->RSSetViewports(&ViewPort, 1);
@@ -263,6 +258,7 @@ void Renderer::Tick()
 		CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 
+	// Render UI
 	GuiContext::Get()->Render(CommandList.get());
 
 	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -329,10 +325,18 @@ void Renderer::OnResize(Int32 Width, Int32 Height)
 	{
 		InitRayTracingTexture();
 
-
+		RayGenDescriptorTable->SetUnorderedAccessView(ResultTexture->GetUnorderedAccessView(0).get(), 0);
+		RayGenDescriptorTable->CopyDescriptors();
 	}
 
-	InitDeferred();
+	// Update deferred
+	InitGBuffer();
+
+	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).get(), 0);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).get(), 1);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).get(), 2);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).get(), 3);
+	LightDescriptorTable->CopyDescriptors();
 
 	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 }
@@ -439,7 +443,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	FenceValues.resize(SwapChain->GetSurfaceCount());
 
 	// Create mesh
-	Mesh		= MeshFactory::CreateSphere(3);
+	Sphere		= MeshFactory::CreateSphere(3);
 	SkyboxMesh	= MeshFactory::CreateSphere(1);
 	Cube		= MeshFactory::CreateCube();
 
@@ -468,14 +472,14 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 
 	// Create vertexbuffer
 	BufferProps.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
-	BufferProps.SizeInBytes		= sizeof(Vertex) * static_cast<Uint64>(Mesh.Vertices.size());
+	BufferProps.SizeInBytes		= sizeof(Vertex) * static_cast<Uint64>(Sphere.Vertices.size());
 	BufferProps.MemoryType		= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 	MeshVertexBuffer = std::make_shared<D3D12Buffer>(Device.get());
 	if (MeshVertexBuffer->Initialize(BufferProps))
 	{
 		void* BufferMemory = MeshVertexBuffer->Map();
-		memcpy(BufferMemory, Mesh.Vertices.data(), BufferProps.SizeInBytes);
+		memcpy(BufferMemory, Sphere.Vertices.data(), BufferProps.SizeInBytes);
 		MeshVertexBuffer->Unmap();
 	}
 	else
@@ -510,12 +514,12 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	// Create indexbuffer
-	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Mesh.Indices.size());
+	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Sphere.Indices.size());
 	MeshIndexBuffer = std::make_shared<D3D12Buffer>(Device.get());
 	if (MeshIndexBuffer->Initialize(BufferProps))
 	{
 		void* BufferMemory = MeshIndexBuffer->Map();
-		memcpy(BufferMemory, Mesh.Indices.data(), BufferProps.SizeInBytes);
+		memcpy(BufferMemory, Sphere.Indices.data(), BufferProps.SizeInBytes);
 		MeshIndexBuffer->Unmap();
 	}
 	else
@@ -550,25 +554,25 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	// Create Texture Cube
-	std::unique_ptr<D3D12Texture> Panorama = std::unique_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/arches.hdr", 0));
+	std::unique_ptr<D3D12Texture> Panorama = std::unique_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/arches.hdr", 0, DXGI_FORMAT_R32G32B32A32_FLOAT));
 	if (!Panorama)
 	{
 		return false;	
 	}
 
-	Skybox = std::shared_ptr<D3D12Texture>(TextureFactory::CreateTextureCubeFromPanorma(Device.get(), Panorama.get(), 512));
+	Skybox = std::shared_ptr<D3D12Texture>(TextureFactory::CreateTextureCubeFromPanorma(Device.get(), Panorama.get(), 512, DXGI_FORMAT_R16G16B16A16_FLOAT));
 	if (!Skybox)
 	{
 		return false;
 	}
 
-	Albedo = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS));
+	Albedo = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!Albedo)
 	{
 		return false;
 	}
 
-	Normal = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS));
+	Normal = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!Normal)
 	{
 		return false;
@@ -777,7 +781,7 @@ bool Renderer::InitRayTracing()
 
 	// Create BLAS
 	std::shared_ptr<D3D12RayTracingGeometry> MeshGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());
-	MeshGeometry->BuildAccelerationStructure(CommandList.get(), MeshVertexBuffer, static_cast<Uint32>(Mesh.Vertices.size()), MeshIndexBuffer, static_cast<Uint32>(Mesh.Indices.size()));
+	MeshGeometry->BuildAccelerationStructure(CommandList.get(), MeshVertexBuffer, static_cast<Uint32>(Sphere.Vertices.size()), MeshIndexBuffer, static_cast<Uint32>(Sphere.Indices.size()));
 
 	std::shared_ptr<D3D12RayTracingGeometry> CubeGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());
 	CubeGeometry->BuildAccelerationStructure(CommandList.get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.size()), CubeIndexBuffer, static_cast<Uint32>(Cube.Indices.size()));
@@ -803,9 +807,9 @@ bool Renderer::InitRayTracing()
 	Instances.emplace_back(CubeGeometry, Matrix, 1, 1);
 
 	// Create DescriptorTables
-	std::shared_ptr<D3D12DescriptorTable> RayGenDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 1);
 	std::shared_ptr<D3D12DescriptorTable> SphereDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 2);
 	std::shared_ptr<D3D12DescriptorTable> CubeDescriptorTable	= std::make_shared<D3D12DescriptorTable>(Device.get(), 2);
+	RayGenDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 1);
 	GlobalDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 5);
 
 	// Create TLAS
@@ -834,7 +838,7 @@ bool Renderer::InitRayTracing()
 	SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.Buffer.FirstElement			= 0;
 	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
-	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Mesh.Vertices.size());
+	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Vertices.size());
 	SrvDesc.Buffer.StructureByteStride	= sizeof(Vertex);
 
 	MeshVertexBuffer->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), MeshVertexBuffer->GetResource(), &SrvDesc), 0);
@@ -845,7 +849,7 @@ bool Renderer::InitRayTracing()
 	// IndexBuffer
 	SrvDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
 	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
-	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Mesh.Indices.size());
+	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Indices.size());
 	SrvDesc.Buffer.StructureByteStride	= 0;
 
 	MeshIndexBuffer->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), MeshIndexBuffer->GetResource(), &SrvDesc), 0);

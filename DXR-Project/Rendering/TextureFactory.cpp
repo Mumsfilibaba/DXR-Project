@@ -38,12 +38,29 @@ inline T DivideByMultiple(T Value, Uint32 Alignment)
 	return static_cast<T>((Value + Alignment - 1) / Alignment);
 }
 
-D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::string& Filepath, Uint32 CreateFlags)
+D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::string& Filepath, Uint32 CreateFlags, DXGI_FORMAT Format)
 {
 	Int32 Width			= 0;
 	Int32 Height		= 0;
 	Int32 ChannelCount	= 0;
-	std::unique_ptr<Byte> Pixels = std::unique_ptr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 4));
+
+	// Load based on format
+	std::unique_ptr<Byte> Pixels;
+	if (Format == DXGI_FORMAT_R8G8B8A8_UNORM)
+	{
+		Pixels = std::unique_ptr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 4));
+	}
+	else if (Format == DXGI_FORMAT_R32G32B32A32_FLOAT)
+	{
+		Pixels = std::unique_ptr<Byte>(reinterpret_cast<Byte*>(stbi_loadf(Filepath.c_str(), &Width, &Height, &ChannelCount, 4)));
+	}
+	else
+	{
+		::OutputDebugString("[TextureFactory]: Format not supported");
+		return nullptr;
+	}
+
+	// Check if succeeded
 	if (!Pixels)
 	{
 		::OutputDebugString(("[TextureFactory]: Failed to load image '" + Filepath + "'\n").c_str());
@@ -54,14 +71,19 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::strin
 		::OutputDebugString(("[TextureFactory]: Loaded image '" + Filepath + "'\n").c_str());
 	}
 
-	return LoadFromMemory(Device, Pixels.get(), Width, Height, CreateFlags);
+	return LoadFromMemory(Device, Pixels.get(), Width, Height, CreateFlags, Format);
 }
 
-D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags)
+D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags, DXGI_FORMAT Format)
 {
+	if (Format != DXGI_FORMAT_R8G8B8A8_UNORM && Format != DXGI_FORMAT_R32G32B32A32_FLOAT)
+	{
+		::OutputDebugString("[TextureFactory]: Format not supported");
+		return nullptr;
+	}
+
 	const bool GenerateMipLevels	= CreateFlags & ETextureFactoryFlags::TEXTURE_FACTORY_FLAGS_GENERATE_MIPS;
 	const Uint32 MipLevels			= GenerateMipLevels ? std::min<Uint32>(std::log2<Uint32>(Width), std::log2<Uint32>(Height)) : 1;
-	const DXGI_FORMAT Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	VALIDATE(MipLevels != 0);
 
@@ -83,7 +105,8 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	}
 
 	// Create UploadBuffer
-	const Uint32 UploadPitch	= (Width * 4 + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
+	const Uint32 UploadStride	= (Format == DXGI_FORMAT_R8G8B8A8_UNORM) ? 4 : 16;
+	const Uint32 UploadPitch	= (Width * UploadStride + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
 	const Uint32 UploadSize		= Height * UploadPitch;
 
 	BufferProperties UploadBufferProps = { };
@@ -99,7 +122,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 		void* Memory = UploadBuffer->Map();
 		for (Uint32 Y = 0; Y < Height; Y++)
 		{
-			memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(Memory) + Y * UploadPitch), Pixels + Y * Width * 4, Width * 4);
+			memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(Memory) + Y * UploadPitch), Pixels + (Y * Width * UploadStride), Width * UploadStride);
 		}
 		UploadBuffer->Unmap();
 	}
@@ -328,11 +351,9 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	return Texture.release();
 }
 
-D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, D3D12Texture* PanoramaSource, Uint32 CubeMapSize)
+D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, D3D12Texture* PanoramaSource, Uint32 CubeMapSize, DXGI_FORMAT Format)
 {
 	VALIDATE(PanoramaSource->GetShaderResourceView(0));
-
-	const DXGI_FORMAT Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	// Create texture
 	TextureProperties TextureProps = { };
