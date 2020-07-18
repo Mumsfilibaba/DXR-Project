@@ -8,6 +8,7 @@ Texture2D<float4> Albedo		: register(t0, space0);
 Texture2D<float4> Normal		: register(t1, space0);
 Texture2D<float4> Material		: register(t2, space0);
 Texture2D<float4> DepthStencil	: register(t3, space0);
+Texture2D<float4> DXRReflection	: register(t4, space0);
 
 SamplerState GBufferSampler : register(s0, space0);
 
@@ -80,12 +81,13 @@ float4 Main(PSInput Input) : SV_TARGET
 	float2 TexCoord = Input.TexCoord;
 	TexCoord.y = 1.0f - TexCoord.y;
 	
-	float3 WorldPosition	= PositionFromDepth(TexCoord);
-	float3 SampledAlbedo	= Albedo.Sample(GBufferSampler, TexCoord).rgb;
-	float3 SampledNormal	= Normal.Sample(GBufferSampler, TexCoord).rgb;
+	float3 WorldPosition		= PositionFromDepth(TexCoord);
+	float3 SampledAlbedo		= Albedo.Sample(GBufferSampler, TexCoord).rgb;
+    float3 SampledReflection	= DXRReflection.Sample(GBufferSampler, TexCoord).rgb;
+	float3 SampledMaterial		= Material.Sample(GBufferSampler, TexCoord).rgb;
+	float3 SampledNormal		= Normal.Sample(GBufferSampler, TexCoord).rgb;
     SampledNormal = ((SampledNormal * 2.0f) - 1.0f);
 	
-	float3 SampledMaterial	= Material.Sample(GBufferSampler, TexCoord).rgb;
 	
 	const float3	Norm		= normalize(SampledNormal);
 	const float3	ViewDir		= normalize(Camera.Position - WorldPosition);
@@ -132,8 +134,8 @@ float4 Main(PSInput Input) : SV_TARGET
     // Add to outgoing radiance Lo
 	Lo += (((Kd * SampledAlbedo) / PI) + Specular) * Radiance * NdotL;
     
-	float3 Ambient	= float3(0.03f, 0.03f, 0.03f) * SampledAlbedo * AO;
-	float3 Color	= Ambient + Lo;
+    float3 Ambient	= SampledReflection * SampledAlbedo * AO;
+    float3 Color	= Ambient + Lo;
 
     // HDR tonemapping
     const float INTENSITY	= 0.5f;

@@ -199,20 +199,20 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		TraceRays(BackBuffer, CommandList.get());
 	}
-	else
-	{
+	//else
+	//{
 		CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-		const Float32 ClearColor[4] = { 0.3921f, 0.5843f, 0.9394f, 1.0f };
-		CommandList->ClearRenderTargetView(BackBuffer->GetRenderTargetView().get(), ClearColor);
-	}
+	//	const Float32 ClearColor[4] = { 0.3921f, 0.5843f, 0.9394f, 1.0f };
+	//	CommandList->ClearRenderTargetView(BackBuffer->GetRenderTargetView().get(), ClearColor);
+	//}
 
 	D3D12RenderTargetView* RenderTarget[] = { BackBuffer->GetRenderTargetView().get() };
 	CommandList->OMSetRenderTargets(RenderTarget, 1, nullptr);
 
 	// LightPass
-	if (!Device->IsRayTracingSupported())
-	{
+	//if (!Device->IsRayTracingSupported())
+	//{
 		CommandList->RSSetViewports(&ViewPort, 1);
 		CommandList->RSSetScissorRects(&ScissorRect, 1);
 
@@ -256,7 +256,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		CommandList->DrawIndexedInstanced(static_cast<Uint32>(SkyboxMesh.Indices.size()), 1, 0, 0, 0);
 
 		CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	}
+	//}
 
 	// Render UI
 	GuiContext::Get()->Render(CommandList.get());
@@ -288,8 +288,8 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 	InCommandList->TransitionBarrier(ResultTexture.get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-	raytraceDesc.Width	= SwapChain->GetWidth();
-	raytraceDesc.Height = SwapChain->GetHeight();
+	raytraceDesc.Width	= ResultTexture->GetDesc().Width; //SwapChain->GetWidth();
+	raytraceDesc.Height = ResultTexture->GetDesc().Height; //SwapChain->GetHeight();
 	raytraceDesc.Depth	= 1;
 
 	// Set shader tables
@@ -307,12 +307,12 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 
 	// Copy the results to the back-buffer
 	InCommandList->TransitionBarrier(ResultTexture.get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	InCommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+	//InCommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	InCommandList->CopyResource(BackBuffer, ResultTexture.get());
+	//InCommandList->CopyResource(BackBuffer, ResultTexture.get());
 
 	// Indicate that the back buffer will now be used to present.
-	InCommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	//InCommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }
 
 void Renderer::OnResize(Int32 Width, Int32 Height)
@@ -327,6 +327,10 @@ void Renderer::OnResize(Int32 Width, Int32 Height)
 
 		RayGenDescriptorTable->SetUnorderedAccessView(ResultTexture->GetUnorderedAccessView(0).get(), 0);
 		RayGenDescriptorTable->CopyDescriptors();
+
+		GlobalDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).get(), 5);
+		GlobalDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).get(), 6);
+		GlobalDescriptorTable->CopyDescriptors();
 	}
 
 	// Update deferred
@@ -587,12 +591,16 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	// Init RayTracing if supported
 	if (Device->IsRayTracingSupported())
 	{
-		return InitRayTracing();
+		if (!InitRayTracing())
+		{
+			return false;
+		}
+
+		LightDescriptorTable->SetShaderResourceView(ResultTexture->GetShaderResourceView(0).get(), 4);
 	}
-	else
-	{
-		return true;
-	}
+
+	LightDescriptorTable->CopyDescriptors();
+	return true;
 }
 
 bool Renderer::InitRayTracing()
@@ -692,7 +700,7 @@ bool Renderer::InitRayTracing()
 
 	// Global RootSignature
 	{
-		D3D12_DESCRIPTOR_RANGE Ranges[5] = {};
+		D3D12_DESCRIPTOR_RANGE Ranges[7] = {};
 		// AccelerationStructure
 		Ranges[0].BaseShaderRegister				= 0;
 		Ranges[0].NumDescriptors					= 1;
@@ -728,25 +736,51 @@ bool Renderer::InitRayTracing()
 		Ranges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		Ranges[4].OffsetInDescriptorsFromTableStart	= 4;
 
+		// GBuffer NormalMap
+		Ranges[5].BaseShaderRegister				= 6;
+		Ranges[5].NumDescriptors					= 1;
+		Ranges[5].RegisterSpace						= 0;
+		Ranges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[5].OffsetInDescriptorsFromTableStart = 5;
+
+		// GBuffer Depth
+		Ranges[6].BaseShaderRegister				= 7;
+		Ranges[6].NumDescriptors					= 1;
+		Ranges[6].RegisterSpace						= 0;
+		Ranges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[6].OffsetInDescriptorsFromTableStart = 6;
+
 		D3D12_ROOT_PARAMETER RootParams = { };
 		RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		RootParams.DescriptorTable.NumDescriptorRanges	= 5;
+		RootParams.DescriptorTable.NumDescriptorRanges	= 7;
 		RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
 
-		D3D12_STATIC_SAMPLER_DESC Sampler = { };
-		Sampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
-		Sampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		Sampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		Sampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		Sampler.Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-		Sampler.ShaderRegister		= 0;
-		Sampler.RegisterSpace		= 0;
-		Sampler.MinLOD				= 0.0f;
-		Sampler.MaxLOD				= FLT_MAX;
+		D3D12_STATIC_SAMPLER_DESC Samplers[2] = { };
+		// Generic Sampler
+		Samplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
+		Samplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[0].Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		Samplers[0].ShaderRegister		= 0;
+		Samplers[0].RegisterSpace		= 0;
+		Samplers[0].MinLOD				= 0.0f;
+		Samplers[0].MaxLOD				= FLT_MAX;
+ 
+		// GBuffer Sampler
+		Samplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
+		Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[1].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
+		Samplers[1].ShaderRegister		= 1;
+		Samplers[1].RegisterSpace		= 0;
+		Samplers[1].MinLOD				= 0.0f;
+		Samplers[1].MaxLOD				= FLT_MAX;
 
 		D3D12_ROOT_SIGNATURE_DESC GlobalRootDesc = {};
-		GlobalRootDesc.NumStaticSamplers	= 1;
-		GlobalRootDesc.pStaticSamplers		= &Sampler;
+		GlobalRootDesc.NumStaticSamplers	= 2;
+		GlobalRootDesc.pStaticSamplers		= Samplers;
 		GlobalRootDesc.NumParameters		= 1;
 		GlobalRootDesc.pParameters			= &RootParams;
 		GlobalRootDesc.Flags				= D3D12_ROOT_SIGNATURE_FLAG_NONE;
@@ -810,7 +844,7 @@ bool Renderer::InitRayTracing()
 	std::shared_ptr<D3D12DescriptorTable> SphereDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 2);
 	std::shared_ptr<D3D12DescriptorTable> CubeDescriptorTable	= std::make_shared<D3D12DescriptorTable>(Device.get(), 2);
 	RayGenDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 1);
-	GlobalDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 5);
+	GlobalDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 7);
 
 	// Create TLAS
 	std::vector<BindingTableEntry> BindingTableEntries;
@@ -874,6 +908,8 @@ bool Renderer::InitRayTracing()
 	GlobalDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).get(), 2);
 	GlobalDescriptorTable->SetShaderResourceView(Albedo->GetShaderResourceView(0).get(), 3);
 	GlobalDescriptorTable->SetShaderResourceView(Normal->GetShaderResourceView(0).get(), 4);
+	GlobalDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).get(), 5);
+	GlobalDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).get(), 6);
 	GlobalDescriptorTable->CopyDescriptors();
 
 	return true;
@@ -997,7 +1033,7 @@ bool Renderer::InitDeferred()
 	}
 
 	{
-		D3D12_DESCRIPTOR_RANGE Ranges[5] = {};
+		D3D12_DESCRIPTOR_RANGE Ranges[6] = {};
 		// Albedo
 		Ranges[0].BaseShaderRegister				= 0;
 		Ranges[0].NumDescriptors					= 1;
@@ -1026,21 +1062,28 @@ bool Renderer::InitDeferred()
 		Ranges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		Ranges[3].OffsetInDescriptorsFromTableStart	= 3;
 
-		// Camera
-		Ranges[4].BaseShaderRegister				= 0;
+		// DXR-Reflections
+		Ranges[4].BaseShaderRegister				= 4;
 		Ranges[4].NumDescriptors					= 1;
 		Ranges[4].RegisterSpace						= 0;
-		Ranges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-		Ranges[4].OffsetInDescriptorsFromTableStart	= 4;
+		Ranges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[4].OffsetInDescriptorsFromTableStart = 4;
+
+		// Camera
+		Ranges[5].BaseShaderRegister				= 0;
+		Ranges[5].NumDescriptors					= 1;
+		Ranges[5].RegisterSpace						= 0;
+		Ranges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		Ranges[5].OffsetInDescriptorsFromTableStart	= 5;
 
 		D3D12_ROOT_PARAMETER Parameters[1];
 		Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		Parameters[0].DescriptorTable.NumDescriptorRanges	= 5;
+		Parameters[0].DescriptorTable.NumDescriptorRanges	= 6;
 		Parameters[0].DescriptorTable.pDescriptorRanges		= Ranges;
 		Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
 
 		D3D12_STATIC_SAMPLER_DESC GBufferSampler = { };
-		GBufferSampler.Filter			= D3D12_FILTER_MIN_MAG_MIP_POINT;
+		GBufferSampler.Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 		GBufferSampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		GBufferSampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		GBufferSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -1174,13 +1217,12 @@ bool Renderer::InitDeferred()
 	GeometryDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 0);
 	GeometryDescriptorTable->CopyDescriptors();
 	
-	LightDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 5);
+	LightDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 6);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).get(), 0);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).get(), 1);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).get(), 2);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).get(), 3);
-	LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 4);
-	LightDescriptorTable->CopyDescriptors();
+	LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 5);
 
 	SkyboxDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 2);
 	SkyboxDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).get(), 0);
@@ -1305,8 +1347,8 @@ bool Renderer::InitRayTracingTexture()
 	TextureProperties OutputProperties = { };
 	OutputProperties.DebugName	= "RayTracing Output";
 	OutputProperties.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	OutputProperties.Width		= static_cast<Uint16>(SwapChain->GetWidth());
-	OutputProperties.Height		= static_cast<Uint16>(SwapChain->GetHeight());
+	OutputProperties.Width		= static_cast<Uint16>(SwapChain->GetWidth() / 2);
+	OutputProperties.Height		= static_cast<Uint16>(SwapChain->GetHeight() / 2);
 	OutputProperties.MipLevels	= 1;
 	OutputProperties.ArrayCount	= 1;
 	OutputProperties.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -1325,6 +1367,18 @@ bool Renderer::InitRayTracingTexture()
 	UAVView.Texture2D.PlaneSlice	= 0;
 
 	ResultTexture->SetUnorderedAccessView(std::make_shared<D3D12UnorderedAccessView>(Device.get(), nullptr, ResultTexture->GetResource(), &UAVView), 0);
+	
+	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
+	SrvDesc.Format							= OutputProperties.Format;
+	SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
+	SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	SrvDesc.Texture2D.MipLevels				= 1;
+	SrvDesc.Texture2D.MostDetailedMip		= 0;
+	SrvDesc.Texture2D.PlaneSlice			= 0;
+	SrvDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
+	
+	ResultTexture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), ResultTexture->GetResource(), &SrvDesc), 0);
+
 	return true;
 }
 

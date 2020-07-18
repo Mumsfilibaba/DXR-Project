@@ -37,9 +37,11 @@ struct VSOutput
 
 VSOutput VSMain(VSInput Input)
 {
+    float3x3 Mat = float3x3(Transform[0].xyz, Transform[1].xyz, Transform[2].xyz);
+	
 	VSOutput Output;
-	Output.Normal	= mul(float4(Input.Normal, 0.0f), Transform);
-	Output.Tangent	= mul(float4(Input.Tangent, 0.0f), Transform);
+    Output.Normal	= mul(Input.Normal, Mat);
+    Output.Tangent	= mul(Input.Tangent, Mat);
 	Output.TexCoord = Input.TexCoord;
 	Output.Position = mul(mul(float4(Input.Position, 1.0f), Transform), Camera.ViewProjection);
 	return Output;
