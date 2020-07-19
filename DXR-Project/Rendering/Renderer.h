@@ -81,6 +81,7 @@ private:
 	bool InitRayTracing();
 	bool InitDeferred();
 	bool InitGBuffer();
+	bool InitIntegrationLUT();
 	bool InitRayTracingTexture();
 
 	void WaitForPendingFrames();
@@ -113,6 +114,7 @@ private:
 	std::shared_ptr<D3D12Texture> Albedo;
 	std::shared_ptr<D3D12Texture> Normal;
 	std::shared_ptr<D3D12Texture> ResultTexture;
+	std::shared_ptr<D3D12Texture> IntegrationLUT;
 
 	std::shared_ptr<D3D12Texture> GBuffer[4];
 	

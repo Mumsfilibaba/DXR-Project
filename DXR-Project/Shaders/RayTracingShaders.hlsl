@@ -1,11 +1,6 @@
-// Scene and Output
-struct Camera
-{
-	float4x4	ViewProjection;
-	float4x4	ViewProjectionInverse;
-	float3		Position;
-};
+#include "PBRCommon.hlsli"
 
+// Scene and Output
 RaytracingAccelerationStructure Scene : register(t0, space0);
 
 Texture2D<float4> Albedo		: register(t4, space0);
@@ -23,25 +18,8 @@ RWTexture2D<float4> OutTexture 	: register(u0, space0);
 ConstantBuffer<Camera> Camera : register(b0, space0);
 
 // Geometry
-struct Vertex
-{
-	float3 Position;
-	float3 Normal;
-	float3 Tangent;
-	float2 TexCoord;
-};
-
 StructuredBuffer<Vertex>	Vertices	: register(t2, space0);
 ByteAddressBuffer			InIndices	: register(t3, space0);
-
-// Constants
-static const float PI				= 3.14159265359f;
-static const float MIN_VALUE		= 0.0000001f;
-static const float MIN_ROUGHNESS	= 0.01f;
-static const float RAY_OFFSET		= 0.01f;
-
-static const float3 LightPosition	= float3(0.0f, 10.0f, -10.0f);
-static const float3 LightColor		= float3(300.0f, 300.0f, 300.0f);
 
 // Helpers
 float3 WorldHitPosition()
@@ -55,54 +33,19 @@ float3 FresnelReflectanceSchlick(in float3 I, in float3 N, in float3 F0)
 	return F0 + (1 - F0) * pow(1 - Cosi, 5);
 }
 
-float3 FresnelSchlick(float CosTheta, float3 F0)
-{
-    return F0 + (1.0f - F0) * pow(1.0f - CosTheta, 5.0f);
-}
-
-float DistributionGGX(float3 N, float3 H, float Roughness)
-{
-    float A = Roughness * Roughness;
-    float A2 = A * A;
-    float NdotH = max(dot(N, H), 0.0f);
-    float NdotH2 = NdotH * NdotH;
-
-    float Nom = A2;
-    float Denom = (NdotH2 * (A2 - 1.0f) + 1.0f);
-    Denom = PI * Denom * Denom;
-
-    return Nom / max(Denom, MIN_VALUE);
-}
-
-float GeometrySchlickGGX(float NdotV, float Roughness)
-{
-    float R = (Roughness + 1.0f);
-    float K = (R * R) / 8.0f;
-
-    return NdotV / ((NdotV * (1.0f - K)) + K);
-}
-
-float GeometrySmith(float3 N, float3 V, float3 L, float Roughness)
-{
-    float NdotV = max(dot(N, V), 0.0f);
-    float NdotL = max(dot(N, L), 0.0f);
-
-    return GeometrySchlickGGX(NdotV, Roughness) * GeometrySchlickGGX(NdotL, Roughness);
-}
-
 // Diffuse lighting calculation.
-float CalculateDiffuseCoefficient(in float3 HitPosition, in float3 IncidentLightRay, in float3 Normal)
-{
-	float fNDotL = saturate(dot(-IncidentLightRay, Normal));
-	return fNDotL;
-}
+//float CalculateDiffuseCoefficient(in float3 HitPosition, in float3 IncidentLightRay, in float3 Normal)
+//{
+//	float fNDotL = saturate(dot(-IncidentLightRay, Normal));
+//	return fNDotL;
+//}
 
-// Phong lighting specular component
-float3 CalculateSpecularCoefficient(in float3 HitPosition, in float3 IncidentLightRay, in float3 Normal, in float SpecularPower)
-{
-	float3 ReflectedLightRay = normalize(reflect(IncidentLightRay, Normal));
-	return pow(saturate(dot(ReflectedLightRay, normalize(-WorldRayDirection()))), SpecularPower);
-}
+//// Phong lighting specular component
+//float3 CalculateSpecularCoefficient(in float3 HitPosition, in float3 IncidentLightRay, in float3 Normal, in float SpecularPower)
+//{
+//	float3 ReflectedLightRay = normalize(reflect(IncidentLightRay, Normal));
+//	return pow(saturate(dot(ReflectedLightRay, normalize(-WorldRayDirection()))), SpecularPower);
+//}
 
 //float3 CalculatePhongLighting(in float3 Albedo, in float3 Normal, in float DiffuseCoef = 1.0f, in float SpecularCoef = 1.0f, in float SpecularPower = 50.0f)
 //{

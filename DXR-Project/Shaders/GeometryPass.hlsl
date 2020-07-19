@@ -1,3 +1,5 @@
+#include "PBRCommon.hlsli"
+
 // Scene and Output
 cbuffer TransformBuffer : register(b0)
 {
@@ -7,16 +9,7 @@ cbuffer TransformBuffer : register(b0)
 	float		AO;
 };
 
-struct Camera
-{
-	float4x4	ViewProjection;
-	float4x4	ViewProjectionInverse;
-	float3		Position;
-};
-
 ConstantBuffer<Camera> Camera : register(b1, space0);
-
-static const float MIN_ROUGHNESS = 0.01f;
 
 // VertexShader
 struct VSInput

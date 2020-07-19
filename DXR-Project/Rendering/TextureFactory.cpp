@@ -143,7 +143,8 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	std::unique_ptr<D3D12Texture> TempTexture;
 	if (GenerateMipLevels)
 	{
-		TextureProps.Flags = D3D12_RESOURCE_FLAG_NONE;
+		TextureProps.DebugName	= "Staging Texture";
+		TextureProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
 
 		TempTexture = std::unique_ptr<D3D12Texture>(new D3D12Texture(Device));
 		if (!TempTexture->Initialize(TextureProps))

@@ -1,32 +1,22 @@
+#include "PBRCommon.hlsli"
+
 // Resources
 struct PSInput
 {
 	float2 TexCoord : TEXCOORD0;
 };
 
-Texture2D<float4> Albedo		: register(t0, space0);
-Texture2D<float4> Normal		: register(t1, space0);
-Texture2D<float4> Material		: register(t2, space0);
-Texture2D<float4> DepthStencil	: register(t3, space0);
-Texture2D<float4> DXRReflection	: register(t4, space0);
+Texture2D<float4> Albedo			: register(t0, space0);
+Texture2D<float4> Normal			: register(t1, space0);
+Texture2D<float4> Material			: register(t2, space0);
+Texture2D<float4> DepthStencil		: register(t3, space0);
+Texture2D<float4> DXRReflection		: register(t4, space0);
+Texture2D<float2> IntegrationLUT	: register(t5, space0);
 
 SamplerState GBufferSampler : register(s0, space0);
-
-struct Camera
-{
-	float4x4	ViewProjection;
-	float4x4	ViewProjectionInverse;
-	float3		Position;
-};
+SamplerState LUTSampler		: register(s1, space0);
 
 ConstantBuffer<Camera> Camera : register(b0, space0);
-
-// Constants
-static const float	PI				= 3.14159265359f;
-static const float	MIN_VALUE		= 0.00000000001f;
-
-static const float3	LightPosition	= float3(0.0f, 10.0f, -10.0f);
-static const float3	LightColor		= float3(300.0f, 300.0f, 300.0f);
 
 // Helpers
 float3 PositionFromDepth(float2 TexCoord)
@@ -40,41 +30,6 @@ float3 PositionFromDepth(float2 TexCoord)
 	return WorldPosition.xyz / WorldPosition.w;
 }
 
-float DistributionGGX(float3 N, float3 H, float Roughness)
-{
-	float A			= Roughness * Roughness;
-	float A2		= A * A;
-	float NdotH		= max(dot(N, H), 0.0f);
-	float NdotH2	= NdotH * NdotH;
-
-	float Nom	= A2;
-	float Denom = (NdotH2 * (A2 - 1.0f) + 1.0f);
-	Denom = PI * Denom * Denom;
-
-    return Nom / max(Denom, MIN_VALUE);
-}
-
-float GeometrySchlickGGX(float NdotV, float Roughness)
-{
-	float R = (Roughness + 1.0f);
-	float K = (R * R) / 8.0f;
-
-    return NdotV / ((NdotV * (1.0f - K)) + K);
-}
-
-float GeometrySmith(float3 N, float3 V, float3 L, float Roughness)
-{
-	float NdotV = max(dot(N, V), 0.0f);
-	float NdotL = max(dot(N, L), 0.0f);
-
-	return GeometrySchlickGGX(NdotV, Roughness) * GeometrySchlickGGX(NdotL, Roughness);
-}
-
-float3 FresnelSchlick(float CosTheta, float3 F0)
-{
-	return F0 + (1.0f - F0) * pow(1.0f - CosTheta, 5.0f);
-}
-
 // Main
 float4 Main(PSInput Input) : SV_TARGET
 {
@@ -83,11 +38,10 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	float3 WorldPosition		= PositionFromDepth(TexCoord);
 	float3 SampledAlbedo		= Albedo.Sample(GBufferSampler, TexCoord).rgb;
-    float3 SampledReflection	= DXRReflection.Sample(GBufferSampler, TexCoord).rgb;
+    float3 SampledReflection	= DXRReflection.Sample(LUTSampler, TexCoord).rgb;
 	float3 SampledMaterial		= Material.Sample(GBufferSampler, TexCoord).rgb;
 	float3 SampledNormal		= Normal.Sample(GBufferSampler, TexCoord).rgb;
     SampledNormal = ((SampledNormal * 2.0f) - 1.0f);
-	
 	
 	const float3	Norm		= normalize(SampledNormal);
 	const float3	ViewDir		= normalize(Camera.Position - WorldPosition);
@@ -119,13 +73,7 @@ float4 Main(PSInput Input) : SV_TARGET
         
     // Ks is equal to Fresnel
 	float3 Ks = F;
-    // For energy conservation, the diffuse and specular light can't
-    // be above 1.0 (unless the surface emits light); to preserve this
-    // relationship the diffuse component (kD) should equal 1.0 - kS.
-	float3 Kd = float3(1.0f, 1.0f, 1.0f) - Ks;
-    // Multiply kD by the inverse metalness such that only non-metals 
-    // have diffuse lighting, or a linear blend if partly metal (pure metals
-    // have no diffuse light).
+	float3 Kd = 1.0f - Ks;
 	Kd *= 1.0f - Metallic;
 
     // Scale light by NdotL
@@ -134,7 +82,15 @@ float4 Main(PSInput Input) : SV_TARGET
     // Add to outgoing radiance Lo
 	Lo += (((Kd * SampledAlbedo) / PI) + Specular) * Radiance * NdotL;
     
-    float3 Ambient	= SampledReflection * SampledAlbedo * AO;
+    float3 F_IBL	= FresnelSchlickRoughness(max(dot(Norm, ViewDir), 0.0), F0, Roughness);
+    float3 Ks_IBL	= F;
+    float3 Kd_IBL	= 1.0f - Ks_IBL;
+    Kd_IBL *= 1.0 - Metallic;
+	
+	float2 IntegrationBRDF	= IntegrationLUT.Sample(LUTSampler, float2(max(dot(Norm, ViewDir), 0.0), Roughness)).rg;
+    float3 IBL_Specular		= SampledReflection * ((F_IBL * IntegrationBRDF.x) + IntegrationBRDF.y);
+	
+    float3 Ambient	= IBL_Specular * AO;
     float3 Color	= Ambient + Lo;
 
     // HDR tonemapping

@@ -28,7 +28,7 @@ bool D3D12CommandAllocator::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 
 bool D3D12CommandAllocator::Reset()
 {
-	return Allocator->Reset();
+	return SUCCEEDED(Allocator->Reset());
 }
 
 void D3D12CommandAllocator::SetName(const std::string& Name)

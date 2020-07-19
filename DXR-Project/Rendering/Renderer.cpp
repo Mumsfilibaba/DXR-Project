@@ -8,6 +8,7 @@
 #include "D3D12/D3D12RootSignature.h"
 #include "D3D12/D3D12GraphicsPipelineState.h"
 #include "D3D12/D3D12RayTracingPipelineState.h"
+#include "D3D12/D3D12ComputePipelineState.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
 #include "Application/InputManager.h"
@@ -575,15 +576,28 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	{
 		return false;
 	}
+	else
+	{
+		Albedo->SetName("AlbedoMap");
+	}
 
 	Normal = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!Normal)
 	{
 		return false;
 	}
+	else
+	{
+		Normal->SetName("NormalMap");
+	}
 
 	// Init Deferred Rendering
 	if (!InitDeferred())
+	{
+		return false;
+	}
+
+	if (!InitIntegrationLUT())
 	{
 		return false;
 	}
@@ -597,6 +611,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 		}
 
 		LightDescriptorTable->SetShaderResourceView(ResultTexture->GetShaderResourceView(0).get(), 4);
+		LightDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).get(), 5);
 	}
 
 	LightDescriptorTable->CopyDescriptors();
@@ -1033,7 +1048,7 @@ bool Renderer::InitDeferred()
 	}
 
 	{
-		D3D12_DESCRIPTOR_RANGE Ranges[6] = {};
+		D3D12_DESCRIPTOR_RANGE Ranges[7] = {};
 		// Albedo
 		Ranges[0].BaseShaderRegister				= 0;
 		Ranges[0].NumDescriptors					= 1;
@@ -1069,39 +1084,60 @@ bool Renderer::InitDeferred()
 		Ranges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		Ranges[4].OffsetInDescriptorsFromTableStart = 4;
 
-		// Camera
-		Ranges[5].BaseShaderRegister				= 0;
+		// Integration LUT
+		Ranges[5].BaseShaderRegister				= 5;
 		Ranges[5].NumDescriptors					= 1;
 		Ranges[5].RegisterSpace						= 0;
-		Ranges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-		Ranges[5].OffsetInDescriptorsFromTableStart	= 5;
+		Ranges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[5].OffsetInDescriptorsFromTableStart = 5;
+
+		// Camera
+		Ranges[6].BaseShaderRegister				= 0;
+		Ranges[6].NumDescriptors					= 1;
+		Ranges[6].RegisterSpace						= 0;
+		Ranges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		Ranges[6].OffsetInDescriptorsFromTableStart	= 6;
 
 		D3D12_ROOT_PARAMETER Parameters[1];
 		Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		Parameters[0].DescriptorTable.NumDescriptorRanges	= 6;
+		Parameters[0].DescriptorTable.NumDescriptorRanges	= 7;
 		Parameters[0].DescriptorTable.pDescriptorRanges		= Ranges;
 		Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
 
-		D3D12_STATIC_SAMPLER_DESC GBufferSampler = { };
-		GBufferSampler.Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-		GBufferSampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		GBufferSampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		GBufferSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		GBufferSampler.MipLODBias		= 0.0f;
-		GBufferSampler.MaxAnisotropy	= 0;
-		GBufferSampler.ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
-		GBufferSampler.BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-		GBufferSampler.MinLOD			= 0.0f;
-		GBufferSampler.MaxLOD			= 0.0f;
-		GBufferSampler.ShaderRegister	= 0;
-		GBufferSampler.RegisterSpace	= 0;
-		GBufferSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		D3D12_STATIC_SAMPLER_DESC Samplers[2] = { };
+		Samplers[0].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
+		Samplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[0].MipLODBias			= 0.0f;
+		Samplers[0].MaxAnisotropy		= 0;
+		Samplers[0].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
+		Samplers[0].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		Samplers[0].MinLOD				= 0.0f;
+		Samplers[0].MaxLOD				= 0.0f;
+		Samplers[0].ShaderRegister		= 0;
+		Samplers[0].RegisterSpace		= 0;
+		Samplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		Samplers[1].Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[1].MipLODBias			= 0.0f;
+		Samplers[1].MaxAnisotropy		= 0;
+		Samplers[1].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
+		Samplers[1].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		Samplers[1].MinLOD				= 0.0f;
+		Samplers[1].MaxLOD				= 0.0f;
+		Samplers[1].ShaderRegister		= 1;
+		Samplers[1].RegisterSpace		= 0;
+		Samplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
 
 		D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
 		RootSignatureDesc.NumParameters			= 1;
 		RootSignatureDesc.pParameters			= Parameters;
-		RootSignatureDesc.NumStaticSamplers		= 1;
-		RootSignatureDesc.pStaticSamplers		= &GBufferSampler;
+		RootSignatureDesc.NumStaticSamplers		= 2;
+		RootSignatureDesc.pStaticSamplers		= Samplers;
 		RootSignatureDesc.Flags					= 
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
@@ -1217,12 +1253,14 @@ bool Renderer::InitDeferred()
 	GeometryDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 0);
 	GeometryDescriptorTable->CopyDescriptors();
 	
-	LightDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 6);
+	LightDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 7);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).get(), 0);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).get(), 1);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).get(), 2);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).get(), 3);
-	LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 5);
+	// #4 is set after deferred and raytracing
+	// #5 is set after deferred and raytracing
+	LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 6);
 
 	SkyboxDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 2);
 	SkyboxDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).get(), 0);
@@ -1342,13 +1380,162 @@ bool Renderer::InitGBuffer()
 	return true;
 }
 
+bool Renderer::InitIntegrationLUT()
+{
+	D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
+	ZERO_MEMORY(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
+
+	HRESULT Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
+	if (SUCCEEDED(Result))
+	{
+		if (FeatureData.TypedUAVLoadAdditionalFormats)
+		{
+			D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport =
+			{
+				DXGI_FORMAT_R16G16_FLOAT,
+				D3D12_FORMAT_SUPPORT1_NONE,
+				D3D12_FORMAT_SUPPORT2_NONE
+			};
+
+			Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
+			if (FAILED(Result) || (FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD) == 0)
+			{
+				::OutputDebugString("[Renderer]: DXGI_FORMAT_R16G16_FLOAT is not supported for UAVs\n");
+				return false;
+			}
+		}
+	}
+
+	TextureProperties LUTProperties = { };
+	LUTProperties.DebugName		= "IntegrationLUT Staging Texture";
+	LUTProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	LUTProperties.Width			= 512;
+	LUTProperties.Height		= 512;
+	LUTProperties.MipLevels		= 1;
+	LUTProperties.ArrayCount	= 1;
+	LUTProperties.Format		= DXGI_FORMAT_R16G16_FLOAT;
+	LUTProperties.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
+	LUTProperties.InitalState	= D3D12_RESOURCE_STATE_COMMON;
+
+	std::unique_ptr<D3D12Texture> StagingTexture = std::make_unique<D3D12Texture>(Device.get());
+	if (!StagingTexture->Initialize(LUTProperties))
+	{
+		return false;
+	}
+	else
+	{
+		D3D12_UNORDERED_ACCESS_VIEW_DESC UavDesc = { };
+		UavDesc.Format					= LUTProperties.Format;
+		UavDesc.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
+		UavDesc.Texture2D.MipSlice		= 0;
+		UavDesc.Texture2D.PlaneSlice	= 0;
+
+		StagingTexture->SetUnorderedAccessView(std::make_shared<D3D12UnorderedAccessView>(Device.get(), nullptr, StagingTexture->GetResource(), &UavDesc), 0);
+	}
+
+	LUTProperties.DebugName	= "IntegrationLUT";
+	LUTProperties.Flags		= D3D12_RESOURCE_FLAG_NONE;
+
+	IntegrationLUT = std::make_shared<D3D12Texture>(Device.get());
+	if (!IntegrationLUT->Initialize(LUTProperties))
+	{
+		return false;
+	}
+	else
+	{
+		D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
+		SrvDesc.Format							= LUTProperties.Format;
+		SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
+		SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		SrvDesc.Texture2D.MipLevels				= 1;
+		SrvDesc.Texture2D.MostDetailedMip		= 0;
+		SrvDesc.Texture2D.PlaneSlice			= 0;
+		SrvDesc.Texture2D.ResourceMinLODClamp	= 0;
+
+		IntegrationLUT->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), IntegrationLUT->GetResource(), &SrvDesc), 0);
+	}
+
+	Microsoft::WRL::ComPtr<IDxcBlob> Shader = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/BRDFIntegationGen.hlsl", "Main", "cs_6_0");
+	if (!Shader)
+	{
+		return false;
+	}
+
+	std::unique_ptr<D3D12RootSignature> RootSignature = std::make_unique<D3D12RootSignature>(Device.get());
+	if (!RootSignature->Initialize(Shader.Get()))
+	{
+		return false;
+	}
+
+	ComputePipelineStateProperties PSOProperties;
+	PSOProperties.DebugName		= "IntegrationGen PSO";
+	PSOProperties.CSBlob		= Shader.Get();
+	PSOProperties.RootSignature	= RootSignature.get();
+
+	std::unique_ptr<D3D12ComputePipelineState> PSO = std::make_unique<D3D12ComputePipelineState>(Device.get());
+	if (!PSO->Initialize(PSOProperties))
+	{
+		return false;
+	}
+
+	std::unique_ptr<D3D12DescriptorTable> DescriptorTable = std::make_unique<D3D12DescriptorTable>(Device.get(), 1);
+	DescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).get(), 0);
+	DescriptorTable->CopyDescriptors();
+
+	std::unique_ptr<D3D12CommandAllocator> Allocator = std::make_unique<D3D12CommandAllocator>(Device.get());
+	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
+	{
+		return false;
+	}
+
+	std::unique_ptr<D3D12CommandList> List = std::make_unique<D3D12CommandList>(Device.get());
+	if (!List->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator.get(), nullptr))
+	{
+		return false;
+	}
+
+	if (!Allocator->Reset())
+	{
+		return false;
+	}
+
+	if (!List->Reset(Allocator.get()))
+	{
+		return false;
+	}
+
+	List->SetComputeRootSignature(RootSignature->GetRootSignature());
+	List->SetPipelineState(PSO->GetPipeline());
+	
+	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
+	List->SetDescriptorHeaps(DescriptorHeaps, 1);
+	List->SetComputeRootDescriptorTable(DescriptorTable->GetGPUTableStartHandle(), 0);
+
+	List->Dispatch(LUTProperties.Width, LUTProperties.Height, 1);
+	List->UnorderedAccessBarrier(StagingTexture.get());
+	
+	List->TransitionBarrier(IntegrationLUT.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+	List->TransitionBarrier(StagingTexture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_SOURCE);
+
+	List->CopyResource(IntegrationLUT.get(), StagingTexture.get());
+	
+	List->TransitionBarrier(IntegrationLUT.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+	List->Close();
+
+	Queue->ExecuteCommandList(List.get());
+	Queue->WaitForCompletion();
+
+	return true;
+}
+
 bool Renderer::InitRayTracingTexture()
 {
 	TextureProperties OutputProperties = { };
 	OutputProperties.DebugName	= "RayTracing Output";
 	OutputProperties.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	OutputProperties.Width		= static_cast<Uint16>(SwapChain->GetWidth() / 2);
-	OutputProperties.Height		= static_cast<Uint16>(SwapChain->GetHeight() / 2);
+	OutputProperties.Width		= static_cast<Uint16>(SwapChain->GetWidth());
+	OutputProperties.Height		= static_cast<Uint16>(SwapChain->GetHeight());
 	OutputProperties.MipLevels	= 1;
 	OutputProperties.ArrayCount	= 1;
 	OutputProperties.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
