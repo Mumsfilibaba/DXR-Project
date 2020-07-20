@@ -57,7 +57,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(Uint32& OutHeap
 
 	if (!Range.IsValid())
 	{
-		Heap.FreeList.erase(Heap.FreeList.begin() + HeapIndex);
+		Heap.FreeList.erase(Heap.FreeList.begin());
 	}
 
 	OutHeapIndex = HeapIndex;

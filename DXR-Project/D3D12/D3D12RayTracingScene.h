@@ -36,6 +36,8 @@ private:
 	
 	Uint32 VertexCount	= 0;
 	Uint32 IndexCount	= 0;
+
+	bool IsDirty = true;
 };
 
 /*
@@ -125,4 +127,6 @@ private:
 	std::shared_ptr<D3D12ShaderResourceView>		View;
 	std::vector<D3D12RayTracingGeometryInstance>	Instances;
 	std::vector<BindingTableEntry>					BindingTableEntries;
+
+	bool IsDirty = true;
 };

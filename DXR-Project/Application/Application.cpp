@@ -285,18 +285,6 @@ bool Application::Initialize()
 	constexpr Float32	MetallicDelta	= 1.0f / SphereCountY;
 	constexpr Float32	RoughnessDelta	= 1.0f / SphereCountX;
 	
-	std::shared_ptr<D3D12Texture> Albedo = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
-	if (!Albedo)
-	{
-		return false;
-	}
-
-	std::shared_ptr<D3D12Texture> Normal = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
-	if (!Normal)
-	{
-		return false;
-	}
-
 	Actor* NewActor = nullptr;
 	RenderComponent* NewComponent = nullptr;
 	CurrentScene = new Scene();
@@ -304,6 +292,32 @@ bool Application::Initialize()
 	// Create Spheres
 	MeshData SphereMeshData = MeshFactory::CreateSphere(3);
 	std::shared_ptr<Mesh> SphereMesh = Mesh::Make(Renderer->GetDevice().get(), SphereMeshData);
+
+	// Create standard textures
+	Byte Pixels[] = { 255, 0, 0, 255 };
+	std::shared_ptr<D3D12Texture> BaseTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	if (!BaseTexture)
+	{
+		return false;
+	}
+	else
+	{
+		BaseTexture->SetName("BaseTexture");
+	}
+
+	Pixels[0] = 127;
+	Pixels[1] = 127;
+	Pixels[2] = 255;
+
+	std::shared_ptr<D3D12Texture> BaseNormal = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	if (!BaseNormal)
+	{
+		return false;
+	}
+	else
+	{
+		BaseNormal->SetName("BaseNormal");
+	}
 
 	XMFLOAT4X4 Matrix;
 	MaterialProperties MatProperties;
@@ -320,6 +334,10 @@ bool Application::Initialize()
 			NewComponent = new RenderComponent(NewActor);
 			NewComponent->Mesh		= SphereMesh;
 			NewComponent->Material	= std::make_shared<Material>(MatProperties);
+			
+			NewComponent->Material->AlbedoMap = BaseTexture;
+			NewComponent->Material->NormalMap = BaseNormal;
+			NewComponent->Material->Initialize(Renderer->GetDevice().get());
 
 			NewActor->AddComponent(NewComponent);
 
@@ -347,8 +365,29 @@ bool Application::Initialize()
 	NewComponent->Mesh		= Mesh::Make(Renderer->GetDevice().get(), CubeMeshData);
 	NewComponent->Material	= std::make_shared<Material>(MatProperties);
 
-	NewComponent->Material->AlbedoMap = Albedo;
-	NewComponent->Material->AlbedoMap = Normal;
+	std::shared_ptr<D3D12Texture> AlbedoMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	if (!AlbedoMap)
+	{
+		return false;
+	}
+	else
+	{
+		AlbedoMap->SetName("AlbedoMap");
+	}
+
+	std::shared_ptr<D3D12Texture> NormalMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	if (!NormalMap)
+	{
+		return false;
+	}
+	else
+	{
+		NormalMap->SetName("NormalMap");
+	}
+
+	NewComponent->Material->AlbedoMap = AlbedoMap;
+	NewComponent->Material->NormalMap = NormalMap;
+	NewComponent->Material->Initialize(Renderer->GetDevice().get());
 
 	NewActor->AddComponent(NewComponent);
 

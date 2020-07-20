@@ -15,7 +15,7 @@
 
 std::unique_ptr<Renderer> Renderer::RendererInstance = nullptr;
 
-static const DXGI_FORMAT	NormalFormat		= DXGI_FORMAT_R16G16B16A16_UNORM;
+static const DXGI_FORMAT	NormalFormat		= DXGI_FORMAT_R16G16B16A16_SNORM;
 static const DXGI_FORMAT	DepthBufferFormat	= DXGI_FORMAT_D32_FLOAT;
 static const Uint32			PresentInterval		= 0;
 
@@ -166,8 +166,13 @@ void Renderer::Tick(const Scene& CurrentScene)
 	for (Actor* CurrentActor : CurrentScene.GetActors())
 	{
 		RenderComponent* RComponent = reinterpret_cast<RenderComponent*>(CurrentActor->GetComponent());
-		Mesh* CurrentMesh = RComponent->Mesh.get();
-		Material* CurrentMaterial = RComponent->Material.get();
+		Mesh*		CurrentMesh		= RComponent->Mesh.get();
+		Material*	CurrentMaterial = RComponent->Material.get();
+		
+		if (Device->IsRayTracingSupported())
+		{
+			CurrentMesh->BuildAccelerationStructure(CommandList.get());
+		}
 
 		D3D12_VERTEX_BUFFER_VIEW VBO = { };
 		VBO.BufferLocation	= CurrentMesh->VertexBuffer->GetGPUVirtualAddress();
@@ -182,11 +187,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 		CommandList->IASetIndexBuffer(&IBV);
 
 		PerObjectBuffer.Matrix		= CurrentActor->GetTransform();
-		PerObjectBuffer.Roughness	= CurrentMaterial->Properties.Roughness;
-		PerObjectBuffer.Metallic	= CurrentMaterial->Properties.Metallic;
-		PerObjectBuffer.AO			= CurrentMaterial->Properties.AO;
+		PerObjectBuffer.Roughness	= CurrentMaterial->GetMaterialProperties().Roughness;
+		PerObjectBuffer.Metallic	= CurrentMaterial->GetMaterialProperties().Metallic;
+		PerObjectBuffer.AO			= CurrentMaterial->GetMaterialProperties().AO;
 		CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 19, 0, 0);
-		
+		CommandList->SetGraphicsRootDescriptorTable(CurrentMaterial->GetDescriptorTable()->GetGPUTableStartHandle(), 2);
+
 		CommandList->DrawIndexedInstanced(CurrentMesh->IndexCount, 1, 0, 0, 0);
 	}
 
@@ -200,64 +206,55 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		TraceRays(BackBuffer, CommandList.get());
 	}
-	//else
-	//{
-		CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	//	const Float32 ClearColor[4] = { 0.3921f, 0.5843f, 0.9394f, 1.0f };
-	//	CommandList->ClearRenderTargetView(BackBuffer->GetRenderTargetView().get(), ClearColor);
-	//}
+	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	D3D12RenderTargetView* RenderTarget[] = { BackBuffer->GetRenderTargetView().get() };
 	CommandList->OMSetRenderTargets(RenderTarget, 1, nullptr);
 
-	// LightPass
-	//if (!Device->IsRayTracingSupported())
-	//{
-		CommandList->RSSetViewports(&ViewPort, 1);
-		CommandList->RSSetScissorRects(&ScissorRect, 1);
+	CommandList->RSSetViewports(&ViewPort, 1);
+	CommandList->RSSetScissorRects(&ScissorRect, 1);
 
-		CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		CommandList->SetPipelineState(LightPassPSO->GetPipelineState());
-		CommandList->SetGraphicsRootSignature(LightRootSignature->GetRootSignature());
-		CommandList->SetGraphicsRootDescriptorTable(LightDescriptorTable->GetGPUTableStartHandle(), 0);
+	CommandList->SetPipelineState(LightPassPSO->GetPipelineState());
+	CommandList->SetGraphicsRootSignature(LightRootSignature->GetRootSignature());
+	CommandList->SetGraphicsRootDescriptorTable(LightDescriptorTable->GetGPUTableStartHandle(), 0);
 
-		CommandList->DrawInstanced(3, 1, 0, 0);
+	CommandList->DrawInstanced(3, 1, 0, 0);
 
-		D3D12_VERTEX_BUFFER_VIEW SkyboxVBO = { };
-		SkyboxVBO.BufferLocation	= SkyboxVertexBuffer->GetGPUVirtualAddress();
-		SkyboxVBO.SizeInBytes		= SkyboxVertexBuffer->GetSizeInBytes();
-		SkyboxVBO.StrideInBytes		= sizeof(Vertex);
-		CommandList->IASetVertexBuffers(0, &SkyboxVBO, 1);
+	D3D12_VERTEX_BUFFER_VIEW SkyboxVBO = { };
+	SkyboxVBO.BufferLocation	= SkyboxVertexBuffer->GetGPUVirtualAddress();
+	SkyboxVBO.SizeInBytes		= SkyboxVertexBuffer->GetSizeInBytes();
+	SkyboxVBO.StrideInBytes		= sizeof(Vertex);
+	CommandList->IASetVertexBuffers(0, &SkyboxVBO, 1);
 
-		D3D12_INDEX_BUFFER_VIEW SkyboxIBV = { };
-		SkyboxIBV.BufferLocation	= SkyboxIndexBuffer->GetGPUVirtualAddress();
-		SkyboxIBV.Format			= DXGI_FORMAT_R32_UINT;
-		SkyboxIBV.SizeInBytes		= SkyboxIndexBuffer->GetSizeInBytes();
-		CommandList->IASetIndexBuffer(&SkyboxIBV);
+	D3D12_INDEX_BUFFER_VIEW SkyboxIBV = { };
+	SkyboxIBV.BufferLocation	= SkyboxIndexBuffer->GetGPUVirtualAddress();
+	SkyboxIBV.Format			= DXGI_FORMAT_R32_UINT;
+	SkyboxIBV.SizeInBytes		= SkyboxIndexBuffer->GetSizeInBytes();
+	CommandList->IASetIndexBuffer(&SkyboxIBV);
 
-		CommandList->SetPipelineState(SkyboxPSO->GetPipelineState());
-		CommandList->SetGraphicsRootSignature(SkyboxRootSignature->GetRootSignature());
+	CommandList->SetPipelineState(SkyboxPSO->GetPipelineState());
+	CommandList->SetGraphicsRootSignature(SkyboxRootSignature->GetRootSignature());
 
-		struct SkyboxCameraBuffer
-		{
-			XMFLOAT4X4 Matrix;
-		} PerSkybox;
+	struct SkyboxCameraBuffer
+	{
+		XMFLOAT4X4 Matrix;
+	} PerSkybox;
 
-		PerSkybox.Matrix = SceneCamera.GetViewProjectionWitoutTranslate();
+	PerSkybox.Matrix = SceneCamera.GetViewProjectionWitoutTranslate();
 
-		CommandList->SetGraphicsRoot32BitConstants(&PerSkybox, 16, 0, 0);
-		CommandList->SetGraphicsRootDescriptorTable(SkyboxDescriptorTable->GetGPUTableStartHandle(), 1);
+	CommandList->SetGraphicsRoot32BitConstants(&PerSkybox, 16, 0, 0);
+	CommandList->SetGraphicsRootDescriptorTable(SkyboxDescriptorTable->GetGPUTableStartHandle(), 1);
 
-		CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_READ);
+	CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_READ);
 
-		CommandList->OMSetRenderTargets(RenderTarget, 1, GBuffer[3]->GetDepthStencilView().get());
+	CommandList->OMSetRenderTargets(RenderTarget, 1, GBuffer[3]->GetDepthStencilView().get());
 
-		CommandList->DrawIndexedInstanced(static_cast<Uint32>(SkyboxMesh.Indices.size()), 1, 0, 0, 0);
+	CommandList->DrawIndexedInstanced(static_cast<Uint32>(SkyboxMesh.Indices.size()), 1, 0, 0, 0);
 
-		CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	//}
+	CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// Render UI
 	GuiContext::Get()->Render(CommandList.get());
@@ -955,31 +952,69 @@ bool Renderer::InitDeferred()
 
 	// Init RootSignatures
 	{
-		D3D12_DESCRIPTOR_RANGE Ranges[1] = {};
+		D3D12_DESCRIPTOR_RANGE PerFrameRanges[1] = {};
 		// Camera Buffer
-		Ranges[0].BaseShaderRegister				= 1;
-		Ranges[0].NumDescriptors					= 1;
-		Ranges[0].RegisterSpace						= 0;
-		Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-		Ranges[0].OffsetInDescriptorsFromTableStart = 0;
+		PerFrameRanges[0].BaseShaderRegister				= 1;
+		PerFrameRanges[0].NumDescriptors					= 1;
+		PerFrameRanges[0].RegisterSpace						= 0;
+		PerFrameRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		PerFrameRanges[0].OffsetInDescriptorsFromTableStart = 0;
 
-		D3D12_ROOT_PARAMETER Parameters[2];
+		D3D12_DESCRIPTOR_RANGE PerObjectRanges[2] = {};
+		// Albedo Map
+		PerObjectRanges[0].BaseShaderRegister					= 0;
+		PerObjectRanges[0].NumDescriptors						= 1;
+		PerObjectRanges[0].RegisterSpace						= 0;
+		PerObjectRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[0].OffsetInDescriptorsFromTableStart	= 0;
+
+		// Normal Map
+		PerObjectRanges[1].BaseShaderRegister					= 1;
+		PerObjectRanges[1].NumDescriptors						= 1;
+		PerObjectRanges[1].RegisterSpace						= 0;
+		PerObjectRanges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[1].OffsetInDescriptorsFromTableStart	= 1;
+
+		D3D12_ROOT_PARAMETER Parameters[3];
+		// Transform Constants
 		Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 		Parameters[0].Constants.ShaderRegister	= 0;
 		Parameters[0].Constants.RegisterSpace	= 0;
 		Parameters[0].Constants.Num32BitValues	= 19;
 		Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
 
+		// PerFrame DescriptorTable
 		Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		Parameters[1].DescriptorTable.NumDescriptorRanges	= 1;
-		Parameters[1].DescriptorTable.pDescriptorRanges		= Ranges;
+		Parameters[1].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
 		Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_VERTEX;
 
+		// PerObject DescriptorTable
+		Parameters[2].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		Parameters[2].DescriptorTable.NumDescriptorRanges	= 2;
+		Parameters[2].DescriptorTable.pDescriptorRanges		= PerObjectRanges;
+		Parameters[2].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		D3D12_STATIC_SAMPLER_DESC MaterialSampler = { };
+		MaterialSampler.Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		MaterialSampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		MaterialSampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		MaterialSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		MaterialSampler.MipLODBias			= 0.0f;
+		MaterialSampler.MaxAnisotropy		= 0;
+		MaterialSampler.ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
+		MaterialSampler.BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		MaterialSampler.MinLOD				= 0.0f;
+		MaterialSampler.MaxLOD				= 0.0f;
+		MaterialSampler.ShaderRegister		= 0;
+		MaterialSampler.RegisterSpace		= 0;
+		MaterialSampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+
 		D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-		RootSignatureDesc.NumParameters		= 2;
+		RootSignatureDesc.NumParameters		= 3;
 		RootSignatureDesc.pParameters		= Parameters;
-		RootSignatureDesc.NumStaticSamplers	= 0;
-		RootSignatureDesc.pStaticSamplers	= nullptr;
+		RootSignatureDesc.NumStaticSamplers	= 1;
+		RootSignatureDesc.pStaticSamplers	= &MaterialSampler;
 		RootSignatureDesc.Flags				= 
 			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |

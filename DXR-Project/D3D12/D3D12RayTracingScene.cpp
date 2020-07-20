@@ -25,6 +25,11 @@ D3D12RayTracingGeometry::~D3D12RayTracingGeometry()
 
 bool D3D12RayTracingGeometry::BuildAccelerationStructure(D3D12CommandList* CommandList, std::shared_ptr<D3D12Buffer>& InVertexBuffer, Uint32 InVertexCount, std::shared_ptr<D3D12Buffer>& InIndexBuffer, Uint32 InIndexCount)
 {
+	if (!IsDirty)
+	{
+		return true;
+	}
+
 	D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc = {};
 	GeometryDesc.Type									= D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
 	GeometryDesc.Triangles.VertexBuffer.StartAddress	= InVertexBuffer->GetGPUVirtualAddress();
@@ -86,6 +91,7 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(D3D12CommandList* Comma
 	VertexCount		= InVertexCount;
 	IndexCount		= InIndexCount;
 	
+	IsDirty = false;
 	return true;
 }
 
@@ -276,6 +282,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandL
 
 	View = std::make_shared<D3D12ShaderResourceView>(Device, nullptr, &SrvDesc);
 
+	IsDirty = false;
 	return true;
 }
 

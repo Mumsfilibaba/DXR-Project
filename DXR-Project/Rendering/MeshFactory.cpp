@@ -110,7 +110,7 @@ MeshData MeshFactory::CreateFromFile(const std::string& Filename, bool MergeMesh
 
 MeshData MeshFactory::CreateCube(Float32 Width, Float32 Height, Float32 Depth) noexcept
 {
-	const Float32 HalfWitdth	= Width * 0.5f;
+	const Float32 HalfWidth		= Width * 0.5f;
 	const Float32 HalfHeight	= Height * 0.5f;
 	const Float32 HalfDepth		= Depth * 0.5f;
 
@@ -118,40 +118,40 @@ MeshData MeshFactory::CreateCube(Float32 Width, Float32 Height, Float32 Depth) n
 	Cube.Vertices =
 	{
 		// FRONT FACE
-		{ XMFLOAT3(-HalfWitdth,  HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3( HalfWitdth,  HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-HalfWitdth, -HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3( HalfWitdth, -HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+		{ XMFLOAT3(-HalfWidth,  HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3( HalfWidth,  HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-HalfWidth, -HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3( HalfWidth, -HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
 
 		// BACK FACE
-		{ XMFLOAT3( HalfWitdth,  HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-HalfWitdth,  HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3( HalfWitdth, -HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(-HalfWitdth, -HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+		{ XMFLOAT3( HalfWidth,  HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-HalfWidth,  HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3( HalfWidth, -HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(-HalfWidth, -HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
 
 		// RIGHT FACE
-		{ XMFLOAT3(HalfWitdth,  HalfHeight, -HalfDepth), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(HalfWitdth,  HalfHeight,  HalfDepth), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(HalfWitdth, -HalfHeight, -HalfDepth), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(HalfWitdth, -HalfHeight,  HalfDepth), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
+		{ XMFLOAT3(HalfWidth,  HalfHeight, -HalfDepth), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(HalfWidth,  HalfHeight,  HalfDepth), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(HalfWidth, -HalfHeight, -HalfDepth), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(HalfWidth, -HalfHeight,  HalfDepth), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
 
 		// LEFT FACE
-		{ XMFLOAT3(-HalfWitdth,  HalfHeight, -HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-HalfWitdth,  HalfHeight,  HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-HalfWitdth, -HalfHeight, -HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(-HalfWitdth, -HalfHeight,  HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
+		{ XMFLOAT3(-HalfWidth,  HalfHeight, -HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-HalfWidth,  HalfHeight,  HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-HalfWidth, -HalfHeight, -HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(-HalfWidth, -HalfHeight,  HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
 
 		// TOP FACE
-		{ XMFLOAT3(-HalfWitdth,  HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3( HalfWitdth,  HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-HalfWitdth,  HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3( HalfWitdth,  HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+		{ XMFLOAT3(-HalfWidth,  HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3( HalfWidth,  HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-HalfWidth,  HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3( HalfWidth,  HalfHeight, -HalfDepth), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
 
 		// BOTTOM FACE
-		{ XMFLOAT3(-HalfWitdth, -HalfHeight, -HalfDepth), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3( HalfWitdth, -HalfHeight, -HalfDepth), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-HalfWitdth, -HalfHeight,  HalfDepth), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3( HalfWitdth, -HalfHeight,  HalfDepth), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT3(-1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+		{ XMFLOAT3(-HalfWidth, -HalfHeight, -HalfDepth), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3( HalfWidth, -HalfHeight, -HalfDepth), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-HalfWidth, -HalfHeight,  HalfDepth), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3( HalfWidth, -HalfHeight,  HalfDepth), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
 	};
 
 	Cube.Indices =
@@ -292,26 +292,23 @@ MeshData MeshFactory::CreateSphere(Uint32 Subdivisions, Float32 Radius) noexcept
 
 	for (Uint32 i = 0; i < static_cast<Uint32>(Sphere.Vertices.size()); i++)
 	{
-		// Calculate the new position
-		XMVECTOR Position = XMLoadFloat3(&Sphere.Vertices[i].Position);
-		Position = XMVector3Normalize(Position);
-
+		// Calculate the new position, normal and tangent
+		XMVECTOR Position	= XMLoadFloat3(&Sphere.Vertices[i].Position);
+		Position			= XMVector3Normalize(Position);
 		XMStoreFloat3(&Sphere.Vertices[i].Normal, Position);
 
 		Position = XMVectorScale(Position, Radius);
 		XMStoreFloat3(&Sphere.Vertices[i].Position, Position);
-
+	
 		// Calculate uvs
-		XMFLOAT2 TexCoords;
-		TexCoords.y = (asin(Sphere.Vertices[i].Position.y) / XM_PI) + 0.5f;
-		TexCoords.x = (atan2f(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + XM_PI) / (2.0f * XM_PI);
-		Sphere.Vertices[i].TexCoord = TexCoords;
+		Sphere.Vertices[i].TexCoord.y = (asin(Sphere.Vertices[i].Position.y) / XM_PI) + 0.5f;
+		Sphere.Vertices[i].TexCoord.x = (atan2f(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + XM_PI) / (2.0f * XM_PI);
 	}
-
-	CalculateTangents(Sphere);
 
 	Sphere.Indices.shrink_to_fit();
 	Sphere.Vertices.shrink_to_fit();
+	
+	CalculateTangents(Sphere);
 
 	return Sphere;
 }
@@ -771,24 +768,56 @@ void MeshFactory::CalculateHardNormals(MeshData& data) noexcept
 	*/
 }
 
-void MeshFactory::CalculateTangents(MeshData& data) noexcept
+void MeshFactory::CalculateTangents(MeshData& Data) noexcept
 {
-	/*
-	for (uint32 i = 0; i < data.Indices.size(); i += 3)
+	auto CalculateTangentFromVectors = [](Vertex& Vertex1, const Vertex& Vertex2, const Vertex& Vertex3)
 	{
-		vec3 modelVec = data.Vertices[data.Indices[i + 1]].Position - data.Vertices[data.Indices[i]].Position;
-		vec3 modelVec2 = data.Vertices[data.Indices[i + 2]].Position - data.Vertices[data.Indices[i]].Position;
-		vec2 tangentVec = data.Vertices[data.Indices[i + 1]].TexCoord - data.Vertices[data.Indices[i]].TexCoord;
-		vec2 tangentVec2 = data.Vertices[data.Indices[i + 2]].TexCoord - data.Vertices[data.Indices[i]].TexCoord;
+		XMFLOAT3 Edge1;
+		Edge1.x = Vertex2.Position.x - Vertex1.Position.x;
+		Edge1.y = Vertex2.Position.y - Vertex1.Position.y;
+		Edge1.z = Vertex2.Position.z - Vertex1.Position.z;
 
-		float denominator = 1.0f / ((tangentVec.x * tangentVec2.y) - (tangentVec2.x * tangentVec.y));
-		vec3 tangent = normalize(((modelVec * tangentVec2.y) - (modelVec2 * tangentVec.y)) * denominator);
+		XMFLOAT3 Edge2;
+		Edge2.x = Vertex3.Position.x - Vertex1.Position.x;
+		Edge2.y = Vertex3.Position.y - Vertex1.Position.y;
+		Edge2.z = Vertex3.Position.z - Vertex1.Position.z;
 
-		data.Vertices[data.Indices[i + 0]].Tangent = tangent;
-		data.Vertices[data.Indices[i + 1]].Tangent = tangent;
-		data.Vertices[data.Indices[i + 2]].Tangent = tangent;
+		XMFLOAT2 UVEdge1;
+		UVEdge1.x = Vertex2.TexCoord.x - Vertex1.TexCoord.x;
+		UVEdge1.y = Vertex2.TexCoord.y - Vertex1.TexCoord.y;
+
+		XMFLOAT3 UVEdge2;
+		UVEdge2.x = Vertex3.TexCoord.x - Vertex1.TexCoord.x;
+		UVEdge2.y = Vertex3.TexCoord.y - Vertex1.TexCoord.y;
+
+		Float32 Denominator = 1.0f / (UVEdge1.x * UVEdge2.y - UVEdge2.x * UVEdge1.y);
+
+		XMFLOAT3 Tangent;
+		Tangent.x = Denominator * (UVEdge2.y * Edge1.x - UVEdge1.y * Edge2.x);
+		Tangent.y = Denominator * (UVEdge2.y * Edge1.y - UVEdge1.y * Edge2.y);
+		Tangent.z = Denominator * (UVEdge2.y * Edge1.z - UVEdge1.y * Edge2.z);
+
+		Float32 Length = std::sqrt((Tangent.x * Tangent.x) + (Tangent.y * Tangent.y) + (Tangent.z * Tangent.z));
+		if (Length != 0.0f) 
+		{		
+			Tangent.x /= Length;
+			Tangent.y /= Length;
+			Tangent.z /= Length;
+		}
+
+		Vertex1.Tangent = Tangent;
+	};
+
+	for (Uint32 i = 0; i < Data.Indices.size(); i += 3)
+	{
+		Vertex& Vertex1 = Data.Vertices[Data.Indices[i + 0]];
+		Vertex& Vertex2 = Data.Vertices[Data.Indices[i + 1]];
+		Vertex& Vertex3 = Data.Vertices[Data.Indices[i + 2]];
+
+		CalculateTangentFromVectors(Vertex1, Vertex2, Vertex3);
+		CalculateTangentFromVectors(Vertex2, Vertex3, Vertex1);
+		CalculateTangentFromVectors(Vertex3, Vertex1, Vertex2);
 	}
-	*/
 }
 
 /*void Mesh::calcNormal()

@@ -1,3 +1,5 @@
+#include "PBRCommon.hlsli"
+
 // Resources
 cbuffer CameraBuffer : register(b0)
 {
@@ -35,14 +37,6 @@ VSOutput VSMain(VSInput Input)
 // PixelShader
 float4 PSMain(float3 TexCoord : TEXCOORD0) : SV_TARGET0
 {
-    const float INTENSITY   = 0.5f;
-    const float GAMMA       = 1.0f / 2.2f;
-    
     float3 Color = Skybox.Sample(SkyboxSampler, TexCoord).rgb;
-    // HDR tonemapping
-    Color = Color / (Color + float3(INTENSITY, INTENSITY, INTENSITY));
-    // Gamma correct
-    Color = pow(Color, float3(GAMMA, GAMMA, GAMMA));
-
-    return float4(Color, 1.0f);
+    return float4(ApplyGammaCorrectionAndTonemapping(Color), 1.0f);
 }

@@ -9,7 +9,14 @@ cbuffer TransformBuffer : register(b0)
 	float		AO;
 };
 
+// PerFrame DescriptorTable
 ConstantBuffer<Camera> Camera : register(b1, space0);
+
+// PerObject DescriptorTable
+Texture2D<float4> AlbedoMap : register(t0, space0);
+Texture2D<float4> NormalMap : register(t1, space0);
+
+SamplerState MaterialSampler : register(s0, space0);
 
 // VertexShader
 struct VSInput
@@ -30,11 +37,12 @@ struct VSOutput
 
 VSOutput VSMain(VSInput Input)
 {
-    float3x3 Mat = float3x3(Transform[0].xyz, Transform[1].xyz, Transform[2].xyz);
-	
 	VSOutput Output;
-    Output.Normal	= mul(Input.Normal, Mat);
-    Output.Tangent	= mul(Input.Tangent, Mat);
+    Output.Normal = normalize(mul(float4(Input.Normal, 0.0f), Transform));
+	
+    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), Transform));
+    Output.Tangent = normalize(Tangent - dot(Tangent, Output.Normal) * Output.Normal);
+	
 	Output.TexCoord = Input.TexCoord;
 	Output.Position = mul(mul(float4(Input.Position, 1.0f), Transform), Camera.ViewProjection);
 	return Output;
@@ -57,16 +65,19 @@ struct PSOutput
 
 PSOutput PSMain(PSInput Input)
 {
-	const float3 ObjectColor = float3(1.0f, 0.0f, 0.0f);
+    float3 Albedo			= AlbedoMap.Sample(MaterialSampler, Input.TexCoord);
+    float3 SampledNormal	= NormalMap.Sample(MaterialSampler, Input.TexCoord);
+    SampledNormal = UnpackNormal(SampledNormal);
 	
-    float3 Normal = normalize(Input.Normal);
-    Normal = (Normal + 1.0f) * 0.5f;
-
+    float3 Normal		= normalize(Input.Normal);
+    float3 Tangent		= normalize(Input.Tangent);
+    float3 MappedNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent);
+	
     const float FinalRoughness = max(Roughness, MIN_ROUGHNESS);
 	
 	PSOutput Output;
-	Output.Albedo	= float4(ObjectColor, 1.0f);
-    Output.Normal	= float4(Normal, 1.0f);
+    Output.Albedo	= float4(Albedo, 1.0f);
+    Output.Normal	= float4(MappedNormal, 1.0f);
     Output.Material = float4(FinalRoughness, Metallic, AO, 1.0f);
 	return Output;
 }
