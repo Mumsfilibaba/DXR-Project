@@ -56,7 +56,7 @@ void RayGen()
 	
     float3 WorldPosition	= PositionFromDepth(Depth, TexCoord, Camera.ViewProjectionInverse);
 	float3 WorldNormal		= GBufferNormal.SampleLevel(GBufferSampler, TexCoord, 0).rgb;
-	WorldNormal = normalize(WorldNormal);
+    WorldNormal = UnpackNormal(WorldNormal);
 	
     float3 ViewDir = normalize(WorldPosition - Camera.Position);
 	

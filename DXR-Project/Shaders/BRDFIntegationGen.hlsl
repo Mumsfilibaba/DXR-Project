@@ -25,9 +25,9 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float Roughness)
 {
     float A = Roughness * Roughness;
 	
-    float Phi       = 2.0f * PI * Xi.x;
-    float CosTheta  = sqrt((1.0f - Xi.y) / (1.0f + (A * A - 1.0f) * Xi.y));
-    float SinTheta  = sqrt(1.0f - CosTheta * CosTheta);
+    float Phi      = 2.0f * PI * Xi.x;
+    float CosTheta = sqrt((1.0f - Xi.y) / (1.0f + (A * A - 1.0f) * Xi.y));
+    float SinTheta = sqrt(1.0f - CosTheta * CosTheta);
 	
     // From spherical coordinates to cartesian coordinates
     float3 H;
@@ -40,12 +40,12 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float Roughness)
     float3 Tangent      = normalize(cross(Up, N));
     float3 Bitangent    = cross(N, Tangent);
 	
-    float3 SampleVec = (Tangent * H.x) + (Bitangent * H.y) + (N * H.z);
+    float3 SampleVec = Tangent * H.x + Bitangent * H.y + N * H.z;
     return normalize(SampleVec);
 }
 
 float2 IntegrateBRDF(float NdotV, float Roughness)
-{
+{ 
     float3 V;
     V.x = sqrt(1.0f - (NdotV * NdotV));
     V.y = 0.0f;
@@ -56,7 +56,7 @@ float2 IntegrateBRDF(float NdotV, float Roughness)
 
     float3 N = float3(0.0f, 0.0f, 1.0f);
 
-    const uint SAMPLE_COUNT = 512u;
+    const uint SAMPLE_COUNT = 1024u;
     for (uint Sample = 0u; Sample < SAMPLE_COUNT; Sample++)
     {
         float2 Xi   = Hammersley(Sample, SAMPLE_COUNT);
@@ -78,9 +78,7 @@ float2 IntegrateBRDF(float NdotV, float Roughness)
         }
     }
     
-    A = A / float(SAMPLE_COUNT);
-    B = B / float(SAMPLE_COUNT);
-    return float2(A, B);
+    return float2(A, B) / SAMPLE_COUNT;
 }
 
 
@@ -88,9 +86,15 @@ float2 IntegrateBRDF(float NdotV, float Roughness)
 [numthreads(1, 1, 1)]
 void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {
-    float2 ImageSize    = float2(512.0f, 512.0f);
-    float2 TexCoord     = (float2(DispatchThreadID.xy) + 0.5f) / ImageSize;
-
-    float2 IntegratedBDRF = IntegrateBRDF(TexCoord.x, 1.0f - TexCoord.y);
+    float OutputWidth;
+    float OutputHeight;
+    IntegrationMap.GetDimensions(OutputWidth, OutputHeight);
+    
+    float2 TexCoord = float2(DispatchThreadID.xy) / float2(OutputWidth, OutputHeight);
+    
+    float NdotV     = max(TexCoord.x, MIN_VALUE);
+    float Roughness = min(max(TexCoord.y, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    
+    float2 IntegratedBDRF = IntegrateBRDF(NdotV, Roughness);
     IntegrationMap[DispatchThreadID.xy] = IntegratedBDRF;
 }

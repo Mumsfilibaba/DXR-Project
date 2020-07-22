@@ -72,8 +72,9 @@ PSOutput PSMain(PSInput Input)
     float3 Normal		= normalize(Input.Normal);
     float3 Tangent		= normalize(Input.Tangent);
     float3 MappedNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent);
+    MappedNormal = PackNormal(MappedNormal);
 	
-    const float FinalRoughness = max(Roughness, MIN_ROUGHNESS);
+    const float FinalRoughness = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
 	
 	PSOutput Output;
     Output.Albedo	= float4(Albedo, 1.0f);

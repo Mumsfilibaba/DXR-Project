@@ -15,7 +15,7 @@
 
 std::unique_ptr<Renderer> Renderer::RendererInstance = nullptr;
 
-static const DXGI_FORMAT	NormalFormat		= DXGI_FORMAT_R16G16B16A16_SNORM;
+static const DXGI_FORMAT	NormalFormat		= DXGI_FORMAT_R10G10B10A2_UNORM;
 static const DXGI_FORMAT	DepthBufferFormat	= DXGI_FORMAT_D32_FLOAT;
 static const Uint32			PresentInterval		= 0;
 
@@ -562,7 +562,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 		return false;	
 	}
 
-	Skybox = std::shared_ptr<D3D12Texture>(TextureFactory::CreateTextureCubeFromPanorma(Device.get(), Panorama.get(), 512, DXGI_FORMAT_R16G16B16A16_FLOAT));
+	Skybox = std::shared_ptr<D3D12Texture>(TextureFactory::CreateTextureCubeFromPanorma(Device.get(), Panorama.get(), 768, DXGI_FORMAT_R16G16B16A16_FLOAT));
 	if (!Skybox)
 	{
 		return false;
@@ -1154,10 +1154,10 @@ bool Renderer::InitDeferred()
 		Samplers[0].RegisterSpace		= 0;
 		Samplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
 
-		Samplers[1].Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-		Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[1].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
+		Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 		Samplers[1].MipLODBias			= 0.0f;
 		Samplers[1].MaxAnisotropy		= 0;
 		Samplers[1].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
