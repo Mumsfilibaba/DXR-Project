@@ -1,12 +1,12 @@
 #include "D3D12UploadStack.h"
 
 D3D12UploadStack::D3D12UploadStack()
-	: Buffer(nullptr)
 {
 }
 
 D3D12UploadStack::~D3D12UploadStack()
 {
+	SAFEDELETE(Buffer);
 }
 
 bool D3D12UploadStack::Initialize(D3D12Device* Device)
@@ -19,13 +19,14 @@ bool D3D12UploadStack::Initialize(D3D12Device* Device)
 	Properties.SizeInBytes	= BufferSize;
 	Properties.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
 
-	Buffer = std::shared_ptr<D3D12Buffer>(new D3D12Buffer(Device));
+	Buffer = new D3D12Buffer(Device);
 	if (!Buffer->Initialize(Properties))
 	{
 		return false;
 	}
 	else
 	{
+		Reset();
 		return true;
 	}
 }
@@ -42,9 +43,9 @@ void D3D12UploadStack::Close()
 	CPUMemory = nullptr;
 }
 
-void* D3D12UploadStack::Allocate(Uint64 SizeInBytes)
+void* D3D12UploadStack::Allocate(Uint32 SizeInBytes)
 {
-	const Uint64 TempAllocatedBytes = Offset + SizeInBytes;
+	const Uint32 TempAllocatedBytes = Offset + SizeInBytes;
 	if (TempAllocatedBytes > BufferSize)
 	{
 		return nullptr;

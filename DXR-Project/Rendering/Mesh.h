@@ -21,6 +21,7 @@ public:
 	std::shared_ptr<D3D12Buffer>				VertexBuffer;
 	std::shared_ptr<D3D12Buffer>				IndexBuffer;
 	std::shared_ptr<D3D12RayTracingGeometry>	RayTracingGeometry;
+	std::shared_ptr<D3D12DescriptorTable>		DescriptorTable;
 	
 	Uint32 VertexCount	= 0;
 	Uint32 IndexCount	= 0;

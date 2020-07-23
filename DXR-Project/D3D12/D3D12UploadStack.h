@@ -14,22 +14,22 @@ public:
 	void Reset();
 	void Close();
 
-	void* Allocate(Uint64 SizeInBytes);
+	void* Allocate(Uint32 SizeInBytes);
 
 	FORCEINLINE D3D12Buffer* GetBuffer() const
 	{
-		return Buffer.get();
+		return Buffer;
 	}
 
-	FORCEINLINE Uint64 GetOffset() const
+	FORCEINLINE Uint32 GetOffset() const
 	{
 		return Offset;
 	}
 
 private:
-	Byte*							CPUMemory = nullptr;
-	std::shared_ptr<D3D12Buffer>	Buffer;
+	Byte*			CPUMemory	= nullptr;
+	D3D12Buffer*	Buffer		= nullptr;
 	
-	Uint64 Offset		= 0;
-	Uint64 BufferSize	= 0;
+	Uint32 Offset		= 0;
+	Uint32 BufferSize	= 0;
 };

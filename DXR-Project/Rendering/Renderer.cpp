@@ -283,11 +283,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandList)
 {
-	InCommandList->TransitionBarrier(ResultTexture.get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	InCommandList->TransitionBarrier(ReflectionTexture.get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-	raytraceDesc.Width	= ResultTexture->GetDesc().Width; //SwapChain->GetWidth();
-	raytraceDesc.Height = ResultTexture->GetDesc().Height; //SwapChain->GetHeight();
+	raytraceDesc.Width	= ReflectionTexture->GetDesc().Width; //SwapChain->GetWidth();
+	raytraceDesc.Height = ReflectionTexture->GetDesc().Height; //SwapChain->GetHeight();
 	raytraceDesc.Depth	= 1;
 
 	// Set shader tables
@@ -304,7 +304,7 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 	InCommandList->DispatchRays(&raytraceDesc);
 
 	// Copy the results to the back-buffer
-	InCommandList->TransitionBarrier(ResultTexture.get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	InCommandList->TransitionBarrier(ReflectionTexture.get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	//InCommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
 
 	//InCommandList->CopyResource(BackBuffer, ResultTexture.get());
@@ -319,20 +319,18 @@ void Renderer::OnResize(Int32 Width, Int32 Height)
 
 	SwapChain->Resize(Width, Height);
 
+	// Update deferred
+	InitGBuffer();
+
 	if (Device->IsRayTracingSupported())
 	{
-		InitRayTracingTexture();
-
-		RayGenDescriptorTable->SetUnorderedAccessView(ResultTexture->GetUnorderedAccessView(0).get(), 0);
+		RayGenDescriptorTable->SetUnorderedAccessView(ReflectionTexture->GetUnorderedAccessView(0).get(), 0);
 		RayGenDescriptorTable->CopyDescriptors();
 
 		GlobalDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).get(), 5);
 		GlobalDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).get(), 6);
 		GlobalDescriptorTable->CopyDescriptors();
 	}
-
-	// Update deferred
-	InitGBuffer();
 
 	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).get(), 0);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).get(), 1);
@@ -606,23 +604,17 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 		{
 			return false;
 		}
-
-		LightDescriptorTable->SetShaderResourceView(ResultTexture->GetShaderResourceView(0).get(), 4);
-		LightDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).get(), 5);
 	}
 
+	LightDescriptorTable->SetShaderResourceView(ReflectionTexture->GetShaderResourceView(0).get(), 4);
+	LightDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).get(), 5);
 	LightDescriptorTable->CopyDescriptors();
+
 	return true;
 }
 
 bool Renderer::InitRayTracing()
 {
-	// Create image
-	if (!InitRayTracingTexture())
-	{
-		return false;
-	}
-
 	// Create RootSignatures
 	std::unique_ptr<D3D12RootSignature> RayGenLocalRoot;
 	{
@@ -695,9 +687,9 @@ bool Renderer::InitRayTracing()
 	std::unique_ptr<D3D12RootSignature> MissLocalRoot;
 	{
 		D3D12_ROOT_SIGNATURE_DESC MissLocalRootDesc = {};
-		MissLocalRootDesc.NumParameters		= 0;
-		MissLocalRootDesc.pParameters		= nullptr;
-		MissLocalRootDesc.Flags				= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+		MissLocalRootDesc.NumParameters	= 0;
+		MissLocalRootDesc.pParameters	= nullptr;
+		MissLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
 		MissLocalRoot = std::make_unique<D3D12RootSignature>(Device.get());
 		if (MissLocalRoot->Initialize(MissLocalRootDesc))
@@ -781,9 +773,9 @@ bool Renderer::InitRayTracing()
  
 		// GBuffer Sampler
 		Samplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
-		Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 		Samplers[1].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
 		Samplers[1].ShaderRegister		= 1;
 		Samplers[1].RegisterSpace		= 0;
@@ -904,7 +896,7 @@ bool Renderer::InitRayTracing()
 	CubeIndexBuffer->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), CubeIndexBuffer->GetResource(), &SrvDesc), 0);
 
 	// Populate descriptors
-	RayGenDescriptorTable->SetUnorderedAccessView(ResultTexture->GetUnorderedAccessView(0).get(), 0);
+	RayGenDescriptorTable->SetUnorderedAccessView(ReflectionTexture->GetUnorderedAccessView(0).get(), 0);
 	RayGenDescriptorTable->CopyDescriptors();
 
 	SphereDescriptorTable->SetShaderResourceView(MeshVertexBuffer->GetShaderResourceView(0).get(), 0);
@@ -1141,9 +1133,9 @@ bool Renderer::InitDeferred()
 
 		D3D12_STATIC_SAMPLER_DESC Samplers[2] = { };
 		Samplers[0].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
-		Samplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		Samplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		Samplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		Samplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		Samplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		Samplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 		Samplers[0].MipLODBias			= 0.0f;
 		Samplers[0].MaxAnisotropy		= 0;
 		Samplers[0].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
@@ -1307,6 +1299,12 @@ bool Renderer::InitDeferred()
 
 bool Renderer::InitGBuffer()
 {
+	// Create image
+	if (!InitRayTracingTexture())
+	{
+		return false;
+	}
+
 	// Albedo
 	TextureProperties GBufferProperties = { };
 	GBufferProperties.DebugName		= "GBuffer Albedo";
@@ -1576,8 +1574,8 @@ bool Renderer::InitRayTracingTexture()
 	OutputProperties.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
 	OutputProperties.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 
-	ResultTexture = std::shared_ptr<D3D12Texture>(new D3D12Texture(Device.get()));
-	if (!ResultTexture->Initialize(OutputProperties))
+	ReflectionTexture = std::shared_ptr<D3D12Texture>(new D3D12Texture(Device.get()));
+	if (!ReflectionTexture->Initialize(OutputProperties))
 	{
 		return false;
 	}
@@ -1588,7 +1586,7 @@ bool Renderer::InitRayTracingTexture()
 	UAVView.Texture2D.MipSlice		= 0;
 	UAVView.Texture2D.PlaneSlice	= 0;
 
-	ResultTexture->SetUnorderedAccessView(std::make_shared<D3D12UnorderedAccessView>(Device.get(), nullptr, ResultTexture->GetResource(), &UAVView), 0);
+	ReflectionTexture->SetUnorderedAccessView(std::make_shared<D3D12UnorderedAccessView>(Device.get(), nullptr, ReflectionTexture->GetResource(), &UAVView), 0);
 	
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
 	SrvDesc.Format							= OutputProperties.Format;
@@ -1599,7 +1597,7 @@ bool Renderer::InitRayTracingTexture()
 	SrvDesc.Texture2D.PlaneSlice			= 0;
 	SrvDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
 	
-	ResultTexture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), ResultTexture->GetResource(), &SrvDesc), 0);
+	ReflectionTexture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), ReflectionTexture->GetResource(), &SrvDesc), 0);
 
 	return true;
 }
