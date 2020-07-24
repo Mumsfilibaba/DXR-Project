@@ -952,7 +952,7 @@ bool Renderer::InitDeferred()
 		PerFrameRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 		PerFrameRanges[0].OffsetInDescriptorsFromTableStart = 0;
 
-		D3D12_DESCRIPTOR_RANGE PerObjectRanges[2] = {};
+		D3D12_DESCRIPTOR_RANGE PerObjectRanges[5] = {};
 		// Albedo Map
 		PerObjectRanges[0].BaseShaderRegister					= 0;
 		PerObjectRanges[0].NumDescriptors						= 1;
@@ -966,6 +966,27 @@ bool Renderer::InitDeferred()
 		PerObjectRanges[1].RegisterSpace						= 0;
 		PerObjectRanges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		PerObjectRanges[1].OffsetInDescriptorsFromTableStart	= 1;
+
+		// Roughness Map
+		PerObjectRanges[2].BaseShaderRegister					= 2;
+		PerObjectRanges[2].NumDescriptors						= 1;
+		PerObjectRanges[2].RegisterSpace						= 0;
+		PerObjectRanges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[2].OffsetInDescriptorsFromTableStart	= 2;
+
+		// Height Map
+		PerObjectRanges[3].BaseShaderRegister					= 3;
+		PerObjectRanges[3].NumDescriptors						= 1;
+		PerObjectRanges[3].RegisterSpace						= 0;
+		PerObjectRanges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[3].OffsetInDescriptorsFromTableStart	= 3;
+
+		// AO Map
+		PerObjectRanges[4].BaseShaderRegister					= 4;
+		PerObjectRanges[4].NumDescriptors						= 1;
+		PerObjectRanges[4].RegisterSpace						= 0;
+		PerObjectRanges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[4].OffsetInDescriptorsFromTableStart	= 4;
 
 		D3D12_ROOT_PARAMETER Parameters[3];
 		// Transform Constants
@@ -983,7 +1004,7 @@ bool Renderer::InitDeferred()
 
 		// PerObject DescriptorTable
 		Parameters[2].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		Parameters[2].DescriptorTable.NumDescriptorRanges	= 2;
+		Parameters[2].DescriptorTable.NumDescriptorRanges	= 5;
 		Parameters[2].DescriptorTable.pDescriptorRanges		= PerObjectRanges;
 		Parameters[2].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
 

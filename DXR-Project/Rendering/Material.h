@@ -36,6 +36,8 @@ public:
 	std::shared_ptr<D3D12Texture>	AlbedoMap;
 	std::shared_ptr<D3D12Texture>	NormalMap;
 	std::shared_ptr<D3D12Texture>	Roughness;
+	std::shared_ptr<D3D12Texture>	Height;
+	std::shared_ptr<D3D12Texture>	AO;
 	std::shared_ptr<D3D12Texture>	Metallic;
 
 private:

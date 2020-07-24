@@ -319,6 +319,20 @@ bool Application::Initialize()
 		BaseNormal->SetName("BaseNormal");
 	}
 
+	Pixels[0] = 255;
+	Pixels[1] = 255;
+	Pixels[2] = 255;
+
+	std::shared_ptr<D3D12Texture> WhiteTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	if (!WhiteTexture)
+	{
+		return false;
+	}
+	else
+	{
+		WhiteTexture->SetName("WhiteTexture");
+	}
+
 	XMFLOAT4X4 Matrix;
 	MaterialProperties MatProperties;
 	for (Uint32 y = 0; y < SphereCountY; y++)
@@ -335,8 +349,11 @@ bool Application::Initialize()
 			NewComponent->Mesh		= SphereMesh;
 			NewComponent->Material	= std::make_shared<Material>(MatProperties);
 			
-			NewComponent->Material->AlbedoMap = BaseTexture;
-			NewComponent->Material->NormalMap = BaseNormal;
+			NewComponent->Material->AlbedoMap	= BaseTexture;
+			NewComponent->Material->NormalMap	= BaseNormal;
+			NewComponent->Material->Roughness	= WhiteTexture;
+			NewComponent->Material->Height		= WhiteTexture;
+			NewComponent->Material->AO			= WhiteTexture;
 			NewComponent->Material->Initialize(Renderer->GetDevice().get());
 
 			NewActor->AddComponent(NewComponent);
@@ -359,7 +376,7 @@ bool Application::Initialize()
 
 	MatProperties.AO		= 1.0f;
 	MatProperties.Metallic	= 0.0f;
-	MatProperties.Roughness = 0.5f;
+	MatProperties.Roughness = 1.0f;
 
 	NewComponent = new RenderComponent(NewActor);
 	NewComponent->Mesh		= Mesh::Make(Renderer->GetDevice().get(), CubeMeshData);
@@ -385,8 +402,41 @@ bool Application::Initialize()
 		NormalMap->SetName("NormalMap");
 	}
 
-	NewComponent->Material->AlbedoMap = AlbedoMap;
-	NewComponent->Material->NormalMap = NormalMap;
+	std::shared_ptr<D3D12Texture> AOMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	if (!AOMap)
+	{
+		return false;
+	}
+	else
+	{
+		AOMap->SetName("AOMap");
+	}
+
+	std::shared_ptr<D3D12Texture> RoughnessMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	if (!RoughnessMap)
+	{
+		return false;
+	}
+	else
+	{
+		RoughnessMap->SetName("RoughnessMap");
+	}
+
+	std::shared_ptr<D3D12Texture> HeightMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	if (!HeightMap)
+	{
+		return false;
+	}
+	else
+	{
+		HeightMap->SetName("HeightMap");
+	}
+
+	NewComponent->Material->AlbedoMap	= AlbedoMap;
+	NewComponent->Material->NormalMap	= NormalMap;
+	NewComponent->Material->Roughness	= RoughnessMap;
+	NewComponent->Material->Height		= HeightMap;
+	NewComponent->Material->AO			= AOMap;
 	NewComponent->Material->Initialize(Renderer->GetDevice().get());
 
 	NewActor->AddComponent(NewComponent);

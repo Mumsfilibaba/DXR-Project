@@ -5,6 +5,8 @@ Material::Material(const MaterialProperties& InProperties)
 	, NormalMap(nullptr)
 	, Roughness(nullptr)
 	, Metallic(nullptr)
+	, AO(nullptr)
+	, Height(nullptr)
 	, MaterialBuffer(nullptr)
 	, Properties(InProperties)
 {
@@ -17,11 +19,17 @@ Material::~Material()
 
 void Material::Initialize(D3D12Device* Device)
 {
-	VALIDATE(AlbedoMap != nullptr);
-	VALIDATE(NormalMap != nullptr);
+	VALIDATE(AlbedoMap	!= nullptr);
+	VALIDATE(NormalMap	!= nullptr);
+	VALIDATE(Roughness	!= nullptr);
+	VALIDATE(Height		!= nullptr);
+	VALIDATE(AO			!= nullptr);
 
-	DescriptorTable = new D3D12DescriptorTable(Device, 2);
+	DescriptorTable = new D3D12DescriptorTable(Device, 5);
 	DescriptorTable->SetShaderResourceView(AlbedoMap->GetShaderResourceView(0).get(), 0);
 	DescriptorTable->SetShaderResourceView(NormalMap->GetShaderResourceView(0).get(), 1);
+	DescriptorTable->SetShaderResourceView(Roughness->GetShaderResourceView(0).get(), 2);
+	DescriptorTable->SetShaderResourceView(Height->GetShaderResourceView(0).get(), 3);
+	DescriptorTable->SetShaderResourceView(AO->GetShaderResourceView(0).get(), 4);
 	DescriptorTable->CopyDescriptors();
 }
