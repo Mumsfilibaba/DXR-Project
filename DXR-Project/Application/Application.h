@@ -20,6 +20,9 @@ public:
 	void Run();
 	bool Tick();
 
+	void DrawDebugData();
+	void DrawRenderSettings();
+
 	void SetCursor(std::shared_ptr<WindowsCursor> Cursor);
 	void SetActiveWindow(std::shared_ptr<WindowsWindow>& ActiveWindow);
 	void SetCapture(std::shared_ptr<WindowsWindow> Capture);

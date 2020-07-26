@@ -19,7 +19,8 @@ Texture2D<float4> AlbedoMap		: register(t0, space0);
 Texture2D<float4> NormalMap		: register(t1, space0);
 Texture2D<float4> RoughnessMap	: register(t2, space0);
 Texture2D<float4> HeightMap		: register(t3, space0);
-Texture2D<float4> AOMap			: register(t4, space0);
+Texture2D<float4> MetallicMap	: register(t4, space0);
+Texture2D<float4> AOMap			: register(t5, space0);
 
 SamplerState MaterialSampler : register(s0, space0);
 
@@ -92,7 +93,7 @@ struct PSOutput
 	float4 Material : SV_Target2;
 };
 
-static const float HEIGHT_SCALE = 0.015f;
+static const float HEIGHT_SCALE = 0.03f;
 
 float SampleHeightMap(float2 TexCoords)
 {
@@ -101,11 +102,11 @@ float SampleHeightMap(float2 TexCoords)
 
 float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 {
-	const float MinLayers	= 8;
-	const float MaxLayers	= 32;
+	const float MinLayers	= 32;
+	const float MaxLayers	= 64;
 
-	float NumLayers			= lerp(MaxLayers, MinLayers, abs(dot(float3(0.0f, 0.0f, 1.0f), ViewDir)));
-	float LayerDepth		= 1.0f / NumLayers;
+	float NumLayers		= lerp(MaxLayers, MinLayers, abs(dot(float3(0.0f, 0.0f, 1.0f), ViewDir)));
+	float LayerDepth	= 1.0f / NumLayers;
 	
 	float2 P				= ViewDir.xy / ViewDir.z * HEIGHT_SCALE;
 	float2 DeltaTexCoords	= P / NumLayers;
@@ -140,10 +141,10 @@ PSOutput PSMain(PSInput Input)
 	
 #if ENABLE_PARALLAX_MAPPING
 	TexCoords = ParallaxMapping(TexCoords, ViewDir);
-	//if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
-	//{
-	//    discard;
-	//}
+    //if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
+    //{
+    //    discard;
+    //}
 #endif
 
 	float3 Albedo			= AlbedoMap.Sample(MaterialSampler, TexCoords).rgb;
@@ -157,13 +158,14 @@ PSOutput PSMain(PSInput Input)
 	MappedNormal = PackNormal(MappedNormal);
 	
 	float SampledAO				= AOMap.Sample(MaterialSampler, TexCoords).r * AO;
+    float SampledMetallic		= MetallicMap.Sample(MaterialSampler, TexCoords).r * Metallic;
 	float SampledRoughness		= RoughnessMap.Sample(MaterialSampler, TexCoords).r * Roughness;
 	const float FinalRoughness	= min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
 	
 	PSOutput Output;
 	Output.Albedo	= float4(Albedo, 1.0f);
 	Output.Normal	= float4(MappedNormal, 1.0f);
-	Output.Material = float4(FinalRoughness, Metallic, SampledAO, 1.0f);
+    Output.Material = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
 
 	return Output;
 }

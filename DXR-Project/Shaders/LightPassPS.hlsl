@@ -11,7 +11,8 @@ Texture2D<float4> Normal			: register(t1, space0);
 Texture2D<float4> Material			: register(t2, space0);
 Texture2D<float4> DepthStencil		: register(t3, space0);
 Texture2D<float4> DXRReflection		: register(t4, space0);
-Texture2D<float4> IntegrationLUT	: register(t5, space0);
+Texture2D<float4> IrradianceMap		: register(t5, space0);
+Texture2D<float4> IntegrationLUT	: register(t6, space0);
 
 SamplerState GBufferSampler : register(s0, space0);
 SamplerState LUTSampler		: register(s1, space0);
@@ -40,7 +41,7 @@ float4 Main(PSInput Input) : SV_TARGET
 	const float3	ViewDir		= normalize(Camera.Position - WorldPosition);
     const float		Roughness	= SampledMaterial.r;
 	const float		Metallic	= SampledMaterial.g;
-	const float		AO			= SampledMaterial.b;
+    const float		SampledAO	= SampledMaterial.b;
 	
 	float3 F0 = float3(0.04f, 0.04f, 0.04f);
     F0 = lerp(F0, SampledAlbedo, Metallic);
@@ -77,17 +78,19 @@ float4 Main(PSInput Input) : SV_TARGET
 		Lo += (Kd * SampledAlbedo / PI + Specular) * Radiance * NdotL;
     }
     
-    float3 F_IBL	= FresnelSchlickRoughness(DotNV, F0, Roughness);
+    float3 F_IBL	= FresnelSchlick(DotNV, F0); // FresnelSchlickRoughness(DotNV, F0, Roughness);
     float3 Ks_IBL	= F_IBL;
     float3 Kd_IBL	= 1.0f - Ks_IBL;
     Kd_IBL *= 1.0 - Metallic;
 	
-    float2	IntegrationBRDF	= IntegrationLUT.Sample(LUTSampler, float2(DotNV, Roughness)).rg;
-    float3	IBL_Specular	= SampledReflection * (F_IBL * IntegrationBRDF.x + IntegrationBRDF.y);
+    float3 Irradiance = IrradianceMap.Sample(GBufferSampler, Norm).rgb;
+    float3 IBL_Diffuse = Irradiance * SampledAlbedo * Kd_IBL;
 	
-    float3 Ambient	= IBL_Specular * AO;
+    //float2	IntegrationBRDF	= IntegrationLUT.Sample(LUTSampler, float2(DotNV, Roughness)).rg;
+    //float3	IBL_Specular	= SampledReflection * (F_IBL * IntegrationBRDF.x + IntegrationBRDF.y);
+	
+    float3 Ambient	= (IBL_Diffuse) * SampledAO;
     float3 Color	= Ambient + Lo;
 	
-    //return float4((F_IBL * IntegrationBRDF.x + IntegrationBRDF.y), 1.0f);
     return float4(ApplyGammaCorrectionAndTonemapping(Color), 1.0f);
 }

@@ -7,7 +7,7 @@ static const float MIN_VALUE        = 0.0000001f;
 static const float RAY_OFFSET       = 0.2f;
 
 static const float3 LightPosition   = float3(0.0f, 10.0f, -10.0f);
-static const float3 LightColor      = float3(300.0f, 300.0f, 300.0f);
+static const float3 LightColor      = float3(400.0f, 400.0f, 400.0f);
 
 // Common Structs
 struct Camera
@@ -98,7 +98,7 @@ float3 FresnelSchlickRoughness(float CosTheta, float3 F0, float Roughness)
 // HDR Helpers
 float3 ApplyGammaCorrectionAndTonemapping(float3 InputColor)
 {
-	const float INTENSITY   = 0.5f;
+	const float INTENSITY   = 0.75f;
 	const float GAMMA       = 1.0f / 2.2f;
 	
 	// Gamma correct

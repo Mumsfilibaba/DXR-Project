@@ -39,13 +39,25 @@ bool Application::Tick()
 
 	Timer.Tick();
 
+	DrawDebugData();
+	DrawRenderSettings();
+
+	GuiContext::Get()->EndFrame();
+
+	Renderer::Get()->Tick(*CurrentScene);
+
+	return ShouldExit;
+}
+
+void Application::DrawDebugData()
+{
 	ImGui::SetNextWindowPos(ImVec2(10, 5));
 	ImGui::SetNextWindowSize(ImVec2(300, 1000));
-	ImGui::Begin("DebugWindow", nullptr, 
+	ImGui::Begin("DebugWindow", nullptr,
 		ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoSavedSettings);
-	
+
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
 
 	static std::string AdapterName = Renderer::Get()->GetDevice()->GetAdapterName();
@@ -58,12 +70,14 @@ bool Application::Tick()
 	ImGui::PopStyleColor();
 
 	ImGui::End();
+}
 
-	GuiContext::Get()->EndFrame();
+void Application::DrawRenderSettings()
+{
+	ImGui::SetNextWindowSize(ImVec2(300, 300));
+	ImGui::Begin("Renderer Settings", nullptr);
 
-	Renderer::Get()->Tick(*CurrentScene);
-
-	return ShouldExit;
+	ImGui::End();
 }
 
 void Application::SetCursor(std::shared_ptr<WindowsCursor> Cursor)
@@ -354,6 +368,7 @@ bool Application::Initialize()
 			NewComponent->Material->Roughness	= WhiteTexture;
 			NewComponent->Material->Height		= WhiteTexture;
 			NewComponent->Material->AO			= WhiteTexture;
+			NewComponent->Material->Metallic	= WhiteTexture;
 			NewComponent->Material->Initialize(Renderer->GetDevice().get());
 
 			NewActor->AddComponent(NewComponent);
@@ -375,14 +390,14 @@ bool Application::Initialize()
 	NewActor->SetTransform(Matrix);
 
 	MatProperties.AO		= 1.0f;
-	MatProperties.Metallic	= 0.0f;
+	MatProperties.Metallic	= 1.0f;
 	MatProperties.Roughness = 1.0f;
 
 	NewComponent = new RenderComponent(NewActor);
 	NewComponent->Mesh		= Mesh::Make(Renderer->GetDevice().get(), CubeMeshData);
 	NewComponent->Material	= std::make_shared<Material>(MatProperties);
 
-	std::shared_ptr<D3D12Texture> AlbedoMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	std::shared_ptr<D3D12Texture> AlbedoMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!AlbedoMap)
 	{
 		return false;
@@ -392,7 +407,7 @@ bool Application::Initialize()
 		AlbedoMap->SetName("AlbedoMap");
 	}
 
-	std::shared_ptr<D3D12Texture> NormalMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	std::shared_ptr<D3D12Texture> NormalMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!NormalMap)
 	{
 		return false;
@@ -402,7 +417,7 @@ bool Application::Initialize()
 		NormalMap->SetName("NormalMap");
 	}
 
-	std::shared_ptr<D3D12Texture> AOMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	std::shared_ptr<D3D12Texture> AOMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!AOMap)
 	{
 		return false;
@@ -412,7 +427,7 @@ bool Application::Initialize()
 		AOMap->SetName("AOMap");
 	}
 
-	std::shared_ptr<D3D12Texture> RoughnessMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	std::shared_ptr<D3D12Texture> RoughnessMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!RoughnessMap)
 	{
 		return false;
@@ -422,7 +437,7 @@ bool Application::Initialize()
 		RoughnessMap->SetName("RoughnessMap");
 	}
 
-	std::shared_ptr<D3D12Texture> HeightMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/RockySoil_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	std::shared_ptr<D3D12Texture> HeightMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!HeightMap)
 	{
 		return false;
@@ -432,11 +447,22 @@ bool Application::Initialize()
 		HeightMap->SetName("HeightMap");
 	}
 
+	std::shared_ptr<D3D12Texture> MetallicMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	if (!MetallicMap)
+	{
+		return false;
+	}
+	else
+	{
+		MetallicMap->SetName("MetallicMap");
+	}
+
 	NewComponent->Material->AlbedoMap	= AlbedoMap;
 	NewComponent->Material->NormalMap	= NormalMap;
 	NewComponent->Material->Roughness	= RoughnessMap;
 	NewComponent->Material->Height		= HeightMap;
 	NewComponent->Material->AO			= AOMap;
+	NewComponent->Material->Metallic	= MetallicMap;
 	NewComponent->Material->Initialize(Renderer->GetDevice().get());
 
 	NewActor->AddComponent(NewComponent);

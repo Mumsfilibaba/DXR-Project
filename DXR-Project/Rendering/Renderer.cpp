@@ -566,7 +566,77 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	{
 		return false;
 	}
+	else
+	{
+		Skybox->SetName("Skybox");
+	}
 
+	// Generate global irradiance
+	const Uint16 IrradianceSize = 64;
+	TextureProperties IrradianceMapProps = { };
+	IrradianceMapProps.DebugName	= "Irradiance Map";
+	IrradianceMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	IrradianceMapProps.Width		= IrradianceSize;
+	IrradianceMapProps.Height		= IrradianceSize;
+	IrradianceMapProps.ArrayCount	= 6;
+	IrradianceMapProps.MipLevels	= 1;
+	IrradianceMapProps.Format		= DXGI_FORMAT_R16G16B16A16_FLOAT;
+	IrradianceMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
+	IrradianceMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
+
+	IrradianceMap = std::make_shared<D3D12Texture>(Device.get());
+	if (!IrradianceMap->Initialize(IrradianceMapProps))
+	{
+		return false;
+	}
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC UavDesc = { };
+	UavDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+	UavDesc.Texture2DArray.ArraySize		= 6;
+	UavDesc.Texture2DArray.FirstArraySlice	= 0;
+	UavDesc.Texture2DArray.MipSlice			= 0;
+	UavDesc.Texture2DArray.PlaneSlice		= 0;
+	IrradianceMap->SetUnorderedAccessView(std::make_shared<D3D12UnorderedAccessView>(Device.get(), nullptr, IrradianceMap->GetResource(), &UavDesc), 0);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
+	SrvDesc.Format							= IrradianceMapProps.Format;
+	SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURECUBE;
+	SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	SrvDesc.TextureCube.MipLevels			= 1;
+	SrvDesc.TextureCube.MostDetailedMip		= 0;
+	SrvDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
+	IrradianceMap->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), IrradianceMap->GetResource(), &SrvDesc), 0);
+
+	std::unique_ptr<D3D12CommandAllocator> Allocator = std::make_unique<D3D12CommandAllocator>(Device.get());
+	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
+	{
+		return nullptr;
+	}
+
+	std::unique_ptr<D3D12CommandList> CommandList = std::make_unique<D3D12CommandList>(Device.get());
+	if (!CommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator.get(), nullptr))
+	{
+		return nullptr;
+	}
+
+	std::unique_ptr<D3D12CommandQueue> Queue = std::make_unique<D3D12CommandQueue>(Device.get());
+	if (!Queue->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
+	{
+		return nullptr;
+	}
+
+	// Generate Cube
+	Allocator->Reset();
+	CommandList->Reset(Allocator.get());
+
+	GenerateIrradianceMap(Skybox.get(), IrradianceMap.get(), CommandList.get());
+
+	CommandList->Close();
+
+	Queue->ExecuteCommandList(CommandList.get());
+	Queue->WaitForCompletion();
+
+	// Generate albedo for raytracing
 	Albedo = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!Albedo)
 	{
@@ -608,7 +678,8 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	LightDescriptorTable->SetShaderResourceView(ReflectionTexture->GetShaderResourceView(0).get(), 4);
-	LightDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).get(), 5);
+	LightDescriptorTable->SetShaderResourceView(IrradianceMap->GetShaderResourceView(0).get(), 5);
+	LightDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).get(), 6);
 	LightDescriptorTable->CopyDescriptors();
 
 	return true;
@@ -953,7 +1024,7 @@ bool Renderer::InitDeferred()
 		PerFrameRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 		PerFrameRanges[0].OffsetInDescriptorsFromTableStart = 0;
 
-		D3D12_DESCRIPTOR_RANGE PerObjectRanges[5] = {};
+		D3D12_DESCRIPTOR_RANGE PerObjectRanges[6] = {};
 		// Albedo Map
 		PerObjectRanges[0].BaseShaderRegister					= 0;
 		PerObjectRanges[0].NumDescriptors						= 1;
@@ -982,12 +1053,19 @@ bool Renderer::InitDeferred()
 		PerObjectRanges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		PerObjectRanges[3].OffsetInDescriptorsFromTableStart	= 3;
 
-		// AO Map
+		// Metallic Map
 		PerObjectRanges[4].BaseShaderRegister					= 4;
 		PerObjectRanges[4].NumDescriptors						= 1;
 		PerObjectRanges[4].RegisterSpace						= 0;
 		PerObjectRanges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		PerObjectRanges[4].OffsetInDescriptorsFromTableStart	= 4;
+
+		// AO Map
+		PerObjectRanges[5].BaseShaderRegister					= 5;
+		PerObjectRanges[5].NumDescriptors						= 1;
+		PerObjectRanges[5].RegisterSpace						= 0;
+		PerObjectRanges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[5].OffsetInDescriptorsFromTableStart	= 5;
 
 		D3D12_ROOT_PARAMETER Parameters[3];
 		// Transform Constants
@@ -1005,7 +1083,7 @@ bool Renderer::InitDeferred()
 
 		// PerObject DescriptorTable
 		Parameters[2].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		Parameters[2].DescriptorTable.NumDescriptorRanges	= 5;
+		Parameters[2].DescriptorTable.NumDescriptorRanges	= 6;
 		Parameters[2].DescriptorTable.pDescriptorRanges		= PerObjectRanges;
 		Parameters[2].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
 
@@ -1097,7 +1175,7 @@ bool Renderer::InitDeferred()
 	}
 
 	{
-		D3D12_DESCRIPTOR_RANGE Ranges[7] = {};
+		D3D12_DESCRIPTOR_RANGE Ranges[8] = {};
 		// Albedo
 		Ranges[0].BaseShaderRegister				= 0;
 		Ranges[0].NumDescriptors					= 1;
@@ -1133,23 +1211,30 @@ bool Renderer::InitDeferred()
 		Ranges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		Ranges[4].OffsetInDescriptorsFromTableStart = 4;
 
-		// Integration LUT
+		// IrradianceMap
 		Ranges[5].BaseShaderRegister				= 5;
 		Ranges[5].NumDescriptors					= 1;
 		Ranges[5].RegisterSpace						= 0;
 		Ranges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		Ranges[5].OffsetInDescriptorsFromTableStart = 5;
 
-		// Camera
-		Ranges[6].BaseShaderRegister				= 0;
+		// Integration LUT
+		Ranges[6].BaseShaderRegister				= 6;
 		Ranges[6].NumDescriptors					= 1;
 		Ranges[6].RegisterSpace						= 0;
-		Ranges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-		Ranges[6].OffsetInDescriptorsFromTableStart	= 6;
+		Ranges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[6].OffsetInDescriptorsFromTableStart = 6;
+
+		// Camera
+		Ranges[7].BaseShaderRegister				= 0;
+		Ranges[7].NumDescriptors					= 1;
+		Ranges[7].RegisterSpace						= 0;
+		Ranges[7].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		Ranges[7].OffsetInDescriptorsFromTableStart	= 7;
 
 		D3D12_ROOT_PARAMETER Parameters[1];
 		Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		Parameters[0].DescriptorTable.NumDescriptorRanges	= 7;
+		Parameters[0].DescriptorTable.NumDescriptorRanges	= 8;
 		Parameters[0].DescriptorTable.pDescriptorRanges		= Ranges;
 		Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
 
@@ -1302,14 +1387,15 @@ bool Renderer::InitDeferred()
 	GeometryDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 0);
 	GeometryDescriptorTable->CopyDescriptors();
 	
-	LightDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 7);
+	LightDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 8);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).get(), 0);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).get(), 1);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).get(), 2);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).get(), 3);
 	// #4 is set after deferred and raytracing
 	// #5 is set after deferred and raytracing
-	LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 6);
+	// #6 is set after deferred and raytracing
+	LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 7);
 
 	SkyboxDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 2);
 	SkyboxDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).get(), 0);
@@ -1622,6 +1708,68 @@ bool Renderer::InitRayTracingTexture()
 	ReflectionTexture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), ReflectionTexture->GetResource(), &SrvDesc), 0);
 
 	return true;
+}
+
+void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList)
+{
+	static std::unique_ptr<D3D12DescriptorTable> SrvDescriptorTable;
+	if (!SrvDescriptorTable)
+	{
+		SrvDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device.get(), 1);
+		SrvDescriptorTable->SetShaderResourceView(Source->GetShaderResourceView(0).get(), 0);
+		SrvDescriptorTable->CopyDescriptors();
+	}
+
+	static std::unique_ptr<D3D12DescriptorTable> UavDescriptorTable;
+	if (!UavDescriptorTable)
+	{
+		UavDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device.get(), 1);
+		UavDescriptorTable->SetUnorderedAccessView(Dest->GetUnorderedAccessView(0).get(), 0);
+		UavDescriptorTable->CopyDescriptors();
+	}
+
+	static Microsoft::WRL::ComPtr<IDxcBlob> Shader;
+	if (!Shader)
+	{
+		Shader = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/IrradianceGen.hlsl", "Main", "cs_6_0");
+	}
+
+	if (!IrradianceGenRootSignature)
+	{
+		IrradianceGenRootSignature = std::make_shared<D3D12RootSignature>(Device.get());
+		IrradianceGenRootSignature->Initialize(Shader.Get());
+		IrradianceGenRootSignature->SetName("Irradiance Gen RootSignature");
+	}
+
+	if (!IrradicanceGenPSO)
+	{
+		ComputePipelineStateProperties Props = { };
+		Props.DebugName		= "Irradiance Gen PSO";
+		Props.CSBlob		= Shader.Get();
+		Props.RootSignature	= IrradianceGenRootSignature.get();
+
+		IrradicanceGenPSO = std::make_unique<D3D12ComputePipelineState>(Device.get());
+		IrradicanceGenPSO->Initialize(Props);
+	}
+
+	CommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+	CommandList->SetComputeRootSignature(IrradianceGenRootSignature->GetRootSignature());
+
+	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
+	CommandList->SetDescriptorHeaps(DescriptorHeaps, 1);
+	CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 0);
+	CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 1);
+
+	CommandList->SetPipelineState(IrradicanceGenPSO->GetPipeline());
+
+	CommandList->Dispatch(64, 64, 6);
+
+	CommandList->UnorderedAccessBarrier(Dest);
+
+	CommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
 void Renderer::WaitForPendingFrames()
