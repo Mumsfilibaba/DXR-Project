@@ -94,8 +94,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 	struct CameraBufferDesc
 	{
 		XMFLOAT4X4	ViewProjection;
-		XMFLOAT4X4	ViewProjectionInv;
 		XMFLOAT3	Position;
+		float		Padding;
+		XMFLOAT4X4	ViewProjectionInv;
 	} CamBuff;
 
 	CamBuff.ViewProjection		= SceneCamera.GetViewProjection();

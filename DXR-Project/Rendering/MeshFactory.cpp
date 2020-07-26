@@ -136,10 +136,10 @@ MeshData MeshFactory::CreateCube(Float32 Width, Float32 Height, Float32 Depth) n
 		{ XMFLOAT3(HalfWidth, -HalfHeight,  HalfDepth), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
 
 		// LEFT FACE
-		{ XMFLOAT3(-HalfWidth,  HalfHeight, -HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-HalfWidth,  HalfHeight,  HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-HalfWidth, -HalfHeight, -HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(-HalfWidth, -HalfHeight,  HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
+		{ XMFLOAT3(-HalfWidth,  HalfHeight, -HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(-HalfWidth,  HalfHeight,  HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
+		{ XMFLOAT3(-HalfWidth, -HalfHeight, -HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-HalfWidth, -HalfHeight,  HalfDepth), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT3(0.0f,  0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
 
 		// TOP FACE
 		{ XMFLOAT3(-HalfWidth,  HalfHeight,  HalfDepth), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT3(1.0f,  0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
@@ -837,25 +837,5 @@ void MeshFactory::CalculateTangents(MeshData& Data) noexcept
 		(*vertexBuffer)[(*indexBuffer)[i + 1]].Normal = Normal;
 		(*vertexBuffer)[(*indexBuffer)[i + 2]].Normal = Normal;
 	}
-}
-
-void Mesh::calcTangent()
-{
-	using namespace Math;
-
-	for (uint32 i = 0; i < indexBuffer->size(); i += 3)
-	{
-		vec3 modelVec = (*vertexBuffer)[(*indexBuffer)[i + 1]].Position - (*vertexBuffer)[(*indexBuffer)[i]].Position;
-		vec3 modelVec2 = (*vertexBuffer)[(*indexBuffer)[i + 2]].Position - (*vertexBuffer)[(*indexBuffer)[i]].Position;
-		vec2 tangentVec = (*vertexBuffer)[(*indexBuffer)[i + 1]].TexCoord - (*vertexBuffer)[(*indexBuffer)[i]].TexCoord;
-		vec2 tangentVec2 = (*vertexBuffer)[(*indexBuffer)[i + 2]].TexCoord - (*vertexBuffer)[(*indexBuffer)[i]].TexCoord;
-
-		float denominator = 1.0f / ((tangentVec.x * tangentVec2.y) - (tangentVec2.x * tangentVec.y));
-		vec3 tangent = ((modelVec * tangentVec2.y) - (modelVec2 * tangentVec.y)) * denominator;
-		tangent.Normalize();
-
-		(*vertexBuffer)[(*indexBuffer)[i]].tangent = tangent;
-		(*vertexBuffer)[(*indexBuffer)[i + 1]].tangent = tangent;
-		(*vertexBuffer)[(*indexBuffer)[i + 2]].tangent = tangent;
-	}
 }*/
+

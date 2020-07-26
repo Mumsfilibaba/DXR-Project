@@ -13,8 +13,9 @@ static const float3 LightColor      = float3(300.0f, 300.0f, 300.0f);
 struct Camera
 {
 	float4x4    ViewProjection;
-	float4x4    ViewProjectionInverse;
 	float3      Position;
+    float		Padding;
+	float4x4    ViewProjectionInverse;
 };
 
 struct Vertex

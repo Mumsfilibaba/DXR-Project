@@ -139,8 +139,18 @@ IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, L
 
 	if (SUCCEEDED(Result->GetStatus(&hResult)))
 	{
+		ComPtr<IDxcBlobEncoding> PrintBlob;
+		ComPtr<IDxcBlobEncoding> PrintBlob8;
+		if (SUCCEEDED(Result->GetErrorBuffer(&PrintBlob)))
+		{
+			DxLibrary->GetBlobAsUtf8(PrintBlob.Get(), &PrintBlob8);
+		}
+
 		if (SUCCEEDED(hResult))
 		{
+			::OutputDebugString("[D3D12ShaderCompiler]: Compile with the following output:\n");
+			::OutputDebugString(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+
 			IDxcBlob* CompiledBlob = nullptr;
 			if (SUCCEEDED(Result->GetResult(&CompiledBlob)))
 			{
@@ -153,15 +163,8 @@ IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, L
 		}
 		else
 		{
-			ComPtr<IDxcBlobEncoding> PrintBlob;
-			if (SUCCEEDED(Result->GetErrorBuffer(&PrintBlob)))
-			{
-				ComPtr<IDxcBlobEncoding> PrintBlob8;
-				DxLibrary->GetBlobAsUtf8(PrintBlob.Get(), &PrintBlob8);
-
-				::OutputDebugString("[D3D12ShaderCompiler]: FAILED to compile with the following error:\n");
-				::OutputDebugString(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
-			}
+			::OutputDebugString("[D3D12ShaderCompiler]: FAILED to compile with the following error:\n");
+			::OutputDebugString(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
 
 			return nullptr;
 		}
