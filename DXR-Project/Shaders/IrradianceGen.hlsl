@@ -1,6 +1,6 @@
 #include "PBRCommon.hlsli"
 
-#define BLOCK_SIZE 16
+#define BLOCK_SIZE 1
 
 #define RootSig \
 	"RootFlags(0), " \
