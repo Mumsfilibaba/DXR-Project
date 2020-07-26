@@ -107,11 +107,9 @@ float3 ApplyGammaCorrectionAndTonemapping(float3 InputColor)
 	return FinalColor;
 }
 
-float3 ApplyNormalMapping(float3 MappedNormal, float3 Normal, float3 Tangent)
+float3 ApplyNormalMapping(float3 MappedNormal, float3 Normal, float3 Tangent, float3 Bitangent)
 {
-	float3 Bitangent = cross(Tangent, Normal);
 	float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
-	
 	return normalize(mul(MappedNormal, TBN));
 }
 

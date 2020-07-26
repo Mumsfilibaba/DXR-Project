@@ -1000,7 +1000,7 @@ bool Renderer::InitDeferred()
 		Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		Parameters[1].DescriptorTable.NumDescriptorRanges	= 1;
 		Parameters[1].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
-		Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_VERTEX;
+		Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
 
 		// PerObject DescriptorTable
 		Parameters[2].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
