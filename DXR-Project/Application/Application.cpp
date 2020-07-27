@@ -53,8 +53,14 @@ bool Application::Tick()
 
 void Application::DrawDebugData()
 {
-	ImGui::SetNextWindowPos(ImVec2(10, 5));
-	ImGui::SetNextWindowSize(ImVec2(300, 1000));
+	constexpr Uint32 Width = 300;
+	
+	WindowShape WindowShape;
+	Window->GetWindowShape(WindowShape);
+
+	ImGui::SetNextWindowPos(ImVec2(WindowShape.Width - Width, 5));
+	ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height));
+
 	ImGui::Begin("DebugWindow", nullptr,
 		ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar |
@@ -76,8 +82,18 @@ void Application::DrawDebugData()
 
 void Application::DrawRenderSettings()
 {
-	ImGui::SetNextWindowSize(ImVec2(300, 300));
-	ImGui::Begin("Renderer Settings", nullptr);
+	constexpr Uint32 Width = 350;
+
+	WindowShape WindowShape;
+	Window->GetWindowShape(WindowShape);
+
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+	ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height));
+
+	ImGui::Begin("Renderer Settings", nullptr, 
+		ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+
+	ImGui::Text("Size: %d x %d", WindowShape.Width, WindowShape.Height);
 
 	ImGui::End();
 }

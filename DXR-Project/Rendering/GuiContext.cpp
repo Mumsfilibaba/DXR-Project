@@ -374,6 +374,101 @@ bool GuiContext::Initialize(std::shared_ptr<D3D12Device> InDevice)
 	// Setup style
 	ImGui::StyleColorsDark();
 
+	ImGuiStyle& Style = ImGui::GetStyle();
+	Style.WindowRounding	= 0.0f;
+	Style.FrameRounding		= 3.0f;
+	Style.GrabRounding		= 4.0f;
+
+	Style.Colors[ImGuiCol_WindowBg].x = 0.15f;
+	Style.Colors[ImGuiCol_WindowBg].y = 0.15f;
+	Style.Colors[ImGuiCol_WindowBg].z = 0.15f;
+	Style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+
+	Style.Colors[ImGuiCol_TitleBg].x = 0.3f;
+	Style.Colors[ImGuiCol_TitleBg].y = 0.3f;
+	Style.Colors[ImGuiCol_TitleBg].z = 0.3f;
+	Style.Colors[ImGuiCol_TitleBg].w = 1.0f;
+
+	Style.Colors[ImGuiCol_TitleBgActive].x = 0.15f;
+	Style.Colors[ImGuiCol_TitleBgActive].y = 0.15f;
+	Style.Colors[ImGuiCol_TitleBgActive].z = 0.15f;
+	Style.Colors[ImGuiCol_TitleBgActive].w = 1.0f;
+
+	Style.Colors[ImGuiCol_FrameBg].x = 0.4f;
+	Style.Colors[ImGuiCol_FrameBg].y = 0.4f;
+	Style.Colors[ImGuiCol_FrameBg].z = 0.4f;
+	Style.Colors[ImGuiCol_FrameBg].w = 1.0f;
+
+	Style.Colors[ImGuiCol_FrameBgHovered].x = 0.3f;
+	Style.Colors[ImGuiCol_FrameBgHovered].y = 0.3f;
+	Style.Colors[ImGuiCol_FrameBgHovered].z = 0.3f;
+	Style.Colors[ImGuiCol_FrameBgHovered].w = 1.0f;
+
+	Style.Colors[ImGuiCol_FrameBgActive].x = 0.24f;
+	Style.Colors[ImGuiCol_FrameBgActive].y = 0.24f;
+	Style.Colors[ImGuiCol_FrameBgActive].z = 0.24f;
+	Style.Colors[ImGuiCol_FrameBgActive].w = 1.0f;
+
+	Style.Colors[ImGuiCol_Button].x = 0.4f;
+	Style.Colors[ImGuiCol_Button].y = 0.4f;
+	Style.Colors[ImGuiCol_Button].z = 0.4f;
+	Style.Colors[ImGuiCol_Button].w = 1.0f;
+
+	Style.Colors[ImGuiCol_ButtonHovered].x = 0.3f;
+	Style.Colors[ImGuiCol_ButtonHovered].y = 0.3f;
+	Style.Colors[ImGuiCol_ButtonHovered].z = 0.3f;
+	Style.Colors[ImGuiCol_ButtonHovered].w = 1.0f;
+
+	Style.Colors[ImGuiCol_ButtonActive].x = 0.25f;
+	Style.Colors[ImGuiCol_ButtonActive].y = 0.25f;
+	Style.Colors[ImGuiCol_ButtonActive].z = 0.25f;
+	Style.Colors[ImGuiCol_ButtonActive].w = 1.0f;
+
+	Style.Colors[ImGuiCol_CheckMark].x = 0.15f;
+	Style.Colors[ImGuiCol_CheckMark].y = 0.15f;
+	Style.Colors[ImGuiCol_CheckMark].z = 0.15f;
+	Style.Colors[ImGuiCol_CheckMark].w = 1.0f;
+
+	Style.Colors[ImGuiCol_SliderGrab].x = 0.15f;
+	Style.Colors[ImGuiCol_SliderGrab].y = 0.15f;
+	Style.Colors[ImGuiCol_SliderGrab].z = 0.15f;
+	Style.Colors[ImGuiCol_SliderGrab].w = 1.0f;
+
+	Style.Colors[ImGuiCol_SliderGrabActive].x = 0.16f;
+	Style.Colors[ImGuiCol_SliderGrabActive].y = 0.16f;
+	Style.Colors[ImGuiCol_SliderGrabActive].z = 0.16f;
+	Style.Colors[ImGuiCol_SliderGrabActive].w = 1.0f;
+
+	Style.Colors[ImGuiCol_ResizeGrip].x = 0.25f;
+	Style.Colors[ImGuiCol_ResizeGrip].y = 0.25f;
+	Style.Colors[ImGuiCol_ResizeGrip].z = 0.25f;
+	Style.Colors[ImGuiCol_ResizeGrip].w = 1.0f;
+
+	Style.Colors[ImGuiCol_ResizeGripHovered].x = 0.35f;
+	Style.Colors[ImGuiCol_ResizeGripHovered].y = 0.35f;
+	Style.Colors[ImGuiCol_ResizeGripHovered].z = 0.35f;
+	Style.Colors[ImGuiCol_ResizeGripHovered].w = 1.0f;
+
+	Style.Colors[ImGuiCol_ResizeGripActive].x = 0.5f;
+	Style.Colors[ImGuiCol_ResizeGripActive].y = 0.5f;
+	Style.Colors[ImGuiCol_ResizeGripActive].z = 0.5f;
+	Style.Colors[ImGuiCol_ResizeGripActive].w = 1.0f;
+
+	Style.Colors[ImGuiCol_Tab].x = 0.55f;
+	Style.Colors[ImGuiCol_Tab].y = 0.55f;
+	Style.Colors[ImGuiCol_Tab].z = 0.55f;
+	Style.Colors[ImGuiCol_Tab].w = 1.0f;
+
+	Style.Colors[ImGuiCol_TabHovered].x = 0.4f;
+	Style.Colors[ImGuiCol_TabHovered].y = 0.4f;
+	Style.Colors[ImGuiCol_TabHovered].z = 0.4f;
+	Style.Colors[ImGuiCol_TabHovered].w = 1.0f;
+
+	Style.Colors[ImGuiCol_TabActive].x = 0.25f;
+	Style.Colors[ImGuiCol_TabActive].y = 0.25f;
+	Style.Colors[ImGuiCol_TabActive].z = 0.25f;
+	Style.Colors[ImGuiCol_TabActive].w = 1.0f;
+
 	// Setup D3D12
 	if (!CreateFontTexture())
 	{
