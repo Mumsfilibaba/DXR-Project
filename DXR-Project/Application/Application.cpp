@@ -5,6 +5,8 @@
 #include "Rendering/GuiContext.h"
 #include "Rendering/TextureFactory.h"
 
+#include "Windows/WindowsConsoleOutput.h"
+
 std::shared_ptr<Application> Application::Instance = nullptr;
 
 Application::Application()
