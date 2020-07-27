@@ -56,19 +56,19 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::strin
 	}
 	else
 	{
-		::OutputDebugString("[TextureFactory]: Format not supported");
+		LOG_ERROR("[TextureFactory]: Format not supported");
 		return nullptr;
 	}
 
 	// Check if succeeded
 	if (!Pixels)
 	{
-		::OutputDebugString(("[TextureFactory]: Failed to load image '" + Filepath + "'\n").c_str());
+		LOG_ERROR("[TextureFactory]: Failed to load image '" + Filepath + "'");
 		return nullptr;
 	}
 	else
 	{
-		::OutputDebugString(("[TextureFactory]: Loaded image '" + Filepath + "'\n").c_str());
+		LOG_INFO("[TextureFactory]: Loaded image '" + Filepath + "'");
 	}
 
 	return LoadFromMemory(Device, Pixels.get(), Width, Height, CreateFlags, Format);
@@ -78,7 +78,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 {
 	if (Format != DXGI_FORMAT_R8G8B8A8_UNORM && Format != DXGI_FORMAT_R32G32B32A32_FLOAT)
 	{
-		::OutputDebugString("[TextureFactory]: Format not supported");
+		LOG_ERROR("[TextureFactory]: Format not supported");
 		return nullptr;
 	}
 

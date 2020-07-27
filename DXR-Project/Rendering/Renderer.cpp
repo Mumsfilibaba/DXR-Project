@@ -1541,7 +1541,7 @@ bool Renderer::InitIntegrationLUT()
 			Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
 			if (FAILED(Result) || (FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD) == 0)
 			{
-				::OutputDebugString("[Renderer]: DXGI_FORMAT_R16G16_FLOAT is not supported for UAVs\n");
+				LOG_ERROR("[Renderer]: DXGI_FORMAT_R16G16_FLOAT is not supported for UAVs");
 				return false;
 			}
 		}

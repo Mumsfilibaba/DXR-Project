@@ -20,8 +20,8 @@ bool D3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 	HRESULT hResult = D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
 	if (FAILED(hResult))
 	{
-		::OutputDebugString("[D3D12RootSignature]: FAILED to Serialize RootSignature\n");
-		::OutputDebugString(reinterpret_cast<const Char*>(ErrorBlob->GetBufferPointer()));
+		LOG_ERROR("[D3D12RootSignature]: FAILED to Serialize RootSignature");
+		LOG_ERROR(reinterpret_cast<const Char*>(ErrorBlob->GetBufferPointer()));
 		__debugbreak();
 
 		return false;
@@ -48,12 +48,12 @@ bool D3D12RootSignature::Initialize(const void* RootSignatureBlob, Uint32 BlobSi
 	HRESULT hResult = Device->GetDevice()->CreateRootSignature(0, RootSignatureBlob, BlobSizeInBytes, IID_PPV_ARGS(&RootSignature));
 	if (SUCCEEDED(hResult))
 	{
-		::OutputDebugString("[D3D12RootSignature]: Created RootSignature\n");
+		LOG_INFO("[D3D12RootSignature]: Created RootSignature");
 		return true;
 	}
 	else
 	{
-		::OutputDebugString("[D3D12RootSignature]: FAILED to Create RootSignature\n");
+		LOG_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
 		__debugbreak();
 
 		return false;

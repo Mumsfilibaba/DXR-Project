@@ -26,12 +26,12 @@ bool D3D12CommandQueue::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 	HRESULT hResult = Device->GetDevice()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
 	if (FAILED(hResult))
 	{
-		::OutputDebugString("[D3D12CommandQueue]: FAILED to create CommandQueue\n");
+		LOG_ERROR("[D3D12CommandQueue]: FAILED to create CommandQueue");
 		return false;
 	}
 	else
 	{
-		::OutputDebugString("[D3D12CommandQueue]: Created CommandQueue\n");
+		LOG_INFO("[D3D12CommandQueue]: Created CommandQueue");
 	}
 
 	QueueFence = std::make_unique<D3D12Fence>(Device);

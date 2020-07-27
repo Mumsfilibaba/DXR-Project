@@ -6,13 +6,13 @@ struct PSInput
 	float2 TexCoord : TEXCOORD0;
 };
 
-Texture2D<float4> Albedo			: register(t0, space0);
-Texture2D<float4> Normal			: register(t1, space0);
-Texture2D<float4> Material			: register(t2, space0);
-Texture2D<float4> DepthStencil		: register(t3, space0);
-Texture2D<float4> DXRReflection		: register(t4, space0);
-Texture2D<float4> IrradianceMap		: register(t5, space0);
-Texture2D<float4> IntegrationLUT	: register(t6, space0);
+Texture2D<float4>	Albedo			: register(t0, space0);
+Texture2D<float4>	Normal			: register(t1, space0);
+Texture2D<float4>	Material		: register(t2, space0);
+Texture2D<float4>	DepthStencil	: register(t3, space0);
+Texture2D<float4>	DXRReflection	: register(t4, space0);
+TextureCube<float4>	IrradianceMap	: register(t5, space0);
+Texture2D<float4>	IntegrationLUT	: register(t6, space0);
 
 SamplerState GBufferSampler : register(s0, space0);
 SamplerState LUTSampler		: register(s1, space0);
@@ -83,8 +83,8 @@ float4 Main(PSInput Input) : SV_TARGET
     float3 Kd_IBL	= 1.0f - Ks_IBL;
     Kd_IBL *= 1.0 - Metallic;
 	
-    float3 Irradiance = IrradianceMap.Sample(GBufferSampler, Norm).rgb;
-    float3 IBL_Diffuse = Irradiance * SampledAlbedo * Kd_IBL;
+    float3 Irradiance	= IrradianceMap.Sample(GBufferSampler, Norm).rgb;
+    float3 IBL_Diffuse	= Irradiance * SampledAlbedo * Kd_IBL;
 	
     //float2	IntegrationBRDF	= IntegrationLUT.Sample(LUTSampler, float2(DotNV, Roughness)).rg;
     //float3	IBL_Specular	= SampledReflection * (F_IBL * IntegrationBRDF.x + IntegrationBRDF.y);

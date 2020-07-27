@@ -59,7 +59,7 @@ bool WindowsWindow::Initialize(WindowsApplication* InOwnerApplication, const Win
 	if (hWindow == NULL)
 	{
 
-		::OutputDebugString("[WindowsWindow]: FAILED to create window\n");
+		LOG_ERROR("[WindowsWindow]: FAILED to create window\n");
 		return false;
 	}
 	else

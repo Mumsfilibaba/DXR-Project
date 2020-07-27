@@ -31,12 +31,12 @@ bool D3D12Buffer::Initialize(const BufferProperties& Properties)
 
 	if (CreateResource(&ResourceDesc, nullptr, Properties.InitalState, Properties.MemoryType))
 	{
-		::OutputDebugString("[D3D12Buffer]: Created Buffer\n");
+		LOG_INFO("[D3D12Buffer]: Created Buffer");
 		return true;
 	}
 	else
 	{
-		::OutputDebugString("[D3D12Buffer]: FAILED to create Buffer\n");
+		LOG_ERROR("[D3D12Buffer]: FAILED to create Buffer");
 		return false;
 	}
 }

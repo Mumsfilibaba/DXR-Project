@@ -16,12 +16,12 @@ bool D3D12CommandAllocator::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 	HRESULT hResult = Device->GetDevice()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
 	if (SUCCEEDED(hResult))
 	{
-		::OutputDebugString("[D3D12CommandAllocator]: Created CommandAllocator\n");
+		LOG_INFO("[D3D12CommandAllocator]: Created CommandAllocator");
 		return true;
 	}
 	else
 	{
-		::OutputDebugString("[D3D12CommandAllocator]: FAILED to create CommandAllocator\n");
+		LOG_ERROR("[D3D12CommandAllocator]: FAILED to create CommandAllocator");
 		return false;
 	}
 }

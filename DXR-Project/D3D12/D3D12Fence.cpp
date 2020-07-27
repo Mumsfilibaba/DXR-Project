@@ -17,12 +17,12 @@ bool D3D12Fence::Initialize(Uint64 InitalValue)
 	HRESULT hResult = Device->GetDevice()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
 	if (SUCCEEDED(hResult))
 	{
-		::OutputDebugString("[D3D12Fence]: Created Fence\n");
+		LOG_INFO("[D3D12Fence]: Created Fence");
 
 		Event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 		if (Event == NULL)
 		{
-			::OutputDebugString("[D3D12Fence]: FAILED to create Event\n");
+			LOG_ERROR("[D3D12Fence]: FAILED to create Event");
 			return false;
 		}
 		else
@@ -32,7 +32,7 @@ bool D3D12Fence::Initialize(Uint64 InitalValue)
 	}
 	else
 	{
-		::OutputDebugString("[D3D12Fence]: FAILED to create Fence\n");
+		LOG_INFO("[D3D12Fence]: FAILED to create Fence");
 		return false;
 	}
 }

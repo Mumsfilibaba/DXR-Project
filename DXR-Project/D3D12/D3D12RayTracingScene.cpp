@@ -134,12 +134,12 @@ bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineStat
 	HRESULT hResult = StateObject.As<ID3D12StateObjectProperties>(&StateProperties);
 	if (FAILED(hResult))
 	{
-		::OutputDebugString("[D3D12RayTracingScene]: FAILED to retrive PipelineState Properties\n");
+		LOG_ERROR("[D3D12RayTracingScene]: FAILED to retrive PipelineState Properties");
 		return false;
 	}
 	else
 	{
-		::OutputDebugString("[D3D12RayTracingScene]: Retrived PipelineState Properties\n");
+		LOG_INFO("[D3D12RayTracingScene]: Retrived PipelineState Properties");
 	}
 
 	// Struct for each entry in shaderbinding table
@@ -162,7 +162,7 @@ bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineStat
 	BindingTable = new D3D12Buffer(Device);
 	if (!BindingTable->Initialize(BufferProps))
 	{
-		::OutputDebugString("[D3D12RayTracingScene]: FAILED to create BindingTable\n");
+		LOG_ERROR("[D3D12RayTracingScene]: FAILED to create BindingTable\n");
 		return false;
 	}
 

@@ -120,7 +120,7 @@ void D3D12OfflineDescriptorHeap::AllocateHeap()
 	HRESULT hResult = Device->GetDevice()->CreateDescriptorHeap(&HeapDesc, IID_PPV_ARGS(&Heap));
 	if (SUCCEEDED(hResult))
 	{
-		::OutputDebugString("[D3D12OfflineDescriptorHeap]: Created DescriptorHeap\n");
+		LOG_INFO("[D3D12OfflineDescriptorHeap]: Created DescriptorHeap");
 
 		if (!DebugName.empty())
 		{
@@ -135,7 +135,7 @@ void D3D12OfflineDescriptorHeap::AllocateHeap()
 	}
 	else
 	{
-		::OutputDebugString("[D3D12OfflineDescriptorHeap]: Failed to create DescriptorHeap\n");
+		LOG_ERROR("[D3D12OfflineDescriptorHeap]: Failed to create DescriptorHeap");
 	}
 }
 
@@ -172,12 +172,12 @@ bool D3D12OnlineDescriptorHeap::Initialize()
 		CPUHeapStart = Heap->GetCPUDescriptorHandleForHeapStart();
 		GPUHeapStart = Heap->GetGPUDescriptorHandleForHeapStart();
 
-		::OutputDebugString("[D3D12OnlineDescriptorHeap]: Created DescriptorHeap\n");
+		LOG_INFO("[D3D12OnlineDescriptorHeap]: Created DescriptorHeap");
 		return true;
 	}
 	else
 	{
-		::OutputDebugString("[D3D12OnlineDescriptorHeap]: FAILED to create DescriptorHeap\n");
+		LOG_ERROR("[D3D12OnlineDescriptorHeap]: FAILED to create DescriptorHeap");
 		return false;
 	}
 }

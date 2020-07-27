@@ -41,12 +41,12 @@ bool D3D12ComputePipelineState::Initialize(const ComputePipelineStateProperties&
 	{
 		SetName(Properties.DebugName);
 
-		::OutputDebugString("[D3D12ComputePipeline]: Created PipelineState\n");
+		LOG_INFO("[D3D12ComputePipeline]: Created PipelineState");
 		return true;
 	}
 	else
 	{
-		::OutputDebugString("[D3D12ComputePipeline]: FAILED to Create PipelineState\n");
+		LOG_ERROR("[D3D12ComputePipeline]: FAILED to Create PipelineState");
 		return false;
 	}
 }

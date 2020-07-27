@@ -192,12 +192,12 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	{
 		SetName(Properties.DebugName);
 
-		::OutputDebugString("[D3D12RayTracer]: Created RayTracing PipelineState\n");
+		LOG_INFO("[D3D12RayTracingPipelineState]: Created RayTracing PipelineState");
 		return true;
 	}
 	else
 	{
-		::OutputDebugString("[D3D12RayTracer]: FAILED to create RayTracing PipelineState\n");
+		LOG_ERROR("[D3D12RayTracingPipelineState]: FAILED to create RayTracing PipelineState");
 		return false;
 	}
 }

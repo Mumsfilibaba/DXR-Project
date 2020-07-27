@@ -69,12 +69,12 @@ bool D3D12Device::Initialize(bool DebugEnable)
 	}
 	else
 	{
-		::OutputDebugString("[D3D12GraphicsDevice]: Created D3D12Device\n");
+		LOG_INFO("[D3D12GraphicsDevice]: Created D3D12Device");
 
 		// Get DXR Interfaces
 		if (FAILED(D3DDevice.As<ID3D12Device5>(&DXRDevice)))
 		{
-			::OutputDebugString("[D3D12RayTracer]: Failed to retrive DXR-Device\n");
+			LOG_ERROR("[D3D12RayTracer]: Failed to retrive DXR-Device");
 			return false;
 		}
 	}
@@ -200,7 +200,7 @@ bool D3D12Device::CreateFactory()
 		}
 		else
 		{
-			::OutputDebugString("[D3D12GraphicsDevice]: FAILED to enable DebugLayer\n");
+			LOG_ERROR("[D3D12GraphicsDevice]: FAILED to enable DebugLayer");
 		}
 
 		ComPtr<IDXGIInfoQueue> InfoQueue;
@@ -211,14 +211,14 @@ bool D3D12Device::CreateFactory()
 		}
 		else
 		{
-			::OutputDebugString("[D3D12GraphicsDevice]: FAILED to retrive InfoQueue\n");
+			LOG_ERROR("[D3D12GraphicsDevice]: FAILED to retrive InfoQueue");
 		}
 	}
 
 	// Create factory
 	if (FAILED(CreateDXGIFactory2(DebugFlags, IID_PPV_ARGS(&Factory))))
 	{
-		::OutputDebugString("[D3D12GraphicsDevice]: FAILED to create factory\n");
+		LOG_ERROR("[D3D12GraphicsDevice]: FAILED to create factory");
 		return false;
 	}
 	else
@@ -227,7 +227,7 @@ bool D3D12Device::CreateFactory()
 		ComPtr<IDXGIFactory5> Factory5;
 		if (FAILED(Factory.As(&Factory5)))
 		{
-			::OutputDebugString("[D3D12GraphicsDevice]: FAILED to retrive IDXGIFactory5\n");
+			LOG_ERROR("[D3D12GraphicsDevice]: FAILED to retrive IDXGIFactory5");
 			return false;
 		}
 		else
@@ -237,11 +237,11 @@ bool D3D12Device::CreateFactory()
 			{
 				if (AllowTearing)
 				{
-					::OutputDebugString("[D3D12GraphicsDevice]: Tearing is supported\n");
+					LOG_INFO("[D3D12GraphicsDevice]: Tearing is supported");
 				}
 				else
 				{
-					::OutputDebugString("[D3D12GraphicsDevice]: Tearing is NOT supported\n");
+					LOG_INFO("[D3D12GraphicsDevice]: Tearing is NOT supported");
 				}
 			}
 		}
@@ -260,7 +260,7 @@ bool D3D12Device::ChooseAdapter()
 		DXGI_ADAPTER_DESC1 Desc;
 		if (FAILED(TempAdapter->GetDesc1(&Desc)))
 		{
-			::OutputDebugString("[D3D12GraphicsDevice]: FAILED to retrive DXGI_ADAPTER_DESC1\n");
+			LOG_ERROR("[D3D12GraphicsDevice]: FAILED to retrive DXGI_ADAPTER_DESC1");
 			return false;
 		}
 
@@ -276,8 +276,8 @@ bool D3D12Device::ChooseAdapter()
 			AdapterID = ID;
 
 			char Buff[256] = {};
-			sprintf_s(Buff, "Direct3D Adapter (%u): %ls\n", AdapterID, Desc.Description);
-			::OutputDebugString(Buff);
+			sprintf_s(Buff, "[D3D12GraphicsDevice]: Direct3D Adapter (%u): %ls", AdapterID, Desc.Description);
+			LOG_INFO(Buff);
 
 			break;
 		}
@@ -285,7 +285,7 @@ bool D3D12Device::ChooseAdapter()
 
 	if (!TempAdapter)
 	{
-		::OutputDebugString("[D3D12GraphicsDevice]: FAILED to retrive adapter\n");
+		LOG_ERROR("[D3D12GraphicsDevice]: FAILED to retrive adapter");
 		return false;
 	}
 	else

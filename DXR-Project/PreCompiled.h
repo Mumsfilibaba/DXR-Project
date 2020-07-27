@@ -20,3 +20,5 @@ using namespace DirectX;
 #include "STL/String.h"
 
 #include "Windows/Windows.h"
+
+#include "Application/Log.h"

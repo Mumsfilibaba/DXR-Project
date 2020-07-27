@@ -118,12 +118,12 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	{
 		SetName(Properties.DebugName);
 
-		::OutputDebugString("[D3D12GraphicsPipelineState]: Created PipelineState\n");
+		LOG_INFO("[D3D12GraphicsPipelineState]: Created PipelineState");
 		return true;
 	}
 	else 
 	{
-		::OutputDebugString("[D3D12GraphicsPipelineState]: FAILED to Create PipelineState\n");
+		LOG_ERROR("[D3D12GraphicsPipelineState]: FAILED to Create PipelineState");
 		return false;
 	}
 }

@@ -13,7 +13,6 @@ static CompilerData GlobalCompilerData;
 * Members
 */
 
-
 D3D12ShaderCompiler::D3D12ShaderCompiler()
 	: DxCompiler(nullptr)
 	, DxLibrary(nullptr)
@@ -41,7 +40,7 @@ bool D3D12ShaderCompiler::Initialize()
 	DxcCreateInstanceProc DxcCreateInstance_ = reinterpret_cast<DxcCreateInstanceProc>(::GetProcAddress(GlobalCompilerData.DxCompilerDLL, "DxcCreateInstance"));
 	if (!DxcCreateInstance_)
 	{
-		::OutputDebugString("[D3D12ShaderCompiler]: FAILED to load DxcCreateInstance\n");
+		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to load DxcCreateInstance");
 		return false;
 	}
 	
@@ -61,25 +60,25 @@ bool D3D12ShaderCompiler::Initialize()
 				}
 				else
 				{
-					::OutputDebugString("[D3D12ShaderCompiler]: FAILED to create DxLinker\n");
+					LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create DxLinker");
 					return false;
 				}
 			}
 			else
 			{
-				::OutputDebugString("[D3D12ShaderCompiler]: FAILED to create DxIncludeHandler\n");
+				LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create DxIncludeHandler");
 				return false;
 			}
 		}
 		else
 		{
-			::OutputDebugString("[D3D12ShaderCompiler]: FAILED to create DxLibrary\n");
+			LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create DxLibrary");
 			return false;
 		}
 	}
 	else
 	{
-		::OutputDebugString("[D3D12ShaderCompiler]: FAILED to create DxCompiler\n");
+		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create DxCompiler");
 		return false;
 	}
 }
@@ -98,7 +97,7 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, cons
 	HRESULT hResult = DxLibrary->CreateBlobFromFile(WideFilePath.c_str(), nullptr, &SourceBlob);
 	if (FAILED(hResult))
 	{
-		::OutputDebugString("[D3D12ShaderCompiler]: FAILED to create Source Data\n");
+		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create Source Data");
 		return nullptr;
 	}
 
@@ -117,7 +116,7 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& Source, cons
 	HRESULT hResult = DxLibrary->CreateBlobWithEncodingOnHeapCopy(Source.c_str(), sizeof(Char) * static_cast<Uint32>(Source.size()), CP_UTF8, &SourceBlob);
 	if (FAILED(hResult))
 	{
-		::OutputDebugString("[D3D12ShaderCompiler]: FAILED to create Source Data\n");
+		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create Source Data");
 		return nullptr;
 	}
 
@@ -133,7 +132,7 @@ IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, L
 	HRESULT hResult = DxCompiler->Compile(SourceBlob, Filepath, Entrypoint, TargetProfile, nullptr, 0, nullptr, 0, DxIncludeHandler.Get(), &Result);
 	if (FAILED(hResult))
 	{
-		::OutputDebugString("[D3D12ShaderCompiler]: FAILED to Compile\n");
+		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to Compile");
 		return nullptr;
 	}
 
@@ -148,8 +147,11 @@ IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, L
 
 		if (SUCCEEDED(hResult))
 		{
-			::OutputDebugString("[D3D12ShaderCompiler]: Compile with the following output:\n");
-			::OutputDebugString(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+			if (PrintBlob8->GetBufferSize() > 0)
+			{
+				LOG_INFO("[D3D12ShaderCompiler]: Compiled with the following output:");
+				LOG_INFO(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+			}
 
 			IDxcBlob* CompiledBlob = nullptr;
 			if (SUCCEEDED(Result->GetResult(&CompiledBlob)))
@@ -163,8 +165,8 @@ IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, L
 		}
 		else
 		{
-			::OutputDebugString("[D3D12ShaderCompiler]: FAILED to compile with the following error:\n");
-			::OutputDebugString(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+			LOG_ERROR("[D3D12ShaderCompiler]: FAILED to compile with the following error:");
+			LOG_ERROR(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
 
 			return nullptr;
 		}

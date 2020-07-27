@@ -54,18 +54,18 @@ bool D3D12SwapChain::Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue)
 
 			RetriveSwapChainSurfaces();
 
-			::OutputDebugString("[D3D12SwapChain]: Created SwapChain\n");
+			LOG_INFO("[D3D12SwapChain]: Created SwapChain");
 			return true;
 		}
 		else
 		{
-			::OutputDebugString("[D3D12SwapChain]: FAILED to retrive IDXGISwapChain3\n");
+			LOG_ERROR("[D3D12SwapChain]: FAILED to retrive IDXGISwapChain3");
 			return false;
 		}
 	}
 	else
 	{
-		::OutputDebugString("[D3D12SwapChain]: FAILED to create SwapChain\n");
+		LOG_ERROR("[D3D12SwapChain]: FAILED to create SwapChain");
 		return false;
 	}
 }
@@ -74,13 +74,13 @@ bool D3D12SwapChain::Resize(Uint32 InWidth, Uint32 InHeight)
 {
 	if (InWidth == 0 || InHeight == 0)
 	{
-		::OutputDebugString("[D3D12SwapChain]: Resize FAILED. Width or Height cannot be zero\n");
+		LOG_ERROR("[D3D12SwapChain]: Resize FAILED. Width or Height cannot be zero");
 		return false;
 	}
 
 	if (InWidth == Width && InHeight == Height)
 	{
-		::OutputDebugString("[D3D12SwapChain]: Resize FAILED. Width or Height is the same\n");
+		LOG_ERROR("[D3D12SwapChain]: Resize FAILED. Width or Height is the same");
 		return false;
 	}
 
@@ -167,7 +167,7 @@ void D3D12SwapChain::RetriveSwapChainSurfaces()
 		}
 		else
 		{
-			::OutputDebugString("[D3D12SwapChain]: FAILED to retrive SwapChain Buffer\n");
+			LOG_ERROR("[D3D12SwapChain]: FAILED to retrive SwapChain Buffer");
 			break;
 		}
 	}
