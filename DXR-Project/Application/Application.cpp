@@ -308,7 +308,7 @@ bool Application::Initialize()
 	std::shared_ptr<Mesh> SphereMesh = Mesh::Make(Renderer->GetDevice().get(), SphereMeshData);
 
 	// Create standard textures
-	Byte Pixels[] = { 255, 255, 255, 255 };
+	Byte Pixels[] = { 255, 0, 0, 255 };
 	std::shared_ptr<D3D12Texture> BaseTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!BaseTexture)
 	{
