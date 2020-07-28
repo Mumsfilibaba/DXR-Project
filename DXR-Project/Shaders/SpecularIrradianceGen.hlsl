@@ -4,6 +4,7 @@
 
 #define RootSig \
 	"RootFlags(0), " \
+	"RootConstants(b0, num32BitConstants = 1), " \
 	"DescriptorTable(SRV(t0, numDescriptors = 1))," \
 	"DescriptorTable(UAV(u0, numDescriptors = 1))," \
 	"StaticSampler(s0," \
@@ -12,16 +13,21 @@
 		"addressW = TEXTURE_ADDRESS_WRAP," \
 		"filter = FILTER_MIN_MAG_LINEAR_MIP_POINT)"
 
-TextureCube<float4> EnvironmentMap : register(t0, space0);
-SamplerState EnvironmentSampler : register(s0, space0);
+cbuffer CB0 : register(b0, space0)
+{
+	float Roughness;
+};
 
-RWTexture2DArray<float4> IrradianceMap : register(u0);
+TextureCube<float4>	EnvironmentMap		: register(t0, space0);
+SamplerState		EnvironmentSampler	: register(s0, space0);
+
+RWTexture2DArray<float4> SpecularIrradianceMap : register(u0);
 
 // Transform from dispatch ID to cubemap face direction
 static const float3x3 RotateUV[6] =
 {
 	// +X
-    float3x3(	 0,  0, 1,
+	float3x3(	 0,  0, 1,
 				 0, -1, 0,
 				-1,  0, 0),
 	// -X
@@ -50,4 +56,55 @@ static const float3x3 RotateUV[6] =
 [numthreads(BLOCK_SIZE, BLOCK_SIZE, 1)]
 void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
 {
+	uint3 TexCoord = DispatchThreadID;
+	
+	uint Width;
+	uint Height;
+	uint Elements;
+	SpecularIrradianceMap.GetDimensions(Width, Height, Elements);
+	
+	uint SourceWidth;
+	uint SourceHeight;
+	EnvironmentMap.GetDimensions(SourceWidth, SourceHeight);
+	
+	float3 Normal = float3((TexCoord.xy / float(Width)) - 0.5f, 0.5f);
+	Normal = normalize(mul(RotateUV[TexCoord.z], Normal));
+	
+	// Make the simplyfying assumption that V equals R equals the normal 
+	float3 R = Normal;
+	float3 V = R;
+
+	float FinalRoughness = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+	const uint SAMPLE_COUNT = 1024U;
+	float	TotalWeight = 0.0f;
+	float3	PrefilteredColor = float3(0.0f, 0.0f, 0.0f);
+	for (uint i = 0U; i < SAMPLE_COUNT; ++i)
+	{
+		// Generates a sample vector that's biased towards the preferred alignment direction (importance sampling).
+		float2 Xi	= Hammersley(i, SAMPLE_COUNT);
+		float3 H	= ImportanceSampleGGX(Xi, Normal, FinalRoughness);
+		float3 L	= normalize(2.0 * dot(V, H) * H - V);
+
+		float NdotL = max(dot(Normal, L), 0.0f);
+		if (NdotL > 0.0f)
+		{
+			// Sample from the environment's mip level based on roughness/pdf
+			float D		= DistributionGGX(Normal, H, FinalRoughness);
+			float NdotH	= max(dot(Normal, H), 0.0f);
+			float HdotV	= max(dot(H, V), 0.0f);
+			float PDF	= D * NdotH / (4.0f * HdotV) + 0.0001f;
+
+			float Resolution	= float(SourceWidth); // Resolution of source cubemap (per face)
+			float SaTexel		= 4.0f * PI / (6.0f * Resolution * Resolution);
+			float SaSample		= 1.0f / (float(SAMPLE_COUNT) * PDF + 0.0001f);
+
+			const float Miplevel = FinalRoughness == 0.0 ? 0.0 : 0.5 * log2(SaSample / SaTexel);
+			
+			PrefilteredColor += EnvironmentMap.SampleLevel(EnvironmentSampler, L, Miplevel).rgb * NdotL;
+			TotalWeight += NdotL;
+		}
+	}
+
+	PrefilteredColor = PrefilteredColor / TotalWeight;
+	SpecularIrradianceMap[TexCoord] = float4(PrefilteredColor, 1.0f);
 }

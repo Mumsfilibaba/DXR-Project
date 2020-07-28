@@ -21,7 +21,9 @@ public:
 	bool Tick();
 
 	void DrawDebugData();
+	void DrawSideWindow();
 	void DrawRenderSettings();
+	void DrawSceneInfo();
 
 	void SetCursor(std::shared_ptr<WindowsCursor> Cursor);
 	void SetActiveWindow(std::shared_ptr<WindowsWindow>& ActiveWindow);

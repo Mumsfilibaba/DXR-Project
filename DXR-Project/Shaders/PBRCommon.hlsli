@@ -14,7 +14,7 @@ struct Camera
 {
 	float4x4    ViewProjection;
 	float3      Position;
-    float		Padding;
+	float		Padding;
 	float4x4    ViewProjectionInverse;
 };
 
@@ -59,13 +59,13 @@ float GeometrySchlickGGX(float NdotV, float Roughness)
 	float R = (Roughness + 1.0f);
 	float K = (R * R) / 8.0f;
 
-    return NdotV / (NdotV * (1.0f - K) + K);
+	return NdotV / (NdotV * (1.0f - K) + K);
 }
 
 float GeometrySchlickGGX_IBL(float NdotV, float Roughness)
 {
-    float K = (Roughness * Roughness) / 2.0f;
-    return NdotV / (NdotV * (1.0f - K) + K);
+	float K = (Roughness * Roughness) / 2.0f;
+	return NdotV / (NdotV * (1.0f - K) + K);
 }
 
 float GeometrySmith(float3 N, float3 V, float3 L, float Roughness)
@@ -79,7 +79,7 @@ float GeometrySmith(float3 N, float3 V, float3 L, float Roughness)
 float GeometrySmith_IBL(float3 N, float3 V, float3 L, float Roughness)
 {
 	float NdotV = max(dot(N, V), MIN_VALUE);
-    float NdotL = max(dot(N, L), MIN_VALUE);
+	float NdotL = max(dot(N, L), MIN_VALUE);
 
 	return GeometrySchlickGGX_IBL(NdotV, Roughness) * GeometrySchlickGGX_IBL(NdotL, Roughness);
 }
@@ -93,6 +93,46 @@ float3 FresnelSchlickRoughness(float CosTheta, float3 F0, float Roughness)
 {
 	float R = 1.0f - Roughness;
 	return F0 + (max(float3(R, R, R), F0) - F0) * pow(1.0f - CosTheta, 5.0f);
+}
+
+// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+// efficient VanDerCorpus calculation.
+float RadicalInverse_VdC(uint Bits)
+{
+	Bits = (Bits << 16u) | (Bits >> 16u);
+	Bits = ((Bits & 0x55555555u) << 1u) | ((Bits & 0xAAAAAAAAu) >> 1u);
+	Bits = ((Bits & 0x33333333u) << 2u) | ((Bits & 0xCCCCCCCCu) >> 2u);
+	Bits = ((Bits & 0x0F0F0F0Fu) << 4u) | ((Bits & 0xF0F0F0F0u) >> 4u);
+	Bits = ((Bits & 0x00FF00FFu) << 8u) | ((Bits & 0xFF00FF00u) >> 8u);
+	return float(Bits) * 2.3283064365386963e-10; // 0x100000000
+}
+
+float2 Hammersley(uint I, uint N)
+{
+	return float2(float(I) / float(N), RadicalInverse_VdC(I));
+}
+
+float3 ImportanceSampleGGX(float2 Xi, float3 N, float Roughness)
+{
+	float A = Roughness * Roughness;
+	
+	float Phi		= 2.0f * PI * Xi.x;
+	float CosTheta	= sqrt((1.0f - Xi.y) / (1.0f + (A * A - 1.0f) * Xi.y));
+	float SinTheta	= sqrt(1.0f - CosTheta * CosTheta);
+	
+	// From spherical coordinates to cartesian coordinates
+	float3 H;
+	H.x = cos(Phi) * SinTheta;
+	H.y = sin(Phi) * SinTheta;
+	H.z = CosTheta;
+	
+	// From tangent-space vector to world-space sample vector
+	float3 Up			= abs(N.z) < 0.999f ? float3(0.0f, 0.0f, 1.0f) : float3(1.0f, 0.0f, 0.0f);
+	float3 Tangent		= normalize(cross(Up, N));
+	float3 Bitangent	= cross(N, Tangent);
+	
+	float3 SampleVec = Tangent * H.x + Bitangent * H.y + N * H.z;
+	return normalize(SampleVec);
 }
 
 // HDR Helpers
@@ -121,7 +161,7 @@ float3 UnpackNormal(float3 SampledNormal)
 
 float3 PackNormal(float3 Normal)
 {
-    return (normalize(Normal) + 1.0f) * 0.5f;
+	return (normalize(Normal) + 1.0f) * 0.5f;
 }
 
 // RayTracing Helpers

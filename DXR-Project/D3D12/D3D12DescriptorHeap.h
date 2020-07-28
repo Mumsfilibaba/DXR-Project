@@ -131,11 +131,11 @@ public:
 	D3D12DescriptorTable(D3D12Device* InDevice, Uint32 InDescriptorCount);
 	~D3D12DescriptorTable();
 
+	void CopyDescriptors();
+	
 	void SetUnorderedAccessView(class D3D12UnorderedAccessView* View, Uint32 SlotIndex);
 	void SetConstantBufferView(class D3D12ConstantBufferView* View, Uint32 SlotIndex);
 	void SetShaderResourceView(class D3D12ShaderResourceView* View, Uint32 SlotIndex);
-
-	void CopyDescriptors();
 
 	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUTableStartHandle() const
 	{
@@ -147,6 +147,16 @@ public:
 		return GPUTableStart;
 	}
 
+	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUTableHandle(Uint32 DescriptorIndex) const
+	{
+		return { CPUTableStart.ptr + (DescriptorSize * DescriptorIndex) };
+	}
+
+	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUTableHandle(Uint32 DescriptorIndex) const
+	{
+		return { GPUTableStart.ptr + (DescriptorSize * DescriptorIndex) };
+	}
+
 private:
 	D3D12Device* Device = nullptr;
 	
@@ -155,6 +165,7 @@ private:
 	D3D12_CPU_DESCRIPTOR_HANDLE	CPUTableStart;
 	D3D12_GPU_DESCRIPTOR_HANDLE	GPUTableStart;
 
+	Uint32	DescriptorSize		= 0;
 	Uint32	StartDescriptorSlot	= 0;
 	Uint32	DescriptorCount		= 0;
 	bool	IsDirty				= true;

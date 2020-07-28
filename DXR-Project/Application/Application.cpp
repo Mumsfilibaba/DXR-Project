@@ -42,7 +42,7 @@ bool Application::Tick()
 	Timer.Tick();
 
 	DrawDebugData();
-	DrawRenderSettings();
+	DrawSideWindow();
 
 	GuiContext::Get()->EndFrame();
 
@@ -62,8 +62,12 @@ void Application::DrawDebugData()
 	ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height));
 
 	ImGui::Begin("DebugWindow", nullptr,
-		ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoBackground | 
+		ImGuiWindowFlags_NoTitleBar | 
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoResize | 
+		ImGuiWindowFlags_NoDecoration | 
+		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoSavedSettings);
 
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
@@ -80,9 +84,9 @@ void Application::DrawDebugData()
 	ImGui::End();
 }
 
-void Application::DrawRenderSettings()
+void Application::DrawSideWindow()
 {
-	constexpr Uint32 Width = 350;
+	constexpr Uint32 Width = 450;
 
 	WindowShape WindowShape;
 	Window->GetWindowShape(WindowShape);
@@ -90,12 +94,80 @@ void Application::DrawRenderSettings()
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height));
 
-	ImGui::Begin("Renderer Settings", nullptr, 
-		ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+	ImGui::Begin("Window", nullptr, 
+		ImGuiWindowFlags_NoMove | 
+		ImGuiWindowFlags_NoResize | 
+		ImGuiWindowFlags_NoTitleBar | 
+		ImGuiWindowFlags_NoSavedSettings);
 
-	ImGui::Text("Size: %d x %d", WindowShape.Width, WindowShape.Height);
+	ImGuiTabBarFlags TabBarFlags = ImGuiTabBarFlags_None;
+	if (ImGui::BeginTabBar("Menu", TabBarFlags))
+	{
+		if (ImGui::BeginTabItem("Renderer"))
+		{
+			DrawRenderSettings();
+			ImGui::EndTabItem();
+		}
+
+		if (ImGui::BeginTabItem("Scene"))
+		{
+			DrawSceneInfo();
+			ImGui::EndTabItem();
+		}
+
+		ImGui::EndTabBar();
+	}
 
 	ImGui::End();
+}
+
+void Application::DrawRenderSettings()
+{
+	ImGui::BeginChild("RendererInfo");
+
+	WindowShape WindowShape;
+	Window->GetWindowShape(WindowShape);
+
+	ImGui::Text("Renderer Info");
+
+	ImGui::Indent();
+	ImGui::Text("Resolution: %d x %d", WindowShape.Width, WindowShape.Height);
+
+	ImGui::EndChild();
+}
+
+void Application::DrawSceneInfo()
+{
+	ImGui::Text("Current Scene");
+	ImGui::Indent();
+
+	ImGui::BeginChild("SceneInfo");
+	if (ImGui::TreeNode("Actors"))
+	{
+		for (Actor* Actor : CurrentScene->GetActors())
+		{
+			if (ImGui::TreeNode(Actor->GetDebugName().c_str()))
+			{
+				if (ImGui::TreeNode("Transform"))
+				{
+					const XMFLOAT3& Position = Actor->GetTransform().GetPosition();
+
+					Float32 Arr[3] = { Position.x, Position.y, Position.z };
+					if (ImGui::DragFloat3("Position", Arr, 0.5f))
+					{
+						Actor->GetTransform().SetPosition(Arr[0], Arr[1], Arr[2]);
+					}
+
+					ImGui::TreePop();
+				}
+
+				ImGui::TreePop();
+			}
+		}
+
+		ImGui::TreePop();
+	}
+	ImGui::EndChild();
 }
 
 void Application::SetCursor(std::shared_ptr<WindowsCursor> Cursor)
@@ -365,16 +437,18 @@ bool Application::Initialize()
 		WhiteTexture->SetName("WhiteTexture");
 	}
 
-	XMFLOAT4X4 Matrix;
 	MaterialProperties MatProperties;
+	Uint32 SphereIndex = 0;
 	for (Uint32 y = 0; y < SphereCountY; y++)
 	{
 		for (Uint32 x = 0; x < SphereCountX; x++)
 		{
-			XMStoreFloat4x4(&Matrix, XMMatrixTranspose(XMMatrixTranslation(StartPositionX + (x * SphereOffset), StartPositionY + (y * SphereOffset), 0)));
-
 			NewActor = new Actor();
-			NewActor->SetTransform(Matrix);
+			NewActor->GetTransform().SetPosition(StartPositionX + (x * SphereOffset), StartPositionY + (y * SphereOffset), 0.0f);
+
+			NewActor->SetDebugName("Sphere[" + std::to_string(SphereIndex) + "]");
+			SphereIndex++;
+
 			CurrentScene->AddActor(NewActor);
 
 			NewComponent = new RenderComponent(NewActor);
@@ -404,8 +478,8 @@ bool Application::Initialize()
 	NewActor = new Actor();
 	CurrentScene->AddActor(NewActor);
 
-	XMStoreFloat4x4(&Matrix, XMMatrixTranspose(XMMatrixTranslation(0.0f, 0.0f, -2.0f)));
-	NewActor->SetTransform(Matrix);
+	NewActor->SetDebugName("Cube");
+	NewActor->GetTransform().SetPosition(0.0f, 0.0f, -2.0f);
 
 	MatProperties.AO		= 1.0f;
 	MatProperties.Metallic	= 1.0f;

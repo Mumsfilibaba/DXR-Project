@@ -207,7 +207,8 @@ D3D12DescriptorTable::D3D12DescriptorTable(D3D12Device* InDevice, Uint32 InDescr
 {
 	OfflineHandles.resize(DescriptorCount);
 
-	StartDescriptorSlot = Device->GetGlobalOnlineResourceHeap()->AllocateSlots(DescriptorCount);
+	StartDescriptorSlot	= Device->GetGlobalOnlineResourceHeap()->AllocateSlots(DescriptorCount);
+	DescriptorSize		= Device->GetGlobalOnlineResourceHeap()->GetDescriptorSize();
 
 	CPUTableStart = Device->GetGlobalOnlineResourceHeap()->GetCPUSlotAt(StartDescriptorSlot);
 	GPUTableStart = Device->GetGlobalOnlineResourceHeap()->GetGPUSlotAt(StartDescriptorSlot);

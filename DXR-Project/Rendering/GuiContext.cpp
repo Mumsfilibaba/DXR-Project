@@ -382,7 +382,7 @@ bool GuiContext::Initialize(std::shared_ptr<D3D12Device> InDevice)
 	Style.Colors[ImGuiCol_WindowBg].x = 0.15f;
 	Style.Colors[ImGuiCol_WindowBg].y = 0.15f;
 	Style.Colors[ImGuiCol_WindowBg].z = 0.15f;
-	Style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+	Style.Colors[ImGuiCol_WindowBg].w = 0.9f;
 
 	Style.Colors[ImGuiCol_TitleBg].x = 0.3f;
 	Style.Colors[ImGuiCol_TitleBg].y = 0.3f;

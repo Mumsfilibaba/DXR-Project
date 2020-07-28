@@ -13,6 +13,8 @@
 
 #include "Application/InputManager.h"
 
+#include <algorithm>
+
 std::unique_ptr<Renderer> Renderer::RendererInstance = nullptr;
 
 static const DXGI_FORMAT	NormalFormat		= DXGI_FORMAT_R10G10B10A2_UNORM;
@@ -116,10 +118,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->CopyBuffer(CameraBuffer.get(), 0, UploadBuffers[CurrentBackBufferIndex]->GetBuffer(), Offset, sizeof(Camera));
 	CommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-	// const Float32 BlackClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	// CommandList->ClearRenderTargetView(GBuffer[0]->GetRenderTargetView().get(), BlackClearColor);
-	// CommandList->ClearRenderTargetView(GBuffer[1]->GetRenderTargetView().get(), BlackClearColor);
-	// CommandList->ClearRenderTargetView(GBuffer[2]->GetRenderTargetView().get(), BlackClearColor);
+	const Float32 BlackClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	//CommandList->ClearRenderTargetView(GBuffer[0]->GetRenderTargetView().get(), BlackClearColor);
+	//CommandList->ClearRenderTargetView(GBuffer[1]->GetRenderTargetView().get(), BlackClearColor);
+	//CommandList->ClearRenderTargetView(GBuffer[2]->GetRenderTargetView().get(), BlackClearColor);
 	CommandList->ClearDepthStencilView(GBuffer[3]->GetDepthStencilView().get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 
 	D3D12_VIEWPORT ViewPort = { };
@@ -187,7 +189,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		IBV.Format			= DXGI_FORMAT_R32_UINT;
 		CommandList->IASetIndexBuffer(&IBV);
 
-		PerObjectBuffer.Matrix		= CurrentActor->GetTransform();
+		PerObjectBuffer.Matrix		= CurrentActor->GetTransform().GetMatrix();
 		PerObjectBuffer.Roughness	= CurrentMaterial->GetMaterialProperties().Roughness;
 		PerObjectBuffer.Metallic	= CurrentMaterial->GetMaterialProperties().Metallic;
 		PerObjectBuffer.AO			= CurrentMaterial->GetMaterialProperties().AO;
@@ -555,7 +557,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	// Create Texture Cube
-	std::unique_ptr<D3D12Texture> Panorama = std::unique_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/arches.hdr", 0, DXGI_FORMAT_R32G32B32A32_FLOAT));
+	std::unique_ptr<D3D12Texture> Panorama = std::unique_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/winterforest.hdr", 0, DXGI_FORMAT_R32G32B32A32_FLOAT));
 	if (!Panorama)
 	{
 		return false;	
@@ -571,8 +573,8 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 		Skybox->SetName("Skybox");
 	}
 
-	// Generate global irradiance
-	const Uint16 IrradianceSize = 64;
+	// Generate global irradiance (From Skybox)
+	const Uint16 IrradianceSize = 32;
 	TextureProperties IrradianceMapProps = { };
 	IrradianceMapProps.DebugName	= "Irradiance Map";
 	IrradianceMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -625,18 +627,57 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 		return nullptr;
 	}
 
+	// Generate global specular irradiance (From Skybox)
+	const Uint16 SpecularIrradianceSize = 128;
+	const Uint32 Miplevels				= std::max<Uint32>(std::log2<Uint32>(SpecularIrradianceSize), 1U);
+	TextureProperties SpecualarIrradianceMapProps = { };
+	SpecualarIrradianceMapProps.DebugName	= "Specular Irradiance Map";
+	SpecualarIrradianceMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	SpecualarIrradianceMapProps.Width		= SpecularIrradianceSize;
+	SpecualarIrradianceMapProps.Height		= SpecularIrradianceSize;
+	SpecualarIrradianceMapProps.ArrayCount	= 6;
+	SpecualarIrradianceMapProps.MipLevels	= Miplevels;
+	SpecualarIrradianceMapProps.Format		= DXGI_FORMAT_R16G16B16A16_FLOAT;
+	SpecualarIrradianceMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
+	SpecualarIrradianceMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
+
+	SpecularIrradianceMap = std::make_shared<D3D12Texture>(Device.get());
+	if (!SpecularIrradianceMap->Initialize(SpecualarIrradianceMapProps))
+	{
+		return false;
+	}
+
+	UavDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+	UavDesc.Texture2DArray.ArraySize		= 6;
+	UavDesc.Texture2DArray.FirstArraySlice	= 0;
+	UavDesc.Texture2DArray.PlaneSlice		= 0;
+	for (Uint32 Miplevel = 0; Miplevel < Miplevels; Miplevel++)
+	{
+		UavDesc.Texture2DArray.MipSlice = Miplevel;
+		SpecularIrradianceMap->SetUnorderedAccessView(std::make_shared<D3D12UnorderedAccessView>(Device.get(), nullptr, SpecularIrradianceMap->GetResource(), &UavDesc), Miplevel);
+	}
+
+	SrvDesc.Format							= SpecualarIrradianceMapProps.Format;
+	SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURECUBE;
+	SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	SrvDesc.TextureCube.MipLevels			= SpecualarIrradianceMapProps.MipLevels;
+	SrvDesc.TextureCube.MostDetailedMip		= 0;
+	SrvDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
+	SpecularIrradianceMap->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), SpecularIrradianceMap->GetResource(), &SrvDesc), 0);
+
 	// Generate Cube
 	Allocator->Reset();
 	CommandList->Reset(Allocator.get());
 
 	GenerateIrradianceMap(Skybox.get(), IrradianceMap.get(), CommandList.get());
+	GenerateSpecularIrradianceMap(Skybox.get(), SpecularIrradianceMap.get(), CommandList.get());
 
 	CommandList->Close();
 
 	Queue->ExecuteCommandList(CommandList.get());
 	Queue->WaitForCompletion();
 
-	// Generate albedo for raytracing
+	// Create albedo for raytracing
 	Albedo = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!Albedo)
 	{
@@ -679,7 +720,8 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 
 	LightDescriptorTable->SetShaderResourceView(ReflectionTexture->GetShaderResourceView(0).get(), 4);
 	LightDescriptorTable->SetShaderResourceView(IrradianceMap->GetShaderResourceView(0).get(), 5);
-	LightDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).get(), 6);
+	LightDescriptorTable->SetShaderResourceView(SpecularIrradianceMap->GetShaderResourceView(0).get(), 6);
+	LightDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).get(), 7);
 	LightDescriptorTable->CopyDescriptors();
 
 	return true;
@@ -1175,7 +1217,7 @@ bool Renderer::InitDeferred()
 	}
 
 	{
-		D3D12_DESCRIPTOR_RANGE Ranges[8] = {};
+		D3D12_DESCRIPTOR_RANGE Ranges[9] = {};
 		// Albedo
 		Ranges[0].BaseShaderRegister				= 0;
 		Ranges[0].NumDescriptors					= 1;
@@ -1218,27 +1260,34 @@ bool Renderer::InitDeferred()
 		Ranges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		Ranges[5].OffsetInDescriptorsFromTableStart = 5;
 
-		// Integration LUT
+		// Specular IrradianceMap
 		Ranges[6].BaseShaderRegister				= 6;
 		Ranges[6].NumDescriptors					= 1;
 		Ranges[6].RegisterSpace						= 0;
 		Ranges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		Ranges[6].OffsetInDescriptorsFromTableStart = 6;
 
-		// Camera
-		Ranges[7].BaseShaderRegister				= 0;
+		// Integration LUT
+		Ranges[7].BaseShaderRegister				= 7;
 		Ranges[7].NumDescriptors					= 1;
 		Ranges[7].RegisterSpace						= 0;
-		Ranges[7].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-		Ranges[7].OffsetInDescriptorsFromTableStart	= 7;
+		Ranges[7].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[7].OffsetInDescriptorsFromTableStart = 7;
+
+		// Camera
+		Ranges[8].BaseShaderRegister				= 0;
+		Ranges[8].NumDescriptors					= 1;
+		Ranges[8].RegisterSpace						= 0;
+		Ranges[8].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		Ranges[8].OffsetInDescriptorsFromTableStart	= 8;
 
 		D3D12_ROOT_PARAMETER Parameters[1];
 		Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		Parameters[0].DescriptorTable.NumDescriptorRanges	= 8;
+		Parameters[0].DescriptorTable.NumDescriptorRanges	= 9;
 		Parameters[0].DescriptorTable.pDescriptorRanges		= Ranges;
 		Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
 
-		D3D12_STATIC_SAMPLER_DESC Samplers[2] = { };
+		D3D12_STATIC_SAMPLER_DESC Samplers[3] = { };
 		Samplers[0].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
 		Samplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 		Samplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -1248,7 +1297,7 @@ bool Renderer::InitDeferred()
 		Samplers[0].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
 		Samplers[0].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 		Samplers[0].MinLOD				= 0.0f;
-		Samplers[0].MaxLOD				= 0.0f;
+		Samplers[0].MaxLOD				= FLT_MAX;
 		Samplers[0].ShaderRegister		= 0;
 		Samplers[0].RegisterSpace		= 0;
 		Samplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
@@ -1262,15 +1311,29 @@ bool Renderer::InitDeferred()
 		Samplers[1].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
 		Samplers[1].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 		Samplers[1].MinLOD				= 0.0f;
-		Samplers[1].MaxLOD				= 0.0f;
+		Samplers[1].MaxLOD				= FLT_MAX;
 		Samplers[1].ShaderRegister		= 1;
 		Samplers[1].RegisterSpace		= 0;
 		Samplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
 
+		Samplers[2].Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		Samplers[2].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		Samplers[2].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		Samplers[2].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		Samplers[2].MipLODBias			= 0.0f;
+		Samplers[2].MaxAnisotropy		= 0;
+		Samplers[2].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
+		Samplers[2].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		Samplers[2].MinLOD				= 0.0f;
+		Samplers[2].MaxLOD				= FLT_MAX;
+		Samplers[2].ShaderRegister		= 2;
+		Samplers[2].RegisterSpace		= 0;
+		Samplers[2].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+
 		D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
 		RootSignatureDesc.NumParameters			= 1;
 		RootSignatureDesc.pParameters			= Parameters;
-		RootSignatureDesc.NumStaticSamplers		= 2;
+		RootSignatureDesc.NumStaticSamplers		= 3;
 		RootSignatureDesc.pStaticSamplers		= Samplers;
 		RootSignatureDesc.Flags					= 
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
@@ -1387,7 +1450,7 @@ bool Renderer::InitDeferred()
 	GeometryDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 0);
 	GeometryDescriptorTable->CopyDescriptors();
 	
-	LightDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 8);
+	LightDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 9);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).get(), 0);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).get(), 1);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).get(), 2);
@@ -1395,7 +1458,8 @@ bool Renderer::InitDeferred()
 	// #4 is set after deferred and raytracing
 	// #5 is set after deferred and raytracing
 	// #6 is set after deferred and raytracing
-	LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 7);
+	// #7 is set after deferred and raytracing
+	LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().get(), 8);
 
 	SkyboxDescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 2);
 	SkyboxDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).get(), 0);
@@ -1712,6 +1776,8 @@ bool Renderer::InitRayTracingTexture()
 
 void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList)
 {
+	const Uint32 Size = Dest->GetDesc().Width;
+
 	static std::unique_ptr<D3D12DescriptorTable> SrvDescriptorTable;
 	if (!SrvDescriptorTable)
 	{
@@ -1764,9 +1830,87 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 
 	CommandList->SetPipelineState(IrradicanceGenPSO->GetPipeline());
 
-	CommandList->Dispatch(64, 64, 6);
+	CommandList->Dispatch(Size, Size, 6);
 
 	CommandList->UnorderedAccessBarrier(Dest);
+
+	CommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+}
+
+void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList)
+{
+	const Uint32 Miplevels = Dest->GetDesc().MipLevels;
+
+	static std::unique_ptr<D3D12DescriptorTable> SrvDescriptorTable;
+	if (!SrvDescriptorTable)
+	{
+		SrvDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device.get(), 1);
+		SrvDescriptorTable->SetShaderResourceView(Source->GetShaderResourceView(0).get(), 0);
+		SrvDescriptorTable->CopyDescriptors();
+	}
+
+	static std::unique_ptr<D3D12DescriptorTable> UavDescriptorTable;
+	if (!UavDescriptorTable)
+	{
+		UavDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device.get(), Miplevels);
+		for (Uint32 Mip = 0; Mip < Miplevels; Mip++)
+		{
+			UavDescriptorTable->SetUnorderedAccessView(Dest->GetUnorderedAccessView(Mip).get(), Mip);
+		}
+
+		UavDescriptorTable->CopyDescriptors();
+	}
+
+	static Microsoft::WRL::ComPtr<IDxcBlob> Shader;
+	if (!Shader)
+	{
+		Shader = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", "Main", "cs_6_0");
+	}
+
+	if (!SpecIrradianceGenRootSignature)
+	{
+		SpecIrradianceGenRootSignature = std::make_shared<D3D12RootSignature>(Device.get());
+		SpecIrradianceGenRootSignature->Initialize(Shader.Get());
+		SpecIrradianceGenRootSignature->SetName("Specular Irradiance Gen RootSignature");
+	}
+
+	if (!SpecIrradicanceGenPSO)
+	{
+		ComputePipelineStateProperties Props = { };
+		Props.DebugName		= "Specular Irradiance Gen PSO";
+		Props.CSBlob		= Shader.Get();
+		Props.RootSignature = SpecIrradianceGenRootSignature.get();
+
+		SpecIrradicanceGenPSO = std::make_unique<D3D12ComputePipelineState>(Device.get());
+		SpecIrradicanceGenPSO->Initialize(Props);
+	}
+
+	CommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+	CommandList->SetComputeRootSignature(SpecIrradianceGenRootSignature->GetRootSignature());
+
+	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
+	CommandList->SetDescriptorHeaps(DescriptorHeaps, 1);
+	CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
+
+	CommandList->SetPipelineState(SpecIrradicanceGenPSO->GetPipeline());
+
+	Uint32	Width		= Dest->GetDesc().Width;
+	Float32 Roughness	= 0.0f;
+	const Float32 RoughnessDelta = 1.0f / (Miplevels - 1);
+	for (Uint32 Mip = 0; Mip < Miplevels; Mip++)
+	{
+		CommandList->SetComputeRoot32BitConstants(&Roughness, 1, 0, 0);
+		CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableHandle(Mip), 2);
+		
+		CommandList->Dispatch(Width, Width, 6);
+		CommandList->UnorderedAccessBarrier(Dest);
+
+		Width = std::max<Uint32>(Width / 2, 1U);
+		Roughness += RoughnessDelta;
+	}
 
 	CommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	CommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);

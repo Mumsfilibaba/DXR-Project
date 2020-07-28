@@ -19,6 +19,33 @@ public:
 	Actor* OwningActor = nullptr;
 };
 
+class Transform
+{
+public:
+	Transform();
+	~Transform() = default;
+
+	void SetPosition(float X, float Y, float Z);
+	void SetPosition(const XMFLOAT3& InPosition);
+
+	FORCEINLINE const XMFLOAT3& GetPosition() const
+	{
+		return Position;
+	}
+
+	FORCEINLINE const XMFLOAT4X4& GetMatrix() const
+	{
+		return Matrix;
+	}
+
+private:
+	void CalculateMatrix();
+
+private:
+	XMFLOAT4X4	Matrix;
+	XMFLOAT3	Position;
+};
+
 /*
 * Actor
 */
@@ -31,12 +58,24 @@ public:
 
 	void AddComponent(Component* InComponent);
 
-	FORCEINLINE void SetTransform(const XMFLOAT4X4& InTransform)
+	void SetDebugName(const std::string& InDebugName);
+
+	FORCEINLINE void SetTransform(const Transform& InTransform)
 	{
 		Transform = InTransform;
 	}
 
-	FORCEINLINE const XMFLOAT4X4& GetTransform() const
+	FORCEINLINE const std::string& GetDebugName() const
+	{
+		return DebugName;
+	}
+
+	FORCEINLINE Transform& GetTransform()
+	{
+		return Transform;
+	}
+
+	FORCEINLINE const Transform& GetTransform() const
 	{
 		return Transform;
 	}
@@ -46,9 +85,9 @@ public:
 		return Components.front();
 	}
 
-public:
-	XMFLOAT4X4 Transform;
-
 private:
+	Transform Transform;
+
 	std::vector<Component*> Components;
+	std::string				DebugName;
 };

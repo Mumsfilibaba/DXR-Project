@@ -85,6 +85,7 @@ private:
 	bool InitRayTracingTexture();
 
 	void GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList);
+	void GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList);
 
 	void WaitForPendingFrames();
 
@@ -114,6 +115,7 @@ private:
 
 	std::shared_ptr<D3D12Texture> Skybox;
 	std::shared_ptr<D3D12Texture> IrradianceMap;
+	std::shared_ptr<D3D12Texture> SpecularIrradianceMap;
 	std::shared_ptr<D3D12Texture> Albedo;
 	std::shared_ptr<D3D12Texture> Normal;
 	std::shared_ptr<D3D12Texture> ReflectionTexture;
@@ -126,6 +128,7 @@ private:
 	std::shared_ptr<D3D12RootSignature>		SkyboxRootSignature;
 	std::shared_ptr<D3D12RootSignature>		GlobalRootSignature;
 	std::shared_ptr<D3D12RootSignature>		IrradianceGenRootSignature;
+	std::shared_ptr<D3D12RootSignature>		SpecIrradianceGenRootSignature;
 	std::shared_ptr<D3D12DescriptorTable>	RayGenDescriptorTable;
 	std::shared_ptr<D3D12DescriptorTable>	GlobalDescriptorTable;
 	std::shared_ptr<D3D12DescriptorTable>	GeometryDescriptorTable;
@@ -137,6 +140,7 @@ private:
 	std::shared_ptr<D3D12GraphicsPipelineState>		LightPassPSO;
 	std::shared_ptr<D3D12GraphicsPipelineState>		SkyboxPSO;
 	std::shared_ptr<D3D12ComputePipelineState>		IrradicanceGenPSO;
+	std::shared_ptr<D3D12ComputePipelineState>		SpecIrradicanceGenPSO;
 	std::shared_ptr<D3D12RayTracingPipelineState>	RaytracingPSO;
 
 	std::vector<Uint64>	FenceValues;
