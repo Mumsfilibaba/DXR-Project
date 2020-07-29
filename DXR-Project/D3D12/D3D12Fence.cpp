@@ -51,7 +51,8 @@ bool D3D12Fence::WaitForValue(Uint64 FenceValue)
 	}
 }
 
-void D3D12Fence::SetName(const std::string& Name)
+void D3D12Fence::SetDebugName(const std::string& DebugName)
 {
-	Fence->SetName(ConvertToWide(Name).c_str());
+	std::wstring WideDebugName = ConvertToWide(DebugName);
+	Fence->SetName(WideDebugName.c_str());
 }

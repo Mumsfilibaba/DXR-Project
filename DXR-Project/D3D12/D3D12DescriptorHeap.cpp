@@ -79,11 +79,15 @@ void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, Uint32
 		{
 			Range.Begin = Handle;
 			FoundRange = true;
+
+			break;
 		}
 		else if (Handle.ptr == Range.End.ptr)
 		{
 			Range.End.ptr += DescriptorSize;
 			FoundRange = true;
+
+			break;
 		}
 	}
 
@@ -94,15 +98,15 @@ void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, Uint32
 	}
 }
 
-void D3D12OfflineDescriptorHeap::SetName(const std::string& InName)
+void D3D12OfflineDescriptorHeap::SetDebugName(const std::string& InDebugName)
 {
-	DebugName = ConvertToWide(InName);
+	DebugName = ConvertToWide(InDebugName);
 
 	Uint32 HeapIndex = 0;
 	for (DescriptorHeap& Heap : Heaps)
 	{
-		std::wstring Name = DebugName + L"[" + std::to_wstring(HeapIndex) + L"]";
-		Heap.Heap->SetName(Name.c_str());
+		std::wstring DbgName = DebugName + L"[" + std::to_wstring(HeapIndex) + L"]";
+		Heap.Heap->SetName(DbgName.c_str());
 	}
 }
 
@@ -124,8 +128,8 @@ void D3D12OfflineDescriptorHeap::AllocateHeap()
 
 		if (!DebugName.empty())
 		{
-			std::wstring Name = DebugName + std::to_wstring(Heaps.size());
-			Heap->SetName(Name.c_str());
+			std::wstring DbgName = DebugName + std::to_wstring(Heaps.size());
+			Heap->SetName(DbgName.c_str());
 		}
 
 		FreeRange WholeRange;
@@ -192,10 +196,10 @@ Uint32 D3D12OnlineDescriptorHeap::AllocateSlots(Uint32 NumSlots)
 	return Slot;
 }
 
-void D3D12OnlineDescriptorHeap::SetName(const std::string& InName)
+void D3D12OnlineDescriptorHeap::SetDebugName(const std::string& InDebugName)
 {
-	std::wstring WideName = ConvertToWide(InName);
-	Heap->SetName(WideName.c_str());
+	std::wstring WideDebugName = ConvertToWide(InDebugName);
+	Heap->SetName(WideDebugName.c_str());
 }
 
 /*

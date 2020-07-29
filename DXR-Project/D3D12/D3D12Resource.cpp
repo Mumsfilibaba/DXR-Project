@@ -81,8 +81,8 @@ void D3D12Resource::SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessV
 	UnorderedAccessViews[SubresourceIndex] = InUnorderedAccessView;
 }
 
-void D3D12Resource::SetName(const std::string& Name)
+void D3D12Resource::SetDebugName(const std::string& DebugName)
 {
-	std::wstring WideName = ConvertToWide(Name);
-	Resource->SetName(WideName.c_str());
+	std::wstring WideDebugName = ConvertToWide(DebugName);
+	Resource->SetName(WideDebugName.c_str());
 }

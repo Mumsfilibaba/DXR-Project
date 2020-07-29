@@ -45,14 +45,14 @@ bool D3D12CommandQueue::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 	}
 }
 
-bool D3D12CommandQueue::SignalFence(D3D12Fence* Fence, Uint64 FenceValue)
+bool D3D12CommandQueue::SignalFence(D3D12Fence* Fence, Uint64 InFenceValue)
 {
-	return SUCCEEDED(Queue->Signal(Fence->GetFence(), FenceValue));
+	return SUCCEEDED(Queue->Signal(Fence->GetFence(), InFenceValue));
 }
 
-bool D3D12CommandQueue::WaitForFence(D3D12Fence* Fence, Uint64 FenceValue)
+bool D3D12CommandQueue::WaitForFence(D3D12Fence* Fence, Uint64 InFenceValue)
 {
-	return SUCCEEDED(Queue->Wait(Fence->GetFence(), FenceValue));
+	return SUCCEEDED(Queue->Wait(Fence->GetFence(), InFenceValue));
 }
 
 void D3D12CommandQueue::WaitForCompletion()
@@ -69,8 +69,8 @@ void D3D12CommandQueue::ExecuteCommandList(D3D12CommandList* CommandList)
 	SignalFence(QueueFence.get(), FenceValue);
 }
 
-void D3D12CommandQueue::SetName(const std::string& Name)
+void D3D12CommandQueue::SetDebugName(const std::string& DebugName)
 {
-	std::wstring WideName = ConvertToWide(Name);
-	Queue->SetName(WideName.c_str());
+	std::wstring WideDebugName = ConvertToWide(DebugName);
+	Queue->SetName(WideDebugName.c_str());
 }

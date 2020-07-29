@@ -23,7 +23,7 @@ public:
 		Device = nullptr;
 	}
 
-	virtual void SetName(const std::string& InName) = 0;
+	virtual void SetDebugName(const std::string& InName) = 0;
 
 	FORCEINLINE D3D12Device* GetDevice() const
 	{

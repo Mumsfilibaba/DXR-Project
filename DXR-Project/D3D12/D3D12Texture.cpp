@@ -28,7 +28,7 @@ bool D3D12Texture::Initialize(const TextureProperties& Properties)
 
 	if (CreateResource(&ResourceDesc, Properties.OptimizedClearValue, Properties.InitalState, Properties.MemoryType))
 	{
-		SetName(Properties.DebugName);
+		SetDebugName(Properties.DebugName);
 
 		LOG_INFO("[D3D12Texture]: Created Texture");
 		return true;

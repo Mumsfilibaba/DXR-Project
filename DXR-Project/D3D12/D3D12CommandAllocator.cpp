@@ -31,7 +31,8 @@ bool D3D12CommandAllocator::Reset()
 	return SUCCEEDED(Allocator->Reset());
 }
 
-void D3D12CommandAllocator::SetName(const std::string& Name)
+void D3D12CommandAllocator::SetDebugName(const std::string& DebugName)
 {
-	Allocator->SetName(ConvertToWide(Name).c_str());
+	std::wstring WideDebugName = ConvertToWide(DebugName);
+	Allocator->SetName(WideDebugName.c_str());
 }

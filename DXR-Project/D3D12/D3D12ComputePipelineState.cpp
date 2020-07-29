@@ -39,7 +39,7 @@ bool D3D12ComputePipelineState::Initialize(const ComputePipelineStateProperties&
 	HRESULT hResult = Device->GetDXRDevice()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
 	if (SUCCEEDED(hResult))
 	{
-		SetName(Properties.DebugName);
+		SetDebugName(Properties.DebugName);
 
 		LOG_INFO("[D3D12ComputePipeline]: Created PipelineState");
 		return true;
@@ -51,8 +51,8 @@ bool D3D12ComputePipelineState::Initialize(const ComputePipelineStateProperties&
 	}
 }
 
-void D3D12ComputePipelineState::SetName(const std::string& Name)
+void D3D12ComputePipelineState::SetDebugName(const std::string& DebugName)
 {
-	std::wstring WideName = ConvertToWide(Name);
-	PipelineState->SetName(WideName.c_str());
+	std::wstring WideDebugName = ConvertToWide(DebugName);
+	PipelineState->SetName(WideDebugName.c_str());
 }

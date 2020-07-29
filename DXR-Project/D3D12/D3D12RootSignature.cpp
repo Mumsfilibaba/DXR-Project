@@ -28,19 +28,19 @@ bool D3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 	}
 	else
 	{
-		return Initialize(SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize());
+		return Initialize(SignatureBlob->GetBufferPointer(), static_cast<Uint32>(SignatureBlob->GetBufferSize()));
 	}
 }
 
 bool D3D12RootSignature::Initialize(IDxcBlob* ShaderBlob)
 {
-	return Initialize(ShaderBlob->GetBufferPointer(), ShaderBlob->GetBufferSize());
+	return Initialize(ShaderBlob->GetBufferPointer(), static_cast<Uint32>(ShaderBlob->GetBufferSize()));
 }
 
-void D3D12RootSignature::SetName(const std::string& Name)
+void D3D12RootSignature::SetDebugName(const std::string& DebugName)
 {
-	std::wstring WideName = ConvertToWide(Name);
-	RootSignature->SetName(WideName.c_str());
+	std::wstring WideDebugName = ConvertToWide(DebugName);
+	RootSignature->SetName(WideDebugName.c_str());
 }
 
 bool D3D12RootSignature::Initialize(const void* RootSignatureBlob, Uint32 BlobSizeInBytes)

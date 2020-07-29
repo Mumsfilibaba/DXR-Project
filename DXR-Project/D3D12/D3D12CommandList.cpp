@@ -37,7 +37,8 @@ bool D3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllo
 	}
 }
 
-void D3D12CommandList::SetName(const std::string& Name)
+void D3D12CommandList::SetDebugName(const std::string& DebugName)
 {
-	CommandList->SetName(ConvertToWide(Name).c_str());
+	std::wstring WideDebugName = ConvertToWide(DebugName);
+	CommandList->SetName(WideDebugName.c_str());
 }

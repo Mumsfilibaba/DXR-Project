@@ -570,7 +570,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 	else
 	{
-		Skybox->SetName("Skybox");
+		Skybox->SetDebugName("Skybox");
 	}
 
 	// Generate global irradiance (From Skybox)
@@ -673,7 +673,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 	else
 	{
-		Albedo->SetName("AlbedoMap");
+		Albedo->SetDebugName("AlbedoMap");
 	}
 
 	Normal = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
@@ -683,7 +683,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 	else
 	{
-		Normal->SetName("NormalMap");
+		Normal->SetDebugName("NormalMap");
 	}
 
 	// Init Deferred Rendering
@@ -740,7 +740,7 @@ bool Renderer::InitRayTracing()
 		RayGenLocalRoot = std::make_unique<D3D12RootSignature>(Device.get());
 		if (RayGenLocalRoot->Initialize(RayGenLocalRootDesc))
 		{
-			RayGenLocalRoot->SetName("RayGen Local RootSignature");
+			RayGenLocalRoot->SetDebugName("RayGen Local RootSignature");
 		}
 		else
 		{
@@ -778,7 +778,7 @@ bool Renderer::InitRayTracing()
 		HitLocalRoot = std::make_unique<D3D12RootSignature>(Device.get());
 		if (HitLocalRoot->Initialize(HitLocalRootDesc))
 		{
-			HitLocalRoot->SetName("Closest Hit Local RootSignature");
+			HitLocalRoot->SetDebugName("Closest Hit Local RootSignature");
 		}
 		else
 		{
@@ -796,7 +796,7 @@ bool Renderer::InitRayTracing()
 		MissLocalRoot = std::make_unique<D3D12RootSignature>(Device.get());
 		if (MissLocalRoot->Initialize(MissLocalRootDesc))
 		{
-			MissLocalRoot->SetName("Miss Local RootSignature");
+			MissLocalRoot->SetDebugName("Miss Local RootSignature");
 		}
 		else
 		{
@@ -1792,7 +1792,7 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 	{
 		IrradianceGenRootSignature = std::make_shared<D3D12RootSignature>(Device.get());
 		IrradianceGenRootSignature->Initialize(Shader.Get());
-		IrradianceGenRootSignature->SetName("Irradiance Gen RootSignature");
+		IrradianceGenRootSignature->SetDebugName("Irradiance Gen RootSignature");
 	}
 
 	if (!IrradicanceGenPSO)
@@ -1860,7 +1860,7 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 	{
 		SpecIrradianceGenRootSignature = std::make_shared<D3D12RootSignature>(Device.get());
 		SpecIrradianceGenRootSignature->Initialize(Shader.Get());
-		SpecIrradianceGenRootSignature->SetName("Specular Irradiance Gen RootSignature");
+		SpecIrradianceGenRootSignature->SetDebugName("Specular Irradiance Gen RootSignature");
 	}
 
 	if (!SpecIrradicanceGenPSO)

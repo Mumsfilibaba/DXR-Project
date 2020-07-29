@@ -100,9 +100,9 @@ D3D12_GPU_VIRTUAL_ADDRESS D3D12RayTracingGeometry::GetGPUVirtualAddress() const
 	return ResultBuffer->GetGPUVirtualAddress();
 }
 
-void D3D12RayTracingGeometry::SetName(const std::string& Name)
+void D3D12RayTracingGeometry::SetDebugName(const std::string& Name)
 {
-	ResultBuffer->SetName(Name);
+	ResultBuffer->SetDebugName(Name);
 }
 
 /*
@@ -311,7 +311,7 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingScene::GetMissShaderTa
 	return { BindingTableAdress + BindingTableStride + HitGroupSizeInBytes, BindingTableStride, BindingTableStride };
 }
 
-void D3D12RayTracingScene::SetName(const std::string& Name)
+void D3D12RayTracingScene::SetDebugName(const std::string& Name)
 {
-	ResultBuffer->SetName(Name);
+	ResultBuffer->SetDebugName(Name);
 }

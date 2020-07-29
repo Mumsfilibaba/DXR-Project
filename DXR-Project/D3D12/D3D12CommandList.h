@@ -229,7 +229,7 @@ public:
 
 public:
 	// DeviceChild
-	virtual void SetName(const std::string& Name) override;
+	virtual void SetDebugName(const std::string& DebugName) override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>	CommandList;

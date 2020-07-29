@@ -58,7 +58,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 	}
 	else
 	{
-		WhiteTexture->SetName("[Scene] WhiteTexture");
+		WhiteTexture->SetDebugName("[Scene] WhiteTexture");
 	}
 
 	Pixels[0] = 127;
@@ -72,7 +72,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 	}
 	else
 	{
-		NormalMap->SetName("[Scene] NormalMap");
+		NormalMap->SetDebugName("[Scene] NormalMap");
 	}
 
 	// Create BaseMaterial
@@ -120,7 +120,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 				std::shared_ptr<D3D12Texture> Texture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
-					Texture->SetName(Mat.ambient_texname);
+					Texture->SetDebugName(Mat.ambient_texname);
 					MaterialTextures[Mat.ambient_texname] = Texture;
 				}
 				else
@@ -143,7 +143,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 				std::shared_ptr<D3D12Texture> Texture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
-					Texture->SetName(Mat.diffuse_texname);
+					Texture->SetDebugName(Mat.diffuse_texname);
 					MaterialTextures[Mat.diffuse_texname] = Texture;
 				}
 				else
@@ -166,7 +166,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 				std::shared_ptr<D3D12Texture> Texture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
-					Texture->SetName(Mat.specular_highlight_texname);
+					Texture->SetDebugName(Mat.specular_highlight_texname);
 					MaterialTextures[Mat.specular_highlight_texname] = Texture;
 				}
 				else
@@ -189,7 +189,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 				std::shared_ptr<D3D12Texture> Texture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
-					Texture->SetName(Mat.bump_texname);
+					Texture->SetDebugName(Mat.bump_texname);
 					MaterialTextures[Mat.bump_texname] = Texture;
 				}
 				else
@@ -212,7 +212,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 				std::shared_ptr<D3D12Texture> Texture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
-					Texture->SetName(Mat.alpha_texname);
+					Texture->SetDebugName(Mat.alpha_texname);
 					MaterialTextures[Mat.alpha_texname] = Texture;
 				}
 				else

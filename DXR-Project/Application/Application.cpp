@@ -58,7 +58,7 @@ void Application::DrawDebugData()
 	WindowShape WindowShape;
 	Window->GetWindowShape(WindowShape);
 
-	ImGui::SetNextWindowPos(ImVec2(WindowShape.Width - Width, 5));
+	ImGui::SetNextWindowPos(ImVec2(static_cast<Float32>(WindowShape.Width - Width), 5.0f));
 	ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height));
 
 	ImGui::Begin("DebugWindow", nullptr,
@@ -406,7 +406,7 @@ bool Application::Initialize()
 	}
 	else
 	{
-		BaseTexture->SetName("BaseTexture");
+		BaseTexture->SetDebugName("BaseTexture");
 	}
 
 	Pixels[0] = 127;
@@ -420,7 +420,7 @@ bool Application::Initialize()
 	}
 	else
 	{
-		BaseNormal->SetName("BaseNormal");
+		BaseNormal->SetDebugName("BaseNormal");
 	}
 
 	Pixels[0] = 255;
@@ -434,7 +434,7 @@ bool Application::Initialize()
 	}
 	else
 	{
-		WhiteTexture->SetName("WhiteTexture");
+		WhiteTexture->SetDebugName("WhiteTexture");
 	}
 
 	MaterialProperties MatProperties;
@@ -496,7 +496,7 @@ bool Application::Initialize()
 	}
 	else
 	{
-		AlbedoMap->SetName("AlbedoMap");
+		AlbedoMap->SetDebugName("AlbedoMap");
 	}
 
 	std::shared_ptr<D3D12Texture> NormalMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
@@ -506,7 +506,7 @@ bool Application::Initialize()
 	}
 	else
 	{
-		NormalMap->SetName("NormalMap");
+		NormalMap->SetDebugName("NormalMap");
 	}
 
 	std::shared_ptr<D3D12Texture> AOMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
@@ -516,7 +516,7 @@ bool Application::Initialize()
 	}
 	else
 	{
-		AOMap->SetName("AOMap");
+		AOMap->SetDebugName("AOMap");
 	}
 
 	std::shared_ptr<D3D12Texture> RoughnessMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
@@ -526,7 +526,7 @@ bool Application::Initialize()
 	}
 	else
 	{
-		RoughnessMap->SetName("RoughnessMap");
+		RoughnessMap->SetDebugName("RoughnessMap");
 	}
 
 	std::shared_ptr<D3D12Texture> HeightMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
@@ -536,7 +536,7 @@ bool Application::Initialize()
 	}
 	else
 	{
-		HeightMap->SetName("HeightMap");
+		HeightMap->SetDebugName("HeightMap");
 	}
 
 	std::shared_ptr<D3D12Texture> MetallicMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
@@ -546,7 +546,7 @@ bool Application::Initialize()
 	}
 	else
 	{
-		MetallicMap->SetName("MetallicMap");
+		MetallicMap->SetDebugName("MetallicMap");
 	}
 
 	NewComponent->Material->AlbedoMap	= AlbedoMap;

@@ -30,7 +30,7 @@ public:
 	bool Initialize(const GraphicsPipelineStateProperties& Properties);
 
 	// DeviceChild Interface
-	virtual void SetName(const std::string& Name) override;
+	virtual void SetDebugName(const std::string& Name) override;
 
 	FORCEINLINE ID3D12PipelineState* GetPipelineState() const
 	{

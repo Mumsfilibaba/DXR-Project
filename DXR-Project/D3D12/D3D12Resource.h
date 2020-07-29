@@ -20,7 +20,7 @@ public:
 	virtual bool Initialize(ID3D12Resource* InResource);
 	
 	// DeviceChild Interface
-	virtual void SetName(const std::string& Name) override;
+	virtual void SetDebugName(const std::string& Name) override;
 
 	void SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex);
 	void SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex);

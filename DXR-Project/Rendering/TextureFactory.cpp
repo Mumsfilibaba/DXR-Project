@@ -98,7 +98,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	TextureProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 
-	std::unique_ptr<D3D12Texture> Texture = std::unique_ptr<D3D12Texture>(new D3D12Texture(Device));
+	std::unique_ptr<D3D12Texture> Texture = std::make_unique<D3D12Texture>(Device);
 	if (!Texture->Initialize(TextureProps))
 	{
 		return nullptr;
@@ -116,7 +116,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	UploadBufferProps.SizeInBytes	= UploadSize;
 	UploadBufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
-	std::unique_ptr<D3D12Buffer> UploadBuffer = std::unique_ptr<D3D12Buffer>(new D3D12Buffer(Device));
+	std::unique_ptr<D3D12Buffer> UploadBuffer = std::make_unique<D3D12Buffer>(Device);
 	if (UploadBuffer->Initialize(UploadBufferProps))
 	{
 		void* Memory = UploadBuffer->Map();
@@ -146,7 +146,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 		TextureProps.DebugName	= "Staging Texture";
 		TextureProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
 
-		TempTexture = std::unique_ptr<D3D12Texture>(new D3D12Texture(Device));
+		TempTexture = std::make_unique<D3D12Texture>(Device);
 		if (!TempTexture->Initialize(TextureProps))
 		{
 			return nullptr;
@@ -195,23 +195,23 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 			GenMipsProperties.RootSignature = nullptr;
 			GenMipsProperties.CSBlob		= CSBlob.Get();
 
-			GlobalFactoryData.GenerateMipsPSO = std::unique_ptr<D3D12ComputePipelineState>(new D3D12ComputePipelineState(Device));
+			GlobalFactoryData.GenerateMipsPSO = std::make_unique<D3D12ComputePipelineState>(Device);
 			if (!GlobalFactoryData.GenerateMipsPSO->Initialize(GenMipsProperties))
 			{
 				return false;
 			}
 
-			GlobalFactoryData.GenerateMipsRootSignature = std::unique_ptr<D3D12RootSignature>(new D3D12RootSignature(Device));
+			GlobalFactoryData.GenerateMipsRootSignature = std::make_unique<D3D12RootSignature>(Device);
 			if (!GlobalFactoryData.GenerateMipsRootSignature->Initialize(CSBlob.Get()))
 			{
 				return false;
 			}
 
-			GlobalFactoryData.GenerateMipsRootSignature->SetName("Generate MipLevels RootSignature");
+			GlobalFactoryData.GenerateMipsRootSignature->SetDebugName("Generate MipLevels RootSignature");
 		}
 
 		// ShaderResourceView
-		SrvDescriptorTable = std::unique_ptr<D3D12DescriptorTable>(new D3D12DescriptorTable(Device, 1));
+		SrvDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device, 1);
 		SrvDescriptorTable->SetShaderResourceView(Texture->GetShaderResourceView(0).get(), 0);
 		SrvDescriptorTable->CopyDescriptors();
 
@@ -230,7 +230,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 		Uint32 UAVIndex = 0;
 		for (Uint32 I = 0; I < NumDispatches; I++)
 		{
-			UavDescriptorTables[I] = std::unique_ptr<D3D12DescriptorTable>(new D3D12DescriptorTable(Device, 4));
+			UavDescriptorTables[I] = std::make_unique<D3D12DescriptorTable>(Device, 4);
 			for (Uint32 J = 0; J < 4; J++)
 			{
 				if (UAVIndex < MipLevels)
@@ -249,7 +249,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	}
 
 	// Upload data
-	std::unique_ptr<D3D12CommandAllocator> Allocator = std::unique_ptr<D3D12CommandAllocator>(new D3D12CommandAllocator(Device));
+	std::unique_ptr<D3D12CommandAllocator> Allocator = std::make_unique<D3D12CommandAllocator>(Device);
 	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
 	{
 		return nullptr;
@@ -349,15 +349,14 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	Queue->ExecuteCommandList(CommandList.get());
 	Queue->WaitForCompletion();
 
-	//if (GenerateMipLevels)
-	//{
-	//	return TempTexture.release();
-	//}
-	//else
-	//{
-	//}
-	
-	return Texture.release();
+	if (GenerateMipLevels)
+	{
+		return TempTexture.release();
+	}
+	else
+	{
+		return Texture.release();
+	}
 }
 
 D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, D3D12Texture* PanoramaSource, Uint32 CubeMapSize, DXGI_FORMAT Format)
@@ -423,7 +422,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 			return false;
 		}
 
-		GlobalFactoryData.PanoramaRootSignature->SetName("Generate CubeMap RootSignature");
+		GlobalFactoryData.PanoramaRootSignature->SetDebugName("Generate CubeMap RootSignature");
 	}
 
 	// Create needed interfaces

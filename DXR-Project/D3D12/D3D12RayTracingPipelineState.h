@@ -30,7 +30,7 @@ public:
 	bool Initialize(const RayTracingPipelineStateProperties& Properties);
 
 	// DeviceChild Interface
-	virtual void SetName(const std::string& Name) override;
+	virtual void SetDebugName(const std::string& Name) override;
 
 	FORCEINLINE ID3D12StateObject* GetStateObject() const
 	{
