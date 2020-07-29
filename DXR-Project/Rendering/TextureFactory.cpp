@@ -349,6 +349,14 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	Queue->ExecuteCommandList(CommandList.get());
 	Queue->WaitForCompletion();
 
+	//if (GenerateMipLevels)
+	//{
+	//	return TempTexture.release();
+	//}
+	//else
+	//{
+	//}
+	
 	return Texture.release();
 }
 

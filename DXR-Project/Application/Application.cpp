@@ -391,14 +391,14 @@ bool Application::Initialize()
 	
 	Actor* NewActor = nullptr;
 	RenderComponent* NewComponent = nullptr;
-	CurrentScene = new Scene();
+	CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj", Renderer->GetDevice().get());
 
 	// Create Spheres
 	MeshData SphereMeshData = MeshFactory::CreateSphere(3);
 	std::shared_ptr<Mesh> SphereMesh = Mesh::Make(Renderer->GetDevice().get(), SphereMeshData);
 
 	// Create standard textures
-	Byte Pixels[] = { 255, 0, 0, 255 };
+	Byte Pixels[] = { 255, 255, 255, 255 };
 	std::shared_ptr<D3D12Texture> BaseTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!BaseTexture)
 	{
@@ -444,7 +444,7 @@ bool Application::Initialize()
 		for (Uint32 x = 0; x < SphereCountX; x++)
 		{
 			NewActor = new Actor();
-			NewActor->GetTransform().SetPosition(StartPositionX + (x * SphereOffset), StartPositionY + (y * SphereOffset), 0.0f);
+			NewActor->GetTransform().SetPosition(StartPositionX + (x * SphereOffset), 8.0f + StartPositionY + (y * SphereOffset), 0.0f);
 
 			NewActor->SetDebugName("Sphere[" + std::to_string(SphereIndex) + "]");
 			SphereIndex++;
@@ -479,7 +479,7 @@ bool Application::Initialize()
 	CurrentScene->AddActor(NewActor);
 
 	NewActor->SetDebugName("Cube");
-	NewActor->GetTransform().SetPosition(0.0f, 0.0f, -2.0f);
+	NewActor->GetTransform().SetPosition(0.0f, 2.0f, -2.0f);
 
 	MatProperties.AO		= 1.0f;
 	MatProperties.Metallic	= 1.0f;

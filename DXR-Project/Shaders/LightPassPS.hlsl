@@ -80,7 +80,7 @@ float4 Main(PSInput Input) : SV_TARGET
 		Lo += (Kd * SampledAlbedo / PI + Specular) * Radiance * NdotL;
 	}
 	
-	float3 F_IBL	= FresnelSchlick(DotNV, F0); // FresnelSchlickRoughness(DotNV, F0, Roughness);
+	float3 F_IBL	= FresnelSchlickRoughness(DotNV, F0, Roughness);
 	float3 Ks_IBL	= F_IBL;
 	float3 Kd_IBL	= 1.0f - Ks_IBL;
 	Kd_IBL *= 1.0 - Metallic;
@@ -90,7 +90,7 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	const float MAX_MIPLEVEL = 6.0f;
 	float3 Reflection		= reflect(-ViewDir, Norm);
-    float3 Prefiltered		= SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, Roughness * MAX_MIPLEVEL);
+    float3 Prefiltered		= SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, Roughness * MAX_MIPLEVEL).rgb;
 	float2 IntegrationBRDF	= IntegrationLUT.Sample(LUTSampler, float2(DotNV, Roughness)).rg;
     float3 IBL_Specular		= Prefiltered * (F_IBL * IntegrationBRDF.x + IntegrationBRDF.y);
 	

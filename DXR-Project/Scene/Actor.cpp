@@ -51,9 +51,10 @@ void Actor::SetDebugName(const std::string& InDebugName)
 
 Transform::Transform()
 	: Matrix()
-	, Position()
+	, Position(0.0f, 0.0f, 0.0f)
+	, Scale(1.0f, 1.0f, 1.0f)
 {
-	SetPosition(0.0f, 0.0f, 0.0f);
+	CalculateMatrix();
 }
 
 void Transform::SetPosition(float X, float Y, float Z)
@@ -70,9 +71,25 @@ void Transform::SetPosition(const XMFLOAT3& InPosition)
 	CalculateMatrix();
 }
 
+void Transform::SetScale(float X, float Y, float Z)
+{
+	XMVECTOR XmScale = XMVectorSet(X, Y, Z, 0.0f);
+	XMStoreFloat3(&Scale, XmScale);
+
+	CalculateMatrix();
+}
+
+void Transform::SetScale(const XMFLOAT3& InScale)
+{
+	Scale = InScale;
+	CalculateMatrix();
+}
+
 void Transform::CalculateMatrix()
 {
 	XMVECTOR XmPosition = XMLoadFloat3(&Position);
-	XMMATRIX XmMatrix	= XMMatrixTranslationFromVector(XmPosition);
+	XMVECTOR XmScale	= XMLoadFloat3(&Scale);
+	
+	XMMATRIX XmMatrix = XMMatrixMultiply(XMMatrixScalingFromVector(XmScale), XMMatrixTranslationFromVector(XmPosition));
 	XMStoreFloat4x4(&Matrix, XMMatrixTranspose(XmMatrix));
 }

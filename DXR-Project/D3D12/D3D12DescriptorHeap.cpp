@@ -186,6 +186,9 @@ Uint32 D3D12OnlineDescriptorHeap::AllocateSlots(Uint32 NumSlots)
 {
 	Uint32 Slot = CurrentSlot;
 	CurrentSlot += NumSlots;
+
+	VALIDATE(CurrentSlot < DescriptorCount);
+
 	return Slot;
 }
 

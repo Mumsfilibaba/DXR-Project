@@ -34,8 +34,14 @@ void Renderer::Tick(const Scene& CurrentScene)
 	Frameclock.Tick();
 
 	const Float32 Delta			= static_cast<Float32>(Frameclock.GetDeltaTime().AsSeconds());
-	const Float32 Speed			= 1.0f;
 	const Float32 RotationSpeed = 45.0f;
+	
+	Float32 Speed = 1.0f;
+	if (InputManager::Get().IsKeyDown(EKey::KEY_LEFT_SHIFT))
+	{
+		Speed = 4.0f;
+	}
+	
 	if (InputManager::Get().IsKeyDown(EKey::KEY_RIGHT))
 	{
 		SceneCamera.Rotate(0.0f, XMConvertToRadians(RotationSpeed * Delta), 0.0f);
@@ -289,8 +295,8 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 	InCommandList->TransitionBarrier(ReflectionTexture.get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-	raytraceDesc.Width	= ReflectionTexture->GetDesc().Width; //SwapChain->GetWidth();
-	raytraceDesc.Height = ReflectionTexture->GetDesc().Height; //SwapChain->GetHeight();
+	raytraceDesc.Width	= static_cast<Uint32>(ReflectionTexture->GetDesc().Width); //SwapChain->GetWidth();
+	raytraceDesc.Height = static_cast<Uint32>(ReflectionTexture->GetDesc().Height); //SwapChain->GetHeight();
 	raytraceDesc.Depth	= 1;
 
 	// Set shader tables
@@ -308,12 +314,6 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 
 	// Copy the results to the back-buffer
 	InCommandList->TransitionBarrier(ReflectionTexture.get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	//InCommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
-
-	//InCommandList->CopyResource(BackBuffer, ResultTexture.get());
-
-	// Indicate that the back buffer will now be used to present.
-	//InCommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }
 
 void Renderer::OnResize(Int32 Width, Int32 Height)
@@ -557,7 +557,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	// Create Texture Cube
-	std::unique_ptr<D3D12Texture> Panorama = std::unique_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/winterforest.hdr", 0, DXGI_FORMAT_R32G32B32A32_FLOAT));
+	std::unique_ptr<D3D12Texture> Panorama = std::unique_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/arches.hdr", 0, DXGI_FORMAT_R32G32B32A32_FLOAT));
 	if (!Panorama)
 	{
 		return false;	
@@ -615,18 +615,6 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 		return nullptr;
 	}
 
-	std::unique_ptr<D3D12CommandList> CommandList = std::make_unique<D3D12CommandList>(Device.get());
-	if (!CommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator.get(), nullptr))
-	{
-		return nullptr;
-	}
-
-	std::unique_ptr<D3D12CommandQueue> Queue = std::make_unique<D3D12CommandQueue>(Device.get());
-	if (!Queue->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return nullptr;
-	}
-
 	// Generate global specular irradiance (From Skybox)
 	const Uint16 SpecularIrradianceSize = 128;
 	const Uint32 Miplevels				= std::max<Uint32>(std::log2<Uint32>(SpecularIrradianceSize), 1U);
@@ -636,7 +624,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	SpecualarIrradianceMapProps.Width		= SpecularIrradianceSize;
 	SpecualarIrradianceMapProps.Height		= SpecularIrradianceSize;
 	SpecualarIrradianceMapProps.ArrayCount	= 6;
-	SpecualarIrradianceMapProps.MipLevels	= Miplevels;
+	SpecualarIrradianceMapProps.MipLevels	= static_cast<Uint16>(Miplevels);
 	SpecualarIrradianceMapProps.Format		= DXGI_FORMAT_R16G16B16A16_FLOAT;
 	SpecualarIrradianceMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 	SpecualarIrradianceMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
@@ -1139,7 +1127,7 @@ bool Renderer::InitDeferred()
 		MaterialSampler.ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
 		MaterialSampler.BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 		MaterialSampler.MinLOD				= 0.0f;
-		MaterialSampler.MaxLOD				= 0.0f;
+		MaterialSampler.MaxLOD				= FLT_MAX;
 		MaterialSampler.ShaderRegister		= 0;
 		MaterialSampler.RegisterSpace		= 0;
 		MaterialSampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
@@ -1774,9 +1762,9 @@ bool Renderer::InitRayTracingTexture()
 	return true;
 }
 
-void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList)
+void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* InCommandList)
 {
-	const Uint32 Size = Dest->GetDesc().Width;
+	const Uint32 Size = static_cast<Uint32>(Dest->GetDesc().Width);
 
 	static std::unique_ptr<D3D12DescriptorTable> SrvDescriptorTable;
 	if (!SrvDescriptorTable)
@@ -1818,27 +1806,27 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 		IrradicanceGenPSO->Initialize(Props);
 	}
 
-	CommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	CommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	InCommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	InCommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
-	CommandList->SetComputeRootSignature(IrradianceGenRootSignature->GetRootSignature());
+	InCommandList->SetComputeRootSignature(IrradianceGenRootSignature->GetRootSignature());
 
 	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
-	CommandList->SetDescriptorHeaps(DescriptorHeaps, 1);
-	CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 0);
-	CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 1);
+	InCommandList->SetDescriptorHeaps(DescriptorHeaps, 1);
+	InCommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 0);
+	InCommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 1);
 
-	CommandList->SetPipelineState(IrradicanceGenPSO->GetPipeline());
+	InCommandList->SetPipelineState(IrradicanceGenPSO->GetPipeline());
 
-	CommandList->Dispatch(Size, Size, 6);
+	InCommandList->Dispatch(Size, Size, 6);
 
-	CommandList->UnorderedAccessBarrier(Dest);
+	InCommandList->UnorderedAccessBarrier(Dest);
 
-	CommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	CommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	InCommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	InCommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
-void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList)
+void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* InCommandList)
 {
 	const Uint32 Miplevels = Dest->GetDesc().MipLevels;
 
@@ -1886,34 +1874,34 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 		SpecIrradicanceGenPSO->Initialize(Props);
 	}
 
-	CommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	CommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	InCommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	InCommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
-	CommandList->SetComputeRootSignature(SpecIrradianceGenRootSignature->GetRootSignature());
+	InCommandList->SetComputeRootSignature(SpecIrradianceGenRootSignature->GetRootSignature());
 
 	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
-	CommandList->SetDescriptorHeaps(DescriptorHeaps, 1);
-	CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
+	InCommandList->SetDescriptorHeaps(DescriptorHeaps, 1);
+	InCommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
 
-	CommandList->SetPipelineState(SpecIrradicanceGenPSO->GetPipeline());
+	InCommandList->SetPipelineState(SpecIrradicanceGenPSO->GetPipeline());
 
-	Uint32	Width		= Dest->GetDesc().Width;
+	Uint32	Width		= static_cast<Uint32>(Dest->GetDesc().Width);
 	Float32 Roughness	= 0.0f;
 	const Float32 RoughnessDelta = 1.0f / (Miplevels - 1);
 	for (Uint32 Mip = 0; Mip < Miplevels; Mip++)
 	{
-		CommandList->SetComputeRoot32BitConstants(&Roughness, 1, 0, 0);
-		CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableHandle(Mip), 2);
+		InCommandList->SetComputeRoot32BitConstants(&Roughness, 1, 0, 0);
+		InCommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableHandle(Mip), 2);
 		
-		CommandList->Dispatch(Width, Width, 6);
-		CommandList->UnorderedAccessBarrier(Dest);
+		InCommandList->Dispatch(Width, Width, 6);
+		InCommandList->UnorderedAccessBarrier(Dest);
 
 		Width = std::max<Uint32>(Width / 2, 1U);
 		Roughness += RoughnessDelta;
 	}
 
-	CommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	CommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	InCommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	InCommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
 void Renderer::WaitForPendingFrames()

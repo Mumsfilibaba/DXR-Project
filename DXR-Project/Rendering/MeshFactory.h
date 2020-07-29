@@ -2,6 +2,8 @@
 #include "Defines.h"
 #include "Types.h"
 
+#include "Utilities/HashUtilities.h"
+
 #include <DirectXMath.h>
 using namespace DirectX;
 
@@ -12,7 +14,7 @@ struct Vertex
 	XMFLOAT3 Tangent;
 	XMFLOAT2 TexCoord;
 
-	FORCEINLINE bool operator==(const Vertex& Other)
+	FORCEINLINE bool operator==(const Vertex& Other) const
 	{
 		return
 			((Position.x	== Other.Position.x)	&& (Position.y	== Other.Position.y)	&& (Position.z	== Other.Position.z))	&&
@@ -21,6 +23,24 @@ struct Vertex
 			((TexCoord.x	== Other.TexCoord.x)	&& (TexCoord.y	== Other.TexCoord.y));
 	}
 };
+
+namespace std
+{
+	template<> struct hash<Vertex>
+	{
+		size_t operator()(const Vertex& V) const
+		{
+			std::hash<XMFLOAT3> Hasher;
+
+			size_t Hash = Hasher(V.Position);
+			HashCombine<XMFLOAT3>(Hash, V.Normal);
+			HashCombine<XMFLOAT3>(Hash, V.Tangent);
+			HashCombine<XMFLOAT2>(Hash, V.TexCoord);
+
+			return Hash;
+		}
+	};
+}
 
 struct MeshData
 {
@@ -41,8 +61,8 @@ public:
 	static MeshData CreatePyramid() noexcept;
 	static MeshData CreateCylinder(Uint32 Sides = 5, Float32 Radius = 0.5f, Float32 Height = 1.0f) noexcept;
 
-	static void Subdivide(MeshData& Data, Uint32 Subdivisions = 1) noexcept;
-	static void Optimize(MeshData& Data, Uint32 StartVertex = 0) noexcept;
-	static void CalculateHardNormals(MeshData& Data) noexcept;
-	static void CalculateTangents(MeshData& Data) noexcept;
+	static void Subdivide(MeshData& OutData, Uint32 Subdivisions = 1) noexcept;
+	static void Optimize(MeshData& OutData, Uint32 StartVertex = 0) noexcept;
+	static void CalculateHardNormals(MeshData& OutData) noexcept;
+	static void CalculateTangents(MeshData& OutData) noexcept;
 };

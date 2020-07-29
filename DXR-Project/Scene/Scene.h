@@ -14,6 +14,8 @@ public:
 		return Actors;
 	}
 
+	static Scene* LoadFromFile(const std::string& Filepath, class D3D12Device* Device);
+
 private:
 	std::vector<Actor*> Actors;
 };

@@ -15,7 +15,12 @@ public:
 	Component(Actor* InOwningActor);
 	virtual ~Component();
 
-public:
+	FORCEINLINE Actor* GetOwningActor() const
+	{
+		return OwningActor;
+	}
+
+protected:
 	Actor* OwningActor = nullptr;
 };
 
@@ -27,6 +32,8 @@ public:
 
 	void SetPosition(float X, float Y, float Z);
 	void SetPosition(const XMFLOAT3& InPosition);
+	void SetScale(float X, float Y, float Z);
+	void SetScale(const XMFLOAT3& InScale);
 
 	FORCEINLINE const XMFLOAT3& GetPosition() const
 	{
@@ -44,6 +51,7 @@ private:
 private:
 	XMFLOAT4X4	Matrix;
 	XMFLOAT3	Position;
+	XMFLOAT3	Scale;
 };
 
 /*

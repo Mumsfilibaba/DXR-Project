@@ -68,6 +68,37 @@ workspace "DXR-Project"
 	-- Dependencies
 	group "Dependencies"
 		include "Dependencies/imgui"
+		
+		-- tinyobjloader Project
+		project "tinyobjloader"
+			kind "StaticLib"
+			language "C++"
+			cppdialect "C++17"
+			systemversion "latest"
+			location "Dependencies/projectfiles/tinyobjloader"
+			
+			filter "configurations:Debug or Release"
+				symbols "on"
+				runtime "Release"
+				optimize "Full"
+			filter{}
+			
+			filter "configurations:Production"
+				symbols "off"
+				runtime "Release"
+				optimize "Full"
+			filter{}
+			
+			-- Targets
+			targetdir ("Dependencies/bin/tinyobjloader/" .. outputdir)
+			objdir ("Dependencies/bin-int/tinyobjloader/" .. outputdir)
+					
+			-- Files
+			files 
+			{
+				"Dependencies/tinyobjloader/tiny_obj_loader.h",
+				"Dependencies/tinyobjloader/tiny_obj_loader.cc",
+			}
 	group ""
 
     -- Engine Project
@@ -113,11 +144,13 @@ workspace "DXR-Project"
 		{
 			"Dependencies/imgui",
 			"Dependencies/stb_image",
+			"Dependencies/tinyobjloader",
 		}
         
 		links 
 		{ 
 			"ImGui",
+			"tinyobjloader"
 		}
 
         -- Includes

@@ -54,7 +54,7 @@ void Camera::Rotate(Float32 Pitch, Float32 Yaw, Float32 Roll)
 void Camera::UpdateMatrices()
 {
 	Float32 Fov	= XMConvertToRadians(90.0f);
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH(Fov, 1920.0f / 1080.0f, 0.01f, 100.0f);
+	XMMATRIX Projection = XMMatrixPerspectiveFovLH(Fov, 1920.0f / 1080.0f, 0.01f, 1000.0f);
 
 	XMVECTOR XmPosition = XMLoadFloat3(&Position);
 	XMVECTOR XmForward	= XMLoadFloat3(&Forward);

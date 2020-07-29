@@ -150,7 +150,7 @@ bool D3D12Device::Initialize(bool DebugEnable)
 	GlobalSamplerDescriptorHeap			= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 	// Create Global Online Heap
-	GlobalOnlineResourceHeap = new D3D12OnlineDescriptorHeap(this, 1024, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	GlobalOnlineResourceHeap = new D3D12OnlineDescriptorHeap(this, 2048, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	if (!GlobalOnlineResourceHeap->Initialize())
 	{
 		return false;

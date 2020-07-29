@@ -141,10 +141,10 @@ PSOutput PSMain(PSInput Input)
 	
 #if ENABLE_PARALLAX_MAPPING
 	TexCoords = ParallaxMapping(TexCoords, ViewDir);
-    if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
-    {
-        discard;
-    }
+    //if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
+    //{
+    //    discard;
+    //}
 #endif
 
 	float3 Albedo			= AlbedoMap.Sample(MaterialSampler, TexCoords).rgb;

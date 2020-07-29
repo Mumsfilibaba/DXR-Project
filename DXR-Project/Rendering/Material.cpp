@@ -35,3 +35,8 @@ void Material::Initialize(D3D12Device* Device)
 	DescriptorTable->SetShaderResourceView(AO->GetShaderResourceView(0).get(), 5);
 	DescriptorTable->CopyDescriptors();
 }
+
+void Material::SetDebugName(const std::string& InDebugName)
+{
+	DebugName = InDebugName;
+}

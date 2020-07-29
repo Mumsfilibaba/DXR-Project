@@ -22,6 +22,8 @@ public:
 
 	void Initialize(D3D12Device* Device);
 
+	void SetDebugName(const std::string& InDebugName);
+
 	FORCEINLINE D3D12DescriptorTable* GetDescriptorTable() const
 	{
 		return DescriptorTable;
@@ -41,6 +43,7 @@ public:
 	std::shared_ptr<D3D12Texture>	Metallic;
 
 private:
+	std::string				DebugName;
 	MaterialProperties		Properties;
 	D3D12Buffer*			MaterialBuffer	= nullptr;
 	D3D12DescriptorTable*	DescriptorTable = nullptr;

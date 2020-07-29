@@ -768,7 +768,7 @@ void MeshFactory::CalculateHardNormals(MeshData& data) noexcept
 	*/
 }
 
-void MeshFactory::CalculateTangents(MeshData& Data) noexcept
+void MeshFactory::CalculateTangents(MeshData& OutData) noexcept
 {
 	auto CalculateTangentFromVectors = [](Vertex& Vertex1, const Vertex& Vertex2, const Vertex& Vertex3)
 	{
@@ -808,11 +808,11 @@ void MeshFactory::CalculateTangents(MeshData& Data) noexcept
 		Vertex1.Tangent = Tangent;
 	};
 
-	for (Uint32 i = 0; i < Data.Indices.size(); i += 3)
+	for (Uint32 i = 0; i < OutData.Indices.size(); i += 3)
 	{
-		Vertex& Vertex1 = Data.Vertices[Data.Indices[i + 0]];
-		Vertex& Vertex2 = Data.Vertices[Data.Indices[i + 1]];
-		Vertex& Vertex3 = Data.Vertices[Data.Indices[i + 2]];
+		Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
+		Vertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];
+		Vertex& Vertex3 = OutData.Vertices[OutData.Indices[i + 2]];
 
 		CalculateTangentFromVectors(Vertex1, Vertex2, Vertex3);
 		CalculateTangentFromVectors(Vertex2, Vertex3, Vertex1);
