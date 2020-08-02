@@ -9,6 +9,7 @@
 #include "D3D12/D3D12Buffer.h"
 #include "D3D12/D3D12RayTracingScene.h"
 #include "D3D12/D3D12UploadStack.h"
+#include "D3D12/D3D12ImmediateCommandList.h"
 
 #include "Windows/WindowsWindow.h"
 
@@ -72,6 +73,11 @@ public:
 		return Device;
 	}
 
+	FORCEINLINE std::shared_ptr<D3D12ImmediateCommandList> GetImmediateCommandList() const
+	{
+		return ImmediateCommandList;
+	}
+
 	static Renderer* Make(std::shared_ptr<WindowsWindow> RendererWindow);
 	static Renderer* Get();
 	
@@ -92,7 +98,9 @@ private:
 	void TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* CommandList);
 
 private:
-	std::shared_ptr<D3D12Device>		Device;
+	std::shared_ptr<D3D12Device>				Device;
+	std::shared_ptr<D3D12ImmediateCommandList>	ImmediateCommandList;
+	
 	std::shared_ptr<D3D12CommandQueue>	Queue;
 	std::shared_ptr<D3D12CommandQueue>	ComputeQueue;
 	std::shared_ptr<D3D12CommandList>	CommandList;
@@ -144,9 +152,7 @@ private:
 	std::shared_ptr<D3D12RayTracingPipelineState>	RaytracingPSO;
 
 	std::vector<Uint64>	FenceValues;
-	Uint32				CurrentBackBufferIndex = 0;
-
-	std::vector<std::shared_ptr<D3D12UploadStack>> UploadBuffers;
+	Uint32 CurrentBackBufferIndex = 0;
 
 	Clock Frameclock;
 	Camera SceneCamera;

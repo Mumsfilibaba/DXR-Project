@@ -54,7 +54,8 @@ bool D3D12RootSignature::Initialize(const void* RootSignatureBlob, Uint32 BlobSi
 	else
 	{
 		LOG_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
-		__debugbreak();
+
+		Debug::DebugBreak();
 
 		return false;
 	}

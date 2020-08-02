@@ -11,6 +11,20 @@ public:
 
 	bool Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline);
 
+	void UploadBufferData(class D3D12Buffer* Dest, const Uint32 DestOffset, const void* Src, const Uint32 SizeInBytes);
+	void UploadTextureData(class D3D12Texture* Dest, const void* Src, DXGI_FORMAT Format, const Uint32 Width, const Uint32 Height, const Uint32 Depth, const Uint32 Stride, const Uint32 RowPitch);
+
+	void DeferDestruction(D3D12Resource* Resource);
+
+	void TransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
+	void UnorderedAccessBarrier(D3D12Resource* Resource);
+
+	FORCEINLINE void ReleaseDeferredResources()
+	{
+		UploadBufferOffset = 0;
+		ResourcesPendingRelease.clear();
+	}
+
 	FORCEINLINE bool Reset(D3D12CommandAllocator* Allocator)
 	{
 		return SUCCEEDED(CommandList->Reset(Allocator->GetAllocator(), nullptr));
@@ -35,28 +49,6 @@ public:
 		FlushDeferredResourceBarriers();
 
 		CommandList->ClearDepthStencilView(View->GetOfflineHandle(), Flags, Depth, Stencil, 0, nullptr);
-	}
-
-	FORCEINLINE void TransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
-	{
-		D3D12_RESOURCE_BARRIER Barrier = { };
-		Barrier.Type					= D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		Barrier.Flags					= D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		Barrier.Transition.pResource	= Resource->GetResource();
-		Barrier.Transition.Subresource	= D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-		Barrier.Transition.StateBefore	= BeforeState;
-		Barrier.Transition.StateAfter	= AfterState;
-
-		DeferredResourceBarriers.push_back(Barrier);
-	}
-
-	FORCEINLINE void UnorderedAccessBarrier(D3D12Resource* Resource)
-	{
-		D3D12_RESOURCE_BARRIER Barrier = { };
-		Barrier.Type			= D3D12_RESOURCE_BARRIER_TYPE_UAV;
-		Barrier.UAV.pResource	= Resource->GetResource();
-
-		DeferredResourceBarriers.push_back(Barrier);
 	}
 
 	FORCEINLINE void CopyBuffer(D3D12Resource* Destination, Uint64 DestinationOffset, D3D12Resource* Source, Uint64 SourceOffset, Uint64 SizeInBytes)
@@ -231,12 +223,19 @@ public:
 	// DeviceChild
 	virtual void SetDebugName(const std::string& DebugName) override;
 
-private:
+protected:
+	bool CreateUploadBuffer(Uint32 SizeInBytes = 1024U);
+
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>	CommandList;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	DXRCommandList;
 
+	class D3D12Buffer* UploadBuffer = nullptr;
+	Byte* UploadPointer = nullptr;
+	Uint32 UploadBufferOffset = 0;
+
 	std::vector<D3D12_RESOURCE_BARRIER> DeferredResourceBarriers;
-	
+	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> ResourcesPendingRelease;
+
 	// There can maximum be 8 rendertargets at one time 
 	D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetHandles[8];
 };

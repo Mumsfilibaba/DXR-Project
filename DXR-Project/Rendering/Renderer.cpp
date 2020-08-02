@@ -93,11 +93,19 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	CommandAllocators[CurrentBackBufferIndex]->Reset();
 	CommandList->Reset(CommandAllocators[CurrentBackBufferIndex].get());
-	UploadBuffers[CurrentBackBufferIndex]->Reset();
-
+	if (CurrentBackBufferIndex == 0)
+	{
+		CommandList->ReleaseDeferredResources();
+	}
+	
 	// Set constant buffer descriptor heap
 	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
 	CommandList->SetDescriptorHeaps(DescriptorHeaps, ARRAYSIZE(DescriptorHeaps));
+
+	CommandList->TransitionBarrier(GBuffer[0].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	CommandList->TransitionBarrier(GBuffer[1].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	CommandList->TransitionBarrier(GBuffer[2].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 	struct CameraBufferDesc
 	{
@@ -111,23 +119,14 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CamBuff.ViewProjectionInv	= SceneCamera.GetViewProjectionInverse();
 	CamBuff.Position			= SceneCamera.GetPosition();
 
-	Uint64 Offset = UploadBuffers[CurrentBackBufferIndex]->GetOffset();
-	void* CameraMemory = UploadBuffers[CurrentBackBufferIndex]->Allocate(sizeof(CameraBufferDesc));
-	memcpy(CameraMemory, &CamBuff, sizeof(CameraBufferDesc));
-	
-	CommandList->TransitionBarrier(GBuffer[0].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	CommandList->TransitionBarrier(GBuffer[1].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	CommandList->TransitionBarrier(GBuffer[2].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	CommandList->TransitionBarrier(GBuffer[3].get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-
 	CommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	CommandList->CopyBuffer(CameraBuffer.get(), 0, UploadBuffers[CurrentBackBufferIndex]->GetBuffer(), Offset, sizeof(Camera));
+	CommandList->UploadBufferData(CameraBuffer.get(), 0, &CamBuff, sizeof(Camera));
 	CommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	const Float32 BlackClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	//CommandList->ClearRenderTargetView(GBuffer[0]->GetRenderTargetView().get(), BlackClearColor);
-	//CommandList->ClearRenderTargetView(GBuffer[1]->GetRenderTargetView().get(), BlackClearColor);
-	//CommandList->ClearRenderTargetView(GBuffer[2]->GetRenderTargetView().get(), BlackClearColor);
+	CommandList->ClearRenderTargetView(GBuffer[0]->GetRenderTargetView().get(), BlackClearColor);
+	CommandList->ClearRenderTargetView(GBuffer[1]->GetRenderTargetView().get(), BlackClearColor);
+	CommandList->ClearRenderTargetView(GBuffer[2]->GetRenderTargetView().get(), BlackClearColor);
 	CommandList->ClearDepthStencilView(GBuffer[3]->GetDepthStencilView().get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 
 	D3D12_VIEWPORT ViewPort = { };
@@ -269,8 +268,6 @@ void Renderer::Tick(const Scene& CurrentScene)
 	GuiContext::Get()->Render(CommandList.get());
 
 	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-	UploadBuffers[CurrentBackBufferIndex]->Close();
 	CommandList->Close();
 
 	// Execute
@@ -390,8 +387,14 @@ Renderer* Renderer::Get()
 
 bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 {
-	Device = std::shared_ptr<D3D12Device>(D3D12Device::Make(true));
+	Device = std::shared_ptr<D3D12Device>(D3D12Device::Make(false));
 	if (!Device)
+	{
+		return false;
+	}
+
+	ImmediateCommandList = std::make_shared<D3D12ImmediateCommandList>(Device.get());
+	if (!ImmediateCommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
 	{
 		return false;
 	}
@@ -414,18 +417,10 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 
 	const Uint32 BackBufferCount = SwapChain->GetSurfaceCount();
 	CommandAllocators.resize(BackBufferCount);
-	UploadBuffers.resize(BackBufferCount);
-
 	for (Uint32 i = 0; i < BackBufferCount; i++)
 	{
 		CommandAllocators[i] = std::make_shared<D3D12CommandAllocator>(Device.get());
 		if (!CommandAllocators[i]->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-		{
-			return false;
-		}
-
-		UploadBuffers[i] = std::make_shared<D3D12UploadStack>();
-		if (!UploadBuffers[i]->Initialize(Device.get()))
 		{
 			return false;
 		}
@@ -474,9 +469,9 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	}
 
 	// Create vertexbuffer
-	BufferProps.InitalState		= D3D12_RESOURCE_STATE_GENERIC_READ;
-	BufferProps.SizeInBytes		= sizeof(Vertex) * static_cast<Uint64>(Sphere.Vertices.size());
-	BufferProps.MemoryType		= EMemoryType::MEMORY_TYPE_UPLOAD;
+	BufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
+	BufferProps.SizeInBytes	= sizeof(Vertex) * static_cast<Uint64>(Sphere.Vertices.size());
+	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 	MeshVertexBuffer = std::make_shared<D3D12Buffer>(Device.get());
 	if (MeshVertexBuffer->Initialize(BufferProps))
@@ -609,12 +604,6 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	SrvDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
 	IrradianceMap->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), IrradianceMap->GetResource(), &SrvDesc), 0);
 
-	std::unique_ptr<D3D12CommandAllocator> Allocator = std::make_unique<D3D12CommandAllocator>(Device.get());
-	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return nullptr;
-	}
-
 	// Generate global specular irradiance (From Skybox)
 	const Uint16 SpecularIrradianceSize = 128;
 	const Uint32 Miplevels				= std::max<Uint32>(std::log2<Uint32>(SpecularIrradianceSize), 1U);
@@ -653,17 +642,10 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	SrvDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
 	SpecularIrradianceMap->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), SpecularIrradianceMap->GetResource(), &SrvDesc), 0);
 
-	// Generate Cube
-	Allocator->Reset();
-	CommandList->Reset(Allocator.get());
+	GenerateIrradianceMap(Skybox.get(), IrradianceMap.get(), ImmediateCommandList.get());
+	GenerateSpecularIrradianceMap(Skybox.get(), SpecularIrradianceMap.get(), ImmediateCommandList.get());
 
-	GenerateIrradianceMap(Skybox.get(), IrradianceMap.get(), CommandList.get());
-	GenerateSpecularIrradianceMap(Skybox.get(), SpecularIrradianceMap.get(), CommandList.get());
-
-	CommandList->Close();
-
-	Queue->ExecuteCommandList(CommandList.get());
-	Queue->WaitForCompletion();
+	ImmediateCommandList->Flush();
 
 	// Create albedo for raytracing
 	Albedo = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
@@ -914,17 +896,14 @@ bool Renderer::InitRayTracing()
 	}
 
 	// Build Acceleration Structures
-	CommandAllocators[0]->Reset();
-	CommandList->Reset(CommandAllocators[0].get());
-
-	CommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	ImmediateCommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	// Create BLAS
 	std::shared_ptr<D3D12RayTracingGeometry> MeshGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());
-	MeshGeometry->BuildAccelerationStructure(CommandList.get(), MeshVertexBuffer, static_cast<Uint32>(Sphere.Vertices.size()), MeshIndexBuffer, static_cast<Uint32>(Sphere.Indices.size()));
+	MeshGeometry->BuildAccelerationStructure(ImmediateCommandList.get(), MeshVertexBuffer, static_cast<Uint32>(Sphere.Vertices.size()), MeshIndexBuffer, static_cast<Uint32>(Sphere.Indices.size()));
 
 	std::shared_ptr<D3D12RayTracingGeometry> CubeGeometry = std::make_shared<D3D12RayTracingGeometry>(Device.get());
-	CubeGeometry->BuildAccelerationStructure(CommandList.get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.size()), CubeIndexBuffer, static_cast<Uint32>(Cube.Indices.size()));
+	CubeGeometry->BuildAccelerationStructure(ImmediateCommandList.get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.size()), CubeIndexBuffer, static_cast<Uint32>(Cube.Indices.size()));
 
 	XMFLOAT3X4 Matrix;
 	std::vector<D3D12RayTracingGeometryInstance> Instances;
@@ -965,11 +944,10 @@ bool Renderer::InitRayTracing()
 		return false;
 	}
 
-	RayTracingScene->BuildAccelerationStructure(CommandList.get(), Instances);
+	RayTracingScene->BuildAccelerationStructure(ImmediateCommandList.get(), Instances);
 
-	CommandList->Close();
-	Queue->ExecuteCommandList(CommandList.get());
-	Queue->WaitForCompletion();
+	ImmediateCommandList->Flush();
+	ImmediateCommandList->WaitForCompletion();
 
 	// VertexBuffer
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
@@ -1675,49 +1653,25 @@ bool Renderer::InitIntegrationLUT()
 	DescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).get(), 0);
 	DescriptorTable->CopyDescriptors();
 
-	std::unique_ptr<D3D12CommandAllocator> Allocator = std::make_unique<D3D12CommandAllocator>(Device.get());
-	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return false;
-	}
-
-	std::unique_ptr<D3D12CommandList> List = std::make_unique<D3D12CommandList>(Device.get());
-	if (!List->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator.get(), nullptr))
-	{
-		return false;
-	}
-
-	if (!Allocator->Reset())
-	{
-		return false;
-	}
-
-	if (!List->Reset(Allocator.get()))
-	{
-		return false;
-	}
-
-	List->SetComputeRootSignature(RootSignature->GetRootSignature());
-	List->SetPipelineState(PSO->GetPipeline());
+	ImmediateCommandList->SetComputeRootSignature(RootSignature->GetRootSignature());
+	ImmediateCommandList->SetPipelineState(PSO->GetPipeline());
 	
 	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
-	List->SetDescriptorHeaps(DescriptorHeaps, 1);
-	List->SetComputeRootDescriptorTable(DescriptorTable->GetGPUTableStartHandle(), 0);
+	ImmediateCommandList->SetDescriptorHeaps(DescriptorHeaps, 1);
+	ImmediateCommandList->SetComputeRootDescriptorTable(DescriptorTable->GetGPUTableStartHandle(), 0);
 
-	List->Dispatch(LUTProperties.Width, LUTProperties.Height, 1);
-	List->UnorderedAccessBarrier(StagingTexture.get());
+	ImmediateCommandList->Dispatch(LUTProperties.Width, LUTProperties.Height, 1);
+	ImmediateCommandList->UnorderedAccessBarrier(StagingTexture.get());
 	
-	List->TransitionBarrier(IntegrationLUT.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-	List->TransitionBarrier(StagingTexture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	ImmediateCommandList->TransitionBarrier(IntegrationLUT.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+	ImmediateCommandList->TransitionBarrier(StagingTexture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
-	List->CopyResource(IntegrationLUT.get(), StagingTexture.get());
+	ImmediateCommandList->CopyResource(IntegrationLUT.get(), StagingTexture.get());
 	
-	List->TransitionBarrier(IntegrationLUT.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	ImmediateCommandList->TransitionBarrier(IntegrationLUT.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	List->Close();
-
-	Queue->ExecuteCommandList(List.get());
-	Queue->WaitForCompletion();
+	ImmediateCommandList->Flush();
+	ImmediateCommandList->WaitForCompletion();
 
 	return true;
 }

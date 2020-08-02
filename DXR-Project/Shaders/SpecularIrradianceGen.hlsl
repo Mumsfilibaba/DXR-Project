@@ -75,7 +75,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 	float3 V = R;
 
 	float FinalRoughness = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
-	const uint SAMPLE_COUNT = 1024U;
+	const uint SAMPLE_COUNT = 4096U;
 	float	TotalWeight = 0.0f;
 	float3	PrefilteredColor = float3(0.0f, 0.0f, 0.0f);
 	for (uint i = 0U; i < SAMPLE_COUNT; ++i)

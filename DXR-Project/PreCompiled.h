@@ -17,6 +17,8 @@ using namespace DirectX;
 #include "Defines.h"
 #include "Types.h"
 
+#include "Debug/Debug.h"
+
 #include "STL/String.h"
 
 #include "Windows/Windows.h"

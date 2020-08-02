@@ -12,6 +12,8 @@
 #include "D3D12/D3D12RootSignature.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
+#include "Renderer.h"
+
 #ifdef min
 	#undef min
 #endif
@@ -105,31 +107,31 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	}
 
 	// Create UploadBuffer
-	const Uint32 UploadStride	= (Format == DXGI_FORMAT_R8G8B8A8_UNORM) ? 4 : 16;
-	const Uint32 UploadPitch	= (Width * UploadStride + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
-	const Uint32 UploadSize		= Height * UploadPitch;
+	const Uint32 Stride			= (Format == DXGI_FORMAT_R8G8B8A8_UNORM) ? 4 : 16;
+	const Uint32 RowPitch		= (Width * Stride + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
+	const Uint32 SizeInBytes	= Height * RowPitch;
 
-	BufferProperties UploadBufferProps = { };
-	UploadBufferProps.Name			= "UploadBuffer";
-	UploadBufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-	UploadBufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
-	UploadBufferProps.SizeInBytes	= UploadSize;
-	UploadBufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
+	//BufferProperties UploadBufferProps = { };
+	//UploadBufferProps.Name			= "UploadBuffer";
+	//UploadBufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
+	//UploadBufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
+	//UploadBufferProps.SizeInBytes	= UploadSize;
+	//UploadBufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
-	std::unique_ptr<D3D12Buffer> UploadBuffer = std::make_unique<D3D12Buffer>(Device);
-	if (UploadBuffer->Initialize(UploadBufferProps))
-	{
-		void* Memory = UploadBuffer->Map();
-		for (Uint32 Y = 0; Y < Height; Y++)
-		{
-			memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(Memory) + Y * UploadPitch), Pixels + (Y * Width * UploadStride), Width * UploadStride);
-		}
-		UploadBuffer->Unmap();
-	}
-	else
-	{
-		return nullptr;
-	}
+	//std::unique_ptr<D3D12Buffer> UploadBuffer = std::make_unique<D3D12Buffer>(Device);
+	//if (UploadBuffer->Initialize(UploadBufferProps))
+	//{
+	//	void* Memory = UploadBuffer->Map();
+	//	for (Uint32 Y = 0; Y < Height; Y++)
+	//	{
+	//		memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(Memory) + Y * UploadPitch), Pixels + (Y * Width * UploadStride), Width * UploadStride);
+	//	}
+	//	UploadBuffer->Unmap();
+	//}
+	//else
+	//{
+	//	return nullptr;
+	//}
 
 	// ShaderResourceView
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
@@ -248,31 +250,11 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 		}
 	}
 
-	// Upload data
-	std::unique_ptr<D3D12CommandAllocator> Allocator = std::make_unique<D3D12CommandAllocator>(Device);
-	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return nullptr;
-	}
-
-	std::unique_ptr<D3D12CommandList> CommandList = std::unique_ptr<D3D12CommandList>(new D3D12CommandList(Device));
-	if (!CommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator.get(), nullptr))
-	{
-		return nullptr;
-	}
-
-	std::unique_ptr<D3D12CommandQueue> Queue = std::unique_ptr<D3D12CommandQueue>(new D3D12CommandQueue(Device));
-	if (!Queue->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return nullptr;
-	}
-
-	Allocator->Reset();
-	CommandList->Reset(Allocator.get());
-
+	std::shared_ptr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
 	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+	CommandList->UploadTextureData(Texture.get(), Pixels, Format, Width, Height, 1, Stride, RowPitch);
 
-	D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
+	/*D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
 	SourceLocation.pResource							= UploadBuffer->GetResource();
 	SourceLocation.Type									= D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
 	SourceLocation.PlacedFootprint.Footprint.Format		= Format;
@@ -286,7 +268,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	DestLocation.Type				= D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 	DestLocation.SubresourceIndex	= 0;
 
-	CommandList->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
+	CommandList->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);*/
 
 	if (GenerateMipLevels)
 	{
@@ -344,10 +326,8 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 		CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 
-	CommandList->Close();
-
-	Queue->ExecuteCommandList(CommandList.get());
-	Queue->WaitForCompletion();
+	CommandList->Flush();
+	CommandList->WaitForCompletion();
 
 	if (GenerateMipLevels)
 	{
@@ -434,28 +414,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	UavDescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).get(), 0);
 	UavDescriptorTable->CopyDescriptors();
 
-	std::unique_ptr<D3D12CommandAllocator> Allocator = std::unique_ptr<D3D12CommandAllocator>(new D3D12CommandAllocator(Device));
-	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return nullptr;
-	}
-
-	std::unique_ptr<D3D12CommandList> CommandList = std::unique_ptr<D3D12CommandList>(new D3D12CommandList(Device));
-	if (!CommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator.get(), nullptr))
-	{
-		return nullptr;
-	}
-
-	std::unique_ptr<D3D12CommandQueue> Queue = std::unique_ptr<D3D12CommandQueue>(new D3D12CommandQueue(Device));
-	if (!Queue->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return nullptr;
-	}
-
-	// Generate Cube
-	Allocator->Reset();
-	CommandList->Reset(Allocator.get());
-
+	std::shared_ptr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
 	CommandList->TransitionBarrier(PanoramaSource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	CommandList->TransitionBarrier(StagingTexture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
@@ -487,10 +446,8 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 
 	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	CommandList->Close();
-
-	Queue->ExecuteCommandList(CommandList.get());
-	Queue->WaitForCompletion();
+	CommandList->Flush();
+	CommandList->WaitForCompletion();
 
 	// ShaderResourceView
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };

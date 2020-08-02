@@ -5,6 +5,8 @@
 #include "D3D12/D3D12CommandQueue.h"
 #include "D3D12/D3D12DescriptorHeap.h"
 
+#include "Renderer.h"
+
 #include <memory>
 
 Mesh::Mesh()
@@ -46,56 +48,21 @@ bool Mesh::Initialize(D3D12Device* Device, const MeshData& Data)
 	IndexCount	= static_cast<Uint32>(Data.Indices.size());
 
 	// Upload data
-	std::unique_ptr<D3D12CommandAllocator> Allocator = std::unique_ptr<D3D12CommandAllocator>(new D3D12CommandAllocator(Device));
-	if (!Allocator->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return false;
-	}
-
-	std::unique_ptr<D3D12CommandList> CommandList = std::unique_ptr<D3D12CommandList>(new D3D12CommandList(Device));
-	if (!CommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator.get(), nullptr))
-	{
-		return false;
-	}
-
-	std::unique_ptr<D3D12CommandQueue> Queue = std::unique_ptr<D3D12CommandQueue>(new D3D12CommandQueue(Device));
-	if (!Queue->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return false;
-	}
-
-	std::unique_ptr<D3D12UploadStack> UploadBuffer = std::make_unique<D3D12UploadStack>();
-	if (!UploadBuffer->Initialize(Device))
-	{
-		return false;
-	}
-
-	Allocator->Reset();
-	CommandList->Reset(Allocator.get());
-
-	Uint32 Offset		= UploadBuffer->GetOffset();
-	Uint32 SizeInBytes	= Data.Vertices.size() * sizeof(Vertex);
-	void* BufferMemory	= UploadBuffer->Allocate(SizeInBytes);
-	memcpy(BufferMemory, Data.Vertices.data(), SizeInBytes);
-
+	std::shared_ptr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
 	CommandList->TransitionBarrier(VertexBuffer.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-	CommandList->CopyBuffer(VertexBuffer.get(), 0, UploadBuffer->GetBuffer(), Offset, SizeInBytes);
-
-	Offset			= UploadBuffer->GetOffset();
-	SizeInBytes		= Data.Indices.size() * sizeof(Uint32);
-	BufferMemory	= UploadBuffer->Allocate(SizeInBytes);
-	memcpy(BufferMemory, Data.Indices.data(), SizeInBytes);
-
 	CommandList->TransitionBarrier(IndexBuffer.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-	CommandList->CopyBuffer(IndexBuffer.get(), 0, UploadBuffer->GetBuffer(), Offset, SizeInBytes);
+	
+	Uint32 SizeInBytes = Data.Vertices.size() * sizeof(Vertex);
+	CommandList->UploadBufferData(VertexBuffer.get(), 0, Data.Vertices.data(), SizeInBytes);
+	
+	SizeInBytes = Data.Indices.size() * sizeof(Uint32);
+	CommandList->UploadBufferData(IndexBuffer.get(), 0, Data.Indices.data(), SizeInBytes);
 
 	CommandList->TransitionBarrier(VertexBuffer.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	CommandList->TransitionBarrier(IndexBuffer.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
-	CommandList->Close();
-
-	Queue->ExecuteCommandList(CommandList.get());
-	Queue->WaitForCompletion();
+	CommandList->Flush();
+	CommandList->WaitForCompletion();
 
 	// Create RaytracingGeometry if raytracing is supported
 	if (Device->IsRayTracingSupported())
