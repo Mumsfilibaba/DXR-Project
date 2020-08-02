@@ -126,7 +126,7 @@ void D3D12CommandList::UnorderedAccessBarrier(D3D12Resource* Resource)
 	D3D12_RESOURCE_BARRIER Barrier = { };
 	Barrier.Type			= D3D12_RESOURCE_BARRIER_TYPE_UAV;
 	Barrier.UAV.pResource	= Resource->GetResource();
-
+	
 	DeferredResourceBarriers.push_back(Barrier);
 }
 

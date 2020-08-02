@@ -11,7 +11,7 @@
 		"addressU = TEXTURE_ADDRESS_WRAP," \
 		"addressV = TEXTURE_ADDRESS_WRAP," \
 		"addressW = TEXTURE_ADDRESS_WRAP," \
-		"filter = FILTER_MIN_MAG_LINEAR_MIP_POINT)"
+		"filter = FILTER_MIN_MAG_MIP_LINEAR)"
 
 cbuffer CB0 : register(b0, space0)
 {
@@ -75,7 +75,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 	float3 V = R;
 
 	float FinalRoughness = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
-	const uint SAMPLE_COUNT = 4096U;
+	const uint SAMPLE_COUNT = 2048U;
 	float	TotalWeight = 0.0f;
 	float3	PrefilteredColor = float3(0.0f, 0.0f, 0.0f);
 	for (uint i = 0U; i < SAMPLE_COUNT; ++i)
@@ -98,7 +98,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 			float SaTexel		= 4.0f * PI / (6.0f * Resolution * Resolution);
 			float SaSample		= 1.0f / (float(SAMPLE_COUNT) * PDF + 0.0001f);
 
-			const float Miplevel = FinalRoughness == 0.0 ? 0.0 : 0.5 * log2(SaSample / SaTexel);
+			const float Miplevel = FinalRoughness == 0.0f ? 0.0f : 0.5f * log2(SaSample / SaTexel);
 			
 			PrefilteredColor += EnvironmentMap.SampleLevel(EnvironmentSampler, L, Miplevel).rgb * NdotL;
 			TotalWeight += NdotL;

@@ -26,8 +26,8 @@ D3D12OfflineDescriptorHeap::~D3D12OfflineDescriptorHeap()
 D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(Uint32& OutHeapIndex)
 {
 	// Find a heap that is not empty
-	Uint32	HeapIndex = 0;
-	bool	FoundHeap = false;
+	Uint32 HeapIndex = 0;
+	bool FoundHeap = false;
 	for (DescriptorHeap& Heap : Heaps)
 	{
 		if (!Heap.FreeList.empty())

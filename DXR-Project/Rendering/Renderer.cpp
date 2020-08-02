@@ -643,8 +643,9 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	SpecularIrradianceMap->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), SpecularIrradianceMap->GetResource(), &SrvDesc), 0);
 
 	GenerateIrradianceMap(Skybox.get(), IrradianceMap.get(), ImmediateCommandList.get());
-	GenerateSpecularIrradianceMap(Skybox.get(), SpecularIrradianceMap.get(), ImmediateCommandList.get());
+	ImmediateCommandList->Flush();
 
+	GenerateSpecularIrradianceMap(Skybox.get(), SpecularIrradianceMap.get(), ImmediateCommandList.get());
 	ImmediateCommandList->Flush();
 
 	// Create albedo for raytracing
@@ -657,7 +658,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	{
 		Albedo->SetDebugName("AlbedoMap");
 	}
-
+	
 	Normal = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device.get(), "../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!Normal)
 	{
