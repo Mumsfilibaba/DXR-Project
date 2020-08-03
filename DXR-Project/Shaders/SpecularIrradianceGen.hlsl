@@ -75,9 +75,10 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 	float3 V = R;
 
 	float FinalRoughness = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+	float TotalWeight = 0.0f;
+	float3 PrefilteredColor = float3(0.0f, 0.0f, 0.0f);
+	
 	const uint SAMPLE_COUNT = 1024U;
-	float	TotalWeight = 0.0f;
-	float3	PrefilteredColor = float3(0.0f, 0.0f, 0.0f);
 	for (uint i = 0U; i < SAMPLE_COUNT; i++)
 	{
 		// Generates a sample vector that's biased towards the preferred alignment direction (importance sampling).
