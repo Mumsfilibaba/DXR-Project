@@ -66,7 +66,7 @@ bool D3D12ShaderCompiler::Initialize()
 	}
 }
 
-IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, const std::string& Entrypoint, const std::string& TargetProfile)
+IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, const std::string& Entrypoint, const std::string& TargetProfile, const DxcDefine* Defines, const Uint32 NumDefines)
 {
 	using namespace Microsoft::WRL;
 
@@ -92,10 +92,10 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, cons
 		return nullptr;
 	}
 
-	return InternalCompileFromSource(SourceBlob.Get(), WideFilePath.c_str(), WideEntrypoint.c_str(), WideTargetProfile.c_str());
+	return InternalCompileFromSource(SourceBlob.Get(), WideFilePath.c_str(), WideEntrypoint.c_str(), WideTargetProfile.c_str(), Defines, NumDefines);
 }
 
-IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& Source, const std::string& Entrypoint, const std::string& TargetProfile)
+IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& Source, const std::string& Entrypoint, const std::string& TargetProfile, const DxcDefine* Defines, const Uint32 NumDefines)
 {
 	using namespace Microsoft::WRL;
 
@@ -119,16 +119,21 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& Source, cons
 		return nullptr;
 	}
 
-	return InternalCompileFromSource(SourceBlob.Get(), nullptr, WideEntrypoint.c_str(), WideTargetProfile.c_str());
+	return InternalCompileFromSource(SourceBlob.Get(), nullptr, WideEntrypoint.c_str(), WideTargetProfile.c_str(), Defines, NumDefines);
 }
 
-IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWSTR Filepath, LPCWSTR Entrypoint, LPCWSTR TargetProfile)
+IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWSTR Filepath, LPCWSTR Entrypoint, LPCWSTR TargetProfile, const DxcDefine* Defines, const Uint32 NumDefines)
 {
 	using namespace Microsoft::WRL;
 
+	LPCWSTR Args[] =
+	{
+		L"-O3",	// Optimization level 3
+	};
+
 	// Compile
 	ComPtr<IDxcOperationResult> Result;
-	HRESULT hResult = DxCompiler->Compile(SourceBlob, Filepath, Entrypoint, TargetProfile, nullptr, 0, nullptr, 0, DxIncludeHandler.Get(), &Result);
+	HRESULT hResult = DxCompiler->Compile(SourceBlob, Filepath, Entrypoint, TargetProfile, Args, 1, Defines, NumDefines, DxIncludeHandler.Get(), &Result);
 	if (FAILED(hResult))
 	{
 		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to Compile");

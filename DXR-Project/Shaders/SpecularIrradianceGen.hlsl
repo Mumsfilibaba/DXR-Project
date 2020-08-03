@@ -78,7 +78,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 	float TotalWeight = 0.0f;
 	float3 PrefilteredColor = float3(0.0f, 0.0f, 0.0f);
 	
-	const uint SAMPLE_COUNT = 1024U;
+	const uint SAMPLE_COUNT = 512U;
 	for (uint i = 0U; i < SAMPLE_COUNT; i++)
 	{
 		// Generates a sample vector that's biased towards the preferred alignment direction (importance sampling).

@@ -1011,13 +1011,19 @@ bool Renderer::InitDeferred()
 	}
 
 	// Init PipelineState
-	ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", "VSMain", "vs_6_0");
+	DxcDefine Defines[] =
+	{
+		{ L"ENABLE_PARALLAX_MAPPING",	L"1" },
+		{ L"ENABLE_NORMAL_MAPPING",		L"1" },
+	};
+
+	ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", "VSMain", "vs_6_0", Defines, 2);
 	if (!VSBlob)
 	{
 		return false;
 	}
 
-	ComPtr<IDxcBlob> PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", "PSMain", "ps_6_0");
+	ComPtr<IDxcBlob> PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", "PSMain", "ps_6_0", Defines, 2);
 	if (!PSBlob)
 	{
 		return false;
