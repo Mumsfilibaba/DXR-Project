@@ -176,8 +176,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	D3D12_INDEX_BUFFER_VIEW SkyboxIBV = { };
 	SkyboxIBV.BufferLocation	= SkyboxIndexBuffer->GetGPUVirtualAddress();
-	SkyboxIBV.Format			= DXGI_FORMAT_R32_UINT;
 	SkyboxIBV.SizeInBytes		= SkyboxIndexBuffer->GetSizeInBytes();
+	SkyboxIBV.Format			= DXGI_FORMAT_R32_UINT;
 	CommandList->IASetIndexBuffer(&SkyboxIBV);
 
 	CommandList->SetPipelineState(SkyboxPSO->GetPipelineState());
