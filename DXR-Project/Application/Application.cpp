@@ -5,6 +5,9 @@
 #include "Rendering/GuiContext.h"
 #include "Rendering/TextureFactory.h"
 
+#include "Scene/MeshComponent.h"
+#include "Scene/Scene.h"
+
 #include "Windows/WindowsConsoleOutput.h"
 
 std::shared_ptr<Application> Application::Instance = nullptr;
@@ -203,6 +206,7 @@ void Application::DrawSceneInfo()
 		{
 			if (ImGui::TreeNode(Actor->GetDebugName().c_str()))
 			{
+				// Transform
 				if (ImGui::TreeNode("Transform"))
 				{
 					const XMFLOAT3& Position = Actor->GetTransform().GetPosition();
@@ -214,6 +218,42 @@ void Application::DrawSceneInfo()
 					}
 
 					ImGui::TreePop();
+				}
+
+				// MeshComponent
+				MeshComponent* MComponent = Actor->GetComponentOfType<MeshComponent>();
+				if (MComponent)
+				{
+					if (ImGui::TreeNode("MeshComponent"))
+					{
+						const XMFLOAT3& Color = MComponent->Material->GetMaterialProperties().Albedo;
+
+						Float32 Arr[3] = { Color.x, Color.y, Color.z };
+						if (ImGui::ColorEdit3("Albedo", Arr))
+						{
+							MComponent->Material->SetAlbedo(Arr[0], Arr[1], Arr[2]);
+						}
+
+						Float32 Roughness = MComponent->Material->GetMaterialProperties().Roughness;
+						if (ImGui::SliderFloat("Roughness", &Roughness, 0.01f, 1.0f, "%.2f"))
+						{
+							MComponent->Material->SetRoughness(Roughness);
+						}
+
+						Float32 Metallic = MComponent->Material->GetMaterialProperties().Metallic;
+						if (ImGui::SliderFloat("Metallic", &Metallic, 0.01f, 1.0f, "%.2f"))
+						{
+							MComponent->Material->SetMetallic(Metallic);
+						}
+
+						Float32 AO = MComponent->Material->GetMaterialProperties().AO;
+						if (ImGui::SliderFloat("Ambient Occlusion", &AO, 0.01f, 1.0f, "%.2f"))
+						{
+							MComponent->Material->SetAmbientOcclusion(AO);
+						}
+
+						ImGui::TreePop();
+					}
 				}
 
 				ImGui::TreePop();

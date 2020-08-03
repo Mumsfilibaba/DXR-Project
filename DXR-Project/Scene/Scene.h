@@ -1,8 +1,8 @@
 #pragma once
 #include "Actor.h"
+#include "Camera.h"
+#include "Light.h"
 #include "MeshDrawCommand.h"
-
-#include "Rendering/Camera.h"
 
 class Scene
 {
@@ -12,6 +12,7 @@ public:
 
 	void AddCamera(Camera* InCamera);
 	void AddActor(Actor* InActor);
+	void AddLight(Light* InLight);
 
 	void OnAddedComponent(Component* NewComponent);
 
@@ -24,7 +25,7 @@ public:
 	{
 		return MeshDrawCommands;
 	}
-
+	 
 	FORCEINLINE Camera* GetCamera() const
 	{
 		return CurrentCamera;
@@ -36,6 +37,7 @@ private:
 	void AddMeshComponent(class MeshComponent* Component);
 
 	std::vector<Actor*> Actors;
+	std::vector<Light*> Light;
 	std::vector<MeshDrawCommand> MeshDrawCommands;
 
 	Camera* CurrentCamera = nullptr;

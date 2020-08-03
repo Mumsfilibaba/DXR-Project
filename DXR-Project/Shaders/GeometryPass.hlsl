@@ -8,13 +8,18 @@
 	#define NORMAL_MAPPING_ENABLED
 #endif
 
-// Scene and Output
+// PerObject
 cbuffer TransformBuffer : register(b0)
 {
-	float4x4	Transform;
-	float		Roughness;
-	float		Metallic;
-	float		AO;
+	float4x4 Transform;
+};
+
+cbuffer MaterialBuffer : register(b2)
+{
+	float3 Albedo;
+	float Roughness;
+	float Metallic;
+	float AO;
 };
 
 // PerFrame DescriptorTable
@@ -50,7 +55,7 @@ struct VSOutput
 	float3 Tangent			: TANGENT0;
 	float3 Bitangent		: BITANGENT0;
 #endif
-    float2 TexCoord			: TEXCOORD0;
+	float2 TexCoord			: TEXCOORD0;
 #ifdef PARALLAX_MAPPING_ENABLED
 	float3 TangentViewPos	: TANGENTVIEWPOS0;
 	float3 TangentPosition	: TANGENTPOSITION0;
@@ -162,13 +167,13 @@ PSOutput PSMain(PSInput Input)
 #ifdef PARALLAX_MAPPING_ENABLED
 	float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
 	TexCoords = ParallaxMapping(TexCoords, ViewDir);
-    //if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
-    //{
-    //    discard;
-    //}
+	//if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
+	//{
+	//    discard;
+	//}
 #endif
 
-	float3 Albedo = AlbedoMap.Sample(MaterialSampler, TexCoords).rgb;
+	float3 SampledAlbedo = AlbedoMap.Sample(MaterialSampler, TexCoords).rgb * Albedo;
 	
 #ifdef NORMAL_MAPPING_ENABLED
 	float3 SampledNormal = NormalMap.Sample(MaterialSampler, TexCoords).rgb;
@@ -179,19 +184,19 @@ PSOutput PSMain(PSInput Input)
 	float3 Normal		= normalize(Input.Normal);
 	float3 MappedNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
 #else
-    float3 MappedNormal = normalize(Input.Normal);
+	float3 MappedNormal = normalize(Input.Normal);
 #endif	
 	MappedNormal = PackNormal(MappedNormal);
 
 	float SampledAO				= AOMap.Sample(MaterialSampler, TexCoords).r * AO;
-    float SampledMetallic		= MetallicMap.Sample(MaterialSampler, TexCoords).r * Metallic;
+	float SampledMetallic		= MetallicMap.Sample(MaterialSampler, TexCoords).r * Metallic;
 	float SampledRoughness		= RoughnessMap.Sample(MaterialSampler, TexCoords).r * Roughness;
 	const float FinalRoughness	= min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
 	
 	PSOutput Output;
-	Output.Albedo	= float4(Albedo, 1.0f);
+	Output.Albedo = float4(SampledAlbedo, 1.0f);
 	Output.Normal	= float4(MappedNormal, 1.0f);
-    Output.Material = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
+	Output.Material = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
 
 	return Output;
 }

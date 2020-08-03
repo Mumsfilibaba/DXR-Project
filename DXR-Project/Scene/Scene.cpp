@@ -1,8 +1,13 @@
 #include "Scene.h"
+#include "MeshComponent.h"
 
-#include "Rendering/Renderer.h"
 #include "Rendering/TextureFactory.h"
 #include "Rendering/MeshFactory.h"
+#include "Rendering/Material.h"
+#include "Rendering/Mesh.h"
+
+#include "D3D12/D3D12Texture.h"
+#include "D3D12/D3D12Buffer.h"
 
 #include <tiny_obj_loader.h>
 

@@ -17,11 +17,11 @@
 
 #include "Scene/Actor.h"
 #include "Scene/Scene.h"
+#include "Scene/Camera.h"
 
 #include <memory>
 #include <vector>
 
-#include "Camera.h"
 #include "MeshFactory.h"
 #include "Material.h"
 #include "Mesh.h"
@@ -31,29 +31,10 @@ class D3D12GraphicsPipelineState;
 class D3D12RayTracingPipelineState;
 
 /*
-* MeshComponent
-*/
-
-class MeshComponent : public Component
-{
-public:
-	MeshComponent(Actor* InOwningActor)
-		: Component(InOwningActor)
-		, Material(nullptr)
-		, Mesh(nullptr)
-	{
-	}
-
-	~MeshComponent() = default;
-
-public:
-	std::shared_ptr<Material>	Material;
-	std::shared_ptr<Mesh>		Mesh;
-};
-
-/*
 * Renderer
 */
+
+#define ENABLE_D3D12_DEBUG 0
 
 class Renderer
 {

@@ -22,7 +22,8 @@ bool D3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 	{
 		LOG_ERROR("[D3D12RootSignature]: FAILED to Serialize RootSignature");
 		LOG_ERROR(reinterpret_cast<const Char*>(ErrorBlob->GetBufferPointer()));
-		__debugbreak();
+		
+		Debug::DebugBreak();
 
 		return false;
 	}

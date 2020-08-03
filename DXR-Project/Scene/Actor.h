@@ -68,6 +68,22 @@ public:
 
 	void AddComponent(Component* InComponent);
 
+	template<typename TComponent>
+	FORCEINLINE bool HasComponentOfType() const noexcept
+	{
+		TComponent* Result = nullptr;
+		for (Component* Component : Components)
+		{
+			Result = dynamic_cast<TComponent*>(Component);
+			if (Result)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	void OnAddedToScene(Scene* InScene);
 	
 	void SetDebugName(const std::string& InDebugName);
@@ -106,11 +122,11 @@ public:
 			Result = dynamic_cast<TComponent*>(Component);
 			if (Result)
 			{
-				break;
+				return Result;
 			}
 		}
 
-		return Result;
+		return nullptr;
 	}
 
 private:

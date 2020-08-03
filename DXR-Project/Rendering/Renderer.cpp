@@ -106,10 +106,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Render all objects to the GBuffer
 	struct PerObject
 	{
-		XMFLOAT4X4	Matrix;
-		Float32		Roughness;
-		Float32		Metallic;
-		Float32		AO;
+		XMFLOAT4X4 Matrix;
 	} PerObjectBuffer;
 
 	D3D12_VERTEX_BUFFER_VIEW	VBO = { };
@@ -131,12 +128,14 @@ void Renderer::Tick(const Scene& CurrentScene)
 		IBV.Format			= DXGI_FORMAT_R32_UINT;
 		CommandList->IASetIndexBuffer(&IBV);
 
-		PerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
-		PerObjectBuffer.Roughness	= Command.Material->GetMaterialProperties().Roughness;
-		PerObjectBuffer.Metallic	= Command.Material->GetMaterialProperties().Metallic;
-		PerObjectBuffer.AO			= Command.Material->GetMaterialProperties().AO;
-		CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 19, 0, 0);
+		if (Command.Material->IsBufferDirty())
+		{
+			Command.Material->BuildBuffer(CommandList.get());
+		}
 		CommandList->SetGraphicsRootDescriptorTable(Command.Material->GetDescriptorTable()->GetGPUTableStartHandle(), 2);
+
+		PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+		CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
 
 		CommandList->DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 	}
@@ -297,7 +296,14 @@ Renderer* Renderer::Get()
 
 bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 {
-	Device = std::shared_ptr<D3D12Device>(D3D12Device::Make(false));
+	const bool EnableDebug =
+#if ENABLE_D3D12_DEBUG
+		true;
+#else
+		false;
+#endif
+
+	Device = std::shared_ptr<D3D12Device>(D3D12Device::Make(EnableDebug));
 	if (!Device)
 	{
 		return false;
@@ -947,7 +953,7 @@ bool Renderer::InitDeferred()
 		PerFrameRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 		PerFrameRanges[0].OffsetInDescriptorsFromTableStart = 0;
 
-		D3D12_DESCRIPTOR_RANGE PerObjectRanges[6] = {};
+		D3D12_DESCRIPTOR_RANGE PerObjectRanges[7] = {};
 		// Albedo Map
 		PerObjectRanges[0].BaseShaderRegister					= 0;
 		PerObjectRanges[0].NumDescriptors						= 1;
@@ -990,12 +996,19 @@ bool Renderer::InitDeferred()
 		PerObjectRanges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		PerObjectRanges[5].OffsetInDescriptorsFromTableStart	= 5;
 
+		// Material Buffer
+		PerObjectRanges[6].BaseShaderRegister					= 2;
+		PerObjectRanges[6].NumDescriptors						= 1;
+		PerObjectRanges[6].RegisterSpace						= 0;
+		PerObjectRanges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		PerObjectRanges[6].OffsetInDescriptorsFromTableStart	= 6;
+
 		D3D12_ROOT_PARAMETER Parameters[3];
 		// Transform Constants
 		Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 		Parameters[0].Constants.ShaderRegister	= 0;
 		Parameters[0].Constants.RegisterSpace	= 0;
-		Parameters[0].Constants.Num32BitValues	= 19;
+		Parameters[0].Constants.Num32BitValues	= 16;
 		Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
 
 		// PerFrame DescriptorTable
@@ -1006,7 +1019,7 @@ bool Renderer::InitDeferred()
 
 		// PerObject DescriptorTable
 		Parameters[2].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		Parameters[2].DescriptorTable.NumDescriptorRanges	= 6;
+		Parameters[2].DescriptorTable.NumDescriptorRanges	= 7;
 		Parameters[2].DescriptorTable.pDescriptorRanges		= PerObjectRanges;
 		Parameters[2].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
 
@@ -1360,15 +1373,15 @@ bool Renderer::InitGBuffer()
 
 	// Albedo
 	TextureProperties GBufferProperties = { };
-	GBufferProperties.DebugName = "GBuffer Albedo";
-	GBufferProperties.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	GBufferProperties.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-	GBufferProperties.ArrayCount = 1;
-	GBufferProperties.Width = static_cast<Uint16>(SwapChain->GetWidth());
-	GBufferProperties.Height = static_cast<Uint16>(SwapChain->GetHeight());
-	GBufferProperties.InitalState = D3D12_RESOURCE_STATE_COMMON;
-	GBufferProperties.MemoryType = EMemoryType::MEMORY_TYPE_DEFAULT;
-	GBufferProperties.MipLevels = 1;
+	GBufferProperties.DebugName		= "GBuffer Albedo";
+	GBufferProperties.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
+	GBufferProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	GBufferProperties.ArrayCount	= 1;
+	GBufferProperties.Width			= static_cast<Uint16>(SwapChain->GetWidth());
+	GBufferProperties.Height		= static_cast<Uint16>(SwapChain->GetHeight());
+	GBufferProperties.InitalState	= D3D12_RESOURCE_STATE_COMMON;
+	GBufferProperties.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
+	GBufferProperties.MipLevels		= 1;
 
 	D3D12_CLEAR_VALUE Value;
 	Value.Format	= GBufferProperties.Format;
