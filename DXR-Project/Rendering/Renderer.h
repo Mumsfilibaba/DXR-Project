@@ -8,7 +8,6 @@
 #include "D3D12/D3D12SwapChain.h"
 #include "D3D12/D3D12Buffer.h"
 #include "D3D12/D3D12RayTracingScene.h"
-#include "D3D12/D3D12UploadStack.h"
 #include "D3D12/D3D12ImmediateCommandList.h"
 
 #include "Windows/WindowsWindow.h"

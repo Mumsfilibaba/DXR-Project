@@ -1,7 +1,6 @@
 #include "Mesh.h"
 
 #include "D3D12/D3D12Device.h"
-#include "D3D12/D3D12UploadStack.h"
 #include "D3D12/D3D12CommandQueue.h"
 #include "D3D12/D3D12DescriptorHeap.h"
 
