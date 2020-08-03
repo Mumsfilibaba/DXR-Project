@@ -21,6 +21,14 @@ Scene::~Scene()
 	}
 
 	Actors.clear();
+
+	SAFEDELETE(CurrentCamera);
+}
+
+void Scene::AddCamera(Camera* InCamera)
+{
+	SAFEDELETE(CurrentCamera);
+	CurrentCamera = InCamera;
 }
 
 void Scene::AddActor(Actor* InActor)
@@ -291,8 +299,8 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 		NewActor->SetDebugName(Shape.name);
 		NewActor->GetTransform().SetScale(0.015f, 0.015f, 0.015f);
 
-		// Add a RenderComponent
-		RenderComponent* NewComponent = new RenderComponent(NewActor);
+		// Add a MeshComponent
+		MeshComponent* NewComponent = new MeshComponent(NewActor);
 		NewComponent->Mesh		= NewMesh;
 		if (Shape.mesh.material_ids[0] >= 0)
 		{

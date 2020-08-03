@@ -31,66 +31,7 @@ Renderer::~Renderer()
 
 void Renderer::Tick(const Scene& CurrentScene)
 {
-	Frameclock.Tick();
-
-	const Float32 Delta			= static_cast<Float32>(Frameclock.GetDeltaTime().AsSeconds());
-	const Float32 RotationSpeed = 45.0f;
-	
-	Float32 Speed = 1.0f;
-	if (InputManager::Get().IsKeyDown(EKey::KEY_LEFT_SHIFT))
-	{
-		Speed = 4.0f;
-	}
-	
-	if (InputManager::Get().IsKeyDown(EKey::KEY_RIGHT))
-	{
-		SceneCamera.Rotate(0.0f, XMConvertToRadians(RotationSpeed * Delta), 0.0f);
-	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_LEFT))
-	{
-		SceneCamera.Rotate(0.0f, XMConvertToRadians(-RotationSpeed * Delta), 0.0f);
-	}
-
-	if (InputManager::Get().IsKeyDown(EKey::KEY_UP))
-	{
-		SceneCamera.Rotate(XMConvertToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
-	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_DOWN))
-	{
-		SceneCamera.Rotate(XMConvertToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
-	}
-
-	if (InputManager::Get().IsKeyDown(EKey::KEY_W))
-	{
-		SceneCamera.Move(0.0f, 0.0f, Speed * Delta);
-	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_S))
-	{
-		SceneCamera.Move(0.0f, 0.0f, -Speed * Delta);
-	}
-	
-	if (InputManager::Get().IsKeyDown(EKey::KEY_A))
-	{
-		SceneCamera.Move(Speed * Delta, 0.0f, 0.0f);
-	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_D))
-	{
-		SceneCamera.Move(-Speed * Delta, 0.0f, 0.0f);
-	}
-	
-	if (InputManager::Get().IsKeyDown(EKey::KEY_Q))
-	{
-		SceneCamera.Move(0.0f, Speed * Delta, 0.0f);
-	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_E))
-	{
-		SceneCamera.Move(0.0f, -Speed * Delta, 0.0f);
-	}
-
-	SceneCamera.UpdateMatrices();
-
 	D3D12Texture* BackBuffer = SwapChain->GetSurfaceResource(CurrentBackBufferIndex);
-
 	CommandAllocators[CurrentBackBufferIndex]->Reset();
 	CommandList->Reset(CommandAllocators[CurrentBackBufferIndex].get());
 	if (CurrentBackBufferIndex == 0)
@@ -115,9 +56,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 		XMFLOAT4X4	ViewProjectionInv;
 	} CamBuff;
 
-	CamBuff.ViewProjection		= SceneCamera.GetViewProjection();
-	CamBuff.ViewProjectionInv	= SceneCamera.GetViewProjectionInverse();
-	CamBuff.Position			= SceneCamera.GetPosition();
+	CamBuff.ViewProjection		= CurrentScene.GetCamera()->GetViewProjection();
+	CamBuff.ViewProjectionInv	= CurrentScene.GetCamera()->GetViewProjectionInverse();
+	CamBuff.Position			= CurrentScene.GetCamera()->GetPosition();
 
 	CommandList->TransitionBarrier(CameraBuffer.get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	CommandList->UploadBufferData(CameraBuffer.get(), 0, &CamBuff, sizeof(Camera));
@@ -173,7 +114,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	for (Actor* CurrentActor : CurrentScene.GetActors())
 	{
-		RenderComponent* RComponent = reinterpret_cast<RenderComponent*>(CurrentActor->GetComponent());
+		MeshComponent* RComponent = reinterpret_cast<MeshComponent*>(CurrentActor->GetComponent());
 		Mesh*		CurrentMesh		= RComponent->Mesh.get();
 		Material*	CurrentMaterial = RComponent->Material.get();
 		
@@ -250,8 +191,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		XMFLOAT4X4 Matrix;
 	} PerSkybox;
-
-	PerSkybox.Matrix = SceneCamera.GetViewProjectionWitoutTranslate();
+	PerSkybox.Matrix = CurrentScene.GetCamera()->GetViewProjectionWitoutTranslate();
 
 	CommandList->SetGraphicsRoot32BitConstants(&PerSkybox, 16, 0, 0);
 	CommandList->SetGraphicsRootDescriptorTable(SkyboxDescriptorTable->GetGPUTableStartHandle(), 1);
@@ -341,32 +281,6 @@ void Renderer::OnResize(Int32 Width, Int32 Height)
 	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 }
 
-void Renderer::OnMouseMove(Int32 X, Int32 Y)
-{
-	if (IsCameraAcive)
-	{
-		static Int32 OldX = X;
-		static Int32 OldY = Y;
-
-		const Int32 DeltaX = OldX - X;
-		const Int32 DeltaY = Y - OldY;
-
-		SceneCamera.Rotate(XMConvertToRadians(static_cast<Float32>(DeltaY)), XMConvertToRadians(static_cast<Float32>(DeltaX)), 0.0f);
-		SceneCamera.UpdateMatrices();
-
-		OldX = X;
-		OldY = Y;
-	}
-}
-
-void Renderer::OnKeyPressed(EKey KeyCode)
-{
-	if (KeyCode == EKey::KEY_ESCAPE)
-	{
-		IsCameraAcive = !IsCameraAcive;
-	}
-}
-
 Renderer* Renderer::Make(std::shared_ptr<WindowsWindow> RendererWindow)
 {
 	RendererInstance = std::make_unique<Renderer>();
@@ -446,8 +360,6 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 	Cube		= MeshFactory::CreateCube();
 
 	// Create CameraBuffer
-	SceneCamera = Camera();
-
 	BufferProperties BufferProps = { };
 	BufferProps.SizeInBytes		= 256; // Must be multiple of 256
 	BufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;

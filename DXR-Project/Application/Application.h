@@ -61,7 +61,8 @@ protected:
 	WindowsApplication*	PlatformApplication = nullptr;
 
 	Clock Timer;
-	Scene* CurrentScene = nullptr;
+	Scene*	CurrentScene	= nullptr;
+	Camera* CurrentCamera	= nullptr;
 
 	static std::shared_ptr<Application> Instance;
 };

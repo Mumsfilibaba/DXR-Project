@@ -36,10 +36,65 @@ void Application::Run()
 bool Application::Tick()
 {
 	bool ShouldExit = PlatformApplication->Tick();
+	
+	Timer.Tick();
+	const Float32 Delta = static_cast<Float32>(Timer.GetDeltaTime().AsSeconds());
+	const Float32 RotationSpeed = 45.0f;
+
+	Float32 Speed = 1.0f;
+	if (InputManager::Get().IsKeyDown(EKey::KEY_LEFT_SHIFT))
+	{
+		Speed = 4.0f;
+	}
+
+	if (InputManager::Get().IsKeyDown(EKey::KEY_RIGHT))
+	{
+		CurrentCamera->Rotate(0.0f, XMConvertToRadians(RotationSpeed * Delta), 0.0f);
+	}
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_LEFT))
+	{
+		CurrentCamera->Rotate(0.0f, XMConvertToRadians(-RotationSpeed * Delta), 0.0f);
+	}
+
+	if (InputManager::Get().IsKeyDown(EKey::KEY_UP))
+	{
+		CurrentCamera->Rotate(XMConvertToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
+	}
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_DOWN))
+	{
+		CurrentCamera->Rotate(XMConvertToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
+	}
+
+	if (InputManager::Get().IsKeyDown(EKey::KEY_W))
+	{
+		CurrentCamera->Move(0.0f, 0.0f, Speed * Delta);
+	}
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_S))
+	{
+		CurrentCamera->Move(0.0f, 0.0f, -Speed * Delta);
+	}
+
+	if (InputManager::Get().IsKeyDown(EKey::KEY_A))
+	{
+		CurrentCamera->Move(Speed * Delta, 0.0f, 0.0f);
+	}
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_D))
+	{
+		CurrentCamera->Move(-Speed * Delta, 0.0f, 0.0f);
+	}
+
+	if (InputManager::Get().IsKeyDown(EKey::KEY_Q))
+	{
+		CurrentCamera->Move(0.0f, Speed * Delta, 0.0f);
+	}
+	else if (InputManager::Get().IsKeyDown(EKey::KEY_E))
+	{
+		CurrentCamera->Move(0.0f, -Speed * Delta, 0.0f);
+	}
+
+	CurrentCamera->UpdateMatrices();
 
 	GuiContext::Get()->BeginFrame();
-
-	Timer.Tick();
 
 	DrawDebugData();
 	DrawSideWindow();
@@ -261,11 +316,6 @@ void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeySt
 
 	InputManager::Get().RegisterKeyDown(KeyCode);
 
-	if (Renderer::Get())
-	{
-		Renderer::Get()->OnKeyPressed(KeyCode);
-	}
-
 	if (GuiContext::Get())
 	{
 		GuiContext::Get()->OnKeyPressed(KeyCode);
@@ -274,10 +324,8 @@ void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeySt
 
 void Application::OnMouseMove(Int32 X, Int32 Y)
 {
-	if (Renderer::Get())
-	{
-		Renderer::Get()->OnMouseMove(X, Y);
-	}
+	UNREFERENCED_PARAMETER(X);
+	UNREFERENCED_PARAMETER(Y);
 }
 
 void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState)
@@ -362,6 +410,7 @@ bool Application::Initialize()
 		return false;
 	}
 
+	// Cursors
 	InitializeCursors();
 
 	// Renderer
@@ -390,7 +439,7 @@ bool Application::Initialize()
 	constexpr Float32	RoughnessDelta	= 1.0f / SphereCountX;
 	
 	Actor* NewActor = nullptr;
-	RenderComponent* NewComponent = nullptr;
+	MeshComponent* NewComponent = nullptr;
 	CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj", Renderer->GetDevice().get());
 
 	// Create Spheres
@@ -451,7 +500,7 @@ bool Application::Initialize()
 
 			CurrentScene->AddActor(NewActor);
 
-			NewComponent = new RenderComponent(NewActor);
+			NewComponent = new MeshComponent(NewActor);
 			NewComponent->Mesh		= SphereMesh;
 			NewComponent->Material	= std::make_shared<Material>(MatProperties);
 			
@@ -485,7 +534,7 @@ bool Application::Initialize()
 	MatProperties.Metallic	= 1.0f;
 	MatProperties.Roughness = 1.0f;
 
-	NewComponent = new RenderComponent(NewActor);
+	NewComponent = new MeshComponent(NewActor);
 	NewComponent->Mesh		= Mesh::Make(Renderer->GetDevice().get(), CubeMeshData);
 	NewComponent->Material	= std::make_shared<Material>(MatProperties);
 
@@ -558,6 +607,9 @@ bool Application::Initialize()
 	NewComponent->Material->Initialize(Renderer->GetDevice().get());
 
 	NewActor->AddComponent(NewComponent);
+
+	CurrentCamera = new Camera();
+	CurrentScene->AddCamera(CurrentCamera);
 
 	// Reset timer before starting
 	Timer.Reset();

@@ -31,20 +31,20 @@ class D3D12GraphicsPipelineState;
 class D3D12RayTracingPipelineState;
 
 /*
-* RenderComponent
+* MeshComponent
 */
 
-class RenderComponent : public Component
+class MeshComponent : public Component
 {
 public:
-	RenderComponent(Actor* InOwningActor)
+	MeshComponent(Actor* InOwningActor)
 		: Component(InOwningActor)
 		, Material(nullptr)
 		, Mesh(nullptr)
 	{
 	}
 
-	~RenderComponent() = default;
+	~MeshComponent() = default;
 
 public:
 	std::shared_ptr<Material>	Material;
@@ -64,8 +64,6 @@ public:
 	void Tick(const Scene& CurrentScene);
 	
 	void OnResize(Int32 Width, Int32 Height);
-	void OnMouseMove(Int32 X, Int32 Y);
-	void OnKeyPressed(EKey KeyCode);
 
 	FORCEINLINE std::shared_ptr<D3D12Device> GetDevice() const
 	{
@@ -152,11 +150,6 @@ private:
 
 	std::vector<Uint64>	FenceValues;
 	Uint32 CurrentBackBufferIndex = 0;
-
-	Clock Frameclock;
-	Camera SceneCamera;
-
-	bool IsCameraAcive = false;
 
 	static std::unique_ptr<Renderer> RendererInstance;
 };
