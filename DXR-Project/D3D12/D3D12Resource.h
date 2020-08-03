@@ -25,6 +25,11 @@ public:
 	void SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex);
 	void SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex);
 
+	FORCEINLINE EMemoryType GetMemoryType() const
+	{
+		return MemoryType;
+	}
+
 	FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
 	{
 		return Resource->GetGPUVirtualAddress();
@@ -51,7 +56,7 @@ public:
 	}
 
 protected:
-	bool CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D12_CLEAR_VALUE* OptimizedClearValue, D3D12_RESOURCE_STATES InitalState, EMemoryType MemoryType);
+	bool CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D12_CLEAR_VALUE* OptimizedClearValue, D3D12_RESOURCE_STATES InitalState, EMemoryType InMemoryType);
 
 protected:
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
@@ -60,4 +65,5 @@ protected:
 	std::vector<std::shared_ptr<D3D12UnorderedAccessView>>	UnorderedAccessViews;
 
 	D3D12_RESOURCE_DESC Desc;
+	EMemoryType MemoryType;
 };

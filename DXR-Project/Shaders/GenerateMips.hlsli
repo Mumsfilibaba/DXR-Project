@@ -3,6 +3,7 @@
 * https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/GenerateMipsCS.hlsli
 */
 
+//#define CUBE_MAP			1
 #define BLOCK_SIZE          8
 #define CHANNEL_COMPONENTS  64
 #define POWER_OF_TWO        1
@@ -13,19 +14,30 @@
 	"DescriptorTable(SRV(t0, numDescriptors = 1))," \
 	"DescriptorTable(UAV(u0, numDescriptors = 4))," \
 	"StaticSampler(s0," \
-		"addressU = TEXTURE_ADDRESS_CLAMP," \
-		"addressV = TEXTURE_ADDRESS_CLAMP," \
-		"addressW = TEXTURE_ADDRESS_CLAMP," \
+		"addressU = TEXTURE_ADDRESS_WRAP," \
+		"addressV = TEXTURE_ADDRESS_WRAP," \
+		"addressW = TEXTURE_ADDRESS_WRAP," \
 		"filter = FILTER_MIN_MAG_MIP_LINEAR)"
 
 // Input
-Texture2D<float4> SourceMip : register(t0);
+#if CUBE_MAP
+	TextureCube<float4> SourceMip : register(t0);
+#else
+	Texture2D<float4> SourceMip : register(t0);
+#endif
 
 // Output
-RWTexture2D<float4> OutMip1 : register(u0);
-RWTexture2D<float4> OutMip2 : register(u1);
-RWTexture2D<float4> OutMip3 : register(u2);
-RWTexture2D<float4> OutMip4 : register(u3);
+#if CUBE_MAP
+	RWTexture2DArray<float4> OutMip1 : register(u0);
+	RWTexture2DArray<float4> OutMip2 : register(u1);
+	RWTexture2DArray<float4> OutMip3 : register(u2);
+	RWTexture2DArray<float4> OutMip4 : register(u3);
+#else
+	RWTexture2D<float4> OutMip1 : register(u0);
+	RWTexture2D<float4> OutMip2 : register(u1);
+	RWTexture2D<float4> OutMip3 : register(u2);
+	RWTexture2D<float4> OutMip4 : register(u3);
+#endif
 
 // Linear sampler
 SamplerState LinearSampler : register(s0);
@@ -33,9 +45,9 @@ SamplerState LinearSampler : register(s0);
 // Properties
 cbuffer CB0 : register(b0)
 {
-	uint    SrcMipLevel;    // Texture level of source mip
-	uint    NumMipLevels;   // Number of OutMips to write: [1, 4]
-	float2  TexelSize;      // 1.0 / OutMip1.Dimensions
+	uint	SrcMipLevel;	// Texture level of source mip
+	uint	NumMipLevels;	// Number of OutMips to write: [1, 4]
+	float2	TexelSize;		// 1.0 / OutMip1.Dimensions
 }
 
 // The reason for separating channels is to reduce bank conflicts in the
@@ -48,9 +60,9 @@ groupshared float AlphaChannel[CHANNEL_COMPONENTS];
 
 void StoreColor(uint Index, float4 Color)
 {
-	RedChannel[Index]   = Color.r;
+	RedChannel[Index]	= Color.r;
 	GreenChannel[Index] = Color.g;
-	BlueChannel[Index]  = Color.b;
+	BlueChannel[Index]	= Color.b;
 	AlphaChannel[Index] = Color.a;
 }
 
@@ -77,9 +89,40 @@ float4 PackColor(float4 Linear)
 #endif
 }
 
+#if CUBE_MAP
+// Transform from dispatch ID to cubemap face direction
+static const float3x3 RotateUV[6] =
+{
+	// +X
+	float3x3(	 0,  0, 1,
+				 0, -1, 0,
+				-1,  0, 0),
+	// -X
+	float3x3(	0,  0, -1,
+				0, -1,  0,
+				1,  0,  0),
+	// +Y
+	float3x3(	1, 0, 0,
+				0, 0, 1,
+				0, 1, 0),
+	// -Y
+	float3x3(	1,  0,  0,
+				0,  0, -1,
+				0, -1,  0),
+	// +Z
+	float3x3(	1,  0, 0,
+				0, -1, 0,
+				0,  0, 1),
+	// -Z
+	float3x3(	-1,  0,  0,
+				 0, -1,  0,
+				 0,  0, -1)
+};
+#endif
+
 [RootSignature(RootSig)]
 [numthreads(BLOCK_SIZE, BLOCK_SIZE, 1)]
-void main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
+void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
 {
 	// One bilinear sample is insufficient when scaling down by more than 2x.
 	// You will slightly undersample in the case where the source dimension
@@ -87,14 +130,24 @@ void main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 	// power-of-two sized textures.  Trying to handle the undersampling case
 	// will force this shader to be slower and more complicated as it will
 	// have to take more source texture samples.
-#if POWER_OF_TWO
-	float2 TexCoord = TexelSize * (DispatchThreadID.xy + 0.5f);
-	float4 Src1     = SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
+#if CUBE_MAP
+	float3 TexCoord = float3((DispatchThreadID.xy * TexelSize) - 0.5f, 0.5f);
+	TexCoord		= normalize(mul(RotateUV[DispatchThreadID.z], TexCoord));
+	float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
 #else
-	#error "Not supported yet"
+	#if POWER_OF_TWO
+		float2 TexCoord = TexelSize * (DispatchThreadID.xy + 0.5f);
+		float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
+	#else
+		#error "Not supported yet"
+	#endif
 #endif
 
+#if CUBE_MAP
+	OutMip1[DispatchThreadID] = PackColor(Src1);
+#else
 	OutMip1[DispatchThreadID.xy] = PackColor(Src1);
+#endif
 
 	// A scalar (constant) branch can exit all threads coherently.
 	if (NumMipLevels == 1)
@@ -120,7 +173,11 @@ void main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 		float4 Src4 = LoadColor(GroupIndex + 0x09);
 		Src1 = 0.25f * (Src1 + Src2 + Src3 + Src4);
 
+#if CUBE_MAP
+		OutMip2[uint3(DispatchThreadID.xy / 2, DispatchThreadID.z)] = PackColor(Src1);
+#else
 		OutMip2[DispatchThreadID.xy / 2] = PackColor(Src1);
+#endif
 		StoreColor(GroupIndex, Src1);
 	}
 
@@ -139,7 +196,11 @@ void main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 		float4 Src4 = LoadColor(GroupIndex + 0x12);
 		Src1 = 0.25f * (Src1 + Src2 + Src3 + Src4);
 
+#if CUBE_MAP
+		OutMip3[uint3(DispatchThreadID.xy / 4, DispatchThreadID.z)] = PackColor(Src1);
+#else
 		OutMip3[DispatchThreadID.xy / 4] = PackColor(Src1);
+#endif
 		StoreColor(GroupIndex, Src1);
 	}
 
@@ -159,6 +220,10 @@ void main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 		float4 Src4 = LoadColor(GroupIndex + 0x24);
 		Src1 = 0.25f * (Src1 + Src2 + Src3 + Src4);
 
-		OutMip4[DispatchThreadID.xy / BLOCK_SIZE] = PackColor(Src1);
+#if CUBE_MAP
+		OutMip4[uint3(DispatchThreadID.xy / 8, DispatchThreadID.z)] = PackColor(Src1);
+#else
+		OutMip4[DispatchThreadID.xy / 8] = PackColor(Src1);
+#endif
 	}
 }

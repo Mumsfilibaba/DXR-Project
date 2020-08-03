@@ -2,59 +2,42 @@
 
 #include "Types.h"
 
-struct CompilerData
-{
-	HMODULE DxCompilerDLL = 0;
-};
-
-static CompilerData GlobalCompilerData;
-
-/*
-* Members
-*/
-
-D3D12ShaderCompiler::D3D12ShaderCompiler()
-	: DxCompiler(nullptr)
-	, DxLibrary(nullptr)
-	, DxLinker(nullptr)
-	, DxIncludeHandler(nullptr)
-{
-}
-
-D3D12ShaderCompiler::~D3D12ShaderCompiler()
-{
-}
+Microsoft::WRL::ComPtr<IDxcCompiler>		D3D12ShaderCompiler::DxCompiler;
+Microsoft::WRL::ComPtr<IDxcLibrary>			D3D12ShaderCompiler::DxLibrary;
+Microsoft::WRL::ComPtr<IDxcLinker>			D3D12ShaderCompiler::DxLinker;
+Microsoft::WRL::ComPtr<IDxcIncludeHandler>	D3D12ShaderCompiler::DxIncludeHandler;
+HMODULE										D3D12ShaderCompiler::DxCompilerDLL = 0;
 
 bool D3D12ShaderCompiler::Initialize()
 {
-	if (!GlobalCompilerData.DxCompilerDLL)
+	if (!DxCompilerDLL)
 	{
-		GlobalCompilerData.DxCompilerDLL = LoadLibrary("dxcompiler.dll");
-		if (!GlobalCompilerData.DxCompilerDLL)
+		DxCompilerDLL = ::LoadLibrary("dxcompiler.dll");
+		if (!DxCompilerDLL)
 		{
 			::MessageBox(0, "FAILED to load dxcompiler.dll", "ERROR", MB_OK);
 			return false;
 		}
 	}
 
-	DxcCreateInstanceProc DxcCreateInstance_ = reinterpret_cast<DxcCreateInstanceProc>(::GetProcAddress(GlobalCompilerData.DxCompilerDLL, "DxcCreateInstance"));
+	DxcCreateInstanceProc DxcCreateInstance_ = reinterpret_cast<DxcCreateInstanceProc>(::GetProcAddress(DxCompilerDLL, "DxcCreateInstance"));
 	if (!DxcCreateInstance_)
 	{
 		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to load DxcCreateInstance");
 		return false;
 	}
 	
-	HRESULT hResult = DxcCreateInstance_(CLSID_DxcCompiler, IID_PPV_ARGS(&DxCompiler));
-	if (SUCCEEDED(hResult))
+	HRESULT hr = DxcCreateInstance_(CLSID_DxcCompiler, IID_PPV_ARGS(&DxCompiler));
+	if (SUCCEEDED(hr))
 	{
-		hResult = DxcCreateInstance_(CLSID_DxcLibrary, IID_PPV_ARGS(&DxLibrary));
-		if (SUCCEEDED(hResult))
+		hr = DxcCreateInstance_(CLSID_DxcLibrary, IID_PPV_ARGS(&DxLibrary));
+		if (SUCCEEDED(hr))
 		{
-			hResult = DxLibrary->CreateIncludeHandler(&DxIncludeHandler);
-			if (SUCCEEDED(hResult))
+			hr = DxLibrary->CreateIncludeHandler(&DxIncludeHandler);
+			if (SUCCEEDED(hr))
 			{
-				hResult = DxcCreateInstance_(CLSID_DxcLinker, IID_PPV_ARGS(&DxLinker));
-				if (SUCCEEDED(hResult))
+				hr = DxcCreateInstance_(CLSID_DxcLinker, IID_PPV_ARGS(&DxLinker));
+				if (SUCCEEDED(hr))
 				{
 					return true;
 				}
@@ -87,6 +70,14 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, cons
 {
 	using namespace Microsoft::WRL;
 
+	if (DxCompilerDLL == 0)
+	{
+		if (!Initialize())
+		{
+			return nullptr;
+		}
+	}
+
 	// Convert to wide
 	std::wstring WideFilePath		= ConvertToWide(Filepath);
 	std::wstring WideEntrypoint		= ConvertToWide(Entrypoint);
@@ -107,6 +98,14 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, cons
 IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& Source, const std::string& Entrypoint, const std::string& TargetProfile)
 {
 	using namespace Microsoft::WRL;
+
+	if (DxCompilerDLL == 0)
+	{
+		if (!Initialize())
+		{
+			return nullptr;
+		}
+	}
 
 	std::wstring WideEntrypoint		= ConvertToWide(Entrypoint);
 	std::wstring WideTargetProfile	= ConvertToWide(TargetProfile);
@@ -175,28 +174,4 @@ IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, L
 	{
 		return nullptr;
 	}
-}
-
-/*
-* Static
-*/
-
-std::unique_ptr<D3D12ShaderCompiler> D3D12ShaderCompiler::CompilerInstance = nullptr;
-
-D3D12ShaderCompiler* D3D12ShaderCompiler::Make()
-{
-	CompilerInstance = std::unique_ptr<D3D12ShaderCompiler>(new D3D12ShaderCompiler());
-	if (CompilerInstance->Initialize())
-	{
-		return CompilerInstance.get();
-	}
-	else
-	{
-		return nullptr;
-	}	
-}
-
-D3D12ShaderCompiler* D3D12ShaderCompiler::Get()
-{
-	return CompilerInstance.get();
 }

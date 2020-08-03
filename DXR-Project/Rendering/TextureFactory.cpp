@@ -25,20 +25,11 @@
 
 struct TextureFactoryData
 {
-	std::unique_ptr<D3D12ComputePipelineState> GenerateMipsPSO;
-	std::unique_ptr<D3D12RootSignature> GenerateMipsRootSignature;
-
 	std::unique_ptr<D3D12ComputePipelineState> PanoramaPSO;
 	std::unique_ptr<D3D12RootSignature> PanoramaRootSignature;
 };
 
 static TextureFactoryData GlobalFactoryData;
-
-template <typename T>
-inline T DivideByMultiple(T Value, Uint32 Alignment)
-{
-	return static_cast<T>((Value + Alignment - 1) / Alignment);
-}
 
 D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::string& Filepath, Uint32 CreateFlags, DXGI_FORMAT Format)
 {
@@ -84,14 +75,14 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 		return nullptr;
 	}
 
-	const bool GenerateMipLevels	= CreateFlags & ETextureFactoryFlags::TEXTURE_FACTORY_FLAGS_GENERATE_MIPS;
-	const Uint32 MipLevels			= GenerateMipLevels ? std::min<Uint32>(std::log2<Uint32>(Width), std::log2<Uint32>(Height)) : 1;
+	const bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TEXTURE_FACTORY_FLAGS_GENERATE_MIPS;
+	const Uint32 MipLevels = GenerateMipLevels ? std::min<Uint32>(std::log2<Uint32>(Width), std::log2<Uint32>(Height)) : 1;
 
 	VALIDATE(MipLevels != 0);
 
 	// Create texture
 	TextureProperties TextureProps = { };
-	TextureProps.Flags			= GenerateMipLevels ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_NONE;
+	TextureProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
 	TextureProps.Width			= static_cast<Uint16>(Width);
 	TextureProps.Height			= static_cast<Uint16>(Height);
 	TextureProps.ArrayCount		= 1;
@@ -106,32 +97,9 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 		return nullptr;
 	}
 
-	// Create UploadBuffer
 	const Uint32 Stride			= (Format == DXGI_FORMAT_R8G8B8A8_UNORM) ? 4 : 16;
 	const Uint32 RowPitch		= (Width * Stride + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
 	const Uint32 SizeInBytes	= Height * RowPitch;
-
-	//BufferProperties UploadBufferProps = { };
-	//UploadBufferProps.Name			= "UploadBuffer";
-	//UploadBufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-	//UploadBufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
-	//UploadBufferProps.SizeInBytes	= UploadSize;
-	//UploadBufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
-
-	//std::unique_ptr<D3D12Buffer> UploadBuffer = std::make_unique<D3D12Buffer>(Device);
-	//if (UploadBuffer->Initialize(UploadBufferProps))
-	//{
-	//	void* Memory = UploadBuffer->Map();
-	//	for (Uint32 Y = 0; Y < Height; Y++)
-	//	{
-	//		memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(Memory) + Y * UploadPitch), Pixels + (Y * Width * UploadStride), Width * UploadStride);
-	//	}
-	//	UploadBuffer->Unmap();
-	//}
-	//else
-	//{
-	//	return nullptr;
-	//}
 
 	// ShaderResourceView
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
@@ -142,206 +110,29 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	SrvDesc.Texture2D.MostDetailedMip	= 0;
 	Texture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, Texture->GetResource(), &SrvDesc), 0);
 
-	std::unique_ptr<D3D12Texture> TempTexture;
-	if (GenerateMipLevels)
-	{
-		TextureProps.DebugName	= "Staging Texture";
-		TextureProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
-
-		TempTexture = std::make_unique<D3D12Texture>(Device);
-		if (!TempTexture->Initialize(TextureProps))
-		{
-			return nullptr;
-		}
-		else
-		{
-			TempTexture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, TempTexture->GetResource(), &SrvDesc), 0);
-		}
-	}
-
-	// Create Resources for generating Miplevels
-	const Uint32 MipLevelsPerDispatch = 4;
-	Uint32 NumDispatches = MipLevels / MipLevelsPerDispatch;
-
-	std::unique_ptr<D3D12UnorderedAccessView> NULLView;
-	std::unique_ptr<D3D12DescriptorTable> SrvDescriptorTable;
-	std::vector<std::unique_ptr<D3D12DescriptorTable>> UavDescriptorTables;
-	if (GenerateMipLevels)
-	{
-		Uint32 MiplevelsLastDispatch = MipLevels - (MipLevelsPerDispatch * NumDispatches);
-		if (MiplevelsLastDispatch > 0)
-		{
-			D3D12_UNORDERED_ACCESS_VIEW_DESC UavDesc = { };
-			UavDesc.Format					= Format;
-			UavDesc.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
-			UavDesc.Texture2D.MipSlice		= 0;
-			UavDesc.Texture2D.PlaneSlice	= 0;
-
-			NULLView = std::make_unique<D3D12UnorderedAccessView>(Device, nullptr, nullptr, &UavDesc);
-
-			NumDispatches++;
-			UavDescriptorTables.resize(NumDispatches);
-		}
-
-		if (!GlobalFactoryData.GenerateMipsPSO)
-		{
-			// Create Mip-Gen PSO
-			Microsoft::WRL::ComPtr<IDxcBlob> CSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/MipMapGen.hlsl", "main", "cs_6_0");
-			if (!CSBlob)
-			{
-				return false;
-			}
-
-			ComputePipelineStateProperties GenMipsProperties = { };
-			GenMipsProperties.DebugName		= "Generate MipLevels Pipeline";
-			GenMipsProperties.RootSignature = nullptr;
-			GenMipsProperties.CSBlob		= CSBlob.Get();
-
-			GlobalFactoryData.GenerateMipsPSO = std::make_unique<D3D12ComputePipelineState>(Device);
-			if (!GlobalFactoryData.GenerateMipsPSO->Initialize(GenMipsProperties))
-			{
-				return false;
-			}
-
-			GlobalFactoryData.GenerateMipsRootSignature = std::make_unique<D3D12RootSignature>(Device);
-			if (!GlobalFactoryData.GenerateMipsRootSignature->Initialize(CSBlob.Get()))
-			{
-				return false;
-			}
-
-			GlobalFactoryData.GenerateMipsRootSignature->SetDebugName("Generate MipLevels RootSignature");
-		}
-
-		// ShaderResourceView
-		SrvDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device, 1);
-		SrvDescriptorTable->SetShaderResourceView(Texture->GetShaderResourceView(0).get(), 0);
-		SrvDescriptorTable->CopyDescriptors();
-
-		// UnorderedAccessViews
-		for (Uint32 MipLevel = 0; MipLevel < MipLevels; MipLevel++)
-		{
-			D3D12_UNORDERED_ACCESS_VIEW_DESC UavDesc = { };
-			UavDesc.Format					= Format;
-			UavDesc.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
-			UavDesc.Texture2D.MipSlice		= MipLevel;
-			UavDesc.Texture2D.PlaneSlice	= 0;
-
-			Texture->SetUnorderedAccessView(std::make_shared<D3D12UnorderedAccessView>(Device, nullptr, Texture->GetResource(), &UavDesc), MipLevel);
-		}
-
-		Uint32 UAVIndex = 0;
-		for (Uint32 I = 0; I < NumDispatches; I++)
-		{
-			UavDescriptorTables[I] = std::make_unique<D3D12DescriptorTable>(Device, 4);
-			for (Uint32 J = 0; J < 4; J++)
-			{
-				if (UAVIndex < MipLevels)
-				{
-					UavDescriptorTables[I]->SetUnorderedAccessView(Texture->GetUnorderedAccessView(UAVIndex).get(), J);
-					UAVIndex++;
-				}
-				else
-				{
-					UavDescriptorTables[I]->SetUnorderedAccessView(NULLView.get(), J);
-				}
-			}
-
-			UavDescriptorTables[I]->CopyDescriptors();
-		}
-	}
-
 	std::shared_ptr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
 	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 	CommandList->UploadTextureData(Texture.get(), Pixels, Format, Width, Height, 1, Stride, RowPitch);
 
-	/*D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
-	SourceLocation.pResource							= UploadBuffer->GetResource();
-	SourceLocation.Type									= D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-	SourceLocation.PlacedFootprint.Footprint.Format		= Format;
-	SourceLocation.PlacedFootprint.Footprint.Width		= Width;
-	SourceLocation.PlacedFootprint.Footprint.Height		= Height;
-	SourceLocation.PlacedFootprint.Footprint.Depth		= 1;
-	SourceLocation.PlacedFootprint.Footprint.RowPitch	= UploadPitch;
-
-	D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
-	DestLocation.pResource			= Texture->GetResource();
-	DestLocation.Type				= D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-	DestLocation.SubresourceIndex	= 0;
-
-	CommandList->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);*/
-
 	if (GenerateMipLevels)
 	{
-		CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-
-		CommandList->SetPipelineState(GlobalFactoryData.GenerateMipsPSO->GetPipeline());
-		CommandList->SetComputeRootSignature(GlobalFactoryData.GenerateMipsRootSignature->GetRootSignature());
-
-		ID3D12DescriptorHeap* GlobalHeap = Device->GetGlobalOnlineResourceHeap()->GetHeap();
-		CommandList->SetDescriptorHeaps(&GlobalHeap, 1);
-		CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
-
-		struct ConstantBuffer
-		{
-			Uint32		SrcMipLevel;
-			Uint32		NumMipLevels;
-			XMFLOAT2	TexelSize;
-		} CB0;
-
-		Uint32 DstWidth		= Width;
-		Uint32 DstHeight	= Height;
-		CB0.SrcMipLevel		= 0;
-
-		Uint32 RemainingMiplevels = MipLevels;
-		for (Uint32 I = 0; I < NumDispatches; I++)
-		{
-			CB0.TexelSize		= XMFLOAT2(1.0f / static_cast<Float32>(DstWidth), 1.0f / static_cast<Float32>(DstHeight));
-			CB0.NumMipLevels	= std::min<Uint32>(4, RemainingMiplevels);
-
-			CommandList->SetComputeRoot32BitConstants(&CB0, 4, 0, 0);
-			CommandList->SetComputeRootDescriptorTable(UavDescriptorTables[I]->GetGPUTableStartHandle(), 2);
-
-			Uint32 ThreadsX = DivideByMultiple(DstWidth, 8);
-			Uint32 ThreadsY = DivideByMultiple(DstHeight, 8);
-			CommandList->Dispatch(ThreadsX, ThreadsY, 1);
-			
-			CommandList->UnorderedAccessBarrier(Texture.get());
-
-			DstWidth	= DstWidth / 16;
-			DstHeight	= DstHeight / 16;
-
-			CB0.SrcMipLevel += 3;
-			RemainingMiplevels -= MipLevelsPerDispatch;
-		}
-
-		CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_SOURCE);
-		CommandList->TransitionBarrier(TempTexture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-
-		CommandList->CopyResource(TempTexture.get(), Texture.get());
-		
-		CommandList->TransitionBarrier(TempTexture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		CommandList->GenerateMips(Texture.get());
 	}
-	else
-	{
-		CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	}
+
+	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	CommandList->Flush();
 	CommandList->WaitForCompletion();
 
-	if (GenerateMipLevels)
-	{
-		return TempTexture.release();
-	}
-	else
-	{
-		return Texture.release();
-	}
+	return Texture.release();
 }
 
-D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, D3D12Texture* PanoramaSource, Uint32 CubeMapSize, DXGI_FORMAT Format)
+D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, D3D12Texture* PanoramaSource, Uint32 CubeMapSize, Uint32 CreateFlags, DXGI_FORMAT Format)
 {
 	VALIDATE(PanoramaSource->GetShaderResourceView(0));
+
+	const bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TEXTURE_FACTORY_FLAGS_GENERATE_MIPS;
+	const Uint32 MipLevels = GenerateMipLevels ? std::log2<Uint32>(CubeMapSize) : 1;
 
 	// Create texture
 	TextureProperties TextureProps = { };
@@ -349,7 +140,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	TextureProps.Width			= static_cast<Uint16>(CubeMapSize);
 	TextureProps.Height			= static_cast<Uint16>(CubeMapSize);
 	TextureProps.ArrayCount		= 6;
-	TextureProps.MipLevels		= 1;
+	TextureProps.MipLevels		= MipLevels;
 	TextureProps.Format			= Format;
 	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 	TextureProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
@@ -360,6 +151,14 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 		return nullptr;
 	}
 
+	//Create UAV
+	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = { };
+	UAVDesc.Format							= Format;
+	UAVDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+	UAVDesc.Texture2DArray.ArraySize		= 6;
+	UAVDesc.Texture2DArray.FirstArraySlice	= 0;
+	StagingTexture->SetUnorderedAccessView(std::make_unique<D3D12UnorderedAccessView>(Device, nullptr, StagingTexture->GetResource(), &UAVDesc), 0);
+
 	TextureProps.Flags = D3D12_RESOURCE_FLAG_NONE;
 
 	std::unique_ptr<D3D12Texture> Texture = std::unique_ptr<D3D12Texture>(new D3D12Texture(Device));
@@ -368,18 +167,21 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 		return nullptr;
 	}
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC UavDesc = { };
-	UavDesc.Format							= Format;
-	UavDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-	UavDesc.Texture2DArray.ArraySize		= 6;
-	UavDesc.Texture2DArray.FirstArraySlice	= 0;
-	StagingTexture->SetUnorderedAccessView(std::make_unique<D3D12UnorderedAccessView>(Device, nullptr, StagingTexture->GetResource(), &UavDesc), 0);
+	// Create SRV
+	D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = { };
+	SRVDesc.Format							= Format;
+	SRVDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURECUBE;
+	SRVDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	SRVDesc.TextureCube.MipLevels			= MipLevels;
+	SRVDesc.TextureCube.MostDetailedMip		= 0;
+	SRVDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
+	Texture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, Texture->GetResource(), &SRVDesc), 0);
 
 	// Generate PipelineState at first run
 	if (!GlobalFactoryData.PanoramaPSO)
 	{
 		// Create Mip-Gen PSO
-		Microsoft::WRL::ComPtr<IDxcBlob> CSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/CubeMapGen.hlsl", "main", "cs_6_0");
+		Microsoft::WRL::ComPtr<IDxcBlob> CSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/CubeMapGen.hlsl", "Main", "cs_6_0");
 		if (!CSBlob)
 		{
 			return false;
@@ -444,20 +246,15 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 
 	CommandList->CopyResource(Texture.get(), StagingTexture.get());
 
+	if (GenerateMipLevels)
+	{
+		CommandList->GenerateMips(Texture.get());
+	}
+
 	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	CommandList->Flush();
 	CommandList->WaitForCompletion();
-
-	// ShaderResourceView
-	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-	SrvDesc.Format							= Format;
-	SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURECUBE;
-	SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SrvDesc.TextureCube.MipLevels			= 1;
-	SrvDesc.TextureCube.MostDetailedMip		= 0;
-	SrvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
-	Texture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, Texture->GetResource(), &SrvDesc), 0);
 
 	return Texture.release();
 }

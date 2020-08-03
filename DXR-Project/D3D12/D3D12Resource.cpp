@@ -11,11 +11,11 @@ D3D12Resource::~D3D12Resource()
 {
 }
 
-bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D12_CLEAR_VALUE* OptimizedClearValue, D3D12_RESOURCE_STATES InitalState, EMemoryType MemoryType)
+bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D12_CLEAR_VALUE* OptimizedClearValue, D3D12_RESOURCE_STATES InitalState, EMemoryType InMemoryType)
 {
 	// HeapProperties
 	D3D12_HEAP_PROPERTIES HeapProperties = { };
-	if (MemoryType == EMemoryType::MEMORY_TYPE_UPLOAD)
+	if (InMemoryType == EMemoryType::MEMORY_TYPE_UPLOAD)
 	{
 		HeapProperties = 
 		{
@@ -26,7 +26,7 @@ bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D1
 			0,
 		};
 	}
-	else if (MemoryType == EMemoryType::MEMORY_TYPE_DEFAULT)
+	else if (InMemoryType == EMemoryType::MEMORY_TYPE_DEFAULT)
 	{
 		HeapProperties =
 		{
@@ -37,12 +37,18 @@ bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D1
 			0,
 		};
 	}
+	else
+	{
+		Debug::DebugBreak();
+	}
 
 	// Create
 	HRESULT hResult = Device->GetDevice()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, InDesc, InitalState, OptimizedClearValue, IID_PPV_ARGS(&Resource));
 	if (SUCCEEDED(hResult))
 	{
-		Desc = *InDesc;
+		Desc		= *InDesc;
+		MemoryType	= InMemoryType;
+
 		return true;
 	}
 	else

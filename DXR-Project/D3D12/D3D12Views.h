@@ -53,6 +53,11 @@ public:
 
 	void CreateView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc);
 
+	FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const
+	{
+		return Desc;
+	}
+
 private:
 	D3D12_CONSTANT_BUFFER_VIEW_DESC Desc;
 };
@@ -69,6 +74,11 @@ public:
 
 	void CreateView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc);
 
+	FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
+	{
+		return Desc;
+	}
+
 private:
 	D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
 };
@@ -84,6 +94,11 @@ public:
 	~D3D12UnorderedAccessView() = default;
 
 	void CreateView(ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc);
+
+	FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
+	{
+		return Desc;
+	}
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12Resource>	CounterResource;
@@ -102,6 +117,11 @@ public:
 
 	void CreateView(ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC* InDesc);
 
+	FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const
+	{
+		return Desc;
+	}
+
 private:
 	D3D12_RENDER_TARGET_VIEW_DESC Desc;
 };
@@ -117,6 +137,11 @@ public:
 	~D3D12DepthStencilView() = default;
 
 	void CreateView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc);
+
+	FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const
+	{
+		return Desc;
+	}
 
 private:
 	D3D12_DEPTH_STENCIL_VIEW_DESC Desc;

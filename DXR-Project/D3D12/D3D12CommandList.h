@@ -3,16 +3,35 @@
 #include "D3D12Views.h"
 #include "D3D12CommandAllocator.h"
 
+class D3D12Texture;
+class D3D12ComputePipelineState;
+class D3D12RootSignature;
+class D3D12DescriptorTable;
+
 class D3D12CommandList : public D3D12DeviceChild
 {
+	struct GenerateMipsHelper
+	{
+		std::unique_ptr<D3D12ComputePipelineState> GenerateMipsTex2D_PSO;
+		std::unique_ptr<D3D12ComputePipelineState> GenerateMipsTexCube_PSO;
+		std::unique_ptr<D3D12RootSignature> GenerateMipsRootSignature;
+		std::unique_ptr<D3D12UnorderedAccessView> NULLView;
+		std::unique_ptr<D3D12DescriptorTable> SRVDescriptorTable;
+		std::vector<std::unique_ptr<D3D12DescriptorTable>> UAVDescriptorTables;
+	};
+
 public:
 	D3D12CommandList(D3D12Device* InDevice);
 	~D3D12CommandList();
 
 	bool Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline);
 
+	void GenerateMips(D3D12Texture* Dest);
+
+	void FlushDeferredResourceBarriers();
+
 	void UploadBufferData(class D3D12Buffer* Dest, const Uint32 DestOffset, const void* Src, const Uint32 SizeInBytes);
-	void UploadTextureData(class D3D12Texture* Dest, const void* Src, DXGI_FORMAT Format, const Uint32 Width, const Uint32 Height, const Uint32 Depth, const Uint32 Stride, const Uint32 RowPitch);
+	void UploadTextureData(D3D12Texture* Dest, const void* Src, DXGI_FORMAT Format, const Uint32 Width, const Uint32 Height, const Uint32 Depth, const Uint32 Stride, const Uint32 RowPitch);
 
 	void DeferDestruction(D3D12Resource* Resource);
 
@@ -205,15 +224,6 @@ public:
 		}
 	}
 
-	FORCEINLINE void FlushDeferredResourceBarriers()
-	{
-		if (!DeferredResourceBarriers.empty())
-		{
-			CommandList->ResourceBarrier(static_cast<UINT>(DeferredResourceBarriers.size()), DeferredResourceBarriers.data());
-			DeferredResourceBarriers.clear();
-		}
-	}
-
 	FORCEINLINE ID3D12CommandList* GetCommandList() const
 	{
 		return CommandList.Get();
@@ -238,4 +248,6 @@ protected:
 
 	// There can maximum be 8 rendertargets at one time 
 	D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetHandles[8];
+
+	GenerateMipsHelper MipGenHelper;
 };

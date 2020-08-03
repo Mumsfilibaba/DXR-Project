@@ -28,7 +28,7 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	SubObjects.reserve(32);
 
 	// Init DXIL subobject
-	ComPtr<IDxcBlob> RayTracingShaders = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/RayTracingShaders.hlsl", "", "lib_6_3");
+	ComPtr<IDxcBlob> RayTracingShaders = D3D12ShaderCompiler::CompileFromFile("Shaders/RayTracingShaders.hlsl", "", "lib_6_3");
 	D3D12_EXPORT_DESC DxilExports[] =
 	{
 		RayGenShaderName,		nullptr, D3D12_EXPORT_FLAG_NONE,

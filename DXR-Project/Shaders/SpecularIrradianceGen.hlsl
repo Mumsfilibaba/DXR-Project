@@ -21,7 +21,7 @@ cbuffer CB0 : register(b0, space0)
 TextureCube<float4>	EnvironmentMap		: register(t0, space0);
 SamplerState		EnvironmentSampler	: register(s0, space0);
 
-RWTexture2DArray<float4> SpecularIrradianceMap : register(u0);
+RWTexture2DArray<float4> SpecularIrradianceMap : register(u0, space0);
 
 // Transform from dispatch ID to cubemap face direction
 static const float3x3 RotateUV[6] =
@@ -75,10 +75,10 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 	float3 V = R;
 
 	float FinalRoughness = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
-	const uint SAMPLE_COUNT = 2048U;
+	const uint SAMPLE_COUNT = 1024U;
 	float	TotalWeight = 0.0f;
 	float3	PrefilteredColor = float3(0.0f, 0.0f, 0.0f);
-	for (uint i = 0U; i < SAMPLE_COUNT; ++i)
+	for (uint i = 0U; i < SAMPLE_COUNT; i++)
 	{
 		// Generates a sample vector that's biased towards the preferred alignment direction (importance sampling).
 		float2 Xi	= Hammersley(i, SAMPLE_COUNT);

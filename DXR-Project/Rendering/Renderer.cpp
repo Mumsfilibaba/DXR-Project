@@ -558,7 +558,7 @@ bool Renderer::Initialize(std::shared_ptr<WindowsWindow> RendererWindow)
 		return false;	
 	}
 
-	Skybox = std::shared_ptr<D3D12Texture>(TextureFactory::CreateTextureCubeFromPanorma(Device.get(), Panorama.get(), 768, DXGI_FORMAT_R16G16B16A16_FLOAT));
+	Skybox = std::shared_ptr<D3D12Texture>(TextureFactory::CreateTextureCubeFromPanorma(Device.get(), Panorama.get(), 1024, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R16G16B16A16_FLOAT));
 	if (!Skybox)
 	{
 		return false;
@@ -1011,13 +1011,13 @@ bool Renderer::InitDeferred()
 	}
 
 	// Init PipelineState
-	ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/GeometryPass.hlsl", "VSMain", "vs_6_0");
+	ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", "VSMain", "vs_6_0");
 	if (!VSBlob)
 	{
 		return false;
 	}
 
-	ComPtr<IDxcBlob> PSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/GeometryPass.hlsl", "PSMain", "ps_6_0");
+	ComPtr<IDxcBlob> PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", "PSMain", "ps_6_0");
 	if (!PSBlob)
 	{
 		return false;
@@ -1351,13 +1351,13 @@ bool Renderer::InitDeferred()
 		return false;
 	}
 
-	VSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/FullscreenVS.hlsl", "Main", "vs_6_0");
+	VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/FullscreenVS.hlsl", "Main", "vs_6_0");
 	if (!VSBlob)
 	{
 		return false;
 	}
 
-	PSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/LightPassPS.hlsl", "Main", "ps_6_0");
+	PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/LightPassPS.hlsl", "Main", "ps_6_0");
 	if (!PSBlob)
 	{
 		return false;
@@ -1381,13 +1381,13 @@ bool Renderer::InitDeferred()
 		return false;
 	}
 
-	VSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/Skybox.hlsl", "VSMain", "vs_6_0");
+	VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/Skybox.hlsl", "VSMain", "vs_6_0");
 	if (!VSBlob)
 	{
 		return false;
 	}
 
-	PSBlob = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/Skybox.hlsl", "PSMain", "ps_6_0");
+	PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/Skybox.hlsl", "PSMain", "ps_6_0");
 	if (!PSBlob)
 	{
 		return false;
@@ -1446,15 +1446,23 @@ bool Renderer::InitGBuffer()
 
 	// Albedo
 	TextureProperties GBufferProperties = { };
-	GBufferProperties.DebugName		= "GBuffer Albedo";
-	GBufferProperties.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
-	GBufferProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-	GBufferProperties.ArrayCount	= 1;
-	GBufferProperties.Width			= static_cast<Uint16>(SwapChain->GetWidth());
-	GBufferProperties.Height		= static_cast<Uint16>(SwapChain->GetHeight());
-	GBufferProperties.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	GBufferProperties.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-	GBufferProperties.MipLevels		= 1;
+	GBufferProperties.DebugName = "GBuffer Albedo";
+	GBufferProperties.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	GBufferProperties.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	GBufferProperties.ArrayCount = 1;
+	GBufferProperties.Width = static_cast<Uint16>(SwapChain->GetWidth());
+	GBufferProperties.Height = static_cast<Uint16>(SwapChain->GetHeight());
+	GBufferProperties.InitalState = D3D12_RESOURCE_STATE_COMMON;
+	GBufferProperties.MemoryType = EMemoryType::MEMORY_TYPE_DEFAULT;
+	GBufferProperties.MipLevels = 1;
+
+	D3D12_CLEAR_VALUE Value;
+	Value.Format	= GBufferProperties.Format;
+	Value.Color[0]	= 0.0f;
+	Value.Color[1]	= 0.0f;
+	Value.Color[2]	= 0.0f;
+	Value.Color[3]	= 1.0f;
+	GBufferProperties.OptimizedClearValue = &Value;
 	
 	// ShaderResourceView
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
@@ -1486,6 +1494,8 @@ bool Renderer::InitGBuffer()
 	// Normal
 	GBufferProperties.DebugName = "GBuffer Normal";
 	GBufferProperties.Format	= NormalFormat;
+	
+	Value.Format = GBufferProperties.Format;
 
 	SrvDesc.Format = GBufferProperties.Format;
 	RtvDesc.Format = GBufferProperties.Format;
@@ -1504,6 +1514,8 @@ bool Renderer::InitGBuffer()
 	// Material Properties
 	GBufferProperties.DebugName = "GBuffer Material";
 	GBufferProperties.Format	= DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	Value.Format = GBufferProperties.Format;
 
 	SrvDesc.Format = GBufferProperties.Format;
 	RtvDesc.Format = GBufferProperties.Format;
@@ -1528,7 +1540,6 @@ bool Renderer::InitGBuffer()
 	ClearValue.Format				= DepthBufferFormat;
 	ClearValue.DepthStencil.Depth	= 1.0f;
 	ClearValue.DepthStencil.Stencil	= 0;
-	
 	GBufferProperties.OptimizedClearValue = &ClearValue;
 
 	SrvDesc.Format = DXGI_FORMAT_R32_FLOAT;
@@ -1627,7 +1638,7 @@ bool Renderer::InitIntegrationLUT()
 		IntegrationLUT->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device.get(), IntegrationLUT->GetResource(), &SrvDesc), 0);
 	}
 
-	Microsoft::WRL::ComPtr<IDxcBlob> Shader = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/BRDFIntegationGen.hlsl", "Main", "cs_6_0");
+	Microsoft::WRL::ComPtr<IDxcBlob> Shader = D3D12ShaderCompiler::CompileFromFile("Shaders/BRDFIntegationGen.hlsl", "Main", "cs_6_0");
 	if (!Shader)
 	{
 		return false;
@@ -1740,7 +1751,7 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 	static Microsoft::WRL::ComPtr<IDxcBlob> Shader;
 	if (!Shader)
 	{
-		Shader = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/IrradianceGen.hlsl", "Main", "cs_6_0");
+		Shader = D3D12ShaderCompiler::CompileFromFile("Shaders/IrradianceGen.hlsl", "Main", "cs_6_0");
 	}
 
 	if (!IrradianceGenRootSignature)
@@ -1808,7 +1819,7 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 	static Microsoft::WRL::ComPtr<IDxcBlob> Shader;
 	if (!Shader)
 	{
-		Shader = D3D12ShaderCompiler::Get()->CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", "Main", "cs_6_0");
+		Shader = D3D12ShaderCompiler::CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", "Main", "cs_6_0");
 	}
 
 	if (!SpecIrradianceGenRootSignature)

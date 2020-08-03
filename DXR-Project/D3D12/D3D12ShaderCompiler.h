@@ -7,26 +7,17 @@
 class D3D12ShaderCompiler
 {
 public:
-	~D3D12ShaderCompiler();
-
-	IDxcBlob* CompileFromFile(const std::string& Filepath, const std::string& Entrypoint, const std::string& TargetProfile);
-	IDxcBlob* CompileFromSource(const std::string& Source, const std::string& Entrypoint, const std::string& TargetProfile);
-
-	static D3D12ShaderCompiler* Make();
-	static D3D12ShaderCompiler* Get();
+	static IDxcBlob* CompileFromFile(const std::string& Filepath, const std::string& Entrypoint, const std::string& TargetProfile);
+	static IDxcBlob* CompileFromSource(const std::string& Source, const std::string& Entrypoint, const std::string& TargetProfile);
 
 private:
-	D3D12ShaderCompiler();
-
-	bool Initialize();
-
-	IDxcBlob* InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWSTR FilePath, LPCWSTR Entrypoint, LPCWSTR TargetProfile);
+	static bool Initialize();
+	static IDxcBlob* InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWSTR FilePath, LPCWSTR Entrypoint, LPCWSTR TargetProfile);
 
 private:
-	Microsoft::WRL::ComPtr<IDxcCompiler>		DxCompiler;
-	Microsoft::WRL::ComPtr<IDxcLibrary>			DxLibrary;
-	Microsoft::WRL::ComPtr<IDxcLinker>			DxLinker;
-	Microsoft::WRL::ComPtr<IDxcIncludeHandler>	DxIncludeHandler;
-
-	static std::unique_ptr<D3D12ShaderCompiler> CompilerInstance;
+	static Microsoft::WRL::ComPtr<IDxcCompiler> DxCompiler;
+	static Microsoft::WRL::ComPtr<IDxcLibrary> DxLibrary;
+	static Microsoft::WRL::ComPtr<IDxcLinker> DxLinker;
+	static Microsoft::WRL::ComPtr<IDxcIncludeHandler> DxIncludeHandler;
+	static HMODULE DxCompilerDLL;
 };

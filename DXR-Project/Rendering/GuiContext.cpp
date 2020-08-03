@@ -584,7 +584,7 @@ bool GuiContext::CreatePipeline()
 			float2 uv  : TEXCOORD0;\
 		};\
 		\
-		PS_INPUT main(VS_INPUT input)\
+		PS_INPUT Main(VS_INPUT input)\
 		{\
 			PS_INPUT output;\
 			output.pos = mul( ProjectionMatrix, float4(input.pos.xy, 0.f, 1.f));\
@@ -593,7 +593,7 @@ bool GuiContext::CreatePipeline()
 			return output;\
 		}";
 
-	IDxcBlob* VSBlob = D3D12ShaderCompiler::Get()->CompileFromSource(VertexShader, "main", "vs_6_1");
+	IDxcBlob* VSBlob = D3D12ShaderCompiler::CompileFromSource(VertexShader, "Main", "vs_6_1");
 	if (!VSBlob)
 	{
 		return false;
@@ -609,13 +609,13 @@ bool GuiContext::CreatePipeline()
 		SamplerState sampler0 : register(s0);\
 		Texture2D texture0 : register(t0);\
 		\
-		float4 main(PS_INPUT input) : SV_Target\
+		float4 Main(PS_INPUT input) : SV_Target\
 		{\
 			float4 out_col = input.col * texture0.Sample(sampler0, input.uv); \
 			return out_col; \
 		}";
 
-	IDxcBlob* PSBlob = D3D12ShaderCompiler::Get()->CompileFromSource(PixelShader, "main", "ps_6_1");
+	IDxcBlob* PSBlob = D3D12ShaderCompiler::CompileFromSource(PixelShader, "Main", "ps_6_1");
 	if (!PSBlob)
 	{
 		return false;

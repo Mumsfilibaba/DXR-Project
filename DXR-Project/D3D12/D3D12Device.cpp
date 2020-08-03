@@ -1,4 +1,3 @@
-#include "Defines.h"
 #include "D3D12Device.h"
 #include "D3D12ShaderCompiler.h"
 #include "D3D12DescriptorHeap.h"
@@ -6,7 +5,6 @@
 #include "D3D12RootSignature.h"
 
 #include <dxgidebug.h>
-
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -135,13 +133,6 @@ bool D3D12Device::Initialize(bool DebugEnable)
 		{
 			RayTracingSupported = true;
 		}
-	}
-
-	// Create ShaderCompiler
-	D3D12ShaderCompiler* ShaderCompiler = D3D12ShaderCompiler::Make();
-	if (!ShaderCompiler)
-	{
-		return false;
 	}
 
 	// Create Global DescriptorHeaps
