@@ -2,6 +2,8 @@
 #include <vector>
 #include <memory>
 #include <cassert>
+#include <utility>
+#include <algorithm>
 
 #define NOMINMAX
 #include <dxgi1_6.h>
