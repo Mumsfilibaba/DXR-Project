@@ -58,6 +58,8 @@ private:
 * Actor
 */
 
+class Scene;
+
 class Actor
 {
 public:
@@ -66,6 +68,8 @@ public:
 
 	void AddComponent(Component* InComponent);
 
+	void OnAddedToScene(Scene* InScene);
+	
 	void SetDebugName(const std::string& InDebugName);
 
 	FORCEINLINE void SetTransform(const Transform& InTransform)
@@ -78,6 +82,11 @@ public:
 		return DebugName;
 	}
 
+	FORCEINLINE Scene* GetScene() const
+	{
+		return CurrentScene;
+	}
+
 	FORCEINLINE Transform& GetTransform()
 	{
 		return Transform;
@@ -88,14 +97,27 @@ public:
 		return Transform;
 	}
 
-	FORCEINLINE Component* GetComponent() const
+	template <typename TComponent>
+	FORCEINLINE TComponent* GetComponentOfType() const
 	{
-		return Components.front();
+		TComponent* Result = nullptr;
+		for (Component* Component : Components)
+		{
+			Result = dynamic_cast<TComponent*>(Component);
+			if (Result)
+			{
+				break;
+			}
+		}
+
+		return Result;
 	}
 
 private:
+	Scene* CurrentScene = nullptr;
+
 	Transform Transform;
 
 	std::vector<Component*> Components;
-	std::string				DebugName;
+	std::string	DebugName;
 };

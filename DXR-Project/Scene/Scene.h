@@ -1,5 +1,6 @@
 #pragma once
 #include "Actor.h"
+#include "MeshDrawCommand.h"
 
 #include "Rendering/Camera.h"
 
@@ -12,9 +13,16 @@ public:
 	void AddCamera(Camera* InCamera);
 	void AddActor(Actor* InActor);
 
-	FORCEINLINE const std::vector<Actor*> GetActors() const
+	void OnAddedComponent(Component* NewComponent);
+
+	FORCEINLINE const std::vector<Actor*>& GetActors() const
 	{
 		return Actors;
+	}
+
+	FORCEINLINE const std::vector<MeshDrawCommand>& GetMeshDrawCommands() const
+	{
+		return MeshDrawCommands;
 	}
 
 	FORCEINLINE Camera* GetCamera() const
@@ -25,6 +33,10 @@ public:
 	static Scene* LoadFromFile(const std::string& Filepath, class D3D12Device* Device);
 
 private:
-	Camera* CurrentCamera = nullptr;
+	void AddMeshComponent(class MeshComponent* Component);
+
 	std::vector<Actor*> Actors;
+	std::vector<MeshDrawCommand> MeshDrawCommands;
+
+	Camera* CurrentCamera = nullptr;
 };

@@ -112,37 +112,33 @@ void Renderer::Tick(const Scene& CurrentScene)
 		Float32		AO;
 	} PerObjectBuffer;
 
-	for (Actor* CurrentActor : CurrentScene.GetActors())
+	D3D12_VERTEX_BUFFER_VIEW	VBO = { };
+	D3D12_INDEX_BUFFER_VIEW		IBV = { };
+	for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 	{
-		MeshComponent* RComponent = reinterpret_cast<MeshComponent*>(CurrentActor->GetComponent());
-		Mesh*		CurrentMesh		= RComponent->Mesh.get();
-		Material*	CurrentMaterial = RComponent->Material.get();
-		
 		if (Device->IsRayTracingSupported())
 		{
-			CurrentMesh->BuildAccelerationStructure(CommandList.get());
+			// Command.Geometry->BuildAccelerationStructure(CommandList.get(), );
 		}
 
-		D3D12_VERTEX_BUFFER_VIEW VBO = { };
-		VBO.BufferLocation	= CurrentMesh->VertexBuffer->GetGPUVirtualAddress();
-		VBO.SizeInBytes		= CurrentMesh->VertexBuffer->GetSizeInBytes();
+		VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
+		VBO.SizeInBytes		= Command.VertexBuffer->GetSizeInBytes();
 		VBO.StrideInBytes	= sizeof(Vertex);
 		CommandList->IASetVertexBuffers(0, &VBO, 1);
 
-		D3D12_INDEX_BUFFER_VIEW IBV = { };
-		IBV.BufferLocation	= CurrentMesh->IndexBuffer->GetGPUVirtualAddress();
-		IBV.SizeInBytes		= CurrentMesh->IndexBuffer->GetSizeInBytes();
+		IBV.BufferLocation	= Command.IndexBuffer->GetGPUVirtualAddress();
+		IBV.SizeInBytes		= Command.IndexBuffer->GetSizeInBytes();
 		IBV.Format			= DXGI_FORMAT_R32_UINT;
 		CommandList->IASetIndexBuffer(&IBV);
 
-		PerObjectBuffer.Matrix		= CurrentActor->GetTransform().GetMatrix();
-		PerObjectBuffer.Roughness	= CurrentMaterial->GetMaterialProperties().Roughness;
-		PerObjectBuffer.Metallic	= CurrentMaterial->GetMaterialProperties().Metallic;
-		PerObjectBuffer.AO			= CurrentMaterial->GetMaterialProperties().AO;
+		PerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
+		PerObjectBuffer.Roughness	= Command.Material->GetMaterialProperties().Roughness;
+		PerObjectBuffer.Metallic	= Command.Material->GetMaterialProperties().Metallic;
+		PerObjectBuffer.AO			= Command.Material->GetMaterialProperties().AO;
 		CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 19, 0, 0);
-		CommandList->SetGraphicsRootDescriptorTable(CurrentMaterial->GetDescriptorTable()->GetGPUTableStartHandle(), 2);
+		CommandList->SetGraphicsRootDescriptorTable(Command.Material->GetDescriptorTable()->GetGPUTableStartHandle(), 2);
 
-		CommandList->DrawIndexedInstanced(CurrentMesh->IndexCount, 1, 0, 0, 0);
+		CommandList->DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 	}
 
 	CommandList->TransitionBarrier(GBuffer[0].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);

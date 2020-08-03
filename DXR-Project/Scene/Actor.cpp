@@ -1,4 +1,5 @@
 #include "Actor.h"
+#include "Scene.h"
 
 /*
 * Component Base-Class
@@ -34,10 +35,20 @@ Actor::~Actor()
 	Components.clear();
 }
 
+void Actor::OnAddedToScene(Scene* InScene)
+{
+	CurrentScene = InScene;
+}
+
 void Actor::AddComponent(Component* InComponent)
 {
 	VALIDATE(InComponent != nullptr);
 	Components.emplace_back(InComponent);
+
+	if (CurrentScene)
+	{
+		CurrentScene->OnAddedComponent(InComponent);
+	}
 }
 
 void Actor::SetDebugName(const std::string& InDebugName)

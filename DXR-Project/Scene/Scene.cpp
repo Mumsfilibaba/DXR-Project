@@ -35,6 +35,23 @@ void Scene::AddActor(Actor* InActor)
 {
 	VALIDATE(InActor != nullptr);
 	Actors.emplace_back(InActor);
+
+	InActor->OnAddedToScene(this);
+
+	MeshComponent* Component = InActor->GetComponentOfType<MeshComponent>();
+	if (Component)
+	{
+		AddMeshComponent(Component);
+	}
+}
+
+void Scene::OnAddedComponent(Component* NewComponent)
+{
+	MeshComponent* Component = dynamic_cast<MeshComponent*>(NewComponent);
+	if (Component)
+	{
+		AddMeshComponent(Component);
+	}
 }
 
 Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
@@ -316,4 +333,17 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 	}
 
 	return LoadedScene.release();
+}
+
+void Scene::AddMeshComponent(MeshComponent* Component)
+{
+	MeshDrawCommand Command;
+	Command.CurrentActor	= Component->GetOwningActor();
+	Command.Geometry		= Component->Mesh->RayTracingGeometry.get();
+	Command.VertexBuffer	= Component->Mesh->VertexBuffer.get();
+	Command.VertexCount		= Component->Mesh->VertexCount;
+	Command.IndexBuffer		= Component->Mesh->IndexBuffer.get();
+	Command.IndexCount		= Component->Mesh->IndexCount;
+	Command.Material		= Component->Material.get();
+	MeshDrawCommands.push_back(Command);
 }
