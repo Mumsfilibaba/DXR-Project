@@ -27,5 +27,6 @@ using namespace DirectX;
 
 #include "Application/Log.h"
 
+#include "Utilities/TUtilities.h"
 #include "Utilities/HashUtilities.h"
 #include "Utilities/MathUtilities.h"

@@ -24,8 +24,13 @@ Scene::~Scene()
 	{
 		SAFEDELETE(CurrentActor);
 	}
-
 	Actors.clear();
+
+	for (Light* CurrentLight : Lights)
+	{
+		SAFEDELETE(CurrentLight);
+	}
+	Lights.clear();
 
 	SAFEDELETE(CurrentCamera);
 }
@@ -48,6 +53,12 @@ void Scene::AddActor(Actor* InActor)
 	{
 		AddMeshComponent(Component);
 	}
+}
+
+void Scene::AddLight(Light* InLight)
+{
+	VALIDATE(InLight != nullptr);
+	Lights.emplace_back(InLight);
 }
 
 void Scene::OnAddedComponent(Component* NewComponent)

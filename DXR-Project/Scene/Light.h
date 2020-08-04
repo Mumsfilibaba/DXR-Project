@@ -23,7 +23,9 @@ class Light
 {
 public:
 	Light();
-	~Light();
+	virtual ~Light();
+
+	virtual bool Initialize(class D3D12Device* Device) = 0;
 
 	void SetColor(const XMFLOAT3& InColor);
 	void SetColor(Float32 R, Float32 G, Float32 B);
@@ -50,12 +52,13 @@ public:
 		return GlobalLightSettings;
 	}
 
-private:
+protected:
 	D3D12Buffer*	LightBuffer = nullptr;
 	D3D12Texture*	ShadowMap	= nullptr;
 
 	XMFLOAT3 Color;
 	Float32 Intensity = 1.0f;
 
+private:
 	static LightSettings GlobalLightSettings;
 };
