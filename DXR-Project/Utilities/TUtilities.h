@@ -65,3 +65,10 @@ constexpr TRemoveReference<T>&& Move(T&& Object) noexcept
 {
 	return static_cast<TRemoveReference<T>&&>(Object);
 }
+
+// Check if a object is of a certain type at runtime
+template<typename T, typename TBase>
+bool IsOfType(TBase* BaseType) noexcept
+{
+	return (dynamic_cast<T*>(BaseType) != nullptr);
+}
