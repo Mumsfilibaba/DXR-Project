@@ -128,7 +128,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 		// Create new material with default properties
 		MaterialProperties MatProps;
 		MatProps.Metallic	= Mat.ambient[0];
-		MatProps.AO			= 1.0f;
+		MatProps.AO			= 0.5f;
 		MatProps.Roughness	= 1.0f;
 
 		std::shared_ptr<Material>& NewMaterial = LoadedMaterials.emplace_back(std::make_shared<Material>(MatProps));
