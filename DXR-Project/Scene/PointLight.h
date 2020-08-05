@@ -20,6 +20,8 @@ public:
 
 	virtual bool Initialize(class D3D12Device* Device) override;
 
+	virtual void BuildBuffer(class D3D12CommandList* CommandList) override;
+
 	void SetPosition(const XMFLOAT3& InPosition);
 	void SetPosition(Float32 X, Float32 Y, Float32 Z);
 

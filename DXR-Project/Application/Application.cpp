@@ -699,6 +699,7 @@ bool Application::Initialize()
 	Light->SetPosition(0.0f, 10.0f, -10.0f);
 	Light->SetColor(1.0f, 1.0f, 1.0f);
 	Light->SetIntensity(400.0f);
+	Light->Initialize(Renderer::Get()->GetDevice().get());
 	CurrentScene->AddLight(Light);
 
 	// Reset timer before starting

@@ -34,7 +34,7 @@ class D3D12RayTracingPipelineState;
 * Renderer
 */
 
-#define ENABLE_D3D12_DEBUG 0
+#define ENABLE_D3D12_DEBUG 1
 
 class Renderer
 {
