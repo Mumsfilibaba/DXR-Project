@@ -145,7 +145,7 @@ void InputManager::InitializeKeyTables()
 	ScanCodeTable[0x137] = EKey::KEY_PRINT_SCREEN;
 	ScanCodeTable[0x146] = EKey::KEY_PAUSE;
 
-	for (Uint32 i = 0; i < 512; i++)
+	for (Uint16 i = 0; i < 512; i++)
 	{
 		if (ScanCodeTable[i] != EKey::KEY_UNKNOWN)
 		{

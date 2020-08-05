@@ -18,6 +18,13 @@ struct Camera
 	float4x4    ViewProjectionInverse;
 };
 
+struct PointLight
+{
+	float3 Color;
+	float Padding;
+	float3 Position;
+};
+
 struct Vertex
 {
 	float3 Position;

@@ -21,6 +21,11 @@ public:
 		return Actors;
 	}
 
+	FORCEINLINE const std::vector<Light*>& GetLights() const
+	{
+		return Lights;
+	}
+
 	FORCEINLINE const std::vector<MeshDrawCommand>& GetMeshDrawCommands() const
 	{
 		return MeshDrawCommands;
@@ -37,7 +42,7 @@ private:
 	void AddMeshComponent(class MeshComponent* Component);
 
 	std::vector<Actor*> Actors;
-	std::vector<Light*> Light;
+	std::vector<Light*> Lights;
 	std::vector<MeshDrawCommand> MeshDrawCommands;
 
 	Camera* CurrentCamera = nullptr;

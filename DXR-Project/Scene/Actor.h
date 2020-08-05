@@ -116,13 +116,11 @@ public:
 	template <typename TComponent>
 	FORCEINLINE TComponent* GetComponentOfType() const
 	{
-		TComponent* Result = nullptr;
 		for (Component* Component : Components)
 		{
-			Result = dynamic_cast<TComponent*>(Component);
-			if (Result)
+			if (IsOfType<TComponent>(Component))
 			{
-				return Result;
+				return static_cast<TComponent*>(Component);
 			}
 		}
 

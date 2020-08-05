@@ -12,7 +12,7 @@ struct MaterialProperties
 };
 
 /*
-* Class for Material
+* Material
 */
 
 class Material

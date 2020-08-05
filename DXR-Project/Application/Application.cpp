@@ -7,6 +7,7 @@
 
 #include "Scene/MeshComponent.h"
 #include "Scene/Scene.h"
+#include "Scene/PointLight.h"
 
 #include "Windows/WindowsConsoleOutput.h"
 
@@ -200,6 +201,8 @@ void Application::DrawSceneInfo()
 	ImGui::Indent();
 
 	ImGui::BeginChild("SceneInfo");
+
+	// Actors
 	if (ImGui::TreeNode("Actors"))
 	{
 		for (Actor* Actor : CurrentScene->GetActors())
@@ -262,6 +265,46 @@ void Application::DrawSceneInfo()
 
 		ImGui::TreePop();
 	}
+
+	// Lights
+	if (ImGui::TreeNode("Lights"))
+	{
+		for (Light* CurrentLight : CurrentScene->GetLights())
+		{
+			if (IsOfType<PointLight>(CurrentLight))
+			{
+				if (ImGui::TreeNode("PointLight"))
+				{
+					const XMFLOAT3& Color = CurrentLight->GetColor();
+
+					Float32 Arr[3] = { Color.x, Color.y, Color.z };
+					if (ImGui::ColorEdit3("Color", Arr))
+					{
+						CurrentLight->SetColor(Arr[0], Arr[1], Arr[2]);
+					}
+
+					const XMFLOAT3& Position = static_cast<PointLight*>(CurrentLight)->GetPosition();
+
+					Float32 Arr2[3] = { Position.x, Position.y, Position.z };
+					if (ImGui::DragFloat3("Position", Arr2, 0.5f))
+					{
+						static_cast<PointLight*>(CurrentLight)->SetPosition(Arr2[0], Arr2[1], Arr2[2]);
+					}
+
+					Float32 Intensity = CurrentLight->GetIntensity();
+					if (ImGui::SliderFloat("Intensity", &Intensity, 0.01f, 10000.0f, "%.2f"))
+					{
+						CurrentLight->SetIntensity(Intensity);
+					}
+
+					ImGui::TreePop();
+				}
+			}
+		}
+
+		ImGui::TreePop();
+	}
+
 	ImGui::EndChild();
 }
 
@@ -650,6 +693,14 @@ bool Application::Initialize()
 
 	CurrentCamera = new Camera();
 	CurrentScene->AddCamera(CurrentCamera);
+
+	// Add lightsource
+	PointLight* Light = new PointLight();
+	Light->SetPosition(0.0f, 10.0f, -10.0f);
+	Light->SetColor(1.0f, 1.0f, 1.0f);
+	Light->SetIntensity(400.0f);
+	Light->Initialize(Renderer::Get()->GetDevice().get());
+	CurrentScene->AddLight(Light);
 
 	// Reset timer before starting
 	Timer.Reset();

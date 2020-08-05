@@ -5,7 +5,7 @@ struct BufferProperties
 {
 	std::string				Name;
 	D3D12_RESOURCE_FLAGS	Flags;
-	Uint64					SizeInBytes;
+	Uint32					SizeInBytes;
 	D3D12_RESOURCE_STATES	InitalState;
 	EMemoryType				MemoryType;
 };

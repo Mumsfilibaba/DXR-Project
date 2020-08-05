@@ -109,6 +109,7 @@ void D3D12ImmediateCommandList::Flush()
 
 	CurrentFenceValue++;
 	Queue->Signal(Fence.Get(), CurrentFenceValue);
+	FenceValues[CurrentAllocatorIndex] = CurrentFenceValue;
 
 	// Get next allocator
 	CurrentAllocatorIndex++;

@@ -39,6 +39,14 @@ void Renderer::Tick(const Scene& CurrentScene)
 		CommandList->ReleaseDeferredResources();
 	}
 	
+	for (Light* Light : CurrentScene.GetLights())
+	{
+		if (Light->IsLightBufferDirty())
+		{
+			Light->BuildBuffer(CommandList.get());
+		}
+	}
+
 	// Set constant buffer descriptor heap
 	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
 	CommandList->SetDescriptorHeaps(DescriptorHeaps, ARRAYSIZE(DescriptorHeaps));
@@ -164,6 +172,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->SetPipelineState(LightPassPSO->GetPipelineState());
 	CommandList->SetGraphicsRootSignature(LightRootSignature->GetRootSignature());
 	CommandList->SetGraphicsRootDescriptorTable(LightDescriptorTable->GetGPUTableStartHandle(), 0);
+
+	D3D12DescriptorTable* LightTable = CurrentScene.GetLights().front()->GetDescriptorTable();
+	CommandList->SetGraphicsRootDescriptorTable(LightTable->GetGPUTableStartHandle(), 1);
 
 	CommandList->DrawInstanced(3, 1, 0, 0);
 
@@ -1111,7 +1122,7 @@ bool Renderer::InitDeferred()
 	}
 
 	{
-		D3D12_DESCRIPTOR_RANGE Ranges[9] = {};
+		D3D12_DESCRIPTOR_RANGE Ranges[9] = { };
 		// Albedo
 		Ranges[0].BaseShaderRegister				= 0;
 		Ranges[0].NumDescriptors					= 1;
@@ -1175,11 +1186,24 @@ bool Renderer::InitDeferred()
 		Ranges[8].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 		Ranges[8].OffsetInDescriptorsFromTableStart	= 8;
 
-		D3D12_ROOT_PARAMETER Parameters[1];
+		// PointLight
+		D3D12_DESCRIPTOR_RANGE LightRanges[1] = {};
+		LightRanges[0].BaseShaderRegister					= 1;
+		LightRanges[0].NumDescriptors						= 1;
+		LightRanges[0].RegisterSpace						= 0;
+		LightRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		LightRanges[0].OffsetInDescriptorsFromTableStart	= 0;
+
+		D3D12_ROOT_PARAMETER Parameters[2];
 		Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		Parameters[0].DescriptorTable.NumDescriptorRanges	= 9;
 		Parameters[0].DescriptorTable.pDescriptorRanges		= Ranges;
 		Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		Parameters[1].DescriptorTable.NumDescriptorRanges	= 1;
+		Parameters[1].DescriptorTable.pDescriptorRanges		= LightRanges;
+		Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
 
 		D3D12_STATIC_SAMPLER_DESC Samplers[3] = { };
 		Samplers[0].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -1225,7 +1249,7 @@ bool Renderer::InitDeferred()
 		Samplers[2].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
 
 		D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-		RootSignatureDesc.NumParameters			= 1;
+		RootSignatureDesc.NumParameters			= 2;
 		RootSignatureDesc.pParameters			= Parameters;
 		RootSignatureDesc.NumStaticSamplers		= 3;
 		RootSignatureDesc.pStaticSamplers		= Samplers;

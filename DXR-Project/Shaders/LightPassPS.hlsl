@@ -19,7 +19,8 @@ SamplerState GBufferSampler		: register(s0, space0);
 SamplerState LUTSampler			: register(s1, space0);
 SamplerState IrradianceSampler	: register(s2, space0);
 
-ConstantBuffer<Camera> Camera : register(b0, space0);
+ConstantBuffer<Camera>		Camera		: register(b0, space0);
+ConstantBuffer<PointLight>	LightBuffer	: register(b1, space0);
 
 // Main
 float4 Main(PSInput Input) : SV_TARGET
@@ -53,11 +54,11 @@ float4 Main(PSInput Input) : SV_TARGET
 	float3	Lo		= float3(0.0f, 0.0f, 0.0f);
 	{
 		// Calculate per-light radiance
-		float3	LightDir	= normalize(LightPosition - WorldPosition);
+		float3	LightDir	= normalize(LightBuffer.Position - WorldPosition);
 		float3	HalfVec		= normalize(ViewDir + LightDir);
-		float	Distance	= length(LightPosition - WorldPosition);
+		float	Distance	= length(LightBuffer.Position - WorldPosition);
 		float	Attenuation = 1.0f / (Distance * Distance);
-		float3	Radiance	= LightColor * Attenuation;
+		float3	Radiance	= LightBuffer.Color * Attenuation;
 
 		// Cook-Torrance BRDF
 		float	NDF	= DistributionGGX(Norm, HalfVec, Roughness);
