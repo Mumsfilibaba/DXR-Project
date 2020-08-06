@@ -1,14 +1,24 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "ClassType.h"
 
-#define CORE_OBJECT(Name)\
+#define CORE_OBJECT(TCoreObject, TSuperClass) \
+private: \
+	typedef TCoreObject This; \
+	typedef TSuperClass Super; \
+\
 public: \
-	static CoreObject* GetStaticClass() \
+	static ClassType* GetStaticClass() \
 	{ \
-		static Name DefaultObject; \
-		return &DefaultObject; \
+		static ClassType ClassInfo(#TCoreObject, Super::GetStaticClass()); \
+		return &ClassInfo; \
 	}
+
+#define CORE_OBJECT_INIT() \
+	SetClass(This::GetStaticClass())
+
+/*
+* Core Object for Engine (Mostly for RTTI)
+*/
 
 class CoreObject
 {
@@ -16,20 +26,38 @@ public:
 	CoreObject();
 	virtual ~CoreObject();
 
-	bool IsInstanceOf(CoreObject* Other) const;
-
-	template<typename T>
-	FORCEINLINE bool IsInstanceOf(CoreObject* Other) const
+	FORCEINLINE const ClassType* GetClass() const
 	{
-		return IsInstanceOf(T::GetStaticClass());
+		return Class;
 	}
+
+	static const ClassType* GetStaticClass()
+	{
+		static ClassType ClassInfo("CoreObject", nullptr);
+		return &ClassInfo;
+	}
+
+protected:
+	FORCEINLINE void SetClass(const ClassType* InClass)
+	{
+		Class = InClass;
+	}
+
+private:
+	const ClassType* Class = nullptr;
 };
 
-class Derived : public CoreObject
+// Casting between coreobjects
+template<typename T>
+bool IsSubClassOf(CoreObject* Object)
 {
-	CORE_OBJECT(Derived);
+	VALIDATE(Object != nullptr);
+	VALIDATE(Object->GetClass() != nullptr);
+	return Object->GetClass()->IsSubClassOf<T>();
+}
 
-public:
-	Derived();
-	~Derived();
-};
+template<typename T>
+T* Cast(CoreObject* Object)
+{
+	return IsSubClassOf<T>(Object) ? static_cast<T*>(Object) : nullptr; 
+}

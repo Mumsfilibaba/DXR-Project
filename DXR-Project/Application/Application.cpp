@@ -271,7 +271,7 @@ void Application::DrawSceneInfo()
 	{
 		for (Light* CurrentLight : CurrentScene->GetLights())
 		{
-			if (IsOfType<PointLight>(CurrentLight))
+			if (IsSubClassOf<PointLight>(CurrentLight))
 			{
 				if (ImGui::TreeNode("PointLight"))
 				{

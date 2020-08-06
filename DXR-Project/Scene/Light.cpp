@@ -6,6 +6,7 @@
 Light::Light()
 	: Color()
 {
+	CORE_OBJECT_INIT();
 }
 
 Light::~Light()
