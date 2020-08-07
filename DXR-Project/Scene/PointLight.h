@@ -14,6 +14,8 @@ struct PointLightProperties
 
 class PointLight : public Light
 {
+	CORE_OBJECT(PointLight, Light);
+
 public:
 	PointLight();
 	~PointLight();

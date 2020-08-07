@@ -1,4 +1,6 @@
 #pragma once
+#include "Core/CoreObject.h"
+
 #include <vector>
 
 #include <DirectXMath.h>
@@ -9,8 +11,10 @@
 
 class Actor;
 
-class Component
+class Component : public CoreObject
 {
+	CORE_OBJECT(Component, CoreObject);
+
 public:
 	Component(Actor* InOwningActor);
 	virtual ~Component();
@@ -60,8 +64,10 @@ private:
 
 class Scene;
 
-class Actor
+class Actor : public CoreObject
 {
+	CORE_OBJECT(Actor, CoreObject);
+
 public:
 	Actor();
 	~Actor();
@@ -118,7 +124,7 @@ public:
 	{
 		for (Component* Component : Components)
 		{
-			if (IsOfType<TComponent>(Component))
+			if (IsSubClassOf<TComponent>(Component))
 			{
 				return static_cast<TComponent*>(Component);
 			}

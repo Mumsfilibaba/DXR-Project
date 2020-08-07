@@ -6,9 +6,12 @@
 */
 
 Component::Component(Actor* InOwningActor)
-	: OwningActor(InOwningActor)
+	: CoreObject()
+	, OwningActor(InOwningActor)
 {
 	VALIDATE(InOwningActor != nullptr);
+
+	CORE_OBJECT_INIT();
 }
 
 Component::~Component()
@@ -20,9 +23,11 @@ Component::~Component()
 */
 
 Actor::Actor()
-	: Components()
+	: CoreObject()
+	, Components()
 	, Transform()
 {
+	CORE_OBJECT_INIT();
 }
 
 Actor::~Actor()

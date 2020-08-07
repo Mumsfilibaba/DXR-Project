@@ -1,6 +1,5 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "Core/CoreObject.h"
 
 class D3D12Buffer;
 class D3D12Texture;
@@ -20,8 +19,10 @@ struct LightSettings
 * Light
 */
 
-class Light
+class Light : public CoreObject
 {
+	CORE_OBJECT(Light, CoreObject);
+
 public:
 	Light();
 	virtual ~Light();
