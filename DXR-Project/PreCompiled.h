@@ -30,3 +30,10 @@ using namespace DirectX;
 #include "Utilities/TUtilities.h"
 #include "Utilities/HashUtilities.h"
 #include "Utilities/MathUtilities.h"
+
+#include "Core/ClassType.h"
+#include "Core/CoreObject.h"
+#include "Core/RefCountedObject.h"
+#include "Core/TSharedPtr.h"
+#include "Core/TSharedRef.h"
+#include "Core/TUniquePtr.h"

@@ -82,14 +82,14 @@ public:
 		return GetAddressOf();
 	}
 
-	FORCEINLINE bool operator==(const TSharedRef& Other) const noexcept
+	FORCEINLINE bool operator==(TRefCountedObject* InPtr) const noexcept
 	{
-		return (Ptr == other.Ptr);
+		return (Ptr == InPtr);
 	}
 
 	FORCEINLINE bool operator==(const TSharedRef& Other) const noexcept
 	{
-		return (Ptr != other.Ptr);
+		return (Ptr == other.Ptr);
 	}
 
 	FORCEINLINE operator bool() const noexcept
