@@ -22,9 +22,9 @@
 #include <memory>
 #include <vector>
 
-#include "MeshFactory.h"
-#include "Material.h"
 #include "Mesh.h"
+#include "Material.h"
+#include "MeshFactory.h"
 
 class D3D12Texture;
 class D3D12GraphicsPipelineState;
