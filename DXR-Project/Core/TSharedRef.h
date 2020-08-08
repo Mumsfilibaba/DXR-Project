@@ -3,6 +3,10 @@
 
 #include <type_traits>
 
+/*
+* TSharedRef - Helper class when using objects with RefCountedObject as a base
+*/
+
 template<typename TRefCountedObject>
 class TSharedRef
 {
@@ -35,7 +39,7 @@ public:
 		static_assert(std::is_base_of<RefCountedObject, TRefCountedObject>());
 	}
 	
-	FORCEINLINE ~TSharedRef()
+	FORCEINLINE ~TSharedRef() 
 	{
 		Reset();
 	}
@@ -141,7 +145,7 @@ public:
 	}
 
 private:
-	FORCEINLINE void InternalRelease()
+	FORCEINLINE void InternalRelease() noexcept
 	{
 		if (Ptr)
 		{ 

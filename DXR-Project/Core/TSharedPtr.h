@@ -1,44 +1,47 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "TUniquePtr.h"
 
-#include "Utilities/TUtilities.h"
-
-class RefCounter
-{
-public:
-	FORCEINLINE RefCounter()
-		: Counter(0)
-	{
-	}
-
-	FORCEINLINE ~RefCounter()
-	{
-	}
-
-	FORCEINLINE Uint32 AddRef()
-	{
-		return ++Counter;
-	}
-
-	FORCEINLINE Uint32 Release()
-	{
-		VALIDATE(Counter > 0);
-		return --Counter;
-	}
-
-	FORCEINLINE Uint32 GetRefCount() const
-	{
-		return Counter;
-	}
-
-private:
-	Uint32 Counter;
-};
+/*
+* TSharedPtr - RefCounted Pointer similar to std::shared_ptr
+*/
 
 template<typename T>
 class TSharedPtr
 {
+private:
+	// Private Refcounter (Not optimal to have one for each T)
+	class RefCounter
+	{
+	public:
+		FORCEINLINE RefCounter() noexcept
+			: Counter(0)
+		{
+		}
+
+		FORCEINLINE ~RefCounter() noexcept
+		{
+		}
+
+		FORCEINLINE Uint32 AddRef() noexcept
+		{
+			return ++Counter;
+		}
+
+		FORCEINLINE Uint32 Release() noexcept
+		{
+			VALIDATE(Counter > 0);
+			return --Counter;
+		}
+
+		FORCEINLINE Uint32 GetRefCount() const noexcept
+		{
+			return Counter;
+		}
+
+	private:
+		Uint32 Counter;
+	};
+
 public:
 	FORCEINLINE TSharedPtr() noexcept
 		: Ptr(nullptr)
@@ -72,6 +75,19 @@ public:
 		Other.Counter	= nullptr;
 	}
 
+	FORCEINLINE TSharedPtr(TUniquePtr<T>&& Unique) noexcept
+		: Ptr(Unique.Ptr)
+		, Counter(nullptr)
+	{
+		Unique.Ptr = nullptr;
+
+		if (Ptr)
+		{
+			Counter = new RefCounter();
+			Counter->AddRef();
+		}
+	}
+
 	FORCEINLINE ~TSharedPtr()
 	{
 		Reset();
@@ -85,6 +101,13 @@ public:
 		Counter	= nullptr;
 	}
 
+	FORCEINLINE void Swap(TSharedPtr& Other) noexcept
+	{
+		T* TempPtr = Ptr;
+		Ptr = Other.Ptr;
+		Other.Ptr = TempPtr;
+	}
+
 	FORCEINLINE T* Get() const noexcept
 	{
 		return Ptr;
@@ -93,6 +116,11 @@ public:
 	FORCEINLINE T* const * GetAddressOf() const noexcept
 	{
 		return &Ptr;
+	}
+
+	FORCEINLINE Uint32 GetRefCount() const noexcept
+	{
+		return Counter->GetRefCount();
 	}
 
 	FORCEINLINE T* operator->() const noexcept
@@ -110,13 +138,13 @@ public:
 		return GetAddressOf();
 	}
 
-	FORCEINLINE T& operator[](Uint32 Index)
+	FORCEINLINE T& operator[](Uint32 Index) noexcept
 	{
 		VALIDATE(Ptr != nullptr);
 		return Ptr[Index];
 	}
 
-	FORCEINLINE TSharedPtr& operator=(const TSharedPtr& Other)
+	FORCEINLINE TSharedPtr& operator=(const TSharedPtr& Other) noexcept
 	{
 		if (this != std::addressof(Other))
 		{
@@ -131,7 +159,7 @@ public:
 		return *this;
 	}
 
-	FORCEINLINE TSharedPtr& operator=(TSharedPtr&& Other)
+	FORCEINLINE TSharedPtr& operator=(TSharedPtr&& Other) noexcept
 	{
 		if (this != std::addressof(Other))
 		{
@@ -147,7 +175,26 @@ public:
 		return *this;
 	}
 
-	FORCEINLINE TSharedPtr& operator=(T* InPtr)
+	FORCEINLINE TSharedPtr& operator=(TUniquePtr&& Unique) noexcept
+	{
+		if (Ptr != Unique.Ptr)
+		{
+			Reset();
+
+			Ptr = Unique.Ptr;
+			Unique.Ptr = nullptr;
+
+			if (Ptr)
+			{
+				Counter = new RefCounter();
+				Counter->AddRef();
+			}
+		}
+
+		return *this;
+	}
+
+	FORCEINLINE TSharedPtr& operator=(T* InPtr) noexcept
 	{
 		if (Ptr != InPtr)
 		{
@@ -164,7 +211,7 @@ public:
 		return *this;
 	}
 
-	FORCEINLINE TSharedPtr& operator=(std::nullptr_t)
+	FORCEINLINE TSharedPtr& operator=(std::nullptr_t) noexcept
 	{
 		Reset();
 		return *this;
@@ -239,8 +286,9 @@ private:
 	RefCounter* Counter;
 };
 
+// Creates a new object together with a SharedPtr
 template<typename T, typename... TArgs>
-TSharedPtr<T> MakeShared(TArgs&&... Args)
+TSharedPtr<T> MakeShared(TArgs&&... Args) noexcept
 {
 	T* RefCountedPtr = new T(Forward<TArgs>(Args)...);
 	return Move(TSharedPtr<T>(RefCountedPtr));

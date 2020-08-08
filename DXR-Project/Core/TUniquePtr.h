@@ -2,6 +2,12 @@
 #include "Defines.h"
 #include "Types.h"
 
+#include "Utilities/TUtilities.h"
+
+/*
+* TUniquePtr - SmartPointer similar to std::unique_ptr
+*/
+
 template<typename T>
 class TUniquePtr
 {
@@ -32,10 +38,24 @@ public:
 		Reset();
 	}
 
+	FORCEINLINE T* Release() noexcept
+	{
+		T* WeakPtr = Ptr;
+		Ptr = nullptr;
+		return WeakPtr;
+	}
+
 	FORCEINLINE void Reset() noexcept
 	{
 		InternalRelease();
 		Ptr = nullptr;
+	}
+
+	FORCEINLINE void Swap(TUniquePtr& Other) noexcept
+	{
+		T* TempPtr = Ptr;
+		Ptr = Other.Ptr;
+		Other.Ptr = TempPtr;
 	}
 
 	FORCEINLINE T* Get() const noexcept
@@ -63,39 +83,47 @@ public:
 		return GetAddressOf();
 	}
 
-	FORCEINLINE T& operator[](Uint32 Index)
+	FORCEINLINE T& operator[](Uint32 Index) noexcept
 	{
+		VALIDATE(Ptr != nullptr);
 		return Ptr[Index];
 	}
 
-	FORCEINLINE TUniquePtr& operator=(const TUniquePtr& Other)
+	FORCEINLINE TUniquePtr& operator=(T* InPtr) noexcept
 	{
-		if (this != std::addressof(Other))
+		if (Ptr != InPtr)
 		{
-			Ptr = Other.Ptr;
-			Counter = Other.Counter;
-
-			InternalAddRef();
+			Reset();
+			Ptr = InPtr;
 		}
 
 		return *this;
 	}
 
-	FORCEINLINE TUniquePtr& operator=(TUniquePtr&& Other)
+	FORCEINLINE TUniquePtr& operator=(const TUniquePtr& Other) noexcept
 	{
 		if (this != std::addressof(Other))
 		{
+			Reset();
 			Ptr = Other.Ptr;
-			Counter = Other.Counter;
-
-			Other.Ptr = nullptr;
-			Other.Counter = nullptr;
 		}
 
 		return *this;
 	}
 
-	FORCEINLINE TUniquePtr& operator=(std::nullptr_t)
+	FORCEINLINE TUniquePtr& operator=(TUniquePtr&& Other) noexcept
+	{
+		if (this != std::addressof(Other))
+		{
+			Reset();
+			Ptr			= Other.Ptr;
+			Other.Ptr	= nullptr;
+		}
+
+		return *this;
+	}
+
+	FORCEINLINE TUniquePtr& operator=(std::nullptr_t) noexcept
 	{
 		Reset();
 		return *this;
@@ -119,33 +147,20 @@ public:
 private:
 	FORCEINLINE void InternalRelease() noexcept
 	{
-		Counter->Release();
-		if (Counter->GetRefCount() <= 0)
+		if (Ptr)
 		{
 			delete Ptr;
 			Ptr = nullptr;
-
-			delete Counter;
-			Counter = nullptr;
-		}
-	}
-
-	FORCEINLINE void InternalAddRef() noexcept
-	{
-		if (Ptr)
-		{
-			if (Counter)
-			{
-				Counter->AddRef();
-			}
 		}
 	}
 
 	T* Ptr;
 };
 
-template<typename T, typename... Args>
-TUniquePtr<T> MakeUnique(Args... Args)
+// Creates a new object together with a UniquePtr
+template<typename T, typename... TArgs>
+TUniquePtr<T> MakeUnique(TArgs&&... Args) noexcept
 {
-	return Move(TUniquePtr<T>(new T(Args)));
+	T* UniquePtr = new T(Forward<TArgs>(Args)...);
+	return Move(TUniquePtr<T>(UniquePtr));
 }
