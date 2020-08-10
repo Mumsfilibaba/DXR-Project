@@ -247,9 +247,9 @@ public:
 		, Size(Other.Size)
 		, Capacity(Other.Capacity)
 	{
-		Other.Data = nullptr;
-		Other.Size = 0;
-		Other.Capacity = 0;
+		Other.Data		= nullptr;
+		Other.Size		= 0;
+		Other.Capacity	= 0;
 	}
 
 	FORCEINLINE ~TArray()
@@ -503,47 +503,87 @@ public:
 		return PosAfterMove;
 	}
 
-	FORCEINLINE void PopBack() noexcept
+	FORCEINLINE Iterator PopBack() noexcept
 	{
 		Size--;
 		Data[Size].~ValueType();
+
+		return end();
 	}
 
 	FORCEINLINE Iterator Erase(Iterator Pos) noexcept
 	{
-		return begin();
+		return Erase(static_cast<ConstIterator>(Pos));
 	}
 
 	FORCEINLINE Iterator Erase(ConstIterator Pos) noexcept
 	{
-		return begin();
+		// Special case
+		if (Pos == end())
+		{
+			return PopBack();
+		}
+
+		// Call destructor
+		(*Pos).~ValueType();
+
+		// Move elements
+		const SizeType Index = static_cast<SizeType>(Pos.Ptr - begin().Ptr);
+
+		Iterator From = begin() + Index;
+		for (Iterator It = From; (It != end()); It++)
+		{
+			From++;
+			(*It) = Move(*From);
+		}
+
+		Size--;
+		return begin() + Index;
 	}
 
 	FORCEINLINE Iterator Erase(Iterator First, Iterator Last) noexcept
 	{
-		return begin();
+		return Erase(static_cast<ConstIterator>(First), static_cast<ConstIterator>(Last));
 	}
 
 	FORCEINLINE Iterator Erase(ConstIterator First, ConstIterator Last) noexcept
 	{
-		return begin();
+		// Call destructors
+		for (ConstIterator It = First; (It != Last); It++)
+		{
+			(*It).~ValueType();
+		}
+
+		// Move elements
+		const SizeType Index	= static_cast<SizeType>(First.Ptr - begin().Ptr);
+		const SizeType Offset	= static_cast<SizeType>(Last.Ptr - First.Ptr);
+
+		Iterator To = begin() + Index;
+		for (Iterator It = To + Offset; (It != end()); It++)
+		{
+			(*To) = Move(*It);
+			To++;
+		}
+
+		Size -= Offset;
+		return begin() + Index;
 	}
 
 	FORCEINLINE void Swap(TArray& Other) noexcept
 	{
 		if (this != std::addressof(Other))
 		{
-			ValueType* TempPtr = Data;
-			SizeType	TempSize = Size;
-			SizeType	TempCapacity = Capacity;
+			ValueType*	TempPtr			= Data;
+			SizeType	TempSize		= Size;
+			SizeType	TempCapacity	= Capacity;
 
-			Data = Other.Data;
-			Size = Other.Size;
-			Capacity = Other.Capacity;
+			Data		= Other.Data;
+			Size		= Other.Size;
+			Capacity	= Other.Capacity;
 
-			Other.Data = TempPtr;
-			Other.Size = TempSize;
-			Other.Capacity = TempCapacity;
+			Other.Data		= TempPtr;
+			Other.Size		= TempSize;
+			Other.Capacity	= TempCapacity;
 		}
 	}
 
@@ -653,13 +693,13 @@ public:
 	{
 		if (this != std::addressof(Other))
 		{
-			Data = Other.Data;
-			Size = Other.Size;
-			Capacity = Other.Capacity;
+			Data		= Other.Data;
+			Size		= Other.Size;
+			Capacity	= Other.Capacity;
 
-			Other.Data = nullptr;
-			Other.Size = 0;
-			Other.Capacity = 0;
+			Other.Data		= nullptr;
+			Other.Size		= 0;
+			Other.Capacity	= 0;
 		}
 
 		return *this;
@@ -714,18 +754,18 @@ private:
 	FORCEINLINE Iterator MakeSpace(ConstIterator Pos, SizeType InSize) noexcept
 	{
 		// Reserve Space
-		const SizeType NewSize = Size + InSize;
-		const SizeType Offset = InSize - 1;
-		const SizeType Index = static_cast<SizeType>(Pos.Ptr - begin().Ptr);
+		const SizeType NewSize	= Size + InSize;
+		const SizeType Offset	= InSize - 1;
+		const SizeType Index	= static_cast<SizeType>(Pos.Ptr - begin().Ptr);
 		if (NewSize >= Capacity)
 		{
 			Reserve(NewSize + (Capacity / 2));
 		}
 
 		// Move all objects
-		Iterator Begin = begin() + Index;
-		Iterator End = Begin + Offset;
-		Iterator From = end();
+		Iterator Begin	= begin() + Index;
+		Iterator End	= Begin + Offset;
+		Iterator From	= end();
 		for (Iterator It = (From + Offset); (It != End); It--)
 		{
 			From--;
