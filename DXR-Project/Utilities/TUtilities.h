@@ -66,9 +66,16 @@ constexpr TRemoveReference<T>&& Move(T&& Object) noexcept
 	return static_cast<TRemoveReference<T>&&>(Object);
 }
 
+// Forward an object by converting it into a rvalue from an lvalue
+template<typename T>
+constexpr T&& Forward(TRemoveReference<T>& Arg) noexcept
+{
+	return static_cast<T&&>(Arg);
+}
+
 // Forward an object by converting it into a rvalue from an rvalue
 template<typename T>
-constexpr T&& Forward(TRemoveReference<T>&& Object) noexcept
+constexpr T&& Forward(TRemoveReference<T>&& Arg) noexcept
 {
-	return static_cast<T&&>(Object);
+	return static_cast<T&&>(Arg);
 }

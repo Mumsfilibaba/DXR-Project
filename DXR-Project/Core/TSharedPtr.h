@@ -9,7 +9,9 @@ template<typename T>
 class TSharedPtr
 {
 private:
-	// Private Refcounter (Not optimal to have one for each T)
+	/*
+	* Private Refcounter (Not optimal to have one for each T)
+	*/
 	class RefCounter
 	{
 	public:
@@ -175,7 +177,7 @@ public:
 		return *this;
 	}
 
-	FORCEINLINE TSharedPtr& operator=(TUniquePtr&& Unique) noexcept
+	FORCEINLINE TSharedPtr& operator=(TUniquePtr<T>&& Unique) noexcept
 	{
 		if (Ptr != Unique.Ptr)
 		{
