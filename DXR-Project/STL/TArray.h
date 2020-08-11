@@ -247,9 +247,9 @@ public:
 		, Size(Other.Size)
 		, Capacity(Other.Capacity)
 	{
-		Other.Data		= nullptr;
-		Other.Size		= 0;
-		Other.Capacity	= 0;
+		Other.Data = nullptr;
+		Other.Size = 0;
+		Other.Capacity = 0;
 	}
 
 	FORCEINLINE ~TArray()
@@ -259,14 +259,14 @@ public:
 
 		if (Data)
 		{
-			delete[] Data;
+			free(Data);
 			Data = nullptr;
 		}
 	}
 
 	FORCEINLINE void Clear() noexcept
 	{
-		// Call destructor 
+		// Call destructor
 		for (Uint32 Index = 0; Index < Size; Index++)
 		{
 			Data[Index].~ValueType();
@@ -306,7 +306,7 @@ public:
 		SizeType Index = 0;
 		for (Iterator It = Begin; It != End; It++)
 		{
-			Data[Index] = *It;
+			Data[Index] = (*It);
 			Index++;
 		}
 
@@ -325,7 +325,7 @@ public:
 		SizeType Index = 0;
 		for (const ValueType& Object : IList)
 		{
-			Data[Index] = Move(Object);
+			new(Data + Index) ValueType(Move(Object));
 			Index++;
 		}
 
@@ -377,18 +377,19 @@ public:
 		}
 
 		// Allocate new memory
-		ValueType* TempData = new ValueType[InCapacity];
+		constexpr SizeType ElementSize = sizeof(ValueType);
+		ValueType* TempData = reinterpret_cast<ValueType*>(malloc(InCapacity * ElementSize));
 
 		// Move data to the new memory
 		for (SizeType Index = 0; Index < Size; Index++)
 		{
-			TempData[Index] = Move(Data[Index]);
+			new(TempData + Index) ValueType(Move(Data[Index]));
 		}
 
 		// Release and set memory
 		if (Data)
 		{
-			delete[] Data;
+			free(Data);
 		}
 
 		Data = TempData;
@@ -433,7 +434,7 @@ public:
 		}
 
 		// Push element
-		new(&Data[Size++]) T(Forward<TArgs>(Args)...);
+		new(Data + (Size++)) T(Forward<TArgs>(Args)...);
 		return end();
 	}
 
@@ -447,7 +448,22 @@ public:
 		}
 
 		// Emplace new element
-		Iterator PosAfterMove = MakeSpace(Pos, 1);
+		const SizeType Index = static_cast<SizeType>(Pos.Ptr - begin().Ptr);
+		if (Size >= Capacity)
+		{
+			// Unneccessary moves?
+			Reserve(Size + (Capacity / 2));
+		}
+
+		// Move all objects
+		Iterator PosAfterMove = begin() + Index;
+		Iterator From = end();
+		for (Iterator It = From; (It != PosAfterMove); It--)
+		{
+			From--;
+			(*It) = Move(*From);
+		}
+
 		new (PosAfterMove.Ptr) ValueType(Forward<TArgs>(Args)...);
 		Size++;
 
@@ -462,8 +478,23 @@ public:
 			return PushBack(Value);
 		}
 
-		// Insert new element		
-		Iterator PosAfterMove = MakeSpace(Pos, 1);
+		// Reserve Space
+		const SizeType Index = static_cast<SizeType>(Pos.Ptr - begin().Ptr);
+		if (Size >= Capacity)
+		{
+			// Unneccessary moves?
+			Reserve(Size + (Capacity / 2));
+		}
+
+		// Move all objects
+		Iterator PosAfterMove = begin() + Index;
+		Iterator From = end();
+		for (Iterator It = From; (It != PosAfterMove); It--)
+		{
+			From--;
+			(*It) = Move(*From);
+		}
+
 		(*PosAfterMove) = Value;
 		Size++;
 
@@ -478,8 +509,23 @@ public:
 			return PushBack(Value);
 		}
 
-		// Insert new element
-		Iterator PosAfterMove = MakeSpace(Pos, 1);
+		// Reserve Space
+		const SizeType Index = static_cast<SizeType>(Pos.Ptr - begin().Ptr);
+		if (Size >= Capacity)
+		{
+			// Unneccessary moves?
+			Reserve(Size + (Capacity / 2));
+		}
+
+		// Move all objects
+		Iterator PosAfterMove = begin() + Index;
+		Iterator From = end();
+		for (Iterator It = From; (It != PosAfterMove); It--)
+		{
+			From--;
+			(*It) = Move(*From);
+		}
+
 		(*PosAfterMove) = Move(Value);
 		Size++;
 
@@ -490,8 +536,28 @@ public:
 	{
 		// Insert new element
 		const SizeType Count = static_cast<SizeType>(IList.size());
-		Iterator PosAfterMove = MakeSpace(Pos, Count);
 
+		// Reserve Space
+		const SizeType NewSize = Size + Count;
+		const SizeType Offset = Count - 1;
+		const SizeType Index = static_cast<SizeType>(Pos.Ptr - begin().Ptr);
+		if (NewSize >= Capacity)
+		{
+			// Unneccessary Moves?
+			Reserve(NewSize + (Capacity / 2));
+		}
+
+		// Move all objects
+		Iterator PosAfterMove = begin() + Index;
+		Iterator End = PosAfterMove + Offset;
+		Iterator From = end();
+		for (Iterator It = (From + Offset); (It != End); It--)
+		{
+			From--;
+			(*It) = Move(*From);
+		}
+
+		// Insert initializer_list
 		Iterator It = PosAfterMove;
 		for (const ValueType& Value : IList)
 		{
@@ -505,9 +571,7 @@ public:
 
 	FORCEINLINE Iterator PopBack() noexcept
 	{
-		Size--;
-		Data[Size].~ValueType();
-
+		Data[--Size].~ValueType();
 		return end();
 	}
 
@@ -555,8 +619,8 @@ public:
 		}
 
 		// Move elements
-		const SizeType Index	= static_cast<SizeType>(First.Ptr - begin().Ptr);
-		const SizeType Offset	= static_cast<SizeType>(Last.Ptr - First.Ptr);
+		const SizeType Index = static_cast<SizeType>(First.Ptr - begin().Ptr);
+		const SizeType Offset = static_cast<SizeType>(Last.Ptr - First.Ptr);
 
 		Iterator To = begin() + Index;
 		for (Iterator It = To + Offset; (It != end()); It++)
@@ -573,17 +637,17 @@ public:
 	{
 		if (this != std::addressof(Other))
 		{
-			ValueType*	TempPtr			= Data;
-			SizeType	TempSize		= Size;
-			SizeType	TempCapacity	= Capacity;
+			ValueType* TempPtr = Data;
+			SizeType	TempSize = Size;
+			SizeType	TempCapacity = Capacity;
 
-			Data		= Other.Data;
-			Size		= Other.Size;
-			Capacity	= Other.Capacity;
+			Data = Other.Data;
+			Size = Other.Size;
+			Capacity = Other.Capacity;
 
-			Other.Data		= TempPtr;
-			Other.Size		= TempSize;
-			Other.Capacity	= TempCapacity;
+			Other.Data = TempPtr;
+			Other.Size = TempSize;
+			Other.Capacity = TempCapacity;
 		}
 	}
 
@@ -693,13 +757,13 @@ public:
 	{
 		if (this != std::addressof(Other))
 		{
-			Data		= Other.Data;
-			Size		= Other.Size;
-			Capacity	= Other.Capacity;
+			Data = Other.Data;
+			Size = Other.Size;
+			Capacity = Other.Capacity;
 
-			Other.Data		= nullptr;
-			Other.Size		= 0;
-			Other.Capacity	= 0;
+			Other.Data = nullptr;
+			Other.Size = 0;
+			Other.Capacity = 0;
 		}
 
 		return *this;
@@ -751,31 +815,6 @@ public:
 	}
 
 private:
-	FORCEINLINE Iterator MakeSpace(ConstIterator Pos, SizeType InSize) noexcept
-	{
-		// Reserve Space
-		const SizeType NewSize	= Size + InSize;
-		const SizeType Offset	= InSize - 1;
-		const SizeType Index	= static_cast<SizeType>(Pos.Ptr - begin().Ptr);
-		if (NewSize >= Capacity)
-		{
-			Reserve(NewSize + (Capacity / 2));
-		}
-
-		// Move all objects
-		Iterator Begin	= begin() + Index;
-		Iterator End	= Begin + Offset;
-		Iterator From	= end();
-		for (Iterator It = (From + Offset); (It != End); It--)
-		{
-			From--;
-			(*It) = Move(*From);
-		}
-
-		// Return new pos
-		return Begin;
-	}
-
 	ValueType* Data;
 	SizeType Size;
 	SizeType Capacity;
