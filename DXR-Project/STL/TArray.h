@@ -24,7 +24,7 @@ public:
 	public:
 		~ConstIterator() = default;
 
-		FORCEINLINE ConstIterator(ValueType* InPtr)
+		FORCEINLINE ConstIterator(ValueType* InPtr = nullptr)
 			: Ptr(InPtr)
 		{
 		}
@@ -133,7 +133,7 @@ public:
 	public:
 		~Iterator() = default;
 
-		FORCEINLINE Iterator(ValueType* InPtr)
+		FORCEINLINE Iterator(ValueType* InPtr = nullptr)
 			: ConstIterator(InPtr)
 		{
 		}
@@ -218,21 +218,20 @@ public:
 		Reserve(InSize);
 
 		Size = InSize;
-		InternalMemset(begin(), end(), Value);
+		InternalMemset(Begin(), End(), Value);
 	}
 
-	FORCEINLINE TArray(Iterator Begin, Iterator End) noexcept
+	FORCEINLINE TArray(Iterator InBegin, Iterator InEnd) noexcept
 		: Data(nullptr)
 		, Size(0)
 		, Capacity(0)
 	{
-		VALIDATE(Begin < End);
+		VALIDATE(InBegin < InEnd);
 
-		const SizeType Count = static_cast<SizeType>(End.Ptr - Begin.Ptr);
+		const SizeType Count = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr);
 		Reserve(Count);
 
-		// TODO: Maybe check if these iterators are from this TArray, then maybe we can simply do a memmove?
-		InternalMemcpy(Begin, End, begin());
+		InternalCopyEmplace(InBegin, InEnd, Begin());
 		Size = Count;
 	}
 
@@ -241,7 +240,10 @@ public:
 		, Size(0)
 		, Capacity(0)
 	{
-		Assign(IList);
+		Reserve(static_cast<SizeType>(IList.size()));
+
+		InternalMoveEmplace(IList, Begin());
+		Size = static_cast<SizeType>(IList.size());
 	}
 
 	FORCEINLINE TArray(const TArray& Other) noexcept
@@ -249,7 +251,14 @@ public:
 		, Size(0)
 		, Capacity(0)
 	{
-		Assign(Other.begin(), Other.end());
+		Iterator Begin = Other.Begin();
+		Iterator End = Other.End();
+
+		const SizeType Count = static_cast<SizeType>(End.Ptr - Begin.Ptr);
+		Reserve(Count);
+
+		InternalCopyEmplace(Begin, End, Begin());
+		Size = Count;
 	}
 
 	FORCEINLINE TArray(TArray&& Other) noexcept
@@ -265,18 +274,16 @@ public:
 	FORCEINLINE ~TArray()
 	{
 		Clear();
-		Capacity = 0;
 
-		if (Data)
-		{
-			free(Data);
-			Data = nullptr;
-		}
+		InternalReleaseData();
+
+		Capacity = 0;
+		Data = nullptr;
 	}
 
 	FORCEINLINE void Clear() noexcept
 	{
-		InternalDestructRange(begin(), end());
+		InternalDestructRange(Begin(), InternalRealEnd());
 		Size = 0;
 	}
 
@@ -286,20 +293,21 @@ public:
 		Reserve(InSize);
 
 		Size = InSize;
-		InternalMemset(begin(), end(), Value);
+		InternalMemset(Begin(), End(), Value);
 	}
 
-	FORCEINLINE void Assign(Iterator Begin, Iterator End) noexcept
+	FORCEINLINE void Assign(Iterator InBegin, Iterator InEnd) noexcept
 	{
-		VALIDATE(Begin < End);
+		// Does not make sense to assign a range from this TArray, since they could overlap
+		VALIDATE(InternalIsRangeOwner(InBegin, InEnd) == false);
+		VALIDATE(InBegin < InEnd);
 
 		Clear();
 
-		const SizeType Count = static_cast<SizeType>(End.Ptr - Begin.Ptr);
+		const SizeType Count = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr);
 		Reserve(Count);
 
-		// TODO: Maybe check if these iterators are from this TArray, then maybe we can simply do a memmove?
-		InternalMemcpy(Begin, End, begin());
+		InternalCopyEmplace(InBegin, InEnd, Begin());
 		Size = Count;
 	}
 
@@ -308,13 +316,7 @@ public:
 		Clear();
 		Reserve(static_cast<SizeType>(IList.size()));
 
-		SizeType Index = 0;
-		for (const ValueType& Object : IList)
-		{
-			new(Data + Index) ValueType(Move(Object));
-			Index++;
-		}
-
+		InternalMoveEmplace(IList, Begin());
 		Size = static_cast<SizeType>(IList.size());
 	}
 
@@ -336,11 +338,11 @@ public:
 				Reserve(InSize + (Capacity / 2));
 			}
 
-			InternalMemset(begin() + Size, end() + (InSize - Size), Value);
+			InternalMemset(Begin() + Size, End() + (InSize - Size), Value);
 		}
 		else if (InSize < Size)
 		{
-			InternalDestructRange(begin() + InSize, end());
+			InternalDestructRange(Begin() + InSize, End());
 		}
 
 		Size = InSize;
@@ -355,24 +357,18 @@ public:
 
 		if (InCapacity < Size)
 		{
-			InternalDestructRange(begin() + InCapacity, end());
+			InternalDestructRange(Begin() + InCapacity, End());
 			Size = InCapacity;
 		}
 
-		constexpr SizeType ElementSize = sizeof(ValueType);
-		ValueType* TempData = reinterpret_cast<ValueType*>(malloc(InCapacity * ElementSize));
+		Iterator NewRange = InternalAllocateElements(InCapacity);
+		InternalMoveEmplace(Begin(), End(), NewRange);
+		InternalConstructRange(NewRange + Size, NewRange + InCapacity);
 
-		for (SizeType Index = 0; Index < Size; Index++)
-		{
-			new(TempData + Index) ValueType(Move(Data[Index]));
-		}
+		InternalDestructRange(Begin(), End());
+		InternalReleaseData();
 
-		if (Data)
-		{
-			free(Data);
-		}
-
-		Data = TempData;
+		Data = NewRange.Ptr;
 		Capacity = InCapacity;
 	}
 
@@ -380,22 +376,28 @@ public:
 	{
 		if (Size >= Capacity)
 		{
-			Reserve(Capacity + (Capacity / 2));
+			Reserve(InternalGetResizeFactor());
 		}
 
-		Data[Size++] = Element;
-		return end();
+		Iterator ItEnd = End();
+		(*ItEnd) = Element;
+
+		Size++;
+		return ItEnd;
 	}
 
 	FORCEINLINE Iterator PushBack(ValueType&& Element) noexcept
 	{
 		if (Size >= Capacity)
 		{
-			Reserve(Capacity + (Capacity / 2));
+			Reserve(InternalGetResizeFactor());
 		}
 
-		Data[Size++] = Move(Element);
-		return end();
+		Iterator ItEnd = End();
+		(*ItEnd) = Move(Element);
+
+		Size++;
+		return ItEnd;
 	}
 
 	template<typename... TArgs>
@@ -403,113 +405,171 @@ public:
 	{
 		if (Size >= Capacity)
 		{
-			Reserve(Capacity + (Capacity / 2));
+			Reserve(InternalGetResizeFactor());
 		}
 
-		new(Data + (Size++)) T(Forward<TArgs>(Args)...);
-		return end();
+		Iterator ItEnd = End();
+		InternalDestruct(ItEnd);
+		new(ItEnd.Ptr) ValueType(Forward<TArgs>(Args)...);
+
+		Size++;
+		return ItEnd;
 	}
 
 	template<typename... TArgs>
 	FORCEINLINE Iterator Emplace(ConstIterator Pos, TArgs&&... Args) noexcept
 	{
-		if (Pos == end())
+		if (Pos == End())
 		{
 			return EmplaceBack(Forward<TArgs>(Args)...);
 		}
 
-		const SizeType Index = static_cast<SizeType>(Pos.Ptr - begin().Ptr);
+		const SizeType Index = static_cast<SizeType>(Pos.Ptr - Begin().Ptr);
+
+		Iterator ItBegin = Begin() + Index;
 		if (Size >= Capacity)
 		{
-			// TODO: Remove unneccessary moves?
-			Reserve(Size + (Capacity / 2));
+			const SizeType NewCapacity = InternalGetResizeFactor();
+			Iterator NewRange = InternalAllocateElements(NewCapacity);
+			InternalMoveEmplace(Begin(), ItBegin, NewRange);
+			InternalMoveEmplace(ItBegin, End(), NewRange + Index + 1);
+			InternalConstructRange(NewRange + Size + 1, NewRange + NewCapacity);
+
+			InternalDestructRange(Begin(), InternalRealEnd());
+			InternalReleaseData();
+
+			Capacity = NewCapacity;
+			Data = NewRange.Ptr;
+
+			ItBegin = Begin() + Index;
+		}
+		else
+		{
+			InternalMemmoveForward(ItBegin, End(), End());
+			InternalDestruct(ItBegin);
 		}
 
-		Iterator Begin = begin() + Index;
-		InternalMemmoveReverse(Begin, end(), end());
-
-		new (Begin.Ptr) ValueType(Forward<TArgs>(Args)...);
+		new (ItBegin.Ptr) ValueType(Forward<TArgs>(Args)...);
 		Size++;
 
-		return Begin;
+		return ItBegin;
 	}
 
 	FORCEINLINE Iterator Insert(ConstIterator Pos, const ValueType& Value) noexcept
 	{
-		if (Pos == end())
+		if (Pos == End())
 		{
 			return PushBack(Value);
 		}
 
-		const SizeType Index = static_cast<SizeType>(Pos.Ptr - begin().Ptr);
+		const SizeType Index = static_cast<SizeType>(Pos.Ptr - Begin().Ptr);
+
+		Iterator ItBegin = Begin() + Index;
 		if (Size >= Capacity)
 		{
-			// TODO: Remove unneccessary moves?
-			Reserve(Size + (Capacity / 2));
+			const SizeType NewCapacity = InternalGetResizeFactor();
+			Iterator NewRange = InternalAllocateElements(NewCapacity);
+			InternalMoveEmplace(Begin(), ItBegin, NewRange);
+			InternalMoveEmplace(ItBegin, End(), NewRange + Index + 1);
+			InternalConstructRange(NewRange + Size + 1, NewRange + NewCapacity);
+
+			InternalDestructRange(Begin(), InternalRealEnd());
+			InternalReleaseData();
+
+			Capacity = NewCapacity;
+			Data = NewRange.Ptr;
+
+			ItBegin = Begin() + Index;
+			new(ItBegin.Ptr) ValueType(Value);
+		}
+		else
+		{
+			InternalMemmoveForward(ItBegin, End(), End());
+			(*ItBegin) = Value;
 		}
 
-		Iterator Begin = begin() + Index;
-		InternalMemmoveReverse(Begin, end(), end());
-
-		(*Begin) = Value;
 		Size++;
-
-		return Begin;
+		return ItBegin;
 	}
 
 	FORCEINLINE Iterator Insert(ConstIterator Pos, ValueType&& Value) noexcept
 	{
-		if (Pos == end())
+		if (Pos == End())
 		{
 			return PushBack(Value);
 		}
 
-		const SizeType Index = static_cast<SizeType>(Pos.Ptr - begin().Ptr);
+		const SizeType Index = static_cast<SizeType>(Pos.Ptr - Begin().Ptr);
+
+		Iterator ItBegin = Begin() + Index;
 		if (Size >= Capacity)
 		{
-			// TODO: Remove unneccessary moves?
-			Reserve(Size + (Capacity / 2));
+			const SizeType NewCapacity = InternalGetResizeFactor();
+			Iterator NewRange = InternalAllocateElements(NewCapacity);
+			InternalMoveEmplace(Begin(), ItBegin, NewRange);
+			InternalMoveEmplace(ItBegin, End(), NewRange + Index + 1);
+			InternalConstructRange(NewRange + Size + 1, NewRange + NewCapacity);
+
+			InternalDestructRange(Begin(), InternalRealEnd());
+			InternalReleaseData();
+
+			Capacity = NewCapacity;
+			Data = NewRange.Ptr;
+
+			ItBegin = Begin() + Index;
+			new(ItBegin.Ptr) ValueType(Move(Value));
+		}
+		else
+		{
+			InternalMemmoveForward(ItBegin, End(), End());
+			(*ItBegin) = Move(Value);
 		}
 
-		Iterator Begin = begin() + Index;
-		InternalMemmoveReverse(Begin, end(), end());
-
-		(*Begin) = Move(Value);
 		Size++;
-
-		return Begin;
+		return ItBegin;
 	}
 
 	FORCEINLINE Iterator Insert(ConstIterator Pos, std::initializer_list<ValueType> IList) noexcept
 	{
 		const SizeType Count = static_cast<SizeType>(IList.size());
 		const SizeType NewSize = Size + Count;
-		const SizeType Offset = Count - 1;
-		const SizeType Index = static_cast<SizeType>(Pos.Ptr - begin().Ptr);
+		const SizeType Index = static_cast<SizeType>(Pos.Ptr - Begin().Ptr);
+
+		Iterator ItBegin = Begin() + Index;
 		if (NewSize >= Capacity)
 		{
-			// TODO: Remove unneccessary moves?
-			Reserve(NewSize + (Capacity / 2));
+			const SizeType NewCapacity = NewSize + (Capacity / 2) + 1;
+			Iterator NewRange = InternalAllocateElements(NewCapacity);
+			InternalMoveEmplace(Begin(), ItBegin, NewRange);
+			InternalMoveEmplace(ItBegin, End(), NewRange + Index + Count);
+			InternalConstructRange(NewRange + Size + Count, NewRange + NewCapacity);
+
+			InternalDestructRange(Begin(), InternalRealEnd());
+			InternalReleaseData();
+
+			Capacity = NewCapacity;
+			Data = NewRange.Ptr;
+
+			ItBegin = Begin() + Index;
 		}
-
-		Iterator Begin = begin() + Index;
-		InternalMemmoveReverse(Begin, end(), end() + Offset);
-
-		Iterator It = Begin;
-		for (const ValueType& Value : IList)
+		else
 		{
-			new (It.Ptr) ValueType(Move(Value));
-			It++;
+			InternalDestructRange(ItBegin, ItBegin + Count);
+			InternalMemmoveForward(ItBegin, End(), End() + (Count - 1));
 		}
 
-		Size += Count;
-		return Begin;
+		InternalMoveEmplace(IList, ItBegin);
+
+		Size = NewSize;
+		return ItBegin;
 	}
 
 	FORCEINLINE Iterator PopBack() noexcept
 	{
-		Data[--Size].~ValueType();
-		return end();
+		VALIDATE(Size > 0);
+
+		InternalDestruct(Begin() + (--Size));
+		return End();
 	}
 
 	FORCEINLINE Iterator Erase(Iterator Pos) noexcept
@@ -519,43 +579,44 @@ public:
 
 	FORCEINLINE Iterator Erase(ConstIterator Pos) noexcept
 	{
-		if (Pos == end())
+		VALIDATE(InternalIsIteratorOwner(Pos));
+
+		if (Pos == End())
 		{
 			return PopBack();
 		}
 
-		(*Pos).~ValueType();
+		InternalDestruct(Pos);
 
-		const SizeType Index = static_cast<SizeType>(Pos.Ptr - begin().Ptr);
-		Iterator Begin = begin() + Index;
-		InternalMemmove(Begin + 1, end(), Begin);
+		const SizeType Index = static_cast<SizeType>(Pos.Ptr - Begin().Ptr);
+
+		Iterator ItBegin = Begin() + Index;
+		InternalMemmoveBackwards(ItBegin + 1, End(), ItBegin);
 
 		Size--;
-		return Begin;
+		return ItBegin;
 	}
 
-	FORCEINLINE Iterator Erase(Iterator First, Iterator Last) noexcept
+	FORCEINLINE Iterator Erase(Iterator InBegin, Iterator InEnd) noexcept
 	{
-		return Erase(static_cast<ConstIterator>(First), static_cast<ConstIterator>(Last));
+		return Erase(static_cast<ConstIterator>(InBegin), static_cast<ConstIterator>(InEnd));
 	}
 
-	FORCEINLINE Iterator Erase(ConstIterator First, ConstIterator Last) noexcept
+	FORCEINLINE Iterator Erase(ConstIterator InBegin, ConstIterator InEnd) noexcept
 	{
-		VALIDATE(First < Last);
+		VALIDATE(InBegin < InEnd);
+		VALIDATE(InternalIsRangeOwner(InBegin, InEnd));
 
-		for (ConstIterator It = First; (It != Last); It++)
-		{
-			(*It).~ValueType();
-		}
+		InternalDestructRange(InBegin, InEnd);
 
-		const SizeType Index = static_cast<SizeType>(First.Ptr - begin().Ptr);
-		const SizeType Offset = static_cast<SizeType>(Last.Ptr - First.Ptr);
+		const SizeType Index = static_cast<SizeType>(InBegin.Ptr - Begin().Ptr);
+		const SizeType Offset = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr);
 
-		Iterator Begin = begin() + Index;
-		InternalMemmove(Begin + Offset, end(), Begin);
+		Iterator ItBegin = Begin() + Index;
+		InternalMemmoveBackwards(ItBegin + Offset, End(), ItBegin);
 
 		Size -= Offset;
-		return Begin;
+		return ItBegin;
 	}
 
 	FORCEINLINE void Swap(TArray& Other) noexcept
@@ -580,13 +641,13 @@ public:
 	{
 		if (Capacity > Size)
 		{
-			ValueType* TempData = new ValueType[Size];
-			InternalMemmove(begin(), end(), Iterator(TempData));
+			Iterator NewRange = InternalAllocateElements(Size);
+			InternalMoveEmplace(Begin(), End(), NewRange);
 
-			VALIDATE(Data != nullptr);
-			free(Data);
+			InternalDestructRange(Begin(), InternalRealEnd());
+			InternalReleaseData();
 
-			Data = TempData;
+			Data = NewRange.Ptr;
 			Capacity = Size;
 		}
 	}
@@ -594,6 +655,26 @@ public:
 	FORCEINLINE bool IsEmpty() const noexcept
 	{
 		return (Size == 0);
+	}
+
+	FORCEINLINE Iterator Begin() noexcept
+	{
+		return Iterator(Data);
+	}
+
+	FORCEINLINE Iterator End() noexcept
+	{
+		return Iterator(Data + Size);
+	}
+
+	FORCEINLINE ConstIterator Begin() const noexcept
+	{
+		return ConstIterator(Data);
+	}
+
+	FORCEINLINE ConstIterator End() const noexcept
+	{
+		return ConstIterator(Data + Size);
 	}
 
 	FORCEINLINE ValueType& GetFront() noexcept
@@ -659,7 +740,7 @@ public:
 			Clear();
 			Reserve(Other.Capacity);
 
-			InternalMemcpy(Other.begin(), Other.end(), begin());
+			InternalCopyEmplace(Other.Begin(), Other.End(), Begin());
 			Size = Other.Size;
 		}
 
@@ -699,7 +780,7 @@ public:
 	}
 
 	/*
-	* STL iterator functions
+	* STL iterator functions, Only here so that you can use Range for-loops
 	*/
 public:
 	FORCEINLINE Iterator begin() noexcept
@@ -723,73 +804,200 @@ public:
 	}
 
 private:
-	FORCEINLINE void InternalMemset(Iterator First, Iterator Last, const ValueType& Value)
+	FORCEINLINE Iterator InternalRealEnd() const noexcept
 	{
-		VALIDATE(Last >= First);
+		return Iterator(Data + Capacity);
+	}
 
-		// Sets each object in the range to value
-		for (; First != Last; First++)
+	FORCEINLINE bool InternalIsRangeOwner(ConstIterator InBegin, ConstIterator InEnd)
+	{
+		return (InBegin < InEnd) && (InBegin >= Begin()) && (InEnd <= End());
+	}
+
+	FORCEINLINE bool InternalIsIteratorOwner(ConstIterator It)
+	{
+		return (It >= Begin()) && (It <= End());
+	}
+
+	FORCEINLINE SizeType InternalGetResizeFactor() const
+	{
+		return Size + (Capacity / 2) + 1;
+	}
+
+	FORCEINLINE Iterator InternalAllocateElements(SizeType InCapacity)
+	{
+		constexpr SizeType ElementByteSize = sizeof(ValueType);
+		return Iterator(reinterpret_cast<ValueType*>(malloc(static_cast<size_t>(ElementByteSize) * InCapacity)));
+	}
+
+	FORCEINLINE void InternalReleaseData()
+	{
+		if (Data)
 		{
-			(*First) = Value;
+			free(Data);
 		}
 	}
 
-	FORCEINLINE void InternalMemcpy(Iterator First, Iterator Last, Iterator Dest)
+	FORCEINLINE void InternalCopyEmplace(Iterator InBegin, Iterator InEnd, Iterator Dest)
 	{
-		VALIDATE(Last >= First);
-
-		// Copy each object in the range to the destination
-		for (; First != Last; First++)
+		// This function assumes that there is no overlap
+		if constexpr (std::is_trivially_move_constructible<ValueType>())
 		{
-			(*Dest) = (*First);
+			const SizeType CpySize = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr) * sizeof(ValueType);
+			memcpy(Dest.Ptr, InBegin.Ptr, CpySize);
+		}
+		else
+		{
+			while (InBegin != InEnd)
+			{
+				new(Dest.Ptr) ValueType(*InBegin);
+				InBegin++;
+				Dest++;
+			}
+		}
+	}
+
+	FORCEINLINE void InternalMoveEmplace(Iterator InBegin, Iterator InEnd, Iterator Dest)
+	{
+		// This function assumes that there is no overlap
+		if constexpr (std::is_trivially_move_constructible<ValueType>())
+		{
+			const SizeType CpySize = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr) * sizeof(ValueType);
+			memcpy(Dest.Ptr, InBegin.Ptr, CpySize);
+		}
+		else
+		{
+			while (InBegin != InEnd)
+			{
+				new(Dest.Ptr) ValueType(Move(*InBegin));
+				InBegin++;
+				Dest++;
+			}
+		}
+	}
+
+	FORCEINLINE void InternalMoveEmplace(std::initializer_list<ValueType> IList, Iterator Dest)
+	{
+		// This function assumes that there is no overlap
+		for (const ValueType& Value : IList)
+		{
+			new(Dest.Ptr) ValueType(Move(Value));
 			Dest++;
 		}
 	}
 
-	FORCEINLINE void InternalMemmove(Iterator First, Iterator Last, Iterator Dest)
+	FORCEINLINE void InternalMemset(Iterator InBegin, Iterator InEnd, const ValueType& Value)
 	{
-		VALIDATE(Last >= First);
+		// Sets each object in the range to value
+		if constexpr (std::is_trivially_copyable<ValueType>() && (sizeof(ValueType) == sizeof(Char)))
+		{
+			// We can use normal memset if this object is trivially copyable and has the size of maximumum of a char (basically only chars)
+			const SizeType CpySize = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr) * sizeof(ValueType);
+			memset(InBegin.Ptr, Value, CpySize);
+		}
+		else
+		{
+			for (; InBegin != InEnd; InBegin++)
+			{
+				(*InBegin) = Value;
+			}
+		}
+	}
+
+	FORCEINLINE void InternalMemcpy(Iterator InBegin, Iterator InEnd, Iterator Dest)
+	{
+		// Copy each object in the range to the destination
+		// This functions assumes that the range is not overlapping
+
+		if constexpr (std::is_trivially_copyable<ValueType>())
+		{
+			const SizeType CpySize = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr) * sizeof(ValueType);
+			memcpy(Dest.Ptr, InBegin.Ptr, CpySize);
+		}
+		else
+		{
+			while (InBegin != InEnd)
+			{
+				(*Dest) = (*InBegin);
+				Dest++;
+				InBegin++;
+			}
+		}
+	}
+
+	FORCEINLINE void InternalMemmoveBackwards(Iterator InBegin, Iterator InEnd, Iterator Dest)
+	{
+		VALIDATE(InEnd <= InternalRealEnd());
+		VALIDATE(InBegin < InEnd);
+		VALIDATE(InternalIsIteratorOwner(Dest));
 
 		// Move each object in the range to the destination
-		for (; First != Last; First++)
+		// This functions assumes that the range is from this TArray (I.e It can overlap)
+
+		const SizeType Count = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr);
+		if constexpr (std::is_trivially_move_assignable<ValueType>())
 		{
-			(*Dest) = Move(*First);
-			Dest++;
+			const SizeType CpySize = Count * sizeof(ValueType);
+			memmove(Dest.Ptr, InBegin.Ptr, CpySize);
+		}
+		else
+		{
+			while (InBegin != InEnd)
+			{
+				(*Dest) = Move(*InBegin);
+				Dest++;
+				InBegin++;
+			}
 		}
 	}
 
-	FORCEINLINE void InternalMemcpyReverse(Iterator First, Iterator Last, Iterator Dest)
+	FORCEINLINE void InternalMemmoveForward(Iterator InBegin, Iterator InEnd, Iterator Dest)
 	{
-		VALIDATE(Last >= First);
-
-		// Copy each object in the range to the destination, starts in the "end" and moves forward
-		for (; Last != First; Dest--)
+		// Move each object in the range to the destination, starts in the "End" and moves forward
+		while (InEnd != InBegin)
 		{
-			Last--;
-			(*Dest) = (*Last);
+			InEnd--;
+			(*Dest) = Move(*InEnd);
+			Dest--;
 		}
 	}
 
-	FORCEINLINE void InternalMemmoveReverse(Iterator First, Iterator Last, Iterator Dest)
+	FORCEINLINE void InternalDestruct(ConstIterator Pos)
 	{
-		VALIDATE(Last >= First);
-
-		// Move each object in the range to the destination, starts in the "end" and moves forward
-		for (; Last != First; Dest--)
+		// Calls the destructor (If it needs to be called)
+		if constexpr (std::is_trivially_destructible<ValueType>() == false)
 		{
-			Last--;
-			(*Dest) = Move(*Last);
+			(*Pos).~ValueType();
 		}
 	}
 
-	FORCEINLINE void InternalDestructRange(Iterator First, Iterator Last)
+	FORCEINLINE void InternalDestructRange(ConstIterator InBegin, ConstIterator InEnd)
 	{
-		VALIDATE(Last >= First);
+		VALIDATE(InBegin <= InEnd);
 
-		// Calls the destructor for every object in the range
-		for (; First != Last; First++)
+		// Calls the destructor for every object in the range (If it needs to be called)
+		if constexpr (std::is_trivially_destructible<ValueType>() == false)
 		{
-			(*First).~ValueType();
+			while (InBegin != InEnd)
+			{
+				InternalDestruct(InBegin);
+				InBegin++;
+			}
+		}
+	}
+
+	FORCEINLINE void InternalConstructRange(ConstIterator InBegin, ConstIterator InEnd)
+	{
+		VALIDATE(InBegin <= InEnd);
+
+		// Calls the default constructor for every object in the range (If it can be called)
+		if constexpr (std::is_default_constructible<ValueType>())
+		{
+			while (InBegin != InEnd)
+			{
+				new(InBegin.Ptr) ValueType();
+				InBegin++;
+			}
 		}
 	}
 
