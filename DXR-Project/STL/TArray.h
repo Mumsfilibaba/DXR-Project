@@ -909,7 +909,7 @@ private:
 
 	FORCEINLINE SizeType InternalGetResizeFactor() const
 	{
-		return Size + (Capacity / 2) + 1;
+		return Size + (Capacity)+1;
 	}
 
 	FORCEINLINE Iterator InternalAllocateElements(SizeType InCapacity)
@@ -931,7 +931,8 @@ private:
 		// This function assumes that there is no overlap
 		if constexpr (std::is_trivially_move_constructible<ValueType>())
 		{
-			const SizeType CpySize = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr) * sizeof(ValueType);
+			const SizeType Count = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr);
+			const SizeType CpySize = Count * sizeof(ValueType);
 			memcpy(Dest.Ptr, InBegin.Ptr, CpySize);
 		}
 		else
@@ -950,7 +951,8 @@ private:
 		// This function assumes that there is no overlap
 		if constexpr (std::is_trivially_move_constructible<ValueType>())
 		{
-			const SizeType CpySize = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr) * sizeof(ValueType);
+			const SizeType Count = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr);
+			const SizeType CpySize = Count * sizeof(ValueType);
 			memcpy(Dest.Ptr, InBegin.Ptr, CpySize);
 		}
 		else
@@ -980,7 +982,8 @@ private:
 		if constexpr (std::is_trivially_copyable<ValueType>() && (sizeof(ValueType) == sizeof(Char)))
 		{
 			// We can use normal memset if this object is trivially copyable and has the size of maximumum of a char (basically only chars)
-			const SizeType CpySize = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr) * sizeof(ValueType);
+			const SizeType Count = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr);
+			const SizeType CpySize = Count * sizeof(ValueType);
 			memset(InBegin.Ptr, Value, CpySize);
 		}
 		else
@@ -999,7 +1002,8 @@ private:
 
 		if constexpr (std::is_trivially_copyable<ValueType>())
 		{
-			const SizeType CpySize = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr) * sizeof(ValueType);
+			const SizeType Count = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr);
+			const SizeType CpySize = Count * sizeof(ValueType);
 			memcpy(Dest.Ptr, InBegin.Ptr, CpySize);
 		}
 		else
@@ -1042,11 +1046,24 @@ private:
 	FORCEINLINE void InternalMemmoveForward(Iterator InBegin, Iterator InEnd, Iterator Dest)
 	{
 		// Move each object in the range to the destination, starts in the "End" and moves forward
-		while (InEnd != InBegin)
+		const SizeType Count = static_cast<SizeType>(InEnd.Ptr - InBegin.Ptr);
+		if constexpr (std::is_trivially_move_assignable<ValueType>())
 		{
-			InEnd--;
-			(*Dest) = Move(*InEnd);
-			Dest--;
+			if (Count > 0)
+			{
+				const SizeType CpySize = Count * sizeof(ValueType);
+				const SizeType OffsetSize = (Count - 1) * sizeof(ValueType);
+				memmove(reinterpret_cast<Char*>(Dest.Ptr) - OffsetSize, InBegin.Ptr, CpySize);
+			}
+		}
+		else
+		{
+			while (InEnd != InBegin)
+			{
+				InEnd--;
+				(*Dest) = Move(*InEnd);
+				Dest--;
+			}
 		}
 	}
 
