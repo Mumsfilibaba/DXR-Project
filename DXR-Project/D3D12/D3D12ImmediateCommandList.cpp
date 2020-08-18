@@ -19,8 +19,8 @@ D3D12ImmediateCommandList::~D3D12ImmediateCommandList()
 bool D3D12ImmediateCommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 {
 	const Uint32 NumAllocators = 3;
-	Allocators.resize(NumAllocators);
-	FenceValues.resize(NumAllocators, 0);
+	Allocators.Resize(NumAllocators);
+	FenceValues.Resize(NumAllocators, 0);
 
 	// Create allocators
 	HRESULT hr = 0;
@@ -113,7 +113,7 @@ void D3D12ImmediateCommandList::Flush()
 
 	// Get next allocator
 	CurrentAllocatorIndex++;
-	if (CurrentAllocatorIndex >= Allocators.size())
+	if (CurrentAllocatorIndex >= Allocators.GetSize())
 	{
 		CurrentAllocatorIndex = 0;
 	}

@@ -67,21 +67,21 @@ bool D3D12Resource::Initialize(ID3D12Resource* InResource)
 	return Resource != nullptr;
 }
 
-void D3D12Resource::SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex)
+void D3D12Resource::SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex)
 {
-	if (SubresourceIndex >= ShaderResourceViews.size())
+	if (SubresourceIndex >= ShaderResourceViews.GetSize())
 	{
-		ShaderResourceViews.resize(SubresourceIndex + 1);
+		ShaderResourceViews.Resize(SubresourceIndex + 1);
 	}
 
 	ShaderResourceViews[SubresourceIndex] = InShaderResourceView;
 }
 
-void D3D12Resource::SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex)
+void D3D12Resource::SetUnorderedAccessView(TSharedPtr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex)
 {
-	if (SubresourceIndex >= UnorderedAccessViews.size())
+	if (SubresourceIndex >= UnorderedAccessViews.GetSize())
 	{
-		UnorderedAccessViews.resize(SubresourceIndex + 1);
+		UnorderedAccessViews.Resize(SubresourceIndex + 1);
 	}
 
 	UnorderedAccessViews[SubresourceIndex] = InUnorderedAccessView;

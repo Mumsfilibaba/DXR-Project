@@ -26,25 +26,25 @@ WindowsCursor::~WindowsCursor()
 * Initialize
 */
 
-std::shared_ptr<WindowsCursor> CursorArrow;
-std::shared_ptr<WindowsCursor> CursorTextInput;
-std::shared_ptr<WindowsCursor> CursorResizeAll;
-std::shared_ptr<WindowsCursor> CursorResizeEastWest;
-std::shared_ptr<WindowsCursor> CursorResizeNorthSouth;
-std::shared_ptr<WindowsCursor> CursorResizeNorthEastSouthWest;
-std::shared_ptr<WindowsCursor> CursorResizeNorthWestSouthEast;
-std::shared_ptr<WindowsCursor> CursorHand;
-std::shared_ptr<WindowsCursor> CursorNotAllowed;
+TSharedPtr<WindowsCursor> CursorArrow;
+TSharedPtr<WindowsCursor> CursorTextInput;
+TSharedPtr<WindowsCursor> CursorResizeAll;
+TSharedPtr<WindowsCursor> CursorResizeEastWest;
+TSharedPtr<WindowsCursor> CursorResizeNorthSouth;
+TSharedPtr<WindowsCursor> CursorResizeNorthEastSouthWest;
+TSharedPtr<WindowsCursor> CursorResizeNorthWestSouthEast;
+TSharedPtr<WindowsCursor> CursorHand;
+TSharedPtr<WindowsCursor> CursorNotAllowed;
 
 void InitializeCursors()
 {
-	CursorArrow						= std::shared_ptr<WindowsCursor>(new WindowsCursor(IDC_ARROW));
-	CursorTextInput					= std::shared_ptr<WindowsCursor>(new WindowsCursor(IDC_IBEAM));
-	CursorResizeAll					= std::shared_ptr<WindowsCursor>(new WindowsCursor(IDC_SIZEALL));
-	CursorResizeEastWest			= std::shared_ptr<WindowsCursor>(new WindowsCursor(IDC_SIZEWE));
-	CursorResizeNorthSouth			= std::shared_ptr<WindowsCursor>(new WindowsCursor(IDC_SIZENS));
-	CursorResizeNorthEastSouthWest	= std::shared_ptr<WindowsCursor>(new WindowsCursor(IDC_SIZENESW));
-	CursorResizeNorthWestSouthEast	= std::shared_ptr<WindowsCursor>(new WindowsCursor(IDC_SIZENWSE));
-	CursorHand						= std::shared_ptr<WindowsCursor>(new WindowsCursor(IDC_HAND));
-	CursorNotAllowed				= std::shared_ptr<WindowsCursor>(new WindowsCursor(IDC_NO));
+	CursorArrow						= TSharedPtr<WindowsCursor>(new WindowsCursor(IDC_ARROW));
+	CursorTextInput					= TSharedPtr<WindowsCursor>(new WindowsCursor(IDC_IBEAM));
+	CursorResizeAll					= TSharedPtr<WindowsCursor>(new WindowsCursor(IDC_SIZEALL));
+	CursorResizeEastWest			= TSharedPtr<WindowsCursor>(new WindowsCursor(IDC_SIZEWE));
+	CursorResizeNorthSouth			= TSharedPtr<WindowsCursor>(new WindowsCursor(IDC_SIZENS));
+	CursorResizeNorthEastSouthWest	= TSharedPtr<WindowsCursor>(new WindowsCursor(IDC_SIZENESW));
+	CursorResizeNorthWestSouthEast	= TSharedPtr<WindowsCursor>(new WindowsCursor(IDC_SIZENWSE));
+	CursorHand						= TSharedPtr<WindowsCursor>(new WindowsCursor(IDC_HAND));
+	CursorNotAllowed				= TSharedPtr<WindowsCursor>(new WindowsCursor(IDC_NO));
 }

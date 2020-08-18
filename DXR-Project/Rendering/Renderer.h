@@ -20,7 +20,6 @@
 #include "Scene/Camera.h"
 
 #include <memory>
-#include <vector>
 
 #include "Mesh.h"
 #include "Material.h"
@@ -46,21 +45,21 @@ public:
 	
 	void OnResize(Int32 Width, Int32 Height);
 
-	FORCEINLINE std::shared_ptr<D3D12Device> GetDevice() const
+	FORCEINLINE TSharedPtr<D3D12Device> GetDevice() const
 	{
 		return Device;
 	}
 
-	FORCEINLINE std::shared_ptr<D3D12ImmediateCommandList> GetImmediateCommandList() const
+	FORCEINLINE TSharedPtr<D3D12ImmediateCommandList> GetImmediateCommandList() const
 	{
 		return ImmediateCommandList;
 	}
 
-	static Renderer* Make(std::shared_ptr<WindowsWindow> RendererWindow);
+	static Renderer* Make(TSharedPtr<WindowsWindow> RendererWindow);
 	static Renderer* Get();
 	
 private:
-	bool Initialize(std::shared_ptr<WindowsWindow> RendererWindow);
+	bool Initialize(TSharedPtr<WindowsWindow> RendererWindow);
 
 	bool InitRayTracing();
 	bool InitDeferred();
@@ -76,61 +75,61 @@ private:
 	void TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* CommandList);
 
 private:
-	std::shared_ptr<D3D12Device>				Device;
-	std::shared_ptr<D3D12ImmediateCommandList>	ImmediateCommandList;
+	TSharedPtr<D3D12Device>				Device;
+	TSharedPtr<D3D12ImmediateCommandList>	ImmediateCommandList;
 	
-	std::shared_ptr<D3D12CommandQueue>	Queue;
-	std::shared_ptr<D3D12CommandQueue>	ComputeQueue;
-	std::shared_ptr<D3D12CommandList>	CommandList;
-	std::shared_ptr<D3D12Fence>			Fence;
-	std::shared_ptr<D3D12SwapChain>		SwapChain;
+	TSharedPtr<D3D12CommandQueue>	Queue;
+	TSharedPtr<D3D12CommandQueue>	ComputeQueue;
+	TSharedPtr<D3D12CommandList>	CommandList;
+	TSharedPtr<D3D12Fence>			Fence;
+	TSharedPtr<D3D12SwapChain>		SwapChain;
 
-	std::vector<std::shared_ptr<D3D12CommandAllocator>> CommandAllocators;
+	TArray<TSharedPtr<D3D12CommandAllocator>> CommandAllocators;
 
 	MeshData Sphere;
 	MeshData SkyboxMesh;
 	MeshData Cube;
 
-	std::shared_ptr<D3D12Buffer> CameraBuffer;
-	std::shared_ptr<D3D12Buffer> MeshVertexBuffer;
-	std::shared_ptr<D3D12Buffer> MeshIndexBuffer;
-	std::shared_ptr<D3D12Buffer> SkyboxVertexBuffer;
-	std::shared_ptr<D3D12Buffer> SkyboxIndexBuffer;
-	std::shared_ptr<D3D12Buffer> CubeVertexBuffer;
-	std::shared_ptr<D3D12Buffer> CubeIndexBuffer;
+	TSharedPtr<D3D12Buffer> CameraBuffer;
+	TSharedPtr<D3D12Buffer> MeshVertexBuffer;
+	TSharedPtr<D3D12Buffer> MeshIndexBuffer;
+	TSharedPtr<D3D12Buffer> SkyboxVertexBuffer;
+	TSharedPtr<D3D12Buffer> SkyboxIndexBuffer;
+	TSharedPtr<D3D12Buffer> CubeVertexBuffer;
+	TSharedPtr<D3D12Buffer> CubeIndexBuffer;
 
-	std::shared_ptr<D3D12Texture> Skybox;
-	std::shared_ptr<D3D12Texture> IrradianceMap;
-	std::shared_ptr<D3D12Texture> SpecularIrradianceMap;
-	std::shared_ptr<D3D12Texture> Albedo;
-	std::shared_ptr<D3D12Texture> Normal;
-	std::shared_ptr<D3D12Texture> ReflectionTexture;
-	std::shared_ptr<D3D12Texture> IntegrationLUT;
+	TSharedPtr<D3D12Texture> Skybox;
+	TSharedPtr<D3D12Texture> IrradianceMap;
+	TSharedPtr<D3D12Texture> SpecularIrradianceMap;
+	TSharedPtr<D3D12Texture> Albedo;
+	TSharedPtr<D3D12Texture> Normal;
+	TSharedPtr<D3D12Texture> ReflectionTexture;
+	TSharedPtr<D3D12Texture> IntegrationLUT;
 
-	std::shared_ptr<D3D12Texture> GBuffer[4];
+	TSharedPtr<D3D12Texture> GBuffer[4];
 	
-	std::shared_ptr<D3D12RootSignature>		GeometryRootSignature;
-	std::shared_ptr<D3D12RootSignature>		LightRootSignature;
-	std::shared_ptr<D3D12RootSignature>		SkyboxRootSignature;
-	std::shared_ptr<D3D12RootSignature>		GlobalRootSignature;
-	std::shared_ptr<D3D12RootSignature>		IrradianceGenRootSignature;
-	std::shared_ptr<D3D12RootSignature>		SpecIrradianceGenRootSignature;
-	std::shared_ptr<D3D12DescriptorTable>	RayGenDescriptorTable;
-	std::shared_ptr<D3D12DescriptorTable>	GlobalDescriptorTable;
-	std::shared_ptr<D3D12DescriptorTable>	GeometryDescriptorTable;
-	std::shared_ptr<D3D12DescriptorTable>	LightDescriptorTable;
-	std::shared_ptr<D3D12DescriptorTable>	SkyboxDescriptorTable;
-	std::shared_ptr<D3D12RayTracingScene>	RayTracingScene;
+	TSharedPtr<D3D12RootSignature>		GeometryRootSignature;
+	TSharedPtr<D3D12RootSignature>		LightRootSignature;
+	TSharedPtr<D3D12RootSignature>		SkyboxRootSignature;
+	TSharedPtr<D3D12RootSignature>		GlobalRootSignature;
+	TSharedPtr<D3D12RootSignature>		IrradianceGenRootSignature;
+	TSharedPtr<D3D12RootSignature>		SpecIrradianceGenRootSignature;
+	TSharedPtr<D3D12DescriptorTable>	RayGenDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable>	GlobalDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable>	GeometryDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable>	LightDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable>	SkyboxDescriptorTable;
+	TSharedPtr<D3D12RayTracingScene>	RayTracingScene;
 
-	std::shared_ptr<D3D12GraphicsPipelineState>		GeometryPSO;
-	std::shared_ptr<D3D12GraphicsPipelineState>		LightPassPSO;
-	std::shared_ptr<D3D12GraphicsPipelineState>		SkyboxPSO;
-	std::shared_ptr<D3D12ComputePipelineState>		IrradicanceGenPSO;
-	std::shared_ptr<D3D12ComputePipelineState>		SpecIrradicanceGenPSO;
-	std::shared_ptr<D3D12RayTracingPipelineState>	RaytracingPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>		GeometryPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>		LightPassPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>		SkyboxPSO;
+	TSharedPtr<D3D12ComputePipelineState>		IrradicanceGenPSO;
+	TSharedPtr<D3D12ComputePipelineState>		SpecIrradicanceGenPSO;
+	TSharedPtr<D3D12RayTracingPipelineState>	RaytracingPSO;
 
-	std::vector<Uint64>	FenceValues;
+	TArray<Uint64> FenceValues;
 	Uint32 CurrentBackBufferIndex = 0;
 
-	static std::unique_ptr<Renderer> RendererInstance;
+	static TUniquePtr<Renderer> RendererInstance;
 };

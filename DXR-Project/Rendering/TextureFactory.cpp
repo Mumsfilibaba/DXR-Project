@@ -108,9 +108,9 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.Texture2D.MipLevels			= MipLevels;
 	SrvDesc.Texture2D.MostDetailedMip	= 0;
-	Texture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, Texture->GetResource(), &SrvDesc), 0);
+	Texture->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device, Texture->GetResource(), &SrvDesc), 0);
 
-	std::shared_ptr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
+	TSharedPtr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
 	CommandList->TransitionBarrier(Texture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 	CommandList->UploadTextureData(Texture.get(), Pixels, Format, Width, Height, 1, Stride, RowPitch);
 
@@ -157,7 +157,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	UAVDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 	UAVDesc.Texture2DArray.ArraySize		= 6;
 	UAVDesc.Texture2DArray.FirstArraySlice	= 0;
-	StagingTexture->SetUnorderedAccessView(std::make_unique<D3D12UnorderedAccessView>(Device, nullptr, StagingTexture->GetResource(), &UAVDesc), 0);
+	StagingTexture->SetUnorderedAccessView(MakeShared<D3D12UnorderedAccessView>(Device, nullptr, StagingTexture->GetResource(), &UAVDesc), 0);
 
 	TextureProps.Flags = D3D12_RESOURCE_FLAG_NONE;
 
@@ -175,7 +175,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	SRVDesc.TextureCube.MipLevels			= MipLevels;
 	SRVDesc.TextureCube.MostDetailedMip		= 0;
 	SRVDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
-	Texture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, Texture->GetResource(), &SRVDesc), 0);
+	Texture->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device, Texture->GetResource(), &SRVDesc), 0);
 
 	// Generate PipelineState at first run
 	if (!GlobalFactoryData.PanoramaPSO)
@@ -208,15 +208,15 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	}
 
 	// Create needed interfaces
-	std::unique_ptr<D3D12DescriptorTable> SrvDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device, 1);
-	SrvDescriptorTable->SetShaderResourceView(PanoramaSource->GetShaderResourceView(0).get(), 0);
+	TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device, 1);
+	SrvDescriptorTable->SetShaderResourceView(PanoramaSource->GetShaderResourceView(0).Get(), 0);
 	SrvDescriptorTable->CopyDescriptors();
 
-	std::unique_ptr<D3D12DescriptorTable> UavDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device, 1);
-	UavDescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).get(), 0);
+	TUniquePtr<D3D12DescriptorTable> UavDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device, 1);
+	UavDescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).Get(), 0);
 	UavDescriptorTable->CopyDescriptors();
 
-	std::shared_ptr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
+	TSharedPtr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
 	CommandList->TransitionBarrier(PanoramaSource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	CommandList->TransitionBarrier(StagingTexture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 

@@ -120,26 +120,26 @@ void D3D12SwapChain::RetriveSwapChainSurfaces()
 {
 	using namespace Microsoft::WRL;
 
-	if (BackBuffers.size() < GetSurfaceCount())
+	if (BackBuffers.GetSize() < GetSurfaceCount())
 	{
-		BackBuffers.resize(GetSurfaceCount());
+		BackBuffers.Resize(GetSurfaceCount());
 	}
 
-	if (BackBuffersViews.size() < GetSurfaceCount())
+	if (BackBuffersViews.GetSize() < GetSurfaceCount())
 	{
-		BackBuffersViews.resize(GetSurfaceCount());
+		BackBuffersViews.Resize(GetSurfaceCount());
 	}
 
 	Uint32 BufferID = 0;
 	ComPtr<ID3D12Resource> Resource;
-	for (std::shared_ptr<D3D12Texture>& Buffer : BackBuffers)
+	for (TSharedPtr<D3D12Texture>& Buffer : BackBuffers)
 	{
 		HRESULT hResult = SwapChain->GetBuffer(BufferID, IID_PPV_ARGS(&Resource));
 		if (SUCCEEDED(hResult))
 		{
 			if (!Buffer)
 			{
-				Buffer = std::shared_ptr<D3D12Texture>(new D3D12Texture(Device));
+				Buffer = TSharedPtr<D3D12Texture>(new D3D12Texture(Device));
 			}
 
 			if (Buffer->D3D12Resource::Initialize(Resource.Get()))
@@ -152,7 +152,7 @@ void D3D12SwapChain::RetriveSwapChainSurfaces()
 
 				if (!BackBuffersViews[BufferID])
 				{
-					BackBuffersViews[BufferID] = std::shared_ptr<D3D12RenderTargetView>(new D3D12RenderTargetView(Device, Resource.Get(), &RtvDesc));
+					BackBuffersViews[BufferID] = TSharedPtr<D3D12RenderTargetView>(new D3D12RenderTargetView(Device, Resource.Get(), &RtvDesc));
 				}
 				else
 				{
@@ -177,12 +177,12 @@ void D3D12SwapChain::ReleaseSurfaces()
 {
 	using namespace Microsoft::WRL;
 
-	for (std::shared_ptr<D3D12Texture>& Buffer : BackBuffers)
+	for (TSharedPtr<D3D12Texture>& Buffer : BackBuffers)
 	{
-		Buffer.reset();
+		Buffer.Reset();
 	}
 
-	for (std::shared_ptr<D3D12RenderTargetView>& View : BackBuffersViews)
+	for (TSharedPtr<D3D12RenderTargetView>& View : BackBuffersViews)
 	{
 		View->ResetResource();
 	}

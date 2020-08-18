@@ -47,9 +47,9 @@ bool WindowsApplication::Initialize()
 	return true;
 }
 
-void WindowsApplication::AddWindow(std::shared_ptr<WindowsWindow>& Window)
+void WindowsApplication::AddWindow(TSharedPtr<WindowsWindow>& Window)
 {
-	Windows.emplace_back(Window);
+	Windows.EmplaceBack(Window);
 }
 
 bool WindowsApplication::RegisterWindowClass()
@@ -73,9 +73,9 @@ bool WindowsApplication::RegisterWindowClass()
 	}
 }
 
-std::shared_ptr<WindowsWindow> WindowsApplication::MakeWindow(const WindowProperties& Properties)
+TSharedPtr<WindowsWindow> WindowsApplication::MakeWindow(const WindowProperties& Properties)
 {
-	std::shared_ptr<WindowsWindow> NewWindow = std::shared_ptr<WindowsWindow>(new WindowsWindow());
+	TSharedPtr<WindowsWindow> NewWindow = TSharedPtr<WindowsWindow>(new WindowsWindow());
 	if (NewWindow->Initialize(this, Properties))
 	{
 		AddWindow(NewWindow);
@@ -83,7 +83,7 @@ std::shared_ptr<WindowsWindow> WindowsApplication::MakeWindow(const WindowProper
 	}
 	else
 	{
-		return std::shared_ptr<WindowsWindow>(nullptr);
+		return TSharedPtr<WindowsWindow>(nullptr);
 	}
 }
 
@@ -118,9 +118,9 @@ ModifierKeyState WindowsApplication::GetModifierKeyState() const
 	return ModifierKeyState(ModifierMask);
 }
 
-std::shared_ptr<WindowsWindow> WindowsApplication::GetWindowFromHWND(HWND Window) const
+TSharedPtr<WindowsWindow> WindowsApplication::GetWindowFromHWND(HWND Window) const
 {
-	for (const std::shared_ptr<WindowsWindow>& CurrentWindow : Windows)
+	for (const TSharedPtr<WindowsWindow>& CurrentWindow : Windows)
 	{
 		if (CurrentWindow->GetHandle() == Window)
 		{
@@ -128,22 +128,22 @@ std::shared_ptr<WindowsWindow> WindowsApplication::GetWindowFromHWND(HWND Window
 		}
 	}
 
-	return std::shared_ptr<WindowsWindow>(nullptr);
+	return TSharedPtr<WindowsWindow>(nullptr);
 }
 
-std::shared_ptr<WindowsWindow> WindowsApplication::GetActiveWindow() const
+TSharedPtr<WindowsWindow> WindowsApplication::GetActiveWindow() const
 {
 	HWND hActiveWindow = ::GetForegroundWindow();
 	return GetWindowFromHWND(hActiveWindow);
 }
 
-std::shared_ptr<WindowsWindow> WindowsApplication::GetCapture() const
+TSharedPtr<WindowsWindow> WindowsApplication::GetCapture() const
 {
 	HWND hCapture = ::GetCapture();
 	return GetWindowFromHWND(hCapture);
 }
 
-void WindowsApplication::GetCursorPos(std::shared_ptr<WindowsWindow>& RelativeWindow, Int32& OutX, Int32& OutY) const
+void WindowsApplication::GetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32& OutX, Int32& OutY) const
 {
 	HWND hRelative = RelativeWindow->GetHandle();
 
@@ -175,7 +175,7 @@ bool WindowsApplication::Tick()
 	return true;
 }
 
-void WindowsApplication::SetCursor(std::shared_ptr<WindowsCursor> Cursor)
+void WindowsApplication::SetCursor(TSharedPtr<WindowsCursor> Cursor)
 {
 	if (Cursor)
 	{
@@ -188,7 +188,7 @@ void WindowsApplication::SetCursor(std::shared_ptr<WindowsCursor> Cursor)
 	}
 }
 
-void WindowsApplication::SetActiveWindow(std::shared_ptr<WindowsWindow>& ActiveWindow)
+void WindowsApplication::SetActiveWindow(TSharedPtr<WindowsWindow>& ActiveWindow)
 {
 	HWND hActiveWindow = ActiveWindow->GetHandle();
 	if (::IsWindow(hActiveWindow))
@@ -197,7 +197,7 @@ void WindowsApplication::SetActiveWindow(std::shared_ptr<WindowsWindow>& ActiveW
 	}
 }
 
-void WindowsApplication::SetCapture(std::shared_ptr<WindowsWindow> CaptureWindow)
+void WindowsApplication::SetCapture(TSharedPtr<WindowsWindow> CaptureWindow)
 {
 	if (CaptureWindow)
 	{
@@ -213,7 +213,7 @@ void WindowsApplication::SetCapture(std::shared_ptr<WindowsWindow> CaptureWindow
 	}
 }
 
-void WindowsApplication::SetCursorPos(std::shared_ptr<WindowsWindow>& RelativeWindow, Int32 X, Int32 Y)
+void WindowsApplication::SetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32 X, Int32 Y)
 {
 	HWND hRelative = RelativeWindow->GetHandle();
 	
@@ -233,7 +233,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 	constexpr Uint16 SCAN_CODE_MASK		= 0x01ff;
 	constexpr Uint16 BACK_BUTTON_MASK	= 0x0001;
 
-	std::shared_ptr<WindowsWindow> MessageWindow = GetWindowFromHWND(hWnd);
+	TSharedPtr<WindowsWindow> MessageWindow = GetWindowFromHWND(hWnd);
 	switch (uMessage)
 	{
 		case WM_DESTROY:

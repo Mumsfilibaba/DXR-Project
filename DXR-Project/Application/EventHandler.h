@@ -12,7 +12,7 @@ class EventHandler
 public:
 	virtual ~EventHandler() = default;
 
-	virtual void OnWindowResized(std::shared_ptr<WindowsWindow>& Window, Uint16 Width, Uint16 Height)
+	virtual void OnWindowResized(TSharedPtr<WindowsWindow>& Window, Uint16 Width, Uint16 Height)
 	{
 	}
 

@@ -26,14 +26,14 @@ private:
 /*
 * Pre-Defined Cursors
 */
-extern std::shared_ptr<WindowsCursor> CursorArrow;
-extern std::shared_ptr<WindowsCursor> CursorTextInput;
-extern std::shared_ptr<WindowsCursor> CursorResizeAll;
-extern std::shared_ptr<WindowsCursor> CursorResizeEastWest;
-extern std::shared_ptr<WindowsCursor> CursorResizeNorthSouth;
-extern std::shared_ptr<WindowsCursor> CursorResizeNorthEastSouthWest;
-extern std::shared_ptr<WindowsCursor> CursorResizeNorthWestSouthEast;
-extern std::shared_ptr<WindowsCursor> CursorHand;
-extern std::shared_ptr<WindowsCursor> CursorNotAllowed;
+extern TSharedPtr<WindowsCursor> CursorArrow;
+extern TSharedPtr<WindowsCursor> CursorTextInput;
+extern TSharedPtr<WindowsCursor> CursorResizeAll;
+extern TSharedPtr<WindowsCursor> CursorResizeEastWest;
+extern TSharedPtr<WindowsCursor> CursorResizeNorthSouth;
+extern TSharedPtr<WindowsCursor> CursorResizeNorthEastSouthWest;
+extern TSharedPtr<WindowsCursor> CursorResizeNorthWestSouthEast;
+extern TSharedPtr<WindowsCursor> CursorHand;
+extern TSharedPtr<WindowsCursor> CursorNotAllowed;
 
 void InitializeCursors();

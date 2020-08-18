@@ -30,7 +30,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(Uint32& OutHeap
 	bool FoundHeap = false;
 	for (DescriptorHeap& Heap : Heaps)
 	{
-		if (!Heap.FreeList.empty())
+		if (!Heap.FreeList.IsEmpty())
 		{
 			FoundHeap = true;
 			break;
@@ -45,19 +45,19 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(Uint32& OutHeap
 	if (!FoundHeap)
 	{
 		AllocateHeap();
-		HeapIndex = static_cast<Uint32>(Heaps.size()) - 1;
+		HeapIndex = static_cast<Uint32>(Heaps.GetSize()) - 1;
 	}
 
 	// Get the heap and the first free range
 	DescriptorHeap&	Heap	= Heaps[HeapIndex];
-	FreeRange&		Range	= Heap.FreeList.front();
+	FreeRange&		Range	= Heap.FreeList.GetFront();
 
 	D3D12_CPU_DESCRIPTOR_HANDLE Handle = Range.Begin;
 	Range.Begin.ptr += DescriptorSize;
 
 	if (!Range.IsValid())
 	{
-		Heap.FreeList.erase(Heap.FreeList.begin());
+		Heap.FreeList.Erase(Heap.FreeList.Begin());
 	}
 
 	OutHeapIndex = HeapIndex;
@@ -66,7 +66,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(Uint32& OutHeap
 
 void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, Uint32 HeapIndex)
 {
-	VALIDATE(HeapIndex < Heaps.size());
+	VALIDATE(HeapIndex < Heaps.GetSize());
 	DescriptorHeap&	Heap = Heaps[HeapIndex];
 
 	// Find a suitable range
@@ -94,7 +94,7 @@ void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, Uint32
 	if (!FoundRange)
 	{
 		D3D12_CPU_DESCRIPTOR_HANDLE End = { Handle.ptr + DescriptorSize };
-		Heap.FreeList.emplace_back(Handle, End);
+		Heap.FreeList.EmplaceBack(Handle, End);
 	}
 }
 
@@ -128,14 +128,14 @@ void D3D12OfflineDescriptorHeap::AllocateHeap()
 
 		if (!DebugName.empty())
 		{
-			std::wstring DbgName = DebugName + std::to_wstring(Heaps.size());
+			std::wstring DbgName = DebugName + std::to_wstring(Heaps.GetSize());
 			Heap->SetName(DbgName.c_str());
 		}
 
 		FreeRange WholeRange;
 		WholeRange.Begin	= Heap->GetCPUDescriptorHandleForHeapStart();
 		WholeRange.End.ptr	= WholeRange.Begin.ptr + (DescriptorSize * DescriptorCount);
-		Heaps.emplace_back(Heap, WholeRange);
+		Heaps.EmplaceBack(Heap, WholeRange);
 	}
 	else
 	{
@@ -212,7 +212,7 @@ D3D12DescriptorTable::D3D12DescriptorTable(D3D12Device* InDevice, Uint32 InDescr
 	, GPUTableStart({ 0 })
 	, DescriptorCount(InDescriptorCount)
 {
-	OfflineHandles.resize(DescriptorCount);
+	OfflineHandles.Resize(DescriptorCount);
 
 	StartDescriptorSlot	= Device->GetGlobalOnlineResourceHeap()->AllocateSlots(DescriptorCount);
 	DescriptorSize		= Device->GetGlobalOnlineResourceHeap()->GetDescriptorSize();
@@ -228,7 +228,7 @@ D3D12DescriptorTable::~D3D12DescriptorTable()
 void D3D12DescriptorTable::SetUnorderedAccessView(D3D12UnorderedAccessView* View, Uint32 SlotIndex)
 {
 	VALIDATE(View != nullptr);
-	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.size()));
+	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.GetSize()));
 
 	OfflineHandles[SlotIndex] = View->GetOfflineHandle();
 	IsDirty = true;
@@ -237,7 +237,7 @@ void D3D12DescriptorTable::SetUnorderedAccessView(D3D12UnorderedAccessView* View
 void D3D12DescriptorTable::SetConstantBufferView(D3D12ConstantBufferView* View, Uint32 SlotIndex)
 {
 	VALIDATE(View != nullptr);
-	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.size()));
+	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.GetSize()));
 
 	OfflineHandles[SlotIndex] = View->GetOfflineHandle();
 	IsDirty = true;
@@ -246,7 +246,7 @@ void D3D12DescriptorTable::SetConstantBufferView(D3D12ConstantBufferView* View, 
 void D3D12DescriptorTable::SetShaderResourceView(D3D12ShaderResourceView* View, Uint32 SlotIndex)
 {
 	VALIDATE(View != nullptr);
-	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.size()));
+	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.GetSize()));
 
 	OfflineHandles[SlotIndex] = View->GetOfflineHandle();
 	IsDirty = true;
@@ -256,13 +256,13 @@ void D3D12DescriptorTable::CopyDescriptors()
 {
 	if (IsDirty)
 	{
-		std::vector<Uint32> RangeSizes(OfflineHandles.size());
+		TArray<Uint32> RangeSizes(OfflineHandles.GetSize());
 		for (Uint32& Size : RangeSizes)
 		{
 			Size = 1;
 		}
 
-		Device->GetDevice()->CopyDescriptors(1, &CPUTableStart, &DescriptorCount, DescriptorCount, OfflineHandles.data(), RangeSizes.data(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		Device->GetDevice()->CopyDescriptors(1, &CPUTableStart, &DescriptorCount, DescriptorCount, OfflineHandles.GetData(), RangeSizes.GetData(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		IsDirty = false;
 	}
 }

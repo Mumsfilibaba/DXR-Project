@@ -4,6 +4,7 @@
 #include "Types.h"
 
 #include "Application/InputCodes.h"
+#include "Application/EventHandler.h"
 
 #include <memory>
 #include <vector>
@@ -65,28 +66,28 @@ class WindowsApplication
 public:
 	~WindowsApplication();
 
-	std::shared_ptr<WindowsWindow> MakeWindow(const struct WindowProperties& Properties);
+	TSharedPtr<WindowsWindow> MakeWindow(const struct WindowProperties& Properties);
 
 	bool Tick();
 	
-	void SetCursor(std::shared_ptr<WindowsCursor> Cursor);
-	void SetActiveWindow(std::shared_ptr<WindowsWindow>& ActiveWindow);
-	void SetCapture(std::shared_ptr<WindowsWindow> CaptureWindow);
+	void SetCursor(TSharedPtr<WindowsCursor> Cursor);
+	void SetActiveWindow(TSharedPtr<WindowsWindow>& ActiveWindow);
+	void SetCapture(TSharedPtr<WindowsWindow> CaptureWindow);
 
-	ModifierKeyState				GetModifierKeyState()			const;
-	std::shared_ptr<WindowsWindow>	GetWindowFromHWND(HWND Window)	const;
-	std::shared_ptr<WindowsWindow>	GetActiveWindow()				const;
-	std::shared_ptr<WindowsWindow>	GetCapture()					const;
+	ModifierKeyState			GetModifierKeyState()			const;
+	TSharedPtr<WindowsWindow>	GetWindowFromHWND(HWND Window)	const;
+	TSharedPtr<WindowsWindow>	GetActiveWindow()				const;
+	TSharedPtr<WindowsWindow>	GetCapture()					const;
 
-	void SetCursorPos(std::shared_ptr<WindowsWindow>& RelativeWindow, Int32 X, Int32 Y);
-	void GetCursorPos(std::shared_ptr<WindowsWindow>& RelativeWindow, Int32& OutX, Int32& OutY) const;
+	void SetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32 X, Int32 Y);
+	void GetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32& OutX, Int32& OutY) const;
 
-	FORCEINLINE void SetEventHandler(std::shared_ptr<EventHandler> InMessageHandler)
+	FORCEINLINE void SetEventHandler(TSharedPtr<EventHandler> InMessageHandler)
 	{
 		MessageHandler = InMessageHandler;
 	}
 
-	FORCEINLINE std::shared_ptr<EventHandler> GetEventHandler() const
+	FORCEINLINE TSharedPtr<EventHandler> GetEventHandler() const
 	{
 		return MessageHandler;
 	}
@@ -103,7 +104,7 @@ private:
 	
 	bool Initialize();
 
-	void AddWindow(std::shared_ptr<WindowsWindow>& Window);
+	void AddWindow(TSharedPtr<WindowsWindow>& Window);
 
 	bool RegisterWindowClass();
 
@@ -112,10 +113,10 @@ private:
 	static LRESULT MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
 private:
-	HINSTANCE						InstanceHandle			= 0;
-	std::shared_ptr<EventHandler>	MessageHandler	= nullptr;
+	HINSTANCE					InstanceHandle	= 0;
+	TSharedPtr<EventHandler>	MessageHandler	= nullptr;
 
-	std::vector<std::shared_ptr<WindowsWindow>> Windows;
+	TArray<TSharedPtr<WindowsWindow>> Windows;
 };
 
 extern WindowsApplication* GlobalWindowsApplication;

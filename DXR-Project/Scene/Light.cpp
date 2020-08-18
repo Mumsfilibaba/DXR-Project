@@ -2,6 +2,7 @@
 
 #include "D3D12/D3D12Buffer.h"
 #include "D3D12/D3D12Texture.h"
+#include "D3D12/D3D12DescriptorHeap.h"
 
 Light::Light()
 	: Color()

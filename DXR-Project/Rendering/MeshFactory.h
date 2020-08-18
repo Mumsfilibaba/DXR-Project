@@ -44,8 +44,8 @@ namespace std
 
 struct MeshData
 {
-	std::vector<Vertex> Vertices;
-	std::vector<Uint32> Indices;
+	TArray<Vertex> Vertices;
+	TArray<Uint32> Indices;
 };
 
 class MeshFactory

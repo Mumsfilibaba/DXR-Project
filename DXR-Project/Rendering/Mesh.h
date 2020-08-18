@@ -5,6 +5,8 @@
 
 #include "MeshFactory.h"
 
+#include "Core/TSharedPtr.h"
+
 class Mesh
 {
 public:
@@ -15,13 +17,13 @@ public:
 	
 	bool BuildAccelerationStructure(D3D12CommandList* CommandList);
 
-	static std::shared_ptr<Mesh> Make(D3D12Device* Device, const MeshData& Data);
+	static TSharedPtr<Mesh> Make(D3D12Device* Device, const MeshData& Data);
 
 public:
-	std::shared_ptr<D3D12Buffer>				VertexBuffer;
-	std::shared_ptr<D3D12Buffer>				IndexBuffer;
-	std::shared_ptr<D3D12RayTracingGeometry>	RayTracingGeometry;
-	std::shared_ptr<D3D12DescriptorTable>		DescriptorTable;
+	TSharedPtr<D3D12Buffer>				VertexBuffer;
+	TSharedPtr<D3D12Buffer>				IndexBuffer;
+	TSharedPtr<D3D12RayTracingGeometry>	RayTracingGeometry;
+	TSharedPtr<D3D12DescriptorTable>		DescriptorTable;
 	
 	Uint32 VertexCount	= 0;
 	Uint32 IndexCount	= 0;

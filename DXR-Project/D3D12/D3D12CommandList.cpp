@@ -65,9 +65,9 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	StagingTextureProps.DebugName			= "StagingTexture";
 	StagingTextureProps.Flags				= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	StagingTextureProps.Format				= Desc.Format;
-	StagingTextureProps.Width				= Desc.Width;
-	StagingTextureProps.Height				= Desc.Height;
-	StagingTextureProps.ArrayCount			= Desc.DepthOrArraySize;
+	StagingTextureProps.Width				= static_cast<Uint16>(Desc.Width);
+	StagingTextureProps.Height				= static_cast<Uint16>(Desc.Height);
+	StagingTextureProps.ArrayCount			= static_cast<Uint16>(Desc.DepthOrArraySize);
 	StagingTextureProps.MemoryType			= Dest->GetMemoryType();
 	StagingTextureProps.InitalState			= D3D12_RESOURCE_STATE_COMMON;
 	StagingTextureProps.MipLevels			= Desc.MipLevels;
@@ -98,7 +98,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 		SRVDesc.Texture2D.MostDetailedMip	= 0;
 	}
 
-	StagingTexture->SetShaderResourceView(std::make_shared<D3D12ShaderResourceView>(Device, StagingTexture->GetResource(), &SRVDesc), 0);
+	StagingTexture->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device, StagingTexture->GetResource(), &SRVDesc), 0);
 
 	// Create UAVs
 	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = { };
@@ -127,7 +127,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 			UAVDesc.Texture2D.MipSlice = i;
 		}
 
-		StagingTexture->SetUnorderedAccessView(std::make_shared<D3D12UnorderedAccessView>(Device, nullptr, StagingTexture->GetResource(), &UAVDesc), i);
+		StagingTexture->SetUnorderedAccessView(MakeShared<D3D12UnorderedAccessView>(Device, nullptr, StagingTexture->GetResource(), &UAVDesc), i);
 	}
 
 	// Create PSO and RS
@@ -218,7 +218,6 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	{
 		if (!MipGenHelper.NULLView)
 		{
-			D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = { };
 			UAVDesc.Format					= Desc.Format;
 			UAVDesc.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
 			UAVDesc.Texture2D.MipSlice		= 0;
@@ -230,9 +229,9 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	}
 
 	// Resize if necessary
-	if (MipGenHelper.UAVDescriptorTables.size() < NumDispatches)
+	if (MipGenHelper.UAVDescriptorTables.GetSize() < NumDispatches)
 	{
-		MipGenHelper.UAVDescriptorTables.resize(NumDispatches);
+		MipGenHelper.UAVDescriptorTables.Resize(NumDispatches);
 	}
 
 	// Bind ShaderResourceView
@@ -241,7 +240,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 		MipGenHelper.SRVDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device, 1);
 	}
 
-	MipGenHelper.SRVDescriptorTable->SetShaderResourceView(StagingTexture->GetShaderResourceView(0).get(), 0);
+	MipGenHelper.SRVDescriptorTable->SetShaderResourceView(StagingTexture->GetShaderResourceView(0).Get(), 0);
 	MipGenHelper.SRVDescriptorTable->CopyDescriptors();
 
 	// Bind UnorderedAccessViews
@@ -257,7 +256,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 		{
 			if (UAVIndex < Desc.MipLevels)
 			{
-				MipGenHelper.UAVDescriptorTables[i]->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(UAVIndex).get(), j);
+				MipGenHelper.UAVDescriptorTables[i]->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(UAVIndex).Get(), j);
 				UAVIndex++;
 			}
 			else
@@ -292,7 +291,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 		XMFLOAT2	TexelSize;
 	} CB0;
 
-	Uint32 DstWidth		= Desc.Width;
+	Uint32 DstWidth		= static_cast<Uint32>(Desc.Width);
 	Uint32 DstHeight	= Desc.Height;
 	CB0.SrcMipLevel		= 0;
 
@@ -329,12 +328,12 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 
 void D3D12CommandList::FlushDeferredResourceBarriers()
 {
-	if (!DeferredResourceBarriers.empty())
+	if (!DeferredResourceBarriers.IsEmpty())
 	{
 		// TODO: Remove unnecessary barriers
 
-		CommandList->ResourceBarrier(static_cast<UINT>(DeferredResourceBarriers.size()), DeferredResourceBarriers.data());
-		DeferredResourceBarriers.clear();
+		CommandList->ResourceBarrier(static_cast<UINT>(DeferredResourceBarriers.GetSize()), DeferredResourceBarriers.GetData());
+		DeferredResourceBarriers.Clear();
 	}
 }
 
@@ -403,7 +402,7 @@ void D3D12CommandList::UploadTextureData(class D3D12Texture* Dest, const void* S
 
 void D3D12CommandList::DeferDestruction(D3D12Resource* Resource)
 {
-	ResourcesPendingRelease.emplace_back(Resource->GetResource());
+	ResourcesPendingRelease.EmplaceBack(Resource->GetResource());
 }
 
 void D3D12CommandList::TransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
@@ -416,7 +415,7 @@ void D3D12CommandList::TransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE
 	Barrier.Transition.StateBefore	= BeforeState;
 	Barrier.Transition.StateAfter	= AfterState;
 
-	DeferredResourceBarriers.push_back(Barrier);
+	DeferredResourceBarriers.PushBack(Barrier);
 }
 
 void D3D12CommandList::UnorderedAccessBarrier(D3D12Resource* Resource)
@@ -425,7 +424,7 @@ void D3D12CommandList::UnorderedAccessBarrier(D3D12Resource* Resource)
 	Barrier.Type			= D3D12_RESOURCE_BARRIER_TYPE_UAV;
 	Barrier.UAV.pResource	= Resource->GetResource();
 	
-	DeferredResourceBarriers.push_back(Barrier);
+	DeferredResourceBarriers.PushBack(Barrier);
 }
 
 void D3D12CommandList::SetDebugName(const std::string& DebugName)

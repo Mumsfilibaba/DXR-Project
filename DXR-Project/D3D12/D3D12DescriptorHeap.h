@@ -1,6 +1,8 @@
 #pragma once
 #include "D3D12DeviceChild.h"
 
+#include "STL/TArray.h"
+
 /*
 * D3D12OfflineDescriptorHeap
 */
@@ -48,13 +50,13 @@ class D3D12OfflineDescriptorHeap : public D3D12DeviceChild
 			VALIDATE(InHeap != nullptr);
 			CPUStart = InHeap->GetCPUDescriptorHandleForHeapStart();
 
-			FreeList.emplace_back(FirstRange);
+			FreeList.EmplaceBack(FirstRange);
 		}
 
 	public:
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	Heap;
 		D3D12_CPU_DESCRIPTOR_HANDLE						CPUStart;
-		std::vector<FreeRange>							FreeList;
+		TArray<FreeRange>							FreeList;
 	};
 
 public:
@@ -70,7 +72,7 @@ private:
 	void AllocateHeap();
 
 private:
-	std::vector<DescriptorHeap> Heaps;
+	TArray<DescriptorHeap> Heaps;
 	std::wstring				DebugName;
 
 	D3D12_DESCRIPTOR_HEAP_TYPE	Type;
@@ -164,7 +166,7 @@ public:
 private:
 	D3D12Device* Device = nullptr;
 	
-	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> OfflineHandles;
+	TArray<D3D12_CPU_DESCRIPTOR_HANDLE> OfflineHandles;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE	CPUTableStart;
 	D3D12_GPU_DESCRIPTOR_HANDLE	GPUTableStart;

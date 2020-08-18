@@ -12,6 +12,15 @@ template<typename T>
 class TUniquePtr
 {
 public:
+	template<typename TOther>
+	friend class TUniquePtr;
+
+	template<typename T>
+	friend class TSharedPtr;
+
+	TUniquePtr(const TUniquePtr& Other)						= delete;
+	TUniquePtr& operator=(const TUniquePtr& Other) noexcept	= delete;
+
 	FORCEINLINE TUniquePtr() noexcept
 		: Ptr(nullptr)
 	{
@@ -22,12 +31,14 @@ public:
 	{
 	}
 
-	FORCEINLINE TUniquePtr(const TUniquePtr& Other) noexcept
+	FORCEINLINE TUniquePtr(TUniquePtr&& Other) noexcept
 		: Ptr(Other.Ptr)
 	{
+		Other.Ptr = nullptr;
 	}
 
-	FORCEINLINE TUniquePtr(TUniquePtr&& Other) noexcept
+	template<typename TOther>
+	FORCEINLINE TUniquePtr(TUniquePtr<TOther>&& Other) noexcept
 		: Ptr(Other.Ptr)
 	{
 		Other.Ptr = nullptr;
@@ -100,17 +111,6 @@ public:
 		return *this;
 	}
 
-	FORCEINLINE TUniquePtr& operator=(const TUniquePtr& Other) noexcept
-	{
-		if (this != std::addressof(Other))
-		{
-			Reset();
-			Ptr = Other.Ptr;
-		}
-
-		return *this;
-	}
-
 	FORCEINLINE TUniquePtr& operator=(TUniquePtr&& Other) noexcept
 	{
 		if (this != std::addressof(Other))
@@ -118,6 +118,19 @@ public:
 			Reset();
 			Ptr			= Other.Ptr;
 			Other.Ptr	= nullptr;
+		}
+
+		return *this;
+	}
+
+	template<typename TOther>
+	FORCEINLINE TUniquePtr& operator=(TUniquePtr<TOther> && Other) noexcept
+	{
+		if (this != std::addressof(Other))
+		{
+			Reset();
+			Ptr = Other.Ptr;
+			Other.Ptr = nullptr;
 		}
 
 		return *this;
@@ -141,7 +154,7 @@ public:
 
 	FORCEINLINE operator bool() const noexcept
 	{
-		return (Ptr == nullptr);
+		return (Ptr != nullptr);
 	}
 
 private:

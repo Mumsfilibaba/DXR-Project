@@ -401,7 +401,7 @@ public:
 		Capacity = InCapacity;
 	}
 
-	FORCEINLINE Iterator PushBack(const ValueType& Element) noexcept
+	FORCEINLINE ValueType& PushBack(const ValueType& Element) noexcept
 	{
 		Iterator ItEnd = End();
 		if (Size >= Capacity)
@@ -426,10 +426,10 @@ public:
 
 		new(ItEnd.Ptr) ValueType(Element);
 		Size++;
-		return ItEnd;
+		return (*ItEnd);
 	}
 
-	FORCEINLINE Iterator PushBack(ValueType&& Element) noexcept
+	FORCEINLINE ValueType& PushBack(ValueType&& Element) noexcept
 	{
 		Iterator ItEnd = End();
 		if (Size >= Capacity)
@@ -454,11 +454,11 @@ public:
 
 		new(ItEnd.Ptr) ValueType(Move(Element));
 		Size++;
-		return ItEnd;
+		return (*ItEnd);
 	}
 
 	template<typename... TArgs>
-	FORCEINLINE Iterator EmplaceBack(TArgs&&... Args) noexcept
+	FORCEINLINE ValueType& EmplaceBack(TArgs&&... Args) noexcept
 	{
 		Iterator ItEnd = End();
 		if (Size >= Capacity)
@@ -483,7 +483,7 @@ public:
 
 		new(ItEnd.Ptr) ValueType(Forward<TArgs>(Args)...);
 		Size++;
-		return ItEnd;
+		return (*ItEnd);
 	}
 
 	template<typename... TArgs>
@@ -658,7 +658,6 @@ public:
 		InternalDestruct(Pos);
 
 		const SizeType Index = static_cast<SizeType>(Pos.Ptr - Begin().Ptr);
-
 		Iterator ItBegin = Begin() + Index;
 		InternalMemmoveBackwards(ItBegin + 1, End(), ItBegin);
 
@@ -986,11 +985,38 @@ private:
 			const SizeType CpySize = Count * sizeof(ValueType);
 			memset(InBegin.Ptr, Value, CpySize);
 		}
-		else
+		else if constexpr (std::is_nothrow_copy_assignable<ValueType>())
 		{
-			for (; InBegin != InEnd; InBegin++)
+			while (InBegin != InEnd)
 			{
 				(*InBegin) = Value;
+				InBegin++;
+			}
+		}
+		else if constexpr (std::is_nothrow_copy_constructible<ValueType>())
+		{
+			while (InBegin != InEnd)
+			{
+				InternalDestruct(InBegin);
+				new(InBegin.Ptr) ValueType(Value);
+				InBegin++;
+			}
+		}
+		else if constexpr (std::is_nothrow_move_assignable<ValueType>())
+		{
+			while (InBegin != InEnd)
+			{
+				(*InBegin) = Move(const_cast<ValueType&>(Value));
+				InBegin++;
+			}
+		}
+		else if constexpr (std::is_nothrow_move_constructible<ValueType>())
+		{
+			while (InBegin != InEnd)
+			{
+				InternalDestruct(InBegin);
+				new(InBegin.Ptr) ValueType(Move(const_cast<ValueType&>(Value)));
+				InBegin++;
 			}
 		}
 	}
@@ -1019,8 +1045,13 @@ private:
 
 	FORCEINLINE void InternalMemmoveBackwards(Iterator InBegin, Iterator InEnd, Iterator Dest)
 	{
+		VALIDATE(InBegin <= InEnd);
+		if (InBegin == InEnd)
+		{ 
+			return;
+		}
+
 		VALIDATE(InEnd <= InternalRealEnd());
-		VALIDATE(InBegin < InEnd);
 		VALIDATE(InternalIsIteratorOwner(Dest));
 
 		// Move each object in the range to the destination

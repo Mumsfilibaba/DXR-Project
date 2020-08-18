@@ -1,14 +1,9 @@
 #pragma once
 #include "TUniquePtr.h"
 
-/*
-* TSharedPtr - RefCounted Pointer similar to std::shared_ptr
-*/
-
-template<typename T>
-class TSharedPtr
+class _SharedPtr
 {
-private:
+protected:
 	/*
 	* Private Refcounter (Not optimal to have one for each T)
 	*/
@@ -43,8 +38,19 @@ private:
 	private:
 		Uint32 Counter;
 	};
+};
 
+/*
+* TSharedPtr - RefCounted Pointer similar to std::shared_ptr
+*/
+
+template<typename T>
+class TSharedPtr : private _SharedPtr
+{
 public:
+	template<typename TOther>
+	friend class TSharedPtr;
+
 	FORCEINLINE TSharedPtr() noexcept
 		: Ptr(nullptr)
 		, Counter(nullptr)
@@ -70,6 +76,23 @@ public:
 	}
 
 	FORCEINLINE TSharedPtr(TSharedPtr&& Other) noexcept
+		: Ptr(Other.Ptr)
+		, Counter(Other.Counter)
+	{
+		Other.Ptr		= nullptr;
+		Other.Counter	= nullptr;
+	}
+
+	template<typename TOther>
+	FORCEINLINE TSharedPtr(const TSharedPtr<TOther>& Other) noexcept
+		: Ptr(Other.Ptr)
+		, Counter(Other.Counter)
+	{
+		InternalAddRef();
+	}
+
+	template<typename TOther>
+	FORCEINLINE TSharedPtr(TSharedPtr<TOther>&& Other) noexcept
 		: Ptr(Other.Ptr)
 		, Counter(Other.Counter)
 	{
@@ -177,6 +200,39 @@ public:
 		return *this;
 	}
 
+	template<typename TOther>
+	FORCEINLINE TSharedPtr& operator=(const TSharedPtr<TOther>& Other) noexcept
+	{
+		if (this != std::addressof(Other))
+		{
+			Reset();
+
+			Ptr = Other.Ptr;
+			Counter = Other.Counter;
+
+			InternalAddRef();
+		}
+
+		return *this;
+	}
+
+	template<typename TOther>
+	FORCEINLINE TSharedPtr& operator=(TSharedPtr<TOther>&& Other) noexcept
+	{
+		if (this != std::addressof(Other))
+		{
+			Reset();
+
+			Ptr = Other.Ptr;
+			Counter = Other.Counter;
+
+			Other.Ptr = nullptr;
+			Other.Counter = nullptr;
+		}
+
+		return *this;
+	}
+
 	FORCEINLINE TSharedPtr& operator=(TUniquePtr<T>&& Unique) noexcept
 	{
 		if (Ptr != Unique.Ptr)
@@ -251,7 +307,7 @@ public:
 
 	FORCEINLINE operator bool() const noexcept
 	{
-		return (Ptr == nullptr);
+		return (Ptr != nullptr);
 	}
 
 private:

@@ -37,7 +37,7 @@ Actor::~Actor()
 		SAFEDELETE(CurrentComponent);
 	}
 
-	Components.clear();
+	Components.Clear();
 }
 
 void Actor::OnAddedToScene(Scene* InScene)
@@ -48,7 +48,7 @@ void Actor::OnAddedToScene(Scene* InScene)
 void Actor::AddComponent(Component* InComponent)
 {
 	VALIDATE(InComponent != nullptr);
-	Components.emplace_back(InComponent);
+	Components.EmplaceBack(InComponent);
 
 	if (CurrentScene)
 	{

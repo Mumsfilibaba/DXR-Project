@@ -103,7 +103,7 @@ MeshData MeshFactory::CreateFromFile(const std::string& Filename, bool MergeMesh
 		return data;
 	}
 
-	LOG_SYSTEM_PRINT("[LAMBDA ENGINE] Loaded mesh with %d vertices and %d indices. Triangles: %d\n", data.Vertices.size(), data.Indices.size(), data.Indices.size() / 3);
+	LOG_SYSTEM_PRINT("[LAMBDA ENGINE] Loaded mesh with %d vertices and %d indices. Triangles: %d\n", data.Vertices.GetSize(), data.Indices.GetSize(), data.Indices.GetSize() / 3);
 	return data;*/
 	return MeshData();
 }
@@ -240,7 +240,7 @@ MeshData MeshFactory::CreatePlane(Uint32 width, Uint32 height) noexcept
 MeshData MeshFactory::CreateSphere(Uint32 Subdivisions, Float32 Radius) noexcept
 {
 	MeshData Sphere;
-	Sphere.Vertices.resize(12);
+	Sphere.Vertices.Resize(12);
 
 	// VERTICES
 	Float32 T = (1.0f + sqrt(5.0f)) / 2.0f;
@@ -290,7 +290,7 @@ MeshData MeshFactory::CreateSphere(Uint32 Subdivisions, Float32 Radius) noexcept
 		Subdivide(Sphere, Subdivisions);
 	}
 
-	for (Uint32 i = 0; i < static_cast<Uint32>(Sphere.Vertices.size()); i++)
+	for (Uint32 i = 0; i < static_cast<Uint32>(Sphere.Vertices.GetSize()); i++)
 	{
 		// Calculate the new position, normal and tangent
 		XMVECTOR Position	= XMLoadFloat3(&Sphere.Vertices[i].Position);
@@ -305,8 +305,8 @@ MeshData MeshFactory::CreateSphere(Uint32 Subdivisions, Float32 Radius) noexcept
 		Sphere.Vertices[i].TexCoord.x = (atan2f(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + XM_PI) / (2.0f * XM_PI);
 	}
 
-	Sphere.Indices.shrink_to_fit();
-	Sphere.Vertices.shrink_to_fit();
+	Sphere.Indices.ShrinkToFit();
+	Sphere.Vertices.ShrinkToFit();
 	
 	CalculateTangents(Sphere);
 
@@ -593,13 +593,13 @@ void MeshFactory::Subdivide(MeshData& OutData, Uint32 Subdivisions) noexcept
 	Uint32 IndexCount		= 0;
 	Uint32 VertexCount		= 0;
 	Uint32 OldVertexCount	= 0;
-	OutData.Vertices.reserve((OutData.Vertices.size() * static_cast<size_t>(pow(2, Subdivisions))));
-	OutData.Indices.reserve((OutData.Indices.size() * static_cast<size_t>(pow(4, Subdivisions))));
+	OutData.Vertices.Reserve((OutData.Vertices.GetSize() * static_cast<size_t>(pow(2, Subdivisions))));
+	OutData.Indices.Reserve((OutData.Indices.GetSize() * static_cast<size_t>(pow(4, Subdivisions))));
 
 	for (Uint32 i = 0; i < Subdivisions; i++)
 	{
-		OldVertexCount	= Uint32(OutData.Vertices.size());
-		IndexCount		= Uint32(OutData.Indices.size());
+		OldVertexCount	= Uint32(OutData.Vertices.GetSize());
+		IndexCount		= Uint32(OutData.Indices.GetSize());
 
 		for (Uint32 j = 0; j < IndexCount; j += 3)
 		{
@@ -678,23 +678,23 @@ void MeshFactory::Subdivide(MeshData& OutData, Uint32 Subdivisions) noexcept
 			XMStoreFloat3(&TempVertices[2].Tangent, Tangent);
 
 			// Push the new Vertices
-			OutData.Vertices.emplace_back(TempVertices[0]);
-			OutData.Vertices.emplace_back(TempVertices[1]);
-			OutData.Vertices.emplace_back(TempVertices[2]);
+			OutData.Vertices.EmplaceBack(TempVertices[0]);
+			OutData.Vertices.EmplaceBack(TempVertices[1]);
+			OutData.Vertices.EmplaceBack(TempVertices[2]);
 
 			// Push index of the new triangles
-			VertexCount = Uint32(OutData.Vertices.size());
-			OutData.Indices.emplace_back(VertexCount - 3);
-			OutData.Indices.emplace_back(VertexCount - 1);
-			OutData.Indices.emplace_back(VertexCount - 2);
+			VertexCount = Uint32(OutData.Vertices.GetSize());
+			OutData.Indices.EmplaceBack(VertexCount - 3);
+			OutData.Indices.EmplaceBack(VertexCount - 1);
+			OutData.Indices.EmplaceBack(VertexCount - 2);
 
-			OutData.Indices.emplace_back(VertexCount - 3);
-			OutData.Indices.emplace_back(OutData.Indices[j + 1]);
-			OutData.Indices.emplace_back(VertexCount - 1);
+			OutData.Indices.EmplaceBack(VertexCount - 3);
+			OutData.Indices.EmplaceBack(OutData.Indices[j + 1]);
+			OutData.Indices.EmplaceBack(VertexCount - 1);
 
-			OutData.Indices.emplace_back(VertexCount - 2);
-			OutData.Indices.emplace_back(VertexCount - 1);
-			OutData.Indices.emplace_back(OutData.Indices[j + 2]);
+			OutData.Indices.EmplaceBack(VertexCount - 2);
+			OutData.Indices.EmplaceBack(VertexCount - 1);
+			OutData.Indices.EmplaceBack(OutData.Indices[j + 2]);
 
 			// Reassign the old indexes
 			OutData.Indices[j + 1] = VertexCount - 3;
@@ -704,14 +704,14 @@ void MeshFactory::Subdivide(MeshData& OutData, Uint32 Subdivisions) noexcept
 		Optimize(OutData, OldVertexCount);
 	}
 
-	OutData.Vertices.shrink_to_fit();
-	OutData.Indices.shrink_to_fit();
+	OutData.Vertices.ShrinkToFit();
+	OutData.Indices.ShrinkToFit();
 }
 
 void MeshFactory::Optimize(MeshData& OutData, Uint32 StartVertex) noexcept
 {
-	Uint32 VertexCount	= static_cast<Uint32>(OutData.Vertices.size());
-	Uint32 IndexCount	= static_cast<Uint32>(OutData.Indices.size());
+	Uint32 VertexCount	= static_cast<Uint32>(OutData.Vertices.GetSize());
+	Uint32 IndexCount	= static_cast<Uint32>(OutData.Indices.GetSize());
 		
 	Uint32 k = 0;
 	Uint32 j = 0;
@@ -724,7 +724,7 @@ void MeshFactory::Optimize(MeshData& OutData, Uint32 StartVertex) noexcept
 			{
 				if (i != j)
 				{
-					OutData.Vertices.erase(OutData.Vertices.begin() + i);
+					OutData.Vertices.Erase(OutData.Vertices.Begin() + i);
 					VertexCount--;
 					j--;
 
@@ -755,7 +755,7 @@ void MeshFactory::CalculateHardNormals(MeshData& data) noexcept
 	vec3 e2;
 	vec3 n;
 
-	for (size_t i = 0; i < data.Indices.size(); i += 3)
+	for (size_t i = 0; i < data.Indices.GetSize(); i += 3)
 	{
 		e1 = data.Vertices[data.Indices[i + 2]].Position - data.Vertices[data.Indices[i]].Position;
 		e2 = data.Vertices[data.Indices[i + 1]].Position - data.Vertices[data.Indices[i]].Position;
@@ -808,7 +808,7 @@ void MeshFactory::CalculateTangents(MeshData& OutData) noexcept
 		Vertex1.Tangent = Tangent;
 	};
 
-	for (Uint32 i = 0; i < OutData.Indices.size(); i += 3)
+	for (Uint32 i = 0; i < OutData.Indices.GetSize(); i += 3)
 	{
 		Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
 		Vertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];
@@ -824,7 +824,7 @@ void MeshFactory::CalculateTangents(MeshData& OutData) noexcept
 {
 	using namespace Math;
 
-	for (uint32 i = 0; i < indexBuffer->size(); i += 3)
+	for (uint32 i = 0; i < indexBuffer->GetSize(); i += 3)
 	{
 		vec3 edge1 = (*vertexBuffer)[(*indexBuffer)[i + 2]].Position - (*vertexBuffer)[(*indexBuffer)[i + 1]].Position;
 		vec3 edge2 = (*vertexBuffer)[(*indexBuffer)[i]].Position - (*vertexBuffer)[(*indexBuffer)[i + 2]].Position;

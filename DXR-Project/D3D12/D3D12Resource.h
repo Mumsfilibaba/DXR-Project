@@ -1,5 +1,6 @@
 #pragma once
 #include "D3D12DeviceChild.h"
+#include "D3D12Views.h"
 
 enum class EMemoryType : Uint32
 {
@@ -7,9 +8,6 @@ enum class EMemoryType : Uint32
 	MEMORY_TYPE_UPLOAD	= 1,
 	MEMORY_TYPE_DEFAULT	= 2,
 };
-
-class D3D12ShaderResourceView;
-class D3D12UnorderedAccessView;
 
 class D3D12Resource : public D3D12DeviceChild
 {
@@ -22,8 +20,8 @@ public:
 	// DeviceChild Interface
 	virtual void SetDebugName(const std::string& Name) override;
 
-	void SetShaderResourceView(std::shared_ptr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex);
-	void SetUnorderedAccessView(std::shared_ptr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex);
+	void SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex);
+	void SetUnorderedAccessView(TSharedPtr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex);
 
 	FORCEINLINE EMemoryType GetMemoryType() const
 	{
@@ -45,12 +43,12 @@ public:
 		return Resource.Get();
 	}
 
-	FORCEINLINE std::shared_ptr<D3D12ShaderResourceView> GetShaderResourceView(const Uint32 SubresourceIndex) const
+	FORCEINLINE TSharedPtr<D3D12ShaderResourceView> GetShaderResourceView(const Uint32 SubresourceIndex) const
 	{
 		return ShaderResourceViews[SubresourceIndex];
 	}
 
-	FORCEINLINE std::shared_ptr<D3D12UnorderedAccessView> GetUnorderedAccessView(const Uint32 SubresourceIndex) const
+	FORCEINLINE TSharedPtr<D3D12UnorderedAccessView> GetUnorderedAccessView(const Uint32 SubresourceIndex) const
 	{
 		return UnorderedAccessViews[SubresourceIndex];
 	}
@@ -61,8 +59,8 @@ protected:
 protected:
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
 
-	std::vector<std::shared_ptr<D3D12ShaderResourceView>>	ShaderResourceViews;
-	std::vector<std::shared_ptr<D3D12UnorderedAccessView>>	UnorderedAccessViews;
+	TArray<TSharedPtr<D3D12ShaderResourceView>>	ShaderResourceViews;
+	TArray<TSharedPtr<D3D12UnorderedAccessView>>	UnorderedAccessViews;
 
 	D3D12_RESOURCE_DESC Desc;
 	EMemoryType MemoryType;

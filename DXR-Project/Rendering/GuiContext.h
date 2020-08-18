@@ -30,7 +30,7 @@ public:
 		return Context;
 	}
 
-	static GuiContext* Make(std::shared_ptr<D3D12Device> Device);
+	static GuiContext* Make(TSharedPtr<D3D12Device> Device);
 	static GuiContext* Get();
 
 public:
@@ -43,7 +43,7 @@ public:
 	void OnCharacterInput(Uint32 Character);
 
 private:
-	bool Initialize(std::shared_ptr<D3D12Device> InDevice);
+	bool Initialize(TSharedPtr<D3D12Device> InDevice);
 
 	bool CreateFontTexture();
 	bool CreatePipeline();
@@ -52,17 +52,17 @@ private:
 private:
 	ImGuiContext* Context = nullptr;
 
-	std::shared_ptr<D3D12Device>			Device			= nullptr;
-	std::shared_ptr<D3D12Texture>			FontTexture		= nullptr;
-	std::shared_ptr<D3D12DescriptorTable>	DescriptorTable	= nullptr;
+	TSharedPtr<D3D12Device>				Device			= nullptr;
+	TSharedPtr<D3D12Texture>			FontTexture		= nullptr;
+	TSharedPtr<D3D12DescriptorTable>	DescriptorTable	= nullptr;
 
 	Clock FrameClock;
 
-	std::shared_ptr<D3D12RootSignature>			RootSignature = nullptr;
-	std::shared_ptr<D3D12GraphicsPipelineState> PipelineState = nullptr;
+	TSharedPtr<D3D12RootSignature>			RootSignature = nullptr;
+	TSharedPtr<D3D12GraphicsPipelineState> PipelineState = nullptr;
 
-	std::shared_ptr<D3D12Buffer> VertexBuffer	= nullptr;
-	std::shared_ptr<D3D12Buffer> IndexBuffer	= nullptr;
+	TSharedPtr<D3D12Buffer> VertexBuffer	= nullptr;
+	TSharedPtr<D3D12Buffer> IndexBuffer	= nullptr;
 
-	static std::unique_ptr<GuiContext> Instance;
+	static TUniquePtr<GuiContext> Instance;
 };

@@ -138,6 +138,6 @@ private:
 
 	Transform Transform;
 
-	std::vector<Component*> Components;
+	TArray<Component*> Components;
 	std::string	DebugName;
 };

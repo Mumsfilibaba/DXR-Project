@@ -6,10 +6,10 @@
 Material::Material(const MaterialProperties& InProperties)
 	: AlbedoMap(nullptr)
 	, NormalMap(nullptr)
-	, Roughness(nullptr)
-	, Metallic(nullptr)
-	, AO(nullptr)
-	, Height(nullptr)
+	, RoughnessMap(nullptr)
+	, MetallicMap(nullptr)
+	, AOMap(nullptr)
+	, HeightMap(nullptr)
 	, MaterialBuffer(nullptr)
 	, Properties(InProperties)
 {
@@ -23,12 +23,12 @@ Material::~Material()
 
 void Material::Initialize(D3D12Device* Device)
 {
-	VALIDATE(AlbedoMap	!= nullptr);
-	VALIDATE(NormalMap	!= nullptr);
-	VALIDATE(Roughness	!= nullptr);
-	VALIDATE(Height		!= nullptr);
-	VALIDATE(AO			!= nullptr);
-	VALIDATE(Metallic	!= nullptr);
+	VALIDATE(AlbedoMap		!= nullptr);
+	VALIDATE(NormalMap		!= nullptr);
+	VALIDATE(RoughnessMap		!= nullptr);
+	VALIDATE(HeightMap		!= nullptr);
+	VALIDATE(AOMap			!= nullptr);
+	VALIDATE(MetallicMap	!= nullptr);
 
 	// Create materialbuffer
 	BufferProperties MaterialBufferProps = { };
@@ -44,13 +44,13 @@ void Material::Initialize(D3D12Device* Device)
 		D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = { };
 		CBVDesc.BufferLocation	= MaterialBuffer->GetGPUVirtualAddress();
 		CBVDesc.SizeInBytes		= MaterialBuffer->GetSizeInBytes();
-		MaterialBuffer->SetConstantBufferView(std::make_shared<D3D12ConstantBufferView>(Device, MaterialBuffer->GetResource(), &CBVDesc));
+		MaterialBuffer->SetConstantBufferView(MakeShared<D3D12ConstantBufferView>(Device, MaterialBuffer->GetResource(), &CBVDesc));
 
-		std::shared_ptr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
+		TSharedPtr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
 		CommandList->TransitionBarrier(MaterialBuffer, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 		CommandList->Flush();
 
-		BuildBuffer(CommandList.get());
+		BuildBuffer(CommandList.Get());
 		CommandList->Flush();
 	}
 	else
@@ -60,13 +60,13 @@ void Material::Initialize(D3D12Device* Device)
 
 	// Create descriptor table
 	DescriptorTable = new D3D12DescriptorTable(Device, 7);
-	DescriptorTable->SetShaderResourceView(AlbedoMap->GetShaderResourceView(0).get(), 0);
-	DescriptorTable->SetShaderResourceView(NormalMap->GetShaderResourceView(0).get(), 1);
-	DescriptorTable->SetShaderResourceView(Roughness->GetShaderResourceView(0).get(), 2);
-	DescriptorTable->SetShaderResourceView(Height->GetShaderResourceView(0).get(), 3);
-	DescriptorTable->SetShaderResourceView(Metallic->GetShaderResourceView(0).get(), 4);
-	DescriptorTable->SetShaderResourceView(AO->GetShaderResourceView(0).get(), 5);
-	DescriptorTable->SetConstantBufferView(MaterialBuffer->GetConstantBufferView().get(), 6);
+	DescriptorTable->SetShaderResourceView(AlbedoMap->GetShaderResourceView(0).Get(), 0);
+	DescriptorTable->SetShaderResourceView(NormalMap->GetShaderResourceView(0).Get(), 1);
+	DescriptorTable->SetShaderResourceView(RoughnessMap->GetShaderResourceView(0).Get(), 2);
+	DescriptorTable->SetShaderResourceView(HeightMap->GetShaderResourceView(0).Get(), 3);
+	DescriptorTable->SetShaderResourceView(MetallicMap->GetShaderResourceView(0).Get(), 4);
+	DescriptorTable->SetShaderResourceView(AOMap->GetShaderResourceView(0).Get(), 5);
+	DescriptorTable->SetConstantBufferView(MaterialBuffer->GetConstantBufferView().Get(), 6);
 	DescriptorTable->CopyDescriptors();
 }
 

@@ -24,13 +24,13 @@ Scene::~Scene()
 	{
 		SAFEDELETE(CurrentActor);
 	}
-	Actors.clear();
+	Actors.Clear();
 
 	for (Light* CurrentLight : Lights)
 	{
 		SAFEDELETE(CurrentLight);
 	}
-	Lights.clear();
+	Lights.Clear();
 
 	SAFEDELETE(CurrentCamera);
 }
@@ -44,7 +44,7 @@ void Scene::AddCamera(Camera* InCamera)
 void Scene::AddActor(Actor* InActor)
 {
 	VALIDATE(InActor != nullptr);
-	Actors.emplace_back(InActor);
+	Actors.EmplaceBack(InActor);
 
 	InActor->OnAddedToScene(this);
 
@@ -58,7 +58,7 @@ void Scene::AddActor(Actor* InActor)
 void Scene::AddLight(Light* InLight)
 {
 	VALIDATE(InLight != nullptr);
-	Lights.emplace_back(InLight);
+	Lights.EmplaceBack(InLight);
 }
 
 void Scene::OnAddedComponent(Component* NewComponent)
@@ -92,7 +92,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 
 	// Create standard textures
 	Byte Pixels[] = { 255, 255, 255, 255 };
-	std::shared_ptr<D3D12Texture> WhiteTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Device, Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> WhiteTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Device, Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!WhiteTexture)
 	{
 		return nullptr;
@@ -106,7 +106,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 	Pixels[1] = 127;
 	Pixels[2] = 255;
 
-	std::shared_ptr<D3D12Texture> NormalMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Device, Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> NormalMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Device, Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!NormalMap)
 	{
 		return nullptr;
@@ -122,18 +122,18 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 	Properties.Metallic		= 0.0f;
 	Properties.Roughness	= 1.0f;
 
-	std::shared_ptr<Material> BaseMaterial = std::make_shared<Material>(Properties);
-	BaseMaterial->AlbedoMap = WhiteTexture;
-	BaseMaterial->AO		= WhiteTexture;
-	BaseMaterial->Height	= WhiteTexture;
-	BaseMaterial->Metallic	= WhiteTexture;
-	BaseMaterial->Roughness = WhiteTexture;
-	BaseMaterial->NormalMap = NormalMap;
+	TSharedPtr<Material> BaseMaterial = MakeShared<Material>(Properties);
+	BaseMaterial->AlbedoMap		= WhiteTexture;
+	BaseMaterial->AOMap			= WhiteTexture;
+	BaseMaterial->HeightMap		= WhiteTexture;
+	BaseMaterial->MetallicMap	= WhiteTexture;
+	BaseMaterial->RoughnessMap		= WhiteTexture;
+	BaseMaterial->NormalMap		= NormalMap;
 	BaseMaterial->Initialize(Device);
 
 	// Create All Materials in scene
-	std::vector<std::shared_ptr<Material>> LoadedMaterials;
-	std::unordered_map<std::string, std::shared_ptr<D3D12Texture>> MaterialTextures;
+	TArray<TSharedPtr<Material>> LoadedMaterials;
+	std::unordered_map<std::string, TSharedPtr<D3D12Texture>> MaterialTextures;
 	for (tinyobj::material_t& Mat : Materials)
 	{
 		// Create new material with default properties
@@ -142,13 +142,13 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 		MatProps.AO			= 0.5f;
 		MatProps.Roughness	= 1.0f;
 
-		std::shared_ptr<Material>& NewMaterial = LoadedMaterials.emplace_back(std::make_shared<Material>(MatProps));
-		NewMaterial->AlbedoMap	= WhiteTexture;
-		NewMaterial->AO			= WhiteTexture;
-		NewMaterial->Height		= WhiteTexture;
-		NewMaterial->Metallic	= WhiteTexture;
-		NewMaterial->Roughness	= WhiteTexture;
-		NewMaterial->NormalMap	= NormalMap;
+		TSharedPtr<Material>& NewMaterial = LoadedMaterials.EmplaceBack(MakeShared<Material>(MatProps));
+		NewMaterial->AlbedoMap		= WhiteTexture;
+		NewMaterial->AOMap			= WhiteTexture;
+		NewMaterial->HeightMap		= WhiteTexture;
+		NewMaterial->MetallicMap	= WhiteTexture;
+		NewMaterial->RoughnessMap		= WhiteTexture;
+		NewMaterial->NormalMap		= NormalMap;
 
 		// Metallic
 		if (!Mat.ambient_texname.empty())
@@ -158,7 +158,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 			if (MaterialTextures.count(Mat.ambient_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.ambient_texname;
-				std::shared_ptr<D3D12Texture> Texture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
 					Texture->SetDebugName(Mat.ambient_texname);
@@ -170,7 +170,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 				}
 			}
 
-			NewMaterial->Metallic = MaterialTextures[Mat.ambient_texname];
+			NewMaterial->MetallicMap = MaterialTextures[Mat.ambient_texname];
 		}
 
 		// Albedo
@@ -181,7 +181,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 			if (MaterialTextures.count(Mat.diffuse_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.diffuse_texname;
-				std::shared_ptr<D3D12Texture> Texture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
 					Texture->SetDebugName(Mat.diffuse_texname);
@@ -204,7 +204,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 			if (MaterialTextures.count(Mat.specular_highlight_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.specular_highlight_texname;
-				std::shared_ptr<D3D12Texture> Texture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
 					Texture->SetDebugName(Mat.specular_highlight_texname);
@@ -216,7 +216,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 				}
 			}
 
-			NewMaterial->Roughness = MaterialTextures[Mat.specular_highlight_texname];
+			NewMaterial->RoughnessMap = MaterialTextures[Mat.specular_highlight_texname];
 		}
 
 		// Normal
@@ -227,7 +227,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 			if (MaterialTextures.count(Mat.bump_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.bump_texname;
-				std::shared_ptr<D3D12Texture> Texture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
 					Texture->SetDebugName(Mat.bump_texname);
@@ -250,7 +250,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 			if (MaterialTextures.count(Mat.alpha_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.alpha_texname;
-				std::shared_ptr<D3D12Texture> Texture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
 					Texture->SetDebugName(Mat.alpha_texname);
@@ -274,8 +274,9 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 	for (const tinyobj::shape_t& Shape : Shapes)
 	{
 		// Create Mesh
-		Data.Indices.clear();
-		Data.Vertices.clear();
+		Data.Indices.Clear();
+		Data.Vertices.Clear();
+
 		UniqueVertices.clear();
 
 		for (const tinyobj::index_t& Index : Shape.mesh.indices)
@@ -316,16 +317,16 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 
 			if (UniqueVertices.count(TempVertex) == 0)
 			{
-				UniqueVertices[TempVertex] = static_cast<Uint32>(Data.Vertices.size());
-				Data.Vertices.push_back(TempVertex);
+				UniqueVertices[TempVertex] = static_cast<Uint32>(Data.Vertices.GetSize());
+				Data.Vertices.PushBack(TempVertex);
 			}
 
-			Data.Indices.emplace_back(UniqueVertices[TempVertex]);
+			Data.Indices.EmplaceBack(UniqueVertices[TempVertex]);
 		}
 
 		// Calculate tangents and create mesh
 		MeshFactory::CalculateTangents(Data);
-		std::shared_ptr<Mesh> NewMesh = std::shared_ptr<Mesh>(Mesh::Make(Device, Data));
+		TSharedPtr<Mesh> NewMesh = Mesh::Make(Device, Data);
 
 		// Setup new actor for this shape
 		Actor* NewActor = new Actor();
@@ -355,11 +356,11 @@ void Scene::AddMeshComponent(MeshComponent* Component)
 {
 	MeshDrawCommand Command;
 	Command.CurrentActor	= Component->GetOwningActor();
-	Command.Geometry		= Component->Mesh->RayTracingGeometry.get();
-	Command.VertexBuffer	= Component->Mesh->VertexBuffer.get();
+	Command.Geometry		= Component->Mesh->RayTracingGeometry.Get();
+	Command.VertexBuffer	= Component->Mesh->VertexBuffer.Get();
 	Command.VertexCount		= Component->Mesh->VertexCount;
-	Command.IndexBuffer		= Component->Mesh->IndexBuffer.get();
+	Command.IndexBuffer		= Component->Mesh->IndexBuffer.Get();
 	Command.IndexCount		= Component->Mesh->IndexCount;
-	Command.Material		= Component->Material.get();
-	MeshDrawCommands.push_back(Command);
+	Command.Material		= Component->Material.Get();
+	MeshDrawCommands.PushBack(Command);
 }

@@ -16,17 +16,17 @@ public:
 
 	void OnAddedComponent(Component* NewComponent);
 
-	FORCEINLINE const std::vector<Actor*>& GetActors() const
+	FORCEINLINE const TArray<Actor*>& GetActors() const
 	{
 		return Actors;
 	}
 
-	FORCEINLINE const std::vector<Light*>& GetLights() const
+	FORCEINLINE const TArray<Light*>& GetLights() const
 	{
 		return Lights;
 	}
 
-	FORCEINLINE const std::vector<MeshDrawCommand>& GetMeshDrawCommands() const
+	FORCEINLINE const TArray<MeshDrawCommand>& GetMeshDrawCommands() const
 	{
 		return MeshDrawCommands;
 	}
@@ -41,9 +41,9 @@ public:
 private:
 	void AddMeshComponent(class MeshComponent* Component);
 
-	std::vector<Actor*> Actors;
-	std::vector<Light*> Lights;
-	std::vector<MeshDrawCommand> MeshDrawCommands;
+	TArray<Actor*> Actors;
+	TArray<Light*> Lights;
+	TArray<MeshDrawCommand> MeshDrawCommands;
 
 	Camera* CurrentCamera = nullptr;
 };

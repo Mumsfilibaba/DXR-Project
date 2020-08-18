@@ -11,7 +11,7 @@
 
 #include "Windows/WindowsConsoleOutput.h"
 
-std::shared_ptr<Application> Application::Instance = nullptr;
+TSharedPtr<Application> Application::Instance = nullptr;
 
 Application::Application()
 {
@@ -238,7 +238,7 @@ void Application::DrawSceneInfo()
 						}
 
 						Float32 Roughness = MComponent->Material->GetMaterialProperties().Roughness;
-						if (ImGui::SliderFloat("Roughness", &Roughness, 0.01f, 1.0f, "%.2f"))
+						if (ImGui::SliderFloat("RoughnessMap", &Roughness, 0.01f, 1.0f, "%.2f"))
 						{
 							MComponent->Material->SetRoughness(Roughness);
 						}
@@ -308,22 +308,22 @@ void Application::DrawSceneInfo()
 	ImGui::EndChild();
 }
 
-void Application::SetCursor(std::shared_ptr<WindowsCursor> Cursor)
+void Application::SetCursor(TSharedPtr<WindowsCursor> Cursor)
 {
 	PlatformApplication->SetCursor(Cursor);
 }
 
-void Application::SetActiveWindow(std::shared_ptr<WindowsWindow>& ActiveWindow)
+void Application::SetActiveWindow(TSharedPtr<WindowsWindow>& ActiveWindow)
 {
 	PlatformApplication->SetActiveWindow(ActiveWindow);
 }
 
-void Application::SetCapture(std::shared_ptr<WindowsWindow> Capture)
+void Application::SetCapture(TSharedPtr<WindowsWindow> Capture)
 {
 	PlatformApplication->SetCapture(Capture);
 }
 
-void Application::SetCursorPos(std::shared_ptr<WindowsWindow>& RelativeWindow, Int32 X, Int32 Y)
+void Application::SetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32 X, Int32 Y)
 {
 	PlatformApplication->SetCursorPos(RelativeWindow, X, Y);
 }
@@ -333,32 +333,32 @@ ModifierKeyState Application::GetModifierKeyState() const
 	return PlatformApplication->GetModifierKeyState();
 }
 
-std::shared_ptr<WindowsWindow> Application::GetWindow() const
+TSharedPtr<WindowsWindow> Application::GetWindow() const
 {
 	return Window;
 }
 
-std::shared_ptr<WindowsWindow> Application::GetActiveWindow() const
+TSharedPtr<WindowsWindow> Application::GetActiveWindow() const
 {
 	return PlatformApplication->GetActiveWindow();
 }
 
-std::shared_ptr<WindowsWindow> Application::GetCapture() const
+TSharedPtr<WindowsWindow> Application::GetCapture() const
 {
 	return PlatformApplication->GetCapture();
 }
 
-void Application::GetCursorPos(std::shared_ptr<WindowsWindow>& RelativeWindow, Int32& OutX, Int32& OutY) const
+void Application::GetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32& OutX, Int32& OutY) const
 {
 	PlatformApplication->GetCursorPos(RelativeWindow, OutX, OutY);
 }
 
 Application* Application::Make()
 {
-	Instance = std::shared_ptr<Application>(new Application());
+	Instance = TSharedPtr<Application>(new Application());
 	if (Instance->Initialize())
 	{
-		return Instance.get();
+		return Instance.Get();
 	}
 	else
 	{
@@ -368,10 +368,10 @@ Application* Application::Make()
 
 Application* Application::Get()
 {
-	return Instance.get();
+	return Instance.Get();
 }
 
-void Application::OnWindowResized(std::shared_ptr<WindowsWindow>& InWindow, Uint16 Width, Uint16 Height)
+void Application::OnWindowResized(TSharedPtr<WindowsWindow>& InWindow, Uint16 Width, Uint16 Height)
 {
 	UNREFERENCED_PARAMETER(InWindow);
 
@@ -415,7 +415,7 @@ void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeySt
 {
 	UNREFERENCED_PARAMETER(ModierKeyState);
 
-	std::shared_ptr<WindowsWindow> CaptureWindow = GetCapture();
+	TSharedPtr<WindowsWindow> CaptureWindow = GetCapture();
 	if (CaptureWindow)
 	{
 		SetCapture(nullptr);
@@ -431,10 +431,10 @@ void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeySta
 {
 	UNREFERENCED_PARAMETER(ModierKeyState);
 
-	std::shared_ptr<WindowsWindow> CaptureWindow = GetCapture();
+	TSharedPtr<WindowsWindow> CaptureWindow = GetCapture();
 	if (!CaptureWindow)
 	{
-		std::shared_ptr<WindowsWindow> ActiveWindow = GetActiveWindow();
+		TSharedPtr<WindowsWindow> ActiveWindow = GetActiveWindow();
 		SetCapture(ActiveWindow);
 	}
 
@@ -467,7 +467,7 @@ bool Application::Initialize()
 	PlatformApplication = WindowsApplication::Make(InstanceHandle);
 	if (PlatformApplication)
 	{
-		PlatformApplication->SetEventHandler(std::shared_ptr<EventHandler>(Instance));
+		PlatformApplication->SetEventHandler(TSharedPtr<EventHandler>(Instance));
 	}
 	else
 	{
@@ -523,15 +523,15 @@ bool Application::Initialize()
 	
 	Actor* NewActor = nullptr;
 	MeshComponent* NewComponent = nullptr;
-	CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj", Renderer->GetDevice().get());
+	CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj", Renderer->GetDevice().Get());
 
 	// Create Spheres
 	MeshData SphereMeshData = MeshFactory::CreateSphere(3);
-	std::shared_ptr<Mesh> SphereMesh = Mesh::Make(Renderer->GetDevice().get(), SphereMeshData);
+	TSharedPtr<Mesh> SphereMesh = Mesh::Make(Renderer->GetDevice().Get(), SphereMeshData);
 
 	// Create standard textures
 	Byte Pixels[] = { 255, 255, 255, 255 };
-	std::shared_ptr<D3D12Texture> BaseTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> BaseTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().Get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!BaseTexture)
 	{
 		return false;
@@ -545,7 +545,7 @@ bool Application::Initialize()
 	Pixels[1] = 127;
 	Pixels[2] = 255;
 
-	std::shared_ptr<D3D12Texture> BaseNormal = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> BaseNormal = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().Get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!BaseNormal)
 	{
 		return false;
@@ -559,7 +559,7 @@ bool Application::Initialize()
 	Pixels[1] = 255;
 	Pixels[2] = 255;
 
-	std::shared_ptr<D3D12Texture> WhiteTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> WhiteTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().Get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!WhiteTexture)
 	{
 		return false;
@@ -585,15 +585,15 @@ bool Application::Initialize()
 
 			NewComponent = new MeshComponent(NewActor);
 			NewComponent->Mesh		= SphereMesh;
-			NewComponent->Material	= std::make_shared<Material>(MatProperties);
+			NewComponent->Material	= MakeShared<Material>(MatProperties);
 			
 			NewComponent->Material->AlbedoMap	= BaseTexture;
 			NewComponent->Material->NormalMap	= BaseNormal;
-			NewComponent->Material->Roughness	= WhiteTexture;
-			NewComponent->Material->Height		= WhiteTexture;
-			NewComponent->Material->AO			= WhiteTexture;
-			NewComponent->Material->Metallic	= WhiteTexture;
-			NewComponent->Material->Initialize(Renderer->GetDevice().get());
+			NewComponent->Material->RoughnessMap	= WhiteTexture;
+			NewComponent->Material->HeightMap	= WhiteTexture;
+			NewComponent->Material->AOMap		= WhiteTexture;
+			NewComponent->Material->MetallicMap = WhiteTexture;
+			NewComponent->Material->Initialize(Renderer->GetDevice().Get());
 
 			NewActor->AddComponent(NewComponent);
 
@@ -618,10 +618,10 @@ bool Application::Initialize()
 	MatProperties.Roughness = 1.0f;
 
 	NewComponent = new MeshComponent(NewActor);
-	NewComponent->Mesh		= Mesh::Make(Renderer->GetDevice().get(), CubeMeshData);
-	NewComponent->Material	= std::make_shared<Material>(MatProperties);
+	NewComponent->Mesh		= Mesh::Make(Renderer->GetDevice().Get(), CubeMeshData);
+	NewComponent->Material	= MakeShared<Material>(MatProperties);
 
-	std::shared_ptr<D3D12Texture> AlbedoMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> AlbedoMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!AlbedoMap)
 	{
 		return false;
@@ -631,7 +631,7 @@ bool Application::Initialize()
 		AlbedoMap->SetDebugName("AlbedoMap");
 	}
 
-	std::shared_ptr<D3D12Texture> NormalMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> NormalMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!NormalMap)
 	{
 		return false;
@@ -641,7 +641,7 @@ bool Application::Initialize()
 		NormalMap->SetDebugName("NormalMap");
 	}
 
-	std::shared_ptr<D3D12Texture> AOMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> AOMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!AOMap)
 	{
 		return false;
@@ -651,7 +651,7 @@ bool Application::Initialize()
 		AOMap->SetDebugName("AOMap");
 	}
 
-	std::shared_ptr<D3D12Texture> RoughnessMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> RoughnessMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!RoughnessMap)
 	{
 		return false;
@@ -661,7 +661,7 @@ bool Application::Initialize()
 		RoughnessMap->SetDebugName("RoughnessMap");
 	}
 
-	std::shared_ptr<D3D12Texture> HeightMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> HeightMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!HeightMap)
 	{
 		return false;
@@ -671,7 +671,7 @@ bool Application::Initialize()
 		HeightMap->SetDebugName("HeightMap");
 	}
 
-	std::shared_ptr<D3D12Texture> MetallicMap = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().get(), "../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> MetallicMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!MetallicMap)
 	{
 		return false;
@@ -683,11 +683,11 @@ bool Application::Initialize()
 
 	NewComponent->Material->AlbedoMap	= AlbedoMap;
 	NewComponent->Material->NormalMap	= NormalMap;
-	NewComponent->Material->Roughness	= RoughnessMap;
-	NewComponent->Material->Height		= HeightMap;
-	NewComponent->Material->AO			= AOMap;
-	NewComponent->Material->Metallic	= MetallicMap;
-	NewComponent->Material->Initialize(Renderer->GetDevice().get());
+	NewComponent->Material->RoughnessMap	= RoughnessMap;
+	NewComponent->Material->HeightMap	= HeightMap;
+	NewComponent->Material->AOMap		= AOMap;
+	NewComponent->Material->MetallicMap = MetallicMap;
+	NewComponent->Material->Initialize(Renderer->GetDevice().Get());
 
 	NewActor->AddComponent(NewComponent);
 
@@ -699,7 +699,7 @@ bool Application::Initialize()
 	Light->SetPosition(0.0f, 10.0f, -10.0f);
 	Light->SetColor(1.0f, 1.0f, 1.0f);
 	Light->SetIntensity(400.0f);
-	Light->Initialize(Renderer::Get()->GetDevice().get());
+	Light->Initialize(Renderer::Get()->GetDevice().Get());
 	CurrentScene->AddLight(Light);
 
 	// Reset timer before starting

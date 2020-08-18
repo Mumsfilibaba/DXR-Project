@@ -17,7 +17,7 @@ class D3D12CommandList : public D3D12DeviceChild
 		std::unique_ptr<D3D12RootSignature> GenerateMipsRootSignature;
 		std::unique_ptr<D3D12UnorderedAccessView> NULLView;
 		std::unique_ptr<D3D12DescriptorTable> SRVDescriptorTable;
-		std::vector<std::unique_ptr<D3D12DescriptorTable>> UAVDescriptorTables;
+		TArray<std::unique_ptr<D3D12DescriptorTable>> UAVDescriptorTables;
 	};
 
 public:
@@ -41,7 +41,7 @@ public:
 	FORCEINLINE void ReleaseDeferredResources()
 	{
 		UploadBufferOffset = 0;
-		ResourcesPendingRelease.clear();
+		ResourcesPendingRelease.Clear();
 	}
 
 	FORCEINLINE bool Reset(D3D12CommandAllocator* Allocator)
@@ -243,8 +243,8 @@ protected:
 	Byte* UploadPointer = nullptr;
 	Uint32 UploadBufferOffset = 0;
 
-	std::vector<D3D12_RESOURCE_BARRIER> DeferredResourceBarriers;
-	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> ResourcesPendingRelease;
+	TArray<D3D12_RESOURCE_BARRIER> DeferredResourceBarriers;
+	TArray<Microsoft::WRL::ComPtr<ID3D12Resource>> ResourcesPendingRelease;
 
 	// There can maximum be 8 rendertargets at one time 
 	D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetHandles[8];

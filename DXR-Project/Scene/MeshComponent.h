@@ -21,6 +21,6 @@ public:
 	~MeshComponent() = default;
 
 public:
-	std::shared_ptr<class Material> Material;
-	std::shared_ptr<class Mesh> Mesh;
+	TSharedPtr<class Material> Material;
+	TSharedPtr<class Mesh> Mesh;
 };

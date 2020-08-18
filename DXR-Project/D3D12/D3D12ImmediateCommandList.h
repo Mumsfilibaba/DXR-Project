@@ -22,11 +22,11 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue>	Queue;
 	Microsoft::WRL::ComPtr<ID3D12Fence>			Fence;
 	
-	std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>>	Allocators;
+	TArray<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>>	Allocators;
 
 	HANDLE Event = 0;
 	Uint64 CurrentFenceValue = 0;
 	Uint32 CurrentAllocatorIndex = 0;
 
-	std::vector<Uint64> FenceValues;
+	TArray<Uint64> FenceValues;
 };

@@ -50,12 +50,12 @@ public:
 	}
 
 public:
-	std::shared_ptr<D3D12Texture>	AlbedoMap;
-	std::shared_ptr<D3D12Texture>	NormalMap;
-	std::shared_ptr<D3D12Texture>	Roughness;
-	std::shared_ptr<D3D12Texture>	Height;
-	std::shared_ptr<D3D12Texture>	AO;
-	std::shared_ptr<D3D12Texture>	Metallic;
+	TSharedPtr<D3D12Texture> AlbedoMap;
+	TSharedPtr<D3D12Texture> NormalMap;
+	TSharedPtr<D3D12Texture> RoughnessMap;
+	TSharedPtr<D3D12Texture> HeightMap;
+	TSharedPtr<D3D12Texture> AOMap;
+	TSharedPtr<D3D12Texture> MetallicMap;
 
 private:
 	std::string				DebugName;

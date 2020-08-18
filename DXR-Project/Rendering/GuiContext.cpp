@@ -19,7 +19,7 @@
 
 #include "TextureFactory.h"
 
-std::unique_ptr<GuiContext> GuiContext::Instance = nullptr;
+TUniquePtr<GuiContext> GuiContext::Instance = nullptr;
 
 GuiContext::GuiContext()
 {
@@ -30,12 +30,12 @@ GuiContext::~GuiContext()
 	ImGui::DestroyContext(Context);
 }
 
-GuiContext* GuiContext::Make(std::shared_ptr<D3D12Device> Device)
+GuiContext* GuiContext::Make(TSharedPtr<D3D12Device> Device)
 {
-	Instance = std::unique_ptr<GuiContext>(new GuiContext());
+	Instance = TUniquePtr<GuiContext>(new GuiContext());
 	if (Instance->Initialize(Device))
 	{
-		return Instance.get();
+		return Instance.Get();
 	}
 	else
 	{
@@ -45,7 +45,7 @@ GuiContext* GuiContext::Make(std::shared_ptr<D3D12Device> Device)
 
 GuiContext* GuiContext::Get()
 {
-	return Instance.get();
+	return Instance.Get();
 }
 
 void GuiContext::BeginFrame()
@@ -59,7 +59,7 @@ void GuiContext::BeginFrame()
 	IO.DeltaTime	= static_cast<Float32>(Delta.AsSeconds());
 
 	// Set Mouseposition
-	std::shared_ptr<WindowsWindow> Window = Application::Get()->GetWindow();
+	TSharedPtr<WindowsWindow> Window = Application::Get()->GetWindow();
 	if (IO.WantSetMousePos)
 	{
 		Application::Get()->SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
@@ -96,7 +96,7 @@ void GuiContext::BeginFrame()
 		else
 		{
 			// Show OS mouse cursor
-			std::shared_ptr<WindowsCursor> Cursor = CursorArrow;
+			TSharedPtr<WindowsCursor> Cursor = CursorArrow;
 			switch (ImguiCursor)
 			{
 			case ImGuiMouseCursor_Arrow:		Cursor = CursorArrow;						break;
@@ -326,7 +326,7 @@ void GuiContext::OnCharacterInput(Uint32 Character)
 	IO.AddInputCharacter(Character);
 }
 
-bool GuiContext::Initialize(std::shared_ptr<D3D12Device> InDevice)
+bool GuiContext::Initialize(TSharedPtr<D3D12Device> InDevice)
 {
 	// Save device so that we can create resource on the GPU
 	Device = InDevice;
@@ -344,7 +344,7 @@ bool GuiContext::Initialize(std::shared_ptr<D3D12Device> InDevice)
 	IO.BackendFlags			|= ImGuiBackendFlags_HasSetMousePos;          // We can honor IO.WantSetMousePos requests (optional, rarely used)
 	IO.BackendPlatformName	= "Windows";
 	
-	std::shared_ptr<WindowsWindow> Window = Application::Get()->GetWindow();
+	TSharedPtr<WindowsWindow> Window = Application::Get()->GetWindow();
 	IO.ImeWindowHandle = Window->GetHandle();
 
 	// Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
@@ -497,11 +497,11 @@ bool GuiContext::CreateFontTexture()
 	Int32	Height	= 0;
 	IO.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-	FontTexture = std::shared_ptr<D3D12Texture>(TextureFactory::LoadFromMemory(Device.get(), Pixels, Width, Height, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	FontTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Device.Get(), Pixels, Width, Height, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (FontTexture)
 	{
-		DescriptorTable = std::make_shared<D3D12DescriptorTable>(Device.get(), 1);
-		DescriptorTable->SetShaderResourceView(FontTexture->GetShaderResourceView(0).get(), 0);
+		DescriptorTable = MakeShared<D3D12DescriptorTable>(Device.Get(), 1);
+		DescriptorTable->SetShaderResourceView(FontTexture->GetShaderResourceView(0).Get(), 0);
 		DescriptorTable->CopyDescriptors();
 
 		return true;
@@ -559,7 +559,7 @@ bool GuiContext::CreatePipeline()
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS		|
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
-	RootSignature = std::shared_ptr<D3D12RootSignature>(new D3D12RootSignature(Device.get()));
+	RootSignature = TSharedPtr<D3D12RootSignature>(new D3D12RootSignature(Device.Get()));
 	if (!RootSignature->Initialize(RootSignaturDesc))
 	{
 		return false;
@@ -630,7 +630,7 @@ bool GuiContext::CreatePipeline()
 
 	GraphicsPipelineStateProperties GuiPipelineProps = { };
 	GuiPipelineProps.DebugName			= "ImGui Pipeline";
-	GuiPipelineProps.RootSignature		= RootSignature.get();
+	GuiPipelineProps.RootSignature		= RootSignature.Get();
 	GuiPipelineProps.VSBlob				= VSBlob;
 	GuiPipelineProps.PSBlob				= PSBlob;
 	GuiPipelineProps.InputElements		= InputElementDesc;
@@ -647,7 +647,7 @@ bool GuiContext::CreatePipeline()
 	GuiPipelineProps.RTFormats			= Formats;
 	GuiPipelineProps.NumRenderTargets	= 1;
 
-	PipelineState = std::shared_ptr<D3D12GraphicsPipelineState>(new D3D12GraphicsPipelineState(Device.get()));
+	PipelineState = TSharedPtr<D3D12GraphicsPipelineState>(new D3D12GraphicsPipelineState(Device.Get()));
 	if (!PipelineState->Initialize(GuiPipelineProps))
 	{
 		return false;
@@ -666,7 +666,7 @@ bool GuiContext::CreateBuffers()
 	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 	
 	// VertexBuffer
-	VertexBuffer = std::shared_ptr<D3D12Buffer>(new D3D12Buffer(Device.get()));
+	VertexBuffer = TSharedPtr<D3D12Buffer>(new D3D12Buffer(Device.Get()));
 	if (!VertexBuffer->Initialize(BufferProps))
 	{
 		return false;
@@ -675,7 +675,7 @@ bool GuiContext::CreateBuffers()
 	// IndexBuffer
 	BufferProps.Name = "ImGui IndexBuffer";
 
-	IndexBuffer = std::shared_ptr<D3D12Buffer>(new D3D12Buffer(Device.get()));
+	IndexBuffer = TSharedPtr<D3D12Buffer>(new D3D12Buffer(Device.Get()));
 	if (!IndexBuffer->Initialize(BufferProps))
 	{
 		return false;

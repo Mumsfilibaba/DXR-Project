@@ -1,5 +1,6 @@
 #pragma once
 #include "D3D12Resource.h"
+#include "D3D12Views.h"
 
 struct BufferProperties
 {
@@ -9,8 +10,6 @@ struct BufferProperties
 	D3D12_RESOURCE_STATES	InitalState;
 	EMemoryType				MemoryType;
 };
-
-class D3D12ConstantBufferView;
 
 class D3D12Buffer : public D3D12Resource
 {
@@ -23,12 +22,12 @@ public:
 	void* Map();
 	void Unmap();
 
-	FORCEINLINE void SetConstantBufferView(std::shared_ptr<D3D12ConstantBufferView> InConstantBufferView)
+	FORCEINLINE void SetConstantBufferView(TSharedPtr<D3D12ConstantBufferView> InConstantBufferView)
 	{
 		ConstantBufferView = InConstantBufferView;
 	}
 
-	FORCEINLINE std::shared_ptr<D3D12ConstantBufferView> GetConstantBufferView() const
+	FORCEINLINE TSharedPtr<D3D12ConstantBufferView> GetConstantBufferView() const
 	{
 		return ConstantBufferView;
 	}
@@ -39,7 +38,7 @@ public:
 	}
 
 private:
-	std::shared_ptr<D3D12ConstantBufferView> ConstantBufferView;
+	TSharedPtr<D3D12ConstantBufferView> ConstantBufferView;
 
 	Uint32 SizeInBytes = 0;
 };

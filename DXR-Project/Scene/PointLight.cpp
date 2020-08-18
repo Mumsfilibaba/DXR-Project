@@ -34,17 +34,17 @@ bool PointLight::Initialize(D3D12Device* Device)
 		D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = { };
 		CBVDesc.BufferLocation	= LightBuffer->GetGPUVirtualAddress();
 		CBVDesc.SizeInBytes		= LightBuffer->GetSizeInBytes();
-		LightBuffer->SetConstantBufferView(std::make_shared<D3D12ConstantBufferView>(Device, LightBuffer->GetResource(), &CBVDesc));
+		LightBuffer->SetConstantBufferView(MakeShared<D3D12ConstantBufferView>(Device, LightBuffer->GetResource(), &CBVDesc));
 
-		std::shared_ptr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
+		TSharedPtr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
 		CommandList->TransitionBarrier(LightBuffer, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 		CommandList->Flush();
 
-		BuildBuffer(CommandList.get());
+		BuildBuffer(CommandList.Get());
 		CommandList->Flush();
 		
 		// Copy descriptors
-		DescriptorTable->SetConstantBufferView(LightBuffer->GetConstantBufferView().get(), 0);
+		DescriptorTable->SetConstantBufferView(LightBuffer->GetConstantBufferView().Get(), 0);
 		DescriptorTable->CopyDescriptors();
 
 		return true;

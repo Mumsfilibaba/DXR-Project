@@ -1,5 +1,4 @@
 #pragma once
-#include <vector>
 #include <memory>
 #include <cassert>
 #include <utility>
@@ -22,6 +21,7 @@ using namespace DirectX;
 #include "Debug/Debug.h"
 
 #include "STL/String.h"
+#include "STL/TArray.h"
 
 #include "Windows/Windows.h"
 
