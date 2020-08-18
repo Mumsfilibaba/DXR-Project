@@ -210,7 +210,7 @@ public:
 	{
 	}
 
-	FORCEINLINE TArray(SizeType InSize, const ValueType& Value = ValueType()) noexcept
+	FORCEINLINE explicit TArray(SizeType InSize, const ValueType& Value = ValueType()) noexcept
 		: Data(nullptr)
 		, Size(0)
 		, Capacity(0)
@@ -221,7 +221,7 @@ public:
 		InternalMemset(Begin(), End(), Value);
 	}
 
-	FORCEINLINE TArray(Iterator InBegin, Iterator InEnd) noexcept
+	FORCEINLINE explicit TArray(Iterator InBegin, Iterator InEnd) noexcept
 		: Data(nullptr)
 		, Size(0)
 		, Capacity(0)
@@ -491,7 +491,8 @@ public:
 	{
 		if (Pos == End())
 		{
-			return EmplaceBack(Forward<TArgs>(Args)...);
+			EmplaceBack(Forward<TArgs>(Args)...);
+			return (End() - 1);
 		}
 
 		const SizeType Index = static_cast<SizeType>(Pos.Ptr - Begin().Ptr);
@@ -528,7 +529,8 @@ public:
 	{
 		if (Pos == End())
 		{
-			return PushBack(Value);
+			PushBack(Value);
+			return (End() - 1);
 		}
 
 		const SizeType Index = static_cast<SizeType>(Pos.Ptr - Begin().Ptr);
@@ -565,7 +567,8 @@ public:
 	{
 		if (Pos == End())
 		{
-			return PushBack(Value);
+			PushBack(Value);
+			return (End() - 1);
 		}
 
 		const SizeType Index = static_cast<SizeType>(Pos.Ptr - Begin().Ptr);
@@ -1047,7 +1050,7 @@ private:
 	{
 		VALIDATE(InBegin <= InEnd);
 		if (InBegin == InEnd)
-		{ 
+		{
 			return;
 		}
 

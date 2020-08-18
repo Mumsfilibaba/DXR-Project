@@ -7,7 +7,6 @@
 /*
 * TUniquePtr - SmartPointer similar to std::unique_ptr
 */
-
 template<typename T>
 class TUniquePtr
 {
@@ -15,11 +14,8 @@ public:
 	template<typename TOther>
 	friend class TUniquePtr;
 
-	template<typename T>
-	friend class TSharedPtr;
-
-	TUniquePtr(const TUniquePtr& Other)						= delete;
-	TUniquePtr& operator=(const TUniquePtr& Other) noexcept	= delete;
+	TUniquePtr(const TUniquePtr& Other) = delete;
+	TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
 	FORCEINLINE TUniquePtr() noexcept
 		: Ptr(nullptr)
@@ -116,15 +112,15 @@ public:
 		if (this != std::addressof(Other))
 		{
 			Reset();
-			Ptr			= Other.Ptr;
-			Other.Ptr	= nullptr;
+			Ptr = Other.Ptr;
+			Other.Ptr = nullptr;
 		}
 
 		return *this;
 	}
 
 	template<typename TOther>
-	FORCEINLINE TUniquePtr& operator=(TUniquePtr<TOther> && Other) noexcept
+	FORCEINLINE TUniquePtr& operator=(TUniquePtr<TOther>&& Other) noexcept
 	{
 		if (this != std::addressof(Other))
 		{
