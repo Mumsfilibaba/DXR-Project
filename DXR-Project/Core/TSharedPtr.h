@@ -54,12 +54,7 @@ public:
 	template<typename TOther>
 	friend class TPtrBase;
 
-	FORCEINLINE T* Get() noexcept
-	{
-		return Ptr;
-	}
-
-	FORCEINLINE const T* Get() const noexcept
+	FORCEINLINE T* Get() const noexcept
 	{
 		return Ptr;
 	}
@@ -313,6 +308,11 @@ public:
 	{
 	}
 
+	FORCEINLINE TSharedPtr(std::nullptr_t) noexcept
+		: TBase()
+	{
+	}
+
 	FORCEINLINE explicit TSharedPtr(T* InPtr) noexcept
 		: TBase()
 	{
@@ -356,7 +356,7 @@ public:
 	}
 
 	template<typename TOther>
-	FORCEINLINE explicit TSharedPtr(TUniquePtr<TOther>&& Other) noexcept
+	FORCEINLINE TSharedPtr(TUniquePtr<TOther>&& Other) noexcept
 		: TBase()
 	{
 		static_assert(std::is_convertible<TOther, T>());

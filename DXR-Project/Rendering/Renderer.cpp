@@ -1719,7 +1719,7 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 		Props.CSBlob		= Shader.Get();
 		Props.RootSignature	= IrradianceGenRootSignature.Get();
 
-		IrradicanceGenPSO = MakeUnique<D3D12ComputePipelineState>(Device.Get());
+		IrradicanceGenPSO = MakeShared<D3D12ComputePipelineState>(Device.Get());
 		IrradicanceGenPSO->Initialize(Props);
 	}
 

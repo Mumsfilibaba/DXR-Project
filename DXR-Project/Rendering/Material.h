@@ -46,7 +46,6 @@ public:
 
 	FORCEINLINE const MaterialProperties& GetMaterialProperties() const 
 	{
-		std::shared_ptr<int>
 		return Properties;
 	}
 
