@@ -1,43 +1,39 @@
 #pragma once
 #include "TUniquePtr.h"
 
-class _SharedPtr
+/*
+* Private Refcounter for sharedptr
+*/
+class SharedPtrRefCounter
 {
-protected:
-	/*
-	* Private Refcounter (Not optimal to have one for each T)
-	*/
-	class RefCounter
+public:
+	FORCEINLINE SharedPtrRefCounter() noexcept
+		: Counter(0)
 	{
-	public:
-		FORCEINLINE RefCounter() noexcept
-			: Counter(0)
-		{
-		}
+	}
 
-		FORCEINLINE ~RefCounter() noexcept
-		{
-		}
+	FORCEINLINE ~SharedPtrRefCounter() noexcept
+	{
+	}
 
-		FORCEINLINE Uint32 AddRef() noexcept
-		{
-			return ++Counter;
-		}
+	FORCEINLINE Uint32 AddRef() noexcept
+	{
+		return ++Counter;
+	}
 
-		FORCEINLINE Uint32 Release() noexcept
-		{
-			VALIDATE(Counter > 0);
-			return --Counter;
-		}
+	FORCEINLINE Uint32 Release() noexcept
+	{
+		VALIDATE(Counter > 0);
+		return --Counter;
+	}
 
-		FORCEINLINE Uint32 GetRefCount() const noexcept
-		{
-			return Counter;
-		}
+	FORCEINLINE Uint32 GetRefCount() const noexcept
+	{
+		return Counter;
+	}
 
-	private:
-		Uint32 Counter;
-	};
+private:
+	Uint32 Counter;
 };
 
 /*
@@ -45,7 +41,7 @@ protected:
 */
 
 template<typename T>
-class TSharedPtr : private _SharedPtr
+class TSharedPtr
 {
 public:
 	template<typename TOther>
@@ -63,7 +59,7 @@ public:
 	{
 		if (Ptr)
 		{
-			Counter = new RefCounter();
+			Counter = new SharedPtrRefCounter();
 			Counter->AddRef();
 		}
 	}
@@ -108,7 +104,7 @@ public:
 
 		if (Ptr)
 		{
-			Counter = new RefCounter();
+			Counter = new SharedPtrRefCounter();
 			Counter->AddRef();
 		}
 	}
@@ -244,7 +240,7 @@ public:
 
 			if (Ptr)
 			{
-				Counter = new RefCounter();
+				Counter = new SharedPtrRefCounter();
 				Counter->AddRef();
 			}
 		}
@@ -261,7 +257,7 @@ public:
 			Ptr = InPtr;
 			if (Ptr)
 			{
-				Counter = new RefCounter();
+				Counter = new SharedPtrRefCounter();
 				Counter->AddRef();
 			}
 		}
@@ -341,7 +337,7 @@ private:
 	}
 
 	T* Ptr;
-	RefCounter* Counter;
+	SharedPtrRefCounter* Counter;
 };
 
 // Creates a new object together with a SharedPtr
