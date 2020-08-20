@@ -3,7 +3,7 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/GuiContext.h"
 
-#include "STL/TArray.h"
+#include "Containers/TArray.h"
 
 #include <crtdbg.h>
 

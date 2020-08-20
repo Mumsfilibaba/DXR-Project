@@ -11,8 +11,6 @@
 #include "D3D12/D3D12ComputePipelineState.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
-#include "Application/InputManager.h"
-
 #include <algorithm>
 
 TUniquePtr<Renderer> Renderer::RendererInstance = nullptr;

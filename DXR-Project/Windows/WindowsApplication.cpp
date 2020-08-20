@@ -3,7 +3,7 @@
 #include "WindowsCursor.h"
 
 #include "Application/EventHandler.h"
-#include "Application/InputManager.h"
+#include "Application/Input.h"
 
 /*
 * Static
@@ -259,7 +259,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		case WM_KEYUP:
 		{
 			const Uint32	ScanCode	= static_cast<Uint32>(HIWORD(lParam) & SCAN_CODE_MASK);
-			const EKey		Key			= InputManager::Get().ConvertFromKeyCode(ScanCode);
+			const EKey		Key			= Input::ConvertFromScanCode(ScanCode);
 			MessageHandler->OnKeyReleased(Key, GetModifierKeyState());
 			return 0;
 		}
@@ -268,7 +268,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		case WM_KEYDOWN:
 		{
 			const Uint32	ScanCode	= static_cast<Uint32>(HIWORD(lParam) & SCAN_CODE_MASK);
-			const EKey		Key			= InputManager::Get().ConvertFromKeyCode(ScanCode);
+			const EKey		Key			= Input::ConvertFromScanCode(ScanCode);
 			MessageHandler->OnKeyPressed(Key, GetModifierKeyState());
 			return 0;
 		}

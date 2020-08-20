@@ -19,8 +19,11 @@ using namespace DirectX;
 
 #include "Debug/Debug.h"
 
-#include "STL/String.h"
-#include "STL/TArray.h"
+#include "Containers/String.h"
+#include "Containers/TArray.h"
+#include "Containers/TSharedPtr.h"
+#include "Containers/TSharedRef.h"
+#include "Containers/TUniquePtr.h"
 
 #include "Windows/Windows.h"
 
@@ -33,6 +36,3 @@ using namespace DirectX;
 #include "Core/ClassType.h"
 #include "Core/CoreObject.h"
 #include "Core/RefCountedObject.h"
-#include "Core/TSharedPtr.h"
-#include "Core/TSharedRef.h"
-#include "Core/TUniquePtr.h"

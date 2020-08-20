@@ -6,7 +6,7 @@
 
 #include <wrl/client.h>
 
-#include "STL/String.h"
+#include "Containers/String.h"
 
 class D3D12Device;
 

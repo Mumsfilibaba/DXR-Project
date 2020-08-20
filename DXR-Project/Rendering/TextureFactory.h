@@ -2,7 +2,7 @@
 #include "Defines.h"
 #include "Types.h"
 
-#include "STL/String.h"
+#include "Containers/String.h"
 
 class D3D12Device;
 class D3D12Texture;

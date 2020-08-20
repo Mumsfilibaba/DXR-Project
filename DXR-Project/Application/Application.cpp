@@ -1,5 +1,5 @@
 #include "Application.h"
-#include "InputManager.h"
+#include "Input.h"
 
 #include "Rendering/Renderer.h"
 #include "Rendering/GuiContext.h"
@@ -46,52 +46,52 @@ bool Application::Tick()
 	const Float32 RotationSpeed = 45.0f;
 
 	Float32 Speed = 1.0f;
-	if (InputManager::Get().IsKeyDown(EKey::KEY_LEFT_SHIFT))
+	if (Input::IsKeyDown(EKey::KEY_LEFT_SHIFT))
 	{
 		Speed = 4.0f;
 	}
 
-	if (InputManager::Get().IsKeyDown(EKey::KEY_RIGHT))
+	if (Input::IsKeyDown(EKey::KEY_RIGHT))
 	{
 		CurrentCamera->Rotate(0.0f, XMConvertToRadians(RotationSpeed * Delta), 0.0f);
 	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_LEFT))
+	else if (Input::IsKeyDown(EKey::KEY_LEFT))
 	{
 		CurrentCamera->Rotate(0.0f, XMConvertToRadians(-RotationSpeed * Delta), 0.0f);
 	}
 
-	if (InputManager::Get().IsKeyDown(EKey::KEY_UP))
+	if (Input::IsKeyDown(EKey::KEY_UP))
 	{
 		CurrentCamera->Rotate(XMConvertToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
 	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_DOWN))
+	else if (Input::IsKeyDown(EKey::KEY_DOWN))
 	{
 		CurrentCamera->Rotate(XMConvertToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
 	}
 
-	if (InputManager::Get().IsKeyDown(EKey::KEY_W))
+	if (Input::IsKeyDown(EKey::KEY_W))
 	{
 		CurrentCamera->Move(0.0f, 0.0f, Speed * Delta);
 	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_S))
+	else if (Input::IsKeyDown(EKey::KEY_S))
 	{
 		CurrentCamera->Move(0.0f, 0.0f, -Speed * Delta);
 	}
 
-	if (InputManager::Get().IsKeyDown(EKey::KEY_A))
+	if (Input::IsKeyDown(EKey::KEY_A))
 	{
 		CurrentCamera->Move(Speed * Delta, 0.0f, 0.0f);
 	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_D))
+	else if (Input::IsKeyDown(EKey::KEY_D))
 	{
 		CurrentCamera->Move(-Speed * Delta, 0.0f, 0.0f);
 	}
 
-	if (InputManager::Get().IsKeyDown(EKey::KEY_Q))
+	if (Input::IsKeyDown(EKey::KEY_Q))
 	{
 		CurrentCamera->Move(0.0f, Speed * Delta, 0.0f);
 	}
-	else if (InputManager::Get().IsKeyDown(EKey::KEY_E))
+	else if (Input::IsKeyDown(EKey::KEY_E))
 	{
 		CurrentCamera->Move(0.0f, -Speed * Delta, 0.0f);
 	}
@@ -385,7 +385,7 @@ void Application::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyS
 {
 	UNREFERENCED_PARAMETER(ModierKeyState);
 
-	InputManager::Get().RegisterKeyUp(KeyCode);
+	Input::RegisterKeyUp(KeyCode);
 
 	if (GuiContext::Get())
 	{
@@ -397,7 +397,7 @@ void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeySt
 {
 	UNREFERENCED_PARAMETER(ModierKeyState);
 
-	InputManager::Get().RegisterKeyDown(KeyCode);
+	Input::RegisterKeyDown(KeyCode);
 
 	if (GuiContext::Get())
 	{

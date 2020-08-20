@@ -1,7 +1,7 @@
 #pragma once
 #include "D3D12DeviceChild.h"
 
-#include "STL/TArray.h"
+#include "Containers/TArray.h"
 
 /*
 * D3D12OfflineDescriptorHeap

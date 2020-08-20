@@ -1,11 +1,11 @@
 #pragma once
+#include "MeshFactory.h"
+
+#include "Containers/TSharedPtr.h"
+
 #include "D3D12/D3D12Buffer.h"
 #include "D3D12/D3D12RayTracingScene.h"
 #include "D3D12/D3D12CommandList.h"
-
-#include "MeshFactory.h"
-
-#include "Core/TSharedPtr.h"
 
 class Mesh
 {

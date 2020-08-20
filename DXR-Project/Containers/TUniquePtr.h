@@ -1,4 +1,4 @@
-#pragma onceunique_ptr
+#pragma once
 #include "Defines.h"
 #include "Types.h"
 
