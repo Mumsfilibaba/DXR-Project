@@ -1,6 +1,6 @@
 #include "Renderer.h"
 #include "TextureFactory.h"
-#include "DebugGUI.h"
+#include "DebugUI.h"
 #include "Mesh.h"
 
 #include "D3D12/D3D12Texture.h"
@@ -209,7 +209,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->TransitionBarrier(GBuffer[3].Get(), D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// Render UI
-	DebugGUI::Render(CommandList.Get());
+	DebugUI::Render(CommandList.Get());
 
 	// Finalize Commandlist
 	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);

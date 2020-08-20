@@ -5,7 +5,7 @@
 #include "EngineLoop.h"
 
 #include "Rendering/Renderer.h"
-#include "Rendering/DebugGUI.h"
+#include "Rendering/DebugUI.h"
 #include "Rendering/TextureFactory.h"
 
 #include "Scene/MeshComponent.h"
@@ -26,7 +26,7 @@ Application::~Application()
 
 void Application::Release()
 {
-	DebugGUI::Release();
+	DebugUI::Release();
 
 	SAFEDELETE(CurrentScene);
 	SAFEDELETE(PlatformApplication);
@@ -108,14 +108,14 @@ void Application::DrawDebugData()
 	static std::string AdapterName = Renderer::Get()->GetDevice()->GetAdapterName();
 
 	const Float64 Delta = EngineLoop::GetDeltaTime().AsMilliSeconds();
-	DebugGUI::DrawDebugString("Adapter: "	+ AdapterName);
-	DebugGUI::DrawDebugString("Frametime: "	+ std::to_string(Delta) + " ms");
-	DebugGUI::DrawDebugString("FPS: "		+ std::to_string(static_cast<Uint32>(1000 / Delta)));
+	DebugUI::DrawDebugString("Adapter: "	+ AdapterName);
+	DebugUI::DrawDebugString("Frametime: "	+ std::to_string(Delta) + " ms");
+	DebugUI::DrawDebugString("FPS: "		+ std::to_string(static_cast<Uint32>(1000 / Delta)));
 }
 
 void Application::DrawSideWindow()
 {
-	DebugGUI::DrawImgui([]
+	DebugUI::DrawImgui([]
 		{
 			constexpr Uint32 Width = 450;
 
@@ -359,7 +359,7 @@ void Application::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyS
 	UNREFERENCED_PARAMETER(ModierKeyState);
 
 	Input::RegisterKeyUp(KeyCode);
-	DebugGUI::OnKeyReleased(KeyCode);
+	DebugUI::OnKeyReleased(KeyCode);
 	//if (GuiContext::Get())
 	//{
 	//	GuiContext::Get()->OnKeyReleased(KeyCode);
@@ -371,7 +371,7 @@ void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeySt
 	UNREFERENCED_PARAMETER(ModierKeyState);
 
 	Input::RegisterKeyDown(KeyCode);
-	DebugGUI::OnKeyPressed(KeyCode);
+	DebugUI::OnKeyPressed(KeyCode);
 	//if (GuiContext::Get())
 	//{
 	//	GuiContext::Get()->OnKeyPressed(KeyCode);
@@ -394,7 +394,7 @@ void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeySt
 		SetCapture(nullptr);
 	}
 
-	DebugGUI::OnMouseButtonReleased(Button);
+	DebugUI::OnMouseButtonReleased(Button);
 	//if (GuiContext::Get())
 	//{
 	//	GuiContext::Get()->OnMouseButtonReleased(Button);
@@ -412,7 +412,7 @@ void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeySta
 		SetCapture(ActiveWindow);
 	}
 
-	DebugGUI::OnMouseButtonPressed(Button);
+	DebugUI::OnMouseButtonPressed(Button);
 	//if (GuiContext::Get())
 	//{
 	//	GuiContext::Get()->OnMouseButtonPressed(Button);
@@ -421,7 +421,7 @@ void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeySta
 
 void Application::OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta)
 {
-	DebugGUI::OnMouseScrolled(HorizontalDelta, VerticalDelta);
+	DebugUI::OnMouseScrolled(HorizontalDelta, VerticalDelta);
 	//if (GuiContext::Get())
 	//{
 	//	GuiContext::Get()->OnMouseScrolled(HorizontalDelta, VerticalDelta);
@@ -430,7 +430,7 @@ void Application::OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta
 
 void Application::OnCharacterInput(Uint32 Character)
 {
-	DebugGUI::OnCharacterInput(Character);
+	DebugUI::OnCharacterInput(Character);
 	//if (GuiContext::Get())
 	//{
 	//	GuiContext::Get()->OnCharacterInput(Character);
@@ -482,7 +482,7 @@ bool Application::Initialize()
 	}
 
 	// ImGui
-	if (!DebugGUI::Initialize(Renderer->GetDevice()))
+	if (!DebugUI::Initialize(Renderer->GetDevice()))
 	{
 		::MessageBox(0, "FAILED to create ImGuiContext", "ERROR", MB_ICONERROR);
 		return false;

@@ -3,7 +3,7 @@
 
 #include <imgui.h>
 
-class DebugGUI
+class DebugUI
 {
 public:
 	typedef void(*DebugGUIDrawFunc)();

@@ -4,7 +4,7 @@
 
 #include "Windows/WindowsConsoleOutput.h"
 
-#include "Rendering/DebugGUI.h"
+#include "Rendering/DebugUI.h"
 
 static Clock	GlobalClock;
 static bool		GlobalIsRunning = false;

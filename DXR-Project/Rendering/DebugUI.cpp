@@ -1,4 +1,4 @@
-#include "DebugGUI.h"
+#include "DebugUI.h"
 
 #include "Application/Application.h"
 #include "Application/Clock.h"
@@ -16,7 +16,7 @@
 #include "D3D12/D3D12RootSignature.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
-static TArray<DebugGUI::DebugGUIDrawFunc>	GlobalDrawFuncs;
+static TArray<DebugUI::DebugGUIDrawFunc>	GlobalDrawFuncs;
 static TArray<std::string>					GlobalDebugStrings;
 
 struct ImGuiState
@@ -38,7 +38,7 @@ struct ImGuiState
 
 static ImGuiState GlobalImGuiState;
 
-bool DebugGUI::Initialize(TSharedPtr<D3D12Device> InDevice)
+bool DebugUI::Initialize(TSharedPtr<D3D12Device> InDevice)
 {
 	// Save device so that we can create resource on the GPU
 	GlobalImGuiState.Device = InDevice;
@@ -368,34 +368,34 @@ bool DebugGUI::Initialize(TSharedPtr<D3D12Device> InDevice)
 	return true;
 }
 
-void DebugGUI::Release()
+void DebugUI::Release()
 {
 	ImGui::DestroyContext(GlobalImGuiState.Context);
 }
 
-void DebugGUI::DrawImgui(DebugGUIDrawFunc DrawFunc)
+void DebugUI::DrawImgui(DebugGUIDrawFunc DrawFunc)
 {
 	GlobalDrawFuncs.EmplaceBack(DrawFunc);
 }
 
-void DebugGUI::DrawDebugString(const std::string& DebugString)
+void DebugUI::DrawDebugString(const std::string& DebugString)
 {
 	GlobalDebugStrings.EmplaceBack(DebugString);
 }
 
-void DebugGUI::OnKeyPressed(EKey KeyCode)
+void DebugUI::OnKeyPressed(EKey KeyCode)
 {
 	ImGuiIO& IO = ImGui::GetIO();
 	IO.KeysDown[KeyCode] = true;
 }
 
-void DebugGUI::OnKeyReleased(EKey KeyCode)
+void DebugUI::OnKeyReleased(EKey KeyCode)
 {
 	ImGuiIO& IO = ImGui::GetIO();
 	IO.KeysDown[KeyCode] = false;
 }
 
-void DebugGUI::OnMouseButtonPressed(EMouseButton Button)
+void DebugUI::OnMouseButtonPressed(EMouseButton Button)
 {
 	ImGuiIO& IO = ImGui::GetIO();
 	Uint32 ButtonIndex = 0;
@@ -423,7 +423,7 @@ void DebugGUI::OnMouseButtonPressed(EMouseButton Button)
 	IO.MouseDown[ButtonIndex] = true;
 }
 
-void DebugGUI::OnMouseButtonReleased(EMouseButton Button)
+void DebugUI::OnMouseButtonReleased(EMouseButton Button)
 {
 	ImGuiIO& IO = ImGui::GetIO();
 	Uint32 ButtonIndex = 0;
@@ -451,20 +451,20 @@ void DebugGUI::OnMouseButtonReleased(EMouseButton Button)
 	IO.MouseDown[ButtonIndex] = false;
 }
 
-void DebugGUI::OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta)
+void DebugUI::OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta)
 {
 	ImGuiIO& IO = ImGui::GetIO();
 	IO.MouseWheel += VerticalDelta;
 	IO.MouseWheelH += HorizontalDelta;
 }
 
-void DebugGUI::OnCharacterInput(Uint32 Character)
+void DebugUI::OnCharacterInput(Uint32 Character)
 {
 	ImGuiIO& IO = ImGui::GetIO();
 	IO.AddInputCharacter(Character);
 }
 
-void DebugGUI::Render(D3D12CommandList* CommandList)
+void DebugUI::Render(D3D12CommandList* CommandList)
 {
 	ImGuiIO& IO = ImGui::GetIO();
 
@@ -690,7 +690,7 @@ void DebugGUI::Render(D3D12CommandList* CommandList)
 	}
 }
 
-ImGuiContext* DebugGUI::GetCurrentContext()
+ImGuiContext* DebugUI::GetCurrentContext()
 {
 	return GlobalImGuiState.Context;
 }
