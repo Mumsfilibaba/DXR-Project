@@ -73,7 +73,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	StagingTextureProps.MipLevels			= Desc.MipLevels;
 	StagingTextureProps.OptimizedClearValue	= nullptr;
 
-	std::unique_ptr<D3D12Texture> StagingTexture = std::make_unique<D3D12Texture>(Device);
+	TUniquePtr<D3D12Texture> StagingTexture = MakeUnique<D3D12Texture>(Device);
 	if (!StagingTexture->Initialize(StagingTextureProps))
 	{
 		LOG_ERROR("[D3D12CommandList] Failed to create StagingTexture for GenerateMips");
@@ -270,12 +270,12 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 
 	// Copy the source over to the staging texture
 	TransitionBarrier(Dest, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	TransitionBarrier(StagingTexture.get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+	TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	CopyResource(StagingTexture.get(), Dest);
+	CopyResource(StagingTexture.Get(), Dest);
 
 	TransitionBarrier(Dest, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	TransitionBarrier(StagingTexture.get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
 	SetPipelineState(PipelineState.Get());
 	SetComputeRootSignature(MipGenHelper.GenerateMipsRootSignature->GetRootSignature());
@@ -309,7 +309,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 		const Uint32 ThreadsY = DivideByMultiple(DstHeight, 8);
 		Dispatch(ThreadsX, ThreadsY, ThreadsZ);
 
-		UnorderedAccessBarrier(StagingTexture.get());
+		UnorderedAccessBarrier(StagingTexture.Get());
 
 		DstWidth	= DstWidth / 16;
 		DstHeight	= DstHeight / 16;
@@ -319,11 +319,11 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	}
 
 	TransitionBarrier(Dest, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-	TransitionBarrier(StagingTexture.get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
-	CopyResource(Dest, StagingTexture.get());
+	CopyResource(Dest, StagingTexture.Get());
 
-	DeferDestruction(StagingTexture.get());
+	DeferDestruction(StagingTexture.Get());
 }
 
 void D3D12CommandList::FlushDeferredResourceBarriers()

@@ -268,7 +268,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 
 	// Construct Scene
 	MeshData Data;
-	std::unique_ptr<Scene>				LoadedScene = std::make_unique<Scene>();
+	TUniquePtr<Scene> LoadedScene = MakeUnique<Scene>();
 	std::unordered_map<Vertex, Uint32>	UniqueVertices;
 
 	for (const tinyobj::shape_t& Shape : Shapes)
@@ -349,7 +349,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 		LoadedScene->AddActor(NewActor);
 	}
 
-	return LoadedScene.release();
+	return LoadedScene.Release();
 }
 
 void Scene::AddMeshComponent(MeshComponent* Component)

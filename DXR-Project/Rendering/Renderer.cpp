@@ -1606,13 +1606,13 @@ bool Renderer::InitIntegrationLUT()
 	PSOProperties.CSBlob		= Shader.Get();
 	PSOProperties.RootSignature	= RootSignature.Get();
 
-	std::unique_ptr<D3D12ComputePipelineState> PSO = std::make_unique<D3D12ComputePipelineState>(Device.Get());
+	TUniquePtr<D3D12ComputePipelineState> PSO = MakeUnique<D3D12ComputePipelineState>(Device.Get());
 	if (!PSO->Initialize(PSOProperties))
 	{
 		return false;
 	}
 
-	std::unique_ptr<D3D12DescriptorTable> DescriptorTable = std::make_unique<D3D12DescriptorTable>(Device.Get(), 1);
+	TUniquePtr<D3D12DescriptorTable> DescriptorTable = MakeUnique<D3D12DescriptorTable>(Device.Get(), 1);
 	DescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).Get(), 0);
 	DescriptorTable->CopyDescriptors();
 
@@ -1683,18 +1683,18 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 {
 	const Uint32 Size = static_cast<Uint32>(Dest->GetDesc().Width);
 
-	static std::unique_ptr<D3D12DescriptorTable> SrvDescriptorTable;
+	static TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable;
 	if (!SrvDescriptorTable)
 	{
-		SrvDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device.Get(), 1);
+		SrvDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device.Get(), 1);
 		SrvDescriptorTable->SetShaderResourceView(Source->GetShaderResourceView(0).Get(), 0);
 		SrvDescriptorTable->CopyDescriptors();
 	}
 
-	static std::unique_ptr<D3D12DescriptorTable> UavDescriptorTable;
+	static TUniquePtr<D3D12DescriptorTable> UavDescriptorTable;
 	if (!UavDescriptorTable)
 	{
-		UavDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device.Get(), 1);
+		UavDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device.Get(), 1);
 		UavDescriptorTable->SetUnorderedAccessView(Dest->GetUnorderedAccessView(0).Get(), 0);
 		UavDescriptorTable->CopyDescriptors();
 	}
@@ -1747,18 +1747,18 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 {
 	const Uint32 Miplevels = Dest->GetDesc().MipLevels;
 
-	static std::unique_ptr<D3D12DescriptorTable> SrvDescriptorTable;
+	static TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable;
 	if (!SrvDescriptorTable)
 	{
-		SrvDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device.Get(), 1);
+		SrvDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device.Get(), 1);
 		SrvDescriptorTable->SetShaderResourceView(Source->GetShaderResourceView(0).Get(), 0);
 		SrvDescriptorTable->CopyDescriptors();
 	}
 
-	static std::unique_ptr<D3D12DescriptorTable> UavDescriptorTable;
+	static TUniquePtr<D3D12DescriptorTable> UavDescriptorTable;
 	if (!UavDescriptorTable)
 	{
-		UavDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device.Get(), Miplevels);
+		UavDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device.Get(), Miplevels);
 		for (Uint32 Mip = 0; Mip < Miplevels; Mip++)
 		{
 			UavDescriptorTable->SetUnorderedAccessView(Dest->GetUnorderedAccessView(Mip).Get(), Mip);

@@ -34,7 +34,7 @@ bool D3D12CommandQueue::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 		LOG_INFO("[D3D12CommandQueue]: Created CommandQueue");
 	}
 
-	QueueFence = std::make_unique<D3D12Fence>(Device);
+	QueueFence = MakeUnique<D3D12Fence>(Device);
 	if (!QueueFence->Initialize(FenceValue))
 	{
 		return false;
@@ -66,7 +66,7 @@ void D3D12CommandQueue::ExecuteCommandList(D3D12CommandList* CommandList)
 	Queue->ExecuteCommandLists(1, CommandLists);
 
 	FenceValue++;
-	SignalFence(QueueFence.get(), FenceValue);
+	SignalFence(QueueFence.Get(), FenceValue);
 }
 
 void D3D12CommandQueue::SetDebugName(const std::string& DebugName)

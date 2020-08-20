@@ -31,7 +31,7 @@ public:
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> Queue;
-	std::unique_ptr<D3D12Fence> QueueFence;
+	TUniquePtr<D3D12Fence> QueueFence;
 	
 	Uint64 FenceValue = 0;
 };
