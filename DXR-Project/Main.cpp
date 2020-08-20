@@ -1,9 +1,5 @@
 #include "Application/Application.h"
-
-#include "Rendering/Renderer.h"
-#include "Rendering/GuiContext.h"
-
-#include "Containers/TArray.h"
+#include "Application/EngineLoop.h"
 
 #include <crtdbg.h>
 
@@ -14,24 +10,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-	// Application
-	GlobalOutputHandle = new WindowsConsoleOutput();
-
-	Application* App = Application::Make();
-	if (!App)
+	if (!EngineLoop::CoreInitialize())
 	{
-		::MessageBox(0, "Failed to create Application", "ERROR", MB_ICONERROR);
+		::MessageBox(0, "Failed to initalize core modules", "ERROR", MB_ICONERROR);
 		return -1;
 	}
-	else
-	{
-		App->Run();
-		App->Release();
 
-		SAFEDELETE(GlobalOutputHandle);
-		
-		return 0;
+	if (!EngineLoop::Initialize())
+	{
+		::MessageBox(0, "Failed to initalize core modules", "ERROR", MB_ICONERROR);
+		return -1;
 	}
+
+	while (EngineLoop::IsRunning())
+	{
+		EngineLoop::Tick();
+	}
+
+	EngineLoop::Release();
+	EngineLoop::CoreRelease();
+
+	return 0;
 }
 
 #pragma warning(pop)

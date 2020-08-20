@@ -15,8 +15,7 @@ public:
 
 	void Release();
 
-	void Run();
-	bool Tick();
+	void Tick();
 
 	void DrawDebugData();
 	void DrawSideWindow();
@@ -58,7 +57,6 @@ protected:
 	TSharedPtr<WindowsWindow> Window = nullptr;
 	WindowsApplication*	PlatformApplication = nullptr;
 
-	Clock Timer;
 	Scene*	CurrentScene	= nullptr;
 	Camera* CurrentCamera	= nullptr;
 

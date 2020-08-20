@@ -1,8 +1,11 @@
 #include "Application.h"
 #include "Input.h"
 
+// TODO: Mayebe should handle this in a different way
+#include "EngineLoop.h"
+
 #include "Rendering/Renderer.h"
-#include "Rendering/GuiContext.h"
+#include "Rendering/DebugGUI.h"
 #include "Rendering/TextureFactory.h"
 
 #include "Scene/MeshComponent.h"
@@ -23,26 +26,22 @@ Application::~Application()
 
 void Application::Release()
 {
+	DebugGUI::Release();
+
 	SAFEDELETE(CurrentScene);
 	SAFEDELETE(PlatformApplication);
 }
 
-void Application::Run()
+void Application::Tick()
 {
-	// Run-Loop
-	bool IsRunning = true;
-	while (IsRunning)
+	// Tick OS
+	if (!PlatformApplication->Tick())
 	{
-		IsRunning = Tick();
+		EngineLoop::Exit();
 	}
-}
-
-bool Application::Tick()
-{
-	bool ShouldExit = PlatformApplication->Tick();
 	
-	Timer.Tick();
-	const Float32 Delta = static_cast<Float32>(Timer.GetDeltaTime().AsSeconds());
+	// Run app
+	const Float32 Delta = static_cast<Float32>(EngineLoop::GetDeltaTime().AsSeconds());
 	const Float32 RotationSpeed = 45.0f;
 
 	Float32 Speed = 1.0f;
@@ -98,86 +97,60 @@ bool Application::Tick()
 
 	CurrentCamera->UpdateMatrices();
 
-	GuiContext::Get()->BeginFrame();
-
 	DrawDebugData();
 	DrawSideWindow();
 
-	GuiContext::Get()->EndFrame();
-
 	Renderer::Get()->Tick(*CurrentScene);
-
-	return ShouldExit;
 }
 
 void Application::DrawDebugData()
 {
-	constexpr Uint32 Width = 300;
-	
-	WindowShape WindowShape;
-	Window->GetWindowShape(WindowShape);
-
-	ImGui::SetNextWindowPos(ImVec2(static_cast<Float32>(WindowShape.Width - Width), 5.0f));
-	ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height));
-
-	ImGui::Begin("DebugWindow", nullptr,
-		ImGuiWindowFlags_NoBackground | 
-		ImGuiWindowFlags_NoTitleBar | 
-		ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoResize | 
-		ImGuiWindowFlags_NoDecoration | 
-		ImGuiWindowFlags_NoScrollbar |
-		ImGuiWindowFlags_NoSavedSettings);
-
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
-
 	static std::string AdapterName = Renderer::Get()->GetDevice()->GetAdapterName();
 
-	const Float64 Delta = Timer.GetDeltaTime().AsMilliSeconds();
-	ImGui::Text("Adapter: %s", AdapterName.c_str());
-	ImGui::Text("Frametime: %.4f ms", Delta);
-	ImGui::Text("FPS: %d", static_cast<Uint32>(1000 / Delta));
-
-	ImGui::PopStyleColor();
-
-	ImGui::End();
+	const Float64 Delta = EngineLoop::GetDeltaTime().AsMilliSeconds();
+	DebugGUI::DrawDebugString("Adapter: "	+ AdapterName);
+	DebugGUI::DrawDebugString("Frametime: "	+ std::to_string(Delta) + " ms");
+	DebugGUI::DrawDebugString("FPS: "		+ std::to_string(static_cast<Uint32>(1000 / Delta)));
 }
 
 void Application::DrawSideWindow()
 {
-	constexpr Uint32 Width = 450;
-
-	WindowShape WindowShape;
-	Window->GetWindowShape(WindowShape);
-
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height));
-
-	ImGui::Begin("Window", nullptr, 
-		ImGuiWindowFlags_NoMove | 
-		ImGuiWindowFlags_NoResize | 
-		ImGuiWindowFlags_NoTitleBar | 
-		ImGuiWindowFlags_NoSavedSettings);
-
-	ImGuiTabBarFlags TabBarFlags = ImGuiTabBarFlags_None;
-	if (ImGui::BeginTabBar("Menu", TabBarFlags))
-	{
-		if (ImGui::BeginTabItem("Renderer"))
+	DebugGUI::DrawImgui([]
 		{
-			DrawRenderSettings();
-			ImGui::EndTabItem();
-		}
+			constexpr Uint32 Width = 450;
 
-		if (ImGui::BeginTabItem("Scene"))
-		{
-			DrawSceneInfo();
-			ImGui::EndTabItem();
-		}
+			WindowShape WindowShape;
+			Application::Get()->GetWindow()->GetWindowShape(WindowShape);
 
-		ImGui::EndTabBar();
-	}
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+			ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height));
 
-	ImGui::End();
+			ImGui::Begin("Window", nullptr,
+				ImGuiWindowFlags_NoMove |
+				ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoTitleBar |
+				ImGuiWindowFlags_NoSavedSettings);
+
+			ImGuiTabBarFlags TabBarFlags = ImGuiTabBarFlags_None;
+			if (ImGui::BeginTabBar("Menu", TabBarFlags))
+			{
+				if (ImGui::BeginTabItem("Renderer"))
+				{
+					Application::Get()->DrawRenderSettings();
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("Scene"))
+				{
+					Application::Get()->DrawSceneInfo();
+					ImGui::EndTabItem();
+				}
+
+				ImGui::EndTabBar();
+			}
+
+			ImGui::End();
+		});
 }
 
 void Application::DrawRenderSettings()
@@ -386,11 +359,11 @@ void Application::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyS
 	UNREFERENCED_PARAMETER(ModierKeyState);
 
 	Input::RegisterKeyUp(KeyCode);
-
-	if (GuiContext::Get())
-	{
-		GuiContext::Get()->OnKeyReleased(KeyCode);
-	}
+	DebugGUI::OnKeyReleased(KeyCode);
+	//if (GuiContext::Get())
+	//{
+	//	GuiContext::Get()->OnKeyReleased(KeyCode);
+	//}
 }
 
 void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState)
@@ -398,11 +371,11 @@ void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeySt
 	UNREFERENCED_PARAMETER(ModierKeyState);
 
 	Input::RegisterKeyDown(KeyCode);
-
-	if (GuiContext::Get())
-	{
-		GuiContext::Get()->OnKeyPressed(KeyCode);
-	}
+	DebugGUI::OnKeyPressed(KeyCode);
+	//if (GuiContext::Get())
+	//{
+	//	GuiContext::Get()->OnKeyPressed(KeyCode);
+	//}
 }
 
 void Application::OnMouseMove(Int32 X, Int32 Y)
@@ -421,10 +394,11 @@ void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeySt
 		SetCapture(nullptr);
 	}
 
-	if (GuiContext::Get())
-	{
-		GuiContext::Get()->OnMouseButtonReleased(Button);
-	}
+	DebugGUI::OnMouseButtonReleased(Button);
+	//if (GuiContext::Get())
+	//{
+	//	GuiContext::Get()->OnMouseButtonReleased(Button);
+	//}
 }
 
 void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState)
@@ -438,26 +412,29 @@ void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeySta
 		SetCapture(ActiveWindow);
 	}
 
-	if (GuiContext::Get())
-	{
-		GuiContext::Get()->OnMouseButtonPressed(Button);
-	}
+	DebugGUI::OnMouseButtonPressed(Button);
+	//if (GuiContext::Get())
+	//{
+	//	GuiContext::Get()->OnMouseButtonPressed(Button);
+	//}
 }
 
 void Application::OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta)
 {
-	if (GuiContext::Get())
-	{
-		GuiContext::Get()->OnMouseScrolled(HorizontalDelta, VerticalDelta);
-	}
+	DebugGUI::OnMouseScrolled(HorizontalDelta, VerticalDelta);
+	//if (GuiContext::Get())
+	//{
+	//	GuiContext::Get()->OnMouseScrolled(HorizontalDelta, VerticalDelta);
+	//}
 }
 
 void Application::OnCharacterInput(Uint32 Character)
 {
-	if (GuiContext::Get())
-	{
-		GuiContext::Get()->OnCharacterInput(Character);
-	}
+	DebugGUI::OnCharacterInput(Character);
+	//if (GuiContext::Get())
+	//{
+	//	GuiContext::Get()->OnCharacterInput(Character);
+	//}
 }
 
 bool Application::Initialize()
@@ -505,8 +482,7 @@ bool Application::Initialize()
 	}
 
 	// ImGui
-	GuiContext* GUIContext = GuiContext::Make(Renderer->GetDevice());
-	if (!GUIContext)
+	if (!DebugGUI::Initialize(Renderer->GetDevice()))
 	{
 		::MessageBox(0, "FAILED to create ImGuiContext", "ERROR", MB_ICONERROR);
 		return false;
@@ -701,9 +677,6 @@ bool Application::Initialize()
 	Light->SetIntensity(400.0f);
 	Light->Initialize(Renderer::Get()->GetDevice().Get());
 	CurrentScene->AddLight(Light);
-
-	// Reset timer before starting
-	Timer.Reset();
 
 	return true;
 }
