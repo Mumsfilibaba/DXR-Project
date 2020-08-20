@@ -1,23 +1,23 @@
 #pragma once
 #include "Light.h"
 
-struct PointLightProperties
+struct DirectionalLightProperties
 {
 	XMFLOAT3 Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	Float32 Padding;
-	XMFLOAT3 Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	XMFLOAT3 Direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
 };
 
 /*
-* PointLight
+* DirectionalLight
 */
-class PointLight : public Light
+class DirectionalLight : public Light
 {
-	CORE_OBJECT(PointLight, Light);
+	CORE_OBJECT(DirectionalLight, Light);
 
 public:
-	PointLight();
-	~PointLight();
+	DirectionalLight();
+	~DirectionalLight();
 
 	virtual bool Initialize(class D3D12Device* Device) override;
 

@@ -2,7 +2,6 @@
 #include <dxcapi.h>
 
 #include <string>
-#include <memory>
 
 class D3D12ShaderCompiler
 {

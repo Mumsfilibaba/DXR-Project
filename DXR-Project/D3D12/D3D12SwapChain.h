@@ -4,8 +4,6 @@
 
 #include <dxgi1_6.h>
 
-#include <vector>
-
 class WindowsWindow;
 class D3D12CommandQueue;
 

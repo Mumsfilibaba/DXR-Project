@@ -19,8 +19,6 @@
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 
-#include <memory>
-
 #include "Mesh.h"
 #include "Material.h"
 #include "MeshFactory.h"

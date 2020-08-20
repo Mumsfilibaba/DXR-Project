@@ -6,8 +6,6 @@
 
 #include "Renderer.h"
 
-#include <memory>
-
 Mesh::Mesh()
 	: VertexBuffer(nullptr)
 	, IndexBuffer(nullptr)

@@ -8,8 +8,6 @@
 
 #include "Scene/Scene.h"
 
-#include <memory>
-
 class Application : public EventHandler
 {
 public:

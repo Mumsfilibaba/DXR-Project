@@ -147,7 +147,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 			GenMipsProperties.RootSignature	= nullptr;
 			GenMipsProperties.CSBlob		= CSBlob.Get();
 
-			MipGenHelper.GenerateMipsTexCube_PSO = std::make_unique<D3D12ComputePipelineState>(Device);
+			MipGenHelper.GenerateMipsTexCube_PSO = MakeUnique<D3D12ComputePipelineState>(Device);
 			if (!MipGenHelper.GenerateMipsTexCube_PSO->Initialize(GenMipsProperties))
 			{
 				return;
@@ -156,7 +156,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 			// Create rootsignature
 			if (!MipGenHelper.GenerateMipsRootSignature)
 			{
-				MipGenHelper.GenerateMipsRootSignature = std::make_unique<D3D12RootSignature>(Device);
+				MipGenHelper.GenerateMipsRootSignature = MakeUnique<D3D12RootSignature>(Device);
 				if (MipGenHelper.GenerateMipsRootSignature->Initialize(CSBlob.Get()))
 				{
 					MipGenHelper.GenerateMipsRootSignature->SetDebugName("Generate MipLevels RootSignature");
@@ -185,7 +185,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 			GenMipsProperties.RootSignature = nullptr;
 			GenMipsProperties.CSBlob		= CSBlob.Get();
 
-			MipGenHelper.GenerateMipsTex2D_PSO = std::make_unique<D3D12ComputePipelineState>(Device);
+			MipGenHelper.GenerateMipsTex2D_PSO = MakeUnique<D3D12ComputePipelineState>(Device);
 			if (!MipGenHelper.GenerateMipsTex2D_PSO->Initialize(GenMipsProperties))
 			{
 				return;
@@ -194,7 +194,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 			// Create rootsignature
 			if (!MipGenHelper.GenerateMipsRootSignature)
 			{
-				MipGenHelper.GenerateMipsRootSignature = std::make_unique<D3D12RootSignature>(Device);
+				MipGenHelper.GenerateMipsRootSignature = MakeUnique<D3D12RootSignature>(Device);
 				if (MipGenHelper.GenerateMipsRootSignature->Initialize(CSBlob.Get()))
 				{
 					MipGenHelper.GenerateMipsRootSignature->SetDebugName("Generate MipLevels RootSignature");
@@ -222,7 +222,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 			UAVDesc.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
 			UAVDesc.Texture2D.MipSlice		= 0;
 			UAVDesc.Texture2D.PlaneSlice	= 0;
-			MipGenHelper.NULLView = std::make_unique<D3D12UnorderedAccessView>(Device, nullptr, nullptr, &UAVDesc);
+			MipGenHelper.NULLView = MakeUnique<D3D12UnorderedAccessView>(Device, nullptr, nullptr, &UAVDesc);
 		}
 
 		NumDispatches++;
@@ -237,7 +237,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	// Bind ShaderResourceView
 	if (!MipGenHelper.SRVDescriptorTable)
 	{
-		MipGenHelper.SRVDescriptorTable = std::make_unique<D3D12DescriptorTable>(Device, 1);
+		MipGenHelper.SRVDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device, 1);
 	}
 
 	MipGenHelper.SRVDescriptorTable->SetShaderResourceView(StagingTexture->GetShaderResourceView(0).Get(), 0);
@@ -249,7 +249,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	{
 		if (!MipGenHelper.UAVDescriptorTables[i])
 		{
-			MipGenHelper.UAVDescriptorTables[i] = std::make_unique<D3D12DescriptorTable>(Device, 4);
+			MipGenHelper.UAVDescriptorTables[i] = MakeUnique<D3D12DescriptorTable>(Device, 4);
 		}
 
 		for (Uint32 j = 0; j < MipLevelsPerDispatch; j++)
@@ -261,7 +261,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 			}
 			else
 			{
-				MipGenHelper.UAVDescriptorTables[i]->SetUnorderedAccessView(MipGenHelper.NULLView.get(), j);
+				MipGenHelper.UAVDescriptorTables[i]->SetUnorderedAccessView(MipGenHelper.NULLView.Get(), j);
 			}
 		}
 

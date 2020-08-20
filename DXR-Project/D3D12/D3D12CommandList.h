@@ -12,12 +12,12 @@ class D3D12CommandList : public D3D12DeviceChild
 {
 	struct GenerateMipsHelper
 	{
-		std::unique_ptr<D3D12ComputePipelineState> GenerateMipsTex2D_PSO;
-		std::unique_ptr<D3D12ComputePipelineState> GenerateMipsTexCube_PSO;
-		std::unique_ptr<D3D12RootSignature> GenerateMipsRootSignature;
-		std::unique_ptr<D3D12UnorderedAccessView> NULLView;
-		std::unique_ptr<D3D12DescriptorTable> SRVDescriptorTable;
-		TArray<std::unique_ptr<D3D12DescriptorTable>> UAVDescriptorTables;
+		TUniquePtr<D3D12ComputePipelineState>		GenerateMipsTex2D_PSO;
+		TUniquePtr<D3D12ComputePipelineState>		GenerateMipsTexCube_PSO;
+		TUniquePtr<D3D12RootSignature>				GenerateMipsRootSignature;
+		TUniquePtr<D3D12UnorderedAccessView>		NULLView;
+		TUniquePtr<D3D12DescriptorTable>			SRVDescriptorTable;
+		TArray<TUniquePtr<D3D12DescriptorTable>>	UAVDescriptorTables;
 	};
 
 public:

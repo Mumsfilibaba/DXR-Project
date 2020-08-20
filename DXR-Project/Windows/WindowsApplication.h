@@ -6,9 +6,6 @@
 #include "Application/InputCodes.h"
 #include "Application/EventHandler.h"
 
-#include <memory>
-#include <vector>
-
 class WindowsWindow;
 class EventHandler;
 class WindowsCursor;

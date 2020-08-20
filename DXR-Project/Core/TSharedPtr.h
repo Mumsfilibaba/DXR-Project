@@ -336,7 +336,7 @@ public:
 		: TBase()
 	{
 		static_assert(std::is_convertible<TOther, T>());
-		TBase::InternalConstructStrong<TOther>(Other);
+		TBase::template InternalConstructStrong<TOther>(Other);
 	}
 
 	template<typename TOther>
@@ -344,7 +344,7 @@ public:
 		: TBase()
 	{
 		static_assert(std::is_convertible<TOther, T>());
-		TBase::InternalMove<TOther>(Move(Other));
+		TBase::template InternalMove<TOther>(Move(Other));
 	}
 
 	template<typename TOther>
@@ -352,7 +352,7 @@ public:
 		: TBase()
 	{
 		static_assert(std::is_convertible<TOther, T>());
-		TBase::InternalConstructStrong<TOther>(Other);
+		TBase::template InternalConstructStrong<TOther>(Other);
 	}
 
 	template<typename TOther>
@@ -360,7 +360,7 @@ public:
 		: TBase()
 	{
 		static_assert(std::is_convertible<TOther, T>());
-		TBase::InternalConstructStrong<TOther>(Other.Release());
+		TBase::template InternalConstructStrong<TOther>(Other.Release());
 	}
 
 	FORCEINLINE ~TSharedPtr()
@@ -413,7 +413,7 @@ public:
 		if (this != std::addressof(Other))
 		{
 			Reset();
-			TBase::InternalConstructStrong<TOther>(Other);
+			TBase::template InternalConstructStrong<TOther>(Other);
 		}
 
 		return *this;
@@ -427,7 +427,7 @@ public:
 		if (this != std::addressof(Other))
 		{
 			Reset();
-			TBase::InternalMove<TOther>(Move(Other));
+			TBase::template InternalMove<TOther>(Move(Other));
 		}
 
 		return *this;
@@ -435,7 +435,7 @@ public:
 
 	FORCEINLINE TSharedPtr& operator=(T* InPtr) noexcept
 	{
-		if (Ptr != InPtr)
+		if (this->Ptr != InPtr)
 		{
 			Reset();
 			TBase::InternalConstructStrong(InPtr);
@@ -452,22 +452,22 @@ public:
 
 	FORCEINLINE bool operator==(const TSharedPtr& Other) const noexcept
 	{
-		return (Ptr == Other.Ptr);
+		return (TBase::Ptr == Other.Ptr);
 	}
 
 	FORCEINLINE bool operator!=(const TSharedPtr& Other) const noexcept
 	{
-		return (Ptr != Other.Ptr);
+		return (TBase::Ptr != Other.Ptr);
 	}
 
 	FORCEINLINE bool operator==(TSharedPtr&& Other) const noexcept
 	{
-		return (Ptr == Other.Ptr);
+		return (TBase::Ptr == Other.Ptr);
 	}
 
 	FORCEINLINE bool operator!=(TSharedPtr&& Other) const noexcept
 	{
-		return (Ptr != Other.Ptr);
+		return (TBase::Ptr != Other.Ptr);
 	}
 };
 
@@ -496,7 +496,7 @@ public:
 		: TBase()
 	{
 		static_assert(std::is_convertible<TOther, T>(), "TWeakPtr: Trying to convert non-convertable types");
-		TBase::InternalConstructWeak<TOther>(InPtr);
+		TBase::template InternalConstructWeak<TOther>(InPtr);
 	}
 
 	FORCEINLINE TWeakPtr(const TWeakPtr& Other) noexcept
@@ -516,7 +516,7 @@ public:
 		: TBase()
 	{
 		static_assert(std::is_convertible<TOther, T>(), "TWeakPtr: Trying to convert non-convertable types");
-		TBase::InternalConstructWeak<TOther>(Other);
+		TBase::template InternalConstructWeak<TOther>(Other);
 	}
 
 	template<typename TOther>
@@ -524,7 +524,7 @@ public:
 		: TBase()
 	{
 		static_assert(std::is_convertible<TOther, T>(), "TWeakPtr: Trying to convert non-convertable types");
-		TBase::InternalMove<TOther>(Move(Other));
+		TBase::template InternalMove<TOther>(Move(Other));
 	}
 
 	FORCEINLINE ~TWeakPtr()
@@ -583,7 +583,7 @@ public:
 		if (this != std::addressof(Other))
 		{
 			Reset();
-			TBase::InternalConstructWeak<TOther>(Other);
+			TBase::template InternalConstructWeak<TOther>(Other);
 		}
 
 		return *this;
@@ -605,7 +605,7 @@ public:
 
 	FORCEINLINE TWeakPtr& operator=(T* InPtr) noexcept
 	{
-		if (Ptr != InPtr)
+		if (TBase::Ptr != InPtr)
 		{
 			Reset();
 			TBase::InternalConstructWeak(InPtr);
@@ -622,22 +622,22 @@ public:
 
 	FORCEINLINE bool operator==(const TWeakPtr& Other) const noexcept
 	{
-		return (Ptr == Other.Ptr);
+		return (TBase::Ptr == Other.Ptr);
 	}
 
 	FORCEINLINE bool operator!=(const TWeakPtr& Other) const noexcept
 	{
-		return (Ptr != Other.Ptr);
+		return (TBase::Ptr != Other.Ptr);
 	}
 
 	FORCEINLINE bool operator==(TWeakPtr&& Other) const noexcept
 	{
-		return (Ptr == Other.Ptr);
+		return (TBase::Ptr == Other.Ptr);
 	}
 
 	FORCEINLINE bool operator!=(TWeakPtr&& Other) const noexcept
 	{
-		return (Ptr != Other.Ptr);
+		return (TBase::Ptr != Other.Ptr);
 	}
 };
 

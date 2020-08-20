@@ -10,7 +10,7 @@ public:
 	void RegisterKeyUp(EKey InKeyCode);
 	void RegisterKeyDown(EKey InKeyCode);
 
-	bool IsKeyUp(EKey InKeyCode)		const;
+	bool IsKeyUp(EKey InKeyCode)	const;
 	bool IsKeyDown(EKey InKeyCode)	const;
 
 	static InputManager& Get();

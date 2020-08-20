@@ -5,8 +5,6 @@
 
 #include "Defines.h"
 
-#include <memory>
-
 class D3D12CommandList;
 class D3D12DescriptorTable;
 

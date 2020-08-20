@@ -6,7 +6,6 @@
 /*
 * TSharedRef - Helper class when using objects with RefCountedObject as a base
 */
-
 template<typename TRefCountedObject>
 class TSharedRef
 {
@@ -21,7 +20,6 @@ public:
 		: Ptr(Other.Ptr)
 	{
 		static_assert(std::is_base_of<RefCountedObject, TRefCountedObject>());
-		
 		AddRef();
 	}
 
@@ -29,7 +27,6 @@ public:
 		: Ptr(Other.Ptr)
 	{
 		static_assert(std::is_base_of<RefCountedObject, TRefCountedObject>());
-		
 		Other.Ptr = nullptr;
 	}
 

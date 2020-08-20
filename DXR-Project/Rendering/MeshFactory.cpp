@@ -600,11 +600,10 @@ void MeshFactory::Subdivide(MeshData& OutData, Uint32 Subdivisions) noexcept
 	{
 		OldVertexCount	= Uint32(OutData.Vertices.GetSize());
 		IndexCount		= Uint32(OutData.Indices.GetSize());
-
 		for (Uint32 j = 0; j < IndexCount; j += 3)
 		{
 			// Calculate Position
-			XMVECTOR Position0 = XMLoadFloat3(&OutData.Vertices[OutData.Indices[j    ]].Position);
+			XMVECTOR Position0 = XMLoadFloat3(&OutData.Vertices[OutData.Indices[j]].Position);
 			XMVECTOR Position1 = XMLoadFloat3(&OutData.Vertices[OutData.Indices[j + 1]].Position);
 			XMVECTOR Position2 = XMLoadFloat3(&OutData.Vertices[OutData.Indices[j + 2]].Position);
 
@@ -715,7 +714,6 @@ void MeshFactory::Optimize(MeshData& OutData, Uint32 StartVertex) noexcept
 		
 	Uint32 k = 0;
 	Uint32 j = 0;
-
 	for (Uint32 i = StartVertex; i < VertexCount; i++)
 	{
 		for (j = 0; j < VertexCount; j++)

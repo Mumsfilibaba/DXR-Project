@@ -1,8 +1,6 @@
 #pragma once
 #include "Core/CoreObject.h"
 
-#include <vector>
-
 #include <DirectXMath.h>
 
 /*

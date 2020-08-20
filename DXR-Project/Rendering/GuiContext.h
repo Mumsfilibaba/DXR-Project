@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 #include <imgui.h>
 
 #include "Types.h"
