@@ -32,6 +32,11 @@ void EngineLoop::Tick()
 {
 	GlobalClock.Tick();
 	Application::Get()->Tick();
+
+	DebugUI::DrawUI([]
+		{
+			ImGui::ShowDemoWindow();
+		});
 }
 
 void EngineLoop::Release()

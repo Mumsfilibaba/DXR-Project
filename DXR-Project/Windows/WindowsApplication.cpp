@@ -2,8 +2,9 @@
 #include "WindowsWindow.h"
 #include "WindowsCursor.h"
 
-#include "Application/EventHandler.h"
 #include "Application/Input.h"
+
+#include "Application/Generic/GenericApplication.h"
 
 /*
 * Static

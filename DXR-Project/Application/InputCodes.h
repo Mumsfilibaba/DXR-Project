@@ -167,7 +167,20 @@ enum EModifierFlag
 	MODIFIER_FLAG_NUM_LOCK		= FLAG(6),
 };
 
-inline const char* KeyToString(EKey key)
+inline const Char* ButtonToString(EMouseButton Button)
+{
+	switch (Button)
+	{
+	case MOUSE_BUTTON_LEFT:		return "LEFT";
+	case MOUSE_BUTTON_RIGHT:	return "RIGHT";
+	case MOUSE_BUTTON_MIDDLE:	return "MIDDLE";
+	case MOUSE_BUTTON_BACK:		return "BACK";
+	case MOUSE_BUTTON_FORWARD:	return "FORWARD";
+	default:					return "UNKNOWN";
+	}
+}
+
+inline const Char* KeyToString(EKey key)
 {
 	switch (key)
 	{

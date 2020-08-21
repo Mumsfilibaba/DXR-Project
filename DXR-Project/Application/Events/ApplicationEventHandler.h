@@ -1,5 +1,5 @@
 #pragma once
-#include "InputCodes.h"
+#include "Application/InputCodes.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
@@ -7,10 +7,10 @@
 class WindowsWindow;
 class ModifierKeyState;
 
-class EventHandler
+class ApplicationEventHandler
 {
 public:
-	virtual ~EventHandler() = default;
+	virtual ~ApplicationEventHandler() = default;
 
 	virtual void OnWindowResized(TSharedPtr<WindowsWindow>& Window, Uint16 Width, Uint16 Height)
 	{
@@ -45,7 +45,7 @@ public:
 	}
 
 protected:
-	EventHandler() = default;
+	ApplicationEventHandler() = default;
 };
 
 #pragma warning(pop)

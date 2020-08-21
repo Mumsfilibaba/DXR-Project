@@ -1,5 +1,4 @@
 #pragma once
-#include "EventHandler.h"
 #include "Clock.h"
 
 #include "Windows/WindowsWindow.h"
@@ -8,7 +7,10 @@
 
 #include "Scene/Scene.h"
 
-class Application : public EventHandler
+#include "Application/Events/ApplicationEventHandler.h"
+#include "Application/Generic/GenericApplication.h"
+
+class Application : public ApplicationEventHandler
 {
 public:
 	~Application();
@@ -54,7 +56,7 @@ private:
 	bool Initialize();
 
 protected:
-	TSharedPtr<WindowsWindow> Window = nullptr;
+	TSharedPtr<WindowsWindow> Window		= nullptr;
 	WindowsApplication*	PlatformApplication = nullptr;
 
 	Scene*	CurrentScene	= nullptr;

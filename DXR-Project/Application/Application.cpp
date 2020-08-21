@@ -1,6 +1,11 @@
 #include "Application.h"
 #include "Input.h"
 
+#include "Events/EventQueue.h"
+#include "Events/KeyEvent.h"
+#include "Events/MouseEvent.h"
+#include "Events/WindowEvent.h"
+
 // TODO: Mayebe should handle this in a different way
 #include "EngineLoop.h"
 
@@ -115,7 +120,7 @@ void Application::DrawDebugData()
 
 void Application::DrawSideWindow()
 {
-	DebugUI::DrawImgui([]
+	DebugUI::DrawUI([]
 		{
 			constexpr Uint32 Width = 450;
 
@@ -348,6 +353,9 @@ void Application::OnWindowResized(TSharedPtr<WindowsWindow>& InWindow, Uint16 Wi
 {
 	UNREFERENCED_PARAMETER(InWindow);
 
+	WindowResizeEvent Event(InWindow, Width, Height);
+	EventQueue::SendEvent(Event);
+
 	if (Renderer::Get())
 	{
 		Renderer::Get()->OnResize(Width, Height);
@@ -359,11 +367,9 @@ void Application::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyS
 	UNREFERENCED_PARAMETER(ModierKeyState);
 
 	Input::RegisterKeyUp(KeyCode);
-	DebugUI::OnKeyReleased(KeyCode);
-	//if (GuiContext::Get())
-	//{
-	//	GuiContext::Get()->OnKeyReleased(KeyCode);
-	//}
+
+	KeyReleasedEvent Event(KeyCode, ModierKeyState);
+	EventQueue::SendEvent(Event);
 }
 
 void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState)
@@ -371,17 +377,15 @@ void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeySt
 	UNREFERENCED_PARAMETER(ModierKeyState);
 
 	Input::RegisterKeyDown(KeyCode);
-	DebugUI::OnKeyPressed(KeyCode);
-	//if (GuiContext::Get())
-	//{
-	//	GuiContext::Get()->OnKeyPressed(KeyCode);
-	//}
+
+	KeyPressedEvent Event(KeyCode, ModierKeyState);
+	EventQueue::SendEvent(Event);
 }
 
 void Application::OnMouseMove(Int32 X, Int32 Y)
 {
-	UNREFERENCED_PARAMETER(X);
-	UNREFERENCED_PARAMETER(Y);
+	MouseMovedEvent Event(X, Y);
+	EventQueue::SendEvent(Event);
 }
 
 void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState)
@@ -394,11 +398,8 @@ void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeySt
 		SetCapture(nullptr);
 	}
 
-	DebugUI::OnMouseButtonReleased(Button);
-	//if (GuiContext::Get())
-	//{
-	//	GuiContext::Get()->OnMouseButtonReleased(Button);
-	//}
+	MouseReleasedEvent Event(Button, ModierKeyState);
+	EventQueue::SendEvent(Event);
 }
 
 void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState)
@@ -412,29 +413,20 @@ void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeySta
 		SetCapture(ActiveWindow);
 	}
 
-	DebugUI::OnMouseButtonPressed(Button);
-	//if (GuiContext::Get())
-	//{
-	//	GuiContext::Get()->OnMouseButtonPressed(Button);
-	//}
+	MousePressedEvent Event(Button, ModierKeyState);
+	EventQueue::SendEvent(Event);
 }
 
 void Application::OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta)
 {
-	DebugUI::OnMouseScrolled(HorizontalDelta, VerticalDelta);
-	//if (GuiContext::Get())
-	//{
-	//	GuiContext::Get()->OnMouseScrolled(HorizontalDelta, VerticalDelta);
-	//}
+	MouseScrolledEvent Event(HorizontalDelta, VerticalDelta);
+	EventQueue::SendEvent(Event);
 }
 
 void Application::OnCharacterInput(Uint32 Character)
 {
-	DebugUI::OnCharacterInput(Character);
-	//if (GuiContext::Get())
-	//{
-	//	GuiContext::Get()->OnCharacterInput(Character);
-	//}
+	KeyTypedEvent Event(Character);
+	EventQueue::SendEvent(Event);
 }
 
 bool Application::Initialize()
@@ -444,7 +436,7 @@ bool Application::Initialize()
 	PlatformApplication = WindowsApplication::Make(InstanceHandle);
 	if (PlatformApplication)
 	{
-		PlatformApplication->SetEventHandler(TSharedPtr<EventHandler>(Instance));
+		PlatformApplication->SetEventHandler(TSharedPtr<ApplicationEventHandler>(Instance));
 	}
 	else
 	{

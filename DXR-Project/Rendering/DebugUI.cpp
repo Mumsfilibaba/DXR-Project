@@ -3,6 +3,10 @@
 #include "Application/Application.h"
 #include "Application/Clock.h"
 
+#include "Application/Events/EventQueue.h"
+#include "Application/Events/KeyEvent.h"
+#include "Application/Events/MouseEvent.h"
+
 #include "Containers/TArray.h"
 
 #include "Rendering/TextureFactory.h"
@@ -16,8 +20,8 @@
 #include "D3D12/D3D12RootSignature.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
-static TArray<DebugUI::DebugGUIDrawFunc>	GlobalDrawFuncs;
-static TArray<std::string>					GlobalDebugStrings;
+static TArray<DebugUI::UIDrawFunc>	GlobalDrawFuncs;
+static TArray<std::string>			GlobalDebugStrings;
 
 struct ImGuiState
 {
@@ -38,6 +42,25 @@ struct ImGuiState
 
 static ImGuiState GlobalImGuiState;
 
+/*
+* Helper Functions
+*/
+static Uint32 GetMouseButtonIndex(EMouseButton Button)
+{
+	switch (Button)
+	{
+	case MOUSE_BUTTON_LEFT:		return 0;
+	case MOUSE_BUTTON_RIGHT:	return 1;
+	case MOUSE_BUTTON_MIDDLE:	return 2;
+	case MOUSE_BUTTON_BACK:		return 3;
+	case MOUSE_BUTTON_FORWARD:	return 4;
+	default:					return static_cast<Uint32>(-1);
+	}
+}
+
+/*
+* DebugUI
+*/
 bool DebugUI::Initialize(TSharedPtr<D3D12Device> InDevice)
 {
 	// Save device so that we can create resource on the GPU
@@ -365,6 +388,9 @@ bool DebugUI::Initialize(TSharedPtr<D3D12Device> InDevice)
 		return false;
 	}
 
+	// Register EventFunc
+	EventQueue::RegisterEventHandler(DebugUI::OnEvent, EEventCategory::EVENT_CATEGORY_INPUT);
+
 	return true;
 }
 
@@ -373,7 +399,7 @@ void DebugUI::Release()
 	ImGui::DestroyContext(GlobalImGuiState.Context);
 }
 
-void DebugUI::DrawImgui(DebugGUIDrawFunc DrawFunc)
+void DebugUI::DrawUI(UIDrawFunc DrawFunc)
 {
 	GlobalDrawFuncs.EmplaceBack(DrawFunc);
 }
@@ -383,85 +409,38 @@ void DebugUI::DrawDebugString(const std::string& DebugString)
 	GlobalDebugStrings.EmplaceBack(DebugString);
 }
 
-void DebugUI::OnKeyPressed(EKey KeyCode)
+bool DebugUI::OnEvent(const Event& Event)
 {
 	ImGuiIO& IO = ImGui::GetIO();
-	IO.KeysDown[KeyCode] = true;
-}
-
-void DebugUI::OnKeyReleased(EKey KeyCode)
-{
-	ImGuiIO& IO = ImGui::GetIO();
-	IO.KeysDown[KeyCode] = false;
-}
-
-void DebugUI::OnMouseButtonPressed(EMouseButton Button)
-{
-	ImGuiIO& IO = ImGui::GetIO();
-	Uint32 ButtonIndex = 0;
-	if (Button == EMouseButton::MOUSE_BUTTON_LEFT)
+	if (IsOfEventType<KeyPressedEvent>(Event))
 	{
-		ButtonIndex = 0;
+		IO.KeysDown[EventCast<KeyEvent>(Event).GetKey()] = true;
 	}
-	else if (Button == EMouseButton::MOUSE_BUTTON_MIDDLE)
+	else if (IsOfEventType<KeyReleasedEvent>(Event))
 	{
-		ButtonIndex = 2;
+		IO.KeysDown[EventCast<KeyEvent>(Event).GetKey()] = false;
 	}
-	else if (Button == EMouseButton::MOUSE_BUTTON_RIGHT)
+	else if (IsOfEventType<KeyTypedEvent>(Event))
 	{
-		ButtonIndex = 1;
+		IO.AddInputCharacter(EventCast<KeyTypedEvent>(Event).GetCharacter());
 	}
-	else if (Button == EMouseButton::MOUSE_BUTTON_BACK)
+	else if (IsOfEventType<MousePressedEvent>(Event))
 	{
-		ButtonIndex = 3;
+		Uint32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
+		IO.MouseDown[ButtonIndex] = true;
 	}
-	else if (Button == EMouseButton::MOUSE_BUTTON_FORWARD)
+	else if (IsOfEventType<MouseReleasedEvent>(Event))
 	{
-		ButtonIndex = 4;
+		Uint32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
+		IO.MouseDown[ButtonIndex] = false;
+	}
+	else if (IsOfEventType<MouseScrolledEvent>(Event))
+	{
+		IO.MouseWheel	+= EventCast<MouseScrolledEvent>(Event).GetVerticalDelta();
+		IO.MouseWheelH	+= EventCast<MouseScrolledEvent>(Event).GetHorizontalDelta();
 	}
 
-	IO.MouseDown[ButtonIndex] = true;
-}
-
-void DebugUI::OnMouseButtonReleased(EMouseButton Button)
-{
-	ImGuiIO& IO = ImGui::GetIO();
-	Uint32 ButtonIndex = 0;
-	if (Button == EMouseButton::MOUSE_BUTTON_LEFT)
-	{
-		ButtonIndex = 0;
-	}
-	else if (Button == EMouseButton::MOUSE_BUTTON_MIDDLE)
-	{
-		ButtonIndex = 2;
-	}
-	else if (Button == EMouseButton::MOUSE_BUTTON_RIGHT)
-	{
-		ButtonIndex = 1;
-	}
-	else if (Button == EMouseButton::MOUSE_BUTTON_BACK)
-	{
-		ButtonIndex = 3;
-	}
-	else if (Button == EMouseButton::MOUSE_BUTTON_FORWARD)
-	{
-		ButtonIndex = 4;
-	}
-
-	IO.MouseDown[ButtonIndex] = false;
-}
-
-void DebugUI::OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta)
-{
-	ImGuiIO& IO = ImGui::GetIO();
-	IO.MouseWheel += VerticalDelta;
-	IO.MouseWheelH += HorizontalDelta;
-}
-
-void DebugUI::OnCharacterInput(Uint32 Character)
-{
-	ImGuiIO& IO = ImGui::GetIO();
-	IO.AddInputCharacter(Character);
+	return false;
 }
 
 void DebugUI::Render(D3D12CommandList* CommandList)
@@ -534,7 +513,7 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	ImGui::NewFrame();
 
 	// Call all the draw functions
-	for (DebugGUIDrawFunc Func : GlobalDrawFuncs)
+	for (UIDrawFunc Func : GlobalDrawFuncs)
 	{
 		Func();
 	}

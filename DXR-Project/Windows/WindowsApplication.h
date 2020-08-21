@@ -1,59 +1,14 @@
 #pragma once
-#include "Windows.h"
 #include "Defines.h"
 #include "Types.h"
+#include "Windows.h"
 
 #include "Application/InputCodes.h"
-#include "Application/EventHandler.h"
+#include "Application/Events/ApplicationEventHandler.h"
 
 class WindowsWindow;
-class EventHandler;
+class ApplicationEventHandler;
 class WindowsCursor;
-
-/*
-* ModifierKeyState
-*/
-class ModifierKeyState
-{
-public:
-	ModifierKeyState(Uint32 InModifierMask)
-		: ModifierMask(InModifierMask)
-	{
-	}
-
-	bool IsCtrlDown() const
-	{
-		return (ModifierMask & MODIFIER_FLAG_CTRL);
-	}
-
-	bool IsAltDown() const
-	{
-		return (ModifierMask & MODIFIER_FLAG_ALT);
-	}
-
-	bool IsShiftDown() const
-	{
-		return (ModifierMask & MODIFIER_FLAG_SHIFT);
-	}
-
-	bool IsCapsLockDown() const
-	{
-		return (ModifierMask & MODIFIER_FLAG_CAPS_LOCK);
-	}
-
-	bool IsSuperKeyDown() const
-	{
-		return (ModifierMask & MODIFIER_FLAG_SUPER);
-	}
-
-	bool IsNumPadDown() const
-	{
-		return (ModifierMask & MODIFIER_FLAG_NUM_LOCK);
-	}
-
-private:
-	Uint32 ModifierMask = 0;
-};
 
 /*
 * WindowsApplication
@@ -79,12 +34,12 @@ public:
 	void SetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32 X, Int32 Y);
 	void GetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32& OutX, Int32& OutY) const;
 
-	FORCEINLINE void SetEventHandler(TSharedPtr<EventHandler> InMessageHandler)
+	FORCEINLINE void SetEventHandler(TSharedPtr<ApplicationEventHandler> InMessageHandler)
 	{
 		MessageHandler = InMessageHandler;
 	}
 
-	FORCEINLINE TSharedPtr<EventHandler> GetEventHandler() const
+	FORCEINLINE TSharedPtr<ApplicationEventHandler> GetEventHandler() const
 	{
 		return MessageHandler;
 	}
@@ -110,9 +65,8 @@ private:
 	static LRESULT MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
 private:
-	HINSTANCE					InstanceHandle	= 0;
-	TSharedPtr<EventHandler>	MessageHandler	= nullptr;
-
+	HINSTANCE InstanceHandle = 0;
+	TSharedPtr<ApplicationEventHandler>	MessageHandler	= nullptr;
 	TArray<TSharedPtr<WindowsWindow>> Windows;
 };
 
