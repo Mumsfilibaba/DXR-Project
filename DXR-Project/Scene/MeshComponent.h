@@ -4,7 +4,6 @@
 /*
 * MeshComponent
 */
-
 class MeshComponent : public Component
 {
 	CORE_OBJECT(MeshComponent, Component);

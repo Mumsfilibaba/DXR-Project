@@ -1,6 +1,9 @@
 #pragma once
 #include "Types.h"
 
+/*
+* Camera
+*/
 class Camera
 {
 public:

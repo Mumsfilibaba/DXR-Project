@@ -4,6 +4,9 @@
 #include "Light.h"
 #include "MeshDrawCommand.h"
 
+/*
+* Scene
+*/
 class Scene
 {
 public:

@@ -26,6 +26,9 @@ protected:
 	Actor* OwningActor = nullptr;
 };
 
+/*
+* Transform
+*/
 class Transform
 {
 public:

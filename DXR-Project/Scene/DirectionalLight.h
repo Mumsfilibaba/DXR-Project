@@ -23,14 +23,14 @@ public:
 
 	virtual void BuildBuffer(class D3D12CommandList* CommandList) override;
 
-	void SetPosition(const XMFLOAT3& InPosition);
-	void SetPosition(Float32 X, Float32 Y, Float32 Z);
+	void SetDirection(const XMFLOAT3& InPosition);
+	void SetDirection(Float32 X, Float32 Y, Float32 Z);
 
-	FORCEINLINE const XMFLOAT3& GetPosition() const
+	FORCEINLINE const XMFLOAT3& GetDirection() const
 	{
-		return Position;
+		return Direction;
 	}
 
 private:
-	XMFLOAT3 Position;
+	XMFLOAT3 Direction;
 };

@@ -19,7 +19,6 @@ public: \
 /*
 * Core Object for Engine (Mostly for RTTI)
 */
-
 class CoreObject
 {
 public:
@@ -47,7 +46,9 @@ private:
 	const ClassType* Class = nullptr;
 };
 
-// Casting between coreobjects
+/*
+* Casting between coreobjects
+*/
 template<typename T>
 bool IsSubClassOf(CoreObject* Object)
 {

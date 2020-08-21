@@ -8,17 +8,15 @@ class D3D12DescriptorTable;
 /*
 * LightSettings
 */
-
 struct LightSettings
 {
-	Uint16 ShadowWidth	= 1024;
-	Uint16 ShadowHeight = 1024;
+	Uint16 ShadowMapWidth	= 1024;
+	Uint16 ShadowMapHeight	= 1024;
 };
 
 /*
 * Light
 */
-
 class Light : public CoreObject
 {
 	CORE_OBJECT(Light, CoreObject);
@@ -33,7 +31,7 @@ public:
 
 	FORCEINLINE bool IsLightBufferDirty() const
 	{
-		return LightBufferDirty;
+		return LightBufferIsDirty;
 	}
 
 	void SetColor(const XMFLOAT3& InColor);
@@ -74,7 +72,7 @@ protected:
 	XMFLOAT3 Color;
 	Float32 Intensity = 1.0f;
 
-	bool LightBufferDirty = false;
+	bool LightBufferIsDirty = false;
 
 private:
 	static LightSettings GlobalLightSettings;

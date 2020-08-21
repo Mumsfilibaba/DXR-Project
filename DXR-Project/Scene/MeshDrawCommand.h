@@ -4,6 +4,9 @@
 
 class D3D12Buffer;
 
+/*
+* MeshDrawCommand
+*/
 struct MeshDrawCommand
 {
 	class Material* Material = nullptr;

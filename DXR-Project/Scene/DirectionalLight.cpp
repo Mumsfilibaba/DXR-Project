@@ -1,22 +1,22 @@
-#include "PointLight.h"
+#include "DirectionalLight.h"
 
 #include "D3D12/D3D12Buffer.h"
 #include "D3D12/D3D12DescriptorHeap.h"
 
 #include "Rendering/Renderer.h"
 
-PointLight::PointLight()
+DirectionalLight::DirectionalLight()
 	: Light()
-	, Position(0.0f, 0.0f, 0.0f)
+	, Direction(0.0f, -1.0f, 0.0f)
 {
 	CORE_OBJECT_INIT();
 }
 
-PointLight::~PointLight()
+DirectionalLight::~DirectionalLight()
 {
 }
 
-bool PointLight::Initialize(D3D12Device* Device)
+bool DirectionalLight::Initialize(D3D12Device* Device)
 {
 	// Create descriptortable
 	DescriptorTable = new D3D12DescriptorTable(Device, 1);
@@ -43,7 +43,7 @@ bool PointLight::Initialize(D3D12Device* Device)
 
 		BuildBuffer(CommandList.Get());
 		CommandList->Flush();
-		
+
 		// Copy descriptors
 		DescriptorTable->SetConstantBufferView(LightBuffer->GetConstantBufferView().Get(), 0);
 		DescriptorTable->CopyDescriptors();
@@ -56,24 +56,30 @@ bool PointLight::Initialize(D3D12Device* Device)
 	}
 }
 
-void PointLight::BuildBuffer(D3D12CommandList* CommandList)
+void DirectionalLight::BuildBuffer(D3D12CommandList* CommandList)
 {
-	PointLightProperties Properties;
-	Properties.Color	= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-	Properties.Position	= Position;
-	CommandList->UploadBufferData(LightBuffer, 0, &Properties, sizeof(PointLightProperties));
+	DirectionalLightProperties Properties;
+	Properties.Color		= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
+	Properties.Direction	= Direction;
+	CommandList->UploadBufferData(LightBuffer, 0, &Properties, sizeof(DirectionalLightProperties));
 
 	LightBufferIsDirty = false;
 }
 
-void PointLight::SetPosition(const XMFLOAT3& InPosition)
+void DirectionalLight::SetDirection(const XMFLOAT3& InDirection)
 {
-	Position = InPosition;
+	XMVECTOR XmDir = XMVectorSet(InDirection.x, InDirection.y, InDirection.z, 0.0f);
+	XmDir = XMVector3Normalize(XmDir);
+	XMStoreFloat3(&Direction, XmDir);
+
 	LightBufferIsDirty = true;
 }
 
-void PointLight::SetPosition(Float32 X, Float32 Y, Float32 Z)
+void DirectionalLight::SetDirection(Float32 X, Float32 Y, Float32 Z)
 {
-	Position = XMFLOAT3(X, Y, Z);
+	XMVECTOR XmDir = XMVectorSet(X, Y, Z, 0.0f);
+	XmDir = XMVector3Normalize(XmDir);
+	XMStoreFloat3(&Direction, XmDir);
+
 	LightBufferIsDirty = true;
 }

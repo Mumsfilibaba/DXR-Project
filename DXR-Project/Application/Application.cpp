@@ -16,6 +16,7 @@
 #include "Scene/MeshComponent.h"
 #include "Scene/Scene.h"
 #include "Scene/PointLight.h"
+#include "Scene/DirectionalLight.h"
 
 #include "Windows/WindowsConsoleOutput.h"
 
@@ -261,12 +262,41 @@ void Application::DrawSceneInfo()
 						CurrentLight->SetColor(Arr[0], Arr[1], Arr[2]);
 					}
 
-					const XMFLOAT3& Position = static_cast<PointLight*>(CurrentLight)->GetPosition();
+					const XMFLOAT3& Position = Cast<PointLight>(CurrentLight)->GetPosition();
 
 					Float32 Arr2[3] = { Position.x, Position.y, Position.z };
 					if (ImGui::DragFloat3("Position", Arr2, 0.5f))
 					{
-						static_cast<PointLight*>(CurrentLight)->SetPosition(Arr2[0], Arr2[1], Arr2[2]);
+						Cast<PointLight>(CurrentLight)->SetPosition(Arr2[0], Arr2[1], Arr2[2]);
+					}
+
+					Float32 Intensity = CurrentLight->GetIntensity();
+					if (ImGui::SliderFloat("Intensity", &Intensity, 0.01f, 10000.0f, "%.2f"))
+					{
+						CurrentLight->SetIntensity(Intensity);
+					}
+
+					ImGui::TreePop();
+				}
+			}
+			else if (IsSubClassOf<DirectionalLight>(CurrentLight))
+			{
+				if (ImGui::TreeNode("DirectionalLight"))
+				{
+					const XMFLOAT3& Color = CurrentLight->GetColor();
+
+					Float32 Arr[3] = { Color.x, Color.y, Color.z };
+					if (ImGui::ColorEdit3("Color", Arr))
+					{
+						CurrentLight->SetColor(Arr[0], Arr[1], Arr[2]);
+					}
+
+					const XMFLOAT3& Direction = Cast<DirectionalLight>(CurrentLight)->GetDirection();
+
+					Float32 Arr2[3] = { Direction.x, Direction.y, Direction.z };
+					if (ImGui::DragFloat3("Direction", Arr2, 0.5f))
+					{
+						Cast<DirectionalLight>(CurrentLight)->SetDirection(Arr2[0], Arr2[1], Arr2[2]);
 					}
 
 					Float32 Intensity = CurrentLight->GetIntensity();
@@ -649,26 +679,33 @@ bool Application::Initialize()
 		MetallicMap->SetDebugName("MetallicMap");
 	}
 
-	NewComponent->Material->AlbedoMap	= AlbedoMap;
-	NewComponent->Material->NormalMap	= NormalMap;
+	NewComponent->Material->AlbedoMap		= AlbedoMap;
+	NewComponent->Material->NormalMap		= NormalMap;
 	NewComponent->Material->RoughnessMap	= RoughnessMap;
-	NewComponent->Material->HeightMap	= HeightMap;
-	NewComponent->Material->AOMap		= AOMap;
-	NewComponent->Material->MetallicMap = MetallicMap;
+	NewComponent->Material->HeightMap		= HeightMap;
+	NewComponent->Material->AOMap			= AOMap;
+	NewComponent->Material->MetallicMap		= MetallicMap;
 	NewComponent->Material->Initialize(Renderer->GetDevice().Get());
-
 	NewActor->AddComponent(NewComponent);
 
 	CurrentCamera = new Camera();
 	CurrentScene->AddCamera(CurrentCamera);
 
-	// Add lightsource
-	PointLight* Light = new PointLight();
-	Light->SetPosition(0.0f, 10.0f, -10.0f);
-	Light->SetColor(1.0f, 1.0f, 1.0f);
-	Light->SetIntensity(400.0f);
-	Light->Initialize(Renderer::Get()->GetDevice().Get());
-	CurrentScene->AddLight(Light);
+	// Add PointLight- Source
+	PointLight* Light0 = new PointLight();
+	Light0->SetPosition(0.0f, 10.0f, -10.0f);
+	Light0->SetColor(1.0f, 1.0f, 1.0f);
+	Light0->SetIntensity(400.0f);
+	Light0->Initialize(Renderer::Get()->GetDevice().Get());
+	CurrentScene->AddLight(Light0);
+
+	// Add DirectionalLight- Source
+	DirectionalLight* Light1 = new DirectionalLight();
+	Light1->SetDirection(0.0f, -1.0f, 0.0f);
+	Light1->SetColor(1.0f, 1.0f, 1.0f);
+	Light1->SetIntensity(400.0f);
+	Light1->Initialize(Renderer::Get()->GetDevice().Get());
+	CurrentScene->AddLight(Light1);
 
 	return true;
 }
