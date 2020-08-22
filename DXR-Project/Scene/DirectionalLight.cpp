@@ -53,7 +53,7 @@ void DirectionalLight::CalculateMatrix()
 	XMVECTOR LightUp		= XMVectorSet(0.0, 0.0f, 1.0f, 0.0f);
 
 	const Float32 Offset		= 30.0f;
-	XMMATRIX LightProjection	= XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, 1.0f, 50.0f);
+	XMMATRIX LightProjection	= XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, 1.0f, 30.0f);
 	XMMATRIX LightView			= XMMatrixLookToLH(LightPosition, LightDirection, LightUp);
 
 	XMStoreFloat4x4(&Matrix, XMMatrixMultiplyTranspose(LightView, LightProjection));

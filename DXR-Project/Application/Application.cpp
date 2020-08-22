@@ -320,9 +320,14 @@ void Application::DrawSceneInfo()
 					}
 
 					Float32 ShadowBias = Cast<DirectionalLight>(CurrentLight)->GetShadowBias();
-					if (ImGui::SliderFloat("Shadow Bias", &ShadowBias, 0.00001f, 1.0f, "%.5f", 0.0001f))
+					if (ImGui::SliderFloat("Shadow Bias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
 					{
-						CurrentLight->SetIntensity(ShadowBias);
+						Cast<DirectionalLight>(CurrentLight)->SetShadowBias(ShadowBias);
+					}
+
+					if (ImGui::IsItemHovered())
+					{
+						ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
 					}
 
 					Float32 Intensity = CurrentLight->GetIntensity();
@@ -727,6 +732,7 @@ bool Application::Initialize()
 	// Add DirectionalLight- Source
 	DirectionalLight* Light1 = new DirectionalLight();
 	Light1->SetDirection(0.0f, -1.0f, 0.0f);
+	Light1->SetShadowMapPosition(0.0f, 25.0f, 0.0f);
 	Light1->SetColor(1.0f, 1.0f, 1.0f);
 	Light1->SetIntensity(10.0f);
 	CurrentScene->AddLight(Light1);

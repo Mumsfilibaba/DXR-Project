@@ -58,11 +58,26 @@ float CalculateShadowMapping(float4 LightSpacePosition, float ShadowBias)
 	float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;
 	ProjCoords.xy	= (ProjCoords.xy * 0.5f) + 0.5f;
 	ProjCoords.y	= 1.0f - ProjCoords.y;
+	if (ProjCoords.z >= 1.0f)
+	{
+		return 0.0f;
+	}
 
-	float SampledDepth = DirLightShadowMaps.Sample(ShadowMapSampler, ProjCoords.xy).r;
-	float Depth = ProjCoords.z;
-	
-    return ((Depth - ShadowBias) > SampledDepth) ? 1.0f : 0.0f;
+	float	Depth		= ProjCoords.z;
+	float	Shadow		= 0.0f;
+	float2	TexelSize	= 1.0f / 2048.0f;
+
+	for (int x = -1; x <= 1; x++)
+	{
+		for (int y = -1; y <= 1; y++)
+		{
+			float PCFSample = DirLightShadowMaps.Sample(ShadowMapSampler, ProjCoords.xy + float2(x, y) * TexelSize).r;
+			Shadow += ((Depth - ShadowBias) > PCFSample) ? 1.0f : 0.0f;
+		}
+	}
+
+	Shadow /= 9.0f;
+    return Shadow;
 }
 
 // Main
@@ -105,7 +120,7 @@ float4 Main(PSInput Input) : SV_TARGET
 		float	Attenuation	= 1.0f / (Distance * Distance);
 		float3	Radiance	= PointLightBuffer.Color * Attenuation;
 	
-		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic);
+		//L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic);
 	}
 	
 	// DirectionalLight

@@ -1309,10 +1309,10 @@ bool Renderer::InitShadowMapPass()
 	RootSignatureDesc.NumStaticSamplers	= 0;
 	RootSignatureDesc.pStaticSamplers	= nullptr;
 	RootSignatureDesc.Flags =
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT	|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS			|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS		|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS		|
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
 	ShadowMapRootSignature = MakeShared<D3D12RootSignature>(Device.Get());
@@ -1340,8 +1340,8 @@ bool Renderer::InitShadowMapPass()
 	PSOProperties.EnableDepth		= true;
 	PSOProperties.EnableBlending	= false;
 	PSOProperties.DepthBufferFormat	= ShadowMapFormat;
-	PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_LESS;
-	PSOProperties.CullMode			= D3D12_CULL_MODE_BACK;
+	PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	PSOProperties.CullMode			= D3D12_CULL_MODE_FRONT;
 	PSOProperties.RTFormats			= nullptr;
 	PSOProperties.NumRenderTargets	= 0;
 
@@ -1679,14 +1679,14 @@ bool Renderer::InitDeferred()
 		Samplers[2].RegisterSpace		= 0;
 		Samplers[2].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
 
-		Samplers[3].Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-		Samplers[3].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-		Samplers[3].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-		Samplers[3].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		Samplers[3].Filter				= D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+		Samplers[3].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		Samplers[3].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		Samplers[3].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 		Samplers[3].MipLODBias			= 0.0f;
-		Samplers[3].MaxAnisotropy		= 0;
+		Samplers[3].MaxAnisotropy		= 16;
 		Samplers[3].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
-		Samplers[3].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		Samplers[3].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
 		Samplers[3].MinLOD				= 0.0f;
 		Samplers[3].MaxLOD				= FLT_MAX;
 		Samplers[3].ShaderRegister		= 3;
