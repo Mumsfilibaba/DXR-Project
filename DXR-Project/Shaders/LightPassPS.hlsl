@@ -19,7 +19,8 @@ Texture2D<float>	DirLightShadowMaps		: register(t8, space0);
 SamplerState GBufferSampler		: register(s0, space0);
 SamplerState LUTSampler			: register(s1, space0);
 SamplerState IrradianceSampler	: register(s2, space0);
-SamplerState ShadowMapSampler	: register(s3, space0);
+
+SamplerComparisonState ShadowMapSampler	: register(s3, space0);
 
 ConstantBuffer<Camera>				CameraBuffer		: register(b0, space0);
 ConstantBuffer<PointLight>			PointLightBuffer	: register(b1, space0);
@@ -60,24 +61,25 @@ float CalculateShadowMapping(float4 LightSpacePosition, float ShadowBias)
 	ProjCoords.y	= 1.0f - ProjCoords.y;
 	if (ProjCoords.z >= 1.0f)
 	{
-		return 0.0f;
+		return 1.0f;
 	}
 
 	float	Depth		= ProjCoords.z;
 	float	Shadow		= 0.0f;
-	float2	TexelSize	= 1.0f / 2048.0f;
-
-	for (int x = -1; x <= 1; x++)
+	float	BiasedDepth = (Depth - ShadowBias);
+	
+	[unroll]
+	for (int x = -PCF_RANGE; x <= PCF_RANGE; x++)
 	{
-		for (int y = -1; y <= 1; y++)
+		[unroll]
+		for (int y = -PCF_RANGE; y <= PCF_RANGE; y++)
 		{
-			float PCFSample = DirLightShadowMaps.Sample(ShadowMapSampler, ProjCoords.xy + float2(x, y) * TexelSize).r;
-			Shadow += ((Depth - ShadowBias) > PCFSample) ? 1.0f : 0.0f;
+			Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler, ProjCoords.xy, BiasedDepth, int2(x, y)).r;
 		}
 	}
 
-	Shadow /= 9.0f;
-    return Shadow;
+	Shadow /= (PCF_WIDTH * PCF_WIDTH);
+	return Shadow;
 }
 
 // Main
@@ -120,7 +122,7 @@ float4 Main(PSInput Input) : SV_TARGET
 		float	Attenuation	= 1.0f / (Distance * Distance);
 		float3	Radiance	= PointLightBuffer.Color * Attenuation;
 	
-		//L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic);
+		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic);
 	}
 	
 	// DirectionalLight
@@ -132,7 +134,7 @@ float4 Main(PSInput Input) : SV_TARGET
 		
 		float4	LightSpacePosition = mul(float4(WorldPosition, 1.0f), DirLightBuffer.LightMatrix);
 		float	Shadow = CalculateShadowMapping(LightSpacePosition, DirLightBuffer.ShadowBias);
-		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * (1.0f - Shadow);
+		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * Shadow;
 	}
 	
 	float3 F_IBL	= FresnelSchlickRoughness(DotNV, F0, Roughness);
@@ -152,7 +154,5 @@ float4 Main(PSInput Input) : SV_TARGET
 	float3 Ambient	= (IBL_Diffuse + IBL_Specular) * SampledAO;
 	float3 Color	= Ambient + L0;
 	
-	//float ShadowMap = DirLightShadowMaps.Sample(ShadowMapSampler, Input.TexCoord);
-	//return float4(ShadowMap, ShadowMap, ShadowMap, 1.0f);
 	return float4(ApplyGammaCorrectionAndTonemapping(Color), 1.0f);
 }

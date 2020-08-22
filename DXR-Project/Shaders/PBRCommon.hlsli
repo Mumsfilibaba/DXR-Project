@@ -1,5 +1,6 @@
-
-// Common Constants
+/*
+* Common Constants
+*/
 static const float MIN_ROUGHNESS    = 0.05f;
 static const float MAX_ROUGHNESS	= 1.0f;
 static const float PI               = 3.14159265359f;
@@ -9,7 +10,15 @@ static const float RAY_OFFSET       = 0.2f;
 static const float3 LightPosition   = float3(0.0f, 10.0f, -10.0f);
 static const float3 LightColor      = float3(400.0f, 400.0f, 400.0f);
 
-// Common Structs
+/*
+* Common Defines
+*/
+#define PCF_RANGE 2
+#define PCF_WIDTH float((PCF_RANGE * 2) + 1)
+
+/*
+* Common Structs
+*/
 struct Camera
 {
 	float4x4    ViewProjection;
@@ -42,7 +51,9 @@ struct Vertex
 	float2 TexCoord;
 };
 
-// Position Helper
+/*
+* Position Helper
+*/
 float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ViewProjectionInverse)
 {
 	float Z = Depth;
@@ -55,7 +66,9 @@ float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ViewProjectionIn
 	return WorldPosition.xyz / WorldPosition.w;
 }
 
-// PBR Functions
+/*
+* PBR Functions
+*/
 float DistributionGGX(float3 N, float3 H, float Roughness)
 {
 	float A         = Roughness * Roughness;
@@ -111,8 +124,10 @@ float3 FresnelSchlickRoughness(float CosTheta, float3 F0, float Roughness)
 	return F0 + (max(float3(R, R, R), F0) - F0) * pow(1.0f - CosTheta, 5.0f);
 }
 
-// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
-// efficient VanDerCorpus calculation.
+/*
+* http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+* efficient VanDerCorpus calculation.
+*/
 float RadicalInverse_VdC(uint Bits)
 {
 	Bits = (Bits << 16u) | (Bits >> 16u);
@@ -151,7 +166,9 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float Roughness)
 	return normalize(SampleVec);
 }
 
-// HDR Helpers
+/*
+* HDR Helpers
+*/
 float3 ApplyGammaCorrectionAndTonemapping(float3 InputColor)
 {
 	const float INTENSITY   = 0.75f;
@@ -180,7 +197,9 @@ float3 PackNormal(float3 Normal)
 	return (normalize(Normal) + 1.0f) * 0.5f;
 }
 
-// RayTracing Helpers
+/*
+* RayTracing Helpers
+*/
 float3 WorldHitPosition()
 {
 	return WorldRayOrigin() + (RayTCurrent() * WorldRayDirection());

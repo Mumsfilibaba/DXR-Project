@@ -733,6 +733,7 @@ bool Application::Initialize()
 	DirectionalLight* Light1 = new DirectionalLight();
 	Light1->SetDirection(0.0f, -1.0f, 0.0f);
 	Light1->SetShadowMapPosition(0.0f, 25.0f, 0.0f);
+	Light1->SetShadowBias(0.0005f);
 	Light1->SetColor(1.0f, 1.0f, 1.0f);
 	Light1->SetIntensity(10.0f);
 	CurrentScene->AddLight(Light1);

@@ -1341,7 +1341,7 @@ bool Renderer::InitShadowMapPass()
 	PSOProperties.EnableBlending	= false;
 	PSOProperties.DepthBufferFormat	= ShadowMapFormat;
 	PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	PSOProperties.CullMode			= D3D12_CULL_MODE_FRONT;
+	PSOProperties.CullMode			= D3D12_CULL_MODE_BACK;
 	PSOProperties.RTFormats			= nullptr;
 	PSOProperties.NumRenderTargets	= 0;
 
@@ -1679,13 +1679,13 @@ bool Renderer::InitDeferred()
 		Samplers[2].RegisterSpace		= 0;
 		Samplers[2].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
 
-		Samplers[3].Filter				= D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+		Samplers[3].Filter				= D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
 		Samplers[3].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 		Samplers[3].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 		Samplers[3].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 		Samplers[3].MipLODBias			= 0.0f;
-		Samplers[3].MaxAnisotropy		= 16;
-		Samplers[3].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
+		Samplers[3].MaxAnisotropy		= 0;
+		Samplers[3].ComparisonFunc		= D3D12_COMPARISON_FUNC_LESS_EQUAL;
 		Samplers[3].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
 		Samplers[3].MinLOD				= 0.0f;
 		Samplers[3].MaxLOD				= FLT_MAX;
