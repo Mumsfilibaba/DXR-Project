@@ -1338,9 +1338,9 @@ bool Renderer::InitShadowMapPass()
 	PSOProperties.InputElements			= InputElementDesc;
 	PSOProperties.NumInputElements		= 4;
 	PSOProperties.EnableDepth			= true;
-	//PSOProperties.DepthBias			= 0.0005f;
+	//PSOProperties.DepthBias				= 3;
 	//PSOProperties.SlopeScaleDepthBias	= 0.01f;
-	//PSOProperties.DepthBiasClamp		= 0.5f;
+	//PSOProperties.DepthBiasClamp		= 0.1f;
 	PSOProperties.EnableBlending		= false;
 	PSOProperties.DepthBufferFormat		= ShadowMapFormat;
 	PSOProperties.DepthFunc				= D3D12_COMPARISON_FUNC_LESS_EQUAL;
