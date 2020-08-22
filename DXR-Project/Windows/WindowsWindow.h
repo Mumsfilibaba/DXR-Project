@@ -29,6 +29,10 @@ struct WindowProperties
 	Uint32		Style;
 };
 
+/*
+* WindowsWindow
+*/
+
 class WindowsApplication;
 
 class WindowsWindow

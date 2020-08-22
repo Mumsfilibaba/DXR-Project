@@ -43,6 +43,19 @@ public:
 	
 	void OnResize(Int32 Width, Int32 Height);
 
+	void SetPrePassEnable(bool Enabled);
+	void SetVerticalSyncEnable(bool Enabled);
+
+	FORCEINLINE bool IsPrePassEnabled() const
+	{
+		return PrePassEnabled;
+	}
+
+	FORCEINLINE bool IsVerticalSyncEnabled() const
+	{
+		return VSyncEnabled;
+	}
+
 	FORCEINLINE TSharedPtr<D3D12Device> GetDevice() const
 	{
 		return Device;
@@ -60,6 +73,9 @@ private:
 	bool Initialize(TSharedPtr<WindowsWindow> RendererWindow);
 
 	bool InitRayTracing();
+	bool InitLightBuffers();
+	bool InitPrePass();
+	bool InitShadowMapPass();
 	bool InitDeferred();
 	bool InitGBuffer();
 	bool InitIntegrationLUT();
@@ -73,7 +89,7 @@ private:
 	void TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* CommandList);
 
 private:
-	TSharedPtr<D3D12Device>				Device;
+	TSharedPtr<D3D12Device>					Device;
 	TSharedPtr<D3D12ImmediateCommandList>	ImmediateCommandList;
 	
 	TSharedPtr<D3D12CommandQueue>	Queue;
@@ -95,6 +111,8 @@ private:
 	TSharedPtr<D3D12Buffer> SkyboxIndexBuffer;
 	TSharedPtr<D3D12Buffer> CubeVertexBuffer;
 	TSharedPtr<D3D12Buffer> CubeIndexBuffer;
+	TSharedPtr<D3D12Buffer> PointLightBuffer;
+	TSharedPtr<D3D12Buffer> DirectionalLightBuffer;
 
 	TSharedPtr<D3D12Texture> Skybox;
 	TSharedPtr<D3D12Texture> IrradianceMap;
@@ -103,9 +121,11 @@ private:
 	TSharedPtr<D3D12Texture> Normal;
 	TSharedPtr<D3D12Texture> ReflectionTexture;
 	TSharedPtr<D3D12Texture> IntegrationLUT;
-
+	TSharedPtr<D3D12Texture> DirLightShadowMaps;
 	TSharedPtr<D3D12Texture> GBuffer[4];
 	
+	TSharedPtr<D3D12RootSignature>		PrePassRootSignature;
+	TSharedPtr<D3D12RootSignature>		ShadowMapRootSignature;
 	TSharedPtr<D3D12RootSignature>		GeometryRootSignature;
 	TSharedPtr<D3D12RootSignature>		LightRootSignature;
 	TSharedPtr<D3D12RootSignature>		SkyboxRootSignature;
@@ -115,10 +135,13 @@ private:
 	TSharedPtr<D3D12DescriptorTable>	RayGenDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	GlobalDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	GeometryDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable>	PrePassDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	LightDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	SkyboxDescriptorTable;
 	TSharedPtr<D3D12RayTracingScene>	RayTracingScene;
 
+	TSharedPtr<D3D12GraphicsPipelineState>		PrePassPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>		ShadowMapPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		GeometryPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		LightPassPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		SkyboxPSO;
@@ -128,6 +151,9 @@ private:
 
 	TArray<Uint64> FenceValues;
 	Uint32 CurrentBackBufferIndex = 0;
+
+	bool PrePassEnabled = true;
+	bool VSyncEnabled	= false;
 
 	static TUniquePtr<Renderer> RendererInstance;
 };

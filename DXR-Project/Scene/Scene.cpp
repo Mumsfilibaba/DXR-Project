@@ -1,5 +1,6 @@
 #include "Scene.h"
-#include "MeshComponent.h"
+
+#include "Components/MeshComponent.h"
 
 #include "Rendering/TextureFactory.h"
 #include "Rendering/MeshFactory.h"
@@ -35,6 +36,10 @@ Scene::~Scene()
 	SAFEDELETE(CurrentCamera);
 }
 
+void Scene::Tick(Timestamp DeltaTime)
+{
+}
+
 void Scene::AddCamera(Camera* InCamera)
 {
 	SAFEDELETE(CurrentCamera);
@@ -63,7 +68,7 @@ void Scene::AddLight(Light* InLight)
 
 void Scene::OnAddedComponent(Component* NewComponent)
 {
-	MeshComponent* Component = dynamic_cast<MeshComponent*>(NewComponent);
+	MeshComponent* Component = Cast<MeshComponent>(NewComponent);
 	if (Component)
 	{
 		AddMeshComponent(Component);
@@ -73,11 +78,11 @@ void Scene::OnAddedComponent(Component* NewComponent)
 Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 {
 	// Load Scene File
-	tinyobj::attrib_t Attributes;
 	std::string Warning;
 	std::string Error;
 	std::vector<tinyobj::shape_t>		Shapes;
 	std::vector<tinyobj::material_t>	Materials;
+	tinyobj::attrib_t Attributes;
 
 	std::string MTLFiledir = std::string(Filepath.begin(), Filepath.begin() + Filepath.find_last_of('/'));
 	if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filepath.c_str(), MTLFiledir.c_str(), true, false))
@@ -154,7 +159,6 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 		if (!Mat.ambient_texname.empty())
 		{
 			ConvertBackslashes(Mat.ambient_texname);
-			
 			if (MaterialTextures.count(Mat.ambient_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.ambient_texname;
@@ -177,7 +181,6 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 		if (!Mat.diffuse_texname.empty())
 		{
 			ConvertBackslashes(Mat.diffuse_texname);
-
 			if (MaterialTextures.count(Mat.diffuse_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.diffuse_texname;
@@ -200,7 +203,6 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 		if (!Mat.specular_highlight_texname.empty())
 		{
 			ConvertBackslashes(Mat.specular_highlight_texname);
-
 			if (MaterialTextures.count(Mat.specular_highlight_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.specular_highlight_texname;
@@ -223,7 +225,6 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 		if (!Mat.bump_texname.empty())
 		{
 			ConvertBackslashes(Mat.bump_texname);
-
 			if (MaterialTextures.count(Mat.bump_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.bump_texname;
@@ -246,7 +247,6 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 		if (!Mat.alpha_texname.empty())
 		{
 			ConvertBackslashes(Mat.alpha_texname);
-
 			if (MaterialTextures.count(Mat.alpha_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.alpha_texname;

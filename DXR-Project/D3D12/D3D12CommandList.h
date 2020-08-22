@@ -46,6 +46,7 @@ public:
 
 	FORCEINLINE bool Reset(D3D12CommandAllocator* Allocator)
 	{
+		ReleaseDeferredResources(); // TODO: Make sure that we can do this here
 		return SUCCEEDED(CommandList->Reset(Allocator->GetAllocator(), nullptr));
 	}
 

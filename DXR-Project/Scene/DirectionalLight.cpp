@@ -1,69 +1,19 @@
 #include "DirectionalLight.h"
 
-#include "D3D12/D3D12Buffer.h"
-#include "D3D12/D3D12DescriptorHeap.h"
-
-#include "Rendering/Renderer.h"
-
 DirectionalLight::DirectionalLight()
 	: Light()
 	, Direction(0.0f, -1.0f, 0.0f)
+	, ShadowBias(0.005f)
+	, ShadowMapPosition(0.0f, 30.0f, 0.0f)
+	, Matrix()
 {
 	CORE_OBJECT_INIT();
+
+	XMStoreFloat4x4(&Matrix, XMMatrixIdentity());
 }
 
 DirectionalLight::~DirectionalLight()
 {
-}
-
-bool DirectionalLight::Initialize(D3D12Device* Device)
-{
-	// Create descriptortable
-	DescriptorTable = new D3D12DescriptorTable(Device, 1);
-
-	// Create materialbuffer
-	BufferProperties MaterialBufferProps = { };
-	MaterialBufferProps.Name		= "LightBuffer";
-	MaterialBufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
-	MaterialBufferProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	MaterialBufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-	MaterialBufferProps.SizeInBytes	= 256; // Must atleast be a multiple of 256
-
-	LightBuffer = new D3D12Buffer(Device);
-	if (LightBuffer->Initialize(MaterialBufferProps))
-	{
-		D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = { };
-		CBVDesc.BufferLocation	= LightBuffer->GetGPUVirtualAddress();
-		CBVDesc.SizeInBytes		= LightBuffer->GetSizeInBytes();
-		LightBuffer->SetConstantBufferView(MakeShared<D3D12ConstantBufferView>(Device, LightBuffer->GetResource(), &CBVDesc));
-
-		TSharedPtr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
-		CommandList->TransitionBarrier(LightBuffer, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-		CommandList->Flush();
-
-		BuildBuffer(CommandList.Get());
-		CommandList->Flush();
-
-		// Copy descriptors
-		DescriptorTable->SetConstantBufferView(LightBuffer->GetConstantBufferView().Get(), 0);
-		DescriptorTable->CopyDescriptors();
-
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-void DirectionalLight::BuildBuffer(D3D12CommandList* CommandList)
-{
-	DirectionalLightProperties Properties;
-	Properties.Color		= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-	Properties.Direction	= Direction;
-	CommandList->UploadBufferData(LightBuffer, 0, &Properties, sizeof(DirectionalLightProperties));
-
-	LightBufferIsDirty = false;
 }
 
 void DirectionalLight::SetDirection(const XMFLOAT3& InDirection)
@@ -72,7 +22,7 @@ void DirectionalLight::SetDirection(const XMFLOAT3& InDirection)
 	XmDir = XMVector3Normalize(XmDir);
 	XMStoreFloat3(&Direction, XmDir);
 
-	LightBufferIsDirty = true;
+	CalculateMatrix();
 }
 
 void DirectionalLight::SetDirection(Float32 X, Float32 Y, Float32 Z)
@@ -81,5 +31,30 @@ void DirectionalLight::SetDirection(Float32 X, Float32 Y, Float32 Z)
 	XmDir = XMVector3Normalize(XmDir);
 	XMStoreFloat3(&Direction, XmDir);
 
-	LightBufferIsDirty = true;
+	CalculateMatrix();
+}
+
+void DirectionalLight::SetShadowMapPosition(const XMFLOAT3& InPosition)
+{
+	ShadowMapPosition = InPosition;
+	CalculateMatrix();
+}
+
+void DirectionalLight::SetShadowMapPosition(Float32 X, Float32 Y, Float32 Z)
+{
+	ShadowMapPosition = XMFLOAT3(X, Y, Z);
+	CalculateMatrix();
+}
+
+void DirectionalLight::CalculateMatrix()
+{
+	XMVECTOR LightDirection = XMVector3Normalize(XMLoadFloat3(&Direction));
+	XMVECTOR LightPosition	= XMLoadFloat3(&ShadowMapPosition);
+	XMVECTOR LightUp		= XMVectorSet(0.0, 0.0f, 1.0f, 0.0f);
+
+	const Float32 Offset		= 30.0f;
+	XMMATRIX LightProjection	= XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, 1.0f, 50.0f);
+	XMMATRIX LightView			= XMMatrixLookToLH(LightPosition, LightDirection, LightUp);
+
+	XMStoreFloat4x4(&Matrix, XMMatrixMultiplyTranspose(LightView, LightProjection));
 }

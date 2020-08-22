@@ -2,7 +2,10 @@
 #include "Actor.h"
 #include "Camera.h"
 #include "Light.h"
-#include "MeshDrawCommand.h"
+
+#include "Rendering/MeshDrawCommand.h"
+
+#include "Application/Timestamp.h"
 
 /*
 * Scene
@@ -12,6 +15,8 @@ class Scene
 public:
 	Scene();
 	~Scene();
+
+	void Tick(Timestamp DeltaTime);
 
 	void AddCamera(Camera* InCamera);
 	void AddActor(Actor* InActor);

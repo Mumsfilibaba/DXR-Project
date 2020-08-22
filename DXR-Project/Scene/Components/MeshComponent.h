@@ -1,5 +1,5 @@
 #pragma once
-#include "Actor.h"
+#include "Scene/Actor.h"
 
 /*
 * MeshComponent

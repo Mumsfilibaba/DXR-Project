@@ -20,9 +20,18 @@ struct Camera
 
 struct PointLight
 {
-	float3 Color;
-	float Padding;
-	float3 Position;
+	float3	Color;
+	float	Padding;
+	float3	Position;
+};
+
+struct DirectionalLight
+{
+    float3		Color;
+    float		ShadowBias;
+    float3		Direction;
+    float		Padding1;
+	float4x4	LightMatrix;
 };
 
 struct Vertex

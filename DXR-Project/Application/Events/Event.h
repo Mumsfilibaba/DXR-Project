@@ -65,8 +65,8 @@ enum EEventCategory : Uint8
 class Event
 {
 public:
-	Event()		= default;
-	~Event()	= default;
+	Event() = default;
+	~Event() = default;
 
 	virtual Uint8		GetEventCategory()	const = 0;
 	virtual EEventType	GetEventType()		const = 0;

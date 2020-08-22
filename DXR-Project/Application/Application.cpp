@@ -13,10 +13,10 @@
 #include "Rendering/DebugUI.h"
 #include "Rendering/TextureFactory.h"
 
-#include "Scene/MeshComponent.h"
 #include "Scene/Scene.h"
 #include "Scene/PointLight.h"
 #include "Scene/DirectionalLight.h"
+#include "Scene/Components/MeshComponent.h"
 
 #include "Windows/WindowsConsoleOutput.h"
 
@@ -171,6 +171,18 @@ void Application::DrawRenderSettings()
 	ImGui::Indent();
 	ImGui::Text("Resolution: %d x %d", WindowShape.Width, WindowShape.Height);
 
+	bool Enabled = Renderer::Get()->IsPrePassEnabled();
+	if (ImGui::Checkbox("Enable Z-PrePass", &Enabled))
+	{
+		Renderer::Get()->SetPrePassEnable(Enabled);
+	}
+
+	Enabled = Renderer::Get()->IsVerticalSyncEnabled();
+	if (ImGui::Checkbox("Enable VSync", &Enabled))
+	{
+		Renderer::Get()->SetVerticalSyncEnable(Enabled);
+	}
+
 	ImGui::EndChild();
 }
 
@@ -297,6 +309,20 @@ void Application::DrawSceneInfo()
 					if (ImGui::DragFloat3("Direction", Arr2, 0.5f))
 					{
 						Cast<DirectionalLight>(CurrentLight)->SetDirection(Arr2[0], Arr2[1], Arr2[2]);
+					}
+
+					const XMFLOAT3& Position = Cast<DirectionalLight>(CurrentLight)->GetShadowMapPosition();
+
+					Float32 Arr3[3] = { Position.x, Position.y, Position.z };
+					if (ImGui::DragFloat3("ShadowMap Position", Arr3, 0.5f))
+					{
+						Cast<DirectionalLight>(CurrentLight)->SetShadowMapPosition(Arr3[0], Arr3[1], Arr3[2]);
+					}
+
+					Float32 ShadowBias = Cast<DirectionalLight>(CurrentLight)->GetShadowBias();
+					if (ImGui::SliderFloat("Shadow Bias", &ShadowBias, 0.00001f, 1.0f, "%.5f", 0.0001f))
+					{
+						CurrentLight->SetIntensity(ShadowBias);
 					}
 
 					Float32 Intensity = CurrentLight->GetIntensity();
@@ -696,15 +722,13 @@ bool Application::Initialize()
 	Light0->SetPosition(0.0f, 10.0f, -10.0f);
 	Light0->SetColor(1.0f, 1.0f, 1.0f);
 	Light0->SetIntensity(400.0f);
-	Light0->Initialize(Renderer::Get()->GetDevice().Get());
 	CurrentScene->AddLight(Light0);
 
 	// Add DirectionalLight- Source
 	DirectionalLight* Light1 = new DirectionalLight();
 	Light1->SetDirection(0.0f, -1.0f, 0.0f);
 	Light1->SetColor(1.0f, 1.0f, 1.0f);
-	Light1->SetIntensity(400.0f);
-	Light1->Initialize(Renderer::Get()->GetDevice().Get());
+	Light1->SetIntensity(10.0f);
 	CurrentScene->AddLight(Light1);
 
 	return true;

@@ -10,6 +10,9 @@
 #include "Application/Events/ApplicationEventHandler.h"
 #include "Application/Generic/GenericApplication.h"
 
+/*
+* Application
+*/
 class Application : public ApplicationEventHandler
 {
 public:

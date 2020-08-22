@@ -39,8 +39,8 @@ void Camera::Rotate(Float32 Pitch, Float32 Yaw, Float32 Roll)
 	Rotation.z += Roll;
 
 	XMMATRIX RotationMatrix = XMMatrixRotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
-	XMVECTOR XmForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	XmForward = XMVector3Normalize(XMVector3Transform(XmForward, RotationMatrix));
+	XMVECTOR XmForward		= XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XmForward				= XMVector3Normalize(XMVector3Transform(XmForward, RotationMatrix));
 
 	XMVECTOR XmUp		= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMVECTOR XmRight	= XMVector3Normalize(XMVector3Cross(XmForward, XmUp));

@@ -1,5 +1,8 @@
 #include "EventQueue.h"
 
+/*
+* EventHandlerPair
+*/
 struct EventHandlerPair
 {
 	EventHandlerPair(IEventHandler* InHandler, Uint8 InCategoryMask)
@@ -28,6 +31,9 @@ struct EventHandlerPair
 
 static TArray<EventHandlerPair>	GlobalEventHandlers;
 
+/*
+* EventQueue
+*/
 void EventQueue::RegisterEventHandler(EventHandlerFunc Func, Uint8 EventCategoryMask)
 {
 	VALIDATE(Func != nullptr);

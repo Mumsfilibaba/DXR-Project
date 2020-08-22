@@ -9,12 +9,12 @@
 #endif
 
 // PerObject
-cbuffer TransformBuffer : register(b0)
+cbuffer TransformBuffer : register(b0, space0)
 {
 	float4x4 Transform;
 };
 
-cbuffer MaterialBuffer : register(b2)
+cbuffer MaterialBuffer : register(b2, space0)
 {
 	float3 Albedo;
 	float Roughness;

@@ -9,6 +9,9 @@ enum class EConsoleColor : Uint8
 	CONSOLE_COLOR_WHITE		= 3
 };
 
+/*
+* WindowsConsoleOutput
+*/
 class WindowsConsoleOutput
 {
 public:

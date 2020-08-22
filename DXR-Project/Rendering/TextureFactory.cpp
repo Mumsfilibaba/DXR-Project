@@ -132,7 +132,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	VALIDATE(PanoramaSource->GetShaderResourceView(0));
 
 	const bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TEXTURE_FACTORY_FLAGS_GENERATE_MIPS;
-	const Uint32 MipLevels = GenerateMipLevels ? std::log2<Uint32>(CubeMapSize) : 1;
+	const Uint16 MipLevels = (GenerateMipLevels) ? static_cast<Uint16>(std::log2(CubeMapSize)) : 1U;
 
 	// Create texture
 	TextureProperties TextureProps = { };

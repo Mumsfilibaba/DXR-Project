@@ -81,8 +81,7 @@ public:
 		TComponent* Result = nullptr;
 		for (Component* Component : Components)
 		{
-			Result = dynamic_cast<TComponent*>(Component);
-			if (Result)
+			if (IsSubClassOf<TComponent>(Component))
 			{
 				return true;
 			}
