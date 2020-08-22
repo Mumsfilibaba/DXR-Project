@@ -10,8 +10,8 @@ class D3D12DescriptorTable;
 */
 struct LightSettings
 {
-	Uint16 ShadowMapWidth	= 2048;
-	Uint16 ShadowMapHeight	= 2048;
+	Uint16 ShadowMapWidth	= 4096;
+	Uint16 ShadowMapHeight	= 4096;
 };
 
 /*

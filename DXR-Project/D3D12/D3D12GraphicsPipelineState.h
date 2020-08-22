@@ -15,6 +15,9 @@ struct GraphicsPipelineStateProperties
 	Uint32						NumRenderTargets	= 0;
 	DXGI_FORMAT					DepthBufferFormat	= DXGI_FORMAT_UNKNOWN;
 	bool						EnableDepth			= false;
+	Float32						DepthBias			= D3D12_DEFAULT_DEPTH_BIAS;
+	Float32						SlopeScaleDepthBias	= D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+	Float32						DepthBiasClamp		= D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
 	bool						EnableBlending		= false;
 	D3D12_DEPTH_WRITE_MASK		DepthWriteMask		= D3D12_DEPTH_WRITE_MASK_ALL;
 	D3D12_COMPARISON_FUNC		DepthFunc			= D3D12_COMPARISON_FUNC_LESS;

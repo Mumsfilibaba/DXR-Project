@@ -79,7 +79,7 @@ float CalculateShadowMapping(float4 LightSpacePosition, float ShadowBias)
 	}
 
 	Shadow /= (PCF_WIDTH * PCF_WIDTH);
-	return Shadow;
+	return min(Shadow, 1.0f);
 }
 
 // Main

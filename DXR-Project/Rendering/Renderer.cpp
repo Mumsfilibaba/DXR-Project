@@ -1331,19 +1331,22 @@ bool Renderer::InitShadowMapPass()
 	};
 
 	GraphicsPipelineStateProperties PSOProperties = { };
-	PSOProperties.DebugName			= "ShadowMap PipelineState";
-	PSOProperties.VSBlob			= VSBlob.Get();
-	PSOProperties.PSBlob			= nullptr;
-	PSOProperties.RootSignature		= ShadowMapRootSignature.Get();
-	PSOProperties.InputElements		= InputElementDesc;
-	PSOProperties.NumInputElements	= 4;
-	PSOProperties.EnableDepth		= true;
-	PSOProperties.EnableBlending	= false;
-	PSOProperties.DepthBufferFormat	= ShadowMapFormat;
-	PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	PSOProperties.CullMode			= D3D12_CULL_MODE_BACK;
-	PSOProperties.RTFormats			= nullptr;
-	PSOProperties.NumRenderTargets	= 0;
+	PSOProperties.DebugName				= "ShadowMap PipelineState";
+	PSOProperties.VSBlob				= VSBlob.Get();
+	PSOProperties.PSBlob				= nullptr;
+	PSOProperties.RootSignature			= ShadowMapRootSignature.Get();
+	PSOProperties.InputElements			= InputElementDesc;
+	PSOProperties.NumInputElements		= 4;
+	PSOProperties.EnableDepth			= true;
+	//PSOProperties.DepthBias			= 0.0005f;
+	//PSOProperties.SlopeScaleDepthBias	= 0.01f;
+	//PSOProperties.DepthBiasClamp		= 0.5f;
+	PSOProperties.EnableBlending		= false;
+	PSOProperties.DepthBufferFormat		= ShadowMapFormat;
+	PSOProperties.DepthFunc				= D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	PSOProperties.CullMode				= D3D12_CULL_MODE_BACK;
+	PSOProperties.RTFormats				= nullptr;
+	PSOProperties.NumRenderTargets		= 0;
 
 	ShadowMapPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
 	if (!ShadowMapPSO->Initialize(PSOProperties))
