@@ -27,8 +27,8 @@ class D3D12Texture;
 class D3D12GraphicsPipelineState;
 class D3D12RayTracingPipelineState;
 
-#define ENABLE_D3D12_DEBUG	0
-#define ENABLE_VSM			0
+#define ENABLE_D3D12_DEBUG	1
+#define ENABLE_VSM			1
 
 /*
 * LightSettings

@@ -14,14 +14,15 @@ Texture2D<float4>	DXRReflection			: register(t4, space0);
 TextureCube<float4>	IrradianceMap			: register(t5, space0);
 TextureCube<float4> SpecularIrradianceMap	: register(t6, space0);
 Texture2D<float4>	IntegrationLUT			: register(t7, space0);
-Texture2D<float>	DirLightShadowMaps		: register(t8, space0);
+Texture2D<float2>	DirLightShadowMaps		: register(t8, space0);
 TextureCube<float>	PointLightShadowMaps	: register(t9, space0);
 
 SamplerState GBufferSampler		: register(s0, space0);
 SamplerState LUTSampler			: register(s1, space0);
 SamplerState IrradianceSampler	: register(s2, space0);
 
-SamplerComparisonState ShadowMapSampler	: register(s3, space0);
+SamplerComparisonState	ShadowMapSampler0	: register(s3, space0);
+SamplerState			ShadowMapSampler1	: register(s4, space0);
 
 ConstantBuffer<Camera>				CameraBuffer		: register(b0, space0);
 ConstantBuffer<PointLight>			PointLightBuffer	: register(b1, space0);
@@ -121,8 +122,8 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float3 WorldPosition, f
 		[unroll]
 		for (int y = -PCF_RANGE; y <= PCF_RANGE; y++)
 		{
-			Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler, ProjCoords.xy, BiasedDepth, int2(x, y)).r;
-		}
+            Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, ProjCoords.xy, BiasedDepth).r;
+        }
 	}
 
 	Shadow /= (PCF_WIDTH * PCF_WIDTH);
@@ -156,8 +157,8 @@ float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, floa
 	[unroll]
     for (int i = 0; i < OFFSET_SAMPLES; i++)
 	{
-		Shadow += PointLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler, DirToLight + SampleOffsetDirections[i] * DiskRadius, BiasedDepth);
-	}
+        Shadow += PointLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, DirToLight + SampleOffsetDirections[i] * DiskRadius, BiasedDepth);
+    }
 	
     Shadow = Shadow / OFFSET_SAMPLES;
     return min(Shadow, 1.0f);
