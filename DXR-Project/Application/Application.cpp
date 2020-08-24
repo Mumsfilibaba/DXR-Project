@@ -893,10 +893,10 @@ bool Application::Initialize()
 	// Add DirectionalLight- Source
 	DirectionalLight* Light1 = new DirectionalLight();
 	Light1->SetDirection(0.0f, -1.0f, 0.0f);
-	Light1->SetShadowMapPosition(0.0f, 60.0f, 0.0f);
+	Light1->SetShadowMapPosition(0.0f, 40.0f, 0.0f);
 	Light1->SetShadowBias(0.0008f);
 	Light1->SetMaxShadowBias(0.01f);
-	Light1->SetShadowFarPlane(100.0f);
+	Light1->SetShadowFarPlane(60.0f);
 	Light1->SetColor(1.0f, 1.0f, 1.0f);
 	Light1->SetIntensity(10.0f);
 	CurrentScene->AddLight(Light1);

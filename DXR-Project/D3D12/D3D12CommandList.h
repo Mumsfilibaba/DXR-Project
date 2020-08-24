@@ -95,6 +95,13 @@ public:
 		CommandList->CopyResource(Destination->GetResource(), Source->GetResource());
 	}
 
+	FORCEINLINE void ResolveSubresource(D3D12Resource* Destination, D3D12Resource* Source, DXGI_FORMAT Format)
+	{
+		FlushDeferredResourceBarriers();
+
+		CommandList->ResolveSubresource(Destination->GetResource(), 0, Source->GetResource(), 0, Format);
+	}
+
 	FORCEINLINE void BuildRaytracingAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* Desc)
 	{
 		FlushDeferredResourceBarriers();

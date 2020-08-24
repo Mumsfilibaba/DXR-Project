@@ -118,8 +118,8 @@ private:
 	TSharedPtr<D3D12Fence>			Fence;
 	TSharedPtr<D3D12SwapChain>		SwapChain;
 
-	TArray<TSharedPtr<D3D12CommandAllocator>> CommandAllocators;
-	TArray<TSharedPtr<D3D12Resource>> DeferredResources;
+	TArray<TSharedPtr<D3D12CommandAllocator>>	CommandAllocators;
+	TArray<TSharedPtr<D3D12Resource>>			DeferredResources;
 
 	MeshData Sphere;
 	MeshData SkyboxMesh;
@@ -144,6 +144,7 @@ private:
 	TSharedPtr<D3D12Texture> IntegrationLUT;
 	TSharedPtr<D3D12Texture> DirLightShadowMaps;
 	TSharedPtr<D3D12Texture> VSMDirLightShadowMaps;
+	TSharedPtr<D3D12Texture> VSMDirLightShadowMapsMSAA;
 	TSharedPtr<D3D12Texture> PointLightShadowMaps;
 	TSharedPtr<D3D12Texture> GBuffer[4];
 	

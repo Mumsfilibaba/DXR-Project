@@ -56,8 +56,9 @@ float3 CalcRadiance(float3 F0, float3 InNormal, float3 InViewDir, float3 InLight
 }
 
 // Shadow Mapping
-#define ENABLE_POISSON_FILTERING 0
-#define POISSON_SAMPLES 4
+#define ENABLE_POISSON_FILTERING	0
+#define ENABLE_VSM					1
+#define POISSON_SAMPLES				4
 
 #if ENABLE_POISSON_FILTERING
 static const float2 PoissonDisk[16] =
@@ -93,17 +94,17 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float3 WorldPosition, f
 	float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;
 	ProjCoords.xy	= (ProjCoords.xy * 0.5f) + 0.5f;
 	ProjCoords.y	= 1.0f - ProjCoords.y;
-	if (ProjCoords.z >= 1.0f)
+	
+	float Depth = ProjCoords.z;
+	if (Depth >= 1.0f)
 	{
 		return 1.0f;
 	}
+	
+	float Shadow = 0.0f;
+	float ShadowBias = max(MaxShadowBias * (1.0f - (dot(InNormal, InLightDir))), MinShadowBias);
+	float BiasedDepth = (Depth - ShadowBias);
 
-	float Depth			= ProjCoords.z;
-	float Shadow		= 0.0f;
-	float ShadowBias	= max(MaxShadowBias * (1.0f - (dot(InNormal, InLightDir))), MinShadowBias);
-	float BiasedDepth	= (Depth - ShadowBias);
-	
-	
 #if ENABLE_POISSON_FILTERING
     const float DiskRadius = 0.0002f;
 	
@@ -115,6 +116,13 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float3 WorldPosition, f
     }
 	
     return min(Shadow / POISSON_SAMPLES, 1.0f);
+#elif ENABLE_VSM
+	float2 Moments	= DirLightShadowMaps.Sample(ShadowMapSampler1, ProjCoords.xy).rg;
+	float Variance	= max(Moments.y - Moments.x * Moments.x, MIN_VALUE);
+	float P			= Moments.x - Depth;
+	float Md_2		= P * P;
+	float PMax		= Variance / (Variance + Md_2);
+	return min(max(P, PMax), 1.0f);
 #else
 	[unroll]
 	for (int x = -PCF_RANGE; x <= PCF_RANGE; x++)
@@ -122,7 +130,7 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float3 WorldPosition, f
 		[unroll]
 		for (int y = -PCF_RANGE; y <= PCF_RANGE; y++)
 		{
-            Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, ProjCoords.xy, BiasedDepth).r;
+			Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, ProjCoords.xy, BiasedDepth).r;
         }
 	}
 

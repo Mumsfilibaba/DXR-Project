@@ -72,6 +72,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	StagingTextureProps.InitalState			= D3D12_RESOURCE_STATE_COMMON;
 	StagingTextureProps.MipLevels			= Desc.MipLevels;
 	StagingTextureProps.OptimizedClearValue	= nullptr;
+	StagingTextureProps.SampleCount			= 1;
 
 	TUniquePtr<D3D12Texture> StagingTexture = MakeUnique<D3D12Texture>(Device);
 	if (!StagingTexture->Initialize(StagingTextureProps))

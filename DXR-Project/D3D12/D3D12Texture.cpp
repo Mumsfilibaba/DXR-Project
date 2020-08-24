@@ -23,8 +23,26 @@ bool D3D12Texture::Initialize(const TextureProperties& Properties)
 	ResourceDesc.Height				= Properties.Height;
 	ResourceDesc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	ResourceDesc.MipLevels			= Properties.MipLevels;
-	ResourceDesc.SampleDesc.Count	= 1;
-	ResourceDesc.SampleDesc.Quality = 0;
+	ResourceDesc.SampleDesc.Count	= Properties.SampleCount;
+
+	if (ResourceDesc.SampleDesc.Count > 1)
+	{
+		D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data = { };
+		Data.Flags			= D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
+		Data.Format			= ResourceDesc.Format;
+		Data.SampleCount	= ResourceDesc.SampleDesc.Count;
+		HRESULT hr = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &Data, sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS));
+		if (FAILED(hr))
+		{
+			return false;
+		}
+
+		ResourceDesc.SampleDesc.Quality = Data.NumQualityLevels - 1;
+	}
+	else
+	{
+		ResourceDesc.SampleDesc.Quality = 0;
+	}
 
 	if (CreateResource(&ResourceDesc, Properties.OptimizedClearValue, Properties.InitalState, Properties.MemoryType))
 	{

@@ -90,6 +90,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	TextureProps.Format			= Format;
 	TextureProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
+	TextureProps.SampleCount	= 1;
 
 	TUniquePtr<D3D12Texture> Texture = MakeUnique<D3D12Texture>(Device);
 	if (!Texture->Initialize(TextureProps))
@@ -144,6 +145,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	TextureProps.Format			= Format;
 	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 	TextureProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
+	TextureProps.SampleCount	= 1;
 
 	TUniquePtr<D3D12Texture> StagingTexture = MakeUnique<D3D12Texture>(Device);
 	if (!StagingTexture->Initialize(TextureProps))

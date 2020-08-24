@@ -91,7 +91,7 @@ void DirectionalLight::CalculateMatrix()
 	XMVECTOR LightPosition	= XMLoadFloat3(&ShadowMapPosition);
 	XMVECTOR LightUp		= XMVectorSet(0.0, 0.0f, 1.0f, 0.0f);
 
-	const Float32 Offset		= 60.0f;
+	const Float32 Offset		= 30.0f;
 	XMMATRIX LightProjection	= XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, ShadowNearPlane, ShadowFarPlane);
 	XMMATRIX LightView			= XMMatrixLookToLH(LightPosition, LightDirection, LightUp);
 

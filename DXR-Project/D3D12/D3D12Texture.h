@@ -10,6 +10,7 @@ struct TextureProperties
 	Uint16						Height;
 	Uint16						ArrayCount;
 	Uint16						MipLevels;
+	Uint32						SampleCount;
 	D3D12_RESOURCE_STATES		InitalState;
 	const D3D12_CLEAR_VALUE*	OptimizedClearValue;
 	EMemoryType					MemoryType;

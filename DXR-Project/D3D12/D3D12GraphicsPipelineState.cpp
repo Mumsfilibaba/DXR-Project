@@ -14,39 +14,74 @@ D3D12GraphicsPipelineState::~D3D12GraphicsPipelineState()
 
 bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStateProperties& Properties)
 {
-	struct PipelineStream
+	struct alignas(void*) PipelineStream
 	{
-		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
-		ID3D12RootSignature*				RootSignature = nullptr;
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
+			ID3D12RootSignature* RootSignature = nullptr;
+		};
 
-		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE	Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT;
-		D3D12_INPUT_LAYOUT_DESC				InputLayout;
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE	Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT;
+			D3D12_INPUT_LAYOUT_DESC InputLayout = { };
+		};
 
-		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type2 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PRIMITIVE_TOPOLOGY;
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE		PrimitiveTopologyType;
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type2 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PRIMITIVE_TOPOLOGY;
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE PrimitiveTopologyType = { };
+		};
 
-		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type3 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS;
-		D3D12_SHADER_BYTECODE				VertexShader;
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type3 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS;
+			D3D12_SHADER_BYTECODE VertexShader = { };
+		};
 
-		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type4 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS;
-		D3D12_SHADER_BYTECODE				PixelShader;
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type4 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS;
+			D3D12_SHADER_BYTECODE PixelShader = { };
+		};
 
-		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type5 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS;
-		D3D12_RT_FORMAT_ARRAY				RenderTargetInfo;
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type5 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS;
+			D3D12_RT_FORMAT_ARRAY RenderTargetInfo = { };
+		};
 
-		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type6 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT;
-		DXGI_FORMAT							DepthBufferFormat;
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type6 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT;
+			DXGI_FORMAT DepthBufferFormat = { };
+		};
 
-		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type7 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER;
-		D3D12_RASTERIZER_DESC				RasterizerDesc;
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type7 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER;
+			D3D12_RASTERIZER_DESC RasterizerDesc = { };
+		};
 
-		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type8 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL;
-		D3D12_DEPTH_STENCIL_DESC			DepthStencilDesc;
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type8 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL;
+			D3D12_DEPTH_STENCIL_DESC DepthStencilDesc = { };
+		};
 
-		D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type9 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND;
-		D3D12_BLEND_DESC					BlendStateDesc;
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type9 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND;
+			D3D12_BLEND_DESC BlendStateDesc = { };
+		};
 
-	} Pipeline = { };
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type10 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC;
+			DXGI_SAMPLE_DESC SampleDesc = { };
+		};
+	} Pipeline;
 
 	D3D12_INPUT_LAYOUT_DESC& InputLayoutDesc	= Pipeline.InputLayout;
 	InputLayoutDesc.pInputElementDescs			= Properties.InputElements;
@@ -83,7 +118,7 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	RasterizerDesc.DepthBiasClamp			= Properties.DepthBiasClamp;
 	RasterizerDesc.SlopeScaledDepthBias		= Properties.SlopeScaleDepthBias;
 	RasterizerDesc.DepthClipEnable			= true;
-	RasterizerDesc.MultisampleEnable		= FALSE;
+	RasterizerDesc.MultisampleEnable		= Properties.MultiSampleEnable;
 	RasterizerDesc.AntialiasedLineEnable	= FALSE;
 	RasterizerDesc.ForcedSampleCount		= 0;
 	RasterizerDesc.ConservativeRaster		= D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
@@ -101,6 +136,7 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 
 	D3D12_BLEND_DESC& BlendStateDesc						= Pipeline.BlendStateDesc;
 	BlendStateDesc.AlphaToCoverageEnable					= false;
+	BlendStateDesc.RenderTarget[0].LogicOpEnable			= false;
 	BlendStateDesc.RenderTarget[0].BlendEnable				= Properties.EnableBlending;
 	BlendStateDesc.RenderTarget[0].SrcBlend					= D3D12_BLEND_SRC_ALPHA;
 	BlendStateDesc.RenderTarget[0].DestBlend				= D3D12_BLEND_INV_SRC_ALPHA;
@@ -121,6 +157,11 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 
 	// Depth Format
 	Pipeline.DepthBufferFormat = Properties.DepthBufferFormat;
+
+	// MSAA
+	DXGI_SAMPLE_DESC& SamplerDesc = Pipeline.SampleDesc;
+	SamplerDesc.Count	= Properties.SampleCount;
+	SamplerDesc.Quality	= Properties.SampleQuality;
 
 	const D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc = { sizeof(PipelineStream), &Pipeline };
 	HRESULT hResult = Device->GetDXRDevice()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
