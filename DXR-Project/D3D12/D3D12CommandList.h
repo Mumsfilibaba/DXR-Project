@@ -46,6 +46,9 @@ public:
 
 	FORCEINLINE bool Reset(D3D12CommandAllocator* Allocator)
 	{
+		// Reset NumDrawcalls
+		NumDrawCalls = 0;
+
 		ReleaseDeferredResources(); // TODO: Make sure that we can do this here
 		return SUCCEEDED(CommandList->Reset(Allocator->GetAllocator(), nullptr));
 	}
@@ -118,6 +121,8 @@ public:
 		FlushDeferredResourceBarriers();
 
 		CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+
+		NumDrawCalls++;
 	}
 
 	FORCEINLINE void DrawIndexedInstanced(Uint32 IndexCountPerInstance, Uint32 InstanceCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation, Uint32 StartInstanceLocation)
@@ -125,6 +130,8 @@ public:
 		FlushDeferredResourceBarriers();
 
 		CommandList->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+
+		NumDrawCalls++;
 	}
 
 	FORCEINLINE void SetDescriptorHeaps(ID3D12DescriptorHeap* const* DescriptorHeaps, Uint32 DescriptorHeapCount)
@@ -229,6 +236,11 @@ public:
 	{
 		return CommandList.Get();
 	}
+	
+	FORCEINLINE Uint32 GetNumDrawCalls() const
+	{
+		return NumDrawCalls;
+	}
 
 public:
 	// DeviceChild
@@ -241,8 +253,9 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	DXRCommandList;
 
 	class D3D12Buffer* UploadBuffer = nullptr;
-	Byte* UploadPointer = nullptr;
-	Uint32 UploadBufferOffset = 0;
+	Byte*	UploadPointer		= nullptr;
+	Uint32	UploadBufferOffset	= 0;
+	Uint32	NumDrawCalls		= 0;
 
 	TArray<D3D12_RESOURCE_BARRIER> DeferredResourceBarriers;
 	TArray<Microsoft::WRL::ComPtr<ID3D12Resource>> ResourcesPendingRelease;

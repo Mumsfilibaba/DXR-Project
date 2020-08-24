@@ -55,7 +55,7 @@ float3 CalcRadiance(float3 F0, float3 InNormal, float3 InViewDir, float3 InLight
 }
 
 // Shadow Mapping
-float CalculateDirLightShadow(float4 LightSpacePosition, float ShadowBias)
+float CalculateDirLightShadow(float4 LightSpacePosition, float3 InNormal, float3 InLightDir, float MaxShadowBias, float MinShadowBias)
 {
 	float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;
 	ProjCoords.xy	= (ProjCoords.xy * 0.5f) + 0.5f;
@@ -65,9 +65,10 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float ShadowBias)
 		return 1.0f;
 	}
 
-	float	Depth		= ProjCoords.z;
-	float	Shadow		= 0.0f;
-	float	BiasedDepth = (Depth - ShadowBias);
+	float Depth			= ProjCoords.z;
+	float Shadow		= 0.0f;
+	float ShadowBias	= max(MaxShadowBias * (1.0f - (dot(InNormal, InLightDir))), MinShadowBias);
+	float BiasedDepth	= (Depth - ShadowBias);
 	
 	[unroll]
 	for (int x = -PCF_RANGE; x <= PCF_RANGE; x++)
@@ -83,14 +84,36 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float ShadowBias)
 	return min(Shadow, 1.0f);
 }
 
-float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, float ShadowBias, float FarPlane)
+static const float3 SampleOffsetDirections[20] =
 {
-	float3 DirToLight = WorldPosition - LightPosition;
+	float3(1.0f, 1.0f,  1.0f),	float3( 1.0f, -1.0f,  1.0f),	float3(-1.0f, -1.0f,  1.0f),	float3(-1.0f, 1.0f,  1.0f),
+	float3(1.0f, 1.0f, -1.0f),	float3( 1.0f, -1.0f, -1.0f),	float3(-1.0f, -1.0f, -1.0f),	float3(-1.0f, 1.0f, -1.0f),
+	float3(1.0f, 1.0f,  0.0f),	float3( 1.0f, -1.0f,  0.0f),	float3(-1.0f, -1.0f,  0.0f),	float3(-1.0f, 1.0f,  0.0f),
+	float3(1.0f, 0.0f,  1.0f),	float3(-1.0f,  0.0f,  1.0f),	float3( 1.0f,  0.0f, -1.0f),	float3(-1.0f, 0.0f, -1.0f),
+	float3(0.0f, 1.0f,  1.0f),	float3( 0.0f, -1.0f, 1.0f),		float3( 0.0f, -1.0f, -1.0f),	float3( 0.0f, 1.0f, -1.0f)
+};
+
+#define SAMPLES 20
+
+float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, float3 InNormal, float MaxShadowBias, float MinShadowBias, float FarPlane)
+{
+	float3 DirToLight	= WorldPosition - LightPosition;
+	float3 LightDir		= normalize(LightPosition - WorldPosition);
 	float Depth = length(DirToLight) / FarPlane;
+
+	float ShadowBias = max(MaxShadowBias * (1.0f - (dot(InNormal, LightDir))), MinShadowBias);
+	float BiasedDepth	= (Depth - ShadowBias);
 	
-	float BiasedDepth = Depth - ShadowBias;
-	float SampledDepth = PointLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler, DirToLight, BiasedDepth);
-	return SampledDepth;
+	float Shadow = 0.0f;
+	const float DiskRadius = (1.0f + (Depth)) / FarPlane;
+	
+	[unroll]
+	for (int i = 0; i < SAMPLES; i++)
+	{
+		Shadow += PointLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler, DirToLight + SampleOffsetDirections[i] * DiskRadius, BiasedDepth);
+	}
+	
+	return Shadow / SAMPLES;
 }
 
 // Main
@@ -107,7 +130,7 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	float3 WorldPosition		= PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
 	float3 SampledAlbedo		= Albedo.Sample(GBufferSampler, TexCoord).rgb;
-	float3 SampledReflection	= DXRReflection.Sample(LUTSampler, TexCoord).rgb;
+	//float3 SampledReflection	= DXRReflection.Sample(LUTSampler, TexCoord).rgb;
 	float3 SampledMaterial		= Material.Sample(GBufferSampler, TexCoord).rgb;
 	float3 SampledNormal		= Normal.Sample(GBufferSampler, TexCoord).rgb;
 	
@@ -127,16 +150,17 @@ float4 Main(PSInput Input) : SV_TARGET
 	// PointLight
 	{
 		// Calculate per-light radiance
-		float3	LightPosition	= PointLightBuffer.Position;
+		const float3 LightPosition = PointLightBuffer.Position;
 		float3	LightDir		= normalize(LightPosition - WorldPosition);
 		float3	HalfVec			= normalize(ViewDir + LightDir);
 		float	Distance		= length(LightPosition - WorldPosition);
 		float	Attenuation		= 1.0f / (Distance * Distance);
 		float3	Radiance		= PointLightBuffer.Color * Attenuation;
 	
-		float ShadowBias	= PointLightBuffer.ShadowBias;
-		float FarPlane		= PointLightBuffer.FarPlane;
-		float Shadow = CalculatePointLightShadow(WorldPosition, LightPosition, ShadowBias, FarPlane);
+		const float ShadowBias		= PointLightBuffer.ShadowBias;
+		const float MaxShadowBias	= PointLightBuffer.MaxShadowBias;
+		const float FarPlane		= PointLightBuffer.FarPlane;
+		float Shadow = CalculatePointLightShadow(WorldPosition, LightPosition, Norm, MaxShadowBias, ShadowBias, FarPlane);
 		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * Shadow;
 	}
 	
@@ -147,8 +171,10 @@ float4 Main(PSInput Input) : SV_TARGET
 		float3 HalfVec	= normalize(ViewDir + LightDir);
 		float3 Radiance = DirLightBuffer.Color;
 		
-		float4	LightSpacePosition = mul(float4(WorldPosition, 1.0f), DirLightBuffer.LightMatrix);
-		float	Shadow = CalculateDirLightShadow(LightSpacePosition, DirLightBuffer.ShadowBias);
+		float4 LightSpacePosition	= mul(float4(WorldPosition, 1.0f), DirLightBuffer.LightMatrix);
+		const float ShadowBias		= DirLightBuffer.ShadowBias;
+		const float MaxShadowBias	= DirLightBuffer.MaxShadowBias;
+		float Shadow = CalculateDirLightShadow(LightSpacePosition, Norm, LightDir, MaxShadowBias, ShadowBias);
 		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * Shadow;
 	}
 	

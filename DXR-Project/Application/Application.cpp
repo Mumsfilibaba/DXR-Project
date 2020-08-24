@@ -191,6 +191,7 @@ void Application::DrawRenderSettings()
 
 	const Char* Items[] = 
 	{ 
+		"8192x8192",
 		"4096x4096", 
 		"2048x2048", 
 		"1024x1024", 
@@ -201,50 +202,59 @@ void Application::DrawRenderSettings()
 	static Int32 CurrentItem = 0;
 	
 	LightSettings Settings = Renderer::GetGlobalLightSettings();
-	if (Settings.ShadowMapWidth == 4096)
+	if (Settings.ShadowMapWidth == 8192)
 	{
 		CurrentItem = 0;
 	}
-	else if (Settings.ShadowMapWidth == 2048)
+	else if (Settings.ShadowMapWidth == 4096)
 	{
 		CurrentItem = 1;
 	}
-	else if (Settings.ShadowMapWidth == 1024)
+	else if (Settings.ShadowMapWidth == 2048)
 	{
 		CurrentItem = 2;
 	}
-	else if (Settings.ShadowMapWidth == 512)
+	else if (Settings.ShadowMapWidth == 1024)
 	{
 		CurrentItem = 3;
 	}
-	else if (Settings.ShadowMapWidth == 256)
+	else if (Settings.ShadowMapWidth == 512)
 	{
 		CurrentItem = 4;
+	}
+	else if (Settings.ShadowMapWidth == 256)
+	{
+		CurrentItem = 5;
 	}
 
 	if (ImGui::Combo("Directional Light ShadowMap", &CurrentItem, Items, IM_ARRAYSIZE(Items)))
 	{
 		if (CurrentItem == 0)
 		{
+			Settings.ShadowMapWidth		= 8192;
+			Settings.ShadowMapHeight	= 8192;
+		}
+		else if (CurrentItem == 1)
+		{
 			Settings.ShadowMapWidth		= 4096;
 			Settings.ShadowMapHeight	= 4096;
 		}
-		else if (CurrentItem == 1)
+		else if (CurrentItem == 2)
 		{
 			Settings.ShadowMapWidth		= 2048;
 			Settings.ShadowMapHeight	= 2048;
 		}
-		else if (CurrentItem == 2)
+		else if (CurrentItem == 3)
 		{
 			Settings.ShadowMapWidth		= 1024;
 			Settings.ShadowMapHeight	= 1024;
 		}
-		else if (CurrentItem == 3)
+		else if (CurrentItem == 4)
 		{
 			Settings.ShadowMapWidth		= 512;
 			Settings.ShadowMapHeight	= 512;
 		}
-		else if (CurrentItem == 4)
+		else if (CurrentItem == 5)
 		{
 			Settings.ShadowMapWidth		= 256;
 			Settings.ShadowMapHeight	= 256;
@@ -368,10 +378,10 @@ void Application::DrawSceneInfo()
 
 					ImGui::PushItemWidth(100.0f);
 
-					Float32 ShadowBias = Cast<PointLight>(CurrentLight)->GetShadowBias();
+					Float32 ShadowBias = CurrentLight->GetShadowBias();
 					if (ImGui::SliderFloat("Shadow Bias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
 					{
-						Cast<PointLight>(CurrentLight)->SetShadowBias(ShadowBias);
+						CurrentLight->SetShadowBias(ShadowBias);
 					}
 
 					if (ImGui::IsItemHovered())
@@ -379,13 +389,19 @@ void Application::DrawSceneInfo()
 						ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
 					}
 
-					Float32 ShadowNearPlane = Cast<PointLight>(CurrentLight)->GetShadowNearPlane();
+					Float32 MaxShadowBias = CurrentLight->GetMaxShadowBias();
+					if (ImGui::SliderFloat("Max Shadow Bias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
+					{
+						CurrentLight->SetMaxShadowBias(MaxShadowBias);
+					}
+
+					Float32 ShadowNearPlane = CurrentLight->GetShadowNearPlane();
 					if (ImGui::SliderFloat("Shadow Near Plane", &ShadowNearPlane, 0.01f, 1.0f, "%0.2f"))
 					{
 						Cast<PointLight>(CurrentLight)->SetShadowNearPlane(ShadowNearPlane);
 					}
 
-					Float32 ShadowFarPlane = Cast<PointLight>(CurrentLight)->GetShadowFarPlane();
+					Float32 ShadowFarPlane = CurrentLight->GetShadowFarPlane();
 					if (ImGui::SliderFloat("Shadow Far Plane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
 					{
 						Cast<PointLight>(CurrentLight)->SetShadowFarPlane(ShadowFarPlane);
@@ -410,12 +426,20 @@ void Application::DrawSceneInfo()
 						CurrentLight->SetColor(Arr[0], Arr[1], Arr[2]);
 					}
 
-					const XMFLOAT3& Direction = Cast<DirectionalLight>(CurrentLight)->GetDirection();
+					const XMFLOAT3& Rotation = Cast<DirectionalLight>(CurrentLight)->GetRotation();
+					Float32 Arr2[3] = 
+					{ 
+						XMConvertToDegrees(Rotation.x), 
+						XMConvertToDegrees(Rotation.y), 
+						XMConvertToDegrees(Rotation.z) 
+					};
 
-					Float32 Arr2[3] = { Direction.x, Direction.y, Direction.z };
-					if (ImGui::DragFloat3("Direction", Arr2, 0.5f))
+					if (ImGui::DragFloat3("Rotation", Arr2, 1.0f, -90.0f, 90.0f, "%.f"))
 					{
-						Cast<DirectionalLight>(CurrentLight)->SetDirection(Arr2[0], Arr2[1], Arr2[2]);
+						Cast<DirectionalLight>(CurrentLight)->SetRotation(
+							XMConvertToRadians(Arr2[0]), 
+							XMConvertToRadians(Arr2[1]), 
+							XMConvertToRadians(Arr2[2]));
 					}
 
 					Float32 Intensity = CurrentLight->GetIntensity();
@@ -440,10 +464,10 @@ void Application::DrawSceneInfo()
 					ImGui::PopItemWidth();
 					ImGui::PushItemWidth(100.0f);
 
-					Float32 ShadowBias = Cast<DirectionalLight>(CurrentLight)->GetShadowBias();
+					Float32 ShadowBias = CurrentLight->GetShadowBias();
 					if (ImGui::SliderFloat("Shadow Bias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
 					{
-						Cast<DirectionalLight>(CurrentLight)->SetShadowBias(ShadowBias);
+						CurrentLight->SetShadowBias(ShadowBias);
 					}
 
 					if (ImGui::IsItemHovered())
@@ -451,13 +475,19 @@ void Application::DrawSceneInfo()
 						ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
 					}
 
-					Float32 ShadowNearPlane = Cast<DirectionalLight>(CurrentLight)->GetShadowNearPlane();
+					Float32 MaxShadowBias = CurrentLight->GetMaxShadowBias();
+					if (ImGui::SliderFloat("Max Shadow Bias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
+					{
+						CurrentLight->SetMaxShadowBias(MaxShadowBias);
+					}
+
+					Float32 ShadowNearPlane = CurrentLight->GetShadowNearPlane();
 					if (ImGui::SliderFloat("Shadow Near Plane", &ShadowNearPlane, 0.01f, 1.0f, "%.2f"))
 					{
 						Cast<DirectionalLight>(CurrentLight)->SetShadowNearPlane(ShadowNearPlane);
 					}
 
-					Float32 ShadowFarPlane = Cast<DirectionalLight>(CurrentLight)->GetShadowFarPlane();
+					Float32 ShadowFarPlane = CurrentLight->GetShadowFarPlane();
 					if (ImGui::SliderFloat("Shadow Far Plane", &ShadowFarPlane, 1.0f, 1000.0f, "%.1f"))
 					{
 						Cast<DirectionalLight>(CurrentLight)->SetShadowFarPlane(ShadowFarPlane);
@@ -854,16 +884,19 @@ bool Application::Initialize()
 	PointLight* Light0 = new PointLight();
 	Light0->SetPosition(14.0f, 1.0f, -0.5f);
 	Light0->SetColor(1.0f, 1.0f, 1.0f);
-	Light0->SetShadowBias(0.005f);
-	Light0->SetShadowFarPlane(15.0f);
+	Light0->SetShadowBias(0.0005f);
+	Light0->SetMaxShadowBias(0.009f);
+	Light0->SetShadowFarPlane(50.0f);
 	Light0->SetIntensity(100.0f);
 	CurrentScene->AddLight(Light0);
 
 	// Add DirectionalLight- Source
 	DirectionalLight* Light1 = new DirectionalLight();
 	Light1->SetDirection(0.0f, -1.0f, 0.0f);
-	Light1->SetShadowMapPosition(0.0f, 25.0f, 0.0f);
+	Light1->SetShadowMapPosition(0.0f, 60.0f, 0.0f);
 	Light1->SetShadowBias(0.0008f);
+	Light1->SetMaxShadowBias(0.01f);
+	Light1->SetShadowFarPlane(100.0f);
 	Light1->SetColor(1.0f, 1.0f, 1.0f);
 	Light1->SetIntensity(10.0f);
 	CurrentScene->AddLight(Light1);

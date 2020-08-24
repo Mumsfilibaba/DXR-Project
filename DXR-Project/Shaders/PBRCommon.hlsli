@@ -32,7 +32,8 @@ struct PointLight
 	float3	Color;
 	float	ShadowBias;
 	float3	Position;
-    float	FarPlane;
+	float	FarPlane;
+	float	MaxShadowBias;
 };
 
 struct DirectionalLight
@@ -40,7 +41,7 @@ struct DirectionalLight
 	float3		Color;
 	float		ShadowBias;
 	float3		Direction;
-	float		Padding1;
+    float		MaxShadowBias;
 	float4x4	LightMatrix;
 };
 

@@ -6,9 +6,6 @@ PointLight::PointLight()
 	: Light()
 	, Position(0.0f, 0.0f, 0.0f)
 	, Matrices()
-	, ShadowNearPlane(1.0f)
-	, ShadowFarPlane(10.0f)
-	, ShadowBias(0.05f)
 {
 	CORE_OBJECT_INIT();
 	CalculateMatrices();
@@ -32,9 +29,6 @@ void PointLight::SetPosition(Float32 X, Float32 Y, Float32 Z)
 
 void PointLight::SetShadowNearPlane(Float32 InShadowNearPlane)
 {
-	LOG_INFO("ShadowFarPlane - InShadowNearPlane: " + std::to_string(ShadowFarPlane - InShadowNearPlane));
-	LOG_INFO("InShadowNearPlane: " + std::to_string(InShadowNearPlane));
-
 	if (InShadowNearPlane > 0.0f)
 	{
 		if (abs(ShadowFarPlane - InShadowNearPlane) >= 0.1f)

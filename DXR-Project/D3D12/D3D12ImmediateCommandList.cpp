@@ -126,6 +126,9 @@ void D3D12ImmediateCommandList::Flush()
 	ID3D12CommandAllocator* Allocator = Allocators[CurrentAllocatorIndex].Get();
 	Allocator->Reset();
 	CommandList->Reset(Allocator, nullptr);
+
+	// Reset NumDrawcalls
+	NumDrawCalls = 0;
 }
 
 void D3D12ImmediateCommandList::WaitForCompletion()

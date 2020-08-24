@@ -67,10 +67,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 			VALIDATE(PoiLight != nullptr);
 
 			PointLightProperties Properties;
-			Properties.Color		= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-			Properties.Position		= PoiLight->GetPosition();
-			Properties.ShadowBias	= PoiLight->GetShadowBias();
-			Properties.FarPlane		= PoiLight->GetShadowFarPlane();
+			Properties.Color			= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
+			Properties.Position			= PoiLight->GetPosition();
+			Properties.ShadowBias		= PoiLight->GetShadowBias();
+			Properties.MaxShadowBias	= PoiLight->GetMaxShadowBias();
+			Properties.FarPlane			= PoiLight->GetShadowFarPlane();
 
 			constexpr Uint32 SizeInBytes = sizeof(PointLightProperties);
 			CommandList->UploadBufferData(PointLightBuffer.Get(), NumPointLights * SizeInBytes, &Properties, SizeInBytes);
@@ -83,10 +84,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 			VALIDATE(DirLight != nullptr);
 
 			DirectionalLightProperties Properties;
-			Properties.Color		= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-			Properties.ShadowBias	= DirLight->GetShadowBias();
-			Properties.Direction	= DirLight->GetDirection();
-			Properties.LightMatrix	= DirLight->GetMatrix();
+			Properties.Color			= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
+			Properties.ShadowBias		= DirLight->GetShadowBias();
+			Properties.Direction		= DirLight->GetDirection();
+			Properties.LightMatrix		= DirLight->GetMatrix();
+			Properties.MaxShadowBias	= DirLight->GetMaxShadowBias();
 
 			constexpr Uint32 SizeInBytes = sizeof(DirectionalLightProperties);
 			CommandList->UploadBufferData(DirectionalLightBuffer.Get(), NumDirLights * SizeInBytes, &Properties, SizeInBytes);
@@ -433,6 +435,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->TransitionBarrier(GBuffer[3].Get(), D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// Render UI
+	DebugUI::DrawDebugString("DrawCall Count: " + std::to_string(CommandList->GetNumDrawCalls()));
 	DebugUI::Render(CommandList.Get());
 
 	// Finalize Commandlist
