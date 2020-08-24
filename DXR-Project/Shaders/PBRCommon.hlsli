@@ -13,7 +13,7 @@ static const float3 LightColor      = float3(400.0f, 400.0f, 400.0f);
 /*
 * Common Defines
 */
-#define PCF_RANGE 2
+#define PCF_RANGE 3
 #define PCF_WIDTH float((PCF_RANGE * 2) + 1)
 
 /*

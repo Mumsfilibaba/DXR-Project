@@ -55,7 +55,39 @@ float3 CalcRadiance(float3 F0, float3 InNormal, float3 InViewDir, float3 InLight
 }
 
 // Shadow Mapping
-float CalculateDirLightShadow(float4 LightSpacePosition, float3 InNormal, float3 InLightDir, float MaxShadowBias, float MinShadowBias)
+#define ENABLE_POISSON_FILTERING 0
+#define POISSON_SAMPLES 4
+
+#if ENABLE_POISSON_FILTERING
+static const float2 PoissonDisk[16] =
+{
+    float2(-0.94201624,  -0.39906216),
+	float2( 0.94558609,  -0.76890725),
+	float2(-0.094184101, -0.92938870),
+	float2( 0.34495938,   0.29387760),
+	float2(-0.91588581,   0.45771432),
+	float2(-0.81544232,  -0.87912464),
+	float2(-0.38277543,   0.27676845),
+	float2( 0.97484398,   0.75648379),
+	float2( 0.44323325,  -0.97511554),
+	float2( 0.53742981,  -0.47373420),
+	float2(-0.26496911,  -0.41893023),
+	float2( 0.79197514,   0.19090188),
+	float2(-0.24188840,   0.99706507),
+	float2(-0.81409955,   0.91437590),
+	float2( 0.19984126,   0.78641367),
+	float2( 0.14383161,  -0.14100790)
+};
+
+float Random(float3 Seed, int i)
+{
+    float4	Seed4		= float4(Seed, i);
+    float	DotProduct	= dot(Seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
+    return frac(sin(DotProduct) * 43758.5453f);
+}
+#endif
+
+float CalculateDirLightShadow(float4 LightSpacePosition, float3 WorldPosition, float3 InNormal, float3 InLightDir, float MaxShadowBias, float MinShadowBias)
 {
 	float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;
 	ProjCoords.xy	= (ProjCoords.xy * 0.5f) + 0.5f;
@@ -70,6 +102,19 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float3 InNormal, float3
 	float ShadowBias	= max(MaxShadowBias * (1.0f - (dot(InNormal, InLightDir))), MinShadowBias);
 	float BiasedDepth	= (Depth - ShadowBias);
 	
+	
+#if ENABLE_POISSON_FILTERING
+    const float DiskRadius = 0.0002f;
+	
+	[unroll]
+    for (int i = 0; i < POISSON_SAMPLES; i++)
+    {
+        int Index = int(16.0f * Random(floor(WorldPosition.xyz * 1000.0f), i)) % 16;
+        Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler, ProjCoords.xy + (PoissonDisk[Index] * DiskRadius), BiasedDepth);
+    }
+	
+    return min(Shadow / POISSON_SAMPLES, 1.0f);
+#else
 	[unroll]
 	for (int x = -PCF_RANGE; x <= PCF_RANGE; x++)
 	{
@@ -82,6 +127,7 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float3 InNormal, float3
 
 	Shadow /= (PCF_WIDTH * PCF_WIDTH);
 	return min(Shadow, 1.0f);
+#endif
 }
 
 static const float3 SampleOffsetDirections[20] =
@@ -93,7 +139,7 @@ static const float3 SampleOffsetDirections[20] =
 	float3(0.0f, 1.0f,  1.0f),	float3( 0.0f, -1.0f, 1.0f),		float3( 0.0f, -1.0f, -1.0f),	float3( 0.0f, 1.0f, -1.0f)
 };
 
-#define SAMPLES 20
+#define OFFSET_SAMPLES 20
 
 float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, float3 InNormal, float MaxShadowBias, float MinShadowBias, float FarPlane)
 {
@@ -108,12 +154,13 @@ float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, floa
 	const float DiskRadius = (1.0f + (Depth)) / FarPlane;
 	
 	[unroll]
-	for (int i = 0; i < SAMPLES; i++)
+    for (int i = 0; i < OFFSET_SAMPLES; i++)
 	{
 		Shadow += PointLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler, DirToLight + SampleOffsetDirections[i] * DiskRadius, BiasedDepth);
 	}
 	
-	return Shadow / SAMPLES;
+    Shadow = Shadow / OFFSET_SAMPLES;
+    return min(Shadow, 1.0f);
 }
 
 // Main
@@ -174,7 +221,7 @@ float4 Main(PSInput Input) : SV_TARGET
 		float4 LightSpacePosition	= mul(float4(WorldPosition, 1.0f), DirLightBuffer.LightMatrix);
 		const float ShadowBias		= DirLightBuffer.ShadowBias;
 		const float MaxShadowBias	= DirLightBuffer.MaxShadowBias;
-		float Shadow = CalculateDirLightShadow(LightSpacePosition, Norm, LightDir, MaxShadowBias, ShadowBias);
+        float Shadow = CalculateDirLightShadow(LightSpacePosition, WorldPosition, Norm, LightDir, MaxShadowBias, ShadowBias);
 		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * Shadow;
 	}
 	
