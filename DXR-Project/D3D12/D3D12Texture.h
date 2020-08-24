@@ -26,27 +26,20 @@ public:
 
 	bool Initialize(const TextureProperties& Properties);
 
-	FORCEINLINE void SetRenderTargetView(TSharedPtr<D3D12RenderTargetView> InRenderTargetView)
+	void SetRenderTargetView(TSharedPtr<D3D12RenderTargetView> InRenderTargetView, Uint32 SubresourceIndex);
+	void SetDepthStencilView(TSharedPtr<D3D12DepthStencilView> InDepthStencilView, Uint32 SubresourceIndex);
+
+	FORCEINLINE TSharedPtr<D3D12RenderTargetView> GetRenderTargetView(Uint32 Index) const
 	{
-		RenderTargetView = InRenderTargetView;
+		return RenderTargetViews[Index];
 	}
 
-	FORCEINLINE TSharedPtr<D3D12RenderTargetView> GetRenderTargetView() const
+	FORCEINLINE TSharedPtr<D3D12DepthStencilView> GetDepthStencilView(Uint32 Index) const
 	{
-		return RenderTargetView;
-	}
-
-	FORCEINLINE void SetDepthStencilView(TSharedPtr<D3D12DepthStencilView> InDepthStencilView)
-	{
-		DepthStencilView = InDepthStencilView;
-	}
-
-	FORCEINLINE TSharedPtr<D3D12DepthStencilView> GetDepthStencilView() const
-	{
-		return DepthStencilView;
+		return DepthStencilViews[Index];
 	}
 
 protected:
-	TSharedPtr<D3D12RenderTargetView> RenderTargetView;
-	TSharedPtr<D3D12DepthStencilView> DepthStencilView;
+	TArray<TSharedPtr<D3D12RenderTargetView>> RenderTargetViews;
+	TArray<TSharedPtr<D3D12DepthStencilView>> DepthStencilViews;
 };

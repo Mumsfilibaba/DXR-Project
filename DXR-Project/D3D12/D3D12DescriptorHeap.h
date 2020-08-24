@@ -168,6 +168,8 @@ private:
 	
 	TArray<D3D12_CPU_DESCRIPTOR_HANDLE> OfflineHandles;
 
+	TUniquePtr<D3D12ShaderResourceView> NULLView;
+
 	D3D12_CPU_DESCRIPTOR_HANDLE	CPUTableStart;
 	D3D12_GPU_DESCRIPTOR_HANDLE	GPUTableStart;
 

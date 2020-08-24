@@ -15,6 +15,7 @@ TextureCube<float4>	IrradianceMap			: register(t5, space0);
 TextureCube<float4> SpecularIrradianceMap	: register(t6, space0);
 Texture2D<float4>	IntegrationLUT			: register(t7, space0);
 Texture2D<float>	DirLightShadowMaps		: register(t8, space0);
+TextureCube<float>	PointLightShadowMaps	: register(t9, space0);
 
 SamplerState GBufferSampler		: register(s0, space0);
 SamplerState LUTSampler			: register(s1, space0);
@@ -54,7 +55,7 @@ float3 CalcRadiance(float3 F0, float3 InNormal, float3 InViewDir, float3 InLight
 }
 
 // Shadow Mapping
-float CalculateShadowMapping(float4 LightSpacePosition, float ShadowBias)
+float CalculateDirLightShadow(float4 LightSpacePosition, float ShadowBias)
 {
 	float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;
 	ProjCoords.xy	= (ProjCoords.xy * 0.5f) + 0.5f;
@@ -80,6 +81,16 @@ float CalculateShadowMapping(float4 LightSpacePosition, float ShadowBias)
 
 	Shadow /= (PCF_WIDTH * PCF_WIDTH);
 	return min(Shadow, 1.0f);
+}
+
+float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, float ShadowBias, float FarPlane)
+{
+	float3 DirToLight = WorldPosition - LightPosition;
+	float Depth = length(DirToLight) / FarPlane;
+	
+	float BiasedDepth = Depth - ShadowBias;
+	float SampledDepth = PointLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler, DirToLight, BiasedDepth);
+	return SampledDepth;
 }
 
 // Main
@@ -116,13 +127,17 @@ float4 Main(PSInput Input) : SV_TARGET
 	// PointLight
 	{
 		// Calculate per-light radiance
-		float3	LightDir	= normalize(PointLightBuffer.Position - WorldPosition);
-		float3	HalfVec		= normalize(ViewDir + LightDir);
-		float	Distance	= length(PointLightBuffer.Position - WorldPosition);
-		float	Attenuation	= 1.0f / (Distance * Distance);
-		float3	Radiance	= PointLightBuffer.Color * Attenuation;
+		float3	LightPosition	= PointLightBuffer.Position;
+		float3	LightDir		= normalize(LightPosition - WorldPosition);
+		float3	HalfVec			= normalize(ViewDir + LightDir);
+		float	Distance		= length(LightPosition - WorldPosition);
+		float	Attenuation		= 1.0f / (Distance * Distance);
+		float3	Radiance		= PointLightBuffer.Color * Attenuation;
 	
-		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic);
+		float ShadowBias	= PointLightBuffer.ShadowBias;
+		float FarPlane		= PointLightBuffer.FarPlane;
+		float Shadow = CalculatePointLightShadow(WorldPosition, LightPosition, ShadowBias, FarPlane);
+		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * Shadow;
 	}
 	
 	// DirectionalLight
@@ -133,7 +148,7 @@ float4 Main(PSInput Input) : SV_TARGET
 		float3 Radiance = DirLightBuffer.Color;
 		
 		float4	LightSpacePosition = mul(float4(WorldPosition, 1.0f), DirLightBuffer.LightMatrix);
-		float	Shadow = CalculateShadowMapping(LightSpacePosition, DirLightBuffer.ShadowBias);
+		float	Shadow = CalculateDirLightShadow(LightSpacePosition, DirLightBuffer.ShadowBias);
 		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * Shadow;
 	}
 	

@@ -30,16 +30,17 @@ struct Camera
 struct PointLight
 {
 	float3	Color;
-	float	Padding;
+	float	ShadowBias;
 	float3	Position;
+    float	FarPlane;
 };
 
 struct DirectionalLight
 {
-    float3		Color;
-    float		ShadowBias;
-    float3		Direction;
-    float		Padding1;
+	float3		Color;
+	float		ShadowBias;
+	float3		Direction;
+	float		Padding1;
 	float4x4	LightMatrix;
 };
 

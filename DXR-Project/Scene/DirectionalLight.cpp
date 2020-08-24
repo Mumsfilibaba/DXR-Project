@@ -4,6 +4,8 @@ DirectionalLight::DirectionalLight()
 	: Light()
 	, Direction(0.0f, -1.0f, 0.0f)
 	, ShadowBias(0.005f)
+	, ShadowMapNearPlane(1.0f)
+	, ShadowMapFarPlane(30.0f)
 	, ShadowMapPosition(0.0f, 30.0f, 0.0f)
 	, Matrix()
 {
@@ -46,6 +48,30 @@ void DirectionalLight::SetShadowMapPosition(Float32 X, Float32 Y, Float32 Z)
 	CalculateMatrix();
 }
 
+void DirectionalLight::SetShadowNearPlane(Float32 InShadowNearPlane)
+{
+	if (InShadowNearPlane > 0.0f)
+	{
+		if (abs(ShadowMapFarPlane - InShadowNearPlane) >= 0.1f)
+		{
+			ShadowMapNearPlane = InShadowNearPlane;
+			CalculateMatrix();
+		}
+	}
+}
+
+void DirectionalLight::SetShadowFarPlane(Float32 InShadowFarPlane)
+{
+	if (InShadowFarPlane > 0.0f)
+	{
+		if (abs(InShadowFarPlane - ShadowMapNearPlane) >= 0.1f)
+		{
+			ShadowMapFarPlane = InShadowFarPlane;
+			CalculateMatrix();
+		}
+	}
+}
+
 void DirectionalLight::CalculateMatrix()
 {
 	XMVECTOR LightDirection = XMVector3Normalize(XMLoadFloat3(&Direction));
@@ -53,7 +79,7 @@ void DirectionalLight::CalculateMatrix()
 	XMVECTOR LightUp		= XMVectorSet(0.0, 0.0f, 1.0f, 0.0f);
 
 	const Float32 Offset		= 30.0f;
-	XMMATRIX LightProjection	= XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, 1.0f, 30.0f);
+	XMMATRIX LightProjection	= XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, ShadowMapNearPlane, ShadowMapFarPlane);
 	XMMATRIX LightView			= XMMatrixLookToLH(LightPosition, LightDirection, LightUp);
 
 	XMStoreFloat4x4(&Matrix, XMMatrixMultiplyTranspose(LightView, LightProjection));

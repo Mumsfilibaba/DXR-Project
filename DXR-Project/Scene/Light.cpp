@@ -1,7 +1,5 @@
 #include "Light.h"
 
-LightSettings Light::GlobalLightSettings;
-
 Light::Light()
 	: Color()
 {

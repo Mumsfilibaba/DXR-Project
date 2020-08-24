@@ -160,7 +160,7 @@ void D3D12SwapChain::RetriveSwapChainSurfaces()
 				}
 
 				Buffer->SetDebugName("BackBuffer[" + std::to_string(BufferID) + "]");
-				Buffer->SetRenderTargetView(BackBuffersViews[BufferID]);
+				Buffer->SetRenderTargetView(BackBuffersViews[BufferID], 0);
 			}
 
 			BufferID++;

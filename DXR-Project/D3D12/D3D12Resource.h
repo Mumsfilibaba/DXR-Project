@@ -59,7 +59,7 @@ protected:
 protected:
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
 
-	TArray<TSharedPtr<D3D12ShaderResourceView>>	ShaderResourceViews;
+	TArray<TSharedPtr<D3D12ShaderResourceView>>		ShaderResourceViews;
 	TArray<TSharedPtr<D3D12UnorderedAccessView>>	UnorderedAccessViews;
 
 	D3D12_RESOURCE_DESC Desc;

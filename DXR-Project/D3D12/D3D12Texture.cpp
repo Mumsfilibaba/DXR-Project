@@ -3,8 +3,8 @@
 
 D3D12Texture::D3D12Texture(D3D12Device* InDevice)
 	: D3D12Resource(InDevice)
-	, RenderTargetView()
-	, DepthStencilView()
+	, RenderTargetViews()
+	, DepthStencilViews()
 {
 }
 
@@ -38,4 +38,24 @@ bool D3D12Texture::Initialize(const TextureProperties& Properties)
 		LOG_ERROR("[D3D12Texture]: FAILED to create Texture");
 		return false;
 	}
+}
+
+void D3D12Texture::SetRenderTargetView(TSharedPtr<D3D12RenderTargetView> InRenderTargetView, Uint32 SubresourceIndex)
+{
+	if (SubresourceIndex >= RenderTargetViews.GetSize())
+	{
+		RenderTargetViews.Resize(SubresourceIndex + 1);
+	}
+
+	RenderTargetViews[SubresourceIndex] = InRenderTargetView;
+}
+
+void D3D12Texture::SetDepthStencilView(TSharedPtr<D3D12DepthStencilView> InDepthStencilView, Uint32 SubresourceIndex)
+{
+	if (SubresourceIndex >= DepthStencilViews.GetSize())
+	{
+		DepthStencilViews.Resize(SubresourceIndex + 1);
+	}
+
+	DepthStencilViews[SubresourceIndex] = InDepthStencilView;
 }

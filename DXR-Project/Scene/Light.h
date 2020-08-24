@@ -1,19 +1,6 @@
 #pragma once
 #include "Core/CoreObject.h"
 
-class D3D12Buffer;
-class D3D12Texture;
-class D3D12DescriptorTable;
-
-/*
-* LightSettings
-*/
-struct LightSettings
-{
-	Uint16 ShadowMapWidth	= 4096;
-	Uint16 ShadowMapHeight	= 4096;
-};
-
 /*
 * Light
 */
@@ -40,20 +27,7 @@ public:
 		return Color;
 	}
 
-	static FORCEINLINE void SetGlobalLightSettings(const LightSettings& InGlobalLightSettings)
-	{
-		GlobalLightSettings = InGlobalLightSettings;
-	}
-
-	static FORCEINLINE const LightSettings& GetGlobalLightSettings()
-	{
-		return GlobalLightSettings;
-	}
-
 protected:
 	XMFLOAT3	Color;
 	Float32		Intensity = 1.0f;
-
-private:
-	static LightSettings GlobalLightSettings;
 };

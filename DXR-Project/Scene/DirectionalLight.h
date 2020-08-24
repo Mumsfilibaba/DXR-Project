@@ -27,6 +27,9 @@ public:
 	void SetShadowMapPosition(const XMFLOAT3& InDirection);
 	void SetShadowMapPosition(Float32 X, Float32 Y, Float32 Z);
 
+	void SetShadowNearPlane(Float32 InShadowNearPlane);
+	void SetShadowFarPlane(Float32 InShadowFarPlane);
+
 	FORCEINLINE void SetShadowBias(Float32 InShadowBias)
 	{
 		ShadowBias = InShadowBias;
@@ -52,11 +55,23 @@ public:
 		return ShadowBias;
 	}
 
+	FORCEINLINE Float32 GetShadowNearPlane() const
+	{
+		return ShadowMapNearPlane;
+	}
+
+	FORCEINLINE Float32 GetShadowFarPlane() const
+	{
+		return ShadowMapFarPlane;
+	}
+
 private:
 	void CalculateMatrix();
 
-	XMFLOAT3 Direction;
-	Float32 ShadowBias;
-	XMFLOAT3 ShadowMapPosition;
-	XMFLOAT4X4 Matrix;
+	XMFLOAT3	Direction;
+	Float32		ShadowBias;
+	Float32		ShadowMapNearPlane;
+	Float32		ShadowMapFarPlane;
+	XMFLOAT3	ShadowMapPosition;
+	XMFLOAT4X4	Matrix;
 };

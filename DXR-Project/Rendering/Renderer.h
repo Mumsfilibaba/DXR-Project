@@ -27,12 +27,21 @@ class D3D12Texture;
 class D3D12GraphicsPipelineState;
 class D3D12RayTracingPipelineState;
 
+#define ENABLE_D3D12_DEBUG 0
+
+/*
+* LightSettings
+*/
+struct LightSettings
+{
+	Uint16 ShadowMapWidth		= 4096;
+	Uint16 ShadowMapHeight		= 4096;
+	Uint16 PointLightShadowSize	= 1024;
+};
+
 /*
 * Renderer
 */
-
-#define ENABLE_D3D12_DEBUG 0
-
 class Renderer
 {
 public:
@@ -66,6 +75,13 @@ public:
 		return ImmediateCommandList;
 	}
 
+	static void SetGlobalLightSettings(const LightSettings& InGlobalLightSettings);
+
+	static FORCEINLINE const LightSettings& GetGlobalLightSettings()
+	{
+		return GlobalLightSettings;
+	}
+
 	static Renderer* Make(TSharedPtr<WindowsWindow> RendererWindow);
 	static Renderer* Get();
 	
@@ -80,6 +96,9 @@ private:
 	bool InitGBuffer();
 	bool InitIntegrationLUT();
 	bool InitRayTracingTexture();
+
+	bool CreateShadowMaps();
+	void WriteShadowMapDescriptors();
 
 	void GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList);
 	void GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList);
@@ -99,6 +118,7 @@ private:
 	TSharedPtr<D3D12SwapChain>		SwapChain;
 
 	TArray<TSharedPtr<D3D12CommandAllocator>> CommandAllocators;
+	TArray<TSharedPtr<D3D12Resource>> DeferredResources;
 
 	MeshData Sphere;
 	MeshData SkyboxMesh;
@@ -122,6 +142,7 @@ private:
 	TSharedPtr<D3D12Texture> ReflectionTexture;
 	TSharedPtr<D3D12Texture> IntegrationLUT;
 	TSharedPtr<D3D12Texture> DirLightShadowMaps;
+	TSharedPtr<D3D12Texture> PointLightShadowMaps;
 	TSharedPtr<D3D12Texture> GBuffer[4];
 	
 	TSharedPtr<D3D12RootSignature>		PrePassRootSignature;
@@ -142,6 +163,7 @@ private:
 
 	TSharedPtr<D3D12GraphicsPipelineState>		PrePassPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		ShadowMapPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>		LinearShadowMapPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		GeometryPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		LightPassPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		SkyboxPSO;
@@ -155,5 +177,6 @@ private:
 	bool PrePassEnabled = true;
 	bool VSyncEnabled	= false;
 
+	static LightSettings		GlobalLightSettings;
 	static TUniquePtr<Renderer> RendererInstance;
 };
