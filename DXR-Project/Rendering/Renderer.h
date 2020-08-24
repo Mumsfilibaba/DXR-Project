@@ -27,7 +27,8 @@ class D3D12Texture;
 class D3D12GraphicsPipelineState;
 class D3D12RayTracingPipelineState;
 
-#define ENABLE_D3D12_DEBUG 0
+#define ENABLE_D3D12_DEBUG	0
+#define ENABLE_VSM			0
 
 /*
 * LightSettings
@@ -142,6 +143,7 @@ private:
 	TSharedPtr<D3D12Texture> ReflectionTexture;
 	TSharedPtr<D3D12Texture> IntegrationLUT;
 	TSharedPtr<D3D12Texture> DirLightShadowMaps;
+	TSharedPtr<D3D12Texture> VSMDirLightShadowMaps;
 	TSharedPtr<D3D12Texture> PointLightShadowMaps;
 	TSharedPtr<D3D12Texture> GBuffer[4];
 	
@@ -163,6 +165,7 @@ private:
 
 	TSharedPtr<D3D12GraphicsPipelineState>		PrePassPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		ShadowMapPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>		VSMShadowMapPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		LinearShadowMapPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		GeometryPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		LightPassPSO;

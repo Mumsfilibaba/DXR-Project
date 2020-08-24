@@ -12,7 +12,7 @@ cbuffer LightBuffer : register(b1, space0)
 	float		LightFarPlane;
 }
 
-// VertexShader
+// VS
 struct VSInput
 {
 	float3 Position : POSITION0;
@@ -51,4 +51,17 @@ float PSMain(float3 WorldPosition : POSITION0) : SV_Depth
 	float LightDistance = length(WorldPosition.xyz - LightPosition);
 	LightDistance = LightDistance / LightFarPlane;
 	return LightDistance;
+}
+
+// Variance Shadow Generation
+float4 VSM_VSMain(VSInput Input) : SV_Position
+{
+	float4 WorldPosition = mul(float4(Input.Position, 1.0f), Transform);
+	return mul(WorldPosition, LightProjection);
+}
+
+float4 VSM_PSMain(float4 Position : SV_Position) : SV_Target0
+{
+	float Depth = Position.z;
+	return float4(Depth, Depth * Depth, 0.0f, 1.0f);
 }
