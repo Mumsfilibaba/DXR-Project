@@ -521,7 +521,7 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 
 	// Draw DebugWindow with DebugStrings
 	constexpr Uint32 Width = 300;
-	ImGui::SetNextWindowPos(ImVec2(static_cast<Float32>(CurrentWindowShape.Width - Width), 5.0f));
+	ImGui::SetNextWindowPos(ImVec2(static_cast<Float32>(CurrentWindowShape.Width - Width), 15.0f));
 	ImGui::SetNextWindowSize(ImVec2(Width, CurrentWindowShape.Height));
 
 	ImGui::Begin("DebugWindow", nullptr,

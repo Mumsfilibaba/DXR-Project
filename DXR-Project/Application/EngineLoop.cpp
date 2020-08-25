@@ -5,6 +5,9 @@
 #include "Windows/WindowsConsoleOutput.h"
 
 #include "Rendering/DebugUI.h"
+#include "Rendering/Renderer.h"
+
+#include "Editor/Editor.h"
 
 static Clock	GlobalClock;
 static bool		GlobalIsRunning = false;
@@ -33,10 +36,14 @@ void EngineLoop::Tick()
 	GlobalClock.Tick();
 	Application::Get()->Tick();
 
-	DebugUI::DrawUI([]
-		{
-			ImGui::ShowDemoWindow();
-		});
+	Renderer::Get()->Tick(*Scene::GetCurrentScene());
+
+	Editor::Tick();
+
+	//DebugUI::DrawUI([]
+	//	{
+	//		ImGui::ShowDemoWindow();
+	//	});
 }
 
 void EngineLoop::Release()

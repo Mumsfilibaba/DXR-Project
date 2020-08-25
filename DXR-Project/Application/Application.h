@@ -22,11 +22,6 @@ public:
 
 	void Tick();
 
-	void DrawDebugData();
-	void DrawSideWindow();
-	void DrawRenderSettings();
-	void DrawSceneInfo();
-
 	void SetCursor(TSharedPtr<WindowsCursor> Cursor);
 	void SetActiveWindow(TSharedPtr<WindowsWindow>& ActiveWindow);
 	void SetCapture(TSharedPtr<WindowsWindow> Capture);

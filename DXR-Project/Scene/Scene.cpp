@@ -14,6 +14,8 @@
 
 #include <unordered_map>
 
+Scene* Scene::CurrentScene = nullptr;
+
 Scene::Scene()
 	: Actors()
 {
@@ -350,6 +352,18 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 	}
 
 	return LoadedScene.Release();
+}
+
+void Scene::SetCurrentScene(Scene* InCurrentScene)
+{
+	VALIDATE(InCurrentScene != nullptr);
+	CurrentScene = InCurrentScene;
+}
+
+Scene* Scene::GetCurrentScene()
+{
+	VALIDATE(CurrentScene != nullptr);
+	return CurrentScene;
 }
 
 void Scene::AddMeshComponent(MeshComponent* Component)

@@ -45,6 +45,9 @@ public:
 	}
 
 	static Scene* LoadFromFile(const std::string& Filepath, class D3D12Device* Device);
+	
+	static void		SetCurrentScene(Scene* InCurrentScene);
+	static Scene*	GetCurrentScene();
 
 private:
 	void AddMeshComponent(class MeshComponent* Component);
@@ -54,4 +57,6 @@ private:
 	TArray<MeshDrawCommand> MeshDrawCommands;
 
 	Camera* CurrentCamera = nullptr;
+
+	static Scene* CurrentScene;
 };

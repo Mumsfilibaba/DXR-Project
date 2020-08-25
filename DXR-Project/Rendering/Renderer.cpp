@@ -22,10 +22,10 @@
 TUniquePtr<Renderer>	Renderer::RendererInstance = nullptr;
 LightSettings			Renderer::GlobalLightSettings;
 
-static const DXGI_FORMAT	NormalFormat		= DXGI_FORMAT_R10G10B10A2_UNORM;
-static const DXGI_FORMAT	DepthBufferFormat	= DXGI_FORMAT_D32_FLOAT;
-static const DXGI_FORMAT	ShadowMapFormat		= DXGI_FORMAT_D32_FLOAT;
-static const Uint32			ShadowMapSampleCount = 2;
+static const DXGI_FORMAT	NormalFormat			= DXGI_FORMAT_R10G10B10A2_UNORM;
+static const DXGI_FORMAT	DepthBufferFormat		= DXGI_FORMAT_D32_FLOAT;
+static const DXGI_FORMAT	ShadowMapFormat			= DXGI_FORMAT_D32_FLOAT;
+static const Uint32			ShadowMapSampleCount	= 2;
 
 /*
 * Renderer
