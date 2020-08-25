@@ -119,15 +119,14 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->ClearDepthStencilView(DirLightShadowMaps->GetDepthStencilView(0).Get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 
 #if ENABLE_VSM
-	CommandList->TransitionBarrier(VSMDirLightShadowMapsMSAA.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	CommandList->TransitionBarrier(VSMDirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RESOLVE_DEST);
+	CommandList->TransitionBarrier(VSMDirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	Float32 DepthClearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	CommandList->ClearRenderTargetView(VSMDirLightShadowMapsMSAA->GetRenderTargetView(0).Get(), DepthClearColor);
+	CommandList->ClearRenderTargetView(VSMDirLightShadowMaps->GetRenderTargetView(0).Get(), DepthClearColor);
 	
 	D3D12RenderTargetView* DirLightRTVS[] =
 	{
-		VSMDirLightShadowMapsMSAA->GetRenderTargetView(0).Get(),
+		VSMDirLightShadowMaps->GetRenderTargetView(0).Get(),
 	};
 	CommandList->OMSetRenderTargets(DirLightRTVS, 1, DirLightShadowMaps->GetDepthStencilView(0).Get());
 	CommandList->SetPipelineState(VSMShadowMapPSO->GetPipelineState());
@@ -266,12 +265,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	// Transition ShadowMaps
 #if ENABLE_VSM
-	CommandList->TransitionBarrier(VSMDirLightShadowMapsMSAA.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
-	
-	CommandList->ResolveSubresource(VSMDirLightShadowMaps.Get(), VSMDirLightShadowMapsMSAA.Get(), DXGI_FORMAT_R32G32_FLOAT);
-	
-	CommandList->TransitionBarrier(VSMDirLightShadowMapsMSAA.Get(), D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	CommandList->TransitionBarrier(VSMDirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_RESOLVE_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(VSMDirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 #endif
 	CommandList->TransitionBarrier(DirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	CommandList->TransitionBarrier(PointLightShadowMaps.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -560,7 +554,6 @@ void Renderer::SetGlobalLightSettings(const LightSettings& InGlobalLightSettings
 
 #if ENABLE_VSM
 		CurrentRenderer->ImmediateCommandList->TransitionBarrier(CurrentRenderer->VSMDirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		CurrentRenderer->ImmediateCommandList->TransitionBarrier(CurrentRenderer->VSMDirLightShadowMapsMSAA.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 #endif
 		CurrentRenderer->ImmediateCommandList->TransitionBarrier(CurrentRenderer->DirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		CurrentRenderer->ImmediateCommandList->TransitionBarrier(CurrentRenderer->PointLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -1450,8 +1443,8 @@ bool Renderer::InitShadowMapPass()
 	DXGI_FORMAT Format = DXGI_FORMAT_R32G32_FLOAT;
 	PSOProperties.RTFormats			= &Format;
 	PSOProperties.NumRenderTargets	= 1;
-	PSOProperties.MultiSampleEnable	= true;
-	PSOProperties.SampleCount		= ShadowMapSampleCount;
+	PSOProperties.MultiSampleEnable	= false;
+	PSOProperties.SampleCount		= 1;
 	PSOProperties.SampleQuality		= 0;
 #else
 	PSOProperties.PSBlob			= nullptr;
@@ -2330,26 +2323,17 @@ bool Renderer::CreateShadowMaps()
 		DeferredResources.EmplaceBack(VSMDirLightShadowMaps);
 	}
 
-	if (VSMDirLightShadowMapsMSAA)
-	{
-		DeferredResources.EmplaceBack(VSMDirLightShadowMapsMSAA);
-	}
-
 	TextureProperties ShadowMapProps = { };
-	ShadowMapProps.DebugName		= "Directional Light ShadowMaps";
-	ShadowMapProps.ArrayCount		= 1;
-	ShadowMapProps.Format			= ShadowMapFormat;
-	ShadowMapProps.Flags			= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-	ShadowMapProps.Height			= Renderer::GetGlobalLightSettings().ShadowMapHeight;
-	ShadowMapProps.Width			= Renderer::GetGlobalLightSettings().ShadowMapWidth;
-	ShadowMapProps.InitalState		= D3D12_RESOURCE_STATE_COMMON;
-	ShadowMapProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
-	ShadowMapProps.MipLevels		= 1;
-#if ENABLE_VSM
-	ShadowMapProps.SampleCount = ShadowMapSampleCount;
-#else
-	ShadowMapProps.SampleCount = 1;
-#endif
+	ShadowMapProps.DebugName	= "Directional Light ShadowMaps";
+	ShadowMapProps.ArrayCount	= 1;
+	ShadowMapProps.Format		= ShadowMapFormat;
+	ShadowMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+	ShadowMapProps.Height		= Renderer::GetGlobalLightSettings().ShadowMapHeight;
+	ShadowMapProps.Width		= Renderer::GetGlobalLightSettings().ShadowMapWidth;
+	ShadowMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
+	ShadowMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
+	ShadowMapProps.MipLevels	= 1;
+	ShadowMapProps.SampleCount	= 1;
 	
 	D3D12_CLEAR_VALUE Value0;
 	Value0.Format				= ShadowMapFormat;
@@ -2361,13 +2345,9 @@ bool Renderer::CreateShadowMaps()
 	if (DirLightShadowMaps->Initialize(ShadowMapProps))
 	{
 		D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = { };
-		DSVDesc.Format = ShadowMapFormat;
-#if ENABLE_VSM
-		DSVDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
-#else
+		DSVDesc.Format				= ShadowMapFormat;
 		DSVDesc.ViewDimension		= D3D12_DSV_DIMENSION_TEXTURE2D;
 		DSVDesc.Texture2D.MipSlice	= 0;
-#endif
 		DirLightShadowMaps->SetDepthStencilView(MakeShared<D3D12DepthStencilView>(Device.Get(), DirLightShadowMaps->GetResource(), &DSVDesc), 0);
 
 #if !ENABLE_VSM
@@ -2388,7 +2368,7 @@ bool Renderer::CreateShadowMaps()
 	}
 
 #if ENABLE_VSM
-	ShadowMapProps.DebugName	= "VSM Directional Light ShadowMaps MSAA";
+	ShadowMapProps.DebugName	= "Directional Light ShadowMaps";
 	ShadowMapProps.ArrayCount	= 1;
 	ShadowMapProps.Format		= DXGI_FORMAT_R32G32_FLOAT;
 	ShadowMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
@@ -2397,7 +2377,7 @@ bool Renderer::CreateShadowMaps()
 	ShadowMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	ShadowMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 	ShadowMapProps.MipLevels	= 1;
-	ShadowMapProps.SampleCount	= ShadowMapSampleCount;
+	ShadowMapProps.SampleCount	= 1;
 
 	D3D12_CLEAR_VALUE Value1;
 	Value1.Format	= ShadowMapProps.Format;
@@ -2407,29 +2387,16 @@ bool Renderer::CreateShadowMaps()
 	Value1.Color[3]	= 1.0f;
 	ShadowMapProps.OptimizedClearValue = &Value1;
 
-	VSMDirLightShadowMapsMSAA = MakeShared<D3D12Texture>(Device.Get());
-	if (VSMDirLightShadowMapsMSAA->Initialize(ShadowMapProps))
-	{
-		D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = { };
-		RTVDesc.Format			= ShadowMapProps.Format;
-		RTVDesc.ViewDimension	= D3D12_RTV_DIMENSION_TEXTURE2DMS;
-		VSMDirLightShadowMapsMSAA->SetRenderTargetView(MakeShared<D3D12RenderTargetView>(Device.Get(), VSMDirLightShadowMapsMSAA->GetResource(), &RTVDesc), 0);
-	}
-	else
-	{
-		return false;
-	}
-
-	ShadowMapProps.DebugName			= "VSM Directional Light ShadowMaps";
-	ShadowMapProps.ArrayCount			= 1;
-	ShadowMapProps.Format				= DXGI_FORMAT_R32G32_FLOAT;
-	ShadowMapProps.Flags				= D3D12_RESOURCE_FLAG_NONE;
-	ShadowMapProps.SampleCount			= 1;
-	ShadowMapProps.OptimizedClearValue	= nullptr;
-
 	VSMDirLightShadowMaps = MakeShared<D3D12Texture>(Device.Get());
 	if (VSMDirLightShadowMaps->Initialize(ShadowMapProps))
 	{
+		D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = { };
+		RTVDesc.Format					= ShadowMapProps.Format;
+		RTVDesc.ViewDimension			= D3D12_RTV_DIMENSION_TEXTURE2D;
+		RTVDesc.Texture2D.MipSlice		= 0;
+		RTVDesc.Texture2D.PlaneSlice	= 0;
+		VSMDirLightShadowMaps->SetRenderTargetView(MakeShared<D3D12RenderTargetView>(Device.Get(), VSMDirLightShadowMaps->GetResource(), &RTVDesc), 0);
+	
 		D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = { };
 		SRVDesc.Format							= ShadowMapProps.Format;
 		SRVDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;

@@ -56,8 +56,8 @@ float3 CalcRadiance(float3 F0, float3 InNormal, float3 InViewDir, float3 InLight
 }
 
 // Shadow Mapping
-#define ENABLE_POISSON_FILTERING	0
-#define ENABLE_VSM					1
+#define ENABLE_POISSON_FILTERING	1
+#define ENABLE_VSM					0
 #define POISSON_SAMPLES				4
 
 #if ENABLE_POISSON_FILTERING
@@ -112,7 +112,7 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float3 WorldPosition, f
     for (int i = 0; i < POISSON_SAMPLES; i++)
     {
         int Index = int(16.0f * Random(floor(WorldPosition.xyz * 1000.0f), i)) % 16;
-        Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler, ProjCoords.xy + (PoissonDisk[Index] * DiskRadius), BiasedDepth);
+        Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, ProjCoords.xy + (PoissonDisk[Index] * DiskRadius), BiasedDepth);
     }
 	
     return min(Shadow / POISSON_SAMPLES, 1.0f);
@@ -130,7 +130,7 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float3 WorldPosition, f
 		[unroll]
 		for (int y = -PCF_RANGE; y <= PCF_RANGE; y++)
 		{
-			Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, ProjCoords.xy, BiasedDepth).r;
+			Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, ProjCoords.xy, BiasedDepth, int2(x, y)).r;
         }
 	}
 
