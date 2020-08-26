@@ -56,9 +56,9 @@ float3 CalcRadiance(float3 F0, float3 InNormal, float3 InViewDir, float3 InLight
 }
 
 // Shadow Mapping
-#define ENABLE_POISSON_FILTERING	1
+#define ENABLE_POISSON_FILTERING	0
 #define ENABLE_VSM					0
-#define POISSON_SAMPLES				4
+#define POISSON_SAMPLES				16
 
 #if ENABLE_POISSON_FILTERING
 static const float2 PoissonDisk[16] =
@@ -89,6 +89,11 @@ float Random(float3 Seed, int i)
 }
 #endif
 
+float Linstep(float Low, float High, float P)
+{
+	return saturate((P - Low) / (High - Low));
+}
+
 float CalculateDirLightShadow(float4 LightSpacePosition, float3 WorldPosition, float3 InNormal, float3 InLightDir, float MaxShadowBias, float MinShadowBias)
 {
 	float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;
@@ -106,7 +111,7 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float3 WorldPosition, f
 	float BiasedDepth = (Depth - ShadowBias);
 
 #if ENABLE_POISSON_FILTERING
-    const float DiskRadius = 0.0002f;
+    const float DiskRadius = 0.001f;
 	
 	[unroll]
     for (int i = 0; i < POISSON_SAMPLES; i++)
@@ -117,11 +122,25 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float3 WorldPosition, f
 	
     return min(Shadow / POISSON_SAMPLES, 1.0f);
 #elif ENABLE_VSM
-	float2 Moments	= DirLightShadowMaps.Sample(ShadowMapSampler1, ProjCoords.xy).rg;
+	float2 Moments = (float2)0;
+	
+	[unroll]
+	for (int x = -PCF_RANGE; x <= PCF_RANGE; x++)
+	{
+		[unroll]
+		for (int y = -PCF_RANGE; y <= PCF_RANGE; y++)
+		{
+			Moments += DirLightShadowMaps.Sample(ShadowMapSampler1, ProjCoords.xy, int2(x, y)).rg;
+		}
+	}
+
+	const float Width = (PCF_RANGE * 2) + 1;
+	Moments = Moments / (Width * Width);
+
 	float Variance	= max(Moments.y - Moments.x * Moments.x, MIN_VALUE);
 	float P			= Moments.x - Depth;
 	float Md_2		= P * P;
-	float PMax		= Variance / (Variance + Md_2);
+	float PMax		= Linstep(0.4f, 1.0f, Variance / (Variance + Md_2));
 	return min(max(P, PMax), 1.0f);
 #else
 	[unroll]
@@ -148,7 +167,7 @@ static const float3 SampleOffsetDirections[20] =
 	float3(0.0f, 1.0f,  1.0f),	float3( 0.0f, -1.0f, 1.0f),		float3( 0.0f, -1.0f, -1.0f),	float3( 0.0f, 1.0f, -1.0f)
 };
 
-#define OFFSET_SAMPLES 20
+#define OFFSET_SAMPLES 8
 
 float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, float3 InNormal, float MaxShadowBias, float MinShadowBias, float FarPlane)
 {
@@ -160,7 +179,7 @@ float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, floa
 	float BiasedDepth	= (Depth - ShadowBias);
 	
 	float Shadow = 0.0f;
-	const float DiskRadius = (1.0f + (Depth)) / FarPlane;
+	const float DiskRadius = (0.5f + (Depth)) / FarPlane;
 	
 	[unroll]
     for (int i = 0; i < OFFSET_SAMPLES; i++)
