@@ -167,7 +167,7 @@ static const float3 SampleOffsetDirections[20] =
 	float3(0.0f, 1.0f,  1.0f),	float3( 0.0f, -1.0f, 1.0f),		float3( 0.0f, -1.0f, -1.0f),	float3( 0.0f, 1.0f, -1.0f)
 };
 
-#define OFFSET_SAMPLES 8
+#define OFFSET_SAMPLES 10
 
 float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, float3 InNormal, float MaxShadowBias, float MinShadowBias, float FarPlane)
 {
@@ -179,7 +179,7 @@ float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, floa
 	float BiasedDepth	= (Depth - ShadowBias);
 	
 	float Shadow = 0.0f;
-	const float DiskRadius = (0.5f + (Depth)) / FarPlane;
+	const float DiskRadius = (0.2f + (Depth)) / FarPlane;
 	
 	[unroll]
     for (int i = 0; i < OFFSET_SAMPLES; i++)
