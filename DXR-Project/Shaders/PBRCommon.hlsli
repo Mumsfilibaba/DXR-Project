@@ -13,7 +13,7 @@ static const float3 LightColor      = float3(400.0f, 400.0f, 400.0f);
 /*
 * Common Defines
 */
-#define PCF_RANGE 2
+#define PCF_RANGE 3
 #define PCF_WIDTH float((PCF_RANGE * 2) + 1)
 
 /*
@@ -41,7 +41,7 @@ struct DirectionalLight
 	float3		Color;
 	float		ShadowBias;
 	float3		Direction;
-    float		MaxShadowBias;
+	float		MaxShadowBias;
 	float4x4	LightMatrix;
 };
 
@@ -66,6 +66,21 @@ float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ViewProjectionIn
 	float4 WorldPosition    = mul(ProjectedPos, ViewProjectionInverse);
 	
 	return WorldPosition.xyz / WorldPosition.w;
+}
+
+/*
+* Random numbers
+*/
+float Random(float3 Seed, int i)
+{
+	float4	Seed4		= float4(Seed, i);
+	float	DotProduct	= dot(Seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
+	return frac(sin(DotProduct) * 43758.5453f);
+}
+
+float Linstep(float Low, float High, float P)
+{
+	return saturate((P - Low) / (High - Low));
 }
 
 /*
