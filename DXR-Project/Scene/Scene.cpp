@@ -337,7 +337,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 
 		// Add a MeshComponent
 		MeshComponent* NewComponent = new MeshComponent(NewActor);
-		NewComponent->Mesh		= NewMesh;
+		NewComponent->Mesh = NewMesh;
 		if (Shape.mesh.material_ids[0] >= 0)
 		{
 			NewComponent->Material = LoadedMaterials[Shape.mesh.material_ids[0]];
@@ -376,5 +376,6 @@ void Scene::AddMeshComponent(MeshComponent* Component)
 	Command.IndexBuffer		= Component->Mesh->IndexBuffer.Get();
 	Command.IndexCount		= Component->Mesh->IndexCount;
 	Command.Material		= Component->Material.Get();
+	Command.Mesh			= Component->Mesh.Get();
 	MeshDrawCommands.PushBack(Command);
 }

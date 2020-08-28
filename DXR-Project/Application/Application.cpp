@@ -373,12 +373,12 @@ bool Application::Initialize()
 			NewComponent->Mesh		= SphereMesh;
 			NewComponent->Material	= MakeShared<Material>(MatProperties);
 			
-			NewComponent->Material->AlbedoMap	= BaseTexture;
-			NewComponent->Material->NormalMap	= BaseNormal;
+			NewComponent->Material->AlbedoMap		= BaseTexture;
+			NewComponent->Material->NormalMap		= BaseNormal;
 			NewComponent->Material->RoughnessMap	= WhiteTexture;
-			NewComponent->Material->HeightMap	= WhiteTexture;
-			NewComponent->Material->AOMap		= WhiteTexture;
-			NewComponent->Material->MetallicMap = WhiteTexture;
+			NewComponent->Material->HeightMap		= WhiteTexture;
+			NewComponent->Material->AOMap			= WhiteTexture;
+			NewComponent->Material->MetallicMap		= WhiteTexture;
 			NewComponent->Material->Initialize(Renderer->GetDevice().Get());
 
 			NewActor->AddComponent(NewComponent);

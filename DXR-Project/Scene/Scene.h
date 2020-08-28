@@ -34,6 +34,24 @@ public:
 		return Lights;
 	}
 
+	template<typename TComponent>
+	FORCEINLINE const TArray<TComponent*> GetAllComponentsOfType() const
+	{
+		// TODO: Cache this result
+
+		TArray<TComponent*> Components;
+		for (Actor* Actor : Actors)
+		{
+			TComponent* Component = Actor->GetComponentOfType<TComponent>();
+			if (Component)
+			{
+				Components.EmplaceBack(Component);
+			}
+		}
+
+		return Move(Components);
+	}
+
 	FORCEINLINE const TArray<MeshDrawCommand>& GetMeshDrawCommands() const
 	{
 		return MeshDrawCommands;

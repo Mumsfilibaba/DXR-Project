@@ -10,6 +10,7 @@ class D3D12Buffer;
 struct MeshDrawCommand
 {
 	class Material* Material = nullptr;
+	class Mesh* Mesh = nullptr;
 	class Actor* CurrentActor = nullptr;
 	
 	D3D12Buffer* VertexBuffer	= nullptr;

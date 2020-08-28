@@ -153,7 +153,7 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	}
 
 	// Topology
-	Pipeline.PrimitiveTopologyType	= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	Pipeline.PrimitiveTopologyType = Properties.PrimitiveType;
 
 	// Depth Format
 	Pipeline.DepthBufferFormat = Properties.DepthBufferFormat;

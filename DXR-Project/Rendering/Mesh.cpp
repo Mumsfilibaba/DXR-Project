@@ -6,6 +6,8 @@
 
 #include "Renderer.h"
 
+#include <algorithm>
+
 Mesh::Mesh()
 	: VertexBuffer(nullptr)
 	, IndexBuffer(nullptr)
@@ -91,6 +93,8 @@ bool Mesh::Initialize(D3D12Device* Device, const MeshData& Data)
 		DescriptorTable->CopyDescriptors();
 	}
 
+	// Create AABB
+	CreateBoundingBox(Data);
 	return true;
 }
 
@@ -110,4 +114,27 @@ TSharedPtr<Mesh> Mesh::Make(D3D12Device* Device, const MeshData& Data)
 	{
 		return TSharedPtr<Mesh>(nullptr);
 	}
+}
+
+void Mesh::CreateBoundingBox(const MeshData& Data)
+{
+	constexpr Float32 Inf = std::numeric_limits<Float32>::infinity();
+	XMFLOAT3 Min = XMFLOAT3(Inf, Inf, Inf);
+	XMFLOAT3 Max = XMFLOAT3(-Inf, -Inf, -Inf);
+
+	for (const Vertex& Vertex : Data.Vertices)
+	{
+		// X
+		Min.x = std::min<Float32>(Min.x, Vertex.Position.x);
+		Max.x = std::max<Float32>(Max.x, Vertex.Position.x);
+		// Y
+		Min.y = std::min<Float32>(Min.y, Vertex.Position.y);
+		Max.y = std::max<Float32>(Max.y, Vertex.Position.y);
+		// Z
+		Min.z = std::min<Float32>(Min.z, Vertex.Position.z);
+		Max.z = std::max<Float32>(Max.z, Vertex.Position.z);
+	}
+
+	BoundingBox.Top		= Max;
+	BoundingBox.Bottom	= Min;
 }
