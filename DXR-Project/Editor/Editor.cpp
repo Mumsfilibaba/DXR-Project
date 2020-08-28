@@ -157,6 +157,12 @@ static void DrawRenderSettings()
 		Renderer::Get()->SetVerticalSyncEnable(Enabled);
 	}
 
+	Enabled = Renderer::Get()->IsDrawAABBsEnabled();
+	if (ImGui::Checkbox("Draw AABBs", &Enabled))
+	{
+		Renderer::Get()->SetDrawAABBsEnable(Enabled);
+	}
+
 	ImGui::Spacing();
 	ImGui::Text("Shadow Settings:");
 	ImGui::Separator();

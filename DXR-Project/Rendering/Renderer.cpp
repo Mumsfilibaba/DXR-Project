@@ -448,40 +448,43 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->DrawIndexedInstanced(static_cast<Uint32>(SkyboxMesh.Indices.GetSize()), 1, 0, 0, 0);
 
 	// Draw DebugBoxes
-	CommandList->SetPipelineState(DebugBoxPSO->GetPipelineState());
-	CommandList->SetGraphicsRootSignature(DebugRootSignature->GetRootSignature());
-	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-
-	SimpleCamera.Matrix = CurrentScene.GetCamera()->GetViewProjection();
-	CommandList->SetGraphicsRoot32BitConstants(&SimpleCamera, 16, 0, 1);
-
-	D3D12_VERTEX_BUFFER_VIEW DebugVBO = { };
-	DebugVBO.BufferLocation = AABBVertexBuffer->GetGPUVirtualAddress();
-	DebugVBO.SizeInBytes	= AABBVertexBuffer->GetSizeInBytes();
-	DebugVBO.StrideInBytes	= sizeof(XMFLOAT3);
-	CommandList->IASetVertexBuffers(0, &DebugVBO, 1);
-
-	D3D12_INDEX_BUFFER_VIEW DebugIBV = { };
-	DebugIBV.BufferLocation = AABBIndexBuffer->GetGPUVirtualAddress();
-	DebugIBV.SizeInBytes	= AABBIndexBuffer->GetSizeInBytes();
-	DebugIBV.Format			= DXGI_FORMAT_R16_UINT;
-	CommandList->IASetIndexBuffer(&DebugIBV);
-
-	for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+	if (DrawAABBs)
 	{
-		AABB& Box = Command.Mesh->BoundingBox;
-		XMFLOAT3 Scale = XMFLOAT3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
-		XMFLOAT3 Position = XMFLOAT3((Box.Bottom.x + Box.Top.x) * 0.5f, (Box.Bottom.y + Box.Top.y) * 0.5f, (Box.Bottom.z + Box.Top.z) * 0.5f);
+		CommandList->SetPipelineState(DebugBoxPSO->GetPipelineState());
+		CommandList->SetGraphicsRootSignature(DebugRootSignature->GetRootSignature());
+		CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
-		XMMATRIX XmTranslation = XMMatrixTranslation(Position.x, Position.y, Position.z);
-		XMMATRIX XmScale = XMMatrixScaling(Scale.x, Scale.y, Scale.z);
+		SimpleCamera.Matrix = CurrentScene.GetCamera()->GetViewProjection();
+		CommandList->SetGraphicsRoot32BitConstants(&SimpleCamera, 16, 0, 1);
 
-		XMFLOAT4X4 Transform = Command.CurrentActor->GetTransform().GetMatrix();
-		XMMATRIX XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
-		XMStoreFloat4x4(&Transform, XMMatrixMultiplyTranspose(XMMatrixMultiply(XmScale, XmTranslation), XmTransform));
+		D3D12_VERTEX_BUFFER_VIEW DebugVBO = { };
+		DebugVBO.BufferLocation = AABBVertexBuffer->GetGPUVirtualAddress();
+		DebugVBO.SizeInBytes	= AABBVertexBuffer->GetSizeInBytes();
+		DebugVBO.StrideInBytes	= sizeof(XMFLOAT3);
+		CommandList->IASetVertexBuffers(0, &DebugVBO, 1);
 
-		CommandList->SetGraphicsRoot32BitConstants(&Transform, 16, 0, 0);
-		CommandList->DrawIndexedInstanced(24, 1, 0, 0, 0);
+		D3D12_INDEX_BUFFER_VIEW DebugIBV = { };
+		DebugIBV.BufferLocation = AABBIndexBuffer->GetGPUVirtualAddress();
+		DebugIBV.SizeInBytes	= AABBIndexBuffer->GetSizeInBytes();
+		DebugIBV.Format			= DXGI_FORMAT_R16_UINT;
+		CommandList->IASetIndexBuffer(&DebugIBV);
+
+		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+		{
+			AABB& Box = Command.Mesh->BoundingBox;
+			XMFLOAT3 Scale = XMFLOAT3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
+			XMFLOAT3 Position = XMFLOAT3((Box.Bottom.x + Box.Top.x) * 0.5f, (Box.Bottom.y + Box.Top.y) * 0.5f, (Box.Bottom.z + Box.Top.z) * 0.5f);
+
+			XMMATRIX XmTranslation = XMMatrixTranslation(Position.x, Position.y, Position.z);
+			XMMATRIX XmScale = XMMatrixScaling(Scale.x, Scale.y, Scale.z);
+
+			XMFLOAT4X4 Transform = Command.CurrentActor->GetTransform().GetMatrix();
+			XMMATRIX XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
+			XMStoreFloat4x4(&Transform, XMMatrixMultiplyTranspose(XMMatrixMultiply(XmScale, XmTranslation), XmTransform));
+
+			CommandList->SetGraphicsRoot32BitConstants(&Transform, 16, 0, 0);
+			CommandList->DrawIndexedInstanced(24, 1, 0, 0, 0);
+		}
 	}
 
 	// Render UI
@@ -572,6 +575,11 @@ void Renderer::SetPrePassEnable(bool Enabled)
 void Renderer::SetVerticalSyncEnable(bool Enabled)
 {
 	VSyncEnabled = Enabled;
+}
+
+void Renderer::SetDrawAABBsEnable(bool Enabled)
+{
+	DrawAABBs = Enabled;
 }
 
 void Renderer::SetGlobalLightSettings(const LightSettings& InGlobalLightSettings)

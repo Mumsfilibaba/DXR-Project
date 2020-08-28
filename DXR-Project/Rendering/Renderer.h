@@ -55,6 +55,12 @@ public:
 
 	void SetPrePassEnable(bool Enabled);
 	void SetVerticalSyncEnable(bool Enabled);
+	void SetDrawAABBsEnable(bool Enabled);
+
+	FORCEINLINE bool IsDrawAABBsEnabled() const
+	{
+		return DrawAABBs;
+	}
 
 	FORCEINLINE bool IsPrePassEnabled() const
 	{
@@ -183,6 +189,7 @@ private:
 	Uint32 CurrentBackBufferIndex = 0;
 
 	bool PrePassEnabled = true;
+	bool DrawAABBs		= false;
 	bool VSyncEnabled	= false;
 
 	static LightSettings		GlobalLightSettings;
