@@ -3,13 +3,17 @@
 #include <algorithm>
 
 Camera::Camera()
-	: ViewProjection()
+	: View()
+	, Projection()
+	, ViewProjection()
 	, ViewProjectionInverse()
 	, Position(0.0f, 0.0f, -2.0f)
 	, Right(-1.0f, 0.0f, 0.0f)
 	, Up(0.0f, 1.0f, 0.0f)
 	, Forward(0.0f, 0.0f, 1.0f)
 	, Rotation(0.0f, 0.0f, 0.0f)
+	, NearPlane(0.01f)
+	, FarPlane(1000.0f)
 {
 	UpdateMatrices();
 }
@@ -54,21 +58,23 @@ void Camera::Rotate(Float32 Pitch, Float32 Yaw, Float32 Roll)
 void Camera::UpdateMatrices()
 {
 	Float32 Fov	= XMConvertToRadians(90.0f);
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH(Fov, 1920.0f / 1080.0f, 0.01f, 1000.0f);
+	XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(Fov, 1920.0f / 1080.0f, NearPlane, FarPlane);
+	XMStoreFloat4x4(&Projection, XmProjection);
 
 	XMVECTOR XmPosition = XMLoadFloat3(&Position);
 	XMVECTOR XmForward	= XMLoadFloat3(&Forward);
 	XMVECTOR XmUp		= XMLoadFloat3(&Up);
-	XMVECTOR At			= XMVectorAdd(XmPosition, XmForward);
-	XMMATRIX View		= XMMatrixLookAtLH(XmPosition, At, XmUp);
+	XMVECTOR XmAt		= XMVectorAdd(XmPosition, XmForward);
+	XMMATRIX XmView		= XMMatrixLookAtLH(XmPosition, XmAt, XmUp);
+	XMStoreFloat4x4(&View, XmView);
 
 	XMFLOAT3X3 TempView3x3;
-	XMStoreFloat3x3(&TempView3x3, View);
-	XMMATRIX View3x3 = XMLoadFloat3x3(&TempView3x3);
+	XMStoreFloat3x3(&TempView3x3, XmView);
+	XMMATRIX XmView3x3 = XMLoadFloat3x3(&TempView3x3);
 
-	XMMATRIX XmViewProjection				= XMMatrixMultiply(View, Projection);
+	XMMATRIX XmViewProjection				= XMMatrixMultiply(XmView, XmProjection);
 	XMMATRIX XmViewProjectionInverse		= XMMatrixInverse(nullptr, XmViewProjection);
-	XMMATRIX XmViewProjectionNoTranslation	= XMMatrixMultiply(View3x3, Projection);
+	XMMATRIX XmViewProjectionNoTranslation	= XMMatrixMultiply(XmView3x3, XmProjection);
 
 	XMStoreFloat4x4(&ViewProjection, XMMatrixTranspose(XmViewProjection));
 	XMStoreFloat4x4(&ViewProjectionInverse, XMMatrixTranspose(XmViewProjectionInverse));

@@ -7,29 +7,7 @@
 #include "D3D12/D3D12RayTracingScene.h"
 #include "D3D12/D3D12CommandList.h"
 
-/*
-* AABB
-*/
-struct AABB
-{
-	XMFLOAT3 Top;
-	XMFLOAT3 Bottom;
-
-	FORCEINLINE Float32 GetWidth() const
-	{
-		return Top.x - Bottom.x;
-	}
-
-	FORCEINLINE Float32 GetHeight() const
-	{
-		return Top.y - Bottom.y;
-	}
-
-	FORCEINLINE Float32 GetDepth() const
-	{
-		return Top.z - Bottom.z;
-	}
-};
+#include "Scene/AABB.h"
 
 /*
 * Mesh

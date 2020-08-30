@@ -5,6 +5,7 @@
 
 #include "Scene/PointLight.h"
 #include "Scene/DirectionalLight.h"
+#include "Scene/Frustum.h"
 
 #include "D3D12/D3D12Texture.h"
 #include "D3D12/D3D12Views.h"
@@ -40,6 +41,20 @@ Renderer::~Renderer()
 
 void Renderer::Tick(const Scene& CurrentScene)
 {
+	TArray<MeshDrawCommand> VisibleCommands;
+	{
+		Camera* Camera = CurrentScene.GetCamera();
+		Frustum CameraFrustum = Frustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+		
+		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+		{
+			if (CameraFrustum.CheckAABB(Command.Mesh->BoundingBox))
+			{
+				VisibleCommands.EmplaceBack(Command);
+			}
+		}
+	}
+
 	// Start frame
 	D3D12Texture* BackBuffer = SwapChain->GetSurfaceResource(CurrentBackBufferIndex);
 	CommandAllocators[CurrentBackBufferIndex]->Reset();
@@ -279,12 +294,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 		XMFLOAT4X4	ViewProjectionInv;
 	} CamBuff;
 
-	CamBuff.ViewProjection		= CurrentScene.GetCamera()->GetViewProjection();
-	CamBuff.ViewProjectionInv	= CurrentScene.GetCamera()->GetViewProjectionInverse();
+	CamBuff.ViewProjection		= CurrentScene.GetCamera()->GetViewProjectionMatrix();
+	CamBuff.ViewProjectionInv	= CurrentScene.GetCamera()->GetViewProjectionInverseMatrix();
 	CamBuff.Position			= CurrentScene.GetCamera()->GetPosition();
 
 	CommandList->TransitionBarrier(CameraBuffer.Get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	CommandList->UploadBufferData(CameraBuffer.Get(), 0, &CamBuff, sizeof(Camera));
+	CommandList->UploadBufferData(CameraBuffer.Get(), 0, &CamBuff, sizeof(CameraBufferDesc));
 	CommandList->TransitionBarrier(CameraBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	// Clear GBuffer
@@ -323,7 +338,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		CommandList->SetGraphicsRootDescriptorTable(PrePassDescriptorTable->GetGPUTableStartHandle(), 1);
 
 		// Draw all objects to depthbuffer
-		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+		//for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+		for (const MeshDrawCommand& Command : VisibleCommands)
 		{
 			VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
 			VBO.SizeInBytes		= Command.VertexBuffer->GetSizeInBytes();
@@ -356,7 +372,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->SetGraphicsRootSignature(GeometryRootSignature->GetRootSignature());
 	CommandList->SetGraphicsRootDescriptorTable(GeometryDescriptorTable->GetGPUTableStartHandle(), 1);
 
-	for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+	//for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+	for (const MeshDrawCommand& Command : VisibleCommands)
 	{
 		if (Device->IsRayTracingSupported())
 		{
@@ -441,7 +458,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		XMFLOAT4X4 Matrix;
 	} SimpleCamera;
-	SimpleCamera.Matrix = CurrentScene.GetCamera()->GetViewProjectionWitoutTranslate();
+	SimpleCamera.Matrix = CurrentScene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
 	CommandList->SetGraphicsRoot32BitConstants(&SimpleCamera, 16, 0, 0);
 	CommandList->SetGraphicsRootDescriptorTable(SkyboxDescriptorTable->GetGPUTableStartHandle(), 1);
 
@@ -454,7 +471,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		CommandList->SetGraphicsRootSignature(DebugRootSignature->GetRootSignature());
 		CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
-		SimpleCamera.Matrix = CurrentScene.GetCamera()->GetViewProjection();
+		SimpleCamera.Matrix = CurrentScene.GetCamera()->GetViewProjectionMatrix();
 		CommandList->SetGraphicsRoot32BitConstants(&SimpleCamera, 16, 0, 1);
 
 		D3D12_VERTEX_BUFFER_VIEW DebugVBO = { };
@@ -469,7 +486,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		DebugIBV.Format			= DXGI_FORMAT_R16_UINT;
 		CommandList->IASetIndexBuffer(&DebugIBV);
 
-		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+		//for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+		for (const MeshDrawCommand& Command : VisibleCommands)
 		{
 			AABB& Box = Command.Mesh->BoundingBox;
 			XMFLOAT3 Scale = XMFLOAT3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
