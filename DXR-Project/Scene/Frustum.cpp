@@ -82,15 +82,14 @@ void Frustum::Create(Float32 FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4&
 	XmPlanes[5] = XMLoadFloat4(&Planes[5]);
 	XmPlanes[5] = XMPlaneNormalize(XmPlanes[5]);
 	XMStoreFloat4(&Planes[5], XmPlanes[5]);
-
 }
 
-bool Frustum::CheckAABB(const AABB& BoundingBox)
+bool Frustum::CheckAABB(const AABB& Box)
 {
-	const XMFLOAT3 Center	= BoundingBox.Bottom;
-	const Float32 Width		= BoundingBox.GetWidth()	/ 2.0f;
-	const Float32 Height	= BoundingBox.GetHeight()	/ 2.0f;
-	const Float32 Depth		= BoundingBox.GetDepth()	/ 2.0f;
+	const XMFLOAT3 Center	= Box.GetCenter();
+	const Float32 Width		= Box.GetWidth()	/ 2.0f;
+	const Float32 Height	= Box.GetHeight()	/ 2.0f;
+	const Float32 Depth		= Box.GetDepth()	/ 2.0f;
 
 	XMVECTOR Coords[8];
 	Coords[0] = XMVectorSet((Center.x - Width), (Center.y - Height), (Center.z - Depth), 1.0f);

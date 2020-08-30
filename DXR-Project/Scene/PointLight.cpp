@@ -79,8 +79,11 @@ void PointLight::CalculateMatrices()
 		XMVECTOR LightDirection	= XMLoadFloat3(&Directions[i]);
 		XMVECTOR LightUp		= XMLoadFloat3(&UpVectors[i]);
 
-		XMMATRIX LightProjection	= XMMatrixPerspectiveFovLH(XM_PI / 2.0f, 1.0f, ShadowNearPlane, ShadowFarPlane);
-		XMMATRIX LightView			= XMMatrixLookToLH(LightPosition, LightDirection, LightUp);
+		XMMATRIX LightProjection = XMMatrixPerspectiveFovLH(XM_PI / 2.0f, 1.0f, ShadowNearPlane, ShadowFarPlane);
+		XMStoreFloat4x4(&ProjMatrices[i], LightProjection);
+
+		XMMATRIX LightView = XMMatrixLookToLH(LightPosition, LightDirection, LightUp);
+		XMStoreFloat4x4(&ViewMatrices[i], LightView);
 		XMStoreFloat4x4(&Matrices[i], XMMatrixMultiplyTranspose(LightView, LightProjection));
 	}
 }

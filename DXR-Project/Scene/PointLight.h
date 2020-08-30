@@ -38,9 +38,23 @@ public:
 		return Matrices[Index];
 	}
 
+	FORCEINLINE const XMFLOAT4X4& GetViewMatrix(Uint32 Index) const
+	{
+		VALIDATE(Index < 6);
+		return ViewMatrices[Index];
+	}
+
+	FORCEINLINE const XMFLOAT4X4& GetProjectionMatrix(Uint32 Index) const
+	{
+		VALIDATE(Index < 6);
+		return ProjMatrices[Index];
+	}
+
 private:
 	void CalculateMatrices();
 
 	XMFLOAT4X4	Matrices[6];
+	XMFLOAT4X4	ViewMatrices[6];
+	XMFLOAT4X4	ProjMatrices[6];
 	XMFLOAT3	Position;
 };
