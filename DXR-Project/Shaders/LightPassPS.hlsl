@@ -233,33 +233,41 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	// PointLight
 	{
-		// Calculate per-light radiance
-		const float3 LightPosition = PointLightBuffer.Position;
-		float3	LightDir		= normalize(LightPosition - WorldPosition);
-		float3	HalfVec			= normalize(ViewDir + LightDir);
-		float	Distance		= length(LightPosition - WorldPosition);
-		float	Attenuation		= 1.0f / (Distance * Distance);
-		float3	Radiance		= PointLightBuffer.Color * Attenuation;
-	
+		const float3 LightPosition = PointLightBuffer.Position;	
 		const float ShadowBias		= PointLightBuffer.ShadowBias;
 		const float MaxShadowBias	= PointLightBuffer.MaxShadowBias;
 		const float FarPlane		= PointLightBuffer.FarPlane;
+		
 		float Shadow = CalculatePointLightShadow(WorldPosition, LightPosition, Norm, MaxShadowBias, ShadowBias, FarPlane);
-		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * Shadow;
+		if (Shadow > EPSILON)
+		{
+			float3	LightDir = normalize(LightPosition - WorldPosition);
+			float3	HalfVec = normalize(ViewDir + LightDir);
+			float	Distance = length(LightPosition - WorldPosition);
+			float	Attenuation = 1.0f / (Distance * Distance);
+			float3	Radiance = PointLightBuffer.Color * Attenuation;
+
+			// Calculate per-light radiance
+			L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * Shadow;
+		}
 	}
 	
 	// DirectionalLight
 	{
-		// Calculate per-light radiance
-		float3 LightDir = normalize(-DirLightBuffer.Direction);
-		float3 HalfVec	= normalize(ViewDir + LightDir);
-		float3 Radiance = DirLightBuffer.Color;
-		
-		float4 LightSpacePosition	= mul(float4(WorldPosition, 1.0f), DirLightBuffer.LightMatrix);
+		const float3 LightDir = normalize(-DirLightBuffer.Direction);
+		const float4 LightSpacePosition	= mul(float4(WorldPosition, 1.0f), DirLightBuffer.LightMatrix);
 		const float ShadowBias		= DirLightBuffer.ShadowBias;
 		const float MaxShadowBias	= DirLightBuffer.MaxShadowBias;
+		
 		float Shadow = CalculateDirLightShadow(LightSpacePosition, WorldPosition, Norm, LightDir, MaxShadowBias, ShadowBias);
-		L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * Shadow;
+		if (Shadow > EPSILON)
+		{
+			float3 HalfVec = normalize(ViewDir + LightDir);
+			float3 Radiance = DirLightBuffer.Color;
+
+			// Calculate per-light radiance
+			L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * Shadow;
+		}
 	}
 	
 	float3 F_IBL	= FresnelSchlickRoughness(DotNV, F0, Roughness);

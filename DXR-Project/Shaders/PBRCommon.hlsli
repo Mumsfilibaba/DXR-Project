@@ -5,6 +5,7 @@ static const float MIN_ROUGHNESS    = 0.05f;
 static const float MAX_ROUGHNESS	= 1.0f;
 static const float PI               = 3.14159265359f;
 static const float MIN_VALUE        = 0.0000001f;
+static const float EPSILON			= 0.0001f;
 static const float RAY_OFFSET       = 0.2f;
 
 static const float3 LightPosition   = float3(0.0f, 10.0f, -10.0f);

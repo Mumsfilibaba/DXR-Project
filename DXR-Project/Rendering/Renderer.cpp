@@ -41,9 +41,10 @@ Renderer::~Renderer()
 
 void Renderer::Tick(const Scene& CurrentScene)
 {
-	VisibleCommands.Clear();
-
+	if (FrustumCullEnabled)
 	{
+		VisibleCommands.Clear();
+		
 		Camera* Camera = CurrentScene.GetCamera();
 		Frustum CameraFrustum = Frustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
 		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
@@ -63,6 +64,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 				VisibleCommands.EmplaceBack(Command);
 			}
 		}
+	}
+	else
+	{
+		VisibleCommands = CurrentScene.GetMeshDrawCommands();
 	}
 
 	// Start frame
@@ -265,20 +270,43 @@ void Renderer::Tick(const Scene& CurrentScene)
 				CommandList->SetGraphicsRoot32BitConstants(&PerLightBuffer, 20, 0, 1);
 
 				// Draw all objects to depthbuffer
-				Frustum CameraFrustum = Frustum(PoiLight->GetShadowFarPlane(), PoiLight->GetViewMatrix(I), PoiLight->GetProjectionMatrix(I));
-				for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+				if (FrustumCullEnabled)
 				{
-					const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
-					XMMATRIX XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
-					XMVECTOR XmTop = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
-					XMVECTOR XmBottom = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
-					XmTop = XMVector4Transform(XmTop, XmTransform);
-					XmBottom = XMVector4Transform(XmBottom, XmTransform);
+					Frustum CameraFrustum = Frustum(PoiLight->GetShadowFarPlane(), PoiLight->GetViewMatrix(I), PoiLight->GetProjectionMatrix(I));
+					for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+					{
+						const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
+						XMMATRIX XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
+						XMVECTOR XmTop = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
+						XMVECTOR XmBottom = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
+						XmTop = XMVector4Transform(XmTop, XmTransform);
+						XmBottom = XMVector4Transform(XmBottom, XmTransform);
 
-					AABB Box;
-					XMStoreFloat3(&Box.Top, XmTop);
-					XMStoreFloat3(&Box.Bottom, XmBottom);
-					if (CameraFrustum.CheckAABB(Box))
+						AABB Box;
+						XMStoreFloat3(&Box.Top, XmTop);
+						XMStoreFloat3(&Box.Bottom, XmBottom);
+						if (CameraFrustum.CheckAABB(Box))
+						{
+							VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
+							VBO.SizeInBytes		= Command.VertexBuffer->GetSizeInBytes();
+							VBO.StrideInBytes	= sizeof(Vertex);
+							CommandList->IASetVertexBuffers(0, &VBO, 1);
+
+							IBV.BufferLocation	= Command.IndexBuffer->GetGPUVirtualAddress();
+							IBV.SizeInBytes		= Command.IndexBuffer->GetSizeInBytes();
+							IBV.Format			= DXGI_FORMAT_R32_UINT;
+							CommandList->IASetIndexBuffer(&IBV);
+
+							PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+							CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+
+							CommandList->DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+						}
+					}
+				}
+				else
+				{
+					for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 					{
 						VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
 						VBO.SizeInBytes		= Command.VertexBuffer->GetSizeInBytes();
@@ -622,6 +650,11 @@ void Renderer::SetVerticalSyncEnable(bool Enabled)
 void Renderer::SetDrawAABBsEnable(bool Enabled)
 {
 	DrawAABBs = Enabled;
+}
+
+void Renderer::SetFrustumCullEnable(bool Enabled)
+{
+	FrustumCullEnabled = Enabled;
 }
 
 void Renderer::SetGlobalLightSettings(const LightSettings& InGlobalLightSettings)

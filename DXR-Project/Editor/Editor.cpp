@@ -157,6 +157,12 @@ static void DrawRenderSettings()
 		Renderer::Get()->SetVerticalSyncEnable(Enabled);
 	}
 
+	Enabled = Renderer::Get()->IsFrustumCullEnabled();
+	if (ImGui::Checkbox("Enable Frustum Culling", &Enabled))
+	{
+		Renderer::Get()->SetFrustumCullEnable(Enabled);
+	}
+
 	Enabled = Renderer::Get()->IsDrawAABBsEnabled();
 	if (ImGui::Checkbox("Draw AABBs", &Enabled))
 	{

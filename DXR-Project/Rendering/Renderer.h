@@ -56,6 +56,7 @@ public:
 	void SetPrePassEnable(bool Enabled);
 	void SetVerticalSyncEnable(bool Enabled);
 	void SetDrawAABBsEnable(bool Enabled);
+	void SetFrustumCullEnable(bool Enabled);
 
 	FORCEINLINE bool IsDrawAABBsEnabled() const
 	{
@@ -70,6 +71,11 @@ public:
 	FORCEINLINE bool IsVerticalSyncEnabled() const
 	{
 		return VSyncEnabled;
+	}
+
+	FORCEINLINE bool IsFrustumCullEnabled() const
+	{
+		return FrustumCullEnabled;
 	}
 
 	FORCEINLINE TSharedPtr<D3D12Device> GetDevice() const
@@ -193,6 +199,7 @@ private:
 	bool PrePassEnabled = true;
 	bool DrawAABBs		= false;
 	bool VSyncEnabled	= false;
+	bool FrustumCullEnabled = true;
 
 	static LightSettings		GlobalLightSettings;
 	static TUniquePtr<Renderer> RendererInstance;
