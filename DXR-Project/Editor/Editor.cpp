@@ -177,6 +177,7 @@ static void DrawRenderSettings()
 	{
 		"8192x8192",
 		"4096x4096",
+		"3072x3072",
 		"2048x2048",
 		"1024x1024",
 		"512x512",
@@ -194,21 +195,25 @@ static void DrawRenderSettings()
 	{
 		CurrentItem = 1;
 	}
-	else if (Settings.ShadowMapWidth == 2048)
+	else if (Settings.ShadowMapWidth == 3072)
 	{
 		CurrentItem = 2;
 	}
-	else if (Settings.ShadowMapWidth == 1024)
+	else if (Settings.ShadowMapWidth == 2048)
 	{
 		CurrentItem = 3;
 	}
-	else if (Settings.ShadowMapWidth == 512)
+	else if (Settings.ShadowMapWidth == 1024)
 	{
 		CurrentItem = 4;
 	}
-	else if (Settings.ShadowMapWidth == 256)
+	else if (Settings.ShadowMapWidth == 512)
 	{
 		CurrentItem = 5;
+	}
+	else if (Settings.ShadowMapWidth == 256)
+	{
+		CurrentItem = 6;
 	}
 
 	if (ImGui::Combo("Directional Light ShadowMap", &CurrentItem, Items, IM_ARRAYSIZE(Items)))
@@ -225,20 +230,25 @@ static void DrawRenderSettings()
 		}
 		else if (CurrentItem == 2)
 		{
+			Settings.ShadowMapWidth = 3072;
+			Settings.ShadowMapHeight = 3072;
+		}
+		else if (CurrentItem == 3)
+		{
 			Settings.ShadowMapWidth = 2048;
 			Settings.ShadowMapHeight = 2048;
 		}
-		else if (CurrentItem == 3)
+		else if (CurrentItem == 4)
 		{
 			Settings.ShadowMapWidth = 1024;
 			Settings.ShadowMapHeight = 1024;
 		}
-		else if (CurrentItem == 4)
+		else if (CurrentItem == 5)
 		{
 			Settings.ShadowMapWidth = 512;
 			Settings.ShadowMapHeight = 512;
 		}
-		else if (CurrentItem == 5)
+		else if (CurrentItem == 6)
 		{
 			Settings.ShadowMapWidth = 256;
 			Settings.ShadowMapHeight = 256;
