@@ -32,7 +32,7 @@ void WindowsConsoleOutput::Print(const std::string& Message)
 {
 	if (OutputHandle)
 	{
-		::WriteConsoleA(OutputHandle, Message.c_str(), Message.size(), 0, NULL);
+		::WriteConsoleA(OutputHandle, Message.c_str(), static_cast<DWORD>(Message.size()), 0, NULL);
 	}
 }
 
