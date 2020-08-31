@@ -41,21 +41,19 @@ Renderer::~Renderer()
 
 void Renderer::Tick(const Scene& CurrentScene)
 {
-	TArray<MeshDrawCommand> VisibleCommands;
+	VisibleCommands.Clear();
+
 	{
 		Camera* Camera = CurrentScene.GetCamera();
 		Frustum CameraFrustum = Frustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
-		
 		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 		{
-			XMVECTOR XmTop		= XMLoadFloat3(&Command.Mesh->BoundingBox.Top);
-			XMVECTOR XmBottom	= XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom);
-			
-			XMFLOAT4X4 Transform = Command.CurrentActor->GetTransform().GetMatrix();
-			XMMATRIX XmTransform = XMLoadFloat4x4(&Transform);
-
-			XmTop		= XMVector3Transform(XmTop, XmTransform);
-			XmBottom	= XMVector3Transform(XmBottom, XmTransform);
+			const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
+			XMMATRIX XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
+			XMVECTOR XmTop = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
+			XMVECTOR XmBottom = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
+			XmTop = XMVector4Transform(XmTop, XmTransform);
+			XmBottom = XMVector4Transform(XmBottom, XmTransform);
 
 			AABB Box;
 			XMStoreFloat3(&Box.Top, XmTop);
@@ -270,14 +268,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 				Frustum CameraFrustum = Frustum(PoiLight->GetShadowFarPlane(), PoiLight->GetViewMatrix(I), PoiLight->GetProjectionMatrix(I));
 				for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 				{
-					XMVECTOR XmTop = XMLoadFloat3(&Command.Mesh->BoundingBox.Top);
-					XMVECTOR XmBottom = XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom);
-
-					XMFLOAT4X4 Transform = Command.CurrentActor->GetTransform().GetMatrix();
-					XMMATRIX XmTransform = XMLoadFloat4x4(&Transform);
-
-					XmTop = XMVector3Transform(XmTop, XmTransform);
-					XmBottom = XMVector3Transform(XmBottom, XmTransform);
+					const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
+					XMMATRIX XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
+					XMVECTOR XmTop = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
+					XMVECTOR XmBottom = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
+					XmTop = XMVector4Transform(XmTop, XmTransform);
+					XmBottom = XMVector4Transform(XmBottom, XmTransform);
 
 					AABB Box;
 					XMStoreFloat3(&Box.Top, XmTop);

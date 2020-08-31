@@ -185,6 +185,8 @@ private:
 	TSharedPtr<D3D12ComputePipelineState>		SpecIrradicanceGenPSO;
 	TSharedPtr<D3D12RayTracingPipelineState>	RaytracingPSO;
 
+	TArray<MeshDrawCommand> VisibleCommands;
+
 	TArray<Uint64> FenceValues;
 	Uint32 CurrentBackBufferIndex = 0;
 
