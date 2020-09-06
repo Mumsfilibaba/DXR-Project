@@ -56,9 +56,9 @@ public:
 
 private:
 	TSharedPtr<WindowsWindow>				RenderWindow;
+	TSharedPtr<D3D12SwapChain>				SwapChain;
 	TSharedPtr<D3D12Device>					Device;
 	TSharedPtr<D3D12CommandQueue>			Queue;
 	TSharedPtr<D3D12CommandQueue>			ComputeQueue;
 	TSharedPtr<D3D12ImmediateCommandList>	ImmediateCommandList;
-	TSharedPtr<D3D12SwapChain>				SwapChain;
 };

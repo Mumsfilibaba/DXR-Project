@@ -12,22 +12,22 @@
 		"filter = FILTER_MIN_MAG_LINEAR_MIP_POINT)"
 
 // Properties
-cbuffer CB0 : register(b0)
+cbuffer CB0 : register(b0, space0)
 {
 	uint CubeMapSize; // Size of one side of the TextureCube
 }
 
-SamplerState LinearSampler : register(s0);
+SamplerState LinearSampler : register(s0, space0);
 
 // Textures
-Texture2D<float4>			Source	: register(t0);
-RWTexture2DArray<float4>	OutCube	: register(u0);
+Texture2D<float4>			Source : register(t0, space0);
+RWTexture2DArray<float4>	OutCube : register(u0, space0);
 
 // Constants
-static const float2 InvAtan = float2(0.1591f, 0.3183f);
+static const float2 INV_ATAN = float2(0.1591f, 0.3183f);
 
 // Transform from dispatch ID to cubemap face direction
-static const float3x3 RotateUV[6] = 
+static const float3x3 ROTATE_UV[6] = 
 {
 	// +X
 	float3x3(  0,  0,  1,
@@ -66,11 +66,11 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 	float3 Direction = float3((TexCoord.xy / float(CubeMapSize)) - 0.5f, 0.5f);
 
 	// Rotate to cubemap face
-	Direction = normalize(mul(RotateUV[TexCoord.z], Direction));
+	Direction = normalize(mul(ROTATE_UV[TexCoord.z], Direction));
 
 	// Convert the world space direction into U,V texture coordinates in the panoramic texture.
 	// Source: http://gl.ict.usc.edu/Data/HighResProbes/
-	float2 PanoramaTexCoords = float2(atan2(-Direction.x, -Direction.z), acos(Direction.y)) * InvAtan;
+	float2 PanoramaTexCoords = float2(atan2(-Direction.x, -Direction.z), acos(Direction.y)) * INV_ATAN;
 
 	OutCube[TexCoord] = Source.SampleLevel(LinearSampler, PanoramaTexCoords, 0);
 }

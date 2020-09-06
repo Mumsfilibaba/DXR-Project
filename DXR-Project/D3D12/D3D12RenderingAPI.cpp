@@ -31,6 +31,7 @@ D3D12RenderingAPI::D3D12RenderingAPI()
 
 D3D12RenderingAPI::~D3D12RenderingAPI()
 {
+	SwapChain.Reset();
 }
 
 bool D3D12RenderingAPI::Initialize(TSharedPtr<WindowsWindow> RenderWindow, bool EnableDebug)

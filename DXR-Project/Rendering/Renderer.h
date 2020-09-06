@@ -95,6 +95,8 @@ public:
 
 	static Renderer* Make(TSharedPtr<WindowsWindow> RenderWindow);
 	static Renderer* Get();
+
+	static void Release();
 	
 private:
 	bool Initialize(TSharedPtr<WindowsWindow> RenderWindow);
@@ -108,6 +110,7 @@ private:
 	bool InitIntegrationLUT();
 	bool InitRayTracingTexture();
 	bool InitDebugStates();
+	bool InitAA();
 
 	bool CreateShadowMaps();
 	void WriteShadowMapDescriptors();
@@ -155,6 +158,7 @@ private:
 	TSharedPtr<D3D12Texture> VSMDirLightShadowMaps;
 	TSharedPtr<D3D12Texture> PointLightShadowMaps;
 	TSharedPtr<D3D12Texture> GBuffer[4];
+	TSharedPtr<D3D12Texture> FinalTarget;
 	
 	TSharedPtr<D3D12RootSignature>		PrePassRootSignature;
 	TSharedPtr<D3D12RootSignature>		ShadowMapRootSignature;
@@ -165,12 +169,14 @@ private:
 	TSharedPtr<D3D12RootSignature>		IrradianceGenRootSignature;
 	TSharedPtr<D3D12RootSignature>		SpecIrradianceGenRootSignature;
 	TSharedPtr<D3D12RootSignature>		DebugRootSignature;
+	TSharedPtr<D3D12RootSignature>		PostRootSignature;
 	TSharedPtr<D3D12DescriptorTable>	RayGenDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	GlobalDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	GeometryDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	PrePassDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	LightDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	SkyboxDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable>	PostDescriptorTable;
 	TSharedPtr<D3D12RayTracingScene>	RayTracingScene;
 
 	TSharedPtr<D3D12GraphicsPipelineState>		PrePassPSO;
@@ -181,6 +187,8 @@ private:
 	TSharedPtr<D3D12GraphicsPipelineState>		LightPassPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		SkyboxPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		DebugBoxPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>		PostPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>		FXAAPSO;
 	TSharedPtr<D3D12ComputePipelineState>		IrradicanceGenPSO;
 	TSharedPtr<D3D12ComputePipelineState>		SpecIrradicanceGenPSO;
 	TSharedPtr<D3D12RayTracingPipelineState>	RaytracingPSO;

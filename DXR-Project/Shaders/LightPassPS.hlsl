@@ -86,17 +86,17 @@ static const float2 PoissonDisk[16] =
 float CalculatePoissonShadow(float3 WorldPosition, float2 TexCoord, float CompareDepth, float FarPlane)
 {
 	float Shadow = 0.0f;
-    const float DiskRadius = (0.4f + (CompareDepth)) / FarPlane;
+	const float DiskRadius = (0.4f + (CompareDepth)) / FarPlane;
 	
 	[unroll]
 	for (int i = 0; i < POISSON_SAMPLES; i++)
 	{
-        int Index = int(float(TOTAL_POISSON_SAMPLES) * Random(floor(WorldPosition.xyz * 1000.0f), i)) % TOTAL_POISSON_SAMPLES;
+		int Index = int(float(TOTAL_POISSON_SAMPLES) * Random(floor(WorldPosition.xyz * 1000.0f), i)) % TOTAL_POISSON_SAMPLES;
 		Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, TexCoord.xy + (PoissonDisk[Index] * DiskRadius), CompareDepth);
 	}
 	
-    Shadow = Shadow / POISSON_SAMPLES;
-    return min(Shadow, 1.0f);
+	Shadow = Shadow / POISSON_SAMPLES;
+	return min(Shadow, 1.0f);
 }
 #elif ENABLE_VSM
 float CalculateVSM(float2 TexCoords, float CompareDepth)
@@ -104,16 +104,16 @@ float CalculateVSM(float2 TexCoords, float CompareDepth)
 	float2 Moments = (float2)0;
 	
 	[unroll]
-    for (int x = -PCF_RANGE; x <= PCF_RANGE; x++)
-    {
+	for (int x = -PCF_RANGE; x <= PCF_RANGE; x++)
+	{
 		[unroll]
-        for (int y = -PCF_RANGE; y <= PCF_RANGE; y++)
-        {
-            Moments += DirLightShadowMaps.Sample(ShadowMapSampler1, TexCoords, int2(x, y)).rg;
-        }
-    }
+		for (int y = -PCF_RANGE; y <= PCF_RANGE; y++)
+		{
+			Moments += DirLightShadowMaps.Sample(ShadowMapSampler1, TexCoords, int2(x, y)).rg;
+		}
+	}
 
-    Moments = Moments / (PCF_WIDTH * PCF_WIDTH);
+	Moments = Moments / (PCF_WIDTH * PCF_WIDTH);
 
   //  Moments = DirLightShadowMaps.Sample(ShadowMapSampler1, TexCoords).rg;
 	
@@ -126,7 +126,7 @@ float CalculateVSM(float2 TexCoords, float CompareDepth)
 #else
 float CalculateStandardShadow(float2 Texcoords, float CompareDepth)
 {
-    float Shadow = 0.0f;
+	float Shadow = 0.0f;
 	
 	[unroll]
 	for (int x = -PCF_RANGE; x <= PCF_RANGE; x++)
@@ -134,8 +134,8 @@ float CalculateStandardShadow(float2 Texcoords, float CompareDepth)
 		[unroll]
 		for (int y = -PCF_RANGE; y <= PCF_RANGE; y++)
 		{
-            Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, Texcoords, CompareDepth, int2(x, y)).r;
-        }
+			Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, Texcoords, CompareDepth, int2(x, y)).r;
+		}
 	}
 
 	Shadow /= (PCF_WIDTH * PCF_WIDTH);
@@ -158,13 +158,13 @@ float CalculateDirLightShadow(float4 LightSpacePosition, float3 WorldPosition, f
 #if ENABLE_POISSON_FILTERING
 	float ShadowBias	= max(MaxShadowBias * (1.0f - (dot(InNormal, InLightDir))), MinShadowBias);
 	float BiasedDepth	= (Depth - ShadowBias);
-    return CalculatePoissonShadow(WorldPosition, ProjCoords.xy, BiasedDepth, 10000.0f);
+	return CalculatePoissonShadow(WorldPosition, ProjCoords.xy, BiasedDepth, 10000.0f);
 #elif ENABLE_VSM
-    return CalculateVSM(ProjCoords.xy, Depth);
+	return CalculateVSM(ProjCoords.xy, Depth);
 #else
-    float ShadowBias	= max(MaxShadowBias * (1.0f - (dot(InNormal, InLightDir))), MinShadowBias);
-    float BiasedDepth	= (Depth - ShadowBias);
-    return CalculateStandardShadow(ProjCoords.xy, BiasedDepth);
+	float ShadowBias	= max(MaxShadowBias * (1.0f - (dot(InNormal, InLightDir))), MinShadowBias);
+	float BiasedDepth	= (Depth - ShadowBias);
+	return CalculateStandardShadow(ProjCoords.xy, BiasedDepth);
 #endif
 }
 
@@ -194,13 +194,13 @@ float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, floa
 	const float DiskRadius = (0.4f + (Depth)) / FarPlane;
 	
 	[unroll]
-    for (int i = 0; i < SAMPLES; i++)
+	for (int i = 0; i < SAMPLES; i++)
 	{
-        int Index = int(float(OFFSET_SAMPLES) * Random(floor(WorldPosition.xyz * 1000.0f), i)) % OFFSET_SAMPLES;
-        Shadow += PointLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, DirToLight + SampleOffsetDirections[Index] * DiskRadius, BiasedDepth);
-    }
+		int Index = int(float(OFFSET_SAMPLES) * Random(floor(WorldPosition.xyz * 1000.0f), i)) % OFFSET_SAMPLES;
+		Shadow += PointLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, DirToLight + SampleOffsetDirections[Index] * DiskRadius, BiasedDepth);
+	}
 	
-    Shadow = Shadow / SAMPLES;
+	Shadow = Shadow / SAMPLES;
 	return min(Shadow, 1.0f);
 }
 
@@ -208,7 +208,7 @@ float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, floa
 float4 Main(PSInput Input) : SV_TARGET
 {
 	float2 TexCoord = Input.TexCoord;
-	TexCoord.y		= 1.0f - TexCoord.y;
+	TexCoord.y = 1.0f - TexCoord.y;
 	
 	float Depth = DepthStencil.Sample(GBufferSampler, TexCoord).r;
 	if (Depth >= 1.0f)
@@ -291,5 +291,5 @@ float4 Main(PSInput Input) : SV_TARGET
 	float3 Ambient	= (IBL_Diffuse + IBL_Specular) * SampledAO;
 	float3 Color	= Ambient + L0;
 	
-	return float4(ApplyGammaCorrectionAndTonemapping(Color), 1.0f);
+	return float4(Color, 1.0f);
 }

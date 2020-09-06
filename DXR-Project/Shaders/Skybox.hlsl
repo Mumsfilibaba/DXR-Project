@@ -37,5 +37,5 @@ VSOutput VSMain(VSInput Input)
 float4 PSMain(float3 TexCoord : TEXCOORD0) : SV_TARGET0
 {
 	float3 Color = Skybox.Sample(SkyboxSampler, TexCoord).rgb;
-	return float4(ApplyGammaCorrectionAndTonemapping(Color), 1.0f);
+	return float4(Color, 1.0f);
 }

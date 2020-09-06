@@ -34,6 +34,7 @@ bool EngineLoop::Initialize()
 void EngineLoop::Tick()
 {
 	GlobalClock.Tick();
+
 	Application::Get()->Tick();
 
 	Renderer::Get()->Tick(*Scene::GetCurrentScene());
@@ -49,11 +50,13 @@ void EngineLoop::Tick()
 void EngineLoop::Release()
 {
 	Application::Get()->Release();
+
+	Renderer::Release();
 }
 
 void EngineLoop::CoreRelease()
 {
-	//RenderingAPI::Release();
+	RenderingAPI::Release();
 
 	SAFEDELETE(GlobalOutputHandle);
 }

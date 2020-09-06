@@ -29,5 +29,6 @@ RenderingAPI* RenderingAPI::Get()
 
 void RenderingAPI::Release()
 {
-	SAFEDELETE(RenderAPI);
+	// TODO: Fix so that there is not crash when exiting
+	//SAFEDELETE(RenderAPI);
 }
