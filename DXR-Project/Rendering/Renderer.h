@@ -23,6 +23,8 @@
 #include "Material.h"
 #include "MeshFactory.h"
 
+#include "Rendering/Core/RenderingAPI.h"
+
 class D3D12Texture;
 class D3D12GraphicsPipelineState;
 class D3D12RayTracingPipelineState;
@@ -57,10 +59,16 @@ public:
 	void SetVerticalSyncEnable(bool Enabled);
 	void SetDrawAABBsEnable(bool Enabled);
 	void SetFrustumCullEnable(bool Enabled);
+	void SetFXAAEnable(bool Enabled);
 
 	FORCEINLINE bool IsDrawAABBsEnabled() const
 	{
 		return DrawAABBs;
+	}
+
+	FORCEINLINE bool IsFXAAEnabled() const
+	{
+		return FXAAEnabled;
 	}
 
 	FORCEINLINE bool IsPrePassEnabled() const
@@ -78,16 +86,6 @@ public:
 		return FrustumCullEnabled;
 	}
 
-	FORCEINLINE TSharedPtr<D3D12Device> GetDevice() const
-	{
-		return Device;
-	}
-
-	FORCEINLINE TSharedPtr<D3D12ImmediateCommandList> GetImmediateCommandList() const
-	{
-		return ImmediateCommandList;
-	}
-
 	static void SetGlobalLightSettings(const LightSettings& InGlobalLightSettings);
 
 	static FORCEINLINE const LightSettings& GetGlobalLightSettings()
@@ -95,11 +93,11 @@ public:
 		return GlobalLightSettings;
 	}
 
-	static Renderer* Make(TSharedPtr<WindowsWindow> RendererWindow);
+	static Renderer* Make(TSharedPtr<WindowsWindow> RenderWindow);
 	static Renderer* Get();
 	
 private:
-	bool Initialize(TSharedPtr<WindowsWindow> RendererWindow);
+	bool Initialize(TSharedPtr<WindowsWindow> RenderWindow);
 
 	bool InitRayTracing();
 	bool InitLightBuffers();
@@ -122,14 +120,10 @@ private:
 	void TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* CommandList);
 
 private:
-	TSharedPtr<D3D12Device>					Device;
-	TSharedPtr<D3D12ImmediateCommandList>	ImmediateCommandList;
+	RenderingAPI* RenderingAPI = nullptr;
 	
-	TSharedPtr<D3D12CommandQueue>	Queue;
-	TSharedPtr<D3D12CommandQueue>	ComputeQueue;
 	TSharedPtr<D3D12CommandList>	CommandList;
 	TSharedPtr<D3D12Fence>			Fence;
-	TSharedPtr<D3D12SwapChain>		SwapChain;
 
 	TArray<TSharedPtr<D3D12CommandAllocator>>	CommandAllocators;
 	TArray<TSharedPtr<D3D12Resource>>			DeferredResources;
@@ -196,10 +190,11 @@ private:
 	TArray<Uint64> FenceValues;
 	Uint32 CurrentBackBufferIndex = 0;
 
-	bool PrePassEnabled = true;
-	bool DrawAABBs		= false;
-	bool VSyncEnabled	= false;
-	bool FrustumCullEnabled = true;
+	bool PrePassEnabled		= true;
+	bool DrawAABBs			= false;
+	bool VSyncEnabled		= false;
+	bool FrustumCullEnabled	= true;
+	bool FXAAEnabled		= true;
 
 	static LightSettings		GlobalLightSettings;
 	static TUniquePtr<Renderer> RendererInstance;

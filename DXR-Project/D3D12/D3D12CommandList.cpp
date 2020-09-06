@@ -338,6 +338,12 @@ void D3D12CommandList::FlushDeferredResourceBarriers()
 	}
 }
 
+void D3D12CommandList::BindGlobalOnlineDescriptorHeaps()
+{
+	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
+	SetDescriptorHeaps(DescriptorHeaps, 1);
+}
+
 void D3D12CommandList::UploadBufferData(D3D12Buffer* Dest, const Uint32 DestOffset, const void* Src, const Uint32 SizeInBytes)
 {
 	const Uint32 NewOffset = UploadBufferOffset + SizeInBytes;

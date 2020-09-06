@@ -1,5 +1,9 @@
 #include "TextureFactory.h"
 
+#include "Renderer.h"
+
+#include "Core/RenderingAPI.h"
+
 #include "D3D12/D3D12Texture.h"
 #include "D3D12/D3D12Buffer.h"
 #include "D3D12/D3D12Device.h"
@@ -11,8 +15,6 @@
 #include "D3D12/D3D12ComputePipelineState.h"
 #include "D3D12/D3D12RootSignature.h"
 #include "D3D12/D3D12ShaderCompiler.h"
-
-#include "Renderer.h"
 
 #ifdef min
 	#undef min
@@ -31,7 +33,7 @@ struct TextureFactoryData
 
 static TextureFactoryData GlobalFactoryData;
 
-D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::string& Filepath, Uint32 CreateFlags, DXGI_FORMAT Format)
+D3D12Texture* TextureFactory::LoadFromFile(const std::string& Filepath, Uint32 CreateFlags, DXGI_FORMAT Format)
 {
 	Int32 Width			= 0;
 	Int32 Height		= 0;
@@ -64,10 +66,10 @@ D3D12Texture* TextureFactory::LoadFromFile(D3D12Device* Device, const std::strin
 		LOG_INFO("[TextureFactory]: Loaded image '" + Filepath + "'");
 	}
 
-	return LoadFromMemory(Device, Pixels.Get(), Width, Height, CreateFlags, Format);
+	return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);
 }
 
-D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags, DXGI_FORMAT Format)
+D3D12Texture* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags, DXGI_FORMAT Format)
 {
 	if (Format != DXGI_FORMAT_R8G8B8A8_UNORM && Format != DXGI_FORMAT_R32G32B32A32_FLOAT)
 	{
@@ -92,8 +94,8 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 	TextureProps.SampleCount	= 1;
 
-	TUniquePtr<D3D12Texture> Texture = MakeUnique<D3D12Texture>(Device);
-	if (!Texture->Initialize(TextureProps))
+	TUniquePtr<D3D12Texture> Texture = RenderingAPI::Get()->CreateTexture(TextureProps);
+	if (!Texture)
 	{
 		return nullptr;
 	}
@@ -109,9 +111,9 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.Texture2D.MipLevels			= MipLevels;
 	SrvDesc.Texture2D.MostDetailedMip	= 0;
-	Texture->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device, Texture->GetResource(), &SrvDesc), 0);
+	Texture->SetShaderResourceView(TSharedPtr(RenderingAPI::Get()->CreateShaderResourceView(Texture->GetResource(), &SrvDesc)), 0);
 
-	TSharedPtr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
+	TSharedPtr<D3D12ImmediateCommandList> CommandList = RenderingAPI::StaticGetImmediateCommandList();
 	CommandList->TransitionBarrier(Texture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 	CommandList->UploadTextureData(Texture.Get(), Pixels, Format, Width, Height, 1, Stride, RowPitch);
 
@@ -128,7 +130,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(D3D12Device* Device, const Byte* Pi
 	return Texture.Release();
 }
 
-D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, D3D12Texture* PanoramaSource, Uint32 CubeMapSize, Uint32 CreateFlags, DXGI_FORMAT Format)
+D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* PanoramaSource, Uint32 CubeMapSize, Uint32 CreateFlags, DXGI_FORMAT Format)
 {
 	VALIDATE(PanoramaSource->GetShaderResourceView(0));
 
@@ -147,8 +149,8 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	TextureProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	TextureProps.SampleCount	= 1;
 
-	TUniquePtr<D3D12Texture> StagingTexture = MakeUnique<D3D12Texture>(Device);
-	if (!StagingTexture->Initialize(TextureProps))
+	TUniquePtr<D3D12Texture> StagingTexture = RenderingAPI::Get()->CreateTexture(TextureProps);
+	if (!StagingTexture)
 	{
 		return nullptr;
 	}
@@ -159,12 +161,12 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	UAVDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 	UAVDesc.Texture2DArray.ArraySize		= 6;
 	UAVDesc.Texture2DArray.FirstArraySlice	= 0;
-	StagingTexture->SetUnorderedAccessView(MakeShared<D3D12UnorderedAccessView>(Device, nullptr, StagingTexture->GetResource(), &UAVDesc), 0);
+	StagingTexture->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get()->CreateUnorderedAccessView(nullptr, StagingTexture->GetResource(), &UAVDesc)), 0);
 
 	TextureProps.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-	TUniquePtr<D3D12Texture> Texture = MakeUnique<D3D12Texture>(Device);
-	if (!Texture->Initialize(TextureProps))
+	TUniquePtr<D3D12Texture> Texture = RenderingAPI::Get()->CreateTexture(TextureProps);
+	if (!Texture)
 	{
 		return nullptr;
 	}
@@ -177,7 +179,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	SRVDesc.TextureCube.MipLevels			= MipLevels;
 	SRVDesc.TextureCube.MostDetailedMip		= 0;
 	SRVDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
-	Texture->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device, Texture->GetResource(), &SRVDesc), 0);
+	Texture->SetShaderResourceView(TSharedPtr(RenderingAPI::Get()->CreateShaderResourceView(Texture->GetResource(), &SRVDesc)), 0);
 
 	// Generate PipelineState at first run
 	if (!GlobalFactoryData.PanoramaPSO)
@@ -194,14 +196,14 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 		GenCubeProperties.RootSignature = nullptr;
 		GenCubeProperties.CSBlob		= CSBlob.Get();
 
-		GlobalFactoryData.PanoramaPSO = TUniquePtr<D3D12ComputePipelineState>(new D3D12ComputePipelineState(Device));
-		if (!GlobalFactoryData.PanoramaPSO->Initialize(GenCubeProperties))
+		GlobalFactoryData.PanoramaPSO = RenderingAPI::Get()->CreateComputePipelineState(GenCubeProperties);
+		if (!GlobalFactoryData.PanoramaPSO)
 		{
 			return false;
 		}
 
-		GlobalFactoryData.PanoramaRootSignature = TUniquePtr<D3D12RootSignature>(new D3D12RootSignature(Device));
-		if (!GlobalFactoryData.PanoramaRootSignature->Initialize(CSBlob.Get()))
+		GlobalFactoryData.PanoramaRootSignature = RenderingAPI::Get()->CreateRootSignature(CSBlob.Get());
+		if (!GlobalFactoryData.PanoramaRootSignature)
 		{
 			return false;
 		}
@@ -210,15 +212,15 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	}
 
 	// Create needed interfaces
-	TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device, 1);
+	TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable = RenderingAPI::Get()->CreateDescriptorTable(1);
 	SrvDescriptorTable->SetShaderResourceView(PanoramaSource->GetShaderResourceView(0).Get(), 0);
 	SrvDescriptorTable->CopyDescriptors();
 
-	TUniquePtr<D3D12DescriptorTable> UavDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device, 1);
+	TUniquePtr<D3D12DescriptorTable> UavDescriptorTable = RenderingAPI::Get()->CreateDescriptorTable(1);
 	UavDescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).Get(), 0);
 	UavDescriptorTable->CopyDescriptors();
 
-	TSharedPtr<D3D12ImmediateCommandList> CommandList = Renderer::Get()->GetImmediateCommandList();
+	TSharedPtr<D3D12ImmediateCommandList> CommandList = RenderingAPI::StaticGetImmediateCommandList();
 	CommandList->TransitionBarrier(PanoramaSource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	CommandList->TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
@@ -232,9 +234,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Device* Device, 
 	CB0.CubeMapSize = CubeMapSize;
 
 	CommandList->SetComputeRoot32BitConstants(&CB0, 1, 0, 0);
-	
-	ID3D12DescriptorHeap* GlobalHeap = Device->GetGlobalOnlineResourceHeap()->GetHeap();
-	CommandList->SetDescriptorHeaps(&GlobalHeap, 1);
+	CommandList->BindGlobalOnlineDescriptorHeaps();
 	CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
 	CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 2);
 

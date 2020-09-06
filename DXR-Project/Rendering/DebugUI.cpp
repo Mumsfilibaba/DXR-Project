@@ -20,6 +20,8 @@
 #include "D3D12/D3D12RootSignature.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
+#include "Rendering/Core/RenderingAPI.h"
+
 static TArray<DebugUI::UIDrawFunc>	GlobalDrawFuncs;
 static TArray<std::string>			GlobalDebugStrings;
 
@@ -27,7 +29,6 @@ struct ImGuiState
 {
 	Clock FrameClock;
 
-	TSharedPtr<D3D12Device>				Device			= nullptr;
 	TSharedPtr<D3D12Texture>			FontTexture		= nullptr;
 	TSharedPtr<D3D12DescriptorTable>	DescriptorTable = nullptr;
 
@@ -61,11 +62,8 @@ static Uint32 GetMouseButtonIndex(EMouseButton Button)
 /*
 * DebugUI
 */
-bool DebugUI::Initialize(TSharedPtr<D3D12Device> InDevice)
+bool DebugUI::Initialize()
 {
-	// Save device so that we can create resource on the GPU
-	GlobalImGuiState.Device = InDevice;
-
 	// Create context
 	IMGUI_CHECKVERSION();
 	GlobalImGuiState.Context = ImGui::CreateContext();
@@ -214,10 +212,10 @@ bool DebugUI::Initialize(TSharedPtr<D3D12Device> InDevice)
 	Int32	Height	= 0;
 	IO.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-	GlobalImGuiState.FontTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(GlobalImGuiState.Device.Get(), Pixels, Width, Height, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	GlobalImGuiState.FontTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, Width, Height, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (GlobalImGuiState.FontTexture)
 	{
-		GlobalImGuiState.DescriptorTable = MakeShared<D3D12DescriptorTable>(GlobalImGuiState.Device.Get(), 1);
+		GlobalImGuiState.DescriptorTable = RenderingAPI::Get()->CreateDescriptorTable(1);
 		GlobalImGuiState.DescriptorTable->SetShaderResourceView(GlobalImGuiState.FontTexture->GetShaderResourceView(0).Get(), 0);
 		GlobalImGuiState.DescriptorTable->CopyDescriptors();
 	}
@@ -271,8 +269,8 @@ bool DebugUI::Initialize(TSharedPtr<D3D12Device> InDevice)
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
-	GlobalImGuiState.RootSignature = MakeShared<D3D12RootSignature>(GlobalImGuiState.Device.Get());
-	if (!GlobalImGuiState.RootSignature->Initialize(RootSignaturDesc))
+	GlobalImGuiState.RootSignature = RenderingAPI::Get()->CreateRootSignature(RootSignaturDesc);
+	if (!GlobalImGuiState.RootSignature)
 	{
 		return false;
 	}
@@ -359,22 +357,22 @@ bool DebugUI::Initialize(TSharedPtr<D3D12Device> InDevice)
 	GuiPipelineProps.RTFormats			= Formats;
 	GuiPipelineProps.NumRenderTargets	= 1;
 
-	GlobalImGuiState.PipelineState = MakeShared<D3D12GraphicsPipelineState>(GlobalImGuiState.Device.Get());
-	if (!GlobalImGuiState.PipelineState->Initialize(GuiPipelineProps))
+	GlobalImGuiState.PipelineState = RenderingAPI::Get()->CreateGraphicsPipelineState(GuiPipelineProps);
+	if (!GlobalImGuiState.PipelineState)
 	{
 		return false;
 	}
 
 	BufferProperties BufferProps = { };
-	BufferProps.Name = "ImGui VertexBuffer";
+	BufferProps.Name		= "ImGui VertexBuffer";
 	BufferProps.SizeInBytes = 1024 * 1024 * 8;
 	BufferProps.InitalState = D3D12_RESOURCE_STATE_GENERIC_READ;
-	BufferProps.Flags = D3D12_RESOURCE_FLAG_NONE;
-	BufferProps.MemoryType = EMemoryType::MEMORY_TYPE_UPLOAD;
+	BufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
+	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 	// VertexBuffer
-	GlobalImGuiState.VertexBuffer = MakeShared<D3D12Buffer>(GlobalImGuiState.Device.Get());
-	if (!GlobalImGuiState.VertexBuffer->Initialize(BufferProps))
+	GlobalImGuiState.VertexBuffer = RenderingAPI::Get()->CreateBuffer(BufferProps);
+	if (!GlobalImGuiState.VertexBuffer)
 	{
 		return false;
 	}
@@ -382,8 +380,8 @@ bool DebugUI::Initialize(TSharedPtr<D3D12Device> InDevice)
 	// IndexBuffer
 	BufferProps.Name = "ImGui IndexBuffer";
 
-	GlobalImGuiState.IndexBuffer = MakeShared<D3D12Buffer>(GlobalImGuiState.Device.Get());
-	if (!GlobalImGuiState.IndexBuffer->Initialize(BufferProps))
+	GlobalImGuiState.IndexBuffer = RenderingAPI::Get()->CreateBuffer(BufferProps);
+	if (!GlobalImGuiState.IndexBuffer)
 	{
 		return false;
 	}

@@ -15,6 +15,7 @@ class D3D12RootSignature;
 class D3D12Device
 {
 public:
+	D3D12Device();
 	~D3D12Device();
 
 	bool Initialize(bool DebugEnable);
@@ -74,8 +75,6 @@ public:
 	static D3D12Device* Make(bool DebugEnable);
 
 private:
-	D3D12Device();
-
 	bool CreateFactory();
 	bool ChooseAdapter();
 

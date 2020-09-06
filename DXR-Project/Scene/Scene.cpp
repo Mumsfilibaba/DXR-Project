@@ -77,7 +77,7 @@ void Scene::OnAddedComponent(Component* NewComponent)
 	}
 }
 
-Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
+Scene* Scene::LoadFromFile(const std::string& Filepath)
 {
 	// Load Scene File
 	std::string Warning;
@@ -99,7 +99,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 
 	// Create standard textures
 	Byte Pixels[] = { 255, 255, 255, 255 };
-	TSharedPtr<D3D12Texture> WhiteTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Device, Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> WhiteTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!WhiteTexture)
 	{
 		return nullptr;
@@ -113,7 +113,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 	Pixels[1] = 127;
 	Pixels[2] = 255;
 
-	TSharedPtr<D3D12Texture> NormalMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Device, Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> NormalMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!NormalMap)
 	{
 		return nullptr;
@@ -136,7 +136,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 	BaseMaterial->MetallicMap	= WhiteTexture;
 	BaseMaterial->RoughnessMap		= WhiteTexture;
 	BaseMaterial->NormalMap		= NormalMap;
-	BaseMaterial->Initialize(Device);
+	BaseMaterial->Initialize();
 
 	// Create All Materials in scene
 	TArray<TSharedPtr<Material>> LoadedMaterials;
@@ -164,7 +164,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 			if (MaterialTextures.count(Mat.ambient_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.ambient_texname;
-				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
 					Texture->SetDebugName(Mat.ambient_texname);
@@ -186,7 +186,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 			if (MaterialTextures.count(Mat.diffuse_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.diffuse_texname;
-				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
 					Texture->SetDebugName(Mat.diffuse_texname);
@@ -208,7 +208,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 			if (MaterialTextures.count(Mat.specular_highlight_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.specular_highlight_texname;
-				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
 					Texture->SetDebugName(Mat.specular_highlight_texname);
@@ -230,7 +230,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 			if (MaterialTextures.count(Mat.bump_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.bump_texname;
-				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
 					Texture->SetDebugName(Mat.bump_texname);
@@ -252,7 +252,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 			if (MaterialTextures.count(Mat.alpha_texname) == 0)
 			{
 				std::string TexName = MTLFiledir + '/' + Mat.alpha_texname;
-				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device, TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+				TSharedPtr<D3D12Texture> Texture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(TexName, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 				if (Texture)
 				{
 					Texture->SetDebugName(Mat.alpha_texname);
@@ -265,7 +265,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 			}
 		}
 
-		NewMaterial->Initialize(Device);
+		NewMaterial->Initialize();
 	}
 
 	// Construct Scene
@@ -328,7 +328,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath, D3D12Device* Device)
 
 		// Calculate tangents and create mesh
 		MeshFactory::CalculateTangents(Data);
-		TSharedPtr<Mesh> NewMesh = Mesh::Make(Device, Data);
+		TSharedPtr<Mesh> NewMesh = Mesh::Make(Data);
 
 		// Setup new actor for this shape
 		Actor* NewActor = new Actor();

@@ -1,6 +1,9 @@
 #pragma once
 #include "D3D12Resource.h"
 
+/*
+* TextureProperties
+*/
 struct TextureProperties
 {
 	std::string					DebugName;
@@ -19,6 +22,9 @@ struct TextureProperties
 class D3D12RenderTargetView;
 class D3D12DepthStencilView;
 
+/*
+* D3D12Texture
+*/
 class D3D12Texture : public D3D12Resource
 {
 public:

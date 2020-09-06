@@ -3,6 +3,9 @@
 
 #include <dxcapi.h>
 
+/*
+* D3D12RootSignature
+*/
 class D3D12RootSignature : public D3D12DeviceChild
 {
 public:

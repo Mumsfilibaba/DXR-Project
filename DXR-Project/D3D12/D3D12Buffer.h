@@ -2,6 +2,9 @@
 #include "D3D12Resource.h"
 #include "D3D12Views.h"
 
+/*
+* BufferProperties
+*/
 struct BufferProperties
 {
 	std::string				Name;
@@ -11,6 +14,9 @@ struct BufferProperties
 	EMemoryType				MemoryType;
 };
 
+/*
+* D3D12Buffer
+*/
 class D3D12Buffer : public D3D12Resource
 {
 public:

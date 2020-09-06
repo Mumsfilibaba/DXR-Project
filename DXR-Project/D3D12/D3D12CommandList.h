@@ -30,6 +30,8 @@ public:
 
 	void FlushDeferredResourceBarriers();
 
+	void BindGlobalOnlineDescriptorHeaps();
+
 	void UploadBufferData(class D3D12Buffer* Dest, const Uint32 DestOffset, const void* Src, const Uint32 SizeInBytes);
 	void UploadTextureData(D3D12Texture* Dest, const void* Src, DXGI_FORMAT Format, const Uint32 Width, const Uint32 Height, const Uint32 Depth, const Uint32 Stride, const Uint32 RowPitch);
 

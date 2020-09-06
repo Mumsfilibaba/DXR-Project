@@ -35,17 +35,17 @@ public:
 	}
 
 	template<typename TComponent>
-	FORCEINLINE const TArray<TComponent*> GetAllComponentsOfType() const
+	FORCEINLINE const TArray<TComponent> GetAllComponentsOfType() const
 	{
 		// TODO: Cache this result
 
-		TArray<TComponent*> Components;
+		TArray<TComponent> Components;
 		for (Actor* Actor : Actors)
 		{
 			TComponent* Component = Actor->GetComponentOfType<TComponent>();
 			if (Component)
 			{
-				Components.EmplaceBack(Component);
+				Components.EmplaceBack(*Component);
 			}
 		}
 
@@ -62,10 +62,10 @@ public:
 		return CurrentCamera;
 	}
 
-	static Scene* LoadFromFile(const std::string& Filepath, class D3D12Device* Device);
+	static Scene* LoadFromFile(const std::string& Filepath);
 	
-	static void		SetCurrentScene(Scene* InCurrentScene);
-	static Scene*	GetCurrentScene();
+	static void SetCurrentScene(Scene* InCurrentScene);
+	static Scene* GetCurrentScene();
 
 private:
 	void AddMeshComponent(class MeshComponent* Component);

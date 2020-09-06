@@ -21,7 +21,7 @@ public:
 	Material(const MaterialProperties& InProperties);
 	~Material();
 
-	void Initialize(D3D12Device* Device);
+	void Initialize();
 
 	void BuildBuffer(class D3D12CommandList* CommandList);
 

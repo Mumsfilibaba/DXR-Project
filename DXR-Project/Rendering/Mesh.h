@@ -18,11 +18,11 @@ public:
 	Mesh();
 	~Mesh();
 
-	bool Initialize(D3D12Device* Device, const MeshData& Data);
+	bool Initialize(const MeshData& Data);
 	
 	bool BuildAccelerationStructure(D3D12CommandList* CommandList);
 
-	static TSharedPtr<Mesh> Make(D3D12Device* Device, const MeshData& Data);
+	static TSharedPtr<Mesh> Make(const MeshData& Data);
 
 public:
 	void CreateBoundingBox(const MeshData& Data);

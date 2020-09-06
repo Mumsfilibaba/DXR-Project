@@ -292,7 +292,7 @@ bool Application::Initialize()
 	}
 
 	// ImGui
-	if (!DebugUI::Initialize(Renderer->GetDevice()))
+	if (!DebugUI::Initialize())
 	{
 		::MessageBox(0, "FAILED to create ImGuiContext", "ERROR", MB_ICONERROR);
 		return false;
@@ -309,15 +309,15 @@ bool Application::Initialize()
 	
 	Actor* NewActor = nullptr;
 	MeshComponent* NewComponent = nullptr;
-	CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj", Renderer->GetDevice().Get());
+	CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
 
 	// Create Spheres
 	MeshData SphereMeshData = MeshFactory::CreateSphere(3);
-	TSharedPtr<Mesh> SphereMesh = Mesh::Make(Renderer->GetDevice().Get(), SphereMeshData);
+	TSharedPtr<Mesh> SphereMesh = Mesh::Make(SphereMeshData);
 
 	// Create standard textures
 	Byte Pixels[] = { 255, 255, 255, 255 };
-	TSharedPtr<D3D12Texture> BaseTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().Get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> BaseTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!BaseTexture)
 	{
 		return false;
@@ -331,7 +331,7 @@ bool Application::Initialize()
 	Pixels[1] = 127;
 	Pixels[2] = 255;
 
-	TSharedPtr<D3D12Texture> BaseNormal = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().Get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> BaseNormal = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!BaseNormal)
 	{
 		return false;
@@ -345,7 +345,7 @@ bool Application::Initialize()
 	Pixels[1] = 255;
 	Pixels[2] = 255;
 
-	TSharedPtr<D3D12Texture> WhiteTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Renderer->GetDevice().Get(), Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> WhiteTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!WhiteTexture)
 	{
 		return false;
@@ -379,7 +379,7 @@ bool Application::Initialize()
 			NewComponent->Material->HeightMap		= WhiteTexture;
 			NewComponent->Material->AOMap			= WhiteTexture;
 			NewComponent->Material->MetallicMap		= WhiteTexture;
-			NewComponent->Material->Initialize(Renderer->GetDevice().Get());
+			NewComponent->Material->Initialize();
 
 			NewActor->AddComponent(NewComponent);
 
@@ -404,10 +404,10 @@ bool Application::Initialize()
 	MatProperties.Roughness = 1.0f;
 
 	NewComponent = new MeshComponent(NewActor);
-	NewComponent->Mesh		= Mesh::Make(Renderer->GetDevice().Get(), CubeMeshData);
+	NewComponent->Mesh		= Mesh::Make(CubeMeshData);
 	NewComponent->Material	= MakeShared<Material>(MatProperties);
 
-	TSharedPtr<D3D12Texture> AlbedoMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> AlbedoMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!AlbedoMap)
 	{
 		return false;
@@ -417,7 +417,7 @@ bool Application::Initialize()
 		AlbedoMap->SetDebugName("AlbedoMap");
 	}
 
-	TSharedPtr<D3D12Texture> NormalMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> NormalMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!NormalMap)
 	{
 		return false;
@@ -427,7 +427,7 @@ bool Application::Initialize()
 		NormalMap->SetDebugName("NormalMap");
 	}
 
-	TSharedPtr<D3D12Texture> AOMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> AOMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!AOMap)
 	{
 		return false;
@@ -437,7 +437,7 @@ bool Application::Initialize()
 		AOMap->SetDebugName("AOMap");
 	}
 
-	TSharedPtr<D3D12Texture> RoughnessMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> RoughnessMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!RoughnessMap)
 	{
 		return false;
@@ -447,7 +447,7 @@ bool Application::Initialize()
 		RoughnessMap->SetDebugName("RoughnessMap");
 	}
 
-	TSharedPtr<D3D12Texture> HeightMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> HeightMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!HeightMap)
 	{
 		return false;
@@ -457,7 +457,7 @@ bool Application::Initialize()
 		HeightMap->SetDebugName("HeightMap");
 	}
 
-	TSharedPtr<D3D12Texture> MetallicMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Renderer->GetDevice().Get(), "../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> MetallicMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!MetallicMap)
 	{
 		return false;
@@ -473,7 +473,7 @@ bool Application::Initialize()
 	NewComponent->Material->HeightMap		= HeightMap;
 	NewComponent->Material->AOMap			= AOMap;
 	NewComponent->Material->MetallicMap		= MetallicMap;
-	NewComponent->Material->Initialize(Renderer->GetDevice().Get());
+	NewComponent->Material->Initialize();
 	NewActor->AddComponent(NewComponent);
 
 	CurrentCamera = new Camera();

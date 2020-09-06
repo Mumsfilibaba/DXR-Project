@@ -53,6 +53,8 @@ void EngineLoop::Release()
 
 void EngineLoop::CoreRelease()
 {
+	//RenderingAPI::Release();
+
 	SAFEDELETE(GlobalOutputHandle);
 }
 

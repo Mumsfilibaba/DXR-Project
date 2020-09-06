@@ -30,7 +30,7 @@ static void DrawSceneInfo();
 */
 static void DrawDebugData()
 {
-	static std::string AdapterName = Renderer::Get()->GetDevice()->GetAdapterName();
+	static std::string AdapterName = RenderingAPI::Get()->GetAdapterName();
 
 	const Float64 Delta = EngineLoop::GetDeltaTime().AsMilliSeconds();
 	DebugUI::DrawDebugString("Adapter: " + AdapterName);
@@ -169,11 +169,39 @@ static void DrawRenderSettings()
 		Renderer::Get()->SetDrawAABBsEnable(Enabled);
 	}
 
+	static const Char* AAItems[] =
+	{
+		"Off",
+		"FXAA",
+	};
+
+	static Int32 CurrentItem = 0;
+	if (Renderer::Get()->IsFXAAEnabled())
+	{
+		CurrentItem = 1;
+	}
+	else
+	{
+		CurrentItem = 0;
+	}
+
+	if (ImGui::Combo("Anti-Aliasing", &CurrentItem, AAItems, IM_ARRAYSIZE(AAItems)))
+	{
+		if (CurrentItem == 0)
+		{
+			Renderer::Get()->SetFXAAEnable(false);
+		}
+		else if (CurrentItem == 1)
+		{
+			Renderer::Get()->SetFXAAEnable(true);
+		}
+	}
+
 	ImGui::Spacing();
 	ImGui::Text("Shadow Settings:");
 	ImGui::Separator();
 
-	const Char* Items[] =
+	static const Char* Items[] =
 	{
 		"8192x8192",
 		"4096x4096",
@@ -183,8 +211,6 @@ static void DrawRenderSettings()
 		"512x512",
 		"256x256"
 	};
-
-	static Int32 CurrentItem = 0;
 
 	LightSettings Settings = Renderer::GetGlobalLightSettings();
 	if (Settings.ShadowMapWidth == 8192)

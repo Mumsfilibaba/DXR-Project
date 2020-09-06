@@ -71,7 +71,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	}
 
 	// Start frame
-	D3D12Texture* BackBuffer = SwapChain->GetSurfaceResource(CurrentBackBufferIndex);
+	D3D12Texture* BackBuffer = RenderingAPI->GetSwapChain()->GetSurfaceResource(CurrentBackBufferIndex);
 	CommandAllocators[CurrentBackBufferIndex]->Reset();
 	CommandList->Reset(CommandAllocators[CurrentBackBufferIndex].Get());
 	
@@ -132,8 +132,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->TransitionBarrier(DirectionalLightBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	// Set constant buffer descriptor heap
-	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
-	CommandList->SetDescriptorHeaps(DescriptorHeaps, ARRAYSIZE(DescriptorHeaps));
+	CommandList->BindGlobalOnlineDescriptorHeaps();
 
 	// Transition GBuffer
 	CommandList->TransitionBarrier(GBuffer[0].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -362,8 +361,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->ClearDepthStencilView(GBuffer[3]->GetDepthStencilView(0).Get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 
 	// Setup view
-	ViewPort.Width		= static_cast<Float32>(SwapChain->GetWidth());
-	ViewPort.Height		= static_cast<Float32>(SwapChain->GetHeight());
+	ViewPort.Width		= static_cast<Float32>(RenderingAPI->GetSwapChain()->GetWidth());
+	ViewPort.Height		= static_cast<Float32>(RenderingAPI->GetSwapChain()->GetHeight());
 	ViewPort.MinDepth	= 0.0f;
 	ViewPort.MaxDepth	= 1.0f;
 	ViewPort.TopLeftX	= 0.0f;
@@ -374,8 +373,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		0,
 		0,
-		static_cast<LONG>(SwapChain->GetWidth()),
-		static_cast<LONG>(SwapChain->GetHeight())
+		static_cast<LONG>(RenderingAPI->GetSwapChain()->GetWidth()),
+		static_cast<LONG>(RenderingAPI->GetSwapChain()->GetHeight())
 	};
 	CommandList->RSSetScissorRects(&ScissorRect, 1);
 
@@ -427,7 +426,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	//for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 	for (const MeshDrawCommand& Command : VisibleCommands)
 	{
-		if (Device->IsRayTracingSupported())
+		if (RenderingAPI->IsRayTracingSupported())
 		{
 			// Command.Geometry->BuildAccelerationStructure(CommandList.Get(), );
 		}
@@ -461,7 +460,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->TransitionBarrier(GBuffer[3].Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// RayTracing
-	if (Device->IsRayTracingSupported())
+	if (RenderingAPI->IsRayTracingSupported())
 	{
 		TraceRays(BackBuffer, CommandList.Get());
 	}
@@ -567,16 +566,16 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->Close();
 
 	// Execute
-	Queue->ExecuteCommandList(CommandList.Get());
+	RenderingAPI->GetQueue()->ExecuteCommandList(CommandList.Get());
 
 	// Present
-	SwapChain->Present(VSyncEnabled ? 1 : 0);
+	RenderingAPI->GetSwapChain()->Present(VSyncEnabled ? 1 : 0);
 
 	// Wait for next frame
 	const Uint64 CurrentFenceValue = FenceValues[CurrentBackBufferIndex];
-	Queue->SignalFence(Fence.Get(), CurrentFenceValue);
+	RenderingAPI->GetQueue()->SignalFence(Fence.Get(), CurrentFenceValue);
 
-	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
+	CurrentBackBufferIndex = RenderingAPI->GetSwapChain()->GetCurrentBackBufferIndex();
 	if (Fence->WaitForValue(CurrentFenceValue))
 	{
 		FenceValues[CurrentBackBufferIndex] = CurrentFenceValue + 1;
@@ -613,12 +612,12 @@ void Renderer::OnResize(Int32 Width, Int32 Height)
 {
 	WaitForPendingFrames();
 
-	SwapChain->Resize(Width, Height);
+	RenderingAPI->GetSwapChain()->Resize(Width, Height);
 
 	// Update deferred
 	InitGBuffer();
 
-	if (Device->IsRayTracingSupported())
+	if (RenderingAPI->IsRayTracingSupported())
 	{
 		RayGenDescriptorTable->SetUnorderedAccessView(ReflectionTexture->GetUnorderedAccessView(0).Get(), 0);
 		RayGenDescriptorTable->CopyDescriptors();
@@ -634,7 +633,7 @@ void Renderer::OnResize(Int32 Width, Int32 Height)
 	LightDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).Get(), 3);
 	LightDescriptorTable->CopyDescriptors();
 
-	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
+	CurrentBackBufferIndex = RenderingAPI->GetSwapChain()->GetCurrentBackBufferIndex();
 }
 
 void Renderer::SetPrePassEnable(bool Enabled)
@@ -657,6 +656,11 @@ void Renderer::SetFrustumCullEnable(bool Enabled)
 	FrustumCullEnabled = Enabled;
 }
 
+void Renderer::SetFXAAEnable(bool Enabled)
+{
+	FXAAEnabled = Enabled;
+}
+
 void Renderer::SetGlobalLightSettings(const LightSettings& InGlobalLightSettings)
 {
 	// Set Settings
@@ -672,18 +676,18 @@ void Renderer::SetGlobalLightSettings(const LightSettings& InGlobalLightSettings
 		CurrentRenderer->WriteShadowMapDescriptors();
 
 #if ENABLE_VSM
-		CurrentRenderer->ImmediateCommandList->TransitionBarrier(CurrentRenderer->VSMDirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(CurrentRenderer->VSMDirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 #endif
-		CurrentRenderer->ImmediateCommandList->TransitionBarrier(CurrentRenderer->DirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		CurrentRenderer->ImmediateCommandList->TransitionBarrier(CurrentRenderer->PointLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		CurrentRenderer->ImmediateCommandList->Flush();
+		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(CurrentRenderer->DirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(CurrentRenderer->PointLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		RenderingAPI::StaticGetImmediateCommandList()->Flush();
 	}
 }
 
-Renderer* Renderer::Make(TSharedPtr<WindowsWindow> RendererWindow)
+Renderer* Renderer::Make(TSharedPtr<WindowsWindow> RenderWindow)
 {
 	RendererInstance = MakeUnique<Renderer>();
-	if (RendererInstance->Initialize(RendererWindow))
+	if (RendererInstance->Initialize(RenderWindow))
 	{
 		return RendererInstance.Get();
 	}
@@ -698,7 +702,7 @@ Renderer* Renderer::Get()
 	return RendererInstance.Get();
 }
 
-bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
+bool Renderer::Initialize(TSharedPtr<WindowsWindow> RenderWindow)
 {
 	const bool EnableDebug =
 #if ENABLE_D3D12_DEBUG
@@ -707,58 +711,36 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 		false;
 #endif
 
-	Device = TSharedPtr<D3D12Device>(D3D12Device::Make(EnableDebug));
-	if (!Device)
+	RenderingAPI = RenderingAPI::Make(ERenderingAPI::RENDERING_API_D3D12, RenderWindow, EnableDebug);
+	if (!RenderingAPI)
 	{
 		return false;
 	}
 
-	ImmediateCommandList = MakeShared<D3D12ImmediateCommandList>(Device.Get());
-	if (!ImmediateCommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return false;
-	}
-
-	Queue = MakeShared<D3D12CommandQueue>(Device.Get());
-	if (!Queue->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return false;
-	}
-
-	SwapChain = MakeShared<D3D12SwapChain>(Device.Get());
-	if (!SwapChain->Initialize(RendererWindow.Get(), Queue.Get()))
-	{
-		return false;
-	}
-	else
-	{
-		CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
-	}
-
-	const Uint32 BackBufferCount = SwapChain->GetSurfaceCount();
+	const Uint32 BackBufferCount = RenderingAPI->GetSwapChain()->GetSurfaceCount();
 	CommandAllocators.Resize(BackBufferCount);
 	for (Uint32 i = 0; i < BackBufferCount; i++)
 	{
-		CommandAllocators[i] = MakeShared<D3D12CommandAllocator>(Device.Get());
-		if (!CommandAllocators[i]->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
+		CommandAllocators[i] = RenderingAPI->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT);
+		if (!CommandAllocators[i])
 		{
 			return false;
 		}
 	}
 
-	CommandList = MakeShared<D3D12CommandList>(Device.Get());
-	if (!CommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, CommandAllocators[0].Get(), nullptr))
+	CommandList = RenderingAPI->CreateCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, CommandAllocators[0].Get(), nullptr);
+	if (!CommandList)
 	{
 		return false;
 	}
 
-	Fence = MakeShared<D3D12Fence>(Device.Get());
-	if (!Fence->Initialize(0))
+	Fence = RenderingAPI->CreateFence(0);
+	if (!Fence)
 	{
 		return false;
 	}
 
-	FenceValues.Resize(SwapChain->GetSurfaceCount());
+	FenceValues.Resize(RenderingAPI->GetSwapChain()->GetSurfaceCount());
 
 	// Create mesh
 	Sphere		= MeshFactory::CreateSphere(3);
@@ -772,14 +754,14 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	BufferProps.InitalState		= D3D12_RESOURCE_STATE_COMMON;
 	BufferProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 
-	CameraBuffer = MakeShared<D3D12Buffer>(Device.Get());
-	if (CameraBuffer->Initialize(BufferProps))
+	CameraBuffer = RenderingAPI->CreateBuffer(BufferProps);
+	if (CameraBuffer)
 	{
 		D3D12_CONSTANT_BUFFER_VIEW_DESC CameraViewDesc = { };
 		CameraViewDesc.BufferLocation	= CameraBuffer->GetGPUVirtualAddress();
 		CameraViewDesc.SizeInBytes		= static_cast<Uint32>(BufferProps.SizeInBytes);
 
-		CameraBuffer->SetConstantBufferView(MakeShared<D3D12ConstantBufferView>(Device.Get(), CameraBuffer->GetResource(), &CameraViewDesc));
+		CameraBuffer->SetConstantBufferView(TSharedPtr(RenderingAPI->CreateConstantBufferView(CameraBuffer->GetResource(), &CameraViewDesc)));
 	}
 	else
 	{
@@ -791,8 +773,8 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	BufferProps.SizeInBytes	= sizeof(Vertex) * static_cast<Uint64>(Sphere.Vertices.GetSize());
 	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
-	MeshVertexBuffer = MakeShared<D3D12Buffer>(Device.Get());
-	if (MeshVertexBuffer->Initialize(BufferProps))
+	MeshVertexBuffer = RenderingAPI->CreateBuffer(BufferProps);
+	if (MeshVertexBuffer)
 	{
 		void* BufferMemory = MeshVertexBuffer->Map();
 		memcpy(BufferMemory, Sphere.Vertices.GetData(), BufferProps.SizeInBytes);
@@ -804,8 +786,8 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	}
 
 	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(Cube.Vertices.GetSize());
-	CubeVertexBuffer = MakeShared<D3D12Buffer>(Device.Get());
-	if (CubeVertexBuffer->Initialize(BufferProps))
+	CubeVertexBuffer = RenderingAPI->CreateBuffer(BufferProps);
+	if (CubeVertexBuffer)
 	{
 		void* BufferMemory = CubeVertexBuffer->Map();
 		memcpy(BufferMemory, Cube.Vertices.GetData(), BufferProps.SizeInBytes);
@@ -817,8 +799,8 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	}
 
 	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(SkyboxMesh.Vertices.GetSize());
-	SkyboxVertexBuffer = MakeShared<D3D12Buffer>(Device.Get());
-	if (SkyboxVertexBuffer->Initialize(BufferProps))
+	SkyboxVertexBuffer = RenderingAPI->CreateBuffer(BufferProps);
+	if (SkyboxVertexBuffer)
 	{
 		void* BufferMemory = SkyboxVertexBuffer->Map();
 		memcpy(BufferMemory, SkyboxMesh.Vertices.GetData(), BufferProps.SizeInBytes);
@@ -831,8 +813,8 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 
 	// Create indexbuffer
 	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Sphere.Indices.GetSize());
-	MeshIndexBuffer = MakeShared<D3D12Buffer>(Device.Get());
-	if (MeshIndexBuffer->Initialize(BufferProps))
+	MeshIndexBuffer = RenderingAPI->CreateBuffer(BufferProps);
+	if (MeshIndexBuffer)
 	{
 		void* BufferMemory = MeshIndexBuffer->Map();
 		memcpy(BufferMemory, Sphere.Indices.GetData(), BufferProps.SizeInBytes);
@@ -844,8 +826,8 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	}
 
 	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Cube.Indices.GetSize());
-	CubeIndexBuffer = MakeShared<D3D12Buffer>(Device.Get());
-	if (CubeIndexBuffer->Initialize(BufferProps))
+	CubeIndexBuffer = RenderingAPI->CreateBuffer(BufferProps);
+	if (CubeIndexBuffer)
 	{
 		void* BufferMemory = CubeIndexBuffer->Map();
 		memcpy(BufferMemory, Cube.Indices.GetData(), BufferProps.SizeInBytes);
@@ -857,8 +839,8 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	}
 
 	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(SkyboxMesh.Indices.GetSize());
-	SkyboxIndexBuffer = MakeShared<D3D12Buffer>(Device.Get());
-	if (SkyboxIndexBuffer->Initialize(BufferProps))
+	SkyboxIndexBuffer = RenderingAPI->CreateBuffer(BufferProps);
+	if (SkyboxIndexBuffer)
 	{
 		void* BufferMemory = SkyboxIndexBuffer->Map();
 		memcpy(BufferMemory, SkyboxMesh.Indices.GetData(), BufferProps.SizeInBytes);
@@ -870,13 +852,13 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	}
 
 	// Create Texture Cube
-	TUniquePtr<D3D12Texture> Panorama = TUniquePtr<D3D12Texture>(TextureFactory::LoadFromFile(Device.Get(), "../Assets/Textures/arches.hdr", 0, DXGI_FORMAT_R32G32B32A32_FLOAT));
+	TUniquePtr<D3D12Texture> Panorama = TUniquePtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/arches.hdr", 0, DXGI_FORMAT_R32G32B32A32_FLOAT));
 	if (!Panorama)
 	{
 		return false;	
 	}
 
-	Skybox = TSharedPtr<D3D12Texture>(TextureFactory::CreateTextureCubeFromPanorma(Device.Get(), Panorama.Get(), 1024, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R16G16B16A16_FLOAT));
+	Skybox = TSharedPtr<D3D12Texture>(TextureFactory::CreateTextureCubeFromPanorma(Panorama.Get(), 1024, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R16G16B16A16_FLOAT));
 	if (!Skybox)
 	{
 		return false;
@@ -900,8 +882,8 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	IrradianceMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	IrradianceMapProps.SampleCount	= 1;
 
-	IrradianceMap = MakeShared<D3D12Texture>(Device.Get());
-	if (!IrradianceMap->Initialize(IrradianceMapProps))
+	IrradianceMap = RenderingAPI->CreateTexture(IrradianceMapProps);
+	if (!IrradianceMap)
 	{
 		return false;
 	}
@@ -912,7 +894,7 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	UavDesc.Texture2DArray.FirstArraySlice	= 0;
 	UavDesc.Texture2DArray.MipSlice			= 0;
 	UavDesc.Texture2DArray.PlaneSlice		= 0;
-	IrradianceMap->SetUnorderedAccessView(MakeShared<D3D12UnorderedAccessView>(Device.Get(), nullptr, IrradianceMap->GetResource(), &UavDesc), 0);
+	IrradianceMap->SetUnorderedAccessView(TSharedPtr(RenderingAPI->CreateUnorderedAccessView(nullptr, IrradianceMap->GetResource(), &UavDesc)), 0);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
 	SrvDesc.Format							= IrradianceMapProps.Format;
@@ -921,7 +903,7 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	SrvDesc.TextureCube.MipLevels			= 1;
 	SrvDesc.TextureCube.MostDetailedMip		= 0;
 	SrvDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
-	IrradianceMap->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), IrradianceMap->GetResource(), &SrvDesc), 0);
+	IrradianceMap->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(IrradianceMap->GetResource(), &SrvDesc)), 0);
 
 	// Generate global specular irradiance (From Skybox)
 	const Uint16 SpecularIrradianceSize = 128;
@@ -938,8 +920,8 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	SpecualarIrradianceMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	SpecualarIrradianceMapProps.SampleCount = 1;
 
-	SpecularIrradianceMap = MakeShared<D3D12Texture>(Device.Get());
-	if (!SpecularIrradianceMap->Initialize(SpecualarIrradianceMapProps))
+	SpecularIrradianceMap = RenderingAPI->CreateTexture(SpecualarIrradianceMapProps);
+	if (!SpecularIrradianceMap)
 	{
 		return false;
 	}
@@ -951,7 +933,7 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	for (Uint32 Miplevel = 0; Miplevel < Miplevels; Miplevel++)
 	{
 		UavDesc.Texture2DArray.MipSlice = Miplevel;
-		SpecularIrradianceMap->SetUnorderedAccessView(MakeShared<D3D12UnorderedAccessView>(Device.Get(), nullptr, SpecularIrradianceMap->GetResource(), &UavDesc), Miplevel);
+		SpecularIrradianceMap->SetUnorderedAccessView(TSharedPtr(RenderingAPI->CreateUnorderedAccessView(nullptr, SpecularIrradianceMap->GetResource(), &UavDesc)), Miplevel);
 	}
 
 	SrvDesc.Format							= SpecualarIrradianceMapProps.Format;
@@ -960,16 +942,16 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	SrvDesc.TextureCube.MipLevels			= SpecualarIrradianceMapProps.MipLevels;
 	SrvDesc.TextureCube.MostDetailedMip		= 0;
 	SrvDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
-	SpecularIrradianceMap->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), SpecularIrradianceMap->GetResource(), &SrvDesc), 0);
+	SpecularIrradianceMap->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(SpecularIrradianceMap->GetResource(), &SrvDesc)), 0);
 
-	GenerateIrradianceMap(Skybox.Get(), IrradianceMap.Get(), ImmediateCommandList.Get());
-	ImmediateCommandList->Flush();
+	GenerateIrradianceMap(Skybox.Get(), IrradianceMap.Get(), RenderingAPI->GetImmediateCommandList().Get());
+	RenderingAPI->GetImmediateCommandList()->Flush();
 
-	GenerateSpecularIrradianceMap(Skybox.Get(), SpecularIrradianceMap.Get(), ImmediateCommandList.Get());
-	ImmediateCommandList->Flush();
+	GenerateSpecularIrradianceMap(Skybox.Get(), SpecularIrradianceMap.Get(), RenderingAPI->GetImmediateCommandList().Get());
+	RenderingAPI->GetImmediateCommandList()->Flush();
 
 	// Create albedo for raytracing
-	Albedo = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device.Get(), "../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	Albedo = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!Albedo)
 	{
 		return false;
@@ -979,7 +961,7 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 		Albedo->SetDebugName("AlbedoMap");
 	}
 	
-	Normal = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(Device.Get(), "../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	Normal = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!Normal)
 	{
 		return false;
@@ -1000,16 +982,16 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 		return false;
 	}
 
-	ImmediateCommandList->TransitionBarrier(PointLightBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	ImmediateCommandList->TransitionBarrier(DirectionalLightBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	ImmediateCommandList->TransitionBarrier(PointLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	ImmediateCommandList->TransitionBarrier(DirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(PointLightBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(DirectionalLightBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(PointLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(DirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	if (VSMDirLightShadowMaps)
 	{
-		ImmediateCommandList->TransitionBarrier(VSMDirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		RenderingAPI->GetImmediateCommandList()->TransitionBarrier(VSMDirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 	
-	ImmediateCommandList->Flush();
+	RenderingAPI->GetImmediateCommandList()->Flush();
 
 	if (!InitGBuffer())
 	{
@@ -1037,7 +1019,7 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RendererWindow)
 	}
 
 	// Init RayTracing if supported
-	if (Device->IsRayTracingSupported())
+	if (RenderingAPI->IsRayTracingSupported())
 	{
 		if (!InitRayTracing())
 		{
@@ -1078,8 +1060,8 @@ bool Renderer::InitRayTracing()
 		RayGenLocalRootDesc.pParameters		= &RootParams;
 		RayGenLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
-		RayGenLocalRoot = MakeUnique<D3D12RootSignature>(Device.Get());
-		if (RayGenLocalRoot->Initialize(RayGenLocalRootDesc))
+		RayGenLocalRoot = RenderingAPI->CreateRootSignature(RayGenLocalRootDesc);
+		if (RayGenLocalRoot)
 		{
 			RayGenLocalRoot->SetDebugName("RayGen Local RootSignature");
 		}
@@ -1116,8 +1098,8 @@ bool Renderer::InitRayTracing()
 		HitLocalRootDesc.pParameters	= &RootParams;
 		HitLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
-		HitLocalRoot = MakeUnique<D3D12RootSignature>(Device.Get());
-		if (HitLocalRoot->Initialize(HitLocalRootDesc))
+		HitLocalRoot = RenderingAPI->CreateRootSignature(HitLocalRootDesc);
+		if (HitLocalRoot)
 		{
 			HitLocalRoot->SetDebugName("Closest Hit Local RootSignature");
 		}
@@ -1134,8 +1116,8 @@ bool Renderer::InitRayTracing()
 		MissLocalRootDesc.pParameters	= nullptr;
 		MissLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
-		MissLocalRoot = MakeUnique<D3D12RootSignature>(Device.Get());
-		if (MissLocalRoot->Initialize(MissLocalRootDesc))
+		MissLocalRoot = RenderingAPI->CreateRootSignature(MissLocalRootDesc);
+		if (MissLocalRoot)
 		{
 			MissLocalRoot->SetDebugName("Miss Local RootSignature");
 		}
@@ -1232,8 +1214,8 @@ bool Renderer::InitRayTracing()
 		GlobalRootDesc.pParameters			= &RootParams;
 		GlobalRootDesc.Flags				= D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
-		GlobalRootSignature = MakeShared<D3D12RootSignature>(Device.Get());
-		if (!GlobalRootSignature->Initialize(GlobalRootDesc))
+		GlobalRootSignature = RenderingAPI->CreateRootSignature(GlobalRootDesc);
+		if (!GlobalRootSignature)
 		{
 			return false;
 		}
@@ -1248,21 +1230,21 @@ bool Renderer::InitRayTracing()
 	PipelineProperties.GlobalRootSignature		= GlobalRootSignature.Get();
 	PipelineProperties.MaxRecursions			= 4;
 
-	RaytracingPSO = MakeShared<D3D12RayTracingPipelineState>(Device.Get());
-	if (!RaytracingPSO->Initialize(PipelineProperties))
+	RaytracingPSO = RenderingAPI->CreateRayTracingPipelineState(PipelineProperties);
+	if (!RaytracingPSO)
 	{
 		return false;
 	}
 
 	// Build Acceleration Structures
-	ImmediateCommandList->TransitionBarrier(CameraBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(CameraBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	// Create BLAS
-	TSharedPtr<D3D12RayTracingGeometry> MeshGeometry = MakeShared<D3D12RayTracingGeometry>(Device.Get());
-	MeshGeometry->BuildAccelerationStructure(ImmediateCommandList.Get(), MeshVertexBuffer, static_cast<Uint32>(Sphere.Vertices.GetSize()), MeshIndexBuffer, static_cast<Uint32>(Sphere.Indices.GetSize()));
+	TSharedPtr<D3D12RayTracingGeometry> MeshGeometry = TSharedPtr(RenderingAPI->CreateRayTracingGeometry());
+	MeshGeometry->BuildAccelerationStructure(RenderingAPI->GetImmediateCommandList().Get(), MeshVertexBuffer, static_cast<Uint32>(Sphere.Vertices.GetSize()), MeshIndexBuffer, static_cast<Uint32>(Sphere.Indices.GetSize()));
 
-	TSharedPtr<D3D12RayTracingGeometry> CubeGeometry = MakeShared<D3D12RayTracingGeometry>(Device.Get());
-	CubeGeometry->BuildAccelerationStructure(ImmediateCommandList.Get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.GetSize()), CubeIndexBuffer, static_cast<Uint32>(Cube.Indices.GetSize()));
+	TSharedPtr<D3D12RayTracingGeometry> CubeGeometry = TSharedPtr(RenderingAPI->CreateRayTracingGeometry());
+	CubeGeometry->BuildAccelerationStructure(RenderingAPI->GetImmediateCommandList().Get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.GetSize()), CubeIndexBuffer, static_cast<Uint32>(Cube.Indices.GetSize()));
 
 	XMFLOAT3X4 Matrix;
 	TArray<D3D12RayTracingGeometryInstance> Instances;
@@ -1285,10 +1267,10 @@ bool Renderer::InitRayTracing()
 	Instances.EmplaceBack(CubeGeometry, Matrix, 1, 1);
 
 	// Create DescriptorTables
-	TSharedPtr<D3D12DescriptorTable> SphereDescriptorTable = MakeShared<D3D12DescriptorTable>(Device.Get(), 2);
-	TSharedPtr<D3D12DescriptorTable> CubeDescriptorTable	= MakeShared<D3D12DescriptorTable>(Device.Get(), 2);
-	RayGenDescriptorTable = MakeShared<D3D12DescriptorTable>(Device.Get(), 1);
-	GlobalDescriptorTable = MakeShared<D3D12DescriptorTable>(Device.Get(), 7);
+	TSharedPtr<D3D12DescriptorTable> SphereDescriptorTable	= TSharedPtr(RenderingAPI->CreateDescriptorTable(2)); 
+	TSharedPtr<D3D12DescriptorTable> CubeDescriptorTable	= TSharedPtr(RenderingAPI->CreateDescriptorTable(2));
+	RayGenDescriptorTable = TSharedPtr(RenderingAPI->CreateDescriptorTable(1));
+	GlobalDescriptorTable = TSharedPtr(RenderingAPI->CreateDescriptorTable(7));
 
 	// Create TLAS
 	TArray<BindingTableEntry> BindingTableEntries;
@@ -1297,16 +1279,15 @@ bool Renderer::InitRayTracing()
 	BindingTableEntries.EmplaceBack("HitGroup", CubeDescriptorTable);
 	BindingTableEntries.EmplaceBack("Miss", nullptr);
 
-	RayTracingScene = MakeShared<D3D12RayTracingScene>(Device.Get());
-	if (!RayTracingScene->Initialize(RaytracingPSO.Get(), BindingTableEntries, 2))
+	RayTracingScene = RenderingAPI->CreateRayTracingScene(RaytracingPSO.Get(), BindingTableEntries, 2);
+	if (!RayTracingScene)
 	{
 		return false;
 	}
 
-	RayTracingScene->BuildAccelerationStructure(ImmediateCommandList.Get(), Instances);
-
-	ImmediateCommandList->Flush();
-	ImmediateCommandList->WaitForCompletion();
+	RayTracingScene->BuildAccelerationStructure(RenderingAPI->GetImmediateCommandList().Get(), Instances);
+	RenderingAPI->GetImmediateCommandList()->Flush();
+	RenderingAPI->GetImmediateCommandList()->WaitForCompletion();
 
 	// VertexBuffer
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
@@ -1318,10 +1299,10 @@ bool Renderer::InitRayTracing()
 	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Vertices.GetSize());
 	SrvDesc.Buffer.StructureByteStride	= sizeof(Vertex);
 
-	MeshVertexBuffer->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), MeshVertexBuffer->GetResource(), &SrvDesc), 0);
+	MeshVertexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(MeshVertexBuffer->GetResource(), &SrvDesc)), 0);
 
 	SrvDesc.Buffer.NumElements = static_cast<Uint32>(Cube.Vertices.GetSize());
-	CubeVertexBuffer->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), CubeVertexBuffer->GetResource(), &SrvDesc), 0);
+	CubeVertexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(CubeVertexBuffer->GetResource(), &SrvDesc)), 0);
 
 	// IndexBuffer
 	SrvDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
@@ -1329,10 +1310,10 @@ bool Renderer::InitRayTracing()
 	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Indices.GetSize());
 	SrvDesc.Buffer.StructureByteStride	= 0;
 
-	MeshIndexBuffer->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), MeshIndexBuffer->GetResource(), &SrvDesc), 0);
+	MeshIndexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(MeshIndexBuffer->GetResource(), &SrvDesc)), 0);
 
 	SrvDesc.Buffer.NumElements = static_cast<Uint32>(Cube.Indices.GetSize());
-	CubeIndexBuffer->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), CubeIndexBuffer->GetResource(), &SrvDesc), 0);
+	CubeIndexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(CubeIndexBuffer->GetResource(), &SrvDesc)), 0);
 
 	// Populate descriptors
 	RayGenDescriptorTable->SetUnorderedAccessView(ReflectionTexture->GetUnorderedAccessView(0).Get(), 0);
@@ -1371,13 +1352,13 @@ bool Renderer::InitLightBuffers()
 	Props.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 	Props.Flags			= D3D12_RESOURCE_FLAG_NONE;
 
-	PointLightBuffer = MakeShared<D3D12Buffer>(Device.Get());
-	if (PointLightBuffer->Initialize(Props))
+	PointLightBuffer = RenderingAPI->CreateBuffer(Props);
+	if (PointLightBuffer)
 	{
 		D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = { };
 		CBVDesc.BufferLocation	= PointLightBuffer->GetGPUVirtualAddress();
 		CBVDesc.SizeInBytes		= static_cast<Uint32>(Props.SizeInBytes);
-		PointLightBuffer->SetConstantBufferView(MakeShared<D3D12ConstantBufferView>(Device.Get(), PointLightBuffer->GetResource(), &CBVDesc));
+		PointLightBuffer->SetConstantBufferView(TSharedPtr(RenderingAPI->CreateConstantBufferView(PointLightBuffer->GetResource(), &CBVDesc)));
 	}
 	else
 	{
@@ -1387,13 +1368,13 @@ bool Renderer::InitLightBuffers()
 	Props.Name			= "DirectionalLight Buffer";
 	Props.SizeInBytes	= AlignUp<Uint32>(NumDirLights * sizeof(DirectionalLightProperties), 256U);
 
-	DirectionalLightBuffer = MakeShared<D3D12Buffer>(Device.Get());
-	if (DirectionalLightBuffer->Initialize(Props))
+	DirectionalLightBuffer = RenderingAPI->CreateBuffer(Props);
+	if (DirectionalLightBuffer)
 	{
 		D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = { };
 		CBVDesc.BufferLocation	= DirectionalLightBuffer->GetGPUVirtualAddress();
 		CBVDesc.SizeInBytes		= static_cast<Uint32>(Props.SizeInBytes);
-		DirectionalLightBuffer->SetConstantBufferView(MakeShared<D3D12ConstantBufferView>(Device.Get(), DirectionalLightBuffer->GetResource(), &CBVDesc));
+		DirectionalLightBuffer->SetConstantBufferView(TSharedPtr(RenderingAPI->CreateConstantBufferView(DirectionalLightBuffer->GetResource(), &CBVDesc)));
 	}
 	else
 	{
@@ -1448,8 +1429,8 @@ bool Renderer::InitPrePass()
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS		|
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
-	PrePassRootSignature = MakeShared<D3D12RootSignature>(Device.Get());
-	if (!PrePassRootSignature->Initialize(RootSignatureDesc))
+	PrePassRootSignature = RenderingAPI->CreateRootSignature(RootSignatureDesc);
+	if (!PrePassRootSignature)
 	{
 		return false;
 	}
@@ -1478,14 +1459,14 @@ bool Renderer::InitPrePass()
 	PSOProperties.RTFormats			= nullptr;
 	PSOProperties.NumRenderTargets	= 0;
 
-	PrePassPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
-	if (!PrePassPSO->Initialize(PSOProperties))
+	PrePassPSO = RenderingAPI->CreateGraphicsPipelineState(PSOProperties);
+	if (!PrePassPSO)
 	{
 		return false;
 	}
 
 	// Init descriptortable
-	PrePassDescriptorTable = MakeShared<D3D12DescriptorTable>(Device.Get(), 1);
+	PrePassDescriptorTable = RenderingAPI->CreateDescriptorTable(1);
 	PrePassDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 0);
 	PrePassDescriptorTable->CopyDescriptors();
 
@@ -1543,7 +1524,7 @@ bool Renderer::InitShadowMapPass()
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS		|
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
-	ShadowMapRootSignature = MakeShared<D3D12RootSignature>(Device.Get());
+	ShadowMapRootSignature = RenderingAPI->CreateRootSignature(RootSignatureDesc);
 	if (!ShadowMapRootSignature->Initialize(RootSignatureDesc))
 	{
 		return false;
@@ -1594,7 +1575,7 @@ bool Renderer::InitShadowMapPass()
 		return false;
 	}
 #else
-	ShadowMapPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
+	ShadowMapPSO = RenderingAPI->CreateGraphicsPipelineState(PSOProperties);
 	if (!ShadowMapPSO->Initialize(PSOProperties))
 	{
 		return false;
@@ -1627,8 +1608,8 @@ bool Renderer::InitShadowMapPass()
 	PSOProperties.SampleCount		= 1;
 	PSOProperties.SampleQuality		= 0;
 
-	LinearShadowMapPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
-	if (!LinearShadowMapPSO->Initialize(PSOProperties))
+	LinearShadowMapPSO = RenderingAPI->CreateGraphicsPipelineState(PSOProperties);
+	if (!LinearShadowMapPSO)
 	{
 		return false;
 	}
@@ -1765,7 +1746,7 @@ bool Renderer::InitDeferred()
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
-		GeometryRootSignature = MakeShared<D3D12RootSignature>(Device.Get());
+		GeometryRootSignature = RenderingAPI->CreateRootSignature(RootSignatureDesc);
 		if (!GeometryRootSignature->Initialize(RootSignatureDesc))
 		{
 			return false;
@@ -1819,8 +1800,8 @@ bool Renderer::InitDeferred()
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
-		SkyboxRootSignature = MakeShared<D3D12RootSignature>(Device.Get());
-		if (!SkyboxRootSignature->Initialize(RootSignatureDesc))
+		SkyboxRootSignature = RenderingAPI->CreateRootSignature(RootSignatureDesc);
+		if (!SkyboxRootSignature)
 		{
 			return false;
 		}
@@ -2006,8 +1987,8 @@ bool Renderer::InitDeferred()
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
-		LightRootSignature = MakeShared<D3D12RootSignature>(Device.Get());
-		if (!LightRootSignature->Initialize(RootSignatureDesc))
+		LightRootSignature = RenderingAPI->CreateRootSignature(RootSignatureDesc);
+		if (!LightRootSignature)
 		{
 			return false;
 		}
@@ -2045,8 +2026,8 @@ bool Renderer::InitDeferred()
 	PSOProperties.RTFormats			= Formats;
 	PSOProperties.NumRenderTargets	= 3;
 
-	GeometryPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
-	if (!GeometryPSO->Initialize(PSOProperties))
+	GeometryPSO = RenderingAPI->CreateGraphicsPipelineState(PSOProperties);
+	if (!GeometryPSO)
 	{
 		return false;
 	}
@@ -2075,8 +2056,8 @@ bool Renderer::InitDeferred()
 	PSOProperties.NumRenderTargets	= 1;
 	PSOProperties.CullMode			= D3D12_CULL_MODE_NONE;
 
-	LightPassPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
-	if (!LightPassPSO->Initialize(PSOProperties))
+	LightPassPSO = RenderingAPI->CreateGraphicsPipelineState(PSOProperties);
+	if (!LightPassPSO)
 	{
 		return false;
 	}
@@ -2106,18 +2087,18 @@ bool Renderer::InitDeferred()
 	PSOProperties.RTFormats			= Formats;
 	PSOProperties.NumRenderTargets	= 1;
 
-	SkyboxPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
-	if (!SkyboxPSO->Initialize(PSOProperties))
+	SkyboxPSO = RenderingAPI->CreateGraphicsPipelineState(PSOProperties);
+	if (!SkyboxPSO)
 	{
 		return false;
 	}
 
 	// Init descriptortable
-	GeometryDescriptorTable = MakeShared<D3D12DescriptorTable>(Device.Get(), 1);
+	GeometryDescriptorTable = RenderingAPI->CreateDescriptorTable(1);
 	GeometryDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 0);
 	GeometryDescriptorTable->CopyDescriptors();
 	
-	LightDescriptorTable = MakeShared<D3D12DescriptorTable>(Device.Get(), 13);
+	LightDescriptorTable = RenderingAPI->CreateDescriptorTable(13);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).Get(), 0);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 1);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).Get(), 2);
@@ -2131,7 +2112,7 @@ bool Renderer::InitDeferred()
 	LightDescriptorTable->SetConstantBufferView(PointLightBuffer->GetConstantBufferView().Get(), 11);
 	LightDescriptorTable->SetConstantBufferView(DirectionalLightBuffer->GetConstantBufferView().Get(), 12);
 
-	SkyboxDescriptorTable = MakeShared<D3D12DescriptorTable>(Device.Get(), 2);
+	SkyboxDescriptorTable = RenderingAPI->CreateDescriptorTable(2);
 	SkyboxDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).Get(), 0);
 	SkyboxDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 1);
 	SkyboxDescriptorTable->CopyDescriptors();
@@ -2153,8 +2134,8 @@ bool Renderer::InitGBuffer()
 	GBufferProperties.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
 	GBufferProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 	GBufferProperties.ArrayCount	= 1;
-	GBufferProperties.Width			= static_cast<Uint16>(SwapChain->GetWidth());
-	GBufferProperties.Height		= static_cast<Uint16>(SwapChain->GetHeight());
+	GBufferProperties.Width			= static_cast<Uint16>(RenderingAPI->GetSwapChain()->GetWidth());
+	GBufferProperties.Height		= static_cast<Uint16>(RenderingAPI->GetSwapChain()->GetHeight());
 	GBufferProperties.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	GBufferProperties.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 	GBufferProperties.MipLevels		= 1;
@@ -2184,11 +2165,11 @@ bool Renderer::InitGBuffer()
 	RtvDesc.Texture2D.MipSlice		= 0;
 	RtvDesc.Texture2D.PlaneSlice	= 0;
 
-	GBuffer[0] = MakeShared<D3D12Texture>(Device.Get());
-	if (GBuffer[0]->Initialize(GBufferProperties))
+	GBuffer[0] = RenderingAPI->CreateTexture(GBufferProperties);
+	if (GBuffer[0])
 	{
-		GBuffer[0]->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), GBuffer[0]->GetResource(), &SrvDesc), 0);
-		GBuffer[0]->SetRenderTargetView(MakeShared<D3D12RenderTargetView>(Device.Get(), GBuffer[0]->GetResource(), &RtvDesc), 0);
+		GBuffer[0]->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(GBuffer[0]->GetResource(), &SrvDesc)), 0);
+		GBuffer[0]->SetRenderTargetView(TSharedPtr(RenderingAPI->CreateRenderTargetView(GBuffer[0]->GetResource(), &RtvDesc)), 0);
 	}
 	else
 	{
@@ -2204,11 +2185,11 @@ bool Renderer::InitGBuffer()
 	SrvDesc.Format = GBufferProperties.Format;
 	RtvDesc.Format = GBufferProperties.Format;
 
-	GBuffer[1] = MakeShared<D3D12Texture>(Device.Get());
-	if (GBuffer[1]->Initialize(GBufferProperties))
+	GBuffer[1] = RenderingAPI->CreateTexture(GBufferProperties);
+	if (GBuffer[1])
 	{
-		GBuffer[1]->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), GBuffer[1]->GetResource(), &SrvDesc), 0);
-		GBuffer[1]->SetRenderTargetView(MakeShared<D3D12RenderTargetView>(Device.Get(), GBuffer[1]->GetResource(), &RtvDesc), 0);
+		GBuffer[1]->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(GBuffer[1]->GetResource(), &SrvDesc)), 0);
+		GBuffer[1]->SetRenderTargetView(TSharedPtr(RenderingAPI->CreateRenderTargetView(GBuffer[1]->GetResource(), &RtvDesc)), 0);
 	}
 	else
 	{
@@ -2224,11 +2205,11 @@ bool Renderer::InitGBuffer()
 	SrvDesc.Format = GBufferProperties.Format;
 	RtvDesc.Format = GBufferProperties.Format;
 
-	GBuffer[2] = MakeShared<D3D12Texture>(Device.Get());
-	if (GBuffer[2]->Initialize(GBufferProperties))
+	GBuffer[2] = RenderingAPI->CreateTexture(GBufferProperties);
+	if (GBuffer[2])
 	{
-		GBuffer[2]->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), GBuffer[2]->GetResource(), &SrvDesc), 0);
-		GBuffer[2]->SetRenderTargetView(MakeShared<D3D12RenderTargetView>(Device.Get(), GBuffer[2]->GetResource(), &RtvDesc), 0);
+		GBuffer[2]->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(GBuffer[2]->GetResource(), &SrvDesc)), 0);
+		GBuffer[2]->SetRenderTargetView(TSharedPtr(RenderingAPI->CreateRenderTargetView(GBuffer[2]->GetResource(), &RtvDesc)), 0);
 	}
 	else
 	{
@@ -2253,11 +2234,11 @@ bool Renderer::InitGBuffer()
 	DsvDesc.ViewDimension		= D3D12_DSV_DIMENSION_TEXTURE2D;
 	DsvDesc.Texture2D.MipSlice	= 0;
 
-	GBuffer[3] = MakeShared<D3D12Texture>(Device.Get());
-	if (GBuffer[3]->Initialize(GBufferProperties))
+	GBuffer[3] = RenderingAPI->CreateTexture(GBufferProperties);
+	if (GBuffer[3])
 	{
-		GBuffer[3]->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), GBuffer[3]->GetResource(), &SrvDesc), 0);
-		GBuffer[3]->SetDepthStencilView(MakeShared<D3D12DepthStencilView>(Device.Get(), GBuffer[3]->GetResource(), &DsvDesc), 0);
+		GBuffer[3]->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(GBuffer[3]->GetResource(), &SrvDesc)), 0);
+		GBuffer[3]->SetDepthStencilView(TSharedPtr(RenderingAPI->CreateDepthStencilView(GBuffer[3]->GetResource(), &DsvDesc)), 0);
 	}
 	else
 	{
@@ -2269,28 +2250,10 @@ bool Renderer::InitGBuffer()
 
 bool Renderer::InitIntegrationLUT()
 {
-	D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
-	ZERO_MEMORY(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
-
-	HRESULT Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
-	if (SUCCEEDED(Result))
+	if (!RenderingAPI->UAVSupportsFormat(DXGI_FORMAT_R16G16_FLOAT))
 	{
-		if (FeatureData.TypedUAVLoadAdditionalFormats)
-		{
-			D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport =
-			{
-				DXGI_FORMAT_R16G16_FLOAT,
-				D3D12_FORMAT_SUPPORT1_NONE,
-				D3D12_FORMAT_SUPPORT2_NONE
-			};
-
-			Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
-			if (FAILED(Result) || (FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD) == 0)
-			{
-				LOG_ERROR("[Renderer]: DXGI_FORMAT_R16G16_FLOAT is not supported for UAVs");
-				return false;
-			}
-		}
+		LOG_ERROR("[Renderer]: DXGI_FORMAT_R16G16_FLOAT is not supported for UAVs");
+		return false;
 	}
 
 	TextureProperties LUTProperties = { };
@@ -2305,8 +2268,8 @@ bool Renderer::InitIntegrationLUT()
 	LUTProperties.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	LUTProperties.SampleCount	= 1;
 
-	TUniquePtr<D3D12Texture> StagingTexture = MakeUnique<D3D12Texture>(Device.Get());
-	if (!StagingTexture->Initialize(LUTProperties))
+	TUniquePtr<D3D12Texture> StagingTexture = RenderingAPI->CreateTexture(LUTProperties);
+	if (!StagingTexture)
 	{
 		return false;
 	}
@@ -2318,14 +2281,14 @@ bool Renderer::InitIntegrationLUT()
 		UavDesc.Texture2D.MipSlice		= 0;
 		UavDesc.Texture2D.PlaneSlice	= 0;
 
-		StagingTexture->SetUnorderedAccessView(MakeShared<D3D12UnorderedAccessView>(Device.Get(), nullptr, StagingTexture->GetResource(), &UavDesc), 0);
+		StagingTexture->SetUnorderedAccessView(TSharedPtr(RenderingAPI->CreateUnorderedAccessView(nullptr, StagingTexture->GetResource(), &UavDesc)), 0);
 	}
 
 	LUTProperties.DebugName	= "IntegrationLUT";
 	LUTProperties.Flags		= D3D12_RESOURCE_FLAG_NONE;
 
-	IntegrationLUT = MakeShared<D3D12Texture>(Device.Get());
-	if (!IntegrationLUT->Initialize(LUTProperties))
+	IntegrationLUT = RenderingAPI->CreateTexture(LUTProperties);
+	if (!IntegrationLUT)
 	{
 		return false;
 	}
@@ -2340,7 +2303,7 @@ bool Renderer::InitIntegrationLUT()
 		SrvDesc.Texture2D.PlaneSlice			= 0;
 		SrvDesc.Texture2D.ResourceMinLODClamp	= 0;
 
-		IntegrationLUT->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), IntegrationLUT->GetResource(), &SrvDesc), 0);
+		IntegrationLUT->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(IntegrationLUT->GetResource(), &SrvDesc)), 0);
 	}
 
 	Microsoft::WRL::ComPtr<IDxcBlob> Shader = D3D12ShaderCompiler::CompileFromFile("Shaders/BRDFIntegationGen.hlsl", "Main", "cs_6_0");
@@ -2349,8 +2312,8 @@ bool Renderer::InitIntegrationLUT()
 		return false;
 	}
 
-	TUniquePtr<D3D12RootSignature> RootSignature = MakeUnique<D3D12RootSignature>(Device.Get());
-	if (!RootSignature->Initialize(Shader.Get()))
+	TUniquePtr<D3D12RootSignature> RootSignature = RenderingAPI->CreateRootSignature(Shader.Get());
+	if (!RootSignature)
 	{
 		return false;
 	}
@@ -2360,35 +2323,34 @@ bool Renderer::InitIntegrationLUT()
 	PSOProperties.CSBlob		= Shader.Get();
 	PSOProperties.RootSignature	= RootSignature.Get();
 
-	TUniquePtr<D3D12ComputePipelineState> PSO = MakeUnique<D3D12ComputePipelineState>(Device.Get());
-	if (!PSO->Initialize(PSOProperties))
+	TUniquePtr<D3D12ComputePipelineState> PSO = RenderingAPI->CreateComputePipelineState(PSOProperties);
+	if (!PSO)
 	{
 		return false;
 	}
 
-	TUniquePtr<D3D12DescriptorTable> DescriptorTable = MakeUnique<D3D12DescriptorTable>(Device.Get(), 1);
+	TUniquePtr<D3D12DescriptorTable> DescriptorTable = RenderingAPI->CreateDescriptorTable(1);
 	DescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).Get(), 0);
 	DescriptorTable->CopyDescriptors();
 
-	ImmediateCommandList->SetComputeRootSignature(RootSignature->GetRootSignature());
-	ImmediateCommandList->SetPipelineState(PSO->GetPipeline());
-	
-	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
-	ImmediateCommandList->SetDescriptorHeaps(DescriptorHeaps, 1);
-	ImmediateCommandList->SetComputeRootDescriptorTable(DescriptorTable->GetGPUTableStartHandle(), 0);
-
-	ImmediateCommandList->Dispatch(LUTProperties.Width, LUTProperties.Height, 1);
-	ImmediateCommandList->UnorderedAccessBarrier(StagingTexture.Get());
-	
-	ImmediateCommandList->TransitionBarrier(IntegrationLUT.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-	ImmediateCommandList->TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_SOURCE);
-
-	ImmediateCommandList->CopyResource(IntegrationLUT.Get(), StagingTexture.Get());
-	
-	ImmediateCommandList->TransitionBarrier(IntegrationLUT.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-	ImmediateCommandList->Flush();
-	ImmediateCommandList->WaitForCompletion();
+	RenderingAPI->GetImmediateCommandList()->SetComputeRootSignature(RootSignature->GetRootSignature());
+	RenderingAPI->GetImmediateCommandList()->SetPipelineState(PSO->GetPipeline());
+				
+	RenderingAPI->GetImmediateCommandList()->BindGlobalOnlineDescriptorHeaps();
+	RenderingAPI->GetImmediateCommandList()->SetComputeRootDescriptorTable(DescriptorTable->GetGPUTableStartHandle(), 0);
+				
+	RenderingAPI->GetImmediateCommandList()->Dispatch(LUTProperties.Width, LUTProperties.Height, 1);
+	RenderingAPI->GetImmediateCommandList()->UnorderedAccessBarrier(StagingTexture.Get());
+				
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(IntegrationLUT.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_SOURCE);
+				
+	RenderingAPI->GetImmediateCommandList()->CopyResource(IntegrationLUT.Get(), StagingTexture.Get());
+				
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(IntegrationLUT.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+				
+	RenderingAPI->GetImmediateCommandList()->Flush();
+	RenderingAPI->GetImmediateCommandList()->WaitForCompletion();
 
 	return true;
 }
@@ -2398,16 +2360,16 @@ bool Renderer::InitRayTracingTexture()
 	TextureProperties OutputProperties = { };
 	OutputProperties.DebugName		= "RayTracing Output";
 	OutputProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	OutputProperties.Width			= static_cast<Uint16>(SwapChain->GetWidth());
-	OutputProperties.Height			= static_cast<Uint16>(SwapChain->GetHeight());
+	OutputProperties.Width			= static_cast<Uint16>(RenderingAPI->GetSwapChain()->GetWidth());
+	OutputProperties.Height			= static_cast<Uint16>(RenderingAPI->GetSwapChain()->GetHeight());
 	OutputProperties.MipLevels		= 1;
 	OutputProperties.ArrayCount		= 1;
 	OutputProperties.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
 	OutputProperties.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 	OutputProperties.SampleCount	= 1;
 
-	ReflectionTexture = TSharedPtr<D3D12Texture>(new D3D12Texture(Device.Get()));
-	if (!ReflectionTexture->Initialize(OutputProperties))
+	ReflectionTexture = RenderingAPI->CreateTexture(OutputProperties);
+	if (!ReflectionTexture)
 	{
 		return false;
 	}
@@ -2418,7 +2380,7 @@ bool Renderer::InitRayTracingTexture()
 	UAVView.Texture2D.MipSlice		= 0;
 	UAVView.Texture2D.PlaneSlice	= 0;
 
-	ReflectionTexture->SetUnorderedAccessView(MakeShared<D3D12UnorderedAccessView>(Device.Get(), nullptr, ReflectionTexture->GetResource(), &UAVView), 0);
+	ReflectionTexture->SetUnorderedAccessView(TSharedPtr(RenderingAPI->CreateUnorderedAccessView(nullptr, ReflectionTexture->GetResource(), &UAVView)), 0);
 	
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
 	SrvDesc.Format							= OutputProperties.Format;
@@ -2429,7 +2391,7 @@ bool Renderer::InitRayTracingTexture()
 	SrvDesc.Texture2D.PlaneSlice			= 0;
 	SrvDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
 	
-	ReflectionTexture->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), ReflectionTexture->GetResource(), &SrvDesc), 0);
+	ReflectionTexture->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(ReflectionTexture->GetResource(), &SrvDesc)), 0);
 
 	return true;
 }
@@ -2481,8 +2443,8 @@ bool Renderer::InitDebugStates()
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS		|
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
-	DebugRootSignature = MakeShared<D3D12RootSignature>(Device.Get());
-	if (!DebugRootSignature->Initialize(RootSignatureDesc))
+	DebugRootSignature = RenderingAPI->CreateRootSignature(RootSignatureDesc);
+	if (!DebugRootSignature)
 	{
 		return false;
 	}
@@ -2509,8 +2471,8 @@ bool Renderer::InitDebugStates()
 	PSOProperties.NumRenderTargets	= 1;
 	PSOProperties.PrimitiveType		= D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 
-	DebugBoxPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
-	if (!DebugBoxPSO->Initialize(PSOProperties))
+	DebugBoxPSO = RenderingAPI->CreateGraphicsPipelineState(PSOProperties);
+	if (!DebugBoxPSO)
 	{
 		return false;
 	}
@@ -2535,8 +2497,8 @@ bool Renderer::InitDebugStates()
 	BufferProps.InitalState = D3D12_RESOURCE_STATE_COMMON;
 	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 
-	AABBVertexBuffer = MakeShared<D3D12Buffer>(Device.Get());
-	if (!AABBVertexBuffer->Initialize(BufferProps))
+	AABBVertexBuffer = RenderingAPI->CreateBuffer(BufferProps);
+	if (!AABBVertexBuffer)
 	{
 		return false;
 	}
@@ -2563,24 +2525,24 @@ bool Renderer::InitDebugStates()
 	BufferProps.InitalState = D3D12_RESOURCE_STATE_COMMON;
 	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 
-	AABBIndexBuffer = MakeShared<D3D12Buffer>(Device.Get());
-	if (!AABBIndexBuffer->Initialize(BufferProps))
+	AABBIndexBuffer = RenderingAPI->CreateBuffer(BufferProps);
+	if (!AABBIndexBuffer)
 	{
 		return false;
 	}
 
 	// Upload Data
-	ImmediateCommandList->TransitionBarrier(AABBVertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-	ImmediateCommandList->TransitionBarrier(AABBIndexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(AABBVertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(AABBIndexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	ImmediateCommandList->UploadBufferData(AABBVertexBuffer.Get(), 0, Vertices, sizeof(Vertices));
-	ImmediateCommandList->UploadBufferData(AABBIndexBuffer.Get(), 0, Indices, sizeof(Indices));
+	RenderingAPI->GetImmediateCommandList()->UploadBufferData(AABBVertexBuffer.Get(), 0, Vertices, sizeof(Vertices));
+	RenderingAPI->GetImmediateCommandList()->UploadBufferData(AABBIndexBuffer.Get(), 0, Indices, sizeof(Indices));
 
-	ImmediateCommandList->TransitionBarrier(AABBVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	ImmediateCommandList->TransitionBarrier(AABBIndexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(AABBVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	RenderingAPI->GetImmediateCommandList()->TransitionBarrier(AABBIndexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
-	ImmediateCommandList->Flush();
-	ImmediateCommandList->WaitForCompletion();
+	RenderingAPI->GetImmediateCommandList()->Flush();
+	RenderingAPI->GetImmediateCommandList()->WaitForCompletion();
 
 	return true;
 }
@@ -2616,14 +2578,14 @@ bool Renderer::CreateShadowMaps()
 	Value0.DepthStencil.Stencil	= 0;
 	ShadowMapProps.OptimizedClearValue = &Value0;
 
-	DirLightShadowMaps = MakeShared<D3D12Texture>(Device.Get());
-	if (DirLightShadowMaps->Initialize(ShadowMapProps))
+	DirLightShadowMaps = RenderingAPI->CreateTexture(ShadowMapProps);
+	if (DirLightShadowMaps)
 	{
 		D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = { };
 		DSVDesc.Format				= ShadowMapFormat;
 		DSVDesc.ViewDimension		= D3D12_DSV_DIMENSION_TEXTURE2D;
 		DSVDesc.Texture2D.MipSlice	= 0;
-		DirLightShadowMaps->SetDepthStencilView(MakeShared<D3D12DepthStencilView>(Device.Get(), DirLightShadowMaps->GetResource(), &DSVDesc), 0);
+		DirLightShadowMaps->SetDepthStencilView(TSharedPtr(RenderingAPI->CreateDepthStencilView(DirLightShadowMaps->GetResource(), &DSVDesc)), 0);
 
 #if !ENABLE_VSM
 		D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = { };
@@ -2634,7 +2596,7 @@ bool Renderer::CreateShadowMaps()
 		SRVDesc.Texture2D.PlaneSlice			= 0;
 		SRVDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
 		SRVDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		DirLightShadowMaps->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), DirLightShadowMaps->GetResource(), &SRVDesc), 0);
+		DirLightShadowMaps->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(DirLightShadowMaps->GetResource(), &SRVDesc)), 0);
 #endif
 	}
 	else
@@ -2662,15 +2624,15 @@ bool Renderer::CreateShadowMaps()
 	Value1.Color[3]	= 1.0f;
 	ShadowMapProps.OptimizedClearValue = &Value1;
 
-	VSMDirLightShadowMaps = MakeShared<D3D12Texture>(Device.Get());
-	if (VSMDirLightShadowMaps->Initialize(ShadowMapProps))
+	VSMDirLightShadowMaps = RenderingAPI->CreateTexture(ShadowMapProps);
+	if (VSMDirLightShadowMaps)
 	{
 		D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = { };
 		RTVDesc.Format					= ShadowMapProps.Format;
 		RTVDesc.ViewDimension			= D3D12_RTV_DIMENSION_TEXTURE2D;
 		RTVDesc.Texture2D.MipSlice		= 0;
 		RTVDesc.Texture2D.PlaneSlice	= 0;
-		VSMDirLightShadowMaps->SetRenderTargetView(MakeShared<D3D12RenderTargetView>(Device.Get(), VSMDirLightShadowMaps->GetResource(), &RTVDesc), 0);
+		VSMDirLightShadowMaps->SetRenderTargetView(TSharedPtr(RenderingAPI->CreateRenderTargetView(VSMDirLightShadowMaps->GetResource(), &RTVDesc)), 0);
 	
 		D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = { };
 		SRVDesc.Format							= ShadowMapProps.Format;
@@ -2680,7 +2642,7 @@ bool Renderer::CreateShadowMaps()
 		SRVDesc.Texture2D.PlaneSlice			= 0;
 		SRVDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
 		SRVDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		VSMDirLightShadowMaps->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), VSMDirLightShadowMaps->GetResource(), &SRVDesc), 0);
+		VSMDirLightShadowMaps->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(VSMDirLightShadowMaps->GetResource(), &SRVDesc)), 0);
 	}
 	else
 	{
@@ -2705,8 +2667,8 @@ bool Renderer::CreateShadowMaps()
 	ShadowMapProps.MemoryType			= EMemoryType::MEMORY_TYPE_DEFAULT;
 	ShadowMapProps.MipLevels			= 1;
 	ShadowMapProps.OptimizedClearValue	= &Value0;
-	PointLightShadowMaps = MakeShared<D3D12Texture>(Device.Get());
-	if (PointLightShadowMaps->Initialize(ShadowMapProps))
+	PointLightShadowMaps = RenderingAPI->CreateTexture(ShadowMapProps);
+	if (PointLightShadowMaps)
 	{
 		D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = { };
 		DSVDesc.Format						= ShadowMapFormat;
@@ -2716,7 +2678,7 @@ bool Renderer::CreateShadowMaps()
 		for (Uint32 I = 0; I < 6; I++)
 		{
 			DSVDesc.Texture2DArray.FirstArraySlice = I;
-			PointLightShadowMaps->SetDepthStencilView(MakeShared<D3D12DepthStencilView>(Device.Get(), PointLightShadowMaps->GetResource(), &DSVDesc), I);
+			PointLightShadowMaps->SetDepthStencilView(TSharedPtr(RenderingAPI->CreateDepthStencilView(PointLightShadowMaps->GetResource(), &DSVDesc)), I);
 		}
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = { };
@@ -2726,7 +2688,7 @@ bool Renderer::CreateShadowMaps()
 		SRVDesc.TextureCube.MipLevels			= 1;
 		SRVDesc.TextureCube.MostDetailedMip		= 0;
 		SRVDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
-		PointLightShadowMaps->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device.Get(), PointLightShadowMaps->GetResource(), &SRVDesc), 0);
+		PointLightShadowMaps->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(PointLightShadowMaps->GetResource(), &SRVDesc)), 0);
 	}
 	else
 	{
@@ -2754,7 +2716,7 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 	static TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable;
 	if (!SrvDescriptorTable)
 	{
-		SrvDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device.Get(), 1);
+		SrvDescriptorTable = RenderingAPI->CreateDescriptorTable(1);
 		SrvDescriptorTable->SetShaderResourceView(Source->GetShaderResourceView(0).Get(), 0);
 		SrvDescriptorTable->CopyDescriptors();
 	}
@@ -2762,7 +2724,7 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 	static TUniquePtr<D3D12DescriptorTable> UavDescriptorTable;
 	if (!UavDescriptorTable)
 	{
-		UavDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device.Get(), 1);
+		UavDescriptorTable = RenderingAPI->CreateDescriptorTable(1);
 		UavDescriptorTable->SetUnorderedAccessView(Dest->GetUnorderedAccessView(0).Get(), 0);
 		UavDescriptorTable->CopyDescriptors();
 	}
@@ -2775,8 +2737,7 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 
 	if (!IrradianceGenRootSignature)
 	{
-		IrradianceGenRootSignature = MakeShared<D3D12RootSignature>(Device.Get());
-		IrradianceGenRootSignature->Initialize(Shader.Get());
+		IrradianceGenRootSignature = RenderingAPI->CreateRootSignature(Shader.Get());
 		IrradianceGenRootSignature->SetDebugName("Irradiance Gen RootSignature");
 	}
 
@@ -2787,8 +2748,7 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 		Props.CSBlob		= Shader.Get();
 		Props.RootSignature	= IrradianceGenRootSignature.Get();
 
-		IrradicanceGenPSO = MakeShared<D3D12ComputePipelineState>(Device.Get());
-		IrradicanceGenPSO->Initialize(Props);
+		IrradicanceGenPSO = RenderingAPI->CreateComputePipelineState(Props);
 	}
 
 	InCommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
@@ -2796,8 +2756,7 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 
 	InCommandList->SetComputeRootSignature(IrradianceGenRootSignature->GetRootSignature());
 
-	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
-	InCommandList->SetDescriptorHeaps(DescriptorHeaps, 1);
+	InCommandList->BindGlobalOnlineDescriptorHeaps();
 	InCommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 0);
 	InCommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 1);
 
@@ -2818,7 +2777,7 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 	static TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable;
 	if (!SrvDescriptorTable)
 	{
-		SrvDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device.Get(), 1);
+		SrvDescriptorTable = RenderingAPI->CreateDescriptorTable(1);
 		SrvDescriptorTable->SetShaderResourceView(Source->GetShaderResourceView(0).Get(), 0);
 		SrvDescriptorTable->CopyDescriptors();
 	}
@@ -2826,7 +2785,7 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 	static TUniquePtr<D3D12DescriptorTable> UavDescriptorTable;
 	if (!UavDescriptorTable)
 	{
-		UavDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device.Get(), Miplevels);
+		UavDescriptorTable = RenderingAPI->CreateDescriptorTable(Miplevels);
 		for (Uint32 Mip = 0; Mip < Miplevels; Mip++)
 		{
 			UavDescriptorTable->SetUnorderedAccessView(Dest->GetUnorderedAccessView(Mip).Get(), Mip);
@@ -2843,8 +2802,7 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 
 	if (!SpecIrradianceGenRootSignature)
 	{
-		SpecIrradianceGenRootSignature = MakeShared<D3D12RootSignature>(Device.Get());
-		SpecIrradianceGenRootSignature->Initialize(Shader.Get());
+		SpecIrradianceGenRootSignature = RenderingAPI->CreateRootSignature(Shader.Get());
 		SpecIrradianceGenRootSignature->SetDebugName("Specular Irradiance Gen RootSignature");
 	}
 
@@ -2855,8 +2813,7 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 		Props.CSBlob		= Shader.Get();
 		Props.RootSignature = SpecIrradianceGenRootSignature.Get();
 
-		SpecIrradicanceGenPSO = MakeUnique<D3D12ComputePipelineState>(Device.Get());
-		SpecIrradicanceGenPSO->Initialize(Props);
+		SpecIrradicanceGenPSO = RenderingAPI->CreateComputePipelineState(Props);
 	}
 
 	InCommandList->TransitionBarrier(Source, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
@@ -2864,8 +2821,7 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 
 	InCommandList->SetComputeRootSignature(SpecIrradianceGenRootSignature->GetRootSignature());
 
-	ID3D12DescriptorHeap* DescriptorHeaps[] = { Device->GetGlobalOnlineResourceHeap()->GetHeap() };
-	InCommandList->SetDescriptorHeaps(DescriptorHeaps, 1);
+	InCommandList->BindGlobalOnlineDescriptorHeaps();
 	InCommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
 
 	InCommandList->SetPipelineState(SpecIrradicanceGenPSO->GetPipeline());
@@ -2899,5 +2855,5 @@ void Renderer::WaitForPendingFrames()
 	//	FenceValues[CurrentBackBufferIndex]++;
 	//}
 
-	Queue->WaitForCompletion();
+	RenderingAPI->GetQueue()->WaitForCompletion();
 }

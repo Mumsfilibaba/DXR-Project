@@ -9,6 +9,9 @@
 class D3D12DescriptorTable;
 class D3D12RootSignature;
 
+/*
+* RayTracingPipelineStateProperties
+*/
 struct RayTracingPipelineStateProperties
 {
 	std::string DebugName;
@@ -21,6 +24,9 @@ struct RayTracingPipelineStateProperties
 	Uint32 MaxRecursions = 0;
 };
 
+/*
+* D3D12RayTracingPipelineState
+*/
 class D3D12RayTracingPipelineState : public D3D12DeviceChild
 {
 public:

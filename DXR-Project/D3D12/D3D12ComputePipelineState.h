@@ -3,13 +3,30 @@
 
 #include <dxcapi.h>
 
+class D3D12RootSignature;
+
+/*
+* ComputePipelineStateProperties
+*/
 struct ComputePipelineStateProperties
 {
+	ComputePipelineStateProperties() = default;
+
+	inline ComputePipelineStateProperties(const std::string& InDebugName, D3D12RootSignature* InRootSignature, IDxcBlob* InCSBlob)
+		: DebugName(InDebugName)
+		, RootSignature(InRootSignature)
+		, CSBlob(InCSBlob)
+	{
+	}
+
 	std::string DebugName;
-	class D3D12RootSignature* RootSignature = nullptr;
+	D3D12RootSignature* RootSignature = nullptr;
 	IDxcBlob* CSBlob = nullptr;
 };
 
+/*
+* D3D12ComputePipelineState 
+*/
 class D3D12ComputePipelineState : public D3D12DeviceChild
 {
 public:

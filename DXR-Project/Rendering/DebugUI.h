@@ -9,7 +9,7 @@ class DebugUI
 public:
 	typedef void(*UIDrawFunc)();
 
-	static bool Initialize(TSharedPtr<class D3D12Device> InDevice);
+	static bool Initialize();
 	static void Release();
 
 	static void DrawUI(UIDrawFunc DrawFunc);

@@ -66,9 +66,8 @@ public:
 };
 
 /*
-* D3D12RayTracingScene - Equal to the Top-Level AccelerationStructure
+* BindingTableEntry
 */
-
 struct BindingTableEntry
 {
 public:
@@ -89,6 +88,9 @@ public:
 	TSharedPtr<D3D12DescriptorTable> DescriptorTable;
 };
 
+/*
+* D3D12RayTracingScene - Equal to the Top-Level AccelerationStructure
+*/
 class D3D12RayTracingScene : public D3D12DeviceChild
 {
 public:
