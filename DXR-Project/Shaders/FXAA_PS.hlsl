@@ -62,8 +62,8 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	float Range = RangeMax - RangeMin;
 	if (Range < max(FXAA_EDGE_THRESHOLD_MIN, RangeMax * FXAA_EDGE_THRESHOLD))
 	{
-        return float4(Middle, 1.0f);
-    }
+		return float4(Middle, 1.0f);
+	}
 	
 	float LumaL = (LumaN + LumaS + LumaW + LumaE) * 0.25f;
 	float RangeL = abs(LumaL - LumaM);
