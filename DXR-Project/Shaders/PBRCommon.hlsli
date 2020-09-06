@@ -222,3 +222,11 @@ float3 WorldHitPosition()
 {
 	return WorldRayOrigin() + (RayTCurrent() * WorldRayDirection());
 }
+
+/*
+* Misc Helpers
+*/
+float3 ToFloat3(float Single)
+{
+    return float3(Single, Single, Single);
+}

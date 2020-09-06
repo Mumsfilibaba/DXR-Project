@@ -171,7 +171,7 @@ static void DrawRenderSettings()
 
 	static const Char* AAItems[] =
 	{
-		"Off",
+		"OFF",
 		"FXAA",
 	};
 
