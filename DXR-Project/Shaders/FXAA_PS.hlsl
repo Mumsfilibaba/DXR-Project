@@ -1,12 +1,10 @@
 #include "PBRCommon.hlsli"
 
-#define FXAA_EDGE_THRESHOLD			(1.0f / 16.0f)
+#define FXAA_EDGE_THRESHOLD			(1.0f / 8.0f)
 #define FXAA_EDGE_THRESHOLD_MIN		(1.0f / 32.0f)
 
-#define FXAA_SUBPIX_TRIM			(1.0f / 8.0f)
-//#define FXAA_SUBPIX_TRIM			0.0f
-#define FXAA_SUBPIX_CAP				(7.0f / 8.0f)
-//#define FXAA_SUBPIX_CAP			1.0f
+#define FXAA_SUBPIX_TRIM			(1.0f / 4.0f)
+#define FXAA_SUBPIX_CAP				(3.0f / 4.0f)
 #define FXAA_SUBPIX_TRIM_SCALE		(1.0f / (1.0f - FXAA_SUBPIX_TRIM))
 
 #define FXAA_SEARCH_THRESHOLD		(1.0f / 8.0f)
@@ -19,8 +17,6 @@ cbuffer CB0 : register(b0, space0)
 
 Texture2D FinalImage : register(t0, space0);
 SamplerState Sampler : register(s0, space0);
-
-static const float FXAA_REDUCE_MUL = 1.0f / 8.0f;
 
 /*
 * Helpers
@@ -66,23 +62,22 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	float Range = RangeMax - RangeMin;
 	if (Range < max(FXAA_EDGE_THRESHOLD_MIN, RangeMax * FXAA_EDGE_THRESHOLD))
 	{
-		return float4(Middle, 1.0f);
-	}
+        return float4(Middle, 1.0f);
+    }
 	
 	float LumaL = (LumaN + LumaS + LumaW + LumaE) * 0.25f;
 	float RangeL = abs(LumaL - LumaM);
 	float BlendL = max(0.0f, (RangeL / Range) - FXAA_SUBPIX_TRIM) * FXAA_SUBPIX_TRIM_SCALE;
 	BlendL = min(BlendL, FXAA_SUBPIX_CAP);
 	
-	float3 ColorL = (Middle + North + South + West + East);
 	const float3 NorthWest = SampleFXAA(FinalImage, Sampler, TexCoord + float2(-InvTextureSize.x, -InvTextureSize.y));
 	const float3 SouthWest = SampleFXAA(FinalImage, Sampler, TexCoord + float2(-InvTextureSize.x,  InvTextureSize.y));
 	const float3 NorthEast = SampleFXAA(FinalImage, Sampler, TexCoord + float2( InvTextureSize.x, -InvTextureSize.y));
 	const float3 SouthEast = SampleFXAA(FinalImage, Sampler, TexCoord + float2( InvTextureSize.x,  InvTextureSize.y));
- #if 1
+	
+	float3 ColorL = (Middle + North + South + West + East);
 	ColorL += (NorthWest + SouthWest + NorthEast + SouthEast);
 	ColorL = ColorL * ToFloat3(1.0f / 9.0f);
-#endif
 	
 	float LumaNW = FXAALuma(NorthWest);
 	float LumaNE = FXAALuma(NorthEast);
