@@ -15,8 +15,9 @@ cbuffer CB0 : register(b0, space0)
 	float2 TextureSize;
 }
 
-Texture2D FinalImage : register(t0, space0);
-SamplerState Sampler : register(s0, space0);
+Texture2D FinalImage		: register(t0, space0);
+SamplerState PointSampler	: register(s0, space0);
+SamplerState LinearSampler	: register(s1, space0);
 
 /*
 * Helpers
@@ -46,11 +47,11 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	
 	// Perform edge detection
 	const float2 InvTextureSize = float2(1.0f, 1.0f) / TextureSize;
-	const float3 Middle	= SampleFXAA(FinalImage, Sampler, TexCoord);
-	const float3 North	= SampleFXAA(FinalImage, Sampler, TexCoord + float2(0.0f, -InvTextureSize.y));
-	const float3 South	= SampleFXAA(FinalImage, Sampler, TexCoord + float2(0.0f, InvTextureSize.y));
-	const float3 West	= SampleFXAA(FinalImage, Sampler, TexCoord + float2(-InvTextureSize.x, 0.0f));
-	const float3 East	= SampleFXAA(FinalImage, Sampler, TexCoord + float2( InvTextureSize.x, 0.0f));
+	const float3 Middle	= SampleFXAA(FinalImage, PointSampler, TexCoord);
+	const float3 North	= SampleFXAA(FinalImage, PointSampler, TexCoord + float2(0.0f, -InvTextureSize.y));
+	const float3 South	= SampleFXAA(FinalImage, PointSampler, TexCoord + float2(0.0f, InvTextureSize.y));
+	const float3 West	= SampleFXAA(FinalImage, PointSampler, TexCoord + float2(-InvTextureSize.x, 0.0f));
+	const float3 East	= SampleFXAA(FinalImage, PointSampler, TexCoord + float2( InvTextureSize.x, 0.0f));
 	float LumaM	= FXAALuma(Middle);
 	float LumaN	= FXAALuma(North);
 	float LumaS	= FXAALuma(South);
@@ -70,10 +71,10 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	float BlendL = max(0.0f, (RangeL / Range) - FXAA_SUBPIX_TRIM) * FXAA_SUBPIX_TRIM_SCALE;
 	BlendL = min(BlendL, FXAA_SUBPIX_CAP);
 	
-	const float3 NorthWest = SampleFXAA(FinalImage, Sampler, TexCoord + float2(-InvTextureSize.x, -InvTextureSize.y));
-	const float3 SouthWest = SampleFXAA(FinalImage, Sampler, TexCoord + float2(-InvTextureSize.x,  InvTextureSize.y));
-	const float3 NorthEast = SampleFXAA(FinalImage, Sampler, TexCoord + float2( InvTextureSize.x, -InvTextureSize.y));
-	const float3 SouthEast = SampleFXAA(FinalImage, Sampler, TexCoord + float2( InvTextureSize.x,  InvTextureSize.y));
+	const float3 NorthWest = SampleFXAA(FinalImage, LinearSampler, TexCoord + float2(-InvTextureSize.x, -InvTextureSize.y));
+	const float3 SouthWest = SampleFXAA(FinalImage, LinearSampler, TexCoord + float2(-InvTextureSize.x, InvTextureSize.y));
+	const float3 NorthEast = SampleFXAA(FinalImage, LinearSampler, TexCoord + float2(InvTextureSize.x, -InvTextureSize.y));
+	const float3 SouthEast = SampleFXAA(FinalImage, LinearSampler, TexCoord + float2(InvTextureSize.x, InvTextureSize.y));
 	
 	float3 ColorL = (Middle + North + South + West + East);
 	ColorL += (NorthWest + SouthWest + NorthEast + SouthEast);
@@ -144,11 +145,11 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	{
 		if (!DoneN)
 		{
-			LumaEndN = FXAALuma(SampleFXAA(FinalImage, Sampler, PosN.xy).rgb);
+			LumaEndN = FXAALuma(SampleFXAA(FinalImage, LinearSampler, PosN.xy).rgb);
 		}
 		if(!DoneP)
 		{
-			LumaEndP = FXAALuma(SampleFXAA(FinalImage, Sampler, PosP.xy).rgb);
+			LumaEndP = FXAALuma(SampleFXAA(FinalImage, LinearSampler, PosP.xy).rgb);
 		}
 		
 		DoneN = DoneN || (abs(LumaEndN - LumaN) >= GradientN);
@@ -182,6 +183,6 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	
 	float SubPixelOffset = (0.5f + (DstN * (-1.0f / SpanLength))) * LengthSign;
 	float2 TexCoordOffset = float2((HorzSpan ? 0.0f : SubPixelOffset), (HorzSpan ? SubPixelOffset : 0.0f));
-	float3 ColorF = SampleFXAA(FinalImage, Sampler, TexCoord + TexCoordOffset).rgb;
+	float3 ColorF = SampleFXAA(FinalImage, LinearSampler, TexCoord + TexCoordOffset).rgb;
 	return float4(Lerp(ColorL, ColorF, BlendL), 1.0f);
 }
