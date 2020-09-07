@@ -189,7 +189,7 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float Roughness)
 */
 float3 ApplyGammaCorrectionAndTonemapping(float3 InputColor)
 {
-	const float INTENSITY   = 0.75f;
+	const float INTENSITY   = 0.6f;
 	const float GAMMA       = 1.0f / 2.2f;
 	
 	// Gamma correct

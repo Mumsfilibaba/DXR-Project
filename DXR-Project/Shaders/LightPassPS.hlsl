@@ -291,5 +291,5 @@ float4 Main(PSInput Input) : SV_TARGET
 	float3 Ambient	= (IBL_Diffuse + IBL_Specular) * SampledAO;
 	float3 Color	= Ambient + L0;
 	
-	return float4(Color, 1.0f);
+    return float4(ApplyGammaCorrectionAndTonemapping(Color), 1.0f);
 }

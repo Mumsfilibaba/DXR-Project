@@ -23,6 +23,7 @@
 TUniquePtr<Renderer>	Renderer::RendererInstance = nullptr;
 LightSettings			Renderer::GlobalLightSettings;
 
+static const DXGI_FORMAT	RenderTargetFormat		= DXGI_FORMAT_R8G8B8A8_UNORM;
 static const DXGI_FORMAT	NormalFormat			= DXGI_FORMAT_R10G10B10A2_UNORM;
 static const DXGI_FORMAT	DepthBufferFormat		= DXGI_FORMAT_D32_FLOAT;
 static const DXGI_FORMAT	ShadowMapFormat			= DXGI_FORMAT_D32_FLOAT;
@@ -2099,7 +2100,7 @@ bool Renderer::InitDeferred()
 
 	DXGI_FORMAT FinalFormat[] =
 	{
-		DXGI_FORMAT_R16G16B16A16_FLOAT
+		RenderTargetFormat
 	};
 
 	PSOProperties.RTFormats			= FinalFormat;
@@ -2296,7 +2297,7 @@ bool Renderer::InitGBuffer()
 	}
 
 	GBufferProperties.DebugName				= "Final Target";
-	GBufferProperties.Format				= DXGI_FORMAT_R16G16B16A16_FLOAT;
+	GBufferProperties.Format				= RenderTargetFormat;
 	GBufferProperties.Flags					= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 	GBufferProperties.ArrayCount			= 1;
 	GBufferProperties.Width					= static_cast<Uint16>(RenderingAPI->GetSwapChain()->GetWidth());
@@ -2679,13 +2680,13 @@ bool Renderer::InitAA()
 	Samplers[0].RegisterSpace		= 0;
 	Samplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
 
-	Samplers[1].Filter				= D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-	Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	Samplers[1].Filter				= D3D12_FILTER_ANISOTROPIC;
+	Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	Samplers[1].MipLODBias			= 0.0f;
-	Samplers[1].MaxAnisotropy		= 0;
-	Samplers[1].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
+	Samplers[1].MaxAnisotropy		= 4;
+	Samplers[1].ComparisonFunc		= D3D12_COMPARISON_FUNC_ALWAYS;
 	Samplers[1].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 	Samplers[1].MinLOD				= 0.0f;
 	Samplers[1].MaxLOD				= 0.0f;

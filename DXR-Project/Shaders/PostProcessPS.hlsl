@@ -7,6 +7,6 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 {
 	TexCoord.y = 1.0f - TexCoord.y;
 	
-    float3 Color = FinalImage.Sample(PointSampler, TexCoord).rgb;
-	return float4(ApplyGammaCorrectionAndTonemapping(Color), 1.0f);
+	float3 Color = FinalImage.Sample(PointSampler, TexCoord).rgb;
+	return float4(Color, 1.0f);
 }
