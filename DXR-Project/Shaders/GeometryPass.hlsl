@@ -194,7 +194,7 @@ PSOutput PSMain(PSInput Input)
 	const float FinalRoughness	= min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
 	
 	PSOutput Output;
-	Output.Albedo = float4(SampledAlbedo, 1.0f);
+	Output.Albedo	= float4(SampledAlbedo, 1.0f);
 	Output.Normal	= float4(MappedNormal, 1.0f);
 	Output.Material = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
 

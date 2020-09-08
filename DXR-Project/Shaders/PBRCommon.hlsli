@@ -14,8 +14,9 @@ static const float3 LightColor      = float3(400.0f, 400.0f, 400.0f);
 /*
 * Common Defines
 */
-#define PCF_RANGE 2
-#define PCF_WIDTH float((PCF_RANGE * 2) + 1)
+#define GAMMA		(1.0f / 2.2f)
+#define PCF_RANGE	2
+#define PCF_WIDTH	float((PCF_RANGE * 2) + 1)
 
 /*
 * Common Structs
@@ -189,9 +190,8 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float Roughness)
 */
 float3 ApplyGammaCorrectionAndTonemapping(float3 InputColor)
 {
-	const float INTENSITY   = 0.6f;
-	const float GAMMA       = 1.0f / 2.2f;
-	
+	const float INTENSITY	= 0.75f;
+		
 	// Gamma correct
 	float3 FinalColor = InputColor;
 	FinalColor = FinalColor / (FinalColor + float3(INTENSITY, INTENSITY, INTENSITY));
@@ -228,5 +228,5 @@ float3 WorldHitPosition()
 */
 float3 ToFloat3(float Single)
 {
-    return float3(Single, Single, Single);
+	return float3(Single, Single, Single);
 }

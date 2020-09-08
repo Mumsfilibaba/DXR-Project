@@ -57,11 +57,11 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	
 	// Perform edge detection
 	const float2 InvTextureSize = float2(1.0f, 1.0f) / TextureSize;
-	const float3 Middle = FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(0, 0));
-	const float3 North	= FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(0, 1));
-	const float3 South	= FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(0, -1));
-	const float3 West	= FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(-1, 0));
-	const float3 East	= FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(1, 0));
+	float3 Middle = FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(0, 0));
+	float3 North	= FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(0, 1));
+	float3 South	= FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(0, -1));
+	float3 West	= FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(-1, 0));
+	float3 East	= FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(1, 0));
 	float LumaM	= FXAALuma(Middle);
 	float LumaN	= FXAALuma(North);
 	float LumaS	= FXAALuma(South);
@@ -81,10 +81,10 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	float BlendL	= max(0.0f, (RangeL / Range) - FXAA_SUBPIX_TRIM) * FXAA_SUBPIX_TRIM_SCALE;
 	BlendL = min(BlendL, FXAA_SUBPIX_CAP);
 	
-	const float3 NorthWest = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, 1));
-	const float3 SouthWest = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, -1));
-	const float3 NorthEast = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, 1));
-	const float3 SouthEast = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, -1));
+	float3 NorthWest = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, 1));
+	float3 SouthWest = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, -1));
+	float3 NorthEast = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, 1));
+	float3 SouthEast = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, -1));
 	
 	float3 ColorL = (Middle + North + South + West + East);
 	ColorL += (NorthWest + SouthWest + NorthEast + SouthEast);
@@ -215,5 +215,6 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	float SubPixelOffset = (0.5f + (Distance0 * (-1.0f / SpanLength))) * StepLength;
 	float2 FinalTexCoord = TexCoord + float2(IsHorizontal ? 0.0f : SubPixelOffset, IsHorizontal ? SubPixelOffset : 0.0f);
 	float3 ColorF = FXAASample(FinalImage, LinearSampler, FinalTexCoord).rgb;
-    return float4(Lerp(ColorL, ColorF, BlendL), 1.0f);
+    float3 FinalColor = Lerp(ColorL, ColorF, BlendL);
+    return float4(FinalColor, 1.0f);
 }
