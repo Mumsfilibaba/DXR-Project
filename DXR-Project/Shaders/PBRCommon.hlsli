@@ -230,3 +230,13 @@ float3 ToFloat3(float Single)
 {
 	return float3(Single, Single, Single);
 }
+
+float4 ToFloat4(float Single)
+{
+    return float4(Single, Single, Single, Single);
+}
+
+float CalculateLuminance(float3 Color)
+{
+    return sqrt(dot(Color, float3(0.299f, 0.587f, 0.114f)));
+}

@@ -2,6 +2,9 @@
 #include "Defines.h"
 #include "Types.h"
 
+/*
+* Editor
+*/
 class Editor
 {
 public:
