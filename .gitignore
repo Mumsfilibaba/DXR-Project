@@ -16,3 +16,6 @@
 Build/
 Dependencies/bin/
 Dependencies/bin-int/
+
+# macos files
+*.DS_Store
