@@ -3,23 +3,7 @@
 #include "Defines.h"
 #include "Types.h"
 
-enum EWindowStyleFlag : Uint32
-{
-	WINDOW_STYLE_FLAG_NONE			= 0x00,
-	WINDOW_STYLE_FLAG_TITLED		= FLAG(1),
-	WINDOW_STYLE_FLAG_CLOSABLE		= FLAG(2),
-	WINDOW_STYLE_FLAG_MINIMIZABLE	= FLAG(3),
-	WINDOW_STYLE_FLAG_MAXIMIZABLE	= FLAG(4),
-	WINDOW_STYLE_FLAG_RESIZEABLE	= FLAG(5),
-};
-
-struct WindowShape
-{
-	Uint16	Width;
-	Uint16	Height;
-	Int16	X;
-	Int16	Y;
-};
+#include "Application/Generic/GenericWindow.h"
 
 struct WindowProperties
 {
@@ -35,7 +19,7 @@ struct WindowProperties
 
 class WindowsApplication;
 
-class WindowsWindow
+class WindowsWindow : public GenericWindow
 {
 public:
 	WindowsWindow();

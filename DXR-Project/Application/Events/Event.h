@@ -62,14 +62,14 @@ enum EEventCategory : Uint8
 /*
 * Base Event
 */
-class Event
+struct Event
 {
 public:
 	Event() = default;
 	~Event() = default;
 
-	virtual Uint8		GetEventCategory()	const = 0;
-	virtual EEventType	GetEventType()		const = 0;
+	virtual Uint8 GetEventCategory() const = 0;
+	virtual EEventType	GetEventType() const = 0;
 
 	virtual const char* GetName() const = 0;
 

@@ -10,16 +10,12 @@ RenderingAPI* RenderingAPI::Make(ERenderingAPI InRenderAPI, TSharedPtr<WindowsWi
 	TUniquePtr<RenderingAPI> TempRenderAPI;
 	if (InRenderAPI == ERenderingAPI::RENDERING_API_D3D12)
 	{
-		TempRenderAPI = TUniquePtr<RenderingAPI>(new D3D12RenderingAPI());
+		return new D3D12RenderingAPI());
 	}
-
-	if (TempRenderAPI->Initialize(RendererWindow, EnableDebug))
+	else
 	{
-		RenderAPI = TempRenderAPI.Release();
-		return RenderAPI;
+		return nullptr;
 	}
-
-	return nullptr;
 }
 
 RenderingAPI* RenderingAPI::Get()

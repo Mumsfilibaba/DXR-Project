@@ -17,5 +17,6 @@ using Float32	= float;
 using Float64	= double;
 
 // Other
-using Byte = Uint8;
-using Char = Int8;
+using Byte      = Uint8;
+using Char      = Int8;
+using VoidPtr   = void*;

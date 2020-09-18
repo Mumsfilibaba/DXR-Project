@@ -756,6 +756,11 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RenderWindow)
 	{
 		return false;
 	}
+	
+	if (!RenderingAPI->Initialize(RendererWindow, EnableDebug))
+	{
+		return false;
+	}
 
 	const Uint32 BackBufferCount = RenderingAPI->GetSwapChain()->GetSurfaceCount();
 	CommandAllocators.Resize(BackBufferCount);
