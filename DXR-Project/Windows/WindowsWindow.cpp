@@ -1,8 +1,12 @@
 #include "WindowsWindow.h"
 #include "WindowsApplication.h"
 
-WindowsWindow::WindowsWindow()
-	: hWindow(0)
+WindowsWindow::WindowsWindow(WindowsApplication* InOwnerApplication)
+	: OwnerApplication(InOwnerApplication)
+	, hWindow(0)
+	, Style(0)
+	, StyleEx(0)
+	, IsFullscreen(false)
 {
 }
 
@@ -14,30 +18,30 @@ WindowsWindow::~WindowsWindow()
 	}
 }
 
-bool WindowsWindow::Initialize(WindowsApplication* InOwnerApplication, const WindowProperties& Properties)
+bool WindowsWindow::Initialize(const WindowInitializer& InInitalizer)
 {
 	// Determine the window style for WinAPI
 	DWORD dwStyle = 0;
-	if (Properties.Style != 0)
+	if (InInitalizer.Style != 0)
 	{
 		dwStyle = WS_OVERLAPPED;
-		if (Properties.Style & WINDOW_STYLE_FLAG_TITLED)
+		if (InInitalizer.IsTitled())
 		{
 			dwStyle |= WS_CAPTION;
 		}
-		if (Properties.Style & WINDOW_STYLE_FLAG_CLOSABLE)
+		if (InInitalizer.IsClosable())
 		{
 			dwStyle |= WS_SYSMENU;
 		}
-		if (Properties.Style & WINDOW_STYLE_FLAG_MINIMIZABLE)
+		if (InInitalizer.IsMinimizable())
 		{
 			dwStyle |= WS_SYSMENU | WS_MINIMIZEBOX;
 		}
-		if (Properties.Style & WINDOW_STYLE_FLAG_MAXIMIZABLE)
+		if (InInitalizer.IsMaximizable())
 		{
 			dwStyle |= WS_SYSMENU | WS_MAXIMIZEBOX;
 		}
-		if (Properties.Style & WINDOW_STYLE_FLAG_RESIZEABLE)
+		if (InInitalizer.IsResizeable())
 		{
 			dwStyle |= WS_THICKFRAME;
 		}
@@ -48,17 +52,16 @@ bool WindowsWindow::Initialize(WindowsApplication* InOwnerApplication, const Win
 	}
 
 	// Calculate real window size, since the width and height describe the clientarea
-	RECT ClientRect = { 0, 0, static_cast<LONG>(Properties.Width), static_cast<LONG>(Properties.Height) };
+	RECT ClientRect = { 0, 0, static_cast<LONG>(InInitalizer.Width), static_cast<LONG>(InInitalizer.Height) };
 	::AdjustWindowRect(&ClientRect, dwStyle, FALSE);
 
 	INT nWidth	= ClientRect.right	- ClientRect.left;
 	INT nHeight = ClientRect.bottom - ClientRect.top;
 
-	HINSTANCE hInstance = InOwnerApplication->GetInstance();
-	hWindow = ::CreateWindowEx(0, "WinClass", Properties.Title.c_str(), dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, hInstance, NULL);
+	HINSTANCE hInstance = OwnerApplication->GetInstance();
+	hWindow = ::CreateWindowEx(0, "WinClass", InInitalizer.Title.c_str(), dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, hInstance, NULL);
 	if (hWindow == NULL)
 	{
-
 		LOG_ERROR("[WindowsWindow]: FAILED to create window\n");
 		return false;
 	}
@@ -67,40 +70,197 @@ bool WindowsWindow::Initialize(WindowsApplication* InOwnerApplication, const Win
 		// If the window has a sysmenu we check if the closebutton should be active
 		if (dwStyle & WS_SYSMENU)
 		{
-			if (!(Properties.Style & WINDOW_STYLE_FLAG_CLOSABLE))
+			if (!(InInitalizer.IsClosable()))
 			{
 				::EnableMenuItem(::GetSystemMenu(hWindow, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 			}
 		}
 
-		// Save owner
-		OwnerApplication = InOwnerApplication;
-		
 		// Save style for later
 		Style = dwStyle;
+		Initializer = InInitalizer;
 
 		::UpdateWindow(hWindow);
 		return true;
 	}
 }
 
-void WindowsWindow::Show()
+void WindowsWindow::Show(bool Maximized)
 {
-	::ShowWindow(hWindow, SW_NORMAL);
+	VALIDATE(hWindow != 0);
+
+	if (IsValid())
+	{
+		if (Maximized)
+		{
+			::ShowWindow(hWindow, SW_NORMAL);
+		}
+		else
+		{
+			::ShowWindow(hWindow, SW_SHOWMAXIMIZED);
+		}
+	}
 }
 
-void WindowsWindow::GetWindowShape(WindowShape& OutWindowShape)
+void WindowsWindow::Close()
 {
-	RECT Rect = { };
-	if (::GetWindowRect(hWindow, &Rect) != 0)
-	{
-		OutWindowShape.X = static_cast<Uint16>(Rect.left);
-		OutWindowShape.Y = static_cast<Uint16>(Rect.top);
-	}
+	VALIDATE(hWindow != 0);
 
-	if (::GetClientRect(hWindow, &Rect) != 0)
+	if (IsValid())
 	{
-		OutWindowShape.Width	= static_cast<Uint16>(Rect.right  - Rect.left);
-		OutWindowShape.Height	= static_cast<Uint16>(Rect.bottom - Rect.top);
+		if (Initializer.IsClosable())
+		{
+			::CloseWindow(hWindow);
+		}
+	}
+}
+
+void WindowsWindow::Minimize()
+{
+	VALIDATE(hWindow != 0);
+	
+	if (Initializer.IsMinimizable())
+	{
+		if (IsValid())
+		{
+			::ShowWindow(hWindow, SW_MINIMIZE);
+		}
+	}
+}
+
+void WindowsWindow::Maximize()
+{
+	if (Initializer.IsMaximizable())
+	{
+		if (IsValid())
+		{
+			::ShowWindow(hWindow, SW_MAXIMIZE);
+		}
+	}
+}
+
+void WindowsWindow::Restore()
+{
+	VALIDATE(hWindow != 0);
+
+	if (IsValid())
+	{
+		BOOL result = ::IsIconic(hWindow);
+		if (result)
+		{
+			::ShowWindow(hWindow, SW_RESTORE);
+		}
+	}
+}
+
+void WindowsWindow::ToggleFullscreen()
+{
+	VALIDATE(hWindow != 0);
+
+	if (IsValid())
+	{
+		if (!IsFullscreen)
+		{
+			IsFullscreen = true;
+
+			::GetWindowPlacement(hWindow, &StoredPlacement);
+			if (Style == 0)
+			{
+				Style = ::GetWindowLong(hWindow, GWL_STYLE);
+			}
+			if (StyleEx == 0)
+			{
+				StyleEx = ::GetWindowLong(hWindow, GWL_EXSTYLE);
+			}
+
+			LONG newStyle = Style;
+			newStyle &= ~WS_BORDER;
+			newStyle &= ~WS_DLGFRAME;
+			newStyle &= ~WS_THICKFRAME;
+
+			LONG newStyleEx = StyleEx;
+			newStyleEx &= ~WS_EX_WINDOWEDGE;
+
+			SetWindowLong(hWindow, GWL_STYLE, newStyle | WS_POPUP);
+			SetWindowLong(hWindow, GWL_EXSTYLE, newStyleEx | WS_EX_TOPMOST);
+			::ShowWindow(hWindow, SW_SHOWMAXIMIZED);
+		}
+		else
+		{
+			IsFullscreen = false;
+
+			::SetWindowLong(hWindow, GWL_STYLE, Style);
+			::SetWindowLong(hWindow, GWL_EXSTYLE, StyleEx);
+			::ShowWindow(hWindow, SW_SHOWNORMAL);
+			::SetWindowPlacement(hWindow, &StoredPlacement);
+		}
+	}
+}
+
+bool WindowsWindow::IsValid() const
+{
+	return ::IsWindow(hWindow);
+}
+
+bool WindowsWindow::IsActiveWindow() const
+{
+	HWND hActive = ::GetForegroundWindow();
+	return (hActive == hWindow);
+}
+
+void WindowsWindow::SetTitle(const std::string& Title)
+{
+	VALIDATE(hWindow != 0);
+
+	if (Initializer.IsTitled())
+	{
+		if (IsValid())
+		{
+			::SetWindowTextA(hWindow, Title.c_str());
+		}
+	}
+}
+
+void WindowsWindow::SetWindowShape(const WindowShape& Shape, bool Move)
+{
+	VALIDATE(hWindow != 0);
+
+	if (IsValid())
+	{
+		UINT Flags = SWP_NOZORDER | SWP_NOACTIVATE;
+		if (!Move)
+		{
+			Flags |= SWP_NOMOVE;
+		}
+
+		::SetWindowPos(hWindow, NULL, Shape.Position.x, Shape.Position.y, Shape.Width, Shape.Height, Flags);
+	}
+}
+
+void WindowsWindow::GetWindowShape(WindowShape& OutWindowShape) const
+{
+	VALIDATE(hWindow != 0);
+
+	if (IsValid())
+	{
+		Int32 x = 0;
+		Int32 y = 0;
+		Uint32 Width = 0;
+		Uint32 Height = 0;
+
+		RECT Rect = { };
+		if (::GetWindowRect(hWindow, &Rect) != 0)
+		{
+			x = static_cast<Int32>(Rect.left);
+			y = static_cast<Int32>(Rect.top);
+		}
+
+		if (::GetClientRect(hWindow, &Rect) != 0)
+		{
+			Width = static_cast<Uint32>(Rect.right  - Rect.left);
+			Height = static_cast<Uint32>(Rect.bottom - Rect.top);
+		}
+
+		OutWindowShape = WindowShape(Width, Height, x, y);
 	}
 }

@@ -1,31 +1,25 @@
 #pragma once
-#include "Windows.h"
+#include "Application/Generic/GenericOutputDevice.h"
 
-enum class EConsoleColor : Uint8
-{
-	CONSOLE_COLOR_RED		= 0,
-	CONSOLE_COLOR_GREEN		= 1,
-	CONSOLE_COLOR_YELLOW	= 2,
-	CONSOLE_COLOR_WHITE		= 3
-};
+#include "Windows.h"
 
 /*
 * WindowsConsoleOutput
 */
-class WindowsConsoleOutput
+class WindowsConsoleOutput : public GenericOutputDevice
 {
 public:
 	WindowsConsoleOutput();
 	~WindowsConsoleOutput();
 
-	void Print(const std::string& Message);
-	void Clear();
+	virtual void Print(const std::string& Message) override final;
+	virtual void Clear() override final;
 
-	void SetTitle(const std::string& Title);
-	void SetColor(EConsoleColor Color);
+	virtual void SetTitle(const std::string& Title) override final;
+	virtual void SetColor(EConsoleColor Color) override final;
+
+	static GenericOutputDevice* Make();
 
 private:
 	HANDLE OutputHandle = 0;
 };
-
-extern WindowsConsoleOutput* GlobalOutputHandle;

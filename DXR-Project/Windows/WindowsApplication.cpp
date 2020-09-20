@@ -9,26 +9,18 @@
 /*
 * Static
 */
-
 WindowsApplication* GlobalWindowsApplication = nullptr;
 
-WindowsApplication* WindowsApplication::Make(HINSTANCE hInstance)
+GenericApplication* WindowsApplication::Make(HINSTANCE hInstance)
 {
 	GlobalWindowsApplication = new WindowsApplication(hInstance);
-	if (GlobalWindowsApplication->Initialize())
-	{
-		return GlobalWindowsApplication;
-	}
-	else
-	{
-		return nullptr;
-	}
+	GlobalPlatformApplication = GlobalWindowsApplication;
+	return GlobalWindowsApplication;
 }
 
 /*
 * Members
 */
-
 WindowsApplication::WindowsApplication(HINSTANCE InInstanceHandle)
 	: InstanceHandle(InInstanceHandle)
 {
@@ -74,17 +66,30 @@ bool WindowsApplication::RegisterWindowClass()
 	}
 }
 
-TSharedPtr<WindowsWindow> WindowsApplication::MakeWindow(const WindowProperties& Properties)
+TSharedPtr<GenericWindow> WindowsApplication::MakeWindow()
 {
-	TSharedPtr<WindowsWindow> NewWindow = TSharedPtr<WindowsWindow>(new WindowsWindow());
-	if (NewWindow->Initialize(this, Properties))
+	TSharedPtr<WindowsWindow> Window = MakeShared<WindowsWindow>(this);
+	if (Window)
 	{
-		AddWindow(NewWindow);
-		return NewWindow;
+		AddWindow(Window);
+		return Window;
 	}
 	else
 	{
-		return TSharedPtr<WindowsWindow>(nullptr);
+		return TSharedPtr<GenericWindow>();
+	}
+}
+
+TSharedPtr<GenericCursor> WindowsApplication::MakeCursor()
+{
+	TSharedPtr<WindowsCursor> Cursor = MakeShared<WindowsCursor>();
+	if (!Cursor)
+	{
+		return TSharedPtr<GenericCursor>();
+	}
+	else
+	{
+		return Cursor;
 	}
 }
 
@@ -132,21 +137,27 @@ TSharedPtr<WindowsWindow> WindowsApplication::GetWindowFromHWND(HWND Window) con
 	return TSharedPtr<WindowsWindow>(nullptr);
 }
 
-TSharedPtr<WindowsWindow> WindowsApplication::GetActiveWindow() const
+TSharedPtr<GenericWindow> WindowsApplication::GetActiveWindow() const
 {
 	HWND hActiveWindow = ::GetForegroundWindow();
 	return GetWindowFromHWND(hActiveWindow);
 }
 
-TSharedPtr<WindowsWindow> WindowsApplication::GetCapture() const
+TSharedPtr<GenericWindow> WindowsApplication::GetCapture() const
 {
 	HWND hCapture = ::GetCapture();
 	return GetWindowFromHWND(hCapture);
 }
 
-void WindowsApplication::GetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32& OutX, Int32& OutY) const
+TSharedPtr<GenericCursor> WindowsApplication::GetCursor() const
 {
-	HWND hRelative = RelativeWindow->GetHandle();
+	return CurrentCursor;
+}
+
+void WindowsApplication::GetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const
+{
+	TSharedPtr<WindowsWindow> WinRelative = RelativeWindow;
+	HWND hRelative = WinRelative->GetHandle();
 
 	POINT CursorPos = { };
 	if (::GetCursorPos(&CursorPos))
@@ -176,11 +187,14 @@ bool WindowsApplication::Tick()
 	return true;
 }
 
-void WindowsApplication::SetCursor(TSharedPtr<WindowsCursor> Cursor)
+void WindowsApplication::SetCursor(TSharedPtr<GenericCursor> Cursor)
 {
 	if (Cursor)
 	{
-		HCURSOR hCursor = Cursor->GetCursor();
+		TSharedPtr<WindowsCursor> WinCursor = Cursor;
+		CurrentCursor = WinCursor;
+
+		HCURSOR hCursor = WinCursor->GetCursor();
 		::SetCursor(hCursor);
 	}
 	else
@@ -189,20 +203,22 @@ void WindowsApplication::SetCursor(TSharedPtr<WindowsCursor> Cursor)
 	}
 }
 
-void WindowsApplication::SetActiveWindow(TSharedPtr<WindowsWindow>& ActiveWindow)
+void WindowsApplication::SetActiveWindow(TSharedPtr<GenericWindow> Window)
 {
-	HWND hActiveWindow = ActiveWindow->GetHandle();
+	TSharedPtr<WindowsWindow> WinWindow = Window;
+	HWND hActiveWindow = WinWindow->GetHandle();
 	if (::IsWindow(hActiveWindow))
 	{
 		::SetActiveWindow(hActiveWindow);
 	}
 }
 
-void WindowsApplication::SetCapture(TSharedPtr<WindowsWindow> CaptureWindow)
+void WindowsApplication::SetCapture(TSharedPtr<GenericWindow> CaptureWindow)
 {
 	if (CaptureWindow)
 	{
-		HWND hCapture = CaptureWindow->GetHandle();
+		TSharedPtr<WindowsWindow> WinWindow = CaptureWindow;
+		HWND hCapture = WinWindow->GetHandle();
 		if (::IsWindow(hCapture))
 		{
 			::SetCapture(hCapture);
@@ -214,14 +230,18 @@ void WindowsApplication::SetCapture(TSharedPtr<WindowsWindow> CaptureWindow)
 	}
 }
 
-void WindowsApplication::SetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32 X, Int32 Y)
+void WindowsApplication::SetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32 X, Int32 Y)
 {
-	HWND hRelative = RelativeWindow->GetHandle();
-	
-	POINT CursorPos = { X, Y };
-	if (::ClientToScreen(hRelative, &CursorPos))
+	if (RelativeWindow)
 	{
-		::SetCursorPos(CursorPos.x, CursorPos.y);
+		TSharedPtr<WindowsWindow> WinWindow = RelativeWindow;
+		HWND hRelative = WinWindow->GetHandle();
+	
+		POINT CursorPos = { X, Y };
+		if (::ClientToScreen(hRelative, &CursorPos))
+		{
+			::SetCursorPos(CursorPos.x, CursorPos.y);
+		}
 	}
 }
 
@@ -250,7 +270,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 				const Uint16 Width	= LOWORD(lParam);
 				const Uint16 Height = HIWORD(lParam);
 
-				MessageHandler->OnWindowResized(MessageWindow, Width, Height);
+				EventHandler->OnWindowResized(MessageWindow, Width, Height);
 			}
 
 			return 0;
@@ -261,7 +281,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		{
 			const Uint32	ScanCode	= static_cast<Uint32>(HIWORD(lParam) & SCAN_CODE_MASK);
 			const EKey		Key			= Input::ConvertFromScanCode(ScanCode);
-			MessageHandler->OnKeyReleased(Key, GetModifierKeyState());
+			EventHandler->OnKeyReleased(Key, GetModifierKeyState());
 			return 0;
 		}
 
@@ -270,7 +290,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		{
 			const Uint32	ScanCode	= static_cast<Uint32>(HIWORD(lParam) & SCAN_CODE_MASK);
 			const EKey		Key			= Input::ConvertFromScanCode(ScanCode);
-			MessageHandler->OnKeyPressed(Key, GetModifierKeyState());
+			EventHandler->OnKeyPressed(Key, GetModifierKeyState());
 			return 0;
 		}
 
@@ -278,7 +298,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		case WM_CHAR:
 		{
 			const Uint32 Character = static_cast<Uint32>(wParam);
-			MessageHandler->OnCharacterInput(Character);
+			EventHandler->OnCharacterInput(Character);
 			return 0;
 		}
 
@@ -287,7 +307,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 			const Int32 x = GET_X_LPARAM(lParam);
 			const Int32 y = GET_Y_LPARAM(lParam);
 
-			MessageHandler->OnMouseMove(x, y);
+			EventHandler->OnMouseMove(x, y);
 			return 0;
 		}
 
@@ -322,7 +342,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 				Button = EMouseButton::MOUSE_BUTTON_FORWARD;
 			}
 
-			MessageHandler->OnMouseButtonPressed(Button, GetModifierKeyState());
+			EventHandler->OnMouseButtonPressed(Button, GetModifierKeyState());
 			return 0;
 		}
 
@@ -353,21 +373,21 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 				Button = EMouseButton::MOUSE_BUTTON_FORWARD;
 			}
 
-			MessageHandler->OnMouseButtonReleased(Button, GetModifierKeyState());
+			EventHandler->OnMouseButtonReleased(Button, GetModifierKeyState());
 			return 0;
 		}
 
 		case WM_MOUSEWHEEL:
 		{
 			const Float32 WheelDelta = static_cast<Float32>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float32>(WHEEL_DELTA);
-			MessageHandler->OnMouseScrolled(0.0f, WheelDelta);
+			EventHandler->OnMouseScrolled(0.0f, WheelDelta);
 			return 0;
 		}
 
 		case WM_MOUSEHWHEEL:
 		{
 			const Float32 WheelDelta = static_cast<Float32>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float32>(WHEEL_DELTA);
-			MessageHandler->OnMouseScrolled(WheelDelta, 0.0f);
+			EventHandler->OnMouseScrolled(WheelDelta, 0.0f);
 			return 0;
 		}
 

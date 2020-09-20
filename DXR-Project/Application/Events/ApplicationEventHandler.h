@@ -4,8 +4,8 @@
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
 
-class WindowsWindow;
-class ModifierKeyState;
+class GenericWindow;
+struct ModifierKeyState;
 
 /*
 * ApplicationEventHandler
@@ -15,7 +15,7 @@ class ApplicationEventHandler
 public:
 	virtual ~ApplicationEventHandler() = default;
 
-	virtual void OnWindowResized(TSharedPtr<WindowsWindow>& Window, Uint16 Width, Uint16 Height)
+	virtual void OnWindowResized(TSharedPtr<GenericWindow> Window, Uint16 Width, Uint16 Height)
 	{
 	}
 

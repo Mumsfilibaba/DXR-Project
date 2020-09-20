@@ -18,8 +18,6 @@
 #include "Scene/DirectionalLight.h"
 #include "Scene/Components/MeshComponent.h"
 
-#include "Windows/WindowsConsoleOutput.h"
-
 TSharedPtr<Application> Application::Instance = nullptr;
 
 Application::Application()
@@ -104,22 +102,22 @@ void Application::Tick()
 	CurrentCamera->UpdateMatrices();
 }
 
-void Application::SetCursor(TSharedPtr<WindowsCursor> Cursor)
+void Application::SetCursor(TSharedPtr<GenericCursor> Cursor)
 {
 	PlatformApplication->SetCursor(Cursor);
 }
 
-void Application::SetActiveWindow(TSharedPtr<WindowsWindow>& ActiveWindow)
+void Application::SetActiveWindow(TSharedPtr<GenericWindow> Window)
 {
-	PlatformApplication->SetActiveWindow(ActiveWindow);
+	PlatformApplication->SetActiveWindow(Window);
 }
 
-void Application::SetCapture(TSharedPtr<WindowsWindow> Capture)
+void Application::SetCapture(TSharedPtr<GenericWindow> Window)
 {
-	PlatformApplication->SetCapture(Capture);
+	PlatformApplication->SetCapture(Window);
 }
 
-void Application::SetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32 X, Int32 Y)
+void Application::SetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32 X, Int32 Y)
 {
 	PlatformApplication->SetCursorPos(RelativeWindow, X, Y);
 }
@@ -129,22 +127,22 @@ ModifierKeyState Application::GetModifierKeyState() const
 	return PlatformApplication->GetModifierKeyState();
 }
 
-TSharedPtr<WindowsWindow> Application::GetWindow() const
+TSharedPtr<GenericWindow> Application::GetWindow() const
 {
 	return Window;
 }
 
-TSharedPtr<WindowsWindow> Application::GetActiveWindow() const
+TSharedPtr<GenericWindow> Application::GetActiveWindow() const
 {
 	return PlatformApplication->GetActiveWindow();
 }
 
-TSharedPtr<WindowsWindow> Application::GetCapture() const
+TSharedPtr<GenericWindow> Application::GetCapture() const
 {
 	return PlatformApplication->GetCapture();
 }
 
-void Application::GetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32& OutX, Int32& OutY) const
+void Application::GetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const
 {
 	PlatformApplication->GetCursorPos(RelativeWindow, OutX, OutY);
 }
@@ -152,7 +150,7 @@ void Application::GetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32&
 Application* Application::Make()
 {
 	Instance = TSharedPtr<Application>(new Application());
-	if (Instance->Initialize())
+	if (Instance)
 	{
 		return Instance.Get();
 	}
@@ -162,15 +160,14 @@ Application* Application::Make()
 	}
 }
 
-Application* Application::Get()
+Application& Application::Get()
 {
-	return Instance.Get();
+	VALIDATE(Instance != nullptr);
+	return (*Instance.Get());
 }
 
-void Application::OnWindowResized(TSharedPtr<WindowsWindow>& InWindow, Uint16 Width, Uint16 Height)
+void Application::OnWindowResized(TSharedPtr<GenericWindow> InWindow, Uint16 Width, Uint16 Height)
 {
-	UNREFERENCED_PARAMETER(InWindow);
-
 	WindowResizeEvent Event(InWindow, Width, Height);
 	EventQueue::SendEvent(Event);
 
@@ -182,8 +179,6 @@ void Application::OnWindowResized(TSharedPtr<WindowsWindow>& InWindow, Uint16 Wi
 
 void Application::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)
 {
-	UNREFERENCED_PARAMETER(ModierKeyState);
-
 	Input::RegisterKeyUp(KeyCode);
 
 	KeyReleasedEvent Event(KeyCode, ModierKeyState);
@@ -192,8 +187,6 @@ void Application::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyS
 
 void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState)
 {
-	UNREFERENCED_PARAMETER(ModierKeyState);
-
 	Input::RegisterKeyDown(KeyCode);
 
 	KeyPressedEvent Event(KeyCode, ModierKeyState);
@@ -208,8 +201,6 @@ void Application::OnMouseMove(Int32 X, Int32 Y)
 
 void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState)
 {
-	UNREFERENCED_PARAMETER(ModierKeyState);
-
 	TSharedPtr<WindowsWindow> CaptureWindow = GetCapture();
 	if (CaptureWindow)
 	{
@@ -222,8 +213,6 @@ void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeySt
 
 void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState)
 {
-	UNREFERENCED_PARAMETER(ModierKeyState);
-
 	TSharedPtr<WindowsWindow> CaptureWindow = GetCapture();
 	if (!CaptureWindow)
 	{
@@ -262,26 +251,23 @@ bool Application::Initialize()
 	}
 
 	// Window
-	WindowProperties WindowProperties;
-	WindowProperties.Title	= "DXR";
-	WindowProperties.Width	= 1920;
-	WindowProperties.Height = 1080;
-	WindowProperties.Style	=	WINDOW_STYLE_FLAG_TITLED | WINDOW_STYLE_FLAG_CLOSABLE | 
-								WINDOW_STYLE_FLAG_MINIMIZABLE | WINDOW_STYLE_FLAG_MAXIMIZABLE |
-								WINDOW_STYLE_FLAG_RESIZEABLE;
+	Uint32 Style =	
+		WINDOW_STYLE_FLAG_TITLED		| 
+		WINDOW_STYLE_FLAG_CLOSABLE		| 
+		WINDOW_STYLE_FLAG_MINIMIZABLE	| 
+		WINDOW_STYLE_FLAG_MAXIMIZABLE	|
+		WINDOW_STYLE_FLAG_RESIZEABLE;
 
-	Window = PlatformApplication->MakeWindow(WindowProperties);
-	if (Window)
+	WindowInitializer WinInitializer("DXR", 1920, 1080, Style);
+	Window = PlatformApplication->MakeWindow();
+	if (Window->Initialize(WinInitializer))
 	{
-		Window->Show();
+		Window->Show(false);
 	}
 	else
 	{
 		return false;
 	}
-
-	// Cursors
-	InitializeCursors();
 
 	// Renderer
 	Renderer* Renderer = Renderer::Make(GetWindow());

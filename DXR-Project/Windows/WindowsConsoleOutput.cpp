@@ -1,15 +1,8 @@
 #include "WindowsConsoleOutput.h"
 
 /*
-* Global Handle
-*/
-
-WindowsConsoleOutput* GlobalOutputHandle = nullptr;
-
-/*
 * WindowsConsoleOutput
 */
-
 WindowsConsoleOutput::WindowsConsoleOutput()
 {
 	if (::AllocConsole())
@@ -86,4 +79,9 @@ void WindowsConsoleOutput::SetColor(EConsoleColor Color)
 
 		::SetConsoleTextAttribute(OutputHandle, wColor);
 	}
+}
+
+GenericOutputDevice* WindowsConsoleOutput::Make()
+{
+	return new WindowsConsoleOutput();
 }

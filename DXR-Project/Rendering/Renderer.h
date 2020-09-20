@@ -23,7 +23,7 @@
 #include "Material.h"
 #include "MeshFactory.h"
 
-#include "Rendering/Core/RenderingAPI.h"
+#include "RenderingCore/RenderingAPI.h"
 
 class D3D12Texture;
 class D3D12GraphicsPipelineState;

@@ -2,26 +2,33 @@
 #include "Clock.h"
 #include "Application.h"
 
-#include "Windows/WindowsConsoleOutput.h"
+#include "Generic/GenericOutputDevice.h"
+#include "Generic/GenericCursor.h"
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
 
 #include "Editor/Editor.h"
 
-static Clock	GlobalClock;
-static bool		GlobalIsRunning = false;
+static Clock GlobalClock;
+static bool GlobalIsRunning = false;
 
+/*
+* EngineLoop
+*/
 bool EngineLoop::CoreInitialize()
 {
-	GlobalOutputHandle = new WindowsConsoleOutput();
+	GlobalOutputDevices::Initialize();
+
+	GlobalCursors::Initialize();
+
 	return true;
 }
 
 bool EngineLoop::Initialize()
 {
 	Application* App = Application::Make();
-	if (!App)
+	if (App->Initialize())
 	{
 		::MessageBox(0, "Failed to create Application", "ERROR", MB_ICONERROR);
 		return false;
@@ -35,7 +42,7 @@ void EngineLoop::Tick()
 {
 	GlobalClock.Tick();
 
-	Application::Get()->Tick();
+	Application::Get().Tick();
 
 	Renderer::Get()->Tick(*Scene::GetCurrentScene());
 
@@ -49,7 +56,7 @@ void EngineLoop::Tick()
 
 void EngineLoop::Release()
 {
-	Application::Get()->Release();
+	Application::Get().Release();
 
 	Renderer::Release();
 }
@@ -58,7 +65,7 @@ void EngineLoop::CoreRelease()
 {
 	RenderingAPI::Release();
 
-	SAFEDELETE(GlobalOutputHandle);
+	GlobalOutputDevices::Initialize();
 }
 
 Timestamp EngineLoop::GetDeltaTime()

@@ -385,14 +385,6 @@ public:
 	}
 
 	template<typename TOther>
-	FORCEINLINE explicit TSharedPtr(const TWeakPtr<TOther[]>& Other) noexcept
-		: TBase()
-	{
-		static_assert(std::is_convertible<TOther, T>());
-		TBase::template InternalConstructStrong<TOther>(Other);
-	}
-
-	template<typename TOther>
 	FORCEINLINE TSharedPtr(TUniquePtr<TOther>&& Other) noexcept
 		: TBase()
 	{

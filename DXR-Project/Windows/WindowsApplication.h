@@ -1,10 +1,9 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
-#include "Windows.h"
-
 #include "Application/InputCodes.h"
 #include "Application/Events/ApplicationEventHandler.h"
+#include "Application/Generic/GenericApplication.h"
+
+#include "Windows.h"
 
 class WindowsWindow;
 class ApplicationEventHandler;
@@ -13,60 +12,51 @@ class WindowsCursor;
 /*
 * WindowsApplication
 */
-class WindowsApplication
+class WindowsApplication : public GenericApplication
 {
 public:
 	~WindowsApplication();
 
-	TSharedPtr<WindowsWindow> MakeWindow(const struct WindowProperties& Properties);
+	virtual bool Initialize() override final;
+	virtual bool Tick() override final;
 
-	bool Tick();
+	virtual TSharedPtr<GenericWindow> MakeWindow() override final;
+	virtual TSharedPtr<GenericCursor> MakeCursor() override final;
 	
-	void SetCursor(TSharedPtr<WindowsCursor> Cursor);
-	void SetActiveWindow(TSharedPtr<WindowsWindow>& ActiveWindow);
-	void SetCapture(TSharedPtr<WindowsWindow> CaptureWindow);
+	virtual void SetCursor(TSharedPtr<GenericCursor> Cursor) override final;
+	virtual void SetActiveWindow(TSharedPtr<GenericWindow> Window) override final;
+	virtual void SetCapture(TSharedPtr<GenericWindow> Window) override final;
 
-	ModifierKeyState			GetModifierKeyState()			const;
-	TSharedPtr<WindowsWindow>	GetWindowFromHWND(HWND Window)	const;
-	TSharedPtr<WindowsWindow>	GetActiveWindow()				const;
-	TSharedPtr<WindowsWindow>	GetCapture()					const;
+	virtual ModifierKeyState GetModifierKeyState() const override final;
+	virtual TSharedPtr<GenericWindow> GetActiveWindow() const override final;
+	virtual TSharedPtr<GenericWindow> GetCapture() const override final;
+	virtual TSharedPtr<GenericCursor> GetCursor() const override final;
+	
+	TSharedPtr<WindowsWindow> GetWindowFromHWND(HWND Window) const;
 
-	void SetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32 X, Int32 Y);
-	void GetCursorPos(TSharedPtr<WindowsWindow>& RelativeWindow, Int32& OutX, Int32& OutY) const;
-
-	FORCEINLINE void SetEventHandler(TSharedPtr<ApplicationEventHandler> InMessageHandler)
-	{
-		MessageHandler = InMessageHandler;
-	}
-
-	FORCEINLINE TSharedPtr<ApplicationEventHandler> GetEventHandler() const
-	{
-		return MessageHandler;
-	}
+	virtual void SetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32 X, Int32 Y) override final;
+	virtual void GetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const override final;
 
 	FORCEINLINE HINSTANCE GetInstance() const
 	{
 		return InstanceHandle;
 	}
 
-	static WindowsApplication* Make(HINSTANCE hInstance);
+	static GenericApplication* Make(HINSTANCE hInstance);
 
 private:
 	WindowsApplication(HINSTANCE hInstance);
 	
-	bool Initialize();
-
 	void AddWindow(TSharedPtr<WindowsWindow>& Window);
 
 	bool RegisterWindowClass();
 
 	LRESULT ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
-
 	static LRESULT MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
 private:
 	HINSTANCE InstanceHandle = 0;
-	TSharedPtr<ApplicationEventHandler>	MessageHandler	= nullptr;
+	TSharedPtr<WindowsCursor> CurrentCursor;
 	TArray<TSharedPtr<WindowsWindow>> Windows;
 };
 

@@ -1,20 +1,26 @@
 #pragma once
-#include "Windows/WindowsConsoleOutput.h"
+#include "Platform/PlatformOutputDevice.h"
 
 #define LOG_ERROR(Message) \
-	VALIDATE(GlobalOutputHandle != nullptr); \
-	GlobalOutputHandle->SetColor(EConsoleColor::CONSOLE_COLOR_RED); \
-	GlobalOutputHandle->Print(std::string(Message) + "\n"); \
-	GlobalOutputHandle->SetColor(EConsoleColor::CONSOLE_COLOR_WHITE) \
+	{ \
+		VALIDATE(GlobalOutputHandle != nullptr); \
+		GlobalOutputDevices::Console->SetColor(EConsoleColor::CONSOLE_COLOR_RED); \
+		GlobalOutputDevices::Console->Print(std::string(Message) + "\n"); \
+		GlobalOutputDevices::Console->SetColor(EConsoleColor::CONSOLE_COLOR_WHITE); \
+	}
 
 #define LOG_WARNING(Message) \
-	VALIDATE(GlobalOutputHandle != nullptr); \
-	GlobalOutputHandle->SetColor(EConsoleColor::CONSOLE_COLOR_YELLOW); \
-	GlobalOutputHandle->Print(std::string(Message) + "\n"); \
-	GlobalOutputHandle->SetColor(EConsoleColor::CONSOLE_COLOR_WHITE) \
+	{ \
+		VALIDATE(GlobalOutputHandle != nullptr); \
+		GlobalOutputDevices::Console->SetColor(EConsoleColor::CONSOLE_COLOR_YELLOW); \
+		GlobalOutputDevices::Console->Print(std::string(Message) + "\n"); \
+		GlobalOutputDevices::Console->SetColor(EConsoleColor::CONSOLE_COLOR_WHITE); \
+	}
 
 #define LOG_INFO(Message) \
-	VALIDATE(GlobalOutputHandle != nullptr); \
-	GlobalOutputHandle->SetColor(EConsoleColor::CONSOLE_COLOR_GREEN); \
-	GlobalOutputHandle->Print(std::string(Message) + "\n"); \
-	GlobalOutputHandle->SetColor(EConsoleColor::CONSOLE_COLOR_WHITE) \
+	{\
+		VALIDATE(GlobalOutputDevices::Console != nullptr); \
+		GlobalOutputDevices::Console->SetColor(EConsoleColor::CONSOLE_COLOR_GREEN); \
+		GlobalOutputDevices::Console->Print(std::string(Message) + "\n"); \
+		GlobalOutputDevices::Console->SetColor(EConsoleColor::CONSOLE_COLOR_WHITE); \
+	}

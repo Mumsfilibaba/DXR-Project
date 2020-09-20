@@ -5,31 +5,37 @@
 
 #include "Application/Generic/GenericWindow.h"
 
-struct WindowProperties
-{
-	std::string Title;
-	Uint16		Width;
-	Uint16		Height;
-	Uint32		Style;
-};
+class WindowsApplication;
 
 /*
 * WindowsWindow
 */
-
-class WindowsApplication;
-
 class WindowsWindow : public GenericWindow
 {
 public:
-	WindowsWindow();
+	WindowsWindow(WindowsApplication* InOwnerApplication);
 	~WindowsWindow();
 
-	bool Initialize(WindowsApplication* InOwnerApplication, const WindowProperties& Properties);
+	virtual bool Initialize(const WindowInitializer& InInitializer) override final;
 
-	void Show();
+	virtual void Show(bool Maximized) override final;
+	virtual void Close() override final;
+	virtual void Minimize() override final;
+	virtual void Maximize() override final;
+	virtual void Restore() override final;
+	virtual void ToggleFullscreen() override final;
 
-	void GetWindowShape(WindowShape& OutWindowShape);
+	virtual bool IsValid() const override final;
+	virtual bool IsActiveWindow() const override final;
+
+	virtual void SetTitle(const std::string& Title) override final;
+	virtual void SetWindowShape(const WindowShape& Shape, bool Move) override final;
+	virtual void GetWindowShape(WindowShape& OutWindowShape) const override final;
+
+	virtual VoidPtr GetNativeHandle() const override final
+	{
+		return reinterpret_cast<VoidPtr>(hWindow);
+	}
 	
 	FORCEINLINE HWND GetHandle() const
 	{
@@ -38,7 +44,9 @@ public:
 
 private:
 	WindowsApplication* OwnerApplication = nullptr;
-
-	HWND	hWindow = 0;
-	DWORD	Style	= 0;
+	HWND hWindow;
+	DWORD Style;
+	DWORD StyleEx;
+	bool IsFullscreen;
+	WINDOWPLACEMENT StoredPlacement;
 };

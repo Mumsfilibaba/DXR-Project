@@ -1,37 +1,33 @@
 #pragma once
+#include "Application/Generic/GenericCursor.h"
+
 #include "Windows.h"
+
+class WindowsApplication;
 
 /*
 * WindowsCursor
 */
-class WindowsCursor
+class WindowsCursor : public GenericCursor
 {
 public:
-	WindowsCursor(LPCSTR InCursorName);
-	WindowsCursor(HCURSOR InCursorHandle);
+	WindowsCursor(WindowsApplication* InApplication);
 	~WindowsCursor();
+
+	virtual bool Initialize(const CursorInitializer& InInitializer) override final;
+
+	virtual VoidPtr GetNativeHandle() const override final
+	{
+		return reinterpret_cast<VoidPtr>(hCursor);
+	}
 
 	FORCEINLINE HCURSOR GetCursor() const
 	{
-		return CursorHandle;
+		return hCursor;
 	}
 
 private:
-	HCURSOR CursorHandle	= 0;
-	LPCSTR	CursorName		= nullptr;
+	WindowsApplication* Application;
+	HCURSOR hCursor;
+	LPCSTR CursorName;
 };
-
-/*
-* Pre-Defined Cursors
-*/
-extern TSharedPtr<WindowsCursor> CursorArrow;
-extern TSharedPtr<WindowsCursor> CursorTextInput;
-extern TSharedPtr<WindowsCursor> CursorResizeAll;
-extern TSharedPtr<WindowsCursor> CursorResizeEastWest;
-extern TSharedPtr<WindowsCursor> CursorResizeNorthSouth;
-extern TSharedPtr<WindowsCursor> CursorResizeNorthEastSouthWest;
-extern TSharedPtr<WindowsCursor> CursorResizeNorthWestSouthEast;
-extern TSharedPtr<WindowsCursor> CursorHand;
-extern TSharedPtr<WindowsCursor> CursorNotAllowed;
-
-void InitializeCursors();
