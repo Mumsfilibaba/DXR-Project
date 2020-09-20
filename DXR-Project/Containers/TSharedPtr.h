@@ -58,7 +58,7 @@ struct TDelete
 {
 	using TType = T;
 
-	FORCEINLINE void operator()(T* Ptr)
+	FORCEINLINE void operator()(TType* Ptr)
 	{
 		delete Ptr;
 	}
@@ -69,7 +69,7 @@ struct TDelete<T[]>
 {
 	using TType = TRemoveExtent<T>;
 
-	FORCEINLINE void operator()(T* Ptr)
+	FORCEINLINE void operator()(TType* Ptr)
 	{
 		delete[] Ptr;
 	}
