@@ -3,7 +3,8 @@
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
 
-#include "Application/EngineLoop.h"
+#include "Engine/EngineLoop.h"
+
 #include "Application/Application.h"
 
 #include "Scene/Scene.h"

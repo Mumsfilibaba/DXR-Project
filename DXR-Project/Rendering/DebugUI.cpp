@@ -1,13 +1,12 @@
 #include "DebugUI.h"
 
 #include "Application/Application.h"
-#include "Application/Clock.h"
-
 #include "Application/Events/EventQueue.h"
 #include "Application/Events/KeyEvent.h"
 #include "Application/Events/MouseEvent.h"
-
 #include "Application/Generic/GenericCursor.h"
+
+#include "Time/Clock.h"
 
 #include "Containers/TArray.h"
 

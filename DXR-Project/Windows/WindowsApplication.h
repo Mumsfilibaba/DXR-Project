@@ -17,11 +17,11 @@ class WindowsApplication : public GenericApplication
 public:
 	~WindowsApplication();
 
-	virtual bool Initialize() override final;
-	virtual bool Tick() override final;
-
 	virtual TSharedPtr<GenericWindow> MakeWindow() override final;
 	virtual TSharedPtr<GenericCursor> MakeCursor() override final;
+
+	virtual bool Initialize() override final;
+	virtual bool Tick() override final;
 	
 	virtual void SetCursor(TSharedPtr<GenericCursor> Cursor) override final;
 	virtual void SetActiveWindow(TSharedPtr<GenericWindow> Window) override final;

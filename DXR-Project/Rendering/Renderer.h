@@ -12,7 +12,8 @@
 
 #include "Windows/WindowsWindow.h"
 
-#include "Application/Clock.h"
+#include "Time/Clock.h"
+
 #include "Application/InputCodes.h"
 
 #include "Scene/Actor.h"

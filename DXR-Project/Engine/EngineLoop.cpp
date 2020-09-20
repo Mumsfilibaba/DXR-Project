@@ -1,9 +1,10 @@
 #include "EngineLoop.h"
-#include "Clock.h"
-#include "Application.h"
 
-#include "Generic/GenericOutputDevice.h"
-#include "Generic/GenericCursor.h"
+#include "Time/Clock.h"
+
+#include "Application/Application.h"
+#include "Application/Generic/GenericOutputDevice.h"
+#include "Application/Generic/GenericCursor.h"
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
@@ -20,17 +21,33 @@ bool EngineLoop::CoreInitialize()
 {
 	GlobalOutputDevices::Initialize();
 
-	GlobalCursors::Initialize();
-
 	return true;
 }
 
 bool EngineLoop::Initialize()
 {
+	// Application
 	Application* App = Application::Make();
 	if (App->Initialize())
 	{
 		::MessageBox(0, "Failed to create Application", "ERROR", MB_ICONERROR);
+		return false;
+	}
+
+	GlobalCursors::Initialize();
+
+	// Renderer
+	Renderer* Renderer = Renderer::Make(App->GetWindow());
+	if (!Renderer)
+	{
+		::MessageBox(0, "FAILED to create Renderer", "ERROR", MB_ICONERROR);
+		return false;
+	}
+
+	// ImGui
+	if (!DebugUI::Initialize())
+	{
+		::MessageBox(0, "FAILED to create ImGuiContext", "ERROR", MB_ICONERROR);
 		return false;
 	}
 
@@ -57,6 +74,8 @@ void EngineLoop::Tick()
 void EngineLoop::Release()
 {
 	Application::Get().Release();
+
+	DebugUI::Release();
 
 	Renderer::Release();
 }

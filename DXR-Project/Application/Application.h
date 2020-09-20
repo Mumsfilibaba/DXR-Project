@@ -1,17 +1,12 @@
 #pragma once
-#include "Clock.h"
-
-#include "Windows/WindowsWindow.h"
-#include "Windows/WindowsCursor.h"
-#include "Windows/WindowsApplication.h"
+#include "Time/Clock.h"
 
 #include "Scene/Scene.h"
-
-#include "Application/Events/ApplicationEventHandler.h"
 
 #include "Application/Generic/GenericApplication.h"
 #include "Application/Generic/GenericCursor.h"
 #include "Application/Generic/GenericWindow.h"
+#include "Application/Events/ApplicationEventHandler.h"
 
 /*
 * Application
@@ -21,10 +16,12 @@ class Application : public ApplicationEventHandler
 public:
 	~Application();
 
-	bool Initialize();
-	void Release();
+	TSharedPtr<GenericWindow> MakeWindow();
+	TSharedPtr<GenericCursor> MakeCursor();
 
+	bool Initialize();
 	void Tick();
+	void Release();
 
 	void SetCursor(TSharedPtr<GenericCursor> Cursor);
 	void SetActiveWindow(TSharedPtr<GenericWindow> Window);
