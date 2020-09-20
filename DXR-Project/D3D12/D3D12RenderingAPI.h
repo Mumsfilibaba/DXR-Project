@@ -1,7 +1,7 @@
 #pragma once
 #include "Windows/WindowsWindow.h"
 
-#include "Rendering/Core/RenderingAPI.h"
+#include "RenderingCore/RenderingAPI.h"
 
 #include "D3D12Device.h"
 #include "D3D12ImmediateCommandList.h"
@@ -16,7 +16,7 @@ public:
 	D3D12RenderingAPI();
 	~D3D12RenderingAPI();
 
-	virtual bool Initialize(TSharedPtr<WindowsWindow> RenderWindow, bool EnableDebug) override final;
+	virtual bool Initialize(TSharedPtr<GenericWindow> RenderWindow, bool EnableDebug) override final;
 
 	virtual class D3D12Texture* CreateTexture(const struct TextureProperties& Properties) const override final;
 	virtual class D3D12Buffer* CreateBuffer(const struct BufferProperties& Properties) const override final;

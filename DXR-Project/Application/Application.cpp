@@ -6,6 +6,8 @@
 #include "Events/MouseEvent.h"
 #include "Events/WindowEvent.h"
 
+#include "Platform/PlatformApplication.h"
+
 // TODO: Mayebe should handle this in a different way
 #include "EngineLoop.h"
 
@@ -201,7 +203,7 @@ void Application::OnMouseMove(Int32 X, Int32 Y)
 
 void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState)
 {
-	TSharedPtr<WindowsWindow> CaptureWindow = GetCapture();
+	TSharedPtr<GenericWindow> CaptureWindow = GetCapture();
 	if (CaptureWindow)
 	{
 		SetCapture(nullptr);
@@ -213,10 +215,10 @@ void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeySt
 
 void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState)
 {
-	TSharedPtr<WindowsWindow> CaptureWindow = GetCapture();
+	TSharedPtr<GenericWindow> CaptureWindow = GetCapture();
 	if (!CaptureWindow)
 	{
-		TSharedPtr<WindowsWindow> ActiveWindow = GetActiveWindow();
+		TSharedPtr<GenericWindow> ActiveWindow = GetActiveWindow();
 		SetCapture(ActiveWindow);
 	}
 
@@ -240,7 +242,7 @@ bool Application::Initialize()
 {
 	// Application
 	HINSTANCE InstanceHandle = static_cast<HINSTANCE>(GetModuleHandle(NULL));
-	PlatformApplication = WindowsApplication::Make(InstanceHandle);
+	PlatformApplication = PlatformApplication::Make(InstanceHandle);
 	if (PlatformApplication)
 	{
 		PlatformApplication->SetEventHandler(TSharedPtr<ApplicationEventHandler>(Instance));

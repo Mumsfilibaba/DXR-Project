@@ -7,6 +7,8 @@
 #include "Application/Events/KeyEvent.h"
 #include "Application/Events/MouseEvent.h"
 
+#include "Application/Generic/GenericCursor.h"
+
 #include "Containers/TArray.h"
 
 #include "Rendering/TextureFactory.h"
@@ -20,7 +22,7 @@
 #include "D3D12/D3D12RootSignature.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
-#include "Rendering/Core/RenderingAPI.h"
+#include "RenderingCore/RenderingAPI.h"
 
 static TArray<DebugUI::UIDrawFunc>	GlobalDrawFuncs;
 static TArray<std::string>			GlobalDebugStrings;
@@ -77,8 +79,10 @@ bool DebugUI::Initialize()
 	IO.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;	// We can honor IO.WantSetMousePos requests (optional, rarely used)
 	IO.BackendPlatformName = "Windows";
 
-	TSharedPtr<WindowsWindow> Window = Application::Get()->GetWindow();
+#ifdef WIN32
+	TSharedPtr<WindowsWindow> Window = StaticCast<WindowsWindow>(Application::Get().GetWindow());
 	IO.ImeWindowHandle = Window->GetHandle();
+#endif
 
 	// Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
 	IO.KeyMap[ImGuiKey_Tab]			= EKey::KEY_TAB;
@@ -215,7 +219,7 @@ bool DebugUI::Initialize()
 	GlobalImGuiState.FontTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, Width, Height, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (GlobalImGuiState.FontTexture)
 	{
-		GlobalImGuiState.DescriptorTable = RenderingAPI::Get()->CreateDescriptorTable(1);
+		GlobalImGuiState.DescriptorTable = RenderingAPI::Get().CreateDescriptorTable(1);
 		GlobalImGuiState.DescriptorTable->SetShaderResourceView(GlobalImGuiState.FontTexture->GetShaderResourceView(0).Get(), 0);
 		GlobalImGuiState.DescriptorTable->CopyDescriptors();
 	}
@@ -269,7 +273,7 @@ bool DebugUI::Initialize()
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
-	GlobalImGuiState.RootSignature = RenderingAPI::Get()->CreateRootSignature(RootSignaturDesc);
+	GlobalImGuiState.RootSignature = RenderingAPI::Get().CreateRootSignature(RootSignaturDesc);
 	if (!GlobalImGuiState.RootSignature)
 	{
 		return false;
@@ -357,7 +361,7 @@ bool DebugUI::Initialize()
 	GuiPipelineProps.RTFormats			= Formats;
 	GuiPipelineProps.NumRenderTargets	= 1;
 
-	GlobalImGuiState.PipelineState = RenderingAPI::Get()->CreateGraphicsPipelineState(GuiPipelineProps);
+	GlobalImGuiState.PipelineState = RenderingAPI::Get().CreateGraphicsPipelineState(GuiPipelineProps);
 	if (!GlobalImGuiState.PipelineState)
 	{
 		return false;
@@ -371,7 +375,7 @@ bool DebugUI::Initialize()
 	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 	// VertexBuffer
-	GlobalImGuiState.VertexBuffer = RenderingAPI::Get()->CreateBuffer(BufferProps);
+	GlobalImGuiState.VertexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
 	if (!GlobalImGuiState.VertexBuffer)
 	{
 		return false;
@@ -380,7 +384,7 @@ bool DebugUI::Initialize()
 	// IndexBuffer
 	BufferProps.Name = "ImGui IndexBuffer";
 
-	GlobalImGuiState.IndexBuffer = RenderingAPI::Get()->CreateBuffer(BufferProps);
+	GlobalImGuiState.IndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
 	if (!GlobalImGuiState.IndexBuffer)
 	{
 		return false;
@@ -452,10 +456,10 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	IO.DeltaTime = static_cast<Float32>(Delta.AsSeconds());
 
 	// Set Mouseposition
-	TSharedPtr<WindowsWindow> Window = Application::Get()->GetWindow();
+	TSharedPtr<GenericWindow> Window = Application::Get().GetWindow();
 	if (IO.WantSetMousePos)
 	{
-		Application::Get()->SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
+		Application::Get().SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
 	}
 
 	// Get the display size
@@ -467,12 +471,12 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	// Get Mouseposition
 	Int32 X = 0;
 	Int32 Y = 0;
-	Application::Get()->GetCursorPos(Window, X, Y);
+	Application::Get().GetCursorPos(Window, X, Y);
 
 	IO.MousePos = ImVec2(static_cast<Float32>(X), static_cast<Float32>(Y));
 
 	// Check modifer keys
-	ModifierKeyState KeyState = Application::Get()->GetModifierKeyState();
+	ModifierKeyState KeyState = Application::Get().GetModifierKeyState();
 	IO.KeyCtrl	= KeyState.IsCtrlDown();
 	IO.KeyShift	= KeyState.IsShiftDown();
 	IO.KeyAlt	= KeyState.IsAltDown();
@@ -484,26 +488,26 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 		ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
 		if (ImguiCursor == ImGuiMouseCursor_None || IO.MouseDrawCursor)
 		{
-			Application::Get()->SetCursor(nullptr);
+			Application::Get().SetCursor(nullptr);
 		}
 		else
 		{
 			// Show OS mouse cursor
-			TSharedPtr<WindowsCursor> Cursor = CursorArrow;
+			TSharedPtr<GenericCursor> Cursor = GlobalCursors::Arrow;
 			switch (ImguiCursor)
 			{
-			case ImGuiMouseCursor_Arrow:		Cursor = CursorArrow;						break;
-			case ImGuiMouseCursor_TextInput:	Cursor = CursorTextInput;					break;
-			case ImGuiMouseCursor_ResizeAll:	Cursor = CursorResizeAll;					break;
-			case ImGuiMouseCursor_ResizeEW:		Cursor = CursorResizeEastWest;				break;
-			case ImGuiMouseCursor_ResizeNS:		Cursor = CursorResizeNorthSouth;			break;
-			case ImGuiMouseCursor_ResizeNESW:	Cursor = CursorResizeNorthEastSouthWest;	break;
-			case ImGuiMouseCursor_ResizeNWSE:	Cursor = CursorResizeNorthWestSouthEast;	break;
-			case ImGuiMouseCursor_Hand:			Cursor = CursorHand;						break;
-			case ImGuiMouseCursor_NotAllowed:	Cursor = CursorNotAllowed;					break;
+			case ImGuiMouseCursor_Arrow:		Cursor = GlobalCursors::Arrow;						break;
+			case ImGuiMouseCursor_TextInput:	Cursor = GlobalCursors::TextInput;					break;
+			case ImGuiMouseCursor_ResizeAll:	Cursor = GlobalCursors::ResizeAll;					break;
+			case ImGuiMouseCursor_ResizeEW:		Cursor = GlobalCursors::ResizeEastWest;				break;
+			case ImGuiMouseCursor_ResizeNS:		Cursor = GlobalCursors::ResizeNorthSouth;			break;
+			case ImGuiMouseCursor_ResizeNESW:	Cursor = GlobalCursors::ResizeNorthEastSouthWest;	break;
+			case ImGuiMouseCursor_ResizeNWSE:	Cursor = GlobalCursors::ResizeNorthWestSouthEast;	break;
+			case ImGuiMouseCursor_Hand:			Cursor = GlobalCursors::Hand;						break;
+			case ImGuiMouseCursor_NotAllowed:	Cursor = GlobalCursors::NotAllowed;					break;
 			}
 
-			Application::Get()->SetCursor(Cursor);
+			Application::Get().SetCursor(Cursor);
 		}
 	}
 

@@ -60,7 +60,7 @@ bool D3D12Texture::Initialize(const TextureProperties& Properties)
 
 void D3D12Texture::SetRenderTargetView(TSharedPtr<D3D12RenderTargetView> InRenderTargetView, Uint32 SubresourceIndex)
 {
-	if (SubresourceIndex >= RenderTargetViews.GetSize())
+	if (SubresourceIndex >= RenderTargetViews.Size())
 	{
 		RenderTargetViews.Resize(SubresourceIndex + 1);
 	}
@@ -70,7 +70,7 @@ void D3D12Texture::SetRenderTargetView(TSharedPtr<D3D12RenderTargetView> InRende
 
 void D3D12Texture::SetDepthStencilView(TSharedPtr<D3D12DepthStencilView> InDepthStencilView, Uint32 SubresourceIndex)
 {
-	if (SubresourceIndex >= DepthStencilViews.GetSize())
+	if (SubresourceIndex >= DepthStencilViews.Size())
 	{
 		DepthStencilViews.Resize(SubresourceIndex + 1);
 	}

@@ -150,7 +150,7 @@ bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineStat
 	};
 
 	const Uint32 StrideInBytes	= sizeof(TableEntry);
-	const Uint32 SizeInBytes	= StrideInBytes * static_cast<Uint32>(InBindingTableEntries.GetSize());
+	const Uint32 SizeInBytes	= StrideInBytes * static_cast<Uint32>(InBindingTableEntries.Size());
 	BindingTableStride = StrideInBytes;
 
 	BufferProperties BufferProps = { };
@@ -195,7 +195,7 @@ bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineStat
 
 bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandList, TArray<D3D12RayTracingGeometryInstance>& InInstances)
 {
-	const Uint32 InstanceCount = static_cast<Uint32>(InInstances.GetSize());
+	const Uint32 InstanceCount = static_cast<Uint32>(InInstances.Size());
 
 	// First get the size of the TLAS buffers and create them
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs = {};

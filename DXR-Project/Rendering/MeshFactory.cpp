@@ -290,7 +290,7 @@ MeshData MeshFactory::CreateSphere(Uint32 Subdivisions, Float32 Radius) noexcept
 		Subdivide(Sphere, Subdivisions);
 	}
 
-	for (Uint32 i = 0; i < static_cast<Uint32>(Sphere.Vertices.GetSize()); i++)
+	for (Uint32 i = 0; i < static_cast<Uint32>(Sphere.Vertices.Size()); i++)
 	{
 		// Calculate the new position, normal and tangent
 		XMVECTOR Position	= XMLoadFloat3(&Sphere.Vertices[i].Position);
@@ -593,13 +593,13 @@ void MeshFactory::Subdivide(MeshData& OutData, Uint32 Subdivisions) noexcept
 	Uint32 IndexCount		= 0;
 	Uint32 VertexCount		= 0;
 	Uint32 OldVertexCount	= 0;
-	OutData.Vertices.Reserve((OutData.Vertices.GetSize() * static_cast<size_t>(pow(2, Subdivisions))));
-	OutData.Indices.Reserve((OutData.Indices.GetSize() * static_cast<size_t>(pow(4, Subdivisions))));
+	OutData.Vertices.Reserve((OutData.Vertices.Size() * static_cast<size_t>(pow(2, Subdivisions))));
+	OutData.Indices.Reserve((OutData.Indices.Size() * static_cast<size_t>(pow(4, Subdivisions))));
 
 	for (Uint32 i = 0; i < Subdivisions; i++)
 	{
-		OldVertexCount	= Uint32(OutData.Vertices.GetSize());
-		IndexCount		= Uint32(OutData.Indices.GetSize());
+		OldVertexCount	= Uint32(OutData.Vertices.Size());
+		IndexCount		= Uint32(OutData.Indices.Size());
 		for (Uint32 j = 0; j < IndexCount; j += 3)
 		{
 			// Calculate Position
@@ -682,7 +682,7 @@ void MeshFactory::Subdivide(MeshData& OutData, Uint32 Subdivisions) noexcept
 			OutData.Vertices.EmplaceBack(TempVertices[2]);
 
 			// Push index of the new triangles
-			VertexCount = Uint32(OutData.Vertices.GetSize());
+			VertexCount = Uint32(OutData.Vertices.Size());
 			OutData.Indices.EmplaceBack(VertexCount - 3);
 			OutData.Indices.EmplaceBack(VertexCount - 1);
 			OutData.Indices.EmplaceBack(VertexCount - 2);
@@ -709,8 +709,8 @@ void MeshFactory::Subdivide(MeshData& OutData, Uint32 Subdivisions) noexcept
 
 void MeshFactory::Optimize(MeshData& OutData, Uint32 StartVertex) noexcept
 {
-	Uint32 VertexCount	= static_cast<Uint32>(OutData.Vertices.GetSize());
-	Uint32 IndexCount	= static_cast<Uint32>(OutData.Indices.GetSize());
+	Uint32 VertexCount	= static_cast<Uint32>(OutData.Vertices.Size());
+	Uint32 IndexCount	= static_cast<Uint32>(OutData.Indices.Size());
 		
 	Uint32 k = 0;
 	Uint32 j = 0;
@@ -806,7 +806,7 @@ void MeshFactory::CalculateTangents(MeshData& OutData) noexcept
 		Vertex1.Tangent = Tangent;
 	};
 
-	for (Uint32 i = 0; i < OutData.Indices.GetSize(); i += 3)
+	for (Uint32 i = 0; i < OutData.Indices.Size(); i += 3)
 	{
 		Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
 		Vertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];

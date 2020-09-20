@@ -515,7 +515,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->SetGraphicsRoot32BitConstants(&SimpleCamera, 16, 0, 0);
 	CommandList->SetGraphicsRootDescriptorTable(SkyboxDescriptorTable->GetGPUTableStartHandle(), 1);
 
-	CommandList->DrawIndexedInstanced(static_cast<Uint32>(SkyboxMesh.Indices.GetSize()), 1, 0, 0, 0);
+	CommandList->DrawIndexedInstanced(static_cast<Uint32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
 
 	// Render to BackBuffer
 	CommandList->TransitionBarrier(FinalTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -719,7 +719,7 @@ void Renderer::SetGlobalLightSettings(const LightSettings& InGlobalLightSettings
 	}
 }
 
-Renderer* Renderer::Make(TSharedPtr<WindowsWindow> RenderWindow)
+Renderer* Renderer::Make(TSharedPtr<GenericWindow> RenderWindow)
 {
 	RendererInstance = MakeUnique<Renderer>();
 	if (RendererInstance->Initialize(RenderWindow))
@@ -742,7 +742,7 @@ void Renderer::Release()
 	RendererInstance.Reset();
 }
 
-bool Renderer::Initialize(TSharedPtr<WindowsWindow> RenderWindow)
+bool Renderer::Initialize(TSharedPtr<GenericWindow> RenderWindow)
 {
 	const bool EnableDebug =
 #if ENABLE_D3D12_DEBUG
@@ -757,7 +757,7 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RenderWindow)
 		return false;
 	}
 	
-	if (!RenderingAPI->Initialize(RendererWindow, EnableDebug))
+	if (!RenderingAPI->Initialize(RenderWindow, EnableDebug))
 	{
 		return false;
 	}
@@ -815,14 +815,14 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RenderWindow)
 
 	// Create vertexbuffer
 	BufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
-	BufferProps.SizeInBytes	= sizeof(Vertex) * static_cast<Uint64>(Sphere.Vertices.GetSize());
+	BufferProps.SizeInBytes	= sizeof(Vertex) * static_cast<Uint64>(Sphere.Vertices.Size());
 	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 	MeshVertexBuffer = RenderingAPI->CreateBuffer(BufferProps);
 	if (MeshVertexBuffer)
 	{
 		void* BufferMemory = MeshVertexBuffer->Map();
-		memcpy(BufferMemory, Sphere.Vertices.GetData(), BufferProps.SizeInBytes);
+		memcpy(BufferMemory, Sphere.Vertices.Data(), BufferProps.SizeInBytes);
 		MeshVertexBuffer->Unmap();
 	}
 	else
@@ -830,12 +830,12 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RenderWindow)
 		return false;
 	}
 
-	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(Cube.Vertices.GetSize());
+	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(Cube.Vertices.Size());
 	CubeVertexBuffer = RenderingAPI->CreateBuffer(BufferProps);
 	if (CubeVertexBuffer)
 	{
 		void* BufferMemory = CubeVertexBuffer->Map();
-		memcpy(BufferMemory, Cube.Vertices.GetData(), BufferProps.SizeInBytes);
+		memcpy(BufferMemory, Cube.Vertices.Data(), BufferProps.SizeInBytes);
 		CubeVertexBuffer->Unmap();
 	}
 	else
@@ -843,12 +843,12 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RenderWindow)
 		return false;
 	}
 
-	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(SkyboxMesh.Vertices.GetSize());
+	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(SkyboxMesh.Vertices.Size());
 	SkyboxVertexBuffer = RenderingAPI->CreateBuffer(BufferProps);
 	if (SkyboxVertexBuffer)
 	{
 		void* BufferMemory = SkyboxVertexBuffer->Map();
-		memcpy(BufferMemory, SkyboxMesh.Vertices.GetData(), BufferProps.SizeInBytes);
+		memcpy(BufferMemory, SkyboxMesh.Vertices.Data(), BufferProps.SizeInBytes);
 		SkyboxVertexBuffer->Unmap();
 	}
 	else
@@ -857,12 +857,12 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RenderWindow)
 	}
 
 	// Create indexbuffer
-	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Sphere.Indices.GetSize());
+	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Sphere.Indices.Size());
 	MeshIndexBuffer = RenderingAPI->CreateBuffer(BufferProps);
 	if (MeshIndexBuffer)
 	{
 		void* BufferMemory = MeshIndexBuffer->Map();
-		memcpy(BufferMemory, Sphere.Indices.GetData(), BufferProps.SizeInBytes);
+		memcpy(BufferMemory, Sphere.Indices.Data(), BufferProps.SizeInBytes);
 		MeshIndexBuffer->Unmap();
 	}
 	else
@@ -870,12 +870,12 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RenderWindow)
 		return false;
 	}
 
-	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Cube.Indices.GetSize());
+	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Cube.Indices.Size());
 	CubeIndexBuffer = RenderingAPI->CreateBuffer(BufferProps);
 	if (CubeIndexBuffer)
 	{
 		void* BufferMemory = CubeIndexBuffer->Map();
-		memcpy(BufferMemory, Cube.Indices.GetData(), BufferProps.SizeInBytes);
+		memcpy(BufferMemory, Cube.Indices.Data(), BufferProps.SizeInBytes);
 		CubeIndexBuffer->Unmap();
 	}
 	else
@@ -883,12 +883,12 @@ bool Renderer::Initialize(TSharedPtr<WindowsWindow> RenderWindow)
 		return false;
 	}
 
-	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(SkyboxMesh.Indices.GetSize());
+	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(SkyboxMesh.Indices.Size());
 	SkyboxIndexBuffer = RenderingAPI->CreateBuffer(BufferProps);
 	if (SkyboxIndexBuffer)
 	{
 		void* BufferMemory = SkyboxIndexBuffer->Map();
-		memcpy(BufferMemory, SkyboxMesh.Indices.GetData(), BufferProps.SizeInBytes);
+		memcpy(BufferMemory, SkyboxMesh.Indices.Data(), BufferProps.SizeInBytes);
 		SkyboxIndexBuffer->Unmap();
 	}
 	else
@@ -1291,10 +1291,10 @@ bool Renderer::InitRayTracing()
 
 	// Create BLAS
 	TSharedPtr<D3D12RayTracingGeometry> MeshGeometry = TSharedPtr(RenderingAPI->CreateRayTracingGeometry());
-	MeshGeometry->BuildAccelerationStructure(RenderingAPI->GetImmediateCommandList().Get(), MeshVertexBuffer, static_cast<Uint32>(Sphere.Vertices.GetSize()), MeshIndexBuffer, static_cast<Uint32>(Sphere.Indices.GetSize()));
+	MeshGeometry->BuildAccelerationStructure(RenderingAPI->GetImmediateCommandList().Get(), MeshVertexBuffer, static_cast<Uint32>(Sphere.Vertices.Size()), MeshIndexBuffer, static_cast<Uint32>(Sphere.Indices.Size()));
 
 	TSharedPtr<D3D12RayTracingGeometry> CubeGeometry = TSharedPtr(RenderingAPI->CreateRayTracingGeometry());
-	CubeGeometry->BuildAccelerationStructure(RenderingAPI->GetImmediateCommandList().Get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.GetSize()), CubeIndexBuffer, static_cast<Uint32>(Cube.Indices.GetSize()));
+	CubeGeometry->BuildAccelerationStructure(RenderingAPI->GetImmediateCommandList().Get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.Size()), CubeIndexBuffer, static_cast<Uint32>(Cube.Indices.Size()));
 
 	XMFLOAT3X4 Matrix;
 	TArray<D3D12RayTracingGeometryInstance> Instances;
@@ -1346,23 +1346,23 @@ bool Renderer::InitRayTracing()
 	SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.Buffer.FirstElement			= 0;
 	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
-	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Vertices.GetSize());
+	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Vertices.Size());
 	SrvDesc.Buffer.StructureByteStride	= sizeof(Vertex);
 
 	MeshVertexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(MeshVertexBuffer->GetResource(), &SrvDesc)), 0);
 
-	SrvDesc.Buffer.NumElements = static_cast<Uint32>(Cube.Vertices.GetSize());
+	SrvDesc.Buffer.NumElements = static_cast<Uint32>(Cube.Vertices.Size());
 	CubeVertexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(CubeVertexBuffer->GetResource(), &SrvDesc)), 0);
 
 	// IndexBuffer
 	SrvDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
 	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
-	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Indices.GetSize());
+	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Indices.Size());
 	SrvDesc.Buffer.StructureByteStride	= 0;
 
 	MeshIndexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(MeshIndexBuffer->GetResource(), &SrvDesc)), 0);
 
-	SrvDesc.Buffer.NumElements = static_cast<Uint32>(Cube.Indices.GetSize());
+	SrvDesc.Buffer.NumElements = static_cast<Uint32>(Cube.Indices.Size());
 	CubeIndexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI->CreateShaderResourceView(CubeIndexBuffer->GetResource(), &SrvDesc)), 0);
 
 	// Populate descriptors
@@ -2355,7 +2355,7 @@ bool Renderer::InitIntegrationLUT()
 	LUTProperties.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	LUTProperties.SampleCount	= 1;
 
-	TUniquePtr<D3D12Texture> StagingTexture = RenderingAPI->CreateTexture(LUTProperties);
+	TUniquePtr<D3D12Texture> StagingTexture = TUniquePtr(RenderingAPI->CreateTexture(LUTProperties));
 	if (!StagingTexture)
 	{
 		return false;
@@ -2399,7 +2399,7 @@ bool Renderer::InitIntegrationLUT()
 		return false;
 	}
 
-	TUniquePtr<D3D12RootSignature> RootSignature = RenderingAPI->CreateRootSignature(Shader.Get());
+	TUniquePtr<D3D12RootSignature> RootSignature = TUniquePtr(RenderingAPI->CreateRootSignature(Shader.Get()));
 	if (!RootSignature)
 	{
 		return false;
@@ -2410,13 +2410,13 @@ bool Renderer::InitIntegrationLUT()
 	PSOProperties.CSBlob		= Shader.Get();
 	PSOProperties.RootSignature	= RootSignature.Get();
 
-	TUniquePtr<D3D12ComputePipelineState> PSO = RenderingAPI->CreateComputePipelineState(PSOProperties);
+	TUniquePtr<D3D12ComputePipelineState> PSO = TUniquePtr(RenderingAPI->CreateComputePipelineState(PSOProperties));
 	if (!PSO)
 	{
 		return false;
 	}
 
-	TUniquePtr<D3D12DescriptorTable> DescriptorTable = RenderingAPI->CreateDescriptorTable(1);
+	TUniquePtr<D3D12DescriptorTable> DescriptorTable = TUniquePtr(RenderingAPI->CreateDescriptorTable(1));
 	DescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).Get(), 0);
 	DescriptorTable->CopyDescriptors();
 

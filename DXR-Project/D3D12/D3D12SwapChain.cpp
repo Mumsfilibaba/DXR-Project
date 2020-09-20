@@ -120,12 +120,12 @@ void D3D12SwapChain::RetriveSwapChainSurfaces()
 {
 	using namespace Microsoft::WRL;
 
-	if (BackBuffers.GetSize() < GetSurfaceCount())
+	if (BackBuffers.Size() < GetSurfaceCount())
 	{
 		BackBuffers.Resize(GetSurfaceCount());
 	}
 
-	if (BackBuffersViews.GetSize() < GetSurfaceCount())
+	if (BackBuffersViews.Size() < GetSurfaceCount())
 	{
 		BackBuffersViews.Resize(GetSurfaceCount());
 	}

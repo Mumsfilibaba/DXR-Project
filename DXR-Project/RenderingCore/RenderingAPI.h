@@ -26,6 +26,8 @@ class RenderingAPI
 public:
 	virtual ~RenderingAPI() = default;
 
+	virtual bool Initialize(TSharedPtr<GenericWindow> RenderWindow, bool EnableDebug) = 0;
+
 	virtual class D3D12Texture* CreateTexture(const struct TextureProperties& Properties) const = 0;
 	virtual class D3D12Buffer* CreateBuffer(const struct BufferProperties& Properties) const = 0;
 	virtual class D3D12RayTracingScene* CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState, TArray<BindingTableEntry>& InBindingTableEntries, Uint32 InNumHitGroups) const = 0;
@@ -69,8 +71,8 @@ public:
 		return false;
 	}
 
-	static RenderingAPI* Make(ERenderingAPI InRenderAPI, TSharedPtr<WindowsWindow> RenderWindow, bool EnableDebug);
-	static RenderingAPI* Get();
+	static RenderingAPI* Make(ERenderingAPI InRenderAPI, TSharedPtr<GenericWindow> RenderWindow, bool EnableDebug);
+	static RenderingAPI& Get();
 	static void Release();
 	
 	FORCEINLINE static TSharedPtr<D3D12ImmediateCommandList> StaticGetImmediateCommandList()
@@ -80,8 +82,6 @@ public:
 
 protected:
 	RenderingAPI() = default;
-
-	virtual bool Initialize(TSharedPtr<WindowsWindow> RenderWindow, bool EnableDebug) = 0;
 
 private:
 	static RenderingAPI* RenderAPI;

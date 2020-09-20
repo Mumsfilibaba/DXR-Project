@@ -113,7 +113,7 @@ void D3D12ImmediateCommandList::Flush()
 
 	// Get next allocator
 	CurrentAllocatorIndex++;
-	if (CurrentAllocatorIndex >= Allocators.GetSize())
+	if (CurrentAllocatorIndex >= Allocators.Size())
 	{
 		CurrentAllocatorIndex = 0;
 	}

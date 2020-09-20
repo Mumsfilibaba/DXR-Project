@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 
-#include "Core/RenderingAPI.h"
+#include "RenderingCore/RenderingAPI.h"
 
 #include "D3D12/D3D12Texture.h"
 #include "D3D12/D3D12Buffer.h"
@@ -94,7 +94,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, U
 	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 	TextureProps.SampleCount	= 1;
 
-	TUniquePtr<D3D12Texture> Texture = RenderingAPI::Get()->CreateTexture(TextureProps);
+	TUniquePtr<D3D12Texture> Texture = TUniquePtr(RenderingAPI::Get().CreateTexture(TextureProps));
 	if (!Texture)
 	{
 		return nullptr;
@@ -111,7 +111,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, U
 	SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.Texture2D.MipLevels			= MipLevels;
 	SrvDesc.Texture2D.MostDetailedMip	= 0;
-	Texture->SetShaderResourceView(TSharedPtr(RenderingAPI::Get()->CreateShaderResourceView(Texture->GetResource(), &SrvDesc)), 0);
+	Texture->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(Texture->GetResource(), &SrvDesc)), 0);
 
 	TSharedPtr<D3D12ImmediateCommandList> CommandList = RenderingAPI::StaticGetImmediateCommandList();
 	CommandList->TransitionBarrier(Texture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -149,7 +149,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* Panoram
 	TextureProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	TextureProps.SampleCount	= 1;
 
-	TUniquePtr<D3D12Texture> StagingTexture = RenderingAPI::Get()->CreateTexture(TextureProps);
+	TUniquePtr<D3D12Texture> StagingTexture = TUniquePtr(RenderingAPI::Get().CreateTexture(TextureProps));
 	if (!StagingTexture)
 	{
 		return nullptr;
@@ -161,11 +161,11 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* Panoram
 	UAVDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 	UAVDesc.Texture2DArray.ArraySize		= 6;
 	UAVDesc.Texture2DArray.FirstArraySlice	= 0;
-	StagingTexture->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get()->CreateUnorderedAccessView(nullptr, StagingTexture->GetResource(), &UAVDesc)), 0);
+	StagingTexture->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get().CreateUnorderedAccessView(nullptr, StagingTexture->GetResource(), &UAVDesc)), 0);
 
 	TextureProps.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-	TUniquePtr<D3D12Texture> Texture = RenderingAPI::Get()->CreateTexture(TextureProps);
+	TUniquePtr<D3D12Texture> Texture = TUniquePtr(RenderingAPI::Get().CreateTexture(TextureProps));
 	if (!Texture)
 	{
 		return nullptr;
@@ -179,7 +179,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* Panoram
 	SRVDesc.TextureCube.MipLevels			= MipLevels;
 	SRVDesc.TextureCube.MostDetailedMip		= 0;
 	SRVDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
-	Texture->SetShaderResourceView(TSharedPtr(RenderingAPI::Get()->CreateShaderResourceView(Texture->GetResource(), &SRVDesc)), 0);
+	Texture->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(Texture->GetResource(), &SRVDesc)), 0);
 
 	// Generate PipelineState at first run
 	if (!GlobalFactoryData.PanoramaPSO)
@@ -196,13 +196,13 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* Panoram
 		GenCubeProperties.RootSignature = nullptr;
 		GenCubeProperties.CSBlob		= CSBlob.Get();
 
-		GlobalFactoryData.PanoramaPSO = RenderingAPI::Get()->CreateComputePipelineState(GenCubeProperties);
+		GlobalFactoryData.PanoramaPSO = RenderingAPI::Get().CreateComputePipelineState(GenCubeProperties);
 		if (!GlobalFactoryData.PanoramaPSO)
 		{
 			return false;
 		}
 
-		GlobalFactoryData.PanoramaRootSignature = RenderingAPI::Get()->CreateRootSignature(CSBlob.Get());
+		GlobalFactoryData.PanoramaRootSignature = RenderingAPI::Get().CreateRootSignature(CSBlob.Get());
 		if (!GlobalFactoryData.PanoramaRootSignature)
 		{
 			return false;
@@ -212,11 +212,11 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* Panoram
 	}
 
 	// Create needed interfaces
-	TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable = RenderingAPI::Get()->CreateDescriptorTable(1);
+	TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable = TUniquePtr(RenderingAPI::Get().CreateDescriptorTable(1));
 	SrvDescriptorTable->SetShaderResourceView(PanoramaSource->GetShaderResourceView(0).Get(), 0);
 	SrvDescriptorTable->CopyDescriptors();
 
-	TUniquePtr<D3D12DescriptorTable> UavDescriptorTable = RenderingAPI::Get()->CreateDescriptorTable(1);
+	TUniquePtr<D3D12DescriptorTable> UavDescriptorTable = TUniquePtr(RenderingAPI::Get().CreateDescriptorTable(1));
 	UavDescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).Get(), 0);
 	UavDescriptorTable->CopyDescriptors();
 

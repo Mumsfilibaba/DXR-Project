@@ -3,7 +3,7 @@
 
 #define LOG_ERROR(Message) \
 	{ \
-		VALIDATE(GlobalOutputHandle != nullptr); \
+		VALIDATE(GlobalOutputDevices::Console != nullptr); \
 		GlobalOutputDevices::Console->SetColor(EConsoleColor::CONSOLE_COLOR_RED); \
 		GlobalOutputDevices::Console->Print(std::string(Message) + "\n"); \
 		GlobalOutputDevices::Console->SetColor(EConsoleColor::CONSOLE_COLOR_WHITE); \
@@ -11,7 +11,7 @@
 
 #define LOG_WARNING(Message) \
 	{ \
-		VALIDATE(GlobalOutputHandle != nullptr); \
+		VALIDATE(GlobalOutputDevices::Console != nullptr); \
 		GlobalOutputDevices::Console->SetColor(EConsoleColor::CONSOLE_COLOR_YELLOW); \
 		GlobalOutputDevices::Console->Print(std::string(Message) + "\n"); \
 		GlobalOutputDevices::Console->SetColor(EConsoleColor::CONSOLE_COLOR_WHITE); \

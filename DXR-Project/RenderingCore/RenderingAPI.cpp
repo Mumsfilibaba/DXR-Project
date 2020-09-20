@@ -4,13 +4,16 @@
 
 RenderingAPI* RenderingAPI::RenderAPI = nullptr;
 
-RenderingAPI* RenderingAPI::Make(ERenderingAPI InRenderAPI, TSharedPtr<WindowsWindow> RendererWindow, bool EnableDebug)
+/*
+* RenderingAPI
+*/
+RenderingAPI* RenderingAPI::Make(ERenderingAPI InRenderAPI, TSharedPtr<GenericWindow> RendererWindow, bool EnableDebug)
 {
 	// Select RenderingAPI
 	TUniquePtr<RenderingAPI> TempRenderAPI;
 	if (InRenderAPI == ERenderingAPI::RENDERING_API_D3D12)
 	{
-		return new D3D12RenderingAPI());
+		return new D3D12RenderingAPI();
 	}
 	else
 	{
@@ -18,9 +21,10 @@ RenderingAPI* RenderingAPI::Make(ERenderingAPI InRenderAPI, TSharedPtr<WindowsWi
 	}
 }
 
-RenderingAPI* RenderingAPI::Get()
+RenderingAPI& RenderingAPI::Get()
 {
-	return RenderAPI;
+	VALIDATE(RenderAPI);
+	return *RenderAPI;
 }
 
 void RenderingAPI::Release()

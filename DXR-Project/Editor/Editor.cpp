@@ -30,7 +30,7 @@ static void DrawSceneInfo();
 */
 static void DrawDebugData()
 {
-	static std::string AdapterName = RenderingAPI::Get()->GetAdapterName();
+	static std::string AdapterName = RenderingAPI::Get().GetAdapterName();
 
 	const Float64 Delta = EngineLoop::GetDeltaTime().AsMilliSeconds();
 	DebugUI::DrawDebugString("Adapter: " + AdapterName);
@@ -84,7 +84,7 @@ static void DrawSideWindow()
 		constexpr Uint32 Width = 450;
 
 		WindowShape WindowShape;
-		Application::Get()->GetWindow()->GetWindowShape(WindowShape);
+		Application::Get().GetWindow()->GetWindowShape(WindowShape);
 
 		ImGui::SetNextWindowPos(ImVec2(0, MainMenuBarHeight));
 		ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height - MainMenuBarHeight));
@@ -136,7 +136,7 @@ static void DrawRenderSettings()
 	ImGui::BeginChild("RendererInfo");
 
 	WindowShape WindowShape;
-	Application::Get()->GetWindow()->GetWindowShape(WindowShape);
+	Application::Get().GetWindow()->GetWindowShape(WindowShape);
 
 	ImGui::Spacing();
 	ImGui::Text("Renderer Info");

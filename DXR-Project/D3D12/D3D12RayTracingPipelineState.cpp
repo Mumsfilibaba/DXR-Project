@@ -80,7 +80,7 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION RayGenLocalRootAssociation;
 	RayGenLocalRootAssociation.pExports		= RayGenLocalRootAssociationShaderNames;
 	RayGenLocalRootAssociation.NumExports	= _countof(RayGenLocalRootAssociationShaderNames);
-	RayGenLocalRootAssociation.pSubobjectToAssociate = &SubObjects.GetBack();
+	RayGenLocalRootAssociation.pSubobjectToAssociate = &SubObjects.Back();
 
 	{
 		D3D12_STATE_SUBOBJECT RayGenLocalRootAssociationSubObject = { };
@@ -103,7 +103,7 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION HitGroupLocalRootAssociation;
 	HitGroupLocalRootAssociation.pExports	= HitGroupLocalRootAssociationShaderNames;
 	HitGroupLocalRootAssociation.NumExports = _countof(HitGroupLocalRootAssociationShaderNames);
-	HitGroupLocalRootAssociation.pSubobjectToAssociate = &SubObjects.GetBack();
+	HitGroupLocalRootAssociation.pSubobjectToAssociate = &SubObjects.Back();
 
 	{
 		D3D12_STATE_SUBOBJECT HitGroupLocalRootAssociationSubObject = { };
@@ -126,7 +126,7 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION MissLocalRootAssociation;
 	MissLocalRootAssociation.pExports	= missLocalRootAssociationShaderNames;
 	MissLocalRootAssociation.NumExports = _countof(missLocalRootAssociationShaderNames);
-	MissLocalRootAssociation.pSubobjectToAssociate = &SubObjects.GetBack();
+	MissLocalRootAssociation.pSubobjectToAssociate = &SubObjects.Back();
 
 	{
 		D3D12_STATE_SUBOBJECT MissLocalRootAssociationSubObject = { };
@@ -153,7 +153,7 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION ShaderConfigAssociation;
 	ShaderConfigAssociation.pExports	= ShaderNamesToConfig;
 	ShaderConfigAssociation.NumExports	= _countof(ShaderNamesToConfig);
-	ShaderConfigAssociation.pSubobjectToAssociate = &SubObjects.GetBack();
+	ShaderConfigAssociation.pSubobjectToAssociate = &SubObjects.Back();
 
 	{
 		D3D12_STATE_SUBOBJECT ShaderConfigAssociationSubObject = { };
@@ -184,8 +184,8 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	// Create state object
 	D3D12_STATE_OBJECT_DESC RayTracingPipeline = { };
 	RayTracingPipeline.Type				= D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
-	RayTracingPipeline.NumSubobjects	= static_cast<Uint32>(SubObjects.GetSize());
-	RayTracingPipeline.pSubobjects		= SubObjects.GetData();
+	RayTracingPipeline.NumSubobjects	= static_cast<Uint32>(SubObjects.Size());
+	RayTracingPipeline.pSubobjects		= SubObjects.Data();
 
 	HRESULT hResult = Device->GetDXRDevice()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&StateObject));
 	if (SUCCEEDED(hResult))

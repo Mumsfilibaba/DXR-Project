@@ -230,7 +230,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	}
 
 	// Resize if necessary
-	if (MipGenHelper.UAVDescriptorTables.GetSize() < NumDispatches)
+	if (MipGenHelper.UAVDescriptorTables.Size() < NumDispatches)
 	{
 		MipGenHelper.UAVDescriptorTables.Resize(NumDispatches);
 	}
@@ -333,7 +333,7 @@ void D3D12CommandList::FlushDeferredResourceBarriers()
 	{
 		// TODO: Remove unnecessary barriers
 
-		CommandList->ResourceBarrier(static_cast<UINT>(DeferredResourceBarriers.GetSize()), DeferredResourceBarriers.GetData());
+		CommandList->ResourceBarrier(static_cast<UINT>(DeferredResourceBarriers.Size()), DeferredResourceBarriers.Data());
 		DeferredResourceBarriers.Clear();
 	}
 }

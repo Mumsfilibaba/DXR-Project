@@ -69,7 +69,7 @@ bool D3D12Resource::Initialize(ID3D12Resource* InResource)
 
 void D3D12Resource::SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex)
 {
-	if (SubresourceIndex >= ShaderResourceViews.GetSize())
+	if (SubresourceIndex >= ShaderResourceViews.Size())
 	{
 		ShaderResourceViews.Resize(SubresourceIndex + 1);
 	}
@@ -79,7 +79,7 @@ void D3D12Resource::SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> In
 
 void D3D12Resource::SetUnorderedAccessView(TSharedPtr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex)
 {
-	if (SubresourceIndex >= UnorderedAccessViews.GetSize())
+	if (SubresourceIndex >= UnorderedAccessViews.Size())
 	{
 		UnorderedAccessViews.Resize(SubresourceIndex + 1);
 	}

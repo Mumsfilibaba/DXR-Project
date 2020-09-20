@@ -3,7 +3,7 @@
 
 #include "Containers/TSharedPtr.h"
 
-class WindowsWindow;
+class GenericWindow;
 
 /*
 * WindowResizeEvent 
@@ -11,7 +11,7 @@ class WindowsWindow;
 struct WindowResizeEvent : public Event
 {
 public:
-	WindowResizeEvent(TSharedPtr<WindowsWindow> InWindow, Uint16 InWidth, Uint16 InHeight)
+	WindowResizeEvent(TSharedPtr<GenericWindow> InWindow, Uint16 InWidth, Uint16 InHeight)
 		: Window(InWindow)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -27,7 +27,7 @@ public:
 		return std::string("WindowResizeEvent=[") + std::to_string(Width) + ", " + std::to_string(Height) + "]";
 	}
 
-	FORCEINLINE TSharedPtr<WindowsWindow> GetWindow() const
+	FORCEINLINE TSharedPtr<GenericWindow> GetWindow() const
 	{
 		return Window;
 	}
@@ -43,7 +43,7 @@ public:
 	}
 
 private:
-	TSharedPtr<WindowsWindow> Window; 
+	TSharedPtr<GenericWindow> Window;
 	Uint16 Width;
 	Uint16 Height;
 };

@@ -1,6 +1,8 @@
 #pragma once
 #include "Application/InputCodes.h"
 
+#include "Application/Events/ApplicationEventHandler.h"
+
 #include "GenericWindow.h"
 #include "GenericCursor.h"
 

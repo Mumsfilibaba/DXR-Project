@@ -82,7 +82,7 @@ TSharedPtr<GenericWindow> WindowsApplication::MakeWindow()
 
 TSharedPtr<GenericCursor> WindowsApplication::MakeCursor()
 {
-	TSharedPtr<WindowsCursor> Cursor = MakeShared<WindowsCursor>();
+	TSharedPtr<WindowsCursor> Cursor = MakeShared<WindowsCursor>(this);
 	if (!Cursor)
 	{
 		return TSharedPtr<GenericCursor>();
@@ -156,7 +156,7 @@ TSharedPtr<GenericCursor> WindowsApplication::GetCursor() const
 
 void WindowsApplication::GetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const
 {
-	TSharedPtr<WindowsWindow> WinRelative = RelativeWindow;
+	TSharedPtr<WindowsWindow> WinRelative = StaticCast<WindowsWindow>(RelativeWindow);
 	HWND hRelative = WinRelative->GetHandle();
 
 	POINT CursorPos = { };
@@ -191,7 +191,7 @@ void WindowsApplication::SetCursor(TSharedPtr<GenericCursor> Cursor)
 {
 	if (Cursor)
 	{
-		TSharedPtr<WindowsCursor> WinCursor = Cursor;
+		TSharedPtr<WindowsCursor> WinCursor = StaticCast<WindowsCursor>(Cursor);
 		CurrentCursor = WinCursor;
 
 		HCURSOR hCursor = WinCursor->GetCursor();
@@ -205,7 +205,7 @@ void WindowsApplication::SetCursor(TSharedPtr<GenericCursor> Cursor)
 
 void WindowsApplication::SetActiveWindow(TSharedPtr<GenericWindow> Window)
 {
-	TSharedPtr<WindowsWindow> WinWindow = Window;
+	TSharedPtr<WindowsWindow> WinWindow = StaticCast<WindowsWindow>(Window);
 	HWND hActiveWindow = WinWindow->GetHandle();
 	if (::IsWindow(hActiveWindow))
 	{
@@ -217,7 +217,7 @@ void WindowsApplication::SetCapture(TSharedPtr<GenericWindow> CaptureWindow)
 {
 	if (CaptureWindow)
 	{
-		TSharedPtr<WindowsWindow> WinWindow = CaptureWindow;
+		TSharedPtr<WindowsWindow> WinWindow = StaticCast<WindowsWindow>(CaptureWindow);
 		HWND hCapture = WinWindow->GetHandle();
 		if (::IsWindow(hCapture))
 		{
@@ -234,7 +234,7 @@ void WindowsApplication::SetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, 
 {
 	if (RelativeWindow)
 	{
-		TSharedPtr<WindowsWindow> WinWindow = RelativeWindow;
+		TSharedPtr<WindowsWindow> WinWindow = StaticCast<WindowsWindow>(RelativeWindow);
 		HWND hRelative = WinWindow->GetHandle();
 	
 		POINT CursorPos = { X, Y };

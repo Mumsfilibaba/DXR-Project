@@ -93,13 +93,13 @@ public:
 		return GlobalLightSettings;
 	}
 
-	static Renderer* Make(TSharedPtr<WindowsWindow> RenderWindow);
+	static Renderer* Make(TSharedPtr<GenericWindow> RenderWindow);
 	static Renderer* Get();
 
 	static void Release();
 	
 private:
-	bool Initialize(TSharedPtr<WindowsWindow> RenderWindow);
+	bool Initialize(TSharedPtr<GenericWindow> RenderWindow);
 
 	bool InitRayTracing();
 	bool InitLightBuffers();

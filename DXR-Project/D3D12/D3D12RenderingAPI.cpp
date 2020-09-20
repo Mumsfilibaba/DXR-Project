@@ -34,7 +34,7 @@ D3D12RenderingAPI::~D3D12RenderingAPI()
 	SwapChain.Reset();
 }
 
-bool D3D12RenderingAPI::Initialize(TSharedPtr<WindowsWindow> RenderWindow, bool EnableDebug)
+bool D3D12RenderingAPI::Initialize(TSharedPtr<GenericWindow> RenderWindow, bool EnableDebug)
 {
 	Device = MakeShared<D3D12Device>();
 	if (!Device->Initialize(EnableDebug))
@@ -55,7 +55,7 @@ bool D3D12RenderingAPI::Initialize(TSharedPtr<WindowsWindow> RenderWindow, bool 
 	}
 
 	SwapChain = MakeShared<D3D12SwapChain>(Device.Get());
-	if (!SwapChain->Initialize(RenderWindow.Get(), Queue.Get()))
+	if (!SwapChain->Initialize(StaticCast<WindowsWindow>(RenderWindow).Get(), Queue.Get()))
 	{
 		return false;
 	}
@@ -65,7 +65,7 @@ bool D3D12RenderingAPI::Initialize(TSharedPtr<WindowsWindow> RenderWindow, bool 
 
 D3D12Texture* D3D12RenderingAPI::CreateTexture(const TextureProperties& Properties) const
 {
-	TUniquePtr<D3D12Texture> Texture = new D3D12Texture(Device.Get());
+	TUniquePtr<D3D12Texture> Texture = TUniquePtr(new D3D12Texture(Device.Get()));
 	if (Texture->Initialize(Properties))
 	{
 		return Texture.Release();
@@ -76,7 +76,7 @@ D3D12Texture* D3D12RenderingAPI::CreateTexture(const TextureProperties& Properti
 
 D3D12Buffer* D3D12RenderingAPI::CreateBuffer(const BufferProperties& Properties) const
 {
-	TUniquePtr<D3D12Buffer> Buffer = new D3D12Buffer(Device.Get());
+	TUniquePtr<D3D12Buffer> Buffer = TUniquePtr(new D3D12Buffer(Device.Get()));
 	if (Buffer->Initialize(Properties))
 	{
 		return Buffer.Release();
@@ -87,7 +87,7 @@ D3D12Buffer* D3D12RenderingAPI::CreateBuffer(const BufferProperties& Properties)
 
 D3D12RayTracingScene* D3D12RenderingAPI::CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState, TArray<BindingTableEntry>& InBindingTableEntries, Uint32 InNumHitGroups) const
 {
-	TUniquePtr<D3D12RayTracingScene> Scene = new D3D12RayTracingScene(Device.Get());
+	TUniquePtr<D3D12RayTracingScene> Scene = TUniquePtr(new D3D12RayTracingScene(Device.Get()));
 	if (Scene->Initialize(PipelineState, InBindingTableEntries, InNumHitGroups))
 	{
 		return Scene.Release();
@@ -133,7 +133,7 @@ D3D12ConstantBufferView* D3D12RenderingAPI::CreateConstantBufferView(ID3D12Resou
 
 D3D12Fence* D3D12RenderingAPI::CreateFence(Uint64 InitalValue) const
 {
-	TUniquePtr<D3D12Fence> Fence = new D3D12Fence(Device.Get());
+	TUniquePtr<D3D12Fence> Fence = TUniquePtr(new D3D12Fence(Device.Get()));
 	if (Fence->Initialize(InitalValue))
 	{
 		return Fence.Release();
@@ -144,7 +144,7 @@ D3D12Fence* D3D12RenderingAPI::CreateFence(Uint64 InitalValue) const
 
 D3D12CommandAllocator* D3D12RenderingAPI::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE ListType) const
 {
-	TUniquePtr<D3D12CommandAllocator> Allocator = new D3D12CommandAllocator(Device.Get());
+	TUniquePtr<D3D12CommandAllocator> Allocator = TUniquePtr(new D3D12CommandAllocator(Device.Get()));
 	if (Allocator->Initialize(ListType))
 	{
 		return Allocator.Release();
@@ -155,7 +155,7 @@ D3D12CommandAllocator* D3D12RenderingAPI::CreateCommandAllocator(D3D12_COMMAND_L
 
 D3D12CommandList* D3D12RenderingAPI::CreateCommandList(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline) const
 {
-	TUniquePtr<D3D12CommandList> List = new D3D12CommandList(Device.Get());
+	TUniquePtr<D3D12CommandList> List = TUniquePtr(new D3D12CommandList(Device.Get()));
 	if (List->Initialize(Type, Allocator, InitalPipeline))
 	{
 		return List.Release();
@@ -171,7 +171,7 @@ D3D12CommandQueue* D3D12RenderingAPI::CreateCommandQueue() const
 
 D3D12ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(const ComputePipelineStateProperties& Properties) const
 {
-	TUniquePtr<D3D12ComputePipelineState> PipelineState = new D3D12ComputePipelineState(Device.Get());
+	TUniquePtr<D3D12ComputePipelineState> PipelineState = TUniquePtr(new D3D12ComputePipelineState(Device.Get()));
 	if (PipelineState->Initialize(Properties))
 	{
 		return PipelineState.Release();
@@ -182,7 +182,7 @@ D3D12ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(const C
 
 D3D12GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(const GraphicsPipelineStateProperties& Properties) const
 {
-	TUniquePtr<D3D12GraphicsPipelineState> PipelineState = new D3D12GraphicsPipelineState(Device.Get());
+	TUniquePtr<D3D12GraphicsPipelineState> PipelineState = TUniquePtr(new D3D12GraphicsPipelineState(Device.Get()));
 	if (PipelineState->Initialize(Properties))
 	{
 		return PipelineState.Release();
@@ -193,7 +193,7 @@ D3D12GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(const
 
 D3D12RayTracingPipelineState* D3D12RenderingAPI::CreateRayTracingPipelineState(const RayTracingPipelineStateProperties& Properties) const
 {
-	TUniquePtr<D3D12RayTracingPipelineState> PipelineState = new D3D12RayTracingPipelineState(Device.Get());
+	TUniquePtr<D3D12RayTracingPipelineState> PipelineState = TUniquePtr(new D3D12RayTracingPipelineState(Device.Get()));
 	if (PipelineState->Initialize(Properties))
 	{
 		return PipelineState.Release();
@@ -204,7 +204,7 @@ D3D12RayTracingPipelineState* D3D12RenderingAPI::CreateRayTracingPipelineState(c
 
 D3D12RootSignature* D3D12RenderingAPI::CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc) const
 {
-	TUniquePtr<D3D12RootSignature> RootSignature = new D3D12RootSignature(Device.Get());
+	TUniquePtr<D3D12RootSignature> RootSignature = TUniquePtr(new D3D12RootSignature(Device.Get()));
 	if (RootSignature->Initialize(Desc))
 	{
 		return RootSignature.Release();
@@ -215,7 +215,7 @@ D3D12RootSignature* D3D12RenderingAPI::CreateRootSignature(const D3D12_ROOT_SIGN
 
 D3D12RootSignature* D3D12RenderingAPI::CreateRootSignature(IDxcBlob* ShaderBlob) const
 {
-	TUniquePtr<D3D12RootSignature> RootSignature = new D3D12RootSignature(Device.Get());
+	TUniquePtr<D3D12RootSignature> RootSignature = TUniquePtr(new D3D12RootSignature(Device.Get()));
 	if (RootSignature->Initialize(ShaderBlob))
 	{
 		return RootSignature.Release();

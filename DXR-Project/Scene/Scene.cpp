@@ -319,7 +319,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
 			if (UniqueVertices.count(TempVertex) == 0)
 			{
-				UniqueVertices[TempVertex] = static_cast<Uint32>(Data.Vertices.GetSize());
+				UniqueVertices[TempVertex] = static_cast<Uint32>(Data.Vertices.Size());
 				Data.Vertices.PushBack(TempVertex);
 			}
 
