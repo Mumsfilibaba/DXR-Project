@@ -37,7 +37,7 @@ public:
 	FORCEINLINE TUniquePtr(TUniquePtr<TOther>&& Other) noexcept
 		: Ptr(Other.Ptr)
 	{
-		static_assert(std::is_convertible<TOther, T>());
+		static_assert(std::is_convertible<TOther*, T*>());
 		Other.Ptr = nullptr;
 	}
 
@@ -117,7 +117,7 @@ public:
 	template<typename TOther>
 	FORCEINLINE TUniquePtr& operator=(TUniquePtr<TOther>&& Other) noexcept
 	{
-		static_assert(std::is_convertible<TOther, T>());
+		static_assert(std::is_convertible<TOther*, T*>());
 
 		if (this != std::addressof(Other))
 		{
@@ -196,7 +196,7 @@ public:
 	FORCEINLINE TUniquePtr(TUniquePtr<TOther>&& Other) noexcept
 		: Ptr(Other.Ptr)
 	{
-		static_assert(std::is_convertible<TOther, T>());
+		static_assert(std::is_convertible<TOther*, T*>());
 		Other.Ptr = nullptr;
 	}
 
@@ -272,7 +272,7 @@ public:
 	template<typename TOther>
 	FORCEINLINE TUniquePtr& operator=(TUniquePtr<TOther>&& Other) noexcept
 	{
-		static_assert(std::is_convertible<TOther, T>());
+		static_assert(std::is_convertible<TOther*, T*>());
 
 		if (this != std::addressof(Other))
 		{
