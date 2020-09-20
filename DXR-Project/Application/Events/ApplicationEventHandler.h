@@ -7,6 +7,9 @@
 class WindowsWindow;
 class ModifierKeyState;
 
+/*
+* ApplicationEventHandler
+*/
 class ApplicationEventHandler
 {
 public:

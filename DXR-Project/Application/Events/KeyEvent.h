@@ -6,7 +6,7 @@
 /*
 * Base KeyEvent
 */
-class KeyEvent : public Event
+struct KeyEvent : public Event
 {
 public:
 	KeyEvent(EKey InKey, const ModifierKeyState& InModifiers)

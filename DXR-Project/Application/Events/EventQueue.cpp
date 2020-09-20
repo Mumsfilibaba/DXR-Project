@@ -1,5 +1,7 @@
 #include "EventQueue.h"
 
+#include "Containers/TArray.h"
+
 /*
 * EventHandlerPair
 */

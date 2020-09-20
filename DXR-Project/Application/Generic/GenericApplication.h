@@ -12,36 +12,44 @@ public:
 	{
 	}
 
-	inline bool IsCtrlDown() const
+	FORCEINLINE bool IsCtrlDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_CTRL);
 	}
 
-	inline bool IsAltDown() const
+	FORCEINLINE bool IsAltDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_ALT);
 	}
 
-	inline bool IsShiftDown() const
+	FORCEINLINE bool IsShiftDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_SHIFT);
 	}
 
-	inline bool IsCapsLockDown() const
+	FORCEINLINE bool IsCapsLockDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_CAPS_LOCK);
 	}
 
-	inline bool IsSuperKeyDown() const
+	FORCEINLINE bool IsSuperKeyDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_SUPER);
 	}
 
-	inline bool IsNumPadDown() const
+	FORCEINLINE bool IsNumPadDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_NUM_LOCK);
 	}
 
 private:
 	Uint32 ModifierMask = 0;
+};
+
+/*
+* GenericApplication
+*/
+class GenericApplication
+{
+
 };
