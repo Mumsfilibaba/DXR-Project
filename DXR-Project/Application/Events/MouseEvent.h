@@ -6,7 +6,7 @@
 /*
 * MouseMovedEvent
 */
-class MouseMovedEvent : public Event
+struct MouseMovedEvent : public Event
 {
 public:
 	MouseMovedEvent(Int32 InX, Int32 InY)
@@ -42,7 +42,7 @@ private:
 /*
 * Base MouseButtonEvent
 */
-class MouseButtonEvent : public Event
+struct MouseButtonEvent : public Event
 {
 public:
 	MouseButtonEvent(EMouseButton InButton, const ModifierKeyState& InModifiers)
@@ -71,7 +71,7 @@ private:
 /*
 * MousePressedEvent
 */
-class MousePressedEvent : public MouseButtonEvent
+struct MousePressedEvent : public MouseButtonEvent
 {
 public:
 	MousePressedEvent(EMouseButton InButton, const ModifierKeyState& InModifiers)
@@ -90,7 +90,7 @@ public:
 /*
 * MouseReleasedEvent
 */
-class MouseReleasedEvent : public MouseButtonEvent
+struct MouseReleasedEvent : public MouseButtonEvent
 {
 public:
 	MouseReleasedEvent(EMouseButton InButton, const ModifierKeyState& InModifiers)
@@ -109,7 +109,7 @@ public:
 /*
 * MouseScrolledEvent
 */
-class MouseScrolledEvent : public Event
+struct MouseScrolledEvent : public Event
 {
 public:
 	MouseScrolledEvent(Float32 InHorizontalDelta, Float32 InVerticalDelta)
