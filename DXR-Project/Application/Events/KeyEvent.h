@@ -35,7 +35,7 @@ private:
 /*
 * KeyPressedEvent
 */
-class KeyPressedEvent : public KeyEvent
+struct KeyPressedEvent : public KeyEvent
 {
 public:
 	KeyPressedEvent(EKey InKey, const ModifierKeyState& InModifiers)
@@ -54,7 +54,7 @@ public:
 /*
 * KeyReleasedEvent
 */
-class KeyReleasedEvent : public KeyEvent
+struct KeyReleasedEvent : public KeyEvent
 {
 public:
 	KeyReleasedEvent(EKey InKey, const ModifierKeyState& InModifiers)
@@ -73,7 +73,7 @@ public:
 /*
 * KeyTypedEvent
 */
-class KeyTypedEvent : public Event
+struct KeyTypedEvent : public Event
 {
 public:
 	KeyTypedEvent(Uint32 InCharacter)

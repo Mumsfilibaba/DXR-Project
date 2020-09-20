@@ -8,7 +8,7 @@ class WindowsWindow;
 /*
 * WindowResizeEvent 
 */
-class WindowResizeEvent : public Event
+struct WindowResizeEvent : public Event
 {
 public:
 	WindowResizeEvent(TSharedPtr<WindowsWindow> InWindow, Uint16 InWidth, Uint16 InHeight)

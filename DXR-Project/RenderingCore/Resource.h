@@ -3,7 +3,7 @@
 #include <vector>
 
 /*
-* Subresource
+* SubresourceIndex
 */
 struct SubresourceIndex
 {
