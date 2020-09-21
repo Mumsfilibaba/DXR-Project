@@ -1122,7 +1122,7 @@ std::enable_if_t<std::is_array_v<T>, TSharedPtr<T>> MakeShared(Uint32 Size) noex
 
 // static_cast
 template<typename T0, typename T1>
-std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> StaticCast(const TSharedPtr<T1>& Pointer)
+std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T1>, TSharedPtr<T0>> StaticCast(const TSharedPtr<T1>& Pointer)
 {
 	using TType = TRemoveExtent<T0>;
 
@@ -1131,7 +1131,7 @@ std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> Sta
 }
 
 template<typename T0, typename T1>
-std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> StaticCast(TSharedPtr<T1>&& Pointer)
+std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T1>, TSharedPtr<T0>> StaticCast(TSharedPtr<T1>&& Pointer)
 {
 	using TType = TRemoveExtent<T0>;
 
@@ -1141,7 +1141,7 @@ std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> Sta
 
 // const_cast
 template<typename T0, typename T1>
-std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> ConstCast(const TSharedPtr<T1>& Pointer)
+std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T1>, TSharedPtr<T0>> ConstCast(const TSharedPtr<T1>& Pointer)
 {
 	using TType = TRemoveExtent<T0>;
 
@@ -1150,7 +1150,7 @@ std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> Con
 }
 
 template<typename T0, typename T1>
-std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> ConstCast(TSharedPtr<T1>&& Pointer)
+std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T1>, TSharedPtr<T0>> ConstCast(TSharedPtr<T1>&& Pointer)
 {
 	using TType = TRemoveExtent<T0>;
 
@@ -1160,7 +1160,7 @@ std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> Con
 
 // reinterpret_cast
 template<typename T0, typename T1>
-std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> ReinterpretCast(const TSharedPtr<T1>& Pointer)
+std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T1>, TSharedPtr<T0>> ReinterpretCast(const TSharedPtr<T1>& Pointer)
 {
 	using TType = TRemoveExtent<T0>;
 
@@ -1169,7 +1169,7 @@ std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> Rei
 }
 
 template<typename T0, typename T1>
-std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> ReinterpretCast(TSharedPtr<T1>&& Pointer)
+std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T1T1>, TSharedPtr<T0>> ReinterpretCast(TSharedPtr<T1>&& Pointer)
 {
 	using TType = TRemoveExtent<T0>;
 
@@ -1179,7 +1179,7 @@ std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> Rei
 
 // dynamic_cast
 template<typename T0, typename T1>
-std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> DynamicCast(const TSharedPtr<T1>& Pointer)
+std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T1>, TSharedPtr<T0>> DynamicCast(const TSharedPtr<T1>& Pointer)
 {
 	using TType = TRemoveExtent<T0>;
 
@@ -1188,7 +1188,7 @@ std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> Dyn
 }
 
 template<typename T0, typename T1>
-std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T0>, TSharedPtr<T0>> DynamicCast(TSharedPtr<T1>&& Pointer)
+std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T1>, TSharedPtr<T0>> DynamicCast(TSharedPtr<T1>&& Pointer)
 {
 	using TType = TRemoveExtent<T0>;
 
