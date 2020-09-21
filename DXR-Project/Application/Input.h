@@ -1,6 +1,9 @@
 #pragma once
 #include "InputCodes.h"
 
+/*
+* Input
+*/
 class Input
 {
 public:

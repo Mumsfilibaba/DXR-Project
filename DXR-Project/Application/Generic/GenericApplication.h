@@ -60,11 +60,11 @@ public:
 	GenericApplication() = default;
 	virtual ~GenericApplication() = default;
 
-	virtual bool Initialize() = 0;
-	virtual bool Tick() = 0;
-
 	virtual TSharedPtr<GenericWindow> MakeWindow() = 0;
 	virtual TSharedPtr<GenericCursor> MakeCursor() = 0;
+
+	virtual bool Initialize() = 0;
+	virtual bool Tick() = 0;
 
 	virtual void SetCursor(TSharedPtr<GenericCursor> Cursor) = 0;
 	virtual TSharedPtr<GenericCursor> GetCursor() const = 0;

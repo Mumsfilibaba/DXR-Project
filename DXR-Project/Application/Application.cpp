@@ -451,9 +451,9 @@ void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeySt
 	EventQueue::SendEvent(Event);
 }
 
-void Application::OnMouseMove(Int32 X, Int32 Y)
+void Application::OnMouseMove(Int32 x, Int32 y)
 {
-	MouseMovedEvent Event(X, Y);
+	MouseMovedEvent Event(x, y);
 	EventQueue::SendEvent(Event);
 }
 

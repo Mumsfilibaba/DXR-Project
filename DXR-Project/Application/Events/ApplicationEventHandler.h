@@ -31,7 +31,7 @@ public:
 	{
 	}
 
-	virtual void OnMouseMove(Int32 X, Int32 Y)
+	virtual void OnMouseMove(Int32 x, Int32 y)
 	{
 	}
 
