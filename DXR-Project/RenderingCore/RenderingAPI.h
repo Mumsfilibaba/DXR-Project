@@ -9,6 +9,7 @@
 /*
 * ERenderingAPI
 */
+
 enum class ERenderingAPI : Uint32
 {
 	RENDERING_API_UNKNOWN	= 0,
@@ -21,6 +22,7 @@ class D3D12RootSignature;
 /*
 * RenderingAPI
 */
+
 class RenderingAPI
 {
 public:
@@ -71,18 +73,18 @@ public:
 		return false;
 	}
 
-	static RenderingAPI* Make(ERenderingAPI InRenderAPI, TSharedPtr<GenericWindow> RenderWindow, bool EnableDebug);
+	static RenderingAPI* Make(ERenderingAPI InRenderAPI);
 	static RenderingAPI& Get();
 	static void Release();
 	
 	FORCEINLINE static TSharedPtr<D3D12ImmediateCommandList> StaticGetImmediateCommandList()
 	{
-		return RenderAPI->GetImmediateCommandList();
+		return CurrentRenderAPI->GetImmediateCommandList();
 	}
 
 protected:
 	RenderingAPI() = default;
 
 private:
-	static RenderingAPI* RenderAPI;
+	static RenderingAPI* CurrentRenderAPI;
 };

@@ -12,11 +12,21 @@ class WindowsCursor;
 /*
 * WindowsApplication
 */
+
 class WindowsApplication : public GenericApplication
 {
 public:
 	~WindowsApplication();
 
+	TSharedPtr<WindowsWindow> GetWindowFromHWND(HWND Window) const;
+
+	FORCEINLINE HINSTANCE GetInstance() const
+	{
+		return InstanceHandle;
+	}
+
+public:
+	// Generic application
 	virtual TSharedPtr<GenericWindow> MakeWindow() override final;
 	virtual TSharedPtr<GenericCursor> MakeCursor() override final;
 
@@ -32,17 +42,10 @@ public:
 	virtual TSharedPtr<GenericWindow> GetCapture() const override final;
 	virtual TSharedPtr<GenericCursor> GetCursor() const override final;
 	
-	TSharedPtr<WindowsWindow> GetWindowFromHWND(HWND Window) const;
-
 	virtual void SetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32 X, Int32 Y) override final;
 	virtual void GetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const override final;
-
-	FORCEINLINE HINSTANCE GetInstance() const
-	{
-		return InstanceHandle;
-	}
-
-	static GenericApplication* Make(HINSTANCE hInstance);
+	
+	static GenericApplication* Make();
 
 private:
 	WindowsApplication(HINSTANCE hInstance);

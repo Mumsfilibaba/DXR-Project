@@ -1,15 +1,23 @@
 #include "EngineLoop.h"
+#include "EngineGlobals.h"
 
 #include "Time/Clock.h"
 
 #include "Application/Application.h"
 #include "Application/Generic/GenericOutputDevice.h"
 #include "Application/Generic/GenericCursor.h"
+#include "Application/Platform/PlatformApplication.h"
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
 
 #include "Editor/Editor.h"
+
+#include "Game/Game.h"
+
+/*
+* Engineloop Globals
+*/
 
 static Clock GlobalClock;
 static bool GlobalIsRunning = false;
@@ -21,6 +29,13 @@ bool EngineLoop::CoreInitialize()
 {
 	GlobalOutputDevices::Initialize();
 
+	EngineGlobals::PlatformApplication = TSharedPtr(PlatformApplication::Make());
+	if (!EngineGlobals::PlatformApplication->Initialize())
+	{
+		::MessageBox(0, "Failed to create Platform Application", "ERROR", MB_ICONERROR);
+		return false;
+	}
+
 	return true;
 }
 
@@ -28,16 +43,36 @@ bool EngineLoop::Initialize()
 {
 	// Application
 	Application* App = Application::Make();
-	if (App->Initialize())
+	if (!App->Initialize(EngineGlobals::PlatformApplication))
 	{
 		::MessageBox(0, "Failed to create Application", "ERROR", MB_ICONERROR);
 		return false;
 	}
 
+	// Cursors
 	GlobalCursors::Initialize();
 
+	// RenderAPI
+	const bool EnableDebug =
+#if ENABLE_D3D12_DEBUG
+		true;
+#else
+		false;
+#endif
+
+	RenderingAPI* RenderingAPI = RenderingAPI::Make(ERenderingAPI::RENDERING_API_D3D12);
+	if (!RenderingAPI)
+	{
+		return false;
+	}
+
+	if (!RenderingAPI->Initialize(App->GetMainWindow(), EnableDebug))
+	{
+		return false;
+	}
+
 	// Renderer
-	Renderer* Renderer = Renderer::Make(App->GetWindow());
+	Renderer* Renderer = Renderer::Make();
 	if (!Renderer)
 	{
 		::MessageBox(0, "FAILED to create Renderer", "ERROR", MB_ICONERROR);
@@ -51,6 +86,14 @@ bool EngineLoop::Initialize()
 		return false;
 	}
 
+	// Game
+	Game* GameInstance = new Game();
+	if (!GameInstance->Initialize())
+	{
+		::MessageBox(0, "FAILED initialize Game", "ERROR", MB_ICONERROR);
+		return false;
+	}
+
 	GlobalIsRunning = true;
 	return true;
 }
@@ -59,16 +102,17 @@ void EngineLoop::Tick()
 {
 	GlobalClock.Tick();
 
+	// Application
 	Application::Get().Tick();
 
+	// Update Game
+	Game::Get().Tick(GlobalClock.GetDeltaTime());
+
+	// Update renderer
 	Renderer::Get()->Tick(*Scene::GetCurrentScene());
 
+	// Update editor
 	Editor::Tick();
-
-	//DebugUI::DrawUI([]
-	//	{
-	//		ImGui::ShowDemoWindow();
-	//	});
 }
 
 void EngineLoop::Release()

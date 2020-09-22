@@ -106,5 +106,3 @@ public:
 protected:
 	TSharedPtr<ApplicationEventHandler> EventHandler;
 };
-
-extern GenericApplication* GlobalPlatformApplication;

@@ -19,7 +19,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 
 	if (!EngineLoop::Initialize())
 	{
-		::MessageBox(0, "Failed to initalize core modules", "ERROR", MB_ICONERROR);
+		::MessageBox(0, "Failed to initalize", "ERROR", MB_ICONERROR);
 		return -1;
 	}
 
@@ -29,6 +29,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	}
 
 	EngineLoop::Release();
+
 	EngineLoop::CoreRelease();
 
 	return 0;

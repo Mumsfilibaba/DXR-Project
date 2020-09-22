@@ -9,25 +9,31 @@
 /*
 * Static
 */
+
 WindowsApplication* GlobalWindowsApplication = nullptr;
 
-GenericApplication* WindowsApplication::Make(HINSTANCE hInstance)
+GenericApplication* WindowsApplication::Make()
 {
+	HINSTANCE hInstance = static_cast<HINSTANCE>(::GetModuleHandle(nullptr));
+
 	GlobalWindowsApplication = new WindowsApplication(hInstance);
-	GlobalPlatformApplication = GlobalWindowsApplication;
 	return GlobalWindowsApplication;
 }
 
 /*
 * Members
 */
+
 WindowsApplication::WindowsApplication(HINSTANCE InInstanceHandle)
 	: InstanceHandle(InInstanceHandle)
+	, CurrentCursor()
+	, Windows()
 {
 }
 
 WindowsApplication::~WindowsApplication()
 {
+	GlobalWindowsApplication = nullptr;
 }
 
 bool WindowsApplication::Initialize()

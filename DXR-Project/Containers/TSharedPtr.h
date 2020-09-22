@@ -1169,7 +1169,7 @@ std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T1>, TSharedPtr<T0>> Rei
 }
 
 template<typename T0, typename T1>
-std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T1T1>, TSharedPtr<T0>> ReinterpretCast(TSharedPtr<T1>&& Pointer)
+std::enable_if_t<std::is_array_v<T0> == std::is_array_v<T1>, TSharedPtr<T0>> ReinterpretCast(TSharedPtr<T1>&& Pointer)
 {
 	using TType = TRemoveExtent<T0>;
 

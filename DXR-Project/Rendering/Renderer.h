@@ -94,13 +94,13 @@ public:
 		return GlobalLightSettings;
 	}
 
-	static Renderer* Make(TSharedPtr<GenericWindow> RenderWindow);
+	static Renderer* Make();
 	static Renderer* Get();
 
 	static void Release();
 	
 private:
-	bool Initialize(TSharedPtr<GenericWindow> RenderWindow);
+	bool Initialize();
 
 	bool InitRayTracing();
 	bool InitLightBuffers();
@@ -124,8 +124,6 @@ private:
 	void TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* CommandList);
 
 private:
-	RenderingAPI* RenderingAPI = nullptr;
-	
 	TSharedPtr<D3D12CommandList>	CommandList;
 	TSharedPtr<D3D12Fence>			Fence;
 

@@ -1,8 +1,6 @@
 #pragma once
 #include "Time/Clock.h"
 
-#include "Scene/Scene.h"
-
 #include "Application/Generic/GenericApplication.h"
 #include "Application/Generic/GenericCursor.h"
 #include "Application/Generic/GenericWindow.h"
@@ -19,7 +17,7 @@ public:
 	TSharedPtr<GenericWindow> MakeWindow();
 	TSharedPtr<GenericCursor> MakeCursor();
 
-	bool Initialize();
+	bool Initialize(TSharedPtr<GenericApplication> InPlatformApplication);
 	void Tick();
 	void Release();
 
@@ -28,13 +26,20 @@ public:
 	void SetCapture(TSharedPtr<GenericWindow> Window);
 
 	ModifierKeyState GetModifierKeyState() const;
-	TSharedPtr<GenericWindow> GetWindow() const;
+	TSharedPtr<GenericWindow> GetMainWindow() const;
 	TSharedPtr<GenericWindow> GetActiveWindow() const;
 	TSharedPtr<GenericWindow> GetCapture() const;
 
 	void SetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32 x, Int32 y);
 	void GetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const;
 	
+	void SetPlatformApplication(TSharedPtr<GenericApplication> InPlatformApplication);
+
+	FORCEINLINE TSharedPtr<GenericApplication> GetPlatformApplication() const
+	{
+		return PlatformApplication;
+	}
+
 	static Application* Make();
 	static Application& Get();
 
@@ -53,11 +58,8 @@ private:
 	Application();
 
 protected:
-	TSharedPtr<GenericWindow> Window;
-	GenericApplication*	PlatformApplication = nullptr;
+	TSharedPtr<GenericWindow> MainWindow;
+	TSharedPtr<GenericApplication> PlatformApplication = nullptr;
 
-	Scene*	CurrentScene	= nullptr;
-	Camera* CurrentCamera	= nullptr;
-
-	static TSharedPtr<Application> Instance;
+	static TSharedPtr<Application> CurrentApplication;
 };

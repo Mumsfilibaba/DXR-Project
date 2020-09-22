@@ -85,7 +85,7 @@ static void DrawSideWindow()
 		constexpr Uint32 Width = 450;
 
 		WindowShape WindowShape;
-		Application::Get().GetWindow()->GetWindowShape(WindowShape);
+		Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
 
 		ImGui::SetNextWindowPos(ImVec2(0, MainMenuBarHeight));
 		ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height - MainMenuBarHeight));
@@ -137,7 +137,7 @@ static void DrawRenderSettings()
 	ImGui::BeginChild("RendererInfo");
 
 	WindowShape WindowShape;
-	Application::Get().GetWindow()->GetWindowShape(WindowShape);
+	Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
 
 	ImGui::Spacing();
 	ImGui::Text("Renderer Info");

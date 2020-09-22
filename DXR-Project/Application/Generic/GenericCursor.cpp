@@ -1,6 +1,8 @@
 #include "GenericCursor.h"
 #include "GenericApplication.h"
 
+#include "Engine/EngineGlobals.h"
+
 /*
 * GlobalCursors
 */
@@ -16,55 +18,55 @@ TSharedPtr<GenericCursor> GlobalCursors::NotAllowed;
 
 bool GlobalCursors::Initialize()
 {
-	Arrow = GlobalPlatformApplication->MakeCursor();
+	Arrow = EngineGlobals::PlatformApplication->MakeCursor();
 	if (!Arrow->Initialize(CursorInitializer(EPlatformCursor::CURSOR_ARROW)))
 	{
 		return false;
 	}
 
-	TextInput = GlobalPlatformApplication->MakeCursor();
+	TextInput = EngineGlobals::PlatformApplication->MakeCursor();
 	if (!TextInput->Initialize(CursorInitializer(EPlatformCursor::CURSOR_TEXT_INPUT)))
 	{
 		return false;
 	}
 
-	ResizeAll = GlobalPlatformApplication->MakeCursor();
+	ResizeAll = EngineGlobals::PlatformApplication->MakeCursor();
 	if (!ResizeAll->Initialize(CursorInitializer(EPlatformCursor::CURSOR_RESIZE_ALL)))
 	{
 		return false;
 	}
 
-	ResizeEastWest = GlobalPlatformApplication->MakeCursor();
+	ResizeEastWest = EngineGlobals::PlatformApplication->MakeCursor();
 	if (!ResizeEastWest->Initialize(CursorInitializer(EPlatformCursor::CURSOR_RESIZE_EW)))
 	{
 		return false;
 	}
 
-	ResizeNorthSouth = GlobalPlatformApplication->MakeCursor();
+	ResizeNorthSouth = EngineGlobals::PlatformApplication->MakeCursor();
 	if (!ResizeNorthSouth->Initialize(CursorInitializer(EPlatformCursor::CURSOR_RESIZE_NS)))
 	{
 		return false;
 	}
 
-	ResizeNorthEastSouthWest = GlobalPlatformApplication->MakeCursor();
+	ResizeNorthEastSouthWest = EngineGlobals::PlatformApplication->MakeCursor();
 	if (!ResizeNorthEastSouthWest->Initialize(CursorInitializer(EPlatformCursor::CURSOR_RESIZE_NESW)))
 	{
 		return false;
 	}
 
-	ResizeNorthWestSouthEast = GlobalPlatformApplication->MakeCursor();
+	ResizeNorthWestSouthEast = EngineGlobals::PlatformApplication->MakeCursor();
 	if (!ResizeNorthWestSouthEast->Initialize(CursorInitializer(EPlatformCursor::CURSOR_RESIZE_NWSE)))
 	{
 		return false;
 	}
 
-	Hand = GlobalPlatformApplication->MakeCursor();
+	Hand = EngineGlobals::PlatformApplication->MakeCursor();
 	if (!Hand->Initialize(CursorInitializer(EPlatformCursor::CURSOR_HAND)))
 	{
 		return false;
 	}
 
-	NotAllowed = GlobalPlatformApplication->MakeCursor();
+	NotAllowed = EngineGlobals::PlatformApplication->MakeCursor();
 	if (!NotAllowed->Initialize(CursorInitializer(EPlatformCursor::CURSOR_NOT_ALLOWED)))
 	{
 		return false;
