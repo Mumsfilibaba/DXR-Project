@@ -128,7 +128,7 @@ void EngineLoop::CoreRelease()
 {
 	RenderingAPI::Release();
 
-	GlobalOutputDevices::Initialize();
+	GlobalOutputDevices::Release();
 }
 
 Timestamp EngineLoop::GetDeltaTime()

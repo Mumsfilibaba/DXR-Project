@@ -34,7 +34,7 @@ float4 FXAASampleOffset(in Texture2D Texture, in SamplerState InSampler, float2 
 
 float4 FXAASampleGrad(in Texture2D Texture, in SamplerState InSampler, float2 TexCoord, float2 Grad)
 {
-    return Texture.SampleGrad(InSampler, TexCoord, Grad, Grad);
+	return Texture.SampleGrad(InSampler, TexCoord, Grad, Grad);
 }
 
 float3 Lerp(float3 A, float3 B, float AmountOfA)
@@ -52,45 +52,43 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	
 	// Perform edge detection
 	const float2 InvTextureSize = float2(1.0f, 1.0f) / TextureSize;
-    float4 Middle = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(0, 0));
-    float4 North = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(0, 1));
-    float4 South = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(0, -1));
-    float4 West = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, 0));
-    float4 East = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, 0));
-    float LumaM = Middle.a;
-    float LumaN = North.a;
-    float LumaS = South.a;
-    float LumaW = West.a;
-    float LumaE = East.a;
+	float4 Middle = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(0, 0));
+	float4 North = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(0, 1));
+	float4 South = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(0, -1));
+	float4 West = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, 0));
+	float4 East = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, 0));
+	float LumaM = Middle.a;
+	float LumaN = North.a;
+	float LumaS = South.a;
+	float LumaW = West.a;
+	float LumaE = East.a;
 	
 	float RangeMin = min(LumaM, min(min(LumaN, LumaS), min(LumaW, LumaE)));
 	float RangeMax = max(LumaM, max(max(LumaN, LumaS), max(LumaW, LumaE)));
 	float Range = RangeMax - RangeMin;
 	if (Range < max(FXAA_EDGE_THRESHOLD_MIN, RangeMax * FXAA_EDGE_THRESHOLD))
 	{
-        return float4(Middle.rgb, 1.0f);
-    }
+		return float4(Middle.rgb, 1.0f);
+	}
 	
 	float LumaL		= (LumaN + LumaS + LumaW + LumaE) * 0.25f;
 	float RangeL	= abs(LumaL - LumaM);
 	float BlendL	= max(0.0f, (RangeL / Range) - FXAA_SUBPIX_TRIM) * FXAA_SUBPIX_TRIM_SCALE;
 	BlendL = min(BlendL, FXAA_SUBPIX_CAP);
 	
-    float4 NorthWest = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, 1));
-    float4 SouthWest = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, -1));
-    float4 NorthEast = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, 1));
-    float4 SouthEast = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, -1));
+	float4 NorthWest = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, 1));
+	float4 SouthWest = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, -1));
+	float4 NorthEast = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, 1));
+	float4 SouthEast = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, -1));
 	
 	float3 ColorL = (Middle + North + South + West + East);
 	ColorL += (NorthWest + SouthWest + NorthEast + SouthEast);
 	ColorL = ColorL * ToFloat3(1.0f / 9.0f);
-    
-    return float4(ColorL, 1.0f);
 	
-    float LumaNW = NorthWest.a;
-    float LumaNE = NorthEast.a;
-    float LumaSW = SouthWest.a;
-    float LumaSE = SouthEast.a;
+	float LumaNW = NorthWest.a;
+	float LumaNE = NorthEast.a;
+	float LumaSW = SouthWest.a;
+	float LumaSE = SouthEast.a;
 	
 	float LumaNorthSouth	= LumaN + LumaS;
 	float LumaWestEast		= LumaW + LumaE;
@@ -153,36 +151,36 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	float2 TexCoord0 = CurrentTexCoord - Offset;
 	float2 TexCoord1 = CurrentTexCoord + Offset;
 #else
-    float2 TexCoord0 = CurrentTexCoord - Offset * float2(2.5f, 2.5f);
-    float2 TexCoord1 = CurrentTexCoord + Offset * float2(2.5f, 2.5f);
-    Offset *= float2(4.0f, 4.0f);
+	float2 TexCoord0 = CurrentTexCoord - Offset * float2(2.5f, 2.5f);
+	float2 TexCoord1 = CurrentTexCoord + Offset * float2(2.5f, 2.5f);
+	Offset *= float2(4.0f, 4.0f);
 #endif
 	
-    int Steps = 0;
-    for (; Steps < FXAA_SEARCH_STEPS; Steps++)
+	int Steps = 0;
+	for (; Steps < FXAA_SEARCH_STEPS; Steps++)
 	{
 #if 0
 		if (!Done0)
 		{
-            float4 Sample = FXAASample(FinalImage, LinearSampler, TexCoord0);
-            LumaEnd0 = Sample.a;
-        }
+			float4 Sample = FXAASample(FinalImage, LinearSampler, TexCoord0);
+			LumaEnd0 = Sample.a;
+		}
 		if(!Done1)
 		{
-            float4 Sample = FXAASample(FinalImage, LinearSampler, TexCoord1);
-            LumaEnd1 = Sample.a;
-        }
+			float4 Sample = FXAASample(FinalImage, LinearSampler, TexCoord1);
+			LumaEnd1 = Sample.a;
+		}
 #else
-        if (!Done0)
-        {
-            float4 Sample = FXAASampleGrad(FinalImage, LinearSampler, TexCoord0, Offset);
-            LumaEnd0 = Sample.a;
-        }
-        if (!Done1)
-        {
-            float4 Sample = FXAASampleGrad(FinalImage, LinearSampler, TexCoord1, Offset);
-            LumaEnd1 = Sample.a;
-        }
+		if (!Done0)
+		{
+			float4 Sample = FXAASampleGrad(FinalImage, LinearSampler, TexCoord0, Offset);
+			LumaEnd0 = Sample.a;
+		}
+		if (!Done1)
+		{
+			float4 Sample = FXAASampleGrad(FinalImage, LinearSampler, TexCoord1, Offset);
+			LumaEnd1 = Sample.a;
+		}
 #endif
 		
 		Done0 = (abs(LumaEnd0 - LocalLumaAvg) >= LocalGradient);
@@ -194,12 +192,12 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 		
 		if (!Done0)
 		{
-            TexCoord0 -= Offset;
-        }
+			TexCoord0 -= Offset;
+		}
 		if (!Done1)
 		{
-            TexCoord1 += Offset;
-        }
+			TexCoord1 += Offset;
+		}
 	}
 	
 	float Distance0 = IsHorizontal ? (TexCoord.x - TexCoord0.x) : (TexCoord.y - TexCoord0.y);
@@ -219,6 +217,6 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	float2 FinalTexCoord = TexCoord + float2(IsHorizontal ? 0.0f : SubPixelOffset, IsHorizontal ? SubPixelOffset : 0.0f);
 	
 	float3 ColorF = FXAASample(FinalImage, LinearSampler, FinalTexCoord).rgb;
-    float3 FinalColor = Lerp(ColorL, ColorF, BlendL);
-    return float4(FinalColor, 1.0f);
+	float3 FinalColor = Lerp(ColorL, ColorF, BlendL);
+	return float4(FinalColor, 1.0f);
 }
