@@ -1,5 +1,5 @@
 # Personal Engine
-This is a small personal engine created for testing different graphic techniques. 
+This is a small personal engine created for testing different graphic techniques. The name may suggest that this is only for DXR, and that is why it was created in the first place, but it has evolved to be more than that.
 
 **Current Features:**
 * FXAA
