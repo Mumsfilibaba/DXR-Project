@@ -1,35 +1,46 @@
 #include "PBRCommon.hlsli"
 
-#define FXAA_EDGE_THRESHOLD			(1.0f / 8.0f)
-#define FXAA_EDGE_THRESHOLD_MIN		(1.0f / 24.0f)
+// For debugging
+#define PASSTHROUGH			0
+#define DEBUG_LUMINANCE		0
+#define DEBUG_EDGES			0
+#define DEBUG				0
+#define DEBUG_HORIZONTAL	0
+#define DEBUG_NEGPOS		0
+#define DEBUG_STEP			0
+#define DEBUG_BLEND_FACTOR	0
+#define DEBUG_RANGE			0
+#define USE_SAMPLE_GRAD		0
 
-#define FXAA_SUBPIX_TRIM			(1.0f / 4.0f)
-#define FXAA_SUBPIX_CAP				(3.0f / 4.0f)
-#define FXAA_SUBPIX_TRIM_SCALE		(1.0f / (1.0f - FXAA_SUBPIX_TRIM))
-
-#define FXAA_SEARCH_THRESHOLD		(1.0f / 4.0f)
-#define FXAA_SEARCH_STEPS			24
+// FXAA Settings
+#define FXAA_EDGE_THRESHOLD		(1.0f / 8.0f)
+#define FXAA_EDGE_THRESHOLD_MIN	(1.0f / 24.0f)
+#define FXAA_SUBPIX_TRIM		(1.0f / 4.0f)
+#define FXAA_SUBPIX_CAP			(3.0f / 4.0f)
+#define FXAA_SUBPIX_TRIM_SCALE	(1.0f / (1.0f - FXAA_SUBPIX_TRIM))
+#define FXAA_SEARCH_THRESHOLD	(1.0f / 4.0f)
+#define FXAA_SEARCH_STEPS		32
 
 cbuffer CB0 : register(b0, space0)
 {
 	float2 TextureSize;
 }
 
-Texture2D FinalImage		: register(t0, space0);
-SamplerState PointSampler	: register(s0, space0);
-SamplerState LinearSampler	: register(s1, space0);
+Texture2D		FinalImage		: register(t0, space0);
+SamplerState	PointSampler	: register(s0, space0);
+SamplerState	LinearSampler	: register(s1, space0);
 
 /*
 * Helpers
 */
 float4 FXAASample(in Texture2D Texture, in SamplerState InSampler, float2 TexCoord)
 {
-	return Texture.SampleLevel(InSampler, TexCoord, 0);
+	return Texture.SampleLevel(InSampler, TexCoord, 0.0f);
 }
 
 float4 FXAASampleOffset(in Texture2D Texture, in SamplerState InSampler, float2 TexCoord, int2 Offset)
 {
-	return Texture.SampleLevel(InSampler, TexCoord, 0, Offset);
+	return Texture.SampleLevel(InSampler, TexCoord, 0.0f, Offset);
 }
 
 float4 FXAASampleGrad(in Texture2D Texture, in SamplerState InSampler, float2 TexCoord, float2 Grad)
@@ -45,68 +56,93 @@ float3 Lerp(float3 A, float3 B, float AmountOfA)
 /*
 * PixelShader
 */
-float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
+float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
 {
 	// Correct the texcoords
 	TexCoord.y = 1.0f - TexCoord.y;
-	
-	// Perform edge detection
 	const float2 InvTextureSize = float2(1.0f, 1.0f) / TextureSize;
-	float4 Middle = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(0, 0));
-	float4 North = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(0, 1));
-	float4 South = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(0, -1));
-	float4 West = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, 0));
-	float4 East = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, 0));
-	float LumaM = Middle.a;
-	float LumaN = North.a;
-	float LumaS = South.a;
-	float LumaW = West.a;
-	float LumaE = East.a;
 	
-	float RangeMin = min(LumaM, min(min(LumaN, LumaS), min(LumaW, LumaE)));
-	float RangeMax = max(LumaM, max(max(LumaN, LumaS), max(LumaW, LumaE)));
-	float Range = RangeMax - RangeMin;
+	float4 M = FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(0, 0));
+	float LumaM = M.a;
+#if PASSTHROUGH
+	return M;
+#endif
+	
+#if DEBUG_LUMINANCE
+	return ToFloat4(M.a);
+#endif
+	
+	float4 N = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2( 0, -1));
+	float4 S = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2( 0,  1));
+	float4 W = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1,  0));
+	float4 E = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2( 1,  0));
+	float LumaN = N.a;
+	float LumaS = S.a;
+	float LumaW = W.a;
+	float LumaE = E.a;
+	
+	float RangeMin	= min(LumaM, min(min(LumaN, LumaS), min(LumaW, LumaE)));
+	float RangeMax	= max(LumaM, max(max(LumaN, LumaS), max(LumaW, LumaE)));
+	float Range		= RangeMax - RangeMin;
 	if (Range < max(FXAA_EDGE_THRESHOLD_MIN, RangeMax * FXAA_EDGE_THRESHOLD))
 	{
-		return float4(Middle.rgb, 1.0f);
+#if DEBUG
+		return float4(ToFloat3(M.a), 1.0f);
+#else
+		return float4(M.rgb, 1.0f);
+#endif
 	}
+	
+#if DEBUG_EDGES
+	return ToFloat4(1.0f);
+#endif
 	
 	float LumaL		= (LumaN + LumaS + LumaW + LumaE) * 0.25f;
 	float RangeL	= abs(LumaL - LumaM);
 	float BlendL	= max(0.0f, (RangeL / Range) - FXAA_SUBPIX_TRIM) * FXAA_SUBPIX_TRIM_SCALE;
-	BlendL = min(BlendL, FXAA_SUBPIX_CAP);
+	BlendL			= min(BlendL, FXAA_SUBPIX_CAP);
 	
-	float4 NorthWest = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, 1));
-	float4 SouthWest = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, -1));
-	float4 NorthEast = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, 1));
-	float4 SouthEast = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(1, -1));
+#if DEBUG_RANGE
+	return ToFloat4(RangeL);
+#endif
 	
-	float3 ColorL = (Middle + North + South + West + East);
-	ColorL += (NorthWest + SouthWest + NorthEast + SouthEast);
-	ColorL = ColorL * ToFloat3(1.0f / 9.0f);
+#if DEBUG_BLEND_FACTOR
+	return ToFloat4(BlendL);
+#endif
 	
-	float LumaNW = NorthWest.a;
-	float LumaNE = NorthEast.a;
-	float LumaSW = SouthWest.a;
-	float LumaSE = SouthEast.a;
+	float4 NW = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1, -1));
+	float4 SW = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(-1,  1));
+	float4 NE = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2( 1, -1));
+	float4 SE = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2( 1,  1));
+	float LumaNW = NW.a;
+	float LumaNE = NE.a;
+	float LumaSW = SW.a;
+	float LumaSE = SE.a;
 	
-	float LumaNorthSouth	= LumaN + LumaS;
-	float LumaWestEast		= LumaW + LumaE;
-	float LumaWestCorners	= LumaSW + LumaNW;
-	float LumaSouthCorners	= LumaSW + LumaSE;
-	float LumaEastCorners	= LumaSE + LumaNE;
-	float LumaNorthCorners	= LumaNW + LumaNE;
+	float3 ColorL	= (M + N + S + W + E) + (NW + SW + NE + SE);
+	ColorL			= ColorL * ToFloat3(1.0f / 9.0f);
 	
 	float EdgeVert =
-		(abs((-2.0f * LumaN) + LumaNorthCorners))		+
-		(abs((-2.0f * LumaM) + LumaWestEast) * 2.0f) +
-		(abs((-2.0f * LumaS) + LumaSouthCorners));
+		abs((0.25f * LumaNW) + (-0.5f * LumaN) + (0.25f * LumaNE)) +
+		abs((0.50f * LumaW)  + (-1.0f * LumaM) + (0.50f * LumaE)) +
+		abs((0.25f * LumaSW) + (-0.5f * LumaS) + (0.25f * LumaSE));
 	float EdgeHorz =
-		(abs((-2.0f * LumaW) + LumaWestCorners))		+
-		(abs((-2.0f * LumaM) + LumaNorthSouth) * 2.0f)	+
-		(abs((-2.0f * LumaE) + LumaEastCorners));
+		abs((0.25f * LumaNW) + (-0.5f * LumaW) + (0.25f * LumaSW)) +
+		abs((0.50f * LumaN)  + (-1.0f * LumaM) + (0.50f * LumaS)) +
+		abs((0.25f * LumaNE) + (-0.5f * LumaE) + (0.25f * LumaSE));
 	
 	bool IsHorizontal = (EdgeHorz >= EdgeVert);
+#if DEBUG_HORIZONTAL
+	if (IsHorizontal)
+	{
+		return float4(0.0f, 1.0f, 0.0f, 1.0f);
+	}
+	else
+	{
+		return float4(0.0f, 0.0f, 1.0f, 1.0f);
+	}
+#endif
+	
 	if (!IsHorizontal)
 	{
 		LumaN = LumaW;
@@ -116,20 +152,20 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 		LumaS = LumaE;
 	}
 	
-	float GradientN = abs(LumaN - LumaM);
-	float GradientS = abs(LumaS - LumaM);
-	float LumaAvgN = (LumaN + LumaM) * 0.5f;
-	float LumaAvgS = (LumaS + LumaM) * 0.5f;
+	float GradientN	= abs(LumaN - LumaM);
+	float GradientS	= abs(LumaS - LumaM);
+	float LumaAvgN	= (LumaN + LumaM) * 0.5f;
+	float LumaAvgS	= (LumaS + LumaM) * 0.5f;
 	
-	bool PairN = (abs(GradientN) >= abs(GradientS));
-	float LocalLumaAvg	= PairN ? LumaAvgN	: LumaAvgS;
-	float LocalGradient = PairN ? GradientN	: GradientS;
-	LocalGradient = LocalGradient * FXAA_SEARCH_THRESHOLD;
+	bool	PairN			= (GradientN >= GradientS);
+	float	LocalLumaAvg	= (!PairN) ? LumaAvgS : LumaAvgN;
+	float	LocalGradient	= (!PairN) ? GradientS : GradientN;
+	LocalGradient			= LocalGradient * FXAA_SEARCH_THRESHOLD;
 
-	float StepLength = (!IsHorizontal) ? InvTextureSize.y : -InvTextureSize.x;
-	if (PairN)
+	float StepLength = (IsHorizontal) ? -InvTextureSize.y : -InvTextureSize.x;
+	if (!PairN)
 	{
-		StepLength = -StepLength;
+		StepLength *= -1.0f;
 	}
 	
 	float2 CurrentTexCoord = TexCoord;
@@ -142,12 +178,12 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 		CurrentTexCoord.x += StepLength * 0.5f;
 	}
 	
-	float2 Offset = IsHorizontal ? float2(InvTextureSize.x, 0.0f) : float2(0.0f, InvTextureSize.y);
-	bool Done0 = false;
-	bool Done1 = false;
-	float LumaEnd0;
-	float LumaEnd1;
-#if 0
+	float2	Offset		= IsHorizontal ? float2(InvTextureSize.x, 0.0f) : float2(0.0f, InvTextureSize.y);
+	bool	Done0		= false;
+	bool	Done1		= false;
+	float	LumaEnd0	= LocalLumaAvg;
+	float	LumaEnd1	= LocalLumaAvg;
+#if (!USE_SAMPLE_GRAD)
 	float2 TexCoord0 = CurrentTexCoord - Offset;
 	float2 TexCoord1 = CurrentTexCoord + Offset;
 #else
@@ -155,11 +191,10 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 	float2 TexCoord1 = CurrentTexCoord + Offset * float2(2.5f, 2.5f);
 	Offset *= float2(4.0f, 4.0f);
 #endif
-	
-	int Steps = 0;
-	for (; Steps < FXAA_SEARCH_STEPS; Steps++)
+		
+	for (int Steps = 0; Steps < FXAA_SEARCH_STEPS; Steps++)
 	{
-#if 0
+#if (!USE_SAMPLE_GRAD)
 		if (!Done0)
 		{
 			float4 Sample = FXAASample(FinalImage, LinearSampler, TexCoord0);
@@ -200,23 +235,40 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 		}
 	}
 	
-	float Distance0 = IsHorizontal ? (TexCoord.x - TexCoord0.x) : (TexCoord.y - TexCoord0.y);
-	float Distance1 = IsHorizontal ? (TexCoord1.x - TexCoord.x) : (TexCoord1.y - TexCoord.y);
-	bool Direction0	= Distance0 < Distance1;
-	LumaEnd0 = Direction0 ? LumaEnd0 : LumaEnd0;
+	float Distance0 = IsHorizontal ? (TexCoord.x  - TexCoord0.x) : (TexCoord.y  - TexCoord0.y);
+	float Distance1 = IsHorizontal ? (TexCoord1.x - TexCoord.x)  : (TexCoord1.y - TexCoord.y);
 	
-	if (((LumaM - LumaN) < 0.0f) == ((LumaEnd0 - LumaN) < 0.0f))
+	bool Dist0	= Distance0 < Distance1;
+#if DEBUG_NEGPOS
+	if(Dist0)
+	{
+		return float4(1.0f, 0.0f, 0.0f, 1.0f);
+	}
+	else
+	{
+		return float4(0.0f, 0.0f, 1.0f, 1.0f);
+	}
+#endif
+	
+	LumaEnd0 = Dist0 ? LumaEnd0 : LumaEnd0;
+	if (((LumaM - LocalLumaAvg) < 0.0f) == ((LumaEnd0 - LocalLumaAvg) < 0.0f))
 	{
 		StepLength = 0.0f;
 	}
 	
-	float SpanLength = (Distance0 + Distance1);
-	Distance0 = Direction0 ? Distance0 : Distance1;
+#if DEBUG_STEP
+	if (StepLength == 0.0f)
+	{
+		return ToFloat4(1.0f);
+	}
+#endif
 	
-	float SubPixelOffset = (0.5f + (Distance0 * (1.0f / SpanLength))) * StepLength;
-	float2 FinalTexCoord = TexCoord + float2(IsHorizontal ? 0.0f : SubPixelOffset, IsHorizontal ? SubPixelOffset : 0.0f);
+	float SpanLength	= (Distance0 + Distance1);
+	Distance0			= Dist0 ? Distance0 : Distance1;
 	
-	float3 ColorF = FXAASample(FinalImage, LinearSampler, FinalTexCoord).rgb;
-	float3 FinalColor = Lerp(ColorL, ColorF, BlendL);
+	float	SubPixelOffset	= (0.5f + (Distance0 * (-1.0f / SpanLength))) * StepLength;
+	float2	FinalTexCoord	= TexCoord + float2(IsHorizontal ? 0.0f : SubPixelOffset, IsHorizontal ? SubPixelOffset : 0.0f);
+	float3	ColorF			= FXAASample(FinalImage, LinearSampler, FinalTexCoord).rgb;
+	float3	FinalColor		= Lerp(ColorL, ColorF, BlendL);
 	return float4(FinalColor, 1.0f);
 }

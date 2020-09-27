@@ -291,7 +291,7 @@ float4 Main(PSInput Input) : SV_TARGET
 	float3 Ambient	= (IBL_Diffuse + IBL_Specular) * SampledAO;
 	float3 Color	= Ambient + L0;
 	
-    float3 finalColor = ApplyGammaCorrectionAndTonemapping(Color);
-    float luminance = CalculateLuminance(finalColor);
-    return float4(finalColor, luminance);
+    float	Luminance	= CalculateLuminance(Color);
+	float3	FinalColor	= ApplyGammaCorrectionAndTonemapping(Color);
+	return float4(FinalColor, Luminance);
 }

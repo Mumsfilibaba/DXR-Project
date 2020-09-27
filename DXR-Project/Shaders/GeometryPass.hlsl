@@ -16,10 +16,10 @@ cbuffer TransformBuffer : register(b0, space0)
 
 cbuffer MaterialBuffer : register(b2, space0)
 {
-	float3 Albedo;
-	float Roughness;
-	float Metallic;
-	float AO;
+	float3	Albedo;
+	float	Roughness;
+	float	Metallic;
+	float	AO;
 };
 
 // PerFrame DescriptorTable
@@ -71,9 +71,9 @@ VSOutput VSMain(VSInput Input)
 	Output.Normal = Normal;
 	
 #ifdef NORMAL_MAPPING_ENABLED
-	float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), Transform).xyz);
-	Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
-	Output.Tangent = Tangent;
+	float3 Tangent	= normalize(mul(float4(Input.Tangent, 0.0f), Transform).xyz);
+	Tangent			= normalize(Tangent - dot(Tangent, Normal) * Normal);
+	Output.Tangent	= Tangent;
 	
 	float3 Bitangent = normalize(cross(Output.Tangent, Output.Normal));
 	Output.Bitangent = Bitangent;
@@ -85,8 +85,8 @@ VSOutput VSMain(VSInput Input)
 	Output.Position			= mul(WorldPosition, Camera.ViewProjection);
 	
 #ifdef PARALLAX_MAPPING_ENABLED
-	float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
-	TBN = transpose(TBN);
+	float3x3 TBN	= float3x3(Tangent, Bitangent, Normal);
+	TBN				= transpose(TBN);
 	
 	Output.TangentViewPos	= mul(Camera.Position, TBN);
 	Output.TangentPosition	= mul(WorldPosition.xyz, TBN);
@@ -161,19 +161,19 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 
 PSOutput PSMain(PSInput Input)
 {
-	float2 TexCoords = Input.TexCoord;
-	TexCoords.y = 1.0f - TexCoords.y;
+	float2 TexCoords	= Input.TexCoord;
+	TexCoords.y			= 1.0f - TexCoords.y;
 	
 #ifdef PARALLAX_MAPPING_ENABLED
-	float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
-	TexCoords = ParallaxMapping(TexCoords, ViewDir);
+	float3 ViewDir	= normalize(Input.TangentViewPos - Input.TangentPosition);
+	TexCoords		= ParallaxMapping(TexCoords, ViewDir);
 	//if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
 	//{
 	//    discard;
 	//}
 #endif
 
-	float3 SampledAlbedo = AlbedoMap.Sample(MaterialSampler, TexCoords).rgb * Albedo;
+    float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords).rgb) * Albedo;
 	
 #ifdef NORMAL_MAPPING_ENABLED
 	float3 SampledNormal = NormalMap.Sample(MaterialSampler, TexCoords).rgb;

@@ -2654,7 +2654,7 @@ bool Renderer::InitAA()
 
 	D3D12_STATIC_SAMPLER_DESC Samplers[2] = { };
 	Samplers[0].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
-	Samplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP; 
+	Samplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	Samplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	Samplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	Samplers[0].MipLODBias			= 0.0f;
@@ -2662,21 +2662,21 @@ bool Renderer::InitAA()
 	Samplers[0].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
 	Samplers[0].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 	Samplers[0].MinLOD				= 0.0f;
-	Samplers[0].MaxLOD				= 0.0f;
+	Samplers[0].MaxLOD				= 1.0f;
 	Samplers[0].ShaderRegister		= 0;
 	Samplers[0].RegisterSpace		= 0;
 	Samplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
 
-	Samplers[1].Filter				= D3D12_FILTER_ANISOTROPIC;
-	Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	Samplers[1].Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	Samplers[1].MipLODBias			= 0.0f;
-	Samplers[1].MaxAnisotropy		= 4;
-	Samplers[1].ComparisonFunc		= D3D12_COMPARISON_FUNC_ALWAYS;
+	Samplers[1].MaxAnisotropy		= 0;
+	Samplers[1].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
 	Samplers[1].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 	Samplers[1].MinLOD				= 0.0f;
-	Samplers[1].MaxLOD				= 0.0f;
+	Samplers[1].MaxLOD				= 1.0f;
 	Samplers[1].ShaderRegister		= 1;
 	Samplers[1].RegisterSpace		= 0;
 	Samplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
@@ -2712,7 +2712,7 @@ bool Renderer::InitAA()
 	PSOProperties.EnableDepth		= false;
 	PSOProperties.DepthWriteMask	= D3D12_DEPTH_WRITE_MASK_ZERO;
 	PSOProperties.EnableBlending	= false;
-	PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_ALWAYS;
 	PSOProperties.DepthBufferFormat	= DXGI_FORMAT_UNKNOWN;
 	PSOProperties.CullMode			= D3D12_CULL_MODE_NONE;
 	PSOProperties.RTFormats			= Formats;

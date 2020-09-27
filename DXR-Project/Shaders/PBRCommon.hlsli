@@ -14,7 +14,7 @@ static const float3 LightColor      = float3(400.0f, 400.0f, 400.0f);
 /*
 * Common Defines
 */
-#define GAMMA		(1.0f / 2.2f)
+#define GAMMA		2.2f
 #define PCF_RANGE	2
 #define PCF_WIDTH	float((PCF_RANGE * 2) + 1)
 
@@ -23,10 +23,10 @@ static const float3 LightColor      = float3(400.0f, 400.0f, 400.0f);
 */
 struct Camera
 {
-	float4x4    ViewProjection;
-	float3      Position;
+	float4x4	ViewProjection;
+	float3		Position;
 	float		Padding;
-	float4x4    ViewProjectionInverse;
+	float4x4	ViewProjectionInverse;
 };
 
 struct PointLight
@@ -64,10 +64,28 @@ float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ViewProjectionIn
 	float X = TexCoord.x * 2.0f - 1.0f;
 	float Y = (1.0f - TexCoord.y) * 2.0f - 1.0f;
 
-	float4 ProjectedPos     = float4(X, Y, Z, 1.0f);
-	float4 WorldPosition    = mul(ProjectedPos, ViewProjectionInverse);
+	float4 ProjectedPos		= float4(X, Y, Z, 1.0f);
+	float4 WorldPosition	= mul(ProjectedPos, ViewProjectionInverse);
 	
 	return WorldPosition.xyz / WorldPosition.w;
+}
+
+/*
+* Misc Helpers
+*/
+float3 ToFloat3(float Single)
+{
+	return float3(Single, Single, Single);
+}
+
+float4 ToFloat4(float Single)
+{
+	return float4(Single, Single, Single, Single);
+}
+
+float CalculateLuminance(float3 Color)
+{
+	return sqrt(dot(Color, float3(0.299f, 0.587f, 0.114f)));
 }
 
 /*
@@ -90,12 +108,12 @@ float Linstep(float Low, float High, float P)
 */
 float DistributionGGX(float3 N, float3 H, float Roughness)
 {
-	float A         = Roughness * Roughness;
-	float A2        = A * A;
-	float NdotH     = max(dot(N, H), 0.0f);
-	float NdotH2    = NdotH * NdotH;
+	float A			= Roughness * Roughness;
+	float A2		= A * A;
+	float NdotH		= max(dot(N, H), 0.0f);
+	float NdotH2	= NdotH * NdotH;
 
-	float Nom   = A2;
+	float Nom	= A2;
 	float Denom = (NdotH2 * (A2 - 1.0f) + 1.0f);
 	Denom = PI * Denom * Denom;
 
@@ -188,14 +206,24 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float Roughness)
 /*
 * HDR Helpers
 */
+float3 ApplyGamma(float3 InputColor)
+{
+	return pow(InputColor, ToFloat3(GAMMA));
+}
+
+float3 ApplyGammaInv(float3 InputColor)
+{
+	return pow(InputColor, ToFloat3(1.0f / GAMMA));
+}
+
 float3 ApplyGammaCorrectionAndTonemapping(float3 InputColor)
 {
 	const float INTENSITY	= 0.75f;
 		
 	// Gamma correct
-	float3 FinalColor = InputColor;
-	FinalColor = FinalColor / (FinalColor + float3(INTENSITY, INTENSITY, INTENSITY));
-	FinalColor = pow(FinalColor, float3(GAMMA, GAMMA, GAMMA));
+	float3 FinalColor	= InputColor;
+	FinalColor			= FinalColor / (FinalColor + ToFloat3(INTENSITY));
+    FinalColor			= ApplyGammaInv(FinalColor);
 	return FinalColor;
 }
 
@@ -221,22 +249,4 @@ float3 PackNormal(float3 Normal)
 float3 WorldHitPosition()
 {
 	return WorldRayOrigin() + (RayTCurrent() * WorldRayDirection());
-}
-
-/*
-* Misc Helpers
-*/
-float3 ToFloat3(float Single)
-{
-	return float3(Single, Single, Single);
-}
-
-float4 ToFloat4(float Single)
-{
-    return float4(Single, Single, Single, Single);
-}
-
-float CalculateLuminance(float3 Color)
-{
-    return sqrt(dot(Color, float3(0.299f, 0.587f, 0.114f)));
 }
