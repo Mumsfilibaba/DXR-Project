@@ -58,11 +58,12 @@ float3 Lerp(float3 A, float3 B, float AmountOfA)
 */
 float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
 {
-	// Correct the texcoords
-	TexCoord.y = 1.0f - TexCoord.y;
-	const float2 InvTextureSize = float2(1.0f, 1.0f) / TextureSize;
+	uint Width;
+	uint Height;
+	FinalImage.GetDimensions(Width, Height);
+	const float2 InvTextureSize = float2(1.0f, 1.0f) / float2(Width, Height); //TextureSize;
 	
-	float4 M = FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(0, 0));
+	float4 M = FXAASampleOffset(FinalImage, LinearSampler, TexCoord, int2(0, 0));
 	float LumaM = M.a;
 #if PASSTHROUGH
 	return M;
@@ -152,18 +153,18 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
 		LumaS = LumaE;
 	}
 	
-	float GradientN	= abs(LumaN - LumaM);
-	float GradientS	= abs(LumaS - LumaM);
-	float LumaAvgN	= (LumaN + LumaM) * 0.5f;
-	float LumaAvgS	= (LumaS + LumaM) * 0.5f;
+	float Gradient0	= abs(LumaN - LumaM);
+	float Gradient1	= abs(LumaS - LumaM);
+	float LumaAvg0	= (LumaN + LumaM) * 0.5f;
+	float LumaAvg1	= (LumaS + LumaM) * 0.5f;
 	
-	bool	PairN			= (GradientN >= GradientS);
-	float	LocalLumaAvg	= (!PairN) ? LumaAvgS : LumaAvgN;
-	float	LocalGradient	= (!PairN) ? GradientS : GradientN;
-	LocalGradient			= LocalGradient * FXAA_SEARCH_THRESHOLD;
+	bool	Pair0			= (Gradient0 >= Gradient1);
+	float	LocalLumaAvg	= (!Pair0) ? LumaAvg1 : LumaAvg0;
+	float	LocalGradient	= (!Pair0) ? Gradient1 : Gradient0;
+	LocalGradient = LocalGradient * FXAA_SEARCH_THRESHOLD;
 
-	float StepLength = (IsHorizontal) ? -InvTextureSize.y : -InvTextureSize.x;
-	if (!PairN)
+	float StepLength = IsHorizontal ? -InvTextureSize.y : -InvTextureSize.x;
+	if (!Pair0)
 	{
 		StepLength *= -1.0f;
 	}
@@ -235,12 +236,12 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
 		}
 	}
 	
-	float Distance0 = IsHorizontal ? (TexCoord.x  - TexCoord0.x) : (TexCoord.y  - TexCoord0.y);
-	float Distance1 = IsHorizontal ? (TexCoord1.x - TexCoord.x)  : (TexCoord1.y - TexCoord.y);
+	float Distance0 = IsHorizontal ? (TexCoord.x - TexCoord0.x) : (TexCoord.y - TexCoord0.y);
+	float Distance1 = IsHorizontal ? (TexCoord1.x - TexCoord.x) : (TexCoord1.y - TexCoord.y);
 	
-	bool Dist0	= Distance0 < Distance1;
+	bool Dir0 = Distance0 < Distance1;
 #if DEBUG_NEGPOS
-	if(Dist0)
+	if(Dir0)
 	{
 		return float4(1.0f, 0.0f, 0.0f, 1.0f);
 	}
@@ -249,8 +250,8 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
 		return float4(0.0f, 0.0f, 1.0f, 1.0f);
 	}
 #endif
-	
-	LumaEnd0 = Dist0 ? LumaEnd0 : LumaEnd0;
+
+	LumaEnd0 = Dir0 ? LumaEnd0 : LumaEnd1;
 	if (((LumaM - LocalLumaAvg) < 0.0f) == ((LumaEnd0 - LocalLumaAvg) < 0.0f))
 	{
 		StepLength = 0.0f;
@@ -264,7 +265,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
 #endif
 	
 	float SpanLength	= (Distance0 + Distance1);
-	Distance0			= Dist0 ? Distance0 : Distance1;
+	Distance0			= Dir0 ? Distance0 : Distance1;
 	
 	float	SubPixelOffset	= (0.5f + (Distance0 * (-1.0f / SpanLength))) * StepLength;
 	float2	FinalTexCoord	= TexCoord + float2(IsHorizontal ? 0.0f : SubPixelOffset, IsHorizontal ? SubPixelOffset : 0.0f);

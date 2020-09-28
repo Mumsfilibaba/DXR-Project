@@ -207,8 +207,7 @@ float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, floa
 // Main
 float4 Main(PSInput Input) : SV_TARGET
 {
-	float2 TexCoord = Input.TexCoord;
-	TexCoord.y = 1.0f - TexCoord.y;
+	const float2 TexCoord = Input.TexCoord;
 	
 	float Depth = DepthStencil.Sample(GBufferSampler, TexCoord).r;
 	if (Depth >= 1.0f)
@@ -291,7 +290,7 @@ float4 Main(PSInput Input) : SV_TARGET
 	float3 Ambient	= (IBL_Diffuse + IBL_Specular) * SampledAO;
 	float3 Color	= Ambient + L0;
 	
-    float	Luminance	= CalculateLuminance(Color);
 	float3	FinalColor	= ApplyGammaCorrectionAndTonemapping(Color);
+	float	Luminance	= CalculateLuminance(FinalColor);
 	return float4(FinalColor, Luminance);
 }
