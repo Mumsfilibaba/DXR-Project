@@ -15,13 +15,15 @@ public:
 	~Game();
 
 	bool Initialize();
+	void Destroy();
 
 	void Tick(Timestamp DeltaTime);
 
-	static Game& Get();
+	static Game& GetCurrent();
+	static void SetCurrent(Game* InCurrentGame);
 
 private:
-	Scene* CurrentScene = nullptr;
+	Scene*	CurrentScene = nullptr;
 	Camera* CurrentCamera = nullptr;
 
 	static Game* CurrentGame;

@@ -11,7 +11,7 @@ class GenericWindow;
 struct WindowResizeEvent : public Event
 {
 public:
-	WindowResizeEvent(TSharedPtr<GenericWindow> InWindow, Uint16 InWidth, Uint16 InHeight)
+	WindowResizeEvent(TSharedRef<GenericWindow> InWindow, Uint16 InWidth, Uint16 InHeight)
 		: Window(InWindow)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -27,7 +27,7 @@ public:
 		return std::string("WindowResizeEvent=[") + std::to_string(Width) + ", " + std::to_string(Height) + "]";
 	}
 
-	FORCEINLINE TSharedPtr<GenericWindow> GetWindow() const
+	FORCEINLINE TSharedRef<GenericWindow> GetWindow() const
 	{
 		return Window;
 	}
@@ -43,7 +43,7 @@ public:
 	}
 
 private:
-	TSharedPtr<GenericWindow> Window;
+	TSharedRef<GenericWindow> Window;
 	Uint16 Width;
 	Uint16 Height;
 };

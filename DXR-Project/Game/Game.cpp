@@ -18,38 +18,34 @@
 Game* Game::CurrentGame = nullptr;
 
 Game::Game()
+	: CurrentScene(nullptr)
+	, CurrentCamera(nullptr)
 {
-	VALIDATE(CurrentGame == nullptr);
-	CurrentGame = this;
 }
 
 Game::~Game()
 {
-	VALIDATE(CurrentGame != nullptr);
-	CurrentGame = nullptr;
-
 	SAFEDELETE(CurrentScene);
-	SAFEDELETE(CurrentCamera);
 }
 
 bool Game::Initialize()
 {
 	// Initialize Scene
-	constexpr Float32	SphereOffset = 1.25f;
-	constexpr Uint32	SphereCountX = 8;
-	constexpr Float32	StartPositionX = (-static_cast<Float32>(SphereCountX) * SphereOffset) / 2.0f;
-	constexpr Uint32	SphereCountY = 8;
-	constexpr Float32	StartPositionY = (-static_cast<Float32>(SphereCountY) * SphereOffset) / 2.0f;
-	constexpr Float32	MetallicDelta = 1.0f / SphereCountY;
-	constexpr Float32	RoughnessDelta = 1.0f / SphereCountX;
+	constexpr Float32	SphereOffset	= 1.25f;
+	constexpr Uint32	SphereCountX	= 8;
+	constexpr Float32	StartPositionX	= (-static_cast<Float32>(SphereCountX) * SphereOffset) / 2.0f;
+	constexpr Uint32	SphereCountY	= 8;
+	constexpr Float32	StartPositionY	= (-static_cast<Float32>(SphereCountY) * SphereOffset) / 2.0f;
+	constexpr Float32	MetallicDelta	= 1.0f / SphereCountY;
+	constexpr Float32	RoughnessDelta	= 1.0f / SphereCountX;
 
-	Actor* NewActor = nullptr;
-	MeshComponent* NewComponent = nullptr;
+	Actor*			NewActor		= nullptr;
+	MeshComponent*	NewComponent	= nullptr;
 	CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
 
 	// Create Spheres
-	MeshData SphereMeshData = MeshFactory::CreateSphere(3);
-	TSharedPtr<Mesh> SphereMesh = Mesh::Make(SphereMeshData);
+	MeshData SphereMeshData		= MeshFactory::CreateSphere(3);
+	TSharedPtr<Mesh> SphereMesh	= Mesh::Make(SphereMeshData);
 
 	// Create standard textures
 	Byte Pixels[] = { 255, 255, 255, 255 };
@@ -106,15 +102,15 @@ bool Game::Initialize()
 			CurrentScene->AddActor(NewActor);
 
 			NewComponent = new MeshComponent(NewActor);
-			NewComponent->Mesh = SphereMesh;
-			NewComponent->Material = MakeShared<Material>(MatProperties);
+			NewComponent->Mesh		= SphereMesh;
+			NewComponent->Material	= MakeShared<Material>(MatProperties);
 
-			NewComponent->Material->AlbedoMap = BaseTexture;
-			NewComponent->Material->NormalMap = BaseNormal;
-			NewComponent->Material->RoughnessMap = WhiteTexture;
-			NewComponent->Material->HeightMap = WhiteTexture;
-			NewComponent->Material->AOMap = WhiteTexture;
-			NewComponent->Material->MetallicMap = WhiteTexture;
+			NewComponent->Material->AlbedoMap		= BaseTexture;
+			NewComponent->Material->NormalMap		= BaseNormal;
+			NewComponent->Material->RoughnessMap	= WhiteTexture;
+			NewComponent->Material->HeightMap		= WhiteTexture;
+			NewComponent->Material->AOMap			= WhiteTexture;
+			NewComponent->Material->MetallicMap		= WhiteTexture;
 			NewComponent->Material->Initialize();
 
 			NewActor->AddComponent(NewComponent);
@@ -135,15 +131,15 @@ bool Game::Initialize()
 	NewActor->SetDebugName("Cube");
 	NewActor->GetTransform().SetPosition(0.0f, 2.0f, -2.0f);
 
-	MatProperties.AO = 1.0f;
-	MatProperties.Metallic = 1.0f;
-	MatProperties.Roughness = 1.0f;
+	MatProperties.AO		= 1.0f;
+	MatProperties.Metallic	= 1.0f;
+	MatProperties.Roughness	= 1.0f;
 
 	NewComponent = new MeshComponent(NewActor);
-	NewComponent->Mesh = Mesh::Make(CubeMeshData);
-	NewComponent->Material = MakeShared<Material>(MatProperties);
+	NewComponent->Mesh		= Mesh::Make(CubeMeshData);
+	NewComponent->Material	= MakeShared<Material>(MatProperties);
 
-	TSharedPtr<D3D12Texture> AlbedoMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> AlbedoMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!AlbedoMap)
 	{
 		return false;
@@ -153,7 +149,7 @@ bool Game::Initialize()
 		AlbedoMap->SetDebugName("AlbedoMap");
 	}
 
-	TSharedPtr<D3D12Texture> NormalMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> NormalMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!NormalMap)
 	{
 		return false;
@@ -163,7 +159,7 @@ bool Game::Initialize()
 		NormalMap->SetDebugName("NormalMap");
 	}
 
-	TSharedPtr<D3D12Texture> AOMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> AOMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!AOMap)
 	{
 		return false;
@@ -173,7 +169,7 @@ bool Game::Initialize()
 		AOMap->SetDebugName("AOMap");
 	}
 
-	TSharedPtr<D3D12Texture> RoughnessMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> RoughnessMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!RoughnessMap)
 	{
 		return false;
@@ -183,7 +179,7 @@ bool Game::Initialize()
 		RoughnessMap->SetDebugName("RoughnessMap");
 	}
 
-	TSharedPtr<D3D12Texture> HeightMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> HeightMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!HeightMap)
 	{
 		return false;
@@ -193,7 +189,7 @@ bool Game::Initialize()
 		HeightMap->SetDebugName("HeightMap");
 	}
 
-	TSharedPtr<D3D12Texture> MetallicMap = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedPtr<D3D12Texture> MetallicMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!MetallicMap)
 	{
 		return false;
@@ -203,12 +199,12 @@ bool Game::Initialize()
 		MetallicMap->SetDebugName("MetallicMap");
 	}
 
-	NewComponent->Material->AlbedoMap = AlbedoMap;
-	NewComponent->Material->NormalMap = NormalMap;
-	NewComponent->Material->RoughnessMap = RoughnessMap;
-	NewComponent->Material->HeightMap = HeightMap;
-	NewComponent->Material->AOMap = AOMap;
-	NewComponent->Material->MetallicMap = MetallicMap;
+	NewComponent->Material->AlbedoMap		= AlbedoMap;
+	NewComponent->Material->NormalMap		= NormalMap;
+	NewComponent->Material->RoughnessMap	= RoughnessMap;
+	NewComponent->Material->HeightMap		= HeightMap;
+	NewComponent->Material->AOMap			= AOMap;
+	NewComponent->Material->MetallicMap		= MetallicMap;
 	NewComponent->Material->Initialize();
 	NewActor->AddComponent(NewComponent);
 
@@ -240,9 +236,13 @@ bool Game::Initialize()
 	return true;
 }
 
+void Game::Destroy()
+{
+	delete this;
+}
+
 void Game::Tick(Timestamp DeltaTime)
 {
-
 	// Run app
 	const Float32 Delta = static_cast<Float32>(DeltaTime.AsSeconds());
 	const Float32 RotationSpeed = 45.0f;
@@ -301,8 +301,13 @@ void Game::Tick(Timestamp DeltaTime)
 	CurrentCamera->UpdateMatrices();
 }
 
-Game& Game::Get()
+Game& Game::GetCurrent()
 {
 	VALIDATE(CurrentGame != nullptr);
 	return *CurrentGame;
+}
+
+void Game::SetCurrent(Game* InCurrentGame)
+{
+	CurrentGame = InCurrentGame;
 }

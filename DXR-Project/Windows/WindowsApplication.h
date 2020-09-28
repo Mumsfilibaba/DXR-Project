@@ -18,7 +18,7 @@ class WindowsApplication : public GenericApplication
 public:
 	~WindowsApplication();
 
-	TSharedPtr<WindowsWindow> GetWindowFromHWND(HWND Window) const;
+	TSharedRef<WindowsWindow> GetWindowFromHWND(HWND Window) const;
 
 	FORCEINLINE HINSTANCE GetInstance() const
 	{
@@ -27,30 +27,30 @@ public:
 
 public:
 	// Generic application
-	virtual TSharedPtr<GenericWindow> MakeWindow() override final;
-	virtual TSharedPtr<GenericCursor> MakeCursor() override final;
+	virtual TSharedRef<GenericWindow> MakeWindow() override final;
+	virtual TSharedRef<GenericCursor> MakeCursor() override final;
 
 	virtual bool Initialize() override final;
 	virtual bool Tick() override final;
 	
-	virtual void SetCursor(TSharedPtr<GenericCursor> Cursor) override final;
-	virtual void SetActiveWindow(TSharedPtr<GenericWindow> Window) override final;
-	virtual void SetCapture(TSharedPtr<GenericWindow> Window) override final;
+	virtual void SetCursor(TSharedRef<GenericCursor> Cursor) override final;
+	virtual void SetActiveWindow(TSharedRef<GenericWindow> Window) override final;
+	virtual void SetCapture(TSharedRef<GenericWindow> Window) override final;
 
 	virtual ModifierKeyState GetModifierKeyState() const override final;
-	virtual TSharedPtr<GenericWindow> GetActiveWindow() const override final;
-	virtual TSharedPtr<GenericWindow> GetCapture() const override final;
-	virtual TSharedPtr<GenericCursor> GetCursor() const override final;
+	virtual TSharedRef<GenericWindow> GetActiveWindow() const override final;
+	virtual TSharedRef<GenericWindow> GetCapture() const override final;
+	virtual TSharedRef<GenericCursor> GetCursor() const override final;
 	
-	virtual void SetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32 X, Int32 Y) override final;
-	virtual void GetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const override final;
+	virtual void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 X, Int32 Y) override final;
+	virtual void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const override final;
 	
 	static GenericApplication* Make();
 
 private:
 	WindowsApplication(HINSTANCE hInstance);
 	
-	void AddWindow(TSharedPtr<WindowsWindow>& Window);
+	void AddWindow(TSharedRef<WindowsWindow>& Window);
 
 	bool RegisterWindowClass();
 
@@ -59,8 +59,8 @@ private:
 
 private:
 	HINSTANCE InstanceHandle = 0;
-	TSharedPtr<WindowsCursor> CurrentCursor;
-	TArray<TSharedPtr<WindowsWindow>> Windows;
+	TSharedRef<WindowsCursor> CurrentCursor;
+	TArray<TSharedRef<WindowsWindow>> Windows;
 };
 
 extern WindowsApplication* GlobalWindowsApplication;

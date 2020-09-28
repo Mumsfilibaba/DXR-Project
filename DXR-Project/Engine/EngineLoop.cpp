@@ -19,12 +19,13 @@
 * Engineloop Globals
 */
 
-static Clock GlobalClock;
-static bool GlobalIsRunning = false;
+static Clock	GlobalClock;
+static bool		GlobalIsRunning = false;
 
 /*
 * EngineLoop
 */
+
 bool EngineLoop::CoreInitialize()
 {
 	GlobalOutputDevices::Initialize();
@@ -93,6 +94,10 @@ bool EngineLoop::Initialize()
 		::MessageBox(0, "FAILED initialize Game", "ERROR", MB_ICONERROR);
 		return false;
 	}
+	else
+	{
+		Game::SetCurrent(GameInstance);
+	}
 
 	GlobalIsRunning = true;
 	return true;
@@ -106,7 +111,7 @@ void EngineLoop::Tick()
 	Application::Get().Tick();
 
 	// Update Game
-	Game::Get().Tick(GlobalClock.GetDeltaTime());
+	Game::GetCurrent().Tick(GlobalClock.GetDeltaTime());
 
 	// Update renderer
 	Renderer::Get()->Tick(*Scene::GetCurrentScene());
@@ -117,6 +122,10 @@ void EngineLoop::Tick()
 
 void EngineLoop::Release()
 {
+	// Destroy game instance
+	Game::GetCurrent().Destroy();
+	Game::SetCurrent(nullptr);
+
 	Application::Get().Release();
 
 	DebugUI::Release();

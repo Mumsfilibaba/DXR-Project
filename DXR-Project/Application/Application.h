@@ -14,24 +14,24 @@ class Application : public ApplicationEventHandler
 public:
 	~Application();
 
-	TSharedPtr<GenericWindow> MakeWindow();
-	TSharedPtr<GenericCursor> MakeCursor();
+	TSharedRef<GenericWindow> MakeWindow();
+	TSharedRef<GenericCursor> MakeCursor();
 
 	bool Initialize(TSharedPtr<GenericApplication> InPlatformApplication);
 	void Tick();
 	void Release();
 
-	void SetCursor(TSharedPtr<GenericCursor> Cursor);
-	void SetActiveWindow(TSharedPtr<GenericWindow> Window);
-	void SetCapture(TSharedPtr<GenericWindow> Window);
+	void SetCursor(TSharedRef<GenericCursor> Cursor);
+	void SetActiveWindow(TSharedRef<GenericWindow> Window);
+	void SetCapture(TSharedRef<GenericWindow> Window);
 
 	ModifierKeyState GetModifierKeyState() const;
-	TSharedPtr<GenericWindow> GetMainWindow() const;
-	TSharedPtr<GenericWindow> GetActiveWindow() const;
-	TSharedPtr<GenericWindow> GetCapture() const;
+	TSharedRef<GenericWindow> GetMainWindow() const;
+	TSharedRef<GenericWindow> GetActiveWindow() const;
+	TSharedRef<GenericWindow> GetCapture() const;
 
-	void SetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32 x, Int32 y);
-	void GetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const;
+	void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 x, Int32 y);
+	void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const;
 	
 	void SetPlatformApplication(TSharedPtr<GenericApplication> InPlatformApplication);
 
@@ -45,7 +45,7 @@ public:
 
 public:
 	// EventHandler Interface
-	virtual void OnWindowResized(TSharedPtr<GenericWindow> InWindow, Uint16 Width, Uint16 Height) override;
+	virtual void OnWindowResized(TSharedRef<GenericWindow> InWindow, Uint16 Width, Uint16 Height) override;
 	virtual void OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState) override;
 	virtual void OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState) override;
 	virtual void OnMouseMove(Int32 x, Int32 y) override;
@@ -58,7 +58,7 @@ private:
 	Application();
 
 protected:
-	TSharedPtr<GenericWindow> MainWindow;
+	TSharedRef<GenericWindow> MainWindow;
 	TSharedPtr<GenericApplication> PlatformApplication = nullptr;
 
 	static TSharedPtr<Application> CurrentApplication;

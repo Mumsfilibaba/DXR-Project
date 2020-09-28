@@ -4,6 +4,7 @@
 /*
 * WindowsCursor
 */
+
 WindowsCursor::WindowsCursor(WindowsApplication* InApplication)
 	: Application(InApplication)
 	, hCursor(0)

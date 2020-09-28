@@ -46,7 +46,7 @@ bool WindowsApplication::Initialize()
 	return true;
 }
 
-void WindowsApplication::AddWindow(TSharedPtr<WindowsWindow>& Window)
+void WindowsApplication::AddWindow(TSharedRef<WindowsWindow>& Window)
 {
 	Windows.EmplaceBack(Window);
 }
@@ -72,9 +72,9 @@ bool WindowsApplication::RegisterWindowClass()
 	}
 }
 
-TSharedPtr<GenericWindow> WindowsApplication::MakeWindow()
+TSharedRef<GenericWindow> WindowsApplication::MakeWindow()
 {
-	TSharedPtr<WindowsWindow> Window = MakeShared<WindowsWindow>(this);
+	TSharedRef<WindowsWindow> Window = new WindowsWindow(this);
 	if (Window)
 	{
 		AddWindow(Window);
@@ -82,16 +82,16 @@ TSharedPtr<GenericWindow> WindowsApplication::MakeWindow()
 	}
 	else
 	{
-		return TSharedPtr<GenericWindow>();
+		return TSharedRef<GenericWindow>();
 	}
 }
 
-TSharedPtr<GenericCursor> WindowsApplication::MakeCursor()
+TSharedRef<GenericCursor> WindowsApplication::MakeCursor()
 {
-	TSharedPtr<WindowsCursor> Cursor = MakeShared<WindowsCursor>(this);
+	TSharedRef<WindowsCursor> Cursor = new WindowsCursor(this);
 	if (!Cursor)
 	{
-		return TSharedPtr<GenericCursor>();
+		return TSharedRef<GenericCursor>();
 	}
 	else
 	{
@@ -130,9 +130,9 @@ ModifierKeyState WindowsApplication::GetModifierKeyState() const
 	return ModifierKeyState(ModifierMask);
 }
 
-TSharedPtr<WindowsWindow> WindowsApplication::GetWindowFromHWND(HWND Window) const
+TSharedRef<WindowsWindow> WindowsApplication::GetWindowFromHWND(HWND Window) const
 {
-	for (const TSharedPtr<WindowsWindow>& CurrentWindow : Windows)
+	for (const TSharedRef<WindowsWindow>& CurrentWindow : Windows)
 	{
 		if (CurrentWindow->GetHandle() == Window)
 		{
@@ -140,29 +140,29 @@ TSharedPtr<WindowsWindow> WindowsApplication::GetWindowFromHWND(HWND Window) con
 		}
 	}
 
-	return TSharedPtr<WindowsWindow>(nullptr);
+	return TSharedRef<WindowsWindow>(nullptr);
 }
 
-TSharedPtr<GenericWindow> WindowsApplication::GetActiveWindow() const
+TSharedRef<GenericWindow> WindowsApplication::GetActiveWindow() const
 {
 	HWND hActiveWindow = ::GetForegroundWindow();
 	return GetWindowFromHWND(hActiveWindow);
 }
 
-TSharedPtr<GenericWindow> WindowsApplication::GetCapture() const
+TSharedRef<GenericWindow> WindowsApplication::GetCapture() const
 {
 	HWND hCapture = ::GetCapture();
 	return GetWindowFromHWND(hCapture);
 }
 
-TSharedPtr<GenericCursor> WindowsApplication::GetCursor() const
+TSharedRef<GenericCursor> WindowsApplication::GetCursor() const
 {
 	return CurrentCursor;
 }
 
-void WindowsApplication::GetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const
+void WindowsApplication::GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const
 {
-	TSharedPtr<WindowsWindow> WinRelative = StaticCast<WindowsWindow>(RelativeWindow);
+	TSharedRef<WindowsWindow> WinRelative = StaticCast<WindowsWindow>(RelativeWindow);
 	HWND hRelative = WinRelative->GetHandle();
 
 	POINT CursorPos = { };
@@ -193,11 +193,11 @@ bool WindowsApplication::Tick()
 	return true;
 }
 
-void WindowsApplication::SetCursor(TSharedPtr<GenericCursor> Cursor)
+void WindowsApplication::SetCursor(TSharedRef<GenericCursor> Cursor)
 {
 	if (Cursor)
 	{
-		TSharedPtr<WindowsCursor> WinCursor = StaticCast<WindowsCursor>(Cursor);
+		TSharedRef<WindowsCursor> WinCursor = StaticCast<WindowsCursor>(Cursor);
 		CurrentCursor = WinCursor;
 
 		HCURSOR hCursor = WinCursor->GetCursor();
@@ -209,9 +209,9 @@ void WindowsApplication::SetCursor(TSharedPtr<GenericCursor> Cursor)
 	}
 }
 
-void WindowsApplication::SetActiveWindow(TSharedPtr<GenericWindow> Window)
+void WindowsApplication::SetActiveWindow(TSharedRef<GenericWindow> Window)
 {
-	TSharedPtr<WindowsWindow> WinWindow = StaticCast<WindowsWindow>(Window);
+	TSharedRef<WindowsWindow> WinWindow = StaticCast<WindowsWindow>(Window);
 	HWND hActiveWindow = WinWindow->GetHandle();
 	if (::IsWindow(hActiveWindow))
 	{
@@ -219,11 +219,11 @@ void WindowsApplication::SetActiveWindow(TSharedPtr<GenericWindow> Window)
 	}
 }
 
-void WindowsApplication::SetCapture(TSharedPtr<GenericWindow> CaptureWindow)
+void WindowsApplication::SetCapture(TSharedRef<GenericWindow> CaptureWindow)
 {
 	if (CaptureWindow)
 	{
-		TSharedPtr<WindowsWindow> WinWindow = StaticCast<WindowsWindow>(CaptureWindow);
+		TSharedRef<WindowsWindow> WinWindow = StaticCast<WindowsWindow>(CaptureWindow);
 		HWND hCapture = WinWindow->GetHandle();
 		if (::IsWindow(hCapture))
 		{
@@ -236,11 +236,11 @@ void WindowsApplication::SetCapture(TSharedPtr<GenericWindow> CaptureWindow)
 	}
 }
 
-void WindowsApplication::SetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32 X, Int32 Y)
+void WindowsApplication::SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 X, Int32 Y)
 {
 	if (RelativeWindow)
 	{
-		TSharedPtr<WindowsWindow> WinWindow = StaticCast<WindowsWindow>(RelativeWindow);
+		TSharedRef<WindowsWindow> WinWindow = StaticCast<WindowsWindow>(RelativeWindow);
 		HWND hRelative = WinWindow->GetHandle();
 	
 		POINT CursorPos = { X, Y };
@@ -260,7 +260,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 	constexpr Uint16 SCAN_CODE_MASK		= 0x01ff;
 	constexpr Uint16 BACK_BUTTON_MASK	= 0x0001;
 
-	TSharedPtr<WindowsWindow> MessageWindow = GetWindowFromHWND(hWnd);
+	TSharedRef<WindowsWindow> MessageWindow = GetWindowFromHWND(hWnd);
 	switch (uMessage)
 	{
 		case WM_DESTROY:

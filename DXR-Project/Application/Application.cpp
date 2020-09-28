@@ -8,7 +8,7 @@
 
 #include "Platform/PlatformApplication.h"
 
-// TODO: Mayebe should handle this in a different way
+// TODO: Maybe should handle this in a different way
 #include "Engine/EngineLoop.h"
 
 /*
@@ -28,12 +28,12 @@ Application::~Application()
 {
 }
 
-TSharedPtr<GenericWindow> Application::MakeWindow()
+TSharedRef<GenericWindow> Application::MakeWindow()
 {
 	return PlatformApplication->MakeWindow();
 }
 
-TSharedPtr<GenericCursor> Application::MakeCursor()
+TSharedRef<GenericCursor> Application::MakeCursor()
 {
 	return PlatformApplication->MakeCursor();
 }
@@ -78,22 +78,22 @@ void Application::Release()
 {
 }
 
-void Application::SetCursor(TSharedPtr<GenericCursor> Cursor)
+void Application::SetCursor(TSharedRef<GenericCursor> Cursor)
 {
 	PlatformApplication->SetCursor(Cursor);
 }
 
-void Application::SetActiveWindow(TSharedPtr<GenericWindow> Window)
+void Application::SetActiveWindow(TSharedRef<GenericWindow> Window)
 {
 	PlatformApplication->SetActiveWindow(Window);
 }
 
-void Application::SetCapture(TSharedPtr<GenericWindow> Window)
+void Application::SetCapture(TSharedRef<GenericWindow> Window)
 {
 	PlatformApplication->SetCapture(Window);
 }
 
-void Application::SetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32 X, Int32 Y)
+void Application::SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 X, Int32 Y)
 {
 	PlatformApplication->SetCursorPos(RelativeWindow, X, Y);
 }
@@ -103,22 +103,22 @@ ModifierKeyState Application::GetModifierKeyState() const
 	return PlatformApplication->GetModifierKeyState();
 }
 
-TSharedPtr<GenericWindow> Application::GetMainWindow() const
+TSharedRef<GenericWindow> Application::GetMainWindow() const
 {
 	return MainWindow;
 }
 
-TSharedPtr<GenericWindow> Application::GetActiveWindow() const
+TSharedRef<GenericWindow> Application::GetActiveWindow() const
 {
 	return PlatformApplication->GetActiveWindow();
 }
 
-TSharedPtr<GenericWindow> Application::GetCapture() const
+TSharedRef<GenericWindow> Application::GetCapture() const
 {
 	return PlatformApplication->GetCapture();
 }
 
-void Application::GetCursorPos(TSharedPtr<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const
+void Application::GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const
 {
 	PlatformApplication->GetCursorPos(RelativeWindow, OutX, OutY);
 }
@@ -157,7 +157,7 @@ Application& Application::Get()
 	return (*CurrentApplication.Get());
 }
 
-void Application::OnWindowResized(TSharedPtr<GenericWindow> InWindow, Uint16 Width, Uint16 Height)
+void Application::OnWindowResized(TSharedRef<GenericWindow> InWindow, Uint16 Width, Uint16 Height)
 {
 	WindowResizeEvent Event(InWindow, Width, Height);
 	EventQueue::SendEvent(Event);
@@ -187,7 +187,7 @@ void Application::OnMouseMove(Int32 x, Int32 y)
 
 void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState)
 {
-	TSharedPtr<GenericWindow> CaptureWindow = GetCapture();
+	TSharedRef<GenericWindow> CaptureWindow = GetCapture();
 	if (CaptureWindow)
 	{
 		SetCapture(nullptr);
@@ -199,10 +199,10 @@ void Application::OnMouseButtonReleased(EMouseButton Button, const ModifierKeySt
 
 void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState)
 {
-	TSharedPtr<GenericWindow> CaptureWindow = GetCapture();
+	TSharedRef<GenericWindow> CaptureWindow = GetCapture();
 	if (!CaptureWindow)
 	{
-		TSharedPtr<GenericWindow> ActiveWindow = GetActiveWindow();
+		TSharedRef<GenericWindow> ActiveWindow = GetActiveWindow();
 		SetCapture(ActiveWindow);
 	}
 

@@ -6,6 +6,7 @@
 /*
 * TSharedRef - Helper class when using objects with RefCountedObject as a base
 */
+
 template<typename TRefCountedObject>
 class TSharedRef
 {
@@ -14,13 +15,13 @@ public:
 	friend class TSharedRef;
 
 	FORCEINLINE TSharedRef() noexcept
-		: Ptr(nullptr)
+		: RefPtr(nullptr)
 	{
 		static_assert(std::is_base_of<RefCountedObject, TRefCountedObject>());
 	}
 
 	FORCEINLINE TSharedRef(const TSharedRef& Other) noexcept
-		: Ptr(Other.Ptr)
+		: RefPtr(Other.RefPtr)
 	{
 		static_assert(std::is_base_of<RefCountedObject, TRefCountedObject>());
 		AddRef();
@@ -28,7 +29,7 @@ public:
 
 	template<typename TOther>
 	FORCEINLINE TSharedRef(const TSharedRef<TOther>& Other) noexcept
-		: Ptr(Other.Ptr)
+		: RefPtr(Other.RefPtr)
 	{
 		static_assert(std::is_convertible<TOther*, TRefCountedObject*>());
 		static_assert(std::is_base_of<RefCountedObject, TOther>());
@@ -37,31 +38,31 @@ public:
 	}
 
 	FORCEINLINE TSharedRef(TSharedRef&& Other) noexcept
-		: Ptr(Other.Ptr)
+		: RefPtr(Other.RefPtr)
 	{
 		static_assert(std::is_base_of<RefCountedObject, TRefCountedObject>());
-		Other.Ptr = nullptr;
+		Other.RefPtr = nullptr;
 	}
 
 	template<typename TOther>
 	FORCEINLINE TSharedRef(TSharedRef<TOther>&& Other) noexcept
-		: Ptr(Other.Ptr)
+		: RefPtr(Other.RefPtr)
 	{
 		static_assert(std::is_convertible<TOther*, TRefCountedObject*>());
 		static_assert(std::is_base_of<RefCountedObject, TOther>());
 
-		Other.Ptr = nullptr;
+		Other.RefPtr = nullptr;
 	}
 
 	FORCEINLINE TSharedRef(TRefCountedObject* InPtr) noexcept
-		: Ptr(InPtr)
+		: RefPtr(InPtr)
 	{
 		static_assert(std::is_base_of<RefCountedObject, TRefCountedObject>());
 	}
 
 	template<typename TOther>
 	FORCEINLINE TSharedRef(TOther* InPtr) noexcept
-		: Ptr(InPtr)
+		: RefPtr(InPtr)
 	{
 		static_assert(std::is_convertible<TOther*, TRefCountedObject*>());
 		static_assert(std::is_base_of<RefCountedObject, TOther>());
@@ -74,7 +75,7 @@ public:
 
 	FORCEINLINE TRefCountedObject* Reset() noexcept
 	{
-		TRefCountedObject* WeakPtr = Ptr;
+		TRefCountedObject* WeakPtr = RefPtr;
 		InternalRelease();
 
 		return WeakPtr;
@@ -82,16 +83,16 @@ public:
 
 	FORCEINLINE void AddRef() noexcept
 	{
-		if (Ptr)
+		if (RefPtr)
 		{
-			Ptr->AddRef();
+			RefPtr->AddRef();
 		}
 	}
 
 	FORCEINLINE void Swap(TRefCountedObject* InPtr) noexcept
 	{
 		Reset();
-		Ptr = InPtr;
+		RefPtr = InPtr;
 	}
 
 	template<typename TOther>
@@ -101,30 +102,30 @@ public:
 		static_assert(std::is_base_of<RefCountedObject, TOther>());
 
 		Reset();
-		Ptr = InPtr;
+		RefPtr = InPtr;
 	}
 
 	FORCEINLINE TRefCountedObject* Get() const noexcept
 	{
-		return Ptr;
+		return RefPtr;
 	}
 
 	FORCEINLINE TRefCountedObject* GetAndAddRef() noexcept
 	{
 		AddRef();
-		return Ptr;
+		return RefPtr;
 	}
 
 	template<typename TCastType>
 	FORCEINLINE TCastType* GetAs() const noexcept
 	{
 		static_assert(std::is_convertible<TCastType*, TRefCountedObject*>());
-		return static_cast<TCastType*>(Ptr);
+		return static_cast<TCastType*>(RefPtr);
 	}
 
 	FORCEINLINE TRefCountedObject* const* GetAddressOf() const noexcept
 	{
-		return &Ptr;
+		return &RefPtr;
 	}
 
 	FORCEINLINE TRefCountedObject* operator->() const noexcept
@@ -139,32 +140,32 @@ public:
 
 	FORCEINLINE bool operator==(TRefCountedObject* InPtr) const noexcept
 	{
-		return (Ptr == InPtr);
+		return (RefPtr == InPtr);
 	}
 
 	FORCEINLINE bool operator==(const TSharedRef& Other) const noexcept
 	{
-		return (Ptr == Other.Ptr);
+		return (RefPtr == Other.RefPtr);
 	}
 
 	FORCEINLINE bool operator!=(TRefCountedObject* InPtr) const noexcept
 	{
-		return (Ptr != InPtr);
+		return (RefPtr != InPtr);
 	}
 
 	FORCEINLINE bool operator!=(const TSharedRef& Other) const noexcept
 	{
-		return (Ptr != Other.Ptr);
+		return (RefPtr != Other.RefPtr);
 	}
 
 	FORCEINLINE bool operator==(std::nullptr_t) const noexcept
 	{
-		return (Ptr == nullptr);
+		return (RefPtr == nullptr);
 	}
 
 	FORCEINLINE bool operator!=(std::nullptr_t) const noexcept
 	{
-		return (Ptr != nullptr);
+		return (RefPtr != nullptr);
 	}
 
 	template<typename TOther>
@@ -173,7 +174,7 @@ public:
 		static_assert(std::is_convertible<TOther*, TRefCountedObject*>());
 		static_assert(std::is_base_of<RefCountedObject, TOther>());
 
-		return (Ptr == InPtr);
+		return (RefPtr == InPtr);
 	}
 
 	template<typename TOther>
@@ -182,7 +183,7 @@ public:
 		static_assert(std::is_convertible<TOther*, TRefCountedObject*>());
 		static_assert(std::is_base_of<RefCountedObject, TOther>());
 
-		return (Ptr == Other.Ptr);
+		return (RefPtr == Other.RefPtr);
 	}
 
 	template<typename TOther>
@@ -191,7 +192,7 @@ public:
 		static_assert(std::is_convertible<TOther*, TRefCountedObject*>());
 		static_assert(std::is_base_of<RefCountedObject, TOther>());
 
-		return (Ptr != InPtr);
+		return (RefPtr != InPtr);
 	}
 
 	template<typename TOther>
@@ -200,12 +201,12 @@ public:
 		static_assert(std::is_convertible<TOther*, TRefCountedObject*>());
 		static_assert(std::is_base_of<RefCountedObject, TOther>());
 
-		return (Ptr != Other.Ptr);
+		return (RefPtr != Other.RefPtr);
 	}
 
 	FORCEINLINE operator bool() const noexcept
 	{
-		return (Ptr != nullptr);
+		return (RefPtr != nullptr);
 	}
 
 	FORCEINLINE TSharedRef& operator=(const TSharedRef& Other) noexcept
@@ -214,7 +215,7 @@ public:
 		{
 			Reset();
 
-			Ptr = Other.Ptr;
+			RefPtr = Other.RefPtr;
 			AddRef();
 		}
 
@@ -231,7 +232,7 @@ public:
 		{
 			Reset();
 
-			Ptr = Other.Ptr;
+			RefPtr = Other.RefPtr;
 			AddRef();
 		}
 
@@ -244,8 +245,8 @@ public:
 		{
 			Reset();
 
-			Ptr = Other.Ptr;
-			Other.Ptr = nullptr;
+			RefPtr = Other.RefPtr;
+			Other.RefPtr = nullptr;
 		}
 
 		return *this;
@@ -261,8 +262,8 @@ public:
 		{
 			Reset();
 
-			Ptr = Other.Ptr;
-			Other.Ptr = nullptr;
+			RefPtr = Other.RefPtr;
+			Other.RefPtr = nullptr;
 		}
 
 		return *this;
@@ -270,10 +271,10 @@ public:
 
 	FORCEINLINE TSharedRef& operator=(TRefCountedObject* InPtr) noexcept
 	{
-		if (Ptr != InPtr)
+		if (RefPtr != InPtr)
 		{
 			Reset();
-			Ptr = InPtr;
+			RefPtr = InPtr;
 		}
 
 		return *this;
@@ -285,10 +286,10 @@ public:
 		static_assert(std::is_convertible<TOther*, TRefCountedObject*>());
 		static_assert(std::is_base_of<RefCountedObject, TOther>());
 
-		if (Ptr != InPtr)
+		if (RefPtr != InPtr)
 		{
 			Reset();
-			Ptr = InPtr;
+			RefPtr = InPtr;
 		}
 
 		return *this;
@@ -303,12 +304,91 @@ public:
 private:
 	FORCEINLINE void InternalRelease() noexcept
 	{
-		if (Ptr)
+		if (RefPtr)
 		{
-			Ptr->Release();
-			Ptr = nullptr;
+			RefPtr->Release();
+			RefPtr = nullptr;
 		}
 	}
 
-	TRefCountedObject* Ptr;
+	TRefCountedObject* RefPtr;
 };
+
+/*
+* Casting functions
+*/
+
+// static_cast
+template<typename T, typename U>
+TSharedRef<T> StaticCast(const TSharedRef<U>& Pointer)
+{
+	T* RawPointer = static_cast<T*>(Pointer.Get());
+	RawPointer->AddRef();
+	return TSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+TSharedRef<T> StaticCast(TSharedRef<U>&& Pointer)
+{
+	T* RawPointer = static_cast<T*>(Pointer.Get());
+	return TSharedRef<T>(RawPointer);
+}
+
+// const_cast
+template<typename T, typename U>
+TSharedRef<T> ConstCast(const TSharedRef<U>& Pointer)
+{
+	T* RawPointer = const_cast<T*>(Pointer.Get());
+	RawPointer->AddRef();
+	return TSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+TSharedRef<T> ConstCast(TSharedRef<U>&& Pointer)
+{
+	T* RawPointer = const_cast<T*>(Pointer.Get());
+	return TSharedRef<T>(RawPointer);
+}
+
+// reinterpret_cast
+template<typename T, typename U>
+TSharedRef<T> ReinterpretCast(const TSharedRef<U>& Pointer)
+{
+	T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
+	RawPointer->AddRef();
+	return TSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+TSharedRef<T> ReinterpretCast(TSharedRef<U>&& Pointer)
+{
+	T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
+	return TSharedRef<T>(RawPointer);
+}
+
+// dynamic_cast
+template<typename T, typename U>
+TSharedRef<T> DynamicCast(const TSharedRef<U>& Pointer)
+{
+	T* RawPointer = dynamic_cast<T*>(Pointer.Get());
+	RawPointer->AddRef();
+	return TSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+TSharedRef<T> DynamicCast(TSharedRef<U>&& Pointer)
+{
+	T* RawPointer = dynamic_cast<T*>(Pointer.Get());
+	return TSharedRef<T>(RawPointer);
+}
+
+/*
+* Converts a rawptr into a TSharedRef
+*/
+
+template<typename T, typename U>
+TSharedRef<T> MakeSharedRef(U* InRefCountedObject)
+{
+	InRefCountedObject->AddRef();
+	return TSharedRef<T>(static_cast<T*>(InRefCountedObject));
+}

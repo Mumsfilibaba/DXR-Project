@@ -2,9 +2,12 @@
 #include "Defines.h"
 #include "Types.h"
 
+#include "Core/RefCountedObject.h"
+
 /*
 * EPlatformCursor
 */
+
 enum class EPlatformCursor : Uint32
 {
 	CURSOR_NONE			= 0,
@@ -22,6 +25,7 @@ enum class EPlatformCursor : Uint32
 /*
 * GenericCursor
 */
+
 struct CursorInitializer
 {
 	inline CursorInitializer()
@@ -42,11 +46,12 @@ struct CursorInitializer
 /*
 * GenericCursor
 */
-class GenericCursor
+
+class GenericCursor : public RefCountedObject
 {
 public:
-	GenericCursor() = default;
-	~GenericCursor() = default;
+	GenericCursor()		= default;
+	~GenericCursor()	= default;
 
 	virtual bool Initialize(const CursorInitializer& InInitializer) = 0;
 
@@ -62,17 +67,18 @@ protected:
 /*
 * Pre-Defined Cursors
 */
+
 struct GlobalCursors
 {
-	static TSharedPtr<GenericCursor> Arrow;
-	static TSharedPtr<GenericCursor> TextInput;
-	static TSharedPtr<GenericCursor> ResizeAll;
-	static TSharedPtr<GenericCursor> ResizeEastWest;
-	static TSharedPtr<GenericCursor> ResizeNorthSouth;
-	static TSharedPtr<GenericCursor> ResizeNorthEastSouthWest;
-	static TSharedPtr<GenericCursor> ResizeNorthWestSouthEast;
-	static TSharedPtr<GenericCursor> Hand;
-	static TSharedPtr<GenericCursor> NotAllowed;
+	static TSharedRef<GenericCursor> Arrow;
+	static TSharedRef<GenericCursor> TextInput;
+	static TSharedRef<GenericCursor> ResizeAll;
+	static TSharedRef<GenericCursor> ResizeEastWest;
+	static TSharedRef<GenericCursor> ResizeNorthSouth;
+	static TSharedRef<GenericCursor> ResizeNorthEastSouthWest;
+	static TSharedRef<GenericCursor> ResizeNorthWestSouthEast;
+	static TSharedRef<GenericCursor> Hand;
+	static TSharedRef<GenericCursor> NotAllowed;
 
 	static bool Initialize();
 };

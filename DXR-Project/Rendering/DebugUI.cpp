@@ -79,7 +79,7 @@ bool DebugUI::Initialize()
 	IO.BackendPlatformName = "Windows";
 
 #ifdef WIN32
-	TSharedPtr<WindowsWindow> Window = StaticCast<WindowsWindow>(Application::Get().GetMainWindow());
+	TSharedRef<WindowsWindow> Window = StaticCast<WindowsWindow>(Application::Get().GetMainWindow());
 	IO.ImeWindowHandle = Window->GetHandle();
 #endif
 
@@ -455,7 +455,7 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	IO.DeltaTime = static_cast<Float32>(Delta.AsSeconds());
 
 	// Set Mouseposition
-	TSharedPtr<GenericWindow> Window = Application::Get().GetMainWindow();
+	TSharedRef<GenericWindow> Window = Application::Get().GetMainWindow();
 	if (IO.WantSetMousePos)
 	{
 		Application::Get().SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
@@ -492,7 +492,7 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 		else
 		{
 			// Show OS mouse cursor
-			TSharedPtr<GenericCursor> Cursor = GlobalCursors::Arrow;
+			TSharedRef<GenericCursor> Cursor = GlobalCursors::Arrow;
 			switch (ImguiCursor)
 			{
 			case ImGuiMouseCursor_Arrow:		Cursor = GlobalCursors::Arrow;						break;

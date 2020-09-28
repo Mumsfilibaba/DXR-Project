@@ -5,6 +5,7 @@
 /*
 * EConsoleColor
 */
+
 enum class EConsoleColor : Uint8
 {
 	CONSOLE_COLOR_RED		= 0,
@@ -16,11 +17,12 @@ enum class EConsoleColor : Uint8
 /*
 * GenericConsoleOutput
 */
+
 class GenericOutputDevice
 {
 public:
 	GenericOutputDevice() = default;
-	~GenericOutputDevice() = default;
+	virtual ~GenericOutputDevice() = default;
 
 	virtual void Print(const std::string& Message) = 0;
 	virtual void Clear() = 0;
@@ -37,6 +39,7 @@ public:
 /*
 * GlobalOutputDevices
 */
+
 struct GlobalOutputDevices
 {
 	static GenericOutputDevice* Console;

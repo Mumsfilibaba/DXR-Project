@@ -2,6 +2,10 @@
 #include "Defines.h"
 #include "Types.h"
 
+/*
+* RefCountedObject
+*/
+
 class RefCountedObject
 {
 public:

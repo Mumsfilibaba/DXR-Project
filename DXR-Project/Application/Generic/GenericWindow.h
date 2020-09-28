@@ -101,11 +101,11 @@ struct WindowShape
 /*
 * GenericWindow
 */
-class GenericWindow
+class GenericWindow : public RefCountedObject
 {
 public:
-	GenericWindow() = default;
-	~GenericWindow() = default;
+	GenericWindow()		= default;
+	~GenericWindow()	= default;
 
 	virtual bool Initialize(const WindowInitializer& InInitializer) = 0;
 

@@ -28,7 +28,7 @@ class RenderingAPI
 public:
 	virtual ~RenderingAPI() = default;
 
-	virtual bool Initialize(TSharedPtr<GenericWindow> RenderWindow, bool EnableDebug) = 0;
+	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) = 0;
 
 	virtual class D3D12Texture* CreateTexture(const struct TextureProperties& Properties) const = 0;
 	virtual class D3D12Buffer* CreateBuffer(const struct BufferProperties& Properties) const = 0;

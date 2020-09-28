@@ -4,6 +4,7 @@
 RefCountedObject::RefCountedObject()
 	: StrongReferences(0)
 {
+	AddRef();
 }
 
 RefCountedObject::~RefCountedObject()

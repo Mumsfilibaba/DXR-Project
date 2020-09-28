@@ -15,7 +15,7 @@ class ApplicationEventHandler
 public:
 	virtual ~ApplicationEventHandler() = default;
 
-	virtual void OnWindowResized(TSharedPtr<GenericWindow> Window, Uint16 Width, Uint16 Height)
+	virtual void OnWindowResized(TSharedRef<GenericWindow> Window, Uint16 Width, Uint16 Height)
 	{
 	}
 

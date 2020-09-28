@@ -6,15 +6,15 @@
 /*
 * GlobalCursors
 */
-TSharedPtr<GenericCursor> GlobalCursors::Arrow;
-TSharedPtr<GenericCursor> GlobalCursors::TextInput;
-TSharedPtr<GenericCursor> GlobalCursors::ResizeAll;
-TSharedPtr<GenericCursor> GlobalCursors::ResizeEastWest;
-TSharedPtr<GenericCursor> GlobalCursors::ResizeNorthSouth;
-TSharedPtr<GenericCursor> GlobalCursors::ResizeNorthEastSouthWest;
-TSharedPtr<GenericCursor> GlobalCursors::ResizeNorthWestSouthEast;
-TSharedPtr<GenericCursor> GlobalCursors::Hand;
-TSharedPtr<GenericCursor> GlobalCursors::NotAllowed;
+TSharedRef<GenericCursor> GlobalCursors::Arrow;
+TSharedRef<GenericCursor> GlobalCursors::TextInput;
+TSharedRef<GenericCursor> GlobalCursors::ResizeAll;
+TSharedRef<GenericCursor> GlobalCursors::ResizeEastWest;
+TSharedRef<GenericCursor> GlobalCursors::ResizeNorthSouth;
+TSharedRef<GenericCursor> GlobalCursors::ResizeNorthEastSouthWest;
+TSharedRef<GenericCursor> GlobalCursors::ResizeNorthWestSouthEast;
+TSharedRef<GenericCursor> GlobalCursors::Hand;
+TSharedRef<GenericCursor> GlobalCursors::NotAllowed;
 
 bool GlobalCursors::Initialize()
 {
