@@ -29,5 +29,5 @@ public:
 private:
 	WindowsApplication* Application;
 	HCURSOR hCursor;
-	LPCSTR CursorName;
+	LPCSTR	CursorName;
 };

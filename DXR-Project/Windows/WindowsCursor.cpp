@@ -40,8 +40,7 @@ bool WindowsCursor::Initialize(const CursorInitializer& InInitializer)
 		Initializer = InInitializer;
 		if (CursorName)
 		{
-			HINSTANCE hInstance = Application->GetInstance();
-			::LoadCursor(hInstance, CursorName);
+			hCursor = ::LoadCursor(0, CursorName);
 			return true;
 		}
 		else

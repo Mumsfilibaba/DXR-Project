@@ -505,8 +505,8 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 			case ImGuiMouseCursor_Hand:			Cursor = GlobalCursors::Hand;						break;
 			case ImGuiMouseCursor_NotAllowed:	Cursor = GlobalCursors::NotAllowed;					break;
 			}
-
-			Application::Get().SetCursor(Cursor);
+			
+			Application::Get().SetCursor(GlobalCursors::Arrow);
 		}
 	}
 
