@@ -2,6 +2,10 @@
 #include "Defines.h"
 #include "Types.h"
 
+/*
+* EKey
+*/
+
 enum EKey : Uint8
 {
 	KEY_UNKNOWN = 0,
@@ -142,6 +146,10 @@ enum EKey : Uint8
 	KEY_COUNT	= KEY_LAST + 1
 };
 
+/*
+* EMouseButton
+*/
+
 enum EMouseButton : Uint8
 {
 	MOUSE_BUTTON_UNKNOWN = 0,
@@ -156,6 +164,10 @@ enum EMouseButton : Uint8
 	MOUSE_BUTTON_COUNT	= MOUSE_BUTTON_LAST + 1
 };
 
+/*
+* EModifierFlag
+*/
+
 enum EModifierFlag
 {
 	MODIFIER_FLAG_NONE			= 0,
@@ -166,6 +178,11 @@ enum EModifierFlag
 	MODIFIER_FLAG_SUPER			= FLAG(5),
 	MODIFIER_FLAG_NUM_LOCK		= FLAG(6),
 };
+
+
+/*
+* Helpers
+*/
 
 inline const Char* ButtonToString(EMouseButton Button)
 {

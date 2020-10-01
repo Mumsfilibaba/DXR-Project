@@ -3,6 +3,10 @@
 #include "D3D12/D3D12Texture.h"
 #include "D3D12/D3D12DescriptorHeap.h"
 
+/*
+* MaterialProperties
+*/
+
 struct MaterialProperties
 {
 	XMFLOAT3 Albedo		= XMFLOAT3(1.0f, 1.0f, 1.0f);

@@ -271,7 +271,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 	// Construct Scene
 	MeshData Data;
 	TUniquePtr<Scene> LoadedScene = MakeUnique<Scene>();
-	std::unordered_map<Vertex, Uint32>	UniqueVertices;
+	std::unordered_map<Vertex, Uint32, VertexHasher> UniqueVertices;
 
 	for (const tinyobj::shape_t& Shape : Shapes)
 	{

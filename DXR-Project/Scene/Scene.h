@@ -10,6 +10,7 @@
 /*
 * Scene
 */
+
 class Scene
 {
 public:

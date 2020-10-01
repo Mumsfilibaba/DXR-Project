@@ -1,6 +1,10 @@
 #pragma once
 #include "ClassType.h"
 
+/*
+* Helper macros
+*/
+
 #define CORE_OBJECT(TCoreObject, TSuperClass) \
 private: \
 	typedef TCoreObject This; \
@@ -14,11 +18,12 @@ public: \
 	}
 
 #define CORE_OBJECT_INIT() \
-	SetClass(This::GetStaticClass())
+	this->SetClass(This::GetStaticClass())
 
 /*
 * Core Object for Engine (Mostly for RTTI)
 */
+
 class CoreObject
 {
 public:
@@ -49,6 +54,7 @@ private:
 /*
 * Casting between coreobjects
 */
+
 template<typename T>
 bool IsSubClassOf(CoreObject* Object)
 {

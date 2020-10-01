@@ -8,6 +8,10 @@
 	#undef OutputDebugString
 #endif
 
+/*
+* Debug
+*/
+
 class Debug
 {
 public:

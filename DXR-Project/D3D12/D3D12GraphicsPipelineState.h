@@ -6,6 +6,7 @@
 /*
 * GraphicsPipelineStateProperties
 */
+
 struct GraphicsPipelineStateProperties
 {
 	std::string						DebugName;
@@ -34,6 +35,7 @@ struct GraphicsPipelineStateProperties
 /*
 * D3D12GraphicsPipelineState
 */
+
 class D3D12GraphicsPipelineState : public D3D12DeviceChild
 {
 public:

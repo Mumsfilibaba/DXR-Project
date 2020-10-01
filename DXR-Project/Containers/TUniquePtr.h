@@ -2,6 +2,8 @@
 #include "Defines.h"
 #include "Types.h"
 
+#include "Memory/New.h"
+
 #include "Utilities/TUtilities.h"
 
 /*
@@ -334,7 +336,7 @@ private:
 template<typename T, typename... TArgs>
 std::enable_if_t<!std::is_array_v<T>, TUniquePtr<T>> MakeUnique(TArgs&&... Args) noexcept
 {
-	T* UniquePtr = new T(Forward<TArgs>(Args)...);
+	T* UniquePtr = DBG_NEW T(Forward<TArgs>(Args)...);
 	return Move(TUniquePtr<T>(UniquePtr));
 }
 
@@ -343,6 +345,6 @@ std::enable_if_t<std::is_array_v<T>, TUniquePtr<T>> MakeUnique(Uint32 Size) noex
 {
 	using TType = TRemoveExtent<T>;
 
-	TType* UniquePtr = new TType[Size];
+	TType* UniquePtr = DBG_NEW TType[Size];
 	return Move(TUniquePtr<T>(UniquePtr));
 }

@@ -4,6 +4,7 @@
 /*
 * Light
 */
+
 class Light : public CoreObject
 {
 	CORE_OBJECT(Light, CoreObject);

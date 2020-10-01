@@ -4,6 +4,7 @@
 /*
 * Camera
 */
+
 class Camera
 {
 public:

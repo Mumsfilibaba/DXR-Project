@@ -12,6 +12,7 @@ class D3D12RootSignature;
 /*
 * RayTracingPipelineStateProperties
 */
+
 struct RayTracingPipelineStateProperties
 {
 	std::string DebugName;
@@ -27,6 +28,7 @@ struct RayTracingPipelineStateProperties
 /*
 * D3D12RayTracingPipelineState
 */
+
 class D3D12RayTracingPipelineState : public D3D12DeviceChild
 {
 public:

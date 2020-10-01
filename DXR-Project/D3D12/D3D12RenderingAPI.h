@@ -10,6 +10,7 @@
 /*
 * D3D12RenderingAPI
 */
+
 class D3D12RenderingAPI : public RenderingAPI
 {
 public:

@@ -126,8 +126,6 @@ void EngineLoop::Release()
 	Game::GetCurrent().Destroy();
 	Game::SetCurrent(nullptr);
 
-	Application::Get().Release();
-
 	DebugUI::Release();
 
 	Renderer::Release();
@@ -136,6 +134,10 @@ void EngineLoop::Release()
 void EngineLoop::CoreRelease()
 {
 	RenderingAPI::Release();
+
+	Application::Get().Release();
+
+	EngineGlobals::PlatformApplication.Reset();
 
 	GlobalOutputDevices::Release();
 }

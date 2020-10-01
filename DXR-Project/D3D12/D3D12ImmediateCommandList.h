@@ -1,6 +1,10 @@
 #pragma once
 #include "D3D12CommandList.h"
 
+/*
+* D3D12ImmediateCommandList
+*/
+
 class D3D12ImmediateCommandList : public D3D12CommandList
 {
 public:

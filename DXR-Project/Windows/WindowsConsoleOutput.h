@@ -6,6 +6,7 @@
 /*
 * WindowsConsoleOutput
 */
+
 class WindowsConsoleOutput : public GenericOutputDevice
 {
 public:

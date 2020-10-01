@@ -3,6 +3,10 @@
 
 #include <string>
 
+/*
+* D3D12ShaderCompiler
+*/
+
 class D3D12ShaderCompiler
 {
 public:

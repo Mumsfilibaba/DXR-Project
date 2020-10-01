@@ -36,6 +36,7 @@ class D3D12RayTracingPipelineState;
 /*
 * LightSettings
 */
+
 struct LightSettings
 {
 	Uint16 ShadowMapWidth		= 4096;
@@ -46,6 +47,7 @@ struct LightSettings
 /*
 * Renderer
 */
+
 class Renderer
 {
 public:

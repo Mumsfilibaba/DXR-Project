@@ -4,6 +4,10 @@
 
 #include <imgui.h>
 
+/*
+* DebugUI
+*/
+
 class DebugUI
 {
 public:

@@ -10,6 +10,7 @@ class D3D12Texture;
 /*
 * ETextureFactoryFlags
 */
+
 enum ETextureFactoryFlags : Uint32
 {
 	TEXTURE_FACTORY_FLAGS_NONE			= 0,
@@ -19,6 +20,7 @@ enum ETextureFactoryFlags : Uint32
 /*
 * TextureFactory
 */
+
 class TextureFactory
 {
 public:

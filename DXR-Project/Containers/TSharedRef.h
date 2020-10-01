@@ -245,8 +245,8 @@ public:
 		{
 			Reset();
 
-			RefPtr = Other.RefPtr;
-			Other.RefPtr = nullptr;
+			RefPtr			= Other.RefPtr;
+			Other.RefPtr	= nullptr;
 		}
 
 		return *this;
@@ -262,8 +262,8 @@ public:
 		{
 			Reset();
 
-			RefPtr = Other.RefPtr;
-			Other.RefPtr = nullptr;
+			RefPtr			= Other.RefPtr;
+			Other.RefPtr	= nullptr;
 		}
 
 		return *this;

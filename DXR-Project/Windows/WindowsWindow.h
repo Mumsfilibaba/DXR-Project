@@ -10,6 +10,7 @@ class WindowsApplication;
 /*
 * WindowsWindow
 */
+
 class WindowsWindow : public GenericWindow
 {
 public:
@@ -44,9 +45,11 @@ public:
 
 private:
 	WindowsApplication* OwnerApplication = nullptr;
-	HWND hWindow;
-	DWORD Style;
-	DWORD StyleEx;
-	bool IsFullscreen;
+	
+	HWND	hWindow;
+	DWORD	Style;
+	DWORD	StyleEx;
+	bool	IsFullscreen;
+	
 	WINDOWPLACEMENT StoredPlacement;
 };

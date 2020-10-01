@@ -5,6 +5,7 @@
 /*
 * BufferProperties
 */
+
 struct BufferProperties
 {
 	std::string				Name;
@@ -17,6 +18,7 @@ struct BufferProperties
 /*
 * D3D12Buffer
 */
+
 class D3D12Buffer : public D3D12Resource
 {
 public:

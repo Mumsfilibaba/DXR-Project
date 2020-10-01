@@ -4,6 +4,7 @@
 /*
 * MeshComponent
 */
+
 class MeshComponent : public Component
 {
 	CORE_OBJECT(MeshComponent, Component);
@@ -19,7 +20,6 @@ public:
 
 	~MeshComponent() = default;
 
-public:
-	TSharedPtr<class Material> Material;
-	TSharedPtr<class Mesh> Mesh;
+	TSharedPtr<class Material>	Material;
+	TSharedPtr<class Mesh>		Mesh;
 };

@@ -16,7 +16,7 @@ GenericApplication* WindowsApplication::Make()
 {
 	HINSTANCE hInstance = static_cast<HINSTANCE>(::GetModuleHandle(nullptr));
 
-	GlobalWindowsApplication = new WindowsApplication(hInstance);
+	GlobalWindowsApplication = DBG_NEW WindowsApplication(hInstance);
 	return GlobalWindowsApplication;
 }
 
@@ -74,7 +74,7 @@ bool WindowsApplication::RegisterWindowClass()
 
 TSharedRef<GenericWindow> WindowsApplication::MakeWindow()
 {
-	TSharedRef<WindowsWindow> Window = new WindowsWindow(this);
+	TSharedRef<WindowsWindow> Window = DBG_NEW WindowsWindow(this);
 	if (Window)
 	{
 		AddWindow(Window);
@@ -88,7 +88,7 @@ TSharedRef<GenericWindow> WindowsApplication::MakeWindow()
 
 TSharedRef<GenericCursor> WindowsApplication::MakeCursor()
 {
-	TSharedRef<WindowsCursor> Cursor = new WindowsCursor(this);
+	TSharedRef<WindowsCursor> Cursor = DBG_NEW WindowsCursor(this);
 	if (!Cursor)
 	{
 		return TSharedRef<GenericCursor>();

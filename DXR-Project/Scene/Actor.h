@@ -29,6 +29,7 @@ protected:
 /*
 * Transform
 */
+
 class Transform
 {
 public:
@@ -138,6 +139,6 @@ private:
 
 	Transform Transform;
 
-	TArray<Component*> Components;
-	std::string	DebugName;
+	TArray<Component*>	Components;
+	std::string			DebugName;
 };

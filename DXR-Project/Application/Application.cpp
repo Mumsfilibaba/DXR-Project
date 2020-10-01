@@ -76,6 +76,7 @@ void Application::Tick()
 
 void Application::Release()
 {
+	PlatformApplication.Reset();
 }
 
 void Application::SetCursor(TSharedRef<GenericCursor> Cursor)

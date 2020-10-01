@@ -6,6 +6,7 @@ class GenericApplication;
 /*
 * EngineGlobals
 */
+
 struct EngineGlobals
 {
 	static TSharedPtr<GenericApplication> PlatformApplication;

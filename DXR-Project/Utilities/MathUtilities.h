@@ -1,6 +1,10 @@
 #pragma once
 #include "Types.h"
 
+/*
+* Math Helpers
+*/
+
 template <typename T>
 inline T DivideByMultiple(T Value, Uint32 Alignment)
 {

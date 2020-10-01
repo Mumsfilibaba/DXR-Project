@@ -1,6 +1,10 @@
 #pragma once
 #include "D3D12DeviceChild.h"
 
+/*
+* D3D12CommandAllocator
+*/
+
 class D3D12CommandAllocator : public D3D12DeviceChild
 {
 public:

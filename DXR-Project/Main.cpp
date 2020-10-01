@@ -2,6 +2,8 @@
 
 #include "Engine/EngineLoop.h"
 
+#include "Memory/Memory.h"
+
 #include <crtdbg.h>
 
 #pragma warning(push)
@@ -9,7 +11,9 @@
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, int cmdShow)
 {
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#ifdef _DEBUG
+	Memory::SetDebugFlags(EMemoryDebugFlag::MEMORY_DEBUG_FLAGS_LEAK_CHECK);
+#endif
 
 	if (!EngineLoop::CoreInitialize())
 	{

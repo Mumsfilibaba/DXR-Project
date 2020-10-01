@@ -7,6 +7,10 @@
 #include <DirectXMath.h>
 using namespace DirectX;
 
+/*
+* Vertex
+*/
+
 struct Vertex
 {
 	XMFLOAT3 Position;
@@ -24,29 +28,38 @@ struct Vertex
 	}
 };
 
-namespace std
+/*
+* Vertex
+*/
+
+struct VertexHasher
 {
-	template<> struct hash<Vertex>
+	inline size_t operator()(const Vertex& V) const
 	{
-		size_t operator()(const Vertex& V) const
-		{
-			std::hash<XMFLOAT3> Hasher;
+		std::hash<XMFLOAT3> Hasher;
 
-			size_t Hash = Hasher(V.Position);
-			HashCombine<XMFLOAT3>(Hash, V.Normal);
-			HashCombine<XMFLOAT3>(Hash, V.Tangent);
-			HashCombine<XMFLOAT2>(Hash, V.TexCoord);
+		size_t Hash = Hasher(V.Position);
+		HashCombine<XMFLOAT3>(Hash, V.Normal);
+		HashCombine<XMFLOAT3>(Hash, V.Tangent);
+		HashCombine<XMFLOAT2>(Hash, V.TexCoord);
 
-			return Hash;
-		}
-	};
-}
+		return Hash;
+	}
+};
+
+/*
+* MeshData
+*/
 
 struct MeshData
 {
 	TArray<Vertex> Vertices;
 	TArray<Uint32> Indices;
 };
+
+/*
+* MeshFactory
+*/
 
 class MeshFactory
 {

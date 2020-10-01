@@ -9,6 +9,7 @@
 /*
 * Application
 */
+
 class Application : public ApplicationEventHandler
 {
 public:

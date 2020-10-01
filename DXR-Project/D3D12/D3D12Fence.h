@@ -3,6 +3,10 @@
 
 #include "Types.h"
 
+/*
+* D3D12Fence
+*/
+
 class D3D12Fence : public D3D12DeviceChild
 {
 public:

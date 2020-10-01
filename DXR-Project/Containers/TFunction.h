@@ -18,8 +18,8 @@ private:
 
 		virtual TReturn Invoke(TArgs... Args) noexcept = 0;
 
-		virtual IFunction* Clone(VoidPtr Memory) noexcept = 0;
-		virtual IFunction* Move(VoidPtr Memory) noexcept = 0;
+		virtual IFunction* Clone(VoidPtr Memory) noexcept	= 0;
+		virtual IFunction* Move(VoidPtr Memory) noexcept	= 0;
 	};
 
 	// Member functions
@@ -256,8 +256,8 @@ public:
 			InternalRelease();
 			if (Other.Func)
 			{
-				Func = Other.Func->Move(reinterpret_cast<VoidPtr>(StackBuffer));
-				Other.Func = nullptr;
+				Func		= Other.Func->Move(reinterpret_cast<VoidPtr>(StackBuffer));
+				Other.Func	= nullptr;
 			}
 		}
 

@@ -4,6 +4,7 @@
 /*
 * TextureProperties
 */
+
 struct TextureProperties
 {
 	std::string					DebugName;
@@ -25,6 +26,7 @@ class D3D12DepthStencilView;
 /*
 * D3D12Texture
 */
+
 class D3D12Texture : public D3D12Resource
 {
 public:

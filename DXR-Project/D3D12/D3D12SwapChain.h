@@ -7,6 +7,10 @@
 class WindowsWindow;
 class D3D12CommandQueue;
 
+/*
+* D3D12SwapChain
+*/
+
 class D3D12SwapChain : public D3D12DeviceChild
 {
 public:

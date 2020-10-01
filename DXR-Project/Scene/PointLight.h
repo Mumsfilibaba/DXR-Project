@@ -1,6 +1,10 @@
 #pragma once
 #include "Light.h"
 
+/*
+* PointLightProperties
+*/
+
 struct PointLightProperties
 {
 	XMFLOAT3	Color			= XMFLOAT3(1.0f, 1.0f, 1.0f);
@@ -13,6 +17,7 @@ struct PointLightProperties
 /*
 * PointLight
 */
+
 class PointLight : public Light
 {
 	CORE_OBJECT(PointLight, Light);

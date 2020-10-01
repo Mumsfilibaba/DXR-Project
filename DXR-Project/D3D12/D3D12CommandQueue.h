@@ -5,6 +5,10 @@
 
 class D3D12Fence;
 
+/*
+* D3D12CommandQueue
+*/
+
 class D3D12CommandQueue : public D3D12DeviceChild
 {
 public:

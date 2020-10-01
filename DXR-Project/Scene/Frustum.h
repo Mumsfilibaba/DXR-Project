@@ -7,6 +7,7 @@ using namespace DirectX;
 /*
 * Frustum
 */
+
 class Frustum
 {
 public:

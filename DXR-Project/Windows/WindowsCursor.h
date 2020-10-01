@@ -8,6 +8,7 @@ class WindowsApplication;
 /*
 * WindowsCursor
 */
+
 class WindowsCursor : public GenericCursor
 {
 public:

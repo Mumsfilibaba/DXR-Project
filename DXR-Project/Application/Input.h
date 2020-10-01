@@ -4,6 +4,7 @@
 /*
 * Input
 */
+
 class Input
 {
 public:

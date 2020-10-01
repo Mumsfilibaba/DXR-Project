@@ -68,6 +68,7 @@ public:
 /*
 * BindingTableEntry
 */
+
 struct BindingTableEntry
 {
 public:
@@ -91,6 +92,7 @@ public:
 /*
 * D3D12RayTracingScene - Equal to the Top-Level AccelerationStructure
 */
+
 class D3D12RayTracingScene : public D3D12DeviceChild
 {
 public:

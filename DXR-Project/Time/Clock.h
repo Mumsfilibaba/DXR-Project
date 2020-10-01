@@ -1,6 +1,10 @@
 #pragma once
 #include "Timestamp.h"
 
+/*
+* Clock
+*/
+
 class Clock
 {
 public:

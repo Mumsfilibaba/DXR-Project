@@ -2,12 +2,20 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12Views.h"
 
+/*
+* EMemoryType
+*/
+
 enum class EMemoryType : Uint32
 {
 	MEMORY_TYPE_UNKNOWN	= 0,
 	MEMORY_TYPE_UPLOAD	= 1,
 	MEMORY_TYPE_DEFAULT	= 2,
 };
+
+/*
+* D3D12Resource
+*/
 
 class D3D12Resource : public D3D12DeviceChild
 {

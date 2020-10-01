@@ -12,6 +12,10 @@ class D3D12OnlineDescriptorHeap;
 class D3D12ComputePipelineState;
 class D3D12RootSignature;
 
+/*
+* D3D12Device
+*/
+
 class D3D12Device
 {
 public:

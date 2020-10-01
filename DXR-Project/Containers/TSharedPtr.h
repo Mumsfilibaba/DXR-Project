@@ -4,6 +4,7 @@
 /*
 * Struct Counting references in TWeak- and TSharedPtr
 */
+
 struct PtrControlBlock
 {
 public:
@@ -53,6 +54,7 @@ private:
 /*
 * TDelete
 */
+
 template<typename T>
 struct TDelete
 {
@@ -78,6 +80,7 @@ struct TDelete<T[]>
 /*
 * Base class for TWeak- and TSharedPtr
 */
+
 template<typename T, typename D>
 class TPtrBase
 {
@@ -184,8 +187,8 @@ protected:
 			VALIDATE(Counter != nullptr);
 			Counter->ReleaseWeakRef();
 
-			PtrControlBlock::RefType StrongRefs = Counter->GetStrongReferences();
-			PtrControlBlock::RefType WeakRefs = Counter->GetWeakReferences();
+			PtrControlBlock::RefType StrongRefs	= Counter->GetStrongReferences();
+			PtrControlBlock::RefType WeakRefs	= Counter->GetWeakReferences();
 			if (WeakRefs <= 0 && StrongRefs <= 0)
 			{
 				delete Counter;
@@ -198,20 +201,20 @@ protected:
 		T* TempPtr = Ptr;
 		PtrControlBlock* TempBlock = Counter;
 
-		Ptr = Other.Ptr;
-		Counter = Other.Counter;
+		Ptr		= Other.Ptr;
+		Counter	= Other.Counter;
 
-		Other.Ptr = TempPtr;
-		Other.Counter = TempBlock;
+		Other.Ptr		= TempPtr;
+		Other.Counter	= TempBlock;
 	}
 
 	FORCEINLINE void InternalMove(TPtrBase&& Other) noexcept
 	{
-		Ptr = Other.Ptr;
-		Counter = Other.Counter;
+		Ptr		= Other.Ptr;
+		Counter	= Other.Counter;
 
-		Other.Ptr = nullptr;
-		Other.Counter = nullptr;
+		Other.Ptr		= nullptr;
+		Other.Counter	= nullptr;
 	}
 
 	template<typename TOther, typename DOther>
@@ -219,17 +222,17 @@ protected:
 	{
 		static_assert(std::is_convertible<TOther*, T*>());
 
-		Ptr = static_cast<TOther*>(Other.Ptr);
-		Counter = Other.Counter;
+		Ptr		= static_cast<TOther*>(Other.Ptr);
+		Counter	= Other.Counter;
 
-		Other.Ptr = nullptr;
-		Other.Counter = nullptr;
+		Other.Ptr		= nullptr;
+		Other.Counter	= nullptr;
 	}
 
 	FORCEINLINE void InternalConstructStrong(T* InPtr)
 	{
-		Ptr = InPtr;
-		Counter = new PtrControlBlock();
+		Ptr		= InPtr;
+		Counter	= DBG_NEW PtrControlBlock();
 		InternalAddStrongRef();
 	}
 
@@ -238,15 +241,15 @@ protected:
 	{
 		static_assert(std::is_convertible<TOther*, T*>());
 
-		Ptr = static_cast<T*>(InPtr);
-		Counter = new PtrControlBlock();
+		Ptr		= static_cast<T*>(InPtr);
+		Counter	= DBG_NEW PtrControlBlock();
 		InternalAddStrongRef();
 	}
 
 	FORCEINLINE void InternalConstructStrong(const TPtrBase& Other)
 	{
-		Ptr = Other.Ptr;
-		Counter = Other.Counter;
+		Ptr		= Other.Ptr;
+		Counter	= Other.Counter;
 		InternalAddStrongRef();
 	}
 
@@ -255,32 +258,32 @@ protected:
 	{
 		static_assert(std::is_convertible<TOther*, T*>());
 
-		Ptr = static_cast<T*>(Other.Ptr);
-		Counter = Other.Counter;
+		Ptr		= static_cast<T*>(Other.Ptr);
+		Counter	= Other.Counter;
 		InternalAddStrongRef();
 	}
 
 	template<typename TOther, typename DOther>
 	FORCEINLINE void InternalConstructStrong(const TPtrBase<TOther, DOther>& Other, T* InPtr)
 	{
-		Ptr = InPtr;
-		Counter = Other.Counter;
+		Ptr		= InPtr;
+		Counter	= Other.Counter;
 		InternalAddStrongRef();
 	}
 
 	template<typename TOther, typename DOther>
 	FORCEINLINE void InternalConstructStrong(TPtrBase<TOther, DOther>&& Other, T* InPtr)
 	{
-		Ptr = InPtr;
-		Counter = Other.Counter;
-		Other.Ptr = nullptr;
-		Other.Counter = nullptr;
+		Ptr				= InPtr;
+		Counter			= Other.Counter;
+		Other.Ptr		= nullptr;
+		Other.Counter	= nullptr;
 	}
 
 	FORCEINLINE void InternalConstructWeak(T* InPtr)
 	{
-		Ptr = InPtr;
-		Counter = new PtrControlBlock();
+		Ptr		= InPtr;
+		Counter	= DBG_NEW PtrControlBlock();
 		InternalAddWeakRef();
 	}
 
@@ -289,15 +292,15 @@ protected:
 	{
 		static_assert(std::is_convertible<TOther*, T*>());
 
-		Ptr = static_cast<T*>(InPtr);
-		Counter = new PtrControlBlock();
+		Ptr		= static_cast<T*>(InPtr);
+		Counter	= DBG_NEW PtrControlBlock();
 		InternalAddWeakRef();
 	}
 
 	FORCEINLINE void InternalConstructWeak(const TPtrBase& Other)
 	{
-		Ptr = Other.Ptr;
-		Counter = Other.Counter;
+		Ptr		= Other.Ptr;
+		Counter	= Other.Counter;
 		InternalAddWeakRef();
 	}
 
@@ -306,8 +309,8 @@ protected:
 	{
 		static_assert(std::is_convertible<TOther*, T*>());
 
-		Ptr = static_cast<T*>(Other.Ptr);
-		Counter = Other.Counter;
+		Ptr		= static_cast<T*>(Other.Ptr);
+		Counter	= Other.Counter;
 		InternalAddWeakRef();
 	}
 
@@ -325,8 +328,8 @@ protected:
 
 	FORCEINLINE void InternalClear() noexcept
 	{
-		Ptr = nullptr;
-		Counter = nullptr;
+		Ptr		= nullptr;
+		Counter	= nullptr;
 	}
 
 protected:
@@ -1103,7 +1106,7 @@ public:
 template<typename T, typename... TArgs>
 std::enable_if_t<!std::is_array_v<T>, TSharedPtr<T>> MakeShared(TArgs&&... Args) noexcept
 {
-	T* RefCountedPtr = new T(Forward<TArgs>(Args)...);
+	T* RefCountedPtr = DBG_NEW T(Forward<TArgs>(Args)...);
 	return ::Move(TSharedPtr<T>(RefCountedPtr));
 }
 
@@ -1112,7 +1115,7 @@ std::enable_if_t<std::is_array_v<T>, TSharedPtr<T>> MakeShared(Uint32 Size) noex
 {
 	using TType = TRemoveExtent<T>;
 
-	TType* RefCountedPtr = new TType[Size];
+	TType* RefCountedPtr = DBG_NEW TType[Size];
 	return ::Move(TSharedPtr<T>(RefCountedPtr));
 }
 

@@ -8,6 +8,10 @@ class D3D12ComputePipelineState;
 class D3D12RootSignature;
 class D3D12DescriptorTable;
 
+/*
+* D3D12CommandList
+*/
+
 class D3D12CommandList : public D3D12DeviceChild
 {
 	struct GenerateMipsHelper

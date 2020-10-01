@@ -59,8 +59,9 @@ private:
 
 private:
 	HINSTANCE InstanceHandle = 0;
-	TSharedRef<WindowsCursor> CurrentCursor;
-	TArray<TSharedRef<WindowsWindow>> Windows;
+	
+	TSharedRef<WindowsCursor>			CurrentCursor;
+	TArray<TSharedRef<WindowsWindow>>	Windows;
 };
 
 extern WindowsApplication* GlobalWindowsApplication;
