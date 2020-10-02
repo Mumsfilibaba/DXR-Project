@@ -34,7 +34,7 @@ public:
 	// Resource views
 	void SetRenderTargetView(RenderTargetView* InRenderTargetView, const SubresourceIndex& InSubresourceIndex)
 	{
-		const int SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
+		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
 		if (SubresourceIndex < RenderTargetViews.Size())
 		{
 			RenderTargetViews.Resize(SubresourceIndex + 1);
@@ -45,7 +45,7 @@ public:
 
 	void SetDepthStencilView(DepthStencilView* InDepthStencilView, const SubresourceIndex& InSubresourceIndex)
 	{
-		const int SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
+		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
 		if (SubresourceIndex < DepthStencilViews.Size())
 		{
 			DepthStencilViews.Resize(SubresourceIndex + 1);
@@ -56,13 +56,13 @@ public:
 
 	RenderTargetView* GetRenderTargetView(const SubresourceIndex& InSubresourceIndex) const
 	{
-		const int SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
+		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
 		return RenderTargetViews[SubresourceIndex];
 	}
 
 	DepthStencilView* GetDepthStencilView(const SubresourceIndex& InSubresourceIndex) const
 	{
-		const int SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
+		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
 		return DepthStencilViews[SubresourceIndex];
 	}
 
