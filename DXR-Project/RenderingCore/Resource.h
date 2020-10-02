@@ -1,4 +1,7 @@
+#pragma once
 #include "ResourceViews.h"
+
+#include "Core/RefCountedObject.h"
 
 #include "Containers/TArray.h"
 
@@ -45,16 +48,31 @@ class Buffer;
 * Resource
 */
 
-class Resource
+class Resource : public RefCountedObject
 {
 public: 
 	virtual ~Resource() = default;
 
 	// Casting Functions
-	virtual Texture*		AsTexture() = 0;
-	virtual const Texture*	AsTexture() const = 0;
-	virtual Buffer*			AsBuffer() = 0;
-	virtual const Buffer*	AsBuffer() const = 0;
+	virtual Texture* AsTexture()
+	{
+		return nullptr;
+	}
+
+	virtual const Texture* AsTexture() const
+	{
+		return nullptr;
+	}
+
+	virtual Buffer* AsBuffer()
+	{
+		return nullptr;
+	}
+
+	virtual const Buffer* AsBuffer() const
+	{
+		return nullptr;
+	}
 
 	// Resource views
 	void SetShaderResourceView(ShaderResourceView* InShaderResourceView, const SubresourceIndex& InSubresourceIndex)

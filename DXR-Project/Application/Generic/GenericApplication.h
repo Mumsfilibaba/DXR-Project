@@ -50,7 +50,6 @@ public:
 		return (ModifierMask & MODIFIER_FLAG_NUM_LOCK);
 	}
 
-private:
 	Uint32 ModifierMask = 0;
 };
 
