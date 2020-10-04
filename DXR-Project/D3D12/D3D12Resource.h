@@ -1,17 +1,8 @@
 #pragma once
+#include "RenderingCore/RenderingCore.h"
+
 #include "D3D12DeviceChild.h"
 #include "D3D12Views.h"
-
-/*
-* EMemoryType
-*/
-
-enum class EMemoryType : Uint32
-{
-	MEMORY_TYPE_UNKNOWN	= 0,
-	MEMORY_TYPE_UPLOAD	= 1,
-	MEMORY_TYPE_DEFAULT	= 2,
-};
 
 /*
 * D3D12Resource
@@ -38,7 +29,7 @@ public:
 
 	FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
 	{
-		return Resource->GetGPUVirtualAddress();
+		return NativeResource->GetGPUVirtualAddress();
 	}
 
 	FORCEINLINE const D3D12_RESOURCE_DESC& GetDesc() const
@@ -48,7 +39,7 @@ public:
 
 	FORCEINLINE ID3D12Resource* GetResource() const
 	{
-		return Resource.Get();
+		return NativeResource.Get();
 	}
 
 	FORCEINLINE TSharedPtr<D3D12ShaderResourceView> GetShaderResourceView(const Uint32 SubresourceIndex) const
@@ -65,7 +56,7 @@ protected:
 	bool CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D12_CLEAR_VALUE* OptimizedClearValue, D3D12_RESOURCE_STATES InitalState, EMemoryType InMemoryType);
 
 protected:
-	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
+	Microsoft::WRL::ComPtr<ID3D12Resource> NativeResource;
 
 	TArray<TSharedPtr<D3D12ShaderResourceView>>		ShaderResourceViews;
 	TArray<TSharedPtr<D3D12UnorderedAccessView>>	UnorderedAccessViews;

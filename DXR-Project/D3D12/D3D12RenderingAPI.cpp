@@ -63,6 +63,17 @@ bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> RenderWindow, bool 
 	return true;
 }
 
+TextureCube* D3D12RenderingAPI::CreateTextureCube() const
+{
+	return nullptr;
+}
+
+Buffer* D3D12RenderingAPI::CreateBuffer() const
+{
+	return new D3D12Buffer(Device.Get);
+}
+
+
 D3D12Texture* D3D12RenderingAPI::CreateTexture(const TextureProperties& Properties) const
 {
 	TUniquePtr<D3D12Texture> Texture = TUniquePtr(new D3D12Texture(Device.Get()));

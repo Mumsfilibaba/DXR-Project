@@ -1,17 +1,16 @@
 #pragma once
-#include "RenderingCore.h"
+#include "Resource.h"
 
-#include "Core/RefCountedObject.h"
+class GraphicsPipelineState;
+class ComputePipelineState;
+class RayTracingPipelineState;
+class Shader;
 
 /*
 * PipelineState
 */
 
-class GraphicsPipelineState;
-class ComputePipelineState;
-class RayTracingPipelineState;
-
-class PipelineState : public RefCountedObject
+class PipelineState : public PipelineResource
 {
 public:
 	PipelineState() = default;
@@ -60,7 +59,7 @@ enum class EDephWriteMask
 	DEPTH_WRITE_MASK_ALL	= 1
 };
 
-const char* ToString(EDephWriteMask DepthWriteMask)
+inline const Char* ToString(EDephWriteMask DepthWriteMask)
 {
 	switch (DepthWriteMask)
 	{
@@ -86,7 +85,7 @@ enum class EStencilOp
 	STENCIL_OP_DECR		= 8
 };
 
-const char* ToString(EStencilOp StencilOp)
+inline const Char* ToString(EStencilOp StencilOp)
 {
 	switch (StencilOp)
 	{
@@ -134,7 +133,7 @@ struct DepthStencilStateInitalizer
 * DepthStencilState
 */
 
-class DepthStencilState
+class DepthStencilState : public PipelineResource
 {
 public:
 	virtual Uint64 GetHash() = 0;
@@ -151,7 +150,7 @@ enum class ECullMode
 	CULL_MODE_BACK	= 3
 };
 
-const char* ToString(ECullMode CullMode)
+inline const Char* ToString(ECullMode CullMode)
 {
 	switch (CullMode)
 	{
@@ -172,7 +171,7 @@ enum class EFillMode
 	FILL_MODE_SOLID		= 2
 };
 
-const char* ToString(EFillMode FillMode)
+inline const Char* ToString(EFillMode FillMode)
 {
 	switch (FillMode)
 	{
@@ -205,7 +204,7 @@ struct RasterizerStateInitializer
 * RasterizerState
 */
 
-class RasterizerState
+class RasterizerState : public PipelineResource
 {
 public:
 	virtual Uint64 GetHash() = 0;
@@ -237,7 +236,7 @@ enum class EBlendFactor
 	BLEND_FACTOR_INV_SRC1_ALPHA		= 17
 };
 
-const char* ToString(EBlendFactor BlendFactor)
+inline const Char* ToString(EBlendFactor BlendFactor)
 {
 	switch (BlendFactor)
 	{
@@ -275,7 +274,7 @@ enum class EBlendOp
 	BLEND_OP_MAX			= 5
 };
 
-const char* ToString(EBlendOp BlendOp)
+inline const Char* ToString(EBlendOp BlendOp)
 {
 	switch (BlendOp)
 	{
@@ -312,8 +311,7 @@ enum class ELogicOp
 	LOGIC_OP_OR_INVERTED	= 15
 };
 
-
-const char* ToString(ELogicOp LogicOp)
+inline const Char* ToString(ELogicOp LogicOp)
 {
 	switch (LogicOp)
 	{
@@ -418,7 +416,7 @@ struct RenderTargetBlendState
 * BlendStateInitializer
 */
 
-struct BlendStateInitializer
+struct BlendStateInitializer 
 {
 	Bool					AlphaToCoverageEnable;
 	Bool					IndependentBlendEnable;
@@ -429,10 +427,99 @@ struct BlendStateInitializer
 * BlendState
 */
 
-class BlendState
+class BlendState : public PipelineResource
 {
 public:
 	virtual Uint64 GetHash() const = 0;
+};
+
+/*
+* InputLayout
+*/
+
+class InputLayout : public PipelineResource
+{
+public:
+	virtual Uint64 GetHash() const = 0;
+};
+
+/*
+* EIndexBufferStripCutValue
+*/
+
+enum class EIndexBufferStripCutValue
+{
+	INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED		= 0,
+	INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF			= 1,
+	INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF		= 2
+};
+
+inline const Char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
+{
+	switch (IndexBufferStripCutValue)
+	{
+	case EIndexBufferStripCutValue::INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED:		return "INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED";
+	case EIndexBufferStripCutValue::INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF:		return "INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF";
+	case EIndexBufferStripCutValue::INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF:	return "INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF";
+	default:																	return "";
+	}
+}
+
+/*
+* PipelineRenderTargetFormats
+*/
+
+struct PipelineRenderTargetFormats
+{
+	inline PipelineRenderTargetFormats()
+		: RenderTargetFormats({ EFormat::FORMAT_R8G8B8A8_UNORM })
+		, NumRenderTargets(1)
+		, DepthStencilFormat(EFormat::FORMAT_D24_UNORM_S8_UINT)
+	{
+	}
+
+	EFormat RenderTargetFormats;
+	Uint32	NumRenderTargets;
+	EFormat DepthStencilFormat;
+};
+
+/*
+* PipelineShaderState
+*/
+
+struct PipelineShaderState
+{
+	inline PipelineShaderState()
+		: VertexShader(nullptr)
+		, PixelShader(nullptr)
+	{
+	}
+
+	inline PipelineShaderState(Shader* InVertexShader, Shader* InPixelShader)
+		: VertexShader(InVertexShader)
+		, PixelShader(InPixelShader)
+	{
+	}
+
+	Shader* VertexShader;
+	Shader* PixelShader;
+};
+
+/*
+* GraphicsPipelineStateInitliazer
+*/
+
+struct GraphicsPipelineStateInitliazer
+{
+	PipelineShaderState			ShaderState;
+	BlendState*					BlendState;
+	InputLayout*				InputLayout;
+	RasterizerState*			RasterizerState;
+	Uint32						SampleMask;
+	DepthStencilState*			DepthStencilState;
+	EIndexBufferStripCutValue	IBStripCutValue;
+	EPrimitveTopologyType		PrimitiveTopologyType;
+	PipelineRenderTargetFormats PipelineFormats;
 };
 
 /*
@@ -445,6 +532,8 @@ public:
 	GraphicsPipelineState() = default;
 	~GraphicsPipelineState() = default;
 
+	virtual bool Initialize(const GraphicsPipelineStateInitliazer& Initalizer) = 0;
+
 	virtual GraphicsPipelineState* AsGraphics() override 
 	{
 		return this;
@@ -454,10 +543,25 @@ public:
 	{
 		return this;
 	}
+};
 
-	virtual const RasterizerState* GetRasterizerState() const = 0;
-	virtual const BlendState* GetBlendState() const = 0;
-	virtual const DepthStencilState* GetDepthStencilState() const = 0;
+/*
+* ComputePipelineStateInitliazer
+*/
+
+struct ComputePipelineStateInitliazer
+{
+	inline ComputePipelineStateInitliazer()
+		: ComputeShader(nullptr)
+	{
+	}
+
+	inline ComputePipelineStateInitliazer(Shader* InComputeShader)
+		: ComputeShader(InComputeShader)
+	{
+	}
+
+	Shader* ComputeShader;
 };
 
 /*
@@ -469,6 +573,8 @@ class ComputePipelineState : public PipelineState
 public:
 	ComputePipelineState() = default;
 	~ComputePipelineState() = default;
+
+	virtual bool Initialize(const ComputePipelineStateInitliazer& Initalizer) = 0;
 
 	virtual ComputePipelineState* AsCompute() override
 	{
@@ -490,6 +596,8 @@ class RayTracingPipelineState : public PipelineState
 public:
 	RayTracingPipelineState() = default;
 	~RayTracingPipelineState() = default;
+
+	virtual bool Initialize() = 0;
 
 	virtual RayTracingPipelineState* AsRayTracing() override
 	{

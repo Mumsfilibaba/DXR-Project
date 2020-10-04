@@ -1,9 +1,28 @@
 #pragma once
-#include "ResourceViews.h"
+#include "RenderingCore.h"
 
 #include "Core/RefCountedObject.h"
 
 #include "Containers/TArray.h"
+
+/*
+* PipelineResource
+*/
+
+class PipelineResource : public RefCountedObject
+{
+public: 
+	virtual ~PipelineResource() = default;
+
+	virtual void SetName(const std::string& Name)
+	{
+	}
+
+	virtual VoidPtr GetNativeResource() const
+	{
+		return nullptr;
+	}
+};
 
 /*
 * SubresourceIndex
@@ -43,12 +62,14 @@ struct SubresourceIndex
 
 class Texture;
 class Buffer;
+class ShaderResourceView;
+class UnorderedAccessView;
 
 /*
 * Resource
 */
 
-class Resource : public RefCountedObject
+class Resource : public PipelineResource
 {
 public: 
 	virtual ~Resource() = default;

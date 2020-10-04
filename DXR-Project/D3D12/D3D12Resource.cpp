@@ -3,7 +3,7 @@
 
 D3D12Resource::D3D12Resource(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
-	, Resource(nullptr)
+	, NativeResource(nullptr)
 {
 }
 
@@ -15,7 +15,7 @@ bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D1
 {
 	// HeapProperties
 	D3D12_HEAP_PROPERTIES HeapProperties = { };
-	if (InMemoryType == EMemoryType::MEMORY_TYPE_UPLOAD)
+	if (InMemoryType == EMemoryType::MEMORY_TYPE_CPU_VISIBLE)
 	{
 		HeapProperties = 
 		{
@@ -26,7 +26,7 @@ bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D1
 			0,
 		};
 	}
-	else if (InMemoryType == EMemoryType::MEMORY_TYPE_DEFAULT)
+	else if (InMemoryType == EMemoryType::MEMORY_TYPE_GPU)
 	{
 		HeapProperties =
 		{
@@ -43,7 +43,7 @@ bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D1
 	}
 
 	// Create
-	HRESULT hResult = Device->GetDevice()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, InDesc, InitalState, OptimizedClearValue, IID_PPV_ARGS(&Resource));
+	HRESULT hResult = Device->GetDevice()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, InDesc, InitalState, OptimizedClearValue, IID_PPV_ARGS(&NativeResource));
 	if (SUCCEEDED(hResult))
 	{
 		Desc		= *InDesc;
@@ -61,10 +61,10 @@ bool D3D12Resource::Initialize(ID3D12Resource* InResource)
 {
 	VALIDATE(InResource != nullptr);
 
-	Resource = InResource;
-	Desc = Resource->GetDesc();
+	NativeResource = InResource;
+	Desc = NativeResource->GetDesc();
 
-	return Resource != nullptr;
+	return NativeResource != nullptr;
 }
 
 void D3D12Resource::SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex)
@@ -90,5 +90,5 @@ void D3D12Resource::SetUnorderedAccessView(TSharedPtr<D3D12UnorderedAccessView> 
 void D3D12Resource::SetDebugName(const std::string& DebugName)
 {
 	std::wstring WideDebugName = ConvertToWide(DebugName);
-	Resource->SetName(WideDebugName.c_str());
+	NativeResource->SetName(WideDebugName.c_str());
 }

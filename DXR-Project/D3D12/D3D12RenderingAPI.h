@@ -19,6 +19,10 @@ public:
 
 	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) override final;
 
+	virtual class Texture2D* CreateTexture2D() const override final;
+	virtual class TextureCube* CreateTextureCube() const override final;
+	virtual class Buffer* CreateBuffer() const override final;
+
 	virtual class D3D12Texture*	CreateTexture(const struct TextureProperties& Properties) const override final;
 	virtual class D3D12Buffer*	CreateBuffer(const struct BufferProperties& Properties) const override final;
 	virtual class D3D12RayTracingScene*		CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState, TArray<BindingTableEntry>& InBindingTableEntries, Uint32 InNumHitGroups) const override final;
