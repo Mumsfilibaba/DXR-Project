@@ -5,28 +5,54 @@
 * CommandList
 */
 
-class CommandList : public PipelineResource
+class CommandList
 {
 public:
-	virtual ~CommandList() = default;
+	~CommandList() = default;
 
-	virtual bool Initialize() = 0;
+	bool Initialize();
 
-	virtual void Begin() = 0;
-	virtual void End() = 0;
+	void Begin();
+	void End();
 
-	virtual void BeginRenderPass() = 0;
-	virtual void EndRenderPass() = 0;
+	void ClearRenderTarget();
+	void ClearDepthStencil();
 
-	virtual void BindViewPort() = 0;
+	void BeginRenderPass();
+	void EndRenderPass();
 
-	virtual void BindVertexBuffers() = 0;
-	virtual void BindIndexBuffer() = 0;
+	void BindViewport(const Viewport& Viewport, Uint32 Slot);
+	void BindScissorRect(const ScissorRect& ScissorRect, Uint32 Slot);
 
-	virtual void BindRenderTargetClearValues() = 0;
-	virtual void BindRenderTargets() = 0;
-	virtual void BindDepthStencil() = 0;
+	void BindBlendFactor();
 
-	virtual void BindShaderResourceView() = 0;
-	virtual void BindUnorderedAccessView() = 0;
+	void BindPrimitiveTopology();
+	void BindVertexBuffers();
+	void BindIndexBuffer();
+
+	void BindRenderTargets();
+
+	void BindGraphicsPipelineState();
+	void BindComputePipelineState();
+	void BindRayTracingPipelineState();
+
+	void BindConstantBuffer();
+	void BindShaderResourceView();
+	void BindUnorderedAccessView();
+
+	void ResolveTexture();
+
+	void BuildRayTracingGeometry();
+	void BuildRayTracingScene();
+
+	void Draw(Uint32 VertexCount, Uint32 StartVertexLocation);
+	void DrawIndexed(Uint32 IndexCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation);
+	void DrawInstanced(Uint32 VertexCountPerInstance, Uint32 InstanceCount, Uint32 StartVertexLocation, Uint32 StartInstanceLocation);
+	void DrawIndexedInstanced(Uint32 IndexCountPerInstance, Uint32 InstanceCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation, Uint32 StartInstanceLocation);
+
+	void Dispatch(Uint32 WorkGroupsX, Uint32 WorkGroupsY, Uint32 WorkGroupsZ);
+	void DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth);
+
+private:
+	VoidPtr AllocateStorage(Uint64 SizeInBytes);
 };

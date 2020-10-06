@@ -22,9 +22,14 @@ public:
 
 	virtual void SetName(const std::string& InName) override;
 
-	virtual VoidPtr GetNativeResource() const
+	virtual VoidPtr GetNativeResource() const override
 	{
 		return reinterpret_cast<VoidPtr>(NativeResource.Get());
+	}
+	
+	virtual Uint64 GetDeviceAddress() const override
+	{
+		return static_cast<Uint64>(DeviceAddress);
 	}
 
 	FORCEINLINE void SetConstantBufferView(TSharedPtr<D3D12ConstantBufferView> InConstantBufferView)
@@ -38,5 +43,6 @@ public:
 	}
 
 private:
+	D3D12_GPU_VIRTUAL_ADDRESS DeviceAddress;
 	TSharedPtr<D3D12ConstantBufferView> ConstantBufferView;
 };

@@ -23,6 +23,7 @@ struct BufferInitializer
 	inline BufferInitializer()
 		: Flags(0)
 		, SizeInBytes(0)
+		, MemoryType(EMemoryType::MEMORY_TYPE_GPU)
 	{
 	}
 
@@ -60,10 +61,6 @@ public:
 	{
 		return this;
 	}
-
-	// Mapping a buffer
-	virtual VoidPtr Map() = 0;
-	virtual void Unmap() = 0;
 
 	virtual Uint64 GetSizeInBytes() const
 	{

@@ -57,6 +57,7 @@ public:
 	virtual D3D12RootSignature* CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc) const = 0;
 	virtual D3D12RootSignature* CreateRootSignature(struct IDxcBlob* ShaderBlob) const = 0;
 
+	virtual class CommandContext& GetCommandContext() const = 0;
 	virtual class D3D12CommandQueue* GetQueue() const = 0;
 	virtual class D3D12SwapChain* GetSwapChain() const = 0;
 	virtual TSharedPtr<D3D12ImmediateCommandList> GetImmediateCommandList() const = 0;

@@ -63,6 +63,11 @@ bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> RenderWindow, bool 
 	return true;
 }
 
+Texture2D* D3D12RenderingAPI::CreateTexture2D() const
+{
+	return nullptr;
+}
+
 TextureCube* D3D12RenderingAPI::CreateTextureCube() const
 {
 	return nullptr;
@@ -70,7 +75,7 @@ TextureCube* D3D12RenderingAPI::CreateTextureCube() const
 
 Buffer* D3D12RenderingAPI::CreateBuffer() const
 {
-	return new D3D12Buffer(Device.Get);
+	return new D3D12Buffer(Device.Get());
 }
 
 

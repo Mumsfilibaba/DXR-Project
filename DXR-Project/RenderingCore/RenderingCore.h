@@ -413,3 +413,90 @@ struct ClearValue
 
 	Bool HasClearColor;
 };
+
+/*
+* Viewport
+*/
+
+struct Viewport
+{
+	inline Viewport()
+		: Width(0.0f)
+		, Height(0.0f)
+		, MinDepth(0.0f)
+		, MaxDepth(0.0f)
+		, x(0.0f)
+		, y(0.0f)
+	{
+	}
+
+	inline Viewport(Float32 InWidth, Float32 InHeight, Float32 InMinDepth, Float32 InMaxDepth, Float32 InX, Float32 InY)
+		: Width(InWidth)
+		, Height(InHeight)
+		, MinDepth(InMinDepth)
+		, MaxDepth(InMaxDepth)
+		, x(InX)
+		, y(InY)
+	{
+	}
+
+	Float32 Width;
+	Float32 Height;
+	Float32 MinDepth;
+	Float32 MaxDepth;
+	Float32 x;
+	Float32 y;
+};
+
+/*
+* ScissorRect
+*/
+
+struct ScissorRect
+{
+	inline ScissorRect()
+		: Width(0.0f)
+		, Height(0.0f)
+		, x(0.0f)
+		, y(0.0f)
+	{
+	}
+
+	inline ScissorRect(Float32 InWidth, Float32 InHeight, Float32 InX, Float32 InY)
+		: Width(InWidth)
+		, Height(InHeight)
+		, x(InX)
+		, y(InY)
+	{
+	}
+
+	Float32 Width;
+	Float32 Height;
+	Float32 x;
+	Float32 y;
+};
+
+/*
+* CopyBufferInfo
+*/
+
+struct CopyBufferInfo
+{
+	inline CopyBufferInfo()
+		: SourceOffset(0)
+		, DestinationOffset(0)
+		, SizeInBytes(0)
+	{
+	}
+
+	inline CopyBufferInfo(Uint64 InSourceOffset, Uint32 InDestinationOffset, Uint32 InSizeInBytes)
+		: SourceOffset(InSourceOffset)
+		, DestinationOffset(InDestinationOffset)
+		, SizeInBytes(InSizeInBytes)
+	{
+	}
+
+	Uint64 SourceOffset;
+	Uint64 DestinationOffset;
+	Uint64 SizeInBytes;
+};
