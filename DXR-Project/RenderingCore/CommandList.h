@@ -8,6 +8,7 @@
 class CommandList
 {
 public:
+	CommandList() = default;
 	~CommandList() = default;
 
 	bool Initialize();

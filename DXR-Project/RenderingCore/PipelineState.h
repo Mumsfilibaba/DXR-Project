@@ -50,22 +50,22 @@ public:
 };
 
 /*
-* EDephWriteMask
+* EDepthWriteMask
 */
 
-enum class EDephWriteMask
+enum class EDepthWriteMask
 {
 	DEPTH_WRITE_MASK_ZERO	= 0,
 	DEPTH_WRITE_MASK_ALL	= 1
 };
 
-inline const Char* ToString(EDephWriteMask DepthWriteMask)
+inline const Char* ToString(EDepthWriteMask DepthWriteMask)
 {
 	switch (DepthWriteMask)
 	{
-	case EDephWriteMask::DEPTH_WRITE_MASK_ZERO:	return "DEPTH_WRITE_MASK_ZERO";
-	case EDephWriteMask::DEPTH_WRITE_MASK_ALL:	return "DEPTH_WRITE_MASK_ALL";
-	default:									return "";
+	case EDepthWriteMask::DEPTH_WRITE_MASK_ZERO:	return "DEPTH_WRITE_MASK_ZERO";
+	case EDepthWriteMask::DEPTH_WRITE_MASK_ALL:		return "DEPTH_WRITE_MASK_ALL";
+	default:										return "";
 	}
 }
 

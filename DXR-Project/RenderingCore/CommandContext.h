@@ -48,15 +48,15 @@ public:
 	virtual void BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState) = 0;
 
 	virtual void BindConstantBuffers(Shader* Shader, Buffer* const * ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot) = 0;
-	virtual void BindShaderResourceView(Shader* Shader, ShaderResourceView* const* ShaderResourceViews, Uint32 ShaderResourceViewCount, Uint32 StartSlot) = 0;
-	virtual void BindUnorderedAccessView(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, Uint32 UnorderedAccessViewCount, Uint32 StartSlot) = 0;
+	virtual void BindShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceViews, Uint32 ShaderResourceViewCount, Uint32 StartSlot) = 0;
+	virtual void BindUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, Uint32 UnorderedAccessViewCount, Uint32 StartSlot) = 0;
 
 	virtual void ResolveTexture(Texture* Destination, Texture* Source) = 0;
 
 	virtual void UpdateBuffer(Buffer* Destination, Uint64 OffsetInBytes, Uint64 SizeInBytes, const VoidPtr SourceData) = 0;
 	virtual void CopyBuffer(Buffer* Destination, Buffer* Source, const CopyBufferInfo& CopyInfo) = 0;
 
-	virtual void CopyTexture(Texture* Destination, Texture* Source) = 0;
+	virtual void CopyTexture(Texture* Destination, Texture* Source, const CopyTextureInfo& CopyTextureInfo) = 0;
 
 	virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) = 0;
 	virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) = 0;

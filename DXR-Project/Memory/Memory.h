@@ -23,6 +23,9 @@ class Memory
 public:
 	static VoidPtr Malloc(Uint64 Size);
 	static void	Free(VoidPtr Ptr);
-	
+
+	static VoidPtr Memcpy(VoidPtr Destination, const VoidPtr Source, Uint32 Size);
+	static VoidPtr Memmove(VoidPtr Destination, const VoidPtr Source, Uint32 Size);
+
 	static void SetDebugFlags(MemoryDebugFlags Flags);
 };

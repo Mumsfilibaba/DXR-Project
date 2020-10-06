@@ -3,6 +3,8 @@
 #include "CommandContext.h"
 #include "RenderingAPI.h"
 
+#include "Memory/Memory.h"
+
 // Base rendercommand
 struct RenderCommand
 {
@@ -17,39 +19,6 @@ struct RenderCommand
 		Execute(CmdContext);
 	}
 };
-
-
-virtual void BindRayTracingScene(RayTracingScene* RayTracingScene) = 0;
-
-virtual void BindRenderTargets(RenderTargetView* const* RenderTargetViews, Uint32 RenderTargetCount, DepthStencilView* DepthStencilView) = 0;
-
-virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState) = 0;
-virtual void BindComputePipelineState(class ComputePipelineState* PipelineState) = 0;
-virtual void BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState) = 0;
-
-virtual void BindConstantBuffers(Shader* Shader, Buffer* const* ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot) = 0;
-virtual void BindShaderResourceView(Shader* Shader, ShaderResourceView* const* ShaderResourceViews, Uint32 ShaderResourceViewCount, Uint32 StartSlot) = 0;
-virtual void BindUnorderedAccessView(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, Uint32 UnorderedAccessViewCount, Uint32 StartSlot) = 0;
-
-virtual void ResolveTexture(Texture* Destination, Texture* Source) = 0;
-
-virtual void UpdateBuffer(Buffer* Destination, Uint64 OffsetInBytes, Uint64 SizeInBytes, const VoidPtr SourceData) = 0;
-virtual void CopyBuffer(Buffer* Destination, Buffer* Source, const CopyBufferInfo& CopyInfo) = 0;
-
-virtual void CopyTexture(Texture* Destination, Texture* Source) = 0;
-
-virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) = 0;
-virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) = 0;
-
-virtual void Draw(Uint32 VertexCount, Uint32 StartVertexLocation) = 0;
-virtual void DrawIndexed(Uint32 IndexCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation) = 0;
-virtual void DrawInstanced(Uint32 VertexCountPerInstance, Uint32 InstanceCount, Uint32 StartVertexLocation, Uint32 StartInstanceLocation) = 0;
-virtual void DrawIndexedInstanced(Uint32 IndexCountPerInstance, Uint32 InstanceCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation, Uint32 StartInstanceLocation) = 0;
-
-virtual void Dispatch(Uint32 WorkGroupsX, Uint32 WorkGroupsY, Uint32 WorkGroupsZ) = 0;
-virtual void DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth) = 0;
-
-
 
 // Begin RenderCommand
 struct BeginRenderCommand : public RenderCommand
@@ -278,6 +247,210 @@ struct BindRenderTargetsRenderCommand : public RenderCommand
 	DepthStencilView* DepthStencilView;
 };
 
+// Bind GraphicsPipelineState RenderCommand
+struct BindGraphicsPipelineStateRenderCommand : public RenderCommand
+{
+	inline BindGraphicsPipelineStateRenderCommand(GraphicsPipelineState* InPipelineState)
+		: PipelineState(InPipelineState)
+	{
+	}
+
+	virtual void Execute(CommandContext& CmdContext) const override
+	{
+		CmdContext.BindGraphicsPipelineState(PipelineState);
+	}
+
+	GraphicsPipelineState* PipelineState;
+};
+
+// Bind ComputePipelineState RenderCommand
+struct BindComputePipelineStateRenderCommand : public RenderCommand
+{
+	inline BindComputePipelineStateRenderCommand(ComputePipelineState* InPipelineState)
+		: PipelineState(InPipelineState)
+	{
+	}
+
+	virtual void Execute(CommandContext& CmdContext) const override
+	{
+		CmdContext.BindComputePipelineState(PipelineState);
+	}
+
+	ComputePipelineState* PipelineState;
+};
+
+// Bind RayTracingPipelineState RenderCommand
+struct BindRayTracingPipelineStateRenderCommand : public RenderCommand
+{
+	inline BindRayTracingPipelineStateRenderCommand(RayTracingPipelineState* InPipelineState)
+		: PipelineState(InPipelineState)
+	{
+	}
+
+	virtual void Execute(CommandContext& CmdContext) const override
+	{
+		CmdContext.BindRayTracingPipelineState();
+	}
+
+	RayTracingPipelineState* PipelineState;
+};
+
+// Bind ConstantBuffers RenderCommand
+struct BindConstantBuffersRenderCommand : public RenderCommand
+{
+	inline BindConstantBuffersRenderCommand(Shader* InShader, Buffer* const* InConstantBuffers, Uint32 InConstantBufferCount, Uint32 InStartSlot)
+		: Shader(InShader)
+		, ConstantBuffers(InConstantBuffers)
+		, ConstantBufferCount(InConstantBufferCount)
+		, StartSlot(InStartSlot)
+	{
+	}
+
+	virtual void Execute(CommandContext& CmdContext) const override
+	{
+		CmdContext.BindConstantBuffers(Shader, ConstantBuffers, ConstantBufferCount, StartSlot);
+	}
+
+	Shader* Shader;
+	Buffer* const* ConstantBuffers;
+	Uint32 ConstantBufferCount;
+	Uint32 StartSlot;
+};
+
+// Bind ShaderResourceViews RenderCommand
+struct BindShaderResourceViewsRenderCommand : public RenderCommand
+{
+	inline BindShaderResourceViewsRenderCommand(Shader* InShader, ShaderResourceView* const* InShaderResourceViews, Uint32 InShaderResourceViewCount, Uint32 InStartSlot)
+		: Shader(InShader)
+		, ShaderResourceViews(InShaderResourceViews)
+		, ShaderResourceViews(InShaderResourceViewCount)
+		, StartSlot(InStartSlot)
+	{
+	}
+
+	virtual void Execute(CommandContext& CmdContext) const override
+	{
+		CmdContext.BindShaderResourceViews(Shader, ShaderResourceViews, ShaderResourceViewCount, StartSlot);
+	}
+
+	Shader* Shader;
+	ShaderResourceView* const* ShaderResourceViews;
+	Uint32 ShaderResourceViewCount;
+	Uint32 StartSlot;
+};
+
+// Bind UnorderedAccessViews RenderCommand
+struct BindUnorderedAccessViewsRenderCommand : public RenderCommand
+{
+	inline BindUnorderedAccessViewsRenderCommand(Shader* InShader, UnorderedAccessView* const* InUnorderedAccessViews, Uint32 InUnorderedAccessViewCount, Uint32 InStartSlot)
+		: Shader(InShader)
+		, UnorderedAccessViews(InUnorderedAccessViews)
+		, UnorderedAccessViewCount(InUnorderedAccessViewCount)
+		, StartSlot(InStartSlot)
+	{
+	}
+
+	virtual void Execute(CommandContext& CmdContext) const override
+	{
+		CmdContext.BindUnorderedAccessViews(Shader, UnorderedAccessViews, UnorderedAccessViewCount, StartSlot);
+	}
+
+	Shader* Shader;
+	UnorderedAccessView* const* UnorderedAccessViews;
+	Uint32 UnorderedAccessViewCount;
+	Uint32 StartSlot;
+};
+
+// Resolve Texture RenderCommand
+struct ResolveTextureRenderCommand : public RenderCommand
+{
+	inline ResolveTextureRenderCommand(Texture* InDestination, Texture* InSource)
+		: Destination(InDestination)
+		, Source(InSource)
+	{
+	}
+
+	virtual void Execute(CommandContext& CmdContext) const override
+	{
+		CmdContext.ResolveTexture(Destination, Source);
+	}
+
+	Texture* Destination;
+	Texture* Source;
+};
+
+// Resolve Texture RenderCommand
+struct UpdateBufferRenderCommand : public RenderCommand
+{
+	inline UpdateBufferRenderCommand(Buffer* InDestination, Uint64 InDestinationOffsetInBytes, Uint64 InSizeInBytes, const VoidPtr InSourceData)
+		: Destination(InDestination)
+		, DestinationOffsetInBytes(InDestinationOffsetInBytes)
+		, SizeInBytes(InSizeInBytes)
+		, SourceData(nullptr)
+	{
+		if (SizeInBytes > 0)
+		{
+			SourceData = Memory::Malloc(SizeInBytes);
+			Memory::Memcpy(SourceData, InSourceData, SizeInBytes);
+		}
+	}
+
+	inline ~UpdateBufferRenderCommand()
+	{
+		Memory::Free(SourceData);
+	}
+
+	virtual void Execute(CommandContext& CmdContext) const override
+	{
+		CmdContext.UpdateBuffer(Destination, OffsetInBytes, );
+	}
+
+	Buffer*	Destination;
+	Uint64 	DestinationOffsetInBytes; 
+	Uint64 	SizeInBytes;
+	const VoidPtr SourceData;
+};
+
+// Copy Buffer RenderCommand
+struct CopyBufferRenderCommand : public RenderCommand
+{
+	inline CopyBufferRenderCommand(Buffer* InDestination, Buffer* InSource, const CopyBufferInfo& InCopyBufferInfo)
+		: Destination(InDestination)
+		, Source(InSource)
+		, CopyBufferInfo(InCopyBufferInfo)
+	{
+	}
+
+	virtual void Execute(CommandContext& CmdContext) const override
+	{
+		CmdContext.CopyBuffer(Destination, Source, CopyBufferInfo);
+	}
+
+	Buffer* Destination;
+	Buffer* Source;
+	CopyBufferInfo CopyBufferInfo;
+};
+
+// Copy Texture RenderCommand
+struct CopyTextureRenderCommand : public RenderCommand
+{
+	inline CopyTextureRenderCommand(Texture* InDestination, Texture* InSource, const CopyTextureInfo& InCopyTextureInfo)
+		: Destination(InDestination)
+		, Source(InSource)
+		, CopyTextureInfo(InCopyTextureInfo)
+	{
+	}
+
+	virtual void Execute(CommandContext& CmdContext) const override
+	{
+		CmdContext.CopyTexture(Destination, Source, CopyTextureInfo);
+	}
+
+	Texture* Destination;
+	Texture* Source;
+	CopyTextureInfo CopyTextureInfo;
+};
+
 // Build RayTracing Geoemtry RenderCommand
 struct BuildRayTracingGeometryRenderCommand : public RenderCommand
 {
@@ -297,66 +470,17 @@ struct BuildRayTracingGeometryRenderCommand : public RenderCommand
 // Build RayTracing Scene RenderCommand
 struct BuildRayTracingSceneRenderCommand : public RenderCommand
 {
-	inline BuildRayTracingSceneRenderCommand()
+	inline BuildRayTracingSceneRenderCommand(RayTracingScene* InRayTracingScene)
+		: RayTracingScene(InRayTracingScene)
 	{
 	}
 
 	virtual void Execute(CommandContext& CmdContext) const override
 	{
-		CmdContext.BuildRayTracingScene();
-	}
-};
-
-// Resolve Texture RenderCommand
-struct ResolveTextureRenderCommand : public RenderCommand
-{
-	inline ResolveTextureRenderCommand()
-	{
+		CmdContext.BuildRayTracingScene(RayTracingScene);
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
-	{
-		CmdContext.ResolveTexture();
-	}
-};
-
-// Bind GraphicsPipelineState RenderCommand
-struct BindGraphicsPipelineStateRenderCommand : public RenderCommand
-{
-	inline BindGraphicsPipelineStateRenderCommand()
-	{
-	}
-
-	virtual void Execute(CommandContext& CmdContext) const override
-	{
-		CmdContext.BindGraphicsPipelineState();
-	}
-};
-
-// Bind ComputePipelineState RenderCommand
-struct BindComputePipelineStateRenderCommand : public RenderCommand
-{
-	inline BindComputePipelineStateRenderCommand()
-	{
-	}
-
-	virtual void Execute(CommandContext& CmdContext) const override
-	{
-		CmdContext.BindComputePipelineState();
-	}
-};
-
-// Bind RayTracingPipelineState RenderCommand
-struct BindRayTracingPipelineStateRenderCommand : public RenderCommand
-{
-	inline BindRayTracingPipelineStateRenderCommand()
-	{
-	}
-
-	virtual void Execute(CommandContext& CmdContext) const override
-	{
-		CmdContext.BindRayTracingPipelineState();
-	}
+	RayTracingScene* RayTracingScene;
 };
 
 // Draw RenderCommand

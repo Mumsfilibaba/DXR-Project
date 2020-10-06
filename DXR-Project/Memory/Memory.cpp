@@ -1,5 +1,7 @@
 #include "Memory.h"
 
+#include <cstdlib>
+#include <cstring>
 #ifdef _WIN32
 	#include <crtdbg.h>
 #endif
@@ -29,4 +31,14 @@ void Memory::SetDebugFlags(MemoryDebugFlags Flags)
 
 	_CrtSetDbgFlag(DebugFlags);
 #endif
+}
+
+VoidPtr Memory::Memcpy(VoidPtr Destination, const VoidPtr Source, Uint32 Size)
+{
+	return ::memcpy(Destination, Source, Size);
+}
+
+VoidPtr Memory::Memmove(VoidPtr Destination, const VoidPtr Source, Uint32 Size)
+{
+	return ::memmove(Destination, Source, Size);
 }
