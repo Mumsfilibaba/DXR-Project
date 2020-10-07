@@ -3,7 +3,7 @@
 #include "RenderCommand.h"
 
 /*
-* CommandAllocator
+* CommandMemoryArena
 */
 
 struct CommandMemoryArena
