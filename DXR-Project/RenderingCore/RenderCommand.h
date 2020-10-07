@@ -289,7 +289,7 @@ struct BindRayTracingPipelineStateRenderCommand : public RenderCommand
 
 	virtual void Execute(CommandContext& CmdContext) const override
 	{
-		CmdContext.BindRayTracingPipelineState();
+		CmdContext.BindRayTracingPipelineState(PipelineState);
 	}
 
 	RayTracingPipelineState* PipelineState;
@@ -323,7 +323,7 @@ struct BindShaderResourceViewsRenderCommand : public RenderCommand
 	inline BindShaderResourceViewsRenderCommand(Shader* InShader, ShaderResourceView* const* InShaderResourceViews, Uint32 InShaderResourceViewCount, Uint32 InStartSlot)
 		: Shader(InShader)
 		, ShaderResourceViews(InShaderResourceViews)
-		, ShaderResourceViews(InShaderResourceViewCount)
+		, ShaderResourceViewCount(InShaderResourceViewCount)
 		, StartSlot(InStartSlot)
 	{
 	}
@@ -402,13 +402,13 @@ struct UpdateBufferRenderCommand : public RenderCommand
 
 	virtual void Execute(CommandContext& CmdContext) const override
 	{
-		CmdContext.UpdateBuffer(Destination, OffsetInBytes, );
+		CmdContext.UpdateBuffer(Destination, DestinationOffsetInBytes, SizeInBytes, SourceData);
 	}
 
 	Buffer*	Destination;
 	Uint64 	DestinationOffsetInBytes; 
 	Uint64 	SizeInBytes;
-	const VoidPtr SourceData;
+	VoidPtr SourceData;
 };
 
 // Copy Buffer RenderCommand

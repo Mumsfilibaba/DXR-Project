@@ -30,9 +30,9 @@ public:
 
 	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) = 0;
 
-	virtual class Texture2D* CreateTexture2D() const = 0;
-	virtual class TextureCube* CreateTextureCube() const = 0;
-	virtual class Buffer* CreateBuffer() const = 0;
+	virtual class Texture2D*	CreateTexture2D() const = 0;
+	virtual class TextureCube*	CreateTextureCube() const = 0;
+	virtual class Buffer*		CreateBuffer() const = 0;
 
 	virtual class D3D12Texture* CreateTexture(const struct TextureProperties& Properties) const = 0;
 	virtual class D3D12Buffer* CreateBuffer(const struct BufferProperties& Properties) const = 0;

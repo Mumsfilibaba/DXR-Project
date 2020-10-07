@@ -6,10 +6,10 @@
 class D3D12CommandContext : public CommandContext, public D3D12DeviceChild
 {
 public:
-    D3D12CommandContext(class D3D12Device* InDevice);
-    ~D3D12CommandContext();
+	D3D12CommandContext(class D3D12Device* InDevice);
+	~D3D12CommandContext();
 
-    virtual bool Initialize() override final;
+	virtual bool Initialize() override final;
 
 	virtual void Begin() override final;
 	virtual void End() override final;
@@ -59,6 +59,7 @@ public:
 	virtual void DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth) override final;
 
 private:
-    class D3D12CommandAllocator* CmdAllocator = nullptr;
-    class D3D12CommandList* CmdList = nullptr; 
+	class D3D12Fence*			 Fence			= nullptr;
+	class D3D12CommandAllocator* CmdAllocator	= nullptr;
+	class D3D12CommandList*		 CmdList		= nullptr; 
 };

@@ -1,14 +1,23 @@
 #include "D3D12CommandContext.h"
 
+/*
+* D3D12CommandContext
+*/
+
 D3D12CommandContext::D3D12CommandContext(D3D12Device* InDevice)
-    : D3D12DeviceChild(InDevice)
-    , CmdList(nullptr)
-    , CmdAllocator(nullptr)
+	: D3D12DeviceChild(InDevice)
+	, CmdList(nullptr)
+	, CmdAllocator(nullptr)
 {
 }
 
-D3D12CommandContext::~CommandContext()
+D3D12CommandContext::~D3D12CommandContext()
 {
+}
+
+bool D3D12CommandContext::Initialize()
+{
+	return false;
 }
 
 void D3D12CommandContext::Begin()
@@ -21,6 +30,7 @@ void D3D12CommandContext::End()
 
 void D3D12CommandContext::ClearRenderTarget(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor)
 {
+	
 }
 
 void D3D12CommandContext::ClearDepthStencil(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) 

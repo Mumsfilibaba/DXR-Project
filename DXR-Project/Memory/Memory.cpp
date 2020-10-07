@@ -33,12 +33,22 @@ void Memory::SetDebugFlags(MemoryDebugFlags Flags)
 #endif
 }
 
-VoidPtr Memory::Memcpy(VoidPtr Destination, const VoidPtr Source, Uint32 Size)
+VoidPtr Memory::Memset(VoidPtr Destination, Uint8 Value, Uint64 Size)
+{
+	return ::memset(Destination, static_cast<int>(Value), Size);
+}
+
+VoidPtr Memory::Memzero(VoidPtr Destination, Uint64 Size)
+{
+	return ::memset(Destination, 0, Size);
+}
+
+VoidPtr Memory::Memcpy(VoidPtr Destination, const VoidPtr Source, Uint64 Size)
 {
 	return ::memcpy(Destination, Source, Size);
 }
 
-VoidPtr Memory::Memmove(VoidPtr Destination, const VoidPtr Source, Uint32 Size)
+VoidPtr Memory::Memmove(VoidPtr Destination, const VoidPtr Source, Uint64 Size)
 {
 	return ::memmove(Destination, Source, Size);
 }

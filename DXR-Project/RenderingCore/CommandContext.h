@@ -10,6 +10,9 @@ class UnorderedAccessView;
 class Texture;
 class RayTracingGeometry;
 class RayTracingScene;
+class GraphicsPipelineState;
+class ComputePipelineState;
+class RayTracingPipelineState;
 
 /*
 * CommandContext

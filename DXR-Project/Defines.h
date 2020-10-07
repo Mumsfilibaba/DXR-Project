@@ -3,9 +3,6 @@
 // Macro for deleting objects safley
 #define SAFEDELETE(OutObject)  if ((OutObject)) { delete (OutObject); (OutObject) = nullptr; }
 
-// Zero memory
-#define ZERO_MEMORY(OutObject, SizeInBytes) memset(OutObject, 0, SizeInBytes)
-
 // Validate (a.k.a ASSERT)
 #define VALIDATE(Condition) assert(Condition)
 

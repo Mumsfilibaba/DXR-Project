@@ -7,7 +7,6 @@
 */
 
 typedef Uint32 MemoryDebugFlags;
-
 enum EMemoryDebugFlag : MemoryDebugFlags
 {
 	MEMORY_DEBUG_FLAGS_NONE			= 0,
@@ -24,8 +23,12 @@ public:
 	static VoidPtr Malloc(Uint64 Size);
 	static void	Free(VoidPtr Ptr);
 
-	static VoidPtr Memcpy(VoidPtr Destination, const VoidPtr Source, Uint32 Size);
-	static VoidPtr Memmove(VoidPtr Destination, const VoidPtr Source, Uint32 Size);
+	// Uses a 8-bit value since that is the max of memset anyway
+	static VoidPtr Memset(VoidPtr Destination, Uint8 Value, Uint64 Size);
+	static VoidPtr Memzero(VoidPtr Destination, Uint64 Size);
+
+	static VoidPtr Memcpy(VoidPtr Destination, const VoidPtr Source, Uint64 Size);
+	static VoidPtr Memmove(VoidPtr Destination, const VoidPtr Source, Uint64 Size);
 
 	static void SetDebugFlags(MemoryDebugFlags Flags);
 };
