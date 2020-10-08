@@ -1,7 +1,11 @@
 #pragma once
 #include "RenderingCore.h"
 
-class Buffer;
+class VertexBuffer;
+class IndexBuffer;
+class ConstantBuffer;
+class StructuredBuffer;
+class ByteAddressBuffer;
 class Shader;
 class RenderTargetView;
 class ShaderResourceView;
@@ -15,13 +19,13 @@ class ComputePipelineState;
 class RayTracingPipelineState;
 
 /*
-* CommandContext
+* ICommandContext
 */
 
-class CommandContext
+class ICommandContext
 {
 public:
-	virtual ~CommandContext() = default;
+	virtual ~ICommandContext() = default;
 
 	virtual bool Initialize() = 0;
 
@@ -40,8 +44,8 @@ public:
 	virtual void BindBlendFactor() = 0;
 
 	virtual void BindPrimitiveTopology(EPrimitveTopologyType PrimitveTopologyType) = 0;
-	virtual void BindVertexBuffers(Buffer* const * VertexBuffers, Uint32 BufferCount, Uint32 BufferSlot) = 0;
-	virtual void BindIndexBuffer(Buffer* IndexBuffer, EFormat IndexFormat) = 0;
+	virtual void BindVertexBuffers(VertexBuffer* const * VertexBuffers, Uint32 BufferCount, Uint32 BufferSlot) = 0;
+	virtual void BindIndexBuffer(IndexBuffer* IndexBuffer, EFormat IndexFormat) = 0;
 	virtual void BindRayTracingScene(RayTracingScene* RayTracingScene) = 0;
 
 	virtual void BindRenderTargets(RenderTargetView* const * RenderTargetViews, Uint32 RenderTargetCount, DepthStencilView* DepthStencilView) = 0;
@@ -50,7 +54,9 @@ public:
 	virtual void BindComputePipelineState(class ComputePipelineState* PipelineState) = 0;
 	virtual void BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState) = 0;
 
-	virtual void BindConstantBuffers(Shader* Shader, Buffer* const * ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot) = 0;
+	virtual void BindConstantBuffers(Shader* Shader, ConstantBuffer* const * ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot) = 0;
+	virtual void BindStructuredBuffers(Shader* Shader, StructuredBuffer* const* StructuredBuffers, Uint32 StructuredBufferCount, Uint32 StartSlot) = 0;
+	virtual void BindByteAddressBuffers(Shader* Shader, ByteAddressBuffer* const* ByteAddressBuffers, Uint32 ByteAddressBufferCount, Uint32 StartSlot) = 0;
 	virtual void BindShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceViews, Uint32 ShaderResourceViewCount, Uint32 StartSlot) = 0;
 	virtual void BindUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, Uint32 UnorderedAccessViewCount, Uint32 StartSlot) = 0;
 

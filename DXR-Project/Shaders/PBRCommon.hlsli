@@ -223,7 +223,7 @@ float3 ApplyGammaCorrectionAndTonemapping(float3 InputColor)
 	// Gamma correct
 	float3 FinalColor	= InputColor;
 	FinalColor			= FinalColor / (FinalColor + ToFloat3(INTENSITY));
-    FinalColor			= ApplyGammaInv(FinalColor);
+	FinalColor			= ApplyGammaInv(FinalColor);
 	return FinalColor;
 }
 

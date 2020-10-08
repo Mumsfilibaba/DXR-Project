@@ -16,9 +16,6 @@ enum class ERenderingAPI : Uint32
 	RENDERING_API_D3D12		= 1,
 };
 
-class D3D12ImmediateCommandList;
-class D3D12RootSignature;
-
 /*
 * RenderingAPI
 */
@@ -30,49 +27,49 @@ public:
 
 	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) = 0;
 
-	virtual class Texture2D*	CreateTexture2D() const = 0;
-	virtual class TextureCube*	CreateTextureCube() const = 0;
-	virtual class Buffer*		CreateBuffer() const = 0;
+	// Resources
+	virtual class Texture1D*	CreateTexture1D()	const = 0;
+	virtual class Texture2D*	CreateTexture2D()	const = 0;
+	virtual class Texture3D*	CreateTexture3D()	const = 0;
+	virtual class TextureCube*	CreateTextureCube()	const = 0;
 
-	virtual class D3D12Texture* CreateTexture(const struct TextureProperties& Properties) const = 0;
-	virtual class D3D12Buffer* CreateBuffer(const struct BufferProperties& Properties) const = 0;
-	virtual class D3D12RayTracingScene* CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState, TArray<BindingTableEntry>& InBindingTableEntries, Uint32 InNumHitGroups) const = 0;
-	virtual class D3D12RayTracingGeometry* CreateRayTracingGeometry() const = 0;
-	virtual class D3D12DescriptorTable* CreateDescriptorTable(Uint32 DescriptorCount) const = 0;
+	virtual class VertexBuffer*		 CreateVertexBuffer()	const = 0;
+	virtual class IndexBuffer*		 CreateIndexBuffer()	const = 0;
+	virtual class ConstantBuffer*	 CreateConstantBuffer()	const = 0;
+	virtual class StructuredBuffer*	 CreateStructuredBuffer()	const = 0;
+	virtual class ByteAddressBuffer* CreateByteAddressBuffer()	const = 0;
 
-	virtual class D3D12ShaderResourceView* CreateShaderResourceView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc) const = 0;
-	virtual class D3D12UnorderedAccessView* CreateUnorderedAccessView(ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc) const = 0;
-	virtual class D3D12RenderTargetView* CreateRenderTargetView(ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC* InDesc) const = 0;
-	virtual class D3D12DepthStencilView* CreateDepthStencilView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc) const = 0;
-	virtual class D3D12ConstantBufferView* CreateConstantBufferView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc) const = 0;
+	virtual class RayTracingGeometry*	CreateRayTracingGeometry()	const = 0;
+	virtual class RayTracingScene*		CreateRayTracingScene()		const = 0;
 
-	virtual class D3D12Fence* CreateFence(Uint64 InitalValue) const = 0;
-	virtual class D3D12CommandAllocator* CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE ListType) const = 0;
-	virtual class D3D12CommandList* CreateCommandList(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline) const = 0;
-	virtual class D3D12CommandQueue* CreateCommandQueue() const = 0;
-	
-	virtual class D3D12ComputePipelineState* CreateComputePipelineState(const struct ComputePipelineStateProperties& Properties) const = 0;
-	virtual class D3D12GraphicsPipelineState* CreateGraphicsPipelineState(const struct GraphicsPipelineStateProperties& Properties) const = 0;
-	virtual class D3D12RayTracingPipelineState* CreateRayTracingPipelineState(const struct RayTracingPipelineStateProperties& Properties) const = 0;
-	virtual D3D12RootSignature* CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc) const = 0;
-	virtual D3D12RootSignature* CreateRootSignature(struct IDxcBlob* ShaderBlob) const = 0;
+	// PipelineState
+	virtual class Shader* CreateShader() const = 0;
 
-	virtual class CommandContext& GetCommandContext() const = 0;
-	virtual class D3D12CommandQueue* GetQueue() const = 0;
-	virtual class D3D12SwapChain* GetSwapChain() const = 0;
-	virtual TSharedPtr<D3D12ImmediateCommandList> GetImmediateCommandList() const = 0;
+	virtual class DepthStencilState*	CreateDepthStencilState()	const = 0;
+	virtual class RasterizerState*		CreateRasterizerState()		const = 0;
+	virtual class BlendState*			CreateBlendState()	const = 0;
+	virtual class InputLayout*			CreateInputLayout() const = 0;
 
-	virtual std::string GetAdapterName() const
+	virtual class GraphicsPipelineState*	CreateGraphicsPipelineState()	const = 0;
+	virtual class ComputePipelineState*		CreateComputePipelineState()	const = 0;
+	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const = 0;
+
+	// Commands
+	virtual class ICommandContext*	CreateCommandContext()		const = 0;
+	virtual class CommandList&		GetDefaultCommandList()		const = 0;
+	virtual class CommandExecutor&	GetDefaultCommandExecutor() const = 0;
+
+	FORCEINLINE virtual std::string GetAdapterName() const
 	{
 		return std::string();
 	}
 
-	virtual bool IsRayTracingSupported() const
+	FORCEINLINE virtual bool IsRayTracingSupported() const
 	{
 		return false;
 	}
 
-	virtual bool UAVSupportsFormat(DXGI_FORMAT Format) const
+	FORCEINLINE virtual bool UAVSupportsFormat(DXGI_FORMAT Format) const
 	{
 		UNREFERENCED_VARIABLE(Format);
 		return false;
@@ -81,11 +78,6 @@ public:
 	static RenderingAPI* Make(ERenderingAPI InRenderAPI);
 	static RenderingAPI& Get();
 	static void Release();
-	
-	FORCEINLINE static TSharedPtr<D3D12ImmediateCommandList> StaticGetImmediateCommandList()
-	{
-		return CurrentRenderAPI->GetImmediateCommandList();
-	}
 
 protected:
 	RenderingAPI() = default;

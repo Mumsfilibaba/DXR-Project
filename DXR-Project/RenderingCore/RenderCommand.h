@@ -10,11 +10,11 @@ struct RenderCommand
 {
 	virtual ~RenderCommand() = default;
 
-	virtual void Execute(CommandContext& CmdContext) const
+	virtual void Execute(ICommandContext& CmdContext) const
 	{
 	}
 
-	inline void operator()(CommandContext& CmdContext) const
+	inline void operator()(ICommandContext& CmdContext) const
 	{
 		Execute(CmdContext);
 	}
@@ -27,7 +27,7 @@ struct BeginRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.Begin();
 	}
@@ -40,7 +40,7 @@ struct EndRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.End();
 	}
@@ -55,7 +55,7 @@ struct ClearRenderTargetRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.ClearRenderTarget(RenderTargetView, ClearColor);
 	}
@@ -73,7 +73,7 @@ struct ClearDepthStencilRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.ClearDepthStencil(DepthStencilView, ClearValue);
 	}
@@ -91,7 +91,7 @@ struct BindViewportRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindViewport(Viewport, Slot);
 	}
@@ -109,7 +109,7 @@ struct BindScissorRectRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindScissorRect(ScissorRect, Slot);
 	}
@@ -125,7 +125,7 @@ struct BindBlendFactorRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindBlendFactor();
 	}
@@ -138,7 +138,7 @@ struct BeginRenderPassRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BeginRenderPass();
 	}
@@ -151,7 +151,7 @@ struct EndRenderPassRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.EndRenderPass();
 	}
@@ -165,7 +165,7 @@ struct BindPrimitiveTopologyRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindPrimitiveTopology(PrimitiveTopologyType);
 	}
@@ -176,19 +176,19 @@ struct BindPrimitiveTopologyRenderCommand : public RenderCommand
 // Bind VertexBuffers RenderCommand
 struct BindVertexBuffersRenderCommand : public RenderCommand
 {
-	inline BindVertexBuffersRenderCommand(Buffer* const * InVertexBuffers, Uint32 InVertexBufferCount, Uint32 InSlot)
+	inline BindVertexBuffersRenderCommand(VertexBuffer* const * InVertexBuffers, Uint32 InVertexBufferCount, Uint32 InSlot)
 		: VertexBuffers(InVertexBuffers)
 		, VertexBufferCount(InVertexBufferCount)
 		, Slot(InSlot)
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindVertexBuffers(VertexBuffers, VertexBufferCount, Slot);
 	}
 
-	Buffer* const* VertexBuffers;
+	VertexBuffer* const* VertexBuffers;
 	Uint32 VertexBufferCount;
 	Uint32 Slot;
 };
@@ -196,18 +196,18 @@ struct BindVertexBuffersRenderCommand : public RenderCommand
 // Bind IndexBuffer RenderCommand
 struct BindIndexBufferRenderCommand : public RenderCommand
 {
-	inline BindIndexBufferRenderCommand(Buffer* InIndexBuffer, EFormat InIndexFormat)
+	inline BindIndexBufferRenderCommand(IndexBuffer* InIndexBuffer, EFormat InIndexFormat)
 		: IndexBuffer(InIndexBuffer)
 		, IndexFormat(InIndexFormat)
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindIndexBuffer(IndexBuffer, IndexFormat);
 	}
 
-	Buffer* IndexBuffer;
+	IndexBuffer* IndexBuffer;
 	EFormat IndexFormat;
 };
 
@@ -219,7 +219,7 @@ struct BindRayTracingSceneRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindRayTracingScene(RayTracingScene);
 	}
@@ -237,7 +237,7 @@ struct BindRenderTargetsRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindRenderTargets(RenderTargetViews, RenderTargetViewCount, DepthStencilView);
 	}
@@ -255,7 +255,7 @@ struct BindGraphicsPipelineStateRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindGraphicsPipelineState(PipelineState);
 	}
@@ -271,7 +271,7 @@ struct BindComputePipelineStateRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindComputePipelineState(PipelineState);
 	}
@@ -287,7 +287,7 @@ struct BindRayTracingPipelineStateRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindRayTracingPipelineState(PipelineState);
 	}
@@ -298,7 +298,7 @@ struct BindRayTracingPipelineStateRenderCommand : public RenderCommand
 // Bind ConstantBuffers RenderCommand
 struct BindConstantBuffersRenderCommand : public RenderCommand
 {
-	inline BindConstantBuffersRenderCommand(Shader* InShader, Buffer* const* InConstantBuffers, Uint32 InConstantBufferCount, Uint32 InStartSlot)
+	inline BindConstantBuffersRenderCommand(Shader* InShader, ConstantBuffer* const* InConstantBuffers, Uint32 InConstantBufferCount, Uint32 InStartSlot)
 		: Shader(InShader)
 		, ConstantBuffers(InConstantBuffers)
 		, ConstantBufferCount(InConstantBufferCount)
@@ -306,14 +306,58 @@ struct BindConstantBuffersRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindConstantBuffers(Shader, ConstantBuffers, ConstantBufferCount, StartSlot);
 	}
 
 	Shader* Shader;
-	Buffer* const* ConstantBuffers;
+	ConstantBuffer* const* ConstantBuffers;
 	Uint32 ConstantBufferCount;
+	Uint32 StartSlot;
+};
+
+// Bind StructuredBuffers RenderCommand
+struct BindStructuredBuffersRenderCommand : public RenderCommand
+{
+	inline BindStructuredBuffersRenderCommand(Shader* InShader, StructuredBuffer* const* InStructuredBuffers, Uint32 InStructuredBufferCount, Uint32 InStartSlot)
+		: Shader(InShader)
+		, StructuredBuffers(InStructuredBuffers)
+		, StructuredBufferCount(InStructuredBufferCount)
+		, StartSlot(InStartSlot)
+	{
+	}
+
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.BindStructuredBuffers(Shader, StructuredBuffers, StructuredBufferCount, StartSlot);
+	}
+
+	Shader* Shader;
+	StructuredBuffer* const* StructuredBuffers;
+	Uint32 StructuredBufferCount;
+	Uint32 StartSlot;
+};
+
+// Bind ByteAddressBuffers RenderCommand
+struct BindByteAddressBuffersRenderCommand : public RenderCommand
+{
+	inline BindByteAddressBuffersRenderCommand(Shader* InShader, ByteAddressBuffer* const* InByteAddressBuffers, Uint32 InByteAddressBufferCount, Uint32 InStartSlot)
+		: Shader(InShader)
+		, ByteAddressBuffers(InByteAddressBuffers)
+		, ByteAddressBufferCount(InByteAddressBufferCount)
+		, StartSlot(InStartSlot)
+	{
+	}
+
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.BindByteAddressBuffers(Shader, ByteAddressBuffers, ByteAddressBufferCount, StartSlot);
+	}
+
+	Shader* Shader;
+	ByteAddressBuffer* const* ByteAddressBuffers;
+	Uint32 ByteAddressBufferCount;
 	Uint32 StartSlot;
 };
 
@@ -328,7 +372,7 @@ struct BindShaderResourceViewsRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindShaderResourceViews(Shader, ShaderResourceViews, ShaderResourceViewCount, StartSlot);
 	}
@@ -350,7 +394,7 @@ struct BindUnorderedAccessViewsRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BindUnorderedAccessViews(Shader, UnorderedAccessViews, UnorderedAccessViewCount, StartSlot);
 	}
@@ -370,7 +414,7 @@ struct ResolveTextureRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.ResolveTexture(Destination, Source);
 	}
@@ -400,7 +444,7 @@ struct UpdateBufferRenderCommand : public RenderCommand
 		Memory::Free(SourceData);
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.UpdateBuffer(Destination, DestinationOffsetInBytes, SizeInBytes, SourceData);
 	}
@@ -421,7 +465,7 @@ struct CopyBufferRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.CopyBuffer(Destination, Source, CopyBufferInfo);
 	}
@@ -441,7 +485,7 @@ struct CopyTextureRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.CopyTexture(Destination, Source, CopyTextureInfo);
 	}
@@ -459,7 +503,7 @@ struct BuildRayTracingGeometryRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BuildRayTracingGeometry(RayTracingGeometry);
 	}
@@ -475,7 +519,7 @@ struct BuildRayTracingSceneRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.BuildRayTracingScene(RayTracingScene);
 	}
@@ -492,7 +536,7 @@ struct DrawRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.Draw(VertexCount, StartVertexLocation);
 	}
@@ -511,7 +555,7 @@ struct DrawIndexedRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
 	}
@@ -532,7 +576,7 @@ struct DrawInstancedRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 	}
@@ -555,7 +599,7 @@ struct DrawIndexedInstancedRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 	}
@@ -577,7 +621,7 @@ struct DispatchComputeRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
 	}
@@ -597,7 +641,7 @@ struct DispatchRaysRenderCommand : public RenderCommand
 	{
 	}
 
-	virtual void Execute(CommandContext& CmdContext) const override
+	virtual void Execute(ICommandContext& CmdContext) const override
 	{
 		CmdContext.Dispatch(Width, Height, Depth);
 	}

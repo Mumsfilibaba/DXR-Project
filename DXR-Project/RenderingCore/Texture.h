@@ -1,6 +1,15 @@
 #pragma once
 #include "Resource.h"
 
+class DepthStencilView;
+class RenderTargetView;
+class ShaderResourceView;
+class UnorderedAccessView;
+class Texture1D;
+class Texture2D;
+class Texture3D;
+class TextureCube;
+
 /*
 * ETextureFlags
 */
@@ -15,10 +24,79 @@ enum ETextureFlag : TextureFlags
 	TEXTURE_FLAG_SHADER_RESOURCE		= FLAG(4),
 };
 
-class DepthStencilView;
-class RenderTargetView;
-class Texture2D;
-class TextureCube;
+/*
+* SubresourceIndex
+*/
+
+struct SubresourceIndex
+{
+	inline explicit SubresourceIndex(Int32 InMipSlice, Int32 InArraySlice, Int32 InPlaneSlice, Int32 InMipLevels, Int32 InArraySize)
+		: MipSlice(InMipSlice)
+		, MipLevels(InMipLevels)
+		, ArraySlice(InArraySlice)
+		, ArraySize(InArraySize)
+		, PlaneSlice(InPlaneSlice)
+	{
+	}
+
+	inline SubresourceIndex(const SubresourceIndex& Other)
+		: MipSlice(Other.MipSlice)
+		, MipLevels(Other.MipLevels)
+		, ArraySlice(Other.ArraySlice)
+		, ArraySize(Other.ArraySize)
+		, PlaneSlice(Other.PlaneSlice)
+	{
+	}
+
+	FORCEINLINE Int32 GetSubresourceIndex() const
+	{
+		return MipSlice + (ArraySlice * MipLevels) + (PlaneSlice * MipLevels * ArraySize);
+	}
+
+	const Int32 MipSlice;
+	const Int32 MipLevels;
+	const Int32 ArraySlice;
+	const Int32 ArraySize;
+	const Int32 PlaneSlice;
+};
+
+/*
+* TextureInitializer
+*/
+
+struct TextureInitializer
+{
+	inline TextureInitializer(EFormat InFormat, TextureFlags InFlags, const ClearValue& InOptimizedClearValue)
+		: Format(InFormat)
+		, Flags(InFlags)
+		, OptimizedClearValue(InOptimizedClearValue)
+	{
+	}
+
+	FORCEINLINE bool HasRenderTargetAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_RENDER_TARGET);
+	}
+
+	FORCEINLINE bool HasDepthStencilAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_DEPTH_STENCIL_TARGET);
+	}
+
+	FORCEINLINE bool HasUnorderedAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_UNORDERED_ACCESS);
+	}
+
+	FORCEINLINE bool HasShaderResourceAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_SHADER_RESOURCE);
+	}
+
+	EFormat			Format;
+	TextureFlags	Flags;
+	ClearValue		OptimizedClearValue;
+};
 
 /*
 * Texture
@@ -41,12 +119,32 @@ public:
 		return this;
 	}
 
+	virtual Texture1D* AsTexture1D()
+	{
+		return nullptr;
+	}
+
+	virtual const Texture1D* AsTexture1D() const
+	{
+		return nullptr;
+	}
+
 	virtual Texture2D* AsTexture2D()
 	{
 		return nullptr;
 	}
 
 	virtual const Texture2D* AsTexture2D() const
+	{
+		return nullptr;
+	}
+
+	virtual Texture3D* AsTexture3D()
+	{
+		return nullptr;
+	}
+
+	virtual const Texture3D* AsTexture3D() const
 	{
 		return nullptr;
 	}
@@ -106,59 +204,79 @@ public:
 		DepthStencilViews[SubresourceIndex] = InDepthStencilView;
 	}
 
-	RenderTargetView* GetRenderTargetView(const SubresourceIndex& InSubresourceIndex) const
+	void SetShaderResourceView(ShaderResourceView* InShaderResourceView, const SubresourceIndex& InSubresourceIndex)
+	{
+		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
+		if (SubresourceIndex < ShaderResourceViews.Size())
+		{
+			ShaderResourceViews.Resize(SubresourceIndex + 1);
+		}
+
+		ShaderResourceViews[SubresourceIndex] = InShaderResourceView;
+	}
+
+	void SetUnorderedAccessView(UnorderedAccessView* InUnorderedAccessView, const SubresourceIndex& InSubresourceIndex)
+	{
+		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
+		if (SubresourceIndex < UnorderedAccessViews.Size())
+		{
+			UnorderedAccessViews.Resize(SubresourceIndex + 1);
+		}
+
+		UnorderedAccessViews[SubresourceIndex] = InUnorderedAccessView;
+	}
+
+	FORCEINLINE RenderTargetView* GetRenderTargetView(const SubresourceIndex& InSubresourceIndex) const
 	{
 		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
 		return RenderTargetViews[SubresourceIndex];
 	}
 
-	DepthStencilView* GetDepthStencilView(const SubresourceIndex& InSubresourceIndex) const
+	FORCEINLINE DepthStencilView* GetDepthStencilView(const SubresourceIndex& InSubresourceIndex) const
 	{
 		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
 		return DepthStencilViews[SubresourceIndex];
 	}
 
+	FORCEINLINE ShaderResourceView* GetShaderResourceView(const SubresourceIndex& InSubresourceIndex) const
+	{
+		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
+		return ShaderResourceViews[SubresourceIndex];
+	}
+
+	FORCEINLINE UnorderedAccessView* GetUnorderedAccessView(const SubresourceIndex& InSubresourceIndex) const
+	{
+		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
+		return UnorderedAccessViews[SubresourceIndex];
+	}
+
 protected:
-	TArray<RenderTargetView*> RenderTargetViews;
-	TArray<DepthStencilView*> DepthStencilViews;
+	TArray<RenderTargetView*>		RenderTargetViews;
+	TArray<DepthStencilView*>		DepthStencilViews;
+	TArray<ShaderResourceView*>		ShaderResourceViews;
+	TArray<UnorderedAccessView*>	UnorderedAccessViews;
 };
 
 /*
-* TextureInitializer
+* Texture1D
 */
 
-struct TextureInitializer
+class Texture1D : public Texture
 {
-	inline TextureInitializer(EFormat InFormat, TextureFlags InFlags, const ClearValue& InOptimizedClearValue)
-		: Format(InFormat)
-		, Flags(InFlags)
-		, OptimizedClearValue(InOptimizedClearValue)
+public:
+	Texture1D()		= default;
+	~Texture1D()	= default;
+
+	// Casting functions
+	virtual Texture1D* AsTexture1D() override
 	{
+		return this;
 	}
 
-	inline bool HasRenderTargetAccess() const
+	virtual const Texture1D* AsTexture1D() const override
 	{
-		return (Flags & TEXTURE_FLAG_RENDER_TARGET);
+		return this;
 	}
-
-	inline bool HasDepthStencilAccess() const
-	{
-		return (Flags & TEXTURE_FLAG_DEPTH_STENCIL_TARGET);
-	}
-
-	inline bool HasUnorderedAccess() const
-	{
-		return (Flags & TEXTURE_FLAG_UNORDERED_ACCESS);
-	}
-
-	inline bool HasShaderResourceAccess() const
-	{
-		return (Flags & TEXTURE_FLAG_SHADER_RESOURCE);
-	}
-	
-	EFormat			Format;
-	TextureFlags	Flags;
-	ClearValue		OptimizedClearValue;
 };
 
 /*
@@ -240,6 +358,28 @@ public:
 
 protected:
 	Texture2DInitializer Initializer;
+};
+
+/*
+* Texture3D
+*/
+
+class Texture3D : public Texture
+{
+public:
+	Texture3D()		= default;
+	~Texture3D()	= default;
+
+	// Casting functions
+	virtual Texture3D* AsTexture3D() override
+	{
+		return this;
+	}
+
+	virtual const Texture3D* AsTexture3D() const override
+	{
+		return this;
+	}
 };
 
 /*

@@ -120,7 +120,7 @@ struct DepthStencilOp
 struct DepthStencilStateInitalizer
 {
 	bool			DepthEnable;
-	EDephWriteMask	DepthWriteMask;
+	EDepthWriteMask	DepthWriteMask;
 	EComparisonFunc	DepthFunc;
 	bool			StencilEnable;
 	Uint8			StencilReadMask;

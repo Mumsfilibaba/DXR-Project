@@ -1,43 +1,11 @@
 #pragma once
 #include "Resource.h"
 
-/*
-* EBufferFlag
-*/
-
-typedef Uint32 BufferFlags;
-enum EBufferFlag : BufferFlags
-{
-	BUFFER_FLAG_NONE				= 0,
-	BUFFER_FLAG_UNORDERED_ACCESS	= FLAG(1),
-	BUFFER_FLAG_CONSTANT_BUFFER		= FLAG(2),
-	BUFFER_FLAG_SHADER_RESOURCE		= FLAG(3),
-};
-
-/*
-* BufferInitializer
-*/
-
-struct BufferInitializer
-{
-	inline BufferInitializer()
-		: Flags(0)
-		, SizeInBytes(0)
-		, MemoryType(EMemoryType::MEMORY_TYPE_GPU)
-	{
-	}
-
-	inline BufferInitializer(BufferFlags InFlags, Uint64 InSizeInBytes, EMemoryType InMemoryType)
-		: Flags(InFlags)
-		, SizeInBytes(InSizeInBytes)
-		, MemoryType(InMemoryType)
-	{
-	}
-
-	BufferFlags Flags;
-	Uint64		SizeInBytes;
-	EMemoryType MemoryType;
-};
+class VertexBuffer;
+class IndexBuffer;
+class ConstantBuffer;
+class StructuredBuffer;
+class ByteAddressBuffer;
 
 /*
 * Buffer
@@ -46,10 +14,10 @@ struct BufferInitializer
 class Buffer : public Resource
 {
 public:
-	Buffer() = default;
-	~Buffer() = default;
+	Buffer()	= default;
+	~Buffer()	= default;
 
-	virtual bool Initialize(const BufferInitializer& InInitializer) = 0;
+	virtual bool Initialize() = 0;
 
 	// Casting functions
 	virtual Buffer* AsBuffer() override
@@ -62,13 +30,175 @@ public:
 		return this;
 	}
 
-	virtual Uint64 GetSizeInBytes() const
+	virtual VertexBuffer* AsVertexBuffer()
 	{
-		return Initializer.SizeInBytes;
+		return nullptr;
 	}
 
-	virtual Uint64 GetDeviceAddress() const = 0;
+	virtual const VertexBuffer* AsVertexBuffer() const
+	{
+		return nullptr;
+	}
 
-protected:
-	BufferInitializer Initializer;
+	virtual IndexBuffer* AsIndexBuffer()
+	{
+		return nullptr;
+	}
+
+	virtual const IndexBuffer* AsIndexBuffer() const
+	{
+		return nullptr;
+	}
+
+	virtual ConstantBuffer* AsConstantBuffer()
+	{
+		return nullptr;
+	}
+
+	virtual const ConstantBuffer* AsConstantBuffer() const
+	{
+		return nullptr;
+	}
+
+	virtual StructuredBuffer* AsStructuredBuffer()
+	{
+		return nullptr;
+	}
+
+	virtual const StructuredBuffer* AsStructuredBuffer() const
+	{
+		return nullptr;
+	}
+
+	virtual ByteAddressBuffer* AsByteAddressBuffer()
+	{
+		return nullptr;
+	}
+
+	virtual const ByteAddressBuffer* AsByteAddressBuffer() const
+	{
+		return nullptr;
+	}
+
+	// Buffer functions
+	virtual Uint64 GetSizeInBytes() const
+	{
+		return 0;
+	}
+
+	virtual Uint64 GetDeviceAddress() const
+	{
+		return 0;
+	}
+};
+
+/*
+* VertexBuffer
+*/
+
+class VertexBuffer : public Buffer
+{
+public:
+	VertexBuffer()	= default;
+	~VertexBuffer()	= default;
+
+	// Casting functions
+	virtual VertexBuffer* AsVertexBuffer()
+	{
+		return this;
+	}
+
+	virtual const VertexBuffer* AsVertexBuffer() const
+	{
+		return this;
+	}
+};
+
+/*
+* IndexBuffer
+*/
+
+class IndexBuffer : public Buffer
+{
+public:
+	IndexBuffer()	= default;
+	~IndexBuffer()	= default;
+
+	// Casting functions
+	virtual IndexBuffer* AsIndexBuffer() override
+	{
+		return this;
+	}
+
+	virtual const IndexBuffer* AsIndexBuffer() const override
+	{
+		return this;
+	}
+
+};
+
+/*
+* ConstantBuffer
+*/
+
+class ConstantBuffer : public Buffer
+{
+public:
+	ConstantBuffer()	= default;
+	~ConstantBuffer()	= default;
+
+	// Casting functions
+	virtual ConstantBuffer* AsConstantBuffer() override
+	{
+		return this;
+	}
+
+	virtual const ConstantBuffer* AsConstantBuffer() const override
+	{
+		return this;
+	}
+};
+
+/*
+* StructuredBuffer
+*/
+
+class StructuredBuffer : public Buffer
+{
+public:
+	StructuredBuffer()	= default;
+	~StructuredBuffer()	= default;
+
+	// Casting functions
+	virtual StructuredBuffer* AsStructuredBuffer() override
+	{
+		return this;
+	}
+
+	virtual const StructuredBuffer* AsStructuredBuffer() const override
+	{
+		return this;
+	}
+};
+
+/*
+* ByteAddressBuffer
+*/
+
+class ByteAddressBuffer : public Buffer
+{
+public:
+	ByteAddressBuffer()		= default;
+	~ByteAddressBuffer()	= default;
+
+	// Casting functions
+	virtual ByteAddressBuffer* AsByteAddressBuffer() override
+	{
+		return this;
+	}
+
+	virtual const ByteAddressBuffer* AsByteAddressBuffer() const override
+	{
+		return this;
+	}
 };

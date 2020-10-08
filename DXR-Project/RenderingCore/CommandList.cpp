@@ -87,5 +87,6 @@ void CommandExecutor::ExecuteCommandList(const CommandList& CmdList)
 	for (RenderCommand* Cmd : Commands)
 	{
 		Cmd->Execute(CmdList.GetContext());
+		Cmd->~RenderCommand();
 	}
 }

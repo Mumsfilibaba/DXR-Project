@@ -7,5 +7,7 @@
 
 class Shader : public PipelineResource
 {
-
+public:
+	Shader()	= default;
+	~Shader()	= default;
 };

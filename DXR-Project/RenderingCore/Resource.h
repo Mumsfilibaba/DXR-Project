@@ -24,46 +24,10 @@ public:
 	}
 };
 
-/*
-* SubresourceIndex
-*/
-
-struct SubresourceIndex
-{
-	inline explicit SubresourceIndex(Int32 InMipSlice, Int32 InArraySlice, Int32 InPlaneSlice, Int32 InMipLevels, Int32 InArraySize)
-		: MipSlice(InMipSlice)
-		, MipLevels(InMipLevels)
-		, ArraySlice(InArraySlice)
-		, ArraySize(InArraySize)
-		, PlaneSlice(InPlaneSlice)
-	{
-	}
-
-	inline SubresourceIndex(const SubresourceIndex& Other)
-		: MipSlice(Other.MipSlice)
-		, MipLevels(Other.MipLevels)
-		, ArraySlice(Other.ArraySlice)
-		, ArraySize(Other.ArraySize)
-		, PlaneSlice(Other.PlaneSlice)
-	{
-	}
-
-	inline Int32 GetSubresourceIndex() const
-	{
-		return MipSlice + (ArraySlice * MipLevels) + (PlaneSlice * MipLevels * ArraySize); 
-	}
-
-	const Int32 MipSlice;
-	const Int32 MipLevels;
-	const Int32 ArraySlice;
-	const Int32 ArraySize;
-	const Int32 PlaneSlice;
-};
-
 class Texture;
 class Buffer;
-class ShaderResourceView;
-class UnorderedAccessView;
+class RayTracingGeometry;
+class RayTracingScene;
 
 /*
 * Resource
@@ -95,42 +59,23 @@ public:
 		return nullptr;
 	}
 
-	// Resource views
-	void SetShaderResourceView(ShaderResourceView* InShaderResourceView, const SubresourceIndex& InSubresourceIndex)
+	virtual RayTracingGeometry* AsRayTracingGeometry()
 	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		if (SubresourceIndex < ShaderResourceViews.Size())
-		{
-			ShaderResourceViews.Resize(SubresourceIndex + 1);
-		}
-
-		ShaderResourceViews[SubresourceIndex] = InShaderResourceView;
+		return nullptr;
 	}
 
-	void SetUnorderedAccessView(UnorderedAccessView* InUnorderedAccessView, const SubresourceIndex& InSubresourceIndex)
+	virtual const RayTracingGeometry* AsRayTracingGeometry() const
 	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		if (SubresourceIndex < UnorderedAccessViews.Size())
-		{
-			UnorderedAccessViews.Resize(SubresourceIndex + 1);
-		}
-
-		UnorderedAccessViews[SubresourceIndex] = InUnorderedAccessView;
+		return nullptr;
 	}
 
-	ShaderResourceView* GetShaderResourceView(const SubresourceIndex& InSubresourceIndex) const
+	virtual RayTracingScene* AsRayTracingScene()
 	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		return ShaderResourceViews[SubresourceIndex];
+		return nullptr;
 	}
 
-	UnorderedAccessView* GetUnorderedAccessView(const SubresourceIndex& InSubresourceIndex) const
+	virtual const RayTracingScene* AsRayTracingScene() const
 	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		return UnorderedAccessViews[SubresourceIndex];
+		return nullptr;
 	}
-
-protected:
-	TArray<ShaderResourceView*>		ShaderResourceViews;
-	TArray<UnorderedAccessView*>	UnorderedAccessViews;
 };

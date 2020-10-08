@@ -3,7 +3,7 @@
 
 #include "D3D12DeviceChild.h"
 
-class D3D12CommandContext : public CommandContext, public D3D12DeviceChild
+class D3D12CommandContext : public ICommandContext, public D3D12DeviceChild
 {
 public:
 	D3D12CommandContext(class D3D12Device* InDevice);

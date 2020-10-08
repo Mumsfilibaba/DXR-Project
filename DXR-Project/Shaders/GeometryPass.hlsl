@@ -173,7 +173,7 @@ PSOutput PSMain(PSInput Input)
 	//}
 #endif
 
-    float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords).rgb) * Albedo;
+	float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords).rgb) * Albedo;
 	
 #ifdef NORMAL_MAPPING_ENABLED
 	float3 SampledNormal = NormalMap.Sample(MaterialSampler, TexCoords).rgb;

@@ -154,14 +154,14 @@ public:
 		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
 	}
 
-	FORCEINLINE void CommandList::BindVertexBuffers(Buffer* const* VertexBuffers, Uint32 VertexBufferCount, Uint32 BufferSlot)
+	FORCEINLINE void CommandList::BindVertexBuffers(VertexBuffer* const* VertexBuffers, Uint32 VertexBufferCount, Uint32 BufferSlot)
 	{
 		VoidPtr Memory = CmdAllocator.Allocate<BindVertexBuffersRenderCommand>();
 		new(Memory) BindVertexBuffersRenderCommand(VertexBuffers, VertexBufferCount, BufferSlot);
 		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
 	}
 
-	FORCEINLINE void CommandList::BindIndexBuffer(Buffer* IndexBuffer, EFormat IndexFormat)
+	FORCEINLINE void CommandList::BindIndexBuffer(IndexBuffer* IndexBuffer, EFormat IndexFormat)
 	{
 		VoidPtr Memory = CmdAllocator.Allocate<BindIndexBufferRenderCommand>();
 		new(Memory) BindIndexBufferRenderCommand(IndexBuffer, IndexFormat);
@@ -203,10 +203,24 @@ public:
 		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
 	}
 
-	FORCEINLINE void CommandList::BindConstantBuffers(Shader* Shader, Buffer* const* ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot)
+	FORCEINLINE void CommandList::BindConstantBuffers(Shader* Shader, ConstantBuffer* const* ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot)
 	{
 		VoidPtr Memory = CmdAllocator.Allocate<BindConstantBuffersRenderCommand>();
 		new(Memory) BindConstantBuffersRenderCommand(Shader, ConstantBuffers, ConstantBufferCount, StartSlot);
+		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+	}
+
+	FORCEINLINE void BindStructuredBuffers(Shader* Shader, StructuredBuffer* const* StructuredBuffers, Uint32 StructuredBufferCount, Uint32 StartSlot)
+	{
+		VoidPtr Memory = CmdAllocator.Allocate<BindStructuredBuffersRenderCommand>();
+		new(Memory) BindStructuredBuffersRenderCommand(Shader, StructuredBuffers, StructuredBufferCount, StartSlot);
+		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+	}
+
+	FORCEINLINE void BindByteAddressBuffers(Shader* Shader, ByteAddressBuffer* const* ByteAddressBuffers, Uint32 ByteAddressBufferCount, Uint32 StartSlot)
+	{
+		VoidPtr Memory = CmdAllocator.Allocate<BindByteAddressBuffersRenderCommand>();
+		new(Memory) BindByteAddressBuffersRenderCommand(Shader, ByteAddressBuffers, ByteAddressBufferCount, StartSlot);
 		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
 	}
 
@@ -308,7 +322,7 @@ public:
 		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
 	}
 
-	FORCEINLINE CommandContext& GetContext() const
+	FORCEINLINE ICommandContext& GetContext() const
 	{
 		VALIDATE(CmdContext != nullptr);
 		return *CmdContext;
@@ -316,7 +330,7 @@ public:
 
 private:
 	CommandAllocator		CmdAllocator;
-	class CommandContext*	CmdContext;
+	class ICommandContext*	CmdContext;
 	TArray<RenderCommand*>	Commands;
 };
 
@@ -331,4 +345,12 @@ public:
 	~CommandExecutor()	= default;
 
 	void ExecuteCommandList(const CommandList& CmdList);
+
+	FORCEINLINE CommandList& GetDefaultCommandList()
+	{
+		return DefaultCmdList;
+	}
+
+private:
+	CommandList DefaultCmdList;
 };
