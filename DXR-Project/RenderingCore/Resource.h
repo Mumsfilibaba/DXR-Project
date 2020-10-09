@@ -12,7 +12,8 @@
 class PipelineResource : public RefCountedObject
 {
 public: 
-	virtual ~PipelineResource() = default;
+	PipelineResource()			= default;
+	virtual ~PipelineResource()	= default;
 
 	virtual void SetName(const std::string& Name)
 	{
@@ -36,7 +37,8 @@ class RayTracingScene;
 class Resource : public PipelineResource
 {
 public: 
-	virtual ~Resource() = default;
+	Resource()			= default;
+	virtual ~Resource()	= default;
 
 	// Casting Functions
 	virtual Texture* AsTexture()

@@ -1,54 +1,69 @@
 #pragma once
+#include "RenderingCore/Texture.h"
+
 #include "D3D12Resource.h"
 
 /*
-* TextureProperties
+* D3D12Texture1D
 */
 
-struct TextureProperties
-{
-	std::string					DebugName;
-	DXGI_FORMAT					Format;
-	D3D12_RESOURCE_FLAGS		Flags;
-	Uint16						Width; 
-	Uint16						Height;
-	Uint16						ArrayCount;
-	Uint16						MipLevels;
-	Uint32						SampleCount;
-	D3D12_RESOURCE_STATES		InitalState;
-	const D3D12_CLEAR_VALUE*	OptimizedClearValue;
-	EMemoryType					MemoryType;
-};
-
-class D3D12RenderTargetView;
-class D3D12DepthStencilView;
-
-/*
-* D3D12Texture
-*/
-
-class D3D12Texture : public D3D12Resource
+class D3D12Texture1D : public Texture1D, public D3D12Resource
 {
 public:
-	D3D12Texture(D3D12Device* InDevice);
-	~D3D12Texture();
+	D3D12Texture1D(D3D12Device* InDevice);
+	~D3D12Texture1D();
 
-	bool Initialize(const TextureProperties& Properties);
+	virtual bool Initialize(const Texture1DInitializer& InInitializer) override;
+};
 
-	void SetRenderTargetView(TSharedPtr<D3D12RenderTargetView> InRenderTargetView, Uint32 SubresourceIndex);
-	void SetDepthStencilView(TSharedPtr<D3D12DepthStencilView> InDepthStencilView, Uint32 SubresourceIndex);
+/*
+* D3D12Texture2D
+*/
 
-	FORCEINLINE TSharedPtr<D3D12RenderTargetView> GetRenderTargetView(Uint32 Index) const
-	{
-		return RenderTargetViews[Index];
-	}
+class D3D12Texture2D : public Texture2D, public D3D12Resource
+{
+public:
+	D3D12Texture2D(D3D12Device* InDevice);
+	~D3D12Texture2D();
 
-	FORCEINLINE TSharedPtr<D3D12DepthStencilView> GetDepthStencilView(Uint32 Index) const
-	{
-		return DepthStencilViews[Index];
-	}
+	virtual bool Initialize(const Texture2DInitializer& InInitializer) override;
+};
 
-protected:
-	TArray<TSharedPtr<D3D12RenderTargetView>> RenderTargetViews;
-	TArray<TSharedPtr<D3D12DepthStencilView>> DepthStencilViews;
+/*
+* D3D12Texture2DArray
+*/
+
+class D3D12Texture2DArray : public Texture2DArray, public D3D12Resource
+{
+public:
+	D3D12Texture2DArray(D3D12Device* InDevice);
+	~D3D12Texture2DArray();
+
+	virtual bool Initialize(const Texture2DArrayInitializer& InInitializer) override;
+};
+
+/*
+* D3D12TextureCube
+*/
+
+class D3D12TextureCube : public TextureCube, public D3D12Resource
+{
+public:
+	D3D12TextureCube(D3D12Device* InDevice);
+	~D3D12TextureCube();
+
+	virtual bool Initialize(const TextureCubeInitializer& InInitializer) override;
+};
+
+/*
+* D3D12Texture3D
+*/
+
+class D3D12Texture3D : public Texture3D, public D3D12Resource
+{
+public:
+	D3D12Texture3D(D3D12Device* InDevice);
+	~D3D12Texture3D();
+
+	virtual bool Initialize(const Texture3DInitializer& InInitializer) override;
 };

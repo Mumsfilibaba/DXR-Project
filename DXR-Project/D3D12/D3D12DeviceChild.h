@@ -6,9 +6,16 @@
 
 #include <wrl/client.h>
 
+template<typename T>
+using ComRef = Microsoft::WRL::ComPtr;
+
 #include "Containers/String.h"
 
 class D3D12Device;
+
+/*
+* D3D12DeviceChild
+*/
 
 class D3D12DeviceChild
 {
@@ -18,7 +25,7 @@ public:
 	{
 	}
 
-	~D3D12DeviceChild()
+	virtual ~D3D12DeviceChild()
 	{
 		Device = nullptr;
 	}

@@ -9,6 +9,7 @@ class Texture1D;
 class Texture2D;
 class Texture3D;
 class TextureCube;
+class Texture2DArray;
 
 /*
 * ETextureFlags
@@ -61,52 +62,14 @@ struct SubresourceIndex
 };
 
 /*
-* TextureInitializer
-*/
-
-struct TextureInitializer
-{
-	inline TextureInitializer(EFormat InFormat, TextureFlags InFlags, const ClearValue& InOptimizedClearValue)
-		: Format(InFormat)
-		, Flags(InFlags)
-		, OptimizedClearValue(InOptimizedClearValue)
-	{
-	}
-
-	FORCEINLINE bool HasRenderTargetAccess() const
-	{
-		return (Flags & TEXTURE_FLAG_RENDER_TARGET);
-	}
-
-	FORCEINLINE bool HasDepthStencilAccess() const
-	{
-		return (Flags & TEXTURE_FLAG_DEPTH_STENCIL_TARGET);
-	}
-
-	FORCEINLINE bool HasUnorderedAccess() const
-	{
-		return (Flags & TEXTURE_FLAG_UNORDERED_ACCESS);
-	}
-
-	FORCEINLINE bool HasShaderResourceAccess() const
-	{
-		return (Flags & TEXTURE_FLAG_SHADER_RESOURCE);
-	}
-
-	EFormat			Format;
-	TextureFlags	Flags;
-	ClearValue		OptimizedClearValue;
-};
-
-/*
 * Texture
 */
 
 class Texture : public Resource
 {
 public:
-	Texture() = default;
-	~Texture() = default;
+	Texture()	= default;
+	~Texture()	= default;
 
 	// Casting functions
 	virtual Texture* AsTexture() override
@@ -139,6 +102,16 @@ public:
 		return nullptr;
 	}
 
+	virtual Texture2DArray* AsTexture2DArray()
+	{
+		return nullptr;
+	}
+
+	virtual const Texture2DArray* AsTexture2DArray() const
+	{
+		return nullptr;
+	}
+
 	virtual Texture3D* AsTexture3D()
 	{
 		return nullptr;
@@ -159,7 +132,7 @@ public:
 		return nullptr;
 	}
 
-	// Size
+	// Info
 	virtual Uint32 GetWidth() const
 	{
 		return 0;
@@ -167,7 +140,7 @@ public:
 
 	virtual Uint32 GetHeight() const
 	{
-		return 0;
+		return 1;
 	}
 
 	virtual Uint32 GetDepth() const
@@ -175,7 +148,21 @@ public:
 		return 1;
 	}
 
-	// Other
+	virtual Uint32 GetArrayCount() const
+	{
+		return 1;
+	}
+
+	virtual Uint32 GetMipLevels() const
+	{
+		return 1;
+	}
+
+	virtual Uint32 GetSampleCount() const
+	{
+		return 1;
+	}
+
 	virtual bool IsMultiSampled() const
 	{
 		return false;
@@ -258,6 +245,48 @@ protected:
 };
 
 /*
+* Texture1DInitializer
+*/
+
+struct Texture1DInitializer
+{
+	inline Texture1DInitializer(EFormat InFormat, TextureFlags InFlags, Uint32 InWidth, Uint32 InMipLevels, const ClearValue& InOptimizedClearValue)
+		: Format(InFormat)
+		, Flags(InFlags)
+		, Width(InWidth)
+		, MipLevels(InMipLevels)
+		, OptimizedClearValue(InOptimizedClearValue)
+	{
+	}
+
+	FORCEINLINE bool HasRenderTargetAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_RENDER_TARGET);
+	}
+
+	FORCEINLINE bool HasDepthStencilAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_DEPTH_STENCIL_TARGET);
+	}
+
+	FORCEINLINE bool HasUnorderedAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_UNORDERED_ACCESS);
+	}
+
+	FORCEINLINE bool HasShaderResourceAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_SHADER_RESOURCE);
+	}
+
+	EFormat			Format;
+	TextureFlags	Flags;
+	Uint32			Width;
+	Uint32			MipLevels;
+	ClearValue		OptimizedClearValue;
+};
+
+/*
 * Texture1D
 */
 
@@ -266,6 +295,8 @@ class Texture1D : public Texture
 public:
 	Texture1D()		= default;
 	~Texture1D()	= default;
+
+	virtual bool Initialize(const Texture1DInitializer& InInitializer) = 0;
 
 	// Casting functions
 	virtual Texture1D* AsTexture1D() override
@@ -277,45 +308,66 @@ public:
 	{
 		return this;
 	}
+
+	// Info
+	virtual Uint32 GetWidth() const override
+	{
+		return Initializer.Width;
+	}
+
+	virtual Uint32 GetMipLevels() const
+	{
+		return Initializer.MipLevels;
+	}
+
+protected:
+	Texture1DInitializer Initializer;
 };
 
 /*
 * Texture2DInitializer
 */
 
-struct Texture2DInitializer : public TextureInitializer
+struct Texture2DInitializer
 {
-	inline Texture2DInitializer()
-		: TextureInitializer(EFormat::FORMAT_UNKNOWN, 0, ClearValue())
-		, Width(0)
-		, Height(0)
-		, MipLevelCount(0)
-		, SampleCount(0)
-	{
-	}
-
-	inline Texture2DInitializer(EFormat InFormat, TextureFlags InFlags, Uint32 InWidth, Uint32 InHeight)
-		: TextureInitializer(InFormat, InFlags, ClearValue())
+	inline Texture2DInitializer(EFormat InFormat, TextureFlags InFlags, Uint32 InWidth, Uint32 InHeight, Uint32 InMipLevels, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue)
+		: Format(InFormat)
+		, Flags(InFlags)
 		, Width(InWidth)
 		, Height(InHeight)
-		, MipLevelCount(1)
-		, SampleCount(1)
-	{
-	}
-
-	inline Texture2DInitializer(EFormat InFormat, TextureFlags InFlags, Uint32 InWidth, Uint32 InHeight, Uint32 InMipLevelCount, Uint32 InSampleCount, const ClearValue& InClearValue)
-		: TextureInitializer(InFormat, InFlags, InClearValue)
-		, Width(InWidth)
-		, Height(InHeight)
-		, MipLevelCount(InMipLevelCount)
+		, MipLevels(InMipLevels)
 		, SampleCount(InSampleCount)
+		, OptimizedClearValue(InOptimizedClearValue)
 	{
 	}
 
-	Uint32 Width;
-	Uint32 Height;
-	Uint32 MipLevelCount;
-	Uint32 SampleCount;
+	FORCEINLINE bool HasRenderTargetAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_RENDER_TARGET);
+	}
+
+	FORCEINLINE bool HasDepthStencilAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_DEPTH_STENCIL_TARGET);
+	}
+
+	FORCEINLINE bool HasUnorderedAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_UNORDERED_ACCESS);
+	}
+
+	FORCEINLINE bool HasShaderResourceAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_SHADER_RESOURCE);
+	}
+
+	EFormat			Format;
+	TextureFlags	Flags;
+	Uint32			Width;
+	Uint32			Height;
+	Uint32			MipLevels;
+	Uint32			SampleCount;
+	ClearValue		OptimizedClearValue;
 };
 
 /*
@@ -341,6 +393,7 @@ public:
 		return nullptr;
 	}
 
+	// Info
 	virtual Uint32 GetWidth() const override
 	{
 		return Initializer.Width;
@@ -349,6 +402,16 @@ public:
 	virtual Uint32 GetHeight() const override
 	{
 		return Initializer.Height;
+	}
+
+	virtual Uint32 GetMipLevels() const
+	{
+		return Initializer.MipLevels;
+	}
+
+	virtual Uint32 GetSampleCount() const
+	{
+		return Initializer.SampleCount;
 	}
 
 	virtual bool IsMultiSampled() const override
@@ -361,59 +424,153 @@ protected:
 };
 
 /*
-* Texture3D
+* Texture2DArrayInitializer
 */
 
-class Texture3D : public Texture
+struct Texture2DArrayInitializer
+{
+	inline Texture2DArrayInitializer(EFormat InFormat, TextureFlags InFlags, Uint32 InWidth, Uint32 InHeight, Uint32 InMipLevels, Uint32 InArrayCount, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue)
+		: Format(InFormat)
+		, Flags(InFlags)
+		, Width(InWidth)
+		, Height(InHeight)
+		, MipLevels(InMipLevels)
+		, ArrayCount(InArrayCount)
+		, SampleCount(InSampleCount)
+		, OptimizedClearValue(InOptimizedClearValue)
+	{
+	}
+
+	FORCEINLINE bool HasRenderTargetAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_RENDER_TARGET);
+	}
+
+	FORCEINLINE bool HasDepthStencilAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_DEPTH_STENCIL_TARGET);
+	}
+
+	FORCEINLINE bool HasUnorderedAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_UNORDERED_ACCESS);
+	}
+
+	FORCEINLINE bool HasShaderResourceAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_SHADER_RESOURCE);
+	}
+
+	EFormat			Format;
+	TextureFlags	Flags;
+	Uint32			Width;
+	Uint32			Height;
+	Uint32			MipLevels;
+	Uint32			ArrayCount;
+	Uint32			SampleCount;
+	ClearValue		OptimizedClearValue;
+};
+
+/*
+* Texture2DArray
+*/
+
+class Texture2DArray : public Texture
 {
 public:
-	Texture3D()		= default;
-	~Texture3D()	= default;
+	Texture2DArray()		= default;
+	~Texture2DArray()	= default;
+
+	virtual bool Initialize(const Texture2DArrayInitializer& InInitializer) = 0;
 
 	// Casting functions
-	virtual Texture3D* AsTexture3D() override
+	virtual Texture2DArray* AsTexture2DArray()
 	{
 		return this;
 	}
 
-	virtual const Texture3D* AsTexture3D() const override
+	virtual const Texture2DArray* AsTexture2DArray() const
 	{
 		return this;
 	}
+
+	// Info
+	virtual Uint32 GetWidth() const override
+	{
+		return Initializer.Width;
+	}
+
+	virtual Uint32 GetHeight() const override
+	{
+		return Initializer.Height;
+	}
+
+	virtual Uint32 GetMipLevels() const
+	{
+		return Initializer.MipLevels;
+	}
+
+	virtual Uint32 GetMipLevels() const
+	{
+		return Initializer.ArrayCount;
+	}
+
+	virtual Uint32 GetSampleCount() const
+	{
+		return Initializer.SampleCount;
+	}
+
+	virtual bool IsMultiSampled() const override
+	{
+		return (Initializer.SampleCount > 1);
+	}
+
+protected:
+	Texture2DArrayInitializer Initializer;
 };
 
 /*
 * TextureCubeInitializer
 */
 
-struct TextureCubeInitializer : public TextureInitializer
+struct TextureCubeInitializer
 {
-	inline TextureCubeInitializer()
-		: TextureInitializer(EFormat::FORMAT_UNKNOWN, 0, ClearValue())
-		, Size(0)
-		, MipLevelCount(0)
-		, SampleCount(0)
-	{
-	}
-
-	inline TextureCubeInitializer(EFormat InFormat, TextureFlags InFlags, Uint32 InSize)
-		: TextureInitializer(InFormat, InFlags, ClearValue())
-		, MipLevelCount(1)
-		, SampleCount(1)
-	{
-	}
-
-	inline TextureCubeInitializer(EFormat InFormat, TextureFlags InFlags, Uint32 InSize, Uint32 InMipLevelCount, Uint32 InSampleCount, const ClearValue& InClearValue)
-		: TextureInitializer(InFormat, InFlags, ClearValue())
+	inline TextureCubeInitializer(EFormat InFormat, TextureFlags InFlags, Uint32 InSize, Uint32 InMipLevels, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue)
+		: Format(InFormat)
+		, Flags(InFlags)
 		, Size(InSize)
-		, MipLevelCount(InMipLevelCount)
+		, MipLevels(InMipLevels)
 		, SampleCount(InSampleCount)
+		, OptimizedClearValue(InOptimizedClearValue)
 	{
 	}
 
-	Uint32 Size;
-	Uint32 MipLevelCount;
-	Uint32 SampleCount;
+	FORCEINLINE bool HasRenderTargetAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_RENDER_TARGET);
+	}
+
+	FORCEINLINE bool HasDepthStencilAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_DEPTH_STENCIL_TARGET);
+	}
+
+	FORCEINLINE bool HasUnorderedAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_UNORDERED_ACCESS);
+	}
+
+	FORCEINLINE bool HasShaderResourceAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_SHADER_RESOURCE);
+	}
+
+	EFormat			Format;
+	TextureFlags	Flags;
+	Uint32			Size;
+	Uint32			MipLevels;
+	Uint32			SampleCount;
+	ClearValue		OptimizedClearValue;
 };
 
 /*
@@ -450,6 +607,16 @@ public:
 		return Initializer.Size;
 	}
 
+	virtual Uint32 GetMipLevels() const
+	{
+		return Initializer.MipLevels;
+	}
+
+	virtual Uint32 GetSampleCount() const
+	{
+		return Initializer.SampleCount;
+	}
+
 	virtual bool IsMultiSampled() const override
 	{
 		return (Initializer.SampleCount > 1);
@@ -457,4 +624,98 @@ public:
 
 protected:
 	TextureCubeInitializer Initializer;
+};
+
+/*
+* Texture3DInitializer
+*/
+
+struct Texture3DInitializer
+{
+	inline Texture3DInitializer(EFormat InFormat, TextureFlags InFlags, Uint32 InWidth, Uint32 InHeight, Uint32 InDepth, Uint32 InMipLevels, const ClearValue& InOptimizedClearValue)
+		: Format(InFormat)
+		, Flags(InFlags)
+		, Width(InWidth)
+		, Height(InHeight)
+		, Depth(InDepth)
+		, MipLevels(InMipLevels)
+		, OptimizedClearValue(InOptimizedClearValue)
+	{
+	}
+
+	FORCEINLINE bool HasRenderTargetAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_RENDER_TARGET);
+	}
+
+	FORCEINLINE bool HasDepthStencilAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_DEPTH_STENCIL_TARGET);
+	}
+
+	FORCEINLINE bool HasUnorderedAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_UNORDERED_ACCESS);
+	}
+
+	FORCEINLINE bool HasShaderResourceAccess() const
+	{
+		return (Flags & TEXTURE_FLAG_SHADER_RESOURCE);
+	}
+
+	EFormat			Format;
+	TextureFlags	Flags;
+	Uint32			Width;
+	Uint32			Height;
+	Uint32			Depth;
+	Uint32			MipLevels;
+	ClearValue		OptimizedClearValue;
+};
+
+/*
+* Texture3D
+*/
+
+class Texture3D : public Texture
+{
+public:
+	Texture3D()		= default;
+	~Texture3D()	= default;
+
+	virtual bool Initialize(const Texture3DInitializer& InInitializer) = 0;
+
+	// Casting functions
+	virtual Texture3D* AsTexture3D() override
+	{
+		return this;
+	}
+
+	virtual const Texture3D* AsTexture3D() const override
+	{
+		return this;
+	}
+
+	// Info
+	virtual Uint32 GetWidth() const
+	{
+		return Initializer.Width;
+	}
+
+	virtual Uint32 GetHeight() const
+	{
+		return Initializer.Height;
+	}
+
+	virtual Uint32 GetDepth() const
+	{
+		return Initializer.Depth;
+	}
+
+	virtual Uint32 GetMipLevels() const
+	{
+		return Initializer.MipLevels;
+	}
+
+protected:
+	Texture3DInitializer Initializer;
 };

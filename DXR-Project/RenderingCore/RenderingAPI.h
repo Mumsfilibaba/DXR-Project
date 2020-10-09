@@ -28,10 +28,11 @@ public:
 	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) = 0;
 
 	// Resources
-	virtual class Texture1D*	CreateTexture1D()	const = 0;
-	virtual class Texture2D*	CreateTexture2D()	const = 0;
-	virtual class Texture3D*	CreateTexture3D()	const = 0;
-	virtual class TextureCube*	CreateTextureCube()	const = 0;
+	virtual class Texture1D*		CreateTexture1D()		const = 0;
+	virtual class Texture2D*		CreateTexture2D()		const = 0;
+	virtual class Texture2DArray*	CreateTexture2DArray()	const = 0;
+	virtual class Texture3D*		CreateTexture3D()		const = 0;
+	virtual class TextureCube*		CreateTextureCube()		const = 0;
 
 	virtual class VertexBuffer*		 CreateVertexBuffer()	const = 0;
 	virtual class IndexBuffer*		 CreateIndexBuffer()	const = 0;

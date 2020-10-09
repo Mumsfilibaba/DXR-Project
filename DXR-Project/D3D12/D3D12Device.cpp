@@ -151,6 +151,23 @@ bool D3D12Device::Initialize(bool DebugEnable)
 	return true;
 }
 
+Uint32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount)
+{
+	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data = { };
+	Data.Flags			= D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
+	Data.Format			= Format;
+	Data.SampleCount	= SampleCount;
+	
+	HRESULT hr = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &Data, sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS));
+	if (FAILED(hr))
+	{
+		LOG_ERROR("[D3D12Device] CheckFeatureSupport failed");
+		return 0;
+	}
+
+	return static_cast<Uint32>(Data.NumQualityLevels - 1);
+}
+
 std::string D3D12Device::GetAdapterName() const
 {
 	DXGI_ADAPTER_DESC Desc;

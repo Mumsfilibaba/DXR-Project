@@ -23,6 +23,8 @@ public:
 	~D3D12Device();
 
 	bool Initialize(bool DebugEnable);
+	
+	Uint32 GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount;
 
 	std::string GetAdapterName() const;
 

@@ -1,8 +1,5 @@
 #pragma once
-#include "RenderingCore/RenderingCore.h"
-
 #include "D3D12DeviceChild.h"
-#include "D3D12Views.h"
 
 /*
 * D3D12Resource
@@ -14,22 +11,21 @@ public:
 	D3D12Resource(D3D12Device* InDevice);
 	virtual ~D3D12Resource();
 
-	virtual bool Initialize(ID3D12Resource* InResource);
-	
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
+	bool Initialize(const D3D12_RESOURCE_DESC& InDesc, D3D12_RESOURCE_STATES InitalState, D3D12_HEAP_TYPE InHeapType, const D3D12_CLEAR_VALUE* OptimizedClearValue);
 
-	void SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex);
-	void SetUnorderedAccessView(TSharedPtr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex);
-
-	FORCEINLINE EMemoryType GetMemoryType() const
+	FORCEINLINE ID3D12Resource* GetResource() const
 	{
-		return MemoryType;
+		return Resource;
 	}
 
-	FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
+	FORCEINLINE D3D12_HEAP_TYPE GetHeapType() const
 	{
-		return NativeResource->GetGPUVirtualAddress();
+		return HeapType;
+	}
+
+	FORCEINLINE D3D12_RESOURCE_STATES GetResourceState() const
+	{
+		return ResourceState;
 	}
 
 	FORCEINLINE const D3D12_RESOURCE_DESC& GetDesc() const
@@ -37,30 +33,16 @@ public:
 		return Desc;
 	}
 
-	FORCEINLINE ID3D12Resource* GetResource() const
+	FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
 	{
-		return NativeResource.Get();
-	}
-
-	FORCEINLINE TSharedPtr<D3D12ShaderResourceView> GetShaderResourceView(const Uint32 SubresourceIndex) const
-	{
-		return ShaderResourceViews[SubresourceIndex];
-	}
-
-	FORCEINLINE TSharedPtr<D3D12UnorderedAccessView> GetUnorderedAccessView(const Uint32 SubresourceIndex) const
-	{
-		return UnorderedAccessViews[SubresourceIndex];
+		return Address;
 	}
 
 protected:
-	bool CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D12_CLEAR_VALUE* OptimizedClearValue, D3D12_RESOURCE_STATES InitalState, EMemoryType InMemoryType);
+	ComRef<ID3D12Resource> Resource;
 
-protected:
-	Microsoft::WRL::ComPtr<ID3D12Resource> NativeResource;
-
-	TArray<TSharedPtr<D3D12ShaderResourceView>>		ShaderResourceViews;
-	TArray<TSharedPtr<D3D12UnorderedAccessView>>	UnorderedAccessViews;
-
-	D3D12_RESOURCE_DESC Desc;
-	EMemoryType MemoryType;
+	D3D12_HEAP_TYPE				HeapType;
+	D3D12_RESOURCE_STATES		ResourceState;
+	D3D12_RESOURCE_DESC			Desc;
+	D3D12_GPU_VIRTUAL_ADDRESS	Address;
 };
