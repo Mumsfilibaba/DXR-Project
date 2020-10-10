@@ -5,6 +5,11 @@
 
 #include "Containers/TArray.h"
 
+class Texture;
+class Buffer;
+class RayTracingGeometry;
+class RayTracingScene;
+
 /*
 * PipelineResource
 */
@@ -24,11 +29,6 @@ public:
 		return nullptr;
 	}
 };
-
-class Texture;
-class Buffer;
-class RayTracingGeometry;
-class RayTracingScene;
 
 /*
 * Resource

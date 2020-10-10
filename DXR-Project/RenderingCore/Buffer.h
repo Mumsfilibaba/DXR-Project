@@ -17,8 +17,6 @@ public:
 	Buffer()	= default;
 	~Buffer()	= default;
 
-	virtual bool Initialize() = 0;
-
 	// Casting functions
 	virtual Buffer* AsBuffer() override
 	{
@@ -86,9 +84,19 @@ public:
 		return 0;
 	}
 
-	virtual Uint64 GetDeviceAddress() const
+	virtual Uint64 GetVirtualGPUAddress() const
 	{
 		return 0;
+	}
+
+	// Map
+	virtual VoidPtr Map()
+	{
+		return nullptr;
+	}
+
+	virtual void Unmap()
+	{
 	}
 };
 

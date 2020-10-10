@@ -19,36 +19,38 @@ public:
 
 	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) override final;
 
-	virtual class Texture2D* CreateTexture2D() const override final;
-	virtual class TextureCube* CreateTextureCube() const override final;
-	virtual class Buffer* CreateBuffer() const override final;
+	// Resources
+	virtual class Texture1D*		CreateTexture1D()		const override final;
+	virtual class Texture2D*		CreateTexture2D()		const override final;
+	virtual class Texture2DArray*	CreateTexture2DArray()	const override final;
+	virtual class Texture3D*		CreateTexture3D()		const override final;
+	virtual class TextureCube*		CreateTextureCube()		const override final;
 
-	virtual class D3D12Texture*	CreateTexture(const struct TextureProperties& Properties) const override final;
-	virtual class D3D12Buffer*	CreateBuffer(const struct BufferProperties& Properties) const override final;
-	virtual class D3D12RayTracingScene*		CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState, TArray<BindingTableEntry>& InBindingTableEntries, Uint32 InNumHitGroups) const override final;
-	virtual class D3D12RayTracingGeometry*	CreateRayTracingGeometry() const override final;
-	virtual class D3D12DescriptorTable*		CreateDescriptorTable(Uint32 DescriptorCount) const override final;
+	virtual class VertexBuffer*			CreateVertexBuffer(Uint32 VertexCount, Uint32 VertexStride) const override final;
+	virtual class IndexBuffer*			CreateIndexBuffer(Uint32 IndexCount, EFormat IndexFormat) const override final;
+	virtual class ConstantBuffer*		CreateConstantBuffer(Uint32 SizeInBytes) const override final;
+	virtual class StructuredBuffer*		CreateStructuredBuffer(Uint32 SizeInBytes, Uint32 StructuredByteStride) const override final;
+	virtual class ByteAddressBuffer*	CreateByteAddressBuffer(Uint32 SizeInBytes) const override final;
 
-	virtual class D3D12ShaderResourceView*	CreateShaderResourceView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc) const override final;
-	virtual class D3D12UnorderedAccessView* CreateUnorderedAccessView(ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc) const override final;
-	virtual class D3D12RenderTargetView*	CreateRenderTargetView(ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC* InDesc) const override final;
-	virtual class D3D12DepthStencilView*	CreateDepthStencilView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc) const override final;
-	virtual class D3D12ConstantBufferView*	CreateConstantBufferView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc) const override final;
+	virtual class RayTracingGeometry*	CreateRayTracingGeometry()	const override final;
+	virtual class RayTracingScene*		CreateRayTracingScene()		const override final;
 
-	virtual class D3D12Fence*				CreateFence(Uint64 InitalValue) const override final;
-	virtual class D3D12CommandAllocator*	CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE ListType) const override final;
-	virtual class D3D12CommandList*			CreateCommandList(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline) const override final;
-	virtual class D3D12CommandQueue*		CreateCommandQueue() const override final;
+	// PipelineState
+	virtual class Shader* CreateShader() const override final;
 
-	virtual class D3D12ComputePipelineState*	CreateComputePipelineState(const struct ComputePipelineStateProperties& Properties) const override final;
-	virtual class D3D12GraphicsPipelineState*	CreateGraphicsPipelineState(const struct GraphicsPipelineStateProperties& Properties) const override final;
-	virtual class D3D12RayTracingPipelineState*	CreateRayTracingPipelineState(const struct RayTracingPipelineStateProperties& Properties) const override final;
-	virtual D3D12RootSignature* CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc) const  override final;
-	virtual D3D12RootSignature* CreateRootSignature(IDxcBlob* ShaderBlob) const override final;
+	virtual class DepthStencilState*	CreateDepthStencilState()	const override final;
+	virtual class RasterizerState*		CreateRasterizerState()		const override final;
+	virtual class BlendState*			CreateBlendState()	const override final;
+	virtual class InputLayout*			CreateInputLayout() const override final;
 
-	virtual class D3D12CommandQueue*	GetQueue() const override final;
-	virtual class D3D12SwapChain*		GetSwapChain() const override final;
-	virtual TSharedPtr<D3D12ImmediateCommandList> GetImmediateCommandList() const override final;
+	virtual class GraphicsPipelineState*	CreateGraphicsPipelineState()	const override final;
+	virtual class ComputePipelineState*		CreateComputePipelineState()	const override final;
+	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const override final;
+
+	// Commands
+	virtual class ICommandContext*	CreateCommandContext()		const override final;
+	virtual class CommandList&		GetDefaultCommandList()		const override final;
+	virtual class CommandExecutor&	GetDefaultCommandExecutor() const override final;
 
 	virtual std::string GetAdapterName() const override final
 	{
@@ -60,6 +62,9 @@ public:
 	virtual bool UAVSupportsFormat(DXGI_FORMAT Format) const override final;
 
 private:
+	ComRef<ID3D12Resource> AllocateBuffer(D3D12_HEAP_TYPE HeapType, Uint32 SizeInBytes) const;
+	ComRef<ID3D12Resource> AllocateTexture();
+
 	TSharedPtr<WindowsWindow>				RenderWindow;
 	TSharedPtr<D3D12SwapChain>				SwapChain;
 	TSharedPtr<D3D12Device>					Device;

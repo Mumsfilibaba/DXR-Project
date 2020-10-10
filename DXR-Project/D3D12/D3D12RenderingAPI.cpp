@@ -63,7 +63,22 @@ bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> RenderWindow, bool 
 	return true;
 }
 
+Texture1D* D3D12RenderingAPI::CreateTexture1D() const
+{
+	return nullptr;
+}
+
 Texture2D* D3D12RenderingAPI::CreateTexture2D() const
+{
+	return nullptr;
+}
+
+Texture2DArray* D3D12RenderingAPI::CreateTexture2DArray() const
+{
+	return nullptr;
+}
+
+Texture3D* D3D12RenderingAPI::CreateTexture3D() const
 {
 	return nullptr;
 }
@@ -73,186 +88,117 @@ TextureCube* D3D12RenderingAPI::CreateTextureCube() const
 	return nullptr;
 }
 
-Buffer* D3D12RenderingAPI::CreateBuffer() const
+VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(Uint32 VertexCount, Uint32 VertexStride) const
 {
-	return new D3D12Buffer(Device.Get());
-}
+	const Uint64 SizeInBytes = VertexCount * VertexStride;
 
-
-D3D12Texture* D3D12RenderingAPI::CreateTexture(const TextureProperties& Properties) const
-{
-	TUniquePtr<D3D12Texture> Texture = TUniquePtr(new D3D12Texture(Device.Get()));
-	if (Texture->Initialize(Properties))
+	ComRef<ID3D12Resource> Buffer = AllocateBuffer(D3D12_HEAP_TYPE_DEFAULT, SizeInBytes);
+	if (!Buffer)
 	{
-		return Texture.Release();
+		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate buffer");
+		return nullptr;
 	}
 
-	return nullptr;
+	D3D12VertexBuffer* NewBuffer = new D3D12VertexBuffer(Device.Get(), VertexCount, VertexStride);
+	NewBuffer->Resource = Buffer;
+
+	D3D12_VERTEX_BUFFER_VIEW View;
+	Memory::Memzero(&View, sizeof(D3D12_VERTEX_BUFFER_VIEW));
+
+	View.BufferLocation	= NewBuffer->GetGPUVirtualAddress();
+	View.SizeInBytes	= SizeInBytes;
+	View.StrideInBytes	= VertexStride;
+
+	return NewBuffer;
 }
 
-D3D12Buffer* D3D12RenderingAPI::CreateBuffer(const BufferProperties& Properties) const
+IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(Uint32 IndexCount, EFormat IndexFormat) const
 {
-	TUniquePtr<D3D12Buffer> Buffer = TUniquePtr(new D3D12Buffer(Device.Get()));
-	if (Buffer->Initialize(Properties))
-	{
-		return Buffer.Release();
-	}
-
-	return nullptr;
+	D3D12IndexBuffer* NewBuffer = new D3D12IndexBuffer(Device.Get(), IndexCount, IndexFormat);
+	return NewBuffer;
 }
 
-D3D12RayTracingScene* D3D12RenderingAPI::CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState, TArray<BindingTableEntry>& InBindingTableEntries, Uint32 InNumHitGroups) const
+ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(Uint32 SizeInBytes) const
 {
-	TUniquePtr<D3D12RayTracingScene> Scene = TUniquePtr(new D3D12RayTracingScene(Device.Get()));
-	if (Scene->Initialize(PipelineState, InBindingTableEntries, InNumHitGroups))
-	{
-		return Scene.Release();
-	}
-
-	return nullptr;
+	D3D12ConstantBuffer* NewBuffer = new D3D12ConstantBuffer(Device.Get(), SizeInBytes);
+	return NewBuffer;
 }
 
-D3D12RayTracingGeometry* D3D12RenderingAPI::CreateRayTracingGeometry() const
+StructuredBuffer* D3D12RenderingAPI::CreateStructuredBuffer(Uint32 SizeInBytes, Uint32 StructuredByteStride) const
 {
-	return new D3D12RayTracingGeometry(Device.Get());
+	D3D12StructuredBuffer* NewBuffer = new D3D12StructuredBuffer(Device.Get(), SizeInBytes, StructuredByteStride);
+	return NewBuffer;
 }
 
-D3D12DescriptorTable* D3D12RenderingAPI::CreateDescriptorTable(Uint32 DescriptorCount) const
+ByteAddressBuffer* D3D12RenderingAPI::CreateByteAddressBuffer(Uint32 SizeInBytes) const
 {
-	return new D3D12DescriptorTable(Device.Get(), DescriptorCount);
+	D3D12ByteAddressBuffer* NewBuffer = new D3D12ByteAddressBuffer(Device.Get(), SizeInBytes);
+	return NewBuffer;
 }
 
-D3D12ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc) const
-{
-	return new D3D12ShaderResourceView(Device.Get(), InResource, InDesc);
-}
-
-D3D12UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc) const
-{
-	return new D3D12UnorderedAccessView(Device.Get(), InCounterResource, InResource, InDesc);
-}
-
-D3D12RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC* InDesc) const
-{
-	return new D3D12RenderTargetView(Device.Get(), InResource, InDesc);
-}
-
-D3D12DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc) const
-{
-	return new D3D12DepthStencilView(Device.Get(), InResource, InDesc);
-}
-
-D3D12ConstantBufferView* D3D12RenderingAPI::CreateConstantBufferView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc) const
-{
-	return new D3D12ConstantBufferView(Device.Get(), InResource, InDesc);
-}
-
-D3D12Fence* D3D12RenderingAPI::CreateFence(Uint64 InitalValue) const
-{
-	TUniquePtr<D3D12Fence> Fence = TUniquePtr(new D3D12Fence(Device.Get()));
-	if (Fence->Initialize(InitalValue))
-	{
-		return Fence.Release();
-	}
-
-	return nullptr;
-}
-
-D3D12CommandAllocator* D3D12RenderingAPI::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE ListType) const
-{
-	TUniquePtr<D3D12CommandAllocator> Allocator = TUniquePtr(new D3D12CommandAllocator(Device.Get()));
-	if (Allocator->Initialize(ListType))
-	{
-		return Allocator.Release();
-	}
-
-	return nullptr;
-}
-
-D3D12CommandList* D3D12RenderingAPI::CreateCommandList(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline) const
-{
-	TUniquePtr<D3D12CommandList> List = TUniquePtr(new D3D12CommandList(Device.Get()));
-	if (List->Initialize(Type, Allocator, InitalPipeline))
-	{
-		return List.Release();
-	}
-
-	return nullptr;
-}
-
-D3D12CommandQueue* D3D12RenderingAPI::CreateCommandQueue() const
+RayTracingGeometry* D3D12RenderingAPI::CreateRayTracingGeometry() const
 {
 	return nullptr;
 }
 
-D3D12ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(const ComputePipelineStateProperties& Properties) const
+RayTracingScene* D3D12RenderingAPI::CreateRayTracingScene() const
 {
-	TUniquePtr<D3D12ComputePipelineState> PipelineState = TUniquePtr(new D3D12ComputePipelineState(Device.Get()));
-	if (PipelineState->Initialize(Properties))
-	{
-		return PipelineState.Release();
-	}
-
 	return nullptr;
 }
 
-D3D12GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(const GraphicsPipelineStateProperties& Properties) const
+Shader* D3D12RenderingAPI::CreateShader() const
 {
-	TUniquePtr<D3D12GraphicsPipelineState> PipelineState = TUniquePtr(new D3D12GraphicsPipelineState(Device.Get()));
-	if (PipelineState->Initialize(Properties))
-	{
-		return PipelineState.Release();
-	}
-
 	return nullptr;
 }
 
-D3D12RayTracingPipelineState* D3D12RenderingAPI::CreateRayTracingPipelineState(const RayTracingPipelineStateProperties& Properties) const
+DepthStencilState* D3D12RenderingAPI::CreateDepthStencilState() const
 {
-	TUniquePtr<D3D12RayTracingPipelineState> PipelineState = TUniquePtr(new D3D12RayTracingPipelineState(Device.Get()));
-	if (PipelineState->Initialize(Properties))
-	{
-		return PipelineState.Release();
-	}
-
 	return nullptr;
 }
 
-D3D12RootSignature* D3D12RenderingAPI::CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc) const
+RasterizerState* D3D12RenderingAPI::CreateRasterizerState() const
 {
-	TUniquePtr<D3D12RootSignature> RootSignature = TUniquePtr(new D3D12RootSignature(Device.Get()));
-	if (RootSignature->Initialize(Desc))
-	{
-		return RootSignature.Release();
-	}
-
 	return nullptr;
 }
 
-D3D12RootSignature* D3D12RenderingAPI::CreateRootSignature(IDxcBlob* ShaderBlob) const
+BlendState* D3D12RenderingAPI::CreateBlendState() const
 {
-	TUniquePtr<D3D12RootSignature> RootSignature = TUniquePtr(new D3D12RootSignature(Device.Get()));
-	if (RootSignature->Initialize(ShaderBlob))
-	{
-		return RootSignature.Release();
-	}
-
 	return nullptr;
 }
 
-D3D12CommandQueue* D3D12RenderingAPI::GetQueue() const
+InputLayout* D3D12RenderingAPI::CreateInputLayout() const
 {
-	return Queue.Get();
+	return nullptr;
 }
 
-D3D12SwapChain* D3D12RenderingAPI::GetSwapChain() const
+GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState() const
 {
-	return SwapChain.Get();
+	return nullptr;
 }
 
-TSharedPtr<D3D12ImmediateCommandList> D3D12RenderingAPI::GetImmediateCommandList() const
+ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState() const
 {
-	return ImmediateCommandList;
+	return nullptr;
+}
+
+RayTracingPipelineState* D3D12RenderingAPI::CreateRayTracingPipelineState() const
+{
+	return nullptr;
+}
+
+ICommandContext* D3D12RenderingAPI::CreateCommandContext() const
+{
+	return nullptr;
+}
+
+CommandList& D3D12RenderingAPI::GetDefaultCommandList() const
+{
+	// TODO: insert return statement here
+}
+
+CommandExecutor& D3D12RenderingAPI::GetDefaultCommandExecutor() const
+{
+	// TODO: insert return statement here
 }
 
 bool D3D12RenderingAPI::IsRayTracingSupported() const
@@ -263,7 +209,7 @@ bool D3D12RenderingAPI::IsRayTracingSupported() const
 bool D3D12RenderingAPI::UAVSupportsFormat(DXGI_FORMAT Format) const
 {
 	D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
-	ZERO_MEMORY(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
+	Memory::Memzero(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
 
 	HRESULT Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
 	if (SUCCEEDED(Result))
@@ -286,4 +232,31 @@ bool D3D12RenderingAPI::UAVSupportsFormat(DXGI_FORMAT Format) const
 	}
 
 	return true;
+}
+
+ComRef<ID3D12Resource> D3D12RenderingAPI::AllocateBuffer(D3D12_HEAP_TYPE HeapType, Uint32 SizeInBytes) const
+{
+	D3D12_RESOURCE_DESC Desc;
+	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
+
+	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_BUFFER;
+	Desc.Flags					= ConvertBufferFlags(InInitializer.Flags);
+	Desc.Format					= DXGI_FORMAT_UNKNOWN;
+	Desc.Width					= SizeInBytes;
+	Desc.Height					= 1;
+	Desc.DepthOrArraySize		= 1;
+	Desc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	Desc.MipLevels				= 1;
+	Desc.SampleDesc.Count		= 1;
+	Desc.SampleDesc.Quality		= 0;
+
+	ComRef<ID3D12Resource> CommitedResource;
+	HRESULT HR = Device->CreateCommitedResource();
+	if (FAILED(HR))
+	{
+		LOG_ERROR("[D3D12RenderingAPI]: Failed to create resource");
+		return ComRef<ID3D12Resource>();
+	}
+
+	return CommitedResource;
 }
