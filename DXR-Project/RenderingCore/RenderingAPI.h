@@ -34,10 +34,10 @@ public:
 	virtual class Texture3D*		CreateTexture3D()		const = 0;
 	virtual class TextureCube*		CreateTextureCube()		const = 0;
 
-	virtual class VertexBuffer*		 CreateVertexBuffer(Uint32 VertexCount, Uint32 VertexStride) const = 0;
-	virtual class IndexBuffer*		 CreateIndexBuffer(Uint32 IndexCount, EFormat IndexFormat) const = 0;
+	virtual class VertexBuffer*		 CreateVertexBuffer(Uint32 SizeInBytes, Uint32 VertexStride) const = 0;
+	virtual class IndexBuffer*		 CreateIndexBuffer(Uint32 SizeInBytes, EFormat IndexFormat) const = 0;
 	virtual class ConstantBuffer*	 CreateConstantBuffer(Uint32 SizeInBytes) const = 0;
-	virtual class StructuredBuffer*	 CreateStructuredBuffer(Uint32 SizeInBytes, Uint32 StructuredByteStride) const = 0;
+	virtual class StructuredBuffer*	 CreateStructuredBuffer(Uint32 ElementCount, Uint32 StructuredByteStride) const = 0;
 	virtual class ByteAddressBuffer* CreateByteAddressBuffer(Uint32 SizeInBytes) const = 0;
 
 	virtual class RayTracingGeometry*	CreateRayTracingGeometry()	const = 0;

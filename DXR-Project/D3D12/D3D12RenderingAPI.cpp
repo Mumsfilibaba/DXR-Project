@@ -16,6 +16,7 @@
 #include "D3D12RootSignature.h"
 #include "D3D12Views.h"
 #include "D3D12SwapChain.h"
+#include "D3D12Helpers.h"
 
 /*
 * D3D12RenderingAPI
@@ -88,19 +89,14 @@ TextureCube* D3D12RenderingAPI::CreateTextureCube() const
 	return nullptr;
 }
 
-VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(Uint32 VertexCount, Uint32 VertexStride) const
+VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(Uint32 SizeInBytes, Uint32 VertexStride) const
 {
-	const Uint64 SizeInBytes = VertexCount * VertexStride;
-
-	ComRef<ID3D12Resource> Buffer = AllocateBuffer(D3D12_HEAP_TYPE_DEFAULT, SizeInBytes);
-	if (!Buffer)
+	D3D12VertexBuffer* NewBuffer = new D3D12VertexBuffer(Device.Get(), SizeInBytes, VertexStride);
+	if (!AllocateBuffer(*NewBuffer, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, SizeInBytes))
 	{
 		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate buffer");
 		return nullptr;
 	}
-
-	D3D12VertexBuffer* NewBuffer = new D3D12VertexBuffer(Device.Get(), VertexCount, VertexStride);
-	NewBuffer->Resource = Buffer;
 
 	D3D12_VERTEX_BUFFER_VIEW View;
 	Memory::Memzero(&View, sizeof(D3D12_VERTEX_BUFFER_VIEW));
@@ -108,31 +104,99 @@ VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(Uint32 VertexCount, Uint32 V
 	View.BufferLocation	= NewBuffer->GetGPUVirtualAddress();
 	View.SizeInBytes	= SizeInBytes;
 	View.StrideInBytes	= VertexStride;
+	NewBuffer->VertexBufferView = View;
 
 	return NewBuffer;
 }
 
-IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(Uint32 IndexCount, EFormat IndexFormat) const
+IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(Uint32 SizeInBytes, EFormat IndexFormat) const
 {
-	D3D12IndexBuffer* NewBuffer = new D3D12IndexBuffer(Device.Get(), IndexCount, IndexFormat);
+	D3D12IndexBuffer* NewBuffer = new D3D12IndexBuffer(Device.Get(), SizeInBytes, IndexFormat);
+	if (!AllocateBuffer(*NewBuffer, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, SizeInBytes))
+	{
+		return nullptr;
+	}
+	
+	D3D12_INDEX_BUFFER_VIEW View;
+	Memory::Memzero(&View, sizeof(D3D12_INDEX_BUFFER_VIEW));
+
+	View.BufferLocation = NewBuffer->GetGPUVirtualAddress();
+	View.Format			= ConvertFormat();
+	View.SizeInBytes	= SizeInBytes;
+	NewBuffer->IndexBufferView = View;
+
 	return NewBuffer;
 }
 
 ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(Uint32 SizeInBytes) const
 {
 	D3D12ConstantBuffer* NewBuffer = new D3D12ConstantBuffer(Device.Get(), SizeInBytes);
+	if (!AllocateBuffer(*NewBuffer, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, SizeInBytes))
+	{
+		return nullptr;
+	}
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
+	Memory::Memzero(&ViewDesc, sizeof(D3D12_CONSTANT_BUFFER_VIEW_DESC));
+
+	ViewDesc.BufferLocation	= NewBuffer->GetGPUVirtualAddress();
+	ViewDesc.SizeInBytes	= SizeInBytes;
+
+	D3D12ConstantBufferView* View = new D3D12ConstantBufferView(Device.Get(), Buffer.Get(), ViewDesc);
+	NewBuffer->View = View;
+
 	return NewBuffer;
 }
 
-StructuredBuffer* D3D12RenderingAPI::CreateStructuredBuffer(Uint32 SizeInBytes, Uint32 StructuredByteStride) const
+StructuredBuffer* D3D12RenderingAPI::CreateStructuredBuffer(Uint32 ElementCount, Uint32 StructuredByteStride) const
 {
-	D3D12StructuredBuffer* NewBuffer = new D3D12StructuredBuffer(Device.Get(), SizeInBytes, StructuredByteStride);
+	const Uint32 SizeInBytes = ElementCount * StructuredByteStride;
+
+	D3D12StructuredBuffer* NewBuffer = new D3D12StructuredBuffer(Device.Get(), ElementCount, StructuredByteStride);
+	if (!AllocateBuffer(*NewBuffer, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, SizeInBytes))
+	{
+		return nullptr;
+	}
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc;
+	Memory::Memzero(&ViewDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+	
+	ViewDesc.Format						= DXGI_FORMAT_UNKNOWN;
+	ViewDesc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
+	ViewDesc.Shader4ComponentMapping	= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	ViewDesc.Buffer.FirstElement		= 0;
+	ViewDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
+	ViewDesc.Buffer.NumElements			= ElementCount;
+	ViewDesc.Buffer.StructureByteStride	= StructuredByteStride;
+	
+	D3D12ShaderResourceView* View = new D3D12ShaderResourceView(Device.Get(), Buffer.Get(), ViewDesc);
+	NewBuffer->View = View;
+
 	return NewBuffer;
 }
 
 ByteAddressBuffer* D3D12RenderingAPI::CreateByteAddressBuffer(Uint32 SizeInBytes) const
 {
 	D3D12ByteAddressBuffer* NewBuffer = new D3D12ByteAddressBuffer(Device.Get(), SizeInBytes);
+	if (!AllocateBuffer(*NewBuffer, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, SizeInBytes))
+	{
+		return nullptr;
+	}
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc;
+	Memory::Memzero(&ViewDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+
+	ViewDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
+	ViewDesc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
+	ViewDesc.Shader4ComponentMapping	= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	ViewDesc.Buffer.FirstElement		= 0;
+	ViewDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
+	ViewDesc.Buffer.NumElements			= SizeInBytes / 4;
+	ViewDesc.Buffer.StructureByteStride = 0;
+
+	D3D12ShaderResourceView* View = new D3D12ShaderResourceView(Device.Get(), NewBuffer->D3DResource.Get(), ViewDesc);
+	NewBuffer->View = View;
+
 	return NewBuffer;
 }
 
@@ -234,13 +298,20 @@ bool D3D12RenderingAPI::UAVSupportsFormat(DXGI_FORMAT Format) const
 	return true;
 }
 
-ComRef<ID3D12Resource> D3D12RenderingAPI::AllocateBuffer(D3D12_HEAP_TYPE HeapType, Uint32 SizeInBytes) const
+bool D3D12RenderingAPI::AllocateBuffer(D3D12Resource& Resource, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_FLAGS Flags, Uint32 SizeInBytes) const
 {
+	D3D12_HEAP_PROPERTIES HeapProperties;
+	Memory::Memzero(&HeapProperties, sizeof(D3D12_HEAP_PROPERTIES));
+
+	HeapProperties.Type					= HeapType;
+	HeapProperties.CPUPageProperty		= D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	HeapProperties.MemoryPoolPreference	= D3D12_MEMORY_POOL_UNKNOWN;
+
 	D3D12_RESOURCE_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
 
 	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_BUFFER;
-	Desc.Flags					= ConvertBufferFlags(InInitializer.Flags);
+	Desc.Flags					= Flags;
 	Desc.Format					= DXGI_FORMAT_UNKNOWN;
 	Desc.Width					= SizeInBytes;
 	Desc.Height					= 1;
@@ -250,13 +321,20 @@ ComRef<ID3D12Resource> D3D12RenderingAPI::AllocateBuffer(D3D12_HEAP_TYPE HeapTyp
 	Desc.SampleDesc.Count		= 1;
 	Desc.SampleDesc.Quality		= 0;
 
-	ComRef<ID3D12Resource> CommitedResource;
-	HRESULT HR = Device->CreateCommitedResource();
+	HRESULT HR = Device->CreateCommitedResource(
+		&HeapProperties, 
+		D3D12_HEAP_FLAG_NONE, 
+		&Desc, 
+		D3D12_RESOURCE_STATE_COMMON, 
+		nullptr, 
+		IID_PPV_ARGS(&Resource.D3DResource));
 	if (FAILED(HR))
 	{
 		LOG_ERROR("[D3D12RenderingAPI]: Failed to create resource");
-		return ComRef<ID3D12Resource>();
+		return false;
 	}
-
-	return CommitedResource;
+	else
+	{
+		return true;
+	}
 }

@@ -30,7 +30,7 @@ bool D3D12Buffer::Initialize(const BufferInitializer& InInitializer)
 	D3D12_RESOURCE_DESC ResourceDesc = {};
 	ResourceDesc.DepthOrArraySize	= 1;
 	ResourceDesc.Dimension			= D3D12_RESOURCE_DIMENSION_BUFFER;
-	ResourceDesc.Flags				= ConvertBufferFlags(InInitializer.Flags);
+	ResourceDesc.Flags				= 
 	ResourceDesc.Format				= DXGI_FORMAT_UNKNOWN;
 	ResourceDesc.Height				= 1;
 	ResourceDesc.Layout				= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;

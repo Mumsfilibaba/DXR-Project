@@ -23,10 +23,51 @@ public:
 	~D3D12Device();
 
 	bool Initialize(bool DebugEnable);
-	
-	Uint32 GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount;
+
+	Uint32 GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount);
 
 	std::string GetAdapterName() const;
+	
+	FORCEINLINE HRESULT CreateCommitedResource(
+		const D3D12_HEAP_PROPERTIES* pHeapProperties,
+		D3D12_HEAP_FLAGS HeapFlags,
+		const D3D12_RESOURCE_DESC* pDesc,
+		D3D12_RESOURCE_STATES InitialResourceState,
+		const D3D12_CLEAR_VALUE* pOptimizedClearValue,
+		REFIID riidResource,
+		void** ppvResource)
+	{
+		return D3DDevice->CreateCommittedResource(pHeapProperties, HeapFlags, pDesc, InitialResourceState, pOptimizedClearValue, riidResource, ppvResource);
+	}
+
+	FORCEINLINE void CreateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+	{
+		D3DDevice->CreateConstantBufferView(pDesc, DestDescriptor);
+	}
+
+	FORCEINLINE void CreateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+	{
+		D3DDevice->CreateRenderTargetView(pResource, pDesc, DestDescriptor);
+	}
+
+	FORCEINLINE void CreateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+	{
+		D3DDevice->CreateDepthStencilView(pResource, pDesc, DestDescriptor);
+	}
+
+	FORCEINLINE void CreateShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+	{
+		D3DDevice->CreateShaderResourceView(pResource, pDesc, DestDescriptor);
+	}
+
+	FORCEINLINE void CreateUnorderedAccessView(
+		ID3D12Resource* pResource,
+		ID3D12Resource* pCounterResource,
+		const D3D12_UNORDERED_ACCESS_VIEW_DESC* pDesc,
+		D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+	{
+		D3DDevice->CreateUnorderedAccessView(pResource, pCounterResource, pDesc, DestDescriptor);
+	}
 
 	FORCEINLINE ID3D12Device* GetDevice() const
 	{
@@ -90,12 +131,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Device>	D3DDevice;
 	Microsoft::WRL::ComPtr<ID3D12Device5>	DXRDevice;
 
-	bool DebugEnabled			= false;
-	bool RayTracingSupported	= false;
-	BOOL AllowTearing			= FALSE;
-
-	Uint32 AdapterID = 0;
-
 	D3D_FEATURE_LEVEL MinFeatureLevel		= D3D_FEATURE_LEVEL_11_0;
 	D3D_FEATURE_LEVEL ActiveFeatureLevel	= D3D_FEATURE_LEVEL_11_0;
 
@@ -105,4 +140,10 @@ private:
 	D3D12OfflineDescriptorHeap* GlobalSamplerDescriptorHeap			= nullptr;
 
 	D3D12OnlineDescriptorHeap* GlobalOnlineResourceHeap = nullptr;
+
+	Uint32 AdapterID = 0;
+
+	bool DebugEnabled			= false;
+	bool RayTracingSupported	= false;
+	BOOL AllowTearing			= FALSE;
 };

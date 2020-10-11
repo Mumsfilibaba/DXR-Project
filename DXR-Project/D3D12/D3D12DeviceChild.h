@@ -2,14 +2,11 @@
 #include "Defines.h"
 #include "Types.h"
 
+#include "Containers/String.h"
+
 #include <d3d12.h>
 
 #include <wrl/client.h>
-
-template<typename T>
-using ComRef = Microsoft::WRL::ComPtr;
-
-#include "Containers/String.h"
 
 class D3D12Device;
 

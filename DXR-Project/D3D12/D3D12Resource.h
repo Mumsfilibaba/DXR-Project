@@ -7,15 +7,15 @@
 
 class D3D12Resource : public D3D12DeviceChild
 {
+	friend class D3D12RenderingAPI;
+
 public:
 	D3D12Resource(D3D12Device* InDevice);
 	virtual ~D3D12Resource();
 
-	bool Initialize(const D3D12_RESOURCE_DESC& InDesc, D3D12_RESOURCE_STATES InitalState, D3D12_HEAP_TYPE InHeapType, const D3D12_CLEAR_VALUE* OptimizedClearValue);
-
 	FORCEINLINE ID3D12Resource* GetResource() const
 	{
-		return Resource;
+		return D3DResource.Get();
 	}
 
 	FORCEINLINE D3D12_HEAP_TYPE GetHeapType() const
@@ -39,7 +39,7 @@ public:
 	}
 
 protected:
-	ComRef<ID3D12Resource> Resource;
+	Microsoft::WRL::ComPtr<ID3D12Resource> D3DResource;
 
 	D3D12_HEAP_TYPE				HeapType;
 	D3D12_RESOURCE_STATES		ResourceState;

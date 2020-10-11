@@ -7,7 +7,7 @@
 */
 
 D3D12View::D3D12View(D3D12Device* InDevice, ID3D12Resource* InResource)
-	: Device(InDevice)
+	: D3D12DeviceChild(InDevice)
 	, Resource(InResource)
 	, OfflineHandle({ 0 })
 {
@@ -27,7 +27,7 @@ void D3D12View::ResetResource()
 * D3D12ConstantBufferView
 */
 
-D3D12ConstantBufferView::D3D12ConstantBufferView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc)
+D3D12ConstantBufferView::D3D12ConstantBufferView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 	: D3D12View(InDevice, InResource)
 	, Desc()
 {
@@ -37,18 +37,18 @@ D3D12ConstantBufferView::D3D12ConstantBufferView(D3D12Device* InDevice, ID3D12Re
 	CreateView(InResource, InDesc);
 }
 
-void D3D12ConstantBufferView::CreateView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc)
+void D3D12ConstantBufferView::CreateView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
 	Resource	= InResource;
-	Desc		= *InDesc;
-	Device->GetDevice()->CreateConstantBufferView(InDesc, OfflineHandle);
+	Desc		= InDesc;
+	Device->CreateConstantBufferView(&Desc, OfflineHandle);
 }
 
 /*
 * D3D12ShaderResourceView
 */
 
-D3D12ShaderResourceView::D3D12ShaderResourceView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc)
+D3D12ShaderResourceView::D3D12ShaderResourceView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 	: D3D12View(InDevice, InResource)
 	, Desc()
 {
@@ -58,19 +58,19 @@ D3D12ShaderResourceView::D3D12ShaderResourceView(D3D12Device* InDevice, ID3D12Re
 	CreateView(InResource, InDesc);
 }
 
-void D3D12ShaderResourceView::CreateView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc)
+void D3D12ShaderResourceView::CreateView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
-	Resource = InResource;
-	Desc = *InDesc;
+	Resource	= InResource;
+	Desc		= InDesc;
 
-	Device->GetDevice()->CreateShaderResourceView(InResource, InDesc, OfflineHandle);
+	Device->CreateShaderResourceView(InResource, &Desc, OfflineHandle);
 }
 
 /*
 * D3D12UnorderedAccessView
 */
 
-D3D12UnorderedAccessView::D3D12UnorderedAccessView(D3D12Device* InDevice, ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc)
+D3D12UnorderedAccessView::D3D12UnorderedAccessView(D3D12Device* InDevice, ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 	: D3D12View(InDevice, InResource)
 	, Desc()
 	, CounterResource()
@@ -81,13 +81,16 @@ D3D12UnorderedAccessView::D3D12UnorderedAccessView(D3D12Device* InDevice, ID3D12
 	CreateView(InCounterResource, InResource, InDesc);
 }
 
-void D3D12UnorderedAccessView::CreateView(ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc)
+void D3D12UnorderedAccessView::CreateView(
+	ID3D12Resource* InCounterResource, 
+	ID3D12Resource* InResource, 
+	const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
-	CounterResource = InCounterResource;
-	Resource = InResource;
-	Desc = *InDesc;
+	Desc			= InDesc;
+	CounterResource	= InCounterResource;
+	Resource		= InResource;
 
-	Device->GetDevice()->CreateUnorderedAccessView(InResource, InCounterResource, InDesc, OfflineHandle);
+	Device->CreateUnorderedAccessView(InResource, InCounterResource, &Desc, OfflineHandle);
 }
 
 
@@ -95,7 +98,7 @@ void D3D12UnorderedAccessView::CreateView(ID3D12Resource* InCounterResource, ID3
 * D3D12RenderTargetView
 */
 
-D3D12RenderTargetView::D3D12RenderTargetView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC* InDesc)
+D3D12RenderTargetView::D3D12RenderTargetView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 	: D3D12View(InDevice, InResource)
 	, Desc()
 {
@@ -105,18 +108,18 @@ D3D12RenderTargetView::D3D12RenderTargetView(D3D12Device* InDevice, ID3D12Resour
 	CreateView(InResource, InDesc);
 }
 
-void D3D12RenderTargetView::CreateView(ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC* InDesc)
+void D3D12RenderTargetView::CreateView(ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
-	Desc = *InDesc;
-	Resource = InResource;
-	Device->GetDevice()->CreateRenderTargetView(InResource, InDesc, OfflineHandle);
+	Desc		= InDesc;
+	Resource	= InResource;
+	Device->GetDevice()->CreateRenderTargetView(InResource, &Desc, OfflineHandle);
 }
 
 /*
 * D3D12DepthStencilView
 */
 
-D3D12DepthStencilView::D3D12DepthStencilView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc)
+D3D12DepthStencilView::D3D12DepthStencilView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 	: D3D12View(InDevice, InResource)
 	, Desc()
 {
@@ -126,9 +129,9 @@ D3D12DepthStencilView::D3D12DepthStencilView(D3D12Device* InDevice, ID3D12Resour
 	CreateView(InResource, InDesc);
 }
 
-void D3D12DepthStencilView::CreateView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc)
+void D3D12DepthStencilView::CreateView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
-	Desc = *InDesc;
-	Resource = InResource;
-	Device->GetDevice()->CreateDepthStencilView(InResource, InDesc, OfflineHandle);
+	Desc		= InDesc;
+	Resource	= InResource;
+	Device->GetDevice()->CreateDepthStencilView(InResource, &Desc, OfflineHandle);
 }

@@ -1,19 +1,14 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "D3D12DeviceChild.h"
 
-#include <d3d12.h>
-
-#include <wrl/client.h>
+class D3D12Device;
+class D3D12OfflineDescriptorHeap;
 
 /*
 * D3D12View
 */
 
-class D3D12Device;
-class D3D12OfflineDescriptorHeap;
-
-class D3D12View
+class D3D12View : public D3D12DeviceChild
 {
 public:
 	D3D12View(D3D12Device* InDevice, ID3D12Resource* InResource);
@@ -32,8 +27,6 @@ public:
 	}
 
 protected:
-	D3D12Device* Device = nullptr;
-
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
 	
 	D3D12OfflineDescriptorHeap* Heap				= nullptr;
@@ -48,10 +41,10 @@ protected:
 class D3D12ConstantBufferView : public D3D12View
 {
 public:
-	D3D12ConstantBufferView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc);
+	D3D12ConstantBufferView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 	~D3D12ConstantBufferView() = default;
 
-	void CreateView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc);
+	void CreateView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 
 	FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const
 	{
@@ -69,10 +62,10 @@ private:
 class D3D12ShaderResourceView : public D3D12View
 {
 public:
-	D3D12ShaderResourceView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc);
+	D3D12ShaderResourceView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 	~D3D12ShaderResourceView() = default;
 
-	void CreateView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc);
+	void CreateView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
 	FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
 	{
@@ -90,10 +83,10 @@ private:
 class D3D12UnorderedAccessView : public D3D12View
 {
 public:
-	D3D12UnorderedAccessView(D3D12Device* InDevice, ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc);
+	D3D12UnorderedAccessView(D3D12Device* InDevice, ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 	~D3D12UnorderedAccessView() = default;
 
-	void CreateView(ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc);
+	void CreateView(ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
 	FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
 	{
@@ -112,10 +105,10 @@ private:
 class D3D12RenderTargetView : public D3D12View
 {
 public:
-	D3D12RenderTargetView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC* InDesc);
+	D3D12RenderTargetView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 	~D3D12RenderTargetView() = default;
 
-	void CreateView(ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC* InDesc);
+	void CreateView(ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
 	FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const
 	{
@@ -133,10 +126,10 @@ private:
 class D3D12DepthStencilView : public D3D12View
 {
 public:
-	D3D12DepthStencilView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc);
+	D3D12DepthStencilView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 	~D3D12DepthStencilView() = default;
 
-	void CreateView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc);
+	void CreateView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 
 	FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const
 	{
