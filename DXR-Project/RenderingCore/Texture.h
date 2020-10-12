@@ -12,26 +12,25 @@ class TextureCube;
 class Texture2DArray;
 
 /*
-* ETextureFlags
+* ETextureUsage
 */
 
-typedef Uint32 TextureFlags;
-enum ETextureFlag : TextureFlags
+enum ETextureUsage
 {
-	TEXTURE_FLAG_NONE					= 0,
-	TEXTURE_FLAG_RENDER_TARGET			= FLAG(1),
-	TEXTURE_FLAG_DEPTH_STENCIL_TARGET	= FLAG(2),
-	TEXTURE_FLAG_UNORDERED_ACCESS		= FLAG(3),
-	TEXTURE_FLAG_SHADER_RESOURCE		= FLAG(4),
+	TextureUsage_None	= 0,
+	TextureUsage_RTV	= FLAG(1), // RenderTargetView
+	TextureUsage_DSV	= FLAG(2), // DepthStencilView
+	TextureUsage_UAV	= FLAG(3), // UnorderedAccessView
+	TextureUsage_SRV	= FLAG(4), // ShaderResourceView
 };
 
 /*
-* SubresourceIndex
+* TextureRange
 */
 
-struct SubresourceIndex
+struct TextureRange
 {
-	inline explicit SubresourceIndex(Int32 InMipSlice, Int32 InArraySlice, Int32 InPlaneSlice, Int32 InMipLevels, Int32 InArraySize)
+	inline explicit TextureRange(Int32 InMipSlice, Int32 InArraySlice, Int32 InPlaneSlice, Int32 InMipLevels, Int32 InArraySize)
 		: MipSlice(InMipSlice)
 		, MipLevels(InMipLevels)
 		, ArraySlice(InArraySlice)
@@ -40,7 +39,7 @@ struct SubresourceIndex
 	{
 	}
 
-	inline SubresourceIndex(const SubresourceIndex& Other)
+	inline TextureRange(const TextureRange& Other)
 		: MipSlice(Other.MipSlice)
 		, MipLevels(Other.MipLevels)
 		, ArraySlice(Other.ArraySlice)
@@ -167,81 +166,6 @@ public:
 	{
 		return false;
 	}
-
-	// Resource views
-	void SetRenderTargetView(RenderTargetView* InRenderTargetView, const SubresourceIndex& InSubresourceIndex)
-	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		if (SubresourceIndex < RenderTargetViews.Size())
-		{
-			RenderTargetViews.Resize(SubresourceIndex + 1);
-		}
-
-		RenderTargetViews[SubresourceIndex] = InRenderTargetView;
-	}
-
-	void SetDepthStencilView(DepthStencilView* InDepthStencilView, const SubresourceIndex& InSubresourceIndex)
-	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		if (SubresourceIndex < DepthStencilViews.Size())
-		{
-			DepthStencilViews.Resize(SubresourceIndex + 1);
-		}
-
-		DepthStencilViews[SubresourceIndex] = InDepthStencilView;
-	}
-
-	void SetShaderResourceView(ShaderResourceView* InShaderResourceView, const SubresourceIndex& InSubresourceIndex)
-	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		if (SubresourceIndex < ShaderResourceViews.Size())
-		{
-			ShaderResourceViews.Resize(SubresourceIndex + 1);
-		}
-
-		ShaderResourceViews[SubresourceIndex] = InShaderResourceView;
-	}
-
-	void SetUnorderedAccessView(UnorderedAccessView* InUnorderedAccessView, const SubresourceIndex& InSubresourceIndex)
-	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		if (SubresourceIndex < UnorderedAccessViews.Size())
-		{
-			UnorderedAccessViews.Resize(SubresourceIndex + 1);
-		}
-
-		UnorderedAccessViews[SubresourceIndex] = InUnorderedAccessView;
-	}
-
-	FORCEINLINE RenderTargetView* GetRenderTargetView(const SubresourceIndex& InSubresourceIndex) const
-	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		return RenderTargetViews[SubresourceIndex];
-	}
-
-	FORCEINLINE DepthStencilView* GetDepthStencilView(const SubresourceIndex& InSubresourceIndex) const
-	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		return DepthStencilViews[SubresourceIndex];
-	}
-
-	FORCEINLINE ShaderResourceView* GetShaderResourceView(const SubresourceIndex& InSubresourceIndex) const
-	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		return ShaderResourceViews[SubresourceIndex];
-	}
-
-	FORCEINLINE UnorderedAccessView* GetUnorderedAccessView(const SubresourceIndex& InSubresourceIndex) const
-	{
-		const Int32 SubresourceIndex = InSubresourceIndex.GetSubresourceIndex();
-		return UnorderedAccessViews[SubresourceIndex];
-	}
-
-protected:
-	TArray<RenderTargetView*>		RenderTargetViews;
-	TArray<DepthStencilView*>		DepthStencilViews;
-	TArray<ShaderResourceView*>		ShaderResourceViews;
-	TArray<UnorderedAccessView*>	UnorderedAccessViews;
 };
 
 /*
@@ -478,7 +402,7 @@ struct Texture2DArrayInitializer
 class Texture2DArray : public Texture
 {
 public:
-	Texture2DArray()		= default;
+	Texture2DArray()	= default;
 	~Texture2DArray()	= default;
 
 	virtual bool Initialize(const Texture2DArrayInitializer& InInitializer) = 0;

@@ -12,19 +12,8 @@ class D3D12VertexBuffer : public VertexBuffer, public D3D12Resource
 	friend class D3D12RenderingAPI;
 
 public:
-	D3D12VertexBuffer(D3D12Device* InDevice, Uint32 SizeInBytes, Uint32 VertexStride);
-	~D3D12VertexBuffer();
-
-	// Buffer functions
-	virtual Uint64 GetSizeInBytes() const
-	{
-		return 0;
-	}
-
-	virtual Uint64 GetVirtualGPUAddress() const
-	{
-		return 0;
-	}
+	D3D12VertexBuffer(D3D12Device* InDevice, Uint32 SizeInBytes, Uint32 VertexStride, Uint32 Usage);
+	~D3D12VertexBuffer() = default;
 
 	// Map
 	virtual VoidPtr Map()
@@ -54,19 +43,8 @@ class D3D12IndexBuffer : public IndexBuffer, public D3D12Resource
 	friend class D3D12RenderingAPI;
 
 public:
-	D3D12IndexBuffer(D3D12Device* InDevice, Uint32 SizeInBytes, EFormat IndexFormat);
-	~D3D12IndexBuffer();
-
-	// Buffer functions
-	virtual Uint64 GetSizeInBytes() const
-	{
-		return 0;
-	}
-
-	virtual Uint64 GetVirtualGPUAddress() const
-	{
-		return 0;
-	}
+	D3D12IndexBuffer(D3D12Device* InDevice, Uint32 SizeInBytes, EIndexFormat IndexFormat, Uint32 Usage);
+	~D3D12IndexBuffer() = default;
 
 	// Map
 	virtual VoidPtr Map()
@@ -96,19 +74,8 @@ class D3D12ConstantBuffer : public ConstantBuffer, public D3D12Resource
 	friend class D3D12RenderingAPI;
 
 public:
-	D3D12ConstantBuffer(D3D12Device* InDevice, Uint32 SizeInBytes);
-	~D3D12ConstantBuffer();
-
-	// Buffer functions
-	virtual Uint64 GetSizeInBytes() const
-	{
-		return 0;
-	}
-
-	virtual Uint64 GetVirtualGPUAddress() const
-	{
-		return 0;
-	}
+	D3D12ConstantBuffer(D3D12Device* InDevice, Uint32 SizeInBytes, Uint32 Usage);
+	~D3D12ConstantBuffer() = default;
 
 	// Map
 	virtual VoidPtr Map()
@@ -133,19 +100,8 @@ class D3D12StructuredBuffer : public StructuredBuffer, public D3D12Resource
 	friend class D3D12RenderingAPI;
 
 public:
-	D3D12StructuredBuffer(D3D12Device* InDevice, Uint32 ElementCount, Uint32 StructuredStride);
-	~D3D12StructuredBuffer();
-
-	// Buffer functions
-	virtual Uint64 GetSizeInBytes() const
-	{
-		return 0;
-	}
-
-	virtual Uint64 GetVirtualGPUAddress() const
-	{
-		return 0;
-	}
+	D3D12StructuredBuffer(D3D12Device* InDevice, Uint32 SizeInBytes, Uint32 Stride, Uint32 Usage);
+	~D3D12StructuredBuffer() = default;
 
 	// Map
 	virtual VoidPtr Map()
@@ -156,44 +112,4 @@ public:
 	virtual void Unmap()
 	{
 	}
-
-private:
-	class D3D12ShaderResourceView* View;
-};
-
-/*
-* D3D12ByteAddressBuffer
-*/
-
-class D3D12ByteAddressBuffer : public ByteAddressBuffer, public D3D12Resource
-{
-	friend class D3D12RenderingAPI;
-
-public:
-	D3D12ByteAddressBuffer(D3D12Device* InDevice, Uint32 SizeInBytes);
-	~D3D12ByteAddressBuffer();
-
-	// Buffer functions
-	virtual Uint64 GetSizeInBytes() const
-	{
-		return 0;
-	}
-
-	virtual Uint64 GetVirtualGPUAddress() const
-	{
-		return 0;
-	}
-
-	// Map
-	virtual VoidPtr Map()
-	{
-		return nullptr;
-	}
-
-	virtual void Unmap()
-	{
-	}
-
-private:
-	class D3D12ShaderResourceView* View;
 };

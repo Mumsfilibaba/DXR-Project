@@ -26,11 +26,10 @@ public:
 	virtual class Texture3D*		CreateTexture3D()		const override final;
 	virtual class TextureCube*		CreateTextureCube()		const override final;
 
-	virtual class VertexBuffer*			CreateVertexBuffer(Uint32 SizeInBytes, Uint32 VertexStride) const override final;
-	virtual class IndexBuffer*			CreateIndexBuffer(Uint32 SizeInBytes, EFormat IndexFormat) const override final;
-	virtual class ConstantBuffer*		CreateConstantBuffer(Uint32 SizeInBytes) const override final;
-	virtual class StructuredBuffer*		CreateStructuredBuffer(Uint32 ElementCount, Uint32 StructuredByteStride) const override final;
-	virtual class ByteAddressBuffer*	CreateByteAddressBuffer(Uint32 SizeInBytes) const override final;
+	virtual class VertexBuffer*		CreateVertexBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 VertexStride, Uint32 Usage)	const override final;
+	virtual class IndexBuffer*		CreateIndexBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, EIndexFormat IndexFormat, Uint32 Usage)	const override final;
+	virtual class ConstantBuffer*	CreateConstantBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Usage)						const override final;
+	virtual class StructuredBuffer*	CreateStructuredBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Stride, Uint32 Usage)		const override final;
 
 	virtual class RayTracingGeometry*	CreateRayTracingGeometry()	const override final;
 	virtual class RayTracingScene*		CreateRayTracingScene()		const override final;
@@ -63,6 +62,7 @@ public:
 
 private:
 	bool AllocateBuffer(D3D12Resource& Resource, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_FLAGS Flags, Uint32 SizeInBytes) const;
+	bool UploadResource(D3D12Resource& Resource, const ResourceData* InitalData) const;
 	bool AllocateTexture(D3D12Resource& Resource);
 
 	TSharedPtr<WindowsWindow>				RenderWindow;

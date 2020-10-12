@@ -31,6 +31,45 @@ public:
 };
 
 /*
+* ResourceData
+*/
+
+struct ResourceData
+{
+	inline ResourceData()
+		: Data(nullptr)
+		, Pitch(0)
+		, SlicePitch(0)
+	{
+	}
+
+	inline ResourceData(VoidPtr InData)
+		: Data(InData)
+		, Pitch(0)
+		, SlicePitch(0)
+	{
+	}
+
+	inline ResourceData(VoidPtr InData, Uint32 InPitch)
+		: Data(InData)
+		, Pitch(InPitch)
+		, SlicePitch(0)
+	{
+	}
+
+	inline ResourceData(VoidPtr InData, Uint32 InPitch, Uint32 InSlicePitch)
+		: Data(InData)
+		, Pitch(InPitch)
+		, SlicePitch(InSlicePitch)
+	{
+	}
+
+	VoidPtr Data;
+	Uint32	Pitch;
+	Uint32	SlicePitch;
+};
+
+/*
 * Resource
 */
 

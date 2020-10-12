@@ -317,50 +317,6 @@ struct BindConstantBuffersRenderCommand : public RenderCommand
 	Uint32 StartSlot;
 };
 
-// Bind StructuredBuffers RenderCommand
-struct BindStructuredBuffersRenderCommand : public RenderCommand
-{
-	inline BindStructuredBuffersRenderCommand(Shader* InShader, StructuredBuffer* const* InStructuredBuffers, Uint32 InStructuredBufferCount, Uint32 InStartSlot)
-		: Shader(InShader)
-		, StructuredBuffers(InStructuredBuffers)
-		, StructuredBufferCount(InStructuredBufferCount)
-		, StartSlot(InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.BindStructuredBuffers(Shader, StructuredBuffers, StructuredBufferCount, StartSlot);
-	}
-
-	Shader* Shader;
-	StructuredBuffer* const* StructuredBuffers;
-	Uint32 StructuredBufferCount;
-	Uint32 StartSlot;
-};
-
-// Bind ByteAddressBuffers RenderCommand
-struct BindByteAddressBuffersRenderCommand : public RenderCommand
-{
-	inline BindByteAddressBuffersRenderCommand(Shader* InShader, ByteAddressBuffer* const* InByteAddressBuffers, Uint32 InByteAddressBufferCount, Uint32 InStartSlot)
-		: Shader(InShader)
-		, ByteAddressBuffers(InByteAddressBuffers)
-		, ByteAddressBufferCount(InByteAddressBufferCount)
-		, StartSlot(InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.BindByteAddressBuffers(Shader, ByteAddressBuffers, ByteAddressBufferCount, StartSlot);
-	}
-
-	Shader* Shader;
-	ByteAddressBuffer* const* ByteAddressBuffers;
-	Uint32 ByteAddressBufferCount;
-	Uint32 StartSlot;
-};
-
 // Bind ShaderResourceViews RenderCommand
 struct BindShaderResourceViewsRenderCommand : public RenderCommand
 {

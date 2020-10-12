@@ -1,5 +1,6 @@
 #pragma once
 #include "D3D12DeviceChild.h"
+#include "D3D12Resource.h"
 
 class D3D12Device;
 class D3D12OfflineDescriptorHeap;
@@ -11,7 +12,7 @@ class D3D12OfflineDescriptorHeap;
 class D3D12View : public D3D12DeviceChild
 {
 public:
-	D3D12View(D3D12Device* InDevice, ID3D12Resource* InResource);
+	D3D12View(D3D12Device* InDevice, D3D12Resource* InResource);
 	virtual ~D3D12View();
 
 	void ResetResource();
@@ -21,13 +22,13 @@ public:
 		return OfflineHandle;
 	}
 
-	FORCEINLINE ID3D12Resource* GetResource() const
+	FORCEINLINE D3D12Resource* GetResource() const
 	{
-		return Resource.Get();
+		return Resource;
 	}
 
 protected:
-	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
+	D3D12Resource* Resource;
 	
 	D3D12OfflineDescriptorHeap* Heap				= nullptr;
 	Uint32						OfflineHeapIndex	= 0;
@@ -41,10 +42,10 @@ protected:
 class D3D12ConstantBufferView : public D3D12View
 {
 public:
-	D3D12ConstantBufferView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
+	D3D12ConstantBufferView(D3D12Device* InDevice, D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 	~D3D12ConstantBufferView() = default;
 
-	void CreateView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
+	void CreateView(D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 
 	FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const
 	{
@@ -62,10 +63,10 @@ private:
 class D3D12ShaderResourceView : public D3D12View
 {
 public:
-	D3D12ShaderResourceView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
+	D3D12ShaderResourceView(D3D12Device* InDevice, D3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 	~D3D12ShaderResourceView() = default;
 
-	void CreateView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
+	void CreateView(D3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
 	FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
 	{
@@ -83,10 +84,10 @@ private:
 class D3D12UnorderedAccessView : public D3D12View
 {
 public:
-	D3D12UnorderedAccessView(D3D12Device* InDevice, ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
+	D3D12UnorderedAccessView(D3D12Device* InDevice, D3D12Resource* InCounterResource, D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 	~D3D12UnorderedAccessView() = default;
 
-	void CreateView(ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
+	void CreateView(D3D12Resource* InCounterResource, D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
 	FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
 	{
@@ -94,8 +95,8 @@ public:
 	}
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12Resource>	CounterResource;
-	D3D12_UNORDERED_ACCESS_VIEW_DESC		Desc;
+	D3D12Resource* CounterResource;
+	D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
 };
 
 /*
@@ -105,10 +106,10 @@ private:
 class D3D12RenderTargetView : public D3D12View
 {
 public:
-	D3D12RenderTargetView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
+	D3D12RenderTargetView(D3D12Device* InDevice, D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 	~D3D12RenderTargetView() = default;
 
-	void CreateView(ID3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
+	void CreateView(D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
 	FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const
 	{
@@ -126,10 +127,10 @@ private:
 class D3D12DepthStencilView : public D3D12View
 {
 public:
-	D3D12DepthStencilView(D3D12Device* InDevice, ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
+	D3D12DepthStencilView(D3D12Device* InDevice, D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 	~D3D12DepthStencilView() = default;
 
-	void CreateView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
+	void CreateView(D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 
 	FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const
 	{

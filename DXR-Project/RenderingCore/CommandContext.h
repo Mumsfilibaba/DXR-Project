@@ -1,11 +1,11 @@
 #pragma once
 #include "RenderingCore.h"
 
+class Buffer;
 class VertexBuffer;
 class IndexBuffer;
 class ConstantBuffer;
 class StructuredBuffer;
-class ByteAddressBuffer;
 class Shader;
 class RenderTargetView;
 class ShaderResourceView;
@@ -54,11 +54,9 @@ public:
 	virtual void BindComputePipelineState(class ComputePipelineState* PipelineState) = 0;
 	virtual void BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState) = 0;
 
-	virtual void BindConstantBuffers(Shader* Shader, ConstantBuffer* const * ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot) = 0;
-	virtual void BindStructuredBuffers(Shader* Shader, StructuredBuffer* const* StructuredBuffers, Uint32 StructuredBufferCount, Uint32 StartSlot) = 0;
-	virtual void BindByteAddressBuffers(Shader* Shader, ByteAddressBuffer* const* ByteAddressBuffers, Uint32 ByteAddressBufferCount, Uint32 StartSlot) = 0;
 	virtual void BindShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceViews, Uint32 ShaderResourceViewCount, Uint32 StartSlot) = 0;
 	virtual void BindUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, Uint32 UnorderedAccessViewCount, Uint32 StartSlot) = 0;
+	virtual void BindConstantBuffers(Shader* Shader, ConstantBuffer* const * ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot) = 0;
 
 	virtual void ResolveTexture(Texture* Destination, Texture* Source) = 0;
 

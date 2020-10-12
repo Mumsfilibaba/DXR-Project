@@ -89,13 +89,25 @@ TextureCube* D3D12RenderingAPI::CreateTextureCube() const
 	return nullptr;
 }
 
-VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(Uint32 SizeInBytes, Uint32 VertexStride) const
+VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 VertexStride, Uint32 Usage) const
 {
-	D3D12VertexBuffer* NewBuffer = new D3D12VertexBuffer(Device.Get(), SizeInBytes, VertexStride);
-	if (!AllocateBuffer(*NewBuffer, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, SizeInBytes))
+	D3D12_RESOURCE_FLAGS Flags	= ConvertBufferUsage(Usage);
+	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
+	if (Usage & BufferUsage_Dynamic)
+	{
+		HeapType = D3D12_HEAP_TYPE_UPLOAD;
+	}
+
+	D3D12VertexBuffer* NewBuffer = new D3D12VertexBuffer(Device.Get(), SizeInBytes, VertexStride, Usage);
+	if (!AllocateBuffer(*NewBuffer, HeapType, Flags, SizeInBytes))
 	{
 		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate buffer");
 		return nullptr;
+	}
+
+	if (InitalData)
+	{
+		UploadResource(*NewBuffer, InitalData);
 	}
 
 	D3D12_VERTEX_BUFFER_VIEW View;
@@ -109,31 +121,65 @@ VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(Uint32 SizeInBytes, Uint32 V
 	return NewBuffer;
 }
 
-IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(Uint32 SizeInBytes, EFormat IndexFormat) const
+IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, EIndexFormat IndexFormat, Uint32 Usage) const
 {
-	D3D12IndexBuffer* NewBuffer = new D3D12IndexBuffer(Device.Get(), SizeInBytes, IndexFormat);
-	if (!AllocateBuffer(*NewBuffer, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, SizeInBytes))
+	D3D12_RESOURCE_FLAGS Flags	= ConvertBufferUsage(Usage);
+	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
+	if (Usage & BufferUsage_Dynamic)
+	{
+		HeapType = D3D12_HEAP_TYPE_UPLOAD;
+	}
+
+	D3D12IndexBuffer* NewBuffer = new D3D12IndexBuffer(Device.Get(), SizeInBytes, IndexFormat, Usage);
+	if (!AllocateBuffer(*NewBuffer, HeapType, Flags, SizeInBytes))
 	{
 		return nullptr;
 	}
 	
+	if (InitalData)
+	{
+		UploadResource(*NewBuffer, InitalData);
+	}
+
 	D3D12_INDEX_BUFFER_VIEW View;
 	Memory::Memzero(&View, sizeof(D3D12_INDEX_BUFFER_VIEW));
 
 	View.BufferLocation = NewBuffer->GetGPUVirtualAddress();
-	View.Format			= ConvertFormat();
 	View.SizeInBytes	= SizeInBytes;
+	if (IndexFormat == EIndexFormat::IndexFormat_Uint16)
+	{
+		View.Format	= DXGI_FORMAT_R16_UINT;
+	}
+	else if (IndexFormat == EIndexFormat::IndexFormat_Uint32)
+	{
+		View.Format = DXGI_FORMAT_R32_UINT;
+	}
+
 	NewBuffer->IndexBufferView = View;
 
 	return NewBuffer;
 }
 
-ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(Uint32 SizeInBytes) const
+ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Usage) const
 {
-	D3D12ConstantBuffer* NewBuffer = new D3D12ConstantBuffer(Device.Get(), SizeInBytes);
-	if (!AllocateBuffer(*NewBuffer, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, SizeInBytes))
+	const Uint32 AlignedSize = AlignUp<Uint32>(SizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+
+	D3D12_RESOURCE_FLAGS Flags	= ConvertBufferUsage(Usage);
+	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
+	if (Usage & BufferUsage_Dynamic)
+	{
+		HeapType = D3D12_HEAP_TYPE_UPLOAD;
+	}
+
+	D3D12ConstantBuffer* NewBuffer = new D3D12ConstantBuffer(Device.Get(), SizeInBytes, Usage);
+	if (!AllocateBuffer(*NewBuffer, HeapType, Flags, AlignedSize))
 	{
 		return nullptr;
+	}
+
+	if (InitalData)
+	{
+		UploadResource(*NewBuffer, InitalData);
 	}
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
@@ -142,60 +188,31 @@ ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(Uint32 SizeInBytes) cons
 	ViewDesc.BufferLocation	= NewBuffer->GetGPUVirtualAddress();
 	ViewDesc.SizeInBytes	= SizeInBytes;
 
-	D3D12ConstantBufferView* View = new D3D12ConstantBufferView(Device.Get(), Buffer.Get(), ViewDesc);
+	D3D12ConstantBufferView* View = new D3D12ConstantBufferView(Device.Get(), NewBuffer, ViewDesc);
 	NewBuffer->View = View;
 
 	return NewBuffer;
 }
 
-StructuredBuffer* D3D12RenderingAPI::CreateStructuredBuffer(Uint32 ElementCount, Uint32 StructuredByteStride) const
+StructuredBuffer* D3D12RenderingAPI::CreateStructuredBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Stride, Uint32 Usage) const
 {
-	const Uint32 SizeInBytes = ElementCount * StructuredByteStride;
+	D3D12_RESOURCE_FLAGS Flags	= ConvertBufferUsage(Usage);
+	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
+	if (Usage & BufferUsage_Dynamic)
+	{
+		HeapType = D3D12_HEAP_TYPE_UPLOAD;
+	}
 
-	D3D12StructuredBuffer* NewBuffer = new D3D12StructuredBuffer(Device.Get(), ElementCount, StructuredByteStride);
-	if (!AllocateBuffer(*NewBuffer, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, SizeInBytes))
+	D3D12StructuredBuffer* NewBuffer = new D3D12StructuredBuffer(Device.Get(), SizeInBytes, Stride, Usage);
+	if (!AllocateBuffer(*NewBuffer, HeapType, Flags, SizeInBytes))
 	{
 		return nullptr;
 	}
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc;
-	Memory::Memzero(&ViewDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
-	
-	ViewDesc.Format						= DXGI_FORMAT_UNKNOWN;
-	ViewDesc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
-	ViewDesc.Shader4ComponentMapping	= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	ViewDesc.Buffer.FirstElement		= 0;
-	ViewDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
-	ViewDesc.Buffer.NumElements			= ElementCount;
-	ViewDesc.Buffer.StructureByteStride	= StructuredByteStride;
-	
-	D3D12ShaderResourceView* View = new D3D12ShaderResourceView(Device.Get(), Buffer.Get(), ViewDesc);
-	NewBuffer->View = View;
-
-	return NewBuffer;
-}
-
-ByteAddressBuffer* D3D12RenderingAPI::CreateByteAddressBuffer(Uint32 SizeInBytes) const
-{
-	D3D12ByteAddressBuffer* NewBuffer = new D3D12ByteAddressBuffer(Device.Get(), SizeInBytes);
-	if (!AllocateBuffer(*NewBuffer, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, SizeInBytes))
+	if (InitalData)
 	{
-		return nullptr;
+		UploadResource(*NewBuffer, InitalData);
 	}
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc;
-	Memory::Memzero(&ViewDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
-
-	ViewDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
-	ViewDesc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
-	ViewDesc.Shader4ComponentMapping	= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	ViewDesc.Buffer.FirstElement		= 0;
-	ViewDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
-	ViewDesc.Buffer.NumElements			= SizeInBytes / 4;
-	ViewDesc.Buffer.StructureByteStride = 0;
-
-	D3D12ShaderResourceView* View = new D3D12ShaderResourceView(Device.Get(), NewBuffer->D3DResource.Get(), ViewDesc);
-	NewBuffer->View = View;
 
 	return NewBuffer;
 }
@@ -337,4 +354,9 @@ bool D3D12RenderingAPI::AllocateBuffer(D3D12Resource& Resource, D3D12_HEAP_TYPE 
 	{
 		return true;
 	}
+}
+
+bool D3D12RenderingAPI::UploadResource(D3D12Resource& Resource, const ResourceData* InitalData) const
+{
+	return false;
 }

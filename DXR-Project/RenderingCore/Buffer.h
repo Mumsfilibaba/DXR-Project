@@ -5,7 +5,19 @@ class VertexBuffer;
 class IndexBuffer;
 class ConstantBuffer;
 class StructuredBuffer;
-class ByteAddressBuffer;
+
+/*
+* EBufferUsage
+*/
+
+enum EBufferUsage : Uint32
+{
+	BufferUsage_None	= 0,	
+	BufferUsage_Default	= FLAG(1), // GPU Memory
+	BufferUsage_Dynamic	= FLAG(2), // CPU Memory
+	BufferUsage_UAV		= FLAG(3), // Can be used in UnorderedAccessViews
+	BufferUsage_SRV		= FLAG(4), // Can be used in ShaderResourceViews
+};
 
 /*
 * Buffer
@@ -14,8 +26,13 @@ class ByteAddressBuffer;
 class Buffer : public Resource
 {
 public:
-	Buffer()	= default;
-	~Buffer()	= default;
+	inline Buffer(Uint32 InSizeInBytes, Uint32 InUsage)
+		: SizeInBytes(InSizeInBytes)
+		, Usage(InUsage)
+	{
+	}
+
+	~Buffer() = default;
 
 	// Casting functions
 	virtual Buffer* AsBuffer() override
@@ -68,36 +85,19 @@ public:
 		return nullptr;
 	}
 
-	virtual ByteAddressBuffer* AsByteAddressBuffer()
-	{
-		return nullptr;
-	}
-
-	virtual const ByteAddressBuffer* AsByteAddressBuffer() const
-	{
-		return nullptr;
-	}
-
 	// Buffer functions
 	virtual Uint64 GetSizeInBytes() const
 	{
-		return 0;
-	}
-
-	virtual Uint64 GetVirtualGPUAddress() const
-	{
-		return 0;
+		return SizeInBytes;
 	}
 
 	// Map
-	virtual VoidPtr Map()
-	{
-		return nullptr;
-	}
+	virtual VoidPtr Map()	= 0;
+	virtual void	Unmap()	= 0;
 
-	virtual void Unmap()
-	{
-	}
+protected:
+	Uint32 SizeInBytes;
+	Uint32 Usage;
 };
 
 /*
@@ -107,7 +107,12 @@ public:
 class VertexBuffer : public Buffer
 {
 public:
-	VertexBuffer()	= default;
+	inline VertexBuffer(Uint32 SizeInBytes, Uint32 InStride, Uint32 Usage)
+		: Buffer(SizeInBytes, Usage)
+		, Stride(InStride)
+	{
+	}
+	
 	~VertexBuffer()	= default;
 
 	// Casting functions
@@ -120,6 +125,19 @@ public:
 	{
 		return this;
 	}
+
+protected:
+	Uint32 Stride;
+};
+
+/*
+* EIndexFormat
+*/
+
+enum class EIndexFormat
+{
+	IndexFormat_Uint16 = 1,
+	IndexFormat_Uint32 = 2
 };
 
 /*
@@ -129,7 +147,12 @@ public:
 class IndexBuffer : public Buffer
 {
 public:
-	IndexBuffer()	= default;
+	inline IndexBuffer(Uint32 SizeInBytes, EIndexFormat InIndexFormat, Uint32 Usage)
+		: Buffer(SizeInBytes, Usage)
+		, IndexFormat(InIndexFormat)
+	{
+	}
+	
 	~IndexBuffer()	= default;
 
 	// Casting functions
@@ -143,6 +166,13 @@ public:
 		return this;
 	}
 
+	virtual EIndexFormat GetIndexFormat() const
+	{
+		return IndexFormat;
+	}
+
+protected:
+	EIndexFormat IndexFormat;
 };
 
 /*
@@ -152,7 +182,11 @@ public:
 class ConstantBuffer : public Buffer
 {
 public:
-	ConstantBuffer()	= default;
+	inline ConstantBuffer(Uint32 SizeInBytes, Uint32 Usage)
+		: Buffer(SizeInBytes, Usage)
+	{
+	}
+	
 	~ConstantBuffer()	= default;
 
 	// Casting functions
@@ -174,7 +208,12 @@ public:
 class StructuredBuffer : public Buffer
 {
 public:
-	StructuredBuffer()	= default;
+	inline StructuredBuffer(Uint32 SizeInBytes, Uint32 InStride, Uint32 Usage)
+		: Buffer(SizeInBytes, Usage)
+		, Stride(InStride)
+	{
+	}
+
 	~StructuredBuffer()	= default;
 
 	// Casting functions
@@ -187,26 +226,46 @@ public:
 	{
 		return this;
 	}
+
+	virtual Uint32 GetStride() const
+	{
+		return Stride;
+	}
+
+protected:
+	Uint32 Stride;
 };
 
 /*
-* ByteAddressBuffer
+* StructuredBufferRef
 */
 
-class ByteAddressBuffer : public Buffer
+struct StructuredBufferRef
 {
-public:
-	ByteAddressBuffer()		= default;
-	~ByteAddressBuffer()	= default;
-
-	// Casting functions
-	virtual ByteAddressBuffer* AsByteAddressBuffer() override
+	inline StructuredBufferRef(const TSharedRef<StructuredBuffer>& InBuffer, const TSharedRef<ShaderResourceView>& InSRV)
+		: Buffer(InBuffer)
+		, SRV(InSRV)
 	{
-		return this;
 	}
 
-	virtual const ByteAddressBuffer* AsByteAddressBuffer() const override
+	TSharedRef<StructuredBuffer> Buffer;
+	TSharedRef<ShaderResourceView> SRV;
+};
+
+/*
+* RWStructuredBufferRef
+*/
+
+struct RWStructuredBufferRef
+{
+	inline RWStructuredBufferRef(const TSharedRef<StructuredBuffer>& InBuffer, const TSharedRef<ShaderResourceView>& InSRV, const TSharedRef<ShaderResourceView>& InUAV)
+		: Buffer(InBuffer)
+		, SRV(InSRV)
+		, UAV(InUAV)
 	{
-		return this;
 	}
+
+	TSharedRef<StructuredBuffer> Buffer;
+	TSharedRef<ShaderResourceView> SRV;
+	TSharedRef<UnorderedAccessView> UAV;
 };

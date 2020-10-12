@@ -210,20 +210,6 @@ public:
 		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
 	}
 
-	FORCEINLINE void BindStructuredBuffers(Shader* Shader, StructuredBuffer* const* StructuredBuffers, Uint32 StructuredBufferCount, Uint32 StartSlot)
-	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindStructuredBuffersRenderCommand>();
-		new(Memory) BindStructuredBuffersRenderCommand(Shader, StructuredBuffers, StructuredBufferCount, StartSlot);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
-	}
-
-	FORCEINLINE void BindByteAddressBuffers(Shader* Shader, ByteAddressBuffer* const* ByteAddressBuffers, Uint32 ByteAddressBufferCount, Uint32 StartSlot)
-	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindByteAddressBuffersRenderCommand>();
-		new(Memory) BindByteAddressBuffersRenderCommand(Shader, ByteAddressBuffers, ByteAddressBufferCount, StartSlot);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
-	}
-
 	FORCEINLINE void CommandList::BindShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceViews, Uint32 ShaderResourceViewCount, Uint32 StartSlot)
 	{
 		VoidPtr Memory = CmdAllocator.Allocate<BindShaderResourceViewsRenderCommand>();
