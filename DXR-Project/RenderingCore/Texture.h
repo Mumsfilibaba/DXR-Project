@@ -17,11 +17,13 @@ class Texture2DArray;
 
 enum ETextureUsage
 {
-	TextureUsage_None	= 0,
-	TextureUsage_RTV	= FLAG(1), // RenderTargetView
-	TextureUsage_DSV	= FLAG(2), // DepthStencilView
-	TextureUsage_UAV	= FLAG(3), // UnorderedAccessView
-	TextureUsage_SRV	= FLAG(4), // ShaderResourceView
+	TextureUsage_None		= 0,
+	TextureUsage_RTV		= FLAG(1), // RenderTargetView
+	TextureUsage_DSV		= FLAG(2), // DepthStencilView
+	TextureUsage_UAV		= FLAG(3), // UnorderedAccessView
+	TextureUsage_SRV		= FLAG(4), // ShaderResourceView
+	TextureUsage_Default 	= FLAG(5), // Default memory
+	TextureUsage_Dynamic 	= FLAG(6), // CPU memory
 };
 
 /*

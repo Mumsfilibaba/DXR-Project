@@ -10,10 +10,13 @@
 class D3D12Texture1D : public Texture1D, public D3D12Resource
 {
 public:
-	D3D12Texture1D(D3D12Device* InDevice);
-	~D3D12Texture1D();
+	inline D3D12Texture1D(D3D12Device* InDevice, EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InMipLevels, const ClearValue& InOptimizedClearValue);
+		: Texture1D(InFormat, InUsage, InWidth, InMipLevels, InOptimizedClearValue)
+		, D3D12Resource(InDevice)
+	{
+	}
 
-	virtual bool Initialize(const Texture1DInitializer& InInitializer) override;
+	~D3D12Texture1D() = default;
 };
 
 /*
@@ -23,10 +26,13 @@ public:
 class D3D12Texture2D : public Texture2D, public D3D12Resource
 {
 public:
-	D3D12Texture2D(D3D12Device* InDevice);
-	~D3D12Texture2D();
-
-	virtual bool Initialize(const Texture2DInitializer& InInitializer) override;
+	inline D3D12Texture2D(D3D12Device* InDevice, EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InHeight, Uint32 InMipLevels, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue);
+		: Texture2D(InFormat, InUsage, InWidth, InHeight, InMipLevels, InSampleCount, InOptimizedClearValue)
+		, D3D12Resource(InDevice)
+	{
+	}
+	
+	~D3D12Texture2D() = default;
 };
 
 /*
@@ -36,10 +42,13 @@ public:
 class D3D12Texture2DArray : public Texture2DArray, public D3D12Resource
 {
 public:
-	D3D12Texture2DArray(D3D12Device* InDevice);
-	~D3D12Texture2DArray();
+	inline D3D12Texture2DArray(D3D12Device* InDevice, EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InHeight, Uint32 InMipLevels, Uint32 InArrayCount, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue)
+		: Texture2DArray(InFormat, InUsage, InWidth, InHeight, InMipLevels, InArrayCount, InSampleCount, InOptimizedClearValue)
+		, D3D12Resource(InDevice)
+	{
+	}
 
-	virtual bool Initialize(const Texture2DArrayInitializer& InInitializer) override;
+	~D3D12Texture2DArray() = default;
 };
 
 /*
@@ -49,10 +58,13 @@ public:
 class D3D12TextureCube : public TextureCube, public D3D12Resource
 {
 public:
-	D3D12TextureCube(D3D12Device* InDevice);
-	~D3D12TextureCube();
-
-	virtual bool Initialize(const TextureCubeInitializer& InInitializer) override;
+	inline D3D12TextureCube(D3D12Device* InDevice, EFormat InFormat, Uint32 InUsage, Uint32 InSize, Uint32 InMipLevels, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue);
+		: TextureCube(InFormat, InUsage, InSize, InMipLevels, InSampleCount, InOptimizedClearValue)
+		, D3D12Resource(InDevice)
+	{
+	}
+	
+	~D3D12TextureCube() = default;
 };
 
 /*
@@ -62,8 +74,11 @@ public:
 class D3D12Texture3D : public Texture3D, public D3D12Resource
 {
 public:
-	D3D12Texture3D(D3D12Device* InDevice);
-	~D3D12Texture3D();
+	inline D3D12Texture3D(D3D12Device* InDevice, EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InHeight, Uint32 InDepth, Uint32 InMipLevels, const ClearValue& InOptimizedClearValue)
+		: Texture3D(InFormat, InUsage, InWidth, InHeight, InDepth, InMipLevels, InOptimizedClearValue)
+		, D3D12Resource(InDevice)
+	{
+	}
 
-	virtual bool Initialize(const Texture3DInitializer& InInitializer) override;
+	~D3D12Texture3D() = default;
 };

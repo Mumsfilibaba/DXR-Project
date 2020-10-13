@@ -4,7 +4,7 @@
 #include <d3d12.h>
 
 /*
-* Converts EBufferUsage to D3D12_RESOURCE_FLAGS
+* Converts EBufferUsage- flags to D3D12_RESOURCE_FLAGS
 */
 
 inline D3D12_RESOURCE_FLAGS ConvertBufferUsage(Uint32 Usage)
@@ -13,6 +13,33 @@ inline D3D12_RESOURCE_FLAGS ConvertBufferUsage(Uint32 Usage)
 	if (Usage & EBufferUsage::BufferUsage_UAV)
 	{
 		Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	}
+
+	return Result;
+}
+
+/*
+* Converts ETextureUsage- flags to D3D12_RESOURCE_FLAGS
+*/
+
+inline D3D12_RESOURCE_FLAGS ConvertTextureUsage(Uint32 Usage)
+{
+	D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
+	if (Usage & ETextureUsage::TextureUsage_UAV)
+	{
+		Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	}
+	if (Usage & ETextureUsage::TextureUsage_RTV)
+	{
+		Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	}
+	if (Usage & ETextureUsage::TextureUsage_DSV)
+	{
+		Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+		if (!(Usage & ETextureUsage::TextureUsage_SRV))
+		{
+			Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+		}
 	}
 
 	return Result;

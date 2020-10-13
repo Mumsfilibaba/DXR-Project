@@ -21,6 +21,28 @@ enum EBufferUsage : Uint32
 };
 
 /*
+* Range
+*/
+
+struct Range
+{
+	inline Range()
+		: Offset(0)
+		, Size(0)
+	{
+	}
+
+	inline Range(Uint32 InOffset, Uint32 InSize)
+		: Offset(InOffset)
+		, Size(InSize)
+	{
+	}
+
+	Uint32 Offset;
+	Uint32 Size;
+};
+
+/*
 * Buffer
 */
 
@@ -93,8 +115,8 @@ public:
 	}
 
 	// Map
-	virtual VoidPtr Map()	= 0;
-	virtual void	Unmap()	= 0;
+	virtual VoidPtr Map(const Range& MappedRange) 	= 0;
+	virtual void Unmap(const Range& MappedRange) 	= 0;
 
 protected:
 	Uint32 SizeInBytes;

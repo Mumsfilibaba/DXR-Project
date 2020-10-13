@@ -20,16 +20,16 @@ public:
 	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) override final;
 
 	// Resources
-	virtual class Texture1D*		CreateTexture1D()		const override final;
-	virtual class Texture2D*		CreateTexture2D()		const override final;
-	virtual class Texture2DArray*	CreateTexture2DArray()	const override final;
-	virtual class Texture3D*		CreateTexture3D()		const override final;
-	virtual class TextureCube*		CreateTextureCube()		const override final;
+	virtual class Texture1D*		CreateTexture1D(const ResourceData* InitalData, EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InMipLevels, const ClearValue& InOptimizedClearValue) const override final;
+	virtual class Texture2D*		CreateTexture2D(const ResourceData* InitalData, EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InHeight, Uint32 InMipLevels, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue) const override final;
+	virtual class Texture2DArray*	CreateTexture2DArray(const ResourceData* InitalData, EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InHeight, Uint32 InMipLevels, Uint32 InArrayCount, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue)	const override final;
+	virtual class TextureCube*		CreateTextureCube(const ResourceData* InitalData, EFormat InFormat, Uint32 InUsage, Uint32 InSize, Uint32 InMipLevels, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue) const override final;
+	virtual class Texture3D*		CreateTexture3D(const ResourceData* InitalData, EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InHeight, Uint32 InDepth, Uint32 InMipLevels, const ClearValue& InOptimizedClearValue) const override final;
 
-	virtual class VertexBuffer*		CreateVertexBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 VertexStride, Uint32 Usage)	const override final;
-	virtual class IndexBuffer*		CreateIndexBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, EIndexFormat IndexFormat, Uint32 Usage)	const override final;
-	virtual class ConstantBuffer*	CreateConstantBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Usage)						const override final;
-	virtual class StructuredBuffer*	CreateStructuredBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Stride, Uint32 Usage)		const override final;
+	virtual class VertexBuffer*		CreateVertexBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 VertexStride, Uint32 Usage) const override final;
+	virtual class IndexBuffer*		CreateIndexBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, EIndexFormat IndexFormat, Uint32 Usage) const override final;
+	virtual class ConstantBuffer*	CreateConstantBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Usage) const override final;
+	virtual class StructuredBuffer*	CreateStructuredBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Stride, Uint32 Usage) const override final;
 
 	virtual class RayTracingGeometry*	CreateRayTracingGeometry()	const override final;
 	virtual class RayTracingScene*		CreateRayTracingScene()		const override final;

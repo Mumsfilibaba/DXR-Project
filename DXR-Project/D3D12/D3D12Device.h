@@ -24,7 +24,7 @@ public:
 
 	bool Initialize(bool DebugEnable);
 
-	Uint32 GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount);
+	Int32 GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount);
 
 	std::string GetAdapterName() const;
 	
