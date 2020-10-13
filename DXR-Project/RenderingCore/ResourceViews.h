@@ -9,7 +9,7 @@ struct ShaderResourceViewInitializer
 {
 };
 
-class ShaderResourceView
+class ShaderResourceView : public PipelineResource
 {
 };
 
@@ -21,7 +21,7 @@ struct RenderTargetViewInitializer
 {
 };
 
-class RenderTargetView
+class RenderTargetView : public PipelineResource
 {
 };
 
@@ -33,7 +33,7 @@ struct DepthStencilViewInitializer
 {
 };
 
-class DepthStencilView
+class DepthStencilView : public PipelineResource
 {
 };
 
@@ -45,6 +45,6 @@ struct UnorderedAccessViewInitializer
 {
 };
 
-class UnorderedAccessView
+class UnorderedAccessView : public PipelineResource
 {
 };

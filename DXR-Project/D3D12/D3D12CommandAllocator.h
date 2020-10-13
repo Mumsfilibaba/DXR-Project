@@ -20,10 +20,6 @@ public:
 		return Allocator.Get();
 	}
 
-public:
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
-
 private:
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> Allocator;
 };

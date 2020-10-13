@@ -345,14 +345,18 @@ bool D3D12RenderingAPI::AllocateBuffer(D3D12Resource& Resource, D3D12_HEAP_TYPE 
 		D3D12_RESOURCE_STATE_COMMON, 
 		nullptr, 
 		IID_PPV_ARGS(&Resource.D3DResource));
-	if (FAILED(HR))
+	if (SUCCEEDED(HR))
 	{
-		LOG_ERROR("[D3D12RenderingAPI]: Failed to create resource");
-		return false;
+		Resource.Address	= Resource.D3DResource->GetGPUVirtualAddress();
+		Resource.Desc		= Desc;
+		Resource.HeapType	= HeapType;
+		Resource.ResourceState = D3D12_RESOURCE_STATE_COMMON;
+		return true;
 	}
 	else
 	{
-		return true;
+		LOG_ERROR("[D3D12RenderingAPI]: Failed to create resource");
+		return false;
 	}
 }
 

@@ -16,12 +16,12 @@ public:
 	~D3D12VertexBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map()
+	virtual VoidPtr Map() override
 	{
 		return nullptr;
 	}
 
-	virtual void Unmap()
+	virtual void Unmap() override
 	{
 	}
 
@@ -47,12 +47,12 @@ public:
 	~D3D12IndexBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map()
+	virtual VoidPtr Map() override
 	{
 		return nullptr;
 	}
 
-	virtual void Unmap()
+	virtual void Unmap() override
 	{
 	}
 
@@ -78,12 +78,12 @@ public:
 	~D3D12ConstantBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map()
+	virtual VoidPtr Map() override
 	{
 		return nullptr;
 	}
 
-	virtual void Unmap()
+	virtual void Unmap() override
 	{
 	}
 
@@ -100,16 +100,16 @@ class D3D12StructuredBuffer : public StructuredBuffer, public D3D12Resource
 	friend class D3D12RenderingAPI;
 
 public:
-	D3D12StructuredBuffer(D3D12Device* InDevice, Uint32 SizeInBytes, Uint32 Stride, Uint32 Usage);
+	D3D12StructuredBuffer(D3D12Device* InDevice, Uint32 InSizeInBytes, Uint32 InStride, Uint32 InUsage);
 	~D3D12StructuredBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map()
+	virtual VoidPtr Map() override
 	{
 		return nullptr;
 	}
 
-	virtual void Unmap()
+	virtual void Unmap() override
 	{
 	}
 };
