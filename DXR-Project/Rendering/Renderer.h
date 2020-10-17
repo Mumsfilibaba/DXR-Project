@@ -117,12 +117,12 @@ private:
 	bool CreateShadowMaps();
 	void WriteShadowMapDescriptors();
 
-	void GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList);
-	void GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList);
+	void GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, D3D12CommandList* CommandList);
+	void GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* Dest, D3D12CommandList* CommandList);
 
 	void WaitForPendingFrames();
 
-	void TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* CommandList);
+	void TraceRays(Texture2D* BackBuffer, D3D12CommandList* CommandList);
 
 private:
 	TSharedPtr<D3D12CommandList>	CommandList;

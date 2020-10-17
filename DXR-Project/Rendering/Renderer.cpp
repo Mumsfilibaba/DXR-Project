@@ -2803,7 +2803,7 @@ void Renderer::WriteShadowMapDescriptors()
 	LightDescriptorTable->CopyDescriptors();
 }
 
-void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* InCommandList)
+void Renderer::GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, D3D12CommandList* InCommandList)
 {
 	const Uint32 Size = static_cast<Uint32>(Dest->GetDesc().Width);
 
@@ -2864,7 +2864,7 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 	InCommandList->TransitionBarrier(Dest, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
-void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* InCommandList)
+void Renderer::GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* Dest, D3D12CommandList* InCommandList)
 {
 	const Uint32 Miplevels = Dest->GetDesc().MipLevels;
 
