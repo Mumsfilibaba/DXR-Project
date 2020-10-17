@@ -140,3 +140,55 @@ public:
 		D3D12Resource::Unmap(WrittenRange);
 	}
 };
+
+/*
+* Cast a buffer to correct type
+*/
+
+inline D3D12Resource* D3D12BufferCast(Buffer* Buffer)
+{
+	if (Buffer->AsVertexBuffer())
+	{
+		return static_cast<D3D12VertexBuffer*>(Buffer);
+	}
+	else if (Buffer->AsIndexBuffer())
+	{
+		return static_cast<D3D12IndexBuffer*>(Buffer);
+	}
+	else if (Buffer->AsConstantBuffer())
+	{
+		return static_cast<D3D12ConstantBuffer*>(Buffer);
+	}
+	else if (Buffer->AsStructuredBuffer())
+	{
+		return static_cast<D3D12StructuredBuffer*>(Buffer);
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
+inline const D3D12Resource* D3D12BufferCast(const Buffer* Buffer)
+{
+	if (Buffer->AsVertexBuffer())
+	{
+		return static_cast<const D3D12VertexBuffer*>(Buffer);
+	}
+	else if (Buffer->AsIndexBuffer())
+	{
+		return static_cast<const D3D12IndexBuffer*>(Buffer);
+	}
+	else if (Buffer->AsConstantBuffer())
+	{
+		return static_cast<const D3D12ConstantBuffer*>(Buffer);
+	}
+	else if (Buffer->AsStructuredBuffer())
+	{
+		return static_cast<const D3D12StructuredBuffer*>(Buffer);
+	}
+	else
+	{
+		return nullptr;
+	}
+}

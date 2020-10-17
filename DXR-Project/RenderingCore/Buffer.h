@@ -114,6 +114,16 @@ public:
 		return SizeInBytes;
 	}
 
+	FORCEINLINE bool HasShaderResourceUsage() const
+	{
+		return Usage & BufferUsage_SRV;
+	}
+
+	FORCEINLINE bool HasUnorderedAccessUsage() const
+	{
+		return Usage & BufferUsage_UAV;
+	}
+
 	// Map
 	virtual VoidPtr Map(const Range& MappedRange) 	= 0;
 	virtual void Unmap(const Range& MappedRange) 	= 0;
@@ -139,12 +149,12 @@ public:
 	~VertexBuffer()	= default;
 
 	// Casting functions
-	virtual VertexBuffer* AsVertexBuffer()
+	virtual VertexBuffer* AsVertexBuffer() override
 	{
 		return this;
 	}
 
-	virtual const VertexBuffer* AsVertexBuffer() const
+	virtual const VertexBuffer* AsVertexBuffer() const override
 	{
 		return this;
 	}
@@ -288,7 +298,7 @@ struct RWStructuredBufferRef
 	{
 	}
 
-	TSharedRef<StructuredBuffer> Buffer;
-	TSharedRef<ShaderResourceView> SRV;
+	TSharedRef<StructuredBuffer>	Buffer;
+	TSharedRef<ShaderResourceView>	SRV;
 	TSharedRef<UnorderedAccessView> UAV;
 };

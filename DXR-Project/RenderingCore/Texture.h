@@ -1,15 +1,13 @@
 #pragma once
 #include "Resource.h"
 
-class DepthStencilView;
-class RenderTargetView;
-class ShaderResourceView;
-class UnorderedAccessView;
 class Texture1D;
+class Texture1DArray;
 class Texture2D;
+class Texture2DArray;
 class Texture3D;
 class TextureCube;
-class Texture2DArray;
+class TextureCubeArray;
 
 /*
 * ETextureUsage
@@ -41,15 +39,6 @@ struct TextureRange
 	{
 	}
 
-	inline TextureRange(const TextureRange& Other)
-		: MipSlice(Other.MipSlice)
-		, MipLevels(Other.MipLevels)
-		, ArraySlice(Other.ArraySlice)
-		, ArraySize(Other.ArraySize)
-		, PlaneSlice(Other.PlaneSlice)
-	{
-	}
-
 	FORCEINLINE Int32 GetSubresourceIndex() const
 	{
 		return MipSlice + (ArraySlice * MipLevels) + (PlaneSlice * MipLevels * ArraySize);
@@ -76,7 +65,7 @@ public:
 	{
 	}
 
-	~Texture()	= default;
+	~Texture() = default;
 
 	// Casting functions
 	virtual Texture* AsTexture() override
@@ -95,6 +84,16 @@ public:
 	}
 
 	virtual const Texture1D* AsTexture1D() const
+	{
+		return nullptr;
+	}
+
+	virtual Texture1DArray* AsTexture1DArray()
+	{
+		return nullptr;
+	}
+
+	virtual const Texture1DArray* AsTexture1DArray() const
 	{
 		return nullptr;
 	}
@@ -139,6 +138,16 @@ public:
 		return nullptr;
 	}
 
+	virtual TextureCubeArray* AsTextureCubeArray()
+	{
+		return nullptr;
+	}
+
+	virtual const TextureCubeArray* AsTextureCubeArray() const
+	{
+		return nullptr;
+	}
+
 	// Info
 	virtual Uint32 GetWidth() const
 	{
@@ -173,6 +182,26 @@ public:
 	virtual bool IsMultiSampled() const
 	{
 		return false;
+	}
+
+	FORCEINLINE bool HasShaderResourceUsage() const
+	{
+		return Usage & TextureUsage_SRV;
+	}
+
+	FORCEINLINE bool HasUnorderedAccessUsage() const
+	{
+		return Usage & TextureUsage_UAV;
+	}
+
+	FORCEINLINE bool HasRenderTargetUsage() const
+	{
+		return Usage & TextureUsage_RTV;
+	}
+
+	FORCEINLINE bool HasDepthStencilUsage() const
+	{
+		return Usage & TextureUsage_DSV;
 	}
 
 protected:
@@ -214,7 +243,7 @@ public:
 		return Width;
 	}
 
-	virtual Uint32 GetMipLevels() const
+	virtual Uint32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}
@@ -222,6 +251,56 @@ public:
 protected:
 	Uint32 Width;
 	Uint32 MipLevels;
+};
+
+/*
+* Texture1DArray
+*/
+
+class Texture1DArray : public Texture
+{
+public:
+	inline Texture1DArray(EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InMipLevels, Uint32 InArrayCount, const ClearValue& InOptimizedClearValue)
+		: Texture(InFormat, InUsage, InOptimizedClearValue)
+		, Width(InWidth)
+		, MipLevels(InMipLevels)
+		, ArrayCount(InArrayCount)
+	{
+	}
+
+	~Texture1DArray() = default;
+
+	// Casting functions
+	virtual Texture1DArray* AsTexture1DArray() override
+	{
+		return this;
+	}
+
+	virtual const Texture1DArray* AsTexture1DArray() const override
+	{
+		return this;
+	}
+
+	// Info
+	virtual Uint32 GetWidth() const override
+	{
+		return Width;
+	}
+
+	virtual Uint32 GetMipLevels() const override
+	{
+		return MipLevels;
+	}
+
+	virtual Uint32 GetArrayCount() const override
+	{
+		return ArrayCount;
+	}
+
+protected:
+	Uint32 Width;
+	Uint32 MipLevels;
+	Uint32 ArrayCount;
 };
 
 /*
@@ -243,14 +322,14 @@ public:
 	~Texture2D() = default;
 
 	// Casting functions
-	virtual Texture2D* AsTexture2D()
+	virtual Texture2D* AsTexture2D() override
 	{
-		return nullptr;
+		return this;
 	}
 
-	virtual const Texture2D* AsTexture2D() const
+	virtual const Texture2D* AsTexture2D() const override
 	{
-		return nullptr;
+		return this;
 	}
 
 	// Info
@@ -264,12 +343,12 @@ public:
 		return Height;
 	}
 
-	virtual Uint32 GetMipLevels() const
+	virtual Uint32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}
 
-	virtual Uint32 GetSampleCount() const
+	virtual Uint32 GetSampleCount() const override
 	{
 		return SampleCount;
 	}
@@ -303,15 +382,15 @@ public:
 	{
 	}
 
-	~Texture2DArray()	= default;
+	~Texture2DArray() = default;
 
 	// Casting functions
-	virtual Texture2DArray* AsTexture2DArray()
+	virtual Texture2DArray* AsTexture2DArray() override
 	{
 		return this;
 	}
 
-	virtual const Texture2DArray* AsTexture2DArray() const
+	virtual const Texture2DArray* AsTexture2DArray() const override
 	{
 		return this;
 	}
@@ -327,17 +406,17 @@ public:
 		return Height;
 	}
 
-	virtual Uint32 GetMipLevels() const
+	virtual Uint32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}
 
-	virtual Uint32 GetMipLevels() const
+	virtual Uint32 GetArrayCount() const override
 	{
 		return ArrayCount;
 	}
 
-	virtual Uint32 GetSampleCount() const
+	virtual Uint32 GetSampleCount() const override
 	{
 		return SampleCount;
 	}
@@ -383,7 +462,7 @@ public:
 		return this;
 	}
 
-	// Size
+	// Info
 	virtual Uint32 GetWidth() const override
 	{
 		return Size;
@@ -394,12 +473,18 @@ public:
 		return Size;
 	}
 
-	virtual Uint32 GetMipLevels() const
+	virtual Uint32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}
 
-	virtual Uint32 GetSampleCount() const
+	virtual Uint32 GetArrayCount() const override
+	{
+		constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
+		return TEXTURE_CUBE_FACE_COUNT;
+	}
+
+	virtual Uint32 GetSampleCount() const override
 	{
 		return SampleCount;
 	}
@@ -414,6 +499,75 @@ protected:
 	Uint32 MipLevels;
 	Uint32 SampleCount;
 };
+
+/*
+* TextureCubeArray
+*/
+
+class TextureCubeArray : public Texture
+{
+public:
+	inline TextureCubeArray(EFormat InFormat, Uint32 InUsage, Uint32 InSize, Uint32 InMipLevels, Uint32 InArrayCount, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue)
+		: Texture(InFormat, InUsage, InOptimizedClearValue)
+		, Size(InSize)
+		, MipLevels(InMipLevels)
+		, ArrayCount(InArrayCount)
+		, SampleCount(InSampleCount)
+	{
+	}
+
+	~TextureCubeArray() = default;
+
+	// Casting functions
+	virtual TextureCubeArray* AsTextureCubeArray() override
+	{
+		return this;
+	}
+
+	virtual const TextureCubeArray* AsTextureCubeArray() const override
+	{
+		return this;
+	}
+
+	// Info
+	virtual Uint32 GetWidth() const override
+	{
+		return Size;
+	}
+
+	virtual Uint32 GetHeight() const override
+	{
+		return Size;
+	}
+
+	virtual Uint32 GetMipLevels() const override
+	{
+		return MipLevels;
+	}
+
+	virtual Uint32 GetArrayCount() const override
+	{
+		constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
+		return ArrayCount * TEXTURE_CUBE_FACE_COUNT;
+	}
+
+	virtual Uint32 GetSampleCount() const override
+	{
+		return SampleCount;
+	}
+
+	virtual bool IsMultiSampled() const override
+	{
+		return (SampleCount > 1);
+	}
+
+protected:
+	Uint32 Size;
+	Uint32 MipLevels;
+	Uint32 ArrayCount;
+	Uint32 SampleCount;
+};
+
 
 /*
 * Texture3D
@@ -445,22 +599,22 @@ public:
 	}
 
 	// Info
-	virtual Uint32 GetWidth() const
+	virtual Uint32 GetWidth() const override
 	{
 		return Width;
 	}
 
-	virtual Uint32 GetHeight() const
+	virtual Uint32 GetHeight() const override
 	{
 		return Height;
 	}
 
-	virtual Uint32 GetDepth() const
+	virtual Uint32 GetDepth() const override
 	{
 		return Depth;
 	}
 
-	virtual Uint32 GetMipLevels() const
+	virtual Uint32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}

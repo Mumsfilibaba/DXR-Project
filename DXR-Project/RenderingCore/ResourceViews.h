@@ -5,46 +5,42 @@
 * ShaderResourceView
 */
 
-struct ShaderResourceViewInitializer
-{
-};
-
 class ShaderResourceView : public PipelineResource
 {
-};
-
-/*
-* RenderTargetView
-*/
-
-struct RenderTargetViewInitializer
-{
-};
-
-class RenderTargetView : public PipelineResource
-{
-};
-
-/*
-* DepthStencilView
-*/
-
-struct DepthStencilViewInitializer
-{
-};
-
-class DepthStencilView : public PipelineResource
-{
+public:
+	ShaderResourceView()	= default;
+	~ShaderResourceView()	= default;
 };
 
 /*
 * UnorderedAccessView
 */
 
-struct UnorderedAccessViewInitializer
-{
-};
-
 class UnorderedAccessView : public PipelineResource
 {
+public:
+	UnorderedAccessView()	= default;
+	~UnorderedAccessView()	= default;
+};
+
+/*
+* DepthStencilView
+*/
+
+class DepthStencilView : public PipelineResource
+{
+public:
+	DepthStencilView()	= default;
+	~DepthStencilView()	= default;
+};
+
+/*
+* RenderTargetView
+*/
+
+class RenderTargetView : public PipelineResource
+{
+public:
+	RenderTargetView()	= default;
+	~RenderTargetView()	= default;
 };

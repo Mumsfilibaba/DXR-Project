@@ -26,7 +26,6 @@
 
 #include "RenderingCore/RenderingAPI.h"
 
-class D3D12Texture;
 class D3D12GraphicsPipelineState;
 class D3D12RayTracingPipelineState;
 

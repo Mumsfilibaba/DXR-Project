@@ -3,7 +3,6 @@
 #include "D3D12Views.h"
 #include "D3D12CommandAllocator.h"
 
-class D3D12Texture;
 class D3D12ComputePipelineState;
 class D3D12RootSignature;
 class D3D12DescriptorTable;
