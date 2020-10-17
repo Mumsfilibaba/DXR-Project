@@ -1,15 +1,4 @@
 #pragma once
-#include "D3D12/D3D12Device.h"
-#include "D3D12/D3D12CommandQueue.h"
-#include "D3D12/D3D12CommandAllocator.h"
-#include "D3D12/D3D12CommandList.h"
-#include "D3D12/D3D12DescriptorHeap.h"
-#include "D3D12/D3D12Fence.h"
-#include "D3D12/D3D12SwapChain.h"
-#include "D3D12/D3D12Buffer.h"
-#include "D3D12/D3D12RayTracingScene.h"
-#include "D3D12/D3D12ImmediateCommandList.h"
-
 #include "Windows/WindowsWindow.h"
 
 #include "Time/Clock.h"
@@ -25,9 +14,7 @@
 #include "MeshFactory.h"
 
 #include "RenderingCore/RenderingAPI.h"
-
-class D3D12GraphicsPipelineState;
-class D3D12RayTracingPipelineState;
+#include "RenderingCore/CommandList.h"
 
 #define ENABLE_D3D12_DEBUG	0
 #define ENABLE_VSM			0
@@ -125,11 +112,7 @@ private:
 	void TraceRays(Texture2D* BackBuffer, D3D12CommandList* CommandList);
 
 private:
-	TSharedPtr<D3D12CommandList>	CommandList;
-	TSharedPtr<D3D12Fence>			Fence;
-
-	TArray<TSharedPtr<D3D12CommandAllocator>>	CommandAllocators;
-	TArray<TSharedPtr<D3D12Resource>>			DeferredResources;
+	CommandList CmdList;
 
 	MeshData Sphere;
 	MeshData SkyboxMesh;
@@ -186,38 +169,21 @@ private:
 	TSharedRef<RenderTargetView>	GBufferRTVs[3];
 	TSharedRef<DepthStencilView>	GBufferDSV;
 	
-	TSharedPtr<D3D12RootSignature>		PrePassRootSignature;
-	TSharedPtr<D3D12RootSignature>		ShadowMapRootSignature;
-	TSharedPtr<D3D12RootSignature>		GeometryRootSignature;
-	TSharedPtr<D3D12RootSignature>		LightRootSignature;
-	TSharedPtr<D3D12RootSignature>		SkyboxRootSignature;
-	TSharedPtr<D3D12RootSignature>		GlobalRootSignature;
-	TSharedPtr<D3D12RootSignature>		IrradianceGenRootSignature;
-	TSharedPtr<D3D12RootSignature>		SpecIrradianceGenRootSignature;
-	TSharedPtr<D3D12RootSignature>		DebugRootSignature;
-	TSharedPtr<D3D12RootSignature>		PostRootSignature;
-	TSharedPtr<D3D12DescriptorTable>	RayGenDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	GlobalDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	GeometryDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	PrePassDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	LightDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	SkyboxDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	PostDescriptorTable;
-	TSharedPtr<D3D12RayTracingScene>	RayTracingScene;
+	TSharedRef<RayTracingScene>	RayTracingScene;
 
-	TSharedPtr<D3D12GraphicsPipelineState>		PrePassPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		ShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		VSMShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		LinearShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		GeometryPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		LightPassPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		SkyboxPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		DebugBoxPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		PostPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		FXAAPSO;
-	TSharedPtr<D3D12ComputePipelineState>		IrradicanceGenPSO;
-	TSharedPtr<D3D12ComputePipelineState>		SpecIrradicanceGenPSO;
-	TSharedPtr<D3D12RayTracingPipelineState>	RaytracingPSO;
+	TSharedRef<GraphicsPipelineState>	PrePassPSO;
+	TSharedRef<GraphicsPipelineState>	ShadowMapPSO;
+	TSharedRef<GraphicsPipelineState>	VSMShadowMapPSO;
+	TSharedRef<GraphicsPipelineState>	LinearShadowMapPSO;
+	TSharedRef<GraphicsPipelineState>	GeometryPSO;
+	TSharedRef<GraphicsPipelineState>	LightPassPSO;
+	TSharedRef<GraphicsPipelineState>	SkyboxPSO;
+	TSharedRef<GraphicsPipelineState>	DebugBoxPSO;
+	TSharedRef<GraphicsPipelineState>	PostPSO;
+	TSharedRef<GraphicsPipelineState>	FXAAPSO;
+	TSharedRef<ComputePipelineState>	IrradicanceGenPSO;
+	TSharedRef<ComputePipelineState>	SpecIrradicanceGenPSO;
+	TSharedRef<RayTracingPipelineState>	RaytracingPSO;
 
 	TArray<MeshDrawCommand> VisibleCommands;
 

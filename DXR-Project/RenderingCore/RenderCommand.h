@@ -23,9 +23,9 @@ struct RenderCommand
 };
 
 // Begin RenderCommand
-struct BeginRenderCommand : public RenderCommand
+struct BeginCommand : public RenderCommand
 {
-	inline BeginRenderCommand()
+	inline BeginCommand()
 	{
 	}
 
@@ -36,9 +36,9 @@ struct BeginRenderCommand : public RenderCommand
 };
 
 // End RenderCommand
-struct EndRenderCommand : public RenderCommand
+struct EndCommand : public RenderCommand
 {
-	inline EndRenderCommand()
+	inline EndCommand()
 	{
 	}
 
@@ -49,16 +49,16 @@ struct EndRenderCommand : public RenderCommand
 };
 
 // Clear RenderTarget RenderCommand
-struct ClearRenderTargetRenderCommand : public RenderCommand
+struct ClearRenderTargetCommand : public RenderCommand
 {
-	inline ClearRenderTargetRenderCommand(RenderTargetView* InRenderTargetView, const ColorClearValue& InClearColor)
+	inline ClearRenderTargetCommand(RenderTargetView* InRenderTargetView, const ColorClearValue& InClearColor)
 		: RenderTargetView(InRenderTargetView)
 		, ClearColor(InClearColor)
 	{
 		VALIDATE(RenderTargetView != nullptr);
 	}
 
-	inline ~ClearRenderTargetRenderCommand()
+	inline ~ClearRenderTargetCommand()
 	{
 		RenderTargetView->Release();
 	}
@@ -73,16 +73,16 @@ struct ClearRenderTargetRenderCommand : public RenderCommand
 };
 
 // Clear DepthStencil RenderCommand
-struct ClearDepthStencilRenderCommand : public RenderCommand
+struct ClearDepthStencilCommand : public RenderCommand
 {
-	inline ClearDepthStencilRenderCommand(DepthStencilView* InDepthStencilView, const DepthStencilClearValue& InClearValue)
+	inline ClearDepthStencilCommand(DepthStencilView* InDepthStencilView, const DepthStencilClearValue& InClearValue)
 		: DepthStencilView(InDepthStencilView)
 		, ClearValue(InClearValue)
 	{
 		VALIDATE(DepthStencilView != nullptr);
 	}
 
-	inline ~ClearDepthStencilRenderCommand()
+	inline ~ClearDepthStencilCommand()
 	{
 		DepthStencilView->Release();
 	}
@@ -97,9 +97,9 @@ struct ClearDepthStencilRenderCommand : public RenderCommand
 };
 
 // Bind Viewport RenderCommand
-struct BindViewportRenderCommand : public RenderCommand
+struct BindViewportCommand : public RenderCommand
 {
-	inline BindViewportRenderCommand(const Viewport& InViewport, Uint32 InSlot)
+	inline BindViewportCommand(const Viewport& InViewport, Uint32 InSlot)
 		: Viewport(InViewport)
 		, Slot(InSlot)
 	{
@@ -115,9 +115,9 @@ struct BindViewportRenderCommand : public RenderCommand
 };
 
 // Bind ScissorRect RenderCommand
-struct BindScissorRectRenderCommand : public RenderCommand
+struct BindScissorRectCommand : public RenderCommand
 {
-	inline BindScissorRectRenderCommand(const ScissorRect& InScissorRect, Uint32 InSlot)
+	inline BindScissorRectCommand(const ScissorRect& InScissorRect, Uint32 InSlot)
 		: ScissorRect(InScissorRect)
 		, Slot(InSlot)
 	{
@@ -133,9 +133,9 @@ struct BindScissorRectRenderCommand : public RenderCommand
 };
 
 // Bind BlendFactor RenderCommand
-struct BindBlendFactorRenderCommand : public RenderCommand
+struct BindBlendFactorCommand : public RenderCommand
 {
-	inline BindBlendFactorRenderCommand()
+	inline BindBlendFactorCommand()
 	{
 	}
 
@@ -146,9 +146,9 @@ struct BindBlendFactorRenderCommand : public RenderCommand
 };
 
 // BeginRenderPass RenderCommand
-struct BeginRenderPassRenderCommand : public RenderCommand
+struct BeginRenderPassCommand : public RenderCommand
 {
-	inline BeginRenderPassRenderCommand()
+	inline BeginRenderPassCommand()
 	{
 	}
 
@@ -159,9 +159,9 @@ struct BeginRenderPassRenderCommand : public RenderCommand
 };
 
 // End RenderCommand
-struct EndRenderPassRenderCommand : public RenderCommand
+struct EndRenderPassCommand : public RenderCommand
 {
-	inline EndRenderPassRenderCommand()
+	inline EndRenderPassCommand()
 	{
 	}
 
@@ -172,9 +172,9 @@ struct EndRenderPassRenderCommand : public RenderCommand
 };
 
 // Bind PrimitiveTopology RenderCommand
-struct BindPrimitiveTopologyRenderCommand : public RenderCommand
+struct BindPrimitiveTopologyCommand : public RenderCommand
 {
-	inline BindPrimitiveTopologyRenderCommand(EPrimitveTopologyType InPrimitiveTopologyType)
+	inline BindPrimitiveTopologyCommand(EPrimitveTopologyType InPrimitiveTopologyType)
 		: PrimitiveTopologyType(InPrimitiveTopologyType)
 	{
 	}
@@ -188,9 +188,9 @@ struct BindPrimitiveTopologyRenderCommand : public RenderCommand
 };
 
 // Bind VertexBuffers RenderCommand
-struct BindVertexBuffersRenderCommand : public RenderCommand
+struct BindVertexBuffersCommand : public RenderCommand
 {
-	inline BindVertexBuffersRenderCommand(VertexBuffer* const * InVertexBuffers, Uint32 InVertexBufferCount, Uint32 InSlot)
+	inline BindVertexBuffersCommand(VertexBuffer* const * InVertexBuffers, Uint32 InVertexBufferCount, Uint32 InSlot)
 		: VertexBuffers(InVertexBuffers)
 		, VertexBufferCount(InVertexBufferCount)
 		, Slot(InSlot)
@@ -202,7 +202,7 @@ struct BindVertexBuffersRenderCommand : public RenderCommand
 		}
 	}
 
-	inline ~BindVertexBuffersRenderCommand()
+	inline ~BindVertexBuffersCommand()
 	{
 		for (Uint32 i = 0; i < VertexBufferCount; i++)
 		{
@@ -221,39 +221,37 @@ struct BindVertexBuffersRenderCommand : public RenderCommand
 };
 
 // Bind IndexBuffer RenderCommand
-struct BindIndexBufferRenderCommand : public RenderCommand
+struct BindIndexBufferCommand : public RenderCommand
 {
-	inline BindIndexBufferRenderCommand(IndexBuffer* InIndexBuffer, EFormat InIndexFormat)
+	inline BindIndexBufferCommand(IndexBuffer* InIndexBuffer)
 		: IndexBuffer(InIndexBuffer)
-		, IndexFormat(InIndexFormat)
 	{
 		VALIDATE(IndexBuffer != nullptr);
 	}
 
-	inline ~BindIndexBufferRenderCommand()
+	inline ~BindIndexBufferCommand()
 	{
 		IndexBuffer->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
 	{
-		CmdContext.BindIndexBuffer(IndexBuffer, IndexFormat);
+		CmdContext.BindIndexBuffer(IndexBuffer);
 	}
 
 	IndexBuffer* IndexBuffer;
-	EFormat IndexFormat;
 };
 
 // Bind RayTracingScene RenderCommand
-struct BindRayTracingSceneRenderCommand : public RenderCommand
+struct BindRayTracingSceneCommand : public RenderCommand
 {
-	inline BindRayTracingSceneRenderCommand(RayTracingScene* InRayTracingScene)
+	inline BindRayTracingSceneCommand(RayTracingScene* InRayTracingScene)
 		: RayTracingScene(InRayTracingScene)
 	{
 		VALIDATE(RayTracingScene != nullptr);
 	}
 
-	inline ~BindRayTracingSceneRenderCommand()
+	inline ~BindRayTracingSceneCommand()
 	{
 		RayTracingScene->Release();
 	}
@@ -267,9 +265,9 @@ struct BindRayTracingSceneRenderCommand : public RenderCommand
 };
 
 // Bind BlendFactor RenderCommand
-struct BindRenderTargetsRenderCommand : public RenderCommand
+struct BindRenderTargetsCommand : public RenderCommand
 {
-	inline BindRenderTargetsRenderCommand(RenderTargetView* const * InRenderTargetViews, Uint32 InRenderTargetViewCount, DepthStencilView* InDepthStencilView)
+	inline BindRenderTargetsCommand(RenderTargetView* const * InRenderTargetViews, Uint32 InRenderTargetViewCount, DepthStencilView* InDepthStencilView)
 		: RenderTargetViews(InRenderTargetViews)
 		, RenderTargetViewCount(InRenderTargetViewCount)
 		, DepthStencilView(InDepthStencilView)
@@ -282,7 +280,7 @@ struct BindRenderTargetsRenderCommand : public RenderCommand
 		}
 	}
 
-	inline BindRenderTargetsRenderCommand()
+	inline BindRenderTargetsCommand()
 	{
 		DepthStencilView->Release();
 		for (Uint32 i = 0; i < RenderTargetViewCount; i++)
@@ -302,15 +300,15 @@ struct BindRenderTargetsRenderCommand : public RenderCommand
 };
 
 // Bind GraphicsPipelineState RenderCommand
-struct BindGraphicsPipelineStateRenderCommand : public RenderCommand
+struct BindGraphicsPipelineStateCommand : public RenderCommand
 {
-	inline BindGraphicsPipelineStateRenderCommand(GraphicsPipelineState* InPipelineState)
+	inline BindGraphicsPipelineStateCommand(GraphicsPipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
 		VALIDATE(PipelineState != nullptr);
 	}
 
-	inline ~BindGraphicsPipelineStateRenderCommand()
+	inline ~BindGraphicsPipelineStateCommand()
 	{
 		PipelineState->Release();
 	}
@@ -324,15 +322,15 @@ struct BindGraphicsPipelineStateRenderCommand : public RenderCommand
 };
 
 // Bind ComputePipelineState RenderCommand
-struct BindComputePipelineStateRenderCommand : public RenderCommand
+struct BindComputePipelineStateCommand : public RenderCommand
 {
-	inline BindComputePipelineStateRenderCommand(ComputePipelineState* InPipelineState)
+	inline BindComputePipelineStateCommand(ComputePipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
 		VALIDATE(PipelineState != nullptr);
 	}
 
-	inline ~BindComputePipelineStateRenderCommand()
+	inline ~BindComputePipelineStateCommand()
 	{
 		PipelineState->Release();
 	}
@@ -346,15 +344,15 @@ struct BindComputePipelineStateRenderCommand : public RenderCommand
 };
 
 // Bind RayTracingPipelineState RenderCommand
-struct BindRayTracingPipelineStateRenderCommand : public RenderCommand
+struct BindRayTracingPipelineStateCommand : public RenderCommand
 {
-	inline BindRayTracingPipelineStateRenderCommand(RayTracingPipelineState* InPipelineState)
+	inline BindRayTracingPipelineStateCommand(RayTracingPipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
 		VALIDATE(PipelineState != nullptr);
 	}
 
-	inline ~BindRayTracingPipelineStateRenderCommand()
+	inline ~BindRayTracingPipelineStateCommand()
 	{
 		PipelineState->Release();
 	}
@@ -368,9 +366,9 @@ struct BindRayTracingPipelineStateRenderCommand : public RenderCommand
 };
 
 // Bind ConstantBuffers RenderCommand
-struct BindConstantBuffersRenderCommand : public RenderCommand
+struct BindConstantBuffersCommand : public RenderCommand
 {
-	inline BindConstantBuffersRenderCommand(Shader* InShader, ConstantBuffer* const* InConstantBuffers, Uint32 InConstantBufferCount, Uint32 InStartSlot)
+	inline BindConstantBuffersCommand(Shader* InShader, ConstantBuffer* const* InConstantBuffers, Uint32 InConstantBufferCount, Uint32 InStartSlot)
 		: Shader(InShader)
 		, ConstantBuffers(InConstantBuffers)
 		, ConstantBufferCount(InConstantBufferCount)
@@ -390,9 +388,9 @@ struct BindConstantBuffersRenderCommand : public RenderCommand
 };
 
 // Bind ShaderResourceViews RenderCommand
-struct BindShaderResourceViewsRenderCommand : public RenderCommand
+struct BindShaderResourceViewsCommand : public RenderCommand
 {
-	inline BindShaderResourceViewsRenderCommand(Shader* InShader, ShaderResourceView* const* InShaderResourceViews, Uint32 InShaderResourceViewCount, Uint32 InStartSlot)
+	inline BindShaderResourceViewsCommand(Shader* InShader, ShaderResourceView* const* InShaderResourceViews, Uint32 InShaderResourceViewCount, Uint32 InStartSlot)
 		: Shader(InShader)
 		, ShaderResourceViews(InShaderResourceViews)
 		, ShaderResourceViewCount(InShaderResourceViewCount)
@@ -412,9 +410,9 @@ struct BindShaderResourceViewsRenderCommand : public RenderCommand
 };
 
 // Bind UnorderedAccessViews RenderCommand
-struct BindUnorderedAccessViewsRenderCommand : public RenderCommand
+struct BindUnorderedAccessViewsCommand : public RenderCommand
 {
-	inline BindUnorderedAccessViewsRenderCommand(Shader* InShader, UnorderedAccessView* const* InUnorderedAccessViews, Uint32 InUnorderedAccessViewCount, Uint32 InStartSlot)
+	inline BindUnorderedAccessViewsCommand(Shader* InShader, UnorderedAccessView* const* InUnorderedAccessViews, Uint32 InUnorderedAccessViewCount, Uint32 InStartSlot)
 		: Shader(InShader)
 		, UnorderedAccessViews(InUnorderedAccessViews)
 		, UnorderedAccessViewCount(InUnorderedAccessViewCount)
@@ -434,9 +432,9 @@ struct BindUnorderedAccessViewsRenderCommand : public RenderCommand
 };
 
 // Resolve Texture RenderCommand
-struct ResolveTextureRenderCommand : public RenderCommand
+struct ResolveTextureCommand : public RenderCommand
 {
-	inline ResolveTextureRenderCommand(Texture* InDestination, Texture* InSource)
+	inline ResolveTextureCommand(Texture* InDestination, Texture* InSource)
 		: Destination(InDestination)
 		, Source(InSource)
 	{
@@ -444,7 +442,7 @@ struct ResolveTextureRenderCommand : public RenderCommand
 		VALIDATE(Source != nullptr);
 	}
 
-	inline ~ResolveTextureRenderCommand()
+	inline ~ResolveTextureCommand()
 	{
 		Destination->Release();
 		Source->Release();
@@ -460,9 +458,9 @@ struct ResolveTextureRenderCommand : public RenderCommand
 };
 
 // Resolve Texture RenderCommand
-struct UpdateBufferRenderCommand : public RenderCommand
+struct UpdateBufferCommand : public RenderCommand
 {
-	inline UpdateBufferRenderCommand(Buffer* InDestination, Uint64 InDestinationOffsetInBytes, Uint64 InSizeInBytes, const VoidPtr InSourceData)
+	inline UpdateBufferCommand(Buffer* InDestination, Uint64 InDestinationOffsetInBytes, Uint64 InSizeInBytes, const VoidPtr InSourceData)
 		: Destination(InDestination)
 		, DestinationOffsetInBytes(InDestinationOffsetInBytes)
 		, SizeInBytes(InSizeInBytes)
@@ -472,7 +470,7 @@ struct UpdateBufferRenderCommand : public RenderCommand
 		VALIDATE(InSourceData != nullptr);
 	}
 
-	inline ~UpdateBufferRenderCommand()
+	inline ~UpdateBufferCommand()
 	{
 		Destination->Release();
 	}
@@ -489,9 +487,9 @@ struct UpdateBufferRenderCommand : public RenderCommand
 };
 
 // Copy Buffer RenderCommand
-struct CopyBufferRenderCommand : public RenderCommand
+struct CopyBufferCommand : public RenderCommand
 {
-	inline CopyBufferRenderCommand(Buffer* InDestination, Buffer* InSource, const CopyBufferInfo& InCopyBufferInfo)
+	inline CopyBufferCommand(Buffer* InDestination, Buffer* InSource, const CopyBufferInfo& InCopyBufferInfo)
 		: Destination(InDestination)
 		, Source(InSource)
 		, CopyBufferInfo(InCopyBufferInfo)
@@ -500,7 +498,7 @@ struct CopyBufferRenderCommand : public RenderCommand
 		VALIDATE(Source != nullptr);
 	}
 
-	inline ~CopyBufferRenderCommand()
+	inline ~CopyBufferCommand()
 	{
 		Destination->Release();
 		Source->Release();
@@ -517,9 +515,9 @@ struct CopyBufferRenderCommand : public RenderCommand
 };
 
 // Copy Texture RenderCommand
-struct CopyTextureRenderCommand : public RenderCommand
+struct CopyTextureCommand : public RenderCommand
 {
-	inline CopyTextureRenderCommand(Texture* InDestination, Texture* InSource, const CopyTextureInfo& InCopyTextureInfo)
+	inline CopyTextureCommand(Texture* InDestination, Texture* InSource, const CopyTextureInfo& InCopyTextureInfo)
 		: Destination(InDestination)
 		, Source(InSource)
 		, CopyTextureInfo(InCopyTextureInfo)
@@ -528,7 +526,7 @@ struct CopyTextureRenderCommand : public RenderCommand
 		VALIDATE(Source != nullptr);
 	}
 
-	inline ~CopyTextureRenderCommand()
+	inline ~CopyTextureCommand()
 	{
 		Destination->Release();
 		Source->Release();
@@ -545,15 +543,15 @@ struct CopyTextureRenderCommand : public RenderCommand
 };
 
 // Build RayTracing Geoemtry RenderCommand
-struct BuildRayTracingGeometryRenderCommand : public RenderCommand
+struct BuildRayTracingGeometryCommand : public RenderCommand
 {
-	inline BuildRayTracingGeometryRenderCommand(RayTracingGeometry* InRayTracingGeometry)
+	inline BuildRayTracingGeometryCommand(RayTracingGeometry* InRayTracingGeometry)
 		: RayTracingGeometry(InRayTracingGeometry)
 	{
 		VALIDATE(RayTracingGeometry != nullptr);
 	}
 
-	inline ~BuildRayTracingGeometryRenderCommand()
+	inline ~BuildRayTracingGeometryCommand()
 	{
 		RayTracingGeometry->Release();
 	}
@@ -567,15 +565,15 @@ struct BuildRayTracingGeometryRenderCommand : public RenderCommand
 };
 
 // Build RayTracing Scene RenderCommand
-struct BuildRayTracingSceneRenderCommand : public RenderCommand
+struct BuildRayTracingSceneCommand : public RenderCommand
 {
-	inline BuildRayTracingSceneRenderCommand(RayTracingScene* InRayTracingScene)
+	inline BuildRayTracingSceneCommand(RayTracingScene* InRayTracingScene)
 		: RayTracingScene(InRayTracingScene)
 	{
 		VALIDATE(RayTracingScene != nullptr);
 	}
 
-	inline ~BuildRayTracingSceneRenderCommand()
+	inline ~BuildRayTracingSceneCommand()
 	{
 		RayTracingScene->Release();
 	}
@@ -589,9 +587,9 @@ struct BuildRayTracingSceneRenderCommand : public RenderCommand
 };
 
 // Draw RenderCommand
-struct DrawRenderCommand : public RenderCommand
+struct DrawCommand : public RenderCommand
 {
-	inline DrawRenderCommand(Uint32 InVertexCount, Uint32 InStartVertexLocation)
+	inline DrawCommand(Uint32 InVertexCount, Uint32 InStartVertexLocation)
 		: VertexCount(InVertexCount)
 		, StartVertexLocation(InStartVertexLocation)
 	{
@@ -607,9 +605,9 @@ struct DrawRenderCommand : public RenderCommand
 };
 
 // DrawIndexed RenderCommand
-struct DrawIndexedRenderCommand : public RenderCommand
+struct DrawIndexedCommand : public RenderCommand
 {
-	inline DrawIndexedRenderCommand(Uint32 InIndexCount, Uint32 InStartIndexLocation, Uint32 InBaseVertexLocation)
+	inline DrawIndexedCommand(Uint32 InIndexCount, Uint32 InStartIndexLocation, Uint32 InBaseVertexLocation)
 		: IndexCount(InIndexCount)
 		, StartIndexLocation(InStartIndexLocation)
 		, BaseVertexLocation(InBaseVertexLocation)
@@ -627,9 +625,9 @@ struct DrawIndexedRenderCommand : public RenderCommand
 };
 
 // DrawInstanced RenderCommand
-struct DrawInstancedRenderCommand : public RenderCommand
+struct DrawInstancedCommand : public RenderCommand
 {
-	inline DrawInstancedRenderCommand(Uint32 InVertexCountPerInstance, Uint32 InInstanceCount, Uint32 InStartVertexLocation, Uint32 InStartInstanceLocation)
+	inline DrawInstancedCommand(Uint32 InVertexCountPerInstance, Uint32 InInstanceCount, Uint32 InStartVertexLocation, Uint32 InStartInstanceLocation)
 		: VertexCountPerInstance(InVertexCountPerInstance)
 		, InstanceCount(InInstanceCount)
 		, StartVertexLocation(InStartVertexLocation)
@@ -649,9 +647,9 @@ struct DrawInstancedRenderCommand : public RenderCommand
 };
 
 // DrawIndexedInstanced RenderCommand
-struct DrawIndexedInstancedRenderCommand : public RenderCommand
+struct DrawIndexedInstancedCommand : public RenderCommand
 {
-	inline DrawIndexedInstancedRenderCommand(Uint32 InIndexCountPerInstance, Uint32 InInstanceCount, Uint32 InStartIndexLocation, Uint32 InBaseVertexLocation, Uint32 InStartInstanceLocation)
+	inline DrawIndexedInstancedCommand(Uint32 InIndexCountPerInstance, Uint32 InInstanceCount, Uint32 InStartIndexLocation, Uint32 InBaseVertexLocation, Uint32 InStartInstanceLocation)
 		: IndexCountPerInstance(InIndexCountPerInstance)
 		, InstanceCount(InInstanceCount)
 		, StartIndexLocation(InStartIndexLocation)
@@ -673,9 +671,9 @@ struct DrawIndexedInstancedRenderCommand : public RenderCommand
 };
 
 // Dispatch Compute RenderCommand
-struct DispatchComputeRenderCommand : public RenderCommand
+struct DispatchComputeCommand : public RenderCommand
 {
-	inline DispatchComputeRenderCommand(Uint32 InWorkGroupsX, Uint32 InWorkGroupsY, Uint32 InWorkGroupsZ)
+	inline DispatchComputeCommand(Uint32 InWorkGroupsX, Uint32 InWorkGroupsY, Uint32 InWorkGroupsZ)
 		: WorkGroupsX(InWorkGroupsX)
 		, WorkGroupsY(InWorkGroupsY)
 		, WorkGroupsZ(InWorkGroupsZ)
@@ -693,9 +691,9 @@ struct DispatchComputeRenderCommand : public RenderCommand
 };
 
 // Dispatch Rays RenderCommand
-struct DispatchRaysRenderCommand : public RenderCommand
+struct DispatchRaysCommand : public RenderCommand
 {
-	inline DispatchRaysRenderCommand(Uint32 InWidth, Uint32 InHeigh, Uint32 InDepth)
+	inline DispatchRaysCommand(Uint32 InWidth, Uint32 InHeigh, Uint32 InDepth)
 		: Width(InWidth)
 		, Height(InHeigh)
 		, Depth(InDepth)

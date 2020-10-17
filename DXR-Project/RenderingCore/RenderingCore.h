@@ -88,23 +88,23 @@ inline const Char* ToString(EShaderLanguange ShaderLanguange)
 
 enum class EPrimitveTopologyType
 {
-	PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED	= 0,
-	PRIMITIVE_TOPOLOGY_TYPE_POINT		= 1,
-	PRIMITIVE_TOPOLOGY_TYPE_LINE		= 2,
-	PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE	= 3,
-	PRIMITIVE_TOPOLOGY_TYPE_PATCH		= 4
+	PrimitveTopologyType_Undefined	= 0,
+	PrimitveTopologyType_Point		= 1,
+	PrimitveTopologyType_Line		= 2,
+	PrimitveTopologyType_Triangle	= 3,
+	PrimitveTopologyType_Patch		= 4
 };
 
 inline const Char* ToString(EPrimitveTopologyType PrimitveTopologyType)
 {
 	switch (PrimitveTopologyType)
 	{
-	case EPrimitveTopologyType::PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED:	return "PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED";
-	case EPrimitveTopologyType::PRIMITIVE_TOPOLOGY_TYPE_POINT:		return "PRIMITIVE_TOPOLOGY_TYPE_POINT";
-	case EPrimitveTopologyType::PRIMITIVE_TOPOLOGY_TYPE_LINE:		return "PRIMITIVE_TOPOLOGY_TYPE_LINE";
-	case EPrimitveTopologyType::PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE:	return "PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE";
-	case EPrimitveTopologyType::PRIMITIVE_TOPOLOGY_TYPE_PATCH:		return "PRIMITIVE_TOPOLOGY_TYPE_PATCH";
-	default:														return "";
+	case EPrimitveTopologyType::PrimitveTopologyType_Undefined:	return "PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED";
+	case EPrimitveTopologyType::PrimitveTopologyType_Point:		return "PRIMITIVE_TOPOLOGY_TYPE_POINT";
+	case EPrimitveTopologyType::PrimitveTopologyType_Line:		return "PRIMITIVE_TOPOLOGY_TYPE_LINE";
+	case EPrimitveTopologyType::PrimitveTopologyType_Triangle:	return "PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE";
+	case EPrimitveTopologyType::PrimitveTopologyType_Patch:		return "PRIMITIVE_TOPOLOGY_TYPE_PATCH";
+	default:													return "";
 	}
 }
 

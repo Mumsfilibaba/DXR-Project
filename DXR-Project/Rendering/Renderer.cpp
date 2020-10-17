@@ -51,11 +51,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 		{
 			const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
-			XMMATRIX XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
-			XMVECTOR XmTop = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
-			XMVECTOR XmBottom = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
-			XmTop = XMVector4Transform(XmTop, XmTransform);
-			XmBottom = XMVector4Transform(XmBottom, XmTransform);
+			XMMATRIX XmTransform	= XMMatrixTranspose(XMLoadFloat4x4(&Transform));
+			XMVECTOR XmTop			= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
+			XMVECTOR XmBottom		= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
+			XmTop		= XMVector4Transform(XmTop, XmTransform);
+			XmBottom	= XMVector4Transform(XmBottom, XmTransform);
 
 			AABB Box;
 			XMStoreFloat3(&Box.Top, XmTop);
@@ -73,15 +73,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	// Start frame
 	D3D12Texture* BackBuffer = RenderingAPI::Get().GetSwapChain()->GetSurfaceResource(CurrentBackBufferIndex);
-	CommandAllocators[CurrentBackBufferIndex]->Reset();
-	CommandList->Reset(CommandAllocators[CurrentBackBufferIndex].Get());
-	
-	// Release deferred resources
-	for (auto& Resource : DeferredResources)
-	{
-		CommandList->DeferDestruction(Resource.Get());
-	}
-	DeferredResources.Clear();
+
+	CmdList.Begin();
 
 	// UpdateLightBuffers
 	CommandList->TransitionBarrier(PointLightBuffer.Get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -106,7 +99,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Properties.FarPlane			= PoiLight->GetShadowFarPlane();
 
 			constexpr Uint32 SizeInBytes = sizeof(PointLightProperties);
-			CommandList->UploadBufferData(PointLightBuffer.Get(), NumPointLights * SizeInBytes, &Properties, SizeInBytes);
+			CmdList.UpdateBuffer(PointLightBuffer.Get(), 0, NumPointLights * SizeInBytes, &Properties);
 
 			NumPointLights++;
 		}
@@ -123,7 +116,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Properties.MaxShadowBias	= DirLight->GetMaxShadowBias();
 
 			constexpr Uint32 SizeInBytes = sizeof(DirectionalLightProperties);
-			CommandList->UploadBufferData(DirectionalLightBuffer.Get(), NumDirLights * SizeInBytes, &Properties, SizeInBytes);
+			CmdList.UpdateBuffer(DirectionalLightBuffer.Get(), 0, NumDirLights * SizeInBytes, &Properties);
 
 			NumDirLights++;
 		}
@@ -146,7 +139,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->TransitionBarrier(DirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	
 	// Render DirectionalLight ShadowMaps
-	CommandList->ClearDepthStencilView(DirLightShadowMaps->GetDepthStencilView(0).Get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
+	CmdList.ClearDepthStencilView(DirLightShadowMaps->GetDepthStencilView(0).Get(), DepthStencilClearValue(1.0f, 0));
 
 #if ENABLE_VSM
 	CommandList->TransitionBarrier(VSMDirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -161,30 +154,29 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->OMSetRenderTargets(DirLightRTVS, 1, DirLightShadowMaps->GetDepthStencilView(0).Get());
 	CommandList->SetPipelineState(VSMShadowMapPSO->GetPipelineState());
 #else
-	CommandList->OMSetRenderTargets(nullptr, 0, DirLightShadowMaps->GetDepthStencilView(0).Get());
-	CommandList->SetPipelineState(ShadowMapPSO->GetPipelineState());
+	CmdList.BindRenderTargets(nullptr, 0, DirLightShadowMaps->GetDepthStencilView(0).Get());
+	CmdList.BindGraphicsPipelineState(ShadowMapPSO.Get());
 #endif
 
 	// Setup view
-	D3D12_VIEWPORT ViewPort = { };
+	Viewport ViewPort = { };
 	ViewPort.Width		= static_cast<Float32>(Renderer::GetGlobalLightSettings().ShadowMapWidth);
 	ViewPort.Height		= static_cast<Float32>(Renderer::GetGlobalLightSettings().ShadowMapHeight);
 	ViewPort.MinDepth	= 0.0f;
 	ViewPort.MaxDepth	= 1.0f;
-	ViewPort.TopLeftX	= 0.0f;
-	ViewPort.TopLeftY	= 0.0f;
-	CommandList->RSSetViewports(&ViewPort, 1);
+	ViewPort.x			= 0.0f;
+	ViewPort.y			= 0.0f;
+	CmdList.BindViewport(ViewPort, 1);
 
-	D3D12_RECT ScissorRect =
+	ScissorRect ScissorRect =
 	{
 		0,
 		0,
 		static_cast<LONG>(Renderer::GetGlobalLightSettings().ShadowMapWidth),
 		static_cast<LONG>(Renderer::GetGlobalLightSettings().ShadowMapHeight)
 	};
-	CommandList->RSSetScissorRects(&ScissorRect, 1);
-	CommandList->SetGraphicsRootSignature(ShadowMapRootSignature->GetRootSignature());
-	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	CmdList.BindScissorRect(ScissorRect, 1);
+	CmdList.BindPrimitiveTopology(EPrimitveTopologyType::PrimitveTopologyType_Triangle);
 
 	// PerObject Structs
 	struct PerObject
@@ -214,20 +206,13 @@ void Renderer::Tick(const Scene& CurrentScene)
 			// Draw all objects to depthbuffer
 			for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 			{
-				VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
-				VBO.SizeInBytes		= Command.VertexBuffer->GetSizeInBytes();
-				VBO.StrideInBytes	= sizeof(Vertex);
-				CommandList->IASetVertexBuffers(0, &VBO, 1);
-
-				IBV.BufferLocation	= Command.IndexBuffer->GetGPUVirtualAddress();
-				IBV.SizeInBytes		= Command.IndexBuffer->GetSizeInBytes();
-				IBV.Format			= DXGI_FORMAT_R32_UINT;
-				CommandList->IASetIndexBuffer(&IBV);
+				CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+				CmdList.BindIndexBuffer(Command.IndexBuffer);
 
 				PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 				CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
 
-				CommandList->DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+				CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 			}
 
 			break;
@@ -240,9 +225,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 	ViewPort.Height		= static_cast<Float32>(PointLightShadowSize);
 	ViewPort.MinDepth	= 0.0f;
 	ViewPort.MaxDepth	= 1.0f;
-	ViewPort.TopLeftX	= 0.0f;
-	ViewPort.TopLeftY	= 0.0f;
-	CommandList->RSSetViewports(&ViewPort, 1);
+	ViewPort.x			= 0.0f;
+	ViewPort.y			= 0.0f;
+	CmdList.BindViewport(ViewPort, 1);
 
 	ScissorRect =
 	{
@@ -251,9 +236,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 		static_cast<LONG>(PointLightShadowSize),
 		static_cast<LONG>(PointLightShadowSize)
 	};
-	CommandList->RSSetScissorRects(&ScissorRect, 1);
+	CmdList.BindScissorRect(ScissorRect, 1);
 
-	CommandList->SetPipelineState(LinearShadowMapPSO->GetPipelineState());
+	CmdList.BindGraphicsPipelineState(LinearShadowMapPSO.Get());
 	for (Light* Light : CurrentScene.GetLights())
 	{
 		if (IsSubClassOf<PointLight>(Light))
