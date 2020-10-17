@@ -1,5 +1,9 @@
 #include "ClassType.h"
 
+/*
+* ClassType
+*/
+
 ClassType::ClassType(const Char* InName, const ClassType* InSuperClass)
 	: Name(InName)
 	, SuperClass(InSuperClass)

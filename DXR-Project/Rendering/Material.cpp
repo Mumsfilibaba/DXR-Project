@@ -15,59 +15,10 @@ Material::Material(const MaterialProperties& InProperties)
 {
 }
 
-Material::~Material()
-{
-	SAFEDELETE(DescriptorTable);
-	SAFEDELETE(MaterialBuffer);
-}
-
 void Material::Initialize()
 {
-	VALIDATE(AlbedoMap		!= nullptr);
-	VALIDATE(NormalMap		!= nullptr);
-	VALIDATE(RoughnessMap	!= nullptr);
-	VALIDATE(HeightMap		!= nullptr);
-	VALIDATE(AOMap			!= nullptr);
-	VALIDATE(MetallicMap	!= nullptr);
-
 	// Create materialbuffer
-	BufferProperties MaterialBufferProps = { };
-	MaterialBufferProps.Name		= "MaterialBuffer";
-	MaterialBufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
-	MaterialBufferProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	MaterialBufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-	MaterialBufferProps.SizeInBytes = 256; // Must atleast be a multiple of 256
-
-	MaterialBuffer = RenderingAPI::Get().CreateBuffer(MaterialBufferProps);
-	if (MaterialBuffer)
-	{
-		D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = { };
-		CBVDesc.BufferLocation	= MaterialBuffer->GetGPUVirtualAddress();
-		CBVDesc.SizeInBytes		= MaterialBuffer->GetSizeInBytes();
-		MaterialBuffer->SetConstantBufferView(TSharedPtr(RenderingAPI::Get().CreateConstantBufferView(MaterialBuffer->GetResource(), &CBVDesc)));
-
-		TSharedPtr<D3D12ImmediateCommandList> CommandList = RenderingAPI::StaticGetImmediateCommandList();
-		CommandList->TransitionBarrier(MaterialBuffer, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-		CommandList->Flush();
-
-		BuildBuffer(CommandList.Get());
-		CommandList->Flush();
-	}
-	else
-	{
-		return;
-	}
-
-	// Create descriptor table
-	DescriptorTable = RenderingAPI::Get().CreateDescriptorTable(7);
-	DescriptorTable->SetShaderResourceView(AlbedoMap->GetShaderResourceView(0).Get(), 0);
-	DescriptorTable->SetShaderResourceView(NormalMap->GetShaderResourceView(0).Get(), 1);
-	DescriptorTable->SetShaderResourceView(RoughnessMap->GetShaderResourceView(0).Get(), 2);
-	DescriptorTable->SetShaderResourceView(HeightMap->GetShaderResourceView(0).Get(), 3);
-	DescriptorTable->SetShaderResourceView(MetallicMap->GetShaderResourceView(0).Get(), 4);
-	DescriptorTable->SetShaderResourceView(AOMap->GetShaderResourceView(0).Get(), 5);
-	DescriptorTable->SetConstantBufferView(MaterialBuffer->GetConstantBufferView().Get(), 6);
-	DescriptorTable->CopyDescriptors();
+	MaterialBuffer = CreateConstantBuffer<MaterialProperties>(nullptr, BufferUsage_Default);
 }
 
 void Material::BuildBuffer(D3D12CommandList* CommandList)

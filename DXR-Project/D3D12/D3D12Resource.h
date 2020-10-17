@@ -1,4 +1,6 @@
 #pragma once
+#include "RenderingCore/Buffer.h"
+
 #include "D3D12DeviceChild.h"
 
 /*

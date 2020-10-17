@@ -26,8 +26,8 @@ public:
 	virtual void BindBlendFactor() override final;
 
 	virtual void BindPrimitiveTopology(EPrimitveTopologyType PrimitveTopologyType) override final;
-	virtual void BindVertexBuffers(Buffer* const * VertexBuffers, Uint32 BufferCount, Uint32 BufferSlot) override final;
-	virtual void BindIndexBuffer(Buffer* IndexBuffer, EFormat IndexFormat) override final;
+	virtual void BindVertexBuffers(VertexBuffer* const * VertexBuffers, Uint32 BufferCount, Uint32 BufferSlot) override final;
+	virtual void BindIndexBuffer(IndexBuffer* IndexBuffer, EFormat IndexFormat) override final;
 	virtual void BindRayTracingScene(RayTracingScene* RayTracingScene) override final;
 
 	virtual void BindRenderTargets(RenderTargetView* const * RenderTargetViews, Uint32 RenderTargetCount, DepthStencilView* DepthStencilView) override final;
@@ -36,7 +36,7 @@ public:
 	virtual void BindComputePipelineState(class ComputePipelineState* PipelineState) override final;
 	virtual void BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState) override final;
 
-	virtual void BindConstantBuffers(Shader* Shader, Buffer* const * ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot) override final;
+	virtual void BindConstantBuffers(Shader* Shader, ConstantBuffer* const * ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot) override final;
 	virtual void BindShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceViews, Uint32 ShaderResourceViewCount, Uint32 StartSlot) override final;
 	virtual void BindUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, Uint32 UnorderedAccessViewCount, Uint32 StartSlot) override final;
 

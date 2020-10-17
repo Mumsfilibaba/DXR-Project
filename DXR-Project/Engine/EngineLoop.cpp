@@ -63,7 +63,7 @@ bool EngineLoop::Initialize()
 		false;
 #endif
 
-	RenderingAPI* RenderingAPI = RenderingAPI::Make(ERenderingAPI::RENDERING_API_D3D12);
+	RenderingAPI* RenderingAPI = RenderingAPI::Make(ERenderingAPI::RenderingAPI_D3D12);
 	if (!RenderingAPI)
 	{
 		return false;
@@ -73,25 +73,6 @@ bool EngineLoop::Initialize()
 	{
 		return false;
 	}
-
-	Texture2D* TestTexture2D = RenderingAPI->CreateTexture2D();
-	if (TestTexture2D)
-	{
-		if (!TestTexture2D->Initialize(TextureInitializer(EFormat::FORMAT_R8G8B8A8_UNORM, ETextureFlag::TEXTURE_FLAG_RENDER_TARGET, 1920, 1080)))
-		{
-			return false;
-		}
-	}
-
-	TextureCube* TestTextureCube = RenderingAPI->CreateTextureCube();
-	if (TestTextureCube)
-	{
-		if (!TestTextureCube->Initialize())
-		{
-			return false;
-		}
-	}
-
 
 	// Renderer
 	Renderer* Renderer = Renderer::Make();

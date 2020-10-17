@@ -21,76 +21,39 @@ Mesh::~Mesh()
 
 bool Mesh::Initialize(const MeshData& Data)
 {
-	// Create VertexBuffer
-	BufferProperties BufferProps = { };
-	BufferProps.SizeInBytes = Data.Vertices.Size() * sizeof(Vertex);
-	BufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
-	BufferProps.InitalState = D3D12_RESOURCE_STATE_COMMON;
-	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
+	VertexCount = static_cast<Uint32>(Data.Vertices.Size());
+	IndexCount	= static_cast<Uint32>(Data.Indices.Size());
 
-	VertexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
+	// Create VertexBuffer
+	VertexBuffer = CreateVertexBuffer<Vertex>(nullptr, VertexCount, BufferUsage_Default);
 	if (!VertexBuffer)
 	{
 		return false;
 	}
 
 	// Create IndexBuffer
-	BufferProps.SizeInBytes = Data.Indices.Size() * sizeof(Uint32);
-
-	IndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
+	IndexBuffer = CreateIndexBuffer(nullptr, IndexCount * sizeof(Uint32), EIndexFormat::IndexFormat_Uint32, BufferUsage_Default);
 	if (!IndexBuffer)
 	{
 		return false;
 	}
-
-	VertexCount = static_cast<Uint32>(Data.Vertices.Size());
-	IndexCount	= static_cast<Uint32>(Data.Indices.Size());
-
-	// Upload data
-	TSharedPtr<D3D12ImmediateCommandList> CommandList = RenderingAPI::StaticGetImmediateCommandList();
-	CommandList->TransitionBarrier(VertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-	CommandList->TransitionBarrier(IndexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-	
-	Uint32 SizeInBytes = Data.Vertices.Size() * sizeof(Vertex);
-	CommandList->UploadBufferData(VertexBuffer.Get(), 0, Data.Vertices.Data(), SizeInBytes);
-	
-	SizeInBytes = Data.Indices.Size() * sizeof(Uint32);
-	CommandList->UploadBufferData(IndexBuffer.Get(), 0, Data.Indices.Data(), SizeInBytes);
-
-	CommandList->TransitionBarrier(VertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	CommandList->TransitionBarrier(IndexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-
-	CommandList->Flush();
-	CommandList->WaitForCompletion();
 
 	// Create RaytracingGeometry if raytracing is supported
 	if (RenderingAPI::Get().IsRayTracingSupported())
 	{
 		RayTracingGeometry = RenderingAPI::Get().CreateRayTracingGeometry();
 
-		// Also create shaderresourceviews for the buffers
-		D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-		SrvDesc.Format						= DXGI_FORMAT_UNKNOWN;
-		SrvDesc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
-		SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		SrvDesc.Buffer.FirstElement			= 0;
-		SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
-		SrvDesc.Buffer.NumElements			= VertexCount;
-		SrvDesc.Buffer.StructureByteStride	= sizeof(Vertex);
+		VertexBufferSRV = CreateShaderResourceView<Vertex>(VertexBuffer.Get(), 0, VertexCount);
+		if (!VertexBufferSRV)
+		{
+			return false;
+		}
 
-		VertexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(VertexBuffer->GetResource(), &SrvDesc)), 0);
-
-		SrvDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
-		SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
-		SrvDesc.Buffer.NumElements			= static_cast<Uint32>(IndexCount);
-		SrvDesc.Buffer.StructureByteStride	= 0;
-
-		IndexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(IndexBuffer->GetResource(), &SrvDesc)), 0);
-
-		DescriptorTable = RenderingAPI::Get().CreateDescriptorTable(2);
-		DescriptorTable->SetShaderResourceView(VertexBuffer->GetShaderResourceView(0).Get(), 0);
-		DescriptorTable->SetShaderResourceView(IndexBuffer->GetShaderResourceView(0).Get(), 1);
-		DescriptorTable->CopyDescriptors();
+		IndexBufferSRV = CreateShaderResourceView(IndexBuffer.Get(), 0, IndexCount, EFormat::Format_R32_Typeless);
+		if (!IndexBufferSRV)
+		{
+			return false;
+		}
 	}
 
 	// Create AABB

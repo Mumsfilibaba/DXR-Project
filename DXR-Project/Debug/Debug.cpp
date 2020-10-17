@@ -1,5 +1,9 @@
 #include "Debug.h"
 
+/*
+* Debug
+*/
+
 void Debug::DebugBreak()
 {
 	__debugbreak();

@@ -1,7 +1,6 @@
 #pragma once
-#include "D3D12/D3D12Buffer.h"
-#include "D3D12/D3D12Texture.h"
-#include "D3D12/D3D12DescriptorHeap.h"
+#include "RenderingCore/Buffer.h"
+#include "RenderingCore/Texture.h"
 
 /*
 * MaterialProperties
@@ -23,7 +22,7 @@ class Material
 {
 public:
 	Material(const MaterialProperties& InProperties);
-	~Material();
+	~Material() = default;
 
 	void Initialize();
 
@@ -43,29 +42,22 @@ public:
 
 	void SetDebugName(const std::string& InDebugName);
 
-	FORCEINLINE D3D12DescriptorTable* GetDescriptorTable() const
-	{
-		return DescriptorTable;
-	}
-
 	FORCEINLINE const MaterialProperties& GetMaterialProperties() const 
 	{
 		return Properties;
 	}
 
 public:
-	TSharedPtr<D3D12Texture> AlbedoMap;
-	TSharedPtr<D3D12Texture> NormalMap;
-	TSharedPtr<D3D12Texture> RoughnessMap;
-	TSharedPtr<D3D12Texture> HeightMap;
-	TSharedPtr<D3D12Texture> AOMap;
-	TSharedPtr<D3D12Texture> MetallicMap;
+	TSharedRef<Texture2D> AlbedoMap;
+	TSharedRef<Texture2D> NormalMap;
+	TSharedRef<Texture2D> RoughnessMap;
+	TSharedRef<Texture2D> HeightMap;
+	TSharedRef<Texture2D> AOMap;
+	TSharedRef<Texture2D> MetallicMap;
 
 private:
 	std::string				DebugName;
 	MaterialProperties		Properties;
-	D3D12Buffer*			MaterialBuffer	= nullptr;
-	D3D12DescriptorTable*	DescriptorTable = nullptr;
-
+	TSharedRef<ConstantBuffer> MaterialBuffer;
 	bool MaterialBufferIsDirty = true;
 };

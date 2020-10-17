@@ -61,11 +61,11 @@ void D3D12CommandContext::BindPrimitiveTopology(EPrimitveTopologyType PrimitveTo
 {
 }
 
-void D3D12CommandContext::BindVertexBuffers(Buffer* const * VertexBuffers, Uint32 BufferCount, Uint32 BufferSlot)
+void D3D12CommandContext::BindVertexBuffers(VertexBuffer* const * VertexBuffers, Uint32 BufferCount, Uint32 BufferSlot)
 {
 }
 
-void D3D12CommandContext::BindIndexBuffer(Buffer* IndexBuffer, EFormat IndexFormat)
+void D3D12CommandContext::BindIndexBuffer(IndexBuffer* IndexBuffer, EFormat IndexFormat)
 {
 }
 
@@ -89,7 +89,7 @@ void D3D12CommandContext::BindRayTracingPipelineState(class RayTracingPipelineSt
 {
 }
 
-void D3D12CommandContext::BindConstantBuffers(Shader* Shader, Buffer* const * ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot)
+void D3D12CommandContext::BindConstantBuffers(Shader* Shader, ConstantBuffer* const * ConstantBuffers, Uint32 ConstantBufferCount, Uint32 StartSlot)
 {
 }
 

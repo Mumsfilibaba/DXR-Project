@@ -3,9 +3,8 @@
 
 #include "Containers/TSharedPtr.h"
 
-#include "D3D12/D3D12Buffer.h"
-#include "D3D12/D3D12RayTracingScene.h"
-#include "D3D12/D3D12CommandList.h"
+#include "RenderingCore/Buffer.h"
+#include "RenderingCore/RayTracing.h"
 
 #include "Scene/AABB.h"
 
@@ -28,10 +27,11 @@ public:
 public:
 	void CreateBoundingBox(const MeshData& Data);
 
-	TSharedPtr<D3D12Buffer>				VertexBuffer;
-	TSharedPtr<D3D12Buffer>				IndexBuffer;
-	TSharedPtr<D3D12RayTracingGeometry>	RayTracingGeometry;
-	TSharedPtr<D3D12DescriptorTable>	DescriptorTable;
+	TSharedRef<VertexBuffer>		VertexBuffer;
+	TSharedRef<ShaderResourceView>	VertexBufferSRV;
+	TSharedRef<IndexBuffer>			IndexBuffer;
+	TSharedRef<ShaderResourceView>	IndexBufferSRV;
+	TSharedRef<RayTracingGeometry>	RayTracingGeometry;
 	
 	Uint32 VertexCount	= 0;
 	Uint32 IndexCount	= 0;

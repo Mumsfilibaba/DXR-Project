@@ -93,14 +93,14 @@ public:
 
 	void OnAddedToScene(Scene* InScene);
 	
-	void SetDebugName(const std::string& InDebugName);
+	void SetName(const std::string& InDebugName);
 
 	FORCEINLINE void SetTransform(const Transform& InTransform)
 	{
 		Transform = InTransform;
 	}
 
-	FORCEINLINE const std::string& GetDebugName() const
+	FORCEINLINE const std::string& GetName() const
 	{
 		return DebugName;
 	}
@@ -140,5 +140,5 @@ private:
 	Transform Transform;
 
 	TArray<Component*>	Components;
-	std::string			DebugName;
+	std::string			Name;
 };

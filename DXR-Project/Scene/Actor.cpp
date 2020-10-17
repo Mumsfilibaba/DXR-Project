@@ -56,9 +56,9 @@ void Actor::AddComponent(Component* InComponent)
 	}
 }
 
-void Actor::SetDebugName(const std::string& InDebugName)
+void Actor::SetName(const std::string& InName)
 {
-	DebugName = InDebugName;
+	Name = InName;
 }
 
 /*

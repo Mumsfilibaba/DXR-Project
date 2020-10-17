@@ -49,42 +49,42 @@ bool Game::Initialize()
 
 	// Create standard textures
 	Byte Pixels[] = { 255, 255, 255, 255 };
-	TSharedPtr<D3D12Texture> BaseTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedRef<Texture2D> BaseTexture = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
 	if (!BaseTexture)
 	{
 		return false;
 	}
 	else
 	{
-		BaseTexture->SetDebugName("BaseTexture");
+		BaseTexture->SetName("BaseTexture");
 	}
 
 	Pixels[0] = 127;
 	Pixels[1] = 127;
 	Pixels[2] = 255;
 
-	TSharedPtr<D3D12Texture> BaseNormal = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedRef<Texture2D> BaseNormal = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
 	if (!BaseNormal)
 	{
 		return false;
 	}
 	else
 	{
-		BaseNormal->SetDebugName("BaseNormal");
+		BaseNormal->SetName("BaseNormal");
 	}
 
 	Pixels[0] = 255;
 	Pixels[1] = 255;
 	Pixels[2] = 255;
 
-	TSharedPtr<D3D12Texture> WhiteTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
 	if (!WhiteTexture)
 	{
 		return false;
 	}
 	else
 	{
-		WhiteTexture->SetDebugName("WhiteTexture");
+		WhiteTexture->SetName("WhiteTexture");
 	}
 
 	MaterialProperties MatProperties;
@@ -139,64 +139,64 @@ bool Game::Initialize()
 	NewComponent->Mesh		= Mesh::Make(CubeMeshData);
 	NewComponent->Material	= MakeShared<Material>(MatProperties);
 
-	TSharedPtr<D3D12Texture> AlbedoMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
 	if (!AlbedoMap)
 	{
 		return false;
 	}
 	else
 	{
-		AlbedoMap->SetDebugName("AlbedoMap");
+		AlbedoMap->SetName("AlbedoMap");
 	}
 
-	TSharedPtr<D3D12Texture> NormalMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedRef<Texture2D> NormalMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
 	if (!NormalMap)
 	{
 		return false;
 	}
 	else
 	{
-		NormalMap->SetDebugName("NormalMap");
+		NormalMap->SetName("NormalMap");
 	}
 
-	TSharedPtr<D3D12Texture> AOMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedRef<Texture2D> AOMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
 	if (!AOMap)
 	{
 		return false;
 	}
 	else
 	{
-		AOMap->SetDebugName("AOMap");
+		AOMap->SetName("AOMap");
 	}
 
-	TSharedPtr<D3D12Texture> RoughnessMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
 	if (!RoughnessMap)
 	{
 		return false;
 	}
 	else
 	{
-		RoughnessMap->SetDebugName("RoughnessMap");
+		RoughnessMap->SetName("RoughnessMap");
 	}
 
-	TSharedPtr<D3D12Texture> HeightMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedRef<Texture2D> HeightMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
 	if (!HeightMap)
 	{
 		return false;
 	}
 	else
 	{
-		HeightMap->SetDebugName("HeightMap");
+		HeightMap->SetName("HeightMap");
 	}
 
-	TSharedPtr<D3D12Texture> MetallicMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	TSharedRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
 	if (!MetallicMap)
 	{
 		return false;
 	}
 	else
 	{
-		MetallicMap->SetDebugName("MetallicMap");
+		MetallicMap->SetName("MetallicMap");
 	}
 
 	NewComponent->Material->AlbedoMap		= AlbedoMap;

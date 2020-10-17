@@ -4,18 +4,6 @@
 
 #include "RenderingCore/RenderingAPI.h"
 
-#include "D3D12/D3D12Texture.h"
-#include "D3D12/D3D12Buffer.h"
-#include "D3D12/D3D12Device.h"
-#include "D3D12/D3D12CommandList.h"
-#include "D3D12/D3D12CommandAllocator.h"
-#include "D3D12/D3D12CommandQueue.h"
-#include "D3D12/D3D12Fence.h"
-#include "D3D12/D3D12DescriptorHeap.h"
-#include "D3D12/D3D12ComputePipelineState.h"
-#include "D3D12/D3D12RootSignature.h"
-#include "D3D12/D3D12ShaderCompiler.h"
-
 #ifdef min
 	#undef min
 #endif
@@ -33,7 +21,7 @@ struct TextureFactoryData
 
 static TextureFactoryData GlobalFactoryData;
 
-D3D12Texture* TextureFactory::LoadFromFile(const std::string& Filepath, Uint32 CreateFlags, DXGI_FORMAT Format)
+Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, Uint32 CreateFlags, EFormat Format)
 {
 	Int32 Width			= 0;
 	Int32 Height		= 0;
@@ -41,11 +29,11 @@ D3D12Texture* TextureFactory::LoadFromFile(const std::string& Filepath, Uint32 C
 
 	// Load based on format
 	TUniquePtr<Byte> Pixels;
-	if (Format == DXGI_FORMAT_R8G8B8A8_UNORM)
+	if (Format == EFormat::Format_R8G8B8A8_Unorm)
 	{
 		Pixels = TUniquePtr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 4));
 	}
-	else if (Format == DXGI_FORMAT_R32G32B32A32_FLOAT)
+	else if (Format == EFormat::Format_R32G32B32A32_Float)
 	{
 		Pixels = TUniquePtr<Byte>(reinterpret_cast<Byte*>(stbi_loadf(Filepath.c_str(), &Width, &Height, &ChannelCount, 4)));
 	}
@@ -69,9 +57,9 @@ D3D12Texture* TextureFactory::LoadFromFile(const std::string& Filepath, Uint32 C
 	return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);
 }
 
-D3D12Texture* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags, DXGI_FORMAT Format)
+Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags, EFormat Format)
 {
-	if (Format != DXGI_FORMAT_R8G8B8A8_UNORM && Format != DXGI_FORMAT_R32G32B32A32_FLOAT)
+	if (Format != EFormat::Format_R8G8B8A8_Unorm && Format != EFormat::Format_R32G32B32A32_Float)
 	{
 		LOG_ERROR("[TextureFactory]: Format not supported");
 		return nullptr;
@@ -82,36 +70,15 @@ D3D12Texture* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, U
 
 	VALIDATE(MipLevels != 0);
 
-	// Create texture
-	TextureProperties TextureProps = { };
-	TextureProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-	TextureProps.Width			= static_cast<Uint16>(Width);
-	TextureProps.Height			= static_cast<Uint16>(Height);
-	TextureProps.ArrayCount		= 1;
-	TextureProps.MipLevels		= static_cast<Uint16>(MipLevels);
-	TextureProps.Format			= Format;
-	TextureProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
-	TextureProps.SampleCount	= 1;
-
-	TUniquePtr<D3D12Texture> Texture = TUniquePtr(RenderingAPI::Get().CreateTexture(TextureProps));
-	if (!Texture)
+	TSharedRef<Texture2D> Texture = CreateTexture2D(nullptr, Format, TextureUsage_Default | TextureUsage_SRV, Width, Height, MipLevels, 1, ClearValue());
+	if (Texture)
 	{
 		return nullptr;
 	}
 
-	const Uint32 Stride			= (Format == DXGI_FORMAT_R8G8B8A8_UNORM) ? 4 : 16;
+	const Uint32 Stride			= (Format == EFormat::Format_R8G8B8A8_Unorm) ? 4 : 16;
 	const Uint32 RowPitch		= (Width * Stride + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
 	const Uint32 SizeInBytes	= Height * RowPitch;
-
-	// ShaderResourceView
-	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-	SrvDesc.Format						= Format;
-	SrvDesc.ViewDimension				= D3D12_SRV_DIMENSION_TEXTURE2D;
-	SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SrvDesc.Texture2D.MipLevels			= MipLevels;
-	SrvDesc.Texture2D.MostDetailedMip	= 0;
-	Texture->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(Texture->GetResource(), &SrvDesc)), 0);
 
 	TSharedPtr<D3D12ImmediateCommandList> CommandList = RenderingAPI::StaticGetImmediateCommandList();
 	CommandList->TransitionBarrier(Texture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -130,56 +97,31 @@ D3D12Texture* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, U
 	return Texture.Release();
 }
 
-D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* PanoramaSource, Uint32 CubeMapSize, Uint32 CreateFlags, DXGI_FORMAT Format)
+TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, Uint32 CubeMapSize, Uint32 CreateFlags, EFormat Format)
 {
-	VALIDATE(PanoramaSource->GetShaderResourceView(0));
-
 	const bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TEXTURE_FACTORY_FLAGS_GENERATE_MIPS;
 	const Uint16 MipLevels = (GenerateMipLevels) ? static_cast<Uint16>(std::log2(CubeMapSize)) : 1U;
 
-	// Create texture
-	TextureProperties TextureProps = { };
-	TextureProps.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	TextureProps.Width			= static_cast<Uint16>(CubeMapSize);
-	TextureProps.Height			= static_cast<Uint16>(CubeMapSize);
-	TextureProps.ArrayCount		= 6;
-	TextureProps.MipLevels		= MipLevels;
-	TextureProps.Format			= Format;
-	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
-	TextureProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	TextureProps.SampleCount	= 1;
-
-	TUniquePtr<D3D12Texture> StagingTexture = TUniquePtr(RenderingAPI::Get().CreateTexture(TextureProps));
+	// Create statging texture
+	TSharedRef<TextureCube> StagingTexture = CreateTextureCube(nullptr, Format, TextureUsage_UAV | TextureUsage_Default, CubeMapSize, MipLevels, 1, ClearValue());
 	if (!StagingTexture)
 	{
 		return nullptr;
 	}
 
 	//Create UAV
-	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = { };
-	UAVDesc.Format							= Format;
-	UAVDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-	UAVDesc.Texture2DArray.ArraySize		= 6;
-	UAVDesc.Texture2DArray.FirstArraySlice	= 0;
-	StagingTexture->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get().CreateUnorderedAccessView(nullptr, StagingTexture->GetResource(), &UAVDesc)), 0);
-
-	TextureProps.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-	TUniquePtr<D3D12Texture> Texture = TUniquePtr(RenderingAPI::Get().CreateTexture(TextureProps));
-	if (!Texture)
+	TSharedRef<UnorderedAccessView> Uav = CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
+	if (!Uav)
 	{
 		return nullptr;
 	}
 
-	// Create SRV
-	D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = { };
-	SRVDesc.Format							= Format;
-	SRVDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURECUBE;
-	SRVDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SRVDesc.TextureCube.MipLevels			= MipLevels;
-	SRVDesc.TextureCube.MostDetailedMip		= 0;
-	SRVDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
-	Texture->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(Texture->GetResource(), &SRVDesc)), 0);
+	// Create texture
+	TSharedRef<TextureCube> Texture = CreateTextureCube(nullptr, Format, TextureUsage_SRV | TextureUsage_Default, CubeMapSize, MipLevels, 1, ClearValue());
+	if (!Texture)
+	{
+		return nullptr;
+	}
 
 	// Generate PipelineState at first run
 	if (!GlobalFactoryData.PanoramaPSO)
@@ -212,14 +154,6 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* Panoram
 	}
 
 	// Create needed interfaces
-	TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable = TUniquePtr(RenderingAPI::Get().CreateDescriptorTable(1));
-	SrvDescriptorTable->SetShaderResourceView(PanoramaSource->GetShaderResourceView(0).Get(), 0);
-	SrvDescriptorTable->CopyDescriptors();
-
-	TUniquePtr<D3D12DescriptorTable> UavDescriptorTable = TUniquePtr(RenderingAPI::Get().CreateDescriptorTable(1));
-	UavDescriptorTable->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(0).Get(), 0);
-	UavDescriptorTable->CopyDescriptors();
-
 	TSharedPtr<D3D12ImmediateCommandList> CommandList = RenderingAPI::StaticGetImmediateCommandList();
 	CommandList->TransitionBarrier(PanoramaSource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	CommandList->TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
