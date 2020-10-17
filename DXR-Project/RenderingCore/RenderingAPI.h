@@ -21,6 +21,7 @@ class ShaderResourceView;
 class UnorderedAccessView;
 class RenderTargetView;
 class DepthStencilView;
+class CommandListExecutor;
 
 /*
 * ERenderingAPI
@@ -347,8 +348,7 @@ public:
 
 	// Commands
 	virtual class ICommandContext*	CreateCommandContext()		const = 0;
-	virtual class CommandList&		GetDefaultCommandList()		const = 0;
-	virtual class CommandExecutor&	GetDefaultCommandExecutor() const = 0;
+	virtual CommandListExecutor&	GetCommandExecutor() const = 0;
 
 	FORCEINLINE virtual std::string GetAdapterName() const
 	{
@@ -1003,4 +1003,13 @@ inline TSharedRef<DepthStencilView> CreateDepthStencilView(
 		ArraySlice,
 		FirstFace,
 		FaceCount);
+}
+
+/*
+* Getters
+*/
+
+inline CommandListExecutor& GetCommandListExecutor()
+{
+	return RenderingAPI::Get().GetCommandExecutor();
 }

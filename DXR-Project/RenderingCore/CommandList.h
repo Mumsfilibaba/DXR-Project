@@ -1,75 +1,17 @@
 #pragma once
 #include "Resource.h"
+#include "Texture.h"
+#include "Buffer.h"
+#include "RayTracing.h"
 #include "RenderCommand.h"
 
-/*
-* CommandMemoryArena
-*/
-
-struct CommandMemoryArena
-{
-	inline CommandMemoryArena()
-		: Mem(nullptr)
-		, SizeInBytes(4096)
-	{
-		Mem = reinterpret_cast<Byte*>(Memory::Malloc(SizeInBytes));
-	}
-
-	inline ~CommandMemoryArena()
-	{
-		Memory::Free(Mem);
-	}
-
-	VoidPtr Allocate(Uint64 SizeInBytes);
-
-	FORCEINLINE Uint64 ReservedSize()
-	{
-		return SizeInBytes - Offset;
-	}
-
-	FORCEINLINE void Reset()
-	{
-		Offset = 0;
-	}
-
-	Byte*	Mem;
-	Uint64	Offset;
-	Uint64	SizeInBytes;
-};
-
-/*
-* CommandAllocator
-*/
-
-class CommandAllocator
-{
-public:
-	CommandAllocator();
-	~CommandAllocator() = default;
-
-	template<typename TRenderCommand>
-	VoidPtr Allocate()
-	{
-		return Allocate(sizeof(TRenderCommand));
-	}
-
-	VoidPtr Allocate(Uint64 SizeInBytes);
-
-	void Reset();
-
-private:
-	Uint32 ArenaIndex;
-	CommandMemoryArena* CurrentArena;
-	TArray<CommandMemoryArena> Arenas;
-};
+#include "Memory/StackAllocator.h"
 
 class RenderTargetView;
 class DepthStencilView;
 class ShaderResourceView;
 class UnorderedAccessView;
 class Shader;
-class RayTracingScene;
-class RayTracingGeometry;
 
 /*
 * CommandList
@@ -77,81 +19,75 @@ class RayTracingGeometry;
 
 class CommandList
 {
-	friend class CommandExecutor;
+	friend class CommandListExecutor;
 
 public:
-	CommandList();
-	~CommandList();
+	inline CommandList()
+		: CmdAllocator()
+		, First(nullptr)
+		, Last(nullptr)
+	{
+	}
 
-	bool Initialize();
+	inline ~CommandList()
+	{
+		Reset();
+	}
 
 	FORCEINLINE void CommandList::Begin()
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BeginRenderCommand>();
-		new(Memory) BeginRenderCommand();
+		InsertCommand<BeginRenderCommand>();
 	}
 
 	FORCEINLINE void CommandList::End()
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<EndRenderCommand>();
-		new(Memory) EndRenderCommand();
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<EndRenderCommand>();
 	}
 
-	FORCEINLINE void CommandList::ClearRenderTarget(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor)
+	FORCEINLINE void CommandList::ClearRenderTarget(
+		RenderTargetView* RenderTargetView, 
+		const ColorClearValue& ClearColor)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<ClearRenderTargetRenderCommand>();
-		new(Memory) ClearRenderTargetRenderCommand(RenderTargetView, ClearColor);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		RenderTargetView->AddRef();
+		InsertCommand<ClearRenderTargetRenderCommand>(RenderTargetView, ClearColor);
 	}
 
-	FORCEINLINE void CommandList::ClearDepthStencil(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue)
+	FORCEINLINE void CommandList::ClearDepthStencil(
+		DepthStencilView* DepthStencilView, 
+		const DepthStencilClearValue& ClearValue)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<ClearDepthStencilRenderCommand>();
-		new(Memory) ClearDepthStencilRenderCommand(DepthStencilView, ClearValue);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		DepthStencilView->AddRef();
+		InsertCommand<ClearDepthStencilRenderCommand>(DepthStencilView, ClearValue);
 	}
 
 	FORCEINLINE void CommandList::BeginRenderPass()
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BeginRenderPassRenderCommand>();
-		new(Memory) BeginRenderPassRenderCommand();
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<BeginRenderPassRenderCommand>();
 	}
 
 	FORCEINLINE void CommandList::EndRenderPass()
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<EndRenderPassRenderCommand>();
-		new(Memory) EndRenderPassRenderCommand();
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<EndRenderPassRenderCommand>();
 	}
 
 	FORCEINLINE void CommandList::BindViewport(const Viewport& Viewport, Uint32 Slot)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindViewportRenderCommand>();
-		new(Memory) BindViewportRenderCommand(Viewport, Slot);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<BindViewportRenderCommand>(Viewport, Slot);
 	}
 
 	FORCEINLINE void CommandList::BindScissorRect(const ScissorRect& ScissorRect, Uint32 Slot)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindScissorRectRenderCommand>();
-		new(Memory) BindScissorRectRenderCommand(ScissorRect, Slot);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<BindScissorRectRenderCommand>(ScissorRect, Slot);
 	}
 
 	FORCEINLINE void CommandList::BindBlendFactor()
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindBlendFactorRenderCommand>();
-		new(Memory) BindBlendFactorRenderCommand();
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<BindBlendFactorRenderCommand>();
 	}
 
 	FORCEINLINE void CommandList::BindPrimitiveTopology(EPrimitveTopologyType PrimitveTopologyType)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindPrimitiveTopologyRenderCommand>();
-		new(Memory) BindPrimitiveTopologyRenderCommand(PrimitveTopologyType);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<BindPrimitiveTopologyRenderCommand>(PrimitveTopologyType);
 	}
 
 	FORCEINLINE void CommandList::BindVertexBuffers(
@@ -159,23 +95,27 @@ public:
 		Uint32 VertexBufferCount, 
 		Uint32 BufferSlot)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindVertexBuffersRenderCommand>();
-		new(Memory) BindVertexBuffersRenderCommand(VertexBuffers, VertexBufferCount, BufferSlot);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		VoidPtr BufferMemory	= CmdAllocator.Allocate(sizeof(VertexBuffer*) * VertexBufferCount, 1);
+		VertexBuffer** Buffers	= reinterpret_cast<VertexBuffer**>(BufferMemory);
+		for (Uint32 i = 0; i < VertexBufferCount; i++)
+		{
+			Buffers[i] = VertexBuffers[i];
+			Buffers[i]->AddRef();
+		}
+
+		InsertCommand<BindVertexBuffersRenderCommand>(Buffers, VertexBufferCount, BufferSlot);
 	}
 
 	FORCEINLINE void CommandList::BindIndexBuffer(IndexBuffer* IndexBuffer, EFormat IndexFormat)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindIndexBufferRenderCommand>();
-		new(Memory) BindIndexBufferRenderCommand(IndexBuffer, IndexFormat);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		IndexBuffer->AddRef();
+		InsertCommand<BindIndexBufferRenderCommand>(IndexBuffer, IndexFormat);
 	}
 
 	FORCEINLINE void CommandList::BindRayTracingScene(RayTracingScene* RayTracingScene)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindRayTracingSceneRenderCommand>();
-		new(Memory) BindRayTracingSceneRenderCommand(RayTracingScene);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		RayTracingScene->AddRef();
+		InsertCommand<BindRayTracingSceneRenderCommand>(RayTracingScene);
 	}
 
 	FORCEINLINE void CommandList::BindRenderTargets(
@@ -183,30 +123,33 @@ public:
 		Uint32 RenderTargetCount, 
 		DepthStencilView* DepthStencilView)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindRenderTargetsRenderCommand>();
-		new(Memory) BindRenderTargetsRenderCommand(RenderTargetViews, RenderTargetCount, DepthStencilView);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		VoidPtr RenderTargetMemory = CmdAllocator.Allocate(sizeof(RenderTargetView*) * RenderTargetCount, 1);
+		RenderTargetView** RenderTargets = reinterpret_cast<RenderTargetView**>(RenderTargetMemory);
+		for (Uint32 i = 0; i < RenderTargetCount; i++)
+		{
+			RenderTargets[i] = RenderTargetViews[i];
+			RenderTargets[i]->AddRef();
+		}
+
+		InsertCommand<BindRenderTargetsRenderCommand>(RenderTargets, RenderTargetCount, DepthStencilView);
 	}
 
 	FORCEINLINE void CommandList::BindGraphicsPipelineState(GraphicsPipelineState* PipelineState)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindGraphicsPipelineStateRenderCommand>();
-		new(Memory) BindGraphicsPipelineStateRenderCommand(PipelineState);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		PipelineState->AddRef();
+		InsertCommand<BindGraphicsPipelineStateRenderCommand>(PipelineState);
 	}
 
 	FORCEINLINE void CommandList::BindComputePipelineState(ComputePipelineState* PipelineState)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindComputePipelineStateRenderCommand>();
-		new(Memory) BindComputePipelineStateRenderCommand(PipelineState);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		PipelineState->AddRef();
+		InsertCommand<BindComputePipelineStateRenderCommand>(PipelineState);
 	}
 
 	FORCEINLINE void CommandList::BindRayTracingPipelineState(RayTracingPipelineState* PipelineState)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindRayTracingPipelineStateRenderCommand>();
-		new(Memory) BindRayTracingPipelineStateRenderCommand(PipelineState);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		PipelineState->AddRef();
+		InsertCommand<BindRayTracingPipelineStateRenderCommand>(PipelineState);
 	}
 
 	FORCEINLINE void CommandList::BindConstantBuffers(
@@ -215,9 +158,11 @@ public:
 		Uint32 ConstantBufferCount, 
 		Uint32 StartSlot)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindConstantBuffersRenderCommand>();
-		new(Memory) BindConstantBuffersRenderCommand(Shader, ConstantBuffers, ConstantBufferCount, StartSlot);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<BindConstantBuffersRenderCommand>(
+			Shader, 
+			ConstantBuffers, 
+			ConstantBufferCount, 
+			StartSlot);
 	}
 
 	FORCEINLINE void CommandList::BindShaderResourceViews(
@@ -226,9 +171,11 @@ public:
 		Uint32 ShaderResourceViewCount, 
 		Uint32 StartSlot)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindShaderResourceViewsRenderCommand>();
-		new(Memory) BindShaderResourceViewsRenderCommand(Shader, ShaderResourceViews, ShaderResourceViewCount, StartSlot);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<BindShaderResourceViewsRenderCommand>(
+			Shader, 
+			ShaderResourceViews, 
+			ShaderResourceViewCount, 
+			StartSlot);
 	}
 
 	FORCEINLINE void CommandList::BindUnorderedAccessViews(
@@ -237,21 +184,18 @@ public:
 		Uint32 UnorderedAccessViewCount, 
 		Uint32 StartSlot)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BindUnorderedAccessViewsRenderCommand>();
-		new(Memory) BindUnorderedAccessViewsRenderCommand(
-			Shader, 
-			UnorderedAccessViews, 
-			UnorderedAccessViewCount, 
+		InsertCommand<BindUnorderedAccessViewsRenderCommand>(
+			Shader,
+			UnorderedAccessViews,
+			UnorderedAccessViewCount,
 			StartSlot);
-
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
 	}
 
 	FORCEINLINE void CommandList::ResolveTexture(Texture* Destination, Texture* Source)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<ResolveTextureRenderCommand>();
-		new(Memory) ResolveTextureRenderCommand(Destination, Source);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		Destination->AddRef();
+		Source->AddRef();
+		InsertCommand<ResolveTextureRenderCommand>(Destination, Source);
 	}
 
 	FORCEINLINE void CommandList::UpdateBuffer(
@@ -260,9 +204,15 @@ public:
 		Uint64 SizeInBytes, 
 		const VoidPtr SourceData)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<UpdateBufferRenderCommand>();
-		new(Memory) UpdateBufferRenderCommand(Destination, DestinationOffsetInBytes, SizeInBytes, SourceData);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		VoidPtr TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
+		Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
+
+		Destination->AddRef();
+		InsertCommand<UpdateBufferRenderCommand>(
+			Destination, 
+			DestinationOffsetInBytes, 
+			SizeInBytes, 
+			SourceData);
 	}
 
 	FORCEINLINE void CommandList::CopyBuffer(
@@ -270,9 +220,9 @@ public:
 		Buffer* Source, 
 		const CopyBufferInfo& CopyInfo)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<CopyBufferRenderCommand>();
-		new(Memory) CopyBufferRenderCommand(Destination, Source, CopyInfo);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		Destination->AddRef();
+		Source->AddRef();
+		InsertCommand<CopyBufferRenderCommand>(Destination, Source, CopyInfo);
 	}
 
 	FORCEINLINE void CommandList::CopyTexture(
@@ -280,44 +230,31 @@ public:
 		Texture* Source, 
 		const CopyTextureInfo& CopyTextureInfo)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<CopyTextureRenderCommand>();
-		new(Memory) CopyTextureRenderCommand(Destination, Source, CopyTextureInfo);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		Destination->AddRef();
+		Source->AddRef();
+		InsertCommand<CopyTextureRenderCommand>(Destination, Source, CopyTextureInfo);
 	}
 
 	FORCEINLINE void CommandList::BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BuildRayTracingGeometryRenderCommand>();
-		new(Memory) BuildRayTracingGeometryRenderCommand(RayTracingGeometry);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		RayTracingGeometry->AddRef();
+		InsertCommand<BuildRayTracingGeometryRenderCommand>(RayTracingGeometry);
 	}
 
 	FORCEINLINE void CommandList::BuildRayTracingScene(RayTracingScene* RayTracingScene)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<BuildRayTracingSceneRenderCommand>();
-		new(Memory) BuildRayTracingSceneRenderCommand(RayTracingScene);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		RayTracingScene->AddRef();
+		InsertCommand<BuildRayTracingSceneRenderCommand>(RayTracingScene);
 	}
 
 	FORCEINLINE void CommandList::Draw(Uint32 VertexCount, Uint32 StartVertexLocation)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<DrawRenderCommand>();
-		new(Memory) DrawRenderCommand(VertexCount, StartVertexLocation);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<DrawRenderCommand>(VertexCount, StartVertexLocation);
 	}
 
-	FORCEINLINE void CommandList::DrawIndexed(
-		Uint32 IndexCount, 
-		Uint32 StartIndexLocation, 
-		Uint32 BaseVertexLocation)
+	FORCEINLINE void CommandList::DrawIndexed(Uint32 IndexCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<DrawIndexedRenderCommand>();
-		new(Memory) DrawIndexedRenderCommand(
-			IndexCount, 
-			StartIndexLocation, 
-			BaseVertexLocation);
-
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand< DrawIndexedRenderCommand>(IndexCount, StartIndexLocation, BaseVertexLocation);
 	}
 
 	FORCEINLINE void CommandList::DrawInstanced(
@@ -326,14 +263,11 @@ public:
 		Uint32 StartVertexLocation, 
 		Uint32 StartInstanceLocation)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<DrawInstancedRenderCommand>();
-		new(Memory) DrawInstancedRenderCommand(
-			VertexCountPerInstance, 
-			InstanceCount, 
-			StartVertexLocation, 
+		InsertCommand<DrawInstancedRenderCommand>(
+			VertexCountPerInstance,
+			InstanceCount,
+			StartVertexLocation,
 			StartInstanceLocation);
-
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
 	}
 
 	FORCEINLINE void CommandList::DrawIndexedInstanced(
@@ -343,35 +277,83 @@ public:
 		Uint32 BaseVertexLocation, 
 		Uint32 StartInstanceLocation)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<DrawIndexedInstancedRenderCommand>();
-		new(Memory) DrawIndexedInstancedRenderCommand(
-			IndexCountPerInstance, 
-			InstanceCount, 
-			StartIndexLocation, 
-			BaseVertexLocation, 
+		InsertCommand<DrawIndexedInstancedRenderCommand>(
+			IndexCountPerInstance,
+			InstanceCount,
+			StartIndexLocation,
+			BaseVertexLocation,
 			StartInstanceLocation);
-
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
 	}
 
-	FORCEINLINE void CommandList::Dispatch(
-		Uint32 WorkGroupsX, 
-		Uint32 WorkGroupsY, 
-		Uint32 WorkGroupsZ)
+	FORCEINLINE void CommandList::Dispatch(Uint32 WorkGroupsX, Uint32 WorkGroupsY, Uint32 WorkGroupsZ)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<DispatchComputeRenderCommand>();
-		new(Memory) DispatchComputeRenderCommand(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<DispatchComputeRenderCommand>(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
 	}
 
-	FORCEINLINE void CommandList::DispatchRays(
-		Uint32 Width, 
-		Uint32 Height, 
-		Uint32 Depth)
+	FORCEINLINE void CommandList::DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<DispatchRaysRenderCommand>();
-		new(Memory) DispatchRaysRenderCommand(Width, Height, Depth);
-		Commands.EmplaceBack(static_cast<RenderCommand*>(Memory));
+		InsertCommand<DispatchRaysRenderCommand>(Width, Height, Depth);
+	}
+
+	FORCEINLINE void Reset()
+	{
+		if (First != nullptr)
+		{
+			RenderCommand* Cmd = First;
+			while (Cmd != nullptr)
+			{
+				RenderCommand* Old = Cmd;
+				Cmd = Cmd->NextCmd;
+				Old->~RenderCommand();
+			}
+		}
+
+		First = nullptr;
+		Last = nullptr;
+
+		CmdAllocator.Reset();
+	}
+
+private:
+	template<typename TCommand, typename... TArgs>
+	FORCEINLINE void InsertCommand(TArgs&&... Args)
+	{
+		VoidPtr Memory	= CmdAllocator.Allocate<TCommand>();
+		TCommand* Cmd	= new(Memory) TCommand(Forward<TArgs>(Args)...);
+		
+		if (Last)
+		{
+			Last->NextCmd = Cmd;
+			Last = Last->NextCmd;
+		}
+		else
+		{
+			First = Cmd;
+			Last = First;
+		}
+	}
+
+	StackAllocator CmdAllocator;
+	RenderCommand* First;
+	RenderCommand* Last;
+};
+
+/*
+* CommandListExecutor
+*/
+
+class CommandListExecutor
+{
+public:
+	CommandListExecutor();
+	~CommandListExecutor();
+
+	void ExecuteCommandList(CommandList& CmdList);
+
+	FORCEINLINE void SetContext(ICommandContext* InCmdContext)
+	{
+		VALIDATE(InCmdContext != nullptr);
+		CmdContext = InCmdContext;
 	}
 
 	FORCEINLINE ICommandContext& GetContext() const
@@ -381,28 +363,5 @@ public:
 	}
 
 private:
-	CommandAllocator		CmdAllocator;
-	class ICommandContext*	CmdContext;
-	TArray<RenderCommand*>	Commands;
-};
-
-/*
-* CommandExecutor
-*/
-
-class CommandExecutor
-{
-public:
-	CommandExecutor()	= default;
-	~CommandExecutor()	= default;
-
-	void ExecuteCommandList(const CommandList& CmdList);
-
-	FORCEINLINE CommandList& GetDefaultCommandList()
-	{
-		return DefaultCmdList;
-	}
-
-private:
-	CommandList DefaultCmdList;
+	ICommandContext* CmdContext;
 };

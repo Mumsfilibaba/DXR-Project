@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderingCore.h"
 #include "CommandContext.h"
-#include "RenderingAPI.h"
+#include "PipelineState.h"
 
 #include "Memory/Memory.h"
 
@@ -18,6 +18,8 @@ struct RenderCommand
 	{
 		Execute(CmdContext);
 	}
+
+	RenderCommand* NextCmd = nullptr;
 };
 
 // Begin RenderCommand
@@ -53,6 +55,12 @@ struct ClearRenderTargetRenderCommand : public RenderCommand
 		: RenderTargetView(InRenderTargetView)
 		, ClearColor(InClearColor)
 	{
+		VALIDATE(RenderTargetView != nullptr);
+	}
+
+	inline ~ClearRenderTargetRenderCommand()
+	{
+		RenderTargetView->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -71,6 +79,12 @@ struct ClearDepthStencilRenderCommand : public RenderCommand
 		: DepthStencilView(InDepthStencilView)
 		, ClearValue(InClearValue)
 	{
+		VALIDATE(DepthStencilView != nullptr);
+	}
+
+	inline ~ClearDepthStencilRenderCommand()
+	{
+		DepthStencilView->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -181,6 +195,19 @@ struct BindVertexBuffersRenderCommand : public RenderCommand
 		, VertexBufferCount(InVertexBufferCount)
 		, Slot(InSlot)
 	{
+		VALIDATE(VertexBuffers != nullptr);
+		for (Uint32 i = 0; i < VertexBufferCount; i++)
+		{
+			VALIDATE(VertexBuffers[i] != nullptr);
+		}
+	}
+
+	inline ~BindVertexBuffersRenderCommand()
+	{
+		for (Uint32 i = 0; i < VertexBufferCount; i++)
+		{
+			VertexBuffers[i]->Release();
+		}
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -200,6 +227,12 @@ struct BindIndexBufferRenderCommand : public RenderCommand
 		: IndexBuffer(InIndexBuffer)
 		, IndexFormat(InIndexFormat)
 	{
+		VALIDATE(IndexBuffer != nullptr);
+	}
+
+	inline ~BindIndexBufferRenderCommand()
+	{
+		IndexBuffer->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -217,6 +250,12 @@ struct BindRayTracingSceneRenderCommand : public RenderCommand
 	inline BindRayTracingSceneRenderCommand(RayTracingScene* InRayTracingScene)
 		: RayTracingScene(InRayTracingScene)
 	{
+		VALIDATE(RayTracingScene != nullptr);
+	}
+
+	inline ~BindRayTracingSceneRenderCommand()
+	{
+		RayTracingScene->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -235,6 +274,21 @@ struct BindRenderTargetsRenderCommand : public RenderCommand
 		, RenderTargetViewCount(InRenderTargetViewCount)
 		, DepthStencilView(InDepthStencilView)
 	{
+		VALIDATE(DepthStencilView != nullptr);
+		VALIDATE(RenderTargetViews != nullptr);
+		for (Uint32 i = 0; i < RenderTargetViewCount; i++)
+		{
+			VALIDATE(RenderTargetViews[i] != nullptr);
+		}
+	}
+
+	inline BindRenderTargetsRenderCommand()
+	{
+		DepthStencilView->Release();
+		for (Uint32 i = 0; i < RenderTargetViewCount; i++)
+		{
+			RenderTargetViews[i]->Release();
+		}
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -253,6 +307,12 @@ struct BindGraphicsPipelineStateRenderCommand : public RenderCommand
 	inline BindGraphicsPipelineStateRenderCommand(GraphicsPipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
+		VALIDATE(PipelineState != nullptr);
+	}
+
+	inline ~BindGraphicsPipelineStateRenderCommand()
+	{
+		PipelineState->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -269,6 +329,12 @@ struct BindComputePipelineStateRenderCommand : public RenderCommand
 	inline BindComputePipelineStateRenderCommand(ComputePipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
+		VALIDATE(PipelineState != nullptr);
+	}
+
+	inline ~BindComputePipelineStateRenderCommand()
+	{
+		PipelineState->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -285,6 +351,12 @@ struct BindRayTracingPipelineStateRenderCommand : public RenderCommand
 	inline BindRayTracingPipelineStateRenderCommand(RayTracingPipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
+		VALIDATE(PipelineState != nullptr);
+	}
+
+	inline ~BindRayTracingPipelineStateRenderCommand()
+	{
+		PipelineState->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -368,6 +440,14 @@ struct ResolveTextureRenderCommand : public RenderCommand
 		: Destination(InDestination)
 		, Source(InSource)
 	{
+		VALIDATE(Destination != nullptr);
+		VALIDATE(Source != nullptr);
+	}
+
+	inline ~ResolveTextureRenderCommand()
+	{
+		Destination->Release();
+		Source->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -388,16 +468,13 @@ struct UpdateBufferRenderCommand : public RenderCommand
 		, SizeInBytes(InSizeInBytes)
 		, SourceData(nullptr)
 	{
-		if (SizeInBytes > 0)
-		{
-			SourceData = Memory::Malloc(SizeInBytes);
-			Memory::Memcpy(SourceData, InSourceData, SizeInBytes);
-		}
+		VALIDATE(InDestination != nullptr);
+		VALIDATE(InSourceData != nullptr);
 	}
 
 	inline ~UpdateBufferRenderCommand()
 	{
-		Memory::Free(SourceData);
+		Destination->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -419,6 +496,14 @@ struct CopyBufferRenderCommand : public RenderCommand
 		, Source(InSource)
 		, CopyBufferInfo(InCopyBufferInfo)
 	{
+		VALIDATE(Destination != nullptr);
+		VALIDATE(Source != nullptr);
+	}
+
+	inline ~CopyBufferRenderCommand()
+	{
+		Destination->Release();
+		Source->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -439,6 +524,14 @@ struct CopyTextureRenderCommand : public RenderCommand
 		, Source(InSource)
 		, CopyTextureInfo(InCopyTextureInfo)
 	{
+		VALIDATE(Destination != nullptr);
+		VALIDATE(Source != nullptr);
+	}
+
+	inline ~CopyTextureRenderCommand()
+	{
+		Destination->Release();
+		Source->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -457,6 +550,12 @@ struct BuildRayTracingGeometryRenderCommand : public RenderCommand
 	inline BuildRayTracingGeometryRenderCommand(RayTracingGeometry* InRayTracingGeometry)
 		: RayTracingGeometry(InRayTracingGeometry)
 	{
+		VALIDATE(RayTracingGeometry != nullptr);
+	}
+
+	inline ~BuildRayTracingGeometryRenderCommand()
+	{
+		RayTracingGeometry->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -473,6 +572,12 @@ struct BuildRayTracingSceneRenderCommand : public RenderCommand
 	inline BuildRayTracingSceneRenderCommand(RayTracingScene* InRayTracingScene)
 		: RayTracingScene(InRayTracingScene)
 	{
+		VALIDATE(RayTracingScene != nullptr);
+	}
+
+	inline ~BuildRayTracingSceneRenderCommand()
+	{
+		RayTracingScene->Release();
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override

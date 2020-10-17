@@ -12,6 +12,7 @@
 #include "Rendering/Renderer.h"
 
 #include "RenderingCore/Texture.h"
+#include "RenderingCore/CommandList.h"
 
 #include "Editor/Editor.h"
 
