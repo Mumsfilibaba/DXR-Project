@@ -135,30 +135,56 @@ private:
 	MeshData SkyboxMesh;
 	MeshData Cube;
 
-	TSharedPtr<D3D12Buffer> CameraBuffer;
-	TSharedPtr<D3D12Buffer> MeshVertexBuffer;
-	TSharedPtr<D3D12Buffer> MeshIndexBuffer;
-	TSharedPtr<D3D12Buffer> SkyboxVertexBuffer;
-	TSharedPtr<D3D12Buffer> SkyboxIndexBuffer;
-	TSharedPtr<D3D12Buffer> AABBVertexBuffer;
-	TSharedPtr<D3D12Buffer> AABBIndexBuffer;
-	TSharedPtr<D3D12Buffer> CubeVertexBuffer;
-	TSharedPtr<D3D12Buffer> CubeIndexBuffer;
-	TSharedPtr<D3D12Buffer> PointLightBuffer;
-	TSharedPtr<D3D12Buffer> DirectionalLightBuffer;
+	TSharedRef<ConstantBuffer> CameraBuffer;
+	TSharedRef<ConstantBuffer> PointLightBuffer;
+	TSharedRef<ConstantBuffer> DirectionalLightBuffer;
 
-	TSharedPtr<D3D12Texture> Skybox;
-	TSharedPtr<D3D12Texture> IrradianceMap;
-	TSharedPtr<D3D12Texture> SpecularIrradianceMap;
-	TSharedPtr<D3D12Texture> Albedo;
-	TSharedPtr<D3D12Texture> Normal;
-	TSharedPtr<D3D12Texture> ReflectionTexture;
-	TSharedPtr<D3D12Texture> IntegrationLUT;
-	TSharedPtr<D3D12Texture> DirLightShadowMaps;
-	TSharedPtr<D3D12Texture> VSMDirLightShadowMaps;
-	TSharedPtr<D3D12Texture> PointLightShadowMaps;
-	TSharedPtr<D3D12Texture> GBuffer[4];
-	TSharedPtr<D3D12Texture> FinalTarget;
+	TSharedRef<VertexBuffer> MeshVertexBuffer;
+	TSharedRef<ShaderResourceView> MeshVertexBufferSRV;
+	TSharedRef<VertexBuffer> CubeVertexBuffer;
+	TSharedRef<ShaderResourceView> CubeVertexBufferSRV;
+
+	TSharedRef<IndexBuffer> MeshIndexBuffer;
+	TSharedRef<ShaderResourceView> MeshIndexBufferSRV;
+	TSharedRef<IndexBuffer> CubeIndexBuffer;
+	TSharedRef<ShaderResourceView> CubeIndexBufferSRV;
+
+	TSharedRef<VertexBuffer> SkyboxVertexBuffer;
+	TSharedRef<VertexBuffer> AABBVertexBuffer;
+	TSharedRef<IndexBuffer> SkyboxIndexBuffer;
+	TSharedRef<IndexBuffer> AABBIndexBuffer;
+
+	TSharedRef<TextureCube>			IrradianceMap;
+	TSharedRef<UnorderedAccessView>	IrradianceMapUAV;
+	TSharedRef<ShaderResourceView>	IrradianceMapSRV;
+
+	TSharedRef<TextureCube>			SpecularIrradianceMap;
+	TSharedRef<ShaderResourceView>	SpecularIrradianceMapSRV;
+	TArray<TSharedRef<UnorderedAccessView>>	SpecularIrradianceMapUAVs;
+
+	TSharedRef<TextureCube> Skybox;
+	TSharedRef<TextureCube> PointLightShadowMaps;
+	
+	TSharedRef<Texture2D> Albedo;
+	TSharedRef<Texture2D> Normal;
+	TSharedRef<Texture2D> DirLightShadowMaps;
+	TSharedRef<Texture2D> VSMDirLightShadowMaps;
+	
+	TSharedRef<Texture2D> ReflectionTexture;
+	TSharedRef<ShaderResourceView>	ReflectionTextureSRV;
+	TSharedRef<ShaderResourceView>	ReflectionTextureUAV;
+
+	TSharedRef<Texture2D> IntegrationLUT;
+	TSharedRef<ShaderResourceView>	IntegrationLUTSRV;
+
+	TSharedRef<Texture2D>			FinalTarget;
+	TSharedRef<ShaderResourceView>	FinalTargetSRV;
+	TSharedRef<RenderTargetView>	FinalTargetRTV;
+
+	TSharedRef<Texture2D>			GBuffer[4];
+	TSharedRef<ShaderResourceView>	GBufferSRVs[4];
+	TSharedRef<RenderTargetView>	GBufferRTVs[3];
+	TSharedRef<DepthStencilView>	GBufferDSV;
 	
 	TSharedPtr<D3D12RootSignature>		PrePassRootSignature;
 	TSharedPtr<D3D12RootSignature>		ShadowMapRootSignature;

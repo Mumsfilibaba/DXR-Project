@@ -360,7 +360,7 @@ public:
 		return false;
 	}
 
-	FORCEINLINE virtual bool UAVSupportsFormat(DXGI_FORMAT Format) const
+	FORCEINLINE virtual bool UAVSupportsFormat(EFormat Format) const
 	{
 		UNREFERENCED_VARIABLE(Format);
 		return false;
@@ -543,6 +543,14 @@ inline TSharedRef<VertexBuffer> CreateVertexBuffer(
 		Usage);
 }
 
+template<typename T>
+inline TSharedRef<VertexBuffer> CreateVertexBuffer(const ResourceData* InitalData, Uint32 VertexCount, Uint32 Usage)
+{
+	constexpr Uint32 STRIDE = sizeof(T);
+	const Uint32 SizeInByte = STRIDE * VertexCount;
+	return CreateVertexBuffer(InitalData);
+}
+
 inline TSharedRef<IndexBuffer> CreateIndexBuffer(
 	const ResourceData* InitalData,
 	Uint32 SizeInBytes,
@@ -559,6 +567,18 @@ inline TSharedRef<IndexBuffer> CreateIndexBuffer(
 inline TSharedRef<ConstantBuffer> CreateConstantBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Usage)
 {
 	return RenderingAPI::Get().CreateConstantBuffer(InitalData, SizeInBytes, Usage);
+}
+
+template<typename T>
+inline TSharedRef<ConstantBuffer> CreateConstantBuffer(const ResourceData* InitalData, Uint32 Usage)
+{
+	return CreateConstantBuffer(InitalData, sizeof(T), Usage);
+}
+
+template<typename T>
+inline TSharedRef<ConstantBuffer> CreateConstantBuffer(const ResourceData* InitalData, Uint32 ElementCount, Uint32 Usage)
+{
+	return CreateConstantBuffer(InitalData, sizeof(T) * ElementCount, Usage);
 }
 
 inline TSharedRef<StructuredBuffer> CreateStructuredBuffer(
@@ -603,6 +623,12 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 		FirstElement,
 		ElementCount,
 		Stride);
+}
+
+template<typename T>
+inline TSharedRef<ShaderResourceView> CreateShaderResourceView(const Buffer* Buffer, Uint32 FirstElement, Uint32 ElementCount)
+{
+	return CreateShaderResourceView(Buffer, FirstElement, ElementCount, sizeof(T));
 }
 
 inline TSharedRef<ShaderResourceView> CreateShaderResourceView(

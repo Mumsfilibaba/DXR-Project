@@ -23,11 +23,11 @@
 TUniquePtr<Renderer>	Renderer::RendererInstance = nullptr;
 LightSettings			Renderer::GlobalLightSettings;
 
-static const DXGI_FORMAT	RenderTargetFormat		= DXGI_FORMAT_R8G8B8A8_UNORM;
-static const DXGI_FORMAT	NormalFormat			= DXGI_FORMAT_R10G10B10A2_UNORM;
-static const DXGI_FORMAT	DepthBufferFormat		= DXGI_FORMAT_D32_FLOAT;
-static const DXGI_FORMAT	ShadowMapFormat			= DXGI_FORMAT_D32_FLOAT;
-static const Uint32			ShadowMapSampleCount	= 2;
+static const EFormat	RenderTargetFormat		= EFormat::Format_R8G8B8A8_Unorm;
+static const EFormat	NormalFormat			= EFormat::Format_R10G10B10A2_Unorm;
+static const EFormat	DepthBufferFormat		= EFormat::Format_D32_Float;
+static const EFormat	ShadowMapFormat			= EFormat::Format_D32_Float;
+static const Uint32		ShadowMapSampleCount	= 2;
 
 /*
 * Renderer
@@ -774,108 +774,107 @@ bool Renderer::Initialize()
 	SkyboxMesh	= MeshFactory::CreateSphere(1);
 	Cube		= MeshFactory::CreateCube();
 
-	// Create CameraBuffer
-	BufferProperties BufferProps = { };
-	BufferProps.SizeInBytes		= 256; // Must be multiple of 256
-	BufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-	BufferProps.InitalState		= D3D12_RESOURCE_STATE_COMMON;
-	BufferProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
-
-	CameraBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
-	if (CameraBuffer)
+	// Create camera
+	CameraBuffer = CreateConstantBuffer(nullptr, 256, BufferUsage_Default);
+	if (!CameraBuffer)
 	{
-		D3D12_CONSTANT_BUFFER_VIEW_DESC CameraViewDesc = { };
-		CameraViewDesc.BufferLocation	= CameraBuffer->GetGPUVirtualAddress();
-		CameraViewDesc.SizeInBytes		= static_cast<Uint32>(BufferProps.SizeInBytes);
-
-		CameraBuffer->SetConstantBufferView(TSharedPtr(RenderingAPI::Get().CreateConstantBufferView(CameraBuffer->GetResource(), &CameraViewDesc)));
-	}
-	else
-	{
+		LOG_ERROR("[Renderer]: Failed to create camerabuffer");
 		return false;
 	}
 
-	// Create vertexbuffer
-	BufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
-	BufferProps.SizeInBytes	= sizeof(Vertex) * static_cast<Uint64>(Sphere.Vertices.Size());
-	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
-
-	MeshVertexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
+	// Create vertexbuffers
+	MeshVertexBuffer = CreateVertexBuffer<Vertex>(nullptr, Sphere.Vertices.Size(), BufferUsage_Dynamic);
 	if (MeshVertexBuffer)
 	{
-		void* BufferMemory = MeshVertexBuffer->Map();
-		memcpy(BufferMemory, Sphere.Vertices.Data(), BufferProps.SizeInBytes);
-		MeshVertexBuffer->Unmap();
+		const Uint32 SizeInBytes = Sphere.Vertices.Size() * sizeof(Vertex);
+
+		Range MappedRange = Range(0, SizeInBytes);
+		VoidPtr BufferMemory = MeshVertexBuffer->Map(MappedRange);
+		memcpy(BufferMemory, Sphere.Vertices.Data(), SizeInBytes);
+		MeshVertexBuffer->Unmap(MappedRange);
 	}
 	else
 	{
 		return false;
 	}
 
-	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(Cube.Vertices.Size());
-	CubeVertexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
+	CubeVertexBuffer = CreateVertexBuffer<Vertex>(nullptr, Cube.Vertices.Size(), BufferUsage_Dynamic);
 	if (CubeVertexBuffer)
 	{
-		void* BufferMemory = CubeVertexBuffer->Map();
-		memcpy(BufferMemory, Cube.Vertices.Data(), BufferProps.SizeInBytes);
-		CubeVertexBuffer->Unmap();
+		const Uint32 SizeInBytes = Cube.Vertices.Size() * sizeof(Vertex);
+
+		Range MappedRange = Range(0, SizeInBytes);
+		VoidPtr BufferMemory = CubeVertexBuffer->Map(MappedRange);
+		memcpy(BufferMemory, Cube.Vertices.Data(), SizeInBytes);
+		CubeVertexBuffer->Unmap(MappedRange);
 	}
 	else
 	{
 		return false;
 	}
 
-	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(SkyboxMesh.Vertices.Size());
-	SkyboxVertexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
+	SkyboxVertexBuffer = CreateVertexBuffer<Vertex>(nullptr, Cube.Vertices.Size(), BufferUsage_Dynamic);
 	if (SkyboxVertexBuffer)
 	{
-		void* BufferMemory = SkyboxVertexBuffer->Map();
-		memcpy(BufferMemory, SkyboxMesh.Vertices.Data(), BufferProps.SizeInBytes);
-		SkyboxVertexBuffer->Unmap();
+		const Uint32 SizeInBytes = SkyboxMesh.Vertices.Size() * sizeof(Vertex);
+		
+		Range MappedRange = Range(0, SizeInBytes);
+		VoidPtr BufferMemory = SkyboxVertexBuffer->Map(MappedRange);
+		memcpy(BufferMemory, SkyboxMesh.Vertices.Data(), SizeInBytes);
+		SkyboxVertexBuffer->Unmap(MappedRange);
 	}
 	else
 	{
 		return false;
 	}
 
-	// Create indexbuffer
-	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Sphere.Indices.Size());
-	MeshIndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
-	if (MeshIndexBuffer)
+	// Create indexbuffers
 	{
-		void* BufferMemory = MeshIndexBuffer->Map();
-		memcpy(BufferMemory, Sphere.Indices.Data(), BufferProps.SizeInBytes);
-		MeshIndexBuffer->Unmap();
-	}
-	else
-	{
-		return false;
-	}
-
-	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Cube.Indices.Size());
-	CubeIndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
-	if (CubeIndexBuffer)
-	{
-		void* BufferMemory = CubeIndexBuffer->Map();
-		memcpy(BufferMemory, Cube.Indices.Data(), BufferProps.SizeInBytes);
-		CubeIndexBuffer->Unmap();
-	}
-	else
-	{
-		return false;
+		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Sphere.Indices.Size());
+		MeshIndexBuffer = CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		if (MeshIndexBuffer)
+		{
+			Range MappedRange = Range(0, SizeInBytes);
+			VoidPtr BufferMemory = MeshIndexBuffer->Map(MappedRange);
+			memcpy(BufferMemory, Sphere.Indices.Data(), SizeInBytes);
+			MeshIndexBuffer->Unmap(MappedRange);
+		}
+		else
+		{
+			return false;
+		}
 	}
 
-	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(SkyboxMesh.Indices.Size());
-	SkyboxIndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
-	if (SkyboxIndexBuffer)
 	{
-		void* BufferMemory = SkyboxIndexBuffer->Map();
-		memcpy(BufferMemory, SkyboxMesh.Indices.Data(), BufferProps.SizeInBytes);
-		SkyboxIndexBuffer->Unmap();
+		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Cube.Indices.Size());
+		CubeIndexBuffer = CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		if (CubeIndexBuffer)
+		{
+			Range MappedRange = Range(0, SizeInBytes);
+			VoidPtr BufferMemory = CubeIndexBuffer->Map(MappedRange);
+			memcpy(BufferMemory, Cube.Indices.Data(), SizeInBytes);
+			CubeIndexBuffer->Unmap(MappedRange);
+		}
+		else
+		{
+			return false;
+		}
 	}
-	else
+
 	{
-		return false;
+		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(SkyboxMesh.Indices.Size());
+		SkyboxIndexBuffer = CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		if (SkyboxIndexBuffer)
+		{
+			Range MappedRange = Range(0, SizeInBytes);
+			VoidPtr BufferMemory = SkyboxIndexBuffer->Map(MappedRange);
+			memcpy(BufferMemory, SkyboxMesh.Indices.Data(), SizeInBytes);
+			SkyboxIndexBuffer->Unmap(MappedRange);
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	// Create Texture Cube
@@ -892,84 +891,67 @@ bool Renderer::Initialize()
 	}
 	else
 	{
-		Skybox->SetDebugName("Skybox");
+		Skybox->SetName("Skybox");
 	}
 
 	// Generate global irradiance (From Skybox)
 	const Uint16 IrradianceSize = 32;
-	TextureProperties IrradianceMapProps = { };
-	IrradianceMapProps.DebugName	= "Irradiance Map";
-	IrradianceMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	IrradianceMapProps.Width		= IrradianceSize;
-	IrradianceMapProps.Height		= IrradianceSize;
-	IrradianceMapProps.ArrayCount	= 6;
-	IrradianceMapProps.MipLevels	= 1;
-	IrradianceMapProps.Format		= DXGI_FORMAT_R16G16B16A16_FLOAT;
-	IrradianceMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-	IrradianceMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	IrradianceMapProps.SampleCount	= 1;
-
-	IrradianceMap = RenderingAPI::Get().CreateTexture(IrradianceMapProps);
-	if (!IrradianceMap)
+	IrradianceMap = CreateTextureCube(nullptr, EFormat::Format_R16G16B16A16_Float, TextureUsage_Default | TextureUsage_UAV, IrradianceSize, 1, 1, ClearValue());
+	if (IrradianceMap)
+	{
+		IrradianceMap->SetName("Irradiance Map");
+	}
+	else
 	{
 		return false;
 	}
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC UavDesc = { };
-	UavDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-	UavDesc.Texture2DArray.ArraySize		= 6;
-	UavDesc.Texture2DArray.FirstArraySlice	= 0;
-	UavDesc.Texture2DArray.MipSlice			= 0;
-	UavDesc.Texture2DArray.PlaneSlice		= 0;
-	IrradianceMap->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get().CreateUnorderedAccessView(nullptr, IrradianceMap->GetResource(), &UavDesc)), 0);
+	IrradianceMapUAV = CreateUnorderedAccessView(IrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, 0);
+	if (!IrradianceMapUAV)
+	{
+		return false;
+	}
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-	SrvDesc.Format							= IrradianceMapProps.Format;
-	SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURECUBE;
-	SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SrvDesc.TextureCube.MipLevels			= 1;
-	SrvDesc.TextureCube.MostDetailedMip		= 0;
-	SrvDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
-	IrradianceMap->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(IrradianceMap->GetResource(), &SrvDesc)), 0);
+	IrradianceMapSRV = CreateShaderResourceView(IrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, 0, 1);
+	if (!IrradianceMapSRV)
+	{
+		return false;
+	}
 
 	// Generate global specular irradiance (From Skybox)
-	const Uint16 SpecularIrradianceSize = 128;
-	const Uint32 Miplevels				= std::max<Uint32>(std::log2<Uint32>(SpecularIrradianceSize), 1U);
-	TextureProperties SpecualarIrradianceMapProps = { };
-	SpecualarIrradianceMapProps.DebugName	= "Specular Irradiance Map";
-	SpecualarIrradianceMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	SpecualarIrradianceMapProps.Width		= SpecularIrradianceSize;
-	SpecualarIrradianceMapProps.Height		= SpecularIrradianceSize;
-	SpecualarIrradianceMapProps.ArrayCount	= 6;
-	SpecualarIrradianceMapProps.MipLevels	= static_cast<Uint16>(Miplevels);
-	SpecualarIrradianceMapProps.Format		= DXGI_FORMAT_R16G16B16A16_FLOAT;
-	SpecualarIrradianceMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-	SpecualarIrradianceMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	SpecualarIrradianceMapProps.SampleCount = 1;
-
-	SpecularIrradianceMap = RenderingAPI::Get().CreateTexture(SpecualarIrradianceMapProps);
-	if (!SpecularIrradianceMap)
+	const Uint16 SpecularIrradianceSize			= 128;
+	const Uint32 SpecularIrradianceMiplevels	= std::max<Uint32>(std::log2<Uint32>(SpecularIrradianceSize), 1U);
+	SpecularIrradianceMap = CreateTextureCube(
+		nullptr, 
+		EFormat::Format_R16G16B16A16_Float, 
+		TextureUsage_Default | TextureUsage_UAV, 
+		SpecularIrradianceSize, 
+		SpecularIrradianceMiplevels, 
+		1, 
+		ClearValue());
+	if (SpecularIrradianceMap)
+	{
+		SpecularIrradianceMap->SetName("Specular Irradiance Map");
+	}
+	else
 	{
 		return false;
 	}
 
-	UavDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-	UavDesc.Texture2DArray.ArraySize		= 6;
-	UavDesc.Texture2DArray.FirstArraySlice	= 0;
-	UavDesc.Texture2DArray.PlaneSlice		= 0;
-	for (Uint32 Miplevel = 0; Miplevel < Miplevels; Miplevel++)
+	for (Uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
 	{
-		UavDesc.Texture2DArray.MipSlice = Miplevel;
-		SpecularIrradianceMap->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get().CreateUnorderedAccessView(nullptr, SpecularIrradianceMap->GetResource(), &UavDesc)), Miplevel);
+		TSharedRef<UnorderedAccessView> Uav = CreateUnorderedAccessView(SpecularIrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, MipLevel);
+		if (Uav)
+		{
+			SpecularIrradianceMapUAVs.EmplaceBack(Uav);
+		}
 	}
 
-	SrvDesc.Format							= SpecualarIrradianceMapProps.Format;
-	SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURECUBE;
-	SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SrvDesc.TextureCube.MipLevels			= SpecualarIrradianceMapProps.MipLevels;
-	SrvDesc.TextureCube.MostDetailedMip		= 0;
-	SrvDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
-	SpecularIrradianceMap->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(SpecularIrradianceMap->GetResource(), &SrvDesc)), 0);
+	SpecularIrradianceMapSRV = CreateShaderResourceView(SpecularIrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, 0, SpecularIrradianceMiplevels);
+	if (SpecularIrradianceMapSRV)
+	{
+		return false;
+	}
 
 	GenerateIrradianceMap(Skybox.Get(), IrradianceMap.Get(), RenderingAPI::Get().GetImmediateCommandList().Get());
 	RenderingAPI::Get().GetImmediateCommandList()->Flush();
@@ -1321,31 +1303,30 @@ bool Renderer::InitRayTracing()
 	RenderingAPI::Get().GetImmediateCommandList()->Flush();
 	RenderingAPI::Get().GetImmediateCommandList()->WaitForCompletion();
 
-	// VertexBuffer
-	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-	SrvDesc.Format						= DXGI_FORMAT_UNKNOWN;
-	SrvDesc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
-	SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SrvDesc.Buffer.FirstElement			= 0;
-	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
-	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Vertices.Size());
-	SrvDesc.Buffer.StructureByteStride	= sizeof(Vertex);
+	// Create shader resource views
+	MeshVertexBufferSRV = CreateShaderResourceView<Vertex>(MeshVertexBuffer.Get(), 0, static_cast<Uint32>(Sphere.Vertices.Size()));
+	if (!MeshVertexBufferSRV)
+	{
+		return false;
+	}
 
-	MeshVertexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(MeshVertexBuffer->GetResource(), &SrvDesc)), 0);
+	CubeVertexBufferSRV = CreateShaderResourceView<Vertex>(CubeVertexBuffer.Get(), 0, static_cast<Uint32>(Cube.Vertices.Size()));
+	if (!CubeVertexBufferSRV)
+	{
+		return false;
+	}
 
-	SrvDesc.Buffer.NumElements = static_cast<Uint32>(Cube.Vertices.Size());
-	CubeVertexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(CubeVertexBuffer->GetResource(), &SrvDesc)), 0);
+	MeshIndexBufferSRV = CreateShaderResourceView(MeshIndexBuffer.Get(), 0, static_cast<Uint32>(Sphere.Indices.Size()), EFormat::Format_R16_Typeless);
+	if (!MeshIndexBufferSRV)
+	{
+		return false;
+	}
 
-	// IndexBuffer
-	SrvDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
-	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
-	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Indices.Size());
-	SrvDesc.Buffer.StructureByteStride	= 0;
-
-	MeshIndexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(MeshIndexBuffer->GetResource(), &SrvDesc)), 0);
-
-	SrvDesc.Buffer.NumElements = static_cast<Uint32>(Cube.Indices.Size());
-	CubeIndexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(CubeIndexBuffer->GetResource(), &SrvDesc)), 0);
+	CubeIndexBufferSRV = CreateShaderResourceView(CubeIndexBuffer.Get(), 0, static_cast<Uint32>(Cube.Indices.Size()), EFormat::Format_R16_Typeless);
+	if (!CubeIndexBufferSRV)
+	{
+		return false;
+	}
 
 	// Populate descriptors
 	RayGenDescriptorTable->SetUnorderedAccessView(ReflectionTexture->GetUnorderedAccessView(0).Get(), 0);
@@ -1376,37 +1357,20 @@ bool Renderer::InitLightBuffers()
 	const Uint32 NumPointLights = 1;
 	const Uint32 NumDirLights	= 1;
 
-	// LightBuffers
-	BufferProperties Props = { };
-	Props.Name			= "PointLight Buffer";
-	Props.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	Props.SizeInBytes	= AlignUp<Uint32>(NumPointLights * sizeof(PointLightProperties), 256U);
-	Props.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-	Props.Flags			= D3D12_RESOURCE_FLAG_NONE;
-
-	PointLightBuffer = RenderingAPI::Get().CreateBuffer(Props);
+	PointLightBuffer = CreateConstantBuffer<PointLightProperties>(nullptr, NumPointLights, BufferUsage_Default);
 	if (PointLightBuffer)
 	{
-		D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = { };
-		CBVDesc.BufferLocation	= PointLightBuffer->GetGPUVirtualAddress();
-		CBVDesc.SizeInBytes		= static_cast<Uint32>(Props.SizeInBytes);
-		PointLightBuffer->SetConstantBufferView(TSharedPtr(RenderingAPI::Get().CreateConstantBufferView(PointLightBuffer->GetResource(), &CBVDesc)));
+		PointLightBuffer->SetName("PointLight Buffer");
 	}
 	else
 	{
 		return false;
 	}
 
-	Props.Name			= "DirectionalLight Buffer";
-	Props.SizeInBytes	= AlignUp<Uint32>(NumDirLights * sizeof(DirectionalLightProperties), 256U);
-
-	DirectionalLightBuffer = RenderingAPI::Get().CreateBuffer(Props);
-	if (DirectionalLightBuffer)
+	PointLightBuffer = CreateConstantBuffer<DirectionalLightProperties>(nullptr, NumDirLights, BufferUsage_Default);
+	if (PointLightBuffer)
 	{
-		D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = { };
-		CBVDesc.BufferLocation	= DirectionalLightBuffer->GetGPUVirtualAddress();
-		CBVDesc.SizeInBytes		= static_cast<Uint32>(Props.SizeInBytes);
-		DirectionalLightBuffer->SetConstantBufferView(TSharedPtr(RenderingAPI::Get().CreateConstantBufferView(DirectionalLightBuffer->GetResource(), &CBVDesc)));
+		PointLightBuffer->SetName("DirectionalLight Buffer");
 	}
 	else
 	{
@@ -2166,48 +2130,28 @@ bool Renderer::InitGBuffer()
 		return false;
 	}
 
-	// Albedo
-	TextureProperties GBufferProperties = { };
-	GBufferProperties.DebugName		= "GBuffer Albedo";
-	GBufferProperties.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
-	GBufferProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-	GBufferProperties.ArrayCount	= 1;
-	GBufferProperties.Width			= static_cast<Uint16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	GBufferProperties.Height		= static_cast<Uint16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
-	GBufferProperties.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	GBufferProperties.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-	GBufferProperties.MipLevels		= 1;
-	GBufferProperties.SampleCount	= 1;
+	const Uint32 Width	= RenderingAPI::Get().GetSwapChain()->GetWidth();
+	const Uint32 Height	= RenderingAPI::Get().GetSwapChain()->GetWidth();
+	const Uint32 Usage	= TextureUsage_Default | TextureUsage_RTV | TextureUsage_SRV;
+	const EFormat AlbedoFormat		= EFormat::Format_R8G8B8A8_Unorm;
+	const EFormat MaterialFormat	= EFormat::Format_R8G8B8A8_Unorm;
 
-	D3D12_CLEAR_VALUE Value;
-	Value.Format	= GBufferProperties.Format;
-	Value.Color[0]	= 0.0f;
-	Value.Color[1]	= 0.0f;
-	Value.Color[2]	= 0.0f;
-	Value.Color[3]	= 1.0f;
-	GBufferProperties.OptimizedClearValue = &Value;
-	
-	// ShaderResourceView
-	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-	SrvDesc.Format							= GBufferProperties.Format;
-	SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
-	SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SrvDesc.Texture2D.MipLevels				= 1;
-	SrvDesc.Texture2D.MostDetailedMip		= 0;
-	SrvDesc.Texture2D.PlaneSlice			= 0;
-	SrvDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
-
-	D3D12_RENDER_TARGET_VIEW_DESC RtvDesc = { };
-	RtvDesc.Format					= GBufferProperties.Format;
-	RtvDesc.ViewDimension			= D3D12_RTV_DIMENSION_TEXTURE2D;
-	RtvDesc.Texture2D.MipSlice		= 0;
-	RtvDesc.Texture2D.PlaneSlice	= 0;
-
-	GBuffer[0] = RenderingAPI::Get().CreateTexture(GBufferProperties);
+	GBuffer[0] = CreateTexture2D(nullptr, AlbedoFormat, Usage, Width, Height, 1, 1, ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
 	if (GBuffer[0])
 	{
-		GBuffer[0]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[0]->GetResource(), &SrvDesc)), 0);
-		GBuffer[0]->SetRenderTargetView(TSharedPtr(RenderingAPI::Get().CreateRenderTargetView(GBuffer[0]->GetResource(), &RtvDesc)), 0);
+		GBuffer[0]->SetName("GBuffer Albedo");
+
+		GBufferSRVs[0] = CreateShaderResourceView(GBuffer[0].Get(), AlbedoFormat, 0, 1);
+		if (!GBufferSRVs[0])
+		{
+			return false;
+		}
+
+		GBufferRTVs[0] = CreateRenderTargetView(GBuffer[0].Get(), AlbedoFormat, 0);
+		if (!GBufferSRVs[0])
+		{
+			return false;
+		}
 	}
 	else
 	{
@@ -2215,19 +2159,22 @@ bool Renderer::InitGBuffer()
 	}
 
 	// Normal
-	GBufferProperties.DebugName = "GBuffer Normal";
-	GBufferProperties.Format	= NormalFormat;
-	
-	Value.Format = GBufferProperties.Format;
-
-	SrvDesc.Format = GBufferProperties.Format;
-	RtvDesc.Format = GBufferProperties.Format;
-
-	GBuffer[1] = RenderingAPI::Get().CreateTexture(GBufferProperties);
+	GBuffer[1] = CreateTexture2D(nullptr, NormalFormat, Usage, Width, Height, 1, 1, ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
 	if (GBuffer[1])
 	{
-		GBuffer[1]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[1]->GetResource(), &SrvDesc)), 0);
-		GBuffer[1]->SetRenderTargetView(TSharedPtr(RenderingAPI::Get().CreateRenderTargetView(GBuffer[1]->GetResource(), &RtvDesc)), 0);
+		GBuffer[1]->SetName("GBuffer Normal");
+
+		GBufferSRVs[1] = CreateShaderResourceView(GBuffer[1].Get(), NormalFormat, 0, 1);
+		if (!GBufferSRVs[1])
+		{
+			return false;
+		}
+
+		GBufferRTVs[1] = CreateRenderTargetView(GBuffer[1].Get(), NormalFormat, 0);
+		if (!GBufferSRVs[1])
+		{
+			return false;
+		}
 	}
 	else
 	{
@@ -2235,19 +2182,22 @@ bool Renderer::InitGBuffer()
 	}
 
 	// Material Properties
-	GBufferProperties.DebugName = "GBuffer Material";
-	GBufferProperties.Format	= DXGI_FORMAT_R8G8B8A8_UNORM;
-
-	Value.Format = GBufferProperties.Format;
-
-	SrvDesc.Format = GBufferProperties.Format;
-	RtvDesc.Format = GBufferProperties.Format;
-
-	GBuffer[2] = RenderingAPI::Get().CreateTexture(GBufferProperties);
+	GBuffer[2] = CreateTexture2D(nullptr, MaterialFormat, Usage, Width, Height, 1, 1, ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
 	if (GBuffer[2])
 	{
-		GBuffer[2]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[2]->GetResource(), &SrvDesc)), 0);
-		GBuffer[2]->SetRenderTargetView(TSharedPtr(RenderingAPI::Get().CreateRenderTargetView(GBuffer[2]->GetResource(), &RtvDesc)), 0);
+		GBuffer[2]->SetName("GBuffer Material");
+
+		GBufferSRVs[2] = CreateShaderResourceView(GBuffer[2].Get(), MaterialFormat, 0, 1);
+		if (!GBufferSRVs[2])
+		{
+			return false;
+		}
+
+		GBufferRTVs[2] = CreateRenderTargetView(GBuffer[2].Get(), MaterialFormat, 0);
+		if (!GBufferSRVs[2])
+		{
+			return false;
+		}
 	}
 	else
 	{
@@ -2255,54 +2205,46 @@ bool Renderer::InitGBuffer()
 	}
 
 	// DepthStencil
-	GBufferProperties.DebugName	= "GBuffer DepthStencil";
-	GBufferProperties.Flags		= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-	GBufferProperties.Format	= DXGI_FORMAT_R32_TYPELESS;
-	
-	D3D12_CLEAR_VALUE ClearValue = { };
-	ClearValue.Format				= DepthBufferFormat;
-	ClearValue.DepthStencil.Depth	= 1.0f;
-	ClearValue.DepthStencil.Stencil	= 0;
-	GBufferProperties.OptimizedClearValue = &ClearValue;
-
-	SrvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-
-	D3D12_DEPTH_STENCIL_VIEW_DESC DsvDesc = { };
-	DsvDesc.Format				= DepthBufferFormat;
-	DsvDesc.ViewDimension		= D3D12_DSV_DIMENSION_TEXTURE2D;
-	DsvDesc.Texture2D.MipSlice	= 0;
-
-	GBuffer[3] = RenderingAPI::Get().CreateTexture(GBufferProperties);
+	const Uint32 UsageDS = TextureUsage_Default | TextureUsage_DSV | TextureUsage_SRV;
+	GBuffer[3] = CreateTexture2D(nullptr, EFormat::Format_R32_Typeless, UsageDS, Width, Height, 1, 1, ClearValue(DepthStencilClearValue(1.0f, 0)));
 	if (GBuffer[3])
 	{
-		GBuffer[3]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[3]->GetResource(), &SrvDesc)), 0);
-		GBuffer[3]->SetDepthStencilView(TSharedPtr(RenderingAPI::Get().CreateDepthStencilView(GBuffer[3]->GetResource(), &DsvDesc)), 0);
+		GBuffer[3]->SetName("GBuffer DepthStencil");
+
+		GBufferSRVs[3] = CreateShaderResourceView(GBuffer[3].Get(), EFormat::Format_R32_Float, 0, 1);
+		if (!GBufferSRVs[3])
+		{
+			return false;
+		}
+
+		GBufferDSV = CreateDepthStencilView(GBuffer[3].Get(), DepthBufferFormat, 0);
+		if (!GBufferDSV)
+		{
+			return false;
+		}
 	}
 	else
 	{
 		return false;
 	}
 
-	GBufferProperties.DebugName				= "Final Target";
-	GBufferProperties.Format				= RenderTargetFormat;
-	GBufferProperties.Flags					= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-	GBufferProperties.ArrayCount			= 1;
-	GBufferProperties.Width					= static_cast<Uint16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	GBufferProperties.Height				= static_cast<Uint16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
-	GBufferProperties.InitalState			= D3D12_RESOURCE_STATE_COMMON;
-	GBufferProperties.MemoryType			= EMemoryType::MEMORY_TYPE_DEFAULT;
-	GBufferProperties.MipLevels				= 1;
-	GBufferProperties.SampleCount			= 1;
-	GBufferProperties.OptimizedClearValue	= nullptr;
-
-	SrvDesc.Format = GBufferProperties.Format;
-	RtvDesc.Format = GBufferProperties.Format;
-
-	FinalTarget = RenderingAPI::Get().CreateTexture(GBufferProperties);
+	// Final Image
+	FinalTarget = CreateTexture2D(nullptr, RenderTargetFormat, Usage, Width, Height, 1, 1, ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
 	if (FinalTarget)
 	{
-		FinalTarget->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(FinalTarget->GetResource(), &SrvDesc)), 0);
-		FinalTarget->SetRenderTargetView(TSharedPtr(RenderingAPI::Get().CreateRenderTargetView(FinalTarget->GetResource(), &RtvDesc)), 0);
+		FinalTarget->SetName("Final Target");
+
+		FinalTargetSRV = CreateShaderResourceView(FinalTarget.Get(), RenderTargetFormat, 0, 1);
+		if (!FinalTargetSRV)
+		{
+			return false;
+		}
+
+		FinalTargetRTV = CreateRenderTargetView(FinalTarget.Get(), RenderTargetFormat, 0);
+		if (!FinalTargetRTV)
+		{
+			return false;
+		}
 	}
 	else
 	{
@@ -2319,60 +2261,40 @@ bool Renderer::InitGBuffer()
 
 bool Renderer::InitIntegrationLUT()
 {
-	if (!RenderingAPI::Get().UAVSupportsFormat(DXGI_FORMAT_R16G16_FLOAT))
+	constexpr EFormat LUTFormat = EFormat::Format_R16G16_Float;
+	constexpr Uint32 LUTSize = 512;
+	if (!RenderingAPI::Get().UAVSupportsFormat(EFormat::Format_R16G16_Float))
 	{
-		LOG_ERROR("[Renderer]: DXGI_FORMAT_R16G16_FLOAT is not supported for UAVs");
+		LOG_ERROR("[Renderer]: Format_R16G16_Float is not supported for UAVs");
 		return false;
 	}
 
-	TextureProperties LUTProperties = { };
-	LUTProperties.DebugName		= "IntegrationLUT Staging Texture";
-	LUTProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	LUTProperties.Width			= 512;
-	LUTProperties.Height		= 512;
-	LUTProperties.MipLevels		= 1;
-	LUTProperties.ArrayCount	= 1;
-	LUTProperties.Format		= DXGI_FORMAT_R16G16_FLOAT;
-	LUTProperties.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-	LUTProperties.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	LUTProperties.SampleCount	= 1;
-
-	TUniquePtr<D3D12Texture> StagingTexture = TUniquePtr(RenderingAPI::Get().CreateTexture(LUTProperties));
-	if (!StagingTexture)
+	TSharedRef<Texture2D> StagingTexture = CreateTexture2D(nullptr, LUTFormat, TextureUsage_Default | TextureUsage_UAV, LUTSize, LUTSize, 1, 1, ClearValue());
+	if (StagingTexture)
 	{
-		return false;
+		StagingTexture->SetName("IntegrationLUT");
 	}
 	else
 	{
-		D3D12_UNORDERED_ACCESS_VIEW_DESC UavDesc = { };
-		UavDesc.Format					= LUTProperties.Format;
-		UavDesc.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
-		UavDesc.Texture2D.MipSlice		= 0;
-		UavDesc.Texture2D.PlaneSlice	= 0;
-
-		StagingTexture->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get().CreateUnorderedAccessView(nullptr, StagingTexture->GetResource(), &UavDesc)), 0);
+		return false;
 	}
 
-	LUTProperties.DebugName	= "IntegrationLUT";
-	LUTProperties.Flags		= D3D12_RESOURCE_FLAG_NONE;
+	TSharedRef<UnorderedAccessView> Uav = CreateUnorderedAccessView(StagingTexture.Get(), LUTFormat, 0);
+	if (!Uav)
+	{
+		return false;
+	}
 
-	IntegrationLUT = RenderingAPI::Get().CreateTexture(LUTProperties);
+	IntegrationLUT = CreateTexture2D(nullptr, LUTFormat, TextureUsage_Default | TextureUsage_SRV, LUTSize, LUTSize, 1, 1, ClearValue());
 	if (!IntegrationLUT)
 	{
 		return false;
 	}
-	else
-	{
-		D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-		SrvDesc.Format							= LUTProperties.Format;
-		SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
-		SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		SrvDesc.Texture2D.MipLevels				= 1;
-		SrvDesc.Texture2D.MostDetailedMip		= 0;
-		SrvDesc.Texture2D.PlaneSlice			= 0;
-		SrvDesc.Texture2D.ResourceMinLODClamp	= 0;
 
-		IntegrationLUT->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(IntegrationLUT->GetResource(), &SrvDesc)), 0);
+	IntegrationLUTSRV = CreateShaderResourceView(IntegrationLUT.Get(), LUTFormat, 0, 1);
+	if (!IntegrationLUTSRV)
+	{
+		return false;
 	}
 
 	Microsoft::WRL::ComPtr<IDxcBlob> Shader = D3D12ShaderCompiler::CompileFromFile("Shaders/BRDFIntegationGen.hlsl", "Main", "cs_6_0");
@@ -2426,42 +2348,27 @@ bool Renderer::InitIntegrationLUT()
 
 bool Renderer::InitRayTracingTexture()
 {
-	TextureProperties OutputProperties = { };
-	OutputProperties.DebugName		= "RayTracing Output";
-	OutputProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	OutputProperties.Width			= static_cast<Uint16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	OutputProperties.Height			= static_cast<Uint16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
-	OutputProperties.MipLevels		= 1;
-	OutputProperties.ArrayCount		= 1;
-	OutputProperties.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
-	OutputProperties.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
-	OutputProperties.SampleCount	= 1;
+	const Uint32 Width	= RenderingAPI::Get().GetSwapChain()->GetWidth();
+	const Uint32 Height	= RenderingAPI::Get().GetSwapChain()->GetHeight();
+	const Uint32 Usage	= TextureUsage_Default | TextureUsage_UAV | TextureUsage_SRV;
 
-	ReflectionTexture = RenderingAPI::Get().CreateTexture(OutputProperties);
+	ReflectionTexture = CreateTexture2D(nullptr, EFormat::Format_R8G8B8A8_Unorm, Usage, Width, Height, 1, 1, ClearValue());
 	if (!ReflectionTexture)
 	{
 		return false;
 	}
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVView = { };
-	UAVView.Format					= OutputProperties.Format;
-	UAVView.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
-	UAVView.Texture2D.MipSlice		= 0;
-	UAVView.Texture2D.PlaneSlice	= 0;
+	ReflectionTextureUAV = CreateUnorderedAccessView(ReflectionTexture.Get(), EFormat::Format_R8G8B8A8_Unorm, 0);
+	if (!ReflectionTextureUAV)
+	{
+		return false;
+	}
 
-	ReflectionTexture->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get().CreateUnorderedAccessView(nullptr, ReflectionTexture->GetResource(), &UAVView)), 0);
-	
-	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-	SrvDesc.Format							= OutputProperties.Format;
-	SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
-	SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SrvDesc.Texture2D.MipLevels				= 1;
-	SrvDesc.Texture2D.MostDetailedMip		= 0;
-	SrvDesc.Texture2D.PlaneSlice			= 0;
-	SrvDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
-	
-	ReflectionTexture->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(ReflectionTexture->GetResource(), &SrvDesc)), 0);
-
+	ReflectionTextureSRV = CreateShaderResourceView(ReflectionTexture.Get(), EFormat::Format_R8G8B8A8_Unorm, 0, 1);
+	if (!ReflectionTextureSRV)
+	{
+		return false;
+	}
 	return true;
 }
 
@@ -2560,13 +2467,7 @@ bool Renderer::InitDebugStates()
 		{ -0.5f,  0.5f, -0.5f }
 	};
 
-	BufferProperties BufferProps = { };
-	BufferProps.SizeInBytes = sizeof(Vertices);
-	BufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
-	BufferProps.InitalState = D3D12_RESOURCE_STATE_COMMON;
-	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-
-	AABBVertexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
+	AABBVertexBuffer = CreateVertexBuffer<XMFLOAT3>(nullptr, 8, BufferUsage_Default);
 	if (!AABBVertexBuffer)
 	{
 		return false;
@@ -2589,12 +2490,7 @@ bool Renderer::InitDebugStates()
 		2, 7,
 	};
 
-	BufferProps.SizeInBytes = sizeof(Indices);
-	BufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
-	BufferProps.InitalState = D3D12_RESOURCE_STATE_COMMON;
-	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-
-	AABBIndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
+	AABBIndexBuffer = CreateIndexBuffer(nullptr, sizeof(Uint16) * 24, EIndexFormat::IndexFormat_Uint16, BufferUsage_Default);
 	if (!AABBIndexBuffer)
 	{
 		return false;

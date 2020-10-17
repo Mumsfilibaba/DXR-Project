@@ -328,11 +328,22 @@ public:
 
 	virtual bool IsRayTracingSupported() const override final;
 
-	virtual bool UAVSupportsFormat(DXGI_FORMAT Format) const override final;
+	virtual bool UAVSupportsFormat(EFormat Format) const override final;
 
 private:
-	bool AllocateBuffer(D3D12Resource& Resource, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_FLAGS Flags, Uint32 SizeInBytes) const;
-	bool AllocateTexture(D3D12Resource& Resource, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitalState, const D3D12_RESOURCE_DESC& Desc) const;
+	bool AllocateBuffer(
+		D3D12Resource& Resource, 
+		D3D12_HEAP_TYPE HeapType, 
+		D3D12_RESOURCE_STATES InitalState, 
+		D3D12_RESOURCE_FLAGS Flags, 
+		Uint32 SizeInBytes) const;
+
+	bool AllocateTexture(
+		D3D12Resource& Resource, 
+		D3D12_HEAP_TYPE HeapType,
+		D3D12_RESOURCE_STATES InitalState, 
+		const D3D12_RESOURCE_DESC& Desc) const;
+	
 	bool UploadResource(D3D12Resource& Resource, const ResourceData* InitalData) const;
 
 	TSharedPtr<WindowsWindow>				RenderWindow;

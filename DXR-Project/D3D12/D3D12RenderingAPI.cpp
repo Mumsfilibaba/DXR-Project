@@ -432,15 +432,17 @@ VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(
 	Uint32 VertexStride, 
 	Uint32 Usage) const
 {
-	D3D12_RESOURCE_FLAGS Flags	= ConvertBufferUsage(Usage);
-	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
+	D3D12_RESOURCE_FLAGS Flags			= ConvertBufferUsage(Usage);
+	D3D12_HEAP_TYPE HeapType			= D3D12_HEAP_TYPE_DEFAULT;
+	D3D12_RESOURCE_STATES InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	if (Usage & BufferUsage_Dynamic)
 	{
-		HeapType = D3D12_HEAP_TYPE_UPLOAD;
+		InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
+		HeapType	= D3D12_HEAP_TYPE_UPLOAD;
 	}
 
 	D3D12VertexBuffer* NewBuffer = new D3D12VertexBuffer(Device.Get(), SizeInBytes, VertexStride, Usage);
-	if (!AllocateBuffer(*NewBuffer, HeapType, Flags, SizeInBytes))
+	if (!AllocateBuffer(*NewBuffer, HeapType, InitalState, Flags, SizeInBytes))
 	{
 		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate buffer");
 		return nullptr;
@@ -468,15 +470,17 @@ IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(
 	EIndexFormat IndexFormat, 
 	Uint32 Usage) const
 {
-	D3D12_RESOURCE_FLAGS Flags	= ConvertBufferUsage(Usage);
-	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
+	D3D12_RESOURCE_FLAGS Flags			= ConvertBufferUsage(Usage);
+	D3D12_HEAP_TYPE HeapType			= D3D12_HEAP_TYPE_DEFAULT;
+	D3D12_RESOURCE_STATES InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	if (Usage & BufferUsage_Dynamic)
 	{
+		InitalState = D3D12_RESOURCE_STATE_GENERIC_READ;
 		HeapType = D3D12_HEAP_TYPE_UPLOAD;
 	}
 
 	D3D12IndexBuffer* NewBuffer = new D3D12IndexBuffer(Device.Get(), SizeInBytes, IndexFormat, Usage);
-	if (!AllocateBuffer(*NewBuffer, HeapType, Flags, SizeInBytes))
+	if (!AllocateBuffer(*NewBuffer, HeapType, InitalState, Flags, SizeInBytes))
 	{
 		return nullptr;
 	}
@@ -509,15 +513,17 @@ ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(const ResourceData* Init
 {
 	const Uint32 AlignedSize = AlignUp<Uint32>(SizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
-	D3D12_RESOURCE_FLAGS Flags	= ConvertBufferUsage(Usage);
-	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
+	D3D12_RESOURCE_FLAGS Flags			= ConvertBufferUsage(Usage);
+	D3D12_HEAP_TYPE HeapType			= D3D12_HEAP_TYPE_DEFAULT;
+	D3D12_RESOURCE_STATES InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	if (Usage & BufferUsage_Dynamic)
 	{
+		InitalState = D3D12_RESOURCE_STATE_GENERIC_READ;
 		HeapType = D3D12_HEAP_TYPE_UPLOAD;
 	}
 
 	D3D12ConstantBuffer* NewBuffer = new D3D12ConstantBuffer(Device.Get(), SizeInBytes, Usage);
-	if (!AllocateBuffer(*NewBuffer, HeapType, Flags, AlignedSize))
+	if (!AllocateBuffer(*NewBuffer, HeapType, InitalState, Flags, AlignedSize))
 	{
 		return nullptr;
 	}
@@ -545,15 +551,18 @@ StructuredBuffer* D3D12RenderingAPI::CreateStructuredBuffer(
 	Uint32 Stride, 
 	Uint32 Usage) const
 {
-	D3D12_RESOURCE_FLAGS Flags	= ConvertBufferUsage(Usage);
-	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
+
+	D3D12_RESOURCE_FLAGS Flags			= ConvertBufferUsage(Usage);
+	D3D12_HEAP_TYPE HeapType			= D3D12_HEAP_TYPE_DEFAULT;
+	D3D12_RESOURCE_STATES InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	if (Usage & BufferUsage_Dynamic)
 	{
+		InitalState = D3D12_RESOURCE_STATE_GENERIC_READ;
 		HeapType = D3D12_HEAP_TYPE_UPLOAD;
 	}
 
 	D3D12StructuredBuffer* NewBuffer = new D3D12StructuredBuffer(Device.Get(), SizeInBytes, Stride, Usage);
-	if (!AllocateBuffer(*NewBuffer, HeapType, Flags, SizeInBytes))
+	if (!AllocateBuffer(*NewBuffer, HeapType, InitalState, Flags, SizeInBytes))
 	{
 		return nullptr;
 	}
@@ -1801,7 +1810,7 @@ bool D3D12RenderingAPI::IsRayTracingSupported() const
 	return Device->IsRayTracingSupported();
 }
 
-bool D3D12RenderingAPI::UAVSupportsFormat(DXGI_FORMAT Format) const
+bool D3D12RenderingAPI::UAVSupportsFormat(EFormat Format) const
 {
 	D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
 	Memory::Memzero(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
@@ -1813,7 +1822,7 @@ bool D3D12RenderingAPI::UAVSupportsFormat(DXGI_FORMAT Format) const
 		{
 			D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport =
 			{
-				Format,
+				ConvertFormat(Format),
 				D3D12_FORMAT_SUPPORT1_NONE,
 				D3D12_FORMAT_SUPPORT2_NONE
 			};
@@ -1829,7 +1838,12 @@ bool D3D12RenderingAPI::UAVSupportsFormat(DXGI_FORMAT Format) const
 	return true;
 }
 
-bool D3D12RenderingAPI::AllocateBuffer(D3D12Resource& Resource, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_FLAGS Flags, Uint32 SizeInBytes) const
+bool D3D12RenderingAPI::AllocateBuffer(
+	D3D12Resource& Resource, 
+	D3D12_HEAP_TYPE HeapType, 
+	D3D12_RESOURCE_STATES InitalState, 
+	D3D12_RESOURCE_FLAGS Flags, 
+	Uint32 SizeInBytes) const
 {
 	D3D12_HEAP_PROPERTIES HeapProperties;
 	Memory::Memzero(&HeapProperties, sizeof(D3D12_HEAP_PROPERTIES));
@@ -1856,15 +1870,15 @@ bool D3D12RenderingAPI::AllocateBuffer(D3D12Resource& Resource, D3D12_HEAP_TYPE 
 		&HeapProperties, 
 		D3D12_HEAP_FLAG_NONE, 
 		&Desc, 
-		D3D12_RESOURCE_STATE_COMMON, 
+		InitalState,
 		nullptr, 
 		IID_PPV_ARGS(&Resource.D3DResource));
 	if (SUCCEEDED(HR))
 	{
-		Resource.Address	= Resource.D3DResource->GetGPUVirtualAddress();
-		Resource.Desc		= Desc;
-		Resource.HeapType	= HeapType;
-		Resource.ResourceState = D3D12_RESOURCE_STATE_COMMON;
+		Resource.Address		= Resource.D3DResource->GetGPUVirtualAddress();
+		Resource.Desc			= Desc;
+		Resource.HeapType		= HeapType;
+		Resource.ResourceState	= InitalState;
 		return true;
 	}
 	else
@@ -1874,7 +1888,11 @@ bool D3D12RenderingAPI::AllocateBuffer(D3D12Resource& Resource, D3D12_HEAP_TYPE 
 	}
 }
 
-bool D3D12RenderingAPI::AllocateTexture(D3D12Resource& Resource, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitalState, const D3D12_RESOURCE_DESC& Desc) const
+bool D3D12RenderingAPI::AllocateTexture(
+	D3D12Resource& Resource, 
+	D3D12_HEAP_TYPE HeapType, 
+	D3D12_RESOURCE_STATES InitalState, 
+	const D3D12_RESOURCE_DESC& Desc) const
 {
 	D3D12_HEAP_PROPERTIES HeapProperties;
 	Memory::Memzero(&HeapProperties, sizeof(D3D12_HEAP_PROPERTIES));
