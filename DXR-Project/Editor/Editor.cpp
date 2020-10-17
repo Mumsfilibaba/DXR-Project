@@ -304,7 +304,7 @@ static void DrawSceneInfo()
 	{
 		for (Actor* Actor : Scene::GetCurrentScene()->GetActors())
 		{
-			if (ImGui::TreeNode(Actor->GetDebugName().c_str()))
+			if (ImGui::TreeNode(Actor->GetName().c_str()))
 			{
 				// Transform
 				if (ImGui::TreeNode("Transform"))
