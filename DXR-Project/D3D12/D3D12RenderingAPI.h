@@ -17,7 +17,7 @@ public:
 	D3D12RenderingAPI();
 	~D3D12RenderingAPI();
 
-	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) override final;
+	virtual bool Init(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) override final;
 
 	/*
 	* Resources
@@ -317,18 +317,18 @@ public:
 	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const override final;
 
 	// Commands
-	virtual class ICommandContext*	CreateCommandContext()		const override final;
-	virtual class CommandList&		GetDefaultCommandList()		const override final;
-	virtual class CommandExecutor&	GetDefaultCommandExecutor() const override final;
+	virtual bool IsRayTracingSupported() const override final;
+	virtual bool UAVSupportsFormat(EFormat Format) const override final;
+	
+	virtual class ICommandContext* GetCommandContext() const override final
+	{
+		return nullptr;
+	}
 
 	virtual std::string GetAdapterName() const override final
 	{
 		return Device->GetAdapterName();
 	}
-
-	virtual bool IsRayTracingSupported() const override final;
-
-	virtual bool UAVSupportsFormat(EFormat Format) const override final;
 
 private:
 	bool AllocateBuffer(

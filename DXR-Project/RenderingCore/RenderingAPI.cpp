@@ -1,30 +1,39 @@
 #include "RenderingAPI.h"
+#include "CommandList.h"
 
 #include "D3D12/D3D12RenderingAPI.h"
-
-RenderingAPI* RenderingAPI::CurrentRenderAPI = nullptr;
 
 /*
 * RenderingAPI
 */
-RenderingAPI* RenderingAPI::Make(ERenderingAPI InRenderAPI)
+
+bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI)
 {
 	// Select RenderingAPI
-	if (InRenderAPI == ERenderingAPI::RENDERING_API_D3D12)
+	if (InRenderAPI == ERenderingAPI::RenderingAPI_D3D12)
 	{
-		CurrentRenderAPI = new D3D12RenderingAPI();
-		return CurrentRenderAPI;
+		EngineGlobals::RenderingAPI = new D3D12RenderingAPI();
 	}
 	else
 	{
-		return nullptr;
-	}
-}
+		LOG_ERROR("[RenderingAPI::Initialize] Invalid RenderingAPI enum");
+		Debug::DebugBreak();
 
-RenderingAPI& RenderingAPI::Get()
-{
-	VALIDATE(CurrentRenderAPI);
-	return *CurrentRenderAPI;
+		return false;
+	}
+
+	// Init
+	if (EngineGlobals::RenderingAPI->Init())
+	{
+		ICommandContext* CmdContext = EngineGlobals::RenderingAPI->GetCommandContext();
+		EngineGlobals::CmdListExecutor->SetContext(CmdContext);
+
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void RenderingAPI::Release()

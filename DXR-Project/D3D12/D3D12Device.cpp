@@ -3,6 +3,8 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12ComputePipelineState.h"
 #include "D3D12RootSignature.h"
+#include "D3D12CommandAllocator.h"
+#include "D3D12CommandQueue.h"
 
 #include <dxgidebug.h>
 
@@ -151,7 +153,124 @@ bool D3D12Device::Initialize(bool DebugEnable)
 	return true;
 }
 
-Uint32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount)
+D3D12CommandAllocator* D3D12Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type)
+{
+	ID3D12CommandAllocator* Allocator = nullptr;
+
+	HRESULT hResult = D3DDevice->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
+	if (SUCCEEDED(hResult))
+	{
+		LOG_INFO("[D3D12Device]: Created CommandAllocator");
+		return new D3D12CommandAllocator(this, Allocator);
+	}
+	else
+	{
+		LOG_ERROR("[D3D12Device]: FAILED to create CommandAllocator");
+		return nullptr;
+	}
+}
+
+D3D12Fence* D3D12Device::CreateFence(Uint64 InitalValue)
+{
+	ID3D12Fence* Fence = nullptr;
+
+	HRESULT hResult = D3DDevice->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
+	if (SUCCEEDED(hResult))
+	{
+		HANDLE hEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+		if (hEvent == NULL)
+		{
+			LOG_ERROR("[D3D12Device]: FAILED to create Event for Fence");
+			return nullptr;
+		}
+		else
+		{
+			LOG_INFO("[D3D12Device]: Created Fence");
+			return new D3D12Fence(this, Fence, hEvent);
+		}
+	}
+	else
+	{
+		LOG_INFO("[D3D12Device]: FAILED to create Fence");
+		return nullptr;
+	}
+}
+
+D3D12CommandQueue* D3D12Device::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type)
+{
+	// Create the command queue.
+	D3D12_COMMAND_QUEUE_DESC QueueDesc;
+	Memory::Memzero(&QueueDesc, sizeof(D3D12_COMMAND_QUEUE_DESC));
+
+	QueueDesc.Flags		= D3D12_COMMAND_QUEUE_FLAG_NONE;
+	QueueDesc.NodeMask	= 0;
+	QueueDesc.Priority	= D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+	QueueDesc.Type		= Type;
+
+	ID3D12CommandQueue* Queue = nullptr;
+
+	HRESULT hResult = D3DDevice->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
+	if (SUCCEEDED(hResult))
+	{
+		LOG_INFO("[D3D12Device]: Created CommandQueue");
+		return new D3D12CommandQueue(this, Queue);
+	}
+	else
+	{
+		LOG_ERROR("[D3D12Device]: FAILED to create CommandQueue");
+		return nullptr;
+	}
+
+}
+
+D3D12RootSignature* D3D12Device::CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc)
+{
+	using namespace Microsoft::WRL;
+
+	ComPtr<ID3DBlob> ErrorBlob;
+	ComPtr<ID3DBlob> SignatureBlob;
+	
+	HRESULT hResult = _D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
+	if (FAILED(hResult))
+	{
+		LOG_ERROR("[D3D12RootSignature]: FAILED to Serialize RootSignature");
+		LOG_ERROR(reinterpret_cast<const Char*>(ErrorBlob->GetBufferPointer()));
+
+		Debug::DebugBreak();
+		return nullptr;
+	}
+	else
+	{
+		return CreateRootSignature(SignatureBlob->GetBufferPointer(), static_cast<Uint32>(SignatureBlob->GetBufferSize()));
+	}
+}
+
+D3D12RootSignature* D3D12Device::CreateRootSignature(IDxcBlob* ShaderBlob)
+{
+	VALIDATE(ShaderBlob != nullptr);
+	return CreateRootSignature(ShaderBlob->GetBufferPointer(), ShaderBlob->GetBufferSize());
+}
+
+D3D12RootSignature* D3D12Device::CreateRootSignature(VoidPtr RootSignatureData, const Uint32 RootSignatureSize)
+{
+	ID3D12RootSignature* RootSignature = nullptr;
+
+	HRESULT hResult = D3DDevice->CreateRootSignature(0, RootSignatureData, RootSignatureSize, IID_PPV_ARGS(&RootSignature));
+	if (FAILED(hResult))
+	{
+		LOG_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
+		Debug::DebugBreak();
+
+		return nullptr;
+	}
+	else
+	{
+		LOG_INFO("[D3D12RootSignature]: Created RootSignature");
+		return new D3D12RootSignature(this, RootSignature);
+	}
+}
+
+Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount)
 {
 	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data = { };
 	Data.Flags			= D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
@@ -221,38 +340,6 @@ bool D3D12Device::CreateFactory()
 		else
 		{
 			LOG_ERROR("[D3D12GraphicsDevice]: FAILED to retrive InfoQueue");
-		}
-	}
-
-	// Create factory
-	if (FAILED(CreateDXGIFactory2(DebugFlags, IID_PPV_ARGS(&Factory))))
-	{
-		LOG_ERROR("[D3D12GraphicsDevice]: FAILED to create factory");
-		return false;
-	}
-	else
-	{
-		// Retrive newer factory interface
-		ComPtr<IDXGIFactory5> Factory5;
-		if (FAILED(Factory.As(&Factory5)))
-		{
-			LOG_ERROR("[D3D12GraphicsDevice]: FAILED to retrive IDXGIFactory5");
-			return false;
-		}
-		else
-		{
-			HRESULT hResult = Factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &AllowTearing, sizeof(AllowTearing));
-			if (SUCCEEDED(hResult))
-			{
-				if (AllowTearing)
-				{
-					LOG_INFO("[D3D12GraphicsDevice]: Tearing is supported");
-				}
-				else
-				{
-					LOG_INFO("[D3D12GraphicsDevice]: Tearing is NOT supported");
-				}
-			}
 		}
 	}
 

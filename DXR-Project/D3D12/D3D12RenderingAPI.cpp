@@ -25,7 +25,7 @@
 */
 
 D3D12RenderingAPI::D3D12RenderingAPI()
-	: RenderingAPI()
+	: RenderingAPI(ERenderingAPI::RenderingAPI_D3D12)
 	, Device(nullptr)
 	, ImmediateCommandList(nullptr)
 	, SwapChain(nullptr)
@@ -37,25 +37,20 @@ D3D12RenderingAPI::~D3D12RenderingAPI()
 	SwapChain.Reset();
 }
 
-bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug)
+bool D3D12RenderingAPI::Init(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug)
 {
+	// TODO: Create Factory
+
+	// TODO: Choose Adaper
+
+	// TODO: Create Device
 	Device = MakeShared<D3D12Device>();
 	if (!Device->Initialize(EnableDebug))
 	{
 		return false;
 	}
 
-	ImmediateCommandList = MakeShared<D3D12ImmediateCommandList>(Device.Get());
-	if (!ImmediateCommandList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return false;
-	}
-
-	Queue = MakeShared<D3D12CommandQueue>(Device.Get());
-	if (!Queue->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
-	{
-		return false;
-	}
+	// TODO: Create CommandContext
 
 	SwapChain = MakeShared<D3D12SwapChain>(Device.Get());
 	if (!SwapChain->Initialize(StaticCast<WindowsWindow>(RenderWindow).Get(), Queue.Get()))
@@ -1788,21 +1783,6 @@ ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState() const
 RayTracingPipelineState* D3D12RenderingAPI::CreateRayTracingPipelineState() const
 {
 	return nullptr;
-}
-
-ICommandContext* D3D12RenderingAPI::CreateCommandContext() const
-{
-	return nullptr;
-}
-
-CommandList& D3D12RenderingAPI::GetDefaultCommandList() const
-{
-	// TODO: insert return statement here
-}
-
-CommandExecutor& D3D12RenderingAPI::GetDefaultCommandExecutor() const
-{
-	// TODO: insert return statement here
 }
 
 bool D3D12RenderingAPI::IsRayTracingSupported() const

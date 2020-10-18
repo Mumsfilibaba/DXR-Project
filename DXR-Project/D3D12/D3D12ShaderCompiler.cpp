@@ -89,6 +89,8 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, cons
 	if (FAILED(hResult))
 	{
 		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create Source Data");
+		Debug::DebugBreak();
+
 		return nullptr;
 	}
 
@@ -103,6 +105,7 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& Source, cons
 	{
 		if (!Initialize())
 		{
+			Debug::DebugBreak();
 			return nullptr;
 		}
 	}
@@ -116,6 +119,8 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& Source, cons
 	if (FAILED(hResult))
 	{
 		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create Source Data");
+		Debug::DebugBreak();
+
 		return nullptr;
 	}
 
@@ -137,6 +142,8 @@ IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, L
 	if (FAILED(hResult))
 	{
 		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to Compile");
+		Debug::DebugBreak();
+
 		return nullptr;
 	}
 

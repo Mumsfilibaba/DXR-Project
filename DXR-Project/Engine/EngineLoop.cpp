@@ -64,13 +64,7 @@ bool EngineLoop::Initialize()
 		false;
 #endif
 
-	RenderingAPI* RenderingAPI = RenderingAPI::Make(ERenderingAPI::RenderingAPI_D3D12);
-	if (!RenderingAPI)
-	{
-		return false;
-	}
-
-	if (!RenderingAPI->Initialize(App->GetMainWindow(), EnableDebug))
+	if (!RenderingAPI::Initialize(ERenderingAPI::RenderingAPI_D3D12))
 	{
 		return false;
 	}

@@ -10,27 +10,31 @@
 class D3D12RootSignature : public D3D12DeviceChild
 {
 public:
-	D3D12RootSignature(D3D12Device* InDevice);
-	~D3D12RootSignature();
-
-	bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
-	bool Initialize(IDxcBlob* ShaderBlob);
+	inline D3D12RootSignature(D3D12Device* InDevice, ID3D12RootSignature* InRootSignature)
+		: D3D12DeviceChild(InDevice)
+		, RootSignature(InRootSignature)
+	{
+		VALIDATE(RootSignature != nullptr);
+	}
+	
+	~D3D12RootSignature() = default;
 
 	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
+	FORCEINLINE void SetDebugName(const std::string& Name)
+	{
+		std::wstring WideName = ConvertToWide(Name);
+		RootSignature->SetName(WideName.c_str());
+	}
 
 	FORCEINLINE ID3D12RootSignature* GetRootSignature() const
 	{
 		return RootSignature.Get();
 	}
 
-	FORCEINLINE ID3D12RootSignature* const * GetRootSignatureAddress() const
+	FORCEINLINE ID3D12RootSignature* const * GetAddressOfRootSignature() const
 	{
 		return RootSignature.GetAddressOf();
 	}
-
-private:
-	bool Initialize(const void* RootSignatureBlob, Uint32 BlobSizeInBytes);
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignature;

@@ -27,8 +27,6 @@ class ICommandContext
 public:
 	virtual ~ICommandContext() = default;
 
-	virtual bool Initialize() = 0;
-
 	virtual void Begin() = 0;
 	virtual void End() = 0;
 

@@ -56,7 +56,7 @@ class D3D12OfflineDescriptorHeap : public D3D12DeviceChild
 	public:
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	Heap;
 		D3D12_CPU_DESCRIPTOR_HANDLE						CPUStart;
-		TArray<FreeRange>							FreeList;
+		TArray<FreeRange>								FreeList;
 	};
 
 public:
@@ -66,17 +66,27 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE Allocate(Uint32& OutHeapIndex);
 	void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, Uint32 HeapIndex);
 
-	virtual void SetDebugName(const std::string& InName) override;
+	void SetName(const std::string& InName);
+
+	FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
+	{
+		return Type;
+	}
+
+	FORCEINLINE Uint32 GetDescriptorSize() const
+	{
+		return DescriptorSize;
+	}
 
 private:
 	void AllocateHeap();
 
 private:
 	TArray<DescriptorHeap> Heaps;
-	std::wstring				DebugName;
+	std::wstring Name;
 
-	D3D12_DESCRIPTOR_HEAP_TYPE	Type;
-	Uint32						DescriptorSize = 0;
+	D3D12_DESCRIPTOR_HEAP_TYPE Type;
+	Uint32 DescriptorSize = 0;
 };
 
 /*
@@ -93,7 +103,11 @@ public:
 	
 	Uint32 AllocateSlots(Uint32 NumSlots);
 
-	virtual void SetDebugName(const std::string& InName) override;
+	FORCEINLINE void SetName(const std::string& InName)
+	{
+		std::wstring WideName = ConvertToWide(InName);
+		Heap->SetName(WideName.c_str());
+	}
 
 	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSlotAt(Uint32 Slot) const
 	{

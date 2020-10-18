@@ -10,21 +10,44 @@
 class D3D12Fence : public D3D12DeviceChild
 {
 public:
-	D3D12Fence(D3D12Device* InDevice);
-	~D3D12Fence();
+	inline D3D12Fence(D3D12Device* InDevice, ID3D12Fence* InFence, HANDLE InEvent)
+		: D3D12DeviceChild(InDevice)
+		, Fence(InFence)
+		, Event(InEvent)
+	{
+		VALIDATE(Fence != nullptr);
+		VALIDATE(Event != 0);
+	}
 
-	bool Initialize(Uint64 InitalValue);
+	inline ~D3D12Fence()
+	{
+		::CloseHandle(Event);
+	}
 
-	bool WaitForValue(Uint64 FenceValue);
+	inline bool D3D12Fence::WaitForValue(Uint64 FenceValue)
+	{
+		HRESULT hResult = Fence->SetEventOnCompletion(FenceValue, Event);
+		if (SUCCEEDED(hResult))
+		{
+			::WaitForSingleObjectEx(Event, INFINITE, FALSE);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	FORCEINLINE void SetDebugName(const std::string& Name)
+	{
+		std::wstring WideName = ConvertToWide(Name);
+		Fence->SetName(WideName.c_str());
+	}
 
 	FORCEINLINE ID3D12Fence* GetFence() const
 	{
 		return Fence.Get();
 	}
-
-public:
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12Fence> Fence;

@@ -1,10 +1,10 @@
 #pragma once
-#include "Windows/WindowsWindow.h"
+#include "Application/Generic/GenericWindow.h"
+
+#include "Engine/EngineGlobals.h"
 
 #include "Containers/TUniquePtr.h"
 #include "Containers/TSharedPtr.h"
-
-#include "D3D12/D3D12RayTracingScene.h"
 
 class Texture1D;
 class Texture1DArray;
@@ -47,7 +47,7 @@ public:
 
 	virtual ~RenderingAPI() = default;
 
-	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) = 0;
+	virtual bool Init(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) = 0;
 
 	/*
 	* Resources
@@ -347,9 +347,9 @@ public:
 	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const = 0;
 
 	// Commands
-	virtual class ICommandContext*	CreateCommandContext()		const = 0;
-	virtual CommandListExecutor&	GetCommandExecutor() const = 0;
+	virtual class ICommandContext* GetCommandContext() const = 0;
 
+	// Getters
 	FORCEINLINE virtual std::string GetAdapterName() const
 	{
 		return std::string();
@@ -371,16 +371,12 @@ public:
 		return API;
 	}
 
-	static RenderingAPI* Make(ERenderingAPI InRenderAPI);
-	static RenderingAPI& Get();
+	// Creation
+	static bool Initialize(ERenderingAPI InRenderAPI);
 	static void Release();
 
 protected:
-	RenderingAPI() = default;
-
 	ERenderingAPI API;
-private:
-	static RenderingAPI* CurrentRenderAPI;
 };
 
 /*
@@ -396,7 +392,7 @@ inline TSharedRef<Texture1D> CreateTexture1D(
 	Uint32 MipLevels, 
 	const ClearValue& OptimizedClearValue)
 {
-	return RenderingAPI::Get().CreateTexture1D(
+	return EngineGlobals::RenderingAPI->CreateTexture1D(
 		InitalData, 
 		Format, 
 		Usage, 
@@ -414,7 +410,7 @@ inline TSharedRef<Texture1DArray> CreateTexture1DArray(
 	Uint32 ArrayCount,
 	const ClearValue& OptimizedClearValue)
 {
-	return RenderingAPI::Get().CreateTexture1DArray(
+	return EngineGlobals::RenderingAPI->CreateTexture1DArray(
 		InitalData,
 		Format,
 		Usage,
@@ -434,7 +430,7 @@ inline TSharedRef<Texture2D> CreateTexture2D(
 	Uint32 SampleCount, 
 	const ClearValue& OptimizedClearValue)
 {
-	return RenderingAPI::Get().CreateTexture2D(
+	return EngineGlobals::RenderingAPI->CreateTexture2D(
 		InitalData, 
 		Format, 
 		Usage, 
@@ -456,7 +452,7 @@ inline TSharedRef<Texture2DArray> CreateTexture2DArray(
 	Uint32 SampleCount, 
 	const ClearValue& OptimizedClearValue) 
 {
-	return RenderingAPI::Get().CreateTexture2DArray(
+	return EngineGlobals::RenderingAPI->CreateTexture2DArray(
 		InitalData, 
 		Format, 
 		Usage, 
@@ -477,7 +473,7 @@ inline TSharedRef<TextureCube> CreateTextureCube(
 	Uint32 SampleCount,
 	const ClearValue& OptimizedClearValue)
 {
-	return RenderingAPI::Get().CreateTextureCube(
+	return EngineGlobals::RenderingAPI->CreateTextureCube(
 		InitalData, 
 		Format,
 		Usage,
@@ -497,7 +493,7 @@ inline TSharedRef<TextureCubeArray> CreateTextureCubeArray(
 	Uint32 SampleCount,
 	const ClearValue& OptimizedClearValue)
 {
-	return RenderingAPI::Get().CreateTextureCubeArray(
+	return EngineGlobals::RenderingAPI->CreateTextureCubeArray(
 		InitalData,
 		Format,
 		Usage,
@@ -518,7 +514,7 @@ inline TSharedRef<Texture3D> CreateTexture3D(
 	Uint32 MipLevels,
 	const ClearValue& OptimizedClearValue)
 {
-	return RenderingAPI::Get().CreateTexture3D(
+	return EngineGlobals::RenderingAPI->CreateTexture3D(
 		InitalData,
 		Format,
 		Usage,
@@ -536,7 +532,7 @@ inline TSharedRef<VertexBuffer> CreateVertexBuffer(
 	Uint32 VertexStride,
 	Uint32 Usage)
 {
-	return RenderingAPI::Get().CreateVertexBuffer(
+	return EngineGlobals::RenderingAPI->CreateVertexBuffer(
 		InitalData,
 		SizeInBytes,
 		VertexStride,
@@ -557,7 +553,7 @@ inline TSharedRef<IndexBuffer> CreateIndexBuffer(
 	EIndexFormat IndexFormat,
 	Uint32 Usage)
 {
-	return RenderingAPI::Get().CreateIndexBuffer(
+	return EngineGlobals::RenderingAPI->CreateIndexBuffer(
 		InitalData,
 		SizeInBytes,
 		IndexFormat,
@@ -566,7 +562,7 @@ inline TSharedRef<IndexBuffer> CreateIndexBuffer(
 
 inline TSharedRef<ConstantBuffer> CreateConstantBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Usage)
 {
-	return RenderingAPI::Get().CreateConstantBuffer(InitalData, SizeInBytes, Usage);
+	return EngineGlobals::RenderingAPI->CreateConstantBuffer(InitalData, SizeInBytes, Usage);
 }
 
 template<typename T>
@@ -587,7 +583,7 @@ inline TSharedRef<StructuredBuffer> CreateStructuredBuffer(
 	Uint32 Stride,
 	Uint32 Usage)
 {
-	return RenderingAPI::Get().CreateStructuredBuffer(
+	return EngineGlobals::RenderingAPI->CreateStructuredBuffer(
 		InitalData,
 		SizeInBytes,
 		Stride,
@@ -605,7 +601,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 	Uint32 ElementCount,
 	EFormat Format)
 {
-	return RenderingAPI::Get().CreateShaderResourceView(
+	return EngineGlobals::RenderingAPI->CreateShaderResourceView(
 		Buffer,
 		FirstElement,
 		ElementCount,
@@ -618,7 +614,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 	Uint32 ElementCount,
 	Uint32 Stride)
 {
-	return RenderingAPI::Get().CreateShaderResourceView(
+	return EngineGlobals::RenderingAPI->CreateShaderResourceView(
 		Buffer,
 		FirstElement,
 		ElementCount,
@@ -637,7 +633,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 	Uint32 MostDetailedMip,
 	Uint32 MipLevels) 
 { 
-	return RenderingAPI::Get().CreateShaderResourceView(
+	return EngineGlobals::RenderingAPI->CreateShaderResourceView(
 		Texture,
 		Format,
 		MostDetailedMip,
@@ -652,7 +648,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 	Uint32 FirstArraySlice,
 	Uint32 ArraySize)
 {
-	return RenderingAPI::Get().CreateShaderResourceView(
+	return EngineGlobals::RenderingAPI->CreateShaderResourceView(
 		Texture,
 		Format,
 		MostDetailedMip,
@@ -667,7 +663,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 	Uint32 MostDetailedMip,
 	Uint32 MipLevels)
 {
-	return RenderingAPI::Get().CreateShaderResourceView(
+	return EngineGlobals::RenderingAPI->CreateShaderResourceView(
 		Texture,
 		Format,
 		MostDetailedMip,
@@ -682,7 +678,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 	Uint32 FirstArraySlice,
 	Uint32 ArraySize)
 {
-	return RenderingAPI::Get().CreateShaderResourceView(
+	return EngineGlobals::RenderingAPI->CreateShaderResourceView(
 		Texture,
 		Format,
 		MostDetailedMip,
@@ -697,7 +693,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 	Uint32 MostDetailedMip,
 	Uint32 MipLevels)
 {
-	return RenderingAPI::Get().CreateShaderResourceView(
+	return EngineGlobals::RenderingAPI->CreateShaderResourceView(
 		Texture,
 		Format,
 		MostDetailedMip,
@@ -712,7 +708,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 	Uint32 FirstArraySlice,
 	Uint32 ArraySize)
 {
-	return RenderingAPI::Get().CreateShaderResourceView(
+	return EngineGlobals::RenderingAPI->CreateShaderResourceView(
 		Texture,
 		Format,
 		MostDetailedMip,
@@ -727,7 +723,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 	Uint32 MostDetailedMip,
 	Uint32 MipLevels)
 {
-	return RenderingAPI::Get().CreateShaderResourceView(
+	return EngineGlobals::RenderingAPI->CreateShaderResourceView(
 		Texture,
 		Format,
 		MostDetailedMip,
@@ -742,7 +738,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 	EFormat Format,
 	Uint64 CounterOffsetInBytes)
 {
-	return RenderingAPI::Get().CreateUnorderedAccessView(
+	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
 		Buffer,
 		FirstElement,
 		NumElements,
@@ -757,7 +753,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 	Uint32 StructureByteStride,
 	Uint64 CounterOffsetInBytes)
 {
-	return RenderingAPI::Get().CreateUnorderedAccessView(
+	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
 		Buffer,
 		FirstElement,
 		NumElements,
@@ -767,7 +763,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 
 inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice)
 {
-	return RenderingAPI::Get().CreateUnorderedAccessView(Texture, Format, MipSlice);
+	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
 }
 
 inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
@@ -777,7 +773,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 	Uint32 FirstArraySlice,
 	Uint32 ArraySize)
 {
-	return RenderingAPI::Get().CreateUnorderedAccessView(
+	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
 		Texture,
 		Format,
 		MipSlice,
@@ -787,7 +783,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 
 inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice)
 {
-	return RenderingAPI::Get().CreateUnorderedAccessView(Texture, Format, MipSlice);
+	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
 }
 
 inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
@@ -797,7 +793,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 	Uint32 FirstArraySlice,
 	Uint32 ArraySize)
 {
-	return RenderingAPI::Get().CreateUnorderedAccessView(
+	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
 		Texture,
 		Format,
 		MipSlice,
@@ -807,7 +803,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 
 inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(const TextureCube* Texture, EFormat Format, Uint32 MipSlice)
 {
-	return RenderingAPI::Get().CreateUnorderedAccessView(
+	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
 		Texture,
 		Format,
 		MipSlice);
@@ -819,7 +815,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 	Uint32 MipSlice,
 	Uint32 ArraySlice)
 {
-	return RenderingAPI::Get().CreateUnorderedAccessView(
+	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
 		Texture,
 		Format,
 		MipSlice,
@@ -833,7 +829,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 	Uint32 FirstDepthSlice,
 	Uint32 DepthSlices) 
 {
-	return RenderingAPI::Get().CreateUnorderedAccessView(
+	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
 		Texture,
 		Format,
 		MipSlice,
@@ -844,7 +840,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 // RenderTargetView
 inline TSharedRef<RenderTargetView> CreateRenderTargetView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice)
 {
-	return RenderingAPI::Get().CreateRenderTargetView(Texture, Format, MipSlice);
+	return EngineGlobals::RenderingAPI->CreateRenderTargetView(Texture, Format, MipSlice);
 }
 
 inline TSharedRef<RenderTargetView> CreateRenderTargetView(
@@ -854,7 +850,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 	Uint32 FirstArraySlice,
 	Uint32 ArraySize)
 {
-	return RenderingAPI::Get().CreateRenderTargetView(
+	return EngineGlobals::RenderingAPI->CreateRenderTargetView(
 		Texture,
 		Format,
 		MipSlice,
@@ -864,7 +860,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 
 inline TSharedRef<RenderTargetView> CreateRenderTargetView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice)
 {
-	return RenderingAPI::Get().CreateRenderTargetView(
+	return EngineGlobals::RenderingAPI->CreateRenderTargetView(
 		Texture,
 		Format,
 		MipSlice);
@@ -877,7 +873,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 	Uint32 FirstArraySlice,
 	Uint32 ArraySize)
 {
-	return RenderingAPI::Get().CreateRenderTargetView(
+	return EngineGlobals::RenderingAPI->CreateRenderTargetView(
 		Texture,
 		Format,
 		MipSlice,
@@ -892,7 +888,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 	Uint32 FirstFace,
 	Uint32 FaceCount)
 {
-	return RenderingAPI::Get().CreateRenderTargetView(
+	return EngineGlobals::RenderingAPI->CreateRenderTargetView(
 		Texture,
 		Format,
 		MipSlice,
@@ -908,7 +904,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 	Uint32 FirstFace,
 	Uint32 FaceCount)
 {
-	return RenderingAPI::Get().CreateRenderTargetView(
+	return EngineGlobals::RenderingAPI->CreateRenderTargetView(
 		Texture,
 		Format,
 		MipSlice,
@@ -924,7 +920,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 	Uint32 FirstDepthSlice,
 	Uint32 DepthSlices) 
 {
-	return RenderingAPI::Get().CreateRenderTargetView(
+	return EngineGlobals::RenderingAPI->CreateRenderTargetView(
 		Texture,
 		Format,
 		MipSlice,
@@ -935,7 +931,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 // DepthStencilView
 inline TSharedRef<DepthStencilView> CreateDepthStencilView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice)
 {
-	return RenderingAPI::Get().CreateDepthStencilView(Texture, Format, MipSlice);
+	return EngineGlobals::RenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
 }
 
 inline TSharedRef<DepthStencilView> CreateDepthStencilView(
@@ -945,7 +941,7 @@ inline TSharedRef<DepthStencilView> CreateDepthStencilView(
 	Uint32 FirstArraySlice,
 	Uint32 ArraySize)
 {
-	return RenderingAPI::Get().CreateDepthStencilView(
+	return EngineGlobals::RenderingAPI->CreateDepthStencilView(
 		Texture,
 		Format,
 		MipSlice,
@@ -955,7 +951,7 @@ inline TSharedRef<DepthStencilView> CreateDepthStencilView(
 
 inline TSharedRef<DepthStencilView> CreateDepthStencilView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice)
 {
-	return RenderingAPI::Get().CreateDepthStencilView(Texture, Format, MipSlice);
+	return EngineGlobals::RenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
 }
 
 inline TSharedRef<DepthStencilView> CreateDepthStencilView(
@@ -965,7 +961,7 @@ inline TSharedRef<DepthStencilView> CreateDepthStencilView(
 	Uint32 FirstArraySlice,
 	Uint32 ArraySize)
 {
-	return RenderingAPI::Get().CreateDepthStencilView(
+	return EngineGlobals::RenderingAPI->CreateDepthStencilView(
 		Texture,
 		Format,
 		MipSlice,
@@ -980,7 +976,7 @@ inline TSharedRef<DepthStencilView> CreateDepthStencilView(
 	Uint32 FirstFace,
 	Uint32 FaceCount)
 {
-	return RenderingAPI::Get().CreateDepthStencilView(
+	return EngineGlobals::RenderingAPI->CreateDepthStencilView(
 		Texture,
 		Format,
 		MipSlice,
@@ -996,7 +992,7 @@ inline TSharedRef<DepthStencilView> CreateDepthStencilView(
 	Uint32 FirstFace,
 	Uint32 FaceCount)
 {
-	return RenderingAPI::Get().CreateDepthStencilView(
+	return EngineGlobals::RenderingAPI->CreateDepthStencilView(
 		Texture,
 		Format,
 		MipSlice,
@@ -1011,5 +1007,5 @@ inline TSharedRef<DepthStencilView> CreateDepthStencilView(
 
 inline CommandListExecutor& GetCommandListExecutor()
 {
-	return RenderingAPI::Get().GetCommandExecutor();
+	return EngineGlobals::RenderingAPI->GetCommandExecutor();
 }

@@ -24,10 +24,16 @@ public:
 
 	bool Initialize(bool DebugEnable);
 
-	Int32 GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount);
+	class D3D12CommandAllocator*	CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type);
+	class D3D12Fence*				CreateFence(Uint64 InitalValue);
+	class D3D12CommandQueue*		CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type);
+	class D3D12RootSignature*		CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+	class D3D12RootSignature*		CreateRootSignature(IDxcBlob* ShaderBlob);
+	class D3D12RootSignature*		CreateRootSignature(VoidPtr RootSignatureData, const Uint32 RootSignatureSize);
 
+	Int32 GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount);
 	std::string GetAdapterName() const;
-	
+
 	FORCEINLINE HRESULT CreateCommitedResource(
 		const D3D12_HEAP_PROPERTIES* pHeapProperties,
 		D3D12_HEAP_FLAGS HeapFlags,
@@ -37,7 +43,14 @@ public:
 		REFIID riidResource,
 		void** ppvResource)
 	{
-		return D3DDevice->CreateCommittedResource(pHeapProperties, HeapFlags, pDesc, InitialResourceState, pOptimizedClearValue, riidResource, ppvResource);
+		return D3DDevice->CreateCommittedResource(
+			pHeapProperties, 
+			HeapFlags, 
+			pDesc, 
+			InitialResourceState, 
+			pOptimizedClearValue, 
+			riidResource, 
+			ppvResource);
 	}
 
 	FORCEINLINE void CreateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
@@ -45,17 +58,26 @@ public:
 		D3DDevice->CreateConstantBufferView(pDesc, DestDescriptor);
 	}
 
-	FORCEINLINE void CreateRenderTargetView(ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+	FORCEINLINE void CreateRenderTargetView(
+		ID3D12Resource* pResource, 
+		const D3D12_RENDER_TARGET_VIEW_DESC* pDesc, 
+		D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
 	{
 		D3DDevice->CreateRenderTargetView(pResource, pDesc, DestDescriptor);
 	}
 
-	FORCEINLINE void CreateDepthStencilView(ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+	FORCEINLINE void CreateDepthStencilView(
+		ID3D12Resource* pResource, 
+		const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc, 
+		D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
 	{
 		D3DDevice->CreateDepthStencilView(pResource, pDesc, DestDescriptor);
 	}
 
-	FORCEINLINE void CreateShaderResourceView(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+	FORCEINLINE void CreateShaderResourceView(
+		ID3D12Resource* pResource, 
+		const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc, 
+		D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
 	{
 		D3DDevice->CreateShaderResourceView(pResource, pDesc, DestDescriptor);
 	}
@@ -133,6 +155,9 @@ private:
 
 	D3D_FEATURE_LEVEL MinFeatureLevel		= D3D_FEATURE_LEVEL_11_0;
 	D3D_FEATURE_LEVEL ActiveFeatureLevel	= D3D_FEATURE_LEVEL_11_0;
+
+	PFN_D3D12_SERIALIZE_ROOT_SIGNATURE				_D3D12SerializeRootSignature			= nullptr;
+	PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE	_D3D12SerializeVersionedRootSignature	= nullptr;
 
 	D3D12OfflineDescriptorHeap* GlobalResourceDescriptorHeap		= nullptr;
 	D3D12OfflineDescriptorHeap* GlobalRenderTargetDescriptorHeap	= nullptr;

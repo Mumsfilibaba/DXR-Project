@@ -9,7 +9,7 @@ public:
 	D3D12CommandContext(class D3D12Device* InDevice);
 	~D3D12CommandContext();
 
-	virtual bool Initialize() override final;
+	bool Initialize();
 
 	virtual void Begin() override final;
 	virtual void End() override final;
@@ -27,7 +27,7 @@ public:
 
 	virtual void BindPrimitiveTopology(EPrimitveTopologyType PrimitveTopologyType) override final;
 	virtual void BindVertexBuffers(VertexBuffer* const * VertexBuffers, Uint32 BufferCount, Uint32 BufferSlot) override final;
-	virtual void BindIndexBuffer(IndexBuffer* IndexBuffer, EFormat IndexFormat) override final;
+	virtual void BindIndexBuffer(IndexBuffer* IndexBuffer) override final;
 	virtual void BindRayTracingScene(RayTracingScene* RayTracingScene) override final;
 
 	virtual void BindRenderTargets(RenderTargetView* const * RenderTargetViews, Uint32 RenderTargetCount, DepthStencilView* DepthStencilView) override final;
@@ -59,7 +59,13 @@ public:
 	virtual void DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth) override final;
 
 private:
-	class D3D12Fence*			 Fence			= nullptr;
-	class D3D12CommandAllocator* CmdAllocator	= nullptr;
-	class D3D12CommandList*		 CmdList		= nullptr; 
+	class D3D12CommandQueue* CmdQueue;
+	class D3D12CommandAllocator* CmdAllocator;
+	class D3D12CommandList* CmdList; 
+	
+	class D3D12Fence* Fence;
+	
+	class D3D12RootSignature* DefaultGraphicsRootSignature;
+	class D3D12RootSignature* DefaultComputeRootSignature;
+	class D3D12RootSignature* DefaultRayTracingRootSignature;
 };

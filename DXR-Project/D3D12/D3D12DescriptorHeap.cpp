@@ -9,7 +9,7 @@
 D3D12OfflineDescriptorHeap::D3D12OfflineDescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType)
 	: D3D12DeviceChild(InDevice)
 	, Heaps()
-	, DebugName()
+	, Name()
 	, Type(InType)
 {
 	// Get the size of this type of heap
@@ -98,14 +98,14 @@ void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, Uint32
 	}
 }
 
-void D3D12OfflineDescriptorHeap::SetDebugName(const std::string& InDebugName)
+void D3D12OfflineDescriptorHeap::SetName(const std::string& InName)
 {
-	DebugName = ConvertToWide(InDebugName);
+	Name = ConvertToWide(InName);
 
 	Uint32 HeapIndex = 0;
 	for (DescriptorHeap& Heap : Heaps)
 	{
-		std::wstring DbgName = DebugName + L"[" + std::to_wstring(HeapIndex) + L"]";
+		std::wstring DbgName = Name + L"[" + std::to_wstring(HeapIndex) + L"]";
 		Heap.Heap->SetName(DbgName.c_str());
 	}
 }
@@ -126,9 +126,9 @@ void D3D12OfflineDescriptorHeap::AllocateHeap()
 	{
 		LOG_INFO("[D3D12OfflineDescriptorHeap]: Created DescriptorHeap");
 
-		if (!DebugName.empty())
+		if (!Name.empty())
 		{
-			std::wstring DbgName = DebugName + std::to_wstring(Heaps.Size());
+			std::wstring DbgName = Name + std::to_wstring(Heaps.Size());
 			Heap->SetName(DbgName.c_str());
 		}
 
@@ -194,12 +194,6 @@ Uint32 D3D12OnlineDescriptorHeap::AllocateSlots(Uint32 NumSlots)
 	VALIDATE(CurrentSlot < DescriptorCount);
 
 	return Slot;
-}
-
-void D3D12OnlineDescriptorHeap::SetDebugName(const std::string& InDebugName)
-{
-	std::wstring WideDebugName = ConvertToWide(InDebugName);
-	Heap->SetName(WideDebugName.c_str());
 }
 
 /*

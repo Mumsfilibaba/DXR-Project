@@ -244,6 +244,12 @@ public:
 		}
 	}
 
+	FORCEINLINE void SetName(const std::string& Name)
+	{
+		std::wstring WideDebugName = ConvertToWide(Name);
+		CommandList->SetName(WideDebugName.c_str());
+	}
+
 	FORCEINLINE ID3D12CommandList* GetCommandList() const
 	{
 		return CommandList.Get();
@@ -253,10 +259,6 @@ public:
 	{
 		return NumDrawCalls;
 	}
-
-public:
-	// DeviceChild
-	virtual void SetDebugName(const std::string& DebugName) override;
 
 protected:
 	bool CreateUploadBuffer(Uint32 SizeInBytes = 1024U);

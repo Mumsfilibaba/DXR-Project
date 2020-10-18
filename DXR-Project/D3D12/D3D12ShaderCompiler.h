@@ -15,6 +15,7 @@ public:
 
 private:
 	static bool Initialize();
+
 	static IDxcBlob* InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWSTR FilePath, LPCWSTR Entrypoint, LPCWSTR TargetProfile, const DxcDefine* Defines = nullptr, const Uint32 NumDefines = 0);
 
 	static Microsoft::WRL::ComPtr<IDxcCompiler> DxCompiler;

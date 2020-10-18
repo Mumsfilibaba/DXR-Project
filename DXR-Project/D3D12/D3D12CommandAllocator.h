@@ -8,12 +8,24 @@
 class D3D12CommandAllocator : public D3D12DeviceChild
 {
 public:
-	D3D12CommandAllocator(D3D12Device* InDevice);
-	~D3D12CommandAllocator();
+	inline D3D12CommandAllocator(D3D12Device* InDevice, ID3D12CommandAllocator* InAllocator)
+		: D3D12DeviceChild(InDevice)
+		, Allocator(InAllocator)
+	{
+	}
 
-	bool Initialize(D3D12_COMMAND_LIST_TYPE Type);
+	~D3D12CommandAllocator() = default;
 
-	bool Reset();
+	FORCEINLINE bool Reset()
+	{
+		return SUCCEEDED(Allocator->Reset());
+	}
+
+	FORCEINLINE void SetName(const std::string& Name)
+	{
+		std::wstring WideName = ConvertToWide(Name);
+		Allocator->SetName(WideName.c_str());
+	}
 
 	FORCEINLINE ID3D12CommandAllocator* GetAllocator() const
 	{

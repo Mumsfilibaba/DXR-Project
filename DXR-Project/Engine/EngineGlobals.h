@@ -1,13 +1,13 @@
 #pragma once
 #include "Containers/TSharedPtr.h"
 
-class GenericApplication;
-
 /*
 * EngineGlobals
 */
 
 struct EngineGlobals
 {
-	static TSharedPtr<GenericApplication> PlatformApplication;
+	static TSharedPtr<class GenericApplication>		PlatformApplication;
+	static TSharedPtr<class RenderingAPI>			RenderingAPI;
+	static TSharedPtr<class CommandListExecutor>	CmdListExecutor;
 };
