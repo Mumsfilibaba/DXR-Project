@@ -5,15 +5,14 @@
 #include "D3D12RootSignature.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12CommandQueue.h"
+#include "D3D12SwapChain.h"
+
+#include "Windows/Windows.h"
 
 #include <dxgidebug.h>
 
-#pragma comment(lib, "d3d12.lib")
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "dxguid")
-
 /*
-* Members
+* D3D12Device
 */
 
 D3D12Device::D3D12Device()
@@ -28,6 +27,7 @@ D3D12Device::~D3D12Device()
 {
 	using namespace Microsoft::WRL;
 
+	// Release
 	SAFEDELETE(GlobalResourceDescriptorHeap);
 	SAFEDELETE(GlobalRenderTargetDescriptorHeap);
 	SAFEDELETE(GlobalDepthStencilDescriptorHeap);
@@ -42,42 +42,174 @@ D3D12Device::~D3D12Device()
 			DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
 		}
 	}
+
+	// Close DLLs
+	::CloseHandle(hDXGI);
+	::CloseHandle(hD3D12);
 }
 
-bool D3D12Device::Initialize(bool DebugEnable)
+bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 {
 	using namespace Microsoft::WRL;
 
 	// Enable Debug
-	DebugEnabled = DebugEnable;
+	DebugEnabled = InDebugEnable;
 
-	// Start Initialization of D3D12-Device
-	if (!CreateFactory())
+	// Load DLLs
+	hDXGI = ::LoadLibrary("dxgi.dll");
+	if (hDXGI == NULL)
 	{
-		return false;
+		::MessageBox(0, "FAILED to load dxgi.dll", "Error", MB_ICONERROR | MB_OK);
+		return -1;
+	}
+	else
+	{
+		LOG_INFO("Loaded dxgi.dll\n");
 	}
 
-	if (!ChooseAdapter())
+	hD3D12 = ::LoadLibrary("d3d12.dll");
+	if (hD3D12 == NULL)
 	{
-		return false;
+		::MessageBox(0, "FAILED to load d3d12.dll", "Error", MB_ICONERROR | MB_OK);
+		return -1;
+	}
+	else
+	{
+		LOG_INFO("Loaded d3d12.dll");
 	}
 
-	// Create Device
-	if (FAILED(D3D12CreateDevice(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&D3DDevice))))
+	// Load DXGI Functions
+	_CreateDXGIFactory2		= GetTypedProcAddress<PFN_CREATE_DXGI_FACTORY_2>(hDXGI, "CreateDXGIFactory2");
+	_DXGIGetDebugInterface1	= GetTypedProcAddress<PFN_DXGI_GET_DEBUG_INTERFACE_1>(hDXGI, "DXGIGetDebugInterface1");
+
+	// Load D3D12 Functions
+	_D3D12CreateDevice						= GetTypedProcAddress<PFN_D3D12_CREATE_DEVICE>(hD3D12, "D3D12CreateDevice");
+	_D3D12SerializeRootSignature			= GetTypedProcAddress<PFN_D3D12_SERIALIZE_ROOT_SIGNATURE>(hD3D12, "D3D12SerializeRootSignature");
+	_D3D12SerializeVersionedRootSignature	= GetTypedProcAddress<PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE>(hD3D12, "D3D12SerializeVersionedRootSignature");
+	_D3D12GetDebugInterface					= GetTypedProcAddress<PFN_D3D12_GET_DEBUG_INTERFACE>(hD3D12, "D3D12GetDebugInterface");
+
+	// Enable debuglayer
+	if (DebugEnabled)
 	{
-		::MessageBox(0, "Failed to create D3D12Device", "ERROR", MB_OK | MB_ICONERROR);
+		ComPtr<ID3D12Debug> DebugInterface;
+		if (FAILED(_D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
+		{
+			LOG_ERROR("[D3D12Device]: FAILED to enable DebugLayer");
+			return false;
+		}
+		else
+		{
+			DebugInterface->EnableDebugLayer();
+		}
+
+		if (GPUValidation)
+		{
+			ComPtr<ID3D12Debug1> DebugInterface1;
+			if (FAILED(DebugInterface.As<ID3D12Debug1>(&DebugInterface1)))
+			{
+				LOG_ERROR("[D3D12Device]: FAILED to enable GPU- Validation");
+				return false;
+			}
+			else
+			{
+				DebugInterface1->SetEnableGPUBasedValidation(TRUE);
+			}
+		}
+
+		ComPtr<IDXGIInfoQueue> InfoQueue;
+		if (SUCCEEDED(_DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
+		{
+			InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
+			InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
+		}
+		else
+		{
+			LOG_ERROR("[D3D12Device]: FAILED to retrive InfoQueue");
+		}
+	}
+
+	// Create factory
+	if (FAILED(_CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
+	{
+		LOG_ERROR("[D3D12Device]: FAILED to create factory");
 		return false;
 	}
 	else
 	{
-		LOG_INFO("[D3D12GraphicsDevice]: Created D3D12Device");
-
-		// Get DXR Interfaces
-		if (FAILED(D3DDevice.As<ID3D12Device5>(&DXRDevice)))
+		// Retrive newer factory interface
+		ComPtr<IDXGIFactory5> Factory5;
+		if (FAILED(Factory.As(&Factory5)))
 		{
-			LOG_ERROR("[D3D12RayTracer]: Failed to retrive DXR-Device");
+			LOG_ERROR("[D3D12Device]: FAILED to retrive IDXGIFactory5");
 			return false;
 		}
+		else
+		{
+			HRESULT hResult = Factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &AllowTearing, sizeof(AllowTearing));
+			if (SUCCEEDED(hResult))
+			{
+				if (AllowTearing)
+				{
+					LOG_INFO("[D3D12Device]: Tearing is supported");
+				}
+				else
+				{
+					LOG_INFO("[D3D12Device]: Tearing is NOT supported");
+				}
+			}
+		}
+	}
+
+	// Choose adapter
+	ComPtr<IDXGIAdapter1> TempAdapter;
+	for (UINT ID = 0; DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters1(ID, &TempAdapter); ID++)
+	{
+		DXGI_ADAPTER_DESC1 Desc;
+		if (FAILED(TempAdapter->GetDesc1(&Desc)))
+		{
+			LOG_ERROR("[D3D12Device]: FAILED to retrive DXGI_ADAPTER_DESC1");
+			return false;
+		}
+
+		// Don't select the Basic Render Driver adapter.
+		if (Desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+		{
+			continue;
+		}
+
+		// Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
+		if (SUCCEEDED(D3D12CreateDevice(TempAdapter.Get(), MinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+		{
+			AdapterID = ID;
+
+			char Buff[256] = {};
+			sprintf_s(Buff, "[D3D12Device]: Direct3D Adapter (%u): %ls", AdapterID, Desc.Description);
+			LOG_INFO(Buff);
+
+			break;
+		}
+	}
+
+	if (!TempAdapter)
+	{
+		LOG_ERROR("[D3D12Device]: FAILED to retrive adapter");
+		return false;
+	}
+	else
+	{
+		Adapter = TempAdapter;
+		return true;
+	}
+
+	// Create Device
+	if (FAILED(_D3D12CreateDevice(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&D3DDevice))))
+	{
+		::MessageBox(0, "Failed to create Device", "ERROR", MB_OK | MB_ICONERROR);
+		return false;
+	}
+	else
+	{
+		LOG_INFO("[D3D12Device]: Created Device");
 	}
 
 	// Configure debug device (if active).
@@ -95,7 +227,9 @@ bool D3D12Device::Initialize(bool DebugEnable)
 				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
 			};
 
-			D3D12_INFO_QUEUE_FILTER Filter = { };
+			D3D12_INFO_QUEUE_FILTER Filter;
+			Memory::Memzero(&Filter, sizeof(D3D12_INFO_QUEUE_FILTER));
+
 			Filter.DenyList.NumIDs	= _countof(Hide);
 			Filter.DenyList.pIDList = Hide;
 			InfoQueue->AddStorageFilterEntries(&Filter);
@@ -151,6 +285,20 @@ bool D3D12Device::Initialize(bool DebugEnable)
 	}
 
 	return true;
+}
+
+bool D3D12Device::InitRayTracing()
+{
+	// Get DXR Interfaces
+	if (FAILED(D3DDevice.As<ID3D12Device5>(&DXRDevice)))
+	{
+		LOG_ERROR("[D3D12Device]: Failed to retrive DXR-Device");
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 D3D12CommandAllocator* D3D12Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type)
@@ -233,7 +381,7 @@ D3D12RootSignature* D3D12Device::CreateRootSignature(const D3D12_ROOT_SIGNATURE_
 	HRESULT hResult = _D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
 	if (FAILED(hResult))
 	{
-		LOG_ERROR("[D3D12RootSignature]: FAILED to Serialize RootSignature");
+		LOG_ERROR("[D3D12Device]: FAILED to Serialize RootSignature");
 		LOG_ERROR(reinterpret_cast<const Char*>(ErrorBlob->GetBufferPointer()));
 
 		Debug::DebugBreak();
@@ -258,15 +406,28 @@ D3D12RootSignature* D3D12Device::CreateRootSignature(VoidPtr RootSignatureData, 
 	HRESULT hResult = D3DDevice->CreateRootSignature(0, RootSignatureData, RootSignatureSize, IID_PPV_ARGS(&RootSignature));
 	if (FAILED(hResult))
 	{
-		LOG_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
+		LOG_ERROR("[D3D12Device]: FAILED to Create RootSignature");
 		Debug::DebugBreak();
 
 		return nullptr;
 	}
 	else
 	{
-		LOG_INFO("[D3D12RootSignature]: Created RootSignature");
+		LOG_INFO("[D3D12Device]: Created RootSignature");
 		return new D3D12RootSignature(this, RootSignature);
+	}
+}
+
+D3D12SwapChain* D3D12Device::CreateSwapChain(WindowsWindow* pWindow, D3D12CommandQueue* Queue)
+{
+	D3D12SwapChain* SwapChain = new D3D12SwapChain(this);
+	if (!SwapChain->CreateSwapChain(Factory.Get(), pWindow, Queue))
+	{
+		return nullptr;
+	}
+	else
+	{
+		return SwapChain;
 	}
 }
 
@@ -294,99 +455,4 @@ std::string D3D12Device::GetAdapterName() const
 
 	std::wstring WideName = Desc.Description;
 	return ConvertToAscii(WideName);
-}
-
-/*
-* Static
-*/
-
-D3D12Device* D3D12Device::Make(bool DebugEnable)
-{
-	D3D12Device* NewDevice = new D3D12Device();
-	if (NewDevice->Initialize(DebugEnable))
-	{
-		return NewDevice;
-	}
-	else
-	{
-		return nullptr;
-	}
-}
-
-bool D3D12Device::CreateFactory()
-{
-	using namespace Microsoft::WRL;
-
-	// Enable debuglayer
-	Uint32 DebugFlags = 0;
-	if (DebugEnabled)
-	{
-		ComPtr<ID3D12Debug> DebugInterface;
-		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
-		{
-			DebugInterface->EnableDebugLayer();
-		}
-		else
-		{
-			LOG_ERROR("[D3D12GraphicsDevice]: FAILED to enable DebugLayer");
-		}
-
-		ComPtr<IDXGIInfoQueue> InfoQueue;
-		if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
-		{
-			InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
-			InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
-		}
-		else
-		{
-			LOG_ERROR("[D3D12GraphicsDevice]: FAILED to retrive InfoQueue");
-		}
-	}
-
-	return true;
-}
-
-bool D3D12Device::ChooseAdapter()
-{
-	using namespace Microsoft::WRL;
-
-	ComPtr<IDXGIAdapter1> TempAdapter;
-	for (UINT ID = 0; DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters1(ID, &TempAdapter); ID++)
-	{
-		DXGI_ADAPTER_DESC1 Desc;
-		if (FAILED(TempAdapter->GetDesc1(&Desc)))
-		{
-			LOG_ERROR("[D3D12GraphicsDevice]: FAILED to retrive DXGI_ADAPTER_DESC1");
-			return false;
-		}
-
-		// Don't select the Basic Render Driver adapter.
-		if (Desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-		{
-			continue;
-		}
-
-		// Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-		if (SUCCEEDED(D3D12CreateDevice(TempAdapter.Get(), MinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
-		{
-			AdapterID = ID;
-
-			char Buff[256] = {};
-			sprintf_s(Buff, "[D3D12GraphicsDevice]: Direct3D Adapter (%u): %ls", AdapterID, Desc.Description);
-			LOG_INFO(Buff);
-
-			break;
-		}
-	}
-
-	if (!TempAdapter)
-	{
-		LOG_ERROR("[D3D12GraphicsDevice]: FAILED to retrive adapter");
-		return false;
-	}
-	else
-	{
-		Adapter = TempAdapter;
-		return true;
-	}
 }

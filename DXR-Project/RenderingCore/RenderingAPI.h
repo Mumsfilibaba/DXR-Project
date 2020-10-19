@@ -1007,5 +1007,6 @@ inline TSharedRef<DepthStencilView> CreateDepthStencilView(
 
 inline CommandListExecutor& GetCommandListExecutor()
 {
-	return EngineGlobals::RenderingAPI->GetCommandExecutor();
+	VALIDATE(EngineGlobals::CmdListExecutor != nullptr);
+	return *EngineGlobals::CmdListExecutor;
 }

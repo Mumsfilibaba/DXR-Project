@@ -1,6 +1,7 @@
 #pragma once
 #include <dxgi1_6.h>
 #include <d3d12.h>
+#include <dxcapi.h>
 
 #include <wrl/client.h>
 
@@ -13,6 +14,13 @@ class D3D12ComputePipelineState;
 class D3D12RootSignature;
 
 /*
+* Function Typedefs
+*/
+
+typedef HRESULT(WINAPI* PFN_CREATE_DXGI_FACTORY_2)(UINT Flags, REFIID riid, _COM_Outptr_ void** ppFactory);
+typedef HRESULT(WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1)(UINT Flags, REFIID riid, _COM_Outptr_ void** pDebug);
+
+/*
 * D3D12Device
 */
 
@@ -22,7 +30,8 @@ public:
 	D3D12Device();
 	~D3D12Device();
 
-	bool Initialize(bool DebugEnable);
+	bool CreateDevice(bool DebugEnable, bool GPUValidation);
+	bool InitRayTracing();
 
 	class D3D12CommandAllocator*	CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type);
 	class D3D12Fence*				CreateFence(Uint64 InitalValue);
@@ -30,6 +39,7 @@ public:
 	class D3D12RootSignature*		CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc);
 	class D3D12RootSignature*		CreateRootSignature(IDxcBlob* ShaderBlob);
 	class D3D12RootSignature*		CreateRootSignature(VoidPtr RootSignatureData, const Uint32 RootSignatureSize);
+	class D3D12SwapChain*			CreateSwapChain(class WindowsWindow* pWindow, D3D12CommandQueue* Queue);
 
 	Int32 GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount);
 	std::string GetAdapterName() const;
@@ -106,6 +116,11 @@ public:
 		return Factory.Get();
 	}
 
+	FORCEINLINE IDXGIAdapter1* GetAdapter() const
+	{
+		return Adapter.Get();
+	}
+
 	FORCEINLINE bool IsTearingSupported() const
 	{
 		return AllowTearing;
@@ -141,12 +156,6 @@ public:
 		return GlobalOnlineResourceHeap;
 	}
 
-	static D3D12Device* Make(bool DebugEnable);
-
-private:
-	bool CreateFactory();
-	bool ChooseAdapter();
-
 private:
 	Microsoft::WRL::ComPtr<IDXGIFactory2>	Factory;
 	Microsoft::WRL::ComPtr<IDXGIAdapter1>	Adapter;
@@ -156,8 +165,19 @@ private:
 	D3D_FEATURE_LEVEL MinFeatureLevel		= D3D_FEATURE_LEVEL_11_0;
 	D3D_FEATURE_LEVEL ActiveFeatureLevel	= D3D_FEATURE_LEVEL_11_0;
 
+	// DLL Handles
+	HMODULE hDXGI	= 0;
+	HMODULE hD3D12	= 0;
+
+	// DXGI Functions loaded from DLLs
+	PFN_CREATE_DXGI_FACTORY_2		_CreateDXGIFactory2		= nullptr;
+	PFN_DXGI_GET_DEBUG_INTERFACE_1	_DXGIGetDebugInterface1	= nullptr;
+
+	// D3D12 Functions loaded from DLLs
+	PFN_D3D12_CREATE_DEVICE							_D3D12CreateDevice						= nullptr;
 	PFN_D3D12_SERIALIZE_ROOT_SIGNATURE				_D3D12SerializeRootSignature			= nullptr;
 	PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE	_D3D12SerializeVersionedRootSignature	= nullptr;
+	PFN_D3D12_GET_DEBUG_INTERFACE					_D3D12GetDebugInterface					= nullptr;
 
 	D3D12OfflineDescriptorHeap* GlobalResourceDescriptorHeap		= nullptr;
 	D3D12OfflineDescriptorHeap* GlobalRenderTargetDescriptorHeap	= nullptr;

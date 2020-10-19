@@ -26,9 +26,10 @@
 
 D3D12RenderingAPI::D3D12RenderingAPI()
 	: RenderingAPI(ERenderingAPI::RenderingAPI_D3D12)
-	, Device(nullptr)
-	, ImmediateCommandList(nullptr)
 	, SwapChain(nullptr)
+	, Device(nullptr)
+	, Queue(nullptr)
+	, ComputeQueue(nullptr)
 {
 }
 
@@ -39,21 +40,23 @@ D3D12RenderingAPI::~D3D12RenderingAPI()
 
 bool D3D12RenderingAPI::Init(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug)
 {
-	// TODO: Create Factory
-
-	// TODO: Choose Adaper
-
-	// TODO: Create Device
+	// Create device
 	Device = MakeShared<D3D12Device>();
-	if (!Device->Initialize(EnableDebug))
+	if (!Device->CreateDevice(EnableDebug, true))
 	{
 		return false;
 	}
 
+	if (Device->IsRayTracingSupported())
+	{
+		Device->InitRayTracing();
+	}
+
 	// TODO: Create CommandContext
 
-	SwapChain = MakeShared<D3D12SwapChain>(Device.Get());
-	if (!SwapChain->Initialize(StaticCast<WindowsWindow>(RenderWindow).Get(), Queue.Get()))
+	// Create swapchain
+	SwapChain = Device->CreateSwapChain(StaticCast<WindowsWindow>(RenderWindow).Get(), Queue.Get());
+	if (!SwapChain)
 	{
 		return false;
 	}

@@ -1,4 +1,5 @@
 #pragma once
+#include "Application/Log.h"
 
 #ifndef NOMINMAX
 	#define NOMINMAX
@@ -14,3 +15,19 @@
 #ifdef CreateWindow
 	#undef CreateWindow
 #endif
+
+/*
+* Helpers
+*/
+
+template<typename T>
+inline T GetTypedProcAddress(HMODULE hModule, LPCSTR lpProcName)
+{
+	T Func = reinterpret_cast<T>(::GetProcAddress(hModule, lpProcName));
+	if (!Func)
+	{
+		LOG_ERROR("Failed to load '%s'", lpProcName);
+	}
+
+	return Func;
+}

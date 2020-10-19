@@ -17,7 +17,7 @@ public:
 	D3D12SwapChain(D3D12Device* InDevice);
 	~D3D12SwapChain();
 
-	bool Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue);
+	bool CreateSwapChain(IDXGIFactory2* Factory, const TSharedRef<WindowsWindow>& InWindow, D3D12CommandQueue* Queue);
 
 	bool Resize(Uint32 InWidth, Uint32 InHeight);
 
@@ -25,9 +25,14 @@ public:
 
 	Uint32 GetCurrentBackBufferIndex() const;
 
-	FORCEINLINE D3D12Texture* GetSurfaceResource(Uint32 SurfaceIndex) const
+	FORCEINLINE void SetName(const std::string& Name)
 	{
-		return BackBuffers[SurfaceIndex].Get();
+		SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Name.size()), Name.data());
+	}
+
+	FORCEINLINE D3D12Texture2D* GetBackBufferResource(Uint32 BackBufferIndex) const
+	{
+		return BackBuffers[BackBufferIndex].Get();
 	}
 
 	FORCEINLINE DXGI_FORMAT GetSurfaceFormat() const
@@ -50,19 +55,16 @@ public:
 		return Height;
 	}
 
-public:
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
-
 private:
 	void RetriveSwapChainSurfaces();
 	void ReleaseSurfaces();
 
 private:
+	TSharedRef<WindowsWindow> BeloningWindow;
 	Microsoft::WRL::ComPtr<IDXGISwapChain3>		SwapChain;
 	
-	TArray<TSharedPtr<D3D12Texture>>			BackBuffers;
-	TArray<TSharedPtr<D3D12RenderTargetView>>	BackBuffersViews;
+	TArray<TSharedRef<D3D12Texture2D>>			BackBuffers;
+	TArray<TSharedRef<D3D12RenderTargetView>>	BackBuffersViews;
 
 	Uint32 Width	= 0;
 	Uint32 Height	= 0;

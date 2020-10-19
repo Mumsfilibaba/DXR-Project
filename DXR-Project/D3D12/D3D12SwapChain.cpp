@@ -6,8 +6,13 @@
 
 D3D12SwapChain::D3D12SwapChain(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
-	, SwapChain(nullptr)
+	, BeloningWindow()
+	, SwapChain()
 	, BackBuffers()
+	, BackBuffersViews()
+	, Width(0)
+	, Height(0)
+	, Flags(0)
 {
 }
 
@@ -15,7 +20,7 @@ D3D12SwapChain::~D3D12SwapChain()
 {
 }
 
-bool D3D12SwapChain::Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue)
+bool D3D12SwapChain::CreateSwapChain(IDXGIFactory2* Factory, const TSharedRef<WindowsWindow>& InWindow, D3D12CommandQueue* Queue)
 {
 	using namespace Microsoft::WRL;
 
@@ -23,7 +28,7 @@ bool D3D12SwapChain::Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue)
 	Flags = Device->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 	WindowShape Shape;
-	Window->GetWindowShape(Shape);
+	InWindow->GetWindowShape(Shape);
 
 	Width	= Shape.Width;
 	Height	= Shape.Height;
@@ -43,14 +48,14 @@ bool D3D12SwapChain::Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue)
 	SwapChainDesc.Flags					= Flags;
 
 	ComPtr<IDXGISwapChain1> TempSwapChain;
-	HRESULT hResult = Device->GetFactory()->CreateSwapChainForHwnd(Queue->GetQueue(), Window->GetHandle(), &SwapChainDesc, nullptr, nullptr, &TempSwapChain);
+	HRESULT hResult = Factory->CreateSwapChainForHwnd(Queue->GetQueue(), InWindow->GetHandle(), &SwapChainDesc, nullptr, nullptr, &TempSwapChain);
 	if (SUCCEEDED(hResult))
 	{
 		hResult = TempSwapChain.As<IDXGISwapChain3>(&SwapChain);
 		if (SUCCEEDED(hResult))
 		{
 			// Disable Alt+Enter for this SwapChain/Window
-			Device->GetFactory()->MakeWindowAssociation(Window->GetHandle(), DXGI_MWA_NO_ALT_ENTER);
+			Factory->MakeWindowAssociation(InWindow->GetHandle(), DXGI_MWA_NO_ALT_ENTER);
 
 			RetriveSwapChainSurfaces();
 
@@ -111,9 +116,9 @@ bool D3D12SwapChain::Present(Uint32 SyncInterval)
 	return SUCCEEDED(SwapChain->Present(SyncInterval, 0));
 }
 
-void D3D12SwapChain::SetDebugName(const std::string& Name)
+void D3D12SwapChain::SetName(const std::string& Name)
 {
-	SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Name.size()), Name.data());
+
 }
 
 void D3D12SwapChain::RetriveSwapChainSurfaces()
