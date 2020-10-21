@@ -19,8 +19,7 @@ public:
 	
 	~D3D12RootSignature() = default;
 
-	// DeviceChild Interface
-	FORCEINLINE void SetDebugName(const std::string& Name)
+	FORCEINLINE void SetName(const std::string& Name)
 	{
 		std::wstring WideName = ConvertToWide(Name);
 		RootSignature->SetName(WideName.c_str());

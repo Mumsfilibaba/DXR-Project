@@ -33,13 +33,18 @@ public:
 	bool CreateDevice(bool DebugEnable, bool GPUValidation);
 	bool InitRayTracing();
 
-	class D3D12CommandAllocator*	CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type);
-	class D3D12Fence*				CreateFence(Uint64 InitalValue);
-	class D3D12CommandQueue*		CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type);
-	class D3D12RootSignature*		CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc);
-	class D3D12RootSignature*		CreateRootSignature(IDxcBlob* ShaderBlob);
-	class D3D12RootSignature*		CreateRootSignature(VoidPtr RootSignatureData, const Uint32 RootSignatureSize);
-	class D3D12SwapChain*			CreateSwapChain(class WindowsWindow* pWindow, D3D12CommandQueue* Queue);
+	class D3D12CommandQueue* CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type);
+	class D3D12CommandAllocator* CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type);
+	class D3D12CommandList* CreateCommandList(
+		D3D12_COMMAND_LIST_TYPE Type, 
+		D3D12CommandAllocator* Allocator, 
+		ID3D12PipelineState* InitalPipeline);
+
+	class D3D12Fence*			CreateFence(Uint64 InitalValue);
+	class D3D12RootSignature*	CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+	class D3D12RootSignature*	CreateRootSignature(IDxcBlob* ShaderBlob);
+	class D3D12RootSignature*	CreateRootSignature(VoidPtr RootSignatureData, const Uint32 RootSignatureSize);
+	class D3D12SwapChain*		CreateSwapChain(class WindowsWindow* pWindow, D3D12CommandQueue* Queue);
 
 	Int32 GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount);
 	std::string GetAdapterName() const;
@@ -99,6 +104,13 @@ public:
 		D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
 	{
 		D3DDevice->CreateUnorderedAccessView(pResource, pCounterResource, pDesc, DestDescriptor);
+	}
+
+	FORCEINLINE void GetRaytracingAccelerationStructurePrebuildInfo(
+		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* pDesc,
+		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO* pInfo)
+	{
+		DXRDevice->GetRaytracingAccelerationStructurePrebuildInfo(pDesc, pInfo);
 	}
 
 	FORCEINLINE ID3D12Device* GetDevice() const

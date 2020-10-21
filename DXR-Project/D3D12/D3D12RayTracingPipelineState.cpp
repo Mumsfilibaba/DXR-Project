@@ -70,7 +70,7 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	{
 		D3D12_STATE_SUBOBJECT RayGenLocalRootSubObject = { };
 		RayGenLocalRootSubObject.Type	= D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
-		RayGenLocalRootSubObject.pDesc	= Properties.RayGenRootSignature->GetRootSignatureAddress();
+		RayGenLocalRootSubObject.pDesc	= Properties.RayGenRootSignature->GetAddressOfRootSignature();
 		SubObjects.PushBack(RayGenLocalRootSubObject);
 	}
 
@@ -93,7 +93,7 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	{
 		D3D12_STATE_SUBOBJECT HitGroupLocalRootSubObject = { };
 		HitGroupLocalRootSubObject.Type		= D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
-		HitGroupLocalRootSubObject.pDesc	= Properties.HitGroupRootSignature->GetRootSignatureAddress();
+		HitGroupLocalRootSubObject.pDesc	= Properties.HitGroupRootSignature->GetAddressOfRootSignature();
 		SubObjects.PushBack(HitGroupLocalRootSubObject);
 	}
 
@@ -116,7 +116,7 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	{
 		D3D12_STATE_SUBOBJECT MissLocalRootSubObject = { };
 		MissLocalRootSubObject.Type		= D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
-		MissLocalRootSubObject.pDesc	= Properties.MissRootSignature->GetRootSignatureAddress();
+		MissLocalRootSubObject.pDesc	= Properties.MissRootSignature->GetAddressOfRootSignature();
 		SubObjects.PushBack(MissLocalRootSubObject);
 	}
 
@@ -177,7 +177,7 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	{
 		D3D12_STATE_SUBOBJECT GlobalRootSubObject = { };
 		GlobalRootSubObject.Type	= D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
-		GlobalRootSubObject.pDesc	= Properties.GlobalRootSignature->GetRootSignatureAddress();
+		GlobalRootSubObject.pDesc	= Properties.GlobalRootSignature->GetAddressOfRootSignature();
 		SubObjects.PushBack(GlobalRootSubObject);
 	}
 
@@ -190,7 +190,7 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	HRESULT hResult = Device->GetDXRDevice()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&StateObject));
 	if (SUCCEEDED(hResult))
 	{
-		SetDebugName(Properties.DebugName);
+		SetName(Properties.DebugName);
 
 		LOG_INFO("[D3D12RayTracingPipelineState]: Created RayTracing PipelineState");
 		return true;
@@ -200,10 +200,4 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 		LOG_ERROR("[D3D12RayTracingPipelineState]: FAILED to create RayTracing PipelineState");
 		return false;
 	}
-}
-
-void D3D12RayTracingPipelineState::SetDebugName(const std::string& InName)
-{
-	std::wstring WideName = ConvertToWide(InName);
-	StateObject->SetName(WideName.c_str());
 }

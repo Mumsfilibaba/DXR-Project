@@ -586,6 +586,22 @@ struct BuildRayTracingSceneCommand : public RenderCommand
 	RayTracingScene* RayTracingScene;
 };
 
+// GenrateMipLevels RenderCommand
+struct DrawCommand : public RenderCommand
+{
+	inline DrawCommand(Texture* InTexture)
+		: Texture(InTexture)
+	{
+	}
+
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.GenerateMipLevels(Texture);
+	}
+
+	Texture* Texture;
+};
+
 // Draw RenderCommand
 struct DrawCommand : public RenderCommand
 {

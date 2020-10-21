@@ -371,6 +371,34 @@ D3D12CommandQueue* D3D12Device::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type)
 
 }
 
+D3D12CommandList* D3D12Device::CreateCommandList(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline)
+{
+	ID3D12GraphicsCommandList* CmdList = nullptr;
+
+	HRESULT hResult = D3DDevice->CreateCommandList(0, Type, Allocator->GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
+	if (SUCCEEDED(hResult))
+	{
+		CmdList->Close();
+		LOG_INFO("[D3D12Device]: Created CommandList");
+
+		D3D12CommandList* CreatedCmdList = new D3D12CommandList(this, CmdList);
+		if (IsRayTracingSupported())
+		{
+			if (!CreatedCmdList->InitRayTracing())
+			{
+				return nullptr;
+			}
+		}
+
+		return CreatedCmdList;
+	}
+	else
+	{
+		LOG_ERROR("[D3D12CommandList]: FAILED to create CommandList");
+		return nullptr;
+	}
+}
+
 D3D12RootSignature* D3D12Device::CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 {
 	using namespace Microsoft::WRL;

@@ -98,6 +98,8 @@ public:
 	virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) = 0;
 	virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) = 0;
 
+	virtual void GenerateMipLevels(Texture* Texture) = 0;
+
 	virtual void Draw(
 		Uint32 VertexCount, 
 		Uint32 StartVertexLocation) = 0;

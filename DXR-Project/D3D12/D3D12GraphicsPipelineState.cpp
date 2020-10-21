@@ -167,7 +167,7 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	HRESULT hResult = Device->GetDXRDevice()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
 	if (SUCCEEDED(hResult))
 	{
-		SetDebugName(Properties.DebugName);
+		SetName(Properties.DebugName);
 
 		LOG_INFO("[D3D12GraphicsPipelineState]: Created PipelineState");
 		return true;
@@ -177,10 +177,4 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 		LOG_ERROR("[D3D12GraphicsPipelineState]: FAILED to Create PipelineState");
 		return false;
 	}
-}
-
-void D3D12GraphicsPipelineState::SetDebugName(const std::string& InName)
-{
-	std::wstring WideName = ConvertToWide(InName);
-	PipelineState->SetName(WideName.c_str());
 }

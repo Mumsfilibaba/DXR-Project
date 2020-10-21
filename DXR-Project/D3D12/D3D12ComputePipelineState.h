@@ -37,8 +37,11 @@ public:
 
 	bool Initialize(const ComputePipelineStateProperties& Properties);
 
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
+	FORCEINLINE void SetName(const std::string& Name)
+	{
+		std::wstring WideName = ConvertToWide(Name);
+		PipelineState->SetName(WideName.c_str());
+	}
 
 	FORCEINLINE ID3D12PipelineState* GetPipeline() const
 	{

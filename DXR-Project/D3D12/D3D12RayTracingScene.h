@@ -18,19 +18,17 @@ public:
 	D3D12RayTracingGeometry(D3D12Device* InDevice);
 	~D3D12RayTracingGeometry();
 
-	bool BuildAccelerationStructure(D3D12CommandList* CommandList, TSharedPtr<D3D12Buffer>& InVertexBuffer, Uint32 InVertexCount, TSharedPtr<D3D12Buffer>& IndexBuffer, Uint32 InIndexCount);
+	bool BuildAccelerationStructure(D3D12CommandList* CommandList, TSharedRef<D3D12VertexBuffer>& InVertexBuffer, Uint32 InVertexCount, TSharedRef<D3D12IndexBuffer>& InIndexBuffer, Uint32 InIndexCount);
 
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
+	void SetName(const std::string& Name);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
 
 private:
-	TSharedPtr<D3D12Buffer> VertexBuffer;
-	TSharedPtr<D3D12Buffer> IndexBuffer;
-	
-	D3D12Buffer* ResultBuffer	= nullptr;
-	D3D12Buffer* ScratchBuffer	= nullptr;
+	TSharedRef<D3D12VertexBuffer>	VertexBuffer	= nullptr;
+	TSharedRef<D3D12IndexBuffer>	IndexBuffer		= nullptr;
+	D3D12StructuredBuffer* ResultBuffer		= nullptr;
+	D3D12StructuredBuffer* ScratchBuffer	= nullptr;
 	
 	Uint32 VertexCount	= 0;
 	Uint32 IndexCount	= 0;
@@ -103,8 +101,7 @@ public:
 
 	bool BuildAccelerationStructure(D3D12CommandList* CommandList, TArray<D3D12RayTracingGeometryInstance>& InInstances);
 
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
+	void SetName(const std::string& Name);
 
 	D3D12_GPU_VIRTUAL_ADDRESS_RANGE				GetRayGenerationShaderRecord()	const;
 	D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE	GetMissShaderTable()			const;
@@ -118,13 +115,12 @@ public:
 	}
 
 private:
-	D3D12Buffer* ResultBuffer	= nullptr;
-	D3D12Buffer* ScratchBuffer	= nullptr;
-	D3D12Buffer* InstanceBuffer	= nullptr;
-
-	D3D12Buffer*	BindingTable		= nullptr;
-	Uint32			BindingTableStride	= 0;
-	Uint32			NumHitGroups		= 0;
+	D3D12StructuredBuffer* ResultBuffer		= nullptr;
+	D3D12StructuredBuffer* ScratchBuffer	= nullptr;
+	D3D12StructuredBuffer* InstanceBuffer	= nullptr;
+	D3D12StructuredBuffer* BindingTable		= nullptr;
+	Uint32 BindingTableStride	= 0;
+	Uint32 NumHitGroups			= 0;
 
 	TSharedPtr<D3D12ShaderResourceView>	View;
 	

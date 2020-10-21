@@ -81,6 +81,13 @@ public:
 		return WeakPtr;
 	}
 
+	FORCEINLINE TRefCountedObject* ReleaseOwnerShip() noexcept
+	{
+		TRefCountedObject* WeakPtr = RefPtr;
+		RefPtr = nullptr;
+		return WeakPtr;
+	}
+
 	FORCEINLINE void AddRef() noexcept
 	{
 		if (RefPtr)
