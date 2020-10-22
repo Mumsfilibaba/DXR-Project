@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderingCore/CommandContext.h"
+#include "RenderingCore/ICommandContext.h"
 
 #include "D3D12DeviceChild.h"
 
@@ -100,7 +100,7 @@ public:
 	virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) override final;
 	virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) override final;
 
-	virtual void GenerateMipLevels(Texture* Texture) override final;
+	virtual void GenerateMips(Texture* Texture) override final;
 
 	virtual void Draw(Uint32 VertexCount, Uint32 StartVertexLocation) override final;
 	

@@ -153,7 +153,7 @@ void D3D12CommandContext::BuildRayTracingScene(RayTracingScene* RayTracingScene)
 {
 }
 
-void D3D12CommandContext::GenerateMipLevels(Texture* Texture)
+void D3D12CommandContext::GenerateMips(Texture* Texture)
 {
 	//using namespace Microsoft::WRL;
 

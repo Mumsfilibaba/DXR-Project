@@ -1,6 +1,6 @@
 #pragma once
 #include "RenderingCore.h"
-#include "CommandContext.h"
+#include "ICommandContext.h"
 #include "PipelineState.h"
 
 #include "Memory/Memory.h"
@@ -10,7 +10,7 @@ struct RenderCommand
 {
 	virtual ~RenderCommand() = default;
 
-	virtual void Execute(ICommandContext& CmdContext) const
+	virtual void Execute(ICommandContext&) const
 	{
 	}
 
@@ -60,7 +60,7 @@ struct ClearRenderTargetCommand : public RenderCommand
 
 	inline ~ClearRenderTargetCommand()
 	{
-		RenderTargetView->Release();
+		SAFERELEASE(RenderTargetView);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -84,7 +84,7 @@ struct ClearDepthStencilCommand : public RenderCommand
 
 	inline ~ClearDepthStencilCommand()
 	{
-		DepthStencilView->Release();
+		SAFERELEASE(DepthStencilView);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -231,7 +231,7 @@ struct BindIndexBufferCommand : public RenderCommand
 
 	inline ~BindIndexBufferCommand()
 	{
-		IndexBuffer->Release();
+		SAFERELEASE(IndexBuffer);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -253,7 +253,7 @@ struct BindRayTracingSceneCommand : public RenderCommand
 
 	inline ~BindRayTracingSceneCommand()
 	{
-		RayTracingScene->Release();
+		SAFERELEASE(RayTracingScene);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -280,9 +280,9 @@ struct BindRenderTargetsCommand : public RenderCommand
 		}
 	}
 
-	inline BindRenderTargetsCommand()
+	inline ~BindRenderTargetsCommand()
 	{
-		DepthStencilView->Release();
+		SAFERELEASE(DepthStencilView);
 		for (Uint32 i = 0; i < RenderTargetViewCount; i++)
 		{
 			RenderTargetViews[i]->Release();
@@ -310,7 +310,7 @@ struct BindGraphicsPipelineStateCommand : public RenderCommand
 
 	inline ~BindGraphicsPipelineStateCommand()
 	{
-		PipelineState->Release();
+		SAFERELEASE(PipelineState);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -332,7 +332,7 @@ struct BindComputePipelineStateCommand : public RenderCommand
 
 	inline ~BindComputePipelineStateCommand()
 	{
-		PipelineState->Release();
+		SAFERELEASE(PipelineState);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -354,7 +354,7 @@ struct BindRayTracingPipelineStateCommand : public RenderCommand
 
 	inline ~BindRayTracingPipelineStateCommand()
 	{
-		PipelineState->Release();
+		SAFERELEASE(PipelineState);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -444,8 +444,8 @@ struct ResolveTextureCommand : public RenderCommand
 
 	inline ~ResolveTextureCommand()
 	{
-		Destination->Release();
-		Source->Release();
+		SAFERELEASE(Destination);
+		SAFERELEASE(Source);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -457,7 +457,7 @@ struct ResolveTextureCommand : public RenderCommand
 	Texture* Source;
 };
 
-// Resolve Texture RenderCommand
+// Update Buffer RenderCommand
 struct UpdateBufferCommand : public RenderCommand
 {
 	inline UpdateBufferCommand(Buffer* InDestination, Uint64 InDestinationOffsetInBytes, Uint64 InSizeInBytes, const VoidPtr InSourceData)
@@ -472,7 +472,7 @@ struct UpdateBufferCommand : public RenderCommand
 
 	inline ~UpdateBufferCommand()
 	{
-		Destination->Release();
+		SAFERELEASE(Destination);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -480,10 +480,41 @@ struct UpdateBufferCommand : public RenderCommand
 		CmdContext.UpdateBuffer(Destination, DestinationOffsetInBytes, SizeInBytes, SourceData);
 	}
 
-	Buffer*	Destination;
-	Uint64 	DestinationOffsetInBytes; 
+	Buffer* Destination;
+	Uint64 	DestinationOffsetInBytes;
 	Uint64 	SizeInBytes;
 	VoidPtr SourceData;
+};
+
+// Update Texture RenderCommand
+struct UpdateTextureCommand : public RenderCommand
+{
+	inline UpdateTextureCommand(Texture2D* InDestination, Uint32 InWidth, Uint32 InHeight, Uint32	InMipLevel, const VoidPtr InSourceData)
+		: Destination(InDestination)
+		, Width(InWidth)
+		, Height(InHeight)
+		, MipLevel(InMipLevel)
+		, SourceData(InSourceData)
+	{
+		VALIDATE(InDestination != nullptr);
+		VALIDATE(InSourceData != nullptr);
+	}
+
+	inline ~UpdateTextureCommand()
+	{
+		SAFERELEASE(Destination);
+	}
+
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.UpdateTexture2D(Destination, Width, Height, MipLevel, SourceData);
+	}
+
+	Texture2D* Destination;
+	Uint32	Width;
+	Uint32	Height;
+	Uint32	MipLevel;
+	VoidPtr	SourceData;
 };
 
 // Copy Buffer RenderCommand
@@ -500,8 +531,8 @@ struct CopyBufferCommand : public RenderCommand
 
 	inline ~CopyBufferCommand()
 	{
-		Destination->Release();
-		Source->Release();
+		SAFERELEASE(Destination);
+		SAFERELEASE(Source);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -528,8 +559,8 @@ struct CopyTextureCommand : public RenderCommand
 
 	inline ~CopyTextureCommand()
 	{
-		Destination->Release();
-		Source->Release();
+		SAFERELEASE(Destination);
+		SAFERELEASE(Source);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -553,7 +584,7 @@ struct BuildRayTracingGeometryCommand : public RenderCommand
 
 	inline ~BuildRayTracingGeometryCommand()
 	{
-		RayTracingGeometry->Release();
+		SAFERELEASE(RayTracingGeometry);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -575,7 +606,7 @@ struct BuildRayTracingSceneCommand : public RenderCommand
 
 	inline ~BuildRayTracingSceneCommand()
 	{
-		RayTracingScene->Release();
+		SAFERELEASE(RayTracingScene);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -586,20 +617,50 @@ struct BuildRayTracingSceneCommand : public RenderCommand
 	RayTracingScene* RayTracingScene;
 };
 
-// GenrateMipLevels RenderCommand
-struct DrawCommand : public RenderCommand
+// GenerateMips RenderCommand
+struct GenerateMipsCommand : public RenderCommand
 {
-	inline DrawCommand(Texture* InTexture)
+	inline GenerateMipsCommand(Texture* InTexture)
 		: Texture(InTexture)
 	{
 	}
 
+	inline ~GenerateMipsCommand()
+	{
+		SAFERELEASE(Texture);
+	}
+
 	virtual void Execute(ICommandContext& CmdContext) const override
 	{
-		CmdContext.GenerateMipLevels(Texture);
+		CmdContext.GenerateMips(Texture);
 	}
 
 	Texture* Texture;
+};
+
+// TransitionTexture RenderCommand
+struct TransitionTextureCommand : public RenderCommand
+{
+	inline TransitionTextureCommand(Texture* InTexture, EResourceState InBeforeState, EResourceState InAfterState)
+		: Texture(InTexture)
+		, BeforeState(InBeforeState)
+		, AfterState(InAfterState)
+	{
+	}
+
+	inline ~TransitionTextureCommand()
+	{
+		SAFERELEASE(Texture);
+	}
+
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.TransitionTexture(Texture, BeforeState, AfterState);
+	}
+
+	Texture* Texture;
+	EResourceState BeforeState;
+	EResourceState AfterState;
 };
 
 // Draw RenderCommand

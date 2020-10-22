@@ -1,11 +1,18 @@
 #pragma once
 
+// Validate (a.k.a ASSERT)
+#define VALIDATE(Condition) assert(Condition)
+
 // Macro for deleting objects safley
 #define SAFEDELETE(OutObject) \
 	if ((OutObject)) \
 	{ \
 		delete (OutObject); \
 		(OutObject) = nullptr; \
+	} \
+	else \
+	{ \
+		VALIDATE(false); \
 	}
 
 #define SAFERELEASE(OutObject) \
@@ -13,10 +20,11 @@
 	{ \
 		(OutObject)->Release(); \
 		(OutObject) = nullptr; \
+	} \
+	else \
+	{ \
+		VALIDATE(false); \
 	}
-
-// Validate (a.k.a ASSERT)
-#define VALIDATE(Condition) assert(Condition)
 
 /*
 * Forceinline

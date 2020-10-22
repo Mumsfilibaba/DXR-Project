@@ -472,13 +472,13 @@ inline const Char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 struct PipelineRenderTargetFormats
 {
 	inline PipelineRenderTargetFormats()
-		: RenderTargetFormats({ EFormat::FORMAT_R8G8B8A8_UNORM })
+		: RenderTargetFormats()
 		, NumRenderTargets(1)
-		, DepthStencilFormat(EFormat::FORMAT_D24_UNORM_S8_UINT)
+		, DepthStencilFormat(EFormat::Format_D24_Unorm_S8_Uint)
 	{
 	}
 
-	EFormat RenderTargetFormats;
+	EFormat RenderTargetFormats[8];
 	Uint32	NumRenderTargets;
 	EFormat DepthStencilFormat;
 };

@@ -34,17 +34,17 @@ public:
 		Reset();
 	}
 
-	FORCEINLINE void CommandList::Begin()
+	FORCEINLINE void Begin()
 	{
 		InsertCommand<BeginCommand>();
 	}
 
-	FORCEINLINE void CommandList::End()
+	FORCEINLINE void End()
 	{
 		InsertCommand<EndCommand>();
 	}
 
-	FORCEINLINE void CommandList::ClearRenderTargetView(
+	FORCEINLINE void ClearRenderTargetView(
 		RenderTargetView* RenderTargetView, 
 		const ColorClearValue& ClearColor)
 	{
@@ -52,7 +52,7 @@ public:
 		InsertCommand<ClearRenderTargetCommand>(RenderTargetView, ClearColor);
 	}
 
-	FORCEINLINE void CommandList::ClearDepthStencilView(
+	FORCEINLINE void ClearDepthStencilView(
 		DepthStencilView* DepthStencilView, 
 		const DepthStencilClearValue& ClearValue)
 	{
@@ -60,37 +60,37 @@ public:
 		InsertCommand<ClearDepthStencilCommand>(DepthStencilView, ClearValue);
 	}
 
-	FORCEINLINE void CommandList::BeginRenderPass()
+	FORCEINLINE void BeginRenderPass()
 	{
 		InsertCommand<BeginRenderPassCommand>();
 	}
 
-	FORCEINLINE void CommandList::EndRenderPass()
+	FORCEINLINE void EndRenderPass()
 	{
 		InsertCommand<EndRenderPassCommand>();
 	}
 
-	FORCEINLINE void CommandList::BindViewport(const Viewport& Viewport, Uint32 Slot)
+	FORCEINLINE void BindViewport(const Viewport& Viewport, Uint32 Slot)
 	{
 		InsertCommand<BindViewportCommand>(Viewport, Slot);
 	}
 
-	FORCEINLINE void CommandList::BindScissorRect(const ScissorRect& ScissorRect, Uint32 Slot)
+	FORCEINLINE void BindScissorRect(const ScissorRect& ScissorRect, Uint32 Slot)
 	{
 		InsertCommand<BindScissorRectCommand>(ScissorRect, Slot);
 	}
 
-	FORCEINLINE void CommandList::BindBlendFactor()
+	FORCEINLINE void BindBlendFactor()
 	{
 		InsertCommand<BindBlendFactorCommand>();
 	}
 
-	FORCEINLINE void CommandList::BindPrimitiveTopology(EPrimitveTopologyType PrimitveTopologyType)
+	FORCEINLINE void BindPrimitiveTopology(EPrimitveTopologyType PrimitveTopologyType)
 	{
 		InsertCommand<BindPrimitiveTopologyCommand>(PrimitveTopologyType);
 	}
 
-	FORCEINLINE void CommandList::BindVertexBuffers(
+	FORCEINLINE void BindVertexBuffers(
 		VertexBuffer* const* VertexBuffers, 
 		Uint32 VertexBufferCount, 
 		Uint32 BufferSlot)
@@ -106,19 +106,19 @@ public:
 		InsertCommand<BindVertexBuffersCommand>(Buffers, VertexBufferCount, BufferSlot);
 	}
 
-	FORCEINLINE void CommandList::BindIndexBuffer(IndexBuffer* IndexBuffer)
+	FORCEINLINE void BindIndexBuffer(IndexBuffer* IndexBuffer)
 	{
 		IndexBuffer->AddRef();
 		InsertCommand<BindIndexBufferCommand>(IndexBuffer);
 	}
 
-	FORCEINLINE void CommandList::BindRayTracingScene(RayTracingScene* RayTracingScene)
+	FORCEINLINE void BindRayTracingScene(RayTracingScene* RayTracingScene)
 	{
 		RayTracingScene->AddRef();
 		InsertCommand<BindRayTracingSceneCommand>(RayTracingScene);
 	}
 
-	FORCEINLINE void CommandList::BindRenderTargets(
+	FORCEINLINE void BindRenderTargets(
 		RenderTargetView* const* RenderTargetViews, 
 		Uint32 RenderTargetCount, 
 		DepthStencilView* DepthStencilView)
@@ -134,25 +134,25 @@ public:
 		InsertCommand<BindRenderTargetsCommand>(RenderTargets, RenderTargetCount, DepthStencilView);
 	}
 
-	FORCEINLINE void CommandList::BindGraphicsPipelineState(GraphicsPipelineState* PipelineState)
+	FORCEINLINE void BindGraphicsPipelineState(GraphicsPipelineState* PipelineState)
 	{
 		PipelineState->AddRef();
 		InsertCommand<BindGraphicsPipelineStateCommand>(PipelineState);
 	}
 
-	FORCEINLINE void CommandList::BindComputePipelineState(ComputePipelineState* PipelineState)
+	FORCEINLINE void BindComputePipelineState(ComputePipelineState* PipelineState)
 	{
 		PipelineState->AddRef();
 		InsertCommand<BindComputePipelineStateCommand>(PipelineState);
 	}
 
-	FORCEINLINE void CommandList::BindRayTracingPipelineState(RayTracingPipelineState* PipelineState)
+	FORCEINLINE void BindRayTracingPipelineState(RayTracingPipelineState* PipelineState)
 	{
 		PipelineState->AddRef();
 		InsertCommand<BindRayTracingPipelineStateCommand>(PipelineState);
 	}
 
-	FORCEINLINE void CommandList::BindConstantBuffers(
+	FORCEINLINE void BindConstantBuffers(
 		Shader* Shader, 
 		ConstantBuffer* const* ConstantBuffers, 
 		Uint32 ConstantBufferCount, 
@@ -165,7 +165,7 @@ public:
 			StartSlot);
 	}
 
-	FORCEINLINE void CommandList::BindShaderResourceViews(
+	FORCEINLINE void BindShaderResourceViews(
 		Shader* Shader, 
 		ShaderResourceView* const* ShaderResourceViews, 
 		Uint32 ShaderResourceViewCount, 
@@ -178,7 +178,7 @@ public:
 			StartSlot);
 	}
 
-	FORCEINLINE void CommandList::BindUnorderedAccessViews(
+	FORCEINLINE void BindUnorderedAccessViews(
 		Shader* Shader, 
 		UnorderedAccessView* const* UnorderedAccessViews, 
 		Uint32 UnorderedAccessViewCount, 
@@ -191,14 +191,14 @@ public:
 			StartSlot);
 	}
 
-	FORCEINLINE void CommandList::ResolveTexture(Texture* Destination, Texture* Source)
+	FORCEINLINE void ResolveTexture(Texture* Destination, Texture* Source)
 	{
 		Destination->AddRef();
 		Source->AddRef();
 		InsertCommand<ResolveTextureCommand>(Destination, Source);
 	}
 
-	FORCEINLINE void CommandList::UpdateBuffer(
+	FORCEINLINE void UpdateBuffer(
 		Buffer* Destination, 
 		Uint64 DestinationOffsetInBytes, 
 		Uint64 SizeInBytes, 
@@ -215,7 +215,27 @@ public:
 			SourceData);
 	}
 
-	FORCEINLINE void CommandList::CopyBuffer(
+	FORCEINLINE void UpdateTexture2D(
+		Texture2D* Destination,
+		Uint32 Width,
+		Uint32 Height,
+		Uint32 MipLevel, 
+		const VoidPtr SourceData)
+	{
+		const Uint32 SizeInBytes = Width * Height;
+		VoidPtr TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
+		Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
+
+		Destination->AddRef();
+		InsertCommand<UpdateTextureCommand>(
+			Destination,
+			Width,
+			Height,
+			MipLevel,
+			SourceData);
+	}
+
+	FORCEINLINE void CopyBuffer(
 		Buffer* Destination, 
 		Buffer* Source, 
 		const CopyBufferInfo& CopyInfo)
@@ -225,7 +245,7 @@ public:
 		InsertCommand<CopyBufferCommand>(Destination, Source, CopyInfo);
 	}
 
-	FORCEINLINE void CommandList::CopyTexture(
+	FORCEINLINE void CopyTexture(
 		Texture* Destination, 
 		Texture* Source, 
 		const CopyTextureInfo& CopyTextureInfo)
@@ -235,29 +255,44 @@ public:
 		InsertCommand<CopyTextureCommand>(Destination, Source, CopyTextureInfo);
 	}
 
-	FORCEINLINE void CommandList::BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry)
+	FORCEINLINE void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry)
 	{
 		RayTracingGeometry->AddRef();
 		InsertCommand<BuildRayTracingGeometryCommand>(RayTracingGeometry);
 	}
 
-	FORCEINLINE void CommandList::BuildRayTracingScene(RayTracingScene* RayTracingScene)
+	FORCEINLINE void BuildRayTracingScene(RayTracingScene* RayTracingScene)
 	{
 		RayTracingScene->AddRef();
 		InsertCommand<BuildRayTracingSceneCommand>(RayTracingScene);
 	}
 
-	FORCEINLINE void CommandList::Draw(Uint32 VertexCount, Uint32 StartVertexLocation)
+	FORCEINLINE void GenerateMips(Texture* Texture)
+	{
+		Texture->AddRef();
+		InsertCommand<GenerateMipsCommand>(Texture);
+	}
+
+	FORCEINLINE void TransitionTexture(
+		Texture* Texture, 
+		EResourceState BeforeState, 
+		EResourceState AfterState)
+	{
+		Texture->AddRef();
+		InsertCommand<TransitionTextureCommand>(Texture, BeforeState, AfterState);
+	}
+
+	FORCEINLINE void Draw(Uint32 VertexCount, Uint32 StartVertexLocation)
 	{
 		InsertCommand<DrawCommand>(VertexCount, StartVertexLocation);
 	}
 
-	FORCEINLINE void CommandList::DrawIndexed(Uint32 IndexCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation)
+	FORCEINLINE void DrawIndexed(Uint32 IndexCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation)
 	{
 		InsertCommand< DrawIndexedCommand>(IndexCount, StartIndexLocation, BaseVertexLocation);
 	}
 
-	FORCEINLINE void CommandList::DrawInstanced(
+	FORCEINLINE void DrawInstanced(
 		Uint32 VertexCountPerInstance, 
 		Uint32 InstanceCount, 
 		Uint32 StartVertexLocation, 
@@ -270,7 +305,7 @@ public:
 			StartInstanceLocation);
 	}
 
-	FORCEINLINE void CommandList::DrawIndexedInstanced(
+	FORCEINLINE void DrawIndexedInstanced(
 		Uint32 IndexCountPerInstance, 
 		Uint32 InstanceCount, 
 		Uint32 StartIndexLocation, 
@@ -285,12 +320,12 @@ public:
 			StartInstanceLocation);
 	}
 
-	FORCEINLINE void CommandList::Dispatch(Uint32 WorkGroupsX, Uint32 WorkGroupsY, Uint32 WorkGroupsZ)
+	FORCEINLINE void Dispatch(Uint32 WorkGroupsX, Uint32 WorkGroupsY, Uint32 WorkGroupsZ)
 	{
 		InsertCommand<DispatchComputeCommand>(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
 	}
 
-	FORCEINLINE void CommandList::DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth)
+	FORCEINLINE void DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth)
 	{
 		InsertCommand<DispatchRaysCommand>(Width, Height, Depth);
 	}

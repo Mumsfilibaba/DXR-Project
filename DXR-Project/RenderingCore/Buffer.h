@@ -291,7 +291,7 @@ struct StructuredBufferRef
 
 struct RWStructuredBufferRef
 {
-	inline RWStructuredBufferRef(const TSharedRef<StructuredBuffer>& InBuffer, const TSharedRef<ShaderResourceView>& InSRV, const TSharedRef<ShaderResourceView>& InUAV)
+	inline RWStructuredBufferRef(const TSharedRef<StructuredBuffer>& InBuffer, const TSharedRef<ShaderResourceView>& InSRV, const TSharedRef<UnorderedAccessView>& InUAV)
 		: Buffer(InBuffer)
 		, SRV(InSRV)
 		, UAV(InUAV)

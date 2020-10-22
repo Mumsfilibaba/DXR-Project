@@ -119,6 +119,54 @@ enum class EMemoryType
 };
 
 /*
+* EResourceState
+*/
+
+enum class EResourceState
+{
+	ResourceState_Common							= 0,
+	ResourceState_VertexAndConstantBuffer			= 1,
+	ResourceState_IndexBuffer						= 2,
+	ResourceState_RenderTarget						= 3,
+	ResourceState_UnorderedAccess					= 4,
+	ResourceState_DepthWrite						= 5,
+	ResourceState_DepthRead							= 6,
+	ResourceState_NonPixelShaderResource			= 7,
+	ResourceState_PixelShaderResource				= 8,
+	ResourceState_CopyDest							= 9,
+	ResourceState_CopySource						= 10,
+	ResourceState_ResolveDest						= 11,
+	ResourceState_ResolveSource						= 12,
+	ResourceState_RayTracingAccelerationStructure	= 13,
+	ResourceState_ShadingRateSource					= 14,
+	ResourceState_Present							= 15,
+};
+
+inline const Char* ToString(EResourceState ResourceState)
+{
+	switch (ResourceState)
+	{
+	case EResourceState::ResourceState_Common:							return "ResourceState_Common";
+	case EResourceState::ResourceState_VertexAndConstantBuffer:			return "ResourceState_VertexAndConstantBuffer";
+	case EResourceState::ResourceState_IndexBuffer:						return "ResourceState_IndexBuffer";
+	case EResourceState::ResourceState_RenderTarget:					return "ResourceState_RenderTarget";
+	case EResourceState::ResourceState_UnorderedAccess:					return "ResourceState_UnorderedAccess";
+	case EResourceState::ResourceState_DepthWrite:						return "ResourceState_DepthWrite";
+	case EResourceState::ResourceState_DepthRead:						return "ResourceState_DepthRead";
+	case EResourceState::ResourceState_NonPixelShaderResource:			return "ResourceState_NonPixelShaderResource";
+	case EResourceState::ResourceState_PixelShaderResource:				return "ResourceState_PixelShaderResource";
+	case EResourceState::ResourceState_CopyDest:						return "ResourceState_CopyDest";
+	case EResourceState::ResourceState_CopySource:						return "ResourceState_CopySource";
+	case EResourceState::ResourceState_ResolveDest:						return "ResourceState_ResolveDest";
+	case EResourceState::ResourceState_ResolveSource:					return "ResourceState_ResolveSource";
+	case EResourceState::ResourceState_RayTracingAccelerationStructure:	return "ResourceState_RayTracingAccelerationStructure";
+	case EResourceState::ResourceState_ShadingRateSource:				return "ResourceState_ShadingRateSource";
+	case EResourceState::ResourceState_Present:							return "ResourceState_Present";
+	default:															return "";
+	}
+}
+
+/*
 * Color
 */
 
@@ -343,24 +391,43 @@ struct CopyBufferInfo
 * CopyTextureInfo
 */
 
+// TODO: This will not work, fix
 struct CopyTextureInfo
 {
 	inline CopyTextureInfo()
-		: SourceOffset(0)
-		, DestinationOffset(0)
-		, SizeInBytes(0)
+		: SourceX(0)
+		, SourceY(0)
+		, SourceZ(0)
+		, DestX(0)
+		, DestY(0)
+		, DestZ(0)
+		, Width(0)
+		, Height(0)
+		, Depth(0)
 	{
 	}
 
 	inline CopyTextureInfo(Uint64 InSourceOffset, Uint32 InDestinationOffset, Uint32 InSizeInBytes)
-		: SourceOffset(InSourceOffset)
-		, DestinationOffset(InDestinationOffset)
-		, SizeInBytes(InSizeInBytes)
+		: SourceX(0)
+		, SourceY(0)
+		, SourceZ(0)
+		, DestX(0)
+		, DestY(0)
+		, DestZ(0)
+		, Width(0)
+		, Height(0)
+		, Depth(0)
 	{
 	}
 
-	Uint64 SourceOffset;
-	Uint64 DestinationOffset;
-	Uint64 SizeInBytes;
+	Uint32 SourceX;
+	Uint32 SourceY;
+	Uint32 SourceZ;
+	Uint32 DestX;
+	Uint32 DestY;
+	Uint32 DestZ;
+	Uint32 Width;
+	Uint32 Height;
+	Uint32 Depth;
 };
 

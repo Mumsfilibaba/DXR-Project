@@ -1,6 +1,6 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "RenderingCore/RenderingCore.h"
+#include "RenderingCore/Format.h"
 
 #include "Containers/String.h"
 
@@ -13,6 +13,9 @@ enum ETextureFactoryFlags : Uint32
 	TEXTURE_FACTORY_FLAGS_NONE			= 0,
 	TEXTURE_FACTORY_FLAGS_GENERATE_MIPS = FLAG(1),
 };
+
+class Texture2D;
+class TextureCube;
 
 /*
 * TextureFactory

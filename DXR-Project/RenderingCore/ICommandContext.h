@@ -12,6 +12,7 @@ class ShaderResourceView;
 class DepthStencilView;
 class UnorderedAccessView;
 class Texture;
+class Texture2D;
 class RayTracingGeometry;
 class RayTracingScene;
 class GraphicsPipelineState;
@@ -85,6 +86,13 @@ public:
 		Uint64 SizeInBytes, 
 		const VoidPtr SourceData) = 0;
 
+	virtual void UpdateTexture2D(
+		Texture2D* Destination,
+		Uint32 Width,
+		Uint32 Height,
+		Uint32 MipLevel,
+		const VoidPtr SourceData) = 0;
+
 	virtual void CopyBuffer(
 		Buffer* Destination, 
 		Buffer* Source, 
@@ -98,7 +106,12 @@ public:
 	virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) = 0;
 	virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) = 0;
 
-	virtual void GenerateMipLevels(Texture* Texture) = 0;
+	virtual void GenerateMips(Texture* Texture) = 0;
+
+	virtual void TransitionTexture(
+		Texture* Texture, 
+		EResourceState BeforeState, 
+		EResourceState AfterState) = 0;
 
 	virtual void Draw(
 		Uint32 VertexCount, 

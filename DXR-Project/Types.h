@@ -19,5 +19,5 @@ using Float64	= double;
 // Other
 using Byte		= Uint8;
 using Char		= Int8;
-using VoidPtr	= void*;
 using Bool		= bool;
+typedef void* VoidPtr;
