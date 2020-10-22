@@ -8,6 +8,7 @@
 #include "D3D12SwapChain.h"
 
 #include "Windows/Windows.h"
+#include "Windows/Windows.inl"
 
 #include <dxgidebug.h>
 

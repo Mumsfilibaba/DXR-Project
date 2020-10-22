@@ -1,4 +1,6 @@
 #pragma once
+#include "Windows/WindowsWindow.h"
+
 #include "D3D12Texture.h"
 #include "D3D12Views.h"
 

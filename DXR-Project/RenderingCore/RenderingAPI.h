@@ -6,6 +6,8 @@
 #include "Containers/TUniquePtr.h"
 #include "Containers/TSharedPtr.h"
 
+#include "Format.h"
+
 class Texture1D;
 class Texture1DArray;
 class Texture2D;
@@ -22,6 +24,8 @@ class UnorderedAccessView;
 class RenderTargetView;
 class DepthStencilView;
 class CommandListExecutor;
+struct ResourceData;
+struct ClearValue;
 
 /*
 * ERenderingAPI

@@ -217,7 +217,8 @@ D3D12DescriptorTable::D3D12DescriptorTable(D3D12Device* InDevice, Uint32 InDescr
 	SRVDesc.Texture2D.MostDetailedMip		= 0;
 	SRVDesc.Texture2D.PlaneSlice			= 0;
 	SRVDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
-	NULLView = MakeUnique<D3D12ShaderResourceView>(Device, nullptr, &SRVDesc);
+
+	NULLView = MakeUnique<D3D12ShaderResourceView>(Device, nullptr, SRVDesc);
 	for (D3D12_CPU_DESCRIPTOR_HANDLE& Handle : OfflineHandles)
 	{
 		Handle = NULLView->GetOfflineHandle();
