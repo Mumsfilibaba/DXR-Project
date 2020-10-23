@@ -102,7 +102,7 @@ public:
 
 	FORCEINLINE const std::string& GetName() const
 	{
-		return DebugName;
+		return Name;
 	}
 
 	FORCEINLINE Scene* GetScene() const

@@ -4,7 +4,6 @@
 #include "RenderingCore/RenderingAPI.h"
 
 #include "D3D12Device.h"
-#include "D3D12ImmediateCommandList.h"
 #include "D3D12SwapChain.h"
 
 /*

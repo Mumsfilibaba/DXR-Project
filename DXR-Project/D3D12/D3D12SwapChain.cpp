@@ -116,11 +116,6 @@ bool D3D12SwapChain::Present(Uint32 SyncInterval)
 	return SUCCEEDED(SwapChain->Present(SyncInterval, 0));
 }
 
-void D3D12SwapChain::SetName(const std::string& Name)
-{
-
-}
-
 void D3D12SwapChain::RetriveSwapChainSurfaces()
 {
 	using namespace Microsoft::WRL;

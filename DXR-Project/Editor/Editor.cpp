@@ -4,6 +4,7 @@
 #include "Rendering/Renderer.h"
 
 #include "Engine/EngineLoop.h"
+#include "Engine/EngineGlobals.h"
 
 #include "Application/Application.h"
 
@@ -31,7 +32,7 @@ static void DrawSceneInfo();
 */
 static void DrawDebugData()
 {
-	static std::string AdapterName = RenderingAPI::Get().GetAdapterName();
+	static std::string AdapterName = EngineGlobals::RenderingAPI->GetAdapterName();
 
 	const Float64 Delta = EngineLoop::GetDeltaTime().AsMilliSeconds();
 	DebugUI::DrawDebugString("Adapter: " + AdapterName);

@@ -1,5 +1,10 @@
 #include "EngineGlobals.h"
 
+#include "Application/Generic/GenericApplication.h"
+
+#include "RenderingCore/RenderingAPI.h"
+#include "RenderingCore/CommandList.h"
+
 /*
 * EngineGlobals
 */

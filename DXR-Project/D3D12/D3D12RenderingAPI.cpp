@@ -10,7 +10,6 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Fence.h"
 #include "D3D12GraphicsPipelineState.h"
-#include "D3D12ImmediateCommandList.h"
 #include "D3D12RayTracingPipelineState.h"
 #include "D3D12RayTracingScene.h"
 #include "D3D12RootSignature.h"

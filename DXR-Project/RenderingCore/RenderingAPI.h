@@ -6,7 +6,9 @@
 #include "Containers/TUniquePtr.h"
 #include "Containers/TSharedPtr.h"
 
-#include "Format.h"
+#include "RenderingCore.h"
+#include "Buffer.h"
+#include "CommandList.h"
 
 class Texture1D;
 class Texture1DArray;
@@ -15,15 +17,10 @@ class Texture2DArray;
 class TextureCube;
 class TextureCubeArray;
 class Texture3D;
-class VertexBuffer;
-class IndexBuffer;
-class ConstantBuffer;
-class StructuredBuffer;
 class ShaderResourceView;
 class UnorderedAccessView;
 class RenderTargetView;
 class DepthStencilView;
-class CommandListExecutor;
 struct ResourceData;
 struct ClearValue;
 
