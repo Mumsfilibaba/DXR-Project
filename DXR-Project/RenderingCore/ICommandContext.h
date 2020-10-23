@@ -40,7 +40,7 @@ public:
 	virtual void BindViewport(const Viewport& Viewport, Uint32 Slot) = 0;
 	virtual void BindScissorRect(const ScissorRect& ScissorRect, Uint32 Slot) = 0;
 
-	virtual void BindBlendFactor() = 0;
+	virtual void BindBlendFactor(const ColorClearValue& Color) = 0;
 
 	virtual void BindVertexBuffers(
 		VertexBuffer* const * VertexBuffers, 
@@ -48,7 +48,7 @@ public:
 		Uint32 BufferSlot) = 0;
 
 	virtual void BindIndexBuffer(IndexBuffer* IndexBuffer) = 0;
-	virtual void BindPrimitiveTopology(EPrimitveTopologyType PrimitveTopologyType) = 0;
+	virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) = 0;
 	virtual void BindRayTracingScene(RayTracingScene* RayTracingScene) = 0;
 
 	virtual void BindRenderTargets(

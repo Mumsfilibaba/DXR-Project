@@ -23,6 +23,8 @@ class RenderTargetView;
 class DepthStencilView;
 struct ResourceData;
 struct ClearValue;
+class RayTracingGeometry;
+class RayTracingScene;
 
 /*
 * ERenderingAPI
@@ -144,8 +146,8 @@ public:
 		Uint32 Usage) const = 0;
 
 	// Ray Tracing
-	virtual class RayTracingGeometry* CreateRayTracingGeometry() const = 0;
-	virtual class RayTracingScene* CreateRayTracingScene() const = 0;
+	virtual RayTracingScene*	CreateRayTracingScene()		const = 0;
+	virtual RayTracingGeometry* CreateRayTracingGeometry()	const = 0;
 
 	/*
 	* Resource Views
@@ -589,6 +591,20 @@ inline TSharedRef<StructuredBuffer> CreateStructuredBuffer(
 		SizeInBytes,
 		Stride,
 		Usage);
+}
+
+/*
+* RayTracing Create functions
+*/
+
+inline TSharedRef<RayTracingScene> CreateRayTracingScene()
+{
+	return EngineGlobals::RenderingAPI->CreateRayTracingScene();
+}
+
+inline TSharedRef<RayTracingGeometry> CreateRayTracingGeometry()
+{
+	return EngineGlobals::RenderingAPI->CreateRayTracingGeometry();
 }
 
 /*

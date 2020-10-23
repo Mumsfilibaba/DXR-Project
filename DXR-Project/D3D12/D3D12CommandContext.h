@@ -41,9 +41,9 @@ public:
 	virtual void BindViewport(const Viewport& Viewport, Uint32 Slot) override final;
 	virtual void BindScissorRect(const ScissorRect& ScissorRect, Uint32 Slot) override final;
 
-	virtual void BindBlendFactor() override final;
+	virtual void BindBlendFactor(const ColorClearValue& Color) override final;
 
-	virtual void BindPrimitiveTopology(EPrimitveTopologyType PrimitveTopologyType) override final;
+	virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
 	virtual void BindVertexBuffers(
 		VertexBuffer* const * VertexBuffers, 
 		Uint32 BufferCount, 

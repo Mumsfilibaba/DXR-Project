@@ -22,7 +22,7 @@ public:
 	static bool OnEvent(const Event& Event);
 	
 	// Should only be called by the renderer
-	static void Render(class D3D12CommandList* CommandList);
+	static void Render(class CommandList& CmdList);
 
 	static ImGuiContext* GetCurrentContext();
 };

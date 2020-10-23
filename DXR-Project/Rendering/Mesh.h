@@ -5,6 +5,7 @@
 
 #include "RenderingCore/Buffer.h"
 #include "RenderingCore/RayTracing.h"
+#include "RenderingCore/CommandList.h"
 
 #include "Scene/AABB.h"
 
@@ -20,7 +21,7 @@ public:
 
 	bool Initialize(const MeshData& Data);
 	
-	bool BuildAccelerationStructure(D3D12CommandList* CommandList);
+	bool BuildAccelerationStructure(CommandList& CmdList);
 
 	static TSharedPtr<Mesh> Make(const MeshData& Data);
 

@@ -18,22 +18,41 @@ D3D12Resource::~D3D12Resource()
 {
 }
 
-VoidPtr D3D12Resource::Map(const Range& MappedRange)
+VoidPtr D3D12Resource::Map(const Range* MappedRange)
 {
-	D3D12_RANGE MapRange = { MappedRange.Offset, MappedRange.Offset + MappedRange.Size };
-
 	VoidPtr MappedData = nullptr;
-	HRESULT HR = D3DResource->Map(0, &MapRange, &MappedData);
-	if (FAILED(HR))
+
+	HRESULT hr = 0;
+	if (MappedRange)
 	{
-		return nullptr;
+		D3D12_RANGE MapRange = { MappedRange->Offset, MappedRange->Offset + MappedRange->Size };
+		hr = D3DResource->Map(0, &MapRange, &MappedData);
+	}
+	else
+	{
+		hr = D3DResource->Map(0, nullptr, &MappedData);
 	}
 
-	return MappedData;
+	if (FAILED(hr))
+	{
+		LOG_ERROR("[D3D12Resource::Map] Failed");
+		return nullptr;
+	}
+	else
+	{
+		return MappedData;
+	}
 }
 
-void D3D12Resource::Unmap(const Range& WrittenRange)
+void D3D12Resource::Unmap(const Range* WrittenRange)
 {
-	D3D12_RANGE WriteRange = { WrittenRange.Offset, WrittenRange.Offset + WrittenRange.Size };
-	D3DResource->Unmap(0, &WriteRange);
+	if (WrittenRange)
+	{
+		D3D12_RANGE WriteRange = { WrittenRange->Offset, WrittenRange->Offset + WrittenRange->Size };
+		D3DResource->Unmap(0, &WriteRange);
+	}
+	else
+	{
+		D3DResource->Unmap(0, nullptr);
+	}
 }

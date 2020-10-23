@@ -199,7 +199,6 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	else
 	{
 		Adapter = TempAdapter;
-		return true;
 	}
 
 	// Create Device

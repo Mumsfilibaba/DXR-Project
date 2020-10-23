@@ -167,6 +167,34 @@ inline const Char* ToString(EResourceState ResourceState)
 }
 
 /*
+* EPrimitiveTopology
+*/
+
+enum EPrimitiveTopology
+{
+	PrimitiveTopology_Undefined		= 0,
+	PrimitiveTopology_PointList		= 1,
+	PrimitiveTopology_LineList		= 2,
+	PrimitiveTopology_LineStrip		= 3,
+	PrimitiveTopology_TriangleList	= 4,
+	PrimitiveTopology_TriangleStrip	= 5,
+};
+
+inline const Char* ToString(EPrimitiveTopology ResourceState)
+{
+	switch (ResourceState)
+	{
+	case EPrimitiveTopology::PrimitiveTopology_Undefined:		return "PrimitiveTopology_Undefined";
+	case EPrimitiveTopology::PrimitiveTopology_PointList:		return "PrimitiveTopology_PointList";
+	case EPrimitiveTopology::PrimitiveTopology_LineList:		return "PrimitiveTopology_LineList";
+	case EPrimitiveTopology::PrimitiveTopology_LineStrip:		return "PrimitiveTopology_LineStrip";
+	case EPrimitiveTopology::PrimitiveTopology_TriangleList:	return "PrimitiveTopology_TriangleList";
+	case EPrimitiveTopology::PrimitiveTopology_TriangleStrip:	return "PrimitiveTopology_TriangleStrip";
+	default:													return "";
+	}
+}
+
+/*
 * Color
 */
 

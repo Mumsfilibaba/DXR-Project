@@ -53,11 +53,11 @@ void D3D12CommandContext::BindScissorRect(const ScissorRect& ScissorRect, Uint32
 {
 }
 
-void D3D12CommandContext::BindBlendFactor()
+void D3D12CommandContext::BindBlendFactor(const ColorClearValue& Color)
 {
 }
 
-void D3D12CommandContext::BindPrimitiveTopology(EPrimitveTopologyType PrimitveTopologyType)
+void D3D12CommandContext::BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
 {
 }
 

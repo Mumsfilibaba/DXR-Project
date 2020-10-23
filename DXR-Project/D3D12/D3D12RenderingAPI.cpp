@@ -1184,7 +1184,6 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 
-	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
 	Desc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 	Desc.Format							= ConvertFormat(Format);
 	Desc.Texture2DArray.MipSlice		= MipSlice;

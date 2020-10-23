@@ -80,12 +80,12 @@ public:
 		InsertCommand<BindScissorRectCommand>(ScissorRect, Slot);
 	}
 
-	FORCEINLINE void BindBlendFactor()
+	FORCEINLINE void BindBlendFactor(const ColorClearValue& Color)
 	{
-		InsertCommand<BindBlendFactorCommand>();
+		InsertCommand<BindBlendFactorCommand>(Color);
 	}
 
-	FORCEINLINE void BindPrimitiveTopology(EPrimitveTopologyType PrimitveTopologyType)
+	FORCEINLINE void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
 	{
 		InsertCommand<BindPrimitiveTopologyCommand>(PrimitveTopologyType);
 	}

@@ -135,14 +135,17 @@ struct BindScissorRectCommand : public RenderCommand
 // Bind BlendFactor RenderCommand
 struct BindBlendFactorCommand : public RenderCommand
 {
-	inline BindBlendFactorCommand()
+	inline BindBlendFactorCommand(const ColorClearValue& InColor)
+		: Color(InColor)
 	{
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
 	{
-		CmdContext.BindBlendFactor();
+		CmdContext.BindBlendFactor(Color);
 	}
+
+	ColorClearValue Color;
 };
 
 // BeginRenderPass RenderCommand
@@ -174,7 +177,7 @@ struct EndRenderPassCommand : public RenderCommand
 // Bind PrimitiveTopology RenderCommand
 struct BindPrimitiveTopologyCommand : public RenderCommand
 {
-	inline BindPrimitiveTopologyCommand(EPrimitveTopologyType InPrimitiveTopologyType)
+	inline BindPrimitiveTopologyCommand(EPrimitiveTopology InPrimitiveTopologyType)
 		: PrimitiveTopologyType(InPrimitiveTopologyType)
 	{
 	}
@@ -184,7 +187,7 @@ struct BindPrimitiveTopologyCommand : public RenderCommand
 		CmdContext.BindPrimitiveTopology(PrimitiveTopologyType);
 	}
 
-	EPrimitveTopologyType PrimitiveTopologyType;
+	EPrimitiveTopology PrimitiveTopologyType;
 };
 
 // Bind VertexBuffers RenderCommand

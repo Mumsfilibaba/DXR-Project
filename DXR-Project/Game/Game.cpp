@@ -96,7 +96,7 @@ bool Game::Initialize()
 			NewActor = new Actor();
 			NewActor->GetTransform().SetPosition(StartPositionX + (x * SphereOffset), 8.0f + StartPositionY + (y * SphereOffset), 0.0f);
 
-			NewActor->SetDebugName("Sphere[" + std::to_string(SphereIndex) + "]");
+			NewActor->SetName("Sphere[" + std::to_string(SphereIndex) + "]");
 			SphereIndex++;
 
 			CurrentScene->AddActor(NewActor);
@@ -128,7 +128,7 @@ bool Game::Initialize()
 	NewActor = new Actor();
 	CurrentScene->AddActor(NewActor);
 
-	NewActor->SetDebugName("Cube");
+	NewActor->SetName("Cube");
 	NewActor->GetTransform().SetPosition(0.0f, 2.0f, -2.0f);
 
 	MatProperties.AO		= 1.0f;

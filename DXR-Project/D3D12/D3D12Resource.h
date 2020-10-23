@@ -15,8 +15,8 @@ public:
 	D3D12Resource(D3D12Device* InDevice);
 	virtual ~D3D12Resource();
 
-	VoidPtr Map(const Range& MappedRange);
-	void Unmap(const Range& WrittenRange);
+	VoidPtr Map(const Range* MappedRange);
+	void Unmap(const Range* WrittenRange);
 
 	FORCEINLINE ID3D12Resource* GetResource() const
 	{

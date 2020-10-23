@@ -22,12 +22,12 @@ public:
 	~D3D12VertexBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map(const Range& MappedRange) override
+	virtual VoidPtr Map(const Range* MappedRange) override
 	{
 		return D3D12Resource::Map(MappedRange);
 	}
 
-	virtual void Unmap(const Range& WrittenRange) override
+	virtual void Unmap(const Range* WrittenRange) override
 	{
 		D3D12Resource::Unmap(WrittenRange);
 	}
@@ -60,12 +60,12 @@ public:
 	~D3D12IndexBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map(const Range& MappedRange) override
+	virtual VoidPtr Map(const Range* MappedRange) override
 	{
-		return D3D12Resource::Map(MappedRange);;
+		return D3D12Resource::Map(MappedRange);
 	}
 
-	virtual void Unmap(const Range& WrittenRange) override
+	virtual void Unmap(const Range* WrittenRange) override
 	{
 		D3D12Resource::Unmap(WrittenRange);
 	}
@@ -98,12 +98,12 @@ public:
 	~D3D12ConstantBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map(const Range& MappedRange) override
+	virtual VoidPtr Map(const Range* MappedRange) override
 	{
-		return D3D12Resource::Map(MappedRange);;
+		return D3D12Resource::Map(MappedRange);
 	}
 
-	virtual void Unmap(const Range& WrittenRange) override
+	virtual void Unmap(const Range* WrittenRange) override
 	{
 		D3D12Resource::Unmap(WrittenRange);
 	}
@@ -130,12 +130,12 @@ public:
 	~D3D12StructuredBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map(const Range& MappedRange) override
+	virtual VoidPtr Map(const Range* MappedRange) override
 	{
-		return D3D12Resource::Map(MappedRange);;
+		return D3D12Resource::Map(MappedRange);
 	}
 
-	virtual void Unmap(const Range& WrittenRange) override
+	virtual void Unmap(const Range* WrittenRange) override
 	{
 		D3D12Resource::Unmap(WrittenRange);
 	}

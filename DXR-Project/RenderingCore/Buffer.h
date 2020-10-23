@@ -125,8 +125,8 @@ public:
 	}
 
 	// Map
-	virtual VoidPtr Map(const Range& MappedRange) 	= 0;
-	virtual void Unmap(const Range& MappedRange) 	= 0;
+	virtual VoidPtr	Map(const Range* MappedRange)		= 0;
+	virtual void	Unmap(const Range* WrittenRange) 	= 0;
 
 protected:
 	Uint32 SizeInBytes;

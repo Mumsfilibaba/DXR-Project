@@ -1,10 +1,10 @@
 #include "Mesh.h"
-
-#include "D3D12/D3D12Device.h"
-#include "D3D12/D3D12CommandQueue.h"
-#include "D3D12/D3D12DescriptorHeap.h"
-
 #include "Renderer.h"
+
+#include "Engine/EngineGlobals.h"
+
+#include "RenderingCore/CommandList.h"
+#include "RenderingCore/RenderingAPI.h"
 
 #include <algorithm>
 
@@ -39,9 +39,9 @@ bool Mesh::Initialize(const MeshData& Data)
 	}
 
 	// Create RaytracingGeometry if raytracing is supported
-	if (RenderingAPI::Get().IsRayTracingSupported())
+	if (EngineGlobals::RenderingAPI->IsRayTracingSupported())
 	{
-		RayTracingGeometry = RenderingAPI::Get().CreateRayTracingGeometry();
+		RayTracingGeometry = CreateRayTracingGeometry();
 
 		VertexBufferSRV = CreateShaderResourceView<Vertex>(VertexBuffer.Get(), 0, VertexCount);
 		if (!VertexBufferSRV)
@@ -61,9 +61,10 @@ bool Mesh::Initialize(const MeshData& Data)
 	return true;
 }
 
-bool Mesh::BuildAccelerationStructure(D3D12CommandList* CommandList)
+bool Mesh::BuildAccelerationStructure(CommandList& CmdList)
 {
-	return RayTracingGeometry->BuildAccelerationStructure(CommandList, VertexBuffer, VertexCount, IndexBuffer, IndexCount);
+	CmdList.BuildRayTracingGeometry(RayTracingGeometry.Get());
+	return true;
 }
 
 TSharedPtr<Mesh> Mesh::Make(const MeshData& Data)

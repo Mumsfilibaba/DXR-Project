@@ -159,8 +159,7 @@ bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineStat
 	}
 
 	// Map the buffer
-	Range MappedRange(0, SizeInBytes);
-	Byte* Data = reinterpret_cast<Byte*>(BindingTable->Map(MappedRange));
+	Byte* Data = reinterpret_cast<Byte*>(BindingTable->Map(nullptr));
 	for (BindingTableEntry& Entry : InBindingTableEntries)
 	{
 		TableEntry TableData;
@@ -179,7 +178,7 @@ bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineStat
 		memcpy(Data, &TableData, StrideInBytes);
 		Data += StrideInBytes;
 	}
-	BindingTable->Unmap(MappedRange);
+	BindingTable->Unmap(nullptr);
 
 	NumHitGroups		= InNumHitGroups;
 	BindingTableEntries	= InBindingTableEntries;
@@ -224,9 +223,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandL
 	}
 
 	// Map and set each instance matrix
-	Range MappedRange(0, InstanceBufferSize);
-
-	D3D12_RAYTRACING_INSTANCE_DESC* InstanceDesc = reinterpret_cast<D3D12_RAYTRACING_INSTANCE_DESC*>(InstanceBuffer->Map(MappedRange));
+	D3D12_RAYTRACING_INSTANCE_DESC* InstanceDesc = reinterpret_cast<D3D12_RAYTRACING_INSTANCE_DESC*>(InstanceBuffer->Map(nullptr));
 	for (Uint32 i = 0; i < InstanceCount; i++)
 	{
 		InstanceDesc->InstanceID							= InInstances[i].InstanceID;
@@ -243,7 +240,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandL
 	}
 
 	// Unmap
-	InstanceBuffer->Unmap(MappedRange);
+	InstanceBuffer->Unmap(nullptr);
 
 	// Create the TLAS
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc = {};
