@@ -57,14 +57,7 @@ bool EngineLoop::Initialize()
 	GlobalCursors::Initialize();
 
 	// RenderAPI
-	const bool EnableDebug =
-#if ENABLE_D3D12_DEBUG
-		true;
-#else
-		false;
-#endif
-
-	if (!RenderingAPI::Initialize(ERenderingAPI::RenderingAPI_D3D12))
+	if (!RenderingAPI::Initialize(ERenderingAPI::RenderingAPI_D3D12, App->GetMainWindow()))
 	{
 		return false;
 	}

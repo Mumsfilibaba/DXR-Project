@@ -666,6 +666,52 @@ struct TransitionTextureCommand : public RenderCommand
 	EResourceState AfterState;
 };
 
+// TransitionBuffer RenderCommand
+struct TransitionBufferCommand : public RenderCommand
+{
+	inline TransitionBufferCommand(Buffer* InBuffer, EResourceState InBeforeState, EResourceState InAfterState)
+		: Buffer(InBuffer)
+		, BeforeState(InBeforeState)
+		, AfterState(InAfterState)
+	{
+	}
+
+	inline ~TransitionBufferCommand()
+	{
+		SAFERELEASE(Buffer);
+	}
+
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.TransitionBuffer(Buffer, BeforeState, AfterState);
+	}
+
+	Buffer* Buffer;
+	EResourceState BeforeState;
+	EResourceState AfterState;
+};
+
+// UnorderedAccessTextureBarrier RenderCommand
+struct UnorderedAccessTextureBarrierCommand : public RenderCommand
+{
+	inline UnorderedAccessTextureBarrierCommand(Texture* InTexture)
+		: Texture(InTexture)
+	{
+	}
+
+	inline ~UnorderedAccessTextureBarrierCommand()
+	{
+		SAFERELEASE(Texture);
+	}
+
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.UnorderedAccessTextureBarrier(Texture);
+	}
+
+	Texture* Texture;
+};
+
 // Draw RenderCommand
 struct DrawCommand : public RenderCommand
 {

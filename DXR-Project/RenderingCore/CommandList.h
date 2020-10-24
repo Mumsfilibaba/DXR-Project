@@ -282,6 +282,21 @@ public:
 		InsertCommand<TransitionTextureCommand>(Texture, BeforeState, AfterState);
 	}
 
+	FORCEINLINE void TransitionBuffer(
+		Buffer* Buffer,
+		EResourceState BeforeState,
+		EResourceState AfterState)
+	{
+		Buffer->AddRef();
+		InsertCommand<TransitionBufferCommand>(Buffer, BeforeState, AfterState);
+	}
+
+	FORCEINLINE void UnorderedAccessTextureBarrier(Texture* Texture)
+	{
+		Texture->AddRef();
+		InsertCommand<UnorderedAccessTextureBarrierCommand>(Texture);
+	}
+
 	FORCEINLINE void Draw(Uint32 VertexCount, Uint32 StartVertexLocation)
 	{
 		InsertCommand<DrawCommand>(VertexCount, StartVertexLocation);

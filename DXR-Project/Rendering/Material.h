@@ -26,7 +26,7 @@ public:
 
 	void Initialize();
 
-	void BuildBuffer(class D3D12CommandList* CommandList);
+	void BuildBuffer(class CommandList& CmdList);
 
 	FORCEINLINE bool IsBufferDirty() const
 	{

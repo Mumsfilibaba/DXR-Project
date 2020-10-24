@@ -11,6 +11,7 @@
 #include "Windows/Windows.inl"
 
 #include <dxgidebug.h>
+#pragma comment(lib, "dxguid.lib")
 
 /*
 * D3D12Device
@@ -65,7 +66,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	}
 	else
 	{
-		LOG_INFO("Loaded dxgi.dll\n");
+		LOG_INFO("Loaded dxgi.dll");
 	}
 
 	hD3D12 = ::LoadLibrary("d3d12.dll");
@@ -179,7 +180,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 		}
 
 		// Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-		if (SUCCEEDED(D3D12CreateDevice(TempAdapter.Get(), MinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+		if (SUCCEEDED(_D3D12CreateDevice(TempAdapter.Get(), MinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
 		{
 			AdapterID = ID;
 

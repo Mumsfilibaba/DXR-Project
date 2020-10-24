@@ -607,14 +607,11 @@ void DebugUI::Render(CommandList& CmdList)
 			//{
 			
 			// Apply Scissor, Bind texture, Draw
-			const ScissorRect ScissorRect =
-			{
-				static_cast<LONG>(Cmd->ClipRect.x - ClipOff.x),
-				static_cast<LONG>(Cmd->ClipRect.y - ClipOff.y),
-				static_cast<LONG>(Cmd->ClipRect.z - ClipOff.x),
-				static_cast<LONG>(Cmd->ClipRect.w - ClipOff.y)
-			};
-
+			const ScissorRect ScissorRect(
+				Cmd->ClipRect.z - ClipOff.x, 
+				Cmd->ClipRect.w - ClipOff.y, 
+				Cmd->ClipRect.x - ClipOff.x, 
+				Cmd->ClipRect.y - ClipOff.y);
 			CmdList.BindScissorRect(ScissorRect, 1);
 			CmdList.DrawIndexedInstanced(Cmd->ElemCount, 1, Cmd->IdxOffset + GlobalIndexOffset, Cmd->VtxOffset + GlobalVertexOffset, 0);
 			//}

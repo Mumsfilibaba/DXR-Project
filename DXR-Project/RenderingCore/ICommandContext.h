@@ -113,6 +113,13 @@ public:
 		EResourceState BeforeState, 
 		EResourceState AfterState) = 0;
 
+	virtual void TransitionBuffer(
+		Buffer* Buffer,
+		EResourceState BeforeState,
+		EResourceState AfterState) = 0;
+
+	virtual void UnorderedAccessTextureBarrier(Texture* Texture) = 0;
+
 	virtual void Draw(
 		Uint32 VertexCount, 
 		Uint32 StartVertexLocation) = 0;

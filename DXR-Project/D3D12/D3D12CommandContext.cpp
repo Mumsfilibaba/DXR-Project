@@ -434,6 +434,24 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
 	//DeferDestruction(StagingTexture.Get());
 }
 
+void D3D12CommandContext::TransitionTexture(
+	Texture* Texture, 
+	EResourceState BeforeState, 
+	EResourceState AfterState)
+{
+}
+
+void D3D12CommandContext::TransitionBuffer(
+	Buffer* Buffer, 
+	EResourceState BeforeState, 
+	EResourceState AfterState)
+{
+}
+
+void D3D12CommandContext::UnorderedAccessTextureBarrier(Texture* Texture)
+{
+}
+
 void D3D12CommandContext::Draw(Uint32 VertexCount, Uint32 StartVertexLocation)
 {
 }

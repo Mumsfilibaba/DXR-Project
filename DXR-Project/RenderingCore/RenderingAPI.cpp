@@ -3,11 +3,13 @@
 
 #include "D3D12/D3D12RenderingAPI.h"
 
+#define ENABLE_API_DEBUGGING 1
+
 /*
 * RenderingAPI
 */
 
-bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI)
+bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindow> RenderWindow)
 {
 	// Select RenderingAPI
 	if (InRenderAPI == ERenderingAPI::RenderingAPI_D3D12)
@@ -22,8 +24,15 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI)
 		return false;
 	}
 
+	const bool EnableDebug =
+#if ENABLE_API_DEBUGGING
+		true;
+#else
+		false;
+#endif
+
 	// Init
-	if (EngineGlobals::RenderingAPI->Init())
+	if (EngineGlobals::RenderingAPI->Init(RenderWindow, EnableDebug))
 	{
 		ICommandContext* CmdContext = EngineGlobals::RenderingAPI->GetCommandContext();
 		EngineGlobals::CmdListExecutor->SetContext(CmdContext);

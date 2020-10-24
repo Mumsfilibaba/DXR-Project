@@ -1,7 +1,7 @@
 #include "Material.h"
 #include "Renderer.h"
 
-#include "D3D12/D3D12CommandList.h"
+#include "RenderingCore/CommandList.h"
 
 Material::Material(const MaterialProperties& InProperties)
 	: AlbedoMap(nullptr)
@@ -21,11 +21,11 @@ void Material::Initialize()
 	MaterialBuffer = CreateConstantBuffer<MaterialProperties>(nullptr, BufferUsage_Default);
 }
 
-void Material::BuildBuffer(D3D12CommandList* CommandList)
+void Material::BuildBuffer(CommandList& CmdList)
 {
-	CommandList->TransitionBarrier(MaterialBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	CommandList->UploadBufferData(MaterialBuffer, 0, &Properties, sizeof(MaterialProperties));
-	CommandList->TransitionBarrier(MaterialBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	//CommandList->TransitionBarrier(MaterialBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+	//CommandList->UploadBufferData(MaterialBuffer, 0, &Properties, sizeof(MaterialProperties));
+	//CommandList->TransitionBarrier(MaterialBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	MaterialBufferIsDirty = false;
 }

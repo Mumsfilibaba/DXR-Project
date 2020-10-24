@@ -104,12 +104,12 @@ private:
 	bool CreateShadowMaps();
 	void WriteShadowMapDescriptors();
 
-	void GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, D3D12CommandList* CommandList);
-	void GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* Dest, D3D12CommandList* CommandList);
+	void GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, CommandList& InCmdList);
+	void GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* Dest, CommandList& InCmdList);
 
 	void WaitForPendingFrames();
 
-	void TraceRays(Texture2D* BackBuffer, D3D12CommandList* CommandList);
+	void TraceRays(Texture2D* BackBuffer, CommandList& InCmdList);
 
 private:
 	CommandList CmdList;
@@ -155,7 +155,7 @@ private:
 	
 	TSharedRef<Texture2D> ReflectionTexture;
 	TSharedRef<ShaderResourceView>	ReflectionTextureSRV;
-	TSharedRef<ShaderResourceView>	ReflectionTextureUAV;
+	TSharedRef<UnorderedAccessView>	ReflectionTextureUAV;
 
 	TSharedRef<Texture2D> IntegrationLUT;
 	TSharedRef<ShaderResourceView>	IntegrationLUTSRV;

@@ -375,7 +375,7 @@ public:
 	}
 
 	// Creation
-	static bool Initialize(ERenderingAPI InRenderAPI);
+	static bool Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindow> RenderingWindow);
 	static void Release();
 
 protected:
@@ -547,7 +547,7 @@ inline TSharedRef<VertexBuffer> CreateVertexBuffer(const ResourceData* InitalDat
 {
 	constexpr Uint32 STRIDE = sizeof(T);
 	const Uint32 SizeInByte = STRIDE * VertexCount;
-	return CreateVertexBuffer(InitalData);
+	return CreateVertexBuffer(InitalData, SizeInByte, STRIDE, Usage);
 }
 
 inline TSharedRef<IndexBuffer> CreateIndexBuffer(

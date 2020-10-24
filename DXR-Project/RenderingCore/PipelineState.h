@@ -518,7 +518,7 @@ struct GraphicsPipelineStateInitliazer
 	Uint32						SampleMask;
 	DepthStencilState*			DepthStencilState;
 	EIndexBufferStripCutValue	IBStripCutValue;
-	EPrimitveTopologyType		PrimitiveTopologyType;
+	EPrimitiveTopologyType		PrimitiveTopologyType;
 	PipelineRenderTargetFormats PipelineFormats;
 };
 

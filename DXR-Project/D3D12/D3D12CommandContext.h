@@ -102,6 +102,18 @@ public:
 
 	virtual void GenerateMips(Texture* Texture) override final;
 
+	virtual void TransitionTexture(
+		Texture* Texture,
+		EResourceState BeforeState,
+		EResourceState AfterState) override final;
+
+	virtual void TransitionBuffer(
+		Buffer* Buffer,
+		EResourceState BeforeState,
+		EResourceState AfterState) override final;
+
+	virtual void UnorderedAccessTextureBarrier(Texture* Texture) override final;
+
 	virtual void Draw(Uint32 VertexCount, Uint32 StartVertexLocation) override final;
 	
 	virtual void DrawIndexed(
