@@ -5,6 +5,9 @@
 
 #include "D3D12Device.h"
 #include "D3D12SwapChain.h"
+#include "D3D12CommandContext.h"
+
+class D3D12CommandContext;
 
 /*
 * D3D12RenderingAPI
@@ -347,6 +350,7 @@ private:
 
 	TSharedPtr<D3D12SwapChain>		SwapChain;
 	TSharedPtr<D3D12Device>			Device;
-	TSharedPtr<D3D12CommandQueue>	Queue;
-	TSharedPtr<D3D12CommandQueue>	ComputeQueue;
+	TSharedPtr<D3D12CommandQueue>	DirectCmdQueue;
+	TSharedPtr<D3D12CommandContext>	DirectCmdContext;
+	D3D12DefaultRootSignatures		DefaultRootSignatures;
 };

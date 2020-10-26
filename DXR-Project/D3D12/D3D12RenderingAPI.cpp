@@ -19,6 +19,7 @@
 
 #include <algorithm>
 
+
 /*
 * D3D12RenderingAPI
 */
@@ -27,8 +28,8 @@ D3D12RenderingAPI::D3D12RenderingAPI()
 	: RenderingAPI(ERenderingAPI::RenderingAPI_D3D12)
 	, SwapChain(nullptr)
 	, Device(nullptr)
-	, Queue(nullptr)
-	, ComputeQueue(nullptr)
+	, DirectCmdQueue(nullptr)
+	, DirectCmdContext(nullptr)
 {
 }
 
@@ -51,10 +52,24 @@ bool D3D12RenderingAPI::Init(TSharedRef<GenericWindow> RenderWindow, bool Enable
 		Device->InitRayTracing();
 	}
 
-	// TODO: Create CommandContext
+	// Create commandqueue
+	DirectCmdQueue = TSharedPtr(Device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
+	if (!DirectCmdQueue)
+	{
+		return false;
+	}
+
+	// Create default rootsignatures
+
+	// Create commandcontext
+	DirectCmdContext = MakeShared<D3D12CommandContext>(Device.Get(), DirectCmdQueue.Get(), DefaultRootSignatures);
+	if (!DirectCmdContext->Initialize())
+	{
+		return false;
+	}
 
 	// Create swapchain
-	SwapChain = Device->CreateSwapChain(StaticCast<WindowsWindow>(RenderWindow).Get(), Queue.Get());
+	SwapChain = Device->CreateSwapChain(StaticCast<WindowsWindow>(RenderWindow).Get(), DirectCmdQueue.Get());
 	if (!SwapChain)
 	{
 		return false;

@@ -1,13 +1,19 @@
 #include "D3D12CommandContext.h"
+#include "D3D12Device.h"
+#include "D3D12CommandQueue.h"
+#include "D3D12CommandList.h"
 
 /*
 * D3D12CommandContext
 */
 
-D3D12CommandContext::D3D12CommandContext(D3D12Device* InDevice)
+D3D12CommandContext::D3D12CommandContext(D3D12Device* InDevice, D3D12CommandQueue* InCmdQueue, const D3D12DefaultRootSignatures& InDefaultRootSignatures)
 	: D3D12DeviceChild(InDevice)
-	, CmdList(nullptr)
+	, CmdQueue(InCmdQueue)
 	, CmdAllocator(nullptr)
+	, CmdList(nullptr)
+	, Fence(nullptr)
+	, DefaultRootSignatures(InDefaultRootSignatures)
 {
 }
 
@@ -17,6 +23,28 @@ D3D12CommandContext::~D3D12CommandContext()
 
 bool D3D12CommandContext::Initialize()
 {
+	VALIDATE(CmdQueue != nullptr);
+
+	CmdAllocator = Device->CreateCommandAllocator(CmdQueue->GetType());
+	if (!CmdAllocator)
+	{
+		return false;
+	}
+
+	CmdList = Device->CreateCommandList(CmdQueue->GetType(), CmdAllocator, nullptr);
+	if (!CmdList)
+	{
+		return false;
+	}
+
+	Fence = Device->CreateFence(0);
+	if (!CmdList)
+	{
+		return false;
+	}
+
+	// TODO: Create RootSignatures
+
 	return false;
 }
 

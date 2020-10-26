@@ -57,6 +57,11 @@ public:
 		return Desc;
 	}
 
+	FORCEINLINE D3D12_COMMAND_LIST_TYPE GetType() const
+	{
+		return Desc.Type;
+	}
+
 private:
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> Queue;
 	D3D12_COMMAND_QUEUE_DESC Desc;

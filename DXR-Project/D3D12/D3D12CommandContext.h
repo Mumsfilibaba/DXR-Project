@@ -2,12 +2,13 @@
 #include "RenderingCore/ICommandContext.h"
 
 #include "D3D12DeviceChild.h"
+#include "D3D12RootSignature.h"
 
 /*
-* GenerateMipsHelper
+* D3D12GenerateMipsHelper
 */
 
-struct GenerateMipsHelper
+struct D3D12GenerateMipsHelper
 {
 	TUniquePtr<class D3D12ComputePipelineState>		GenerateMipsTex2D_PSO;
 	TUniquePtr<class D3D12ComputePipelineState>		GenerateMipsTexCube_PSO;
@@ -18,13 +19,26 @@ struct GenerateMipsHelper
 };
 
 /*
+* D3D12DefaultRootSignatures
+*/
+
+struct D3D12DefaultRootSignatures
+{
+	TSharedPtr<D3D12RootSignature> Graphics;
+	TSharedPtr<D3D12RootSignature> Compute;
+	TSharedPtr<D3D12RootSignature> GlobalRayTracing;
+	TSharedPtr<D3D12RootSignature> LocalRayTracing;
+};
+
+
+/*
 * D3D12CommandContext 
 */
 
 class D3D12CommandContext : public ICommandContext, public D3D12DeviceChild
 {
 public:
-	D3D12CommandContext(class D3D12Device* InDevice);
+	D3D12CommandContext(class D3D12Device* InDevice, D3D12CommandQueue* InCmdQueue, const D3D12DefaultRootSignatures& InDefaultRootSignatures);
 	~D3D12CommandContext();
 
 	bool Initialize();
@@ -148,7 +162,5 @@ private:
 	
 	class D3D12Fence* Fence;
 	
-	class D3D12RootSignature* DefaultGraphicsRootSignature;
-	class D3D12RootSignature* DefaultComputeRootSignature;
-	class D3D12RootSignature* DefaultRayTracingRootSignature;
+	D3D12DefaultRootSignatures DefaultRootSignatures;
 };
