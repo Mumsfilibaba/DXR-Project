@@ -387,7 +387,7 @@ protected:
 */
 
 // Textures
-inline TSharedRef<Texture1D> CreateTexture1D(
+inline Texture1D* CreateTexture1D(
 	const ResourceData* InitalData, 
 	EFormat Format, 
 	Uint32 Usage, 
@@ -404,7 +404,7 @@ inline TSharedRef<Texture1D> CreateTexture1D(
 		OptimizedClearValue);
 }
 
-inline TSharedRef<Texture1DArray> CreateTexture1DArray(
+inline Texture1DArray* CreateTexture1DArray(
 	const ResourceData* InitalData,
 	EFormat Format,
 	Uint32 Usage,
@@ -423,7 +423,7 @@ inline TSharedRef<Texture1DArray> CreateTexture1DArray(
 		OptimizedClearValue);
 }
 
-inline TSharedRef<Texture2D> CreateTexture2D(
+inline Texture2D* CreateTexture2D(
 	const ResourceData* InitalData, 
 	EFormat Format, 
 	Uint32 Usage, 
@@ -444,7 +444,7 @@ inline TSharedRef<Texture2D> CreateTexture2D(
 		OptimizedClearValue);
 }
 
-inline TSharedRef<Texture2DArray> CreateTexture2DArray(
+inline Texture2DArray* CreateTexture2DArray(
 	const ResourceData* InitalData, 
 	EFormat Format, 
 	Uint32 Usage, 
@@ -467,7 +467,7 @@ inline TSharedRef<Texture2DArray> CreateTexture2DArray(
 		OptimizedClearValue);
 }
 
-inline TSharedRef<TextureCube> CreateTextureCube(
+inline TextureCube* CreateTextureCube(
 	const ResourceData* InitalData,
 	EFormat Format,
 	Uint32 Usage,
@@ -486,7 +486,7 @@ inline TSharedRef<TextureCube> CreateTextureCube(
 		OptimizedClearValue);
 }
 
-inline TSharedRef<TextureCubeArray> CreateTextureCubeArray(
+inline TextureCubeArray* CreateTextureCubeArray(
 	const ResourceData* InitalData,
 	EFormat Format,
 	Uint32 Usage,
@@ -507,7 +507,7 @@ inline TSharedRef<TextureCubeArray> CreateTextureCubeArray(
 		OptimizedClearValue);
 }
 
-inline TSharedRef<Texture3D> CreateTexture3D(
+inline Texture3D* CreateTexture3D(
 	const ResourceData* InitalData,
 	EFormat Format,
 	Uint32 Usage,
@@ -529,7 +529,7 @@ inline TSharedRef<Texture3D> CreateTexture3D(
 }
 
 // Buffers
-inline TSharedRef<VertexBuffer> CreateVertexBuffer(
+inline VertexBuffer* CreateVertexBuffer(
 	const ResourceData* InitalData,
 	Uint32 SizeInBytes,
 	Uint32 VertexStride,
@@ -543,14 +543,14 @@ inline TSharedRef<VertexBuffer> CreateVertexBuffer(
 }
 
 template<typename T>
-inline TSharedRef<VertexBuffer> CreateVertexBuffer(const ResourceData* InitalData, Uint32 VertexCount, Uint32 Usage)
+inline VertexBuffer* CreateVertexBuffer(const ResourceData* InitalData, Uint32 VertexCount, Uint32 Usage)
 {
 	constexpr Uint32 STRIDE = sizeof(T);
 	const Uint32 SizeInByte = STRIDE * VertexCount;
 	return CreateVertexBuffer(InitalData, SizeInByte, STRIDE, Usage);
 }
 
-inline TSharedRef<IndexBuffer> CreateIndexBuffer(
+inline IndexBuffer* CreateIndexBuffer(
 	const ResourceData* InitalData,
 	Uint32 SizeInBytes,
 	EIndexFormat IndexFormat,
@@ -563,24 +563,24 @@ inline TSharedRef<IndexBuffer> CreateIndexBuffer(
 		Usage);
 }
 
-inline TSharedRef<ConstantBuffer> CreateConstantBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Usage)
+inline ConstantBuffer* CreateConstantBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Usage)
 {
 	return EngineGlobals::RenderingAPI->CreateConstantBuffer(InitalData, SizeInBytes, Usage);
 }
 
 template<typename T>
-inline TSharedRef<ConstantBuffer> CreateConstantBuffer(const ResourceData* InitalData, Uint32 Usage)
+inline ConstantBuffer* CreateConstantBuffer(const ResourceData* InitalData, Uint32 Usage)
 {
 	return CreateConstantBuffer(InitalData, sizeof(T), Usage);
 }
 
 template<typename T>
-inline TSharedRef<ConstantBuffer> CreateConstantBuffer(const ResourceData* InitalData, Uint32 ElementCount, Uint32 Usage)
+inline ConstantBuffer* CreateConstantBuffer(const ResourceData* InitalData, Uint32 ElementCount, Uint32 Usage)
 {
 	return CreateConstantBuffer(InitalData, sizeof(T) * ElementCount, Usage);
 }
 
-inline TSharedRef<StructuredBuffer> CreateStructuredBuffer(
+inline StructuredBuffer* CreateStructuredBuffer(
 	const ResourceData* InitalData,
 	Uint32 SizeInBytes,
 	Uint32 Stride,
@@ -597,12 +597,12 @@ inline TSharedRef<StructuredBuffer> CreateStructuredBuffer(
 * RayTracing Create functions
 */
 
-inline TSharedRef<RayTracingScene> CreateRayTracingScene()
+inline RayTracingScene* CreateRayTracingScene()
 {
 	return EngineGlobals::RenderingAPI->CreateRayTracingScene();
 }
 
-inline TSharedRef<RayTracingGeometry> CreateRayTracingGeometry()
+inline RayTracingGeometry* CreateRayTracingGeometry()
 {
 	return EngineGlobals::RenderingAPI->CreateRayTracingGeometry();
 }
@@ -612,7 +612,7 @@ inline TSharedRef<RayTracingGeometry> CreateRayTracingGeometry()
 */
 
 // ShaderResourceView
-inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
+inline ShaderResourceView* CreateShaderResourceView(
 	const Buffer* Buffer,
 	Uint32 FirstElement,
 	Uint32 ElementCount,
@@ -625,7 +625,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 		Format);
 }
 
-inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
+inline ShaderResourceView* CreateShaderResourceView(
 	const Buffer* Buffer,
 	Uint32 FirstElement,
 	Uint32 ElementCount,
@@ -639,12 +639,12 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 }
 
 template<typename T>
-inline TSharedRef<ShaderResourceView> CreateShaderResourceView(const Buffer* Buffer, Uint32 FirstElement, Uint32 ElementCount)
+inline ShaderResourceView* CreateShaderResourceView(const Buffer* Buffer, Uint32 FirstElement, Uint32 ElementCount)
 {
 	return CreateShaderResourceView(Buffer, FirstElement, ElementCount, sizeof(T));
 }
 
-inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
+inline ShaderResourceView* CreateShaderResourceView(
 	const Texture1D* Texture,
 	EFormat Format,
 	Uint32 MostDetailedMip,
@@ -657,7 +657,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 		MipLevels);
 }
 
-inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
+inline ShaderResourceView* CreateShaderResourceView(
 	const Texture1DArray* Texture,
 	EFormat Format,
 	Uint32 MostDetailedMip,
@@ -674,7 +674,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 		ArraySize);
 }
 
-inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
+inline ShaderResourceView* CreateShaderResourceView(
 	const Texture2D* Texture,
 	EFormat Format,
 	Uint32 MostDetailedMip,
@@ -687,7 +687,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 		MipLevels);
 }
 
-inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
+inline ShaderResourceView* CreateShaderResourceView(
 	const Texture2DArray* Texture,
 	EFormat Format,
 	Uint32 MostDetailedMip,
@@ -704,7 +704,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 		ArraySize);
 }
 
-inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
+inline ShaderResourceView* CreateShaderResourceView(
 	const TextureCube* Texture,
 	EFormat Format,
 	Uint32 MostDetailedMip,
@@ -717,7 +717,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 		MipLevels);
 }
 
-inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
+inline ShaderResourceView* CreateShaderResourceView(
 	const TextureCubeArray* Texture,
 	EFormat Format,
 	Uint32 MostDetailedMip,
@@ -734,7 +734,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 		ArraySize);
 }
 
-inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
+inline ShaderResourceView* CreateShaderResourceView(
 	const Texture3D* Texture,
 	EFormat Format,
 	Uint32 MostDetailedMip,
@@ -748,7 +748,7 @@ inline TSharedRef<ShaderResourceView> CreateShaderResourceView(
 }
 
 // UnorderedAccessView
-inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
+inline UnorderedAccessView* CreateUnorderedAccessView(
 	const Buffer* Buffer,
 	Uint64 FirstElement,
 	Uint32 NumElements,
@@ -763,7 +763,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 		CounterOffsetInBytes);
 }
 
-inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
+inline UnorderedAccessView* CreateUnorderedAccessView(
 	const Buffer* Buffer,
 	Uint64 FirstElement,
 	Uint32 NumElements,
@@ -778,12 +778,12 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 		CounterOffsetInBytes);
 }
 
-inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice)
+inline UnorderedAccessView* CreateUnorderedAccessView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice)
 {
 	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
 }
 
-inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
+inline UnorderedAccessView* CreateUnorderedAccessView(
 	const Texture1DArray* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -798,12 +798,12 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 		ArraySize);
 }
 
-inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice)
+inline UnorderedAccessView* CreateUnorderedAccessView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice)
 {
 	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
 }
 
-inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
+inline UnorderedAccessView* CreateUnorderedAccessView(
 	const Texture2DArray* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -818,7 +818,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 		ArraySize);
 }
 
-inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(const TextureCube* Texture, EFormat Format, Uint32 MipSlice)
+inline UnorderedAccessView* CreateUnorderedAccessView(const TextureCube* Texture, EFormat Format, Uint32 MipSlice)
 {
 	return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
 		Texture,
@@ -826,7 +826,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(const TextureCu
 		MipSlice);
 }
 
-inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
+inline UnorderedAccessView* CreateUnorderedAccessView(
 	const TextureCubeArray* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -839,7 +839,7 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 		ArraySlice);
 }
 
-inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
+inline UnorderedAccessView* CreateUnorderedAccessView(
 	const Texture3D* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -855,12 +855,12 @@ inline TSharedRef<UnorderedAccessView> CreateUnorderedAccessView(
 }
 
 // RenderTargetView
-inline TSharedRef<RenderTargetView> CreateRenderTargetView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice)
+inline RenderTargetView* CreateRenderTargetView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice)
 {
 	return EngineGlobals::RenderingAPI->CreateRenderTargetView(Texture, Format, MipSlice);
 }
 
-inline TSharedRef<RenderTargetView> CreateRenderTargetView(
+inline RenderTargetView* CreateRenderTargetView(
 	const Texture1DArray* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -875,7 +875,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 		ArraySize);
 }
 
-inline TSharedRef<RenderTargetView> CreateRenderTargetView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice)
+inline RenderTargetView* CreateRenderTargetView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice)
 {
 	return EngineGlobals::RenderingAPI->CreateRenderTargetView(
 		Texture,
@@ -883,7 +883,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(const Texture2D* Text
 		MipSlice);
 }
 
-inline TSharedRef<RenderTargetView> CreateRenderTargetView(
+inline RenderTargetView* CreateRenderTargetView(
 	const Texture2DArray* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -898,7 +898,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 		ArraySize);
 }
 
-inline TSharedRef<RenderTargetView> CreateRenderTargetView(
+inline RenderTargetView* CreateRenderTargetView(
 	const TextureCube* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -913,7 +913,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 		FaceCount);
 }
 
-inline TSharedRef<RenderTargetView> CreateRenderTargetView(
+inline RenderTargetView* CreateRenderTargetView(
 	const TextureCubeArray* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -930,7 +930,7 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 		FaceCount);
 }
 
-inline TSharedRef<RenderTargetView> CreateRenderTargetView(
+inline RenderTargetView* CreateRenderTargetView(
 	const Texture3D* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -946,12 +946,12 @@ inline TSharedRef<RenderTargetView> CreateRenderTargetView(
 }
 
 // DepthStencilView
-inline TSharedRef<DepthStencilView> CreateDepthStencilView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice)
+inline DepthStencilView* CreateDepthStencilView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice)
 {
 	return EngineGlobals::RenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
 }
 
-inline TSharedRef<DepthStencilView> CreateDepthStencilView(
+inline DepthStencilView* CreateDepthStencilView(
 	const Texture1DArray* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -966,12 +966,12 @@ inline TSharedRef<DepthStencilView> CreateDepthStencilView(
 		ArraySize);
 }
 
-inline TSharedRef<DepthStencilView> CreateDepthStencilView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice)
+inline DepthStencilView* CreateDepthStencilView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice)
 {
 	return EngineGlobals::RenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
 }
 
-inline TSharedRef<DepthStencilView> CreateDepthStencilView(
+inline DepthStencilView* CreateDepthStencilView(
 	const Texture2DArray* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -986,7 +986,7 @@ inline TSharedRef<DepthStencilView> CreateDepthStencilView(
 		ArraySize);
 }
 
-inline TSharedRef<DepthStencilView> CreateDepthStencilView(
+inline DepthStencilView* CreateDepthStencilView(
 	const TextureCube* Texture,
 	EFormat Format,
 	Uint32 MipSlice,
@@ -1001,7 +1001,7 @@ inline TSharedRef<DepthStencilView> CreateDepthStencilView(
 		FaceCount);
 }
 
-inline TSharedRef<DepthStencilView> CreateDepthStencilView(
+inline DepthStencilView* CreateDepthStencilView(
 	const TextureCubeArray* Texture,
 	EFormat Format,
 	Uint32 MipSlice,

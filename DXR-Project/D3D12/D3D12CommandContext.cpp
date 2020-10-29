@@ -43,9 +43,7 @@ bool D3D12CommandContext::Initialize()
 		return false;
 	}
 
-	// TODO: Create RootSignatures
-
-	return false;
+	return true;
 }
 
 void D3D12CommandContext::Begin()
@@ -155,6 +153,15 @@ void D3D12CommandContext::UpdateBuffer(
 	Buffer* Destination, 
 	Uint64 OffsetInBytes, 
 	Uint64 SizeInBytes, 
+	const VoidPtr SourceData)
+{
+}
+
+void D3D12CommandContext::UpdateTexture2D(
+	Texture2D* Destination, 
+	Uint32 Width, 
+	Uint32 Height, 
+	Uint32 MipLevel, 
 	const VoidPtr SourceData)
 {
 }

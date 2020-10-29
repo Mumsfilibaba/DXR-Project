@@ -58,13 +58,15 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(D3D12CommandList* Comma
 	Memory::Memzero(&Info, sizeof(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO));
 	Device->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
 
-	ScratchBuffer = StaticCast<D3D12StructuredBuffer>(CreateStructuredBuffer(nullptr, Info.ScratchDataSizeInBytes, 1, BufferUsage_UAV | BufferUsage_Default)).ReleaseOwnerShip();
+	ScratchBuffer = static_cast<D3D12StructuredBuffer*>(
+		CreateStructuredBuffer(nullptr, Info.ScratchDataSizeInBytes, 1, BufferUsage_UAV | BufferUsage_Default));
 	if (!ScratchBuffer)
 	{
 		return false;
 	}
 
-	ResultBuffer = StaticCast<D3D12StructuredBuffer>(CreateStructuredBuffer(nullptr, Info.ResultDataMaxSizeInBytes, 1, BufferUsage_UAV | BufferUsage_Default)).ReleaseOwnerShip();
+	ResultBuffer = static_cast<D3D12StructuredBuffer*>(
+		CreateStructuredBuffer(nullptr, Info.ResultDataMaxSizeInBytes, 1, BufferUsage_UAV | BufferUsage_Default));
 	if (!ResultBuffer)
 	{
 		return false;
@@ -151,7 +153,8 @@ bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineStat
 	const Uint32 SizeInBytes	= StrideInBytes * static_cast<Uint32>(InBindingTableEntries.Size());
 	BindingTableStride = StrideInBytes;
 
-	BindingTable = StaticCast<D3D12StructuredBuffer>(CreateStructuredBuffer(nullptr, SizeInBytes, 1, BufferUsage_UAV | BufferUsage_Dynamic)).ReleaseOwnerShip();
+	BindingTable = static_cast<D3D12StructuredBuffer*>(
+		CreateStructuredBuffer(nullptr, SizeInBytes, 1, BufferUsage_UAV | BufferUsage_Dynamic));
 	if (!BindingTable)
 	{
 		LOG_ERROR("[D3D12RayTracingScene]: FAILED to create BindingTable\n");
@@ -203,20 +206,23 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandL
 	Device->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
 
 	// Create the buffers
-	ScratchBuffer = StaticCast<D3D12StructuredBuffer>(CreateStructuredBuffer(nullptr, Info.ScratchDataSizeInBytes, 1, BufferUsage_UAV | BufferUsage_Default)).ReleaseOwnerShip();
+	ScratchBuffer = static_cast<D3D12StructuredBuffer*>(
+		CreateStructuredBuffer(nullptr, Info.ScratchDataSizeInBytes, 1, BufferUsage_UAV | BufferUsage_Default));
 	if (!ScratchBuffer)
 	{
 		return false;
 	}
 
-	ResultBuffer = StaticCast<D3D12StructuredBuffer>(CreateStructuredBuffer(nullptr, Info.ResultDataMaxSizeInBytes, 1, BufferUsage_UAV | BufferUsage_Default)).ReleaseOwnerShip();
+	ResultBuffer = static_cast<D3D12StructuredBuffer*>(
+		CreateStructuredBuffer(nullptr, Info.ResultDataMaxSizeInBytes, 1, BufferUsage_UAV | BufferUsage_Default));
 	if (!ResultBuffer)
 	{
 		return false;
 	}
 
 	const Uint32 InstanceBufferSize = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * InstanceCount;
-	InstanceBuffer = StaticCast<D3D12StructuredBuffer>(CreateStructuredBuffer(nullptr, InstanceBufferSize, sizeof(D3D12_RAYTRACING_INSTANCE_DESC), BufferUsage_UAV | BufferUsage_Dynamic)).ReleaseOwnerShip();
+	InstanceBuffer = static_cast<D3D12StructuredBuffer*>(
+		CreateStructuredBuffer(nullptr, InstanceBufferSize, sizeof(D3D12_RAYTRACING_INSTANCE_DESC), BufferUsage_UAV | BufferUsage_Dynamic));
 	if(!InstanceBuffer)
 	{
 		return false;

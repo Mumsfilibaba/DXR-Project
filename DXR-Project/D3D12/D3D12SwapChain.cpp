@@ -6,10 +6,8 @@
 
 D3D12SwapChain::D3D12SwapChain(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
-	, BeloningWindow()
+	, Window(nullptr)
 	, SwapChain()
-	, BackBuffers()
-	, BackBuffersViews()
 	, Width(0)
 	, Height(0)
 	, Flags(0)
@@ -57,8 +55,6 @@ bool D3D12SwapChain::CreateSwapChain(IDXGIFactory2* Factory, const TSharedRef<Wi
 			// Disable Alt+Enter for this SwapChain/Window
 			Factory->MakeWindowAssociation(InWindow->GetHandle(), DXGI_MWA_NO_ALT_ENTER);
 
-			RetriveSwapChainSurfaces();
-
 			LOG_INFO("[D3D12SwapChain]: Created SwapChain");
 			return true;
 		}
@@ -89,15 +85,11 @@ bool D3D12SwapChain::Resize(Uint32 InWidth, Uint32 InHeight)
 		return false;
 	}
 
-	ReleaseSurfaces();
-
 	HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
 	if (SUCCEEDED(Result))
 	{
 		Width	= InWidth;
 		Height	= InHeight;
-
-		RetriveSwapChainSurfaces();
 		return true;
 	}
 	else
@@ -116,74 +108,59 @@ bool D3D12SwapChain::Present(Uint32 SyncInterval)
 	return SUCCEEDED(SwapChain->Present(SyncInterval, 0));
 }
 
-void D3D12SwapChain::RetriveSwapChainSurfaces()
-{
-	using namespace Microsoft::WRL;
-
-	if (BackBuffers.Size() < GetSurfaceCount())
-	{
-		BackBuffers.Resize(GetSurfaceCount());
-	}
-
-	if (BackBuffersViews.Size() < GetSurfaceCount())
-	{
-		BackBuffersViews.Resize(GetSurfaceCount());
-	}
-
-	//Uint32 BufferID = 0;
-	//ComPtr<ID3D12Resource> Resource;
-	//for (TSharedPtr<D3D12Texture2D>& Buffer : BackBuffers)
-	//{
-	//	HRESULT hResult = SwapChain->GetBuffer(BufferID, IID_PPV_ARGS(&Resource));
-	//	if (SUCCEEDED(hResult))
-	//	{
-	//		if (!Buffer)
-	//		{
-	//			Buffer = TSharedPtr<D3D12Texture>(new D3D12Texture(Device));
-	//		}
-
-	//		if (Buffer->D3D12Resource::Initialize(Resource.Get()))
-	//		{
-	//			D3D12_RENDER_TARGET_VIEW_DESC RtvDesc = { };
-	//			RtvDesc.ViewDimension			= D3D12_RTV_DIMENSION_TEXTURE2D;
-	//			RtvDesc.Format					= GetSurfaceFormat();
-	//			RtvDesc.Texture2D.MipSlice		= 0;
-	//			RtvDesc.Texture2D.PlaneSlice	= 0;
-
-	//			if (!BackBuffersViews[BufferID])
-	//			{
-	//				BackBuffersViews[BufferID] = TSharedPtr<D3D12RenderTargetView>(new D3D12RenderTargetView(Device, Resource.Get(), &RtvDesc));
-	//			}
-	//			else
-	//			{
-	//				BackBuffersViews[BufferID]->CreateView(Resource.Get(), &RtvDesc);
-	//			}
-
-	//			Buffer->SetName("BackBuffer[" + std::to_string(BufferID) + "]");
-	//			//Buffer->SetRenderTargetView(BackBuffersViews[BufferID], 0);
-	//		}
-
-	//		BufferID++;
-	//	}
-	//	else
-	//	{
-	//		LOG_ERROR("[D3D12SwapChain]: FAILED to retrive SwapChain Buffer");
-	//		break;
-	//	}
-	//}
-}
-
-void D3D12SwapChain::ReleaseSurfaces()
-{
-	using namespace Microsoft::WRL;
-
-	for (TSharedRef<D3D12Texture2D>& Buffer : BackBuffers)
-	{
-		Buffer.Reset();
-	}
-
-	for (TSharedRef<D3D12RenderTargetView>& View : BackBuffersViews)
-	{
-		View->ResetResource();
-	}
-}
+//void D3D12SwapChain::RetriveSwapChainSurfaces()
+//{
+//	using namespace Microsoft::WRL;
+//
+//	if (BackBuffers.Size() < GetSurfaceCount())
+//	{
+//		BackBuffers.Resize(GetSurfaceCount());
+//	}
+//
+//	if (BackBuffersViews.Size() < GetSurfaceCount())
+//	{
+//		BackBuffersViews.Resize(GetSurfaceCount());
+//	}
+//
+//	Uint32 BufferID = 0;
+//	ComPtr<ID3D12Resource> Resource;
+//	for (TSharedPtr<D3D12Texture2D>& Buffer : BackBuffers)
+//	{
+//		HRESULT hResult = SwapChain->GetBuffer(BufferID, IID_PPV_ARGS(&Resource));
+//		if (SUCCEEDED(hResult))
+//		{
+//			if (!Buffer)
+//			{
+//				Buffer = TSharedPtr<D3D12Texture>(new D3D12Texture(Device));
+//			}
+//
+//			if (Buffer->D3D12Resource::Initialize(Resource.Get()))
+//			{
+//				D3D12_RENDER_TARGET_VIEW_DESC RtvDesc = { };
+//				RtvDesc.ViewDimension			= D3D12_RTV_DIMENSION_TEXTURE2D;
+//				RtvDesc.Format					= GetSurfaceFormat();
+//				RtvDesc.Texture2D.MipSlice		= 0;
+//				RtvDesc.Texture2D.PlaneSlice	= 0;
+//
+//				if (!BackBuffersViews[BufferID])
+//				{
+//					BackBuffersViews[BufferID] = TSharedPtr<D3D12RenderTargetView>(new D3D12RenderTargetView(Device, Resource.Get(), &RtvDesc));
+//				}
+//				else
+//				{
+//					BackBuffersViews[BufferID]->CreateView(Resource.Get(), &RtvDesc);
+//				}
+//
+//				Buffer->SetName("BackBuffer[" + std::to_string(BufferID) + "]");
+//				//Buffer->SetRenderTargetView(BackBuffersViews[BufferID], 0);
+//			}
+//
+//			BufferID++;
+//		}
+//		else
+//		{
+//			LOG_ERROR("[D3D12SwapChain]: FAILED to retrive SwapChain Buffer");
+//			break;
+//		}
+//	}
+//}

@@ -348,6 +348,33 @@ private:
 	
 	bool UploadResource(D3D12Resource& Resource, const ResourceData* InitalData) const;
 
+	template<typename TD3D12Texture>
+	TD3D12Texture* CreateTextureResource(
+		TD3D12Texture* Texture, 
+		Uint32 Usage, 
+		const D3D12_RESOURCE_DESC& Desc, 
+		const ResourceData* InitalData) const
+	{
+		D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_DEFAULT;
+		if (Usage & TextureUsage_Dynamic)
+		{
+			HeapType = D3D12_HEAP_TYPE_UPLOAD;
+		}
+
+		if (!AllocateTexture(*Texture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
+		{
+			LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
+			return nullptr;
+		}
+
+		if (InitalData)
+		{
+			UploadResource(*Texture, InitalData);
+		}
+
+		return Texture;
+	}
+
 	TSharedPtr<D3D12SwapChain>		SwapChain;
 	TSharedPtr<D3D12Device>			Device;
 	TSharedPtr<D3D12CommandQueue>	DirectCmdQueue;

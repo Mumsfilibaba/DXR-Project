@@ -60,6 +60,10 @@ bool D3D12RenderingAPI::Init(TSharedRef<GenericWindow> RenderWindow, bool Enable
 	}
 
 	// Create default rootsignatures
+	if (!DefaultRootSignatures.Init(Device.Get()))
+	{
+		return false;
+	}
 
 	// Create commandcontext
 	DirectCmdContext = MakeShared<D3D12CommandContext>(Device.Get(), DirectCmdQueue.Get(), DefaultRootSignatures);
@@ -74,6 +78,8 @@ bool D3D12RenderingAPI::Init(TSharedRef<GenericWindow> RenderWindow, bool Enable
 	{
 		return false;
 	}
+
+	// TODO: Create RenderTargets
 
 	return true;
 }
@@ -90,18 +96,11 @@ Texture1D* D3D12RenderingAPI::CreateTexture1D(
 	Uint32 MipLevels, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_FLAGS Flags	= ConvertTextureUsage(Usage);
-	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
-	if (Usage & TextureUsage_Dynamic)
-	{
-		HeapType = D3D12_HEAP_TYPE_UPLOAD;
-	}
-
 	D3D12_RESOURCE_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
 
 	Desc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-	Desc.Flags				= Flags;
+	Desc.Flags				= ConvertTextureUsage(Usage);
 	Desc.Format				= ConvertFormat(Format);
 	Desc.Width				= Width;
 	Desc.Height				= 1;
@@ -112,18 +111,7 @@ Texture1D* D3D12RenderingAPI::CreateTexture1D(
 	Desc.SampleDesc.Quality	= 0;
 
 	D3D12Texture1D* NewTexture = new D3D12Texture1D(Device.Get(), Format, Usage, Width, MipLevels, OptimizedClearValue);
-	if (!AllocateTexture(*NewTexture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
-		return nullptr;
-	}
-
-	if (InitalData)
-	{
-		UploadResource(*NewTexture, InitalData);
-	}
-
-	return NewTexture;
+	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 Texture1DArray* D3D12RenderingAPI::CreateTexture1DArray(
@@ -135,18 +123,11 @@ Texture1DArray* D3D12RenderingAPI::CreateTexture1DArray(
 	Uint32 ArrayCount, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_FLAGS Flags = ConvertTextureUsage(Usage);
-	D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_DEFAULT;
-	if (Usage & TextureUsage_Dynamic)
-	{
-		HeapType = D3D12_HEAP_TYPE_UPLOAD;
-	}
-
 	D3D12_RESOURCE_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
 
 	Desc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-	Desc.Flags				= Flags;
+	Desc.Flags				= ConvertTextureUsage(Usage);
 	Desc.Format				= ConvertFormat(Format);
 	Desc.Width				= Width;
 	Desc.Height				= 1;
@@ -157,18 +138,7 @@ Texture1DArray* D3D12RenderingAPI::CreateTexture1DArray(
 	Desc.SampleDesc.Quality	= 0;
 
 	D3D12Texture1DArray* NewTexture = new D3D12Texture1DArray(Device.Get(), Format, Usage, Width, MipLevels, ArrayCount, OptimizedClearValue);
-	if (!AllocateTexture(*NewTexture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
-		return nullptr;
-	}
-
-	if (InitalData)
-	{
-		UploadResource(*NewTexture, InitalData);
-	}
-
-	return NewTexture;
+	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 Texture2D* D3D12RenderingAPI::CreateTexture2D(
@@ -181,18 +151,11 @@ Texture2D* D3D12RenderingAPI::CreateTexture2D(
 	Uint32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_FLAGS Flags	= ConvertTextureUsage(Usage);
-	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
-	if (Usage & TextureUsage_Dynamic)
-	{
-		HeapType = D3D12_HEAP_TYPE_UPLOAD;
-	}
-
 	D3D12_RESOURCE_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
 
 	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	Desc.Flags					= Flags;
+	Desc.Flags					= ConvertTextureUsage(Usage);
 	Desc.Format					= ConvertFormat(Format);
 	Desc.Width					= Width;
 	Desc.Height					= Height;
@@ -212,18 +175,7 @@ Texture2D* D3D12RenderingAPI::CreateTexture2D(
 	}
 	
 	D3D12Texture2D* NewTexture = new D3D12Texture2D(Device.Get(), Format, Usage, Width, Height, MipLevels, SampleCount, OptimizedClearValue);
-	if (!AllocateTexture(*NewTexture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
-		return nullptr;
-	}
-
-	if (InitalData)
-	{
-		UploadResource(*NewTexture, InitalData);
-	}
-
-	return NewTexture;
+	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 Texture2DArray* D3D12RenderingAPI::CreateTexture2DArray(
@@ -237,18 +189,11 @@ Texture2DArray* D3D12RenderingAPI::CreateTexture2DArray(
 	Uint32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_FLAGS Flags	= ConvertTextureUsage(Usage);
-	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
-	if (Usage & TextureUsage_Dynamic)
-	{
-		HeapType = D3D12_HEAP_TYPE_UPLOAD;
-	}
-
 	D3D12_RESOURCE_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
 
 	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	Desc.Flags					= Flags;
+	Desc.Flags					= ConvertTextureUsage(Usage);
 	Desc.Format					= ConvertFormat(Format);
 	Desc.Width					= Width;
 	Desc.Height					= Height;
@@ -268,18 +213,7 @@ Texture2DArray* D3D12RenderingAPI::CreateTexture2DArray(
 	}
 
 	D3D12Texture2DArray* NewTexture = new D3D12Texture2DArray(Device.Get(), Format, Usage, Width, Height, MipLevels, ArrayCount, SampleCount, OptimizedClearValue);
-	if (!AllocateTexture(*NewTexture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
-		return nullptr;
-	}
-
-	if (InitalData)
-	{
-		UploadResource(*NewTexture, InitalData);
-	}
-
-	return NewTexture;
+	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 TextureCube* D3D12RenderingAPI::CreateTextureCube(
@@ -291,19 +225,12 @@ TextureCube* D3D12RenderingAPI::CreateTextureCube(
 	Uint32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_FLAGS Flags	= ConvertTextureUsage(Usage);
-	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
-	if (Usage & TextureUsage_Dynamic)
-	{
-		HeapType = D3D12_HEAP_TYPE_UPLOAD;
-	}
-
 	D3D12_RESOURCE_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
 
 	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
 	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	Desc.Flags					= Flags;
+	Desc.Flags					= ConvertTextureUsage(Usage);
 	Desc.Format					= ConvertFormat(Format);
 	Desc.Width					= Size;
 	Desc.Height					= Size;
@@ -323,18 +250,7 @@ TextureCube* D3D12RenderingAPI::CreateTextureCube(
 	}
 
 	D3D12TextureCube* NewTexture = new D3D12TextureCube(Device.Get(), Format, Usage, Size, MipLevels, SampleCount, OptimizedClearValue);
-	if (!AllocateTexture(*NewTexture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
-		return nullptr;
-	}
-
-	if (InitalData)
-	{
-		UploadResource(*NewTexture, InitalData);
-	}
-
-	return NewTexture;
+	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 TextureCubeArray* D3D12RenderingAPI::CreateTextureCubeArray(
@@ -347,19 +263,12 @@ TextureCubeArray* D3D12RenderingAPI::CreateTextureCubeArray(
 	Uint32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_FLAGS Flags = ConvertTextureUsage(Usage);
-	D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_DEFAULT;
-	if (Usage & TextureUsage_Dynamic)
-	{
-		HeapType = D3D12_HEAP_TYPE_UPLOAD;
-	}
-
 	D3D12_RESOURCE_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
 
 	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
 	Desc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	Desc.Flags				= Flags;
+	Desc.Flags				= ConvertTextureUsage(Usage);
 	Desc.Format				= ConvertFormat(Format);
 	Desc.Width				= Size;
 	Desc.Height				= Size;
@@ -379,18 +288,7 @@ TextureCubeArray* D3D12RenderingAPI::CreateTextureCubeArray(
 	}
 
 	D3D12TextureCubeArray* NewTexture = new D3D12TextureCubeArray(Device.Get(), Format, Usage, Size, MipLevels, ArrayCount, SampleCount, OptimizedClearValue);
-	if (!AllocateTexture(*NewTexture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
-		return nullptr;
-	}
-
-	if (InitalData)
-	{
-		UploadResource(*NewTexture, InitalData);
-	}
-
-	return NewTexture;
+	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 Texture3D* D3D12RenderingAPI::CreateTexture3D(
@@ -403,18 +301,11 @@ Texture3D* D3D12RenderingAPI::CreateTexture3D(
 	Uint32 MipLevels, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_FLAGS Flags	= ConvertTextureUsage(Usage);
-	D3D12_HEAP_TYPE HeapType	= D3D12_HEAP_TYPE_DEFAULT;
-	if (Usage & TextureUsage_Dynamic)
-	{
-		HeapType = D3D12_HEAP_TYPE_UPLOAD;
-	}
-
 	D3D12_RESOURCE_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
 
 	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-	Desc.Flags					= Flags;
+	Desc.Flags					= ConvertTextureUsage(Usage);
 	Desc.Format					= ConvertFormat(Format);
 	Desc.Width					= Width;
 	Desc.Height					= Height;
@@ -424,18 +315,7 @@ Texture3D* D3D12RenderingAPI::CreateTexture3D(
 	Desc.SampleDesc.Count		= 1;
 
 	D3D12Texture3D* NewTexture = new D3D12Texture3D(Device.Get(), Format, Usage, Width, Height, Depth, MipLevels, OptimizedClearValue);
-	if (!AllocateTexture(*NewTexture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
-		return nullptr;
-	}
-
-	if (InitalData)
-	{
-		UploadResource(*NewTexture, InitalData);
-	}
-
-	return NewTexture;
+	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(

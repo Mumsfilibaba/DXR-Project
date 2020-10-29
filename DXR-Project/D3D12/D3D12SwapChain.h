@@ -32,11 +32,6 @@ public:
 		SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Name.size()), Name.data());
 	}
 
-	FORCEINLINE D3D12Texture2D* GetBackBufferResource(Uint32 BackBufferIndex) const
-	{
-		return BackBuffers[BackBufferIndex].Get();
-	}
-
 	FORCEINLINE DXGI_FORMAT GetSurfaceFormat() const
 	{
 		return DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -57,16 +52,10 @@ public:
 		return Height;
 	}
 
-private:
-	void RetriveSwapChainSurfaces();
-	void ReleaseSurfaces();
 
 private:
-	TSharedRef<WindowsWindow> BeloningWindow;
-	Microsoft::WRL::ComPtr<IDXGISwapChain3>		SwapChain;
-	
-	TArray<TSharedRef<D3D12Texture2D>>			BackBuffers;
-	TArray<TSharedRef<D3D12RenderTargetView>>	BackBuffersViews;
+	TSharedRef<WindowsWindow> Window;
+	Microsoft::WRL::ComPtr<IDXGISwapChain3> SwapChain;
 
 	Uint32 Width	= 0;
 	Uint32 Height	= 0;

@@ -3,6 +3,22 @@
 
 #include <dxcapi.h>
 
+class D3D12RootSignature;
+
+/*
+* D3D12DefaultRootSignatures
+*/
+
+struct D3D12DefaultRootSignatures
+{
+	TSharedPtr<D3D12RootSignature> Graphics;
+	TSharedPtr<D3D12RootSignature> Compute;
+	TSharedPtr<D3D12RootSignature> GlobalRayTracing;
+	TSharedPtr<D3D12RootSignature> LocalRayTracing;
+
+	bool Init(class D3D12Device* Device);
+};
+
 /*
 * D3D12RootSignature
 */

@@ -1,4 +1,6 @@
 #pragma once
+#include "RenderingCore/RayTracing.h"
+
 #include "D3D12DeviceChild.h"
 #include "D3D12Buffer.h"
 #include "D3D12Views.h"
@@ -12,7 +14,7 @@ class D3D12DescriptorTable;
 * D3D12RayTracingGeometry - Equal to the Bottom-Level AccelerationStructure
 */
 
-class D3D12RayTracingGeometry : public D3D12DeviceChild
+class D3D12RayTracingGeometry : public RayTracingGeometry, public D3D12DeviceChild
 {
 public:
 	D3D12RayTracingGeometry(D3D12Device* InDevice);

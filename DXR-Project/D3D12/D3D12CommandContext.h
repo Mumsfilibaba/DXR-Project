@@ -4,6 +4,8 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12RootSignature.h"
 
+class D3D12CommandQueue;
+
 /*
 * D3D12GenerateMipsHelper
 */
@@ -17,19 +19,6 @@ struct D3D12GenerateMipsHelper
 	TUniquePtr<class D3D12DescriptorTable>			SRVDescriptorTable;
 	TArray<TUniquePtr<class D3D12DescriptorTable>>	UAVDescriptorTables;
 };
-
-/*
-* D3D12DefaultRootSignatures
-*/
-
-struct D3D12DefaultRootSignatures
-{
-	TSharedPtr<D3D12RootSignature> Graphics;
-	TSharedPtr<D3D12RootSignature> Compute;
-	TSharedPtr<D3D12RootSignature> GlobalRayTracing;
-	TSharedPtr<D3D12RootSignature> LocalRayTracing;
-};
-
 
 /*
 * D3D12CommandContext 
@@ -101,6 +90,13 @@ public:
 		Uint64 SizeInBytes, 
 		const VoidPtr SourceData) override final;
 
+	virtual void UpdateTexture2D(
+		Texture2D* Destination,
+		Uint32 Width,
+		Uint32 Height,
+		Uint32 MipLevel,
+		const VoidPtr SourceData) override final;
+
 	virtual void CopyBuffer(
 		Buffer* Destination, 
 		Buffer* Source, 
@@ -156,7 +152,7 @@ public:
 	virtual void DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth) override final;
 
 private:
-	class D3D12CommandQueue* CmdQueue;
+	D3D12CommandQueue* CmdQueue;
 	class D3D12CommandAllocator* CmdAllocator;
 	class D3D12CommandList* CmdList; 
 	
