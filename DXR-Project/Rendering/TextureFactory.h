@@ -10,8 +10,8 @@
 
 enum ETextureFactoryFlags : Uint32
 {
-	TEXTURE_FACTORY_FLAGS_NONE			= 0,
-	TEXTURE_FACTORY_FLAGS_GENERATE_MIPS = FLAG(1),
+	TextureFactoryFlag_None			= 0,
+	TextureFactoryFlag_GenerateMips = FLAG(1),
 };
 
 class Texture2D;

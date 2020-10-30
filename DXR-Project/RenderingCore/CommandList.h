@@ -383,6 +383,7 @@ private:
 		}
 	}
 
+private:
 	StackAllocator CmdAllocator;
 	RenderCommand* First;
 	RenderCommand* Last;

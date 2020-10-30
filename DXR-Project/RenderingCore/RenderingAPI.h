@@ -21,7 +21,7 @@ public:
 	* Textures
 	*/
 
-	inline static Texture1D* CreateTexture1D(
+	FORCEINLINE static Texture1D* CreateTexture1D(
 		const ResourceData* InitalData, 
 		EFormat Format, 
 		Uint32 Usage, 
@@ -29,7 +29,7 @@ public:
 		Uint32 MipLevels, 
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return EngineGlobals::RenderingAPI->CreateTexture1D(
+		return ActiveRenderingAPI->CreateTexture1D(
 			InitalData, 
 			Format, 
 			Usage, 
@@ -38,7 +38,7 @@ public:
 			OptimizedClearValue);
 	}
 
-	inline static Texture1DArray* CreateTexture1DArray(
+	FORCEINLINE static Texture1DArray* CreateTexture1DArray(
 		const ResourceData* InitalData,
 		EFormat Format,
 		Uint32 Usage,
@@ -47,7 +47,7 @@ public:
 		Uint32 ArrayCount,
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return EngineGlobals::RenderingAPI->CreateTexture1DArray(
+		return ActiveRenderingAPI->CreateTexture1DArray(
 			InitalData,
 			Format,
 			Usage,
@@ -57,7 +57,7 @@ public:
 			OptimizedClearValue);
 	}
 
-	inline static Texture2D* CreateTexture2D(
+	FORCEINLINE static Texture2D* CreateTexture2D(
 		const ResourceData* InitalData, 
 		EFormat Format, 
 		Uint32 Usage, 
@@ -67,7 +67,7 @@ public:
 		Uint32 SampleCount, 
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return EngineGlobals::RenderingAPI->CreateTexture2D(
+		return ActiveRenderingAPI->CreateTexture2D(
 			InitalData, 
 			Format, 
 			Usage, 
@@ -78,7 +78,7 @@ public:
 			OptimizedClearValue);
 	}
 
-	inline static Texture2DArray* CreateTexture2DArray(
+	FORCEINLINE static Texture2DArray* CreateTexture2DArray(
 		const ResourceData* InitalData, 
 		EFormat Format, 
 		Uint32 Usage, 
@@ -89,7 +89,7 @@ public:
 		Uint32 SampleCount, 
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return EngineGlobals::RenderingAPI->CreateTexture2DArray(
+		return ActiveRenderingAPI->CreateTexture2DArray(
 			InitalData, 
 			Format, 
 			Usage, 
@@ -101,7 +101,7 @@ public:
 			OptimizedClearValue);
 	}
 
-	inline static TextureCube* CreateTextureCube(
+	FORCEINLINE static TextureCube* CreateTextureCube(
 		const ResourceData* InitalData,
 		EFormat Format,
 		Uint32 Usage,
@@ -110,7 +110,7 @@ public:
 		Uint32 SampleCount,
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return EngineGlobals::RenderingAPI->CreateTextureCube(
+		return ActiveRenderingAPI->CreateTextureCube(
 			InitalData, 
 			Format,
 			Usage,
@@ -120,7 +120,7 @@ public:
 			OptimizedClearValue);
 	}
 
-	inline static TextureCubeArray* CreateTextureCubeArray(
+	FORCEINLINE static TextureCubeArray* CreateTextureCubeArray(
 		const ResourceData* InitalData,
 		EFormat Format,
 		Uint32 Usage,
@@ -130,7 +130,7 @@ public:
 		Uint32 SampleCount,
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return EngineGlobals::RenderingAPI->CreateTextureCubeArray(
+		return ActiveRenderingAPI->CreateTextureCubeArray(
 			InitalData,
 			Format,
 			Usage,
@@ -141,7 +141,7 @@ public:
 			OptimizedClearValue);
 	}
 
-	inline static Texture3D* CreateTexture3D(
+	FORCEINLINE static Texture3D* CreateTexture3D(
 		const ResourceData* InitalData,
 		EFormat Format,
 		Uint32 Usage,
@@ -151,7 +151,7 @@ public:
 		Uint32 MipLevels,
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return EngineGlobals::RenderingAPI->CreateTexture3D(
+		return ActiveRenderingAPI->CreateTexture3D(
 			InitalData,
 			Format,
 			Usage,
@@ -166,13 +166,13 @@ public:
 	* Buffers
 	*/
 
-	inline static VertexBuffer* CreateVertexBuffer(
+	FORCEINLINE static VertexBuffer* CreateVertexBuffer(
 		const ResourceData* InitalData,
 		Uint32 SizeInBytes,
 		Uint32 VertexStride,
 		Uint32 Usage)
 	{
-		return EngineGlobals::RenderingAPI->CreateVertexBuffer(
+		return ActiveRenderingAPI->CreateVertexBuffer(
 			InitalData,
 			SizeInBytes,
 			VertexStride,
@@ -180,7 +180,7 @@ public:
 	}
 
 	template<typename T>
-	inline static VertexBuffer* CreateVertexBuffer(
+	FORCEINLINE static VertexBuffer* CreateVertexBuffer(
 		const ResourceData* InitalData, 
 		Uint32 VertexCount, 
 		Uint32 Usage)
@@ -190,29 +190,29 @@ public:
 		return CreateVertexBuffer(InitalData, SizeInByte, STRIDE, Usage);
 	}
 
-	inline static IndexBuffer* CreateIndexBuffer(
+	FORCEINLINE static IndexBuffer* CreateIndexBuffer(
 		const ResourceData* InitalData,
 		Uint32 SizeInBytes,
 		EIndexFormat IndexFormat,
 		Uint32 Usage)
 	{
-		return EngineGlobals::RenderingAPI->CreateIndexBuffer(
+		return ActiveRenderingAPI->CreateIndexBuffer(
 			InitalData,
 			SizeInBytes,
 			IndexFormat,
 			Usage);
 	}
 
-	inline static ConstantBuffer* CreateConstantBuffer(
+	FORCEINLINE static ConstantBuffer* CreateConstantBuffer(
 		const ResourceData* InitalData, 
 		Uint32 SizeInBytes, 
 		Uint32 Usage)
 	{
-		return EngineGlobals::RenderingAPI->CreateConstantBuffer(InitalData, SizeInBytes, Usage);
+		return ActiveRenderingAPI->CreateConstantBuffer(InitalData, SizeInBytes, Usage);
 	}
 
 	template<typename T>
-	inline static ConstantBuffer* CreateConstantBuffer(
+	FORCEINLINE static ConstantBuffer* CreateConstantBuffer(
 		const ResourceData* InitalData, 
 		Uint32 Usage)
 	{
@@ -220,7 +220,7 @@ public:
 	}
 
 	template<typename T>
-	inline static ConstantBuffer* CreateConstantBuffer(
+	FORCEINLINE static ConstantBuffer* CreateConstantBuffer(
 		const ResourceData* InitalData, 
 		Uint32 ElementCount, 
 		Uint32 Usage)
@@ -228,13 +228,13 @@ public:
 		return CreateConstantBuffer(InitalData, sizeof(T) * ElementCount, Usage);
 	}
 
-	inline static StructuredBuffer* CreateStructuredBuffer(
+	FORCEINLINE static StructuredBuffer* CreateStructuredBuffer(
 		const ResourceData* InitalData,
 		Uint32 SizeInBytes,
 		Uint32 Stride,
 		Uint32 Usage)
 	{
-		return EngineGlobals::RenderingAPI->CreateStructuredBuffer(
+		return ActiveRenderingAPI->CreateStructuredBuffer(
 			InitalData,
 			SizeInBytes,
 			Stride,
@@ -245,44 +245,44 @@ public:
 	* RayTracingScene
 	*/
 
-	inline static RayTracingScene* CreateRayTracingScene()
+	FORCEINLINE static RayTracingScene* CreateRayTracingScene()
 	{
-		return EngineGlobals::RenderingAPI->CreateRayTracingScene();
+		return ActiveRenderingAPI->CreateRayTracingScene();
 	}
 
 	/*
 	* RayTracingGeometry
 	*/
 
-	inline static RayTracingGeometry* CreateRayTracingGeometry()
+	FORCEINLINE static RayTracingGeometry* CreateRayTracingGeometry()
 	{
-		return EngineGlobals::RenderingAPI->CreateRayTracingGeometry();
+		return ActiveRenderingAPI->CreateRayTracingGeometry();
 	}
 
 	/*
 	* ShaderResourceView
 	*/
 
-	inline static ShaderResourceView* CreateShaderResourceView(
+	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
 		const Buffer* Buffer,
 		Uint32 FirstElement,
 		Uint32 ElementCount,
 		EFormat Format)
 	{
-		return EngineGlobals::RenderingAPI->CreateShaderResourceView(
+		return ActiveRenderingAPI->CreateShaderResourceView(
 			Buffer,
 			FirstElement,
 			ElementCount,
 			Format);
 	}
 
-	inline static ShaderResourceView* CreateShaderResourceView(
+	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
 		const Buffer* Buffer,
 		Uint32 FirstElement,
 		Uint32 ElementCount,
 		Uint32 Stride)
 	{
-		return EngineGlobals::RenderingAPI->CreateShaderResourceView(
+		return ActiveRenderingAPI->CreateShaderResourceView(
 			Buffer,
 			FirstElement,
 			ElementCount,
@@ -290,7 +290,7 @@ public:
 	}
 
 	template<typename T>
-	inline static ShaderResourceView* CreateShaderResourceView(
+	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
 		const Buffer* Buffer, 
 		Uint32 FirstElement, 
 		Uint32 ElementCount)
@@ -298,20 +298,20 @@ public:
 		return CreateShaderResourceView(Buffer, FirstElement, ElementCount, sizeof(T));
 	}
 
-	inline static ShaderResourceView* CreateShaderResourceView(
+	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
 		const Texture1D* Texture,
 		EFormat Format,
 		Uint32 MostDetailedMip,
 		Uint32 MipLevels) 
 	{ 
-		return EngineGlobals::RenderingAPI->CreateShaderResourceView(
+		return ActiveRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
 			MipLevels);
 	}
 
-	inline static ShaderResourceView* CreateShaderResourceView(
+	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
 		const Texture1DArray* Texture,
 		EFormat Format,
 		Uint32 MostDetailedMip,
@@ -319,7 +319,7 @@ public:
 		Uint32 FirstArraySlice,
 		Uint32 ArraySize)
 	{
-		return EngineGlobals::RenderingAPI->CreateShaderResourceView(
+		return ActiveRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
@@ -328,20 +328,20 @@ public:
 			ArraySize);
 	}
 
-	inline static ShaderResourceView* CreateShaderResourceView(
+	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
 		const Texture2D* Texture,
 		EFormat Format,
 		Uint32 MostDetailedMip,
 		Uint32 MipLevels)
 	{
-		return EngineGlobals::RenderingAPI->CreateShaderResourceView(
+		return ActiveRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
 			MipLevels);
 	}
 
-	inline static ShaderResourceView* CreateShaderResourceView(
+	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
 		const Texture2DArray* Texture,
 		EFormat Format,
 		Uint32 MostDetailedMip,
@@ -349,7 +349,7 @@ public:
 		Uint32 FirstArraySlice,
 		Uint32 ArraySize)
 	{
-		return EngineGlobals::RenderingAPI->CreateShaderResourceView(
+		return ActiveRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
@@ -358,20 +358,20 @@ public:
 			ArraySize);
 	}
 
-	inline static ShaderResourceView* CreateShaderResourceView(
+	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
 		const TextureCube* Texture,
 		EFormat Format,
 		Uint32 MostDetailedMip,
 		Uint32 MipLevels)
 	{
-		return EngineGlobals::RenderingAPI->CreateShaderResourceView(
+		return ActiveRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
 			MipLevels);
 	}
 
-	inline static ShaderResourceView* CreateShaderResourceView(
+	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
 		Uint32 MostDetailedMip,
@@ -379,7 +379,7 @@ public:
 		Uint32 FirstArraySlice,
 		Uint32 ArraySize)
 	{
-		return EngineGlobals::RenderingAPI->CreateShaderResourceView(
+		return ActiveRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
@@ -388,13 +388,13 @@ public:
 			ArraySize);
 	}
 
-	inline static ShaderResourceView* CreateShaderResourceView(
+	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
 		const Texture3D* Texture,
 		EFormat Format,
 		Uint32 MostDetailedMip,
 		Uint32 MipLevels)
 	{
-		return EngineGlobals::RenderingAPI->CreateShaderResourceView(
+		return ActiveRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
@@ -405,14 +405,14 @@ public:
 	* UnorderedAccessView
 	*/
 
-	inline static UnorderedAccessView* CreateUnorderedAccessView(
+	FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
 		const Buffer* Buffer,
 		Uint64 FirstElement,
 		Uint32 NumElements,
 		EFormat Format,
 		Uint64 CounterOffsetInBytes)
 	{
-		return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
+		return ActiveRenderingAPI->CreateUnorderedAccessView(
 			Buffer,
 			FirstElement,
 			NumElements,
@@ -420,14 +420,14 @@ public:
 			CounterOffsetInBytes);
 	}
 
-	inline static UnorderedAccessView* CreateUnorderedAccessView(
+	FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
 		const Buffer* Buffer,
 		Uint64 FirstElement,
 		Uint32 NumElements,
 		Uint32 StructureByteStride,
 		Uint64 CounterOffsetInBytes)
 	{
-		return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
+		return ActiveRenderingAPI->CreateUnorderedAccessView(
 			Buffer,
 			FirstElement,
 			NumElements,
@@ -435,22 +435,22 @@ public:
 			CounterOffsetInBytes);
 	}
 
-	inline static UnorderedAccessView* CreateUnorderedAccessView(
+	FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture1D* Texture, 
 		EFormat Format, 
 		Uint32 MipSlice)
 	{
-		return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
+		return ActiveRenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
 	}
 
-	inline static UnorderedAccessView* CreateUnorderedAccessView(
+	FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture1DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
 		Uint32 ArraySize)
 	{
-		return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
+		return ActiveRenderingAPI->CreateUnorderedAccessView(
 			Texture,
 			Format,
 			MipSlice,
@@ -458,22 +458,22 @@ public:
 			ArraySize);
 	}
 
-	inline static UnorderedAccessView* CreateUnorderedAccessView(
+	FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture2D* Texture, 
 		EFormat Format, 
 		Uint32 MipSlice)
 	{
-		return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
+		return ActiveRenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
 	}
 
-	inline static UnorderedAccessView* CreateUnorderedAccessView(
+	FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture2DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
 		Uint32 ArraySize)
 	{
-		return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
+		return ActiveRenderingAPI->CreateUnorderedAccessView(
 			Texture,
 			Format,
 			MipSlice,
@@ -481,38 +481,38 @@ public:
 			ArraySize);
 	}
 
-	inline static UnorderedAccessView* CreateUnorderedAccessView(
+	FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
 		const TextureCube* Texture, 
 		EFormat Format, 
 		Uint32 MipSlice)
 	{
-		return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
+		return ActiveRenderingAPI->CreateUnorderedAccessView(
 			Texture,
 			Format,
 			MipSlice);
 	}
 
-	inline static UnorderedAccessView* CreateUnorderedAccessView(
+	FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 ArraySlice)
 	{
-		return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
+		return ActiveRenderingAPI->CreateUnorderedAccessView(
 			Texture,
 			Format,
 			MipSlice,
 			ArraySlice);
 	}
 
-	inline static UnorderedAccessView* CreateUnorderedAccessView(
+	FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture3D* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstDepthSlice,
 		Uint32 DepthSlices) 
 	{
-		return EngineGlobals::RenderingAPI->CreateUnorderedAccessView(
+		return ActiveRenderingAPI->CreateUnorderedAccessView(
 			Texture,
 			Format,
 			MipSlice,
@@ -524,22 +524,22 @@ public:
 	* RenderTargetView
 	*/
 
-	inline static RenderTargetView* CreateRenderTargetView(
+	FORCEINLINE static RenderTargetView* CreateRenderTargetView(
 		const Texture1D* Texture, 
 		EFormat Format, 
 		Uint32 MipSlice)
 	{
-		return EngineGlobals::RenderingAPI->CreateRenderTargetView(Texture, Format, MipSlice);
+		return ActiveRenderingAPI->CreateRenderTargetView(Texture, Format, MipSlice);
 	}
 
-	inline static RenderTargetView* CreateRenderTargetView(
+	FORCEINLINE static RenderTargetView* CreateRenderTargetView(
 		const Texture1DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
 		Uint32 ArraySize)
 	{
-		return EngineGlobals::RenderingAPI->CreateRenderTargetView(
+		return ActiveRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
@@ -547,25 +547,25 @@ public:
 			ArraySize);
 	}
 
-	inline static RenderTargetView* CreateRenderTargetView(
+	FORCEINLINE static RenderTargetView* CreateRenderTargetView(
 		const Texture2D* Texture, 
 		EFormat Format, 
 		Uint32 MipSlice)
 	{
-		return EngineGlobals::RenderingAPI->CreateRenderTargetView(
+		return ActiveRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice);
 	}
 
-	inline static RenderTargetView* CreateRenderTargetView(
+	FORCEINLINE static RenderTargetView* CreateRenderTargetView(
 		const Texture2DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
 		Uint32 ArraySize)
 	{
-		return EngineGlobals::RenderingAPI->CreateRenderTargetView(
+		return ActiveRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
@@ -573,14 +573,14 @@ public:
 			ArraySize);
 	}
 
-	inline static RenderTargetView* CreateRenderTargetView(
+	FORCEINLINE static RenderTargetView* CreateRenderTargetView(
 		const TextureCube* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstFace,
 		Uint32 FaceCount)
 	{
-		return EngineGlobals::RenderingAPI->CreateRenderTargetView(
+		return ActiveRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
@@ -588,7 +588,7 @@ public:
 			FaceCount);
 	}
 
-	inline static RenderTargetView* CreateRenderTargetView(
+	FORCEINLINE static RenderTargetView* CreateRenderTargetView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
@@ -596,7 +596,7 @@ public:
 		Uint32 FirstFace,
 		Uint32 FaceCount)
 	{
-		return EngineGlobals::RenderingAPI->CreateRenderTargetView(
+		return ActiveRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
@@ -605,14 +605,14 @@ public:
 			FaceCount);
 	}
 
-	inline static RenderTargetView* CreateRenderTargetView(
+	FORCEINLINE static RenderTargetView* CreateRenderTargetView(
 		const Texture3D* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstDepthSlice,
 		Uint32 DepthSlices) 
 	{
-		return EngineGlobals::RenderingAPI->CreateRenderTargetView(
+		return ActiveRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
@@ -624,22 +624,22 @@ public:
 	* DepthStencilView
 	*/
 
-	inline static DepthStencilView* CreateDepthStencilView(
+	FORCEINLINE static DepthStencilView* CreateDepthStencilView(
 		const Texture1D* Texture, 
 		EFormat Format, 
 		Uint32 MipSlice)
 	{
-		return EngineGlobals::RenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
+		return ActiveRenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
 	}
 
-	inline static DepthStencilView* CreateDepthStencilView(
+	FORCEINLINE static DepthStencilView* CreateDepthStencilView(
 		const Texture1DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
 		Uint32 ArraySize)
 	{
-		return EngineGlobals::RenderingAPI->CreateDepthStencilView(
+		return ActiveRenderingAPI->CreateDepthStencilView(
 			Texture,
 			Format,
 			MipSlice,
@@ -647,22 +647,22 @@ public:
 			ArraySize);
 	}
 
-	inline static DepthStencilView* CreateDepthStencilView(
+	FORCEINLINE static DepthStencilView* CreateDepthStencilView(
 		const Texture2D* Texture, 
 		EFormat Format, 
 		Uint32 MipSlice)
 	{
-		return EngineGlobals::RenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
+		return ActiveRenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
 	}
 
-	inline static DepthStencilView* CreateDepthStencilView(
+	FORCEINLINE static DepthStencilView* CreateDepthStencilView(
 		const Texture2DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
 		Uint32 ArraySize)
 	{
-		return EngineGlobals::RenderingAPI->CreateDepthStencilView(
+		return ActiveRenderingAPI->CreateDepthStencilView(
 			Texture,
 			Format,
 			MipSlice,
@@ -670,14 +670,14 @@ public:
 			ArraySize);
 	}
 
-	inline static DepthStencilView* CreateDepthStencilView(
+	FORCEINLINE static DepthStencilView* CreateDepthStencilView(
 		const TextureCube* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstFace,
 		Uint32 FaceCount)
 	{
-		return EngineGlobals::RenderingAPI->CreateDepthStencilView(
+		return ActiveRenderingAPI->CreateDepthStencilView(
 			Texture,
 			Format,
 			MipSlice,
@@ -685,7 +685,7 @@ public:
 			FaceCount);
 	}
 
-	inline static DepthStencilView* CreateDepthStencilView(
+	FORCEINLINE static DepthStencilView* CreateDepthStencilView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
@@ -693,7 +693,7 @@ public:
 		Uint32 FirstFace,
 		Uint32 FaceCount)
 	{
-		return EngineGlobals::RenderingAPI->CreateDepthStencilView(
+		return ActiveRenderingAPI->CreateDepthStencilView(
 			Texture,
 			Format,
 			MipSlice,
@@ -703,12 +703,49 @@ public:
 	}
 
 	/*
+	* Support Features
+	*/
+
+	FORCEINLINE static bool IsRayTracingSupported()
+	{
+		return ActiveRenderingAPI->IsRayTracingSupported();
+	}
+
+	FORCEINLINE static bool UAVSupportsFormat(EFormat Format)
+	{
+		return ActiveRenderingAPI->UAVSupportsFormat(Format);
+	}
+
+	/*
 	* Getters
 	*/
 
-	inline static CommandListExecutor& GetCommandListExecutor()
+	FORCEINLINE static CommandListExecutor& GetCommandListExecutor()
 	{
-		VALIDATE(EngineGlobals::CmdListExecutor != nullptr);
-		return *EngineGlobals::CmdListExecutor;
+		return CmdExecutor;
 	}
+
+	FORCEINLINE static class ICommandContext* GetDefaultCommandContext()
+	{
+		return ActiveRenderingAPI->GetDefaultCommandContext();
+	}
+
+	FORCEINLINE static TSharedPtr<GenericRenderingAPI> GetActiveRenderingAPI()
+	{
+		return ActiveRenderingAPI;
+	}
+
+	FORCEINLINE static ERenderingAPI GetAPI()
+	{
+		return ActiveRenderingAPI->GetAPI();
+	}
+
+	FORCEINLINE static std::string GetAdapterName()
+	{
+		return ActiveRenderingAPI->GetAdapterName();
+	}
+
+private:
+	static CommandListExecutor CmdExecutor;
+	static TSharedPtr<GenericRenderingAPI> ActiveRenderingAPI;
 };

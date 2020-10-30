@@ -39,7 +39,7 @@ bool Mesh::Initialize(const MeshData& Data)
 	}
 
 	// Create RaytracingGeometry if raytracing is supported
-	if (EngineGlobals::RenderingAPI->IsRayTracingSupported())
+	if (RenderingAPI::IsRayTracingSupported())
 	{
 		RayTracingGeometry = RenderingAPI::CreateRayTracingGeometry();
 

@@ -9,12 +9,15 @@
 * RenderingAPI
 */
 
+CommandListExecutor				RenderingAPI::CmdExecutor			= CommandListExecutor();
+TSharedPtr<GenericRenderingAPI>	RenderingAPI::ActiveRenderingAPI	= nullptr;
+
 bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindow> RenderWindow)
 {
 	// Select RenderingAPI
 	if (InRenderAPI == ERenderingAPI::RenderingAPI_D3D12)
 	{
-		EngineGlobals::RenderingAPI = new D3D12RenderingAPI();
+		ActiveRenderingAPI = new D3D12RenderingAPI();
 	}
 	else
 	{
@@ -33,12 +36,10 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 #endif
 
 	// Init
-	if (EngineGlobals::RenderingAPI->Init(RenderWindow, EnableDebug))
+	if (ActiveRenderingAPI->Init(RenderWindow, EnableDebug))
 	{
-		EngineGlobals::CmdListExecutor = MakeShared<CommandListExecutor>();
-
-		ICommandContext* CmdContext = EngineGlobals::RenderingAPI->GetDefaultCommandContext();
-		EngineGlobals::CmdListExecutor->SetContext(CmdContext);
+		ICommandContext* CmdContext = ActiveRenderingAPI->GetDefaultCommandContext();
+		CmdExecutor.SetContext(CmdContext);
 
 		return true;
 	}

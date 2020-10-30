@@ -32,7 +32,7 @@ static void DrawSceneInfo();
 */
 static void DrawDebugData()
 {
-	static std::string AdapterName = EngineGlobals::RenderingAPI->GetAdapterName();
+	static std::string AdapterName = RenderingAPI::GetAdapterName();
 
 	const Float64 Delta = EngineLoop::GetDeltaTime().AsMilliSeconds();
 	DebugUI::DrawDebugString("Adapter: " + AdapterName);

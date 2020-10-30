@@ -808,7 +808,7 @@ bool Renderer::Initialize()
 		return false;	
 	}
 
-	Skybox = TextureFactory::CreateTextureCubeFromPanorma(Panorama.Get(), 1024, TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R16G16B16A16_Float);
+	Skybox = TextureFactory::CreateTextureCubeFromPanorma(Panorama.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::Format_R16G16B16A16_Float);
 	if (!Skybox)
 	{
 		return false;
@@ -893,7 +893,7 @@ bool Renderer::Initialize()
 	GenerateSpecularIrradianceMap(Skybox.Get(), SpecularIrradianceMap.Get(), CmdList);
 
 	// Create albedo for raytracing
-	Albedo = TextureFactory::LoadFromFile("../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
+	Albedo = TextureFactory::LoadFromFile("../Assets/Textures/RockySoil_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
 	if (!Albedo)
 	{
 		return false;
@@ -903,7 +903,7 @@ bool Renderer::Initialize()
 		Albedo->SetName("AlbedoMap");
 	}
 	
-	Normal = TextureFactory::LoadFromFile("../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
+	Normal = TextureFactory::LoadFromFile("../Assets/Textures/RockySoil_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
 	if (!Normal)
 	{
 		return false;
@@ -2258,7 +2258,7 @@ bool Renderer::InitIntegrationLUT()
 {
 	constexpr EFormat LUTFormat = EFormat::Format_R16G16_Float;
 	constexpr Uint32 LUTSize = 512;
-	if (!EngineGlobals::RenderingAPI->UAVSupportsFormat(EFormat::Format_R16G16_Float))
+	if (!RenderingAPI::UAVSupportsFormat(EFormat::Format_R16G16_Float))
 	{
 		LOG_ERROR("[Renderer]: Format_R16G16_Float is not supported for UAVs");
 		return false;

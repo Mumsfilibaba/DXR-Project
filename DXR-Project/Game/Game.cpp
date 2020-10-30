@@ -139,7 +139,7 @@ bool Game::Initialize()
 	NewComponent->Mesh		= Mesh::Make(CubeMeshData);
 	NewComponent->Material	= MakeShared<Material>(MatProperties);
 
-	TSharedRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
+	TSharedRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
 	if (!AlbedoMap)
 	{
 		return false;
@@ -149,7 +149,7 @@ bool Game::Initialize()
 		AlbedoMap->SetName("AlbedoMap");
 	}
 
-	TSharedRef<Texture2D> NormalMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
+	TSharedRef<Texture2D> NormalMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
 	if (!NormalMap)
 	{
 		return false;
@@ -159,7 +159,7 @@ bool Game::Initialize()
 		NormalMap->SetName("NormalMap");
 	}
 
-	TSharedRef<Texture2D> AOMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
+	TSharedRef<Texture2D> AOMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
 	if (!AOMap)
 	{
 		return false;
@@ -169,7 +169,7 @@ bool Game::Initialize()
 		AOMap->SetName("AOMap");
 	}
 
-	TSharedRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
+	TSharedRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
 	if (!RoughnessMap)
 	{
 		return false;
@@ -179,7 +179,7 @@ bool Game::Initialize()
 		RoughnessMap->SetName("RoughnessMap");
 	}
 
-	TSharedRef<Texture2D> HeightMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
+	TSharedRef<Texture2D> HeightMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
 	if (!HeightMap)
 	{
 		return false;
@@ -189,7 +189,7 @@ bool Game::Initialize()
 		HeightMap->SetName("HeightMap");
 	}
 
-	TSharedRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, EFormat::Format_R8G8B8A8_Unorm);
+	TSharedRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
 	if (!MetallicMap)
 	{
 		return false;

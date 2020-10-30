@@ -51,10 +51,9 @@ public:
 	virtual bool Init(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) = 0;
 
 	/*
-	* Resources
+	* Textures
 	*/
 
-	// Textures
 	virtual Texture1D* CreateTexture1D(
 		const ResourceData* InitalData,
 		EFormat Format,
@@ -122,7 +121,10 @@ public:
 		Uint32 MipLevels,
 		const ClearValue& OptimizedClearValue) const = 0;
 
-	// Buffers
+	/*
+	* Buffers
+	*/
+
 	virtual VertexBuffer* CreateVertexBuffer(
 		const ResourceData* InitalData,
 		Uint32 SizeInBytes,
@@ -146,15 +148,17 @@ public:
 		Uint32 Stride,
 		Uint32 Usage) const = 0;
 
-	// Ray Tracing
+	/*
+	* RayTracing
+	*/
+
 	virtual RayTracingScene* CreateRayTracingScene()		const = 0;
 	virtual RayTracingGeometry* CreateRayTracingGeometry()	const = 0;
 
 	/*
-	* Resource Views
+	* ShaderResourceView
 	*/
 
-	// ShaderResourceView
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Buffer* Buffer,
 		Uint32 FirstElement,
@@ -215,7 +219,10 @@ public:
 		Uint32 MostDetailedMip,
 		Uint32 MipLevels) const = 0;
 
-	// UnorderedAccessView
+	/*
+	* UnorderedAccessView
+	*/
+
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Buffer* Buffer,
 		Uint64 FirstElement,
@@ -272,7 +279,10 @@ public:
 		Uint32 FirstDepthSlice,
 		Uint32 DepthSlices) const = 0;
 
-	// RenderTargetView
+	/*
+	* RenderTargetView
+	*/
+
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture1D* Texture, 
 		EFormat Format, 
@@ -319,7 +329,10 @@ public:
 		Uint32 FirstDepthSlice,
 		Uint32 DepthSlices) const = 0;
 
-	// DepthStencilView
+	/*
+	* DepthStencilView
+	*/
+
 	virtual DepthStencilView* CreateDepthStencilView(
 		const Texture1D* Texture, 
 		EFormat Format, 
@@ -359,7 +372,10 @@ public:
 		Uint32 FaceIndex,
 		Uint32 FaceCount) const = 0;
 
-	// PipelineState
+	/*
+	* Pipeline
+	*/
+
 	virtual class Shader* CreateShader() const = 0;
 
 	virtual class DepthStencilState* CreateDepthStencilState()	const = 0;
@@ -371,10 +387,16 @@ public:
 	virtual class ComputePipelineState* CreateComputePipelineState()	const = 0;
 	virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const = 0;
 
-	// Context
+	/*
+	* Context
+	*/
+
 	virtual class ICommandContext* GetDefaultCommandContext() const = 0;
 
-	// Getters
+	/*
+	* Getters
+	*/
+
 	FORCEINLINE virtual std::string GetAdapterName() const
 	{
 		return std::string();
