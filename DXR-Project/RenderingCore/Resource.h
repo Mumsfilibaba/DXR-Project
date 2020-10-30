@@ -43,28 +43,28 @@ struct ResourceData
 	{
 	}
 
-	inline ResourceData(VoidPtr InData)
+	inline ResourceData(const VoidPtr InData)
 		: Data(InData)
 		, Pitch(0)
 		, SlicePitch(0)
 	{
 	}
 
-	inline ResourceData(VoidPtr InData, Uint32 InPitch)
+	inline ResourceData(const VoidPtr InData, Uint32 InPitch)
 		: Data(InData)
 		, Pitch(InPitch)
 		, SlicePitch(0)
 	{
 	}
 
-	inline ResourceData(VoidPtr InData, Uint32 InPitch, Uint32 InSlicePitch)
+	inline ResourceData(const VoidPtr InData, Uint32 InPitch, Uint32 InSlicePitch)
 		: Data(InData)
 		, Pitch(InPitch)
 		, SlicePitch(InSlicePitch)
 	{
 	}
 
-	VoidPtr Data;
+	const VoidPtr Data;
 	Uint32	Pitch;
 	Uint32	SlicePitch;
 };

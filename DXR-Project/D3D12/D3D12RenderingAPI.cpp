@@ -167,7 +167,7 @@ Texture2D* D3D12RenderingAPI::CreateTexture2D(
 	Desc.Width					= Width;
 	Desc.Height					= Height;
 	Desc.DepthOrArraySize		= 1;
-	Desc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	Desc.Layout					= D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	Desc.MipLevels				= static_cast<UINT16>(MipLevels);
 	Desc.SampleDesc.Count		= SampleCount;
 
@@ -1773,16 +1773,16 @@ bool D3D12RenderingAPI::AllocateTexture(
 	HeapProperties.CPUPageProperty		= D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	HeapProperties.MemoryPoolPreference	= D3D12_MEMORY_POOL_UNKNOWN;
 
-	HRESULT HR = Device->CreateCommitedResource(
+	HRESULT hr = Device->CreateCommitedResource(
 		&HeapProperties, 
 		D3D12_HEAP_FLAG_NONE, 
 		&Desc, 
 		InitalState, 
 		nullptr, 
 		IID_PPV_ARGS(&Resource.D3DResource));
-	if (SUCCEEDED(HR))
+	if (SUCCEEDED(hr))
 	{
-		Resource.Address	= Resource.D3DResource->GetGPUVirtualAddress();
+		Resource.Address	= NULL;
 		Resource.Desc		= Desc;
 		Resource.HeapType	= HeapType;
 		Resource.ResourceState = InitalState;

@@ -185,7 +185,7 @@ public:
 * Cast a buffer to correct type
 */
 
-inline D3D12Resource* D3D12BufferCast(Buffer* Buffer)
+inline D3D12Buffer* D3D12BufferCast(Buffer* Buffer)
 {
 	if (Buffer->AsVertexBuffer())
 	{
@@ -209,7 +209,7 @@ inline D3D12Resource* D3D12BufferCast(Buffer* Buffer)
 	}
 }
 
-inline const D3D12Resource* D3D12BufferCast(const Buffer* Buffer)
+inline const D3D12Buffer* D3D12BufferCast(const Buffer* Buffer)
 {
 	if (Buffer->AsVertexBuffer())
 	{

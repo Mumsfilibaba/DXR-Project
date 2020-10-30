@@ -87,36 +87,36 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint
 
 	VALIDATE(MipLevels != 0);
 
+	const Uint32 Stride		= (Format == EFormat::Format_R8G8B8A8_Unorm) ? 4 : 16;
+	const Uint32 RowPitch	= Width * Stride;
+	
+	VALIDATE(RowPitch > 0);
+	
+	ResourceData InitalData = ResourceData((const VoidPtr)Pixels, Width * Stride);
 	TSharedRef<Texture2D> Texture = RenderingAPI::CreateTexture2D(
-		nullptr, 
+		&InitalData,
 		Format, 
 		TextureUsage_Default | TextureUsage_SRV,
 		Width, 
 		Height, 
 		MipLevels, 
 		1);
+
 	if (!Texture)
 	{
 		return nullptr;
 	}
 
-	const Uint32 Stride			= (Format == EFormat::Format_R8G8B8A8_Unorm) ? 4 : 16;
-	const Uint32 RowPitch		= (Width * Stride + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
-	const Uint32 SizeInBytes	= Height * RowPitch;
-
-	CommandList& CmdList = GlobalFactoryData.CmdList;
-	CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);	
-	CmdList.UpdateTexture2D(Texture.Get(), Width, Height, 0, (const VoidPtr)(Pixels));
-
 	if (GenerateMipLevels)
 	{
+		CommandList& CmdList = GlobalFactoryData.CmdList;
+		CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);	
 		CmdList.GenerateMips(Texture.Get());
+		CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
+	
+		CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
+		Executor.ExecuteCommandList(CmdList);
 	}
-
-	CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
-
-	CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
-	Executor.ExecuteCommandList(CmdList);
 
 	return Texture.ReleaseOwnerShip();
 }
@@ -130,7 +130,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	TSharedRef<TextureCube> StagingTexture = RenderingAPI::CreateTextureCube(
 		nullptr, 
 		Format, 
-		TextureUsage_UAV | TextureUsage_Default, 
+		TextureUsage_Default | TextureUsage_UAV ,
 		CubeMapSize, 
 		MipLevels, 
 		1);
