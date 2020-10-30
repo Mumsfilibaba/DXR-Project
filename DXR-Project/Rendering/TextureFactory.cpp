@@ -31,7 +31,7 @@ struct TextureFactoryData
 
 bool TextureFactory::Initialize()
 {
-	return false;
+	return true;
 }
 
 void TextureFactory::Release()
@@ -94,8 +94,8 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint
 		Width, 
 		Height, 
 		MipLevels, 
-		1, ClearValue());
-	if (Texture)
+		1);
+	if (!Texture)
 	{
 		return nullptr;
 	}
@@ -115,8 +115,8 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint
 
 	CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
 
-	CommandListExecutor& executor = RenderingAPI::GetCommandListExecutor();
-	executor.ExecuteCommandList(CmdList);
+	CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
+	Executor.ExecuteCommandList(CmdList);
 
 	return Texture.ReleaseOwnerShip();
 }
@@ -133,8 +133,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 		TextureUsage_UAV | TextureUsage_Default, 
 		CubeMapSize, 
 		MipLevels, 
-		1, 
-		ClearValue());
+		1);
 	if (!StagingTexture)
 	{
 		return nullptr;
@@ -154,8 +153,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 		TextureUsage_SRV | TextureUsage_Default, 
 		CubeMapSize, 
 		MipLevels, 
-		1, 
-		ClearValue());
+		1);
 	if (!Texture)
 	{
 		return nullptr;

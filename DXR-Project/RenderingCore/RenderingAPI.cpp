@@ -24,6 +24,7 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 		return false;
 	}
 
+	// TODO: This should be in EngineConfig
 	const bool EnableDebug =
 #if ENABLE_API_DEBUGGING
 		true;

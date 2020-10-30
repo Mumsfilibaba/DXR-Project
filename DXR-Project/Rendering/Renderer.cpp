@@ -30,8 +30,21 @@ static const EFormat	ShadowMapFormat			= EFormat::Format_D32_Float;
 static const Uint32		ShadowMapSampleCount	= 2;
 
 /*
+* CameraBufferData
+*/
+
+struct CameraBufferData
+{
+	XMFLOAT4X4	ViewProjection;
+	XMFLOAT3	Position;
+	float		Padding;
+	XMFLOAT4X4	ViewProjectionInv;
+};
+
+/*
 * Renderer
 */
+
 Renderer::Renderer()
 {
 }
@@ -313,20 +326,13 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.TransitionTexture(PointLightShadowMaps.Get(), EResourceState::ResourceState_DepthWrite, EResourceState::ResourceState_PixelShaderResource);
 
 	// Update camerabuffer
-	struct CameraBufferDesc
-	{
-		XMFLOAT4X4	ViewProjection;
-		XMFLOAT3	Position;
-		float		Padding;
-		XMFLOAT4X4	ViewProjectionInv;
-	} CamBuff;
-
+	CameraBufferData CamBuff = {};
 	CamBuff.ViewProjection		= CurrentScene.GetCamera()->GetViewProjectionMatrix();
 	CamBuff.ViewProjectionInv	= CurrentScene.GetCamera()->GetViewProjectionInverseMatrix();
 	CamBuff.Position			= CurrentScene.GetCamera()->GetPosition();
 
 	CmdList.TransitionBuffer(CameraBuffer.Get(), EResourceState::ResourceState_VertexAndConstantBuffer, EResourceState::ResourceState_CopyDest);
-	CmdList.UpdateBuffer(CameraBuffer.Get(), 0, sizeof(CameraBufferDesc), &CamBuff);
+	CmdList.UpdateBuffer(CameraBuffer.Get(), 0, sizeof(CameraBufferData), &CamBuff);
 	CmdList.TransitionBuffer(CameraBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_VertexAndConstantBuffer);
 
 	// Clear GBuffer
@@ -690,130 +696,108 @@ void Renderer::Release()
 
 bool Renderer::Initialize()
 {
-	//const Uint32 BackBufferCount = RenderingAPI::Get().GetSwapChain()->GetSurfaceCount();
-	//CommandAllocators.Resize(BackBufferCount);
-	//for (Uint32 i = 0; i < BackBufferCount; i++)
-	//{
-	//	CommandAllocators[i] = RenderingAPI::Get().CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	//	if (!CommandAllocators[i])
-	//	{
-	//		return false;
-	//	}
-	//}
-
-	//CommandList = RenderingAPI::Get().CreateCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, CommandAllocators[0].Get(), nullptr);
-	//if (!CommandList)
-	//{
-	//	return false;
-	//}
-
-	//Fence = RenderingAPI::Get().CreateFence(0);
-	//if (!Fence)
-	//{
-	//	return false;
-	//}
-
-	//FenceValues.Resize(RenderingAPI::Get().GetSwapChain()->GetSurfaceCount());
-
 	// Create mesh
 	Sphere		= MeshFactory::CreateSphere(3);
 	SkyboxMesh	= MeshFactory::CreateSphere(1);
 	Cube		= MeshFactory::CreateCube();
 
 	// Create camera
-	CameraBuffer = RenderingAPI::CreateConstantBuffer(nullptr, 256, BufferUsage_Default);
+	CameraBuffer = RenderingAPI::CreateConstantBuffer<CameraBufferData>(nullptr, BufferUsage_Default);
 	if (!CameraBuffer)
 	{
 		LOG_ERROR("[Renderer]: Failed to create camerabuffer");
 		return false;
 	}
-
-	// Create vertexbuffers
-	MeshVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(nullptr, Sphere.Vertices.Size(), BufferUsage_Dynamic);
-	if (MeshVertexBuffer)
-	{
-		const Uint32 SizeInBytes = Sphere.Vertices.Size() * sizeof(Vertex);
-
-		VoidPtr BufferMemory = MeshVertexBuffer->Map(nullptr);
-		memcpy(BufferMemory, Sphere.Vertices.Data(), SizeInBytes);
-		MeshVertexBuffer->Unmap(nullptr);
-	}
 	else
 	{
-		return false;
+		CameraBuffer->SetName("CameraBuffer");
 	}
 
-	CubeVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(nullptr, Cube.Vertices.Size(), BufferUsage_Dynamic);
-	if (CubeVertexBuffer)
+	// Create VertexBuffers
 	{
-		const Uint32 SizeInBytes = Cube.Vertices.Size() * sizeof(Vertex);
-
-		VoidPtr BufferMemory = CubeVertexBuffer->Map(nullptr);
-		memcpy(BufferMemory, Cube.Vertices.Data(), SizeInBytes);
-		CubeVertexBuffer->Unmap(nullptr);
-	}
-	else
-	{
-		return false;
-	}
-
-	SkyboxVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(nullptr, Cube.Vertices.Size(), BufferUsage_Dynamic);
-	if (SkyboxVertexBuffer)
-	{
-		const Uint32 SizeInBytes = SkyboxMesh.Vertices.Size() * sizeof(Vertex);
+		ResourceData VertexData = ResourceData(Sphere.Vertices.Data());
 		
-		VoidPtr BufferMemory = SkyboxVertexBuffer->Map(nullptr);
-		memcpy(BufferMemory, SkyboxMesh.Vertices.Data(), SizeInBytes);
-		SkyboxVertexBuffer->Unmap(nullptr);
+		MeshVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(&VertexData, Sphere.Vertices.Size(), BufferUsage_Dynamic);
+		if (!MeshVertexBuffer)
+		{
+			return false;
+		}
+		else
+		{
+			MeshVertexBuffer->SetName("MeshVertexBuffer");
+		}
 	}
-	else
+
 	{
-		return false;
+		ResourceData VertexData = ResourceData(Cube.Vertices.Data());
+		
+		CubeVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(&VertexData, Cube.Vertices.Size(), BufferUsage_Dynamic);
+		if (!CubeVertexBuffer)
+		{
+			return false;
+		}
+		else
+		{
+			CubeVertexBuffer->SetName("CubeVertexBuffer");
+		}
+	}
+
+	{
+		ResourceData VertexData = ResourceData(SkyboxMesh.Vertices.Data());
+		SkyboxVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(&VertexData, SkyboxMesh.Vertices.Size(), BufferUsage_Dynamic);
+		if (!SkyboxVertexBuffer)
+		{
+			return false;
+		}
+		else
+		{
+			SkyboxVertexBuffer->SetName("SkyboxVertexBuffer");
+		}
 	}
 
 	// Create indexbuffers
 	{
+		ResourceData IndexData = ResourceData(Sphere.Indices.Data());
+
 		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Sphere.Indices.Size());
-		MeshIndexBuffer = RenderingAPI::CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
-		if (MeshIndexBuffer)
+		MeshIndexBuffer = RenderingAPI::CreateIndexBuffer(&IndexData, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		if (!MeshIndexBuffer)
 		{
-			VoidPtr BufferMemory = MeshIndexBuffer->Map(nullptr);
-			memcpy(BufferMemory, Sphere.Indices.Data(), SizeInBytes);
-			MeshIndexBuffer->Unmap(nullptr);
+			return false;
 		}
 		else
 		{
-			return false;
+			MeshIndexBuffer->SetName("MeshIndexBuffer");
 		}
 	}
 
 	{
+		ResourceData IndexData = ResourceData(Cube.Indices.Data());
+
 		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Cube.Indices.Size());
-		CubeIndexBuffer = RenderingAPI::CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
-		if (CubeIndexBuffer)
+		CubeIndexBuffer = RenderingAPI::CreateIndexBuffer(&IndexData, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		if (!CubeIndexBuffer)
 		{
-			VoidPtr BufferMemory = CubeIndexBuffer->Map(nullptr);
-			memcpy(BufferMemory, Cube.Indices.Data(), SizeInBytes);
-			CubeIndexBuffer->Unmap(nullptr);
+			return false;
 		}
 		else
 		{
-			return false;
+			CubeIndexBuffer->SetName("CubeIndexBuffer");
 		}
 	}
 
 	{
+		ResourceData IndexData = ResourceData(SkyboxMesh.Indices.Data());
+
 		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(SkyboxMesh.Indices.Size());
-		SkyboxIndexBuffer = RenderingAPI::CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
-		if (SkyboxIndexBuffer)
+		SkyboxIndexBuffer = RenderingAPI::CreateIndexBuffer(&IndexData, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		if (!SkyboxIndexBuffer)
 		{
-			VoidPtr BufferMemory = SkyboxIndexBuffer->Map(nullptr);
-			memcpy(BufferMemory, SkyboxMesh.Indices.Data(), SizeInBytes);
-			SkyboxIndexBuffer->Unmap(nullptr);
+			return false;
 		}
 		else
 		{
-			return false;
+			SkyboxIndexBuffer->SetName("SkyboxIndexBuffer");
 		}
 	}
 
@@ -842,8 +826,7 @@ bool Renderer::Initialize()
 		TextureUsage_Default | TextureUsage_UAV, 
 		IrradianceSize, 
 		1, 
-		1, 
-		ClearValue());
+		1);
 	if (IrradianceMap)
 	{
 		IrradianceMap->SetName("Irradiance Map");
@@ -874,8 +857,7 @@ bool Renderer::Initialize()
 		TextureUsage_Default | TextureUsage_UAV, 
 		SpecularIrradianceSize, 
 		SpecularIrradianceMiplevels, 
-		1, 
-		ClearValue());
+		1);
 	if (SpecularIrradianceMap)
 	{
 		SpecularIrradianceMap->SetName("Specular Irradiance Map");
@@ -2288,8 +2270,7 @@ bool Renderer::InitIntegrationLUT()
 		TextureUsage_Default | TextureUsage_UAV, 
 		LUTSize, 
 		LUTSize, 
-		1, 1, 
-		ClearValue());
+		1, 1);
 	if (StagingTexture)
 	{
 		StagingTexture->SetName("IntegrationLUT");
@@ -2311,8 +2292,7 @@ bool Renderer::InitIntegrationLUT()
 		TextureUsage_Default | TextureUsage_SRV,
 		LUTSize, 
 		LUTSize, 
-		1, 1,
-		ClearValue());
+		1, 1);
 	if (!IntegrationLUT)
 	{
 		return false;
@@ -2378,8 +2358,13 @@ bool Renderer::InitRayTracingTexture()
 	const Uint32 Width	= 0;//RenderingAPI::Get().GetSwapChain()->GetWidth();
 	const Uint32 Height	= 0;//RenderingAPI::Get().GetSwapChain()->GetHeight();
 	const Uint32 Usage	= TextureUsage_Default | TextureUsage_UAV | TextureUsage_SRV;
-
-	ReflectionTexture = RenderingAPI::CreateTexture2D(nullptr, EFormat::Format_R8G8B8A8_Unorm, Usage, Width, Height, 1, 1, ClearValue());
+	ReflectionTexture = RenderingAPI::CreateTexture2D(
+		nullptr, 
+		EFormat::Format_R8G8B8A8_Unorm, 
+		Usage, 
+		Width, 
+		Height, 
+		1, 1);
 	if (!ReflectionTexture)
 	{
 		return false;

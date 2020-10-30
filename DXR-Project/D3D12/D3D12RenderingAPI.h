@@ -8,6 +8,7 @@
 #include "D3D12CommandContext.h"
 
 class D3D12CommandContext;
+class D3D12Buffer;
 
 /*
 * D3D12RenderingAPI
@@ -22,10 +23,9 @@ public:
 	virtual bool Init(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) override final;
 
 	/*
-	* Resources
+	* Textures
 	*/
 
-	// Textures
 	virtual Texture1D* CreateTexture1D(
 		const ResourceData* InitalData,
 		EFormat Format,
@@ -93,7 +93,10 @@ public:
 		Uint32 MipLevels,
 		const ClearValue& OptimizedClearValue) const override final;
 
-	// Buffers
+	/*
+	* Buffers
+	*/
+
 	virtual VertexBuffer* CreateVertexBuffer(
 		const ResourceData* InitalData,
 		Uint32 SizeInBytes,
@@ -117,15 +120,17 @@ public:
 		Uint32 Stride,
 		Uint32 Usage) const override final;
 
-	// Ray Tracing
+	/*
+	* RayTracing
+	*/
+
 	virtual class RayTracingGeometry* CreateRayTracingGeometry() const override final;
 	virtual class RayTracingScene* CreateRayTracingScene() const override final;
 
 	/*
-	* Resource Views
+	* ShaderResourceView
 	*/
 
-	// ShaderResourceView
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Buffer* Buffer,
 		Uint32 FirstElement,
@@ -186,7 +191,10 @@ public:
 		Uint32 MostDetailedMip,
 		Uint32 MipLevels) const override final;
 
-	// UnorderedAccessView
+	/*
+	* UnorderedAccessView
+	*/
+
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Buffer* Buffer,
 		Uint64 FirstElement,
@@ -243,7 +251,10 @@ public:
 		Uint32 FirstDepthSlice,
 		Uint32 DepthSlices) const override final;
 
-	// RenderTargetView
+	/*
+	* RenderTargetView
+	*/
+
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture1D* Texture, 
 		EFormat Format, 
@@ -290,7 +301,10 @@ public:
 		Uint32 FirstDepthSlice,
 		Uint32 DepthSlices) const override final;
 
-	// DepthStencilView
+	/*
+	* DepthStencilView
+	*/
+	
 	virtual DepthStencilView* CreateDepthStencilView(
 		const Texture1D* Texture, 
 		EFormat Format, 
@@ -330,7 +344,10 @@ public:
 		Uint32 FaceIndex,
 		Uint32 FaceCount) const override final;
 
-	// PipelineState
+	/*
+	* Pipeline
+	*/
+
 	virtual class Shader* CreateShader() const override final;
 
 	virtual class DepthStencilState*	CreateDepthStencilState()	const override final;
@@ -342,7 +359,10 @@ public:
 	virtual class ComputePipelineState*		CreateComputePipelineState()	const override final;
 	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const override final;
 
-	// Commands
+	/*
+	* Supported features
+	*/
+
 	virtual bool IsRayTracingSupported() const override final;
 	virtual bool UAVSupportsFormat(EFormat Format) const override final;
 	
@@ -365,12 +385,13 @@ private:
 		Uint32 SizeInBytes) const;
 
 	bool AllocateTexture(
-		D3D12Resource& Resource, 
+		D3D12Resource& Resource,
 		D3D12_HEAP_TYPE HeapType,
 		D3D12_RESOURCE_STATES InitalState, 
 		const D3D12_RESOURCE_DESC& Desc) const;
 	
-	bool UploadResource(D3D12Resource& Resource, const ResourceData* InitalData) const;
+	bool UploadBuffer(D3D12Buffer& Buffer, Uint32 SizeInBytes, const ResourceData* InitalData) const;
+	bool UploadTexture(D3D12Resource& Resource, const ResourceData* InitalData) const;
 
 	template<typename TD3D12Texture>
 	TD3D12Texture* CreateTextureResource(
@@ -393,12 +414,52 @@ private:
 
 		if (InitalData)
 		{
-			UploadResource(*Texture, InitalData);
+			UploadTexture(*Texture, InitalData);
 		}
 
 		return Texture;
 	}
 
+	template<typename TD3D12Buffer, typename... TArgs>
+	TD3D12Buffer* CreateBufferResource(
+		const ResourceData* InitalData,
+		TArgs&&... Args) const
+	{
+		// Create buffer object and get size to allocate
+		TD3D12Buffer* NewBuffer = new TD3D12Buffer(Device.Get(), Forward<TArgs>(Args)...);
+		const Uint64 Alignment		= NewBuffer->GetRequiredAlignment();
+		const Uint64 SizeInBytes	= NewBuffer->GetSizeInBytes();
+		const Uint64 AlignedSize	= AlignUp<Uint64>(SizeInBytes, Alignment);
+
+		// Get properties based on Usage
+		const Uint32 Usage = NewBuffer->GetUsage();
+		const D3D12_RESOURCE_FLAGS Flags = ConvertBufferUsage(Usage);
+
+		D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_DEFAULT;
+		D3D12_RESOURCE_STATES InitalState = D3D12_RESOURCE_STATE_COMMON;
+		if (Usage & BufferUsage_Dynamic)
+		{
+			InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
+			HeapType	= D3D12_HEAP_TYPE_UPLOAD;
+		}
+
+		// Allocate
+		if (!AllocateBuffer(*NewBuffer, HeapType, InitalState, Flags, AlignedSize))
+		{
+			LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate buffer");
+			return nullptr;
+		}
+
+		// Upload initial
+		if (InitalData)
+		{
+			UploadBuffer(*NewBuffer, SizeInBytes, InitalData);
+		}
+
+		return NewBuffer;
+	}
+
+private:
 	TSharedPtr<D3D12SwapChain>		SwapChain;
 	TSharedPtr<D3D12Device>			Device;
 	TSharedPtr<D3D12CommandQueue>	DirectCmdQueue;

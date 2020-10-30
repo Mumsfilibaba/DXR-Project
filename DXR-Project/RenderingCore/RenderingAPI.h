@@ -10,6 +10,7 @@
 class RenderingAPI
 {
 public:
+
 	/*
 	* Creation
 	*/
@@ -26,7 +27,7 @@ public:
 		Uint32 Usage, 
 		Uint32 Width, 
 		Uint32 MipLevels, 
-		const ClearValue& OptimizedClearValue)
+		const ClearValue& OptimizedClearValue = ClearValue())
 	{
 		return EngineGlobals::RenderingAPI->CreateTexture1D(
 			InitalData, 
@@ -44,7 +45,7 @@ public:
 		Uint32 Width,
 		Uint32 MipLevels,
 		Uint32 ArrayCount,
-		const ClearValue& OptimizedClearValue)
+		const ClearValue& OptimizedClearValue = ClearValue())
 	{
 		return EngineGlobals::RenderingAPI->CreateTexture1DArray(
 			InitalData,
@@ -64,7 +65,7 @@ public:
 		Uint32 Height, 
 		Uint32 MipLevels, 
 		Uint32 SampleCount, 
-		const ClearValue& OptimizedClearValue)
+		const ClearValue& OptimizedClearValue = ClearValue())
 	{
 		return EngineGlobals::RenderingAPI->CreateTexture2D(
 			InitalData, 
@@ -86,7 +87,7 @@ public:
 		Uint32 MipLevels, 
 		Uint32 ArrayCount, 
 		Uint32 SampleCount, 
-		const ClearValue& OptimizedClearValue) 
+		const ClearValue& OptimizedClearValue = ClearValue())
 	{
 		return EngineGlobals::RenderingAPI->CreateTexture2DArray(
 			InitalData, 
@@ -107,7 +108,7 @@ public:
 		Uint32 Size,
 		Uint32 MipLevels,
 		Uint32 SampleCount,
-		const ClearValue& OptimizedClearValue)
+		const ClearValue& OptimizedClearValue = ClearValue())
 	{
 		return EngineGlobals::RenderingAPI->CreateTextureCube(
 			InitalData, 
@@ -127,7 +128,7 @@ public:
 		Uint32 MipLevels,
 		Uint32 ArrayCount,
 		Uint32 SampleCount,
-		const ClearValue& OptimizedClearValue)
+		const ClearValue& OptimizedClearValue = ClearValue())
 	{
 		return EngineGlobals::RenderingAPI->CreateTextureCubeArray(
 			InitalData,
@@ -148,7 +149,7 @@ public:
 		Uint32 Height,
 		Uint32 Depth,
 		Uint32 MipLevels,
-		const ClearValue& OptimizedClearValue)
+		const ClearValue& OptimizedClearValue = ClearValue())
 	{
 		return EngineGlobals::RenderingAPI->CreateTexture3D(
 			InitalData,

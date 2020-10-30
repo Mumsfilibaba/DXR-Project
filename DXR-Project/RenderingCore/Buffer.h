@@ -114,6 +114,21 @@ public:
 		return SizeInBytes;
 	}
 
+	virtual Uint64 GetRequiredAlignment() const
+	{
+		return 0;
+	}
+
+	// Map
+	virtual VoidPtr	Map(const Range* MappedRange)		= 0;
+	virtual void	Unmap(const Range* WrittenRange) 	= 0;
+
+	// Usage
+	FORCEINLINE Uint32 GetUsage() const
+	{
+		return Usage;
+	}
+
 	FORCEINLINE bool HasShaderResourceUsage() const
 	{
 		return Usage & BufferUsage_SRV;
@@ -124,9 +139,10 @@ public:
 		return Usage & BufferUsage_UAV;
 	}
 
-	// Map
-	virtual VoidPtr	Map(const Range* MappedRange)		= 0;
-	virtual void	Unmap(const Range* WrittenRange) 	= 0;
+	FORCEINLINE bool HasDynamicUsage() const
+	{
+		return Usage & BufferUsage_Dynamic;
+	}
 
 protected:
 	Uint32 SizeInBytes;
@@ -157,6 +173,11 @@ public:
 	virtual const VertexBuffer* AsVertexBuffer() const override
 	{
 		return this;
+	}
+
+	FORCEINLINE Uint32 GetStride() const
+	{
+		return Stride;
 	}
 
 protected:
@@ -199,7 +220,7 @@ public:
 		return this;
 	}
 
-	virtual EIndexFormat GetIndexFormat() const
+	FORCEINLINE EIndexFormat GetIndexFormat() const
 	{
 		return IndexFormat;
 	}
@@ -260,45 +281,11 @@ public:
 		return this;
 	}
 
-	virtual Uint32 GetStride() const
+	FORCEINLINE Uint32 GetStride() const
 	{
 		return Stride;
 	}
 
 protected:
 	Uint32 Stride;
-};
-
-/*
-* StructuredBufferRef
-*/
-
-struct StructuredBufferRef
-{
-	inline StructuredBufferRef(const TSharedRef<StructuredBuffer>& InBuffer, const TSharedRef<ShaderResourceView>& InSRV)
-		: Buffer(InBuffer)
-		, SRV(InSRV)
-	{
-	}
-
-	TSharedRef<StructuredBuffer> Buffer;
-	TSharedRef<ShaderResourceView> SRV;
-};
-
-/*
-* RWStructuredBufferRef
-*/
-
-struct RWStructuredBufferRef
-{
-	inline RWStructuredBufferRef(const TSharedRef<StructuredBuffer>& InBuffer, const TSharedRef<ShaderResourceView>& InSRV, const TSharedRef<UnorderedAccessView>& InUAV)
-		: Buffer(InBuffer)
-		, SRV(InSRV)
-		, UAV(InUAV)
-	{
-	}
-
-	TSharedRef<StructuredBuffer>	Buffer;
-	TSharedRef<ShaderResourceView>	SRV;
-	TSharedRef<UnorderedAccessView> UAV;
 };

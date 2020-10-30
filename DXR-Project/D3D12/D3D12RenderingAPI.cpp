@@ -84,7 +84,7 @@ bool D3D12RenderingAPI::Init(TSharedRef<GenericWindow> RenderWindow, bool Enable
 }
 
 /*
-* D3D12RenderingAPI - Resources
+* Textures
 */
 
 Texture1D* D3D12RenderingAPI::CreateTexture1D(
@@ -105,7 +105,7 @@ Texture1D* D3D12RenderingAPI::CreateTexture1D(
 	Desc.Height				= 1;
 	Desc.DepthOrArraySize	= 1;
 	Desc.Layout				= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels			= MipLevels;
+	Desc.MipLevels			= static_cast<UINT16>(MipLevels);
 	Desc.SampleDesc.Count	= 1;
 	Desc.SampleDesc.Quality	= 0;
 
@@ -132,11 +132,19 @@ Texture1DArray* D3D12RenderingAPI::CreateTexture1DArray(
 	Desc.Height				= 1;
 	Desc.DepthOrArraySize	= ArrayCount;
 	Desc.Layout				= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels			= MipLevels;
+	Desc.MipLevels			= static_cast<UINT16>(MipLevels);
 	Desc.SampleDesc.Count	= 1;
 	Desc.SampleDesc.Quality	= 0;
 
-	D3D12Texture1DArray* NewTexture = new D3D12Texture1DArray(Device.Get(), Format, Usage, Width, MipLevels, ArrayCount, OptimizedClearValue);
+	D3D12Texture1DArray* NewTexture = new D3D12Texture1DArray(
+		Device.Get(), 
+		Format, 
+		Usage, 
+		Width, 
+		MipLevels, 
+		ArrayCount, 
+		OptimizedClearValue);
+
 	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
@@ -160,7 +168,7 @@ Texture2D* D3D12RenderingAPI::CreateTexture2D(
 	Desc.Height					= Height;
 	Desc.DepthOrArraySize		= 1;
 	Desc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels				= MipLevels;
+	Desc.MipLevels				= static_cast<UINT16>(MipLevels);
 	Desc.SampleDesc.Count		= SampleCount;
 
 	if (SampleCount > 1)
@@ -173,7 +181,16 @@ Texture2D* D3D12RenderingAPI::CreateTexture2D(
 		Desc.SampleDesc.Quality	= 0;
 	}
 	
-	D3D12Texture2D* NewTexture = new D3D12Texture2D(Device.Get(), Format, Usage, Width, Height, MipLevels, SampleCount, OptimizedClearValue);
+	D3D12Texture2D* NewTexture = new D3D12Texture2D(
+		Device.Get(), 
+		Format, 
+		Usage, 
+		Width, 
+		Height, 
+		MipLevels, 
+		SampleCount, 
+		OptimizedClearValue);
+
 	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
@@ -198,7 +215,7 @@ Texture2DArray* D3D12RenderingAPI::CreateTexture2DArray(
 	Desc.Height					= Height;
 	Desc.DepthOrArraySize		= ArrayCount;
 	Desc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels				= MipLevels;
+	Desc.MipLevels				= static_cast<UINT16>(MipLevels);
 	Desc.SampleDesc.Count		= SampleCount;
 
 	if (SampleCount > 1)
@@ -211,7 +228,17 @@ Texture2DArray* D3D12RenderingAPI::CreateTexture2DArray(
 		Desc.SampleDesc.Quality	= 0;
 	}
 
-	D3D12Texture2DArray* NewTexture = new D3D12Texture2DArray(Device.Get(), Format, Usage, Width, Height, MipLevels, ArrayCount, SampleCount, OptimizedClearValue);
+	D3D12Texture2DArray* NewTexture = new D3D12Texture2DArray(
+		Device.Get(), 
+		Format, 
+		Usage, 
+		Width, 
+		Height, 
+		MipLevels, 
+		ArrayCount, 
+		SampleCount, 
+		OptimizedClearValue);
+
 	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
@@ -235,7 +262,7 @@ TextureCube* D3D12RenderingAPI::CreateTextureCube(
 	Desc.Height					= Size;
 	Desc.DepthOrArraySize		= TEXTURE_CUBE_FACE_COUNT;
 	Desc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels				= MipLevels;
+	Desc.MipLevels				= static_cast<UINT16>(MipLevels);
 	Desc.SampleDesc.Count		= SampleCount;
 
 	if (SampleCount > 1)
@@ -248,7 +275,15 @@ TextureCube* D3D12RenderingAPI::CreateTextureCube(
 		Desc.SampleDesc.Quality	= 0;
 	}
 
-	D3D12TextureCube* NewTexture = new D3D12TextureCube(Device.Get(), Format, Usage, Size, MipLevels, SampleCount, OptimizedClearValue);
+	D3D12TextureCube* NewTexture = new D3D12TextureCube(
+		Device.Get(), 
+		Format, 
+		Usage, 
+		Size, 
+		MipLevels, 
+		SampleCount, 
+		OptimizedClearValue);
+
 	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
@@ -273,7 +308,7 @@ TextureCubeArray* D3D12RenderingAPI::CreateTextureCubeArray(
 	Desc.Height				= Size;
 	Desc.DepthOrArraySize	= TEXTURE_CUBE_FACE_COUNT * ArrayCount;
 	Desc.Layout				= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels			= MipLevels;
+	Desc.MipLevels			= static_cast<UINT16>(MipLevels);
 	Desc.SampleDesc.Count	= SampleCount;
 
 	if (SampleCount > 1)
@@ -286,7 +321,16 @@ TextureCubeArray* D3D12RenderingAPI::CreateTextureCubeArray(
 		Desc.SampleDesc.Quality = 0;
 	}
 
-	D3D12TextureCubeArray* NewTexture = new D3D12TextureCubeArray(Device.Get(), Format, Usage, Size, MipLevels, ArrayCount, SampleCount, OptimizedClearValue);
+	D3D12TextureCubeArray* NewTexture = new D3D12TextureCubeArray(
+		Device.Get(), 
+		Format, 
+		Usage, 
+		Size, 
+		MipLevels, 
+		ArrayCount, 
+		SampleCount, 
+		OptimizedClearValue);
+
 	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
@@ -310,48 +354,42 @@ Texture3D* D3D12RenderingAPI::CreateTexture3D(
 	Desc.Height					= Height;
 	Desc.DepthOrArraySize		= Depth;
 	Desc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels				= MipLevels;
+	Desc.MipLevels				= static_cast<UINT16>(MipLevels);
 	Desc.SampleDesc.Count		= 1;
 
-	D3D12Texture3D* NewTexture = new D3D12Texture3D(Device.Get(), Format, Usage, Width, Height, Depth, MipLevels, OptimizedClearValue);
+	D3D12Texture3D* NewTexture = new D3D12Texture3D(
+		Device.Get(), 
+		Format, 
+		Usage, 
+		Width, 
+		Height, 
+		Depth, 
+		MipLevels, 
+		OptimizedClearValue);
+
 	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
+
+/*
+* Buffers
+*/
 
 VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(
 	const ResourceData* InitalData, 
 	Uint32 SizeInBytes, 
-	Uint32 VertexStride, 
+	Uint32 StrideInBytes, 
 	Uint32 Usage) const
 {
-	D3D12_RESOURCE_FLAGS Flags			= ConvertBufferUsage(Usage);
-	D3D12_HEAP_TYPE HeapType			= D3D12_HEAP_TYPE_DEFAULT;
-	D3D12_RESOURCE_STATES InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	if (Usage & BufferUsage_Dynamic)
-	{
-		InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
-		HeapType	= D3D12_HEAP_TYPE_UPLOAD;
-	}
-
-	D3D12VertexBuffer* NewBuffer = new D3D12VertexBuffer(Device.Get(), SizeInBytes, VertexStride, Usage);
-	if (!AllocateBuffer(*NewBuffer, HeapType, InitalState, Flags, SizeInBytes))
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate buffer");
-		return nullptr;
-	}
-
-	if (InitalData)
-	{
-		UploadResource(*NewBuffer, InitalData);
-	}
+	D3D12VertexBuffer* NewBuffer = CreateBufferResource<D3D12VertexBuffer>(InitalData, SizeInBytes, StrideInBytes, Usage);
 
 	D3D12_VERTEX_BUFFER_VIEW View;
 	Memory::Memzero(&View, sizeof(D3D12_VERTEX_BUFFER_VIEW));
 
 	View.BufferLocation	= NewBuffer->GetGPUVirtualAddress();
 	View.SizeInBytes	= SizeInBytes;
-	View.StrideInBytes	= VertexStride;
-	NewBuffer->VertexBufferView = View;
+	View.StrideInBytes	= StrideInBytes;
 
+	NewBuffer->VertexBufferView = View;
 	return NewBuffer;
 }
 
@@ -361,25 +399,7 @@ IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(
 	EIndexFormat IndexFormat, 
 	Uint32 Usage) const
 {
-	D3D12_RESOURCE_FLAGS Flags			= ConvertBufferUsage(Usage);
-	D3D12_HEAP_TYPE HeapType			= D3D12_HEAP_TYPE_DEFAULT;
-	D3D12_RESOURCE_STATES InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	if (Usage & BufferUsage_Dynamic)
-	{
-		InitalState = D3D12_RESOURCE_STATE_GENERIC_READ;
-		HeapType = D3D12_HEAP_TYPE_UPLOAD;
-	}
-
-	D3D12IndexBuffer* NewBuffer = new D3D12IndexBuffer(Device.Get(), SizeInBytes, IndexFormat, Usage);
-	if (!AllocateBuffer(*NewBuffer, HeapType, InitalState, Flags, SizeInBytes))
-	{
-		return nullptr;
-	}
-	
-	if (InitalData)
-	{
-		UploadResource(*NewBuffer, InitalData);
-	}
+	D3D12IndexBuffer* NewBuffer = CreateBufferResource<D3D12IndexBuffer>(InitalData, SizeInBytes, IndexFormat, Usage);
 
 	D3D12_INDEX_BUFFER_VIEW View;
 	Memory::Memzero(&View, sizeof(D3D12_INDEX_BUFFER_VIEW));
@@ -396,43 +416,21 @@ IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(
 	}
 
 	NewBuffer->IndexBufferView = View;
-
 	return NewBuffer;
 }
 
 ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Usage) const
 {
-	const Uint32 AlignedSize = AlignUp<Uint32>(SizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
-
-	D3D12_RESOURCE_FLAGS Flags			= ConvertBufferUsage(Usage);
-	D3D12_HEAP_TYPE HeapType			= D3D12_HEAP_TYPE_DEFAULT;
-	D3D12_RESOURCE_STATES InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	if (Usage & BufferUsage_Dynamic)
-	{
-		InitalState = D3D12_RESOURCE_STATE_GENERIC_READ;
-		HeapType = D3D12_HEAP_TYPE_UPLOAD;
-	}
-
-	D3D12ConstantBuffer* NewBuffer = new D3D12ConstantBuffer(Device.Get(), SizeInBytes, Usage);
-	if (!AllocateBuffer(*NewBuffer, HeapType, InitalState, Flags, AlignedSize))
-	{
-		return nullptr;
-	}
-
-	if (InitalData)
-	{
-		UploadResource(*NewBuffer, InitalData);
-	}
+	D3D12ConstantBuffer* NewBuffer = CreateBufferResource<D3D12ConstantBuffer>(InitalData, SizeInBytes, Usage);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
 	Memory::Memzero(&ViewDesc, sizeof(D3D12_CONSTANT_BUFFER_VIEW_DESC));
 
 	ViewDesc.BufferLocation	= NewBuffer->GetGPUVirtualAddress();
-	ViewDesc.SizeInBytes	= SizeInBytes;
+	ViewDesc.SizeInBytes	= NewBuffer->GetAllocatedSize();
 
 	D3D12ConstantBufferView* View = new D3D12ConstantBufferView(Device.Get(), NewBuffer, ViewDesc);
 	NewBuffer->View = View;
-
 	return NewBuffer;
 }
 
@@ -442,29 +440,12 @@ StructuredBuffer* D3D12RenderingAPI::CreateStructuredBuffer(
 	Uint32 Stride, 
 	Uint32 Usage) const
 {
-
-	D3D12_RESOURCE_FLAGS Flags			= ConvertBufferUsage(Usage);
-	D3D12_HEAP_TYPE HeapType			= D3D12_HEAP_TYPE_DEFAULT;
-	D3D12_RESOURCE_STATES InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	if (Usage & BufferUsage_Dynamic)
-	{
-		InitalState = D3D12_RESOURCE_STATE_GENERIC_READ;
-		HeapType = D3D12_HEAP_TYPE_UPLOAD;
-	}
-
-	D3D12StructuredBuffer* NewBuffer = new D3D12StructuredBuffer(Device.Get(), SizeInBytes, Stride, Usage);
-	if (!AllocateBuffer(*NewBuffer, HeapType, InitalState, Flags, SizeInBytes))
-	{
-		return nullptr;
-	}
-
-	if (InitalData)
-	{
-		UploadResource(*NewBuffer, InitalData);
-	}
-
-	return NewBuffer;
+	return CreateBufferResource<D3D12StructuredBuffer>(InitalData, SizeInBytes, Stride, Usage);
 }
+
+/*
+* RayTracing
+*/
 
 RayTracingGeometry* D3D12RenderingAPI::CreateRayTracingGeometry() const
 {
@@ -477,10 +458,9 @@ RayTracingScene* D3D12RenderingAPI::CreateRayTracingScene() const
 }
 
 /*
-* D3D12RenderingAPI - Resource Views
+* ShaderResourceView
 */
 
-// ShaderResourceView
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	const Buffer* Buffer, 
 	Uint32 FirstElement, 
@@ -820,7 +800,10 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	}
 }
 
-// UnorderedAccessView
+/*
+* UnorderedAccessView
+*/
+
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	const Buffer* Buffer, 
 	Uint64 FirstElement, 
@@ -1133,7 +1116,10 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	}
 }
 
-// RenderTargetView
+/*
+* RenderTargetView
+*/
+
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice) const
 {
 	VALIDATE(Texture != nullptr);
@@ -1404,7 +1390,10 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 	}
 }
 
-// DepthStencilView
+/*
+* DepthStencilView
+*/
+
 DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice) const
 {
 	VALIDATE(Texture != nullptr);
@@ -1637,7 +1626,7 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 }
 
 /*
-* D3D12RenderingAPI - Pipeline
+* Pipeline
 */
 
 Shader* D3D12RenderingAPI::CreateShader() const
@@ -1680,6 +1669,10 @@ RayTracingPipelineState* D3D12RenderingAPI::CreateRayTracingPipelineState() cons
 	return nullptr;
 }
 
+/*
+* Supported features
+*/
+
 bool D3D12RenderingAPI::IsRayTracingSupported() const
 {
 	return Device->IsRayTracingSupported();
@@ -1713,6 +1706,10 @@ bool D3D12RenderingAPI::UAVSupportsFormat(EFormat Format) const
 	return true;
 }
 
+/*
+* Allocate resources
+*/
+
 bool D3D12RenderingAPI::AllocateBuffer(
 	D3D12Resource& Resource, 
 	D3D12_HEAP_TYPE HeapType, 
@@ -1741,14 +1738,14 @@ bool D3D12RenderingAPI::AllocateBuffer(
 	Desc.SampleDesc.Count		= 1;
 	Desc.SampleDesc.Quality		= 0;
 
-	HRESULT HR = Device->CreateCommitedResource(
+	HRESULT hr = Device->CreateCommitedResource(
 		&HeapProperties, 
 		D3D12_HEAP_FLAG_NONE, 
 		&Desc, 
 		InitalState,
 		nullptr, 
 		IID_PPV_ARGS(&Resource.D3DResource));
-	if (SUCCEEDED(HR))
+	if (SUCCEEDED(hr))
 	{
 		Resource.Address		= Resource.D3DResource->GetGPUVirtualAddress();
 		Resource.Desc			= Desc;
@@ -1798,7 +1795,32 @@ bool D3D12RenderingAPI::AllocateTexture(
 	}
 }
 
-bool D3D12RenderingAPI::UploadResource(D3D12Resource& Resource, const ResourceData* InitalData) const
+
+/*
+* Resource uploading
+*/
+
+bool D3D12RenderingAPI::UploadBuffer(D3D12Buffer& Buffer, Uint32 SizeInBytes, const ResourceData* InitalData) const
+{
+	if (Buffer.GetHeapType() == D3D12_HEAP_TYPE_UPLOAD)
+	{
+		VALIDATE(Buffer.GetAllocatedSize() <= SizeInBytes);
+
+		VoidPtr HostData =  Buffer.Map(nullptr);
+		if (HostData)
+		{
+			Memory::Memcpy(HostData, InitalData->Data, SizeInBytes);
+			Buffer.Unmap(nullptr);
+
+			return true;
+		}
+	}
+
+	// TODO: Handle non uploadheaps
+	return false;
+}
+
+bool D3D12RenderingAPI::UploadTexture(D3D12Resource& Resource, const ResourceData* InitalData) const
 {
 	return false;
 }
