@@ -2,13 +2,15 @@
 
 #include "Application/Generic/GenericApplication.h"
 
-#include "RenderingCore/RenderingAPI.h"
+#include "RenderingCore/GenericRenderingAPI.h"
 #include "RenderingCore/CommandList.h"
 
 /*
 * EngineGlobals
 */
 
-TSharedPtr<GenericApplication>	EngineGlobals::PlatformApplication	= nullptr;
-TSharedPtr<RenderingAPI>		EngineGlobals::RenderingAPI			= nullptr;
-TSharedPtr<CommandListExecutor>	EngineGlobals::CmdListExecutor		= nullptr;
+// Application
+TSharedPtr<GenericApplication> EngineGlobals::PlatformApplication = nullptr;
+// Graphics
+TSharedPtr<GenericRenderingAPI> EngineGlobals::RenderingAPI		= nullptr;
+TSharedPtr<CommandListExecutor> EngineGlobals::CmdListExecutor	= nullptr;

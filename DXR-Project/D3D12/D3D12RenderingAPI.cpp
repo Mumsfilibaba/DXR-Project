@@ -19,13 +19,12 @@
 
 #include <algorithm>
 
-
 /*
 * D3D12RenderingAPI
 */
 
 D3D12RenderingAPI::D3D12RenderingAPI()
-	: RenderingAPI(ERenderingAPI::RenderingAPI_D3D12)
+	: GenericRenderingAPI(ERenderingAPI::RenderingAPI_D3D12)
 	, SwapChain(nullptr)
 	, Device(nullptr)
 	, DirectCmdQueue(nullptr)

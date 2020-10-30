@@ -549,7 +549,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.End();
 
 	// Execute
-	CommandListExecutor& Executor = GetCommandListExecutor();
+	CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
 	Executor.ExecuteCommandList(CmdList);
 
 	// Present
@@ -721,7 +721,7 @@ bool Renderer::Initialize()
 	Cube		= MeshFactory::CreateCube();
 
 	// Create camera
-	CameraBuffer = CreateConstantBuffer(nullptr, 256, BufferUsage_Default);
+	CameraBuffer = RenderingAPI::CreateConstantBuffer(nullptr, 256, BufferUsage_Default);
 	if (!CameraBuffer)
 	{
 		LOG_ERROR("[Renderer]: Failed to create camerabuffer");
@@ -729,7 +729,7 @@ bool Renderer::Initialize()
 	}
 
 	// Create vertexbuffers
-	MeshVertexBuffer = CreateVertexBuffer<Vertex>(nullptr, Sphere.Vertices.Size(), BufferUsage_Dynamic);
+	MeshVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(nullptr, Sphere.Vertices.Size(), BufferUsage_Dynamic);
 	if (MeshVertexBuffer)
 	{
 		const Uint32 SizeInBytes = Sphere.Vertices.Size() * sizeof(Vertex);
@@ -743,7 +743,7 @@ bool Renderer::Initialize()
 		return false;
 	}
 
-	CubeVertexBuffer = CreateVertexBuffer<Vertex>(nullptr, Cube.Vertices.Size(), BufferUsage_Dynamic);
+	CubeVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(nullptr, Cube.Vertices.Size(), BufferUsage_Dynamic);
 	if (CubeVertexBuffer)
 	{
 		const Uint32 SizeInBytes = Cube.Vertices.Size() * sizeof(Vertex);
@@ -757,7 +757,7 @@ bool Renderer::Initialize()
 		return false;
 	}
 
-	SkyboxVertexBuffer = CreateVertexBuffer<Vertex>(nullptr, Cube.Vertices.Size(), BufferUsage_Dynamic);
+	SkyboxVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(nullptr, Cube.Vertices.Size(), BufferUsage_Dynamic);
 	if (SkyboxVertexBuffer)
 	{
 		const Uint32 SizeInBytes = SkyboxMesh.Vertices.Size() * sizeof(Vertex);
@@ -774,7 +774,7 @@ bool Renderer::Initialize()
 	// Create indexbuffers
 	{
 		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Sphere.Indices.Size());
-		MeshIndexBuffer = CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		MeshIndexBuffer = RenderingAPI::CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
 		if (MeshIndexBuffer)
 		{
 			VoidPtr BufferMemory = MeshIndexBuffer->Map(nullptr);
@@ -789,7 +789,7 @@ bool Renderer::Initialize()
 
 	{
 		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Cube.Indices.Size());
-		CubeIndexBuffer = CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		CubeIndexBuffer = RenderingAPI::CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
 		if (CubeIndexBuffer)
 		{
 			VoidPtr BufferMemory = CubeIndexBuffer->Map(nullptr);
@@ -804,7 +804,7 @@ bool Renderer::Initialize()
 
 	{
 		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(SkyboxMesh.Indices.Size());
-		SkyboxIndexBuffer = CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		SkyboxIndexBuffer = RenderingAPI::CreateIndexBuffer(nullptr, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
 		if (SkyboxIndexBuffer)
 		{
 			VoidPtr BufferMemory = SkyboxIndexBuffer->Map(nullptr);
@@ -836,7 +836,14 @@ bool Renderer::Initialize()
 
 	// Generate global irradiance (From Skybox)
 	const Uint16 IrradianceSize = 32;
-	IrradianceMap = CreateTextureCube(nullptr, EFormat::Format_R16G16B16A16_Float, TextureUsage_Default | TextureUsage_UAV, IrradianceSize, 1, 1, ClearValue());
+	IrradianceMap = RenderingAPI::CreateTextureCube(
+		nullptr, 
+		EFormat::Format_R16G16B16A16_Float, 
+		TextureUsage_Default | TextureUsage_UAV, 
+		IrradianceSize, 
+		1, 
+		1, 
+		ClearValue());
 	if (IrradianceMap)
 	{
 		IrradianceMap->SetName("Irradiance Map");
@@ -846,13 +853,13 @@ bool Renderer::Initialize()
 		return false;
 	}
 
-	IrradianceMapUAV = CreateUnorderedAccessView(IrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, 0);
+	IrradianceMapUAV = RenderingAPI::CreateUnorderedAccessView(IrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, 0);
 	if (!IrradianceMapUAV)
 	{
 		return false;
 	}
 
-	IrradianceMapSRV = CreateShaderResourceView(IrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, 0, 1);
+	IrradianceMapSRV = RenderingAPI::CreateShaderResourceView(IrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, 0, 1);
 	if (!IrradianceMapSRV)
 	{
 		return false;
@@ -861,7 +868,7 @@ bool Renderer::Initialize()
 	// Generate global specular irradiance (From Skybox)
 	const Uint16 SpecularIrradianceSize			= 128;
 	const Uint32 SpecularIrradianceMiplevels	= std::max<Uint32>(std::log2<Uint32>(SpecularIrradianceSize), 1U);
-	SpecularIrradianceMap = CreateTextureCube(
+	SpecularIrradianceMap = RenderingAPI::CreateTextureCube(
 		nullptr, 
 		EFormat::Format_R16G16B16A16_Float, 
 		TextureUsage_Default | TextureUsage_UAV, 
@@ -880,14 +887,21 @@ bool Renderer::Initialize()
 
 	for (Uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
 	{
-		TSharedRef<UnorderedAccessView> Uav = CreateUnorderedAccessView(SpecularIrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, MipLevel);
+		TSharedRef<UnorderedAccessView> Uav = RenderingAPI::CreateUnorderedAccessView(
+			SpecularIrradianceMap.Get(), 
+			EFormat::Format_R16G16B16A16_Float, 
+			MipLevel);
 		if (Uav)
 		{
 			SpecularIrradianceMapUAVs.EmplaceBack(Uav);
 		}
 	}
 
-	SpecularIrradianceMapSRV = CreateShaderResourceView(SpecularIrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, 0, SpecularIrradianceMiplevels);
+	SpecularIrradianceMapSRV = RenderingAPI::CreateShaderResourceView(
+		SpecularIrradianceMap.Get(), 
+		EFormat::Format_R16G16B16A16_Float, 
+		0, 
+		SpecularIrradianceMiplevels);
 	if (SpecularIrradianceMapSRV)
 	{
 		return false;
@@ -1241,25 +1255,39 @@ bool Renderer::InitRayTracing()
 	//RenderingAPI::Get().GetImmediateCommandList()->WaitForCompletion();
 
 	// Create shader resource views
-	MeshVertexBufferSRV = CreateShaderResourceView<Vertex>(MeshVertexBuffer.Get(), 0, static_cast<Uint32>(Sphere.Vertices.Size()));
+	MeshVertexBufferSRV = RenderingAPI::CreateShaderResourceView<Vertex>(
+		MeshVertexBuffer.Get(), 
+		0, 
+		static_cast<Uint32>(Sphere.Vertices.Size()));
 	if (!MeshVertexBufferSRV)
 	{
 		return false;
 	}
 
-	CubeVertexBufferSRV = CreateShaderResourceView<Vertex>(CubeVertexBuffer.Get(), 0, static_cast<Uint32>(Cube.Vertices.Size()));
+	CubeVertexBufferSRV = RenderingAPI::CreateShaderResourceView<Vertex>(
+		CubeVertexBuffer.Get(), 
+		0, 
+		static_cast<Uint32>(Cube.Vertices.Size()));
 	if (!CubeVertexBufferSRV)
 	{
 		return false;
 	}
 
-	MeshIndexBufferSRV = CreateShaderResourceView(MeshIndexBuffer.Get(), 0, static_cast<Uint32>(Sphere.Indices.Size()), EFormat::Format_R16_Typeless);
+	MeshIndexBufferSRV = RenderingAPI::CreateShaderResourceView(
+		MeshIndexBuffer.Get(), 
+		0, 
+		static_cast<Uint32>(Sphere.Indices.Size()),
+		EFormat::Format_R16_Typeless);
 	if (!MeshIndexBufferSRV)
 	{
 		return false;
 	}
 
-	CubeIndexBufferSRV = CreateShaderResourceView(CubeIndexBuffer.Get(), 0, static_cast<Uint32>(Cube.Indices.Size()), EFormat::Format_R16_Typeless);
+	CubeIndexBufferSRV = RenderingAPI::CreateShaderResourceView(
+		CubeIndexBuffer.Get(), 
+		0, 
+		static_cast<Uint32>(Cube.Indices.Size()), 
+		EFormat::Format_R16_Typeless);
 	if (!CubeIndexBufferSRV)
 	{
 		return false;
@@ -1294,7 +1322,10 @@ bool Renderer::InitLightBuffers()
 	const Uint32 NumPointLights = 1;
 	const Uint32 NumDirLights	= 1;
 
-	PointLightBuffer = CreateConstantBuffer<PointLightProperties>(nullptr, NumPointLights, BufferUsage_Default);
+	PointLightBuffer = RenderingAPI::CreateConstantBuffer<PointLightProperties>(
+		nullptr, 
+		NumPointLights, 
+		BufferUsage_Default);
 	if (PointLightBuffer)
 	{
 		PointLightBuffer->SetName("PointLight Buffer");
@@ -1304,7 +1335,10 @@ bool Renderer::InitLightBuffers()
 		return false;
 	}
 
-	PointLightBuffer = CreateConstantBuffer<DirectionalLightProperties>(nullptr, NumDirLights, BufferUsage_Default);
+	PointLightBuffer = RenderingAPI::CreateConstantBuffer<DirectionalLightProperties>(
+		nullptr, 
+		NumDirLights, 
+		BufferUsage_Default);
 	if (PointLightBuffer)
 	{
 		PointLightBuffer->SetName("DirectionalLight Buffer");
@@ -2073,18 +2107,25 @@ bool Renderer::InitGBuffer()
 	const EFormat AlbedoFormat		= EFormat::Format_R8G8B8A8_Unorm;
 	const EFormat MaterialFormat	= EFormat::Format_R8G8B8A8_Unorm;
 
-	GBuffer[0] = CreateTexture2D(nullptr, AlbedoFormat, Usage, Width, Height, 1, 1, ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
+	GBuffer[0] = RenderingAPI::CreateTexture2D(
+		nullptr, 
+		AlbedoFormat, 
+		Usage, 
+		Width, 
+		Height, 
+		1, 1, 
+		ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
 	if (GBuffer[0])
 	{
 		GBuffer[0]->SetName("GBuffer Albedo");
 
-		GBufferSRVs[0] = CreateShaderResourceView(GBuffer[0].Get(), AlbedoFormat, 0, 1);
+		GBufferSRVs[0] = RenderingAPI::CreateShaderResourceView(GBuffer[0].Get(), AlbedoFormat, 0, 1);
 		if (!GBufferSRVs[0])
 		{
 			return false;
 		}
 
-		GBufferRTVs[0] = CreateRenderTargetView(GBuffer[0].Get(), AlbedoFormat, 0);
+		GBufferRTVs[0] = RenderingAPI::CreateRenderTargetView(GBuffer[0].Get(), AlbedoFormat, 0);
 		if (!GBufferSRVs[0])
 		{
 			return false;
@@ -2096,18 +2137,25 @@ bool Renderer::InitGBuffer()
 	}
 
 	// Normal
-	GBuffer[1] = CreateTexture2D(nullptr, NormalFormat, Usage, Width, Height, 1, 1, ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
+	GBuffer[1] = RenderingAPI::CreateTexture2D(
+		nullptr, 
+		NormalFormat, 
+		Usage, 
+		Width, 
+		Height, 
+		1, 1, 
+		ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
 	if (GBuffer[1])
 	{
 		GBuffer[1]->SetName("GBuffer Normal");
 
-		GBufferSRVs[1] = CreateShaderResourceView(GBuffer[1].Get(), NormalFormat, 0, 1);
+		GBufferSRVs[1] = RenderingAPI::CreateShaderResourceView(GBuffer[1].Get(), NormalFormat, 0, 1);
 		if (!GBufferSRVs[1])
 		{
 			return false;
 		}
 
-		GBufferRTVs[1] = CreateRenderTargetView(GBuffer[1].Get(), NormalFormat, 0);
+		GBufferRTVs[1] = RenderingAPI::CreateRenderTargetView(GBuffer[1].Get(), NormalFormat, 0);
 		if (!GBufferSRVs[1])
 		{
 			return false;
@@ -2119,18 +2167,25 @@ bool Renderer::InitGBuffer()
 	}
 
 	// Material Properties
-	GBuffer[2] = CreateTexture2D(nullptr, MaterialFormat, Usage, Width, Height, 1, 1, ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
+	GBuffer[2] = RenderingAPI::CreateTexture2D(
+		nullptr, 
+		MaterialFormat, 
+		Usage, 
+		Width, 
+		Height, 
+		1, 1, 
+		ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
 	if (GBuffer[2])
 	{
 		GBuffer[2]->SetName("GBuffer Material");
 
-		GBufferSRVs[2] = CreateShaderResourceView(GBuffer[2].Get(), MaterialFormat, 0, 1);
+		GBufferSRVs[2] = RenderingAPI::CreateShaderResourceView(GBuffer[2].Get(), MaterialFormat, 0, 1);
 		if (!GBufferSRVs[2])
 		{
 			return false;
 		}
 
-		GBufferRTVs[2] = CreateRenderTargetView(GBuffer[2].Get(), MaterialFormat, 0);
+		GBufferRTVs[2] = RenderingAPI::CreateRenderTargetView(GBuffer[2].Get(), MaterialFormat, 0);
 		if (!GBufferSRVs[2])
 		{
 			return false;
@@ -2143,18 +2198,32 @@ bool Renderer::InitGBuffer()
 
 	// DepthStencil
 	const Uint32 UsageDS = TextureUsage_Default | TextureUsage_DSV | TextureUsage_SRV;
-	GBuffer[3] = CreateTexture2D(nullptr, EFormat::Format_R32_Typeless, UsageDS, Width, Height, 1, 1, ClearValue(DepthStencilClearValue(1.0f, 0)));
+	GBuffer[3] = RenderingAPI::CreateTexture2D(
+		nullptr, 
+		EFormat::Format_R32_Typeless, 
+		UsageDS, 
+		Width, 
+		Height, 
+		1, 1, 
+		ClearValue(DepthStencilClearValue(1.0f, 0)));
 	if (GBuffer[3])
 	{
 		GBuffer[3]->SetName("GBuffer DepthStencil");
 
-		GBufferSRVs[3] = CreateShaderResourceView(GBuffer[3].Get(), EFormat::Format_R32_Float, 0, 1);
+		GBufferSRVs[3] = RenderingAPI::CreateShaderResourceView(
+			GBuffer[3].Get(), 
+			EFormat::Format_R32_Float, 
+			0, 
+			1);
 		if (!GBufferSRVs[3])
 		{
 			return false;
 		}
 
-		GBufferDSV = CreateDepthStencilView(GBuffer[3].Get(), DepthBufferFormat, 0);
+		GBufferDSV = RenderingAPI::CreateDepthStencilView(
+			GBuffer[3].Get(),
+			DepthBufferFormat, 
+			0);
 		if (!GBufferDSV)
 		{
 			return false;
@@ -2166,18 +2235,25 @@ bool Renderer::InitGBuffer()
 	}
 
 	// Final Image
-	FinalTarget = CreateTexture2D(nullptr, RenderTargetFormat, Usage, Width, Height, 1, 1, ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
+	FinalTarget = RenderingAPI::CreateTexture2D(
+		nullptr, 
+		RenderTargetFormat, 
+		Usage, 
+		Width, 
+		Height, 
+		1, 1, 
+		ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
 	if (FinalTarget)
 	{
 		FinalTarget->SetName("Final Target");
 
-		FinalTargetSRV = CreateShaderResourceView(FinalTarget.Get(), RenderTargetFormat, 0, 1);
+		FinalTargetSRV = RenderingAPI::CreateShaderResourceView(FinalTarget.Get(), RenderTargetFormat, 0, 1);
 		if (!FinalTargetSRV)
 		{
 			return false;
 		}
 
-		FinalTargetRTV = CreateRenderTargetView(FinalTarget.Get(), RenderTargetFormat, 0);
+		FinalTargetRTV = RenderingAPI::CreateRenderTargetView(FinalTarget.Get(), RenderTargetFormat, 0);
 		if (!FinalTargetRTV)
 		{
 			return false;
@@ -2206,7 +2282,14 @@ bool Renderer::InitIntegrationLUT()
 		return false;
 	}
 
-	TSharedRef<Texture2D> StagingTexture = CreateTexture2D(nullptr, LUTFormat, TextureUsage_Default | TextureUsage_UAV, LUTSize, LUTSize, 1, 1, ClearValue());
+	TSharedRef<Texture2D> StagingTexture = RenderingAPI::CreateTexture2D(
+		nullptr, 
+		LUTFormat, 
+		TextureUsage_Default | TextureUsage_UAV, 
+		LUTSize, 
+		LUTSize, 
+		1, 1, 
+		ClearValue());
 	if (StagingTexture)
 	{
 		StagingTexture->SetName("IntegrationLUT");
@@ -2216,19 +2299,26 @@ bool Renderer::InitIntegrationLUT()
 		return false;
 	}
 
-	TSharedRef<UnorderedAccessView> Uav = CreateUnorderedAccessView(StagingTexture.Get(), LUTFormat, 0);
+	TSharedRef<UnorderedAccessView> Uav = RenderingAPI::CreateUnorderedAccessView(StagingTexture.Get(), LUTFormat, 0);
 	if (!Uav)
 	{
 		return false;
 	}
 
-	IntegrationLUT = CreateTexture2D(nullptr, LUTFormat, TextureUsage_Default | TextureUsage_SRV, LUTSize, LUTSize, 1, 1, ClearValue());
+	IntegrationLUT = RenderingAPI::CreateTexture2D(
+		nullptr, 
+		LUTFormat, 
+		TextureUsage_Default | TextureUsage_SRV,
+		LUTSize, 
+		LUTSize, 
+		1, 1,
+		ClearValue());
 	if (!IntegrationLUT)
 	{
 		return false;
 	}
 
-	IntegrationLUTSRV = CreateShaderResourceView(IntegrationLUT.Get(), LUTFormat, 0, 1);
+	IntegrationLUTSRV = RenderingAPI::CreateShaderResourceView(IntegrationLUT.Get(), LUTFormat, 0, 1);
 	if (!IntegrationLUTSRV)
 	{
 		return false;
@@ -2289,19 +2379,19 @@ bool Renderer::InitRayTracingTexture()
 	const Uint32 Height	= 0;//RenderingAPI::Get().GetSwapChain()->GetHeight();
 	const Uint32 Usage	= TextureUsage_Default | TextureUsage_UAV | TextureUsage_SRV;
 
-	ReflectionTexture = CreateTexture2D(nullptr, EFormat::Format_R8G8B8A8_Unorm, Usage, Width, Height, 1, 1, ClearValue());
+	ReflectionTexture = RenderingAPI::CreateTexture2D(nullptr, EFormat::Format_R8G8B8A8_Unorm, Usage, Width, Height, 1, 1, ClearValue());
 	if (!ReflectionTexture)
 	{
 		return false;
 	}
 
-	ReflectionTextureUAV = CreateUnorderedAccessView(ReflectionTexture.Get(), EFormat::Format_R8G8B8A8_Unorm, 0);
+	ReflectionTextureUAV = RenderingAPI::CreateUnorderedAccessView(ReflectionTexture.Get(), EFormat::Format_R8G8B8A8_Unorm, 0);
 	if (!ReflectionTextureUAV)
 	{
 		return false;
 	}
 
-	ReflectionTextureSRV = CreateShaderResourceView(ReflectionTexture.Get(), EFormat::Format_R8G8B8A8_Unorm, 0, 1);
+	ReflectionTextureSRV = RenderingAPI::CreateShaderResourceView(ReflectionTexture.Get(), EFormat::Format_R8G8B8A8_Unorm, 0, 1);
 	if (!ReflectionTextureSRV)
 	{
 		return false;
@@ -2404,7 +2494,7 @@ bool Renderer::InitDebugStates()
 		{ -0.5f,  0.5f, -0.5f }
 	};
 
-	AABBVertexBuffer = CreateVertexBuffer<XMFLOAT3>(nullptr, 8, BufferUsage_Default);
+	AABBVertexBuffer = RenderingAPI::CreateVertexBuffer<XMFLOAT3>(nullptr, 8, BufferUsage_Default);
 	if (!AABBVertexBuffer)
 	{
 		return false;
@@ -2427,7 +2517,7 @@ bool Renderer::InitDebugStates()
 		2, 7,
 	};
 
-	AABBIndexBuffer = CreateIndexBuffer(nullptr, sizeof(Uint16) * 24, EIndexFormat::IndexFormat_Uint16, BufferUsage_Default);
+	AABBIndexBuffer = RenderingAPI::CreateIndexBuffer(nullptr, sizeof(Uint16) * 24, EIndexFormat::IndexFormat_Uint16, BufferUsage_Default);
 	if (!AABBIndexBuffer)
 	{
 		return false;

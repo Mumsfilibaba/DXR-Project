@@ -10,6 +10,7 @@
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
+#include "Rendering/TextureFactory.h"
 
 #include "RenderingCore/Texture.h"
 #include "RenderingCore/CommandList.h"
@@ -58,6 +59,12 @@ bool EngineLoop::Initialize()
 
 	// RenderAPI
 	if (!RenderingAPI::Initialize(ERenderingAPI::RenderingAPI_D3D12, App->GetMainWindow()))
+	{
+		return false;
+	}
+
+	// TextureFactory
+	if (!TextureFactory::Initialize())
 	{
 		return false;
 	}
@@ -123,7 +130,7 @@ void EngineLoop::Release()
 
 void EngineLoop::CoreRelease()
 {
-	RenderingAPI::Release();
+	TextureFactory::Release();
 
 	Application::Get().Release();
 

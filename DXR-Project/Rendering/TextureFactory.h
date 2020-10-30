@@ -24,6 +24,9 @@ class TextureCube;
 class TextureFactory
 {
 public:
+	static bool Initialize();
+	static void Release();
+
 	// Supports R8G8B8A8 and R32G32B32A32 for now
 	static Texture2D* LoadFromFile(const std::string& Filepath, Uint32 CreateFlags, EFormat Format);
 	static Texture2D* LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags, EFormat Format);

@@ -1,25 +1,54 @@
 #pragma once
-#include "RenderingCore/GenericRenderingAPI.h"
+#include "Application/Generic/GenericWindow.h"
 
-#include "Windows/WindowsWindow.h"
+#include "Containers/TUniquePtr.h"
+#include "Containers/TSharedPtr.h"
 
-#include "D3D12Device.h"
-#include "D3D12SwapChain.h"
-#include "D3D12CommandContext.h"
+#include "RenderingCore.h"
+#include "Buffer.h"
+#include "CommandList.h"
 
-class D3D12CommandContext;
+class Texture1D;
+class Texture1DArray;
+class Texture2D;
+class Texture2DArray;
+class TextureCube;
+class TextureCubeArray;
+class Texture3D;
+class ShaderResourceView;
+class UnorderedAccessView;
+class RenderTargetView;
+class DepthStencilView;
+struct ResourceData;
+struct ClearValue;
+class RayTracingGeometry;
+class RayTracingScene;
 
 /*
-* D3D12RenderingAPI
+* ERenderingAPI
 */
 
-class D3D12RenderingAPI : public GenericRenderingAPI
+enum class ERenderingAPI : Uint32
+{
+	RenderingAPI_Unknown	= 0,
+	RenderingAPI_D3D12		= 1,
+};
+
+/*
+* GenericRenderingAPI
+*/
+
+class GenericRenderingAPI
 {
 public:
-	D3D12RenderingAPI();
-	~D3D12RenderingAPI();
+	inline GenericRenderingAPI(ERenderingAPI InAPI)
+		: API(InAPI)
+	{
+	}
 
-	virtual bool Init(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) override final;
+	virtual ~GenericRenderingAPI() = default;
+
+	virtual bool Init(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) = 0;
 
 	/*
 	* Resources
@@ -32,7 +61,7 @@ public:
 		Uint32 Usage,
 		Uint32 Width,
 		Uint32 MipLevels,
-		const ClearValue& OptimizedClearValue) const override final;
+		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual Texture1DArray* CreateTexture1DArray(
 		const ResourceData* InitalData,
@@ -41,7 +70,7 @@ public:
 		Uint32 Width,
 		Uint32 MipLevels,
 		Uint32 ArrayCount,
-		const ClearValue& OptimizedClearValue) const override final;
+		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual Texture2D* CreateTexture2D(
 		const ResourceData* InitalData,
@@ -51,7 +80,7 @@ public:
 		Uint32 Height,
 		Uint32 MipLevels,
 		Uint32 SampleCount,
-		const ClearValue& OptimizedClearValue) const override final;
+		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual Texture2DArray* CreateTexture2DArray(
 		const ResourceData* InitalData,
@@ -62,7 +91,7 @@ public:
 		Uint32 MipLevels,
 		Uint32 ArrayCount,
 		Uint32 SampleCount,
-		const ClearValue& OptimizedClearValue) const override final;
+		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual TextureCube* CreateTextureCube(
 		const ResourceData* InitalData,
@@ -71,7 +100,7 @@ public:
 		Uint32 Size,
 		Uint32 MipLevels,
 		Uint32 SampleCount,
-		const ClearValue& OptimizedClearValue) const override final;
+		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual TextureCubeArray* CreateTextureCubeArray(
 		const ResourceData* InitalData,
@@ -81,7 +110,7 @@ public:
 		Uint32 MipLevels,
 		Uint32 ArrayCount,
 		Uint32 SampleCount,
-		const ClearValue& OptimizedClearValue) const override final;
+		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual Texture3D* CreateTexture3D(
 		const ResourceData* InitalData,
@@ -91,35 +120,35 @@ public:
 		Uint32 Height,
 		Uint32 Depth,
 		Uint32 MipLevels,
-		const ClearValue& OptimizedClearValue) const override final;
+		const ClearValue& OptimizedClearValue) const = 0;
 
 	// Buffers
 	virtual VertexBuffer* CreateVertexBuffer(
 		const ResourceData* InitalData,
 		Uint32 SizeInBytes,
 		Uint32 VertexStride,
-		Uint32 Usage) const override final;
+		Uint32 Usage) const = 0;
 
 	virtual IndexBuffer* CreateIndexBuffer(
 		const ResourceData* InitalData,
 		Uint32 SizeInBytes,
 		EIndexFormat IndexFormat,
-		Uint32 Usage) const override final;
+		Uint32 Usage) const = 0;
 
 	virtual ConstantBuffer* CreateConstantBuffer(
 		const ResourceData* InitalData, 
 		Uint32 SizeInBytes, 
-		Uint32 Usage) const override final;
+		Uint32 Usage) const = 0;
 
 	virtual StructuredBuffer* CreateStructuredBuffer(
 		const ResourceData* InitalData,
 		Uint32 SizeInBytes,
 		Uint32 Stride,
-		Uint32 Usage) const override final;
+		Uint32 Usage) const = 0;
 
 	// Ray Tracing
-	virtual class RayTracingGeometry* CreateRayTracingGeometry() const override final;
-	virtual class RayTracingScene* CreateRayTracingScene() const override final;
+	virtual RayTracingScene* CreateRayTracingScene()		const = 0;
+	virtual RayTracingGeometry* CreateRayTracingGeometry()	const = 0;
 
 	/*
 	* Resource Views
@@ -130,19 +159,19 @@ public:
 		const Buffer* Buffer,
 		Uint32 FirstElement,
 		Uint32 ElementCount,
-		EFormat Format) const override final;
+		EFormat Format) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Buffer* Buffer,
 		Uint32 FirstElement,
 		Uint32 ElementCount,
-		Uint32 Stride) const override final;
+		Uint32 Stride) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Texture1D* Texture,
 		EFormat Format,
 		Uint32 MostDetailedMip,
-		Uint32 MipLevels) const override final;
+		Uint32 MipLevels) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Texture1DArray* Texture,
@@ -150,13 +179,13 @@ public:
 		Uint32 MostDetailedMip,
 		Uint32 MipLevels,
 		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const override final;
+		Uint32 ArraySize) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Texture2D* Texture,
 		EFormat Format,
 		Uint32 MostDetailedMip,
-		Uint32 MipLevels) const override final;
+		Uint32 MipLevels) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Texture2DArray* Texture,
@@ -164,13 +193,13 @@ public:
 		Uint32 MostDetailedMip,
 		Uint32 MipLevels,
 		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const override final;
+		Uint32 ArraySize) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const TextureCube* Texture,
 		EFormat Format,
 		Uint32 MostDetailedMip,
-		Uint32 MipLevels) const override final;
+		Uint32 MipLevels) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const TextureCubeArray* Texture,
@@ -178,13 +207,13 @@ public:
 		Uint32 MostDetailedMip,
 		Uint32 MipLevels,
 		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const override final;
+		Uint32 ArraySize) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Texture3D* Texture,
 		EFormat Format,
 		Uint32 MostDetailedMip,
-		Uint32 MipLevels) const override final;
+		Uint32 MipLevels) const = 0;
 
 	// UnorderedAccessView
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
@@ -192,88 +221,88 @@ public:
 		Uint64 FirstElement,
 		Uint32 NumElements,
 		EFormat Format,
-		Uint64 CounterOffsetInBytes) const override final;
+		Uint64 CounterOffsetInBytes) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Buffer* Buffer,
 		Uint64 FirstElement,
 		Uint32 NumElements,
 		Uint32 StructureByteStride,
-		Uint64 CounterOffsetInBytes) const override final;
+		Uint64 CounterOffsetInBytes) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture1D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const override final;
+		Uint32 MipSlice) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture1DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const override final;
+		Uint32 ArraySize) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture2D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const override final;
+		Uint32 MipSlice) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture2DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const override final;
+		Uint32 ArraySize) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const TextureCube* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const override final;
+		Uint32 MipSlice) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
-		Uint32 ArraySlice) const override final;
+		Uint32 ArraySlice) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture3D* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstDepthSlice,
-		Uint32 DepthSlices) const override final;
+		Uint32 DepthSlices) const = 0;
 
 	// RenderTargetView
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture1D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const override final;
+		Uint32 MipSlice) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture1DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const override final;
+		Uint32 ArraySize) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture2D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const override final;
+		Uint32 MipSlice) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture2DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const override final;
+		Uint32 ArraySize) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const TextureCube* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstFace,
-		Uint32 FaceCount) const override final;
+		Uint32 FaceCount) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const TextureCubeArray* Texture,
@@ -281,46 +310,46 @@ public:
 		Uint32 MipSlice,
 		Uint32 ArraySlice,
 		Uint32 FirstFace,
-		Uint32 FaceCount) const override final;
+		Uint32 FaceCount) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture3D* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstDepthSlice,
-		Uint32 DepthSlices) const override final;
+		Uint32 DepthSlices) const = 0;
 
 	// DepthStencilView
 	virtual DepthStencilView* CreateDepthStencilView(
 		const Texture1D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const override final;
+		Uint32 MipSlice) const = 0;
 
 	virtual DepthStencilView* CreateDepthStencilView(
 		const Texture1DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const override final;
+		Uint32 ArraySize) const = 0;
 
 	virtual DepthStencilView* CreateDepthStencilView(
 		const Texture2D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const override final;
+		Uint32 MipSlice) const = 0;
 
 	virtual DepthStencilView* CreateDepthStencilView(
 		const Texture2DArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const override final;
+		Uint32 ArraySize) const = 0;
 
 	virtual DepthStencilView* CreateDepthStencilView(
 		const TextureCube* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 FirstFace,
-		Uint32 FaceCount) const override final;
+		Uint32 FaceCount) const = 0;
 
 	virtual DepthStencilView* CreateDepthStencilView(
 		const TextureCubeArray* Texture,
@@ -328,80 +357,45 @@ public:
 		Uint32 MipSlice,
 		Uint32 ArraySlice,
 		Uint32 FaceIndex,
-		Uint32 FaceCount) const override final;
+		Uint32 FaceCount) const = 0;
 
 	// PipelineState
-	virtual class Shader* CreateShader() const override final;
+	virtual class Shader* CreateShader() const = 0;
 
-	virtual class DepthStencilState*	CreateDepthStencilState()	const override final;
-	virtual class RasterizerState*		CreateRasterizerState()		const override final;
-	virtual class BlendState*			CreateBlendState()	const override final;
-	virtual class InputLayout*			CreateInputLayout() const override final;
+	virtual class DepthStencilState* CreateDepthStencilState()	const = 0;
+	virtual class RasterizerState* CreateRasterizerState()		const = 0;
+	virtual class BlendState* CreateBlendState()	const = 0;
+	virtual class InputLayout* CreateInputLayout() const = 0;
 
-	virtual class GraphicsPipelineState*	CreateGraphicsPipelineState()	const override final;
-	virtual class ComputePipelineState*		CreateComputePipelineState()	const override final;
-	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const override final;
+	virtual class GraphicsPipelineState* CreateGraphicsPipelineState()	const = 0;
+	virtual class ComputePipelineState* CreateComputePipelineState()	const = 0;
+	virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const = 0;
 
-	// Commands
-	virtual bool IsRayTracingSupported() const override final;
-	virtual bool UAVSupportsFormat(EFormat Format) const override final;
-	
-	virtual class ICommandContext* GetDefaultCommandContext() const override final
+	// Context
+	virtual class ICommandContext* GetDefaultCommandContext() const = 0;
+
+	// Getters
+	FORCEINLINE virtual std::string GetAdapterName() const
 	{
-		return DirectCmdContext.Get();
+		return std::string();
 	}
 
-	virtual std::string GetAdapterName() const override final
+	FORCEINLINE virtual bool IsRayTracingSupported() const
 	{
-		return Device->GetAdapterName();
+		return false;
 	}
 
-private:
-	bool AllocateBuffer(
-		D3D12Resource& Resource, 
-		D3D12_HEAP_TYPE HeapType, 
-		D3D12_RESOURCE_STATES InitalState, 
-		D3D12_RESOURCE_FLAGS Flags, 
-		Uint32 SizeInBytes) const;
-
-	bool AllocateTexture(
-		D3D12Resource& Resource, 
-		D3D12_HEAP_TYPE HeapType,
-		D3D12_RESOURCE_STATES InitalState, 
-		const D3D12_RESOURCE_DESC& Desc) const;
-	
-	bool UploadResource(D3D12Resource& Resource, const ResourceData* InitalData) const;
-
-	template<typename TD3D12Texture>
-	TD3D12Texture* CreateTextureResource(
-		TD3D12Texture* Texture, 
-		Uint32 Usage, 
-		const D3D12_RESOURCE_DESC& Desc, 
-		const ResourceData* InitalData) const
+	FORCEINLINE virtual bool UAVSupportsFormat(EFormat Format) const
 	{
-		D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_DEFAULT;
-		if (Usage & TextureUsage_Dynamic)
-		{
-			HeapType = D3D12_HEAP_TYPE_UPLOAD;
-		}
-
-		if (!AllocateTexture(*Texture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
-		{
-			LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
-			return nullptr;
-		}
-
-		if (InitalData)
-		{
-			UploadResource(*Texture, InitalData);
-		}
-
-		return Texture;
+		UNREFERENCED_VARIABLE(Format);
+		return false;
 	}
 
-	TSharedPtr<D3D12SwapChain>		SwapChain;
-	TSharedPtr<D3D12Device>			Device;
-	TSharedPtr<D3D12CommandQueue>	DirectCmdQueue;
-	TSharedPtr<D3D12CommandContext>	DirectCmdContext;
-	D3D12DefaultRootSignatures		DefaultRootSignatures;
+	FORCEINLINE ERenderingAPI GetAPI() const
+	{
+		return API;
+	}
+
+protected:
+	ERenderingAPI API;
 };

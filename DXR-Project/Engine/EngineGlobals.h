@@ -7,7 +7,9 @@
 
 struct EngineGlobals
 {
-	static TSharedPtr<class GenericApplication>		PlatformApplication;
-	static TSharedPtr<class RenderingAPI>			RenderingAPI;
-	static TSharedPtr<class CommandListExecutor>	CmdListExecutor;
+	// Application
+	static TSharedPtr<class GenericApplication> PlatformApplication;
+	// Graphics
+	static TSharedPtr<class GenericRenderingAPI> RenderingAPI;
+	static TSharedPtr<class CommandListExecutor> CmdListExecutor;
 };

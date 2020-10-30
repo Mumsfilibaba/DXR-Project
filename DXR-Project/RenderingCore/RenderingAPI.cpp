@@ -34,7 +34,9 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 	// Init
 	if (EngineGlobals::RenderingAPI->Init(RenderWindow, EnableDebug))
 	{
-		ICommandContext* CmdContext = EngineGlobals::RenderingAPI->GetCommandContext();
+		EngineGlobals::CmdListExecutor = MakeShared<CommandListExecutor>();
+
+		ICommandContext* CmdContext = EngineGlobals::RenderingAPI->GetDefaultCommandContext();
 		EngineGlobals::CmdListExecutor->SetContext(CmdContext);
 
 		return true;
@@ -43,10 +45,4 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 	{
 		return false;
 	}
-}
-
-void RenderingAPI::Release()
-{
-	// TODO: Fix so that there is not crash when exiting
-	//SAFEDELETE(CurrentRenderAPI);
 }

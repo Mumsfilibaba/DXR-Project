@@ -29,6 +29,15 @@ struct TextureFactoryData
 * TextureFactory
 */
 
+bool TextureFactory::Initialize()
+{
+	return false;
+}
+
+void TextureFactory::Release()
+{
+}
+
 Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, Uint32 CreateFlags, EFormat Format)
 {
 	Int32 Width			= 0;
@@ -78,7 +87,14 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint
 
 	VALIDATE(MipLevels != 0);
 
-	TSharedRef<Texture2D> Texture = CreateTexture2D(nullptr, Format, TextureUsage_Default | TextureUsage_SRV, Width, Height, MipLevels, 1, ClearValue());
+	TSharedRef<Texture2D> Texture = RenderingAPI::CreateTexture2D(
+		nullptr, 
+		Format, 
+		TextureUsage_Default | TextureUsage_SRV,
+		Width, 
+		Height, 
+		MipLevels, 
+		1, ClearValue());
 	if (Texture)
 	{
 		return nullptr;
@@ -99,7 +115,7 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint
 
 	CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
 
-	CommandListExecutor& executor = GetCommandListExecutor();
+	CommandListExecutor& executor = RenderingAPI::GetCommandListExecutor();
 	executor.ExecuteCommandList(CmdList);
 
 	return Texture.ReleaseOwnerShip();
@@ -111,21 +127,35 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	const Uint16 MipLevels = (GenerateMipLevels) ? static_cast<Uint16>(std::log2(CubeMapSize)) : 1U;
 
 	// Create statging texture
-	TSharedRef<TextureCube> StagingTexture = CreateTextureCube(nullptr, Format, TextureUsage_UAV | TextureUsage_Default, CubeMapSize, MipLevels, 1, ClearValue());
+	TSharedRef<TextureCube> StagingTexture = RenderingAPI::CreateTextureCube(
+		nullptr, 
+		Format, 
+		TextureUsage_UAV | TextureUsage_Default, 
+		CubeMapSize, 
+		MipLevels, 
+		1, 
+		ClearValue());
 	if (!StagingTexture)
 	{
 		return nullptr;
 	}
 
 	//Create UAV
-	TSharedRef<UnorderedAccessView> Uav = CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
+	TSharedRef<UnorderedAccessView> Uav = RenderingAPI::CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
 	if (!Uav)
 	{
 		return nullptr;
 	}
 
 	// Create texture
-	TSharedRef<TextureCube> Texture = CreateTextureCube(nullptr, Format, TextureUsage_SRV | TextureUsage_Default, CubeMapSize, MipLevels, 1, ClearValue());
+	TSharedRef<TextureCube> Texture = RenderingAPI::CreateTextureCube(
+		nullptr, 
+		Format, 
+		TextureUsage_SRV | TextureUsage_Default, 
+		CubeMapSize, 
+		MipLevels, 
+		1, 
+		ClearValue());
 	if (!Texture)
 	{
 		return nullptr;

@@ -25,33 +25,6 @@ enum ETextureUsage
 };
 
 /*
-* TextureRange
-*/
-
-struct TextureRange
-{
-	inline explicit TextureRange(Int32 InMipSlice, Int32 InArraySlice, Int32 InPlaneSlice, Int32 InMipLevels, Int32 InArraySize)
-		: MipSlice(InMipSlice)
-		, MipLevels(InMipLevels)
-		, ArraySlice(InArraySlice)
-		, ArraySize(InArraySize)
-		, PlaneSlice(InPlaneSlice)
-	{
-	}
-
-	FORCEINLINE Int32 GetSubresourceIndex() const
-	{
-		return MipSlice + (ArraySlice * MipLevels) + (PlaneSlice * MipLevels * ArraySize);
-	}
-
-	const Int32 MipSlice;
-	const Int32 MipLevels;
-	const Int32 ArraySlice;
-	const Int32 ArraySize;
-	const Int32 PlaneSlice;
-};
-
-/*
 * Texture
 */
 
@@ -182,6 +155,16 @@ public:
 	virtual bool IsMultiSampled() const
 	{
 		return false;
+	}
+
+	FORCEINLINE EFormat GetFormat() const
+	{
+		return Format;
+	}
+
+	FORCEINLINE Uint32 GetUsage() const
+	{
+		return Usage;
 	}
 
 	FORCEINLINE bool HasShaderResourceUsage() const

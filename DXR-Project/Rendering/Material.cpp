@@ -18,7 +18,7 @@ Material::Material(const MaterialProperties& InProperties)
 void Material::Initialize()
 {
 	// Create materialbuffer
-	MaterialBuffer = CreateConstantBuffer<MaterialProperties>(nullptr, BufferUsage_Default);
+	MaterialBuffer = RenderingAPI::CreateConstantBuffer<MaterialProperties>(nullptr, BufferUsage_Default);
 }
 
 void Material::BuildBuffer(CommandList& CmdList)
