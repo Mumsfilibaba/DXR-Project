@@ -143,6 +143,21 @@ public:
 		return false;// RayTracingSupported;
 	}
 
+	FORCEINLINE bool IsInlineRayTracingSupported() const
+	{
+		return InlineRayTracingSupported;
+	}
+
+	FORCEINLINE bool IsMeshShadersSupported() const
+	{
+		return MeshShadersSupported;
+	}
+
+	FORCEINLINE bool IsSamplerFeedbackSupported() const
+	{
+		return SamplerFeedbackSupported;
+	}
+
 	FORCEINLINE D3D12OfflineDescriptorHeap* GetGlobalResourceDescriptorHeap() const
 	{
 		return GlobalResourceDescriptorHeap;
@@ -200,7 +215,10 @@ private:
 
 	Uint32 AdapterID = 0;
 
-	bool DebugEnabled			= false;
-	bool RayTracingSupported	= false;
-	BOOL AllowTearing			= FALSE;
+	bool MeshShadersSupported		= false;
+	bool SamplerFeedbackSupported	= false;
+	bool RayTracingSupported		= false;
+	bool InlineRayTracingSupported	= false;
+	bool AllowTearing				= false;
+	bool DebugEnabled				= false;
 };

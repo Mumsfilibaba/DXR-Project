@@ -251,8 +251,8 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 		_countof(SupportedFeatureLevels), SupportedFeatureLevels, D3D_FEATURE_LEVEL_11_0
 	};
 
-	HRESULT hResult = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
-	if (SUCCEEDED(hResult))
+	HRESULT hr = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
+	if (SUCCEEDED(hr))
 	{
 		ActiveFeatureLevel = FeatureLevels.MaxSupportedFeatureLevel;
 	}
@@ -262,13 +262,41 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	}
 
 	// Check for Ray-Tracing support
-	D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5 = { };
-	hResult = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
-	if (SUCCEEDED(hResult))
 	{
-		if (Features5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+		D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
+		Memory::Memzero(&Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+
+		hr = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+		if (SUCCEEDED(hr))
 		{
-			RayTracingSupported = true;
+			if (Features5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+			{
+				RayTracingSupported = true;
+				if (Features5.RaytracingTier >= D3D12_RAYTRACING_TIER_1_1)
+				{
+					InlineRayTracingSupported = true;
+				}
+			}
+		}
+	}
+
+	// Check for Mesh-Shaders support
+	{
+		D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
+		Memory::Memzero(&Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
+
+		hr = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
+		if (SUCCEEDED(hr))
+		{
+			if (Features7.MeshShaderTier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
+			{
+				MeshShadersSupported = true;
+			}
+
+			if (Features7.SamplerFeedbackTier != D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED)
+			{
+				SamplerFeedbackSupported = true;
+			}
 		}
 	}
 
