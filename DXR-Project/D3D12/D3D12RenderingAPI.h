@@ -391,7 +391,7 @@ private:
 		const D3D12_RESOURCE_DESC& Desc) const;
 	
 	bool UploadBuffer(D3D12Buffer& Buffer, Uint32 SizeInBytes, const ResourceData* InitalData) const;
-	bool UploadTexture(D3D12Resource& Resource, const ResourceData* InitalData) const;
+	bool UploadTexture(D3D12Texture& Texture, const ResourceData* InitalData) const;
 
 	template<typename TD3D12Texture>
 	TD3D12Texture* CreateTextureResource(

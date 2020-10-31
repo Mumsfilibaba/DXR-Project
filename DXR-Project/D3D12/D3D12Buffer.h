@@ -24,6 +24,25 @@ public:
 };
 
 /*
+* D3D12StagingBuffer
+*/
+
+class D3D12StagingBuffer : public D3D12Buffer
+{
+public:
+	inline D3D12StagingBuffer(D3D12Device* InDevice, Uint32 InSizeInBytes)
+		: D3D12Buffer(InDevice)
+		, SizeInBytes(InSizeInBytes)
+	{
+	}
+
+	~D3D12StagingBuffer() = default;
+
+private:
+	Uint32 SizeInBytes;
+};
+
+/*
 * D3D12VertexBuffer
 */
 

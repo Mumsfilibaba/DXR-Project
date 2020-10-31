@@ -1820,7 +1820,7 @@ bool D3D12RenderingAPI::UploadBuffer(D3D12Buffer& Buffer, Uint32 SizeInBytes, co
 	return false;
 }
 
-bool D3D12RenderingAPI::UploadTexture(D3D12Resource& Resource, const ResourceData* InitalData) const
+bool D3D12RenderingAPI::UploadTexture(D3D12Texture& Texture, const ResourceData* InitalData) const
 {
 	return false;
 }
