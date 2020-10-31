@@ -101,7 +101,6 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint
 		Height, 
 		MipLevels, 
 		1);
-
 	if (!Texture)
 	{
 		return nullptr;
