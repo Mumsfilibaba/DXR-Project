@@ -95,22 +95,13 @@ Texture1D* D3D12RenderingAPI::CreateTexture1D(
 	Uint32 MipLevels, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_DESC Desc;
-	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
-
-	Desc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-	Desc.Flags				= ConvertTextureUsage(Usage);
-	Desc.Format				= ConvertFormat(Format);
-	Desc.Width				= Width;
-	Desc.Height				= 1;
-	Desc.DepthOrArraySize	= 1;
-	Desc.Layout				= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels			= static_cast<UINT16>(MipLevels);
-	Desc.SampleDesc.Count	= 1;
-	Desc.SampleDesc.Quality	= 0;
-
-	D3D12Texture1D* NewTexture = new D3D12Texture1D(Device.Get(), Format, Usage, Width, MipLevels, OptimizedClearValue);
-	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
+	return CreateTextureResource<D3D12Texture1D>(
+		InitalData,
+		Format,
+		Usage,
+		Width,
+		MipLevels,
+		OptimizedClearValue);
 }
 
 Texture1DArray* D3D12RenderingAPI::CreateTexture1DArray(
@@ -122,30 +113,14 @@ Texture1DArray* D3D12RenderingAPI::CreateTexture1DArray(
 	Uint32 ArrayCount, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_DESC Desc;
-	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
-
-	Desc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-	Desc.Flags				= ConvertTextureUsage(Usage);
-	Desc.Format				= ConvertFormat(Format);
-	Desc.Width				= Width;
-	Desc.Height				= 1;
-	Desc.DepthOrArraySize	= ArrayCount;
-	Desc.Layout				= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels			= static_cast<UINT16>(MipLevels);
-	Desc.SampleDesc.Count	= 1;
-	Desc.SampleDesc.Quality	= 0;
-
-	D3D12Texture1DArray* NewTexture = new D3D12Texture1DArray(
-		Device.Get(), 
+	return CreateTextureResource<D3D12Texture1DArray>(
+		InitalData,
 		Format, 
 		Usage, 
 		Width, 
 		MipLevels, 
 		ArrayCount, 
 		OptimizedClearValue);
-
-	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 Texture2D* D3D12RenderingAPI::CreateTexture2D(
@@ -158,31 +133,8 @@ Texture2D* D3D12RenderingAPI::CreateTexture2D(
 	Uint32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_DESC Desc;
-	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
-
-	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	Desc.Flags					= ConvertTextureUsage(Usage);
-	Desc.Format					= ConvertFormat(Format);
-	Desc.Width					= Width;
-	Desc.Height					= Height;
-	Desc.DepthOrArraySize		= 1;
-	Desc.Layout					= D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	Desc.MipLevels				= static_cast<UINT16>(MipLevels);
-	Desc.SampleDesc.Count		= SampleCount;
-
-	if (SampleCount > 1)
-	{
-		const Int32 Quality = Device->GetMultisampleQuality(Desc.Format, SampleCount);
-		Desc.SampleDesc.Quality	= std::max<Int32>(Quality - 1, 0);
-	}
-	else
-	{
-		Desc.SampleDesc.Quality	= 0;
-	}
-	
-	D3D12Texture2D* NewTexture = new D3D12Texture2D(
-		Device.Get(), 
+	return CreateTextureResource<D3D12Texture2D>(
+		InitalData,
 		Format, 
 		Usage, 
 		Width, 
@@ -190,8 +142,6 @@ Texture2D* D3D12RenderingAPI::CreateTexture2D(
 		MipLevels, 
 		SampleCount, 
 		OptimizedClearValue);
-
-	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 Texture2DArray* D3D12RenderingAPI::CreateTexture2DArray(
@@ -205,41 +155,16 @@ Texture2DArray* D3D12RenderingAPI::CreateTexture2DArray(
 	Uint32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_DESC Desc;
-	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
-
-	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	Desc.Flags					= ConvertTextureUsage(Usage);
-	Desc.Format					= ConvertFormat(Format);
-	Desc.Width					= Width;
-	Desc.Height					= Height;
-	Desc.DepthOrArraySize		= ArrayCount;
-	Desc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels				= static_cast<UINT16>(MipLevels);
-	Desc.SampleDesc.Count		= SampleCount;
-
-	if (SampleCount > 1)
-	{
-		const Int32 Quality = Device->GetMultisampleQuality(Desc.Format, SampleCount);
-		Desc.SampleDesc.Quality	= std::max<Int32>(Quality - 1, 0);
-	}
-	else
-	{
-		Desc.SampleDesc.Quality	= 0;
-	}
-
-	D3D12Texture2DArray* NewTexture = new D3D12Texture2DArray(
-		Device.Get(), 
-		Format, 
-		Usage, 
-		Width, 
-		Height, 
-		MipLevels, 
-		ArrayCount, 
-		SampleCount, 
+	return CreateTextureResource<D3D12Texture2DArray>(
+		InitalData,
+		Format,
+		Usage,
+		Width,
+		Height,
+		MipLevels,
+		ArrayCount,
+		SampleCount,
 		OptimizedClearValue);
-
-	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 TextureCube* D3D12RenderingAPI::CreateTextureCube(
@@ -251,40 +176,14 @@ TextureCube* D3D12RenderingAPI::CreateTextureCube(
 	Uint32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_DESC Desc;
-	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
-
-	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
-	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	Desc.Flags					= ConvertTextureUsage(Usage);
-	Desc.Format					= ConvertFormat(Format);
-	Desc.Width					= Size;
-	Desc.Height					= Size;
-	Desc.DepthOrArraySize		= TEXTURE_CUBE_FACE_COUNT;
-	Desc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels				= static_cast<UINT16>(MipLevels);
-	Desc.SampleDesc.Count		= SampleCount;
-
-	if (SampleCount > 1)
-	{
-		const Int32 Quality = Device->GetMultisampleQuality(Desc.Format, SampleCount);
-		Desc.SampleDesc.Quality	= std::max<Int32>(Quality - 1, 0);
-	}
-	else
-	{
-		Desc.SampleDesc.Quality	= 0;
-	}
-
-	D3D12TextureCube* NewTexture = new D3D12TextureCube(
-		Device.Get(), 
-		Format, 
-		Usage, 
-		Size, 
-		MipLevels, 
-		SampleCount, 
+	return CreateTextureResource<D3D12TextureCube>(
+		InitalData,
+		Format,
+		Usage,
+		Size,
+		MipLevels,
+		SampleCount,
 		OptimizedClearValue);
-
-	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 TextureCubeArray* D3D12RenderingAPI::CreateTextureCubeArray(
@@ -297,41 +196,15 @@ TextureCubeArray* D3D12RenderingAPI::CreateTextureCubeArray(
 	Uint32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_DESC Desc;
-	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
-
-	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
-	Desc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	Desc.Flags				= ConvertTextureUsage(Usage);
-	Desc.Format				= ConvertFormat(Format);
-	Desc.Width				= Size;
-	Desc.Height				= Size;
-	Desc.DepthOrArraySize	= TEXTURE_CUBE_FACE_COUNT * ArrayCount;
-	Desc.Layout				= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels			= static_cast<UINT16>(MipLevels);
-	Desc.SampleDesc.Count	= SampleCount;
-
-	if (SampleCount > 1)
-	{
-		const Int32 Quality = Device->GetMultisampleQuality(Desc.Format, SampleCount);
-		Desc.SampleDesc.Quality = std::max<Int32>(Quality - 1, 0);
-	}
-	else
-	{
-		Desc.SampleDesc.Quality = 0;
-	}
-
-	D3D12TextureCubeArray* NewTexture = new D3D12TextureCubeArray(
-		Device.Get(), 
-		Format, 
-		Usage, 
-		Size, 
-		MipLevels, 
-		ArrayCount, 
-		SampleCount, 
+	return CreateTextureResource<D3D12TextureCubeArray>(
+		InitalData,
+		Format,
+		Usage,
+		Size,
+		MipLevels,
+		ArrayCount,
+		SampleCount,
 		OptimizedClearValue);
-
-	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 Texture3D* D3D12RenderingAPI::CreateTexture3D(
@@ -344,30 +217,15 @@ Texture3D* D3D12RenderingAPI::CreateTexture3D(
 	Uint32 MipLevels, 
 	const ClearValue& OptimizedClearValue) const
 {
-	D3D12_RESOURCE_DESC Desc;
-	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
-
-	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-	Desc.Flags					= ConvertTextureUsage(Usage);
-	Desc.Format					= ConvertFormat(Format);
-	Desc.Width					= Width;
-	Desc.Height					= Height;
-	Desc.DepthOrArraySize		= Depth;
-	Desc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Desc.MipLevels				= static_cast<UINT16>(MipLevels);
-	Desc.SampleDesc.Count		= 1;
-
-	D3D12Texture3D* NewTexture = new D3D12Texture3D(
-		Device.Get(), 
-		Format, 
-		Usage, 
-		Width, 
-		Height, 
-		Depth, 
-		MipLevels, 
+	return CreateTextureResource<D3D12Texture3D>(
+		InitalData,
+		Format,
+		Usage,
+		Width,
+		Height,
+		Depth,
+		MipLevels,
 		OptimizedClearValue);
-
-	return CreateTextureResource(NewTexture, Usage, Desc, InitalData);
 }
 
 /*
@@ -1629,7 +1487,17 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 * Pipeline
 */
 
-Shader* D3D12RenderingAPI::CreateShader() const
+VertexShader* D3D12RenderingAPI::CreateVertexShader() const
+{
+	return nullptr;
+}
+
+PixelShader* D3D12RenderingAPI::CreatePixelShader() const
+{
+	return nullptr;
+}
+
+ComputeShader* D3D12RenderingAPI::CreateComputeShader() const
 {
 	return nullptr;
 }
@@ -1659,7 +1527,7 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState() const
 	return nullptr;
 }
 
-ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState() const
+ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(const ComputePipelineStateCreateInfo& Info) const
 {
 	return nullptr;
 }

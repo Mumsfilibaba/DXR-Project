@@ -4,7 +4,9 @@
 class GraphicsPipelineState;
 class ComputePipelineState;
 class RayTracingPipelineState;
-class Shader;
+class ComputeShader;
+class VertexShader;
+class PixelShader;
 
 /*
 * PipelineState
@@ -45,8 +47,6 @@ public:
 	{
 		return nullptr;
 	}
-
-	virtual Uint64 GetHash() const = 0;
 };
 
 /*
@@ -55,17 +55,17 @@ public:
 
 enum class EDepthWriteMask
 {
-	DEPTH_WRITE_MASK_ZERO	= 0,
-	DEPTH_WRITE_MASK_ALL	= 1
+	DepthWriteMask_Zero	= 0,
+	DepthWriteMask_All	= 1
 };
 
 inline const Char* ToString(EDepthWriteMask DepthWriteMask)
 {
 	switch (DepthWriteMask)
 	{
-	case EDepthWriteMask::DEPTH_WRITE_MASK_ZERO:	return "DEPTH_WRITE_MASK_ZERO";
-	case EDepthWriteMask::DEPTH_WRITE_MASK_ALL:		return "DEPTH_WRITE_MASK_ALL";
-	default:										return "";
+	case EDepthWriteMask::DepthWriteMask_Zero:	return "DepthWriteMask_Zero";
+	case EDepthWriteMask::DepthWriteMask_All:	return "DepthWriteMask_All";
+	default:									return "";
 	}
 }
 
@@ -75,29 +75,29 @@ inline const Char* ToString(EDepthWriteMask DepthWriteMask)
 
 enum class EStencilOp
 {
-	STENCIL_OP_KEEP		= 1,
-	STENCIL_OP_ZERO		= 2,
-	STENCIL_OP_REPLACE	= 3,
-	STENCIL_OP_INCR_SAT = 4,
-	STENCIL_OP_DECR_SAT = 5,
-	STENCIL_OP_INVERT	= 6,
-	STENCIL_OP_INCR		= 7,
-	STENCIL_OP_DECR		= 8
+	StencilOp_Keep		= 1,
+	StencilOp_Zero		= 2,
+	StencilOp_Replace	= 3,
+	StencilOp_IncrSat	= 4,
+	StencilOp_DecrSat	= 5,
+	StencilOp_Invert	= 6,
+	StencilOp_Incr		= 7,
+	StencilOp_Decr		= 8
 };
 
 inline const Char* ToString(EStencilOp StencilOp)
 {
 	switch (StencilOp)
 	{
-	case EStencilOp::STENCIL_OP_KEEP:		return "STENCIL_OP_KEEP";
-	case EStencilOp::STENCIL_OP_ZERO:		return "STENCIL_OP_ZERO";
-	case EStencilOp::STENCIL_OP_REPLACE:	return "STENCIL_OP_REPLACE";
-	case EStencilOp::STENCIL_OP_INCR_SAT:	return "STENCIL_OP_INCR_SAT";
-	case EStencilOp::STENCIL_OP_DECR_SAT:	return "STENCIL_OP_DECR_SAT";
-	case EStencilOp::STENCIL_OP_INVERT:		return "STENCIL_OP_INVERT";
-	case EStencilOp::STENCIL_OP_INCR:		return "STENCIL_OP_INCR";
-	case EStencilOp::STENCIL_OP_DECR:		return "STENCIL_OP_DECR";
-	default:								return "";
+	case EStencilOp::StencilOp_Keep:	return "StencilOp_Keep";
+	case EStencilOp::StencilOp_Zero:	return "StencilOp_Zero";
+	case EStencilOp::StencilOp_Replace:	return "StencilOp_Replace";
+	case EStencilOp::StencilOp_IncrSat:	return "StencilOp_IncrSat";
+	case EStencilOp::StencilOp_DecrSat:	return "StencilOp_DecrSat";
+	case EStencilOp::StencilOp_Invert:	return "StencilOp_Invert";
+	case EStencilOp::StencilOp_Incr:	return "StencilOp_Incr";
+	case EStencilOp::StencilOp_Decr:	return "StencilOp_Decr";
+	default:							return "";
 	}
 }
 
@@ -546,22 +546,22 @@ public:
 };
 
 /*
-* ComputePipelineStateInitliazer
+* ComputePipelineStateCreateInfo
 */
 
-struct ComputePipelineStateInitliazer
+struct ComputePipelineStateCreateInfo
 {
-	inline ComputePipelineStateInitliazer()
-		: ComputeShader(nullptr)
+	inline ComputePipelineStateCreateInfo()
+		: Shader(nullptr)
 	{
 	}
 
-	inline ComputePipelineStateInitliazer(Shader* InComputeShader)
-		: ComputeShader(InComputeShader)
+	inline ComputePipelineStateCreateInfo(ComputeShader* InShader)
+		: Shader(InShader)
 	{
 	}
 
-	Shader* ComputeShader;
+	ComputeShader* Shader;
 };
 
 /*
@@ -573,8 +573,6 @@ class ComputePipelineState : public PipelineState
 public:
 	ComputePipelineState() = default;
 	~ComputePipelineState() = default;
-
-	virtual bool Initialize(const ComputePipelineStateInitliazer& Initalizer) = 0;
 
 	virtual ComputePipelineState* AsCompute() override
 	{

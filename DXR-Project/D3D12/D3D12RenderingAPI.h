@@ -6,9 +6,59 @@
 #include "D3D12Device.h"
 #include "D3D12SwapChain.h"
 #include "D3D12CommandContext.h"
+#include "D3D12Texture.h"
 
 class D3D12CommandContext;
 class D3D12Buffer;
+
+/*
+* D3D12Texture ResourceDimension
+*/
+
+template<typename TD3D12Texture>
+D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1D>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1DArray>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2D>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2DArray>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCube>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCubeArray>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture3D>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+}
 
 /*
 * D3D12RenderingAPI
@@ -124,8 +174,8 @@ public:
 	* RayTracing
 	*/
 
-	virtual class RayTracingGeometry* CreateRayTracingGeometry() const override final;
-	virtual class RayTracingScene* CreateRayTracingScene() const override final;
+	virtual class RayTracingGeometry*	CreateRayTracingGeometry()	const override final;
+	virtual class RayTracingScene*		CreateRayTracingScene()		const override final;
 
 	/*
 	* ShaderResourceView
@@ -348,15 +398,17 @@ public:
 	* Pipeline
 	*/
 
-	virtual class Shader* CreateShader() const override final;
+	virtual class VertexShader*		CreateVertexShader()	const override final;
+	virtual class PixelShader*		CreatePixelShader()		const override final;
+	virtual class ComputeShader*	CreateComputeShader()	const override final;
 
 	virtual class DepthStencilState*	CreateDepthStencilState()	const override final;
 	virtual class RasterizerState*		CreateRasterizerState()		const override final;
-	virtual class BlendState*			CreateBlendState()	const override final;
-	virtual class InputLayout*			CreateInputLayout() const override final;
+	virtual class BlendState*	CreateBlendState()	const override final;
+	virtual class InputLayout*	CreateInputLayout() const override final;
 
 	virtual class GraphicsPipelineState*	CreateGraphicsPipelineState()	const override final;
-	virtual class ComputePipelineState*		CreateComputePipelineState()	const override final;
+	virtual class ComputePipelineState*		CreateComputePipelineState(const ComputePipelineStateCreateInfo& Info) const override final;
 	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const override final;
 
 	/*
@@ -390,35 +442,14 @@ private:
 		D3D12_RESOURCE_STATES InitalState, 
 		const D3D12_RESOURCE_DESC& Desc) const;
 	
-	bool UploadBuffer(D3D12Buffer& Buffer, Uint32 SizeInBytes, const ResourceData* InitalData) const;
-	bool UploadTexture(D3D12Texture& Texture, const ResourceData* InitalData) const;
-
-	template<typename TD3D12Texture>
-	TD3D12Texture* CreateTextureResource(
-		TD3D12Texture* Texture, 
-		Uint32 Usage, 
-		const D3D12_RESOURCE_DESC& Desc, 
-		const ResourceData* InitalData) const
-	{
-		D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_DEFAULT;
-		if (Usage & TextureUsage_Dynamic)
-		{
-			HeapType = D3D12_HEAP_TYPE_UPLOAD;
-		}
-
-		if (!AllocateTexture(*Texture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
-		{
-			LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
-			return nullptr;
-		}
-
-		if (InitalData)
-		{
-			UploadTexture(*Texture, InitalData);
-		}
-
-		return Texture;
-	}
+	bool UploadBuffer(
+		D3D12Buffer& Buffer, 
+		Uint32 SizeInBytes, 
+		const ResourceData* InitalData) const;
+	
+	bool UploadTexture(
+		D3D12Texture& Texture, 
+		const ResourceData* InitalData) const;
 
 	template<typename TD3D12Buffer, typename... TArgs>
 	TD3D12Buffer* CreateBufferResource(
@@ -457,6 +488,67 @@ private:
 		}
 
 		return NewBuffer;
+	}
+
+	template<typename TD3D12Texture, typename... TArgs>
+	TD3D12Texture* CreateTextureResource(
+		const ResourceData* InitalData,
+		TArgs&&... Args) const
+	{
+		// Create texture and get texture properties
+		TD3D12Texture* NewTexture = new TD3D12Texture(Device.Get(), Forward<TArgs>(Args)...);
+		const Uint32	Usage	= NewTexture->GetUsage();
+		const EFormat	Format	= NewTexture->GetFormat();
+		const Uint32	Width	= NewTexture->GetWidth();
+		const Uint32	Height	= NewTexture->GetHeight();
+		const Uint32	DepthOrArraySize = std::max(NewTexture->GetDepth(), NewTexture->GetArrayCount());
+		const Uint32	MipLevels	= NewTexture->GetMipLevels();
+		const Uint32	SampleCount = NewTexture->GetSampleCount();
+
+		// Setup desc
+		D3D12_RESOURCE_DESC Desc;
+		Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
+
+		Desc.Dimension			= GetD3D12TextureResourceDimension<TD3D12Texture>();
+		Desc.Flags				= ConvertTextureUsage(Usage);
+		Desc.Format				= ConvertFormat(Format);
+		Desc.Width				= Width;
+		Desc.Height				= Height;
+		Desc.DepthOrArraySize	= DepthOrArraySize;
+		Desc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		Desc.MipLevels			= static_cast<UINT16>(MipLevels);
+		Desc.SampleDesc.Count	= SampleCount;
+
+		if (SampleCount > 1)
+		{
+			const Int32 Quality = Device->GetMultisampleQuality(Desc.Format, SampleCount);
+			Desc.SampleDesc.Quality = std::max<Int32>(Quality - 1, 0);
+		}
+		else
+		{
+			Desc.SampleDesc.Quality = 0;
+		}
+
+		// Allocate texture
+		D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_DEFAULT;
+		if (Usage & TextureUsage_Dynamic)
+		{
+			HeapType = D3D12_HEAP_TYPE_UPLOAD;
+		}
+
+		if (!AllocateTexture(*NewTexture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
+		{
+			LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
+			return nullptr;
+		}
+
+		// Upload TextureData
+		if (InitalData)
+		{
+			UploadTexture(*NewTexture, InitalData);
+		}
+
+		return NewTexture;
 	}
 
 private:

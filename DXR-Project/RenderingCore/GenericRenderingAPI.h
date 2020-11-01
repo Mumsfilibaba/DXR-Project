@@ -152,7 +152,7 @@ public:
 	* RayTracing
 	*/
 
-	virtual RayTracingScene* CreateRayTracingScene()		const = 0;
+	virtual RayTracingScene*	CreateRayTracingScene()		const = 0;
 	virtual RayTracingGeometry* CreateRayTracingGeometry()	const = 0;
 
 	/*
@@ -376,16 +376,18 @@ public:
 	* Pipeline
 	*/
 
-	virtual class Shader* CreateShader() const = 0;
+	virtual class VertexShader*		CreateVertexShader()	const = 0;
+	virtual class PixelShader*		CreatePixelShader()		const = 0;
+	virtual class ComputeShader*	CreateComputeShader()	const = 0;
 
-	virtual class DepthStencilState* CreateDepthStencilState()	const = 0;
-	virtual class RasterizerState* CreateRasterizerState()		const = 0;
-	virtual class BlendState* CreateBlendState()	const = 0;
-	virtual class InputLayout* CreateInputLayout() const = 0;
+	virtual class DepthStencilState*	CreateDepthStencilState()	const = 0;
+	virtual class RasterizerState*		CreateRasterizerState()		const = 0;
+	virtual class BlendState*	CreateBlendState()	const = 0;
+	virtual class InputLayout*	CreateInputLayout()	const = 0;
 
-	virtual class GraphicsPipelineState* CreateGraphicsPipelineState()	const = 0;
-	virtual class ComputePipelineState* CreateComputePipelineState()	const = 0;
-	virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const = 0;
+	virtual class GraphicsPipelineState*	CreateGraphicsPipelineState()	const = 0;
+	virtual class ComputePipelineState*		CreateComputePipelineState(const ComputePipelineStateCreateInfo& Info) const = 0;
+	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const = 0;
 
 	/*
 	* Context
