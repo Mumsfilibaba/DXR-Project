@@ -3,8 +3,6 @@
 
 #include "D3D12DeviceChild.h"
 
-#include <dxcapi.h>
-
 class D3D12RootSignature;
 
 /*
@@ -14,10 +12,15 @@ class D3D12RootSignature;
 class D3D12ComputePipelineState : public ComputePipelineState, public D3D12DeviceChild
 {
 public:
-	D3D12ComputePipelineState(D3D12Device* InDevice);
-	~D3D12ComputePipelineState();
+	inline D3D12ComputePipelineState::D3D12ComputePipelineState(D3D12Device* InDevice)
+		: D3D12DeviceChild(InDevice)
+		, PipelineState(nullptr)
+	{
+	}
 
-	FORCEINLINE void SetName(const std::string& Name)
+	~D3D12ComputePipelineState() = default;
+
+	FORCEINLINE virtual void SetName(const std::string& Name) override final
 	{
 		std::wstring WideName = ConvertToWide(Name);
 		PipelineState->SetName(WideName.c_str());

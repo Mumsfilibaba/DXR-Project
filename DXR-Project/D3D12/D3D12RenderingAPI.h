@@ -18,48 +18,6 @@ class D3D12Buffer;
 template<typename TD3D12Texture>
 D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
 
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1D>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1DArray>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2D>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2DArray>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCube>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCubeArray>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture3D>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-}
-
 /*
 * D3D12RenderingAPI
 */

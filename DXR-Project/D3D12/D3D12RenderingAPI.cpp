@@ -20,6 +20,52 @@
 #include <algorithm>
 
 /*
+* D3D12Texture ResourceDimension
+*/
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1D>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1DArray>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2D>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2DArray>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCube>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCubeArray>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture3D>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+}
+
+/*
 * D3D12RenderingAPI
 */
 
@@ -1529,6 +1575,48 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState() const
 
 ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(const ComputePipelineStateCreateInfo& Info) const
 {
+	struct alignas(void*) PipelineStream
+	{
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
+			ID3D12RootSignature* RootSignature = nullptr;
+		};
+
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS;
+			D3D12_SHADER_BYTECODE ComputeShader = { };
+		};
+	} Pipeline;
+
+	//// RootSignature
+	//if (Properties.RootSignature)
+	//{
+	//	Pipeline.RootSignature = Properties.RootSignature->GetRootSignature();
+	//}
+
+	//VALIDATE(Properties.CSBlob);
+
+	//// Shader
+	//Pipeline.ComputeShader.BytecodeLength = Properties.CSBlob->GetBufferSize();
+	//Pipeline.ComputeShader.pShaderBytecode = Properties.CSBlob->GetBufferPointer();
+
+	//const D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc = { sizeof(PipelineStream), &Pipeline };
+	//HRESULT hResult = Device->GetDXRDevice()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
+	//if (SUCCEEDED(hResult))
+	//{
+	//	SetName(Properties.DebugName);
+
+	//	LOG_INFO("[D3D12ComputePipeline]: Created PipelineState");
+	//	return true;
+	//}
+	//else
+	//{
+	//	LOG_ERROR("[D3D12ComputePipeline]: FAILED to Create PipelineState");
+	//	return false;
+	//}
+
 	return nullptr;
 }
 

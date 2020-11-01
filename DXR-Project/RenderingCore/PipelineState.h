@@ -495,14 +495,14 @@ struct PipelineShaderState
 	{
 	}
 
-	inline PipelineShaderState(Shader* InVertexShader, Shader* InPixelShader)
+	inline PipelineShaderState(VertexShader* InVertexShader, PixelShader* InPixelShader)
 		: VertexShader(InVertexShader)
 		, PixelShader(InPixelShader)
 	{
 	}
 
-	Shader* VertexShader;
-	Shader* PixelShader;
+	VertexShader*	VertexShader;
+	PixelShader*	PixelShader;
 };
 
 /*
