@@ -1,5 +1,6 @@
 #include "RenderingAPI.h"
 #include "CommandList.h"
+#include "Shader.h"
 
 #include "D3D12/D3D12RenderingAPI.h"
 
@@ -40,6 +41,11 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 	{
 		ICommandContext* CmdContext = ActiveRenderingAPI->GetDefaultCommandContext();
 		CmdExecutor.SetContext(CmdContext);
+
+		if (!ShaderCompiler::Initialize())
+		{
+			return false;
+		}
 
 		return true;
 	}

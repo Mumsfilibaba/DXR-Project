@@ -376,9 +376,11 @@ public:
 	* Pipeline
 	*/
 
-	virtual class VertexShader*		CreateVertexShader()	const = 0;
-	virtual class PixelShader*		CreatePixelShader()		const = 0;
-	virtual class ComputeShader*	CreateComputeShader()	const = 0;
+	virtual class IShaderCompiler* CreateShaderCompiler() const = 0;
+
+	virtual class VertexShader*		CreateVertexShader(const TArray<Uint8>& ShaderCode)		const = 0;
+	virtual class PixelShader*		CreatePixelShader(const TArray<Uint8>& ShaderCode)		const = 0;
+	virtual class ComputeShader*	CreateComputeShader(const TArray<Uint8>& ShaderCode)	const = 0;
 
 	virtual class DepthStencilState*	CreateDepthStencilState()	const = 0;
 	virtual class RasterizerState*		CreateRasterizerState()		const = 0;

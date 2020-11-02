@@ -16,6 +16,7 @@
 #include "D3D12Views.h"
 #include "D3D12SwapChain.h"
 #include "D3D12Helpers.h"
+#include "D3D12ShaderCompiler.h"
 
 #include <algorithm>
 
@@ -1533,17 +1534,30 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 * Pipeline
 */
 
-VertexShader* D3D12RenderingAPI::CreateVertexShader() const
+IShaderCompiler* D3D12RenderingAPI::CreateShaderCompiler() const
+{
+	TUniquePtr<D3D12ShaderCompiler> Compiler = MakeUnique<D3D12ShaderCompiler>();
+	if (Compiler->Initialize())
+	{
+		return Compiler.Release();
+	}
+	else
+	{
+		return nullptr;
+	}	
+}
+
+VertexShader* D3D12RenderingAPI::CreateVertexShader(const TArray<Uint8>& ShaderCode) const
 {
 	return nullptr;
 }
 
-PixelShader* D3D12RenderingAPI::CreatePixelShader() const
+PixelShader* D3D12RenderingAPI::CreatePixelShader(const TArray<Uint8>& ShaderCode) const
 {
 	return nullptr;
 }
 
-ComputeShader* D3D12RenderingAPI::CreateComputeShader() const
+ComputeShader* D3D12RenderingAPI::CreateComputeShader(const TArray<Uint8>& ShaderCode) const
 {
 	return nullptr;
 }

@@ -122,14 +122,14 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint
 
 TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, Uint32 CubeMapSize, Uint32 CreateFlags, EFormat Format)
 {
-	const bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-	const Uint16 MipLevels = (GenerateMipLevels) ? static_cast<Uint16>(std::log2(CubeMapSize)) : 1U;
+	const bool		GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
+	const Uint16	MipLevels = (GenerateMipLevels) ? static_cast<Uint16>(std::log2(CubeMapSize)) : 1U;
 
 	// Create statging texture
 	TSharedRef<TextureCube> StagingTexture = RenderingAPI::CreateTextureCube(
 		nullptr, 
 		Format, 
-		TextureUsage_Default | TextureUsage_UAV ,
+		TextureUsage_Default | TextureUsage_UAV,
 		CubeMapSize, 
 		MipLevels, 
 		1);

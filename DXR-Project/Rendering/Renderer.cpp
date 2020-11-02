@@ -1337,11 +1337,11 @@ bool Renderer::InitPrePass()
 {
 	using namespace Microsoft::WRL;
 
-	ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/PrePass.hlsl", "Main", "vs_6_0");
-	if (!VSBlob)
-	{
-		return false;
-	}
+	//ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/PrePass.hlsl", "Main", "vs_6_0");
+	//if (!VSBlob)
+	//{
+	//	return false;
+	//}
 
 	//// Init RootSignature
 	//D3D12_DESCRIPTOR_RANGE PerFrameRanges[1] = {};
@@ -2304,11 +2304,11 @@ bool Renderer::InitIntegrationLUT()
 		return false;
 	}
 
-	Microsoft::WRL::ComPtr<IDxcBlob> Shader = D3D12ShaderCompiler::CompileFromFile("Shaders/BRDFIntegationGen.hlsl", "Main", "cs_6_0");
-	if (!Shader)
-	{
-		return false;
-	}
+	//Microsoft::WRL::ComPtr<IDxcBlob> Shader = D3D12ShaderCompiler::CompileFromFile("Shaders/BRDFIntegationGen.hlsl", "Main", "cs_6_0");
+	//if (!Shader)
+	//{
+	//	return false;
+	//}
 
 	//TUniquePtr<D3D12RootSignature> RootSignature = TUniquePtr(RenderingAPI::Get().CreateRootSignature(Shader.Get()));
 	//if (!RootSignature)

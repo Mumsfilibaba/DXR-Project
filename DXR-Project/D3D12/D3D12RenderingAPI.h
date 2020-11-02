@@ -356,9 +356,11 @@ public:
 	* Pipeline
 	*/
 
-	virtual class VertexShader*		CreateVertexShader()	const override final;
-	virtual class PixelShader*		CreatePixelShader()		const override final;
-	virtual class ComputeShader*	CreateComputeShader()	const override final;
+	virtual class IShaderCompiler* CreateShaderCompiler() const override final;
+
+	virtual class VertexShader*		CreateVertexShader(const TArray<Uint8>& ShaderCode)		const override final;
+	virtual class PixelShader*		CreatePixelShader(const TArray<Uint8>& ShaderCode)		const override final;
+	virtual class ComputeShader*	CreateComputeShader(const TArray<Uint8>& ShaderCode)	const override final;
 
 	virtual class DepthStencilState*	CreateDepthStencilState()	const override final;
 	virtual class RasterizerState*		CreateRasterizerState()		const override final;

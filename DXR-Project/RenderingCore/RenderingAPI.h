@@ -703,6 +703,30 @@ public:
 	}
 
 	/*
+	* Pipeline
+	*/
+
+	FORCEINLINE static class IShaderCompiler* CreateShaderCompiler()
+	{
+		return ActiveRenderingAPI->CreateShaderCompiler();
+	}
+
+	FORCEINLINE static VertexShader* CreateVertexShader(const TArray<Uint8>& Code)
+	{
+		return ActiveRenderingAPI->CreateVertexShader(Code);
+	}
+
+	FORCEINLINE static PixelShader* CreatePixelShader(const TArray<Uint8>& Code)
+	{
+		return ActiveRenderingAPI->CreatePixelShader(Code);
+	}
+
+	FORCEINLINE static ComputeShader* CreateComputeShader(const TArray<Uint8>& Code)
+	{
+		return ActiveRenderingAPI->CreateComputeShader(Code);
+	}
+
+	/*
 	* Support Features
 	*/
 

@@ -34,55 +34,6 @@ inline const Char* ToString(EComparisonFunc ComparisonFunc)
 }
 
 /*
-* EShaderStageFlag
-*/
-
-typedef Uint32 EShaderStageFlags;
-enum EShaderStageFlag : EShaderStageFlags
-{
-	SHADER_STAGE_FLAG_NONE			= 0,
-	
-	// Graphics Pipeline
-	SHADER_STAGE_FLAG_VERTEX		= FLAG(1),
-	SHADER_STAGE_FLAG_HULL			= FLAG(2),
-	SHADER_STAGE_FLAG_DOMAIN		= FLAG(3),
-	SHADER_STAGE_FLAG_GEOMETRY		= FLAG(4),
-	SHADER_STAGE_FLAG_PIXEL			= FLAG(5),
-	
-	// Compute
-	SHADER_STAGE_FLAG_COMPUTE		= FLAG(6),
-	
-	// Mesh Shaders
-	SHADER_STAGE_FLAG_MESH			= FLAG(7),
-	SHADER_STAGE_FLAG_AMPLIFICATION	= FLAG(8),
-
-	// Ray Tracing
-	SHADER_STAGE_FLAG_RAY_GEN		= FLAG(9),
-	SHADER_STAGE_FLAG_HIT_SHADER	= FLAG(10),
-	SHADER_STAGE_FLAG_MISS_SHADER	= FLAG(11),
-};
-
-/*
-* EShaderLanguage
-*/
-
-enum class EShaderLanguange
-{
-	SHADER_LANGUAGE_NONE = 0,
-	SHADER_LANGUAGE_HLSL = 1,
-};
-
-inline const Char* ToString(EShaderLanguange ShaderLanguange)
-{
-	switch (ShaderLanguange)
-	{
-	case EShaderLanguange::SHADER_LANGUAGE_NONE:	return "SHADER_LANGUAGE_NONE";
-	case EShaderLanguange::SHADER_LANGUAGE_HLSL:	return "SHADER_LANGUAGE_HLSL";
-	default:										return "";
-	}
-}
-
-/*
 * EPrimitiveTopologyType
 */
 
