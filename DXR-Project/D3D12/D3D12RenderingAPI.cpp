@@ -17,6 +17,7 @@
 #include "D3D12SwapChain.h"
 #include "D3D12Helpers.h"
 #include "D3D12ShaderCompiler.h"
+#include "D3D12Shader.h"
 
 #include <algorithm>
 
@@ -1549,17 +1550,17 @@ IShaderCompiler* D3D12RenderingAPI::CreateShaderCompiler() const
 
 VertexShader* D3D12RenderingAPI::CreateVertexShader(const TArray<Uint8>& ShaderCode) const
 {
-	return nullptr;
+	return new D3D12VertexShader(Device.Get(), ShaderCode);
 }
 
 PixelShader* D3D12RenderingAPI::CreatePixelShader(const TArray<Uint8>& ShaderCode) const
 {
-	return nullptr;
+	return new D3D12PixelShader(Device.Get(), ShaderCode);
 }
 
 ComputeShader* D3D12RenderingAPI::CreateComputeShader(const TArray<Uint8>& ShaderCode) const
 {
-	return nullptr;
+	return new D3D12ComputeShader(Device.Get(), ShaderCode);
 }
 
 DepthStencilState* D3D12RenderingAPI::CreateDepthStencilState() const
@@ -1610,28 +1611,28 @@ ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(const Comput
 	//	Pipeline.RootSignature = Properties.RootSignature->GetRootSignature();
 	//}
 
-	//VALIDATE(Properties.CSBlob);
+	VALIDATE(Info.Shader != nullptr);
 
-	//// Shader
-	//Pipeline.ComputeShader.BytecodeLength = Properties.CSBlob->GetBufferSize();
-	//Pipeline.ComputeShader.pShaderBytecode = Properties.CSBlob->GetBufferPointer();
+	// Shader
+	D3D12ComputeShader& Shader = *static_cast<D3D12ComputeShader*>(Info.Shader);
+	Pipeline.ComputeShader = Shader.GetShaderByteCode();
 
-	//const D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc = { sizeof(PipelineStream), &Pipeline };
-	//HRESULT hResult = Device->GetDXRDevice()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
-	//if (SUCCEEDED(hResult))
-	//{
-	//	SetName(Properties.DebugName);
+	// Create PipelineState
+	const D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc = { sizeof(PipelineStream), &Pipeline };
+	HRESULT hResult = 0;// Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
+	if (SUCCEEDED(hResult))
+	{
+		D3D12ComputePipelineState* Pipeline = new D3D12ComputePipelineState(Device.Get());
 
-	//	LOG_INFO("[D3D12ComputePipeline]: Created PipelineState");
-	//	return true;
-	//}
-	//else
-	//{
-	//	LOG_ERROR("[D3D12ComputePipeline]: FAILED to Create PipelineState");
-	//	return false;
-	//}
 
-	return nullptr;
+		LOG_INFO("[D3D12RenderingAPI]: Created PipelineState");
+		return Pipeline;
+	}
+	else
+	{
+		LOG_ERROR("[D3D12RenderingAPI]: FAILED to Create PipelineState");
+		return nullptr;
+	}
 }
 
 RayTracingPipelineState* D3D12RenderingAPI::CreateRayTracingPipelineState() const

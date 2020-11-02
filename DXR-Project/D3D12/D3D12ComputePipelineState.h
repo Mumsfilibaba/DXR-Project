@@ -3,8 +3,6 @@
 
 #include "D3D12DeviceChild.h"
 
-class D3D12RootSignature;
-
 /*
 * D3D12ComputePipelineState 
 */
