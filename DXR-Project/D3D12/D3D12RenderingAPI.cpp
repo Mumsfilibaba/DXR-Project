@@ -22,52 +22,6 @@
 #include <algorithm>
 
 /*
-* D3D12Texture ResourceDimension
-*/
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1D>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1DArray>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2D>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2DArray>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCube>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCubeArray>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture3D>()
-{
-	return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-}
-
-/*
 * D3D12RenderingAPI
 */
 
@@ -93,12 +47,7 @@ bool D3D12RenderingAPI::Init(TSharedRef<GenericWindow> RenderWindow, bool Enable
 	{
 		return false;
 	}
-
-	if (Device->IsRayTracingSupported())
-	{
-		Device->InitRayTracing();
-	}
-
+	
 	// Create commandqueue
 	DirectCmdQueue = TSharedPtr(Device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
 	if (!DirectCmdQueue)
@@ -439,7 +388,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
-	VALIDATE(MostDetailedMip + MipLevels < Texture->GetMipLevels());
+	VALIDATE(MostDetailedMip + MipLevels <= Texture->GetMipLevels());
 	VALIDATE(Format != EFormat::Format_Unknown);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
@@ -475,7 +424,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
-	VALIDATE(MostDetailedMip + MipLevels < Texture->GetMipLevels());
+	VALIDATE(MostDetailedMip + MipLevels <= Texture->GetMipLevels());
 	VALIDATE(FirstArraySlice + ArraySize < Texture->GetArrayCount());
 	VALIDATE(Format != EFormat::Format_Unknown);
 
@@ -512,7 +461,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
-	VALIDATE(MostDetailedMip + MipLevels < Texture->GetMipLevels());
+	VALIDATE(MostDetailedMip + MipLevels <= Texture->GetMipLevels());
 	VALIDATE(Format != EFormat::Format_Unknown);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
@@ -556,7 +505,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
-	VALIDATE(MostDetailedMip + MipLevels < Texture->GetMipLevels());
+	VALIDATE(MostDetailedMip + MipLevels <= Texture->GetMipLevels());
 	VALIDATE(FirstArraySlice + ArraySize < Texture->GetArrayCount());
 	VALIDATE(Format != EFormat::Format_Unknown);
 
@@ -603,7 +552,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
-	VALIDATE(MostDetailedMip + MipLevels < Texture->GetMipLevels());
+	VALIDATE(MostDetailedMip + MipLevels <= Texture->GetMipLevels());
 	VALIDATE(Format != EFormat::Format_Unknown);
 	VALIDATE(Texture->IsMultiSampled() == false);
 
@@ -642,7 +591,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
-	VALIDATE(MostDetailedMip + MipLevels < Texture->GetMipLevels());
+	VALIDATE(MostDetailedMip + MipLevels <= Texture->GetMipLevels());
 	VALIDATE(FirstArraySlice + ArraySize < (Texture->GetArrayCount() / TEXTURE_CUBE_FACE_COUNT));
 	VALIDATE(Format != EFormat::Format_Unknown);
 	VALIDATE(Texture->IsMultiSampled() == false);
@@ -680,7 +629,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
-	VALIDATE(MostDetailedMip + MipLevels < Texture->GetMipLevels());
+	VALIDATE(MostDetailedMip + MipLevels <= Texture->GetMipLevels());
 	VALIDATE(Format != EFormat::Format_Unknown);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
@@ -1535,17 +1484,11 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 * Pipeline
 */
 
-IShaderCompiler* D3D12RenderingAPI::CreateShaderCompiler() const
+ComputeShader* D3D12RenderingAPI::CreateComputeShader(const TArray<Uint8>& ShaderCode) const
 {
-	TUniquePtr<D3D12ShaderCompiler> Compiler = MakeUnique<D3D12ShaderCompiler>();
-	if (Compiler->Initialize())
-	{
-		return Compiler.Release();
-	}
-	else
-	{
-		return nullptr;
-	}	
+	D3D12ComputeShader* Shader = new D3D12ComputeShader(Device.Get(), ShaderCode);
+	Shader->CreateRootSignature();
+	return Shader;
 }
 
 VertexShader* D3D12RenderingAPI::CreateVertexShader(const TArray<Uint8>& ShaderCode) const
@@ -1553,14 +1496,49 @@ VertexShader* D3D12RenderingAPI::CreateVertexShader(const TArray<Uint8>& ShaderC
 	return new D3D12VertexShader(Device.Get(), ShaderCode);
 }
 
+HullShader* D3D12RenderingAPI::CreateHullShader(const TArray<Uint8>& ShaderCode) const
+{
+	return nullptr;
+}
+
+DomainShader* D3D12RenderingAPI::CreateDomainShader(const TArray<Uint8>& ShaderCode) const
+{
+	return nullptr;
+}
+
+GeometryShader* D3D12RenderingAPI::CreateGeometryShader(const TArray<Uint8>& ShaderCode) const
+{
+	return nullptr;
+}
+
+MeshShader* D3D12RenderingAPI::CreateMeshShader(const TArray<Uint8>& ShaderCode) const
+{
+	return nullptr;
+}
+
+AmplificationShader* D3D12RenderingAPI::CreateAmplificationShader(const TArray<Uint8>& ShaderCode) const
+{
+	return nullptr;
+}
+
 PixelShader* D3D12RenderingAPI::CreatePixelShader(const TArray<Uint8>& ShaderCode) const
 {
 	return new D3D12PixelShader(Device.Get(), ShaderCode);
 }
 
-ComputeShader* D3D12RenderingAPI::CreateComputeShader(const TArray<Uint8>& ShaderCode) const
+RayGenShader* D3D12RenderingAPI::CreateRayGenShader(const TArray<Uint8>& ShaderCode) const
 {
-	return new D3D12ComputeShader(Device.Get(), ShaderCode);
+	return nullptr;
+}
+
+RayHitShader* D3D12RenderingAPI::CreateRayHitShader(const TArray<Uint8>& ShaderCode) const
+{
+	return nullptr;
+}
+
+RayMissShader* D3D12RenderingAPI::CreateRayMissShader(const TArray<Uint8>& ShaderCode) const
+{
+	return nullptr;
 }
 
 DepthStencilState* D3D12RenderingAPI::CreateDepthStencilState() const
@@ -1590,7 +1568,9 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState() const
 
 ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(const ComputePipelineStateCreateInfo& Info) const
 {
-	struct alignas(void*) PipelineStream
+	using namespace Microsoft::WRL;
+
+	struct alignas(void*) ComputePipelineStream
 	{
 		struct alignas(void*)
 		{
@@ -1603,27 +1583,36 @@ ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(const Comput
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS;
 			D3D12_SHADER_BYTECODE ComputeShader = { };
 		};
-	} Pipeline;
-
-	//// RootSignature
-	//if (Properties.RootSignature)
-	//{
-	//	Pipeline.RootSignature = Properties.RootSignature->GetRootSignature();
-	//}
+	} PipelineStream;
 
 	VALIDATE(Info.Shader != nullptr);
 
 	// Shader
 	D3D12ComputeShader& Shader = *static_cast<D3D12ComputeShader*>(Info.Shader);
-	Pipeline.ComputeShader = Shader.GetShaderByteCode();
+	PipelineStream.ComputeShader = Shader.GetShaderByteCode();
+
+	// Check if shader contains a rootsignature, or use the default one
+	D3D12RootSignature* RootSignature = Shader.GetRootSignature();
+	if (!RootSignature)
+	{
+		RootSignature = DefaultRootSignatures.Compute.Get();
+	}
+	
+	PipelineStream.RootSignature = RootSignature->GetRootSignature();
 
 	// Create PipelineState
-	const D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc = { sizeof(PipelineStream), &Pipeline };
-	HRESULT hResult = 0;// Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
+	D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
+	Memory::Memzero(&PipelineStreamDesc, sizeof(D3D12_PIPELINE_STATE_STREAM_DESC));
+	
+	PipelineStreamDesc.pPipelineStateSubobjectStream	= &PipelineStream;
+	PipelineStreamDesc.SizeInBytes						= sizeof(ComputePipelineStream);
+
+	ComPtr<ID3D12PipelineState> PipelineState;
+	HRESULT hResult = Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
 	if (SUCCEEDED(hResult))
 	{
 		D3D12ComputePipelineState* Pipeline = new D3D12ComputePipelineState(Device.Get());
-
+		Pipeline->PipelineState = PipelineState;
 
 		LOG_INFO("[D3D12RenderingAPI]: Created PipelineState");
 		return Pipeline;
@@ -1793,5 +1782,6 @@ bool D3D12RenderingAPI::UploadBuffer(D3D12Buffer& Buffer, Uint32 SizeInBytes, co
 
 bool D3D12RenderingAPI::UploadTexture(D3D12Texture& Texture, const ResourceData* InitalData) const
 {
+	// TODO: Finish this function
 	return false;
 }

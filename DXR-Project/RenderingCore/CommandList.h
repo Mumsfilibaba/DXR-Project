@@ -356,10 +356,10 @@ public:
 				Cmd = Cmd->NextCmd;
 				Old->~RenderCommand();
 			}
-		}
 
-		First = nullptr;
-		Last = nullptr;
+			First	= nullptr;
+			Last	= nullptr;
+		}
 
 		CmdAllocator.Reset();
 	}

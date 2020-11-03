@@ -11,16 +11,16 @@
 
 class D3D12ShaderCompiler : public IShaderCompiler
 {
-	friend class D3D12RenderingAPI;
-
 public:
 	D3D12ShaderCompiler();
 	~D3D12ShaderCompiler();
 
+	bool Initialize();
+	
 	virtual bool CompileFromFile(
 		const std::string& FilePath,
 		const std::string& EntryPoint,
-		const TArray<ShaderDefine>& Defines,
+		const TArray<ShaderDefine>* Defines,
 		EShaderStage ShaderStage,
 		EShaderModel ShaderModel,
 		TArray<Uint8>& Code) const override final;
@@ -28,20 +28,18 @@ public:
 	virtual bool CompileShader(
 		const std::string& ShaderSource,
 		const std::string& EntryPoint,
-		const TArray<ShaderDefine>& Defines,
+		const TArray<ShaderDefine>* Defines,
 		EShaderStage ShaderStage,
 		EShaderModel ShaderModel,
 		TArray<Uint8>& Code) const override final;
 
 private:
-	bool Initialize();
-
 	bool InternalCompileFromSource(
 		IDxcBlob* SourceBlob, 
 		LPCWSTR FilePath, 
 		LPCWSTR Entrypoint, 
 		LPCWSTR TargetProfile, 
-		const TArray<ShaderDefine>& Defines,
+		const TArray<ShaderDefine>* Defines,
 		TArray<Uint8>& Code) const;
 
 private:

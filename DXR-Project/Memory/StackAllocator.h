@@ -10,9 +10,11 @@ struct MemoryArena
 {
 	inline MemoryArena(Uint64 InSizeInBytes)
 		: Mem(nullptr)
+		, Offset(0)
 		, SizeInBytes(InSizeInBytes)
 	{
 		Mem = reinterpret_cast<Byte*>(Memory::Malloc(SizeInBytes));
+		Reset();
 	}
 
 	inline ~MemoryArena()

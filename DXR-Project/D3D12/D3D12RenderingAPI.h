@@ -18,6 +18,48 @@ class D3D12Buffer;
 template<typename TD3D12Texture>
 D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
 
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1D>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1DArray>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2D>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2DArray>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCube>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCubeArray>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture3D>()
+{
+	return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+}
+
 /*
 * D3D12RenderingAPI
 */
@@ -356,11 +398,21 @@ public:
 	* Pipeline
 	*/
 
-	virtual class IShaderCompiler* CreateShaderCompiler() const override final;
+	virtual class ComputeShader* CreateComputeShader(const TArray<Uint8>& ShaderCode)	const override final;
 
 	virtual class VertexShader*		CreateVertexShader(const TArray<Uint8>& ShaderCode)		const override final;
-	virtual class PixelShader*		CreatePixelShader(const TArray<Uint8>& ShaderCode)		const override final;
-	virtual class ComputeShader*	CreateComputeShader(const TArray<Uint8>& ShaderCode)	const override final;
+	virtual class HullShader*		CreateHullShader(const TArray<Uint8>& ShaderCode)		const override final;
+	virtual class DomainShader*		CreateDomainShader(const TArray<Uint8>& ShaderCode)		const override final;
+	virtual class GeometryShader*	CreateGeometryShader(const TArray<Uint8>& ShaderCode)	const override final;
+
+	virtual class MeshShader*			CreateMeshShader(const TArray<Uint8>& ShaderCode)			const override final;
+	virtual class AmplificationShader*	CreateAmplificationShader(const TArray<Uint8>& ShaderCode)	const override final;
+
+	virtual class PixelShader* CreatePixelShader(const TArray<Uint8>& ShaderCode)		const override final;
+
+	virtual class RayGenShader*		CreateRayGenShader(const TArray<Uint8>& ShaderCode)		const override final;
+	virtual class RayHitShader*		CreateRayHitShader(const TArray<Uint8>& ShaderCode)		const override final;
+	virtual class RayMissShader*	CreateRayMissShader(const TArray<Uint8>& ShaderCode)	const override final;
 
 	virtual class DepthStencilState*	CreateDepthStencilState()	const override final;
 	virtual class RasterizerState*		CreateRasterizerState()		const override final;
@@ -375,8 +427,8 @@ public:
 	* Supported features
 	*/
 
-	virtual bool IsRayTracingSupported() const override final;
-	virtual bool UAVSupportsFormat(EFormat Format) const override final;
+	virtual bool IsRayTracingSupported()			const override final;
+	virtual bool UAVSupportsFormat(EFormat Format)	const override final;
 	
 	virtual class ICommandContext* GetDefaultCommandContext() const override final
 	{
@@ -451,7 +503,7 @@ private:
 	}
 
 	template<typename TD3D12Texture, typename... TArgs>
-	TD3D12Texture* CreateTextureResource(
+	FORCEINLINE TD3D12Texture* CreateTextureResource(
 		const ResourceData* InitalData,
 		TArgs&&... Args) const
 	{

@@ -25,5 +25,7 @@ void CommandListExecutor::ExecuteCommandList(CommandList& CmdList)
 		Old->~RenderCommand();
 	}
 
+	CmdList.First	= nullptr;
+	CmdList.Last	= nullptr;
 	CmdList.Reset();
 }

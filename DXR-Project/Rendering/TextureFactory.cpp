@@ -4,7 +4,7 @@
 #include "RenderingCore/CommandList.h"
 #include "RenderingCore/PipelineState.h"
 #include "RenderingCore/RenderingAPI.h"
-
+#include "RenderingCore/Shader.h"
 
 #ifdef min
 	#undef min
@@ -31,7 +31,36 @@ struct TextureFactoryData
 
 bool TextureFactory::Initialize()
 {
-	return true;
+	// Compile and create shader
+	TArray<Uint8> Code;
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/CubeMapGen.hlsl",
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Compute,
+		EShaderModel::ShaderModel_6_0,
+		Code))
+	{
+		return false;
+	}
+
+	ComputeShader* Shader = RenderingAPI::CreateComputeShader(Code);
+	if (!Shader)
+	{
+		return false;
+	}
+
+	// Create pipeline
+	GlobalFactoryData.PanoramaPSO = RenderingAPI::CreateComputePipelineState(ComputePipelineStateCreateInfo(Shader));
+	if (GlobalFactoryData.PanoramaPSO)
+	{
+		GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void TextureFactory::Release()
@@ -158,76 +187,47 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 		return nullptr;
 	}
 
-	// Generate PipelineState at first run
-	//if (!GlobalFactoryData.PanoramaPSO)
-	//{
-	//	// Create Mip-Gen PSO
-	//	Microsoft::WRL::ComPtr<IDxcBlob> CSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/CubeMapGen.hlsl", "Main", "cs_6_0");
-	//	if (!CSBlob)
-	//	{
-	//		return false;
-	//	}
+	// Create needed interfaces
+	CommandList& CmdList = GlobalFactoryData.CmdList;
+	CmdList.Begin();
+	
+	CmdList.TransitionTexture(PanoramaSource, EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
+	CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_NonPixelShaderResource);
 
-	//	ComputePipelineStateProperties GenCubeProperties = { };
-	//	GenCubeProperties.DebugName		= "Generate CubeMap Pipeline";
-	//	GenCubeProperties.RootSignature = nullptr;
-	//	GenCubeProperties.CSBlob		= CSBlob.Get();
+	CmdList.BindComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
 
-	//	GlobalFactoryData.PanoramaPSO = RenderingAPI::Get().CreateComputePipelineState(GenCubeProperties);
-	//	if (!GlobalFactoryData.PanoramaPSO)
-	//	{
-	//		return false;
-	//	}
+	struct ConstantBuffer
+	{
+		Uint32 CubeMapSize;
+	} CB0;
+	CB0.CubeMapSize = CubeMapSize;
 
-	//	GlobalFactoryData.PanoramaRootSignature = RenderingAPI::Get().CreateRootSignature(CSBlob.Get());
-	//	if (!GlobalFactoryData.PanoramaRootSignature)
-	//	{
-	//		return false;
-	//	}
 
-	//	GlobalFactoryData.PanoramaRootSignature->SetDebugName("Generate CubeMap RootSignature");
-	//}
-
-	//// Create needed interfaces
-	//TSharedPtr<D3D12ImmediateCommandList> CommandList = RenderingAPI::StaticGetImmediateCommandList();
-	//CommandList->TransitionBarrier(PanoramaSource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	//CommandList->TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-
-	//CommandList->SetPipelineState(GlobalFactoryData.PanoramaPSO->GetPipeline());
-	//CommandList->SetComputeRootSignature(GlobalFactoryData.PanoramaRootSignature->GetRootSignature());
-	//
-	//struct ConstantBuffer
-	//{
-	//	Uint32 CubeMapSize;
-	//} CB0;
-	//CB0.CubeMapSize = CubeMapSize;
-
+	// TODO: How to work with constants and resources
 	//CommandList->SetComputeRoot32BitConstants(&CB0, 1, 0, 0);
 	//CommandList->BindGlobalOnlineDescriptorHeaps();
 	//CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
 	//CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 2);
 
-	//Uint32 ThreadsX = DivideByMultiple(CubeMapSize, 16);
-	//Uint32 ThreadsY = DivideByMultiple(CubeMapSize, 16);
-	//CommandList->Dispatch(ThreadsX, ThreadsY, 6);
+	Uint32 ThreadsX = DivideByMultiple(CubeMapSize, 16);
+	Uint32 ThreadsY = DivideByMultiple(CubeMapSize, 16);
+	CmdList.Dispatch(ThreadsX, ThreadsY, 6);
 
-	//CommandList->TransitionBarrier(PanoramaSource, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	//CommandList->TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	//CommandList->TransitionBarrier(Texture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+	CmdList.TransitionTexture(PanoramaSource, EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
+	CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
+	CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);
 
-	//CommandList->CopyResource(Texture.Get(), StagingTexture.Get());
+	CmdList.CopyTexture(Texture.Get(), StagingTexture.Get(), CopyTextureInfo());
 
-	//if (GenerateMipLevels)
-	//{
-	//	CommandList->GenerateMips(Texture.Get());
-	//}
+	if (GenerateMipLevels)
+	{
+		CmdList.GenerateMips(Texture.Get());
+	}
 
-	//CommandList->TransitionBarrier(Texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
 
-	//CommandList->Flush();
-	//CommandList->WaitForCompletion();
+	CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
+	Executor.ExecuteCommandList(CmdList);
 
-	//return Texture.Release();
-
-	return nullptr;
+	return Texture.ReleaseOwnerShip();
 }

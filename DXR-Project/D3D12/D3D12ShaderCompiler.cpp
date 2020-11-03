@@ -82,7 +82,7 @@ D3D12ShaderCompiler::~D3D12ShaderCompiler()
 bool D3D12ShaderCompiler::CompileFromFile(
 	const std::string& FilePath, 
 	const std::string& EntryPoint, 
-	const TArray<ShaderDefine>& Defines, 
+	const TArray<ShaderDefine>* Defines,
 	EShaderStage ShaderStage, 
 	EShaderModel ShaderModel, 
 	TArray<Uint8>& Code) const
@@ -117,7 +117,7 @@ bool D3D12ShaderCompiler::CompileFromFile(
 bool D3D12ShaderCompiler::CompileShader(
 	const std::string& ShaderSource, 
 	const std::string& EntryPoint, 
-	const TArray<ShaderDefine>& Defines, 
+	const TArray<ShaderDefine>* Defines,
 	EShaderStage ShaderStage, 
 	EShaderModel ShaderModel, 
 	TArray<Uint8>& Code) const
@@ -207,7 +207,7 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
 	LPCWSTR FilePath, 
 	LPCWSTR Entrypoint, 
 	LPCWSTR TargetProfile, 
-	const TArray<ShaderDefine>& Defines, 
+	const TArray<ShaderDefine>* Defines,
 	TArray<Uint8>& Code) const
 {
 	using namespace Microsoft::WRL;
@@ -218,13 +218,18 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
 	};
 
 	// Convert defines
-	TArray<DxcDefine>		DxDefines(Defines.Size());
-	TArray<std::wstring>	StrBuff(Defines.Size() * 2);
-	for (const ShaderDefine& Define : Defines)
+	TArray<DxcDefine> DxDefines;
+	if (Defines)
 	{
-		const std::wstring& WideDefine	= StrBuff.EmplaceBack(ConvertToWide(Define.Define));
-		const std::wstring& WideValue	= StrBuff.EmplaceBack(ConvertToWide(Define.Define));
-		DxDefines.PushBack({ WideDefine.c_str(), WideValue.c_str() });
+		DxDefines.Reserve(Defines->Size());
+
+		TArray<std::wstring>	StrBuff(Defines->Size() * 2);
+		for (const ShaderDefine& Define : *Defines)
+		{
+			const std::wstring& WideDefine	= StrBuff.EmplaceBack(ConvertToWide(Define.Define));
+			const std::wstring& WideValue	= StrBuff.EmplaceBack(ConvertToWide(Define.Define));
+			DxDefines.PushBack({ WideDefine.c_str(), WideValue.c_str() });
+		}
 	}
 
 	// Compile

@@ -485,11 +485,8 @@ public:
 	{
 		static_assert(std::is_convertible<TOther*, T*>());
 
-		if (this != std::addressof(Other))
-		{
-			Reset();
-			TBase::template InternalConstructStrong<TOther>(Other);
-		}
+		Reset();
+		TBase::template InternalConstructStrong<TOther>(Other);
 
 		return *this;
 	}
@@ -499,11 +496,8 @@ public:
 	{
 		static_assert(std::is_convertible<TOther*, T*>());
 
-		if (this != std::addressof(Other))
-		{
-			Reset();
-			TBase::template InternalMove<TOther>(::Move(Other));
-		}
+		Reset();
+		TBase::template InternalMove<TOther>(::Move(Other));
 
 		return *this;
 	}
@@ -682,11 +676,8 @@ public:
 	{
 		static_assert(std::is_convertible<TOther*, T*>());
 
-		if (this != std::addressof(Other))
-		{
-			Reset();
-			TBase::template InternalConstructStrong<TOther>(Other);
-		}
+		Reset();
+		TBase::template InternalConstructStrong<TOther>(Other);
 
 		return *this;
 	}
@@ -696,11 +687,8 @@ public:
 	{
 		static_assert(std::is_convertible<TOther*, T*>());
 
-		if (this != std::addressof(Other))
-		{
-			Reset();
-			TBase::template InternalMove<TOther>(::Move(Other));
-		}
+		Reset();
+		TBase::template InternalMove<TOther>(::Move(Other));
 
 		return *this;
 	}
@@ -863,11 +851,8 @@ public:
 	{
 		static_assert(std::is_convertible<TOther*, T*>(), "TWeakPtr: Trying to convert non-convertable types");
 
-		if (this != std::addressof(Other))
-		{
-			Reset();
-			TBase::template InternalConstructWeak<TOther>(Other);
-		}
+		Reset();
+		TBase::template InternalConstructWeak<TOther>(Other);
 
 		return *this;
 	}
@@ -877,11 +862,8 @@ public:
 	{
 		static_assert(std::is_convertible<TOther*, T*>(), "TWeakPtr: Trying to convert non-convertable types");
 
-		if (this != std::addressof(Other))
-		{
-			Reset();
-			TBase::InternalMove(::Move(Other));
-		}
+		Reset();
+		TBase::InternalMove(::Move(Other));
 
 		return *this;
 	}
@@ -1039,11 +1021,8 @@ public:
 	{
 		static_assert(std::is_convertible<TOther*, T*>(), "TWeakPtr: Trying to convert non-convertable types");
 
-		if (this != std::addressof(Other))
-		{
-			Reset();
-			TBase::template InternalConstructWeak<TOther>(Other);
-		}
+		Reset();
+		TBase::template InternalConstructWeak<TOther>(Other);
 
 		return *this;
 	}
@@ -1053,11 +1032,8 @@ public:
 	{
 		static_assert(std::is_convertible<TOther*, T*>(), "TWeakPtr: Trying to convert non-convertable types");
 
-		if (this != std::addressof(Other))
-		{
-			Reset();
-			TBase::InternalMove(::Move(Other));
-		}
+		Reset();
+		TBase::InternalMove(::Move(Other));
 
 		return *this;
 	}

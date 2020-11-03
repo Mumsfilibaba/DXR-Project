@@ -9,6 +9,8 @@
 
 class D3D12ComputePipelineState : public ComputePipelineState, public D3D12DeviceChild
 {
+	friend class D3D12RenderingAPI;
+
 public:
 	inline D3D12ComputePipelineState::D3D12ComputePipelineState(D3D12Device* InDevice)
 		: D3D12DeviceChild(InDevice)

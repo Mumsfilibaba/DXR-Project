@@ -85,10 +85,12 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	_DXGIGetDebugInterface1	= GetTypedProcAddress<PFN_DXGI_GET_DEBUG_INTERFACE_1>(hDXGI, "DXGIGetDebugInterface1");
 
 	// Load D3D12 Functions
-	_D3D12CreateDevice						= GetTypedProcAddress<PFN_D3D12_CREATE_DEVICE>(hD3D12, "D3D12CreateDevice");
+	_D3D12CreateDevice		= GetTypedProcAddress<PFN_D3D12_CREATE_DEVICE>(hD3D12, "D3D12CreateDevice");
+	_D3D12GetDebugInterface	= GetTypedProcAddress<PFN_D3D12_GET_DEBUG_INTERFACE>(hD3D12, "D3D12GetDebugInterface");
 	_D3D12SerializeRootSignature			= GetTypedProcAddress<PFN_D3D12_SERIALIZE_ROOT_SIGNATURE>(hD3D12, "D3D12SerializeRootSignature");
 	_D3D12SerializeVersionedRootSignature	= GetTypedProcAddress<PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE>(hD3D12, "D3D12SerializeVersionedRootSignature");
-	_D3D12GetDebugInterface					= GetTypedProcAddress<PFN_D3D12_GET_DEBUG_INTERFACE>(hD3D12, "D3D12GetDebugInterface");
+	_D3D12CreateRootSignatureDeserializer	= GetTypedProcAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>(hD3D12, "D3D12CreateRootSignatureDeserializer");
+	_D3D12CreateVersionedRootSignatureDeserializer	= GetTypedProcAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>(hD3D12, "D3D12CreateVersionedRootSignatureDeserializer");
 
 	// Enable debuglayer
 	if (DebugEnabled)
@@ -237,6 +239,13 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 		}
 	}
 
+	// Get DXR Interfaces
+	if (FAILED(D3DDevice.As<ID3D12Device5>(&DXRDevice)))
+	{
+		LOG_ERROR("[D3D12Device]: Failed to retrive DXR-Device");
+		return false;
+	}
+
 	// Determine maximum supported feature level for this device
 	static const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
 	{
@@ -314,20 +323,6 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	}
 
 	return true;
-}
-
-bool D3D12Device::InitRayTracing()
-{
-	// Get DXR Interfaces
-	if (FAILED(D3DDevice.As<ID3D12Device5>(&DXRDevice)))
-	{
-		LOG_ERROR("[D3D12Device]: Failed to retrive DXR-Device");
-		return false;
-	}
-	else
-	{
-		return true;
-	}
 }
 
 D3D12CommandAllocator* D3D12Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type)

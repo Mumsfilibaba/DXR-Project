@@ -22,6 +22,10 @@ enum ETextureUsage
 	TextureUsage_SRV		= FLAG(4), // ShaderResourceView
 	TextureUsage_Default 	= FLAG(5), // Default memory
 	TextureUsage_Dynamic 	= FLAG(6), // CPU memory
+
+	// Defines for often used combinations
+	TextureUsage_RWTexture		= TextureUsage_UAV | TextureUsage_SRV, 
+	TextureUsage_RenderTarget	= TextureUsage_RTV | TextureUsage_SRV,
 };
 
 /*

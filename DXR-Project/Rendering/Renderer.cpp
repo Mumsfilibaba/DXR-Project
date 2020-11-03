@@ -823,7 +823,7 @@ bool Renderer::Initialize()
 	IrradianceMap = RenderingAPI::CreateTextureCube(
 		nullptr, 
 		EFormat::Format_R16G16B16A16_Float, 
-		TextureUsage_Default | TextureUsage_UAV, 
+		TextureUsage_Default | TextureUsage_RWTexture,
 		IrradianceSize, 
 		1, 
 		1);
@@ -854,7 +854,7 @@ bool Renderer::Initialize()
 	SpecularIrradianceMap = RenderingAPI::CreateTextureCube(
 		nullptr, 
 		EFormat::Format_R16G16B16A16_Float, 
-		TextureUsage_Default | TextureUsage_UAV, 
+		TextureUsage_Default | TextureUsage_RWTexture, 
 		SpecularIrradianceSize, 
 		SpecularIrradianceMiplevels, 
 		1);
@@ -884,7 +884,7 @@ bool Renderer::Initialize()
 		EFormat::Format_R16G16B16A16_Float, 
 		0, 
 		SpecularIrradianceMiplevels);
-	if (SpecularIrradianceMapSRV)
+	if (!SpecularIrradianceMapSRV)
 	{
 		return false;
 	}

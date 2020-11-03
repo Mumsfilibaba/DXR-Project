@@ -3,6 +3,7 @@
 #include "Shader.h"
 
 #include "D3D12/D3D12RenderingAPI.h"
+#include "D3D12/D3D12ShaderCompiler.h"
 
 #define ENABLE_API_DEBUGGING 1
 
@@ -19,6 +20,14 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 	if (InRenderAPI == ERenderingAPI::RenderingAPI_D3D12)
 	{
 		ActiveRenderingAPI = new D3D12RenderingAPI();
+		
+		D3D12ShaderCompiler* Compiler = new D3D12ShaderCompiler();
+		if (!Compiler->Initialize())
+		{
+			return false;
+		}
+
+		ShaderCompiler::Instance = TSharedPtr<D3D12ShaderCompiler>(Compiler);
 	}
 	else
 	{
@@ -41,11 +50,6 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 	{
 		ICommandContext* CmdContext = ActiveRenderingAPI->GetDefaultCommandContext();
 		CmdExecutor.SetContext(CmdContext);
-
-		if (!ShaderCompiler::Initialize())
-		{
-			return false;
-		}
 
 		return true;
 	}

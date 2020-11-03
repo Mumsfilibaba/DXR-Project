@@ -8,7 +8,10 @@
 // Base rendercommand
 struct RenderCommand
 {
-	virtual ~RenderCommand() = default;
+	inline virtual ~RenderCommand()
+	{
+		NextCmd = nullptr;
+	}
 
 	virtual void Execute(ICommandContext&) const
 	{

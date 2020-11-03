@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderingCore/Shader.h"
 
-#include "D3D12DeviceChild.h"
+#include "D3D12RootSignature.h"
 
 /*
 * D3D12Shader
@@ -24,6 +24,16 @@ public:
 	FORCEINLINE D3D12_SHADER_BYTECODE GetShaderByteCode() const
 	{
 		return ByteCode;
+	}
+
+	FORCEINLINE const void* GetCodeData() const
+	{
+		return reinterpret_cast<const void*>(Code.Data());
+	}
+
+	FORCEINLINE Uint32 GetCodeSize() const
+	{
+		return Code.Size();
 	}
 
 protected:
@@ -73,8 +83,53 @@ public:
 	inline D3D12ComputeShader(D3D12Device* InDevice, const TArray<Uint8>& InCode)
 		: ComputeShader()
 		, D3D12Shader(InDevice, InCode)
+		, RootSignature(nullptr)
 	{
 	}
 
 	~D3D12ComputeShader() = default;
+
+	/*
+	* Creates a rootsignature if the shader contains one, this is only supported for Compute for now
+	*/
+	FORCEINLINE bool CreateRootSignature()
+	{
+		using namespace Microsoft::WRL;
+
+		// Create RootSignature if the shader contains one
+		ComPtr<ID3D12RootSignatureDeserializer> Deserializer;
+		HRESULT hResult = Device->CreateRootSignatureDeserializer(
+			ByteCode.pShaderBytecode,
+			ByteCode.BytecodeLength,
+			IID_PPV_ARGS(&Deserializer));
+		if (SUCCEEDED(hResult))
+		{
+			LOG_INFO("[D3D12Shader]: Created ID3D12RootSignatureDeserializer");
+
+			const D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = *Deserializer->GetRootSignatureDesc();
+			RootSignature = Device->CreateRootSignature(RootSignatureDesc);
+			if (!RootSignature)
+			{
+				LOG_INFO("[D3D12Shader]: FAILED to create RootSignature");
+				return false;
+			}
+			else
+			{
+				LOG_INFO("[D3D12Shader]: Created RootSignature");
+				return true;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	FORCEINLINE D3D12RootSignature* GetRootSignature() const
+	{
+		return RootSignature;
+	}
+
+protected:
+	D3D12RootSignature* RootSignature;
 };

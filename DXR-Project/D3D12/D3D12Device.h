@@ -56,7 +56,7 @@ public:
 		D3D12_RESOURCE_STATES InitialResourceState,
 		const D3D12_CLEAR_VALUE* pOptimizedClearValue,
 		REFIID riidResource,
-		void** ppvResource)
+		void** ppResource)
 	{
 		return D3DDevice->CreateCommittedResource(
 			pHeapProperties, 
@@ -65,10 +65,46 @@ public:
 			InitialResourceState, 
 			pOptimizedClearValue, 
 			riidResource, 
-			ppvResource);
+			ppResource);
 	}
 
-	FORCEINLINE void CreateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+	FORCEINLINE HRESULT CreatePipelineState(
+		const D3D12_PIPELINE_STATE_STREAM_DESC* pDesc,
+		REFIID riid,
+		void** ppPipelineState)
+	{
+		return DXRDevice->CreatePipelineState(pDesc, riid, ppPipelineState);
+	}
+
+	FORCEINLINE HRESULT CreateRootSignatureDeserializer(
+		LPCVOID pSrcData,
+		SIZE_T SrcDataSizeInBytes,
+		REFIID pRootSignatureDeserializerInterface,
+		void** ppRootSignatureDeserializer)
+	{
+		return _D3D12CreateRootSignatureDeserializer(
+			pSrcData,
+			SrcDataSizeInBytes, 
+			pRootSignatureDeserializerInterface,
+			ppRootSignatureDeserializer);
+	}
+
+	FORCEINLINE HRESULT CreateVersionedRootSignatureDeserializer(
+		LPCVOID pSrcData,
+		SIZE_T SrcDataSizeInBytes,
+		REFIID pRootSignatureDeserializerInterface,
+		void** ppRootSignatureDeserializer)
+	{
+		return _D3D12CreateVersionedRootSignatureDeserializer(
+			pSrcData,
+			SrcDataSizeInBytes,
+			pRootSignatureDeserializerInterface,
+			ppRootSignatureDeserializer);
+	}
+
+	FORCEINLINE void CreateConstantBufferView(
+		const D3D12_CONSTANT_BUFFER_VIEW_DESC* pDesc, 
+		D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
 	{
 		D3DDevice->CreateConstantBufferView(pDesc, DestDescriptor);
 	}
@@ -201,10 +237,12 @@ private:
 	PFN_DXGI_GET_DEBUG_INTERFACE_1	_DXGIGetDebugInterface1	= nullptr;
 
 	// D3D12 Functions loaded from DLLs
-	PFN_D3D12_CREATE_DEVICE							_D3D12CreateDevice						= nullptr;
+	PFN_D3D12_CREATE_DEVICE			_D3D12CreateDevice		= nullptr;
+	PFN_D3D12_GET_DEBUG_INTERFACE	_D3D12GetDebugInterface	= nullptr;
 	PFN_D3D12_SERIALIZE_ROOT_SIGNATURE				_D3D12SerializeRootSignature			= nullptr;
 	PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE	_D3D12SerializeVersionedRootSignature	= nullptr;
-	PFN_D3D12_GET_DEBUG_INTERFACE					_D3D12GetDebugInterface					= nullptr;
+	PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER	_D3D12CreateRootSignatureDeserializer	= nullptr;
+	PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER	_D3D12CreateVersionedRootSignatureDeserializer = nullptr;
 
 	D3D12OfflineDescriptorHeap* GlobalResourceDescriptorHeap		= nullptr;
 	D3D12OfflineDescriptorHeap* GlobalRenderTargetDescriptorHeap	= nullptr;
