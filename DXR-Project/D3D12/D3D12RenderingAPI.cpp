@@ -337,15 +337,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	Desc.Buffer.StructureByteStride	= 0;
 
 	const D3D12Resource* Resource = D3D12BufferCast(Buffer);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified Buffer was not of buffer-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12ShaderResourceView(Device.Get(), Resource, Desc);
-	}
+	return CreateShaderResourceView(Resource, Desc);
 }
 
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
@@ -369,15 +361,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	Desc.Buffer.StructureByteStride = 0;
 
 	const D3D12Resource* Resource = D3D12BufferCast(Buffer);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified Buffer was not of buffer-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12ShaderResourceView(Device.Get(), Resource, Desc);
-	}
+	return CreateShaderResourceView(Resource, Desc);
 }
 
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
@@ -403,15 +387,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12ShaderResourceView(Device.Get(), Resource, Desc);
-	}
+	return CreateShaderResourceView(Resource, Desc);
 }
 
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
@@ -442,15 +418,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12ShaderResourceView(Device.Get(), Resource, Desc);
-	}
+	return CreateShaderResourceView(Resource, Desc);
 }
 
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
@@ -484,15 +452,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12ShaderResourceView(Device.Get(), Resource, Desc);
-	}
+	return CreateShaderResourceView(Resource, Desc);
 }
 
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
@@ -533,15 +493,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12ShaderResourceView(Device.Get(), Resource, Desc);
-	}
+	return CreateShaderResourceView(Resource, Desc);
 }
 
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
@@ -568,15 +520,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12ShaderResourceView(Device.Get(), Resource, Desc);
-	}
+	return CreateShaderResourceView(Resource, Desc);
 }
 
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
@@ -610,15 +554,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12ShaderResourceView(Device.Get(), Resource, Desc);
-	}
+	return CreateShaderResourceView(Resource, Desc);
 }
 
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
@@ -644,15 +580,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12ShaderResourceView(Device.Get(), Resource, Desc);
-	}
+	return CreateShaderResourceView(Resource, Desc);
 }
 
 /*
@@ -683,15 +611,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 
 	// Make sure we actually have a buffer
 	const D3D12Resource* Resource = D3D12BufferCast(Buffer);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified Buffer was not of buffer-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12UnorderedAccessView(Device.Get(), nullptr, Resource, Desc);
-	}
+	return CreateUnorderedAccessView(nullptr, Resource, Desc);
 }
 
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
@@ -718,15 +638,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 
 	// Make sure we actually have a buffer
 	const D3D12Resource* Resource = D3D12BufferCast(Buffer);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified Buffer was not of buffer-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12UnorderedAccessView(Device.Get(), nullptr, Resource, Desc);
-	}
+	return CreateUnorderedAccessView(nullptr, Resource, Desc);
 }
 
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
@@ -748,15 +660,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12UnorderedAccessView(Device.Get(), nullptr, Resource, Desc);
-	}
+	return CreateUnorderedAccessView(nullptr, Resource, Desc);
 }
 
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
@@ -783,15 +687,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12UnorderedAccessView(Device.Get(), nullptr, Resource, Desc);
-	}
+	return CreateUnorderedAccessView(nullptr, Resource, Desc);
 }
 
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
@@ -815,15 +711,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12UnorderedAccessView(Device.Get(), nullptr, Resource, Desc);
-	}
+	return CreateUnorderedAccessView(nullptr, Resource, Desc);
 }
 
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
@@ -852,15 +740,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12UnorderedAccessView(Device.Get(), nullptr, Resource, Desc);
-	}
+	return CreateUnorderedAccessView(nullptr, Resource, Desc);
 }
 
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
@@ -887,15 +767,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12UnorderedAccessView(Device.Get(), nullptr, Resource, Desc);
-	}
+	return CreateUnorderedAccessView(nullptr, Resource, Desc);
 }
 
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
@@ -925,15 +797,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12UnorderedAccessView(Device.Get(), nullptr, Resource, Desc);
-	}
+	return CreateUnorderedAccessView(nullptr, Resource, Desc);
 }
 
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
@@ -960,15 +824,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12UnorderedAccessView(Device.Get(), nullptr, Resource, Desc);
-	}
+	return CreateUnorderedAccessView(nullptr, Resource, Desc);
 }
 
 /*
@@ -991,15 +847,7 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(const Texture1D* Tex
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12RenderTargetView(Device.Get(), Resource, Desc);
-	}
+	return CreateRenderTargetView(Resource, Desc);
 }
 
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
@@ -1025,15 +873,7 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12RenderTargetView(Device.Get(), Resource, Desc);
-	}
+	return CreateRenderTargetView(Resource, Desc);
 }
 
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice) const
@@ -1060,15 +900,7 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(const Texture2D* Tex
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12RenderTargetView(Device.Get(), Resource, Desc);
-	}
+	return CreateRenderTargetView(Resource, Desc);
 }
 
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
@@ -1105,15 +937,7 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12RenderTargetView(Device.Get(), Resource, Desc);
-	}
+	return CreateRenderTargetView(Resource, Desc);
 }
 
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
@@ -1150,15 +974,7 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12RenderTargetView(Device.Get(), Resource, Desc);
-	}
+	return CreateRenderTargetView(Resource, Desc);
 }
 
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
@@ -1199,15 +1015,7 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12RenderTargetView(Device.Get(), Resource, Desc);
-	}
+	return CreateRenderTargetView(Resource, Desc);
 }
 
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
@@ -1234,15 +1042,7 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12RenderTargetView(Device.Get(), Resource, Desc);
-	}
+	return CreateRenderTargetView(Resource, Desc);
 }
 
 /*
@@ -1265,15 +1065,7 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(const Texture1D* Tex
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12DepthStencilView(Device.Get(), Resource, Desc);
-	}
+	return CreateDepthStencilView(Resource, Desc);
 }
 
 DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
@@ -1299,15 +1091,7 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12DepthStencilView(Device.Get(), Resource, Desc);
-	}
+	return CreateDepthStencilView(Resource, Desc);
 }
 
 DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice) const
@@ -1333,15 +1117,7 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(const Texture2D* Tex
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12DepthStencilView(Device.Get(), Resource, Desc);
-	}
+	return CreateDepthStencilView(Resource, Desc);
 }
 
 DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
@@ -1377,15 +1153,7 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12DepthStencilView(Device.Get(), Resource, Desc);
-	}
+	return CreateDepthStencilView(Resource, Desc);
 }
 
 DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
@@ -1421,15 +1189,7 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12DepthStencilView(Device.Get(), Resource, Desc);
-	}
+	return CreateDepthStencilView(Resource, Desc);
 }
 
 DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
@@ -1469,15 +1229,7 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 
 	// Make sure that the texture actually is a textures
 	const D3D12Resource* Resource = D3D12TextureCast(Texture);
-	if (!Resource)
-	{
-		LOG_ERROR("[D3D12RenderingAPI]: Specified texture was not of texture-type");
-		return nullptr;
-	}
-	else
-	{
-		return new D3D12DepthStencilView(Device.Get(), Resource, Desc);
-	}
+	return CreateDepthStencilView(Resource, Desc);
 }
 
 /*

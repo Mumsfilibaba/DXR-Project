@@ -463,6 +463,10 @@ private:
 		D3D12Texture& Texture, 
 		const ResourceData* InitalData) const;
 
+	/*
+	* Creation of basic resources
+	*/
+
 	template<typename TD3D12Buffer, typename... TArgs>
 	TD3D12Buffer* CreateBufferResource(
 		const ResourceData* InitalData,
@@ -561,6 +565,71 @@ private:
 		}
 
 		return NewTexture;
+	}
+
+	/*
+	* Create resource view helpers
+	*/
+
+	FORCEINLINE D3D12ShaderResourceView* CreateShaderResourceView(
+		const D3D12Resource* Resource, 
+		const D3D12_SHADER_RESOURCE_VIEW_DESC& Desc) const
+	{
+		if (!Resource)
+		{
+			LOG_ERROR("[D3D12RenderingAPI]: Specified resource was invalid for creation of a ShaderResourceView");
+			return nullptr;
+		}
+		else
+		{
+			return new D3D12ShaderResourceView(Device.Get(), Resource, Desc);
+		}
+	}
+
+	FORCEINLINE D3D12RenderTargetView* CreateRenderTargetView(
+		const D3D12Resource* Resource,
+		const D3D12_RENDER_TARGET_VIEW_DESC& Desc) const
+	{
+		if (!Resource)
+		{
+			LOG_ERROR("[D3D12RenderingAPI]: Specified resource was invalid for creation of a RenderTargetView");
+			return nullptr;
+		}
+		else
+		{
+			return new D3D12RenderTargetView(Device.Get(), Resource, Desc);
+		}
+	}
+
+	FORCEINLINE D3D12DepthStencilView* CreateDepthStencilView(
+		const D3D12Resource* Resource,
+		const D3D12_DEPTH_STENCIL_VIEW_DESC& Desc) const
+	{
+		if (!Resource)
+		{
+			LOG_ERROR("[D3D12RenderingAPI]: Specified resource was invalid for creation of a DepthStencilView");
+			return nullptr;
+		}
+		else
+		{
+			return new D3D12DepthStencilView(Device.Get(), Resource, Desc);
+		}
+	}
+
+	FORCEINLINE D3D12UnorderedAccessView* CreateUnorderedAccessView(
+		const D3D12Resource* CounterResource,
+		const D3D12Resource* Resource,
+		const D3D12_UNORDERED_ACCESS_VIEW_DESC& Desc) const
+	{
+		if (!Resource)
+		{
+			LOG_ERROR("[D3D12RenderingAPI]: Specified resource was invalid for creation of a UnorderedAccessView");
+			return nullptr;
+		}
+		else
+		{
+			return new D3D12UnorderedAccessView(Device.Get(), CounterResource, Resource, Desc);
+		}
 	}
 
 private:
