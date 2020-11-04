@@ -376,22 +376,38 @@ public:
 	* Pipeline
 	*/
 
-	virtual class ComputeShader*	CreateComputeShader(const TArray<Uint8>& ShaderCode)	const = 0;
+	virtual class ComputeShader* CreateComputeShader(
+		const TArray<Uint8>& ShaderCode) const = 0;
 	
-	virtual class VertexShader*		CreateVertexShader(const TArray<Uint8>& ShaderCode)		const = 0;
-	virtual class HullShader*		CreateHullShader(const TArray<Uint8>& ShaderCode)		const = 0;
-	virtual class DomainShader*		CreateDomainShader(const TArray<Uint8>& ShaderCode)		const = 0;
-	virtual class GeometryShader*	CreateGeometryShader(const TArray<Uint8>& ShaderCode)	const = 0;
+	virtual class VertexShader* CreateVertexShader(
+		const TArray<Uint8>& ShaderCode) const = 0;
+	
+	virtual class HullShader* CreateHullShader(
+		const TArray<Uint8>& ShaderCode) const = 0;
+	
+	virtual class DomainShader* CreateDomainShader(
+		const TArray<Uint8>& ShaderCode) const = 0;
+	
+	virtual class GeometryShader* CreateGeometryShader(
+		const TArray<Uint8>& ShaderCode) const = 0;
 
-	virtual class MeshShader*			CreateMeshShader(const TArray<Uint8>& ShaderCode)			const = 0;
-	virtual class AmplificationShader*	CreateAmplificationShader(const TArray<Uint8>& ShaderCode)	const = 0;
+	virtual class MeshShader* CreateMeshShader(
+		const TArray<Uint8>& ShaderCode) const = 0;
 
-	virtual class PixelShader*		CreatePixelShader(const TArray<Uint8>& ShaderCode)		const = 0;
+	virtual class AmplificationShader* CreateAmplificationShader(
+		const TArray<Uint8>& ShaderCode) const = 0;
 
-	virtual class RayGenShader*		CreateRayGenShader(const TArray<Uint8>& ShaderCode)		const = 0;
-	virtual class RayHitShader*		CreateRayHitShader(const TArray<Uint8>& ShaderCode)		const = 0;
-	virtual class RayMissShader*	CreateRayMissShader(const TArray<Uint8>& ShaderCode)	const = 0;
+	virtual class PixelShader* CreatePixelShader(
+		const TArray<Uint8>& ShaderCode) const = 0;
 
+	virtual class RayGenShader* CreateRayGenShader(
+		const TArray<Uint8>& ShaderCode) const = 0;
+	
+	virtual class RayHitShader* CreateRayHitShader(
+		const TArray<Uint8>& ShaderCode) const = 0;
+	
+	virtual class RayMissShader* CreateRayMissShader(
+		const TArray<Uint8>& ShaderCode) const = 0;
 
 	virtual class DepthStencilState*	CreateDepthStencilState()	const = 0;
 	virtual class RasterizerState*		CreateRasterizerState()		const = 0;

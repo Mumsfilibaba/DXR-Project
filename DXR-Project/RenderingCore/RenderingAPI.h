@@ -706,19 +706,59 @@ public:
 	* Pipeline
 	*/
 
-	FORCEINLINE static VertexShader* CreateVertexShader(const TArray<Uint8>& Code)
+	FORCEINLINE static ComputeShader* CreateComputeShader(const TArray<Uint8>& ShaderCode)
 	{
-		return ActiveRenderingAPI->CreateVertexShader(Code);
+		return ActiveRenderingAPI->CreateComputeShader(ShaderCode);
 	}
 
-	FORCEINLINE static PixelShader* CreatePixelShader(const TArray<Uint8>& Code)
+	FORCEINLINE static VertexShader* CreateVertexShader(const TArray<Uint8>& ShaderCode)
 	{
-		return ActiveRenderingAPI->CreatePixelShader(Code);
+		return ActiveRenderingAPI->CreateVertexShader(ShaderCode);
+	}
+	
+	FORCEINLINE static HullShader* CreateHullShader(const TArray<Uint8>& ShaderCode)
+	{
+		return ActiveRenderingAPI->CreateHullShader(ShaderCode);
+	}
+	
+	FORCEINLINE static DomainShader* CreateDomainShader(const TArray<Uint8>& ShaderCode)
+	{
+		return ActiveRenderingAPI->CreateDomainShader(ShaderCode);
+	}
+	
+	FORCEINLINE static GeometryShader* CreateGeometryShader(const TArray<Uint8>& ShaderCode)
+	{
+		return ActiveRenderingAPI->CreateGeometryShader(ShaderCode);
 	}
 
-	FORCEINLINE static ComputeShader* CreateComputeShader(const TArray<Uint8>& Code)
+	FORCEINLINE static MeshShader* CreateMeshShader(const TArray<Uint8>& ShaderCode)
 	{
-		return ActiveRenderingAPI->CreateComputeShader(Code);
+		return ActiveRenderingAPI->CreateMeshShader(ShaderCode);
+	}
+	
+	FORCEINLINE static AmplificationShader* CreateAmplificationShader(const TArray<Uint8>& ShaderCode)
+	{
+		return ActiveRenderingAPI->CreateAmplificationShader(ShaderCode);
+	}
+
+	FORCEINLINE static PixelShader* CreatePixelShader(const TArray<Uint8>& ShaderCode)
+	{
+		return ActiveRenderingAPI->CreatePixelShader(ShaderCode);
+	}
+
+	FORCEINLINE static RayGenShader* CreateRayGenShader(const TArray<Uint8>& ShaderCode)
+	{
+		return ActiveRenderingAPI->CreateRayGenShader(ShaderCode);
+	}
+	
+	FORCEINLINE static RayHitShader* CreateRayHitShader(const TArray<Uint8>& ShaderCode)
+	{
+		return ActiveRenderingAPI->CreateRayHitShader(ShaderCode);
+	}
+
+	FORCEINLINE static RayMissShader* CreateRayMissShader(const TArray<Uint8>& ShaderCode)
+	{
+		return ActiveRenderingAPI->CreateRayMissShader(ShaderCode);
 	}
 
 	FORCEINLINE static ComputePipelineState* CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo)

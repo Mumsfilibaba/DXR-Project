@@ -398,21 +398,38 @@ public:
 	* Pipeline
 	*/
 
-	virtual class ComputeShader* CreateComputeShader(const TArray<Uint8>& ShaderCode)	const override final;
+	virtual class ComputeShader* CreateComputeShader(
+		const TArray<Uint8>& ShaderCode) const override final;
 
-	virtual class VertexShader*		CreateVertexShader(const TArray<Uint8>& ShaderCode)		const override final;
-	virtual class HullShader*		CreateHullShader(const TArray<Uint8>& ShaderCode)		const override final;
-	virtual class DomainShader*		CreateDomainShader(const TArray<Uint8>& ShaderCode)		const override final;
-	virtual class GeometryShader*	CreateGeometryShader(const TArray<Uint8>& ShaderCode)	const override final;
+	virtual class VertexShader* CreateVertexShader(
+		const TArray<Uint8>& ShaderCode) const override final;
 
-	virtual class MeshShader*			CreateMeshShader(const TArray<Uint8>& ShaderCode)			const override final;
-	virtual class AmplificationShader*	CreateAmplificationShader(const TArray<Uint8>& ShaderCode)	const override final;
+	virtual class HullShader* CreateHullShader(
+		const TArray<Uint8>& ShaderCode) const override final;
 
-	virtual class PixelShader* CreatePixelShader(const TArray<Uint8>& ShaderCode)		const override final;
+	virtual class DomainShader* CreateDomainShader(
+		const TArray<Uint8>& ShaderCode) const override final;
 
-	virtual class RayGenShader*		CreateRayGenShader(const TArray<Uint8>& ShaderCode)		const override final;
-	virtual class RayHitShader*		CreateRayHitShader(const TArray<Uint8>& ShaderCode)		const override final;
-	virtual class RayMissShader*	CreateRayMissShader(const TArray<Uint8>& ShaderCode)	const override final;
+	virtual class GeometryShader* CreateGeometryShader(
+		const TArray<Uint8>& ShaderCode) const override final;
+
+	virtual class MeshShader* CreateMeshShader(
+		const TArray<Uint8>& ShaderCode) const override final;
+
+	virtual class AmplificationShader* CreateAmplificationShader(
+		const TArray<Uint8>& ShaderCode) const override final;
+
+	virtual class PixelShader* CreatePixelShader(
+		const TArray<Uint8>& ShaderCode) const override final;
+
+	virtual class RayGenShader* CreateRayGenShader(
+		const TArray<Uint8>& ShaderCode) const override final;
+
+	virtual class RayHitShader* CreateRayHitShader(
+		const TArray<Uint8>& ShaderCode) const override final;
+
+	virtual class RayMissShader* CreateRayMissShader(
+		const TArray<Uint8>& ShaderCode) const override final;
 
 	virtual class DepthStencilState*	CreateDepthStencilState()	const override final;
 	virtual class RasterizerState*		CreateRasterizerState()		const override final;
