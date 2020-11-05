@@ -155,15 +155,15 @@ void Renderer::Tick(const Scene& CurrentScene)
 #if ENABLE_VSM
 	CmdList.TransitionTexture(VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_RenderTarget);
 
-	Float32 DepthClearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	CmdList.ClearRenderTargetView(VSMDirLightShadowMaps->GetRenderTargetView(0).Get(), DepthClearColor);
-	
-	D3D12RenderTargetView* DirLightRTVS[] =
-	{
-		VSMDirLightShadowMaps->GetRenderTargetView(0).Get(),
-	};
-	CmdList.BindRenderTargets(DirLightRTVS, 1, DirLightShadowMaps->GetDepthStencilView(0).Get());
-	CmdList.BindGraphicsPipelineState(VSMShadowMapPSO.Get());
+	//Float32 DepthClearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	//CmdList.ClearRenderTargetView(VSMDirLightShadowMaps->GetRenderTargetView(0).Get(), DepthClearColor);
+	//
+	//D3D12RenderTargetView* DirLightRTVS[] =
+	//{
+	//	VSMDirLightShadowMaps->GetRenderTargetView(0).Get(),
+	//};
+	//CmdList.BindRenderTargets(DirLightRTVS, 1, DirLightShadowMaps->GetDepthStencilView(0).Get());
+	//CmdList.BindGraphicsPipelineState(VSMShadowMapPSO.Get());
 #else
 	// TODO: Solve this
 	// CmdList.BindRenderTargets(nullptr, 0, DirLightShadowMaps->GetDepthStencilView(0).Get());
@@ -564,13 +564,13 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// RenderingAPI::Get().GetSwapChain()->Present(VSyncEnabled ? 1 : 0);
 
 	// Wait for next frame
-	const Uint64 CurrentFenceValue = FenceValues[CurrentBackBufferIndex];
+	//const Uint64 CurrentFenceValue = FenceValues[CurrentBackBufferIndex];
 	//RenderingAPI::Get().GetQueue()->SignalFence(Fence.Get(), CurrentFenceValue);
 
 	// CurrentBackBufferIndex = RenderingAPI::Get().GetSwapChain()->GetCurrentBackBufferIndex();
 	// if (Fence->WaitForValue(CurrentFenceValue))
 	{
-		FenceValues[CurrentBackBufferIndex] = CurrentFenceValue + 1;
+		//FenceValues[CurrentBackBufferIndex] = CurrentFenceValue + 1;
 	}
 }
 
@@ -663,7 +663,7 @@ void Renderer::SetGlobalLightSettings(const LightSettings& InGlobalLightSettings
 		CurrentRenderer->WriteShadowMapDescriptors();
 
 #if ENABLE_VSM
-		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(CurrentRenderer->VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
+		//RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(CurrentRenderer->VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
 #endif
 		//RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(CurrentRenderer->DirLightShadowMaps.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
 		//RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(CurrentRenderer->PointLightShadowMaps.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
@@ -1426,59 +1426,91 @@ bool Renderer::InitShadowMapPass()
 {
 	using namespace Microsoft::WRL;
 
-//	// Directional Shadows
-//#if ENABLE_VSM
-//	ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/ShadowMap.hlsl", "VSM_VSMain", "vs_6_0");
-//	if (!VSBlob)
-//	{
-//		return false;
-//	}
-//
-//	ComPtr<IDxcBlob> PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/ShadowMap.hlsl", "VSM_PSMain", "ps_6_0");
-//	if (!PSBlob)
-//	{
-//		return false;
-//	}
-//#else
-//	ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/ShadowMap.hlsl", "Main", "vs_6_0");
-//	if (!VSBlob)
-//	{
-//		return false;
-//	}
-//#endif
-//
-//	D3D12_ROOT_PARAMETER Parameters[2];
-//	// Transform Constants
-//	Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-//	Parameters[0].Constants.ShaderRegister	= 0;
-//	Parameters[0].Constants.RegisterSpace	= 0;
-//	Parameters[0].Constants.Num32BitValues	= 16;
-//	Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_VERTEX;
-//
-//	// Camera
-//	Parameters[1].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-//	Parameters[1].Constants.ShaderRegister	= 1;
-//	Parameters[1].Constants.RegisterSpace	= 0;
-//	Parameters[1].Constants.Num32BitValues	= 20;
-//	Parameters[1].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
-//
-//	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-//	RootSignatureDesc.NumParameters		= 2;
-//	RootSignatureDesc.pParameters		= Parameters;
-//	RootSignatureDesc.NumStaticSamplers	= 0;
-//	RootSignatureDesc.pStaticSamplers	= nullptr;
-//	RootSignatureDesc.Flags =
-//		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT	|
-//		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS			|
-//		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS		|
-//		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-//
-//	ShadowMapRootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
-//	if (!ShadowMapRootSignature->Initialize(RootSignatureDesc))
-//	{
-//		return false;
-//	}
-//
+	// Directional Shadows
+	TArray<Uint8> ShaderCode;
+
+#if ENABLE_VSM
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/ShadowMap.hlsl",
+		"VSM_VSMain",
+		nullptr,
+		EShaderStage::ShaderStage_Vertex,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	TSharedRef<VertexShader> VSShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	if (!VSShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		VSShader->SetName("ShadowMap VertexShader");
+	}
+
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/ShadowMap.hlsl",
+		"VSM_PSMain",
+		nullptr,
+		EShaderStage::ShaderStage_Pixel,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	TSharedRef<PixelShader> PSShader = RenderingAPI::CreatePixelShader(ShaderCode);
+	if (!PSShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		PSShader->SetName("ShadowMap PixelShader");
+	}
+#else
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/ShadowMap.hlsl", 
+		"Main",
+		nullptr, 
+		EShaderStage::ShaderStage_Vertex,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	TSharedRef<VertexShader> VSShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	if (!VSShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		VSShader->SetName("ShadowMap VertexShader");
+	}
+#endif
+
+	StdInputLayout = RenderingAPI::CreateInputLayout();
+	if (!StdInputLayout)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		StdInputLayout->SetName("Standard Input Layout");
+	}
+
 //	// Init PipelineState
 //	D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
 //	{
@@ -2658,97 +2690,81 @@ bool Renderer::CreateShadowMaps()
 	// DirLights
 	if (DirLightShadowMaps)
 	{
-		//DeferredResources.EmplaceBack(DirLightShadowMaps);
+		DeferredResources.EmplaceBack(DirLightShadowMaps);
 	}
 
 	if (VSMDirLightShadowMaps)
 	{
-		//DeferredResources.EmplaceBack(VSMDirLightShadowMaps);
+		DeferredResources.EmplaceBack(VSMDirLightShadowMaps);
 	}
 
-//	TextureProperties ShadowMapProps = { };
-//	ShadowMapProps.DebugName	= "Directional Light ShadowMaps";
-//	ShadowMapProps.ArrayCount	= 1;
-//	ShadowMapProps.Format		= ShadowMapFormat;
-//	ShadowMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-//	ShadowMapProps.Height		= Renderer::GetGlobalLightSettings().ShadowMapHeight;
-//	ShadowMapProps.Width		= Renderer::GetGlobalLightSettings().ShadowMapWidth;
-//	ShadowMapProps.InitalState	= EResourceState::ResourceState_Common;
-//	ShadowMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-//	ShadowMapProps.MipLevels	= 1;
-//	ShadowMapProps.SampleCount	= 1;
-//	
-//	D3D12_CLEAR_VALUE Value0;
-//	Value0.Format				= ShadowMapFormat;
-//	Value0.DepthStencil.Depth	= 1.0f;
-//	Value0.DepthStencil.Stencil	= 0;
-//	ShadowMapProps.OptimizedClearValue = &Value0;
-//
-//	DirLightShadowMaps = RenderingAPI::Get().CreateTexture(ShadowMapProps);
-//	if (DirLightShadowMaps)
-//	{
-//		D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = { };
-//		DSVDesc.Format				= ShadowMapFormat;
-//		DSVDesc.ViewDimension		= D3D12_DSV_DIMENSION_TEXTURE2D;
-//		DSVDesc.Texture2D.MipSlice	= 0;
-//		DirLightShadowMaps->SetDepthStencilView(TSharedPtr(RenderingAPI::Get().CreateDepthStencilView(DirLightShadowMaps->GetResource(), &DSVDesc)), 0);
-//
-//#if !ENABLE_VSM
-//		D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = { };
-//		SRVDesc.Format = DXGI_FORMAT_R32_FLOAT;
-//		SRVDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
-//		SRVDesc.Texture2D.MipLevels				= 1;
-//		SRVDesc.Texture2D.MostDetailedMip		= 0;
-//		SRVDesc.Texture2D.PlaneSlice			= 0;
-//		SRVDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
-//		SRVDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-//		DirLightShadowMaps->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(DirLightShadowMaps->GetResource(), &SRVDesc)), 0);
-//#endif
-//	}
-//	else
-//	{
-//		return false;
-//	}
+	DirLightShadowMaps = RenderingAPI::CreateTexture2D(
+		nullptr,
+		ShadowMapFormat,
+		TextureUsage_ShadowMap,
+		Renderer::GetGlobalLightSettings().ShadowMapWidth,
+		Renderer::GetGlobalLightSettings().ShadowMapHeight,
+		1, 1,
+		ClearValue(DepthStencilClearValue(1.0f, 0)));
+	if (DirLightShadowMaps)
+	{
+		DirLightShadowMaps->SetName("Directional Light ShadowMaps");
+
+		DirLightShadowMapDSV = RenderingAPI::CreateDepthStencilView(
+			DirLightShadowMaps.Get(),
+			ShadowMapFormat,
+			0);
+		if (!DirLightShadowMapDSV)
+		{
+			Debug::DebugBreak();
+		}
+
+#if !ENABLE_VSM
+		DirLightShadowMapSRV = RenderingAPI::CreateShaderResourceView(
+			DirLightShadowMaps.Get(),
+			EFormat::Format_R32_Float,
+			0, 1);
+		if (!DirLightShadowMapSRV)
+		{
+			Debug::DebugBreak();
+		}
+#endif
+	}
+	else
+	{
+		return false;
+	}
 
 #if ENABLE_VSM
-	ShadowMapProps.DebugName	= "Directional Light ShadowMaps";
-	ShadowMapProps.ArrayCount	= 1;
-	ShadowMapProps.Format		= DXGI_FORMAT_R32G32_FLOAT;
-	ShadowMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-	ShadowMapProps.Height		= Renderer::GetGlobalLightSettings().ShadowMapHeight;
-	ShadowMapProps.Width		= Renderer::GetGlobalLightSettings().ShadowMapWidth;
-	ShadowMapProps.InitalState	= EResourceState::ResourceState_Common;
-	ShadowMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
-	ShadowMapProps.MipLevels	= 1;
-	ShadowMapProps.SampleCount	= 1;
-
-	D3D12_CLEAR_VALUE Value1;
-	Value1.Format	= ShadowMapProps.Format;
-	Value1.Color[0]	= 1.0f;
-	Value1.Color[1]	= 1.0f;
-	Value1.Color[2]	= 1.0f;
-	Value1.Color[3]	= 1.0f;
-	ShadowMapProps.OptimizedClearValue = &Value1;
-
-	VSMDirLightShadowMaps = RenderingAPI::Get().CreateTexture(ShadowMapProps);
+	VSMDirLightShadowMaps = RenderingAPI::CreateTexture2D(
+		nullptr,
+		EFormat::Format_R32G32_Float,
+		TextureUsage_RenderTarget,
+		Renderer::GetGlobalLightSettings().ShadowMapWidth,
+		Renderer::GetGlobalLightSettings().ShadowMapHeight,
+		1, 1,
+		ClearValue(ColorClearValue(1.0f, 1.0f, 1.0f, 1.0f)));
 	if (VSMDirLightShadowMaps)
 	{
-		D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = { };
-		RTVDesc.Format					= ShadowMapProps.Format;
-		RTVDesc.ViewDimension			= D3D12_RTV_DIMENSION_TEXTURE2D;
-		RTVDesc.Texture2D.MipSlice		= 0;
-		RTVDesc.Texture2D.PlaneSlice	= 0;
-		VSMDirLightShadowMaps->SetRenderTargetView(TSharedPtr(RenderingAPI::Get().CreateRenderTargetView(VSMDirLightShadowMaps->GetResource(), &RTVDesc)), 0);
-	
-		D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = { };
-		SRVDesc.Format							= ShadowMapProps.Format;
-		SRVDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
-		SRVDesc.Texture2D.MipLevels				= 1;
-		SRVDesc.Texture2D.MostDetailedMip		= 0;
-		SRVDesc.Texture2D.PlaneSlice			= 0;
-		SRVDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
-		SRVDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		VSMDirLightShadowMaps->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(VSMDirLightShadowMaps->GetResource(), &SRVDesc)), 0);
+		VSMDirLightShadowMaps->SetName("Directional Light VSM");
+
+		VSMDirLightShadowMapRTV = RenderingAPI::CreateRenderTargetView(
+			VSMDirLightShadowMaps.Get(),
+			EFormat::Format_R32G32_Float,
+			0);
+		if (!VSMDirLightShadowMapRTV)
+		{
+			Debug::DebugBreak();
+		}
+
+		VSMDirLightShadowMapSRV = RenderingAPI::CreateShaderResourceView(
+			VSMDirLightShadowMaps.Get(),
+			EFormat::Format_R32G32_Float,
+			0, 1);
+		if (!VSMDirLightShadowMapSRV)
+		{
+			Debug::DebugBreak();
+		}
 	}
 	else
 	{
@@ -2757,49 +2773,41 @@ bool Renderer::CreateShadowMaps()
 #endif
 
 	// PointLights
-	//if (PointLightShadowMaps)
-	//{
-	//	DeferredResources.EmplaceBack(PointLightShadowMaps);
-	//}
+	if (PointLightShadowMaps)
+	{
+		DeferredResources.EmplaceBack(PointLightShadowMaps);
+	}
 
-	//const Uint16 Size = Renderer::GetGlobalLightSettings().PointLightShadowSize;
-	//ShadowMapProps.DebugName			= "PointLight ShadowMaps";
-	//ShadowMapProps.ArrayCount			= 6;
-	//ShadowMapProps.Format				= ShadowMapFormat;
-	//ShadowMapProps.Flags				= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-	//ShadowMapProps.Height				= Size;
-	//ShadowMapProps.Width				= Size;
-	//ShadowMapProps.InitalState			= EResourceState::ResourceState_Common;
-	//ShadowMapProps.MemoryType			= EMemoryType::MEMORY_TYPE_DEFAULT;
-	//ShadowMapProps.MipLevels			= 1;
-	//ShadowMapProps.OptimizedClearValue	= &Value0;
-	//PointLightShadowMaps = RenderingAPI::Get().CreateTexture(ShadowMapProps);
-	//if (PointLightShadowMaps)
-	//{
-	//	D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = { };
-	//	DSVDesc.Format						= ShadowMapFormat;
-	//	DSVDesc.ViewDimension				= D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-	//	DSVDesc.Texture2DArray.ArraySize	= 1;
-	//	DSVDesc.Texture2DArray.MipSlice		= 0;
-	//	for (Uint32 I = 0; I < 6; I++)
-	//	{
-	//		DSVDesc.Texture2DArray.FirstArraySlice = I;
-	//		PointLightShadowMaps->SetDepthStencilView(TSharedPtr(RenderingAPI::Get().CreateDepthStencilView(PointLightShadowMaps->GetResource(), &DSVDesc)), I);
-	//	}
+	const Uint16 Size = Renderer::GetGlobalLightSettings().PointLightShadowSize;
+	PointLightShadowMaps = RenderingAPI::CreateTextureCube(
+		nullptr,
+		ShadowMapFormat,
+		TextureUsage_ShadowMap,
+		Size,
+		1, 1,
+		ClearValue(DepthStencilClearValue(1.0f, 0)));
+	if (PointLightShadowMaps)
+	{
+		PointLightShadowMaps->SetName("PointLight ShadowMaps");
 
-	//	D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = { };
-	//	SRVDesc.Format							= DXGI_FORMAT_R32_FLOAT;
-	//	SRVDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURECUBE;
-	//	SRVDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	//	SRVDesc.TextureCube.MipLevels			= 1;
-	//	SRVDesc.TextureCube.MostDetailedMip		= 0;
-	//	SRVDesc.TextureCube.ResourceMinLODClamp	= 0.0f;
-	//	PointLightShadowMaps->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(PointLightShadowMaps->GetResource(), &SRVDesc)), 0);
-	//}
-	//else
-	//{
-	//	return false;
-	//}
+		PointLightShadowMapsDSVs.Resize(6);
+		for (Uint32 i = 0; i < 6; i++)
+		{
+			PointLightShadowMapsDSVs[i] = RenderingAPI::CreateDepthStencilView(
+				PointLightShadowMaps.Get(),
+				ShadowMapFormat,
+				0, i);
+		}
+
+		PointLightShadowMapsSRV = RenderingAPI::CreateShaderResourceView(
+			PointLightShadowMaps.Get(),
+			EFormat::Format_R32_Float,
+			0, 1);
+	}
+	else
+	{
+		return false;
+	}
 
 	return true;
 }
@@ -2819,43 +2827,40 @@ void Renderer::GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, Com
 {
 	const Uint32 Size = static_cast<Uint32>(Dest->GetWidth());
 
-	/*static TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable;
-	if (!SrvDescriptorTable)
-	{
-		SrvDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(1);
-		SrvDescriptorTable->SetShaderResourceView(Source->GetShaderResourceView(0).Get(), 0);
-		SrvDescriptorTable->CopyDescriptors();
-	}
-
-	static TUniquePtr<D3D12DescriptorTable> UavDescriptorTable;
-	if (!UavDescriptorTable)
-	{
-		UavDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(1);
-		UavDescriptorTable->SetUnorderedAccessView(Dest->GetUnorderedAccessView(0).Get(), 0);
-		UavDescriptorTable->CopyDescriptors();
-	}
-
-	static Microsoft::WRL::ComPtr<IDxcBlob> Shader;
-	if (!Shader)
-	{
-		Shader = D3D12ShaderCompiler::CompileFromFile("Shaders/IrradianceGen.hlsl", "Main", "cs_6_0");
-	}
-
-	if (!IrradianceGenRootSignature)
-	{
-		IrradianceGenRootSignature = RenderingAPI::Get().CreateRootSignature(Shader.Get());
-		IrradianceGenRootSignature->SetName("Irradiance Gen RootSignature");
-	}
-
+	// Create irradiancemap if it is not created
 	if (!IrradicanceGenPSO)
 	{
-		ComputePipelineStateProperties Props = { };
-		Props.DebugName		= "Irradiance Gen PSO";
-		Props.CSBlob		= Shader.Get();
-		Props.RootSignature	= IrradianceGenRootSignature.Get();
+		TArray<Uint8> Code;
+		if (!ShaderCompiler::CompileFromFile(
+			"Shaders/IrradianceGen.hlsl",
+			"Main",
+			nullptr,
+			EShaderStage::ShaderStage_Compute,
+			EShaderModel::ShaderModel_6_0,
+			Code))
+		{
+			LOG_ERROR("Failed to compile IrradianceGen Shader");
+			Debug::DebugBreak();
+		}
 
-		IrradicanceGenPSO = RenderingAPI::Get().CreateComputePipelineState(Props);
-	}*/
+		IrradianceGenShader = RenderingAPI::CreateComputeShader(Code);
+		if (!IrradianceGenShader)
+		{
+			LOG_ERROR("Failed to create IrradianceGen Shader");
+			Debug::DebugBreak();
+		}
+
+		IrradicanceGenPSO = RenderingAPI::CreateComputePipelineState(ComputePipelineStateCreateInfo(IrradianceGenShader.Get()));
+		if (!IrradicanceGenPSO)
+		{
+			LOG_ERROR("Failed to create IrradianceGen PipelineState");
+			Debug::DebugBreak();
+		}
+		else
+		{
+			IrradicanceGenPSO->SetName("Irradiance Gen PSO");
+		}
+	}
 
 	InCmdList.TransitionTexture(Source, EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
 	InCmdList.TransitionTexture(Dest, EResourceState::ResourceState_Common, EResourceState::ResourceState_NonPixelShaderResource);
@@ -2880,72 +2885,64 @@ void Renderer::GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* D
 {
 	const Uint32 Miplevels = Dest->GetMipLevels();
 
-	/*static TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable;
-	if (!SrvDescriptorTable)
-	{
-		SrvDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(1);
-		SrvDescriptorTable->SetShaderResourceView(Source->GetShaderResourceView(0).Get(), 0);
-		SrvDescriptorTable->CopyDescriptors();
-	}
-
-	static TUniquePtr<D3D12DescriptorTable> UavDescriptorTable;
-	if (!UavDescriptorTable)
-	{
-		UavDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(Miplevels);
-		for (Uint32 Mip = 0; Mip < Miplevels; Mip++)
-		{
-			UavDescriptorTable->SetUnorderedAccessView(Dest->GetUnorderedAccessView(Mip).Get(), Mip);
-		}
-
-		UavDescriptorTable->CopyDescriptors();
-	}
-
-	static Microsoft::WRL::ComPtr<IDxcBlob> Shader;
-	if (!Shader)
-	{
-		Shader = D3D12ShaderCompiler::CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", "Main", "cs_6_0");
-	}
-
-	if (!SpecIrradianceGenRootSignature)
-	{
-		SpecIrradianceGenRootSignature = RenderingAPI::Get().CreateRootSignature(Shader.Get());
-		SpecIrradianceGenRootSignature->SetName("Specular Irradiance Gen RootSignature");
-	}
-
 	if (!SpecIrradicanceGenPSO)
 	{
-		ComputePipelineStateProperties Props = { };
-		Props.DebugName		= "Specular Irradiance Gen PSO";
-		Props.CSBlob		= Shader.Get();
-		Props.RootSignature = SpecIrradianceGenRootSignature.Get();
+		TArray<Uint8> Code;
+		if (!ShaderCompiler::CompileFromFile(
+			"Shaders/SpecularIrradianceGen.hlsl",
+			"Main",
+			nullptr,
+			EShaderStage::ShaderStage_Compute,
+			EShaderModel::ShaderModel_6_0,
+			Code))
+		{
+			LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
+			Debug::DebugBreak();
+		}
 
-		SpecIrradicanceGenPSO = RenderingAPI::Get().CreateComputePipelineState(Props);
+		SpecIrradianceGenShader = RenderingAPI::CreateComputeShader(Code);
+		if (!SpecIrradianceGenShader)
+		{
+			LOG_ERROR("Failed to create SpecularIrradianceGen Shader");
+			Debug::DebugBreak();
+		}
+
+		SpecIrradicanceGenPSO = RenderingAPI::CreateComputePipelineState(ComputePipelineStateCreateInfo(SpecIrradianceGenShader.Get()));
+		if (!SpecIrradicanceGenPSO)
+		{
+			LOG_ERROR("Failed to create SpecularIrradianceGen PipelineState");
+			Debug::DebugBreak();
+		}
+		else
+		{
+			SpecIrradicanceGenPSO->SetName("Specular Irradiance Gen PSO");
+		}
 	}
 
 	InCmdList.TransitionTexture(Source, EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
 	InCmdList.TransitionTexture(Dest, EResourceState::ResourceState_Common, EResourceState::ResourceState_NonPixelShaderResource);
 
-	InCommandList->SetComputeRootSignature(SpecIrradianceGenRootSignature->GetRootSignature());
+	//InCommandList->SetComputeRootSignature(SpecIrradianceGenRootSignature->GetRootSignature());
 
-	InCommandList->BindGlobalOnlineDescriptorHeaps();
-	InCommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
+	//InCommandList->BindGlobalOnlineDescriptorHeaps();
+	//InCommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
 
-	InCommandList->SetPipelineState(SpecIrradicanceGenPSO->GetPipeline());
+	InCmdList.BindComputePipelineState(SpecIrradicanceGenPSO.Get());
 
-	Uint32	Width		= static_cast<Uint32>(Dest->GetDesc().Width);
+	Uint32	Width		= static_cast<Uint32>(Dest->GetWidth());
 	Float32 Roughness	= 0.0f;
 	const Float32 RoughnessDelta = 1.0f / (Miplevels - 1);
 	for (Uint32 Mip = 0; Mip < Miplevels; Mip++)
 	{
-		InCommandList->SetComputeRoot32BitConstants(&Roughness, 1, 0, 0);
-		InCommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableHandle(Mip), 2);
+		//InCommandList->SetComputeRoot32BitConstants(&Roughness, 1, 0, 0);
+		//InCommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableHandle(Mip), 2);
 		
-		InCommandList->Dispatch(Width, Width, 6);
-		InCommandList->UnorderedAccessBarrier(Dest);
+		InCmdList.Dispatch(Width, Width, 6);
+		InCmdList.UnorderedAccessTextureBarrier(Dest);
 
 		Width = std::max<Uint32>(Width / 2, 1U);
 		Roughness += RoughnessDelta;
-	}*/
+	}
 
 	InCmdList.TransitionTexture(Source, EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
 	InCmdList.TransitionTexture(Dest, EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);

@@ -26,6 +26,7 @@ enum ETextureUsage
 	// Defines for often used combinations
 	TextureUsage_RWTexture		= TextureUsage_UAV | TextureUsage_SRV, 
 	TextureUsage_RenderTarget	= TextureUsage_RTV | TextureUsage_SRV,
+	TextureUsage_ShadowMap		= TextureUsage_DSV | TextureUsage_SRV,
 };
 
 /*

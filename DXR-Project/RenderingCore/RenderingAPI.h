@@ -674,15 +674,13 @@ public:
 		const TextureCube* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
-		Uint32 FirstFace,
-		Uint32 FaceCount)
+		Uint32 FaceIndex)
 	{
 		return ActiveRenderingAPI->CreateDepthStencilView(
 			Texture,
 			Format,
 			MipSlice,
-			FirstFace,
-			FaceCount);
+			FaceIndex);
 	}
 
 	FORCEINLINE static DepthStencilView* CreateDepthStencilView(
@@ -690,16 +688,14 @@ public:
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 ArraySlice,
-		Uint32 FirstFace,
-		Uint32 FaceCount)
+		Uint32 FaceIndex)
 	{
 		return ActiveRenderingAPI->CreateDepthStencilView(
 			Texture,
 			Format,
 			MipSlice,
 			ArraySlice,
-			FirstFace,
-			FaceCount);
+			FaceIndex);
 	}
 
 	/*
@@ -764,6 +760,11 @@ public:
 	FORCEINLINE static ComputePipelineState* CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo)
 	{
 		return ActiveRenderingAPI->CreateComputePipelineState(CreateInfo);
+	}
+
+	FORCEINLINE static InputLayout* CreateInputLayout()
+	{
+		return ActiveRenderingAPI->CreateInputLayout();
 	}
 
 	/*

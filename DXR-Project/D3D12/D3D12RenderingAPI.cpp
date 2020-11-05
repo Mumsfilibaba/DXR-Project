@@ -236,6 +236,11 @@ VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(
 	Uint32 Usage) const
 {
 	D3D12VertexBuffer* NewBuffer = CreateBufferResource<D3D12VertexBuffer>(InitalData, SizeInBytes, StrideInBytes, Usage);
+	if (!NewBuffer)
+	{
+		LOG_ERROR("[D3D12RenderingAPI]: Failed to create VertexBuffer");
+		return nullptr;
+	}
 
 	D3D12_VERTEX_BUFFER_VIEW View;
 	Memory::Memzero(&View, sizeof(D3D12_VERTEX_BUFFER_VIEW));
@@ -255,6 +260,11 @@ IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(
 	Uint32 Usage) const
 {
 	D3D12IndexBuffer* NewBuffer = CreateBufferResource<D3D12IndexBuffer>(InitalData, SizeInBytes, IndexFormat, Usage);
+	if (!NewBuffer)
+	{
+		LOG_ERROR("[D3D12RenderingAPI]: Failed to create IndexBuffer");
+		return nullptr;
+	}
 
 	D3D12_INDEX_BUFFER_VIEW View;
 	Memory::Memzero(&View, sizeof(D3D12_INDEX_BUFFER_VIEW));
@@ -277,6 +287,11 @@ IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(
 ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Usage) const
 {
 	D3D12ConstantBuffer* NewBuffer = CreateBufferResource<D3D12ConstantBuffer>(InitalData, SizeInBytes, Usage);
+	if (!NewBuffer)
+	{
+		LOG_ERROR("[D3D12RenderingAPI]: Failed to create ConstantBuffer");
+		return nullptr;
+	}
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
 	Memory::Memzero(&ViewDesc, sizeof(D3D12_CONSTANT_BUFFER_VIEW_DESC));
@@ -295,7 +310,16 @@ StructuredBuffer* D3D12RenderingAPI::CreateStructuredBuffer(
 	Uint32 Stride, 
 	Uint32 Usage) const
 {
-	return CreateBufferResource<D3D12StructuredBuffer>(InitalData, SizeInBytes, Stride, Usage);
+	D3D12StructuredBuffer* NewBuffer = CreateBufferResource<D3D12StructuredBuffer>(InitalData, SizeInBytes, Stride, Usage);
+	if (!NewBuffer)
+	{
+		LOG_ERROR("[D3D12RenderingAPI]: Failed to create StructuredBuffer");
+		return nullptr;
+	}
+	else
+	{
+		return NewBuffer;
+	}
 }
 
 /*
@@ -1160,13 +1184,12 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 	const TextureCube* Texture, 
 	EFormat Format, 
 	Uint32 MipSlice,
-	Uint32 FirstFace,
-	Uint32 FaceCount) const
+	Uint32 FaceIndex) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasDepthStencilUsage());
 	VALIDATE(MipSlice < Texture->GetMipLevels());
-	VALIDATE(FirstFace + FaceCount < Texture->GetArrayCount());
+	VALIDATE(FaceIndex < 6);
 	VALIDATE(Format != EFormat::Format_Unknown);
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
@@ -1177,14 +1200,14 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 	{
 		Desc.ViewDimension					= D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
 		Desc.Texture2DArray.MipSlice		= MipSlice;
-		Desc.Texture2DArray.ArraySize		= FaceCount;
-		Desc.Texture2DArray.FirstArraySlice = FirstFace;
+		Desc.Texture2DArray.ArraySize		= 1;
+		Desc.Texture2DArray.FirstArraySlice = FaceIndex;
 	}
 	else
 	{
 		Desc.ViewDimension						= D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-		Desc.Texture2DMSArray.ArraySize			= FaceCount;
-		Desc.Texture2DMSArray.FirstArraySlice	= FirstFace;
+		Desc.Texture2DMSArray.ArraySize			= 1;
+		Desc.Texture2DMSArray.FirstArraySlice	= FaceIndex;
 	}
 
 	// Make sure that the texture actually is a textures
@@ -1197,16 +1220,15 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 	EFormat Format, 
 	Uint32 MipSlice, 
 	Uint32 ArraySlice, 
-	Uint32 FirstFace,
-	Uint32 FaceCount) const
+	Uint32 FaceIndex) const
 {
 	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
 
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasDepthStencilUsage());
 	VALIDATE(MipSlice < Texture->GetMipLevels());
-	VALIDATE((ArraySlice * TEXTURE_CUBE_FACE_COUNT) + FirstFace + FaceCount < Texture->GetArrayCount());
-	VALIDATE(FaceCount < TEXTURE_CUBE_FACE_COUNT);
+	VALIDATE((ArraySlice * TEXTURE_CUBE_FACE_COUNT) + FaceIndex < Texture->GetArrayCount());
+	VALIDATE(FaceIndex < TEXTURE_CUBE_FACE_COUNT);
 	VALIDATE(Format != EFormat::Format_Unknown);
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
@@ -1217,14 +1239,14 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 	{
 		Desc.ViewDimension					= D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
 		Desc.Texture2DArray.MipSlice		= MipSlice;
-		Desc.Texture2DArray.ArraySize		= FaceCount;
-		Desc.Texture2DArray.FirstArraySlice = (ArraySlice * TEXTURE_CUBE_FACE_COUNT) + FirstFace;
+		Desc.Texture2DArray.ArraySize		= 1;
+		Desc.Texture2DArray.FirstArraySlice = (ArraySlice * TEXTURE_CUBE_FACE_COUNT) + FaceIndex;
 	}
 	else
 	{
 		Desc.ViewDimension						= D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-		Desc.Texture2DMSArray.ArraySize			= FaceCount;
-		Desc.Texture2DMSArray.FirstArraySlice	= (ArraySlice * TEXTURE_CUBE_FACE_COUNT) + FirstFace;
+		Desc.Texture2DMSArray.ArraySize			= 1;
+		Desc.Texture2DMSArray.FirstArraySlice	= (ArraySlice * TEXTURE_CUBE_FACE_COUNT) + FaceIndex;
 	}
 
 	// Make sure that the texture actually is a textures
@@ -1366,7 +1388,7 @@ ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(const Comput
 		D3D12ComputePipelineState* Pipeline = new D3D12ComputePipelineState(Device.Get());
 		Pipeline->PipelineState = PipelineState;
 
-		LOG_INFO("[D3D12RenderingAPI]: Created PipelineState");
+		LOG_INFO("[D3D12RenderingAPI]: Created ComputePipelineState");
 		return Pipeline;
 	}
 	else

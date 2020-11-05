@@ -147,10 +147,18 @@ private:
 
 	TSharedRef<TextureCube> Skybox;
 	TSharedRef<TextureCube> PointLightShadowMaps;
+	TArray<TSharedRef<DepthStencilView>> PointLightShadowMapsDSVs;
+	TSharedRef<ShaderResourceView>	PointLightShadowMapsSRV;
 	
 	TSharedRef<Texture2D> Albedo;
 	TSharedRef<Texture2D> Normal;
+
+	TSharedRef<ShaderResourceView>	DirLightShadowMapSRV;
+	TSharedRef<DepthStencilView>	DirLightShadowMapDSV;
 	TSharedRef<Texture2D> DirLightShadowMaps;
+
+	TSharedRef<ShaderResourceView>	VSMDirLightShadowMapSRV;
+	TSharedRef<RenderTargetView>	VSMDirLightShadowMapRTV;
 	TSharedRef<Texture2D> VSMDirLightShadowMaps;
 	
 	TSharedRef<Texture2D> ReflectionTexture;
@@ -171,6 +179,8 @@ private:
 	
 	TSharedRef<RayTracingScene>	RayTracingScene;
 
+	TSharedRef<InputLayout> StdInputLayout;
+
 	TSharedRef<GraphicsPipelineState>	PrePassPSO;
 	TSharedRef<GraphicsPipelineState>	ShadowMapPSO;
 	TSharedRef<GraphicsPipelineState>	VSMShadowMapPSO;
@@ -181,14 +191,15 @@ private:
 	TSharedRef<GraphicsPipelineState>	DebugBoxPSO;
 	TSharedRef<GraphicsPipelineState>	PostPSO;
 	TSharedRef<GraphicsPipelineState>	FXAAPSO;
-	TSharedRef<ComputePipelineState>	IrradicanceGenPSO;
-	TSharedRef<ComputePipelineState>	SpecIrradicanceGenPSO;
 	TSharedRef<RayTracingPipelineState>	RaytracingPSO;
 
-	TArray<MeshDrawCommand> VisibleCommands;
+	TSharedRef<ComputeShader>			IrradianceGenShader;
+	TSharedRef<ComputePipelineState>	IrradicanceGenPSO;
+	TSharedRef<ComputeShader>			SpecIrradianceGenShader;
+	TSharedRef<ComputePipelineState>	SpecIrradicanceGenPSO;
 
-	TArray<Uint64> FenceValues;
-	Uint32 CurrentBackBufferIndex = 0;
+	TArray<MeshDrawCommand> VisibleCommands;
+	TArray<TSharedRef<PipelineResource>> DeferredResources;
 
 	bool PrePassEnabled		= true;
 	bool DrawAABBs			= false;

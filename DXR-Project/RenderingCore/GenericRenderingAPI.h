@@ -361,16 +361,14 @@ public:
 		const TextureCube* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
-		Uint32 FirstFace,
-		Uint32 FaceCount) const = 0;
+		Uint32 FaceIndex) const = 0;
 
 	virtual DepthStencilView* CreateDepthStencilView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 ArraySlice,
-		Uint32 FaceIndex,
-		Uint32 FaceCount) const = 0;
+		Uint32 FaceIndex) const = 0;
 
 	/*
 	* Pipeline
