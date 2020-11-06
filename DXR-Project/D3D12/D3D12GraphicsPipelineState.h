@@ -1,4 +1,6 @@
 #pragma once
+#include "RenderingCore/PipelineState.h"
+
 #include "D3D12DeviceChild.h"
 
 #include <dxcapi.h>
@@ -57,4 +59,48 @@ public:
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> PipelineState;
+};
+
+/*
+* D3D12DepthStencilState
+*/
+
+class D3D12DepthStencilState : public DepthStencilState
+{
+public:
+	inline D3D12DepthStencilState(D3D12Device* InDevice)
+	{
+	}
+
+	~D3D12DepthStencilState() = default;
+
+	FORCEINLINE const D3D12_DEPTH_STENCIL_STATE_DESC& GetStateDesc() const
+	{
+		return StateDesc;
+	}
+
+private:
+	D3D12_DEPTH_STENCIL_STATE_DESC StateDesc;
+};
+
+/*
+* D3D12RasterizerState
+*/
+
+class D3D12RasterizerState : public RasterizerState
+{
+public:
+	inline D3D12RasterizerState(D3D12Device* InDevice)
+	{
+	}
+
+	~D3D12RasterizerState() = default;
+
+	FORCEINLINE const D3D12_RASTERIZER_STATE_DESC& GetStateDesc() const
+	{
+		return StateDesc;
+	}
+
+private:
+	D3D12_RASTERIZER_STATE_DESC StateDesc;
 };

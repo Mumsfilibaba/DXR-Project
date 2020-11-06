@@ -577,15 +577,13 @@ public:
 		const TextureCube* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
-		Uint32 FirstFace,
-		Uint32 FaceCount)
+		Uint32 FaceIndex)
 	{
 		return ActiveRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
-			FirstFace,
-			FaceCount);
+			FaceIndex);
 	}
 
 	FORCEINLINE static RenderTargetView* CreateRenderTargetView(
@@ -593,16 +591,14 @@ public:
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 ArraySlice,
-		Uint32 FirstFace,
-		Uint32 FaceCount)
+		Uint32 FaceIndex)
 	{
 		return ActiveRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
 			ArraySlice,
-			FirstFace,
-			FaceCount);
+			FaceIndex);
 	}
 
 	FORCEINLINE static RenderTargetView* CreateRenderTargetView(
@@ -702,62 +698,74 @@ public:
 	* Pipeline
 	*/
 
-	FORCEINLINE static ComputeShader* CreateComputeShader(const TArray<Uint8>& ShaderCode)
+	FORCEINLINE static ComputeShader* CreateComputeShader(
+		const TArray<Uint8>& ShaderCode)
 	{
 		return ActiveRenderingAPI->CreateComputeShader(ShaderCode);
 	}
 
-	FORCEINLINE static VertexShader* CreateVertexShader(const TArray<Uint8>& ShaderCode)
+	FORCEINLINE static VertexShader* CreateVertexShader(
+		const TArray<Uint8>& ShaderCode)
 	{
 		return ActiveRenderingAPI->CreateVertexShader(ShaderCode);
 	}
 	
-	FORCEINLINE static HullShader* CreateHullShader(const TArray<Uint8>& ShaderCode)
+	FORCEINLINE static HullShader* CreateHullShader(
+		const TArray<Uint8>& ShaderCode)
 	{
 		return ActiveRenderingAPI->CreateHullShader(ShaderCode);
 	}
 	
-	FORCEINLINE static DomainShader* CreateDomainShader(const TArray<Uint8>& ShaderCode)
+	FORCEINLINE static DomainShader* CreateDomainShader(
+		const TArray<Uint8>& ShaderCode)
 	{
 		return ActiveRenderingAPI->CreateDomainShader(ShaderCode);
 	}
 	
-	FORCEINLINE static GeometryShader* CreateGeometryShader(const TArray<Uint8>& ShaderCode)
+	FORCEINLINE static GeometryShader* CreateGeometryShader(
+		const TArray<Uint8>& ShaderCode)
 	{
 		return ActiveRenderingAPI->CreateGeometryShader(ShaderCode);
 	}
 
-	FORCEINLINE static MeshShader* CreateMeshShader(const TArray<Uint8>& ShaderCode)
+	FORCEINLINE static MeshShader* CreateMeshShader(
+		const TArray<Uint8>& ShaderCode)
 	{
 		return ActiveRenderingAPI->CreateMeshShader(ShaderCode);
 	}
 	
-	FORCEINLINE static AmplificationShader* CreateAmplificationShader(const TArray<Uint8>& ShaderCode)
+	FORCEINLINE static AmplificationShader* CreateAmplificationShader(
+		const TArray<Uint8>& ShaderCode)
 	{
 		return ActiveRenderingAPI->CreateAmplificationShader(ShaderCode);
 	}
 
-	FORCEINLINE static PixelShader* CreatePixelShader(const TArray<Uint8>& ShaderCode)
+	FORCEINLINE static PixelShader* CreatePixelShader(
+		const TArray<Uint8>& ShaderCode)
 	{
 		return ActiveRenderingAPI->CreatePixelShader(ShaderCode);
 	}
 
-	FORCEINLINE static RayGenShader* CreateRayGenShader(const TArray<Uint8>& ShaderCode)
+	FORCEINLINE static RayGenShader* CreateRayGenShader(
+		const TArray<Uint8>& ShaderCode)
 	{
 		return ActiveRenderingAPI->CreateRayGenShader(ShaderCode);
 	}
 	
-	FORCEINLINE static RayHitShader* CreateRayHitShader(const TArray<Uint8>& ShaderCode)
+	FORCEINLINE static RayHitShader* CreateRayHitShader(
+		const TArray<Uint8>& ShaderCode)
 	{
 		return ActiveRenderingAPI->CreateRayHitShader(ShaderCode);
 	}
 
-	FORCEINLINE static RayMissShader* CreateRayMissShader(const TArray<Uint8>& ShaderCode)
+	FORCEINLINE static RayMissShader* CreateRayMissShader(
+		const TArray<Uint8>& ShaderCode)
 	{
 		return ActiveRenderingAPI->CreateRayMissShader(ShaderCode);
 	}
 
-	FORCEINLINE static ComputePipelineState* CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo)
+	FORCEINLINE static ComputePipelineState* CreateComputePipelineState(
+		const ComputePipelineStateCreateInfo& CreateInfo)
 	{
 		return ActiveRenderingAPI->CreateComputePipelineState(CreateInfo);
 	}
