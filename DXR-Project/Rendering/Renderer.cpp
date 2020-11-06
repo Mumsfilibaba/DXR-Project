@@ -1511,6 +1511,8 @@ bool Renderer::InitShadowMapPass()
 		StdInputLayout->SetName("Standard Input Layout");
 	}
 
+
+
 //	// Init PipelineState
 //	D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
 //	{

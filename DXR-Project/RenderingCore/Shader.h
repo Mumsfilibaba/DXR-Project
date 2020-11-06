@@ -54,6 +54,9 @@ public:
 
 class ComputeShader : public Shader
 {
+public:
+	ComputeShader()		= default;
+	~ComputeShader()	= default;
 };
 
 /*
@@ -62,6 +65,9 @@ class ComputeShader : public Shader
 
 class VertexShader : public Shader
 {
+public:
+	VertexShader()	= default;
+	~VertexShader()	= default;
 };
 
 /*
@@ -70,6 +76,9 @@ class VertexShader : public Shader
 
 class HullShader : public Shader
 {
+public:
+	HullShader()	= default;
+	~HullShader()	= default;
 };
 
 /*
@@ -78,6 +87,9 @@ class HullShader : public Shader
 
 class DomainShader : public Shader
 {
+public:
+	DomainShader()	= default;
+	~DomainShader()	= default;
 };
 
 /*
@@ -86,6 +98,9 @@ class DomainShader : public Shader
 
 class GeometryShader : public Shader
 {
+public:
+	GeometryShader()	= default;
+	~GeometryShader()	= default;
 };
 
 /*
@@ -94,6 +109,9 @@ class GeometryShader : public Shader
 
 class MeshShader : public Shader
 {
+public:
+	MeshShader()	= default;
+	~MeshShader()	= default;
 };
 
 /*
@@ -102,6 +120,9 @@ class MeshShader : public Shader
 
 class AmplificationShader : public Shader
 {
+public:
+	AmplificationShader()	= default;
+	~AmplificationShader()	= default;
 };
 
 /*
@@ -110,6 +131,9 @@ class AmplificationShader : public Shader
 
 class PixelShader : public Shader
 {
+public:
+	PixelShader()	= default;
+	~PixelShader()	= default;
 };
 
 /*
@@ -118,6 +142,9 @@ class PixelShader : public Shader
 
 class RayGenShader : public Shader
 {
+public:
+	RayGenShader()	= default;
+	~RayGenShader()	= default;
 };
 
 /*
@@ -126,6 +153,9 @@ class RayGenShader : public Shader
 
 class RayHitShader : public Shader
 {
+public:
+	RayHitShader()	= default;
+	~RayHitShader()	= default;
 };
 
 /*
@@ -134,4 +164,7 @@ class RayHitShader : public Shader
 
 class RayMissShader : public Shader
 {
+public:
+	RayMissShader()		= default;
+	~RayMissShader()	= default;
 };

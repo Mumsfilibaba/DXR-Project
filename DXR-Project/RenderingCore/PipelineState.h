@@ -145,19 +145,19 @@ public:
 
 enum class ECullMode
 {
-	CULL_MODE_NONE	= 1,
-	CULL_MODE_FRONT	= 2,
-	CULL_MODE_BACK	= 3
+	CullMode_None	= 1,
+	CullMode_Front	= 2,
+	CullMode_Back	= 3
 };
 
 inline const Char* ToString(ECullMode CullMode)
 {
 	switch (CullMode)
 	{
-	case ECullMode::CULL_MODE_NONE:		return "CULL_MODE_NONE";
-	case ECullMode::CULL_MODE_FRONT:	return "CULL_MODE_FRONT";
-	case ECullMode::CULL_MODE_BACK:		return "CULL_MODE_BACK";
-	default:							return "";
+	case ECullMode::CullMode_None:	return "CullMode_None";
+	case ECullMode::CullMode_Front:	return "CullMode_Front";
+	case ECullMode::CullMode_Back:	return "CullMode_Back";
+	default:						return "";
 	}
 }
 
@@ -167,17 +167,17 @@ inline const Char* ToString(ECullMode CullMode)
 
 enum class EFillMode
 {
-	FILL_MODE_WIREFRAME	= 1,
-	FILL_MODE_SOLID		= 2
+	FillMode_WireFrame	= 1,
+	FillMode_Solid		= 2
 };
 
 inline const Char* ToString(EFillMode FillMode)
 {
 	switch (FillMode)
 	{
-	case EFillMode::FILL_MODE_WIREFRAME:	return "FILL_MODE_WIREFRAME";
-	case EFillMode::FILL_MODE_SOLID:		return "FILL_MODE_SOLID";
-	default:								return "";
+	case EFillMode::FillMode_WireFrame:	return "FillMode_WireFrame";
+	case EFillMode::FillMode_Solid:		return "FillMode_Solid";
+	default:							return "";
 	}
 }
 
@@ -206,8 +206,6 @@ struct RasterizerStateInitializer
 
 class RasterizerState : public PipelineResource
 {
-public:
-	virtual Uint64 GetHash() = 0;
 };
 
 
@@ -217,47 +215,47 @@ public:
 
 enum class EBlendFactor
 {
-	BLEND_FACTOR_ZERO				= 1,
-	BLEND_FACTOR_ONE				= 2,
-	BLEND_FACTOR_SRC_COLOR			= 3,
-	BLEND_FACTOR_INV_SRC_COLOR		= 4,
-	BLEND_FACTOR_SRC_ALPHA			= 5,
-	BLEND_FACTOR_INV_SRC_ALPHA		= 6,
-	BLEND_FACTOR_DEST_ALPHA			= 7,
-	BLEND_FACTOR_INV_DEST_ALPHA		= 8,
-	BLEND_FACTOR_DEST_COLOR			= 9,
-	BLEND_FACTOR_INV_DEST_COLOR		= 10,
-	BLEND_FACTOR_SRC_ALPHA_SAT		= 11,
-	BLEND_FACTOR_BLEND_FACTOR		= 12,
-	BLEND_FACTOR_INV_BLEND_FACTOR	= 13,
-	BLEND_FACTOR_SRC1_COLOR			= 14,
-	BLEND_FACTOR_INV_SRC1_COLOR		= 15,
-	BLEND_FACTOR_SRC1_ALPHA			= 16,
-	BLEND_FACTOR_INV_SRC1_ALPHA		= 17
+	BlendFactor_Zero			= 1,
+	BlendFactor_One				= 2,
+	BlendFactor_SrcColor		= 3,
+	BlendFactor_InvSrcColor		= 4,
+	BlendFactor_SrcAlpha		= 5,
+	BlendFactor_InvSrcAlpha		= 6,
+	BlendFactor_DestAlpha		= 7,
+	BlendFactor_InvDestAlpha	= 8,
+	BlendFactor_DestColor		= 9,
+	BlendFactor_InvDestColor	= 10,
+	BlendFactor_SrcAlphaSat		= 11,
+	BlendFactor_BlendFactor		= 12,
+	BlendFactor_InvBlendFactor	= 13,
+	BlendFactor_Src1Color		= 14,
+	BlendFactor_InvSrc1Color	= 15,
+	BlendFactor_Src1Alpha		= 16,
+	BlendFactor_InvSrc1Alpha	= 17
 };
 
 inline const Char* ToString(EBlendFactor BlendFactor)
 {
 	switch (BlendFactor)
 	{
-	case EBlendFactor::BLEND_FACTOR_ZERO:				return "BLEND_FACTOR_ZERO";
-	case EBlendFactor::BLEND_FACTOR_ONE:				return "BLEND_FACTOR_ONE";
-	case EBlendFactor::BLEND_FACTOR_SRC_COLOR:			return "BLEND_FACTOR_SRC_COLOR";
-	case EBlendFactor::BLEND_FACTOR_INV_SRC_COLOR:		return "BLEND_FACTOR_INV_SRC_COLOR";
-	case EBlendFactor::BLEND_FACTOR_SRC_ALPHA:			return "BLEND_FACTOR_SRC_ALPHA";
-	case EBlendFactor::BLEND_FACTOR_INV_SRC_ALPHA:		return "BLEND_FACTOR_INV_SRC_ALPHA";
-	case EBlendFactor::BLEND_FACTOR_DEST_ALPHA:			return "BLEND_FACTOR_DEST_ALPHA";
-	case EBlendFactor::BLEND_FACTOR_INV_DEST_ALPHA:		return "BLEND_FACTOR_INV_DEST_ALPHA";
-	case EBlendFactor::BLEND_FACTOR_DEST_COLOR:			return "BLEND_FACTOR_DEST_COLOR";
-	case EBlendFactor::BLEND_FACTOR_INV_DEST_COLOR:		return "BLEND_FACTOR_INV_DEST_COLOR";
-	case EBlendFactor::BLEND_FACTOR_SRC_ALPHA_SAT:		return "BLEND_FACTOR_SRC_ALPHA_SAT";
-	case EBlendFactor::BLEND_FACTOR_BLEND_FACTOR:		return "BLEND_FACTOR_BLEND_FACTOR";
-	case EBlendFactor::BLEND_FACTOR_INV_BLEND_FACTOR:	return "BLEND_FACTOR_INV_BLEND_FACTOR";
-	case EBlendFactor::BLEND_FACTOR_SRC1_COLOR:			return "BLEND_FACTOR_SRC1_COLOR";
-	case EBlendFactor::BLEND_FACTOR_INV_SRC1_COLOR:		return "BLEND_FACTOR_INV_SRC1_COLOR";
-	case EBlendFactor::BLEND_FACTOR_SRC1_ALPHA:			return "BLEND_FACTOR_SRC1_ALPHA";
-	case EBlendFactor::BLEND_FACTOR_INV_SRC1_ALPHA:		return "BLEND_FACTOR_INV_SRC1_ALPHA";
-	default:											return "";
+	case EBlendFactor::BlendFactor_Zero:			return "BlendFactor_Zero";
+	case EBlendFactor::BlendFactor_One:				return "BlendFactor_One";
+	case EBlendFactor::BlendFactor_SrcColor:		return "BlendFactor_SrcColor";
+	case EBlendFactor::BlendFactor_InvSrcColor:		return "BlendFactor_InvSrcColor";
+	case EBlendFactor::BlendFactor_SrcAlpha:		return "BlendFactor_SrcAlpha";
+	case EBlendFactor::BlendFactor_InvSrcAlpha:		return "BlendFactor_InvSrcAlpha";
+	case EBlendFactor::BlendFactor_DestAlpha:		return "BlendFactor_DestAlpha";
+	case EBlendFactor::BlendFactor_InvDestAlpha:	return "BlendFactor_InvDestAlpha";
+	case EBlendFactor::BlendFactor_DestColor:		return "BlendFactor_DestColor";
+	case EBlendFactor::BlendFactor_InvDestColor:	return "BlendFactor_InvDestColor";
+	case EBlendFactor::BlendFactor_SrcAlphaSat:		return "BlendFactor_SrcAlphaSat";
+	case EBlendFactor::BlendFactor_BlendFactor:		return "BlendFactor_BlendFactor";
+	case EBlendFactor::BlendFactor_InvBlendFactor:	return "BlendFactor_InvBlendFactor";
+	case EBlendFactor::BlendFactor_Src1Color:		return "BlendFactor_Src1Color";
+	case EBlendFactor::BlendFactor_InvSrc1Color:	return "BlendFactor_InvSrc1Color";
+	case EBlendFactor::BlendFactor_Src1Alpha:		return "BlendFactor_Src1Alpha";
+	case EBlendFactor::BlendFactor_InvSrc1Alpha:	return "BlendFactor_InvSrc1Alpha";
+	default:										return "";
 	}
 }
 
@@ -267,23 +265,23 @@ inline const Char* ToString(EBlendFactor BlendFactor)
 
 enum class EBlendOp
 {
-	BLEND_OP_ADD			= 1,
-	BLEND_OP_SUBTRACT		= 2,
-	BLEND_OP_REV_SUBTRACT	= 3,
-	BLEND_OP_MIN			= 4,
-	BLEND_OP_MAX			= 5
+	BlendOp_Add			= 1,
+	BlendOp_Subtract	= 2,
+	BlendOp_RevSubtract	= 3,
+	BlendOp_Min			= 4,
+	BlendOp_Max			= 5
 };
 
 inline const Char* ToString(EBlendOp BlendOp)
 {
 	switch (BlendOp)
 	{
-	case EBlendOp::BLEND_OP_ADD:			return "BLEND_OP_ADD";
-	case EBlendOp::BLEND_OP_SUBTRACT:		return "BLEND_OP_SUBTRACT";
-	case EBlendOp::BLEND_OP_REV_SUBTRACT:	return "BLEND_OP_REV_SUBTRACT";
-	case EBlendOp::BLEND_OP_MIN:			return "BLEND_OP_MIN";
-	case EBlendOp::BLEND_OP_MAX:			return "BLEND_OP_MAX";
-	default:								return "";
+	case EBlendOp::BlendOp_Add:			return "BlendOp_Add";
+	case EBlendOp::BlendOp_Subtract:	return "BlendOp_Subtract";
+	case EBlendOp::BlendOp_RevSubtract:	return "BlendOp_RevSubtract";
+	case EBlendOp::BlendOp_Min:			return "BlendOp_Min";
+	case EBlendOp::BlendOp_Max:			return "BlendOp_Max";
+	default:							return "";
 	}
 }
 
@@ -293,44 +291,44 @@ inline const Char* ToString(EBlendOp BlendOp)
 
 enum class ELogicOp
 {
-	LOGIC_OP_CLEAR			= 0,
-	LOGIC_OP_SET			= 1,
-	LOGIC_OP_COPY			= 2,
-	LOGIC_OP_COPY_INVERTED	= 3,
-	LOGIC_OP_NOOP			= 4,
-	LOGIC_OP_INVERT			= 5,
-	LOGIC_OP_AND			= 6,
-	LOGIC_OP_NAND			= 7,
-	LOGIC_OP_OR				= 8,
-	LOGIC_OP_NOR			= 9,
-	LOGIC_OP_XOR			= 10,
-	LOGIC_OP_EQUIV			= 11,
-	LOGIC_OP_AND_REVERSE	= 12,
-	LOGIC_OP_AND_INVERTED	= 13,
-	LOGIC_OP_OR_REVERSE		= 14,
-	LOGIC_OP_OR_INVERTED	= 15
+	LogicOp_Clear			= 0,
+	LogicOp_Set				= 1,
+	LogicOp_Copy			= 2,
+	LogicOp_CopyInverted	= 3,
+	LogicOp_Noop			= 4,
+	LogicOp_Invert			= 5,
+	LogicOp_And				= 6,
+	LogicOp_Nand			= 7,
+	LogicOp_Or				= 8,
+	LogicOp_Nor				= 9,
+	LogicOp_Xor				= 10,
+	LogicOp_Equiv			= 11,
+	LogicOp_AndReverse		= 12,
+	LogicOp_AndInverted		= 13,
+	LogicOp_OrReverse		= 14,
+	LogicOp_OrInverted		= 15
 };
 
 inline const Char* ToString(ELogicOp LogicOp)
 {
 	switch (LogicOp)
 	{
-	case ELogicOp::LOGIC_OP_CLEAR:			return "LOGIC_OP_CLEAR";
-	case ELogicOp::LOGIC_OP_SET:			return "LOGIC_OP_SET";
-	case ELogicOp::LOGIC_OP_COPY:			return "LOGIC_OP_COPY";
-	case ELogicOp::LOGIC_OP_COPY_INVERTED:	return "LOGIC_OP_COPY_INVERTED";
-	case ELogicOp::LOGIC_OP_NOOP:			return "LOGIC_OP_NOOP";
-	case ELogicOp::LOGIC_OP_INVERT:			return "LOGIC_OP_INVERT";
-	case ELogicOp::LOGIC_OP_AND:			return "LOGIC_OP_AND";
-	case ELogicOp::LOGIC_OP_NAND:			return "LOGIC_OP_NAND";
-	case ELogicOp::LOGIC_OP_OR:				return "LOGIC_OP_OR";
-	case ELogicOp::LOGIC_OP_NOR:			return "LOGIC_OP_NOR";
-	case ELogicOp::LOGIC_OP_XOR:			return "LOGIC_OP_XOR";
-	case ELogicOp::LOGIC_OP_EQUIV:			return "LOGIC_OP_EQUIV";
-	case ELogicOp::LOGIC_OP_AND_REVERSE:	return "LOGIC_OP_AND_REVERSE";
-	case ELogicOp::LOGIC_OP_AND_INVERTED:	return "LOGIC_OP_AND_INVERTED";
-	case ELogicOp::LOGIC_OP_OR_REVERSE:		return "LOGIC_OP_OR_REVERSE";
-	case ELogicOp::LOGIC_OP_OR_INVERTED:	return "LOGIC_OP_OR_INVERTED";
+	case ELogicOp::LogicOp_Clear:			return "LogicOp_Clear";
+	case ELogicOp::LogicOp_Set:				return "LogicOp_Set";
+	case ELogicOp::LogicOp_Copy:			return "LogicOp_Copy";
+	case ELogicOp::LogicOp_CopyInverted:	return "LogicOp_CopyInverted";
+	case ELogicOp::LogicOp_Noop:			return "LogicOp_Noop";
+	case ELogicOp::LogicOp_Invert:			return "LogicOp_Invert";
+	case ELogicOp::LogicOp_And:				return "LogicOp_And";
+	case ELogicOp::LogicOp_Nand:			return "LogicOp_Nand";
+	case ELogicOp::LogicOp_Or:				return "LogicOp_Or";
+	case ELogicOp::LogicOp_Nor:				return "LogicOp_Nor";
+	case ELogicOp::LogicOp_Xor:				return "LogicOp_Xor";
+	case ELogicOp::LogicOp_Equiv:			return "LogicOp_Equiv";
+	case ELogicOp::LogicOp_AndReverse:		return "LogicOp_AndReverse";
+	case ELogicOp::LogicOp_AndInverted:		return "LogicOp_AndInverted";
+	case ELogicOp::LogicOp_OrReverse:		return "LogicOp_OrReverse";
+	case ELogicOp::LogicOp_OrInverted:		return "LogicOp_OrInverted";
 	default:								return "";
 	}
 }
@@ -342,12 +340,12 @@ inline const Char* ToString(ELogicOp LogicOp)
 typedef Uint8 ColorWriteFlags;
 enum EColorWriteFlag : ColorWriteFlags
 {
-	COLOR_WRITE_FLAG_NONE	= 0,
-	COLOR_WRITE_FLAG_RED	= 1,
-	COLOR_WRITE_FLAG_GREEN	= 2,
-	COLOR_WRITE_FLAG_BLUE	= 4,
-	COLOR_WRITE_FLAG_ALPHA	= 8,
-	COLOR_WRITE_FLAG_ALL	= (((COLOR_WRITE_FLAG_RED | COLOR_WRITE_FLAG_GREEN) | COLOR_WRITE_FLAG_BLUE) | COLOR_WRITE_FLAG_ALPHA)
+	ColorWriteFlag_None		= 0,
+	ColorWriteFlag_Red		= 1,
+	ColorWriteFlag_Green	= 2,
+	ColorWriteFlag_Blue		= 4,
+	ColorWriteFlag_Alpha	= 8,
+	ColorWriteFlag_All		= (((ColorWriteFlag_Red | ColorWriteFlag_Green) | ColorWriteFlag_Blue) | ColorWriteFlag_Alpha)
 };
 
 /*
@@ -363,32 +361,32 @@ struct RenderTargetWriteState
 
 	inline bool WriteNone() const
 	{
-		return Mask == COLOR_WRITE_FLAG_NONE;
+		return Mask == ColorWriteFlag_None;
 	}
 
 	inline bool WriteRed() const
 	{
-		return (Mask & COLOR_WRITE_FLAG_RED);
+		return (Mask & ColorWriteFlag_Red);
 	}
 
 	inline bool WriteGreen() const
 	{
-		return (Mask & COLOR_WRITE_FLAG_GREEN);
+		return (Mask & ColorWriteFlag_Green);
 	}
 
 	inline bool WriteBlue() const
 	{
-		return (Mask & COLOR_WRITE_FLAG_BLUE);
+		return (Mask & ColorWriteFlag_Blue);
 	}
 
 	inline bool WriteAlpha() const
 	{
-		return (Mask & COLOR_WRITE_FLAG_ALPHA);
+		return (Mask & ColorWriteFlag_Alpha);
 	}
 
 	inline bool WriteAll() const
 	{
-		return Mask == COLOR_WRITE_FLAG_ALL;
+		return Mask == ColorWriteFlag_All;
 	}
 
 	ColorWriteFlags Mask;
@@ -429,8 +427,6 @@ struct BlendStateInitializer
 
 class BlendState : public PipelineResource
 {
-public:
-	virtual Uint64 GetHash() const = 0;
 };
 
 /*
@@ -439,8 +435,6 @@ public:
 
 class InputLayout : public PipelineResource
 {
-public:
-	virtual Uint64 GetHash() const = 0;
 };
 
 /*
@@ -449,19 +443,19 @@ public:
 
 enum class EIndexBufferStripCutValue
 {
-	INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED		= 0,
-	INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF			= 1,
-	INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF		= 2
+	IndexBufferStripCutValue_Disabled	= 0,
+	IndexBufferStripCutValue_0xffff		= 1,
+	IndexBufferStripCutValue_0xffffffff	= 2
 };
 
 inline const Char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 {
 	switch (IndexBufferStripCutValue)
 	{
-	case EIndexBufferStripCutValue::INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED:		return "INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED";
-	case EIndexBufferStripCutValue::INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF:		return "INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF";
-	case EIndexBufferStripCutValue::INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF:	return "INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF";
-	default:																	return "";
+	case EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled:		return "IndexBufferStripCutValue_Disabled";
+	case EIndexBufferStripCutValue::IndexBufferStripCutValue_0xffff:		return "IndexBufferStripCutValue_0xffff";
+	case EIndexBufferStripCutValue::IndexBufferStripCutValue_0xffffffff:	return "IndexBufferStripCutValue_0xffffffff";
+	default:																return "";
 	}
 }
 

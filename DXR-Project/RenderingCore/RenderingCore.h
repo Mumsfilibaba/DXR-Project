@@ -7,29 +7,29 @@
 
 enum class EComparisonFunc
 {
-	COMPARISON_FUNC_NEVER			= 1,
-	COMPARISON_FUNC_LESS			= 2,
-	COMPARISON_FUNC_EQUAL			= 3,
-	COMPARISON_FUNC_LESS_EQUAL		= 4,
-	COMPARISON_FUNC_GREATER			= 5,
-	COMPARISON_FUNC_NOT_EQUAL		= 6,
-	COMPARISON_FUNC_GREATER_EQUAL	= 7,
-	COMPARISON_FUNC_ALWAYS			= 8
+	ComparisonFunc_Never		= 1,
+	ComparisonFunc_Less			= 2,
+	ComparisonFunc_Equal		= 3,
+	ComparisonFunc_LessEqual	= 4,
+	ComparisonFunc_Greater		= 5,
+	ComparisonFunc_NotEqual		= 6,
+	ComparisonFunc_GreaterEqual	= 7,
+	ComparisonFunc_Always		= 8
 };
 
 inline const Char* ToString(EComparisonFunc ComparisonFunc)
 {
 	switch (ComparisonFunc)
 	{
-	case EComparisonFunc::COMPARISON_FUNC_NEVER:			return "BLEND_FACTOR_ZERO";
-	case EComparisonFunc::COMPARISON_FUNC_LESS:				return "BLEND_FACTOR_ONE";
-	case EComparisonFunc::COMPARISON_FUNC_EQUAL:			return "BLEND_FACTOR_SRC_COLOR";
-	case EComparisonFunc::COMPARISON_FUNC_LESS_EQUAL:		return "BLEND_FACTOR_INV_SRC_COLOR";
-	case EComparisonFunc::COMPARISON_FUNC_GREATER:			return "BLEND_FACTOR_SRC_ALPHA";
-	case EComparisonFunc::COMPARISON_FUNC_NOT_EQUAL:		return "BLEND_FACTOR_INV_SRC_ALPHA";
-	case EComparisonFunc::COMPARISON_FUNC_GREATER_EQUAL:	return "BLEND_FACTOR_DEST_ALPHA";
-	case EComparisonFunc::COMPARISON_FUNC_ALWAYS:			return "BLEND_FACTOR_INV_DEST_ALPHA";
-	default:												return "";
+	case EComparisonFunc::ComparisonFunc_Never:			return "ComparisonFunc_Never";
+	case EComparisonFunc::ComparisonFunc_Less:			return "ComparisonFunc_Less";
+	case EComparisonFunc::ComparisonFunc_Equal:			return "ComparisonFunc_Equal";
+	case EComparisonFunc::ComparisonFunc_LessEqual:		return "ComparisonFunc_LessEqual";
+	case EComparisonFunc::ComparisonFunc_Greater:		return "ComparisonFunc_Greater";
+	case EComparisonFunc::ComparisonFunc_NotEqual:		return "ComparisonFunc_NotEqual";
+	case EComparisonFunc::ComparisonFunc_GreaterEqual:	return "ComparisonFunc_GreaterEqual";
+	case EComparisonFunc::ComparisonFunc_Always:		return "ComparisonFunc_Always";
+	default:											return "";
 	}
 }
 
@@ -50,11 +50,11 @@ inline const Char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 {
 	switch (PrimitveTopologyType)
 	{
-	case EPrimitiveTopologyType::PrimitiveTopologyType_Undefined:	return "PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED";
-	case EPrimitiveTopologyType::PrimitiveTopologyType_Point:		return "PRIMITIVE_TOPOLOGY_TYPE_POINT";
-	case EPrimitiveTopologyType::PrimitiveTopologyType_Line:		return "PRIMITIVE_TOPOLOGY_TYPE_LINE";
-	case EPrimitiveTopologyType::PrimitiveTopologyType_Triangle:	return "PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE";
-	case EPrimitiveTopologyType::PrimitiveTopologyType_Patch:		return "PRIMITIVE_TOPOLOGY_TYPE_PATCH";
+	case EPrimitiveTopologyType::PrimitiveTopologyType_Undefined:	return "PrimitiveTopologyType_Undefined";
+	case EPrimitiveTopologyType::PrimitiveTopologyType_Point:		return "PrimitiveTopologyType_Point";
+	case EPrimitiveTopologyType::PrimitiveTopologyType_Line:		return "PrimitiveTopologyType_Line";
+	case EPrimitiveTopologyType::PrimitiveTopologyType_Triangle:	return "PrimitiveTopologyType_Triangle";
+	case EPrimitiveTopologyType::PrimitiveTopologyType_Patch:		return "PrimitiveTopologyType_Patch";
 	default:														return "";
 	}
 }
