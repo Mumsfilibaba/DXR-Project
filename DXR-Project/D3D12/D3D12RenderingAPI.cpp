@@ -6,10 +6,9 @@
 #include "D3D12CommandList.h"
 #include "D3D12CommandQueue.h"
 #include "D3D12CommandAllocator.h"
-#include "D3D12ComputePipelineState.h"
+#include "D3D12PipelineState.h"
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Fence.h"
-#include "D3D12GraphicsPipelineState.h"
 #include "D3D12RayTracingPipelineState.h"
 #include "D3D12RayTracingScene.h"
 #include "D3D12RootSignature.h"
@@ -968,13 +967,12 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 	const TextureCube* Texture, 
 	EFormat Format, 
 	Uint32 MipSlice,
-	Uint32 FirstFace,
-	Uint32 FaceCount) const
+	Uint32 FaceIndex) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasRenderTargetUsage());
 	VALIDATE(MipSlice < Texture->GetMipLevels());
-	VALIDATE(FirstFace + FaceCount < Texture->GetArrayCount());
+	VALIDATE(FaceIndex < Texture->GetArrayCount());
 	VALIDATE(Format != EFormat::Format_Unknown);
 
 	D3D12_RENDER_TARGET_VIEW_DESC Desc;
@@ -986,14 +984,14 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 		Desc.ViewDimension					= D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 		Desc.Texture2DArray.MipSlice		= MipSlice;
 		Desc.Texture2DArray.PlaneSlice		= 0;
-		Desc.Texture2DArray.FirstArraySlice	= FirstFace;
-		Desc.Texture2DArray.ArraySize		= FaceCount;
+		Desc.Texture2DArray.FirstArraySlice	= FaceIndex;
+		Desc.Texture2DArray.ArraySize		= 1;
 	}
 	else
 	{
 		Desc.ViewDimension						= D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-		Desc.Texture2DMSArray.FirstArraySlice	= FirstFace;
-		Desc.Texture2DMSArray.ArraySize			= FaceCount;
+		Desc.Texture2DMSArray.FirstArraySlice	= FaceIndex;
+		Desc.Texture2DMSArray.ArraySize			= 1;
 	}
 
 	// Make sure that the texture actually is a textures
@@ -1006,16 +1004,15 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 	EFormat Format, 
 	Uint32 MipSlice, 
 	Uint32 ArraySlice, 
-	Uint32 FirstFace, 
-	Uint32 FaceCount) const
+	Uint32 FaceIndex) const
 {
 	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
 
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasRenderTargetUsage());
 	VALIDATE(MipSlice < Texture->GetMipLevels());
-	VALIDATE((ArraySlice * TEXTURE_CUBE_FACE_COUNT) + FirstFace + FaceCount < Texture->GetArrayCount());
-	VALIDATE(FaceCount < TEXTURE_CUBE_FACE_COUNT);
+	VALIDATE((ArraySlice * TEXTURE_CUBE_FACE_COUNT) + FaceIndex < Texture->GetArrayCount());
+	VALIDATE(FaceIndex < TEXTURE_CUBE_FACE_COUNT);
 	VALIDATE(Format != EFormat::Format_Unknown);
 
 	D3D12_RENDER_TARGET_VIEW_DESC Desc;
@@ -1027,14 +1024,14 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 		Desc.ViewDimension					= D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 		Desc.Texture2DArray.MipSlice		= MipSlice;
 		Desc.Texture2DArray.PlaneSlice		= 0;
-		Desc.Texture2DArray.FirstArraySlice = (TEXTURE_CUBE_FACE_COUNT * ArraySlice) + FirstFace;
-		Desc.Texture2DArray.ArraySize		= FaceCount;
+		Desc.Texture2DArray.FirstArraySlice = (TEXTURE_CUBE_FACE_COUNT * ArraySlice) + FaceIndex;
+		Desc.Texture2DArray.ArraySize		= 1;
 	}
 	else
 	{
 		Desc.ViewDimension						= D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-		Desc.Texture2DMSArray.FirstArraySlice	= (TEXTURE_CUBE_FACE_COUNT * ArraySlice) + FirstFace;
-		Desc.Texture2DMSArray.ArraySize			= FaceCount;
+		Desc.Texture2DMSArray.FirstArraySlice	= (TEXTURE_CUBE_FACE_COUNT * ArraySlice) + FaceIndex;
+		Desc.Texture2DMSArray.ArraySize			= 1;
 	}
 
 	// Make sure that the texture actually is a textures
@@ -1315,32 +1312,250 @@ RayMissShader* D3D12RenderingAPI::CreateRayMissShader(const TArray<Uint8>& Shade
 	return nullptr;
 }
 
-DepthStencilState* D3D12RenderingAPI::CreateDepthStencilState() const
+DepthStencilState* D3D12RenderingAPI::CreateDepthStencilState(
+	const DepthStencilStateCreateInfo& CreateInfo) const
 {
-	return nullptr;
+	D3D12_DEPTH_STENCIL_DESC Desc;
+	Memory::Memzero(&Desc, sizeof(D3D12_DEPTH_STENCIL_DESC));
+	
+	Desc.DepthEnable		= CreateInfo.DepthEnable;
+	Desc.DepthFunc			= ConvertComparisonFunc(CreateInfo.DepthFunc);
+	Desc.DepthWriteMask		= ConvertDepthWriteMask(CreateInfo.DepthWriteMask);
+	Desc.StencilEnable		= CreateInfo.StencilEnable;
+	Desc.StencilReadMask	= CreateInfo.StencilReadMask;
+	Desc.StencilWriteMask	= CreateInfo.StencilWriteMask;
+	Desc.FrontFace			= ConvertDepthStencilOp(CreateInfo.FrontFace);
+	Desc.BackFace			= ConvertDepthStencilOp(CreateInfo.BackFace);
+
+	return new D3D12DepthStencilState(Device.Get(), Desc);
 }
 
-RasterizerState* D3D12RenderingAPI::CreateRasterizerState() const
+RasterizerState* D3D12RenderingAPI::CreateRasterizerState(
+	const RasterizerStateCreateInfo& CreateInfo) const
 {
-	return nullptr;
+	D3D12_RASTERIZER_DESC Desc;
+	Memory::Memzero(&Desc, sizeof(D3D12_RASTERIZER_DESC));
+
+	Desc.AntialiasedLineEnable	= CreateInfo.AntialiasedLineEnable;
+	Desc.ConservativeRaster =
+		(CreateInfo.EnableConservativeRaster) ?
+		D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON :
+		D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+	Desc.CullMode				= ConvertCullMode(CreateInfo.CullMode);
+	Desc.DepthBias				= CreateInfo.DepthBias;
+	Desc.DepthBiasClamp			= CreateInfo.DepthBiasClamp;
+	Desc.DepthClipEnable		= CreateInfo.DepthClipEnable;
+	Desc.SlopeScaledDepthBias	= CreateInfo.SlopeScaledDepthBias;
+	Desc.FillMode				= ConvertFillMode(CreateInfo.FillMode);
+	Desc.ForcedSampleCount		= CreateInfo.ForcedSampleCount;
+	Desc.FrontCounterClockwise	= CreateInfo.FrontCounterClockwise;
+	Desc.MultisampleEnable		= CreateInfo.MultisampleEnable;
+
+	return new D3D12RasterizerState(Device.Get(), Desc);
 }
 
-BlendState* D3D12RenderingAPI::CreateBlendState() const
+BlendState* D3D12RenderingAPI::CreateBlendState(
+	const BlendStateCreateInfo& CreateInfo) const
 {
-	return nullptr;
+	D3D12_BLEND_DESC Desc;
+	Memory::Memzero(&Desc, sizeof(D3D12_BLEND_DESC));
+
+	Desc.AlphaToCoverageEnable	= CreateInfo.AlphaToCoverageEnable;
+	Desc.IndependentBlendEnable	= CreateInfo.IndependentBlendEnable;	
+	for (Uint32 i = 0; i < 8; i++)
+	{
+		Desc.RenderTarget[i].BlendEnable			= CreateInfo.RenderTarget[i].BlendEnable;
+		Desc.RenderTarget[i].BlendOp				= ConvertBlendOp(CreateInfo.RenderTarget[i].BlendOp);
+		Desc.RenderTarget[i].BlendOpAlpha			= ConvertBlendOp(CreateInfo.RenderTarget[i].BlendOpAlpha);
+		Desc.RenderTarget[i].DestBlend				= ConvertBlend(CreateInfo.RenderTarget[i].DestBlend);
+		Desc.RenderTarget[i].DestBlendAlpha			= ConvertBlend(CreateInfo.RenderTarget[i].DestBlendAlpha);
+		Desc.RenderTarget[i].SrcBlend				= ConvertBlend(CreateInfo.RenderTarget[i].SrcBlend);
+		Desc.RenderTarget[i].SrcBlendAlpha			= ConvertBlend(CreateInfo.RenderTarget[i].SrcBlendAlpha);
+		Desc.RenderTarget[i].LogicOpEnable			= CreateInfo.RenderTarget[i].LogicOpEnable;
+		Desc.RenderTarget[i].LogicOp				= ConvertLogicOp(CreateInfo.RenderTarget[i].LogicOp);
+		Desc.RenderTarget[i].RenderTargetWriteMask	= ConvertRenderTargetWriteState(CreateInfo.RenderTarget[i].RenderTargetWriteMask);
+	}
+
+	return new D3D12BlendState(Device.Get(), Desc);
 }
 
-InputLayout* D3D12RenderingAPI::CreateInputLayout() const
+InputLayoutState* D3D12RenderingAPI::CreateInputLayout(
+	const InputLayoutStateCreateInfo& CreateInfo) const
 {
-	return nullptr;
+	return new D3D12InputLayoutState(Device.Get(), CreateInfo);
 }
 
-GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState() const
+GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
+	const GraphicsPipelineStateCreateInfo& CreateInfo) const
 {
-	return nullptr;
+	using namespace Microsoft::WRL;
+
+	struct alignas(void*) GraphicsPipelineStream
+	{
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
+			ID3D12RootSignature* RootSignature = nullptr;
+		};
+
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE	Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT;
+			D3D12_INPUT_LAYOUT_DESC InputLayout = { };
+		};
+
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type2 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PRIMITIVE_TOPOLOGY;
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE PrimitiveTopologyType = { };
+		};
+
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type3 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS;
+			D3D12_SHADER_BYTECODE VertexShader = { };
+		};
+
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type4 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS;
+			D3D12_SHADER_BYTECODE PixelShader = { };
+		};
+
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type5 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS;
+			D3D12_RT_FORMAT_ARRAY RenderTargetInfo = { };
+		};
+
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type6 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT;
+			DXGI_FORMAT DepthBufferFormat = { };
+		};
+
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type7 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER;
+			D3D12_RASTERIZER_DESC RasterizerDesc = { };
+		};
+
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type8 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL;
+			D3D12_DEPTH_STENCIL_DESC DepthStencilDesc = { };
+		};
+
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type9 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND;
+			D3D12_BLEND_DESC BlendStateDesc = { };
+		};
+
+		struct alignas(void*)
+		{
+			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type10 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC;
+			DXGI_SAMPLE_DESC SampleDesc = { };
+		};
+	} PipelineStream;
+
+	// InputLayout
+	D3D12InputLayoutState* DxInputLayoutState = static_cast<D3D12InputLayoutState*>(CreateInfo.InputLayoutState);
+	VALIDATE(DxInputLayoutState != nullptr);
+
+	D3D12_INPUT_LAYOUT_DESC& InputLayoutDesc = PipelineStream.InputLayout;
+	InputLayoutDesc = DxInputLayoutState->GetDesc();
+
+	// VertexShader
+	D3D12VertexShader* DxVertexShader = static_cast<D3D12VertexShader*>(CreateInfo.ShaderState.VertexShader);
+	VALIDATE(DxVertexShader != nullptr);
+
+	D3D12_SHADER_BYTECODE& VertexShader = PipelineStream.VertexShader;
+	VertexShader = DxVertexShader->GetShaderByteCode();
+
+	// PixelShader
+	D3D12PixelShader* DxPixelShader = static_cast<D3D12PixelShader*>(CreateInfo.ShaderState.PixelShader);
+	
+	D3D12_SHADER_BYTECODE& PixelShader = PipelineStream.PixelShader;
+	if (!DxPixelShader)
+	{
+		PixelShader.pShaderBytecode	= nullptr;
+		PixelShader.BytecodeLength	= 0;
+	}
+	else
+	{
+		PixelShader = DxPixelShader->GetShaderByteCode();
+	}
+
+	//D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = Pipeline.RenderTargetInfo;
+	//for (Uint32 Index = 0; Index < Properties.NumRenderTargets; Index++)
+	//{
+	//	RenderTargetInfo.RTFormats[Index] = Properties.RTFormats[Index];
+	//}
+	//RenderTargetInfo.NumRenderTargets = Properties.NumRenderTargets;
+
+	// RasterizerState
+	D3D12RasterizerState* DxRasterizerState = static_cast<D3D12RasterizerState*>(CreateInfo.RasterizerState);
+	VALIDATE(DxRasterizerState != nullptr);
+
+	D3D12_RASTERIZER_DESC& RasterizerDesc = PipelineStream.RasterizerDesc;
+	RasterizerDesc = DxRasterizerState->GetDesc();
+
+	// DepthStencilState
+	D3D12DepthStencilState* DxDepthStencilState = static_cast<D3D12DepthStencilState*>(CreateInfo.DepthStencilState);
+	VALIDATE(DxDepthStencilState != nullptr);
+
+	D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc = PipelineStream.DepthStencilDesc;
+	DepthStencilDesc = DxDepthStencilState->GetDesc();
+
+	// BlendState
+	D3D12BlendState* DxBlendState = static_cast<D3D12BlendState*>(CreateInfo.BlendState);
+	VALIDATE(DxBlendState != nullptr);
+
+	D3D12_BLEND_DESC& BlendStateDesc = PipelineStream.BlendStateDesc;
+	BlendStateDesc = DxBlendState->GetDesc();
+
+	// RootSignature
+	VALIDATE(DefaultRootSignatures.Graphics != nullptr);
+	PipelineStream.RootSignature = DefaultRootSignatures.Graphics->GetRootSignature();;
+
+	// Topology
+	//Pipeline.PrimitiveTopologyType = Properties.PrimitiveType;
+
+	// Depth Format
+	// Pipeline.DepthBufferFormat = Properties.DepthBufferFormat;
+
+	// MSAA
+	DXGI_SAMPLE_DESC& SamplerDesc = PipelineStream.SampleDesc;
+	SamplerDesc.Count	= CreateInfo.SampleCount;
+	SamplerDesc.Quality	= CreateInfo.SampleQuality;
+
+	// Create PipelineState
+	D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
+	Memory::Memzero(&PipelineStreamDesc, sizeof(D3D12_PIPELINE_STATE_STREAM_DESC));
+
+	PipelineStreamDesc.pPipelineStateSubobjectStream	= &PipelineStream;
+	PipelineStreamDesc.SizeInBytes						= sizeof(GraphicsPipelineStream);
+
+	ComPtr<ID3D12PipelineState> PipelineState;
+	HRESULT hResult = Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
+	if (SUCCEEDED(hResult))
+	{
+		D3D12GraphicsPipelineState* Pipeline = new D3D12GraphicsPipelineState(Device.Get());
+		Pipeline->PipelineState = PipelineState;
+
+		LOG_INFO("[D3D12RenderingAPI]: Created GraphicsPipelineState");
+		return Pipeline;
+	}
+	else
+	{
+		LOG_ERROR("[D3D12RenderingAPI]: FAILED to Create GraphicsPipelineState");
+		return nullptr;
+	}
 }
 
-ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(const ComputePipelineStateCreateInfo& Info) const
+ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(
+	const ComputePipelineStateCreateInfo& Info) const
 {
 	using namespace Microsoft::WRL;
 
@@ -1393,7 +1608,7 @@ ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(const Comput
 	}
 	else
 	{
-		LOG_ERROR("[D3D12RenderingAPI]: FAILED to Create PipelineState");
+		LOG_ERROR("[D3D12RenderingAPI]: FAILED to Create ComputePipelineState");
 		return nullptr;
 	}
 }

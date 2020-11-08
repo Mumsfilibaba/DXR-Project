@@ -333,16 +333,14 @@ public:
 		const TextureCube* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
-		Uint32 FirstFace,
-		Uint32 FaceCount) const override final;
+		Uint32 FaceIndex) const override final;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 ArraySlice,
-		Uint32 FirstFace,
-		Uint32 FaceCount) const override final;
+		Uint32 FaceIndex) const override final;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture3D* Texture,
@@ -429,13 +427,24 @@ public:
 	virtual class RayMissShader* CreateRayMissShader(
 		const TArray<Uint8>& ShaderCode) const override final;
 
-	virtual class DepthStencilState*	CreateDepthStencilState()	const override final;
-	virtual class RasterizerState*		CreateRasterizerState()		const override final;
-	virtual class BlendState*	CreateBlendState()	const override final;
-	virtual class InputLayout*	CreateInputLayout() const override final;
+	virtual class DepthStencilState* CreateDepthStencilState(
+		const DepthStencilStateCreateInfo& CreateInfo) const override final;
 
-	virtual class GraphicsPipelineState*	CreateGraphicsPipelineState()	const override final;
-	virtual class ComputePipelineState*		CreateComputePipelineState(const ComputePipelineStateCreateInfo& Info) const override final;
+	virtual class RasterizerState* CreateRasterizerState(
+		const RasterizerStateCreateInfo& CreateInfo) const override final;
+
+	virtual class BlendState* CreateBlendState(
+		const BlendStateCreateInfo& CreateInfo) const override final;
+	
+	virtual class InputLayoutState*	CreateInputLayout(
+		const InputLayoutStateCreateInfo& CreateInfo) const override final;
+
+	virtual class GraphicsPipelineState* CreateGraphicsPipelineState(
+		const GraphicsPipelineStateCreateInfo& CreateInfo) const override final;
+	
+	virtual class ComputePipelineState* CreateComputePipelineState(
+		const ComputePipelineStateCreateInfo& Info) const override final;
+	
 	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const override final;
 
 	/*

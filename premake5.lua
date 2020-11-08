@@ -1,9 +1,10 @@
 workspace "DXR-Project"
-    startproject "DXR-Project"
-    architecture "x64"
-    warnings "extra"    
-
-    -- Set output dir
+    startproject 	"DXR-Project"
+    architecture 	"x64"
+    warnings 		"extra"    
+	flags { "MultiProcessorCompile" }
+    
+	-- Set output dir
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}-%{cfg.platform}"
 
     -- Platform
@@ -103,12 +104,12 @@ workspace "DXR-Project"
 
     -- Engine Project
     project "DXR-Project"
-        language "C++"
-        cppdialect "C++17"
-        systemversion "latest"
-        location "DXR-Project"
-        kind "WindowedApp"
-		characterset "Ascii"
+        language 		"C++"
+        cppdialect 		"C++17"
+        systemversion 	"latest"
+        location 		"DXR-Project"
+        kind 			"WindowedApp"
+		characterset 	"Ascii"
 		
 		-- Pre-Compiled Headers
 		pchheader "PreCompiled.h"

@@ -764,15 +764,41 @@ public:
 		return ActiveRenderingAPI->CreateRayMissShader(ShaderCode);
 	}
 
+	FORCEINLINE static InputLayoutState* CreateInputLayout(
+		const InputLayoutStateCreateInfo& CreateInfo)
+	{
+		return ActiveRenderingAPI->CreateInputLayout(CreateInfo);
+	}
+
+	FORCEINLINE static DepthStencilState* CreateDepthStencilState(
+		const DepthStencilStateCreateInfo& CreateInfo)
+	{
+		return ActiveRenderingAPI->CreateDepthStencilState(CreateInfo);
+	}
+
+	FORCEINLINE static RasterizerState* CreateRasterizerState(
+		const RasterizerStateCreateInfo& CreateInfo)
+	{
+		return ActiveRenderingAPI->CreateRasterizerState(CreateInfo);
+	}
+
+	FORCEINLINE static BlendState* CreateBlendState(
+		const BlendStateCreateInfo& CreateInfo)
+	{
+		return ActiveRenderingAPI->CreateBlendState(CreateInfo);
+	}
+
+
 	FORCEINLINE static ComputePipelineState* CreateComputePipelineState(
 		const ComputePipelineStateCreateInfo& CreateInfo)
 	{
 		return ActiveRenderingAPI->CreateComputePipelineState(CreateInfo);
 	}
 
-	FORCEINLINE static InputLayout* CreateInputLayout()
+	FORCEINLINE static GraphicsPipelineState* CreateGraphicsPipelineState(
+		const GraphicsPipelineStateCreateInfo& CreateInfo)
 	{
-		return ActiveRenderingAPI->CreateInputLayout();
+		return ActiveRenderingAPI->CreateGraphicsPipelineState(CreateInfo);
 	}
 
 	/*

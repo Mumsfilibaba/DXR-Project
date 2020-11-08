@@ -15,8 +15,8 @@ class PixelShader;
 class PipelineState : public PipelineResource
 {
 public:
-	PipelineState() = default;
-	~PipelineState() = default;
+	PipelineState()		= default;
+	~PipelineState()	= default;
 
 	virtual GraphicsPipelineState* AsGraphics()
 	{
@@ -102,31 +102,31 @@ inline const Char* ToString(EStencilOp StencilOp)
 }
 
 /*
-* DepthStencilStateInitializer
+* DepthStencilOp
 */
 
 struct DepthStencilOp
 {
-	EStencilOp		StencilFailOp;
-	EStencilOp		StencilDepthFailOp;
-	EStencilOp		StencilPassOp;
-	EComparisonFunc	StencilFunc;
+	EStencilOp		StencilFailOp		= EStencilOp::StencilOp_Keep;
+	EStencilOp		StencilDepthFailOp	= EStencilOp::StencilOp_Keep;
+	EStencilOp		StencilPassOp		= EStencilOp::StencilOp_Keep;
+	EComparisonFunc	StencilFunc			= EComparisonFunc::ComparisonFunc_Always;
 };
 
 /*
-* DepthStencilStateInitializer
+* DepthStencilStateCreateInfo
 */
 
-struct DepthStencilStateInitalizer
+struct DepthStencilStateCreateInfo
 {
-	bool			DepthEnable;
-	EDepthWriteMask	DepthWriteMask;
-	EComparisonFunc	DepthFunc;
-	bool			StencilEnable;
-	Uint8			StencilReadMask;
-	Uint8			StencilWriteMask;
-	DepthStencilOp	FrontFace;
-	DepthStencilOp	BackFace;
+	EDepthWriteMask	DepthWriteMask = EDepthWriteMask::DepthWriteMask_All;
+	EComparisonFunc	DepthFunc = EComparisonFunc::ComparisonFunc_Less;
+	bool			DepthEnable = true;
+	Uint8			StencilReadMask = 0xff;
+	Uint8			StencilWriteMask = 0xff;
+	bool			StencilEnable = false;
+	DepthStencilOp	FrontFace	= DepthStencilOp();
+	DepthStencilOp	BackFace	= DepthStencilOp();
 };
 
 /*
@@ -136,7 +136,8 @@ struct DepthStencilStateInitalizer
 class DepthStencilState : public PipelineResource
 {
 public:
-	virtual Uint64 GetHash() = 0;
+	DepthStencilState()		= default;
+	~DepthStencilState()	= default;
 };
 
 /*
@@ -182,22 +183,22 @@ inline const Char* ToString(EFillMode FillMode)
 }
 
 /*
-* RasterizerStateInitializer
+* RasterizerStateCreateInfo
 */
 
-struct RasterizerStateInitializer
+struct RasterizerStateCreateInfo
 {
-	EFillMode	FillMode;
-	ECullMode	CullMode;
-	Bool		FrontCounterClockwise;
-	Int32		DepthBias;
-	Float32		DepthBiasClamp;
-	Bool		SlopeScaledDepthBias;
-	Bool		DepthClipEnable;
-	Bool		MultisampleEnable;
-	Bool		AntialiasedLineEnable;
-	Uint32		ForcedSampleCount;
-	Bool		EnableConservativeRaster;
+	EFillMode	FillMode = EFillMode::FillMode_Solid;
+	ECullMode	CullMode = ECullMode::CullMode_Back;
+	Bool		FrontCounterClockwise = false;
+	Int32		DepthBias = 0;
+	Float32		DepthBiasClamp = 0.0f;
+	Float32		SlopeScaledDepthBias = 0.0f;
+	Bool		DepthClipEnable = true;
+	Bool		MultisampleEnable = false;
+	Bool		AntialiasedLineEnable = false;
+	Uint32		ForcedSampleCount = 0;
+	Bool		EnableConservativeRaster = false;
 };
 
 /*
@@ -206,56 +207,58 @@ struct RasterizerStateInitializer
 
 class RasterizerState : public PipelineResource
 {
+public:
+	RasterizerState()	= default;
+	~RasterizerState()	= default;
 };
-
 
 /*
-* EBlendFactor
+* EBlend
 */
 
-enum class EBlendFactor
+enum class EBlend
 {
-	BlendFactor_Zero			= 1,
-	BlendFactor_One				= 2,
-	BlendFactor_SrcColor		= 3,
-	BlendFactor_InvSrcColor		= 4,
-	BlendFactor_SrcAlpha		= 5,
-	BlendFactor_InvSrcAlpha		= 6,
-	BlendFactor_DestAlpha		= 7,
-	BlendFactor_InvDestAlpha	= 8,
-	BlendFactor_DestColor		= 9,
-	BlendFactor_InvDestColor	= 10,
-	BlendFactor_SrcAlphaSat		= 11,
-	BlendFactor_BlendFactor		= 12,
-	BlendFactor_InvBlendFactor	= 13,
-	BlendFactor_Src1Color		= 14,
-	BlendFactor_InvSrc1Color	= 15,
-	BlendFactor_Src1Alpha		= 16,
-	BlendFactor_InvSrc1Alpha	= 17
+	Blend_Zero				= 1,
+	Blend_One				= 2,
+	Blend_SrcColor			= 3,
+	Blend_InvSrcColor		= 4,
+	Blend_SrcAlpha			= 5,
+	Blend_InvSrcAlpha		= 6,
+	Blend_DestAlpha			= 7,
+	Blend_InvDestAlpha		= 8,
+	Blend_DestColor			= 9,
+	Blend_InvDestColor		= 10,
+	Blend_SrcAlphaSat		= 11,
+	Blend_BlendFactor		= 12,
+	Blend_InvBlendFactor	= 13,
+	Blend_Src1Color			= 14,
+	Blend_InvSrc1Color		= 15,
+	Blend_Src1Alpha			= 16,
+	Blend_InvSrc1Alpha		= 17
 };
 
-inline const Char* ToString(EBlendFactor BlendFactor)
+inline const Char* ToString(EBlend Blend)
 {
-	switch (BlendFactor)
+	switch (Blend)
 	{
-	case EBlendFactor::BlendFactor_Zero:			return "BlendFactor_Zero";
-	case EBlendFactor::BlendFactor_One:				return "BlendFactor_One";
-	case EBlendFactor::BlendFactor_SrcColor:		return "BlendFactor_SrcColor";
-	case EBlendFactor::BlendFactor_InvSrcColor:		return "BlendFactor_InvSrcColor";
-	case EBlendFactor::BlendFactor_SrcAlpha:		return "BlendFactor_SrcAlpha";
-	case EBlendFactor::BlendFactor_InvSrcAlpha:		return "BlendFactor_InvSrcAlpha";
-	case EBlendFactor::BlendFactor_DestAlpha:		return "BlendFactor_DestAlpha";
-	case EBlendFactor::BlendFactor_InvDestAlpha:	return "BlendFactor_InvDestAlpha";
-	case EBlendFactor::BlendFactor_DestColor:		return "BlendFactor_DestColor";
-	case EBlendFactor::BlendFactor_InvDestColor:	return "BlendFactor_InvDestColor";
-	case EBlendFactor::BlendFactor_SrcAlphaSat:		return "BlendFactor_SrcAlphaSat";
-	case EBlendFactor::BlendFactor_BlendFactor:		return "BlendFactor_BlendFactor";
-	case EBlendFactor::BlendFactor_InvBlendFactor:	return "BlendFactor_InvBlendFactor";
-	case EBlendFactor::BlendFactor_Src1Color:		return "BlendFactor_Src1Color";
-	case EBlendFactor::BlendFactor_InvSrc1Color:	return "BlendFactor_InvSrc1Color";
-	case EBlendFactor::BlendFactor_Src1Alpha:		return "BlendFactor_Src1Alpha";
-	case EBlendFactor::BlendFactor_InvSrc1Alpha:	return "BlendFactor_InvSrc1Alpha";
-	default:										return "";
+	case EBlend::Blend_Zero:			return "Blend_Zero";
+	case EBlend::Blend_One:				return "Blend_One";
+	case EBlend::Blend_SrcColor:		return "Blend_SrcColor";
+	case EBlend::Blend_InvSrcColor:		return "Blend_InvSrcColor";
+	case EBlend::Blend_SrcAlpha:		return "Blend_SrcAlpha";
+	case EBlend::Blend_InvSrcAlpha:		return "Blend_InvSrcAlpha";
+	case EBlend::Blend_DestAlpha:		return "Blend_DestAlpha";
+	case EBlend::Blend_InvDestAlpha:	return "Blend_InvDestAlpha";
+	case EBlend::Blend_DestColor:		return "Blend_DestColor";
+	case EBlend::Blend_InvDestColor:	return "Blend_InvDestColor";
+	case EBlend::Blend_SrcAlphaSat:		return "Blend_SrcAlphaSat";
+	case EBlend::Blend_BlendFactor:		return "Blend_BlendFactor";
+	case EBlend::Blend_InvBlendFactor:	return "Blend_InvBlendFactor";
+	case EBlend::Blend_Src1Color:		return "Blend_Src1Color";
+	case EBlend::Blend_InvSrc1Color:	return "Blend_InvSrc1Color";
+	case EBlend::Blend_Src1Alpha:		return "Blend_Src1Alpha";
+	case EBlend::Blend_InvSrc1Alpha:	return "Blend_InvSrc1Alpha";
+	default:							return "";
 	}
 }
 
@@ -354,6 +357,11 @@ enum EColorWriteFlag : ColorWriteFlags
 
 struct RenderTargetWriteState
 {
+	inline RenderTargetWriteState()
+		: Mask(ColorWriteFlag_All)
+	{
+	}
+
 	inline RenderTargetWriteState(ColorWriteFlags Flags)
 		: Mask(Flags)
 	{
@@ -398,26 +406,26 @@ struct RenderTargetWriteState
 
 struct RenderTargetBlendState
 {
-	Bool					BlendEnable;
-	Bool					LogicOpEnable;
-	EBlendFactor			SrcBlend;
-	EBlendFactor			DestBlend;
-	EBlendOp				BlendOp;
-	EBlendFactor			SrcBlendAlpha;
-	EBlendFactor			DestBlendAlpha;
-	EBlendOp				BlendOpAlpha;
-	ELogicOp				LogicOp;
+	Bool					BlendEnable = false;
+	Bool					LogicOpEnable = false;
+	EBlend					SrcBlend = EBlend::Blend_One;
+	EBlend					DestBlend = EBlend::Blend_Zero;
+	EBlendOp				BlendOp = EBlendOp::BlendOp_Add;
+	EBlend					SrcBlendAlpha = EBlend::Blend_One;
+	EBlend					DestBlendAlpha = EBlend::Blend_Zero;
+	EBlendOp				BlendOpAlpha = EBlendOp::BlendOp_Add;;
+	ELogicOp				LogicOp = ELogicOp::LogicOp_Noop;
 	RenderTargetWriteState	RenderTargetWriteMask;
 };
 
 /*
-* BlendStateInitializer
+* BlendStateCreateInfo
 */
 
-struct BlendStateInitializer 
+struct BlendStateCreateInfo
 {
-	Bool					AlphaToCoverageEnable;
-	Bool					IndependentBlendEnable;
+	Bool					AlphaToCoverageEnable	= false;
+	Bool					IndependentBlendEnable	= false;
 	RenderTargetBlendState	RenderTarget[8];
 };
 
@@ -427,14 +435,79 @@ struct BlendStateInitializer
 
 class BlendState : public PipelineResource
 {
+public:
+	BlendState()	= default;
+	~BlendState()	= default;
 };
 
 /*
-* InputLayout
+* InputElement
 */
 
-class InputLayout : public PipelineResource
+enum class EInputClassification
 {
+	InputClassification_Vertex		= 0,
+	InputClassification_Instance	= 1,
+};
+
+inline const Char* ToString(EInputClassification BlendOp)
+{
+	switch (BlendOp)
+	{
+	case EInputClassification::InputClassification_Vertex:		return "InputClassification_Vertex";
+	case EInputClassification::InputClassification_Instance:	return "InputClassification_Instance";
+	default:													return "";
+	}
+}
+
+/*
+* InputElement
+*/
+
+struct InputElement
+{
+	std::string				Semantic = "";
+	Uint32					SemanticIndex = 0;
+	EFormat					Format = EFormat::Format_Unknown;
+	Uint32					InputSlot = 0;
+	Uint32					ByteOffset = 0;
+	EInputClassification	InputClassification = EInputClassification::InputClassification_Vertex;
+	Uint32					InstanceStepRate = 0;
+};
+
+/*
+* InputLayoutStateCreateInfo
+*/
+
+struct InputLayoutStateCreateInfo
+{
+	inline InputLayoutStateCreateInfo()
+		: Elements()
+	{
+	}
+
+	inline InputLayoutStateCreateInfo(const TArray<InputElement>& InElements)
+		: Elements(InElements)
+	{
+	}
+
+	inline InputLayoutStateCreateInfo(std::initializer_list<InputElement> InList)
+		: Elements(InList)
+	{
+	}
+
+	TArray<InputElement> Elements;
+};
+
+/*
+* InputLayoutState
+*/
+
+class InputLayoutState : public PipelineResource
+{
+public:
+	InputLayoutState()	= default;
+	~InputLayoutState()	= default;
 };
 
 /*
@@ -500,17 +573,19 @@ struct PipelineShaderState
 };
 
 /*
-* GraphicsPipelineStateInitliazer
+* GraphicsPipelineStateCreateInfo
 */
 
-struct GraphicsPipelineStateInitliazer
+struct GraphicsPipelineStateCreateInfo
 {
 	PipelineShaderState			ShaderState;
 	BlendState*					BlendState;
-	InputLayout*				InputLayout;
+	InputLayoutState*			InputLayoutState;
 	RasterizerState*			RasterizerState;
-	Uint32						SampleMask;
 	DepthStencilState*			DepthStencilState;
+	Uint32						SampleCount;
+	Uint32						SampleQuality;
+	Uint32						SampleMask;
 	EIndexBufferStripCutValue	IBStripCutValue;
 	EPrimitiveTopologyType		PrimitiveTopologyType;
 	PipelineRenderTargetFormats PipelineFormats;
@@ -523,10 +598,8 @@ struct GraphicsPipelineStateInitliazer
 class GraphicsPipelineState : public PipelineState
 {
 public:
-	GraphicsPipelineState() = default;
-	~GraphicsPipelineState() = default;
-
-	virtual bool Initialize(const GraphicsPipelineStateInitliazer& Initalizer) = 0;
+	GraphicsPipelineState()		= default;
+	~GraphicsPipelineState()	= default;
 
 	virtual GraphicsPipelineState* AsGraphics() override 
 	{
@@ -565,8 +638,8 @@ struct ComputePipelineStateCreateInfo
 class ComputePipelineState : public PipelineState
 {
 public:
-	ComputePipelineState() = default;
-	~ComputePipelineState() = default;
+	ComputePipelineState()	= default;
+	~ComputePipelineState()	= default;
 
 	virtual ComputePipelineState* AsCompute() override
 	{
@@ -586,10 +659,8 @@ public:
 class RayTracingPipelineState : public PipelineState
 {
 public:
-	RayTracingPipelineState() = default;
-	~RayTracingPipelineState() = default;
-
-	virtual bool Initialize() = 0;
+	RayTracingPipelineState()	= default;
+	~RayTracingPipelineState()	= default;
 
 	virtual RayTracingPipelineState* AsRayTracing() override
 	{

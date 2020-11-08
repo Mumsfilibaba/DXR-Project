@@ -10,9 +10,8 @@
 #include "D3D12/D3D12Texture.h"
 #include "D3D12/D3D12Views.h"
 #include "D3D12/D3D12RootSignature.h"
-#include "D3D12/D3D12GraphicsPipelineState.h"
 #include "D3D12/D3D12RayTracingPipelineState.h"
-#include "D3D12/D3D12ComputePipelineState.h"
+#include "D3D12/D3D12PipelineState.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
 #include <algorithm>
@@ -1500,7 +1499,16 @@ bool Renderer::InitShadowMapPass()
 	}
 #endif
 
-	StdInputLayout = RenderingAPI::CreateInputLayout();
+	// Init PipelineState
+	InputLayoutStateCreateInfo InputLayout = 
+	{
+		{ "POSITION",	0, EFormat::Format_R32G32B32_Float,	0, 0,	EInputClassification::InputClassification_Vertex, 0 },
+		{ "NORMAL",		0, EFormat::Format_R32G32B32_Float,	0, 12,	EInputClassification::InputClassification_Vertex, 0 },
+		{ "TANGENT",	0, EFormat::Format_R32G32B32_Float,	0, 24,	EInputClassification::InputClassification_Vertex, 0 },
+		{ "TEXCOORD",	0, EFormat::Format_R32G32_Float,	0, 36,	EInputClassification::InputClassification_Vertex, 0 },
+	};
+
+	StdInputLayout = RenderingAPI::CreateInputLayout(InputLayout);
 	if (!StdInputLayout)
 	{
 		Debug::DebugBreak();
@@ -1508,49 +1516,73 @@ bool Renderer::InitShadowMapPass()
 	}
 	else
 	{
-		StdInputLayout->SetName("Standard Input Layout");
+		StdInputLayout->SetName("Standard InputLayoutState");
 	}
 
+	DepthStencilStateCreateInfo DepthStencilState;
+	DepthStencilState.DepthFunc			= EComparisonFunc::ComparisonFunc_LessEqual;
+	DepthStencilState.DepthEnable		= true;
+	DepthStencilState.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_All;
+	
+	ShadowDepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilState);
+	if (!ShadowDepthStencilState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		ShadowDepthStencilState->SetName("Shadow DepthStencilState");
+	}
 
+	RasterizerStateCreateInfo RasterizerState;
+	RasterizerState.CullMode = ECullMode::CullMode_Back;
 
-//	// Init PipelineState
-//	D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
-//	{
-//		{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 0,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-//		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 12,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-//		{ "TANGENT",	0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 24,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-//		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,	0, 36,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-//	};
-//
-//	GraphicsPipelineStateProperties PSOProperties = { };
-//	PSOProperties.DebugName				= "ShadowMap PipelineState";
-//	PSOProperties.VSBlob				= VSBlob.Get();
-//#if ENABLE_VSM
-//	PSOProperties.PSBlob				= PSBlob.Get();
-//
-//	DXGI_FORMAT Format = DXGI_FORMAT_R32G32_FLOAT;
-//	PSOProperties.RTFormats			= &Format;
-//	PSOProperties.NumRenderTargets	= 1;
-//	PSOProperties.MultiSampleEnable	= false;
-//	PSOProperties.SampleCount		= 1;
-//	PSOProperties.SampleQuality		= 0;
-//#else
-//	PSOProperties.PSBlob			= nullptr;
-//	PSOProperties.RTFormats			= nullptr;
-//	PSOProperties.NumRenderTargets	= 0;
-//#endif
-//	PSOProperties.DepthBufferFormat		= ShadowMapFormat;
-//	PSOProperties.RootSignature			= ShadowMapRootSignature.Get();
-//	PSOProperties.InputElements			= InputElementDesc;
-//	PSOProperties.NumInputElements		= 4;
-//	PSOProperties.EnableDepth			= true;
-//	//PSOProperties.DepthBias			= 3;
-//	//PSOProperties.SlopeScaleDepthBias	= 0.01f;
-//	//PSOProperties.DepthBiasClamp		= 0.1f;
-//	PSOProperties.EnableBlending		= false;
-//	PSOProperties.DepthFunc				= D3D12_COMPARISON_FUNC_LESS_EQUAL;
-//	PSOProperties.CullMode				= D3D12_CULL_MODE_BACK;
-//
+	StdRasterizerState = RenderingAPI::CreateRasterizerState(RasterizerState);
+	if (!StdRasterizerState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		StdRasterizerState->SetName("Standard RasterizerState");
+	}
+
+	BlendStateCreateInfo BlendState;
+	ShadowBlendState = RenderingAPI::CreateBlendState(BlendState);
+	if (!ShadowBlendState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		ShadowBlendState->SetName("Standard BlendState");
+	}
+
+	GraphicsPipelineStateCreateInfo ShadowMapPSOInfo;
+	ShadowMapPSOInfo.BlendState					= ShadowBlendState.Get();
+	ShadowMapPSOInfo.DepthStencilState			= ShadowDepthStencilState.Get();
+	ShadowMapPSOInfo.IBStripCutValue			= EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
+	ShadowMapPSOInfo.InputLayoutState			= StdInputLayout.Get();
+	ShadowMapPSOInfo.PrimitiveTopologyType		= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+	ShadowMapPSOInfo.RasterizerState			= StdRasterizerState.Get();
+	ShadowMapPSOInfo.ShaderState.VertexShader	= VSShader.Get();
+	ShadowMapPSOInfo.PipelineFormats.NumRenderTargets	= 0;
+	ShadowMapPSOInfo.PipelineFormats.DepthStencilFormat	= ShadowMapFormat;
+
+	ShadowMapPSO = RenderingAPI::CreateGraphicsPipelineState(ShadowMapPSOInfo);
+	if (!ShadowMapPSO)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		ShadowMapPSO->SetName("ShadowMap PipelineState");
+	}
+
 //#if ENABLE_VSM
 //	VSMShadowMapPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
 //	if (!VSMShadowMapPSO->Initialize(PSOProperties))

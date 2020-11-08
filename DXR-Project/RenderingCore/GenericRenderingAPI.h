@@ -311,16 +311,14 @@ public:
 		const TextureCube* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
-		Uint32 FirstFace,
-		Uint32 FaceCount) const = 0;
+		Uint32 FaceIndex) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
 		Uint32 MipSlice,
 		Uint32 ArraySlice,
-		Uint32 FirstFace,
-		Uint32 FaceCount) const = 0;
+		Uint32 FaceIndex) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture3D* Texture,
@@ -407,14 +405,25 @@ public:
 	virtual class RayMissShader* CreateRayMissShader(
 		const TArray<Uint8>& ShaderCode) const = 0;
 
-	virtual class DepthStencilState*	CreateDepthStencilState()	const = 0;
-	virtual class RasterizerState*		CreateRasterizerState()		const = 0;
-	virtual class BlendState*	CreateBlendState()	const = 0;
-	virtual class InputLayout*	CreateInputLayout()	const = 0;
+	virtual class DepthStencilState* CreateDepthStencilState(
+		const DepthStencilStateCreateInfo& CreateInfo) const = 0;
 
-	virtual class GraphicsPipelineState*	CreateGraphicsPipelineState()	const = 0;
-	virtual class ComputePipelineState*		CreateComputePipelineState(const ComputePipelineStateCreateInfo& Info) const = 0;
-	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const = 0;
+	virtual class RasterizerState* CreateRasterizerState(
+		const RasterizerStateCreateInfo& CreateInfo) const = 0;
+
+	virtual class BlendState* CreateBlendState(
+		const BlendStateCreateInfo& CreateInfo) const = 0;
+	
+	virtual class InputLayoutState*	CreateInputLayout(
+		const InputLayoutStateCreateInfo& CreateInfo) const = 0;
+
+	virtual class GraphicsPipelineState* CreateGraphicsPipelineState(
+		const GraphicsPipelineStateCreateInfo& CreateInfo) const = 0;
+
+	virtual class ComputePipelineState* CreateComputePipelineState(
+		const ComputePipelineStateCreateInfo& CreateInfo) const = 0;
+	
+	virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const = 0;
 
 	/*
 	* Context
