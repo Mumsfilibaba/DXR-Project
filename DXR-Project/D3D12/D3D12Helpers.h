@@ -359,3 +359,21 @@ inline Uint8 ConvertRenderTargetWriteState(const RenderTargetWriteState& RenderT
 
 	return RenderTargetWriteMask;
 }
+
+/*
+* Converts EPrimitiveTopologyType to D3D12_PRIMITIVE_TOPOLOGY_TYPE
+*/
+
+inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopologyType PrimitiveTopologyType)
+{
+	switch (PrimitiveTopologyType)
+	{
+	case EPrimitiveTopologyType::PrimitiveTopologyType_Line:		return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+	case EPrimitiveTopologyType::PrimitiveTopologyType_Patch:		return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+	case EPrimitiveTopologyType::PrimitiveTopologyType_Point:		return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+	case EPrimitiveTopologyType::PrimitiveTopologyType_Triangle:	return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	case EPrimitiveTopologyType::PrimitiveTopologyType_Undefined:	return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+	}
+
+	return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+}

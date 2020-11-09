@@ -1336,87 +1336,48 @@ bool Renderer::InitPrePass()
 {
 	using namespace Microsoft::WRL;
 
-	//ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/PrePass.hlsl", "Main", "vs_6_0");
-	//if (!VSBlob)
-	//{
-	//	return false;
-	//}
+	TArray<Uint8> ShaderCode;
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/PrePass.hlsl",
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Vertex,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
 
-	//// Init RootSignature
-	//D3D12_DESCRIPTOR_RANGE PerFrameRanges[1] = {};
-	//// Camera Buffer
-	//PerFrameRanges[0].BaseShaderRegister				= 1;
-	//PerFrameRanges[0].NumDescriptors					= 1;
-	//PerFrameRanges[0].RegisterSpace						= 0;
-	//PerFrameRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//PerFrameRanges[0].OffsetInDescriptorsFromTableStart	= 0;
+	TSharedRef<VertexShader> VShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	if (!VShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		VShader->SetName("PrePass VertexShader");
+	}
 
-	//// Transform Constants
-	//D3D12_ROOT_PARAMETER Parameters[2];
-	//Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	//Parameters[0].Constants.ShaderRegister	= 0;
-	//Parameters[0].Constants.RegisterSpace	= 0;
-	//Parameters[0].Constants.Num32BitValues	= 16;
-	//Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_VERTEX;
+	GraphicsPipelineStateCreateInfo PSOInfo;
+	PSOInfo.DepthStencilState	= ShadowDepthStencilState.Get();
+	PSOInfo.BlendState			= ShadowBlendState.Get();
+	PSOInfo.InputLayoutState	= StdInputLayout.Get();
+	PSOInfo.RasterizerState		= StdRasterizerState.Get();
+	PSOInfo.ShaderState.VertexShader = VShader.Get();
+	PSOInfo.PipelineFormats.DepthStencilFormat = DepthBufferFormat;
 
-	//// PerFrame DescriptorTable
-	//Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//Parameters[1].DescriptorTable.NumDescriptorRanges	= 1;
-	//Parameters[1].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
-	//Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_VERTEX;
-
-	//D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-	//RootSignatureDesc.NumParameters		= 2;
-	//RootSignatureDesc.pParameters		= Parameters;
-	//RootSignatureDesc.NumStaticSamplers = 0;
-	//RootSignatureDesc.pStaticSamplers	= nullptr;
-	//RootSignatureDesc.Flags =
-	//	D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT	|
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS			|
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS		|
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS		|
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
-
-	//PrePassRootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
-	//if (!PrePassRootSignature)
-	//{
-	//	return false;
-	//}
-
-	//// Init PipelineState
-	//D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
-	//{
-	//	{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 0,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//	{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 12,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//	{ "TANGENT",	0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 24,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//	{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,	0, 36,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//};
-
-	//GraphicsPipelineStateProperties PSOProperties = { };
-	//PSOProperties.DebugName			= "PrePass PipelineState";
-	//PSOProperties.VSBlob			= VSBlob.Get();
-	//PSOProperties.PSBlob			= nullptr;
-	//PSOProperties.RootSignature		= PrePassRootSignature.Get();
-	//PSOProperties.InputElements		= InputElementDesc;
-	//PSOProperties.NumInputElements	= 4;
-	//PSOProperties.EnableDepth		= true;
-	//PSOProperties.EnableBlending	= false;
-	//PSOProperties.DepthBufferFormat = DepthBufferFormat;
-	//PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_LESS;
-	//PSOProperties.CullMode			= D3D12_CULL_MODE_BACK;
-	//PSOProperties.RTFormats			= nullptr;
-	//PSOProperties.NumRenderTargets	= 0;
-
-	//PrePassPSO = RenderingAPI::Get().CreateGraphicsPipelineState(PSOProperties);
-	//if (!PrePassPSO)
-	//{
-	//	return false;
-	//}
-
-	//// Init descriptortable
-	//PrePassDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(1);
-	//PrePassDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 0);
-	//PrePassDescriptorTable->CopyDescriptors();
+	PrePassPSO = RenderingAPI::CreateGraphicsPipelineState(PSOInfo);
+	if (!PrePassPSO)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		PrePassPSO->SetName("PrePass PipelineState");
+	}
 
 	return true;
 }
@@ -1487,15 +1448,15 @@ bool Renderer::InitShadowMapPass()
 		return false;
 	}
 
-	TSharedRef<VertexShader> VSShader = RenderingAPI::CreateVertexShader(ShaderCode);
-	if (!VSShader)
+	TSharedRef<VertexShader> VShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	if (!VShader)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 	else
 	{
-		VSShader->SetName("ShadowMap VertexShader");
+		VShader->SetName("ShadowMap VertexShader");
 	}
 #endif
 
@@ -1562,16 +1523,27 @@ bool Renderer::InitShadowMapPass()
 	}
 
 	GraphicsPipelineStateCreateInfo ShadowMapPSOInfo;
-	ShadowMapPSOInfo.BlendState					= ShadowBlendState.Get();
-	ShadowMapPSOInfo.DepthStencilState			= ShadowDepthStencilState.Get();
-	ShadowMapPSOInfo.IBStripCutValue			= EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
-	ShadowMapPSOInfo.InputLayoutState			= StdInputLayout.Get();
-	ShadowMapPSOInfo.PrimitiveTopologyType		= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
-	ShadowMapPSOInfo.RasterizerState			= StdRasterizerState.Get();
-	ShadowMapPSOInfo.ShaderState.VertexShader	= VSShader.Get();
+	ShadowMapPSOInfo.BlendState				= ShadowBlendState.Get();
+	ShadowMapPSOInfo.DepthStencilState		= ShadowDepthStencilState.Get();
+	ShadowMapPSOInfo.IBStripCutValue		= EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
+	ShadowMapPSOInfo.InputLayoutState		= StdInputLayout.Get();
+	ShadowMapPSOInfo.PrimitiveTopologyType	= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+	ShadowMapPSOInfo.RasterizerState		= StdRasterizerState.Get();
+	ShadowMapPSOInfo.SampleCount			= 1;
+	ShadowMapPSOInfo.SampleQuality			= 0;
+	ShadowMapPSOInfo.SampleMask				= 0xffffffff;
+	ShadowMapPSOInfo.ShaderState.VertexShader	= VShader.Get();
+	ShadowMapPSOInfo.ShaderState.PixelShader	= nullptr;
 	ShadowMapPSOInfo.PipelineFormats.NumRenderTargets	= 0;
 	ShadowMapPSOInfo.PipelineFormats.DepthStencilFormat	= ShadowMapFormat;
 
+#if ENABLE_VSM
+	VSMShadowMapPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
+	if (!VSMShadowMapPSO->Initialize(PSOProperties))
+	{
+		return false;
+	}
+#else
 	ShadowMapPSO = RenderingAPI::CreateGraphicsPipelineState(ShadowMapPSOInfo);
 	if (!ShadowMapPSO)
 	{
@@ -1582,53 +1554,73 @@ bool Renderer::InitShadowMapPass()
 	{
 		ShadowMapPSO->SetName("ShadowMap PipelineState");
 	}
+#endif
 
-//#if ENABLE_VSM
-//	VSMShadowMapPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
-//	if (!VSMShadowMapPSO->Initialize(PSOProperties))
-//	{
-//		return false;
-//	}
-//#else
-//	ShadowMapPSO = RenderingAPI::Get().CreateGraphicsPipelineState(PSOProperties);
-//	if (!ShadowMapPSO->Initialize(PSOProperties))
-//	{
-//		return false;
-//	}
-//#endif
-//
-//	// Linear Shadow Maps
-//	VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/ShadowMap.hlsl", "VSMain", "vs_6_0");
-//	if (!VSBlob)
-//	{
-//		return false;
-//	}
-//
-//#if !ENABLE_VSM
-//	ComPtr<IDxcBlob> PSBlob;
-//#endif
-//	PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/ShadowMap.hlsl", "PSMain", "ps_6_0");
-//	if (!PSBlob)
-//	{
-//		return false;
-//	}
-//
-//	PSOProperties.DebugName			= "Linear ShadowMap PipelineState";
-//	PSOProperties.VSBlob			= VSBlob.Get();
-//	PSOProperties.PSBlob			= PSBlob.Get();
-//	PSOProperties.DepthBufferFormat = ShadowMapFormat;
-//	PSOProperties.RTFormats			= nullptr;
-//	PSOProperties.NumRenderTargets	= 0;
-//	PSOProperties.MultiSampleEnable = false;
-//	PSOProperties.SampleCount		= 1;
-//	PSOProperties.SampleQuality		= 0;
-//
-//	LinearShadowMapPSO = RenderingAPI::Get().CreateGraphicsPipelineState(PSOProperties);
-//	if (!LinearShadowMapPSO)
-//	{
-//		return false;
-//	}
-//
+	// Linear Shadow Maps
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/ShadowMap.hlsl",
+		"VSMain",
+		nullptr,
+		EShaderStage::ShaderStage_Vertex,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	VShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	if (!VShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		VShader->SetName("Linear ShadowMap VertexShader");
+	}
+
+#if !ENABLE_VSM
+	TSharedRef<PixelShader> PShader;
+#endif
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/ShadowMap.hlsl",
+		"PSMain",
+		nullptr,
+		EShaderStage::ShaderStage_Pixel,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	PShader = RenderingAPI::CreatePixelShader(ShaderCode);
+	if (!PShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		PShader->SetName("Linear ShadowMap PixelShader");
+	}
+
+	// Linear ShadowMap PipelineState
+	ShadowMapPSOInfo.ShaderState.VertexShader	= VShader.Get();
+	ShadowMapPSOInfo.ShaderState.PixelShader	= PShader.Get();
+
+	LinearShadowMapPSO = RenderingAPI::CreateGraphicsPipelineState(ShadowMapPSOInfo);
+	if (!LinearShadowMapPSO)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		LinearShadowMapPSO->SetName("Linear ShadowMap PipelineState");
+	}
+
 	return true;
 }
 
@@ -2149,9 +2141,9 @@ bool Renderer::InitGBuffer()
 		return false;
 	}
 
-	const Uint32 Width = 0;// RenderingAPI::Get().GetSwapChain()->GetWidth();
-	const Uint32 Height = 0;// RenderingAPI::Get().GetSwapChain()->GetWidth();
-	const Uint32 Usage	= TextureUsage_Default | TextureUsage_RTV | TextureUsage_SRV;
+	const Uint32 Width	= 800;// RenderingAPI::Get().GetSwapChain()->GetWidth();
+	const Uint32 Height	= 600;// RenderingAPI::Get().GetSwapChain()->GetWidth();
+	const Uint32 Usage	= TextureUsage_Default | TextureUsage_RenderTarget;
 	const EFormat AlbedoFormat		= EFormat::Format_R8G8B8A8_Unorm;
 	const EFormat MaterialFormat	= EFormat::Format_R8G8B8A8_Unorm;
 
@@ -2421,9 +2413,9 @@ bool Renderer::InitIntegrationLUT()
 
 bool Renderer::InitRayTracingTexture()
 {
-	const Uint32 Width	= 0;//RenderingAPI::Get().GetSwapChain()->GetWidth();
-	const Uint32 Height	= 0;//RenderingAPI::Get().GetSwapChain()->GetHeight();
-	const Uint32 Usage	= TextureUsage_Default | TextureUsage_UAV | TextureUsage_SRV;
+	const Uint32 Width	= 800;//RenderingAPI::Get().GetSwapChain()->GetWidth();
+	const Uint32 Height	= 600;//RenderingAPI::Get().GetSwapChain()->GetHeight();
+	const Uint32 Usage	= TextureUsage_Default | TextureUsage_RWTexture;
 	ReflectionTexture = RenderingAPI::CreateTexture2D(
 		nullptr, 
 		EFormat::Format_R8G8B8A8_Unorm, 

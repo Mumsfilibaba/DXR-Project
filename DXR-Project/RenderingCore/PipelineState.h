@@ -540,8 +540,8 @@ struct PipelineRenderTargetFormats
 {
 	inline PipelineRenderTargetFormats()
 		: RenderTargetFormats()
-		, NumRenderTargets(1)
-		, DepthStencilFormat(EFormat::Format_D24_Unorm_S8_Uint)
+		, NumRenderTargets(0)
+		, DepthStencilFormat(EFormat::Format_Unknown)
 	{
 	}
 
@@ -578,16 +578,16 @@ struct PipelineShaderState
 
 struct GraphicsPipelineStateCreateInfo
 {
+	InputLayoutState*			InputLayoutState		= nullptr;
+	DepthStencilState*			DepthStencilState		= nullptr;
+	RasterizerState*			RasterizerState			= nullptr;
+	BlendState*					BlendState				= nullptr;
+	Uint32						SampleCount				= 1;
+	Uint32						SampleQuality			= 0;
+	Uint32						SampleMask				= 0xffffffff;
+	EIndexBufferStripCutValue	IBStripCutValue			= EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
+	EPrimitiveTopologyType		PrimitiveTopologyType	= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
 	PipelineShaderState			ShaderState;
-	BlendState*					BlendState;
-	InputLayoutState*			InputLayoutState;
-	RasterizerState*			RasterizerState;
-	DepthStencilState*			DepthStencilState;
-	Uint32						SampleCount;
-	Uint32						SampleQuality;
-	Uint32						SampleMask;
-	EIndexBufferStripCutValue	IBStripCutValue;
-	EPrimitiveTopologyType		PrimitiveTopologyType;
 	PipelineRenderTargetFormats PipelineFormats;
 };
 

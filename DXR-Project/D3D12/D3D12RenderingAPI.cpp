@@ -1487,12 +1487,18 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
 		PixelShader = DxPixelShader->GetShaderByteCode();
 	}
 
-	//D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = Pipeline.RenderTargetInfo;
-	//for (Uint32 Index = 0; Index < Properties.NumRenderTargets; Index++)
-	//{
-	//	RenderTargetInfo.RTFormats[Index] = Properties.RTFormats[Index];
-	//}
-	//RenderTargetInfo.NumRenderTargets = Properties.NumRenderTargets;
+	// RenderTarget
+	D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = PipelineStream.RenderTargetInfo;
+
+	const Uint32 NumRenderTargets = CreateInfo.PipelineFormats.NumRenderTargets;
+	for (Uint32 Index = 0; Index < NumRenderTargets; Index++)
+	{
+		RenderTargetInfo.RTFormats[Index] = ConvertFormat(CreateInfo.PipelineFormats.RenderTargetFormats[Index]);
+	}
+	RenderTargetInfo.NumRenderTargets = NumRenderTargets;
+
+	// DepthStencil
+	PipelineStream.DepthBufferFormat = ConvertFormat(CreateInfo.PipelineFormats.DepthStencilFormat);
 
 	// RasterizerState
 	D3D12RasterizerState* DxRasterizerState = static_cast<D3D12RasterizerState*>(CreateInfo.RasterizerState);
@@ -1517,13 +1523,10 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
 
 	// RootSignature
 	VALIDATE(DefaultRootSignatures.Graphics != nullptr);
-	PipelineStream.RootSignature = DefaultRootSignatures.Graphics->GetRootSignature();;
+	PipelineStream.RootSignature = DefaultRootSignatures.Graphics->GetRootSignature();
 
 	// Topology
-	//Pipeline.PrimitiveTopologyType = Properties.PrimitiveType;
-
-	// Depth Format
-	// Pipeline.DepthBufferFormat = Properties.DepthBufferFormat;
+	PipelineStream.PrimitiveTopologyType = ConvertPrimitiveTopologyType(CreateInfo.PrimitiveTopologyType);
 
 	// MSAA
 	DXGI_SAMPLE_DESC& SamplerDesc = PipelineStream.SampleDesc;
