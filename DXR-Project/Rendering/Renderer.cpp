@@ -1628,378 +1628,62 @@ bool Renderer::InitDeferred()
 {
 	using namespace Microsoft::WRL;
 
-	//// Init PipelineState
-	//DxcDefine Defines[] =
-	//{
-	//	{ L"ENABLE_PARALLAX_MAPPING",	L"1" },
-	//	{ L"ENABLE_NORMAL_MAPPING",		L"1" },
-	//};
+	// Init PipelineState
+	TArray<ShaderDefine> Defines =
+	{
+		{ "ENABLE_PARALLAX_MAPPING", "1" },
+		{ "ENABLE_NORMAL_MAPPING",	 "1" },
+	};
 
-	//ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", "VSMain", "vs_6_0", Defines, 2);
-	//if (!VSBlob)
-	//{
-	//	return false;
-	//}
+	TArray<Uint8> ShaderCode;
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/GeometryPass.hlsl", 
+		"VSMain",
+		&Defines,
+		EShaderStage::ShaderStage_Vertex,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
 
-	//ComPtr<IDxcBlob> PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/GeometryPass.hlsl", "PSMain", "ps_6_0", Defines, 2);
-	//if (!PSBlob)
-	//{
-	//	return false;
-	//}
+	TSharedRef<VertexShader> VShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	if (!VShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		VShader->SetName("GeometryPass VertexShader");
+	}
 
-	//// Init RootSignatures
-	//{
-	//	D3D12_DESCRIPTOR_RANGE PerFrameRanges[1] = {};
-	//	// Camera Buffer
-	//	PerFrameRanges[0].BaseShaderRegister				= 1;
-	//	PerFrameRanges[0].NumDescriptors					= 1;
-	//	PerFrameRanges[0].RegisterSpace						= 0;
-	//	PerFrameRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	PerFrameRanges[0].OffsetInDescriptorsFromTableStart = 0;
+	TArray<Uint8> ShaderCode;
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/GeometryPass.hlsl",
+		"PSMain",
+		&Defines,
+		EShaderStage::ShaderStage_Pixel,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
 
-	//	D3D12_DESCRIPTOR_RANGE PerObjectRanges[7] = {};
-	//	// Albedo Map
-	//	PerObjectRanges[0].BaseShaderRegister					= 0;
-	//	PerObjectRanges[0].NumDescriptors						= 1;
-	//	PerObjectRanges[0].RegisterSpace						= 0;
-	//	PerObjectRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[0].OffsetInDescriptorsFromTableStart	= 0;
+	TSharedRef<PixelShader> VShader = RenderingAPI::CreatePixelShader(ShaderCode);
+	if (!VShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		VShader->SetName("GeometryPass PixelShader");
+	}
 
-	//	// Normal Map
-	//	PerObjectRanges[1].BaseShaderRegister					= 1;
-	//	PerObjectRanges[1].NumDescriptors						= 1;
-	//	PerObjectRanges[1].RegisterSpace						= 0;
-	//	PerObjectRanges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[1].OffsetInDescriptorsFromTableStart	= 1;
 
-	//	// Roughness Map
-	//	PerObjectRanges[2].BaseShaderRegister					= 2;
-	//	PerObjectRanges[2].NumDescriptors						= 1;
-	//	PerObjectRanges[2].RegisterSpace						= 0;
-	//	PerObjectRanges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[2].OffsetInDescriptorsFromTableStart	= 2;
-
-	//	// Height Map
-	//	PerObjectRanges[3].BaseShaderRegister					= 3;
-	//	PerObjectRanges[3].NumDescriptors						= 1;
-	//	PerObjectRanges[3].RegisterSpace						= 0;
-	//	PerObjectRanges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[3].OffsetInDescriptorsFromTableStart	= 3;
-
-	//	// Metallic Map
-	//	PerObjectRanges[4].BaseShaderRegister					= 4;
-	//	PerObjectRanges[4].NumDescriptors						= 1;
-	//	PerObjectRanges[4].RegisterSpace						= 0;
-	//	PerObjectRanges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[4].OffsetInDescriptorsFromTableStart	= 4;
-
-	//	// AO Map
-	//	PerObjectRanges[5].BaseShaderRegister					= 5;
-	//	PerObjectRanges[5].NumDescriptors						= 1;
-	//	PerObjectRanges[5].RegisterSpace						= 0;
-	//	PerObjectRanges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[5].OffsetInDescriptorsFromTableStart	= 5;
-
-	//	// Material Buffer
-	//	PerObjectRanges[6].BaseShaderRegister					= 2;
-	//	PerObjectRanges[6].NumDescriptors						= 1;
-	//	PerObjectRanges[6].RegisterSpace						= 0;
-	//	PerObjectRanges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	PerObjectRanges[6].OffsetInDescriptorsFromTableStart	= 6;
-
-	//	D3D12_ROOT_PARAMETER Parameters[3];
-	//	// Transform Constants
-	//	Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	//	Parameters[0].Constants.ShaderRegister	= 0;
-	//	Parameters[0].Constants.RegisterSpace	= 0;
-	//	Parameters[0].Constants.Num32BitValues	= 16;
-	//	Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
-
-	//	// PerFrame DescriptorTable
-	//	Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	Parameters[1].DescriptorTable.NumDescriptorRanges	= 1;
-	//	Parameters[1].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
-	//	Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
-
-	//	// PerObject DescriptorTable
-	//	Parameters[2].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	Parameters[2].DescriptorTable.NumDescriptorRanges	= 7;
-	//	Parameters[2].DescriptorTable.pDescriptorRanges		= PerObjectRanges;
-	//	Parameters[2].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	D3D12_STATIC_SAMPLER_DESC MaterialSampler = { };
-	//	MaterialSampler.Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	//	MaterialSampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	MaterialSampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	MaterialSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	MaterialSampler.MipLODBias			= 0.0f;
-	//	MaterialSampler.MaxAnisotropy		= 0;
-	//	MaterialSampler.ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
-	//	MaterialSampler.BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//	MaterialSampler.MinLOD				= 0.0f;
-	//	MaterialSampler.MaxLOD				= FLT_MAX;
-	//	MaterialSampler.ShaderRegister		= 0;
-	//	MaterialSampler.RegisterSpace		= 0;
-	//	MaterialSampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-	//	RootSignatureDesc.NumParameters		= 3;
-	//	RootSignatureDesc.pParameters		= Parameters;
-	//	RootSignatureDesc.NumStaticSamplers	= 1;
-	//	RootSignatureDesc.pStaticSamplers	= &MaterialSampler;
-	//	RootSignatureDesc.Flags				= 
-	//		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-
-	//	GeometryRootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
-	//	if (!GeometryRootSignature->Initialize(RootSignatureDesc))
-	//	{
-	//		return false;
-	//	}
-	//}
-
-	//{
-	//	D3D12_DESCRIPTOR_RANGE Ranges[1] = {};
-	//	// Skybox Buffer
-	//	Ranges[0].BaseShaderRegister				= 0;
-	//	Ranges[0].NumDescriptors					= 1;
-	//	Ranges[0].RegisterSpace						= 0;
-	//	Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[0].OffsetInDescriptorsFromTableStart	= 0;
-
-	//	D3D12_ROOT_PARAMETER Parameters[2];
-	//	Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	//	Parameters[0].Constants.ShaderRegister	= 0;
-	//	Parameters[0].Constants.RegisterSpace	= 0;
-	//	Parameters[0].Constants.Num32BitValues	= 16;
-	//	Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_VERTEX;
-
-	//	Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	Parameters[1].DescriptorTable.NumDescriptorRanges	= 1;
-	//	Parameters[1].DescriptorTable.pDescriptorRanges		= Ranges;
-	//	Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	D3D12_STATIC_SAMPLER_DESC SkyboxSampler = { };
-	//	SkyboxSampler.Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	//	SkyboxSampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	SkyboxSampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	SkyboxSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	SkyboxSampler.MipLODBias		= 0.0f;
-	//	SkyboxSampler.MaxAnisotropy		= 0;
-	//	SkyboxSampler.ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
-	//	SkyboxSampler.BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//	SkyboxSampler.MinLOD			= 0.0f;
-	//	SkyboxSampler.MaxLOD			= 0.0f;
-	//	SkyboxSampler.ShaderRegister	= 0;
-	//	SkyboxSampler.RegisterSpace		= 0;
-	//	SkyboxSampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-	//	RootSignatureDesc.NumParameters		= 2;
-	//	RootSignatureDesc.pParameters		= Parameters;
-	//	RootSignatureDesc.NumStaticSamplers	= 1;
-	//	RootSignatureDesc.pStaticSamplers	= &SkyboxSampler;
-	//	RootSignatureDesc.Flags				=
-	//		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-
-	//	SkyboxRootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
-	//	if (!SkyboxRootSignature)
-	//	{
-	//		return false;
-	//	}
-	//}
-
-	//{
-	//	D3D12_DESCRIPTOR_RANGE Ranges[13] = { };
-	//	// Albedo
-	//	Ranges[0].BaseShaderRegister				= 0;
-	//	Ranges[0].NumDescriptors					= 1;
-	//	Ranges[0].RegisterSpace						= 0;
-	//	Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[0].OffsetInDescriptorsFromTableStart = 0;
-
-	//	// Normal
-	//	Ranges[1].BaseShaderRegister				= 1;
-	//	Ranges[1].NumDescriptors					= 1;
-	//	Ranges[1].RegisterSpace						= 0;
-	//	Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[1].OffsetInDescriptorsFromTableStart	= 1;
-
-	//	// Material
-	//	Ranges[2].BaseShaderRegister				= 2;
-	//	Ranges[2].NumDescriptors					= 1;
-	//	Ranges[2].RegisterSpace						= 0;
-	//	Ranges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[2].OffsetInDescriptorsFromTableStart	= 2;
-
-	//	// Depth
-	//	Ranges[3].BaseShaderRegister				= 3;
-	//	Ranges[3].NumDescriptors					= 1;
-	//	Ranges[3].RegisterSpace						= 0;
-	//	Ranges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[3].OffsetInDescriptorsFromTableStart	= 3;
-
-	//	// DXR-Reflections
-	//	Ranges[4].BaseShaderRegister				= 4;
-	//	Ranges[4].NumDescriptors					= 1;
-	//	Ranges[4].RegisterSpace						= 0;
-	//	Ranges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[4].OffsetInDescriptorsFromTableStart = 4;
-
-	//	// IrradianceMap
-	//	Ranges[5].BaseShaderRegister				= 5;
-	//	Ranges[5].NumDescriptors					= 1;
-	//	Ranges[5].RegisterSpace						= 0;
-	//	Ranges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[5].OffsetInDescriptorsFromTableStart = 5;
-
-	//	// Specular IrradianceMap
-	//	Ranges[6].BaseShaderRegister				= 6;
-	//	Ranges[6].NumDescriptors					= 1;
-	//	Ranges[6].RegisterSpace						= 0;
-	//	Ranges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[6].OffsetInDescriptorsFromTableStart = 6;
-
-	//	// Integration LUT
-	//	Ranges[7].BaseShaderRegister				= 7;
-	//	Ranges[7].NumDescriptors					= 1;
-	//	Ranges[7].RegisterSpace						= 0;
-	//	Ranges[7].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[7].OffsetInDescriptorsFromTableStart = 7;
-
-	//	// Directional ShadowMaps
-	//	Ranges[8].BaseShaderRegister				= 8;
-	//	Ranges[8].NumDescriptors					= 1;
-	//	Ranges[8].RegisterSpace						= 0;
-	//	Ranges[8].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[8].OffsetInDescriptorsFromTableStart = 8;
-
-	//	// PointLight ShadowMaps
-	//	Ranges[9].BaseShaderRegister				= 9;
-	//	Ranges[9].NumDescriptors					= 1;
-	//	Ranges[9].RegisterSpace						= 0;
-	//	Ranges[9].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[9].OffsetInDescriptorsFromTableStart = 9;
-
-	//	// Camera
-	//	Ranges[10].BaseShaderRegister					= 0;
-	//	Ranges[10].NumDescriptors						= 1;
-	//	Ranges[10].RegisterSpace						= 0;
-	//	Ranges[10].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	Ranges[10].OffsetInDescriptorsFromTableStart	= 10;
-
-	//	// PointLights
-	//	Ranges[11].BaseShaderRegister					= 1;
-	//	Ranges[11].NumDescriptors						= 1;
-	//	Ranges[11].RegisterSpace						= 0;
-	//	Ranges[11].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	Ranges[11].OffsetInDescriptorsFromTableStart	= 11;
-
-	//	// DirectionalLights
-	//	Ranges[12].BaseShaderRegister					= 2;
-	//	Ranges[12].NumDescriptors						= 1;
-	//	Ranges[12].RegisterSpace						= 0;
-	//	Ranges[12].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	Ranges[12].OffsetInDescriptorsFromTableStart	= 12;
-
-	//	D3D12_ROOT_PARAMETER Parameters[1];
-	//	Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	Parameters[0].DescriptorTable.NumDescriptorRanges	= 13;
-	//	Parameters[0].DescriptorTable.pDescriptorRanges		= Ranges;
-	//	Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	D3D12_STATIC_SAMPLER_DESC Samplers[5] = { };
-	//	Samplers[0].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
-	//	Samplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[0].MipLODBias			= 0.0f;
-	//	Samplers[0].MaxAnisotropy		= 0;
-	//	Samplers[0].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
-	//	Samplers[0].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//	Samplers[0].MinLOD				= 0.0f;
-	//	Samplers[0].MaxLOD				= FLT_MAX;
-	//	Samplers[0].ShaderRegister		= 0;
-	//	Samplers[0].RegisterSpace		= 0;
-	//	Samplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	Samplers[1].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
-	//	Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[1].MipLODBias			= 0.0f;
-	//	Samplers[1].MaxAnisotropy		= 0;
-	//	Samplers[1].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
-	//	Samplers[1].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//	Samplers[1].MinLOD				= 0.0f;
-	//	Samplers[1].MaxLOD				= FLT_MAX;
-	//	Samplers[1].ShaderRegister		= 1;
-	//	Samplers[1].RegisterSpace		= 0;
-	//	Samplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	Samplers[2].Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	//	Samplers[2].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[2].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[2].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[2].MipLODBias			= 0.0f;
-	//	Samplers[2].MaxAnisotropy		= 0;
-	//	Samplers[2].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
-	//	Samplers[2].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//	Samplers[2].MinLOD				= 0.0f;
-	//	Samplers[2].MaxLOD				= FLT_MAX;
-	//	Samplers[2].ShaderRegister		= 2;
-	//	Samplers[2].RegisterSpace		= 0;
-	//	Samplers[2].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	Samplers[3].Filter				= D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
-	//	Samplers[3].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	Samplers[3].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	Samplers[3].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	Samplers[3].MipLODBias			= 0.0f;
-	//	Samplers[3].MaxAnisotropy		= 0;
-	//	Samplers[3].ComparisonFunc		= D3D12_COMPARISON_FUNC_LESS;
-	//	Samplers[3].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-	//	Samplers[3].MinLOD				= 0.0f;
-	//	Samplers[3].MaxLOD				= FLT_MAX;
-	//	Samplers[3].ShaderRegister		= 3;
-	//	Samplers[3].RegisterSpace		= 0;
-	//	Samplers[3].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	Samplers[4].Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	//	Samplers[4].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	Samplers[4].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	Samplers[4].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	Samplers[4].MipLODBias			= 0.0f;
-	//	Samplers[4].MaxAnisotropy		= 0;
-	//	Samplers[4].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
-	//	Samplers[4].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-	//	Samplers[4].MinLOD				= 0.0f;
-	//	Samplers[4].MaxLOD				= FLT_MAX;
-	//	Samplers[4].ShaderRegister		= 4;
-	//	Samplers[4].RegisterSpace		= 0;
-	//	Samplers[4].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-	//	RootSignatureDesc.NumParameters			= 1;
-	//	RootSignatureDesc.pParameters			= Parameters;
-	//	RootSignatureDesc.NumStaticSamplers		= 5;
-	//	RootSignatureDesc.pStaticSamplers		= Samplers;
-	//	RootSignatureDesc.Flags					= 
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-
-	//	LightRootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
-	//	if (!LightRootSignature)
-	//	{
-	//		return false;
-	//	}
-	//}
 
 	//// Init PipelineState
 	//D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
