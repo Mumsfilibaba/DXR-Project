@@ -219,11 +219,12 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
 
 	// Convert defines
 	TArray<DxcDefine> DxDefines;
+	TArray<std::wstring> StrBuff;
 	if (Defines)
 	{
+		StrBuff.Reserve(Defines->Size() * 2);
 		DxDefines.Reserve(Defines->Size());
 
-		TArray<std::wstring>	StrBuff(Defines->Size() * 2);
 		for (const ShaderDefine& Define : *Defines)
 		{
 			const std::wstring& WideDefine	= StrBuff.EmplaceBack(ConvertToWide(Define.Define));

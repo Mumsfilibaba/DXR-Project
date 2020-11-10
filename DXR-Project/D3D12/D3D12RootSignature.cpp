@@ -8,7 +8,7 @@
 bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 {
 	// Ranges for resources
-	constexpr Uint32 NumRanges = 8;
+	constexpr Uint32 NumRanges = 16;
 	D3D12_DESCRIPTOR_RANGE CBVRanges[NumRanges];
 	Memory::Memzero(CBVRanges, sizeof(CBVRanges));
 
@@ -17,6 +17,9 @@ bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 
 	D3D12_DESCRIPTOR_RANGE UAVRanges[NumRanges];
 	Memory::Memzero(UAVRanges, sizeof(UAVRanges));
+
+	D3D12_DESCRIPTOR_RANGE SamplerRanges[NumRanges];
+	Memory::Memzero(SamplerRanges, sizeof(SamplerRanges));
 	
 	for (Uint32 i = 0; i < NumRanges; i++)
 	{
@@ -37,13 +40,19 @@ bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 		UAVRanges[i].NumDescriptors						= 1;
 		UAVRanges[i].RegisterSpace						= 0;
 		UAVRanges[i].OffsetInDescriptorsFromTableStart	= i;
+
+		SamplerRanges[i].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+		SamplerRanges[i].BaseShaderRegister					= i;
+		SamplerRanges[i].NumDescriptors						= 1;
+		SamplerRanges[i].RegisterSpace						= 0;
+		SamplerRanges[i].OffsetInDescriptorsFromTableStart	= i;
 	}
 
 	// Graphics
 	D3D12_ROOT_SIGNATURE_DESC GraphicsRootDesc;
 	Memory::Memzero(&GraphicsRootDesc, sizeof(D3D12_ROOT_SIGNATURE_DESC));
 
-	constexpr Uint32 NumParametersPerStage	= 3;
+	constexpr Uint32 NumParametersPerStage	= 4;
 	constexpr Uint32 NumStages				= 2;
 	constexpr Uint32 NumParameters			= NumParametersPerStage * NumStages;
 	D3D12_ROOT_PARAMETER GraphicsRootParameters[NumParameters];
@@ -68,6 +77,7 @@ bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 		GraphicsRootParameters[Index + 0].DescriptorTable.pDescriptorRanges = CBVRanges;
 		GraphicsRootParameters[Index + 1].DescriptorTable.pDescriptorRanges = SRVRanges;
 		GraphicsRootParameters[Index + 2].DescriptorTable.pDescriptorRanges = UAVRanges;
+		GraphicsRootParameters[Index + 3].DescriptorTable.pDescriptorRanges = SamplerRanges;
 	}
 
 	GraphicsRootDesc.NumParameters	= NumParameters;
@@ -101,14 +111,15 @@ bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 	ComputeRootParameters[0].DescriptorTable.pDescriptorRanges = CBVRanges;
 	ComputeRootParameters[1].DescriptorTable.pDescriptorRanges = SRVRanges;
 	ComputeRootParameters[2].DescriptorTable.pDescriptorRanges = UAVRanges;
+	ComputeRootParameters[3].DescriptorTable.pDescriptorRanges = SamplerRanges;
 
 	ComputeRootDesc.NumParameters	= NumParametersPerStage;
 	ComputeRootDesc.pParameters		= ComputeRootParameters;
 	ComputeRootDesc.Flags =
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS	|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS		|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS	|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS	|
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
 	if (Device->IsMeshShadersSupported())

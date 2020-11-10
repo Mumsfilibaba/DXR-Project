@@ -102,7 +102,6 @@ private:
 	bool InitAA();
 
 	bool CreateShadowMaps();
-	void WriteShadowMapDescriptors();
 
 	void GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, CommandList& InCmdList);
 	void GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* Dest, CommandList& InCmdList);

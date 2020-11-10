@@ -18,6 +18,7 @@
 #include "D3D12ShaderCompiler.h"
 #include "D3D12Shader.h"
 
+#include <d3d11.h>
 #include <algorithm>
 
 /*
@@ -1460,11 +1461,18 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
 	} PipelineStream;
 
 	// InputLayout
-	D3D12InputLayoutState* DxInputLayoutState = static_cast<D3D12InputLayoutState*>(CreateInfo.InputLayoutState);
-	VALIDATE(DxInputLayoutState != nullptr);
-
 	D3D12_INPUT_LAYOUT_DESC& InputLayoutDesc = PipelineStream.InputLayout;
-	InputLayoutDesc = DxInputLayoutState->GetDesc();
+	
+	D3D12InputLayoutState* DxInputLayoutState = static_cast<D3D12InputLayoutState*>(CreateInfo.InputLayoutState);
+	if (!DxInputLayoutState)
+	{
+		InputLayoutDesc.pInputElementDescs	= nullptr;
+		InputLayoutDesc.NumElements			= 0;
+	}
+	else
+	{
+		InputLayoutDesc = DxInputLayoutState->GetDesc();
+	}
 
 	// VertexShader
 	D3D12VertexShader* DxVertexShader = static_cast<D3D12VertexShader*>(CreateInfo.ShaderState.VertexShader);
