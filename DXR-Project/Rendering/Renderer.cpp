@@ -688,7 +688,6 @@ void Renderer::SetGlobalLightSettings(const LightSettings& InGlobalLightSettings
 		CurrentRenderer->WaitForPendingFrames();
 
 		CurrentRenderer->CreateShadowMaps();
-		CurrentRenderer->WriteShadowMapDescriptors();
 
 #if ENABLE_VSM
 		//RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(CurrentRenderer->VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
@@ -1012,8 +1011,6 @@ bool Renderer::Initialize()
 	//LightDescriptorTable->SetShaderResourceView(SpecularIrradianceMap->GetShaderResourceView(0).Get(), 6);
 	//LightDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).Get(), 7);
 	//LightDescriptorTable->CopyDescriptors();
-
-	WriteShadowMapDescriptors();
 
 	return true;
 }
@@ -2245,60 +2242,6 @@ bool Renderer::InitDebugStates()
 {
 	using namespace Microsoft::WRL;
 
-	//DXGI_FORMAT Formats[] =
-	//{
-	//	EFormat::Format_R8G8B8A8_Unorm,
-	//};
-
-	//ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/Debug.hlsl", "VSMain", "vs_6_0");
-	//if (!VSBlob)
-	//{
-	//	return false;
-	//}
-
-	//ComPtr<IDxcBlob> PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/Debug.hlsl", "PSMain", "ps_6_0");
-	//if (!PSBlob)
-	//{
-	//	return false;
-	//}
-
-	//D3D12_ROOT_PARAMETER Parameters[2];
-	//// Transform Constants
-	//Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	//Parameters[0].Constants.ShaderRegister	= 0;
-	//Parameters[0].Constants.RegisterSpace	= 0;
-	//Parameters[0].Constants.Num32BitValues	= 16;
-	//Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_VERTEX;
-
-	//// Camera
-	//Parameters[1].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	//Parameters[1].Constants.ShaderRegister	= 1;
-	//Parameters[1].Constants.RegisterSpace	= 0;
-	//Parameters[1].Constants.Num32BitValues	= 16;
-	//Parameters[1].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
-
-	//D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-	//RootSignatureDesc.NumParameters		= 2;
-	//RootSignatureDesc.pParameters		= Parameters;
-	//RootSignatureDesc.NumStaticSamplers	= 0;
-	//RootSignatureDesc.pStaticSamplers	= nullptr;
-	//RootSignatureDesc.Flags =
-	//	D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT	|
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS			|
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS		|
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-
-	//DebugRootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
-	//if (!DebugRootSignature)
-	//{
-	//	return false;
-	//}
-
-	//D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
-	//{
-	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//};
-
 	//GraphicsPipelineStateProperties PSOProperties = { };
 	//PSOProperties.DebugName			= "Debug PSO";
 	//PSOProperties.VSBlob			= VSBlob.Get();
@@ -2316,11 +2259,105 @@ bool Renderer::InitDebugStates()
 	//PSOProperties.NumRenderTargets	= 1;
 	//PSOProperties.PrimitiveType		= D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 
-	//DebugBoxPSO = RenderingAPI::Get().CreateGraphicsPipelineState(PSOProperties);
-	//if (!DebugBoxPSO)
-	//{
-	//	return false;
-	//}
+	TArray<Uint8> ShaderCode;
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/Debug.hlsl",
+		"VSMain",
+		nullptr,
+		EShaderStage::ShaderStage_Vertex,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	TSharedRef<VertexShader> VShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	if (!VShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		VShader->SetName("Debug VertexShader");
+	}
+
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/Debug.hlsl",
+		"PSMain",
+		nullptr,
+		EShaderStage::ShaderStage_Pixel,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	TSharedRef<PixelShader> PShader = RenderingAPI::CreatePixelShader(ShaderCode);
+	if (!PShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		PShader->SetName("Debug PixelShader");
+	}
+
+	// Debug Inputlayout
+	InputLayoutStateCreateInfo InputLayout =
+	{
+		{ "POSITION", 0, EFormat::Format_R32G32B32_Float, 0, 0, EInputClassification::InputClassification_Vertex, 0 },
+	};
+
+	TSharedRef<InputLayoutState> InputLayoutState = RenderingAPI::CreateInputLayout(InputLayout);
+	if (!InputLayoutState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		InputLayoutState->SetName("Debug InputLayoutState");
+	}
+
+	// Debug blendstate
+	BlendStateCreateInfo BlendStateInfo;
+	TSharedRef<BlendState> BlendState = RenderingAPI::CreateBlendState(BlendStateInfo);
+	if (!BlendState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		BlendState->SetName("Debug BlendState");
+	}
+
+	GraphicsPipelineStateCreateInfo PSOProperties;
+	PSOProperties.BlendState		= BlendState.Get();
+	PSOProperties.DepthStencilState	= ShadowDepthStencilState.Get();
+	PSOProperties.InputLayoutState	= InputLayoutState.Get();
+	PSOProperties.RasterizerState	= StdRasterizerState.Get();
+	PSOProperties.ShaderState.VertexShader	= VShader.Get();
+	PSOProperties.ShaderState.PixelShader	= PShader.Get();
+	PSOProperties.PrimitiveTopologyType		= EPrimitiveTopologyType::PrimitiveTopologyType_Line;
+	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
+	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
+	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
+
+	DebugBoxPSO = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
+	if (!DebugBoxPSO)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		DebugBoxPSO->SetName("Debug PipelineState");
+	}
 
 	// Create VertexBuffer
 	XMFLOAT3 Vertices[8] =
@@ -2339,7 +2376,12 @@ bool Renderer::InitDebugStates()
 	AABBVertexBuffer = RenderingAPI::CreateVertexBuffer<XMFLOAT3>(nullptr, 8, BufferUsage_Default);
 	if (!AABBVertexBuffer)
 	{
+		Debug::DebugBreak();
 		return false;
+	}
+	else
+	{
+		AABBVertexBuffer->SetName("AABB VertexBuffer");
 	}
 
 	// Create IndexBuffer
@@ -2362,7 +2404,12 @@ bool Renderer::InitDebugStates()
 	AABBIndexBuffer = RenderingAPI::CreateIndexBuffer(nullptr, sizeof(Uint16) * 24, EIndexFormat::IndexFormat_Uint16, BufferUsage_Default);
 	if (!AABBIndexBuffer)
 	{
+		Debug::DebugBreak();
 		return false;
+	}
+	else
+	{
+		AABBIndexBuffer->SetName("AABB IndexBuffer");
 	}
 
 	// Upload Data
