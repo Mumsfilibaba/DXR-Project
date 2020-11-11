@@ -178,11 +178,7 @@ private:
 	
 	TSharedRef<RayTracingScene>	RayTracingScene;
 
-	TSharedRef<InputLayoutState>	StdInputLayout;
-	TSharedRef<RasterizerState>		StdRasterizerState;
-
-	TSharedRef<DepthStencilState>	ShadowDepthStencilState;
-	TSharedRef<BlendState>			ShadowBlendState;
+	TSharedRef<InputLayoutState> StdInputLayout;
 
 	TSharedRef<GraphicsPipelineState>	PrePassPSO;
 	TSharedRef<GraphicsPipelineState>	ShadowMapPSO;

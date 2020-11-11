@@ -223,8 +223,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		Float32		FarPlane;
 	} PerLightBuffer;
 
-	D3D12_VERTEX_BUFFER_VIEW VBO = { };
-	D3D12_INDEX_BUFFER_VIEW IBV = { };
+	D3D12_INDEX_BUFFER_VIEW	IBV		= { };
+	D3D12_VERTEX_BUFFER_VIEW VBO	= { };
 	for (Light* Light : CurrentScene.GetLights())
 	{
 		if (IsSubClassOf<DirectionalLight>(Light))
@@ -945,6 +945,26 @@ bool Renderer::Initialize()
 		Normal->SetName("NormalMap");
 	}
 
+	// Init standard inputlayout
+	InputLayoutStateCreateInfo InputLayout =
+	{
+		{ "POSITION",	0, EFormat::Format_R32G32B32_Float,	0, 0,	EInputClassification::InputClassification_Vertex, 0 },
+		{ "NORMAL",		0, EFormat::Format_R32G32B32_Float,	0, 12,	EInputClassification::InputClassification_Vertex, 0 },
+		{ "TANGENT",	0, EFormat::Format_R32G32B32_Float,	0, 24,	EInputClassification::InputClassification_Vertex, 0 },
+		{ "TEXCOORD",	0, EFormat::Format_R32G32_Float,	0, 36,	EInputClassification::InputClassification_Vertex, 0 },
+	};
+
+	StdInputLayout = RenderingAPI::CreateInputLayout(InputLayout);
+	if (!StdInputLayout)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		StdInputLayout->SetName("Standard InputLayoutState");
+	}
+
 	// Init Deferred Rendering
 	if (!InitLightBuffers())
 	{
@@ -1393,11 +1413,56 @@ bool Renderer::InitPrePass()
 		VShader->SetName("PrePass VertexShader");
 	}
 
+	DepthStencilStateCreateInfo DepthStencilStateInfo;
+	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_Less;
+	DepthStencilStateInfo.DepthEnable		= true;
+	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_All;
+
+	TSharedRef<DepthStencilState> DepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	if (!DepthStencilState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		DepthStencilState->SetName("Prepass DepthStencilState");
+	}
+
+	RasterizerStateCreateInfo RasterizerStateInfo;
+	RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
+
+	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	if (!RasterizerState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		RasterizerState->SetName("Prepass RasterizerState");
+	}
+
+	BlendStateCreateInfo BlendStateInfo;
+	BlendStateInfo.IndependentBlendEnable		= false;
+	BlendStateInfo.RenderTarget[0].BlendEnable	= false;
+
+	TSharedRef<BlendState> BlendState = RenderingAPI::CreateBlendState(BlendStateInfo);
+	if (!BlendState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		BlendState->SetName("Prepass BlendState");
+	}
+
 	GraphicsPipelineStateCreateInfo PSOInfo;
-	PSOInfo.DepthStencilState	= ShadowDepthStencilState.Get();
-	PSOInfo.BlendState			= ShadowBlendState.Get();
 	PSOInfo.InputLayoutState	= StdInputLayout.Get();
-	PSOInfo.RasterizerState		= StdRasterizerState.Get();
+	PSOInfo.BlendState			= BlendState.Get();
+	PSOInfo.DepthStencilState	= DepthStencilState.Get();
+	PSOInfo.RasterizerState		= RasterizerState.Get();
 	PSOInfo.ShaderState.VertexShader = VShader.Get();
 	PSOInfo.PipelineFormats.DepthStencilFormat = DepthBufferFormat;
 
@@ -1494,74 +1559,55 @@ bool Renderer::InitShadowMapPass()
 #endif
 
 	// Init PipelineState
-	InputLayoutStateCreateInfo InputLayout = 
-	{
-		{ "POSITION",	0, EFormat::Format_R32G32B32_Float,	0, 0,	EInputClassification::InputClassification_Vertex, 0 },
-		{ "NORMAL",		0, EFormat::Format_R32G32B32_Float,	0, 12,	EInputClassification::InputClassification_Vertex, 0 },
-		{ "TANGENT",	0, EFormat::Format_R32G32B32_Float,	0, 24,	EInputClassification::InputClassification_Vertex, 0 },
-		{ "TEXCOORD",	0, EFormat::Format_R32G32_Float,	0, 36,	EInputClassification::InputClassification_Vertex, 0 },
-	};
-
-	StdInputLayout = RenderingAPI::CreateInputLayout(InputLayout);
-	if (!StdInputLayout)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		StdInputLayout->SetName("Standard InputLayoutState");
-	}
-
-	DepthStencilStateCreateInfo DepthStencilState;
-	DepthStencilState.DepthFunc			= EComparisonFunc::ComparisonFunc_LessEqual;
-	DepthStencilState.DepthEnable		= true;
-	DepthStencilState.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_All;
+	DepthStencilStateCreateInfo DepthStencilStateInfo;
+	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_LessEqual;
+	DepthStencilStateInfo.DepthEnable		= true;
+	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_All;
 	
-	ShadowDepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilState);
-	if (!ShadowDepthStencilState)
+	TSharedRef<DepthStencilState> DepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	if (!DepthStencilState)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 	else
 	{
-		ShadowDepthStencilState->SetName("Shadow DepthStencilState");
+		DepthStencilState->SetName("Shadow DepthStencilState");
 	}
 
-	RasterizerStateCreateInfo RasterizerState;
-	RasterizerState.CullMode = ECullMode::CullMode_Back;
+	RasterizerStateCreateInfo RasterizerStateInfo;
+	RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
 
-	StdRasterizerState = RenderingAPI::CreateRasterizerState(RasterizerState);
-	if (!StdRasterizerState)
+	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	if (!RasterizerState)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 	else
 	{
-		StdRasterizerState->SetName("Standard RasterizerState");
+		RasterizerState->SetName("Shadow RasterizerState");
 	}
 
-	BlendStateCreateInfo BlendState;
-	ShadowBlendState = RenderingAPI::CreateBlendState(BlendState);
-	if (!ShadowBlendState)
+	BlendStateCreateInfo BlendStateInfo;
+	TSharedRef<BlendState> BlendState = RenderingAPI::CreateBlendState(BlendStateInfo);
+	if (!BlendState)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 	else
 	{
-		ShadowBlendState->SetName("Standard BlendState");
+		BlendState->SetName("Shadow BlendState");
 	}
 
 	GraphicsPipelineStateCreateInfo ShadowMapPSOInfo;
-	ShadowMapPSOInfo.BlendState				= ShadowBlendState.Get();
-	ShadowMapPSOInfo.DepthStencilState		= ShadowDepthStencilState.Get();
+	ShadowMapPSOInfo.BlendState				= BlendState.Get();
+	ShadowMapPSOInfo.DepthStencilState		= DepthStencilState.Get();
 	ShadowMapPSOInfo.IBStripCutValue		= EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
 	ShadowMapPSOInfo.InputLayoutState		= StdInputLayout.Get();
 	ShadowMapPSOInfo.PrimitiveTopologyType	= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
-	ShadowMapPSOInfo.RasterizerState		= StdRasterizerState.Get();
+	ShadowMapPSOInfo.RasterizerState		= RasterizerState.Get();
 	ShadowMapPSOInfo.SampleCount			= 1;
 	ShadowMapPSOInfo.SampleQuality			= 0;
 	ShadowMapPSOInfo.SampleMask				= 0xffffffff;
@@ -1715,11 +1761,56 @@ bool Renderer::InitDeferred()
 		PShader->SetName("GeometryPass PixelShader");
 	}
 
+	DepthStencilStateCreateInfo DepthStencilStateInfo;
+	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_LessEqual;
+	DepthStencilStateInfo.DepthEnable		= true;
+	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_All;
+
+	TSharedRef<DepthStencilState> DepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	if (!DepthStencilState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		DepthStencilState->SetName("GeometryPass DepthStencilState");
+	}
+
+	RasterizerStateCreateInfo RasterizerStateInfo;
+	RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
+
+	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	if (!RasterizerState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		RasterizerState->SetName("GeometryPass RasterizerState");
+	}
+
+	BlendStateCreateInfo BlendStateInfo;
+	BlendStateInfo.IndependentBlendEnable		= false;
+	BlendStateInfo.RenderTarget[0].BlendEnable	= false;
+
+	TSharedRef<BlendState> BlendState = RenderingAPI::CreateBlendState(BlendStateInfo);
+	if (!BlendState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		BlendState->SetName("GeometryPass BlendState");
+	}
+
 	GraphicsPipelineStateCreateInfo PSOProperties;
-	PSOProperties.BlendState		= ShadowBlendState.Get();
-	PSOProperties.DepthStencilState	= ShadowDepthStencilState.Get();
 	PSOProperties.InputLayoutState	= StdInputLayout.Get();
-	PSOProperties.RasterizerState	= StdRasterizerState.Get();
+	PSOProperties.BlendState		= BlendState.Get();
+	PSOProperties.DepthStencilState	= DepthStencilState.Get();
+	PSOProperties.RasterizerState	= RasterizerState.Get();
 	PSOProperties.ShaderState.VertexShader	= VShader.Get();
 	PSOProperties.ShaderState.PixelShader	= PShader.Get();
 	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
@@ -2242,23 +2333,6 @@ bool Renderer::InitDebugStates()
 {
 	using namespace Microsoft::WRL;
 
-	//GraphicsPipelineStateProperties PSOProperties = { };
-	//PSOProperties.DebugName			= "Debug PSO";
-	//PSOProperties.VSBlob			= VSBlob.Get();
-	//PSOProperties.PSBlob			= PSBlob.Get();
-	//PSOProperties.RootSignature		= DebugRootSignature.Get();
-	//PSOProperties.InputElements		= InputElementDesc;
-	//PSOProperties.NumInputElements	= 1;
-	//PSOProperties.EnableDepth		= false;
-	//PSOProperties.DepthWriteMask	= D3D12_DEPTH_WRITE_MASK_ZERO;
-	//PSOProperties.EnableBlending	= false;
-	//PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	//PSOProperties.DepthBufferFormat	= DepthBufferFormat;
-	//PSOProperties.CullMode			= D3D12_CULL_MODE_NONE;
-	//PSOProperties.RTFormats			= Formats;
-	//PSOProperties.NumRenderTargets	= 1;
-	//PSOProperties.PrimitiveType		= D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-
 	TArray<Uint8> ShaderCode;
 	if (!ShaderCompiler::CompileFromFile(
 		"Shaders/Debug.hlsl",
@@ -2323,6 +2397,36 @@ bool Renderer::InitDebugStates()
 		InputLayoutState->SetName("Debug InputLayoutState");
 	}
 
+	DepthStencilStateCreateInfo DepthStencilStateInfo;
+	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_LessEqual;
+	DepthStencilStateInfo.DepthEnable		= false;
+	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_Zero;
+
+	TSharedRef<DepthStencilState> DepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	if (!DepthStencilState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		DepthStencilState->SetName("Debug DepthStencilState");
+	}
+
+	RasterizerStateCreateInfo RasterizerStateInfo;
+	RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
+
+	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	if (!RasterizerState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		RasterizerState->SetName("Debug RasterizerState");
+	}
+
 	// Debug blendstate
 	BlendStateCreateInfo BlendStateInfo;
 	TSharedRef<BlendState> BlendState = RenderingAPI::CreateBlendState(BlendStateInfo);
@@ -2338,9 +2442,9 @@ bool Renderer::InitDebugStates()
 
 	GraphicsPipelineStateCreateInfo PSOProperties;
 	PSOProperties.BlendState		= BlendState.Get();
-	PSOProperties.DepthStencilState	= ShadowDepthStencilState.Get();
+	PSOProperties.DepthStencilState	= DepthStencilState.Get();
 	PSOProperties.InputLayoutState	= InputLayoutState.Get();
-	PSOProperties.RasterizerState	= StdRasterizerState.Get();
+	PSOProperties.RasterizerState	= RasterizerState.Get();
 	PSOProperties.ShaderState.VertexShader	= VShader.Get();
 	PSOProperties.ShaderState.PixelShader	= PShader.Get();
 	PSOProperties.PrimitiveTopologyType		= EPrimitiveTopologyType::PrimitiveTopologyType_Line;
@@ -2433,126 +2537,157 @@ bool Renderer::InitAA()
 	using namespace Microsoft::WRL;
 
 	// No AA
-	//ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/FullscreenVS.hlsl", "Main", "vs_6_0");
-	//if (!VSBlob)
-	//{
-	//	return false;
-	//}
+	TArray<Uint8> ShaderCode;
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/FullscreenVS.hlsl",
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Vertex,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
 
-	//ComPtr<IDxcBlob> PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/PostProcessPS.hlsl", "Main", "ps_6_0");
-	//if (!PSBlob)
-	//{
-	//	return false;
-	//}
+	TSharedRef<VertexShader> VShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	if (!VShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		VShader->SetName("Fullscreen VertexShader");
+	}
 
-	//D3D12_DESCRIPTOR_RANGE Ranges[1] = {};
-	//Ranges[0].BaseShaderRegister				= 0;
-	//Ranges[0].NumDescriptors					= 1;
-	//Ranges[0].RegisterSpace						= 0;
-	//Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//Ranges[0].OffsetInDescriptorsFromTableStart	= 0;
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/PostProcessPS.hlsl",
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Pixel,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
 
-	//D3D12_ROOT_PARAMETER Parameters[2];
-	//Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
-	//Parameters[0].DescriptorTable.NumDescriptorRanges	= 1;
-	//Parameters[0].DescriptorTable.pDescriptorRanges		= Ranges;
+	TSharedRef<PixelShader> PShader = RenderingAPI::CreatePixelShader(ShaderCode);
+	if (!PShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		PShader->SetName("PostProcess PixelShader");
+	}
 
-	//Parameters[1].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	//Parameters[1].ShaderVisibility			= D3D12_SHADER_VISIBILITY_PIXEL;
-	//Parameters[1].Constants.Num32BitValues	= 2;
-	//Parameters[1].Constants.RegisterSpace	= 0;
-	//Parameters[1].Constants.ShaderRegister	= 0;
+	DepthStencilStateCreateInfo DepthStencilStateInfo;
+	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_Always;
+	DepthStencilStateInfo.DepthEnable		= false;
+	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_Zero;
 
-	//D3D12_STATIC_SAMPLER_DESC Samplers[2] = { };
-	//Samplers[0].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
-	//Samplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//Samplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//Samplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//Samplers[0].MipLODBias			= 0.0f;
-	//Samplers[0].MaxAnisotropy		= 0;
-	//Samplers[0].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
-	//Samplers[0].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//Samplers[0].MinLOD				= 0.0f;
-	//Samplers[0].MaxLOD				= 1.0f;
-	//Samplers[0].ShaderRegister		= 0;
-	//Samplers[0].RegisterSpace		= 0;
-	//Samplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+	TSharedRef<DepthStencilState> DepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	if (!DepthStencilState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		DepthStencilState->SetName("Debug DepthStencilState");
+	}
 
-	//Samplers[1].Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	//Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//Samplers[1].MipLODBias			= 0.0f;
-	//Samplers[1].MaxAnisotropy		= 0;
-	//Samplers[1].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;
-	//Samplers[1].BorderColor			= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//Samplers[1].MinLOD				= 0.0f;
-	//Samplers[1].MaxLOD				= 1.0f;
-	//Samplers[1].ShaderRegister		= 1;
-	//Samplers[1].RegisterSpace		= 0;
-	//Samplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+	RasterizerStateCreateInfo RasterizerStateInfo;
+	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
 
-	//D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-	//RootSignatureDesc.NumParameters		= 2;
-	//RootSignatureDesc.pParameters		= Parameters;
-	//RootSignatureDesc.NumStaticSamplers	= 2;
-	//RootSignatureDesc.pStaticSamplers	= Samplers;
-	//RootSignatureDesc.Flags =
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS		|
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS	|
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	if (!RasterizerState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		RasterizerState->SetName("Debug RasterizerState");
+	}
 
-	//PostRootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
-	//if (!PostRootSignature)
-	//{
-	//	return false;
-	//}
+	BlendStateCreateInfo BlendStateInfo;
+	BlendStateInfo.IndependentBlendEnable		= false;
+	BlendStateInfo.RenderTarget[0].BlendEnable	= false;
 
-	//DXGI_FORMAT Formats[] =
-	//{
-	//	EFormat::Format_R8G8B8A8_Unorm,
-	//};
+	TSharedRef<BlendState> BlendState = RenderingAPI::CreateBlendState(BlendStateInfo);
+	if (!BlendState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		BlendState->SetName("Debug BlendState");
+	}
 
-	//GraphicsPipelineStateProperties PSOProperties = { };
-	//PSOProperties.DebugName			= "Post PSO";
-	//PSOProperties.VSBlob			= VSBlob.Get();
-	//PSOProperties.PSBlob			= PSBlob.Get();
-	//PSOProperties.RootSignature		= PostRootSignature.Get();
-	//PSOProperties.InputElements		= nullptr;
-	//PSOProperties.NumInputElements	= 0;
-	//PSOProperties.EnableDepth		= false;
-	//PSOProperties.DepthWriteMask	= D3D12_DEPTH_WRITE_MASK_ZERO;
-	//PSOProperties.EnableBlending	= false;
-	//PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_ALWAYS;
-	//PSOProperties.DepthBufferFormat	= DXGI_FORMAT_UNKNOWN;
-	//PSOProperties.CullMode			= D3D12_CULL_MODE_NONE;
-	//PSOProperties.RTFormats			= Formats;
-	//PSOProperties.NumRenderTargets	= 1;
-	//PSOProperties.PrimitiveType		= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	GraphicsPipelineStateCreateInfo PSOProperties;
+	PSOProperties.InputLayoutState	= nullptr;
+	PSOProperties.BlendState		= BlendState.Get();
+	PSOProperties.DepthStencilState	= DepthStencilState.Get();
+	PSOProperties.RasterizerState	= RasterizerState.Get();
+	PSOProperties.ShaderState.VertexShader	= VShader.Get();
+	PSOProperties.ShaderState.PixelShader	= PShader.Get();
+	PSOProperties.PrimitiveTopologyType		= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
+	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
+	PSOProperties.PipelineFormats.DepthStencilFormat		= EFormat::Format_Unknown;
 
-	//PostPSO = RenderingAPI::Get().CreateGraphicsPipelineState(PSOProperties);
-	//if (!PostPSO)
-	//{
-	//	return false;
-	//}
+	PostPSO = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
+	if (!PostPSO)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		PostPSO->SetName("PostProcess PipelineState");
+	}
 
-	//// FXAA
-	//PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/FXAA_PS.hlsl", "Main", "ps_6_0");
-	//if (!PSBlob)
-	//{
-	//	return false;
-	//}
+	// FXAA
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/FXAA_PS.hlsl",
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Pixel,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
 
-	//PSOProperties.DebugName = "FXAA PSO";
-	//PSOProperties.VSBlob	= VSBlob.Get();
-	//PSOProperties.PSBlob	= PSBlob.Get();
+	PShader = RenderingAPI::CreatePixelShader(ShaderCode);
+	if (!PShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		PShader->SetName("FXAA PixelShader");
+	}
 
-	//FXAAPSO = RenderingAPI::Get().CreateGraphicsPipelineState(PSOProperties);
-	//if (!FXAAPSO)
-	//{
-	//	return false;
-	//}
+	PSOProperties.ShaderState.PixelShader = PShader.Get();
+
+	PostPSO = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
+	if (!PostPSO)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		PostPSO->SetName("FXAA PipelineState");
+	}
 
 	return true;
 }

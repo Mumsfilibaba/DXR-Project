@@ -1,6 +1,7 @@
 /*
 * Common Constants
 */
+
 static const float MIN_ROUGHNESS    = 0.05f;
 static const float MAX_ROUGHNESS	= 1.0f;
 static const float PI               = 3.14159265359f;
@@ -14,6 +15,7 @@ static const float3 LightColor      = float3(400.0f, 400.0f, 400.0f);
 /*
 * Common Defines
 */
+
 #define GAMMA		2.2f
 #define PCF_RANGE	2
 #define PCF_WIDTH	float((PCF_RANGE * 2) + 1)
@@ -21,6 +23,7 @@ static const float3 LightColor      = float3(400.0f, 400.0f, 400.0f);
 /*
 * Common Structs
 */
+
 struct Camera
 {
 	float4x4	ViewProjection;
@@ -58,6 +61,7 @@ struct Vertex
 /*
 * Position Helper
 */
+
 float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ViewProjectionInverse)
 {
 	float Z = Depth;
@@ -73,6 +77,7 @@ float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ViewProjectionIn
 /*
 * Misc Helpers
 */
+
 float3 ToFloat3(float Single)
 {
 	return float3(Single, Single, Single);
@@ -91,6 +96,7 @@ float CalculateLuminance(float3 Color)
 /*
 * Random numbers
 */
+
 float Random(float3 Seed, int i)
 {
 	float4	Seed4		= float4(Seed, i);
@@ -106,6 +112,7 @@ float Linstep(float Low, float High, float P)
 /*
 * PBR Functions
 */
+
 float DistributionGGX(float3 N, float3 H, float Roughness)
 {
 	float A			= Roughness * Roughness;
@@ -165,6 +172,7 @@ float3 FresnelSchlickRoughness(float CosTheta, float3 F0, float Roughness)
 * http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 * efficient VanDerCorpus calculation.
 */
+
 float RadicalInverse_VdC(uint Bits)
 {
 	Bits = (Bits << 16u) | (Bits >> 16u);
@@ -206,6 +214,7 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float Roughness)
 /*
 * HDR Helpers
 */
+
 float3 ApplyGamma(float3 InputColor)
 {
 	return pow(InputColor, ToFloat3(GAMMA));
@@ -246,6 +255,7 @@ float3 PackNormal(float3 Normal)
 /*
 * RayTracing Helpers
 */
+
 float3 WorldHitPosition()
 {
 	return WorldRayOrigin() + (RayTCurrent() * WorldRayDirection());

@@ -33,6 +33,7 @@ SamplerState	LinearSampler	: register(s1, space0);
 /*
 * Helpers
 */
+
 float4 FXAASample(in Texture2D Texture, in SamplerState InSampler, float2 TexCoord)
 {
 	return Texture.SampleLevel(InSampler, TexCoord, 0.0f);
@@ -56,6 +57,7 @@ float3 Lerp(float3 A, float3 B, float AmountOfA)
 /*
 * PixelShader
 */
+
 float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
 {
 	uint Width;
