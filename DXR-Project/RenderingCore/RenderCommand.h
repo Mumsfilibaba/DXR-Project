@@ -8,14 +8,16 @@
 // Base rendercommand
 struct RenderCommand
 {
-	inline virtual ~RenderCommand()
+	inline RenderCommand()
+		: NextCmd(nullptr)
 	{
-		NextCmd = nullptr;
 	}
 
-	virtual void Execute(ICommandContext&) const
+	inline virtual ~RenderCommand()
 	{
 	}
+
+	virtual void Execute(ICommandContext&) const = 0;
 
 	inline void operator()(ICommandContext& CmdContext) const
 	{
@@ -196,34 +198,32 @@ struct BindPrimitiveTopologyCommand : public RenderCommand
 // Bind VertexBuffers RenderCommand
 struct BindVertexBuffersCommand : public RenderCommand
 {
-	inline BindVertexBuffersCommand(VertexBuffer* const * InVertexBuffers, Uint32 InVertexBufferCount, Uint32 InSlot)
+	inline BindVertexBuffersCommand(VertexBuffer* const * InVertexBuffers, Uint32 InVertexBufferCount, Uint32 InStartSlot)
 		: VertexBuffers(InVertexBuffers)
 		, VertexBufferCount(InVertexBufferCount)
-		, Slot(InSlot)
+		, StartSlot(InStartSlot)
 	{
-		VALIDATE(VertexBuffers != nullptr);
-		for (Uint32 i = 0; i < VertexBufferCount; i++)
-		{
-			VALIDATE(VertexBuffers[i] != nullptr);
-		}
 	}
 
 	inline ~BindVertexBuffersCommand()
 	{
 		for (Uint32 i = 0; i < VertexBufferCount; i++)
 		{
-			VertexBuffers[i]->Release();
+			if (VertexBuffers[i])
+			{
+				VertexBuffers[i]->Release();
+			}
 		}
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
 	{
-		CmdContext.BindVertexBuffers(VertexBuffers, VertexBufferCount, Slot);
+		CmdContext.BindVertexBuffers(VertexBuffers, VertexBufferCount, StartSlot);
 	}
 
 	VertexBuffer* const* VertexBuffers;
 	Uint32 VertexBufferCount;
-	Uint32 Slot;
+	Uint32 StartSlot;
 };
 
 // Bind IndexBuffer RenderCommand
@@ -232,7 +232,6 @@ struct BindIndexBufferCommand : public RenderCommand
 	inline BindIndexBufferCommand(IndexBuffer* InIndexBuffer)
 		: IndexBuffer(InIndexBuffer)
 	{
-		VALIDATE(IndexBuffer != nullptr);
 	}
 
 	inline ~BindIndexBufferCommand()
@@ -278,20 +277,18 @@ struct BindRenderTargetsCommand : public RenderCommand
 		, RenderTargetViewCount(InRenderTargetViewCount)
 		, DepthStencilView(InDepthStencilView)
 	{
-		VALIDATE(DepthStencilView != nullptr);
-		VALIDATE(RenderTargetViews != nullptr);
-		for (Uint32 i = 0; i < RenderTargetViewCount; i++)
-		{
-			VALIDATE(RenderTargetViews[i] != nullptr);
-		}
 	}
 
 	inline ~BindRenderTargetsCommand()
 	{
 		SAFERELEASE(DepthStencilView);
+
 		for (Uint32 i = 0; i < RenderTargetViewCount; i++)
 		{
-			RenderTargetViews[i]->Release();
+			if (RenderTargetViews[i])
+			{
+				RenderTargetViews[i]->Release();
+			}
 		}
 	}
 
@@ -311,7 +308,6 @@ struct BindGraphicsPipelineStateCommand : public RenderCommand
 	inline BindGraphicsPipelineStateCommand(GraphicsPipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
-		VALIDATE(PipelineState != nullptr);
 	}
 
 	inline ~BindGraphicsPipelineStateCommand()
@@ -333,7 +329,6 @@ struct BindComputePipelineStateCommand : public RenderCommand
 	inline BindComputePipelineStateCommand(ComputePipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
-		VALIDATE(PipelineState != nullptr);
 	}
 
 	inline ~BindComputePipelineStateCommand()
@@ -355,7 +350,6 @@ struct BindRayTracingPipelineStateCommand : public RenderCommand
 	inline BindRayTracingPipelineStateCommand(RayTracingPipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
-		VALIDATE(PipelineState != nullptr);
 	}
 
 	inline ~BindRayTracingPipelineStateCommand()
@@ -629,6 +623,7 @@ struct GenerateMipsCommand : public RenderCommand
 	inline GenerateMipsCommand(Texture* InTexture)
 		: Texture(InTexture)
 	{
+		VALIDATE(Texture != nullptr);
 	}
 
 	inline ~GenerateMipsCommand()
@@ -652,6 +647,7 @@ struct TransitionTextureCommand : public RenderCommand
 		, BeforeState(InBeforeState)
 		, AfterState(InAfterState)
 	{
+		VALIDATE(Texture != nullptr);
 	}
 
 	inline ~TransitionTextureCommand()
@@ -677,6 +673,7 @@ struct TransitionBufferCommand : public RenderCommand
 		, BeforeState(InBeforeState)
 		, AfterState(InAfterState)
 	{
+		VALIDATE(Buffer != nullptr);
 	}
 
 	inline ~TransitionBufferCommand()
@@ -700,6 +697,7 @@ struct UnorderedAccessTextureBarrierCommand : public RenderCommand
 	inline UnorderedAccessTextureBarrierCommand(Texture* InTexture)
 		: Texture(InTexture)
 	{
+		VALIDATE(Texture != nullptr);
 	}
 
 	inline ~UnorderedAccessTextureBarrierCommand()

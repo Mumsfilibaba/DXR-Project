@@ -23,6 +23,7 @@
 TUniquePtr<Renderer>	Renderer::RendererInstance = nullptr;
 LightSettings			Renderer::GlobalLightSettings;
 
+static const EFormat	FinalTargetFormat		= EFormat::Format_R16G16B16A16_Float;
 static const EFormat	RenderTargetFormat		= EFormat::Format_R8G8B8A8_Unorm;
 static const EFormat	NormalFormat			= EFormat::Format_R10G10B10A2_Unorm;
 static const EFormat	DepthBufferFormat		= EFormat::Format_D32_Float;
@@ -85,6 +86,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	}
 
 	// Start frame
+	// TODO: Fix this with viewport
 	Texture2D* BackBuffer = nullptr;// RenderingAPI::Get().GetSwapChain()->GetSurfaceResource(CurrentBackBufferIndex);
 
 	CmdList.Begin();
@@ -153,10 +155,25 @@ void Renderer::Tick(const Scene& CurrentScene)
 		EResourceState::ResourceState_VertexAndConstantBuffer);
 
 	// Transition GBuffer
-	CmdList.TransitionTexture(GBuffer[0].Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_RenderTarget);
-	CmdList.TransitionTexture(GBuffer[1].Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_RenderTarget);
-	CmdList.TransitionTexture(GBuffer[2].Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_RenderTarget);
-	CmdList.TransitionTexture(GBuffer[3].Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_DepthWrite);
+	CmdList.TransitionTexture(
+		GBuffer[0].Get(), 
+		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_RenderTarget);
+
+	CmdList.TransitionTexture(
+		GBuffer[1].Get(), 
+		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_RenderTarget);
+
+	CmdList.TransitionTexture(
+		GBuffer[2].Get(), 
+		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_RenderTarget);
+
+	CmdList.TransitionTexture(
+		GBuffer[3].Get(), 
+		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_DepthWrite);
 
 	// Transition ShadowMaps
 	CmdList.TransitionTexture(
@@ -170,8 +187,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		EResourceState::ResourceState_DepthWrite);
 	
 	// Render DirectionalLight ShadowMaps
-	// TODO: Solve this
-	// CmdList.ClearDepthStencilView(DirLightShadowMaps->GetDepthStencilView(0).Get(), DepthStencilClearValue(1.0f, 0));
+	CmdList.ClearDepthStencilView(DirLightShadowMapDSV.Get(), DepthStencilClearValue(1.0f, 0));
 
 #if ENABLE_VSM
 	CmdList.TransitionTexture(VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_RenderTarget);
@@ -186,8 +202,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	//CmdList.BindRenderTargets(DirLightRTVS, 1, DirLightShadowMaps->GetDepthStencilView(0).Get());
 	//CmdList.BindGraphicsPipelineState(VSMShadowMapPSO.Get());
 #else
-	// TODO: Solve this
-	// CmdList.BindRenderTargets(nullptr, 0, DirLightShadowMaps->GetDepthStencilView(0).Get());
+	CmdList.BindRenderTargets(nullptr, 0, DirLightShadowMapDSV.Get());
 	CmdList.BindGraphicsPipelineState(ShadowMapPSO.Get());
 #endif
 
@@ -223,8 +238,6 @@ void Renderer::Tick(const Scene& CurrentScene)
 		Float32		FarPlane;
 	} PerLightBuffer;
 
-	D3D12_INDEX_BUFFER_VIEW	IBV		= { };
-	D3D12_VERTEX_BUFFER_VIEW VBO	= { };
 	for (Light* Light : CurrentScene.GetLights())
 	{
 		if (IsSubClassOf<DirectionalLight>(Light))
@@ -272,6 +285,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.BindScissorRect(ScissorRect, 1);
 
 	CmdList.BindGraphicsPipelineState(LinearShadowMapPSO.Get());
+
 	for (Light* Light : CurrentScene.GetLights())
 	{
 		if (IsSubClassOf<PointLight>(Light))
@@ -279,15 +293,14 @@ void Renderer::Tick(const Scene& CurrentScene)
 			PointLight* PoiLight = Cast<PointLight>(Light);
 			for (Uint32 i = 0; i < 6; i++)
 			{
-				// TODO: Solve this
-				// CmdList.ClearDepthStencilView(PointLightShadowMaps->GetDepthStencilView(I).Get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
-				// CmdList.BindRenderTargets(nullptr, 0, PointLightShadowMaps->GetDepthStencilView(I).Get());
+				CmdList.ClearDepthStencilView(PointLightShadowMapsDSVs[i].Get(), DepthStencilClearValue(1.0f, 0));
+				CmdList.BindRenderTargets(nullptr, 0, PointLightShadowMapsDSVs[i].Get());
 
 				PerLightBuffer.Matrix	= PoiLight->GetMatrix(i);
 				PerLightBuffer.Position	= PoiLight->GetPosition();
 				PerLightBuffer.FarPlane	= PoiLight->GetShadowFarPlane();
 				// TODO: Solve this
-				// // CommandList->SetGraphicsRoot32BitConstants(&PerLightBuffer, 20, 0, 1);
+				// CommandList->SetGraphicsRoot32BitConstants(&PerLightBuffer, 20, 0, 1);
 
 				// Draw all objects to depthbuffer
 				if (FrustumCullEnabled)
@@ -313,7 +326,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 							PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 							
 							// TODO: Solve this
-							// // CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+							// CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
 
 							CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 						}
@@ -341,7 +354,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	// Transition ShadowMaps
 #if ENABLE_VSM
-	CmdList.TransitionTexture(VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_RenderTarget, EResourceState::ResourceState_PixelShaderResource);
+	CmdList.TransitionTexture(
+		VSMDirLightShadowMaps.Get(), 
+		EResourceState::ResourceState_RenderTarget, 
+		EResourceState::ResourceState_PixelShaderResource);
 #endif
 	CmdList.TransitionTexture(
 		DirLightShadowMaps.Get(), 
@@ -359,18 +375,24 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CamBuff.ViewProjectionInv	= CurrentScene.GetCamera()->GetViewProjectionInverseMatrix();
 	CamBuff.Position			= CurrentScene.GetCamera()->GetPosition();
 
-	CmdList.TransitionBuffer(CameraBuffer.Get(), EResourceState::ResourceState_VertexAndConstantBuffer, EResourceState::ResourceState_CopyDest);
+	CmdList.TransitionBuffer(
+		CameraBuffer.Get(), 
+		EResourceState::ResourceState_VertexAndConstantBuffer, 
+		EResourceState::ResourceState_CopyDest);
+
 	CmdList.UpdateBuffer(CameraBuffer.Get(), 0, sizeof(CameraBufferData), &CamBuff);
-	CmdList.TransitionBuffer(CameraBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_VertexAndConstantBuffer);
+	
+	CmdList.TransitionBuffer(
+		CameraBuffer.Get(), 
+		EResourceState::ResourceState_CopyDest, 
+		EResourceState::ResourceState_VertexAndConstantBuffer);
 
 	// Clear GBuffer
-	const Float32 BlackClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	
-	// TODO: Solve this
-	// CmdList.ClearRenderTargetView(GBuffer[0]->GetRenderTargetView(0).Get(), BlackClearColor);
-	// CmdList.ClearRenderTargetView(GBuffer[1]->GetRenderTargetView(0).Get(), BlackClearColor);
-	// CmdList.ClearRenderTargetView(GBuffer[2]->GetRenderTargetView(0).Get(), BlackClearColor);
-	// CmdList.ClearDepthStencilView(GBuffer[3]->GetDepthStencilView(0).Get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
+	ColorClearValue BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	CmdList.ClearRenderTargetView(GBufferRTVs[0].Get(), BlackClearColor);
+	CmdList.ClearRenderTargetView(GBufferRTVs[1].Get(), BlackClearColor);
+	CmdList.ClearRenderTargetView(GBufferRTVs[2].Get(), BlackClearColor);
+	CmdList.ClearDepthStencilView(GBufferDSV.Get(), DepthStencilClearValue(1.0f, 0));
 
 	// Setup view
 	
@@ -394,13 +416,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 	if (PrePassEnabled)
 	{
 		// Setup Pipeline
-		
-		// TODO: Solve this
-		// CmdList.BindRenderTargets(nullptr, 0, GBuffer[3]->GetDepthStencilView(0).Get());
+		CmdList.BindRenderTargets(nullptr, 0, GBufferDSV.Get());
 
 		CmdList.BindGraphicsPipelineState(PrePassPSO.Get());
-		//// CommandList->SetGraphicsRootSignature(PrePassRootSignature->GetRootSignature());
-		//// CommandList->SetGraphicsRootDescriptorTable(PrePassDescriptorTable->GetGPUTableStartHandle(), 1);
+		// CommandList->SetGraphicsRootSignature(PrePassRootSignature->GetRootSignature());
+		// CommandList->SetGraphicsRootDescriptorTable(PrePassDescriptorTable->GetGPUTableStartHandle(), 1);
 
 		// Draw all objects to depthbuffer
 		//for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
@@ -410,22 +430,20 @@ void Renderer::Tick(const Scene& CurrentScene)
 			CmdList.BindIndexBuffer(Command.IndexBuffer);
 
 			PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-			//// CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+			// CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
 
 			CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 		}
 	}
 
 	// Render all objects to the GBuffer
-
-	// TODO: Solve this
-	//D3D12RenderTargetView* GBufferRTVS[] =
-	//{
-	//	GBuffer[0]->GetRenderTargetView(0).Get(),
-	//	GBuffer[1]->GetRenderTargetView(0).Get(),
-	//	GBuffer[2]->GetRenderTargetView(0).Get()
-	//};
-	//CmdList.BindRenderTargets(GBufferRTVS, 3, GBuffer[3]->GetDepthStencilView(0).Get());
+	RenderTargetView* RenderTargets[] =
+	{
+		GBufferRTVs[0].Get(),
+		GBufferRTVs[1].Get(),
+		GBufferRTVs[2].Get()
+	};
+	CmdList.BindRenderTargets(RenderTargets, 3, GBufferDSV.Get());
 
 	// Setup Pipeline
 	CmdList.BindGraphicsPipelineState(GeometryPSO.Get());
@@ -456,10 +474,25 @@ void Renderer::Tick(const Scene& CurrentScene)
 	}
 
 	// Setup GBuffer for Read
-	CmdList.TransitionTexture(GBuffer[0].Get(), EResourceState::ResourceState_RenderTarget, EResourceState::ResourceState_PixelShaderResource);
-	CmdList.TransitionTexture(GBuffer[1].Get(), EResourceState::ResourceState_RenderTarget, EResourceState::ResourceState_PixelShaderResource);
-	CmdList.TransitionTexture(GBuffer[2].Get(), EResourceState::ResourceState_RenderTarget, EResourceState::ResourceState_PixelShaderResource);
-	CmdList.TransitionTexture(GBuffer[3].Get(), EResourceState::ResourceState_DepthWrite, EResourceState::ResourceState_PixelShaderResource);
+	CmdList.TransitionTexture(
+		GBuffer[0].Get(), 
+		EResourceState::ResourceState_RenderTarget, 
+		EResourceState::ResourceState_PixelShaderResource);
+	
+	CmdList.TransitionTexture(
+		GBuffer[1].Get(), 
+		EResourceState::ResourceState_RenderTarget, 
+		EResourceState::ResourceState_PixelShaderResource);
+
+	CmdList.TransitionTexture(
+		GBuffer[2].Get(), 
+		EResourceState::ResourceState_RenderTarget, 
+		EResourceState::ResourceState_PixelShaderResource);
+
+	CmdList.TransitionTexture(
+		GBuffer[3].Get(), 
+		EResourceState::ResourceState_DepthWrite, 
+		EResourceState::ResourceState_PixelShaderResource);
 
 	// RayTracing
 	//if (RenderingAPI::Get().IsRayTracingSupported())
@@ -468,11 +501,18 @@ void Renderer::Tick(const Scene& CurrentScene)
 	//}
 
 	// Render to final output
-	CmdList.TransitionTexture(FinalTarget.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_RenderTarget);
-	CmdList.TransitionTexture(BackBuffer, EResourceState::ResourceState_Present, EResourceState::ResourceState_RenderTarget);
+	CmdList.TransitionTexture(
+		FinalTarget.Get(), 
+		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_RenderTarget);
+	
+	//CmdList.TransitionTexture(
+	//	BackBuffer, 
+	//	EResourceState::ResourceState_Present, 
+	//	EResourceState::ResourceState_RenderTarget);
 
-	//D3D12RenderTargetView* RenderTarget[] = { FinalTarget->GetRenderTargetView(0).Get() };
-	//CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
+	RenderTargetView* RenderTarget[] = { FinalTargetRTV.Get() };
+	CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
 
 	CmdList.BindViewport(ViewPort, 0);
 	CmdList.BindScissorRect(ScissorRect, 0);
@@ -488,8 +528,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.DrawInstanced(3, 1, 0, 0);
 
 	// Draw skybox
-	CmdList.TransitionTexture(GBuffer[3].Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_DepthWrite);
-	//CmdList.BindRenderTargets(RenderTarget, 1, GBuffer[3]->GetDepthStencilView(0).Get());
+	CmdList.TransitionTexture(
+		GBuffer[3].Get(), 
+		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_DepthWrite);
+	
+	CmdList.BindRenderTargets(RenderTarget, 1, GBufferDSV.Get());
 	
 	CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
 	CmdList.BindVertexBuffers(&SkyboxVertexBuffer, 1, 0);
@@ -508,8 +552,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.DrawIndexedInstanced(static_cast<Uint32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
 
 	// Render to BackBuffer
-	CmdList.TransitionTexture(FinalTarget.Get(), EResourceState::ResourceState_RenderTarget, EResourceState::ResourceState_PixelShaderResource);
+	CmdList.TransitionTexture(
+		FinalTarget.Get(), 
+		EResourceState::ResourceState_RenderTarget, 
+		EResourceState::ResourceState_PixelShaderResource);
 	
+	// TODO: Solve this
 	//RenderTarget[0] = BackBuffer->GetRenderTargetView(0).Get();
 	//CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
 
@@ -578,8 +626,13 @@ void Renderer::Tick(const Scene& CurrentScene)
 	DebugUI::Render(CmdList);
 
 	// Finalize Commandlist
-	CmdList.TransitionTexture(GBuffer[3].Get(), EResourceState::ResourceState_DepthWrite, EResourceState::ResourceState_PixelShaderResource);
-	CmdList.TransitionTexture(BackBuffer, EResourceState::ResourceState_RenderTarget, EResourceState::ResourceState_Present);
+	CmdList.TransitionTexture(
+		GBuffer[3].Get(), 
+		EResourceState::ResourceState_DepthWrite, 
+		EResourceState::ResourceState_PixelShaderResource);
+
+	//CmdList.TransitionTexture(BackBuffer, EResourceState::ResourceState_RenderTarget, EResourceState::ResourceState_Present);
+	
 	CmdList.End();
 
 	// Execute
@@ -604,7 +657,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 void Renderer::TraceRays(Texture2D* BackBuffer, CommandList& InCmdList)
 {
-	InCmdList.TransitionTexture(ReflectionTexture.Get(), EResourceState::ResourceState_CopySource, EResourceState::ResourceState_UnorderedAccess);
+	InCmdList.TransitionTexture(
+		ReflectionTexture.Get(), 
+		EResourceState::ResourceState_CopySource, 
+		EResourceState::ResourceState_UnorderedAccess);
 
 	// Set shader tables
 	InCmdList.BindRayTracingScene(RayTracingScene.Get());
@@ -620,7 +676,10 @@ void Renderer::TraceRays(Texture2D* BackBuffer, CommandList& InCmdList)
 	InCmdList.DispatchRays(0, 0, 1);
 
 	// Copy the results to the back-buffer
-	InCmdList.TransitionTexture(ReflectionTexture.Get(), EResourceState::ResourceState_UnorderedAccess, EResourceState::ResourceState_CopySource);
+	InCmdList.TransitionTexture(
+		ReflectionTexture.Get(), 
+		EResourceState::ResourceState_UnorderedAccess, 
+		EResourceState::ResourceState_CopySource);
 }
 
 void Renderer::OnResize(Int32 Width, Int32 Height)
@@ -689,12 +748,25 @@ void Renderer::SetGlobalLightSettings(const LightSettings& InGlobalLightSettings
 
 		CurrentRenderer->CreateShadowMaps();
 
+		CommandList& CmdList = CurrentRenderer->CmdList;
 #if ENABLE_VSM
-		//RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(CurrentRenderer->VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
+		CmdList.TransitionTexture(
+			CurrentRenderer->VSMDirLightShadowMaps.Get(), 
+			EResourceState::ResourceState_Common, 
+			EResourceState::ResourceState_PixelShaderResource);
 #endif
-		//RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(CurrentRenderer->DirLightShadowMaps.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
-		//RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(CurrentRenderer->PointLightShadowMaps.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
-		//RenderingAPI::StaticGetImmediateCommandList()->Flush();
+		CmdList.TransitionTexture(
+			CurrentRenderer->DirLightShadowMaps.Get(), 
+			EResourceState::ResourceState_Common, 
+			EResourceState::ResourceState_PixelShaderResource);
+		
+		CmdList.TransitionTexture(
+			CurrentRenderer->PointLightShadowMaps.Get(),
+			EResourceState::ResourceState_Common, 
+			EResourceState::ResourceState_PixelShaderResource);
+
+		CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
+		Executor.ExecuteCommandList(CmdList);
 	}
 }
 
@@ -744,7 +816,10 @@ bool Renderer::Initialize()
 	{
 		ResourceData VertexData = ResourceData(Sphere.Vertices.Data());
 		
-		MeshVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(&VertexData, Sphere.Vertices.Size(), BufferUsage_Dynamic);
+		MeshVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(
+			&VertexData, 
+			Sphere.Vertices.Size(), 
+			BufferUsage_Dynamic);
 		if (!MeshVertexBuffer)
 		{
 			return false;
@@ -758,7 +833,10 @@ bool Renderer::Initialize()
 	{
 		ResourceData VertexData = ResourceData(Cube.Vertices.Data());
 		
-		CubeVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(&VertexData, Cube.Vertices.Size(), BufferUsage_Dynamic);
+		CubeVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(
+			&VertexData, 
+			Cube.Vertices.Size(), 
+			BufferUsage_Dynamic);
 		if (!CubeVertexBuffer)
 		{
 			return false;
@@ -771,7 +849,10 @@ bool Renderer::Initialize()
 
 	{
 		ResourceData VertexData = ResourceData(SkyboxMesh.Vertices.Data());
-		SkyboxVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(&VertexData, SkyboxMesh.Vertices.Size(), BufferUsage_Dynamic);
+		SkyboxVertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(
+			&VertexData, 
+			SkyboxMesh.Vertices.Size(), 
+			BufferUsage_Dynamic);
 		if (!SkyboxVertexBuffer)
 		{
 			return false;
@@ -787,7 +868,11 @@ bool Renderer::Initialize()
 		ResourceData IndexData = ResourceData(Sphere.Indices.Data());
 
 		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Sphere.Indices.Size());
-		MeshIndexBuffer = RenderingAPI::CreateIndexBuffer(&IndexData, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		MeshIndexBuffer = RenderingAPI::CreateIndexBuffer(
+			&IndexData, 
+			SizeInBytes, 
+			EIndexFormat::IndexFormat_Uint32, 
+			BufferUsage_Dynamic);
 		if (!MeshIndexBuffer)
 		{
 			return false;
@@ -802,7 +887,11 @@ bool Renderer::Initialize()
 		ResourceData IndexData = ResourceData(Cube.Indices.Data());
 
 		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Cube.Indices.Size());
-		CubeIndexBuffer = RenderingAPI::CreateIndexBuffer(&IndexData, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		CubeIndexBuffer = RenderingAPI::CreateIndexBuffer(
+			&IndexData, 
+			SizeInBytes, 
+			EIndexFormat::IndexFormat_Uint32, 
+			BufferUsage_Dynamic);
 		if (!CubeIndexBuffer)
 		{
 			return false;
@@ -817,7 +906,11 @@ bool Renderer::Initialize()
 		ResourceData IndexData = ResourceData(SkyboxMesh.Indices.Data());
 
 		const Uint32 SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(SkyboxMesh.Indices.Size());
-		SkyboxIndexBuffer = RenderingAPI::CreateIndexBuffer(&IndexData, SizeInBytes, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+		SkyboxIndexBuffer = RenderingAPI::CreateIndexBuffer(
+			&IndexData, 
+			SizeInBytes, 
+			EIndexFormat::IndexFormat_Uint32, 
+			BufferUsage_Dynamic);
 		if (!SkyboxIndexBuffer)
 		{
 			return false;
@@ -835,7 +928,11 @@ bool Renderer::Initialize()
 		return false;	
 	}
 
-	Skybox = TextureFactory::CreateTextureCubeFromPanorma(Panorama.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::Format_R16G16B16A16_Float);
+	Skybox = TextureFactory::CreateTextureCubeFromPanorma(
+		Panorama.Get(), 
+		1024, 
+		TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R16G16B16A16_Float);
 	if (!Skybox)
 	{
 		return false;
@@ -976,16 +1073,38 @@ bool Renderer::Initialize()
 		return false;
 	}
 
-	//RenderingAPI::Get().GetImmediateCommandList()->TransitionBarrier(PointLightBuffer.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_VertexAndConstantBuffer);
-	//RenderingAPI::Get().GetImmediateCommandList()->TransitionBarrier(DirectionalLightBuffer.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_VertexAndConstantBuffer);
-	//RenderingAPI::Get().GetImmediateCommandList()->TransitionBarrier(PointLightShadowMaps.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
-	//RenderingAPI::Get().GetImmediateCommandList()->TransitionBarrier(DirLightShadowMaps.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
-	//if (VSMDirLightShadowMaps)
-	//{
-	//	RenderingAPI::Get().GetImmediateCommandList()->TransitionBarrier(VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
-	//}
-	//
-	//RenderingAPI::Get().GetImmediateCommandList()->Flush();
+	CmdList.Begin();
+	
+	CmdList.TransitionBuffer(
+		PointLightBuffer.Get(), 
+		EResourceState::ResourceState_Common, 
+		EResourceState::ResourceState_VertexAndConstantBuffer);
+	
+	CmdList.TransitionBuffer(
+		DirectionalLightBuffer.Get(), 
+		EResourceState::ResourceState_Common, 
+		EResourceState::ResourceState_VertexAndConstantBuffer);
+	
+	CmdList.TransitionTexture(
+		PointLightShadowMaps.Get(), 
+		EResourceState::ResourceState_Common, 
+		EResourceState::ResourceState_PixelShaderResource);
+
+	CmdList.TransitionTexture(
+		DirLightShadowMaps.Get(), 
+		EResourceState::ResourceState_Common, 
+		EResourceState::ResourceState_PixelShaderResource);
+
+	if (VSMDirLightShadowMaps)
+	{
+		CmdList.TransitionTexture(
+			VSMDirLightShadowMaps.Get(), 
+			EResourceState::ResourceState_Common, 
+			EResourceState::ResourceState_PixelShaderResource);
+	}
+	
+	CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
+	Executor.ExecuteCommandList(CmdList);
 
 	if (!InitGBuffer())
 	{
@@ -1017,6 +1136,7 @@ bool Renderer::Initialize()
 		return false;
 	}
 
+	// TODO: Fix raytracinf
 	// Init RayTracing if supported
 	//if (RenderingAPI::Get().IsRayTracingSupported())
 	//{
@@ -1026,6 +1146,7 @@ bool Renderer::Initialize()
 	//	}
 	//}
 
+	// TODO: Fix this
 	//LightDescriptorTable->SetShaderResourceView(ReflectionTexture->GetShaderResourceView(0).Get(), 4);
 	//LightDescriptorTable->SetShaderResourceView(IrradianceMap->GetShaderResourceView(0).Get(), 5);
 	//LightDescriptorTable->SetShaderResourceView(SpecularIrradianceMap->GetShaderResourceView(0).Get(), 6);
@@ -2131,7 +2252,7 @@ bool Renderer::InitGBuffer()
 	// Final Image
 	FinalTarget = RenderingAPI::CreateTexture2D(
 		nullptr, 
-		RenderTargetFormat, 
+		FinalTargetFormat,
 		Usage, 
 		Width, 
 		Height, 
@@ -2141,13 +2262,13 @@ bool Renderer::InitGBuffer()
 	{
 		FinalTarget->SetName("Final Target");
 
-		FinalTargetSRV = RenderingAPI::CreateShaderResourceView(FinalTarget.Get(), RenderTargetFormat, 0, 1);
+		FinalTargetSRV = RenderingAPI::CreateShaderResourceView(FinalTarget.Get(), FinalTargetFormat, 0, 1);
 		if (!FinalTargetSRV)
 		{
 			return false;
 		}
 
-		FinalTargetRTV = RenderingAPI::CreateRenderTargetView(FinalTarget.Get(), RenderTargetFormat, 0);
+		FinalTargetRTV = RenderingAPI::CreateRenderTargetView(FinalTarget.Get(), FinalTargetFormat, 0);
 		if (!FinalTargetRTV)
 		{
 			return false;
@@ -2414,7 +2535,7 @@ bool Renderer::InitDebugStates()
 	}
 
 	RasterizerStateCreateInfo RasterizerStateInfo;
-	RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
+	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
 
 	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
 	if (!RasterizerState)
@@ -2429,6 +2550,7 @@ bool Renderer::InitDebugStates()
 
 	// Debug blendstate
 	BlendStateCreateInfo BlendStateInfo;
+
 	TSharedRef<BlendState> BlendState = RenderingAPI::CreateBlendState(BlendStateInfo);
 	if (!BlendState)
 	{
@@ -2448,7 +2570,7 @@ bool Renderer::InitDebugStates()
 	PSOProperties.ShaderState.VertexShader	= VShader.Get();
 	PSOProperties.ShaderState.PixelShader	= PShader.Get();
 	PSOProperties.PrimitiveTopologyType		= EPrimitiveTopologyType::PrimitiveTopologyType_Line;
-	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
+	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= FinalTargetFormat;
 	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
 	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
 
@@ -2477,7 +2599,9 @@ bool Renderer::InitDebugStates()
 		{ -0.5f,  0.5f, -0.5f }
 	};
 
-	AABBVertexBuffer = RenderingAPI::CreateVertexBuffer<XMFLOAT3>(nullptr, 8, BufferUsage_Default);
+	ResourceData VertexData(Vertices);
+
+	AABBVertexBuffer = RenderingAPI::CreateVertexBuffer<XMFLOAT3>(&VertexData, 8, BufferUsage_Default);
 	if (!AABBVertexBuffer)
 	{
 		Debug::DebugBreak();
@@ -2505,7 +2629,13 @@ bool Renderer::InitDebugStates()
 		2, 7,
 	};
 
-	AABBIndexBuffer = RenderingAPI::CreateIndexBuffer(nullptr, sizeof(Uint16) * 24, EIndexFormat::IndexFormat_Uint16, BufferUsage_Default);
+	ResourceData IndexData(Indices);
+
+	AABBIndexBuffer = RenderingAPI::CreateIndexBuffer(
+		&IndexData, 
+		sizeof(Uint16) * 24, 
+		EIndexFormat::IndexFormat_Uint16, 
+		BufferUsage_Default);
 	if (!AABBIndexBuffer)
 	{
 		Debug::DebugBreak();
@@ -2515,19 +2645,6 @@ bool Renderer::InitDebugStates()
 	{
 		AABBIndexBuffer->SetName("AABB IndexBuffer");
 	}
-
-	// Upload Data
-	//RenderingAPI::Get().GetImmediateCommandList()->TransitionBarrier(AABBVertexBuffer.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);
-	//RenderingAPI::Get().GetImmediateCommandList()->TransitionBarrier(AABBIndexBuffer.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);
-
-	//RenderingAPI::Get().GetImmediateCommandList()->UploadBufferData(AABBVertexBuffer.Get(), 0, Vertices, sizeof(Vertices));
-	//RenderingAPI::Get().GetImmediateCommandList()->UploadBufferData(AABBIndexBuffer.Get(), 0, Indices, sizeof(Indices));
-
-	//RenderingAPI::Get().GetImmediateCommandList()->TransitionBarrier(AABBVertexBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_VertexAndConstantBuffer);
-	//RenderingAPI::Get().GetImmediateCommandList()->TransitionBarrier(AABBIndexBuffer.Get(), EResourceState::ResourceState_CopyDest, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-
-	//RenderingAPI::Get().GetImmediateCommandList()->Flush();
-	//RenderingAPI::Get().GetImmediateCommandList()->WaitForCompletion();
 
 	return true;
 }
@@ -2597,7 +2714,7 @@ bool Renderer::InitAA()
 	}
 	else
 	{
-		DepthStencilState->SetName("Debug DepthStencilState");
+		DepthStencilState->SetName("PostProcess DepthStencilState");
 	}
 
 	RasterizerStateCreateInfo RasterizerStateInfo;
@@ -2611,7 +2728,7 @@ bool Renderer::InitAA()
 	}
 	else
 	{
-		RasterizerState->SetName("Debug RasterizerState");
+		RasterizerState->SetName("PostProcess RasterizerState");
 	}
 
 	BlendStateCreateInfo BlendStateInfo;
@@ -2626,7 +2743,7 @@ bool Renderer::InitAA()
 	}
 	else
 	{
-		BlendState->SetName("Debug BlendState");
+		BlendState->SetName("PostProcess BlendState");
 	}
 
 	GraphicsPipelineStateCreateInfo PSOProperties;
@@ -2858,8 +2975,15 @@ void Renderer::GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, Com
 		}
 	}
 
-	InCmdList.TransitionTexture(Source, EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
-	InCmdList.TransitionTexture(Dest, EResourceState::ResourceState_Common, EResourceState::ResourceState_NonPixelShaderResource);
+	InCmdList.TransitionTexture(
+		Source, 
+		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_NonPixelShaderResource);
+	
+	InCmdList.TransitionTexture(
+		Dest, 
+		EResourceState::ResourceState_Common, 
+		EResourceState::ResourceState_NonPixelShaderResource);
 
 	//InCmdList->SetComputeRootSignature(IrradianceGenRootSignature->GetRootSignature());
 
@@ -2873,8 +2997,15 @@ void Renderer::GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, Com
 
 	InCmdList.UnorderedAccessTextureBarrier(Dest);
 
-	InCmdList.TransitionTexture(Source, EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
-	InCmdList.TransitionTexture(Dest, EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
+	InCmdList.TransitionTexture(
+		Source, 
+		EResourceState::ResourceState_NonPixelShaderResource, 
+		EResourceState::ResourceState_PixelShaderResource);
+	
+	InCmdList.TransitionTexture(
+		Dest, 
+		EResourceState::ResourceState_NonPixelShaderResource, 
+		EResourceState::ResourceState_PixelShaderResource);
 }
 
 void Renderer::GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* Dest, CommandList& InCmdList)
@@ -2915,8 +3046,15 @@ void Renderer::GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* D
 		}
 	}
 
-	InCmdList.TransitionTexture(Source, EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
-	InCmdList.TransitionTexture(Dest, EResourceState::ResourceState_Common, EResourceState::ResourceState_NonPixelShaderResource);
+	InCmdList.TransitionTexture(
+		Source, 
+		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_NonPixelShaderResource);
+	
+	InCmdList.TransitionTexture(
+		Dest, 
+		EResourceState::ResourceState_Common, 
+		EResourceState::ResourceState_NonPixelShaderResource);
 
 	//InCommandList->SetComputeRootSignature(SpecIrradianceGenRootSignature->GetRootSignature());
 
@@ -2940,8 +3078,15 @@ void Renderer::GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* D
 		Roughness += RoughnessDelta;
 	}
 
-	InCmdList.TransitionTexture(Source, EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
-	InCmdList.TransitionTexture(Dest, EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
+	InCmdList.TransitionTexture(
+		Source, 
+		EResourceState::ResourceState_NonPixelShaderResource, 
+		EResourceState::ResourceState_PixelShaderResource);
+	
+	InCmdList.TransitionTexture(
+		Dest, 
+		EResourceState::ResourceState_NonPixelShaderResource, 
+		EResourceState::ResourceState_PixelShaderResource);
 }
 
 void Renderer::WaitForPendingFrames()

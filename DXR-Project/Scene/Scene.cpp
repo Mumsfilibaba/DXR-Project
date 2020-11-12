@@ -44,7 +44,11 @@ void Scene::Tick(Timestamp DeltaTime)
 
 void Scene::AddCamera(Camera* InCamera)
 {
-	SAFEDELETE(CurrentCamera);
+	if (CurrentCamera)
+	{
+		SAFEDELETE(CurrentCamera);
+	}
+
 	CurrentCamera = InCamera;
 }
 

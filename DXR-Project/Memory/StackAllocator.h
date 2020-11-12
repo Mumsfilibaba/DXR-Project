@@ -17,6 +17,18 @@ struct MemoryArena
 		Reset();
 	}
 
+	MemoryArena(const MemoryArena& Other) = delete;
+
+	inline MemoryArena(MemoryArena&& Other)
+		: Mem(Other.Mem)
+		, Offset(Other.Offset)
+		, SizeInBytes(Other.SizeInBytes)
+	{
+		Other.Mem			= nullptr;
+		Other.Offset		= 0;
+		Other.SizeInBytes	= 0;
+	}
+
 	inline ~MemoryArena()
 	{
 		Memory::Free(Mem);
@@ -41,6 +53,25 @@ struct MemoryArena
 		Offset = 0;
 	}
 
+	MemoryArena& operator=(const MemoryArena& Other) = delete;
+
+	FORCEINLINE MemoryArena& operator=(MemoryArena&& Other)
+	{
+		if (Mem)
+		{
+			Memory::Free(Mem);
+		}
+
+		Mem			= Other.Mem;
+		Offset		= Other.Offset;
+		SizeInBytes = Other.SizeInBytes;
+		Other.Mem			= nullptr;
+		Other.Offset		= 0;
+		Other.SizeInBytes	= 0;
+
+		return *this;
+	}
+
 	Byte*	Mem;
 	Uint64	Offset;
 	Uint64	SizeInBytes;
@@ -63,8 +94,7 @@ public:
 	template<typename T>
 	FORCEINLINE VoidPtr Allocate()
 	{
-		constexpr Uint64 STANDARD_ALIGNMENT = 16;
-		return Allocate(sizeof(T), STANDARD_ALIGNMENT);
+		return Allocate(sizeof(T), alignof(T));
 	}
 
 	FORCEINLINE Byte* AllocateBytes(Uint64 SizeInBytes, Uint64 Alignment)

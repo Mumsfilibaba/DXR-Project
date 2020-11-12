@@ -48,6 +48,8 @@ public:
 		RenderTargetView* RenderTargetView, 
 		const ColorClearValue& ClearColor)
 	{
+		VALIDATE(RenderTargetView != nullptr);
+
 		RenderTargetView->AddRef();
 		InsertCommand<ClearRenderTargetCommand>(RenderTargetView, ClearColor);
 	}
@@ -56,6 +58,8 @@ public:
 		DepthStencilView* DepthStencilView, 
 		const DepthStencilClearValue& ClearValue)
 	{
+		VALIDATE(DepthStencilView != nullptr);
+
 		DepthStencilView->AddRef();
 		InsertCommand<ClearDepthStencilCommand>(DepthStencilView, ClearValue);
 	}
@@ -100,7 +104,7 @@ public:
 		for (Uint32 i = 0; i < VertexBufferCount; i++)
 		{
 			Buffers[i] = VertexBuffers[i];
-			Buffers[i]->AddRef();
+			SAFEADDREF(Buffers[i]);
 		}
 
 		InsertCommand<BindVertexBuffersCommand>(Buffers, VertexBufferCount, BufferSlot);
@@ -108,13 +112,13 @@ public:
 
 	FORCEINLINE void BindIndexBuffer(IndexBuffer* IndexBuffer)
 	{
-		IndexBuffer->AddRef();
+		SAFEADDREF(IndexBuffer);
 		InsertCommand<BindIndexBufferCommand>(IndexBuffer);
 	}
 
 	FORCEINLINE void BindRayTracingScene(RayTracingScene* RayTracingScene)
 	{
-		RayTracingScene->AddRef();
+		SAFEADDREF(RayTracingScene);
 		InsertCommand<BindRayTracingSceneCommand>(RayTracingScene);
 	}
 
@@ -123,32 +127,33 @@ public:
 		Uint32 RenderTargetCount, 
 		DepthStencilView* DepthStencilView)
 	{
-		VoidPtr RenderTargetMemory = CmdAllocator.Allocate(sizeof(RenderTargetView*) * RenderTargetCount, 1);
-		RenderTargetView** RenderTargets = reinterpret_cast<RenderTargetView**>(RenderTargetMemory);
+		VoidPtr RenderTargetMemory			= CmdAllocator.Allocate(sizeof(RenderTargetView*) * RenderTargetCount, 1);
+		RenderTargetView** RenderTargets	= reinterpret_cast<RenderTargetView**>(RenderTargetMemory);
 		for (Uint32 i = 0; i < RenderTargetCount; i++)
 		{
 			RenderTargets[i] = RenderTargetViews[i];
-			RenderTargets[i]->AddRef();
+			SAFEADDREF(RenderTargets[i]);
 		}
 
+		SAFEADDREF(DepthStencilView);
 		InsertCommand<BindRenderTargetsCommand>(RenderTargets, RenderTargetCount, DepthStencilView);
 	}
 
 	FORCEINLINE void BindGraphicsPipelineState(GraphicsPipelineState* PipelineState)
 	{
-		PipelineState->AddRef();
+		SAFEADDREF(PipelineState);
 		InsertCommand<BindGraphicsPipelineStateCommand>(PipelineState);
 	}
 
 	FORCEINLINE void BindComputePipelineState(ComputePipelineState* PipelineState)
 	{
-		PipelineState->AddRef();
+		SAFEADDREF(PipelineState);
 		InsertCommand<BindComputePipelineStateCommand>(PipelineState);
 	}
 
 	FORCEINLINE void BindRayTracingPipelineState(RayTracingPipelineState* PipelineState)
 	{
-		PipelineState->AddRef();
+		SAFEADDREF(PipelineState);
 		InsertCommand<BindRayTracingPipelineStateCommand>(PipelineState);
 	}
 
@@ -193,8 +198,8 @@ public:
 
 	FORCEINLINE void ResolveTexture(Texture* Destination, Texture* Source)
 	{
-		Destination->AddRef();
-		Source->AddRef();
+		SAFEADDREF(Destination);
+		SAFEADDREF(Source);
 		InsertCommand<ResolveTextureCommand>(Destination, Source);
 	}
 
@@ -207,7 +212,7 @@ public:
 		VoidPtr TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
 		Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
-		Destination->AddRef();
+		SAFEADDREF(Destination);
 		InsertCommand<UpdateBufferCommand>(
 			Destination, 
 			DestinationOffsetInBytes, 
@@ -226,7 +231,7 @@ public:
 		VoidPtr TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
 		Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
-		Destination->AddRef();
+		SAFEADDREF(Destination);
 		InsertCommand<UpdateTextureCommand>(
 			Destination,
 			Width,
@@ -240,8 +245,8 @@ public:
 		Buffer* Source, 
 		const CopyBufferInfo& CopyInfo)
 	{
-		Destination->AddRef();
-		Source->AddRef();
+		SAFEADDREF(Destination);
+		SAFEADDREF(Source);
 		InsertCommand<CopyBufferCommand>(Destination, Source, CopyInfo);
 	}
 
@@ -250,25 +255,27 @@ public:
 		Texture* Source, 
 		const CopyTextureInfo& CopyTextureInfo)
 	{
-		Destination->AddRef();
-		Source->AddRef();
+		SAFEADDREF(Destination);
+		SAFEADDREF(Source);
 		InsertCommand<CopyTextureCommand>(Destination, Source, CopyTextureInfo);
 	}
 
 	FORCEINLINE void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry)
 	{
-		RayTracingGeometry->AddRef();
+		SAFEADDREF(RayTracingGeometry);
 		InsertCommand<BuildRayTracingGeometryCommand>(RayTracingGeometry);
 	}
 
 	FORCEINLINE void BuildRayTracingScene(RayTracingScene* RayTracingScene)
 	{
-		RayTracingScene->AddRef();
+		SAFEADDREF(RayTracingScene);
 		InsertCommand<BuildRayTracingSceneCommand>(RayTracingScene);
 	}
 
 	FORCEINLINE void GenerateMips(Texture* Texture)
 	{
+		VALIDATE(Texture != nullptr);
+
 		Texture->AddRef();
 		InsertCommand<GenerateMipsCommand>(Texture);
 	}
@@ -278,6 +285,8 @@ public:
 		EResourceState BeforeState, 
 		EResourceState AfterState)
 	{
+		VALIDATE(Texture != nullptr);
+
 		Texture->AddRef();
 		InsertCommand<TransitionTextureCommand>(Texture, BeforeState, AfterState);
 	}
@@ -287,22 +296,31 @@ public:
 		EResourceState BeforeState,
 		EResourceState AfterState)
 	{
+		VALIDATE(Buffer != nullptr);
+
 		Buffer->AddRef();
 		InsertCommand<TransitionBufferCommand>(Buffer, BeforeState, AfterState);
 	}
 
 	FORCEINLINE void UnorderedAccessTextureBarrier(Texture* Texture)
 	{
+		VALIDATE(Texture != nullptr);
+
 		Texture->AddRef();
 		InsertCommand<UnorderedAccessTextureBarrierCommand>(Texture);
 	}
 
-	FORCEINLINE void Draw(Uint32 VertexCount, Uint32 StartVertexLocation)
+	FORCEINLINE void Draw(
+		Uint32 VertexCount, 
+		Uint32 StartVertexLocation)
 	{
 		InsertCommand<DrawCommand>(VertexCount, StartVertexLocation);
 	}
 
-	FORCEINLINE void DrawIndexed(Uint32 IndexCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation)
+	FORCEINLINE void DrawIndexed(
+		Uint32 IndexCount, 
+		Uint32 StartIndexLocation, 
+		Uint32 BaseVertexLocation)
 	{
 		InsertCommand< DrawIndexedCommand>(IndexCount, StartIndexLocation, BaseVertexLocation);
 	}
@@ -370,7 +388,7 @@ private:
 	{
 		VoidPtr Memory	= CmdAllocator.Allocate<TCommand>();
 		TCommand* Cmd	= new(Memory) TCommand(Forward<TArgs>(Args)...);
-		
+
 		if (Last)
 		{
 			Last->NextCmd = Cmd;

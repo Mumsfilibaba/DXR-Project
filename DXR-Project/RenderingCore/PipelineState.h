@@ -554,15 +554,15 @@ struct PipelineRenderTargetFormats
 * PipelineShaderState
 */
 
-struct PipelineShaderState
+struct GraphicsPipelineShaderState
 {
-	inline PipelineShaderState()
+	inline GraphicsPipelineShaderState()
 		: VertexShader(nullptr)
 		, PixelShader(nullptr)
 	{
 	}
 
-	inline PipelineShaderState(VertexShader* InVertexShader, PixelShader* InPixelShader)
+	inline GraphicsPipelineShaderState(VertexShader* InVertexShader, PixelShader* InPixelShader)
 		: VertexShader(InVertexShader)
 		, PixelShader(InPixelShader)
 	{
@@ -587,7 +587,7 @@ struct GraphicsPipelineStateCreateInfo
 	Uint32						SampleMask				= 0xffffffff;
 	EIndexBufferStripCutValue	IBStripCutValue			= EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
 	EPrimitiveTopologyType		PrimitiveTopologyType	= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
-	PipelineShaderState			ShaderState;
+	GraphicsPipelineShaderState ShaderState;
 	PipelineRenderTargetFormats PipelineFormats;
 };
 

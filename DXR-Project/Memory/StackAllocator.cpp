@@ -16,6 +16,7 @@ StackAllocator::StackAllocator(Uint32 InSizePerArena)
 VoidPtr StackAllocator::Allocate(Uint64 SizeInBytes, Uint64 Alignment)
 {
 	VALIDATE(CurrentArena != nullptr);
+	VALIDATE(SizeInBytes <= SizePerArena);
 
 	const Uint32 AlignedSize = AlignUp(SizeInBytes, Alignment);
 	if (CurrentArena->ReservedSize() > AlignedSize)
@@ -24,13 +25,16 @@ VoidPtr StackAllocator::Allocate(Uint64 SizeInBytes, Uint64 Alignment)
 	}
 
 	// Check if reuse is possible
-	if (ArenaIndex < (Arenas.Size() - 1))
+	const Uint32 LastIndex = Arenas.Size() - 1;
+	if (ArenaIndex < LastIndex)
 	{
 		CurrentArena = &Arenas[++ArenaIndex];
+		CurrentArena->Reset();
 	}
 	else
 	{
 		CurrentArena = &Arenas.EmplaceBack(SizePerArena);
+		ArenaIndex++;
 	}
 
 	VALIDATE(CurrentArena != nullptr);
@@ -40,8 +44,9 @@ VoidPtr StackAllocator::Allocate(Uint64 SizeInBytes, Uint64 Alignment)
 void StackAllocator::Reset()
 {
 	VALIDATE(Arenas.IsEmpty() == false);
-	Arenas.Front().Reset();
+	ArenaIndex		= 0;
+	CurrentArena	= &Arenas.Front();
 
-	CurrentArena = &Arenas.Front();
 	VALIDATE(CurrentArena != nullptr);
+	CurrentArena->Reset();
 }

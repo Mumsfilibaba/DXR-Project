@@ -9,10 +9,6 @@
 	{ \
 		delete (OutObject); \
 		(OutObject) = nullptr; \
-	} \
-	else \
-	{ \
-		VALIDATE(false); \
 	}
 
 #define SAFERELEASE(OutObject) \
@@ -20,10 +16,12 @@
 	{ \
 		(OutObject)->Release(); \
 		(OutObject) = nullptr; \
-	} \
-	else \
+	}
+
+#define SAFEADDREF(OutObject) \
+	if ((OutObject)) \
 	{ \
-		VALIDATE(false); \
+		(OutObject)->AddRef(); \
 	}
 
 /*

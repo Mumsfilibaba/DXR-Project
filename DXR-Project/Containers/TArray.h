@@ -940,7 +940,6 @@ private:
 
 		InternalReleaseData();
 		ArrayPtr = TempData;
-
 		ArrayCapacity = InCapacity;
 	}
 
@@ -1145,6 +1144,7 @@ private:
 	FORCEINLINE void InternalDestructRange(const T* InBegin, const T* InEnd)
 	{
 		VALIDATE(InBegin <= InEnd);
+		VALIDATE(InEnd - InBegin <= ArrayCapacity);
 
 		// Calls the destructor for every object in the range (If It needs to be called)
 		if constexpr (std::is_trivially_destructible<T>() == false)
