@@ -150,11 +150,13 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 		MatProps.Roughness	= 1.0f;
 
 		TSharedPtr<Material>& NewMaterial = LoadedMaterials.EmplaceBack(MakeShared<Material>(MatProps));
+		LOG_INFO("Loaded materialID=" + std::to_string(LoadedMaterials.Size() - 1));
+
 		NewMaterial->AlbedoMap		= WhiteTexture;
 		NewMaterial->AOMap			= WhiteTexture;
 		NewMaterial->HeightMap		= WhiteTexture;
 		NewMaterial->MetallicMap	= WhiteTexture;
-		NewMaterial->RoughnessMap		= WhiteTexture;
+		NewMaterial->RoughnessMap	= WhiteTexture;
 		NewMaterial->NormalMap		= NormalMap;
 
 		// Metallic
@@ -275,80 +277,96 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
 	for (const tinyobj::shape_t& Shape : Shapes)
 	{
-		// Create Mesh
-		Data.Indices.Clear();
-		Data.Vertices.Clear();
-
-		UniqueVertices.clear();
-
-		for (const tinyobj::index_t& Index : Shape.mesh.indices)
+		// Start at index zero for eaxh mesh and loop until all indices are processed
+		Uint32 i = 0;
+		while (i < Shape.mesh.indices.size())
 		{
-			Vertex TempVertex;
+			// Start a new mesh
+			Data.Indices.Clear();
+			Data.Vertices.Clear();
 
-			// Normals and texcoords are optional, Positions are required
-			VALIDATE(Index.vertex_index >= 0);
+			UniqueVertices.clear();
 
-			size_t PositionIndex = 3 * static_cast<size_t>(Index.vertex_index);
-			TempVertex.Position =
+			Uint32 Face = i / 3;
+			const Int32 MaterialID = Shape.mesh.material_ids[Face];
+			for (; i < Shape.mesh.indices.size(); i++)
 			{
-				Attributes.vertices[PositionIndex + 0],
-				Attributes.vertices[PositionIndex + 1],
-				Attributes.vertices[PositionIndex + 2],
-			};
-
-			if (Index.normal_index >= 0)
-			{
-				size_t NormalIndex = 3 * static_cast<size_t>(Index.normal_index);
-				TempVertex.Normal =
+				// Break if material is not the same
+				Face = i / 3;
+				if (Shape.mesh.material_ids[Face] != MaterialID)
 				{
-					Attributes.normals[NormalIndex + 0],
-					Attributes.normals[NormalIndex + 1],
-					Attributes.normals[NormalIndex + 2],
-				};
-			}
+					break;
+				}
 
-			if (Index.texcoord_index >= 0)
-			{
-				size_t TexCoordIndex = 2 * static_cast<size_t>(Index.texcoord_index);
-				TempVertex.TexCoord =
+				const tinyobj::index_t& Index = Shape.mesh.indices[i];
+				Vertex TempVertex;
+
+				// Normals and texcoords are optional, Positions are required
+				VALIDATE(Index.vertex_index >= 0);
+
+				size_t PositionIndex = 3 * static_cast<size_t>(Index.vertex_index);
+				TempVertex.Position =
 				{
-					Attributes.texcoords[TexCoordIndex + 0],
-					Attributes.texcoords[TexCoordIndex + 1],
+					Attributes.vertices[PositionIndex + 0],
+					Attributes.vertices[PositionIndex + 1],
+					Attributes.vertices[PositionIndex + 2],
 				};
+
+				if (Index.normal_index >= 0)
+				{
+					size_t NormalIndex = 3 * static_cast<size_t>(Index.normal_index);
+					TempVertex.Normal =
+					{
+						Attributes.normals[NormalIndex + 0],
+						Attributes.normals[NormalIndex + 1],
+						Attributes.normals[NormalIndex + 2],
+					};
+				}
+
+				if (Index.texcoord_index >= 0)
+				{
+					size_t TexCoordIndex = 2 * static_cast<size_t>(Index.texcoord_index);
+					TempVertex.TexCoord =
+					{
+						Attributes.texcoords[TexCoordIndex + 0],
+						Attributes.texcoords[TexCoordIndex + 1],
+					};
+				}
+
+				if (UniqueVertices.count(TempVertex) == 0)
+				{
+					UniqueVertices[TempVertex] = static_cast<Uint32>(Data.Vertices.Size());
+					Data.Vertices.PushBack(TempVertex);
+				}
+
+				Data.Indices.EmplaceBack(UniqueVertices[TempVertex]);
 			}
 
-			if (UniqueVertices.count(TempVertex) == 0)
+			// Calculate tangents and create mesh
+			MeshFactory::CalculateTangents(Data);
+			TSharedPtr<Mesh> NewMesh = Mesh::Make(Data);
+
+			// Setup new actor for this shape
+			Actor* NewActor = new Actor();
+			NewActor->SetDebugName(Shape.name);
+			NewActor->GetTransform().SetScale(0.015f, 0.015f, 0.015f);
+
+			// Add a MeshComponent
+			MeshComponent* NewComponent = new MeshComponent(NewActor);
+			NewComponent->Mesh = NewMesh;
+			if (MaterialID >= 0)
 			{
-				UniqueVertices[TempVertex] = static_cast<Uint32>(Data.Vertices.Size());
-				Data.Vertices.PushBack(TempVertex);
+				LOG_INFO(Shape.name + " got materialID=" + std::to_string(MaterialID));
+				NewComponent->Material = LoadedMaterials[MaterialID];
+			}
+			else
+			{
+				NewComponent->Material = BaseMaterial;
 			}
 
-			Data.Indices.EmplaceBack(UniqueVertices[TempVertex]);
+			NewActor->AddComponent(NewComponent);
+			LoadedScene->AddActor(NewActor);
 		}
-
-		// Calculate tangents and create mesh
-		MeshFactory::CalculateTangents(Data);
-		TSharedPtr<Mesh> NewMesh = Mesh::Make(Data);
-
-		// Setup new actor for this shape
-		Actor* NewActor = new Actor();
-		NewActor->SetDebugName(Shape.name);
-		NewActor->GetTransform().SetScale(0.015f, 0.015f, 0.015f);
-
-		// Add a MeshComponent
-		MeshComponent* NewComponent = new MeshComponent(NewActor);
-		NewComponent->Mesh = NewMesh;
-		if (Shape.mesh.material_ids[0] >= 0)
-		{
-			NewComponent->Material = LoadedMaterials[Shape.mesh.material_ids[0]];
-		}
-		else
-		{
-			NewComponent->Material	= BaseMaterial;
-		}
-
-		NewActor->AddComponent(NewComponent);
-		LoadedScene->AddActor(NewActor);
 	}
 
 	return LoadedScene.Release();
