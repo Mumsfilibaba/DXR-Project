@@ -31,7 +31,6 @@ public:
 	~D3D12Device();
 
 	bool CreateDevice(bool DebugEnable, bool GPUValidation);
-	bool InitRayTracing();
 
 	class D3D12CommandQueue* CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type);
 	class D3D12CommandAllocator* CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type);

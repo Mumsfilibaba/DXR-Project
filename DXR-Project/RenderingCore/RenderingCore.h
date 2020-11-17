@@ -146,7 +146,7 @@ inline const Char* ToString(EPrimitiveTopology ResourceState)
 }
 
 /*
-* Color
+* ColorClearValue
 */
 
 struct ColorClearValue
