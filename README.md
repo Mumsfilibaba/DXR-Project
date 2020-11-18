@@ -10,7 +10,7 @@ This engine is a small hobby rendering/game engine created for testing different
 * Physically Based Rendering with Image-Based Lightning
 * Shadow Mapping (Both Variance Shadow Mapping and "Traditional" is supported, and is selectable at compile time)
 * Dynamic lights (Point-Lights, Directional-Lights, both with shadow support)
-* Ray Traced reflections (Currently disabled)
+* RayTraced reflections
 
 **Planed:**
 * Vulkan backend
@@ -21,7 +21,12 @@ This engine is a small hobby rendering/game engine created for testing different
 * Cascade Shadow-maps
 
 # Screenshots
-![Screen0](Screenshots/screen0.png? "Screen0")
-![Screen1](Screenshots/screen1.png? "Screen1")
-![Screen2](Screenshots/screen2.png? "Screen2")
 ![Screen3](Screenshots/screen3.png? "Screen3")
+RayTracing **Off**
+![Screen0](Screenshots/screen0.png? "Screen0")
+RayTracing **Off**
+![Screen1](Screenshots/screen1.png? "Screen1")
+RayTracing **Off**
+![Screen2](Screenshots/screen2.png? "Screen2")
+RayTracing **Off**
+
