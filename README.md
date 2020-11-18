@@ -1,5 +1,5 @@
 # Personal Engine
-This is a small personal rendering engine created for testing different graphic techniques. The name may suggest that this is only for DXR, and that is why it was created in the first place, but it has evolved to be more than that. Maybe I change the name in the future, maybe not.
+This engine is a small hobby rendering/game engine created for testing different rendering techniques. The name may suggest that this is only for DXR, and that is how it started. However, it has evolved into more than that. Now it has more focus on abstracting D3D12 and testing game-engine architecture techniques. Maybe I change the name in the future, perhaps not.
 
 **Current Features:**
 * FXAA
