@@ -70,7 +70,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 
 	// Convert the world space direction into U,V texture coordinates in the panoramic texture.
 	// Source: http://gl.ict.usc.edu/Data/HighResProbes/
-	float2 PanoramaTexCoords = float2(atan2(-Direction.x, -Direction.z), acos(Direction.y)) * INV_ATAN;
+	float2 PanoramaTexCoords = float2(atan2(Direction.x, Direction.z), acos(Direction.y)) * INV_ATAN;
 
 	OutCube[TexCoord] = Source.SampleLevel(LinearSampler, PanoramaTexCoords, 0);
 }

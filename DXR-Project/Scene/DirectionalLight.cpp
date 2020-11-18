@@ -84,9 +84,11 @@ void DirectionalLight::SetShadowFarPlane(Float32 InShadowFarPlane)
 
 void DirectionalLight::CalculateMatrix()
 {
-	XMVECTOR LightDirection = XMLoadFloat3(&Direction);
+	XMFLOAT3 StartDirection = XMFLOAT3(0.0f, -1.0f, 0.0f);
+	XMVECTOR LightDirection = XMLoadFloat3(&StartDirection);
 	XMMATRIX RotationMatrix = XMMatrixRotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
 	LightDirection = XMVector3Normalize(XMVector3Transform(LightDirection, RotationMatrix));
+	XMStoreFloat3(&Direction, LightDirection);
 
 	XMVECTOR LightPosition	= XMLoadFloat3(&ShadowMapPosition);
 	XMVECTOR LightUp		= XMVectorSet(0.0, 0.0f, 1.0f, 0.0f);

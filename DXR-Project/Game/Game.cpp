@@ -10,6 +10,7 @@
 #include "Scene/Components/MeshComponent.h"
 
 #include "Application/Input.h"
+#include "Application/Application.h"
 
 /*
 * Game
@@ -30,6 +31,8 @@ Game::~Game()
 
 bool Game::Initialize()
 {
+	Application::Get().GetMainWindow()->ToggleFullscreen();
+
 	// Initialize Scene
 	constexpr Float32	SphereOffset	= 1.25f;
 	constexpr Uint32	SphereCountX	= 8;
@@ -131,9 +134,10 @@ bool Game::Initialize()
 	NewActor->SetDebugName("Cube");
 	NewActor->GetTransform().SetPosition(0.0f, 2.0f, -2.0f);
 
-	MatProperties.AO		= 1.0f;
-	MatProperties.Metallic	= 1.0f;
-	MatProperties.Roughness	= 1.0f;
+	MatProperties.AO			= 1.0f;
+	MatProperties.Metallic		= 1.0f;
+	MatProperties.Roughness		= 1.0f;
+	MatProperties.EnableHeight	= 1;
 
 	NewComponent = new MeshComponent(NewActor);
 	NewComponent->Mesh		= Mesh::Make(CubeMeshData);

@@ -9,10 +9,11 @@
 
 struct MaterialProperties
 {
-	XMFLOAT3 Albedo		= XMFLOAT3(1.0f, 1.0f, 1.0f);
-	Float32 Roughness	= 0.0f;
-	Float32 Metallic	= 0.0f;
-	Float32 AO			= 0.5f;
+	XMFLOAT3 Albedo			= XMFLOAT3(1.0f, 1.0f, 1.0f);
+	Float32 Roughness		= 0.0f;
+	Float32 Metallic		= 0.0f;
+	Float32 AO				= 0.5f;
+	Int32	EnableHeight	= 0;
 };
 
 /*
@@ -40,6 +41,8 @@ public:
 	void SetMetallic(Float32 Metallic);
 	void SetRoughness(Float32 Roughness);
 	void SetAmbientOcclusion(Float32 AO);
+
+	void EnableHeightMap(bool EnableHeightMap);
 
 	void SetDebugName(const std::string& InDebugName);
 

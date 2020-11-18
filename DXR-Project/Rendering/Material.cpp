@@ -109,6 +109,18 @@ void Material::SetAmbientOcclusion(Float32 AO)
 	MaterialBufferIsDirty = true;
 }
 
+void Material::EnableHeightMap(bool EnableHeightMap)
+{
+	if (EnableHeightMap)
+	{
+		Properties.EnableHeight = 1;
+	}
+	else
+	{
+		Properties.EnableHeight = 0;
+	}
+}
+
 void Material::SetDebugName(const std::string& InDebugName)
 {
 	DebugName = InDebugName;

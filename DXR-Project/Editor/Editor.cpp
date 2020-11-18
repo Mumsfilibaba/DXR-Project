@@ -78,6 +78,7 @@ static void DrawMenu()
 /*
 * Draw SideWindow
 */
+
 static void DrawSideWindow()
 {
 	DebugUI::DrawUI([]
@@ -292,12 +293,17 @@ static void DrawRenderSettings()
 */
 static void DrawSceneInfo()
 {
+	constexpr Uint32 Width = 400;
+
 	ImGui::Spacing();
 	ImGui::Text("Current Scene");
 	ImGui::Separator();
 
 	ImGui::Indent();
-	ImGui::BeginChild("SceneInfo");
+
+	WindowShape WindowShape;
+	Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
+	ImGui::BeginChild("SceneInfo", ImVec2(Width, WindowShape.Height - 100));
 
 	// Actors
 	if (ImGui::TreeNode("Actors"))

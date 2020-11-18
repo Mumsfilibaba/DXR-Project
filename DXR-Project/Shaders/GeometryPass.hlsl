@@ -20,6 +20,7 @@ cbuffer MaterialBuffer : register(b2, space0)
 	float	Roughness;
 	float	Metallic;
 	float	AO;
+	int		EnableHeight;
 };
 
 // PerFrame DescriptorTable
@@ -165,15 +166,18 @@ PSOutput PSMain(PSInput Input)
 	TexCoords.y			= 1.0f - TexCoords.y;
 	
 #ifdef PARALLAX_MAPPING_ENABLED
-	float3 ViewDir	= normalize(Input.TangentViewPos - Input.TangentPosition);
-	TexCoords		= ParallaxMapping(TexCoords, ViewDir);
-	//if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
-	//{
-	//    discard;
-	//}
+	if (EnableHeight != 0)
+	{
+		float3 ViewDir	= normalize(Input.TangentViewPos - Input.TangentPosition);
+		TexCoords		= ParallaxMapping(TexCoords, ViewDir);
+		//if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
+		//{
+		//	discard;
+		//}
+	}
 #endif
 
-    float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords).rgb) * Albedo;
+	float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords).rgb) * Albedo;
 	
 #ifdef NORMAL_MAPPING_ENABLED
 	float3 SampledNormal = NormalMap.Sample(MaterialSampler, TexCoords).rgb;
