@@ -465,7 +465,7 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	WindowShape CurrentWindowShape;
 	Window->GetWindowShape(CurrentWindowShape);
 
-	IO.DisplaySize = ImVec2(CurrentWindowShape.Width, CurrentWindowShape.Height);
+	IO.DisplaySize = ImVec2(Float32(CurrentWindowShape.Width), Float32(CurrentWindowShape.Height));
 
 	// Get Mouseposition
 	Int32 X = 0;
@@ -521,9 +521,9 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	GlobalDrawFuncs.Clear();
 
 	// Draw DebugWindow with DebugStrings
-	constexpr Uint32 Width = 300;
+	constexpr Float32 Width = 300.0f;
 	ImGui::SetNextWindowPos(ImVec2(static_cast<Float32>(CurrentWindowShape.Width - Width), 15.0f));
-	ImGui::SetNextWindowSize(ImVec2(Width, CurrentWindowShape.Height));
+	ImGui::SetNextWindowSize(ImVec2(Width, static_cast<Float32>(CurrentWindowShape.Height)));
 
 	ImGui::Begin("DebugWindow", nullptr,
 		ImGuiWindowFlags_NoBackground	| 

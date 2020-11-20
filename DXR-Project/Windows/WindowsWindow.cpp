@@ -264,3 +264,33 @@ void WindowsWindow::GetWindowShape(WindowShape& OutWindowShape) const
 		OutWindowShape = WindowShape(Width, Height, x, y);
 	}
 }
+
+Uint32 WindowsWindow::GetWidth() const
+{
+	if (IsValid())
+	{
+		RECT Rect = { };
+		if (::GetClientRect(hWindow, &Rect) != 0)
+		{
+			const Uint32 Width = static_cast<Uint32>(Rect.right - Rect.left);
+			return Width;
+		}
+	}
+
+	return 0;
+}
+
+Uint32 WindowsWindow::GetHeight() const
+{
+	if (IsValid())
+	{
+		RECT Rect = { };
+		if (::GetClientRect(hWindow, &Rect) != 0)
+		{
+			const Uint32 Height = static_cast<Uint32>(Rect.bottom - Rect.top);
+			return Height;
+		}
+	}
+
+	return 0;
+}

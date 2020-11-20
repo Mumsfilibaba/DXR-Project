@@ -54,7 +54,7 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(D3D12CommandList* Comma
 
 	// Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
 	BufferProperties BufferProps = { };
-	BufferProps.SizeInBytes	= Info.ScratchDataSizeInBytes;
+	BufferProps.SizeInBytes	= Uint32(Info.ScratchDataSizeInBytes);
 	BufferProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	BufferProps.InitalState	= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
@@ -65,7 +65,7 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(D3D12CommandList* Comma
 		return false;
 	}
 
-	BufferProps.SizeInBytes = Info.ResultDataMaxSizeInBytes;
+	BufferProps.SizeInBytes = Uint32(Info.ResultDataMaxSizeInBytes);
 	BufferProps.InitalState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 
 	ResultBuffer = new D3D12Buffer(Device);
@@ -209,7 +209,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandL
 
 	// Create the buffers
 	BufferProperties BufferProps = { };
-	BufferProps.SizeInBytes	= Info.ScratchDataSizeInBytes;
+	BufferProps.SizeInBytes	= Uint32(Info.ScratchDataSizeInBytes);
 	BufferProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	BufferProps.InitalState	= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
@@ -220,7 +220,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandL
 		return false;
 	}
 
-	BufferProps.SizeInBytes = Info.ResultDataMaxSizeInBytes;
+	BufferProps.SizeInBytes = Uint32(Info.ResultDataMaxSizeInBytes);
 	BufferProps.InitalState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 
 	ResultBuffer = new D3D12Buffer(Device);

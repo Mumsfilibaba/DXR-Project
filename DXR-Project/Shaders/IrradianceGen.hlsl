@@ -52,12 +52,12 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 {
 	uint3 TexCoord = DispatchThreadID;
 	
-    uint Width;
-    uint Height;
-    uint Elements;
-    IrradianceMap.GetDimensions(Width, Height, Elements);
+	uint Width;
+	uint Height;
+	uint Elements;
+	IrradianceMap.GetDimensions(Width, Height, Elements);
 	
-    float3 Normal	= float3((TexCoord.xy / float(Width)) - 0.5f, 0.5f);
+	float3 Normal	= float3((TexCoord.xy / float(Width)) - 0.5f, 0.5f);
 	Normal			= normalize(mul(RotateUV[TexCoord.z], Normal));
 	
 	float3 Up		= float3(0.0f, 1.0f, 0.0f);
@@ -80,5 +80,5 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 	}
 	
 	Irradiance = PI * Irradiance * (1.0f / float(NrSamples));
-    IrradianceMap[TexCoord] = float4(Irradiance, 1.0f);
+	IrradianceMap[TexCoord] = float4(Irradiance, 1.0f);
 }

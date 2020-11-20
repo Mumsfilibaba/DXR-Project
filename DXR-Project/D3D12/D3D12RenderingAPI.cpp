@@ -34,7 +34,7 @@ D3D12RenderingAPI::~D3D12RenderingAPI()
 	SwapChain.Reset();
 }
 
-bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug)
+bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> InRenderWindow, bool EnableDebug)
 {
 	Device = MakeShared<D3D12Device>();
 	if (!Device->Initialize(EnableDebug))
@@ -54,8 +54,9 @@ bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> RenderWindow, bool 
 		return false;
 	}
 
-	SwapChain = MakeShared<D3D12SwapChain>(Device.Get());
-	if (!SwapChain->Initialize(StaticCast<WindowsWindow>(RenderWindow).Get(), Queue.Get()))
+	RenderWindow	= StaticCast<WindowsWindow>(InRenderWindow);
+	SwapChain		= MakeShared<D3D12SwapChain>(Device.Get());
+	if (!SwapChain->Initialize(RenderWindow.Get(), Queue.Get()))
 	{
 		return false;
 	}
@@ -247,7 +248,7 @@ bool D3D12RenderingAPI::IsRayTracingSupported() const
 bool D3D12RenderingAPI::UAVSupportsFormat(DXGI_FORMAT Format) const
 {
 	D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
-	ZERO_MEMORY(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
+	Memory::Memzero(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
 
 	HRESULT Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
 	if (SUCCEEDED(Result))

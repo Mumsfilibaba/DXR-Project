@@ -120,8 +120,12 @@ public:
 	virtual bool IsActiveWindow() const = 0;
 
 	virtual void SetTitle(const std::string& Title) = 0;
-	virtual void SetWindowShape(const WindowShape& Shape, bool Move) = 0;
-	virtual void GetWindowShape(WindowShape& OutWindowShape) const = 0;
+
+	virtual void SetWindowShape(const WindowShape& Shape, bool Move)	= 0;
+	virtual void GetWindowShape(WindowShape& OutWindowShape) const		= 0;
+
+	virtual Uint32 GetWidth()	const = 0;
+	virtual Uint32 GetHeight()	const = 0;
 
 	virtual VoidPtr GetNativeHandle() const
 	{

@@ -134,7 +134,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 	BaseMaterial->AOMap			= WhiteTexture;
 	BaseMaterial->HeightMap		= WhiteTexture;
 	BaseMaterial->MetallicMap	= WhiteTexture;
-	BaseMaterial->RoughnessMap		= WhiteTexture;
+	BaseMaterial->RoughnessMap	= WhiteTexture;
 	BaseMaterial->NormalMap		= NormalMap;
 	BaseMaterial->Initialize();
 

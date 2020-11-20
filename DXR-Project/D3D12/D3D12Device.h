@@ -12,6 +12,8 @@ class D3D12OnlineDescriptorHeap;
 class D3D12ComputePipelineState;
 class D3D12RootSignature;
 
+#define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
+
 /*
 * D3D12Device
 */

@@ -6,6 +6,10 @@
 
 MeshData MeshFactory::CreateFromFile(const std::string& Filename, bool MergeMeshes, bool LeftHanded) noexcept
 {
+	UNREFERENCED_VARIABLE(Filename);
+	UNREFERENCED_VARIABLE(MergeMeshes);
+	UNREFERENCED_VARIABLE(LeftHanded);
+
 	/*using namespace std;
 
 	// Set import flags
@@ -184,8 +188,11 @@ MeshData MeshFactory::CreateCube(Float32 Width, Float32 Height, Float32 Depth) n
 	return Cube;
 }
 
-MeshData MeshFactory::CreatePlane(Uint32 width, Uint32 height) noexcept
+MeshData MeshFactory::CreatePlane(Uint32 Width, Uint32 Height) noexcept
 {
+	UNREFERENCED_VARIABLE(Width);
+	UNREFERENCED_VARIABLE(Height);
+
 	/*using namespace std;
 
 	MeshData data;
@@ -313,8 +320,12 @@ MeshData MeshFactory::CreateSphere(Uint32 Subdivisions, Float32 Radius) noexcept
 	return Sphere;
 }
 
-MeshData MeshFactory::CreateCone(Uint32 sides, Float32 radius, Float32 height) noexcept
+MeshData MeshFactory::CreateCone(Uint32 Sides, Float32 Radius, Float32 Height) noexcept
 {
+	UNREFERENCED_VARIABLE(Sides);
+	UNREFERENCED_VARIABLE(Radius);
+	UNREFERENCED_VARIABLE(Height);
+
 	/*
 	MeshData data;
 	// Num verts = (Sides*2)	(Bottom, since we need unique normals)
@@ -478,8 +489,12 @@ MeshData MeshFactory::CreatePyramid() noexcept
 	return MeshData();
 }
 
-MeshData MeshFactory::CreateCylinder(Uint32 sides, Float32 radius, Float32 height) noexcept
+MeshData MeshFactory::CreateCylinder(Uint32 Sides, Float32 Radius, Float32 Height) noexcept
 {
+	UNREFERENCED_VARIABLE(Sides);
+	UNREFERENCED_VARIABLE(Radius);
+	UNREFERENCED_VARIABLE(Height);
+
 	/*
 	MeshData data;
 	if (sides < 5)
@@ -593,8 +608,8 @@ void MeshFactory::Subdivide(MeshData& OutData, Uint32 Subdivisions) noexcept
 	Uint32 IndexCount		= 0;
 	Uint32 VertexCount		= 0;
 	Uint32 OldVertexCount	= 0;
-	OutData.Vertices.Reserve((OutData.Vertices.Size() * static_cast<size_t>(pow(2, Subdivisions))));
-	OutData.Indices.Reserve((OutData.Indices.Size() * static_cast<size_t>(pow(4, Subdivisions))));
+	OutData.Vertices.Reserve((OutData.Vertices.Size() * static_cast<Uint32>(pow(2, Subdivisions))));
+	OutData.Indices.Reserve((OutData.Indices.Size() * static_cast<Uint32>(pow(4, Subdivisions))));
 
 	for (Uint32 i = 0; i < Subdivisions; i++)
 	{
@@ -746,8 +761,10 @@ void MeshFactory::Optimize(MeshData& OutData, Uint32 StartVertex) noexcept
 	}
 }
 
-void MeshFactory::CalculateHardNormals(MeshData& data) noexcept
+void MeshFactory::CalculateHardNormals(MeshData& Data) noexcept
 {
+	UNREFERENCED_VARIABLE(Data);
+
 	/*
 	vec3 e1;
 	vec3 e2;

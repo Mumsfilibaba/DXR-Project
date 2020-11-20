@@ -78,7 +78,7 @@ D3D12Texture* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, U
 	}
 
 	const bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TEXTURE_FACTORY_FLAGS_GENERATE_MIPS;
-	const Uint32 MipLevels = GenerateMipLevels ? std::min<Uint32>(std::log2<Uint32>(Width), std::log2<Uint32>(Height)) : 1;
+	const Uint32 MipLevels = GenerateMipLevels ? std::min<Uint32>(Uint32(std::log2<Uint32>(Width)), Uint32(std::log2<Uint32>(Height))) : 1;
 
 	VALIDATE(MipLevels != 0);
 

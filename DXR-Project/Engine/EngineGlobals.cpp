@@ -1,5 +1,7 @@
 #include "EngineGlobals.h"
 
+#include "Application/Generic/GenericApplication.h"
+
 /*
 * EngineGlobals
 */

@@ -31,8 +31,6 @@ Game::~Game()
 
 bool Game::Initialize()
 {
-	Application::Get().GetMainWindow()->ToggleFullscreen();
-
 	// Initialize Scene
 	constexpr Float32	SphereOffset	= 1.25f;
 	constexpr Uint32	SphereCountX	= 8;

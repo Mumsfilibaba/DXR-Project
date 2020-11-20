@@ -56,7 +56,7 @@ public:
 	virtual bool UAVSupportsFormat(DXGI_FORMAT Format) const override final;
 
 private:
-	TSharedPtr<WindowsWindow>				RenderWindow;
+	TSharedRef<WindowsWindow>				RenderWindow;
 	TSharedPtr<D3D12SwapChain>				SwapChain;
 	TSharedPtr<D3D12Device>					Device;
 	TSharedPtr<D3D12CommandQueue>			Queue;

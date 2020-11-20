@@ -30,8 +30,12 @@ public:
 	virtual bool IsActiveWindow() const override final;
 
 	virtual void SetTitle(const std::string& Title) override final;
+	
 	virtual void SetWindowShape(const WindowShape& Shape, bool Move) override final;
 	virtual void GetWindowShape(WindowShape& OutWindowShape) const override final;
+
+	virtual Uint32 GetWidth() const override final;
+	virtual Uint32 GetHeight() const override final;
 
 	virtual VoidPtr GetNativeHandle() const override final
 	{

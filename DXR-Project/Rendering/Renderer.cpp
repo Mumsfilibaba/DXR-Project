@@ -537,8 +537,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Float32 Height;
 		} Settings;
 
-		Settings.Width	= RenderingAPI::Get().GetSwapChain()->GetWidth();
-		Settings.Height	= RenderingAPI::Get().GetSwapChain()->GetHeight();
+		Settings.Width	= Float32(RenderingAPI::Get().GetSwapChain()->GetWidth());
+		Settings.Height	= Float32(RenderingAPI::Get().GetSwapChain()->GetHeight());
 
 		CommandList->SetGraphicsRoot32BitConstants(&Settings, 2, 0, 1);
 		CommandList->SetPipelineState(FXAAPSO->GetPipelineState());
@@ -619,6 +619,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandList)
 {
+	UNREFERENCED_VARIABLE(BackBuffer);
+
 	InCommandList->TransitionBarrier(ReflectionTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
@@ -939,7 +941,7 @@ bool Renderer::Initialize()
 
 	// Generate global specular irradiance (From Skybox)
 	const Uint16 SpecularIrradianceSize = 128;
-	const Uint32 Miplevels				= std::max<Uint32>(std::log2<Uint32>(SpecularIrradianceSize), 1U);
+	const Uint32 Miplevels				= std::max<Uint32>(Uint32(std::log2<Uint32>(SpecularIrradianceSize)), 1U);
 	TextureProperties SpecualarIrradianceMapProps = { };
 	SpecualarIrradianceMapProps.DebugName	= "Specular Irradiance Map";
 	SpecualarIrradianceMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;

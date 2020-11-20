@@ -365,8 +365,18 @@ void D3D12CommandList::UploadBufferData(D3D12Buffer* Dest, const Uint32 DestOffs
 	UploadBufferOffset = NewOffset;
 }
 
-void D3D12CommandList::UploadTextureData(class D3D12Texture* Dest, const void* Src, DXGI_FORMAT Format, const Uint32 Width, const Uint32 Height, const Uint32 Depth, const Uint32 Stride, const Uint32 RowPitch)
+void D3D12CommandList::UploadTextureData(
+	class D3D12Texture* Dest, 
+	const void* Src, 
+	DXGI_FORMAT Format, 
+	const Uint32 Width, 
+	const Uint32 Height, 
+	const Uint32 Depth, 
+	const Uint32 Stride, 
+	const Uint32 RowPitch)
 {
+	UNREFERENCED_VARIABLE(Depth);
+
 	const Uint32 SizeInBytes	= Height * RowPitch;
 	const Uint32 NewOffset		= UploadBufferOffset + SizeInBytes;
 	if (NewOffset >= UploadBuffer->GetSizeInBytes())

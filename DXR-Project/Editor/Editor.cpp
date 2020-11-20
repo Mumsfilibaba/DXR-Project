@@ -54,6 +54,11 @@ static void DrawMenu()
 			// Menu
 			if (ImGui::BeginMenu("File"))
 			{
+				if (ImGui::MenuItem("Toggle Fullscreen"))
+				{
+					Application::Get().GetMainWindow()->ToggleFullscreen();
+				}
+
 				if (ImGui::MenuItem("Quit"))
 				{
 					EngineLoop::Exit();
@@ -293,7 +298,7 @@ static void DrawRenderSettings()
 */
 static void DrawSceneInfo()
 {
-	constexpr Uint32 Width = 400;
+	constexpr Float32 Width = 400.0f;
 
 	ImGui::Spacing();
 	ImGui::Text("Current Scene");
@@ -303,7 +308,7 @@ static void DrawSceneInfo()
 
 	WindowShape WindowShape;
 	Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
-	ImGui::BeginChild("SceneInfo", ImVec2(Width, WindowShape.Height - 100));
+	ImGui::BeginChild("SceneInfo", ImVec2(Width, Float32(WindowShape.Height) - 100.0f));
 
 	// Actors
 	if (ImGui::TreeNode("Actors"))

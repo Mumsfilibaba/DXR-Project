@@ -12,9 +12,9 @@ static KeyTableState GlobalkeyState;
 
 static void InitializeKeyState()
 {
-	ZERO_MEMORY(GlobalkeyState.KeyStates, sizeof(GlobalkeyState.KeyStates));
-	ZERO_MEMORY(GlobalkeyState.ScanCodeTable, sizeof(GlobalkeyState.ScanCodeTable));
-	ZERO_MEMORY(GlobalkeyState.KeyTable, sizeof(GlobalkeyState.KeyTable));
+	Memory::Memzero(GlobalkeyState.KeyStates, sizeof(GlobalkeyState.KeyStates));
+	Memory::Memzero(GlobalkeyState.ScanCodeTable, sizeof(GlobalkeyState.ScanCodeTable));
+	Memory::Memzero(GlobalkeyState.KeyTable, sizeof(GlobalkeyState.KeyTable));
 
 	GlobalkeyState.ScanCodeTable[0x00B] = EKey::KEY_0;
 	GlobalkeyState.ScanCodeTable[0x002] = EKey::KEY_1;

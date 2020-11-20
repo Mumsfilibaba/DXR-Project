@@ -5,6 +5,7 @@
 #include "Containers/TSharedPtr.h"
 
 #include "D3D12/D3D12RayTracingScene.h"
+#include "D3D12/D3D12ImmediateCommandList.h"
 
 /*
 * ERenderingAPI
@@ -16,7 +17,6 @@ enum class ERenderingAPI : Uint32
 	RENDERING_API_D3D12		= 1,
 };
 
-class D3D12ImmediateCommandList;
 class D3D12RootSignature;
 
 /*
