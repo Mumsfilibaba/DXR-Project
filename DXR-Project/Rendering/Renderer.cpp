@@ -192,6 +192,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 		XMFLOAT4X4 Matrix;
 	} PerObjectBuffer;
 
+	struct ShadowPerObject
+	{
+		XMFLOAT4X4 Matrix;
+		Float32 ShadowOffset;
+	} ShadowPerObjectBuffer;
+
 	struct PerLight
 	{
 		XMFLOAT4X4	Matrix;
@@ -224,8 +230,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 				IBV.Format			= DXGI_FORMAT_R32_UINT;
 				CommandList->IASetIndexBuffer(&IBV);
 
-				PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-				CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+				ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
+				ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
+				CommandList->SetGraphicsRoot32BitConstants(&ShadowPerObjectBuffer, 17, 0, 0);
 
 				CommandList->DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 			}
@@ -297,8 +304,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 							IBV.Format			= DXGI_FORMAT_R32_UINT;
 							CommandList->IASetIndexBuffer(&IBV);
 
-							PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-							CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+							ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
+							ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
+							CommandList->SetGraphicsRoot32BitConstants(&ShadowPerObjectBuffer, 17, 0, 0);
 
 							CommandList->DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 						}
@@ -318,8 +326,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 						IBV.Format			= DXGI_FORMAT_R32_UINT;
 						CommandList->IASetIndexBuffer(&IBV);
 
-						PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-						CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+						ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
+						ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
+						CommandList->SetGraphicsRoot32BitConstants(&ShadowPerObjectBuffer, 17, 0, 0);
 
 						CommandList->DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 					}
@@ -1542,7 +1551,7 @@ bool Renderer::InitShadowMapPass()
 	Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 	Parameters[0].Constants.ShaderRegister	= 0;
 	Parameters[0].Constants.RegisterSpace	= 0;
-	Parameters[0].Constants.Num32BitValues	= 16;
+	Parameters[0].Constants.Num32BitValues	= 17;
 	Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_VERTEX;
 
 	// Camera

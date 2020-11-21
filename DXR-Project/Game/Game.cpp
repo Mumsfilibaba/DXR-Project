@@ -47,6 +47,7 @@ bool Game::Initialize()
 	// Create Spheres
 	MeshData SphereMeshData		= MeshFactory::CreateSphere(3);
 	TSharedPtr<Mesh> SphereMesh	= Mesh::Make(SphereMeshData);
+	SphereMesh->ShadowOffset = 0.05f;
 
 	// Create standard textures
 	Byte Pixels[] = { 255, 255, 255, 255 };
