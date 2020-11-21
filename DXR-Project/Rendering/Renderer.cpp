@@ -438,7 +438,19 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		if (RenderingAPI::Get().IsRayTracingSupported())
 		{
-			// Command.Geometry->BuildAccelerationStructure(CommandList.Get(), );
+			Command.Geometry->BuildAccelerationStructure(
+				CommandList.Get(),
+				Command.Mesh->VertexBuffer,
+				Command.Mesh->VertexCount,
+				Command.Mesh->IndexBuffer,
+				Command.Mesh->IndexCount);
+
+			XMFLOAT4X4 Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
+			XMFLOAT3X4 SmallMatrix	= XMFLOAT3X4(reinterpret_cast<Float32*>(&Matrix));
+			RayTracingGeometryInstances.EmplaceBack(
+				Command.Geometry, 
+				SmallMatrix,
+				);
 		}
 
 		VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
@@ -472,6 +484,14 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// RayTracing
 	if (RenderingAPI::Get().IsRayTracingSupported())
 	{
+
+
+
+		//RayTracingScene->BuildAccelerationStructure(
+		//	CommandList.Get(),
+		//	);
+
+
 		TraceRays(BackBuffer, CommandList.Get());
 	}
 

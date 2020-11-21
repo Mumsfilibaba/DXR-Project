@@ -178,7 +178,9 @@ private:
 	TSharedPtr<D3D12DescriptorTable>	LightDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	SkyboxDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	PostDescriptorTable;
+
 	TSharedPtr<D3D12RayTracingScene>	RayTracingScene;
+	TArray<D3D12RayTracingGeometryInstance> RayTracingGeometryInstances;
 
 	TSharedPtr<D3D12GraphicsPipelineState>		PrePassPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		ShadowMapPSO;

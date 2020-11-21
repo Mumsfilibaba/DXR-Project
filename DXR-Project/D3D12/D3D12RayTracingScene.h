@@ -84,7 +84,6 @@ public:
 	{
 	}
 
-public:
 	std::string ShaderExportName;
 	TSharedPtr<D3D12DescriptorTable> DescriptorTable;
 };

@@ -23,7 +23,12 @@ D3D12RayTracingGeometry::~D3D12RayTracingGeometry()
 	SAFEDELETE(ResultBuffer);
 }
 
-bool D3D12RayTracingGeometry::BuildAccelerationStructure(D3D12CommandList* CommandList, TSharedPtr<D3D12Buffer>& InVertexBuffer, Uint32 InVertexCount, TSharedPtr<D3D12Buffer>& InIndexBuffer, Uint32 InIndexCount)
+bool D3D12RayTracingGeometry::BuildAccelerationStructure(
+	D3D12CommandList* CommandList, 
+	TSharedPtr<D3D12Buffer>& InVertexBuffer, 
+	Uint32 InVertexCount, 
+	TSharedPtr<D3D12Buffer>& InIndexBuffer, 
+	Uint32 InIndexCount)
 {
 	if (!IsDirty)
 	{
@@ -123,7 +128,10 @@ D3D12RayTracingScene::~D3D12RayTracingScene()
 	SAFEDELETE(BindingTable);
 }
 
-bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineState, TArray<BindingTableEntry>& InBindingTableEntries, Uint32 InNumHitGroups)
+bool D3D12RayTracingScene::Initialize(
+	D3D12RayTracingPipelineState* PipelineState, 
+	TArray<BindingTableEntry>& InBindingTableEntries, 
+	Uint32 InNumHitGroups)
 {
 	using namespace Microsoft::WRL;
 
@@ -249,8 +257,8 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandL
 		InstanceDesc->Flags									= D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 
 		D3D12RayTracingGeometryInstance& Instance = InInstances[i];
-		InstanceDesc->AccelerationStructure		= Instance.Geometry->GetGPUVirtualAddress();
-		InstanceDesc->InstanceMask				= 0xFF;
+		InstanceDesc->AccelerationStructure	= Instance.Geometry->GetGPUVirtualAddress();
+		InstanceDesc->InstanceMask			= 0xFF;
 
 		memcpy(InstanceDesc->Transform, &Instance.Transform, sizeof(InstanceDesc->Transform));
 
