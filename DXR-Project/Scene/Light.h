@@ -59,10 +59,10 @@ public:
 	}
 
 protected:
-	XMFLOAT3	Color;
-	Float32		Intensity = 1.0f;
-	Float32		ShadowNearPlane;
-	Float32		ShadowFarPlane;
-	Float32		ShadowBias;
-	Float32		MaxShadowBias;
+	XMFLOAT3 Color;
+	Float32	 Intensity = 1.0f;
+	Float32	 ShadowNearPlane;
+	Float32	 ShadowFarPlane;
+	Float32	 ShadowBias;
+	Float32	 MaxShadowBias;
 };

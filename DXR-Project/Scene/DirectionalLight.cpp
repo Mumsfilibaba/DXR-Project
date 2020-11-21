@@ -4,7 +4,8 @@ DirectionalLight::DirectionalLight()
 	: Light()
 	, Direction(0.0f, -1.0f, 0.0f)
 	, Rotation(0.0f, 0.0f, 0.0f)
-	, ShadowMapPosition(0.0f, 30.0f, 0.0f)
+	, ShadowMapPosition(0.0f, 0.0f, 0.0f)
+	, LookAt(0.0f, 0.0f, 0.0f)
 	, Matrix()
 {
 	CORE_OBJECT_INIT();
@@ -28,33 +29,15 @@ void DirectionalLight::SetRotation(Float32 X, Float32 Y, Float32 Z)
 	CalculateMatrix();
 }
 
-void DirectionalLight::SetDirection(const XMFLOAT3& InDirection)
+void DirectionalLight::SetLookAt(const XMFLOAT3& InLookAt)
 {
-	XMVECTOR XmDir = XMVectorSet(InDirection.x, InDirection.y, InDirection.z, 0.0f);
-	XmDir = XMVector3Normalize(XmDir);
-	XMStoreFloat3(&Direction, XmDir);
-
+	LookAt = InLookAt;
 	CalculateMatrix();
 }
 
-void DirectionalLight::SetDirection(Float32 X, Float32 Y, Float32 Z)
+void DirectionalLight::SetLookAt(Float32 X, Float32 Y, Float32 Z)
 {
-	XMVECTOR XmDir = XMVectorSet(X, Y, Z, 0.0f);
-	XmDir = XMVector3Normalize(XmDir);
-	XMStoreFloat3(&Direction, XmDir);
-
-	CalculateMatrix();
-}
-
-void DirectionalLight::SetShadowMapPosition(const XMFLOAT3& InPosition)
-{
-	ShadowMapPosition = InPosition;
-	CalculateMatrix();
-}
-
-void DirectionalLight::SetShadowMapPosition(Float32 X, Float32 Y, Float32 Z)
-{
-	ShadowMapPosition = XMFLOAT3(X, Y, Z);
+	LookAt = XMFLOAT3(X, Y, Z);
 	CalculateMatrix();
 }
 
@@ -84,18 +67,25 @@ void DirectionalLight::SetShadowFarPlane(Float32 InShadowFarPlane)
 
 void DirectionalLight::CalculateMatrix()
 {
-	XMFLOAT3 StartDirection = XMFLOAT3(0.0f, -1.0f, 0.0f);
-	XMVECTOR LightDirection = XMLoadFloat3(&StartDirection);
-	XMMATRIX RotationMatrix = XMMatrixRotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
-	LightDirection = XMVector3Normalize(XMVector3Transform(LightDirection, RotationMatrix));
-	XMStoreFloat3(&Direction, LightDirection);
+	XMVECTOR XmDirection = XMVectorSet(0.0, -1.0f, 0.0f, 0.0f);;
+	XMMATRIX XmRotation	 = XMMatrixRotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
+	XMVECTOR XmOffset	 = XMVector3Transform(XmDirection, XmRotation);
+	XmDirection	= XMVector3Normalize(XmOffset);
+	XMStoreFloat3(&Direction, XmDirection);
 
-	XMVECTOR LightPosition	= XMLoadFloat3(&ShadowMapPosition);
-	XMVECTOR LightUp		= XMVectorSet(0.0, 0.0f, 1.0f, 0.0f);
+	const Float32 Scale = (ShadowFarPlane - ShadowNearPlane) / 2.0f;
+	XmOffset = XMVectorScale(XmOffset, -Scale);
 
-	const Float32 Offset		= 30.0f;
-	XMMATRIX LightProjection	= XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, ShadowNearPlane, ShadowFarPlane);
-	XMMATRIX LightView			= XMMatrixLookToLH(LightPosition, LightDirection, LightUp);
+	XMVECTOR XmLookAt	= XMLoadFloat3(&LookAt);
+	XMVECTOR XmPosition	= XMVectorAdd(XmLookAt, XmOffset);
+	XMStoreFloat3(&ShadowMapPosition, XmPosition);
 
-	XMStoreFloat4x4(&Matrix, XMMatrixMultiplyTranspose(LightView, LightProjection));
+	XMVECTOR XmUp = XMVectorSet(0.0, 0.0f, 1.0f, 0.0f);
+	XmUp = XMVector3Normalize(XMVector3Transform(XmUp, XmRotation));
+
+	const Float32 Offset	= 35.0f;
+	XMMATRIX XmProjection	= XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, ShadowNearPlane, ShadowFarPlane);
+	XMMATRIX XmView			= XMMatrixLookAtLH(XmPosition, XmLookAt, XmUp);
+
+	XMStoreFloat4x4(&Matrix, XMMatrixMultiplyTranspose(XmView, XmProjection));
 }

@@ -24,7 +24,10 @@ struct VSInput
 // Normal ShadowMap Generation
 float4 Main(VSInput Input) : SV_POSITION
 {
-	float4 WorldPosition = mul(float4(Input.Position, 1.0f), Transform);
+	float3 Normal	= normalize(Input.Normal);
+	float3 Position	= Input.Position + (Normal * 0.05f);
+	
+	float4 WorldPosition = mul(float4(Position, 1.0f), Transform);
 	return mul(WorldPosition, LightProjection);
 }
 

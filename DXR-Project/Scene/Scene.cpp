@@ -40,6 +40,7 @@ Scene::~Scene()
 
 void Scene::Tick(Timestamp DeltaTime)
 {
+	UNREFERENCED_VARIABLE(DeltaTime);
 }
 
 void Scene::AddCamera(Camera* InCamera)

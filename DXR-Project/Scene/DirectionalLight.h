@@ -28,15 +28,10 @@ public:
 
 	// Rotation in Radians
 	void SetRotation(const XMFLOAT3& InRotation);
-	
-	// Rotation in Radians
 	void SetRotation(Float32 X, Float32 Y, Float32 Z);
 
-	void SetDirection(const XMFLOAT3& InDirection);
-	void SetDirection(Float32 X, Float32 Y, Float32 Z);
-
-	void SetShadowMapPosition(const XMFLOAT3& InDirection);
-	void SetShadowMapPosition(Float32 X, Float32 Y, Float32 Z);
+	void SetLookAt(const XMFLOAT3& InInLookAt);
+	void SetLookAt(Float32 X, Float32 Y, Float32 Z);
 
 	void SetShadowNearPlane(Float32 InShadowNearPlane);
 	void SetShadowFarPlane(Float32 InShadowFarPlane);
@@ -56,6 +51,11 @@ public:
 		return ShadowMapPosition;
 	}
 
+	FORCEINLINE const XMFLOAT3& GetLookAt() const
+	{
+		return LookAt;
+	}
+
 	FORCEINLINE const XMFLOAT4X4& GetMatrix() const
 	{
 		return Matrix;
@@ -66,6 +66,7 @@ private:
 
 	XMFLOAT3	Direction;
 	XMFLOAT3	Rotation;
+	XMFLOAT3	LookAt;
 	XMFLOAT3	ShadowMapPosition;
 	XMFLOAT4X4	Matrix;
 };
