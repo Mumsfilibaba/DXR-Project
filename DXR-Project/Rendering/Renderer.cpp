@@ -42,6 +42,19 @@ Renderer::~Renderer()
 
 void Renderer::Tick(const Scene& CurrentScene)
 {
+	// Start frame
+	D3D12Texture* BackBuffer = RenderingAPI::Get().GetSwapChain()->GetSurfaceResource(CurrentBackBufferIndex);
+	CommandAllocators[CurrentBackBufferIndex]->Reset();
+	CommandList->Reset(CommandAllocators[CurrentBackBufferIndex].Get());
+
+	// Release deferred resources
+	for (auto& Resource : DeferredResources)
+	{
+		CommandList->DeferDestruction(Resource.Get());
+	}
+	DeferredResources.Clear();
+
+	// Perform frustum culling
 	if (FrustumCullEnabled)
 	{
 		VisibleCommands.Clear();
@@ -71,17 +84,57 @@ void Renderer::Tick(const Scene& CurrentScene)
 		VisibleCommands = CurrentScene.GetMeshDrawCommands();
 	}
 
-	// Start frame
-	D3D12Texture* BackBuffer = RenderingAPI::Get().GetSwapChain()->GetSurfaceResource(CurrentBackBufferIndex);
-	CommandAllocators[CurrentBackBufferIndex]->Reset();
-	CommandList->Reset(CommandAllocators[CurrentBackBufferIndex].Get());
-	
-	// Release deferred resources
-	for (auto& Resource : DeferredResources)
+	// Build acceleration structures
+	if (RenderingAPI::Get().IsRayTracingSupported())
 	{
-		CommandList->DeferDestruction(Resource.Get());
+		// Build Bottom-Level
+		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+		{
+			Command.Geometry->BuildAccelerationStructure(
+				CommandList.Get(),
+				Command.Mesh->VertexBuffer,
+				Command.Mesh->VertexCount,
+				Command.Mesh->IndexBuffer,
+				Command.Mesh->IndexCount);
+
+			XMFLOAT4X4 Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
+			XMFLOAT3X4 SmallMatrix	= XMFLOAT3X4(reinterpret_cast<Float32*>(&Matrix));
+
+			RayTracingGeometryInstances.EmplaceBack(
+				Command.Mesh->RayTracingGeometry,
+				Command.Material,
+				SmallMatrix,
+				0, 0);
+		}
+
+		// Build Top-Level
+		const bool NeedsBuild = RayTracingScene->NeedsBuild();
+		if (NeedsBuild)
+		{
+			TArray<BindingTableEntry> BindingTableEntries;
+			BindingTableEntries.Reserve(RayTracingGeometryInstances.Size());
+
+			BindingTableEntries.EmplaceBack("RayGen", RayGenDescriptorTable, nullptr);
+			for (D3D12RayTracingGeometryInstance& Geometry : RayTracingGeometryInstances)
+			{
+				BindingTableEntries.EmplaceBack(
+					"HitGroup", 
+					Geometry.Material->GetDescriptorTable(),
+					Geometry.Geometry->GetDescriptorTable());
+			}
+			BindingTableEntries.EmplaceBack("Miss", nullptr, nullptr);
+
+			const Uint32 NumHitGroups = BindingTableEntries.Size() - 2;
+			RayTracingScene->BuildAccelerationStructure(
+				CommandList.Get(),
+				RayTracingGeometryInstances,
+				BindingTableEntries,
+				NumHitGroups);
+
+			GlobalDescriptorTable->SetShaderResourceView(RayTracingScene->GetShaderResourceView(), 0);
+			GlobalDescriptorTable->CopyDescriptors();
+		}
 	}
-	DeferredResources.Clear();
 
 	// UpdateLightBuffers
 	CommandList->TransitionBarrier(PointLightBuffer.Get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -436,23 +489,6 @@ void Renderer::Tick(const Scene& CurrentScene)
 	//for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 	for (const MeshDrawCommand& Command : VisibleCommands)
 	{
-		if (RenderingAPI::Get().IsRayTracingSupported())
-		{
-			Command.Geometry->BuildAccelerationStructure(
-				CommandList.Get(),
-				Command.Mesh->VertexBuffer,
-				Command.Mesh->VertexCount,
-				Command.Mesh->IndexBuffer,
-				Command.Mesh->IndexCount);
-
-			XMFLOAT4X4 Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
-			XMFLOAT3X4 SmallMatrix	= XMFLOAT3X4(reinterpret_cast<Float32*>(&Matrix));
-			RayTracingGeometryInstances.EmplaceBack(
-				Command.Geometry, 
-				SmallMatrix,
-				);
-		}
-
 		VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
 		VBO.SizeInBytes		= Command.VertexBuffer->GetSizeInBytes();
 		VBO.StrideInBytes	= sizeof(Vertex);
@@ -484,15 +520,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// RayTracing
 	if (RenderingAPI::Get().IsRayTracingSupported())
 	{
-
-
-
-		//RayTracingScene->BuildAccelerationStructure(
-		//	CommandList.Get(),
-		//	);
-
-
 		TraceRays(BackBuffer, CommandList.Get());
+		RayTracingGeometryInstances.Clear();
 	}
 
 	// Render to final output
@@ -800,11 +829,6 @@ bool Renderer::Initialize()
 
 	FenceValues.Resize(RenderingAPI::Get().GetSwapChain()->GetSurfaceCount());
 
-	// Create mesh
-	Sphere		= MeshFactory::CreateSphere(3);
-	SkyboxMesh	= MeshFactory::CreateSphere(1);
-	Cube		= MeshFactory::CreateCube();
-
 	// Create CameraBuffer
 	BufferProperties BufferProps = { };
 	BufferProps.SizeInBytes		= 256; // Must be multiple of 256
@@ -826,37 +850,14 @@ bool Renderer::Initialize()
 		return false;
 	}
 
+	// Create mesh
+	SkyboxMesh	= MeshFactory::CreateSphere(1);
+
 	// Create vertexbuffer
 	BufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
-	BufferProps.SizeInBytes	= sizeof(Vertex) * static_cast<Uint64>(Sphere.Vertices.Size());
+	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(SkyboxMesh.Vertices.Size());
 	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
-	MeshVertexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
-	if (MeshVertexBuffer)
-	{
-		void* BufferMemory = MeshVertexBuffer->Map();
-		memcpy(BufferMemory, Sphere.Vertices.Data(), BufferProps.SizeInBytes);
-		MeshVertexBuffer->Unmap();
-	}
-	else
-	{
-		return false;
-	}
-
-	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(Cube.Vertices.Size());
-	CubeVertexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
-	if (CubeVertexBuffer)
-	{
-		void* BufferMemory = CubeVertexBuffer->Map();
-		memcpy(BufferMemory, Cube.Vertices.Data(), BufferProps.SizeInBytes);
-		CubeVertexBuffer->Unmap();
-	}
-	else
-	{
-		return false;
-	}
-
-	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<Uint64>(SkyboxMesh.Vertices.Size());
 	SkyboxVertexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
 	if (SkyboxVertexBuffer)
 	{
@@ -870,32 +871,6 @@ bool Renderer::Initialize()
 	}
 
 	// Create indexbuffer
-	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Sphere.Indices.Size());
-	MeshIndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
-	if (MeshIndexBuffer)
-	{
-		void* BufferMemory = MeshIndexBuffer->Map();
-		memcpy(BufferMemory, Sphere.Indices.Data(), BufferProps.SizeInBytes);
-		MeshIndexBuffer->Unmap();
-	}
-	else
-	{
-		return false;
-	}
-
-	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(Cube.Indices.Size());
-	CubeIndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
-	if (CubeIndexBuffer)
-	{
-		void* BufferMemory = CubeIndexBuffer->Map();
-		memcpy(BufferMemory, Cube.Indices.Data(), BufferProps.SizeInBytes);
-		CubeIndexBuffer->Unmap();
-	}
-	else
-	{
-		return false;
-	}
-
 	BufferProps.SizeInBytes = sizeof(Uint32) * static_cast<Uint64>(SkyboxMesh.Indices.Size());
 	SkyboxIndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
 	if (SkyboxIndexBuffer)
@@ -910,7 +885,10 @@ bool Renderer::Initialize()
 	}
 
 	// Create Texture Cube
-	TUniquePtr<D3D12Texture> Panorama = TUniquePtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/arches.hdr", 0, DXGI_FORMAT_R32G32B32A32_FLOAT));
+	TUniquePtr<D3D12Texture> Panorama = TUniquePtr<D3D12Texture>(TextureFactory::LoadFromFile(
+		"../Assets/Textures/arches.hdr", 
+		0, 
+		DXGI_FORMAT_R32G32B32A32_FLOAT));
 	if (!Panorama)
 	{
 		return false;
@@ -1014,7 +992,10 @@ bool Renderer::Initialize()
 	RenderingAPI::Get().GetImmediateCommandList()->Flush();
 
 	// Create albedo for raytracing
-	Albedo = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/RockySoil_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	Albedo = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(
+		"../Assets/Textures/RockySoil_Albedo.png", 
+		TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, 
+		DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!Albedo)
 	{
 		return false;
@@ -1024,7 +1005,10 @@ bool Renderer::Initialize()
 		Albedo->SetDebugName("AlbedoMap");
 	}
 	
-	Normal = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile("../Assets/Textures/RockySoil_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	Normal = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(
+		"../Assets/Textures/RockySoil_Normal.png", 
+		TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, 
+		DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!Normal)
 	{
 		return false;
@@ -1120,6 +1104,7 @@ bool Renderer::InitRayTracing()
 
 		D3D12_ROOT_PARAMETER RootParams = { };
 		RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		RootParams.ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
 		RootParams.DescriptorTable.NumDescriptorRanges	= 1;
 		RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
 
@@ -1141,29 +1126,88 @@ bool Renderer::InitRayTracing()
 
 	TUniquePtr<D3D12RootSignature> HitLocalRoot;
 	{
-		D3D12_DESCRIPTOR_RANGE Ranges[2] = {};
+		constexpr Uint32 NumRanges0 = 7;
+		D3D12_DESCRIPTOR_RANGE Ranges0[NumRanges0] = {};
+		// Albedo
+		Ranges0[0].BaseShaderRegister					= 0;
+		Ranges0[0].NumDescriptors						= 1;
+		Ranges0[0].RegisterSpace						= 1;
+		Ranges0[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges0[0].OffsetInDescriptorsFromTableStart	= 0;
+
+		// Normal
+		Ranges0[1].BaseShaderRegister					= 1;
+		Ranges0[1].NumDescriptors						= 1;
+		Ranges0[1].RegisterSpace						= 1;
+		Ranges0[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges0[1].OffsetInDescriptorsFromTableStart	= 1;
+
+		// Roughness
+		Ranges0[2].BaseShaderRegister					= 2;
+		Ranges0[2].NumDescriptors						= 1;
+		Ranges0[2].RegisterSpace						= 1;
+		Ranges0[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges0[2].OffsetInDescriptorsFromTableStart	= 2;
+
+		// Height
+		Ranges0[3].BaseShaderRegister					= 3;
+		Ranges0[3].NumDescriptors						= 1;
+		Ranges0[3].RegisterSpace						= 1;
+		Ranges0[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges0[3].OffsetInDescriptorsFromTableStart	= 3;
+
+		// Metallic
+		Ranges0[4].BaseShaderRegister					= 4;
+		Ranges0[4].NumDescriptors						= 1;
+		Ranges0[4].RegisterSpace						= 1;
+		Ranges0[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges0[4].OffsetInDescriptorsFromTableStart	= 4;
+
+		// AO
+		Ranges0[5].BaseShaderRegister					= 5;
+		Ranges0[5].NumDescriptors						= 1;
+		Ranges0[5].RegisterSpace						= 1;
+		Ranges0[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges0[5].OffsetInDescriptorsFromTableStart	= 5;
+
+		// MaterialBuffer
+		Ranges0[6].BaseShaderRegister					= 0;
+		Ranges0[6].NumDescriptors						= 1;
+		Ranges0[6].RegisterSpace						= 1;
+		Ranges0[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		Ranges0[6].OffsetInDescriptorsFromTableStart	= 6;
+
+		constexpr Uint32 NumRanges1 = 2;
+		D3D12_DESCRIPTOR_RANGE Ranges1[NumRanges1] = {};
 		// VertexBuffer
-		Ranges[0].BaseShaderRegister				= 2;
-		Ranges[0].NumDescriptors					= 1;
-		Ranges[0].RegisterSpace						= 0;
-		Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		Ranges[0].OffsetInDescriptorsFromTableStart = 0;
+		Ranges1[0].BaseShaderRegister					= 6;
+		Ranges1[0].NumDescriptors						= 1;
+		Ranges1[0].RegisterSpace						= 1;
+		Ranges1[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges1[0].OffsetInDescriptorsFromTableStart	= 0;
 
 		// IndexBuffer
-		Ranges[1].BaseShaderRegister				= 3;
-		Ranges[1].NumDescriptors					= 1;
-		Ranges[1].RegisterSpace						= 0;
-		Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		Ranges[1].OffsetInDescriptorsFromTableStart	= 1;
+		Ranges1[1].BaseShaderRegister					= 7;
+		Ranges1[1].NumDescriptors						= 1;
+		Ranges1[1].RegisterSpace						= 1;
+		Ranges1[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges1[1].OffsetInDescriptorsFromTableStart	= 1;
 
-		D3D12_ROOT_PARAMETER RootParams = { };
-		RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		RootParams.DescriptorTable.NumDescriptorRanges	= 2;
-		RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
+		const Uint32 NumRootParams = 2;
+		D3D12_ROOT_PARAMETER RootParams[NumRootParams];
+		RootParams[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		RootParams[0].DescriptorTable.NumDescriptorRanges	= NumRanges0;
+		RootParams[0].DescriptorTable.pDescriptorRanges		= Ranges0;
+		RootParams[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
+
+		RootParams[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		RootParams[1].DescriptorTable.NumDescriptorRanges	= NumRanges1;
+		RootParams[1].DescriptorTable.pDescriptorRanges		= Ranges1;
+		RootParams[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
 
 		D3D12_ROOT_SIGNATURE_DESC HitLocalRootDesc = {};
-		HitLocalRootDesc.NumParameters	= 1;
-		HitLocalRootDesc.pParameters	= &RootParams;
+		HitLocalRootDesc.NumParameters	= NumRootParams;
+		HitLocalRootDesc.pParameters	= RootParams;
 		HitLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
 		HitLocalRoot = RenderingAPI::Get().CreateRootSignature(HitLocalRootDesc);
@@ -1197,7 +1241,8 @@ bool Renderer::InitRayTracing()
 
 	// Global RootSignature
 	{
-		D3D12_DESCRIPTOR_RANGE Ranges[7] = {};
+		constexpr Uint32 NumRanges = 5;
+		D3D12_DESCRIPTOR_RANGE Ranges[NumRanges] = {};
 		// AccelerationStructure
 		Ranges[0].BaseShaderRegister				= 0;
 		Ranges[0].NumDescriptors					= 1;
@@ -1212,44 +1257,31 @@ bool Renderer::InitRayTracing()
 		Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 		Ranges[1].OffsetInDescriptorsFromTableStart	= 1;
 
-		// Skybox
-		Ranges[2].BaseShaderRegister				= 1;
+		// GBuffer NormalMap
+		Ranges[2].BaseShaderRegister				= 6;
 		Ranges[2].NumDescriptors					= 1;
 		Ranges[2].RegisterSpace						= 0;
 		Ranges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		Ranges[2].OffsetInDescriptorsFromTableStart	= 2;
+		Ranges[2].OffsetInDescriptorsFromTableStart = 2;
 
-		// Albedo
-		Ranges[3].BaseShaderRegister				= 4;
+		// GBuffer Depth
+		Ranges[3].BaseShaderRegister				= 7;
 		Ranges[3].NumDescriptors					= 1;
 		Ranges[3].RegisterSpace						= 0;
 		Ranges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		Ranges[3].OffsetInDescriptorsFromTableStart	= 3;
+		Ranges[3].OffsetInDescriptorsFromTableStart = 3;
 
-		// Normal
-		Ranges[4].BaseShaderRegister				= 5;
+		// Skybox
+		Ranges[4].BaseShaderRegister				= 1;
 		Ranges[4].NumDescriptors					= 1;
 		Ranges[4].RegisterSpace						= 0;
 		Ranges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		Ranges[4].OffsetInDescriptorsFromTableStart	= 4;
 
-		// GBuffer NormalMap
-		Ranges[5].BaseShaderRegister				= 6;
-		Ranges[5].NumDescriptors					= 1;
-		Ranges[5].RegisterSpace						= 0;
-		Ranges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		Ranges[5].OffsetInDescriptorsFromTableStart = 5;
-
-		// GBuffer Depth
-		Ranges[6].BaseShaderRegister				= 7;
-		Ranges[6].NumDescriptors					= 1;
-		Ranges[6].RegisterSpace						= 0;
-		Ranges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		Ranges[6].OffsetInDescriptorsFromTableStart = 6;
-
 		D3D12_ROOT_PARAMETER RootParams = { };
 		RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		RootParams.DescriptorTable.NumDescriptorRanges	= 7;
+		RootParams.ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
+		RootParams.DescriptorTable.NumDescriptorRanges	= NumRanges;
 		RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
 
 		D3D12_STATIC_SAMPLER_DESC Samplers[2] = { };
@@ -1307,101 +1339,28 @@ bool Renderer::InitRayTracing()
 	// Build Acceleration Structures
 	RenderingAPI::Get().GetImmediateCommandList()->TransitionBarrier(CameraBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-	// Create BLAS
-	TSharedPtr<D3D12RayTracingGeometry> MeshGeometry = TSharedPtr(RenderingAPI::Get().CreateRayTracingGeometry());
-	MeshGeometry->BuildAccelerationStructure(RenderingAPI::Get().GetImmediateCommandList().Get(), MeshVertexBuffer, static_cast<Uint32>(Sphere.Vertices.Size()), MeshIndexBuffer, static_cast<Uint32>(Sphere.Indices.Size()));
-
-	TSharedPtr<D3D12RayTracingGeometry> CubeGeometry = TSharedPtr(RenderingAPI::Get().CreateRayTracingGeometry());
-	CubeGeometry->BuildAccelerationStructure(RenderingAPI::Get().GetImmediateCommandList().Get(), CubeVertexBuffer, static_cast<Uint32>(Cube.Vertices.Size()), CubeIndexBuffer, static_cast<Uint32>(Cube.Indices.Size()));
-
-	XMFLOAT3X4 Matrix;
-	TArray<D3D12RayTracingGeometryInstance> Instances;
-
-	constexpr Float32	Offset = 1.25f;
-	constexpr Uint32	SphereCountX = 8;
-	constexpr Float32	StartPositionX = (-static_cast<Float32>(SphereCountX) * Offset) / 2.0f;
-	constexpr Uint32	SphereCountY = 8;
-	constexpr Float32	StartPositionY = (-static_cast<Float32>(SphereCountY) * Offset) / 2.0f;
-	for (Uint32 y = 0; y < SphereCountY; y++)
-	{
-		for (Uint32 x = 0; x < SphereCountX; x++)
-		{
-			XMStoreFloat3x4(&Matrix, XMMatrixTranslation(StartPositionX + (x * Offset), StartPositionY + (y * Offset), 0));
-			Instances.EmplaceBack(MeshGeometry, Matrix, 0, 0);
-		}
-	}
-
-	XMStoreFloat3x4(&Matrix, XMMatrixTranslation(0.0f, 0.0f, -3.0f));
-	Instances.EmplaceBack(CubeGeometry, Matrix, 1, 1);
-
 	// Create DescriptorTables
-	TSharedPtr<D3D12DescriptorTable> SphereDescriptorTable	= TSharedPtr(RenderingAPI::Get().CreateDescriptorTable(2)); 
-	TSharedPtr<D3D12DescriptorTable> CubeDescriptorTable	= TSharedPtr(RenderingAPI::Get().CreateDescriptorTable(2));
 	RayGenDescriptorTable = TSharedPtr(RenderingAPI::Get().CreateDescriptorTable(1));
 	GlobalDescriptorTable = TSharedPtr(RenderingAPI::Get().CreateDescriptorTable(7));
 
 	// Create TLAS
-	TArray<BindingTableEntry> BindingTableEntries;
-	BindingTableEntries.EmplaceBack("RayGen", RayGenDescriptorTable);
-	BindingTableEntries.EmplaceBack("HitGroup", SphereDescriptorTable);
-	BindingTableEntries.EmplaceBack("HitGroup", CubeDescriptorTable);
-	BindingTableEntries.EmplaceBack("Miss", nullptr);
-
-	RayTracingScene = RenderingAPI::Get().CreateRayTracingScene(RaytracingPSO.Get(), BindingTableEntries, 2);
+	RayTracingScene = RenderingAPI::Get().CreateRayTracingScene(RaytracingPSO.Get());
 	if (!RayTracingScene)
 	{
 		return false;
 	}
 
-	RayTracingScene->BuildAccelerationStructure(RenderingAPI::Get().GetImmediateCommandList().Get(), Instances);
 	RenderingAPI::Get().GetImmediateCommandList()->Flush();
 	RenderingAPI::Get().GetImmediateCommandList()->WaitForCompletion();
-
-	// VertexBuffer
-	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-	SrvDesc.Format						= DXGI_FORMAT_UNKNOWN;
-	SrvDesc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
-	SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SrvDesc.Buffer.FirstElement			= 0;
-	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
-	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Vertices.Size());
-	SrvDesc.Buffer.StructureByteStride	= sizeof(Vertex);
-
-	MeshVertexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(MeshVertexBuffer->GetResource(), &SrvDesc)), 0);
-
-	SrvDesc.Buffer.NumElements = static_cast<Uint32>(Cube.Vertices.Size());
-	CubeVertexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(CubeVertexBuffer->GetResource(), &SrvDesc)), 0);
-
-	// IndexBuffer
-	SrvDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
-	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
-	SrvDesc.Buffer.NumElements			= static_cast<Uint32>(Sphere.Indices.Size());
-	SrvDesc.Buffer.StructureByteStride	= 0;
-
-	MeshIndexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(MeshIndexBuffer->GetResource(), &SrvDesc)), 0);
-
-	SrvDesc.Buffer.NumElements = static_cast<Uint32>(Cube.Indices.Size());
-	CubeIndexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(CubeIndexBuffer->GetResource(), &SrvDesc)), 0);
 
 	// Populate descriptors
 	RayGenDescriptorTable->SetUnorderedAccessView(ReflectionTexture->GetUnorderedAccessView(0).Get(), 0);
 	RayGenDescriptorTable->CopyDescriptors();
 
-	SphereDescriptorTable->SetShaderResourceView(MeshVertexBuffer->GetShaderResourceView(0).Get(), 0);
-	SphereDescriptorTable->SetShaderResourceView(MeshIndexBuffer->GetShaderResourceView(0).Get(), 1);
-	SphereDescriptorTable->CopyDescriptors();
-
-	CubeDescriptorTable->SetShaderResourceView(CubeVertexBuffer->GetShaderResourceView(0).Get(), 0);
-	CubeDescriptorTable->SetShaderResourceView(CubeIndexBuffer->GetShaderResourceView(0).Get(), 1);
-	CubeDescriptorTable->CopyDescriptors();
-
-	GlobalDescriptorTable->SetShaderResourceView(RayTracingScene->GetShaderResourceView(), 0);
 	GlobalDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 1);
-	GlobalDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).Get(), 2);
-	GlobalDescriptorTable->SetShaderResourceView(Albedo->GetShaderResourceView(0).Get(), 3);
-	GlobalDescriptorTable->SetShaderResourceView(Normal->GetShaderResourceView(0).Get(), 4);
-	GlobalDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 5);
-	GlobalDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).Get(), 6);
+	GlobalDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 2);
+	GlobalDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).Get(), 3);
+	GlobalDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).Get(), 4);
 	GlobalDescriptorTable->CopyDescriptors();
 
 	return true;
@@ -1711,6 +1670,7 @@ bool Renderer::InitDeferred()
 	// Init RootSignatures
 	{
 		D3D12_DESCRIPTOR_RANGE PerFrameRanges[1] = {};
+
 		// Camera Buffer
 		PerFrameRanges[0].BaseShaderRegister				= 1;
 		PerFrameRanges[0].NumDescriptors					= 1;

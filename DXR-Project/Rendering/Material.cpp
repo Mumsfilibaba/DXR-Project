@@ -17,7 +17,6 @@ Material::Material(const MaterialProperties& InProperties)
 
 Material::~Material()
 {
-	SAFEDELETE(DescriptorTable);
 	SAFEDELETE(MaterialBuffer);
 }
 
@@ -59,7 +58,7 @@ void Material::Initialize()
 	}
 
 	// Create descriptor table
-	DescriptorTable = RenderingAPI::Get().CreateDescriptorTable(7);
+	DescriptorTable = TSharedPtr(RenderingAPI::Get().CreateDescriptorTable(7));
 	DescriptorTable->SetShaderResourceView(AlbedoMap->GetShaderResourceView(0).Get(), 0);
 	DescriptorTable->SetShaderResourceView(NormalMap->GetShaderResourceView(0).Get(), 1);
 	DescriptorTable->SetShaderResourceView(RoughnessMap->GetShaderResourceView(0).Get(), 2);

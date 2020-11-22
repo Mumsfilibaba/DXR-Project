@@ -217,7 +217,7 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	float3 WorldPosition		= PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
 	float3 SampledAlbedo		= Albedo.Sample(GBufferSampler, TexCoord).rgb;
-	//float3 SampledReflection	= DXRReflection.Sample(LUTSampler, TexCoord).rgb;
+	float3 SampledReflection	= DXRReflection.Sample(LUTSampler, TexCoord).rgb;
 	float3 SampledMaterial		= Material.Sample(GBufferSampler, TexCoord).rgb;
 	float3 SampledNormal		= Normal.Sample(GBufferSampler, TexCoord).rgb;
 	
@@ -292,5 +292,5 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	float3	FinalColor	= ApplyGammaCorrectionAndTonemapping(Color);
 	float	Luminance	= CalculateLuminance(FinalColor);
-	return float4(FinalColor, Luminance);
+    return float4(SampledReflection, Luminance);
 }

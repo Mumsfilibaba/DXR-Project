@@ -86,10 +86,10 @@ D3D12Buffer* D3D12RenderingAPI::CreateBuffer(const BufferProperties& Properties)
 	return nullptr;
 }
 
-D3D12RayTracingScene* D3D12RenderingAPI::CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState, TArray<BindingTableEntry>& InBindingTableEntries, Uint32 InNumHitGroups) const
+D3D12RayTracingScene* D3D12RenderingAPI::CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState) const
 {
 	TUniquePtr<D3D12RayTracingScene> Scene = TUniquePtr(new D3D12RayTracingScene(Device.Get()));
-	if (Scene->Initialize(PipelineState, InBindingTableEntries, InNumHitGroups))
+	if (Scene->Initialize(PipelineState))
 	{
 		return Scene.Release();
 	}

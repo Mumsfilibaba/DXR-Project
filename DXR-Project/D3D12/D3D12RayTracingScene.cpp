@@ -6,6 +6,8 @@
 
 #include "Rendering/MeshFactory.h"
 
+#include "RenderingCore/RenderingAPI.h"
+
 /*
 * D3D12RayTracingGeometry
 */
@@ -35,7 +37,13 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(
 		return true;
 	}
 
-	D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc = {};
+	// Create descriptortable
+	DescriptorTable = RenderingAPI::Get().CreateDescriptorTable(2);
+
+	// Create geometry
+	D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc;
+	Memory::Memzero(&GeometryDesc, sizeof(D3D12_RAYTRACING_GEOMETRY_DESC));
+
 	GeometryDesc.Type									= D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
 	GeometryDesc.Triangles.VertexBuffer.StartAddress	= InVertexBuffer->GetGPUVirtualAddress();
 	GeometryDesc.Triangles.VertexBuffer.StrideInBytes	= sizeof(Vertex);
@@ -47,14 +55,16 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(
 	GeometryDesc.Flags									= D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
 	// Get the size requirements for the scratch and AS buffers
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs = {};
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
+	Memory::Memzero(&Inputs, sizeof(D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS));
+
 	Inputs.DescsLayout		= D3D12_ELEMENTS_LAYOUT_ARRAY;
 	Inputs.Flags			= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
 	Inputs.NumDescs			= 1;
 	Inputs.pGeometryDescs	= &GeometryDesc;
 	Inputs.Type				= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 
-	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO Info = { };
+	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO Info;
 	Device->GetDXRDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
 
 	// Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
@@ -80,7 +90,9 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(
 	}
 
 	// Create the bottom-level AS
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc = {};
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc;
+	Memory::Memzero(&AccelerationStructureDesc, sizeof(D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC));
+
 	AccelerationStructureDesc.Inputs							= Inputs;
 	AccelerationStructureDesc.DestAccelerationStructureData		= ResultBuffer->GetGPUVirtualAddress();
 	AccelerationStructureDesc.ScratchAccelerationStructureData	= ScratchBuffer->GetGPUVirtualAddress();
@@ -96,6 +108,11 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(
 	VertexCount		= InVertexCount;
 	IndexCount		= InIndexCount;
 	
+	// Write descriptors
+	DescriptorTable->SetShaderResourceView(VertexBuffer->GetShaderResourceView(0).Get(), 0);
+	DescriptorTable->SetShaderResourceView(IndexBuffer->GetShaderResourceView(0).Get(), 1);
+	DescriptorTable->CopyDescriptors();
+
 	IsDirty = false;
 	return true;
 }
@@ -116,7 +133,17 @@ void D3D12RayTracingGeometry::SetDebugName(const std::string& Name)
 
 D3D12RayTracingScene::D3D12RayTracingScene(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
+	, ResultBuffer(nullptr)
+	, ScratchBuffer(nullptr)
+	, InstanceBuffer(nullptr)
+	, BindingTable(nullptr)
+	, BindingTableStride(0)
+	, NumHitGroups(0)
+	, View(nullptr)
 	, Instances()
+	, BindingTableEntries()
+	, PipelineStateProperties(nullptr)
+	, IsDirty(true)
 {
 }
 
@@ -128,18 +155,13 @@ D3D12RayTracingScene::~D3D12RayTracingScene()
 	SAFEDELETE(BindingTable);
 }
 
-bool D3D12RayTracingScene::Initialize(
-	D3D12RayTracingPipelineState* PipelineState, 
-	TArray<BindingTableEntry>& InBindingTableEntries, 
-	Uint32 InNumHitGroups)
+bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineState)
 {
 	using namespace Microsoft::WRL;
 
 	// Create Shader Binding Table
-	ComPtr<ID3D12StateObject>			StateObject = PipelineState->GetStateObject();
-	ComPtr<ID3D12StateObjectProperties> StateProperties;
-	
-	HRESULT hResult = StateObject.As<ID3D12StateObjectProperties>(&StateProperties);
+	ComPtr<ID3D12StateObject> StateObject = PipelineState->GetStateObject();
+	HRESULT hResult = StateObject.As<ID3D12StateObjectProperties>(&PipelineStateProperties);
 	if (FAILED(hResult))
 	{
 		LOG_ERROR("[D3D12RayTracingScene]: FAILED to retrive PipelineState Properties");
@@ -150,11 +172,26 @@ bool D3D12RayTracingScene::Initialize(
 		LOG_INFO("[D3D12RayTracingScene]: Retrived PipelineState Properties");
 	}
 
+	return true;
+}
+
+bool D3D12RayTracingScene::BuildAccelerationStructure(
+	D3D12CommandList* CommandList, 
+	TArray<D3D12RayTracingGeometryInstance>& InInstances,
+	TArray<BindingTableEntry>& InBindingTableEntries,
+	Uint32 InNumHitGroups)
+{
+	if (!IsDirty)
+	{
+		return true;
+	}
+
 	// Struct for each entry in shaderbinding table
 	struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) TableEntry
 	{
 		Byte ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
-		D3D12_GPU_DESCRIPTOR_HANDLE	DescriptorTable;
+		D3D12_GPU_DESCRIPTOR_HANDLE	DescriptorTable0;
+		D3D12_GPU_DESCRIPTOR_HANDLE	DescriptorTable1;
 	};
 
 	const Uint32 StrideInBytes	= sizeof(TableEntry);
@@ -179,34 +216,41 @@ bool D3D12RayTracingScene::Initialize(
 	for (BindingTableEntry& Entry : InBindingTableEntries)
 	{
 		TableEntry TableData;
-		if (Entry.DescriptorTable)
+		if (Entry.DescriptorTable0)
 		{
-			TableData.DescriptorTable = Entry.DescriptorTable->GetGPUTableStartHandle();
+			TableData.DescriptorTable0 = Entry.DescriptorTable0->GetGPUTableStartHandle();
 		}
 		else
 		{
-			TableData.DescriptorTable = { 0 };
+			TableData.DescriptorTable0 = { 0 };
+		}
+
+		if (Entry.DescriptorTable1)
+		{
+			TableData.DescriptorTable1 = Entry.DescriptorTable1->GetGPUTableStartHandle();
+		}
+		else
+		{
+			TableData.DescriptorTable1 = { 0 };
 		}
 
 		std::wstring WideShaderExportName = ConvertToWide(Entry.ShaderExportName);
-		memcpy(TableData.ShaderIdentifier, StateProperties->GetShaderIdentifier(WideShaderExportName.c_str()), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-
-		memcpy(Data, &TableData, StrideInBytes);
+		Memory::Memcpy(TableData.ShaderIdentifier, PipelineStateProperties->GetShaderIdentifier(WideShaderExportName.c_str()), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+		Memory::Memcpy(Data, &TableData, StrideInBytes);
 		Data += StrideInBytes;
 	}
 	BindingTable->Unmap();
 
 	NumHitGroups		= InNumHitGroups;
 	BindingTableEntries	= InBindingTableEntries;
-	return true;
-}
 
-bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandList, TArray<D3D12RayTracingGeometryInstance>& InInstances)
-{
+	// Init accelerationstructure
 	const Uint32 InstanceCount = static_cast<Uint32>(InInstances.Size());
 
 	// First get the size of the TLAS buffers and create them
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs = {};
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
+	Memory::Memzero(&Inputs, sizeof(D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS));
+
 	Inputs.DescsLayout	= D3D12_ELEMENTS_LAYOUT_ARRAY;
 	Inputs.Flags		= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
 	Inputs.NumDescs		= InstanceCount;
@@ -216,7 +260,6 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandL
 	Device->GetDXRDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
 
 	// Create the buffers
-	BufferProperties BufferProps = { };
 	BufferProps.SizeInBytes	= Uint32(Info.ScratchDataSizeInBytes);
 	BufferProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	BufferProps.InitalState	= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -269,7 +312,9 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandL
 	InstanceBuffer->Unmap();
 
 	// Create the TLAS
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc = {};
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc;
+	Memory::Memzero(&AccelerationStructureDesc, sizeof(D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC));
+
 	AccelerationStructureDesc.Inputs							= Inputs;
 	AccelerationStructureDesc.Inputs.InstanceDescs				= InstanceBuffer->GetGPUVirtualAddress();
 	AccelerationStructureDesc.DestAccelerationStructureData		= ResultBuffer->GetGPUVirtualAddress();
@@ -283,7 +328,9 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(D3D12CommandList* CommandL
 	Instances = InInstances;
 
 	// Create descriptor
-	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
+	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
+	Memory::Memzero(&SrvDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+
 	SrvDesc.ViewDimension								= D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
 	SrvDesc.Shader4ComponentMapping						= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.RaytracingAccelerationStructure.Location	= ResultBuffer->GetGPUVirtualAddress();

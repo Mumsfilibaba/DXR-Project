@@ -21,7 +21,7 @@ public:
 
 	virtual class D3D12Texture*	CreateTexture(const struct TextureProperties& Properties) const override final;
 	virtual class D3D12Buffer*	CreateBuffer(const struct BufferProperties& Properties) const override final;
-	virtual class D3D12RayTracingScene*		CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState, TArray<BindingTableEntry>& InBindingTableEntries, Uint32 InNumHitGroups) const override final;
+	virtual class D3D12RayTracingScene*		CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState) const override final;
 	virtual class D3D12RayTracingGeometry*	CreateRayTracingGeometry() const override final;
 	virtual class D3D12DescriptorTable*		CreateDescriptorTable(Uint32 DescriptorCount) const override final;
 

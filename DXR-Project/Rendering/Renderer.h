@@ -132,19 +132,13 @@ private:
 	TArray<TSharedPtr<D3D12CommandAllocator>>	CommandAllocators;
 	TArray<TSharedPtr<D3D12Resource>>			DeferredResources;
 
-	MeshData Sphere;
 	MeshData SkyboxMesh;
-	MeshData Cube;
 
 	TSharedPtr<D3D12Buffer> CameraBuffer;
-	TSharedPtr<D3D12Buffer> MeshVertexBuffer;
-	TSharedPtr<D3D12Buffer> MeshIndexBuffer;
 	TSharedPtr<D3D12Buffer> SkyboxVertexBuffer;
 	TSharedPtr<D3D12Buffer> SkyboxIndexBuffer;
 	TSharedPtr<D3D12Buffer> AABBVertexBuffer;
 	TSharedPtr<D3D12Buffer> AABBIndexBuffer;
-	TSharedPtr<D3D12Buffer> CubeVertexBuffer;
-	TSharedPtr<D3D12Buffer> CubeIndexBuffer;
 	TSharedPtr<D3D12Buffer> PointLightBuffer;
 	TSharedPtr<D3D12Buffer> DirectionalLightBuffer;
 

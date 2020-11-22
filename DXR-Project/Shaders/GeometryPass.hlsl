@@ -8,6 +8,9 @@
 	#define NORMAL_MAPPING_ENABLED
 #endif
 
+// PerFrame DescriptorTable
+ConstantBuffer<Camera> Camera : register(b1, space0);
+
 // PerObject
 cbuffer TransformBuffer : register(b0, space0)
 {
@@ -23,10 +26,6 @@ cbuffer MaterialBuffer : register(b2, space0)
 	int		EnableHeight;
 };
 
-// PerFrame DescriptorTable
-ConstantBuffer<Camera> Camera : register(b1, space0);
-
-// PerObject DescriptorTable
 Texture2D<float4> AlbedoMap		: register(t0, space0);
 #ifdef NORMAL_MAPPING_ENABLED
 	Texture2D<float4> NormalMap : register(t1, space0);

@@ -46,7 +46,7 @@ public:
 
 	void SetDebugName(const std::string& InDebugName);
 
-	FORCEINLINE D3D12DescriptorTable* GetDescriptorTable() const
+	FORCEINLINE TSharedPtr<D3D12DescriptorTable> GetDescriptorTable() const
 	{
 		return DescriptorTable;
 	}
@@ -65,10 +65,10 @@ public:
 	TSharedPtr<D3D12Texture> MetallicMap;
 
 private:
-	std::string				DebugName;
-	MaterialProperties		Properties;
-	D3D12Buffer*			MaterialBuffer	= nullptr;
-	D3D12DescriptorTable*	DescriptorTable = nullptr;
+	std::string			DebugName;
+	MaterialProperties	Properties;
+	D3D12Buffer*		MaterialBuffer	= nullptr;
+	TSharedPtr<D3D12DescriptorTable> DescriptorTable;
 
 	bool MaterialBufferIsDirty = true;
 };
