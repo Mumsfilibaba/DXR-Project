@@ -24,6 +24,9 @@ TUniquePtr<Renderer>	Renderer::RendererInstance = nullptr;
 LightSettings			Renderer::GlobalLightSettings;
 
 static const DXGI_FORMAT	RenderTargetFormat		= DXGI_FORMAT_R8G8B8A8_UNORM;
+static const DXGI_FORMAT	MaterialFormat			= DXGI_FORMAT_R8G8B8A8_UNORM;
+static const DXGI_FORMAT	AlbedoFormat			= DXGI_FORMAT_R8G8B8A8_UNORM;
+static const DXGI_FORMAT	LightProbeFormat		= DXGI_FORMAT_R16G16B16A16_UNORM;
 static const DXGI_FORMAT	NormalFormat			= DXGI_FORMAT_R10G10B10A2_UNORM;
 static const DXGI_FORMAT	DepthBufferFormat		= DXGI_FORMAT_D32_FLOAT;
 static const DXGI_FORMAT	ShadowMapFormat			= DXGI_FORMAT_D32_FLOAT;
@@ -55,10 +58,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 	DeferredResources.Clear();
 
 	// Perform frustum culling
+	DeferredVisibleCommands.Clear();
+	ForwardVisibleCommands.Clear();
+
 	if (FrustumCullEnabled)
 	{
-		VisibleCommands.Clear();
-		
 		Camera* Camera = CurrentScene.GetCamera();
 		Frustum CameraFrustum = Frustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
 		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
@@ -75,13 +79,30 @@ void Renderer::Tick(const Scene& CurrentScene)
 			XMStoreFloat3(&Box.Bottom, XmBottom);
 			if (CameraFrustum.CheckAABB(Box))
 			{
-				VisibleCommands.EmplaceBack(Command);
+				if (Command.Material->HasAlphaMask())
+				{
+					ForwardVisibleCommands.EmplaceBack(Command);
+				}
+				else
+				{
+					DeferredVisibleCommands.EmplaceBack(Command);
+				}
 			}
 		}
 	}
 	else
 	{
-		VisibleCommands = CurrentScene.GetMeshDrawCommands();
+		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+		{
+			if (Command.Material->HasAlphaMask())
+			{
+				ForwardVisibleCommands.EmplaceBack(Command);
+			}
+			else
+			{
+				DeferredVisibleCommands.EmplaceBack(Command);
+			}
+		}
 	}
 
 	// Build acceleration structures
@@ -455,8 +476,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		CommandList->SetGraphicsRootDescriptorTable(PrePassDescriptorTable->GetGPUTableStartHandle(), 1);
 
 		// Draw all objects to depthbuffer
-		//for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-		for (const MeshDrawCommand& Command : VisibleCommands)
+		for (const MeshDrawCommand& Command : DeferredVisibleCommands)
 		{
 			VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
 			VBO.SizeInBytes		= Command.VertexBuffer->GetSizeInBytes();
@@ -489,8 +509,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->SetGraphicsRootSignature(GeometryRootSignature->GetRootSignature());
 	CommandList->SetGraphicsRootDescriptorTable(GeometryDescriptorTable->GetGPUTableStartHandle(), 1);
 
-	//for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-	for (const MeshDrawCommand& Command : VisibleCommands)
+	for (const MeshDrawCommand& Command : DeferredVisibleCommands)
 	{
 		VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
 		VBO.SizeInBytes		= Command.VertexBuffer->GetSizeInBytes();
@@ -611,6 +630,57 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	CommandList->DrawInstanced(3, 1, 0, 0);
 
+	// Forward Pass
+	ViewPort.Width		= static_cast<Float32>(RenderingAPI::Get().GetSwapChain()->GetWidth());
+	ViewPort.Height		= static_cast<Float32>(RenderingAPI::Get().GetSwapChain()->GetHeight());
+	ViewPort.MinDepth	= 0.0f;
+	ViewPort.MaxDepth	= 1.0f;
+	ViewPort.TopLeftX	= 0.0f;
+	ViewPort.TopLeftY	= 0.0f;
+	CommandList->RSSetViewports(&ViewPort, 1);
+
+	ScissorRect =
+	{
+		0,
+		0,
+		static_cast<LONG>(RenderingAPI::Get().GetSwapChain()->GetWidth()),
+		static_cast<LONG>(RenderingAPI::Get().GetSwapChain()->GetHeight())
+	};
+	CommandList->RSSetScissorRects(&ScissorRect, 1);
+
+	// Render all transparent objects
+	RenderTarget[0] = BackBuffer->GetRenderTargetView(0).Get();
+	CommandList->OMSetRenderTargets(RenderTarget, 1, GBuffer[3]->GetDepthStencilView(0).Get());
+
+	// Setup Pipeline
+	CommandList->SetPipelineState(ForwardPSO->GetPipelineState());
+	CommandList->SetGraphicsRootSignature(ForwardRootSignature->GetRootSignature());
+	CommandList->SetGraphicsRootDescriptorTable(ForwardDescriptorTable->GetGPUTableStartHandle(), 1);
+
+	for (const MeshDrawCommand& Command : ForwardVisibleCommands)
+	{
+		VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
+		VBO.SizeInBytes		= Command.VertexBuffer->GetSizeInBytes();
+		VBO.StrideInBytes	= sizeof(Vertex);
+		CommandList->IASetVertexBuffers(0, &VBO, 1);
+
+		IBV.BufferLocation	= Command.IndexBuffer->GetGPUVirtualAddress();
+		IBV.SizeInBytes		= Command.IndexBuffer->GetSizeInBytes();
+		IBV.Format			= DXGI_FORMAT_R32_UINT;
+		CommandList->IASetIndexBuffer(&IBV);
+
+		if (Command.Material->IsBufferDirty())
+		{
+			Command.Material->BuildBuffer(CommandList.Get());
+		}
+		CommandList->SetGraphicsRootDescriptorTable(Command.Material->GetDescriptorTable()->GetGPUTableStartHandle(), 2);
+
+		PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+		CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+
+		CommandList->DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+	}
+
 	// Draw DebugBoxes
 	if (DrawAABBs)
 	{
@@ -633,8 +703,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		DebugIBV.Format			= DXGI_FORMAT_R16_UINT;
 		CommandList->IASetIndexBuffer(&DebugIBV);
 
-		//for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-		for (const MeshDrawCommand& Command : VisibleCommands)
+		for (const MeshDrawCommand& Command : DeferredVisibleCommands)
 		{
 			AABB& Box = Command.Mesh->BoundingBox;
 			XMFLOAT3 Scale = XMFLOAT3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
@@ -685,8 +754,8 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 	InCommandList->TransitionBarrier(ReflectionTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-	raytraceDesc.Width	= static_cast<Uint32>(ReflectionTexture->GetDesc().Width);	//SwapChain->GetWidth();
-	raytraceDesc.Height = static_cast<Uint32>(ReflectionTexture->GetDesc().Height);	//SwapChain->GetHeight();
+	raytraceDesc.Width	= static_cast<Uint32>(ReflectionTexture->GetDesc().Width);
+	raytraceDesc.Height = static_cast<Uint32>(ReflectionTexture->GetDesc().Height);
 	raytraceDesc.Depth	= 1;
 
 	// Set shader tables
@@ -902,7 +971,7 @@ bool Renderer::Initialize()
 			Panorama.Get(), 
 			1280,
 			TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, 
-			DXGI_FORMAT_R16G16B16A16_FLOAT));
+			LightProbeFormat));
 	if (!Skybox)
 	{
 		return false;
@@ -921,7 +990,7 @@ bool Renderer::Initialize()
 	IrradianceMapProps.Height		= IrradianceSize;
 	IrradianceMapProps.ArrayCount	= 6;
 	IrradianceMapProps.MipLevels	= 1;
-	IrradianceMapProps.Format		= DXGI_FORMAT_R16G16B16A16_FLOAT;
+	IrradianceMapProps.Format		= LightProbeFormat;
 	IrradianceMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 	IrradianceMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	IrradianceMapProps.SampleCount	= 1;
@@ -959,7 +1028,7 @@ bool Renderer::Initialize()
 	SpecualarIrradianceMapProps.Height		= SpecularIrradianceSize;
 	SpecualarIrradianceMapProps.ArrayCount	= 6;
 	SpecualarIrradianceMapProps.MipLevels	= static_cast<Uint16>(Miplevels);
-	SpecualarIrradianceMapProps.Format		= DXGI_FORMAT_R16G16B16A16_FLOAT;
+	SpecualarIrradianceMapProps.Format		= LightProbeFormat;
 	SpecualarIrradianceMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 	SpecualarIrradianceMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	SpecualarIrradianceMapProps.SampleCount = 1;
@@ -993,33 +1062,6 @@ bool Renderer::Initialize()
 
 	GenerateSpecularIrradianceMap(Skybox.Get(), SpecularIrradianceMap.Get(), RenderingAPI::Get().GetImmediateCommandList().Get());
 	RenderingAPI::Get().GetImmediateCommandList()->Flush();
-
-	// Create albedo for raytracing
-	Albedo = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(
-		"../Assets/Textures/RockySoil_Albedo.png", 
-		TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, 
-		DXGI_FORMAT_R8G8B8A8_UNORM));
-	if (!Albedo)
-	{
-		return false;
-	}
-	else
-	{
-		Albedo->SetDebugName("AlbedoMap");
-	}
-	
-	Normal = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromFile(
-		"../Assets/Textures/RockySoil_Normal.png", 
-		TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, 
-		DXGI_FORMAT_R8G8B8A8_UNORM));
-	if (!Normal)
-	{
-		return false;
-	}
-	else
-	{
-		Normal->SetDebugName("NormalMap");
-	}
 
 	// Init Deferred Rendering
 	if (!InitLightBuffers())
@@ -1073,6 +1115,11 @@ bool Renderer::Initialize()
 		return false;
 	}
 
+	if (!InitForwardPass())
+	{
+		return false;
+	}
+
 	// Init RayTracing if supported
 	if (RenderingAPI::Get().IsRayTracingSupported())
 	{
@@ -1087,6 +1134,11 @@ bool Renderer::Initialize()
 	LightDescriptorTable->SetShaderResourceView(SpecularIrradianceMap->GetShaderResourceView(0).Get(), 6);
 	LightDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).Get(), 7);
 	LightDescriptorTable->CopyDescriptors();
+
+	ForwardDescriptorTable->SetShaderResourceView(IrradianceMap->GetShaderResourceView(0).Get(), 3);
+	ForwardDescriptorTable->SetShaderResourceView(SpecularIrradianceMap->GetShaderResourceView(0).Get(), 4);
+	ForwardDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).Get(), 5);
+	ForwardDescriptorTable->CopyDescriptors();
 
 	WriteShadowMapDescriptors();
 
@@ -2049,9 +2101,9 @@ bool Renderer::InitDeferred()
 
 	DXGI_FORMAT Formats[] =
 	{
-		DXGI_FORMAT_R8G8B8A8_UNORM,
+		AlbedoFormat,
 		NormalFormat,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
+		MaterialFormat,
 	};
 
 	PSOProperties.RTFormats			= Formats;
@@ -2069,7 +2121,13 @@ bool Renderer::InitDeferred()
 		return false;
 	}
 
-	PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/LightPassPS.hlsl", "Main", "ps_6_0");
+	LPCWSTR Value = RenderingAPI::Get().IsRayTracingSupported() ? L"1" : L"0";
+	DxcDefine LightPassDefines[] =
+	{
+		{ L"ENABLE_RAYTRACING",	Value },
+	};
+
+	PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/LightPassPS.hlsl", "Main", "ps_6_0", LightPassDefines, 1);
 	if (!PSBlob)
 	{
 		return false;
@@ -2134,7 +2192,12 @@ bool Renderer::InitDeferred()
 	GeometryDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(1);
 	GeometryDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 0);
 	GeometryDescriptorTable->CopyDescriptors();
-	
+
+	ForwardDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(8);
+	ForwardDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 0);
+	ForwardDescriptorTable->SetConstantBufferView(PointLightBuffer->GetConstantBufferView().Get(), 1);
+	ForwardDescriptorTable->SetConstantBufferView(DirectionalLightBuffer->GetConstantBufferView().Get(), 2);
+
 	LightDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(13);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).Get(), 0);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 1);
@@ -2168,7 +2231,7 @@ bool Renderer::InitGBuffer()
 	// Albedo
 	TextureProperties GBufferProperties = { };
 	GBufferProperties.DebugName		= "GBuffer Albedo";
-	GBufferProperties.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
+	GBufferProperties.Format		= AlbedoFormat;
 	GBufferProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 	GBufferProperties.ArrayCount	= 1;
 	GBufferProperties.Width			= static_cast<Uint16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
@@ -2235,7 +2298,7 @@ bool Renderer::InitGBuffer()
 
 	// Material Properties
 	GBufferProperties.DebugName = "GBuffer Material";
-	GBufferProperties.Format	= DXGI_FORMAT_R8G8B8A8_UNORM;
+	GBufferProperties.Format	= MaterialFormat;
 
 	Value.Format = GBufferProperties.Format;
 
@@ -2744,6 +2807,302 @@ bool Renderer::InitAA()
 	return true;
 }
 
+bool Renderer::InitForwardPass()
+{
+	using namespace Microsoft::WRL;
+
+	// Init PipelineState
+	DxcDefine Defines[] =
+	{
+		{ L"ENABLE_PARALLAX_MAPPING",	L"1" },
+		{ L"ENABLE_NORMAL_MAPPING",		L"1" },
+	};
+
+	ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/ForwardPass.hlsl", "VSMain", "vs_6_0", Defines, 2);
+	if (!VSBlob)
+	{
+		return false;
+	}
+
+	ComPtr<IDxcBlob> PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/ForwardPass.hlsl", "PSMain", "ps_6_0", Defines, 2);
+	if (!PSBlob)
+	{
+		return false;
+	}
+
+	// Init RootSignatures
+	{
+		constexpr Uint32 NumPerFrameRanges = 8;
+		D3D12_DESCRIPTOR_RANGE PerFrameRanges[NumPerFrameRanges] = {};
+		// Camera Buffer
+		PerFrameRanges[0].BaseShaderRegister				= 0;
+		PerFrameRanges[0].NumDescriptors					= 1;
+		PerFrameRanges[0].RegisterSpace						= 1;
+		PerFrameRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		PerFrameRanges[0].OffsetInDescriptorsFromTableStart	= 0;
+
+		// PointLight Buffer
+		PerFrameRanges[1].BaseShaderRegister				= 1;
+		PerFrameRanges[1].NumDescriptors					= 1;
+		PerFrameRanges[1].RegisterSpace						= 1;
+		PerFrameRanges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		PerFrameRanges[1].OffsetInDescriptorsFromTableStart = 1;
+
+		// DirLight Buffer
+		PerFrameRanges[2].BaseShaderRegister				= 2;
+		PerFrameRanges[2].NumDescriptors					= 1;
+		PerFrameRanges[2].RegisterSpace						= 1;
+		PerFrameRanges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		PerFrameRanges[2].OffsetInDescriptorsFromTableStart	= 2;
+
+		// Irradiance Map
+		PerFrameRanges[3].BaseShaderRegister				= 0;
+		PerFrameRanges[3].NumDescriptors					= 1;
+		PerFrameRanges[3].RegisterSpace						= 1;
+		PerFrameRanges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerFrameRanges[3].OffsetInDescriptorsFromTableStart = 3;
+
+		// Specular Irradiance Map
+		PerFrameRanges[4].BaseShaderRegister				= 1;
+		PerFrameRanges[4].NumDescriptors					= 1;
+		PerFrameRanges[4].RegisterSpace						= 1;
+		PerFrameRanges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerFrameRanges[4].OffsetInDescriptorsFromTableStart = 4;
+
+		// Integration LUT
+		PerFrameRanges[5].BaseShaderRegister				= 2;
+		PerFrameRanges[5].NumDescriptors					= 1;
+		PerFrameRanges[5].RegisterSpace						= 1;
+		PerFrameRanges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerFrameRanges[5].OffsetInDescriptorsFromTableStart = 5;
+
+		// DirLight ShadowMaps
+		PerFrameRanges[6].BaseShaderRegister				= 3;
+		PerFrameRanges[6].NumDescriptors					= 1;
+		PerFrameRanges[6].RegisterSpace						= 1;
+		PerFrameRanges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerFrameRanges[6].OffsetInDescriptorsFromTableStart = 6;
+
+		// PointLight ShadowMaps
+		PerFrameRanges[7].BaseShaderRegister				= 4;
+		PerFrameRanges[7].NumDescriptors					= 1;
+		PerFrameRanges[7].RegisterSpace						= 1;
+		PerFrameRanges[7].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerFrameRanges[7].OffsetInDescriptorsFromTableStart = 7;
+
+		constexpr Uint32 NumPerObjectRanges = 8;
+		D3D12_DESCRIPTOR_RANGE PerObjectRanges[NumPerObjectRanges] = {};
+		// Albedo Map
+		PerObjectRanges[0].BaseShaderRegister					= 0;
+		PerObjectRanges[0].NumDescriptors						= 1;
+		PerObjectRanges[0].RegisterSpace						= 0;
+		PerObjectRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[0].OffsetInDescriptorsFromTableStart	= 0;
+
+		// Normal Map
+		PerObjectRanges[1].BaseShaderRegister					= 1;
+		PerObjectRanges[1].NumDescriptors						= 1;
+		PerObjectRanges[1].RegisterSpace						= 0;
+		PerObjectRanges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[1].OffsetInDescriptorsFromTableStart	= 1;
+
+		// Roughness Map
+		PerObjectRanges[2].BaseShaderRegister					= 2;
+		PerObjectRanges[2].NumDescriptors						= 1;
+		PerObjectRanges[2].RegisterSpace						= 0;
+		PerObjectRanges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[2].OffsetInDescriptorsFromTableStart	= 2;
+
+		// Height Map
+		PerObjectRanges[3].BaseShaderRegister					= 3;
+		PerObjectRanges[3].NumDescriptors						= 1;
+		PerObjectRanges[3].RegisterSpace						= 0;
+		PerObjectRanges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[3].OffsetInDescriptorsFromTableStart	= 3;
+
+		// Metallic Map
+		PerObjectRanges[4].BaseShaderRegister					= 4;
+		PerObjectRanges[4].NumDescriptors						= 1;
+		PerObjectRanges[4].RegisterSpace						= 0;
+		PerObjectRanges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[4].OffsetInDescriptorsFromTableStart	= 4;
+
+		// AO Map
+		PerObjectRanges[5].BaseShaderRegister					= 5;
+		PerObjectRanges[5].NumDescriptors						= 1;
+		PerObjectRanges[5].RegisterSpace						= 0;
+		PerObjectRanges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[5].OffsetInDescriptorsFromTableStart	= 5;
+
+		// Material Buffer
+		PerObjectRanges[6].BaseShaderRegister					= 1;
+		PerObjectRanges[6].NumDescriptors						= 1;
+		PerObjectRanges[6].RegisterSpace						= 0;
+		PerObjectRanges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		PerObjectRanges[6].OffsetInDescriptorsFromTableStart	= 6;
+
+		// Alpha Mask
+		PerObjectRanges[7].BaseShaderRegister					= 6;
+		PerObjectRanges[7].NumDescriptors						= 1;
+		PerObjectRanges[7].RegisterSpace						= 0;
+		PerObjectRanges[7].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerObjectRanges[7].OffsetInDescriptorsFromTableStart	= 7;
+
+		D3D12_ROOT_PARAMETER Parameters[3];
+		// Transform Constants
+		Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+		Parameters[0].Constants.ShaderRegister	= 0;
+		Parameters[0].Constants.RegisterSpace	= 0;
+		Parameters[0].Constants.Num32BitValues	= 16;
+		Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
+
+		// PerFrame DescriptorTable
+		Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		Parameters[1].DescriptorTable.NumDescriptorRanges	= NumPerFrameRanges;
+		Parameters[1].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
+		Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
+
+		// PerObject DescriptorTable
+		Parameters[2].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		Parameters[2].DescriptorTable.NumDescriptorRanges	= NumPerObjectRanges;
+		Parameters[2].DescriptorTable.pDescriptorRanges		= PerObjectRanges;
+		Parameters[2].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		constexpr Uint32 NumStaticSamplers = 5;
+		D3D12_STATIC_SAMPLER_DESC StaticSamplers[NumStaticSamplers] = { };
+		// Material Sampler
+		StaticSamplers[0].Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		StaticSamplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[0].MipLODBias		= 0.0f;
+		StaticSamplers[0].MaxAnisotropy		= 0;
+		StaticSamplers[0].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
+		StaticSamplers[0].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		StaticSamplers[0].MinLOD			= 0.0f;
+		StaticSamplers[0].MaxLOD			= FLT_MAX;
+		StaticSamplers[0].ShaderRegister	= 0;
+		StaticSamplers[0].RegisterSpace		= 1;
+		StaticSamplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		// LUT Sampler
+		StaticSamplers[1].Filter			= D3D12_FILTER_MIN_MAG_MIP_POINT;
+		StaticSamplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		StaticSamplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		StaticSamplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		StaticSamplers[1].MipLODBias		= 0.0f;
+		StaticSamplers[1].MaxAnisotropy		= 0;
+		StaticSamplers[1].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
+		StaticSamplers[1].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		StaticSamplers[1].MinLOD			= 0.0f;
+		StaticSamplers[1].MaxLOD			= 1.0f;
+		StaticSamplers[1].ShaderRegister	= 1;
+		StaticSamplers[1].RegisterSpace		= 1;
+		StaticSamplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		// Irradiance Sampler
+		StaticSamplers[2].Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		StaticSamplers[2].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		StaticSamplers[2].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		StaticSamplers[2].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		StaticSamplers[2].MipLODBias		= 0.0f;
+		StaticSamplers[2].MaxAnisotropy		= 0;
+		StaticSamplers[2].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
+		StaticSamplers[2].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		StaticSamplers[2].MinLOD			= 0.0f;
+		StaticSamplers[2].MaxLOD			= FLT_MAX;
+		StaticSamplers[2].ShaderRegister	= 2;
+		StaticSamplers[2].RegisterSpace		= 1;
+		StaticSamplers[2].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		// Comparison ShadowMap Sampler
+		StaticSamplers[3].Filter			= D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+		StaticSamplers[3].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		StaticSamplers[3].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		StaticSamplers[3].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		StaticSamplers[3].MipLODBias		= 0.0f;
+		StaticSamplers[3].MaxAnisotropy		= 0;
+		StaticSamplers[3].ComparisonFunc	= D3D12_COMPARISON_FUNC_LESS;
+		StaticSamplers[3].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+		StaticSamplers[3].MinLOD			= 0.0f;
+		StaticSamplers[3].MaxLOD			= FLT_MAX;
+		StaticSamplers[3].ShaderRegister	= 3;
+		StaticSamplers[3].RegisterSpace		= 1;
+		StaticSamplers[3].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		// PointLight ShadowMap Sampler
+		StaticSamplers[4].Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		StaticSamplers[4].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		StaticSamplers[4].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		StaticSamplers[4].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		StaticSamplers[4].MipLODBias		= 0.0f;
+		StaticSamplers[4].MaxAnisotropy		= 0;
+		StaticSamplers[4].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
+		StaticSamplers[4].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+		StaticSamplers[4].MinLOD			= 0.0f;
+		StaticSamplers[4].MaxLOD			= FLT_MAX;
+		StaticSamplers[4].ShaderRegister	= 4;
+		StaticSamplers[4].RegisterSpace		= 1;
+		StaticSamplers[4].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+
+		D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
+		RootSignatureDesc.NumParameters		= 3;
+		RootSignatureDesc.pParameters		= Parameters;
+		RootSignatureDesc.NumStaticSamplers	= NumStaticSamplers;
+		RootSignatureDesc.pStaticSamplers	= StaticSamplers;
+		RootSignatureDesc.Flags =
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+
+		ForwardRootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
+		if (!ForwardRootSignature->Initialize(RootSignatureDesc))
+		{
+			return false;
+		}
+
+		// Init PipelineState
+		D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
+		{
+			{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 0,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 12,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT",	0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 24,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,	0, 36,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+
+		GraphicsPipelineStateProperties PSOProperties = { };
+		PSOProperties.DebugName			= "ForwardPass PipelineState";
+		PSOProperties.VSBlob			= VSBlob.Get();
+		PSOProperties.PSBlob			= PSBlob.Get();
+		PSOProperties.RootSignature		= ForwardRootSignature.Get();
+		PSOProperties.InputElements		= InputElementDesc;
+		PSOProperties.NumInputElements	= 4;
+		PSOProperties.EnableDepth		= true;
+		PSOProperties.DepthWriteMask	= D3D12_DEPTH_WRITE_MASK_ZERO;
+		PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_LESS;
+		PSOProperties.DepthBufferFormat = DepthBufferFormat;
+		PSOProperties.CullMode			= D3D12_CULL_MODE_NONE;
+		PSOProperties.EnableBlending	= true;
+
+		DXGI_FORMAT Formats[] =
+		{
+			RenderTargetFormat
+		};
+
+		PSOProperties.RTFormats			= Formats;
+		PSOProperties.NumRenderTargets	= 1;
+
+		ForwardPSO = RenderingAPI::Get().CreateGraphicsPipelineState(PSOProperties);
+		if (!ForwardPSO)
+		{
+			return false;
+		}
+
+		return true;
+	}
+}
+
 bool Renderer::CreateShadowMaps()
 {
 	// DirLights
@@ -2899,11 +3258,15 @@ void Renderer::WriteShadowMapDescriptors()
 {
 #if ENABLE_VSM
 	LightDescriptorTable->SetShaderResourceView(VSMDirLightShadowMaps->GetShaderResourceView(0).Get(), 8);
+	ForwardDescriptorTable->SetShaderResourceView(VSMDirLightShadowMaps->GetShaderResourceView(0).Get(), 6);
 #else
 	LightDescriptorTable->SetShaderResourceView(DirLightShadowMaps->GetShaderResourceView(0).Get(), 8);
+	ForwardDescriptorTable->SetShaderResourceView(DirLightShadowMaps->GetShaderResourceView(0).Get(), 6);
 #endif
 	LightDescriptorTable->SetShaderResourceView(PointLightShadowMaps->GetShaderResourceView(0).Get(), 9);
+	ForwardDescriptorTable->SetShaderResourceView(PointLightShadowMaps->GetShaderResourceView(0).Get(), 7);
 	LightDescriptorTable->CopyDescriptors();
+	ForwardDescriptorTable->CopyDescriptors();
 }
 
 void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* InCommandList)

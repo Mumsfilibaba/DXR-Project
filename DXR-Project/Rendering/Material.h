@@ -46,6 +46,11 @@ public:
 
 	void SetDebugName(const std::string& InDebugName);
 
+	FORCEINLINE bool HasAlphaMask() const
+	{
+		return AlphaMask != nullptr;
+	}
+
 	FORCEINLINE TSharedPtr<D3D12DescriptorTable> GetDescriptorTable() const
 	{
 		return DescriptorTable;
@@ -63,6 +68,7 @@ public:
 	TSharedPtr<D3D12Texture> HeightMap;
 	TSharedPtr<D3D12Texture> AOMap;
 	TSharedPtr<D3D12Texture> MetallicMap;
+	TSharedPtr<D3D12Texture> AlphaMask;
 
 private:
 	std::string			DebugName;

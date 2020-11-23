@@ -58,7 +58,7 @@ void Material::Initialize()
 	}
 
 	// Create descriptor table
-	DescriptorTable = TSharedPtr(RenderingAPI::Get().CreateDescriptorTable(7));
+	DescriptorTable = TSharedPtr(RenderingAPI::Get().CreateDescriptorTable(8));
 	DescriptorTable->SetShaderResourceView(AlbedoMap->GetShaderResourceView(0).Get(), 0);
 	DescriptorTable->SetShaderResourceView(NormalMap->GetShaderResourceView(0).Get(), 1);
 	DescriptorTable->SetShaderResourceView(RoughnessMap->GetShaderResourceView(0).Get(), 2);
@@ -66,6 +66,12 @@ void Material::Initialize()
 	DescriptorTable->SetShaderResourceView(MetallicMap->GetShaderResourceView(0).Get(), 4);
 	DescriptorTable->SetShaderResourceView(AOMap->GetShaderResourceView(0).Get(), 5);
 	DescriptorTable->SetConstantBufferView(MaterialBuffer->GetConstantBufferView().Get(), 6);
+	
+	if (AlphaMask)
+	{
+		DescriptorTable->SetShaderResourceView(AlphaMask->GetShaderResourceView(0).Get(), 7);
+	}
+
 	DescriptorTable->CopyDescriptors();
 }
 

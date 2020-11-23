@@ -266,6 +266,8 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 					MaterialTextures[Mat.alpha_texname] = WhiteTexture;
 				}
 			}
+
+			NewMaterial->AlphaMask = MaterialTextures[Mat.alpha_texname];
 		}
 
 		NewMaterial->Initialize();

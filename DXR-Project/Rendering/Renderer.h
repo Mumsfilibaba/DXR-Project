@@ -114,6 +114,7 @@ private:
 	bool InitRayTracingTexture();
 	bool InitDebugStates();
 	bool InitAA();
+	bool InitForwardPass();
 
 	bool CreateShadowMaps();
 	void WriteShadowMapDescriptors();
@@ -145,8 +146,6 @@ private:
 	TSharedPtr<D3D12Texture> Skybox;
 	TSharedPtr<D3D12Texture> IrradianceMap;
 	TSharedPtr<D3D12Texture> SpecularIrradianceMap;
-	TSharedPtr<D3D12Texture> Albedo;
-	TSharedPtr<D3D12Texture> Normal;
 	TSharedPtr<D3D12Texture> ReflectionTexture;
 	TSharedPtr<D3D12Texture> IntegrationLUT;
 	TSharedPtr<D3D12Texture> DirLightShadowMaps;
@@ -165,9 +164,11 @@ private:
 	TSharedPtr<D3D12RootSignature>		SpecIrradianceGenRootSignature;
 	TSharedPtr<D3D12RootSignature>		DebugRootSignature;
 	TSharedPtr<D3D12RootSignature>		PostRootSignature;
+	TSharedPtr<D3D12RootSignature>		ForwardRootSignature;
 	TSharedPtr<D3D12DescriptorTable>	RayGenDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	GlobalDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	GeometryDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable>	ForwardDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	PrePassDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	LightDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	SkyboxDescriptorTable;
@@ -181,6 +182,7 @@ private:
 	TSharedPtr<D3D12GraphicsPipelineState>		VSMShadowMapPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		LinearShadowMapPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		GeometryPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>		ForwardPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		LightPassPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		SkyboxPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>		DebugBoxPSO;
@@ -190,7 +192,8 @@ private:
 	TSharedPtr<D3D12ComputePipelineState>		SpecIrradicanceGenPSO;
 	TSharedPtr<D3D12RayTracingPipelineState>	RaytracingPSO;
 
-	TArray<MeshDrawCommand> VisibleCommands;
+	TArray<MeshDrawCommand> DeferredVisibleCommands;
+	TArray<MeshDrawCommand> ForwardVisibleCommands;
 
 	TArray<Uint64> FenceValues;
 	Uint32 CurrentBackBufferIndex = 0;

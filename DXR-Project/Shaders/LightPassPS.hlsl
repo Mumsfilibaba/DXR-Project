@@ -1,5 +1,9 @@
 #include "PBRCommon.hlsli"
 
+#if ENABLE_RAYTRACING
+#define RAYTRACING_ENABLED
+#endif
+
 // Resources
 struct PSInput
 {
@@ -217,7 +221,9 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	float3 WorldPosition		= PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
 	float3 SampledAlbedo		= Albedo.Sample(GBufferSampler, TexCoord).rgb;
+#ifdef RAYTRACING_ENABLED
 	float3 SampledReflection	= DXRReflection.Sample(LUTSampler, TexCoord).rgb;
+#endif
 	float3 SampledMaterial		= Material.Sample(GBufferSampler, TexCoord).rgb;
 	float3 SampledNormal		= Normal.Sample(GBufferSampler, TexCoord).rgb;
 	
@@ -283,9 +289,13 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	const float MAX_MIPLEVEL = 6.0f;
 	float3 Reflection	= reflect(-ViewDir, Norm);
+#ifdef RAYTRACING_ENABLED
 	float3 Prefiltered	= 
 		(SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, Roughness * MAX_MIPLEVEL).rgb * Roughness) + 
 		(SampledReflection * (1.0f - Roughness));
+#else
+	float3 Prefiltered = SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, Roughness * MAX_MIPLEVEL).rgb;
+#endif
 	float2 IntegrationBRDF	= IntegrationLUT.Sample(LUTSampler, float2(DotNV, Roughness)).rg;
 	float3 IBL_Specular		= Prefiltered * (F_IBL * IntegrationBRDF.x + IntegrationBRDF.y);
 	

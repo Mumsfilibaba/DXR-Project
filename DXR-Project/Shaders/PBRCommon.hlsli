@@ -58,6 +58,20 @@ struct Vertex
 	float2 TexCoord;
 };
 
+struct Transform
+{
+	float4x4 Transform;
+};
+
+struct Material
+{
+	float3	Albedo;
+	float	Roughness;
+	float	Metallic;
+	float	AO;
+	int		EnableHeight;
+};
+
 /*
 * Position Helper
 */
