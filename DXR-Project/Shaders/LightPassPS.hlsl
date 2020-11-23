@@ -282,8 +282,10 @@ float4 Main(PSInput Input) : SV_TARGET
 	float3 IBL_Diffuse	= Irradiance * SampledAlbedo * Kd_IBL;
 	
 	const float MAX_MIPLEVEL = 6.0f;
-	float3 Reflection		= reflect(-ViewDir, Norm);
-	float3 Prefiltered		= SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, Roughness * MAX_MIPLEVEL).rgb;
+	float3 Reflection	= reflect(-ViewDir, Norm);
+	float3 Prefiltered	= 
+		(SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, Roughness * MAX_MIPLEVEL).rgb * Roughness) + 
+		(SampledReflection * (1.0f - Roughness));
 	float2 IntegrationBRDF	= IntegrationLUT.Sample(LUTSampler, float2(DotNV, Roughness)).rg;
 	float3 IBL_Specular		= Prefiltered * (F_IBL * IntegrationBRDF.x + IntegrationBRDF.y);
 	

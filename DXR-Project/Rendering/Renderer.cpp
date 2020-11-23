@@ -64,11 +64,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 		{
 			const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
-			XMMATRIX XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
-			XMVECTOR XmTop = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
-			XMVECTOR XmBottom = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
-			XmTop = XMVector4Transform(XmTop, XmTransform);
-			XmBottom = XMVector4Transform(XmBottom, XmTransform);
+			XMMATRIX XmTransform	= XMMatrixTranspose(XMLoadFloat4x4(&Transform));
+			XMVECTOR XmTop			= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
+			XMVECTOR XmBottom		= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
+			XmTop		= XMVector4Transform(XmTop, XmTransform);
+			XmBottom	= XMVector4Transform(XmBottom, XmTransform);
 
 			AABB Box;
 			XMStoreFloat3(&Box.Top, XmTop);
@@ -88,6 +88,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	if (RenderingAPI::Get().IsRayTracingSupported())
 	{
 		// Build Bottom-Level
+		Uint32 HitGroupIndex = 0;
 		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 		{
 			Command.Geometry->BuildAccelerationStructure(
@@ -104,7 +105,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 				Command.Mesh->RayTracingGeometry,
 				Command.Material,
 				SmallMatrix,
-				0, 0);
+				HitGroupIndex, 0);
+
+			HitGroupIndex++;
 		}
 
 		// Build Top-Level

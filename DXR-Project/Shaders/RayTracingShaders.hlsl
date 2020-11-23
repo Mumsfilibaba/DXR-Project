@@ -163,12 +163,13 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	const float3 HalfVec		= normalize(ViewDir + LightDir);
 	
 	// MaterialProperties
-	const float SampledRoughness	= min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
-	const float SampledMetallic		= Metallic;
-	const float SampledAO			= AO;
+	const float SampledAO			= AOMap.SampleLevel(TextureSampler, TexCoords, 0).r * AO;
+    const float SampledMetallic		= MetallicMap.SampleLevel(TextureSampler, TexCoords, 0).r * Metallic;
+    const float SampledRoughness	= RoughnessMap.SampleLevel(TextureSampler, TexCoords, 0).r * Roughness;
+	const float FinalRoughness		= min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
 	
 	float3 ReflectedColor = ToFloat3(0.0f);
-	if (PayLoad.CurrentRecursionDepth < 2)
+	if (PayLoad.CurrentRecursionDepth < 4)
 	{
 		RayDesc Ray;
 		Ray.Origin		= HitPosition + (Normal * RAY_OFFSET);
@@ -204,8 +205,8 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	float3	Radiance	= LightColor * Attenuation;
 
 	// Cook-Torrance BRDF
-	float	NDF	= DistributionGGX(Normal, HalfVec, SampledRoughness);
-    float G		= GeometrySmith(Normal, ViewDir, LightDir, SampledRoughness);
+    float NDF	= DistributionGGX(Normal, HalfVec, FinalRoughness);
+    float G		= GeometrySmith(Normal, ViewDir, LightDir, FinalRoughness);
 	float3	F	= FresnelSchlick(saturate(dot(HalfVec, ViewDir)), F0);
 	
 	float3	Nominator	= NDF * G * F;

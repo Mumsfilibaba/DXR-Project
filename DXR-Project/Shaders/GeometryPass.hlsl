@@ -191,10 +191,10 @@ PSOutput PSMain(PSInput Input)
 #endif	
 	MappedNormal = PackNormal(MappedNormal);
 
-	float SampledAO				= AOMap.Sample(MaterialSampler, TexCoords).r * AO;
-	float SampledMetallic		= MetallicMap.Sample(MaterialSampler, TexCoords).r * Metallic;
-	float SampledRoughness		= RoughnessMap.Sample(MaterialSampler, TexCoords).r * Roughness;
-	const float FinalRoughness	= min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+	const float SampledAO			= AOMap.Sample(MaterialSampler, TexCoords).r * AO;
+	const float SampledMetallic		= MetallicMap.Sample(MaterialSampler, TexCoords).r * Metallic;
+	const float SampledRoughness	= RoughnessMap.Sample(MaterialSampler, TexCoords).r * Roughness;
+	const float FinalRoughness		= min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
 	
 	PSOutput Output;
 	Output.Albedo	= float4(SampledAlbedo, 1.0f);
