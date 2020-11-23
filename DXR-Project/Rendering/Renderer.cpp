@@ -653,10 +653,35 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->OMSetRenderTargets(RenderTarget, 1, GBuffer[3]->GetDepthStencilView(0).Get());
 
 	// Setup Pipeline
-	CommandList->SetPipelineState(ForwardPSO->GetPipelineState());
 	CommandList->SetGraphicsRootSignature(ForwardRootSignature->GetRootSignature());
 	CommandList->SetGraphicsRootDescriptorTable(ForwardDescriptorTable->GetGPUTableStartHandle(), 1);
 
+	CommandList->SetPipelineState(ForwardFrontPSO->GetPipelineState());
+	for (const MeshDrawCommand& Command : ForwardVisibleCommands)
+	{
+		VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
+		VBO.SizeInBytes		= Command.VertexBuffer->GetSizeInBytes();
+		VBO.StrideInBytes	= sizeof(Vertex);
+		CommandList->IASetVertexBuffers(0, &VBO, 1);
+
+		IBV.BufferLocation	= Command.IndexBuffer->GetGPUVirtualAddress();
+		IBV.SizeInBytes		= Command.IndexBuffer->GetSizeInBytes();
+		IBV.Format			= DXGI_FORMAT_R32_UINT;
+		CommandList->IASetIndexBuffer(&IBV);
+
+		if (Command.Material->IsBufferDirty())
+		{
+			Command.Material->BuildBuffer(CommandList.Get());
+		}
+		CommandList->SetGraphicsRootDescriptorTable(Command.Material->GetDescriptorTable()->GetGPUTableStartHandle(), 2);
+
+		PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+		CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+
+		CommandList->DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+	}
+
+	CommandList->SetPipelineState(ForwardBackPSO->GetPipelineState());
 	for (const MeshDrawCommand& Command : ForwardVisibleCommands)
 	{
 		VBO.BufferLocation	= Command.VertexBuffer->GetGPUVirtualAddress();
@@ -3082,7 +3107,7 @@ bool Renderer::InitForwardPass()
 		PSOProperties.DepthWriteMask	= D3D12_DEPTH_WRITE_MASK_ZERO;
 		PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_LESS;
 		PSOProperties.DepthBufferFormat = DepthBufferFormat;
-		PSOProperties.CullMode			= D3D12_CULL_MODE_NONE;
+		PSOProperties.CullMode			= D3D12_CULL_MODE_FRONT;
 		PSOProperties.EnableBlending	= true;
 
 		DXGI_FORMAT Formats[] =
@@ -3093,8 +3118,16 @@ bool Renderer::InitForwardPass()
 		PSOProperties.RTFormats			= Formats;
 		PSOProperties.NumRenderTargets	= 1;
 
-		ForwardPSO = RenderingAPI::Get().CreateGraphicsPipelineState(PSOProperties);
-		if (!ForwardPSO)
+		ForwardFrontPSO = RenderingAPI::Get().CreateGraphicsPipelineState(PSOProperties);
+		if (!ForwardFrontPSO)
+		{
+			return false;
+		}
+
+		PSOProperties.CullMode = D3D12_CULL_MODE_BACK;
+
+		ForwardBackPSO = RenderingAPI::Get().CreateGraphicsPipelineState(PSOProperties);
+		if (!ForwardBackPSO)
 		{
 			return false;
 		}

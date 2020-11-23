@@ -177,20 +177,21 @@ private:
 	TSharedPtr<D3D12RayTracingScene>	RayTracingScene;
 	TArray<D3D12RayTracingGeometryInstance> RayTracingGeometryInstances;
 
-	TSharedPtr<D3D12GraphicsPipelineState>		PrePassPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		ShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		VSMShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		LinearShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		GeometryPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		ForwardPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		LightPassPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		SkyboxPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		DebugBoxPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		PostPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>		FXAAPSO;
-	TSharedPtr<D3D12ComputePipelineState>		IrradicanceGenPSO;
-	TSharedPtr<D3D12ComputePipelineState>		SpecIrradicanceGenPSO;
-	TSharedPtr<D3D12RayTracingPipelineState>	RaytracingPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	PrePassPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	ShadowMapPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	VSMShadowMapPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	LinearShadowMapPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	GeometryPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	ForwardFrontPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	ForwardBackPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	LightPassPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	SkyboxPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	DebugBoxPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	PostPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	FXAAPSO;
+	TSharedPtr<D3D12ComputePipelineState>	IrradicanceGenPSO;
+	TSharedPtr<D3D12ComputePipelineState>	SpecIrradicanceGenPSO;
+	TSharedPtr<D3D12RayTracingPipelineState> RaytracingPSO;
 
 	TArray<MeshDrawCommand> DeferredVisibleCommands;
 	TArray<MeshDrawCommand> ForwardVisibleCommands;
