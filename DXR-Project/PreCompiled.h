@@ -35,7 +35,9 @@ using namespace DirectX;
 // Utilities
 #include "Utilities/TUtilities.h"
 #include "Utilities/HashUtilities.h"
-#include "Utilities/MathUtilities.h"
+
+// Math
+#include "Math/Math.h"
 
 // Core
 #include "Core/ClassType.h"

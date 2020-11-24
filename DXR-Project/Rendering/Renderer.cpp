@@ -1455,7 +1455,7 @@ bool Renderer::InitLightBuffers()
 	BufferProperties Props = { };
 	Props.Name			= "PointLight Buffer";
 	Props.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	Props.SizeInBytes	= AlignUp<Uint32>(NumPointLights * sizeof(PointLightProperties), 256U);
+	Props.SizeInBytes	= Math::AlignUp<Uint32>(NumPointLights * sizeof(PointLightProperties), 256U);
 	Props.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 	Props.Flags			= D3D12_RESOURCE_FLAG_NONE;
 
@@ -1473,7 +1473,7 @@ bool Renderer::InitLightBuffers()
 	}
 
 	Props.Name			= "DirectionalLight Buffer";
-	Props.SizeInBytes	= AlignUp<Uint32>(NumDirLights * sizeof(DirectionalLightProperties), 256U);
+	Props.SizeInBytes	= Math::AlignUp<Uint32>(NumDirLights * sizeof(DirectionalLightProperties), 256U);
 
 	DirectionalLightBuffer = RenderingAPI::Get().CreateBuffer(Props);
 	if (DirectionalLightBuffer)

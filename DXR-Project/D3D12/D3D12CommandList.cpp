@@ -306,8 +306,8 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 		SetComputeRoot32BitConstants(&CB0, 4, 0, 0);
 		SetComputeRootDescriptorTable(MipGenHelper.UAVDescriptorTables[i]->GetGPUTableStartHandle(), 2);
 
-		const Uint32 ThreadsX = DivideByMultiple(DstWidth, 8);
-		const Uint32 ThreadsY = DivideByMultiple(DstHeight, 8);
+		const Uint32 ThreadsX = Math::DivideByMultiple(DstWidth, 8);
+		const Uint32 ThreadsY = Math::DivideByMultiple(DstHeight, 8);
 		Dispatch(ThreadsX, ThreadsY, ThreadsZ);
 
 		UnorderedAccessBarrier(StagingTexture.Get());

@@ -238,8 +238,8 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* Panoram
 	CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
 	CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 2);
 
-	Uint32 ThreadsX = DivideByMultiple(CubeMapSize, 16);
-	Uint32 ThreadsY = DivideByMultiple(CubeMapSize, 16);
+	Uint32 ThreadsX = Math::DivideByMultiple(CubeMapSize, 16);
+	Uint32 ThreadsY = Math::DivideByMultiple(CubeMapSize, 16);
 	CommandList->Dispatch(ThreadsX, ThreadsY, 6);
 
 	CommandList->TransitionBarrier(PanoramaSource, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
