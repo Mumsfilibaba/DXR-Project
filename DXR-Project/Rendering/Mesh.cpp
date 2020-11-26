@@ -35,7 +35,7 @@ bool Mesh::Initialize(const MeshData& Data)
 	}
 
 	// Create IndexBuffer
-	BufferProps.SizeInBytes = Data.Indices.Size() * sizeof(Uint32);
+	BufferProps.SizeInBytes = Data.Indices.Size() * sizeof(uint32);
 
 	IndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
 	if (!IndexBuffer)
@@ -43,18 +43,18 @@ bool Mesh::Initialize(const MeshData& Data)
 		return false;
 	}
 
-	VertexCount = static_cast<Uint32>(Data.Vertices.Size());
-	IndexCount	= static_cast<Uint32>(Data.Indices.Size());
+	VertexCount = static_cast<uint32>(Data.Vertices.Size());
+	IndexCount	= static_cast<uint32>(Data.Indices.Size());
 
 	// Upload data
 	TSharedPtr<D3D12ImmediateCommandList> CommandList = RenderingAPI::StaticGetImmediateCommandList();
 	CommandList->TransitionBarrier(VertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 	CommandList->TransitionBarrier(IndexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 	
-	Uint32 SizeInBytes = Data.Vertices.Size() * sizeof(Vertex);
+	uint32 SizeInBytes = Data.Vertices.Size() * sizeof(Vertex);
 	CommandList->UploadBufferData(VertexBuffer.Get(), 0, Data.Vertices.Data(), SizeInBytes);
 	
-	SizeInBytes = Data.Indices.Size() * sizeof(Uint32);
+	SizeInBytes = Data.Indices.Size() * sizeof(uint32);
 	CommandList->UploadBufferData(IndexBuffer.Get(), 0, Data.Indices.Data(), SizeInBytes);
 
 	CommandList->TransitionBarrier(VertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
@@ -82,7 +82,7 @@ bool Mesh::Initialize(const MeshData& Data)
 
 		SrvDesc.Format						= DXGI_FORMAT_R32_TYPELESS;
 		SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
-		SrvDesc.Buffer.NumElements			= static_cast<Uint32>(IndexCount);
+		SrvDesc.Buffer.NumElements			= static_cast<uint32>(IndexCount);
 		SrvDesc.Buffer.StructureByteStride	= 0;
 
 		IndexBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(IndexBuffer->GetResource(), &SrvDesc)), 0);
@@ -118,21 +118,21 @@ TSharedPtr<Mesh> Mesh::Make(const MeshData& Data)
 
 void Mesh::CreateBoundingBox(const MeshData& Data)
 {
-	constexpr Float32 Inf = std::numeric_limits<Float32>::infinity();
+	constexpr float Inf = std::numeric_limits<float>::infinity();
 	XMFLOAT3 Min = XMFLOAT3(Inf, Inf, Inf);
 	XMFLOAT3 Max = XMFLOAT3(-Inf, -Inf, -Inf);
 
 	for (const Vertex& Vertex : Data.Vertices)
 	{
 		// X
-		Min.x = std::min<Float32>(Min.x, Vertex.Position.x);
-		Max.x = std::max<Float32>(Max.x, Vertex.Position.x);
+		Min.x = std::min<float>(Min.x, Vertex.Position.x);
+		Max.x = std::max<float>(Max.x, Vertex.Position.x);
 		// Y
-		Min.y = std::min<Float32>(Min.y, Vertex.Position.y);
-		Max.y = std::max<Float32>(Max.y, Vertex.Position.y);
+		Min.y = std::min<float>(Min.y, Vertex.Position.y);
+		Max.y = std::max<float>(Max.y, Vertex.Position.y);
 		// Z
-		Min.z = std::min<Float32>(Min.z, Vertex.Position.z);
-		Max.z = std::max<Float32>(Max.z, Vertex.Position.z);
+		Min.z = std::min<float>(Min.z, Vertex.Position.z);
+		Max.z = std::max<float>(Max.z, Vertex.Position.z);
 	}
 
 	BoundingBox.Top		= Max;

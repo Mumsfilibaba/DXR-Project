@@ -34,12 +34,12 @@ public:
 	virtual void SetWindowShape(const WindowShape& Shape, bool Move) override final;
 	virtual void GetWindowShape(WindowShape& OutWindowShape) const override final;
 
-	virtual Uint32 GetWidth() const override final;
-	virtual Uint32 GetHeight() const override final;
+	virtual uint32 GetWidth() const override final;
+	virtual uint32 GetHeight() const override final;
 
-	virtual VoidPtr GetNativeHandle() const override final
+	virtual void* GetNativeHandle() const override final
 	{
-		return reinterpret_cast<VoidPtr>(hWindow);
+		return reinterpret_cast<void*>(hWindow);
 	}
 	
 	FORCEINLINE HWND GetHandle() const

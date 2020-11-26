@@ -8,10 +8,10 @@
 struct PointLightProperties
 {
 	XMFLOAT3	Color			= XMFLOAT3(1.0f, 1.0f, 1.0f);
-	Float32		ShadowBias		= 0.005f;
+	float		ShadowBias		= 0.005f;
 	XMFLOAT3	Position		= XMFLOAT3(0.0f, 0.0f, 0.0f);
-	Float32		FarPlane		= 10.0f;
-	Float32		MaxShadowBias	= 0.05f;
+	float		FarPlane		= 10.0f;
+	float		MaxShadowBias	= 0.05f;
 };
 
 /*
@@ -27,29 +27,29 @@ public:
 	~PointLight();
 
 	void SetPosition(const XMFLOAT3& InPosition);
-	void SetPosition(Float32 X, Float32 Y, Float32 Z);
+	void SetPosition(float X, float Y, float Z);
 
-	void SetShadowNearPlane(Float32 InShadowNearPlane);
-	void SetShadowFarPlane(Float32 InShadowFarPlane);
+	void SetShadowNearPlane(float InShadowNearPlane);
+	void SetShadowFarPlane(float InShadowFarPlane);
 
 	FORCEINLINE const XMFLOAT3& GetPosition() const
 	{
 		return Position;
 	}
 
-	FORCEINLINE const XMFLOAT4X4& GetMatrix(Uint32 Index) const
+	FORCEINLINE const XMFLOAT4X4& GetMatrix(uint32 Index) const
 	{
 		VALIDATE(Index < 6);
 		return Matrices[Index];
 	}
 
-	FORCEINLINE const XMFLOAT4X4& GetViewMatrix(Uint32 Index) const
+	FORCEINLINE const XMFLOAT4X4& GetViewMatrix(uint32 Index) const
 	{
 		VALIDATE(Index < 6);
 		return ViewMatrices[Index];
 	}
 
-	FORCEINLINE const XMFLOAT4X4& GetProjectionMatrix(Uint32 Index) const
+	FORCEINLINE const XMFLOAT4X4& GetProjectionMatrix(uint32 Index) const
 	{
 		VALIDATE(Index < 6);
 		return ProjMatrices[Index];

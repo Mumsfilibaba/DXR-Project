@@ -128,6 +128,16 @@ float Linstep(float Low, float High, float P)
 	return saturate((P - Low) / (High - Low));
 }
 
+float Lerp(float A, float B, float AmountOfA)
+{
+	return (-AmountOfA * B) + ((A * AmountOfA) + B);
+}
+
+float3 Lerp(float3 A, float3 B, float AmountOfA)
+{
+	return (ToFloat3(-AmountOfA) * B) + ((A * ToFloat3(AmountOfA)) + B);
+}
+
 /*
 * PBR Functions
 */

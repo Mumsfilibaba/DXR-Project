@@ -5,7 +5,7 @@
 /*
 * EEventType
 */
-enum class EEventType : Uint8
+enum class EEventType : uint8
 { 
 	UNKNOWN_EVENT = 0,
 
@@ -24,7 +24,7 @@ enum class EEventType : Uint8
 /*
 * EEventCategory
 */
-enum EEventCategory : Uint8
+enum EEventCategory : uint8
 {
 	EVENT_CATEGORY_UNKNOWN	= 0,
 	
@@ -54,7 +54,7 @@ enum EEventCategory : Uint8
 	} \
 
 #define DECLARE_EVENT_CATEGORY(Category) \
-	virtual Uint8 GetEventCategory() const override \
+	virtual uint8 GetEventCategory() const override \
 	{ \
 		return (Category); \
 	} \
@@ -68,7 +68,7 @@ public:
 	Event() = default;
 	~Event() = default;
 
-	virtual Uint8 GetEventCategory() const = 0;
+	virtual uint8 GetEventCategory() const = 0;
 	virtual EEventType	GetEventType() const = 0;
 
 	virtual const char* GetName() const = 0;

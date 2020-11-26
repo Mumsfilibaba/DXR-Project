@@ -22,7 +22,7 @@ struct RayTracingPipelineStateProperties
 	D3D12RootSignature* MissRootSignature		= nullptr;
 	D3D12RootSignature* GlobalRootSignature		= nullptr;
 
-	Uint32 MaxRecursions = 0;
+	uint32 MaxRecursions = 0;
 };
 
 /*

@@ -65,9 +65,9 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	StagingTextureProps.DebugName			= "StagingTexture";
 	StagingTextureProps.Flags				= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	StagingTextureProps.Format				= Desc.Format;
-	StagingTextureProps.Width				= static_cast<Uint16>(Desc.Width);
-	StagingTextureProps.Height				= static_cast<Uint16>(Desc.Height);
-	StagingTextureProps.ArrayCount			= static_cast<Uint16>(Desc.DepthOrArraySize);
+	StagingTextureProps.Width				= static_cast<uint16>(Desc.Width);
+	StagingTextureProps.Height				= static_cast<uint16>(Desc.Height);
+	StagingTextureProps.ArrayCount			= static_cast<uint16>(Desc.DepthOrArraySize);
 	StagingTextureProps.MemoryType			= Dest->GetMemoryType();
 	StagingTextureProps.InitalState			= D3D12_RESOURCE_STATE_COMMON;
 	StagingTextureProps.MipLevels			= Desc.MipLevels;
@@ -117,7 +117,7 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 		UAVDesc.Texture2D.PlaneSlice	= 0;
 	}
 
-	for (Uint32 i = 0; i < Desc.MipLevels; i++)
+	for (uint32 i = 0; i < Desc.MipLevels; i++)
 	{
 		if (IsTextureCube)
 		{
@@ -211,10 +211,10 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	}
 
 	// Create Resources for generating Miplevels
-	const Uint32 MipLevelsPerDispatch = 4;
-	Uint32 NumDispatches = Desc.MipLevels / MipLevelsPerDispatch;
+	const uint32 MipLevelsPerDispatch = 4;
+	uint32 NumDispatches = Desc.MipLevels / MipLevelsPerDispatch;
 
-	Uint32 MiplevelsLastDispatch = Desc.MipLevels - (MipLevelsPerDispatch * NumDispatches);
+	uint32 MiplevelsLastDispatch = Desc.MipLevels - (MipLevelsPerDispatch * NumDispatches);
 	if (MiplevelsLastDispatch > 0)
 	{
 		if (!MipGenHelper.NULLView)
@@ -245,15 +245,15 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 	MipGenHelper.SRVDescriptorTable->CopyDescriptors();
 
 	// Bind UnorderedAccessViews
-	Uint32 UAVIndex = 0;
-	for (Uint32 i = 0; i < NumDispatches; i++)
+	uint32 UAVIndex = 0;
+	for (uint32 i = 0; i < NumDispatches; i++)
 	{
 		if (!MipGenHelper.UAVDescriptorTables[i])
 		{
 			MipGenHelper.UAVDescriptorTables[i] = MakeUnique<D3D12DescriptorTable>(Device, 4);
 		}
 
-		for (Uint32 j = 0; j < MipLevelsPerDispatch; j++)
+		for (uint32 j = 0; j < MipLevelsPerDispatch; j++)
 		{
 			if (UAVIndex < Desc.MipLevels)
 			{
@@ -287,27 +287,27 @@ void D3D12CommandList::GenerateMips(D3D12Texture* Dest)
 
 	struct ConstantBuffer
 	{
-		Uint32		SrcMipLevel;
-		Uint32		NumMipLevels;
+		uint32		SrcMipLevel;
+		uint32		NumMipLevels;
 		XMFLOAT2	TexelSize;
 	} CB0;
 
-	Uint32 DstWidth		= static_cast<Uint32>(Desc.Width);
-	Uint32 DstHeight	= Desc.Height;
+	uint32 DstWidth		= static_cast<uint32>(Desc.Width);
+	uint32 DstHeight	= Desc.Height;
 	CB0.SrcMipLevel		= 0;
 
-	const Uint32 ThreadsZ = IsTextureCube ? 6 : 1;
-	Uint32 RemainingMiplevels = Desc.MipLevels;
-	for (Uint32 i = 0; i < NumDispatches; i++)
+	const uint32 ThreadsZ = IsTextureCube ? 6 : 1;
+	uint32 RemainingMiplevels = Desc.MipLevels;
+	for (uint32 i = 0; i < NumDispatches; i++)
 	{
-		CB0.TexelSize		= XMFLOAT2(1.0f / static_cast<Float32>(DstWidth), 1.0f / static_cast<Float32>(DstHeight));
-		CB0.NumMipLevels	= std::min<Uint32>(4, RemainingMiplevels);
+		CB0.TexelSize		= XMFLOAT2(1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight));
+		CB0.NumMipLevels	= std::min<uint32>(4, RemainingMiplevels);
 
 		SetComputeRoot32BitConstants(&CB0, 4, 0, 0);
 		SetComputeRootDescriptorTable(MipGenHelper.UAVDescriptorTables[i]->GetGPUTableStartHandle(), 2);
 
-		const Uint32 ThreadsX = Math::DivideByMultiple(DstWidth, 8);
-		const Uint32 ThreadsY = Math::DivideByMultiple(DstHeight, 8);
+		const uint32 ThreadsX = Math::DivideByMultiple(DstWidth, 8);
+		const uint32 ThreadsY = Math::DivideByMultiple(DstHeight, 8);
 		Dispatch(ThreadsX, ThreadsY, ThreadsZ);
 
 		UnorderedAccessBarrier(StagingTexture.Get());
@@ -344,9 +344,9 @@ void D3D12CommandList::BindGlobalOnlineDescriptorHeaps()
 	SetDescriptorHeaps(DescriptorHeaps, 1);
 }
 
-void D3D12CommandList::UploadBufferData(D3D12Buffer* Dest, const Uint32 DestOffset, const void* Src, const Uint32 SizeInBytes)
+void D3D12CommandList::UploadBufferData(D3D12Buffer* Dest, const uint32 DestOffset, const void* Src, const uint32 SizeInBytes)
 {
-	const Uint32 NewOffset = UploadBufferOffset + SizeInBytes;
+	const uint32 NewOffset = UploadBufferOffset + SizeInBytes;
 	if (NewOffset >= UploadBuffer->GetSizeInBytes())
 	{
 		// Destroy old buffer
@@ -369,16 +369,16 @@ void D3D12CommandList::UploadTextureData(
 	class D3D12Texture* Dest, 
 	const void* Src, 
 	DXGI_FORMAT Format, 
-	const Uint32 Width, 
-	const Uint32 Height, 
-	const Uint32 Depth, 
-	const Uint32 Stride, 
-	const Uint32 RowPitch)
+	const uint32 Width, 
+	const uint32 Height, 
+	const uint32 Depth, 
+	const uint32 Stride, 
+	const uint32 RowPitch)
 {
 	UNREFERENCED_VARIABLE(Depth);
 
-	const Uint32 SizeInBytes	= Height * RowPitch;
-	const Uint32 NewOffset		= UploadBufferOffset + SizeInBytes;
+	const uint32 SizeInBytes	= Height * RowPitch;
+	const uint32 NewOffset		= UploadBufferOffset + SizeInBytes;
 	if (NewOffset >= UploadBuffer->GetSizeInBytes())
 	{
 		// Destroy old buffer
@@ -390,9 +390,9 @@ void D3D12CommandList::UploadTextureData(
 	}
 
 	// Copy to GPU buffer
-	Byte* Memory = UploadPointer + UploadBufferOffset;
-	const Byte* Source = reinterpret_cast<const Byte*>(Src);
-	for (Uint32 Y = 0; Y < Height; Y++)
+	byte* Memory = UploadPointer + UploadBufferOffset;
+	const byte* Source = reinterpret_cast<const byte*>(Src);
+	for (uint32 Y = 0; Y < Height; Y++)
 	{
 		memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(Memory) + Y * RowPitch), Source + (Y * Width * Stride), Width * Stride);
 	}
@@ -450,7 +450,7 @@ void D3D12CommandList::SetDebugName(const std::string& DebugName)
 	CommandList->SetName(WideDebugName.c_str());
 }
 
-bool D3D12CommandList::CreateUploadBuffer(Uint32 SizeInBytes)
+bool D3D12CommandList::CreateUploadBuffer(uint32 SizeInBytes)
 {
 	BufferProperties UploadBufferProps = { };
 	UploadBufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
@@ -463,7 +463,7 @@ bool D3D12CommandList::CreateUploadBuffer(Uint32 SizeInBytes)
 	{
 		UploadBufferOffset = 0;
 
-		UploadPointer = reinterpret_cast<Byte*>(UploadBuffer->Map());
+		UploadPointer = reinterpret_cast<byte*>(UploadBuffer->Map());
 		return true;
 	}
 	else

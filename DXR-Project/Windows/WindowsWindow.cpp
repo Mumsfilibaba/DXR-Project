@@ -243,36 +243,36 @@ void WindowsWindow::GetWindowShape(WindowShape& OutWindowShape) const
 
 	if (IsValid())
 	{
-		Int32 x = 0;
-		Int32 y = 0;
-		Uint32 Width = 0;
-		Uint32 Height = 0;
+		int32 x = 0;
+		int32 y = 0;
+		uint32 Width = 0;
+		uint32 Height = 0;
 
 		RECT Rect = { };
 		if (::GetWindowRect(hWindow, &Rect) != 0)
 		{
-			x = static_cast<Int32>(Rect.left);
-			y = static_cast<Int32>(Rect.top);
+			x = static_cast<int32>(Rect.left);
+			y = static_cast<int32>(Rect.top);
 		}
 
 		if (::GetClientRect(hWindow, &Rect) != 0)
 		{
-			Width = static_cast<Uint32>(Rect.right  - Rect.left);
-			Height = static_cast<Uint32>(Rect.bottom - Rect.top);
+			Width = static_cast<uint32>(Rect.right  - Rect.left);
+			Height = static_cast<uint32>(Rect.bottom - Rect.top);
 		}
 
 		OutWindowShape = WindowShape(Width, Height, x, y);
 	}
 }
 
-Uint32 WindowsWindow::GetWidth() const
+uint32 WindowsWindow::GetWidth() const
 {
 	if (IsValid())
 	{
 		RECT Rect = { };
 		if (::GetClientRect(hWindow, &Rect) != 0)
 		{
-			const Uint32 Width = static_cast<Uint32>(Rect.right - Rect.left);
+			const uint32 Width = static_cast<uint32>(Rect.right - Rect.left);
 			return Width;
 		}
 	}
@@ -280,14 +280,14 @@ Uint32 WindowsWindow::GetWidth() const
 	return 0;
 }
 
-Uint32 WindowsWindow::GetHeight() const
+uint32 WindowsWindow::GetHeight() const
 {
 	if (IsValid())
 	{
 		RECT Rect = { };
 		if (::GetClientRect(hWindow, &Rect) != 0)
 		{
-			const Uint32 Height = static_cast<Uint32>(Rect.bottom - Rect.top);
+			const uint32 Height = static_cast<uint32>(Rect.bottom - Rect.top);
 			return Height;
 		}
 	}

@@ -15,7 +15,7 @@ class ApplicationEventHandler
 public:
 	virtual ~ApplicationEventHandler() = default;
 
-	virtual void OnWindowResized(TSharedRef<GenericWindow> Window, Uint16 Width, Uint16 Height)
+	virtual void OnWindowResized(TSharedRef<GenericWindow> Window, uint16 Width, uint16 Height)
 	{
 	}
 
@@ -27,11 +27,11 @@ public:
 	{
 	}
 
-	virtual void OnCharacterInput(Uint32 Character)
+	virtual void OnCharacterInput(uint32 Character)
 	{
 	}
 
-	virtual void OnMouseMove(Int32 x, Int32 y)
+	virtual void OnMouseMove(int32 x, int32 y)
 	{
 	}
 
@@ -43,7 +43,7 @@ public:
 	{
 	}
 
-	virtual void OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta)
+	virtual void OnMouseScrolled(float HorizontalDelta, float VerticalDelta)
 	{
 	}
 

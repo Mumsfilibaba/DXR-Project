@@ -6,7 +6,7 @@
 * EMemoryType
 */
 
-enum class EMemoryType : Uint32
+enum class EMemoryType : uint32
 {
 	MEMORY_TYPE_UNKNOWN	= 0,
 	MEMORY_TYPE_UPLOAD	= 1,
@@ -28,8 +28,8 @@ public:
 	// DeviceChild Interface
 	virtual void SetDebugName(const std::string& Name) override;
 
-	void SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex);
-	void SetUnorderedAccessView(TSharedPtr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex);
+	void SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> InShaderResourceView, const uint32 SubresourceIndex);
+	void SetUnorderedAccessView(TSharedPtr<D3D12UnorderedAccessView> InUnorderedAccessView, const uint32 SubresourceIndex);
 
 	FORCEINLINE EMemoryType GetMemoryType() const
 	{
@@ -51,12 +51,12 @@ public:
 		return Resource.Get();
 	}
 
-	FORCEINLINE TSharedPtr<D3D12ShaderResourceView> GetShaderResourceView(const Uint32 SubresourceIndex) const
+	FORCEINLINE TSharedPtr<D3D12ShaderResourceView> GetShaderResourceView(const uint32 SubresourceIndex) const
 	{
 		return ShaderResourceViews[SubresourceIndex];
 	}
 
-	FORCEINLINE TSharedPtr<D3D12UnorderedAccessView> GetUnorderedAccessView(const Uint32 SubresourceIndex) const
+	FORCEINLINE TSharedPtr<D3D12UnorderedAccessView> GetUnorderedAccessView(const uint32 SubresourceIndex) const
 	{
 		return UnorderedAccessViews[SubresourceIndex];
 	}

@@ -99,7 +99,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 	}
 
 	// Create standard textures
-	Byte Pixels[] = { 255, 255, 255, 255 };
+	byte Pixels[] = { 255, 255, 255, 255 };
 	TSharedPtr<D3D12Texture> WhiteTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!WhiteTexture)
 	{
@@ -276,12 +276,12 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 	// Construct Scene
 	MeshData Data;
 	TUniquePtr<Scene> LoadedScene = MakeUnique<Scene>();
-	std::unordered_map<Vertex, Uint32, VertexHasher> UniqueVertices;
+	std::unordered_map<Vertex, uint32, VertexHasher> UniqueVertices;
 
 	for (const tinyobj::shape_t& Shape : Shapes)
 	{
 		// Start at index zero for eaxh mesh and loop until all indices are processed
-		Uint32 i = 0;
+		uint32 i = 0;
 		while (i < Shape.mesh.indices.size())
 		{
 			// Start a new mesh
@@ -290,8 +290,8 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
 			UniqueVertices.clear();
 
-			Uint32 Face = i / 3;
-			const Int32 MaterialID = Shape.mesh.material_ids[Face];
+			uint32 Face = i / 3;
+			const int32 MaterialID = Shape.mesh.material_ids[Face];
 			for (; i < Shape.mesh.indices.size(); i++)
 			{
 				// Break if material is not the same
@@ -338,7 +338,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
 				if (UniqueVertices.count(TempVertex) == 0)
 				{
-					UniqueVertices[TempVertex] = static_cast<Uint32>(Data.Vertices.Size());
+					UniqueVertices[TempVertex] = static_cast<uint32>(Data.Vertices.Size());
 					Data.Vertices.PushBack(TempVertex);
 				}
 

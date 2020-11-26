@@ -39,9 +39,9 @@ class D3D12RayTracingPipelineState;
 
 struct LightSettings
 {
-	Uint16 ShadowMapWidth		= 4096;
-	Uint16 ShadowMapHeight		= 4096;
-	Uint16 PointLightShadowSize	= 1024;
+	uint16 ShadowMapWidth		= 4096;
+	uint16 ShadowMapHeight		= 4096;
+	uint16 PointLightShadowSize	= 1024;
 };
 
 /*
@@ -56,13 +56,14 @@ public:
 	
 	void Tick(const Scene& CurrentScene);
 	
-	void OnResize(Int32 Width, Int32 Height);
+	void OnResize(int32 Width, int32 Height);
 
 	void SetPrePassEnable(bool Enabled);
 	void SetVerticalSyncEnable(bool Enabled);
 	void SetDrawAABBsEnable(bool Enabled);
 	void SetFrustumCullEnable(bool Enabled);
 	void SetFXAAEnable(bool Enabled);
+	void SetSSAOEnable(bool Enabled);
 
 	FORCEINLINE bool IsDrawAABBsEnabled() const
 	{
@@ -87,6 +88,11 @@ public:
 	FORCEINLINE bool IsFrustumCullEnabled() const
 	{
 		return FrustumCullEnabled;
+	}
+
+	FORCEINLINE bool IsSSAOEnabled() const
+	{
+		return SSAOEnabled;
 	}
 
 	static void SetGlobalLightSettings(const LightSettings& InGlobalLightSettings);
@@ -115,6 +121,7 @@ private:
 	bool InitDebugStates();
 	bool InitAA();
 	bool InitForwardPass();
+	bool InitSSAO();
 
 	bool CreateShadowMaps();
 	void WriteShadowMapDescriptors();
@@ -152,6 +159,7 @@ private:
 	TSharedPtr<D3D12Texture> VSMDirLightShadowMaps;
 	TSharedPtr<D3D12Texture> PointLightShadowMaps;
 	TSharedPtr<D3D12Texture> GBuffer[4];
+	TSharedPtr<D3D12Texture> SSAOBuffer;
 	TSharedPtr<D3D12Texture> FinalTarget;
 	
 	TSharedPtr<D3D12RootSignature>		PrePassRootSignature;
@@ -165,8 +173,10 @@ private:
 	TSharedPtr<D3D12RootSignature>		DebugRootSignature;
 	TSharedPtr<D3D12RootSignature>		PostRootSignature;
 	TSharedPtr<D3D12RootSignature>		ForwardRootSignature;
+	TSharedPtr<D3D12RootSignature>		SSAORootSignature;
 	TSharedPtr<D3D12DescriptorTable>	RayGenDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	GlobalDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable>	SSAODescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	GeometryDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	ForwardDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	PrePassDescriptorTable;
@@ -182,13 +192,13 @@ private:
 	TSharedPtr<D3D12GraphicsPipelineState>	VSMShadowMapPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>	LinearShadowMapPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>	GeometryPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	ForwardFrontPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	ForwardBackPSO;
+	TSharedPtr<D3D12GraphicsPipelineState>	ForwardPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>	LightPassPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>	SkyboxPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>	DebugBoxPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>	PostPSO;
 	TSharedPtr<D3D12GraphicsPipelineState>	FXAAPSO;
+	TSharedPtr<D3D12ComputePipelineState>	SSAOPSO;
 	TSharedPtr<D3D12ComputePipelineState>	IrradicanceGenPSO;
 	TSharedPtr<D3D12ComputePipelineState>	SpecIrradicanceGenPSO;
 	TSharedPtr<D3D12RayTracingPipelineState> RaytracingPSO;
@@ -196,14 +206,15 @@ private:
 	TArray<MeshDrawCommand> DeferredVisibleCommands;
 	TArray<MeshDrawCommand> ForwardVisibleCommands;
 
-	TArray<Uint64> FenceValues;
-	Uint32 CurrentBackBufferIndex = 0;
+	TArray<uint64> FenceValues;
+	uint32 CurrentBackBufferIndex = 0;
 
 	bool PrePassEnabled		= true;
 	bool DrawAABBs			= false;
 	bool VSyncEnabled		= false;
 	bool FrustumCullEnabled	= true;
 	bool FXAAEnabled		= true;
+	bool SSAOEnabled		= true;
 
 	static LightSettings		GlobalLightSettings;
 	static TUniquePtr<Renderer> RendererInstance;

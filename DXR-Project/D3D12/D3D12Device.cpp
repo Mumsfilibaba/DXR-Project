@@ -182,7 +182,7 @@ bool D3D12Device::CreateFactory()
 	using namespace Microsoft::WRL;
 
 	// Enable debuglayer
-	Uint32 DebugFlags = 0;
+	uint32 DebugFlags = 0;
 	if (DebugEnabled)
 	{
 		ComPtr<ID3D12Debug> DebugInterface;

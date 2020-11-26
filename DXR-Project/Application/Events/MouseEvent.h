@@ -9,7 +9,7 @@
 struct MouseMovedEvent : public Event
 {
 public:
-	MouseMovedEvent(Int32 InX, Int32 InY)
+	MouseMovedEvent(int32 InX, int32 InY)
 		: X(InX)
 		, Y(InY)
 	{
@@ -24,19 +24,19 @@ public:
 		return std::string("MouseMovedEvent=[") + std::to_string(X) + ", " + std::to_string(Y) + "]";
 	}
 
-	FORCEINLINE Int32 GetX() const
+	FORCEINLINE int32 GetX() const
 	{
 		return X;
 	}
 
-	FORCEINLINE Int32 GetY() const
+	FORCEINLINE int32 GetY() const
 	{
 		return Y;
 	}
 
 private:
-	Int32 X;
-	Int32 Y;
+	int32 X;
+	int32 Y;
 };
 
 /*
@@ -112,7 +112,7 @@ public:
 struct MouseScrolledEvent : public Event
 {
 public:
-	MouseScrolledEvent(Float32 InHorizontalDelta, Float32 InVerticalDelta)
+	MouseScrolledEvent(float InHorizontalDelta, float InVerticalDelta)
 		: HorizontalDelta(InHorizontalDelta)
 		, VerticalDelta(InVerticalDelta)
 	{
@@ -127,17 +127,17 @@ public:
 		return std::string("MouseScrolledEvent=[") + std::to_string(HorizontalDelta) + ", " + std::to_string(VerticalDelta) + "]";
 	}
 
-	FORCEINLINE Float32 GetHorizontalDelta() const
+	FORCEINLINE float GetHorizontalDelta() const
 	{
 		return HorizontalDelta;
 	}
 
-	FORCEINLINE Float32 GetVerticalDelta() const
+	FORCEINLINE float GetVerticalDelta() const
 	{
 		return VerticalDelta;
 	}
 
 private:
-	Float32 HorizontalDelta;
-	Float32 VerticalDelta;
+	float HorizontalDelta;
+	float VerticalDelta;
 };

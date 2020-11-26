@@ -19,13 +19,13 @@ public:
 
 	bool Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue);
 
-	bool Resize(Uint32 InWidth, Uint32 InHeight);
+	bool Resize(uint32 InWidth, uint32 InHeight);
 
-	bool Present(Uint32 SyncInterval);
+	bool Present(uint32 SyncInterval);
 
-	Uint32 GetCurrentBackBufferIndex() const;
+	uint32 GetCurrentBackBufferIndex() const;
 
-	FORCEINLINE D3D12Texture* GetSurfaceResource(Uint32 SurfaceIndex) const
+	FORCEINLINE D3D12Texture* GetSurfaceResource(uint32 SurfaceIndex) const
 	{
 		return BackBuffers[SurfaceIndex].Get();
 	}
@@ -35,17 +35,17 @@ public:
 		return DXGI_FORMAT_R8G8B8A8_UNORM;
 	}
 
-	FORCEINLINE Uint32 GetSurfaceCount() const
+	FORCEINLINE uint32 GetSurfaceCount() const
 	{
 		return 3;
 	}
 
-	FORCEINLINE Uint32 GetWidth() const
+	FORCEINLINE uint32 GetWidth() const
 	{
 		return Width;
 	}
 
-	FORCEINLINE Uint32 GetHeight() const
+	FORCEINLINE uint32 GetHeight() const
 	{
 		return Height;
 	}
@@ -64,7 +64,7 @@ private:
 	TArray<TSharedPtr<D3D12Texture>>			BackBuffers;
 	TArray<TSharedPtr<D3D12RenderTargetView>>	BackBuffersViews;
 
-	Uint32 Width	= 0;
-	Uint32 Height	= 0;
-	Uint32 Flags	= 0;
+	uint32 Width	= 0;
+	uint32 Height	= 0;
+	uint32 Flags	= 0;
 };

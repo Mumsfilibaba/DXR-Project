@@ -66,7 +66,7 @@ bool D3D12ShaderCompiler::Initialize()
 	}
 }
 
-IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, const std::string& Entrypoint, const std::string& TargetProfile, const DxcDefine* Defines, const Uint32 NumDefines)
+IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, const std::string& Entrypoint, const std::string& TargetProfile, const DxcDefine* Defines, const uint32 NumDefines)
 {
 	using namespace Microsoft::WRL;
 
@@ -95,7 +95,7 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromFile(const std::string& Filepath, cons
 	return InternalCompileFromSource(SourceBlob.Get(), WideFilePath.c_str(), WideEntrypoint.c_str(), WideTargetProfile.c_str(), Defines, NumDefines);
 }
 
-IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& Source, const std::string& Entrypoint, const std::string& TargetProfile, const DxcDefine* Defines, const Uint32 NumDefines)
+IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& Source, const std::string& Entrypoint, const std::string& TargetProfile, const DxcDefine* Defines, const uint32 NumDefines)
 {
 	using namespace Microsoft::WRL;
 
@@ -112,7 +112,7 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& Source, cons
 
 	// Create SourceBlob
 	ComPtr<IDxcBlobEncoding> SourceBlob;
-	HRESULT hResult = DxLibrary->CreateBlobWithEncodingOnHeapCopy(Source.c_str(), sizeof(Char) * static_cast<Uint32>(Source.size()), CP_UTF8, &SourceBlob);
+	HRESULT hResult = DxLibrary->CreateBlobWithEncodingOnHeapCopy(Source.c_str(), sizeof(Char) * static_cast<uint32>(Source.size()), CP_UTF8, &SourceBlob);
 	if (FAILED(hResult))
 	{
 		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create Source Data");
@@ -122,7 +122,7 @@ IDxcBlob* D3D12ShaderCompiler::CompileFromSource(const std::string& Source, cons
 	return InternalCompileFromSource(SourceBlob.Get(), nullptr, WideEntrypoint.c_str(), WideTargetProfile.c_str(), Defines, NumDefines);
 }
 
-IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWSTR Filepath, LPCWSTR Entrypoint, LPCWSTR TargetProfile, const DxcDefine* Defines, const Uint32 NumDefines)
+IDxcBlob* D3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWSTR Filepath, LPCWSTR Entrypoint, LPCWSTR TargetProfile, const DxcDefine* Defines, const uint32 NumDefines)
 {
 	using namespace Microsoft::WRL;
 

@@ -2,6 +2,7 @@
 #include <cassert>
 #include <utility>
 #include <algorithm>
+#include <random>
 
 // Libs
 #define NOMINMAX

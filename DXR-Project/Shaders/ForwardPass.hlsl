@@ -293,6 +293,7 @@ struct PSInput
 	float3 TangentViewPos	: TANGENTVIEWPOS0;
 	float3 TangentPosition	: TANGENTPOSITION0;
 #endif
+    bool IsFrontFace : SV_IsFrontFace;
 };
 
 #ifdef PARALLAX_MAPPING_ENABLED
@@ -356,16 +357,24 @@ float4 PSMain(PSInput Input) : SV_Target0
 
 	float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords).rgb) * MaterialBuffer.Albedo;
 	
+	const float3 WorldPosition	= Input.WorldPosition;
+	const float3 ViewDir		= normalize(CameraBuffer.Position - WorldPosition);
+	float3 InputNormal = normalize(Input.Normal);
+	if (!Input.IsFrontFace)
+	{
+		InputNormal = -InputNormal;
+	}
+	
 #ifdef NORMAL_MAPPING_ENABLED
 	float3 SampledNormal	= NormalMap.Sample(MaterialSampler, TexCoords).rgb;
 	SampledNormal			= UnpackNormal(SampledNormal);
 	
 	float3 Tangent		= normalize(Input.Tangent);
 	float3 Bitangent	= normalize(Input.Bitangent);
-	float3 Normal		= normalize(Input.Normal);
+	float3 Normal		= normalize(InputNormal);
 	const float3 MappedNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
 #else
-	const float3 MappedNormal = normalize(Input.Normal);
+	const float3 MappedNormal = InputNormal;
 #endif	
 
 	const float AO			= AOMap.Sample(MaterialSampler, TexCoords) * MaterialBuffer.AO;
@@ -373,10 +382,12 @@ float4 PSMain(PSInput Input) : SV_Target0
 	const float Roughness	= RoughnessMap.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Roughness;
 	const float FinalRoughness	= min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
 	const float	Alpha			= AlphaMask.Sample(MaterialSampler, TexCoords);
+	if (Alpha < 0.1f)
+	{
+		discard;
+	}
 	
-	const float3 WorldPosition	= Input.WorldPosition;
-	const float3 Norm			= MappedNormal;
-	const float3 ViewDir		= normalize(CameraBuffer.Position - WorldPosition);
+	const float3 Norm = MappedNormal;
 	
 	float3 F0 = float3(0.04f, 0.04f, 0.04f);
 	F0 = lerp(F0, SampledAlbedo, Metallic);

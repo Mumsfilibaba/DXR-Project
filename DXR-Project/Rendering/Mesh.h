@@ -33,10 +33,10 @@ public:
 	TSharedPtr<D3D12RayTracingGeometry>	RayTracingGeometry;
 	TSharedPtr<D3D12DescriptorTable>	DescriptorTable;
 	
-	Uint32 VertexCount	= 0;
-	Uint32 IndexCount	= 0;
+	uint32 VertexCount	= 0;
+	uint32 IndexCount	= 0;
 
-	Float32 ShadowOffset = 0.0f;
+	float ShadowOffset = 0.0f;
 
 	AABB BoundingBox;
 };

@@ -32,13 +32,13 @@ Game::~Game()
 bool Game::Initialize()
 {
 	// Initialize Scene
-	constexpr Float32	SphereOffset	= 1.25f;
-	constexpr Uint32	SphereCountX	= 8;
-	constexpr Float32	StartPositionX	= (-static_cast<Float32>(SphereCountX) * SphereOffset) / 2.0f;
-	constexpr Uint32	SphereCountY	= 8;
-	constexpr Float32	StartPositionY	= (-static_cast<Float32>(SphereCountY) * SphereOffset) / 2.0f;
-	constexpr Float32	MetallicDelta	= 1.0f / SphereCountY;
-	constexpr Float32	RoughnessDelta	= 1.0f / SphereCountX;
+	constexpr float	SphereOffset	= 1.25f;
+	constexpr uint32	SphereCountX	= 8;
+	constexpr float	StartPositionX	= (-static_cast<float>(SphereCountX) * SphereOffset) / 2.0f;
+	constexpr uint32	SphereCountY	= 8;
+	constexpr float	StartPositionY	= (-static_cast<float>(SphereCountY) * SphereOffset) / 2.0f;
+	constexpr float	MetallicDelta	= 1.0f / SphereCountY;
+	constexpr float	RoughnessDelta	= 1.0f / SphereCountX;
 
 	Actor*			NewActor		= nullptr;
 	MeshComponent*	NewComponent	= nullptr;
@@ -50,7 +50,7 @@ bool Game::Initialize()
 	SphereMesh->ShadowOffset = 0.05f;
 
 	// Create standard textures
-	Byte Pixels[] = { 255, 255, 255, 255 };
+	byte Pixels[] = { 255, 255, 255, 255 };
 	TSharedPtr<D3D12Texture> BaseTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
 	if (!BaseTexture)
 	{
@@ -90,10 +90,10 @@ bool Game::Initialize()
 	}
 
 	MaterialProperties MatProperties;
-	Uint32 SphereIndex = 0;
-	for (Uint32 y = 0; y < SphereCountY; y++)
+	uint32 SphereIndex = 0;
+	for (uint32 y = 0; y < SphereCountY; y++)
 	{
-		for (Uint32 x = 0; x < SphereCountX; x++)
+		for (uint32 x = 0; x < SphereCountX; x++)
 		{
 			NewActor = new Actor();
 			NewActor->GetTransform().SetPosition(StartPositionX + (x * SphereOffset), 8.0f + StartPositionY + (y * SphereOffset), 0.0f);
@@ -246,10 +246,10 @@ void Game::Destroy()
 void Game::Tick(Timestamp DeltaTime)
 {
 	// Run app
-	const Float32 Delta = static_cast<Float32>(DeltaTime.AsSeconds());
-	const Float32 RotationSpeed = 45.0f;
+	const float Delta = static_cast<float>(DeltaTime.AsSeconds());
+	const float RotationSpeed = 45.0f;
 
-	Float32 Speed = 1.0f;
+	float Speed = 1.0f;
 	if (Input::IsKeyDown(EKey::KEY_LEFT_SHIFT))
 	{
 		Speed = 4.0f;

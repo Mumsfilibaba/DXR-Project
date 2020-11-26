@@ -76,7 +76,7 @@ public:
 struct KeyTypedEvent : public Event
 {
 public:
-	KeyTypedEvent(Uint32 InCharacter)
+	KeyTypedEvent(uint32 InCharacter)
 		: Character(InCharacter)
 	{
 	}
@@ -90,7 +90,7 @@ public:
 		return std::string("KeyTypedEvent=") + GetPrintableCharacter();
 	}
 
-	FORCEINLINE Uint32 GetCharacter() const
+	FORCEINLINE uint32 GetCharacter() const
 	{
 		return Character;
 	}
@@ -101,5 +101,5 @@ public:
 	}
 
 private:
-	Uint32 Character;
+	uint32 Character;
 };

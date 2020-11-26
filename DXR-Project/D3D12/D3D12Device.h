@@ -94,7 +94,7 @@ private:
 	bool RayTracingSupported	= false;
 	BOOL AllowTearing			= FALSE;
 
-	Uint32 AdapterID = 0;
+	uint32 AdapterID = 0;
 
 	D3D_FEATURE_LEVEL MinFeatureLevel		= D3D_FEATURE_LEVEL_11_0;
 	D3D_FEATURE_LEVEL ActiveFeatureLevel	= D3D_FEATURE_LEVEL_11_0;

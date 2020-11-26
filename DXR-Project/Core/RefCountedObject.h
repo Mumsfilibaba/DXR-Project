@@ -12,14 +12,14 @@ public:
 	RefCountedObject();
 	virtual ~RefCountedObject();
 
-	Uint32 AddRef();
-	Uint32 Release();
+	uint32 AddRef();
+	uint32 Release();
 
-	FORCEINLINE Uint32 GetRefCount() const
+	FORCEINLINE uint32 GetRefCount() const
 	{
 		return StrongReferences;
 	}
 
 private:
-	Uint32 StrongReferences;
+	uint32 StrongReferences;
 };

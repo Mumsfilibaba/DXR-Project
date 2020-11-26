@@ -12,7 +12,7 @@
 #include "Scene/PointLight.h"
 #include "Scene/Components/MeshComponent.h"
 
-static Float32 MainMenuBarHeight = 0.0f;
+static float MainMenuBarHeight = 0.0f;
 
 static bool ShowRenderSettings	= false;
 static bool ShowSceneGraph		= false;
@@ -33,10 +33,10 @@ static void DrawDebugData()
 {
 	static std::string AdapterName = RenderingAPI::Get().GetAdapterName();
 
-	const Float64 Delta = EngineLoop::GetDeltaTime().AsMilliSeconds();
+	const double Delta = EngineLoop::GetDeltaTime().AsMilliSeconds();
 	DebugUI::DrawDebugString("Adapter: " + AdapterName);
 	DebugUI::DrawDebugString("Frametime: " + std::to_string(Delta) + " ms");
-	DebugUI::DrawDebugString("FPS: " + std::to_string(static_cast<Uint32>(1000 / Delta)));
+	DebugUI::DrawDebugString("FPS: " + std::to_string(static_cast<uint32>(1000 / Delta)));
 }
 
 /*
@@ -88,7 +88,7 @@ static void DrawSideWindow()
 {
 	DebugUI::DrawUI([]
 	{
-		constexpr Uint32 Width = 450;
+		constexpr uint32 Width = 450;
 
 		WindowShape WindowShape;
 		Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
@@ -182,7 +182,7 @@ static void DrawRenderSettings()
 		"FXAA",
 	};
 
-	static Int32 CurrentItem = 0;
+	static int32 CurrentItem = 0;
 	if (Renderer::Get()->IsFXAAEnabled())
 	{
 		CurrentItem = 1;
@@ -290,6 +290,16 @@ static void DrawRenderSettings()
 		Renderer::SetGlobalLightSettings(Settings);
 	}
 
+	ImGui::Spacing();
+	ImGui::Text("SSAO:");
+	ImGui::Separator();
+
+	Enabled = Renderer::Get()->IsSSAOEnabled();
+	if (ImGui::Checkbox("Enabled ", &Enabled))
+	{
+		Renderer::Get()->SetSSAOEnable(Enabled);
+	}
+
 	ImGui::EndChild();
 }
 
@@ -298,7 +308,7 @@ static void DrawRenderSettings()
 */
 static void DrawSceneInfo()
 {
-	constexpr Float32 Width = 400.0f;
+	constexpr float Width = 400.0f;
 
 	ImGui::Spacing();
 	ImGui::Text("Current Scene");
@@ -308,7 +318,7 @@ static void DrawSceneInfo()
 
 	WindowShape WindowShape;
 	Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
-	ImGui::BeginChild("SceneInfo", ImVec2(Width, Float32(WindowShape.Height) - 100.0f));
+	ImGui::BeginChild("SceneInfo", ImVec2(Width, float(WindowShape.Height) - 100.0f));
 
 	// Actors
 	if (ImGui::TreeNode("Actors"))
@@ -322,7 +332,7 @@ static void DrawSceneInfo()
 				{
 					const XMFLOAT3& Position = Actor->GetTransform().GetPosition();
 
-					Float32 Arr[3] = { Position.x, Position.y, Position.z };
+					float Arr[3] = { Position.x, Position.y, Position.z };
 					if (ImGui::DragFloat3("Position", Arr, 0.5f))
 					{
 						Actor->GetTransform().SetPosition(Arr[0], Arr[1], Arr[2]);
@@ -339,25 +349,25 @@ static void DrawSceneInfo()
 					{
 						const XMFLOAT3& Color = MComponent->Material->GetMaterialProperties().Albedo;
 
-						Float32 Arr[3] = { Color.x, Color.y, Color.z };
+						float Arr[3] = { Color.x, Color.y, Color.z };
 						if (ImGui::ColorEdit3("Albedo", Arr))
 						{
 							MComponent->Material->SetAlbedo(Arr[0], Arr[1], Arr[2]);
 						}
 
-						Float32 Roughness = MComponent->Material->GetMaterialProperties().Roughness;
+						float Roughness = MComponent->Material->GetMaterialProperties().Roughness;
 						if (ImGui::SliderFloat("RoughnessMap", &Roughness, 0.01f, 1.0f, "%.2f"))
 						{
 							MComponent->Material->SetRoughness(Roughness);
 						}
 
-						Float32 Metallic = MComponent->Material->GetMaterialProperties().Metallic;
+						float Metallic = MComponent->Material->GetMaterialProperties().Metallic;
 						if (ImGui::SliderFloat("Metallic", &Metallic, 0.01f, 1.0f, "%.2f"))
 						{
 							MComponent->Material->SetMetallic(Metallic);
 						}
 
-						Float32 AO = MComponent->Material->GetMaterialProperties().AO;
+						float AO = MComponent->Material->GetMaterialProperties().AO;
 						if (ImGui::SliderFloat("Ambient Occlusion", &AO, 0.01f, 1.0f, "%.2f"))
 						{
 							MComponent->Material->SetAmbientOcclusion(AO);
@@ -388,20 +398,20 @@ static void DrawSceneInfo()
 					ImGui::Separator();
 
 					const XMFLOAT3& Color = CurrentPointLight->GetColor();
-					Float32 Arr[3] = { Color.x, Color.y, Color.z };
+					float Arr[3] = { Color.x, Color.y, Color.z };
 					if (ImGui::ColorEdit3("Color", Arr))
 					{
 						CurrentPointLight->SetColor(Arr[0], Arr[1], Arr[2]);
 					}
 
 					const XMFLOAT3& Position = CurrentPointLight->GetPosition();
-					Float32 Arr2[3] = { Position.x, Position.y, Position.z };
+					float Arr2[3] = { Position.x, Position.y, Position.z };
 					if (ImGui::DragFloat3("Position", Arr2, 0.5f))
 					{
 						CurrentPointLight->SetPosition(Arr2[0], Arr2[1], Arr2[2]);
 					}
 
-					Float32 Intensity = CurrentPointLight->GetIntensity();
+					float Intensity = CurrentPointLight->GetIntensity();
 					if (ImGui::SliderFloat("Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
 					{
 						CurrentPointLight->SetIntensity(Intensity);
@@ -412,7 +422,7 @@ static void DrawSceneInfo()
 
 					ImGui::PushItemWidth(100.0f);
 
-					Float32 ShadowBias = CurrentPointLight->GetShadowBias();
+					float ShadowBias = CurrentPointLight->GetShadowBias();
 					if (ImGui::SliderFloat("Shadow Bias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
 					{
 						CurrentPointLight->SetShadowBias(ShadowBias);
@@ -423,19 +433,19 @@ static void DrawSceneInfo()
 						ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
 					}
 
-					Float32 MaxShadowBias = CurrentPointLight->GetMaxShadowBias();
+					float MaxShadowBias = CurrentPointLight->GetMaxShadowBias();
 					if (ImGui::SliderFloat("Max Shadow Bias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
 					{
 						CurrentPointLight->SetMaxShadowBias(MaxShadowBias);
 					}
 
-					Float32 ShadowNearPlane = CurrentPointLight->GetShadowNearPlane();
+					float ShadowNearPlane = CurrentPointLight->GetShadowNearPlane();
 					if (ImGui::SliderFloat("Shadow Near Plane", &ShadowNearPlane, 0.01f, 1.0f, "%0.2f"))
 					{
 						CurrentPointLight->SetShadowNearPlane(ShadowNearPlane);
 					}
 
-					Float32 ShadowFarPlane = CurrentPointLight->GetShadowFarPlane();
+					float ShadowFarPlane = CurrentPointLight->GetShadowFarPlane();
 					if (ImGui::SliderFloat("Shadow Far Plane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
 					{
 						CurrentPointLight->SetShadowFarPlane(ShadowFarPlane);
@@ -454,14 +464,14 @@ static void DrawSceneInfo()
 					ImGui::Separator();
 
 					const XMFLOAT3& Color = CurrentDirectionalLight->GetColor();
-					Float32 Arr[3] = { Color.x, Color.y, Color.z };
+					float Arr[3] = { Color.x, Color.y, Color.z };
 					if (ImGui::ColorEdit3("Color", Arr))
 					{
 						CurrentDirectionalLight->SetColor(Arr[0], Arr[1], Arr[2]);
 					}
 
 					const XMFLOAT3& Rotation = CurrentDirectionalLight->GetRotation();
-					Float32 Arr2[3] =
+					float Arr2[3] =
 					{
 						XMConvertToDegrees(Rotation.x),
 						XMConvertToDegrees(Rotation.y),
@@ -477,10 +487,10 @@ static void DrawSceneInfo()
 					}
 
 					XMFLOAT3 Direction	= CurrentDirectionalLight->GetDirection();
-					Float32* DirArr		= reinterpret_cast<Float32*>(&Direction);
+					float* DirArr		= reinterpret_cast<float*>(&Direction);
 					ImGui::InputFloat3("Direction", DirArr, 2, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
 
-					Float32 Intensity = CurrentDirectionalLight->GetIntensity();
+					float Intensity = CurrentDirectionalLight->GetIntensity();
 					if (ImGui::SliderFloat("Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
 					{
 						CurrentDirectionalLight->SetIntensity(Intensity);
@@ -492,20 +502,20 @@ static void DrawSceneInfo()
 					ImGui::PushItemWidth(200.0f);
 
 					const XMFLOAT3& LookAt = CurrentDirectionalLight->GetLookAt();
-					Float32 Arr3[3] = { LookAt.x, LookAt.y, LookAt.z };
+					float Arr3[3] = { LookAt.x, LookAt.y, LookAt.z };
 					if (ImGui::DragFloat3("LookAt", Arr3, 0.5f))
 					{
 						CurrentDirectionalLight->SetLookAt(Arr3[0], Arr3[1], Arr3[2]);
 					}
 
 					XMFLOAT3 Position	= CurrentDirectionalLight->GetShadowMapPosition();
-					Float32* PosArr		= reinterpret_cast<Float32*>(&Position);
+					float* PosArr		= reinterpret_cast<float*>(&Position);
 					ImGui::InputFloat3("Position", PosArr, 2, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
 
 					ImGui::PopItemWidth();
 					ImGui::PushItemWidth(100.0f);
 
-					Float32 ShadowBias = CurrentDirectionalLight->GetShadowBias();
+					float ShadowBias = CurrentDirectionalLight->GetShadowBias();
 					if (ImGui::SliderFloat("Shadow Bias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
 					{
 						CurrentDirectionalLight->SetShadowBias(ShadowBias);
@@ -516,19 +526,19 @@ static void DrawSceneInfo()
 						ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
 					}
 
-					Float32 MaxShadowBias = CurrentDirectionalLight->GetMaxShadowBias();
+					float MaxShadowBias = CurrentDirectionalLight->GetMaxShadowBias();
 					if (ImGui::SliderFloat("Max Shadow Bias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
 					{
 						CurrentDirectionalLight->SetMaxShadowBias(MaxShadowBias);
 					}
 
-					Float32 ShadowNearPlane = CurrentDirectionalLight->GetShadowNearPlane();
+					float ShadowNearPlane = CurrentDirectionalLight->GetShadowNearPlane();
 					if (ImGui::SliderFloat("Shadow Near Plane", &ShadowNearPlane, 0.01f, 1.0f, "%.2f"))
 					{
 						CurrentDirectionalLight->SetShadowNearPlane(ShadowNearPlane);
 					}
 
-					Float32 ShadowFarPlane = CurrentLight->GetShadowFarPlane();
+					float ShadowFarPlane = CurrentLight->GetShadowFarPlane();
 					if (ImGui::SliderFloat("Shadow Far Plane", &ShadowFarPlane, 1.0f, 1000.0f, "%.1f"))
 					{
 						CurrentDirectionalLight->SetShadowFarPlane(ShadowFarPlane);

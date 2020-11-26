@@ -14,21 +14,21 @@ public:
 	virtual ~Light();
 
 	void SetColor(const XMFLOAT3& InColor);
-	void SetColor(Float32 R, Float32 G, Float32 B);
+	void SetColor(float R, float G, float B);
 	
-	void SetIntensity(Float32 InIntensity);
+	void SetIntensity(float InIntensity);
 
-	FORCEINLINE void SetShadowBias(Float32 InShadowBias)
+	FORCEINLINE void SetShadowBias(float InShadowBias)
 	{
 		ShadowBias = InShadowBias;
 	}
 
-	FORCEINLINE void SetMaxShadowBias(Float32 InShadowBias)
+	FORCEINLINE void SetMaxShadowBias(float InShadowBias)
 	{
 		MaxShadowBias = InShadowBias;
 	}
 
-	FORCEINLINE Float32 GetIntensity() const
+	FORCEINLINE float GetIntensity() const
 	{
 		return Intensity;
 	}
@@ -38,31 +38,31 @@ public:
 		return Color;
 	}
 
-	FORCEINLINE Float32 GetShadowNearPlane() const
+	FORCEINLINE float GetShadowNearPlane() const
 	{
 		return ShadowNearPlane;
 	}
 
-	FORCEINLINE Float32 GetShadowFarPlane() const
+	FORCEINLINE float GetShadowFarPlane() const
 	{
 		return ShadowFarPlane;
 	}
 
-	FORCEINLINE Float32 GetShadowBias() const
+	FORCEINLINE float GetShadowBias() const
 	{
 		return ShadowBias;
 	}
 
-	FORCEINLINE Float32 GetMaxShadowBias() const
+	FORCEINLINE float GetMaxShadowBias() const
 	{
 		return MaxShadowBias;
 	}
 
 protected:
 	XMFLOAT3 Color;
-	Float32	 Intensity = 1.0f;
-	Float32	 ShadowNearPlane;
-	Float32	 ShadowFarPlane;
-	Float32	 ShadowBias;
-	Float32	 MaxShadowBias;
+	float	 Intensity = 1.0f;
+	float	 ShadowNearPlane;
+	float	 ShadowFarPlane;
+	float	 ShadowBias;
+	float	 MaxShadowBias;
 };

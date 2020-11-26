@@ -10,11 +10,11 @@ struct TextureProperties
 	std::string					DebugName;
 	DXGI_FORMAT					Format;
 	D3D12_RESOURCE_FLAGS		Flags;
-	Uint16						Width; 
-	Uint16						Height;
-	Uint16						ArrayCount;
-	Uint16						MipLevels;
-	Uint32						SampleCount;
+	uint16						Width; 
+	uint16						Height;
+	uint16						ArrayCount;
+	uint16						MipLevels;
+	uint32						SampleCount;
 	D3D12_RESOURCE_STATES		InitalState;
 	const D3D12_CLEAR_VALUE*	OptimizedClearValue;
 	EMemoryType					MemoryType;
@@ -35,15 +35,15 @@ public:
 
 	bool Initialize(const TextureProperties& Properties);
 
-	void SetRenderTargetView(TSharedPtr<D3D12RenderTargetView> InRenderTargetView, Uint32 SubresourceIndex);
-	void SetDepthStencilView(TSharedPtr<D3D12DepthStencilView> InDepthStencilView, Uint32 SubresourceIndex);
+	void SetRenderTargetView(TSharedPtr<D3D12RenderTargetView> InRenderTargetView, uint32 SubresourceIndex);
+	void SetDepthStencilView(TSharedPtr<D3D12DepthStencilView> InDepthStencilView, uint32 SubresourceIndex);
 
-	FORCEINLINE TSharedPtr<D3D12RenderTargetView> GetRenderTargetView(Uint32 Index) const
+	FORCEINLINE TSharedPtr<D3D12RenderTargetView> GetRenderTargetView(uint32 Index) const
 	{
 		return RenderTargetViews[Index];
 	}
 
-	FORCEINLINE TSharedPtr<D3D12DepthStencilView> GetDepthStencilView(Uint32 Index) const
+	FORCEINLINE TSharedPtr<D3D12DepthStencilView> GetDepthStencilView(uint32 Index) const
 	{
 		return DepthStencilViews[Index];
 	}

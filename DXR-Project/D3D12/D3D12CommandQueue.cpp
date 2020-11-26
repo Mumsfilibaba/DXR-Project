@@ -45,12 +45,12 @@ bool D3D12CommandQueue::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 	}
 }
 
-bool D3D12CommandQueue::SignalFence(D3D12Fence* Fence, Uint64 InFenceValue)
+bool D3D12CommandQueue::SignalFence(D3D12Fence* Fence, uint64 InFenceValue)
 {
 	return SUCCEEDED(Queue->Signal(Fence->GetFence(), InFenceValue));
 }
 
-bool D3D12CommandQueue::WaitForFence(D3D12Fence* Fence, Uint64 InFenceValue)
+bool D3D12CommandQueue::WaitForFence(D3D12Fence* Fence, uint64 InFenceValue)
 {
 	return SUCCEEDED(Queue->Wait(Fence->GetFence(), InFenceValue));
 }

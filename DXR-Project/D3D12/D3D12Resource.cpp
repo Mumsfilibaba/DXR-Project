@@ -67,7 +67,7 @@ bool D3D12Resource::Initialize(ID3D12Resource* InResource)
 	return Resource != nullptr;
 }
 
-void D3D12Resource::SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> InShaderResourceView, const Uint32 SubresourceIndex)
+void D3D12Resource::SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> InShaderResourceView, const uint32 SubresourceIndex)
 {
 	if (SubresourceIndex >= ShaderResourceViews.Size())
 	{
@@ -77,7 +77,7 @@ void D3D12Resource::SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> In
 	ShaderResourceViews[SubresourceIndex] = InShaderResourceView;
 }
 
-void D3D12Resource::SetUnorderedAccessView(TSharedPtr<D3D12UnorderedAccessView> InUnorderedAccessView, const Uint32 SubresourceIndex)
+void D3D12Resource::SetUnorderedAccessView(TSharedPtr<D3D12UnorderedAccessView> InUnorderedAccessView, const uint32 SubresourceIndex)
 {
 	if (SubresourceIndex >= UnorderedAccessViews.Size())
 	{

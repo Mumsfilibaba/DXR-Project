@@ -8,7 +8,7 @@
 struct PtrControlBlock
 {
 public:
-	typedef Uint32 RefType;
+	typedef uint32 RefType;
 
 	inline PtrControlBlock()
 		: WeakReferences(0)
@@ -98,12 +98,12 @@ public:
 		return &Ptr;
 	}
 
-	FORCEINLINE Uint32 GetStrongReferences() const noexcept
+	FORCEINLINE uint32 GetStrongReferences() const noexcept
 	{
 		return Counter ? Counter->GetStrongReferences() : 0;
 	}
 
-	FORCEINLINE Uint32 GetWeakReferences() const noexcept
+	FORCEINLINE uint32 GetWeakReferences() const noexcept
 	{
 		return Counter ? Counter->GetWeakReferences() : 0;
 	}
@@ -649,7 +649,7 @@ public:
 		return (TBase::GetStrongReferences() == 1);
 	}
 
-	FORCEINLINE T& operator[](Uint32 Index) noexcept
+	FORCEINLINE T& operator[](uint32 Index) noexcept
 	{
 		VALIDATE(TBase::Ptr != nullptr);
 		return TBase::Ptr[Index];
@@ -1006,7 +1006,7 @@ public:
 		return ::Move(TSharedPtr<T[]>(This));
 	}
 
-	FORCEINLINE T& operator[](Uint32 Index) noexcept
+	FORCEINLINE T& operator[](uint32 Index) noexcept
 	{
 		VALIDATE(TBase::Ptr != nullptr);
 		return TBase::Ptr[Index];
@@ -1111,7 +1111,7 @@ std::enable_if_t<!std::is_array_v<T>, TSharedPtr<T>> MakeShared(TArgs&&... Args)
 }
 
 template<typename T>
-std::enable_if_t<std::is_array_v<T>, TSharedPtr<T>> MakeShared(Uint32 Size) noexcept
+std::enable_if_t<std::is_array_v<T>, TSharedPtr<T>> MakeShared(uint32 Size) noexcept
 {
 	using TType = TRemoveExtent<T>;
 

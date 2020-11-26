@@ -11,14 +11,14 @@ RefCountedObject::~RefCountedObject()
 {
 }
 
-Uint32 RefCountedObject::AddRef()
+uint32 RefCountedObject::AddRef()
 {
 	return ++StrongReferences;
 }
 
-Uint32 RefCountedObject::Release()
+uint32 RefCountedObject::Release()
 {
-	Uint32 NewRefCount = --StrongReferences;
+	uint32 NewRefCount = --StrongReferences;
 	if (StrongReferences <= 0)
 	{
 		delete this;

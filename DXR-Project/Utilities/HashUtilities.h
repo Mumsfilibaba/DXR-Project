@@ -23,12 +23,12 @@ namespace std
 	{
 		size_t operator()(const XMFLOAT4& XmFloat) const
 		{
-			std::hash<Float32> Hasher;
+			std::hash<float> Hasher;
 
 			size_t Hash = Hasher(XmFloat.x);
-			HashCombine<Float32>(Hash, XmFloat.y);
-			HashCombine<Float32>(Hash, XmFloat.z);
-			HashCombine<Float32>(Hash, XmFloat.w);
+			HashCombine<float>(Hash, XmFloat.y);
+			HashCombine<float>(Hash, XmFloat.z);
+			HashCombine<float>(Hash, XmFloat.w);
 
 			return Hash;
 		}
@@ -38,11 +38,11 @@ namespace std
 	{
 		size_t operator()(const XMFLOAT3& XmFloat) const
 		{
-			std::hash<Float32> Hasher;
+			std::hash<float> Hasher;
 
 			size_t Hash = Hasher(XmFloat.x);
-			HashCombine<Float32>(Hash, XmFloat.y);
-			HashCombine<Float32>(Hash, XmFloat.z);
+			HashCombine<float>(Hash, XmFloat.y);
+			HashCombine<float>(Hash, XmFloat.z);
 
 			return Hash;
 		}
@@ -52,10 +52,10 @@ namespace std
 	{
 		size_t operator()(const XMFLOAT2& XmFloat) const
 		{
-			std::hash<Float32> Hasher;
+			std::hash<float> Hasher;
 
 			size_t Hash = Hasher(XmFloat.x);
-			HashCombine<Float32>(Hash, XmFloat.y);
+			HashCombine<float>(Hash, XmFloat.y);
 
 			return Hash;
 		}

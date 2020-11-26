@@ -36,8 +36,8 @@ public:
 
 	void BindGlobalOnlineDescriptorHeaps();
 
-	void UploadBufferData(class D3D12Buffer* Dest, const Uint32 DestOffset, const void* Src, const Uint32 SizeInBytes);
-	void UploadTextureData(D3D12Texture* Dest, const void* Src, DXGI_FORMAT Format, const Uint32 Width, const Uint32 Height, const Uint32 Depth, const Uint32 Stride, const Uint32 RowPitch);
+	void UploadBufferData(class D3D12Buffer* Dest, const uint32 DestOffset, const void* Src, const uint32 SizeInBytes);
+	void UploadTextureData(D3D12Texture* Dest, const void* Src, DXGI_FORMAT Format, const uint32 Width, const uint32 Height, const uint32 Depth, const uint32 Stride, const uint32 RowPitch);
 
 	void DeferDestruction(D3D12Resource* Resource);
 
@@ -66,28 +66,28 @@ public:
 		return SUCCEEDED(CommandList->Close());
 	}
 
-	FORCEINLINE void ClearRenderTargetView(const D3D12RenderTargetView* View, const Float32 ClearColor[4])
+	FORCEINLINE void ClearRenderTargetView(const D3D12RenderTargetView* View, const float ClearColor[4])
 	{
 		FlushDeferredResourceBarriers();
 
 		CommandList->ClearRenderTargetView(View->GetOfflineHandle(), ClearColor, 0, nullptr);
 	}
 
-	FORCEINLINE void ClearDepthStencilView(const D3D12DepthStencilView* View, D3D12_CLEAR_FLAGS Flags, Float32 Depth, const Uint8 Stencil)
+	FORCEINLINE void ClearDepthStencilView(const D3D12DepthStencilView* View, D3D12_CLEAR_FLAGS Flags, float Depth, const uint8 Stencil)
 	{
 		FlushDeferredResourceBarriers();
 
 		CommandList->ClearDepthStencilView(View->GetOfflineHandle(), Flags, Depth, Stencil, 0, nullptr);
 	}
 
-	FORCEINLINE void CopyBuffer(D3D12Resource* Destination, Uint64 DestinationOffset, D3D12Resource* Source, Uint64 SourceOffset, Uint64 SizeInBytes)
+	FORCEINLINE void CopyBuffer(D3D12Resource* Destination, uint64 DestinationOffset, D3D12Resource* Source, uint64 SourceOffset, uint64 SizeInBytes)
 	{
 		FlushDeferredResourceBarriers();
 
 		CommandList->CopyBufferRegion(Destination->GetResource(), DestinationOffset, Source->GetResource(), SourceOffset, SizeInBytes);
 	}
 
-	FORCEINLINE void CopyTextureRegion(const D3D12_TEXTURE_COPY_LOCATION* InDestination, Uint32 X, Uint32 Y, Uint32 Z, const D3D12_TEXTURE_COPY_LOCATION* InSource, const D3D12_BOX* InSourceBox)
+	FORCEINLINE void CopyTextureRegion(const D3D12_TEXTURE_COPY_LOCATION* InDestination, uint32 X, uint32 Y, uint32 Z, const D3D12_TEXTURE_COPY_LOCATION* InSource, const D3D12_BOX* InSourceBox)
 	{
 		FlushDeferredResourceBarriers();
 
@@ -122,14 +122,14 @@ public:
 		DXRCommandList->DispatchRays(Desc);
 	}
 
-	FORCEINLINE void Dispatch(Uint32 ThreadGroupCountX, Uint32 ThreadGroupCountY, Uint32 ThreadGroupCountZ)
+	FORCEINLINE void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 	{
 		FlushDeferredResourceBarriers();
 
 		CommandList->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 	}
 
-	FORCEINLINE void DrawInstanced(Uint32 VertexCountPerInstance, Uint32 InstanceCount, Uint32 StartVertexLocation, Uint32 StartInstanceLocation)
+	FORCEINLINE void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 	{
 		FlushDeferredResourceBarriers();
 
@@ -138,7 +138,7 @@ public:
 		NumDrawCalls++;
 	}
 
-	FORCEINLINE void DrawIndexedInstanced(Uint32 IndexCountPerInstance, Uint32 InstanceCount, Uint32 StartIndexLocation, Uint32 BaseVertexLocation, Uint32 StartInstanceLocation)
+	FORCEINLINE void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 	{
 		FlushDeferredResourceBarriers();
 
@@ -147,7 +147,7 @@ public:
 		NumDrawCalls++;
 	}
 
-	FORCEINLINE void SetDescriptorHeaps(ID3D12DescriptorHeap* const* DescriptorHeaps, Uint32 DescriptorHeapCount)
+	FORCEINLINE void SetDescriptorHeaps(ID3D12DescriptorHeap* const* DescriptorHeaps, uint32 DescriptorHeapCount)
 	{
 		CommandList->SetDescriptorHeaps(DescriptorHeapCount, DescriptorHeaps);
 	}
@@ -172,31 +172,31 @@ public:
 		CommandList->SetGraphicsRootSignature(RootSignature);
 	}
 
-	FORCEINLINE void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, Uint32 RootParameterIndex)
+	FORCEINLINE void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, uint32 RootParameterIndex)
 	{
 		FlushDeferredResourceBarriers();
 
 		CommandList->SetComputeRootDescriptorTable(RootParameterIndex, BaseDescriptor);
 	}
 
-	FORCEINLINE void SetGraphicsRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, Uint32 RootParameterIndex)
+	FORCEINLINE void SetGraphicsRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, uint32 RootParameterIndex)
 	{
 		FlushDeferredResourceBarriers();
 
 		CommandList->SetGraphicsRootDescriptorTable(RootParameterIndex, BaseDescriptor);
 	}
 
-	FORCEINLINE void SetGraphicsRoot32BitConstants(const void* SourceData, Uint32 Num32BitValues, Uint32 DestOffsetIn32BitValues, Uint32 RootParameterIndex)
+	FORCEINLINE void SetGraphicsRoot32BitConstants(const void* SourceData, uint32 Num32BitValues, uint32 DestOffsetIn32BitValues, uint32 RootParameterIndex)
 	{
 		CommandList->SetGraphicsRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
 	}
 
-	FORCEINLINE void SetComputeRoot32BitConstants(const void* SourceData, Uint32 Num32BitValues, Uint32 DestOffsetIn32BitValues, Uint32 RootParameterIndex)
+	FORCEINLINE void SetComputeRoot32BitConstants(const void* SourceData, uint32 Num32BitValues, uint32 DestOffsetIn32BitValues, uint32 RootParameterIndex)
 	{
 		CommandList->SetComputeRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
 	}
 
-	FORCEINLINE void IASetVertexBuffers(Uint32 StartSlot, const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, Uint32 VertexBufferViewCount)
+	FORCEINLINE void IASetVertexBuffers(uint32 StartSlot, const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, uint32 VertexBufferViewCount)
 	{
 		CommandList->IASetVertexBuffers(StartSlot, VertexBufferViewCount, VertexBufferViews);
 	}
@@ -211,24 +211,24 @@ public:
 		CommandList->IASetPrimitiveTopology(PrimitiveTopology);
 	}
 
-	FORCEINLINE void RSSetViewports(const D3D12_VIEWPORT* Viewports, Uint32 ViewportCount)
+	FORCEINLINE void RSSetViewports(const D3D12_VIEWPORT* Viewports, uint32 ViewportCount)
 	{
 		CommandList->RSSetViewports(ViewportCount, Viewports);
 	}
 
-	FORCEINLINE void RSSetScissorRects(const D3D12_RECT* ScissorRects, Uint32 ScissorRectCount)
+	FORCEINLINE void RSSetScissorRects(const D3D12_RECT* ScissorRects, uint32 ScissorRectCount)
 	{
 		CommandList->RSSetScissorRects(ScissorRectCount, ScissorRects);
 	}
 
-	FORCEINLINE void OMSetBlendFactor(const Float32 BlendFactor[4])
+	FORCEINLINE void OMSetBlendFactor(const float BlendFactor[4])
 	{
 		CommandList->OMSetBlendFactor(BlendFactor);
 	}
 
-	FORCEINLINE void OMSetRenderTargets(const D3D12RenderTargetView* const * RenderTargetViews, Uint32 RenderTargetCount, const D3D12DepthStencilView* DepthStencilView)
+	FORCEINLINE void OMSetRenderTargets(const D3D12RenderTargetView* const * RenderTargetViews, uint32 RenderTargetCount, const D3D12DepthStencilView* DepthStencilView)
 	{
-		for (Uint32 I = 0; I < RenderTargetCount; I++)
+		for (uint32 I = 0; I < RenderTargetCount; I++)
 		{
 			VALIDATE(RenderTargetViews[I] != nullptr);
 			RenderTargetHandles[I] = RenderTargetViews[I]->GetOfflineHandle();
@@ -250,7 +250,7 @@ public:
 		return CommandList.Get();
 	}
 	
-	FORCEINLINE Uint32 GetNumDrawCalls() const
+	FORCEINLINE uint32 GetNumDrawCalls() const
 	{
 		return NumDrawCalls;
 	}
@@ -260,15 +260,15 @@ public:
 	virtual void SetDebugName(const std::string& DebugName) override;
 
 protected:
-	bool CreateUploadBuffer(Uint32 SizeInBytes = 1024U);
+	bool CreateUploadBuffer(uint32 SizeInBytes = 1024U);
 
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>	CommandList;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	DXRCommandList;
 
 	class D3D12Buffer* UploadBuffer = nullptr;
-	Byte*	UploadPointer		= nullptr;
-	Uint32	UploadBufferOffset	= 0;
-	Uint32	NumDrawCalls		= 0;
+	byte*	UploadPointer		= nullptr;
+	uint32	UploadBufferOffset	= 0;
+	uint32	NumDrawCalls		= 0;
 
 	TArray<D3D12_RESOURCE_BARRIER> DeferredResourceBarriers;
 	TArray<Microsoft::WRL::ComPtr<ID3D12Resource>> ResourcesPendingRelease;

@@ -10,12 +10,12 @@
 	#define DBG_NEW	new
 #endif
 
-VoidPtr operator new  (size_t sizeInBytes);
-VoidPtr operator new[](size_t sizeInBytes);
-VoidPtr operator new  (size_t sizeInBytes, const std::nothrow_t&) noexcept;
-VoidPtr operator new[](size_t sizeInBytes, const std::nothrow_t&) noexcept;
+void* operator new  (size_t sizeInBytes);
+void* operator new[](size_t sizeInBytes);
+void* operator new  (size_t sizeInBytes, const std::nothrow_t&) noexcept;
+void* operator new[](size_t sizeInBytes, const std::nothrow_t&) noexcept;
 
-void operator delete  (VoidPtr pPtr) noexcept;
-void operator delete[](VoidPtr pPtr) noexcept;
-void operator delete  (VoidPtr pPtr, size_t) noexcept;
-void operator delete[](VoidPtr pPtr, size_t) noexcept;
+void operator delete  (void* pPtr) noexcept;
+void operator delete[](void* pPtr) noexcept;
+void operator delete  (void* pPtr, size_t) noexcept;
+void operator delete[](void* pPtr, size_t) noexcept;

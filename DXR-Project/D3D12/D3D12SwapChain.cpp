@@ -70,7 +70,7 @@ bool D3D12SwapChain::Initialize(WindowsWindow* Window, D3D12CommandQueue* Queue)
 	}
 }
 
-bool D3D12SwapChain::Resize(Uint32 InWidth, Uint32 InHeight)
+bool D3D12SwapChain::Resize(uint32 InWidth, uint32 InHeight)
 {
 	if (InWidth == 0 || InHeight == 0)
 	{
@@ -101,12 +101,12 @@ bool D3D12SwapChain::Resize(Uint32 InWidth, Uint32 InHeight)
 	}
 }
 
-Uint32 D3D12SwapChain::GetCurrentBackBufferIndex() const
+uint32 D3D12SwapChain::GetCurrentBackBufferIndex() const
 {
 	return SwapChain->GetCurrentBackBufferIndex();
 }
 
-bool D3D12SwapChain::Present(Uint32 SyncInterval)
+bool D3D12SwapChain::Present(uint32 SyncInterval)
 {
 	return SUCCEEDED(SwapChain->Present(SyncInterval, 0));
 }
@@ -130,7 +130,7 @@ void D3D12SwapChain::RetriveSwapChainSurfaces()
 		BackBuffersViews.Resize(GetSurfaceCount());
 	}
 
-	Uint32 BufferID = 0;
+	uint32 BufferID = 0;
 	ComPtr<ID3D12Resource> Resource;
 	for (TSharedPtr<D3D12Texture>& Buffer : BackBuffers)
 	{

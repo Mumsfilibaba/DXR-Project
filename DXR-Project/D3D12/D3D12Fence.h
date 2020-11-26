@@ -13,9 +13,9 @@ public:
 	D3D12Fence(D3D12Device* InDevice);
 	~D3D12Fence();
 
-	bool Initialize(Uint64 InitalValue);
+	bool Initialize(uint64 InitalValue);
 
-	bool WaitForValue(Uint64 FenceValue);
+	bool WaitForValue(uint64 FenceValue);
 
 	FORCEINLINE ID3D12Fence* GetFence() const
 	{

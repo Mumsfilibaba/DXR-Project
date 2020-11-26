@@ -11,9 +11,9 @@ public:
 	Camera();
 	~Camera() = default;
 
-	void Move(Float32 X, Float32 Y, Float32 Z);
+	void Move(float X, float Y, float Z);
 
-	void Rotate(Float32 Pitch, Float32 Yaw, Float32 Roll);
+	void Rotate(float Pitch, float Yaw, float Roll);
 
 	void UpdateMatrices();
 
@@ -47,12 +47,12 @@ public:
 		return Position;
 	}
 
-	FORCEINLINE Float32 GetNearPlane() const
+	FORCEINLINE float GetNearPlane() const
 	{
 		return NearPlane;
 	}
 
-	FORCEINLINE Float32 GetFarPlane() const
+	FORCEINLINE float GetFarPlane() const
 	{
 		return FarPlane;
 	}
@@ -68,6 +68,6 @@ private:
 	XMFLOAT3	Forward;
 	XMFLOAT3	Right;
 	XMFLOAT3	Up;
-	Float32		NearPlane;
-	Float32		FarPlane;
+	float		NearPlane;
+	float		FarPlane;
 };

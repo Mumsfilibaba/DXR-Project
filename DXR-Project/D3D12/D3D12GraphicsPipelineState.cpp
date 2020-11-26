@@ -104,7 +104,7 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	}
 
 	D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = Pipeline.RenderTargetInfo;
-	for (Uint32 Index = 0; Index < Properties.NumRenderTargets; Index++) 
+	for (uint32 Index = 0; Index < Properties.NumRenderTargets; Index++) 
 	{
 		RenderTargetInfo.RTFormats[Index] = Properties.RTFormats[Index];
 	}

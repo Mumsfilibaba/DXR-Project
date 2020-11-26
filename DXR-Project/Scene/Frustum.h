@@ -12,10 +12,10 @@ class Frustum
 {
 public:
 	Frustum();
-	Frustum(Float32 ScreenDepth, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection);
+	Frustum(float ScreenDepth, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection);
 	~Frustum() = default;
 
-	void Create(Float32 ScreenDepth, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection);
+	void Create(float ScreenDepth, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection);
 
 	bool CheckAABB(const AABB& BoundingBox);
 

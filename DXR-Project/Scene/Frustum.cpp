@@ -6,18 +6,18 @@ Frustum::Frustum()
 {
 }
 
-Frustum::Frustum(Float32 FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection)
+Frustum::Frustum(float FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection)
 	: Planes()
 {
 	Create(FarPlane, View, Projection);
 }
 
-void Frustum::Create(Float32 FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection)
+void Frustum::Create(float FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection)
 {
 	XMFLOAT4X4 TempProjection = Projection;
 	// Calculate the minimum Z distance in the frustum.
-	Float32 MinimumZ = -TempProjection._43 / TempProjection._33;
-	Float32 R = FarPlane / (FarPlane - MinimumZ);
+	float MinimumZ = -TempProjection._43 / TempProjection._33;
+	float R = FarPlane / (FarPlane - MinimumZ);
 	TempProjection._33 = R;
 	TempProjection._43 = -R * MinimumZ;
 
@@ -87,9 +87,9 @@ void Frustum::Create(Float32 FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4&
 bool Frustum::CheckAABB(const AABB& Box)
 {
 	const XMFLOAT3 Center	= Box.GetCenter();
-	const Float32 Width		= Box.GetWidth()	/ 2.0f;
-	const Float32 Height	= Box.GetHeight()	/ 2.0f;
-	const Float32 Depth		= Box.GetDepth()	/ 2.0f;
+	const float Width		= Box.GetWidth()	/ 2.0f;
+	const float Height	= Box.GetHeight()	/ 2.0f;
+	const float Depth		= Box.GetDepth()	/ 2.0f;
 
 	XMVECTOR Coords[8];
 	Coords[0] = XMVectorSet((Center.x - Width), (Center.y - Height), (Center.z - Depth), 1.0f);
@@ -101,7 +101,7 @@ bool Frustum::CheckAABB(const AABB& Box)
 	Coords[6] = XMVectorSet((Center.x - Width), (Center.y + Height), (Center.z + Depth), 1.0f);
 	Coords[7] = XMVectorSet((Center.x + Width), (Center.y + Height), (Center.z + Depth), 1.0f);
 
-	for (Int32 Index = 0; Index < 6; Index++)
+	for (int32 Index = 0; Index < 6; Index++)
 	{
 		XMVECTOR Plane = XMLoadFloat4(&Planes[Index]);
 		if (XMPlaneDotCoord(Plane, Coords[0]).m128_f32[0] >= 0.0f)

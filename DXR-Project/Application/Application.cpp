@@ -44,7 +44,7 @@ bool Application::Initialize(TSharedPtr<GenericApplication> InPlatformApplicatio
 	SetPlatformApplication(InPlatformApplication);
 
 	// Creating main Window
-	Uint32 Style =
+	uint32 Style =
 		WINDOW_STYLE_FLAG_TITLED |
 		WINDOW_STYLE_FLAG_CLOSABLE |
 		WINDOW_STYLE_FLAG_MINIMIZABLE |
@@ -94,7 +94,7 @@ void Application::SetCapture(TSharedRef<GenericWindow> Window)
 	PlatformApplication->SetCapture(Window);
 }
 
-void Application::SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 X, Int32 Y)
+void Application::SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, int32 X, int32 Y)
 {
 	PlatformApplication->SetCursorPos(RelativeWindow, X, Y);
 }
@@ -119,7 +119,7 @@ TSharedRef<GenericWindow> Application::GetCapture() const
 	return PlatformApplication->GetCapture();
 }
 
-void Application::GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const
+void Application::GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, int32& OutX, int32& OutY) const
 {
 	PlatformApplication->GetCursorPos(RelativeWindow, OutX, OutY);
 }
@@ -158,7 +158,7 @@ Application& Application::Get()
 	return (*CurrentApplication.Get());
 }
 
-void Application::OnWindowResized(TSharedRef<GenericWindow> InWindow, Uint16 Width, Uint16 Height)
+void Application::OnWindowResized(TSharedRef<GenericWindow> InWindow, uint16 Width, uint16 Height)
 {
 	WindowResizeEvent Event(InWindow, Width, Height);
 	EventQueue::SendEvent(Event);
@@ -180,7 +180,7 @@ void Application::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeySt
 	EventQueue::SendEvent(Event);
 }
 
-void Application::OnMouseMove(Int32 x, Int32 y)
+void Application::OnMouseMove(int32 x, int32 y)
 {
 	MouseMovedEvent Event(x, y);
 	EventQueue::SendEvent(Event);
@@ -211,13 +211,13 @@ void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeySta
 	EventQueue::SendEvent(Event);
 }
 
-void Application::OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta)
+void Application::OnMouseScrolled(float HorizontalDelta, float VerticalDelta)
 {
 	MouseScrolledEvent Event(HorizontalDelta, VerticalDelta);
 	EventQueue::SendEvent(Event);
 }
 
-void Application::OnCharacterInput(Uint32 Character)
+void Application::OnCharacterInput(uint32 Character)
 {
 	KeyTypedEvent Event(Character);
 	EventQueue::SendEvent(Event);

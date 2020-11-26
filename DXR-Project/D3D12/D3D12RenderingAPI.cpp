@@ -102,7 +102,7 @@ D3D12RayTracingGeometry* D3D12RenderingAPI::CreateRayTracingGeometry() const
 	return new D3D12RayTracingGeometry(Device.Get());
 }
 
-D3D12DescriptorTable* D3D12RenderingAPI::CreateDescriptorTable(Uint32 DescriptorCount) const
+D3D12DescriptorTable* D3D12RenderingAPI::CreateDescriptorTable(uint32 DescriptorCount) const
 {
 	return new D3D12DescriptorTable(Device.Get(), DescriptorCount);
 }
@@ -132,7 +132,7 @@ D3D12ConstantBufferView* D3D12RenderingAPI::CreateConstantBufferView(ID3D12Resou
 	return new D3D12ConstantBufferView(Device.Get(), InResource, InDesc);
 }
 
-D3D12Fence* D3D12RenderingAPI::CreateFence(Uint64 InitalValue) const
+D3D12Fence* D3D12RenderingAPI::CreateFence(uint64 InitalValue) const
 {
 	TUniquePtr<D3D12Fence> Fence = TUniquePtr(new D3D12Fence(Device.Get()));
 	if (Fence->Initialize(InitalValue))
