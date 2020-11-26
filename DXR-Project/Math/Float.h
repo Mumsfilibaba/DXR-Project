@@ -8,13 +8,18 @@
 
 struct Float64
 {
-	inline Float64()
-		: Float(0.0f)
+	FORCEINLINE Float64()
+		: Float(0.0)
 	{
 	}
 
-	inline Float64(double F64)
+	FORCEINLINE Float64(double F64)
 		: Float(F64)
+	{
+	}
+
+	FORCEINLINE Float64(const Float64& Other)
+		: Float(Other.Float)
 	{
 	}
 
@@ -31,6 +36,12 @@ struct Float64
 	FORCEINLINE Float64& operator=(double F64)
 	{
 		Set(F64);
+		return *this;
+	}
+
+	FORCEINLINE Float64& operator=(const Float64& Other)
+	{
+		Float = Other.Float;
 		return *this;
 	}
 
@@ -53,13 +64,18 @@ struct Float64
 
 struct Float32
 {
-	inline Float32()
+	FORCEINLINE Float32()
 		: Float(0.0f)
 	{
 	}
 
-	inline Float32(float F32)
+	FORCEINLINE Float32(float F32)
 		: Float(F32)
+	{
+	}
+
+	FORCEINLINE Float32(const Float32& Other)
+		: Float(Other.Float)
 	{
 	}
 
@@ -76,6 +92,12 @@ struct Float32
 	FORCEINLINE Float32& operator=(float F32)
 	{
 		Set(F32);
+		return *this;
+	}
+
+	FORCEINLINE Float32& operator=(const Float32& Other)
+	{
+		Float = Other.Float;
 		return *this;
 	}
 
@@ -98,15 +120,20 @@ struct Float32
 
 struct Float16
 {
-	inline Float16()
+	FORCEINLINE Float16()
 		: Encoded(0)
 	{
 	}
 
-	inline Float16(float F32)
+	FORCEINLINE Float16(float F32)
 		: Encoded(0)
 	{
 		Set(F32);
+	}
+
+	FORCEINLINE Float16(const Float16& Other)
+		: Encoded(Other.Encoded)
+	{
 	}
 
 	FORCEINLINE void Set(float F32)
@@ -142,6 +169,12 @@ struct Float16
 	FORCEINLINE Float16& operator=(float F32)
 	{
 		Set(F32);
+		return *this;
+	}
+
+	FORCEINLINE Float16& operator=(const Float16& Other)
+	{
+		Encoded = Other.Encoded;
 		return *this;
 	}
 
