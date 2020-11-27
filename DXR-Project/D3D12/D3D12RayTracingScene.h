@@ -19,7 +19,7 @@ public:
 	D3D12RayTracingGeometry(D3D12Device* InDevice);
 	~D3D12RayTracingGeometry();
 
-	bool BuildAccelerationStructure(D3D12CommandList* CommandList, TSharedPtr<D3D12Buffer>& InVertexBuffer, uint32 InVertexCount, TSharedPtr<D3D12Buffer>& IndexBuffer, uint32 InIndexCount);
+	bool BuildAccelerationStructure(D3D12CommandList* CommandList, TSharedPtr<D3D12Buffer>& InVertexBuffer, UInt32 InVertexCount, TSharedPtr<D3D12Buffer>& IndexBuffer, UInt32 InIndexCount);
 
 	// DeviceChild Interface
 	virtual void SetDebugName(const std::string& Name) override;
@@ -39,8 +39,8 @@ private:
 	D3D12Buffer* ResultBuffer	= nullptr;
 	D3D12Buffer* ScratchBuffer	= nullptr;
 	
-	uint32 VertexCount	= 0;
-	uint32 IndexCount	= 0;
+	UInt32 VertexCount	= 0;
+	UInt32 IndexCount	= 0;
 
 	bool IsDirty = true;
 };
@@ -52,7 +52,7 @@ private:
 class D3D12RayTracingGeometryInstance
 {
 public:
-	D3D12RayTracingGeometryInstance(TSharedPtr<D3D12RayTracingGeometry>& InGeometry, Material* InMaterial, XMFLOAT3X4 InTransform, uint32 InHitGroupIndex, uint32 InInstanceID)
+	D3D12RayTracingGeometryInstance(TSharedPtr<D3D12RayTracingGeometry>& InGeometry, Material* InMaterial, XMFLOAT3X4 InTransform, UInt32 InHitGroupIndex, UInt32 InInstanceID)
 		: Geometry(InGeometry)
 		, Material(InMaterial)
 		, Transform(InTransform)
@@ -70,8 +70,8 @@ public:
 	Material* Material;
 
 	XMFLOAT3X4	Transform;
-	uint32		HitGroupIndex;
-	uint32		InstanceID;
+	UInt32		HitGroupIndex;
+	UInt32		InstanceID;
 };
 
 /*
@@ -116,7 +116,7 @@ public:
 	bool BuildAccelerationStructure(D3D12CommandList* CommandList,
 		TArray<D3D12RayTracingGeometryInstance>& InInstances,
 		TArray<BindingTableEntry>& InBindingTableEntries,
-		uint32 InNumHitGroups);
+		UInt32 InNumHitGroups);
 
 	// DeviceChild Interface
 	virtual void SetDebugName(const std::string& Name) override;
@@ -143,8 +143,8 @@ private:
 	D3D12Buffer* InstanceBuffer	= nullptr;
 
 	D3D12Buffer*	BindingTable		= nullptr;
-	uint32			BindingTableStride	= 0;
-	uint32			NumHitGroups		= 0;
+	UInt32			BindingTableStride	= 0;
+	UInt32			NumHitGroups		= 0;
 
 	TSharedPtr<D3D12ShaderResourceView>	View;
 	

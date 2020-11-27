@@ -10,10 +10,10 @@
 struct MaterialProperties
 {
 	XMFLOAT3 Albedo			= XMFLOAT3(1.0f, 1.0f, 1.0f);
-	float Roughness		= 0.0f;
-	float Metallic		= 0.0f;
-	float AO				= 0.5f;
-	int32	EnableHeight	= 0;
+	Float Roughness		= 0.0f;
+	Float Metallic		= 0.0f;
+	Float AO				= 0.5f;
+	Int32	EnableHeight	= 0;
 };
 
 /*
@@ -36,11 +36,11 @@ public:
 	}
 
 	void SetAlbedo(const XMFLOAT3& Albedo);
-	void SetAlbedo(float R, float G, float B);
+	void SetAlbedo(Float R, Float G, Float B);
 
-	void SetMetallic(float Metallic);
-	void SetRoughness(float Roughness);
-	void SetAmbientOcclusion(float AO);
+	void SetMetallic(Float Metallic);
+	void SetRoughness(Float Roughness);
+	void SetAmbientOcclusion(Float AO);
 
 	void EnableHeightMap(bool EnableHeightMap);
 

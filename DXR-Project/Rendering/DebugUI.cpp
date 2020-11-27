@@ -47,7 +47,7 @@ static ImGuiState GlobalImGuiState;
 /*
 * Helper Functions
 */
-static uint32 GetMouseButtonIndex(EMouseButton Button)
+static UInt32 GetMouseButtonIndex(EMouseButton Button)
 {
 	switch (Button)
 	{
@@ -56,7 +56,7 @@ static uint32 GetMouseButtonIndex(EMouseButton Button)
 	case MOUSE_BUTTON_MIDDLE:	return 2;
 	case MOUSE_BUTTON_BACK:		return 3;
 	case MOUSE_BUTTON_FORWARD:	return 4;
-	default:					return static_cast<uint32>(-1);
+	default:					return static_cast<UInt32>(-1);
 	}
 }
 
@@ -210,9 +210,9 @@ bool DebugUI::Initialize()
 	*/
 	
 	// Build texture atlas
-	byte*	Pixels	= nullptr;
-	int32	Width	= 0;
-	int32	Height	= 0;
+	Byte*	Pixels	= nullptr;
+	Int32	Width	= 0;
+	Int32	Height	= 0;
 	IO.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
 	GlobalImGuiState.FontTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, Width, Height, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
@@ -278,7 +278,7 @@ bool DebugUI::Initialize()
 		return false;
 	}
 
-	static const char* VertexShader =
+	static const Char* VertexShader =
 		"cbuffer vertexBuffer : register(b0) \
 		{\
 			float4x4 ProjectionMatrix; \
@@ -312,7 +312,7 @@ bool DebugUI::Initialize()
 		return false;
 	}
 
-	static const char* PixelShader =
+	static const Char* PixelShader =
 		"struct PS_INPUT\
 		{\
 			float4 pos : SV_POSITION;\
@@ -427,12 +427,12 @@ bool DebugUI::OnEvent(const Event& Event)
 	}
 	else if (IsOfEventType<MousePressedEvent>(Event))
 	{
-		uint32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
+		UInt32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
 		IO.MouseDown[ButtonIndex] = true;
 	}
 	else if (IsOfEventType<MouseReleasedEvent>(Event))
 	{
-		uint32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
+		UInt32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
 		IO.MouseDown[ButtonIndex] = false;
 	}
 	else if (IsOfEventType<MouseScrolledEvent>(Event))
@@ -452,27 +452,27 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	GlobalImGuiState.FrameClock.Tick();
 
 	Timestamp Delta = GlobalImGuiState.FrameClock.GetDeltaTime();
-	IO.DeltaTime = static_cast<float>(Delta.AsSeconds());
+	IO.DeltaTime = static_cast<Float>(Delta.AsSeconds());
 
 	// Set Mouseposition
 	TSharedRef<GenericWindow> Window = Application::Get().GetMainWindow();
 	if (IO.WantSetMousePos)
 	{
-		Application::Get().SetCursorPos(Window, static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y));
+		Application::Get().SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
 	}
 
 	// Get the display size
 	WindowShape CurrentWindowShape;
 	Window->GetWindowShape(CurrentWindowShape);
 
-	IO.DisplaySize = ImVec2(float(CurrentWindowShape.Width), float(CurrentWindowShape.Height));
+	IO.DisplaySize = ImVec2(Float(CurrentWindowShape.Width), Float(CurrentWindowShape.Height));
 
 	// Get Mouseposition
-	int32 X = 0;
-	int32 Y = 0;
+	Int32 X = 0;
+	Int32 Y = 0;
 	Application::Get().GetCursorPos(Window, X, Y);
 
-	IO.MousePos = ImVec2(static_cast<float>(X), static_cast<float>(Y));
+	IO.MousePos = ImVec2(static_cast<Float>(X), static_cast<Float>(Y));
 
 	// Check modifer keys
 	ModifierKeyState KeyState = Application::Get().GetModifierKeyState();
@@ -521,9 +521,9 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	GlobalDrawFuncs.Clear();
 
 	// Draw DebugWindow with DebugStrings
-	constexpr float Width = 300.0f;
-	ImGui::SetNextWindowPos(ImVec2(static_cast<float>(CurrentWindowShape.Width - Width), 15.0f));
-	ImGui::SetNextWindowSize(ImVec2(Width, static_cast<float>(CurrentWindowShape.Height)));
+	constexpr Float Width = 300.0f;
+	ImGui::SetNextWindowPos(ImVec2(static_cast<Float>(CurrentWindowShape.Width - Width), 15.0f));
+	ImGui::SetNextWindowSize(ImVec2(Width, static_cast<Float>(CurrentWindowShape.Height)));
 
 	ImGui::Begin("DebugWindow", nullptr,
 		ImGuiWindowFlags_NoBackground	| 
@@ -559,14 +559,14 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	// Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
 	struct VERTEX_CONSTANT_BUFFER
 	{
-		float MVP[4][4];
+		Float MVP[4][4];
 	} VertexConstantBuffer = { };
 
-	float L = DrawData->DisplayPos.x;
-	float R = DrawData->DisplayPos.x + DrawData->DisplaySize.x;
-	float T = DrawData->DisplayPos.y;
-	float B = DrawData->DisplayPos.y + DrawData->DisplaySize.y;
-	float MVP[4][4] =
+	Float L = DrawData->DisplayPos.x;
+	Float R = DrawData->DisplayPos.x + DrawData->DisplaySize.x;
+	Float T = DrawData->DisplayPos.y;
+	Float B = DrawData->DisplayPos.y + DrawData->DisplaySize.y;
+	Float MVP[4][4] =
 	{
 		{ 2.0f / (R - L),		0.0f,				0.0f,	0.0f },
 		{ 0.0f,					2.0f / (T - B),		0.0f,	0.0f },
@@ -587,7 +587,7 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	CommandList->RSSetViewports(&ViewPort, 1);
 
 	// Bind shader and vertex buffers
-	const uint32 Stride = sizeof(ImDrawVert);
+	const UInt32 Stride = sizeof(ImDrawVert);
 
 	D3D12_VERTEX_BUFFER_VIEW VertexBufferView = { };
 	VertexBufferView.BufferLocation	= GlobalImGuiState.VertexBuffer->GetGPUVirtualAddress();
@@ -608,13 +608,13 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	CommandList->SetGraphicsRoot32BitConstants(&VertexConstantBuffer, 16, 0, 0);
 
 	// Setup BlendFactor
-	const float BlendFactor[4] = { 0.f, 0.f, 0.f, 0.f };
+	const Float BlendFactor[4] = { 0.f, 0.f, 0.f, 0.f };
 	CommandList->OMSetBlendFactor(BlendFactor);
 
 	// Upload vertex/index data into a single contiguous GPU buffer
 	ImDrawVert* VertexDest	= reinterpret_cast<ImDrawVert*>(GlobalImGuiState.VertexBuffer->Map());
 	ImDrawIdx* IndexDest	= reinterpret_cast<ImDrawIdx*>(GlobalImGuiState.IndexBuffer->Map());
-	for (int32 N = 0; N < DrawData->CmdListsCount; N++)
+	for (Int32 N = 0; N < DrawData->CmdListsCount; N++)
 	{
 		const ImDrawList* CmdList = DrawData->CmdLists[N];
 		memcpy(VertexDest, CmdList->VtxBuffer.Data, CmdList->VtxBuffer.Size * sizeof(ImDrawVert));
@@ -628,13 +628,13 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 
 	// Render command lists
 	// (Because we merged all buffers into a single one, we maintain our own offset into them)
-	int32	GlobalVertexOffset	= 0;
-	int32	GlobalIndexOffset	= 0;
+	Int32	GlobalVertexOffset	= 0;
+	Int32	GlobalIndexOffset	= 0;
 	ImVec2	ClipOff = DrawData->DisplayPos;
-	for (int32 N = 0; N < DrawData->CmdListsCount; N++)
+	for (Int32 N = 0; N < DrawData->CmdListsCount; N++)
 	{
 		const ImDrawList* CmdList = DrawData->CmdLists[N];
-		for (int32 CmdIndex = 0; CmdIndex < CmdList->CmdBuffer.Size; CmdIndex++)
+		for (Int32 CmdIndex = 0; CmdIndex < CmdList->CmdBuffer.Size; CmdIndex++)
 		{
 			const ImDrawCmd* Cmd = &CmdList->CmdBuffer[CmdIndex];
 			//if (Cmd->UserCallback != NULL)

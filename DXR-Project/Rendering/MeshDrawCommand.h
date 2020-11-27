@@ -17,8 +17,8 @@ struct MeshDrawCommand
 	D3D12Buffer* VertexBuffer	= nullptr;
 	D3D12Buffer* IndexBuffer	= nullptr;
 
-	uint32 VertexCount	= 0;
-	uint32 IndexCount	= 0;
+	UInt32 VertexCount	= 0;
+	UInt32 IndexCount	= 0;
 
 	class D3D12RayTracingGeometry* Geometry = nullptr;
 };

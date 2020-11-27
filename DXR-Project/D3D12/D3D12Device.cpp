@@ -182,7 +182,7 @@ bool D3D12Device::CreateFactory()
 	using namespace Microsoft::WRL;
 
 	// Enable debuglayer
-	uint32 DebugFlags = 0;
+	UInt32 DebugFlags = 0;
 	if (DebugEnabled)
 	{
 		ComPtr<ID3D12Debug> DebugInterface;
@@ -267,7 +267,7 @@ bool D3D12Device::ChooseAdapter()
 		{
 			AdapterID = ID;
 
-			char Buff[256] = {};
+			Char Buff[256] = {};
 			sprintf_s(Buff, "[D3D12GraphicsDevice]: Direct3D Adapter (%u): %ls", AdapterID, Desc.Description);
 			LOG_INFO(Buff);
 

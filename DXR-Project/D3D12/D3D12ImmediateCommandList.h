@@ -21,7 +21,7 @@ public:
 	virtual void SetDebugName(const std::string& DebugName) override;
 
 private:
-	void WaitForValue(uint64 FenceValue);
+	void WaitForValue(UInt64 FenceValue);
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue>	Queue;
 	Microsoft::WRL::ComPtr<ID3D12Fence>			Fence;
@@ -29,8 +29,8 @@ private:
 	TArray<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>>	Allocators;
 
 	HANDLE Event = 0;
-	uint64 CurrentFenceValue = 0;
-	uint32 CurrentAllocatorIndex = 0;
+	UInt64 CurrentFenceValue = 0;
+	UInt32 CurrentAllocatorIndex = 0;
 
-	TArray<uint64> FenceValues;
+	TArray<UInt64> FenceValues;
 };

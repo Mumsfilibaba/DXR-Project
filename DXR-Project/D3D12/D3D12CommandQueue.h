@@ -17,8 +17,8 @@ public:
 
 	bool Initialize(D3D12_COMMAND_LIST_TYPE Type);
 	
-	bool SignalFence(D3D12Fence* Fence, uint64 FenceValue);
-	bool WaitForFence(D3D12Fence* Fence, uint64 FenceValue);
+	bool SignalFence(D3D12Fence* Fence, UInt64 FenceValue);
+	bool WaitForFence(D3D12Fence* Fence, UInt64 FenceValue);
 
 	void WaitForCompletion();
 
@@ -37,6 +37,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> Queue;
 	TUniquePtr<D3D12Fence> QueueFence;
 	
-	uint64 FenceValue = 0;
+	UInt64 FenceValue = 0;
 };
 

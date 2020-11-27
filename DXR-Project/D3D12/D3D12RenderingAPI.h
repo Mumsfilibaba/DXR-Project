@@ -23,7 +23,7 @@ public:
 	virtual class D3D12Buffer*	CreateBuffer(const struct BufferProperties& Properties) const override final;
 	virtual class D3D12RayTracingScene*		CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState) const override final;
 	virtual class D3D12RayTracingGeometry*	CreateRayTracingGeometry() const override final;
-	virtual class D3D12DescriptorTable*		CreateDescriptorTable(uint32 DescriptorCount) const override final;
+	virtual class D3D12DescriptorTable*		CreateDescriptorTable(UInt32 DescriptorCount) const override final;
 
 	virtual class D3D12ShaderResourceView*	CreateShaderResourceView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc) const override final;
 	virtual class D3D12UnorderedAccessView* CreateUnorderedAccessView(ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc) const override final;
@@ -31,7 +31,7 @@ public:
 	virtual class D3D12DepthStencilView*	CreateDepthStencilView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc) const override final;
 	virtual class D3D12ConstantBufferView*	CreateConstantBufferView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc) const override final;
 
-	virtual class D3D12Fence*				CreateFence(uint64 InitalValue) const override final;
+	virtual class D3D12Fence*				CreateFence(UInt64 InitalValue) const override final;
 	virtual class D3D12CommandAllocator*	CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE ListType) const override final;
 	virtual class D3D12CommandList*			CreateCommandList(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline) const override final;
 	virtual class D3D12CommandQueue*		CreateCommandQueue() const override final;

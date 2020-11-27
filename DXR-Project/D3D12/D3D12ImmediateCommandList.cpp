@@ -18,13 +18,13 @@ D3D12ImmediateCommandList::~D3D12ImmediateCommandList()
 
 bool D3D12ImmediateCommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type)
 {
-	const uint32 NumAllocators = 3;
+	const UInt32 NumAllocators = 3;
 	Allocators.Resize(NumAllocators);
 	FenceValues.Resize(NumAllocators, 0);
 
 	// Create allocators
 	HRESULT hr = 0;
-	for (uint32 i = 0; i < NumAllocators; i++)
+	for (UInt32 i = 0; i < NumAllocators; i++)
 	{
 		Device->GetDevice()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocators[i]));
 		if (FAILED(hr))
@@ -119,7 +119,7 @@ void D3D12ImmediateCommandList::Flush()
 	}
 
 	// Make sure this allocator is not in use
-	const uint64 SyncValue = FenceValues[CurrentAllocatorIndex];
+	const UInt64 SyncValue = FenceValues[CurrentAllocatorIndex];
 	WaitForValue(SyncValue);
 
 	// Reset commandlist
@@ -138,7 +138,7 @@ void D3D12ImmediateCommandList::WaitForCompletion()
 	ReleaseDeferredResources();
 }
 
-void D3D12ImmediateCommandList::WaitForValue(uint64 FenceValue)
+void D3D12ImmediateCommandList::WaitForValue(UInt64 FenceValue)
 {
 	if (FenceValue > 0)
 	{
@@ -168,7 +168,7 @@ void D3D12ImmediateCommandList::SetDebugName(const std::string& DebugName)
 	std::wstring FenceName = L"[Fence]" + WideDebugName;
 	Fence->SetName(FenceName.c_str());
 
-	uint32 Index = 0;
+	UInt32 Index = 0;
 	std::wstring AllocatorName;
 	for (ComPtr<ID3D12CommandAllocator>& Allocator : Allocators)
 	{

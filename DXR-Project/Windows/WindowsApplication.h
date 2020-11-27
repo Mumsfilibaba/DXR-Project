@@ -42,8 +42,8 @@ public:
 	virtual TSharedRef<GenericWindow> GetCapture() const override final;
 	virtual TSharedRef<GenericCursor> GetCursor() const override final;
 	
-	virtual void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, int32 X, int32 Y) override final;
-	virtual void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, int32& OutX, int32& OutY) const override final;
+	virtual void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 X, Int32 Y) override final;
+	virtual void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const override final;
 	
 	static GenericApplication* Make();
 

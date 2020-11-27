@@ -73,7 +73,7 @@ Transform::Transform()
 	CalculateMatrix();
 }
 
-void Transform::SetPosition(float X, float Y, float Z)
+void Transform::SetPosition(Float X, Float Y, Float Z)
 {
 	XMVECTOR XmPosition = XMVectorSet(X, Y, Z, 0.0f);
 	XMStoreFloat3(&Position, XmPosition);
@@ -87,7 +87,7 @@ void Transform::SetPosition(const XMFLOAT3& InPosition)
 	CalculateMatrix();
 }
 
-void Transform::SetScale(float X, float Y, float Z)
+void Transform::SetScale(Float X, Float Y, Float Z)
 {
 	XMVECTOR XmScale = XMVectorSet(X, Y, Z, 0.0f);
 	XMStoreFloat3(&Scale, XmScale);

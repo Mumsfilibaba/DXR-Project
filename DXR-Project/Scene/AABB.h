@@ -11,17 +11,17 @@ struct AABB
 		return XMFLOAT3((Bottom.x + Top.x) * 0.5f, (Bottom.y + Top.y) * 0.5f, (Bottom.z + Top.z) * 0.5f);
 	}
 
-	FORCEINLINE float GetWidth() const
+	FORCEINLINE Float GetWidth() const
 	{
 		return Top.x - Bottom.x;
 	}
 
-	FORCEINLINE float GetHeight() const
+	FORCEINLINE Float GetHeight() const
 	{
 		return Top.y - Bottom.y;
 	}
 
-	FORCEINLINE float GetDepth() const
+	FORCEINLINE Float GetDepth() const
 	{
 		return Top.z - Bottom.z;
 	}

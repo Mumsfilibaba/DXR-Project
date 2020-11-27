@@ -7,14 +7,14 @@
 */
 struct EventHandlerPair
 {
-	EventHandlerPair(IEventHandler* InHandler, uint8 InCategoryMask)
+	EventHandlerPair(IEventHandler* InHandler, UInt8 InCategoryMask)
 		: CategoryMask(InCategoryMask)
 		, IsHandlerFunc(false)
 	{
 		Handler = InHandler;
 	}
 
-	EventHandlerPair(EventHandlerFunc InFunc, uint8 InCategoryMask)
+	EventHandlerPair(EventHandlerFunc InFunc, UInt8 InCategoryMask)
 		: CategoryMask(InCategoryMask)
 		, IsHandlerFunc(true)
 	{
@@ -27,7 +27,7 @@ struct EventHandlerPair
 		EventHandlerFunc	Func;
 	};
 
-	uint8	CategoryMask	= 0;
+	UInt8	CategoryMask	= 0;
 	bool	IsHandlerFunc	= false;
 };
 
@@ -36,7 +36,7 @@ static TArray<EventHandlerPair>	GlobalEventHandlers;
 /*
 * EventQueue
 */
-void EventQueue::RegisterEventHandler(EventHandlerFunc Func, uint8 EventCategoryMask)
+void EventQueue::RegisterEventHandler(EventHandlerFunc Func, UInt8 EventCategoryMask)
 {
 	VALIDATE(Func != nullptr);
 
@@ -57,7 +57,7 @@ void EventQueue::RegisterEventHandler(EventHandlerFunc Func, uint8 EventCategory
 	GlobalEventHandlers.EmplaceBack(Func, EventCategoryMask);
 }
 
-void EventQueue::RegisterEventHandler(IEventHandler* EventHandler, uint8 EventCategoryMask)
+void EventQueue::RegisterEventHandler(IEventHandler* EventHandler, UInt8 EventCategoryMask)
 {	
 	VALIDATE(EventHandler != nullptr);
 

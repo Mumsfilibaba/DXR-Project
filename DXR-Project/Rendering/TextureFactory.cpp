@@ -33,21 +33,21 @@ struct TextureFactoryData
 
 static TextureFactoryData GlobalFactoryData;
 
-D3D12Texture* TextureFactory::LoadFromFile(const std::string& Filepath, uint32 CreateFlags, DXGI_FORMAT Format)
+D3D12Texture* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, DXGI_FORMAT Format)
 {
-	int32 Width			= 0;
-	int32 Height		= 0;
-	int32 ChannelCount	= 0;
+	Int32 Width			= 0;
+	Int32 Height		= 0;
+	Int32 ChannelCount	= 0;
 
 	// Load based on format
-	TUniquePtr<byte> Pixels;
+	TUniquePtr<Byte> Pixels;
 	if (Format == DXGI_FORMAT_R8G8B8A8_UNORM)
 	{
-		Pixels = TUniquePtr<byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 4));
+		Pixels = TUniquePtr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 4));
 	}
 	else if (Format == DXGI_FORMAT_R32G32B32A32_FLOAT)
 	{
-		Pixels = TUniquePtr<byte>(reinterpret_cast<byte*>(stbi_loadf(Filepath.c_str(), &Width, &Height, &ChannelCount, 4)));
+		Pixels = TUniquePtr<Byte>(reinterpret_cast<Byte*>(stbi_loadf(Filepath.c_str(), &Width, &Height, &ChannelCount, 4)));
 	}
 	else
 	{
@@ -69,7 +69,7 @@ D3D12Texture* TextureFactory::LoadFromFile(const std::string& Filepath, uint32 C
 	return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);
 }
 
-D3D12Texture* TextureFactory::LoadFromMemory(const byte* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, DXGI_FORMAT Format)
+D3D12Texture* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, DXGI_FORMAT Format)
 {
 	if (Format != DXGI_FORMAT_R8G8B8A8_UNORM && Format != DXGI_FORMAT_R32G32B32A32_FLOAT)
 	{
@@ -78,17 +78,17 @@ D3D12Texture* TextureFactory::LoadFromMemory(const byte* Pixels, uint32 Width, u
 	}
 
 	const bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TEXTURE_FACTORY_FLAGS_GENERATE_MIPS;
-	const uint32 MipLevels = GenerateMipLevels ? std::min<uint32>(uint32(std::log2<uint32>(Width)), uint32(std::log2<uint32>(Height))) : 1;
+	const UInt32 MipLevels = GenerateMipLevels ? std::min<UInt32>(UInt32(std::log2<UInt32>(Width)), UInt32(std::log2<UInt32>(Height))) : 1;
 
 	VALIDATE(MipLevels != 0);
 
 	// Create texture
 	TextureProperties TextureProps = { };
 	TextureProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-	TextureProps.Width			= static_cast<uint16>(Width);
-	TextureProps.Height			= static_cast<uint16>(Height);
+	TextureProps.Width			= static_cast<UInt16>(Width);
+	TextureProps.Height			= static_cast<UInt16>(Height);
 	TextureProps.ArrayCount		= 1;
-	TextureProps.MipLevels		= static_cast<uint16>(MipLevels);
+	TextureProps.MipLevels		= static_cast<UInt16>(MipLevels);
 	TextureProps.Format			= Format;
 	TextureProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
@@ -100,9 +100,9 @@ D3D12Texture* TextureFactory::LoadFromMemory(const byte* Pixels, uint32 Width, u
 		return nullptr;
 	}
 
-	const uint32 Stride			= (Format == DXGI_FORMAT_R8G8B8A8_UNORM) ? 4 : 16;
-	const uint32 RowPitch		= (Width * Stride + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
-	const uint32 SizeInBytes	= Height * RowPitch;
+	const UInt32 Stride			= (Format == DXGI_FORMAT_R8G8B8A8_UNORM) ? 4 : 16;
+	const UInt32 RowPitch		= (Width * Stride + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
+	const UInt32 SizeInBytes	= Height * RowPitch;
 
 	// ShaderResourceView
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
@@ -130,18 +130,18 @@ D3D12Texture* TextureFactory::LoadFromMemory(const byte* Pixels, uint32 Width, u
 	return Texture.Release();
 }
 
-D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, DXGI_FORMAT Format)
+D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, DXGI_FORMAT Format)
 {
 	VALIDATE(PanoramaSource->GetShaderResourceView(0));
 
 	const bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TEXTURE_FACTORY_FLAGS_GENERATE_MIPS;
-	const uint16 MipLevels = (GenerateMipLevels) ? static_cast<uint16>(std::log2(CubeMapSize)) : 1U;
+	const UInt16 MipLevels = (GenerateMipLevels) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
 
 	// Create texture
 	TextureProperties TextureProps = { };
 	TextureProps.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	TextureProps.Width			= static_cast<uint16>(CubeMapSize);
-	TextureProps.Height			= static_cast<uint16>(CubeMapSize);
+	TextureProps.Width			= static_cast<UInt16>(CubeMapSize);
+	TextureProps.Height			= static_cast<UInt16>(CubeMapSize);
 	TextureProps.ArrayCount		= 6;
 	TextureProps.MipLevels		= MipLevels;
 	TextureProps.Format			= Format;
@@ -229,7 +229,7 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* Panoram
 	
 	struct ConstantBuffer
 	{
-		uint32 CubeMapSize;
+		UInt32 CubeMapSize;
 	} CB0;
 	CB0.CubeMapSize = CubeMapSize;
 
@@ -238,8 +238,8 @@ D3D12Texture* TextureFactory::CreateTextureCubeFromPanorma(D3D12Texture* Panoram
 	CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
 	CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 2);
 
-	uint32 ThreadsX = Math::DivideByMultiple(CubeMapSize, 16);
-	uint32 ThreadsY = Math::DivideByMultiple(CubeMapSize, 16);
+	UInt32 ThreadsX = Math::DivideByMultiple(CubeMapSize, 16);
+	UInt32 ThreadsY = Math::DivideByMultiple(CubeMapSize, 16);
 	CommandList->Dispatch(ThreadsX, ThreadsY, 6);
 
 	CommandList->TransitionBarrier(PanoramaSource, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);

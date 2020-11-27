@@ -137,8 +137,8 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 
 	// Init shader config
 	D3D12_RAYTRACING_SHADER_CONFIG ShaderConfig = {};
-	ShaderConfig.MaxAttributeSizeInBytes	= sizeof(float) * 2;
-	ShaderConfig.MaxPayloadSizeInBytes		= sizeof(float) * 3 + sizeof(uint32);
+	ShaderConfig.MaxAttributeSizeInBytes	= sizeof(Float) * 2;
+	ShaderConfig.MaxPayloadSizeInBytes		= sizeof(Float) * 3 + sizeof(UInt32);
 
 	{
 		D3D12_STATE_SUBOBJECT ShaderConfigSubObject = { };
@@ -184,7 +184,7 @@ bool D3D12RayTracingPipelineState::Initialize(const RayTracingPipelineStatePrope
 	// Create state object
 	D3D12_STATE_OBJECT_DESC RayTracingPipeline = { };
 	RayTracingPipeline.Type				= D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
-	RayTracingPipeline.NumSubobjects	= static_cast<uint32>(SubObjects.Size());
+	RayTracingPipeline.NumSubobjects	= static_cast<UInt32>(SubObjects.Size());
 	RayTracingPipeline.pSubobjects		= SubObjects.Data();
 
 	HRESULT hResult = Device->GetDXRDevice()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&StateObject));

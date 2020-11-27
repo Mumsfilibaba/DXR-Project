@@ -30,7 +30,7 @@ static const DXGI_FORMAT	LightProbeFormat		= DXGI_FORMAT_R16G16B16A16_UNORM;
 static const DXGI_FORMAT	NormalFormat			= DXGI_FORMAT_R10G10B10A2_UNORM;
 static const DXGI_FORMAT	DepthBufferFormat		= DXGI_FORMAT_D32_FLOAT;
 static const DXGI_FORMAT	ShadowMapFormat			= DXGI_FORMAT_D32_FLOAT;
-static const uint32			ShadowMapSampleCount	= 2;
+static const UInt32			ShadowMapSampleCount	= 2;
 
 #define GBUFFER_ALBEDO_INDEX	0
 #define GBUFFER_NORMAL_INDEX	1
@@ -114,7 +114,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	if (RenderingAPI::Get().IsRayTracingSupported())
 	{
 		// Build Bottom-Level
-		uint32 HitGroupIndex = 0;
+		UInt32 HitGroupIndex = 0;
 		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 		{
 			Command.Geometry->BuildAccelerationStructure(
@@ -125,7 +125,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 				Command.Mesh->IndexCount);
 
 			XMFLOAT4X4 Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
-			XMFLOAT3X4 SmallMatrix	= XMFLOAT3X4(reinterpret_cast<float*>(&Matrix));
+			XMFLOAT3X4 SmallMatrix	= XMFLOAT3X4(reinterpret_cast<Float*>(&Matrix));
 
 			RayTracingGeometryInstances.EmplaceBack(
 				Command.Mesh->RayTracingGeometry,
@@ -153,7 +153,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 			}
 			BindingTableEntries.EmplaceBack("Miss", nullptr, nullptr);
 
-			const uint32 NumHitGroups = BindingTableEntries.Size() - 2;
+			const UInt32 NumHitGroups = BindingTableEntries.Size() - 2;
 			RayTracingScene->BuildAccelerationStructure(
 				CommandList.Get(),
 				RayTracingGeometryInstances,
@@ -169,12 +169,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->TransitionBarrier(PointLightBuffer.Get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	CommandList->TransitionBarrier(DirectionalLightBuffer.Get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	uint32 NumPointLights	= 0;
-	uint32 NumDirLights		= 0;
+	UInt32 NumPointLights	= 0;
+	UInt32 NumDirLights		= 0;
 	for (Light* Light : CurrentScene.GetLights())
 	{
 		XMFLOAT3	Color		= Light->GetColor();
-		float		Intensity	= Light->GetIntensity();
+		Float		Intensity	= Light->GetIntensity();
 		if (IsSubClassOf<PointLight>(Light))
 		{
 			PointLight* PoiLight = Cast<PointLight>(Light);
@@ -187,7 +187,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Properties.MaxShadowBias	= PoiLight->GetMaxShadowBias();
 			Properties.FarPlane			= PoiLight->GetShadowFarPlane();
 
-			constexpr uint32 SizeInBytes = sizeof(PointLightProperties);
+			constexpr UInt32 SizeInBytes = sizeof(PointLightProperties);
 			CommandList->UploadBufferData(PointLightBuffer.Get(), NumPointLights * SizeInBytes, &Properties, SizeInBytes);
 
 			NumPointLights++;
@@ -204,7 +204,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Properties.LightMatrix		= DirLight->GetMatrix();
 			Properties.MaxShadowBias	= DirLight->GetMaxShadowBias();
 
-			constexpr uint32 SizeInBytes = sizeof(DirectionalLightProperties);
+			constexpr UInt32 SizeInBytes = sizeof(DirectionalLightProperties);
 			CommandList->UploadBufferData(DirectionalLightBuffer.Get(), NumDirLights * SizeInBytes, &Properties, SizeInBytes);
 
 			NumDirLights++;
@@ -233,7 +233,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 #if ENABLE_VSM
 	CommandList->TransitionBarrier(VSMDirLightShadowMaps.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	float DepthClearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	Float DepthClearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	CommandList->ClearRenderTargetView(VSMDirLightShadowMaps->GetRenderTargetView(0).Get(), DepthClearColor);
 	
 	D3D12RenderTargetView* DirLightRTVS[] =
@@ -249,8 +249,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	// Setup view
 	D3D12_VIEWPORT ViewPort = { };
-	ViewPort.Width		= static_cast<float>(Renderer::GetGlobalLightSettings().ShadowMapWidth);
-	ViewPort.Height		= static_cast<float>(Renderer::GetGlobalLightSettings().ShadowMapHeight);
+	ViewPort.Width		= static_cast<Float>(Renderer::GetGlobalLightSettings().ShadowMapWidth);
+	ViewPort.Height		= static_cast<Float>(Renderer::GetGlobalLightSettings().ShadowMapHeight);
 	ViewPort.MinDepth	= 0.0f;
 	ViewPort.MaxDepth	= 1.0f;
 	ViewPort.TopLeftX	= 0.0f;
@@ -277,14 +277,14 @@ void Renderer::Tick(const Scene& CurrentScene)
 	struct ShadowPerObject
 	{
 		XMFLOAT4X4 Matrix;
-		float ShadowOffset;
+		Float ShadowOffset;
 	} ShadowPerObjectBuffer;
 
 	struct PerLight
 	{
 		XMFLOAT4X4	Matrix;
 		XMFLOAT3	Position;
-		float		FarPlane;
+		Float		FarPlane;
 	} PerLightBuffer;
 
 	D3D12_VERTEX_BUFFER_VIEW VBO = { };
@@ -324,9 +324,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 	}
 
 	// Render PointLight ShadowMaps
-	const uint32 PointLightShadowSize = Renderer::GetGlobalLightSettings().PointLightShadowSize;
-	ViewPort.Width		= static_cast<float>(PointLightShadowSize);
-	ViewPort.Height		= static_cast<float>(PointLightShadowSize);
+	const UInt32 PointLightShadowSize = Renderer::GetGlobalLightSettings().PointLightShadowSize;
+	ViewPort.Width		= static_cast<Float>(PointLightShadowSize);
+	ViewPort.Height		= static_cast<Float>(PointLightShadowSize);
 	ViewPort.MinDepth	= 0.0f;
 	ViewPort.MaxDepth	= 1.0f;
 	ViewPort.TopLeftX	= 0.0f;
@@ -348,7 +348,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		if (IsSubClassOf<PointLight>(Light))
 		{
 			PointLight* PoiLight = Cast<PointLight>(Light);
-			for (uint32 I = 0; I < 6; I++)
+			for (UInt32 I = 0; I < 6; I++)
 			{
 				CommandList->ClearDepthStencilView(PointLightShadowMaps->GetDepthStencilView(I).Get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 				CommandList->OMSetRenderTargets(nullptr, 0, PointLightShadowMaps->GetDepthStencilView(I).Get());
@@ -433,7 +433,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		XMFLOAT4X4	ViewProjection;
 		XMFLOAT3	Position;
-		float		Padding;
+		Float		Padding;
 		XMFLOAT4X4	ViewProjectionInv;
 	} CamBuff;
 
@@ -446,15 +446,15 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->TransitionBarrier(CameraBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	// Clear GBuffer
-	const float BlackClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	const Float BlackClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	CommandList->ClearRenderTargetView(GBuffer[0]->GetRenderTargetView(0).Get(), BlackClearColor);
 	CommandList->ClearRenderTargetView(GBuffer[1]->GetRenderTargetView(0).Get(), BlackClearColor);
 	CommandList->ClearRenderTargetView(GBuffer[2]->GetRenderTargetView(0).Get(), BlackClearColor);
 	CommandList->ClearDepthStencilView(GBuffer[3]->GetDepthStencilView(0).Get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 
 	// Setup view
-	ViewPort.Width		= static_cast<float>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	ViewPort.Height		= static_cast<float>(RenderingAPI::Get().GetSwapChain()->GetHeight());
+	ViewPort.Width		= static_cast<Float>(RenderingAPI::Get().GetSwapChain()->GetWidth());
+	ViewPort.Height		= static_cast<Float>(RenderingAPI::Get().GetSwapChain()->GetHeight());
 	ViewPort.MinDepth	= 0.0f;
 	ViewPort.MaxDepth	= 1.0f;
 	ViewPort.TopLeftX	= 0.0f;
@@ -571,8 +571,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		
 		CommandList->SetPipelineState(SSAOPSO->GetPipeline());
 	
-		const uint32 DispatchWidth	= RenderingAPI::Get().GetSwapChain()->GetWidth();
-		const uint32 DispatchHeight	= RenderingAPI::Get().GetSwapChain()->GetHeight();
+		const UInt32 DispatchWidth	= RenderingAPI::Get().GetSwapChain()->GetWidth();
+		const UInt32 DispatchHeight	= RenderingAPI::Get().GetSwapChain()->GetHeight();
 		CommandList->Dispatch(DispatchWidth, DispatchHeight, 1);
 
 		CommandList->TransitionBarrier(GBuffer[0].Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -617,7 +617,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->SetGraphicsRoot32BitConstants(&SimpleCamera, 16, 0, 0);
 	CommandList->SetGraphicsRootDescriptorTable(SkyboxDescriptorTable->GetGPUTableStartHandle(), 1);
 
-	CommandList->DrawIndexedInstanced(static_cast<uint32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
+	CommandList->DrawIndexedInstanced(static_cast<UInt32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
 
 	// Render to BackBuffer
 	CommandList->TransitionBarrier(FinalTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -635,12 +635,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		struct FXAASettings
 		{
-			float Width;
-			float Height;
+			Float Width;
+			Float Height;
 		} Settings;
 
-		Settings.Width	= float(RenderingAPI::Get().GetSwapChain()->GetWidth());
-		Settings.Height	= float(RenderingAPI::Get().GetSwapChain()->GetHeight());
+		Settings.Width	= Float(RenderingAPI::Get().GetSwapChain()->GetWidth());
+		Settings.Height	= Float(RenderingAPI::Get().GetSwapChain()->GetHeight());
 
 		CommandList->SetGraphicsRoot32BitConstants(&Settings, 2, 0, 1);
 		CommandList->SetPipelineState(FXAAPSO->GetPipelineState());
@@ -653,8 +653,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->DrawInstanced(3, 1, 0, 0);
 
 	// Forward Pass
-	ViewPort.Width		= static_cast<float>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	ViewPort.Height		= static_cast<float>(RenderingAPI::Get().GetSwapChain()->GetHeight());
+	ViewPort.Width		= static_cast<Float>(RenderingAPI::Get().GetSwapChain()->GetWidth());
+	ViewPort.Height		= static_cast<Float>(RenderingAPI::Get().GetSwapChain()->GetHeight());
 	ViewPort.MinDepth	= 0.0f;
 	ViewPort.MaxDepth	= 1.0f;
 	ViewPort.TopLeftX	= 0.0f;
@@ -759,7 +759,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	RenderingAPI::Get().GetSwapChain()->Present(VSyncEnabled ? 1 : 0);
 
 	// Wait for next frame
-	const uint64 CurrentFenceValue = FenceValues[CurrentBackBufferIndex];
+	const UInt64 CurrentFenceValue = FenceValues[CurrentBackBufferIndex];
 	RenderingAPI::Get().GetQueue()->SignalFence(Fence.Get(), CurrentFenceValue);
 
 	CurrentBackBufferIndex = RenderingAPI::Get().GetSwapChain()->GetCurrentBackBufferIndex();
@@ -776,8 +776,8 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 	InCommandList->TransitionBarrier(ReflectionTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-	raytraceDesc.Width	= static_cast<uint32>(ReflectionTexture->GetDesc().Width);
-	raytraceDesc.Height = static_cast<uint32>(ReflectionTexture->GetDesc().Height);
+	raytraceDesc.Width	= static_cast<UInt32>(ReflectionTexture->GetDesc().Width);
+	raytraceDesc.Height = static_cast<UInt32>(ReflectionTexture->GetDesc().Height);
 	raytraceDesc.Depth	= 1;
 
 	// Set shader tables
@@ -797,7 +797,7 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 	InCommandList->TransitionBarrier(ReflectionTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
 }
 
-void Renderer::OnResize(int32 Width, int32 Height)
+void Renderer::OnResize(Int32 Width, Int32 Height)
 {
 	WaitForPendingFrames();
 
@@ -903,9 +903,9 @@ void Renderer::Release()
 
 bool Renderer::Initialize()
 {
-	const uint32 BackBufferCount = RenderingAPI::Get().GetSwapChain()->GetSurfaceCount();
+	const UInt32 BackBufferCount = RenderingAPI::Get().GetSwapChain()->GetSurfaceCount();
 	CommandAllocators.Resize(BackBufferCount);
-	for (uint32 i = 0; i < BackBufferCount; i++)
+	for (UInt32 i = 0; i < BackBufferCount; i++)
 	{
 		CommandAllocators[i] = RenderingAPI::Get().CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT);
 		if (!CommandAllocators[i])
@@ -940,7 +940,7 @@ bool Renderer::Initialize()
 	{
 		D3D12_CONSTANT_BUFFER_VIEW_DESC CameraViewDesc = { };
 		CameraViewDesc.BufferLocation	= CameraBuffer->GetGPUVirtualAddress();
-		CameraViewDesc.SizeInBytes		= static_cast<uint32>(BufferProps.SizeInBytes);
+		CameraViewDesc.SizeInBytes		= static_cast<UInt32>(BufferProps.SizeInBytes);
 
 		CameraBuffer->SetConstantBufferView(TSharedPtr(RenderingAPI::Get().CreateConstantBufferView(CameraBuffer->GetResource(), &CameraViewDesc)));
 	}
@@ -954,13 +954,13 @@ bool Renderer::Initialize()
 
 	// Create vertexbuffer
 	BufferProps.InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
-	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<uint64>(SkyboxMesh.Vertices.Size());
+	BufferProps.SizeInBytes = sizeof(Vertex) * static_cast<UInt64>(SkyboxMesh.Vertices.Size());
 	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
 
 	SkyboxVertexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
 	if (SkyboxVertexBuffer)
 	{
-		void* BufferMemory = SkyboxVertexBuffer->Map();
+		Void* BufferMemory = SkyboxVertexBuffer->Map();
 		memcpy(BufferMemory, SkyboxMesh.Vertices.Data(), BufferProps.SizeInBytes);
 		SkyboxVertexBuffer->Unmap();
 	}
@@ -970,11 +970,11 @@ bool Renderer::Initialize()
 	}
 
 	// Create indexbuffer
-	BufferProps.SizeInBytes = sizeof(uint32) * static_cast<uint64>(SkyboxMesh.Indices.Size());
+	BufferProps.SizeInBytes = sizeof(UInt32) * static_cast<UInt64>(SkyboxMesh.Indices.Size());
 	SkyboxIndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
 	if (SkyboxIndexBuffer)
 	{
-		void* BufferMemory = SkyboxIndexBuffer->Map();
+		Void* BufferMemory = SkyboxIndexBuffer->Map();
 		memcpy(BufferMemory, SkyboxMesh.Indices.Data(), BufferProps.SizeInBytes);
 		SkyboxIndexBuffer->Unmap();
 	}
@@ -1009,7 +1009,7 @@ bool Renderer::Initialize()
 	}
 
 	// Generate global irradiance (From Skybox)
-	const uint16 IrradianceSize = 32;
+	const UInt16 IrradianceSize = 32;
 	TextureProperties IrradianceMapProps = { };
 	IrradianceMapProps.DebugName	= "Irradiance Map";
 	IrradianceMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -1046,15 +1046,15 @@ bool Renderer::Initialize()
 	IrradianceMap->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(IrradianceMap->GetResource(), &SrvDesc)), 0);
 
 	// Generate global specular irradiance (From Skybox)
-	const uint16 SpecularIrradianceSize = 128;
-	const uint32 Miplevels				= std::max<uint32>(uint32(std::log2<uint32>(SpecularIrradianceSize)), 1U);
+	const UInt16 SpecularIrradianceSize = 128;
+	const UInt32 Miplevels				= std::max<UInt32>(UInt32(std::log2<UInt32>(SpecularIrradianceSize)), 1U);
 	TextureProperties SpecualarIrradianceMapProps = { };
 	SpecualarIrradianceMapProps.DebugName	= "Specular Irradiance Map";
 	SpecualarIrradianceMapProps.Flags		= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	SpecualarIrradianceMapProps.Width		= SpecularIrradianceSize;
 	SpecualarIrradianceMapProps.Height		= SpecularIrradianceSize;
 	SpecualarIrradianceMapProps.ArrayCount	= 6;
-	SpecualarIrradianceMapProps.MipLevels	= static_cast<uint16>(Miplevels);
+	SpecualarIrradianceMapProps.MipLevels	= static_cast<UInt16>(Miplevels);
 	SpecualarIrradianceMapProps.Format		= LightProbeFormat;
 	SpecualarIrradianceMapProps.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 	SpecualarIrradianceMapProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
@@ -1070,7 +1070,7 @@ bool Renderer::Initialize()
 	UavDesc.Texture2DArray.ArraySize		= 6;
 	UavDesc.Texture2DArray.FirstArraySlice	= 0;
 	UavDesc.Texture2DArray.PlaneSlice		= 0;
-	for (uint32 Miplevel = 0; Miplevel < Miplevels; Miplevel++)
+	for (UInt32 Miplevel = 0; Miplevel < Miplevels; Miplevel++)
 	{
 		UavDesc.Texture2DArray.MipSlice = Miplevel;
 		SpecularIrradianceMap->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get().CreateUnorderedAccessView(nullptr, SpecularIrradianceMap->GetResource(), &UavDesc)), Miplevel);
@@ -1219,7 +1219,7 @@ bool Renderer::InitRayTracing()
 
 	TUniquePtr<D3D12RootSignature> HitLocalRoot;
 	{
-		constexpr uint32 NumRanges0 = 7;
+		constexpr UInt32 NumRanges0 = 7;
 		D3D12_DESCRIPTOR_RANGE Ranges0[NumRanges0] = {};
 		// Albedo
 		Ranges0[0].BaseShaderRegister					= 0;
@@ -1270,7 +1270,7 @@ bool Renderer::InitRayTracing()
 		Ranges0[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 		Ranges0[6].OffsetInDescriptorsFromTableStart	= 6;
 
-		constexpr uint32 NumRanges1 = 2;
+		constexpr UInt32 NumRanges1 = 2;
 		D3D12_DESCRIPTOR_RANGE Ranges1[NumRanges1] = {};
 		// VertexBuffer
 		Ranges1[0].BaseShaderRegister					= 6;
@@ -1286,7 +1286,7 @@ bool Renderer::InitRayTracing()
 		Ranges1[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		Ranges1[1].OffsetInDescriptorsFromTableStart	= 1;
 
-		const uint32 NumRootParams = 2;
+		const UInt32 NumRootParams = 2;
 		D3D12_ROOT_PARAMETER RootParams[NumRootParams];
 		RootParams[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		RootParams[0].DescriptorTable.NumDescriptorRanges	= NumRanges0;
@@ -1334,7 +1334,7 @@ bool Renderer::InitRayTracing()
 
 	// Global RootSignature
 	{
-		constexpr uint32 NumRanges = 5;
+		constexpr UInt32 NumRanges = 5;
 		D3D12_DESCRIPTOR_RANGE Ranges[NumRanges] = {};
 		// AccelerationStructure
 		Ranges[0].BaseShaderRegister				= 0;
@@ -1461,14 +1461,14 @@ bool Renderer::InitRayTracing()
 
 bool Renderer::InitLightBuffers()
 {
-	const uint32 NumPointLights = 1;
-	const uint32 NumDirLights	= 1;
+	const UInt32 NumPointLights = 1;
+	const UInt32 NumDirLights	= 1;
 
 	// LightBuffers
 	BufferProperties Props = { };
 	Props.Name			= "PointLight Buffer";
 	Props.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	Props.SizeInBytes	= Math::AlignUp<uint32>(NumPointLights * sizeof(PointLightProperties), 256U);
+	Props.SizeInBytes	= Math::AlignUp<UInt32>(NumPointLights * sizeof(PointLightProperties), 256U);
 	Props.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 	Props.Flags			= D3D12_RESOURCE_FLAG_NONE;
 
@@ -1477,7 +1477,7 @@ bool Renderer::InitLightBuffers()
 	{
 		D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = { };
 		CBVDesc.BufferLocation	= PointLightBuffer->GetGPUVirtualAddress();
-		CBVDesc.SizeInBytes		= static_cast<uint32>(Props.SizeInBytes);
+		CBVDesc.SizeInBytes		= static_cast<UInt32>(Props.SizeInBytes);
 		PointLightBuffer->SetConstantBufferView(TSharedPtr(RenderingAPI::Get().CreateConstantBufferView(PointLightBuffer->GetResource(), &CBVDesc)));
 	}
 	else
@@ -1486,14 +1486,14 @@ bool Renderer::InitLightBuffers()
 	}
 
 	Props.Name			= "DirectionalLight Buffer";
-	Props.SizeInBytes	= Math::AlignUp<uint32>(NumDirLights * sizeof(DirectionalLightProperties), 256U);
+	Props.SizeInBytes	= Math::AlignUp<UInt32>(NumDirLights * sizeof(DirectionalLightProperties), 256U);
 
 	DirectionalLightBuffer = RenderingAPI::Get().CreateBuffer(Props);
 	if (DirectionalLightBuffer)
 	{
 		D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = { };
 		CBVDesc.BufferLocation	= DirectionalLightBuffer->GetGPUVirtualAddress();
-		CBVDesc.SizeInBytes		= static_cast<uint32>(Props.SizeInBytes);
+		CBVDesc.SizeInBytes		= static_cast<UInt32>(Props.SizeInBytes);
 		DirectionalLightBuffer->SetConstantBufferView(TSharedPtr(RenderingAPI::Get().CreateConstantBufferView(DirectionalLightBuffer->GetResource(), &CBVDesc)));
 	}
 	else
@@ -2272,8 +2272,8 @@ bool Renderer::InitGBuffer()
 	GBufferProperties.Format		= AlbedoFormat;
 	GBufferProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 	GBufferProperties.ArrayCount	= 1;
-	GBufferProperties.Width			= static_cast<uint16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	GBufferProperties.Height		= static_cast<uint16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
+	GBufferProperties.Width			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
+	GBufferProperties.Height		= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
 	GBufferProperties.InitalState	= D3D12_RESOURCE_STATE_COMMON;
 	GBufferProperties.MemoryType	= EMemoryType::MEMORY_TYPE_DEFAULT;
 	GBufferProperties.MipLevels		= 1;
@@ -2387,8 +2387,8 @@ bool Renderer::InitGBuffer()
 	GBufferProperties.Format				= RenderTargetFormat;
 	GBufferProperties.Flags					= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 	GBufferProperties.ArrayCount			= 1;
-	GBufferProperties.Width					= static_cast<uint16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	GBufferProperties.Height				= static_cast<uint16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
+	GBufferProperties.Width					= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
+	GBufferProperties.Height				= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
 	GBufferProperties.InitalState			= D3D12_RESOURCE_STATE_COMMON;
 	GBufferProperties.MemoryType			= EMemoryType::MEMORY_TYPE_DEFAULT;
 	GBufferProperties.MipLevels				= 1;
@@ -2529,8 +2529,8 @@ bool Renderer::InitRayTracingTexture()
 	TextureProperties OutputProperties = { };
 	OutputProperties.DebugName		= "RayTracing Output";
 	OutputProperties.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	OutputProperties.Width			= static_cast<uint16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	OutputProperties.Height			= static_cast<uint16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
+	OutputProperties.Width			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
+	OutputProperties.Height			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
 	OutputProperties.MipLevels		= 1;
 	OutputProperties.ArrayCount		= 1;
 	OutputProperties.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -2673,7 +2673,7 @@ bool Renderer::InitDebugStates()
 	}
 
 	// Create IndexBuffer
-	uint16 Indices[24] =
+	UInt16 Indices[24] =
 	{
 		0, 1,
 		1, 3,
@@ -2870,7 +2870,7 @@ bool Renderer::InitForwardPass()
 
 	// Init RootSignatures
 	{
-		constexpr uint32 NumPerFrameRanges = 8;
+		constexpr UInt32 NumPerFrameRanges = 8;
 		D3D12_DESCRIPTOR_RANGE PerFrameRanges[NumPerFrameRanges] = {};
 		// Camera Buffer
 		PerFrameRanges[0].BaseShaderRegister				= 0;
@@ -2928,7 +2928,7 @@ bool Renderer::InitForwardPass()
 		PerFrameRanges[7].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		PerFrameRanges[7].OffsetInDescriptorsFromTableStart = 7;
 
-		constexpr uint32 NumPerObjectRanges = 8;
+		constexpr UInt32 NumPerObjectRanges = 8;
 		D3D12_DESCRIPTOR_RANGE PerObjectRanges[NumPerObjectRanges] = {};
 		// Albedo Map
 		PerObjectRanges[0].BaseShaderRegister					= 0;
@@ -3006,7 +3006,7 @@ bool Renderer::InitForwardPass()
 		Parameters[2].DescriptorTable.pDescriptorRanges		= PerObjectRanges;
 		Parameters[2].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
 
-		constexpr uint32 NumStaticSamplers = 5;
+		constexpr UInt32 NumStaticSamplers = 5;
 		D3D12_STATIC_SAMPLER_DESC StaticSamplers[NumStaticSamplers] = { };
 		// Material Sampler
 		StaticSamplers[0].Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
@@ -3149,8 +3149,8 @@ bool Renderer::InitSSAO()
 	TextureProperties TextureProps = { };
 	TextureProps.DebugName		= "SSAO Buffer";
 	TextureProps.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	TextureProps.Width			= static_cast<uint16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	TextureProps.Height			= static_cast<uint16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
+	TextureProps.Width			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
+	TextureProps.Height			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
 	TextureProps.MipLevels		= 1;
 	TextureProps.ArrayCount		= 1;
 	TextureProps.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -3191,7 +3191,7 @@ bool Renderer::InitSSAO()
 	}
 
 	// Init RootSignatures
-	constexpr uint32 NumPerFrameRanges = 8;
+	constexpr UInt32 NumPerFrameRanges = 8;
 	D3D12_DESCRIPTOR_RANGE PerFrameRanges[NumPerFrameRanges] = {};
 	// Normal Buffer
 	PerFrameRanges[0].BaseShaderRegister				= 0;
@@ -3214,7 +3214,7 @@ bool Renderer::InitSSAO()
 	PerFrameRanges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 	PerFrameRanges[2].OffsetInDescriptorsFromTableStart = 2;
 
-	constexpr uint32 NumParameters = 1;
+	constexpr UInt32 NumParameters = 1;
 	D3D12_ROOT_PARAMETER Parameters[NumParameters];
 	// PerFrame DescriptorTable
 	Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -3222,7 +3222,7 @@ bool Renderer::InitSSAO()
 	Parameters[0].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
 	Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
 
-	constexpr uint32 NumStaticSamplers = 1;
+	constexpr UInt32 NumStaticSamplers = 1;
 	D3D12_STATIC_SAMPLER_DESC StaticSamplers[NumStaticSamplers] = { };
 	// GBuffer Sampler
 	StaticSamplers[0].Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
@@ -3270,10 +3270,10 @@ bool Renderer::InitSSAO()
 	}
 
 	// Generate SSAO Kernel
-	std::uniform_real_distribution<float> RandomFloats(0.0f, 1.0f);
+	std::uniform_real_distribution<Float> RandomFloats(0.0f, 1.0f);
 	std::default_random_engine Generator;
 	TArray<XMFLOAT3> SSAOKernel;
-	for (uint32 i = 0; i < 64; ++i)
+	for (UInt32 i = 0; i < 64; ++i)
 	{
 		XMVECTOR XmSample = XMVectorSet(
 			RandomFloats(Generator) * 2.0 - 1.0,
@@ -3281,11 +3281,11 @@ bool Renderer::InitSSAO()
 			RandomFloats(Generator), 
 			0.0f);
 
-		float Scale = RandomFloats(Generator);
+		Float Scale = RandomFloats(Generator);
 		XmSample = XMVectorScale(XmSample, Scale);
 		XmSample = XMVector3Normalize(XmSample);
 
-		Scale = (float)i / 64.0;
+		Scale = (Float)i / 64.0;
 		Scale = Math::Lerp(0.1f, 1.0f, Scale * Scale);
 		XmSample = XMVectorScale(XmSample, Scale);
 
@@ -3295,8 +3295,8 @@ bool Renderer::InitSSAO()
 	}
 
 	// Generate noise
-	TArray<XMFLOAT3> SSAOKernel;
-	for (uint32 i = 0; i < 16; i++)
+	TArray<XMFLOAT3> SSAONoise;
+	for (UInt32 i = 0; i < 16; i++)
 	{
 		XMVECTOR XmNoise = XMVectorSet(
 			RandomFloats(Generator) * 2.0 - 1.0,
@@ -3421,7 +3421,7 @@ bool Renderer::CreateShadowMaps()
 		DeferredResources.EmplaceBack(PointLightShadowMaps);
 	}
 
-	const uint16 Size = Renderer::GetGlobalLightSettings().PointLightShadowSize;
+	const UInt16 Size = Renderer::GetGlobalLightSettings().PointLightShadowSize;
 	ShadowMapProps.DebugName			= "PointLight ShadowMaps";
 	ShadowMapProps.ArrayCount			= 6;
 	ShadowMapProps.Format				= ShadowMapFormat;
@@ -3440,7 +3440,7 @@ bool Renderer::CreateShadowMaps()
 		DSVDesc.ViewDimension				= D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
 		DSVDesc.Texture2DArray.ArraySize	= 1;
 		DSVDesc.Texture2DArray.MipSlice		= 0;
-		for (uint32 I = 0; I < 6; I++)
+		for (UInt32 I = 0; I < 6; I++)
 		{
 			DSVDesc.Texture2DArray.FirstArraySlice = I;
 			PointLightShadowMaps->SetDepthStencilView(TSharedPtr(RenderingAPI::Get().CreateDepthStencilView(PointLightShadowMaps->GetResource(), &DSVDesc)), I);
@@ -3480,7 +3480,7 @@ void Renderer::WriteShadowMapDescriptors()
 
 void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* InCommandList)
 {
-	const uint32 Size = static_cast<uint32>(Dest->GetDesc().Width);
+	const UInt32 Size = static_cast<UInt32>(Dest->GetDesc().Width);
 
 	static TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable;
 	if (!SrvDescriptorTable)
@@ -3541,7 +3541,7 @@ void Renderer::GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D
 
 void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* InCommandList)
 {
-	const uint32 Miplevels = Dest->GetDesc().MipLevels;
+	const UInt32 Miplevels = Dest->GetDesc().MipLevels;
 
 	static TUniquePtr<D3D12DescriptorTable> SrvDescriptorTable;
 	if (!SrvDescriptorTable)
@@ -3555,7 +3555,7 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 	if (!UavDescriptorTable)
 	{
 		UavDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(Miplevels);
-		for (uint32 Mip = 0; Mip < Miplevels; Mip++)
+		for (UInt32 Mip = 0; Mip < Miplevels; Mip++)
 		{
 			UavDescriptorTable->SetUnorderedAccessView(Dest->GetUnorderedAccessView(Mip).Get(), Mip);
 		}
@@ -3595,10 +3595,10 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 
 	InCommandList->SetPipelineState(SpecIrradicanceGenPSO->GetPipeline());
 
-	uint32	Width		= static_cast<uint32>(Dest->GetDesc().Width);
-	float Roughness	= 0.0f;
-	const float RoughnessDelta = 1.0f / (Miplevels - 1);
-	for (uint32 Mip = 0; Mip < Miplevels; Mip++)
+	UInt32	Width		= static_cast<UInt32>(Dest->GetDesc().Width);
+	Float Roughness	= 0.0f;
+	const Float RoughnessDelta = 1.0f / (Miplevels - 1);
+	for (UInt32 Mip = 0; Mip < Miplevels; Mip++)
 	{
 		InCommandList->SetComputeRoot32BitConstants(&Roughness, 1, 0, 0);
 		InCommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableHandle(Mip), 2);
@@ -3606,7 +3606,7 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 		InCommandList->Dispatch(Width, Width, 6);
 		InCommandList->UnorderedAccessBarrier(Dest);
 
-		Width = std::max<uint32>(Width / 2, 1U);
+		Width = std::max<UInt32>(Width / 2, 1U);
 		Roughness += RoughnessDelta;
 	}
 
@@ -3616,7 +3616,7 @@ void Renderer::GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture*
 
 void Renderer::WaitForPendingFrames()
 {
-	//const uint64 CurrentFenceValue = FenceValues[CurrentBackBufferIndex];
+	//const UInt64 CurrentFenceValue = FenceValues[CurrentBackBufferIndex];
 
 	//Queue->SignalFence(Fence.Get(), CurrentFenceValue);
 	//if (Fence->WaitForValue(CurrentFenceValue))

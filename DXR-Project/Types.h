@@ -1,16 +1,22 @@
 #pragma once
 
 // Unsigned
-using uint8		= unsigned char;
-using uint16	= unsigned short;
-using uint32	= unsigned int;
-using uint64	= unsigned long long;
+using UInt8		= unsigned char;
+using UInt16	= unsigned short;
+using UInt32	= unsigned int;
+using UInt64	= unsigned long long;
 
 // Signed
-using int8	= char;
-using int16	= short;
-using int32	= int;
-using int64	= long long;
+using Int8	= char;
+using Int16	= short;
+using Int32	= int;
+using Int64	= long long;
+
+// Floating Point
+using Float		= float;
+using Double	= double;
 
 // Other
-using byte	= uint8;
+using Byte	= UInt8;
+using Char	= char;
+using Void	= void;

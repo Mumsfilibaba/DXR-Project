@@ -8,9 +8,9 @@
 struct DirectionalLightProperties
 {
 	XMFLOAT3	Color			= XMFLOAT3(1.0f, 1.0f, 1.0f);
-	float		ShadowBias		= 0.005f;
+	Float		ShadowBias		= 0.005f;
 	XMFLOAT3	Direction		= XMFLOAT3(0.0f, -1.0f, 0.0f);
-	float		MaxShadowBias	= 0.05f;
+	Float		MaxShadowBias	= 0.05f;
 	XMFLOAT4X4	LightMatrix;
 };
 
@@ -28,13 +28,13 @@ public:
 
 	// Rotation in Radians
 	void SetRotation(const XMFLOAT3& InRotation);
-	void SetRotation(float X, float Y, float Z);
+	void SetRotation(Float X, Float Y, Float Z);
 
 	void SetLookAt(const XMFLOAT3& InInLookAt);
-	void SetLookAt(float X, float Y, float Z);
+	void SetLookAt(Float X, Float Y, Float Z);
 
-	void SetShadowNearPlane(float InShadowNearPlane);
-	void SetShadowFarPlane(float InShadowFarPlane);
+	void SetShadowNearPlane(Float InShadowNearPlane);
+	void SetShadowFarPlane(Float InShadowFarPlane);
 
 	FORCEINLINE const XMFLOAT3& GetDirection() const
 	{

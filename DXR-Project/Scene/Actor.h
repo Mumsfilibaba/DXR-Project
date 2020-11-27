@@ -36,9 +36,9 @@ public:
 	Transform();
 	~Transform() = default;
 
-	void SetPosition(float X, float Y, float Z);
+	void SetPosition(Float X, Float Y, Float Z);
 	void SetPosition(const XMFLOAT3& InPosition);
-	void SetScale(float X, float Y, float Z);
+	void SetScale(Float X, Float Y, Float Z);
 	void SetScale(const XMFLOAT3& InScale);
 
 	FORCEINLINE const XMFLOAT3& GetPosition() const

@@ -29,13 +29,13 @@ bool D3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 	}
 	else
 	{
-		return Initialize(SignatureBlob->GetBufferPointer(), static_cast<uint32>(SignatureBlob->GetBufferSize()));
+		return Initialize(SignatureBlob->GetBufferPointer(), static_cast<UInt32>(SignatureBlob->GetBufferSize()));
 	}
 }
 
 bool D3D12RootSignature::Initialize(IDxcBlob* ShaderBlob)
 {
-	return Initialize(ShaderBlob->GetBufferPointer(), static_cast<uint32>(ShaderBlob->GetBufferSize()));
+	return Initialize(ShaderBlob->GetBufferPointer(), static_cast<UInt32>(ShaderBlob->GetBufferSize()));
 }
 
 void D3D12RootSignature::SetDebugName(const std::string& DebugName)
@@ -44,7 +44,7 @@ void D3D12RootSignature::SetDebugName(const std::string& DebugName)
 	RootSignature->SetName(WideDebugName.c_str());
 }
 
-bool D3D12RootSignature::Initialize(const void* RootSignatureBlob, uint32 BlobSizeInBytes)
+bool D3D12RootSignature::Initialize(const Void* RootSignatureBlob, UInt32 BlobSizeInBytes)
 {
 	HRESULT hResult = Device->GetDevice()->CreateRootSignature(0, RootSignatureBlob, BlobSizeInBytes, IID_PPV_ARGS(&RootSignature));
 	if (SUCCEEDED(hResult))

@@ -30,7 +30,7 @@ public:
 	}
 
 private:
-	bool Initialize(const void* RootSignatureBlob, uint32 BlobSizeInBytes);
+	bool Initialize(const Void* RootSignatureBlob, UInt32 BlobSizeInBytes);
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignature;

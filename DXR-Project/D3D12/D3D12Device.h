@@ -12,7 +12,7 @@ class D3D12OnlineDescriptorHeap;
 class D3D12ComputePipelineState;
 class D3D12RootSignature;
 
-#define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
+#define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(Void*))
 
 /*
 * D3D12Device
@@ -94,7 +94,7 @@ private:
 	bool RayTracingSupported	= false;
 	BOOL AllowTearing			= FALSE;
 
-	uint32 AdapterID = 0;
+	UInt32 AdapterID = 0;
 
 	D3D_FEATURE_LEVEL MinFeatureLevel		= D3D_FEATURE_LEVEL_11_0;
 	D3D_FEATURE_LEVEL ActiveFeatureLevel	= D3D_FEATURE_LEVEL_11_0;

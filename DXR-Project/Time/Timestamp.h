@@ -8,30 +8,30 @@
 class Timestamp
 {
 public:
-	FORCEINLINE Timestamp(uint64 Nanoseconds = 0)
+	FORCEINLINE Timestamp(UInt64 Nanoseconds = 0)
 		: TimestampInNS(Nanoseconds)
 	{
 	}
 
-	FORCEINLINE double AsSeconds() const
+	FORCEINLINE Double AsSeconds() const
 	{
-		constexpr double SECONDS = 1000.0 * 1000.0 * 1000.0;
-		return double(TimestampInNS) / SECONDS;
+		constexpr Double SECONDS = 1000.0 * 1000.0 * 1000.0;
+		return Double(TimestampInNS) / SECONDS;
 	}
 
-	FORCEINLINE double AsMilliSeconds() const
+	FORCEINLINE Double AsMilliSeconds() const
 	{
-		constexpr double MILLISECONDS = 1000.0 * 1000.0;
-		return double(TimestampInNS) / MILLISECONDS;
+		constexpr Double MILLISECONDS = 1000.0 * 1000.0;
+		return Double(TimestampInNS) / MILLISECONDS;
 	}
 
-	FORCEINLINE double AsMicroSeconds() const
+	FORCEINLINE Double AsMicroSeconds() const
 	{
-		constexpr double MICROSECONDS = 1000.0;
-		return double(TimestampInNS) / MICROSECONDS;
+		constexpr Double MICROSECONDS = 1000.0;
+		return Double(TimestampInNS) / MICROSECONDS;
 	}
 
-	FORCEINLINE uint64 AsNanoSeconds() const
+	FORCEINLINE UInt64 AsNanoSeconds() const
 	{
 		return TimestampInNS;
 	}
@@ -70,25 +70,25 @@ public:
 		return *this;
 	}
 
-	FORCEINLINE static Timestamp Seconds(double Seconds)
+	FORCEINLINE static Timestamp Seconds(Double Seconds)
 	{
-		constexpr double SECOND = 1000.0 * 1000.0 * 1000.0;
-		return Timestamp(static_cast<uint64>(Seconds * SECOND));
+		constexpr Double SECOND = 1000.0 * 1000.0 * 1000.0;
+		return Timestamp(static_cast<UInt64>(Seconds * SECOND));
 	}
 
-	FORCEINLINE static Timestamp MilliSeconds(double Milliseconds)
+	FORCEINLINE static Timestamp MilliSeconds(Double Milliseconds)
 	{
-		constexpr double MILLISECOND = 1000.0 * 1000.0;
-		return Timestamp(static_cast<uint64>(Milliseconds * MILLISECOND));
+		constexpr Double MILLISECOND = 1000.0 * 1000.0;
+		return Timestamp(static_cast<UInt64>(Milliseconds * MILLISECOND));
 	}
 
-	FORCEINLINE static Timestamp MicroSeconds(double Microseconds)
+	FORCEINLINE static Timestamp MicroSeconds(Double Microseconds)
 	{
-		constexpr double MICROSECOND = 1000.0;
-		return Timestamp(static_cast<uint64>(Microseconds * MICROSECOND));
+		constexpr Double MICROSECOND = 1000.0;
+		return Timestamp(static_cast<UInt64>(Microseconds * MICROSECOND));
 	}
 
-	FORCEINLINE static Timestamp NanoSeconds(uint64 Nanoseconds)
+	FORCEINLINE static Timestamp NanoSeconds(UInt64 Nanoseconds)
 	{
 		return Timestamp(Nanoseconds);
 	}
@@ -135,7 +135,7 @@ public:
 	}
 
 private:
-	uint64 TimestampInNS = 0;
+	UInt64 TimestampInNS = 0;
 };
 
 #pragma warning(pop)

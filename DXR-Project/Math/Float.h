@@ -13,7 +13,7 @@ struct Float64
 	{
 	}
 
-	FORCEINLINE Float64(double F64)
+	FORCEINLINE Float64(Double F64)
 		: Float(F64)
 	{
 	}
@@ -23,19 +23,19 @@ struct Float64
 	{
 	}
 
-	FORCEINLINE void Set(double F64)
+	FORCEINLINE void SetFloat(Double F64)
 	{
 		Float = F64;
 	}
 
-	FORCEINLINE double Get() const
+	FORCEINLINE Double GetFloat() const
 	{
 		return Float;
 	}
 
-	FORCEINLINE Float64& operator=(double F64)
+	FORCEINLINE Float64& operator=(Double F64)
 	{
-		Set(F64);
+		Float = F64;
 		return *this;
 	}
 
@@ -47,13 +47,13 @@ struct Float64
 
 	union
 	{
-		double	Float;
-		uint64	Encoded;
+		Double	Float;
+		UInt64	Encoded;
 		struct
 		{
-			uint64 Mantissa : 52;
-			uint64 Exponent	: 11;
-			uint64 Sign		: 1;
+			UInt64 Mantissa : 52;
+			UInt64 Exponent	: 11;
+			UInt64 Sign		: 1;
 		};
 	};
 };
@@ -69,7 +69,7 @@ struct Float32
 	{
 	}
 
-	FORCEINLINE Float32(float F32)
+	FORCEINLINE Float32(Float F32)
 		: Float(F32)
 	{
 	}
@@ -79,19 +79,19 @@ struct Float32
 	{
 	}
 
-	FORCEINLINE void Set(float F32)
+	FORCEINLINE void SetFloat(Float F32)
 	{
 		Float = F32;
 	}
 
-	FORCEINLINE float Get() const
+	FORCEINLINE Float GetFloat() const
 	{
 		return Float;
 	}
 
-	FORCEINLINE Float32& operator=(float F32)
+	FORCEINLINE Float32& operator=(Float F32)
 	{
-		Set(F32);
+		Float = F32;
 		return *this;
 	}
 
@@ -103,13 +103,13 @@ struct Float32
 
 	union
 	{
-		float	Float;
-		uint32	Encoded;
+		Float	Float;
+		UInt32	Encoded;
 		struct
 		{
-			uint32 Mantissa	: 23;
-			uint32 Exponent	: 8;
-			uint32 Sign		: 1;
+			UInt32 Mantissa	: 23;
+			UInt32 Exponent	: 8;
+			UInt32 Sign		: 1;
 		};
 	};
 };
@@ -125,10 +125,10 @@ struct Float16
 	{
 	}
 
-	FORCEINLINE Float16(float F32)
+	FORCEINLINE Float16(Float F32)
 		: Encoded(0)
 	{
-		Set(F32);
+		SetFloat(F32);
 	}
 
 	FORCEINLINE Float16(const Float16& Other)
@@ -136,39 +136,28 @@ struct Float16
 	{
 	}
 
-	FORCEINLINE void Set(float F32)
+	FORCEINLINE void SetFloat(Float F32)
 	{
-		Float32 In(F32);
+		const Float32 In(F32);
 		Sign = In.Sign;
 		
-		if (In.Exponent == 0)
-		{
-			// Handle Zero
-			Exponent = 0;
-			Mantissa = 0;
-		}
-		else if (In.Exponent == 0xff)
-		{
-			// Handle infinity or NaN
-			Exponent = 31;
-			Mantissa = (In.Mantissa != 0) ? 1 : 0;
-		}
-		else
-		{
-			// Other
+		// Adjust E for exponent bias difference between 16-bit and 32-bit
+		const UInt32 E = In.Exponent - (127u - 15u);
+		
+		// Round mantissa
+		const UInt32 RoundedMantissa = In.Mantissa + ((In.Mantissa & 0x00001000) << 1);
 
-		}
 	}
 
-	FORCEINLINE float Get() const
+	FORCEINLINE Float GetFloat() const
 	{
 		Float32 Ret;
 		return Ret.Float;
 	}
 
-	FORCEINLINE Float16& operator=(float F32)
+	FORCEINLINE Float16& operator=(Float F32)
 	{
-		Set(F32);
+		SetFloat(F32);
 		return *this;
 	}
 
@@ -180,12 +169,12 @@ struct Float16
 
 	union
 	{
-		uint16 Encoded;
+		UInt16 Encoded;
 		struct
 		{
-			uint16 Mantissa	: 10;
-			uint16 Exponent	: 5;
-			uint16 Sign		: 1;
+			UInt16 Mantissa	: 10;
+			UInt16 Exponent	: 5;
+			UInt16 Sign		: 1;
 		};
 	};
 };

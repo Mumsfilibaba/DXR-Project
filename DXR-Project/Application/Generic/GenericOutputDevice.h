@@ -6,7 +6,7 @@
 * EConsoleColor
 */
 
-enum class EConsoleColor : uint8
+enum class EConsoleColor : UInt8
 {
 	CONSOLE_COLOR_RED		= 0,
 	CONSOLE_COLOR_GREEN		= 1,

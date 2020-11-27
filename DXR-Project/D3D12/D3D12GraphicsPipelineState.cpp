@@ -88,13 +88,13 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	InputLayoutDesc.NumElements					= Properties.NumInputElements;
 
 	D3D12_SHADER_BYTECODE& VertexShader = Pipeline.VertexShader;
-	VertexShader.pShaderBytecode	= reinterpret_cast<void*>(Properties.VSBlob->GetBufferPointer());
+	VertexShader.pShaderBytecode	= reinterpret_cast<Void*>(Properties.VSBlob->GetBufferPointer());
 	VertexShader.BytecodeLength		= Properties.VSBlob->GetBufferSize();
 
 	D3D12_SHADER_BYTECODE& PixelShader = Pipeline.PixelShader;
 	if (Properties.PSBlob)
 	{
-		PixelShader.pShaderBytecode	= reinterpret_cast<void*>(Properties.PSBlob->GetBufferPointer());
+		PixelShader.pShaderBytecode	= reinterpret_cast<Void*>(Properties.PSBlob->GetBufferPointer());
 		PixelShader.BytecodeLength	= Properties.PSBlob->GetBufferSize();
 	}
 	else
@@ -104,7 +104,7 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	}
 
 	D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = Pipeline.RenderTargetInfo;
-	for (uint32 Index = 0; Index < Properties.NumRenderTargets; Index++) 
+	for (UInt32 Index = 0; Index < Properties.NumRenderTargets; Index++) 
 	{
 		RenderTargetInfo.RTFormats[Index] = Properties.RTFormats[Index];
 	}

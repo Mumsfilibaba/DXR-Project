@@ -11,7 +11,7 @@
 * ERenderingAPI
 */
 
-enum class ERenderingAPI : uint32
+enum class ERenderingAPI : UInt32
 {
 	RENDERING_API_UNKNOWN	= 0,
 	RENDERING_API_D3D12		= 1,
@@ -34,7 +34,7 @@ public:
 	virtual class D3D12Buffer* CreateBuffer(const struct BufferProperties& Properties) const = 0;
 	virtual class D3D12RayTracingScene* CreateRayTracingScene(class D3D12RayTracingPipelineState* PipelineState) const = 0;
 	virtual class D3D12RayTracingGeometry* CreateRayTracingGeometry() const = 0;
-	virtual class D3D12DescriptorTable* CreateDescriptorTable(uint32 DescriptorCount) const = 0;
+	virtual class D3D12DescriptorTable* CreateDescriptorTable(UInt32 DescriptorCount) const = 0;
 
 	virtual class D3D12ShaderResourceView* CreateShaderResourceView(ID3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* InDesc) const = 0;
 	virtual class D3D12UnorderedAccessView* CreateUnorderedAccessView(ID3D12Resource* InCounterResource, ID3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* InDesc) const = 0;
@@ -42,7 +42,7 @@ public:
 	virtual class D3D12DepthStencilView* CreateDepthStencilView(ID3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* InDesc) const = 0;
 	virtual class D3D12ConstantBufferView* CreateConstantBufferView(ID3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC* InDesc) const = 0;
 
-	virtual class D3D12Fence* CreateFence(uint64 InitalValue) const = 0;
+	virtual class D3D12Fence* CreateFence(UInt64 InitalValue) const = 0;
 	virtual class D3D12CommandAllocator* CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE ListType) const = 0;
 	virtual class D3D12CommandList* CreateCommandList(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline) const = 0;
 	virtual class D3D12CommandQueue* CreateCommandQueue() const = 0;

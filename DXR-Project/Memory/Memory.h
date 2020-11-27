@@ -6,7 +6,7 @@
 * EMemoryDebugFlags
 */
 
-typedef uint32 MemoryDebugFlags;
+typedef UInt32 MemoryDebugFlags;
 
 enum EMemoryDebugFlag : MemoryDebugFlags
 {
@@ -21,13 +21,13 @@ enum EMemoryDebugFlag : MemoryDebugFlags
 class Memory
 {
 public:
-	static void*	Malloc(uint64 Size);
-	static void		Free(void* Ptr);
+	static Void*	Malloc(UInt64 Size);
+	static void		Free(Void* Ptr);
 
-	static void* Memset(void* Destination, uint8 Value, uint64 Size);
-	static void* Memzero(void* Destination, uint64 Size);
-	static void* Memcpy(void* Destination, const void* Source, uint64 Size);
-	static void* Memmove(void* Destination, const void* Source, uint64 Size);
+	static Void* Memset(Void* Destination, UInt8 Value, UInt64 Size);
+	static Void* Memzero(Void* Destination, UInt64 Size);
+	static Void* Memcpy(Void* Destination, const Void* Source, UInt64 Size);
+	static Void* Memmove(Void* Destination, const Void* Source, UInt64 Size);
 
 	static void SetDebugFlags(MemoryDebugFlags Flags);
 };

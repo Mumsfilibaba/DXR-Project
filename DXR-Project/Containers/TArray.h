@@ -11,7 +11,7 @@ template<typename T>
 class TArray
 {
 public:
-	typedef uint32 SizeType;
+	typedef UInt32 SizeType;
 
 	/*
 	* TIterator
@@ -51,7 +51,7 @@ public:
 			return *this;
 		}
 
-		FORCEINLINE TIterator operator++(int32)
+		FORCEINLINE TIterator operator++(Int32)
 		{
 			TIterator Temp = *this;
 			Ptr++;
@@ -64,20 +64,20 @@ public:
 			return *this;
 		}
 
-		FORCEINLINE TIterator operator--(int32)
+		FORCEINLINE TIterator operator--(Int32)
 		{
 			TIterator Temp = *this;
 			Ptr--;
 			return Temp;
 		}
 
-		FORCEINLINE TIterator operator+(int32 Offset) const
+		FORCEINLINE TIterator operator+(Int32 Offset) const
 		{
 			TIterator Temp = *this;
 			return Temp += Offset;
 		}
 
-		FORCEINLINE TIterator operator-(int32 Offset) const
+		FORCEINLINE TIterator operator-(Int32 Offset) const
 		{
 			TIterator Temp = *this;
 			return Temp -= Offset;
@@ -88,13 +88,13 @@ public:
 			return static_cast<difference_type>(Ptr - Other.Ptr);
 		}
 
-		FORCEINLINE TIterator& operator+=(int32 Offset)
+		FORCEINLINE TIterator& operator+=(Int32 Offset)
 		{
 			Ptr += Offset;
 			return *this;
 		}
 
-		FORCEINLINE TIterator& operator-=(int32 Offset)
+		FORCEINLINE TIterator& operator-=(Int32 Offset)
 		{
 			Ptr -= Offset;
 			return *this;
@@ -174,7 +174,7 @@ public:
 			return *this;
 		}
 
-		FORCEINLINE TReverseIterator operator++(int32)
+		FORCEINLINE TReverseIterator operator++(Int32)
 		{
 			TReverseIterator Temp = *this;
 			Ptr--;
@@ -187,32 +187,32 @@ public:
 			return *this;
 		}
 
-		FORCEINLINE TReverseIterator operator--(int32)
+		FORCEINLINE TReverseIterator operator--(Int32)
 		{
 			TReverseIterator Temp = *this;
 			Ptr++;
 			return Temp;
 		}
 
-		FORCEINLINE TReverseIterator operator+(int32 Offset) const
+		FORCEINLINE TReverseIterator operator+(Int32 Offset) const
 		{
 			TReverseIterator Temp = *this;
 			return Temp += Offset;
 		}
 
-		FORCEINLINE TReverseIterator operator-(int32 Offset) const
+		FORCEINLINE TReverseIterator operator-(Int32 Offset) const
 		{
 			TReverseIterator Temp = *this;
 			return Temp -= Offset;
 		}
 
-		FORCEINLINE TReverseIterator& operator+=(int32 Offset)
+		FORCEINLINE TReverseIterator& operator+=(Int32 Offset)
 		{
 			Ptr -= Offset;
 			return *this;
 		}
 
-		FORCEINLINE TReverseIterator& operator-=(int32 Offset)
+		FORCEINLINE TReverseIterator& operator-=(Int32 Offset)
 		{
 			Ptr += Offset;
 			return *this;
@@ -408,7 +408,7 @@ public:
 		}
 
 		T* DataEnd = ArrayPtr + ArraySize;
-		new(reinterpret_cast<void*>(DataEnd)) T(Forward<TArgs>(Args)...);
+		new(reinterpret_cast<Void*>(DataEnd)) T(Forward<TArgs>(Args)...);
 		ArraySize++;
 		return (*DataEnd);
 	}
@@ -452,7 +452,7 @@ public:
 			InternalDestruct(DataBegin);
 		}
 
-		new (reinterpret_cast<void*>(DataBegin)) T(Forward<TArgs>(Args)...);
+		new (reinterpret_cast<Void*>(DataBegin)) T(Forward<TArgs>(Args)...);
 		ArraySize++;
 		return Iterator(DataBegin);
 	}
@@ -1029,7 +1029,7 @@ private:
 		{
 			while (InBegin != InEnd)
 			{
-				new(reinterpret_cast<void*>(Dest)) T(*InBegin);
+				new(reinterpret_cast<Void*>(Dest)) T(*InBegin);
 				InBegin++;
 				Dest++;
 			}
@@ -1041,7 +1041,7 @@ private:
 		T* ItEnd = Dest + Size;
 		while (Dest != ItEnd)
 		{
-			new(reinterpret_cast<void*>(Dest)) T(Value);
+			new(reinterpret_cast<Void*>(Dest)) T(Value);
 			Dest++;
 		}
 	}
@@ -1059,7 +1059,7 @@ private:
 		{
 			while (InBegin != InEnd)
 			{
-				new(reinterpret_cast<void*>(Dest)) T(::Move(*InBegin));
+				new(reinterpret_cast<Void*>(Dest)) T(::Move(*InBegin));
 				InBegin++;
 				Dest++;
 			}
@@ -1166,7 +1166,7 @@ private:
 		{
 			while (InBegin != InEnd)
 			{
-				new(reinterpret_cast<void*>(InBegin)) T();
+				new(reinterpret_cast<Void*>(InBegin)) T();
 				InBegin++;
 			}
 		}

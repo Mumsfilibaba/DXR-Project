@@ -252,7 +252,7 @@ public:
 		return GetAddressOf();
 	}
 
-	FORCEINLINE T& operator[](uint32 Index) noexcept
+	FORCEINLINE T& operator[](UInt32 Index) noexcept
 	{
 		VALIDATE(Ptr != nullptr);
 		return Ptr[Index];
@@ -341,7 +341,7 @@ std::enable_if_t<!std::is_array_v<T>, TUniquePtr<T>> MakeUnique(TArgs&&... Args)
 }
 
 template<typename T>
-std::enable_if_t<std::is_array_v<T>, TUniquePtr<T>> MakeUnique(uint32 Size) noexcept
+std::enable_if_t<std::is_array_v<T>, TUniquePtr<T>> MakeUnique(UInt32 Size) noexcept
 {
 	using TType = TRemoveExtent<T>;
 

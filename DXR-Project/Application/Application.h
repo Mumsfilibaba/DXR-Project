@@ -31,8 +31,8 @@ public:
 	TSharedRef<GenericWindow> GetActiveWindow() const;
 	TSharedRef<GenericWindow> GetCapture() const;
 
-	void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, int32 x, int32 y);
-	void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, int32& OutX, int32& OutY) const;
+	void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 x, Int32 y);
+	void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const;
 	
 	void SetPlatformApplication(TSharedPtr<GenericApplication> InPlatformApplication);
 
@@ -46,14 +46,14 @@ public:
 
 public:
 	// EventHandler Interface
-	virtual void OnWindowResized(TSharedRef<GenericWindow> InWindow, uint16 Width, uint16 Height) override;
+	virtual void OnWindowResized(TSharedRef<GenericWindow> InWindow, UInt16 Width, UInt16 Height) override;
 	virtual void OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState) override;
 	virtual void OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState) override;
-	virtual void OnMouseMove(int32 x, int32 y) override;
+	virtual void OnMouseMove(Int32 x, Int32 y) override;
 	virtual void OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState) override;
 	virtual void OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState) override;
-	virtual void OnMouseScrolled(float HorizontalDelta, float VerticalDelta) override;
-	virtual void OnCharacterInput(uint32 Character) override;
+	virtual void OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta) override;
+	virtual void OnCharacterInput(UInt32 Character) override;
 
 private:
 	Application();

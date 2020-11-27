@@ -15,7 +15,7 @@
 struct ModifierKeyState
 {
 public:
-	inline ModifierKeyState(uint32 InModifierMask)
+	inline ModifierKeyState(UInt32 InModifierMask)
 		: ModifierMask(InModifierMask)
 	{
 	}
@@ -51,7 +51,7 @@ public:
 	}
 
 private:
-	uint32 ModifierMask = 0;
+	UInt32 ModifierMask = 0;
 };
 
 /*
@@ -89,8 +89,8 @@ public:
 		return TSharedRef<GenericWindow>();
 	}
 
-	virtual void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, int32 X, int32 Y) = 0;
-	virtual void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, int32& OutX, int32& OutY) const = 0;
+	virtual void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 X, Int32 Y) = 0;
+	virtual void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const = 0;
 
 	FORCEINLINE void SetEventHandler(TSharedPtr<ApplicationEventHandler> InEventHandler)
 	{

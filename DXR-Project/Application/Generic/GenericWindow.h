@@ -7,7 +7,7 @@
 /*
 * EWindowStyleFlag
 */
-enum EWindowStyleFlag : uint32
+enum EWindowStyleFlag : UInt32
 {
 	WINDOW_STYLE_FLAG_NONE			= 0x00,
 	WINDOW_STYLE_FLAG_TITLED		= FLAG(1),
@@ -31,7 +31,7 @@ public:
 	{
 	}
 
-	inline WindowInitializer(const std::string& InTitle, uint32 InWidth, uint32 InHeight, uint32 InStyle)
+	inline WindowInitializer(const std::string& InTitle, UInt32 InWidth, UInt32 InHeight, UInt32 InStyle)
 		: Title(InTitle)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -65,9 +65,9 @@ public:
 	}
 
 	std::string Title;
-	uint32 Width;
-	uint32 Height;
-	uint32 Style;
+	UInt32 Width;
+	UInt32 Height;
+	UInt32 Style;
 };
 
 /*
@@ -82,19 +82,19 @@ struct WindowShape
 	{
 	}
 
-	inline WindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
+	inline WindowShape(UInt32 InWidth, UInt32 InHeight, Int32 x, Int32 y)
 		: Width(InWidth)
 		, Height(InHeight)
 		, Position({ x, y })
 	{
 	}
 
-	uint32 Width;
-	uint32 Height;
+	UInt32 Width;
+	UInt32 Height;
 	struct
 	{
-		int32 x;
-		int32 y;
+		Int32 x;
+		Int32 y;
 	} Position;
 };
 
@@ -124,10 +124,10 @@ public:
 	virtual void SetWindowShape(const WindowShape& Shape, bool Move)	= 0;
 	virtual void GetWindowShape(WindowShape& OutWindowShape) const		= 0;
 
-	virtual uint32 GetWidth()	const = 0;
-	virtual uint32 GetHeight()	const = 0;
+	virtual UInt32 GetWidth()	const = 0;
+	virtual UInt32 GetHeight()	const = 0;
 
-	virtual void* GetNativeHandle() const
+	virtual Void* GetNativeHandle() const
 	{
 		return nullptr;
 	}

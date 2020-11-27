@@ -36,6 +36,6 @@ public:
 private:
 	Timestamp	TotalTime	= Timestamp(0);
 	Timestamp	DeltaTime	= Timestamp(0);
-	uint64		LastTime	= 0;
-	uint64		Frequency	= 0;
+	UInt64		LastTime	= 0;
+	UInt64		Frequency	= 0;
 };

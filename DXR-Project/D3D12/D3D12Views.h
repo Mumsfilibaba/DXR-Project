@@ -37,7 +37,7 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
 	
 	D3D12OfflineDescriptorHeap* Heap				= nullptr;
-	uint32						OfflineHeapIndex	= 0;
+	UInt32						OfflineHeapIndex	= 0;
 	D3D12_CPU_DESCRIPTOR_HANDLE	OfflineHandle;
 };
 

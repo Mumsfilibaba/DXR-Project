@@ -9,7 +9,7 @@ class Math
 {
 public:
 	template <typename T>
-	FORCEINLINE static T DivideByMultiple(T Value, uint32 Alignment)
+	FORCEINLINE static T DivideByMultiple(T Value, UInt32 Alignment)
 	{
 		return static_cast<T>((Value + Alignment - 1) / Alignment);
 	}
@@ -32,7 +32,7 @@ public:
 		return ((value) & (~mask));
 	}
 
-	FORCEINLINE static float Lerp(float A, float B, float F)
+	FORCEINLINE static Float Lerp(Float A, Float B, Float F)
 	{
 		return (-F * B) + ((A * F) + B);
 	}

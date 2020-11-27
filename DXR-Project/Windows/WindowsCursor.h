@@ -17,9 +17,9 @@ public:
 
 	virtual bool Initialize(const CursorInitializer& InInitializer) override final;
 
-	virtual void* GetNativeHandle() const override final
+	virtual Void* GetNativeHandle() const override final
 	{
-		return reinterpret_cast<void*>(hCursor);
+		return reinterpret_cast<Void*>(hCursor);
 	}
 
 	FORCEINLINE HCURSOR GetCursor() const

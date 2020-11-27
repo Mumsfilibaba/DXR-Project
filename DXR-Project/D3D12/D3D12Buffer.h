@@ -10,7 +10,7 @@ struct BufferProperties
 {
 	std::string				Name;
 	D3D12_RESOURCE_FLAGS	Flags;
-	uint32					SizeInBytes;
+	UInt32					SizeInBytes;
 	D3D12_RESOURCE_STATES	InitalState;
 	EMemoryType				MemoryType;
 };
@@ -27,7 +27,7 @@ public:
 
 	bool Initialize(const BufferProperties& Properties);
 
-	void* Map();
+	Void* Map();
 	void Unmap();
 
 	FORCEINLINE void SetConstantBufferView(TSharedPtr<D3D12ConstantBufferView> InConstantBufferView)
@@ -40,7 +40,7 @@ public:
 		return ConstantBufferView;
 	}
 
-	FORCEINLINE uint32 GetSizeInBytes() const
+	FORCEINLINE UInt32 GetSizeInBytes() const
 	{
 		return SizeInBytes;
 	}
@@ -48,5 +48,5 @@ public:
 private:
 	TSharedPtr<D3D12ConstantBufferView> ConstantBufferView;
 
-	uint32 SizeInBytes = 0;
+	UInt32 SizeInBytes = 0;
 };

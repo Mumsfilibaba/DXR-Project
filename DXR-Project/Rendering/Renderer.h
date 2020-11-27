@@ -39,9 +39,9 @@ class D3D12RayTracingPipelineState;
 
 struct LightSettings
 {
-	uint16 ShadowMapWidth		= 4096;
-	uint16 ShadowMapHeight		= 4096;
-	uint16 PointLightShadowSize	= 1024;
+	UInt16 ShadowMapWidth		= 4096;
+	UInt16 ShadowMapHeight		= 4096;
+	UInt16 PointLightShadowSize	= 1024;
 };
 
 /*
@@ -56,7 +56,7 @@ public:
 	
 	void Tick(const Scene& CurrentScene);
 	
-	void OnResize(int32 Width, int32 Height);
+	void OnResize(Int32 Width, Int32 Height);
 
 	void SetPrePassEnable(bool Enabled);
 	void SetVerticalSyncEnable(bool Enabled);
@@ -206,8 +206,8 @@ private:
 	TArray<MeshDrawCommand> DeferredVisibleCommands;
 	TArray<MeshDrawCommand> ForwardVisibleCommands;
 
-	TArray<uint64> FenceValues;
-	uint32 CurrentBackBufferIndex = 0;
+	TArray<UInt64> FenceValues;
+	UInt32 CurrentBackBufferIndex = 0;
 
 	bool PrePassEnabled		= true;
 	bool DrawAABBs			= false;

@@ -90,25 +90,25 @@ void Material::SetAlbedo(const XMFLOAT3& Albedo)
 	MaterialBufferIsDirty = true;
 }
 
-void Material::SetAlbedo(float R, float G, float B)
+void Material::SetAlbedo(Float R, Float G, Float B)
 {
 	Properties.Albedo = XMFLOAT3(R, G, B);
 	MaterialBufferIsDirty = true;
 }
 
-void Material::SetMetallic(float Metallic)
+void Material::SetMetallic(Float Metallic)
 {
 	Properties.Metallic = Metallic;
 	MaterialBufferIsDirty = true;
 }
 
-void Material::SetRoughness(float Roughness)
+void Material::SetRoughness(Float Roughness)
 {
 	Properties.Roughness = Roughness;
 	MaterialBufferIsDirty = true;
 }
 
-void Material::SetAmbientOcclusion(float AO)
+void Material::SetAmbientOcclusion(Float AO)
 {
 	Properties.AO = AO;
 	MaterialBufferIsDirty = true;
