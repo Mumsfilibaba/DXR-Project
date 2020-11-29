@@ -13,8 +13,8 @@ struct Float64
 	{
 	}
 
-	FORCEINLINE Float64(Double F64)
-		: Float(F64)
+	FORCEINLINE Float64(Double Fp64)
+		: Float(Fp64)
 	{
 	}
 
@@ -23,9 +23,9 @@ struct Float64
 	{
 	}
 
-	FORCEINLINE void SetFloat(Double F64)
+	FORCEINLINE void SetFloat(Double Fp64)
 	{
-		Float = F64;
+		Float = Fp64;
 	}
 
 	FORCEINLINE Double GetFloat() const
@@ -33,9 +33,9 @@ struct Float64
 		return Float;
 	}
 
-	FORCEINLINE Float64& operator=(Double F64)
+	FORCEINLINE Float64& operator=(Double Fp64)
 	{
-		Float = F64;
+		Float = Fp64;
 		return *this;
 	}
 
@@ -69,8 +69,8 @@ struct Float32
 	{
 	}
 
-	FORCEINLINE Float32(Float F32)
-		: Float(F32)
+	FORCEINLINE Float32(Float Fp32)
+		: Float(Fp32)
 	{
 	}
 
@@ -79,9 +79,9 @@ struct Float32
 	{
 	}
 
-	FORCEINLINE void SetFloat(Float F32)
+	FORCEINLINE void SetFloat(Float Fp32)
 	{
-		Float = F32;
+		Float = Fp32;
 	}
 
 	FORCEINLINE Float GetFloat() const
@@ -89,9 +89,9 @@ struct Float32
 		return Float;
 	}
 
-	FORCEINLINE Float32& operator=(Float F32)
+	FORCEINLINE Float32& operator=(Float Fp32)
 	{
-		Float = F32;
+		Float = Fp32;
 		return *this;
 	}
 
@@ -125,10 +125,10 @@ struct Float16
 	{
 	}
 
-	FORCEINLINE Float16(Float F32)
+	FORCEINLINE Float16(Float Fp32)
 		: Encoded(0)
 	{
-		SetFloat(F32);
+		SetFloat(Fp32);
 	}
 
 	FORCEINLINE Float16(const Float16& Other)
@@ -136,22 +136,113 @@ struct Float16
 	{
 	}
 
-	FORCEINLINE void SetFloat(Float F32)
+	FORCEINLINE void SetFloat(Float Fp32)
 	{
-		const Float32 In(F32);
-		Sign = In.Sign;
-		
-		// Adjust E for exponent bias difference between 16-bit and 32-bit
-		const UInt32 E = In.Exponent - (127u - 15u);
-		
-		// Round mantissa
-		const UInt32 RoundedMantissa = In.Mantissa + ((In.Mantissa & 0x00001000) << 1);
+		// Constant masks
+		constexpr UInt32 FP32_HIDDEN_BIT	= 0x800000U;
+		constexpr UInt16 FP16_MAX_EXPONENT	= 0x1f;
+		constexpr UInt32 MAX_EXPONENT		= FP16_MAX_EXPONENT + 127 - 15;
+		constexpr UInt32 DENORM_EXPONENT	= (127 - 15);
+		constexpr UInt32 MIN_EXPONENT		= DENORM_EXPONENT - 10;
 
+		// Convert
+		const Float32 In(Fp32);
+		Sign = In.Sign;
+
+		// This value is to large to be represented with Fp16 (Alt. Infinity or NaN)
+		if (In.Exponent >= MAX_EXPONENT)
+		{
+			// Set mantissa to NaN if these bit are set otherwise Infinity
+			constexpr UInt32 SIGN_EXLUDE_MASK = 0x7fffffff;
+			const UInt32 InEncoded = In.Encoded & SIGN_EXLUDE_MASK;
+			Mantissa = (InEncoded > 0x7F800000) ? (0x200 | (In.Mantissa & 0x3ffu)) : 0u;
+			Exponent = FP16_MAX_EXPONENT;
+		}
+		else if (In.Exponent <= MIN_EXPONENT)
+		{
+			// These values are too small to be represented by Fp16, these values reults in +/- zero
+			Exponent = 0;
+			Mantissa = 0;
+		}
+		else if (In.Exponent <= DENORM_EXPONENT)
+		{
+			// Calculate new mantissa with hidden bit
+			const UInt32 NewMantissa	= FP32_HIDDEN_BIT | In.Mantissa;
+			const UInt32 Shift			= 125u - In.Exponent; // Calculate how much to shift to go from normalized to demormalized
+			
+			Exponent = 0;
+			Mantissa = NewMantissa >> (Shift + 1);
+
+			// Check for rounding and add one
+			if ((NewMantissa & ((1u << Shift) - 1)))
+			{
+				Encoded++;
+			}
+		}
+		else
+		{
+			// All other values
+			const Int32 NewExponent = Int32(In.Exponent) - 127 + 15; // Unbias and bias the exponents
+			Exponent = UInt16(NewExponent);
+			
+			const Int32 NewMantissa = Int32(In.Mantissa) >> 13; // Bit-Shift diff in number of mantissa bits
+			Mantissa = UInt16(NewMantissa);
+		}
+	}
+
+	FORCEINLINE void SetFloatFast(Float Fp32)
+	{
+		/*
+		* Does not check bounds, should only be used for values that certainly will take this
+		* path in normal SetFloat
+		*/
+
+		Float32 In(Fp32);
+		Exponent	= UInt16(Int32(In.Exponent) - 127 + 15);	// Unbias and bias the exponents
+		Mantissa	= UInt16(In.Mantissa >> 13);				// Bit-Shift diff in number of mantissa bits
+		Sign		= In.Sign;
 	}
 
 	FORCEINLINE Float GetFloat() const
 	{
+		constexpr UInt32 FP32_MAX_EXPONENT = 0xff;
+		constexpr UInt16 FP16_MAX_EXPONENT = 0x1f;
+
 		Float32 Ret;
+		Ret.Sign = Sign;
+
+		// Infinity/NaN
+		if (Exponent == FP16_MAX_EXPONENT)
+		{
+			Ret.Exponent = FP32_MAX_EXPONENT;
+			Ret.Mantissa = (Mantissa != 0) ? (Mantissa << 13) : 0u;
+		}
+		else if (Exponent == 0)
+		{
+			if (Mantissa == 0)
+			{
+				// Zero
+				Ret.Exponent = 0;
+				Ret.Mantissa = 0;
+			}
+			else
+			{
+				// Denormalized
+				const UInt32 Shift = 10 - UInt32(log2((Float)Mantissa));
+				Ret.Exponent = 127 - (15 - 1) - Shift;
+				Ret.Mantissa = Mantissa << (Shift + 13);
+			}
+		}
+		else
+		{
+			// All other values
+			const Int32 NewExponent = Int32(Exponent) - 15 + 127; // Unbias and bias the exponents
+			Ret.Exponent = UInt16(NewExponent);
+
+			const Int32 NewMantissa = Int32(Mantissa) << 13; // Bit-Shift diff in number of mantissa bits
+			Ret.Mantissa = UInt16(NewMantissa);
+		}
+
 		return Ret.Float;
 	}
 

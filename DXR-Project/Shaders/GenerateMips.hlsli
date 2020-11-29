@@ -1,3 +1,5 @@
+#include "PBRCommon.hlsli"
+
 /*
 * Based on GenerateMipsCS.hlsli by Microsoft
 * https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/GenerateMipsCS.hlsli
@@ -122,7 +124,7 @@ static const float3x3 RotateUV[6] =
 
 [RootSignature(RootSig)]
 [numthreads(BLOCK_SIZE, BLOCK_SIZE, 1)]
-void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
+void Main(ComputeShaderInput Input)
 {
 	// One bilinear sample is insufficient when scaling down by more than 2x.
 	// You will slightly undersample in the case where the source dimension
@@ -136,7 +138,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 	float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
 #else
 	#if POWER_OF_TWO
-		float2 TexCoord = TexelSize * (DispatchThreadID.xy + 0.5f);
+		float2 TexCoord = TexelSize * (Input.DispatchThreadID.xy + 0.5f);
 		float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
 	#else
 		#error "Not supported yet"
@@ -144,9 +146,9 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 #endif
 
 #if CUBE_MAP
-	OutMip1[DispatchThreadID] = PackColor(Src1);
+	OutMip1[Input.DispatchThreadID] = PackColor(Src1);
 #else
-	OutMip1[DispatchThreadID.xy] = PackColor(Src1);
+	OutMip1[Input.DispatchThreadID.xy] = PackColor(Src1);
 #endif
 
 	// A scalar (constant) branch can exit all threads coherently.
@@ -157,7 +159,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 
 	// Without lane swizzle operations, the only way to share data with other
 	// threads is through LDS.
-	StoreColor(GroupIndex, Src1);
+	StoreColor(Input.GroupIndex, Src1);
 
 	// This guarantees all LDS writes are complete and that all threads have
 	// executed all instructions so far (and therefore have issued their LDS
@@ -166,19 +168,19 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 
 	// With low three bits for X and high three bits for Y, this bit mask
 	// (binary: 001001) checks that X and Y are even.
-	if ((GroupIndex & 0x9) == 0)
+	if ((Input.GroupIndex & 0x9) == 0)
 	{
-		float4 Src2 = LoadColor(GroupIndex + 0x01);
-		float4 Src3 = LoadColor(GroupIndex + 0x08);
-		float4 Src4 = LoadColor(GroupIndex + 0x09);
+		float4 Src2 = LoadColor(Input.GroupIndex + 0x01);
+		float4 Src3 = LoadColor(Input.GroupIndex + 0x08);
+		float4 Src4 = LoadColor(Input.GroupIndex + 0x09);
 		Src1 = 0.25f * (Src1 + Src2 + Src3 + Src4);
 
 #if CUBE_MAP
-		OutMip2[uint3(DispatchThreadID.xy / 2, DispatchThreadID.z)] = PackColor(Src1);
+		OutMip2[uint3(Input.DispatchThreadID.xy / 2, Input.DispatchThreadID.z)] = PackColor(Src1);
 #else
-		OutMip2[DispatchThreadID.xy / 2] = PackColor(Src1);
+		OutMip2[Input.DispatchThreadID.xy / 2] = PackColor(Src1);
 #endif
-		StoreColor(GroupIndex, Src1);
+		StoreColor(Input.GroupIndex, Src1);
 	}
 
 	if (NumMipLevels == 2)
@@ -189,19 +191,19 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 	GroupMemoryBarrierWithGroupSync();
 
 	// This bit mask (binary: 011011) checks that X and Y are multiples of four.
-	if ((GroupIndex & 0x1B) == 0)
+	if ((Input.GroupIndex & 0x1B) == 0)
 	{
-		float4 Src2 = LoadColor(GroupIndex + 0x02);
-		float4 Src3 = LoadColor(GroupIndex + 0x10);
-		float4 Src4 = LoadColor(GroupIndex + 0x12);
+		float4 Src2 = LoadColor(Input.GroupIndex + 0x02);
+		float4 Src3 = LoadColor(Input.GroupIndex + 0x10);
+		float4 Src4 = LoadColor(Input.GroupIndex + 0x12);
 		Src1 = 0.25f * (Src1 + Src2 + Src3 + Src4);
 
 #if CUBE_MAP
 		OutMip3[uint3(DispatchThreadID.xy / 4, DispatchThreadID.z)] = PackColor(Src1);
 #else
-		OutMip3[DispatchThreadID.xy / 4] = PackColor(Src1);
+		OutMip3[Input.DispatchThreadID.xy / 4] = PackColor(Src1);
 #endif
-		StoreColor(GroupIndex, Src1);
+		StoreColor(Input.GroupIndex, Src1);
 	}
 
 	if (NumMipLevels == 3)
@@ -213,17 +215,17 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 
 	// This bit mask would be 111111 (X & Y multiples of 8), but only one
 	// thread fits that criteria.
-	if (GroupIndex == 0)
+	if (Input.GroupIndex == 0)
 	{
-		float4 Src2 = LoadColor(GroupIndex + 0x04);
-		float4 Src3 = LoadColor(GroupIndex + 0x20);
-		float4 Src4 = LoadColor(GroupIndex + 0x24);
+		float4 Src2 = LoadColor(Input.GroupIndex + 0x04);
+		float4 Src3 = LoadColor(Input.GroupIndex + 0x20);
+		float4 Src4 = LoadColor(Input.GroupIndex + 0x24);
 		Src1 = 0.25f * (Src1 + Src2 + Src3 + Src4);
 
 #if CUBE_MAP
-		OutMip4[uint3(DispatchThreadID.xy / 8, DispatchThreadID.z)] = PackColor(Src1);
+		OutMip4[uint3(Input.DispatchThreadID.xy / 8, Input.DispatchThreadID.z)] = PackColor(Src1);
 #else
-		OutMip4[DispatchThreadID.xy / 8] = PackColor(Src1);
+		OutMip4[Input.DispatchThreadID.xy / 8] = PackColor(Src1);
 #endif
 	}
 }

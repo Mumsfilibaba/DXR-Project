@@ -3146,41 +3146,43 @@ bool Renderer::InitSSAO()
 	using namespace Microsoft::WRL;
 
 	// Init texture
-	TextureProperties TextureProps = { };
-	TextureProps.DebugName		= "SSAO Buffer";
-	TextureProps.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	TextureProps.Width			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	TextureProps.Height			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
-	TextureProps.MipLevels		= 1;
-	TextureProps.ArrayCount		= 1;
-	TextureProps.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
-	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
-	TextureProps.SampleCount	= 1;
-
-	SSAOBuffer = RenderingAPI::Get().CreateTexture(TextureProps);
-	if (!SSAOBuffer)
 	{
-		return false;
+		TextureProperties TextureProps = { };
+		TextureProps.DebugName		= "SSAO Buffer";
+		TextureProps.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		TextureProps.Width			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
+		TextureProps.Height			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
+		TextureProps.MipLevels		= 1;
+		TextureProps.ArrayCount		= 1;
+		TextureProps.Format			= DXGI_FORMAT_R16_FLOAT;
+		TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
+		TextureProps.SampleCount	= 1;
+
+		SSAOBuffer = RenderingAPI::Get().CreateTexture(TextureProps);
+		if (!SSAOBuffer)
+		{
+			return false;
+		}
+
+		D3D12_UNORDERED_ACCESS_VIEW_DESC UAVView = { };
+		UAVView.Format					= TextureProps.Format;
+		UAVView.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
+		UAVView.Texture2D.MipSlice		= 0;
+		UAVView.Texture2D.PlaneSlice	= 0;
+
+		SSAOBuffer->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get().CreateUnorderedAccessView(nullptr, SSAOBuffer->GetResource(), &UAVView)), 0);
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
+		SrvDesc.Format							= TextureProps.Format;
+		SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
+		SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		SrvDesc.Texture2D.MipLevels				= 1;
+		SrvDesc.Texture2D.MostDetailedMip		= 0;
+		SrvDesc.Texture2D.PlaneSlice			= 0;
+		SrvDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
+
+		SSAOBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(SSAOBuffer->GetResource(), &SrvDesc)), 0);
 	}
-
-	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVView = { };
-	UAVView.Format					= TextureProps.Format;
-	UAVView.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
-	UAVView.Texture2D.MipSlice		= 0;
-	UAVView.Texture2D.PlaneSlice	= 0;
-
-	SSAOBuffer->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get().CreateUnorderedAccessView(nullptr, SSAOBuffer->GetResource(), &UAVView)), 0);
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-	SrvDesc.Format							= TextureProps.Format;
-	SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
-	SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SrvDesc.Texture2D.MipLevels				= 1;
-	SrvDesc.Texture2D.MostDetailedMip		= 0;
-	SrvDesc.Texture2D.PlaneSlice			= 0;
-	SrvDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
-
-	SSAOBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(SSAOBuffer->GetResource(), &SrvDesc)), 0);
 
 	// Load shader
 	ComPtr<IDxcBlob> CSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/SSAO.hlsl", "Main", "cs_6_0");
@@ -3191,7 +3193,7 @@ bool Renderer::InitSSAO()
 	}
 
 	// Init RootSignatures
-	constexpr UInt32 NumPerFrameRanges = 8;
+	constexpr UInt32 NumPerFrameRanges = 5;
 	D3D12_DESCRIPTOR_RANGE PerFrameRanges[NumPerFrameRanges] = {};
 	// Normal Buffer
 	PerFrameRanges[0].BaseShaderRegister				= 0;
@@ -3207,12 +3209,26 @@ bool Renderer::InitSSAO()
 	PerFrameRanges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	PerFrameRanges[1].OffsetInDescriptorsFromTableStart	= 1;
 
-	// Output Buffer
-	PerFrameRanges[2].BaseShaderRegister				= 0;
+	// Noise 
+	PerFrameRanges[2].BaseShaderRegister				= 2;
 	PerFrameRanges[2].NumDescriptors					= 1;
 	PerFrameRanges[2].RegisterSpace						= 0;
-	PerFrameRanges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+	PerFrameRanges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	PerFrameRanges[2].OffsetInDescriptorsFromTableStart = 2;
+
+	// Output Buffer
+	PerFrameRanges[3].BaseShaderRegister				= 0;
+	PerFrameRanges[3].NumDescriptors					= 1;
+	PerFrameRanges[3].RegisterSpace						= 0;
+	PerFrameRanges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+	PerFrameRanges[3].OffsetInDescriptorsFromTableStart = 3;
+
+	// Samples 
+	PerFrameRanges[4].BaseShaderRegister				= 3;
+	PerFrameRanges[4].NumDescriptors					= 1;
+	PerFrameRanges[4].RegisterSpace						= 0;
+	PerFrameRanges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	PerFrameRanges[4].OffsetInDescriptorsFromTableStart = 4;
 
 	constexpr UInt32 NumParameters = 1;
 	D3D12_ROOT_PARAMETER Parameters[NumParameters];
@@ -3222,10 +3238,10 @@ bool Renderer::InitSSAO()
 	Parameters[0].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
 	Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
 
-	constexpr UInt32 NumStaticSamplers = 1;
+	constexpr UInt32 NumStaticSamplers = 2;
 	D3D12_STATIC_SAMPLER_DESC StaticSamplers[NumStaticSamplers] = { };
 	// GBuffer Sampler
-	StaticSamplers[0].Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	StaticSamplers[0].Filter			= D3D12_FILTER_MIN_MAG_MIP_POINT;
 	StaticSamplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	StaticSamplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	StaticSamplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -3234,10 +3250,25 @@ bool Renderer::InitSSAO()
 	StaticSamplers[0].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
 	StaticSamplers[0].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 	StaticSamplers[0].MinLOD			= 0.0f;
-	StaticSamplers[0].MaxLOD			= FLT_MAX;
+	StaticSamplers[0].MaxLOD			= 0.0f;
 	StaticSamplers[0].ShaderRegister	= 0;
-	StaticSamplers[0].RegisterSpace		= 1;
+	StaticSamplers[0].RegisterSpace		= 0;
 	StaticSamplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
+
+	// Noise Samplers
+	StaticSamplers[1].Filter			= D3D12_FILTER_MIN_MAG_MIP_POINT;
+	StaticSamplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	StaticSamplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	StaticSamplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	StaticSamplers[1].MipLODBias		= 0.0f;
+	StaticSamplers[1].MaxAnisotropy		= 0;
+	StaticSamplers[1].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
+	StaticSamplers[1].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+	StaticSamplers[1].MinLOD			= 0.0f;
+	StaticSamplers[1].MaxLOD			= 0.0f;
+	StaticSamplers[1].ShaderRegister	= 1;
+	StaticSamplers[1].RegisterSpace		= 0;
+	StaticSamplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
 
 	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
 	RootSignatureDesc.NumParameters		= NumParameters;
@@ -3245,9 +3276,11 @@ bool Renderer::InitSSAO()
 	RootSignatureDesc.NumStaticSamplers	= NumStaticSamplers;
 	RootSignatureDesc.pStaticSamplers	= StaticSamplers;
 	RootSignatureDesc.Flags =
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS	|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS		|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS	|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS	|
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
 	SSAORootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
 	if (!SSAORootSignature->Initialize(RootSignatureDesc))
@@ -3276,8 +3309,8 @@ bool Renderer::InitSSAO()
 	for (UInt32 i = 0; i < 64; ++i)
 	{
 		XMVECTOR XmSample = XMVectorSet(
-			RandomFloats(Generator) * 2.0 - 1.0,
-			RandomFloats(Generator) * 2.0 - 1.0,
+			RandomFloats(Generator) * 2.0f - 1.0f,
+			RandomFloats(Generator) * 2.0f - 1.0f,
 			RandomFloats(Generator), 
 			0.0f);
 
@@ -3285,7 +3318,7 @@ bool Renderer::InitSSAO()
 		XmSample = XMVectorScale(XmSample, Scale);
 		XmSample = XMVector3Normalize(XmSample);
 
-		Scale = (Float)i / 64.0;
+		Scale = Float(i) / 64.0f;
 		Scale = Math::Lerp(0.1f, 1.0f, Scale * Scale);
 		XmSample = XMVectorScale(XmSample, Scale);
 
@@ -3295,18 +3328,55 @@ bool Renderer::InitSSAO()
 	}
 
 	// Generate noise
-	TArray<XMFLOAT3> SSAONoise;
+	TArray<Float16> SSAONoise;
 	for (UInt32 i = 0; i < 16; i++)
 	{
-		XMVECTOR XmNoise = XMVectorSet(
-			RandomFloats(Generator) * 2.0 - 1.0,
-			RandomFloats(Generator) * 2.0 - 1.0,
-			RandomFloats(Generator),
-			0.0f);
+		SSAONoise.EmplaceBack(RandomFloats(Generator) * 2.0f - 1.0f);
+		SSAONoise.EmplaceBack(RandomFloats(Generator) * 2.0f - 1.0f);
+		SSAONoise.EmplaceBack(0.0f);
+		SSAONoise.EmplaceBack(0.0f);
+	}
 
-		XMFLOAT3 Noise;
-		XMStoreFloat3(&Noise, XmNoise);
-		SSAOKernel.PushBack(Noise);
+	// Init texture
+	{
+		TextureProperties TextureProps = { };
+		TextureProps.DebugName		= "SSAO Noise";
+		TextureProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
+		TextureProps.Width			= 4;
+		TextureProps.Height			= 4;
+		TextureProps.MipLevels		= 1;
+		TextureProps.ArrayCount		= 1;
+		TextureProps.Format			= DXGI_FORMAT_R16G16B16A16_FLOAT;
+		TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
+		TextureProps.SampleCount	= 1;
+
+		SSAONoiseTex = RenderingAPI::Get().CreateTexture(TextureProps);
+		if (!SSAONoiseTex)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
+		SrvDesc.Format							= TextureProps.Format;
+		SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
+		SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		SrvDesc.Texture2D.MipLevels				= 1;
+		SrvDesc.Texture2D.MostDetailedMip		= 0;
+		SrvDesc.Texture2D.PlaneSlice			= 0;
+		SrvDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
+
+		SSAONoiseTex->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(SSAONoiseTex->GetResource(), &SrvDesc)), 0);
+
+		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAONoiseTex.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+		
+		const UInt32 Stride			= sizeof(Float16);
+		const UInt32 RowPitch		= (4 * Stride + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
+		const UInt32 SizeInBytes	= 4 * RowPitch;
+		RenderingAPI::StaticGetImmediateCommandList()->UploadTextureData(SSAONoiseTex.Get(), SSAONoise.Data(), TextureProps.Format, 4, 4, 1, Stride, RowPitch);
+		
+		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAONoiseTex.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		RenderingAPI::StaticGetImmediateCommandList()->Flush();
 	}
 
 	return true;

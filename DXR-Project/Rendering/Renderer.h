@@ -160,6 +160,7 @@ private:
 	TSharedPtr<D3D12Texture> PointLightShadowMaps;
 	TSharedPtr<D3D12Texture> GBuffer[4];
 	TSharedPtr<D3D12Texture> SSAOBuffer;
+	TSharedPtr<D3D12Texture> SSAONoiseTex;
 	TSharedPtr<D3D12Texture> FinalTarget;
 	
 	TSharedPtr<D3D12RootSignature>		PrePassRootSignature;

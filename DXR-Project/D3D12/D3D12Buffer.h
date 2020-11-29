@@ -27,8 +27,23 @@ public:
 
 	bool Initialize(const BufferProperties& Properties);
 
-	Void* Map();
-	void Unmap();
+	FORCEINLINE Void* Map()
+	{
+		Void* HostMemory = nullptr;
+		if (SUCCEEDED(Resource->Map(0, nullptr, &HostMemory)))
+		{
+			return HostMemory;
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	FORCEINLINE void Unmap()
+	{
+		Resource->Unmap(0, nullptr);
+	}
 
 	FORCEINLINE void SetConstantBufferView(TSharedPtr<D3D12ConstantBufferView> InConstantBufferView)
 	{

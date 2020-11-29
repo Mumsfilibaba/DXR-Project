@@ -40,21 +40,3 @@ bool D3D12Buffer::Initialize(const BufferProperties& Properties)
 		return false;
 	}
 }
-
-Void* D3D12Buffer::Map()
-{
-	Void* HostMemory = nullptr;
-	if (SUCCEEDED(Resource->Map(0, nullptr, &HostMemory)))
-	{
-		return HostMemory;
-	}
-	else
-	{
-		return nullptr;
-	}
-}
-
-void D3D12Buffer::Unmap()
-{
-	Resource->Unmap(0, nullptr);
-}
