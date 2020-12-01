@@ -149,6 +149,7 @@ private:
 	TSharedPtr<D3D12Buffer> AABBIndexBuffer;
 	TSharedPtr<D3D12Buffer> PointLightBuffer;
 	TSharedPtr<D3D12Buffer> DirectionalLightBuffer;
+	TSharedPtr<D3D12Buffer> SSAOSamples;
 
 	TSharedPtr<D3D12Texture> Skybox;
 	TSharedPtr<D3D12Texture> IrradianceMap;
@@ -175,6 +176,7 @@ private:
 	TSharedPtr<D3D12RootSignature>		PostRootSignature;
 	TSharedPtr<D3D12RootSignature>		ForwardRootSignature;
 	TSharedPtr<D3D12RootSignature>		SSAORootSignature;
+
 	TSharedPtr<D3D12DescriptorTable>	RayGenDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	GlobalDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable>	SSAODescriptorTable;
@@ -216,6 +218,7 @@ private:
 	bool FrustumCullEnabled	= true;
 	bool FXAAEnabled		= true;
 	bool SSAOEnabled		= true;
+	bool RayTracingEnabled	= false;
 
 	static LightSettings		GlobalLightSettings;
 	static TUniquePtr<Renderer> RendererInstance;

@@ -20,6 +20,7 @@ TextureCube<float4> SpecularIrradianceMap	: register(t6, space0);
 Texture2D<float4>	IntegrationLUT			: register(t7, space0);
 Texture2D<float2>	DirLightShadowMaps		: register(t8, space0);
 TextureCube<float>	PointLightShadowMaps	: register(t9, space0);
+Texture2D<float>	SSAO					: register(t10, space0);
 
 SamplerState GBufferSampler		: register(s0, space0);
 SamplerState LUTSampler			: register(s1, space0);
@@ -224,14 +225,15 @@ float4 Main(PSInput Input) : SV_TARGET
 #ifdef RAYTRACING_ENABLED
 	float3 SampledReflection	= DXRReflection.Sample(LUTSampler, TexCoord).rgb;
 #endif
-	float3 SampledMaterial		= Material.Sample(GBufferSampler, TexCoord).rgb;
-	float3 SampledNormal		= Normal.Sample(GBufferSampler, TexCoord).rgb;
+	float3 SampledMaterial	= Material.Sample(GBufferSampler, TexCoord).rgb;
+	float3 SampledNormal	= Normal.Sample(GBufferSampler, TexCoord).rgb;
+	float ScreenSpaceAO		= SSAO.Sample(GBufferSampler, TexCoord);
 	
 	const float3	Norm		= UnpackNormal(SampledNormal);
 	const float3	ViewDir		= normalize(CameraBuffer.Position - WorldPosition);
 	const float		Roughness	= SampledMaterial.r;
 	const float		Metallic	= SampledMaterial.g;
-	const float		SampledAO	= SampledMaterial.b;
+	const float		SampledAO	= SampledMaterial.b * ScreenSpaceAO;
 	
 	float3 F0 = float3(0.04f, 0.04f, 0.04f);
 	F0 = lerp(F0, SampledAlbedo, Metallic);
@@ -304,5 +306,5 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	float3	FinalColor	= ApplyGammaCorrectionAndTonemapping(Color);
 	float	Luminance	= CalculateLuminance(FinalColor);
-	return float4(FinalColor, Luminance);
+	return float4(ToFloat3(ScreenSpaceAO), Luminance);
 }

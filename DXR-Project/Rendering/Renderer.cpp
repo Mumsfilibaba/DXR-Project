@@ -40,6 +40,7 @@ static const UInt32			ShadowMapSampleCount	= 2;
 /*
 * Renderer
 */
+
 Renderer::Renderer()
 {
 }
@@ -111,7 +112,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	}
 
 	// Build acceleration structures
-	if (RenderingAPI::Get().IsRayTracingSupported())
+	if (RenderingAPI::Get().IsRayTracingSupported() && RayTracingEnabled)
 	{
 		// Build Bottom-Level
 		UInt32 HitGroupIndex = 0;
@@ -545,7 +546,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->TransitionBarrier(GBuffer[3].Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// RayTracing
-	if (RenderingAPI::Get().IsRayTracingSupported())
+	if (RenderingAPI::Get().IsRayTracingSupported() && RayTracingEnabled)
 	{
 		TraceRays(BackBuffer, CommandList.Get());
 		RayTracingGeometryInstances.Clear();
@@ -564,18 +565,34 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// SSAO
 	if (SSAOEnabled)
 	{
-		CommandList->TransitionBarrier(GBuffer[0].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		struct SSAOSettings
+		{
+			XMFLOAT4X4	ViewProjectionInv;
+			XMFLOAT4X4	Projection;
+			XMFLOAT2	ScreenSize;
+			XMFLOAT2	NoiseSize;
+			Float		Radius;
+		} SSAOSettings;
+
+		const UInt32 Width	= RenderingAPI::Get().GetSwapChain()->GetWidth();
+		const UInt32 Height	= RenderingAPI::Get().GetSwapChain()->GetHeight();
+		SSAOSettings.ViewProjectionInv	= CurrentScene.GetCamera()->GetViewProjectionInverseMatrix();
+		SSAOSettings.Projection			= CurrentScene.GetCamera()->GetProjectionMatrix();
+		SSAOSettings.ScreenSize			= XMFLOAT2(Float(Width), Float(Height));
+		SSAOSettings.NoiseSize			= XMFLOAT2(4.0f, 4.0f);
+		SSAOSettings.Radius				= 0.25f;
 
 		CommandList->SetComputeRootSignature(SSAORootSignature->GetRootSignature());
 		CommandList->SetComputeRootDescriptorTable(SSAODescriptorTable->GetGPUTableStartHandle(), 0);
+		CommandList->SetComputeRoot32BitConstants(&SSAOSettings, 37, 0, 1);
 		
 		CommandList->SetPipelineState(SSAOPSO->GetPipeline());
 	
-		const UInt32 DispatchWidth	= RenderingAPI::Get().GetSwapChain()->GetWidth();
-		const UInt32 DispatchHeight	= RenderingAPI::Get().GetSwapChain()->GetHeight();
+		const UInt32 DispatchWidth	= Width;
+		const UInt32 DispatchHeight	= Height;
 		CommandList->Dispatch(DispatchWidth, DispatchHeight, 1);
 
-		CommandList->TransitionBarrier(GBuffer[0].Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		CommandList->UnorderedAccessBarrier(SSAOBuffer.Get());
 	}
 
 	// Setup LightPass
@@ -806,7 +823,7 @@ void Renderer::OnResize(Int32 Width, Int32 Height)
 	// Update deferred
 	InitGBuffer();
 
-	if (RenderingAPI::Get().IsRayTracingSupported())
+	if (RenderingAPI::Get().IsRayTracingSupported() && RayTracingEnabled)
 	{
 		RayGenDescriptorTable->SetUnorderedAccessView(ReflectionTexture->GetUnorderedAccessView(0).Get(), 0);
 		RayGenDescriptorTable->CopyDescriptors();
@@ -1063,6 +1080,7 @@ bool Renderer::Initialize()
 	SpecularIrradianceMap = RenderingAPI::Get().CreateTexture(SpecualarIrradianceMapProps);
 	if (!SpecularIrradianceMap)
 	{
+		Debug::DebugBreak();
 		return false;
 	}
 
@@ -1153,7 +1171,7 @@ bool Renderer::Initialize()
 	}
 
 	// Init RayTracing if supported
-	if (RenderingAPI::Get().IsRayTracingSupported())
+	if (RenderingAPI::Get().IsRayTracingSupported() && RayTracingEnabled)
 	{
 		if (!InitRayTracing())
 		{
@@ -1165,6 +1183,7 @@ bool Renderer::Initialize()
 	LightDescriptorTable->SetShaderResourceView(IrradianceMap->GetShaderResourceView(0).Get(), 5);
 	LightDescriptorTable->SetShaderResourceView(SpecularIrradianceMap->GetShaderResourceView(0).Get(), 6);
 	LightDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).Get(), 7);
+	LightDescriptorTable->SetShaderResourceView(SSAOBuffer->GetShaderResourceView(0).Get(), 13);
 	LightDescriptorTable->CopyDescriptors();
 
 	ForwardDescriptorTable->SetShaderResourceView(IrradianceMap->GetShaderResourceView(0).Get(), 3);
@@ -1172,11 +1191,16 @@ bool Renderer::Initialize()
 	ForwardDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).Get(), 5);
 	ForwardDescriptorTable->CopyDescriptors();
 
-	SSAODescriptorTable = RenderingAPI::Get().CreateDescriptorTable(3);
-	SSAODescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(0).Get(), 0);
-	SSAODescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(0).Get(), 0);
-	SSAODescriptorTable->SetUnorderedAccessView(SSAOBuffer->GetUnorderedAccessView(0).Get(), 0);
-	SSAODescriptorTable->CopyDescriptors();
+	if (SSAOEnabled)
+	{
+		SSAODescriptorTable = RenderingAPI::Get().CreateDescriptorTable(5);
+		SSAODescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(0).Get(), 0);
+		SSAODescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(0).Get(), 1);
+		SSAODescriptorTable->SetShaderResourceView(SSAONoiseTex->GetShaderResourceView(0).Get(), 2);
+		SSAODescriptorTable->SetUnorderedAccessView(SSAOBuffer->GetUnorderedAccessView(0).Get(), 3);
+		SSAODescriptorTable->SetShaderResourceView(SSAOSamples->GetShaderResourceView(0).Get(), 4);
+		SSAODescriptorTable->CopyDescriptors();
+	}
 
 	WriteShadowMapDescriptors();
 
@@ -1929,7 +1953,8 @@ bool Renderer::InitDeferred()
 	}
 
 	{
-		D3D12_DESCRIPTOR_RANGE Ranges[13] = { };
+		constexpr UInt32 NumRanges = 14;
+		D3D12_DESCRIPTOR_RANGE Ranges[NumRanges] = { };
 		// Albedo
 		Ranges[0].BaseShaderRegister				= 0;
 		Ranges[0].NumDescriptors					= 1;
@@ -2021,9 +2046,16 @@ bool Renderer::InitDeferred()
 		Ranges[12].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 		Ranges[12].OffsetInDescriptorsFromTableStart	= 12;
 
+		// PointLight ShadowMaps
+		Ranges[13].BaseShaderRegister					= 10;
+		Ranges[13].NumDescriptors						= 1;
+		Ranges[13].RegisterSpace						= 0;
+		Ranges[13].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		Ranges[13].OffsetInDescriptorsFromTableStart	= 13;
+
 		D3D12_ROOT_PARAMETER Parameters[1];
 		Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		Parameters[0].DescriptorTable.NumDescriptorRanges	= 13;
+		Parameters[0].DescriptorTable.NumDescriptorRanges	= NumRanges;
 		Parameters[0].DescriptorTable.pDescriptorRanges		= Ranges;
 		Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
 
@@ -2159,7 +2191,7 @@ bool Renderer::InitDeferred()
 		return false;
 	}
 
-	LPCWSTR Value = RenderingAPI::Get().IsRayTracingSupported() ? L"1" : L"0";
+	LPCWSTR Value = (RenderingAPI::Get().IsRayTracingSupported() && RayTracingEnabled) ? L"1" : L"0";
 	DxcDefine LightPassDefines[] =
 	{
 		{ L"ENABLE_RAYTRACING",	Value },
@@ -2236,7 +2268,7 @@ bool Renderer::InitDeferred()
 	ForwardDescriptorTable->SetConstantBufferView(PointLightBuffer->GetConstantBufferView().Get(), 1);
 	ForwardDescriptorTable->SetConstantBufferView(DirectionalLightBuffer->GetConstantBufferView().Get(), 2);
 
-	LightDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(13);
+	LightDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(14);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).Get(), 0);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 1);
 	LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).Get(), 2);
@@ -3230,13 +3262,20 @@ bool Renderer::InitSSAO()
 	PerFrameRanges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	PerFrameRanges[4].OffsetInDescriptorsFromTableStart = 4;
 
-	constexpr UInt32 NumParameters = 1;
+	constexpr UInt32 NumParameters = 2;
 	D3D12_ROOT_PARAMETER Parameters[NumParameters];
-	// PerFrame DescriptorTable
+	// DescriptorTable
 	Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	Parameters[0].DescriptorTable.NumDescriptorRanges	= NumPerFrameRanges;
 	Parameters[0].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
 	Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
+
+	// Settings
+	Parameters[1].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	Parameters[1].Constants.Num32BitValues	= 37;
+	Parameters[1].Constants.RegisterSpace	= 0;
+	Parameters[1].Constants.ShaderRegister	= 0;
+	Parameters[1].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
 
 	constexpr UInt32 NumStaticSamplers = 2;
 	D3D12_STATIC_SAMPLER_DESC StaticSamplers[NumStaticSamplers] = { };
@@ -3328,11 +3367,18 @@ bool Renderer::InitSSAO()
 	}
 
 	// Generate noise
+	LOG_INFO("SSAO Noise:");
+
 	TArray<Float16> SSAONoise;
 	for (UInt32 i = 0; i < 16; i++)
 	{
-		SSAONoise.EmplaceBack(RandomFloats(Generator) * 2.0f - 1.0f);
-		SSAONoise.EmplaceBack(RandomFloats(Generator) * 2.0f - 1.0f);
+		const Float x = RandomFloats(Generator) * 2.0f - 1.0f;
+		const Float y = RandomFloats(Generator) * 2.0f - 1.0f;
+
+		LOG_INFO("x=" + std::to_string(x) + ", y=" + std::to_string(y));
+
+		SSAONoise.EmplaceBack(x);
+		SSAONoise.EmplaceBack(y);
 		SSAONoise.EmplaceBack(0.0f);
 		SSAONoise.EmplaceBack(0.0f);
 	}
@@ -3370,13 +3416,49 @@ bool Renderer::InitSSAO()
 
 		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAONoiseTex.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 		
-		const UInt32 Stride			= sizeof(Float16);
-		const UInt32 RowPitch		= (4 * Stride + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
-		const UInt32 SizeInBytes	= 4 * RowPitch;
+		const UInt32 Stride		= 4 * sizeof(Float16);
+		const UInt32 RowPitch	= ((4 * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
 		RenderingAPI::StaticGetImmediateCommandList()->UploadTextureData(SSAONoiseTex.Get(), SSAONoise.Data(), TextureProps.Format, 4, 4, 1, Stride, RowPitch);
 		
 		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAONoiseTex.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		
 		RenderingAPI::StaticGetImmediateCommandList()->Flush();
+		RenderingAPI::StaticGetImmediateCommandList()->WaitForCompletion();
+	}
+
+	// Init samples
+	{
+		BufferProperties SamplesProps;
+		SamplesProps.Name			= "SSAO Samples Buffer";
+		SamplesProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
+		SamplesProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
+		SamplesProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
+		SamplesProps.SizeInBytes	= sizeof(XMFLOAT3) * SSAOKernel.Size();
+
+		SSAOSamples = RenderingAPI::Get().CreateBuffer(SamplesProps);
+		if (!SSAOSamples)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
+		SrvDesc.Format						= DXGI_FORMAT_UNKNOWN;
+		SrvDesc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
+		SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		SrvDesc.Buffer.FirstElement			= 0;
+		SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
+		SrvDesc.Buffer.NumElements			= SSAOKernel.Size();
+		SrvDesc.Buffer.StructureByteStride	= sizeof(XMFLOAT3);
+
+		SSAOSamples->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(SSAOSamples->GetResource(), &SrvDesc)), 0);
+
+		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAOSamples.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+		RenderingAPI::StaticGetImmediateCommandList()->UploadBufferData(SSAOSamples.Get(), 0, SSAOKernel.Data(), SamplesProps.SizeInBytes);
+		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAOSamples.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		
+		RenderingAPI::StaticGetImmediateCommandList()->Flush();
+		RenderingAPI::StaticGetImmediateCommandList()->WaitForCompletion();
 	}
 
 	return true;

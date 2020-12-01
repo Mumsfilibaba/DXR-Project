@@ -392,9 +392,9 @@ void D3D12CommandList::UploadTextureData(
 	// Copy to GPU buffer
 	Byte* Memory = UploadPointer + UploadBufferOffset;
 	const Byte* Source = reinterpret_cast<const Byte*>(Src);
-	for (UInt32 Y = 0; Y < Height; Y++)
+	for (UInt32 y = 0; y < Height; y++)
 	{
-		memcpy(reinterpret_cast<Void*>(reinterpret_cast<uintptr_t>(Memory) + Y * RowPitch), Source + (Y * Width * Stride), Width * Stride);
+		memcpy(reinterpret_cast<Void*>(Memory + (y * RowPitch)), Source + (y * Width * Stride), Width * Stride);
 	}
 
 	// Copy to Dest

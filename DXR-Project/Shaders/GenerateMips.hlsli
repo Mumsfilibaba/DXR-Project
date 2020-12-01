@@ -133,8 +133,8 @@ void Main(ComputeShaderInput Input)
 	// will force this shader to be slower and more complicated as it will
 	// have to take more source texture samples.
 #if CUBE_MAP
-	float3 TexCoord = float3((DispatchThreadID.xy * TexelSize) - 0.5f, 0.5f);
-	TexCoord		= normalize(mul(RotateUV[DispatchThreadID.z], TexCoord));
+    float3 TexCoord = float3((Input.DispatchThreadID.xy * TexelSize) - 0.5f, 0.5f);
+    TexCoord		= normalize(mul(RotateUV[Input.DispatchThreadID.z], TexCoord));
 	float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
 #else
 	#if POWER_OF_TWO
@@ -199,7 +199,7 @@ void Main(ComputeShaderInput Input)
 		Src1 = 0.25f * (Src1 + Src2 + Src3 + Src4);
 
 #if CUBE_MAP
-		OutMip3[uint3(DispatchThreadID.xy / 4, DispatchThreadID.z)] = PackColor(Src1);
+        OutMip3[uint3(Input.DispatchThreadID.xy / 4, Input.DispatchThreadID.z)] = PackColor(Src1);
 #else
 		OutMip3[Input.DispatchThreadID.xy / 4] = PackColor(Src1);
 #endif
