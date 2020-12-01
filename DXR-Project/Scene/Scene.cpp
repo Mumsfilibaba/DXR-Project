@@ -147,7 +147,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 		// Create new material with default properties
 		MaterialProperties MatProps;
 		MatProps.Metallic	= Mat.ambient[0];
-		MatProps.AO			= 0.5f;
+		MatProps.AO			= 1.0f;
 		MatProps.Roughness	= 1.0f;
 
 		TSharedPtr<Material>& NewMaterial = LoadedMaterials.EmplaceBack(MakeShared<Material>(MatProps));

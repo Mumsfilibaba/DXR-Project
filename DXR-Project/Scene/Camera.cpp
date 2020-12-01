@@ -72,11 +72,15 @@ void Camera::UpdateMatrices()
 	XMStoreFloat3x3(&TempView3x3, XmView);
 	XMMATRIX XmView3x3 = XMLoadFloat3x3(&TempView3x3);
 
-	XMMATRIX XmViewProjection				= XMMatrixMultiply(XmView, XmProjection);
-	XMMATRIX XmViewProjectionInverse		= XMMatrixInverse(nullptr, XmViewProjection);
-	XMMATRIX XmViewProjectionNoTranslation	= XMMatrixMultiply(XmView3x3, XmProjection);
+	XMMATRIX XmProjectionInverse = XMMatrixInverse(nullptr, XmProjection);
+	XMStoreFloat4x4(&ProjectionInverse, XMMatrixTranspose(XmProjectionInverse));
 
+	XMMATRIX XmViewProjection = XMMatrixMultiply(XmView, XmProjection);
 	XMStoreFloat4x4(&ViewProjection, XMMatrixTranspose(XmViewProjection));
+
+	XMMATRIX XmViewProjectionInverse = XMMatrixInverse(nullptr, XmViewProjection);
 	XMStoreFloat4x4(&ViewProjectionInverse, XMMatrixTranspose(XmViewProjectionInverse));
+	
+	XMMATRIX XmViewProjectionNoTranslation	= XMMatrixMultiply(XmView3x3, XmProjection);
 	XMStoreFloat4x4(&ViewProjectionNoTranslation, XMMatrixTranspose(XmViewProjectionNoTranslation));
 }

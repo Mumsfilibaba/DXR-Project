@@ -32,13 +32,13 @@ Game::~Game()
 bool Game::Initialize()
 {
 	// Initialize Scene
-	constexpr Float	SphereOffset	= 1.25f;
-	constexpr UInt32	SphereCountX	= 8;
-	constexpr Float	StartPositionX	= (-static_cast<Float>(SphereCountX) * SphereOffset) / 2.0f;
-	constexpr UInt32	SphereCountY	= 8;
-	constexpr Float	StartPositionY	= (-static_cast<Float>(SphereCountY) * SphereOffset) / 2.0f;
-	constexpr Float	MetallicDelta	= 1.0f / SphereCountY;
-	constexpr Float	RoughnessDelta	= 1.0f / SphereCountX;
+	constexpr Float	 SphereOffset	= 1.25f;
+	constexpr UInt32 SphereCountX	= 8;
+	constexpr Float	 StartPositionX	= (-static_cast<Float>(SphereCountX) * SphereOffset) / 2.0f;
+	constexpr UInt32 SphereCountY	= 8;
+	constexpr Float	 StartPositionY	= (-static_cast<Float>(SphereCountY) * SphereOffset) / 2.0f;
+	constexpr Float	 MetallicDelta	= 1.0f / SphereCountY;
+	constexpr Float	 RoughnessDelta	= 1.0f / SphereCountX;
 
 	Actor*			NewActor		= nullptr;
 	MeshComponent*	NewComponent	= nullptr;
@@ -90,6 +90,8 @@ bool Game::Initialize()
 	}
 
 	MaterialProperties MatProperties;
+	MatProperties.AO = 1.0f;
+
 	UInt32 SphereIndex = 0;
 	for (UInt32 y = 0; y < SphereCountY; y++)
 	{

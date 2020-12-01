@@ -568,7 +568,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		struct SSAOSettings
 		{
 			XMFLOAT4X4	ViewProjectionInv;
-			XMFLOAT4X4	Projection;
+			XMFLOAT4X4	ViewProjection;
 			XMFLOAT2	ScreenSize;
 			XMFLOAT2	NoiseSize;
 			Float		Radius;
@@ -576,11 +576,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 		const UInt32 Width	= RenderingAPI::Get().GetSwapChain()->GetWidth();
 		const UInt32 Height	= RenderingAPI::Get().GetSwapChain()->GetHeight();
-		SSAOSettings.ViewProjectionInv	= CurrentScene.GetCamera()->GetViewProjectionInverseMatrix();
-		SSAOSettings.Projection			= CurrentScene.GetCamera()->GetProjectionMatrix();
+		SSAOSettings.ViewProjectionInv	= CurrentScene.GetCamera()->GetProjectionInverseMatrix();
+		SSAOSettings.ViewProjection		= CurrentScene.GetCamera()->GetProjectionMatrix();
 		SSAOSettings.ScreenSize			= XMFLOAT2(Float(Width), Float(Height));
 		SSAOSettings.NoiseSize			= XMFLOAT2(4.0f, 4.0f);
-		SSAOSettings.Radius				= 0.25f;
+		SSAOSettings.Radius				= 0.5f;
 
 		CommandList->SetComputeRootSignature(SSAORootSignature->GetRootSignature());
 		CommandList->SetComputeRootDescriptorTable(SSAODescriptorTable->GetGPUTableStartHandle(), 0);
@@ -588,8 +588,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		
 		CommandList->SetPipelineState(SSAOPSO->GetPipeline());
 	
-		const UInt32 DispatchWidth	= Width;
-		const UInt32 DispatchHeight	= Height;
+		const UInt32 DispatchWidth	= Math::AlignUp<UInt32>(Width, 16) / 16;
+		const UInt32 DispatchHeight	= Math::AlignUp<UInt32>(Height, 16) / 16;
 		CommandList->Dispatch(DispatchWidth, DispatchHeight, 1);
 
 		CommandList->UnorderedAccessBarrier(SSAOBuffer.Get());
