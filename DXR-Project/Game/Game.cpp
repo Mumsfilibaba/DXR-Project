@@ -5,8 +5,8 @@
 #include "Rendering/TextureFactory.h"
 
 #include "Scene/Scene.h"
-#include "Scene/PointLight.h"
-#include "Scene/DirectionalLight.h"
+#include "Scene/Lights/PointLight.h"
+#include "Scene/Lights/DirectionalLight.h"
 #include "Scene/Components/MeshComponent.h"
 
 #include "Application/Input.h"

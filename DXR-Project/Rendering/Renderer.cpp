@@ -3,9 +3,9 @@
 #include "DebugUI.h"
 #include "Mesh.h"
 
-#include "Scene/PointLight.h"
-#include "Scene/DirectionalLight.h"
 #include "Scene/Frustum.h"
+#include "Scene/Lights/PointLight.h"
+#include "Scene/Lights/DirectionalLight.h"
 
 #include "D3D12/D3D12Texture.h"
 #include "D3D12/D3D12Views.h"

@@ -8,8 +8,8 @@
 #include "Application/Application.h"
 
 #include "Scene/Scene.h"
-#include "Scene/DirectionalLight.h"
-#include "Scene/PointLight.h"
+#include "Scene/Lights/DirectionalLight.h"
+#include "Scene/Lights/PointLight.h"
 #include "Scene/Components/MeshComponent.h"
 
 static Float MainMenuBarHeight = 0.0f;
