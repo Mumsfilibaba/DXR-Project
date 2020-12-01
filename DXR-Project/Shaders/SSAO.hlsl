@@ -20,6 +20,8 @@ cbuffer Params : register(b0, space0)
 	float	Radius;
 };
 
+#define KERNEL_SIZE 64
+
 [numthreads(16, 16, 1)]
 void Main(ComputeShaderInput Input)
 {
@@ -44,7 +46,7 @@ void Main(ComputeShaderInput Input)
 	float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
 	
 	float Occlusion = 0.0f;
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < KERNEL_SIZE; i++)
 	{
 		float3 SamplePos = normalize(mul(Samples[i], TBN));
 		SamplePos = Position + (SamplePos * Radius);
@@ -61,5 +63,7 @@ void Main(ComputeShaderInput Input)
 		Occlusion += (Depth0 < SamplePos.z ? 1.0f : 0.0f) * RangeCheck;
 	}	
 	
-	Output[OutputTexCoords] = 1.0f - (Occlusion / 64.0f);
+	Occlusion = 1.0f - (Occlusion / float(KERNEL_SIZE));
+	Occlusion = Occlusion * Occlusion;
+	Output[OutputTexCoords] = Occlusion;
 }
