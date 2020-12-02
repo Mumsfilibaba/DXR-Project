@@ -563,6 +563,14 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->RSSetScissorRects(&ScissorRect, 1);
 
 	// SSAO
+	CommandList->TransitionBarrier(SSAOBuffer.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	CommandList->ClearUnorderedAccessViewFloat(
+		SSAODescriptorTable->GetGPUTableHandle(3), 
+		SSAOBuffer->GetUnorderedAccessView(0).Get(), 
+		WhiteColor);
+
 	if (SSAOEnabled)
 	{
 		struct SSAOSettings
@@ -594,6 +602,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 		CommandList->UnorderedAccessBarrier(SSAOBuffer.Get());
 	}
+
+	CommandList->TransitionBarrier(SSAOBuffer.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// Setup LightPass
 	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -3415,7 +3425,8 @@ bool Renderer::InitSSAO()
 		SSAONoiseTex->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(SSAONoiseTex->GetResource(), &SrvDesc)), 0);
 
 		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAONoiseTex.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-		
+		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAOBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
 		const UInt32 Stride		= 4 * sizeof(Float16);
 		const UInt32 RowPitch	= ((4 * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
 		RenderingAPI::StaticGetImmediateCommandList()->UploadTextureData(SSAONoiseTex.Get(), SSAONoise.Data(), TextureProps.Format, 4, 4, 1, Stride, RowPitch);
