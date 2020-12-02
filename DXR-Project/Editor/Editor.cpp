@@ -12,6 +12,8 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Components/MeshComponent.h"
 
+#include <imgui_internal.h>
+
 static Float MainMenuBarHeight = 0.0f;
 
 static bool ShowRenderSettings	= false;
@@ -20,6 +22,7 @@ static bool ShowSceneGraph		= false;
 /*
 * Functions
 */
+
 static void DrawMenu();
 static void DrawDebugData();
 static void DrawSideWindow();
@@ -27,8 +30,82 @@ static void DrawRenderSettings();
 static void DrawSceneInfo();
 
 /*
+* Helpers
+*/
+
+static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, Float ResetValue = 0.0f, Float ColumnWidth = 100.0f)
+{
+	ImGui::PushID(Label.c_str());
+	ImGui::Columns(2);
+
+	// Text
+	ImGui::SetColumnWidth(0, ColumnWidth);
+	ImGui::Text(Label.c_str());
+	ImGui::NextColumn();
+
+	// Drag Floats
+	ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+
+	Float	LineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+	ImVec2	ButtonSize = ImVec2(LineHeight + 3.0f, LineHeight);
+	
+	// X
+	ImGui::PushStyleColor(ImGuiCol_Button,			ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered,	ImVec4(0.9f, 0.2f, 0.2f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive,	ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
+	if (ImGui::Button("X", ButtonSize))
+	{
+		Value.x = ResetValue;
+	}
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	ImGui::DragFloat("##X", &Value.x, 0.01f);
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+
+	// Y
+	ImGui::PushStyleColor(ImGuiCol_Button,			ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered,	ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive,	ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
+	if (ImGui::Button("Y", ButtonSize))
+	{
+		Value.y = ResetValue;
+	}
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	ImGui::DragFloat("##Y", &Value.y, 0.01f);
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+
+	// Z
+	ImGui::PushStyleColor(ImGuiCol_Button,			ImVec4(0.1f, 0.25f, 0.8f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered,	ImVec4(0.2f, 0.35f, 0.9f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive,	ImVec4(0.1f, 0.25f, 0.8f, 1.0f));
+	if (ImGui::Button("Z", ButtonSize))
+	{
+		Value.z = ResetValue;
+	}
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	ImGui::DragFloat("##Z", &Value.z, 0.01f);
+	ImGui::PopItemWidth();
+
+	// Reset
+	ImGui::PopStyleVar();
+	ImGui::PopStyleVar();
+	ImGui::Columns(1);
+	ImGui::PopID();
+}
+
+/*
 * DrawDebugData
 */
+
 static void DrawDebugData()
 {
 	static std::string AdapterName = RenderingAPI::Get().GetAdapterName();
@@ -42,6 +119,7 @@ static void DrawDebugData()
 /*
 * MenuBar
 */
+
 static void DrawMenu()
 {
 	DebugUI::DrawUI([]
@@ -88,7 +166,7 @@ static void DrawSideWindow()
 {
 	DebugUI::DrawUI([]
 	{
-		constexpr UInt32 Width = 450;
+		constexpr UInt32 Width = 500;
 
 		WindowShape WindowShape;
 		Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
@@ -138,6 +216,7 @@ static void DrawSideWindow()
 /*
 * DrawRenderSettings
 */
+
 static void DrawRenderSettings()
 {
 	ImGui::BeginChild("RendererInfo");
@@ -312,15 +391,14 @@ static void DrawRenderSettings()
 /*
 * DrawSceneInfo
 */
+
 static void DrawSceneInfo()
 {
-	constexpr Float Width = 400.0f;
+	constexpr Float Width = 450.0f;
 
 	ImGui::Spacing();
 	ImGui::Text("Current Scene");
 	ImGui::Separator();
-
-	ImGui::Indent();
 
 	WindowShape WindowShape;
 	Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
@@ -336,13 +414,43 @@ static void DrawSceneInfo()
 				// Transform
 				if (ImGui::TreeNode("Transform"))
 				{
-					const XMFLOAT3& Position = Actor->GetTransform().GetPosition();
+					XMFLOAT3 Translation = Actor->GetTransform().GetTranslation();
+					DrawFloat3Control("Translation", Translation);
+					Actor->GetTransform().SetTranslation(Translation);
 
-					Float Arr[3] = { Position.x, Position.y, Position.z };
-					if (ImGui::DragFloat3("Position", Arr, 0.5f))
+					XMFLOAT3 Scale0 = Actor->GetTransform().GetScale();
+					XMFLOAT3 Scale1 = Scale0;
+					DrawFloat3Control("Scale", Scale0, 1.0f);
+
+					ImGui::SameLine();
+
+					static bool Uniform = false;
+					ImGui::Checkbox("##Uniform", &Uniform);
+					if (ImGui::IsItemHovered())
 					{
-						Actor->GetTransform().SetPosition(Arr[0], Arr[1], Arr[2]);
+						ImGui::SetTooltip("Enable Uniform Scaling");
 					}
+
+					if (Uniform)
+					{
+						if (Scale1.x != Scale0.x)
+						{
+							Scale0.y = Scale0.x;
+							Scale0.z = Scale0.x;
+						}
+						else if (Scale1.y != Scale0.y)
+						{
+							Scale0.x = Scale0.y;
+							Scale0.z = Scale0.y;
+						}
+						else if (Scale1.z != Scale0.z)
+						{
+							Scale0.x = Scale0.z;
+							Scale0.y = Scale0.z;
+						}
+					}
+
+					Actor->GetTransform().SetScale(Scale0);
 
 					ImGui::TreePop();
 				}
@@ -354,7 +462,6 @@ static void DrawSceneInfo()
 					if (ImGui::TreeNode("MeshComponent"))
 					{
 						const XMFLOAT3& Color = MComponent->Material->GetMaterialProperties().Albedo;
-
 						Float Arr[3] = { Color.x, Color.y, Color.z };
 						if (ImGui::ColorEdit3("Albedo", Arr))
 						{
@@ -412,7 +519,7 @@ static void DrawSceneInfo()
 
 					const XMFLOAT3& Position = CurrentPointLight->GetPosition();
 					Float Arr2[3] = { Position.x, Position.y, Position.z };
-					if (ImGui::DragFloat3("Position", Arr2, 0.5f))
+					if (ImGui::DragFloat3("Translation", Arr2, 0.5f))
 					{
 						CurrentPointLight->SetPosition(Arr2[0], Arr2[1], Arr2[2]);
 					}
@@ -516,7 +623,7 @@ static void DrawSceneInfo()
 
 					XMFLOAT3 Position	= CurrentDirectionalLight->GetShadowMapPosition();
 					Float* PosArr		= reinterpret_cast<Float*>(&Position);
-					ImGui::InputFloat3("Position", PosArr, 2, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+					ImGui::InputFloat3("Translation", PosArr, 2, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
 
 					ImGui::PopItemWidth();
 					ImGui::PushItemWidth(100.0f);
@@ -565,6 +672,7 @@ static void DrawSceneInfo()
 /*
 * Tick
 */
+
 void Editor::Tick()
 {
 	DrawMenu();

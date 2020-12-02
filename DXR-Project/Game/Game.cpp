@@ -98,7 +98,7 @@ bool Game::Initialize()
 		for (UInt32 x = 0; x < SphereCountX; x++)
 		{
 			NewActor = new Actor();
-			NewActor->GetTransform().SetPosition(StartPositionX + (x * SphereOffset), 8.0f + StartPositionY + (y * SphereOffset), 0.0f);
+			NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 8.0f + StartPositionY + (y * SphereOffset), 0.0f);
 
 			NewActor->SetDebugName("Sphere[" + std::to_string(SphereIndex) + "]");
 			SphereIndex++;
@@ -133,7 +133,7 @@ bool Game::Initialize()
 	CurrentScene->AddActor(NewActor);
 
 	NewActor->SetDebugName("Cube");
-	NewActor->GetTransform().SetPosition(0.0f, 2.0f, -2.0f);
+	NewActor->GetTransform().SetTranslation(0.0f, 2.0f, -2.0f);
 
 	MatProperties.AO			= 1.0f;
 	MatProperties.Metallic		= 1.0f;

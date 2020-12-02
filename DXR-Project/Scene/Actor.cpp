@@ -67,29 +67,29 @@ void Actor::SetDebugName(const std::string& InDebugName)
 
 Transform::Transform()
 	: Matrix()
-	, Position(0.0f, 0.0f, 0.0f)
+	, Translation(0.0f, 0.0f, 0.0f)
 	, Scale(1.0f, 1.0f, 1.0f)
 {
 	CalculateMatrix();
 }
 
-void Transform::SetPosition(Float X, Float Y, Float Z)
+void Transform::SetTranslation(Float x, Float y, Float z)
 {
-	XMVECTOR XmPosition = XMVectorSet(X, Y, Z, 0.0f);
-	XMStoreFloat3(&Position, XmPosition);
+	XMVECTOR XmPosition = XMVectorSet(x, y, z, 0.0f);
+	XMStoreFloat3(&Translation, XmPosition);
 
 	CalculateMatrix();
 }
 
-void Transform::SetPosition(const XMFLOAT3& InPosition)
+void Transform::SetTranslation(const XMFLOAT3& InPosition)
 {
-	Position = InPosition;
+	Translation = InPosition;
 	CalculateMatrix();
 }
 
-void Transform::SetScale(Float X, Float Y, Float Z)
+void Transform::SetScale(Float x, Float y, Float z)
 {
-	XMVECTOR XmScale = XMVectorSet(X, Y, Z, 0.0f);
+	XMVECTOR XmScale = XMVectorSet(x, y, z, 0.0f);
 	XMStoreFloat3(&Scale, XmScale);
 
 	CalculateMatrix();
@@ -103,9 +103,9 @@ void Transform::SetScale(const XMFLOAT3& InScale)
 
 void Transform::CalculateMatrix()
 {
-	XMVECTOR XmPosition = XMLoadFloat3(&Position);
-	XMVECTOR XmScale	= XMLoadFloat3(&Scale);
+	XMVECTOR XmTranslation	= XMLoadFloat3(&Translation);
+	XMVECTOR XmScale		= XMLoadFloat3(&Scale);
 	
-	XMMATRIX XmMatrix = XMMatrixMultiply(XMMatrixScalingFromVector(XmScale), XMMatrixTranslationFromVector(XmPosition));
+	XMMATRIX XmMatrix = XMMatrixMultiply(XMMatrixScalingFromVector(XmScale), XMMatrixTranslationFromVector(XmTranslation));
 	XMStoreFloat4x4(&Matrix, XMMatrixTranspose(XmMatrix));
 }
