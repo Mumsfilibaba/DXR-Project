@@ -580,7 +580,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		SSAOSettings.ViewProjection		= CurrentScene.GetCamera()->GetProjectionMatrix();
 		SSAOSettings.ScreenSize			= XMFLOAT2(Float(Width), Float(Height));
 		SSAOSettings.NoiseSize			= XMFLOAT2(4.0f, 4.0f);
-		SSAOSettings.Radius				= 0.5f;
+		SSAOSettings.Radius				= SSAORadius;
 
 		CommandList->SetComputeRootSignature(SSAORootSignature->GetRootSignature());
 		CommandList->SetComputeRootDescriptorTable(SSAODescriptorTable->GetGPUTableStartHandle(), 0);
@@ -3354,8 +3354,8 @@ bool Renderer::InitSSAO()
 			0.0f);
 
 		Float Scale = RandomFloats(Generator);
-		XmSample = XMVectorScale(XmSample, Scale);
 		XmSample = XMVector3Normalize(XmSample);
+		XmSample = XMVectorScale(XmSample, Scale);
 
 		Scale = Float(i) / 64.0f;
 		Scale = Math::Lerp(0.1f, 1.0f, Scale * Scale);

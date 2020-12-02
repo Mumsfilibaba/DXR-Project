@@ -300,6 +300,12 @@ static void DrawRenderSettings()
 		Renderer::Get()->SetSSAOEnable(Enabled);
 	}
 
+	Float Radius = Renderer::Get()->GetSSAORadius();
+	if (ImGui::SliderFloat("Radius: ", &Radius, 0.05f, 2.0f, "%.3f"))
+	{
+		Renderer::Get()->SetSSAORadius(Radius);
+	}
+
 	ImGui::EndChild();
 }
 

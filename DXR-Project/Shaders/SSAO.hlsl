@@ -39,7 +39,7 @@ void Main(ComputeShaderInput Input)
 	
 	const float2 NoiseScale = ScreenSize / NoiseSize;
 	float3 NoiseVec	= Noise.SampleLevel(NoiseSampler, TexCoords * NoiseScale, 0);
-	NoiseVec = NoiseVec * 2.0f - 1.0f;
+	NoiseVec = normalize(NoiseVec * 2.0f - 1.0f);
 	
 	const float3 Tangent	= normalize(NoiseVec - Normal * dot(NoiseVec, Normal));
 	const float3 Bitangent	= cross(Normal, Tangent);
@@ -48,19 +48,19 @@ void Main(ComputeShaderInput Input)
 	float Occlusion = 0.0f;
 	for (int i = 0; i < KERNEL_SIZE; i++)
 	{
-		float3 SamplePos = normalize(mul(Samples[i], TBN));
+		float3 SamplePos = mul(Samples[i], TBN);
 		SamplePos = Position + (SamplePos * Radius);
 			
 		float4 Offset = float4(SamplePos, 1.0f);
 		Offset		= mul(Offset, Projection);
 		Offset.xy	= Offset.xy / Offset.w;
-		Offset.xy	= (Offset.xy * float2(0.5f, 0.5)) + 0.5f;
+		Offset.xy	= (Offset.xy * float2(0.5f, -0.5)) + 0.5f;
 		
 		float Depth0 = GBufferDepth.SampleLevel(GBufferSampler, Offset.xy, 0);
 		Depth0 = ViewPositionFromDepth(Depth0, Offset.xy, ProjectionInv).z;
 		
-		const float RangeCheck = smoothstep(0.0f, 1.0f, Radius / abs(Depth0 - Position.z));
-		Occlusion += (Depth0 < SamplePos.z ? 1.0f : 0.0f) * RangeCheck;
+		const float RangeCheck = smoothstep(0.0f, 1.0f, Radius / abs(Position.z - Depth0));
+		Occlusion += (Depth0 >= SamplePos.z + 0.025f ? 0.0f : 1.0f) * RangeCheck;
 	}	
 	
 	Occlusion = 1.0f - (Occlusion / float(KERNEL_SIZE));

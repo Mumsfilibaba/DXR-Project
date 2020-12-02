@@ -64,6 +64,11 @@ public:
 	void SetFrustumCullEnable(bool Enabled);
 	void SetFXAAEnable(bool Enabled);
 	void SetSSAOEnable(bool Enabled);
+	
+	FORCEINLINE void SetSSAORadius(Float InSSAORadius)
+	{
+		SSAORadius = InSSAORadius;
+	}
 
 	FORCEINLINE bool IsDrawAABBsEnabled() const
 	{
@@ -93,6 +98,11 @@ public:
 	FORCEINLINE bool IsSSAOEnabled() const
 	{
 		return SSAOEnabled;
+	}
+
+	FORCEINLINE Float GetSSAORadius() const
+	{
+		return SSAORadius;
 	}
 
 	static void SetGlobalLightSettings(const LightSettings& InGlobalLightSettings);
@@ -217,8 +227,10 @@ private:
 	bool VSyncEnabled		= false;
 	bool FrustumCullEnabled	= true;
 	bool FXAAEnabled		= true;
-	bool SSAOEnabled		= true;
 	bool RayTracingEnabled	= false;
+
+	bool SSAOEnabled = true;
+	Float SSAORadius = 0.25f;
 
 	static LightSettings		GlobalLightSettings;
 	static TUniquePtr<Renderer> RendererInstance;
