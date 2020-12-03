@@ -92,11 +92,14 @@ bool D3D12SwapChain::Resize(UInt32 InWidth, UInt32 InHeight)
 		Width	= InWidth;
 		Height	= InHeight;
 
+		LOG_ERROR("[D3D12SwapChain]: Resize. Width=" + std::to_string(Width) + ", Height=" + std::to_string(Height));
+
 		RetriveSwapChainSurfaces();
 		return true;
 	}
 	else
 	{
+		LOG_WARNING("[D3D12SwapChain]: Resize FAILED");
 		return false;
 	}
 }

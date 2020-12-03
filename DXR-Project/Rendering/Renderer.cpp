@@ -15,6 +15,8 @@
 #include "D3D12/D3D12ComputePipelineState.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
+#include "Application/Events/EventQueue.h"
+
 #include <algorithm>
 
 /*
@@ -824,8 +826,17 @@ void Renderer::TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* InCommandLi
 	InCommandList->TransitionBarrier(ReflectionTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
 }
 
-void Renderer::OnResize(Int32 Width, Int32 Height)
+bool Renderer::OnEvent(const Event& Event)
 {
+	if (!IsOfEventType<WindowResizeEvent>(Event))
+	{
+		return false;
+	}
+
+	const WindowResizeEvent& ResizeEvent = EventCast<WindowResizeEvent>(Event);
+	const UInt32 Width	= ResizeEvent.GetWidth();
+	const UInt32 Height	= ResizeEvent.GetHeight();
+
 	WaitForPendingFrames();
 
 	RenderingAPI::Get().GetSwapChain()->Resize(Width, Height);
@@ -850,6 +861,8 @@ void Renderer::OnResize(Int32 Width, Int32 Height)
 	LightDescriptorTable->CopyDescriptors();
 
 	CurrentBackBufferIndex = RenderingAPI::Get().GetSwapChain()->GetCurrentBackBufferIndex();
+
+	return true;
 }
 
 void Renderer::SetPrePassEnable(bool Enabled)
@@ -1213,6 +1226,9 @@ bool Renderer::Initialize()
 	}
 
 	WriteShadowMapDescriptors();
+
+	// Register EventFunc
+	EventQueue::RegisterEventHandler(this, EEventCategory::EVENT_CATEGORY_WINDOW);
 
 	return true;
 }

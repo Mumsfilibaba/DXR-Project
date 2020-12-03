@@ -23,10 +23,9 @@ void DirectionalLight::SetRotation(const XMFLOAT3& InRotation)
 	CalculateMatrix();
 }
 
-void DirectionalLight::SetRotation(Float X, Float Y, Float Z)
+void DirectionalLight::SetRotation(Float x, Float y, Float z)
 {
-	Rotation = XMFLOAT3(X, Y, Z);
-	CalculateMatrix();
+	SetRotation(XMFLOAT3(x, y, z));
 }
 
 void DirectionalLight::SetLookAt(const XMFLOAT3& InLookAt)
@@ -35,10 +34,9 @@ void DirectionalLight::SetLookAt(const XMFLOAT3& InLookAt)
 	CalculateMatrix();
 }
 
-void DirectionalLight::SetLookAt(Float X, Float Y, Float Z)
+void DirectionalLight::SetLookAt(Float x, Float y, Float z)
 {
-	LookAt = XMFLOAT3(X, Y, Z);
-	CalculateMatrix();
+	SetLookAt(XMFLOAT3(x, y, z));
 }
 
 void DirectionalLight::SetShadowNearPlane(Float InShadowNearPlane)

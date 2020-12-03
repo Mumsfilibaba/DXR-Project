@@ -414,10 +414,28 @@ static void DrawSceneInfo()
 				// Transform
 				if (ImGui::TreeNode("Transform"))
 				{
+					// Transform
 					XMFLOAT3 Translation = Actor->GetTransform().GetTranslation();
 					DrawFloat3Control("Translation", Translation);
 					Actor->GetTransform().SetTranslation(Translation);
 
+					// Rotation
+					XMFLOAT3 Rotation = Actor->GetTransform().GetRotation();
+					Rotation = XMFLOAT3(
+						XMConvertToDegrees(Rotation.x),
+						XMConvertToDegrees(Rotation.y),
+						XMConvertToDegrees(Rotation.z));
+					
+					DrawFloat3Control("Rotation", Rotation);
+
+					Rotation = XMFLOAT3(
+						XMConvertToRadians(Rotation.x),
+						XMConvertToRadians(Rotation.y),
+						XMConvertToRadians(Rotation.z));
+
+					Actor->GetTransform().SetRotation(Rotation);
+
+					// Scale
 					XMFLOAT3 Scale0 = Actor->GetTransform().GetScale();
 					XMFLOAT3 Scale1 = Scale0;
 					DrawFloat3Control("Scale", Scale0, 1.0f);
@@ -461,31 +479,54 @@ static void DrawSceneInfo()
 				{
 					if (ImGui::TreeNode("MeshComponent"))
 					{
+						ImGui::Columns(2);
+						ImGui::SetColumnWidth(0, 100.0f);
+
+						// Albedo
+						ImGui::Text("Albedo");
+						ImGui::NextColumn();
+
 						const XMFLOAT3& Color = MComponent->Material->GetMaterialProperties().Albedo;
 						Float Arr[3] = { Color.x, Color.y, Color.z };
-						if (ImGui::ColorEdit3("Albedo", Arr))
+						if (ImGui::ColorEdit3("##Albedo", Arr))
 						{
 							MComponent->Material->SetAlbedo(Arr[0], Arr[1], Arr[2]);
 						}
 
+						// Roughness
+						ImGui::NextColumn();
+						ImGui::Text("Roughness");
+						ImGui::NextColumn();
+
 						Float Roughness = MComponent->Material->GetMaterialProperties().Roughness;
-						if (ImGui::SliderFloat("RoughnessMap", &Roughness, 0.01f, 1.0f, "%.2f"))
+						if (ImGui::SliderFloat("##Roughness", &Roughness, 0.01f, 1.0f, "%.2f"))
 						{
 							MComponent->Material->SetRoughness(Roughness);
 						}
 
+						// Metallic
+						ImGui::NextColumn();
+						ImGui::Text("Metallic");
+						ImGui::NextColumn();
+
 						Float Metallic = MComponent->Material->GetMaterialProperties().Metallic;
-						if (ImGui::SliderFloat("Metallic", &Metallic, 0.01f, 1.0f, "%.2f"))
+						if (ImGui::SliderFloat("##Metallic", &Metallic, 0.01f, 1.0f, "%.2f"))
 						{
 							MComponent->Material->SetMetallic(Metallic);
 						}
 
+						// AO
+						ImGui::NextColumn();
+						ImGui::Text("AO");
+						ImGui::NextColumn();
+
 						Float AO = MComponent->Material->GetMaterialProperties().AO;
-						if (ImGui::SliderFloat("Ambient Occlusion", &AO, 0.01f, 1.0f, "%.2f"))
+						if (ImGui::SliderFloat("##AO", &AO, 0.01f, 1.0f, "%.2f"))
 						{
 							MComponent->Material->SetAmbientOcclusion(AO);
 						}
 
+						ImGui::Columns(1);
 						ImGui::TreePop();
 					}
 				}
@@ -507,64 +548,106 @@ static void DrawSceneInfo()
 				PointLight* CurrentPointLight = Cast<PointLight>(CurrentLight);
 				if (ImGui::TreeNode("PointLight"))
 				{
-					ImGui::Text("Light Settings:");
-					ImGui::Separator();
+					const Float ColumnWidth = 150.0f;
 
-					const XMFLOAT3& Color = CurrentPointLight->GetColor();
-					Float Arr[3] = { Color.x, Color.y, Color.z };
-					if (ImGui::ColorEdit3("Color", Arr))
+					// Transform
+					if (ImGui::TreeNode("Transform"))
 					{
-						CurrentPointLight->SetColor(Arr[0], Arr[1], Arr[2]);
+						XMFLOAT3 Translation = CurrentPointLight->GetPosition();
+						DrawFloat3Control("Translation", Translation, 0.0f, ColumnWidth);
+						CurrentPointLight->SetPosition(Translation);
+						
+						ImGui::TreePop();
 					}
 
-					const XMFLOAT3& Position = CurrentPointLight->GetPosition();
-					Float Arr2[3] = { Position.x, Position.y, Position.z };
-					if (ImGui::DragFloat3("Translation", Arr2, 0.5f))
+					// Color
+					if (ImGui::TreeNode("Light Settings"))
 					{
-						CurrentPointLight->SetPosition(Arr2[0], Arr2[1], Arr2[2]);
+						ImGui::Columns(2);
+						ImGui::SetColumnWidth(0, ColumnWidth);
+
+						ImGui::Text("Color");
+						ImGui::NextColumn();
+
+						const XMFLOAT3& Color = CurrentPointLight->GetColor();
+						Float Arr[3] = { Color.x, Color.y, Color.z };
+						if (ImGui::ColorEdit3("##Color", Arr))
+						{
+							CurrentPointLight->SetColor(Arr[0], Arr[1], Arr[2]);
+						}
+
+						ImGui::NextColumn();
+						ImGui::Text("Intensity");
+						ImGui::NextColumn();
+
+						Float Intensity = CurrentPointLight->GetIntensity();
+						if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
+						{
+							CurrentPointLight->SetIntensity(Intensity);
+						}
+
+						ImGui::Columns(1);
+						ImGui::TreePop();
 					}
 
-					Float Intensity = CurrentPointLight->GetIntensity();
-					if (ImGui::SliderFloat("Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
+					// Shadow Settings
+					if (ImGui::TreeNode("Shadows"))
 					{
-						CurrentPointLight->SetIntensity(Intensity);
+						ImGui::Columns(2);
+						ImGui::SetColumnWidth(0, ColumnWidth);
+
+						// Bias
+						ImGui::Text("Shadow Bias");
+						ImGui::NextColumn();
+
+						Float ShadowBias = CurrentPointLight->GetShadowBias();
+						if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
+						{
+							CurrentPointLight->SetShadowBias(ShadowBias);
+						}
+
+						if (ImGui::IsItemHovered())
+						{
+							ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
+						}
+
+						// Max Shadow Bias
+						ImGui::NextColumn();
+						ImGui::Text("Max Shadow Bias");
+						ImGui::NextColumn();
+
+						Float MaxShadowBias = CurrentPointLight->GetMaxShadowBias();
+						if (ImGui::SliderFloat("##MaxShadowBias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
+						{
+							CurrentPointLight->SetMaxShadowBias(MaxShadowBias);
+						}
+
+						// Shadow Near Plane
+						ImGui::NextColumn();
+						ImGui::Text("Shadow Near Plane");
+						ImGui::NextColumn();
+
+						Float ShadowNearPlane = CurrentPointLight->GetShadowNearPlane();
+						if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.01f, 1.0f, "%0.2f"))
+						{
+							CurrentPointLight->SetShadowNearPlane(ShadowNearPlane);
+						}
+
+						// Shadow Far Plane
+						ImGui::NextColumn();
+						ImGui::Text("Shadow Far Plane");
+						ImGui::NextColumn();
+
+						Float ShadowFarPlane = CurrentPointLight->GetShadowFarPlane();
+						if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
+						{
+							CurrentPointLight->SetShadowFarPlane(ShadowFarPlane);
+						}
+
+						ImGui::Columns(1);
+						ImGui::TreePop();
 					}
 
-					ImGui::Text("ShadowMap Settings:");
-					ImGui::Separator();
-
-					ImGui::PushItemWidth(100.0f);
-
-					Float ShadowBias = CurrentPointLight->GetShadowBias();
-					if (ImGui::SliderFloat("Shadow Bias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
-					{
-						CurrentPointLight->SetShadowBias(ShadowBias);
-					}
-
-					if (ImGui::IsItemHovered())
-					{
-						ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
-					}
-
-					Float MaxShadowBias = CurrentPointLight->GetMaxShadowBias();
-					if (ImGui::SliderFloat("Max Shadow Bias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
-					{
-						CurrentPointLight->SetMaxShadowBias(MaxShadowBias);
-					}
-
-					Float ShadowNearPlane = CurrentPointLight->GetShadowNearPlane();
-					if (ImGui::SliderFloat("Shadow Near Plane", &ShadowNearPlane, 0.01f, 1.0f, "%0.2f"))
-					{
-						CurrentPointLight->SetShadowNearPlane(ShadowNearPlane);
-					}
-
-					Float ShadowFarPlane = CurrentPointLight->GetShadowFarPlane();
-					if (ImGui::SliderFloat("Shadow Far Plane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
-					{
-						CurrentPointLight->SetShadowFarPlane(ShadowFarPlane);
-					}
-
-					ImGui::PopItemWidth();
 					ImGui::TreePop();
 				}
 			}
@@ -573,91 +656,143 @@ static void DrawSceneInfo()
 				DirectionalLight* CurrentDirectionalLight = Cast<DirectionalLight>(CurrentLight);
 				if (ImGui::TreeNode("DirectionalLight"))
 				{
-					ImGui::Text("Light Settings:");
-					ImGui::Separator();
+					const Float ColumnWidth = 150.0f;
 
-					const XMFLOAT3& Color = CurrentDirectionalLight->GetColor();
-					Float Arr[3] = { Color.x, Color.y, Color.z };
-					if (ImGui::ColorEdit3("Color", Arr))
+					// Color
+					if (ImGui::TreeNode("Light Settings"))
 					{
-						CurrentDirectionalLight->SetColor(Arr[0], Arr[1], Arr[2]);
+						ImGui::Columns(2);
+						ImGui::SetColumnWidth(0, ColumnWidth);
+
+						ImGui::Text("Color");
+						ImGui::NextColumn();
+
+						const XMFLOAT3& Color = CurrentDirectionalLight->GetColor();
+						Float Arr[3] = { Color.x, Color.y, Color.z };
+						if (ImGui::ColorEdit3("##Color", Arr))
+						{
+							CurrentDirectionalLight->SetColor(Arr[0], Arr[1], Arr[2]);
+						}
+
+						ImGui::NextColumn();
+						ImGui::Text("Intensity");
+						ImGui::NextColumn();
+
+						Float Intensity = CurrentDirectionalLight->GetIntensity();
+						if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
+						{
+							CurrentDirectionalLight->SetIntensity(Intensity);
+						}
+
+						ImGui::Columns(1);
+						ImGui::TreePop();
 					}
 
-					const XMFLOAT3& Rotation = CurrentDirectionalLight->GetRotation();
-					Float Arr2[3] =
+					// Transform
+					if (ImGui::TreeNode("Transform"))
 					{
-						XMConvertToDegrees(Rotation.x),
-						XMConvertToDegrees(Rotation.y),
-						XMConvertToDegrees(Rotation.z)
-					};
+						XMFLOAT3 Rotation = CurrentDirectionalLight->GetRotation();
+						Rotation = XMFLOAT3(
+							XMConvertToDegrees(Rotation.x),
+							XMConvertToDegrees(Rotation.y),
+							XMConvertToDegrees(Rotation.z)
+						);
 
-					if (ImGui::DragFloat3("Rotation", Arr2, 1.0f, -90.0f, 90.0f, "%.2f"))
-					{
-						CurrentDirectionalLight->SetRotation(
-							XMConvertToRadians(Arr2[0]),
-							XMConvertToRadians(Arr2[1]),
-							XMConvertToRadians(Arr2[2]));
+						DrawFloat3Control("Rotation", Rotation, 0.0f, ColumnWidth);
+
+						Rotation = XMFLOAT3(
+							XMConvertToRadians(Rotation.x),
+							XMConvertToRadians(Rotation.y),
+							XMConvertToRadians(Rotation.z)
+						);
+
+						CurrentDirectionalLight->SetRotation(Rotation);
+
+						ImGui::Columns(2);
+						ImGui::SetColumnWidth(0, ColumnWidth);
+
+						ImGui::Text("Direction");
+						ImGui::NextColumn();
+
+						XMFLOAT3 Direction = CurrentDirectionalLight->GetDirection();
+						Float* DirArr = reinterpret_cast<Float*>(&Direction);
+						ImGui::InputFloat3("##Direction", DirArr, 2, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+
+						ImGui::Columns(1);
+						ImGui::TreePop();
 					}
 
-					XMFLOAT3 Direction	= CurrentDirectionalLight->GetDirection();
-					Float* DirArr		= reinterpret_cast<Float*>(&Direction);
-					ImGui::InputFloat3("Direction", DirArr, 2, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
-
-					Float Intensity = CurrentDirectionalLight->GetIntensity();
-					if (ImGui::SliderFloat("Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
+					// Shadow Settings
+					if (ImGui::TreeNode("Shadow Settings"))
 					{
-						CurrentDirectionalLight->SetIntensity(Intensity);
+						XMFLOAT3 LookAt = CurrentDirectionalLight->GetLookAt();
+						DrawFloat3Control("LookAt", LookAt, 0.0f, ColumnWidth);
+						CurrentDirectionalLight->SetLookAt(LookAt);
+
+						ImGui::Columns(2);
+						ImGui::SetColumnWidth(0, ColumnWidth);
+
+						// Read only translation
+						ImGui::Text("Translation");
+						ImGui::NextColumn();
+
+						XMFLOAT3 Position = CurrentDirectionalLight->GetShadowMapPosition();
+						Float* PosArr = reinterpret_cast<Float*>(&Position);
+						ImGui::InputFloat3("##Translation", PosArr, 2, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+
+						// Shadow Bias
+						ImGui::NextColumn();
+						ImGui::Text("Shadow Bias");
+						ImGui::NextColumn();
+
+						Float ShadowBias = CurrentDirectionalLight->GetShadowBias();
+						if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
+						{
+							CurrentDirectionalLight->SetShadowBias(ShadowBias);
+						}
+
+						if (ImGui::IsItemHovered())
+						{
+							ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
+						}
+
+						// Max Shadow Bias
+						ImGui::NextColumn();
+						ImGui::Text("Max Shadow Bias");
+						ImGui::NextColumn();
+
+						Float MaxShadowBias = CurrentDirectionalLight->GetMaxShadowBias();
+						if (ImGui::SliderFloat("##MaxShadowBias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
+						{
+							CurrentDirectionalLight->SetMaxShadowBias(MaxShadowBias);
+						}
+
+						// Shadow Near Plane
+						ImGui::NextColumn();
+						ImGui::Text("Shadow Near Plane");
+						ImGui::NextColumn();
+
+						Float ShadowNearPlane = CurrentDirectionalLight->GetShadowNearPlane();
+						if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.01f, 1.0f, "%.2f"))
+						{
+							CurrentDirectionalLight->SetShadowNearPlane(ShadowNearPlane);
+						}
+
+						// Shadow Far Plane 
+						ImGui::NextColumn();
+						ImGui::Text("Shadow Far Plane");
+						ImGui::NextColumn();
+
+						Float ShadowFarPlane = CurrentLight->GetShadowFarPlane();
+						if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 1000.0f, "%.1f"))
+						{
+							CurrentDirectionalLight->SetShadowFarPlane(ShadowFarPlane);
+						}
+
+						ImGui::Columns(1);
+						ImGui::TreePop();
 					}
 
-					ImGui::Text("ShadowMap Settings:");
-					ImGui::Separator();
-
-					ImGui::PushItemWidth(200.0f);
-
-					const XMFLOAT3& LookAt = CurrentDirectionalLight->GetLookAt();
-					Float Arr3[3] = { LookAt.x, LookAt.y, LookAt.z };
-					if (ImGui::DragFloat3("LookAt", Arr3, 0.5f))
-					{
-						CurrentDirectionalLight->SetLookAt(Arr3[0], Arr3[1], Arr3[2]);
-					}
-
-					XMFLOAT3 Position	= CurrentDirectionalLight->GetShadowMapPosition();
-					Float* PosArr		= reinterpret_cast<Float*>(&Position);
-					ImGui::InputFloat3("Translation", PosArr, 2, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
-
-					ImGui::PopItemWidth();
-					ImGui::PushItemWidth(100.0f);
-
-					Float ShadowBias = CurrentDirectionalLight->GetShadowBias();
-					if (ImGui::SliderFloat("Shadow Bias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
-					{
-						CurrentDirectionalLight->SetShadowBias(ShadowBias);
-					}
-
-					if (ImGui::IsItemHovered())
-					{
-						ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
-					}
-
-					Float MaxShadowBias = CurrentDirectionalLight->GetMaxShadowBias();
-					if (ImGui::SliderFloat("Max Shadow Bias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
-					{
-						CurrentDirectionalLight->SetMaxShadowBias(MaxShadowBias);
-					}
-
-					Float ShadowNearPlane = CurrentDirectionalLight->GetShadowNearPlane();
-					if (ImGui::SliderFloat("Shadow Near Plane", &ShadowNearPlane, 0.01f, 1.0f, "%.2f"))
-					{
-						CurrentDirectionalLight->SetShadowNearPlane(ShadowNearPlane);
-					}
-
-					Float ShadowFarPlane = CurrentLight->GetShadowFarPlane();
-					if (ImGui::SliderFloat("Shadow Far Plane", &ShadowFarPlane, 1.0f, 1000.0f, "%.1f"))
-					{
-						CurrentDirectionalLight->SetShadowFarPlane(ShadowFarPlane);
-					}
-
-					ImGui::PopItemWidth();
 					ImGui::TreePop();
 				}
 			}

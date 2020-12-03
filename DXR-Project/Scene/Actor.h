@@ -42,14 +42,22 @@ public:
 	void SetScale(Float x, Float y, Float z);
 	void SetScale(const XMFLOAT3& InScale);
 
+	void SetRotation(Float x, Float y, Float z);
+	void SetRotation(const XMFLOAT3& InRotation);
+
+	FORCEINLINE const XMFLOAT3& GetTranslation() const
+	{
+		return Translation;
+	}
+
 	FORCEINLINE const XMFLOAT3& GetScale() const
 	{
 		return Scale;
 	}
 
-	FORCEINLINE const XMFLOAT3& GetTranslation() const
+	FORCEINLINE const XMFLOAT3& GetRotation() const
 	{
-		return Translation;
+		return Rotation;
 	}
 
 	FORCEINLINE const XMFLOAT4X4& GetMatrix() const
@@ -64,6 +72,7 @@ private:
 	XMFLOAT4X4	Matrix;
 	XMFLOAT3	Translation;
 	XMFLOAT3	Scale;
+	XMFLOAT3	Rotation;
 };
 
 /*

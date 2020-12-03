@@ -26,6 +26,9 @@
 
 #include "RenderingCore/RenderingAPI.h"
 
+#include "Application/Events/EventQueue.h"
+#include "Application/Events/WindowEvent.h"
+
 class D3D12Texture;
 class D3D12GraphicsPipelineState;
 class D3D12RayTracingPipelineState;
@@ -48,7 +51,7 @@ struct LightSettings
 * Renderer
 */
 
-class Renderer
+class Renderer : public IEventHandler
 {
 public:
 	Renderer();
@@ -56,7 +59,7 @@ public:
 	
 	void Tick(const Scene& CurrentScene);
 	
-	void OnResize(Int32 Width, Int32 Height);
+	bool OnEvent(const Event& Event);
 
 	void SetPrePassEnable(bool Enabled);
 	void SetVerticalSyncEnable(bool Enabled);

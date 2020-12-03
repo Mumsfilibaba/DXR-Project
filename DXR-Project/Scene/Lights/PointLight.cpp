@@ -21,10 +21,9 @@ void PointLight::SetPosition(const XMFLOAT3& InPosition)
 	CalculateMatrices();
 }
 
-void PointLight::SetPosition(Float X, Float Y, Float Z)
+void PointLight::SetPosition(Float x, Float y, Float z)
 {
-	Position = XMFLOAT3(X, Y, Z);
-	CalculateMatrices();
+	SetPosition(XMFLOAT3(x, y, z));
 }
 
 void PointLight::SetShadowNearPlane(Float InShadowNearPlane)

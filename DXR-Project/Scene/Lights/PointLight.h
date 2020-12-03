@@ -27,7 +27,7 @@ public:
 	~PointLight();
 
 	void SetPosition(const XMFLOAT3& InPosition);
-	void SetPosition(Float X, Float Y, Float Z);
+	void SetPosition(Float x, Float y, Float z);
 
 	void SetShadowNearPlane(Float InShadowNearPlane);
 	void SetShadowFarPlane(Float InShadowFarPlane);

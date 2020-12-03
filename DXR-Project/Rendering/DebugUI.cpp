@@ -47,6 +47,7 @@ static ImGuiState GlobalImGuiState;
 /*
 * Helper Functions
 */
+
 static UInt32 GetMouseButtonIndex(EMouseButton Button)
 {
 	switch (Button)
@@ -63,6 +64,7 @@ static UInt32 GetMouseButtonIndex(EMouseButton Button)
 /*
 * DebugUI
 */
+
 bool DebugUI::Initialize()
 {
 	// Create context
@@ -76,6 +78,7 @@ bool DebugUI::Initialize()
 	ImGuiIO& IO = ImGui::GetIO();
 	IO.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;	// We can honor GetMouseCursor() values (optional)
 	IO.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;	// We can honor IO.WantSetMousePos requests (optional, rarely used)
+	IO.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 	IO.BackendPlatformName = "Windows";
 
 #ifdef WIN32
@@ -451,9 +454,6 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	// Get deltatime
 	GlobalImGuiState.FrameClock.Tick();
 
-	Timestamp Delta = GlobalImGuiState.FrameClock.GetDeltaTime();
-	IO.DeltaTime = static_cast<Float>(Delta.AsSeconds());
-
 	// Set Mouseposition
 	TSharedRef<GenericWindow> Window = Application::Get().GetMainWindow();
 	if (IO.WantSetMousePos)
@@ -465,14 +465,17 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	WindowShape CurrentWindowShape;
 	Window->GetWindowShape(CurrentWindowShape);
 
-	IO.DisplaySize = ImVec2(Float(CurrentWindowShape.Width), Float(CurrentWindowShape.Height));
+	Timestamp Delta = GlobalImGuiState.FrameClock.GetDeltaTime();
+	IO.DeltaTime				= static_cast<Float>(Delta.AsSeconds());
+	IO.DisplaySize				= ImVec2(Float(CurrentWindowShape.Width), Float(CurrentWindowShape.Height));
+	IO.DisplayFramebufferScale	= ImVec2(1.0f, 1.0f);
 
 	// Get Mouseposition
-	Int32 X = 0;
-	Int32 Y = 0;
-	Application::Get().GetCursorPos(Window, X, Y);
+	Int32 x = 0;
+	Int32 y = 0;
+	Application::Get().GetCursorPos(Window, x, y);
 
-	IO.MousePos = ImVec2(static_cast<Float>(X), static_cast<Float>(Y));
+	IO.MousePos = ImVec2(static_cast<Float>(x), static_cast<Float>(y));
 
 	// Check modifer keys
 	ModifierKeyState KeyState = Application::Get().GetModifierKeyState();
@@ -608,7 +611,7 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	CommandList->SetGraphicsRoot32BitConstants(&VertexConstantBuffer, 16, 0, 0);
 
 	// Setup BlendFactor
-	const Float BlendFactor[4] = { 0.f, 0.f, 0.f, 0.f };
+	const Float BlendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	CommandList->OMSetBlendFactor(BlendFactor);
 
 	// Upload vertex/index data into a single contiguous GPU buffer
