@@ -34,12 +34,11 @@ void Main(ComputeShaderInput Input)
 	
 	const float2 TexCoords	= float2(OutputTexCoords) / ScreenSize;
 	const float  Depth0		= GBufferDepth.SampleLevel(GBufferSampler, TexCoords, 0);
-    float3 ViewPosition		= WorldPositionFromDepth(Depth0, TexCoords, ProjectionInv);
+    float3 ViewPosition		= PositionFromDepth(Depth0, TexCoords, ProjectionInv);
 	
 	float3 WorldNormal	= GBufferNormals.SampleLevel(GBufferSampler, TexCoords, 0).rgb;
 	WorldNormal			= UnpackNormal(WorldNormal);
-    float3 ViewNormal = normalize(mul(float4(WorldNormal, 0.0f), ViewInvTranspose).xyz);
-    ViewNormal.z = -ViewNormal.z;
+    float3 ViewNormal = WorldNormal;//    normalize(mul(float4(WorldNormal, 0.0f), ViewInvTranspose).xyz);
 	
 	const float2 NoiseScale = ScreenSize / NoiseSize;
 	const float3 NoiseVec	= normalize(Noise.SampleLevel(NoiseSampler, TexCoords * NoiseScale, 0));
@@ -55,11 +54,11 @@ void Main(ComputeShaderInput Input)
 		SamplePos = ViewPosition + (SamplePos * Radius);
 			
 		float4 Offset = mul(float4(SamplePos, 1.0f), Projection);
-		Offset.xyz	= Offset.xyz / Offset.w;
-		Offset.xy	= (Offset.xy * float2(0.5f, -0.5f)) + 0.5f;
+		Offset.xy = Offset.xy / Offset.w;
+		Offset.xy = (Offset.xy * float2(0.5f, -0.5f)) + 0.5f;
 		
 		float Depth1	= GBufferDepth.SampleLevel(GBufferSampler, Offset.xy, 0);
-        float3 DepthPos = WorldPositionFromDepth(Depth1, Offset.xy, ProjectionInv);
+        float3 DepthPos = PositionFromDepth(Depth1, Offset.xy, ProjectionInv);
         Depth1 = DepthPos.z;
 		
         const float RangeCheck = smoothstep(0.0f, 1.0f, Radius / abs(ViewPosition.z - Depth1));

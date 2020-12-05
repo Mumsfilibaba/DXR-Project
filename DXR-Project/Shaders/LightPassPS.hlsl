@@ -185,7 +185,6 @@ static const float3 SampleOffsetDirections[OFFSET_SAMPLES] =
 	float3(0.0f, 1.0f,  1.0f),	float3( 0.0f, -1.0f, 1.0f),		float3( 0.0f, -1.0f, -1.0f),	float3( 0.0f, 1.0f, -1.0f)
 };
 
-
 float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, float3 InNormal, float MaxShadowBias, float MinShadowBias, float FarPlane)
 {
 	float3 DirToLight	= WorldPosition - LightPosition;
@@ -220,7 +219,7 @@ float4 Main(PSInput Input) : SV_TARGET
 		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 	}
 	
-	float3 WorldPosition = WorldPositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
+    float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
 	float3 SampledAlbedo = Albedo.Sample(GBufferSampler, TexCoord).rgb;
 #ifdef RAYTRACING_ENABLED
 	float3 SampledReflection	= DXRReflection.Sample(LUTSampler, TexCoord).rgb;
@@ -306,5 +305,6 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	float3	FinalColor	= ApplyGammaCorrectionAndTonemapping(Color);
 	float	Luminance	= CalculateLuminance(FinalColor);
-    return float4(ToFloat3(ScreenSpaceAO), Luminance);
+    //return float4(ToFloat3(ScreenSpaceAO), Luminance);
+    return float4(FinalColor, Luminance);
 }

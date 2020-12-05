@@ -290,8 +290,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		Float		FarPlane;
 	} PerLightBuffer;
 
-	D3D12_VERTEX_BUFFER_VIEW VBO = { };
-	D3D12_INDEX_BUFFER_VIEW IBV = { };
+	D3D12_VERTEX_BUFFER_VIEW	VBO = { };
+	D3D12_INDEX_BUFFER_VIEW		IBV = { };
 	for (Light* Light : CurrentScene.GetLights())
 	{
 		if (IsSubClassOf<DirectionalLight>(Light))
@@ -434,15 +434,26 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Update camerabuffer
 	struct CameraBufferDesc
 	{
-		XMFLOAT4X4	ViewProjection;
-		XMFLOAT3	Position;
-		Float		Padding;
-		XMFLOAT4X4	ViewProjectionInv;
+		XMFLOAT4X4 ViewProjection;
+		XMFLOAT4X4 View;
+		XMFLOAT4X4 Projection;
+		XMFLOAT4X4 ProjectionInv;
+		XMFLOAT4X4 ViewProjectionInv;
+		XMFLOAT3 Position;
+		Float NearPlane;
+		Float FarPlane;
+		Float AspectRatio;
 	} CamBuff;
 
 	CamBuff.ViewProjection		= CurrentScene.GetCamera()->GetViewProjectionMatrix();
+	CamBuff.View				= CurrentScene.GetCamera()->GetViewMatrix();
+	CamBuff.Projection			= CurrentScene.GetCamera()->GetProjectionMatrix();
+	CamBuff.ProjectionInv		= CurrentScene.GetCamera()->GetProjectionInverseMatrix();
 	CamBuff.ViewProjectionInv	= CurrentScene.GetCamera()->GetViewProjectionInverseMatrix();
 	CamBuff.Position			= CurrentScene.GetCamera()->GetPosition();
+	CamBuff.NearPlane			= CurrentScene.GetCamera()->GetNearPlane();
+	CamBuff.FarPlane			= CurrentScene.GetCamera()->GetFarPlane();
+	CamBuff.AspectRatio			= CurrentScene.GetCamera()->GetAspectRatio();
 
 	CommandList->TransitionBarrier(CameraBuffer.Get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	CommandList->UploadBufferData(CameraBuffer.Get(), 0, &CamBuff, sizeof(CameraBufferDesc));
@@ -973,7 +984,7 @@ bool Renderer::Initialize()
 
 	// Create CameraBuffer
 	BufferProperties BufferProps = { };
-	BufferProps.SizeInBytes		= 256; // Must be multiple of 256
+	BufferProps.SizeInBytes		= 512; // Must be multiple of 256
 	BufferProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
 	BufferProps.InitalState		= D3D12_RESOURCE_STATE_COMMON;
 	BufferProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;

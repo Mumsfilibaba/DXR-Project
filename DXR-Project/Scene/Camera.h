@@ -67,6 +67,11 @@ public:
 		return FarPlane;
 	}
 
+	FORCEINLINE Float GetAspectRatio() const
+	{
+		return AspectRatio;
+	}
+
 private:
 	XMFLOAT4X4	View;
 	XMFLOAT4X4	ViewInverseTranspose;
@@ -82,4 +87,5 @@ private:
 	XMFLOAT3	Up;
 	Float		NearPlane;
 	Float		FarPlane;
+	Float		AspectRatio;
 };

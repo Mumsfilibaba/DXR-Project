@@ -26,10 +26,15 @@ static const float3 LightColor		= float3(400.0f, 400.0f, 400.0f);
 
 struct Camera
 {
-	float4x4	ViewProjection;
-	float3		Position;
-	float		Padding;
-	float4x4	ViewProjectionInverse;
+	float4x4 ViewProjection;
+	float4x4 View;
+	float4x4 Projection;
+	float4x4 ProjectionInverse;
+	float4x4 ViewProjectionInverse;
+	float3	Position;
+	float	NearPlane;
+	float	FarPlane;
+	float	AspectRatio;
 };
 
 struct PointLight
@@ -84,7 +89,7 @@ struct ComputeShaderInput
 * Position Helper
 */
 
-float3 WorldPositionFromDepth(float Depth, float2 TexCoord, float4x4 ViewProjectionInverse)
+float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ViewProjectionInverse)
 {
 	float z = Depth;
 	float x = TexCoord.x * 2.0f - 1.0f;
@@ -94,18 +99,6 @@ float3 WorldPositionFromDepth(float Depth, float2 TexCoord, float4x4 ViewProject
 	float4 WorldPosition	= mul(ProjectedPos, ViewProjectionInverse);
 	
 	return WorldPosition.xyz / WorldPosition.w;
-}
-
-float3 ViewPositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInverse)
-{
-	float z = Depth;
-	float x = TexCoord.x * 2.0f - 1.0f;
-	float y = (1.0f - TexCoord.y) * 2.0f - 1.0f;
-
-	float4 ProjectedPos = float4(x, y, z, 1.0f);
-	float4 ViewPosition = mul(ProjectedPos, ProjectionInverse);
-	
-	return ViewPosition.xyz / ViewPosition.w;
 }
 
 /*
