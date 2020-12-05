@@ -50,7 +50,7 @@ public:
 
 	FORCEINLINE bool IsRayTracingSupported() const
 	{
-		return false;// RayTracingSupported;
+		return RayTracingSupported;
 	}
 
 	FORCEINLINE D3D12OfflineDescriptorHeap* GetGlobalResourceDescriptorHeap() const

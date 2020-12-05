@@ -230,7 +230,7 @@ private:
 	bool VSyncEnabled		= false;
 	bool FrustumCullEnabled	= true;
 	bool FXAAEnabled		= true;
-	bool RayTracingEnabled	= false;
+	bool RayTracingEnabled	= true;
 
 	bool SSAOEnabled = true;
 	Float SSAORadius = 0.25f;

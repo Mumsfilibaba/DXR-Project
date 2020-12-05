@@ -59,7 +59,7 @@ VSOutput VSMain(VSInput Input)
 	VSOutput Output;
 	
 	float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformBuffer.Transform).xyz);
-	Output.Normal = Normal;
+    Output.Normal = Normal;
 	
 #ifdef NORMAL_MAPPING_ENABLED
 	float3 Tangent	= normalize(mul(float4(Input.Tangent, 0.0f), TransformBuffer.Transform).xyz);

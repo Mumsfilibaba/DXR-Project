@@ -554,6 +554,52 @@ void Renderer::Tick(const Scene& CurrentScene)
 		RayTracingGeometryInstances.Clear();
 	}
 
+	// SSAO
+	CommandList->TransitionBarrier(SSAOBuffer.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	CommandList->ClearUnorderedAccessViewFloat(
+		SSAODescriptorTable->GetGPUTableHandle(3),
+		SSAOBuffer->GetUnorderedAccessView(0).Get(),
+		WhiteColor);
+
+	if (SSAOEnabled)
+	{
+		struct SSAOSettings
+		{
+			XMFLOAT4X4	ProjectionInv;
+			XMFLOAT4X4	Projection;
+			XMFLOAT4X4	View;
+			XMFLOAT2	ScreenSize;
+			XMFLOAT2	NoiseSize;
+			Float		Radius;
+		} SSAOSettings;
+
+		const UInt32 Width	= RenderingAPI::Get().GetSwapChain()->GetWidth();
+		const UInt32 Height	= RenderingAPI::Get().GetSwapChain()->GetHeight();
+
+		SSAOSettings.ProjectionInv	= CurrentScene.GetCamera()->GetProjectionInverseMatrix();
+		SSAOSettings.Projection		= CurrentScene.GetCamera()->GetProjectionMatrix();
+		SSAOSettings.View			= CurrentScene.GetCamera()->GetViewInverseTransposeMatrix();
+		SSAOSettings.ScreenSize		= XMFLOAT2(Float(Width), Float(Height));
+		SSAOSettings.NoiseSize		= XMFLOAT2(4.0f, 4.0f);
+		SSAOSettings.Radius			= SSAORadius;
+
+		CommandList->SetComputeRootSignature(SSAORootSignature->GetRootSignature());
+		CommandList->SetComputeRootDescriptorTable(SSAODescriptorTable->GetGPUTableStartHandle(), 0);
+		CommandList->SetComputeRoot32BitConstants(&SSAOSettings, 53, 0, 1);
+
+		CommandList->SetPipelineState(SSAOPSO->GetPipeline());
+
+		const UInt32 DispatchWidth = Math::AlignUp<UInt32>(Width, 16) / 16;
+		const UInt32 DispatchHeight = Math::AlignUp<UInt32>(Height, 16) / 16;
+		CommandList->Dispatch(DispatchWidth, DispatchHeight, 1);
+
+		CommandList->UnorderedAccessBarrier(SSAOBuffer.Get());
+	}
+
+	CommandList->TransitionBarrier(SSAOBuffer.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
 	// Render to final output
 	CommandList->TransitionBarrier(FinalTarget.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -563,49 +609,6 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	CommandList->RSSetViewports(&ViewPort, 1);
 	CommandList->RSSetScissorRects(&ScissorRect, 1);
-
-	// SSAO
-	CommandList->TransitionBarrier(SSAOBuffer.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-	const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	CommandList->ClearUnorderedAccessViewFloat(
-		SSAODescriptorTable->GetGPUTableHandle(3), 
-		SSAOBuffer->GetUnorderedAccessView(0).Get(), 
-		WhiteColor);
-
-	if (SSAOEnabled)
-	{
-		struct SSAOSettings
-		{
-			XMFLOAT4X4	ViewProjectionInv;
-			XMFLOAT4X4	ViewProjection;
-			XMFLOAT2	ScreenSize;
-			XMFLOAT2	NoiseSize;
-			Float		Radius;
-		} SSAOSettings;
-
-		const UInt32 Width	= RenderingAPI::Get().GetSwapChain()->GetWidth();
-		const UInt32 Height	= RenderingAPI::Get().GetSwapChain()->GetHeight();
-		SSAOSettings.ViewProjectionInv	= CurrentScene.GetCamera()->GetProjectionInverseMatrix();
-		SSAOSettings.ViewProjection		= CurrentScene.GetCamera()->GetProjectionMatrix();
-		SSAOSettings.ScreenSize			= XMFLOAT2(Float(Width), Float(Height));
-		SSAOSettings.NoiseSize			= XMFLOAT2(4.0f, 4.0f);
-		SSAOSettings.Radius				= SSAORadius;
-
-		CommandList->SetComputeRootSignature(SSAORootSignature->GetRootSignature());
-		CommandList->SetComputeRootDescriptorTable(SSAODescriptorTable->GetGPUTableStartHandle(), 0);
-		CommandList->SetComputeRoot32BitConstants(&SSAOSettings, 37, 0, 1);
-		
-		CommandList->SetPipelineState(SSAOPSO->GetPipeline());
-	
-		const UInt32 DispatchWidth	= Math::AlignUp<UInt32>(Width, 16) / 16;
-		const UInt32 DispatchHeight	= Math::AlignUp<UInt32>(Height, 16) / 16;
-		CommandList->Dispatch(DispatchWidth, DispatchHeight, 1);
-
-		CommandList->UnorderedAccessBarrier(SSAOBuffer.Get());
-	}
-
-	CommandList->TransitionBarrier(SSAOBuffer.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// Setup LightPass
 	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -3212,7 +3215,7 @@ bool Renderer::InitSSAO()
 		TextureProps.Height			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
 		TextureProps.MipLevels		= 1;
 		TextureProps.ArrayCount		= 1;
-		TextureProps.Format			= DXGI_FORMAT_R16_FLOAT;
+		TextureProps.Format			= DXGI_FORMAT_R32_FLOAT;
 		TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 		TextureProps.SampleCount	= 1;
 
@@ -3298,7 +3301,7 @@ bool Renderer::InitSSAO()
 
 	// Settings
 	Parameters[1].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	Parameters[1].Constants.Num32BitValues	= 37;
+	Parameters[1].Constants.Num32BitValues	= 53;
 	Parameters[1].Constants.RegisterSpace	= 0;
 	Parameters[1].Constants.ShaderRegister	= 0;
 	Parameters[1].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
@@ -3315,7 +3318,7 @@ bool Renderer::InitSSAO()
 	StaticSamplers[0].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
 	StaticSamplers[0].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 	StaticSamplers[0].MinLOD			= 0.0f;
-	StaticSamplers[0].MaxLOD			= 0.0f;
+	StaticSamplers[0].MaxLOD			= FLT_MAX;
 	StaticSamplers[0].ShaderRegister	= 0;
 	StaticSamplers[0].RegisterSpace		= 0;
 	StaticSamplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
@@ -3330,7 +3333,7 @@ bool Renderer::InitSSAO()
 	StaticSamplers[1].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
 	StaticSamplers[1].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 	StaticSamplers[1].MinLOD			= 0.0f;
-	StaticSamplers[1].MaxLOD			= 0.0f;
+	StaticSamplers[1].MaxLOD			= FLT_MAX;
 	StaticSamplers[1].ShaderRegister	= 1;
 	StaticSamplers[1].RegisterSpace		= 0;
 	StaticSamplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
@@ -3393,15 +3396,11 @@ bool Renderer::InitSSAO()
 	}
 
 	// Generate noise
-	LOG_INFO("SSAO Noise:");
-
 	TArray<Float16> SSAONoise;
 	for (UInt32 i = 0; i < 16; i++)
 	{
 		const Float x = RandomFloats(Generator) * 2.0f - 1.0f;
 		const Float y = RandomFloats(Generator) * 2.0f - 1.0f;
-
-		LOG_INFO("x=" + std::to_string(x) + ", y=" + std::to_string(y));
 
 		SSAONoise.EmplaceBack(x);
 		SSAONoise.EmplaceBack(y);

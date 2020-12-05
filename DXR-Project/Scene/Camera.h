@@ -22,6 +22,11 @@ public:
 		return View;
 	}
 
+	FORCEINLINE const XMFLOAT4X4& GetViewInverseTransposeMatrix() const
+	{
+		return ViewInverseTranspose;
+	}
+
 	FORCEINLINE const XMFLOAT4X4& GetProjectionMatrix() const
 	{
 		return Projection;
@@ -64,6 +69,7 @@ public:
 
 private:
 	XMFLOAT4X4	View;
+	XMFLOAT4X4	ViewInverseTranspose;
 	XMFLOAT4X4	Projection;
 	XMFLOAT4X4	ProjectionInverse;
 	XMFLOAT4X4	ViewProjection;

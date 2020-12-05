@@ -68,6 +68,9 @@ void Camera::UpdateMatrices()
 	XMMATRIX XmView		= XMMatrixLookAtLH(XmPosition, XmAt, XmUp);
 	XMStoreFloat4x4(&View, XmView);
 
+	XMMATRIX XmViewInvTranspose = XMMatrixInverse(nullptr, XmView);
+	XMStoreFloat4x4(&ViewInverseTranspose, XMMatrixTranspose(XmViewInvTranspose));
+
 	XMFLOAT3X3 TempView3x3;
 	XMStoreFloat3x3(&TempView3x3, XmView);
 	XMMATRIX XmView3x3 = XMLoadFloat3x3(&TempView3x3);
