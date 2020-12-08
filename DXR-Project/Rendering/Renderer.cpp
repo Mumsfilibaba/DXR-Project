@@ -602,7 +602,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 		CommandList->SetPipelineState(SSAOPSO->GetPipeline());
 
-		const UInt32 DispatchWidth = Math::AlignUp<UInt32>(Width, 16) / 16;
+		const UInt32 DispatchWidth	= Math::AlignUp<UInt32>(Width, 16) / 16;
 		const UInt32 DispatchHeight = Math::AlignUp<UInt32>(Height, 16) / 16;
 		CommandList->Dispatch(DispatchWidth, DispatchHeight, 1);
 
@@ -3226,13 +3226,14 @@ bool Renderer::InitSSAO()
 		TextureProps.Height			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
 		TextureProps.MipLevels		= 1;
 		TextureProps.ArrayCount		= 1;
-		TextureProps.Format			= DXGI_FORMAT_R32_FLOAT;
+		TextureProps.Format			= DXGI_FORMAT_R32G32B32A32_FLOAT;
 		TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
 		TextureProps.SampleCount	= 1;
 
 		SSAOBuffer = RenderingAPI::Get().CreateTexture(TextureProps);
 		if (!SSAOBuffer)
 		{
+			Debug::DebugBreak();
 			return false;
 		}
 
@@ -3457,7 +3458,7 @@ bool Renderer::InitSSAO()
 		const UInt32 RowPitch	= ((4 * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
 		RenderingAPI::StaticGetImmediateCommandList()->UploadTextureData(SSAONoiseTex.Get(), SSAONoise.Data(), TextureProps.Format, 4, 4, 1, Stride, RowPitch);
 		
-		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAONoiseTex.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAONoiseTex.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 		
 		RenderingAPI::StaticGetImmediateCommandList()->Flush();
 		RenderingAPI::StaticGetImmediateCommandList()->WaitForCompletion();
@@ -3492,7 +3493,7 @@ bool Renderer::InitSSAO()
 
 		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAOSamples.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 		RenderingAPI::StaticGetImmediateCommandList()->UploadBufferData(SSAOSamples.Get(), 0, SSAOKernel.Data(), SamplesProps.SizeInBytes);
-		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAOSamples.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAOSamples.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 		
 		RenderingAPI::StaticGetImmediateCommandList()->Flush();
 		RenderingAPI::StaticGetImmediateCommandList()->WaitForCompletion();

@@ -5,7 +5,7 @@
 #endif
 
 #if ENABLE_NORMAL_MAPPING
-#define NORMAL_MAPPING_ENABLED
+//#define NORMAL_MAPPING_ENABLED
 #endif
 
 // Per Frame Buffers
@@ -42,7 +42,7 @@ struct VSInput
 struct VSOutput
 {
 	float3 Normal : NORMAL0;
-#ifdef NORMAL_MAPPING_ENABLED
+#if defined(NORMAL_MAPPING_ENABLED) || defined(PARALLAX_MAPPING_ENABLED)
 	float3 Tangent		: TANGENT0;
 	float3 Bitangent	: BITANGENT0;
 #endif
@@ -58,11 +58,10 @@ VSOutput VSMain(VSInput Input)
 {
 	VSOutput Output;
 	
-	float3 Normal	= normalize(mul(float4(Input.Normal, 0.0f), TransformBuffer.Transform).xyz);
-    Normal			= normalize(mul(float4(Normal, 0.0f), CameraBuffer.View).xyz);
-	Output.Normal	= Normal;
+	float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformBuffer.Transform).xyz);
+	Output.Normal = Normal;
 	
-#ifdef NORMAL_MAPPING_ENABLED
+#if defined(NORMAL_MAPPING_ENABLED) || defined(PARALLAX_MAPPING_ENABLED)
 	float3 Tangent	= normalize(mul(float4(Input.Tangent, 0.0f), TransformBuffer.Transform).xyz);
 	Tangent			= normalize(Tangent - dot(Tangent, Normal) * Normal);
 	Output.Tangent	= Tangent;
@@ -91,7 +90,7 @@ VSOutput VSMain(VSInput Input)
 struct PSInput
 {
 	float3 Normal : NORMAL0;
-#ifdef NORMAL_MAPPING_ENABLED
+#if defined(NORMAL_MAPPING_ENABLED) || defined(PARALLAX_MAPPING_ENABLED)
 	float3 Tangent		: TANGENT0;
 	float3 Bitangent	: BITANGENT0;
 #endif

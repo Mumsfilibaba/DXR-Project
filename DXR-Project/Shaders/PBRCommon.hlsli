@@ -89,16 +89,16 @@ struct ComputeShaderInput
 * Position Helper
 */
 
-float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ViewProjectionInverse)
+float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInverse)
 {
 	float z = Depth;
 	float x = TexCoord.x * 2.0f - 1.0f;
 	float y = (1.0f - TexCoord.y) * 2.0f - 1.0f;
 
 	float4 ProjectedPos		= float4(x, y, z, 1.0f);
-	float4 WorldPosition	= mul(ProjectedPos, ViewProjectionInverse);
+    float4 FinalPosition	= mul(ProjectedPos, ProjectionInverse);
 	
-	return WorldPosition.xyz / WorldPosition.w;
+    return FinalPosition.xyz / FinalPosition.w;
 }
 
 /*

@@ -20,7 +20,7 @@ TextureCube<float4> SpecularIrradianceMap	: register(t6, space0);
 Texture2D<float4>	IntegrationLUT			: register(t7, space0);
 Texture2D<float2>	DirLightShadowMaps		: register(t8, space0);
 TextureCube<float>	PointLightShadowMaps	: register(t9, space0);
-Texture2D<float>	SSAO					: register(t10, space0);
+Texture2D<float3>	SSAO					: register(t10, space0);
 
 SamplerState GBufferSampler		: register(s0, space0);
 SamplerState LUTSampler			: register(s1, space0);
@@ -226,7 +226,7 @@ float4 Main(PSInput Input) : SV_TARGET
 #endif
 	float3 SampledMaterial	= Material.Sample(GBufferSampler, TexCoord).rgb;
 	float3 SampledNormal	= Normal.Sample(GBufferSampler, TexCoord).rgb;
-	float ScreenSpaceAO		= SSAO.Sample(GBufferSampler, TexCoord);
+	float3 ScreenSpaceAO	= SSAO.Sample(GBufferSampler, TexCoord);
 	
 	const float3 Norm		= UnpackNormal(SampledNormal);
 	const float3 ViewDir	= normalize(CameraBuffer.Position - WorldPosition);
@@ -305,6 +305,6 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	float3	FinalColor	= ApplyGammaCorrectionAndTonemapping(Color);
 	float	Luminance	= CalculateLuminance(FinalColor);
-    //return float4(ToFloat3(ScreenSpaceAO), Luminance);
-    return float4(FinalColor, Luminance);
+    return float4(ScreenSpaceAO, Luminance);
+    //return float4(FinalColor, Luminance);
 }
