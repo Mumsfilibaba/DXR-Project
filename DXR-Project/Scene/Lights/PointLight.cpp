@@ -82,7 +82,7 @@ void PointLight::CalculateMatrices()
 		XMStoreFloat4x4(&ProjMatrices[i], LightProjection);
 
 		XMMATRIX LightView = XMMatrixLookToLH(LightPosition, LightDirection, LightUp);
-		XMStoreFloat4x4(&ViewMatrices[i], LightView);
+		XMStoreFloat4x4(&ViewMatrices[i], XMMatrixTranspose(LightView));
 		XMStoreFloat4x4(&Matrices[i], XMMatrixMultiplyTranspose(LightView, LightProjection));
 	}
 }

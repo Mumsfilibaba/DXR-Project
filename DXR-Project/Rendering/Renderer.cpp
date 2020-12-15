@@ -363,11 +363,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 					for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 					{
 						const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
-						XMMATRIX XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
-						XMVECTOR XmTop = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
-						XMVECTOR XmBottom = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
-						XmTop = XMVector4Transform(XmTop, XmTransform);
-						XmBottom = XMVector4Transform(XmBottom, XmTransform);
+						XMMATRIX XmTransform	= XMMatrixTranspose(XMLoadFloat4x4(&Transform));
+						XMVECTOR XmTop			= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
+						XMVECTOR XmBottom		= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
+						XmTop		= XMVector4Transform(XmTop, XmTransform);
+						XmBottom	= XMVector4Transform(XmBottom, XmTransform);
 
 						AABB Box;
 						XMStoreFloat3(&Box.Top, XmTop);
@@ -865,6 +865,8 @@ bool Renderer::OnEvent(const Event& Event)
 	{
 		return false;
 	}
+
+	return false;
 
 	const WindowResizeEvent& ResizeEvent = EventCast<WindowResizeEvent>(Event);
 	const UInt32 Width	= ResizeEvent.GetWidth();
