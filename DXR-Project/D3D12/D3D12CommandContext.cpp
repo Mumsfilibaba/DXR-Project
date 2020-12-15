@@ -48,15 +48,16 @@ bool D3D12CommandContext::Initialize()
 
 void D3D12CommandContext::Begin()
 {
+	IsReady = true;
 }
 
 void D3D12CommandContext::End()
 {
+	IsReady = false;
 }
 
 void D3D12CommandContext::ClearRenderTarget(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor)
 {
-	
 }
 
 void D3D12CommandContext::ClearDepthStencil(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) 

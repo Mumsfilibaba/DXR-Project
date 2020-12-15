@@ -1776,12 +1776,51 @@ bool D3D12RenderingAPI::UploadBuffer(D3D12Buffer& Buffer, Uint32 SizeInBytes, co
 		}
 	}
 
-	// TODO: Handle non uploadheaps
-	return false;
+	const bool IsReady = DirectCmdContext->IsReady();
+	if (!IsReady)
+	{
+		DirectCmdContext->Begin();
+	}
+
+	DirectCmdContext->UpdateBuffer(&Buffer, 0, SizeInBytes, InitalData->Data);
+
+	if (!IsReady)
+	{
+		DirectCmdContext->End();
+		DirectCmdContext->Flush();
+	}
+
+	return true;
 }
 
 bool D3D12RenderingAPI::UploadTexture(D3D12Texture& Texture, const ResourceData* InitalData) const
 {
-	// TODO: Finish this function
-	return false;
+	// TODO: Support other types than texture 2D
+	if (!Texture.AsTexture2D())
+	{
+		return false;
+	}
+
+	const bool IsReady = DirectCmdContext->IsReady();
+	if (!IsReady)
+	{
+		DirectCmdContext->Begin();
+	}
+
+	const Uint32 Width 	= Texture.GetWidth();
+	const Uint32 Height = Texture.GetHeight();
+	DirectCmdContext->UpdateTexture2D(
+		Texture.AsTexture2D(),
+		Width,
+		Height,
+		0,
+		InitalData->Data);
+
+	if (!IsReady)
+	{
+		DirectCmdContext->End();
+		DirectCmdContext->Flush();
+	}
+
+	return true;
 }

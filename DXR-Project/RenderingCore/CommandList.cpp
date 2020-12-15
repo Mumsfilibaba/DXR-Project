@@ -4,14 +4,7 @@
 * CommandListExecutor
 */
 
-CommandListExecutor::CommandListExecutor()
-	: CmdContext(nullptr)
-{
-}
-
-CommandListExecutor::~CommandListExecutor()
-{
-}
+ICommandContext* CommandListExecutor::CmdContext = nullptr;
 
 void CommandListExecutor::ExecuteCommandList(CommandList& CmdList)
 {

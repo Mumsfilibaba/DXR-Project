@@ -31,6 +31,8 @@ public:
 	virtual void Begin() = 0;
 	virtual void End() = 0;
 
+	virtual bool IsReady() const = 0;
+
 	virtual void ClearRenderTarget(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor) = 0;
 	virtual void ClearDepthStencil(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) = 0;
 
@@ -151,4 +153,6 @@ public:
 		Uint32 Width, 
 		Uint32 Height, 
 		Uint32 Depth) = 0;
+
+	virtual void Flush() = 0;
 };

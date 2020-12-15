@@ -5,7 +5,7 @@
 #include "RayTracing.h"
 #include "RenderCommand.h"
 
-#include "Memory/StackAllocator.h"
+#include "Memory/LinearAllocator.h"
 
 class RenderTargetView;
 class DepthStencilView;
@@ -402,7 +402,7 @@ private:
 	}
 
 private:
-	StackAllocator CmdAllocator;
+	LinearAllocator CmdAllocator;
 	RenderCommand* First;
 	RenderCommand* Last;
 };
@@ -414,23 +414,20 @@ private:
 class CommandListExecutor
 {
 public:
-	CommandListExecutor();
-	~CommandListExecutor();
+	static void ExecuteCommandList(CommandList& CmdList);
 
-	void ExecuteCommandList(CommandList& CmdList);
-
-	FORCEINLINE void SetContext(ICommandContext* InCmdContext)
+	FORCEINLINE static void SetContext(ICommandContext* InCmdContext)
 	{
 		VALIDATE(InCmdContext != nullptr);
 		CmdContext = InCmdContext;
 	}
 
-	FORCEINLINE ICommandContext& GetContext() const
+	FORCEINLINE static ICommandContext& GetContext() const
 	{
 		VALIDATE(CmdContext != nullptr);
 		return *CmdContext;
 	}
 
 private:
-	ICommandContext* CmdContext;
+	static ICommandContext* CmdContext;
 };

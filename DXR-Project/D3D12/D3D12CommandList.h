@@ -38,11 +38,13 @@ public:
 
 	FORCEINLINE bool Reset(D3D12CommandAllocator* Allocator)
 	{
+		IsReady = true;
 		return SUCCEEDED(CmdList->Reset(Allocator->GetAllocator(), nullptr));
 	}
 
 	FORCEINLINE bool Close()
 	{
+		IsReady = false;
 		return SUCCEEDED(CmdList->Close());
 	}
 
@@ -246,6 +248,11 @@ public:
 		CmdList->ResourceBarrier(NumBarriers, Barriers);
 	}
 
+	FORCEINLINE bool IsReady() const
+	{
+		return IsReady;
+	}
+
 	FORCEINLINE void SetName(const std::string& Name)
 	{
 		std::wstring WideName = ConvertToWide(Name);
@@ -270,4 +277,5 @@ public:
 private:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>	CmdList;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	DXRCmdList;
+	bool IsReady = false;
 };

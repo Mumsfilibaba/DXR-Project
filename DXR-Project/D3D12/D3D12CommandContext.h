@@ -5,6 +5,7 @@
 #include "D3D12RootSignature.h"
 
 class D3D12CommandQueue;
+class D3D12CommandAllocator;
 
 /*
 * D3D12GenerateMipsHelper
@@ -32,8 +33,20 @@ public:
 
 	bool Initialize();
 
+	FORCEINLINE D3D12CommandList& GetCommandList() const
+	{
+		VALIDATE(CmdList != nullptr);
+		return *CmdList;
+	}
+
+public:
 	virtual void Begin() override final;
 	virtual void End() override final;
+
+	virtual bool IsReady() const override final
+	{
+		return IsReady;
+	}
 
 	virtual void ClearRenderTarget(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor) override final;
 	virtual void ClearDepthStencil(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) override final;
@@ -107,8 +120,8 @@ public:
 		Texture* Source, 
 		const CopyTextureInfo& CopyTextureInfo) override final;
 
-	virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) override final;
-	virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) override final;
+	virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) 	override final;
+	virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) 			override final;
 
 	virtual void GenerateMips(Texture* Texture) override final;
 
@@ -151,12 +164,14 @@ public:
 
 	virtual void DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth) override final;
 
+	virtual void Flush() override final;
+
 private:
 	D3D12CommandQueue* CmdQueue;
-	class D3D12CommandAllocator* CmdAllocator;
+	TArray<D3D12CommandAllocator*> CmdAllocators;
 	class D3D12CommandList* CmdList; 
-	
 	class D3D12Fence* Fence;
+	bool IsReady = false;
 	
 	D3D12DefaultRootSignatures DefaultRootSignatures;
 };

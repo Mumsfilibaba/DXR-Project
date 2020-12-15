@@ -1,6 +1,7 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h" 
+#include "Memory.h"
+
+#include "Containers/TArray.h"
 
 /*
 * MemoryArena
@@ -53,6 +54,11 @@ struct MemoryArena
 		Offset = 0;
 	}
 
+	FORCEINLINE Uint64 GetSizeInBytes()
+	{
+		return SizeInBytes;
+	}
+
 	MemoryArena& operator=(const MemoryArena& Other) = delete;
 
 	FORCEINLINE MemoryArena& operator=(MemoryArena&& Other)
@@ -65,6 +71,7 @@ struct MemoryArena
 		Mem			= Other.Mem;
 		Offset		= Other.Offset;
 		SizeInBytes = Other.SizeInBytes;
+
 		Other.Mem			= nullptr;
 		Other.Offset		= 0;
 		Other.SizeInBytes	= 0;
@@ -78,14 +85,14 @@ struct MemoryArena
 };
 
 /*
-* StackAllocator
+* LinearAllocator
 */
 
-class StackAllocator
+class LinearAllocator
 {
 public:
-	StackAllocator(Uint32 InSizePerArena = 4096);
-	~StackAllocator() = default;
+	LinearAllocator(Uint32 StatSize);
+	~LinearAllocator() = default;
 
 	VoidPtr Allocate(Uint64 SizeInBytes, Uint64 Alignment);
 	
@@ -105,6 +112,4 @@ public:
 private:
 	MemoryArena* CurrentArena;
 	TArray<MemoryArena> Arenas;
-	Uint32 SizePerArena;
-	Uint32 ArenaIndex;
 };
