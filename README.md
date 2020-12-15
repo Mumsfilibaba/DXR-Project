@@ -11,12 +11,12 @@ This engine is a small hobby rendering/game engine created for testing different
 * Shadow Mapping (Both Variance Shadow Mapping and "Traditional" is supported, and is selectable at compile time)
 * Dynamic lights (Point-Lights, Directional-Lights, both with shadow support)
 * RayTraced reflections
+* SSAO
 
 **Planed:**
 * Vulkan backend
 * Better API abstraction
 * Tiled Deferred Rendering
-* SSAO
 * Screen Space Reflections
 * Cascade Shadow-maps
 
