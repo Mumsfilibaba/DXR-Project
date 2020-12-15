@@ -104,10 +104,9 @@ struct PSInput
 
 struct PSOutput
 {
-	float4 Albedo		: SV_Target0;
-	float4 Normal		: SV_Target1;
-	float4 Material		: SV_Target2;
-	float4 ViewNormal	: SV_Target3;
+	float4 Albedo	: SV_Target0;
+	float4 Normal	: SV_Target1;
+	float4 Material	: SV_Target2;
 };
 
 #ifdef PARALLAX_MAPPING_ENABLED

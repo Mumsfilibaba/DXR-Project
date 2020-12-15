@@ -588,9 +588,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		struct SSAOSettings
 		{
-			XMFLOAT2	ScreenSize;
-			XMFLOAT2	NoiseSize;
-			Float		Radius;
+			XMFLOAT2 ScreenSize;
+			XMFLOAT2 NoiseSize;
+			Float Radius;
+			Float Bias;
+			Int32 KernelSize;
 		} SSAOSettings;
 
 		const UInt32 Width	= RenderingAPI::Get().GetSwapChain()->GetWidth();
@@ -598,15 +600,28 @@ void Renderer::Tick(const Scene& CurrentScene)
 		SSAOSettings.ScreenSize	= XMFLOAT2(Float(Width), Float(Height));
 		SSAOSettings.NoiseSize	= XMFLOAT2(4.0f, 4.0f);
 		SSAOSettings.Radius		= SSAORadius;
+		SSAOSettings.KernelSize = SSAOKernelSize;
+		SSAOSettings.Bias		= SSAOBias;
 
 		CommandList->SetComputeRootSignature(SSAORootSignature->GetRootSignature());
 		CommandList->SetComputeRootDescriptorTable(SSAODescriptorTable->GetGPUTableStartHandle(), 0);
-		CommandList->SetComputeRoot32BitConstants(&SSAOSettings, 5, 0, 1);
+		CommandList->SetComputeRoot32BitConstants(&SSAOSettings, 7, 0, 1);
 
 		CommandList->SetPipelineState(SSAOPSO->GetPipeline());
 
-		const UInt32 DispatchWidth	= Math::AlignUp<UInt32>(Width, 16) / 16;
-		const UInt32 DispatchHeight = Math::AlignUp<UInt32>(Height, 16) / 16;
+		constexpr UInt32 ThreadCount = 32;
+		const UInt32 DispatchWidth	= Math::AlignUp<UInt32>(Width, ThreadCount) / ThreadCount;
+		const UInt32 DispatchHeight = Math::AlignUp<UInt32>(Height, ThreadCount) / ThreadCount;
+		CommandList->Dispatch(DispatchWidth, DispatchHeight, 1);
+
+		CommandList->UnorderedAccessBarrier(SSAOBuffer.Get());
+
+		CommandList->SetComputeRootSignature(BlurRootSignature->GetRootSignature());
+		CommandList->SetComputeRootDescriptorTable(SSAOBlurDescriptorTable->GetGPUTableStartHandle(), 0);
+		CommandList->SetComputeRoot32BitConstants(&SSAOSettings.ScreenSize, 2, 0, 1);
+
+		CommandList->SetPipelineState(SSAOBlur->GetPipeline());
+
 		CommandList->Dispatch(DispatchWidth, DispatchHeight, 1);
 
 		CommandList->UnorderedAccessBarrier(SSAOBuffer.Get());
@@ -1242,6 +1257,10 @@ bool Renderer::Initialize()
 		SSAODescriptorTable->SetShaderResourceView(SSAOSamples->GetShaderResourceView(0).Get(), 4);
 		SSAODescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 5);
 		SSAODescriptorTable->CopyDescriptors();
+
+		SSAOBlurDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(1);
+		SSAOBlurDescriptorTable->SetUnorderedAccessView(SSAOBuffer->GetUnorderedAccessView(0).Get(), 0);
+		SSAOBlurDescriptorTable->CopyDescriptors();
 	}
 
 	WriteShadowMapDescriptors();
@@ -3225,15 +3244,15 @@ bool Renderer::InitSSAO()
 	// Init texture
 	{
 		TextureProperties TextureProps = { };
-		TextureProps.DebugName		= "SSAO Buffer";
-		TextureProps.Flags			= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-		TextureProps.Width			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-		TextureProps.Height			= static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
-		TextureProps.MipLevels		= 1;
-		TextureProps.ArrayCount		= 1;
-		TextureProps.Format			= DXGI_FORMAT_R32G32B32A32_FLOAT;
-		TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
-		TextureProps.SampleCount	= 1;
+		TextureProps.DebugName = "SSAO Buffer";
+		TextureProps.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		TextureProps.Width = static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetWidth());
+		TextureProps.Height = static_cast<UInt16>(RenderingAPI::Get().GetSwapChain()->GetHeight());
+		TextureProps.MipLevels = 1;
+		TextureProps.ArrayCount = 1;
+		TextureProps.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		TextureProps.MemoryType = EMemoryType::MEMORY_TYPE_DEFAULT;
+		TextureProps.SampleCount = 1;
 
 		SSAOBuffer = RenderingAPI::Get().CreateTexture(TextureProps);
 		if (!SSAOBuffer)
@@ -3243,21 +3262,21 @@ bool Renderer::InitSSAO()
 		}
 
 		D3D12_UNORDERED_ACCESS_VIEW_DESC UAVView = { };
-		UAVView.Format					= TextureProps.Format;
-		UAVView.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
-		UAVView.Texture2D.MipSlice		= 0;
-		UAVView.Texture2D.PlaneSlice	= 0;
+		UAVView.Format = TextureProps.Format;
+		UAVView.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+		UAVView.Texture2D.MipSlice = 0;
+		UAVView.Texture2D.PlaneSlice = 0;
 
 		SSAOBuffer->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get().CreateUnorderedAccessView(nullptr, SSAOBuffer->GetResource(), &UAVView)), 0);
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-		SrvDesc.Format							= TextureProps.Format;
-		SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
-		SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		SrvDesc.Texture2D.MipLevels				= 1;
-		SrvDesc.Texture2D.MostDetailedMip		= 0;
-		SrvDesc.Texture2D.PlaneSlice			= 0;
-		SrvDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
+		SrvDesc.Format = TextureProps.Format;
+		SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		SrvDesc.Texture2D.MipLevels = 1;
+		SrvDesc.Texture2D.MostDetailedMip = 0;
+		SrvDesc.Texture2D.PlaneSlice = 0;
+		SrvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
 		SSAOBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(SSAOBuffer->GetResource(), &SrvDesc)), 0);
 	}
@@ -3270,128 +3289,132 @@ bool Renderer::InitSSAO()
 		return false;
 	}
 
-	// Init RootSignatures
-	constexpr UInt32 NumPerFrameRanges = 6;
-	D3D12_DESCRIPTOR_RANGE PerFrameRanges[NumPerFrameRanges] = {};
-	// Normal Buffer
-	PerFrameRanges[0].BaseShaderRegister				= 0;
-	PerFrameRanges[0].NumDescriptors					= 1;
-	PerFrameRanges[0].RegisterSpace						= 0;
-	PerFrameRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	PerFrameRanges[0].OffsetInDescriptorsFromTableStart	= 0;
-
-	// Depth Buffer
-	PerFrameRanges[1].BaseShaderRegister				= 1;
-	PerFrameRanges[1].NumDescriptors					= 1;
-	PerFrameRanges[1].RegisterSpace						= 0;
-	PerFrameRanges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	PerFrameRanges[1].OffsetInDescriptorsFromTableStart	= 1;
-
-	// Noise 
-	PerFrameRanges[2].BaseShaderRegister				= 2;
-	PerFrameRanges[2].NumDescriptors					= 1;
-	PerFrameRanges[2].RegisterSpace						= 0;
-	PerFrameRanges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	PerFrameRanges[2].OffsetInDescriptorsFromTableStart = 2;
-
-	// Output Buffer
-	PerFrameRanges[3].BaseShaderRegister				= 0;
-	PerFrameRanges[3].NumDescriptors					= 1;
-	PerFrameRanges[3].RegisterSpace						= 0;
-	PerFrameRanges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-	PerFrameRanges[3].OffsetInDescriptorsFromTableStart = 3;
-
-	// Samples 
-	PerFrameRanges[4].BaseShaderRegister				= 3;
-	PerFrameRanges[4].NumDescriptors					= 1;
-	PerFrameRanges[4].RegisterSpace						= 0;
-	PerFrameRanges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	PerFrameRanges[4].OffsetInDescriptorsFromTableStart = 4;
-
-	// Camera
-	PerFrameRanges[5].BaseShaderRegister				= 1;
-	PerFrameRanges[5].NumDescriptors					= 1;
-	PerFrameRanges[5].RegisterSpace						= 0;
-	PerFrameRanges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	PerFrameRanges[5].OffsetInDescriptorsFromTableStart	= 5;
-
-	constexpr UInt32 NumParameters = 2;
-	D3D12_ROOT_PARAMETER Parameters[NumParameters];
-	// DescriptorTable
-	Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	Parameters[0].DescriptorTable.NumDescriptorRanges	= NumPerFrameRanges;
-	Parameters[0].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
-	Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
-
-	// Settings
-	Parameters[1].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	Parameters[1].Constants.Num32BitValues	= 5;
-	Parameters[1].Constants.RegisterSpace	= 0;
-	Parameters[1].Constants.ShaderRegister	= 0;
-	Parameters[1].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
-
-	constexpr UInt32 NumStaticSamplers = 2;
-	D3D12_STATIC_SAMPLER_DESC StaticSamplers[NumStaticSamplers] = { };
-	// GBuffer Sampler
-	StaticSamplers[0].Filter			= D3D12_FILTER_MIN_MAG_MIP_POINT;
-	StaticSamplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSamplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSamplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSamplers[0].MipLODBias		= 0.0f;
-	StaticSamplers[0].MaxAnisotropy		= 0;
-	StaticSamplers[0].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
-	StaticSamplers[0].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	StaticSamplers[0].MinLOD			= 0.0f;
-	StaticSamplers[0].MaxLOD			= FLT_MAX;
-	StaticSamplers[0].ShaderRegister	= 0;
-	StaticSamplers[0].RegisterSpace		= 0;
-	StaticSamplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
-
-	// Noise Samplers
-	StaticSamplers[1].Filter			= D3D12_FILTER_MIN_MAG_MIP_POINT;
-	StaticSamplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSamplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSamplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSamplers[1].MipLODBias		= 0.0f;
-	StaticSamplers[1].MaxAnisotropy		= 0;
-	StaticSamplers[1].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
-	StaticSamplers[1].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	StaticSamplers[1].MinLOD			= 0.0f;
-	StaticSamplers[1].MaxLOD			= FLT_MAX;
-	StaticSamplers[1].ShaderRegister	= 1;
-	StaticSamplers[1].RegisterSpace		= 0;
-	StaticSamplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
-
-	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-	RootSignatureDesc.NumParameters		= NumParameters;
-	RootSignatureDesc.pParameters		= Parameters;
-	RootSignatureDesc.NumStaticSamplers	= NumStaticSamplers;
-	RootSignatureDesc.pStaticSamplers	= StaticSamplers;
-	RootSignatureDesc.Flags =
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS	|
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS		|
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS	|
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS	|
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
-
-	SSAORootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
-	if (!SSAORootSignature->Initialize(RootSignatureDesc))
 	{
-		Debug::DebugBreak();
-		return false;
+		// Init RootSignatures
+		constexpr UInt32 NumPerFrameRanges = 6;
+		D3D12_DESCRIPTOR_RANGE PerFrameRanges[NumPerFrameRanges] = {};
+		// Normal Buffer
+		PerFrameRanges[0].BaseShaderRegister = 0;
+		PerFrameRanges[0].NumDescriptors = 1;
+		PerFrameRanges[0].RegisterSpace = 0;
+		PerFrameRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerFrameRanges[0].OffsetInDescriptorsFromTableStart = 0;
+
+		// Depth Buffer
+		PerFrameRanges[1].BaseShaderRegister = 1;
+		PerFrameRanges[1].NumDescriptors = 1;
+		PerFrameRanges[1].RegisterSpace = 0;
+		PerFrameRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerFrameRanges[1].OffsetInDescriptorsFromTableStart = 1;
+
+		// Noise 
+		PerFrameRanges[2].BaseShaderRegister = 2;
+		PerFrameRanges[2].NumDescriptors = 1;
+		PerFrameRanges[2].RegisterSpace = 0;
+		PerFrameRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerFrameRanges[2].OffsetInDescriptorsFromTableStart = 2;
+
+		// Output Buffer
+		PerFrameRanges[3].BaseShaderRegister = 0;
+		PerFrameRanges[3].NumDescriptors = 1;
+		PerFrameRanges[3].RegisterSpace = 0;
+		PerFrameRanges[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+		PerFrameRanges[3].OffsetInDescriptorsFromTableStart = 3;
+
+		// Samples 
+		PerFrameRanges[4].BaseShaderRegister = 3;
+		PerFrameRanges[4].NumDescriptors = 1;
+		PerFrameRanges[4].RegisterSpace = 0;
+		PerFrameRanges[4].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		PerFrameRanges[4].OffsetInDescriptorsFromTableStart = 4;
+
+		// Camera
+		PerFrameRanges[5].BaseShaderRegister = 1;
+		PerFrameRanges[5].NumDescriptors = 1;
+		PerFrameRanges[5].RegisterSpace = 0;
+		PerFrameRanges[5].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		PerFrameRanges[5].OffsetInDescriptorsFromTableStart = 5;
+
+		constexpr UInt32 NumParameters = 2;
+		D3D12_ROOT_PARAMETER Parameters[NumParameters];
+		// DescriptorTable
+		Parameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		Parameters[0].DescriptorTable.NumDescriptorRanges = NumPerFrameRanges;
+		Parameters[0].DescriptorTable.pDescriptorRanges = PerFrameRanges;
+		Parameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		// Settings
+		Parameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+		Parameters[1].Constants.Num32BitValues = 7;
+		Parameters[1].Constants.RegisterSpace = 0;
+		Parameters[1].Constants.ShaderRegister = 0;
+		Parameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		constexpr UInt32 NumStaticSamplers = 2;
+		D3D12_STATIC_SAMPLER_DESC StaticSamplers[NumStaticSamplers] = { };
+		// GBuffer Sampler
+		StaticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		StaticSamplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[0].MipLODBias = 0.0f;
+		StaticSamplers[0].MaxAnisotropy = 0;
+		StaticSamplers[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		StaticSamplers[0].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		StaticSamplers[0].MinLOD = 0.0f;
+		StaticSamplers[0].MaxLOD = FLT_MAX;
+		StaticSamplers[0].ShaderRegister = 0;
+		StaticSamplers[0].RegisterSpace = 0;
+		StaticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		// Noise Samplers
+		StaticSamplers[1].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		StaticSamplers[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[1].MipLODBias = 0.0f;
+		StaticSamplers[1].MaxAnisotropy = 0;
+		StaticSamplers[1].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		StaticSamplers[1].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		StaticSamplers[1].MinLOD = 0.0f;
+		StaticSamplers[1].MaxLOD = FLT_MAX;
+		StaticSamplers[1].ShaderRegister = 1;
+		StaticSamplers[1].RegisterSpace = 0;
+		StaticSamplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
+		RootSignatureDesc.NumParameters = NumParameters;
+		RootSignatureDesc.pParameters = Parameters;
+		RootSignatureDesc.NumStaticSamplers = NumStaticSamplers;
+		RootSignatureDesc.pStaticSamplers = StaticSamplers;
+		RootSignatureDesc.Flags =
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+
+		SSAORootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
+		if (!SSAORootSignature->Initialize(RootSignatureDesc))
+		{
+			Debug::DebugBreak();
+			return false;
+		}
 	}
 
-	// Init PipelineState
-	ComputePipelineStateProperties PSOProperties = { };
-	PSOProperties.DebugName		= "SSAO PipelineState";
-	PSOProperties.CSBlob		= CSBlob.Get();
-	PSOProperties.RootSignature	= SSAORootSignature.Get();
-
-	SSAOPSO = RenderingAPI::Get().CreateComputePipelineState(PSOProperties);
-	if (!SSAOPSO)
 	{
-		Debug::DebugBreak();
-		return false;
+		// Init PipelineState
+		ComputePipelineStateProperties PSOProperties = { };
+		PSOProperties.DebugName		= "SSAO PipelineState";
+		PSOProperties.CSBlob		= CSBlob.Get();
+		PSOProperties.RootSignature = SSAORootSignature.Get();
+
+		SSAOPSO = RenderingAPI::Get().CreateComputePipelineState(PSOProperties);
+		if (!SSAOPSO)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
 	}
 
 	// Generate SSAO Kernel
@@ -3509,6 +3532,92 @@ bool Renderer::InitSSAO()
 		
 		RenderingAPI::StaticGetImmediateCommandList()->Flush();
 		RenderingAPI::StaticGetImmediateCommandList()->WaitForCompletion();
+	}
+
+	// Load shader
+	CSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/Blur.hlsl", "Main", "cs_6_0");
+	if (!CSBlob)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	{
+		// Init RootSignatures
+		constexpr UInt32 NumPerFrameRanges = 1;
+		D3D12_DESCRIPTOR_RANGE PerFrameRanges[NumPerFrameRanges] = {};
+		// Texture
+		PerFrameRanges[0].BaseShaderRegister				= 0;
+		PerFrameRanges[0].NumDescriptors					= 1;
+		PerFrameRanges[0].RegisterSpace						= 0;
+		PerFrameRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+		PerFrameRanges[0].OffsetInDescriptorsFromTableStart	= 0;
+
+		constexpr UInt32 NumParameters = 2;
+		D3D12_ROOT_PARAMETER Parameters[NumParameters];
+		// DescriptorTable
+		Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		Parameters[0].DescriptorTable.NumDescriptorRanges	= NumPerFrameRanges;
+		Parameters[0].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
+		Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
+
+		// Settings
+		Parameters[1].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+		Parameters[1].Constants.Num32BitValues	= 2;
+		Parameters[1].Constants.RegisterSpace	= 0;
+		Parameters[1].Constants.ShaderRegister	= 0;
+		Parameters[1].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
+
+		constexpr UInt32 NumStaticSamplers = 1;
+		D3D12_STATIC_SAMPLER_DESC StaticSamplers[NumStaticSamplers] = { };
+		// Sampler, not used for now
+		StaticSamplers[0].Filter			= D3D12_FILTER_MIN_MAG_MIP_POINT;
+		StaticSamplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		StaticSamplers[0].MipLODBias		= 0.0f;
+		StaticSamplers[0].MaxAnisotropy		= 0;
+		StaticSamplers[0].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
+		StaticSamplers[0].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		StaticSamplers[0].MinLOD			= 0.0f;
+		StaticSamplers[0].MaxLOD			= FLT_MAX;
+		StaticSamplers[0].ShaderRegister	= 0;
+		StaticSamplers[0].RegisterSpace		= 0;
+		StaticSamplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
+
+		D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
+		RootSignatureDesc.NumParameters		= NumParameters;
+		RootSignatureDesc.pParameters		= Parameters;
+		RootSignatureDesc.NumStaticSamplers	= NumStaticSamplers;
+		RootSignatureDesc.pStaticSamplers	= StaticSamplers;
+		RootSignatureDesc.Flags =
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+
+		BlurRootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
+		if (!BlurRootSignature->Initialize(RootSignatureDesc))
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+	}
+
+	{
+		// Init PipelineState
+		ComputePipelineStateProperties PSOProperties = { };
+		PSOProperties.DebugName		= "Blur PipelineState";
+		PSOProperties.CSBlob		= CSBlob.Get();
+		PSOProperties.RootSignature	= BlurRootSignature.Get();
+
+		SSAOBlur = RenderingAPI::Get().CreateComputePipelineState(PSOProperties);
+		if (!SSAOBlur)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
 	}
 
 	return true;

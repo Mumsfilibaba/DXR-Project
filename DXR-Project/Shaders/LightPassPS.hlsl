@@ -305,5 +305,6 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	float3	FinalColor	= ApplyGammaCorrectionAndTonemapping(Color);
 	float	Luminance	= CalculateLuminance(FinalColor);
-    return float4(FinalColor, Luminance);
+	return float4(FinalColor, Luminance);
+    //return float4(ScreenSpaceAO, Luminance);
 }

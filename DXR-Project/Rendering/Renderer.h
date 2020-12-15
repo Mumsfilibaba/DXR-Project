@@ -33,7 +33,7 @@ class D3D12Texture;
 class D3D12GraphicsPipelineState;
 class D3D12RayTracingPipelineState;
 
-#define ENABLE_D3D12_DEBUG	1
+#define ENABLE_D3D12_DEBUG	0
 #define ENABLE_VSM			0
 
 /*
@@ -73,6 +73,16 @@ public:
 		SSAORadius = InSSAORadius;
 	}
 
+	FORCEINLINE void SetSSAOKernelSize(Int32 InSSAOKernelSize)
+	{
+		SSAOKernelSize = InSSAOKernelSize;
+	}
+
+	FORCEINLINE void SetSSAOBias(Float InSSAOBias)
+	{
+		SSAOBias = InSSAOBias;
+	}
+
 	FORCEINLINE bool IsDrawAABBsEnabled() const
 	{
 		return DrawAABBs;
@@ -106,6 +116,16 @@ public:
 	FORCEINLINE Float GetSSAORadius() const
 	{
 		return SSAORadius;
+	}
+
+	FORCEINLINE Int32 GetSSAOKernelSize() const
+	{
+		return SSAOKernelSize;
+	}
+
+	FORCEINLINE Float GetSSAOBias() const
+	{
+		return SSAOBias;
 	}
 
 	static void SetGlobalLightSettings(const LightSettings& InGlobalLightSettings);
@@ -189,10 +209,12 @@ private:
 	TSharedPtr<D3D12RootSignature> PostRootSignature;
 	TSharedPtr<D3D12RootSignature> ForwardRootSignature;
 	TSharedPtr<D3D12RootSignature> SSAORootSignature;
+	TSharedPtr<D3D12RootSignature> BlurRootSignature;
 
 	TSharedPtr<D3D12DescriptorTable> RayGenDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable> GlobalDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable> SSAODescriptorTable;
+	TSharedPtr<D3D12DescriptorTable> SSAOBlurDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable> GeometryDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable> ForwardDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable> PrePassDescriptorTable;
@@ -200,7 +222,7 @@ private:
 	TSharedPtr<D3D12DescriptorTable> SkyboxDescriptorTable;
 	TSharedPtr<D3D12DescriptorTable> PostDescriptorTable;
 
-	TSharedPtr<D3D12RayTracingScene>	RayTracingScene;
+	TSharedPtr<D3D12RayTracingScene> RayTracingScene;
 	TArray<D3D12RayTracingGeometryInstance> RayTracingGeometryInstances;
 
 	TSharedPtr<D3D12GraphicsPipelineState> PrePassPSO;
@@ -216,6 +238,7 @@ private:
 	TSharedPtr<D3D12GraphicsPipelineState> FXAAPSO;
 
 	TSharedPtr<D3D12ComputePipelineState> SSAOPSO;
+	TSharedPtr<D3D12ComputePipelineState> SSAOBlur;
 	TSharedPtr<D3D12ComputePipelineState> IrradicanceGenPSO;
 	TSharedPtr<D3D12ComputePipelineState> SpecIrradicanceGenPSO;
 
@@ -234,8 +257,10 @@ private:
 	bool FXAAEnabled		= true;
 	bool RayTracingEnabled	= false;
 
-	bool SSAOEnabled = true;
-	Float SSAORadius = 0.25f;
+	bool SSAOEnabled	= true;
+	Float SSAORadius	= 0.3f;
+	Float SSAOBias		= 0.0f;
+	int SSAOKernelSize	= 64;
 
 	static LightSettings		GlobalLightSettings;
 	static TUniquePtr<Renderer> RendererInstance;

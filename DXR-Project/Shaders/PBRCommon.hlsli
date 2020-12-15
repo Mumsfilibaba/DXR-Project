@@ -28,7 +28,7 @@ struct Camera
 {
 	float4x4 ViewProjection;
 	float4x4 View;
-    float4x4 ViewInverse;
+	float4x4 ViewInverse;
 	float4x4 Projection;
 	float4x4 ProjectionInverse;
 	float4x4 ViewProjectionInverse;
@@ -67,7 +67,7 @@ struct Vertex
 struct Transform
 {
 	float4x4 Transform;
-    float4x4 TransformInv;
+	float4x4 TransformInv;
 };
 
 struct Material
@@ -98,9 +98,9 @@ float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInvers
 	float y = (1.0f - TexCoord.y) * 2.0f - 1.0f;
 
 	float4 ProjectedPos		= float4(x, y, z, 1.0f);
-    float4 FinalPosition	= mul(ProjectedPos, ProjectionInverse);
+	float4 FinalPosition	= mul(ProjectedPos, ProjectionInverse);
 	
-    return FinalPosition.xyz / FinalPosition.w;
+	return FinalPosition.xyz / FinalPosition.w;
 }
 
 /*

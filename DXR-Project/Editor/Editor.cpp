@@ -33,7 +33,7 @@ static void DrawSceneInfo();
 * Helpers
 */
 
-static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, Float ResetValue = 0.0f, Float ColumnWidth = 100.0f)
+static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, Float ResetValue = 0.0f, Float ColumnWidth = 100.0f, Float Speed = 0.01f)
 {
 	ImGui::PushID(Label.c_str());
 	ImGui::Columns(2);
@@ -62,7 +62,7 @@ static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, Float R
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	ImGui::DragFloat("##X", &Value.x, 0.01f);
+	ImGui::DragFloat("##X", &Value.x, Speed);
 	ImGui::PopItemWidth();
 	ImGui::SameLine();
 
@@ -77,7 +77,7 @@ static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, Float R
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	ImGui::DragFloat("##Y", &Value.y, 0.01f);
+	ImGui::DragFloat("##Y", &Value.y, Speed);
 	ImGui::PopItemWidth();
 	ImGui::SameLine();
 
@@ -92,7 +92,7 @@ static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, Float R
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	ImGui::DragFloat("##Z", &Value.z, 0.01f);
+	ImGui::DragFloat("##Z", &Value.z, Speed);
 	ImGui::PopItemWidth();
 
 	// Reset
@@ -373,18 +373,51 @@ static void DrawRenderSettings()
 	ImGui::Text("SSAO:");
 	ImGui::Separator();
 
+	ImGui::Columns(2);
+
+	// Text
+	ImGui::SetColumnWidth(0, 100.0f);
+
 	Enabled = Renderer::Get()->IsSSAOEnabled();
-	if (ImGui::Checkbox("Enabled ", &Enabled))
+	ImGui::Text("Enabled: ");
+	ImGui::NextColumn();
+
+	if (ImGui::Checkbox("##Enabled", &Enabled))
 	{
 		Renderer::Get()->SetSSAOEnable(Enabled);
 	}
 
+	ImGui::NextColumn();
+	ImGui::Text("Radius: ");
+	ImGui::NextColumn();
+
 	Float Radius = Renderer::Get()->GetSSAORadius();
-	if (ImGui::SliderFloat("Radius: ", &Radius, 0.05f, 2.0f, "%.3f"))
+	if (ImGui::SliderFloat("##Radius", &Radius, 0.05f, 5.0f, "%.3f"))
 	{
 		Renderer::Get()->SetSSAORadius(Radius);
 	}
 
+	ImGui::NextColumn();
+	ImGui::Text("Bias: ");
+	ImGui::NextColumn();
+
+	Float Bias = Renderer::Get()->GetSSAOBias();
+	if (ImGui::SliderFloat("##Bias", &Bias, 0.0f, 0.5f, "%.3f"))
+	{
+		Renderer::Get()->SetSSAOBias(Bias);
+	}
+
+	ImGui::NextColumn();
+	ImGui::Text("KernelSize: ");
+	ImGui::NextColumn();
+
+	Int32 KernelSize = Renderer::Get()->GetSSAOKernelSize();
+	if (ImGui::SliderInt("##KernelSize", &KernelSize, 4, 64))
+	{
+		Renderer::Get()->SetSSAOKernelSize(KernelSize);
+	}
+
+	ImGui::Columns(1);
 	ImGui::EndChild();
 }
 
@@ -426,7 +459,7 @@ static void DrawSceneInfo()
 						XMConvertToDegrees(Rotation.y),
 						XMConvertToDegrees(Rotation.z));
 					
-					DrawFloat3Control("Rotation", Rotation);
+					DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
 
 					Rotation = XMFLOAT3(
 						XMConvertToRadians(Rotation.x),
@@ -698,7 +731,7 @@ static void DrawSceneInfo()
 							XMConvertToDegrees(Rotation.z)
 						);
 
-						DrawFloat3Control("Rotation", Rotation, 0.0f, ColumnWidth);
+						DrawFloat3Control("Rotation", Rotation, 0.0f, ColumnWidth, 1.0f);
 
 						Rotation = XMFLOAT3(
 							XMConvertToRadians(Rotation.x),
