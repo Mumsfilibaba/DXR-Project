@@ -22,9 +22,9 @@ void Frustum::Create(Float FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4& P
 	TempProjection._43 = -R * MinimumZ;
 
 	// Create the frustum Matrix from the view Matrix and updated projection Matrix.
-	XMMATRIX XmView = XMLoadFloat4x4(&View);
-	XMMATRIX XmProjection = XMLoadFloat4x4(&TempProjection);
-	XMMATRIX XmMatrix = XMMatrixMultiply(XmView, XmProjection);
+	XMMATRIX XmView			= XMMatrixTranspose(XMLoadFloat4x4(&View));
+	XMMATRIX XmProjection	= XMLoadFloat4x4(&TempProjection);
+	XMMATRIX XmMatrix		= XMMatrixMultiply(XmView, XmProjection);
 	XMFLOAT4X4 Matrix;
 	XMStoreFloat4x4(&Matrix, XmMatrix);
 

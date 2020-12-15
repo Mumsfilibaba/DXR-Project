@@ -28,6 +28,7 @@ struct Camera
 {
 	float4x4 ViewProjection;
 	float4x4 View;
+    float4x4 ViewInverse;
 	float4x4 Projection;
 	float4x4 ProjectionInverse;
 	float4x4 ViewProjectionInverse;
@@ -66,6 +67,7 @@ struct Vertex
 struct Transform
 {
 	float4x4 Transform;
+    float4x4 TransformInv;
 };
 
 struct Material

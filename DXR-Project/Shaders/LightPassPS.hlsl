@@ -232,7 +232,7 @@ float4 Main(PSInput Input) : SV_TARGET
 	const float3 ViewDir	= normalize(CameraBuffer.Position - WorldPosition);
 	const float Roughness	= SampledMaterial.r;
 	const float Metallic	= SampledMaterial.g;
-	const float SampledAO	= SampledMaterial.b * ScreenSpaceAO;
+    const float SampledAO	= SampledMaterial.b * ScreenSpaceAO;
 	
 	float3 F0 = float3(0.04f, 0.04f, 0.04f);
 	F0 = lerp(F0, SampledAlbedo, Metallic);
@@ -305,6 +305,5 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	float3	FinalColor	= ApplyGammaCorrectionAndTonemapping(Color);
 	float	Luminance	= CalculateLuminance(FinalColor);
-    return float4(ScreenSpaceAO, Luminance);
-    //return float4(FinalColor, Luminance);
+    return float4(FinalColor, Luminance);
 }

@@ -128,7 +128,8 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 	DepthStencilDesc.DepthWriteMask				= Properties.DepthWriteMask;
 	DepthStencilDesc.DepthFunc					= Properties.DepthFunc;
 	DepthStencilDesc.StencilEnable				= Properties.EnableDepth;
-	DepthStencilDesc.FrontFace.StencilFailOp	= DepthStencilDesc.FrontFace.StencilDepthFailOp 
+	DepthStencilDesc.FrontFace.StencilFailOp 
+		= DepthStencilDesc.FrontFace.StencilDepthFailOp 
 		= DepthStencilDesc.FrontFace.StencilPassOp 
 		= D3D12_STENCIL_OP_KEEP;
 	DepthStencilDesc.FrontFace.StencilFunc		= D3D12_COMPARISON_FUNC_ALWAYS;
@@ -136,6 +137,7 @@ bool D3D12GraphicsPipelineState::Initialize(const GraphicsPipelineStatePropertie
 
 	D3D12_BLEND_DESC& BlendStateDesc						= Pipeline.BlendStateDesc;
 	BlendStateDesc.AlphaToCoverageEnable					= false;
+	BlendStateDesc.IndependentBlendEnable					= false;
 	BlendStateDesc.RenderTarget[0].LogicOpEnable			= false;
 	BlendStateDesc.RenderTarget[0].BlendEnable				= Properties.EnableBlending;
 	BlendStateDesc.RenderTarget[0].SrcBlend					= D3D12_BLEND_SRC_ALPHA;

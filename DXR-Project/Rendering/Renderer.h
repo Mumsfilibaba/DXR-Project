@@ -177,46 +177,48 @@ private:
 	TSharedPtr<D3D12Texture> SSAONoiseTex;
 	TSharedPtr<D3D12Texture> FinalTarget;
 	
-	TSharedPtr<D3D12RootSignature>		PrePassRootSignature;
-	TSharedPtr<D3D12RootSignature>		ShadowMapRootSignature;
-	TSharedPtr<D3D12RootSignature>		GeometryRootSignature;
-	TSharedPtr<D3D12RootSignature>		LightRootSignature;
-	TSharedPtr<D3D12RootSignature>		SkyboxRootSignature;
-	TSharedPtr<D3D12RootSignature>		GlobalRootSignature;
-	TSharedPtr<D3D12RootSignature>		IrradianceGenRootSignature;
-	TSharedPtr<D3D12RootSignature>		SpecIrradianceGenRootSignature;
-	TSharedPtr<D3D12RootSignature>		DebugRootSignature;
-	TSharedPtr<D3D12RootSignature>		PostRootSignature;
-	TSharedPtr<D3D12RootSignature>		ForwardRootSignature;
-	TSharedPtr<D3D12RootSignature>		SSAORootSignature;
+	TSharedPtr<D3D12RootSignature> PrePassRootSignature;
+	TSharedPtr<D3D12RootSignature> ShadowMapRootSignature;
+	TSharedPtr<D3D12RootSignature> GeometryRootSignature;
+	TSharedPtr<D3D12RootSignature> LightRootSignature;
+	TSharedPtr<D3D12RootSignature> SkyboxRootSignature;
+	TSharedPtr<D3D12RootSignature> GlobalRootSignature;
+	TSharedPtr<D3D12RootSignature> IrradianceGenRootSignature;
+	TSharedPtr<D3D12RootSignature> SpecIrradianceGenRootSignature;
+	TSharedPtr<D3D12RootSignature> DebugRootSignature;
+	TSharedPtr<D3D12RootSignature> PostRootSignature;
+	TSharedPtr<D3D12RootSignature> ForwardRootSignature;
+	TSharedPtr<D3D12RootSignature> SSAORootSignature;
 
-	TSharedPtr<D3D12DescriptorTable>	RayGenDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	GlobalDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	SSAODescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	GeometryDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	ForwardDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	PrePassDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	LightDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	SkyboxDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable>	PostDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable> RayGenDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable> GlobalDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable> SSAODescriptorTable;
+	TSharedPtr<D3D12DescriptorTable> GeometryDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable> ForwardDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable> PrePassDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable> LightDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable> SkyboxDescriptorTable;
+	TSharedPtr<D3D12DescriptorTable> PostDescriptorTable;
 
 	TSharedPtr<D3D12RayTracingScene>	RayTracingScene;
 	TArray<D3D12RayTracingGeometryInstance> RayTracingGeometryInstances;
 
-	TSharedPtr<D3D12GraphicsPipelineState>	PrePassPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	ShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	VSMShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	LinearShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	GeometryPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	ForwardPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	LightPassPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	SkyboxPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	DebugBoxPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	PostPSO;
-	TSharedPtr<D3D12GraphicsPipelineState>	FXAAPSO;
-	TSharedPtr<D3D12ComputePipelineState>	SSAOPSO;
-	TSharedPtr<D3D12ComputePipelineState>	IrradicanceGenPSO;
-	TSharedPtr<D3D12ComputePipelineState>	SpecIrradicanceGenPSO;
+	TSharedPtr<D3D12GraphicsPipelineState> PrePassPSO;
+	TSharedPtr<D3D12GraphicsPipelineState> ShadowMapPSO;
+	TSharedPtr<D3D12GraphicsPipelineState> VSMShadowMapPSO;
+	TSharedPtr<D3D12GraphicsPipelineState> LinearShadowMapPSO;
+	TSharedPtr<D3D12GraphicsPipelineState> GeometryPSO;
+	TSharedPtr<D3D12GraphicsPipelineState> ForwardPSO;
+	TSharedPtr<D3D12GraphicsPipelineState> LightPassPSO;
+	TSharedPtr<D3D12GraphicsPipelineState> SkyboxPSO;
+	TSharedPtr<D3D12GraphicsPipelineState> DebugBoxPSO;
+	TSharedPtr<D3D12GraphicsPipelineState> PostPSO;
+	TSharedPtr<D3D12GraphicsPipelineState> FXAAPSO;
+
+	TSharedPtr<D3D12ComputePipelineState> SSAOPSO;
+	TSharedPtr<D3D12ComputePipelineState> IrradicanceGenPSO;
+	TSharedPtr<D3D12ComputePipelineState> SpecIrradicanceGenPSO;
+
 	TSharedPtr<D3D12RayTracingPipelineState> RaytracingPSO;
 
 	TArray<MeshDrawCommand> DeferredVisibleCommands;

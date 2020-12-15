@@ -65,11 +65,17 @@ public:
 		return Matrix;
 	}
 
+	FORCEINLINE const XMFLOAT4X4& GetMatrixInverse() const
+	{
+		return MatrixInv;
+	}
+
 private:
 	void CalculateMatrix();
 
 private:
 	XMFLOAT4X4	Matrix;
+	XMFLOAT4X4	MatrixInv;
 	XMFLOAT3	Translation;
 	XMFLOAT3	Scale;
 	XMFLOAT3	Rotation;

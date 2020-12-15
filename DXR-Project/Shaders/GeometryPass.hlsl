@@ -5,7 +5,7 @@
 #endif
 
 #if ENABLE_NORMAL_MAPPING
-//#define NORMAL_MAPPING_ENABLED
+#define NORMAL_MAPPING_ENABLED
 #endif
 
 // Per Frame Buffers
@@ -41,7 +41,7 @@ struct VSInput
 
 struct VSOutput
 {
-	float3 Normal : NORMAL0;
+	float3 Normal		: NORMAL0;
 #if defined(NORMAL_MAPPING_ENABLED) || defined(PARALLAX_MAPPING_ENABLED)
 	float3 Tangent		: TANGENT0;
 	float3 Bitangent	: BITANGENT0;
@@ -51,14 +51,15 @@ struct VSOutput
 	float3 TangentViewPos	: TANGENTVIEWPOS0;
 	float3 TangentPosition	: TANGENTPOSITION0;
 #endif
-	float4 Position : SV_Position;
+	float4 Position		: SV_Position;
 };
 
 VSOutput VSMain(VSInput Input)
 {
 	VSOutput Output;
 	
-	float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformBuffer.Transform).xyz);
+	const float4x4 TransformInv = transpose(TransformBuffer.TransformInv);
+	float3 Normal = mul(float4(Input.Normal, 0.0f), TransformInv).xyz;
 	Output.Normal = Normal;
 	
 #if defined(NORMAL_MAPPING_ENABLED) || defined(PARALLAX_MAPPING_ENABLED)
@@ -81,7 +82,7 @@ VSOutput VSMain(VSInput Input)
 	
 	Output.TangentViewPos	= mul(CameraBuffer.Position, TBN);
 	Output.TangentPosition	= mul(WorldPosition.xyz, TBN);
-#endif	
+#endif
 
 	return Output;
 }
@@ -89,7 +90,7 @@ VSOutput VSMain(VSInput Input)
 // PixelShader
 struct PSInput
 {
-	float3 Normal : NORMAL0;
+	float3 Normal		: NORMAL0;
 #if defined(NORMAL_MAPPING_ENABLED) || defined(PARALLAX_MAPPING_ENABLED)
 	float3 Tangent		: TANGENT0;
 	float3 Bitangent	: BITANGENT0;
@@ -103,9 +104,10 @@ struct PSInput
 
 struct PSOutput
 {
-	float4 Albedo	: SV_Target0;
-	float4 Normal	: SV_Target1;
-	float4 Material : SV_Target2;
+	float4 Albedo		: SV_Target0;
+	float4 Normal		: SV_Target1;
+	float4 Material		: SV_Target2;
+	float4 ViewNormal	: SV_Target3;
 };
 
 #ifdef PARALLAX_MAPPING_ENABLED
@@ -152,8 +154,8 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 
 PSOutput PSMain(PSInput Input)
 {
-	float2 TexCoords	= Input.TexCoord;
-	TexCoords.y			= 1.0f - TexCoords.y;
+	float2 TexCoords = Input.TexCoord;
+	TexCoords.y = 1.0f - TexCoords.y;
 	
 #ifdef PARALLAX_MAPPING_ENABLED
 	if (MaterialBuffer.EnableHeight != 0)
@@ -178,7 +180,7 @@ PSOutput PSMain(PSInput Input)
 	float3 Normal		= normalize(Input.Normal);
 	float3 MappedNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
 #else
-	float3 MappedNormal = normalize(Input.Normal);
+	float3 MappedNormal = Input.Normal;
 #endif	
 	MappedNormal = PackNormal(MappedNormal);
 
@@ -190,7 +192,7 @@ PSOutput PSMain(PSInput Input)
 	PSOutput Output;
 	Output.Albedo	= float4(SampledAlbedo, 1.0f);
 	Output.Normal	= float4(MappedNormal, 1.0f);
-	Output.Material = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
+	Output.Material	= float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
 
 	return Output;
 }

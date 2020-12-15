@@ -28,16 +28,16 @@ LightSettings			Renderer::GlobalLightSettings;
 static const DXGI_FORMAT	RenderTargetFormat		= DXGI_FORMAT_R8G8B8A8_UNORM;
 static const DXGI_FORMAT	MaterialFormat			= DXGI_FORMAT_R8G8B8A8_UNORM;
 static const DXGI_FORMAT	AlbedoFormat			= DXGI_FORMAT_R8G8B8A8_UNORM;
-static const DXGI_FORMAT	LightProbeFormat		= DXGI_FORMAT_R16G16B16A16_UNORM;
+static const DXGI_FORMAT	LightProbeFormat		= DXGI_FORMAT_R16G16B16A16_FLOAT;
 static const DXGI_FORMAT	NormalFormat			= DXGI_FORMAT_R10G10B10A2_UNORM;
 static const DXGI_FORMAT	DepthBufferFormat		= DXGI_FORMAT_D32_FLOAT;
 static const DXGI_FORMAT	ShadowMapFormat			= DXGI_FORMAT_D32_FLOAT;
 static const UInt32			ShadowMapSampleCount	= 2;
 
-#define GBUFFER_ALBEDO_INDEX	0
-#define GBUFFER_NORMAL_INDEX	1
-#define GBUFFER_MATERIAL_INDEX	2
-#define GBUFFER_DEPTH_INDEX		3
+#define GBUFFER_ALBEDO_INDEX		0
+#define GBUFFER_NORMAL_INDEX		1
+#define GBUFFER_MATERIAL_INDEX		2
+#define GBUFFER_DEPTH_INDEX			3
 
 /*
 * Renderer
@@ -221,10 +221,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->BindGlobalOnlineDescriptorHeaps();
 
 	// Transition GBuffer
-	CommandList->TransitionBarrier(GBuffer[0].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	CommandList->TransitionBarrier(GBuffer[1].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	CommandList->TransitionBarrier(GBuffer[2].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	CommandList->TransitionBarrier(GBuffer[3].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	CommandList->TransitionBarrier(GBuffer[GBUFFER_ALBEDO_INDEX].Get(),		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	CommandList->TransitionBarrier(GBuffer[GBUFFER_NORMAL_INDEX].Get(),		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	CommandList->TransitionBarrier(GBuffer[GBUFFER_MATERIAL_INDEX].Get(),	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	CommandList->TransitionBarrier(GBuffer[GBUFFER_DEPTH_INDEX].Get(),		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 	// Transition ShadowMaps
 	CommandList->TransitionBarrier(PointLightShadowMaps.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
@@ -272,11 +272,6 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// PerObject Structs
-	struct PerObject
-	{
-		XMFLOAT4X4 Matrix;
-	} PerObjectBuffer;
-
 	struct ShadowPerObject
 	{
 		XMFLOAT4X4 Matrix;
@@ -436,6 +431,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		XMFLOAT4X4 ViewProjection;
 		XMFLOAT4X4 View;
+		XMFLOAT4X4 ViewInv;
 		XMFLOAT4X4 Projection;
 		XMFLOAT4X4 ProjectionInv;
 		XMFLOAT4X4 ViewProjectionInv;
@@ -447,6 +443,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	CamBuff.ViewProjection		= CurrentScene.GetCamera()->GetViewProjectionMatrix();
 	CamBuff.View				= CurrentScene.GetCamera()->GetViewMatrix();
+	CamBuff.ViewInv				= CurrentScene.GetCamera()->GetViewInverseMatrix();
 	CamBuff.Projection			= CurrentScene.GetCamera()->GetProjectionMatrix();
 	CamBuff.ProjectionInv		= CurrentScene.GetCamera()->GetProjectionInverseMatrix();
 	CamBuff.ViewProjectionInv	= CurrentScene.GetCamera()->GetViewProjectionInverseMatrix();
@@ -461,10 +458,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	// Clear GBuffer
 	const Float BlackClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	CommandList->ClearRenderTargetView(GBuffer[0]->GetRenderTargetView(0).Get(), BlackClearColor);
-	CommandList->ClearRenderTargetView(GBuffer[1]->GetRenderTargetView(0).Get(), BlackClearColor);
-	CommandList->ClearRenderTargetView(GBuffer[2]->GetRenderTargetView(0).Get(), BlackClearColor);
-	CommandList->ClearDepthStencilView(GBuffer[3]->GetDepthStencilView(0).Get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
+	CommandList->ClearRenderTargetView(GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(0).Get(), BlackClearColor);
+	CommandList->ClearRenderTargetView(GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(0).Get(), BlackClearColor);
+	CommandList->ClearRenderTargetView(GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(0).Get(), BlackClearColor);
+	CommandList->ClearDepthStencilView(GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(0).Get(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 
 	// Setup view
 	ViewPort.Width		= static_cast<Float>(RenderingAPI::Get().GetSwapChain()->GetWidth());
@@ -487,8 +484,13 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Perform PrePass
 	if (PrePassEnabled)
 	{
+		struct PerObject
+		{
+			XMFLOAT4X4 Matrix;
+		} PerObjectBuffer;
+
 		// Setup Pipeline
-		CommandList->OMSetRenderTargets(nullptr, 0, GBuffer[3]->GetDepthStencilView(0).Get());
+		CommandList->OMSetRenderTargets(nullptr, 0, GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(0).Get());
 
 		CommandList->SetPipelineState(PrePassPSO->GetPipelineState());
 		CommandList->SetGraphicsRootSignature(PrePassRootSignature->GetRootSignature());
@@ -515,18 +517,25 @@ void Renderer::Tick(const Scene& CurrentScene)
 	}
 
 	// Render all objects to the GBuffer
-	D3D12RenderTargetView* GBufferRTVS[] =
+	constexpr UInt32 NumRTVs = 3;
+	D3D12RenderTargetView* GBufferRTVS[NumRTVs] =
 	{
-		GBuffer[0]->GetRenderTargetView(0).Get(),
-		GBuffer[1]->GetRenderTargetView(0).Get(),
-		GBuffer[2]->GetRenderTargetView(0).Get()
+		GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(0).Get(),
+		GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(0).Get(),
+		GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(0).Get()
 	};
-	CommandList->OMSetRenderTargets(GBufferRTVS, 3, GBuffer[3]->GetDepthStencilView(0).Get());
+	CommandList->OMSetRenderTargets(GBufferRTVS, NumRTVs, GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(0).Get());
 
 	// Setup Pipeline
 	CommandList->SetPipelineState(GeometryPSO->GetPipelineState());
 	CommandList->SetGraphicsRootSignature(GeometryRootSignature->GetRootSignature());
 	CommandList->SetGraphicsRootDescriptorTable(GeometryDescriptorTable->GetGPUTableStartHandle(), 1);
+
+	struct TransformBuffer
+	{
+		XMFLOAT4X4 Transform;
+		XMFLOAT4X4 TransformInv;
+	} TransformPerObject;
 
 	for (const MeshDrawCommand& Command : DeferredVisibleCommands)
 	{
@@ -546,17 +555,18 @@ void Renderer::Tick(const Scene& CurrentScene)
 		}
 		CommandList->SetGraphicsRootDescriptorTable(Command.Material->GetDescriptorTable()->GetGPUTableStartHandle(), 2);
 
-		PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-		CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+		TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
+		TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
+		CommandList->SetGraphicsRoot32BitConstants(&TransformPerObject, 32, 0, 0);
 
 		CommandList->DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 	}
 
 	// Setup GBuffer for Read
-	CommandList->TransitionBarrier(GBuffer[0].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	CommandList->TransitionBarrier(GBuffer[1].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	CommandList->TransitionBarrier(GBuffer[2].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	CommandList->TransitionBarrier(GBuffer[3].Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(GBuffer[GBUFFER_ALBEDO_INDEX].Get(),		D3D12_RESOURCE_STATE_RENDER_TARGET,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(GBuffer[GBUFFER_NORMAL_INDEX].Get(),		D3D12_RESOURCE_STATE_RENDER_TARGET,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(GBuffer[GBUFFER_MATERIAL_INDEX].Get(),	D3D12_RESOURCE_STATE_RENDER_TARGET,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(GBuffer[GBUFFER_DEPTH_INDEX].Get(),		D3D12_RESOURCE_STATE_DEPTH_WRITE,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	// RayTracing
 	if (RenderingAPI::Get().IsRayTracingSupported() && RayTracingEnabled)
@@ -578,9 +588,6 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		struct SSAOSettings
 		{
-			XMFLOAT4X4	ProjectionInv;
-			XMFLOAT4X4	Projection;
-			XMFLOAT4X4	View;
 			XMFLOAT2	ScreenSize;
 			XMFLOAT2	NoiseSize;
 			Float		Radius;
@@ -588,17 +595,13 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 		const UInt32 Width	= RenderingAPI::Get().GetSwapChain()->GetWidth();
 		const UInt32 Height	= RenderingAPI::Get().GetSwapChain()->GetHeight();
-
-		SSAOSettings.ProjectionInv	= CurrentScene.GetCamera()->GetProjectionInverseMatrix();
-		SSAOSettings.Projection		= CurrentScene.GetCamera()->GetProjectionMatrix();
-		SSAOSettings.View			= CurrentScene.GetCamera()->GetViewInverseTransposeMatrix();
-		SSAOSettings.ScreenSize		= XMFLOAT2(Float(Width), Float(Height));
-		SSAOSettings.NoiseSize		= XMFLOAT2(4.0f, 4.0f);
-		SSAOSettings.Radius			= SSAORadius;
+		SSAOSettings.ScreenSize	= XMFLOAT2(Float(Width), Float(Height));
+		SSAOSettings.NoiseSize	= XMFLOAT2(4.0f, 4.0f);
+		SSAOSettings.Radius		= SSAORadius;
 
 		CommandList->SetComputeRootSignature(SSAORootSignature->GetRootSignature());
 		CommandList->SetComputeRootDescriptorTable(SSAODescriptorTable->GetGPUTableStartHandle(), 0);
-		CommandList->SetComputeRoot32BitConstants(&SSAOSettings, 53, 0, 1);
+		CommandList->SetComputeRoot32BitConstants(&SSAOSettings, 5, 0, 1);
 
 		CommandList->SetPipelineState(SSAOPSO->GetPipeline());
 
@@ -632,8 +635,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CommandList->DrawInstanced(3, 1, 0, 0);
 
 	// Draw skybox
-	CommandList->TransitionBarrier(GBuffer[3].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	CommandList->OMSetRenderTargets(RenderTarget, 1, GBuffer[3]->GetDepthStencilView(0).Get());
+	CommandList->TransitionBarrier(GBuffer[GBUFFER_DEPTH_INDEX].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	CommandList->OMSetRenderTargets(RenderTarget, 1, GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(0).Get());
 	
 	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -715,7 +718,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	// Render all transparent objects
 	RenderTarget[0] = BackBuffer->GetRenderTargetView(0).Get();
-	CommandList->OMSetRenderTargets(RenderTarget, 1, GBuffer[3]->GetDepthStencilView(0).Get());
+	CommandList->OMSetRenderTargets(RenderTarget, 1, GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(0).Get());
 
 	// Setup Pipeline
 	CommandList->SetGraphicsRootSignature(ForwardRootSignature->GetRootSignature());
@@ -740,8 +743,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 		}
 		CommandList->SetGraphicsRootDescriptorTable(Command.Material->GetDescriptorTable()->GetGPUTableStartHandle(), 2);
 
-		PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-		CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+		TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
+		TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
+		CommandList->SetGraphicsRoot32BitConstants(&TransformPerObject, 32, 0, 0);
 
 		CommandList->DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 	}
@@ -791,7 +795,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	DebugUI::Render(CommandList.Get());
 
 	// Finalize Commandlist
-	CommandList->TransitionBarrier(GBuffer[3].Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CommandList->TransitionBarrier(GBuffer[GBUFFER_DEPTH_INDEX].Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	CommandList->TransitionBarrier(BackBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	CommandList->Close();
 
@@ -863,15 +867,15 @@ bool Renderer::OnEvent(const Event& Event)
 		RayGenDescriptorTable->SetUnorderedAccessView(ReflectionTexture->GetUnorderedAccessView(0).Get(), 0);
 		RayGenDescriptorTable->CopyDescriptors();
 
-		GlobalDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 5);
-		GlobalDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).Get(), 6);
+		GlobalDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(0).Get(), 5);
+		GlobalDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(0).Get(), 6);
 		GlobalDescriptorTable->CopyDescriptors();
 	}
 
-	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).Get(), 0);
-	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 1);
-	LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).Get(), 2);
-	LightDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).Get(), 3);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView(0).Get(), 0);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(0).Get(), 1);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(0).Get(), 2);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(0).Get(), 3);
 	LightDescriptorTable->CopyDescriptors();
 
 	CurrentBackBufferIndex = RenderingAPI::Get().GetSwapChain()->GetCurrentBackBufferIndex();
@@ -1230,12 +1234,13 @@ bool Renderer::Initialize()
 
 	if (SSAOEnabled)
 	{
-		SSAODescriptorTable = RenderingAPI::Get().CreateDescriptorTable(5);
+		SSAODescriptorTable = RenderingAPI::Get().CreateDescriptorTable(6);
 		SSAODescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(0).Get(), 0);
 		SSAODescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(0).Get(), 1);
 		SSAODescriptorTable->SetShaderResourceView(SSAONoiseTex->GetShaderResourceView(0).Get(), 2);
 		SSAODescriptorTable->SetUnorderedAccessView(SSAOBuffer->GetUnorderedAccessView(0).Get(), 3);
 		SSAODescriptorTable->SetShaderResourceView(SSAOSamples->GetShaderResourceView(0).Get(), 4);
+		SSAODescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 5);
 		SSAODescriptorTable->CopyDescriptors();
 	}
 
@@ -1515,8 +1520,8 @@ bool Renderer::InitRayTracing()
 	RayGenDescriptorTable->CopyDescriptors();
 
 	GlobalDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 1);
-	GlobalDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 2);
-	GlobalDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).Get(), 3);
+	GlobalDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(0).Get(), 2);
+	GlobalDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(0).Get(), 3);
 	GlobalDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).Get(), 4);
 	GlobalDescriptorTable->CopyDescriptors();
 
@@ -1890,7 +1895,7 @@ bool Renderer::InitDeferred()
 		Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 		Parameters[0].Constants.ShaderRegister	= 0;
 		Parameters[0].Constants.RegisterSpace	= 0;
-		Parameters[0].Constants.Num32BitValues	= 16;
+		Parameters[0].Constants.Num32BitValues	= 32;
 		Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
 
 		// PerFrame DescriptorTable
@@ -2213,7 +2218,7 @@ bool Renderer::InitDeferred()
 	{
 		AlbedoFormat,
 		NormalFormat,
-		MaterialFormat,
+		MaterialFormat
 	};
 
 	PSOProperties.RTFormats			= Formats;
@@ -2309,10 +2314,10 @@ bool Renderer::InitDeferred()
 	ForwardDescriptorTable->SetConstantBufferView(DirectionalLightBuffer->GetConstantBufferView().Get(), 2);
 
 	LightDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(14);
-	LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).Get(), 0);
-	LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 1);
-	LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).Get(), 2);
-	LightDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).Get(), 3);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView(0).Get(), 0);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(0).Get(), 1);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(0).Get(), 2);
+	LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(0).Get(), 3);
 	// #4 is set after deferred and raytracing
 	// #5 is set after deferred and raytracing
 	// #6 is set after deferred and raytracing
@@ -2375,11 +2380,11 @@ bool Renderer::InitGBuffer()
 	RtvDesc.Texture2D.MipSlice		= 0;
 	RtvDesc.Texture2D.PlaneSlice	= 0;
 
-	GBuffer[0] = RenderingAPI::Get().CreateTexture(GBufferProperties);
-	if (GBuffer[0])
+	GBuffer[GBUFFER_ALBEDO_INDEX] = RenderingAPI::Get().CreateTexture(GBufferProperties);
+	if (GBuffer[GBUFFER_ALBEDO_INDEX])
 	{
-		GBuffer[0]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[0]->GetResource(), &SrvDesc)), 0);
-		GBuffer[0]->SetRenderTargetView(TSharedPtr(RenderingAPI::Get().CreateRenderTargetView(GBuffer[0]->GetResource(), &RtvDesc)), 0);
+		GBuffer[GBUFFER_ALBEDO_INDEX]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[GBUFFER_ALBEDO_INDEX]->GetResource(), &SrvDesc)), 0);
+		GBuffer[GBUFFER_ALBEDO_INDEX]->SetRenderTargetView(TSharedPtr(RenderingAPI::Get().CreateRenderTargetView(GBuffer[GBUFFER_ALBEDO_INDEX]->GetResource(), &RtvDesc)), 0);
 	}
 	else
 	{
@@ -2395,11 +2400,11 @@ bool Renderer::InitGBuffer()
 	SrvDesc.Format = GBufferProperties.Format;
 	RtvDesc.Format = GBufferProperties.Format;
 
-	GBuffer[1] = RenderingAPI::Get().CreateTexture(GBufferProperties);
-	if (GBuffer[1])
+	GBuffer[GBUFFER_NORMAL_INDEX] = RenderingAPI::Get().CreateTexture(GBufferProperties);
+	if (GBuffer[GBUFFER_NORMAL_INDEX])
 	{
-		GBuffer[1]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[1]->GetResource(), &SrvDesc)), 0);
-		GBuffer[1]->SetRenderTargetView(TSharedPtr(RenderingAPI::Get().CreateRenderTargetView(GBuffer[1]->GetResource(), &RtvDesc)), 0);
+		GBuffer[GBUFFER_NORMAL_INDEX]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetResource(), &SrvDesc)), 0);
+		GBuffer[GBUFFER_NORMAL_INDEX]->SetRenderTargetView(TSharedPtr(RenderingAPI::Get().CreateRenderTargetView(GBuffer[GBUFFER_NORMAL_INDEX]->GetResource(), &RtvDesc)), 0);
 	}
 	else
 	{
@@ -2415,11 +2420,11 @@ bool Renderer::InitGBuffer()
 	SrvDesc.Format = GBufferProperties.Format;
 	RtvDesc.Format = GBufferProperties.Format;
 
-	GBuffer[2] = RenderingAPI::Get().CreateTexture(GBufferProperties);
-	if (GBuffer[2])
+	GBuffer[GBUFFER_MATERIAL_INDEX] = RenderingAPI::Get().CreateTexture(GBufferProperties);
+	if (GBuffer[GBUFFER_MATERIAL_INDEX])
 	{
-		GBuffer[2]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[2]->GetResource(), &SrvDesc)), 0);
-		GBuffer[2]->SetRenderTargetView(TSharedPtr(RenderingAPI::Get().CreateRenderTargetView(GBuffer[2]->GetResource(), &RtvDesc)), 0);
+		GBuffer[GBUFFER_MATERIAL_INDEX]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[GBUFFER_MATERIAL_INDEX]->GetResource(), &SrvDesc)), 0);
+		GBuffer[GBUFFER_MATERIAL_INDEX]->SetRenderTargetView(TSharedPtr(RenderingAPI::Get().CreateRenderTargetView(GBuffer[GBUFFER_MATERIAL_INDEX]->GetResource(), &RtvDesc)), 0);
 	}
 	else
 	{
@@ -2444,11 +2449,11 @@ bool Renderer::InitGBuffer()
 	DsvDesc.ViewDimension		= D3D12_DSV_DIMENSION_TEXTURE2D;
 	DsvDesc.Texture2D.MipSlice	= 0;
 
-	GBuffer[3] = RenderingAPI::Get().CreateTexture(GBufferProperties);
-	if (GBuffer[3])
+	GBuffer[GBUFFER_DEPTH_INDEX] = RenderingAPI::Get().CreateTexture(GBufferProperties);
+	if (GBuffer[GBUFFER_DEPTH_INDEX])
 	{
-		GBuffer[3]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[3]->GetResource(), &SrvDesc)), 0);
-		GBuffer[3]->SetDepthStencilView(TSharedPtr(RenderingAPI::Get().CreateDepthStencilView(GBuffer[3]->GetResource(), &DsvDesc)), 0);
+		GBuffer[GBUFFER_DEPTH_INDEX]->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetResource(), &SrvDesc)), 0);
+		GBuffer[GBUFFER_DEPTH_INDEX]->SetDepthStencilView(TSharedPtr(RenderingAPI::Get().CreateDepthStencilView(GBuffer[GBUFFER_DEPTH_INDEX]->GetResource(), &DsvDesc)), 0);
 	}
 	else
 	{
@@ -3063,7 +3068,7 @@ bool Renderer::InitForwardPass()
 		Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 		Parameters[0].Constants.ShaderRegister	= 0;
 		Parameters[0].Constants.RegisterSpace	= 0;
-		Parameters[0].Constants.Num32BitValues	= 16;
+		Parameters[0].Constants.Num32BitValues	= 32;
 		Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
 
 		// PerFrame DescriptorTable
@@ -3266,7 +3271,7 @@ bool Renderer::InitSSAO()
 	}
 
 	// Init RootSignatures
-	constexpr UInt32 NumPerFrameRanges = 5;
+	constexpr UInt32 NumPerFrameRanges = 6;
 	D3D12_DESCRIPTOR_RANGE PerFrameRanges[NumPerFrameRanges] = {};
 	// Normal Buffer
 	PerFrameRanges[0].BaseShaderRegister				= 0;
@@ -3303,6 +3308,13 @@ bool Renderer::InitSSAO()
 	PerFrameRanges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	PerFrameRanges[4].OffsetInDescriptorsFromTableStart = 4;
 
+	// Camera
+	PerFrameRanges[5].BaseShaderRegister				= 1;
+	PerFrameRanges[5].NumDescriptors					= 1;
+	PerFrameRanges[5].RegisterSpace						= 0;
+	PerFrameRanges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	PerFrameRanges[5].OffsetInDescriptorsFromTableStart	= 5;
+
 	constexpr UInt32 NumParameters = 2;
 	D3D12_ROOT_PARAMETER Parameters[NumParameters];
 	// DescriptorTable
@@ -3313,7 +3325,7 @@ bool Renderer::InitSSAO()
 
 	// Settings
 	Parameters[1].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	Parameters[1].Constants.Num32BitValues	= 53;
+	Parameters[1].Constants.Num32BitValues	= 5;
 	Parameters[1].Constants.RegisterSpace	= 0;
 	Parameters[1].Constants.ShaderRegister	= 0;
 	Parameters[1].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;

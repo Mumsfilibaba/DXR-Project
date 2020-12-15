@@ -22,9 +22,9 @@ public:
 		return View;
 	}
 
-	FORCEINLINE const XMFLOAT4X4& GetViewInverseTransposeMatrix() const
+	FORCEINLINE const XMFLOAT4X4& GetViewInverseMatrix() const
 	{
-		return ViewInverseTranspose;
+		return ViewInverse;
 	}
 
 	FORCEINLINE const XMFLOAT4X4& GetProjectionMatrix() const
@@ -73,19 +73,20 @@ public:
 	}
 
 private:
-	XMFLOAT4X4	View;
-	XMFLOAT4X4	ViewInverseTranspose;
-	XMFLOAT4X4	Projection;
-	XMFLOAT4X4	ProjectionInverse;
-	XMFLOAT4X4	ViewProjection;
-	XMFLOAT4X4	ViewProjectionInverse;
-	XMFLOAT4X4	ViewProjectionNoTranslation;
-	XMFLOAT3	Position;
-	XMFLOAT3	Rotation;
-	XMFLOAT3	Forward;
-	XMFLOAT3	Right;
-	XMFLOAT3	Up;
-	Float		NearPlane;
-	Float		FarPlane;
-	Float		AspectRatio;
+	XMFLOAT4X4 View;
+	XMFLOAT4X4 ViewInverse;
+	XMFLOAT4X4 Projection;
+	XMFLOAT4X4 ProjectionInverse;
+	XMFLOAT4X4 ViewProjection;
+	XMFLOAT4X4 ViewProjectionInverse;
+	XMFLOAT4X4 ViewProjectionNoTranslation;
+
+	XMFLOAT3 Position;
+	XMFLOAT3 Rotation;
+	XMFLOAT3 Forward;
+	XMFLOAT3 Right;
+	XMFLOAT3 Up;
+	Float	 NearPlane;
+	Float	 FarPlane;
+	Float	 AspectRatio;
 };

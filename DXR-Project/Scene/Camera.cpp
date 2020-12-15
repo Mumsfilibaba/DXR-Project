@@ -65,11 +65,12 @@ void Camera::UpdateMatrices()
 	XMVECTOR XmForward	= XMLoadFloat3(&Forward);
 	XMVECTOR XmUp		= XMLoadFloat3(&Up);
 	XMVECTOR XmAt		= XMVectorAdd(XmPosition, XmForward);
-	XMMATRIX XmView		= XMMatrixLookAtLH(XmPosition, XmAt, XmUp);
-	XMStoreFloat4x4(&View, XmView);
 
-	XMMATRIX XmViewInvTranspose = XMMatrixInverse(nullptr, XmView);
-	XMStoreFloat4x4(&ViewInverseTranspose, XMMatrixTranspose(XmViewInvTranspose));
+	XMMATRIX XmView = XMMatrixLookAtLH(XmPosition, XmAt, XmUp);
+	XMStoreFloat4x4(&View, XMMatrixTranspose(XmView));
+
+	XMMATRIX XmViewInv = XMMatrixInverse(nullptr, XmView);
+	XMStoreFloat4x4(&ViewInverse, XMMatrixTranspose(XmViewInv));
 
 	XMFLOAT3X3 TempView3x3;
 	XMStoreFloat3x3(&TempView3x3, XmView);
