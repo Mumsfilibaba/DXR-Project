@@ -149,7 +149,7 @@ public:
 		Uint32 WorkGroupsY, 
 		Uint32 WorkGroupsZ) = 0;
 
-	virtual void DispatchRays(
+	virtual void DispatchRays(	
 		Uint32 Width, 
 		Uint32 Height, 
 		Uint32 Depth) = 0;
