@@ -15,26 +15,44 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 	Memory::SetDebugFlags(EMemoryDebugFlag::MEMORY_DEBUG_FLAGS_LEAK_CHECK);
 #endif
 
-	if (!EngineLoop::CoreInitialize())
+	// Init core modules
+	if (!EngineLoop::PreInitialize())
 	{
-		::MessageBox(0, "Failed to initalize core modules", "ERROR", MB_ICONERROR);
+		::MessageBox(0, "Pre-Initialize Failed", "ERROR", MB_ICONERROR);
 		return -1;
 	}
 
+	// Main init
 	if (!EngineLoop::Initialize())
 	{
 		::MessageBox(0, "Failed to initalize", "ERROR", MB_ICONERROR);
 		return -1;
 	}
 
-	while (EngineLoop::IsRunning())
+	// Handle post init
+	if (!EngineLoop::PostInitialize())
 	{
-		EngineLoop::Tick();
+		::MessageBox(0, "Post-Initialize Failed ", "ERROR", MB_ICONERROR);
+		return -1;
 	}
 
-	EngineLoop::Release();
+	// Run loop
+	while (EngineLoop::IsRunning())
+	{
+		// Prepare for tick
+		EngineLoop::PreTick();
+		// Update engine
+		EngineLoop::Tick();
+		// Handle post tick
+		EngineLoop::PostTick();
+	}
 
-	EngineLoop::CoreRelease();
+	// Relrase minor resources
+	EngineLoop::PreRelease();
+	// Main release of resources
+	EngineLoop::Release();
+	// Release core features
+	EngineLoop::PostRelease();
 
 	return 0;
 }

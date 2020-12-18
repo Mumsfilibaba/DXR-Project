@@ -634,10 +634,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	//CmdList.TransitionTexture(BackBuffer, EResourceState::ResourceState_RenderTarget, EResourceState::ResourceState_Present);
 	
 	CmdList.End();
-
-	// Execute
-	CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
-	Executor.ExecuteCommandList(CmdList);
+	CommandListExecutor::ExecuteCommandList(CmdList);
 
 	// Present
 	
@@ -765,8 +762,7 @@ void Renderer::SetGlobalLightSettings(const LightSettings& InGlobalLightSettings
 			EResourceState::ResourceState_Common, 
 			EResourceState::ResourceState_PixelShaderResource);
 
-		CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
-		Executor.ExecuteCommandList(CmdList);
+		CommandListExecutor::ExecuteCommandList(CmdList);
 	}
 }
 
@@ -1103,8 +1099,7 @@ bool Renderer::Initialize()
 			EResourceState::ResourceState_PixelShaderResource);
 	}
 	
-	CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
-	Executor.ExecuteCommandList(CmdList);
+	CommandListExecutor::ExecuteCommandList(CmdList);
 
 	if (!InitGBuffer())
 	{

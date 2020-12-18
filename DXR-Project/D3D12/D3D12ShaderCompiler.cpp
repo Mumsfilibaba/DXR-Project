@@ -76,7 +76,12 @@ D3D12ShaderCompiler::D3D12ShaderCompiler()
 
 D3D12ShaderCompiler::~D3D12ShaderCompiler()
 {
-	::CloseHandle(DxCompilerDLL);
+	DxCompiler.Reset();
+	DxLibrary.Reset();
+	DxLinker.Reset();
+	DxIncludeHandler.Reset();
+
+	::FreeLibrary(DxCompilerDLL);
 }
 
 bool D3D12ShaderCompiler::CompileFromFile(

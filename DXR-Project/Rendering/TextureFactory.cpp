@@ -142,8 +142,7 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint
 		CmdList.GenerateMips(Texture.Get());
 		CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
 	
-		CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
-		Executor.ExecuteCommandList(CmdList);
+		CommandListExecutor::ExecuteCommandList(CmdList);
 	}
 
 	return Texture.ReleaseOwnerShip();
@@ -225,9 +224,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	}
 
 	CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
-
-	CommandListExecutor& Executor = RenderingAPI::GetCommandListExecutor();
-	Executor.ExecuteCommandList(CmdList);
+	CommandListExecutor::ExecuteCommandList(CmdList);
 
 	return Texture.ReleaseOwnerShip();
 }

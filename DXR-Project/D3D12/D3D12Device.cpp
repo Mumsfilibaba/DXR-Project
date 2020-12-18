@@ -46,8 +46,8 @@ D3D12Device::~D3D12Device()
 	}
 
 	// Close DLLs
-	::CloseHandle(hDXGI);
-	::CloseHandle(hD3D12);
+	::FreeLibrary(hDXGI);
+	::FreeLibrary(hD3D12);
 }
 
 bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)

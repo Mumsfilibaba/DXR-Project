@@ -30,7 +30,7 @@ static bool		GlobalIsRunning = false;
 * EngineLoop
 */
 
-bool EngineLoop::CoreInitialize()
+bool EngineLoop::PreInitialize()
 {
 	GlobalOutputDevices::Initialize();
 
@@ -100,6 +100,17 @@ bool EngineLoop::Initialize()
 	return true;
 }
 
+bool EngineLoop::PostInitialize()
+{
+	// Empty for now
+	return true;
+}
+
+void EngineLoop::PreTick()
+{
+	// Empty for now
+}
+
 void EngineLoop::Tick()
 {
 	GlobalClock.Tick();
@@ -117,6 +128,22 @@ void EngineLoop::Tick()
 	Editor::Tick();
 }
 
+void EngineLoop::PostTick()
+{
+	// Empty for now
+}
+
+void EngineLoop::PreRelease()
+{
+	TextureFactory::Release();
+
+	Application::Get().Release();
+
+	EngineGlobals::PlatformApplication.Reset();
+
+	GlobalOutputDevices::Release();
+}
+
 void EngineLoop::Release()
 {
 	// Destroy game instance
@@ -128,15 +155,19 @@ void EngineLoop::Release()
 	Renderer::Release();
 }
 
-void EngineLoop::CoreRelease()
+void EngineLoop::PostRelease()
 {
-	TextureFactory::Release();
+	// Empty for now
+}
 
-	Application::Get().Release();
+void EngineLoop::Exit()
+{
+	GlobalIsRunning = false;
+}
 
-	EngineGlobals::PlatformApplication.Reset();
-
-	GlobalOutputDevices::Release();
+bool EngineLoop::IsRunning()
+{
+	return GlobalIsRunning;
 }
 
 Timestamp EngineLoop::GetDeltaTime()
@@ -147,14 +178,4 @@ Timestamp EngineLoop::GetDeltaTime()
 Timestamp EngineLoop::GetTotalElapsedTime()
 {
 	return GlobalClock.GetTotalTime();
-}
-
-bool EngineLoop::IsRunning()
-{
-	return GlobalIsRunning;
-}
-
-void EngineLoop::Exit()
-{
-	GlobalIsRunning = false;
 }
