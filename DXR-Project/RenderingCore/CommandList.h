@@ -51,7 +51,7 @@ public:
 		VALIDATE(RenderTargetView != nullptr);
 
 		RenderTargetView->AddRef();
-		InsertCommand<ClearRenderTargetCommand>(RenderTargetView, ClearColor);
+		InsertCommand<ClearRenderTargetViewCommand>(RenderTargetView, ClearColor);
 	}
 
 	FORCEINLINE void ClearDepthStencilView(
@@ -61,7 +61,17 @@ public:
 		VALIDATE(DepthStencilView != nullptr);
 
 		DepthStencilView->AddRef();
-		InsertCommand<ClearDepthStencilCommand>(DepthStencilView, ClearValue);
+		InsertCommand<ClearDepthStencilViewCommand>(DepthStencilView, ClearValue);
+	}
+
+	FORCEINLINE void ClearUnorderedAccessView(
+		UnorderedAccessView* UnorderedAccessView,
+		const ColorClearValue& ClearColor)
+	{
+		VALIDATE(UnorderedAccessView != nullptr);
+
+		UnorderedAccessView->AddRef();
+		InsertCommand<ClearUnorderedAccessViewCommand>(UnorderedAccessView, ClearColor);
 	}
 
 	FORCEINLINE void BeginRenderPass()
@@ -386,9 +396,10 @@ private:
 	template<typename TCommand, typename... TArgs>
 	FORCEINLINE void InsertCommand(TArgs&&... Args)
 	{
-		VoidPtr Memory	= CmdAllocator.Allocate<TCommand>();
-		TCommand* Cmd	= new(Memory) TCommand(Forward<TArgs>(Args)...);
+		VoidPtr Memory = CmdAllocator.Allocate<TCommand>();
+		VALIDATE(Memory != nullptr);
 
+		TCommand* Cmd = new(Memory) TCommand(Forward<TArgs>(Args)...);
 		if (Last)
 		{
 			Last->NextCmd = Cmd;
@@ -422,7 +433,7 @@ public:
 		CmdContext = InCmdContext;
 	}
 
-	FORCEINLINE static ICommandContext& GetContext() const
+	FORCEINLINE static ICommandContext& GetContext()
 	{
 		VALIDATE(CmdContext != nullptr);
 		return *CmdContext;

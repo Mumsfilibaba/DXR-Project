@@ -91,7 +91,7 @@ struct MemoryArena
 class LinearAllocator
 {
 public:
-	LinearAllocator(Uint32 StatSize);
+	LinearAllocator(Uint32 StartSize = 4096);
 	~LinearAllocator() = default;
 
 	VoidPtr Allocate(Uint64 SizeInBytes, Uint64 Alignment);

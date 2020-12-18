@@ -10,7 +10,7 @@
 D3D12CommandContext::D3D12CommandContext(D3D12Device* InDevice, D3D12CommandQueue* InCmdQueue, const D3D12DefaultRootSignatures& InDefaultRootSignatures)
 	: D3D12DeviceChild(InDevice)
 	, CmdQueue(InCmdQueue)
-	, CmdAllocator(nullptr)
+	, CmdAllocators()
 	, CmdList(nullptr)
 	, Fence(nullptr)
 	, DefaultRootSignatures(InDefaultRootSignatures)
@@ -19,19 +19,33 @@ D3D12CommandContext::D3D12CommandContext(D3D12Device* InDevice, D3D12CommandQueu
 
 D3D12CommandContext::~D3D12CommandContext()
 {
+	for (D3D12CommandAllocator* CmdAllocator : CmdAllocators)
+	{
+		SAFEDELETE(CmdAllocator);
+	}
+
+	SAFEDELETE(CmdList);
 }
 
 bool D3D12CommandContext::Initialize()
 {
 	VALIDATE(CmdQueue != nullptr);
 
-	CmdAllocator = Device->CreateCommandAllocator(CmdQueue->GetType());
-	if (!CmdAllocator)
+	// TODO: Have support for more than 3 commandallocators
+	for (Uint32 i = 0; i < 3; i++)
 	{
-		return false;
+		TUniquePtr<D3D12CommandAllocator> CmdAllocator = TUniquePtr(Device->CreateCommandAllocator(CmdQueue->GetType()));
+		if (CmdAllocator)
+		{
+			CmdAllocators.EmplaceBack(CmdAllocator.Release());
+		}
+		else
+		{
+			return false;
+		}
 	}
 
-	CmdList = Device->CreateCommandList(CmdQueue->GetType(), CmdAllocator, nullptr);
+	CmdList = Device->CreateCommandList(CmdQueue->GetType(), CmdAllocators[0], nullptr);
 	if (!CmdList)
 	{
 		return false;
@@ -56,11 +70,15 @@ void D3D12CommandContext::End()
 	IsReady = false;
 }
 
-void D3D12CommandContext::ClearRenderTarget(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor)
+void D3D12CommandContext::ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor)
 {
 }
 
-void D3D12CommandContext::ClearDepthStencil(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) 
+void D3D12CommandContext::ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) 
+{
+}
+
+void D3D12CommandContext::ClearUnorderedAccessView(UnorderedAccessView* UnorderedAccessView, const ColorClearValue& ClearColor)
 {
 }
 
@@ -524,5 +542,9 @@ void D3D12CommandContext::Dispatch(
 }
 
 void D3D12CommandContext::DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth)
+{
+}
+
+void D3D12CommandContext::Flush()
 {
 }

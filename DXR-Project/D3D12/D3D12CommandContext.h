@@ -5,6 +5,7 @@
 #include "D3D12RootSignature.h"
 
 class D3D12CommandQueue;
+class D3D12CommandList;
 class D3D12CommandAllocator;
 
 /*
@@ -16,9 +17,9 @@ struct D3D12GenerateMipsHelper
 	TUniquePtr<class D3D12ComputePipelineState>		GenerateMipsTex2D_PSO;
 	TUniquePtr<class D3D12ComputePipelineState>		GenerateMipsTexCube_PSO;
 	TUniquePtr<class D3D12RootSignature>			GenerateMipsRootSignature;
-	TUniquePtr<class D3D12UnorderedAccessView>		NULLView;
 	TUniquePtr<class D3D12DescriptorTable>			SRVDescriptorTable;
 	TArray<TUniquePtr<class D3D12DescriptorTable>>	UAVDescriptorTables;
+	TUniquePtr<class D3D12UnorderedAccessView>		NULLView;
 };
 
 /*
@@ -43,13 +44,9 @@ public:
 	virtual void Begin() override final;
 	virtual void End() override final;
 
-	virtual bool IsReady() const override final
-	{
-		return IsReady;
-	}
-
-	virtual void ClearRenderTarget(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor) override final;
-	virtual void ClearDepthStencil(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) override final;
+	virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor) override final;
+	virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) override final;
+	virtual void ClearUnorderedAccessView(UnorderedAccessView* UnorderedAccessView, const ColorClearValue& ClearColor) override final;
 
 	virtual void BeginRenderPass() override final;
 	virtual void EndRenderPass() override final;

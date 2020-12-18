@@ -248,7 +248,7 @@ public:
 		CmdList->ResourceBarrier(NumBarriers, Barriers);
 	}
 
-	FORCEINLINE bool IsReady() const
+	FORCEINLINE bool IsRecordning() const
 	{
 		return IsReady;
 	}

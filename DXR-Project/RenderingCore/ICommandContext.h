@@ -31,13 +31,12 @@ public:
 	virtual void Begin() = 0;
 	virtual void End() = 0;
 
-	virtual bool IsReady() const = 0;
+	virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor)			= 0;
+	virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue)	= 0;
+	virtual void ClearUnorderedAccessView(UnorderedAccessView* UnorderedAccessView, const ColorClearValue& ClearColor)	= 0;
 
-	virtual void ClearRenderTarget(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor) = 0;
-	virtual void ClearDepthStencil(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) = 0;
-
-	virtual void BeginRenderPass() = 0;
-	virtual void EndRenderPass() = 0;
+	virtual void BeginRenderPass()	= 0;
+	virtual void EndRenderPass()	= 0;
 
 	virtual void BindViewport(const Viewport& Viewport, Uint32 Slot) = 0;
 	virtual void BindScissorRect(const ScissorRect& ScissorRect, Uint32 Slot) = 0;

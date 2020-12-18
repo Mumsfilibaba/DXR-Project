@@ -479,12 +479,12 @@ private:
 		const D3D12_RESOURCE_DESC& Desc) const;
 	
 	bool UploadBuffer(
-		D3D12Buffer& Buffer, 
+		Buffer& Buffer, 
 		Uint32 SizeInBytes, 
 		const ResourceData* InitalData) const;
 	
 	bool UploadTexture(
-		D3D12Texture& Texture, 
+		Texture& Texture, 
 		const ResourceData* InitalData) const;
 
 	/*

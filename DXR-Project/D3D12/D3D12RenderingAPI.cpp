@@ -1760,13 +1760,13 @@ bool D3D12RenderingAPI::AllocateTexture(
 * Resource uploading
 */
 
-bool D3D12RenderingAPI::UploadBuffer(D3D12Buffer& Buffer, Uint32 SizeInBytes, const ResourceData* InitalData) const
+bool D3D12RenderingAPI::UploadBuffer(Buffer& Buffer, Uint32 SizeInBytes, const ResourceData* InitalData) const
 {
-	if (Buffer.GetHeapType() == D3D12_HEAP_TYPE_UPLOAD)
+	if (Buffer.HasDynamicUsage())
 	{
-		VALIDATE(Buffer.GetAllocatedSize() <= SizeInBytes);
+		VALIDATE(Buffer.GetSizeInBytes() <= SizeInBytes);
 
-		VoidPtr HostData =  Buffer.Map(nullptr);
+		VoidPtr HostData = Buffer.Map(nullptr);
 		if (HostData)
 		{
 			Memory::Memcpy(HostData, InitalData->Data, SizeInBytes);
@@ -1776,51 +1776,36 @@ bool D3D12RenderingAPI::UploadBuffer(D3D12Buffer& Buffer, Uint32 SizeInBytes, co
 		}
 	}
 
-	const bool IsReady = DirectCmdContext->IsReady();
-	if (!IsReady)
-	{
-		DirectCmdContext->Begin();
-	}
-
+	DirectCmdContext->Begin();
 	DirectCmdContext->UpdateBuffer(&Buffer, 0, SizeInBytes, InitalData->Data);
-
-	if (!IsReady)
-	{
-		DirectCmdContext->End();
-		DirectCmdContext->Flush();
-	}
+	DirectCmdContext->End();
+	DirectCmdContext->Flush();
 
 	return true;
 }
 
-bool D3D12RenderingAPI::UploadTexture(D3D12Texture& Texture, const ResourceData* InitalData) const
+bool D3D12RenderingAPI::UploadTexture(Texture& Texture, const ResourceData* InitalData) const
 {
 	// TODO: Support other types than texture 2D
-	if (!Texture.AsTexture2D())
+	Texture2D* Texture2D = Texture.AsTexture2D();
+	if (!Texture2D)
 	{
 		return false;
 	}
 
-	const bool IsReady = DirectCmdContext->IsReady();
-	if (!IsReady)
-	{
-		DirectCmdContext->Begin();
-	}
+	DirectCmdContext->Begin();
 
 	const Uint32 Width 	= Texture.GetWidth();
 	const Uint32 Height = Texture.GetHeight();
 	DirectCmdContext->UpdateTexture2D(
-		Texture.AsTexture2D(),
+		Texture2D,
 		Width,
 		Height,
 		0,
 		InitalData->Data);
 
-	if (!IsReady)
-	{
-		DirectCmdContext->End();
-		DirectCmdContext->Flush();
-	}
+	DirectCmdContext->End();
+	DirectCmdContext->Flush();
 
 	return true;
 }

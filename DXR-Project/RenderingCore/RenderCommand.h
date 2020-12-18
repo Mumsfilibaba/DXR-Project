@@ -54,23 +54,23 @@ struct EndCommand : public RenderCommand
 };
 
 // Clear RenderTarget RenderCommand
-struct ClearRenderTargetCommand : public RenderCommand
+struct ClearRenderTargetViewCommand : public RenderCommand
 {
-	inline ClearRenderTargetCommand(RenderTargetView* InRenderTargetView, const ColorClearValue& InClearColor)
+	inline ClearRenderTargetViewCommand(RenderTargetView* InRenderTargetView, const ColorClearValue& InClearColor)
 		: RenderTargetView(InRenderTargetView)
 		, ClearColor(InClearColor)
 	{
 		VALIDATE(RenderTargetView != nullptr);
 	}
 
-	inline ~ClearRenderTargetCommand()
+	inline ~ClearRenderTargetViewCommand()
 	{
 		SAFERELEASE(RenderTargetView);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
 	{
-		CmdContext.ClearRenderTarget(RenderTargetView, ClearColor);
+		CmdContext.ClearRenderTargetView(RenderTargetView, ClearColor);
 	}
 
 	RenderTargetView* RenderTargetView;
@@ -78,27 +78,51 @@ struct ClearRenderTargetCommand : public RenderCommand
 };
 
 // Clear DepthStencil RenderCommand
-struct ClearDepthStencilCommand : public RenderCommand
+struct ClearDepthStencilViewCommand : public RenderCommand
 {
-	inline ClearDepthStencilCommand(DepthStencilView* InDepthStencilView, const DepthStencilClearValue& InClearValue)
+	inline ClearDepthStencilViewCommand(DepthStencilView* InDepthStencilView, const DepthStencilClearValue& InClearValue)
 		: DepthStencilView(InDepthStencilView)
 		, ClearValue(InClearValue)
 	{
 		VALIDATE(DepthStencilView != nullptr);
 	}
 
-	inline ~ClearDepthStencilCommand()
+	inline ~ClearDepthStencilViewCommand()
 	{
 		SAFERELEASE(DepthStencilView);
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
 	{
-		CmdContext.ClearDepthStencil(DepthStencilView, ClearValue);
+		CmdContext.ClearDepthStencilView(DepthStencilView, ClearValue);
 	}
 
 	DepthStencilView* DepthStencilView;
 	DepthStencilClearValue ClearValue;
+};
+
+// Clear UnorderedAccessView RenderCommand
+struct ClearUnorderedAccessViewCommand : public RenderCommand
+{
+	inline ClearUnorderedAccessViewCommand(UnorderedAccessView* InUnorderedAccessView, const ColorClearValue& InClearColor)
+		: UnorderedAccessView(InUnorderedAccessView)
+		, ClearValue(InClearColor)
+	{
+		VALIDATE(UnorderedAccessView != nullptr);
+	}
+
+	inline ~ClearUnorderedAccessViewCommand()
+	{
+		SAFERELEASE(UnorderedAccessView);
+	}
+
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.ClearUnorderedAccessView(UnorderedAccessView, ClearValue);
+	}
+
+	UnorderedAccessView* UnorderedAccessView;
+	ColorClearValue ClearValue;
 };
 
 // Bind Viewport RenderCommand
