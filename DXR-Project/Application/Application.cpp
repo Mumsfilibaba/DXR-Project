@@ -44,7 +44,7 @@ bool Application::Initialize(TSharedPtr<GenericApplication> InPlatformApplicatio
 	SetPlatformApplication(InPlatformApplication);
 
 	// Creating main Window
-	Uint32 Style =
+	UInt32 Style =
 		WINDOW_STYLE_FLAG_TITLED |
 		WINDOW_STYLE_FLAG_CLOSABLE |
 		WINDOW_STYLE_FLAG_MINIMIZABLE |
@@ -158,7 +158,7 @@ Application& Application::Get()
 	return (*CurrentApplication.Get());
 }
 
-void Application::OnWindowResized(TSharedRef<GenericWindow> InWindow, Uint16 Width, Uint16 Height)
+void Application::OnWindowResized(TSharedRef<GenericWindow> InWindow, UInt16 Width, UInt16 Height)
 {
 	WindowResizeEvent Event(InWindow, Width, Height);
 	EventQueue::SendEvent(Event);
@@ -211,13 +211,13 @@ void Application::OnMouseButtonPressed(EMouseButton Button, const ModifierKeySta
 	EventQueue::SendEvent(Event);
 }
 
-void Application::OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta)
+void Application::OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta)
 {
 	MouseScrolledEvent Event(HorizontalDelta, VerticalDelta);
 	EventQueue::SendEvent(Event);
 }
 
-void Application::OnCharacterInput(Uint32 Character)
+void Application::OnCharacterInput(UInt32 Character)
 {
 	KeyTypedEvent Event(Character);
 	EventQueue::SendEvent(Event);

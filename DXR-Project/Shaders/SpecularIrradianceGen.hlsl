@@ -70,13 +70,13 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 	float3 Normal = float3((TexCoord.xy / float(Width)) - 0.5f, 0.5f);
 	Normal = normalize(mul(RotateUV[TexCoord.z], Normal));
 	
-	// Make the simplyfying assumption that V equals R equals the normal 
+	// Make the assumption that V equals R equals the normal 
 	float3 R = Normal;
 	float3 V = R;
 
-	float FinalRoughness = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
-	float TotalWeight = 0.0f;
-	float3 PrefilteredColor = float3(0.0f, 0.0f, 0.0f);
+	float	FinalRoughness		= min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+	float	TotalWeight			= 0.0f;
+	float3	PrefilteredColor	= float3(0.0f, 0.0f, 0.0f);
 	
 	const uint SAMPLE_COUNT = 512U;
 	for (uint i = 0U; i < SAMPLE_COUNT; i++)

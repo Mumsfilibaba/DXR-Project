@@ -11,7 +11,7 @@ template<typename T>
 class TArray
 {
 public:
-	typedef Uint32 SizeType;
+	typedef UInt32 SizeType;
 
 	/*
 	* TIterator
@@ -408,7 +408,7 @@ public:
 		}
 
 		T* DataEnd = ArrayPtr + ArraySize;
-		new(reinterpret_cast<VoidPtr>(DataEnd)) T(Forward<TArgs>(Args)...);
+		new(reinterpret_cast<Void*>(DataEnd)) T(Forward<TArgs>(Args)...);
 		ArraySize++;
 		return (*DataEnd);
 	}
@@ -452,7 +452,7 @@ public:
 			InternalDestruct(DataBegin);
 		}
 
-		new (reinterpret_cast<VoidPtr>(DataBegin)) T(Forward<TArgs>(Args)...);
+		new (reinterpret_cast<Void*>(DataBegin)) T(Forward<TArgs>(Args)...);
 		ArraySize++;
 		return Iterator(DataBegin);
 	}
@@ -1028,7 +1028,7 @@ private:
 		{
 			while (InBegin != InEnd)
 			{
-				new(reinterpret_cast<VoidPtr>(Dest)) T(*InBegin);
+				new(reinterpret_cast<Void*>(Dest)) T(*InBegin);
 				InBegin++;
 				Dest++;
 			}
@@ -1040,7 +1040,7 @@ private:
 		T* ItEnd = Dest + Size;
 		while (Dest != ItEnd)
 		{
-			new(reinterpret_cast<VoidPtr>(Dest)) T(Value);
+			new(reinterpret_cast<Void*>(Dest)) T(Value);
 			Dest++;
 		}
 	}
@@ -1058,7 +1058,7 @@ private:
 		{
 			while (InBegin != InEnd)
 			{
-				new(reinterpret_cast<VoidPtr>(Dest)) T(::Move(*InBegin));
+				new(reinterpret_cast<Void*>(Dest)) T(::Move(*InBegin));
 				InBegin++;
 				Dest++;
 			}
@@ -1166,7 +1166,7 @@ private:
 		{
 			while (InBegin != InEnd)
 			{
-				new(reinterpret_cast<VoidPtr>(InBegin)) T();
+				new(reinterpret_cast<Void*>(InBegin)) T();
 				InBegin++;
 			}
 		}

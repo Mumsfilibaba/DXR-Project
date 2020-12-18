@@ -34,8 +34,10 @@ public:
 	TSharedRef<ShaderResourceView>	IndexBufferSRV;
 	TSharedRef<RayTracingGeometry>	RayTracingGeometry;
 	
-	Uint32 VertexCount	= 0;
-	Uint32 IndexCount	= 0;
+	UInt32 VertexCount	= 0;
+	UInt32 IndexCount	= 0;
+
+	Float ShadowOffset = 0.0f;
 
 	AABB BoundingBox;
 };

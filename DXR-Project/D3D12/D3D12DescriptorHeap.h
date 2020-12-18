@@ -63,8 +63,8 @@ public:
 	D3D12OfflineDescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
 	~D3D12OfflineDescriptorHeap();
 
-	D3D12_CPU_DESCRIPTOR_HANDLE Allocate(Uint32& OutHeapIndex);
-	void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, Uint32 HeapIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE Allocate(UInt32& OutHeapIndex);
+	void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, UInt32 HeapIndex);
 
 	void SetName(const std::string& InName);
 
@@ -96,12 +96,12 @@ private:
 class D3D12OnlineDescriptorHeap : public D3D12DeviceChild
 {
 public:
-	D3D12OnlineDescriptorHeap(D3D12Device* InDevice, Uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
+	D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
 	~D3D12OnlineDescriptorHeap();
 
 	bool Initialize();
 	
-	Uint32 AllocateSlots(Uint32 NumSlots);
+	UInt32 AllocateSlots(UInt32 NumSlots);
 
 	FORCEINLINE void SetName(const std::string& InName)
 	{
@@ -109,17 +109,17 @@ public:
 		Heap->SetName(WideName.c_str());
 	}
 
-	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSlotAt(Uint32 Slot) const
+	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSlotAt(UInt32 Slot) const
 	{
 		return { CPUHeapStart.ptr + (Slot * DescriptorSize) };
 	}
 
-	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUSlotAt(Uint32 Slot) const
+	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUSlotAt(UInt32 Slot) const
 	{
 		return { GPUHeapStart.ptr + (Slot * DescriptorSize) };
 	}
 
-	FORCEINLINE Uint32 GetDescriptorSize() const
+	FORCEINLINE UInt32 GetDescriptorSize() const
 	{
 		return DescriptorSize;
 	}
@@ -136,9 +136,9 @@ private:
 	D3D12_GPU_DESCRIPTOR_HANDLE	GPUHeapStart;
 	D3D12_DESCRIPTOR_HEAP_TYPE	Type;
 
-	Uint32 DescriptorSize	= 0;
-	Uint32 CurrentSlot		= 0;
-	Uint32 DescriptorCount	= 0;
+	UInt32 DescriptorSize	= 0;
+	UInt32 CurrentSlot		= 0;
+	UInt32 DescriptorCount	= 0;
 };
 
 /*
@@ -148,14 +148,14 @@ private:
 class D3D12DescriptorTable
 {
 public:
-	D3D12DescriptorTable(D3D12Device* InDevice, Uint32 InDescriptorCount);
+	D3D12DescriptorTable(D3D12Device* InDevice, UInt32 InDescriptorCount);
 	~D3D12DescriptorTable();
 
 	void CopyDescriptors();
 	
-	void SetUnorderedAccessView(class D3D12UnorderedAccessView* View, Uint32 SlotIndex);
-	void SetConstantBufferView(class D3D12ConstantBufferView* View, Uint32 SlotIndex);
-	void SetShaderResourceView(class D3D12ShaderResourceView* View, Uint32 SlotIndex);
+	void SetUnorderedAccessView(class D3D12UnorderedAccessView* View, UInt32 SlotIndex);
+	void SetConstantBufferView(class D3D12ConstantBufferView* View, UInt32 SlotIndex);
+	void SetShaderResourceView(class D3D12ShaderResourceView* View, UInt32 SlotIndex);
 
 	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUTableStartHandle() const
 	{
@@ -167,12 +167,12 @@ public:
 		return GPUTableStart;
 	}
 
-	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUTableHandle(Uint32 DescriptorIndex) const
+	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUTableHandle(UInt32 DescriptorIndex) const
 	{
 		return { CPUTableStart.ptr + (DescriptorSize * DescriptorIndex) };
 	}
 
-	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUTableHandle(Uint32 DescriptorIndex) const
+	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUTableHandle(UInt32 DescriptorIndex) const
 	{
 		return { GPUTableStart.ptr + (DescriptorSize * DescriptorIndex) };
 	}
@@ -187,8 +187,8 @@ private:
 	D3D12_CPU_DESCRIPTOR_HANDLE	CPUTableStart;
 	D3D12_GPU_DESCRIPTOR_HANDLE	GPUTableStart;
 
-	Uint32	DescriptorSize		= 0;
-	Uint32	StartDescriptorSlot	= 0;
-	Uint32	DescriptorCount		= 0;
+	UInt32	DescriptorSize		= 0;
+	UInt32	StartDescriptorSlot	= 0;
+	UInt32	DescriptorCount		= 0;
 	bool	IsDirty				= true;
 };

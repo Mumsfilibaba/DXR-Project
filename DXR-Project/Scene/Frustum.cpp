@@ -6,25 +6,25 @@ Frustum::Frustum()
 {
 }
 
-Frustum::Frustum(Float32 FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection)
+Frustum::Frustum(Float FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection)
 	: Planes()
 {
 	Create(FarPlane, View, Projection);
 }
 
-void Frustum::Create(Float32 FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection)
+void Frustum::Create(Float FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection)
 {
 	XMFLOAT4X4 TempProjection = Projection;
 	// Calculate the minimum Z distance in the frustum.
-	Float32 MinimumZ = -TempProjection._43 / TempProjection._33;
-	Float32 R = FarPlane / (FarPlane - MinimumZ);
+	Float MinimumZ = -TempProjection._43 / TempProjection._33;
+	Float R = FarPlane / (FarPlane - MinimumZ);
 	TempProjection._33 = R;
 	TempProjection._43 = -R * MinimumZ;
 
 	// Create the frustum Matrix from the view Matrix and updated projection Matrix.
-	XMMATRIX XmView = XMLoadFloat4x4(&View);
-	XMMATRIX XmProjection = XMLoadFloat4x4(&TempProjection);
-	XMMATRIX XmMatrix = XMMatrixMultiply(XmView, XmProjection);
+	XMMATRIX XmView			= XMMatrixTranspose(XMLoadFloat4x4(&View));
+	XMMATRIX XmProjection	= XMLoadFloat4x4(&TempProjection);
+	XMMATRIX XmMatrix		= XMMatrixMultiply(XmView, XmProjection);
 	XMFLOAT4X4 Matrix;
 	XMStoreFloat4x4(&Matrix, XmMatrix);
 
@@ -87,9 +87,9 @@ void Frustum::Create(Float32 FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4&
 bool Frustum::CheckAABB(const AABB& Box)
 {
 	const XMFLOAT3 Center	= Box.GetCenter();
-	const Float32 Width		= Box.GetWidth()	/ 2.0f;
-	const Float32 Height	= Box.GetHeight()	/ 2.0f;
-	const Float32 Depth		= Box.GetDepth()	/ 2.0f;
+	const Float Width		= Box.GetWidth()	/ 2.0f;
+	const Float Height	= Box.GetHeight()	/ 2.0f;
+	const Float Depth		= Box.GetDepth()	/ 2.0f;
 
 	XMVECTOR Coords[8];
 	Coords[0] = XMVectorSet((Center.x - Width), (Center.y - Height), (Center.z - Depth), 1.0f);

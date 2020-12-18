@@ -8,7 +8,7 @@
 * EPlatformCursor
 */
 
-enum class EPlatformCursor : Uint32
+enum class EPlatformCursor : UInt32
 {
 	CURSOR_NONE			= 0,
 	CURSOR_TEXT_INPUT	= 1,
@@ -55,7 +55,7 @@ public:
 
 	virtual bool Initialize(const CursorInitializer& InInitializer) = 0;
 
-	virtual VoidPtr GetNativeHandle() const
+	virtual Void* GetNativeHandle() const
 	{
 		return nullptr;
 	}

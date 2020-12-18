@@ -11,7 +11,7 @@ class GenericWindow;
 struct WindowResizeEvent : public Event
 {
 public:
-	WindowResizeEvent(TSharedRef<GenericWindow> InWindow, Uint16 InWidth, Uint16 InHeight)
+	WindowResizeEvent(TSharedRef<GenericWindow> InWindow, UInt16 InWidth, UInt16 InHeight)
 		: Window(InWindow)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -32,18 +32,18 @@ public:
 		return Window;
 	}
 
-	FORCEINLINE Uint16 GetWidth() const
+	FORCEINLINE UInt16 GetWidth() const
 	{
 		return Width;
 	}
 
-	FORCEINLINE Uint16 GetHeight() const
+	FORCEINLINE UInt16 GetHeight() const
 	{
 		return Height;
 	}
 
 private:
 	TSharedRef<GenericWindow> Window;
-	Uint16 Width;
-	Uint16 Height;
+	UInt16 Width;
+	UInt16 Height;
 };

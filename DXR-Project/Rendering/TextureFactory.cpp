@@ -67,7 +67,7 @@ void TextureFactory::Release()
 {
 }
 
-Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, Uint32 CreateFlags, EFormat Format)
+Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format)
 {
 	Int32 Width			= 0;
 	Int32 Height		= 0;
@@ -103,7 +103,7 @@ Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, Uint32 Crea
 	return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);
 }
 
-Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags, EFormat Format)
+Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format)
 {
 	if (Format != EFormat::Format_R8G8B8A8_Unorm && Format != EFormat::Format_R32G32B32A32_Float)
 	{
@@ -112,12 +112,12 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint
 	}
 
 	const bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-	const Uint32 MipLevels = GenerateMipLevels ? std::min<Uint32>(std::log2<Uint32>(Width), std::log2<Uint32>(Height)) : 1;
+	const UInt32 MipLevels = GenerateMipLevels ? std::min<UInt32>(std::log2<UInt32>(Width), std::log2<UInt32>(Height)) : 1;
 
 	VALIDATE(MipLevels != 0);
 
-	const Uint32 Stride		= (Format == EFormat::Format_R8G8B8A8_Unorm) ? 4 : 16;
-	const Uint32 RowPitch	= Width * Stride;
+	const UInt32 Stride		= (Format == EFormat::Format_R8G8B8A8_Unorm) ? 4 : 16;
+	const UInt32 RowPitch	= Width * Stride;
 	
 	VALIDATE(RowPitch > 0);
 	
@@ -148,10 +148,10 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint
 	return Texture.ReleaseOwnerShip();
 }
 
-TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, Uint32 CubeMapSize, Uint32 CreateFlags, EFormat Format)
+TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format)
 {
 	const bool		GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-	const Uint16	MipLevels = (GenerateMipLevels) ? static_cast<Uint16>(std::log2(CubeMapSize)) : 1U;
+	const UInt16	MipLevels = (GenerateMipLevels) ? static_cast<Uint16>(std::log2(CubeMapSize)) : 1U;
 
 	// Create statging texture
 	TSharedRef<TextureCube> StagingTexture = RenderingAPI::CreateTextureCube(
@@ -197,10 +197,9 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 
 	struct ConstantBuffer
 	{
-		Uint32 CubeMapSize;
+		UInt32 CubeMapSize;
 	} CB0;
 	CB0.CubeMapSize = CubeMapSize;
-
 
 	// TODO: How to work with constants and resources
 	//CommandList->SetComputeRoot32BitConstants(&CB0, 1, 0, 0);
@@ -208,8 +207,8 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	//CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
 	//CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 2);
 
-	Uint32 ThreadsX = DivideByMultiple(CubeMapSize, 16);
-	Uint32 ThreadsY = DivideByMultiple(CubeMapSize, 16);
+	UInt32 ThreadsX = DivideByMultiple(CubeMapSize, 16);
+	UInt32 ThreadsY = DivideByMultiple(CubeMapSize, 16);
 	CmdList.Dispatch(ThreadsX, ThreadsY, 6);
 
 	CmdList.TransitionTexture(PanoramaSource, EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);

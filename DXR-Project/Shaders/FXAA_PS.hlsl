@@ -49,11 +49,6 @@ float4 FXAASampleGrad(in Texture2D Texture, in SamplerState InSampler, float2 Te
 	return Texture.SampleGrad(InSampler, TexCoord, Grad, Grad);
 }
 
-float3 Lerp(float3 A, float3 B, float AmountOfA)
-{
-	return (ToFloat3(-AmountOfA) * B) + ((A * ToFloat3(AmountOfA)) + B);
-}
-
 /*
 * PixelShader
 */

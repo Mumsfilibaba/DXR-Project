@@ -18,7 +18,7 @@ Camera::Camera()
 	UpdateMatrices();
 }
 
-void Camera::Move(Float32 X, Float32 Y, Float32 Z)
+void Camera::Move(Float X, Float Y, Float Z)
 {
 	XMVECTOR XmPosition = XMLoadFloat3(&Position);
 	XMVECTOR XmRight	= XMLoadFloat3(&Right);
@@ -34,10 +34,10 @@ void Camera::Move(Float32 X, Float32 Y, Float32 Z)
 	XMStoreFloat3(&Position, XmPosition);
 }
 
-void Camera::Rotate(Float32 Pitch, Float32 Yaw, Float32 Roll)
+void Camera::Rotate(Float Pitch, Float Yaw, Float Roll)
 {
 	Rotation.x += Pitch;
-	Rotation.x = std::max<Float32>(XMConvertToRadians(-89.0f), std::min<Float32>(XMConvertToRadians(89.0f), Rotation.x));
+	Rotation.x = std::max<Float>(XMConvertToRadians(-89.0f), std::min<Float>(XMConvertToRadians(89.0f), Rotation.x));
 	
 	Rotation.y += Yaw;
 	Rotation.z += Roll;
@@ -57,7 +57,7 @@ void Camera::Rotate(Float32 Pitch, Float32 Yaw, Float32 Roll)
 
 void Camera::UpdateMatrices()
 {
-	Float32 Fov	= XMConvertToRadians(90.0f);
+	Float Fov	= XMConvertToRadians(90.0f);
 	XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(Fov, 1920.0f / 1080.0f, NearPlane, FarPlane);
 	XMStoreFloat4x4(&Projection, XmProjection);
 
@@ -65,18 +65,26 @@ void Camera::UpdateMatrices()
 	XMVECTOR XmForward	= XMLoadFloat3(&Forward);
 	XMVECTOR XmUp		= XMLoadFloat3(&Up);
 	XMVECTOR XmAt		= XMVectorAdd(XmPosition, XmForward);
-	XMMATRIX XmView		= XMMatrixLookAtLH(XmPosition, XmAt, XmUp);
-	XMStoreFloat4x4(&View, XmView);
+
+	XMMATRIX XmView = XMMatrixLookAtLH(XmPosition, XmAt, XmUp);
+	XMStoreFloat4x4(&View, XMMatrixTranspose(XmView));
+
+	XMMATRIX XmViewInv = XMMatrixInverse(nullptr, XmView);
+	XMStoreFloat4x4(&ViewInverse, XMMatrixTranspose(XmViewInv));
 
 	XMFLOAT3X3 TempView3x3;
 	XMStoreFloat3x3(&TempView3x3, XmView);
 	XMMATRIX XmView3x3 = XMLoadFloat3x3(&TempView3x3);
 
-	XMMATRIX XmViewProjection				= XMMatrixMultiply(XmView, XmProjection);
-	XMMATRIX XmViewProjectionInverse		= XMMatrixInverse(nullptr, XmViewProjection);
-	XMMATRIX XmViewProjectionNoTranslation	= XMMatrixMultiply(XmView3x3, XmProjection);
+	XMMATRIX XmProjectionInverse = XMMatrixInverse(nullptr, XmProjection);
+	XMStoreFloat4x4(&ProjectionInverse, XMMatrixTranspose(XmProjectionInverse));
 
+	XMMATRIX XmViewProjection = XMMatrixMultiply(XmView, XmProjection);
 	XMStoreFloat4x4(&ViewProjection, XMMatrixTranspose(XmViewProjection));
+
+	XMMATRIX XmViewProjectionInverse = XMMatrixInverse(nullptr, XmViewProjection);
 	XMStoreFloat4x4(&ViewProjectionInverse, XMMatrixTranspose(XmViewProjectionInverse));
+	
+	XMMATRIX XmViewProjectionNoTranslation	= XMMatrixMultiply(XmView3x3, XmProjection);
 	XMStoreFloat4x4(&ViewProjectionNoTranslation, XMMatrixTranspose(XmViewProjectionNoTranslation));
 }

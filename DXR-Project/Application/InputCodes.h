@@ -6,7 +6,7 @@
 * EKey
 */
 
-enum EKey : Uint8
+enum EKey : UInt8
 {
 	KEY_UNKNOWN = 0,
 
@@ -150,7 +150,7 @@ enum EKey : Uint8
 * EMouseButton
 */
 
-enum EMouseButton : Uint8
+enum EMouseButton : UInt8
 {
 	MOUSE_BUTTON_UNKNOWN = 0,
 

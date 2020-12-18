@@ -1,5 +1,9 @@
 #include "PBRCommon.hlsli"
 
+#if ENABLE_RAYTRACING
+#define RAYTRACING_ENABLED
+#endif
+
 // Resources
 struct PSInput
 {
@@ -16,6 +20,7 @@ TextureCube<float4> SpecularIrradianceMap	: register(t6, space0);
 Texture2D<float4>	IntegrationLUT			: register(t7, space0);
 Texture2D<float2>	DirLightShadowMaps		: register(t8, space0);
 TextureCube<float>	PointLightShadowMaps	: register(t9, space0);
+Texture2D<float3>	SSAO					: register(t10, space0);
 
 SamplerState GBufferSampler		: register(s0, space0);
 SamplerState LUTSampler			: register(s1, space0);
@@ -180,7 +185,6 @@ static const float3 SampleOffsetDirections[OFFSET_SAMPLES] =
 	float3(0.0f, 1.0f,  1.0f),	float3( 0.0f, -1.0f, 1.0f),		float3( 0.0f, -1.0f, -1.0f),	float3( 0.0f, 1.0f, -1.0f)
 };
 
-
 float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, float3 InNormal, float MaxShadowBias, float MinShadowBias, float FarPlane)
 {
 	float3 DirToLight	= WorldPosition - LightPosition;
@@ -215,17 +219,20 @@ float4 Main(PSInput Input) : SV_TARGET
 		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 	}
 	
-	float3 WorldPosition		= PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
-	float3 SampledAlbedo		= Albedo.Sample(GBufferSampler, TexCoord).rgb;
-	//float3 SampledReflection	= DXRReflection.Sample(LUTSampler, TexCoord).rgb;
-	float3 SampledMaterial		= Material.Sample(GBufferSampler, TexCoord).rgb;
-	float3 SampledNormal		= Normal.Sample(GBufferSampler, TexCoord).rgb;
+    float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
+	float3 SampledAlbedo = Albedo.Sample(GBufferSampler, TexCoord).rgb;
+#ifdef RAYTRACING_ENABLED
+	float3 SampledReflection	= DXRReflection.Sample(LUTSampler, TexCoord).rgb;
+#endif
+	float3 SampledMaterial	= Material.Sample(GBufferSampler, TexCoord).rgb;
+	float3 SampledNormal	= Normal.Sample(GBufferSampler, TexCoord).rgb;
+	float3 ScreenSpaceAO	= SSAO.Sample(GBufferSampler, TexCoord);
 	
-	const float3	Norm		= UnpackNormal(SampledNormal);
-	const float3	ViewDir		= normalize(CameraBuffer.Position - WorldPosition);
-	const float		Roughness	= SampledMaterial.r;
-	const float		Metallic	= SampledMaterial.g;
-	const float		SampledAO	= SampledMaterial.b;
+	const float3 Norm		= UnpackNormal(SampledNormal);
+	const float3 ViewDir	= normalize(CameraBuffer.Position - WorldPosition);
+	const float Roughness	= SampledMaterial.r;
+	const float Metallic	= SampledMaterial.g;
+    const float SampledAO	= SampledMaterial.b * ScreenSpaceAO;
 	
 	float3 F0 = float3(0.04f, 0.04f, 0.04f);
 	F0 = lerp(F0, SampledAlbedo, Metallic);
@@ -236,7 +243,7 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	// PointLight
 	{
-		const float3 LightPosition = PointLightBuffer.Position;	
+		const float3 LightPosition	= PointLightBuffer.Position;	
 		const float ShadowBias		= PointLightBuffer.ShadowBias;
 		const float MaxShadowBias	= PointLightBuffer.MaxShadowBias;
 		const float FarPlane		= PointLightBuffer.FarPlane;
@@ -244,11 +251,11 @@ float4 Main(PSInput Input) : SV_TARGET
 		float Shadow = CalculatePointLightShadow(WorldPosition, LightPosition, Norm, MaxShadowBias, ShadowBias, FarPlane);
 		if (Shadow > EPSILON)
 		{
-			float3	LightDir = normalize(LightPosition - WorldPosition);
-			float3	HalfVec = normalize(ViewDir + LightDir);
-			float	Distance = length(LightPosition - WorldPosition);
-			float	Attenuation = 1.0f / (Distance * Distance);
-			float3	Radiance = PointLightBuffer.Color * Attenuation;
+			float3	LightDir	= normalize(LightPosition - WorldPosition);
+			float3	HalfVec		= normalize(ViewDir + LightDir);
+			float	Distance	= length(LightPosition - WorldPosition);
+			float	Attenuation	= 1.0f / (Distance * Distance);
+			float3	Radiance	= PointLightBuffer.Color * Attenuation;
 
 			// Calculate per-light radiance
 			L0 += CalcRadiance(F0, Norm, ViewDir, LightDir, Radiance, SampledAlbedo, Roughness, Metallic) * Shadow;
@@ -257,7 +264,7 @@ float4 Main(PSInput Input) : SV_TARGET
 	
 	// DirectionalLight
 	{
-		const float3 LightDir = normalize(-DirLightBuffer.Direction);
+		const float3 LightDir			= normalize(-DirLightBuffer.Direction);
 		const float4 LightSpacePosition	= mul(float4(WorldPosition, 1.0f), DirLightBuffer.LightMatrix);
 		const float ShadowBias		= DirLightBuffer.ShadowBias;
 		const float MaxShadowBias	= DirLightBuffer.MaxShadowBias;
@@ -282,8 +289,14 @@ float4 Main(PSInput Input) : SV_TARGET
 	float3 IBL_Diffuse	= Irradiance * SampledAlbedo * Kd_IBL;
 	
 	const float MAX_MIPLEVEL = 6.0f;
-	float3 Reflection		= reflect(-ViewDir, Norm);
-	float3 Prefiltered		= SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, Roughness * MAX_MIPLEVEL).rgb;
+	float3 Reflection	= reflect(-ViewDir, Norm);
+#ifdef RAYTRACING_ENABLED
+	float3 Prefiltered	= 
+		(SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, Roughness * MAX_MIPLEVEL).rgb * Roughness) + 
+		(SampledReflection * (1.0f - Roughness));
+#else
+	float3 Prefiltered = SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, Roughness * MAX_MIPLEVEL).rgb;
+#endif
 	float2 IntegrationBRDF	= IntegrationLUT.Sample(LUTSampler, float2(DotNV, Roughness)).rg;
 	float3 IBL_Specular		= Prefiltered * (F_IBL * IntegrationBRDF.x + IntegrationBRDF.y);
 	
@@ -293,4 +306,5 @@ float4 Main(PSInput Input) : SV_TARGET
 	float3	FinalColor	= ApplyGammaCorrectionAndTonemapping(Color);
 	float	Luminance	= CalculateLuminance(FinalColor);
 	return float4(FinalColor, Luminance);
+    //return float4(ScreenSpaceAO, Luminance);
 }

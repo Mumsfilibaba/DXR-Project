@@ -39,7 +39,7 @@ D3D12RenderingAPI::~D3D12RenderingAPI()
 	SwapChain.Reset();
 }
 
-bool D3D12RenderingAPI::Init(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug)
+bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> InRenderWindow, bool EnableDebug)
 {
 	// Create device
 	Device = MakeShared<D3D12Device>();

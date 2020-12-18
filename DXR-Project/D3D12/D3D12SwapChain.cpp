@@ -4,6 +4,10 @@
 
 #include "Windows/WindowsWindow.h"
 
+/*
+* D3D12SwapChain
+*/
+
 D3D12SwapChain::D3D12SwapChain(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
 	, Window(nullptr)
@@ -71,7 +75,7 @@ bool D3D12SwapChain::CreateSwapChain(IDXGIFactory2* Factory, const TSharedRef<Wi
 	}
 }
 
-bool D3D12SwapChain::Resize(Uint32 InWidth, Uint32 InHeight)
+bool D3D12SwapChain::Resize(UInt32 InWidth, UInt32 InHeight)
 {
 	if (InWidth == 0 || InHeight == 0)
 	{
@@ -94,16 +98,17 @@ bool D3D12SwapChain::Resize(Uint32 InWidth, Uint32 InHeight)
 	}
 	else
 	{
+		LOG_WARNING("[D3D12SwapChain]: Resize FAILED");
 		return false;
 	}
 }
 
-Uint32 D3D12SwapChain::GetCurrentBackBufferIndex() const
+UInt32 D3D12SwapChain::GetCurrentBackBufferIndex() const
 {
 	return SwapChain->GetCurrentBackBufferIndex();
 }
 
-bool D3D12SwapChain::Present(Uint32 SyncInterval)
+bool D3D12SwapChain::Present(UInt32 SyncInterval)
 {
 	return SUCCEEDED(SwapChain->Present(SyncInterval, 0));
 }

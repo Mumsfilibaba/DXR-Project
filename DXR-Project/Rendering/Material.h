@@ -8,10 +8,11 @@
 
 struct MaterialProperties
 {
-	XMFLOAT3 Albedo		= XMFLOAT3(1.0f, 1.0f, 1.0f);
-	Float32 Roughness	= 0.0f;
-	Float32 Metallic	= 0.0f;
-	Float32 AO			= 0.5f;
+	XMFLOAT3 Albedo			= XMFLOAT3(1.0f, 1.0f, 1.0f);
+	Float Roughness		= 0.0f;
+	Float Metallic		= 0.0f;
+	Float AO				= 0.5f;
+	Int32	EnableHeight	= 0;
 };
 
 /*
@@ -34,13 +35,20 @@ public:
 	}
 
 	void SetAlbedo(const XMFLOAT3& Albedo);
-	void SetAlbedo(Float32 R, Float32 G, Float32 B);
+	void SetAlbedo(Float R, Float G, Float B);
 
-	void SetMetallic(Float32 Metallic);
-	void SetRoughness(Float32 Roughness);
-	void SetAmbientOcclusion(Float32 AO);
+	void SetMetallic(Float Metallic);
+	void SetRoughness(Float Roughness);
+	void SetAmbientOcclusion(Float AO);
+
+	void EnableHeightMap(bool EnableHeightMap);
 
 	void SetDebugName(const std::string& InDebugName);
+
+	FORCEINLINE bool HasAlphaMask() const
+	{
+		return AlphaMask != nullptr;
+	}
 
 	FORCEINLINE const MaterialProperties& GetMaterialProperties() const 
 	{
@@ -54,10 +62,12 @@ public:
 	TSharedRef<Texture2D> HeightMap;
 	TSharedRef<Texture2D> AOMap;
 	TSharedRef<Texture2D> MetallicMap;
+	TSharedPtr<Texture2D> AlphaMask;
 
 private:
-	std::string				DebugName;
-	MaterialProperties		Properties;
-	TSharedRef<ConstantBuffer> MaterialBuffer;
-	bool MaterialBufferIsDirty = true;
+	std::string	DebugName;
+	Bool MaterialBufferIsDirty = true;
+	
+	MaterialProperties			Properties;
+	TSharedRef<ConstantBuffer> 	MaterialBuffer;
 };

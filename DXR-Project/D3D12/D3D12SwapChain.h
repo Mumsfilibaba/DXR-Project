@@ -21,11 +21,11 @@ public:
 
 	bool CreateSwapChain(IDXGIFactory2* Factory, const TSharedRef<WindowsWindow>& InWindow, D3D12CommandQueue* Queue);
 
-	bool Resize(Uint32 InWidth, Uint32 InHeight);
+	bool Resize(UInt32 InWidth, UInt32 InHeight);
 
-	bool Present(Uint32 SyncInterval);
+	bool Present(UInt32 SyncInterval);
 
-	Uint32 GetCurrentBackBufferIndex() const;
+	UInt32 GetCurrentBackBufferIndex() const;
 
 	FORCEINLINE void SetName(const std::string& Name)
 	{
@@ -37,17 +37,17 @@ public:
 		return DXGI_FORMAT_R8G8B8A8_UNORM;
 	}
 
-	FORCEINLINE Uint32 GetSurfaceCount() const
+	FORCEINLINE UInt32 GetSurfaceCount() const
 	{
 		return 3;
 	}
 
-	FORCEINLINE Uint32 GetWidth() const
+	FORCEINLINE UInt32 GetWidth() const
 	{
 		return Width;
 	}
 
-	FORCEINLINE Uint32 GetHeight() const
+	FORCEINLINE UInt32 GetHeight() const
 	{
 		return Height;
 	}
@@ -57,7 +57,7 @@ private:
 	TSharedRef<WindowsWindow> Window;
 	Microsoft::WRL::ComPtr<IDXGISwapChain3> SwapChain;
 
-	Uint32 Width	= 0;
-	Uint32 Height	= 0;
-	Uint32 Flags	= 0;
+	UInt32 Width	= 0;
+	UInt32 Height	= 0;
+	UInt32 Flags	= 0;
 };

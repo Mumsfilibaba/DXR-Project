@@ -2,6 +2,7 @@
 #include <cassert>
 #include <utility>
 #include <algorithm>
+#include <random>
 
 // Libs
 #define NOMINMAX
@@ -35,7 +36,9 @@ using namespace DirectX;
 // Utilities
 #include "Utilities/TUtilities.h"
 #include "Utilities/HashUtilities.h"
-#include "Utilities/MathUtilities.h"
+
+// Math
+#include "Math/Math.h"
 
 // Core
 #include "Core/ClassType.h"

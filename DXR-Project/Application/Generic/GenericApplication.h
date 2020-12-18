@@ -15,7 +15,7 @@
 struct ModifierKeyState
 {
 public:
-	inline ModifierKeyState(Uint32 InModifierMask)
+	inline ModifierKeyState(UInt32 InModifierMask)
 		: ModifierMask(InModifierMask)
 	{
 	}
@@ -50,7 +50,8 @@ public:
 		return (ModifierMask & MODIFIER_FLAG_NUM_LOCK);
 	}
 
-	Uint32 ModifierMask = 0;
+private:
+	UInt32 ModifierMask = 0;
 };
 
 /*

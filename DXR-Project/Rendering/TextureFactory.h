@@ -8,7 +8,7 @@
 * ETextureFactoryFlags
 */
 
-enum ETextureFactoryFlags : Uint32
+enum ETextureFactoryFlags : UInt32
 {
 	TextureFactoryFlag_None			= 0,
 	TextureFactoryFlag_GenerateMips = FLAG(1),
@@ -28,8 +28,8 @@ public:
 	static void Release();
 
 	// Supports R8G8B8A8 and R32G32B32A32 for now
-	static Texture2D* LoadFromFile(const std::string& Filepath, Uint32 CreateFlags, EFormat Format);
-	static Texture2D* LoadFromMemory(const Byte* Pixels, Uint32 Width, Uint32 Height, Uint32 CreateFlags, EFormat Format);
+	static Texture2D* LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, DXGI_FORMAT Format);
+	static Texture2D* LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, DXGI_FORMAT Format);
 
-	static TextureCube* CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, Uint32 CubeMapSize, Uint32 CreateFlags, EFormat Format);
+	static TextureCube* CreateTextureCubeFromPanorma(D3D12Texture* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, DXGI_FORMAT Format);
 };

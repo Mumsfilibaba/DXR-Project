@@ -15,16 +15,16 @@ Clock::Clock()
 
 void Clock::Tick()
 {
-	Uint64			Now		= 0;
+	UInt64			Now		= 0;
 	LARGE_INTEGER	Count	= { };
 	if (::QueryPerformanceCounter(&Count))
 	{
 		Now = Count.QuadPart;
 	}
 	
-	constexpr Uint64 NANOSECONDS = 1000 * 1000 * 1000;
-	Uint64 Delta		= Now - LastTime;
-	Uint64 Nanoseconds	= (Delta * NANOSECONDS) / Frequency;
+	constexpr UInt64 NANOSECONDS = 1000 * 1000 * 1000;
+	UInt64 Delta		= Now - LastTime;
+	UInt64 Nanoseconds	= (Delta * NANOSECONDS) / Frequency;
 
 	VALIDATE(LastTime < Now);
 

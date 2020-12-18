@@ -46,14 +46,14 @@ public:
 
 public:
 	// EventHandler Interface
-	virtual void OnWindowResized(TSharedRef<GenericWindow> InWindow, Uint16 Width, Uint16 Height) override;
+	virtual void OnWindowResized(TSharedRef<GenericWindow> InWindow, UInt16 Width, UInt16 Height) override;
 	virtual void OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState) override;
 	virtual void OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState) override;
 	virtual void OnMouseMove(Int32 x, Int32 y) override;
 	virtual void OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState) override;
 	virtual void OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState) override;
-	virtual void OnMouseScrolled(Float32 HorizontalDelta, Float32 VerticalDelta) override;
-	virtual void OnCharacterInput(Uint32 Character) override;
+	virtual void OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta) override;
+	virtual void OnCharacterInput(UInt32 Character) override;
 
 private:
 	Application();

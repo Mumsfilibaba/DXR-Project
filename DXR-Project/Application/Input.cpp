@@ -8,7 +8,7 @@ struct KeyTableState
 {
 	bool	KeyStates[EKey::KEY_COUNT];
 	EKey	ScanCodeTable[512];
-	Uint16	KeyTable[512];
+	UInt16	KeyTable[512];
 	bool	IsInitialized = false;
 };
 
@@ -147,7 +147,7 @@ static void InitializeKeyState()
 	GlobalkeyState.ScanCodeTable[0x137] = EKey::KEY_PRINT_SCREEN;
 	GlobalkeyState.ScanCodeTable[0x146] = EKey::KEY_PAUSE;
 
-	for (Uint16 Index = 0; Index < 512; Index++)
+	for (UInt16 Index = 0; Index < 512; Index++)
 	{
 		if (GlobalkeyState.ScanCodeTable[Index] != EKey::KEY_UNKNOWN)
 		{
@@ -158,7 +158,7 @@ static void InitializeKeyState()
 	GlobalkeyState.IsInitialized = true;
 }
 
-EKey Input::ConvertFromScanCode(Uint32 ScanCode)
+EKey Input::ConvertFromScanCode(UInt32 ScanCode)
 {
 	//[[unlikely]]
 	if (!GlobalkeyState.IsInitialized)
@@ -169,7 +169,7 @@ EKey Input::ConvertFromScanCode(Uint32 ScanCode)
 	return GlobalkeyState.ScanCodeTable[ScanCode];
 }
 
-Uint32 Input::ConvertToScanCode(EKey Key)
+UInt32 Input::ConvertToScanCode(EKey Key)
 {
 	//[[unlikely]]
 	if (!GlobalkeyState.IsInitialized)

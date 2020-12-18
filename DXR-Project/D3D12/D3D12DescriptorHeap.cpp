@@ -23,10 +23,10 @@ D3D12OfflineDescriptorHeap::~D3D12OfflineDescriptorHeap()
 {
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(Uint32& OutHeapIndex)
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(UInt32& OutHeapIndex)
 {
 	// Find a heap that is not empty
-	Uint32 HeapIndex = 0;
+	UInt32 HeapIndex = 0;
 	bool FoundHeap = false;
 	for (DescriptorHeap& Heap : Heaps)
 	{
@@ -45,7 +45,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(Uint32& OutHeap
 	if (!FoundHeap)
 	{
 		AllocateHeap();
-		HeapIndex = static_cast<Uint32>(Heaps.Size()) - 1;
+		HeapIndex = static_cast<UInt32>(Heaps.Size()) - 1;
 	}
 
 	// Get the heap and the first free range
@@ -64,7 +64,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(Uint32& OutHeap
 	return Handle;
 }
 
-void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, Uint32 HeapIndex)
+void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, UInt32 HeapIndex)
 {
 	VALIDATE(HeapIndex < Heaps.Size());
 	DescriptorHeap&	Heap = Heaps[HeapIndex];
@@ -102,7 +102,7 @@ void D3D12OfflineDescriptorHeap::SetName(const std::string& InName)
 {
 	Name = ConvertToWide(InName);
 
-	Uint32 HeapIndex = 0;
+	UInt32 HeapIndex = 0;
 	for (DescriptorHeap& Heap : Heaps)
 	{
 		std::wstring DbgName = Name + L"[" + std::to_wstring(HeapIndex) + L"]";
@@ -112,7 +112,7 @@ void D3D12OfflineDescriptorHeap::SetName(const std::string& InName)
 
 void D3D12OfflineDescriptorHeap::AllocateHeap()
 {
-	constexpr Uint32 DescriptorCount = 32;
+	constexpr UInt32 DescriptorCount = 32;
 
 	D3D12_DESCRIPTOR_HEAP_DESC HeapDesc = {};
 	HeapDesc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_NONE; // These heaps are not visible to shaders
@@ -147,7 +147,7 @@ void D3D12OfflineDescriptorHeap::AllocateHeap()
 * D3D12OnlineDescriptorHeap
 */
 
-D3D12OnlineDescriptorHeap::D3D12OnlineDescriptorHeap(D3D12Device* InDevice, Uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType)
+D3D12OnlineDescriptorHeap::D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType)
 	: D3D12DeviceChild(InDevice)
 	, Heap(nullptr)
 	, DescriptorCount(InDescriptorCount)
@@ -186,9 +186,9 @@ bool D3D12OnlineDescriptorHeap::Initialize()
 	}
 }
 
-Uint32 D3D12OnlineDescriptorHeap::AllocateSlots(Uint32 NumSlots)
+UInt32 D3D12OnlineDescriptorHeap::AllocateSlots(UInt32 NumSlots)
 {
-	Uint32 Slot = CurrentSlot;
+	UInt32 Slot = CurrentSlot;
 	CurrentSlot += NumSlots;
 
 	VALIDATE(CurrentSlot < DescriptorCount);
@@ -200,7 +200,7 @@ Uint32 D3D12OnlineDescriptorHeap::AllocateSlots(Uint32 NumSlots)
 * D3D12DescriptorTable
 */
 
-D3D12DescriptorTable::D3D12DescriptorTable(D3D12Device* InDevice, Uint32 InDescriptorCount)
+D3D12DescriptorTable::D3D12DescriptorTable(D3D12Device* InDevice, UInt32 InDescriptorCount)
 	: Device(InDevice)
 	, CPUTableStart({ 0 })
 	, GPUTableStart({ 0 })
@@ -235,28 +235,28 @@ D3D12DescriptorTable::~D3D12DescriptorTable()
 {
 }
 
-void D3D12DescriptorTable::SetUnorderedAccessView(D3D12UnorderedAccessView* View, Uint32 SlotIndex)
+void D3D12DescriptorTable::SetUnorderedAccessView(D3D12UnorderedAccessView* View, UInt32 SlotIndex)
 {
 	VALIDATE(View != nullptr);
-	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.Size()));
+	VALIDATE(SlotIndex < static_cast<UInt32>(OfflineHandles.Size()));
 
 	OfflineHandles[SlotIndex] = View->GetOfflineHandle();
 	IsDirty = true;
 }
 
-void D3D12DescriptorTable::SetConstantBufferView(D3D12ConstantBufferView* View, Uint32 SlotIndex)
+void D3D12DescriptorTable::SetConstantBufferView(D3D12ConstantBufferView* View, UInt32 SlotIndex)
 {
 	VALIDATE(View != nullptr);
-	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.Size()));
+	VALIDATE(SlotIndex < static_cast<UInt32>(OfflineHandles.Size()));
 
 	OfflineHandles[SlotIndex] = View->GetOfflineHandle();
 	IsDirty = true;
 }
 
-void D3D12DescriptorTable::SetShaderResourceView(D3D12ShaderResourceView* View, Uint32 SlotIndex)
+void D3D12DescriptorTable::SetShaderResourceView(D3D12ShaderResourceView* View, UInt32 SlotIndex)
 {
 	VALIDATE(View != nullptr);
-	VALIDATE(SlotIndex < static_cast<Uint32>(OfflineHandles.Size()));
+	VALIDATE(SlotIndex < static_cast<UInt32>(OfflineHandles.Size()));
 
 	OfflineHandles[SlotIndex] = View->GetOfflineHandle();
 	IsDirty = true;
@@ -266,8 +266,8 @@ void D3D12DescriptorTable::CopyDescriptors()
 {
 	if (IsDirty)
 	{
-		TArray<Uint32> RangeSizes(OfflineHandles.Size());
-		for (Uint32& Size : RangeSizes)
+		TArray<UInt32> RangeSizes(OfflineHandles.Size());
+		for (UInt32& Size : RangeSizes)
 		{
 			Size = 1;
 		}

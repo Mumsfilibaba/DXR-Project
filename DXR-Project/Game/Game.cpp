@@ -5,11 +5,12 @@
 #include "Rendering/TextureFactory.h"
 
 #include "Scene/Scene.h"
-#include "Scene/PointLight.h"
-#include "Scene/DirectionalLight.h"
+#include "Scene/Lights/PointLight.h"
+#include "Scene/Lights/DirectionalLight.h"
 #include "Scene/Components/MeshComponent.h"
 
 #include "Application/Input.h"
+#include "Application/Application.h"
 
 /*
 * Game
@@ -31,13 +32,13 @@ Game::~Game()
 bool Game::Initialize()
 {
 	// Initialize Scene
-	constexpr Float32	SphereOffset	= 1.25f;
-	constexpr Uint32	SphereCountX	= 8;
-	constexpr Float32	StartPositionX	= (-static_cast<Float32>(SphereCountX) * SphereOffset) / 2.0f;
-	constexpr Uint32	SphereCountY	= 8;
-	constexpr Float32	StartPositionY	= (-static_cast<Float32>(SphereCountY) * SphereOffset) / 2.0f;
-	constexpr Float32	MetallicDelta	= 1.0f / SphereCountY;
-	constexpr Float32	RoughnessDelta	= 1.0f / SphereCountX;
+	constexpr Float	 SphereOffset	= 1.25f;
+	constexpr UInt32 SphereCountX	= 8;
+	constexpr Float	 StartPositionX	= (-static_cast<Float>(SphereCountX) * SphereOffset) / 2.0f;
+	constexpr UInt32 SphereCountY	= 8;
+	constexpr Float	 StartPositionY	= (-static_cast<Float>(SphereCountY) * SphereOffset) / 2.0f;
+	constexpr Float	 MetallicDelta	= 1.0f / SphereCountY;
+	constexpr Float	 RoughnessDelta	= 1.0f / SphereCountX;
 
 	Actor*			NewActor		= nullptr;
 	MeshComponent*	NewComponent	= nullptr;
@@ -46,6 +47,7 @@ bool Game::Initialize()
 	// Create Spheres
 	MeshData SphereMeshData		= MeshFactory::CreateSphere(3);
 	TSharedPtr<Mesh> SphereMesh	= Mesh::Make(SphereMeshData);
+	SphereMesh->ShadowOffset = 0.05f;
 
 	// Create standard textures
 	Byte Pixels[] = { 255, 255, 255, 255 };
@@ -88,13 +90,15 @@ bool Game::Initialize()
 	}
 
 	MaterialProperties MatProperties;
-	Uint32 SphereIndex = 0;
-	for (Uint32 y = 0; y < SphereCountY; y++)
+	MatProperties.AO = 1.0f;
+
+	UInt32 SphereIndex = 0;
+	for (UInt32 y = 0; y < SphereCountY; y++)
 	{
-		for (Uint32 x = 0; x < SphereCountX; x++)
+		for (UInt32 x = 0; x < SphereCountX; x++)
 		{
 			NewActor = new Actor();
-			NewActor->GetTransform().SetPosition(StartPositionX + (x * SphereOffset), 8.0f + StartPositionY + (y * SphereOffset), 0.0f);
+			NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 8.0f + StartPositionY + (y * SphereOffset), 0.0f);
 
 			NewActor->SetName("Sphere[" + std::to_string(SphereIndex) + "]");
 			SphereIndex++;
@@ -128,12 +132,13 @@ bool Game::Initialize()
 	NewActor = new Actor();
 	CurrentScene->AddActor(NewActor);
 
-	NewActor->SetName("Cube");
-	NewActor->GetTransform().SetPosition(0.0f, 2.0f, -2.0f);
+	NewActor->SetDebugName("Cube");
+	NewActor->GetTransform().SetTranslation(0.0f, 2.0f, -2.0f);
 
-	MatProperties.AO		= 1.0f;
-	MatProperties.Metallic	= 1.0f;
-	MatProperties.Roughness	= 1.0f;
+	MatProperties.AO			= 1.0f;
+	MatProperties.Metallic		= 1.0f;
+	MatProperties.Roughness		= 1.0f;
+	MatProperties.EnableHeight	= 1;
 
 	NewComponent = new MeshComponent(NewActor);
 	NewComponent->Mesh		= Mesh::Make(CubeMeshData);
@@ -223,11 +228,10 @@ bool Game::Initialize()
 
 	// Add DirectionalLight- Source
 	DirectionalLight* Light1 = new DirectionalLight();
-	Light1->SetDirection(0.0f, -1.0f, 0.0f);
-	Light1->SetShadowMapPosition(0.0f, 40.0f, 0.0f);
 	Light1->SetShadowBias(0.0008f);
-	Light1->SetMaxShadowBias(0.01f);
-	Light1->SetShadowFarPlane(60.0f);
+	Light1->SetMaxShadowBias(0.008f);
+	Light1->SetShadowNearPlane(0.01f);
+	Light1->SetShadowFarPlane(140.0f);
 	Light1->SetColor(1.0f, 1.0f, 1.0f);
 	Light1->SetIntensity(10.0f);
 	CurrentScene->AddLight(Light1);
@@ -244,10 +248,10 @@ void Game::Destroy()
 void Game::Tick(Timestamp DeltaTime)
 {
 	// Run app
-	const Float32 Delta = static_cast<Float32>(DeltaTime.AsSeconds());
-	const Float32 RotationSpeed = 45.0f;
+	const Float Delta = static_cast<Float>(DeltaTime.AsSeconds());
+	const Float RotationSpeed = 45.0f;
 
-	Float32 Speed = 1.0f;
+	Float Speed = 1.0f;
 	if (Input::IsKeyDown(EKey::KEY_LEFT_SHIFT))
 	{
 		Speed = 4.0f;

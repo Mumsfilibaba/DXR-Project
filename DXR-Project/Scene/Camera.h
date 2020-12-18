@@ -11,9 +11,9 @@ public:
 	Camera();
 	~Camera() = default;
 
-	void Move(Float32 X, Float32 Y, Float32 Z);
+	void Move(Float X, Float Y, Float Z);
 
-	void Rotate(Float32 Pitch, Float32 Yaw, Float32 Roll);
+	void Rotate(Float Pitch, Float Yaw, Float Roll);
 
 	void UpdateMatrices();
 
@@ -22,9 +22,19 @@ public:
 		return View;
 	}
 
+	FORCEINLINE const XMFLOAT4X4& GetViewInverseMatrix() const
+	{
+		return ViewInverse;
+	}
+
 	FORCEINLINE const XMFLOAT4X4& GetProjectionMatrix() const
 	{
 		return Projection;
+	}
+
+	FORCEINLINE const XMFLOAT4X4& GetProjectionInverseMatrix() const
+	{
+		return ProjectionInverse;
 	}
 
 	FORCEINLINE const XMFLOAT4X4& GetViewProjectionMatrix() const
@@ -47,27 +57,36 @@ public:
 		return Position;
 	}
 
-	FORCEINLINE Float32 GetNearPlane() const
+	FORCEINLINE Float GetNearPlane() const
 	{
 		return NearPlane;
 	}
 
-	FORCEINLINE Float32 GetFarPlane() const
+	FORCEINLINE Float GetFarPlane() const
 	{
 		return FarPlane;
 	}
 
+	FORCEINLINE Float GetAspectRatio() const
+	{
+		return AspectRatio;
+	}
+
 private:
-	XMFLOAT4X4	View;
-	XMFLOAT4X4	Projection;
-	XMFLOAT4X4	ViewProjection;
-	XMFLOAT4X4	ViewProjectionInverse;
-	XMFLOAT4X4	ViewProjectionNoTranslation;
-	XMFLOAT3	Position;
-	XMFLOAT3	Rotation;
-	XMFLOAT3	Forward;
-	XMFLOAT3	Right;
-	XMFLOAT3	Up;
-	Float32		NearPlane;
-	Float32		FarPlane;
+	XMFLOAT4X4 View;
+	XMFLOAT4X4 ViewInverse;
+	XMFLOAT4X4 Projection;
+	XMFLOAT4X4 ProjectionInverse;
+	XMFLOAT4X4 ViewProjection;
+	XMFLOAT4X4 ViewProjectionInverse;
+	XMFLOAT4X4 ViewProjectionNoTranslation;
+
+	XMFLOAT3 Position;
+	XMFLOAT3 Rotation;
+	XMFLOAT3 Forward;
+	XMFLOAT3 Right;
+	XMFLOAT3 Up;
+	Float	 NearPlane;
+	Float	 FarPlane;
+	Float	 AspectRatio;
 };

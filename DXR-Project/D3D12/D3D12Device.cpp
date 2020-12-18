@@ -316,7 +316,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	GlobalSamplerDescriptorHeap			= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 	// Create Global Online Heap
-	GlobalOnlineResourceHeap = new D3D12OnlineDescriptorHeap(this, 2048, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	GlobalOnlineResourceHeap = new D3D12OnlineDescriptorHeap(this, 4096, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	if (!GlobalOnlineResourceHeap->Initialize())
 	{
 		return false;
@@ -497,7 +497,7 @@ Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount)
 		return 0;
 	}
 
-	return static_cast<Uint32>(Data.NumQualityLevels - 1);
+	return static_cast<UInt32>(Data.NumQualityLevels - 1);
 }
 
 std::string D3D12Device::GetAdapterName() const

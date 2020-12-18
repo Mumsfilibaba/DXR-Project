@@ -15,6 +15,11 @@ Material::Material(const MaterialProperties& InProperties)
 {
 }
 
+Material::~Material()
+{
+	SAFEDELETE(MaterialBuffer);
+}
+
 void Material::Initialize()
 {
 	// Create materialbuffer
@@ -36,28 +41,40 @@ void Material::SetAlbedo(const XMFLOAT3& Albedo)
 	MaterialBufferIsDirty = true;
 }
 
-void Material::SetAlbedo(Float32 R, Float32 G, Float32 B)
+void Material::SetAlbedo(Float R, Float G, Float B)
 {
 	Properties.Albedo = XMFLOAT3(R, G, B);
 	MaterialBufferIsDirty = true;
 }
 
-void Material::SetMetallic(Float32 Metallic)
+void Material::SetMetallic(Float Metallic)
 {
 	Properties.Metallic = Metallic;
 	MaterialBufferIsDirty = true;
 }
 
-void Material::SetRoughness(Float32 Roughness)
+void Material::SetRoughness(Float Roughness)
 {
 	Properties.Roughness = Roughness;
 	MaterialBufferIsDirty = true;
 }
 
-void Material::SetAmbientOcclusion(Float32 AO)
+void Material::SetAmbientOcclusion(Float AO)
 {
 	Properties.AO = AO;
 	MaterialBufferIsDirty = true;
+}
+
+void Material::EnableHeightMap(bool EnableHeightMap)
+{
+	if (EnableHeightMap)
+	{
+		Properties.EnableHeight = 1;
+	}
+	else
+	{
+		Properties.EnableHeight = 0;
+	}
 }
 
 void Material::SetDebugName(const std::string& InDebugName)

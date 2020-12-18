@@ -13,6 +13,8 @@ class D3D12OnlineDescriptorHeap;
 class D3D12ComputePipelineState;
 class D3D12RootSignature;
 
+#define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(Void*))
+
 /*
 * Function Typedefs
 */
@@ -175,7 +177,7 @@ public:
 
 	FORCEINLINE bool IsRayTracingSupported() const
 	{
-		return false;// RayTracingSupported;
+		return RayTracingSupported;
 	}
 
 	FORCEINLINE bool IsInlineRayTracingSupported() const
@@ -250,7 +252,7 @@ private:
 
 	D3D12OnlineDescriptorHeap* GlobalOnlineResourceHeap = nullptr;
 
-	Uint32 AdapterID = 0;
+	UInt32 AdapterID = 0;
 
 	bool MeshShadersSupported		= false;
 	bool SamplerFeedbackSupported	= false;

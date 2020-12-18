@@ -40,7 +40,7 @@ static ImGuiState GlobalImGuiState;
 * Helper Functions
 */
 
-static Uint32 GetMouseButtonIndex(EMouseButton Button)
+static UInt32 GetMouseButtonIndex(EMouseButton Button)
 {
 	switch (Button)
 	{
@@ -49,7 +49,7 @@ static Uint32 GetMouseButtonIndex(EMouseButton Button)
 	case MOUSE_BUTTON_MIDDLE:	return 2;
 	case MOUSE_BUTTON_BACK:		return 3;
 	case MOUSE_BUTTON_FORWARD:	return 4;
-	default:					return static_cast<Uint32>(-1);
+	default:					return static_cast<UInt32>(-1);
 	}
 }
 
@@ -73,6 +73,7 @@ bool DebugUI::Initialize()
 	ImGuiIO& IO = ImGui::GetIO();
 	IO.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;	// We can honor GetMouseCursor() values (optional)
 	IO.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;	// We can honor IO.WantSetMousePos requests (optional, rarely used)
+	IO.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 	IO.BackendPlatformName = "Windows";
 
 #ifdef WIN32
@@ -270,7 +271,7 @@ bool DebugUI::Initialize()
 	//	return false;
 	//}
 
-	static const char* VertexShader =
+	static const Char* VertexShader =
 		"cbuffer vertexBuffer : register(b0) \
 		{\
 			float4x4 ProjectionMatrix; \
@@ -304,7 +305,7 @@ bool DebugUI::Initialize()
 	//	return false;
 	//}
 
-	static const char* PixelShader =
+	static const Char* PixelShader =
 		"struct PS_INPUT\
 		{\
 			float4 pos : SV_POSITION;\
@@ -410,12 +411,12 @@ bool DebugUI::OnEvent(const Event& Event)
 	}
 	else if (IsOfEventType<MousePressedEvent>(Event))
 	{
-		Uint32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
+		UInt32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
 		IO.MouseDown[ButtonIndex] = true;
 	}
 	else if (IsOfEventType<MouseReleasedEvent>(Event))
 	{
-		Uint32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
+		UInt32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
 		IO.MouseDown[ButtonIndex] = false;
 	}
 	else if (IsOfEventType<MouseScrolledEvent>(Event))
@@ -434,9 +435,6 @@ void DebugUI::Render(CommandList& CmdList)
 	// Get deltatime
 	GlobalImGuiState.FrameClock.Tick();
 
-	Timestamp Delta = GlobalImGuiState.FrameClock.GetDeltaTime();
-	IO.DeltaTime = static_cast<Float32>(Delta.AsSeconds());
-
 	// Set Mouseposition
 	TSharedRef<GenericWindow> Window = Application::Get().GetMainWindow();
 	if (IO.WantSetMousePos)
@@ -448,14 +446,17 @@ void DebugUI::Render(CommandList& CmdList)
 	WindowShape CurrentWindowShape;
 	Window->GetWindowShape(CurrentWindowShape);
 
-	IO.DisplaySize = ImVec2(CurrentWindowShape.Width, CurrentWindowShape.Height);
+	Timestamp Delta = GlobalImGuiState.FrameClock.GetDeltaTime();
+	IO.DeltaTime				= static_cast<Float>(Delta.AsSeconds());
+	IO.DisplaySize				= ImVec2(Float(CurrentWindowShape.Width), Float(CurrentWindowShape.Height));
+	IO.DisplayFramebufferScale	= ImVec2(1.0f, 1.0f);
 
 	// Get Mouseposition
-	Int32 X = 0;
-	Int32 Y = 0;
-	Application::Get().GetCursorPos(Window, X, Y);
+	Int32 x = 0;
+	Int32 y = 0;
+	Application::Get().GetCursorPos(Window, x, y);
 
-	IO.MousePos = ImVec2(static_cast<Float32>(X), static_cast<Float32>(Y));
+	IO.MousePos = ImVec2(static_cast<Float>(x), static_cast<Float>(y));
 
 	// Check modifer keys
 	ModifierKeyState KeyState = Application::Get().GetModifierKeyState();
@@ -504,9 +505,9 @@ void DebugUI::Render(CommandList& CmdList)
 	GlobalDrawFuncs.Clear();
 
 	// Draw DebugWindow with DebugStrings
-	constexpr Uint32 Width = 300;
-	ImGui::SetNextWindowPos(ImVec2(static_cast<Float32>(CurrentWindowShape.Width - Width), 15.0f));
-	ImGui::SetNextWindowSize(ImVec2(Width, CurrentWindowShape.Height));
+	constexpr Float Width = 300.0f;
+	ImGui::SetNextWindowPos(ImVec2(static_cast<Float>(CurrentWindowShape.Width - Width), 15.0f));
+	ImGui::SetNextWindowSize(ImVec2(Width, static_cast<Float>(CurrentWindowShape.Height)));
 
 	ImGui::Begin("DebugWindow", nullptr,
 		ImGuiWindowFlags_NoBackground	| 
@@ -542,14 +543,14 @@ void DebugUI::Render(CommandList& CmdList)
 	// Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
 	struct VERTEX_CONSTANT_BUFFER
 	{
-		Float32 MVP[4][4];
+		Float MVP[4][4];
 	} VertexConstantBuffer = { };
 
-	Float32 L = DrawData->DisplayPos.x;
-	Float32 R = DrawData->DisplayPos.x + DrawData->DisplaySize.x;
-	Float32 T = DrawData->DisplayPos.y;
-	Float32 B = DrawData->DisplayPos.y + DrawData->DisplaySize.y;
-	Float32 MVP[4][4] =
+	Float L = DrawData->DisplayPos.x;
+	Float R = DrawData->DisplayPos.x + DrawData->DisplaySize.x;
+	Float T = DrawData->DisplayPos.y;
+	Float B = DrawData->DisplayPos.y + DrawData->DisplaySize.y;
+	Float MVP[4][4] =
 	{
 		{ 2.0f / (R - L),		0.0f,				0.0f,	0.0f },
 		{ 0.0f,					2.0f / (T - B),		0.0f,	0.0f },

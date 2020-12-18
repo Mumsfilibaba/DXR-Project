@@ -67,32 +67,27 @@ void Actor::SetName(const std::string& InName)
 
 Transform::Transform()
 	: Matrix()
-	, Position(0.0f, 0.0f, 0.0f)
+	, Translation(0.0f, 0.0f, 0.0f)
 	, Scale(1.0f, 1.0f, 1.0f)
+	, Rotation(0.0f, 0.0f, 0.0f)
 {
 	CalculateMatrix();
 }
 
-void Transform::SetPosition(float X, float Y, float Z)
+void Transform::SetTranslation(Float x, Float y, Float z)
 {
-	XMVECTOR XmPosition = XMVectorSet(X, Y, Z, 0.0f);
-	XMStoreFloat3(&Position, XmPosition);
+	SetTranslation(XMFLOAT3(x, y, z));
+}
 
+void Transform::SetTranslation(const XMFLOAT3& InPosition)
+{
+	Translation = InPosition;
 	CalculateMatrix();
 }
 
-void Transform::SetPosition(const XMFLOAT3& InPosition)
+void Transform::SetScale(Float x, Float y, Float z)
 {
-	Position = InPosition;
-	CalculateMatrix();
-}
-
-void Transform::SetScale(float X, float Y, float Z)
-{
-	XMVECTOR XmScale = XMVectorSet(X, Y, Z, 0.0f);
-	XMStoreFloat3(&Scale, XmScale);
-
-	CalculateMatrix();
+	SetScale(XMFLOAT3(x, y, z));
 }
 
 void Transform::SetScale(const XMFLOAT3& InScale)
@@ -101,11 +96,29 @@ void Transform::SetScale(const XMFLOAT3& InScale)
 	CalculateMatrix();
 }
 
+void Transform::SetRotation(Float x, Float y, Float z)
+{
+	SetRotation(XMFLOAT3(x, y, z));
+}
+
+void Transform::SetRotation(const XMFLOAT3& InRotation)
+{
+	Rotation = InRotation;
+	CalculateMatrix();
+}
+
 void Transform::CalculateMatrix()
 {
-	XMVECTOR XmPosition = XMLoadFloat3(&Position);
-	XMVECTOR XmScale	= XMLoadFloat3(&Scale);
+	XMVECTOR XmTranslation	= XMLoadFloat3(&Translation);
+	XMVECTOR XmScale		= XMLoadFloat3(&Scale);
+	// Convert into Roll, Pitch, Yaw
+	XMVECTOR XmRotation = XMVectorSet(Rotation.z, Rotation.y, Rotation.x, 0.0f);
 	
-	XMMATRIX XmMatrix = XMMatrixMultiply(XMMatrixScalingFromVector(XmScale), XMMatrixTranslationFromVector(XmPosition));
+	XMMATRIX XmMatrix = XMMatrixMultiply(
+		XMMatrixMultiply(XMMatrixScalingFromVector(XmScale), XMMatrixRotationRollPitchYawFromVector(XmRotation)),
+		XMMatrixTranslationFromVector(XmTranslation));
 	XMStoreFloat4x4(&Matrix, XMMatrixTranspose(XmMatrix));
+
+	XMMATRIX XmMatrixInv = XMMatrixInverse(nullptr, XmMatrix);
+	XMStoreFloat4x4(&MatrixInv, XMMatrixTranspose(XmMatrixInv));
 }

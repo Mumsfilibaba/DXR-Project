@@ -3,9 +3,11 @@
 #include "D3D12Views.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12RootSignature.h"
+#include "D3D12DescriptorHeap.h"
 
 class D3D12ComputePipelineState;
 class D3D12DescriptorTable;
+class D3D12RootSignature;
 
 /*
 * D3D12CommandList
@@ -48,7 +50,7 @@ public:
 		return SUCCEEDED(CmdList->Close());
 	}
 
-	FORCEINLINE void ClearRenderTargetView(const D3D12RenderTargetView* View, const Float32 ClearColor[4])
+	FORCEINLINE void ClearRenderTargetView(const D3D12RenderTargetView* View, const Float ClearColor[4])
 	{
 		CmdList->ClearRenderTargetView(View->GetOfflineHandle(), ClearColor, 0, nullptr);
 	}
@@ -60,6 +62,14 @@ public:
 		const Uint8 Stencil)
 	{
 		CmdList->ClearDepthStencilView(View->GetOfflineHandle(), Flags, Depth, Stencil, 0, nullptr);
+	}
+
+	FORCEINLINE void ClearUnorderedAccessViewFloat(
+		D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, 
+		const D3D12UnorderedAccessView* View,
+		 const Float ClearColor[4])
+	{
+		CommandList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), View->GetResource(), ClearColor, 0, nullptr);
 	}
 
 	FORCEINLINE void CopyBuffer(
@@ -144,7 +154,7 @@ public:
 			StartInstanceLocation);
 	}
 
-	FORCEINLINE void SetDescriptorHeaps(ID3D12DescriptorHeap* const* DescriptorHeaps, Uint32 DescriptorHeapCount)
+	FORCEINLINE void SetDescriptorHeaps(ID3D12DescriptorHeap* const* DescriptorHeaps, UInt32 DescriptorHeapCount)
 	{
 		CmdList->SetDescriptorHeaps(DescriptorHeapCount, DescriptorHeaps);
 	}
@@ -169,12 +179,12 @@ public:
 		CmdList->SetGraphicsRootSignature(RootSignature->GetRootSignature());
 	}
 
-	FORCEINLINE void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, Uint32 RootParameterIndex)
+	FORCEINLINE void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, UInt32 RootParameterIndex)
 	{
 		CmdList->SetComputeRootDescriptorTable(RootParameterIndex, BaseDescriptor);
 	}
 
-	FORCEINLINE void SetGraphicsRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, Uint32 RootParameterIndex)
+	FORCEINLINE void SetGraphicsRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, UInt32 RootParameterIndex)
 	{
 		CmdList->SetGraphicsRootDescriptorTable(RootParameterIndex, BaseDescriptor);
 	}
@@ -215,17 +225,17 @@ public:
 		CmdList->IASetPrimitiveTopology(PrimitiveTopology);
 	}
 
-	FORCEINLINE void RSSetViewports(const D3D12_VIEWPORT* Viewports, Uint32 ViewportCount)
+	FORCEINLINE void RSSetViewports(const D3D12_VIEWPORT* Viewports, UInt32 ViewportCount)
 	{
 		CmdList->RSSetViewports(ViewportCount, Viewports);
 	}
 
-	FORCEINLINE void RSSetScissorRects(const D3D12_RECT* ScissorRects, Uint32 ScissorRectCount)
+	FORCEINLINE void RSSetScissorRects(const D3D12_RECT* ScissorRects, UInt32 ScissorRectCount)
 	{
 		CmdList->RSSetScissorRects(ScissorRectCount, ScissorRects);
 	}
 
-	FORCEINLINE void OMSetBlendFactor(const Float32 BlendFactor[4])
+	FORCEINLINE void OMSetBlendFactor(const Float BlendFactor[4])
 	{
 		CmdList->OMSetBlendFactor(BlendFactor);
 	}

@@ -36,14 +36,28 @@ public:
 	Transform();
 	~Transform() = default;
 
-	void SetPosition(float X, float Y, float Z);
-	void SetPosition(const XMFLOAT3& InPosition);
-	void SetScale(float X, float Y, float Z);
+	void SetTranslation(Float x, Float y, Float z);
+	void SetTranslation(const XMFLOAT3& InPosition);
+
+	void SetScale(Float x, Float y, Float z);
 	void SetScale(const XMFLOAT3& InScale);
 
-	FORCEINLINE const XMFLOAT3& GetPosition() const
+	void SetRotation(Float x, Float y, Float z);
+	void SetRotation(const XMFLOAT3& InRotation);
+
+	FORCEINLINE const XMFLOAT3& GetTranslation() const
 	{
-		return Position;
+		return Translation;
+	}
+
+	FORCEINLINE const XMFLOAT3& GetScale() const
+	{
+		return Scale;
+	}
+
+	FORCEINLINE const XMFLOAT3& GetRotation() const
+	{
+		return Rotation;
 	}
 
 	FORCEINLINE const XMFLOAT4X4& GetMatrix() const
@@ -51,13 +65,20 @@ public:
 		return Matrix;
 	}
 
+	FORCEINLINE const XMFLOAT4X4& GetMatrixInverse() const
+	{
+		return MatrixInv;
+	}
+
 private:
 	void CalculateMatrix();
 
 private:
 	XMFLOAT4X4	Matrix;
-	XMFLOAT3	Position;
+	XMFLOAT4X4	MatrixInv;
+	XMFLOAT3	Translation;
 	XMFLOAT3	Scale;
+	XMFLOAT3	Rotation;
 };
 
 /*

@@ -32,7 +32,11 @@ bool Mesh::Initialize(const MeshData& Data)
 	}
 
 	// Create IndexBuffer
-	IndexBuffer = RenderingAPI::CreateIndexBuffer(nullptr, IndexCount * sizeof(Uint32), EIndexFormat::IndexFormat_Uint32, BufferUsage_Default);
+	IndexBuffer = RenderingAPI::CreateIndexBuffer(
+		nullptr, 
+		IndexCount * sizeof(UInt32), 
+		EIndexFormat::IndexFormat_Uint32, 
+		BufferUsage_Default);
 	if (!IndexBuffer)
 	{
 		return false;
@@ -82,21 +86,21 @@ TSharedPtr<Mesh> Mesh::Make(const MeshData& Data)
 
 void Mesh::CreateBoundingBox(const MeshData& Data)
 {
-	constexpr Float32 Inf = std::numeric_limits<Float32>::infinity();
+	constexpr Float Inf = std::numeric_limits<Float>::infinity();
 	XMFLOAT3 Min = XMFLOAT3(Inf, Inf, Inf);
 	XMFLOAT3 Max = XMFLOAT3(-Inf, -Inf, -Inf);
 
 	for (const Vertex& Vertex : Data.Vertices)
 	{
 		// X
-		Min.x = std::min<Float32>(Min.x, Vertex.Position.x);
-		Max.x = std::max<Float32>(Max.x, Vertex.Position.x);
+		Min.x = std::min<Float>(Min.x, Vertex.Position.x);
+		Max.x = std::max<Float>(Max.x, Vertex.Position.x);
 		// Y
-		Min.y = std::min<Float32>(Min.y, Vertex.Position.y);
-		Max.y = std::max<Float32>(Max.y, Vertex.Position.y);
+		Min.y = std::min<Float>(Min.y, Vertex.Position.y);
+		Max.y = std::max<Float>(Max.y, Vertex.Position.y);
 		// Z
-		Min.z = std::min<Float32>(Min.z, Vertex.Position.z);
-		Max.z = std::max<Float32>(Max.z, Vertex.Position.z);
+		Min.z = std::min<Float>(Min.z, Vertex.Position.z);
+		Max.z = std::max<Float>(Max.z, Vertex.Position.z);
 	}
 
 	BoundingBox.Top		= Max;

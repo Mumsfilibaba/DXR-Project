@@ -112,7 +112,7 @@ public:
 struct MouseScrolledEvent : public Event
 {
 public:
-	MouseScrolledEvent(Float32 InHorizontalDelta, Float32 InVerticalDelta)
+	MouseScrolledEvent(Float InHorizontalDelta, Float InVerticalDelta)
 		: HorizontalDelta(InHorizontalDelta)
 		, VerticalDelta(InVerticalDelta)
 	{
@@ -127,17 +127,17 @@ public:
 		return std::string("MouseScrolledEvent=[") + std::to_string(HorizontalDelta) + ", " + std::to_string(VerticalDelta) + "]";
 	}
 
-	FORCEINLINE Float32 GetHorizontalDelta() const
+	FORCEINLINE Float GetHorizontalDelta() const
 	{
 		return HorizontalDelta;
 	}
 
-	FORCEINLINE Float32 GetVerticalDelta() const
+	FORCEINLINE Float GetVerticalDelta() const
 	{
 		return VerticalDelta;
 	}
 
 private:
-	Float32 HorizontalDelta;
-	Float32 VerticalDelta;
+	Float HorizontalDelta;
+	Float VerticalDelta;
 };

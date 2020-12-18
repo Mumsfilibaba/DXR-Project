@@ -9,6 +9,7 @@
 
 class D3D12CommandList;
 class D3D12DescriptorTable;
+class Material;
 
 /*
 * D3D12RayTracingGeometry - Equal to the Bottom-Level AccelerationStructure
@@ -20,11 +21,21 @@ public:
 	D3D12RayTracingGeometry(D3D12Device* InDevice);
 	~D3D12RayTracingGeometry();
 
-	bool BuildAccelerationStructure(D3D12CommandList* CommandList, TSharedRef<D3D12VertexBuffer>& InVertexBuffer, Uint32 InVertexCount, TSharedRef<D3D12IndexBuffer>& InIndexBuffer, Uint32 InIndexCount);
+	bool BuildAccelerationStructure(
+		D3D12CommandList* CommandList, 
+		TSharedRef<D3D12VertexBuffer>& InVertexBuffer, 
+		UInt32 InVertexCount, 
+		TSharedRef<D3D12IndexBuffer>& InIndexBuffer, 
+		UInt32 InIndexCount);
 
 	void SetName(const std::string& Name);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
+
+	FORCEINLINE TSharedPtr<D3D12DescriptorTable> GetDescriptorTable() const
+	{
+		return DescriptorTable;
+	}
 
 private:
 	TSharedRef<D3D12VertexBuffer>	VertexBuffer	= nullptr;
@@ -32,8 +43,8 @@ private:
 	D3D12StructuredBuffer* ResultBuffer		= nullptr;
 	D3D12StructuredBuffer* ScratchBuffer	= nullptr;
 	
-	Uint32 VertexCount	= 0;
-	Uint32 IndexCount	= 0;
+	UInt32 VertexCount	= 0;
+	UInt32 IndexCount	= 0;
 
 	bool IsDirty = true;
 };
@@ -45,8 +56,9 @@ private:
 class D3D12RayTracingGeometryInstance
 {
 public:
-	D3D12RayTracingGeometryInstance(TSharedPtr<D3D12RayTracingGeometry>& InGeometry, XMFLOAT3X4 InTransform, Uint32 InHitGroupIndex, Uint32 InInstanceID)
+	D3D12RayTracingGeometryInstance(TSharedPtr<D3D12RayTracingGeometry>& InGeometry, Material* InMaterial, XMFLOAT3X4 InTransform, UInt32 InHitGroupIndex, UInt32 InInstanceID)
 		: Geometry(InGeometry)
+		, Material(InMaterial)
 		, Transform(InTransform)
 		, HitGroupIndex(InHitGroupIndex)
 		, InstanceID(InInstanceID)
@@ -59,10 +71,11 @@ public:
 
 public:
 	TSharedPtr<D3D12RayTracingGeometry> Geometry;
-	
+	Material* Material;
+
 	XMFLOAT3X4	Transform;
-	Uint32		HitGroupIndex;
-	Uint32		InstanceID;
+	UInt32		HitGroupIndex;
+	UInt32		InstanceID;
 };
 
 /*
@@ -74,19 +87,22 @@ struct BindingTableEntry
 public:
 	BindingTableEntry()
 		: ShaderExportName()
-		, DescriptorTable(nullptr)
+		, DescriptorTable0(nullptr)
+		, DescriptorTable1(nullptr)
 	{
 	}
 
-	BindingTableEntry(std::string InShaderExportName, TSharedPtr<D3D12DescriptorTable> InDescriptorTable)
+	BindingTableEntry(std::string InShaderExportName, TSharedPtr<D3D12DescriptorTable> InDescriptorTable0, TSharedPtr<D3D12DescriptorTable> InDescriptorTable1)
 		: ShaderExportName(InShaderExportName)
-		, DescriptorTable(InDescriptorTable)
+		, DescriptorTable0(InDescriptorTable0)
+		, DescriptorTable1(InDescriptorTable1)
 	{
 	}
 
-public:
 	std::string ShaderExportName;
-	TSharedPtr<D3D12DescriptorTable> DescriptorTable;
+
+	TSharedPtr<D3D12DescriptorTable> DescriptorTable0;
+	TSharedPtr<D3D12DescriptorTable> DescriptorTable1;
 };
 
 /*
@@ -99,9 +115,12 @@ public:
 	D3D12RayTracingScene(D3D12Device* InDevice);
 	~D3D12RayTracingScene();
 
-	bool Initialize(class D3D12RayTracingPipelineState* PipelineState, TArray<BindingTableEntry>& InBindingTableEntries, Uint32 InNumHitGroups);
+	bool Initialize(class D3D12RayTracingPipelineState* PipelineState);
 
-	bool BuildAccelerationStructure(D3D12CommandList* CommandList, TArray<D3D12RayTracingGeometryInstance>& InInstances);
+	bool BuildAccelerationStructure(D3D12CommandList* CommandList,
+		TArray<D3D12RayTracingGeometryInstance>& InInstances,
+		TArray<BindingTableEntry>& InBindingTableEntries,
+		UInt32 InNumHitGroups);
 
 	void SetName(const std::string& Name);
 
@@ -116,6 +135,11 @@ public:
 		return View.Get();
 	}
 
+	FORCEINLINE bool NeedsBuild() const
+	{
+		return IsDirty;
+	}
+
 private:
 	D3D12StructuredBuffer* ResultBuffer		= nullptr;
 	D3D12StructuredBuffer* ScratchBuffer	= nullptr;
@@ -128,6 +152,8 @@ private:
 	
 	TArray<D3D12RayTracingGeometryInstance>	Instances;
 	TArray<BindingTableEntry>				BindingTableEntries;
+
+	Microsoft::WRL::ComPtr<ID3D12StateObjectProperties> PipelineStateProperties;
 
 	bool IsDirty = true;
 };

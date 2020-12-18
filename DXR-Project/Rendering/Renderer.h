@@ -16,6 +16,13 @@
 #include "RenderingCore/RenderingAPI.h"
 #include "RenderingCore/CommandList.h"
 
+#include "Application/Events/EventQueue.h"
+#include "Application/Events/WindowEvent.h"
+
+class D3D12Texture;
+class D3D12GraphicsPipelineState;
+class D3D12RayTracingPipelineState;
+
 #define ENABLE_D3D12_DEBUG	0
 #define ENABLE_VSM			0
 
@@ -25,16 +32,16 @@
 
 struct LightSettings
 {
-	Uint16 ShadowMapWidth		= 4096;
-	Uint16 ShadowMapHeight		= 4096;
-	Uint16 PointLightShadowSize	= 1024;
+	UInt16 ShadowMapWidth		= 4096;
+	UInt16 ShadowMapHeight		= 4096;
+	UInt16 PointLightShadowSize	= 1024;
 };
 
 /*
 * Renderer
 */
 
-class Renderer
+class Renderer : public IEventHandler
 {
 public:
 	Renderer();
@@ -42,13 +49,29 @@ public:
 	
 	void Tick(const Scene& CurrentScene);
 	
-	void OnResize(Int32 Width, Int32 Height);
+	bool OnEvent(const Event& Event);
 
 	void SetPrePassEnable(bool Enabled);
 	void SetVerticalSyncEnable(bool Enabled);
 	void SetDrawAABBsEnable(bool Enabled);
 	void SetFrustumCullEnable(bool Enabled);
 	void SetFXAAEnable(bool Enabled);
+	void SetSSAOEnable(bool Enabled);
+	
+	FORCEINLINE void SetSSAORadius(Float InSSAORadius)
+	{
+		SSAORadius = InSSAORadius;
+	}
+
+	FORCEINLINE void SetSSAOKernelSize(Int32 InSSAOKernelSize)
+	{
+		SSAOKernelSize = InSSAOKernelSize;
+	}
+
+	FORCEINLINE void SetSSAOBias(Float InSSAOBias)
+	{
+		SSAOBias = InSSAOBias;
+	}
 
 	FORCEINLINE bool IsDrawAABBsEnabled() const
 	{
@@ -73,6 +96,26 @@ public:
 	FORCEINLINE bool IsFrustumCullEnabled() const
 	{
 		return FrustumCullEnabled;
+	}
+
+	FORCEINLINE bool IsSSAOEnabled() const
+	{
+		return SSAOEnabled;
+	}
+
+	FORCEINLINE Float GetSSAORadius() const
+	{
+		return SSAORadius;
+	}
+
+	FORCEINLINE Int32 GetSSAOKernelSize() const
+	{
+		return SSAOKernelSize;
+	}
+
+	FORCEINLINE Float GetSSAOBias() const
+	{
+		return SSAOBias;
 	}
 
 	static void SetGlobalLightSettings(const LightSettings& InGlobalLightSettings);
@@ -100,6 +143,8 @@ private:
 	bool InitRayTracingTexture();
 	bool InitDebugStates();
 	bool InitAA();
+	bool InitForwardPass();
+	bool InitSSAO();
 
 	bool CreateShadowMaps();
 
@@ -113,9 +158,7 @@ private:
 private:
 	CommandList CmdList;
 
-	MeshData Sphere;
 	MeshData SkyboxMesh;
-	MeshData Cube;
 
 	TSharedRef<ConstantBuffer> CameraBuffer;
 	TSharedRef<ConstantBuffer> PointLightBuffer;
@@ -176,14 +219,13 @@ private:
 	TSharedRef<RenderTargetView>	GBufferRTVs[3];
 	TSharedRef<DepthStencilView>	GBufferDSV;
 	
-	TSharedRef<RayTracingScene>	RayTracingScene;
-
 	TSharedRef<InputLayoutState> StdInputLayout;
 
 	TSharedRef<GraphicsPipelineState>	PrePassPSO;
 	TSharedRef<GraphicsPipelineState>	ShadowMapPSO;
 	TSharedRef<GraphicsPipelineState>	VSMShadowMapPSO;
 	TSharedRef<GraphicsPipelineState>	LinearShadowMapPSO;
+	TSharedPtr<GraphicsPipelineState> 	ForwardPSO;
 	TSharedRef<GraphicsPipelineState>	GeometryPSO;
 	TSharedRef<GraphicsPipelineState>	LightPassPSO;
 	TSharedRef<GraphicsPipelineState>	SkyboxPSO;
@@ -192,19 +234,38 @@ private:
 	TSharedRef<GraphicsPipelineState>	FXAAPSO;
 	TSharedRef<RayTracingPipelineState>	RaytracingPSO;
 
-	TSharedRef<ComputeShader>			IrradianceGenShader;
-	TSharedRef<ComputePipelineState>	IrradicanceGenPSO;
-	TSharedRef<ComputeShader>			SpecIrradianceGenShader;
-	TSharedRef<ComputePipelineState>	SpecIrradicanceGenPSO;
+	TSharedRef<ComputeShader> IrradianceGenShader;
+	TSharedRef<ComputeShader> SpecIrradianceGenShader;
+	
+	TSharedRef<ComputePipelineState> IrradicanceGenPSO;
+	TSharedRef<ComputePipelineState> SpecIrradicanceGenPSO;
+	TSharedPtr<ComputePipelineState> SSAOPSO;
+	TSharedPtr<ComputePipelineState> SSAOBlur;
 
 	TArray<MeshDrawCommand> VisibleCommands;
 	TArray<TSharedRef<PipelineResource>> DeferredResources;
 
-	bool PrePassEnabled		= true;
-	bool DrawAABBs			= false;
-	bool VSyncEnabled		= false;
-	bool FrustumCullEnabled	= true;
-	bool FXAAEnabled		= true;
+	TSharedRef<StructuredBuffer> SSAOSamples;
+	TSharedRef<Texture2D> SSAOBuffer;
+	TSharedRef<Texture2D> SSAONoiseTex;
+	
+	TSharedPtr<RayTracingScene> RayTracingScene;
+	TArray<RayTracingGeometryInstance> RayTracingGeometryInstances;
+
+	TArray<MeshDrawCommand> DeferredVisibleCommands;
+	TArray<MeshDrawCommand> ForwardVisibleCommands;
+
+	Bool PrePassEnabled		= true;
+	Bool DrawAABBs			= false;
+	Bool VSyncEnabled		= false;
+	Bool FrustumCullEnabled	= true;
+	Bool FXAAEnabled		= true;
+	Bool RayTracingEnabled	= false;
+
+	Bool SSAOEnabled	= true;
+	Float SSAORadius	= 0.3f;
+	Float SSAOBias		= 0.0f;
+	Int32 SSAOKernelSize	= 64;
 
 	static LightSettings		GlobalLightSettings;
 	static TUniquePtr<Renderer> RendererInstance;

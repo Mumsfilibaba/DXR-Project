@@ -101,7 +101,7 @@ TSharedRef<GenericCursor> WindowsApplication::MakeCursor()
 
 ModifierKeyState WindowsApplication::GetModifierKeyState() const
 {
-	Uint32 ModifierMask = 0;
+	UInt32 ModifierMask = 0;
 	if (::GetKeyState(VK_CONTROL) & 0x8000)
 	{
 		ModifierMask |= EModifierFlag::MODIFIER_FLAG_CTRL;
@@ -257,8 +257,8 @@ void WindowsApplication::SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, 
 
 LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
-	constexpr Uint16 SCAN_CODE_MASK		= 0x01ff;
-	constexpr Uint16 BACK_BUTTON_MASK	= 0x0001;
+	constexpr UInt16 SCAN_CODE_MASK		= 0x01ff;
+	constexpr UInt16 BACK_BUTTON_MASK	= 0x0001;
 
 	TSharedRef<WindowsWindow> MessageWindow = GetWindowFromHWND(hWnd);
 	switch (uMessage)
@@ -273,8 +273,8 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		{
 			if (MessageWindow)
 			{
-				const Uint16 Width	= LOWORD(lParam);
-				const Uint16 Height = HIWORD(lParam);
+				const UInt16 Width	= LOWORD(lParam);
+				const UInt16 Height = HIWORD(lParam);
 
 				EventHandler->OnWindowResized(MessageWindow, Width, Height);
 			}
@@ -285,7 +285,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		case WM_SYSKEYUP:
 		case WM_KEYUP:
 		{
-			const Uint32	ScanCode	= static_cast<Uint32>(HIWORD(lParam) & SCAN_CODE_MASK);
+			const UInt32	ScanCode	= static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
 			const EKey		Key			= Input::ConvertFromScanCode(ScanCode);
 			EventHandler->OnKeyReleased(Key, GetModifierKeyState());
 			return 0;
@@ -294,7 +294,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
 		{
-			const Uint32	ScanCode	= static_cast<Uint32>(HIWORD(lParam) & SCAN_CODE_MASK);
+			const UInt32	ScanCode	= static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
 			const EKey		Key			= Input::ConvertFromScanCode(ScanCode);
 			EventHandler->OnKeyPressed(Key, GetModifierKeyState());
 			return 0;
@@ -303,7 +303,7 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		case WM_SYSCHAR:
 		case WM_CHAR:
 		{
-			const Uint32 Character = static_cast<Uint32>(wParam);
+			const UInt32 Character = static_cast<UInt32>(wParam);
 			EventHandler->OnCharacterInput(Character);
 			return 0;
 		}
@@ -385,14 +385,14 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 
 		case WM_MOUSEWHEEL:
 		{
-			const Float32 WheelDelta = static_cast<Float32>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float32>(WHEEL_DELTA);
+			const Float WheelDelta = static_cast<Float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float>(WHEEL_DELTA);
 			EventHandler->OnMouseScrolled(0.0f, WheelDelta);
 			return 0;
 		}
 
 		case WM_MOUSEHWHEEL:
 		{
-			const Float32 WheelDelta = static_cast<Float32>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float32>(WHEEL_DELTA);
+			const Float WheelDelta = static_cast<Float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float>(WHEEL_DELTA);
 			EventHandler->OnMouseScrolled(WheelDelta, 0.0f);
 			return 0;
 		}

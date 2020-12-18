@@ -1,25 +1,39 @@
 #include "PBRCommon.hlsli"
 
-// Scene and Output
+// Global RootSignature
 RaytracingAccelerationStructure Scene : register(t0, space0);
 
-Texture2D<float4> Albedo		: register(t4, space0);
-Texture2D<float4> NormalMap		: register(t5, space0);
+ConstantBuffer<Camera> Camera : register(b0, space0);
+
 Texture2D<float4> GBufferNormal	: register(t6, space0);
 Texture2D<float4> GBufferDepth	: register(t7, space0);
 
-TextureCube<float4>	Skybox		: register(t1, space0);
+TextureCube<float4>	Skybox : register(t1, space0);
 
 SamplerState TextureSampler	: register(s0, space0);
 SamplerState GBufferSampler : register(s1, space0);
 
 RWTexture2D<float4> OutTexture 	: register(u0, space0);
 
-ConstantBuffer<Camera> Camera : register(b0, space0);
+// Local RootSignature
+cbuffer MaterialBuffer : register(b0, space1)
+{
+	float3	Albedo;
+	float	Roughness;
+	float	Metallic;
+	float	AO;
+	int		EnableHeight;
+};
 
-// Geometry
-StructuredBuffer<Vertex>	Vertices	: register(t2, space0);
-ByteAddressBuffer			InIndices	: register(t3, space0);
+Texture2D<float4> AlbedoMap		: register(t0, space1);
+Texture2D<float4> NormalMap		: register(t1, space1);
+Texture2D<float4> RoughnessMap	: register(t2, space1);
+Texture2D<float4> HeightMap		: register(t3, space1);
+Texture2D<float4> MetallicMap	: register(t4, space1);
+Texture2D<float4> AOMap			: register(t5, space1);
+
+StructuredBuffer<Vertex>	Vertices	: register(t6, space1);
+ByteAddressBuffer			InIndices	: register(t7, space1);
 
 // Shaders
 struct RayPayload
@@ -108,49 +122,53 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	float3 Normal = (TriangleNormals[0] * BarycentricCoords.x) + (TriangleNormals[1] * BarycentricCoords.y) + (TriangleNormals[2] * BarycentricCoords.z);
 	Normal = normalize(Normal);
 	
-	// Use instanceID to determine if we should use normalmaps
-	float3 AlbedoColor;
-	if (InstanceID() == 1)
+	float3 TriangleTangent[3] =
 	{
-		float3 TriangleTangent[3] =
-		{
-			Vertices[Indices[0]].Tangent,
-			Vertices[Indices[1]].Tangent,
-			Vertices[Indices[2]].Tangent
-		};
+		Vertices[Indices[0]].Tangent,
+		Vertices[Indices[1]].Tangent,
+		Vertices[Indices[2]].Tangent
+	};
 
-		float2 TriangleTexCoords[3] =
-		{
-			Vertices[Indices[0]].TexCoord,
-			Vertices[Indices[1]].TexCoord,
-			Vertices[Indices[2]].TexCoord
-		};
-
-		float2 TexCoords	= (TriangleTexCoords[0] * BarycentricCoords.x) + (TriangleTexCoords[1] * BarycentricCoords.y) + (TriangleTexCoords[2] * BarycentricCoords.z);
-		float3 Tangent		= (TriangleTangent[0] * BarycentricCoords.x) + (TriangleTangent[1] * BarycentricCoords.y) + (TriangleTangent[2] * BarycentricCoords.z);
-		Tangent = normalize(Tangent);
-
-		float3 MappedNormal = NormalMap.SampleLevel(TextureSampler, TexCoords, 0).rgb;
-		MappedNormal = UnpackNormal(MappedNormal);
-		
-		AlbedoColor = Albedo.SampleLevel(TextureSampler, TexCoords, 0).rgb;
-		Normal		= ApplyNormalMapping(MappedNormal, Normal, Tangent);
-	}
-	else
+	float2 TriangleTexCoords[3] =
 	{
-		AlbedoColor = float3(0.5f, 0.0f, 0.0f);
-	}
+		Vertices[Indices[0]].TexCoord,
+		Vertices[Indices[1]].TexCoord,
+		Vertices[Indices[2]].TexCoord
+	};
 
+	float2 TexCoords = 
+		(TriangleTexCoords[0] * BarycentricCoords.x) + 
+		(TriangleTexCoords[1] * BarycentricCoords.y) + 
+		(TriangleTexCoords[2] * BarycentricCoords.z);
+	
+	float3 Tangent = 
+		(TriangleTangent[0] * BarycentricCoords.x) + 
+		(TriangleTangent[1] * BarycentricCoords.y) + 
+		(TriangleTangent[2] * BarycentricCoords.z);
+	Tangent = normalize(Tangent);
+
+	float3 MappedNormal = NormalMap.SampleLevel(TextureSampler, TexCoords, 0).rgb;
+	MappedNormal = UnpackNormal(MappedNormal);
+	
+	float3 Bitangent = normalize(cross(Normal, Tangent));
+	Normal = ApplyNormalMapping(MappedNormal, Normal, Tangent, Bitangent);
+	
+	float3 AlbedoColor = AlbedoMap.SampleLevel(TextureSampler, TexCoords, 0).rgb;
+	AlbedoColor = AlbedoColor * Albedo;
+	
 	// Send a new ray for reflection
 	const float3 HitPosition	= WorldHitPosition();
 	const float3 LightDir		= normalize(LightPosition - HitPosition);
 	const float3 ViewDir		= WorldRayDirection(); //normalize(Camera.Position - HitPosition);
 	const float3 HalfVec		= normalize(ViewDir + LightDir);
-	const float Roughness		= min(max(1.05f, MIN_ROUGHNESS), MAX_ROUGHNESS);
-	const float Metallic		= 1.0f;
-	const float AO				= 1.0f;
 	
-	float3 ReflectedColor = float3(0.0f, 0.0f, 0.0f);
+	// MaterialProperties
+	const float SampledAO			= AOMap.SampleLevel(TextureSampler, TexCoords, 0).r * AO;
+    const float SampledMetallic		= MetallicMap.SampleLevel(TextureSampler, TexCoords, 0).r * Metallic;
+    const float SampledRoughness	= RoughnessMap.SampleLevel(TextureSampler, TexCoords, 0).r * Roughness;
+	const float FinalRoughness		= min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+	
+	float3 ReflectedColor = ToFloat3(0.0f);
 	if (PayLoad.CurrentRecursionDepth < 4)
 	{
 		RayDesc Ray;
@@ -175,11 +193,11 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	float3 FresnelReflect = FresnelSchlick(saturate(dot(-WorldRayDirection(), Normal)), AlbedoColor);
 	ReflectedColor = FresnelReflect * ReflectedColor;
 
-	float3 F0 = float3(0.04f, 0.04f, 0.04f);
-	F0 = lerp(F0, AlbedoColor, Metallic);
+	float3 F0 = ToFloat3(0.04f);
+	F0 = lerp(F0, AlbedoColor, SampledMetallic);
 
 	// Reflectance equation
-	float3 Lo = float3(0.0f, 0.0f, 0.0f);
+	float3 Lo = ToFloat3(0.0f);
 
 	// Calculate per-light radiance
 	float	Distance	= length(LightPosition - HitPosition);
@@ -187,10 +205,10 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	float3	Radiance	= LightColor * Attenuation;
 
 	// Cook-Torrance BRDF
-	float	NDF	= DistributionGGX(Normal, HalfVec, Roughness);
-	float	G	= GeometrySmith(Normal, ViewDir, LightDir, Roughness);
-	float3	F	= FresnelSchlick(saturate(dot(HalfVec, ViewDir)), F0);
-		   
+    float NDF	= DistributionGGX(Normal, HalfVec, FinalRoughness);
+    float G		= GeometrySmith(Normal, ViewDir, LightDir, FinalRoughness);
+	float3 F	= FresnelSchlick(saturate(dot(HalfVec, ViewDir)), F0);
+	
 	float3	Nominator	= NDF * G * F;
 	float	Denominator = 4.0f * max(dot(Normal, ViewDir), 0.0f) * max(dot(Normal, LightDir), 0.0f);
 	float3	Specular	= Nominator / max(Denominator, MIN_VALUE);
@@ -200,11 +218,11 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	// For energy conservation, the diffuse and specular light can't
 	// be above 1.0 (unless the surface emits light); to preserve this
 	// relationship the diffuse component (kD) should equal 1.0 - kS.
-	float3 Kd = float3(1.0f, 1.0f, 1.0f) - Ks;
+	float3 Kd = ToFloat3(1.0f) - Ks;
 	// Multiply kD by the inverse metalness such that only non-metals 
 	// have diffuse lighting, or a linear blend if partly metal (pure metals
 	// have no diffuse light).
-	Kd *= 1.0f - Metallic;
+	Kd *= 1.0f - SampledMetallic;
 
 	// Scale light by NdotL
 	float NdotL = max(dot(Normal, LightDir), 0.0f);
@@ -212,7 +230,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	// Add to outgoing radiance Lo
 	Lo += (((Kd * AlbedoColor) / PI) + Specular) * Radiance * NdotL;
 	
-	float3 Ambient	= float3(0.03f, 0.03f, 0.03f) * AlbedoColor * AO;
+	float3 Ambient	= ToFloat3(0.03f) * AlbedoColor * SampledAO;
 	float3 Color	= Ambient + Lo;
 	
 	// Add rays together

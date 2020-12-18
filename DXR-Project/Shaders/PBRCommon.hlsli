@@ -2,15 +2,15 @@
 * Common Constants
 */
 
-static const float MIN_ROUGHNESS    = 0.05f;
+static const float MIN_ROUGHNESS	= 0.05f;
 static const float MAX_ROUGHNESS	= 1.0f;
-static const float PI               = 3.14159265359f;
-static const float MIN_VALUE        = 0.0000001f;
+static const float PI				= 3.14159265359f;
+static const float MIN_VALUE		= 0.0000001f;
 static const float EPSILON			= 0.0001f;
-static const float RAY_OFFSET       = 0.2f;
+static const float RAY_OFFSET		= 0.2f;
 
-static const float3 LightPosition   = float3(0.0f, 10.0f, -10.0f);
-static const float3 LightColor      = float3(400.0f, 400.0f, 400.0f);
+static const float3 LightPosition	= float3(0.0f, 10.0f, -10.0f);
+static const float3 LightColor		= float3(400.0f, 400.0f, 400.0f);
 
 /*
 * Common Defines
@@ -26,10 +26,16 @@ static const float3 LightColor      = float3(400.0f, 400.0f, 400.0f);
 
 struct Camera
 {
-	float4x4	ViewProjection;
-	float3		Position;
-	float		Padding;
-	float4x4	ViewProjectionInverse;
+	float4x4 ViewProjection;
+	float4x4 View;
+	float4x4 ViewInverse;
+	float4x4 Projection;
+	float4x4 ProjectionInverse;
+	float4x4 ViewProjectionInverse;
+	float3	Position;
+	float	NearPlane;
+	float	FarPlane;
+	float	AspectRatio;
 };
 
 struct PointLight
@@ -58,25 +64,53 @@ struct Vertex
 	float2 TexCoord;
 };
 
+struct Transform
+{
+	float4x4 Transform;
+	float4x4 TransformInv;
+};
+
+struct Material
+{
+	float3	Albedo;
+	float	Roughness;
+	float	Metallic;
+	float	AO;
+	int		EnableHeight;
+};
+
+struct ComputeShaderInput
+{
+	uint3	GroupID				: SV_GroupID;
+	uint3	GroupThreadID		: SV_GroupThreadID;
+	uint3	DispatchThreadID	: SV_DispatchThreadID;
+	uint	GroupIndex			: SV_GroupIndex;
+};
+
 /*
 * Position Helper
 */
 
-float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ViewProjectionInverse)
+float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInverse)
 {
-	float Z = Depth;
-	float X = TexCoord.x * 2.0f - 1.0f;
-	float Y = (1.0f - TexCoord.y) * 2.0f - 1.0f;
+	float z = Depth;
+	float x = TexCoord.x * 2.0f - 1.0f;
+	float y = (1.0f - TexCoord.y) * 2.0f - 1.0f;
 
-	float4 ProjectedPos		= float4(X, Y, Z, 1.0f);
-	float4 WorldPosition	= mul(ProjectedPos, ViewProjectionInverse);
+	float4 ProjectedPos		= float4(x, y, z, 1.0f);
+	float4 FinalPosition	= mul(ProjectedPos, ProjectionInverse);
 	
-	return WorldPosition.xyz / WorldPosition.w;
+	return FinalPosition.xyz / FinalPosition.w;
 }
 
 /*
 * Misc Helpers
 */
+
+float2 ToFloat2(float Single)
+{
+	return float2(Single, Single);
+}
 
 float3 ToFloat3(float Single)
 {
@@ -107,6 +141,16 @@ float Random(float3 Seed, int i)
 float Linstep(float Low, float High, float P)
 {
 	return saturate((P - Low) / (High - Low));
+}
+
+float Lerp(float A, float B, float AmountOfA)
+{
+	return (-AmountOfA * B) + ((A * AmountOfA) + B);
+}
+
+float3 Lerp(float3 A, float3 B, float AmountOfA)
+{
+	return (ToFloat3(-AmountOfA) * B) + ((A * ToFloat3(AmountOfA)) + B);
 }
 
 /*
