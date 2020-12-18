@@ -342,7 +342,7 @@ D3D12CommandAllocator* D3D12Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TY
 	}
 }
 
-D3D12Fence* D3D12Device::CreateFence(Uint64 InitalValue)
+D3D12Fence* D3D12Device::CreateFence(UInt64 InitalValue)
 {
 	ID3D12Fence* Fence = nullptr;
 
@@ -441,7 +441,7 @@ D3D12RootSignature* D3D12Device::CreateRootSignature(const D3D12_ROOT_SIGNATURE_
 	}
 	else
 	{
-		return CreateRootSignature(SignatureBlob->GetBufferPointer(), static_cast<Uint32>(SignatureBlob->GetBufferSize()));
+		return CreateRootSignature(SignatureBlob->GetBufferPointer(), static_cast<UInt32>(SignatureBlob->GetBufferSize()));
 	}
 }
 
@@ -451,7 +451,7 @@ D3D12RootSignature* D3D12Device::CreateRootSignature(IDxcBlob* ShaderBlob)
 	return CreateRootSignature(ShaderBlob->GetBufferPointer(), ShaderBlob->GetBufferSize());
 }
 
-D3D12RootSignature* D3D12Device::CreateRootSignature(VoidPtr RootSignatureData, const Uint32 RootSignatureSize)
+D3D12RootSignature* D3D12Device::CreateRootSignature(Void* RootSignatureData, const UInt32 RootSignatureSize)
 {
 	ID3D12RootSignature* RootSignature = nullptr;
 
@@ -483,7 +483,7 @@ D3D12SwapChain* D3D12Device::CreateSwapChain(WindowsWindow* pWindow, D3D12Comman
 	}
 }
 
-Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount)
+Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount)
 {
 	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data = { };
 	Data.Flags			= D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;

@@ -45,7 +45,7 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 #endif
 
 	// Init
-	if (CurrentRenderingAPI->Init(RenderWindow, EnableDebug))
+	if (CurrentRenderingAPI->Initialize(RenderWindow, EnableDebug))
 	{
 		ICommandContext* CmdContext = CurrentRenderingAPI->GetDefaultCommandContext();
 		CommandListExecutor::SetContext(CmdContext);

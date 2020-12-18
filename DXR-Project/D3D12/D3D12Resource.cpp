@@ -18,9 +18,9 @@ D3D12Resource::~D3D12Resource()
 {
 }
 
-VoidPtr D3D12Resource::Map(const Range* MappedRange)
+Void* D3D12Resource::Map(const Range* MappedRange)
 {
-	VoidPtr MappedData = nullptr;
+	Void* MappedData = nullptr;
 
 	HRESULT hr = 0;
 	if (MappedRange)

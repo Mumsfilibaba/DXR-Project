@@ -122,8 +122,8 @@ struct DepthStencilStateCreateInfo
 	EDepthWriteMask	DepthWriteMask = EDepthWriteMask::DepthWriteMask_All;
 	EComparisonFunc	DepthFunc = EComparisonFunc::ComparisonFunc_Less;
 	bool			DepthEnable = true;
-	Uint8			StencilReadMask = 0xff;
-	Uint8			StencilWriteMask = 0xff;
+	UInt8			StencilReadMask = 0xff;
+	UInt8			StencilWriteMask = 0xff;
 	bool			StencilEnable = false;
 	DepthStencilOp	FrontFace	= DepthStencilOp();
 	DepthStencilOp	BackFace	= DepthStencilOp();
@@ -188,17 +188,17 @@ inline const Char* ToString(EFillMode FillMode)
 
 struct RasterizerStateCreateInfo
 {
-	EFillMode	FillMode = EFillMode::FillMode_Solid;
-	ECullMode	CullMode = ECullMode::CullMode_Back;
-	Bool		FrontCounterClockwise = false;
-	Int32		DepthBias = 0;
-	Float32		DepthBiasClamp = 0.0f;
-	Float32		SlopeScaledDepthBias = 0.0f;
-	Bool		DepthClipEnable = true;
-	Bool		MultisampleEnable = false;
-	Bool		AntialiasedLineEnable = false;
-	Uint32		ForcedSampleCount = 0;
-	Bool		EnableConservativeRaster = false;
+	EFillMode FillMode = EFillMode::FillMode_Solid;
+	ECullMode CullMode = ECullMode::CullMode_Back;
+	Bool	FrontCounterClockwise = false;
+	Int32	DepthBias = 0;
+	Float	DepthBiasClamp = 0.0f;
+	Float	SlopeScaledDepthBias = 0.0f;
+	Bool	DepthClipEnable = true;
+	Bool	MultisampleEnable = false;
+	Bool	AntialiasedLineEnable = false;
+	UInt32	ForcedSampleCount = 0;
+	Bool	EnableConservativeRaster = false;
 };
 
 /*
@@ -340,7 +340,7 @@ inline const Char* ToString(ELogicOp LogicOp)
 * EColorWriteFlag
 */
 
-typedef Uint8 ColorWriteFlags;
+typedef UInt8 ColorWriteFlags;
 enum EColorWriteFlag : ColorWriteFlags
 {
 	ColorWriteFlag_None		= 0,
@@ -467,12 +467,12 @@ inline const Char* ToString(EInputClassification BlendOp)
 struct InputElement
 {
 	std::string				Semantic = "";
-	Uint32					SemanticIndex = 0;
+	UInt32					SemanticIndex = 0;
 	EFormat					Format = EFormat::Format_Unknown;
-	Uint32					InputSlot = 0;
-	Uint32					ByteOffset = 0;
+	UInt32					InputSlot = 0;
+	UInt32					ByteOffset = 0;
 	EInputClassification	InputClassification = EInputClassification::InputClassification_Vertex;
-	Uint32					InstanceStepRate = 0;
+	UInt32					InstanceStepRate = 0;
 };
 
 /*
@@ -546,7 +546,7 @@ struct PipelineRenderTargetFormats
 	}
 
 	EFormat RenderTargetFormats[8];
-	Uint32	NumRenderTargets;
+	UInt32	NumRenderTargets;
 	EFormat DepthStencilFormat;
 };
 
@@ -582,9 +582,9 @@ struct GraphicsPipelineStateCreateInfo
 	DepthStencilState*			DepthStencilState		= nullptr;
 	RasterizerState*			RasterizerState			= nullptr;
 	BlendState*					BlendState				= nullptr;
-	Uint32						SampleCount				= 1;
-	Uint32						SampleQuality			= 0;
-	Uint32						SampleMask				= 0xffffffff;
+	UInt32						SampleCount				= 1;
+	UInt32						SampleQuality			= 0;
+	UInt32						SampleMask				= 0xffffffff;
 	EIndexBufferStripCutValue	IBStripCutValue			= EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
 	EPrimitiveTopologyType		PrimitiveTopologyType	= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
 	GraphicsPipelineShaderState ShaderState;

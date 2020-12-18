@@ -17,7 +17,7 @@ public:
 
 	~D3D12Buffer() = default;
 
-	FORCEINLINE Uint64 GetAllocatedSize() const
+	FORCEINLINE UInt64 GetAllocatedSize() const
 	{
 		return Desc.Width;
 	}
@@ -32,7 +32,7 @@ class D3D12VertexBuffer : public VertexBuffer, public D3D12Buffer
 	friend class D3D12RenderingAPI;
 
 public:
-	inline D3D12VertexBuffer::D3D12VertexBuffer(D3D12Device* InDevice, Uint32 InSizeInBytes, Uint32 InStride, Uint32 InUsage)
+	inline D3D12VertexBuffer::D3D12VertexBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InStride, UInt32 InUsage)
 		: VertexBuffer(InSizeInBytes, InStride, InUsage)
 		, D3D12Buffer(InDevice)
 		, VertexBufferView()
@@ -42,7 +42,7 @@ public:
 	~D3D12VertexBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map(const Range* MappedRange) override
+	virtual Void* Map(const Range* MappedRange) override
 	{
 		return D3D12Resource::Map(MappedRange);
 	}
@@ -52,7 +52,7 @@ public:
 		D3D12Resource::Unmap(WrittenRange);
 	}
 
-	virtual Uint64 GetRequiredAlignment() const override final
+	virtual UInt64 GetRequiredAlignment() const override final
 	{
 		return 1;
 	}
@@ -75,7 +75,7 @@ class D3D12IndexBuffer : public IndexBuffer, public D3D12Buffer
 	friend class D3D12RenderingAPI;
 
 public:
-	inline D3D12IndexBuffer(D3D12Device* InDevice, Uint32 InSizeInBytes, EIndexFormat InIndexFormat, Uint32 InUsage)
+	inline D3D12IndexBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, EIndexFormat InIndexFormat, UInt32 InUsage)
 		: IndexBuffer(InSizeInBytes, InIndexFormat, InUsage)
 		, D3D12Buffer(InDevice)
 		, IndexBufferView()
@@ -85,7 +85,7 @@ public:
 	~D3D12IndexBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map(const Range* MappedRange) override
+	virtual Void* Map(const Range* MappedRange) override
 	{
 		return D3D12Resource::Map(MappedRange);
 	}
@@ -95,7 +95,7 @@ public:
 		D3D12Resource::Unmap(WrittenRange);
 	}
 
-	virtual Uint64 GetRequiredAlignment() const override final
+	virtual UInt64 GetRequiredAlignment() const override final
 	{
 		return 1;
 	}
@@ -118,7 +118,7 @@ class D3D12ConstantBuffer : public ConstantBuffer, public D3D12Buffer
 	friend class D3D12RenderingAPI;
 
 public:
-	inline D3D12ConstantBuffer(D3D12Device* InDevice, Uint32 InSizeInBytes, Uint32 InUsage)
+	inline D3D12ConstantBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InUsage)
 		: ConstantBuffer(InSizeInBytes, InUsage)
 		, D3D12Buffer(InDevice)
 		, View(nullptr)
@@ -128,7 +128,7 @@ public:
 	~D3D12ConstantBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map(const Range* MappedRange) override
+	virtual Void* Map(const Range* MappedRange) override
 	{
 		return D3D12Resource::Map(MappedRange);
 	}
@@ -138,7 +138,7 @@ public:
 		D3D12Resource::Unmap(WrittenRange);
 	}
 
-	virtual Uint64 GetRequiredAlignment() const override final
+	virtual UInt64 GetRequiredAlignment() const override final
 	{
 		return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
 	}
@@ -156,7 +156,7 @@ class D3D12StructuredBuffer : public StructuredBuffer, public D3D12Buffer
 	friend class D3D12RenderingAPI;
 
 public:
-	inline D3D12StructuredBuffer(D3D12Device* InDevice, Uint32 InSizeInBytes, Uint32 InStride, Uint32 InUsage)
+	inline D3D12StructuredBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InStride, UInt32 InUsage)
 		: StructuredBuffer(InSizeInBytes, InStride, InUsage)
 		, D3D12Buffer(InDevice)
 	{
@@ -165,7 +165,7 @@ public:
 	~D3D12StructuredBuffer() = default;
 
 	// Map
-	virtual VoidPtr Map(const Range* MappedRange) override
+	virtual Void* Map(const Range* MappedRange) override
 	{
 		return D3D12Resource::Map(MappedRange);
 	}
@@ -175,7 +175,7 @@ public:
 		D3D12Resource::Unmap(WrittenRange);
 	}
 
-	virtual Uint64 GetRequiredAlignment() const override final
+	virtual UInt64 GetRequiredAlignment() const override final
 	{
 		return 1;
 	}

@@ -159,7 +159,7 @@ struct ColorClearValue
 	{
 	}
 
-	inline ColorClearValue(Float32 InR, Float32 InG, Float32 InB, Float32 InA)
+	inline ColorClearValue(Float InR, Float InG, Float InB, Float InA)
 		: R(InR)
 		, G(InG)
 		, B(InB)
@@ -171,13 +171,13 @@ struct ColorClearValue
 	{
 		struct 
 		{
-			Float32 R;
-			Float32 G;
-			Float32 B;
-			Float32 A;
+			Float R;
+			Float G;
+			Float B;
+			Float A;
 		};
 
-		Float32 ColorArr[4];
+		Float ColorArr[4];
 	};
 };
 
@@ -193,14 +193,14 @@ struct DepthStencilClearValue
 	{
 	}
 
-	inline DepthStencilClearValue(Float32 InDepth, Uint8 InStencil)
+	inline DepthStencilClearValue(Float InDepth, UInt8 InStencil)
 		: Depth(InDepth)
 		, Stencil(InStencil)
 	{
 	}
 
-	Float32 Depth;
-	Uint8	Stencil;
+	Float Depth;
+	UInt8 Stencil;
 };
 
 /*
@@ -295,7 +295,7 @@ struct Viewport
 	{
 	}
 
-	inline Viewport(Float32 InWidth, Float32 InHeight, Float32 InMinDepth, Float32 InMaxDepth, Float32 InX, Float32 InY)
+	inline Viewport(Float InWidth, Float InHeight, Float InMinDepth, Float InMaxDepth, Float InX, Float InY)
 		: Width(InWidth)
 		, Height(InHeight)
 		, MinDepth(InMinDepth)
@@ -305,12 +305,12 @@ struct Viewport
 	{
 	}
 
-	Float32 Width;
-	Float32 Height;
-	Float32 MinDepth;
-	Float32 MaxDepth;
-	Float32 x;
-	Float32 y;
+	Float Width;
+	Float Height;
+	Float MinDepth;
+	Float MaxDepth;
+	Float x;
+	Float y;
 };
 
 /*
@@ -327,7 +327,7 @@ struct ScissorRect
 	{
 	}
 
-	inline ScissorRect(Float32 InWidth, Float32 InHeight, Float32 InX, Float32 InY)
+	inline ScissorRect(Float InWidth, Float InHeight, Float InX, Float InY)
 		: Width(InWidth)
 		, Height(InHeight)
 		, x(InX)
@@ -335,10 +335,10 @@ struct ScissorRect
 	{
 	}
 
-	Float32 Width;
-	Float32 Height;
-	Float32 x;
-	Float32 y;
+	Float Width;
+	Float Height;
+	Float x;
+	Float y;
 };
 
 /*
@@ -354,16 +354,16 @@ struct CopyBufferInfo
 	{
 	}
 
-	inline CopyBufferInfo(Uint64 InSourceOffset, Uint32 InDestinationOffset, Uint32 InSizeInBytes)
+	inline CopyBufferInfo(UInt64 InSourceOffset, UInt32 InDestinationOffset, UInt32 InSizeInBytes)
 		: SourceOffset(InSourceOffset)
 		, DestinationOffset(InDestinationOffset)
 		, SizeInBytes(InSizeInBytes)
 	{
 	}
 
-	Uint64 SourceOffset;
-	Uint64 DestinationOffset;
-	Uint64 SizeInBytes;
+	UInt64 SourceOffset;
+	UInt32 DestinationOffset;
+	UInt32 SizeInBytes;
 };
 
 /*
@@ -386,7 +386,7 @@ struct CopyTextureInfo
 	{
 	}
 
-	inline CopyTextureInfo(Uint64 InSourceOffset, Uint32 InDestinationOffset, Uint32 InSizeInBytes)
+	inline CopyTextureInfo(UInt64 InSourceOffset, UInt32 InDestinationOffset, UInt32 InSizeInBytes)
 		: SourceX(0)
 		, SourceY(0)
 		, SourceZ(0)
@@ -399,14 +399,14 @@ struct CopyTextureInfo
 	{
 	}
 
-	Uint32 SourceX;
-	Uint32 SourceY;
-	Uint32 SourceZ;
-	Uint32 DestX;
-	Uint32 DestY;
-	Uint32 DestZ;
-	Uint32 Width;
-	Uint32 Height;
-	Uint32 Depth;
+	UInt32 SourceX;
+	UInt32 SourceY;
+	UInt32 SourceZ;
+	UInt32 DestX;
+	UInt32 DestY;
+	UInt32 DestZ;
+	UInt32 Width;
+	UInt32 Height;
+	UInt32 Depth;
 };
 

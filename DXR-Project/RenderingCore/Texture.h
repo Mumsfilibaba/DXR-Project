@@ -36,7 +36,7 @@ enum ETextureUsage
 class Texture : public Resource
 {
 public:
-	inline Texture(EFormat InFormat, Uint32 InUsage, const ClearValue& InOptimizedClearValue)
+	inline Texture(EFormat InFormat, UInt32 InUsage, const ClearValue& InOptimizedClearValue)
 		: Format(InFormat)
 		, Usage(InUsage)
 		, OptimizedClearValue(InOptimizedClearValue)
@@ -127,32 +127,32 @@ public:
 	}
 
 	// Info
-	virtual Uint32 GetWidth() const
+	virtual UInt32 GetWidth() const
 	{
 		return 0;
 	}
 
-	virtual Uint32 GetHeight() const
+	virtual UInt32 GetHeight() const
 	{
 		return 1;
 	}
 
-	virtual Uint32 GetDepth() const
+	virtual UInt32 GetDepth() const
 	{
 		return 1;
 	}
 
-	virtual Uint32 GetArrayCount() const
+	virtual UInt32 GetArrayCount() const
 	{
 		return 1;
 	}
 
-	virtual Uint32 GetMipLevels() const
+	virtual UInt32 GetMipLevels() const
 	{
 		return 1;
 	}
 
-	virtual Uint32 GetSampleCount() const
+	virtual UInt32 GetSampleCount() const
 	{
 		return 1;
 	}
@@ -167,7 +167,7 @@ public:
 		return Format;
 	}
 
-	FORCEINLINE Uint32 GetUsage() const
+	FORCEINLINE UInt32 GetUsage() const
 	{
 		return Usage;
 	}
@@ -194,7 +194,7 @@ public:
 
 protected:
 	EFormat Format;
-	Uint32	Usage;
+	UInt32	Usage;
 	ClearValue OptimizedClearValue;
 };
 
@@ -205,7 +205,7 @@ protected:
 class Texture1D : public Texture
 {
 public:
-	inline Texture1D(EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InMipLevels, const ClearValue& InOptimizedClearValue)
+	inline Texture1D(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InMipLevels, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Width(InWidth)
 		, MipLevels(InMipLevels)
@@ -226,19 +226,19 @@ public:
 	}
 
 	// Info
-	virtual Uint32 GetWidth() const override
+	virtual UInt32 GetWidth() const override
 	{
 		return Width;
 	}
 
-	virtual Uint32 GetMipLevels() const override
+	virtual UInt32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}
 
 protected:
-	Uint32 Width;
-	Uint32 MipLevels;
+	UInt32 Width;
+	UInt32 MipLevels;
 };
 
 /*
@@ -248,7 +248,7 @@ protected:
 class Texture1DArray : public Texture
 {
 public:
-	inline Texture1DArray(EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InMipLevels, Uint32 InArrayCount, const ClearValue& InOptimizedClearValue)
+	inline Texture1DArray(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InMipLevels, UInt32 InArrayCount, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Width(InWidth)
 		, MipLevels(InMipLevels)
@@ -270,25 +270,25 @@ public:
 	}
 
 	// Info
-	virtual Uint32 GetWidth() const override
+	virtual UInt32 GetWidth() const override
 	{
 		return Width;
 	}
 
-	virtual Uint32 GetMipLevels() const override
+	virtual UInt32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}
 
-	virtual Uint32 GetArrayCount() const override
+	virtual UInt32 GetArrayCount() const override
 	{
 		return ArrayCount;
 	}
 
 protected:
-	Uint32 Width;
-	Uint32 MipLevels;
-	Uint32 ArrayCount;
+	UInt32 Width;
+	UInt32 MipLevels;
+	UInt32 ArrayCount;
 };
 
 /*
@@ -298,7 +298,7 @@ protected:
 class Texture2D : public Texture
 {
 public:
-	inline Texture2D(EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InHeight, Uint32 InMipLevels, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue)
+	inline Texture2D(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevels, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -321,22 +321,22 @@ public:
 	}
 
 	// Info
-	virtual Uint32 GetWidth() const override
+	virtual UInt32 GetWidth() const override
 	{
 		return Width;
 	}
 
-	virtual Uint32 GetHeight() const override
+	virtual UInt32 GetHeight() const override
 	{
 		return Height;
 	}
 
-	virtual Uint32 GetMipLevels() const override
+	virtual UInt32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}
 
-	virtual Uint32 GetSampleCount() const override
+	virtual UInt32 GetSampleCount() const override
 	{
 		return SampleCount;
 	}
@@ -347,10 +347,10 @@ public:
 	}
 
 protected:
-	Uint32 Width;
-	Uint32 Height;
-	Uint32 MipLevels;
-	Uint32 SampleCount;
+	UInt32 Width;
+	UInt32 Height;
+	UInt32 MipLevels;
+	UInt32 SampleCount;
 };
 
 /*
@@ -360,7 +360,7 @@ protected:
 class Texture2DArray : public Texture
 {
 public:
-	inline Texture2DArray(EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InHeight, Uint32 InMipLevels, Uint32 InArrayCount, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue)
+	inline Texture2DArray(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevels, UInt32 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -384,27 +384,27 @@ public:
 	}
 
 	// Info
-	virtual Uint32 GetWidth() const override
+	virtual UInt32 GetWidth() const override
 	{
 		return Width;
 	}
 
-	virtual Uint32 GetHeight() const override
+	virtual UInt32 GetHeight() const override
 	{
 		return Height;
 	}
 
-	virtual Uint32 GetMipLevels() const override
+	virtual UInt32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}
 
-	virtual Uint32 GetArrayCount() const override
+	virtual UInt32 GetArrayCount() const override
 	{
 		return ArrayCount;
 	}
 
-	virtual Uint32 GetSampleCount() const override
+	virtual UInt32 GetSampleCount() const override
 	{
 		return SampleCount;
 	}
@@ -415,11 +415,11 @@ public:
 	}
 
 protected:
-	Uint32 Width;
-	Uint32 Height;
-	Uint32 MipLevels;
-	Uint32 ArrayCount;
-	Uint32 SampleCount;
+	UInt32 Width;
+	UInt32 Height;
+	UInt32 MipLevels;
+	UInt32 ArrayCount;
+	UInt32 SampleCount;
 };
 
 /*
@@ -429,7 +429,7 @@ protected:
 class TextureCube : public Texture
 {
 public:
-	inline TextureCube(EFormat InFormat, Uint32 InUsage, Uint32 InSize, Uint32 InMipLevels, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue)
+	inline TextureCube(EFormat InFormat, UInt32 InUsage, UInt32 InSize, UInt32 InMipLevels, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Size(InSize)
 		, MipLevels(InMipLevels)
@@ -451,28 +451,28 @@ public:
 	}
 
 	// Info
-	virtual Uint32 GetWidth() const override
+	virtual UInt32 GetWidth() const override
 	{
 		return Size;
 	}
 
-	virtual Uint32 GetHeight() const override
+	virtual UInt32 GetHeight() const override
 	{
 		return Size;
 	}
 
-	virtual Uint32 GetMipLevels() const override
+	virtual UInt32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}
 
-	virtual Uint32 GetArrayCount() const override
+	virtual UInt32 GetArrayCount() const override
 	{
-		constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
+		constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
 		return TEXTURE_CUBE_FACE_COUNT;
 	}
 
-	virtual Uint32 GetSampleCount() const override
+	virtual UInt32 GetSampleCount() const override
 	{
 		return SampleCount;
 	}
@@ -483,9 +483,9 @@ public:
 	}
 
 protected:
-	Uint32 Size;
-	Uint32 MipLevels;
-	Uint32 SampleCount;
+	UInt32 Size;
+	UInt32 MipLevels;
+	UInt32 SampleCount;
 };
 
 /*
@@ -495,7 +495,7 @@ protected:
 class TextureCubeArray : public Texture
 {
 public:
-	inline TextureCubeArray(EFormat InFormat, Uint32 InUsage, Uint32 InSize, Uint32 InMipLevels, Uint32 InArrayCount, Uint32 InSampleCount, const ClearValue& InOptimizedClearValue)
+	inline TextureCubeArray(EFormat InFormat, UInt32 InUsage, UInt32 InSize, UInt32 InMipLevels, UInt32 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Size(InSize)
 		, MipLevels(InMipLevels)
@@ -518,28 +518,28 @@ public:
 	}
 
 	// Info
-	virtual Uint32 GetWidth() const override
+	virtual UInt32 GetWidth() const override
 	{
 		return Size;
 	}
 
-	virtual Uint32 GetHeight() const override
+	virtual UInt32 GetHeight() const override
 	{
 		return Size;
 	}
 
-	virtual Uint32 GetMipLevels() const override
+	virtual UInt32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}
 
-	virtual Uint32 GetArrayCount() const override
+	virtual UInt32 GetArrayCount() const override
 	{
-		constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
+		constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
 		return ArrayCount * TEXTURE_CUBE_FACE_COUNT;
 	}
 
-	virtual Uint32 GetSampleCount() const override
+	virtual UInt32 GetSampleCount() const override
 	{
 		return SampleCount;
 	}
@@ -550,10 +550,10 @@ public:
 	}
 
 protected:
-	Uint32 Size;
-	Uint32 MipLevels;
-	Uint32 ArrayCount;
-	Uint32 SampleCount;
+	UInt32 Size;
+	UInt32 MipLevels;
+	UInt32 ArrayCount;
+	UInt32 SampleCount;
 };
 
 
@@ -564,7 +564,7 @@ protected:
 class Texture3D : public Texture
 {
 public:
-	inline Texture3D(EFormat InFormat, Uint32 InUsage, Uint32 InWidth, Uint32 InHeight, Uint32 InDepth, Uint32 InMipLevels, const ClearValue& InOptimizedClearValue)
+	inline Texture3D(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InDepth, UInt32 InMipLevels, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -587,29 +587,29 @@ public:
 	}
 
 	// Info
-	virtual Uint32 GetWidth() const override
+	virtual UInt32 GetWidth() const override
 	{
 		return Width;
 	}
 
-	virtual Uint32 GetHeight() const override
+	virtual UInt32 GetHeight() const override
 	{
 		return Height;
 	}
 
-	virtual Uint32 GetDepth() const override
+	virtual UInt32 GetDepth() const override
 	{
 		return Depth;
 	}
 
-	virtual Uint32 GetMipLevels() const override
+	virtual UInt32 GetMipLevels() const override
 	{
 		return MipLevels;
 	}
 
 protected:
-	Uint32 Width;
-	Uint32 Height;
-	Uint32 Depth;
-	Uint32 MipLevels;
+	UInt32 Width;
+	UInt32 Height;
+	UInt32 Depth;
+	UInt32 MipLevels;
 };

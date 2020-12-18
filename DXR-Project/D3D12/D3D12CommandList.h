@@ -58,8 +58,8 @@ public:
 	FORCEINLINE void ClearDepthStencilView(
 		const D3D12DepthStencilView* View, 
 		D3D12_CLEAR_FLAGS Flags, 
-		Float32 Depth, 
-		const Uint8 Stencil)
+		Float Depth, 
+		const UInt8 Stencil)
 	{
 		CmdList->ClearDepthStencilView(View->GetOfflineHandle(), Flags, Depth, Stencil, 0, nullptr);
 	}
@@ -69,15 +69,21 @@ public:
 		const D3D12UnorderedAccessView* View,
 		 const Float ClearColor[4])
 	{
-		CommandList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), View->GetResource(), ClearColor, 0, nullptr);
+		const D3D12Resource* Resource = View->GetResource();
+		CmdList->ClearUnorderedAccessViewFloat(
+			GPUHandle, 
+			View->GetOfflineHandle(), 
+			Resource->GetResource(), 
+			ClearColor, 
+			0, nullptr);
 	}
 
 	FORCEINLINE void CopyBuffer(
 		D3D12Resource* Destination, 
-		Uint64 DestinationOffset, 
+		UInt64 DestinationOffset, 
 		D3D12Resource* Source, 
-		Uint64 SourceOffset, 
-		Uint64 SizeInBytes)
+		UInt64 SourceOffset, 
+		UInt64 SizeInBytes)
 	{
 		CmdList->CopyBufferRegion(
 			Destination->GetResource(), 
@@ -89,9 +95,9 @@ public:
 
 	FORCEINLINE void CopyTextureRegion(
 		const D3D12_TEXTURE_COPY_LOCATION* Destination, 
-		Uint32 x, 
-		Uint32 y, 
-		Uint32 z, 
+		UInt32 x, 
+		UInt32 y, 
+		UInt32 z, 
 		const D3D12_TEXTURE_COPY_LOCATION* Source, 
 		const D3D12_BOX* SourceBox)
 	{
@@ -119,18 +125,18 @@ public:
 	}
 
 	FORCEINLINE void Dispatch(
-		Uint32 ThreadGroupCountX, 
-		Uint32 ThreadGroupCountY, 
-		Uint32 ThreadGroupCountZ)
+		UInt32 ThreadGroupCountX, 
+		UInt32 ThreadGroupCountY, 
+		UInt32 ThreadGroupCountZ)
 	{
 		CmdList->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 	}
 
 	FORCEINLINE void DrawInstanced(
-		Uint32 VertexCountPerInstance, 
-		Uint32 InstanceCount, 
-		Uint32 StartVertexLocation, 
-		Uint32 StartInstanceLocation)
+		UInt32 VertexCountPerInstance, 
+		UInt32 InstanceCount, 
+		UInt32 StartVertexLocation, 
+		UInt32 StartInstanceLocation)
 	{
 		CmdList->DrawInstanced(
 			VertexCountPerInstance, 
@@ -140,11 +146,11 @@ public:
 	}
 
 	FORCEINLINE void DrawIndexedInstanced(
-		Uint32 IndexCountPerInstance, 
-		Uint32 InstanceCount, 
-		Uint32 StartIndexLocation, 
-		Uint32 BaseVertexLocation, 
-		Uint32 StartInstanceLocation)
+		UInt32 IndexCountPerInstance, 
+		UInt32 InstanceCount, 
+		UInt32 StartIndexLocation, 
+		UInt32 BaseVertexLocation, 
+		UInt32 StartInstanceLocation)
 	{
 		CmdList->DrawIndexedInstanced(
 			IndexCountPerInstance, 
@@ -190,27 +196,27 @@ public:
 	}
 
 	FORCEINLINE void SetGraphicsRoot32BitConstants(
-		const VoidPtr SourceData, 
-		Uint32 Num32BitValues, 
-		Uint32 DestOffsetIn32BitValues, 
-		Uint32 RootParameterIndex)
+		const Void* SourceData, 
+		UInt32 Num32BitValues, 
+		UInt32 DestOffsetIn32BitValues, 
+		UInt32 RootParameterIndex)
 	{
 		CmdList->SetGraphicsRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
 	}
 
 	FORCEINLINE void SetComputeRoot32BitConstants(
-		const VoidPtr SourceData, 
-		Uint32 Num32BitValues, 
-		Uint32 DestOffsetIn32BitValues, 
-		Uint32 RootParameterIndex)
+		const Void* SourceData, 
+		UInt32 Num32BitValues, 
+		UInt32 DestOffsetIn32BitValues, 
+		UInt32 RootParameterIndex)
 	{
 		CmdList->SetComputeRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
 	}
 
 	FORCEINLINE void IASetVertexBuffers(
-		Uint32 StartSlot, 
+		UInt32 StartSlot, 
 		const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, 
-		Uint32 VertexBufferViewCount)
+		UInt32 VertexBufferViewCount)
 	{
 		CmdList->IASetVertexBuffers(StartSlot, VertexBufferViewCount, VertexBufferViews);
 	}
@@ -242,7 +248,7 @@ public:
 
 	FORCEINLINE void OMSetRenderTargets(
 		const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors,
-		Uint32 NumRenderTargetDescriptors,
+		UInt32 NumRenderTargetDescriptors,
 		BOOL RTsSingleHandleToDescriptorRange,
 		const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor)
 	{
@@ -253,7 +259,7 @@ public:
 			DepthStencilDescriptor);
 	}
 
-	FORCEINLINE void ResourceBarrier(const D3D12_RESOURCE_BARRIER* Barriers, Uint32 NumBarriers)
+	FORCEINLINE void ResourceBarrier(const D3D12_RESOURCE_BARRIER* Barriers, UInt32 NumBarriers)
 	{
 		CmdList->ResourceBarrier(NumBarriers, Barriers);
 	}

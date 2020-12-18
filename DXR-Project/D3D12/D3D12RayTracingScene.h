@@ -32,11 +32,6 @@ public:
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
 
-	FORCEINLINE TSharedPtr<D3D12DescriptorTable> GetDescriptorTable() const
-	{
-		return DescriptorTable;
-	}
-
 private:
 	TSharedRef<D3D12VertexBuffer>	VertexBuffer	= nullptr;
 	TSharedRef<D3D12IndexBuffer>	IndexBuffer		= nullptr;
@@ -145,8 +140,8 @@ private:
 	D3D12StructuredBuffer* ScratchBuffer	= nullptr;
 	D3D12StructuredBuffer* InstanceBuffer	= nullptr;
 	D3D12StructuredBuffer* BindingTable		= nullptr;
-	Uint32 BindingTableStride	= 0;
-	Uint32 NumHitGroups			= 0;
+	UInt32 BindingTableStride	= 0;
+	UInt32 NumHitGroups			= 0;
 
 	TSharedPtr<D3D12ShaderResourceView>	View;
 	

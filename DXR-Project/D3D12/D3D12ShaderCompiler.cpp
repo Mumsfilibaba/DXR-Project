@@ -90,7 +90,7 @@ bool D3D12ShaderCompiler::CompileFromFile(
 	const TArray<ShaderDefine>* Defines,
 	EShaderStage ShaderStage, 
 	EShaderModel ShaderModel, 
-	TArray<Uint8>& Code) const
+	TArray<UInt8>& Code) const
 {
 	using namespace Microsoft::WRL;
 
@@ -125,7 +125,7 @@ bool D3D12ShaderCompiler::CompileShader(
 	const TArray<ShaderDefine>* Defines,
 	EShaderStage ShaderStage, 
 	EShaderModel ShaderModel, 
-	TArray<Uint8>& Code) const
+	TArray<UInt8>& Code) const
 {
 	using namespace Microsoft::WRL;
 
@@ -134,7 +134,11 @@ bool D3D12ShaderCompiler::CompileShader(
 
 	// Create SourceBlob
 	ComPtr<IDxcBlobEncoding> SourceBlob;
-	HRESULT hResult = DxLibrary->CreateBlobWithEncodingOnHeapCopy(ShaderSource.c_str(), sizeof(Char) * static_cast<Uint32>(ShaderSource.size()), CP_UTF8, &SourceBlob);
+	HRESULT hResult = DxLibrary->CreateBlobWithEncodingOnHeapCopy(
+		ShaderSource.c_str(), 
+		sizeof(Char) * static_cast<UInt32>(ShaderSource.size()), 
+		CP_UTF8, 
+		&SourceBlob);
 	if (FAILED(hResult))
 	{
 		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create Source Data");
@@ -213,7 +217,7 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
 	LPCWSTR Entrypoint, 
 	LPCWSTR TargetProfile, 
 	const TArray<ShaderDefine>* Defines,
-	TArray<Uint8>& Code) const
+	TArray<UInt8>& Code) const
 {
 	using namespace Microsoft::WRL;
 
@@ -279,7 +283,7 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
 			if (SUCCEEDED(Result->GetResult(&CompiledBlob)))
 			{
 				// Copy data to resulting bytecode
-				const Uint32 BlobSize = CompiledBlob->GetBufferSize();
+				const UInt32 BlobSize = CompiledBlob->GetBufferSize();
 				Code.Resize(BlobSize);
 				Memory::Memcpy(Code.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 

@@ -360,14 +360,22 @@ bool DebugUI::Initialize()
 	}*/
 
 	// VertexBuffer
-	GlobalImGuiState.VertexBuffer = RenderingAPI::CreateVertexBuffer(nullptr, 1024 * 1024 * 8, sizeof(ImDrawVert), BufferUsage_Dynamic);
+	GlobalImGuiState.VertexBuffer = RenderingAPI::CreateVertexBuffer(
+		nullptr, 
+		1024 * 1024 * 8, 
+		sizeof(ImDrawVert), 
+		BufferUsage_Dynamic);
 	if (!GlobalImGuiState.VertexBuffer)
 	{
 		return false;
 	}
 
 	// IndexBuffer
-	GlobalImGuiState.IndexBuffer = RenderingAPI::CreateIndexBuffer(nullptr, 1024 * 1024 * 8, EIndexFormat::IndexFormat_Uint32, BufferUsage_Dynamic);
+	GlobalImGuiState.IndexBuffer = RenderingAPI::CreateIndexBuffer(
+		nullptr, 
+		1024 * 1024 * 8, 
+		EIndexFormat::IndexFormat_UInt32, 
+		BufferUsage_Dynamic);
 	if (!GlobalImGuiState.IndexBuffer)
 	{
 		return false;

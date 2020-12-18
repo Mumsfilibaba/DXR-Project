@@ -31,9 +31,9 @@ D3D12RayTracingGeometry::~D3D12RayTracingGeometry()
 
 bool D3D12RayTracingGeometry::BuildAccelerationStructure(
 	D3D12CommandList* CommandList, 
-	TSharedPtr<D3D12Buffer>& InVertexBuffer, 
+	TSharedRef<D3D12VertexBuffer>& InVertexBuffer,
 	UInt32 InVertexCount, 
-	TSharedPtr<D3D12Buffer>& InIndexBuffer, 
+	TSharedRef<D3D12IndexBuffer>& InIndexBuffer,
 	UInt32 InIndexCount)
 {
 	if (!IsDirty)
@@ -108,9 +108,9 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(
 	IndexCount		= InIndexCount;
 	
 	// Write descriptors
-	DescriptorTable->SetShaderResourceView(VertexBuffer->GetShaderResourceView(0).Get(), 0);
-	DescriptorTable->SetShaderResourceView(IndexBuffer->GetShaderResourceView(0).Get(), 1);
-	DescriptorTable->CopyDescriptors();
+	//DescriptorTable->SetShaderResourceView(VertexBuffer->GetShaderResourceView(0).Get(), 0);
+	//DescriptorTable->SetShaderResourceView(IndexBuffer->GetShaderResourceView(0).Get(), 1);
+	//DescriptorTable->CopyDescriptors();
 
 	IsDirty = false;
 	return true;

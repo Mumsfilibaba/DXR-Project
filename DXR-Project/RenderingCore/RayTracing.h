@@ -42,3 +42,13 @@ public:
 		return this;
 	}
 };
+
+/*
+* RayTracingGeometryInstance
+*/
+
+struct RayTracingGeometryInstance
+{
+	TSharedRef<RayTracingGeometry> Geometry;
+	XMFLOAT3X4 TransformMatrix;
+};

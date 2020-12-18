@@ -28,7 +28,7 @@ class RayTracingScene;
 * ERenderingAPI
 */
 
-enum class ERenderingAPI : Uint32
+enum class ERenderingAPI : UInt32
 {
 	RenderingAPI_Unknown	= 0,
 	RenderingAPI_D3D12		= 1,
@@ -48,7 +48,7 @@ public:
 
 	virtual ~GenericRenderingAPI() = default;
 
-	virtual bool Init(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) = 0;
+	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) = 0;
 
 	/*
 	* Textures
@@ -57,68 +57,68 @@ public:
 	virtual Texture1D* CreateTexture1D(
 		const ResourceData* InitalData,
 		EFormat Format,
-		Uint32 Usage,
-		Uint32 Width,
-		Uint32 MipLevels,
+		UInt32 Usage,
+		UInt32 Width,
+		UInt32 MipLevels,
 		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual Texture1DArray* CreateTexture1DArray(
 		const ResourceData* InitalData,
 		EFormat Format,
-		Uint32 Usage,
-		Uint32 Width,
-		Uint32 MipLevels,
-		Uint32 ArrayCount,
+		UInt32 Usage,
+		UInt32 Width,
+		UInt32 MipLevels,
+		UInt32 ArrayCount,
 		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual Texture2D* CreateTexture2D(
 		const ResourceData* InitalData,
 		EFormat Format,
-		Uint32 Usage,
-		Uint32 Width,
-		Uint32 Height,
-		Uint32 MipLevels,
-		Uint32 SampleCount,
+		UInt32 Usage,
+		UInt32 Width,
+		UInt32 Height,
+		UInt32 MipLevels,
+		UInt32 SampleCount,
 		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual Texture2DArray* CreateTexture2DArray(
 		const ResourceData* InitalData,
 		EFormat Format,
-		Uint32 Usage,
-		Uint32 Width,
-		Uint32 Height,
-		Uint32 MipLevels,
-		Uint32 ArrayCount,
-		Uint32 SampleCount,
+		UInt32 Usage,
+		UInt32 Width,
+		UInt32 Height,
+		UInt32 MipLevels,
+		UInt32 ArrayCount,
+		UInt32 SampleCount,
 		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual TextureCube* CreateTextureCube(
 		const ResourceData* InitalData,
 		EFormat Format,
-		Uint32 Usage,
-		Uint32 Size,
-		Uint32 MipLevels,
-		Uint32 SampleCount,
+		UInt32 Usage,
+		UInt32 Size,
+		UInt32 MipLevels,
+		UInt32 SampleCount,
 		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual TextureCubeArray* CreateTextureCubeArray(
 		const ResourceData* InitalData,
 		EFormat Format,
-		Uint32 Usage,
-		Uint32 Size,
-		Uint32 MipLevels,
-		Uint32 ArrayCount,
-		Uint32 SampleCount,
+		UInt32 Usage,
+		UInt32 Size,
+		UInt32 MipLevels,
+		UInt32 ArrayCount,
+		UInt32 SampleCount,
 		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual Texture3D* CreateTexture3D(
 		const ResourceData* InitalData,
 		EFormat Format,
-		Uint32 Usage,
-		Uint32 Width,
-		Uint32 Height,
-		Uint32 Depth,
-		Uint32 MipLevels,
+		UInt32 Usage,
+		UInt32 Width,
+		UInt32 Height,
+		UInt32 Depth,
+		UInt32 MipLevels,
 		const ClearValue& OptimizedClearValue) const = 0;
 
 	/*
@@ -127,26 +127,26 @@ public:
 
 	virtual VertexBuffer* CreateVertexBuffer(
 		const ResourceData* InitalData,
-		Uint32 SizeInBytes,
-		Uint32 VertexStride,
-		Uint32 Usage) const = 0;
+		UInt32 SizeInBytes,
+		UInt32 VertexStride,
+		UInt32 Usage) const = 0;
 
 	virtual IndexBuffer* CreateIndexBuffer(
 		const ResourceData* InitalData,
-		Uint32 SizeInBytes,
+		UInt32 SizeInBytes,
 		EIndexFormat IndexFormat,
-		Uint32 Usage) const = 0;
+		UInt32 Usage) const = 0;
 
 	virtual ConstantBuffer* CreateConstantBuffer(
 		const ResourceData* InitalData, 
-		Uint32 SizeInBytes, 
-		Uint32 Usage) const = 0;
+		UInt32 SizeInBytes, 
+		UInt32 Usage) const = 0;
 
 	virtual StructuredBuffer* CreateStructuredBuffer(
 		const ResourceData* InitalData,
-		Uint32 SizeInBytes,
-		Uint32 Stride,
-		Uint32 Usage) const = 0;
+		UInt32 SizeInBytes,
+		UInt32 Stride,
+		UInt32 Usage) const = 0;
 
 	/*
 	* RayTracing
@@ -161,63 +161,63 @@ public:
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Buffer* Buffer,
-		Uint32 FirstElement,
-		Uint32 ElementCount,
+		UInt32 FirstElement,
+		UInt32 ElementCount,
 		EFormat Format) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Buffer* Buffer,
-		Uint32 FirstElement,
-		Uint32 ElementCount,
-		Uint32 Stride) const = 0;
+		UInt32 FirstElement,
+		UInt32 ElementCount,
+		UInt32 Stride) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Texture1D* Texture,
 		EFormat Format,
-		Uint32 MostDetailedMip,
-		Uint32 MipLevels) const = 0;
+		UInt32 MostDetailedMip,
+		UInt32 MipLevels) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Texture1DArray* Texture,
 		EFormat Format,
-		Uint32 MostDetailedMip,
-		Uint32 MipLevels,
-		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const = 0;
+		UInt32 MostDetailedMip,
+		UInt32 MipLevels,
+		UInt32 FirstArraySlice,
+		UInt32 ArraySize) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Texture2D* Texture,
 		EFormat Format,
-		Uint32 MostDetailedMip,
-		Uint32 MipLevels) const = 0;
+		UInt32 MostDetailedMip,
+		UInt32 MipLevels) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Texture2DArray* Texture,
 		EFormat Format,
-		Uint32 MostDetailedMip,
-		Uint32 MipLevels,
-		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const = 0;
+		UInt32 MostDetailedMip,
+		UInt32 MipLevels,
+		UInt32 FirstArraySlice,
+		UInt32 ArraySize) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const TextureCube* Texture,
 		EFormat Format,
-		Uint32 MostDetailedMip,
-		Uint32 MipLevels) const = 0;
+		UInt32 MostDetailedMip,
+		UInt32 MipLevels) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
-		Uint32 MostDetailedMip,
-		Uint32 MipLevels,
-		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const = 0;
+		UInt32 MostDetailedMip,
+		UInt32 MipLevels,
+		UInt32 FirstArraySlice,
+		UInt32 ArraySize) const = 0;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Texture3D* Texture,
 		EFormat Format,
-		Uint32 MostDetailedMip,
-		Uint32 MipLevels) const = 0;
+		UInt32 MostDetailedMip,
+		UInt32 MipLevels) const = 0;
 
 	/*
 	* UnorderedAccessView
@@ -225,59 +225,59 @@ public:
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Buffer* Buffer,
-		Uint64 FirstElement,
-		Uint32 NumElements,
+		UInt64 FirstElement,
+		UInt32 NumElements,
 		EFormat Format,
-		Uint64 CounterOffsetInBytes) const = 0;
+		UInt64 CounterOffsetInBytes) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Buffer* Buffer,
-		Uint64 FirstElement,
-		Uint32 NumElements,
-		Uint32 StructureByteStride,
-		Uint64 CounterOffsetInBytes) const = 0;
+		UInt64 FirstElement,
+		UInt32 NumElements,
+		UInt32 StructureByteStride,
+		UInt64 CounterOffsetInBytes) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture1D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const = 0;
+		UInt32 MipSlice) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture1DArray* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const = 0;
+		UInt32 MipSlice,
+		UInt32 FirstArraySlice,
+		UInt32 ArraySize) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture2D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const = 0;
+		UInt32 MipSlice) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture2DArray* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const = 0;
+		UInt32 MipSlice,
+		UInt32 FirstArraySlice,
+		UInt32 ArraySize) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const TextureCube* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const = 0;
+		UInt32 MipSlice) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 ArraySlice) const = 0;
+		UInt32 MipSlice,
+		UInt32 ArraySlice) const = 0;
 
 	virtual UnorderedAccessView* CreateUnorderedAccessView(
 		const Texture3D* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 FirstDepthSlice,
-		Uint32 DepthSlices) const = 0;
+		UInt32 MipSlice,
+		UInt32 FirstDepthSlice,
+		UInt32 DepthSlices) const = 0;
 
 	/*
 	* RenderTargetView
@@ -286,46 +286,46 @@ public:
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture1D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const = 0;
+		UInt32 MipSlice) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture1DArray* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const = 0;
+		UInt32 MipSlice,
+		UInt32 FirstArraySlice,
+		UInt32 ArraySize) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture2D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const = 0;
+		UInt32 MipSlice) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture2DArray* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const = 0;
+		UInt32 MipSlice,
+		UInt32 FirstArraySlice,
+		UInt32 ArraySize) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const TextureCube* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 FaceIndex) const = 0;
+		UInt32 MipSlice,
+		UInt32 FaceIndex) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 ArraySlice,
-		Uint32 FaceIndex) const = 0;
+		UInt32 MipSlice,
+		UInt32 ArraySlice,
+		UInt32 FaceIndex) const = 0;
 
 	virtual RenderTargetView* CreateRenderTargetView(
 		const Texture3D* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 FirstDepthSlice,
-		Uint32 DepthSlices) const = 0;
+		UInt32 MipSlice,
+		UInt32 FirstDepthSlice,
+		UInt32 DepthSlices) const = 0;
 
 	/*
 	* DepthStencilView
@@ -334,76 +334,76 @@ public:
 	virtual DepthStencilView* CreateDepthStencilView(
 		const Texture1D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const = 0;
+		UInt32 MipSlice) const = 0;
 
 	virtual DepthStencilView* CreateDepthStencilView(
 		const Texture1DArray* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const = 0;
+		UInt32 MipSlice,
+		UInt32 FirstArraySlice,
+		UInt32 ArraySize) const = 0;
 
 	virtual DepthStencilView* CreateDepthStencilView(
 		const Texture2D* Texture, 
 		EFormat Format, 
-		Uint32 MipSlice) const = 0;
+		UInt32 MipSlice) const = 0;
 
 	virtual DepthStencilView* CreateDepthStencilView(
 		const Texture2DArray* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 FirstArraySlice,
-		Uint32 ArraySize) const = 0;
+		UInt32 MipSlice,
+		UInt32 FirstArraySlice,
+		UInt32 ArraySize) const = 0;
 
 	virtual DepthStencilView* CreateDepthStencilView(
 		const TextureCube* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 FaceIndex) const = 0;
+		UInt32 MipSlice,
+		UInt32 FaceIndex) const = 0;
 
 	virtual DepthStencilView* CreateDepthStencilView(
 		const TextureCubeArray* Texture,
 		EFormat Format,
-		Uint32 MipSlice,
-		Uint32 ArraySlice,
-		Uint32 FaceIndex) const = 0;
+		UInt32 MipSlice,
+		UInt32 ArraySlice,
+		UInt32 FaceIndex) const = 0;
 
 	/*
 	* Pipeline
 	*/
 
 	virtual class ComputeShader* CreateComputeShader(
-		const TArray<Uint8>& ShaderCode) const = 0;
+		const TArray<UInt8>& ShaderCode) const = 0;
 	
 	virtual class VertexShader* CreateVertexShader(
-		const TArray<Uint8>& ShaderCode) const = 0;
+		const TArray<UInt8>& ShaderCode) const = 0;
 	
 	virtual class HullShader* CreateHullShader(
-		const TArray<Uint8>& ShaderCode) const = 0;
+		const TArray<UInt8>& ShaderCode) const = 0;
 	
 	virtual class DomainShader* CreateDomainShader(
-		const TArray<Uint8>& ShaderCode) const = 0;
+		const TArray<UInt8>& ShaderCode) const = 0;
 	
 	virtual class GeometryShader* CreateGeometryShader(
-		const TArray<Uint8>& ShaderCode) const = 0;
+		const TArray<UInt8>& ShaderCode) const = 0;
 
 	virtual class MeshShader* CreateMeshShader(
-		const TArray<Uint8>& ShaderCode) const = 0;
+		const TArray<UInt8>& ShaderCode) const = 0;
 
 	virtual class AmplificationShader* CreateAmplificationShader(
-		const TArray<Uint8>& ShaderCode) const = 0;
+		const TArray<UInt8>& ShaderCode) const = 0;
 
 	virtual class PixelShader* CreatePixelShader(
-		const TArray<Uint8>& ShaderCode) const = 0;
+		const TArray<UInt8>& ShaderCode) const = 0;
 
 	virtual class RayGenShader* CreateRayGenShader(
-		const TArray<Uint8>& ShaderCode) const = 0;
+		const TArray<UInt8>& ShaderCode) const = 0;
 	
 	virtual class RayHitShader* CreateRayHitShader(
-		const TArray<Uint8>& ShaderCode) const = 0;
+		const TArray<UInt8>& ShaderCode) const = 0;
 	
 	virtual class RayMissShader* CreateRayMissShader(
-		const TArray<Uint8>& ShaderCode) const = 0;
+		const TArray<UInt8>& ShaderCode) const = 0;
 
 	virtual class DepthStencilState* CreateDepthStencilState(
 		const DepthStencilStateCreateInfo& CreateInfo) const = 0;

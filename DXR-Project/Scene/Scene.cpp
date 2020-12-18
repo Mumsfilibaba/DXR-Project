@@ -355,7 +355,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
 			// Setup new actor for this shape
 			Actor* NewActor = new Actor();
-			NewActor->SetDebugName(Shape.name);
+			NewActor->SetName(Shape.name);
 			NewActor->GetTransform().SetScale(0.015f, 0.015f, 0.015f);
 
 			// Add a MeshComponent

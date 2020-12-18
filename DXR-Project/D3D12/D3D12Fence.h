@@ -24,7 +24,7 @@ public:
 		::CloseHandle(Event);
 	}
 
-	FORCEINLINE bool D3D12Fence::WaitForValue(Uint64 FenceValue)
+	FORCEINLINE bool D3D12Fence::WaitForValue(UInt64 FenceValue)
 	{
 		HRESULT hResult = Fence->SetEventOnCompletion(FenceValue, Event);
 		if (SUCCEEDED(hResult))

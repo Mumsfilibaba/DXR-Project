@@ -71,7 +71,7 @@ public:
 		const TArray<ShaderDefine>* Defines,
 		EShaderStage ShaderStage,
 		EShaderModel ShaderModel,
-		TArray<Uint8>& Code) const = 0;
+		TArray<UInt8>& Code) const = 0;
 
 	virtual bool CompileShader(
 		const std::string& ShaderSource,
@@ -79,7 +79,7 @@ public:
 		const TArray<ShaderDefine>* Defines,
 		EShaderStage ShaderStage,
 		EShaderModel ShaderModel,
-		TArray<Uint8>& Code) const = 0;
+		TArray<UInt8>& Code) const = 0;
 };
 
 /*
@@ -97,7 +97,7 @@ public:
 		const TArray<ShaderDefine>* Defines,
 		EShaderStage ShaderStage,
 		EShaderModel ShaderModel,
-		TArray<Uint8>& Code)
+		TArray<UInt8>& Code)
 	{
 		return Instance->CompileFromFile(
 			FilePath,
@@ -114,7 +114,7 @@ public:
 		const TArray<ShaderDefine>* Defines,
 		EShaderStage ShaderStage,
 		EShaderModel ShaderModel,
-		TArray<Uint8>& Code)
+		TArray<UInt8>& Code)
 	{
 		return Instance->CompileShader(
 			ShaderSource,

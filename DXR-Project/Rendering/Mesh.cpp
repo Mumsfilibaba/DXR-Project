@@ -8,6 +8,10 @@
 
 #include <algorithm>
 
+/*
+* Mesh
+*/
+
 Mesh::Mesh()
 	: VertexBuffer(nullptr)
 	, IndexBuffer(nullptr)
@@ -21,11 +25,19 @@ Mesh::~Mesh()
 
 bool Mesh::Initialize(const MeshData& Data)
 {
-	VertexCount = static_cast<Uint32>(Data.Vertices.Size());
-	IndexCount	= static_cast<Uint32>(Data.Indices.Size());
+	VertexCount = static_cast<UInt32>(Data.Vertices.Size());
+	IndexCount	= static_cast<UInt32>(Data.Indices.Size());
+
+	const UInt32 BufferUsage =
+		RenderingAPI::IsRayTracingSupported() ?
+		BufferUsage_SRV | BufferUsage_Default :
+		BufferUsage_Default;
 
 	// Create VertexBuffer
-	VertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(nullptr, VertexCount, BufferUsage_Default);
+	VertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(
+		nullptr, 
+		VertexCount, 
+		BufferUsage);
 	if (!VertexBuffer)
 	{
 		return false;
@@ -35,8 +47,8 @@ bool Mesh::Initialize(const MeshData& Data)
 	IndexBuffer = RenderingAPI::CreateIndexBuffer(
 		nullptr, 
 		IndexCount * sizeof(UInt32), 
-		EIndexFormat::IndexFormat_Uint32, 
-		BufferUsage_Default);
+		EIndexFormat::IndexFormat_UInt32, 
+		BufferUsage);
 	if (!IndexBuffer)
 	{
 		return false;
@@ -47,13 +59,19 @@ bool Mesh::Initialize(const MeshData& Data)
 	{
 		RayTracingGeometry = RenderingAPI::CreateRayTracingGeometry();
 
-		VertexBufferSRV = RenderingAPI::CreateShaderResourceView<Vertex>(VertexBuffer.Get(), 0, VertexCount);
+		VertexBufferSRV = RenderingAPI::CreateShaderResourceView<Vertex>(
+			VertexBuffer.Get(), 
+			0, 
+			VertexCount);
 		if (!VertexBufferSRV)
 		{
 			return false;
 		}
 
-		IndexBufferSRV = RenderingAPI::CreateShaderResourceView(IndexBuffer.Get(), 0, IndexCount, EFormat::Format_R32_Typeless);
+		IndexBufferSRV = RenderingAPI::CreateShaderResourceView(
+			IndexBuffer.Get(), 
+			0, IndexCount, 
+			EFormat::Format_R32_Typeless);
 		if (!IndexBufferSRV)
 		{
 			return false;

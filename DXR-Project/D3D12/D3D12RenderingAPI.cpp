@@ -69,7 +69,7 @@ bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> InRenderWindow, boo
 	}
 
 	// Create swapchain
-	SwapChain = Device->CreateSwapChain(StaticCast<WindowsWindow>(RenderWindow).Get(), DirectCmdQueue.Get());
+	SwapChain = Device->CreateSwapChain(StaticCast<WindowsWindow>(InRenderWindow).Get(), DirectCmdQueue.Get());
 	if (!SwapChain)
 	{
 		return false;
@@ -87,9 +87,9 @@ bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> InRenderWindow, boo
 Texture1D* D3D12RenderingAPI::CreateTexture1D(
 	const ResourceData* InitalData, 
 	EFormat Format, 
-	Uint32 Usage, 
-	Uint32 Width, 
-	Uint32 MipLevels, 
+	UInt32 Usage, 
+	UInt32 Width, 
+	UInt32 MipLevels, 
 	const ClearValue& OptimizedClearValue) const
 {
 	return CreateTextureResource<D3D12Texture1D>(
@@ -104,10 +104,10 @@ Texture1D* D3D12RenderingAPI::CreateTexture1D(
 Texture1DArray* D3D12RenderingAPI::CreateTexture1DArray(
 	const ResourceData* InitalData, 
 	EFormat Format, 
-	Uint32 Usage, 
-	Uint32 Width, 
-	Uint32 MipLevels, 
-	Uint32 ArrayCount, 
+	UInt32 Usage, 
+	UInt32 Width, 
+	UInt32 MipLevels, 
+	UInt32 ArrayCount, 
 	const ClearValue& OptimizedClearValue) const
 {
 	return CreateTextureResource<D3D12Texture1DArray>(
@@ -123,11 +123,11 @@ Texture1DArray* D3D12RenderingAPI::CreateTexture1DArray(
 Texture2D* D3D12RenderingAPI::CreateTexture2D(
 	const ResourceData* InitalData, 
 	EFormat Format, 
-	Uint32 Usage, 
-	Uint32 Width, 
-	Uint32 Height, 
-	Uint32 MipLevels, 
-	Uint32 SampleCount, 
+	UInt32 Usage, 
+	UInt32 Width, 
+	UInt32 Height, 
+	UInt32 MipLevels, 
+	UInt32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
 	return CreateTextureResource<D3D12Texture2D>(
@@ -144,12 +144,12 @@ Texture2D* D3D12RenderingAPI::CreateTexture2D(
 Texture2DArray* D3D12RenderingAPI::CreateTexture2DArray(
 	const ResourceData* InitalData, 
 	EFormat Format, 
-	Uint32 Usage, 
-	Uint32 Width, 
-	Uint32 Height, 
-	Uint32 MipLevels, 
-	Uint32 ArrayCount, 
-	Uint32 SampleCount, 
+	UInt32 Usage, 
+	UInt32 Width, 
+	UInt32 Height, 
+	UInt32 MipLevels, 
+	UInt32 ArrayCount, 
+	UInt32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
 	return CreateTextureResource<D3D12Texture2DArray>(
@@ -167,10 +167,10 @@ Texture2DArray* D3D12RenderingAPI::CreateTexture2DArray(
 TextureCube* D3D12RenderingAPI::CreateTextureCube(
 	const ResourceData* InitalData, 
 	EFormat Format, 
-	Uint32 Usage, 
-	Uint32 Size, 
-	Uint32 MipLevels, 
-	Uint32 SampleCount, 
+	UInt32 Usage, 
+	UInt32 Size, 
+	UInt32 MipLevels, 
+	UInt32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
 	return CreateTextureResource<D3D12TextureCube>(
@@ -186,11 +186,11 @@ TextureCube* D3D12RenderingAPI::CreateTextureCube(
 TextureCubeArray* D3D12RenderingAPI::CreateTextureCubeArray(
 	const ResourceData* InitalData, 
 	EFormat Format, 
-	Uint32 Usage, 
-	Uint32 Size, 
-	Uint32 MipLevels, 
-	Uint32 ArrayCount, 
-	Uint32 SampleCount, 
+	UInt32 Usage, 
+	UInt32 Size, 
+	UInt32 MipLevels, 
+	UInt32 ArrayCount, 
+	UInt32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
 	return CreateTextureResource<D3D12TextureCubeArray>(
@@ -207,11 +207,11 @@ TextureCubeArray* D3D12RenderingAPI::CreateTextureCubeArray(
 Texture3D* D3D12RenderingAPI::CreateTexture3D(
 	const ResourceData* InitalData, 
 	EFormat Format, 
-	Uint32 Usage, 
-	Uint32 Width, 
-	Uint32 Height, 
-	Uint32 Depth, 
-	Uint32 MipLevels, 
+	UInt32 Usage, 
+	UInt32 Width, 
+	UInt32 Height, 
+	UInt32 Depth, 
+	UInt32 MipLevels, 
 	const ClearValue& OptimizedClearValue) const
 {
 	return CreateTextureResource<D3D12Texture3D>(
@@ -231,9 +231,9 @@ Texture3D* D3D12RenderingAPI::CreateTexture3D(
 
 VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(
 	const ResourceData* InitalData, 
-	Uint32 SizeInBytes, 
-	Uint32 StrideInBytes, 
-	Uint32 Usage) const
+	UInt32 SizeInBytes, 
+	UInt32 StrideInBytes, 
+	UInt32 Usage) const
 {
 	D3D12VertexBuffer* NewBuffer = CreateBufferResource<D3D12VertexBuffer>(InitalData, SizeInBytes, StrideInBytes, Usage);
 	if (!NewBuffer)
@@ -255,9 +255,9 @@ VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(
 
 IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(
 	const ResourceData* InitalData, 
-	Uint32 SizeInBytes, 
+	UInt32 SizeInBytes, 
 	EIndexFormat IndexFormat, 
-	Uint32 Usage) const
+	UInt32 Usage) const
 {
 	D3D12IndexBuffer* NewBuffer = CreateBufferResource<D3D12IndexBuffer>(InitalData, SizeInBytes, IndexFormat, Usage);
 	if (!NewBuffer)
@@ -271,11 +271,11 @@ IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(
 
 	View.BufferLocation = NewBuffer->GetGPUVirtualAddress();
 	View.SizeInBytes	= SizeInBytes;
-	if (IndexFormat == EIndexFormat::IndexFormat_Uint16)
+	if (IndexFormat == EIndexFormat::IndexFormat_UInt16)
 	{
 		View.Format	= DXGI_FORMAT_R16_UINT;
 	}
-	else if (IndexFormat == EIndexFormat::IndexFormat_Uint32)
+	else if (IndexFormat == EIndexFormat::IndexFormat_UInt32)
 	{
 		View.Format = DXGI_FORMAT_R32_UINT;
 	}
@@ -284,7 +284,7 @@ IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(
 	return NewBuffer;
 }
 
-ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(const ResourceData* InitalData, Uint32 SizeInBytes, Uint32 Usage) const
+ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 Usage) const
 {
 	D3D12ConstantBuffer* NewBuffer = CreateBufferResource<D3D12ConstantBuffer>(InitalData, SizeInBytes, Usage);
 	if (!NewBuffer)
@@ -306,9 +306,9 @@ ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(const ResourceData* Init
 
 StructuredBuffer* D3D12RenderingAPI::CreateStructuredBuffer(
 	const ResourceData* InitalData, 
-	Uint32 SizeInBytes, 
-	Uint32 Stride, 
-	Uint32 Usage) const
+	UInt32 SizeInBytes, 
+	UInt32 Stride, 
+	UInt32 Usage) const
 {
 	D3D12StructuredBuffer* NewBuffer = CreateBufferResource<D3D12StructuredBuffer>(InitalData, SizeInBytes, Stride, Usage);
 	if (!NewBuffer)
@@ -342,8 +342,8 @@ RayTracingScene* D3D12RenderingAPI::CreateRayTracingScene() const
 
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	const Buffer* Buffer, 
-	Uint32 FirstElement, 
-	Uint32 ElementCount,
+	UInt32 FirstElement, 
+	UInt32 ElementCount,
 	EFormat Format) const
 {
 	VALIDATE(Buffer != nullptr);
@@ -354,6 +354,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 
 	Desc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
+	Desc.Shader4ComponentMapping	= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	Desc.Buffer.FirstElement		= FirstElement;
 	Desc.Buffer.NumElements			= ElementCount;
 	Desc.Format						= ConvertFormat(Format);
@@ -366,9 +367,9 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	const Buffer* Buffer,
-	Uint32 FirstElement,
-	Uint32 ElementCount,
-	Uint32 Stride) const
+	UInt32 FirstElement,
+	UInt32 ElementCount,
+	UInt32 Stride) const
 {
 	VALIDATE(Buffer != nullptr);
 	VALIDATE(Buffer->HasShaderResourceUsage());
@@ -378,11 +379,12 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 
 	Desc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
+	Desc.Shader4ComponentMapping	= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	Desc.Buffer.FirstElement		= FirstElement;
 	Desc.Buffer.NumElements			= ElementCount;
 	Desc.Format						= DXGI_FORMAT_UNKNOWN;
 	Desc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
-	Desc.Buffer.StructureByteStride = 0;
+	Desc.Buffer.StructureByteStride = Stride;
 
 	const D3D12Resource* Resource = D3D12BufferCast(Buffer);
 	return CreateShaderResourceView(Resource, Desc);
@@ -391,8 +393,8 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	const Texture1D* Texture, 
 	EFormat Format, 
-	Uint32 MostDetailedMip, 
-	Uint32 MipLevels) const
+	UInt32 MostDetailedMip, 
+	UInt32 MipLevels) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
@@ -417,10 +419,10 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	const Texture1DArray* Texture, 
 	EFormat Format, 
-	Uint32 MostDetailedMip, 
-	Uint32 MipLevels,
-	Uint32 FirstArraySlice,
-	Uint32 ArraySize) const
+	UInt32 MostDetailedMip, 
+	UInt32 MipLevels,
+	UInt32 FirstArraySlice,
+	UInt32 ArraySize) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
@@ -448,8 +450,8 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	const Texture2D* Texture, 
 	EFormat Format, 
-	Uint32 MostDetailedMip, 
-	Uint32 MipLevels) const
+	UInt32 MostDetailedMip, 
+	UInt32 MipLevels) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
@@ -482,10 +484,10 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	const Texture2DArray* Texture, 
 	EFormat Format, 
-	Uint32 MostDetailedMip, 
-	Uint32 MipLevels,
-	Uint32 FirstArraySlice,
-	Uint32 ArraySize) const
+	UInt32 MostDetailedMip, 
+	UInt32 MipLevels,
+	UInt32 FirstArraySlice,
+	UInt32 ArraySize) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
@@ -523,8 +525,8 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	const TextureCube* Texture, 
 	EFormat Format, 
-	Uint32 MostDetailedMip, 
-	Uint32 MipLevels) const
+	UInt32 MostDetailedMip, 
+	UInt32 MipLevels) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
@@ -550,12 +552,12 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	const TextureCubeArray* Texture, 
 	EFormat Format, 
-	Uint32 MostDetailedMip, 
-	Uint32 MipLevels, 
-	Uint32 FirstArraySlice, 
-	Uint32 ArraySize) const
+	UInt32 MostDetailedMip, 
+	UInt32 MipLevels, 
+	UInt32 FirstArraySlice, 
+	UInt32 ArraySize) const
 {
-	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
+	constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
 
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
@@ -584,8 +586,8 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	const Texture3D* Texture, 
 	EFormat Format, 
-	Uint32 MostDetailedMip, 
-	Uint32 MipLevels) const
+	UInt32 MostDetailedMip, 
+	UInt32 MipLevels) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
@@ -613,10 +615,10 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	const Buffer* Buffer, 
-	Uint64 FirstElement, 
-	Uint32 NumElements, 
+	UInt64 FirstElement, 
+	UInt32 NumElements, 
 	EFormat Format, 
-	Uint64 CounterOffsetInBytes) const
+	UInt64 CounterOffsetInBytes) const
 {
 	VALIDATE(Buffer != nullptr);
 	VALIDATE(Buffer->HasUnorderedAccessUsage());
@@ -640,10 +642,10 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	const Buffer* Buffer,
-	Uint64 FirstElement,
-	Uint32 NumElements,
-	Uint32 Stride,
-	Uint64 CounterOffsetInBytes) const
+	UInt64 FirstElement,
+	UInt32 NumElements,
+	UInt32 Stride,
+	UInt64 CounterOffsetInBytes) const
 {
 	VALIDATE(Buffer != nullptr);
 	VALIDATE(Buffer->HasUnorderedAccessUsage());
@@ -668,7 +670,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	const Texture1D* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice) const
+	UInt32 MipSlice) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasUnorderedAccessUsage());
@@ -690,9 +692,9 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	const Texture1DArray* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice, 
-	Uint32 FirstArraySlice, 
-	Uint32 ArraySize) const
+	UInt32 MipSlice, 
+	UInt32 FirstArraySlice, 
+	UInt32 ArraySize) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasUnorderedAccessUsage());
@@ -717,7 +719,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	const Texture2D* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice) const
+	UInt32 MipSlice) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasUnorderedAccessUsage());
@@ -741,9 +743,9 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	const Texture2DArray* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice, 
-	Uint32 FirstArraySlice, 
-	Uint32 ArraySize) const
+	UInt32 MipSlice, 
+	UInt32 FirstArraySlice, 
+	UInt32 ArraySize) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasUnorderedAccessUsage());
@@ -770,7 +772,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	const TextureCube* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice) const
+	UInt32 MipSlice) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasUnorderedAccessUsage());
@@ -781,7 +783,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 
-	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
+	constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
 	Desc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 	Desc.Format							= ConvertFormat(Format);
 	Desc.Texture2DArray.MipSlice		= MipSlice;
@@ -797,10 +799,10 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	const TextureCubeArray* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice, 
-	Uint32 ArraySlice) const
+	UInt32 MipSlice, 
+	UInt32 ArraySlice) const
 {
-	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
+	constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
 
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasUnorderedAccessUsage());
@@ -827,9 +829,9 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 	const Texture3D* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice, 
-	Uint32 FirstDepthSlice, 
-	Uint32 DepthSlices) const
+	UInt32 MipSlice, 
+	UInt32 FirstDepthSlice, 
+	UInt32 DepthSlices) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasUnorderedAccessUsage());
@@ -855,7 +857,7 @@ UnorderedAccessView* D3D12RenderingAPI::CreateUnorderedAccessView(
 * RenderTargetView
 */
 
-RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice) const
+RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(const Texture1D* Texture, EFormat Format, UInt32 MipSlice) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasRenderTargetUsage());
@@ -877,9 +879,9 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(const Texture1D* Tex
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 	const Texture1DArray* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice, 
-	Uint32 FirstArraySlice, 
-	Uint32 ArraySize) const
+	UInt32 MipSlice, 
+	UInt32 FirstArraySlice, 
+	UInt32 ArraySize) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasRenderTargetUsage());
@@ -900,7 +902,7 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 	return CreateRenderTargetView(Resource, Desc);
 }
 
-RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice) const
+RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(const Texture2D* Texture, EFormat Format, UInt32 MipSlice) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasRenderTargetUsage());
@@ -930,9 +932,9 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(const Texture2D* Tex
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 	const Texture2DArray* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice, 
-	Uint32 FirstArraySlice, 
-	Uint32 ArraySize) const
+	UInt32 MipSlice, 
+	UInt32 FirstArraySlice, 
+	UInt32 ArraySize) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasRenderTargetUsage());
@@ -967,8 +969,8 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 	const TextureCube* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice,
-	Uint32 FaceIndex) const
+	UInt32 MipSlice,
+	UInt32 FaceIndex) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasRenderTargetUsage());
@@ -1003,11 +1005,11 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 	const TextureCubeArray* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice, 
-	Uint32 ArraySlice, 
-	Uint32 FaceIndex) const
+	UInt32 MipSlice, 
+	UInt32 ArraySlice, 
+	UInt32 FaceIndex) const
 {
-	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
+	constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
 
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasRenderTargetUsage());
@@ -1043,9 +1045,9 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 	const Texture3D* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice, 
-	Uint32 FirstDepthSlice, 
-	Uint32 DepthSlices) const
+	UInt32 MipSlice, 
+	UInt32 FirstDepthSlice, 
+	UInt32 DepthSlices) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasRenderTargetUsage());
@@ -1071,7 +1073,7 @@ RenderTargetView* D3D12RenderingAPI::CreateRenderTargetView(
 * DepthStencilView
 */
 
-DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(const Texture1D* Texture, EFormat Format, Uint32 MipSlice) const
+DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(const Texture1D* Texture, EFormat Format, UInt32 MipSlice) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasDepthStencilUsage());
@@ -1093,9 +1095,9 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(const Texture1D* Tex
 DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 	const Texture1DArray* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice, 
-	Uint32 FirstArraySlice, 
-	Uint32 ArraySize) const
+	UInt32 MipSlice, 
+	UInt32 FirstArraySlice, 
+	UInt32 ArraySize) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasDepthStencilUsage());
@@ -1116,7 +1118,7 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 	return CreateDepthStencilView(Resource, Desc);
 }
 
-DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(const Texture2D* Texture, EFormat Format, Uint32 MipSlice) const
+DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(const Texture2D* Texture, EFormat Format, UInt32 MipSlice) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasDepthStencilUsage());
@@ -1145,9 +1147,9 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(const Texture2D* Tex
 DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 	const Texture2DArray* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice, 
-	Uint32 FirstArraySlice, 
-	Uint32 ArraySize) const
+	UInt32 MipSlice, 
+	UInt32 FirstArraySlice, 
+	UInt32 ArraySize) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasDepthStencilUsage());
@@ -1181,8 +1183,8 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 	const TextureCube* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice,
-	Uint32 FaceIndex) const
+	UInt32 MipSlice,
+	UInt32 FaceIndex) const
 {
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasDepthStencilUsage());
@@ -1216,11 +1218,11 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 	const TextureCubeArray* Texture, 
 	EFormat Format, 
-	Uint32 MipSlice, 
-	Uint32 ArraySlice, 
-	Uint32 FaceIndex) const
+	UInt32 MipSlice, 
+	UInt32 ArraySlice, 
+	UInt32 FaceIndex) const
 {
-	constexpr Uint32 TEXTURE_CUBE_FACE_COUNT = 6;
+	constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
 
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasDepthStencilUsage());
@@ -1256,59 +1258,59 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 * Pipeline
 */
 
-ComputeShader* D3D12RenderingAPI::CreateComputeShader(const TArray<Uint8>& ShaderCode) const
+ComputeShader* D3D12RenderingAPI::CreateComputeShader(const TArray<UInt8>& ShaderCode) const
 {
 	D3D12ComputeShader* Shader = new D3D12ComputeShader(Device.Get(), ShaderCode);
 	Shader->CreateRootSignature();
 	return Shader;
 }
 
-VertexShader* D3D12RenderingAPI::CreateVertexShader(const TArray<Uint8>& ShaderCode) const
+VertexShader* D3D12RenderingAPI::CreateVertexShader(const TArray<UInt8>& ShaderCode) const
 {
 	return new D3D12VertexShader(Device.Get(), ShaderCode);
 }
 
-HullShader* D3D12RenderingAPI::CreateHullShader(const TArray<Uint8>& ShaderCode) const
+HullShader* D3D12RenderingAPI::CreateHullShader(const TArray<UInt8>& ShaderCode) const
 {
 	return nullptr;
 }
 
-DomainShader* D3D12RenderingAPI::CreateDomainShader(const TArray<Uint8>& ShaderCode) const
+DomainShader* D3D12RenderingAPI::CreateDomainShader(const TArray<UInt8>& ShaderCode) const
 {
 	return nullptr;
 }
 
-GeometryShader* D3D12RenderingAPI::CreateGeometryShader(const TArray<Uint8>& ShaderCode) const
+GeometryShader* D3D12RenderingAPI::CreateGeometryShader(const TArray<UInt8>& ShaderCode) const
 {
 	return nullptr;
 }
 
-MeshShader* D3D12RenderingAPI::CreateMeshShader(const TArray<Uint8>& ShaderCode) const
+MeshShader* D3D12RenderingAPI::CreateMeshShader(const TArray<UInt8>& ShaderCode) const
 {
 	return nullptr;
 }
 
-AmplificationShader* D3D12RenderingAPI::CreateAmplificationShader(const TArray<Uint8>& ShaderCode) const
+AmplificationShader* D3D12RenderingAPI::CreateAmplificationShader(const TArray<UInt8>& ShaderCode) const
 {
 	return nullptr;
 }
 
-PixelShader* D3D12RenderingAPI::CreatePixelShader(const TArray<Uint8>& ShaderCode) const
+PixelShader* D3D12RenderingAPI::CreatePixelShader(const TArray<UInt8>& ShaderCode) const
 {
 	return new D3D12PixelShader(Device.Get(), ShaderCode);
 }
 
-RayGenShader* D3D12RenderingAPI::CreateRayGenShader(const TArray<Uint8>& ShaderCode) const
+RayGenShader* D3D12RenderingAPI::CreateRayGenShader(const TArray<UInt8>& ShaderCode) const
 {
 	return nullptr;
 }
 
-RayHitShader* D3D12RenderingAPI::CreateRayHitShader(const TArray<Uint8>& ShaderCode) const
+RayHitShader* D3D12RenderingAPI::CreateRayHitShader(const TArray<UInt8>& ShaderCode) const
 {
 	return nullptr;
 }
 
-RayMissShader* D3D12RenderingAPI::CreateRayMissShader(const TArray<Uint8>& ShaderCode) const
+RayMissShader* D3D12RenderingAPI::CreateRayMissShader(const TArray<UInt8>& ShaderCode) const
 {
 	return nullptr;
 }
@@ -1363,7 +1365,7 @@ BlendState* D3D12RenderingAPI::CreateBlendState(
 
 	Desc.AlphaToCoverageEnable	= CreateInfo.AlphaToCoverageEnable;
 	Desc.IndependentBlendEnable	= CreateInfo.IndependentBlendEnable;	
-	for (Uint32 i = 0; i < 8; i++)
+	for (UInt32 i = 0; i < 8; i++)
 	{
 		Desc.RenderTarget[i].BlendEnable			= CreateInfo.RenderTarget[i].BlendEnable;
 		Desc.RenderTarget[i].BlendOp				= ConvertBlendOp(CreateInfo.RenderTarget[i].BlendOp);
@@ -1498,8 +1500,8 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
 	// RenderTarget
 	D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = PipelineStream.RenderTargetInfo;
 
-	const Uint32 NumRenderTargets = CreateInfo.PipelineFormats.NumRenderTargets;
-	for (Uint32 Index = 0; Index < NumRenderTargets; Index++)
+	const UInt32 NumRenderTargets = CreateInfo.PipelineFormats.NumRenderTargets;
+	for (UInt32 Index = 0; Index < NumRenderTargets; Index++)
 	{
 		RenderTargetInfo.RTFormats[Index] = ConvertFormat(CreateInfo.PipelineFormats.RenderTargetFormats[Index]);
 	}
@@ -1675,7 +1677,7 @@ bool D3D12RenderingAPI::AllocateBuffer(
 	D3D12_HEAP_TYPE HeapType, 
 	D3D12_RESOURCE_STATES InitalState, 
 	D3D12_RESOURCE_FLAGS Flags, 
-	Uint32 SizeInBytes) const
+	UInt32 SizeInBytes) const
 {
 	D3D12_HEAP_PROPERTIES HeapProperties;
 	Memory::Memzero(&HeapProperties, sizeof(D3D12_HEAP_PROPERTIES));
@@ -1760,13 +1762,13 @@ bool D3D12RenderingAPI::AllocateTexture(
 * Resource uploading
 */
 
-bool D3D12RenderingAPI::UploadBuffer(Buffer& Buffer, Uint32 SizeInBytes, const ResourceData* InitalData) const
+bool D3D12RenderingAPI::UploadBuffer(Buffer& Buffer, UInt32 SizeInBytes, const ResourceData* InitalData) const
 {
 	if (Buffer.HasDynamicUsage())
 	{
 		VALIDATE(Buffer.GetSizeInBytes() <= SizeInBytes);
 
-		VoidPtr HostData = Buffer.Map(nullptr);
+		Void* HostData = Buffer.Map(nullptr);
 		if (HostData)
 		{
 			Memory::Memcpy(HostData, InitalData->Data, SizeInBytes);
@@ -1795,8 +1797,8 @@ bool D3D12RenderingAPI::UploadTexture(Texture& Texture, const ResourceData* Init
 
 	DirectCmdContext->Begin();
 
-	const Uint32 Width 	= Texture.GetWidth();
-	const Uint32 Height = Texture.GetHeight();
+	const UInt32 Width 	= Texture.GetWidth();
+	const UInt32 Height = Texture.GetHeight();
 	DirectCmdContext->UpdateTexture2D(
 		Texture2D,
 		Width,

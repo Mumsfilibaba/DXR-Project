@@ -9,7 +9,7 @@
 
 struct MemoryArena
 {
-	inline MemoryArena(Uint64 InSizeInBytes)
+	inline MemoryArena(UInt64 InSizeInBytes)
 		: Mem(nullptr)
 		, Offset(0)
 		, SizeInBytes(InSizeInBytes)
@@ -35,16 +35,16 @@ struct MemoryArena
 		Memory::Free(Mem);
 	}
 
-	FORCEINLINE VoidPtr MemoryArena::Allocate(Uint64 InSizeInBytes)
+	FORCEINLINE Void* MemoryArena::Allocate(UInt64 InSizeInBytes)
 	{
 		VALIDATE(ReservedSize() > InSizeInBytes);
 
-		VoidPtr Allocated = reinterpret_cast<VoidPtr>(Mem + Offset);
+		Void* Allocated = reinterpret_cast<Void*>(Mem + Offset);
 		Offset += InSizeInBytes;
 		return Allocated;
 	}
 
-	FORCEINLINE Uint64 ReservedSize()
+	FORCEINLINE UInt64 ReservedSize()
 	{
 		return SizeInBytes - Offset;
 	}
@@ -54,7 +54,7 @@ struct MemoryArena
 		Offset = 0;
 	}
 
-	FORCEINLINE Uint64 GetSizeInBytes()
+	FORCEINLINE UInt64 GetSizeInBytes()
 	{
 		return SizeInBytes;
 	}
@@ -80,8 +80,8 @@ struct MemoryArena
 	}
 
 	Byte*	Mem;
-	Uint64	Offset;
-	Uint64	SizeInBytes;
+	UInt64	Offset;
+	UInt64	SizeInBytes;
 };
 
 /*
@@ -91,20 +91,20 @@ struct MemoryArena
 class LinearAllocator
 {
 public:
-	LinearAllocator(Uint32 StartSize = 4096);
+	LinearAllocator(UInt32 StartSize = 4096);
 	~LinearAllocator() = default;
 
-	VoidPtr Allocate(Uint64 SizeInBytes, Uint64 Alignment);
+	Void* Allocate(UInt64 SizeInBytes, UInt64 Alignment);
 	
 	void Reset();
 
 	template<typename T>
-	FORCEINLINE VoidPtr Allocate()
+	FORCEINLINE Void* Allocate()
 	{
 		return Allocate(sizeof(T), alignof(T));
 	}
 
-	FORCEINLINE Byte* AllocateBytes(Uint64 SizeInBytes, Uint64 Alignment)
+	FORCEINLINE Byte* AllocateBytes(UInt64 SizeInBytes, UInt64 Alignment)
 	{
 		return reinterpret_cast<Byte*>(Allocate(SizeInBytes, Alignment));
 	}

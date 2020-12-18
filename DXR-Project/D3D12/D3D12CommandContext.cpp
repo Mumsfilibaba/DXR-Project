@@ -32,7 +32,7 @@ bool D3D12CommandContext::Initialize()
 	VALIDATE(CmdQueue != nullptr);
 
 	// TODO: Have support for more than 3 commandallocators
-	for (Uint32 i = 0; i < 3; i++)
+	for (UInt32 i = 0; i < 3; i++)
 	{
 		TUniquePtr<D3D12CommandAllocator> CmdAllocator = TUniquePtr(Device->CreateCommandAllocator(CmdQueue->GetType()));
 		if (CmdAllocator)
@@ -90,11 +90,11 @@ void D3D12CommandContext::EndRenderPass()
 {
 }
 
-void D3D12CommandContext::BindViewport(const Viewport& Viewport, Uint32 Slot)
+void D3D12CommandContext::BindViewport(const Viewport& Viewport, UInt32 Slot)
 {
 }
 
-void D3D12CommandContext::BindScissorRect(const ScissorRect& ScissorRect, Uint32 Slot)
+void D3D12CommandContext::BindScissorRect(const ScissorRect& ScissorRect, UInt32 Slot)
 {
 }
 
@@ -108,8 +108,8 @@ void D3D12CommandContext::BindPrimitiveTopology(EPrimitiveTopology PrimitveTopol
 
 void D3D12CommandContext::BindVertexBuffers(
 	VertexBuffer* const * VertexBuffers, 
-	Uint32 BufferCount, 
-	Uint32 BufferSlot)
+	UInt32 BufferCount, 
+	UInt32 BufferSlot)
 {
 }
 
@@ -123,7 +123,7 @@ void D3D12CommandContext::BindRayTracingScene(RayTracingScene* RayTracingScene)
 
 void D3D12CommandContext::BindRenderTargets(
 	RenderTargetView* const * RenderTargetViews, 
-	Uint32 RenderTargetCount, 
+	UInt32 RenderTargetCount, 
 	DepthStencilView* DepthStencilView)
 {
 }
@@ -143,24 +143,24 @@ void D3D12CommandContext::BindRayTracingPipelineState(class RayTracingPipelineSt
 void D3D12CommandContext::BindConstantBuffers(
 	Shader* Shader, 
 	ConstantBuffer* const * ConstantBuffers, 
-	Uint32 ConstantBufferCount, 
-	Uint32 StartSlot)
+	UInt32 ConstantBufferCount, 
+	UInt32 StartSlot)
 {
 }
 
 void D3D12CommandContext::BindShaderResourceViews(
 	Shader* Shader, 
 	ShaderResourceView* const* ShaderResourceViews, 
-	Uint32 ShaderResourceViewCount, 
-	Uint32 StartSlot)
+	UInt32 ShaderResourceViewCount, 
+	UInt32 StartSlot)
 {
 }
 
 void D3D12CommandContext::BindUnorderedAccessViews(
 	Shader* Shader, 
 	UnorderedAccessView* const* UnorderedAccessViews, 
-	Uint32 UnorderedAccessViewCount, 
-	Uint32 StartSlot)
+	UInt32 UnorderedAccessViewCount, 
+	UInt32 StartSlot)
 {
 }
 
@@ -170,18 +170,18 @@ void D3D12CommandContext::ResolveTexture(Texture* Destination, Texture* Source)
 
 void D3D12CommandContext::UpdateBuffer(
 	Buffer* Destination, 
-	Uint64 OffsetInBytes, 
-	Uint64 SizeInBytes, 
-	const VoidPtr SourceData)
+	UInt64 OffsetInBytes, 
+	UInt64 SizeInBytes, 
+	const Void* SourceData)
 {
 }
 
 void D3D12CommandContext::UpdateTexture2D(
 	Texture2D* Destination, 
-	Uint32 Width, 
-	Uint32 Height, 
-	Uint32 MipLevel, 
-	const VoidPtr SourceData)
+	UInt32 Width, 
+	UInt32 Height, 
+	UInt32 MipLevel, 
+	const Void* SourceData)
 {
 }
 
@@ -278,7 +278,7 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
 	//	UAVDesc.Texture2D.PlaneSlice = 0;
 	//}
 
-	//for (Uint32 i = 0; i < Desc.MipLevels; i++)
+	//for (UInt32 i = 0; i < Desc.MipLevels; i++)
 	//{
 	//	if (IsTextureCube)
 	//	{
@@ -372,10 +372,10 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
 	//}
 
 	//// Create Resources for generating Miplevels
-	//const Uint32 MipLevelsPerDispatch = 4;
-	//Uint32 NumDispatches = Desc.MipLevels / MipLevelsPerDispatch;
+	//const UInt32 MipLevelsPerDispatch = 4;
+	//UInt32 NumDispatches = Desc.MipLevels / MipLevelsPerDispatch;
 
-	//Uint32 MiplevelsLastDispatch = Desc.MipLevels - (MipLevelsPerDispatch * NumDispatches);
+	//UInt32 MiplevelsLastDispatch = Desc.MipLevels - (MipLevelsPerDispatch * NumDispatches);
 	//if (MiplevelsLastDispatch > 0)
 	//{
 	//	if (!MipGenHelper.NULLView)
@@ -406,15 +406,15 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
 	//MipGenHelper.SRVDescriptorTable->CopyDescriptors();
 
 	//// Bind UnorderedAccessViews
-	//Uint32 UAVIndex = 0;
-	//for (Uint32 i = 0; i < NumDispatches; i++)
+	//UInt32 UAVIndex = 0;
+	//for (UInt32 i = 0; i < NumDispatches; i++)
 	//{
 	//	if (!MipGenHelper.UAVDescriptorTables[i])
 	//	{
 	//		MipGenHelper.UAVDescriptorTables[i] = MakeUnique<D3D12DescriptorTable>(Device, 4);
 	//	}
 
-	//	for (Uint32 j = 0; j < MipLevelsPerDispatch; j++)
+	//	for (UInt32 j = 0; j < MipLevelsPerDispatch; j++)
 	//	{
 	//		if (UAVIndex < Desc.MipLevels)
 	//		{
@@ -448,27 +448,27 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
 
 	//struct ConstantBuffer
 	//{
-	//	Uint32		SrcMipLevel;
-	//	Uint32		NumMipLevels;
+	//	UInt32		SrcMipLevel;
+	//	UInt32		NumMipLevels;
 	//	XMFLOAT2	TexelSize;
 	//} CB0;
 
-	//Uint32 DstWidth = static_cast<Uint32>(Desc.Width);
-	//Uint32 DstHeight = Desc.Height;
+	//UInt32 DstWidth = static_cast<UInt32>(Desc.Width);
+	//UInt32 DstHeight = Desc.Height;
 	//CB0.SrcMipLevel = 0;
 
-	//const Uint32 ThreadsZ = IsTextureCube ? 6 : 1;
-	//Uint32 RemainingMiplevels = Desc.MipLevels;
-	//for (Uint32 i = 0; i < NumDispatches; i++)
+	//const UInt32 ThreadsZ = IsTextureCube ? 6 : 1;
+	//UInt32 RemainingMiplevels = Desc.MipLevels;
+	//for (UInt32 i = 0; i < NumDispatches; i++)
 	//{
 	//	CB0.TexelSize = XMFLOAT2(1.0f / static_cast<Float32>(DstWidth), 1.0f / static_cast<Float32>(DstHeight));
-	//	CB0.NumMipLevels = std::min<Uint32>(4, RemainingMiplevels);
+	//	CB0.NumMipLevels = std::min<UInt32>(4, RemainingMiplevels);
 
 	//	SetComputeRoot32BitConstants(&CB0, 4, 0, 0);
 	//	SetComputeRootDescriptorTable(MipGenHelper.UAVDescriptorTables[i]->GetGPUTableStartHandle(), 2);
 
-	//	const Uint32 ThreadsX = DivideByMultiple(DstWidth, 8);
-	//	const Uint32 ThreadsY = DivideByMultiple(DstHeight, 8);
+	//	const UInt32 ThreadsX = DivideByMultiple(DstWidth, 8);
+	//	const UInt32 ThreadsY = DivideByMultiple(DstHeight, 8);
 	//	Dispatch(ThreadsX, ThreadsY, ThreadsZ);
 
 	//	UnorderedAccessBarrier(StagingTexture.Get());
@@ -506,42 +506,42 @@ void D3D12CommandContext::UnorderedAccessTextureBarrier(Texture* Texture)
 {
 }
 
-void D3D12CommandContext::Draw(Uint32 VertexCount, Uint32 StartVertexLocation)
+void D3D12CommandContext::Draw(UInt32 VertexCount, UInt32 StartVertexLocation)
 {
 }
 
 void D3D12CommandContext::DrawIndexed(
-	Uint32 IndexCount, 
-	Uint32 StartIndexLocation, 
-	Uint32 BaseVertexLocation)
+	UInt32 IndexCount, 
+	UInt32 StartIndexLocation, 
+	UInt32 BaseVertexLocation)
 {
 }
 
 void D3D12CommandContext::DrawInstanced(
-	Uint32 VertexCountPerInstance, 
-	Uint32 InstanceCount, 
-	Uint32 StartVertexLocation, 
-	Uint32 StartInstanceLocation)
+	UInt32 VertexCountPerInstance, 
+	UInt32 InstanceCount, 
+	UInt32 StartVertexLocation, 
+	UInt32 StartInstanceLocation)
 {
 }
 
 void D3D12CommandContext::DrawIndexedInstanced(
-	Uint32 IndexCountPerInstance, 
-	Uint32 InstanceCount, 
-	Uint32 StartIndexLocation, 
-	Uint32 BaseVertexLocation, 
-	Uint32 StartInstanceLocation)
+	UInt32 IndexCountPerInstance, 
+	UInt32 InstanceCount, 
+	UInt32 StartIndexLocation, 
+	UInt32 BaseVertexLocation, 
+	UInt32 StartInstanceLocation)
 {
 }
 
 void D3D12CommandContext::Dispatch(
-	Uint32 WorkGroupsX, 
-	Uint32 WorkGroupsY, 
-	Uint32 WorkGroupsZ)
+	UInt32 WorkGroupsX, 
+	UInt32 WorkGroupsY, 
+	UInt32 WorkGroupsZ)
 {
 }
 
-void D3D12CommandContext::DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth)
+void D3D12CommandContext::DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth)
 {
 }
 

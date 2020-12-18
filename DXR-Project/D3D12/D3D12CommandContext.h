@@ -51,23 +51,23 @@ public:
 	virtual void BeginRenderPass() override final;
 	virtual void EndRenderPass() override final;
 
-	virtual void BindViewport(const Viewport& Viewport, Uint32 Slot) override final;
-	virtual void BindScissorRect(const ScissorRect& ScissorRect, Uint32 Slot) override final;
+	virtual void BindViewport(const Viewport& Viewport, UInt32 Slot) override final;
+	virtual void BindScissorRect(const ScissorRect& ScissorRect, UInt32 Slot) override final;
 
 	virtual void BindBlendFactor(const ColorClearValue& Color) override final;
 
 	virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
 	virtual void BindVertexBuffers(
 		VertexBuffer* const * VertexBuffers, 
-		Uint32 BufferCount, 
-		Uint32 BufferSlot) override final;
+		UInt32 BufferCount, 
+		UInt32 BufferSlot) override final;
 
 	virtual void BindIndexBuffer(IndexBuffer* IndexBuffer) override final;
 	virtual void BindRayTracingScene(RayTracingScene* RayTracingScene) override final;
 
 	virtual void BindRenderTargets(
 		RenderTargetView* const * RenderTargetViews, 
-		Uint32 RenderTargetCount, 
+		UInt32 RenderTargetCount, 
 		DepthStencilView* DepthStencilView) override final;
 
 	virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState) override final;
@@ -77,35 +77,35 @@ public:
 	virtual void BindConstantBuffers(
 		Shader* Shader, 
 		ConstantBuffer* const * ConstantBuffers, 
-		Uint32 ConstantBufferCount, 
-		Uint32 StartSlot) override final;
+		UInt32 ConstantBufferCount, 
+		UInt32 StartSlot) override final;
 
 	virtual void BindShaderResourceViews(
 		Shader* Shader, 
 		ShaderResourceView* const* ShaderResourceViews, 
-		Uint32 ShaderResourceViewCount, 
-		Uint32 StartSlot) override final;
+		UInt32 ShaderResourceViewCount, 
+		UInt32 StartSlot) override final;
 
 	virtual void BindUnorderedAccessViews(
 		Shader* Shader, 
 		UnorderedAccessView* const* UnorderedAccessViews, 
-		Uint32 UnorderedAccessViewCount, 
-		Uint32 StartSlot) override final;
+		UInt32 UnorderedAccessViewCount, 
+		UInt32 StartSlot) override final;
 
 	virtual void ResolveTexture(Texture* Destination, Texture* Source) override final;
 
 	virtual void UpdateBuffer(
 		Buffer* Destination, 
-		Uint64 OffsetInBytes, 
-		Uint64 SizeInBytes, 
-		const VoidPtr SourceData) override final;
+		UInt64 OffsetInBytes, 
+		UInt64 SizeInBytes, 
+		const Void* SourceData) override final;
 
 	virtual void UpdateTexture2D(
 		Texture2D* Destination,
-		Uint32 Width,
-		Uint32 Height,
-		Uint32 MipLevel,
-		const VoidPtr SourceData) override final;
+		UInt32 Width,
+		UInt32 Height,
+		UInt32 MipLevel,
+		const Void* SourceData) override final;
 
 	virtual void CopyBuffer(
 		Buffer* Destination, 
@@ -134,32 +134,32 @@ public:
 
 	virtual void UnorderedAccessTextureBarrier(Texture* Texture) override final;
 
-	virtual void Draw(Uint32 VertexCount, Uint32 StartVertexLocation) override final;
+	virtual void Draw(UInt32 VertexCount, UInt32 StartVertexLocation) override final;
 	
 	virtual void DrawIndexed(
-		Uint32 IndexCount, 
-		Uint32 StartIndexLocation, 
-		Uint32 BaseVertexLocation) override final;
+		UInt32 IndexCount, 
+		UInt32 StartIndexLocation, 
+		UInt32 BaseVertexLocation) override final;
 	
 	virtual void DrawInstanced(
-		Uint32 VertexCountPerInstance, 
-		Uint32 InstanceCount, 
-		Uint32 StartVertexLocation, 
-		Uint32 StartInstanceLocation) override final;
+		UInt32 VertexCountPerInstance, 
+		UInt32 InstanceCount, 
+		UInt32 StartVertexLocation, 
+		UInt32 StartInstanceLocation) override final;
 	
 	virtual void DrawIndexedInstanced(
-		Uint32 IndexCountPerInstance, 
-		Uint32 InstanceCount, 
-		Uint32 StartIndexLocation, 
-		Uint32 BaseVertexLocation, 
-		Uint32 StartInstanceLocation) override final;
+		UInt32 IndexCountPerInstance, 
+		UInt32 InstanceCount, 
+		UInt32 StartIndexLocation, 
+		UInt32 BaseVertexLocation, 
+		UInt32 StartInstanceLocation) override final;
 
 	virtual void Dispatch(
-		Uint32 WorkGroupsX, 
-		Uint32 WorkGroupsY, 
-		Uint32 WorkGroupsZ) override final;
+		UInt32 WorkGroupsX, 
+		UInt32 WorkGroupsY, 
+		UInt32 WorkGroupsZ) override final;
 
-	virtual void DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth) override final;
+	virtual void DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth) override final;
 
 	virtual void Flush() override final;
 

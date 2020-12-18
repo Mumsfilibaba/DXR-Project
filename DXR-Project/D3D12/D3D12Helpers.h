@@ -8,7 +8,7 @@
 * Converts EBufferUsage- flags to D3D12_RESOURCE_FLAGS
 */
 
-inline D3D12_RESOURCE_FLAGS ConvertBufferUsage(Uint32 Usage)
+inline D3D12_RESOURCE_FLAGS ConvertBufferUsage(UInt32 Usage)
 {
 	D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
 	if (Usage & EBufferUsage::BufferUsage_UAV)
@@ -23,7 +23,7 @@ inline D3D12_RESOURCE_FLAGS ConvertBufferUsage(Uint32 Usage)
 * Converts ETextureUsage- flags to D3D12_RESOURCE_FLAGS
 */
 
-inline D3D12_RESOURCE_FLAGS ConvertTextureUsage(Uint32 Usage)
+inline D3D12_RESOURCE_FLAGS ConvertTextureUsage(UInt32 Usage)
 {
 	D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
 	if (Usage & ETextureUsage::TextureUsage_UAV)
@@ -330,9 +330,9 @@ inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
 * Converts RenderTargetWriteState to D3D12 RenderTargetWriteMask
 */
 
-inline Uint8 ConvertRenderTargetWriteState(const RenderTargetWriteState& RenderTargetWriteState)
+inline UInt8 ConvertRenderTargetWriteState(const RenderTargetWriteState& RenderTargetWriteState)
 {
-	Uint8 RenderTargetWriteMask = 0;
+	UInt8 RenderTargetWriteMask = 0;
 	if (RenderTargetWriteState.WriteAll())
 	{
 		RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;

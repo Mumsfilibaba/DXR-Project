@@ -25,12 +25,12 @@ public:
 
 	~D3D12CommandQueue() = default;
 
-	FORCEINLINE bool SignalFence(D3D12Fence* Fence, Uint64 FenceValue)
+	FORCEINLINE bool SignalFence(D3D12Fence* Fence, UInt64 FenceValue)
 	{
 		return SUCCEEDED(Queue->Signal(Fence->GetFence(), FenceValue));
 	}
 
-	FORCEINLINE bool WaitForFence(D3D12Fence* Fence, Uint64 FenceValue)
+	FORCEINLINE bool WaitForFence(D3D12Fence* Fence, UInt64 FenceValue)
 	{
 		return SUCCEEDED(Queue->Wait(Fence->GetFence(), FenceValue));
 	}

@@ -43,7 +43,7 @@ public:
 		return ElementDesc.Data();
 	}
 
-	FORCEINLINE Uint32 GetElementCount() const
+	FORCEINLINE UInt32 GetElementCount() const
 	{
 		return ElementDesc.Size();
 	}

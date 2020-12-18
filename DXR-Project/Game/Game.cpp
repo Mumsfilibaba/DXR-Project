@@ -132,7 +132,7 @@ bool Game::Initialize()
 	NewActor = new Actor();
 	CurrentScene->AddActor(NewActor);
 
-	NewActor->SetDebugName("Cube");
+	NewActor->SetName("Cube");
 	NewActor->GetTransform().SetTranslation(0.0f, 2.0f, -2.0f);
 
 	MatProperties.AO			= 1.0f;

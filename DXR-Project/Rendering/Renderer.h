@@ -242,9 +242,6 @@ private:
 	TSharedPtr<ComputePipelineState> SSAOPSO;
 	TSharedPtr<ComputePipelineState> SSAOBlur;
 
-	TArray<MeshDrawCommand> VisibleCommands;
-	TArray<TSharedRef<PipelineResource>> DeferredResources;
-
 	TSharedRef<StructuredBuffer> SSAOSamples;
 	TSharedRef<Texture2D> SSAOBuffer;
 	TSharedRef<Texture2D> SSAONoiseTex;

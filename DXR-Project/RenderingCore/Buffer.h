@@ -11,7 +11,7 @@ class StructuredBuffer;
 * EBufferUsage
 */
 
-enum EBufferUsage : Uint32
+enum EBufferUsage : UInt32
 {
 	BufferUsage_None	= 0,	
 	BufferUsage_Default	= FLAG(1), // GPU Memory
@@ -32,14 +32,14 @@ struct Range
 	{
 	}
 
-	inline Range(Uint32 InOffset, Uint32 InSize)
+	inline Range(UInt32 InOffset, UInt32 InSize)
 		: Offset(InOffset)
 		, Size(InSize)
 	{
 	}
 
-	Uint32 Offset;
-	Uint32 Size;
+	UInt32 Offset;
+	UInt32 Size;
 };
 
 /*
@@ -49,7 +49,7 @@ struct Range
 class Buffer : public Resource
 {
 public:
-	inline Buffer(Uint32 InSizeInBytes, Uint32 InUsage)
+	inline Buffer(UInt32 InSizeInBytes, UInt32 InUsage)
 		: SizeInBytes(InSizeInBytes)
 		, Usage(InUsage)
 	{
@@ -109,22 +109,22 @@ public:
 	}
 
 	// Buffer functions
-	virtual Uint64 GetSizeInBytes() const
+	virtual UInt64 GetSizeInBytes() const
 	{
 		return SizeInBytes;
 	}
 
-	virtual Uint64 GetRequiredAlignment() const
+	virtual UInt64 GetRequiredAlignment() const
 	{
 		return 0;
 	}
 
 	// Map
-	virtual VoidPtr	Map(const Range* MappedRange)		= 0;
-	virtual void	Unmap(const Range* WrittenRange) 	= 0;
+	virtual Void*	Map(const Range* MappedRange)	 = 0;
+	virtual void	Unmap(const Range* WrittenRange) = 0;
 
 	// Usage
-	FORCEINLINE Uint32 GetUsage() const
+	FORCEINLINE UInt32 GetUsage() const
 	{
 		return Usage;
 	}
@@ -145,8 +145,8 @@ public:
 	}
 
 protected:
-	Uint32 SizeInBytes;
-	Uint32 Usage;
+	UInt32 SizeInBytes;
+	UInt32 Usage;
 };
 
 /*
@@ -156,7 +156,7 @@ protected:
 class VertexBuffer : public Buffer
 {
 public:
-	inline VertexBuffer(Uint32 SizeInBytes, Uint32 InStride, Uint32 Usage)
+	inline VertexBuffer(UInt32 SizeInBytes, UInt32 InStride, UInt32 Usage)
 		: Buffer(SizeInBytes, Usage)
 		, Stride(InStride)
 	{
@@ -175,13 +175,13 @@ public:
 		return this;
 	}
 
-	FORCEINLINE Uint32 GetStride() const
+	FORCEINLINE UInt32 GetStride() const
 	{
 		return Stride;
 	}
 
 protected:
-	Uint32 Stride;
+	UInt32 Stride;
 };
 
 /*
@@ -190,8 +190,8 @@ protected:
 
 enum class EIndexFormat
 {
-	IndexFormat_Uint16 = 1,
-	IndexFormat_Uint32 = 2
+	IndexFormat_UInt16 = 1,
+	IndexFormat_UInt32 = 2
 };
 
 /*
@@ -201,7 +201,7 @@ enum class EIndexFormat
 class IndexBuffer : public Buffer
 {
 public:
-	inline IndexBuffer(Uint32 SizeInBytes, EIndexFormat InIndexFormat, Uint32 Usage)
+	inline IndexBuffer(UInt32 SizeInBytes, EIndexFormat InIndexFormat, UInt32 Usage)
 		: Buffer(SizeInBytes, Usage)
 		, IndexFormat(InIndexFormat)
 	{
@@ -236,7 +236,7 @@ protected:
 class ConstantBuffer : public Buffer
 {
 public:
-	inline ConstantBuffer(Uint32 SizeInBytes, Uint32 Usage)
+	inline ConstantBuffer(UInt32 SizeInBytes, UInt32 Usage)
 		: Buffer(SizeInBytes, Usage)
 	{
 	}
@@ -262,7 +262,7 @@ public:
 class StructuredBuffer : public Buffer
 {
 public:
-	inline StructuredBuffer(Uint32 SizeInBytes, Uint32 InStride, Uint32 Usage)
+	inline StructuredBuffer(UInt32 SizeInBytes, UInt32 InStride, UInt32 Usage)
 		: Buffer(SizeInBytes, Usage)
 		, Stride(InStride)
 	{
@@ -281,11 +281,11 @@ public:
 		return this;
 	}
 
-	FORCEINLINE Uint32 GetStride() const
+	FORCEINLINE UInt32 GetStride() const
 	{
 		return Stride;
 	}
 
 protected:
-	Uint32 Stride;
+	UInt32 Stride;
 };

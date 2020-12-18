@@ -32,7 +32,7 @@ struct TextureFactoryData
 bool TextureFactory::Initialize()
 {
 	// Compile and create shader
-	TArray<Uint8> Code;
+	TArray<UInt8> Code;
 	if (!ShaderCompiler::CompileFromFile(
 		"Shaders/CubeMapGen.hlsl",
 		"Main",
@@ -121,7 +121,7 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
 	
 	VALIDATE(RowPitch > 0);
 	
-	ResourceData InitalData = ResourceData((const VoidPtr)Pixels, Width * Stride);
+	ResourceData InitalData = ResourceData(Pixels, Width * Stride);
 	TSharedRef<Texture2D> Texture = RenderingAPI::CreateTexture2D(
 		&InitalData,
 		Format, 
@@ -151,7 +151,7 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
 TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format)
 {
 	const bool		GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-	const UInt16	MipLevels = (GenerateMipLevels) ? static_cast<Uint16>(std::log2(CubeMapSize)) : 1U;
+	const UInt16	MipLevels = (GenerateMipLevels) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
 
 	// Create statging texture
 	TSharedRef<TextureCube> StagingTexture = RenderingAPI::CreateTextureCube(
@@ -207,8 +207,8 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	//CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
 	//CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 2);
 
-	UInt32 ThreadsX = DivideByMultiple(CubeMapSize, 16);
-	UInt32 ThreadsY = DivideByMultiple(CubeMapSize, 16);
+	const UInt32 ThreadsX = Math::DivideByMultiple(CubeMapSize, 16);
+	const UInt32 ThreadsY = Math::DivideByMultiple(CubeMapSize, 16);
 	CmdList.Dispatch(ThreadsX, ThreadsY, 6);
 
 	CmdList.TransitionTexture(PanoramaSource, EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);

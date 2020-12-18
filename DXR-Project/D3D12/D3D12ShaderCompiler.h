@@ -23,7 +23,7 @@ public:
 		const TArray<ShaderDefine>* Defines,
 		EShaderStage ShaderStage,
 		EShaderModel ShaderModel,
-		TArray<Uint8>& Code) const override final;
+		TArray<UInt8>& Code) const override final;
 
 	virtual bool CompileShader(
 		const std::string& ShaderSource,
@@ -31,7 +31,7 @@ public:
 		const TArray<ShaderDefine>* Defines,
 		EShaderStage ShaderStage,
 		EShaderModel ShaderModel,
-		TArray<Uint8>& Code) const override final;
+		TArray<UInt8>& Code) const override final;
 
 private:
 	bool InternalCompileFromSource(
@@ -40,7 +40,7 @@ private:
 		LPCWSTR Entrypoint, 
 		LPCWSTR TargetProfile, 
 		const TArray<ShaderDefine>* Defines,
-		TArray<Uint8>& Code) const;
+		TArray<UInt8>& Code) const;
 
 private:
 	Microsoft::WRL::ComPtr<IDxcCompiler>	DxCompiler;

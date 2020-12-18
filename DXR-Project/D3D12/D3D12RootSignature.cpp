@@ -8,7 +8,7 @@
 bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 {
 	// Ranges for resources
-	constexpr Uint32 NumRanges = 16;
+	constexpr UInt32 NumRanges = 16;
 	D3D12_DESCRIPTOR_RANGE CBVRanges[NumRanges];
 	Memory::Memzero(CBVRanges, sizeof(CBVRanges));
 
@@ -21,7 +21,7 @@ bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 	D3D12_DESCRIPTOR_RANGE SamplerRanges[NumRanges];
 	Memory::Memzero(SamplerRanges, sizeof(SamplerRanges));
 	
-	for (Uint32 i = 0; i < NumRanges; i++)
+	for (UInt32 i = 0; i < NumRanges; i++)
 	{
 		CBVRanges[i].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 		CBVRanges[i].BaseShaderRegister					= i;
@@ -52,9 +52,9 @@ bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 	D3D12_ROOT_SIGNATURE_DESC GraphicsRootDesc;
 	Memory::Memzero(&GraphicsRootDesc, sizeof(D3D12_ROOT_SIGNATURE_DESC));
 
-	constexpr Uint32 NumParametersPerStage	= 4;
-	constexpr Uint32 NumStages				= 2;
-	constexpr Uint32 NumParameters			= NumParametersPerStage * NumStages;
+	constexpr UInt32 NumParametersPerStage	= 4;
+	constexpr UInt32 NumStages				= 2;
+	constexpr UInt32 NumParameters			= NumParametersPerStage * NumStages;
 	D3D12_ROOT_PARAMETER GraphicsRootParameters[NumParameters];
 	Memory::Memzero(GraphicsRootParameters, sizeof(GraphicsRootParameters));
 
@@ -64,10 +64,10 @@ bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 		D3D12_SHADER_VISIBILITY_PIXEL 
 	};
 
-	for (Uint32 Stage = 0; Stage < NumStages; Stage++)
+	for (UInt32 Stage = 0; Stage < NumStages; Stage++)
 	{
-		const Uint32 Index = Stage * NumParametersPerStage;
-		for (Uint32 i = 0; i < NumParametersPerStage; i++)
+		const UInt32 Index = Stage * NumParametersPerStage;
+		for (UInt32 i = 0; i < NumParametersPerStage; i++)
 		{
 			GraphicsRootParameters[Index + i].ParameterType		= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 			GraphicsRootParameters[Index + i].ShaderVisibility	= Stages[Stage];
@@ -101,7 +101,7 @@ bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 	D3D12_ROOT_PARAMETER ComputeRootParameters[NumParametersPerStage];
 	Memory::Memzero(ComputeRootParameters, sizeof(ComputeRootParameters));
 
-	for (Uint32 i = 0; i < NumParametersPerStage; i++)
+	for (UInt32 i = 0; i < NumParametersPerStage; i++)
 	{
 		ComputeRootParameters[i].ParameterType		= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		ComputeRootParameters[i].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;

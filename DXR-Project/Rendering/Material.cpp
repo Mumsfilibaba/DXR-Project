@@ -15,11 +15,6 @@ Material::Material(const MaterialProperties& InProperties)
 {
 }
 
-Material::~Material()
-{
-	SAFEDELETE(MaterialBuffer);
-}
-
 void Material::Initialize()
 {
 	// Create materialbuffer

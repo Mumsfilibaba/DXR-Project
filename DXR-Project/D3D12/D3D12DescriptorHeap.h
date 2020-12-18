@@ -73,7 +73,7 @@ public:
 		return Type;
 	}
 
-	FORCEINLINE Uint32 GetDescriptorSize() const
+	FORCEINLINE UInt32 GetDescriptorSize() const
 	{
 		return DescriptorSize;
 	}
@@ -86,7 +86,7 @@ private:
 	std::wstring Name;
 
 	D3D12_DESCRIPTOR_HEAP_TYPE Type;
-	Uint32 DescriptorSize = 0;
+	UInt32 DescriptorSize = 0;
 };
 
 /*

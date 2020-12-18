@@ -24,7 +24,7 @@ public:
 	{
 	}
 
-	virtual VoidPtr GetNativeResource() const
+	virtual Void* GetNativeResource() const
 	{
 		return nullptr;
 	}
@@ -43,30 +43,30 @@ struct ResourceData
 	{
 	}
 
-	inline ResourceData(const VoidPtr InData)
+	inline ResourceData(const Void* InData)
 		: Data(InData)
 		, Pitch(0)
 		, SlicePitch(0)
 	{
 	}
 
-	inline ResourceData(const VoidPtr InData, Uint32 InPitch)
+	inline ResourceData(const Void* InData, UInt32 InPitch)
 		: Data(InData)
 		, Pitch(InPitch)
 		, SlicePitch(0)
 	{
 	}
 
-	inline ResourceData(const VoidPtr InData, Uint32 InPitch, Uint32 InSlicePitch)
+	inline ResourceData(const Void* InData, UInt32 InPitch, UInt32 InSlicePitch)
 		: Data(InData)
 		, Pitch(InPitch)
 		, SlicePitch(InSlicePitch)
 	{
 	}
 
-	const VoidPtr Data;
-	Uint32	Pitch;
-	Uint32	SlicePitch;
+	const Void* Data;
+	UInt32 Pitch;
+	UInt32 SlicePitch;
 };
 
 /*

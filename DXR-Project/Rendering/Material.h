@@ -62,7 +62,7 @@ public:
 	TSharedRef<Texture2D> HeightMap;
 	TSharedRef<Texture2D> AOMap;
 	TSharedRef<Texture2D> MetallicMap;
-	TSharedPtr<Texture2D> AlphaMask;
+	TSharedRef<Texture2D> AlphaMask;
 
 private:
 	std::string	DebugName;

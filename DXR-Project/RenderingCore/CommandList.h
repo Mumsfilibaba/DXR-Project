@@ -84,12 +84,12 @@ public:
 		InsertCommand<EndRenderPassCommand>();
 	}
 
-	FORCEINLINE void BindViewport(const Viewport& Viewport, Uint32 Slot)
+	FORCEINLINE void BindViewport(const Viewport& Viewport, UInt32 Slot)
 	{
 		InsertCommand<BindViewportCommand>(Viewport, Slot);
 	}
 
-	FORCEINLINE void BindScissorRect(const ScissorRect& ScissorRect, Uint32 Slot)
+	FORCEINLINE void BindScissorRect(const ScissorRect& ScissorRect, UInt32 Slot)
 	{
 		InsertCommand<BindScissorRectCommand>(ScissorRect, Slot);
 	}
@@ -106,12 +106,12 @@ public:
 
 	FORCEINLINE void BindVertexBuffers(
 		VertexBuffer* const* VertexBuffers, 
-		Uint32 VertexBufferCount, 
-		Uint32 BufferSlot)
+		UInt32 VertexBufferCount, 
+		UInt32 BufferSlot)
 	{
-		VoidPtr BufferMemory	= CmdAllocator.Allocate(sizeof(VertexBuffer*) * VertexBufferCount, 1);
+		Void* BufferMemory	= CmdAllocator.Allocate(sizeof(VertexBuffer*) * VertexBufferCount, 1);
 		VertexBuffer** Buffers	= reinterpret_cast<VertexBuffer**>(BufferMemory);
-		for (Uint32 i = 0; i < VertexBufferCount; i++)
+		for (UInt32 i = 0; i < VertexBufferCount; i++)
 		{
 			Buffers[i] = VertexBuffers[i];
 			SAFEADDREF(Buffers[i]);
@@ -134,12 +134,12 @@ public:
 
 	FORCEINLINE void BindRenderTargets(
 		RenderTargetView* const* RenderTargetViews, 
-		Uint32 RenderTargetCount, 
+		UInt32 RenderTargetCount, 
 		DepthStencilView* DepthStencilView)
 	{
-		VoidPtr RenderTargetMemory			= CmdAllocator.Allocate(sizeof(RenderTargetView*) * RenderTargetCount, 1);
+		Void* RenderTargetMemory			= CmdAllocator.Allocate(sizeof(RenderTargetView*) * RenderTargetCount, 1);
 		RenderTargetView** RenderTargets	= reinterpret_cast<RenderTargetView**>(RenderTargetMemory);
-		for (Uint32 i = 0; i < RenderTargetCount; i++)
+		for (UInt32 i = 0; i < RenderTargetCount; i++)
 		{
 			RenderTargets[i] = RenderTargetViews[i];
 			SAFEADDREF(RenderTargets[i]);
@@ -170,8 +170,8 @@ public:
 	FORCEINLINE void BindConstantBuffers(
 		Shader* Shader, 
 		ConstantBuffer* const* ConstantBuffers, 
-		Uint32 ConstantBufferCount, 
-		Uint32 StartSlot)
+		UInt32 ConstantBufferCount, 
+		UInt32 StartSlot)
 	{
 		InsertCommand<BindConstantBuffersCommand>(
 			Shader, 
@@ -183,8 +183,8 @@ public:
 	FORCEINLINE void BindShaderResourceViews(
 		Shader* Shader, 
 		ShaderResourceView* const* ShaderResourceViews, 
-		Uint32 ShaderResourceViewCount, 
-		Uint32 StartSlot)
+		UInt32 ShaderResourceViewCount, 
+		UInt32 StartSlot)
 	{
 		InsertCommand<BindShaderResourceViewsCommand>(
 			Shader, 
@@ -196,8 +196,8 @@ public:
 	FORCEINLINE void BindUnorderedAccessViews(
 		Shader* Shader, 
 		UnorderedAccessView* const* UnorderedAccessViews, 
-		Uint32 UnorderedAccessViewCount, 
-		Uint32 StartSlot)
+		UInt32 UnorderedAccessViewCount, 
+		UInt32 StartSlot)
 	{
 		InsertCommand<BindUnorderedAccessViewsCommand>(
 			Shader,
@@ -215,11 +215,11 @@ public:
 
 	FORCEINLINE void UpdateBuffer(
 		Buffer* Destination, 
-		Uint64 DestinationOffsetInBytes, 
-		Uint64 SizeInBytes, 
-		const VoidPtr SourceData)
+		UInt64 DestinationOffsetInBytes, 
+		UInt64 SizeInBytes, 
+		const Void* SourceData)
 	{
-		VoidPtr TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
+		Void* TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
 		Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
 		SAFEADDREF(Destination);
@@ -232,13 +232,13 @@ public:
 
 	FORCEINLINE void UpdateTexture2D(
 		Texture2D* Destination,
-		Uint32 Width,
-		Uint32 Height,
-		Uint32 MipLevel, 
-		const VoidPtr SourceData)
+		UInt32 Width,
+		UInt32 Height,
+		UInt32 MipLevel, 
+		const Void* SourceData)
 	{
-		const Uint32 SizeInBytes = Width * Height;
-		VoidPtr TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
+		const UInt32 SizeInBytes = Width * Height;
+		Void* TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
 		Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
 		SAFEADDREF(Destination);
@@ -321,25 +321,25 @@ public:
 	}
 
 	FORCEINLINE void Draw(
-		Uint32 VertexCount, 
-		Uint32 StartVertexLocation)
+		UInt32 VertexCount, 
+		UInt32 StartVertexLocation)
 	{
 		InsertCommand<DrawCommand>(VertexCount, StartVertexLocation);
 	}
 
 	FORCEINLINE void DrawIndexed(
-		Uint32 IndexCount, 
-		Uint32 StartIndexLocation, 
-		Uint32 BaseVertexLocation)
+		UInt32 IndexCount, 
+		UInt32 StartIndexLocation, 
+		UInt32 BaseVertexLocation)
 	{
 		InsertCommand< DrawIndexedCommand>(IndexCount, StartIndexLocation, BaseVertexLocation);
 	}
 
 	FORCEINLINE void DrawInstanced(
-		Uint32 VertexCountPerInstance, 
-		Uint32 InstanceCount, 
-		Uint32 StartVertexLocation, 
-		Uint32 StartInstanceLocation)
+		UInt32 VertexCountPerInstance, 
+		UInt32 InstanceCount, 
+		UInt32 StartVertexLocation, 
+		UInt32 StartInstanceLocation)
 	{
 		InsertCommand<DrawInstancedCommand>(
 			VertexCountPerInstance,
@@ -349,11 +349,11 @@ public:
 	}
 
 	FORCEINLINE void DrawIndexedInstanced(
-		Uint32 IndexCountPerInstance, 
-		Uint32 InstanceCount, 
-		Uint32 StartIndexLocation, 
-		Uint32 BaseVertexLocation, 
-		Uint32 StartInstanceLocation)
+		UInt32 IndexCountPerInstance, 
+		UInt32 InstanceCount, 
+		UInt32 StartIndexLocation, 
+		UInt32 BaseVertexLocation, 
+		UInt32 StartInstanceLocation)
 	{
 		InsertCommand<DrawIndexedInstancedCommand>(
 			IndexCountPerInstance,
@@ -363,12 +363,12 @@ public:
 			StartInstanceLocation);
 	}
 
-	FORCEINLINE void Dispatch(Uint32 WorkGroupsX, Uint32 WorkGroupsY, Uint32 WorkGroupsZ)
+	FORCEINLINE void Dispatch(UInt32 WorkGroupsX, UInt32 WorkGroupsY, UInt32 WorkGroupsZ)
 	{
 		InsertCommand<DispatchComputeCommand>(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
 	}
 
-	FORCEINLINE void DispatchRays(Uint32 Width, Uint32 Height, Uint32 Depth)
+	FORCEINLINE void DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth)
 	{
 		InsertCommand<DispatchRaysCommand>(Width, Height, Depth);
 	}
@@ -396,7 +396,7 @@ private:
 	template<typename TCommand, typename... TArgs>
 	FORCEINLINE void InsertCommand(TArgs&&... Args)
 	{
-		VoidPtr Memory = CmdAllocator.Allocate<TCommand>();
+		Void* Memory = CmdAllocator.Allocate<TCommand>();
 		VALIDATE(Memory != nullptr);
 
 		TCommand* Cmd = new(Memory) TCommand(Forward<TArgs>(Args)...);

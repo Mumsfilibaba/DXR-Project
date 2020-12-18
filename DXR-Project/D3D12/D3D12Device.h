@@ -41,13 +41,13 @@ public:
 		D3D12CommandAllocator* Allocator, 
 		ID3D12PipelineState* InitalPipeline);
 
-	class D3D12Fence*			CreateFence(Uint64 InitalValue);
+	class D3D12Fence*			CreateFence(UInt64 InitalValue);
 	class D3D12RootSignature*	CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc);
 	class D3D12RootSignature*	CreateRootSignature(IDxcBlob* ShaderBlob);
-	class D3D12RootSignature*	CreateRootSignature(VoidPtr RootSignatureData, const Uint32 RootSignatureSize);
+	class D3D12RootSignature*	CreateRootSignature(Void* RootSignatureData, const UInt32 RootSignatureSize);
 	class D3D12SwapChain*		CreateSwapChain(class WindowsWindow* pWindow, D3D12CommandQueue* Queue);
 
-	Int32 GetMultisampleQuality(DXGI_FORMAT Format, Uint32 SampleCount);
+	Int32 GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount);
 	std::string GetAdapterName() const;
 
 	FORCEINLINE HRESULT CreateCommitedResource(
