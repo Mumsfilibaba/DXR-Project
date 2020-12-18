@@ -343,12 +343,10 @@ RayTracingScene* D3D12RenderingAPI::CreateRayTracingScene() const
 ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	const Buffer* Buffer, 
 	UInt32 FirstElement, 
-	UInt32 ElementCount,
-	EFormat Format) const
+	UInt32 ElementCount) const
 {
 	VALIDATE(Buffer != nullptr);
 	VALIDATE(Buffer->HasShaderResourceUsage());
-	VALIDATE(Format != EFormat::Format_Unknown);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
@@ -357,7 +355,7 @@ ShaderResourceView* D3D12RenderingAPI::CreateShaderResourceView(
 	Desc.Shader4ComponentMapping	= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	Desc.Buffer.FirstElement		= FirstElement;
 	Desc.Buffer.NumElements			= ElementCount;
-	Desc.Format						= ConvertFormat(Format);
+	Desc.Format						= DXGI_FORMAT_R32_TYPELESS;
 	Desc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
 	Desc.Buffer.StructureByteStride	= 0;
 

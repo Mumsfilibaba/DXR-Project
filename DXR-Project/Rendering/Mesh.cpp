@@ -68,10 +68,10 @@ bool Mesh::Initialize(const MeshData& Data)
 			return false;
 		}
 
+		// ByteAddressBuffer
 		IndexBufferSRV = RenderingAPI::CreateShaderResourceView(
 			IndexBuffer.Get(), 
-			0, IndexCount, 
-			EFormat::Format_R32_Typeless);
+			0, IndexCount);
 		if (!IndexBufferSRV)
 		{
 			return false;

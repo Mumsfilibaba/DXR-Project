@@ -266,14 +266,12 @@ public:
 	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
 		const Buffer* Buffer,
 		UInt32 FirstElement,
-		UInt32 ElementCount,
-		EFormat Format)
+		UInt32 ElementCount)
 	{
 		return CurrentRenderingAPI->CreateShaderResourceView(
 			Buffer,
 			FirstElement,
-			ElementCount,
-			Format);
+			ElementCount);
 	}
 
 	FORCEINLINE static ShaderResourceView* CreateShaderResourceView(

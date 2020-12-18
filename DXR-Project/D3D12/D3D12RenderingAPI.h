@@ -184,8 +184,7 @@ public:
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Buffer* Buffer,
 		UInt32 FirstElement,
-		UInt32 ElementCount,
-		EFormat Format) const override final;
+		UInt32 ElementCount) const override final;
 
 	virtual ShaderResourceView* CreateShaderResourceView(
 		const Buffer* Buffer,

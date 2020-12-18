@@ -164,16 +164,6 @@ private:
 	TSharedRef<ConstantBuffer> PointLightBuffer;
 	TSharedRef<ConstantBuffer> DirectionalLightBuffer;
 
-	TSharedRef<VertexBuffer> MeshVertexBuffer;
-	TSharedRef<ShaderResourceView> MeshVertexBufferSRV;
-	TSharedRef<VertexBuffer> CubeVertexBuffer;
-	TSharedRef<ShaderResourceView> CubeVertexBufferSRV;
-
-	TSharedRef<IndexBuffer> MeshIndexBuffer;
-	TSharedRef<ShaderResourceView> MeshIndexBufferSRV;
-	TSharedRef<IndexBuffer> CubeIndexBuffer;
-	TSharedRef<ShaderResourceView> CubeIndexBufferSRV;
-
 	TSharedRef<VertexBuffer> SkyboxVertexBuffer;
 	TSharedRef<VertexBuffer> AABBVertexBuffer;
 	TSharedRef<IndexBuffer> SkyboxIndexBuffer;
@@ -190,11 +180,8 @@ private:
 	TSharedRef<TextureCube> Skybox;
 	TSharedRef<TextureCube> PointLightShadowMaps;
 	TArray<TSharedRef<DepthStencilView>> PointLightShadowMapsDSVs;
-	TSharedRef<ShaderResourceView>	PointLightShadowMapsSRV;
+	TSharedRef<ShaderResourceView> PointLightShadowMapsSRV;
 	
-	TSharedRef<Texture2D> Albedo;
-	TSharedRef<Texture2D> Normal;
-
 	TSharedRef<ShaderResourceView>	DirLightShadowMapSRV;
 	TSharedRef<DepthStencilView>	DirLightShadowMapDSV;
 	TSharedRef<Texture2D> DirLightShadowMaps;
@@ -221,17 +208,18 @@ private:
 	
 	TSharedRef<InputLayoutState> StdInputLayout;
 
-	TSharedRef<GraphicsPipelineState>	PrePassPSO;
-	TSharedRef<GraphicsPipelineState>	ShadowMapPSO;
-	TSharedRef<GraphicsPipelineState>	VSMShadowMapPSO;
-	TSharedRef<GraphicsPipelineState>	LinearShadowMapPSO;
-	TSharedPtr<GraphicsPipelineState> 	ForwardPSO;
-	TSharedRef<GraphicsPipelineState>	GeometryPSO;
-	TSharedRef<GraphicsPipelineState>	LightPassPSO;
-	TSharedRef<GraphicsPipelineState>	SkyboxPSO;
-	TSharedRef<GraphicsPipelineState>	DebugBoxPSO;
-	TSharedRef<GraphicsPipelineState>	PostPSO;
-	TSharedRef<GraphicsPipelineState>	FXAAPSO;
+	TSharedRef<GraphicsPipelineState> PrePassPSO;
+	TSharedRef<GraphicsPipelineState> ShadowMapPSO;
+	TSharedRef<GraphicsPipelineState> VSMShadowMapPSO;
+	TSharedRef<GraphicsPipelineState> LinearShadowMapPSO;
+	TSharedPtr<GraphicsPipelineState> ForwardPSO;
+	TSharedRef<GraphicsPipelineState> GeometryPSO;
+	TSharedRef<GraphicsPipelineState> LightPassPSO;
+	TSharedRef<GraphicsPipelineState> SkyboxPSO;
+	TSharedRef<GraphicsPipelineState> DebugBoxPSO;
+	TSharedRef<GraphicsPipelineState> PostPSO;
+	TSharedRef<GraphicsPipelineState> FXAAPSO;
+
 	TSharedRef<RayTracingPipelineState>	RaytracingPSO;
 
 	TSharedRef<ComputeShader> IrradianceGenShader;
@@ -242,10 +230,14 @@ private:
 	TSharedPtr<ComputePipelineState> SSAOPSO;
 	TSharedPtr<ComputePipelineState> SSAOBlur;
 
-	TSharedRef<StructuredBuffer> SSAOSamples;
-	TSharedRef<Texture2D> SSAOBuffer;
-	TSharedRef<Texture2D> SSAONoiseTex;
-	
+	TSharedRef<StructuredBuffer>	SSAOSamples;
+	TSharedRef<ShaderResourceView>	SSAOSamplesSRV;
+	TSharedRef<Texture2D>			SSAOBuffer;
+	TSharedRef<ShaderResourceView>	SSAOBufferSRV;
+	TSharedRef<UnorderedAccessView>	SSAOBufferUAV;
+	TSharedRef<Texture2D>			SSAONoiseTex;
+	TSharedRef<ShaderResourceView>	SSAONoiseSRV;
+
 	TSharedPtr<RayTracingScene> RayTracingScene;
 	TArray<RayTracingGeometryInstance> RayTracingGeometryInstances;
 
@@ -262,7 +254,7 @@ private:
 	Bool SSAOEnabled	= true;
 	Float SSAORadius	= 0.3f;
 	Float SSAOBias		= 0.0f;
-	Int32 SSAOKernelSize	= 64;
+	Int32 SSAOKernelSize = 64;
 
 	static LightSettings		GlobalLightSettings;
 	static TUniquePtr<Renderer> RendererInstance;

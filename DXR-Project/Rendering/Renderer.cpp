@@ -25,6 +25,7 @@
 TUniquePtr<Renderer>	Renderer::RendererInstance = nullptr;
 LightSettings			Renderer::GlobalLightSettings;
 
+static const EFormat SSAOBufferFormat		= EFormat::Format_R32G32B32A32_Float;
 static const EFormat FinalTargetFormat		= EFormat::Format_R16G16B16A16_Float;
 static const EFormat RenderTargetFormat		= EFormat::Format_R8G8B8A8_Unorm;
 static const EFormat AlbedoFormat			= EFormat::Format_R8G8B8A8_Unorm;
@@ -1171,33 +1172,6 @@ bool Renderer::Initialize()
 
 	GenerateIrradianceMap(Skybox.Get(), IrradianceMap.Get(), CmdList);
 	GenerateSpecularIrradianceMap(Skybox.Get(), SpecularIrradianceMap.Get(), CmdList);
-
-	// Create albedo for raytracing
-	Albedo = TextureFactory::LoadFromFile(
-		"../Assets/Textures/RockySoil_Albedo.png", 
-		TextureFactoryFlag_GenerateMips, 
-		EFormat::Format_R8G8B8A8_Unorm);
-	if (!Albedo)
-	{
-		return false;
-	}
-	else
-	{
-		Albedo->SetName("AlbedoMap");
-	}
-	
-	Normal = TextureFactory::LoadFromFile(
-		"../Assets/Textures/RockySoil_Normal.png", 
-		TextureFactoryFlag_GenerateMips, 
-		EFormat::Format_R8G8B8A8_Unorm);
-	if (!Normal)
-	{
-		return false;
-	}
-	else
-	{
-		Normal->SetName("NormalMap");
-	}
 
 	// Init standard inputlayout
 	InputLayoutStateCreateInfo InputLayout =
@@ -3118,296 +3092,127 @@ bool Renderer::InitForwardPass()
 {
 	using namespace Microsoft::WRL;
 
-	//// Init PipelineState
-	//DxcDefine Defines[] =
-	//{
-	//	{ L"ENABLE_PARALLAX_MAPPING",	L"1" },
-	//	{ L"ENABLE_NORMAL_MAPPING",		L"1" },
-	//};
+	// Init PipelineState
+	TArray<ShaderDefine> Defines =
+	{
+		{ "ENABLE_PARALLAX_MAPPING", "1" },
+		{ "ENABLE_NORMAL_MAPPING",	 "1" },
+	};
 
-	//ComPtr<IDxcBlob> VSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/ForwardPass.hlsl", "VSMain", "vs_6_0", Defines, 2);
-	//if (!VSBlob)
-	//{
-	//	return false;
-	//}
+	TArray<UInt8> ShaderCode;
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/ForwardPass.hlsl",
+		"VSMain",
+		&Defines,
+		EShaderStage::ShaderStage_Vertex,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
 
-	//ComPtr<IDxcBlob> PSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/ForwardPass.hlsl", "PSMain", "ps_6_0", Defines, 2);
-	//if (!PSBlob)
-	//{
-	//	return false;
-	//}
+	TSharedRef<VertexShader> VShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	if (!VShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		VShader->SetName("GeometryPass VertexShader");
+	}
 
-	//// Init RootSignatures
-	//{
-	//	constexpr UInt32 NumPerFrameRanges = 8;
-	//	D3D12_DESCRIPTOR_RANGE PerFrameRanges[NumPerFrameRanges] = {};
-	//	// Camera Buffer
-	//	PerFrameRanges[0].BaseShaderRegister				= 0;
-	//	PerFrameRanges[0].NumDescriptors					= 1;
-	//	PerFrameRanges[0].RegisterSpace						= 1;
-	//	PerFrameRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	PerFrameRanges[0].OffsetInDescriptorsFromTableStart	= 0;
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/ForwardPass.hlsl",
+		"PSMain",
+		&Defines,
+		EShaderStage::ShaderStage_Pixel,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
 
-	//	// PointLight Buffer
-	//	PerFrameRanges[1].BaseShaderRegister				= 1;
-	//	PerFrameRanges[1].NumDescriptors					= 1;
-	//	PerFrameRanges[1].RegisterSpace						= 1;
-	//	PerFrameRanges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	PerFrameRanges[1].OffsetInDescriptorsFromTableStart = 1;
+	TSharedRef<PixelShader> PShader = RenderingAPI::CreatePixelShader(ShaderCode);
+	if (!PShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		PShader->SetName("ForwardPass PixelShader");
+	}
 
-	//	// DirLight Buffer
-	//	PerFrameRanges[2].BaseShaderRegister				= 2;
-	//	PerFrameRanges[2].NumDescriptors					= 1;
-	//	PerFrameRanges[2].RegisterSpace						= 1;
-	//	PerFrameRanges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	PerFrameRanges[2].OffsetInDescriptorsFromTableStart	= 2;
+	DepthStencilStateCreateInfo DepthStencilStateInfo;
+	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_LessEqual;
+	DepthStencilStateInfo.DepthEnable		= true;
+	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_All;
 
-	//	// Irradiance Map
-	//	PerFrameRanges[3].BaseShaderRegister				= 0;
-	//	PerFrameRanges[3].NumDescriptors					= 1;
-	//	PerFrameRanges[3].RegisterSpace						= 1;
-	//	PerFrameRanges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerFrameRanges[3].OffsetInDescriptorsFromTableStart = 3;
+	TSharedRef<DepthStencilState> DepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	if (!DepthStencilState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		DepthStencilState->SetName("ForwardPass DepthStencilState");
+	}
 
-	//	// Specular Irradiance Map
-	//	PerFrameRanges[4].BaseShaderRegister				= 1;
-	//	PerFrameRanges[4].NumDescriptors					= 1;
-	//	PerFrameRanges[4].RegisterSpace						= 1;
-	//	PerFrameRanges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerFrameRanges[4].OffsetInDescriptorsFromTableStart = 4;
+	RasterizerStateCreateInfo RasterizerStateInfo;
+	RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
 
-	//	// Integration LUT
-	//	PerFrameRanges[5].BaseShaderRegister				= 2;
-	//	PerFrameRanges[5].NumDescriptors					= 1;
-	//	PerFrameRanges[5].RegisterSpace						= 1;
-	//	PerFrameRanges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerFrameRanges[5].OffsetInDescriptorsFromTableStart = 5;
+	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	if (!RasterizerState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		RasterizerState->SetName("ForwardPass RasterizerState");
+	}
 
-	//	// DirLight ShadowMaps
-	//	PerFrameRanges[6].BaseShaderRegister				= 3;
-	//	PerFrameRanges[6].NumDescriptors					= 1;
-	//	PerFrameRanges[6].RegisterSpace						= 1;
-	//	PerFrameRanges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerFrameRanges[6].OffsetInDescriptorsFromTableStart = 6;
+	BlendStateCreateInfo BlendStateInfo;
+	BlendStateInfo.IndependentBlendEnable		= false;
+	BlendStateInfo.RenderTarget[0].BlendEnable	= true;
 
-	//	// PointLight ShadowMaps
-	//	PerFrameRanges[7].BaseShaderRegister				= 4;
-	//	PerFrameRanges[7].NumDescriptors					= 1;
-	//	PerFrameRanges[7].RegisterSpace						= 1;
-	//	PerFrameRanges[7].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerFrameRanges[7].OffsetInDescriptorsFromTableStart = 7;
+	TSharedRef<BlendState> BlendState = RenderingAPI::CreateBlendState(BlendStateInfo);
+	if (!BlendState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		BlendState->SetName("GeometryPass BlendState");
+	}
 
-	//	constexpr UInt32 NumPerObjectRanges = 8;
-	//	D3D12_DESCRIPTOR_RANGE PerObjectRanges[NumPerObjectRanges] = {};
-	//	// Albedo Map
-	//	PerObjectRanges[0].BaseShaderRegister					= 0;
-	//	PerObjectRanges[0].NumDescriptors						= 1;
-	//	PerObjectRanges[0].RegisterSpace						= 0;
-	//	PerObjectRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[0].OffsetInDescriptorsFromTableStart	= 0;
+	GraphicsPipelineStateCreateInfo PSOProperties = { };
+	PSOProperties.ShaderState.VertexShader	= VShader.Get();
+	PSOProperties.ShaderState.PixelShader	= PShader.Get();
+	PSOProperties.InputLayoutState	= StdInputLayout.Get();
+	PSOProperties.DepthStencilState = DepthStencilState.Get();
+	PSOProperties.BlendState		= BlendState.Get();
+	PSOProperties.RasterizerState	= RasterizerState.Get();
+	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= FinalTargetFormat;
+	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
+	PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
 
-	//	// Normal Map
-	//	PerObjectRanges[1].BaseShaderRegister					= 1;
-	//	PerObjectRanges[1].NumDescriptors						= 1;
-	//	PerObjectRanges[1].RegisterSpace						= 0;
-	//	PerObjectRanges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[1].OffsetInDescriptorsFromTableStart	= 1;
+	ForwardPSO = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
+	if (!ForwardPSO)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		ForwardPSO->SetName("Forward PipelineState");
+	}
 
-	//	// Roughness Map
-	//	PerObjectRanges[2].BaseShaderRegister					= 2;
-	//	PerObjectRanges[2].NumDescriptors						= 1;
-	//	PerObjectRanges[2].RegisterSpace						= 0;
-	//	PerObjectRanges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[2].OffsetInDescriptorsFromTableStart	= 2;
-
-	//	// Height Map
-	//	PerObjectRanges[3].BaseShaderRegister					= 3;
-	//	PerObjectRanges[3].NumDescriptors						= 1;
-	//	PerObjectRanges[3].RegisterSpace						= 0;
-	//	PerObjectRanges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[3].OffsetInDescriptorsFromTableStart	= 3;
-
-	//	// Metallic Map
-	//	PerObjectRanges[4].BaseShaderRegister					= 4;
-	//	PerObjectRanges[4].NumDescriptors						= 1;
-	//	PerObjectRanges[4].RegisterSpace						= 0;
-	//	PerObjectRanges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[4].OffsetInDescriptorsFromTableStart	= 4;
-
-	//	// AO Map
-	//	PerObjectRanges[5].BaseShaderRegister					= 5;
-	//	PerObjectRanges[5].NumDescriptors						= 1;
-	//	PerObjectRanges[5].RegisterSpace						= 0;
-	//	PerObjectRanges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[5].OffsetInDescriptorsFromTableStart	= 5;
-
-	//	// Material Buffer
-	//	PerObjectRanges[6].BaseShaderRegister					= 1;
-	//	PerObjectRanges[6].NumDescriptors						= 1;
-	//	PerObjectRanges[6].RegisterSpace						= 0;
-	//	PerObjectRanges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	PerObjectRanges[6].OffsetInDescriptorsFromTableStart	= 6;
-
-	//	// Alpha Mask
-	//	PerObjectRanges[7].BaseShaderRegister					= 6;
-	//	PerObjectRanges[7].NumDescriptors						= 1;
-	//	PerObjectRanges[7].RegisterSpace						= 0;
-	//	PerObjectRanges[7].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerObjectRanges[7].OffsetInDescriptorsFromTableStart	= 7;
-
-	//	D3D12_ROOT_PARAMETER Parameters[3];
-	//	// Transform Constants
-	//	Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	//	Parameters[0].Constants.ShaderRegister	= 0;
-	//	Parameters[0].Constants.RegisterSpace	= 0;
-	//	Parameters[0].Constants.Num32BitValues	= 32;
-	//	Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
-
-	//	// PerFrame DescriptorTable
-	//	Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	Parameters[1].DescriptorTable.NumDescriptorRanges	= NumPerFrameRanges;
-	//	Parameters[1].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
-	//	Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
-
-	//	// PerObject DescriptorTable
-	//	Parameters[2].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	Parameters[2].DescriptorTable.NumDescriptorRanges	= NumPerObjectRanges;
-	//	Parameters[2].DescriptorTable.pDescriptorRanges		= PerObjectRanges;
-	//	Parameters[2].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	constexpr UInt32 NumStaticSamplers = 5;
-	//	D3D12_STATIC_SAMPLER_DESC StaticSamplers[NumStaticSamplers] = { };
-	//	// Material Sampler
-	//	StaticSamplers[0].Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	//	StaticSamplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[0].MipLODBias		= 0.0f;
-	//	StaticSamplers[0].MaxAnisotropy		= 0;
-	//	StaticSamplers[0].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
-	//	StaticSamplers[0].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//	StaticSamplers[0].MinLOD			= 0.0f;
-	//	StaticSamplers[0].MaxLOD			= FLT_MAX;
-	//	StaticSamplers[0].ShaderRegister	= 0;
-	//	StaticSamplers[0].RegisterSpace		= 1;
-	//	StaticSamplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	// LUT Sampler
-	//	StaticSamplers[1].Filter			= D3D12_FILTER_MIN_MAG_MIP_POINT;
-	//	StaticSamplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	StaticSamplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	StaticSamplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	StaticSamplers[1].MipLODBias		= 0.0f;
-	//	StaticSamplers[1].MaxAnisotropy		= 0;
-	//	StaticSamplers[1].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
-	//	StaticSamplers[1].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//	StaticSamplers[1].MinLOD			= 0.0f;
-	//	StaticSamplers[1].MaxLOD			= 1.0f;
-	//	StaticSamplers[1].ShaderRegister	= 1;
-	//	StaticSamplers[1].RegisterSpace		= 1;
-	//	StaticSamplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	// Irradiance Sampler
-	//	StaticSamplers[2].Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	//	StaticSamplers[2].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	StaticSamplers[2].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	StaticSamplers[2].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	StaticSamplers[2].MipLODBias		= 0.0f;
-	//	StaticSamplers[2].MaxAnisotropy		= 0;
-	//	StaticSamplers[2].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
-	//	StaticSamplers[2].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//	StaticSamplers[2].MinLOD			= 0.0f;
-	//	StaticSamplers[2].MaxLOD			= FLT_MAX;
-	//	StaticSamplers[2].ShaderRegister	= 2;
-	//	StaticSamplers[2].RegisterSpace		= 1;
-	//	StaticSamplers[2].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	// Comparison ShadowMap Sampler
-	//	StaticSamplers[3].Filter			= D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
-	//	StaticSamplers[3].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	StaticSamplers[3].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	StaticSamplers[3].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	StaticSamplers[3].MipLODBias		= 0.0f;
-	//	StaticSamplers[3].MaxAnisotropy		= 0;
-	//	StaticSamplers[3].ComparisonFunc	= D3D12_COMPARISON_FUNC_LESS;
-	//	StaticSamplers[3].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-	//	StaticSamplers[3].MinLOD			= 0.0f;
-	//	StaticSamplers[3].MaxLOD			= FLT_MAX;
-	//	StaticSamplers[3].ShaderRegister	= 3;
-	//	StaticSamplers[3].RegisterSpace		= 1;
-	//	StaticSamplers[3].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	// PointLight ShadowMap Sampler
-	//	StaticSamplers[4].Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	//	StaticSamplers[4].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	StaticSamplers[4].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	StaticSamplers[4].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//	StaticSamplers[4].MipLODBias		= 0.0f;
-	//	StaticSamplers[4].MaxAnisotropy		= 0;
-	//	StaticSamplers[4].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
-	//	StaticSamplers[4].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-	//	StaticSamplers[4].MinLOD			= 0.0f;
-	//	StaticSamplers[4].MaxLOD			= FLT_MAX;
-	//	StaticSamplers[4].ShaderRegister	= 4;
-	//	StaticSamplers[4].RegisterSpace		= 1;
-	//	StaticSamplers[4].ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-	//	RootSignatureDesc.NumParameters		= 3;
-	//	RootSignatureDesc.pParameters		= Parameters;
-	//	RootSignatureDesc.NumStaticSamplers	= NumStaticSamplers;
-	//	RootSignatureDesc.pStaticSamplers	= StaticSamplers;
-	//	RootSignatureDesc.Flags =
-	//		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-
-	//	ForwardRootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
-	//	if (!ForwardRootSignature->Initialize(RootSignatureDesc))
-	//	{
-	//		return false;
-	//	}
-
-	//	// Init PipelineState
-	//	D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
-	//	{
-	//		{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 0,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 12,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//		{ "TANGENT",	0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 24,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,	0, 36,	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//	};
-
-	//	GraphicsPipelineStateProperties PSOProperties = { };
-	//	PSOProperties.DebugName			= "ForwardPass PipelineState";
-	//	PSOProperties.VSBlob			= VSBlob.Get();
-	//	PSOProperties.PSBlob			= PSBlob.Get();
-	//	PSOProperties.RootSignature		= ForwardRootSignature.Get();
-	//	PSOProperties.InputElements		= InputElementDesc;
-	//	PSOProperties.NumInputElements	= 4;
-	//	PSOProperties.EnableDepth		= true;
-	//	PSOProperties.DepthWriteMask	= D3D12_DEPTH_WRITE_MASK_ALL;
-	//	PSOProperties.DepthFunc			= D3D12_COMPARISON_FUNC_LESS;
-	//	PSOProperties.DepthBufferFormat = DepthBufferFormat;
-	//	PSOProperties.CullMode			= D3D12_CULL_MODE_NONE;
-	//	PSOProperties.EnableBlending	= true;
-
-	//	DXGI_FORMAT Formats[] =
-	//	{
-	//		RenderTargetFormat
-	//	};
-
-	//	PSOProperties.RTFormats			= Formats;
-	//	PSOProperties.NumRenderTargets	= 1;
-
-	//	ForwardPSO = RenderingAPI::Get().CreateGraphicsPipelineState(PSOProperties);
-	//	if (!ForwardPSO)
-	//	{
-	//		return false;
-	//	}
-
-	//	return true;
-	//}
 	return true;
 }
 
@@ -3419,7 +3224,7 @@ bool Renderer::InitSSAO()
 	{
 		SSAOBuffer = RenderingAPI::CreateTexture2D(
 			nullptr,
-			EFormat::Format_R32G32B32A32_Float,
+			SSAOBufferFormat,
 			TextureUsage_RWTexture,
 			800,
 			600,
@@ -3434,173 +3239,76 @@ bool Renderer::InitSSAO()
 			SSAOBuffer->SetName("SSAO Buffer");
 		}
 
-		//D3D12_UNORDERED_ACCESS_VIEW_DESC UAVView = { };
-		//UAVView.Format = TextureProps.Format;
-		//UAVView.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-		//UAVView.Texture2D.MipSlice = 0;
-		//UAVView.Texture2D.PlaneSlice = 0;
+		SSAOBufferUAV = RenderingAPI::CreateUnorderedAccessView(
+			SSAOBuffer.Get(),
+			SSAOBufferFormat,
+			0);
+		if (!SSAOBufferUAV)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+		else
+		{
+			SSAOBufferUAV->SetName("SSAO Buffer UAV");
+		}
 
-		//SSAOBuffer->SetUnorderedAccessView(TSharedPtr(RenderingAPI::Get().CreateUnorderedAccessView(nullptr, SSAOBuffer->GetResource(), &UAVView)), 0);
-
-		//D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-		//SrvDesc.Format = TextureProps.Format;
-		//SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		//SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		//SrvDesc.Texture2D.MipLevels = 1;
-		//SrvDesc.Texture2D.MostDetailedMip = 0;
-		//SrvDesc.Texture2D.PlaneSlice = 0;
-		//SrvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-
-		//SSAOBuffer->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(SSAOBuffer->GetResource(), &SrvDesc)), 0);
+		SSAOBufferSRV = RenderingAPI::CreateShaderResourceView(
+			SSAOBuffer.Get(),
+			SSAOBufferFormat,
+			0, 1);
+		if (!SSAOBufferSRV)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+		else
+		{
+			SSAOBufferSRV->SetName("SSAO Buffer SRV");
+		}
 	}
 
 	// Load shader
-	//ComPtr<IDxcBlob> CSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/SSAO.hlsl", "Main", "cs_6_0");
-	//if (!CSBlob)
-	//{
-	//	Debug::DebugBreak();
-	//	return false;
-	//}
+	TArray<UInt8> ShaderCode;
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/SSAO.hlsl",
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Compute,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
 
+	TSharedRef<ComputeShader> CShader = RenderingAPI::CreateComputeShader(ShaderCode);
+	if (!CShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		CShader->SetName("SSAO Shader");
+	}
 
+	// Init PipelineState
+	{
+		ComputePipelineStateCreateInfo PSOProperties = { };
+		PSOProperties.Shader = CShader.Get();
 
-	//FORCEINLINE static Texture2D* CreateTexture2D(
-//	const ResourceData * InitalData,
-//	EFormat Format,
-//	UInt32 Usage,
-//	UInt32 Width,
-//	UInt32 Height,
-//	UInt32 MipLevels,
-//	UInt32 SampleCount,
-//	const ClearValue & OptimizedClearValue = ClearValue())
-
-	//{
-	//	// Init RootSignatures
-	//	constexpr UInt32 NumPerFrameRanges = 6;
-	//	D3D12_DESCRIPTOR_RANGE PerFrameRanges[NumPerFrameRanges] = {};
-	//	// Normal Buffer
-	//	PerFrameRanges[0].BaseShaderRegister = 0;
-	//	PerFrameRanges[0].NumDescriptors = 1;
-	//	PerFrameRanges[0].RegisterSpace = 0;
-	//	PerFrameRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerFrameRanges[0].OffsetInDescriptorsFromTableStart = 0;
-
-	//	// Depth Buffer
-	//	PerFrameRanges[1].BaseShaderRegister = 1;
-	//	PerFrameRanges[1].NumDescriptors = 1;
-	//	PerFrameRanges[1].RegisterSpace = 0;
-	//	PerFrameRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerFrameRanges[1].OffsetInDescriptorsFromTableStart = 1;
-
-	//	// Noise 
-	//	PerFrameRanges[2].BaseShaderRegister = 2;
-	//	PerFrameRanges[2].NumDescriptors = 1;
-	//	PerFrameRanges[2].RegisterSpace = 0;
-	//	PerFrameRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerFrameRanges[2].OffsetInDescriptorsFromTableStart = 2;
-
-	//	// Output Buffer
-	//	PerFrameRanges[3].BaseShaderRegister = 0;
-	//	PerFrameRanges[3].NumDescriptors = 1;
-	//	PerFrameRanges[3].RegisterSpace = 0;
-	//	PerFrameRanges[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-	//	PerFrameRanges[3].OffsetInDescriptorsFromTableStart = 3;
-
-	//	// Samples 
-	//	PerFrameRanges[4].BaseShaderRegister = 3;
-	//	PerFrameRanges[4].NumDescriptors = 1;
-	//	PerFrameRanges[4].RegisterSpace = 0;
-	//	PerFrameRanges[4].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	PerFrameRanges[4].OffsetInDescriptorsFromTableStart = 4;
-
-	//	// Camera
-	//	PerFrameRanges[5].BaseShaderRegister = 1;
-	//	PerFrameRanges[5].NumDescriptors = 1;
-	//	PerFrameRanges[5].RegisterSpace = 0;
-	//	PerFrameRanges[5].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	PerFrameRanges[5].OffsetInDescriptorsFromTableStart = 5;
-
-	//	constexpr UInt32 NumParameters = 2;
-	//	D3D12_ROOT_PARAMETER Parameters[NumParameters];
-	//	// DescriptorTable
-	//	Parameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	Parameters[0].DescriptorTable.NumDescriptorRanges = NumPerFrameRanges;
-	//	Parameters[0].DescriptorTable.pDescriptorRanges = PerFrameRanges;
-	//	Parameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	//	// Settings
-	//	Parameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	//	Parameters[1].Constants.Num32BitValues = 7;
-	//	Parameters[1].Constants.RegisterSpace = 0;
-	//	Parameters[1].Constants.ShaderRegister = 0;
-	//	Parameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	//	constexpr UInt32 NumStaticSamplers = 2;
-	//	D3D12_STATIC_SAMPLER_DESC StaticSamplers[NumStaticSamplers] = { };
-	//	// GBuffer Sampler
-	//	StaticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-	//	StaticSamplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[0].MipLODBias = 0.0f;
-	//	StaticSamplers[0].MaxAnisotropy = 0;
-	//	StaticSamplers[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-	//	StaticSamplers[0].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//	StaticSamplers[0].MinLOD = 0.0f;
-	//	StaticSamplers[0].MaxLOD = FLT_MAX;
-	//	StaticSamplers[0].ShaderRegister = 0;
-	//	StaticSamplers[0].RegisterSpace = 0;
-	//	StaticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	//	// Noise Samplers
-	//	StaticSamplers[1].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-	//	StaticSamplers[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[1].MipLODBias = 0.0f;
-	//	StaticSamplers[1].MaxAnisotropy = 0;
-	//	StaticSamplers[1].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-	//	StaticSamplers[1].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//	StaticSamplers[1].MinLOD = 0.0f;
-	//	StaticSamplers[1].MaxLOD = FLT_MAX;
-	//	StaticSamplers[1].ShaderRegister = 1;
-	//	StaticSamplers[1].RegisterSpace = 0;
-	//	StaticSamplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	//	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-	//	RootSignatureDesc.NumParameters = NumParameters;
-	//	RootSignatureDesc.pParameters = Parameters;
-	//	RootSignatureDesc.NumStaticSamplers = NumStaticSamplers;
-	//	RootSignatureDesc.pStaticSamplers = StaticSamplers;
-	//	RootSignatureDesc.Flags =
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
-
-	//	SSAORootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
-	//	if (!SSAORootSignature->Initialize(RootSignatureDesc))
-	//	{
-	//		Debug::DebugBreak();
-	//		return false;
-	//	}
-	//}
-
-	//{
-	//	// Init PipelineState
-	//	ComputePipelineStateProperties PSOProperties = { };
-	//	PSOProperties.DebugName		= "SSAO PipelineState";
-	//	PSOProperties.CSBlob		= CSBlob.Get();
-	//	PSOProperties.RootSignature = SSAORootSignature.Get();
-
-	//	SSAOPSO = RenderingAPI::Get().CreateComputePipelineState(PSOProperties);
-	//	if (!SSAOPSO)
-	//	{
-	//		Debug::DebugBreak();
-	//		return false;
-	//	}
-	//}
+		SSAOPSO = RenderingAPI::CreateComputePipelineState(PSOProperties);
+		if (!SSAOPSO)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+		else
+		{
+			SSAOPSO->SetName("SSAO PipelineState");
+		}
+	}
 
 	// Generate SSAO Kernel
 	std::uniform_real_distribution<Float> RandomFloats(0.0f, 1.0f);
@@ -3641,169 +3349,137 @@ bool Renderer::InitSSAO()
 	}
 
 	// Init texture
-	//{
-	//	TextureProperties TextureProps = { };
-	//	TextureProps.DebugName		= "SSAO Noise";
-	//	TextureProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-	//	TextureProps.Width			= 4;
-	//	TextureProps.Height			= 4;
-	//	TextureProps.MipLevels		= 1;
-	//	TextureProps.ArrayCount		= 1;
-	//	TextureProps.Format			= DXGI_FORMAT_R16G16B16A16_FLOAT;
-	//	TextureProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
-	//	TextureProps.SampleCount	= 1;
+	{
+		SSAONoiseTex = RenderingAPI::CreateTexture2D(
+			nullptr,
+			EFormat::Format_R16G16_Float,
+			TextureUsage_SRV,
+			4,
+			4,
+			1, 1);
+		if (!SSAONoiseTex)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+		else
+		{
+			SSAONoiseTex->SetName("SSAO Noise Texture");
+		}
 
-	//	SSAONoiseTex = RenderingAPI::Get().CreateTexture(TextureProps);
-	//	if (!SSAONoiseTex)
-	//	{
-	//		Debug::DebugBreak();
-	//		return false;
-	//	}
+		SSAONoiseSRV = RenderingAPI::CreateShaderResourceView(
+			SSAONoiseTex.Get(),
+			EFormat::Format_R16G16_Float,
+			0, 1);
+		if (!SSAONoiseSRV)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+		else
+		{
+			SSAOBufferSRV->SetName("SSAO Noise Texture SRV");
+		}
+	}
 
-	//	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-	//	SrvDesc.Format							= TextureProps.Format;
-	//	SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
-	//	SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	//	SrvDesc.Texture2D.MipLevels				= 1;
-	//	SrvDesc.Texture2D.MostDetailedMip		= 0;
-	//	SrvDesc.Texture2D.PlaneSlice			= 0;
-	//	SrvDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
+	CmdList.Begin();
+	CmdList.TransitionTexture(
+		SSAOBuffer.Get(), 
+		EResourceState::ResourceState_Common, 
+		EResourceState::ResourceState_PixelShaderResource);
 
-	//	SSAONoiseTex->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(SSAONoiseTex->GetResource(), &SrvDesc)), 0);
+	CmdList.TransitionTexture(
+		SSAONoiseTex.Get(),
+		EResourceState::ResourceState_Common,
+		EResourceState::ResourceState_CopyDest);
 
-	//	RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAONoiseTex.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-	//	RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAOBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	{
+		const UInt32 Stride		= 4 * sizeof(Float16);
+		const UInt32 RowPitch	= ((4 * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
+		CmdList.UpdateTexture2D(
+			SSAONoiseTex.Get(),
+			4, 4, 0,
+			SSAONoise.Data());
+	}
 
-	//	const UInt32 Stride		= 4 * sizeof(Float16);
-	//	const UInt32 RowPitch	= ((4 * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
-	//	RenderingAPI::StaticGetImmediateCommandList()->UploadTextureData(SSAONoiseTex.Get(), SSAONoise.Data(), TextureProps.Format, 4, 4, 1, Stride, RowPitch);
-	//	
-	//	RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAONoiseTex.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	//	
-	//	RenderingAPI::StaticGetImmediateCommandList()->Flush();
-	//	RenderingAPI::StaticGetImmediateCommandList()->WaitForCompletion();
-	//}
+	CmdList.TransitionTexture(
+		SSAONoiseTex.Get(),
+		EResourceState::ResourceState_CopyDest,
+		EResourceState::ResourceState_NonPixelShaderResource);
+
+	CmdList.End();
 
 	// Init samples
-	//{
-	//	BufferProperties SamplesProps;
-	//	SamplesProps.Name			= "SSAO Samples Buffer";
-	//	SamplesProps.Flags			= D3D12_RESOURCE_FLAG_NONE;
-	//	SamplesProps.InitalState	= D3D12_RESOURCE_STATE_COMMON;
-	//	SamplesProps.MemoryType		= EMemoryType::MEMORY_TYPE_DEFAULT;
-	//	SamplesProps.SizeInBytes	= sizeof(XMFLOAT3) * SSAOKernel.Size();
+	{
+		const UInt32 Stride			= sizeof(XMFLOAT3);
+		const UInt32 SizeInBytes	= Stride * SSAOKernel.Size();
+		ResourceData SSAOSampleData(SSAOKernel.Data());
+		SSAOSamples = RenderingAPI::CreateStructuredBuffer(
+			&SSAOSampleData,
+			SizeInBytes,
+			Stride,
+			BufferUsage_SRV | BufferUsage_Default);
+		if (!SSAOSamples)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+		else
+		{
+			SSAOSamples->SetName("SSAO Samples");
+		}
+	}
 
-	//	SSAOSamples = RenderingAPI::Get().CreateBuffer(SamplesProps);
-	//	if (!SSAOSamples)
-	//	{
-	//		Debug::DebugBreak();
-	//		return false;
-	//	}
-
-	//	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = { };
-	//	SrvDesc.Format						= DXGI_FORMAT_UNKNOWN;
-	//	SrvDesc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
-	//	SrvDesc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	//	SrvDesc.Buffer.FirstElement			= 0;
-	//	SrvDesc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
-	//	SrvDesc.Buffer.NumElements			= SSAOKernel.Size();
-	//	SrvDesc.Buffer.StructureByteStride	= sizeof(XMFLOAT3);
-
-	//	SSAOSamples->SetShaderResourceView(TSharedPtr(RenderingAPI::Get().CreateShaderResourceView(SSAOSamples->GetResource(), &SrvDesc)), 0);
-
-	//	RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAOSamples.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-	//	RenderingAPI::StaticGetImmediateCommandList()->UploadBufferData(SSAOSamples.Get(), 0, SSAOKernel.Data(), SamplesProps.SizeInBytes);
-	//	RenderingAPI::StaticGetImmediateCommandList()->TransitionBarrier(SSAOSamples.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	//	
-	//	RenderingAPI::StaticGetImmediateCommandList()->Flush();
-	//	RenderingAPI::StaticGetImmediateCommandList()->WaitForCompletion();
-	//}
+	SSAOSamplesSRV = RenderingAPI::CreateShaderResourceView(
+		SSAOSamples.Get(),
+		0, SSAOKernel.Size(), 
+		sizeof(XMFLOAT3));
+	if (!SSAOSamplesSRV)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		SSAOSamplesSRV->SetName("SSAO Samples SRV");
+	}
 
 	// Load shader
-	//CSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/Blur.hlsl", "Main", "cs_6_0");
-	//if (!CSBlob)
-	//{
-	//	Debug::DebugBreak();
-	//	return false;
-	//}
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/Blur.hlsl",
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Compute,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
 
-	//{
-	//	// Init RootSignatures
-	//	constexpr UInt32 NumPerFrameRanges = 1;
-	//	D3D12_DESCRIPTOR_RANGE PerFrameRanges[NumPerFrameRanges] = {};
-	//	// Texture
-	//	PerFrameRanges[0].BaseShaderRegister				= 0;
-	//	PerFrameRanges[0].NumDescriptors					= 1;
-	//	PerFrameRanges[0].RegisterSpace						= 0;
-	//	PerFrameRanges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-	//	PerFrameRanges[0].OffsetInDescriptorsFromTableStart	= 0;
+	CShader = RenderingAPI::CreateComputeShader(ShaderCode);
+	if (!CShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		CShader->SetName("SSAO Blur Shader");
+	}
 
-	//	constexpr UInt32 NumParameters = 2;
-	//	D3D12_ROOT_PARAMETER Parameters[NumParameters];
-	//	// DescriptorTable
-	//	Parameters[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	Parameters[0].DescriptorTable.NumDescriptorRanges	= NumPerFrameRanges;
-	//	Parameters[0].DescriptorTable.pDescriptorRanges		= PerFrameRanges;
-	//	Parameters[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
+	{
+		// Init PipelineState
+		ComputePipelineStateCreateInfo PSOProperties = { };
+		PSOProperties.Shader = CShader.Get();
 
-	//	// Settings
-	//	Parameters[1].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	//	Parameters[1].Constants.Num32BitValues	= 2;
-	//	Parameters[1].Constants.RegisterSpace	= 0;
-	//	Parameters[1].Constants.ShaderRegister	= 0;
-	//	Parameters[1].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
-
-	//	constexpr UInt32 NumStaticSamplers = 1;
-	//	D3D12_STATIC_SAMPLER_DESC StaticSamplers[NumStaticSamplers] = { };
-	//	// Sampler, not used for now
-	//	StaticSamplers[0].Filter			= D3D12_FILTER_MIN_MAG_MIP_POINT;
-	//	StaticSamplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	StaticSamplers[0].MipLODBias		= 0.0f;
-	//	StaticSamplers[0].MaxAnisotropy		= 0;
-	//	StaticSamplers[0].ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
-	//	StaticSamplers[0].BorderColor		= D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-	//	StaticSamplers[0].MinLOD			= 0.0f;
-	//	StaticSamplers[0].MaxLOD			= FLT_MAX;
-	//	StaticSamplers[0].ShaderRegister	= 0;
-	//	StaticSamplers[0].RegisterSpace		= 0;
-	//	StaticSamplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
-
-	//	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = { };
-	//	RootSignatureDesc.NumParameters		= NumParameters;
-	//	RootSignatureDesc.pParameters		= Parameters;
-	//	RootSignatureDesc.NumStaticSamplers	= NumStaticSamplers;
-	//	RootSignatureDesc.pStaticSamplers	= StaticSamplers;
-	//	RootSignatureDesc.Flags =
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
-
-	//	BlurRootSignature = RenderingAPI::Get().CreateRootSignature(RootSignatureDesc);
-	//	if (!BlurRootSignature->Initialize(RootSignatureDesc))
-	//	{
-	//		Debug::DebugBreak();
-	//		return false;
-	//	}
-	//}
-
-	//{
-	//	// Init PipelineState
-	//	ComputePipelineStateProperties PSOProperties = { };
-	//	PSOProperties.DebugName		= "Blur PipelineState";
-	//	PSOProperties.CSBlob		= CSBlob.Get();
-	//	PSOProperties.RootSignature	= BlurRootSignature.Get();
-
-	//	SSAOBlur = RenderingAPI::Get().CreateComputePipelineState(PSOProperties);
-	//	if (!SSAOBlur)
-	//	{
-	//		Debug::DebugBreak();
-	//		return false;
-	//	}
-	//}
+		SSAOBlur = RenderingAPI::CreateComputePipelineState(PSOProperties);
+		if (!SSAOBlur)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+	}
 
 	return true;
 }
