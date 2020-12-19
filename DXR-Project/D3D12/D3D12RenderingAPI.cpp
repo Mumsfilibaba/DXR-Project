@@ -1779,7 +1779,6 @@ bool D3D12RenderingAPI::UploadBuffer(Buffer& Buffer, UInt32 SizeInBytes, const R
 	DirectCmdContext->Begin();
 	DirectCmdContext->UpdateBuffer(&Buffer, 0, SizeInBytes, InitalData->Data);
 	DirectCmdContext->End();
-	DirectCmdContext->Flush();
 
 	return true;
 }
@@ -1805,7 +1804,6 @@ bool D3D12RenderingAPI::UploadTexture(Texture& Texture, const ResourceData* Init
 		InitalData->Data);
 
 	DirectCmdContext->End();
-	DirectCmdContext->Flush();
 
 	return true;
 }

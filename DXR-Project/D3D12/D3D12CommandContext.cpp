@@ -62,11 +62,43 @@ bool D3D12CommandContext::Initialize()
 
 void D3D12CommandContext::Begin()
 {
+	D3D12CommandAllocator* CmdAllocator = CmdAllocators[NextCmdAllocator];
+	NextCmdAllocator = (NextCmdAllocator + 1) % CmdAllocators.Size();
+
+	if (FenceValue >= CmdAllocators.Size())
+	{
+		const UInt64 WaitValue = Math::Max(FenceValue - CmdAllocators.Size(), 0ULL);
+		Fence->WaitForValue(WaitValue);
+	}
+
+	if (!CmdAllocator->Reset())
+	{
+		return;
+	}
+
+	if (!CmdList->Reset(CmdAllocator))
+	{
+		return;
+	}
+
 	IsReady = true;
 }
 
 void D3D12CommandContext::End()
 {
+	if (!CmdList->Close())
+	{
+		return;
+	}
+
+	CmdQueue->ExecuteCommandList(CmdList);
+
+	const UInt64 CurrentFenceValue = ++FenceValue;
+	if (!CmdQueue->SignalFence(Fence, CurrentFenceValue))
+	{
+		return;
+	}
+
 	IsReady = false;
 }
 

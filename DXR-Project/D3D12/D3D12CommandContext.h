@@ -165,10 +165,14 @@ public:
 
 private:
 	D3D12CommandQueue* CmdQueue;
-	TArray<D3D12CommandAllocator*> CmdAllocators;
 	class D3D12CommandList* CmdList; 
 	class D3D12Fence* Fence;
-	bool IsReady = false;
-	
+	UInt64 FenceValue = 0;
+
+	TArray<D3D12CommandAllocator*> CmdAllocators;
+	UInt32 NextCmdAllocator = 0;
+
 	D3D12DefaultRootSignatures DefaultRootSignatures;
+	
+	Bool IsReady = false;
 };

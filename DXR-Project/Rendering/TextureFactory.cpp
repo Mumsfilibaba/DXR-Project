@@ -138,10 +138,13 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
 	if (GenerateMipLevels)
 	{
 		CommandList& CmdList = GlobalFactoryData.CmdList;
+		CmdList.Begin();
+		
 		CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);	
 		CmdList.GenerateMips(Texture.Get());
 		CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
 	
+		CmdList.End();
 		CommandListExecutor::ExecuteCommandList(CmdList);
 	}
 
@@ -223,6 +226,8 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	}
 
 	CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
+	
+	CmdList.End();
 	CommandListExecutor::ExecuteCommandList(CmdList);
 
 	return Texture.ReleaseOwnerShip();

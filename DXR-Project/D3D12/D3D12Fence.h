@@ -24,9 +24,9 @@ public:
 		::CloseHandle(Event);
 	}
 
-	FORCEINLINE bool D3D12Fence::WaitForValue(UInt64 FenceValue)
+	FORCEINLINE bool WaitForValue(UInt64 Value)
 	{
-		HRESULT hResult = Fence->SetEventOnCompletion(FenceValue, Event);
+		HRESULT hResult = Fence->SetEventOnCompletion(Value, Event);
 		if (SUCCEEDED(hResult))
 		{
 			::WaitForSingleObjectEx(Event, INFINITE, FALSE);
@@ -38,7 +38,13 @@ public:
 		}
 	}
 
-	FORCEINLINE void SetDebugName(const std::string& Name)
+	FORCEINLINE bool Signal(UInt64 Value)
+	{
+		HRESULT hResult = Fence->Signal(Value);
+		return SUCCEEDED(hResult);
+	}
+
+	FORCEINLINE void SetName(const std::string& Name)
 	{
 		std::wstring WideName = ConvertToWide(Name);
 		Fence->SetName(WideName.c_str());

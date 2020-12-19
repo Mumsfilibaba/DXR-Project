@@ -1073,7 +1073,10 @@ bool Renderer::Initialize()
 	}
 
 	// Create Texture Cube
-	TSharedRef<Texture2D> Panorama = TextureFactory::LoadFromFile("../Assets/Textures/arches.hdr", 0, EFormat::Format_R32G32B32A32_Float);
+	TSharedRef<Texture2D> Panorama = TextureFactory::LoadFromFile(
+		"../Assets/Textures/arches.hdr", 
+		0, 
+		EFormat::Format_R32G32B32A32_Float);
 	if (!Panorama)
 	{
 		return false;	
@@ -1170,8 +1173,10 @@ bool Renderer::Initialize()
 		return false;
 	}
 
+	CmdList.Begin();
 	GenerateIrradianceMap(Skybox.Get(), IrradianceMap.Get(), CmdList);
 	GenerateSpecularIrradianceMap(Skybox.Get(), SpecularIrradianceMap.Get(), CmdList);
+	CmdList.End();
 
 	// Init standard inputlayout
 	InputLayoutStateCreateInfo InputLayout =
@@ -1234,6 +1239,7 @@ bool Renderer::Initialize()
 			EResourceState::ResourceState_PixelShaderResource);
 	}
 	
+	CmdList.End();
 	CommandListExecutor::ExecuteCommandList(CmdList);
 
 	if (!InitGBuffer())
