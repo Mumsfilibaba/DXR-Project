@@ -239,6 +239,7 @@ void D3D12CommandContext::BindIndexBuffer(IndexBuffer* IndexBuffer)
 
 void D3D12CommandContext::BindRayTracingScene(RayTracingScene* RayTracingScene)
 {
+	// TODO: Implement this function
 }
 
 void D3D12CommandContext::BindRenderTargets(
@@ -289,7 +290,6 @@ void D3D12CommandContext::VSBindShaderResourceViews(
 	UInt32 ShaderResourceViewCount, 
 	UInt32 StartSlot)
 {
-
 }
 
 void D3D12CommandContext::VSBindUnorderedAccessViews(
@@ -414,6 +414,7 @@ void D3D12CommandContext::CSBindConstantBuffers(
 void D3D12CommandContext::ResolveTexture(Texture* Destination, Texture* Source)
 {
 	//TODO: For now texture must be the same format. I.e typeless does probably not work
+
 	D3D12Texture* DxDestination	= D3D12TextureCast(Destination);
 	D3D12Texture* DxSource		= D3D12TextureCast(Source);
 	const DXGI_FORMAT DstFormat	= DxDestination->GetDxgiFormat();
