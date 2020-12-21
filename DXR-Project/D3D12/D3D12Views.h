@@ -45,7 +45,6 @@ class D3D12ConstantBufferView : public D3D12View
 {
 public:
 	D3D12ConstantBufferView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
-	~D3D12ConstantBufferView() = default;
 
 	void CreateView(const D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 
@@ -66,7 +65,6 @@ class D3D12ShaderResourceView : public ShaderResourceView, public D3D12View
 {
 public:
 	D3D12ShaderResourceView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
-	~D3D12ShaderResourceView() = default;
 
 	void CreateView(const D3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
@@ -87,7 +85,6 @@ class D3D12UnorderedAccessView : public UnorderedAccessView, public D3D12View
 {
 public:
 	D3D12UnorderedAccessView(D3D12Device* InDevice, const D3D12Resource* InCounterResource, const D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
-	~D3D12UnorderedAccessView() = default;
 
 	void CreateView(const D3D12Resource* InCounterResource, const D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
@@ -109,7 +106,6 @@ class D3D12RenderTargetView : public RenderTargetView, public D3D12View
 {
 public:
 	D3D12RenderTargetView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
-	~D3D12RenderTargetView() = default;
 
 	void CreateView(const D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
@@ -130,7 +126,6 @@ class D3D12DepthStencilView : public DepthStencilView, public D3D12View
 {
 public:
 	D3D12DepthStencilView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
-	~D3D12DepthStencilView() = default;
 
 	void CreateView(const D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 

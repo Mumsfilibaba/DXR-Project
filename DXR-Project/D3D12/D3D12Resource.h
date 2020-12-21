@@ -23,6 +23,11 @@ public:
 		return D3DResource.Get();
 	}
 
+	FORCEINLINE D3D12_RESOURCE_DIMENSION GetResourceDimension() const
+	{
+		return Desc.Dimension;
+	}
+
 	FORCEINLINE D3D12_HEAP_TYPE GetHeapType() const
 	{
 		return HeapType;

@@ -135,6 +135,11 @@ public:
 		return &RefPtr;
 	}
 
+	FORCEINLINE TRefCountedObject& Dereference() const noexcept
+	{
+		return *RefPtr;
+	}
+
 	FORCEINLINE TRefCountedObject* operator->() const noexcept
 	{
 		return Get();
@@ -143,6 +148,11 @@ public:
 	FORCEINLINE TRefCountedObject* const* operator&() const noexcept
 	{
 		return GetAddressOf();
+	}
+
+	FORCEINLINE TRefCountedObject& operator*() const noexcept
+	{
+		return Dereference();
 	}
 
 	FORCEINLINE bool operator==(TRefCountedObject* InPtr) const noexcept

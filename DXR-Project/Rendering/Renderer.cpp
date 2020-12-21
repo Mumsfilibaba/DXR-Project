@@ -122,7 +122,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	}
 
 	// Start frame
-	// TODO: Fix this with viewport
+	// TODO: Fix this with Viewport-Class
 	Texture2D* BackBuffer = nullptr;// RenderingAPI::Get().GetSwapChain()->GetSurfaceResource(CurrentBackBufferIndex);
 
 	CmdList.Begin();
@@ -292,22 +292,19 @@ void Renderer::Tick(const Scene& CurrentScene)
 #endif
 
 	// Setup view
-	Viewport ViewPort = { };
-	ViewPort.Width		= static_cast<Float>(Renderer::GetGlobalLightSettings().ShadowMapWidth);
-	ViewPort.Height		= static_cast<Float>(Renderer::GetGlobalLightSettings().ShadowMapHeight);
-	ViewPort.MinDepth	= 0.0f;
-	ViewPort.MaxDepth	= 1.0f;
-	ViewPort.x			= 0.0f;
-	ViewPort.y			= 0.0f;
-	CmdList.BindViewport(ViewPort, 1);
+	CmdList.BindViewport(
+		static_cast<Float>(Renderer::GetGlobalLightSettings().ShadowMapWidth),
+		static_cast<Float>(Renderer::GetGlobalLightSettings().ShadowMapHeight),
+		0.0f,
+		1.0f,
+		0.0f,
+		0.0f);
 
-	ScissorRect ScissorRect;
-	ScissorRect.x		= 0;
-	ScissorRect.y		= 0;
-	ScissorRect.Width	= Renderer::GetGlobalLightSettings().ShadowMapWidth;
-	ScissorRect.Height	= Renderer::GetGlobalLightSettings().ShadowMapHeight;
+	CmdList.BindScissorRect(
+		Renderer::GetGlobalLightSettings().ShadowMapWidth,
+		Renderer::GetGlobalLightSettings().ShadowMapHeight,
+		 0, 0);
 
-	CmdList.BindScissorRect(ScissorRect, 1);
 	CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
 
 	// PerObject Structs
@@ -356,19 +353,18 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	// Render PointLight ShadowMaps
 	const UInt32 PointLightShadowSize = Renderer::GetGlobalLightSettings().PointLightShadowSize;
-	ViewPort.Width		= static_cast<Float>(PointLightShadowSize);
-	ViewPort.Height		= static_cast<Float>(PointLightShadowSize);
-	ViewPort.MinDepth	= 0.0f;
-	ViewPort.MaxDepth	= 1.0f;
-	ViewPort.x			= 0.0f;
-	ViewPort.y			= 0.0f;
-	CmdList.BindViewport(ViewPort, 1);
+	CmdList.BindViewport(
+		static_cast<Float>(PointLightShadowSize),
+		static_cast<Float>(PointLightShadowSize),
+		0.0f,
+		1.0f,
+		0.0f,
+		0.0f);
 
-	ScissorRect.x		= 0;
-	ScissorRect.y		= 0;
-	ScissorRect.Width	= PointLightShadowSize;
-	ScissorRect.Height	= PointLightShadowSize;
-	CmdList.BindScissorRect(ScissorRect, 1);
+	CmdList.BindScissorRect(
+		PointLightShadowSize,
+		PointLightShadowSize,
+		0, 0);
 
 	CmdList.BindGraphicsPipelineState(LinearShadowMapPSO.Get());
 
@@ -489,22 +485,19 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.ClearDepthStencilView(GBufferDSV.Get(), DepthStencilClearValue(1.0f, 0));
 
 	// Setup view
-	
 	// TODO: Solve this
-	// ViewPort.Width		= static_cast<Float32>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	// ViewPort.Height		= static_cast<Float32>(RenderingAPI::Get().GetSwapChain()->GetHeight());
-	ViewPort.MinDepth	= 0.0f;
-	ViewPort.MaxDepth	= 1.0f;
-	ViewPort.x			= 0.0f;
-	ViewPort.y			= 0.0f;
-	CmdList.BindViewport(ViewPort, 0);
+	CmdList.BindViewport(
+		static_cast<Float>(PointLightShadowSize),
+		static_cast<Float>(PointLightShadowSize),
+		0.0f,
+		1.0f,
+		0.0f,
+		0.0f);
 
-	ScissorRect.x = 0;
-	ScissorRect.y = 0;
-	// TODO: Solve this
-	// static_cast<LONG>(RenderingAPI::Get().GetSwapChain()->GetWidth()),
-	// static_cast<LONG>(RenderingAPI::Get().GetSwapChain()->GetHeight());
-	CmdList.BindScissorRect(ScissorRect, 0);
+	CmdList.BindScissorRect(
+		PointLightShadowSize,
+		PointLightShadowSize,
+		0, 0);
 
 	// Perform PrePass
 	if (PrePassEnabled)
@@ -607,7 +600,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	EResourceState::ResourceState_UnorderedAccess);
 
 	const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	//CmdList.ClearUnorderedAccessView(, WhiteColor);
+	//CmdList.ClearUnorderedAccessViewFloat(, WhiteColor);
 
 	if (SSAOEnabled)
 	{
@@ -670,8 +663,19 @@ void Renderer::Tick(const Scene& CurrentScene)
 	RenderTargetView* RenderTarget[] = { FinalTargetRTV.Get() };
 	CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
 
-	CmdList.BindViewport(ViewPort, 0);
-	CmdList.BindScissorRect(ScissorRect, 0);
+	// TODO: Fix this
+	CmdList.BindViewport(
+		static_cast<Float>(PointLightShadowSize),
+		static_cast<Float>(PointLightShadowSize),
+		0.0f,
+		1.0f,
+		0.0f,
+		0.0f);
+
+	CmdList.BindScissorRect(
+		PointLightShadowSize,
+		PointLightShadowSize,
+		0, 0);
 
 	// Setup LightPass
 	CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
@@ -745,22 +749,19 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.DrawInstanced(3, 1, 0, 0);
 
 	// Forward Pass
-	ViewPort.Width		= 800;// static_cast<Float>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-	ViewPort.Height		= 600;// static_cast<Float>(RenderingAPI::Get().GetSwapChain()->GetHeight());
-	ViewPort.MinDepth	= 0.0f;
-	ViewPort.MaxDepth	= 1.0f;
-	ViewPort.x			= 0.0f;
-	ViewPort.y			= 0.0f;
-	CmdList.BindViewport(ViewPort, 1);
+	// TODO: Fix this
+	CmdList.BindViewport(
+		static_cast<Float>(PointLightShadowSize),
+		static_cast<Float>(PointLightShadowSize),
+		0.0f,
+		1.0f,
+		0.0f,
+		0.0f);
 
-	ScissorRect =
-	{
-		0,
-		0,
-		800,// static_cast<Float>(RenderingAPI::Get().GetSwapChain()->GetWidth());
-		600,// static_cast<Float>(RenderingAPI::Get().GetSwapChain()->GetHeight());
-	};
-	CmdList.BindScissorRect(ScissorRect, 1);
+	CmdList.BindScissorRect(
+		PointLightShadowSize,
+		PointLightShadowSize,
+		0, 0);
 
 	// Render all transparent objects
 	//RenderTarget[0] = BackBuffer->GetRenderTargetView(0).Get();
@@ -2404,8 +2405,6 @@ bool Renderer::InitGBuffer()
 	const UInt32 Width	= 800;// RenderingAPI::Get().GetSwapChain()->GetWidth();
 	const UInt32 Height	= 600;// RenderingAPI::Get().GetSwapChain()->GetWidth();
 	const UInt32 Usage	= TextureUsage_Default | TextureUsage_RenderTarget;
-	const EFormat AlbedoFormat		= EFormat::Format_R8G8B8A8_Unorm;
-	const EFormat MaterialFormat	= EFormat::Format_R8G8B8A8_Unorm;
 
 	GBuffer[GBUFFER_ALBEDO_INDEX] = RenderingAPI::CreateTexture2D(
 		nullptr, 
@@ -3080,15 +3079,15 @@ bool Renderer::InitAA()
 
 	PSOProperties.ShaderState.PixelShader = PShader.Get();
 
-	PostPSO = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
-	if (!PostPSO)
+	FXAAPSO = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
+	if (!FXAAPSO)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 	else
 	{
-		PostPSO->SetName("FXAA PipelineState");
+		FXAAPSO->SetName("FXAA PipelineState");
 	}
 
 	return true;
@@ -3126,7 +3125,7 @@ bool Renderer::InitForwardPass()
 	}
 	else
 	{
-		VShader->SetName("GeometryPass VertexShader");
+		VShader->SetName("ForwardPass VertexShader");
 	}
 
 	if (!ShaderCompiler::CompileFromFile(
@@ -3194,7 +3193,7 @@ bool Renderer::InitForwardPass()
 	}
 	else
 	{
-		BlendState->SetName("GeometryPass BlendState");
+		BlendState->SetName("ForwardPass BlendState");
 	}
 
 	GraphicsPipelineStateCreateInfo PSOProperties = { };

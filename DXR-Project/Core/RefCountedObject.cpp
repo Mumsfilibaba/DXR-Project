@@ -1,6 +1,10 @@
 #include "PreCompiled.h"
 #include "RefCountedObject.h"
 
+/*
+* RefCountedObject
+*/
+
 RefCountedObject::RefCountedObject()
 	: StrongReferences(0)
 {

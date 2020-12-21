@@ -18,7 +18,8 @@
 */
 
 D3D12Device::D3D12Device()
-	: Factory(nullptr)
+	: RefCountedObject()
+	, Factory(nullptr)
 	, Adapter(nullptr)
 	, D3DDevice(nullptr)
 	, DXRDevice(nullptr)
@@ -62,7 +63,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	if (hDXGI == NULL)
 	{
 		::MessageBox(0, "FAILED to load dxgi.dll", "Error", MB_ICONERROR | MB_OK);
-		return -1;
+		return false;
 	}
 	else
 	{
@@ -73,7 +74,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	if (hD3D12 == NULL)
 	{
 		::MessageBox(0, "FAILED to load d3d12.dll", "Error", MB_ICONERROR | MB_OK);
-		return -1;
+		return false;
 	}
 	else
 	{

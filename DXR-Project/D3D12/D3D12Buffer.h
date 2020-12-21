@@ -15,8 +15,6 @@ public:
 	{
 	}
 
-	~D3D12Buffer() = default;
-
 	FORCEINLINE UInt64 GetAllocatedSize() const
 	{
 		return Desc.Width;
@@ -38,8 +36,6 @@ public:
 		, VertexBufferView()
 	{
 	}
-	
-	~D3D12VertexBuffer() = default;
 
 	// Map
 	virtual Void* Map(const Range* MappedRange) override
@@ -82,8 +78,6 @@ public:
 	{
 	}
 
-	~D3D12IndexBuffer() = default;
-
 	// Map
 	virtual Void* Map(const Range* MappedRange) override
 	{
@@ -125,8 +119,6 @@ public:
 	{
 	}
 
-	~D3D12ConstantBuffer() = default;
-
 	// Map
 	virtual Void* Map(const Range* MappedRange) override
 	{
@@ -161,8 +153,6 @@ public:
 		, D3D12Buffer(InDevice)
 	{
 	}
-
-	~D3D12StructuredBuffer() = default;
 
 	// Map
 	virtual Void* Map(const Range* MappedRange) override

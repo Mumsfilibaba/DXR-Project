@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderingCore/Shader.h"
+#include "RenderingCore/ShaderCompiler.h"
 
 #include <dxcapi.h>
 

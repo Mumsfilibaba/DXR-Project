@@ -3,6 +3,7 @@
 
 #include "D3D12Texture.h"
 #include "D3D12Views.h"
+#include "D3D12RefCountedObject.h"
 
 #include <dxgi1_6.h>
 
@@ -13,7 +14,7 @@ class D3D12CommandQueue;
 * D3D12SwapChain
 */
 
-class D3D12SwapChain : public D3D12DeviceChild
+class D3D12SwapChain : public D3D12RefCountedObject
 {
 public:
 	D3D12SwapChain(D3D12Device* InDevice);
@@ -51,7 +52,6 @@ public:
 	{
 		return Height;
 	}
-
 
 private:
 	TSharedRef<WindowsWindow> Window;

@@ -66,12 +66,12 @@ public:
 
 	FORCEINLINE void ClearUnorderedAccessView(
 		UnorderedAccessView* UnorderedAccessView,
-		const ColorClearValue& ClearColor)
+		const Float ClearColor[4])
 	{
 		VALIDATE(UnorderedAccessView != nullptr);
 
 		UnorderedAccessView->AddRef();
-		InsertCommand<ClearUnorderedAccessViewCommand>(UnorderedAccessView, ClearColor);
+		InsertCommand<ClearUnorderedAccessViewFloatCommand>(UnorderedAccessView, ClearColor);
 	}
 
 	FORCEINLINE void BeginRenderPass()
@@ -84,14 +84,24 @@ public:
 		InsertCommand<EndRenderPassCommand>();
 	}
 
-	FORCEINLINE void BindViewport(const Viewport& Viewport, UInt32 Slot)
+	FORCEINLINE void BindViewport(
+		Float Width, 
+		Float Height, 
+		Float MinDepth, 
+		Float MaxDepth, 
+		Float x, 
+		Float y)
 	{
-		InsertCommand<BindViewportCommand>(Viewport, Slot);
+		InsertCommand<BindViewportCommand>(Width, Height, MinDepth, MaxDepth, x, y);
 	}
 
-	FORCEINLINE void BindScissorRect(const ScissorRect& ScissorRect, UInt32 Slot)
+	FORCEINLINE void BindScissorRect(
+		Float Width, 
+		Float Height, 
+		Float x, 
+		Float y)
 	{
-		InsertCommand<BindScissorRectCommand>(ScissorRect, Slot);
+		InsertCommand<BindScissorRectCommand>(Width, Height, x, y);
 	}
 
 	FORCEINLINE void BindBlendFactor(const ColorClearValue& Color)
@@ -167,43 +177,276 @@ public:
 		InsertCommand<BindRayTracingPipelineStateCommand>(PipelineState);
 	}
 
-	FORCEINLINE void BindConstantBuffers(
-		Shader* Shader, 
+	// VertexShader
+	FORCEINLINE void VSBindConstantBuffers(
 		ConstantBuffer* const* ConstantBuffers, 
 		UInt32 ConstantBufferCount, 
 		UInt32 StartSlot)
 	{
-		InsertCommand<BindConstantBuffersCommand>(
-			Shader, 
+		InsertCommand<VSBindConstantBuffersCommand>(
 			ConstantBuffers, 
 			ConstantBufferCount, 
 			StartSlot);
 	}
 
-	FORCEINLINE void BindShaderResourceViews(
-		Shader* Shader, 
+	FORCEINLINE void VSBindShaderResourceViews(
 		ShaderResourceView* const* ShaderResourceViews, 
 		UInt32 ShaderResourceViewCount, 
 		UInt32 StartSlot)
 	{
-		InsertCommand<BindShaderResourceViewsCommand>(
-			Shader, 
+		InsertCommand<VSBindShaderResourceViewsCommand>(
 			ShaderResourceViews, 
 			ShaderResourceViewCount, 
 			StartSlot);
 	}
 
-	FORCEINLINE void BindUnorderedAccessViews(
-		Shader* Shader, 
+	FORCEINLINE void VSBindUnorderedAccessViews(
 		UnorderedAccessView* const* UnorderedAccessViews, 
 		UInt32 UnorderedAccessViewCount, 
 		UInt32 StartSlot)
 	{
-		InsertCommand<BindUnorderedAccessViewsCommand>(
-			Shader,
+		InsertCommand<VSBindUnorderedAccessViewsCommand>(
 			UnorderedAccessViews,
 			UnorderedAccessViewCount,
 			StartSlot);
+	}
+
+	// HullShader
+	FORCEINLINE void HSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<HSBindConstantBuffersCommand>(
+			ConstantBuffers,
+			ConstantBufferCount,
+			StartSlot);
+	}
+
+	FORCEINLINE void HSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<HSBindShaderResourceViewsCommand>(
+			ShaderResourceViews,
+			ShaderResourceViewCount,
+			StartSlot);
+	}
+
+	FORCEINLINE void HSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<HSBindUnorderedAccessViewsCommand>(
+			UnorderedAccessViews,
+			UnorderedAccessViewCount,
+			StartSlot);
+	}
+
+	// DomainShader
+	FORCEINLINE void DSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<DSBindConstantBuffersCommand>(
+			ConstantBuffers,
+			ConstantBufferCount,
+			StartSlot);
+	}
+
+	FORCEINLINE void DSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<DSBindShaderResourceViewsCommand>(
+			ShaderResourceViews,
+			ShaderResourceViewCount,
+			StartSlot);
+	}
+
+	FORCEINLINE void DSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<DSBindUnorderedAccessViewsCommand>(
+			UnorderedAccessViews,
+			UnorderedAccessViewCount,
+			StartSlot);
+	}
+
+	// GeometryShader
+	FORCEINLINE void GSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<GSBindConstantBuffersCommand>(
+			ConstantBuffers,
+			ConstantBufferCount,
+			StartSlot);
+	}
+
+	FORCEINLINE void GSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<GSBindShaderResourceViewsCommand>(
+			ShaderResourceViews,
+			ShaderResourceViewCount,
+			StartSlot);
+	}
+
+	FORCEINLINE void GSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<GSBindUnorderedAccessViewsCommand>(
+			UnorderedAccessViews,
+			UnorderedAccessViewCount,
+			StartSlot);
+	}
+
+	// PixelShader
+	FORCEINLINE void PSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<PSBindConstantBuffersCommand>(
+			ConstantBuffers,
+			ConstantBufferCount,
+			StartSlot);
+	}
+
+	FORCEINLINE void PSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<PSBindShaderResourceViewsCommand>(
+			ShaderResourceViews,
+			ShaderResourceViewCount,
+			StartSlot);
+	}
+
+	FORCEINLINE void PSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<PSBindUnorderedAccessViewsCommand>(
+			UnorderedAccessViews,
+			UnorderedAccessViewCount,
+			StartSlot);
+	}
+
+	// ComputeShader
+	FORCEINLINE void CSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<CSBindConstantBuffersCommand>(
+			ConstantBuffers,
+			ConstantBufferCount,
+			StartSlot);
+	}
+
+	FORCEINLINE void CSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<CSBindShaderResourceViewsCommand>(
+			ShaderResourceViews,
+			ShaderResourceViewCount,
+			StartSlot);
+	}
+
+	FORCEINLINE void CSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		InsertCommand<CSBindUnorderedAccessViewsCommand>(
+			UnorderedAccessViews,
+			UnorderedAccessViewCount,
+			StartSlot);
+	}
+
+	// MeshShader
+	FORCEINLINE void MSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		UNREFERENCED_VARIABLE(ConstantBuffers);
+		UNREFERENCED_VARIABLE(ConstantBufferCount);
+		UNREFERENCED_VARIABLE(StartSlot);
+		// Empty for now
+	}
+
+	FORCEINLINE void MSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		UNREFERENCED_VARIABLE(ShaderResourceViews);
+		UNREFERENCED_VARIABLE(ShaderResourceViewCount);
+		UNREFERENCED_VARIABLE(StartSlot);
+		// Empty for now
+	}
+
+	FORCEINLINE void MSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		UNREFERENCED_VARIABLE(UnorderedAccessViews);
+		UNREFERENCED_VARIABLE(UnorderedAccessViewCount);
+		UNREFERENCED_VARIABLE(StartSlot);
+		// Empty for now
+	}
+
+	// AmplificationShader
+	FORCEINLINE void ASBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		UNREFERENCED_VARIABLE(ConstantBuffers);
+		UNREFERENCED_VARIABLE(ConstantBufferCount);
+		UNREFERENCED_VARIABLE(StartSlot);
+		// Empty for now
+	}
+
+	FORCEINLINE void ASBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		UNREFERENCED_VARIABLE(ShaderResourceViews);
+		UNREFERENCED_VARIABLE(ShaderResourceViewCount);
+		UNREFERENCED_VARIABLE(StartSlot);
+		// Empty for now
+	}
+
+	FORCEINLINE void ASBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		UNREFERENCED_VARIABLE(UnorderedAccessViews);
+		UNREFERENCED_VARIABLE(UnorderedAccessViewCount);
+		UNREFERENCED_VARIABLE(StartSlot);
+		// Empty for now
 	}
 
 	FORCEINLINE void ResolveTexture(Texture* Destination, Texture* Source)
@@ -260,14 +503,27 @@ public:
 		InsertCommand<CopyBufferCommand>(Destination, Source, CopyInfo);
 	}
 
-	FORCEINLINE void CopyTexture(
+	FORCEINLINE void CopyTexture(Texture* Destination, Texture* Source)
+	{
+		SAFEADDREF(Destination);
+		SAFEADDREF(Source);
+		InsertCommand<CopyTextureCommand>(Destination, Source);
+	}
+
+	FORCEINLINE void CopyTextureRegion(
 		Texture* Destination, 
 		Texture* Source, 
 		const CopyTextureInfo& CopyTextureInfo)
 	{
 		SAFEADDREF(Destination);
 		SAFEADDREF(Source);
-		InsertCommand<CopyTextureCommand>(Destination, Source, CopyTextureInfo);
+		InsertCommand<CopyTextureRegionCommand>(Destination, Source, CopyTextureInfo);
+	}
+
+	FORCEINLINE void DestroyResource(PipelineResource* Resource)
+	{
+		SAFEADDREF(Resource);
+		InsertCommand<DestroyResourceCommand>(Resource);
 	}
 
 	FORCEINLINE void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry)
@@ -332,7 +588,10 @@ public:
 		UInt32 StartIndexLocation, 
 		UInt32 BaseVertexLocation)
 	{
-		InsertCommand< DrawIndexedCommand>(IndexCount, StartIndexLocation, BaseVertexLocation);
+		InsertCommand<DrawIndexedCommand>(
+			IndexCount, 
+			StartIndexLocation, 
+			BaseVertexLocation);
 	}
 
 	FORCEINLINE void DrawInstanced(
@@ -363,14 +622,26 @@ public:
 			StartInstanceLocation);
 	}
 
-	FORCEINLINE void Dispatch(UInt32 WorkGroupsX, UInt32 WorkGroupsY, UInt32 WorkGroupsZ)
+	FORCEINLINE void Dispatch(
+		UInt32 ThreadGroupCountX, 
+		UInt32 ThreadGroupCountY, 
+		UInt32 ThreadGroupCountZ)
 	{
-		InsertCommand<DispatchComputeCommand>(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
+		InsertCommand<DispatchComputeCommand>(
+			ThreadGroupCountX, 
+			ThreadGroupCountY,
+			ThreadGroupCountZ);
 	}
 
-	FORCEINLINE void DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth)
+	FORCEINLINE void DispatchRays(
+		UInt32 Width, 
+		UInt32 Height, 
+		UInt32 Depth)
 	{
-		InsertCommand<DispatchRaysCommand>(Width, Height, Depth);
+		InsertCommand<DispatchRaysCommand>(
+			Width, 
+			Height, 
+			Depth);
 	}
 
 	FORCEINLINE void Reset()

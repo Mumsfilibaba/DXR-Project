@@ -16,7 +16,8 @@
 #include "RenderingCore/Texture.h"
 #include "RenderingCore/PipelineState.h"
 #include "RenderingCore/RenderingAPI.h"
-
+#include "RenderingCore/ShaderCompiler.h"
+#include "RenderingCore/Shader.h"
 
 /*
 * Helper ImGuiState
@@ -220,144 +221,191 @@ bool DebugUI::Initialize()
 	}
 
 	// TODO: Make API- independent
-	D3D12_STATIC_SAMPLER_DESC StaticSampler = {};
-	StaticSampler.Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	StaticSampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSampler.MipLODBias		= 0.0f;
-	StaticSampler.MaxAnisotropy		= 0;
-	StaticSampler.ComparisonFunc	= D3D12_COMPARISON_FUNC_ALWAYS;
-	StaticSampler.BorderColor		= D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	StaticSampler.MinLOD			= 0.0f;
-	StaticSampler.MaxLOD			= 0.0f;
-	StaticSampler.ShaderRegister	= 0;
-	StaticSampler.RegisterSpace		= 0;
-	StaticSampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+	//D3D12_STATIC_SAMPLER_DESC StaticSampler = {};
+	//StaticSampler.Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	//StaticSampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	//StaticSampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	//StaticSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	//StaticSampler.MipLODBias		= 0.0f;
+	//StaticSampler.MaxAnisotropy		= 0;
+	//StaticSampler.ComparisonFunc	= D3D12_COMPARISON_FUNC_ALWAYS;
+	//StaticSampler.BorderColor		= D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	//StaticSampler.MinLOD			= 0.0f;
+	//StaticSampler.MaxLOD			= 0.0f;
+	//StaticSampler.ShaderRegister	= 0;
+	//StaticSampler.RegisterSpace		= 0;
+	//StaticSampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
 
-	D3D12_DESCRIPTOR_RANGE DescRange = {};
-	DescRange.RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	DescRange.NumDescriptors					= 1;
-	DescRange.BaseShaderRegister				= 0;
-	DescRange.RegisterSpace						= 0;
-	DescRange.OffsetInDescriptorsFromTableStart	= 0;
+	static const Char* VSSource = R"*(
+	#define RootSig \
+	"RootFlags(0), " \
+	"RootConstants(b0, num32BitConstants = 16), " \
+	"DescriptorTable(SRV(t0, numDescriptors = 1))," \
+	"StaticSampler(s0," \
+		"addressU = TEXTURE_ADDRESS_WRAP," \
+		"addressV = TEXTURE_ADDRESS_WRAP," \
+		"addressW = TEXTURE_ADDRESS_WRAP," \
+		"filter = FILTER_MIN_MAG_MIP_LINEAR)"
 
-	D3D12_ROOT_PARAMETER Parameters[2];
-	Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	Parameters[0].Constants.ShaderRegister	= 0;
-	Parameters[0].Constants.RegisterSpace	= 0;
-	Parameters[0].Constants.Num32BitValues	= 16;
-	Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_VERTEX;
-
-	Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	Parameters[1].DescriptorTable.NumDescriptorRanges	= 1;
-	Parameters[1].DescriptorTable.pDescriptorRanges		= &DescRange;
-	Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	D3D12_ROOT_SIGNATURE_DESC RootSignaturDesc;
-	RootSignaturDesc.NumParameters		= 2;
-	RootSignaturDesc.pParameters		= Parameters;
-	RootSignaturDesc.NumStaticSamplers	= 1;
-	RootSignaturDesc.pStaticSamplers	= &StaticSampler;
-	RootSignaturDesc.Flags =
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-
-	//GlobalImGuiState.RootSignature = RenderingAPI::Get().CreateRootSignature(RootSignaturDesc);
-	//if (!GlobalImGuiState.RootSignature)
-	//{
-	//	return false;
-	//}
-
-	static const Char* VertexShader =
-		"cbuffer vertexBuffer : register(b0) \
-		{\
-			float4x4 ProjectionMatrix; \
-		};\
-		struct VS_INPUT\
-		{\
-			float2 pos : POSITION;\
-			float4 col : COLOR0;\
-			float2 uv  : TEXCOORD0;\
-		};\
-		\
-		struct PS_INPUT\
-		{\
-			float4 pos : SV_POSITION;\
-			float4 col : COLOR0;\
-			float2 uv  : TEXCOORD0;\
-		};\
-		\
-		PS_INPUT Main(VS_INPUT input)\
-		{\
-			PS_INPUT output;\
-			output.pos = mul( ProjectionMatrix, float4(input.pos.xy, 0.f, 1.f));\
-			output.col = input.col;\
-			output.uv  = input.uv;\
-			return output;\
-		}";
-
-	//IDxcBlob* VSBlob = D3D12ShaderCompiler::CompileFromSource(VertexShader, "Main", "vs_6_1");
-	//if (!VSBlob)
-	//{
-	//	return false;
-	//}
-
-	static const Char* PixelShader =
-		"struct PS_INPUT\
-		{\
-			float4 pos : SV_POSITION;\
-			float4 col : COLOR0;\
-			float2 uv  : TEXCOORD0;\
-		};\
-		SamplerState sampler0 : register(s0);\
-		Texture2D texture0 : register(t0);\
-		\
-		float4 Main(PS_INPUT input) : SV_Target\
-		{\
-			float4 out_col = input.col * texture0.Sample(sampler0, input.uv); \
-			return out_col; \
-		}";
-
-	//IDxcBlob* PSBlob = D3D12ShaderCompiler::CompileFromSource(PixelShader, "Main", "ps_6_1");
-	//if (!PSBlob)
-	//{
-	//	return false;
-	//}
-
-	D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
+	cbuffer vertexBuffer : register(b0)
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, pos)), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, uv)),  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, col)), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		float4x4 ProjectionMatrix;
+	};
+	struct VS_INPUT
+	{
+		float2 pos : POSITION;
+		float4 col : COLOR0;
+		float2 uv : TEXCOORD0;
+	};
+	struct PS_INPUT
+	{
+		float4 pos : SV_POSITION;
+		float4 col : COLOR0;
+		float2 uv : TEXCOORD0;
+	};
+	[RootSignature(RootSig)]
+	PS_INPUT Main(VS_INPUT input)
+	{
+		PS_INPUT output;
+		output.pos = mul(ProjectionMatrix, float4(input.pos.xy, 0.f, 1.f));
+		output.col = input.col;
+		output.uv = input.uv;
+		return output;
+	})*";
+
+	TArray<UInt8> ShaderCode;
+	if (!ShaderCompiler::CompileShader(
+		VSSource,
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Vertex,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	TSharedRef<VertexShader> VShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	if (!VShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	static const Char* PSSource = R"*(
+		struct PS_INPUT
+		{
+			float4 pos : SV_POSITION;
+			float4 col : COLOR0;
+			float2 uv  : TEXCOORD0;
+		};
+		SamplerState sampler0 : register(s0);
+		Texture2D texture0 : register(t0);
+
+		float4 Main(PS_INPUT input) : SV_Target
+		{
+			float4 out_col = input.col * texture0.Sample(sampler0, input.uv);
+			return out_col;
+		})*";
+
+	if (!ShaderCompiler::CompileShader(
+		PSSource,
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Pixel,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	TSharedRef<PixelShader> PShader = RenderingAPI::CreatePixelShader(ShaderCode);
+	if (!PShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	InputLayoutStateCreateInfo InputLayoutInfo =
+	{
+		{ "POSITION",	0, EFormat::Format_R32G32_Float,	0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, pos)),	EInputClassification::InputClassification_Vertex, 0 },
+		{ "TEXCOORD",	0, EFormat::Format_R32G32_Float,	0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, uv)),	EInputClassification::InputClassification_Vertex, 0 },
+		{ "COLOR",		0, EFormat::Format_R32G32B32_Float,	0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, col)),	EInputClassification::InputClassification_Vertex, 0 },
 	};
 
-	/*GraphicsPipelineStateProperties GuiPipelineProps = { };
-	GuiPipelineProps.DebugName			= "ImGui Pipeline";
-	GuiPipelineProps.RootSignature		= GlobalImGuiState.RootSignature.Get();
-	GuiPipelineProps.VSBlob				= VSBlob;
-	GuiPipelineProps.PSBlob				= PSBlob;
-	GuiPipelineProps.InputElements		= InputElementDesc;
-	GuiPipelineProps.NumInputElements	= 3;
-	GuiPipelineProps.EnableDepth		= false;
-	GuiPipelineProps.DepthBufferFormat	= DXGI_FORMAT_UNKNOWN;
-	GuiPipelineProps.EnableBlending		= true;
-
-	DXGI_FORMAT Formats[] =
+	TSharedRef<InputLayoutState> InputLayout = RenderingAPI::CreateInputLayout(InputLayoutInfo);
+	if (!InputLayout)
 	{
-		DXGI_FORMAT_R8G8B8A8_UNORM
-	};
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		InputLayout->SetName("ImGui InputLayoutState");
+	}
 
-	GuiPipelineProps.RTFormats			= Formats;
-	GuiPipelineProps.NumRenderTargets	= 1;
+	DepthStencilStateCreateInfo DepthStencilStateInfo;
+	DepthStencilStateInfo.DepthEnable		= false;
+	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_Zero;
 
-	GlobalImGuiState.PipelineState = RenderingAPI::Get().CreateGraphicsPipelineState(GuiPipelineProps);
+	TSharedRef<DepthStencilState> DepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	if (!DepthStencilState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		DepthStencilState->SetName("ImGui DepthStencilState");
+	}
+
+	RasterizerStateCreateInfo RasterizerStateInfo;
+	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
+
+	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	if (!RasterizerState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		RasterizerState->SetName("ImGui RasterizerState");
+	}
+
+	BlendStateCreateInfo BlendStateInfo;
+	BlendStateInfo.IndependentBlendEnable		= false;
+	BlendStateInfo.RenderTarget[0].BlendEnable	= true;
+
+	TSharedRef<BlendState> BlendState = RenderingAPI::CreateBlendState(BlendStateInfo);
+	if (!BlendState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		BlendState->SetName("ImGui BlendState");
+	}
+
+	GraphicsPipelineStateCreateInfo PSOProperties = { };
+	PSOProperties.ShaderState.VertexShader	= VShader.Get();
+	PSOProperties.ShaderState.PixelShader	= PShader.Get();
+	PSOProperties.InputLayoutState	= InputLayout.Get();
+	PSOProperties.DepthStencilState	= DepthStencilState.Get();
+	PSOProperties.BlendState		= BlendState.Get();
+	PSOProperties.RasterizerState	= RasterizerState.Get();
+	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
+	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
+	PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+
+	GlobalImGuiState.PipelineState = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
 	if (!GlobalImGuiState.PipelineState)
 	{
 		return false;
-	}*/
+	}
 
 	// VertexBuffer
 	GlobalImGuiState.VertexBuffer = RenderingAPI::CreateVertexBuffer(
@@ -569,8 +617,11 @@ void DebugUI::Render(CommandList& CmdList)
 	memcpy(&VertexConstantBuffer.MVP, MVP, sizeof(MVP));
 
 	// Setup viewport
-	Viewport Viewport(DrawData->DisplaySize.x, DrawData->DisplaySize.y, 0.0f, 1.0f, 0.0f, 0.0f);
-	CmdList.BindViewport(Viewport, 1);
+	CmdList.BindViewport(
+		DrawData->DisplaySize.x,
+		DrawData->DisplaySize.y, 
+		0.0f, 1.0f, 0.0f, 0.0f);
+
 	CmdList.BindVertexBuffers(&GlobalImGuiState.VertexBuffer, 1, 0);
 	CmdList.BindIndexBuffer(GlobalImGuiState.IndexBuffer.Get());
 	CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
@@ -616,13 +667,18 @@ void DebugUI::Render(CommandList& CmdList)
 			//{
 			
 			// Apply Scissor, Bind texture, Draw
-			const ScissorRect ScissorRect(
-				Cmd->ClipRect.z - ClipOff.x, 
-				Cmd->ClipRect.w - ClipOff.y, 
-				Cmd->ClipRect.x - ClipOff.x, 
+			CmdList.BindScissorRect(
+				Cmd->ClipRect.z - ClipOff.x,
+				Cmd->ClipRect.w - ClipOff.y,
+				Cmd->ClipRect.x - ClipOff.x,
 				Cmd->ClipRect.y - ClipOff.y);
-			CmdList.BindScissorRect(ScissorRect, 1);
-			CmdList.DrawIndexedInstanced(Cmd->ElemCount, 1, Cmd->IdxOffset + GlobalIndexOffset, Cmd->VtxOffset + GlobalVertexOffset, 0);
+
+			CmdList.DrawIndexedInstanced(
+				Cmd->ElemCount, 
+				1, 
+				Cmd->IdxOffset + GlobalIndexOffset, 
+				Cmd->VtxOffset + GlobalVertexOffset, 
+				0);
 			//}
 		}
 

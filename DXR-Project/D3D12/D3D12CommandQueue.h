@@ -1,29 +1,23 @@
 #pragma once
-#include "D3D12DeviceChild.h"
+#include "D3D12RefCountedObject.h"
 #include "D3D12Fence.h"
 #include "D3D12CommandList.h"
-
-#include "Types.h"
-
-class D3D12Fence;
 
 /*
 * D3D12CommandQueue
 */
 
-class D3D12CommandQueue : public D3D12DeviceChild
+class D3D12CommandQueue : public D3D12RefCountedObject
 {
 public:
 	inline D3D12CommandQueue(D3D12Device* InDevice, ID3D12CommandQueue* InQueue)
-		: D3D12DeviceChild(InDevice)
+		: D3D12RefCountedObject(InDevice)
 		, Queue(InQueue)
 		, Desc()
 	{
 		VALIDATE(Queue != nullptr);
 		Desc = Queue->GetDesc();
 	}
-
-	~D3D12CommandQueue() = default;
 
 	FORCEINLINE bool SignalFence(D3D12Fence* Fence, UInt64 FenceValue)
 	{

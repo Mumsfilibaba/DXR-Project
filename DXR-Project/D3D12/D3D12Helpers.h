@@ -1,6 +1,7 @@
 #pragma once
 #include "RenderingCore/Buffer.h"
 #include "RenderingCore/Texture.h"
+#include "RenderingCore/PipelineState.h"
 
 #include <d3d12.h>
 
@@ -376,4 +377,52 @@ inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopo
 	}
 
 	return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+}
+
+
+/*
+* Converts EPrimitiveTopology to D3D12_PRIMITIVE_TOPOLOGY
+*/
+
+inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
+{
+	switch (PrimitiveTopology)
+	{
+	case EPrimitiveTopology::PrimitiveTopology_LineList:		return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+	case EPrimitiveTopology::PrimitiveTopology_LineStrip:		return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+	case EPrimitiveTopology::PrimitiveTopology_PointList:		return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+	case EPrimitiveTopology::PrimitiveTopology_TriangleList:	return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	case EPrimitiveTopology::PrimitiveTopology_TriangleStrip:	return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+	case EPrimitiveTopology::PrimitiveTopology_Undefined:		return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+	}
+
+	return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+}
+
+/*
+* Converts EResourceState to D3D12_RESOURCE_STATES
+*/
+
+inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState ResourceState)
+{
+	switch (ResourceState)
+	{
+	case EResourceState::ResourceState_Common:					return D3D12_RESOURCE_STATE_COMMON;
+	case EResourceState::ResourceState_CopyDest:				return D3D12_RESOURCE_STATE_COPY_DEST;
+	case EResourceState::ResourceState_CopySource:				return D3D12_RESOURCE_STATE_COPY_SOURCE;
+	case EResourceState::ResourceState_DepthRead:				return D3D12_RESOURCE_STATE_DEPTH_READ;
+	case EResourceState::ResourceState_DepthWrite:				return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	case EResourceState::ResourceState_IndexBuffer:				return D3D12_RESOURCE_STATE_INDEX_BUFFER;
+	case EResourceState::ResourceState_NonPixelShaderResource:	return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	case EResourceState::ResourceState_PixelShaderResource:		return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	case EResourceState::ResourceState_Present:					return D3D12_RESOURCE_STATE_PRESENT;
+	case EResourceState::ResourceState_RenderTarget:			return D3D12_RESOURCE_STATE_RENDER_TARGET;
+	case EResourceState::ResourceState_ResolveDest:				return D3D12_RESOURCE_STATE_RESOLVE_DEST;
+	case EResourceState::ResourceState_ResolveSource:			return D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
+	case EResourceState::ResourceState_ShadingRateSource:		return D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
+	case EResourceState::ResourceState_UnorderedAccess:			return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	case EResourceState::ResourceState_VertexAndConstantBuffer:	return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+	}
+
+	return D3D12_RESOURCE_STATES();
 }

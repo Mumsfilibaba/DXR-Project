@@ -162,8 +162,14 @@ public:
 		return PipelineState.Get();
 	}
 
+	FORCEINLINE D3D12RootSignature* GetRootSignature() const
+	{
+		return RootSignature;
+	}
+
 private:
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> PipelineState;
+	D3D12RootSignature* RootSignature;
 };
 
 /*
@@ -194,6 +200,12 @@ public:
 		return PipelineState.Get();
 	}
 
+	FORCEINLINE D3D12RootSignature* GetRootSignature() const
+	{
+		return RootSignature;
+	}
+
 private:
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> PipelineState;
+	D3D12RootSignature* RootSignature;
 };

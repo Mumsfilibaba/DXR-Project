@@ -177,7 +177,7 @@ struct ColorClearValue
 			Float A;
 		};
 
-		Float ColorArr[4];
+		Float RGBA[4];
 	};
 };
 
@@ -187,11 +187,7 @@ struct ColorClearValue
 
 struct DepthStencilClearValue
 {
-	inline DepthStencilClearValue()
-		: Depth(1.0f)
-		, Stencil(0)
-	{
-	}
+	DepthStencilClearValue() = default;
 
 	inline DepthStencilClearValue(Float InDepth, UInt8 InStencil)
 		: Depth(InDepth)
@@ -199,8 +195,8 @@ struct DepthStencilClearValue
 	{
 	}
 
-	Float Depth;
-	UInt8 Stencil;
+	Float Depth		= 1.0f;
+	UInt8 Stencil	= 0;
 };
 
 /*
@@ -280,79 +276,12 @@ struct ClearValue
 };
 
 /*
-* Viewport
-*/
-
-struct Viewport
-{
-	inline Viewport()
-		: Width(0.0f)
-		, Height(0.0f)
-		, MinDepth(0.0f)
-		, MaxDepth(0.0f)
-		, x(0.0f)
-		, y(0.0f)
-	{
-	}
-
-	inline Viewport(Float InWidth, Float InHeight, Float InMinDepth, Float InMaxDepth, Float InX, Float InY)
-		: Width(InWidth)
-		, Height(InHeight)
-		, MinDepth(InMinDepth)
-		, MaxDepth(InMaxDepth)
-		, x(InX)
-		, y(InY)
-	{
-	}
-
-	Float Width;
-	Float Height;
-	Float MinDepth;
-	Float MaxDepth;
-	Float x;
-	Float y;
-};
-
-/*
-* ScissorRect
-*/
-
-struct ScissorRect
-{
-	inline ScissorRect()
-		: Width(0.0f)
-		, Height(0.0f)
-		, x(0.0f)
-		, y(0.0f)
-	{
-	}
-
-	inline ScissorRect(Float InWidth, Float InHeight, Float InX, Float InY)
-		: Width(InWidth)
-		, Height(InHeight)
-		, x(InX)
-		, y(InY)
-	{
-	}
-
-	Float Width;
-	Float Height;
-	Float x;
-	Float y;
-};
-
-/*
 * CopyBufferInfo
 */
 
 struct CopyBufferInfo
 {
-	inline CopyBufferInfo()
-		: SourceOffset(0)
-		, DestinationOffset(0)
-		, SizeInBytes(0)
-	{
-	}
+	CopyBufferInfo() = default;
 
 	inline CopyBufferInfo(UInt64 InSourceOffset, UInt32 InDestinationOffset, UInt32 InSizeInBytes)
 		: SourceOffset(InSourceOffset)
@@ -361,52 +290,43 @@ struct CopyBufferInfo
 	{
 	}
 
-	UInt64 SourceOffset;
-	UInt32 DestinationOffset;
-	UInt32 SizeInBytes;
+	UInt64 SourceOffset			= 0;
+	UInt32 DestinationOffset	= 0;
+	UInt32 SizeInBytes			= 0;
+};
+
+/*
+* CopyTextureSubresourceInfo
+*/
+
+struct CopyTextureSubresourceInfo
+{
+	CopyTextureSubresourceInfo() = default;
+
+	inline CopyTextureSubresourceInfo(UInt32 InX, UInt32 InY, UInt32 InZ, UInt32 InSubresourceIndex)
+		: x(InX)
+		, y(InY)
+		, z(InZ)
+		, SubresourceIndex(InSubresourceIndex)
+	{
+	}
+
+	UInt32 x = 0;
+	UInt32 y = 0;
+	UInt32 z = 0;
+	UInt32 SubresourceIndex = 0;
 };
 
 /*
 * CopyTextureInfo
 */
 
-// TODO: This will not work, fix
 struct CopyTextureInfo
 {
-	inline CopyTextureInfo()
-		: SourceX(0)
-		, SourceY(0)
-		, SourceZ(0)
-		, DestX(0)
-		, DestY(0)
-		, DestZ(0)
-		, Width(0)
-		, Height(0)
-		, Depth(0)
-	{
-	}
+	CopyTextureSubresourceInfo Source;
+	CopyTextureSubresourceInfo Destination;
 
-	inline CopyTextureInfo(UInt64 InSourceOffset, UInt32 InDestinationOffset, UInt32 InSizeInBytes)
-		: SourceX(0)
-		, SourceY(0)
-		, SourceZ(0)
-		, DestX(0)
-		, DestY(0)
-		, DestZ(0)
-		, Width(0)
-		, Height(0)
-		, Depth(0)
-	{
-	}
-
-	UInt32 SourceX;
-	UInt32 SourceY;
-	UInt32 SourceZ;
-	UInt32 DestX;
-	UInt32 DestY;
-	UInt32 DestZ;
-	UInt32 Width;
-	UInt32 Height;
-	UInt32 Depth;
+	UInt32 Width	= 0;
+	UInt32 Height	= 0;
+	UInt32 Depth	= 0;
 };
-

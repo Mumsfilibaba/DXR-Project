@@ -4,26 +4,23 @@
 #include "D3D12CommandAllocator.h"
 #include "D3D12RootSignature.h"
 #include "D3D12DescriptorHeap.h"
+#include "D3D12RefCountedObject.h"
 
 class D3D12ComputePipelineState;
-class D3D12DescriptorTable;
-class D3D12RootSignature;
 
 /*
 * D3D12CommandList
 */
 
-class D3D12CommandList : public D3D12DeviceChild
+class D3D12CommandList : public D3D12RefCountedObject
 {
 public:
 	inline D3D12CommandList::D3D12CommandList(D3D12Device* InDevice, ID3D12GraphicsCommandList* InCmdList)
-		: D3D12DeviceChild(InDevice)
+		: D3D12RefCountedObject(InDevice)
 		, CmdList(InCmdList)
 		, DXRCmdList(nullptr)
 	{
 	}
-	
-	~D3D12CommandList() = default;
 
 	FORCEINLINE bool InitRayTracing()
 	{
@@ -50,18 +47,22 @@ public:
 		return SUCCEEDED(CmdList->Close());
 	}
 
-	FORCEINLINE void ClearRenderTargetView(const D3D12RenderTargetView* View, const Float ClearColor[4])
+	FORCEINLINE void ClearRenderTargetView(
+		D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView,
+		const Float Color[4],
+		UInt32 NumRects,
+		const D3D12_RECT* Rects)
 	{
-		CmdList->ClearRenderTargetView(View->GetOfflineHandle(), ClearColor, 0, nullptr);
+		CmdList->ClearRenderTargetView(RenderTargetView, Color, NumRects, Rects);
 	}
 
 	FORCEINLINE void ClearDepthStencilView(
-		const D3D12DepthStencilView* View, 
+		D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView,
 		D3D12_CLEAR_FLAGS Flags, 
 		Float Depth, 
 		const UInt8 Stencil)
 	{
-		CmdList->ClearDepthStencilView(View->GetOfflineHandle(), Flags, Depth, Stencil, 0, nullptr);
+		CmdList->ClearDepthStencilView(DepthStencilView, Flags, Depth, Stencil, 0, nullptr);
 	}
 
 	FORCEINLINE void ClearUnorderedAccessViewFloat(
@@ -129,7 +130,10 @@ public:
 		UInt32 ThreadGroupCountY, 
 		UInt32 ThreadGroupCountZ)
 	{
-		CmdList->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+		CmdList->Dispatch(
+			ThreadGroupCountX, 
+			ThreadGroupCountY, 
+			ThreadGroupCountZ);
 	}
 
 	FORCEINLINE void DrawInstanced(
@@ -293,5 +297,5 @@ public:
 private:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>	CmdList;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	DXRCmdList;
-	bool IsReady = false;
+	Bool IsReady = false;
 };

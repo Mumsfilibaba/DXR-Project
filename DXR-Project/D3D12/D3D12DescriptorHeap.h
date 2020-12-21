@@ -34,16 +34,16 @@ class D3D12OfflineDescriptorHeap : public D3D12DeviceChild
 		D3D12_CPU_DESCRIPTOR_HANDLE End;
 	};
 
-	struct DescriptorHeap
+	struct D3D12DescriptorHeap
 	{
 	public:
-		DescriptorHeap()
+		D3D12DescriptorHeap()
 			: Heap(nullptr)
 			, FreeList()
 		{
 		}
 
-		DescriptorHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& InHeap, FreeRange FirstRange)
+		D3D12DescriptorHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& InHeap, FreeRange FirstRange)
 			: Heap(InHeap)
 			, FreeList()
 		{
@@ -82,7 +82,7 @@ private:
 	void AllocateHeap();
 
 private:
-	TArray<DescriptorHeap> Heaps;
+	TArray<D3D12DescriptorHeap> Heaps;
 	std::wstring Name;
 
 	D3D12_DESCRIPTOR_HEAP_TYPE Type;

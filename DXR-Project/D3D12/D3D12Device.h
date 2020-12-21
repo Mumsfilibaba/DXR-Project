@@ -5,9 +5,8 @@
 
 #include <wrl/client.h>
 
-#include "Types.h"
+#include "Core/RefCountedObject.h"
 
-class D3D12DescriptorHeap;
 class D3D12OfflineDescriptorHeap;
 class D3D12OnlineDescriptorHeap;
 class D3D12ComputePipelineState;
@@ -26,7 +25,7 @@ typedef HRESULT(WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1)(UINT Flags, REFIID riid,
 * D3D12Device
 */
 
-class D3D12Device
+class D3D12Device : public RefCountedObject
 {
 public:
 	D3D12Device();
@@ -34,18 +33,19 @@ public:
 
 	bool CreateDevice(bool DebugEnable, bool GPUValidation);
 
-	class D3D12CommandQueue* CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type);
-	class D3D12CommandAllocator* CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type);
+	class D3D12CommandQueue*		CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type);
+	class D3D12CommandAllocator*	CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type);
+	
 	class D3D12CommandList* CreateCommandList(
 		D3D12_COMMAND_LIST_TYPE Type, 
 		D3D12CommandAllocator* Allocator, 
 		ID3D12PipelineState* InitalPipeline);
 
-	class D3D12Fence*			CreateFence(UInt64 InitalValue);
-	class D3D12RootSignature*	CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc);
-	class D3D12RootSignature*	CreateRootSignature(IDxcBlob* ShaderBlob);
-	class D3D12RootSignature*	CreateRootSignature(Void* RootSignatureData, const UInt32 RootSignatureSize);
-	class D3D12SwapChain*		CreateSwapChain(class WindowsWindow* pWindow, D3D12CommandQueue* Queue);
+	class D3D12Fence*		CreateFence(UInt64 InitalValue);
+	D3D12RootSignature*		CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+	D3D12RootSignature*		CreateRootSignature(IDxcBlob* ShaderBlob);
+	D3D12RootSignature*		CreateRootSignature(Void* RootSignatureData, const UInt32 RootSignatureSize);
+	class D3D12SwapChain*	CreateSwapChain(class WindowsWindow* pWindow, D3D12CommandQueue* Queue);
 
 	Int32 GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount);
 	std::string GetAdapterName() const;
@@ -170,27 +170,27 @@ public:
 		return Adapter.Get();
 	}
 
-	FORCEINLINE bool IsTearingSupported() const
+	FORCEINLINE Bool IsTearingSupported() const
 	{
 		return AllowTearing;
 	}
 
-	FORCEINLINE bool IsRayTracingSupported() const
+	FORCEINLINE Bool IsRayTracingSupported() const
 	{
 		return RayTracingSupported;
 	}
 
-	FORCEINLINE bool IsInlineRayTracingSupported() const
+	FORCEINLINE Bool IsInlineRayTracingSupported() const
 	{
 		return InlineRayTracingSupported;
 	}
 
-	FORCEINLINE bool IsMeshShadersSupported() const
+	FORCEINLINE Bool IsMeshShadersSupported() const
 	{
 		return MeshShadersSupported;
 	}
 
-	FORCEINLINE bool IsSamplerFeedbackSupported() const
+	FORCEINLINE Bool IsSamplerFeedbackSupported() const
 	{
 		return SamplerFeedbackSupported;
 	}
@@ -241,8 +241,8 @@ private:
 	PFN_D3D12_CREATE_DEVICE			_D3D12CreateDevice		= nullptr;
 	PFN_D3D12_GET_DEBUG_INTERFACE	_D3D12GetDebugInterface	= nullptr;
 	PFN_D3D12_SERIALIZE_ROOT_SIGNATURE				_D3D12SerializeRootSignature			= nullptr;
-	PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE	_D3D12SerializeVersionedRootSignature	= nullptr;
 	PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER	_D3D12CreateRootSignatureDeserializer	= nullptr;
+	PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE	_D3D12SerializeVersionedRootSignature	= nullptr;
 	PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER	_D3D12CreateVersionedRootSignatureDeserializer = nullptr;
 
 	D3D12OfflineDescriptorHeap* GlobalResourceDescriptorHeap		= nullptr;
@@ -254,10 +254,10 @@ private:
 
 	UInt32 AdapterID = 0;
 
-	bool MeshShadersSupported		= false;
-	bool SamplerFeedbackSupported	= false;
-	bool RayTracingSupported		= false;
-	bool InlineRayTracingSupported	= false;
-	bool AllowTearing				= false;
-	bool DebugEnabled				= false;
+	Bool MeshShadersSupported		= false;
+	Bool SamplerFeedbackSupported	= false;
+	Bool RayTracingSupported		= false;
+	Bool InlineRayTracingSupported	= false;
+	Bool AllowTearing				= false;
+	Bool DebugEnabled				= false;
 };

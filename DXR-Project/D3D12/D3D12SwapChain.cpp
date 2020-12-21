@@ -9,7 +9,7 @@
 */
 
 D3D12SwapChain::D3D12SwapChain(D3D12Device* InDevice)
-	: D3D12DeviceChild(InDevice)
+	: D3D12RefCountedObject(InDevice)
 	, Window(nullptr)
 	, SwapChain()
 	, Width(0)

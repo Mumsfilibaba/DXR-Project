@@ -42,14 +42,14 @@ D3D12RenderingAPI::~D3D12RenderingAPI()
 bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> InRenderWindow, bool EnableDebug)
 {
 	// Create device
-	Device = MakeShared<D3D12Device>();
+	Device = new D3D12Device();
 	if (!Device->CreateDevice(EnableDebug, true))
 	{
 		return false;
 	}
 	
 	// Create commandqueue
-	DirectCmdQueue = TSharedPtr(Device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
+	DirectCmdQueue = Device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	if (!DirectCmdQueue)
 	{
 		return false;
@@ -62,14 +62,15 @@ bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> InRenderWindow, boo
 	}
 
 	// Create commandcontext
-	DirectCmdContext = MakeShared<D3D12CommandContext>(Device.Get(), DirectCmdQueue.Get(), DefaultRootSignatures);
+	DirectCmdContext = new D3D12CommandContext(Device.Get(), DirectCmdQueue.Get(), DefaultRootSignatures);
 	if (!DirectCmdContext->Initialize())
 	{
 		return false;
 	}
 
 	// Create swapchain
-	SwapChain = Device->CreateSwapChain(StaticCast<WindowsWindow>(InRenderWindow).Get(), DirectCmdQueue.Get());
+	TSharedRef<WindowsWindow> Window = StaticCast<WindowsWindow>(InRenderWindow);
+	SwapChain = Device->CreateSwapChain(Window.Get(), DirectCmdQueue.Get());
 	if (!SwapChain)
 	{
 		return false;
@@ -1270,26 +1271,31 @@ VertexShader* D3D12RenderingAPI::CreateVertexShader(const TArray<UInt8>& ShaderC
 
 HullShader* D3D12RenderingAPI::CreateHullShader(const TArray<UInt8>& ShaderCode) const
 {
+	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 DomainShader* D3D12RenderingAPI::CreateDomainShader(const TArray<UInt8>& ShaderCode) const
 {
+	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 GeometryShader* D3D12RenderingAPI::CreateGeometryShader(const TArray<UInt8>& ShaderCode) const
 {
+	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 MeshShader* D3D12RenderingAPI::CreateMeshShader(const TArray<UInt8>& ShaderCode) const
 {
+	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 AmplificationShader* D3D12RenderingAPI::CreateAmplificationShader(const TArray<UInt8>& ShaderCode) const
 {
+	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
@@ -1300,16 +1306,19 @@ PixelShader* D3D12RenderingAPI::CreatePixelShader(const TArray<UInt8>& ShaderCod
 
 RayGenShader* D3D12RenderingAPI::CreateRayGenShader(const TArray<UInt8>& ShaderCode) const
 {
+	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 RayHitShader* D3D12RenderingAPI::CreateRayHitShader(const TArray<UInt8>& ShaderCode) const
 {
+	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 RayMissShader* D3D12RenderingAPI::CreateRayMissShader(const TArray<UInt8>& ShaderCode) const
 {
+	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
@@ -1531,7 +1540,9 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
 
 	// RootSignature
 	VALIDATE(DefaultRootSignatures.Graphics != nullptr);
-	PipelineStream.RootSignature = DefaultRootSignatures.Graphics->GetRootSignature();
+
+	D3D12RootSignature* RootSignature = DefaultRootSignatures.Graphics.Get();
+	PipelineStream.RootSignature = RootSignature->GetRootSignature();
 
 	// Topology
 	PipelineStream.PrimitiveTopologyType = ConvertPrimitiveTopologyType(CreateInfo.PrimitiveTopologyType);
@@ -1554,6 +1565,9 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
 	{
 		D3D12GraphicsPipelineState* Pipeline = new D3D12GraphicsPipelineState(Device.Get());
 		Pipeline->PipelineState = PipelineState;
+
+		// TODO: This should be refcounted
+		Pipeline->RootSignature = RootSignature;
 
 		LOG_INFO("[D3D12RenderingAPI]: Created GraphicsPipelineState");
 		return Pipeline;
@@ -1613,6 +1627,9 @@ ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(
 	{
 		D3D12ComputePipelineState* Pipeline = new D3D12ComputePipelineState(Device.Get());
 		Pipeline->PipelineState = PipelineState;
+
+		// TODO: This should be refcounted
+		Pipeline->RootSignature = RootSignature;
 
 		LOG_INFO("[D3D12RenderingAPI]: Created ComputePipelineState");
 		return Pipeline;

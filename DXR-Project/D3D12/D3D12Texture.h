@@ -15,7 +15,10 @@ public:
 	{
 	}
 
-	~D3D12Texture() = default;
+	FORCEINLINE DXGI_FORMAT GetDxgiFormat() const
+	{
+		return Desc.Format;
+	}
 };
 
 /*
@@ -30,8 +33,6 @@ public:
 		, D3D12Texture(InDevice)
 	{
 	}
-
-	~D3D12Texture1D() = default;
 };
 
 /*
@@ -46,8 +47,6 @@ public:
 		, D3D12Texture(InDevice)
 	{
 	}
-
-	~D3D12Texture1DArray() = default;
 };
 
 /*
@@ -62,8 +61,6 @@ public:
 		, D3D12Texture(InDevice)
 	{
 	}
-	
-	~D3D12Texture2D() = default;
 };
 
 /*
@@ -78,8 +75,6 @@ public:
 		, D3D12Texture(InDevice)
 	{
 	}
-
-	~D3D12Texture2DArray() = default;
 };
 
 /*
@@ -94,8 +89,6 @@ public:
 		, D3D12Texture(InDevice)
 	{
 	}
-	
-	~D3D12TextureCube() = default;
 };
 
 /*
@@ -110,8 +103,6 @@ public:
 		, D3D12Texture(InDevice)
 	{
 	}
-
-	~D3D12TextureCubeArray() = default;
 };
 
 /*
@@ -126,8 +117,6 @@ public:
 		, D3D12Texture(InDevice)
 	{
 	}
-
-	~D3D12Texture3D() = default;
 };
 
 /*

@@ -656,9 +656,9 @@ private:
 	}
 
 private:
-	TSharedPtr<D3D12SwapChain>		SwapChain;
-	TSharedPtr<D3D12Device>			Device;
-	TSharedPtr<D3D12CommandQueue>	DirectCmdQueue;
-	TSharedPtr<D3D12CommandContext>	DirectCmdContext;
+	TSharedRef<D3D12SwapChain>		SwapChain;
+	TSharedRef<D3D12Device>			Device;
+	TSharedRef<D3D12CommandQueue>	DirectCmdQueue;
+	TSharedRef<D3D12CommandContext>	DirectCmdContext;
 	D3D12DefaultRootSignatures		DefaultRootSignatures;
 };

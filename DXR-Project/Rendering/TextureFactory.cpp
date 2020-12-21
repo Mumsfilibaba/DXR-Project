@@ -4,7 +4,7 @@
 #include "RenderingCore/CommandList.h"
 #include "RenderingCore/PipelineState.h"
 #include "RenderingCore/RenderingAPI.h"
-#include "RenderingCore/Shader.h"
+#include "RenderingCore/ShaderCompiler.h"
 
 #ifdef min
 	#undef min
@@ -153,8 +153,8 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
 
 TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format)
 {
-	const bool		GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-	const UInt16	MipLevels = (GenerateMipLevels) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
+	const Bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
+	const UInt16 MipLevels	= (GenerateMipLevels) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
 
 	// Create statging texture
 	TSharedRef<TextureCube> StagingTexture = RenderingAPI::CreateTextureCube(
@@ -170,8 +170,8 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	}
 
 	// Create UAV
-	TSharedRef<UnorderedAccessView> Uav = RenderingAPI::CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
-	if (!Uav)
+	TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderingAPI::CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
+	if (!StagingTextureUAV)
 	{
 		return nullptr;
 	}
@@ -210,23 +210,43 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	//CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
 	//CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 2);
 
-	const UInt32 ThreadsX = Math::DivideByMultiple(CubeMapSize, 16);
-	const UInt32 ThreadsY = Math::DivideByMultiple(CubeMapSize, 16);
+	CmdList.CSBindUnorderedAccessViews(&StagingTextureUAV, 1, 0);
+
+	constexpr UInt32 LocalWorkGroupCount = 16;
+	const UInt32 ThreadsX = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
+	const UInt32 ThreadsY = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
 	CmdList.Dispatch(ThreadsX, ThreadsY, 6);
 
-	CmdList.TransitionTexture(PanoramaSource, EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
-	CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
-	CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);
+	CmdList.TransitionTexture(
+		PanoramaSource, 
+		EResourceState::ResourceState_NonPixelShaderResource,
+		EResourceState::ResourceState_PixelShaderResource);
+	
+	CmdList.TransitionTexture(
+		StagingTexture.Get(), 
+		EResourceState::ResourceState_NonPixelShaderResource, 
+		EResourceState::ResourceState_CopySource);
+	
+	CmdList.TransitionTexture(
+		Texture.Get(), 
+		EResourceState::ResourceState_Common, 
+		EResourceState::ResourceState_CopyDest);
 
-	CmdList.CopyTexture(Texture.Get(), StagingTexture.Get(), CopyTextureInfo());
+	CmdList.CopyTexture(Texture.Get(), StagingTexture.Get());
 
 	if (GenerateMipLevels)
 	{
 		CmdList.GenerateMips(Texture.Get());
 	}
 
-	CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
+	CmdList.TransitionTexture(Texture.Get(), 
+		EResourceState::ResourceState_CopyDest, 
+		EResourceState::ResourceState_PixelShaderResource);
 	
+	CmdList.DestroyResource(StagingTexture.Get());
+	CmdList.DestroyResource(StagingTextureUAV.Get());
+	CmdList.DestroyResource(Texture.Get());
+
 	CmdList.End();
 	CommandListExecutor::ExecuteCommandList(CmdList);
 

@@ -1,17 +1,15 @@
 #pragma once
-#include "D3D12DeviceChild.h"
-
-#include "Types.h"
+#include "D3D12RefCountedObject.h"
 
 /*
 * D3D12Fence
 */
 
-class D3D12Fence : public D3D12DeviceChild
+class D3D12Fence : public D3D12RefCountedObject
 {
 public:
 	inline D3D12Fence(D3D12Device* InDevice, ID3D12Fence* InFence, HANDLE InEvent)
-		: D3D12DeviceChild(InDevice)
+		: D3D12RefCountedObject(InDevice)
 		, Fence(InFence)
 		, Event(InEvent)
 	{

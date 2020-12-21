@@ -1,7 +1,5 @@
 #pragma once
-#include "D3D12DeviceChild.h"
-
-#include <dxcapi.h>
+#include "D3D12RefCountedObject.h"
 
 class D3D12RootSignature;
 
@@ -23,17 +21,15 @@ struct D3D12DefaultRootSignatures
 * D3D12RootSignature
 */
 
-class D3D12RootSignature : public D3D12DeviceChild
+class D3D12RootSignature : public D3D12RefCountedObject
 {
 public:
 	inline D3D12RootSignature(D3D12Device* InDevice, ID3D12RootSignature* InRootSignature)
-		: D3D12DeviceChild(InDevice)
+		: D3D12RefCountedObject(InDevice)
 		, RootSignature(InRootSignature)
 	{
 		VALIDATE(RootSignature != nullptr);
 	}
-	
-	~D3D12RootSignature() = default;
 
 	FORCEINLINE void SetName(const std::string& Name)
 	{

@@ -17,11 +17,11 @@ class RayTracingScene;
 class PipelineResource : public RefCountedObject
 {
 public: 
-	PipelineResource()			= default;
 	virtual ~PipelineResource()	= default;
 
 	virtual void SetName(const std::string& Name)
 	{
+		UNREFERENCED_VARIABLE(Name);
 	}
 
 	virtual Void* GetNativeResource() const
@@ -75,8 +75,7 @@ struct ResourceData
 
 class Resource : public PipelineResource
 {
-public: 
-	Resource()			= default;
+public:
 	virtual ~Resource()	= default;
 
 	// Casting Functions

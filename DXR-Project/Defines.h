@@ -57,6 +57,12 @@
 #define PREPROCESS_CONCAT(x, y) _PREPROCESS_CONCAT(x, y)
 
 /*
+* Makes multiline strings
+*/
+
+#define MULTILINE_STRING(...) #__VA_ARGS__
+
+/*
 * Disable some warnings
 */
 

@@ -19,8 +19,6 @@ public:
 		ByteCode.pShaderBytecode	= reinterpret_cast<const void*>(Code.Data());
 	}
 
-	~D3D12Shader() = default;
-
 	FORCEINLINE D3D12_SHADER_BYTECODE GetShaderByteCode() const
 	{
 		return ByteCode;
@@ -53,8 +51,6 @@ public:
 		, D3D12Shader(InDevice, InCode)
 	{
 	}
-
-	~D3D12VertexShader() = default;
 };
 
 /*
@@ -69,8 +65,6 @@ public:
 		, D3D12Shader(InDevice, InCode)
 	{
 	}
-
-	~D3D12PixelShader() = default;
 };
 
 /*
@@ -86,8 +80,6 @@ public:
 		, RootSignature(nullptr)
 	{
 	}
-
-	~D3D12ComputeShader() = default;
 
 	/*
 	* Creates a rootsignature if the shader contains one, this is only supported for Compute for now

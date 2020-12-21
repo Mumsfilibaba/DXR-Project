@@ -1,20 +1,18 @@
 #pragma once
-#include "D3D12DeviceChild.h"
+#include "D3D12RefCountedObject.h"
 
 /*
 * D3D12CommandAllocator
 */
 
-class D3D12CommandAllocator : public D3D12DeviceChild
+class D3D12CommandAllocator : public D3D12RefCountedObject
 {
 public:
 	inline D3D12CommandAllocator(D3D12Device* InDevice, ID3D12CommandAllocator* InAllocator)
-		: D3D12DeviceChild(InDevice)
+		: D3D12RefCountedObject(InDevice)
 		, Allocator(InAllocator)
 	{
 	}
-
-	~D3D12CommandAllocator() = default;
 
 	FORCEINLINE bool Reset()
 	{

@@ -28,7 +28,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(UInt32& OutHeap
 	// Find a heap that is not empty
 	UInt32 HeapIndex = 0;
 	bool FoundHeap = false;
-	for (DescriptorHeap& Heap : Heaps)
+	for (D3D12DescriptorHeap& Heap : Heaps)
 	{
 		if (!Heap.FreeList.IsEmpty())
 		{
@@ -49,7 +49,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(UInt32& OutHeap
 	}
 
 	// Get the heap and the first free range
-	DescriptorHeap&	Heap	= Heaps[HeapIndex];
+	D3D12DescriptorHeap&	Heap	= Heaps[HeapIndex];
 	FreeRange&		Range	= Heap.FreeList.Front();
 
 	D3D12_CPU_DESCRIPTOR_HANDLE Handle = Range.Begin;
@@ -67,7 +67,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(UInt32& OutHeap
 void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, UInt32 HeapIndex)
 {
 	VALIDATE(HeapIndex < Heaps.Size());
-	DescriptorHeap&	Heap = Heaps[HeapIndex];
+	D3D12DescriptorHeap&	Heap = Heaps[HeapIndex];
 
 	// Find a suitable range
 	bool FoundRange	= false;
@@ -103,7 +103,7 @@ void D3D12OfflineDescriptorHeap::SetName(const std::string& InName)
 	Name = ConvertToWide(InName);
 
 	UInt32 HeapIndex = 0;
-	for (DescriptorHeap& Heap : Heaps)
+	for (D3D12DescriptorHeap& Heap : Heaps)
 	{
 		std::wstring DbgName = Name + L"[" + std::to_wstring(HeapIndex) + L"]";
 		Heap.Heap->SetName(DbgName.c_str());

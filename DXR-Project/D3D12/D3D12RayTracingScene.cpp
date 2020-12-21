@@ -327,7 +327,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(
 	SrvDesc.Shader4ComponentMapping						= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.RaytracingAccelerationStructure.Location	= ResultBuffer->GetGPUVirtualAddress();
 
-	View = MakeShared<D3D12ShaderResourceView>(Device, nullptr, SrvDesc);
+	View = new D3D12ShaderResourceView(Device, nullptr, SrvDesc);
 
 	IsDirty = false;
 	return true;

@@ -1,10 +1,29 @@
 #pragma once
 #include "Resource.h"
-#include "ShaderCompiler.h"
 
 class ComputeShader;
 class VertexShader;
 class PixelShader;
+
+/*
+* EShaderStage
+*/
+
+enum class EShaderStage
+{
+	ShaderStage_Vertex			= 1,
+	ShaderStage_Hull			= 2,
+	ShaderStage_Domain			= 3,
+	ShaderStage_Geometry		= 4,
+	ShaderStage_Mesh			= 5,
+	ShaderStage_Amplification	= 6,
+	ShaderStage_Pixel			= 7,
+	ShaderStage_Compute			= 8,
+	ShaderStage_RayGen			= 9,
+	ShaderStage_RayAnyHit		= 10,
+	ShaderStage_RayClosestHit	= 11,
+	ShaderStage_RayMiss			= 12,
+};
 
 /*
 * Shader

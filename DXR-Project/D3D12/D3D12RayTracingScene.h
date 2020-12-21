@@ -41,7 +41,7 @@ private:
 	UInt32 VertexCount	= 0;
 	UInt32 IndexCount	= 0;
 
-	bool IsDirty = true;
+	Bool IsDirty = true;
 };
 
 /*
@@ -143,7 +143,7 @@ private:
 	UInt32 BindingTableStride	= 0;
 	UInt32 NumHitGroups			= 0;
 
-	TSharedPtr<D3D12ShaderResourceView>	View;
+	TSharedRef<D3D12ShaderResourceView>	View;
 	
 	TArray<D3D12RayTracingGeometryInstance>	Instances;
 	TArray<BindingTableEntry>				BindingTableEntries;

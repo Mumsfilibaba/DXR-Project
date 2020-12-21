@@ -31,8 +31,8 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 	else
 	{
 		LOG_ERROR("[RenderingAPI::Initialize] Invalid RenderingAPI enum");
+		
 		Debug::DebugBreak();
-
 		return false;
 	}
 
