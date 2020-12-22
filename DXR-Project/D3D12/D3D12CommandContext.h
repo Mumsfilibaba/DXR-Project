@@ -156,10 +156,27 @@ public:
 	{
 	}
 
+	FORCEINLINE void BindConstantBuffer()
+	{
+	}
+
+	FORCEINLINE void BindShaderResourceView()
+	{
+	}
+
+	FORCEINLINE void BindUnorderedAccessView()
+	{
+	}
+
+	FORCEINLINE void BindSamplerState()
+	{
+	}
+
 private:
 	TArray<D3D12_GPU_DESCRIPTOR_HANDLE> ConstantBuffers;
 	TArray<D3D12_GPU_DESCRIPTOR_HANDLE> ShaderResources;
 	TArray<D3D12_GPU_DESCRIPTOR_HANDLE> UnorderedAccessResources;
+	TArray<D3D12_GPU_DESCRIPTOR_HANDLE> Samplers;
 };
 
 /*
@@ -177,6 +194,156 @@ public:
 		, PixelShader()
 		, ComputeShader()
 	{
+	}
+
+	// VertexShader
+	FORCEINLINE void VSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		VertexShader.BindConstantBuffer();
+	}
+
+	FORCEINLINE void VSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		VertexShader.BindShaderResourceView();
+	}
+
+	FORCEINLINE void VSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		VertexShader.BindUnorderedAccessView();
+	}
+
+	// HullShader
+	FORCEINLINE void HSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		HullShader.BindConstantBuffer();
+	}
+
+	FORCEINLINE void HSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		HullShader.BindShaderResourceView();
+	}
+
+	FORCEINLINE void HSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		HullShader.BindUnorderedAccessView();
+	}
+
+	// DomainShader
+	FORCEINLINE void DSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		DomainShader.BindConstantBuffer();
+	}
+
+	FORCEINLINE void DSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		DomainShader.BindShaderResourceView();
+	}
+
+	FORCEINLINE void DSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		DomainShader.BindUnorderedAccessView();
+	}
+
+	// GeometryShader
+	FORCEINLINE void GSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		GeometryShader.BindConstantBuffer();
+	}
+
+	FORCEINLINE void GSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		GeometryShader.BindShaderResourceView();
+	}
+
+	FORCEINLINE void GSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		GeometryShader.BindUnorderedAccessView();
+	}
+
+	// PixelShader
+	FORCEINLINE void PSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		PixelShader.BindConstantBuffer();
+	}
+
+	FORCEINLINE void PSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		PixelShader.BindShaderResourceView();
+	}
+
+	FORCEINLINE void PSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		PixelShader.BindUnorderedAccessView();
+	}
+
+	// ComputeShader
+	FORCEINLINE void CSBindConstantBuffers(
+		ConstantBuffer* const* ConstantBuffers,
+		UInt32 ConstantBufferCount,
+		UInt32 StartSlot)
+	{
+		ComputeShader.BindConstantBuffer();
+	}
+
+	FORCEINLINE void CSBindShaderResourceViews(
+		ShaderResourceView* const* ShaderResourceViews,
+		UInt32 ShaderResourceViewCount,
+		UInt32 StartSlot)
+	{
+		ComputeShader.BindShaderResourceView();
+	}
+
+	FORCEINLINE void CSBindUnorderedAccessViews(
+		UnorderedAccessView* const* UnorderedAccessViews,
+		UInt32 UnorderedAccessViewCount,
+		UInt32 StartSlot)
+	{
+		ComputeShader.BindUnorderedAccessView();
 	}
 
 private:

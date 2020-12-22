@@ -44,6 +44,10 @@ public:
 		InsertCommand<EndCommand>();
 	}
 
+	/*
+	* RenderTarget Management
+	*/
+
 	FORCEINLINE void ClearRenderTargetView(
 		RenderTargetView* RenderTargetView, 
 		const ColorClearValue& ClearColor)
@@ -109,6 +113,27 @@ public:
 		InsertCommand<BindBlendFactorCommand>(Color);
 	}
 
+	FORCEINLINE void BindRenderTargets(
+		RenderTargetView* const* RenderTargetViews,
+		UInt32 RenderTargetCount,
+		DepthStencilView* DepthStencilView)
+	{
+		Void* RenderTargetMemory = CmdAllocator.Allocate(sizeof(RenderTargetView*) * RenderTargetCount, 1);
+		RenderTargetView** RenderTargets = reinterpret_cast<RenderTargetView**>(RenderTargetMemory);
+		for (UInt32 i = 0; i < RenderTargetCount; i++)
+		{
+			RenderTargets[i] = RenderTargetViews[i];
+			SAFEADDREF(RenderTargets[i]);
+		}
+
+		SAFEADDREF(DepthStencilView);
+		InsertCommand<BindRenderTargetsCommand>(RenderTargets, RenderTargetCount, DepthStencilView);
+	}
+
+	/*
+	* Pipeline Management
+	*/
+
 	FORCEINLINE void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
 	{
 		InsertCommand<BindPrimitiveTopologyCommand>(PrimitveTopologyType);
@@ -142,23 +167,6 @@ public:
 		InsertCommand<BindRayTracingSceneCommand>(RayTracingScene);
 	}
 
-	FORCEINLINE void BindRenderTargets(
-		RenderTargetView* const* RenderTargetViews, 
-		UInt32 RenderTargetCount, 
-		DepthStencilView* DepthStencilView)
-	{
-		Void* RenderTargetMemory			= CmdAllocator.Allocate(sizeof(RenderTargetView*) * RenderTargetCount, 1);
-		RenderTargetView** RenderTargets	= reinterpret_cast<RenderTargetView**>(RenderTargetMemory);
-		for (UInt32 i = 0; i < RenderTargetCount; i++)
-		{
-			RenderTargets[i] = RenderTargetViews[i];
-			SAFEADDREF(RenderTargets[i]);
-		}
-
-		SAFEADDREF(DepthStencilView);
-		InsertCommand<BindRenderTargetsCommand>(RenderTargets, RenderTargetCount, DepthStencilView);
-	}
-
 	FORCEINLINE void BindGraphicsPipelineState(GraphicsPipelineState* PipelineState)
 	{
 		SAFEADDREF(PipelineState);
@@ -176,6 +184,10 @@ public:
 		SAFEADDREF(PipelineState);
 		InsertCommand<BindRayTracingPipelineStateCommand>(PipelineState);
 	}
+
+	/*
+	* Binding Shader Resources
+	*/
 
 	// VertexShader
 	FORCEINLINE void VSBindConstantBuffers(
@@ -449,6 +461,10 @@ public:
 		// Empty for now
 	}
 
+	/*
+	* Resource Management
+	*/
+
 	FORCEINLINE void ResolveTexture(Texture* Destination, Texture* Source)
 	{
 		SAFEADDREF(Destination);
@@ -546,6 +562,10 @@ public:
 		InsertCommand<GenerateMipsCommand>(Texture);
 	}
 
+	/*
+	* Resource Barriers
+	*/
+
 	FORCEINLINE void TransitionTexture(
 		Texture* Texture, 
 		EResourceState BeforeState, 
@@ -575,6 +595,10 @@ public:
 		Texture->AddRef();
 		InsertCommand<UnorderedAccessTextureBarrierCommand>(Texture);
 	}
+
+	/*
+	* Resource Management
+	*/
 
 	FORCEINLINE void Draw(
 		UInt32 VertexCount, 
@@ -621,6 +645,10 @@ public:
 			BaseVertexLocation,
 			StartInstanceLocation);
 	}
+
+	/*
+	* Draw
+	*/
 
 	FORCEINLINE void Dispatch(
 		UInt32 ThreadGroupCountX, 

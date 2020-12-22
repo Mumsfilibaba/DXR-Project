@@ -67,14 +67,14 @@ public:
 
 	virtual void BindBlendFactor(const ColorClearValue& Color) = 0;
 
-	/*
-	* Pipeline Management
-	*/
-
 	virtual void BindRenderTargets(
 		RenderTargetView* const * RenderTargetViews, 
 		UInt32 RenderTargetCount, 
 		DepthStencilView* DepthStencilView) = 0;
+
+	/*
+	* Pipeline Management
+	*/
 
 	virtual void BindVertexBuffers(
 		VertexBuffer* const * VertexBuffers, 
