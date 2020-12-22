@@ -16,12 +16,10 @@ class D3D12CommandAllocator;
 
 struct D3D12GenerateMipsHelper
 {
-	TSharedRef<class D3D12ComputePipelineState>		GenerateMipsTex2D_PSO;
-	TSharedRef<class D3D12ComputePipelineState>		GenerateMipsTexCube_PSO;
-	TSharedRef<class D3D12RootSignature>			GenerateMipsRootSignature;
-	TUniquePtr<class D3D12DescriptorTable>			SRVDescriptorTable;
-	TArray<TUniquePtr<class D3D12DescriptorTable>>	UAVDescriptorTables;
-	TSharedRef<class D3D12UnorderedAccessView>		NULLView;
+	TSharedRef<class D3D12ComputePipelineState>	GenerateMipsTex2D_PSO;
+	TSharedRef<class D3D12ComputePipelineState>	GenerateMipsTexCube_PSO;
+	TSharedRef<class D3D12RootSignature>		GenerateMipsRootSignature;
+	TSharedRef<class D3D12UnorderedAccessView>	NULLView;
 };
 
 /*

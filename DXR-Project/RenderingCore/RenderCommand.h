@@ -13,13 +13,11 @@ struct RenderCommand
 	{
 	}
 
-	inline virtual ~RenderCommand()
-	{
-	}
+	virtual ~RenderCommand() = default;
 
 	virtual void Execute(ICommandContext&) const = 0;
 
-	inline void operator()(ICommandContext& CmdContext) const
+	FORCEINLINE void operator()(ICommandContext& CmdContext) const
 	{
 		Execute(CmdContext);
 	}
@@ -32,6 +30,7 @@ struct BeginCommand : public RenderCommand
 {
 	inline BeginCommand()
 	{
+		// Empty for now
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -45,6 +44,7 @@ struct EndCommand : public RenderCommand
 {
 	inline EndCommand()
 	{
+		// Empty for now
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -195,6 +195,7 @@ struct BeginRenderPassCommand : public RenderCommand
 {
 	inline BeginRenderPassCommand()
 	{
+		// Empty for now
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -208,6 +209,7 @@ struct EndRenderPassCommand : public RenderCommand
 {
 	inline EndRenderPassCommand()
 	{
+		// Empty for now
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
