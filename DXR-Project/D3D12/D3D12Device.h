@@ -143,6 +143,13 @@ public:
 		D3DDevice->CreateUnorderedAccessView(pResource, pCounterResource, pDesc, DestDescriptor);
 	}
 
+	FORCEINLINE void CreateSampler(
+		const D3D12_SAMPLER_DESC* pDesc,
+		D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+	{
+		D3DDevice->CreateSampler(pDesc, DestDescriptor);
+	}
+
 	FORCEINLINE void GetRaytracingAccelerationStructurePrebuildInfo(
 		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* pDesc,
 		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO* pInfo)

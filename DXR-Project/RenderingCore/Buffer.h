@@ -26,11 +26,7 @@ enum EBufferUsage : UInt32
 
 struct Range
 {
-	inline Range()
-		: Offset(0)
-		, Size(0)
-	{
-	}
+	Range() = default;
 
 	inline Range(UInt32 InOffset, UInt32 InSize)
 		: Offset(InOffset)
@@ -38,8 +34,8 @@ struct Range
 	{
 	}
 
-	UInt32 Offset;
-	UInt32 Size;
+	UInt32 Offset	= 0;
+	UInt32 Size		= 0;
 };
 
 /*
@@ -54,8 +50,6 @@ public:
 		, Usage(InUsage)
 	{
 	}
-
-	~Buffer() = default;
 
 	// Casting functions
 	virtual Buffer* AsBuffer() override
@@ -161,8 +155,6 @@ public:
 		, Stride(InStride)
 	{
 	}
-	
-	~VertexBuffer()	= default;
 
 	// Casting functions
 	virtual VertexBuffer* AsVertexBuffer() override
@@ -207,8 +199,6 @@ public:
 	{
 	}
 	
-	~IndexBuffer()	= default;
-
 	// Casting functions
 	virtual IndexBuffer* AsIndexBuffer() override
 	{
@@ -241,8 +231,6 @@ public:
 	{
 	}
 	
-	~ConstantBuffer()	= default;
-
 	// Casting functions
 	virtual ConstantBuffer* AsConstantBuffer() override
 	{
@@ -267,8 +255,6 @@ public:
 		, Stride(InStride)
 	{
 	}
-
-	~StructuredBuffer()	= default;
 
 	// Casting functions
 	virtual StructuredBuffer* AsStructuredBuffer() override

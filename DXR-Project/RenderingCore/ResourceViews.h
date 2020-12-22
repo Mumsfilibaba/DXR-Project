@@ -7,9 +7,6 @@
 
 class ShaderResourceView : public PipelineResource
 {
-public:
-	ShaderResourceView()	= default;
-	~ShaderResourceView()	= default;
 };
 
 /*
@@ -18,9 +15,6 @@ public:
 
 class UnorderedAccessView : public PipelineResource
 {
-public:
-	UnorderedAccessView()	= default;
-	~UnorderedAccessView()	= default;
 };
 
 /*
@@ -29,9 +23,6 @@ public:
 
 class DepthStencilView : public PipelineResource
 {
-public:
-	DepthStencilView()	= default;
-	~DepthStencilView()	= default;
 };
 
 /*
@@ -40,7 +31,4 @@ public:
 
 class RenderTargetView : public PipelineResource
 {
-public:
-	RenderTargetView()	= default;
-	~RenderTargetView()	= default;
 };

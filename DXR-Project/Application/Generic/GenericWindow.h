@@ -7,29 +7,25 @@
 /*
 * EWindowStyleFlag
 */
+
 enum EWindowStyleFlag : UInt32
 {
-	WINDOW_STYLE_FLAG_NONE			= 0x00,
-	WINDOW_STYLE_FLAG_TITLED		= FLAG(1),
-	WINDOW_STYLE_FLAG_CLOSABLE		= FLAG(2),
-	WINDOW_STYLE_FLAG_MINIMIZABLE	= FLAG(3),
-	WINDOW_STYLE_FLAG_MAXIMIZABLE	= FLAG(4),
-	WINDOW_STYLE_FLAG_RESIZEABLE	= FLAG(5),
+	WindowStyleFlag_None		= 0x0,
+	WindowStyleFlag_Titled		= FLAG(1),
+	WindowStyleFlag_Closable	= FLAG(2),
+	WindowStyleFlag_Minimizable	= FLAG(3),
+	WindowStyleFlag_Maximizable	= FLAG(4),
+	WindowStyleFlag_Resizeable	= FLAG(5),
 };
 
 /*
 * WindowInitializer
 */
+
 struct WindowInitializer
 {
 public:
-	inline WindowInitializer()
-		: Title()
-		, Width(0)
-		, Height(0)
-		, Style(0)
-	{
-	}
+	WindowInitializer() = default;
 
 	inline WindowInitializer(const std::string& InTitle, UInt32 InWidth, UInt32 InHeight, UInt32 InStyle)
 		: Title(InTitle)
@@ -41,46 +37,42 @@ public:
 
 	FORCEINLINE bool IsTitled() const
 	{
-		return Style & WINDOW_STYLE_FLAG_TITLED;
+		return Style & WindowStyleFlag_Titled;
 	}
 
 	FORCEINLINE bool IsClosable() const
 	{
-		return Style & WINDOW_STYLE_FLAG_CLOSABLE;
-	}
-
-	FORCEINLINE bool IsMaximizable() const
-	{
-		return Style & WINDOW_STYLE_FLAG_MAXIMIZABLE;
+		return Style & WindowStyleFlag_Closable;
 	}
 
 	FORCEINLINE bool IsMinimizable() const
 	{
-		return Style & WINDOW_STYLE_FLAG_MINIMIZABLE;
+		return Style & WindowStyleFlag_Minimizable;
+	}
+
+	FORCEINLINE bool IsMaximizable() const
+	{
+		return Style & WindowStyleFlag_Maximizable;
 	}
 
 	FORCEINLINE bool IsResizeable() const
 	{
-		return Style & WINDOW_STYLE_FLAG_RESIZEABLE;
+		return Style & WindowStyleFlag_Resizeable;
 	}
 
 	std::string Title;
-	UInt32 Width;
-	UInt32 Height;
-	UInt32 Style;
+	UInt32 Width	= 0;
+	UInt32 Height	= 0;
+	UInt32 Style	= 0;
 };
 
 /*
 * WindowShape
 */
+
 struct WindowShape
 {
-	inline WindowShape()
-		: Width(0)
-		, Height(0)
-		, Position({ 0, 0 })
-	{
-	}
+	WindowShape() = default;
 
 	inline WindowShape(UInt32 InWidth, UInt32 InHeight, Int32 x, Int32 y)
 		: Width(InWidth)
@@ -89,24 +81,22 @@ struct WindowShape
 	{
 	}
 
-	UInt32 Width;
-	UInt32 Height;
+	UInt32 Width	= 0;
+	UInt32 Height	= 0;
 	struct
 	{
-		Int32 x;
-		Int32 y;
+		Int32 x = 0;
+		Int32 y = 0;
 	} Position;
 };
 
 /*
 * GenericWindow
 */
+
 class GenericWindow : public RefCountedObject
 {
 public:
-	GenericWindow()		= default;
-	~GenericWindow()	= default;
-
 	virtual bool Initialize(const WindowInitializer& InInitializer) = 0;
 
 	virtual void Show(bool Maximized) = 0;

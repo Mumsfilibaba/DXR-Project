@@ -7,7 +7,7 @@
 #include "Application/Generic/GenericApplication.h"
 
 /*
-* Static
+* WindowsApplication
 */
 
 WindowsApplication* GlobalWindowsApplication = nullptr;
@@ -19,10 +19,6 @@ GenericApplication* WindowsApplication::Make()
 	GlobalWindowsApplication = DBG_NEW WindowsApplication(hInstance);
 	return GlobalWindowsApplication;
 }
-
-/*
-* Members
-*/
 
 WindowsApplication::WindowsApplication(HINSTANCE InInstanceHandle)
 	: InstanceHandle(InInstanceHandle)

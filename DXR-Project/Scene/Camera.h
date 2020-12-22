@@ -9,7 +9,6 @@ class Camera
 {
 public:
 	Camera();
-	~Camera() = default;
 
 	void Move(Float X, Float Y, Float Z);
 

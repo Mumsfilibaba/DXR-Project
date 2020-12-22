@@ -30,6 +30,7 @@ struct CursorInitializer
 {
 	inline CursorInitializer()
 		: PlatformCursor(EPlatformCursor::CURSOR_NONE)
+		, IsPlatformCursor(false)
 	{
 	}
 
@@ -50,8 +51,7 @@ struct CursorInitializer
 class GenericCursor : public RefCountedObject
 {
 public:
-	GenericCursor()		= default;
-	~GenericCursor()	= default;
+	virtual ~GenericCursor() = default;
 
 	virtual bool Initialize(const CursorInitializer& InInitializer) = 0;
 

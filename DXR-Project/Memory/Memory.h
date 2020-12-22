@@ -21,8 +21,8 @@ enum EMemoryDebugFlag : MemoryDebugFlags
 class Memory
 {
 public:
-	static Void*	Malloc(UInt64 Size);
-	static void		Free(Void* Ptr);
+	static Void* Malloc(UInt64 Size);
+	static void Free(Void* Ptr);
 
 	static Void* Memset(Void* Destination, UInt8 Value, UInt64 Size);
 	static Void* Memzero(Void* Destination, UInt64 Size);

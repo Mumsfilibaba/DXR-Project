@@ -44,12 +44,12 @@ bool Application::Initialize(TSharedPtr<GenericApplication> InPlatformApplicatio
 	SetPlatformApplication(InPlatformApplication);
 
 	// Creating main Window
-	UInt32 Style =
-		WINDOW_STYLE_FLAG_TITLED |
-		WINDOW_STYLE_FLAG_CLOSABLE |
-		WINDOW_STYLE_FLAG_MINIMIZABLE |
-		WINDOW_STYLE_FLAG_MAXIMIZABLE |
-		WINDOW_STYLE_FLAG_RESIZEABLE;
+	const UInt32 Style =
+		WindowStyleFlag_Titled |
+		WindowStyleFlag_Closable |
+		WindowStyleFlag_Minimizable |
+		WindowStyleFlag_Maximizable |
+		WindowStyleFlag_Resizeable;
 
 	WindowInitializer WinInitializer("DXR", 1920, 1080, Style);
 	MainWindow = PlatformApplication->MakeWindow();

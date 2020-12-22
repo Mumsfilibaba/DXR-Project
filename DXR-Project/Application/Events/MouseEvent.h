@@ -6,6 +6,7 @@
 /*
 * MouseMovedEvent
 */
+
 struct MouseMovedEvent : public Event
 {
 public:
@@ -42,6 +43,7 @@ private:
 /*
 * Base MouseButtonEvent
 */
+
 struct MouseButtonEvent : public Event
 {
 public:
@@ -71,6 +73,7 @@ private:
 /*
 * MousePressedEvent
 */
+
 struct MousePressedEvent : public MouseButtonEvent
 {
 public:
@@ -90,6 +93,7 @@ public:
 /*
 * MouseReleasedEvent
 */
+
 struct MouseReleasedEvent : public MouseButtonEvent
 {
 public:
@@ -109,6 +113,7 @@ public:
 /*
 * MouseScrolledEvent
 */
+
 struct MouseScrolledEvent : public Event
 {
 public:

@@ -7,6 +7,7 @@
 /*
 * Dynamic Array similar to std::vector
 */
+
 template<typename T>
 class TArray
 {
@@ -16,6 +17,7 @@ public:
 	/*
 	* TIterator
 	*/
+
 	template<typename TIteratorType>
 	class TIterator
 	{

@@ -21,7 +21,6 @@ enum class EConsoleColor : UInt8
 class GenericOutputDevice
 {
 public:
-	GenericOutputDevice() = default;
 	virtual ~GenericOutputDevice() = default;
 
 	virtual void Print(const std::string& Message) = 0;

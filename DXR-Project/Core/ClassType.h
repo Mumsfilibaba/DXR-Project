@@ -10,8 +10,7 @@ class ClassType
 {
 public:
 	ClassType(const Char* InName, const ClassType* InSuperClass);
-	~ClassType() = default;
-
+	
 	bool IsSubClassOf(const ClassType* Class) const;
 
 	template<typename T>

@@ -8,9 +8,6 @@
 class RayTracingGeometry : public Resource
 {
 public:
-	RayTracingGeometry()	= default;
-	~RayTracingGeometry()	= default;
-
 	virtual RayTracingGeometry* AsRayTracingGeometry() override
 	{
 		return this;
@@ -29,9 +26,6 @@ public:
 class RayTracingScene : public Resource
 {
 public:
-	RayTracingScene()	= default;
-	~RayTracingScene()	= default;
-
 	virtual RayTracingScene* AsRayTracingScene() override
 	{
 		return this;

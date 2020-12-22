@@ -8,11 +8,11 @@
 
 struct MaterialProperties
 {
-	XMFLOAT3 Albedo			= XMFLOAT3(1.0f, 1.0f, 1.0f);
-	Float Roughness		= 0.0f;
-	Float Metallic		= 0.0f;
-	Float AO				= 0.5f;
-	Int32	EnableHeight	= 0;
+	XMFLOAT3 Albedo	= XMFLOAT3(1.0f, 1.0f, 1.0f);
+	Float Roughness	= 0.0f;
+	Float Metallic	= 0.0f;
+	Float AO		= 0.5f;
+	Int32 EnableHeight	= 0;
 };
 
 /*

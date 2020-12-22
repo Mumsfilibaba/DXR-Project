@@ -163,6 +163,15 @@ public:
 	}
 
 	/*
+	* Samplers
+	*/
+
+	FORCEINLINE static class SamplerState* CreateSamplerState()
+	{
+		return CurrentRenderingAPI->CreateSamplerState();
+	}
+
+	/*
 	* Buffers
 	*/
 
@@ -797,6 +806,18 @@ public:
 		const GraphicsPipelineStateCreateInfo& CreateInfo)
 	{
 		return CurrentRenderingAPI->CreateGraphicsPipelineState(CreateInfo);
+	}
+
+	/*
+	* Viewport
+	*/
+
+	FORCEINLINE static class Viewport* CreateViewport(
+		GenericWindow* Window,
+		EFormat ColorFormat,
+		EFormat DepthFormat)
+	{
+		return CurrentRenderingAPI->CreateViewport(Window, ColorFormat, DepthFormat);
 	}
 
 	/*

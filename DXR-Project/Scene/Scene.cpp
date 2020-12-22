@@ -14,6 +14,10 @@
 
 #include <unordered_map>
 
+/*
+* Scene
+*/
+
 Scene* Scene::CurrentScene = nullptr;
 
 Scene::Scene()

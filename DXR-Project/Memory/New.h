@@ -10,6 +10,10 @@
 	#define DBG_NEW	new
 #endif
 
+/*
+* New
+*/
+
 Void* operator new  (size_t sizeInBytes);
 Void* operator new[](size_t sizeInBytes);
 Void* operator new  (size_t sizeInBytes, const std::nothrow_t&) noexcept;

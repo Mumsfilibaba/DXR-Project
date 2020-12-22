@@ -12,17 +12,6 @@
 * Mesh
 */
 
-Mesh::Mesh()
-	: VertexBuffer(nullptr)
-	, IndexBuffer(nullptr)
-	, RayTracingGeometry(nullptr)
-{
-}
-
-Mesh::~Mesh()
-{
-}
-
 bool Mesh::Initialize(const MeshData& Data)
 {
 	VertexCount = static_cast<UInt32>(Data.Vertices.Size());

@@ -8,6 +8,7 @@ class GenericWindow;
 /*
 * WindowResizeEvent 
 */
+
 struct WindowResizeEvent : public Event
 {
 public:

@@ -2,6 +2,10 @@
 #include "Event.h"
 #include "EventHandler.h"
 
+/*
+* EventQueue
+*/
+
 class EventQueue
 {
 public:

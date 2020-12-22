@@ -5,6 +5,7 @@
 /*
 * EEventType
 */
+
 enum class EEventType : UInt8
 { 
 	UNKNOWN_EVENT = 0,
@@ -24,6 +25,7 @@ enum class EEventType : UInt8
 /*
 * EEventCategory
 */
+
 enum EEventCategory : UInt8
 {
 	EVENT_CATEGORY_UNKNOWN	= 0,
@@ -39,6 +41,7 @@ enum EEventCategory : UInt8
 /*
 * Helper Macro
 */
+
 #define DECLARE_EVENT_CLASS(EventType) \
 	static EEventType GetStaticEventType() \
 	{ \
@@ -62,11 +65,11 @@ enum EEventCategory : UInt8
 /*
 * Base Event
 */
+
 struct Event
 {
 public:
-	Event() = default;
-	~Event() = default;
+	virtual ~Event() = default;
 
 	virtual UInt8 GetEventCategory() const = 0;
 	virtual EEventType	GetEventType() const = 0;
@@ -87,6 +90,7 @@ public:
 /*
 * Get EventType
 */
+
 template<typename T>
 inline bool IsOfEventType(const Event& InEvent)
 {

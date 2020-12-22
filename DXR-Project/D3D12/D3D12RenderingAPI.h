@@ -144,6 +144,12 @@ public:
 		const ClearValue& OptimizedClearValue) const override final;
 
 	/*
+	* Samplers
+	*/
+
+	virtual class SamplerState* CreateSamplerState() const override final;
+
+	/*
 	* Buffers
 	*/
 
@@ -445,6 +451,15 @@ public:
 		const ComputePipelineStateCreateInfo& Info) const override final;
 	
 	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const override final;
+
+	/*
+	* Viewport
+	*/
+
+	virtual class Viewport* CreateViewport(
+		GenericWindow* Window,
+		EFormat ColorFormat,
+		EFormat DepthFormat) const override final;
 
 	/*
 	* Supported features

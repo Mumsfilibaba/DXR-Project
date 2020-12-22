@@ -11,7 +11,7 @@ class Light : public CoreObject
 
 public:
 	Light();
-	virtual ~Light();
+	virtual ~Light() = default;
 
 	void SetColor(const XMFLOAT3& InColor);
 	void SetColor(Float R, Float G, Float B);
@@ -60,9 +60,9 @@ public:
 
 protected:
 	XMFLOAT3 Color;
-	Float	 Intensity = 1.0f;
-	Float	 ShadowNearPlane;
-	Float	 ShadowFarPlane;
-	Float	 ShadowBias;
-	Float	 MaxShadowBias;
+	Float Intensity = 1.0f;
+	Float ShadowNearPlane;
+	Float ShadowFarPlane;
+	Float ShadowBias;
+	Float MaxShadowBias;
 };

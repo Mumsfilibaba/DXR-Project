@@ -3,6 +3,7 @@
 /*
 * WindowsConsoleOutput
 */
+
 WindowsConsoleOutput::WindowsConsoleOutput()
 {
 	if (::AllocConsole())

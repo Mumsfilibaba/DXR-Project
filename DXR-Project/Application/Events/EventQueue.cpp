@@ -5,6 +5,7 @@
 /*
 * EventHandlerPair
 */
+
 struct EventHandlerPair
 {
 	EventHandlerPair(IEventHandler* InHandler, UInt8 InCategoryMask)
@@ -36,6 +37,7 @@ static TArray<EventHandlerPair>	GlobalEventHandlers;
 /*
 * EventQueue
 */
+
 void EventQueue::RegisterEventHandler(EventHandlerFunc Func, UInt8 EventCategoryMask)
 {
 	VALIDATE(Func != nullptr);

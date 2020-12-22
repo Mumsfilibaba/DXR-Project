@@ -32,9 +32,6 @@ enum class EShaderStage
 class Shader : public PipelineResource
 {
 public:
-	Shader()	= default;
-	~Shader()	= default;
-
 	// Dynamic Casting
 	virtual ComputeShader* AsComputeShader()
 	{
@@ -73,9 +70,6 @@ public:
 
 class ComputeShader : public Shader
 {
-public:
-	ComputeShader()		= default;
-	~ComputeShader()	= default;
 };
 
 /*
@@ -84,9 +78,6 @@ public:
 
 class VertexShader : public Shader
 {
-public:
-	VertexShader()	= default;
-	~VertexShader()	= default;
 };
 
 /*
@@ -95,9 +86,6 @@ public:
 
 class HullShader : public Shader
 {
-public:
-	HullShader()	= default;
-	~HullShader()	= default;
 };
 
 /*
@@ -106,9 +94,6 @@ public:
 
 class DomainShader : public Shader
 {
-public:
-	DomainShader()	= default;
-	~DomainShader()	= default;
 };
 
 /*
@@ -117,9 +102,6 @@ public:
 
 class GeometryShader : public Shader
 {
-public:
-	GeometryShader()	= default;
-	~GeometryShader()	= default;
 };
 
 /*
@@ -128,9 +110,6 @@ public:
 
 class MeshShader : public Shader
 {
-public:
-	MeshShader()	= default;
-	~MeshShader()	= default;
 };
 
 /*
@@ -139,9 +118,6 @@ public:
 
 class AmplificationShader : public Shader
 {
-public:
-	AmplificationShader()	= default;
-	~AmplificationShader()	= default;
 };
 
 /*
@@ -150,9 +126,6 @@ public:
 
 class PixelShader : public Shader
 {
-public:
-	PixelShader()	= default;
-	~PixelShader()	= default;
 };
 
 /*
@@ -161,9 +134,6 @@ public:
 
 class RayGenShader : public Shader
 {
-public:
-	RayGenShader()	= default;
-	~RayGenShader()	= default;
 };
 
 /*
@@ -172,9 +142,6 @@ public:
 
 class RayHitShader : public Shader
 {
-public:
-	RayHitShader()	= default;
-	~RayHitShader()	= default;
 };
 
 /*
@@ -183,7 +150,4 @@ public:
 
 class RayMissShader : public Shader
 {
-public:
-	RayMissShader()		= default;
-	~RayMissShader()	= default;
 };

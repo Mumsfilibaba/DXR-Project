@@ -17,8 +17,8 @@
 #include "D3D12Helpers.h"
 #include "D3D12ShaderCompiler.h"
 #include "D3D12Shader.h"
+#include "D3D12SamplerState.h"
 
-#include <d3d11.h>
 #include <algorithm>
 
 /*
@@ -62,7 +62,7 @@ bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> InRenderWindow, boo
 	}
 
 	// Create commandcontext
-	DirectCmdContext = new D3D12CommandContext(Device.Get(), DirectCmdQueue.Get(), DefaultRootSignatures);
+	DirectCmdContext = new D3D12CommandContext(Device.Get(), DirectCmdQueue, DefaultRootSignatures);
 	if (!DirectCmdContext->Initialize())
 	{
 		return false;
@@ -224,6 +224,21 @@ Texture3D* D3D12RenderingAPI::CreateTexture3D(
 		Depth,
 		MipLevels,
 		OptimizedClearValue);
+}
+
+/*
+* Samplers
+*/
+
+SamplerState* D3D12RenderingAPI::CreateSamplerState() const
+{
+	D3D12_SAMPLER_DESC Desc;
+	Memory::Memzero(&Desc, sizeof(D3D12_SAMPLER_DESC));
+
+	// TODO: Finish this function
+	VALIDATE(false);
+
+	return new D3D12SamplerState(Device.Get(), Device->GetGlobalSamplerDescriptorHeap(), Desc);
 }
 
 /*
@@ -1642,6 +1657,18 @@ ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(
 }
 
 RayTracingPipelineState* D3D12RenderingAPI::CreateRayTracingPipelineState() const
+{
+	return nullptr;
+}
+
+/*
+* Viewport
+*/
+
+Viewport* D3D12RenderingAPI::CreateViewport(
+	GenericWindow* Window, 
+	EFormat ColorFormat, 
+	EFormat DepthFormat) const
 {
 	return nullptr;
 }

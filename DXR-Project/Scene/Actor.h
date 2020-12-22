@@ -15,7 +15,7 @@ class Component : public CoreObject
 
 public:
 	Component(Actor* InOwningActor);
-	virtual ~Component();
+	virtual ~Component() = default;
 
 	FORCEINLINE Actor* GetOwningActor() const
 	{
@@ -34,7 +34,6 @@ class Transform
 {
 public:
 	Transform();
-	~Transform() = default;
 
 	void SetTranslation(Float x, Float y, Float z);
 	void SetTranslation(const XMFLOAT3& InPosition);

@@ -15,9 +15,6 @@ class PixelShader;
 class PipelineState : public PipelineResource
 {
 public:
-	PipelineState()		= default;
-	~PipelineState()	= default;
-
 	virtual GraphicsPipelineState* AsGraphics()
 	{
 		return nullptr;
@@ -207,9 +204,6 @@ struct RasterizerStateCreateInfo
 
 class RasterizerState : public PipelineResource
 {
-public:
-	RasterizerState()	= default;
-	~RasterizerState()	= default;
 };
 
 /*
@@ -406,15 +400,15 @@ struct RenderTargetWriteState
 
 struct RenderTargetBlendState
 {
-	Bool					BlendEnable = false;
-	Bool					LogicOpEnable = false;
-	EBlend					SrcBlend = EBlend::Blend_One;
-	EBlend					DestBlend = EBlend::Blend_Zero;
-	EBlendOp				BlendOp = EBlendOp::BlendOp_Add;
-	EBlend					SrcBlendAlpha = EBlend::Blend_One;
-	EBlend					DestBlendAlpha = EBlend::Blend_Zero;
-	EBlendOp				BlendOpAlpha = EBlendOp::BlendOp_Add;;
-	ELogicOp				LogicOp = ELogicOp::LogicOp_Noop;
+	Bool		BlendEnable		= false;
+	Bool		LogicOpEnable	= false;
+	EBlend		SrcBlend		= EBlend::Blend_One;
+	EBlend		DestBlend		= EBlend::Blend_Zero;
+	EBlendOp	BlendOp			= EBlendOp::BlendOp_Add;
+	EBlend		SrcBlendAlpha	= EBlend::Blend_One;
+	EBlend		DestBlendAlpha	= EBlend::Blend_Zero;
+	EBlendOp	BlendOpAlpha	= EBlendOp::BlendOp_Add;;
+	ELogicOp	LogicOp			= ELogicOp::LogicOp_Noop;
 	RenderTargetWriteState	RenderTargetWriteMask;
 };
 
@@ -424,8 +418,8 @@ struct RenderTargetBlendState
 
 struct BlendStateCreateInfo
 {
-	Bool					AlphaToCoverageEnable	= false;
-	Bool					IndependentBlendEnable	= false;
+	Bool AlphaToCoverageEnable	= false;
+	Bool IndependentBlendEnable	= false;
 	RenderTargetBlendState	RenderTarget[8];
 };
 
@@ -435,9 +429,6 @@ struct BlendStateCreateInfo
 
 class BlendState : public PipelineResource
 {
-public:
-	BlendState()	= default;
-	~BlendState()	= default;
 };
 
 /*
@@ -481,10 +472,7 @@ struct InputElement
 
 struct InputLayoutStateCreateInfo
 {
-	inline InputLayoutStateCreateInfo()
-		: Elements()
-	{
-	}
+	InputLayoutStateCreateInfo() = default;
 
 	inline InputLayoutStateCreateInfo(const TArray<InputElement>& InElements)
 		: Elements(InElements)
@@ -505,9 +493,6 @@ struct InputLayoutStateCreateInfo
 
 class InputLayoutState : public PipelineResource
 {
-public:
-	InputLayoutState()	= default;
-	~InputLayoutState()	= default;
 };
 
 /*
@@ -556,11 +541,7 @@ struct PipelineRenderTargetFormats
 
 struct GraphicsPipelineShaderState
 {
-	inline GraphicsPipelineShaderState()
-		: VertexShader(nullptr)
-		, PixelShader(nullptr)
-	{
-	}
+	GraphicsPipelineShaderState() = default;
 
 	inline GraphicsPipelineShaderState(VertexShader* InVertexShader, PixelShader* InPixelShader)
 		: VertexShader(InVertexShader)
@@ -568,8 +549,8 @@ struct GraphicsPipelineShaderState
 	{
 	}
 
-	VertexShader*	VertexShader;
-	PixelShader*	PixelShader;
+	VertexShader*	VertexShader	= nullptr;
+	PixelShader*	PixelShader		= nullptr;
 };
 
 /*
@@ -598,9 +579,6 @@ struct GraphicsPipelineStateCreateInfo
 class GraphicsPipelineState : public PipelineState
 {
 public:
-	GraphicsPipelineState()		= default;
-	~GraphicsPipelineState()	= default;
-
 	virtual GraphicsPipelineState* AsGraphics() override 
 	{
 		return this;
@@ -618,17 +596,14 @@ public:
 
 struct ComputePipelineStateCreateInfo
 {
-	inline ComputePipelineStateCreateInfo()
-		: Shader(nullptr)
-	{
-	}
+	ComputePipelineStateCreateInfo() = default;
 
 	inline ComputePipelineStateCreateInfo(ComputeShader* InShader)
 		: Shader(InShader)
 	{
 	}
 
-	ComputeShader* Shader;
+	ComputeShader* Shader = nullptr;
 };
 
 /*
@@ -638,9 +613,6 @@ struct ComputePipelineStateCreateInfo
 class ComputePipelineState : public PipelineState
 {
 public:
-	ComputePipelineState()	= default;
-	~ComputePipelineState()	= default;
-
 	virtual ComputePipelineState* AsCompute() override
 	{
 		return this;
@@ -659,9 +631,6 @@ public:
 class RayTracingPipelineState : public PipelineState
 {
 public:
-	RayTracingPipelineState()	= default;
-	~RayTracingPipelineState()	= default;
-
 	virtual RayTracingPipelineState* AsRayTracing() override
 	{
 		return this;

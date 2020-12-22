@@ -1,6 +1,10 @@
 #include "WindowsWindow.h"
 #include "WindowsApplication.h"
 
+/*
+* WindowsWindow
+*/
+
 WindowsWindow::WindowsWindow(WindowsApplication* InOwnerApplication)
 	: OwnerApplication(InOwnerApplication)
 	, hWindow(0)

@@ -41,7 +41,6 @@ struct ShaderDefine
 class IShaderCompiler
 {
 public:
-	IShaderCompiler() = default;
 	virtual ~IShaderCompiler() = default;
 
 	virtual bool CompileFromFile(

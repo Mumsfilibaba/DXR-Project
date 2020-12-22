@@ -10,10 +10,6 @@ Light::Light()
 	CORE_OBJECT_INIT();
 }
 
-Light::~Light()
-{
-}
-
 void Light::SetColor(const XMFLOAT3& InColor)
 {
 	Color = InColor;

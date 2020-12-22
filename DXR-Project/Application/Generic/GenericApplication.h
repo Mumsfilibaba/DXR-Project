@@ -61,7 +61,6 @@ private:
 class GenericApplication
 {
 public:
-	GenericApplication() = default;
 	virtual ~GenericApplication() = default;
 
 	virtual TSharedRef<GenericWindow> MakeWindow() = 0;

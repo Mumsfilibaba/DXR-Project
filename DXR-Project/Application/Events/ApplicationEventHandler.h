@@ -10,6 +10,7 @@ struct ModifierKeyState;
 /*
 * ApplicationEventHandler
 */
+
 class ApplicationEventHandler
 {
 public:

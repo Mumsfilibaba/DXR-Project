@@ -13,7 +13,6 @@ class Frustum
 public:
 	Frustum();
 	Frustum(Float ScreenDepth, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection);
-	~Frustum() = default;
 
 	void Create(Float ScreenDepth, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection);
 

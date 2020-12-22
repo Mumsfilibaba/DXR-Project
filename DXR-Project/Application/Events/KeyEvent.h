@@ -6,6 +6,7 @@
 /*
 * Base KeyEvent
 */
+
 struct KeyEvent : public Event
 {
 public:
@@ -35,6 +36,7 @@ private:
 /*
 * KeyPressedEvent
 */
+
 struct KeyPressedEvent : public KeyEvent
 {
 public:
@@ -54,6 +56,7 @@ public:
 /*
 * KeyReleasedEvent
 */
+
 struct KeyReleasedEvent : public KeyEvent
 {
 public:
@@ -73,6 +76,7 @@ public:
 /*
 * KeyTypedEvent
 */
+
 struct KeyTypedEvent : public Event
 {
 public:

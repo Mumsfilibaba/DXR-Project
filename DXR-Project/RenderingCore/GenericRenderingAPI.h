@@ -122,6 +122,12 @@ public:
 		const ClearValue& OptimizedClearValue) const = 0;
 
 	/*
+	* Samplers
+	*/
+
+	virtual class SamplerState* CreateSamplerState() const = 0;
+
+	/*
 	* Buffers
 	*/
 
@@ -423,6 +429,15 @@ public:
 		const ComputePipelineStateCreateInfo& CreateInfo) const = 0;
 	
 	virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const = 0;
+
+	/*
+	* Viewport
+	*/
+
+	virtual class Viewport* CreateViewport(
+		GenericWindow* Window, 
+		EFormat ColorFormat, 
+		EFormat DepthFormat) const = 0;
 
 	/*
 	* Context

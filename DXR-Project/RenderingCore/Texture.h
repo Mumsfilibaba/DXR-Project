@@ -43,8 +43,6 @@ public:
 	{
 	}
 
-	~Texture() = default;
-
 	// Casting functions
 	virtual Texture* AsTexture() override
 	{
@@ -212,8 +210,6 @@ public:
 	{
 	}
 
-	~Texture1D() = default;
-
 	// Casting functions
 	virtual Texture1D* AsTexture1D() override
 	{
@@ -307,8 +303,6 @@ public:
 	{
 	}
 
-	~Texture2D() = default;
-
 	// Casting functions
 	virtual Texture2D* AsTexture2D() override
 	{
@@ -369,8 +363,6 @@ public:
 		, SampleCount(InSampleCount)
 	{
 	}
-
-	~Texture2DArray() = default;
 
 	// Casting functions
 	virtual Texture2DArray* AsTexture2DArray() override
@@ -437,8 +429,6 @@ public:
 	{
 	}
 
-	~TextureCube() = default;
-
 	// Casting functions
 	virtual TextureCube* AsTextureCube() override
 	{
@@ -503,8 +493,6 @@ public:
 		, SampleCount(InSampleCount)
 	{
 	}
-
-	~TextureCubeArray() = default;
 
 	// Casting functions
 	virtual TextureCubeArray* AsTextureCubeArray() override
@@ -572,8 +560,6 @@ public:
 		, MipLevels(InMipLevels)
 	{
 	}
-	
-	~Texture3D() = default;
 
 	// Casting functions
 	virtual Texture3D* AsTexture3D() override

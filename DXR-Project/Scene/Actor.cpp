@@ -10,12 +10,7 @@ Component::Component(Actor* InOwningActor)
 	, OwningActor(InOwningActor)
 {
 	VALIDATE(InOwningActor != nullptr);
-
 	CORE_OBJECT_INIT();
-}
-
-Component::~Component()
-{
 }
 
 /*
