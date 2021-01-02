@@ -1,5 +1,5 @@
 #include "TextureFactory.h"
-#include "Types.h"
+#include "Defines.h"
 
 #include "RenderingCore/CommandList.h"
 #include "RenderingCore/PipelineState.h"

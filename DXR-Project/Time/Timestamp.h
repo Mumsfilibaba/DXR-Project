@@ -1,9 +1,12 @@
 #pragma once
 #include "Defines.h"
-#include "Types.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4251)
+
+/*
+* Timestamp
+*/
 
 class Timestamp
 {

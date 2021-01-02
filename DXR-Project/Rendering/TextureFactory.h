@@ -2,7 +2,7 @@
 #include "RenderingCore/RenderingCore.h"
 #include "RenderingCore/Format.h"
 
-#include "Containers/String.h"
+#include "Utilities/StringUtilities.h"
 
 /*
 * ETextureFactoryFlags

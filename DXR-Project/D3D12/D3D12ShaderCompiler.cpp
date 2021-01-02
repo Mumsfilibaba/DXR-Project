@@ -1,6 +1,8 @@
 #include "D3D12ShaderCompiler.h"
 
-#include "Types.h"
+#include "Defines.h"
+
+#include "Utilities/StringUtilities.h"
 
 #include "Windows/Windows.h"
 #include "Windows/Windows.inl"

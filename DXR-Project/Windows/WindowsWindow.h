@@ -1,7 +1,6 @@
 #pragma once
 #include "Windows.h"
 #include "Defines.h"
-#include "Types.h"
 
 #include "Application/Generic/GenericWindow.h"
 

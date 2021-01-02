@@ -1,7 +1,10 @@
 #pragma once
+#include <Containers/Types.h>
 
 // Validate (a.k.a ASSERT)
-#define VALIDATE(Condition) assert(Condition)
+#ifndef VALIDATE
+	#define VALIDATE(Condition) assert(Condition)
+#endif
 
 // Macro for deleting objects safley
 #define SAFEDELETE(OutObject) \
@@ -28,11 +31,17 @@
 * Forceinline
 */
 
+#ifndef FORCEINLINE
+#ifndef DEBUG
 #ifdef COMPILER_VISUAL_STUDIO
-#define FORCEINLINE __forceinline
+	#define FORCEINLINE __forceinline
 #else
-#define FORCEINLINE __attribute__((always_inline)) inline
-#endif
+	#define FORCEINLINE __attribute__((always_inline)) inline
+#endif // ifdef COMPILER_VISUAL_STUDIO
+#else
+	#define FORCEINLINE inline
+#endif // ifdef DEBUG
+#endif // ifndef FORCEINLINE
 
 /*
 * Bit-Mask helpers

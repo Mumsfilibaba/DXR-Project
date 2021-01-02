@@ -1,8 +1,7 @@
 #pragma once
 #include "Defines.h"
-#include "Types.h"
 
-#include "Containers/String.h"
+#include "Utilities/StringUtilities.h"
 
 #include <d3d12.h>
 

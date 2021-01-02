@@ -1,6 +1,8 @@
 #pragma once
 #include "D3D12RefCountedObject.h"
 
+#include "Utilities/StringUtilities.h"
+
 class D3D12RootSignature;
 
 /*
