@@ -145,7 +145,8 @@ workspace "DXR-Project"
 		{
 			"Dependencies/imgui",
 			"Dependencies/stb_image",
-			"Dependencies/tinyobjloader",
+            "Dependencies/tinyobjloader",
+            "Dependencies/Template-Library"
 		}
         
 		links 
