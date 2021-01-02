@@ -5,7 +5,7 @@
 #include "Utilities/TUtilities.h"
 
 /*
-* Dynamic Array similar to std::vector
+* TArray - Dynamic Array similar to std::vector
 */
 
 template<typename T>
