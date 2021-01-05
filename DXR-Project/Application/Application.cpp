@@ -17,17 +17,6 @@
 
 TSharedPtr<Application> Application::CurrentApplication = nullptr;
 
-Application::Application()
-	: ApplicationEventHandler()
-	, MainWindow(nullptr)
-	, PlatformApplication(nullptr)
-{
-}
-
-Application::~Application()
-{
-}
-
 TSharedRef<GenericWindow> Application::MakeWindow()
 {
 	return PlatformApplication->MakeWindow();
@@ -38,7 +27,7 @@ TSharedRef<GenericCursor> Application::MakeCursor()
 	return PlatformApplication->MakeCursor();
 }
 
-bool Application::Initialize(TSharedPtr<GenericApplication> InPlatformApplication)
+bool Application::Initialize(GenericApplication* InPlatformApplication)
 {
 	// PlatformApplication
 	SetPlatformApplication(InPlatformApplication);
@@ -51,9 +40,9 @@ bool Application::Initialize(TSharedPtr<GenericApplication> InPlatformApplicatio
 		WindowStyleFlag_Maximizable |
 		WindowStyleFlag_Resizeable;
 
-	WindowInitializer WinInitializer("DXR", 1920, 1080, Style);
+	WindowCreateInfo WinCreateInfo("DXR", 1920, 1080, Style);
 	MainWindow = PlatformApplication->MakeWindow();
-	if (MainWindow->Initialize(WinInitializer))
+	if (MainWindow->Initialize(WinCreateInfo))
 	{
 		MainWindow->Show(false);
 	}
@@ -72,11 +61,6 @@ void Application::Tick()
 	{
 		EngineLoop::Exit();
 	}
-}
-
-void Application::Release()
-{
-	PlatformApplication.Reset();
 }
 
 void Application::SetCursor(TSharedRef<GenericCursor> Cursor)
@@ -124,7 +108,7 @@ void Application::GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& 
 	PlatformApplication->GetCursorPos(RelativeWindow, OutX, OutY);
 }
 
-void Application::SetPlatformApplication(TSharedPtr<GenericApplication> InPlatformApplication)
+void Application::SetPlatformApplication(GenericApplication* InPlatformApplication)
 {
 	// If there is a platform application, release the old mainwindow
 	if (PlatformApplication)

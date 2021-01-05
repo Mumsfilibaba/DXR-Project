@@ -76,7 +76,7 @@ public:
 	FORCEINLINE TRefCountedObject* Reset() noexcept
 	{
 		TRefCountedObject* WeakPtr = RefPtr;
-		InternalRelease();
+		Release();
 
 		return WeakPtr;
 	}
@@ -319,7 +319,7 @@ public:
 	}
 
 private:
-	FORCEINLINE void InternalRelease() noexcept
+	FORCEINLINE void Release() noexcept
 	{
 		if (RefPtr)
 		{

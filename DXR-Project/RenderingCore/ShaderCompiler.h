@@ -77,7 +77,7 @@ public:
 		EShaderModel ShaderModel,
 		TArray<UInt8>& Code)
 	{
-		return Instance->CompileFromFile(
+		return GlobalShaderCompiler->CompileFromFile(
 			FilePath,
 			EntryPoint,
 			Defines,
@@ -94,7 +94,7 @@ public:
 		EShaderModel ShaderModel,
 		TArray<UInt8>& Code)
 	{
-		return Instance->CompileShader(
+		return GlobalShaderCompiler->CompileShader(
 			ShaderSource,
 			EntryPoint,
 			Defines,
@@ -102,7 +102,4 @@ public:
 			ShaderModel,
 			Code);
 	}
-
-private:
-	inline static TSharedPtr<IShaderCompiler> Instance = nullptr;
 };

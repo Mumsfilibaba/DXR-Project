@@ -1,6 +1,5 @@
 #pragma once
 #include "Windows.h"
-#include "Defines.h"
 
 #include "Application/Generic/GenericWindow.h"
 
@@ -16,13 +15,13 @@ public:
 	WindowsWindow(WindowsApplication* InOwnerApplication);
 	~WindowsWindow();
 
-	virtual bool Initialize(const WindowInitializer& InInitializer) override final;
+	virtual bool Initialize(const WindowCreateInfo& InCreateInfo) override final;
 
 	virtual void Show(bool Maximized) override final;
-	virtual void Close() override final;
+	virtual void Close()	override final;
 	virtual void Minimize() override final;
 	virtual void Maximize() override final;
-	virtual void Restore() override final;
+	virtual void Restore()	override final;
 	virtual void ToggleFullscreen() override final;
 
 	virtual bool IsValid() const override final;

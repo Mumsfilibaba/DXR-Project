@@ -1,9 +1,6 @@
 #pragma once
 #include "Application/Generic/GenericWindow.h"
 
-#include "Containers/TUniquePtr.h"
-#include "Containers/TSharedPtr.h"
-
 #include "RenderingCore.h"
 #include "Buffer.h"
 #include "CommandList.h"

@@ -17,7 +17,7 @@ using namespace DirectX;
 #include <imgui.h>
 
 // Common
-#include "Defines.h"
+#include "Core.h"
 
 // Debug
 #include "Debug/Debug.h"

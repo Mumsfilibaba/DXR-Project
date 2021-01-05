@@ -1,6 +1,6 @@
 #pragma once
 #include "D3D12Buffer.h"
-#include "Defines.h"
+#include "Core.h"
 
 #include <wrl/client.h>
 

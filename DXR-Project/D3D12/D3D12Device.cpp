@@ -1,3 +1,5 @@
+#include "Application/Platform/PlatformDialogMisc.h"
+
 #include "D3D12Device.h"
 #include "D3D12ShaderCompiler.h"
 #include "D3D12DescriptorHeap.h"
@@ -62,7 +64,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	hDXGI = ::LoadLibrary("dxgi.dll");
 	if (hDXGI == NULL)
 	{
-		::MessageBox(0, "FAILED to load dxgi.dll", "Error", MB_ICONERROR | MB_OK);
+		PlatformDialogMisc::MessageBox("ERROR", "FAILED to load dxgi.dll");
 		return false;
 	}
 	else
@@ -73,7 +75,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	hD3D12 = ::LoadLibrary("d3d12.dll");
 	if (hD3D12 == NULL)
 	{
-		::MessageBox(0, "FAILED to load d3d12.dll", "Error", MB_ICONERROR | MB_OK);
+		PlatformDialogMisc::MessageBox("ERROR", "FAILED to load d3d12.dll");
 		return false;
 	}
 	else
@@ -208,7 +210,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	// Create Device
 	if (FAILED(_D3D12CreateDevice(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&D3DDevice))))
 	{
-		::MessageBox(0, "Failed to create Device", "ERROR", MB_OK | MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "FAILED to create device");
 		return false;
 	}
 	else

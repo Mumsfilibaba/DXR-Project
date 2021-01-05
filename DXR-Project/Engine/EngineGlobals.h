@@ -1,12 +1,15 @@
 #pragma once
-#include "Containers/TSharedPtr.h"
 
 /*
-* EngineGlobals
+* Application
 */
 
-struct EngineGlobals
-{
-	// Application
-	static TSharedPtr<class GenericApplication> PlatformApplication;
-};
+extern class GenericApplication* GlobalPlatformApplication;
+
+/*
+* Rendering
+*/
+
+extern class GenericRenderingAPI*	GlobalRenderingAPI;
+extern class IShaderCompiler*		GlobalShaderCompiler;
+extern class ICommandContext*		GlobalCommandContext;

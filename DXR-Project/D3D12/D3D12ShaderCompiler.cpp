@@ -1,11 +1,11 @@
 #include "D3D12ShaderCompiler.h"
 
-#include "Defines.h"
-
 #include "Utilities/StringUtilities.h"
 
 #include "Windows/Windows.h"
 #include "Windows/Windows.inl"
+
+#include "Application/Platform/PlatformDialogMisc.h"
 
 /*
 * GetTargetProfile
@@ -163,7 +163,7 @@ bool D3D12ShaderCompiler::Initialize()
 	DxCompilerDLL = ::LoadLibrary("dxcompiler.dll");
 	if (!DxCompilerDLL)
 	{
-		::MessageBox(0, "FAILED to load dxcompiler.dll", "ERROR", MB_OK);
+		PlatformDialogMisc::MessageBox("ERROR", "FAILED to load dxcompiler.dll");
 		return false;
 	}
 

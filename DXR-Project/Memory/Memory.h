@@ -1,5 +1,5 @@
 #pragma once
-#include "Defines.h"
+#include "Core.h"
 
 /*
 * EMemoryDebugFlags
@@ -9,8 +9,8 @@ typedef UInt32 MemoryDebugFlags;
 
 enum EMemoryDebugFlag : MemoryDebugFlags
 {
-	MEMORY_DEBUG_FLAGS_NONE			= 0,
-	MEMORY_DEBUG_FLAGS_LEAK_CHECK	= FLAG(1),
+	MemoryDebugFlag_None		= 0,
+	MemoryDebugFlag_LeakCheck	= FLAG(1),
 };
 
 /*

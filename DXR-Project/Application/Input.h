@@ -8,8 +8,8 @@
 class Input
 {
 public:
-	static EKey	ConvertFromScanCode(UInt32 ScanCode);
-	static UInt32 ConvertToScanCode(EKey Key);
+	static EKey		ConvertFromScanCode(UInt32 ScanCode);
+	static UInt32	ConvertToScanCode(EKey Key);
 
 	static void RegisterKeyUp(EKey Key);
 	static void RegisterKeyDown(EKey Key);

@@ -11,14 +11,12 @@
 * RenderingAPI
 */
 
-TSharedPtr<GenericRenderingAPI>	RenderingAPI::CurrentRenderingAPI = nullptr;
-
 bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindow> RenderWindow)
 {
 	// Select RenderingAPI
 	if (InRenderAPI == ERenderingAPI::RenderingAPI_D3D12)
 	{
-		CurrentRenderingAPI = new D3D12RenderingAPI();
+		GlobalRenderingAPI = new D3D12RenderingAPI();
 		
 		D3D12ShaderCompiler* Compiler = new D3D12ShaderCompiler();
 		if (!Compiler->Initialize())
@@ -26,7 +24,7 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 			return false;
 		}
 
-		ShaderCompiler::Instance = TSharedPtr<D3D12ShaderCompiler>(Compiler);
+		GlobalShaderCompiler = Compiler;
 	}
 	else
 	{
@@ -45,9 +43,9 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 #endif
 
 	// Init
-	if (CurrentRenderingAPI->Initialize(RenderWindow, EnableDebug))
+	if (GlobalRenderingAPI->Initialize(RenderWindow, EnableDebug))
 	{
-		ICommandContext* CmdContext = CurrentRenderingAPI->GetDefaultCommandContext();
+		ICommandContext* CmdContext = GlobalRenderingAPI->GetDefaultCommandContext();
 		CommandListExecutor::SetContext(CmdContext);
 
 		return true;
@@ -56,4 +54,13 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 	{
 		return false;
 	}
+}
+
+void RenderingAPI::Release()
+{
+	delete GlobalRenderingAPI;
+	GlobalRenderingAPI = nullptr;
+
+	delete GlobalShaderCompiler;
+	GlobalShaderCompiler = nullptr;
 }

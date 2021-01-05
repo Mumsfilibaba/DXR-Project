@@ -6,7 +6,9 @@
 #include "Application/Application.h"
 #include "Application/Generic/GenericOutputDevice.h"
 #include "Application/Generic/GenericCursor.h"
+
 #include "Application/Platform/PlatformApplication.h"
+#include "Application/Platform/PlatformDialogMisc.h"
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
@@ -34,10 +36,10 @@ bool EngineLoop::PreInitialize()
 {
 	GlobalOutputDevices::Initialize();
 
-	EngineGlobals::PlatformApplication = TSharedPtr(PlatformApplication::Make());
-	if (!EngineGlobals::PlatformApplication->Initialize())
+	GlobalPlatformApplication = PlatformApplication::Make();
+	if (!GlobalPlatformApplication->Initialize())
 	{
-		::MessageBox(0, "Failed to create Platform Application", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "Failed to create Platform Application");
 		return false;
 	}
 
@@ -48,9 +50,9 @@ bool EngineLoop::Initialize()
 {
 	// Application
 	Application* App = Application::Make();
-	if (!App->Initialize(EngineGlobals::PlatformApplication))
+	if (!App->Initialize(GlobalPlatformApplication))
 	{
-		::MessageBox(0, "Failed to create Application", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "Failed to create Application");
 		return false;
 	}
 
@@ -73,14 +75,14 @@ bool EngineLoop::Initialize()
 	Renderer* Renderer = Renderer::Make();
 	if (!Renderer)
 	{
-		::MessageBox(0, "FAILED to create Renderer", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "FAILED to create Renderer");
 		return false;
 	}
 
 	// ImGui
 	if (!DebugUI::Initialize())
 	{
-		::MessageBox(0, "FAILED to create ImGuiContext", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "FAILED to create ImGuiContext");
 		return false;
 	}
 
@@ -88,7 +90,7 @@ bool EngineLoop::Initialize()
 	Game* GameInstance = new Game();
 	if (!GameInstance->Initialize())
 	{
-		::MessageBox(0, "FAILED initialize Game", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "FAILED initialize Game");
 		return false;
 	}
 	else
@@ -137,9 +139,8 @@ void EngineLoop::PreRelease()
 {
 	TextureFactory::Release();
 
-	Application::Get().Release();
-
-	EngineGlobals::PlatformApplication.Reset();
+	delete GlobalPlatformApplication;
+	GlobalPlatformApplication = nullptr;
 
 	GlobalOutputDevices::Release();
 }

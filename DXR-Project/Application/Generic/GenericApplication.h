@@ -1,12 +1,12 @@
 #pragma once
+#include "GenericWindow.h"
+#include "GenericCursor.h"
+
 #include "Application/InputCodes.h"
 
 #include "Application/Events/ApplicationEventHandler.h"
 
 #include "Core/TSharedRef.h"
-
-#include "GenericWindow.h"
-#include "GenericCursor.h"
 
 /*
 * ModifierKeyState
@@ -66,11 +66,11 @@ public:
 	virtual TSharedRef<GenericWindow> MakeWindow() = 0;
 	virtual TSharedRef<GenericCursor> MakeCursor() = 0;
 
-	virtual bool Initialize() = 0;
-	virtual bool Tick() = 0;
+	virtual bool Initialize()	= 0;
+	virtual bool Tick()			= 0;
 
-	virtual void SetCursor(TSharedRef<GenericCursor> Cursor) = 0;
-	virtual TSharedRef<GenericCursor> GetCursor() const = 0;
+	virtual void SetCursor(TSharedRef<GenericCursor> Cursor)	= 0;
+	virtual TSharedRef<GenericCursor> GetCursor() const			= 0;
 
 	virtual void SetActiveWindow(TSharedRef<GenericWindow> Window) = 0;
 	
@@ -79,8 +79,8 @@ public:
 		UNREFERENCED_VARIABLE(Window);
 	}
 
-	virtual ModifierKeyState GetModifierKeyState() const = 0;
-	virtual TSharedRef<GenericWindow> GetActiveWindow() const = 0;
+	virtual ModifierKeyState GetModifierKeyState() const		= 0;
+	virtual TSharedRef<GenericWindow> GetActiveWindow() const	= 0;
 
 	// Some platforms does not have the concept of mouse capture, therefor return nullptr as standard
 	virtual TSharedRef<GenericWindow> GetCapture() const
@@ -88,8 +88,8 @@ public:
 		return TSharedRef<GenericWindow>();
 	}
 
-	virtual void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 X, Int32 Y) = 0;
-	virtual void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const = 0;
+	virtual void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 X, Int32 Y)				= 0;
+	virtual void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const	= 0;
 
 	FORCEINLINE void SetEventHandler(TSharedPtr<ApplicationEventHandler> InEventHandler)
 	{

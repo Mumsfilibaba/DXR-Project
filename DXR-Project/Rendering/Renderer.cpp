@@ -1323,7 +1323,7 @@ bool Renderer::Initialize()
 	//WriteShadowMapDescriptors();
 
 	// Register EventFunc
-	EventQueue::RegisterEventHandler(this, EEventCategory::EVENT_CATEGORY_WINDOW);
+	EventQueue::RegisterEventHandler(this, EEventCategory::EventCategory_Window);
 
 	return true;
 }

@@ -5,7 +5,7 @@
 #include "D3D12Buffer.h"
 #include "D3D12Views.h"
 
-#include "Defines.h"
+#include "Core.h"
 
 class D3D12CommandList;
 class D3D12DescriptorTable;

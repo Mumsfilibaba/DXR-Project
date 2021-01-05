@@ -1,5 +1,5 @@
 #pragma once
-#include "Defines.h"
+#include "Core.h"
 
 #include <string>
 
@@ -18,15 +18,15 @@ enum EWindowStyleFlag : UInt32
 };
 
 /*
-* WindowInitializer
+* WindowCreateInfo
 */
 
-struct WindowInitializer
+struct WindowCreateInfo
 {
 public:
-	WindowInitializer() = default;
+	WindowCreateInfo() = default;
 
-	inline WindowInitializer(const std::string& InTitle, UInt32 InWidth, UInt32 InHeight, UInt32 InStyle)
+	inline WindowCreateInfo(const std::string& InTitle, UInt32 InWidth, UInt32 InHeight, UInt32 InStyle)
 		: Title(InTitle)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -96,16 +96,16 @@ struct WindowShape
 class GenericWindow : public RefCountedObject
 {
 public:
-	virtual bool Initialize(const WindowInitializer& InInitializer) = 0;
+	virtual bool Initialize(const WindowCreateInfo& InCreateInfo) = 0;
 
 	virtual void Show(bool Maximized) = 0;
-	virtual void Minimize() = 0;
-	virtual void Maximize() = 0;
-	virtual void Close() = 0;
-	virtual void Restore() = 0;
+	virtual void Minimize()	= 0;
+	virtual void Maximize()	= 0;
+	virtual void Close()	= 0;
+	virtual void Restore()	= 0;
 	virtual void ToggleFullscreen() = 0;
 
-	virtual bool IsValid() const = 0;
+	virtual bool IsValid() const		= 0;
 	virtual bool IsActiveWindow() const = 0;
 
 	virtual void SetTitle(const std::string& Title) = 0;
@@ -121,11 +121,11 @@ public:
 		return nullptr;
 	}
 
-	FORCEINLINE const WindowInitializer& GetInitializer() const
+	FORCEINLINE const WindowCreateInfo& GetCreateInfo() const
 	{
-		return Initializer;
+		return CreateInfo;
 	}
 
 protected:
-	WindowInitializer Initializer;
+	WindowCreateInfo CreateInfo;
 };

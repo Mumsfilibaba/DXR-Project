@@ -11,33 +11,34 @@ struct MouseMovedEvent : public Event
 {
 public:
 	MouseMovedEvent(Int32 InX, Int32 InY)
-		: X(InX)
-		, Y(InY)
+		: Event()
+		, x(InX)
+		, y(InY)
 	{
 	}
 
-	DECLARE_EVENT_CLASS(MOUSE_MOVED_EVENT);
+	DECLARE_EVENT_CLASS(EventType_MouseMoved);
 
-	DECLARE_EVENT_CATEGORY(EEventCategory::EVENT_CATEGORY_INPUT | EEventCategory::EVENT_CATEGORY_MOUSE);
+	DECLARE_EVENT_CATEGORY(EEventCategory::EventCategory_Input| EEventCategory::EventCategory_Mouse);
 
 	virtual std::string ToString() const override
 	{
-		return std::string("MouseMovedEvent=[") + std::to_string(X) + ", " + std::to_string(Y) + "]";
+		return std::string("MouseMovedEvent=[") + std::to_string(x) + ", " + std::to_string(y) + "]";
 	}
 
 	FORCEINLINE Int32 GetX() const
 	{
-		return X;
+		return x;
 	}
 
 	FORCEINLINE Int32 GetY() const
 	{
-		return Y;
+		return y;
 	}
 
 private:
-	Int32 X;
-	Int32 Y;
+	Int32 x;
+	Int32 y;
 };
 
 /*
@@ -48,12 +49,13 @@ struct MouseButtonEvent : public Event
 {
 public:
 	MouseButtonEvent(EMouseButton InButton, const ModifierKeyState& InModifiers)
-		: Button(InButton)
+		: Event()
+		, Button(InButton)
 		, Modifiers(InModifiers)
 	{
 	}
 
-	DECLARE_EVENT_CATEGORY(EEventCategory::EVENT_CATEGORY_INPUT | EEventCategory::EVENT_CATEGORY_MOUSE);
+	DECLARE_EVENT_CATEGORY(EEventCategory::EventCategory_Input | EEventCategory::EventCategory_Mouse);
 
 	FORCEINLINE EMouseButton GetButton() const
 	{
@@ -82,7 +84,7 @@ public:
 	{
 	}
 
-	DECLARE_EVENT_CLASS(MOUSE_PRESSED_EVENT);
+	DECLARE_EVENT_CLASS(EventType_MousePressed);
 
 	virtual std::string ToString() const override
 	{
@@ -102,7 +104,7 @@ public:
 	{
 	}
 
-	DECLARE_EVENT_CLASS(MOUSE_RELEASED_EVENT);
+	DECLARE_EVENT_CLASS(EventType_MouseReleased);
 
 	virtual std::string ToString() const override
 	{
@@ -118,14 +120,15 @@ struct MouseScrolledEvent : public Event
 {
 public:
 	MouseScrolledEvent(Float InHorizontalDelta, Float InVerticalDelta)
-		: HorizontalDelta(InHorizontalDelta)
+		: Event()
+		, HorizontalDelta(InHorizontalDelta)
 		, VerticalDelta(InVerticalDelta)
 	{
 	}
 
-	DECLARE_EVENT_CLASS(MOUSE_SCROLLED_EVENT);
+	DECLARE_EVENT_CLASS(EventType_MouseScrolled);
 
-	DECLARE_EVENT_CATEGORY(EEventCategory::EVENT_CATEGORY_INPUT | EEventCategory::EVENT_CATEGORY_MOUSE);
+	DECLARE_EVENT_CATEGORY(EEventCategory::EventCategory_Input | EEventCategory::EventCategory_Mouse);
 
 	virtual std::string ToString() const override
 	{

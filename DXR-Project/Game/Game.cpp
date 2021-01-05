@@ -252,52 +252,52 @@ void Game::Tick(Timestamp DeltaTime)
 	const Float RotationSpeed = 45.0f;
 
 	Float Speed = 1.0f;
-	if (Input::IsKeyDown(EKey::KEY_LEFT_SHIFT))
+	if (Input::IsKeyDown(EKey::Key_LeftShift))
 	{
 		Speed = 4.0f;
 	}
 
-	if (Input::IsKeyDown(EKey::KEY_RIGHT))
+	if (Input::IsKeyDown(EKey::Key_Right))
 	{
 		CurrentCamera->Rotate(0.0f, XMConvertToRadians(RotationSpeed * Delta), 0.0f);
 	}
-	else if (Input::IsKeyDown(EKey::KEY_LEFT))
+	else if (Input::IsKeyDown(EKey::Key_Left))
 	{
 		CurrentCamera->Rotate(0.0f, XMConvertToRadians(-RotationSpeed * Delta), 0.0f);
 	}
 
-	if (Input::IsKeyDown(EKey::KEY_UP))
+	if (Input::IsKeyDown(EKey::Key_Up))
 	{
 		CurrentCamera->Rotate(XMConvertToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
 	}
-	else if (Input::IsKeyDown(EKey::KEY_DOWN))
+	else if (Input::IsKeyDown(EKey::Key_Down))
 	{
 		CurrentCamera->Rotate(XMConvertToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
 	}
 
-	if (Input::IsKeyDown(EKey::KEY_W))
+	if (Input::IsKeyDown(EKey::Key_W))
 	{
 		CurrentCamera->Move(0.0f, 0.0f, Speed * Delta);
 	}
-	else if (Input::IsKeyDown(EKey::KEY_S))
+	else if (Input::IsKeyDown(EKey::Key_S))
 	{
 		CurrentCamera->Move(0.0f, 0.0f, -Speed * Delta);
 	}
 
-	if (Input::IsKeyDown(EKey::KEY_A))
+	if (Input::IsKeyDown(EKey::Key_A))
 	{
 		CurrentCamera->Move(Speed * Delta, 0.0f, 0.0f);
 	}
-	else if (Input::IsKeyDown(EKey::KEY_D))
+	else if (Input::IsKeyDown(EKey::Key_D))
 	{
 		CurrentCamera->Move(-Speed * Delta, 0.0f, 0.0f);
 	}
 
-	if (Input::IsKeyDown(EKey::KEY_Q))
+	if (Input::IsKeyDown(EKey::Key_Q))
 	{
 		CurrentCamera->Move(0.0f, Speed * Delta, 0.0f);
 	}
-	else if (Input::IsKeyDown(EKey::KEY_E))
+	else if (Input::IsKeyDown(EKey::Key_E))
 	{
 		CurrentCamera->Move(0.0f, -Speed * Delta, 0.0f);
 	}

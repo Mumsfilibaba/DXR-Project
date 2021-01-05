@@ -15,7 +15,7 @@ public:
 	WindowsCursor(WindowsApplication* InApplication);
 	~WindowsCursor();
 
-	virtual bool Initialize(const CursorInitializer& InInitializer) override final;
+	virtual bool Initialize(const CursorCreateInfo& InCreateInfo) override final;
 
 	virtual Void* GetNativeHandle() const override final
 	{

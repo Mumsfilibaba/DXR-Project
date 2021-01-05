@@ -11,12 +11,13 @@ struct KeyEvent : public Event
 {
 public:
 	KeyEvent(EKey InKey, const ModifierKeyState& InModifiers)
-		: Key(InKey)
+		: Event()
+		, Key(InKey)
 		, Modifiers(InModifiers)
 	{
 	}
 
-	DECLARE_EVENT_CATEGORY(EEventCategory::EVENT_CATEGORY_INPUT | EEventCategory::EVENT_CATEGORY_KEYBOARD);
+	DECLARE_EVENT_CATEGORY(EEventCategory::EventCategory_Input | EEventCategory::EventCategory_Keyboard);
 
 	FORCEINLINE EKey GetKey() const
 	{
@@ -45,7 +46,7 @@ public:
 	{
 	}
 
-	DECLARE_EVENT_CLASS(KEY_PRESSED_EVENT);
+	DECLARE_EVENT_CLASS(EventType_KeyPressed);
 
 	virtual std::string ToString() const override
 	{
@@ -65,7 +66,7 @@ public:
 	{
 	}
 
-	DECLARE_EVENT_CLASS(KEY_RELEASED_EVENT);
+	DECLARE_EVENT_CLASS(EventType_KeyReleased);
 
 	virtual std::string ToString() const override
 	{
@@ -81,13 +82,14 @@ struct KeyTypedEvent : public Event
 {
 public:
 	KeyTypedEvent(UInt32 InCharacter)
-		: Character(InCharacter)
+		: Event()
+		, Character(InCharacter)
 	{
 	}
 
-	DECLARE_EVENT_CLASS(KEY_TYPED_EVENT);
+	DECLARE_EVENT_CLASS(EventType_KeyTyped);
 
-	DECLARE_EVENT_CATEGORY(EEventCategory::EVENT_CATEGORY_INPUT | EEventCategory::EVENT_CATEGORY_KEYBOARD);
+	DECLARE_EVENT_CATEGORY(EEventCategory::EventCategory_Input | EEventCategory::EventCategory_Keyboard);
 
 	virtual std::string ToString() const override
 	{

@@ -13,14 +13,11 @@
 class Application : public ApplicationEventHandler
 {
 public:
-	~Application();
-
 	TSharedRef<GenericWindow> MakeWindow();
 	TSharedRef<GenericCursor> MakeCursor();
 
-	bool Initialize(TSharedPtr<GenericApplication> InPlatformApplication);
+	bool Initialize(GenericApplication* InPlatformApplication);
 	void Tick();
-	void Release();
 
 	void SetCursor(TSharedRef<GenericCursor> Cursor);
 	void SetActiveWindow(TSharedRef<GenericWindow> Window);
@@ -34,9 +31,9 @@ public:
 	void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 x, Int32 y);
 	void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const;
 	
-	void SetPlatformApplication(TSharedPtr<GenericApplication> InPlatformApplication);
+	void SetPlatformApplication(GenericApplication* InPlatformApplication);
 
-	FORCEINLINE TSharedPtr<GenericApplication> GetPlatformApplication() const
+	FORCEINLINE GenericApplication* GetPlatformApplication() const
 	{
 		return PlatformApplication;
 	}
@@ -50,17 +47,14 @@ public:
 	virtual void OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState) override;
 	virtual void OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState) override;
 	virtual void OnMouseMove(Int32 x, Int32 y) override;
-	virtual void OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState) override;
-	virtual void OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState) override;
+	virtual void OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState)	override;
+	virtual void OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState)	override;
 	virtual void OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta) override;
 	virtual void OnCharacterInput(UInt32 Character) override;
 
-private:
-	Application();
-
 protected:
 	TSharedRef<GenericWindow> MainWindow;
-	TSharedPtr<GenericApplication> PlatformApplication = nullptr;
+	GenericApplication* PlatformApplication = nullptr;
 
 	static TSharedPtr<Application> CurrentApplication;
 };

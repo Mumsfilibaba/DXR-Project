@@ -1,8 +1,6 @@
 #pragma once
 #include "GenericRenderingAPI.h"
 
-#include "Engine/EngineGlobals.h"
-
 /*
 * RenderingAPI
 */
@@ -16,6 +14,7 @@ public:
 	*/
 
 	static bool Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindow> RenderingWindow);
+	static void Release();
 
 	/*
 	* Textures
@@ -29,7 +28,7 @@ public:
 		UInt32 MipLevels, 
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return CurrentRenderingAPI->CreateTexture1D(
+		return GlobalRenderingAPI->CreateTexture1D(
 			InitalData, 
 			Format, 
 			Usage, 
@@ -47,7 +46,7 @@ public:
 		UInt32 ArrayCount,
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return CurrentRenderingAPI->CreateTexture1DArray(
+		return GlobalRenderingAPI->CreateTexture1DArray(
 			InitalData,
 			Format,
 			Usage,
@@ -67,7 +66,7 @@ public:
 		UInt32 SampleCount, 
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return CurrentRenderingAPI->CreateTexture2D(
+		return GlobalRenderingAPI->CreateTexture2D(
 			InitalData, 
 			Format, 
 			Usage, 
@@ -89,7 +88,7 @@ public:
 		UInt32 SampleCount, 
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return CurrentRenderingAPI->CreateTexture2DArray(
+		return GlobalRenderingAPI->CreateTexture2DArray(
 			InitalData, 
 			Format, 
 			Usage, 
@@ -110,7 +109,7 @@ public:
 		UInt32 SampleCount,
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return CurrentRenderingAPI->CreateTextureCube(
+		return GlobalRenderingAPI->CreateTextureCube(
 			InitalData, 
 			Format,
 			Usage,
@@ -130,7 +129,7 @@ public:
 		UInt32 SampleCount,
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return CurrentRenderingAPI->CreateTextureCubeArray(
+		return GlobalRenderingAPI->CreateTextureCubeArray(
 			InitalData,
 			Format,
 			Usage,
@@ -151,7 +150,7 @@ public:
 		UInt32 MipLevels,
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
-		return CurrentRenderingAPI->CreateTexture3D(
+		return GlobalRenderingAPI->CreateTexture3D(
 			InitalData,
 			Format,
 			Usage,
@@ -168,7 +167,7 @@ public:
 
 	FORCEINLINE static class SamplerState* CreateSamplerState()
 	{
-		return CurrentRenderingAPI->CreateSamplerState();
+		return GlobalRenderingAPI->CreateSamplerState();
 	}
 
 	/*
@@ -181,7 +180,7 @@ public:
 		UInt32 VertexStride,
 		UInt32 Usage)
 	{
-		return CurrentRenderingAPI->CreateVertexBuffer(
+		return GlobalRenderingAPI->CreateVertexBuffer(
 			InitalData,
 			SizeInBytes,
 			VertexStride,
@@ -205,7 +204,7 @@ public:
 		EIndexFormat IndexFormat,
 		UInt32 Usage)
 	{
-		return CurrentRenderingAPI->CreateIndexBuffer(
+		return GlobalRenderingAPI->CreateIndexBuffer(
 			InitalData,
 			SizeInBytes,
 			IndexFormat,
@@ -217,7 +216,7 @@ public:
 		UInt32 SizeInBytes, 
 		UInt32 Usage)
 	{
-		return CurrentRenderingAPI->CreateConstantBuffer(InitalData, SizeInBytes, Usage);
+		return GlobalRenderingAPI->CreateConstantBuffer(InitalData, SizeInBytes, Usage);
 	}
 
 	template<typename T>
@@ -243,7 +242,7 @@ public:
 		UInt32 Stride,
 		UInt32 Usage)
 	{
-		return CurrentRenderingAPI->CreateStructuredBuffer(
+		return GlobalRenderingAPI->CreateStructuredBuffer(
 			InitalData,
 			SizeInBytes,
 			Stride,
@@ -256,7 +255,7 @@ public:
 
 	FORCEINLINE static RayTracingScene* CreateRayTracingScene()
 	{
-		return CurrentRenderingAPI->CreateRayTracingScene();
+		return GlobalRenderingAPI->CreateRayTracingScene();
 	}
 
 	/*
@@ -265,7 +264,7 @@ public:
 
 	FORCEINLINE static RayTracingGeometry* CreateRayTracingGeometry()
 	{
-		return CurrentRenderingAPI->CreateRayTracingGeometry();
+		return GlobalRenderingAPI->CreateRayTracingGeometry();
 	}
 
 	/*
@@ -277,7 +276,7 @@ public:
 		UInt32 FirstElement,
 		UInt32 ElementCount)
 	{
-		return CurrentRenderingAPI->CreateShaderResourceView(
+		return GlobalRenderingAPI->CreateShaderResourceView(
 			Buffer,
 			FirstElement,
 			ElementCount);
@@ -289,7 +288,7 @@ public:
 		UInt32 ElementCount,
 		UInt32 Stride)
 	{
-		return CurrentRenderingAPI->CreateShaderResourceView(
+		return GlobalRenderingAPI->CreateShaderResourceView(
 			Buffer,
 			FirstElement,
 			ElementCount,
@@ -311,7 +310,7 @@ public:
 		UInt32 MostDetailedMip,
 		UInt32 MipLevels) 
 	{ 
-		return CurrentRenderingAPI->CreateShaderResourceView(
+		return GlobalRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
@@ -326,7 +325,7 @@ public:
 		UInt32 FirstArraySlice,
 		UInt32 ArraySize)
 	{
-		return CurrentRenderingAPI->CreateShaderResourceView(
+		return GlobalRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
@@ -341,7 +340,7 @@ public:
 		UInt32 MostDetailedMip,
 		UInt32 MipLevels)
 	{
-		return CurrentRenderingAPI->CreateShaderResourceView(
+		return GlobalRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
@@ -356,7 +355,7 @@ public:
 		UInt32 FirstArraySlice,
 		UInt32 ArraySize)
 	{
-		return CurrentRenderingAPI->CreateShaderResourceView(
+		return GlobalRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
@@ -371,7 +370,7 @@ public:
 		UInt32 MostDetailedMip,
 		UInt32 MipLevels)
 	{
-		return CurrentRenderingAPI->CreateShaderResourceView(
+		return GlobalRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
@@ -386,7 +385,7 @@ public:
 		UInt32 FirstArraySlice,
 		UInt32 ArraySize)
 	{
-		return CurrentRenderingAPI->CreateShaderResourceView(
+		return GlobalRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
@@ -401,7 +400,7 @@ public:
 		UInt32 MostDetailedMip,
 		UInt32 MipLevels)
 	{
-		return CurrentRenderingAPI->CreateShaderResourceView(
+		return GlobalRenderingAPI->CreateShaderResourceView(
 			Texture,
 			Format,
 			MostDetailedMip,
@@ -419,7 +418,7 @@ public:
 		EFormat Format,
 		UInt64 CounterOffsetInBytes)
 	{
-		return CurrentRenderingAPI->CreateUnorderedAccessView(
+		return GlobalRenderingAPI->CreateUnorderedAccessView(
 			Buffer,
 			FirstElement,
 			NumElements,
@@ -434,7 +433,7 @@ public:
 		UInt32 StructureByteStride,
 		UInt64 CounterOffsetInBytes)
 	{
-		return CurrentRenderingAPI->CreateUnorderedAccessView(
+		return GlobalRenderingAPI->CreateUnorderedAccessView(
 			Buffer,
 			FirstElement,
 			NumElements,
@@ -447,7 +446,7 @@ public:
 		EFormat Format, 
 		UInt32 MipSlice)
 	{
-		return CurrentRenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
+		return GlobalRenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
 	}
 
 	FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
@@ -457,7 +456,7 @@ public:
 		UInt32 FirstArraySlice,
 		UInt32 ArraySize)
 	{
-		return CurrentRenderingAPI->CreateUnorderedAccessView(
+		return GlobalRenderingAPI->CreateUnorderedAccessView(
 			Texture,
 			Format,
 			MipSlice,
@@ -470,7 +469,7 @@ public:
 		EFormat Format, 
 		UInt32 MipSlice)
 	{
-		return CurrentRenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
+		return GlobalRenderingAPI->CreateUnorderedAccessView(Texture, Format, MipSlice);
 	}
 
 	FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
@@ -480,7 +479,7 @@ public:
 		UInt32 FirstArraySlice,
 		UInt32 ArraySize)
 	{
-		return CurrentRenderingAPI->CreateUnorderedAccessView(
+		return GlobalRenderingAPI->CreateUnorderedAccessView(
 			Texture,
 			Format,
 			MipSlice,
@@ -493,7 +492,7 @@ public:
 		EFormat Format, 
 		UInt32 MipSlice)
 	{
-		return CurrentRenderingAPI->CreateUnorderedAccessView(
+		return GlobalRenderingAPI->CreateUnorderedAccessView(
 			Texture,
 			Format,
 			MipSlice);
@@ -505,7 +504,7 @@ public:
 		UInt32 MipSlice,
 		UInt32 ArraySlice)
 	{
-		return CurrentRenderingAPI->CreateUnorderedAccessView(
+		return GlobalRenderingAPI->CreateUnorderedAccessView(
 			Texture,
 			Format,
 			MipSlice,
@@ -519,7 +518,7 @@ public:
 		UInt32 FirstDepthSlice,
 		UInt32 DepthSlices) 
 	{
-		return CurrentRenderingAPI->CreateUnorderedAccessView(
+		return GlobalRenderingAPI->CreateUnorderedAccessView(
 			Texture,
 			Format,
 			MipSlice,
@@ -536,7 +535,7 @@ public:
 		EFormat Format, 
 		UInt32 MipSlice)
 	{
-		return CurrentRenderingAPI->CreateRenderTargetView(Texture, Format, MipSlice);
+		return GlobalRenderingAPI->CreateRenderTargetView(Texture, Format, MipSlice);
 	}
 
 	FORCEINLINE static RenderTargetView* CreateRenderTargetView(
@@ -546,7 +545,7 @@ public:
 		UInt32 FirstArraySlice,
 		UInt32 ArraySize)
 	{
-		return CurrentRenderingAPI->CreateRenderTargetView(
+		return GlobalRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
@@ -559,7 +558,7 @@ public:
 		EFormat Format, 
 		UInt32 MipSlice)
 	{
-		return CurrentRenderingAPI->CreateRenderTargetView(
+		return GlobalRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice);
@@ -572,7 +571,7 @@ public:
 		UInt32 FirstArraySlice,
 		UInt32 ArraySize)
 	{
-		return CurrentRenderingAPI->CreateRenderTargetView(
+		return GlobalRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
@@ -586,7 +585,7 @@ public:
 		UInt32 MipSlice,
 		UInt32 FaceIndex)
 	{
-		return CurrentRenderingAPI->CreateRenderTargetView(
+		return GlobalRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
@@ -600,7 +599,7 @@ public:
 		UInt32 ArraySlice,
 		UInt32 FaceIndex)
 	{
-		return CurrentRenderingAPI->CreateRenderTargetView(
+		return GlobalRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
@@ -615,7 +614,7 @@ public:
 		UInt32 FirstDepthSlice,
 		UInt32 DepthSlices) 
 	{
-		return CurrentRenderingAPI->CreateRenderTargetView(
+		return GlobalRenderingAPI->CreateRenderTargetView(
 			Texture,
 			Format,
 			MipSlice,
@@ -632,7 +631,7 @@ public:
 		EFormat Format, 
 		UInt32 MipSlice)
 	{
-		return CurrentRenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
+		return GlobalRenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
 	}
 
 	FORCEINLINE static DepthStencilView* CreateDepthStencilView(
@@ -642,7 +641,7 @@ public:
 		UInt32 FirstArraySlice,
 		UInt32 ArraySize)
 	{
-		return CurrentRenderingAPI->CreateDepthStencilView(
+		return GlobalRenderingAPI->CreateDepthStencilView(
 			Texture,
 			Format,
 			MipSlice,
@@ -655,7 +654,7 @@ public:
 		EFormat Format, 
 		UInt32 MipSlice)
 	{
-		return CurrentRenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
+		return GlobalRenderingAPI->CreateDepthStencilView(Texture, Format, MipSlice);
 	}
 
 	FORCEINLINE static DepthStencilView* CreateDepthStencilView(
@@ -665,7 +664,7 @@ public:
 		UInt32 FirstArraySlice,
 		UInt32 ArraySize)
 	{
-		return CurrentRenderingAPI->CreateDepthStencilView(
+		return GlobalRenderingAPI->CreateDepthStencilView(
 			Texture,
 			Format,
 			MipSlice,
@@ -679,7 +678,7 @@ public:
 		UInt32 MipSlice,
 		UInt32 FaceIndex)
 	{
-		return CurrentRenderingAPI->CreateDepthStencilView(
+		return GlobalRenderingAPI->CreateDepthStencilView(
 			Texture,
 			Format,
 			MipSlice,
@@ -693,7 +692,7 @@ public:
 		UInt32 ArraySlice,
 		UInt32 FaceIndex)
 	{
-		return CurrentRenderingAPI->CreateDepthStencilView(
+		return GlobalRenderingAPI->CreateDepthStencilView(
 			Texture,
 			Format,
 			MipSlice,
@@ -708,104 +707,104 @@ public:
 	FORCEINLINE static ComputeShader* CreateComputeShader(
 		const TArray<UInt8>& ShaderCode)
 	{
-		return CurrentRenderingAPI->CreateComputeShader(ShaderCode);
+		return GlobalRenderingAPI->CreateComputeShader(ShaderCode);
 	}
 
 	FORCEINLINE static VertexShader* CreateVertexShader(
 		const TArray<UInt8>& ShaderCode)
 	{
-		return CurrentRenderingAPI->CreateVertexShader(ShaderCode);
+		return GlobalRenderingAPI->CreateVertexShader(ShaderCode);
 	}
 	
 	FORCEINLINE static HullShader* CreateHullShader(
 		const TArray<UInt8>& ShaderCode)
 	{
-		return CurrentRenderingAPI->CreateHullShader(ShaderCode);
+		return GlobalRenderingAPI->CreateHullShader(ShaderCode);
 	}
 	
 	FORCEINLINE static DomainShader* CreateDomainShader(
 		const TArray<UInt8>& ShaderCode)
 	{
-		return CurrentRenderingAPI->CreateDomainShader(ShaderCode);
+		return GlobalRenderingAPI->CreateDomainShader(ShaderCode);
 	}
 	
 	FORCEINLINE static GeometryShader* CreateGeometryShader(
 		const TArray<UInt8>& ShaderCode)
 	{
-		return CurrentRenderingAPI->CreateGeometryShader(ShaderCode);
+		return GlobalRenderingAPI->CreateGeometryShader(ShaderCode);
 	}
 
 	FORCEINLINE static MeshShader* CreateMeshShader(
 		const TArray<UInt8>& ShaderCode)
 	{
-		return CurrentRenderingAPI->CreateMeshShader(ShaderCode);
+		return GlobalRenderingAPI->CreateMeshShader(ShaderCode);
 	}
 	
 	FORCEINLINE static AmplificationShader* CreateAmplificationShader(
 		const TArray<UInt8>& ShaderCode)
 	{
-		return CurrentRenderingAPI->CreateAmplificationShader(ShaderCode);
+		return GlobalRenderingAPI->CreateAmplificationShader(ShaderCode);
 	}
 
 	FORCEINLINE static PixelShader* CreatePixelShader(
 		const TArray<UInt8>& ShaderCode)
 	{
-		return CurrentRenderingAPI->CreatePixelShader(ShaderCode);
+		return GlobalRenderingAPI->CreatePixelShader(ShaderCode);
 	}
 
 	FORCEINLINE static RayGenShader* CreateRayGenShader(
 		const TArray<UInt8>& ShaderCode)
 	{
-		return CurrentRenderingAPI->CreateRayGenShader(ShaderCode);
+		return GlobalRenderingAPI->CreateRayGenShader(ShaderCode);
 	}
 	
 	FORCEINLINE static RayHitShader* CreateRayHitShader(
 		const TArray<UInt8>& ShaderCode)
 	{
-		return CurrentRenderingAPI->CreateRayHitShader(ShaderCode);
+		return GlobalRenderingAPI->CreateRayHitShader(ShaderCode);
 	}
 
 	FORCEINLINE static RayMissShader* CreateRayMissShader(
 		const TArray<UInt8>& ShaderCode)
 	{
-		return CurrentRenderingAPI->CreateRayMissShader(ShaderCode);
+		return GlobalRenderingAPI->CreateRayMissShader(ShaderCode);
 	}
 
 	FORCEINLINE static InputLayoutState* CreateInputLayout(
 		const InputLayoutStateCreateInfo& CreateInfo)
 	{
-		return CurrentRenderingAPI->CreateInputLayout(CreateInfo);
+		return GlobalRenderingAPI->CreateInputLayout(CreateInfo);
 	}
 
 	FORCEINLINE static DepthStencilState* CreateDepthStencilState(
 		const DepthStencilStateCreateInfo& CreateInfo)
 	{
-		return CurrentRenderingAPI->CreateDepthStencilState(CreateInfo);
+		return GlobalRenderingAPI->CreateDepthStencilState(CreateInfo);
 	}
 
 	FORCEINLINE static RasterizerState* CreateRasterizerState(
 		const RasterizerStateCreateInfo& CreateInfo)
 	{
-		return CurrentRenderingAPI->CreateRasterizerState(CreateInfo);
+		return GlobalRenderingAPI->CreateRasterizerState(CreateInfo);
 	}
 
 	FORCEINLINE static BlendState* CreateBlendState(
 		const BlendStateCreateInfo& CreateInfo)
 	{
-		return CurrentRenderingAPI->CreateBlendState(CreateInfo);
+		return GlobalRenderingAPI->CreateBlendState(CreateInfo);
 	}
 
 
 	FORCEINLINE static ComputePipelineState* CreateComputePipelineState(
 		const ComputePipelineStateCreateInfo& CreateInfo)
 	{
-		return CurrentRenderingAPI->CreateComputePipelineState(CreateInfo);
+		return GlobalRenderingAPI->CreateComputePipelineState(CreateInfo);
 	}
 
 	FORCEINLINE static GraphicsPipelineState* CreateGraphicsPipelineState(
 		const GraphicsPipelineStateCreateInfo& CreateInfo)
 	{
-		return CurrentRenderingAPI->CreateGraphicsPipelineState(CreateInfo);
+		return GlobalRenderingAPI->CreateGraphicsPipelineState(CreateInfo);
 	}
 
 	/*
@@ -817,7 +816,7 @@ public:
 		EFormat ColorFormat,
 		EFormat DepthFormat)
 	{
-		return CurrentRenderingAPI->CreateViewport(Window, ColorFormat, DepthFormat);
+		return GlobalRenderingAPI->CreateViewport(Window, ColorFormat, DepthFormat);
 	}
 
 	/*
@@ -826,12 +825,12 @@ public:
 
 	FORCEINLINE static bool IsRayTracingSupported()
 	{
-		return CurrentRenderingAPI->IsRayTracingSupported();
+		return GlobalRenderingAPI->IsRayTracingSupported();
 	}
 
 	FORCEINLINE static bool UAVSupportsFormat(EFormat Format)
 	{
-		return CurrentRenderingAPI->UAVSupportsFormat(Format);
+		return GlobalRenderingAPI->UAVSupportsFormat(Format);
 	}
 
 	/*
@@ -840,24 +839,16 @@ public:
 
 	FORCEINLINE static class ICommandContext* GetDefaultCommandContext()
 	{
-		return CurrentRenderingAPI->GetDefaultCommandContext();
-	}
-
-	FORCEINLINE static TSharedPtr<GenericRenderingAPI> GetActiveRenderingAPI()
-	{
-		return CurrentRenderingAPI;
+		return GlobalRenderingAPI->GetDefaultCommandContext();
 	}
 
 	FORCEINLINE static ERenderingAPI GetAPI()
 	{
-		return CurrentRenderingAPI->GetAPI();
+		return GlobalRenderingAPI->GetAPI();
 	}
 
 	FORCEINLINE static std::string GetAdapterName()
 	{
-		return CurrentRenderingAPI->GetAdapterName();
+		return GlobalRenderingAPI->GetAdapterName();
 	}
-
-private:
-	static TSharedPtr<GenericRenderingAPI> CurrentRenderingAPI;
 };

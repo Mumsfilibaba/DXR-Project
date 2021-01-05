@@ -1,5 +1,5 @@
 #pragma once
-#include "Defines.h"
+#include "Core.h"
 
 #include "Core/RefCountedObject.h"
 
@@ -9,31 +9,31 @@
 
 enum class EPlatformCursor : UInt32
 {
-	CURSOR_NONE			= 0,
-	CURSOR_TEXT_INPUT	= 1,
-	CURSOR_RESIZE_ALL	= 2,
-	CURSOR_RESIZE_EW	= 3,
-	CURSOR_RESIZE_NS	= 4,
-	CURSOR_RESIZE_NESW	= 5,
-	CURSOR_RESIZE_NWSE	= 6,
-	CURSOR_HAND			= 7,
-	CURSOR_NOT_ALLOWED	= 8,
-	CURSOR_ARROW		= 9,
+	PlatformCursor_None			= 0,
+	PlatformCursor_TextInput	= 1,
+	PlatformCursor_ResizeAll	= 2,
+	PlatformCursor_ResizeEW		= 3,
+	PlatformCursor_ResizeNS		= 4,
+	PlatformCursor_ResizeNESW	= 5,
+	PlatformCursor_ResizeNWSE	= 6,
+	PlatformCursor_Hand			= 7,
+	PlatformCursor_NotAllowed	= 8,
+	PlatformCursor_Arrow		= 9,
 };
 
 /*
 * GenericCursor
 */
 
-struct CursorInitializer
+struct CursorCreateInfo
 {
-	inline CursorInitializer()
-		: PlatformCursor(EPlatformCursor::CURSOR_NONE)
+	inline CursorCreateInfo()
+		: PlatformCursor(EPlatformCursor::PlatformCursor_None)
 		, IsPlatformCursor(false)
 	{
 	}
 
-	inline CursorInitializer(EPlatformCursor InPlatformCursor)
+	inline CursorCreateInfo(EPlatformCursor InPlatformCursor)
 		: PlatformCursor(InPlatformCursor)
 		, IsPlatformCursor(true)
 	{
@@ -52,7 +52,7 @@ class GenericCursor : public RefCountedObject
 public:
 	virtual ~GenericCursor() = default;
 
-	virtual bool Initialize(const CursorInitializer& InInitializer) = 0;
+	virtual bool Initialize(const CursorCreateInfo& InCreateInfo) = 0;
 
 	virtual Void* GetNativeHandle() const
 	{
@@ -60,7 +60,7 @@ public:
 	}
 
 protected:
-	CursorInitializer Initializer;
+	CursorCreateInfo CreateInfo;
 };
 
 /*
@@ -72,12 +72,13 @@ struct GlobalCursors
 	static TSharedRef<GenericCursor> Arrow;
 	static TSharedRef<GenericCursor> TextInput;
 	static TSharedRef<GenericCursor> ResizeAll;
-	static TSharedRef<GenericCursor> ResizeEastWest;
-	static TSharedRef<GenericCursor> ResizeNorthSouth;
-	static TSharedRef<GenericCursor> ResizeNorthEastSouthWest;
-	static TSharedRef<GenericCursor> ResizeNorthWestSouthEast;
+	static TSharedRef<GenericCursor> ResizeEW;
+	static TSharedRef<GenericCursor> ResizeNS;
+	static TSharedRef<GenericCursor> ResizeNESW;
+	static TSharedRef<GenericCursor> ResizeNWSE;
 	static TSharedRef<GenericCursor> Hand;
 	static TSharedRef<GenericCursor> NotAllowed;
 
 	static bool Initialize();
+	static void Release();
 };

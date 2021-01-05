@@ -1,76 +1,88 @@
 #include "GenericCursor.h"
 #include "GenericApplication.h"
 
-#include "Engine/EngineGlobals.h"
-
 /*
 * GlobalCursors
 */
+
 TSharedRef<GenericCursor> GlobalCursors::Arrow;
 TSharedRef<GenericCursor> GlobalCursors::TextInput;
 TSharedRef<GenericCursor> GlobalCursors::ResizeAll;
-TSharedRef<GenericCursor> GlobalCursors::ResizeEastWest;
-TSharedRef<GenericCursor> GlobalCursors::ResizeNorthSouth;
-TSharedRef<GenericCursor> GlobalCursors::ResizeNorthEastSouthWest;
-TSharedRef<GenericCursor> GlobalCursors::ResizeNorthWestSouthEast;
+TSharedRef<GenericCursor> GlobalCursors::ResizeEW;
+TSharedRef<GenericCursor> GlobalCursors::ResizeNS;
+TSharedRef<GenericCursor> GlobalCursors::ResizeNESW;
+TSharedRef<GenericCursor> GlobalCursors::ResizeNWSE;
 TSharedRef<GenericCursor> GlobalCursors::Hand;
 TSharedRef<GenericCursor> GlobalCursors::NotAllowed;
 
 bool GlobalCursors::Initialize()
 {
-	Arrow = EngineGlobals::PlatformApplication->MakeCursor();
-	if (!Arrow->Initialize(CursorInitializer(EPlatformCursor::CURSOR_ARROW)))
+	Arrow = GlobalPlatformApplication->MakeCursor();
+	if (!Arrow->Initialize(CursorCreateInfo(EPlatformCursor::PlatformCursor_Arrow)))
 	{
 		return false;
 	}
 
-	TextInput = EngineGlobals::PlatformApplication->MakeCursor();
-	if (!TextInput->Initialize(CursorInitializer(EPlatformCursor::CURSOR_TEXT_INPUT)))
+	TextInput = GlobalPlatformApplication->MakeCursor();
+	if (!TextInput->Initialize(CursorCreateInfo(EPlatformCursor::PlatformCursor_TextInput)))
 	{
 		return false;
 	}
 
-	ResizeAll = EngineGlobals::PlatformApplication->MakeCursor();
-	if (!ResizeAll->Initialize(CursorInitializer(EPlatformCursor::CURSOR_RESIZE_ALL)))
+	ResizeAll = GlobalPlatformApplication->MakeCursor();
+	if (!ResizeAll->Initialize(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeAll)))
 	{
 		return false;
 	}
 
-	ResizeEastWest = EngineGlobals::PlatformApplication->MakeCursor();
-	if (!ResizeEastWest->Initialize(CursorInitializer(EPlatformCursor::CURSOR_RESIZE_EW)))
+	ResizeEW = GlobalPlatformApplication->MakeCursor();
+	if (!ResizeEW->Initialize(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeEW)))
 	{
 		return false;
 	}
 
-	ResizeNorthSouth = EngineGlobals::PlatformApplication->MakeCursor();
-	if (!ResizeNorthSouth->Initialize(CursorInitializer(EPlatformCursor::CURSOR_RESIZE_NS)))
+	ResizeNS = GlobalPlatformApplication->MakeCursor();
+	if (!ResizeNS->Initialize(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNS)))
 	{
 		return false;
 	}
 
-	ResizeNorthEastSouthWest = EngineGlobals::PlatformApplication->MakeCursor();
-	if (!ResizeNorthEastSouthWest->Initialize(CursorInitializer(EPlatformCursor::CURSOR_RESIZE_NESW)))
+	ResizeNESW = GlobalPlatformApplication->MakeCursor();
+	if (!ResizeNESW->Initialize(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNESW)))
 	{
 		return false;
 	}
 
-	ResizeNorthWestSouthEast = EngineGlobals::PlatformApplication->MakeCursor();
-	if (!ResizeNorthWestSouthEast->Initialize(CursorInitializer(EPlatformCursor::CURSOR_RESIZE_NWSE)))
+	ResizeNWSE = GlobalPlatformApplication->MakeCursor();
+	if (!ResizeNWSE->Initialize(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNWSE)))
 	{
 		return false;
 	}
 
-	Hand = EngineGlobals::PlatformApplication->MakeCursor();
-	if (!Hand->Initialize(CursorInitializer(EPlatformCursor::CURSOR_HAND)))
+	Hand = GlobalPlatformApplication->MakeCursor();
+	if (!Hand->Initialize(CursorCreateInfo(EPlatformCursor::PlatformCursor_Hand)))
 	{
 		return false;
 	}
 
-	NotAllowed = EngineGlobals::PlatformApplication->MakeCursor();
-	if (!NotAllowed->Initialize(CursorInitializer(EPlatformCursor::CURSOR_NOT_ALLOWED)))
+	NotAllowed = GlobalPlatformApplication->MakeCursor();
+	if (!NotAllowed->Initialize(CursorCreateInfo(EPlatformCursor::PlatformCursor_NotAllowed)))
 	{
 		return false;
 	}
 
 	return true;
+}
+
+void GlobalCursors::Release()
+{
+	Arrow.Reset();
+	TextInput.Reset();
+	ResizeAll.Reset();
+	ResizeEW.Reset();
+	ResizeNS.Reset();
+	ResizeNESW.Reset();
+	ResizeNWSE.Reset();
+	Hand.Reset();
+	NotAllowed.Reset();
 }

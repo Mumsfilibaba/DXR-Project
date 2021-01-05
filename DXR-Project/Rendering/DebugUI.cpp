@@ -83,28 +83,28 @@ bool DebugUI::Initialize()
 #endif
 
 	// Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
-	IO.KeyMap[ImGuiKey_Tab]			= EKey::KEY_TAB;
-	IO.KeyMap[ImGuiKey_LeftArrow]	= EKey::KEY_LEFT;
-	IO.KeyMap[ImGuiKey_RightArrow]	= EKey::KEY_RIGHT;
-	IO.KeyMap[ImGuiKey_UpArrow]		= EKey::KEY_UP;
-	IO.KeyMap[ImGuiKey_DownArrow]	= EKey::KEY_DOWN;
-	IO.KeyMap[ImGuiKey_PageUp]		= EKey::KEY_PAGE_UP;
-	IO.KeyMap[ImGuiKey_PageDown]	= EKey::KEY_PAGE_DOWN;
-	IO.KeyMap[ImGuiKey_Home]		= EKey::KEY_HOME;
-	IO.KeyMap[ImGuiKey_End]			= EKey::KEY_END;
-	IO.KeyMap[ImGuiKey_Insert]		= EKey::KEY_INSERT;
-	IO.KeyMap[ImGuiKey_Delete]		= EKey::KEY_DELETE;
-	IO.KeyMap[ImGuiKey_Backspace]	= EKey::KEY_BACKSPACE;
-	IO.KeyMap[ImGuiKey_Space]		= EKey::KEY_SPACE;
-	IO.KeyMap[ImGuiKey_Enter]		= EKey::KEY_ENTER;
-	IO.KeyMap[ImGuiKey_Escape]		= EKey::KEY_ESCAPE;
-	IO.KeyMap[ImGuiKey_KeyPadEnter]	= EKey::KEY_KEYPAD_ENTER;
-	IO.KeyMap[ImGuiKey_A]			= EKey::KEY_A;
-	IO.KeyMap[ImGuiKey_C]			= EKey::KEY_C;
-	IO.KeyMap[ImGuiKey_V]			= EKey::KEY_V;
-	IO.KeyMap[ImGuiKey_X]			= EKey::KEY_X;
-	IO.KeyMap[ImGuiKey_Y]			= EKey::KEY_Y;
-	IO.KeyMap[ImGuiKey_Z]			= EKey::KEY_Z;
+	IO.KeyMap[ImGuiKey_Tab]			= EKey::Key_Tab;
+	IO.KeyMap[ImGuiKey_LeftArrow]	= EKey::Key_Left;
+	IO.KeyMap[ImGuiKey_RightArrow]	= EKey::Key_Right;
+	IO.KeyMap[ImGuiKey_UpArrow]		= EKey::Key_Up;
+	IO.KeyMap[ImGuiKey_DownArrow]	= EKey::Key_Down;
+	IO.KeyMap[ImGuiKey_PageUp]		= EKey::Key_PageUp;
+	IO.KeyMap[ImGuiKey_PageDown]	= EKey::Key_PageDown;
+	IO.KeyMap[ImGuiKey_Home]		= EKey::Key_Home;
+	IO.KeyMap[ImGuiKey_End]			= EKey::Key_End;
+	IO.KeyMap[ImGuiKey_Insert]		= EKey::Key_Insert;
+	IO.KeyMap[ImGuiKey_Delete]		= EKey::Key_Delete;
+	IO.KeyMap[ImGuiKey_Backspace]	= EKey::Key_Backspace;
+	IO.KeyMap[ImGuiKey_Space]		= EKey::Key_Space;
+	IO.KeyMap[ImGuiKey_Enter]		= EKey::Key_Enter;
+	IO.KeyMap[ImGuiKey_Escape]		= EKey::Key_Escape;
+	IO.KeyMap[ImGuiKey_KeyPadEnter]	= EKey::Key_KeypadEnter;
+	IO.KeyMap[ImGuiKey_A]			= EKey::Key_A;
+	IO.KeyMap[ImGuiKey_C]			= EKey::Key_C;
+	IO.KeyMap[ImGuiKey_V]			= EKey::Key_V;
+	IO.KeyMap[ImGuiKey_X]			= EKey::Key_X;
+	IO.KeyMap[ImGuiKey_Y]			= EKey::Key_Y;
+	IO.KeyMap[ImGuiKey_Z]			= EKey::Key_Z;
 
 	// Setup style
 	ImGui::StyleColorsDark();
@@ -430,7 +430,7 @@ bool DebugUI::Initialize()
 	}
 
 	// Register EventFunc
-	EventQueue::RegisterEventHandler(DebugUI::OnEvent, EEventCategory::EVENT_CATEGORY_INPUT);
+	EventQueue::RegisterEventHandler(DebugUI::OnEvent, EEventCategory::EventCategory_Input);
 
 	return true;
 }
@@ -538,10 +538,10 @@ void DebugUI::Render(CommandList& CmdList)
 			case ImGuiMouseCursor_Arrow:		Cursor = GlobalCursors::Arrow;						break;
 			case ImGuiMouseCursor_TextInput:	Cursor = GlobalCursors::TextInput;					break;
 			case ImGuiMouseCursor_ResizeAll:	Cursor = GlobalCursors::ResizeAll;					break;
-			case ImGuiMouseCursor_ResizeEW:		Cursor = GlobalCursors::ResizeEastWest;				break;
-			case ImGuiMouseCursor_ResizeNS:		Cursor = GlobalCursors::ResizeNorthSouth;			break;
-			case ImGuiMouseCursor_ResizeNESW:	Cursor = GlobalCursors::ResizeNorthEastSouthWest;	break;
-			case ImGuiMouseCursor_ResizeNWSE:	Cursor = GlobalCursors::ResizeNorthWestSouthEast;	break;
+			case ImGuiMouseCursor_ResizeEW:		Cursor = GlobalCursors::ResizeEW;				break;
+			case ImGuiMouseCursor_ResizeNS:		Cursor = GlobalCursors::ResizeNS;			break;
+			case ImGuiMouseCursor_ResizeNESW:	Cursor = GlobalCursors::ResizeNESW;	break;
+			case ImGuiMouseCursor_ResizeNWSE:	Cursor = GlobalCursors::ResizeNWSE;	break;
 			case ImGuiMouseCursor_Hand:			Cursor = GlobalCursors::Hand;						break;
 			case ImGuiMouseCursor_NotAllowed:	Cursor = GlobalCursors::NotAllowed;					break;
 			}

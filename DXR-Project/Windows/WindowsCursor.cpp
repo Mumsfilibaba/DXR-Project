@@ -20,25 +20,25 @@ WindowsCursor::~WindowsCursor()
 	}
 }
 
-bool WindowsCursor::Initialize(const CursorInitializer& InInitializer)
+bool WindowsCursor::Initialize(const CursorCreateInfo& InCreateInfo)
 {
-	if (InInitializer.IsPlatformCursor)
+	if (InCreateInfo.IsPlatformCursor)
 	{
-		switch (InInitializer.PlatformCursor)
+		switch (InCreateInfo.PlatformCursor)
 		{
-		case EPlatformCursor::CURSOR_ARROW:			CursorName = IDC_ARROW;		break;
-		case EPlatformCursor::CURSOR_HAND:			CursorName = IDC_HAND;		break;
-		case EPlatformCursor::CURSOR_NOT_ALLOWED:	CursorName = IDC_NO;		break;
-		case EPlatformCursor::CURSOR_RESIZE_ALL:	CursorName = IDC_SIZEALL;	break;
-		case EPlatformCursor::CURSOR_RESIZE_EW:		CursorName = IDC_SIZEWE;	break;
-		case EPlatformCursor::CURSOR_RESIZE_NS:		CursorName = IDC_SIZENS;	break;
-		case EPlatformCursor::CURSOR_RESIZE_NESW:	CursorName = IDC_SIZENESW;	break;
-		case EPlatformCursor::CURSOR_RESIZE_NWSE:	CursorName = IDC_SIZENWSE;	break;
-		case EPlatformCursor::CURSOR_TEXT_INPUT:	CursorName = IDC_IBEAM;		break;
-		default:									CursorName = nullptr;		break;
+		case EPlatformCursor::PlatformCursor_Arrow:			CursorName = IDC_ARROW;		break;
+		case EPlatformCursor::PlatformCursor_Hand:			CursorName = IDC_HAND;		break;
+		case EPlatformCursor::PlatformCursor_NotAllowed:	CursorName = IDC_NO;		break;
+		case EPlatformCursor::PlatformCursor_ResizeAll:		CursorName = IDC_SIZEALL;	break;
+		case EPlatformCursor::PlatformCursor_ResizeEW:		CursorName = IDC_SIZEWE;	break;
+		case EPlatformCursor::PlatformCursor_ResizeNS:		CursorName = IDC_SIZENS;	break;
+		case EPlatformCursor::PlatformCursor_ResizeNESW:	CursorName = IDC_SIZENESW;	break;
+		case EPlatformCursor::PlatformCursor_ResizeNWSE:	CursorName = IDC_SIZENWSE;	break;
+		case EPlatformCursor::PlatformCursor_TextInput:		CursorName = IDC_IBEAM;		break;
+		default:											CursorName = nullptr;		break;
 		}
 
-		Initializer = InInitializer;
+		CreateInfo = InCreateInfo;
 		if (CursorName)
 		{
 			hCursor = ::LoadCursor(0, CursorName);

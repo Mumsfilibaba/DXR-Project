@@ -1,5 +1,5 @@
 #pragma once
-#include "Defines.h"
+#include "Core.h"
 
 /*
 * EEventType
@@ -7,18 +7,18 @@
 
 enum class EEventType : UInt8
 { 
-	UNKNOWN_EVENT = 0,
+	EventType_Unknown	= 0,
 
-	KEY_PRESSED_EVENT	= 1,
-	KEY_RELEASED_EVENT	= 2,
-	KEY_TYPED_EVENT		= 3,
+	EventType_KeyPressed	= 1,
+	EventType_KeyReleased	= 2,
+	EventType_KeyTyped		= 3,
 
-	MOUSE_MOVED_EVENT		= 4,
-	MOUSE_PRESSED_EVENT		= 5,
-	MOUSE_RELEASED_EVENT	= 6,
-	MOUSE_SCROLLED_EVENT	= 7,
+	EventType_MouseMoved	= 4,
+	EventType_MousePressed	= 5,
+	EventType_MouseReleased	= 6,
+	EventType_MouseScrolled	= 7,
 
-	WINDOW_RESIZED_EVENT	= 8,
+	EventType_WindowResized = 8,
 };
 
 /*
@@ -27,14 +27,14 @@ enum class EEventType : UInt8
 
 enum EEventCategory : UInt8
 {
-	EVENT_CATEGORY_UNKNOWN	= 0,
+	EventCategory_Unknown	= 0,
 	
-	EVENT_CATEGORY_INPUT	= BIT(1),
-	EVENT_CATEGORY_MOUSE	= BIT(2),
-	EVENT_CATEGORY_KEYBOARD	= BIT(3),
-	EVENT_CATEGORY_WINDOW	= BIT(4),
+	EventCategory_Input		= BIT(1),
+	EventCategory_Mouse		= BIT(2),
+	EventCategory_Keyboard	= BIT(3),
+	EventCategory_Window	= BIT(4),
 
-	EVENT_CATEGORY_ALL		= 0xff
+	EventCategory_All = 0xff
 };
 
 /*
@@ -70,8 +70,8 @@ struct Event
 public:
 	virtual ~Event() = default;
 
-	virtual UInt8 GetEventCategory() const = 0;
-	virtual EEventType	GetEventType() const = 0;
+	virtual EEventType GetEventType() const	= 0;
+	virtual UInt8 GetEventCategory() const	= 0;
 
 	virtual const Char* GetName() const = 0;
 
@@ -82,7 +82,7 @@ public:
 
 	static EEventType GetStaticEventType()
 	{
-		return EEventType::UNKNOWN_EVENT;
+		return EEventType::EventType_Unknown;
 	}
 };
 

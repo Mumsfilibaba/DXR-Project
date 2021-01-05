@@ -1,4 +1,5 @@
 #include "Application/Application.h"
+#include "Application/Platform/PlatformDialogMisc.h"
 
 #include "Engine/EngineLoop.h"
 
@@ -12,27 +13,27 @@
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, int cmdShow)
 {
 #ifdef _DEBUG
-	Memory::SetDebugFlags(EMemoryDebugFlag::MEMORY_DEBUG_FLAGS_LEAK_CHECK);
+	Memory::SetDebugFlags(EMemoryDebugFlag::MemoryDebugFlag_LeakCheck);
 #endif
 
 	// Init core modules
 	if (!EngineLoop::PreInitialize())
 	{
-		::MessageBox(0, "Pre-Initialize Failed", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "Pre-Initialize Failed");
 		return -1;
 	}
 
 	// Main init
 	if (!EngineLoop::Initialize())
 	{
-		::MessageBox(0, "Failed to initalize", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "Initialize Failed");
 		return -1;
 	}
 
 	// Handle post init
 	if (!EngineLoop::PostInitialize())
 	{
-		::MessageBox(0, "Post-Initialize Failed ", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "Post-Initialize Failed");
 		return -1;
 	}
 

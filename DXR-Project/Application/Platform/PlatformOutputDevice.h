@@ -1,5 +1,5 @@
 #pragma once
-#ifdef WIN32
+#ifdef PLATFORM_WINDOWS
 	#include "Windows/WindowsConsoleOutput.h"
 	typedef WindowsConsoleOutput PlatformOutputDevice;
 #else

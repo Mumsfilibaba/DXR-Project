@@ -1,10 +1,15 @@
 #include "EngineGlobals.h"
 
-#include "Application/Generic/GenericApplication.h"
-
 /*
-* EngineGlobals
+* Application
 */
 
-// Application
-TSharedPtr<GenericApplication> EngineGlobals::PlatformApplication = nullptr;
+class GenericApplication* GlobalPlatformApplication = nullptr;
+
+/*
+* Rendering
+*/
+
+class GenericRenderingAPI*	GlobalRenderingAPI		= nullptr;
+class IShaderCompiler*		GlobalShaderCompiler	= nullptr;
+class ICommandContext*		GlobalCommandContext	= nullptr;

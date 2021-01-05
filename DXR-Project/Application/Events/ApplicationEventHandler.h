@@ -1,8 +1,10 @@
 #pragma once
 #include "Application/InputCodes.h"
 
+#ifdef COMPILER_VISUAL_STUDIO
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
+#endif
 
 class GenericWindow;
 struct ModifierKeyState;
@@ -52,4 +54,6 @@ protected:
 	ApplicationEventHandler() = default;
 };
 
+#ifdef COMPILER_VISUAL_STUDIO
 #pragma warning(pop)
+#endif

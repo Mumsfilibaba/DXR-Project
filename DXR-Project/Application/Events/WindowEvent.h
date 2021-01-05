@@ -1,7 +1,7 @@
 #pragma once
 #include "Event.h"
 
-#include "Containers/TSharedPtr.h"
+#include <Containers/TSharedPtr.h>
 
 class GenericWindow;
 
@@ -13,15 +13,16 @@ struct WindowResizeEvent : public Event
 {
 public:
 	WindowResizeEvent(TSharedRef<GenericWindow> InWindow, UInt16 InWidth, UInt16 InHeight)
-		: Window(InWindow)
+		: Event()
+		, Window(InWindow)
 		, Width(InWidth)
 		, Height(InHeight)
 	{
 	}
 
-	DECLARE_EVENT_CLASS(WINDOW_RESIZED_EVENT);
+	DECLARE_EVENT_CLASS(EventType_WindowResized);
 
-	DECLARE_EVENT_CATEGORY(EEventCategory::EVENT_CATEGORY_WINDOW);
+	DECLARE_EVENT_CATEGORY(EEventCategory::EventCategory_Window);
 
 	virtual std::string ToString() const override
 	{

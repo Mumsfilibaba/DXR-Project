@@ -6,7 +6,8 @@
 */
 
 WindowsWindow::WindowsWindow(WindowsApplication* InOwnerApplication)
-	: OwnerApplication(InOwnerApplication)
+	: GenericWindow()
+	, OwnerApplication(InOwnerApplication)
 	, hWindow(0)
 	, Style(0)
 	, StyleEx(0)
@@ -22,30 +23,30 @@ WindowsWindow::~WindowsWindow()
 	}
 }
 
-bool WindowsWindow::Initialize(const WindowInitializer& InInitalizer)
+bool WindowsWindow::Initialize(const WindowCreateInfo& InCreateInfo)
 {
 	// Determine the window style for WinAPI
 	DWORD dwStyle = 0;
-	if (InInitalizer.Style != 0)
+	if (InCreateInfo.Style != 0)
 	{
 		dwStyle = WS_OVERLAPPED;
-		if (InInitalizer.IsTitled())
+		if (InCreateInfo.IsTitled())
 		{
 			dwStyle |= WS_CAPTION;
 		}
-		if (InInitalizer.IsClosable())
+		if (InCreateInfo.IsClosable())
 		{
 			dwStyle |= WS_SYSMENU;
 		}
-		if (InInitalizer.IsMinimizable())
+		if (InCreateInfo.IsMinimizable())
 		{
 			dwStyle |= WS_SYSMENU | WS_MINIMIZEBOX;
 		}
-		if (InInitalizer.IsMaximizable())
+		if (InCreateInfo.IsMaximizable())
 		{
 			dwStyle |= WS_SYSMENU | WS_MAXIMIZEBOX;
 		}
-		if (InInitalizer.IsResizeable())
+		if (InCreateInfo.IsResizeable())
 		{
 			dwStyle |= WS_THICKFRAME;
 		}
@@ -56,14 +57,14 @@ bool WindowsWindow::Initialize(const WindowInitializer& InInitalizer)
 	}
 
 	// Calculate real window size, since the width and height describe the clientarea
-	RECT ClientRect = { 0, 0, static_cast<LONG>(InInitalizer.Width), static_cast<LONG>(InInitalizer.Height) };
+	RECT ClientRect = { 0, 0, static_cast<LONG>(InCreateInfo.Width), static_cast<LONG>(InCreateInfo.Height) };
 	::AdjustWindowRect(&ClientRect, dwStyle, FALSE);
 
 	INT nWidth	= ClientRect.right	- ClientRect.left;
 	INT nHeight = ClientRect.bottom - ClientRect.top;
 
 	HINSTANCE hInstance = OwnerApplication->GetInstance();
-	hWindow = ::CreateWindowEx(0, "WinClass", InInitalizer.Title.c_str(), dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, hInstance, NULL);
+	hWindow = ::CreateWindowEx(0, "WinClass", InCreateInfo.Title.c_str(), dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, hInstance, NULL);
 	if (hWindow == NULL)
 	{
 		LOG_ERROR("[WindowsWindow]: FAILED to create window\n");
@@ -74,7 +75,7 @@ bool WindowsWindow::Initialize(const WindowInitializer& InInitalizer)
 		// If the window has a sysmenu we check if the closebutton should be active
 		if (dwStyle & WS_SYSMENU)
 		{
-			if (!(InInitalizer.IsClosable()))
+			if (!(InCreateInfo.IsClosable()))
 			{
 				::EnableMenuItem(::GetSystemMenu(hWindow, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 			}
@@ -82,7 +83,7 @@ bool WindowsWindow::Initialize(const WindowInitializer& InInitalizer)
 
 		// Save style for later
 		Style = dwStyle;
-		Initializer = InInitalizer;
+		CreateInfo = InCreateInfo;
 
 		::UpdateWindow(hWindow);
 		return true;
@@ -112,7 +113,7 @@ void WindowsWindow::Close()
 
 	if (IsValid())
 	{
-		if (Initializer.IsClosable())
+		if (CreateInfo.IsClosable())
 		{
 			::CloseWindow(hWindow);
 		}
@@ -123,7 +124,7 @@ void WindowsWindow::Minimize()
 {
 	VALIDATE(hWindow != 0);
 	
-	if (Initializer.IsMinimizable())
+	if (CreateInfo.IsMinimizable())
 	{
 		if (IsValid())
 		{
@@ -134,7 +135,7 @@ void WindowsWindow::Minimize()
 
 void WindowsWindow::Maximize()
 {
-	if (Initializer.IsMaximizable())
+	if (CreateInfo.IsMaximizable())
 	{
 		if (IsValid())
 		{
@@ -216,7 +217,7 @@ void WindowsWindow::SetTitle(const std::string& Title)
 {
 	VALIDATE(hWindow != 0);
 
-	if (Initializer.IsTitled())
+	if (CreateInfo.IsTitled())
 	{
 		if (IsValid())
 		{
