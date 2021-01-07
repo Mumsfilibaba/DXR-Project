@@ -993,3 +993,22 @@ struct DispatchRaysCommand : public RenderCommand
 	UInt32 Height;
 	UInt32 Depth;
 };
+
+// InsertCommandListMarker RenderCommand
+struct InsertCommandListMarkerCommand : public RenderCommand
+{
+	inline InsertCommandListMarkerCommand(const std::string& InMarker)
+		: Marker(InMarker)
+	{
+	}
+
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		UNREFERENCED_VARIABLE(CmdContext);
+
+		Debug::OutputDebugString(Marker + '\n');
+		LOG_INFO(Marker);
+	}
+
+	std::string Marker;
+};

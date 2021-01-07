@@ -60,6 +60,17 @@ struct CameraBufferDesc
 };
 
 /*
+* PerShadowMap
+*/
+
+struct PerShadowMap
+{
+	XMFLOAT4X4	Matrix;
+	XMFLOAT3	Position;
+	Float		FarPlane;
+};
+
+/*
 * Renderer
 */
 
@@ -177,6 +188,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	}
 
 	// UpdateLightBuffers
+	CmdList.InsertCommandListMarker("Begin UpdateLightBuffers");
+
 	CmdList.TransitionBuffer(
 		PointLightBuffer.Get(), 
 		EResourceState::ResourceState_VertexAndConstantBuffer, 
@@ -239,6 +252,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		EResourceState::ResourceState_CopyDest, 
 		EResourceState::ResourceState_VertexAndConstantBuffer);
 
+	CmdList.InsertCommandListMarker("End UpdateLightBuffers");
+
 	// Transition GBuffer
 	CmdList.TransitionTexture(
 		GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
@@ -272,6 +287,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		EResourceState::ResourceState_DepthWrite);
 	
 	// Render DirectionalLight ShadowMaps
+	CmdList.InsertCommandListMarker("Begin Render DirectionalLight ShadowMaps");
+	
 	CmdList.ClearDepthStencilView(DirLightShadowMapDSV.Get(), DepthStencilClearValue(1.0f, 0));
 
 #if ENABLE_VSM
@@ -313,25 +330,36 @@ void Renderer::Tick(const Scene& CurrentScene)
 		XMFLOAT4X4 Matrix;
 		Float ShadowOffset;
 	} ShadowPerObjectBuffer;
-
-	struct PerLight
-	{
-		XMFLOAT4X4	Matrix;
-		XMFLOAT3	Position;
-		Float		FarPlane;
-	} PerLightBuffer;
-
+	
+	PerShadowMap PerShadowMapData;
 	for (Light* Light : CurrentScene.GetLights())
 	{
 		if (IsSubClassOf<DirectionalLight>(Light))
 		{
 			DirectionalLight* DirLight = Cast<DirectionalLight>(Light);
-			PerLightBuffer.Matrix	= DirLight->GetMatrix();
-			PerLightBuffer.Position	= DirLight->GetShadowMapPosition();
-			PerLightBuffer.FarPlane	= DirLight->GetShadowFarPlane();
+			PerShadowMapData.Matrix		= DirLight->GetMatrix();
+			PerShadowMapData.Position	= DirLight->GetShadowMapPosition();
+			PerShadowMapData.FarPlane	= DirLight->GetShadowFarPlane();
 			
-			// TODO: Solve this
-			// CommandList->SetGraphicsRoot32BitConstants(&PerLightBuffer, 20, 0, 1);
+			CmdList.TransitionBuffer(
+				PerShadowMapBuffer.Get(),
+				EResourceState::ResourceState_VertexAndConstantBuffer,
+				EResourceState::ResourceState_CopyDest);
+
+			CmdList.UpdateBuffer(
+				PerShadowMapBuffer.Get(),
+				0, sizeof(PerShadowMap),
+				&PerShadowMapData);
+
+			CmdList.TransitionBuffer(
+				PerShadowMapBuffer.Get(),
+				EResourceState::ResourceState_CopyDest,
+				EResourceState::ResourceState_VertexAndConstantBuffer);
+
+			CmdList.BindConstantBuffers(
+				EShaderStage::ShaderStage_Vertex,
+				PerShadowMapBuffer.GetAddressOf(), 
+				1, 0);
 
 			// Draw all objects to depthbuffer
 			for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
@@ -339,8 +367,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 				CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
 				CmdList.BindIndexBuffer(Command.IndexBuffer);
 
-				// TODO: Solve this
-				// CommandList->SetGraphicsRoot32BitConstants(&ShadowPerObjectBuffer, 16, 0, 0);
+				CmdList.Bind32BitShaderConstants(
+					EShaderStage::ShaderStage_Vertex,
+					&ShadowPerObjectBuffer, 17);
+
 				ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
 				ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
 
@@ -351,7 +381,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 		}
 	}
 
+	CmdList.InsertCommandListMarker("End Render DirectionalLight ShadowMaps");
+
 	// Render PointLight ShadowMaps
+	CmdList.InsertCommandListMarker("Begin Render PointLight ShadowMaps");
+	
 	const UInt32 PointLightShadowSize = Renderer::GetGlobalLightSettings().PointLightShadowSize;
 	CmdList.BindViewport(
 		static_cast<Float>(PointLightShadowSize),
@@ -378,11 +412,29 @@ void Renderer::Tick(const Scene& CurrentScene)
 				CmdList.ClearDepthStencilView(PointLightShadowMapsDSVs[i].Get(), DepthStencilClearValue(1.0f, 0));
 				CmdList.BindRenderTargets(nullptr, 0, PointLightShadowMapsDSVs[i].Get());
 
-				PerLightBuffer.Matrix	= PoiLight->GetMatrix(i);
-				PerLightBuffer.Position	= PoiLight->GetPosition();
-				PerLightBuffer.FarPlane	= PoiLight->GetShadowFarPlane();
-				// TODO: Solve this
-				// CommandList->SetGraphicsRoot32BitConstants(&PerLightBuffer, 20, 0, 1);
+				PerShadowMapData.Matrix		= PoiLight->GetMatrix(i);
+				PerShadowMapData.Position	= PoiLight->GetPosition();
+				PerShadowMapData.FarPlane	= PoiLight->GetShadowFarPlane();
+
+				CmdList.TransitionBuffer(
+					PerShadowMapBuffer.Get(),
+					EResourceState::ResourceState_VertexAndConstantBuffer,
+					EResourceState::ResourceState_CopyDest);
+
+				CmdList.UpdateBuffer(
+					PerShadowMapBuffer.Get(),
+					0, sizeof(PerShadowMap),
+					&PerShadowMapData);
+
+				CmdList.TransitionBuffer(
+					PerShadowMapBuffer.Get(),
+					EResourceState::ResourceState_CopyDest,
+					EResourceState::ResourceState_VertexAndConstantBuffer);
+
+				CmdList.BindConstantBuffers(
+					EShaderStage::ShaderStage_Vertex,
+					PerShadowMapBuffer.GetAddressOf(),
+					1, 0);
 
 				// Draw all objects to depthbuffer
 				if (FrustumCullEnabled)
@@ -405,10 +457,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 							CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
 							CmdList.BindIndexBuffer(Command.IndexBuffer);
 
-							// TODO: Solve this
 							ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
 							ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
-							// CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+							
+							CmdList.Bind32BitShaderConstants(
+								EShaderStage::ShaderStage_Vertex,
+								&ShadowPerObjectBuffer, 17);
 
 							CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 						}
@@ -421,10 +475,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 						CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
 						CmdList.BindIndexBuffer(Command.IndexBuffer);
 
-						// TODO: Solve this
 						ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
 						ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
-						// CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+						
+						CmdList.Bind32BitShaderConstants(
+							EShaderStage::ShaderStage_Vertex,
+							&ShadowPerObjectBuffer, 17);
 
 						CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 					}
@@ -434,6 +490,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 			break;
 		}
 	}
+
+	CmdList.InsertCommandListMarker("End Render PointLight ShadowMaps");
 
 	// Transition ShadowMaps
 #if ENABLE_VSM
@@ -485,7 +543,6 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.ClearDepthStencilView(GBufferDSV.Get(), DepthStencilClearValue(1.0f, 0));
 
 	// Setup view
-	// TODO: Solve this
 	CmdList.BindViewport(
 		static_cast<Float>(PointLightShadowSize),
 		static_cast<Float>(PointLightShadowSize),
@@ -502,6 +559,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Perform PrePass
 	if (PrePassEnabled)
 	{
+		CmdList.InsertCommandListMarker("Begin PrePass");
+
 		struct PerObject
 		{
 			XMFLOAT4X4 Matrix;
@@ -511,8 +570,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 		CmdList.BindRenderTargets(nullptr, 0, GBufferDSV.Get());
 
 		CmdList.BindGraphicsPipelineState(PrePassPSO.Get());
-		// CommandList->SetGraphicsRootSignature(PrePassRootSignature->GetRootSignature());
-		// CommandList->SetGraphicsRootDescriptorTable(PrePassDescriptorTable->GetGPUTableStartHandle(), 1);
+		
+		CmdList.BindConstantBuffers(
+			EShaderStage::ShaderStage_Vertex,
+			CameraBuffer.GetAddressOf(),
+			1, 0);
 
 		// Draw all objects to depthbuffer
 		for (const MeshDrawCommand& Command : DeferredVisibleCommands)
@@ -521,13 +583,20 @@ void Renderer::Tick(const Scene& CurrentScene)
 			CmdList.BindIndexBuffer(Command.IndexBuffer);
 
 			PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-			// CommandList->SetGraphicsRoot32BitConstants(&PerObjectBuffer, 16, 0, 0);
+			
+			CmdList.Bind32BitShaderConstants(
+				EShaderStage::ShaderStage_Vertex,
+				&PerObjectBuffer, 16);
 
 			CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 		}
+
+		CmdList.InsertCommandListMarker("End PrePass");
 	}
 
 	// Render all objects to the GBuffer
+	CmdList.InsertCommandListMarker("Begin GeometryPass");
+
 	RenderTargetView* RenderTargets[] =
 	{
 		GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(),
@@ -538,8 +607,6 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	// Setup Pipeline
 	CmdList.BindGraphicsPipelineState(GeometryPSO.Get());
-	// CommandList->SetGraphicsRootSignature(GeometryRootSignature->GetRootSignature());
-	// CommandList->SetGraphicsRootDescriptorTable(GeometryDescriptorTable->GetGPUTableStartHandle(), 1);
 
 	struct TransformBuffer
 	{
@@ -556,11 +623,24 @@ void Renderer::Tick(const Scene& CurrentScene)
 		{
 			Command.Material->BuildBuffer(CmdList);
 		}
-		// CommandList->SetGraphicsRootDescriptorTable(Command.Material->GetDescriptorTable()->GetGPUTableStartHandle(), 2);
+
+		ConstantBuffer* ConstantBuffers[] =
+		{
+			CameraBuffer.Get(),
+			Command.Material->GetMaterialBuffer()
+		};
+
+		CmdList.BindConstantBuffers(
+			EShaderStage::ShaderStage_Vertex,
+			ConstantBuffers,
+			1, 0);
 
 		TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
 		TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
-		//CommandList->SetGraphicsRoot32BitConstants(&TransformPerObject, 32, 0, 0);
+		
+		CmdList.Bind32BitShaderConstants(
+			EShaderStage::ShaderStage_Vertex,
+			&TransformPerObject, 32);
 
 		CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 	}
@@ -586,24 +666,33 @@ void Renderer::Tick(const Scene& CurrentScene)
 		EResourceState::ResourceState_DepthWrite, 
 		EResourceState::ResourceState_PixelShaderResource);
 
+	CmdList.InsertCommandListMarker("End GeometryPass");
+
 	// RayTracing
 	if (RenderingAPI::IsRayTracingSupported() && RayTracingEnabled)
 	{
+		CmdList.InsertCommandListMarker("Begin RayTracing");
+
 		TraceRays(BackBuffer, CmdList);
 		RayTracingGeometryInstances.Clear();
+
+		CmdList.InsertCommandListMarker("End RayTracing");
 	}
 
 	// SSAO
+
 	CmdList.TransitionTexture(
 	SSAOBuffer.Get(), 
 	EResourceState::ResourceState_PixelShaderResource, 
 	EResourceState::ResourceState_UnorderedAccess);
 
 	const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	//CmdList.ClearUnorderedAccessViewFloat(, WhiteColor);
+	CmdList.ClearUnorderedAccessView(SSAOBufferUAV.Get(), WhiteColor);
 
 	if (SSAOEnabled)
 	{
+		CmdList.InsertCommandListMarker("Begin SSAO");
+		
 		struct SSAOSettings
 		{
 			XMFLOAT2 ScreenSize;
@@ -621,11 +710,34 @@ void Renderer::Tick(const Scene& CurrentScene)
 		SSAOSettings.KernelSize = SSAOKernelSize;
 		SSAOSettings.Bias		= SSAOBias;
 
-		//CommandList->SetComputeRootSignature(SSAORootSignature->GetRootSignature());
-		//CommandList->SetComputeRootDescriptorTable(SSAODescriptorTable->GetGPUTableStartHandle(), 0);
-		//CommandList->SetComputeRoot32BitConstants(&SSAOSettings, 7, 0, 1);
+		ShaderResourceView* ShaderResourceViews[] =
+		{
+			GBufferSRVs[GBUFFER_NORMAL_INDEX].Get(),
+			GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
+			SSAONoiseSRV.Get(),
+			SSAOSamplesSRV.Get()
+		};
 
 		CmdList.BindComputePipelineState(SSAOPSO.Get());
+		
+		CmdList.BindShaderResourceViews(
+			EShaderStage::ShaderStage_Compute,
+			ShaderResourceViews,
+			4, 0);
+
+		CmdList.BindConstantBuffers(
+			EShaderStage::ShaderStage_Compute,
+			CameraBuffer.GetAddressOf(),
+			1, 0);
+
+		CmdList.BindUnorderedAccessViews(
+			EShaderStage::ShaderStage_Compute,
+			SSAOBufferUAV.GetAddressOf(),
+			1, 0);
+
+		CmdList.Bind32BitShaderConstants(
+			EShaderStage::ShaderStage_Compute,
+			&SSAOSettings, 7);
 
 		constexpr UInt32 ThreadCount = 32;
 		const UInt32 DispatchWidth	= Math::AlignUp<UInt32>(Width, ThreadCount) / ThreadCount;
@@ -634,14 +746,17 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 		CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
 
-		//CommandList->SetComputeRootSignature(BlurRootSignature->GetRootSignature());
-		//CommandList->SetComputeRootDescriptorTable(SSAOBlurDescriptorTable->GetGPUTableStartHandle(), 0);
-		//CommandList->SetComputeRoot32BitConstants(&SSAOSettings.ScreenSize, 2, 0, 1);
-
 		CmdList.BindComputePipelineState(SSAOBlur.Get());
+
+		CmdList.Bind32BitShaderConstants(
+			EShaderStage::ShaderStage_Compute,
+			&SSAOSettings.ScreenSize, 2);
+
 		CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
 		CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
+
+		CmdList.InsertCommandListMarker("End SSAO");
 	}
 
 	CmdList.TransitionTexture(
@@ -678,14 +793,17 @@ void Renderer::Tick(const Scene& CurrentScene)
 		0, 0);
 
 	// Setup LightPass
+	CmdList.InsertCommandListMarker("Begin LightPass");
+
 	CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
 
 	CmdList.BindGraphicsPipelineState(LightPassPSO.Get());
-	// CommandList->SetGraphicsRootSignature(LightRootSignature->GetRootSignature());
 	// CommandList->SetGraphicsRootDescriptorTable(LightDescriptorTable->GetGPUTableStartHandle(), 0);
 
 	// Perform LightPass
 	CmdList.DrawInstanced(3, 1, 0, 0);
+
+	CmdList.InsertCommandListMarker("End LightPass");
 
 	// Draw skybox
 	CmdList.TransitionTexture(
@@ -1266,6 +1384,11 @@ bool Renderer::Initialize()
 		EResourceState::ResourceState_Common, 
 		EResourceState::ResourceState_VertexAndConstantBuffer);
 	
+	CmdList.TransitionBuffer(
+		PerShadowMapBuffer.Get(),
+		EResourceState::ResourceState_Common,
+		EResourceState::ResourceState_VertexAndConstantBuffer);
+
 	CmdList.TransitionTexture(
 		PointLightShadowMaps.Get(), 
 		EResourceState::ResourceState_Common, 
@@ -1767,6 +1890,20 @@ bool Renderer::InitLightBuffers()
 	else
 	{
 		DirectionalLightBuffer->SetName("DirectionalLight Buffer");
+	}
+
+	PerShadowMapBuffer = RenderingAPI::CreateConstantBuffer<DirectionalLightProperties>(
+		nullptr,
+		NumDirLights,
+		BufferUsage_Default);
+	if (!PerShadowMapBuffer)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		PerShadowMapBuffer->SetName("PerShadowMap Buffer");
 	}
 
 	return CreateShadowMaps();

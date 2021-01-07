@@ -29,7 +29,7 @@ bool D3D12ShaderDescriptorTableState::CreateResources(D3D12Device& Device)
 {
 	const UInt32 NumDefaultResourceDescriptors = 4;
 	DefaultResourceHeap = Device.CreateDescriptorHeap(
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 		NumDefaultResourceDescriptors,
 		D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 	if (!DefaultResourceHeap)
@@ -758,6 +758,8 @@ void D3D12CommandContext::Bind32BitShaderConstants(
 	const Void* Shader32BitConstants, 
 	UInt32 Num32BitConstants)
 {
+	VALIDATE(Num32BitConstants <= D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_COUNT);
+
 	if (ShaderStageIsGraphics(ShaderStage))
 	{
 		CmdList->SetGraphicsRoot32BitConstants(
@@ -1438,6 +1440,6 @@ void D3D12CommandContext::ClearState()
 
 void D3D12CommandContext::Flush()
 {
-	// TODO: Wait for all pending command that are being executed on the GPU
+	// TODO: Wait for all pending commands that are being executed on the GPU
 	Fence->WaitForValue(FenceValue);	
 }

@@ -3,6 +3,10 @@
 
 #include "RenderingCore/CommandList.h"
 
+/*
+* Material
+*/
+
 Material::Material(const MaterialProperties& InProperties)
 	: AlbedoMap(nullptr)
 	, NormalMap(nullptr)
@@ -23,9 +27,20 @@ void Material::Initialize()
 
 void Material::BuildBuffer(CommandList& CmdList)
 {
-	//CommandList->TransitionBarrier(MaterialBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	//CommandList->UploadBufferData(MaterialBuffer, 0, &Properties, sizeof(MaterialProperties));
-	//CommandList->TransitionBarrier(MaterialBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	CmdList.TransitionBuffer(
+		MaterialBuffer.Get(),
+		EResourceState::ResourceState_VertexAndConstantBuffer,
+		EResourceState::ResourceState_CopyDest);
+
+	CmdList.UpdateBuffer(
+		MaterialBuffer.Get(),
+		0, sizeof(MaterialProperties),
+		&Properties);
+
+	CmdList.TransitionBuffer(
+		MaterialBuffer.Get(),
+		EResourceState::ResourceState_CopyDest,
+		EResourceState::ResourceState_VertexAndConstantBuffer);
 
 	MaterialBufferIsDirty = false;
 }

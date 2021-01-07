@@ -175,6 +175,7 @@ private:
 	TSharedRef<ConstantBuffer> CameraBuffer;
 	TSharedRef<ConstantBuffer> PointLightBuffer;
 	TSharedRef<ConstantBuffer> DirectionalLightBuffer;
+	TSharedRef<ConstantBuffer> PerShadowMapBuffer;
 
 	TSharedRef<VertexBuffer> SkyboxVertexBuffer;
 	TSharedRef<VertexBuffer> AABBVertexBuffer;

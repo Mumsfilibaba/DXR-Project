@@ -506,6 +506,19 @@ public:
 			Depth);
 	}
 
+	/*
+	* Debug
+	*/
+
+	FORCEINLINE void InsertCommandListMarker(const std::string& Marker)
+	{
+		InsertCommand<InsertCommandListMarkerCommand>(Marker);
+	}
+
+	/*
+	* Reset
+	*/
+
 	FORCEINLINE void Reset()
 	{
 		if (First != nullptr)

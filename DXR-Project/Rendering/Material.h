@@ -45,6 +45,11 @@ public:
 
 	void SetDebugName(const std::string& InDebugName);
 
+	FORCEINLINE ConstantBuffer* GetMaterialBuffer() const
+	{
+		return MaterialBuffer.Get();
+	}
+
 	FORCEINLINE bool HasAlphaMask() const
 	{
 		return AlphaMask != nullptr;
