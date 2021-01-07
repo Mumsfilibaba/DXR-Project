@@ -1336,36 +1336,6 @@ bool Renderer::Initialize()
 		}
 	}
 
-	//LightDescriptorTable->SetShaderResourceView(ReflectionTexture->GetShaderResourceView(0).Get(), 4);
-	//LightDescriptorTable->SetShaderResourceView(IrradianceMap->GetShaderResourceView(0).Get(), 5);
-	//LightDescriptorTable->SetShaderResourceView(SpecularIrradianceMap->GetShaderResourceView(0).Get(), 6);
-	//LightDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).Get(), 7);
-	//LightDescriptorTable->SetShaderResourceView(SSAOBuffer->GetShaderResourceView(0).Get(), 13);
-	//LightDescriptorTable->CopyDescriptors();
-
-	//ForwardDescriptorTable->SetShaderResourceView(IrradianceMap->GetShaderResourceView(0).Get(), 3);
-	//ForwardDescriptorTable->SetShaderResourceView(SpecularIrradianceMap->GetShaderResourceView(0).Get(), 4);
-	//ForwardDescriptorTable->SetShaderResourceView(IntegrationLUT->GetShaderResourceView(0).Get(), 5);
-	//ForwardDescriptorTable->CopyDescriptors();
-
-	//if (SSAOEnabled)
-	//{
-	//	SSAODescriptorTable = RenderingAPI::Get().CreateDescriptorTable(6);
-	//	SSAODescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(0).Get(), 0);
-	//	SSAODescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(0).Get(), 1);
-	//	SSAODescriptorTable->SetShaderResourceView(SSAONoiseTex->GetShaderResourceView(0).Get(), 2);
-	//	SSAODescriptorTable->SetUnorderedAccessView(SSAOBuffer->GetUnorderedAccessView(0).Get(), 3);
-	//	SSAODescriptorTable->SetShaderResourceView(SSAOSamples->GetShaderResourceView(0).Get(), 4);
-	//	SSAODescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 5);
-	//	SSAODescriptorTable->CopyDescriptors();
-
-	//	SSAOBlurDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(1);
-	//	SSAOBlurDescriptorTable->SetUnorderedAccessView(SSAOBuffer->GetUnorderedAccessView(0).Get(), 0);
-	//	SSAOBlurDescriptorTable->CopyDescriptors();
-	//}
-
-	//WriteShadowMapDescriptors();
-
 	// Register EventFunc
 	EventQueue::RegisterEventHandler(this, EEventCategory::EventCategory_Window);
 
@@ -2183,15 +2153,15 @@ bool Renderer::InitDeferred()
 	DepthStencilStateInfo.DepthEnable		= true;
 	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_All;
 
-	TSharedRef<DepthStencilState> DepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
-	if (!DepthStencilState)
+	TSharedRef<DepthStencilState> GeometryDepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	if (!GeometryDepthStencilState)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 	else
 	{
-		DepthStencilState->SetName("GeometryPass DepthStencilState");
+		GeometryDepthStencilState->SetName("GeometryPass DepthStencilState");
 	}
 
 	RasterizerStateCreateInfo RasterizerStateInfo;
@@ -2226,7 +2196,7 @@ bool Renderer::InitDeferred()
 	GraphicsPipelineStateCreateInfo PSOProperties;
 	PSOProperties.InputLayoutState	= StdInputLayout.Get();
 	PSOProperties.BlendState		= BlendState.Get();
-	PSOProperties.DepthStencilState	= DepthStencilState.Get();
+	PSOProperties.DepthStencilState	= GeometryDepthStencilState.Get();
 	PSOProperties.RasterizerState	= RasterizerState.Get();
 	PSOProperties.ShaderState.VertexShader	= VShader.Get();
 	PSOProperties.ShaderState.PixelShader	= PShader.Get();
@@ -2300,7 +2270,14 @@ bool Renderer::InitDeferred()
 		PShader->SetName("LightPass PixelShader");
 	}
 
+	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_Never;
+	DepthStencilStateInfo.DepthEnable		= false;
+	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_Zero;
+
+	TSharedRef<DepthStencilState> LightDepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+
 	PSOProperties.InputLayoutState	= nullptr;
+	PSOProperties.DepthStencilState = LightDepthStencilState.Get();
 	PSOProperties.ShaderState.VertexShader	= VShader.Get();
 	PSOProperties.ShaderState.PixelShader	= PShader.Get();
 	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= RenderTargetFormat;
@@ -2365,7 +2342,8 @@ bool Renderer::InitDeferred()
 		PShader->SetName("Skybox PixelShader");
 	}
 
-	PSOProperties.InputLayoutState = StdInputLayout.Get();
+	PSOProperties.InputLayoutState	= StdInputLayout.Get();
+	PSOProperties.DepthStencilState	= GeometryDepthStencilState.Get();
 	PSOProperties.ShaderState.VertexShader	= VShader.Get();
 	PSOProperties.ShaderState.PixelShader	= PShader.Get();
 	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
@@ -2382,58 +2360,6 @@ bool Renderer::InitDeferred()
 	{
 		SkyboxPSO->SetName("SkyboxPSO PipelineState");
 	}
-
-	//// Init descriptortable
-	//GeometryDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(1);
-	//GeometryDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 0);
-	//GeometryDescriptorTable->CopyDescriptors();
-	//
-	//LightDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(13);
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).Get(), 0);
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 1);
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).Get(), 2);
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).Get(), 3);
-	//// #4 is set after deferred and raytracing
-	//// #5 is set after deferred and raytracing
-	//// #6 is set after deferred and raytracing
-	//// #7 is set after deferred and raytracing
-	//// #8 is set after deferred and raytracing
-	//LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 10);
-	//LightDescriptorTable->SetConstantBufferView(PointLightBuffer->GetConstantBufferView().Get(), 11);
-	//LightDescriptorTable->SetConstantBufferView(DirectionalLightBuffer->GetConstantBufferView().Get(), 12);
-
-	//SkyboxDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(2);
-	//SkyboxDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).Get(), 0);
-	//SkyboxDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 1);
-	//SkyboxDescriptorTable->CopyDescriptors();
-	// Init descriptortable
-	//GeometryDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(1);
-	//GeometryDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 0);
-	//GeometryDescriptorTable->CopyDescriptors();
-
-	//ForwardDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(8);
-	//ForwardDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 0);
-	//ForwardDescriptorTable->SetConstantBufferView(PointLightBuffer->GetConstantBufferView().Get(), 1);
-	//ForwardDescriptorTable->SetConstantBufferView(DirectionalLightBuffer->GetConstantBufferView().Get(), 2);
-
-	//LightDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(14);
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView(0).Get(), 0);
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(0).Get(), 1);
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(0).Get(), 2);
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(0).Get(), 3);
-	// #4 is set after deferred and raytracing
-	// #5 is set after deferred and raytracing
-	// #6 is set after deferred and raytracing
-	// #7 is set after deferred and raytracing
-	// #8 is set after deferred and raytracing
-	//LightDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 10);
-	//LightDescriptorTable->SetConstantBufferView(PointLightBuffer->GetConstantBufferView().Get(), 11);
-	//LightDescriptorTable->SetConstantBufferView(DirectionalLightBuffer->GetConstantBufferView().Get(), 12);
-
-	//SkyboxDescriptorTable = RenderingAPI::Get().CreateDescriptorTable(2);
-	//SkyboxDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).Get(), 0);
-	//SkyboxDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 1);
-	//SkyboxDescriptorTable->CopyDescriptors();
 
 	return true;
 }
@@ -3735,7 +3661,7 @@ void Renderer::GenerateIrradianceMap(
 	
 	InCmdList.TransitionTexture(
 		Dest, 
-		EResourceState::ResourceState_NonPixelShaderResource, 
+		EResourceState::ResourceState_UnorderedAccess,
 		EResourceState::ResourceState_PixelShaderResource);
 }
 
@@ -3792,7 +3718,7 @@ void Renderer::GenerateSpecularIrradianceMap(
 	InCmdList.TransitionTexture(
 		Dest, 
 		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_NonPixelShaderResource);
+		EResourceState::ResourceState_UnorderedAccess);
 
 	InCmdList.BindShaderResourceViews(
 		EShaderStage::ShaderStage_Compute,
@@ -3827,7 +3753,7 @@ void Renderer::GenerateSpecularIrradianceMap(
 	
 	InCmdList.TransitionTexture(
 		Dest, 
-		EResourceState::ResourceState_NonPixelShaderResource, 
+		EResourceState::ResourceState_UnorderedAccess,
 		EResourceState::ResourceState_PixelShaderResource);
 }
 

@@ -33,6 +33,11 @@ public:
 		, D3D12Texture(InDevice)
 	{
 	}
+
+	virtual void SetName(const std::string& Name) override final
+	{
+		D3D12Resource::SetName(Name);
+	}
 };
 
 /*
@@ -46,6 +51,11 @@ public:
 		: Texture1DArray(InFormat, InUsage, InWidth, InMipLevels, InArrayCount, InOptimizedClearValue)
 		, D3D12Texture(InDevice)
 	{
+	}
+
+	virtual void SetName(const std::string& Name) override final
+	{
+		D3D12Resource::SetName(Name);
 	}
 };
 
@@ -61,6 +71,11 @@ public:
 		, D3D12Texture(InDevice)
 	{
 	}
+
+	virtual void SetName(const std::string& Name) override final
+	{
+		D3D12Resource::SetName(Name);
+	}
 };
 
 /*
@@ -74,6 +89,11 @@ public:
 		: Texture2DArray(InFormat, InUsage, InWidth, InHeight, InMipLevels, InArrayCount, InSampleCount, InOptimizedClearValue)
 		, D3D12Texture(InDevice)
 	{
+	}
+
+	virtual void SetName(const std::string& Name) override final
+	{
+		D3D12Resource::SetName(Name);
 	}
 };
 
@@ -89,6 +109,11 @@ public:
 		, D3D12Texture(InDevice)
 	{
 	}
+
+	virtual void SetName(const std::string& Name) override final
+	{
+		D3D12Resource::SetName(Name);
+	}
 };
 
 /*
@@ -103,6 +128,11 @@ public:
 		, D3D12Texture(InDevice)
 	{
 	}
+
+	virtual void SetName(const std::string& Name) override final
+	{
+		D3D12Resource::SetName(Name);
+	}
 };
 
 /*
@@ -116,6 +146,11 @@ public:
 		: Texture3D(InFormat, InUsage, InWidth, InHeight, InDepth, InMipLevels, InOptimizedClearValue)
 		, D3D12Texture(InDevice)
 	{
+	}
+
+	virtual void SetName(const std::string& Name) override final
+	{
+		D3D12Resource::SetName(Name);
 	}
 };
 

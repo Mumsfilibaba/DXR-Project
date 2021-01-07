@@ -298,6 +298,28 @@ public:
 	{
 		VALIDATE(Resource != nullptr);
 
+		// Make sure we are not already have transition for this resource
+		for (TArray<D3D12_RESOURCE_BARRIER>::Iterator It = Barriers.Begin(); It != Barriers.End(); It++)
+		{
+			if ((*It).Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
+			{
+				if ((*It).Transition.pResource == Resource->GetResource())
+				{
+					if ((*It).Transition.StateBefore != AfterState)
+					{
+						(*It).Transition.StateAfter = AfterState;
+					}
+					else
+					{
+						Barriers.Erase(It);
+					}
+
+					return;
+				}
+			}
+		}
+
+		// Add new resource barrier
 		D3D12_RESOURCE_BARRIER Barrier;
 		Memory::Memzero(&Barrier);
 

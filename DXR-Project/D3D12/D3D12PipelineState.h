@@ -151,7 +151,7 @@ public:
 
 	~D3D12GraphicsPipelineState() = default;
 
-	FORCEINLINE virtual void SetName(const std::string& Name) override final
+	virtual void SetName(const std::string& Name) override final
 	{
 		std::wstring WideName = ConvertToWide(Name);
 		PipelineState->SetName(WideName.c_str());
@@ -189,7 +189,7 @@ public:
 
 	~D3D12ComputePipelineState() = default;
 
-	FORCEINLINE virtual void SetName(const std::string& Name) override final
+	virtual void SetName(const std::string& Name) override final
 	{
 		std::wstring WideName = ConvertToWide(Name);
 		PipelineState->SetName(WideName.c_str());

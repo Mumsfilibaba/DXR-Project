@@ -50,6 +50,11 @@ public:
 		D3D12Resource::Unmap(WrittenRange);
 	}
 
+	virtual void SetName(const std::string& Name) override final
+	{
+		D3D12Resource::SetName(Name);
+	}
+
 	virtual UInt64 GetRequiredAlignment() const override final
 	{
 		return 1;
@@ -89,6 +94,11 @@ public:
 	virtual void Unmap(const Range* WrittenRange) override
 	{
 		D3D12Resource::Unmap(WrittenRange);
+	}
+
+	virtual void SetName(const std::string& Name) override final
+	{
+		D3D12Resource::SetName(Name);
 	}
 
 	virtual UInt64 GetRequiredAlignment() const override final
@@ -132,6 +142,11 @@ public:
 		D3D12Resource::Unmap(WrittenRange);
 	}
 
+	virtual void SetName(const std::string& Name) override final
+	{
+		D3D12Resource::SetName(Name);
+	}
+
 	virtual UInt64 GetRequiredAlignment() const override final
 	{
 		return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
@@ -170,6 +185,11 @@ public:
 	virtual void Unmap(const Range* WrittenRange) override
 	{
 		D3D12Resource::Unmap(WrittenRange);
+	}
+
+	virtual void SetName(const std::string& Name) override final
+	{
+		D3D12Resource::SetName(Name);
 	}
 
 	virtual UInt64 GetRequiredAlignment() const override final

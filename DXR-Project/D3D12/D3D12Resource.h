@@ -18,6 +18,12 @@ public:
 	Void* Map(const Range* MappedRange);
 	void Unmap(const Range* WrittenRange);
 
+	FORCEINLINE void SetName(const std::string& Name)
+	{
+		std::wstring WideName = ConvertToWide(Name);
+		D3DResource->SetName(WideName.c_str());
+	}
+
 	FORCEINLINE ID3D12Resource* GetResource() const
 	{
 		return D3DResource.Get();
