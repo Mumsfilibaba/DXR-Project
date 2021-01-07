@@ -63,7 +63,7 @@ void D3D12ShaderResourceView::CreateView(const D3D12Resource* InResource, const 
 	Resource	= InResource;
 	Desc		= InDesc;
 
-	Device->CreateShaderResourceView(InResource->GetResource(), &Desc, OfflineHandle);
+	Device->CreateShaderResourceView(InResource->GetNativeResource(), &Desc, OfflineHandle);
 }
 
 /*
@@ -93,10 +93,10 @@ void D3D12UnorderedAccessView::CreateView(
 	ID3D12Resource* CounterResourcePtr = nullptr;
 	if (CounterResource)
 	{
-		CounterResourcePtr = CounterResource->GetResource();
+		CounterResourcePtr = CounterResource->GetNativeResource();
 	}
 
-	Device->CreateUnorderedAccessView(InResource->GetResource(), CounterResourcePtr, &Desc, OfflineHandle);
+	Device->CreateUnorderedAccessView(InResource->GetNativeResource(), CounterResourcePtr, &Desc, OfflineHandle);
 }
 
 
@@ -118,7 +118,7 @@ void D3D12RenderTargetView::CreateView(const D3D12Resource* InResource, const D3
 {
 	Desc		= InDesc;
 	Resource	= InResource;
-	Device->GetDevice()->CreateRenderTargetView(InResource->GetResource(), &Desc, OfflineHandle);
+	Device->GetDevice()->CreateRenderTargetView(InResource->GetNativeResource(), &Desc, OfflineHandle);
 }
 
 /*
@@ -139,5 +139,5 @@ void D3D12DepthStencilView::CreateView(const D3D12Resource* InResource, const D3
 {
 	Desc		= InDesc;
 	Resource	= InResource;
-	Device->GetDevice()->CreateDepthStencilView(InResource->GetResource(), &Desc, OfflineHandle);
+	Device->GetDevice()->CreateDepthStencilView(InResource->GetNativeResource(), &Desc, OfflineHandle);
 }

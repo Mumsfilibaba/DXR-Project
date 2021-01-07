@@ -560,7 +560,7 @@ struct UpdateBufferCommand : public RenderCommand
 		: Destination(InDestination)
 		, DestinationOffsetInBytes(InDestinationOffsetInBytes)
 		, SizeInBytes(InSizeInBytes)
-		, SourceData(nullptr)
+		, SourceData(InSourceData)
 	{
 		VALIDATE(InDestination != nullptr);
 		VALIDATE(InSourceData != nullptr);
@@ -583,7 +583,7 @@ struct UpdateBufferCommand : public RenderCommand
 	Buffer* Destination;
 	UInt64 	DestinationOffsetInBytes;
 	UInt64 	SizeInBytes;
-	Void* SourceData;
+	const Void* SourceData;
 };
 
 // Update Texture RenderCommand

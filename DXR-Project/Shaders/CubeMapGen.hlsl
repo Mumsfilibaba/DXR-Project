@@ -11,6 +11,7 @@
 	"DescriptorTable(CBV(b1, numDescriptors = 1))," \
 	"DescriptorTable(SRV(t0, numDescriptors = 1))," \
 	"DescriptorTable(UAV(u0, numDescriptors = 1))," \
+	"DescriptorTable(Sampler(s1, numDescriptors = 1))," \
 	"StaticSampler(s0," \
 		"addressU = TEXTURE_ADDRESS_WRAP," \
 		"addressV = TEXTURE_ADDRESS_WRAP," \

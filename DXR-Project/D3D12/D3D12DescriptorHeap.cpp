@@ -141,7 +141,7 @@ D3D12OnlineDescriptorHeap::D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt
 {
 }
 
-bool D3D12OnlineDescriptorHeap::CreateHeap()
+Bool D3D12OnlineDescriptorHeap::CreateHeap()
 {
 	Heap = Device->CreateDescriptorHeap(Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 	if (Heap)

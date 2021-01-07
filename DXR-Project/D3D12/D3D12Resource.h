@@ -21,12 +21,12 @@ public:
 	FORCEINLINE void SetName(const std::string& Name)
 	{
 		std::wstring WideName = ConvertToWide(Name);
-		D3DResource->SetName(WideName.c_str());
+		NativeResource->SetName(WideName.c_str());
 	}
 
-	FORCEINLINE ID3D12Resource* GetResource() const
+	FORCEINLINE ID3D12Resource* GetNativeResource() const
 	{
-		return D3DResource.Get();
+		return NativeResource.Get();
 	}
 
 	FORCEINLINE D3D12_RESOURCE_DIMENSION GetResourceDimension() const
@@ -55,7 +55,7 @@ public:
 	}
 
 protected:
-	Microsoft::WRL::ComPtr<ID3D12Resource> D3DResource;
+	Microsoft::WRL::ComPtr<ID3D12Resource> NativeResource;
 
 	D3D12_HEAP_TYPE				HeapType;
 	D3D12_RESOURCE_STATES		ResourceState;

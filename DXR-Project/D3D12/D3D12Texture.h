@@ -15,7 +15,7 @@ public:
 	{
 	}
 
-	FORCEINLINE DXGI_FORMAT GetDxgiFormat() const
+	FORCEINLINE DXGI_FORMAT GetNativeFormat() const
 	{
 		return Desc.Format;
 	}

@@ -74,7 +74,7 @@ public:
 		CmdList->ClearUnorderedAccessViewFloat(
 			GPUHandle, 
 			View->GetOfflineHandle(), 
-			Resource->GetResource(), 
+			Resource->GetNativeResource(), 
 			ClearColor, 
 			0, nullptr);
 	}
@@ -87,10 +87,25 @@ public:
 		UInt64 SizeInBytes)
 	{
 		CmdList->CopyBufferRegion(
-			Destination->GetResource(), 
+			Destination->GetNativeResource(),
 			DestinationOffset, 
-			Source->GetResource(), 
+			Source->GetNativeResource(),
 			SourceOffset, 
+			SizeInBytes);
+	}
+
+	FORCEINLINE void CopyBufferRegion(
+		ID3D12Resource* Destination,
+		UInt64 DestinationOffset,
+		ID3D12Resource* Source,
+		UInt64 SourceOffset,
+		UInt64 SizeInBytes)
+	{
+		CmdList->CopyBufferRegion(
+			Destination,
+			DestinationOffset,
+			Source,
+			SourceOffset,
 			SizeInBytes);
 	}
 
@@ -107,12 +122,12 @@ public:
 
 	FORCEINLINE void CopyResource(D3D12Resource* Destination, D3D12Resource* Source)
 	{
-		CmdList->CopyResource(Destination->GetResource(), Source->GetResource());
+		CmdList->CopyResource(Destination->GetNativeResource(), Source->GetNativeResource());
 	}
 
 	FORCEINLINE void ResolveSubresource(D3D12Resource* Destination, D3D12Resource* Source, DXGI_FORMAT Format)
 	{
-		CmdList->ResolveSubresource(Destination->GetResource(), 0, Source->GetResource(), 0, Format);
+		CmdList->ResolveSubresource(Destination->GetNativeResource(), 0, Source->GetNativeResource(), 0, Format);
 	}
 
 	FORCEINLINE void BuildRaytracingAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* Desc)

@@ -65,6 +65,7 @@ bool TextureFactory::Initialize()
 
 void TextureFactory::Release()
 {
+	GlobalFactoryData.PanoramaPSO.Reset();
 }
 
 Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format)
@@ -135,18 +136,33 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
 		return nullptr;
 	}
 
+	CommandList& CmdList = GlobalFactoryData.CmdList;
+	CmdList.Begin();
+
 	if (GenerateMipLevels)
 	{
-		CommandList& CmdList = GlobalFactoryData.CmdList;
-		CmdList.Begin();
+		CmdList.TransitionTexture(
+			Texture.Get(), 
+			EResourceState::ResourceState_Common, 
+			EResourceState::ResourceState_CopyDest);	
 		
-		CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);	
 		CmdList.GenerateMips(Texture.Get());
-		CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
-	
-		CmdList.End();
-		CommandListExecutor::ExecuteCommandList(CmdList);
+
+		CmdList.TransitionTexture(
+			Texture.Get(), 
+			EResourceState::ResourceState_CopyDest, 
+			EResourceState::ResourceState_PixelShaderResource);
 	}
+	else
+	{
+		CmdList.TransitionTexture(
+			Texture.Get(),
+			EResourceState::ResourceState_Common,
+			EResourceState::ResourceState_PixelShaderResource);
+	}
+
+	CmdList.End();
+	CommandListExecutor::ExecuteCommandList(CmdList);
 
 	return Texture.ReleaseOwnerShip();
 }
@@ -159,7 +175,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
 	EFormat Format)
 {
 	const Bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-	const UInt16 MipLevels	= (GenerateMipLevels) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
+	const UInt16 MipLevels = (GenerateMipLevels) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
 
 	// Create statging texture
 	TSharedRef<TextureCube> StagingTexture = RenderingAPI::CreateTextureCube(
@@ -206,8 +222,15 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
 	CommandList& CmdList = GlobalFactoryData.CmdList;
 	CmdList.Begin();
 	
-	CmdList.TransitionTexture(PanoramaSource, EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
-	CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_UnorderedAccess);
+	CmdList.TransitionTexture(
+		PanoramaSource, 
+		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_NonPixelShaderResource);
+	
+	CmdList.TransitionTexture(
+		StagingTexture.Get(), 
+		EResourceState::ResourceState_Common, 
+		EResourceState::ResourceState_UnorderedAccess);
 
 	CmdList.BindComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
 
@@ -217,10 +240,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
 	} CB0;
 	CB0.CubeMapSize = CubeMapSize;
 
-	// TODO: How to work with constants and resources
-	//CommandList->SetComputeRoot32BitConstants(&CB0, 1, 0, 0);
-	//CommandList->BindGlobalOnlineDescriptorHeaps();
-
+	CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Compute, &CB0, 1);
 	CmdList.BindUnorderedAccessViews(EShaderStage::ShaderStage_Compute, &StagingTextureUAV, 1, 0);
 	CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Compute, &PanoramaSourceSRV, 1, 0);
 

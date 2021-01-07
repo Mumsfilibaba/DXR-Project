@@ -157,12 +157,13 @@ private:
 * D3D12OnlineDescriptorHeap
 */
 
+// TODO: Make sure that we can reallocate the onlineheap when needed
 class D3D12OnlineDescriptorHeap : public D3D12RefCountedObject
 {
 public:
 	D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
 
-	bool CreateHeap();
+	Bool CreateHeap();
 
 	UInt32 AllocateHandles(UInt32 NumHandles);
 	
@@ -177,6 +178,11 @@ public:
 		{
 			return { 0 };
 		}
+	}
+
+	FORCEINLINE void Reset()
+	{
+		CurrentSlot = 0;
 	}
 
 	FORCEINLINE void SetName(const std::string& Name)

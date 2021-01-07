@@ -26,11 +26,11 @@ Void* D3D12Resource::Map(const Range* MappedRange)
 	if (MappedRange)
 	{
 		D3D12_RANGE MapRange = { MappedRange->Offset, MappedRange->Offset + MappedRange->Size };
-		hr = D3DResource->Map(0, &MapRange, &MappedData);
+		hr = NativeResource->Map(0, &MapRange, &MappedData);
 	}
 	else
 	{
-		hr = D3DResource->Map(0, nullptr, &MappedData);
+		hr = NativeResource->Map(0, nullptr, &MappedData);
 	}
 
 	if (FAILED(hr))
@@ -49,10 +49,10 @@ void D3D12Resource::Unmap(const Range* WrittenRange)
 	if (WrittenRange)
 	{
 		D3D12_RANGE WriteRange = { WrittenRange->Offset, WrittenRange->Offset + WrittenRange->Size };
-		D3DResource->Unmap(0, &WriteRange);
+		NativeResource->Unmap(0, &WriteRange);
 	}
 	else
 	{
-		D3DResource->Unmap(0, nullptr);
+		NativeResource->Unmap(0, nullptr);
 	}
 }

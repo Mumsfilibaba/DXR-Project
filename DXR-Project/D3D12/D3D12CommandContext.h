@@ -184,11 +184,13 @@ public:
 	void CommitGraphicsDescriptorTables(
 		D3D12Device& Device,
 		D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
+		D3D12OnlineDescriptorHeap& SamplerDescriptorHeap,
 		D3D12CommandList& CmdList);
 
 	void CommitComputeDescriptorTables(
 		D3D12Device& Device,
 		D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
+		D3D12OnlineDescriptorHeap& SamplerDescriptorHeap,
 		D3D12CommandList& CmdList);
 
 	FORCEINLINE void Reset()
@@ -209,7 +211,8 @@ public:
 private:
 	void InternalAllocateAndCopyDescriptorHandles(
 		D3D12Device& Device,
-		D3D12OnlineDescriptorHeap& ResourceDescriptorHeap);
+		D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
+		D3D12OnlineDescriptorHeap& SamplerDescriptorHeap);
 
 	TArray<D3D12_CPU_DESCRIPTOR_HANDLE> CBVOfflineHandles;
 	DescriptorTable CBVDescriptorTable;
@@ -226,9 +229,54 @@ private:
 	D3D12_CPU_DESCRIPTOR_HANDLE DefaultSamplerState;
 
 	TSharedRef<D3D12DescriptorHeap> DefaultResourceHeap;
+	TSharedRef<D3D12DescriptorHeap> DefaultSamplerHeap;
 
 	TArray<UInt32> SrcRangeSizes;
 	Bool IsDirty = false;
+};
+
+/*
+* D3D12GPUResourceUploader
+*/
+
+class D3D12GPUResourceUploader
+{
+public:
+	inline D3D12GPUResourceUploader()
+		: MappedMemory(nullptr)
+		, SizeInBytes(0)
+		, OffsetInBytes(0)
+		, Resource(nullptr)
+		, GarbageResources()
+	{
+	}
+
+	Bool Reserve(D3D12Device& Device, UInt32 InSizeInBytes);
+	void Reset();
+
+	Byte* LinearAllocate(D3D12Device& Device, UInt32 SizeInBytes);
+
+	FORCEINLINE ID3D12Resource* GetGpuResource() const
+	{
+		return Resource.Get();
+	}
+
+	FORCEINLINE UInt32 GetOffsetInBytesFromPtr(Byte* Ptr) const
+	{
+		return Ptr - MappedMemory;
+	}
+
+	FORCEINLINE UInt32 GetSizeInBytes() const
+	{
+		return SizeInBytes;
+	}
+
+private:
+	Byte* MappedMemory		= nullptr;
+	UInt32 SizeInBytes		= 0;
+	UInt32 OffsetInBytes	= 0;
+	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
+	TArray<Microsoft::WRL::ComPtr<ID3D12Resource>> GarbageResources;
 };
 
 /*
@@ -238,9 +286,15 @@ private:
 class D3D12CommandBatch
 {
 public:
-	inline D3D12CommandBatch(TSharedRef<D3D12CommandAllocator>& InCmdAllocator, TSharedRef<D3D12OnlineDescriptorHeap>& InOnlineDescriptorHeap)
+	inline D3D12CommandBatch(
+		TSharedRef<D3D12CommandAllocator>& InCmdAllocator, 
+		TSharedRef<D3D12OnlineDescriptorHeap>& InOnlineResourceDescriptorHeap,
+		TSharedRef<D3D12OnlineDescriptorHeap>& InOnlineSamplerDescriptorHeap,
+		D3D12GPUResourceUploader InGPUResourceUploader)
 		: CmdAllocator(InCmdAllocator)
-		, OnlineDescriptorHeap(InOnlineDescriptorHeap)
+		, OnlineResourceDescriptorHeap(InOnlineResourceDescriptorHeap)
+		, OnlineSamplerDescriptorHeap(InOnlineSamplerDescriptorHeap)
+		, GpuResourceUploader(InGPUResourceUploader)
 		, Resources()
 	{
 	}
@@ -250,6 +304,12 @@ public:
 		if (CmdAllocator->Reset())
 		{
 			Resources.Clear();
+
+			GpuResourceUploader.Reset();
+
+			OnlineResourceDescriptorHeap->Reset();
+			OnlineSamplerDescriptorHeap->Reset();
+
 			return true;
 		}
 		else
@@ -263,19 +323,32 @@ public:
 		Resources.EmplaceBack(MakeSharedRef<PipelineResource>(InResource));
 	}
 
+	FORCEINLINE D3D12GPUResourceUploader& GetGpuResourceUploader()
+	{
+		return GpuResourceUploader;
+	}
+
 	FORCEINLINE D3D12CommandAllocator* GetCommandAllocator() const
 	{
 		return CmdAllocator.Get();
 	}
 
-	FORCEINLINE D3D12OnlineDescriptorHeap* GetOnlineDescriptorHeap() const
+	FORCEINLINE D3D12OnlineDescriptorHeap* GetOnlineResourceDescriptorHeap() const
 	{
-		return OnlineDescriptorHeap.Get();
+		return OnlineResourceDescriptorHeap.Get();
+	}
+
+	FORCEINLINE D3D12OnlineDescriptorHeap* GetOnlineSamplerDescriptorHeap() const
+	{
+		return OnlineSamplerDescriptorHeap.Get();
 	}
 
 private:
-	TSharedRef<D3D12CommandAllocator> CmdAllocator;
-	TSharedRef<D3D12OnlineDescriptorHeap> OnlineDescriptorHeap;
+	TSharedRef<D3D12CommandAllocator>		CmdAllocator;
+	TSharedRef<D3D12OnlineDescriptorHeap>	OnlineResourceDescriptorHeap;
+	TSharedRef<D3D12OnlineDescriptorHeap>	OnlineSamplerDescriptorHeap;
+	
+	D3D12GPUResourceUploader GpuResourceUploader;
 	TArray<TSharedRef<PipelineResource>> Resources;
 };
 
@@ -291,56 +364,20 @@ public:
 	{
 	}
 
-	FORCEINLINE void AddTransitionBarrier(
-		D3D12Resource* Resource, 
-		D3D12_RESOURCE_STATES BeforeState, 
-		D3D12_RESOURCE_STATES AfterState)
-	{
-		VALIDATE(Resource != nullptr);
-
-		// Make sure we are not already have transition for this resource
-		for (TArray<D3D12_RESOURCE_BARRIER>::Iterator It = Barriers.Begin(); It != Barriers.End(); It++)
-		{
-			if ((*It).Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
-			{
-				if ((*It).Transition.pResource == Resource->GetResource())
-				{
-					if ((*It).Transition.StateBefore != AfterState)
-					{
-						(*It).Transition.StateAfter = AfterState;
-					}
-					else
-					{
-						Barriers.Erase(It);
-					}
-
-					return;
-				}
-			}
-		}
-
-		// Add new resource barrier
-		D3D12_RESOURCE_BARRIER Barrier;
-		Memory::Memzero(&Barrier);
-
-		Barrier.Type					= D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		Barrier.Transition.pResource	= Resource->GetResource();
-		Barrier.Transition.StateAfter	= AfterState;
-		Barrier.Transition.StateBefore	= BeforeState;
-		Barrier.Transition.Subresource	= D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-		Barriers.EmplaceBack(Barrier);
-	}
+	void AddTransitionBarrier(
+		D3D12Resource* Resource,
+		D3D12_RESOURCE_STATES BeforeState,
+		D3D12_RESOURCE_STATES AfterState);
 
 	FORCEINLINE void AddUnorderedAccessBarrier(D3D12Resource* Resource)
 	{
 		VALIDATE(Resource != nullptr);
 
 		D3D12_RESOURCE_BARRIER Barrier;
-		Memory::Memzero(&Barrier, sizeof(D3D12_RESOURCE_BARRIER));
+		Memory::Memzero(&Barrier);
 
 		Barrier.Type			= D3D12_RESOURCE_BARRIER_TYPE_UAV;
-		Barrier.UAV.pResource	= Resource->GetResource();
+		Barrier.UAV.pResource	= Resource->GetNativeResource();
 
 		Barriers.EmplaceBack(Barrier);
 	}
@@ -375,10 +412,13 @@ private:
 class D3D12CommandContext : public ICommandContext, public D3D12DeviceChild
 {
 public:
-	D3D12CommandContext(class D3D12Device* InDevice, TSharedRef<D3D12CommandQueue>& InCmdQueue, const D3D12DefaultRootSignatures& InDefaultRootSignatures);
+	D3D12CommandContext(
+		D3D12Device* InDevice, 
+		TSharedRef<D3D12CommandQueue>& InCmdQueue, 
+		const D3D12DefaultRootSignatures& InDefaultRootSignatures);
 	~D3D12CommandContext();
 
-	bool CreateResources();
+	Bool CreateResources();
 
 	FORCEINLINE D3D12CommandList& GetCommandList() const
 	{
@@ -593,10 +633,10 @@ private:
 
 	D3D12VertexBufferState VertexBufferState;
 	D3D12RenderTargetState RenderTargetState;
-	D3D12ShaderDescriptorTableState ShaderDescriptorState;
-	D3D12ResourceBarrierBatcher BarrierBatcher;
-	D3D12DefaultRootSignatures DefaultRootSignatures;
-	D3D12GenerateMipsHelper GenerateMipsHelper;
+	D3D12ShaderDescriptorTableState	ShaderDescriptorState;
+	D3D12ResourceBarrierBatcher		BarrierBatcher;
+	D3D12DefaultRootSignatures		DefaultRootSignatures;
+	D3D12GenerateMipsHelper			GenerateMipsHelper;
 
 	Bool IsReady = false;
 };

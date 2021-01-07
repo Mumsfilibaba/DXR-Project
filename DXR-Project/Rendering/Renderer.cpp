@@ -3175,6 +3175,7 @@ bool Renderer::InitForwardPass()
 	PSOProperties.RasterizerState	= RasterizerState.Get();
 	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= FinalTargetFormat;
 	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
+	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
 	PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
 
 	ForwardPSO = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);

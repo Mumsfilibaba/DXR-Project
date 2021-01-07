@@ -1722,14 +1722,14 @@ bool D3D12RenderingAPI::AllocateBuffer(
 	UInt32 SizeInBytes) const
 {
 	D3D12_HEAP_PROPERTIES HeapProperties;
-	Memory::Memzero(&HeapProperties, sizeof(D3D12_HEAP_PROPERTIES));
+	Memory::Memzero(&HeapProperties);
 
 	HeapProperties.Type					= HeapType;
 	HeapProperties.CPUPageProperty		= D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	HeapProperties.MemoryPoolPreference	= D3D12_MEMORY_POOL_UNKNOWN;
 
 	D3D12_RESOURCE_DESC Desc;
-	Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
+	Memory::Memzero(&Desc);
 
 	Desc.Dimension				= D3D12_RESOURCE_DIMENSION_BUFFER;
 	Desc.Flags					= Flags;
@@ -1748,10 +1748,10 @@ bool D3D12RenderingAPI::AllocateBuffer(
 		&Desc, 
 		InitalState,
 		nullptr, 
-		IID_PPV_ARGS(&Resource.D3DResource));
+		IID_PPV_ARGS(&Resource.NativeResource));
 	if (SUCCEEDED(hr))
 	{
-		Resource.Address		= Resource.D3DResource->GetGPUVirtualAddress();
+		Resource.Address		= Resource.NativeResource->GetGPUVirtualAddress();
 		Resource.Desc			= Desc;
 		Resource.HeapType		= HeapType;
 		Resource.ResourceState	= InitalState;
@@ -1783,7 +1783,7 @@ bool D3D12RenderingAPI::AllocateTexture(
 		&Desc, 
 		InitalState, 
 		nullptr, 
-		IID_PPV_ARGS(&Resource.D3DResource));
+		IID_PPV_ARGS(&Resource.NativeResource));
 	if (SUCCEEDED(hr))
 	{
 		Resource.Address	= NULL;
@@ -1838,6 +1838,11 @@ bool D3D12RenderingAPI::UploadTexture(Texture& Texture, const ResourceData* Init
 
 	DirectCmdContext->Begin();
 
+	DirectCmdContext->TransitionTexture(
+		Texture2D, 
+		EResourceState::ResourceState_Common,
+		EResourceState::ResourceState_CopyDest);
+
 	const UInt32 Width 	= Texture.GetWidth();
 	const UInt32 Height = Texture.GetHeight();
 	DirectCmdContext->UpdateTexture2D(
@@ -1846,6 +1851,11 @@ bool D3D12RenderingAPI::UploadTexture(Texture& Texture, const ResourceData* Init
 		Height,
 		0,
 		InitalData->Data);
+
+	DirectCmdContext->TransitionTexture(
+		Texture2D,
+		EResourceState::ResourceState_CopyDest,
+		EResourceState::ResourceState_Common);
 
 	DirectCmdContext->End();
 
