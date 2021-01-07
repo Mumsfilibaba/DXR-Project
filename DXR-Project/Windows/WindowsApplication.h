@@ -15,6 +15,25 @@ class WindowsCursor;
 
 class WindowsApplication : public GenericApplication
 {
+private:
+	WindowsApplication(HINSTANCE hInstance);
+
+	void AddWindow(TSharedRef<WindowsWindow>& Window);
+
+	bool RegisterWindowClass();
+
+	LRESULT ApplicationProc(
+		HWND hWnd,
+		UINT uMessage,
+		WPARAM wParam,
+		LPARAM lParam);
+
+	static LRESULT MessageProc(
+		HWND hWnd,
+		UINT uMessage,
+		WPARAM wParam,
+		LPARAM lParam);
+
 public:
 	~WindowsApplication();
 
@@ -25,8 +44,7 @@ public:
 		return InstanceHandle;
 	}
 
-public:
-	// Generic application
+	// GenericApplication
 	virtual TSharedRef<GenericWindow> MakeWindow() override final;
 	virtual TSharedRef<GenericCursor> MakeCursor() override final;
 
@@ -46,25 +64,6 @@ public:
 	virtual void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const override final;
 	
 	static GenericApplication* Make();
-
-private:
-	WindowsApplication(HINSTANCE hInstance);
-	
-	void AddWindow(TSharedRef<WindowsWindow>& Window);
-
-	bool RegisterWindowClass();
-
-	LRESULT ApplicationProc(
-		HWND hWnd, 
-		UINT uMessage, 
-		WPARAM wParam, 
-		LPARAM lParam);
-
-	static LRESULT MessageProc(
-		HWND hWnd, 
-		UINT uMessage, 
-		WPARAM wParam, 
-		LPARAM lParam);
 
 private:
 	HINSTANCE InstanceHandle = 0;

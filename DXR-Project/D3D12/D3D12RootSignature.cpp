@@ -5,26 +5,27 @@
 * D3D12DefaultRootSignatures
 */
 
-bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
+bool D3D12DefaultRootSignatures::CreateRootSignatures(D3D12Device* Device)
 {
+	constexpr UInt32 ShaderRegisterOffset32BitConstants = 1;
+
 	// Ranges for resources
-	constexpr UInt32 NumRanges = 16;
-	D3D12_DESCRIPTOR_RANGE CBVRanges[NumRanges];
+	D3D12_DESCRIPTOR_RANGE CBVRanges[D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT];
 	Memory::Memzero(CBVRanges, sizeof(CBVRanges));
 
-	D3D12_DESCRIPTOR_RANGE SRVRanges[NumRanges];
+	D3D12_DESCRIPTOR_RANGE SRVRanges[D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT];
 	Memory::Memzero(SRVRanges, sizeof(SRVRanges));
 
-	D3D12_DESCRIPTOR_RANGE UAVRanges[NumRanges];
+	D3D12_DESCRIPTOR_RANGE UAVRanges[D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT];
 	Memory::Memzero(UAVRanges, sizeof(UAVRanges));
 
-	D3D12_DESCRIPTOR_RANGE SamplerRanges[NumRanges];
+	D3D12_DESCRIPTOR_RANGE SamplerRanges[D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT];
 	Memory::Memzero(SamplerRanges, sizeof(SamplerRanges));
 	
-	for (UInt32 i = 0; i < NumRanges; i++)
+	for (UInt32 i = 0; i < D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT; i++)
 	{
 		CBVRanges[i].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-		CBVRanges[i].BaseShaderRegister					= i;
+		CBVRanges[i].BaseShaderRegister					= ShaderRegisterOffset32BitConstants + i;
 		CBVRanges[i].NumDescriptors						= 1;
 		CBVRanges[i].RegisterSpace						= 0;
 		CBVRanges[i].OffsetInDescriptorsFromTableStart	= i;
@@ -50,35 +51,33 @@ bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 
 	// Graphics
 	D3D12_ROOT_SIGNATURE_DESC GraphicsRootDesc;
-	Memory::Memzero(&GraphicsRootDesc, sizeof(D3D12_ROOT_SIGNATURE_DESC));
+	Memory::Memzero(&GraphicsRootDesc);
 
-	constexpr UInt32 NumParametersPerStage	= 4;
-	constexpr UInt32 NumStages				= 2;
-	constexpr UInt32 NumParameters			= NumParametersPerStage * NumStages;
+	// 1 For 32 bit constants and 4, one for each type of resource, CBV, SRV, UAV, Samplers
+	constexpr UInt32 NumParameters = 1 + 4;
+
 	D3D12_ROOT_PARAMETER GraphicsRootParameters[NumParameters];
 	Memory::Memzero(GraphicsRootParameters, sizeof(GraphicsRootParameters));
 
-	const D3D12_SHADER_VISIBILITY Stages[NumStages] = 
-	{ 
-		D3D12_SHADER_VISIBILITY_VERTEX, 
-		D3D12_SHADER_VISIBILITY_PIXEL 
-	};
+	// Constants
+	GraphicsRootParameters[D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER].Constants.Num32BitValues	= D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_COUNT;
+	GraphicsRootParameters[D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER].Constants.RegisterSpace		= 0;
+	GraphicsRootParameters[D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER].Constants.ShaderRegister	= 0;
+	GraphicsRootParameters[D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	GraphicsRootParameters[D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
 
-	for (UInt32 Stage = 0; Stage < NumStages; Stage++)
+	// Start at 1, and skip the constants
+	for (UInt32 i = 1; i < NumParameters; i++)
 	{
-		const UInt32 Index = Stage * NumParametersPerStage;
-		for (UInt32 i = 0; i < NumParametersPerStage; i++)
-		{
-			GraphicsRootParameters[Index + i].ParameterType		= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-			GraphicsRootParameters[Index + i].ShaderVisibility	= Stages[Stage];
-			GraphicsRootParameters[Index + i].DescriptorTable.NumDescriptorRanges = NumRanges;
-		}
-
-		GraphicsRootParameters[Index + 0].DescriptorTable.pDescriptorRanges = CBVRanges;
-		GraphicsRootParameters[Index + 1].DescriptorTable.pDescriptorRanges = SRVRanges;
-		GraphicsRootParameters[Index + 2].DescriptorTable.pDescriptorRanges = UAVRanges;
-		GraphicsRootParameters[Index + 3].DescriptorTable.pDescriptorRanges = SamplerRanges;
+		GraphicsRootParameters[i].ParameterType		= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		GraphicsRootParameters[i].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
+		GraphicsRootParameters[i].DescriptorTable.NumDescriptorRanges = D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT;
 	}
+
+	GraphicsRootParameters[D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER].DescriptorTable.pDescriptorRanges			= CBVRanges;
+	GraphicsRootParameters[D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER].DescriptorTable.pDescriptorRanges		= SRVRanges;
+	GraphicsRootParameters[D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER].DescriptorTable.pDescriptorRanges	= UAVRanges;
+	GraphicsRootParameters[D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER].DescriptorTable.pDescriptorRanges			= SamplerRanges;
 
 	GraphicsRootDesc.NumParameters	= NumParameters;
 	GraphicsRootDesc.pParameters	= GraphicsRootParameters;
@@ -96,24 +95,32 @@ bool D3D12DefaultRootSignatures::Init(D3D12Device* Device)
 
 	// Compute
 	D3D12_ROOT_SIGNATURE_DESC ComputeRootDesc;
-	Memory::Memzero(&ComputeRootDesc, sizeof(D3D12_ROOT_SIGNATURE_DESC));
+	Memory::Memzero(&ComputeRootDesc);
 
-	D3D12_ROOT_PARAMETER ComputeRootParameters[NumParametersPerStage];
+	D3D12_ROOT_PARAMETER ComputeRootParameters[NumParameters];
 	Memory::Memzero(ComputeRootParameters, sizeof(ComputeRootParameters));
 
-	for (UInt32 i = 0; i < NumParametersPerStage; i++)
+	// Constants
+	ComputeRootParameters[D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER].Constants.Num32BitValues	= D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_COUNT;
+	ComputeRootParameters[D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER].Constants.RegisterSpace	= 0;
+	ComputeRootParameters[D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER].Constants.ShaderRegister	= 0;
+	ComputeRootParameters[D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER].ParameterType			= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	ComputeRootParameters[D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER].ShaderVisibility			= D3D12_SHADER_VISIBILITY_ALL;
+
+	// Start at 1, and skip the constants
+	for (UInt32 i = 1; i < NumParameters; i++)
 	{
-		ComputeRootParameters[i].ParameterType		= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		ComputeRootParameters[i].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
-		ComputeRootParameters[i].DescriptorTable.NumDescriptorRanges = NumRanges;
+		ComputeRootParameters[i].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		ComputeRootParameters[i].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
+		ComputeRootParameters[i].DescriptorTable.NumDescriptorRanges	= D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT;
 	}
 
-	ComputeRootParameters[0].DescriptorTable.pDescriptorRanges = CBVRanges;
-	ComputeRootParameters[1].DescriptorTable.pDescriptorRanges = SRVRanges;
-	ComputeRootParameters[2].DescriptorTable.pDescriptorRanges = UAVRanges;
-	ComputeRootParameters[3].DescriptorTable.pDescriptorRanges = SamplerRanges;
+	ComputeRootParameters[D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER].DescriptorTable.pDescriptorRanges		= CBVRanges;
+	ComputeRootParameters[D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER].DescriptorTable.pDescriptorRanges	= SRVRanges;
+	ComputeRootParameters[D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER].DescriptorTable.pDescriptorRanges = UAVRanges;
+	ComputeRootParameters[D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER].DescriptorTable.pDescriptorRanges			= SamplerRanges;
 
-	ComputeRootDesc.NumParameters	= NumParametersPerStage;
+	ComputeRootDesc.NumParameters	= NumParameters;
 	ComputeRootDesc.pParameters		= ComputeRootParameters;
 	ComputeRootDesc.Flags =
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS	|

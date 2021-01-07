@@ -23,7 +23,7 @@ D3D12Device::D3D12Device()
 	: RefCountedObject()
 	, Factory(nullptr)
 	, Adapter(nullptr)
-	, D3DDevice(nullptr)
+	, Device(nullptr)
 	, DXRDevice(nullptr)
 {
 }
@@ -33,16 +33,15 @@ D3D12Device::~D3D12Device()
 	using namespace Microsoft::WRL;
 
 	// Release
-	SAFEDELETE(GlobalResourceDescriptorHeap);
-	SAFEDELETE(GlobalRenderTargetDescriptorHeap);
-	SAFEDELETE(GlobalDepthStencilDescriptorHeap);
-	SAFEDELETE(GlobalSamplerDescriptorHeap);
-	SAFEDELETE(GlobalOnlineResourceHeap);
+	SAFERELEASE(GlobalResourceDescriptorHeap);
+	SAFERELEASE(GlobalRenderTargetDescriptorHeap);
+	SAFERELEASE(GlobalDepthStencilDescriptorHeap);
+	SAFERELEASE(GlobalSamplerDescriptorHeap);
 
 	if (DebugEnabled)
 	{
 		ComPtr<ID3D12DebugDevice> DebugDevice;
-		if (SUCCEEDED(D3DDevice.As<ID3D12DebugDevice>(&DebugDevice)))
+		if (SUCCEEDED(Device.As<ID3D12DebugDevice>(&DebugDevice)))
 		{
 			DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
 		}
@@ -208,7 +207,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	}
 
 	// Create Device
-	if (FAILED(_D3D12CreateDevice(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&D3DDevice))))
+	if (FAILED(_D3D12CreateDevice(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
 	{
 		PlatformDialogMisc::MessageBox("ERROR", "FAILED to create device");
 		return false;
@@ -222,7 +221,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	if (DebugEnabled)
 	{
 		ComPtr<ID3D12InfoQueue> InfoQueue;
-		if (SUCCEEDED(D3DDevice.As(&InfoQueue)))
+		if (SUCCEEDED(Device.As(&InfoQueue)))
 		{
 			InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
 			InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
@@ -234,7 +233,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 			};
 
 			D3D12_INFO_QUEUE_FILTER Filter;
-			Memory::Memzero(&Filter, sizeof(D3D12_INFO_QUEUE_FILTER));
+			Memory::Memzero(&Filter);
 
 			Filter.DenyList.NumIDs	= _countof(Hide);
 			Filter.DenyList.pIDList = Hide;
@@ -243,7 +242,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	}
 
 	// Get DXR Interfaces
-	if (FAILED(D3DDevice.As<ID3D12Device5>(&DXRDevice)))
+	if (FAILED(Device.As<ID3D12Device5>(&DXRDevice)))
 	{
 		LOG_ERROR("[D3D12Device]: Failed to retrive DXR-Device");
 		return false;
@@ -263,7 +262,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 		_countof(SupportedFeatureLevels), SupportedFeatureLevels, D3D_FEATURE_LEVEL_11_0
 	};
 
-	HRESULT hr = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
+	HRESULT hr = Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
 	if (SUCCEEDED(hr))
 	{
 		ActiveFeatureLevel = FeatureLevels.MaxSupportedFeatureLevel;
@@ -278,7 +277,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 		D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
 		Memory::Memzero(&Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
 
-		hr = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+		hr = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
 		if (SUCCEEDED(hr))
 		{
 			if (Features5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
@@ -297,7 +296,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 		D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
 		Memory::Memzero(&Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
 
-		hr = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
+		hr = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
 		if (SUCCEEDED(hr))
 		{
 			if (Features7.MeshShaderTier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
@@ -318,13 +317,6 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	GlobalDepthStencilDescriptorHeap	= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	GlobalSamplerDescriptorHeap			= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
-	// Create Global Online Heap
-	GlobalOnlineResourceHeap = new D3D12OnlineDescriptorHeap(this, 4096, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	if (!GlobalOnlineResourceHeap->Initialize())
-	{
-		return false;
-	}
-
 	return true;
 }
 
@@ -332,7 +324,7 @@ D3D12CommandAllocator* D3D12Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TY
 {
 	ID3D12CommandAllocator* Allocator = nullptr;
 
-	HRESULT hResult = D3DDevice->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
+	HRESULT hResult = Device->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
 	if (SUCCEEDED(hResult))
 	{
 		LOG_INFO("[D3D12Device]: Created CommandAllocator");
@@ -349,7 +341,7 @@ D3D12Fence* D3D12Device::CreateFence(UInt64 InitalValue)
 {
 	ID3D12Fence* Fence = nullptr;
 
-	HRESULT hResult = D3DDevice->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
+	HRESULT hResult = Device->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
 	if (SUCCEEDED(hResult))
 	{
 		HANDLE hEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -384,7 +376,7 @@ D3D12CommandQueue* D3D12Device::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type)
 
 	ID3D12CommandQueue* Queue = nullptr;
 
-	HRESULT hResult = D3DDevice->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
+	HRESULT hResult = Device->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
 	if (SUCCEEDED(hResult))
 	{
 		LOG_INFO("[D3D12Device]: Created CommandQueue");
@@ -402,7 +394,7 @@ D3D12CommandList* D3D12Device::CreateCommandList(D3D12_COMMAND_LIST_TYPE Type, D
 {
 	ID3D12GraphicsCommandList* CmdList = nullptr;
 
-	HRESULT hResult = D3DDevice->CreateCommandList(0, Type, Allocator->GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
+	HRESULT hResult = Device->CreateCommandList(0, Type, Allocator->GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
 	if (SUCCEEDED(hResult))
 	{
 		CmdList->Close();
@@ -458,7 +450,7 @@ D3D12RootSignature* D3D12Device::CreateRootSignature(Void* RootSignatureData, co
 {
 	ID3D12RootSignature* RootSignature = nullptr;
 
-	HRESULT hResult = D3DDevice->CreateRootSignature(0, RootSignatureData, RootSignatureSize, IID_PPV_ARGS(&RootSignature));
+	HRESULT hResult = Device->CreateRootSignature(0, RootSignatureData, RootSignatureSize, IID_PPV_ARGS(&RootSignature));
 	if (FAILED(hResult))
 	{
 		LOG_ERROR("[D3D12Device]: FAILED to Create RootSignature");
@@ -470,6 +462,35 @@ D3D12RootSignature* D3D12Device::CreateRootSignature(Void* RootSignatureData, co
 	{
 		LOG_INFO("[D3D12Device]: Created RootSignature");
 		return new D3D12RootSignature(this, RootSignature);
+	}
+}
+
+D3D12DescriptorHeap* D3D12Device::CreateDescriptorHeap(
+	D3D12_DESCRIPTOR_HEAP_TYPE Type,
+	UInt32 NumDescriptors,
+	D3D12_DESCRIPTOR_HEAP_FLAGS Flags)
+{
+	ID3D12DescriptorHeap* Heap = nullptr;
+
+	D3D12_DESCRIPTOR_HEAP_DESC Desc;
+	Memory::Memzero(&Desc);
+	
+	Desc.Type	= Type;
+	Desc.Flags	= Flags;
+	Desc.NumDescriptors = NumDescriptors;
+
+	HRESULT hResult = Device->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));
+	if (FAILED(hResult))
+	{
+		LOG_ERROR("[D3D12Device]: FAILED to Create DescriptorHeap");
+		Debug::DebugBreak();
+
+		return nullptr;
+	}
+	else
+	{
+		LOG_INFO("[D3D12Device]: Created RootSignature");
+		return new D3D12DescriptorHeap(this, Heap);
 	}
 }
 
@@ -489,11 +510,13 @@ D3D12SwapChain* D3D12Device::CreateSwapChain(WindowsWindow* pWindow, D3D12Comman
 Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount)
 {
 	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data = { };
+	Memory::Memzero(&Data);
+
 	Data.Flags			= D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
 	Data.Format			= Format;
 	Data.SampleCount	= SampleCount;
 	
-	HRESULT hr = D3DDevice->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &Data, sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS));
+	HRESULT hr = Device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &Data, sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS));
 	if (FAILED(hr))
 	{
 		LOG_ERROR("[D3D12Device] CheckFeatureSupport failed");

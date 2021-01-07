@@ -16,6 +16,7 @@ enum ETextureFactoryFlags : UInt32
 
 class Texture2D;
 class TextureCube;
+class ShaderResourceView;
 
 /*
 * TextureFactory
@@ -31,5 +32,10 @@ public:
 	static Texture2D* LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format);
 	static Texture2D* LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format);
 
-	static TextureCube* CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format);
+	static TextureCube* CreateTextureCubeFromPanorma(
+		ShaderResourceView* PanoramaSourceView,
+		Texture2D* PanoramaSource,
+		UInt32 CubeMapSize,
+		UInt32 CreateFlags,
+		EFormat Format);
 };

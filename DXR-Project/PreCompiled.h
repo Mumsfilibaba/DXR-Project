@@ -52,6 +52,6 @@ using namespace DirectX;
 #include "Memory/New.h"
 
 // Windows
-#ifdef _WIN32
+#ifdef PLATFORM_WINDOWS
 	#include "Windows/Windows.h"
 #endif

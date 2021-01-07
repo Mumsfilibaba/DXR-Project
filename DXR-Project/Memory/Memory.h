@@ -27,6 +27,12 @@ public:
 	static Void* Memzero(Void* Destination, UInt64 Size);
 	static Void* Memcpy(Void* Destination, const Void* Source, UInt64 Size);
 	static Void* Memmove(Void* Destination, const Void* Source, UInt64 Size);
+	
+	template<typename T>
+	static Void* Memzero(T* Destination)
+	{
+		return Memzero(Destination, sizeof(T));
+	}
 
 	static void SetDebugFlags(MemoryDebugFlags Flags);
 };

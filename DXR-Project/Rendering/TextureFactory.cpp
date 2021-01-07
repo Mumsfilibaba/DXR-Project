@@ -151,7 +151,12 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
 	return Texture.ReleaseOwnerShip();
 }
 
-TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format)
+TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
+	ShaderResourceView* PanoramaSourceSRV, 
+	Texture2D* PanoramaSource, 
+	UInt32 CubeMapSize, 
+	UInt32 CreateFlags, 
+	EFormat Format)
 {
 	const Bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
 	const UInt16 MipLevels	= (GenerateMipLevels) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
@@ -168,12 +173,20 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	{
 		return nullptr;
 	}
+	else
+	{
+		StagingTexture->SetName("TextureCube From Panorama StagingTexture");
+	}
 
 	// Create UAV
 	TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderingAPI::CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
 	if (!StagingTextureUAV)
 	{
 		return nullptr;
+	}
+	else
+	{
+		StagingTexture->SetName("TextureCube From Panorama StagingTexture UAV");
 	}
 
 	// Create texture
@@ -194,7 +207,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	CmdList.Begin();
 	
 	CmdList.TransitionTexture(PanoramaSource, EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
-	CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_NonPixelShaderResource);
+	CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_UnorderedAccess);
 
 	CmdList.BindComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
 
@@ -207,10 +220,9 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	// TODO: How to work with constants and resources
 	//CommandList->SetComputeRoot32BitConstants(&CB0, 1, 0, 0);
 	//CommandList->BindGlobalOnlineDescriptorHeaps();
-	//CommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
-	//CommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 2);
 
-	CmdList.CSBindUnorderedAccessViews(&StagingTextureUAV, 1, 0);
+	CmdList.BindUnorderedAccessViews(EShaderStage::ShaderStage_Compute, &StagingTextureUAV, 1, 0);
+	CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Compute, &PanoramaSourceSRV, 1, 0);
 
 	constexpr UInt32 LocalWorkGroupCount = 16;
 	const UInt32 ThreadsX = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
@@ -224,7 +236,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 	
 	CmdList.TransitionTexture(
 		StagingTexture.Get(), 
-		EResourceState::ResourceState_NonPixelShaderResource, 
+		EResourceState::ResourceState_UnorderedAccess,
 		EResourceState::ResourceState_CopySource);
 	
 	CmdList.TransitionTexture(

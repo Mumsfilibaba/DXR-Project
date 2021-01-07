@@ -22,3 +22,8 @@ void CommandListExecutor::ExecuteCommandList(CommandList& CmdList)
 	CmdList.Last	= nullptr;
 	CmdList.Reset();
 }
+
+void CommandListExecutor::WaitForGPU()
+{
+	GetContext().Flush();
+}

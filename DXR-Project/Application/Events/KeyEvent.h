@@ -4,7 +4,7 @@
 #include "Application/Generic/GenericApplication.h"
 
 /*
-* Base KeyEvent
+* KeyEvent
 */
 
 struct KeyEvent : public Event

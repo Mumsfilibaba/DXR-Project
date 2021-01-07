@@ -56,14 +56,14 @@ bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> InRenderWindow, boo
 	}
 
 	// Create default rootsignatures
-	if (!DefaultRootSignatures.Init(Device.Get()))
+	if (!DefaultRootSignatures.CreateRootSignatures(Device.Get()))
 	{
 		return false;
 	}
 
 	// Create commandcontext
 	DirectCmdContext = new D3D12CommandContext(Device.Get(), DirectCmdQueue, DefaultRootSignatures);
-	if (!DirectCmdContext->Initialize())
+	if (!DirectCmdContext->CreateResources())
 	{
 		return false;
 	}

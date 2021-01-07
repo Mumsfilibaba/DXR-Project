@@ -148,8 +148,20 @@ private:
 
 	bool CreateShadowMaps();
 
-	void GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, CommandList& InCmdList);
-	void GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* Dest, CommandList& InCmdList);
+	void GenerateIrradianceMap(
+		ShaderResourceView* SourceSRV,
+		TextureCube* Source,
+		UnorderedAccessView* DestUAV,
+		TextureCube* Dest,
+		CommandList& InCmdList);
+
+	void GenerateSpecularIrradianceMap(
+		ShaderResourceView* SourceSRV,
+		TextureCube* Source,
+		UnorderedAccessView* const* DestUAVs,
+		UInt32 NumDestUAVs,
+		TextureCube* Dest,
+		CommandList& InCmdList);
 
 	void WaitForPendingFrames();
 
@@ -176,8 +188,11 @@ private:
 	TSharedRef<TextureCube>			SpecularIrradianceMap;
 	TSharedRef<ShaderResourceView>	SpecularIrradianceMapSRV;
 	TArray<TSharedRef<UnorderedAccessView>>	SpecularIrradianceMapUAVs;
+	TArray<UnorderedAccessView*> WeakSpecularIrradianceMapUAVs;
 
 	TSharedRef<TextureCube> Skybox;
+	TSharedRef<ShaderResourceView> SkyboxSRV;
+
 	TSharedRef<TextureCube> PointLightShadowMaps;
 	TArray<TSharedRef<DepthStencilView>> PointLightShadowMapsDSVs;
 	TSharedRef<ShaderResourceView> PointLightShadowMapsSRV;

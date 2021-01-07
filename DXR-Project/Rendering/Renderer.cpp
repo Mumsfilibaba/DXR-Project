@@ -1074,16 +1074,31 @@ bool Renderer::Initialize()
 	}
 
 	// Create Texture Cube
+	const std::string PanoramaSourceFilename = "../Assets/Textures/arches.hdr";
 	TSharedRef<Texture2D> Panorama = TextureFactory::LoadFromFile(
-		"../Assets/Textures/arches.hdr", 
+		PanoramaSourceFilename,
 		0, 
 		EFormat::Format_R32G32B32A32_Float);
 	if (!Panorama)
 	{
 		return false;	
 	}
+	else
+	{
+		Panorama->SetName(PanoramaSourceFilename);
+	}
+
+	TSharedRef<ShaderResourceView> PanormaSRV = RenderingAPI::CreateShaderResourceView(
+		Panorama.Get(),
+		EFormat::Format_R32G32B32A32_Float,
+		0, 1);
+	if (!PanormaSRV)
+	{
+		return false;
+	}
 
 	Skybox = TextureFactory::CreateTextureCubeFromPanorma(
+		PanormaSRV.Get(),
 		Panorama.Get(), 
 		1024, 
 		TextureFactoryFlag_GenerateMips, 
@@ -1095,6 +1110,19 @@ bool Renderer::Initialize()
 	else
 	{
 		Skybox->SetName("Skybox");
+	}
+
+	SkyboxSRV = RenderingAPI::CreateShaderResourceView(
+		Skybox.Get(),
+		EFormat::Format_R16G16B16A16_Float,
+		0, 1);
+	if (!SkyboxSRV)
+	{
+		return false;
+	}
+	else
+	{
+		SkyboxSRV->SetName("Skybox SRV");
 	}
 
 	// Generate global irradiance (From Skybox)
@@ -1161,6 +1189,7 @@ bool Renderer::Initialize()
 		if (Uav)
 		{
 			SpecularIrradianceMapUAVs.EmplaceBack(Uav);
+			WeakSpecularIrradianceMapUAVs.EmplaceBack(Uav.Get());
 		}
 	}
 
@@ -1175,9 +1204,24 @@ bool Renderer::Initialize()
 	}
 
 	CmdList.Begin();
-	GenerateIrradianceMap(Skybox.Get(), IrradianceMap.Get(), CmdList);
-	GenerateSpecularIrradianceMap(Skybox.Get(), SpecularIrradianceMap.Get(), CmdList);
+
+	GenerateIrradianceMap(
+		SkyboxSRV.Get(), 
+		Skybox.Get(), 
+		IrradianceMapUAV.Get(), 
+		IrradianceMap.Get(), 
+		CmdList);
+
+	GenerateSpecularIrradianceMap(
+		SkyboxSRV.Get(),
+		Skybox.Get(), 
+		WeakSpecularIrradianceMapUAVs.Data(),
+		WeakSpecularIrradianceMapUAVs.Size(),
+		SpecularIrradianceMap.Get(), 
+		CmdList);
+
 	CmdList.End();
+	CommandListExecutor::ExecuteCommandList(CmdList);
 
 	// Init standard inputlayout
 	InputLayoutStateCreateInfo InputLayout =
@@ -3616,7 +3660,12 @@ bool Renderer::CreateShadowMaps()
 	return true;
 }
 
-void Renderer::GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, CommandList& InCmdList)
+void Renderer::GenerateIrradianceMap(
+	ShaderResourceView* SourceSRV,
+	TextureCube* Source,
+	UnorderedAccessView* DestUAV,
+	TextureCube* Dest,
+	CommandList& InCmdList)
 {
 	const UInt32 Size = static_cast<UInt32>(Dest->GetWidth());
 
@@ -3663,15 +3712,17 @@ void Renderer::GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, Com
 	InCmdList.TransitionTexture(
 		Dest, 
 		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_NonPixelShaderResource);
-
-	//InCmdList->SetComputeRootSignature(IrradianceGenRootSignature->GetRootSignature());
-
-	//InCmdList->BindGlobalOnlineDescriptorHeaps();
-	//InCmdList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 0);
-	//InCmdList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableStartHandle(), 1);
+		EResourceState::ResourceState_UnorderedAccess);
 
 	InCmdList.BindComputePipelineState(IrradicanceGenPSO.Get());
+
+	InCmdList.BindShaderResourceViews(
+		EShaderStage::ShaderStage_Compute, 
+		&SourceSRV, 1, 0);
+
+	InCmdList.BindUnorderedAccessViews(
+		EShaderStage::ShaderStage_Compute,
+		&DestUAV, 1, 0);
 
 	InCmdList.Dispatch(Size, Size, 6);
 
@@ -3688,9 +3739,16 @@ void Renderer::GenerateIrradianceMap(TextureCube* Source, TextureCube* Dest, Com
 		EResourceState::ResourceState_PixelShaderResource);
 }
 
-void Renderer::GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* Dest, CommandList& InCmdList)
+void Renderer::GenerateSpecularIrradianceMap(
+	ShaderResourceView* SourceSRV,
+	TextureCube* Source, 
+	UnorderedAccessView* const * DestUAVs,
+	UInt32 NumDestUAVs,
+	TextureCube* Dest, 
+	CommandList& InCmdList)
 {
 	const UInt32 Miplevels = Dest->GetMipLevels();
+	VALIDATE(Miplevels == NumDestUAVs);
 
 	if (!SpecIrradicanceGenPSO)
 	{
@@ -3736,10 +3794,9 @@ void Renderer::GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* D
 		EResourceState::ResourceState_Common, 
 		EResourceState::ResourceState_NonPixelShaderResource);
 
-	//InCommandList->SetComputeRootSignature(SpecIrradianceGenRootSignature->GetRootSignature());
-
-	//InCommandList->BindGlobalOnlineDescriptorHeaps();
-	//InCommandList->SetComputeRootDescriptorTable(SrvDescriptorTable->GetGPUTableStartHandle(), 1);
+	InCmdList.BindShaderResourceViews(
+		EShaderStage::ShaderStage_Compute,
+		&SourceSRV, 1, 0);
 
 	InCmdList.BindComputePipelineState(SpecIrradicanceGenPSO.Get());
 
@@ -3748,8 +3805,13 @@ void Renderer::GenerateSpecularIrradianceMap(TextureCube* Source, TextureCube* D
 	const Float RoughnessDelta = 1.0f / (Miplevels - 1);
 	for (UInt32 Mip = 0; Mip < Miplevels; Mip++)
 	{
-		//InCommandList->SetComputeRoot32BitConstants(&Roughness, 1, 0, 0);
-		//InCommandList->SetComputeRootDescriptorTable(UavDescriptorTable->GetGPUTableHandle(Mip), 2);
+		InCmdList.Bind32BitShaderConstants(
+			EShaderStage::ShaderStage_Compute,
+			&Roughness, 1);
+
+		InCmdList.BindUnorderedAccessViews(
+			EShaderStage::ShaderStage_Compute,
+			&DestUAVs[Mip], 1, 0);
 		
 		InCmdList.Dispatch(Width, Width, 6);
 		InCmdList.UnorderedAccessTextureBarrier(Dest);

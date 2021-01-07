@@ -5,6 +5,8 @@
 
 #include <d3d12.h>
 
+#define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
+
 /*
 * Converts EBufferUsage- flags to D3D12_RESOURCE_FLAGS
 */
@@ -425,4 +427,78 @@ inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState ResourceState)
 	}
 
 	return D3D12_RESOURCE_STATES();
+}
+
+/*
+* Operators for D3D12_GPU_DESCRIPTOR_HANDLE
+*/
+
+inline Bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
+{
+	return DescriptorHandle.ptr == Value;
+}
+
+inline Bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
+{
+	return !(DescriptorHandle == Value);
+}
+
+/*
+* Operators for D3D12_CPU_DESCRIPTOR_HANDLE
+*/
+
+inline Bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
+{
+	return DescriptorHandle.ptr == Value;
+}
+
+inline Bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
+{
+	return !(DescriptorHandle == Value);
+}
+
+/*
+* Other helpers
+*/
+
+inline Bool ShaderStageIsGraphics(EShaderStage ShaderStage)
+{
+	switch (ShaderStage)
+	{
+		case EShaderStage::ShaderStage_Vertex:
+		case EShaderStage::ShaderStage_Hull:
+		case EShaderStage::ShaderStage_Domain:
+		case EShaderStage::ShaderStage_Geometry:
+		case EShaderStage::ShaderStage_Pixel:
+		case EShaderStage::ShaderStage_Mesh:
+		case EShaderStage::ShaderStage_Amplification:
+		{
+			return true;
+		}
+
+		default: 
+		{
+			return false;
+		}
+	}
+}
+
+inline Bool ShaderStageIsCompute(EShaderStage ShaderStage)
+{
+	switch (ShaderStage)
+	{
+		case EShaderStage::ShaderStage_Compute:
+		case EShaderStage::ShaderStage_RayGen:
+		case EShaderStage::ShaderStage_RayClosestHit:
+		case EShaderStage::ShaderStage_RayAnyHit:
+		case EShaderStage::ShaderStage_RayMiss:
+		{
+			return true;
+		}
+
+		default:
+		{
+			return false;
+		}
+	}
 }

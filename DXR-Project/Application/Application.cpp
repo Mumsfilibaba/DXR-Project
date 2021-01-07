@@ -15,27 +15,20 @@
 * Application
 */
 
-TSharedPtr<Application> Application::CurrentApplication = nullptr;
+TSharedPtr<Application> Application::Instance;
 
-TSharedRef<GenericWindow> Application::MakeWindow()
+Application::Application(GenericApplication* InPlatformApplication)
+	: PlatformApplication(InPlatformApplication)
 {
-	return PlatformApplication->MakeWindow();
+	VALIDATE(PlatformApplication != nullptr);
 }
 
-TSharedRef<GenericCursor> Application::MakeCursor()
+bool Application::Initialize()
 {
-	return PlatformApplication->MakeCursor();
-}
-
-bool Application::Initialize(GenericApplication* InPlatformApplication)
-{
-	// PlatformApplication
-	SetPlatformApplication(InPlatformApplication);
-
 	// Creating main Window
 	const UInt32 Style =
-		WindowStyleFlag_Titled |
-		WindowStyleFlag_Closable |
+		WindowStyleFlag_Titled		|
+		WindowStyleFlag_Closable	|
 		WindowStyleFlag_Minimizable |
 		WindowStyleFlag_Maximizable |
 		WindowStyleFlag_Resizeable;
@@ -63,54 +56,8 @@ void Application::Tick()
 	}
 }
 
-void Application::SetCursor(TSharedRef<GenericCursor> Cursor)
-{
-	PlatformApplication->SetCursor(Cursor);
-}
-
-void Application::SetActiveWindow(TSharedRef<GenericWindow> Window)
-{
-	PlatformApplication->SetActiveWindow(Window);
-}
-
-void Application::SetCapture(TSharedRef<GenericWindow> Window)
-{
-	PlatformApplication->SetCapture(Window);
-}
-
-void Application::SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 X, Int32 Y)
-{
-	PlatformApplication->SetCursorPos(RelativeWindow, X, Y);
-}
-
-ModifierKeyState Application::GetModifierKeyState() const
-{
-	return PlatformApplication->GetModifierKeyState();
-}
-
-TSharedRef<GenericWindow> Application::GetMainWindow() const
-{
-	return MainWindow;
-}
-
-TSharedRef<GenericWindow> Application::GetActiveWindow() const
-{
-	return PlatformApplication->GetActiveWindow();
-}
-
-TSharedRef<GenericWindow> Application::GetCapture() const
-{
-	return PlatformApplication->GetCapture();
-}
-
-void Application::GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const
-{
-	PlatformApplication->GetCursorPos(RelativeWindow, OutX, OutY);
-}
-
 void Application::SetPlatformApplication(GenericApplication* InPlatformApplication)
 {
-	// If there is a platform application, release the old mainwindow
 	if (PlatformApplication)
 	{
 		MainWindow.Reset();
@@ -119,27 +66,22 @@ void Application::SetPlatformApplication(GenericApplication* InPlatformApplicati
 	PlatformApplication = InPlatformApplication;
 	if (PlatformApplication)
 	{
-		PlatformApplication->SetEventHandler(CurrentApplication);
+		PlatformApplication->SetEventHandler(Instance);
 	}
 }
 
-Application* Application::Make()
+Application* Application::Make(GenericApplication* InPlatformApplication)
 {
-	CurrentApplication = TSharedPtr<Application>(new Application());
-	if (CurrentApplication)
+	Instance = TSharedPtr(new Application(InPlatformApplication));
+	if (Instance)
 	{
-		return CurrentApplication.Get();
+		InPlatformApplication->SetEventHandler(Instance);
+		return Instance.Get();
 	}
 	else
 	{
 		return nullptr;
 	}
-}
-
-Application& Application::Get()
-{
-	VALIDATE(CurrentApplication != nullptr);
-	return (*CurrentApplication.Get());
 }
 
 void Application::OnWindowResized(TSharedRef<GenericWindow> InWindow, UInt16 Width, UInt16 Height)

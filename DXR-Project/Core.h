@@ -61,7 +61,9 @@
 * Unused params
 */
 
-#define UNREFERENCED_VARIABLE(Variable) (void)(Variable)
+#ifndef UNREFERENCED_VARIABLE
+	#define UNREFERENCED_VARIABLE(Variable) (void)(Variable)
+#endif
 
 /*
 * String preprocessor handling

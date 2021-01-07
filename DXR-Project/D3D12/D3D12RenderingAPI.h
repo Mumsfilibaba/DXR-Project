@@ -450,7 +450,7 @@ public:
 	virtual class ComputePipelineState* CreateComputePipelineState(
 		const ComputePipelineStateCreateInfo& Info) const override final;
 	
-	virtual class RayTracingPipelineState*	CreateRayTracingPipelineState() const override final;
+	virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const override final;
 
 	/*
 	* Viewport
@@ -506,7 +506,7 @@ private:
 	*/
 
 	template<typename TD3D12Buffer, typename... TArgs>
-	TD3D12Buffer* CreateBufferResource(
+	FORCEINLINE TD3D12Buffer* CreateBufferResource(
 		const ResourceData* InitalData,
 		TArgs&&... Args) const
 	{
@@ -520,8 +520,8 @@ private:
 		const UInt32 Usage = NewBuffer->GetUsage();
 		const D3D12_RESOURCE_FLAGS Flags = ConvertBufferUsage(Usage);
 
-		D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_DEFAULT;
-		D3D12_RESOURCE_STATES InitalState = D3D12_RESOURCE_STATE_COMMON;
+		D3D12_HEAP_TYPE HeapType			= D3D12_HEAP_TYPE_DEFAULT;
+		D3D12_RESOURCE_STATES InitalState	= D3D12_RESOURCE_STATE_COMMON;
 		if (Usage & BufferUsage_Dynamic)
 		{
 			InitalState	= D3D12_RESOURCE_STATE_GENERIC_READ;
@@ -561,7 +561,7 @@ private:
 
 		// Setup desc
 		D3D12_RESOURCE_DESC Desc;
-		Memory::Memzero(&Desc, sizeof(D3D12_RESOURCE_DESC));
+		Memory::Memzero(&Desc);
 
 		Desc.Dimension			= GetD3D12TextureResourceDimension<TD3D12Texture>();
 		Desc.Flags				= ConvertTextureUsage(Usage);

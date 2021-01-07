@@ -49,8 +49,8 @@ bool EngineLoop::PreInitialize()
 bool EngineLoop::Initialize()
 {
 	// Application
-	Application* App = Application::Make();
-	if (!App->Initialize(GlobalPlatformApplication))
+	Application* App = Application::Make(GlobalPlatformApplication);
+	if (!App->Initialize())
 	{
 		PlatformDialogMisc::MessageBox("ERROR", "Failed to create Application");
 		return false;

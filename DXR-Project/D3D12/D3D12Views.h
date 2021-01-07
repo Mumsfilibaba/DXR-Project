@@ -31,7 +31,6 @@ public:
 
 protected:
 	const D3D12Resource* Resource;
-	
 	D3D12OfflineDescriptorHeap* Heap				= nullptr;
 	UInt32						OfflineHeapIndex	= 0;
 	D3D12_CPU_DESCRIPTOR_HANDLE	OfflineHandle;

@@ -210,20 +210,20 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(
 	for (BindingTableEntry& Entry : InBindingTableEntries)
 	{
 		TableEntry TableData;
-		if (Entry.DescriptorTable0)
-		{
-			TableData.DescriptorTable0 = Entry.DescriptorTable0->GetGPUTableStartHandle();
-		}
-		else
+		//if (Entry.DescriptorTable0)
+		//{
+		//	TableData.DescriptorTable0 = Entry.DescriptorTable0->GetGPUTableStartHandle();
+		//}
+		//else
 		{
 			TableData.DescriptorTable0 = { 0 };
 		}
 
-		if (Entry.DescriptorTable1)
-		{
-			TableData.DescriptorTable1 = Entry.DescriptorTable1->GetGPUTableStartHandle();
-		}
-		else
+		//if (Entry.DescriptorTable1)
+		//{
+		//	TableData.DescriptorTable1 = Entry.DescriptorTable1->GetGPUTableStartHandle();
+		//}
+		//else
 		{
 			TableData.DescriptorTable1 = { 0 };
 		}

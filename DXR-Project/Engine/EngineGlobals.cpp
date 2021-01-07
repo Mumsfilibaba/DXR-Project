@@ -12,4 +12,3 @@ class GenericApplication* GlobalPlatformApplication = nullptr;
 
 class GenericRenderingAPI*	GlobalRenderingAPI		= nullptr;
 class IShaderCompiler*		GlobalShaderCompiler	= nullptr;
-class ICommandContext*		GlobalCommandContext	= nullptr;

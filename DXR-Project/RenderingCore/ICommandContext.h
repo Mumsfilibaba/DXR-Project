@@ -7,7 +7,7 @@ class VertexBuffer;
 class IndexBuffer;
 class ConstantBuffer;
 class StructuredBuffer;
-class Shader;
+class SamplerState;
 class RenderTargetView;
 class ShaderResourceView;
 class DepthStencilView;
@@ -93,100 +93,33 @@ public:
 	* Binding Shader Resources
 	*/
 
-	// VertexShader
-	virtual void VSBindShaderResourceViews(
+	virtual void Bind32BitShaderConstants(
+		EShaderStage ShaderStage,
+		const Void* Shader32BitConstants,
+		UInt32 Num32BitConstants) = 0;
+
+	virtual void BindShaderResourceViews(
+		EShaderStage ShaderStage,
 		ShaderResourceView* const* ShaderResourceViews, 
 		UInt32 ShaderResourceViewCount, 
 		UInt32 StartSlot) = 0;
 
-	virtual void VSBindUnorderedAccessViews(
+	virtual void BindSamplerStates(
+		EShaderStage ShaderStage,
+		SamplerState* const* SamplerStates,
+		UInt32 SamplerStateCount,
+		UInt32 StartSlot) = 0;
+
+	virtual void BindUnorderedAccessViews(
+		EShaderStage ShaderStage,
 		UnorderedAccessView* const* UnorderedAccessViews, 
 		UInt32 UnorderedAccessViewCount, 
 		UInt32 StartSlot) = 0;
 
-	virtual void VSBindConstantBuffers(
+	virtual void BindConstantBuffers(
+		EShaderStage ShaderStage,
 		ConstantBuffer* const * ConstantBuffers, 
 		UInt32 ConstantBufferCount, 
-		UInt32 StartSlot) = 0;
-
-	// HullShader
-	virtual void HSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot) = 0;
-
-	virtual void HSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot) = 0;
-
-	virtual void HSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot) = 0;
-
-	// DomainShader
-	virtual void DSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot) = 0;
-
-	virtual void DSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot) = 0;
-
-	virtual void DSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot) = 0;
-
-	// GeometryShader
-	virtual void GSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot) = 0;
-
-	virtual void GSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot) = 0;
-
-	virtual void GSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot) = 0;
-
-	// PixelShader
-	virtual void PSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot) = 0;
-
-	virtual void PSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot) = 0;
-
-	virtual void PSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot) = 0;
-
-	// ComputeShader
-	virtual void CSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot) = 0;
-
-	virtual void CSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot) = 0;
-
-	virtual void CSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
 		UInt32 StartSlot) = 0;
 
 	/*

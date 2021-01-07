@@ -6,6 +6,8 @@
 #include "D3D12CommandList.h"
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Buffer.h"
+#include "D3D12Views.h"
+#include "D3D12SamplerState.h"
 
 class D3D12CommandQueue;
 class D3D12CommandAllocator;
@@ -143,218 +145,90 @@ private:
 };
 
 /*
-* D3D12ShaderStageDescriptorState
+* D3D12ShaderDescriptorTableState
 */
 
-class D3D12ShaderStageDescriptorState
+class D3D12ShaderDescriptorTableState
 {
+	struct DescriptorTable
+	{
+		D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandleStart_GPU = { 0 };
+		D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandleStart_CPU = { 0 };
+
+		FORCEINLINE void AllocateOnlineDescriptorHandles(
+			D3D12OnlineDescriptorHeap& DescriptorHeap, 
+			const UInt32 NumOnlineDescriptorHandles)
+		{
+			const UInt32 StartHandleIndex = DescriptorHeap.AllocateHandles(NumOnlineDescriptorHandles);
+			OnlineHandleStart_GPU = DescriptorHeap.GetGPUDescriptorHandleAt(StartHandleIndex);
+			OnlineHandleStart_CPU = DescriptorHeap.GetCPUDescriptorHandleAt(StartHandleIndex);
+		}
+
+		FORCEINLINE void Reset()
+		{
+			OnlineHandleStart_GPU = { 0 };
+			OnlineHandleStart_CPU = { 0 };
+		}
+	};
+
 public:
-	inline D3D12ShaderStageDescriptorState()
-		: ConstantBuffers()
-		, ShaderResources()
-		, UnorderedAccessResources()
-	{
-	}
+	D3D12ShaderDescriptorTableState();
+	
+	bool CreateResources(D3D12Device& Device);
 
-	FORCEINLINE void BindConstantBuffer()
-	{
-	}
+	void BindConstantBuffer(D3D12ConstantBufferView* ConstantBufferView, UInt32 Slot);
+	void BindShaderResourceView(D3D12ShaderResourceView* ShaderResourceView, UInt32 Slot);
+	void BindUnorderedAccessView(D3D12UnorderedAccessView* UnorderedAccessView, UInt32 Slot);
+	void BindSamplerState(D3D12SamplerState* SamplerState, UInt32 Slot);
 
-	FORCEINLINE void BindShaderResourceView()
-	{
-	}
+	void CommitGraphicsDescriptorTables(
+		D3D12Device& Device,
+		D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
+		D3D12CommandList& CmdList);
 
-	FORCEINLINE void BindUnorderedAccessView()
-	{
-	}
+	void CommitComputeDescriptorTables(
+		D3D12Device& Device,
+		D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
+		D3D12CommandList& CmdList);
 
-	FORCEINLINE void BindSamplerState()
+	FORCEINLINE void Reset()
 	{
+		CBVDescriptorTable.Reset();
+		SRVDescriptorTable.Reset();
+		UAVDescriptorTable.Reset();
+		SamplerDescriptorTable.Reset();
+
+		CBVOfflineHandles.Fill(DefaultConstantBufferView);
+		SRVOfflineHandles.Fill(DefaultShaderResourceView);
+		UAVOfflineHandles.Fill(DefaultUnorderedAccessView);
+		SamplerOfflineHandles.Fill(DefaultSamplerState);
+
+		IsDirty = false;
 	}
 
 private:
-	TArray<D3D12_GPU_DESCRIPTOR_HANDLE> ConstantBuffers;
-	TArray<D3D12_GPU_DESCRIPTOR_HANDLE> ShaderResources;
-	TArray<D3D12_GPU_DESCRIPTOR_HANDLE> UnorderedAccessResources;
-	TArray<D3D12_GPU_DESCRIPTOR_HANDLE> Samplers;
-};
+	void InternalAllocateAndCopyDescriptorHandles(
+		D3D12Device& Device,
+		D3D12OnlineDescriptorHeap& ResourceDescriptorHeap);
 
-/*
-* D3D12ShaderDescriptorState
-*/
+	TArray<D3D12_CPU_DESCRIPTOR_HANDLE> CBVOfflineHandles;
+	DescriptorTable CBVDescriptorTable;
+	TArray<D3D12_CPU_DESCRIPTOR_HANDLE> SRVOfflineHandles;
+	DescriptorTable SRVDescriptorTable;
+	TArray<D3D12_CPU_DESCRIPTOR_HANDLE> UAVOfflineHandles;
+	DescriptorTable UAVDescriptorTable;
+	TArray<D3D12_CPU_DESCRIPTOR_HANDLE> SamplerOfflineHandles;
+	DescriptorTable SamplerDescriptorTable;
 
-class D3D12ShaderDescriptorState
-{
-public:
-	inline D3D12ShaderDescriptorState()
-		: VertexShader()
-		, HullShader()
-		, DomainShader()
-		, GeometryShader()
-		, PixelShader()
-		, ComputeShader()
-	{
-	}
+	D3D12_CPU_DESCRIPTOR_HANDLE DefaultConstantBufferView;
+	D3D12_CPU_DESCRIPTOR_HANDLE DefaultShaderResourceView;
+	D3D12_CPU_DESCRIPTOR_HANDLE DefaultUnorderedAccessView;
+	D3D12_CPU_DESCRIPTOR_HANDLE DefaultSamplerState;
 
-	// VertexShader
-	FORCEINLINE void VSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot)
-	{
-		VertexShader.BindConstantBuffer();
-	}
+	TSharedRef<D3D12DescriptorHeap> DefaultResourceHeap;
 
-	FORCEINLINE void VSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot)
-	{
-		VertexShader.BindShaderResourceView();
-	}
-
-	FORCEINLINE void VSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot)
-	{
-		VertexShader.BindUnorderedAccessView();
-	}
-
-	// HullShader
-	FORCEINLINE void HSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot)
-	{
-		HullShader.BindConstantBuffer();
-	}
-
-	FORCEINLINE void HSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot)
-	{
-		HullShader.BindShaderResourceView();
-	}
-
-	FORCEINLINE void HSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot)
-	{
-		HullShader.BindUnorderedAccessView();
-	}
-
-	// DomainShader
-	FORCEINLINE void DSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot)
-	{
-		DomainShader.BindConstantBuffer();
-	}
-
-	FORCEINLINE void DSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot)
-	{
-		DomainShader.BindShaderResourceView();
-	}
-
-	FORCEINLINE void DSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot)
-	{
-		DomainShader.BindUnorderedAccessView();
-	}
-
-	// GeometryShader
-	FORCEINLINE void GSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot)
-	{
-		GeometryShader.BindConstantBuffer();
-	}
-
-	FORCEINLINE void GSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot)
-	{
-		GeometryShader.BindShaderResourceView();
-	}
-
-	FORCEINLINE void GSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot)
-	{
-		GeometryShader.BindUnorderedAccessView();
-	}
-
-	// PixelShader
-	FORCEINLINE void PSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot)
-	{
-		PixelShader.BindConstantBuffer();
-	}
-
-	FORCEINLINE void PSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot)
-	{
-		PixelShader.BindShaderResourceView();
-	}
-
-	FORCEINLINE void PSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot)
-	{
-		PixelShader.BindUnorderedAccessView();
-	}
-
-	// ComputeShader
-	FORCEINLINE void CSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot)
-	{
-		ComputeShader.BindConstantBuffer();
-	}
-
-	FORCEINLINE void CSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot)
-	{
-		ComputeShader.BindShaderResourceView();
-	}
-
-	FORCEINLINE void CSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot)
-	{
-		ComputeShader.BindUnorderedAccessView();
-	}
-
-private:
-	// VS Graphics Pipeline
-	D3D12ShaderStageDescriptorState VertexShader;
-	D3D12ShaderStageDescriptorState HullShader;
-	D3D12ShaderStageDescriptorState DomainShader;
-	D3D12ShaderStageDescriptorState GeometryShader;
-	D3D12ShaderStageDescriptorState PixelShader;
-	// Compute Pipeline
-	D3D12ShaderStageDescriptorState ComputeShader;
+	TArray<UInt32> SrcRangeSizes;
+	Bool IsDirty = false;
 };
 
 /*
@@ -364,9 +238,9 @@ private:
 class D3D12CommandBatch
 {
 public:
-	inline D3D12CommandBatch(TSharedPtr<D3D12CommandAllocator>& InCmdAllocator, TSharedPtr<D3D12OnlineDescriptorHeap>& InOnlineHeap)
+	inline D3D12CommandBatch(TSharedRef<D3D12CommandAllocator>& InCmdAllocator, TSharedRef<D3D12OnlineDescriptorHeap>& InOnlineDescriptorHeap)
 		: CmdAllocator(InCmdAllocator)
-		, OnlineHeap(InOnlineHeap)
+		, OnlineDescriptorHeap(InOnlineDescriptorHeap)
 		, Resources()
 	{
 	}
@@ -384,25 +258,24 @@ public:
 		}
 	}
 
-	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE AllocateResourceDescriptors(UInt32 NumDescriptors)
-	{
-		const UInt32 FirstDescriptor = OnlineHeap->AllocateSlots(NumDescriptors);
-		return OnlineHeap->GetGPUSlotAt(FirstDescriptor);
-	}
-
 	FORCEINLINE void EnqueueResourceDestruction(PipelineResource* InResource)
 	{
 		Resources.EmplaceBack(MakeSharedRef<PipelineResource>(InResource));
 	}
 
-	FORCEINLINE D3D12CommandAllocator* GetAllocator() const
+	FORCEINLINE D3D12CommandAllocator* GetCommandAllocator() const
 	{
 		return CmdAllocator.Get();
 	}
 
+	FORCEINLINE D3D12OnlineDescriptorHeap* GetOnlineDescriptorHeap() const
+	{
+		return OnlineDescriptorHeap.Get();
+	}
+
 private:
-	TSharedPtr<D3D12CommandAllocator> CmdAllocator;
-	TSharedPtr<D3D12OnlineDescriptorHeap> OnlineHeap;
+	TSharedRef<D3D12CommandAllocator> CmdAllocator;
+	TSharedRef<D3D12OnlineDescriptorHeap> OnlineDescriptorHeap;
 	TArray<TSharedRef<PipelineResource>> Resources;
 };
 
@@ -426,7 +299,7 @@ public:
 		VALIDATE(Resource != nullptr);
 
 		D3D12_RESOURCE_BARRIER Barrier;
-		Memory::Memzero(&Barrier, sizeof(D3D12_RESOURCE_BARRIER));
+		Memory::Memzero(&Barrier);
 
 		Barrier.Type					= D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		Barrier.Transition.pResource	= Resource->GetResource();
@@ -483,7 +356,7 @@ public:
 	D3D12CommandContext(class D3D12Device* InDevice, TSharedRef<D3D12CommandQueue>& InCmdQueue, const D3D12DefaultRootSignatures& InDefaultRootSignatures);
 	~D3D12CommandContext();
 
-	bool Initialize();
+	bool CreateResources();
 
 	FORCEINLINE D3D12CommandList& GetCommandList() const
 	{
@@ -556,98 +429,31 @@ public:
 	* Binding Shader Resources
 	*/
 
-	// VertexShader
-	virtual void VSBindShaderResourceViews(
+	virtual void Bind32BitShaderConstants(
+		EShaderStage ShaderStage,
+		const Void* Shader32BitConstants,
+		UInt32 Num32BitConstants) override final;
+
+	virtual void BindShaderResourceViews(
+		EShaderStage ShaderStage,
 		ShaderResourceView* const* ShaderResourceViews,
 		UInt32 ShaderResourceViewCount,
 		UInt32 StartSlot) override final;
 
-	virtual void VSBindUnorderedAccessViews(
+	virtual void BindSamplerStates(
+		EShaderStage ShaderStage,
+		SamplerState* const* SamplerStates,
+		UInt32 SamplerStateCount,
+		UInt32 StartSlot) override final;
+
+	virtual void BindUnorderedAccessViews(
+		EShaderStage ShaderStage,
 		UnorderedAccessView* const* UnorderedAccessViews,
 		UInt32 UnorderedAccessViewCount,
 		UInt32 StartSlot) override final;
 
-	virtual void VSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot) override final;
-
-	// HullShader
-	virtual void HSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot) override final;
-
-	virtual void HSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot) override final;
-
-	virtual void HSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot) override final;
-
-	// DomainShader
-	virtual void DSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot) override final;
-
-	virtual void DSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot) override final;
-
-	virtual void DSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot) override final;
-
-	// GeometryShader
-	virtual void GSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot) override final;
-
-	virtual void GSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot) override final;
-
-	virtual void GSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot) override final;
-
-	// PixelShader
-	virtual void PSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot) override final;
-
-	virtual void PSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot) override final;
-
-	virtual void PSBindConstantBuffers(
-		ConstantBuffer* const* ConstantBuffers,
-		UInt32 ConstantBufferCount,
-		UInt32 StartSlot) override final;
-
-	// ComputeShader
-	virtual void CSBindShaderResourceViews(
-		ShaderResourceView* const* ShaderResourceViews,
-		UInt32 ShaderResourceViewCount,
-		UInt32 StartSlot) override final;
-
-	virtual void CSBindUnorderedAccessViews(
-		UnorderedAccessView* const* UnorderedAccessViews,
-		UInt32 UnorderedAccessViewCount,
-		UInt32 StartSlot) override final;
-
-	virtual void CSBindConstantBuffers(
+	virtual void BindConstantBuffers(
+		EShaderStage ShaderStage,
 		ConstantBuffer* const* ConstantBuffers,
 		UInt32 ConstantBufferCount,
 		UInt32 StartSlot) override final;
@@ -765,7 +571,7 @@ private:
 
 	D3D12VertexBufferState VertexBufferState;
 	D3D12RenderTargetState RenderTargetState;
-	D3D12ShaderDescriptorState ShaderDescriptorState;
+	D3D12ShaderDescriptorTableState ShaderDescriptorState;
 	D3D12ResourceBarrierBatcher BarrierBatcher;
 	D3D12DefaultRootSignatures DefaultRootSignatures;
 	D3D12GenerateMipsHelper GenerateMipsHelper;

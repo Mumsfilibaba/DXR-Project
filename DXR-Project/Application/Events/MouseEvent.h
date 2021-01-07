@@ -42,7 +42,7 @@ private:
 };
 
 /*
-* Base MouseButtonEvent
+* MouseButtonEvent
 */
 
 struct MouseButtonEvent : public Event

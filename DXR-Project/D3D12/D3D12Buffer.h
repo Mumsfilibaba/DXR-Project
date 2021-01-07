@@ -3,6 +3,8 @@
 
 #include "D3D12Resource.h"
 
+class D3D12ConstantBufferView;
+
 /*
 * D3D12Buffer
 */
@@ -135,8 +137,13 @@ public:
 		return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
 	}
 
+	FORCEINLINE D3D12ConstantBufferView* GetView() const
+	{
+		return View;
+	}
+
 private:
-	class D3D12ConstantBufferView* View;
+	D3D12ConstantBufferView* View;
 };
 
 /*

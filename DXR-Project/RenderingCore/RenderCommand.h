@@ -400,31 +400,76 @@ struct BindRayTracingPipelineStateCommand : public RenderCommand
 	RayTracingPipelineState* PipelineState;
 };
 
+// Bind ShaderResourceViews RenderCommand
+struct Bind32BitShaderConstantsCommand : public RenderCommand
+{
+	inline Bind32BitShaderConstantsCommand(EShaderStage InShaderStage, const Void* InShader32BitConstants, UInt32 InNum32BitConstants)
+		: ShaderStage(InShaderStage)
+		, Shader32BitConstants(InShader32BitConstants)
+		, Num32BitConstants(InNum32BitConstants)
+	{
+	}
+
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.Bind32BitShaderConstants(
+			ShaderStage,
+			Shader32BitConstants,
+			Num32BitConstants);
+	}
+
+	EShaderStage ShaderStage;
+	const Void* Shader32BitConstants;
+	UInt32 Num32BitConstants;
+};
+
 // Bind ConstantBuffers RenderCommand
 struct BindConstantBuffersCommand : public RenderCommand
 {
-	inline BindConstantBuffersCommand(ConstantBuffer* const* InConstantBuffers, UInt32 InConstantBufferCount, UInt32 InStartSlot)
-		: ConstantBuffers(InConstantBuffers)
+	inline BindConstantBuffersCommand(EShaderStage InShaderStage, ConstantBuffer* const* InConstantBuffers, UInt32 InConstantBufferCount, UInt32 InStartSlot)
+		: ShaderStage(InShaderStage)
+		, ConstantBuffers(InConstantBuffers)
 		, ConstantBufferCount(InConstantBufferCount)
 		, StartSlot(InStartSlot)
 	{
 	}
 
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.BindConstantBuffers(
+			ShaderStage,
+			ConstantBuffers,
+			ConstantBufferCount,
+			StartSlot);
+	}
+
+	EShaderStage ShaderStage;
 	ConstantBuffer* const* ConstantBuffers;
 	UInt32 ConstantBufferCount;
 	UInt32 StartSlot;
 };
 
-// Bind ShaderResourceViews RenderCommand
+// Bind ShaderResourceView RenderCommand
 struct BindShaderResourceViewsCommand : public RenderCommand
 {
-	inline BindShaderResourceViewsCommand(ShaderResourceView* const* InShaderResourceViews, UInt32 InShaderResourceViewCount, UInt32 InStartSlot)
-		: ShaderResourceViews(InShaderResourceViews)
-		, ShaderResourceViewCount(InShaderResourceViewCount)
+	inline BindShaderResourceViewsCommand(EShaderStage InShaderStage, ShaderResourceView* const* InShaderResourceViews, UInt32 InConstantBufferCount, UInt32 InStartSlot)
+		: ShaderStage(InShaderStage)
+		, ShaderResourceViews(InShaderResourceViews)
+		, ShaderResourceViewCount(InConstantBufferCount)
 		, StartSlot(InStartSlot)
 	{
 	}
 
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.BindShaderResourceViews(
+			ShaderStage,
+			ShaderResourceViews,
+			ShaderResourceViewCount,
+			StartSlot);
+	}
+
+	EShaderStage ShaderStage;
 	ShaderResourceView* const* ShaderResourceViews;
 	UInt32 ShaderResourceViewCount;
 	UInt32 StartSlot;
@@ -433,322 +478,53 @@ struct BindShaderResourceViewsCommand : public RenderCommand
 // Bind UnorderedAccessViews RenderCommand
 struct BindUnorderedAccessViewsCommand : public RenderCommand
 {
-	inline BindUnorderedAccessViewsCommand(UnorderedAccessView* const* InUnorderedAccessViews, UInt32 InUnorderedAccessViewCount, UInt32 InStartSlot)
-		: UnorderedAccessViews(InUnorderedAccessViews)
+	inline BindUnorderedAccessViewsCommand(EShaderStage InShaderStage, UnorderedAccessView* const* InUnorderedAccessViews, UInt32 InUnorderedAccessViewCount, UInt32 InStartSlot)
+		: ShaderStage(InShaderStage)
+		, UnorderedAccessViews(InUnorderedAccessViews)
 		, UnorderedAccessViewCount(InUnorderedAccessViewCount)
 		, StartSlot(InStartSlot)
 	{
 	}
 
+	virtual void Execute(ICommandContext& CmdContext) const override
+	{
+		CmdContext.BindUnorderedAccessViews(
+			ShaderStage,
+			UnorderedAccessViews,
+			UnorderedAccessViewCount,
+			StartSlot);
+	}
+
+	EShaderStage ShaderStage;
 	UnorderedAccessView* const* UnorderedAccessViews;
 	UInt32 UnorderedAccessViewCount;
 	UInt32 StartSlot;
 };
 
-// VertexShader Bind ConstantBuffers RenderCommand
-struct VSBindConstantBuffersCommand : public BindConstantBuffersCommand
+// Bind SamplerStates RenderCommand
+struct BindSamplerStatesCommand : public RenderCommand
 {
-	inline VSBindConstantBuffersCommand(ConstantBuffer* const* InConstantBuffers, UInt32 InConstantBufferCount, UInt32 InStartSlot)
-		: BindConstantBuffersCommand(InConstantBuffers, InConstantBufferCount, InStartSlot)
+	inline BindSamplerStatesCommand(EShaderStage InShaderStage, SamplerState* const* InSamplerStates, UInt32 InSamplerStateCount, UInt32 InStartSlot)
+		: ShaderStage(InShaderStage)
+		, SamplerStates(InSamplerStates)
+		, SamplerStateCount(InSamplerStateCount)
+		, StartSlot(InStartSlot)
 	{
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
 	{
-		CmdContext.VSBindConstantBuffers(
-			ConstantBuffers,
-			ConstantBufferCount,
+		CmdContext.BindSamplerStates(
+			ShaderStage,
+			SamplerStates,
+			SamplerStateCount,
 			StartSlot);
 	}
-};
 
-// VertexShader Bind ShaderResourceViews RenderCommand
-struct VSBindShaderResourceViewsCommand : public BindShaderResourceViewsCommand
-{
-	inline VSBindShaderResourceViewsCommand(ShaderResourceView* const* InShaderResourceViews, UInt32 InShaderResourceViewCount, UInt32 InStartSlot)
-		: BindShaderResourceViewsCommand(InShaderResourceViews, InShaderResourceViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.VSBindShaderResourceViews(
-			ShaderResourceViews,
-			ShaderResourceViewCount,
-			StartSlot);
-	}
-};
-
-// VertexShader Bind UnorderedAccessViews RenderCommand
-struct VSBindUnorderedAccessViewsCommand : public BindUnorderedAccessViewsCommand
-{
-	inline VSBindUnorderedAccessViewsCommand(UnorderedAccessView* const* InUnorderedAccessViews, UInt32 InUnorderedAccessViewCount, UInt32 InStartSlot)
-		: BindUnorderedAccessViewsCommand(InUnorderedAccessViews, InUnorderedAccessViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.VSBindUnorderedAccessViews(
-			UnorderedAccessViews,
-			UnorderedAccessViewCount,
-			StartSlot);
-	}
-};
-
-// HullShader Bind ConstantBuffers RenderCommand
-struct HSBindConstantBuffersCommand : public BindConstantBuffersCommand
-{
-	inline HSBindConstantBuffersCommand(ConstantBuffer* const* InConstantBuffers, UInt32 InConstantBufferCount, UInt32 InStartSlot)
-		: BindConstantBuffersCommand(InConstantBuffers, InConstantBufferCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.HSBindConstantBuffers(
-			ConstantBuffers,
-			ConstantBufferCount,
-			StartSlot);
-	}
-};
-
-// HullShader Bind ShaderResourceViews RenderCommand
-struct HSBindShaderResourceViewsCommand : public BindShaderResourceViewsCommand
-{
-	inline HSBindShaderResourceViewsCommand(ShaderResourceView* const* InShaderResourceViews, UInt32 InShaderResourceViewCount, UInt32 InStartSlot)
-		: BindShaderResourceViewsCommand(InShaderResourceViews, InShaderResourceViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.HSBindShaderResourceViews(
-			ShaderResourceViews,
-			ShaderResourceViewCount,
-			StartSlot);
-	}
-};
-
-// HullShader Bind UnorderedAccessViews RenderCommand
-struct HSBindUnorderedAccessViewsCommand : public BindUnorderedAccessViewsCommand
-{
-	inline HSBindUnorderedAccessViewsCommand(UnorderedAccessView* const* InUnorderedAccessViews, UInt32 InUnorderedAccessViewCount, UInt32 InStartSlot)
-		: BindUnorderedAccessViewsCommand(InUnorderedAccessViews, InUnorderedAccessViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.HSBindUnorderedAccessViews(
-			UnorderedAccessViews,
-			UnorderedAccessViewCount,
-			StartSlot);
-	}
-};
-
-// DomainShader Bind ConstantBuffers RenderCommand
-struct DSBindConstantBuffersCommand : public BindConstantBuffersCommand
-{
-	inline DSBindConstantBuffersCommand(ConstantBuffer* const* InConstantBuffers, UInt32 InConstantBufferCount, UInt32 InStartSlot)
-		: BindConstantBuffersCommand(InConstantBuffers, InConstantBufferCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.DSBindConstantBuffers(
-			ConstantBuffers,
-			ConstantBufferCount,
-			StartSlot);
-	}
-};
-
-// DomainShader Bind ShaderResourceViews RenderCommand
-struct DSBindShaderResourceViewsCommand : public BindShaderResourceViewsCommand
-{
-	inline DSBindShaderResourceViewsCommand(ShaderResourceView* const* InShaderResourceViews, UInt32 InShaderResourceViewCount, UInt32 InStartSlot)
-		: BindShaderResourceViewsCommand(InShaderResourceViews, InShaderResourceViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.DSBindShaderResourceViews(
-			ShaderResourceViews,
-			ShaderResourceViewCount,
-			StartSlot);
-	}
-};
-
-// DomainShader Bind UnorderedAccessViews RenderCommand
-struct DSBindUnorderedAccessViewsCommand : public BindUnorderedAccessViewsCommand
-{
-	inline DSBindUnorderedAccessViewsCommand(UnorderedAccessView* const* InUnorderedAccessViews, UInt32 InUnorderedAccessViewCount, UInt32 InStartSlot)
-		: BindUnorderedAccessViewsCommand(InUnorderedAccessViews, InUnorderedAccessViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.DSBindUnorderedAccessViews(
-			UnorderedAccessViews,
-			UnorderedAccessViewCount,
-			StartSlot);
-	}
-};
-
-// GeometryShader Bind ConstantBuffers RenderCommand
-struct GSBindConstantBuffersCommand : public BindConstantBuffersCommand
-{
-	inline GSBindConstantBuffersCommand(ConstantBuffer* const* InConstantBuffers, UInt32 InConstantBufferCount, UInt32 InStartSlot)
-		: BindConstantBuffersCommand(InConstantBuffers, InConstantBufferCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.GSBindConstantBuffers(
-			ConstantBuffers,
-			ConstantBufferCount,
-			StartSlot);
-	}
-};
-
-// GeometryShader Bind ShaderResourceViews RenderCommand
-struct GSBindShaderResourceViewsCommand : public BindShaderResourceViewsCommand
-{
-	inline GSBindShaderResourceViewsCommand(ShaderResourceView* const* InShaderResourceViews, UInt32 InShaderResourceViewCount, UInt32 InStartSlot)
-		: BindShaderResourceViewsCommand(InShaderResourceViews, InShaderResourceViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.GSBindShaderResourceViews(
-			ShaderResourceViews,
-			ShaderResourceViewCount,
-			StartSlot);
-	}
-};
-
-// GeometryShader Bind UnorderedAccessViews RenderCommand
-struct GSBindUnorderedAccessViewsCommand : public BindUnorderedAccessViewsCommand
-{
-	inline GSBindUnorderedAccessViewsCommand(UnorderedAccessView* const* InUnorderedAccessViews, UInt32 InUnorderedAccessViewCount, UInt32 InStartSlot)
-		: BindUnorderedAccessViewsCommand(InUnorderedAccessViews, InUnorderedAccessViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.GSBindUnorderedAccessViews(
-			UnorderedAccessViews,
-			UnorderedAccessViewCount,
-			StartSlot);
-	}
-};
-
-// PixelShader Bind ConstantBuffers RenderCommand
-struct PSBindConstantBuffersCommand : public BindConstantBuffersCommand
-{
-	inline PSBindConstantBuffersCommand(ConstantBuffer* const* InConstantBuffers, UInt32 InConstantBufferCount, UInt32 InStartSlot)
-		: BindConstantBuffersCommand(InConstantBuffers, InConstantBufferCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.PSBindConstantBuffers(
-			ConstantBuffers,
-			ConstantBufferCount,
-			StartSlot);
-	}
-};
-
-// PixelShader Bind ShaderResourceViews RenderCommand
-struct PSBindShaderResourceViewsCommand : public BindShaderResourceViewsCommand
-{
-	inline PSBindShaderResourceViewsCommand(ShaderResourceView* const* InShaderResourceViews, UInt32 InShaderResourceViewCount, UInt32 InStartSlot)
-		: BindShaderResourceViewsCommand(InShaderResourceViews, InShaderResourceViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.PSBindShaderResourceViews(
-			ShaderResourceViews,
-			ShaderResourceViewCount,
-			StartSlot);
-	}
-};
-
-// PixelShader Bind UnorderedAccessViews RenderCommand
-struct PSBindUnorderedAccessViewsCommand : public BindUnorderedAccessViewsCommand
-{
-	inline PSBindUnorderedAccessViewsCommand(UnorderedAccessView* const* InUnorderedAccessViews, UInt32 InUnorderedAccessViewCount, UInt32 InStartSlot)
-		: BindUnorderedAccessViewsCommand(InUnorderedAccessViews, InUnorderedAccessViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.PSBindUnorderedAccessViews(
-			UnorderedAccessViews,
-			UnorderedAccessViewCount,
-			StartSlot);
-	}
-};
-
-// ComputeShader Bind ConstantBuffers RenderCommand
-struct CSBindConstantBuffersCommand : public BindConstantBuffersCommand
-{
-	inline CSBindConstantBuffersCommand(ConstantBuffer* const* InConstantBuffers, UInt32 InConstantBufferCount, UInt32 InStartSlot)
-		: BindConstantBuffersCommand(InConstantBuffers, InConstantBufferCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.CSBindConstantBuffers(
-			ConstantBuffers,
-			ConstantBufferCount,
-			StartSlot);
-	}
-};
-
-// ComputeShader Bind ShaderResourceViews RenderCommand
-struct CSBindShaderResourceViewsCommand : public BindShaderResourceViewsCommand
-{
-	inline CSBindShaderResourceViewsCommand(ShaderResourceView* const* InShaderResourceViews, UInt32 InShaderResourceViewCount, UInt32 InStartSlot)
-		: BindShaderResourceViewsCommand(InShaderResourceViews, InShaderResourceViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.CSBindShaderResourceViews(
-			ShaderResourceViews,
-			ShaderResourceViewCount,
-			StartSlot);
-	}
-};
-
-// ComputeShader Bind UnorderedAccessViews RenderCommand
-struct CSBindUnorderedAccessViewsCommand : public BindUnorderedAccessViewsCommand
-{
-	inline CSBindUnorderedAccessViewsCommand(UnorderedAccessView* const* InUnorderedAccessViews, UInt32 InUnorderedAccessViewCount, UInt32 InStartSlot)
-		: BindUnorderedAccessViewsCommand(InUnorderedAccessViews, InUnorderedAccessViewCount, InStartSlot)
-	{
-	}
-
-	virtual void Execute(ICommandContext& CmdContext) const override
-	{
-		CmdContext.CSBindUnorderedAccessViews(
-			UnorderedAccessViews,
-			UnorderedAccessViewCount,
-			StartSlot);
-	}
+	EShaderStage ShaderStage;
+	SamplerState* const* SamplerStates;
+	UInt32 SamplerStateCount;
+	UInt32 StartSlot;
 };
 
 // Resolve Texture RenderCommand

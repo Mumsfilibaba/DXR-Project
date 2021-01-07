@@ -8,7 +8,6 @@
 #include "Core.h"
 
 class D3D12CommandList;
-class D3D12DescriptorTable;
 class Material;
 
 /*
@@ -82,22 +81,22 @@ struct BindingTableEntry
 public:
 	BindingTableEntry()
 		: ShaderExportName()
-		, DescriptorTable0(nullptr)
-		, DescriptorTable1(nullptr)
+		//, DescriptorTable0(nullptr)
+		//, DescriptorTable1(nullptr)
 	{
 	}
 
-	BindingTableEntry(std::string InShaderExportName, TSharedPtr<D3D12DescriptorTable> InDescriptorTable0, TSharedPtr<D3D12DescriptorTable> InDescriptorTable1)
-		: ShaderExportName(InShaderExportName)
-		, DescriptorTable0(InDescriptorTable0)
-		, DescriptorTable1(InDescriptorTable1)
-	{
-	}
+	//BindingTableEntry(std::string InShaderExportName, TSharedPtr<D3D12DescriptorTable> InDescriptorTable0, TSharedPtr<D3D12DescriptorTable> InDescriptorTable1)
+	//	: ShaderExportName(InShaderExportName)
+	//	, DescriptorTable0(InDescriptorTable0)
+	//	, DescriptorTable1(InDescriptorTable1)
+	//{
+	//}
 
 	std::string ShaderExportName;
 
-	TSharedPtr<D3D12DescriptorTable> DescriptorTable0;
-	TSharedPtr<D3D12DescriptorTable> DescriptorTable1;
+	//TSharedPtr<D3D12DescriptorTable> DescriptorTable0;
+	//TSharedPtr<D3D12DescriptorTable> DescriptorTable1;
 };
 
 /*

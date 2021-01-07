@@ -6,6 +6,18 @@
 class D3D12RootSignature;
 
 /*
+* Default Root Signature defines
+*/
+
+#define D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER		0
+#define D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER			1
+#define D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER		2
+#define D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER		3
+#define D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER				4
+#define D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_COUNT				16
+#define D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT				16
+
+/*
 * D3D12DefaultRootSignatures
 */
 
@@ -16,7 +28,7 @@ struct D3D12DefaultRootSignatures
 	TSharedPtr<D3D12RootSignature> GlobalRayTracing;
 	TSharedPtr<D3D12RootSignature> LocalRayTracing;
 
-	bool Init(class D3D12Device* Device);
+	bool CreateRootSignatures(class D3D12Device* Device);
 };
 
 /*

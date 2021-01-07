@@ -20,8 +20,8 @@ public:
 	static void SetCurrent(Game* InCurrentGame);
 
 private:
-	Scene*	CurrentScene = nullptr;
-	Camera* CurrentCamera = nullptr;
+	Scene*	CurrentScene	= nullptr;
+	Camera* CurrentCamera	= nullptr;
 
 	static Game* CurrentGame;
 };

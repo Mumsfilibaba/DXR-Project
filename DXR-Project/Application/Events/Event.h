@@ -62,7 +62,7 @@ enum EEventCategory : UInt8
 	} \
 
 /*
-* Base Event
+* Event
 */
 
 struct Event

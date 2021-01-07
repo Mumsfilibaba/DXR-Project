@@ -12,4 +12,3 @@ extern class GenericApplication* GlobalPlatformApplication;
 
 extern class GenericRenderingAPI*	GlobalRenderingAPI;
 extern class IShaderCompiler*		GlobalShaderCompiler;
-extern class ICommandContext*		GlobalCommandContext;

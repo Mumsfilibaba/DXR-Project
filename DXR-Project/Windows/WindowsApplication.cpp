@@ -7,10 +7,14 @@
 #include "Application/Generic/GenericApplication.h"
 
 /*
-* WindowsApplication
+* Globals
 */
 
 WindowsApplication* GlobalWindowsApplication = nullptr;
+
+/*
+* WindowsApplication
+*/
 
 GenericApplication* WindowsApplication::Make()
 {
@@ -398,7 +402,6 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 			return ::DefWindowProc(hWnd, uMessage, wParam, lParam);
 		}
 	}
-
 }
 
 LRESULT WindowsApplication::MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
