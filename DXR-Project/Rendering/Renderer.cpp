@@ -2749,15 +2749,15 @@ bool Renderer::InitIntegrationLUT()
 		StagingTexture->SetName("Staging IntegrationLUT");
 	}
 
-	TSharedRef<UnorderedAccessView> Uav = RenderingAPI::CreateUnorderedAccessView(StagingTexture.Get(), LUTFormat, 0);
-	if (!Uav)
+	TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderingAPI::CreateUnorderedAccessView(StagingTexture.Get(), LUTFormat, 0);
+	if (!StagingTextureUAV)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 	else
 	{
-		Uav->SetName("IntegrationLUT UAV");
+		StagingTextureUAV->SetName("IntegrationLUT UAV");
 	}
 
 	IntegrationLUT = RenderingAPI::CreateTexture2D(
@@ -2815,16 +2815,59 @@ bool Renderer::InitIntegrationLUT()
 	ComputePipelineStateCreateInfo PSOInfo;
 	PSOInfo.Shader = CShader.Get();
 
-	TUniquePtr<ComputePipelineState> PSO = TUniquePtr(RenderingAPI::CreateComputePipelineState(PSOInfo));
-	if (!PSO)
+	TSharedRef<ComputePipelineState> BRDFPSO = RenderingAPI::CreateComputePipelineState(PSOInfo);
+	if (!BRDFPSO)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 	else
 	{
-		PSO->SetName("BRDFIntegationGen PipelineState");
+		BRDFPSO->SetName("BRDFIntegationGen PipelineState");
 	}
+
+	CmdList.Begin();
+
+	CmdList.TransitionTexture(
+		StagingTexture.Get(),
+		EResourceState::ResourceState_Common,
+		EResourceState::ResourceState_UnorderedAccess);
+
+	CmdList.BindComputePipelineState(BRDFPSO.Get());
+
+	CmdList.BindUnorderedAccessViews(
+		EShaderStage::ShaderStage_Compute,
+		&StagingTextureUAV, 1, 0);
+
+	const UInt32 DispatchWidth	= Math::DivideByMultiple(LUTSize, 1);
+	const UInt32 DispatchHeight	= Math::DivideByMultiple(LUTSize, 1);
+	CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+
+	CmdList.UnorderedAccessTextureBarrier(StagingTexture.Get());
+
+	CmdList.TransitionTexture(
+		StagingTexture.Get(),
+		EResourceState::ResourceState_UnorderedAccess,
+		EResourceState::ResourceState_CopySource);
+
+	CmdList.TransitionTexture(
+		IntegrationLUT.Get(),
+		EResourceState::ResourceState_Common,
+		EResourceState::ResourceState_CopyDest);
+
+	CmdList.CopyTexture(IntegrationLUT.Get(), StagingTexture.Get());
+
+	CmdList.TransitionTexture(
+		IntegrationLUT.Get(),
+		EResourceState::ResourceState_CopyDest,
+		EResourceState::ResourceState_PixelShaderResource);
+
+	CmdList.DestroyResource(StagingTexture.Get());
+	CmdList.DestroyResource(StagingTextureUAV.Get());
+	CmdList.DestroyResource(BRDFPSO.Get());
+
+	CmdList.End();
+	CommandListExecutor::ExecuteCommandList(CmdList);
 
 	return true;
 }
