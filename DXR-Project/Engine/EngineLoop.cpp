@@ -60,7 +60,7 @@ bool EngineLoop::Initialize()
 	GlobalCursors::Initialize();
 
 	// RenderAPI
-	if (!RenderingAPI::Initialize(ERenderingAPI::RenderingAPI_D3D12, App->GetMainWindow()))
+	if (!RenderingAPI::Initialize(ERenderingAPI::RenderingAPI_D3D12))
 	{
 		return false;
 	}
@@ -72,8 +72,8 @@ bool EngineLoop::Initialize()
 	}
 
 	// Renderer
-	Renderer* Renderer = Renderer::Make();
-	if (!Renderer)
+	GlobalRenderer = new Renderer();
+	if (!GlobalRenderer->Init())
 	{
 		PlatformDialogMisc::MessageBox("ERROR", "FAILED to create Renderer");
 		return false;
@@ -124,7 +124,7 @@ void EngineLoop::Tick()
 	Game::GetCurrent().Tick(GlobalClock.GetDeltaTime());
 
 	// Update renderer
-	Renderer::Get()->Tick(*Scene::GetCurrentScene());
+	GlobalRenderer->Tick(*Scene::GetCurrentScene());
 
 	// Update editor
 	Editor::Tick();
@@ -138,11 +138,6 @@ void EngineLoop::PostTick()
 void EngineLoop::PreRelease()
 {
 	TextureFactory::Release();
-
-	delete GlobalPlatformApplication;
-	GlobalPlatformApplication = nullptr;
-
-	GlobalOutputDevices::Release();
 }
 
 void EngineLoop::Release()
@@ -153,12 +148,14 @@ void EngineLoop::Release()
 
 	DebugUI::Release();
 
-	Renderer::Release();
+	SAFEDELETE(GlobalRenderer);
 }
 
 void EngineLoop::PostRelease()
 {
-	// Empty for now
+	SAFEDELETE(GlobalPlatformApplication);
+
+	GlobalOutputDevices::Release();
 }
 
 void EngineLoop::Exit()

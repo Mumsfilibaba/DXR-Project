@@ -232,28 +232,28 @@ static void DrawRenderSettings()
 	ImGui::Indent();
 	ImGui::Text("Resolution: %d x %d", WindowShape.Width, WindowShape.Height);
 
-	bool Enabled = Renderer::Get()->IsPrePassEnabled();
+	bool Enabled = GlobalRenderer->IsPrePassEnabled();
 	if (ImGui::Checkbox("Enable Z-PrePass", &Enabled))
 	{
-		Renderer::Get()->SetPrePassEnable(Enabled);
+		GlobalRenderer->SetPrePassEnable(Enabled);
 	}
 
-	Enabled = Renderer::Get()->IsVerticalSyncEnabled();
+	Enabled = GlobalRenderer->IsVerticalSyncEnabled();
 	if (ImGui::Checkbox("Enable VSync", &Enabled))
 	{
-		Renderer::Get()->SetVerticalSyncEnable(Enabled);
+		GlobalRenderer->SetVerticalSyncEnable(Enabled);
 	}
 
-	Enabled = Renderer::Get()->IsFrustumCullEnabled();
+	Enabled = GlobalRenderer->IsFrustumCullEnabled();
 	if (ImGui::Checkbox("Enable Frustum Culling", &Enabled))
 	{
-		Renderer::Get()->SetFrustumCullEnable(Enabled);
+		GlobalRenderer->SetFrustumCullEnable(Enabled);
 	}
 
-	Enabled = Renderer::Get()->IsDrawAABBsEnabled();
+	Enabled = GlobalRenderer->IsDrawAABBsEnabled();
 	if (ImGui::Checkbox("Draw AABBs", &Enabled))
 	{
-		Renderer::Get()->SetDrawAABBsEnable(Enabled);
+		GlobalRenderer->SetDrawAABBsEnable(Enabled);
 	}
 
 	static const Char* AAItems[] =
@@ -263,7 +263,7 @@ static void DrawRenderSettings()
 	};
 
 	static Int32 CurrentItem = 0;
-	if (Renderer::Get()->IsFXAAEnabled())
+	if (GlobalRenderer->IsFXAAEnabled())
 	{
 		CurrentItem = 1;
 	}
@@ -276,11 +276,11 @@ static void DrawRenderSettings()
 	{
 		if (CurrentItem == 0)
 		{
-			Renderer::Get()->SetFXAAEnable(false);
+			GlobalRenderer->SetFXAAEnable(false);
 		}
 		else if (CurrentItem == 1)
 		{
-			Renderer::Get()->SetFXAAEnable(true);
+			GlobalRenderer->SetFXAAEnable(true);
 		}
 	}
 
@@ -299,7 +299,7 @@ static void DrawRenderSettings()
 		"256x256"
 	};
 
-	LightSettings Settings = Renderer::GetGlobalLightSettings();
+	LightSettings Settings = GlobalRenderer->GetLightSettings();
 	if (Settings.ShadowMapWidth == 8192)
 	{
 		CurrentItem = 0;
@@ -367,7 +367,7 @@ static void DrawRenderSettings()
 			Settings.ShadowMapHeight = 256;
 		}
 
-		Renderer::SetGlobalLightSettings(Settings);
+		GlobalRenderer->SetLightSettings(Settings);
 	}
 
 	ImGui::Spacing();
@@ -379,43 +379,43 @@ static void DrawRenderSettings()
 	// Text
 	ImGui::SetColumnWidth(0, 100.0f);
 
-	Enabled = Renderer::Get()->IsSSAOEnabled();
+	Enabled = GlobalRenderer->IsSSAOEnabled();
 	ImGui::Text("Enabled: ");
 	ImGui::NextColumn();
 
 	if (ImGui::Checkbox("##Enabled", &Enabled))
 	{
-		Renderer::Get()->SetSSAOEnable(Enabled);
+		GlobalRenderer->SetSSAOEnable(Enabled);
 	}
 
 	ImGui::NextColumn();
 	ImGui::Text("Radius: ");
 	ImGui::NextColumn();
 
-	Float Radius = Renderer::Get()->GetSSAORadius();
+	Float Radius = GlobalRenderer->GetSSAORadius();
 	if (ImGui::SliderFloat("##Radius", &Radius, 0.05f, 5.0f, "%.3f"))
 	{
-		Renderer::Get()->SetSSAORadius(Radius);
+		GlobalRenderer->SetSSAORadius(Radius);
 	}
 
 	ImGui::NextColumn();
 	ImGui::Text("Bias: ");
 	ImGui::NextColumn();
 
-	Float Bias = Renderer::Get()->GetSSAOBias();
+	Float Bias = GlobalRenderer->GetSSAOBias();
 	if (ImGui::SliderFloat("##Bias", &Bias, 0.0f, 0.5f, "%.3f"))
 	{
-		Renderer::Get()->SetSSAOBias(Bias);
+		GlobalRenderer->SetSSAOBias(Bias);
 	}
 
 	ImGui::NextColumn();
 	ImGui::Text("KernelSize: ");
 	ImGui::NextColumn();
 
-	Int32 KernelSize = Renderer::Get()->GetSSAOKernelSize();
+	Int32 KernelSize = GlobalRenderer->GetSSAOKernelSize();
 	if (ImGui::SliderInt("##KernelSize", &KernelSize, 4, 64))
 	{
-		Renderer::Get()->SetSSAOKernelSize(KernelSize);
+		GlobalRenderer->SetSSAOKernelSize(KernelSize);
 	}
 
 	ImGui::Columns(1);

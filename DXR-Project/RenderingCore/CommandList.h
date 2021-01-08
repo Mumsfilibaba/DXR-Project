@@ -439,6 +439,7 @@ public:
 		UInt32 StartVertexLocation)
 	{
 		InsertCommand<DrawCommand>(VertexCount, StartVertexLocation);
+		DrawCallCount++;
 	}
 
 	FORCEINLINE void DrawIndexed(
@@ -450,6 +451,8 @@ public:
 			IndexCount, 
 			StartIndexLocation, 
 			BaseVertexLocation);
+
+		DrawCallCount++;
 	}
 
 	FORCEINLINE void DrawInstanced(
@@ -463,6 +466,8 @@ public:
 			InstanceCount,
 			StartVertexLocation,
 			StartInstanceLocation);
+
+		DrawCallCount++;
 	}
 
 	FORCEINLINE void DrawIndexedInstanced(
@@ -478,6 +483,8 @@ public:
 			StartIndexLocation,
 			BaseVertexLocation,
 			StartInstanceLocation);
+
+		DrawCallCount++;
 	}
 
 	/*
@@ -493,6 +500,8 @@ public:
 			ThreadGroupCountX, 
 			ThreadGroupCountY,
 			ThreadGroupCountZ);
+
+		DispatchCallCount++;
 	}
 
 	FORCEINLINE void DispatchRays(
@@ -535,7 +544,20 @@ public:
 			Last	= nullptr;
 		}
 
+		DrawCallCount		= 0;
+		DispatchCallCount	= 0;
+
 		CmdAllocator.Reset();
+	}
+
+	FORCEINLINE UInt32 GetDrawCallCount() const
+	{
+		return DrawCallCount;
+	}
+
+	FORCEINLINE UInt32 GetDispatchCallCount() const
+	{
+		return DispatchCallCount;
 	}
 
 private:
@@ -562,6 +584,11 @@ private:
 	LinearAllocator CmdAllocator;
 	RenderCommand* First;
 	RenderCommand* Last;
+
+	// TODO: Actually read statistics from the graphics API
+	UInt32 DrawCallCount		= 0;
+	UInt32 DispatchCallCount	= 0;
+
 	Bool IsRecording = false;
 };
 

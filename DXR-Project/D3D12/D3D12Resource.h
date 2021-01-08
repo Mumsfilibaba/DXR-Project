@@ -1,4 +1,6 @@
 #pragma once
+#include "Utilities/StringUtilities.h"
+
 #include "RenderingCore/Buffer.h"
 
 #include "D3D12DeviceChild.h"
@@ -13,7 +15,7 @@ class D3D12Resource : public D3D12DeviceChild
 
 public:
 	D3D12Resource(D3D12Device* InDevice);
-	virtual ~D3D12Resource();
+	virtual ~D3D12Resource() = default;
 
 	Void* Map(const Range* MappedRange);
 	void Unmap(const Range* WrittenRange);
@@ -55,7 +57,7 @@ public:
 	}
 
 protected:
-	Microsoft::WRL::ComPtr<ID3D12Resource> NativeResource;
+	TComPtr<ID3D12Resource> NativeResource;
 
 	D3D12_HEAP_TYPE				HeapType;
 	D3D12_RESOURCE_STATES		ResourceState;

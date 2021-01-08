@@ -15,13 +15,10 @@
 
 #include "RenderingCore/RenderingAPI.h"
 #include "RenderingCore/CommandList.h"
+#include "RenderingCore/Viewport.h"
 
 #include "Application/Events/EventQueue.h"
 #include "Application/Events/WindowEvent.h"
-
-class D3D12Texture;
-class D3D12GraphicsPipelineState;
-class D3D12RayTracingPipelineState;
 
 #define ENABLE_D3D12_DEBUG	0
 #define ENABLE_VSM			0
@@ -47,6 +44,8 @@ public:
 	Renderer();
 	~Renderer();
 	
+	bool Init();
+
 	void Tick(const Scene& CurrentScene);
 	
 	bool OnEvent(const Event& Event);
@@ -118,21 +117,14 @@ public:
 		return SSAOBias;
 	}
 
-	static void SetGlobalLightSettings(const LightSettings& InGlobalLightSettings);
+	void SetLightSettings(const LightSettings& InLightSettings);
 
-	static FORCEINLINE const LightSettings& GetGlobalLightSettings()
+	FORCEINLINE const LightSettings& GetLightSettings()
 	{
-		return GlobalLightSettings;
+		return CurrentLightSettings;
 	}
-
-	static Renderer* Make();
-	static Renderer* Get();
-
-	static void Release();
 	
 private:
-	bool Initialize();
-
 	bool InitRayTracing();
 	bool InitLightBuffers();
 	bool InitPrePass();
@@ -162,8 +154,6 @@ private:
 		UInt32 NumDestUAVs,
 		TextureCube* Dest,
 		CommandList& InCmdList);
-
-	void WaitForPendingFrames();
 
 	void TraceRays(Texture2D* BackBuffer, CommandList& InCmdList);
 
@@ -260,6 +250,8 @@ private:
 	TArray<MeshDrawCommand> DeferredVisibleCommands;
 	TArray<MeshDrawCommand> ForwardVisibleCommands;
 
+	TSharedRef<Viewport> MainWindowViewport;
+
 	Bool PrePassEnabled		= true;
 	Bool DrawAABBs			= false;
 	Bool VSyncEnabled		= false;
@@ -272,6 +264,5 @@ private:
 	Float SSAOBias		= 0.0f;
 	Int32 SSAOKernelSize = 64;
 
-	static LightSettings		GlobalLightSettings;
-	static TUniquePtr<Renderer> RendererInstance;
+	LightSettings CurrentLightSettings;
 };

@@ -113,8 +113,6 @@ void D3D12OfflineDescriptorHeap::AllocateHeap()
 	TSharedRef<D3D12DescriptorHeap> Heap = Device->CreateDescriptorHeap(Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 	if (Heap)
 	{
-		LOG_INFO("[D3D12OfflineDescriptorHeap]: Created DescriptorHeap");
-
 		if (!Name.empty())
 		{
 			std::string DbgName = Name + std::to_string(Heaps.Size());
@@ -122,10 +120,6 @@ void D3D12OfflineDescriptorHeap::AllocateHeap()
 		}
 
 		Heaps.EmplaceBack(Heap);
-	}
-	else
-	{
-		LOG_ERROR("[D3D12OfflineDescriptorHeap]: Failed to create DescriptorHeap");
 	}
 }
 
@@ -141,27 +135,66 @@ D3D12OnlineDescriptorHeap::D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt
 {
 }
 
-Bool D3D12OnlineDescriptorHeap::CreateHeap()
+Bool D3D12OnlineDescriptorHeap::Init()
 {
 	Heap = Device->CreateDescriptorHeap(Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 	if (Heap)
 	{
-		LOG_INFO("[D3D12OnlineDescriptorHeap]: Created DescriptorHeap");
 		return true;
 	}
 	else
 	{
-		LOG_ERROR("[D3D12OnlineDescriptorHeap]: FAILED to create DescriptorHeap");
 		return false;
 	}
 }
 
+void D3D12OnlineDescriptorHeap::Reset()
+{
+	if (!HeapPool.IsEmpty())
+	{
+		for (TSharedRef<D3D12DescriptorHeap>& CurrentHeap : DiscardedHeaps)
+		{
+			HeapPool.EmplaceBack(CurrentHeap);
+		}
+
+		DiscardedHeaps.Clear();
+	}
+	else
+	{
+		HeapPool.Swap(DiscardedHeaps);
+	}
+
+	CurrentHandle = 0;
+}
+
 UInt32 D3D12OnlineDescriptorHeap::AllocateHandles(UInt32 NumHandles)
 {
-	UInt32 Slot = CurrentSlot;
-	CurrentSlot += NumHandles;
+	VALIDATE(NumHandles <= DescriptorCount);
 
-	VALIDATE(CurrentSlot < DescriptorCount);
+	const UInt32 NewCurrentHandle = CurrentHandle + NumHandles;
+	if (NewCurrentHandle >= DescriptorCount)
+	{
+		DiscardedHeaps.EmplaceBack(Heap);
 
-	return Slot;
+		if (HeapPool.IsEmpty())
+		{
+			Heap = Device->CreateDescriptorHeap(Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+			if (!Heap)
+			{
+				Debug::DebugBreak();
+				return UInt32(-1);
+			}
+		}
+		else
+		{
+			Heap = HeapPool.Back();
+			HeapPool.PopBack();
+		}
+
+		CurrentHandle = 0;
+	}
+
+	const UInt32 Handle = CurrentHandle;
+	CurrentHandle += NumHandles;
+	return Handle;
 }

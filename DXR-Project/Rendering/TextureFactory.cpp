@@ -164,7 +164,7 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
 	CmdList.End();
 	CommandListExecutor::ExecuteCommandList(CmdList);
 
-	return Texture.ReleaseOwnerShip();
+	return Texture.ReleaseOwnership();
 }
 
 TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
@@ -282,5 +282,5 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
 	CmdList.End();
 	CommandListExecutor::ExecuteCommandList(CmdList);
 
-	return Texture.ReleaseOwnerShip();
+	return Texture.ReleaseOwnership();
 }

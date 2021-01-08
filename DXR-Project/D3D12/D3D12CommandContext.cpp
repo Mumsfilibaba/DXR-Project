@@ -175,36 +175,35 @@ void D3D12ShaderDescriptorTableState::CommitGraphicsDescriptorTables(
 	if (IsDirty)
 	{
 		InternalAllocateAndCopyDescriptorHandles(Device, ResourceDescriptorHeap, SamplerDescriptorHeap);
-
-		const UInt32 NumDescriptorHeaps = 2;
-		ID3D12DescriptorHeap* DescriptorHeaps[] =
-		{
-			ResourceDescriptorHeap.GetNativeHeap(),
-			SamplerDescriptorHeap.GetNativeHeap()
-		};
-		CmdList.SetDescriptorHeaps(DescriptorHeaps, NumDescriptorHeaps);
-
-		if (CBVDescriptorTable.OnlineHandleStart_GPU != 0)
-		{
-			CmdList.SetGraphicsRootDescriptorTable(CBVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER);
-		}
-
-		if (SRVDescriptorTable.OnlineHandleStart_GPU != 0)
-		{
-			CmdList.SetGraphicsRootDescriptorTable(SRVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER);
-		}
-
-		if (UAVDescriptorTable.OnlineHandleStart_GPU != 0)
-		{
-			CmdList.SetGraphicsRootDescriptorTable(UAVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER);
-		}
-
-		if (SamplerDescriptorTable.OnlineHandleStart_GPU != 0)
-		{
-			CmdList.SetGraphicsRootDescriptorTable(SamplerDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER);
-		}
-
 		IsDirty = false;
+	}
+
+	const UInt32 NumDescriptorHeaps = 2;
+	ID3D12DescriptorHeap* DescriptorHeaps[] =
+	{
+		ResourceDescriptorHeap.GetNativeHeap(),
+		SamplerDescriptorHeap.GetNativeHeap()
+	};
+	CmdList.SetDescriptorHeaps(DescriptorHeaps, NumDescriptorHeaps);
+
+	if (CBVDescriptorTable.OnlineHandleStart_GPU != 0)
+	{
+		CmdList.SetGraphicsRootDescriptorTable(CBVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER);
+	}
+
+	if (SRVDescriptorTable.OnlineHandleStart_GPU != 0)
+	{
+		CmdList.SetGraphicsRootDescriptorTable(SRVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER);
+	}
+
+	if (UAVDescriptorTable.OnlineHandleStart_GPU != 0)
+	{
+		CmdList.SetGraphicsRootDescriptorTable(UAVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER);
+	}
+
+	if (SamplerDescriptorTable.OnlineHandleStart_GPU != 0)
+	{
+		CmdList.SetGraphicsRootDescriptorTable(SamplerDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER);
 	}
 }
 
@@ -217,36 +216,35 @@ void D3D12ShaderDescriptorTableState::CommitComputeDescriptorTables(
 	if (IsDirty)
 	{
 		InternalAllocateAndCopyDescriptorHandles(Device, ResourceDescriptorHeap, SamplerDescriptorHeap);
-
-		const UInt32 NumDescriptorHeaps = 2;
-		ID3D12DescriptorHeap* DescriptorHeaps[] = 
-		{ 
-			ResourceDescriptorHeap.GetNativeHeap(),
-			SamplerDescriptorHeap.GetNativeHeap()
-		};
-		CmdList.SetDescriptorHeaps(DescriptorHeaps, NumDescriptorHeaps);
-
-		if (CBVDescriptorTable.OnlineHandleStart_GPU != 0)
-		{
-			CmdList.SetComputeRootDescriptorTable(CBVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER);
-		}
-
-		if (SRVDescriptorTable.OnlineHandleStart_GPU != 0)
-		{
-			CmdList.SetComputeRootDescriptorTable(SRVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER);
-		}
-
-		if (UAVDescriptorTable.OnlineHandleStart_GPU != 0)
-		{
-			CmdList.SetComputeRootDescriptorTable(UAVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER);
-		}
-
-		if (SamplerDescriptorTable.OnlineHandleStart_GPU != 0)
-		{
-			CmdList.SetComputeRootDescriptorTable(SamplerDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER);
-		}
-
 		IsDirty = false;
+	}
+
+	const UInt32 NumDescriptorHeaps = 2;
+	ID3D12DescriptorHeap* DescriptorHeaps[] = 
+	{ 
+		ResourceDescriptorHeap.GetNativeHeap(),
+		SamplerDescriptorHeap.GetNativeHeap()
+	};
+	CmdList.SetDescriptorHeaps(DescriptorHeaps, NumDescriptorHeaps);
+
+	if (CBVDescriptorTable.OnlineHandleStart_GPU != 0)
+	{
+		CmdList.SetComputeRootDescriptorTable(CBVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER);
+	}
+
+	if (SRVDescriptorTable.OnlineHandleStart_GPU != 0)
+	{
+		CmdList.SetComputeRootDescriptorTable(SRVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER);
+	}
+
+	if (UAVDescriptorTable.OnlineHandleStart_GPU != 0)
+	{
+		CmdList.SetComputeRootDescriptorTable(UAVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER);
+	}
+
+	if (SamplerDescriptorTable.OnlineHandleStart_GPU != 0)
+	{
+		CmdList.SetComputeRootDescriptorTable(SamplerDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER);
 	}
 }
 
@@ -255,66 +253,65 @@ void D3D12ShaderDescriptorTableState::InternalAllocateAndCopyDescriptorHandles(
 	D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
 	D3D12OnlineDescriptorHeap& SamplerDescriptorHeap)
 {
-	const UInt32 NumDescriptorHandles	= 1;
-	const UInt32 NumConstantBufferViews = CBVOfflineHandles.Size();
-	if (NumConstantBufferViews > 0)
-	{
-		CBVDescriptorTable.AllocateOnlineDescriptorHandles(ResourceDescriptorHeap, NumDescriptorHandles);
+	const UInt32 NumDescriptorHandles = D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT;
 
-		Device.CopyDescriptors(
-			1, 
-			&CBVDescriptorTable.OnlineHandleStart_CPU, 
-			&NumDescriptorHandles,
-			NumDescriptorHandles,
-			CBVOfflineHandles.Data(),
-			SrcRangeSizes.Data(),
-			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	{
+		const UInt32 NumResourceDescriptorHandles = NumDescriptorHandles * 3;
+		const UInt32 StartHandle = ResourceDescriptorHeap.AllocateHandles(NumResourceDescriptorHandles);
+
+		CBVDescriptorTable.SetStart(
+			ResourceDescriptorHeap.GetGPUDescriptorHandleAt(StartHandle),
+			ResourceDescriptorHeap.GetCPUDescriptorHandleAt(StartHandle));
+		SRVDescriptorTable.SetStart(
+			ResourceDescriptorHeap.GetGPUDescriptorHandleAt(StartHandle + NumDescriptorHandles),
+			ResourceDescriptorHeap.GetCPUDescriptorHandleAt(StartHandle + NumDescriptorHandles));
+		UAVDescriptorTable.SetStart(
+			ResourceDescriptorHeap.GetGPUDescriptorHandleAt(StartHandle + NumDescriptorHandles * 2),
+			ResourceDescriptorHeap.GetCPUDescriptorHandleAt(StartHandle + NumDescriptorHandles * 2));
 	}
 
-	const UInt32 NumShaderResourceViews = SRVOfflineHandles.Size();
-	if (NumShaderResourceViews > 0)
-	{
-		SRVDescriptorTable.AllocateOnlineDescriptorHandles(ResourceDescriptorHeap, NumDescriptorHandles);
+	Device.CopyDescriptors(
+		1, 
+		&CBVDescriptorTable.OnlineHandleStart_CPU, 
+		&NumDescriptorHandles,
+		NumDescriptorHandles,
+		CBVOfflineHandles.Data(),
+		SrcRangeSizes.Data(),
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		
-		Device.CopyDescriptors(
-			1,
-			&SRVDescriptorTable.OnlineHandleStart_CPU,
-			&NumDescriptorHandles,
-			NumDescriptorHandles,
-			SRVOfflineHandles.Data(),
-			SrcRangeSizes.Data(),
-			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
+	Device.CopyDescriptors(
+		1,
+		&SRVDescriptorTable.OnlineHandleStart_CPU,
+		&NumDescriptorHandles,
+		NumDescriptorHandles,
+		SRVOfflineHandles.Data(),
+		SrcRangeSizes.Data(),
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	const UInt32 NumUnorderedAccessViews = UAVOfflineHandles.Size();
-	if (NumUnorderedAccessViews > 0)
+	Device.CopyDescriptors(
+		1,
+		&UAVDescriptorTable.OnlineHandleStart_CPU,
+		&NumDescriptorHandles,
+		NumDescriptorHandles,
+		UAVOfflineHandles.Data(),
+		SrcRangeSizes.Data(),
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
 	{
-		UAVDescriptorTable.AllocateOnlineDescriptorHandles(ResourceDescriptorHeap, NumDescriptorHandles);
-		
-		Device.CopyDescriptors(
-			1,
-			&UAVDescriptorTable.OnlineHandleStart_CPU,
-			&NumDescriptorHandles,
-			NumDescriptorHandles,
-			UAVOfflineHandles.Data(),
-			SrcRangeSizes.Data(),
-			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		const UInt32 StartHandle = SamplerDescriptorHeap.AllocateHandles(NumDescriptorHandles);
+		SamplerDescriptorTable.SetStart(
+			SamplerDescriptorHeap.GetGPUDescriptorHandleAt(StartHandle),
+			SamplerDescriptorHeap.GetCPUDescriptorHandleAt(StartHandle));
 	}
 
-	const UInt32 NumSamplers = SamplerOfflineHandles.Size();
-	if (NumSamplers > 0)
-	{
-		SamplerDescriptorTable.AllocateOnlineDescriptorHandles(SamplerDescriptorHeap, NumDescriptorHandles);
-
-		Device.CopyDescriptors(
-			1,
-			&SamplerDescriptorTable.OnlineHandleStart_CPU,
-			&NumDescriptorHandles,
-			NumDescriptorHandles,
-			SamplerOfflineHandles.Data(),
-			SrcRangeSizes.Data(),
-			D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-	}
+	Device.CopyDescriptors(
+		1,
+		&SamplerDescriptorTable.OnlineHandleStart_CPU,
+		&NumDescriptorHandles,
+		NumDescriptorHandles,
+		SamplerOfflineHandles.Data(),
+		SrcRangeSizes.Data(),
+		D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 }
 
 /*
@@ -353,11 +350,11 @@ void D3D12ResourceBarrierBatcher::AddTransitionBarrier(
 	D3D12_RESOURCE_BARRIER Barrier;
 	Memory::Memzero(&Barrier);
 
-	Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	Barrier.Transition.pResource = Resource->GetNativeResource();
-	Barrier.Transition.StateAfter = AfterState;
-	Barrier.Transition.StateBefore = BeforeState;
-	Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	Barrier.Type					= D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	Barrier.Transition.pResource	= Resource->GetNativeResource();
+	Barrier.Transition.StateAfter	= AfterState;
+	Barrier.Transition.StateBefore	= BeforeState;
+	Barrier.Transition.Subresource	= D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
 	Barriers.EmplaceBack(Barrier);
 }
@@ -478,7 +475,7 @@ D3D12CommandContext::~D3D12CommandContext()
 	Flush();
 }
 
-Bool D3D12CommandContext::CreateResources()
+Bool D3D12CommandContext::Init()
 {
 	VALIDATE(CmdQueue != nullptr);
 
@@ -491,14 +488,19 @@ Bool D3D12CommandContext::CreateResources()
 			return false;
 		}
 
-		TSharedRef<D3D12OnlineDescriptorHeap> ResourceOnlineHeap = new D3D12OnlineDescriptorHeap(Device, 1024, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		if (!ResourceOnlineHeap->CreateHeap())
+		TSharedRef<D3D12OnlineDescriptorHeap> ResourceOnlineHeap = new D3D12OnlineDescriptorHeap(
+			Device, 
+			D3D12_DEFAULT_ONLINE_RESOURCE_DESCRIPTOR_HEAP_COUNT, 
+			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		if (!ResourceOnlineHeap->Init())
 		{
 			return false;
 		}
 
-		TSharedRef<D3D12OnlineDescriptorHeap> SamplerOnlineHeap = new D3D12OnlineDescriptorHeap(Device, 512, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-		if (!SamplerOnlineHeap->CreateHeap())
+		TSharedRef<D3D12OnlineDescriptorHeap> SamplerOnlineHeap = new D3D12OnlineDescriptorHeap(Device,
+			D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_HEAP_COUNT,
+			D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+		if (!SamplerOnlineHeap->Init())
 		{
 			return false;
 		}
@@ -714,6 +716,8 @@ void D3D12CommandContext::BindRenderTargets(
 	UInt32 RenderTargetCount, 
 	DepthStencilView* DepthStencilView)
 {
+	RenderTargetState.Reset();
+
 	for (UInt32 i = 0; i < RenderTargetCount; i++)
 	{
 		D3D12RenderTargetView* DxRenderTargetView = static_cast<D3D12RenderTargetView*>(RenderTargetViews[i]);

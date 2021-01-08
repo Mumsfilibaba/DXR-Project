@@ -11,7 +11,7 @@
 * RenderingAPI
 */
 
-bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindow> RenderWindow)
+bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI)
 {
 	// Select RenderingAPI
 	if (InRenderAPI == ERenderingAPI::RenderingAPI_D3D12)
@@ -43,7 +43,7 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindo
 #endif
 
 	// Init
-	if (GlobalRenderingAPI->Initialize(RenderWindow, EnableDebug))
+	if (GlobalRenderingAPI->Initialize(EnableDebug))
 	{
 		ICommandContext* CmdContext = GlobalRenderingAPI->GetDefaultCommandContext();
 		CommandListExecutor::SetContext(CmdContext);

@@ -1,6 +1,8 @@
 #pragma once
 #include "RenderingCore/PipelineState.h"
 
+#include "Utilities/StringUtilities.h"
+
 #include "D3D12DeviceChild.h"
 #include "D3D12Helpers.h"
 
@@ -35,8 +37,6 @@ public:
 		Desc.NumElements		= GetElementCount();
 		Desc.pInputElementDescs	= GetElementData();
 	}
-
-	~D3D12InputLayoutState() = default;
 
 	FORCEINLINE const D3D12_INPUT_ELEMENT_DESC* GetElementData() const
 	{
@@ -73,8 +73,6 @@ public:
 	{
 	}
 
-	~D3D12DepthStencilState() = default;
-
 	FORCEINLINE const D3D12_DEPTH_STENCIL_DESC& GetDesc() const
 	{
 		return Desc;
@@ -97,8 +95,6 @@ public:
 		, Desc(InDesc)
 	{
 	}
-
-	~D3D12RasterizerState() = default;
 
 	FORCEINLINE const D3D12_RASTERIZER_DESC& GetDesc() const
 	{
@@ -123,8 +119,6 @@ public:
 	{
 	}
 
-	~D3D12BlendState() = default;
-
 	FORCEINLINE const D3D12_BLEND_DESC& GetDesc() const
 	{
 		return Desc;
@@ -148,8 +142,6 @@ public:
 		, PipelineState(nullptr)
 	{
 	}
-
-	~D3D12GraphicsPipelineState() = default;
 
 	virtual void SetName(const std::string& Name) override final
 	{
@@ -186,8 +178,6 @@ public:
 		, PipelineState(nullptr)
 	{
 	}
-
-	~D3D12ComputePipelineState() = default;
 
 	virtual void SetName(const std::string& Name) override final
 	{

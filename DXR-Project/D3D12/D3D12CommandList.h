@@ -15,7 +15,7 @@ class D3D12ComputePipelineState;
 class D3D12CommandList : public D3D12RefCountedObject
 {
 public:
-	inline D3D12CommandList::D3D12CommandList(D3D12Device* InDevice, ID3D12GraphicsCommandList* InCmdList)
+	D3D12CommandList(D3D12Device* InDevice, ID3D12GraphicsCommandList* InCmdList)
 		: D3D12RefCountedObject(InDevice)
 		, CmdList(InCmdList)
 		, DXRCmdList(nullptr)
@@ -310,7 +310,7 @@ public:
 	}
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>	CmdList;
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	DXRCmdList;
+	TComPtr<ID3D12GraphicsCommandList>	CmdList;
+	TComPtr<ID3D12GraphicsCommandList4>	DXRCmdList;
 	Bool IsReady = false;
 };

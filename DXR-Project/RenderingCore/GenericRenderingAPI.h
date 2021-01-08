@@ -38,14 +38,14 @@ enum class ERenderingAPI : UInt32
 class GenericRenderingAPI
 {
 public:
-	inline GenericRenderingAPI(ERenderingAPI InAPI)
+	GenericRenderingAPI(ERenderingAPI InAPI)
 		: API(InAPI)
 	{
 	}
 
 	virtual ~GenericRenderingAPI() = default;
 
-	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) = 0;
+	virtual bool Initialize(bool EnableDebug) = 0;
 
 	/*
 	* Textures
@@ -432,8 +432,10 @@ public:
 	*/
 
 	virtual class Viewport* CreateViewport(
-		GenericWindow* Window, 
-		EFormat ColorFormat, 
+		GenericWindow* Window,
+		UInt32 Width,
+		UInt32 Height,
+		EFormat ColorFormat,
 		EFormat DepthFormat) const = 0;
 
 	/*

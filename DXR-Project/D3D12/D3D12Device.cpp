@@ -7,7 +7,6 @@
 #include "D3D12RootSignature.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12CommandQueue.h"
-#include "D3D12SwapChain.h"
 
 #include "Windows/Windows.h"
 #include "Windows/Windows.inl"
@@ -19,49 +18,40 @@
 * D3D12Device
 */
 
-D3D12Device::D3D12Device()
-	: RefCountedObject()
-	, Factory(nullptr)
+D3D12Device::D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation)
+	: Factory(nullptr)
 	, Adapter(nullptr)
 	, Device(nullptr)
 	, DXRDevice(nullptr)
+	, EnableDebugLayer(InEnableDebugLayer)
+	, EnableGPUValidation(InEnableGPUValidation)
 {
 }
 
 D3D12Device::~D3D12Device()
 {
-	using namespace Microsoft::WRL;
-
-	// Release
 	SAFERELEASE(GlobalResourceDescriptorHeap);
 	SAFERELEASE(GlobalRenderTargetDescriptorHeap);
 	SAFERELEASE(GlobalDepthStencilDescriptorHeap);
 	SAFERELEASE(GlobalSamplerDescriptorHeap);
 
-	if (DebugEnabled)
+	if (EnableDebugLayer)
 	{
-		ComPtr<ID3D12DebugDevice> DebugDevice;
-		if (SUCCEEDED(Device.As<ID3D12DebugDevice>(&DebugDevice)))
+		TComPtr<ID3D12DebugDevice> DebugDevice;
+		if (SUCCEEDED(Device.As(&DebugDevice)))
 		{
 			DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
 		}
 	}
 
-	// Close DLLs
-	::FreeLibrary(hDXGI);
-	::FreeLibrary(hD3D12);
+	::FreeLibrary(DXGILib);
+	::FreeLibrary(D3D12Lib);
 }
 
-bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
+bool D3D12Device::Init()
 {
-	using namespace Microsoft::WRL;
-
-	// Enable Debug
-	DebugEnabled = InDebugEnable;
-
-	// Load DLLs
-	hDXGI = ::LoadLibrary("dxgi.dll");
-	if (hDXGI == NULL)
+	DXGILib = ::LoadLibrary("dxgi.dll");
+	if (DXGILib == NULL)
 	{
 		PlatformDialogMisc::MessageBox("ERROR", "FAILED to load dxgi.dll");
 		return false;
@@ -71,8 +61,8 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 		LOG_INFO("Loaded dxgi.dll");
 	}
 
-	hD3D12 = ::LoadLibrary("d3d12.dll");
-	if (hD3D12 == NULL)
+	D3D12Lib = ::LoadLibrary("d3d12.dll");
+	if (D3D12Lib == NULL)
 	{
 		PlatformDialogMisc::MessageBox("ERROR", "FAILED to load d3d12.dll");
 		return false;
@@ -82,23 +72,35 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 		LOG_INFO("Loaded d3d12.dll");
 	}
 
-	// Load DXGI Functions
-	_CreateDXGIFactory2		= GetTypedProcAddress<PFN_CREATE_DXGI_FACTORY_2>(hDXGI, "CreateDXGIFactory2");
-	_DXGIGetDebugInterface1	= GetTypedProcAddress<PFN_DXGI_GET_DEBUG_INTERFACE_1>(hDXGI, "DXGIGetDebugInterface1");
+	CreateDXGIFactory2Func = GetTypedProcAddress<PFN_CREATE_DXGI_FACTORY_2>(
+		DXGILib, 
+		"CreateDXGIFactory2");
+	DXGIGetDebugInterface1Func = GetTypedProcAddress<PFN_DXGI_GET_DEBUG_INTERFACE_1>(
+		DXGILib, 
+		"DXGIGetDebugInterface1");
+	D3D12CreateDeviceFunc = GetTypedProcAddress<PFN_D3D12_CREATE_DEVICE>(
+		D3D12Lib, 
+		"D3D12CreateDevice");
+	D3D12GetDebugInterfaceFunc = GetTypedProcAddress<PFN_D3D12_GET_DEBUG_INTERFACE>(
+		D3D12Lib, 
+		"D3D12GetDebugInterface");
+	D3D12SerializeRootSignatureFunc = GetTypedProcAddress<PFN_D3D12_SERIALIZE_ROOT_SIGNATURE>(
+		D3D12Lib, 
+		"D3D12SerializeRootSignature");
+	D3D12SerializeVersionedRootSignatureFunc = GetTypedProcAddress<PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE>(
+		D3D12Lib, 
+		"D3D12SerializeVersionedRootSignature");
+	D3D12CreateRootSignatureDeserializerFunc = GetTypedProcAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>(
+		D3D12Lib, 
+		"D3D12CreateRootSignatureDeserializer");
+	D3D12CreateVersionedRootSignatureDeserializerFunc = GetTypedProcAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>(
+		D3D12Lib, 
+		"D3D12CreateVersionedRootSignatureDeserializer");
 
-	// Load D3D12 Functions
-	_D3D12CreateDevice		= GetTypedProcAddress<PFN_D3D12_CREATE_DEVICE>(hD3D12, "D3D12CreateDevice");
-	_D3D12GetDebugInterface	= GetTypedProcAddress<PFN_D3D12_GET_DEBUG_INTERFACE>(hD3D12, "D3D12GetDebugInterface");
-	_D3D12SerializeRootSignature			= GetTypedProcAddress<PFN_D3D12_SERIALIZE_ROOT_SIGNATURE>(hD3D12, "D3D12SerializeRootSignature");
-	_D3D12SerializeVersionedRootSignature	= GetTypedProcAddress<PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE>(hD3D12, "D3D12SerializeVersionedRootSignature");
-	_D3D12CreateRootSignatureDeserializer	= GetTypedProcAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>(hD3D12, "D3D12CreateRootSignatureDeserializer");
-	_D3D12CreateVersionedRootSignatureDeserializer	= GetTypedProcAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>(hD3D12, "D3D12CreateVersionedRootSignatureDeserializer");
-
-	// Enable debuglayer
-	if (DebugEnabled)
+	if (EnableDebugLayer)
 	{
-		ComPtr<ID3D12Debug> DebugInterface;
-		if (FAILED(_D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
+		TComPtr<ID3D12Debug> DebugInterface;
+		if (FAILED(D3D12GetDebugInterfaceFunc(IID_PPV_ARGS(&DebugInterface))))
 		{
 			LOG_ERROR("[D3D12Device]: FAILED to enable DebugLayer");
 			return false;
@@ -108,10 +110,10 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 			DebugInterface->EnableDebugLayer();
 		}
 
-		if (GPUValidation)
+		if (EnableGPUValidation)
 		{
-			ComPtr<ID3D12Debug1> DebugInterface1;
-			if (FAILED(DebugInterface.As<ID3D12Debug1>(&DebugInterface1)))
+			TComPtr<ID3D12Debug1> DebugInterface1;
+			if (FAILED(DebugInterface.As(&DebugInterface1)))
 			{
 				LOG_ERROR("[D3D12Device]: FAILED to enable GPU- Validation");
 				return false;
@@ -122,8 +124,8 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 			}
 		}
 
-		ComPtr<IDXGIInfoQueue> InfoQueue;
-		if (SUCCEEDED(_DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
+		TComPtr<IDXGIInfoQueue> InfoQueue;
+		if (SUCCEEDED(DXGIGetDebugInterface1Func(0, IID_PPV_ARGS(&InfoQueue))))
 		{
 			InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
 			InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
@@ -135,7 +137,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	}
 
 	// Create factory
-	if (FAILED(_CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
+	if (FAILED(CreateDXGIFactory2Func(0, IID_PPV_ARGS(&Factory))))
 	{
 		LOG_ERROR("[D3D12Device]: FAILED to create factory");
 		return false;
@@ -143,7 +145,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	else
 	{
 		// Retrive newer factory interface
-		ComPtr<IDXGIFactory5> Factory5;
+		TComPtr<IDXGIFactory5> Factory5;
 		if (FAILED(Factory.As(&Factory5)))
 		{
 			LOG_ERROR("[D3D12Device]: FAILED to retrive IDXGIFactory5");
@@ -167,7 +169,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	}
 
 	// Choose adapter
-	ComPtr<IDXGIAdapter1> TempAdapter;
+	TComPtr<IDXGIAdapter1> TempAdapter;
 	for (UINT ID = 0; DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters1(ID, &TempAdapter); ID++)
 	{
 		DXGI_ADAPTER_DESC1 Desc;
@@ -184,7 +186,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 		}
 
 		// Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-		if (SUCCEEDED(_D3D12CreateDevice(TempAdapter.Get(), MinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+		if (SUCCEEDED(D3D12CreateDeviceFunc(TempAdapter.Get(), MinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
 		{
 			AdapterID = ID;
 
@@ -207,7 +209,7 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	}
 
 	// Create Device
-	if (FAILED(_D3D12CreateDevice(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
+	if (FAILED(D3D12CreateDeviceFunc(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
 	{
 		PlatformDialogMisc::MessageBox("ERROR", "FAILED to create device");
 		return false;
@@ -218,9 +220,9 @@ bool D3D12Device::CreateDevice(bool InDebugEnable, bool GPUValidation)
 	}
 
 	// Configure debug device (if active).
-	if (DebugEnabled)
+	if (EnableDebugLayer)
 	{
-		ComPtr<ID3D12InfoQueue> InfoQueue;
+		TComPtr<ID3D12InfoQueue> InfoQueue;
 		if (SUCCEEDED(Device.As(&InfoQueue)))
 		{
 			InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
@@ -420,12 +422,10 @@ D3D12CommandList* D3D12Device::CreateCommandList(D3D12_COMMAND_LIST_TYPE Type, D
 
 D3D12RootSignature* D3D12Device::CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 {
-	using namespace Microsoft::WRL;
-
-	ComPtr<ID3DBlob> ErrorBlob;
-	ComPtr<ID3DBlob> SignatureBlob;
+	TComPtr<ID3DBlob> ErrorBlob;
+	TComPtr<ID3DBlob> SignatureBlob;
 	
-	HRESULT hResult = _D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
+	HRESULT hResult = D3D12SerializeRootSignatureFunc(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
 	if (FAILED(hResult))
 	{
 		LOG_ERROR("[D3D12Device]: FAILED to Serialize RootSignature");
@@ -489,27 +489,14 @@ D3D12DescriptorHeap* D3D12Device::CreateDescriptorHeap(
 	}
 	else
 	{
-		LOG_INFO("[D3D12Device]: Created RootSignature");
+		LOG_INFO("[D3D12Device]: Created DescriptorHeap");
 		return new D3D12DescriptorHeap(this, Heap);
-	}
-}
-
-D3D12SwapChain* D3D12Device::CreateSwapChain(WindowsWindow* pWindow, D3D12CommandQueue* Queue)
-{
-	D3D12SwapChain* SwapChain = new D3D12SwapChain(this);
-	if (!SwapChain->CreateSwapChain(Factory.Get(), pWindow, Queue))
-	{
-		return nullptr;
-	}
-	else
-	{
-		return SwapChain;
 	}
 }
 
 Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount)
 {
-	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data = { };
+	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data;
 	Memory::Memzero(&Data);
 
 	Data.Flags			= D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;

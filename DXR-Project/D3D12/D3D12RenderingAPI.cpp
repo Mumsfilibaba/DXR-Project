@@ -1,5 +1,7 @@
 #include "Containers/TUniquePtr.h"
 
+#include "Windows/WindowsWindow.h"
+
 #include "D3D12RenderingAPI.h"
 #include "D3D12Texture.h"
 #include "D3D12Buffer.h"
@@ -13,11 +15,11 @@
 #include "D3D12RayTracingScene.h"
 #include "D3D12RootSignature.h"
 #include "D3D12Views.h"
-#include "D3D12SwapChain.h"
 #include "D3D12Helpers.h"
 #include "D3D12ShaderCompiler.h"
 #include "D3D12Shader.h"
 #include "D3D12SamplerState.h"
+#include "D3D12Viewport.h"
 
 #include <algorithm>
 
@@ -27,7 +29,6 @@
 
 D3D12RenderingAPI::D3D12RenderingAPI()
 	: GenericRenderingAPI(ERenderingAPI::RenderingAPI_D3D12)
-	, SwapChain(nullptr)
 	, Device(nullptr)
 	, DirectCmdQueue(nullptr)
 	, DirectCmdContext(nullptr)
@@ -36,14 +37,14 @@ D3D12RenderingAPI::D3D12RenderingAPI()
 
 D3D12RenderingAPI::~D3D12RenderingAPI()
 {
-	SwapChain.Reset();
+	delete Device;
 }
 
-bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> InRenderWindow, bool EnableDebug)
+bool D3D12RenderingAPI::Initialize(bool EnableDebug)
 {
 	// Create device
-	Device = new D3D12Device();
-	if (!Device->CreateDevice(EnableDebug, true))
+	Device = new D3D12Device(EnableDebug, EnableDebug ? true : false);
+	if (!Device->Init())
 	{
 		return false;
 	}
@@ -56,27 +57,17 @@ bool D3D12RenderingAPI::Initialize(TSharedRef<GenericWindow> InRenderWindow, boo
 	}
 
 	// Create default rootsignatures
-	if (!DefaultRootSignatures.CreateRootSignatures(Device.Get()))
+	if (!DefaultRootSignatures.CreateRootSignatures(Device))
 	{
 		return false;
 	}
 
 	// Create commandcontext
-	DirectCmdContext = new D3D12CommandContext(Device.Get(), DirectCmdQueue, DefaultRootSignatures);
-	if (!DirectCmdContext->CreateResources())
+	DirectCmdContext = new D3D12CommandContext(Device, DirectCmdQueue, DefaultRootSignatures);
+	if (!DirectCmdContext->Init())
 	{
 		return false;
 	}
-
-	// Create swapchain
-	TSharedRef<WindowsWindow> Window = StaticCast<WindowsWindow>(InRenderWindow);
-	SwapChain = Device->CreateSwapChain(Window.Get(), DirectCmdQueue.Get());
-	if (!SwapChain)
-	{
-		return false;
-	}
-
-	// TODO: Create RenderTargets
 
 	return true;
 }
@@ -238,7 +229,7 @@ SamplerState* D3D12RenderingAPI::CreateSamplerState() const
 	// TODO: Finish this function
 	VALIDATE(false);
 
-	return new D3D12SamplerState(Device.Get(), Device->GetGlobalSamplerDescriptorHeap(), Desc);
+	return new D3D12SamplerState(Device, Device->GetGlobalSamplerDescriptorHeap(), Desc);
 }
 
 /*
@@ -315,7 +306,7 @@ ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(const ResourceData* Init
 	ViewDesc.BufferLocation	= NewBuffer->GetGPUVirtualAddress();
 	ViewDesc.SizeInBytes	= NewBuffer->GetAllocatedSize();
 
-	D3D12ConstantBufferView* View = new D3D12ConstantBufferView(Device.Get(), NewBuffer, ViewDesc);
+	D3D12ConstantBufferView* View = new D3D12ConstantBufferView(Device, NewBuffer, ViewDesc);
 	NewBuffer->View = View;
 	return NewBuffer;
 }
@@ -1274,14 +1265,14 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 
 ComputeShader* D3D12RenderingAPI::CreateComputeShader(const TArray<UInt8>& ShaderCode) const
 {
-	D3D12ComputeShader* Shader = new D3D12ComputeShader(Device.Get(), ShaderCode);
+	D3D12ComputeShader* Shader = new D3D12ComputeShader(Device, ShaderCode);
 	Shader->CreateRootSignature();
 	return Shader;
 }
 
 VertexShader* D3D12RenderingAPI::CreateVertexShader(const TArray<UInt8>& ShaderCode) const
 {
-	return new D3D12VertexShader(Device.Get(), ShaderCode);
+	return new D3D12VertexShader(Device, ShaderCode);
 }
 
 HullShader* D3D12RenderingAPI::CreateHullShader(const TArray<UInt8>& ShaderCode) const
@@ -1316,7 +1307,7 @@ AmplificationShader* D3D12RenderingAPI::CreateAmplificationShader(const TArray<U
 
 PixelShader* D3D12RenderingAPI::CreatePixelShader(const TArray<UInt8>& ShaderCode) const
 {
-	return new D3D12PixelShader(Device.Get(), ShaderCode);
+	return new D3D12PixelShader(Device, ShaderCode);
 }
 
 RayGenShader* D3D12RenderingAPI::CreateRayGenShader(const TArray<UInt8>& ShaderCode) const
@@ -1352,7 +1343,7 @@ DepthStencilState* D3D12RenderingAPI::CreateDepthStencilState(
 	Desc.FrontFace			= ConvertDepthStencilOp(CreateInfo.FrontFace);
 	Desc.BackFace			= ConvertDepthStencilOp(CreateInfo.BackFace);
 
-	return new D3D12DepthStencilState(Device.Get(), Desc);
+	return new D3D12DepthStencilState(Device, Desc);
 }
 
 RasterizerState* D3D12RenderingAPI::CreateRasterizerState(
@@ -1376,7 +1367,7 @@ RasterizerState* D3D12RenderingAPI::CreateRasterizerState(
 	Desc.FrontCounterClockwise	= CreateInfo.FrontCounterClockwise;
 	Desc.MultisampleEnable		= CreateInfo.MultisampleEnable;
 
-	return new D3D12RasterizerState(Device.Get(), Desc);
+	return new D3D12RasterizerState(Device, Desc);
 }
 
 BlendState* D3D12RenderingAPI::CreateBlendState(
@@ -1401,13 +1392,13 @@ BlendState* D3D12RenderingAPI::CreateBlendState(
 		Desc.RenderTarget[i].RenderTargetWriteMask	= ConvertRenderTargetWriteState(CreateInfo.RenderTarget[i].RenderTargetWriteMask);
 	}
 
-	return new D3D12BlendState(Device.Get(), Desc);
+	return new D3D12BlendState(Device, Desc);
 }
 
 InputLayoutState* D3D12RenderingAPI::CreateInputLayout(
 	const InputLayoutStateCreateInfo& CreateInfo) const
 {
-	return new D3D12InputLayoutState(Device.Get(), CreateInfo);
+	return new D3D12InputLayoutState(Device, CreateInfo);
 }
 
 GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
@@ -1578,7 +1569,7 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
 	HRESULT hResult = Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
 	if (SUCCEEDED(hResult))
 	{
-		D3D12GraphicsPipelineState* Pipeline = new D3D12GraphicsPipelineState(Device.Get());
+		D3D12GraphicsPipelineState* Pipeline = new D3D12GraphicsPipelineState(Device);
 		Pipeline->PipelineState = PipelineState;
 
 		// TODO: This should be refcounted
@@ -1640,7 +1631,7 @@ ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(
 	HRESULT hResult = Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
 	if (SUCCEEDED(hResult))
 	{
-		D3D12ComputePipelineState* Pipeline = new D3D12ComputePipelineState(Device.Get());
+		D3D12ComputePipelineState* Pipeline = new D3D12ComputePipelineState(Device);
 		Pipeline->PipelineState = PipelineState;
 
 		// TODO: This should be refcounted
@@ -1666,11 +1657,40 @@ RayTracingPipelineState* D3D12RenderingAPI::CreateRayTracingPipelineState() cons
 */
 
 Viewport* D3D12RenderingAPI::CreateViewport(
-	GenericWindow* Window, 
+	GenericWindow* Window,
+	UInt32 Width,
+	UInt32 Height,
 	EFormat ColorFormat, 
 	EFormat DepthFormat) const
 {
-	return nullptr;
+	// TODO: Take DepthFormat into account
+
+	TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>(Window);
+	if (Width == 0)
+	{
+		Width = WinWindow->GetWidth();
+	}
+
+	if (Height == 0)
+	{
+		Height = WinWindow->GetHeight();
+	}
+
+	TSharedRef<D3D12Viewport> Viewport = new D3D12Viewport(
+		Device, 
+		DirectCmdContext.Get(), 
+		WinWindow->GetHandle(), 
+		Width,
+		Height,
+		ColorFormat);
+	if (Viewport->Init())
+	{
+		return Viewport.ReleaseOwnership();
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 
 /*

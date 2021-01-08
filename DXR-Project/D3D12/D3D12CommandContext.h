@@ -95,7 +95,7 @@ public:
 		}
 		else
 		{
-			RenderTargetViewHandles[Slot] = {0};
+			RenderTargetViewHandles[Slot] = { 0 };
 		}
 	}
 
@@ -107,14 +107,14 @@ public:
 		}
 		else
 		{
-			DepthStencilViewHandle = {0};
+			DepthStencilViewHandle = { 0 };
 		}
 	}
 
 	FORCEINLINE void Reset()
 	{
 		RenderTargetViewHandles.Clear();
-		DepthStencilViewHandle = {0};
+		DepthStencilViewHandle = { 0 };
 	}
 
 	FORCEINLINE const D3D12_CPU_DESCRIPTOR_HANDLE* GetRenderTargetViewHandles() const
@@ -155,13 +155,12 @@ class D3D12ShaderDescriptorTableState
 		D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandleStart_GPU = { 0 };
 		D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandleStart_CPU = { 0 };
 
-		FORCEINLINE void AllocateOnlineDescriptorHandles(
-			D3D12OnlineDescriptorHeap& DescriptorHeap, 
-			const UInt32 NumOnlineDescriptorHandles)
+		FORCEINLINE void SetStart(
+			D3D12_GPU_DESCRIPTOR_HANDLE InOnlineHandleStart_GPU,
+			D3D12_CPU_DESCRIPTOR_HANDLE InOnlineHandleStart_CPU)
 		{
-			const UInt32 StartHandleIndex = DescriptorHeap.AllocateHandles(NumOnlineDescriptorHandles);
-			OnlineHandleStart_GPU = DescriptorHeap.GetGPUDescriptorHandleAt(StartHandleIndex);
-			OnlineHandleStart_CPU = DescriptorHeap.GetCPUDescriptorHandleAt(StartHandleIndex);
+			OnlineHandleStart_GPU = InOnlineHandleStart_GPU;
+			OnlineHandleStart_CPU = InOnlineHandleStart_CPU;
 		}
 
 		FORCEINLINE void Reset()
@@ -263,7 +262,7 @@ public:
 
 	FORCEINLINE UInt32 GetOffsetInBytesFromPtr(Byte* Ptr) const
 	{
-		return Ptr - MappedMemory;
+		return UInt32(Ptr - MappedMemory);
 	}
 
 	FORCEINLINE UInt32 GetSizeInBytes() const
@@ -275,8 +274,8 @@ private:
 	Byte* MappedMemory		= nullptr;
 	UInt32 SizeInBytes		= 0;
 	UInt32 OffsetInBytes	= 0;
-	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
-	TArray<Microsoft::WRL::ComPtr<ID3D12Resource>> GarbageResources;
+	TComPtr<ID3D12Resource> Resource;
+	TArray<TComPtr<ID3D12Resource>> GarbageResources;
 };
 
 /*
@@ -416,9 +415,16 @@ public:
 		D3D12Device* InDevice, 
 		TSharedRef<D3D12CommandQueue>& InCmdQueue, 
 		const D3D12DefaultRootSignatures& InDefaultRootSignatures);
+	
 	~D3D12CommandContext();
 
-	Bool CreateResources();
+	Bool Init();
+
+	FORCEINLINE D3D12CommandQueue& GetQueue() const
+	{
+		VALIDATE(CmdQueue != nullptr);
+		return *CmdQueue;
+	}
 
 	FORCEINLINE D3D12CommandList& GetCommandList() const
 	{
@@ -622,9 +628,9 @@ public:
 	virtual void Flush()		override final;
 
 private:
-	TSharedRef<D3D12CommandQueue> CmdQueue;
-	TSharedRef<D3D12CommandList> CmdList;
-	TSharedRef<class D3D12Fence> Fence;
+	TSharedRef<D3D12CommandQueue>	CmdQueue;
+	TSharedRef<D3D12CommandList>	CmdList;
+	TSharedRef<class D3D12Fence>	Fence;
 	UInt64 FenceValue = 0;
 
 	TArray<D3D12CommandBatch> CmdBatches;

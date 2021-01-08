@@ -48,7 +48,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 		EngineLoop::PostTick();
 	}
 
-	// Relrase minor resources
+	// Release minor resources
 	EngineLoop::PreRelease();
 	// Main release of resources
 	EngineLoop::Release();

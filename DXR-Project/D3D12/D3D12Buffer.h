@@ -12,7 +12,7 @@ class D3D12ConstantBufferView;
 class D3D12Buffer : public D3D12Resource
 {
 public:
-	inline D3D12Buffer::D3D12Buffer(D3D12Device* InDevice)
+	D3D12Buffer::D3D12Buffer(D3D12Device* InDevice)
 		: D3D12Resource(InDevice)
 	{
 	}
@@ -32,14 +32,13 @@ class D3D12VertexBuffer : public VertexBuffer, public D3D12Buffer
 	friend class D3D12RenderingAPI;
 
 public:
-	inline D3D12VertexBuffer::D3D12VertexBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InStride, UInt32 InUsage)
+	D3D12VertexBuffer::D3D12VertexBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InStride, UInt32 InUsage)
 		: VertexBuffer(InSizeInBytes, InStride, InUsage)
 		, D3D12Buffer(InDevice)
 		, VertexBufferView()
 	{
 	}
 
-	// Map
 	virtual Void* Map(const Range* MappedRange) override
 	{
 		return D3D12Resource::Map(MappedRange);
@@ -78,14 +77,13 @@ class D3D12IndexBuffer : public IndexBuffer, public D3D12Buffer
 	friend class D3D12RenderingAPI;
 
 public:
-	inline D3D12IndexBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, EIndexFormat InIndexFormat, UInt32 InUsage)
+	D3D12IndexBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, EIndexFormat InIndexFormat, UInt32 InUsage)
 		: IndexBuffer(InSizeInBytes, InIndexFormat, InUsage)
 		, D3D12Buffer(InDevice)
 		, IndexBufferView()
 	{
 	}
 
-	// Map
 	virtual Void* Map(const Range* MappedRange) override
 	{
 		return D3D12Resource::Map(MappedRange);
@@ -124,14 +122,13 @@ class D3D12ConstantBuffer : public ConstantBuffer, public D3D12Buffer
 	friend class D3D12RenderingAPI;
 
 public:
-	inline D3D12ConstantBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InUsage)
+	D3D12ConstantBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InUsage)
 		: ConstantBuffer(InSizeInBytes, InUsage)
 		, D3D12Buffer(InDevice)
 		, View(nullptr)
 	{
 	}
 
-	// Map
 	virtual Void* Map(const Range* MappedRange) override
 	{
 		return D3D12Resource::Map(MappedRange);
@@ -170,13 +167,12 @@ class D3D12StructuredBuffer : public StructuredBuffer, public D3D12Buffer
 	friend class D3D12RenderingAPI;
 
 public:
-	inline D3D12StructuredBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InStride, UInt32 InUsage)
+	D3D12StructuredBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InStride, UInt32 InUsage)
 		: StructuredBuffer(InSizeInBytes, InStride, InUsage)
 		, D3D12Buffer(InDevice)
 	{
 	}
 
-	// Map
 	virtual Void* Map(const Range* MappedRange) override
 	{
 		return D3D12Resource::Map(MappedRange);

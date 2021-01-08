@@ -3,7 +3,7 @@
 #include <d3d12.h>
 #include <dxcapi.h>
 
-#include <wrl/client.h>
+#include "D3D12Helpers.h"
 
 #include "Core/RefCountedObject.h"
 
@@ -25,13 +25,13 @@ typedef HRESULT(WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1)(UINT Flags, REFIID riid,
 * D3D12Device
 */
 
-class D3D12Device : public RefCountedObject
+class D3D12Device
 {
 public:
-	D3D12Device();
+	D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation);
 	~D3D12Device();
 
-	bool CreateDevice(bool DebugEnable, bool GPUValidation);
+	bool Init();
 
 	class D3D12CommandQueue*		CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type);
 	class D3D12CommandAllocator*	CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type);
@@ -41,8 +41,7 @@ public:
 		D3D12CommandAllocator* Allocator, 
 		ID3D12PipelineState* InitalPipeline);
 
-	class D3D12Fence*		CreateFence(UInt64 InitalValue);
-	class D3D12SwapChain*	CreateSwapChain(class WindowsWindow* Window, D3D12CommandQueue* Queue);
+	class D3D12Fence*	CreateFence(UInt64 InitalValue);
 	D3D12RootSignature* CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc);
 	D3D12RootSignature* CreateRootSignature(IDxcBlob* ShaderBlob);
 	D3D12RootSignature* CreateRootSignature(Void* RootSignatureData, const UInt32 RootSignatureSize);
@@ -88,7 +87,7 @@ public:
 		REFIID RootSignatureDeserializerInterface,
 		void** RootSignatureDeserializer)
 	{
-		return _D3D12CreateRootSignatureDeserializer(
+		return D3D12CreateRootSignatureDeserializerFunc(
 			SrcData,
 			SrcDataSizeInBytes, 
 			RootSignatureDeserializerInterface,
@@ -101,7 +100,7 @@ public:
 		REFIID RootSignatureDeserializerInterface,
 		void** RootSignatureDeserializer)
 	{
-		return _D3D12CreateVersionedRootSignatureDeserializer(
+		return D3D12CreateVersionedRootSignatureDeserializerFunc(
 			SrcData,
 			SrcDataSizeInBytes,
 			RootSignatureDeserializerInterface,
@@ -264,30 +263,26 @@ public:
 		return GlobalSamplerDescriptorHeap;
 	}
 
+	PFN_CREATE_DXGI_FACTORY_2								CreateDXGIFactory2Func								= nullptr;
+	PFN_DXGI_GET_DEBUG_INTERFACE_1							DXGIGetDebugInterface1Func							= nullptr;
+	PFN_D3D12_CREATE_DEVICE									D3D12CreateDeviceFunc								= nullptr;
+	PFN_D3D12_GET_DEBUG_INTERFACE							D3D12GetDebugInterfaceFunc							= nullptr;
+	PFN_D3D12_SERIALIZE_ROOT_SIGNATURE						D3D12SerializeRootSignatureFunc						= nullptr;
+	PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER			D3D12CreateRootSignatureDeserializerFunc			= nullptr;
+	PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE			D3D12SerializeVersionedRootSignatureFunc			= nullptr;
+	PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER	D3D12CreateVersionedRootSignatureDeserializerFunc	= nullptr;
+
 private:
-	Microsoft::WRL::ComPtr<IDXGIFactory2>	Factory;
-	Microsoft::WRL::ComPtr<IDXGIAdapter1>	Adapter;
-	Microsoft::WRL::ComPtr<ID3D12Device>	Device;
-	Microsoft::WRL::ComPtr<ID3D12Device5>	DXRDevice;
+	TComPtr<IDXGIFactory2>	Factory;
+	TComPtr<IDXGIAdapter1>	Adapter;
+	TComPtr<ID3D12Device>	Device;
+	TComPtr<ID3D12Device5>	DXRDevice;
 
 	D3D_FEATURE_LEVEL MinFeatureLevel		= D3D_FEATURE_LEVEL_11_0;
 	D3D_FEATURE_LEVEL ActiveFeatureLevel	= D3D_FEATURE_LEVEL_11_0;
 
-	// DLL Handles
-	HMODULE hDXGI	= 0;
-	HMODULE hD3D12	= 0;
-
-	// DXGI Functions loaded from DLLs
-	PFN_CREATE_DXGI_FACTORY_2		_CreateDXGIFactory2		= nullptr;
-	PFN_DXGI_GET_DEBUG_INTERFACE_1	_DXGIGetDebugInterface1	= nullptr;
-
-	// D3D12 Functions loaded from DLLs
-	PFN_D3D12_CREATE_DEVICE			_D3D12CreateDevice		= nullptr;
-	PFN_D3D12_GET_DEBUG_INTERFACE	_D3D12GetDebugInterface	= nullptr;
-	PFN_D3D12_SERIALIZE_ROOT_SIGNATURE				_D3D12SerializeRootSignature			= nullptr;
-	PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER	_D3D12CreateRootSignatureDeserializer	= nullptr;
-	PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE	_D3D12SerializeVersionedRootSignature	= nullptr;
-	PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER	_D3D12CreateVersionedRootSignatureDeserializer = nullptr;
+	HMODULE DXGILib		= 0;
+	HMODULE D3D12Lib	= 0;
 
 	D3D12OfflineDescriptorHeap* GlobalResourceDescriptorHeap		= nullptr;
 	D3D12OfflineDescriptorHeap* GlobalRenderTargetDescriptorHeap	= nullptr;
@@ -301,5 +296,6 @@ private:
 	Bool RayTracingSupported		= false;
 	Bool InlineRayTracingSupported	= false;
 	Bool AllowTearing				= false;
-	Bool DebugEnabled				= false;
+	Bool EnableDebugLayer			= false;
+	Bool EnableGPUValidation		= false;
 };

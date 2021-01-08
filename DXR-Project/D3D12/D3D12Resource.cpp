@@ -7,6 +7,7 @@
 
 D3D12Resource::D3D12Resource(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
+	, NativeResource()
 	, HeapType(D3D12_HEAP_TYPE_DEFAULT)
 	, ResourceState(D3D12_RESOURCE_STATE_COMMON)
 	, Desc()
@@ -14,26 +15,22 @@ D3D12Resource::D3D12Resource(D3D12Device* InDevice)
 {
 }
 
-D3D12Resource::~D3D12Resource()
-{
-}
-
 Void* D3D12Resource::Map(const Range* MappedRange)
 {
 	Void* MappedData = nullptr;
 
-	HRESULT hr = 0;
+	HRESULT Result = 0;
 	if (MappedRange)
 	{
 		D3D12_RANGE MapRange = { MappedRange->Offset, MappedRange->Offset + MappedRange->Size };
-		hr = NativeResource->Map(0, &MapRange, &MappedData);
+		Result = NativeResource->Map(0, &MapRange, &MappedData);
 	}
 	else
 	{
-		hr = NativeResource->Map(0, nullptr, &MappedData);
+		Result = NativeResource->Map(0, nullptr, &MappedData);
 	}
 
-	if (FAILED(hr))
+	if (FAILED(Result))
 	{
 		LOG_ERROR("[D3D12Resource::Map] Failed");
 		return nullptr;

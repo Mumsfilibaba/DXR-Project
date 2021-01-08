@@ -13,7 +13,7 @@ public:
 	* Creation
 	*/
 
-	static bool Initialize(ERenderingAPI InRenderAPI, TSharedRef<GenericWindow> RenderingWindow);
+	static bool Initialize(ERenderingAPI InRenderAPI);
 	static void Release();
 
 	/*
@@ -813,10 +813,17 @@ public:
 
 	FORCEINLINE static class Viewport* CreateViewport(
 		GenericWindow* Window,
+		UInt32 Width,
+		UInt32 Height,
 		EFormat ColorFormat,
 		EFormat DepthFormat)
 	{
-		return GlobalRenderingAPI->CreateViewport(Window, ColorFormat, DepthFormat);
+		return GlobalRenderingAPI->CreateViewport(
+			Window, 
+			Width,
+			Height,
+			ColorFormat, 
+			DepthFormat);
 	}
 
 	/*

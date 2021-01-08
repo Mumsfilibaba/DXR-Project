@@ -4,7 +4,6 @@
 #include "Windows/WindowsWindow.h"
 
 #include "D3D12Device.h"
-#include "D3D12SwapChain.h"
 #include "D3D12CommandContext.h"
 #include "D3D12Texture.h"
 
@@ -70,7 +69,7 @@ public:
 	D3D12RenderingAPI();
 	~D3D12RenderingAPI();
 
-	virtual bool Initialize(TSharedRef<GenericWindow> RenderWindow, bool EnableDebug) override final;
+	virtual bool Initialize(bool EnableDebug) override final;
 
 	/*
 	* Textures
@@ -458,6 +457,8 @@ public:
 
 	virtual class Viewport* CreateViewport(
 		GenericWindow* Window,
+		UInt32 Width,
+		UInt32 Height,
 		EFormat ColorFormat,
 		EFormat DepthFormat) const override final;
 
@@ -511,7 +512,7 @@ private:
 		TArgs&&... Args) const
 	{
 		// Create buffer object and get size to allocate
-		TD3D12Buffer* NewBuffer = new TD3D12Buffer(Device.Get(), Forward<TArgs>(Args)...);
+		TD3D12Buffer* NewBuffer = new TD3D12Buffer(Device, Forward<TArgs>(Args)...);
 		const UInt64 Alignment		= NewBuffer->GetRequiredAlignment();
 		const UInt64 SizeInBytes	= NewBuffer->GetSizeInBytes();
 		const UInt64 AlignedSize	= Math::AlignUp<UInt64>(SizeInBytes, Alignment);
@@ -550,7 +551,7 @@ private:
 		TArgs&&... Args) const
 	{
 		// Create texture and get texture properties
-		TD3D12Texture* NewTexture = new TD3D12Texture(Device.Get(), Forward<TArgs>(Args)...);
+		TD3D12Texture* NewTexture = new TD3D12Texture(Device, Forward<TArgs>(Args)...);
 		const UInt32	Usage	= NewTexture->GetUsage();
 		const EFormat	Format	= NewTexture->GetFormat();
 		const UInt32	Width	= NewTexture->GetWidth();
@@ -620,7 +621,7 @@ private:
 		}
 		else
 		{
-			return new D3D12ShaderResourceView(Device.Get(), Resource, Desc);
+			return new D3D12ShaderResourceView(Device, Resource, Desc);
 		}
 	}
 
@@ -635,7 +636,7 @@ private:
 		}
 		else
 		{
-			return new D3D12RenderTargetView(Device.Get(), Resource, Desc);
+			return new D3D12RenderTargetView(Device, Resource, Desc);
 		}
 	}
 
@@ -650,7 +651,7 @@ private:
 		}
 		else
 		{
-			return new D3D12DepthStencilView(Device.Get(), Resource, Desc);
+			return new D3D12DepthStencilView(Device, Resource, Desc);
 		}
 	}
 
@@ -666,13 +667,13 @@ private:
 		}
 		else
 		{
-			return new D3D12UnorderedAccessView(Device.Get(), CounterResource, Resource, Desc);
+			return new D3D12UnorderedAccessView(Device, CounterResource, Resource, Desc);
 		}
 	}
 
 private:
-	TSharedRef<D3D12SwapChain>		SwapChain;
-	TSharedRef<D3D12Device>			Device;
+	D3D12Device* Device;
+
 	TSharedRef<D3D12CommandQueue>	DirectCmdQueue;
 	TSharedRef<D3D12CommandContext>	DirectCmdContext;
 	D3D12DefaultRootSignatures		DefaultRootSignatures;

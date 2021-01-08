@@ -2,10 +2,20 @@
 #include "RenderingCore/Buffer.h"
 #include "RenderingCore/Texture.h"
 #include "RenderingCore/PipelineState.h"
+#include "RenderingCore/Shader.h"
 
 #include <d3d12.h>
 
+#include <wrl/client.h>
+
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
+
+/*
+* TComPtr - Typedef for comptr -> Less to write
+*/
+
+template<typename T>
+using TComPtr = Microsoft::WRL::ComPtr<T>;
 
 /*
 * Converts EBufferUsage- flags to D3D12_RESOURCE_FLAGS

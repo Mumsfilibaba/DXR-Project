@@ -8,22 +8,36 @@
 class Viewport : public PipelineResource
 {
 public:
-	virtual class Texture2D* GetSurface() const
+	inline Viewport(UInt32 InWidth, UInt32 InHeight, EFormat InPixelFormat)
+		: Width(InWidth)
+		, Height(InHeight)
+		, PixelFormat(InPixelFormat)
 	{
-		return nullptr;
 	}
+
+	virtual Bool Resize(UInt32 Width, UInt32 Height) = 0;
+	virtual Bool Present(Bool VerticalSync) = 0;
 
 	virtual class RenderTargetView* GetRenderTargetView() const = 0;
+	virtual class Texture2D* GetBackBuffer() const = 0;
 
-	virtual class GenericWindow* GetWindow() const = 0;
-
-	virtual UInt32 GetWidth() const
+	FORCEINLINE UInt32 GetWidth() const
 	{
-		return 0;
+		return Width;
 	}
 
-	virtual UInt32 GetHeight() const
+	FORCEINLINE UInt32 GetHeight() const
 	{
-		return 0;
+		return Height;
 	}
+
+	FORCEINLINE EFormat GetColorFormat() const
+	{
+		return PixelFormat;
+	}
+
+protected:
+	UInt32 Width;
+	UInt32 Height;
+	EFormat PixelFormat;
 };

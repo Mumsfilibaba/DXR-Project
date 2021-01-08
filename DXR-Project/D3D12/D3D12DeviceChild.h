@@ -1,11 +1,5 @@
 #pragma once
-#include "Core.h"
-
-#include "Utilities/StringUtilities.h"
-
-#include <d3d12.h>
-
-#include <wrl/client.h>
+#include "D3D12Helpers.h"
 
 class D3D12Device;
 

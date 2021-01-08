@@ -1,8 +1,10 @@
 #pragma once
+#include <Containers/TArray.h>
+
+#include "Utilities/StringUtilities.h"
+
 #include "D3D12RefCountedObject.h"
 #include "D3D12Device.h"
-
-#include <Containers/TArray.h>
 
 /*
 * D3D12DescriptorHeap
@@ -157,33 +159,16 @@ private:
 * D3D12OnlineDescriptorHeap
 */
 
-// TODO: Make sure that we can reallocate the onlineheap when needed
 class D3D12OnlineDescriptorHeap : public D3D12RefCountedObject
 {
 public:
 	D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
 
-	Bool CreateHeap();
+	Bool Init();
 
 	UInt32 AllocateHandles(UInt32 NumHandles);
-	
-	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE AllocateHandlesAndGetFirstGPUDescriptorHandle(UInt32 NumHandles)
-	{
-		if (NumHandles >= 1)
-		{
-			const UInt32 FirstHandle = AllocateHandles(NumHandles);
-			return GetGPUDescriptorHandleAt(FirstHandle);
-		}
-		else
-		{
-			return { 0 };
-		}
-	}
 
-	FORCEINLINE void Reset()
-	{
-		CurrentSlot = 0;
-	}
+	void Reset();
 
 	FORCEINLINE void SetName(const std::string& Name)
 	{
@@ -205,19 +190,22 @@ public:
 		return Heap->GetDescriptorHandleIncrementSize();
 	}
 	
-	FORCEINLINE D3D12DescriptorHeap* GetHeap() const
-	{
-		return Heap.Get();
-	}
-
 	FORCEINLINE ID3D12DescriptorHeap* GetNativeHeap() const
 	{
 		return Heap->GetHeap();
 	}
 
+	FORCEINLINE D3D12DescriptorHeap* GetHeap() const
+	{
+		return Heap.Get();
+	}
+
 private:
 	TSharedRef<D3D12DescriptorHeap> Heap;
+	TArray<TSharedRef<D3D12DescriptorHeap>> HeapPool;
+	TArray<TSharedRef<D3D12DescriptorHeap>> DiscardedHeaps;
+	
 	D3D12_DESCRIPTOR_HEAP_TYPE Type;
-	UInt32 CurrentSlot		= 0;
-	UInt32 DescriptorCount	= 0;
+	UInt32 CurrentHandle		= 0;
+	UInt32 DescriptorCount		= 0;
 };

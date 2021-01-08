@@ -11,17 +11,22 @@
 class D3D12SamplerState : public SamplerState, public D3D12DeviceChild
 {
 public:
-	inline D3D12SamplerState(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InOfflineHeap, const D3D12_SAMPLER_DESC& InDesc)
-		: D3D12DeviceChild(InDevice)
-		, SamplerState()
+	D3D12SamplerState(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InOfflineHeap, const D3D12_SAMPLER_DESC& InDesc)
+		: SamplerState()
+		, D3D12DeviceChild(InDevice)
 		, OfflineHeap(InOfflineHeap)
-		, OfflineHandle({0})
-		, Desc()
+		, OfflineHandle({ 0 })
+		, Desc(InDesc)
 	{
 		VALIDATE(InOfflineHeap !=  nullptr);
 		OfflineHandle = OfflineHeap->Allocate(OfflineHeapIndex);
 
 		CreateView(Desc);
+	}
+
+	~D3D12SamplerState()
+	{
+		//TODO: Free handle from heap
 	}
 
 	FORCEINLINE void CreateView(const D3D12_SAMPLER_DESC& InDesc)
