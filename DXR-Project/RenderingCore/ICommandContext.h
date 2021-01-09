@@ -222,4 +222,10 @@ public:
 
 	virtual void ClearState()	= 0;
 	virtual void Flush()		= 0;
+
+	/*
+	* Other
+	*/
+
+	virtual void InsertMarker(const std::string& Message) = 0;
 };

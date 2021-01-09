@@ -17,5 +17,8 @@ Build/
 Dependencies/bin/
 Dependencies/bin-int/
 
+#VS Packages
+packages/
+
 # macos files
 *.DS_Store

@@ -490,7 +490,8 @@ private:
 	bool AllocateTexture(
 		D3D12Resource& Resource,
 		D3D12_HEAP_TYPE HeapType,
-		D3D12_RESOURCE_STATES InitalState, 
+		D3D12_RESOURCE_STATES InitalState,
+		D3D12_CLEAR_VALUE* OptimizedClearValue,
 		const D3D12_RESOURCE_DESC& Desc) const;
 	
 	bool UploadBuffer(
@@ -550,17 +551,15 @@ private:
 		const ResourceData* InitalData,
 		TArgs&&... Args) const
 	{
-		// Create texture and get texture properties
 		TD3D12Texture* NewTexture = new TD3D12Texture(Device, Forward<TArgs>(Args)...);
-		const UInt32	Usage	= NewTexture->GetUsage();
 		const EFormat	Format	= NewTexture->GetFormat();
+		const UInt32	Usage	= NewTexture->GetUsage();
 		const UInt32	Width	= NewTexture->GetWidth();
 		const UInt32	Height	= NewTexture->GetHeight();
 		const UInt32	DepthOrArraySize = std::max(NewTexture->GetDepth(), NewTexture->GetArrayCount());
 		const UInt32	MipLevels	= NewTexture->GetMipLevels();
 		const UInt32	SampleCount = NewTexture->GetSampleCount();
 
-		// Setup desc
 		D3D12_RESOURCE_DESC Desc;
 		Memory::Memzero(&Desc);
 
@@ -584,20 +583,81 @@ private:
 			Desc.SampleDesc.Quality = 0;
 		}
 
-		// Allocate texture
 		D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_DEFAULT;
 		if (Usage & TextureUsage_Dynamic)
 		{
 			HeapType = D3D12_HEAP_TYPE_UPLOAD;
 		}
 
-		if (!AllocateTexture(*NewTexture, HeapType, D3D12_RESOURCE_STATE_COMMON, Desc))
+		D3D12_CLEAR_VALUE DxOptimizedClearValue;
+		Memory::Memzero(&DxOptimizedClearValue);
+
+		D3D12_CLEAR_VALUE* DxOptimizedClearValuePtr = nullptr;
+		if ((Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) ||
+			(Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
+		{
+			Bool IsTypeless = false;
+			switch (Desc.Format)
+			{
+				case DXGI_FORMAT_R32G32B32A32_TYPELESS:
+				case DXGI_FORMAT_R32G32B32_TYPELESS:
+				case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+				case DXGI_FORMAT_R32G32_TYPELESS:
+				case DXGI_FORMAT_R32G8X24_TYPELESS:
+				case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+				case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+				case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+				case DXGI_FORMAT_R16G16_TYPELESS:
+				case DXGI_FORMAT_R32_TYPELESS:
+				case DXGI_FORMAT_R24G8_TYPELESS:
+				case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+				case DXGI_FORMAT_R8G8_TYPELESS:
+				case DXGI_FORMAT_R16_TYPELESS:
+				case DXGI_FORMAT_R8_TYPELESS:
+				{
+					IsTypeless = true;
+					break;
+				}
+
+				default:
+				{
+					IsTypeless = false;
+					break;
+				}
+			};
+
+			if (!IsTypeless)
+			{
+				DxOptimizedClearValuePtr		= &DxOptimizedClearValue;
+				DxOptimizedClearValue.Format	= Desc.Format;
+
+				const ClearValue& OptimizedClearValue = NewTexture->GetOptimizedClearValue();
+				if (OptimizedClearValue.Type == EClearValueType::ClearValueType_Color)
+				{
+					Memory::Memcpy(
+						DxOptimizedClearValue.Color, 
+						OptimizedClearValue.Color.RGBA, 
+						sizeof(DxOptimizedClearValue.Color));
+				}
+				else
+				{
+					DxOptimizedClearValue.DepthStencil.Depth	= OptimizedClearValue.DepthStencil.Depth;
+					DxOptimizedClearValue.DepthStencil.Stencil	= OptimizedClearValue.DepthStencil.Stencil;
+				}
+			}
+		}
+
+		if (!AllocateTexture(
+			*NewTexture, 
+			HeapType, 
+			D3D12_RESOURCE_STATE_COMMON, 
+			DxOptimizedClearValuePtr,
+			Desc))
 		{
 			LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
 			return nullptr;
 		}
 
-		// Upload TextureData
 		if (InitalData)
 		{
 			UploadTexture(*NewTexture, InitalData);

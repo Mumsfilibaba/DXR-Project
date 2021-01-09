@@ -199,12 +199,13 @@ public:
 		UAVDescriptorTable.Reset();
 		SamplerDescriptorTable.Reset();
 
-		CBVOfflineHandles.Fill(DefaultConstantBufferView);
-		SRVOfflineHandles.Fill(DefaultShaderResourceView);
-		UAVOfflineHandles.Fill(DefaultUnorderedAccessView);
-		SamplerOfflineHandles.Fill(DefaultSamplerState);
+		CBVOfflineHandles.Fill(DefaultCBVOfflineHandle);
+		SRVOfflineHandles.Fill(DefaultSRVOfflineHandle);
+		UAVOfflineHandles.Fill(DefaultUAVOfflineHandle);
+		SamplerOfflineHandles.Fill(DefaultSamplerOfflineHandle);
 
-		IsDirty = false;
+		IsResourcesDirty	= true;
+		IsSamplersDirty		= true;
 	}
 
 private:
@@ -222,16 +223,18 @@ private:
 	TArray<D3D12_CPU_DESCRIPTOR_HANDLE> SamplerOfflineHandles;
 	DescriptorTable SamplerDescriptorTable;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE DefaultConstantBufferView;
-	D3D12_CPU_DESCRIPTOR_HANDLE DefaultShaderResourceView;
-	D3D12_CPU_DESCRIPTOR_HANDLE DefaultUnorderedAccessView;
-	D3D12_CPU_DESCRIPTOR_HANDLE DefaultSamplerState;
+	D3D12_CPU_DESCRIPTOR_HANDLE DefaultCBVOfflineHandle;
+	D3D12_CPU_DESCRIPTOR_HANDLE DefaultSRVOfflineHandle;
+	D3D12_CPU_DESCRIPTOR_HANDLE DefaultUAVOfflineHandle;
+	D3D12_CPU_DESCRIPTOR_HANDLE DefaultSamplerOfflineHandle;
 
 	TSharedRef<D3D12DescriptorHeap> DefaultResourceHeap;
 	TSharedRef<D3D12DescriptorHeap> DefaultSamplerHeap;
+	TStaticArray<ID3D12DescriptorHeap*, 2> DescriptorHeaps;
 
 	TArray<UInt32> SrcRangeSizes;
-	Bool IsDirty = false;
+	Bool IsResourcesDirty	= false;
+	Bool IsSamplersDirty	= false;
 };
 
 /*
@@ -626,6 +629,12 @@ public:
 
 	virtual void ClearState()	override final;
 	virtual void Flush()		override final;
+
+	/*
+	* Other
+	*/
+
+	virtual void InsertMarker(const std::string& Message) override final;
 
 private:
 	TSharedRef<D3D12CommandQueue>	CmdQueue;

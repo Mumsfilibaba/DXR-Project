@@ -1762,14 +1762,14 @@ bool D3D12RenderingAPI::AllocateBuffer(
 	Desc.SampleDesc.Count		= 1;
 	Desc.SampleDesc.Quality		= 0;
 
-	HRESULT hr = Device->CreateCommitedResource(
+	HRESULT Result = Device->CreateCommitedResource(
 		&HeapProperties, 
 		D3D12_HEAP_FLAG_NONE, 
 		&Desc, 
 		InitalState,
 		nullptr, 
 		IID_PPV_ARGS(&Resource.NativeResource));
-	if (SUCCEEDED(hr))
+	if (SUCCEEDED(Result))
 	{
 		Resource.Address		= Resource.NativeResource->GetGPUVirtualAddress();
 		Resource.Desc			= Desc;
@@ -1787,24 +1787,25 @@ bool D3D12RenderingAPI::AllocateBuffer(
 bool D3D12RenderingAPI::AllocateTexture(
 	D3D12Resource& Resource, 
 	D3D12_HEAP_TYPE HeapType, 
-	D3D12_RESOURCE_STATES InitalState, 
+	D3D12_RESOURCE_STATES InitalState,
+	D3D12_CLEAR_VALUE* OptimizedClearValue,
 	const D3D12_RESOURCE_DESC& Desc) const
 {
 	D3D12_HEAP_PROPERTIES HeapProperties;
-	Memory::Memzero(&HeapProperties, sizeof(D3D12_HEAP_PROPERTIES));
+	Memory::Memzero(&HeapProperties);
 
 	HeapProperties.Type					= HeapType;
 	HeapProperties.CPUPageProperty		= D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	HeapProperties.MemoryPoolPreference	= D3D12_MEMORY_POOL_UNKNOWN;
 
-	HRESULT hr = Device->CreateCommitedResource(
+	HRESULT Result = Device->CreateCommitedResource(
 		&HeapProperties, 
 		D3D12_HEAP_FLAG_NONE, 
 		&Desc, 
 		InitalState, 
-		nullptr, 
+		OptimizedClearValue,
 		IID_PPV_ARGS(&Resource.NativeResource));
-	if (SUCCEEDED(hr))
+	if (SUCCEEDED(Result))
 	{
 		Resource.Address	= NULL;
 		Resource.Desc		= Desc;
@@ -1841,7 +1842,19 @@ bool D3D12RenderingAPI::UploadBuffer(Buffer& Buffer, UInt32 SizeInBytes, const R
 	}
 
 	DirectCmdContext->Begin();
+
+	DirectCmdContext->TransitionBuffer(
+		&Buffer,
+		EResourceState::ResourceState_Common,
+		EResourceState::ResourceState_CopyDest);
+	
 	DirectCmdContext->UpdateBuffer(&Buffer, 0, SizeInBytes, InitalData->Data);
+
+	DirectCmdContext->TransitionBuffer(
+		&Buffer,
+		EResourceState::ResourceState_CopyDest,
+		EResourceState::ResourceState_Common);
+
 	DirectCmdContext->End();
 
 	return true;

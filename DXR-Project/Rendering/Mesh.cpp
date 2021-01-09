@@ -12,7 +12,7 @@
 * Mesh
 */
 
-bool Mesh::Initialize(const MeshData& Data)
+bool Mesh::Init(const MeshData& Data)
 {
 	VertexCount = static_cast<UInt32>(Data.Vertices.Size());
 	IndexCount	= static_cast<UInt32>(Data.Indices.Size());
@@ -23,8 +23,9 @@ bool Mesh::Initialize(const MeshData& Data)
 		BufferUsage_Default;
 
 	// Create VertexBuffer
+	ResourceData InitialData(Data.Vertices.Data());
 	VertexBuffer = RenderingAPI::CreateVertexBuffer<Vertex>(
-		nullptr, 
+		&InitialData,
 		VertexCount, 
 		BufferUsage);
 	if (!VertexBuffer)
@@ -33,8 +34,9 @@ bool Mesh::Initialize(const MeshData& Data)
 	}
 
 	// Create IndexBuffer
+	InitialData = ResourceData(Data.Indices.Data());
 	IndexBuffer = RenderingAPI::CreateIndexBuffer(
-		nullptr, 
+		&InitialData,
 		IndexCount * sizeof(UInt32), 
 		EIndexFormat::IndexFormat_UInt32, 
 		BufferUsage);
@@ -81,7 +83,7 @@ bool Mesh::BuildAccelerationStructure(CommandList& CmdList)
 TSharedPtr<Mesh> Mesh::Make(const MeshData& Data)
 {
 	TSharedPtr<Mesh> Result = MakeShared<Mesh>();
-	if (Result->Initialize(Data))
+	if (Result->Init(Data))
 	{
 		return Result;
 	}

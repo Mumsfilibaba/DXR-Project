@@ -214,7 +214,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Properties.FarPlane			= PoiLight->GetShadowFarPlane();
 
 			constexpr UInt32 SizeInBytes = sizeof(PointLightProperties);
-			CmdList.UpdateBuffer(PointLightBuffer.Get(), 0, NumPointLights * SizeInBytes, &Properties);
+			CmdList.UpdateBuffer(
+				PointLightBuffer.Get(), 
+				NumPointLights* SizeInBytes, 
+				SizeInBytes, 
+				&Properties);
 
 			NumPointLights++;
 		}
@@ -231,7 +235,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Properties.MaxShadowBias	= DirLight->GetMaxShadowBias();
 
 			constexpr UInt32 SizeInBytes = sizeof(DirectionalLightProperties);
-			CmdList.UpdateBuffer(DirectionalLightBuffer.Get(), 0, NumDirLights * SizeInBytes, &Properties);
+			CmdList.UpdateBuffer(
+				DirectionalLightBuffer.Get(),
+				NumDirLights * SizeInBytes,
+				SizeInBytes,
+				&Properties);
 
 			NumDirLights++;
 		}
@@ -362,12 +370,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 				CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
 				CmdList.BindIndexBuffer(Command.IndexBuffer);
 
+				ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
+				ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
+
 				CmdList.Bind32BitShaderConstants(
 					EShaderStage::ShaderStage_Vertex,
 					&ShadowPerObjectBuffer, 17);
-
-				ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
-				ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
 
 				CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 			}
@@ -550,7 +558,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		0.0f);
 
 	CmdList.BindScissorRect(
-		RenderHeight,
+		RenderWidth,
 		RenderHeight,
 		0, 0);
 
@@ -622,16 +630,16 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Command.Material->BuildBuffer(CmdList);
 		}
 
-		ConstantBuffer* ConstantBuffers[] =
-		{
-			CameraBuffer.Get(),
-			Command.Material->GetMaterialBuffer()
-		};
-
 		CmdList.BindConstantBuffers(
 			EShaderStage::ShaderStage_Vertex,
-			ConstantBuffers,
+			&CameraBuffer,
 			1, 0);
+
+		ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
+		CmdList.BindConstantBuffers(
+			EShaderStage::ShaderStage_Pixel,
+			&MaterialBuffer,
+			1, 1);
 
 		TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
 		TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
@@ -1184,6 +1192,10 @@ bool Renderer::Init()
 	if (!MainWindowViewport)
 	{
 		return false;
+	}
+	else
+	{
+		MainWindowViewport->SetName("Main Window Viewport");
 	}
 
 	// Create mesh
@@ -1939,7 +1951,7 @@ bool Renderer::InitLightBuffers()
 		DirectionalLightBuffer->SetName("DirectionalLight Buffer");
 	}
 
-	PerShadowMapBuffer = RenderingAPI::CreateConstantBuffer<DirectionalLightProperties>(
+	PerShadowMapBuffer = RenderingAPI::CreateConstantBuffer<PerShadowMap>(
 		nullptr,
 		NumDirLights,
 		BufferUsage_Default);

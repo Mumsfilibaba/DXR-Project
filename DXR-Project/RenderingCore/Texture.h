@@ -190,6 +190,11 @@ public:
 		return Usage & TextureUsage_DSV;
 	}
 
+	FORCEINLINE const ClearValue& GetOptimizedClearValue() const
+	{
+		return OptimizedClearValue;
+	}
+
 protected:
 	EFormat Format;
 	UInt32	Usage;

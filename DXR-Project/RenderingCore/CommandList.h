@@ -320,7 +320,7 @@ public:
 			Destination, 
 			DestinationOffsetInBytes, 
 			SizeInBytes, 
-			SourceData);
+			TempSourceData);
 	}
 
 	FORCEINLINE void UpdateTexture2D(
@@ -340,7 +340,7 @@ public:
 			Width,
 			Height,
 			MipLevel,
-			SourceData);
+			TempSourceData);
 	}
 
 	FORCEINLINE void CopyBuffer(

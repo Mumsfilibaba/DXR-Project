@@ -16,7 +16,7 @@
 class Mesh
 {
 public:
-	bool Initialize(const MeshData& Data);
+	bool Init(const MeshData& Data);
 	
 	bool BuildAccelerationStructure(CommandList& CmdList);
 

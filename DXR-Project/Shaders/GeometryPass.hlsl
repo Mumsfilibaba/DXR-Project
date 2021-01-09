@@ -1,5 +1,8 @@
 #include "PBRCommon.hlsli"
 
+#define ENABLE_PARALLAX_MAPPING	1 
+#define ENABLE_NORMAL_MAPPING	1 
+
 #if ENABLE_PARALLAX_MAPPING
 #define PARALLAX_MAPPING_ENABLED
 #endif

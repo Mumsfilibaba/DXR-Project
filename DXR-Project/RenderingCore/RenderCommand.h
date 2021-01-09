@@ -564,6 +564,7 @@ struct UpdateBufferCommand : public RenderCommand
 	{
 		VALIDATE(InDestination != nullptr);
 		VALIDATE(InSourceData != nullptr);
+		VALIDATE(InSizeInBytes != 0);
 	}
 
 	inline ~UpdateBufferCommand()
@@ -1004,10 +1005,10 @@ struct InsertCommandListMarkerCommand : public RenderCommand
 
 	virtual void Execute(ICommandContext& CmdContext) const override
 	{
-		UNREFERENCED_VARIABLE(CmdContext);
-
 		Debug::OutputDebugString(Marker + '\n');
 		LOG_INFO(Marker);
+
+		CmdContext.InsertMarker(Marker);
 	}
 
 	std::string Marker;

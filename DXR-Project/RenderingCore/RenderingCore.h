@@ -200,34 +200,45 @@ struct DepthStencilClearValue
 };
 
 /*
+* EClearValueType
+*/
+
+enum class EClearValueType : Byte
+{
+	ClearValueType_Unknown		= 0,
+	ClearValueType_Color		= 1,
+	ClearValueType_DepthStencil	= 2,
+};
+
+/*
 * ClearValue
 */
 
 struct ClearValue
 {
-	inline ClearValue()
+	ClearValue()
 		: Color()
-		, HasClearColor(true)
+		, Type(EClearValueType::ClearValueType_Color)
 	{
 	}
 
-	inline ClearValue(const ColorClearValue& InClearColor)
+	ClearValue(const ColorClearValue& InClearColor)
 		: Color(InClearColor)
-		, HasClearColor(true)
+		, Type(EClearValueType::ClearValueType_Color)
 	{
 	}
 
-	inline ClearValue(const DepthStencilClearValue& InDepthStencil)
+	ClearValue(const DepthStencilClearValue& InDepthStencil)
 		: DepthStencil(InDepthStencil)
-		, HasClearColor(false)
+		, Type(EClearValueType::ClearValueType_DepthStencil)
 	{
 	}
 
-	inline ClearValue(const ClearValue& Other)
+	ClearValue(const ClearValue& Other)
 		: Color()
-		, HasClearColor(Other.HasClearColor)
+		, Type(Other.Type)
 	{
-		if (HasClearColor)
+		if (Type == EClearValueType::ClearValueType_Color)
 		{
 			Color = Other.Color;
 		}
@@ -239,8 +250,8 @@ struct ClearValue
 
 	inline ClearValue& operator=(const ClearValue& Other)
 	{
-		HasClearColor = Other.HasClearColor;
-		if (HasClearColor)
+		Type = Other.Type;
+		if(Type == EClearValueType::ClearValueType_Color)
 		{
 			Color = Other.Color;
 		}
@@ -254,25 +265,24 @@ struct ClearValue
 
 	inline ClearValue& operator=(const ColorClearValue& InColor)
 	{
-		HasClearColor	= true;
-		Color			= InColor;
+		Type	= EClearValueType::ClearValueType_Color;
+		Color	= InColor;
 		return *this;
 	}
 
 	inline ClearValue& operator=(const DepthStencilClearValue& InDepthStencil)
 	{
-		HasClearColor	= false;
+		Type			= EClearValueType::ClearValueType_DepthStencil;
 		DepthStencil	= InDepthStencil;
 		return *this;
 	}
 
+	EClearValueType Type;
 	union
 	{
 		ColorClearValue Color;
 		DepthStencilClearValue DepthStencil;
 	};
-
-	Bool HasClearColor;
 };
 
 /*
