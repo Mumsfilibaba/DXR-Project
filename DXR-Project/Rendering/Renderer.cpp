@@ -644,6 +644,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 		TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
 		TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
 		
+		ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
+		CmdList.BindShaderResourceViews(
+			EShaderStage::ShaderStage_Pixel,
+			ShaderResourceViews, 
+			6, 0);
+
 		CmdList.Bind32BitShaderConstants(
 			EShaderStage::ShaderStage_Vertex,
 			&TransformPerObject, 32);
@@ -1252,7 +1258,7 @@ bool Renderer::Init()
 
 	// Create Texture Cube
 	const std::string PanoramaSourceFilename = "../Assets/Textures/arches.hdr";
-	TSharedRef<Texture2D> Panorama = TextureFactory::LoadFromFile(
+	SampledTexture2D Panorama = TextureFactory::LoadSampledTextureFromFile(
 		PanoramaSourceFilename,
 		0, 
 		EFormat::Format_R32G32B32A32_Float);
@@ -1262,21 +1268,11 @@ bool Renderer::Init()
 	}
 	else
 	{
-		Panorama->SetName(PanoramaSourceFilename);
-	}
-
-	TSharedRef<ShaderResourceView> PanormaSRV = RenderingAPI::CreateShaderResourceView(
-		Panorama.Get(),
-		EFormat::Format_R32G32B32A32_Float,
-		0, 1);
-	if (!PanormaSRV)
-	{
-		return false;
+		Panorama.SetName(PanoramaSourceFilename);
 	}
 
 	Skybox = TextureFactory::CreateTextureCubeFromPanorma(
-		PanormaSRV.Get(),
-		Panorama.Get(), 
+		Panorama,
 		1024, 
 		TextureFactoryFlag_GenerateMips, 
 		EFormat::Format_R16G16B16A16_Float);

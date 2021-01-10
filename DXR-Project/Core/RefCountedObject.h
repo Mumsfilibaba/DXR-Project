@@ -7,18 +7,20 @@
 
 class RefCountedObject
 {
+	using RefCountType = UInt32;
+
 public:
 	RefCountedObject();
-	virtual ~RefCountedObject();
+	virtual ~RefCountedObject() = default;
 
-	UInt32 AddRef();
-	UInt32 Release();
+	RefCountType AddRef();
+	RefCountType Release();
 
-	FORCEINLINE UInt32 GetRefCount() const
+	FORCEINLINE RefCountType GetRefCount() const
 	{
 		return StrongReferences;
 	}
 
 private:
-	UInt32 StrongReferences;
+	RefCountType StrongReferences;
 };

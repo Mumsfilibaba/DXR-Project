@@ -8,13 +8,13 @@
 */
 
 Material::Material(const MaterialProperties& InProperties)
-	: AlbedoMap(nullptr)
-	, NormalMap(nullptr)
-	, RoughnessMap(nullptr)
-	, MetallicMap(nullptr)
-	, AOMap(nullptr)
-	, HeightMap(nullptr)
-	, MaterialBuffer(nullptr)
+	: AlbedoMap()
+	, NormalMap()
+	, RoughnessMap()
+	, MetallicMap()
+	, AOMap()
+	, HeightMap()
+	, MaterialBuffer()
 	, Properties(InProperties)
 {
 }
@@ -90,4 +90,17 @@ void Material::EnableHeightMap(bool EnableHeightMap)
 void Material::SetDebugName(const std::string& InDebugName)
 {
 	DebugName = InDebugName;
+}
+
+ShaderResourceView* const* Material::GetShaderResourceViews() const
+{
+	ShaderResourceViews[0] = AlbedoMap.View.Get();
+	ShaderResourceViews[1] = NormalMap.View.Get();
+	ShaderResourceViews[2] = RoughnessMap.View.Get();
+	ShaderResourceViews[3] = HeightMap.View.Get();
+	ShaderResourceViews[4] = MetallicMap.View.Get();
+	ShaderResourceViews[5] = AOMap.View.Get();
+	ShaderResourceViews[6] = AlphaMask.View.Get();
+
+	return ShaderResourceViews.Data();
 }

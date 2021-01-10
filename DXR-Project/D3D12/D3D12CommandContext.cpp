@@ -110,8 +110,8 @@ bool D3D12ShaderDescriptorTableState::CreateResources(D3D12Device& Device)
 	SamplerDesc.ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
 	SamplerDesc.Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 	SamplerDesc.MaxAnisotropy	= 1;
-	SamplerDesc.MaxLOD			= FLT_MAX;
-	SamplerDesc.MinLOD			= -FLT_MAX;
+	SamplerDesc.MaxLOD			= 0.0f;
+	SamplerDesc.MinLOD			= 0.0f;
 	SamplerDesc.MipLODBias		= 0.0f;
 
 	DefaultSamplerOfflineHandle = SamplerHandleForHeapStart;

@@ -50,43 +50,50 @@ bool Game::Initialize()
 	SphereMesh->ShadowOffset = 0.05f;
 
 	// Create standard textures
-	Byte Pixels[] = { 255, 255, 255, 255 };
-	TSharedRef<Texture2D> BaseTexture = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
+	Byte Pixels[] = 
+	{ 
+		255, 
+		255, 
+		255, 
+		255 
+	};
+
+	SampledTexture2D BaseTexture = TextureFactory::LoadSampledTextureFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
 	if (!BaseTexture)
 	{
 		return false;
 	}
 	else
 	{
-		BaseTexture->SetName("BaseTexture");
+		BaseTexture.SetName("BaseTexture");
 	}
 
 	Pixels[0] = 127;
 	Pixels[1] = 127;
 	Pixels[2] = 255;
 
-	TSharedRef<Texture2D> BaseNormal = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
+	SampledTexture2D BaseNormal = TextureFactory::LoadSampledTextureFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
 	if (!BaseNormal)
 	{
 		return false;
 	}
 	else
 	{
-		BaseNormal->SetName("BaseNormal");
+		BaseNormal.SetName("BaseNormal");
 	}
 
 	Pixels[0] = 255;
 	Pixels[1] = 255;
 	Pixels[2] = 255;
 
-	TSharedRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
+	SampledTexture2D WhiteTexture = TextureFactory::LoadSampledTextureFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
 	if (!WhiteTexture)
 	{
 		return false;
 	}
 	else
 	{
-		WhiteTexture->SetName("WhiteTexture");
+		WhiteTexture.SetName("WhiteTexture");
 	}
 
 	MaterialProperties MatProperties;
@@ -144,64 +151,82 @@ bool Game::Initialize()
 	NewComponent->Mesh		= Mesh::Make(CubeMeshData);
 	NewComponent->Material	= MakeShared<Material>(MatProperties);
 
-	TSharedRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
+	SampledTexture2D AlbedoMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_Albedo.png", 
+		TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!AlbedoMap)
 	{
 		return false;
 	}
 	else
 	{
-		AlbedoMap->SetName("AlbedoMap");
+		AlbedoMap.SetName("AlbedoMap");
 	}
 
-	TSharedRef<Texture2D> NormalMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
+	SampledTexture2D NormalMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_Normal.png", 
+		TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!NormalMap)
 	{
 		return false;
 	}
 	else
 	{
-		NormalMap->SetName("NormalMap");
+		NormalMap.SetName("NormalMap");
 	}
 
-	TSharedRef<Texture2D> AOMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
+	SampledTexture2D AOMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_AO.png", 
+		TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!AOMap)
 	{
 		return false;
 	}
 	else
 	{
-		AOMap->SetName("AOMap");
+		AOMap.SetName("AOMap");
 	}
 
-	TSharedRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
+	SampledTexture2D RoughnessMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_Roughness.png", 
+		TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!RoughnessMap)
 	{
 		return false;
 	}
 	else
 	{
-		RoughnessMap->SetName("RoughnessMap");
+		RoughnessMap.SetName("RoughnessMap");
 	}
 
-	TSharedRef<Texture2D> HeightMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
+	SampledTexture2D HeightMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_Height.png",
+		TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!HeightMap)
 	{
 		return false;
 	}
 	else
 	{
-		HeightMap->SetName("HeightMap");
+		HeightMap.SetName("HeightMap");
 	}
 
-	TSharedRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png", TextureFactoryFlag_GenerateMips, EFormat::Format_R8G8B8A8_Unorm);
+	SampledTexture2D MetallicMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_Metallic.png"
+		, TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!MetallicMap)
 	{
 		return false;
 	}
 	else
 	{
-		MetallicMap->SetName("MetallicMap");
+		MetallicMap.SetName("MetallicMap");
 	}
 
 	NewComponent->Material->AlbedoMap		= AlbedoMap;

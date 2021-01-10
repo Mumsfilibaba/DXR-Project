@@ -141,6 +141,7 @@ workspace "DXR-Project"
 			
 			files 
 			{
+				"%{prj.name}/**.natvis",	
 				"Dependencies/Template-Library/Containers/*.natvis"
 			}
 		filter {}

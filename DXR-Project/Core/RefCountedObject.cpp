@@ -10,18 +10,14 @@ RefCountedObject::RefCountedObject()
 	AddRef();
 }
 
-RefCountedObject::~RefCountedObject()
-{
-}
-
-UInt32 RefCountedObject::AddRef()
+RefCountedObject::RefCountType RefCountedObject::AddRef()
 {
 	return ++StrongReferences;
 }
 
-UInt32 RefCountedObject::Release()
+RefCountedObject::RefCountType RefCountedObject::Release()
 {
-	UInt32 NewRefCount = --StrongReferences;
+	RefCountType NewRefCount = --StrongReferences;
 	if (StrongReferences <= 0)
 	{
 		delete this;

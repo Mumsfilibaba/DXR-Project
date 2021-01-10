@@ -68,7 +68,10 @@ void TextureFactory::Release()
 	GlobalFactoryData.PanoramaPSO.Reset();
 }
 
-Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format)
+Texture2D* TextureFactory::LoadFromFile(
+	const std::string& Filepath, 
+	UInt32 CreateFlags, 
+	EFormat Format)
 {
 	Int32 Width			= 0;
 	Int32 Height		= 0;
@@ -104,7 +107,12 @@ Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 Crea
 	return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);
 }
 
-Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format)
+Texture2D* TextureFactory::LoadFromMemory(
+	const Byte* Pixels, 
+	UInt32 Width, 
+	UInt32 Height, 
+	UInt32 CreateFlags, 
+	EFormat Format)
 {
 	if (Format != EFormat::Format_R8G8B8A8_Unorm && Format != EFormat::Format_R32G32B32A32_Float)
 	{
@@ -167,9 +175,66 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
 	return Texture.ReleaseOwnership();
 }
 
+SampledTexture2D TextureFactory::LoadSampledTextureFromFile(
+	const std::string& Filepath, 
+	UInt32 CreateFlags, 
+	EFormat Format)
+{
+	TSharedRef<Texture2D> Texture = LoadFromFile(
+		Filepath,
+		CreateFlags,
+		Format);
+	if (!Texture)
+	{
+		return SampledTexture2D();
+	}
+
+	TSharedRef<ShaderResourceView> View = RenderingAPI::CreateShaderResourceView(
+		Texture.Get(),
+		Format,
+		0,
+		Texture->GetMipLevels());
+	if (!View)
+	{
+		return SampledTexture2D();
+	}
+
+	return SampledTexture2D(Texture, View);
+}
+
+SampledTexture2D TextureFactory::LoadSampledTextureFromMemory(
+	const Byte* Pixels,
+	UInt32 Width,
+	UInt32 Height,
+	UInt32 CreateFlags,
+	EFormat Format)
+{
+	TSharedRef<Texture2D> Texture = LoadFromMemory(
+		Pixels, 
+		Width,
+		Height,
+		CreateFlags,
+		Format);
+	if (!Texture)
+	{
+		return SampledTexture2D();
+	}
+
+	TSharedRef<ShaderResourceView> View = RenderingAPI::CreateShaderResourceView(
+		Texture.Get(),
+		Format,
+		0,
+		Texture->GetMipLevels());
+	if (!View)
+	{
+		return SampledTexture2D();
+	}
+
+	return SampledTexture2D(Texture, View);
+}
+
 TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
-	ShaderResourceView* PanoramaSourceSRV, 
-	Texture2D* PanoramaSource, 
+	const SampledTexture2D& PanoramaSource,
 	UInt32 CubeMapSize, 
 	UInt32 CreateFlags, 
 	EFormat Format)
@@ -223,7 +288,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
 	CmdList.Begin();
 	
 	CmdList.TransitionTexture(
-		PanoramaSource, 
+		PanoramaSource.Texture.Get(),
 		EResourceState::ResourceState_PixelShaderResource, 
 		EResourceState::ResourceState_NonPixelShaderResource);
 	
@@ -242,7 +307,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
 
 	CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Compute, &CB0, 1);
 	CmdList.BindUnorderedAccessViews(EShaderStage::ShaderStage_Compute, &StagingTextureUAV, 1, 0);
-	CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Compute, &PanoramaSourceSRV, 1, 0);
+	CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Compute, &PanoramaSource.View, 1, 0);
 
 	constexpr UInt32 LocalWorkGroupCount = 16;
 	const UInt32 ThreadsX = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
@@ -250,7 +315,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
 	CmdList.Dispatch(ThreadsX, ThreadsY, 6);
 
 	CmdList.TransitionTexture(
-		PanoramaSource, 
+		PanoramaSource.Texture.Get(), 
 		EResourceState::ResourceState_NonPixelShaderResource,
 		EResourceState::ResourceState_PixelShaderResource);
 	

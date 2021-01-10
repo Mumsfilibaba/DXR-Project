@@ -1,6 +1,7 @@
 #pragma once
 #include "RenderingCore/RenderingCore.h"
 #include "RenderingCore/Format.h"
+#include "RenderingCore/ResourceHelpers.h"
 
 #include "Utilities/StringUtilities.h"
 
@@ -14,10 +15,6 @@ enum ETextureFactoryFlags : UInt32
 	TextureFactoryFlag_GenerateMips = FLAG(1),
 };
 
-class Texture2D;
-class TextureCube;
-class ShaderResourceView;
-
 /*
 * TextureFactory
 */
@@ -28,13 +25,33 @@ public:
 	static bool Initialize();
 	static void Release();
 
-	// Supports R8G8B8A8 and R32G32B32A32 for now
-	static Texture2D* LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format);
-	static Texture2D* LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format);
+	// TODO: Supports R8G8B8A8 and R32G32B32A32 for now, support more formats? Such as Float16?
+	static Texture2D* LoadFromFile(
+		const std::string& Filepath, 
+		UInt32 CreateFlags, 
+		EFormat Format);
+
+	static Texture2D* LoadFromMemory(
+		const Byte* Pixels, 
+		UInt32 Width, 
+		UInt32 Height, 
+		UInt32 CreateFlags, 
+		EFormat Format);
+
+	static SampledTexture2D LoadSampledTextureFromFile(
+		const std::string& Filepath, 
+		UInt32 CreateFlags, 
+		EFormat Format);
+
+	static SampledTexture2D LoadSampledTextureFromMemory(
+		const Byte* Pixels, 
+		UInt32 Width, 
+		UInt32 Height, 
+		UInt32 CreateFlags, 
+		EFormat Format);
 
 	static TextureCube* CreateTextureCubeFromPanorma(
-		ShaderResourceView* PanoramaSourceView,
-		Texture2D* PanoramaSource,
+		const SampledTexture2D& PanoramaSource,
 		UInt32 CubeMapSize,
 		UInt32 CreateFlags,
 		EFormat Format);

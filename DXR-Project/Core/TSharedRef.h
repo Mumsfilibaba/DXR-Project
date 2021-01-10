@@ -107,6 +107,11 @@ public:
 		return RefPtr;
 	}
 
+	FORCEINLINE T* GetRefCount() const noexcept
+	{
+		return RefPtr->GetRefCount();
+	}
+
 	FORCEINLINE T* GetAndAddRef() noexcept
 	{
 		AddRef();

@@ -1,6 +1,8 @@
 #pragma once
 #include "RenderingCore/Buffer.h"
-#include "RenderingCore/Texture.h"
+#include "RenderingCore/ResourceHelpers.h"
+
+#include <Containers/TStaticArray.h>
 
 /*
 * MaterialProperties
@@ -45,6 +47,10 @@ public:
 
 	void SetDebugName(const std::string& InDebugName);
 
+	// ShaderResourceView are sorted in the way that the deferred rendering pass wants them
+	// This means that one can call BindShaderResourceViews directly with this function
+	ShaderResourceView* const* GetShaderResourceViews() const;
+
 	FORCEINLINE ConstantBuffer* GetMaterialBuffer() const
 	{
 		return MaterialBuffer.Get();
@@ -52,7 +58,7 @@ public:
 
 	FORCEINLINE bool HasAlphaMask() const
 	{
-		return AlphaMask != nullptr;
+		return AlphaMask.Texture != nullptr;
 	}
 
 	FORCEINLINE const MaterialProperties& GetMaterialProperties() const 
@@ -61,13 +67,13 @@ public:
 	}
 
 public:
-	TSharedRef<Texture2D> AlbedoMap;
-	TSharedRef<Texture2D> NormalMap;
-	TSharedRef<Texture2D> RoughnessMap;
-	TSharedRef<Texture2D> HeightMap;
-	TSharedRef<Texture2D> AOMap;
-	TSharedRef<Texture2D> MetallicMap;
-	TSharedRef<Texture2D> AlphaMask;
+	SampledTexture2D AlbedoMap;
+	SampledTexture2D NormalMap;
+	SampledTexture2D RoughnessMap;
+	SampledTexture2D HeightMap;
+	SampledTexture2D AOMap;
+	SampledTexture2D MetallicMap;
+	SampledTexture2D AlphaMask;
 
 private:
 	std::string	DebugName;
@@ -75,4 +81,6 @@ private:
 	
 	MaterialProperties			Properties;
 	TSharedRef<ConstantBuffer> 	MaterialBuffer;
+
+	mutable TStaticArray<ShaderResourceView*, 7> ShaderResourceViews;
 };
