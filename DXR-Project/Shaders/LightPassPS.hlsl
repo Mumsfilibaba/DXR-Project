@@ -29,9 +29,9 @@ SamplerState IrradianceSampler	: register(s2, space0);
 SamplerComparisonState	ShadowMapSampler0	: register(s3, space0);
 SamplerState			ShadowMapSampler1	: register(s4, space0);
 
-ConstantBuffer<Camera>				CameraBuffer		: register(b0, space0);
-ConstantBuffer<PointLight>			PointLightBuffer	: register(b1, space0);
-ConstantBuffer<DirectionalLight>	DirLightBuffer		: register(b2, space0);
+ConstantBuffer<Camera>				CameraBuffer		: register(b1, space0);
+ConstantBuffer<PointLight>			PointLightBuffer	: register(b2, space0);
+ConstantBuffer<DirectionalLight>	DirLightBuffer		: register(b3, space0);
 
 // Light Calculations
 float3 CalcRadiance(float3 F0, float3 InNormal, float3 InViewDir, float3 InLightDir, float3 InRadiance, float3 InAlbedo, float InRoughness, float InMetallic)

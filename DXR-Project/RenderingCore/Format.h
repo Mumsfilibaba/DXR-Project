@@ -165,3 +165,103 @@ inline const Char* ToString(EFormat Format)
 	default:										return "Format_UNKNOWN";
 	}
 }
+
+inline UInt32 GetStrideFromFormat(EFormat Format)
+{
+	switch (Format)
+	{
+	case EFormat::Format_R32G32B32A32_Typeless:
+	case EFormat::Format_R32G32B32A32_Float:
+	case EFormat::Format_R32G32B32A32_Uint:
+	case EFormat::Format_R32G32B32A32_Sint:
+	{
+		return 16;
+	}
+
+	case EFormat::Format_R32G32B32_Typeless:
+	case EFormat::Format_R32G32B32_Float:
+	case EFormat::Format_R32G32B32_Uint:
+	case EFormat::Format_R32G32B32_Sint:
+	{
+		return 12;
+	}
+
+	case EFormat::Format_R16G16B16A16_Typeless:
+	case EFormat::Format_R16G16B16A16_Float:
+	case EFormat::Format_R16G16B16A16_Unorm:
+	case EFormat::Format_R16G16B16A16_Uint:
+	case EFormat::Format_R16G16B16A16_Snorm:
+	case EFormat::Format_R16G16B16A16_Sint:
+	case EFormat::Format_R32G32_Typeless:
+	case EFormat::Format_R32G32_Float:
+	case EFormat::Format_R32G32_Uint:
+	case EFormat::Format_R32G32_Sint:
+	case EFormat::Format_R32G8X24_Typeless:
+	case EFormat::Format_D32_Float_S8X24_Uint:
+	case EFormat::Format_R32_Float_X8X24_Typeless:
+	case EFormat::Format_X32_Typeless_G8X24_Uint:
+	{
+		return 8;
+	}
+
+	case EFormat::Format_R10G10B10A2_Typeless:
+	case EFormat::Format_R10G10B10A2_Unorm:
+	case EFormat::Format_R10G10B10A2_Uint:
+	case EFormat::Format_R11G11B10_Float:
+	case EFormat::Format_R8G8B8A8_Typeless:
+	case EFormat::Format_R8G8B8A8_Unorm:
+	case EFormat::Format_R8G8B8A8_Unorm_SRGB:
+	case EFormat::Format_R8G8B8A8_Uint:
+	case EFormat::Format_R8G8B8A8_Snorm:
+	case EFormat::Format_R8G8B8A8_Sint:
+	case EFormat::Format_R16G16_Typeless:
+	case EFormat::Format_R16G16_Float:
+	case EFormat::Format_R16G16_Unorm:
+	case EFormat::Format_R16G16_Uint:
+	case EFormat::Format_R16G16_Snorm:
+	case EFormat::Format_R16G16_Sint:
+	case EFormat::Format_R32_Typeless:
+	case EFormat::Format_D32_Float:
+	case EFormat::Format_R32_Float:
+	case EFormat::Format_R32_Uint:
+	case EFormat::Format_R32_Sint:
+	case EFormat::Format_R24G8_Typeless:
+	case EFormat::Format_D24_Unorm_S8_Uint:
+	case EFormat::Format_R24_Unorm_X8_Typeless:
+	case EFormat::Format_X24_Typeless_G8_Uint:
+	{
+		return 4;
+	}
+
+	case EFormat::Format_R8G8_Typeless:
+	case EFormat::Format_R8G8_Unorm:
+	case EFormat::Format_R8G8_Uint:
+	case EFormat::Format_R8G8_Snorm:
+	case EFormat::Format_R8G8_Sint:
+	case EFormat::Format_R16_Typeless:
+	case EFormat::Format_R16_Float:
+	case EFormat::Format_D16_Unorm:
+	case EFormat::Format_R16_Unorm:
+	case EFormat::Format_R16_Uint:
+	case EFormat::Format_R16_Snorm:
+	case EFormat::Format_R16_Sint:
+	{
+		return 2;
+	}
+
+	case EFormat::Format_R8_Typeless:
+	case EFormat::Format_R8_Unorm:
+	case EFormat::Format_R8_Uint:
+	case EFormat::Format_R8_Snorm:
+	case EFormat::Format_R8_Sint:
+	case EFormat::Format_A8_Unorm:
+	{
+		return 1;
+	}
+
+	default:
+	{
+		return 0;
+	}
+	}
+}

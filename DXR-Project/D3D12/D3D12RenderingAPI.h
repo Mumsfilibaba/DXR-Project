@@ -146,7 +146,7 @@ public:
 	* Samplers
 	*/
 
-	virtual class SamplerState* CreateSamplerState() const override final;
+	virtual class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) const override final;
 
 	/*
 	* Buffers

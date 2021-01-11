@@ -165,9 +165,9 @@ public:
 	* Samplers
 	*/
 
-	FORCEINLINE static class SamplerState* CreateSamplerState()
+	FORCEINLINE static class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo)
 	{
-		return GlobalRenderingAPI->CreateSamplerState();
+		return GlobalRenderingAPI->CreateSamplerState(CreateInfo);
 	}
 
 	/*

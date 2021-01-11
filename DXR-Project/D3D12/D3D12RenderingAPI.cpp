@@ -221,13 +221,21 @@ Texture3D* D3D12RenderingAPI::CreateTexture3D(
 * Samplers
 */
 
-SamplerState* D3D12RenderingAPI::CreateSamplerState() const
+SamplerState* D3D12RenderingAPI::CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) const
 {
 	D3D12_SAMPLER_DESC Desc;
 	Memory::Memzero(&Desc, sizeof(D3D12_SAMPLER_DESC));
 
-	// TODO: Finish this function
-	VALIDATE(false);
+	Desc.AddressU		= ConvertSamplerMode(CreateInfo.AddressU);
+	Desc.AddressV		= ConvertSamplerMode(CreateInfo.AddressV);
+	Desc.AddressW		= ConvertSamplerMode(CreateInfo.AddressW);
+	Desc.ComparisonFunc = ConvertComparisonFunc(CreateInfo.ComparisonFunc);
+	Desc.Filter			= ConvertSamplerFilter(CreateInfo.Filter);
+	Desc.MaxAnisotropy	= CreateInfo.MaxAnisotropy;
+	Desc.MaxLOD			= CreateInfo.MaxLOD;
+	Desc.MinLOD			= CreateInfo.MinLOD;
+	Desc.MipLODBias		= CreateInfo.MipLODBias;
+	Memory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor, sizeof(Desc.BorderColor));
 
 	return new D3D12SamplerState(Device, Device->GetGlobalSamplerDescriptorHeap(), Desc);
 }

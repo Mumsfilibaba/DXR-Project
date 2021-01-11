@@ -3,6 +3,7 @@
 #include "RenderingCore/Texture.h"
 #include "RenderingCore/PipelineState.h"
 #include "RenderingCore/Shader.h"
+#include "RenderingCore/SamplerState.h"
 
 #include <d3d12.h>
 
@@ -437,6 +438,55 @@ inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState ResourceState)
 	}
 
 	return D3D12_RESOURCE_STATES();
+}
+
+/*
+* Converts ESamplerMode to D3D12_TEXTURE_ADDRESS_MODE
+*/
+
+inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
+{
+	switch (SamplerMode)
+	{
+	case ESamplerMode::SamplerMode_Wrap:		return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	case ESamplerMode::SamplerMode_Clamp:		return D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	case ESamplerMode::SamplerMode_Mirror:		return D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+	case ESamplerMode::SamplerMode_Border:		return D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	case ESamplerMode::SamplerMode_MirrorOnce:	return D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE;
+	}
+
+	return D3D12_TEXTURE_ADDRESS_MODE();
+}
+
+/*
+* Converts ESamplerFilter to D3D12_FILTER
+*/
+
+inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
+{
+	switch (SamplerFilter)
+	{
+	case ESamplerFilter::SamplerFilter_MinMagMipPoint:							return D3D12_FILTER_MIN_MAG_MIP_POINT;
+	case ESamplerFilter::SamplerFilter_MinMagPoint_MipLinear:					return D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+	case ESamplerFilter::SamplerFilter_MinPoint_MagLinear_MipPoint:				return D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+	case ESamplerFilter::SamplerFilter_MinPoint_MagMipLinear:					return D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+	case ESamplerFilter::SamplerFilter_MinLinear_MagMipPoint:					return D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+	case ESamplerFilter::SamplerFilter_MinLinear_MagPoint_MipLinear:			return D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+	case ESamplerFilter::SamplerFilter_MinMagLinear_MipPoint:					return D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	case ESamplerFilter::SamplerFilter_MinMagMipLinear:							return D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	case ESamplerFilter::SamplerFilter_Anistrotopic:							return D3D12_FILTER_ANISOTROPIC;
+	case ESamplerFilter::SamplerFilter_Comparison_MinMagMipPoint:				return D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
+	case ESamplerFilter::SamplerFilter_Comparison_MinMagPoint_MipLinear:		return D3D12_FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR;
+	case ESamplerFilter::SamplerFilter_Comparison_MinPoint_MagLinear_MipPoint:	return D3D12_FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT;
+	case ESamplerFilter::SamplerFilter_Comparison_MinPoint_MagMipLinear:		return D3D12_FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR;
+	case ESamplerFilter::SamplerFilter_Comparison_MinLinear_MagMipPoint:		return D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT;
+	case ESamplerFilter::SamplerFilter_Comparison_MinLinear_MagPoint_MipLinear:	return D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+	case ESamplerFilter::SamplerFilter_Comparison_MinMagLinear_MipPoint:		return D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+	case ESamplerFilter::SamplerFilter_Comparison_MinMagMipLinear:				return D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+	case ESamplerFilter::SamplerFilter_Comparison_Anistrotopic:					return D3D12_FILTER_COMPARISON_ANISOTROPIC;
+	}
+
+	return D3D12_FILTER();
 }
 
 /*

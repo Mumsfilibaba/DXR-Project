@@ -191,11 +191,6 @@ struct Float16
 
 	FORCEINLINE void SetFloatFast(Float Fp32)
 	{
-		/*
-		* Does not check bounds, should only be used for values that certainly will take this
-		* path in normal SetFloat
-		*/
-
 		Float32 In(Fp32);
 		Exponent	= UInt16(Int32(In.Exponent) - 127 + 15);	// Unbias and bias the exponents
 		Mantissa	= UInt16(In.Mantissa >> 13);				// Bit-Shift diff in number of mantissa bits
@@ -228,7 +223,7 @@ struct Float16
 			{
 				// Denormalized
 				const UInt32 Shift = 10 - UInt32(log2((Float)Mantissa));
-				Ret.Exponent = 127 - (15 - 1) - Shift;
+				Ret.Exponent = 127 - 14 - Shift;
 				Ret.Mantissa = Mantissa << (Shift + 13);
 			}
 		}
@@ -236,10 +231,10 @@ struct Float16
 		{
 			// All other values
 			const Int32 NewExponent = Int32(Exponent) - 15 + 127; // Unbias and bias the exponents
-			Ret.Exponent = UInt16(NewExponent);
+			Ret.Exponent = UInt32(NewExponent);
 
 			const Int32 NewMantissa = Int32(Mantissa) << 13; // Bit-Shift diff in number of mantissa bits
-			Ret.Mantissa = UInt16(NewMantissa);
+			Ret.Mantissa = UInt32(NewMantissa);
 		}
 
 		return Ret.Float;

@@ -330,11 +330,13 @@ public:
 		UInt32 MipLevel, 
 		const Void* SourceData)
 	{
-		const UInt32 SizeInBytes = Width * Height;
+		VALIDATE(Destination != nullptr);
+
+		const UInt32 SizeInBytes = Width * Height * GetStrideFromFormat(Destination->GetFormat());
 		Void* TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
 		Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
-		SAFEADDREF(Destination);
+		Destination->AddRef();
 		InsertCommand<UpdateTextureCommand>(
 			Destination,
 			Width,

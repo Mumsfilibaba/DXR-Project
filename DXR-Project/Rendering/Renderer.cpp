@@ -650,6 +650,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 			ShaderResourceViews, 
 			6, 0);
 
+		SamplerState* Sampler = Command.Material->GetMaterialSampler();
+		CmdList.BindSamplerStates(
+			EShaderStage::ShaderStage_Pixel,
+			&Sampler,
+			1, 0);
+
 		CmdList.Bind32BitShaderConstants(
 			EShaderStage::ShaderStage_Vertex,
 			&TransformPerObject, 32);
@@ -1035,7 +1041,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	// Render UI
 	DebugUI::DrawDebugString("DrawCall Count: " + std::to_string(CmdList.GetDrawCallCount()));
+	
+	CmdList.InsertCommandListMarker("Begin UI Render");
 	DebugUI::Render(CmdList);
+	CmdList.InsertCommandListMarker("End UI Render");
 
 	// Finalize Commandlist
 	CmdList.TransitionTexture(
@@ -3528,7 +3537,6 @@ bool Renderer::InitSSAO()
 	{
 		const Float x = RandomFloats(Generator) * 2.0f - 1.0f;
 		const Float y = RandomFloats(Generator) * 2.0f - 1.0f;
-
 		SSAONoise.EmplaceBack(x);
 		SSAONoise.EmplaceBack(y);
 		SSAONoise.EmplaceBack(0.0f);
@@ -3539,7 +3547,7 @@ bool Renderer::InitSSAO()
 	{
 		SSAONoiseTex = RenderingAPI::CreateTexture2D(
 			nullptr,
-			EFormat::Format_R16G16_Float,
+			EFormat::Format_R16G16B16A16_Float,
 			TextureUsage_SRV,
 			4,
 			4,
@@ -3556,7 +3564,7 @@ bool Renderer::InitSSAO()
 
 		SSAONoiseSRV = RenderingAPI::CreateShaderResourceView(
 			SSAONoiseTex.Get(),
-			EFormat::Format_R16G16_Float,
+			EFormat::Format_R16G16B16A16_Float,
 			0, 1);
 		if (!SSAONoiseSRV)
 		{
@@ -3580,14 +3588,10 @@ bool Renderer::InitSSAO()
 		EResourceState::ResourceState_Common,
 		EResourceState::ResourceState_CopyDest);
 
-	{
-		const UInt32 Stride		= 4 * sizeof(Float16);
-		const UInt32 RowPitch	= ((4 * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
-		CmdList.UpdateTexture2D(
-			SSAONoiseTex.Get(),
-			4, 4, 0,
-			SSAONoise.Data());
-	}
+	CmdList.UpdateTexture2D(
+		SSAONoiseTex.Get(),
+		4, 4, 0,
+		SSAONoise.Data());
 
 	CmdList.TransitionTexture(
 		SSAONoiseTex.Get(),

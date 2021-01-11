@@ -21,8 +21,22 @@ Material::Material(const MaterialProperties& InProperties)
 
 void Material::Initialize()
 {
-	// Create materialbuffer
-	MaterialBuffer = RenderingAPI::CreateConstantBuffer<MaterialProperties>(nullptr, BufferUsage_Default);
+	MaterialBuffer = RenderingAPI::CreateConstantBuffer<MaterialProperties>(
+		nullptr, 
+		BufferUsage_Default);
+
+	SamplerStateCreateInfo CreateInfo;
+	CreateInfo.AddressU			= ESamplerMode::SamplerMode_Wrap;
+	CreateInfo.AddressV			= ESamplerMode::SamplerMode_Wrap;
+	CreateInfo.AddressW			= ESamplerMode::SamplerMode_Wrap;
+	CreateInfo.ComparisonFunc	= EComparisonFunc::ComparisonFunc_Never;
+	CreateInfo.Filter			= ESamplerFilter::SamplerFilter_MinMagMipLinear;
+	CreateInfo.MaxAnisotropy	= 1;
+	CreateInfo.MaxLOD			= 0.0f;
+	CreateInfo.MinLOD			= 0.0f;
+	CreateInfo.MipLODBias		= 0.0f;
+
+	Sampler = RenderingAPI::CreateSamplerState(CreateInfo);
 }
 
 void Material::BuildBuffer(CommandList& CmdList)

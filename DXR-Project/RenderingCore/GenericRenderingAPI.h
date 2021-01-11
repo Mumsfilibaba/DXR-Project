@@ -122,7 +122,7 @@ public:
 	* Samplers
 	*/
 
-	virtual class SamplerState* CreateSamplerState() const = 0;
+	virtual class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) const = 0;
 
 	/*
 	* Buffers

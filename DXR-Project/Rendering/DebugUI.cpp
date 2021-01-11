@@ -27,10 +27,10 @@ struct ImGuiState
 {
 	Clock FrameClock;
 
-	TSharedRef<Texture2D>				FontTexture		= nullptr;
-	TSharedRef<GraphicsPipelineState>	PipelineState	= nullptr;
-	TSharedRef<VertexBuffer>	VertexBuffer	= nullptr;
-	TSharedRef<IndexBuffer>		IndexBuffer		= nullptr;
+	SampledTexture2D					FontTexture;
+	TSharedRef<GraphicsPipelineState>	PipelineState;
+	TSharedRef<VertexBuffer>			VertexBuffer;
+	TSharedRef<IndexBuffer>				IndexBuffer;
 	
 	ImGuiContext* Context = nullptr;
 };
@@ -214,7 +214,11 @@ bool DebugUI::Initialize()
 	Int32	Height	= 0;
 	IO.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-	GlobalImGuiState.FontTexture = TSharedRef<Texture2D>(TextureFactory::LoadFromMemory(Pixels, Width, Height, 0, EFormat::Format_R8G8B8A8_Unorm));
+	GlobalImGuiState.FontTexture = TextureFactory::LoadSampledTextureFromMemory(
+		Pixels, 
+		Width, Height, 
+		0, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!GlobalImGuiState.FontTexture)
 	{
 		return false;
@@ -654,19 +658,11 @@ void DebugUI::Render(CommandList& CmdList)
 		for (Int32 CmdIndex = 0; CmdIndex < DrawCmdList->CmdBuffer.Size; CmdIndex++)
 		{
 			const ImDrawCmd* Cmd = &DrawCmdList->CmdBuffer[CmdIndex];
-			//if (Cmd->UserCallback != NULL)
-			//{
-			//	// User callback, registered via ImDrawList::AddCallback()
-			//	// (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
-			//	if (Cmd->UserCallback == ImDrawCallback_ResetRenderState)
-			//		ImGui_ImplDX12_SetupRenderState(draw_data, ctx, fr);
-			//	else
-			//		Cmd->UserCallback(CmdList, Cmd);
-			//}
-			//else
-			//{
-			
-			// Apply Scissor, Bind texture, Draw
+			CmdList.BindShaderResourceViews(
+				EShaderStage::ShaderStage_Pixel,
+				&GlobalImGuiState.FontTexture.View, 
+				1, 0);
+
 			CmdList.BindScissorRect(
 				Cmd->ClipRect.z - ClipOff.x,
 				Cmd->ClipRect.w - ClipOff.y,
@@ -679,7 +675,6 @@ void DebugUI::Render(CommandList& CmdList)
 				Cmd->IdxOffset + GlobalIndexOffset, 
 				Cmd->VtxOffset + GlobalVertexOffset, 
 				0);
-			//}
 		}
 
 		GlobalIndexOffset	+= DrawCmdList->IdxBuffer.Size;

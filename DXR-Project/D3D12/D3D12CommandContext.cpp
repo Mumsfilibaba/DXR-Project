@@ -70,30 +70,30 @@ bool D3D12ShaderDescriptorTableState::CreateResources(D3D12Device& Device)
 	DefaultCBVOfflineHandle = ResourceHandleForHeapStart;
 	Device.CreateConstantBufferView(&CBVDesc, DefaultCBVOfflineHandle);
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-	Memory::Memzero(&SRVDesc);
+	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
+	Memory::Memzero(&SrvDesc);
 
-	SRVDesc.Format							= DXGI_FORMAT_R8G8B8A8_UNORM;
-	SRVDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SRVDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
-	SRVDesc.Texture2D.MipLevels				= 1;
-	SRVDesc.Texture2D.MostDetailedMip		= 0;
-	SRVDesc.Texture2D.PlaneSlice			= 0;
-	SRVDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
+	SrvDesc.Format							= DXGI_FORMAT_R8G8B8A8_UNORM;
+	SrvDesc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
+	SrvDesc.Texture2D.MipLevels				= 1;
+	SrvDesc.Texture2D.MostDetailedMip		= 0;
+	SrvDesc.Texture2D.PlaneSlice			= 0;
+	SrvDesc.Texture2D.ResourceMinLODClamp	= 0.0f;
 
 	DefaultSRVOfflineHandle = D3D12_DESCRIPTOR_HANDLE_INCREMENT(DefaultCBVOfflineHandle, ResourceDescriptorHandleIncrementSize);
-	Device.CreateShaderResourceView(nullptr, &SRVDesc, DefaultSRVOfflineHandle);
+	Device.CreateShaderResourceView(nullptr, &SrvDesc, DefaultSRVOfflineHandle);
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
-	Memory::Memzero(&UAVDesc);
+	D3D12_UNORDERED_ACCESS_VIEW_DESC UavDesc;
+	Memory::Memzero(&UavDesc);
 
-	UAVDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM;
-	UAVDesc.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
-	UAVDesc.Texture2D.MipSlice		= 0;
-	UAVDesc.Texture2D.PlaneSlice	= 0;
+	UavDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM;
+	UavDesc.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
+	UavDesc.Texture2D.MipSlice		= 0;
+	UavDesc.Texture2D.PlaneSlice	= 0;
 
 	DefaultUAVOfflineHandle = D3D12_DESCRIPTOR_HANDLE_INCREMENT(DefaultSRVOfflineHandle, ResourceDescriptorHandleIncrementSize);
-	Device.CreateUnorderedAccessView(nullptr, nullptr, &UAVDesc, DefaultUAVOfflineHandle);
+	Device.CreateUnorderedAccessView(nullptr, nullptr, &UavDesc, DefaultUAVOfflineHandle);
 
 	const D3D12_CPU_DESCRIPTOR_HANDLE SamplerHandleForHeapStart = DefaultSamplerHeap->GetCPUDescriptorHandleForHeapStart();
 
@@ -110,8 +110,8 @@ bool D3D12ShaderDescriptorTableState::CreateResources(D3D12Device& Device)
 	SamplerDesc.ComparisonFunc	= D3D12_COMPARISON_FUNC_NEVER;
 	SamplerDesc.Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 	SamplerDesc.MaxAnisotropy	= 1;
-	SamplerDesc.MaxLOD			= 0.0f;
-	SamplerDesc.MinLOD			= 0.0f;
+	SamplerDesc.MaxLOD			= FLT_MAX;
+	SamplerDesc.MinLOD			= -FLT_MAX;
 	SamplerDesc.MipLODBias		= 0.0f;
 
 	DefaultSamplerOfflineHandle = SamplerHandleForHeapStart;
@@ -887,7 +887,7 @@ void D3D12CommandContext::UpdateTexture2D(
 
 		const DXGI_FORMAT NativeFormat = DxDestination->GetNativeFormat();
 		const UInt32 Stride		= GetFormatStride(NativeFormat);
-		const UInt32 RowPitch	= (Width * Stride + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
+		const UInt32 RowPitch	= ((Width * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
 		const UInt32 SizeInBytes = Height * RowPitch;
 	
 		D3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();

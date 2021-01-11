@@ -1,6 +1,7 @@
 #pragma once
 #include "RenderingCore/Buffer.h"
 #include "RenderingCore/ResourceHelpers.h"
+#include "RenderingCore/SamplerState.h"
 
 #include <Containers/TStaticArray.h>
 
@@ -51,6 +52,11 @@ public:
 	// This means that one can call BindShaderResourceViews directly with this function
 	ShaderResourceView* const* GetShaderResourceViews() const;
 
+	FORCEINLINE SamplerState* GetMaterialSampler() const
+	{
+		return Sampler.Get();
+	}
+
 	FORCEINLINE ConstantBuffer* GetMaterialBuffer() const
 	{
 		return MaterialBuffer.Get();
@@ -81,6 +87,7 @@ private:
 	
 	MaterialProperties			Properties;
 	TSharedRef<ConstantBuffer> 	MaterialBuffer;
+	TSharedRef<SamplerState> 	Sampler;
 
 	mutable TStaticArray<ShaderResourceView*, 7> ShaderResourceViews;
 };

@@ -167,40 +167,40 @@ private:
 	TSharedRef<ConstantBuffer> DirectionalLightBuffer;
 	TSharedRef<ConstantBuffer> PerShadowMapBuffer;
 
-	TSharedRef<VertexBuffer> SkyboxVertexBuffer;
-	TSharedRef<VertexBuffer> AABBVertexBuffer;
-	TSharedRef<IndexBuffer> SkyboxIndexBuffer;
-	TSharedRef<IndexBuffer> AABBIndexBuffer;
+	TSharedRef<VertexBuffer>	SkyboxVertexBuffer;
+	TSharedRef<VertexBuffer>	AABBVertexBuffer;
+	TSharedRef<IndexBuffer>		SkyboxIndexBuffer;
+	TSharedRef<IndexBuffer>		AABBIndexBuffer;
 
 	TSharedRef<TextureCube>			IrradianceMap;
 	TSharedRef<UnorderedAccessView>	IrradianceMapUAV;
 	TSharedRef<ShaderResourceView>	IrradianceMapSRV;
 
-	TSharedRef<TextureCube>			SpecularIrradianceMap;
-	TSharedRef<ShaderResourceView>	SpecularIrradianceMapSRV;
+	TSharedRef<TextureCube>					SpecularIrradianceMap;
+	TSharedRef<ShaderResourceView>			SpecularIrradianceMapSRV;
 	TArray<TSharedRef<UnorderedAccessView>>	SpecularIrradianceMapUAVs;
-	TArray<UnorderedAccessView*> WeakSpecularIrradianceMapUAVs;
+	TArray<UnorderedAccessView*>			WeakSpecularIrradianceMapUAVs;
 
-	TSharedRef<TextureCube> Skybox;
-	TSharedRef<ShaderResourceView> SkyboxSRV;
+	TSharedRef<TextureCube>			Skybox;
+	TSharedRef<ShaderResourceView>	SkyboxSRV;
 
-	TSharedRef<TextureCube> PointLightShadowMaps;
-	TArray<TSharedRef<DepthStencilView>> PointLightShadowMapsDSVs;
-	TSharedRef<ShaderResourceView> PointLightShadowMapsSRV;
+	TSharedRef<TextureCube>					PointLightShadowMaps;
+	TArray<TSharedRef<DepthStencilView>>	PointLightShadowMapsDSVs;
+	TSharedRef<ShaderResourceView>			PointLightShadowMapsSRV;
 	
 	TSharedRef<ShaderResourceView>	DirLightShadowMapSRV;
 	TSharedRef<DepthStencilView>	DirLightShadowMapDSV;
-	TSharedRef<Texture2D> DirLightShadowMaps;
+	TSharedRef<Texture2D>			DirLightShadowMaps;
 
 	TSharedRef<ShaderResourceView>	VSMDirLightShadowMapSRV;
 	TSharedRef<RenderTargetView>	VSMDirLightShadowMapRTV;
-	TSharedRef<Texture2D> VSMDirLightShadowMaps;
+	TSharedRef<Texture2D>			VSMDirLightShadowMaps;
 	
-	TSharedRef<Texture2D> ReflectionTexture;
+	TSharedRef<Texture2D>			ReflectionTexture;
 	TSharedRef<ShaderResourceView>	ReflectionTextureSRV;
 	TSharedRef<UnorderedAccessView>	ReflectionTextureUAV;
 
-	TSharedRef<Texture2D> IntegrationLUT;
+	TSharedRef<Texture2D>			IntegrationLUT;
 	TSharedRef<ShaderResourceView>	IntegrationLUTSRV;
 
 	TSharedRef<Texture2D>			FinalTarget;
