@@ -239,7 +239,7 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
 		for (const ShaderDefine& Define : *Defines)
 		{
 			const std::wstring& WideDefine	= StrBuff.EmplaceBack(ConvertToWide(Define.Define));
-			const std::wstring& WideValue	= StrBuff.EmplaceBack(ConvertToWide(Define.Define));
+			const std::wstring& WideValue	= StrBuff.EmplaceBack(ConvertToWide(Define.Value));
 			DxDefines.PushBack({ WideDefine.c_str(), WideValue.c_str() });
 		}
 	}

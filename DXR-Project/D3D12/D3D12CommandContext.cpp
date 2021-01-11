@@ -886,9 +886,9 @@ void D3D12CommandContext::UpdateTexture2D(
 		BarrierBatcher.FlushBarriers(*CmdList);
 
 		const DXGI_FORMAT NativeFormat = DxDestination->GetNativeFormat();
-		const UInt32 Stride		= GetFormatStride(NativeFormat);
-		const UInt32 RowPitch	= ((Width * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
-		const UInt32 SizeInBytes = Height * RowPitch;
+		const UInt32 Stride			= GetFormatStride(NativeFormat);
+		const UInt32 RowPitch		= ((Width * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
+		const UInt32 SizeInBytes	= Height * RowPitch;
 	
 		D3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
 		Byte* SourceMemory = GpuResourceUploader.LinearAllocate(*Device, SizeInBytes);

@@ -139,8 +139,8 @@ float CalculateStandardShadow(float2 Texcoords, float CompareDepth)
 		[unroll]
 		for (int y = -PCF_RANGE; y <= PCF_RANGE; y++)
 		{
-			//Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, Texcoords, CompareDepth, int2(x, y)).r;
-            Shadow += DirLightShadowMaps.SampleLevel(ShadowMapSampler1, Texcoords, 0.0f, int2(x, y)).r < CompareDepth ? 0.0f : 1.0f;
+			Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, Texcoords, CompareDepth, int2(x, y)).r;
+            //Shadow += DirLightShadowMaps.SampleLevel(ShadowMapSampler1, Texcoords, 0.0f, int2(x, y)).r < CompareDepth ? 0.0f : 1.0f;
         }
 	}
 
@@ -202,8 +202,8 @@ float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, floa
 	for (int i = 0; i < SAMPLES; i++)
 	{
 		int Index = int(float(OFFSET_SAMPLES) * Random(floor(WorldPosition.xyz * 1000.0f), i)) % OFFSET_SAMPLES;
-		//Shadow += PointLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, DirToLight + SampleOffsetDirections[Index] * DiskRadius, BiasedDepth);
-        Shadow += PointLightShadowMaps.SampleLevel(ShadowMapSampler1, DirToLight + SampleOffsetDirections[Index] * DiskRadius, 0.0f) < BiasedDepth ? 0.0f : 1.0f;
+		Shadow += PointLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, DirToLight + SampleOffsetDirections[Index] * DiskRadius, BiasedDepth);
+        //Shadow += PointLightShadowMaps.SampleLevel(ShadowMapSampler1, DirToLight + SampleOffsetDirections[Index] * DiskRadius, 0.0f) < BiasedDepth ? 0.0f : 1.0f;
     }
 	
 	Shadow = Shadow / SAMPLES;

@@ -49,16 +49,16 @@ enum class ESamplerFilter : Byte
 
 struct SamplerStateCreateInfo
 {
-	ESamplerMode	AddressU;
-	ESamplerMode	AddressV;
-	ESamplerMode	AddressW;
-	ESamplerFilter	Filter;
-	EComparisonFunc	ComparisonFunc;
-	Float			MipLODBias;
-	UInt32			MaxAnisotropy;
-	Float			BorderColor[4];
-	Float			MinLOD;
-	Float			MaxLOD;
+	ESamplerMode	AddressU		= ESamplerMode::SamplerMode_Clamp;
+	ESamplerMode	AddressV		= ESamplerMode::SamplerMode_Clamp;
+	ESamplerMode	AddressW		= ESamplerMode::SamplerMode_Clamp;
+	ESamplerFilter	Filter			= ESamplerFilter::SamplerFilter_MinMagMipLinear;
+	EComparisonFunc	ComparisonFunc	= EComparisonFunc::ComparisonFunc_Never;
+	Float			MipLODBias		= 0.0f;
+	UInt32			MaxAnisotropy	= 1;
+	Float			BorderColor[4]	= { 0.0f, 0.0f, 0.0f, 0.0f };
+	Float			MinLOD			= -FLT_MAX;
+	Float			MaxLOD			= FLT_MAX;
 };
 
 /*

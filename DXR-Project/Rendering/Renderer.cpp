@@ -752,6 +752,16 @@ void Renderer::Tick(const Scene& CurrentScene)
 			ShaderResourceViews,
 			4, 0);
 
+		SamplerState* SamplerStates[] =
+		{
+			GBufferSampler.Get()
+		};
+
+		CmdList.BindSamplerStates(
+			EShaderStage::ShaderStage_Compute,
+			SamplerStates,
+			1, 0);
+
 		CmdList.BindConstantBuffers(
 			EShaderStage::ShaderStage_Compute,
 			CameraBuffer.GetAddressOf(),
@@ -868,6 +878,21 @@ void Renderer::Tick(const Scene& CurrentScene)
 		3, 
 		0);
 
+	SamplerState* SamplerStates[] =
+	{
+		GBufferSampler.Get(),
+		IntegrationLUTSampler.Get(),
+		IrradianceSampler.Get(),
+		ShadowMapCompSampler.Get(),
+		ShadowMapSampler.Get()
+	};
+
+	CmdList.BindSamplerStates(
+		EShaderStage::ShaderStage_Pixel,
+		SamplerStates,
+		5,
+		0);
+
 	// Perform LightPass
 	CmdList.DrawInstanced(3, 1, 0, 0);
 
@@ -903,6 +928,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 		&SkyboxSRV,
 		1, 0);
 
+	CmdList.BindSamplerStates(
+		EShaderStage::ShaderStage_Pixel,
+		&SkyboxSampler,
+		1, 0);
+
 	CmdList.DrawIndexedInstanced(static_cast<UInt32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
 
 	CmdList.InsertCommandListMarker("End Skybox");
@@ -918,6 +948,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.BindShaderResourceViews(
 		EShaderStage::ShaderStage_Pixel,
 		&FinalTargetSRV, 1, 0);
+
+	CmdList.BindSamplerStates(
+		EShaderStage::ShaderStage_Pixel,
+		&GBufferSampler, 1, 0);
 
 	if (FXAAEnabled)
 	{
@@ -1307,6 +1341,22 @@ bool Renderer::Init()
 		SkyboxSRV->SetName("Skybox SRV");
 	}
 
+	{
+		SamplerStateCreateInfo CreateInfo;
+		CreateInfo.AddressU	= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.AddressV	= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.AddressW	= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.Filter	= ESamplerFilter::SamplerFilter_MinMagMipLinear;
+		CreateInfo.MinLOD	= 0.0f;
+		CreateInfo.MaxLOD	= 0.0f;
+
+		SkyboxSampler = RenderingAPI::CreateSamplerState(CreateInfo);
+		if (!SkyboxSampler)
+		{
+			return false;
+		}
+	}
+
 	// Generate global irradiance (From Skybox)
 	const UInt16 IrradianceSize = 32;
 	IrradianceMap = RenderingAPI::CreateTextureCube(
@@ -1383,6 +1433,20 @@ bool Renderer::Init()
 	if (!SpecularIrradianceMapSRV)
 	{
 		return false;
+	}
+
+	{
+		SamplerStateCreateInfo CreateInfo;
+		CreateInfo.AddressU	= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.AddressV	= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.AddressW	= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.Filter	= ESamplerFilter::SamplerFilter_MinMagMipLinear;
+
+		IrradianceSampler = RenderingAPI::CreateSamplerState(CreateInfo);
+		if (!IrradianceSampler)
+		{
+			return false;
+		}
 	}
 
 	CmdList.Begin();
@@ -1970,6 +2034,36 @@ bool Renderer::InitLightBuffers()
 		PerShadowMapBuffer->SetName("PerShadowMap Buffer");
 	}
 
+
+	{
+		SamplerStateCreateInfo CreateInfo;
+		CreateInfo.AddressU	= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.AddressV	= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.AddressW	= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.Filter	= ESamplerFilter::SamplerFilter_MinMagMipPoint;
+
+		ShadowMapSampler = RenderingAPI::CreateSamplerState(CreateInfo);
+		if (!ShadowMapSampler)
+		{
+			return false;
+		}
+	}
+
+	{
+		SamplerStateCreateInfo CreateInfo;
+		CreateInfo.AddressU			= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.AddressV			= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.AddressW			= ESamplerMode::SamplerMode_Wrap;
+		CreateInfo.Filter			= ESamplerFilter::SamplerFilter_Comparison_MinMagMipLinear;
+		CreateInfo.ComparisonFunc	= EComparisonFunc::ComparisonFunc_LessEqual;
+
+		ShadowMapCompSampler = RenderingAPI::CreateSamplerState(CreateInfo);
+		if (!ShadowMapCompSampler)
+		{
+			return false;
+		}
+	}
+
 	return CreateShadowMaps();
 }
 
@@ -2368,15 +2462,15 @@ bool Renderer::InitDeferred()
 	RasterizerStateCreateInfo RasterizerStateInfo;
 	RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
 
-	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
-	if (!RasterizerState)
+	TSharedRef<RasterizerState> GeometryRasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	if (!GeometryRasterizerState)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 	else
 	{
-		RasterizerState->SetName("GeometryPass RasterizerState");
+		GeometryRasterizerState->SetName("GeometryPass RasterizerState");
 	}
 
 	BlendStateCreateInfo BlendStateInfo;
@@ -2398,7 +2492,7 @@ bool Renderer::InitDeferred()
 	PSOProperties.InputLayoutState	= StdInputLayout.Get();
 	PSOProperties.BlendState		= BlendState.Get();
 	PSOProperties.DepthStencilState	= GeometryDepthStencilState.Get();
-	PSOProperties.RasterizerState	= RasterizerState.Get();
+	PSOProperties.RasterizerState	= GeometryRasterizerState.Get();
 	PSOProperties.ShaderState.VertexShader	= VShader.Get();
 	PSOProperties.ShaderState.PixelShader	= PShader.Get();
 	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
@@ -2476,9 +2570,32 @@ bool Renderer::InitDeferred()
 	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_Zero;
 
 	TSharedRef<DepthStencilState> LightDepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	if (!LightDepthStencilState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		LightDepthStencilState->SetName("LightPass DepthStencilState");
+	}
+
+	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
+
+	TSharedRef<RasterizerState> NoCullRasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	if (!NoCullRasterizerState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		NoCullRasterizerState->SetName("No Cull RasterizerState");
+	}
 
 	PSOProperties.InputLayoutState	= nullptr;
 	PSOProperties.DepthStencilState = LightDepthStencilState.Get();
+	PSOProperties.RasterizerState	= NoCullRasterizerState.Get();
 	PSOProperties.ShaderState.VertexShader	= VShader.Get();
 	PSOProperties.ShaderState.PixelShader	= PShader.Get();
 	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= FinalTargetFormat;
@@ -2734,6 +2851,20 @@ bool Renderer::InitGBuffer()
 		return false;
 	}
 
+	{
+		SamplerStateCreateInfo CreateInfo;
+		CreateInfo.AddressU	= ESamplerMode::SamplerMode_Clamp;
+		CreateInfo.AddressV	= ESamplerMode::SamplerMode_Clamp;
+		CreateInfo.AddressW	= ESamplerMode::SamplerMode_Clamp;
+		CreateInfo.Filter	= ESamplerFilter::SamplerFilter_MinMagMipPoint;
+		
+		GBufferSampler = RenderingAPI::CreateSamplerState(CreateInfo);
+		if (!GBufferSampler)
+		{
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -2803,6 +2934,20 @@ bool Renderer::InitIntegrationLUT()
 	else
 	{
 		IntegrationLUTSRV->SetName("IntegrationLUT SRV");
+	}
+
+	{
+		SamplerStateCreateInfo CreateInfo;
+		CreateInfo.AddressU	= ESamplerMode::SamplerMode_Clamp;
+		CreateInfo.AddressV	= ESamplerMode::SamplerMode_Clamp;
+		CreateInfo.AddressW	= ESamplerMode::SamplerMode_Clamp;
+		CreateInfo.Filter	= ESamplerFilter::SamplerFilter_MinMagMipPoint;
+
+		IntegrationLUTSampler = RenderingAPI::CreateSamplerState(CreateInfo);
+		if (!IntegrationLUTSampler)
+		{
+			return false;
+		}
 	}
 
 	TArray<UInt8> ShaderCode;

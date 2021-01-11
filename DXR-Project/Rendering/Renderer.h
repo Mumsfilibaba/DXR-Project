@@ -175,6 +175,7 @@ private:
 	TSharedRef<TextureCube>			IrradianceMap;
 	TSharedRef<UnorderedAccessView>	IrradianceMapUAV;
 	TSharedRef<ShaderResourceView>	IrradianceMapSRV;
+	TSharedRef<SamplerState>		IrradianceSampler;
 
 	TSharedRef<TextureCube>					SpecularIrradianceMap;
 	TSharedRef<ShaderResourceView>			SpecularIrradianceMapSRV;
@@ -183,11 +184,14 @@ private:
 
 	TSharedRef<TextureCube>			Skybox;
 	TSharedRef<ShaderResourceView>	SkyboxSRV;
+	TSharedRef<SamplerState>		SkyboxSampler;
 
 	TSharedRef<TextureCube>					PointLightShadowMaps;
 	TArray<TSharedRef<DepthStencilView>>	PointLightShadowMapsDSVs;
 	TSharedRef<ShaderResourceView>			PointLightShadowMapsSRV;
-	
+	TSharedRef<SamplerState>				ShadowMapSampler;
+	TSharedRef<SamplerState>				ShadowMapCompSampler;
+
 	TSharedRef<ShaderResourceView>	DirLightShadowMapSRV;
 	TSharedRef<DepthStencilView>	DirLightShadowMapDSV;
 	TSharedRef<Texture2D>			DirLightShadowMaps;
@@ -202,6 +206,7 @@ private:
 
 	TSharedRef<Texture2D>			IntegrationLUT;
 	TSharedRef<ShaderResourceView>	IntegrationLUTSRV;
+	TSharedRef<SamplerState>		IntegrationLUTSampler;
 
 	TSharedRef<Texture2D>			FinalTarget;
 	TSharedRef<ShaderResourceView>	FinalTargetSRV;
@@ -211,7 +216,8 @@ private:
 	TSharedRef<ShaderResourceView>	GBufferSRVs[4];
 	TSharedRef<RenderTargetView>	GBufferRTVs[3];
 	TSharedRef<DepthStencilView>	GBufferDSV;
-	
+	TSharedRef<SamplerState>		GBufferSampler;
+
 	TSharedRef<InputLayoutState> StdInputLayout;
 
 	TSharedRef<GraphicsPipelineState> PrePassPSO;
@@ -244,8 +250,8 @@ private:
 	TSharedRef<Texture2D>			SSAONoiseTex;
 	TSharedRef<ShaderResourceView>	SSAONoiseSRV;
 
-	TSharedPtr<RayTracingScene> RayTracingScene;
-	TArray<RayTracingGeometryInstance> RayTracingGeometryInstances;
+	TSharedPtr<RayTracingScene>			RayTracingScene;
+	TArray<RayTracingGeometryInstance>	RayTracingGeometryInstances;
 
 	TArray<MeshDrawCommand> DeferredVisibleCommands;
 	TArray<MeshDrawCommand> ForwardVisibleCommands;
