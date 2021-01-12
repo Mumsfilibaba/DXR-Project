@@ -4,7 +4,16 @@
 * Application
 */
 
-class GenericApplication* GlobalPlatformApplication = nullptr;
+class GenericWindow*		GlobalMainWindow			= nullptr;
+class GenericApplication*	GlobalPlatformApplication	= nullptr;
+class EventDispatcher*		GlobalEventDispatcher		= nullptr;
+class GenericOutputDevice*	GlobalConsoleOutput			= nullptr;
+
+/*
+* Game
+*/
+
+class Game* GlobalGame = nullptr;
 
 /*
 * Rendering

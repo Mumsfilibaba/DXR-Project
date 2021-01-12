@@ -7,8 +7,7 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
-#include "Application/Application.h"
-#include "Application/Events/EventQueue.h"
+#include "Application/Events/EventDispatcher.h"
 
 #include <algorithm>
 
@@ -1209,9 +1208,9 @@ Bool Renderer::OnEvent(const Event& Event)
 		return false;
 	}
 
-	const WindowResizeEvent& ResizeEvent = EventCast<WindowResizeEvent>(Event);
-	const UInt32 Width	= ResizeEvent.GetWidth();
-	const UInt32 Height	= ResizeEvent.GetHeight();
+	const WindowResizeEvent& ResizeEvent = CastEvent<WindowResizeEvent>(Event);
+	const UInt32 Width	= ResizeEvent.Width;
+	const UInt32 Height	= ResizeEvent.Height;
 
 	CommandListExecutor::WaitForGPU();
 
@@ -1253,9 +1252,8 @@ void Renderer::SetLightSettings(const LightSettings& InLightSettings)
 Bool Renderer::Init()
 {
 	// Viewport
-	TSharedRef<GenericWindow> MainWindow = Application::Get().GetMainWindow();
 	MainWindowViewport = RenderingAPI::CreateViewport(
-		MainWindow.Get(),
+		GlobalMainWindow,
 		0, 0,
 		EFormat::Format_R8G8B8A8_Unorm,
 		EFormat::Format_Unknown);
@@ -1352,7 +1350,8 @@ Bool Renderer::Init()
 	SkyboxSRV = RenderingAPI::CreateShaderResourceView(
 		Skybox.Get(),
 		EFormat::Format_R16G16B16A16_Float,
-		0, 1);
+		0, 
+		Skybox->GetMipLevels());
 	if (!SkyboxSRV)
 	{
 		return false;
@@ -1609,7 +1608,7 @@ Bool Renderer::Init()
 	}
 
 	// Register EventFunc
-	EventQueue::RegisterEventHandler(this, EEventCategory::EventCategory_Window);
+	GlobalEventDispatcher->RegisterEventHandler(this, EEventCategory::EventCategory_Window);
 
 	return true;
 }

@@ -32,8 +32,8 @@ void Material::Initialize()
 	CreateInfo.ComparisonFunc	= EComparisonFunc::ComparisonFunc_Never;
 	CreateInfo.Filter			= ESamplerFilter::SamplerFilter_MinMagMipLinear;
 	CreateInfo.MaxAnisotropy	= 1;
-	CreateInfo.MaxLOD			= 0.0f;
-	CreateInfo.MinLOD			= 0.0f;
+	CreateInfo.MaxLOD			= FLT_MAX;
+	CreateInfo.MinLOD			= -FLT_MAX;
 	CreateInfo.MipLODBias		= 0.0f;
 
 	Sampler = RenderingAPI::CreateSamplerState(CreateInfo);

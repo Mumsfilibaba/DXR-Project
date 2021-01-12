@@ -10,13 +10,10 @@
 #include "Scene/Components/MeshComponent.h"
 
 #include "Application/Input.h"
-#include "Application/Application.h"
 
 /*
 * Game
 */
-
-Game* Game::CurrentGame = nullptr;
 
 Game::Game()
 	: CurrentScene(nullptr)
@@ -29,7 +26,7 @@ Game::~Game()
 	SAFEDELETE(CurrentScene);
 }
 
-bool Game::Initialize()
+Bool Game::Init()
 {
 	// Initialize Scene
 	constexpr Float	 SphereOffset	= 1.25f;
@@ -265,11 +262,6 @@ bool Game::Initialize()
 	return true;
 }
 
-void Game::Destroy()
-{
-	delete this;
-}
-
 void Game::Tick(Timestamp DeltaTime)
 {
 	// Run app
@@ -328,15 +320,4 @@ void Game::Tick(Timestamp DeltaTime)
 	}
 
 	CurrentCamera->UpdateMatrices();
-}
-
-Game& Game::GetCurrent()
-{
-	VALIDATE(CurrentGame != nullptr);
-	return *CurrentGame;
-}
-
-void Game::SetCurrent(Game* InCurrentGame)
-{
-	CurrentGame = InCurrentGame;
 }

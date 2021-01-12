@@ -49,9 +49,6 @@ public:
 	virtual void OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta)
 	{
 	}
-
-protected:
-	ApplicationEventHandler() = default;
 };
 
 #ifdef COMPILER_VISUAL_STUDIO

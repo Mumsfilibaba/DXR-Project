@@ -6,8 +6,6 @@
 #include "Engine/EngineLoop.h"
 #include "Engine/EngineGlobals.h"
 
-#include "Application/Application.h"
-
 #include "Scene/Scene.h"
 #include "Scene/Lights/DirectionalLight.h"
 #include "Scene/Lights/PointLight.h"
@@ -135,7 +133,7 @@ static void DrawMenu()
 			{
 				if (ImGui::MenuItem("Toggle Fullscreen"))
 				{
-					Application::Get().GetMainWindow()->ToggleFullscreen();
+					GlobalMainWindow->ToggleFullscreen();
 				}
 
 				if (ImGui::MenuItem("Quit"))
@@ -170,7 +168,7 @@ static void DrawSideWindow()
 		constexpr UInt32 Width = 500;
 
 		WindowShape WindowShape;
-		Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
+		GlobalMainWindow->GetWindowShape(WindowShape);
 
 		ImGui::SetNextWindowPos(ImVec2(0, MainMenuBarHeight));
 		ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height - MainMenuBarHeight));
@@ -223,7 +221,7 @@ static void DrawRenderSettings()
 	ImGui::BeginChild("RendererInfo");
 
 	WindowShape WindowShape;
-	Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
+	GlobalMainWindow->GetWindowShape(WindowShape);
 
 	ImGui::Spacing();
 	ImGui::Text("Renderer Info");
@@ -412,7 +410,7 @@ static void DrawSceneInfo()
 	ImGui::Separator();
 
 	WindowShape WindowShape;
-	Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
+	GlobalMainWindow->GetWindowShape(WindowShape);
 	ImGui::BeginChild("SceneInfo", ImVec2(Width, Float(WindowShape.Height) - 100.0f));
 
 	// Actors

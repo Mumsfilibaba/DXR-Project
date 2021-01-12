@@ -125,6 +125,11 @@ public:
 		CmdList->CopyResource(Destination->GetNativeResource(), Source->GetNativeResource());
 	}
 
+	FORCEINLINE void CopyNativeResource(ID3D12Resource* Destination, ID3D12Resource* Source)
+	{
+		CmdList->CopyResource(Destination, Source);
+	}
+
 	FORCEINLINE void ResolveSubresource(D3D12Resource* Destination, D3D12Resource* Source, DXGI_FORMAT Format)
 	{
 		CmdList->ResolveSubresource(Destination->GetNativeResource(), 0, Source->GetNativeResource(), 0, Format);
@@ -281,6 +286,17 @@ public:
 	FORCEINLINE void ResourceBarrier(const D3D12_RESOURCE_BARRIER* Barriers, UInt32 NumBarriers)
 	{
 		CmdList->ResourceBarrier(NumBarriers, Barriers);
+	}
+
+	FORCEINLINE void UnorderedAccessBarrier(ID3D12Resource* Resource)
+	{
+		D3D12_RESOURCE_BARRIER Barrier;
+		Memory::Memzero(&Barrier);
+
+		Barrier.Type			=  D3D12_RESOURCE_BARRIER_TYPE_UAV;
+		Barrier.UAV.pResource	= Resource;
+
+		CmdList->ResourceBarrier(1, &Barrier);
 	}
 
 	FORCEINLINE bool IsRecordning() const

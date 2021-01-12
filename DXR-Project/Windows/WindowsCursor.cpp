@@ -20,7 +20,7 @@ WindowsCursor::~WindowsCursor()
 	}
 }
 
-bool WindowsCursor::Initialize(const CursorCreateInfo& InCreateInfo)
+Bool WindowsCursor::Init(const CursorCreateInfo& InCreateInfo)
 {
 	if (InCreateInfo.IsPlatformCursor)
 	{

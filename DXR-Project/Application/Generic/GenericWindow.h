@@ -26,7 +26,7 @@ struct WindowCreateInfo
 public:
 	WindowCreateInfo() = default;
 
-	inline WindowCreateInfo(const std::string& InTitle, UInt32 InWidth, UInt32 InHeight, UInt32 InStyle)
+	WindowCreateInfo(const std::string& InTitle, UInt32 InWidth, UInt32 InHeight, UInt32 InStyle)
 		: Title(InTitle)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -34,27 +34,27 @@ public:
 	{
 	}
 
-	FORCEINLINE bool IsTitled() const
+	FORCEINLINE Bool IsTitled() const
 	{
 		return Style & WindowStyleFlag_Titled;
 	}
 
-	FORCEINLINE bool IsClosable() const
+	FORCEINLINE Bool IsClosable() const
 	{
 		return Style & WindowStyleFlag_Closable;
 	}
 
-	FORCEINLINE bool IsMinimizable() const
+	FORCEINLINE Bool IsMinimizable() const
 	{
 		return Style & WindowStyleFlag_Minimizable;
 	}
 
-	FORCEINLINE bool IsMaximizable() const
+	FORCEINLINE Bool IsMaximizable() const
 	{
 		return Style & WindowStyleFlag_Maximizable;
 	}
 
-	FORCEINLINE bool IsResizeable() const
+	FORCEINLINE Bool IsResizeable() const
 	{
 		return Style & WindowStyleFlag_Resizeable;
 	}
@@ -73,7 +73,7 @@ struct WindowShape
 {
 	WindowShape() = default;
 
-	inline WindowShape(UInt32 InWidth, UInt32 InHeight, Int32 x, Int32 y)
+	WindowShape(UInt32 InWidth, UInt32 InHeight, Int32 x, Int32 y)
 		: Width(InWidth)
 		, Height(InHeight)
 		, Position({ x, y })
@@ -96,21 +96,21 @@ struct WindowShape
 class GenericWindow : public RefCountedObject
 {
 public:
-	virtual bool Initialize(const WindowCreateInfo& InCreateInfo) = 0;
+	virtual Bool Init(const WindowCreateInfo& InCreateInfo) = 0;
 
-	virtual void Show(bool Maximized) = 0;
+	virtual void Show(Bool Maximized) = 0;
 	virtual void Minimize()	= 0;
 	virtual void Maximize()	= 0;
 	virtual void Close()	= 0;
 	virtual void Restore()	= 0;
 	virtual void ToggleFullscreen() = 0;
 
-	virtual bool IsValid() const		= 0;
-	virtual bool IsActiveWindow() const = 0;
+	virtual Bool IsValid() const		= 0;
+	virtual Bool IsActiveWindow() const = 0;
 
 	virtual void SetTitle(const std::string& Title) = 0;
 
-	virtual void SetWindowShape(const WindowShape& Shape, bool Move)	= 0;
+	virtual void SetWindowShape(const WindowShape& Shape, Bool Move)	= 0;
 	virtual void GetWindowShape(WindowShape& OutWindowShape) const		= 0;
 
 	virtual UInt32 GetWidth()	const = 0;

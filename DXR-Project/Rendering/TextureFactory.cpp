@@ -29,7 +29,7 @@ struct TextureFactoryData
 * TextureFactory
 */
 
-bool TextureFactory::Initialize()
+Bool TextureFactory::Init()
 {
 	// Compile and create shader
 	TArray<UInt8> Code;
@@ -120,7 +120,7 @@ Texture2D* TextureFactory::LoadFromMemory(
 		return nullptr;
 	}
 
-	const bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
+	const Bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
 	const UInt32 MipLevels = GenerateMipLevels ? std::min<UInt32>(std::log2<UInt32>(Width), std::log2<UInt32>(Height)) : 1;
 
 	VALIDATE(MipLevels != 0);

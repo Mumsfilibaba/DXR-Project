@@ -153,13 +153,13 @@ enum EMouseButton : UInt8
 {
 	MOUSE_BUTTON_UNKNOWN = 0,
 
-	MOUSE_BUTTON_LEFT		= 1,
-	MOUSE_BUTTON_RIGHT		= 2,
-	MOUSE_BUTTON_MIDDLE		= 3,
-	MOUSE_BUTTON_BACK		= 4,
-	MOUSE_BUTTON_FORWARD	= 5,
+	MouseButton_Left		= 1,
+	MouseButton_Right		= 2,
+	MouseButton_Middle		= 3,
+	MouseButton_Back		= 4,
+	MouseButton_Forward	= 5,
 
-	MOUSE_BUTTON_LAST	= MOUSE_BUTTON_BACK,
+	MOUSE_BUTTON_LAST	= MouseButton_Back,
 	MOUSE_BUTTON_COUNT	= MOUSE_BUTTON_LAST + 1
 };
 
@@ -183,20 +183,20 @@ enum EModifierFlag
 * Helpers
 */
 
-inline const Char* ButtonToString(EMouseButton Button)
+inline const Char* ToString(EMouseButton Button)
 {
 	switch (Button)
 	{
-	case MOUSE_BUTTON_LEFT:		return "LEFT";
-	case MOUSE_BUTTON_RIGHT:	return "RIGHT";
-	case MOUSE_BUTTON_MIDDLE:	return "MIDDLE";
-	case MOUSE_BUTTON_BACK:		return "BACK";
-	case MOUSE_BUTTON_FORWARD:	return "FORWARD";
-	default:					return "UNKNOWN";
+	case MouseButton_Left:		return "LeftMouse";
+	case MouseButton_Right:		return "RightMouse";
+	case MouseButton_Middle:	return "MiddleMouse";
+	case MouseButton_Back:		return "Back";
+	case MouseButton_Forward:	return "Forward";
+	default:					return "Unknown";
 	}
 }
 
-inline const Char* KeyToString(EKey key)
+inline const Char* ToString(EKey key)
 {
 	switch (key)
 	{

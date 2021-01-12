@@ -33,15 +33,3 @@ public:
 		return nullptr;
 	}
 };
-
-/*
-* GlobalOutputDevices
-*/
-
-struct GlobalOutputDevices
-{
-	static GenericOutputDevice* Console;
-
-	static bool Initialize();
-	static bool Release();
-};

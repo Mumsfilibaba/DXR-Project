@@ -1,6 +1,6 @@
 #pragma once
 #include "Application/InputCodes.h"
-#include "Application/Events/Event.h"
+#include "Application/Events/Events.h"
 
 #include <imgui.h>
 
@@ -13,13 +13,13 @@ class DebugUI
 public:
 	typedef void(*UIDrawFunc)();
 
-	static bool Initialize();
+	static Bool Init();
 	static void Release();
 
 	static void DrawUI(UIDrawFunc DrawFunc);
 	static void DrawDebugString(const std::string& DebugString);
 
-	static bool OnEvent(const Event& Event);
+	static Bool OnEvent(const Event& Event);
 	
 	// Should only be called by the renderer
 	static void Render(class CommandList& CmdList);

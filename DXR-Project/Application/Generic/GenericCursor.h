@@ -27,20 +27,20 @@ enum class EPlatformCursor : UInt32
 
 struct CursorCreateInfo
 {
-	inline CursorCreateInfo()
+	CursorCreateInfo()
 		: PlatformCursor(EPlatformCursor::PlatformCursor_None)
 		, IsPlatformCursor(false)
 	{
 	}
 
-	inline CursorCreateInfo(EPlatformCursor InPlatformCursor)
+	CursorCreateInfo(EPlatformCursor InPlatformCursor)
 		: PlatformCursor(InPlatformCursor)
 		, IsPlatformCursor(true)
 	{
 	}
 
 	EPlatformCursor PlatformCursor;
-	bool IsPlatformCursor;
+	Bool IsPlatformCursor;
 };
 
 /*
@@ -52,7 +52,7 @@ class GenericCursor : public RefCountedObject
 public:
 	virtual ~GenericCursor() = default;
 
-	virtual bool Initialize(const CursorCreateInfo& InCreateInfo) = 0;
+	virtual Bool Init(const CursorCreateInfo& InCreateInfo) = 0;
 
 	virtual Void* GetNativeHandle() const
 	{
@@ -79,6 +79,6 @@ struct GlobalCursors
 	static TSharedRef<GenericCursor> Hand;
 	static TSharedRef<GenericCursor> NotAllowed;
 
-	static bool Initialize();
+	static Bool Init();
 	static void Release();
 };

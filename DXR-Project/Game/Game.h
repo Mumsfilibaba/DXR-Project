@@ -11,17 +11,11 @@ public:
 	Game();
 	~Game();
 
-	bool Initialize();
-	void Destroy();
+	Bool Init();
 
 	void Tick(Timestamp DeltaTime);
-
-	static Game& GetCurrent();
-	static void SetCurrent(Game* InCurrentGame);
 
 private:
 	Scene*	CurrentScene	= nullptr;
 	Camera* CurrentCamera	= nullptr;
-
-	static Game* CurrentGame;
 };

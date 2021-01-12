@@ -13,7 +13,7 @@ public:
 	* Creation
 	*/
 
-	static bool Initialize(ERenderingAPI InRenderAPI);
+	static Bool Init(ERenderingAPI InRenderAPI);
 	static void Release();
 
 	/*
@@ -830,12 +830,12 @@ public:
 	* Support Features
 	*/
 
-	FORCEINLINE static bool IsRayTracingSupported()
+	FORCEINLINE static Bool IsRayTracingSupported()
 	{
 		return GlobalRenderingAPI->IsRayTracingSupported();
 	}
 
-	FORCEINLINE static bool UAVSupportsFormat(EFormat Format)
+	FORCEINLINE static Bool UAVSupportsFormat(EFormat Format)
 	{
 		return GlobalRenderingAPI->UAVSupportsFormat(Format);
 	}

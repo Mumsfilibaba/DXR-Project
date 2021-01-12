@@ -5,7 +5,16 @@
 * Application
 */
 
-extern class GenericApplication* GlobalPlatformApplication;
+extern class GenericWindow*			GlobalMainWindow;
+extern class GenericApplication*	GlobalPlatformApplication;
+extern class EventDispatcher*		GlobalEventDispatcher;
+extern class GenericOutputDevice*	GlobalConsoleOutput;
+
+/*
+* Game
+*/
+
+extern class Game* GlobalGame;
 
 /*
 * Rendering

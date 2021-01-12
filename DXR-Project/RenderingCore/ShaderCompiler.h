@@ -18,13 +18,13 @@ enum class EShaderModel
 
 struct ShaderDefine
 {
-	inline ShaderDefine(const std::string& InDefine)
+	ShaderDefine(const std::string& InDefine)
 		: Define(InDefine)
 		, Value()
 	{
 	}
 
-	inline ShaderDefine(const std::string& InDefine, const std::string& InValue)
+	ShaderDefine(const std::string& InDefine, const std::string& InValue)
 		: Define(InDefine)
 		, Value(InValue)
 	{
@@ -43,7 +43,7 @@ class IShaderCompiler
 public:
 	virtual ~IShaderCompiler() = default;
 
-	virtual bool CompileFromFile(
+	virtual Bool CompileFromFile(
 		const std::string& FilePath,
 		const std::string& EntryPoint,
 		const TArray<ShaderDefine>* Defines,
@@ -51,7 +51,7 @@ public:
 		EShaderModel ShaderModel,
 		TArray<UInt8>& Code) const = 0;
 
-	virtual bool CompileShader(
+	virtual Bool CompileShader(
 		const std::string& ShaderSource,
 		const std::string& EntryPoint,
 		const TArray<ShaderDefine>* Defines,
@@ -69,7 +69,7 @@ class ShaderCompiler
 	friend class RenderingAPI;
 
 public:
-	FORCEINLINE static bool CompileFromFile(
+	FORCEINLINE static Bool CompileFromFile(
 		const std::string& FilePath,
 		const std::string& EntryPoint,
 		const TArray<ShaderDefine>* Defines,
@@ -86,7 +86,7 @@ public:
 			Code);
 	}
 
-	FORCEINLINE static bool CompileShader(
+	FORCEINLINE static Bool CompileShader(
 		const std::string& ShaderSource,
 		const std::string& EntryPoint,
 		const TArray<ShaderDefine>* Defines,

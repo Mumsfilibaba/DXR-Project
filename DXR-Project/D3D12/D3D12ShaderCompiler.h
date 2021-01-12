@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderingCore/ShaderCompiler.h"
 
-#include <dxcapi.h>
+#include "D3D12Helpers.h"
 
 #include <string>
 
@@ -15,9 +15,9 @@ public:
 	D3D12ShaderCompiler();
 	~D3D12ShaderCompiler();
 
-	bool Initialize();
+	Bool Init();
 	
-	virtual bool CompileFromFile(
+	virtual Bool CompileFromFile(
 		const std::string& FilePath,
 		const std::string& EntryPoint,
 		const TArray<ShaderDefine>* Defines,
@@ -25,7 +25,7 @@ public:
 		EShaderModel ShaderModel,
 		TArray<UInt8>& Code) const override final;
 
-	virtual bool CompileShader(
+	virtual Bool CompileShader(
 		const std::string& ShaderSource,
 		const std::string& EntryPoint,
 		const TArray<ShaderDefine>* Defines,
@@ -34,7 +34,7 @@ public:
 		TArray<UInt8>& Code) const override final;
 
 private:
-	bool InternalCompileFromSource(
+	Bool InternalCompileFromSource(
 		IDxcBlob* SourceBlob, 
 		LPCWSTR FilePath, 
 		LPCWSTR Entrypoint, 
@@ -43,9 +43,9 @@ private:
 		TArray<UInt8>& Code) const;
 
 private:
-	Microsoft::WRL::ComPtr<IDxcCompiler>	DxCompiler;
-	Microsoft::WRL::ComPtr<IDxcLibrary>		DxLibrary;
-	Microsoft::WRL::ComPtr<IDxcLinker>		DxLinker;
-	Microsoft::WRL::ComPtr<IDxcIncludeHandler> DxIncludeHandler;
+	TComPtr<IDxcCompiler>		DxCompiler;
+	TComPtr<IDxcLibrary>		DxLibrary;
+	TComPtr<IDxcLinker>			DxLinker;
+	TComPtr<IDxcIncludeHandler> DxIncludeHandler;
 	HMODULE DxCompilerDLL;
 };

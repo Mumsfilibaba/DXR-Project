@@ -4,6 +4,7 @@
 #include "Time/Clock.h"
 
 #include "Application/InputCodes.h"
+#include "Application/Events/EventHandler.h"
 
 #include "Scene/Actor.h"
 #include "Scene/Scene.h"
@@ -16,9 +17,6 @@
 #include "RenderingCore/RenderingAPI.h"
 #include "RenderingCore/CommandList.h"
 #include "RenderingCore/Viewport.h"
-
-#include "Application/Events/EventQueue.h"
-#include "Application/Events/WindowEvent.h"
 
 #define ENABLE_D3D12_DEBUG	0
 #define ENABLE_VSM			0

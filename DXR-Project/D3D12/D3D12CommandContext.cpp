@@ -316,7 +316,7 @@ void D3D12ShaderDescriptorTableState::InternalAllocateAndCopyDescriptorHandles(
 */
 
 void D3D12ResourceBarrierBatcher::AddTransitionBarrier(
-	D3D12Resource* Resource, 
+	ID3D12Resource* Resource, 
 	D3D12_RESOURCE_STATES BeforeState, 
 	D3D12_RESOURCE_STATES AfterState)
 {
@@ -327,7 +327,7 @@ void D3D12ResourceBarrierBatcher::AddTransitionBarrier(
 	{
 		if ((*It).Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
 		{
-			if ((*It).Transition.pResource == Resource->GetNativeResource())
+			if ((*It).Transition.pResource == Resource)
 			{
 				if ((*It).Transition.StateBefore != AfterState)
 				{
@@ -348,12 +348,20 @@ void D3D12ResourceBarrierBatcher::AddTransitionBarrier(
 	Memory::Memzero(&Barrier);
 
 	Barrier.Type					= D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	Barrier.Transition.pResource	= Resource->GetNativeResource();
+	Barrier.Transition.pResource	= Resource;
 	Barrier.Transition.StateAfter	= AfterState;
 	Barrier.Transition.StateBefore	= BeforeState;
 	Barrier.Transition.Subresource	= D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
 	Barriers.EmplaceBack(Barrier);
+}
+
+void D3D12ResourceBarrierBatcher::AddTransitionBarrier(
+	D3D12Resource* Resource, 
+	D3D12_RESOURCE_STATES BeforeState, 
+	D3D12_RESOURCE_STATES AfterState)
+{
+	AddTransitionBarrier(Resource->GetNativeResource(), BeforeState, AfterState);
 }
 
 /*
@@ -1075,7 +1083,9 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
 	D3D12Texture* DxTexture = D3D12TextureCast(Texture);
 	VALIDATE(DxTexture != nullptr);
 
-	const D3D12_RESOURCE_DESC& Desc = DxTexture->GetDesc();
+	D3D12_RESOURCE_DESC Desc = DxTexture->GetDesc();
+	Desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	
 	VALIDATE(Desc.MipLevels > 1);
 
 	D3D12_HEAP_PROPERTIES HeapProperties;
@@ -1104,8 +1114,6 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
 	// Check Type
 	const Bool IsTextureCube = Texture->AsTextureCube();
 
-	D3D12Resource StagingResource(Device, StagingTexture);
-
 	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
 	Memory::Memzero(&SrvDesc);
 
@@ -1125,8 +1133,6 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
 		SrvDesc.Texture2D.MostDetailedMip	= 0;
 	}
 
-	D3D12ShaderResourceView StagingResourceView(Device, &StagingResource, SrvDesc);
-
 	D3D12_UNORDERED_ACCESS_VIEW_DESC UavDesc;
 	Memory::Memzero(&UavDesc);
 
@@ -1144,110 +1150,169 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
 		UavDesc.Texture2D.PlaneSlice	= 0;
 	}
 
-	const UInt32 MipLevelsPerDispatch = 4;
-	UInt32 NumDispatches = Desc.MipLevels / MipLevelsPerDispatch;
+	const UInt32 MipLevelsPerDispatch		= 4;
+	const UInt32 UavDescriptorHandleCount	= Math::AlignUp<UInt32>(Desc.MipLevels, MipLevelsPerDispatch);
+	const UInt32 NumDispatches				= UavDescriptorHandleCount / MipLevelsPerDispatch;
 
-	const UInt32 MiplevelsLastDispatch = Desc.MipLevels - (MipLevelsPerDispatch * NumDispatches);
-	if (MiplevelsLastDispatch > 0)
+	D3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
+
+	// Allocate an extra handle for SRV
+	const UInt32 StartDescriptorHandleIndex			= ResourceHeap->AllocateHandles(UavDescriptorHandleCount + 1); 
+	const D3D12_CPU_DESCRIPTOR_HANDLE SrvHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(StartDescriptorHandleIndex);
+	Device->CreateShaderResourceView(DxTexture->GetNativeResource(), &SrvDesc, SrvHandle_CPU);
+
+	const UInt32 UavStartDescriptorHandleIndex = StartDescriptorHandleIndex + 1;
+	for (UInt32 i = 0; i < Desc.MipLevels; i++)
 	{
-		NumDispatches++;
+		if (IsTextureCube)
+		{
+			UavDesc.Texture2DArray.MipSlice = i;
+		}
+		else
+		{
+			UavDesc.Texture2D.MipSlice = i;
+		}
+
+		const D3D12_CPU_DESCRIPTOR_HANDLE UavHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(UavStartDescriptorHandleIndex + i);
+		Device->CreateUnorderedAccessView(StagingTexture.Get(), nullptr, &UavDesc, UavHandle_CPU);
 	}
 
-	//for (UInt32 i = 0; i < Desc.MipLevels; i++)
-	//{
-	//	if (IsTextureCube)
-	//	{
-	//		UavDesc.Texture2DArray.MipSlice = i;
-	//	}
-	//	else
-	//	{
-	//		UavDesc.Texture2D.MipSlice = i;
-	//	}
+	for (UInt32 i = Desc.MipLevels; i < UavDescriptorHandleCount; i++)
+	{
+		if (IsTextureCube)
+		{
+			UavDesc.Texture2DArray.MipSlice = 0;
+		}
+		else
+		{
+			UavDesc.Texture2D.MipSlice = 0;
+		}
 
-	//	StagingTexture->SetUnorderedAccessView(MakeShared<D3D12UnorderedAccessView>(Device, nullptr, StagingTexture->GetResource(), &UavDesc), i);
-	//}
+		const D3D12_CPU_DESCRIPTOR_HANDLE UavHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(UavStartDescriptorHandleIndex + i);
+		Device->CreateUnorderedAccessView(nullptr, nullptr, &UavDesc, UavHandle_CPU);
+	}
 
-	//// Bind UnorderedAccessViews
-	//UInt32 UAVIndex = 0;
-	//for (UInt32 i = 0; i < NumDispatches; i++)
-	//{
-	//	if (!MipGenHelper.UAVDescriptorTables[i])
-	//	{
-	//		MipGenHelper.UAVDescriptorTables[i] = MakeUnique<D3D12DescriptorTable>(Device, 4);
-	//	}
+	// We assume the destination is in D3D12_RESOURCE_STATE_COPY_DEST
+	BarrierBatcher.AddTransitionBarrier(
+		DxTexture, 
+		D3D12_RESOURCE_STATE_COPY_DEST, 
+		D3D12_RESOURCE_STATE_COPY_SOURCE);
+	
+	BarrierBatcher.AddTransitionBarrier(
+		StagingTexture.Get(), 
+		D3D12_RESOURCE_STATE_COMMON, 
+		D3D12_RESOURCE_STATE_COPY_DEST);
 
-	//	for (UInt32 j = 0; j < MipLevelsPerDispatch; j++)
-	//	{
-	//		if (UAVIndex < Desc.MipLevels)
-	//		{
-	//			MipGenHelper.UAVDescriptorTables[i]->SetUnorderedAccessView(StagingTexture->GetUnorderedAccessView(UAVIndex).Get(), j);
-	//			UAVIndex++;
-	//		}
-	//		else
-	//		{
-	//			MipGenHelper.UAVDescriptorTables[i]->SetUnorderedAccessView(MipGenHelper.NULLView.Get(), j);
-	//		}
-	//	}
+	BarrierBatcher.FlushBarriers(*CmdList);
 
-	//	MipGenHelper.UAVDescriptorTables[i]->CopyDescriptors();
-	//}
+	CmdList->CopyNativeResource(
+		StagingTexture.Get(), 
+		DxTexture->GetNativeResource());
 
-	//// Copy the source over to the staging texture
-	//TransitionBarrier(Dest, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	//TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+	BarrierBatcher.AddTransitionBarrier(
+		DxTexture,
+		D3D12_RESOURCE_STATE_COPY_SOURCE,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
-	//CopyResource(StagingTexture.Get(), Dest);
+	BarrierBatcher.AddTransitionBarrier(
+		StagingTexture.Get(),
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-	//TransitionBarrier(Dest, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	//TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	BarrierBatcher.FlushBarriers(*CmdList);
 
-	//SetPipelineState(PipelineState.Get());
-	//SetComputeRootSignature(MipGenHelper.GenerateMipsRootSignature->GetRootSignature());
+	if (IsTextureCube)
+	{
+		CmdList->SetPipelineState(GenerateMipsTexCube_PSO->GetPipeline());
+		CmdList->SetComputeRootSignature(GenerateMipsTexCube_PSO->GetRootSignature());
+	}
+	else
+	{
+		CmdList->SetPipelineState(GenerateMipsTex2D_PSO->GetPipeline());
+		CmdList->SetComputeRootSignature(GenerateMipsTex2D_PSO->GetRootSignature());
+	}
 
-	//ID3D12DescriptorHeap* GlobalHeap = Device->GetGlobalOnlineResourceHeap()->GetHeap();
-	//SetDescriptorHeaps(&GlobalHeap, 1);
-	//SetComputeRootDescriptorTable(MipGenHelper.SRVDescriptorTable->GetGPUTableStartHandle(), 1);
+	const D3D12_GPU_DESCRIPTOR_HANDLE SrvHandle_GPU = ResourceHeap->GetGPUDescriptorHandleAt(StartDescriptorHandleIndex);
+	ID3D12DescriptorHeap* OnlineResourceHeap		= ResourceHeap->GetHeap()->GetHeap();	
+	CmdList->SetDescriptorHeaps(&OnlineResourceHeap, 1);
+	CmdList->SetComputeRootDescriptorTable(SrvHandle_GPU, 1);
 
-	//struct ConstantBuffer
-	//{
-	//	UInt32		SrcMipLevel;
-	//	UInt32		NumMipLevels;
-	//	XMFLOAT2	TexelSize;
-	//} CB0;
+	struct ConstantBuffer
+	{
+		UInt32		SrcMipLevel;
+		UInt32		NumMipLevels;
+		XMFLOAT2	TexelSize;
+	} ConstantData;
 
-	//UInt32 DstWidth = static_cast<UInt32>(Desc.Width);
-	//UInt32 DstHeight = Desc.Height;
-	//CB0.SrcMipLevel = 0;
+	UInt32 DstWidth		= static_cast<UInt32>(Desc.Width);
+	UInt32 DstHeight	= Desc.Height;
+	ConstantData.SrcMipLevel = 0;
 
-	//const UInt32 ThreadsZ = IsTextureCube ? 6 : 1;
-	//UInt32 RemainingMiplevels = Desc.MipLevels;
-	//for (UInt32 i = 0; i < NumDispatches; i++)
-	//{
-	//	CB0.TexelSize = XMFLOAT2(1.0f / static_cast<Float32>(DstWidth), 1.0f / static_cast<Float32>(DstHeight));
-	//	CB0.NumMipLevels = std::min<UInt32>(4, RemainingMiplevels);
+	const UInt32 ThreadsZ		= IsTextureCube ? 6 : 1;	
+	UInt32 RemainingMiplevels	= Desc.MipLevels;
+	for (UInt32 i = 0; i < NumDispatches; i++)
+	{
+		ConstantData.TexelSize		= XMFLOAT2(1.0f / static_cast<Float>(DstWidth), 1.0f / static_cast<Float>(DstHeight));
+		ConstantData.NumMipLevels	= Math::Min<UInt32>(4, RemainingMiplevels);
 
-	//	SetComputeRoot32BitConstants(&CB0, 4, 0, 0);
-	//	SetComputeRootDescriptorTable(MipGenHelper.UAVDescriptorTables[i]->GetGPUTableStartHandle(), 2);
+		CmdList->SetComputeRoot32BitConstants(
+			&ConstantData, 4, 0, 0);
 
-	//	const UInt32 ThreadsX = DivideByMultiple(DstWidth, 8);
-	//	const UInt32 ThreadsY = DivideByMultiple(DstHeight, 8);
-	//	Dispatch(ThreadsX, ThreadsY, ThreadsZ);
+		const UInt32 GPUDescriptorHandleIndex = i * MipLevelsPerDispatch;
+		const D3D12_GPU_DESCRIPTOR_HANDLE UavHandle_GPU = ResourceHeap->GetGPUDescriptorHandleAt(UavStartDescriptorHandleIndex + GPUDescriptorHandleIndex);
+		CmdList->SetComputeRootDescriptorTable(UavHandle_GPU, 2);
 
-	//	UnorderedAccessBarrier(StagingTexture.Get());
+		constexpr UInt32 ThreadCount = 8;
+		const UInt32 ThreadsX = Math::DivideByMultiple(DstWidth, ThreadCount);
+		const UInt32 ThreadsY = Math::DivideByMultiple(DstHeight, ThreadCount);
+		CmdList->Dispatch(ThreadsX, ThreadsY, ThreadsZ);
 
-	//	DstWidth = DstWidth / 16;
-	//	DstHeight = DstHeight / 16;
+		CmdList->UnorderedAccessBarrier(StagingTexture.Get());
 
-	//	CB0.SrcMipLevel += 3;
-	//	RemainingMiplevels -= MipLevelsPerDispatch;
-	//}
+		BarrierBatcher.AddTransitionBarrier(
+			DxTexture,
+			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_COPY_DEST);
 
-	//TransitionBarrier(Dest, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-	//TransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		BarrierBatcher.AddTransitionBarrier(
+			StagingTexture.Get(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_COPY_SOURCE);
 
-	//CopyResource(Dest, StagingTexture.Get());
+		BarrierBatcher.FlushBarriers(*CmdList);
 
-	//DeferDestruction(StagingTexture.Get());
+		// TODO: Copy only miplevels (Maybe faster?)
+		CmdList->CopyNativeResource(
+			DxTexture->GetNativeResource(),
+			StagingTexture.Get());
+
+		BarrierBatcher.AddTransitionBarrier(
+			DxTexture,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+		BarrierBatcher.AddTransitionBarrier(
+			StagingTexture.Get(),
+			D3D12_RESOURCE_STATE_COPY_SOURCE,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+		BarrierBatcher.FlushBarriers(*CmdList);
+
+		DstWidth	= DstWidth / 16;
+		DstHeight	= DstHeight / 16;
+
+		ConstantData.SrcMipLevel += 3;
+		RemainingMiplevels -= MipLevelsPerDispatch;
+	}
+
+	BarrierBatcher.AddTransitionBarrier(
+		DxTexture,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+		D3D12_RESOURCE_STATE_COPY_DEST);
+
+	BarrierBatcher.FlushBarriers(*CmdList);
+
+	CmdBatch->EnqueueResourceDestruction(StagingTexture);
 }
 
 void D3D12CommandContext::TransitionTexture(

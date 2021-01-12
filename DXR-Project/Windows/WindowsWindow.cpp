@@ -23,7 +23,7 @@ WindowsWindow::~WindowsWindow()
 	}
 }
 
-bool WindowsWindow::Initialize(const WindowCreateInfo& InCreateInfo)
+Bool WindowsWindow::Init(const WindowCreateInfo& InCreateInfo)
 {
 	// Determine the window style for WinAPI
 	DWORD dwStyle = 0;
@@ -90,7 +90,7 @@ bool WindowsWindow::Initialize(const WindowCreateInfo& InCreateInfo)
 	}
 }
 
-void WindowsWindow::Show(bool Maximized)
+void WindowsWindow::Show(Bool Maximized)
 {
 	VALIDATE(hWindow != 0);
 
@@ -150,7 +150,7 @@ void WindowsWindow::Restore()
 
 	if (IsValid())
 	{
-		BOOL result = ::IsIconic(hWindow);
+		Bool result = ::IsIconic(hWindow);
 		if (result)
 		{
 			::ShowWindow(hWindow, SW_RESTORE);
@@ -202,12 +202,12 @@ void WindowsWindow::ToggleFullscreen()
 	}
 }
 
-bool WindowsWindow::IsValid() const
+Bool WindowsWindow::IsValid() const
 {
 	return ::IsWindow(hWindow);
 }
 
-bool WindowsWindow::IsActiveWindow() const
+Bool WindowsWindow::IsActiveWindow() const
 {
 	HWND hActive = ::GetForegroundWindow();
 	return (hActive == hWindow);
@@ -226,7 +226,7 @@ void WindowsWindow::SetTitle(const std::string& Title)
 	}
 }
 
-void WindowsWindow::SetWindowShape(const WindowShape& Shape, bool Move)
+void WindowsWindow::SetWindowShape(const WindowShape& Shape, Bool Move)
 {
 	VALIDATE(hWindow != 0);
 

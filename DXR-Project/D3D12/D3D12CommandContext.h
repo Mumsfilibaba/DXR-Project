@@ -19,7 +19,7 @@ class D3D12CommandAllocator;
 class D3D12VertexBufferState
 {
 public:
-	inline D3D12VertexBufferState()
+	D3D12VertexBufferState()
 		: VertexBufferViews()
 	{
 	}
@@ -62,7 +62,7 @@ private:
 class D3D12RenderTargetState
 {
 public:
-	inline D3D12RenderTargetState()
+	D3D12RenderTargetState()
 		: RenderTargetViewHandles()
 		, DepthStencilViewHandle({0})
 	{
@@ -232,7 +232,7 @@ private:
 class D3D12GPUResourceUploader
 {
 public:
-	inline D3D12GPUResourceUploader()
+	D3D12GPUResourceUploader()
 		: MappedMemory(nullptr)
 		, SizeInBytes(0)
 		, OffsetInBytes(0)
@@ -276,7 +276,7 @@ private:
 class D3D12CommandBatch
 {
 public:
-	inline D3D12CommandBatch(
+	D3D12CommandBatch(
 		TSharedRef<D3D12CommandAllocator>& InCmdAllocator, 
 		TSharedRef<D3D12OnlineDescriptorHeap>& InOnlineResourceDescriptorHeap,
 		TSharedRef<D3D12OnlineDescriptorHeap>& InOnlineSamplerDescriptorHeap,
@@ -294,6 +294,7 @@ public:
 		if (CmdAllocator->Reset())
 		{
 			Resources.Clear();
+			NativeResources.Clear();
 
 			GpuResourceUploader.Reset();
 
@@ -311,6 +312,11 @@ public:
 	FORCEINLINE void EnqueueResourceDestruction(PipelineResource* InResource)
 	{
 		Resources.EmplaceBack(MakeSharedRef<PipelineResource>(InResource));
+	}
+
+	FORCEINLINE void EnqueueResourceDestruction(const TComPtr<ID3D12Resource>& Resource)
+	{
+		NativeResources.EmplaceBack(Resource);
 	}
 
 	FORCEINLINE D3D12GPUResourceUploader& GetGpuResourceUploader()
@@ -338,8 +344,9 @@ private:
 	TSharedRef<D3D12OnlineDescriptorHeap>	OnlineResourceDescriptorHeap;
 	TSharedRef<D3D12OnlineDescriptorHeap>	OnlineSamplerDescriptorHeap;
 	
-	D3D12GPUResourceUploader GpuResourceUploader;
-	TArray<TSharedRef<PipelineResource>> Resources;
+	D3D12GPUResourceUploader				GpuResourceUploader;
+	TArray<TSharedRef<PipelineResource>>	Resources;
+	TArray<TComPtr<ID3D12Resource>>			NativeResources;
 };
 
 /*
@@ -349,10 +356,15 @@ private:
 class D3D12ResourceBarrierBatcher
 {
 public:
-	inline D3D12ResourceBarrierBatcher()
+	D3D12ResourceBarrierBatcher()
 		: Barriers()
 	{
 	}
+
+	void AddTransitionBarrier(
+		ID3D12Resource* Resource,
+		D3D12_RESOURCE_STATES BeforeState,
+		D3D12_RESOURCE_STATES AfterState);
 
 	void AddTransitionBarrier(
 		D3D12Resource* Resource,

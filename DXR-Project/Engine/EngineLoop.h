@@ -9,9 +9,9 @@ class EngineLoop
 {
 public:
 	// Runs before start of loop
-	static bool PreInitialize();
-	static bool Initialize();
-	static bool PostInitialize();
+	static Bool PreInit();
+	static Bool Init();
+	static Bool PostInit();
 	
 	// Runs every frame
 	static void PreTick();
@@ -25,7 +25,7 @@ public:
 
 	static void Exit();
 	
-	static bool IsRunning();
+	static Bool IsRunning();
 
 	static Timestamp GetDeltaTime();
 	static Timestamp GetTotalElapsedTime();

@@ -86,7 +86,7 @@ D3D12ShaderCompiler::~D3D12ShaderCompiler()
 	::FreeLibrary(DxCompilerDLL);
 }
 
-bool D3D12ShaderCompiler::CompileFromFile(
+Bool D3D12ShaderCompiler::CompileFromFile(
 	const std::string& FilePath, 
 	const std::string& EntryPoint, 
 	const TArray<ShaderDefine>* Defines,
@@ -103,8 +103,8 @@ bool D3D12ShaderCompiler::CompileFromFile(
 
 	// Create SourceBlob
 	ComPtr<IDxcBlobEncoding> SourceBlob;
-	HRESULT hResult = DxLibrary->CreateBlobFromFile(WideFilePath.c_str(), nullptr, &SourceBlob);
-	if (FAILED(hResult))
+	HRESULT Result = DxLibrary->CreateBlobFromFile(WideFilePath.c_str(), nullptr, &SourceBlob);
+	if (FAILED(Result))
 	{
 		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create Source Data");
 		Debug::DebugBreak();
@@ -121,7 +121,7 @@ bool D3D12ShaderCompiler::CompileFromFile(
 		Code);
 }
 
-bool D3D12ShaderCompiler::CompileShader(
+Bool D3D12ShaderCompiler::CompileShader(
 	const std::string& ShaderSource, 
 	const std::string& EntryPoint, 
 	const TArray<ShaderDefine>* Defines,
@@ -136,12 +136,12 @@ bool D3D12ShaderCompiler::CompileShader(
 
 	// Create SourceBlob
 	ComPtr<IDxcBlobEncoding> SourceBlob;
-	HRESULT hResult = DxLibrary->CreateBlobWithEncodingOnHeapCopy(
+	HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(
 		ShaderSource.c_str(), 
 		sizeof(Char) * static_cast<UInt32>(ShaderSource.size()), 
 		CP_UTF8, 
 		&SourceBlob);
-	if (FAILED(hResult))
+	if (FAILED(Result))
 	{
 		LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create Source Data");
 		Debug::DebugBreak();
@@ -158,7 +158,7 @@ bool D3D12ShaderCompiler::CompileShader(
 		Code);
 }
 
-bool D3D12ShaderCompiler::Initialize()
+Bool D3D12ShaderCompiler::Init()
 {
 	DxCompilerDLL = ::LoadLibrary("dxcompiler.dll");
 	if (!DxCompilerDLL)
@@ -174,17 +174,17 @@ bool D3D12ShaderCompiler::Initialize()
 		return false;
 	}
 	
-	HRESULT hr = DxcCreateInstance_(CLSID_DxcCompiler, IID_PPV_ARGS(&DxCompiler));
-	if (SUCCEEDED(hr))
+	HRESULT Result = DxcCreateInstance_(CLSID_DxcCompiler, IID_PPV_ARGS(&DxCompiler));
+	if (SUCCEEDED(Result))
 	{
-		hr = DxcCreateInstance_(CLSID_DxcLibrary, IID_PPV_ARGS(&DxLibrary));
-		if (SUCCEEDED(hr))
+		Result = DxcCreateInstance_(CLSID_DxcLibrary, IID_PPV_ARGS(&DxLibrary));
+		if (SUCCEEDED(Result))
 		{
-			hr = DxLibrary->CreateIncludeHandler(&DxIncludeHandler);
-			if (SUCCEEDED(hr))
+			Result = DxLibrary->CreateIncludeHandler(&DxIncludeHandler);
+			if (SUCCEEDED(Result))
 			{
-				hr = DxcCreateInstance_(CLSID_DxcLinker, IID_PPV_ARGS(&DxLinker));
-				if (SUCCEEDED(hr))
+				Result = DxcCreateInstance_(CLSID_DxcLinker, IID_PPV_ARGS(&DxLinker));
+				if (SUCCEEDED(Result))
 				{
 					return true;
 				}
@@ -213,7 +213,7 @@ bool D3D12ShaderCompiler::Initialize()
 	}
 }
 
-bool D3D12ShaderCompiler::InternalCompileFromSource(
+Bool D3D12ShaderCompiler::InternalCompileFromSource(
 	IDxcBlob* SourceBlob, 
 	LPCWSTR FilePath, 
 	LPCWSTR Entrypoint, 

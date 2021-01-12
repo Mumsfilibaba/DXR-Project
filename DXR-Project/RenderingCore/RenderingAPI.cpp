@@ -11,7 +11,7 @@
 * RenderingAPI
 */
 
-bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI)
+bool RenderingAPI::Init(ERenderingAPI InRenderAPI)
 {
 	// Select RenderingAPI
 	if (InRenderAPI == ERenderingAPI::RenderingAPI_D3D12)
@@ -19,7 +19,7 @@ bool RenderingAPI::Initialize(ERenderingAPI InRenderAPI)
 		GlobalRenderingAPI = new D3D12RenderingAPI();
 		
 		D3D12ShaderCompiler* Compiler = new D3D12ShaderCompiler();
-		if (!Compiler->Initialize())
+		if (!Compiler->Init())
 		{
 			return false;
 		}

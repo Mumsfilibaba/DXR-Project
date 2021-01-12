@@ -22,7 +22,7 @@ enum ETextureFactoryFlags : UInt32
 class TextureFactory
 {
 public:
-	static bool Initialize();
+	static Bool Init();
 	static void Release();
 
 	// TODO: Supports R8G8B8A8 and R32G32B32A32 for now, support more formats? Such as Float16?

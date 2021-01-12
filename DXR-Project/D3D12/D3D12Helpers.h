@@ -6,6 +6,7 @@
 #include "RenderingCore/SamplerState.h"
 
 #include <d3d12.h>
+#include <dxcapi.h>
 
 #include <wrl/client.h>
 

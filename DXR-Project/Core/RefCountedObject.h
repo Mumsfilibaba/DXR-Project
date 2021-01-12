@@ -7,9 +7,9 @@
 
 class RefCountedObject
 {
+public:
 	using RefCountType = UInt32;
 
-public:
 	RefCountedObject();
 	virtual ~RefCountedObject() = default;
 
