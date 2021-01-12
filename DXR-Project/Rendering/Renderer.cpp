@@ -2162,12 +2162,12 @@ Bool Renderer::InitPrePass()
 	}
 
 	GraphicsPipelineStateCreateInfo PSOInfo;
-	PSOInfo.InputLayoutState	= StdInputLayout.Get();
-	PSOInfo.BlendState			= BlendState.Get();
-	PSOInfo.DepthStencilState	= DepthStencilState.Get();
-	PSOInfo.RasterizerState		= RasterizerState.Get();
-	PSOInfo.ShaderState.VertexShader = VShader.Get();
-	PSOInfo.PipelineFormats.DepthStencilFormat = DepthBufferFormat;
+	PSOInfo.InputLayoutState					= StdInputLayout.Get();
+	PSOInfo.BlendState							= BlendState.Get();
+	PSOInfo.DepthStencilState					= DepthStencilState.Get();
+	PSOInfo.RasterizerState						= RasterizerState.Get();
+	PSOInfo.ShaderState.VertexShader			= VShader.Get();
+	PSOInfo.PipelineFormats.DepthStencilFormat	= DepthBufferFormat;
 
 	PrePassPSO = RenderingAPI::CreateGraphicsPipelineState(PSOInfo);
 	if (!PrePassPSO)
@@ -2305,17 +2305,17 @@ Bool Renderer::InitShadowMapPass()
 	}
 
 	GraphicsPipelineStateCreateInfo ShadowMapPSOInfo;
-	ShadowMapPSOInfo.BlendState				= BlendState.Get();
-	ShadowMapPSOInfo.DepthStencilState		= DepthStencilState.Get();
-	ShadowMapPSOInfo.IBStripCutValue		= EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
-	ShadowMapPSOInfo.InputLayoutState		= StdInputLayout.Get();
-	ShadowMapPSOInfo.PrimitiveTopologyType	= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
-	ShadowMapPSOInfo.RasterizerState		= RasterizerState.Get();
-	ShadowMapPSOInfo.SampleCount			= 1;
-	ShadowMapPSOInfo.SampleQuality			= 0;
-	ShadowMapPSOInfo.SampleMask				= 0xffffffff;
-	ShadowMapPSOInfo.ShaderState.VertexShader	= VShader.Get();
-	ShadowMapPSOInfo.ShaderState.PixelShader	= nullptr;
+	ShadowMapPSOInfo.BlendState							= BlendState.Get();
+	ShadowMapPSOInfo.DepthStencilState					= DepthStencilState.Get();
+	ShadowMapPSOInfo.IBStripCutValue					= EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
+	ShadowMapPSOInfo.InputLayoutState					= StdInputLayout.Get();
+	ShadowMapPSOInfo.PrimitiveTopologyType				= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+	ShadowMapPSOInfo.RasterizerState					= RasterizerState.Get();
+	ShadowMapPSOInfo.SampleCount						= 1;
+	ShadowMapPSOInfo.SampleQuality						= 0;
+	ShadowMapPSOInfo.SampleMask							= 0xffffffff;
+	ShadowMapPSOInfo.ShaderState.VertexShader			= VShader.Get();
+	ShadowMapPSOInfo.ShaderState.PixelShader			= nullptr;
 	ShadowMapPSOInfo.PipelineFormats.NumRenderTargets	= 0;
 	ShadowMapPSOInfo.PipelineFormats.DepthStencilFormat	= ShadowMapFormat;
 
@@ -2510,12 +2510,12 @@ Bool Renderer::InitDeferred()
 	}
 
 	GraphicsPipelineStateCreateInfo PSOProperties;
-	PSOProperties.InputLayoutState	= StdInputLayout.Get();
-	PSOProperties.BlendState		= BlendState.Get();
-	PSOProperties.DepthStencilState	= GeometryDepthStencilState.Get();
-	PSOProperties.RasterizerState	= GeometryRasterizerState.Get();
-	PSOProperties.ShaderState.VertexShader	= VShader.Get();
-	PSOProperties.ShaderState.PixelShader	= PShader.Get();
+	PSOProperties.InputLayoutState							= StdInputLayout.Get();
+	PSOProperties.BlendState								= BlendState.Get();
+	PSOProperties.DepthStencilState							= GeometryDepthStencilState.Get();
+	PSOProperties.RasterizerState							= GeometryRasterizerState.Get();
+	PSOProperties.ShaderState.VertexShader					= VShader.Get();
+	PSOProperties.ShaderState.PixelShader					= PShader.Get();
 	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
 	PSOProperties.PipelineFormats.RenderTargetFormats[1]	= NormalFormat;
 	PSOProperties.PipelineFormats.RenderTargetFormats[2]	= EFormat::Format_R8G8B8A8_Unorm;
@@ -3199,14 +3199,14 @@ Bool Renderer::InitDebugStates()
 	}
 
 	GraphicsPipelineStateCreateInfo PSOProperties;
-	PSOProperties.BlendState		= BlendState.Get();
-	PSOProperties.DepthStencilState	= DepthStencilState.Get();
-	PSOProperties.InputLayoutState	= InputLayoutState.Get();
-	PSOProperties.RasterizerState	= RasterizerState.Get();
-	PSOProperties.ShaderState.VertexShader	= VShader.Get();
-	PSOProperties.ShaderState.PixelShader	= PShader.Get();
-	PSOProperties.PrimitiveTopologyType		= EPrimitiveTopologyType::PrimitiveTopologyType_Line;
-	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= FinalTargetFormat;
+	PSOProperties.BlendState								= BlendState.Get();
+	PSOProperties.DepthStencilState							= DepthStencilState.Get();
+	PSOProperties.InputLayoutState							= InputLayoutState.Get();
+	PSOProperties.RasterizerState							= RasterizerState.Get();
+	PSOProperties.ShaderState.VertexShader					= VShader.Get();
+	PSOProperties.ShaderState.PixelShader					= PShader.Get();
+	PSOProperties.PrimitiveTopologyType						= EPrimitiveTopologyType::PrimitiveTopologyType_Line;
+	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= RenderTargetFormat;
 	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
 	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
 
@@ -3383,13 +3383,13 @@ Bool Renderer::InitAA()
 	}
 
 	GraphicsPipelineStateCreateInfo PSOProperties;
-	PSOProperties.InputLayoutState	= nullptr;
-	PSOProperties.BlendState		= BlendState.Get();
-	PSOProperties.DepthStencilState	= DepthStencilState.Get();
-	PSOProperties.RasterizerState	= RasterizerState.Get();
-	PSOProperties.ShaderState.VertexShader	= VShader.Get();
-	PSOProperties.ShaderState.PixelShader	= PShader.Get();
-	PSOProperties.PrimitiveTopologyType		= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+	PSOProperties.InputLayoutState							= nullptr;
+	PSOProperties.BlendState								= BlendState.Get();
+	PSOProperties.DepthStencilState							= DepthStencilState.Get();
+	PSOProperties.RasterizerState							= RasterizerState.Get();
+	PSOProperties.ShaderState.VertexShader					= VShader.Get();
+	PSOProperties.ShaderState.PixelShader					= PShader.Get();
+	PSOProperties.PrimitiveTopologyType						= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
 	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
 	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
 	PSOProperties.PipelineFormats.DepthStencilFormat		= EFormat::Format_Unknown;
@@ -3549,16 +3549,16 @@ Bool Renderer::InitForwardPass()
 	}
 
 	GraphicsPipelineStateCreateInfo PSOProperties = { };
-	PSOProperties.ShaderState.VertexShader	= VShader.Get();
-	PSOProperties.ShaderState.PixelShader	= PShader.Get();
-	PSOProperties.InputLayoutState	= StdInputLayout.Get();
-	PSOProperties.DepthStencilState = DepthStencilState.Get();
-	PSOProperties.BlendState		= BlendState.Get();
-	PSOProperties.RasterizerState	= RasterizerState.Get();
+	PSOProperties.ShaderState.VertexShader					= VShader.Get();
+	PSOProperties.ShaderState.PixelShader					= PShader.Get();
+	PSOProperties.InputLayoutState							= StdInputLayout.Get();
+	PSOProperties.DepthStencilState							= DepthStencilState.Get();
+	PSOProperties.BlendState								= BlendState.Get();
+	PSOProperties.RasterizerState							= RasterizerState.Get();
 	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= MainWindowViewport->GetColorFormat();
 	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
 	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
-	PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+	PSOProperties.PrimitiveTopologyType						= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
 
 	ForwardPSO = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
 	if (!ForwardPSO)
