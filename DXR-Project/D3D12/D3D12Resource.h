@@ -15,6 +15,7 @@ class D3D12Resource : public D3D12DeviceChild
 
 public:
 	D3D12Resource(D3D12Device* InDevice);
+	D3D12Resource(D3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource);
 	virtual ~D3D12Resource() = default;
 
 	Void* Map(const Range* MappedRange);

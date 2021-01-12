@@ -10,13 +10,13 @@ class D3D12Device;
 class D3D12DeviceChild
 {
 public:
-	 inline D3D12DeviceChild(D3D12Device* InDevice)
+	D3D12DeviceChild(D3D12Device* InDevice)
 		: Device(InDevice)
 	{
 		 VALIDATE(Device != nullptr);
 	}
 
-	inline virtual ~D3D12DeviceChild()
+	virtual ~D3D12DeviceChild()
 	{
 		Device = nullptr;
 	}

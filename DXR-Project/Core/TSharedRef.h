@@ -389,6 +389,11 @@ TSharedRef<T> DynamicCast(TSharedRef<U>&& Pointer)
 template<typename T, typename U>
 TSharedRef<T> MakeSharedRef(U* InRefCountedObject)
 {
-	InRefCountedObject->AddRef();
-	return TSharedRef<T>(static_cast<T*>(InRefCountedObject));
+	if (InRefCountedObject)
+	{
+		InRefCountedObject->AddRef();
+		return TSharedRef<T>(static_cast<T*>(InRefCountedObject));
+	}
+
+	return TSharedRef<T>();
 }

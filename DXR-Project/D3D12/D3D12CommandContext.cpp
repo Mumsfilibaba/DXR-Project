@@ -6,6 +6,8 @@
 #include "D3D12Buffer.h"
 #include "D3D12Texture.h"
 #include "D3D12PipelineState.h"
+#include "D3D12ShaderCompiler.h"
+#include "D3D12Shader.h"
 
 #include <pix3.h>
 
@@ -461,7 +463,6 @@ D3D12CommandContext::D3D12CommandContext(D3D12Device* InDevice, TSharedRef<D3D12
 	, VertexBufferState()
 	, RenderTargetState()
 	, BarrierBatcher()
-	, GenerateMipsHelper()
 {
 }
 
@@ -521,6 +522,63 @@ Bool D3D12CommandContext::Init()
 	if (!ShaderDescriptorState.CreateResources(*Device))
 	{
 		return false;
+	}
+
+	TArray<UInt8> Code;
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/GenerateMipsTex2D.hlsl",
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Compute,
+		EShaderModel::ShaderModel_6_0,
+		Code))
+	{
+		LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
+		Debug::DebugBreak();
+	}
+
+	TSharedRef<D3D12ComputeShader> Shader = new D3D12ComputeShader(Device, Code);
+	Shader->CreateRootSignature();
+
+	TSharedRef<D3D12RootSignature> RootSignature = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
+
+	GenerateMipsTex2D_PSO = new D3D12ComputePipelineState(Device, Shader, RootSignature);
+	if (!GenerateMipsTex2D_PSO->Init())
+	{
+		LOG_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTex2D PipelineState");
+		return false;
+	}
+	else
+	{
+		GenerateMipsTex2D_PSO->SetName("GenerateMipsTex2D Gen PSO");
+	}
+
+	if (!ShaderCompiler::CompileFromFile(
+		"Shaders/GenerateMipsTexCube.hlsl",
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Compute,
+		EShaderModel::ShaderModel_6_0,
+		Code))
+	{
+		LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
+		Debug::DebugBreak();
+	}
+
+	Shader = new D3D12ComputeShader(Device, Code);
+	Shader->CreateRootSignature();
+
+	RootSignature = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
+
+	GenerateMipsTexCube_PSO = new D3D12ComputePipelineState(Device, Shader, RootSignature);
+	if (!GenerateMipsTexCube_PSO->Init())
+	{
+		LOG_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTexCube PipelineState");
+		return false;
+	}
+	else
+	{
+		GenerateMipsTexCube_PSO->SetName("GenerateMipsTexCube Gen PSO");
 	}
 
 	return true;
@@ -1014,201 +1072,100 @@ void D3D12CommandContext::BuildRayTracingScene(RayTracingScene* RayTracingScene)
 
 void D3D12CommandContext::GenerateMips(Texture* Texture)
 {
-	//using namespace Microsoft::WRL;
+	D3D12Texture* DxTexture = D3D12TextureCast(Texture);
+	VALIDATE(DxTexture != nullptr);
 
-	//const D3D12_RESOURCE_DESC& Desc = Dest->GetDesc();
-	//VALIDATE(Desc.MipLevels > 1);
+	const D3D12_RESOURCE_DESC& Desc = DxTexture->GetDesc();
+	VALIDATE(Desc.MipLevels > 1);
 
-	//// Check Type
-	//bool IsTextureCube = false;
-	//if (Dest->GetShaderResourceView(0)->GetDesc().ViewDimension == D3D12_SRV_DIMENSION_TEXTURECUBE)
-	//{
-	//	IsTextureCube = true;
-	//}
+	D3D12_HEAP_PROPERTIES HeapProperties;
+	Memory::Memzero(&HeapProperties);
 
-	//// Create staging texture
-	//TextureProperties StagingTextureProps;
-	//StagingTextureProps.DebugName = "StagingTexture";
-	//StagingTextureProps.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	//StagingTextureProps.Format = Desc.Format;
-	//StagingTextureProps.Width = static_cast<Uint16>(Desc.Width);
-	//StagingTextureProps.Height = static_cast<Uint16>(Desc.Height);
-	//StagingTextureProps.ArrayCount = static_cast<Uint16>(Desc.DepthOrArraySize);
-	//StagingTextureProps.MemoryType = Dest->GetMemoryType();
-	//StagingTextureProps.InitalState = D3D12_RESOURCE_STATE_COMMON;
-	//StagingTextureProps.MipLevels = Desc.MipLevels;
-	//StagingTextureProps.OptimizedClearValue = nullptr;
-	//StagingTextureProps.SampleCount = 1;
+	HeapProperties.Type					= DxTexture->GetHeapType();
+	HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+	HeapProperties.CPUPageProperty		= D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	HeapProperties.CreationNodeMask		= 0;
+	HeapProperties.VisibleNodeMask		= 0;
 
-	//TUniquePtr<D3D12Texture> StagingTexture = MakeUnique<D3D12Texture>(Device);
-	//if (!StagingTexture->Initialize(StagingTextureProps))
-	//{
-	//	LOG_ERROR("[D3D12CommandList] Failed to create StagingTexture for GenerateMips");
-	//	return;
-	//}
+	TComPtr<ID3D12Resource> StagingTexture;
+	HRESULT Result = Device->CreateCommitedResource(
+		&HeapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&Desc,
+		D3D12_RESOURCE_STATE_COMMON,
+		nullptr,
+		IID_PPV_ARGS(&StagingTexture));
+	if (FAILED(Result))
+	{
+		LOG_ERROR("[D3D12CommandContext] Failed to create StagingTexture for GenerateMips");
+		return;
+	}
 
-	//// Create SRV
-	//D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = { };
-	//SRVDesc.Format = Desc.Format;
-	//SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	//if (IsTextureCube)
-	//{
-	//	SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-	//	SRVDesc.TextureCube.MipLevels = Desc.MipLevels;
-	//	SRVDesc.TextureCube.MostDetailedMip = 0;
-	//	SRVDesc.TextureCube.ResourceMinLODClamp = 0.0f;
-	//}
-	//else
-	//{
-	//	SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	//	SRVDesc.Texture2D.MipLevels = Desc.MipLevels;
-	//	SRVDesc.Texture2D.MostDetailedMip = 0;
-	//}
+	// Check Type
+	const Bool IsTextureCube = Texture->AsTextureCube();
 
-	//StagingTexture->SetShaderResourceView(MakeShared<D3D12ShaderResourceView>(Device, StagingTexture->GetResource(), &SRVDesc), 0);
+	D3D12Resource StagingResource(Device, StagingTexture);
 
-	//// Create UAVs
-	//D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = { };
-	//UAVDesc.Format = Desc.Format;
-	//if (IsTextureCube)
-	//{
-	//	UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-	//	UAVDesc.Texture2DArray.ArraySize = 6;
-	//	UAVDesc.Texture2DArray.FirstArraySlice = 0;
-	//	UAVDesc.Texture2DArray.PlaneSlice = 0;
-	//}
-	//else
-	//{
-	//	UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-	//	UAVDesc.Texture2D.PlaneSlice = 0;
-	//}
+	D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
+	Memory::Memzero(&SrvDesc);
+
+	SrvDesc.Format					= Desc.Format;
+	SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	if (IsTextureCube)
+	{
+		SrvDesc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURECUBE;
+		SrvDesc.TextureCube.MipLevels			= Desc.MipLevels;
+		SrvDesc.TextureCube.MostDetailedMip		= 0;
+		SrvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
+	}
+	else
+	{
+		SrvDesc.ViewDimension				= D3D12_SRV_DIMENSION_TEXTURE2D;
+		SrvDesc.Texture2D.MipLevels			= Desc.MipLevels;
+		SrvDesc.Texture2D.MostDetailedMip	= 0;
+	}
+
+	D3D12ShaderResourceView StagingResourceView(Device, &StagingResource, SrvDesc);
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC UavDesc;
+	Memory::Memzero(&UavDesc);
+
+	UavDesc.Format = Desc.Format;
+	if (IsTextureCube)
+	{
+		UavDesc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+		UavDesc.Texture2DArray.ArraySize		= 6;
+		UavDesc.Texture2DArray.FirstArraySlice	= 0;
+		UavDesc.Texture2DArray.PlaneSlice		= 0;
+	}
+	else
+	{
+		UavDesc.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
+		UavDesc.Texture2D.PlaneSlice	= 0;
+	}
+
+	const UInt32 MipLevelsPerDispatch = 4;
+	UInt32 NumDispatches = Desc.MipLevels / MipLevelsPerDispatch;
+
+	const UInt32 MiplevelsLastDispatch = Desc.MipLevels - (MipLevelsPerDispatch * NumDispatches);
+	if (MiplevelsLastDispatch > 0)
+	{
+		NumDispatches++;
+	}
 
 	//for (UInt32 i = 0; i < Desc.MipLevels; i++)
 	//{
 	//	if (IsTextureCube)
 	//	{
-	//		UAVDesc.Texture2DArray.MipSlice = i;
+	//		UavDesc.Texture2DArray.MipSlice = i;
 	//	}
 	//	else
 	//	{
-	//		UAVDesc.Texture2D.MipSlice = i;
+	//		UavDesc.Texture2D.MipSlice = i;
 	//	}
 
-	//	StagingTexture->SetUnorderedAccessView(MakeShared<D3D12UnorderedAccessView>(Device, nullptr, StagingTexture->GetResource(), &UAVDesc), i);
+	//	StagingTexture->SetUnorderedAccessView(MakeShared<D3D12UnorderedAccessView>(Device, nullptr, StagingTexture->GetResource(), &UavDesc), i);
 	//}
-
-	//// Create PSO and RS
-	//ComPtr<ID3D12PipelineState> PipelineState;
-	//if (IsTextureCube)
-	//{
-	//	if (!MipGenHelper.GenerateMipsTexCube_PSO)
-	//	{
-	//		Microsoft::WRL::ComPtr<IDxcBlob> CSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/GenerateMipsTexCube.hlsl", "Main", "cs_6_0");
-	//		if (!CSBlob)
-	//		{
-	//			return;
-	//		}
-
-	//		ComputePipelineStateProperties GenMipsProperties = { };
-	//		GenMipsProperties.DebugName = "Generate MipLevels Pipeline TexCube";
-	//		GenMipsProperties.RootSignature = nullptr;
-	//		GenMipsProperties.CSBlob = CSBlob.Get();
-
-	//		MipGenHelper.GenerateMipsTexCube_PSO = MakeUnique<D3D12ComputePipelineState>(Device);
-	//		if (!MipGenHelper.GenerateMipsTexCube_PSO->Initialize(GenMipsProperties))
-	//		{
-	//			return;
-	//		}
-
-	//		// Create rootsignature
-	//		if (!MipGenHelper.GenerateMipsRootSignature)
-	//		{
-	//			MipGenHelper.GenerateMipsRootSignature = MakeUnique<D3D12RootSignature>(Device);
-	//			if (MipGenHelper.GenerateMipsRootSignature->Initialize(CSBlob.Get()))
-	//			{
-	//				MipGenHelper.GenerateMipsRootSignature->SetDebugName("Generate MipLevels RootSignature");
-	//			}
-	//			else
-	//			{
-	//				return;
-	//			}
-	//		}
-	//	}
-
-	//	PipelineState = MipGenHelper.GenerateMipsTexCube_PSO->GetPipeline();
-	//}
-	//else
-	//{
-	//	if (!MipGenHelper.GenerateMipsTex2D_PSO)
-	//	{
-	//		Microsoft::WRL::ComPtr<IDxcBlob> CSBlob = D3D12ShaderCompiler::CompileFromFile("Shaders/GenerateMipsTex2D.hlsl", "Main", "cs_6_0");
-	//		if (!CSBlob)
-	//		{
-	//			return;
-	//		}
-
-	//		ComputePipelineStateProperties GenMipsProperties = { };
-	//		GenMipsProperties.DebugName = "Generate MipLevels Pipeline Tex2D";
-	//		GenMipsProperties.RootSignature = nullptr;
-	//		GenMipsProperties.CSBlob = CSBlob.Get();
-
-	//		MipGenHelper.GenerateMipsTex2D_PSO = MakeUnique<D3D12ComputePipelineState>(Device);
-	//		if (!MipGenHelper.GenerateMipsTex2D_PSO->Initialize(GenMipsProperties))
-	//		{
-	//			return;
-	//		}
-
-	//		// Create rootsignature
-	//		if (!MipGenHelper.GenerateMipsRootSignature)
-	//		{
-	//			MipGenHelper.GenerateMipsRootSignature = MakeUnique<D3D12RootSignature>(Device);
-	//			if (MipGenHelper.GenerateMipsRootSignature->Initialize(CSBlob.Get()))
-	//			{
-	//				MipGenHelper.GenerateMipsRootSignature->SetDebugName("Generate MipLevels RootSignature");
-	//			}
-	//			else
-	//			{
-	//				return;
-	//			}
-	//		}
-	//	}
-
-	//	PipelineState = MipGenHelper.GenerateMipsTex2D_PSO->GetPipeline();
-	//}
-
-	//// Create Resources for generating Miplevels
-	//const UInt32 MipLevelsPerDispatch = 4;
-	//UInt32 NumDispatches = Desc.MipLevels / MipLevelsPerDispatch;
-
-	//UInt32 MiplevelsLastDispatch = Desc.MipLevels - (MipLevelsPerDispatch * NumDispatches);
-	//if (MiplevelsLastDispatch > 0)
-	//{
-	//	if (!MipGenHelper.NULLView)
-	//	{
-	//		UAVDesc.Format = Desc.Format;
-	//		UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-	//		UAVDesc.Texture2D.MipSlice = 0;
-	//		UAVDesc.Texture2D.PlaneSlice = 0;
-	//		MipGenHelper.NULLView = MakeUnique<D3D12UnorderedAccessView>(Device, nullptr, nullptr, &UAVDesc);
-	//	}
-
-	//	NumDispatches++;
-	//}
-
-	//// Resize if necessary
-	//if (MipGenHelper.UAVDescriptorTables.Size() < NumDispatches)
-	//{
-	//	MipGenHelper.UAVDescriptorTables.Resize(NumDispatches);
-	//}
-
-	//// Bind ShaderResourceView
-	//if (!MipGenHelper.SRVDescriptorTable)
-	//{
-	//	MipGenHelper.SRVDescriptorTable = MakeUnique<D3D12DescriptorTable>(Device, 1);
-	//}
-
-	//MipGenHelper.SRVDescriptorTable->SetShaderResourceView(StagingTexture->GetShaderResourceView(0).Get(), 0);
-	//MipGenHelper.SRVDescriptorTable->CopyDescriptors();
 
 	//// Bind UnorderedAccessViews
 	//UInt32 UAVIndex = 0;

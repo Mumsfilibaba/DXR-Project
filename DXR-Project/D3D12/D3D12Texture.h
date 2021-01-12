@@ -180,6 +180,8 @@ public:
 
 inline D3D12Texture* D3D12TextureCast(Texture* Texture)
 {
+	VALIDATE(Texture != nullptr);
+
 	if (Texture->AsTexture1D() != nullptr)
 	{
 		return static_cast<D3D12Texture1D*>(Texture);
@@ -216,6 +218,8 @@ inline D3D12Texture* D3D12TextureCast(Texture* Texture)
 
 inline const D3D12Texture* D3D12TextureCast(const Texture* Texture)
 {
+	VALIDATE(Texture != nullptr);
+
 	if (Texture->AsTexture1D() != nullptr)
 	{
 		return static_cast<const D3D12Texture1D*>(Texture);

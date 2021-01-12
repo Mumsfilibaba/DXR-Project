@@ -25,10 +25,10 @@ class D3D12RootSignature;
 
 struct D3D12DefaultRootSignatures
 {
-	TSharedPtr<D3D12RootSignature> Graphics;
-	TSharedPtr<D3D12RootSignature> Compute;
-	TSharedPtr<D3D12RootSignature> GlobalRayTracing;
-	TSharedPtr<D3D12RootSignature> LocalRayTracing;
+	TSharedRef<D3D12RootSignature> Graphics;
+	TSharedRef<D3D12RootSignature> Compute;
+	TSharedRef<D3D12RootSignature> GlobalRayTracing;
+	TSharedRef<D3D12RootSignature> LocalRayTracing;
 
 	bool CreateRootSignatures(class D3D12Device* Device);
 };
@@ -40,7 +40,7 @@ struct D3D12DefaultRootSignatures
 class D3D12RootSignature : public D3D12RefCountedObject
 {
 public:
-	inline D3D12RootSignature(D3D12Device* InDevice, ID3D12RootSignature* InRootSignature)
+	D3D12RootSignature(D3D12Device* InDevice, ID3D12RootSignature* InRootSignature)
 		: D3D12RefCountedObject(InDevice)
 		, RootSignature(InRootSignature)
 	{
@@ -64,5 +64,5 @@ public:
 	}
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignature;
+	TComPtr<ID3D12RootSignature> RootSignature;
 };

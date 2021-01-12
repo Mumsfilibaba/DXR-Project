@@ -2,6 +2,7 @@
 #include "RenderingCore/Shader.h"
 
 #include "D3D12RootSignature.h"
+#include "D3D12Device.h"
 
 /*
 * D3D12Shader
@@ -84,7 +85,7 @@ public:
 	/*
 	* Creates a rootsignature if the shader contains one, this is only supported for Compute for now
 	*/
-	FORCEINLINE bool CreateRootSignature()
+	FORCEINLINE Bool CreateRootSignature()
 	{
 		using namespace Microsoft::WRL;
 

@@ -13,18 +13,6 @@ class D3D12CommandQueue;
 class D3D12CommandAllocator;
 
 /*
-* D3D12GenerateMipsHelper
-*/
-
-struct D3D12GenerateMipsHelper
-{
-	TSharedRef<class D3D12ComputePipelineState>	GenerateMipsTex2D_PSO;
-	TSharedRef<class D3D12ComputePipelineState>	GenerateMipsTexCube_PSO;
-	TSharedRef<class D3D12RootSignature>		GenerateMipsRootSignature;
-	TSharedRef<class D3D12UnorderedAccessView>	NULLView;
-};
-
-/*
 * D3D12VertexBufferState
 */
 
@@ -646,12 +634,14 @@ private:
 	UInt32 NextCmdAllocator = 0;
 	D3D12CommandBatch* CmdBatch = nullptr;
 
+	TSharedRef<D3D12ComputePipelineState>	GenerateMipsTex2D_PSO;
+	TSharedRef<D3D12ComputePipelineState>	GenerateMipsTexCube_PSO;
+
 	D3D12VertexBufferState			VertexBufferState;
 	D3D12RenderTargetState			RenderTargetState;
 	D3D12ShaderDescriptorTableState	ShaderDescriptorState;
 	D3D12ResourceBarrierBatcher		BarrierBatcher;
 	D3D12DefaultRootSignatures		DefaultRootSignatures;
-	D3D12GenerateMipsHelper			GenerateMipsHelper;
 
 	Bool IsReady = false;
 };

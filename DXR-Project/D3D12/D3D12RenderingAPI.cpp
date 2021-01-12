@@ -1596,61 +1596,23 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
 ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(
 	const ComputePipelineStateCreateInfo& Info) const
 {
-	using namespace Microsoft::WRL;
-
-	struct alignas(void*) ComputePipelineStream
-	{
-		struct alignas(void*)
-		{
-			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
-			ID3D12RootSignature* RootSignature = nullptr;
-		};
-
-		struct alignas(void*)
-		{
-			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS;
-			D3D12_SHADER_BYTECODE ComputeShader = { };
-		};
-	} PipelineStream;
-
 	VALIDATE(Info.Shader != nullptr);
-
-	// Shader
-	D3D12ComputeShader& Shader = *static_cast<D3D12ComputeShader*>(Info.Shader);
-	PipelineStream.ComputeShader = Shader.GetShaderByteCode();
-
+	
 	// Check if shader contains a rootsignature, or use the default one
-	D3D12RootSignature* RootSignature = Shader.GetRootSignature();
+	TSharedRef<D3D12ComputeShader> Shader			= MakeSharedRef<D3D12ComputeShader>(Info.Shader);
+	TSharedRef<D3D12RootSignature> RootSignature	= MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
 	if (!RootSignature)
 	{
-		RootSignature = DefaultRootSignatures.Compute.Get();
+		RootSignature = DefaultRootSignatures.Compute;
 	}
-	
-	PipelineStream.RootSignature = RootSignature->GetRootSignature();
 
-	// Create PipelineState
-	D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
-	Memory::Memzero(&PipelineStreamDesc, sizeof(D3D12_PIPELINE_STATE_STREAM_DESC));
-	
-	PipelineStreamDesc.pPipelineStateSubobjectStream	= &PipelineStream;
-	PipelineStreamDesc.SizeInBytes						= sizeof(ComputePipelineStream);
-
-	ComPtr<ID3D12PipelineState> PipelineState;
-	HRESULT hResult = Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
-	if (SUCCEEDED(hResult))
+	D3D12ComputePipelineState* NewPipelineState = new D3D12ComputePipelineState(Device, Shader, RootSignature);
+	if (NewPipelineState->Init())
 	{
-		D3D12ComputePipelineState* Pipeline = new D3D12ComputePipelineState(Device);
-		Pipeline->PipelineState = PipelineState;
-
-		// TODO: This should be refcounted
-		Pipeline->RootSignature = RootSignature;
-
-		LOG_INFO("[D3D12RenderingAPI]: Created ComputePipelineState");
-		return Pipeline;
+		return NewPipelineState;
 	}
 	else
 	{
-		LOG_ERROR("[D3D12RenderingAPI]: FAILED to Create ComputePipelineState");
 		return nullptr;
 	}
 }

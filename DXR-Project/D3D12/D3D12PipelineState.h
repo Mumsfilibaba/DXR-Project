@@ -3,7 +3,7 @@
 
 #include "Utilities/StringUtilities.h"
 
-#include "D3D12DeviceChild.h"
+#include "D3D12Shader.h"
 #include "D3D12Helpers.h"
 
 /*
@@ -13,7 +13,7 @@
 class D3D12InputLayoutState : public InputLayoutState, public D3D12DeviceChild
 {
 public:
-	inline D3D12InputLayoutState(D3D12Device* InDevice, const InputLayoutStateCreateInfo& CreateInfo)
+	D3D12InputLayoutState(D3D12Device* InDevice, const InputLayoutStateCreateInfo& CreateInfo)
 		: InputLayoutState()
 		, D3D12DeviceChild(InDevice)
 		, SemanticNames()
@@ -66,7 +66,7 @@ private:
 class D3D12DepthStencilState : public DepthStencilState, public D3D12DeviceChild
 {
 public:
-	inline D3D12DepthStencilState(D3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
+	D3D12DepthStencilState(D3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
 		: DepthStencilState()
 		, D3D12DeviceChild(InDevice)
 		, Desc(InDesc)
@@ -89,7 +89,7 @@ private:
 class D3D12RasterizerState : public RasterizerState, public D3D12DeviceChild
 {
 public:
-	inline D3D12RasterizerState(D3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
+	D3D12RasterizerState(D3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
 		: RasterizerState()
 		, D3D12DeviceChild(InDevice)
 		, Desc(InDesc)
@@ -112,7 +112,7 @@ private:
 class D3D12BlendState : public BlendState, public D3D12DeviceChild
 {
 public:
-	inline D3D12BlendState(D3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
+	D3D12BlendState(D3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
 		: BlendState()
 		, D3D12DeviceChild(InDevice)
 		, Desc(InDesc)
@@ -137,7 +137,7 @@ class D3D12GraphicsPipelineState : public GraphicsPipelineState, public D3D12Dev
 	friend class D3D12RenderingAPI;
 
 public:
-	inline D3D12GraphicsPipelineState(D3D12Device* InDevice)
+	D3D12GraphicsPipelineState(D3D12Device* InDevice)
 		: D3D12DeviceChild(InDevice)
 		, PipelineState(nullptr)
 	{
@@ -160,7 +160,7 @@ public:
 	}
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12PipelineState> PipelineState;
+	TComPtr<ID3D12PipelineState> PipelineState;
 	D3D12RootSignature* RootSignature;
 };
 
@@ -173,17 +173,14 @@ class D3D12ComputePipelineState : public ComputePipelineState, public D3D12Devic
 	friend class D3D12RenderingAPI;
 
 public:
-	inline D3D12ComputePipelineState(D3D12Device* InDevice)
-		: D3D12DeviceChild(InDevice)
-		, PipelineState(nullptr)
-	{
-	}
+	D3D12ComputePipelineState(
+		D3D12Device* InDevice, 
+		const TSharedRef<D3D12ComputeShader>& InShader,
+		const TSharedRef<D3D12RootSignature>& InRootSignature);
 
-	virtual void SetName(const std::string& Name) override final
-	{
-		std::wstring WideName = ConvertToWide(Name);
-		PipelineState->SetName(WideName.c_str());
-	}
+	Bool Init();
+
+	virtual void SetName(const std::string& Name) override final;
 
 	FORCEINLINE ID3D12PipelineState* GetPipeline() const
 	{
@@ -192,10 +189,11 @@ public:
 
 	FORCEINLINE D3D12RootSignature* GetRootSignature() const
 	{
-		return RootSignature;
+		return RootSignature.Get();
 	}
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12PipelineState> PipelineState;
-	D3D12RootSignature* RootSignature;
+	TComPtr<ID3D12PipelineState>	PipelineState;
+	TSharedRef<D3D12ComputeShader>	Shader;
+	TSharedRef<D3D12RootSignature>	RootSignature;
 };

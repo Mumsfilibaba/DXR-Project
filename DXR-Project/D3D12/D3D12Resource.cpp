@@ -15,6 +15,16 @@ D3D12Resource::D3D12Resource(D3D12Device* InDevice)
 {
 }
 
+D3D12Resource::D3D12Resource(D3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource)
+	: D3D12DeviceChild(InDevice)
+	, NativeResource(InNativeResource)
+	, HeapType(D3D12_HEAP_TYPE_DEFAULT)
+	, ResourceState(D3D12_RESOURCE_STATE_COMMON)
+	, Desc()
+	, Address(0)
+{
+}
+
 Void* D3D12Resource::Map(const Range* MappedRange)
 {
 	Void* MappedData = nullptr;
