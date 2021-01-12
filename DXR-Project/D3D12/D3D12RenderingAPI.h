@@ -69,7 +69,7 @@ public:
 	D3D12RenderingAPI();
 	~D3D12RenderingAPI();
 
-	virtual bool Initialize(bool EnableDebug) override final;
+	virtual Bool Init(Bool EnableDebug) override final;
 
 	/*
 	* Textures
@@ -89,7 +89,7 @@ public:
 		UInt32 Usage,
 		UInt32 Width,
 		UInt32 MipLevels,
-		UInt32 ArrayCount,
+		UInt16 ArrayCount,
 		const ClearValue& OptimizedClearValue) const override final;
 
 	virtual Texture2D* CreateTexture2D(
@@ -109,7 +109,7 @@ public:
 		UInt32 Width,
 		UInt32 Height,
 		UInt32 MipLevels,
-		UInt32 ArrayCount,
+		UInt16 ArrayCount,
 		UInt32 SampleCount,
 		const ClearValue& OptimizedClearValue) const override final;
 
@@ -128,7 +128,7 @@ public:
 		UInt32 Usage,
 		UInt32 Size,
 		UInt32 MipLevels,
-		UInt32 ArrayCount,
+		UInt16 ArrayCount,
 		UInt32 SampleCount,
 		const ClearValue& OptimizedClearValue) const override final;
 
@@ -138,7 +138,7 @@ public:
 		UInt32 Usage,
 		UInt32 Width,
 		UInt32 Height,
-		UInt32 Depth,
+		UInt16 Depth,
 		UInt32 MipLevels,
 		const ClearValue& OptimizedClearValue) const override final;
 
@@ -466,8 +466,8 @@ public:
 	* Supported features
 	*/
 
-	virtual bool IsRayTracingSupported()			const override final;
-	virtual bool UAVSupportsFormat(EFormat Format)	const override final;
+	virtual Bool IsRayTracingSupported()			const override final;
+	virtual Bool UAVSupportsFormat(EFormat Format)	const override final;
 	
 	virtual class ICommandContext* GetDefaultCommandContext() const override final
 	{
@@ -480,26 +480,26 @@ public:
 	}
 
 private:
-	bool AllocateBuffer(
+	Bool AllocateBuffer(
 		D3D12Resource& Resource, 
 		D3D12_HEAP_TYPE HeapType, 
 		D3D12_RESOURCE_STATES InitalState, 
 		D3D12_RESOURCE_FLAGS Flags, 
 		UInt32 SizeInBytes) const;
 
-	bool AllocateTexture(
+	Bool AllocateTexture(
 		D3D12Resource& Resource,
 		D3D12_HEAP_TYPE HeapType,
 		D3D12_RESOURCE_STATES InitalState,
 		D3D12_CLEAR_VALUE* OptimizedClearValue,
 		const D3D12_RESOURCE_DESC& Desc) const;
 	
-	bool UploadBuffer(
+	Bool UploadBuffer(
 		Buffer& Buffer, 
 		UInt32 SizeInBytes, 
 		const ResourceData* InitalData) const;
 	
-	bool UploadTexture(
+	Bool UploadTexture(
 		Texture& Texture, 
 		const ResourceData* InitalData) const;
 
@@ -513,10 +513,10 @@ private:
 		TArgs&&... Args) const
 	{
 		// Create buffer object and get size to allocate
-		TD3D12Buffer* NewBuffer = new TD3D12Buffer(Device, Forward<TArgs>(Args)...);
+		TD3D12Buffer* NewBuffer = DBG_NEW TD3D12Buffer(Device, Forward<TArgs>(Args)...);
 		const UInt64 Alignment		= NewBuffer->GetRequiredAlignment();
 		const UInt64 SizeInBytes	= NewBuffer->GetSizeInBytes();
-		const UInt64 AlignedSize	= Math::AlignUp<UInt64>(SizeInBytes, Alignment);
+		const UInt32 AlignedSize	= UInt32(Math::AlignUp<UInt64>(SizeInBytes, Alignment));
 
 		// Get properties based on Usage
 		const UInt32 Usage = NewBuffer->GetUsage();
@@ -540,7 +540,7 @@ private:
 		// Upload initial
 		if (InitalData)
 		{
-			UploadBuffer(*NewBuffer, SizeInBytes, InitalData);
+			UploadBuffer(*NewBuffer, UInt32(SizeInBytes), InitalData);
 		}
 
 		return NewBuffer;
@@ -551,12 +551,12 @@ private:
 		const ResourceData* InitalData,
 		TArgs&&... Args) const
 	{
-		TD3D12Texture* NewTexture = new TD3D12Texture(Device, Forward<TArgs>(Args)...);
+		TD3D12Texture* NewTexture = DBG_NEW TD3D12Texture(Device, Forward<TArgs>(Args)...);
 		const EFormat	Format	= NewTexture->GetFormat();
 		const UInt32	Usage	= NewTexture->GetUsage();
 		const UInt32	Width	= NewTexture->GetWidth();
 		const UInt32	Height	= NewTexture->GetHeight();
-		const UInt32	DepthOrArraySize = std::max(NewTexture->GetDepth(), NewTexture->GetArrayCount());
+		const UInt16	DepthOrArraySize = std::max(NewTexture->GetDepth(), NewTexture->GetArrayCount());
 		const UInt32	MipLevels	= NewTexture->GetMipLevels();
 		const UInt32	SampleCount = NewTexture->GetSampleCount();
 
@@ -681,7 +681,7 @@ private:
 		}
 		else
 		{
-			return new D3D12ShaderResourceView(Device, Resource, Desc);
+			return DBG_NEW D3D12ShaderResourceView(Device, Resource, Desc);
 		}
 	}
 
@@ -696,7 +696,7 @@ private:
 		}
 		else
 		{
-			return new D3D12RenderTargetView(Device, Resource, Desc);
+			return DBG_NEW D3D12RenderTargetView(Device, Resource, Desc);
 		}
 	}
 
@@ -711,7 +711,7 @@ private:
 		}
 		else
 		{
-			return new D3D12DepthStencilView(Device, Resource, Desc);
+			return DBG_NEW D3D12DepthStencilView(Device, Resource, Desc);
 		}
 	}
 
@@ -727,7 +727,7 @@ private:
 		}
 		else
 		{
-			return new D3D12UnorderedAccessView(Device, CounterResource, Resource, Desc);
+			return DBG_NEW D3D12UnorderedAccessView(Device, CounterResource, Resource, Desc);
 		}
 	}
 

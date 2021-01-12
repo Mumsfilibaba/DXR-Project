@@ -530,7 +530,7 @@ struct GraphicsPipelineShaderState
 {
 	GraphicsPipelineShaderState() = default;
 
-	inline GraphicsPipelineShaderState(VertexShader* InVertexShader, PixelShader* InPixelShader)
+	GraphicsPipelineShaderState(VertexShader* InVertexShader, PixelShader* InPixelShader)
 		: VertexShader(InVertexShader)
 		, PixelShader(InPixelShader)
 	{
@@ -585,7 +585,7 @@ struct ComputePipelineStateCreateInfo
 {
 	ComputePipelineStateCreateInfo() = default;
 
-	inline ComputePipelineStateCreateInfo(ComputeShader* InShader)
+	ComputePipelineStateCreateInfo(ComputeShader* InShader)
 		: Shader(InShader)
 	{
 	}

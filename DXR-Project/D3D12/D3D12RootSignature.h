@@ -30,7 +30,7 @@ struct D3D12DefaultRootSignatures
 	TSharedRef<D3D12RootSignature> GlobalRayTracing;
 	TSharedRef<D3D12RootSignature> LocalRayTracing;
 
-	bool CreateRootSignatures(class D3D12Device* Device);
+	Bool CreateRootSignatures(class D3D12Device* Device);
 };
 
 /*

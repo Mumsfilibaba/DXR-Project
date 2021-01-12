@@ -37,33 +37,30 @@ D3D12RenderingAPI::D3D12RenderingAPI()
 
 D3D12RenderingAPI::~D3D12RenderingAPI()
 {
-	delete Device;
+	SAFEDELETE(Device);
 }
 
-bool D3D12RenderingAPI::Initialize(bool EnableDebug)
+Bool D3D12RenderingAPI::Init(Bool EnableDebug)
 {
 	// Create device
-	Device = new D3D12Device(EnableDebug, EnableDebug ? true : false);
+	Device = DBG_NEW D3D12Device(EnableDebug, EnableDebug ? true : false);
 	if (!Device->Init())
 	{
 		return false;
 	}
 	
-	// Create commandqueue
 	DirectCmdQueue = Device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	if (!DirectCmdQueue)
 	{
 		return false;
 	}
 
-	// Create default rootsignatures
 	if (!DefaultRootSignatures.CreateRootSignatures(Device))
 	{
 		return false;
 	}
 
-	// Create commandcontext
-	DirectCmdContext = new D3D12CommandContext(Device, DirectCmdQueue, DefaultRootSignatures);
+	DirectCmdContext = DBG_NEW D3D12CommandContext(Device, DirectCmdQueue, DefaultRootSignatures);
 	if (!DirectCmdContext->Init())
 	{
 		return false;
@@ -99,7 +96,7 @@ Texture1DArray* D3D12RenderingAPI::CreateTexture1DArray(
 	UInt32 Usage, 
 	UInt32 Width, 
 	UInt32 MipLevels, 
-	UInt32 ArrayCount, 
+	UInt16 ArrayCount, 
 	const ClearValue& OptimizedClearValue) const
 {
 	return CreateTextureResource<D3D12Texture1DArray>(
@@ -140,7 +137,7 @@ Texture2DArray* D3D12RenderingAPI::CreateTexture2DArray(
 	UInt32 Width, 
 	UInt32 Height, 
 	UInt32 MipLevels, 
-	UInt32 ArrayCount, 
+	UInt16 ArrayCount,
 	UInt32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
@@ -181,7 +178,7 @@ TextureCubeArray* D3D12RenderingAPI::CreateTextureCubeArray(
 	UInt32 Usage, 
 	UInt32 Size, 
 	UInt32 MipLevels, 
-	UInt32 ArrayCount, 
+	UInt16 ArrayCount,
 	UInt32 SampleCount, 
 	const ClearValue& OptimizedClearValue) const
 {
@@ -202,7 +199,7 @@ Texture3D* D3D12RenderingAPI::CreateTexture3D(
 	UInt32 Usage, 
 	UInt32 Width, 
 	UInt32 Height, 
-	UInt32 Depth, 
+	UInt16 Depth,
 	UInt32 MipLevels, 
 	const ClearValue& OptimizedClearValue) const
 {
@@ -224,8 +221,9 @@ Texture3D* D3D12RenderingAPI::CreateTexture3D(
 SamplerState* D3D12RenderingAPI::CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) const
 {
 	D3D12_SAMPLER_DESC Desc;
-	Memory::Memzero(&Desc, sizeof(D3D12_SAMPLER_DESC));
+	Memory::Memzero(&Desc);
 
+	Memory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor, sizeof(Desc.BorderColor));
 	Desc.AddressU		= ConvertSamplerMode(CreateInfo.AddressU);
 	Desc.AddressV		= ConvertSamplerMode(CreateInfo.AddressV);
 	Desc.AddressW		= ConvertSamplerMode(CreateInfo.AddressW);
@@ -235,9 +233,8 @@ SamplerState* D3D12RenderingAPI::CreateSamplerState(const struct SamplerStateCre
 	Desc.MaxLOD			= CreateInfo.MaxLOD;
 	Desc.MinLOD			= CreateInfo.MinLOD;
 	Desc.MipLODBias		= CreateInfo.MipLODBias;
-	Memory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor, sizeof(Desc.BorderColor));
 
-	return new D3D12SamplerState(Device, Device->GetGlobalSamplerDescriptorHeap(), Desc);
+	return DBG_NEW D3D12SamplerState(Device, Device->GetGlobalSamplerDescriptorHeap(), Desc);
 }
 
 /*
@@ -312,9 +309,9 @@ ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(const ResourceData* Init
 	Memory::Memzero(&ViewDesc, sizeof(D3D12_CONSTANT_BUFFER_VIEW_DESC));
 
 	ViewDesc.BufferLocation	= NewBuffer->GetGPUVirtualAddress();
-	ViewDesc.SizeInBytes	= NewBuffer->GetAllocatedSize();
+	ViewDesc.SizeInBytes	= UInt32(NewBuffer->GetAllocatedSize());
 
-	D3D12ConstantBufferView* View = new D3D12ConstantBufferView(Device, NewBuffer, ViewDesc);
+	D3D12ConstantBufferView* View = DBG_NEW D3D12ConstantBufferView(Device, NewBuffer, ViewDesc);
 	NewBuffer->View = View;
 	return NewBuffer;
 }
@@ -1273,65 +1270,73 @@ DepthStencilView* D3D12RenderingAPI::CreateDepthStencilView(
 
 ComputeShader* D3D12RenderingAPI::CreateComputeShader(const TArray<UInt8>& ShaderCode) const
 {
-	D3D12ComputeShader* Shader = new D3D12ComputeShader(Device, ShaderCode);
+	D3D12ComputeShader* Shader = DBG_NEW D3D12ComputeShader(Device, ShaderCode);
 	Shader->CreateRootSignature();
 	return Shader;
 }
 
 VertexShader* D3D12RenderingAPI::CreateVertexShader(const TArray<UInt8>& ShaderCode) const
 {
-	return new D3D12VertexShader(Device, ShaderCode);
+	return DBG_NEW D3D12VertexShader(Device, ShaderCode);
 }
 
 HullShader* D3D12RenderingAPI::CreateHullShader(const TArray<UInt8>& ShaderCode) const
 {
+	// TODO: Finish this
 	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 DomainShader* D3D12RenderingAPI::CreateDomainShader(const TArray<UInt8>& ShaderCode) const
 {
+	// TODO: Finish this
 	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 GeometryShader* D3D12RenderingAPI::CreateGeometryShader(const TArray<UInt8>& ShaderCode) const
 {
+	// TODO: Finish this
 	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 MeshShader* D3D12RenderingAPI::CreateMeshShader(const TArray<UInt8>& ShaderCode) const
 {
+	// TODO: Finish this
 	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 AmplificationShader* D3D12RenderingAPI::CreateAmplificationShader(const TArray<UInt8>& ShaderCode) const
 {
+	// TODO: Finish this
 	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 PixelShader* D3D12RenderingAPI::CreatePixelShader(const TArray<UInt8>& ShaderCode) const
 {
-	return new D3D12PixelShader(Device, ShaderCode);
+	return DBG_NEW D3D12PixelShader(Device, ShaderCode);
 }
 
 RayGenShader* D3D12RenderingAPI::CreateRayGenShader(const TArray<UInt8>& ShaderCode) const
 {
+	// TODO: Finish this
 	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 RayHitShader* D3D12RenderingAPI::CreateRayHitShader(const TArray<UInt8>& ShaderCode) const
 {
+	// TODO: Finish this
 	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
 
 RayMissShader* D3D12RenderingAPI::CreateRayMissShader(const TArray<UInt8>& ShaderCode) const
 {
+	// TODO: Finish this
 	UNREFERENCED_VARIABLE(ShaderCode);
 	return nullptr;
 }
@@ -1351,7 +1356,7 @@ DepthStencilState* D3D12RenderingAPI::CreateDepthStencilState(
 	Desc.FrontFace			= ConvertDepthStencilOp(CreateInfo.FrontFace);
 	Desc.BackFace			= ConvertDepthStencilOp(CreateInfo.BackFace);
 
-	return new D3D12DepthStencilState(Device, Desc);
+	return DBG_NEW D3D12DepthStencilState(Device, Desc);
 }
 
 RasterizerState* D3D12RenderingAPI::CreateRasterizerState(
@@ -1375,7 +1380,7 @@ RasterizerState* D3D12RenderingAPI::CreateRasterizerState(
 	Desc.FrontCounterClockwise	= CreateInfo.FrontCounterClockwise;
 	Desc.MultisampleEnable		= CreateInfo.MultisampleEnable;
 
-	return new D3D12RasterizerState(Device, Desc);
+	return DBG_NEW D3D12RasterizerState(Device, Desc);
 }
 
 BlendState* D3D12RenderingAPI::CreateBlendState(
@@ -1400,13 +1405,13 @@ BlendState* D3D12RenderingAPI::CreateBlendState(
 		Desc.RenderTarget[i].RenderTargetWriteMask	= ConvertRenderTargetWriteState(CreateInfo.RenderTarget[i].RenderTargetWriteMask);
 	}
 
-	return new D3D12BlendState(Device, Desc);
+	return DBG_NEW D3D12BlendState(Device, Desc);
 }
 
 InputLayoutState* D3D12RenderingAPI::CreateInputLayout(
 	const InputLayoutStateCreateInfo& CreateInfo) const
 {
-	return new D3D12InputLayoutState(Device, CreateInfo);
+	return DBG_NEW D3D12InputLayoutState(Device, CreateInfo);
 }
 
 GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
@@ -1414,69 +1419,69 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
 {
 	using namespace Microsoft::WRL;
 
-	struct alignas(void*) GraphicsPipelineStream
+	struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) GraphicsPipelineStream
 	{
-		struct alignas(void*)
+		struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
 		{
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
 			ID3D12RootSignature* RootSignature = nullptr;
 		};
 
-		struct alignas(void*)
+		struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
 		{
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE	Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT;
 			D3D12_INPUT_LAYOUT_DESC InputLayout = { };
 		};
 
-		struct alignas(void*)
+		struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
 		{
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type2 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PRIMITIVE_TOPOLOGY;
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE PrimitiveTopologyType = { };
 		};
 
-		struct alignas(void*)
+		struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
 		{
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type3 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS;
 			D3D12_SHADER_BYTECODE VertexShader = { };
 		};
 
-		struct alignas(void*)
+		struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
 		{
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type4 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS;
 			D3D12_SHADER_BYTECODE PixelShader = { };
 		};
 
-		struct alignas(void*)
+		struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
 		{
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type5 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS;
 			D3D12_RT_FORMAT_ARRAY RenderTargetInfo = { };
 		};
 
-		struct alignas(void*)
+		struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
 		{
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type6 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT;
 			DXGI_FORMAT DepthBufferFormat = { };
 		};
 
-		struct alignas(void*)
+		struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
 		{
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type7 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER;
 			D3D12_RASTERIZER_DESC RasterizerDesc = { };
 		};
 
-		struct alignas(void*)
+		struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
 		{
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type8 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL;
 			D3D12_DEPTH_STENCIL_DESC DepthStencilDesc = { };
 		};
 
-		struct alignas(void*)
+		struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
 		{
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type9 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND;
 			D3D12_BLEND_DESC BlendStateDesc = { };
 		};
 
-		struct alignas(void*)
+		struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
 		{
 			D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type10 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC;
 			DXGI_SAMPLE_DESC SampleDesc = { };
@@ -1577,7 +1582,7 @@ GraphicsPipelineState* D3D12RenderingAPI::CreateGraphicsPipelineState(
 	HRESULT hResult = Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
 	if (SUCCEEDED(hResult))
 	{
-		D3D12GraphicsPipelineState* Pipeline = new D3D12GraphicsPipelineState(Device);
+		D3D12GraphicsPipelineState* Pipeline = DBG_NEW D3D12GraphicsPipelineState(Device);
 		Pipeline->PipelineState = PipelineState;
 
 		// TODO: This should be refcounted
@@ -1606,7 +1611,7 @@ ComputePipelineState* D3D12RenderingAPI::CreateComputePipelineState(
 		RootSignature = DefaultRootSignatures.Compute;
 	}
 
-	D3D12ComputePipelineState* NewPipelineState = new D3D12ComputePipelineState(Device, Shader, RootSignature);
+	D3D12ComputePipelineState* NewPipelineState = DBG_NEW D3D12ComputePipelineState(Device, Shader, RootSignature);
 	if (NewPipelineState->Init())
 	{
 		return NewPipelineState;
@@ -1633,6 +1638,8 @@ Viewport* D3D12RenderingAPI::CreateViewport(
 	EFormat ColorFormat, 
 	EFormat DepthFormat) const
 {
+	UNREFERENCED_VARIABLE(DepthFormat);
+
 	// TODO: Take DepthFormat into account
 
 	TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>(Window);
@@ -1646,7 +1653,7 @@ Viewport* D3D12RenderingAPI::CreateViewport(
 		Height = WinWindow->GetHeight();
 	}
 
-	TSharedRef<D3D12Viewport> Viewport = new D3D12Viewport(
+	TSharedRef<D3D12Viewport> Viewport = DBG_NEW D3D12Viewport(
 		Device, 
 		DirectCmdContext.Get(), 
 		WinWindow->GetHandle(), 
@@ -1667,12 +1674,12 @@ Viewport* D3D12RenderingAPI::CreateViewport(
 * Supported features
 */
 
-bool D3D12RenderingAPI::IsRayTracingSupported() const
+Bool D3D12RenderingAPI::IsRayTracingSupported() const
 {
 	return Device->IsRayTracingSupported();
 }
 
-bool D3D12RenderingAPI::UAVSupportsFormat(EFormat Format) const
+Bool D3D12RenderingAPI::UAVSupportsFormat(EFormat Format) const
 {
 	D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
 	Memory::Memzero(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
@@ -1704,7 +1711,7 @@ bool D3D12RenderingAPI::UAVSupportsFormat(EFormat Format) const
 * Allocate resources
 */
 
-bool D3D12RenderingAPI::AllocateBuffer(
+Bool D3D12RenderingAPI::AllocateBuffer(
 	D3D12Resource& Resource, 
 	D3D12_HEAP_TYPE HeapType, 
 	D3D12_RESOURCE_STATES InitalState, 
@@ -1754,7 +1761,7 @@ bool D3D12RenderingAPI::AllocateBuffer(
 	}
 }
 
-bool D3D12RenderingAPI::AllocateTexture(
+Bool D3D12RenderingAPI::AllocateTexture(
 	D3D12Resource& Resource, 
 	D3D12_HEAP_TYPE HeapType, 
 	D3D12_RESOURCE_STATES InitalState,
@@ -1795,7 +1802,7 @@ bool D3D12RenderingAPI::AllocateTexture(
 * Resource uploading
 */
 
-bool D3D12RenderingAPI::UploadBuffer(Buffer& Buffer, UInt32 SizeInBytes, const ResourceData* InitalData) const
+Bool D3D12RenderingAPI::UploadBuffer(Buffer& Buffer, UInt32 SizeInBytes, const ResourceData* InitalData) const
 {
 	if (Buffer.HasDynamicUsage())
 	{
@@ -1830,7 +1837,7 @@ bool D3D12RenderingAPI::UploadBuffer(Buffer& Buffer, UInt32 SizeInBytes, const R
 	return true;
 }
 
-bool D3D12RenderingAPI::UploadTexture(Texture& Texture, const ResourceData* InitalData) const
+Bool D3D12RenderingAPI::UploadTexture(Texture& Texture, const ResourceData* InitalData) const
 {
 	// TODO: Support other types than texture 2D
 	Texture2D* Texture2D = Texture.AsTexture2D();

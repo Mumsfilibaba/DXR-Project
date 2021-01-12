@@ -16,9 +16,9 @@ bool RenderingAPI::Init(ERenderingAPI InRenderAPI)
 	// Select RenderingAPI
 	if (InRenderAPI == ERenderingAPI::RenderingAPI_D3D12)
 	{
-		GlobalRenderingAPI = new D3D12RenderingAPI();
+		GlobalRenderingAPI = DBG_NEW D3D12RenderingAPI();
 		
-		D3D12ShaderCompiler* Compiler = new D3D12ShaderCompiler();
+		D3D12ShaderCompiler* Compiler = DBG_NEW D3D12ShaderCompiler();
 		if (!Compiler->Init())
 		{
 			return false;
@@ -43,7 +43,7 @@ bool RenderingAPI::Init(ERenderingAPI InRenderAPI)
 #endif
 
 	// Init
-	if (GlobalRenderingAPI->Initialize(EnableDebug))
+	if (GlobalRenderingAPI->Init(EnableDebug))
 	{
 		ICommandContext* CmdContext = GlobalRenderingAPI->GetDefaultCommandContext();
 		CommandListExecutor::SetContext(CmdContext);
@@ -58,9 +58,6 @@ bool RenderingAPI::Init(ERenderingAPI InRenderAPI)
 
 void RenderingAPI::Release()
 {
-	delete GlobalRenderingAPI;
-	GlobalRenderingAPI = nullptr;
-
-	delete GlobalShaderCompiler;
-	GlobalShaderCompiler = nullptr;
+	SAFEDELETE(GlobalRenderingAPI);
+	SAFEDELETE(GlobalShaderCompiler);
 }

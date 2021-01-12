@@ -101,7 +101,7 @@ Bool Game::Init()
 	{
 		for (UInt32 x = 0; x < SphereCountX; x++)
 		{
-			NewActor = new Actor();
+			NewActor = DBG_NEW Actor();
 			NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 8.0f + StartPositionY + (y * SphereOffset), 0.0f);
 
 			NewActor->SetName("Sphere[" + std::to_string(SphereIndex) + "]");
@@ -109,7 +109,7 @@ Bool Game::Init()
 
 			CurrentScene->AddActor(NewActor);
 
-			NewComponent = new MeshComponent(NewActor);
+			NewComponent = DBG_NEW MeshComponent(NewActor);
 			NewComponent->Mesh		= SphereMesh;
 			NewComponent->Material	= MakeShared<Material>(MatProperties);
 
@@ -119,7 +119,7 @@ Bool Game::Init()
 			NewComponent->Material->HeightMap		= WhiteTexture;
 			NewComponent->Material->AOMap			= WhiteTexture;
 			NewComponent->Material->MetallicMap		= WhiteTexture;
-			NewComponent->Material->Initialize();
+			NewComponent->Material->Init();
 
 			NewActor->AddComponent(NewComponent);
 
@@ -133,7 +133,7 @@ Bool Game::Init()
 	// Create Other Meshes
 	MeshData CubeMeshData = MeshFactory::CreateCube();
 
-	NewActor = new Actor();
+	NewActor = DBG_NEW Actor();
 	CurrentScene->AddActor(NewActor);
 
 	NewActor->SetName("Cube");
@@ -144,7 +144,7 @@ Bool Game::Init()
 	MatProperties.Roughness		= 1.0f;
 	MatProperties.EnableHeight	= 1;
 
-	NewComponent = new MeshComponent(NewActor);
+	NewComponent = DBG_NEW MeshComponent(NewActor);
 	NewComponent->Mesh		= Mesh::Make(CubeMeshData);
 	NewComponent->Material	= MakeShared<Material>(MatProperties);
 
@@ -232,14 +232,14 @@ Bool Game::Init()
 	NewComponent->Material->HeightMap		= HeightMap;
 	NewComponent->Material->AOMap			= AOMap;
 	NewComponent->Material->MetallicMap		= MetallicMap;
-	NewComponent->Material->Initialize();
+	NewComponent->Material->Init();
 	NewActor->AddComponent(NewComponent);
 
-	CurrentCamera = new Camera();
+	CurrentCamera = DBG_NEW Camera();
 	CurrentScene->AddCamera(CurrentCamera);
 
 	// Add PointLight- Source
-	PointLight* Light0 = new PointLight();
+	PointLight* Light0 = DBG_NEW PointLight();
 	Light0->SetPosition(14.0f, 1.0f, -0.5f);
 	Light0->SetColor(1.0f, 1.0f, 1.0f);
 	Light0->SetShadowBias(0.0005f);
@@ -249,7 +249,7 @@ Bool Game::Init()
 	CurrentScene->AddLight(Light0);
 
 	// Add DirectionalLight- Source
-	DirectionalLight* Light1 = new DirectionalLight();
+	DirectionalLight* Light1 = DBG_NEW DirectionalLight();
 	Light1->SetShadowBias(0.0008f);
 	Light1->SetMaxShadowBias(0.008f);
 	Light1->SetShadowNearPlane(0.01f);

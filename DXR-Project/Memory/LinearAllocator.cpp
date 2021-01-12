@@ -15,7 +15,7 @@ Void* LinearAllocator::Allocate(UInt64 SizeInBytes, UInt64 Alignment)
 {
 	VALIDATE(CurrentArena != nullptr);
 
-	const UInt32 AlignedSize = Math::AlignUp(SizeInBytes, Alignment);
+	const UInt64 AlignedSize = Math::AlignUp(SizeInBytes, Alignment);
 	if (CurrentArena->ReservedSize() > AlignedSize)
 	{
 		return CurrentArena->Allocate(AlignedSize);
@@ -43,7 +43,7 @@ void LinearAllocator::Reset()
 
 	if (Arenas.Size() > 1)
 	{
-		Arenas.Front() = Move(Arenas.Back());
+		Arenas.Front() = ::Move(Arenas.Back());
 		Arenas.Resize(1); // Keep memory for the pointers
 		CurrentArena = &Arenas.Front();
 	}

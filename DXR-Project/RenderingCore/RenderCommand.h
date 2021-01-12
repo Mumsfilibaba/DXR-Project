@@ -23,7 +23,7 @@ struct RenderCommand
 // Begin RenderCommand
 struct BeginCommand : public RenderCommand
 {
-	inline BeginCommand()
+	BeginCommand()
 	{
 		// Empty for now
 	}
@@ -37,7 +37,7 @@ struct BeginCommand : public RenderCommand
 // End RenderCommand
 struct EndCommand : public RenderCommand
 {
-	inline EndCommand()
+	EndCommand()
 	{
 		// Empty for now
 	}
@@ -51,14 +51,14 @@ struct EndCommand : public RenderCommand
 // Clear RenderTarget RenderCommand
 struct ClearRenderTargetViewCommand : public RenderCommand
 {
-	inline ClearRenderTargetViewCommand(RenderTargetView* InRenderTargetView, const ColorClearValue& InClearColor)
+	ClearRenderTargetViewCommand(RenderTargetView* InRenderTargetView, const ColorClearValue& InClearColor)
 		: RenderTargetView(InRenderTargetView)
 		, ClearColor(InClearColor)
 	{
 		VALIDATE(RenderTargetView != nullptr);
 	}
 
-	inline ~ClearRenderTargetViewCommand()
+	~ClearRenderTargetViewCommand()
 	{
 		SAFERELEASE(RenderTargetView);
 	}
@@ -75,14 +75,14 @@ struct ClearRenderTargetViewCommand : public RenderCommand
 // Clear DepthStencil RenderCommand
 struct ClearDepthStencilViewCommand : public RenderCommand
 {
-	inline ClearDepthStencilViewCommand(DepthStencilView* InDepthStencilView, const DepthStencilClearValue& InClearValue)
+	ClearDepthStencilViewCommand(DepthStencilView* InDepthStencilView, const DepthStencilClearValue& InClearValue)
 		: DepthStencilView(InDepthStencilView)
 		, ClearValue(InClearValue)
 	{
 		VALIDATE(DepthStencilView != nullptr);
 	}
 
-	inline ~ClearDepthStencilViewCommand()
+	~ClearDepthStencilViewCommand()
 	{
 		SAFERELEASE(DepthStencilView);
 	}
@@ -99,7 +99,7 @@ struct ClearDepthStencilViewCommand : public RenderCommand
 // Clear UnorderedAccessView RenderCommand
 struct ClearUnorderedAccessViewFloatCommand : public RenderCommand
 {
-	inline ClearUnorderedAccessViewFloatCommand(UnorderedAccessView* InUnorderedAccessView, const Float InClearColor[4])
+	ClearUnorderedAccessViewFloatCommand(UnorderedAccessView* InUnorderedAccessView, const Float InClearColor[4])
 		: UnorderedAccessView(InUnorderedAccessView)
 		, ClearColor()
 	{
@@ -107,7 +107,7 @@ struct ClearUnorderedAccessViewFloatCommand : public RenderCommand
 		Memory::Memcpy(ClearColor, InClearColor, sizeof(InClearColor));
 	}
 
-	inline ~ClearUnorderedAccessViewFloatCommand()
+	~ClearUnorderedAccessViewFloatCommand()
 	{
 		SAFERELEASE(UnorderedAccessView);
 	}
@@ -124,7 +124,7 @@ struct ClearUnorderedAccessViewFloatCommand : public RenderCommand
 // Bind Viewport RenderCommand
 struct BindViewportCommand : public RenderCommand
 {
-	inline BindViewportCommand(Float InWidth, Float InHeight, Float InMinDepth, Float InMaxDepth, Float InX, Float InY)
+	BindViewportCommand(Float InWidth, Float InHeight, Float InMinDepth, Float InMaxDepth, Float InX, Float InY)
 		: Width(InWidth)
 		, Height(InHeight)
 		, MinDepth(InMinDepth)
@@ -150,7 +150,7 @@ struct BindViewportCommand : public RenderCommand
 // Bind ScissorRect RenderCommand
 struct BindScissorRectCommand : public RenderCommand
 {
-	inline BindScissorRectCommand(Float InWidth, Float InHeight, Float InX, Float InY)
+	BindScissorRectCommand(Float InWidth, Float InHeight, Float InX, Float InY)
 		: Width(InWidth)
 		, Height(InHeight)
 		, x(InX)
@@ -172,7 +172,7 @@ struct BindScissorRectCommand : public RenderCommand
 // Bind BlendFactor RenderCommand
 struct BindBlendFactorCommand : public RenderCommand
 {
-	inline BindBlendFactorCommand(const ColorClearValue& InColor)
+	BindBlendFactorCommand(const ColorClearValue& InColor)
 		: Color(InColor)
 	{
 	}
@@ -188,7 +188,7 @@ struct BindBlendFactorCommand : public RenderCommand
 // BeginRenderPass RenderCommand
 struct BeginRenderPassCommand : public RenderCommand
 {
-	inline BeginRenderPassCommand()
+	BeginRenderPassCommand()
 	{
 		// Empty for now
 	}
@@ -202,7 +202,7 @@ struct BeginRenderPassCommand : public RenderCommand
 // End RenderCommand
 struct EndRenderPassCommand : public RenderCommand
 {
-	inline EndRenderPassCommand()
+	EndRenderPassCommand()
 	{
 		// Empty for now
 	}
@@ -216,7 +216,7 @@ struct EndRenderPassCommand : public RenderCommand
 // Bind PrimitiveTopology RenderCommand
 struct BindPrimitiveTopologyCommand : public RenderCommand
 {
-	inline BindPrimitiveTopologyCommand(EPrimitiveTopology InPrimitiveTopologyType)
+	BindPrimitiveTopologyCommand(EPrimitiveTopology InPrimitiveTopologyType)
 		: PrimitiveTopologyType(InPrimitiveTopologyType)
 	{
 	}
@@ -232,14 +232,14 @@ struct BindPrimitiveTopologyCommand : public RenderCommand
 // Bind VertexBuffers RenderCommand
 struct BindVertexBuffersCommand : public RenderCommand
 {
-	inline BindVertexBuffersCommand(VertexBuffer* const * InVertexBuffers, UInt32 InVertexBufferCount, UInt32 InStartSlot)
+	BindVertexBuffersCommand(VertexBuffer* const * InVertexBuffers, UInt32 InVertexBufferCount, UInt32 InStartSlot)
 		: VertexBuffers(InVertexBuffers)
 		, VertexBufferCount(InVertexBufferCount)
 		, StartSlot(InStartSlot)
 	{
 	}
 
-	inline ~BindVertexBuffersCommand()
+	~BindVertexBuffersCommand()
 	{
 		for (UInt32 i = 0; i < VertexBufferCount; i++)
 		{
@@ -263,12 +263,12 @@ struct BindVertexBuffersCommand : public RenderCommand
 // Bind IndexBuffer RenderCommand
 struct BindIndexBufferCommand : public RenderCommand
 {
-	inline BindIndexBufferCommand(IndexBuffer* InIndexBuffer)
+	BindIndexBufferCommand(IndexBuffer* InIndexBuffer)
 		: IndexBuffer(InIndexBuffer)
 	{
 	}
 
-	inline ~BindIndexBufferCommand()
+	~BindIndexBufferCommand()
 	{
 		SAFERELEASE(IndexBuffer);
 	}
@@ -284,13 +284,13 @@ struct BindIndexBufferCommand : public RenderCommand
 // Bind RayTracingScene RenderCommand
 struct BindRayTracingSceneCommand : public RenderCommand
 {
-	inline BindRayTracingSceneCommand(RayTracingScene* InRayTracingScene)
+	BindRayTracingSceneCommand(RayTracingScene* InRayTracingScene)
 		: RayTracingScene(InRayTracingScene)
 	{
 		VALIDATE(RayTracingScene != nullptr);
 	}
 
-	inline ~BindRayTracingSceneCommand()
+	~BindRayTracingSceneCommand()
 	{
 		SAFERELEASE(RayTracingScene);
 	}
@@ -306,14 +306,14 @@ struct BindRayTracingSceneCommand : public RenderCommand
 // Bind BlendFactor RenderCommand
 struct BindRenderTargetsCommand : public RenderCommand
 {
-	inline BindRenderTargetsCommand(RenderTargetView* const * InRenderTargetViews, UInt32 InRenderTargetViewCount, DepthStencilView* InDepthStencilView)
+	BindRenderTargetsCommand(RenderTargetView* const * InRenderTargetViews, UInt32 InRenderTargetViewCount, DepthStencilView* InDepthStencilView)
 		: RenderTargetViews(InRenderTargetViews)
 		, RenderTargetViewCount(InRenderTargetViewCount)
 		, DepthStencilView(InDepthStencilView)
 	{
 	}
 
-	inline ~BindRenderTargetsCommand()
+	~BindRenderTargetsCommand()
 	{
 		SAFERELEASE(DepthStencilView);
 
@@ -339,13 +339,13 @@ struct BindRenderTargetsCommand : public RenderCommand
 // Bind GraphicsPipelineState RenderCommand
 struct BindGraphicsPipelineStateCommand : public RenderCommand
 {
-	inline BindGraphicsPipelineStateCommand(GraphicsPipelineState* InPipelineState)
+	BindGraphicsPipelineStateCommand(GraphicsPipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
 		VALIDATE(InPipelineState != nullptr);
 	}
 
-	inline ~BindGraphicsPipelineStateCommand()
+	~BindGraphicsPipelineStateCommand()
 	{
 		SAFERELEASE(PipelineState);
 	}
@@ -361,12 +361,12 @@ struct BindGraphicsPipelineStateCommand : public RenderCommand
 // Bind ComputePipelineState RenderCommand
 struct BindComputePipelineStateCommand : public RenderCommand
 {
-	inline BindComputePipelineStateCommand(ComputePipelineState* InPipelineState)
+	BindComputePipelineStateCommand(ComputePipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
 	}
 
-	inline ~BindComputePipelineStateCommand()
+	~BindComputePipelineStateCommand()
 	{
 		SAFERELEASE(PipelineState);
 	}
@@ -382,12 +382,12 @@ struct BindComputePipelineStateCommand : public RenderCommand
 // Bind RayTracingPipelineState RenderCommand
 struct BindRayTracingPipelineStateCommand : public RenderCommand
 {
-	inline BindRayTracingPipelineStateCommand(RayTracingPipelineState* InPipelineState)
+	BindRayTracingPipelineStateCommand(RayTracingPipelineState* InPipelineState)
 		: PipelineState(InPipelineState)
 	{
 	}
 
-	inline ~BindRayTracingPipelineStateCommand()
+	~BindRayTracingPipelineStateCommand()
 	{
 		SAFERELEASE(PipelineState);
 	}
@@ -403,7 +403,7 @@ struct BindRayTracingPipelineStateCommand : public RenderCommand
 // Bind ShaderResourceViews RenderCommand
 struct Bind32BitShaderConstantsCommand : public RenderCommand
 {
-	inline Bind32BitShaderConstantsCommand(EShaderStage InShaderStage, const Void* InShader32BitConstants, UInt32 InNum32BitConstants)
+	Bind32BitShaderConstantsCommand(EShaderStage InShaderStage, const Void* InShader32BitConstants, UInt32 InNum32BitConstants)
 		: ShaderStage(InShaderStage)
 		, Shader32BitConstants(InShader32BitConstants)
 		, Num32BitConstants(InNum32BitConstants)
@@ -426,12 +426,25 @@ struct Bind32BitShaderConstantsCommand : public RenderCommand
 // Bind ConstantBuffers RenderCommand
 struct BindConstantBuffersCommand : public RenderCommand
 {
-	inline BindConstantBuffersCommand(EShaderStage InShaderStage, ConstantBuffer* const* InConstantBuffers, UInt32 InConstantBufferCount, UInt32 InStartSlot)
+	BindConstantBuffersCommand(EShaderStage InShaderStage, ConstantBuffer* const* InConstantBuffers, UInt32 InConstantBufferCount, UInt32 InStartSlot)
 		: ShaderStage(InShaderStage)
 		, ConstantBuffers(InConstantBuffers)
 		, ConstantBufferCount(InConstantBufferCount)
 		, StartSlot(InStartSlot)
 	{
+	}
+
+	~BindConstantBuffersCommand()
+	{
+		for (UInt32 i = 0; i < ConstantBufferCount; i++)
+		{
+			if (ConstantBuffers[i])
+			{
+				ConstantBuffers[i]->Release();
+			}
+		}
+
+		ConstantBuffers = nullptr;
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -452,12 +465,25 @@ struct BindConstantBuffersCommand : public RenderCommand
 // Bind ShaderResourceView RenderCommand
 struct BindShaderResourceViewsCommand : public RenderCommand
 {
-	inline BindShaderResourceViewsCommand(EShaderStage InShaderStage, ShaderResourceView* const* InShaderResourceViews, UInt32 InConstantBufferCount, UInt32 InStartSlot)
+	BindShaderResourceViewsCommand(EShaderStage InShaderStage, ShaderResourceView* const* InShaderResourceViews, UInt32 InConstantBufferCount, UInt32 InStartSlot)
 		: ShaderStage(InShaderStage)
 		, ShaderResourceViews(InShaderResourceViews)
 		, ShaderResourceViewCount(InConstantBufferCount)
 		, StartSlot(InStartSlot)
 	{
+	}
+
+	~BindShaderResourceViewsCommand()
+	{
+		for (UInt32 i = 0; i < ShaderResourceViewCount; i++)
+		{
+			if (ShaderResourceViews[i])
+			{
+				ShaderResourceViews[i]->Release();
+			}
+		}
+
+		ShaderResourceViews = nullptr;
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -478,12 +504,25 @@ struct BindShaderResourceViewsCommand : public RenderCommand
 // Bind UnorderedAccessViews RenderCommand
 struct BindUnorderedAccessViewsCommand : public RenderCommand
 {
-	inline BindUnorderedAccessViewsCommand(EShaderStage InShaderStage, UnorderedAccessView* const* InUnorderedAccessViews, UInt32 InUnorderedAccessViewCount, UInt32 InStartSlot)
+	BindUnorderedAccessViewsCommand(EShaderStage InShaderStage, UnorderedAccessView* const* InUnorderedAccessViews, UInt32 InUnorderedAccessViewCount, UInt32 InStartSlot)
 		: ShaderStage(InShaderStage)
 		, UnorderedAccessViews(InUnorderedAccessViews)
 		, UnorderedAccessViewCount(InUnorderedAccessViewCount)
 		, StartSlot(InStartSlot)
 	{
+	}
+
+	~BindUnorderedAccessViewsCommand()
+	{
+		for (UInt32 i = 0; i < UnorderedAccessViewCount; i++)
+		{
+			if (UnorderedAccessViews[i])
+			{
+				UnorderedAccessViews[i]->Release();
+			}
+		}
+
+		UnorderedAccessViews = nullptr;
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -504,12 +543,25 @@ struct BindUnorderedAccessViewsCommand : public RenderCommand
 // Bind SamplerStates RenderCommand
 struct BindSamplerStatesCommand : public RenderCommand
 {
-	inline BindSamplerStatesCommand(EShaderStage InShaderStage, SamplerState* const* InSamplerStates, UInt32 InSamplerStateCount, UInt32 InStartSlot)
+	BindSamplerStatesCommand(EShaderStage InShaderStage, SamplerState* const* InSamplerStates, UInt32 InSamplerStateCount, UInt32 InStartSlot)
 		: ShaderStage(InShaderStage)
 		, SamplerStates(InSamplerStates)
 		, SamplerStateCount(InSamplerStateCount)
 		, StartSlot(InStartSlot)
 	{
+	}
+
+	~BindSamplerStatesCommand()
+	{
+		for (UInt32 i = 0; i < SamplerStateCount; i++)
+		{
+			if (SamplerStates[i])
+			{
+				SamplerStates[i]->Release();
+			}
+		}
+
+		SamplerStates = nullptr;
 	}
 
 	virtual void Execute(ICommandContext& CmdContext) const override
@@ -530,7 +582,7 @@ struct BindSamplerStatesCommand : public RenderCommand
 // Resolve Texture RenderCommand
 struct ResolveTextureCommand : public RenderCommand
 {
-	inline ResolveTextureCommand(Texture* InDestination, Texture* InSource)
+	ResolveTextureCommand(Texture* InDestination, Texture* InSource)
 		: Destination(InDestination)
 		, Source(InSource)
 	{
@@ -538,7 +590,7 @@ struct ResolveTextureCommand : public RenderCommand
 		VALIDATE(Source != nullptr);
 	}
 
-	inline ~ResolveTextureCommand()
+	~ResolveTextureCommand()
 	{
 		SAFERELEASE(Destination);
 		SAFERELEASE(Source);
@@ -556,7 +608,7 @@ struct ResolveTextureCommand : public RenderCommand
 // Update Buffer RenderCommand
 struct UpdateBufferCommand : public RenderCommand
 {
-	inline UpdateBufferCommand(Buffer* InDestination, UInt64 InDestinationOffsetInBytes, UInt64 InSizeInBytes, const Void* InSourceData)
+	UpdateBufferCommand(Buffer* InDestination, UInt64 InDestinationOffsetInBytes, UInt64 InSizeInBytes, const Void* InSourceData)
 		: Destination(InDestination)
 		, DestinationOffsetInBytes(InDestinationOffsetInBytes)
 		, SizeInBytes(InSizeInBytes)
@@ -567,7 +619,7 @@ struct UpdateBufferCommand : public RenderCommand
 		VALIDATE(InSizeInBytes != 0);
 	}
 
-	inline ~UpdateBufferCommand()
+	~UpdateBufferCommand()
 	{
 		SAFERELEASE(Destination);
 	}
@@ -587,10 +639,10 @@ struct UpdateBufferCommand : public RenderCommand
 	const Void* SourceData;
 };
 
-// Update Texture RenderCommand
-struct UpdateTextureCommand : public RenderCommand
+// Update Texture2D RenderCommand
+struct UpdateTexture2DCommand : public RenderCommand
 {
-	inline UpdateTextureCommand(Texture2D* InDestination, UInt32 InWidth, UInt32 InHeight, UInt32	InMipLevel, const Void* InSourceData)
+	UpdateTexture2DCommand(Texture2D* InDestination, UInt32 InWidth, UInt32 InHeight, UInt32	InMipLevel, const Void* InSourceData)
 		: Destination(InDestination)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -601,7 +653,7 @@ struct UpdateTextureCommand : public RenderCommand
 		VALIDATE(InSourceData != nullptr);
 	}
 
-	inline ~UpdateTextureCommand()
+	~UpdateTexture2DCommand()
 	{
 		SAFERELEASE(Destination);
 	}
@@ -621,7 +673,7 @@ struct UpdateTextureCommand : public RenderCommand
 // Copy Buffer RenderCommand
 struct CopyBufferCommand : public RenderCommand
 {
-	inline CopyBufferCommand(Buffer* InDestination, Buffer* InSource, const CopyBufferInfo& InCopyBufferInfo)
+	CopyBufferCommand(Buffer* InDestination, Buffer* InSource, const CopyBufferInfo& InCopyBufferInfo)
 		: Destination(InDestination)
 		, Source(InSource)
 		, CopyBufferInfo(InCopyBufferInfo)
@@ -630,7 +682,7 @@ struct CopyBufferCommand : public RenderCommand
 		VALIDATE(Source != nullptr);
 	}
 
-	inline ~CopyBufferCommand()
+	~CopyBufferCommand()
 	{
 		SAFERELEASE(Destination);
 		SAFERELEASE(Source);
@@ -649,7 +701,7 @@ struct CopyBufferCommand : public RenderCommand
 // Copy Texture RenderCommand
 struct CopyTextureCommand : public RenderCommand
 {
-	inline CopyTextureCommand(Texture* InDestination, Texture* InSource)
+	CopyTextureCommand(Texture* InDestination, Texture* InSource)
 		: Destination(InDestination)
 		, Source(InSource)
 	{
@@ -657,7 +709,7 @@ struct CopyTextureCommand : public RenderCommand
 		VALIDATE(Source != nullptr);
 	}
 
-	inline ~CopyTextureCommand()
+	~CopyTextureCommand()
 	{
 		SAFERELEASE(Destination);
 		SAFERELEASE(Source);
@@ -675,7 +727,7 @@ struct CopyTextureCommand : public RenderCommand
 // Copy Texture RenderCommand
 struct CopyTextureRegionCommand : public RenderCommand
 {
-	inline CopyTextureRegionCommand(Texture* InDestination, Texture* InSource, const CopyTextureInfo& InCopyTextureInfo)
+	CopyTextureRegionCommand(Texture* InDestination, Texture* InSource, const CopyTextureInfo& InCopyTextureInfo)
 		: Destination(InDestination)
 		, Source(InSource)
 		, CopyTextureInfo(InCopyTextureInfo)
@@ -684,7 +736,7 @@ struct CopyTextureRegionCommand : public RenderCommand
 		VALIDATE(Source != nullptr);
 	}
 
-	inline ~CopyTextureRegionCommand()
+	~CopyTextureRegionCommand()
 	{
 		SAFERELEASE(Destination);
 		SAFERELEASE(Source);
@@ -703,13 +755,13 @@ struct CopyTextureRegionCommand : public RenderCommand
 // Destroy Resource RenderCommand
 struct DestroyResourceCommand : public RenderCommand
 {
-	inline DestroyResourceCommand(PipelineResource* InResource)
+	DestroyResourceCommand(PipelineResource* InResource)
 		: Resource(InResource)
 	{
 		VALIDATE(Resource != nullptr);
 	}
 
-	inline ~DestroyResourceCommand()
+	~DestroyResourceCommand()
 	{
 		SAFERELEASE(Resource);
 	}
@@ -725,13 +777,13 @@ struct DestroyResourceCommand : public RenderCommand
 // Build RayTracing Geoemtry RenderCommand
 struct BuildRayTracingGeometryCommand : public RenderCommand
 {
-	inline BuildRayTracingGeometryCommand(RayTracingGeometry* InRayTracingGeometry)
+	BuildRayTracingGeometryCommand(RayTracingGeometry* InRayTracingGeometry)
 		: RayTracingGeometry(InRayTracingGeometry)
 	{
 		VALIDATE(RayTracingGeometry != nullptr);
 	}
 
-	inline ~BuildRayTracingGeometryCommand()
+	~BuildRayTracingGeometryCommand()
 	{
 		SAFERELEASE(RayTracingGeometry);
 	}
@@ -747,13 +799,13 @@ struct BuildRayTracingGeometryCommand : public RenderCommand
 // Build RayTracing Scene RenderCommand
 struct BuildRayTracingSceneCommand : public RenderCommand
 {
-	inline BuildRayTracingSceneCommand(RayTracingScene* InRayTracingScene)
+	BuildRayTracingSceneCommand(RayTracingScene* InRayTracingScene)
 		: RayTracingScene(InRayTracingScene)
 	{
 		VALIDATE(RayTracingScene != nullptr);
 	}
 
-	inline ~BuildRayTracingSceneCommand()
+	~BuildRayTracingSceneCommand()
 	{
 		SAFERELEASE(RayTracingScene);
 	}
@@ -769,13 +821,13 @@ struct BuildRayTracingSceneCommand : public RenderCommand
 // GenerateMips RenderCommand
 struct GenerateMipsCommand : public RenderCommand
 {
-	inline GenerateMipsCommand(Texture* InTexture)
+	GenerateMipsCommand(Texture* InTexture)
 		: Texture(InTexture)
 	{
 		VALIDATE(Texture != nullptr);
 	}
 
-	inline ~GenerateMipsCommand()
+	~GenerateMipsCommand()
 	{
 		SAFERELEASE(Texture);
 	}
@@ -791,7 +843,7 @@ struct GenerateMipsCommand : public RenderCommand
 // TransitionTexture RenderCommand
 struct TransitionTextureCommand : public RenderCommand
 {
-	inline TransitionTextureCommand(Texture* InTexture, EResourceState InBeforeState, EResourceState InAfterState)
+	TransitionTextureCommand(Texture* InTexture, EResourceState InBeforeState, EResourceState InAfterState)
 		: Texture(InTexture)
 		, BeforeState(InBeforeState)
 		, AfterState(InAfterState)
@@ -799,7 +851,7 @@ struct TransitionTextureCommand : public RenderCommand
 		VALIDATE(Texture != nullptr);
 	}
 
-	inline ~TransitionTextureCommand()
+	~TransitionTextureCommand()
 	{
 		SAFERELEASE(Texture);
 	}
@@ -817,7 +869,7 @@ struct TransitionTextureCommand : public RenderCommand
 // TransitionBuffer RenderCommand
 struct TransitionBufferCommand : public RenderCommand
 {
-	inline TransitionBufferCommand(Buffer* InBuffer, EResourceState InBeforeState, EResourceState InAfterState)
+	TransitionBufferCommand(Buffer* InBuffer, EResourceState InBeforeState, EResourceState InAfterState)
 		: Buffer(InBuffer)
 		, BeforeState(InBeforeState)
 		, AfterState(InAfterState)
@@ -825,7 +877,7 @@ struct TransitionBufferCommand : public RenderCommand
 		VALIDATE(Buffer != nullptr);
 	}
 
-	inline ~TransitionBufferCommand()
+	~TransitionBufferCommand()
 	{
 		SAFERELEASE(Buffer);
 	}
@@ -843,13 +895,13 @@ struct TransitionBufferCommand : public RenderCommand
 // UnorderedAccessTextureBarrier RenderCommand
 struct UnorderedAccessTextureBarrierCommand : public RenderCommand
 {
-	inline UnorderedAccessTextureBarrierCommand(Texture* InTexture)
+	UnorderedAccessTextureBarrierCommand(Texture* InTexture)
 		: Texture(InTexture)
 	{
 		VALIDATE(Texture != nullptr);
 	}
 
-	inline ~UnorderedAccessTextureBarrierCommand()
+	~UnorderedAccessTextureBarrierCommand()
 	{
 		SAFERELEASE(Texture);
 	}
@@ -865,7 +917,7 @@ struct UnorderedAccessTextureBarrierCommand : public RenderCommand
 // Draw RenderCommand
 struct DrawCommand : public RenderCommand
 {
-	inline DrawCommand(UInt32 InVertexCount, UInt32 InStartVertexLocation)
+	DrawCommand(UInt32 InVertexCount, UInt32 InStartVertexLocation)
 		: VertexCount(InVertexCount)
 		, StartVertexLocation(InStartVertexLocation)
 	{
@@ -883,7 +935,7 @@ struct DrawCommand : public RenderCommand
 // DrawIndexed RenderCommand
 struct DrawIndexedCommand : public RenderCommand
 {
-	inline DrawIndexedCommand(UInt32 InIndexCount, UInt32 InStartIndexLocation, UInt32 InBaseVertexLocation)
+	DrawIndexedCommand(UInt32 InIndexCount, UInt32 InStartIndexLocation, UInt32 InBaseVertexLocation)
 		: IndexCount(InIndexCount)
 		, StartIndexLocation(InStartIndexLocation)
 		, BaseVertexLocation(InBaseVertexLocation)
@@ -903,7 +955,7 @@ struct DrawIndexedCommand : public RenderCommand
 // DrawInstanced RenderCommand
 struct DrawInstancedCommand : public RenderCommand
 {
-	inline DrawInstancedCommand(UInt32 InVertexCountPerInstance, UInt32 InInstanceCount, UInt32 InStartVertexLocation, UInt32 InStartInstanceLocation)
+	DrawInstancedCommand(UInt32 InVertexCountPerInstance, UInt32 InInstanceCount, UInt32 InStartVertexLocation, UInt32 InStartInstanceLocation)
 		: VertexCountPerInstance(InVertexCountPerInstance)
 		, InstanceCount(InInstanceCount)
 		, StartVertexLocation(InStartVertexLocation)
@@ -929,7 +981,7 @@ struct DrawInstancedCommand : public RenderCommand
 // DrawIndexedInstanced RenderCommand
 struct DrawIndexedInstancedCommand : public RenderCommand
 {
-	inline DrawIndexedInstancedCommand(UInt32 InIndexCountPerInstance, UInt32 InInstanceCount, UInt32 InStartIndexLocation, UInt32 InBaseVertexLocation, UInt32 InStartInstanceLocation)
+	DrawIndexedInstancedCommand(UInt32 InIndexCountPerInstance, UInt32 InInstanceCount, UInt32 InStartIndexLocation, UInt32 InBaseVertexLocation, UInt32 InStartInstanceLocation)
 		: IndexCountPerInstance(InIndexCountPerInstance)
 		, InstanceCount(InInstanceCount)
 		, StartIndexLocation(InStartIndexLocation)
@@ -958,7 +1010,7 @@ struct DrawIndexedInstancedCommand : public RenderCommand
 // Dispatch Compute RenderCommand
 struct DispatchComputeCommand : public RenderCommand
 {
-	inline DispatchComputeCommand(UInt32 InThreadGroupCountX, UInt32 InThreadGroupCountY, UInt32 InThreadGroupCountZ)
+	DispatchComputeCommand(UInt32 InThreadGroupCountX, UInt32 InThreadGroupCountY, UInt32 InThreadGroupCountZ)
 		: ThreadGroupCountX(InThreadGroupCountX)
 		, ThreadGroupCountY(InThreadGroupCountY)
 		, ThreadGroupCountZ(InThreadGroupCountZ)
@@ -978,7 +1030,7 @@ struct DispatchComputeCommand : public RenderCommand
 // Dispatch Rays RenderCommand
 struct DispatchRaysCommand : public RenderCommand
 {
-	inline DispatchRaysCommand(UInt32 InWidth, UInt32 InHeigh, UInt32 InDepth)
+	DispatchRaysCommand(UInt32 InWidth, UInt32 InHeigh, UInt32 InDepth)
 		: Width(InWidth)
 		, Height(InHeigh)
 		, Depth(InDepth)
@@ -998,7 +1050,7 @@ struct DispatchRaysCommand : public RenderCommand
 // InsertCommandListMarker RenderCommand
 struct InsertCommandListMarkerCommand : public RenderCommand
 {
-	inline InsertCommandListMarkerCommand(const std::string& InMarker)
+	InsertCommandListMarkerCommand(const std::string& InMarker)
 		: Marker(InMarker)
 	{
 	}

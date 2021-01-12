@@ -32,7 +32,7 @@ public:
 	D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation);
 	~D3D12Device();
 
-	bool Init();
+	Bool Init();
 
 	class D3D12CommandQueue*		CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type);
 	class D3D12CommandAllocator*	CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type);

@@ -30,6 +30,15 @@ struct ImGuiState
 	TSharedRef<VertexBuffer>			VertexBuffer;
 	TSharedRef<IndexBuffer>				IndexBuffer;
 	
+	void Reset()
+	{
+		FontTexture.Texture.Reset();
+		FontTexture.View.Reset();
+		PipelineState.Reset();
+		VertexBuffer.Reset();
+		IndexBuffer.Reset();
+	}
+
 	ImGuiContext* Context = nullptr;
 };
 
@@ -418,6 +427,8 @@ bool DebugUI::Init()
 
 void DebugUI::Release()
 {
+	GlobalImGuiState.Reset();
+
 	ImGui::DestroyContext(GlobalImGuiState.Context);
 }
 

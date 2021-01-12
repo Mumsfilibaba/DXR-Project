@@ -44,14 +44,14 @@ Bool TextureFactory::Init()
 		return false;
 	}
 
-	ComputeShader* Shader = RenderingAPI::CreateComputeShader(Code);
+	TSharedRef<ComputeShader> Shader = RenderingAPI::CreateComputeShader(Code);
 	if (!Shader)
 	{
 		return false;
 	}
 
 	// Create pipeline
-	GlobalFactoryData.PanoramaPSO = RenderingAPI::CreateComputePipelineState(ComputePipelineStateCreateInfo(Shader));
+	GlobalFactoryData.PanoramaPSO = RenderingAPI::CreateComputePipelineState(ComputePipelineStateCreateInfo(Shader.Get()));
 	if (GlobalFactoryData.PanoramaPSO)
 	{
 		GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");
@@ -121,7 +121,7 @@ Texture2D* TextureFactory::LoadFromMemory(
 	}
 
 	const Bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-	const UInt32 MipLevels = GenerateMipLevels ? std::min<UInt32>(std::log2<UInt32>(Width), std::log2<UInt32>(Height)) : 1;
+	const UInt32 MipLevels = GenerateMipLevels ? UInt32(std::min(std::log2(Width), std::log2(Height))) : 1;
 
 	VALIDATE(MipLevels != 0);
 

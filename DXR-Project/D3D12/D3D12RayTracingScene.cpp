@@ -70,7 +70,7 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(
 
 	ScratchBuffer = static_cast<D3D12StructuredBuffer*>(RenderingAPI::CreateStructuredBuffer(
 		nullptr, 
-		Info.ScratchDataSizeInBytes, 
+		UInt32(Info.ScratchDataSizeInBytes), 
 		1,
 		BufferUsage_UAV | BufferUsage_Default));
 	if (!ScratchBuffer)
@@ -80,7 +80,7 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(
 
 	ResultBuffer = static_cast<D3D12StructuredBuffer*>(RenderingAPI::CreateStructuredBuffer(
 		nullptr, 
-		Info.ResultDataMaxSizeInBytes, 
+		UInt32(Info.ResultDataMaxSizeInBytes), 
 		1,
 		BufferUsage_UAV | BufferUsage_Default));
 	if (!ResultBuffer)
@@ -257,7 +257,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(
 	// Create the buffers
 	ScratchBuffer = static_cast<D3D12StructuredBuffer*>(RenderingAPI::CreateStructuredBuffer(
 		nullptr, 
-		Info.ScratchDataSizeInBytes, 
+		UInt32(Info.ScratchDataSizeInBytes), 
 		1, 
 		BufferUsage_UAV | BufferUsage_Default));
 	if (!ScratchBuffer)
@@ -267,7 +267,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(
 
 	ResultBuffer = static_cast<D3D12StructuredBuffer*>(RenderingAPI::CreateStructuredBuffer(
 		nullptr, 
-		Info.ResultDataMaxSizeInBytes, 
+		UInt32(Info.ResultDataMaxSizeInBytes), 
 		1, 
 		BufferUsage_UAV | BufferUsage_Default));
 	if (!ResultBuffer)
@@ -327,7 +327,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(
 	SrvDesc.Shader4ComponentMapping						= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SrvDesc.RaytracingAccelerationStructure.Location	= ResultBuffer->GetGPUVirtualAddress();
 
-	View = new D3D12ShaderResourceView(Device, nullptr, SrvDesc);
+	View = DBG_NEW D3D12ShaderResourceView(Device, nullptr, SrvDesc);
 
 	IsDirty = false;
 	return true;

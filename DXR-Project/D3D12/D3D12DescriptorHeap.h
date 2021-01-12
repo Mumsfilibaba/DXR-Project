@@ -13,24 +13,9 @@
 class D3D12DescriptorHeap : public D3D12RefCountedObject
 {
 public:
-	inline D3D12DescriptorHeap(D3D12Device* InDevice, ID3D12DescriptorHeap* InHeap)
-		: D3D12RefCountedObject(InDevice)
-		, Heap(InHeap)
-		, CPUStart({ 0 })
-		, GPUStart({ 0 })
-		, DescriptorHandleIncrementSize(0)
-		, Type()
-	{
-		VALIDATE(Heap != nullptr);
-		
-		CPUStart = Heap->GetCPUDescriptorHandleForHeapStart();
-		GPUStart = Heap->GetGPUDescriptorHandleForHeapStart();
+	D3D12DescriptorHeap(D3D12Device* InDevice, const D3D12_DESCRIPTOR_HEAP_DESC& InDesc);
 
-		D3D12_DESCRIPTOR_HEAP_DESC Desc = Heap->GetDesc();
-		Type			= Desc.Type;
-		NumDescriptors	= Desc.NumDescriptors;
-		DescriptorHandleIncrementSize = InDevice->GetDescriptorHandleIncrementSize(Type);
-	}
+	Bool Init();
 
 	FORCEINLINE void SetName(const std::string& Name)
 	{
@@ -55,12 +40,12 @@ public:
 
 	FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
 	{
-		return Type;
+		return Desc.Type;
 	}
 
 	FORCEINLINE UInt32 GetNumDescriptors() const
 	{
-		return NumDescriptors;
+		return UInt32(Desc.NumDescriptors);
 	}
 
 	FORCEINLINE UInt32 GetDescriptorHandleIncrementSize() const
@@ -69,12 +54,11 @@ public:
 	}
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> Heap;
-	D3D12_CPU_DESCRIPTOR_HANDLE CPUStart;
-	D3D12_GPU_DESCRIPTOR_HANDLE GPUStart;
-	D3D12_DESCRIPTOR_HEAP_TYPE Type;
+	TComPtr<ID3D12DescriptorHeap> Heap;
+	D3D12_CPU_DESCRIPTOR_HANDLE	CPUStart;
+	D3D12_GPU_DESCRIPTOR_HANDLE	GPUStart;
+	D3D12_DESCRIPTOR_HEAP_DESC	Desc;
 	UInt32 DescriptorHandleIncrementSize;
-	UInt32 NumDescriptors;
 };
 
 /*
@@ -112,7 +96,7 @@ class D3D12OfflineDescriptorHeap : public D3D12RefCountedObject
 
 	struct DescriptorHeap
 	{
-		inline DescriptorHeap(TSharedRef<D3D12DescriptorHeap>& InHeap)
+		inline DescriptorHeap(const TSharedRef<D3D12DescriptorHeap>& InHeap)
 			: FreeList()
 			, Heap(InHeap)
 		{

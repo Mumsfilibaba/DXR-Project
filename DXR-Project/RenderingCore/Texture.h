@@ -36,14 +36,13 @@ enum ETextureUsage
 class Texture : public Resource
 {
 public:
-	inline Texture(EFormat InFormat, UInt32 InUsage, const ClearValue& InOptimizedClearValue)
+	Texture(EFormat InFormat, UInt32 InUsage, const ClearValue& InOptimizedClearValue)
 		: Format(InFormat)
 		, Usage(InUsage)
 		, OptimizedClearValue(InOptimizedClearValue)
 	{
 	}
 
-	// Casting functions
 	virtual Texture* AsTexture() override
 	{
 		return this;
@@ -124,7 +123,6 @@ public:
 		return nullptr;
 	}
 
-	// Info
 	virtual UInt32 GetWidth() const
 	{
 		return 0;
@@ -135,12 +133,12 @@ public:
 		return 1;
 	}
 
-	virtual UInt32 GetDepth() const
+	virtual UInt16 GetDepth() const
 	{
 		return 1;
 	}
 
-	virtual UInt32 GetArrayCount() const
+	virtual UInt16 GetArrayCount() const
 	{
 		return 1;
 	}
@@ -155,7 +153,7 @@ public:
 		return 1;
 	}
 
-	virtual bool IsMultiSampled() const
+	virtual Bool IsMultiSampled() const
 	{
 		return false;
 	}
@@ -170,22 +168,22 @@ public:
 		return Usage;
 	}
 
-	FORCEINLINE bool HasShaderResourceUsage() const
+	FORCEINLINE Bool HasShaderResourceUsage() const
 	{
 		return Usage & TextureUsage_SRV;
 	}
 
-	FORCEINLINE bool HasUnorderedAccessUsage() const
+	FORCEINLINE Bool HasUnorderedAccessUsage() const
 	{
 		return Usage & TextureUsage_UAV;
 	}
 
-	FORCEINLINE bool HasRenderTargetUsage() const
+	FORCEINLINE Bool HasRenderTargetUsage() const
 	{
 		return Usage & TextureUsage_RTV;
 	}
 
-	FORCEINLINE bool HasDepthStencilUsage() const
+	FORCEINLINE Bool HasDepthStencilUsage() const
 	{
 		return Usage & TextureUsage_DSV;
 	}
@@ -208,14 +206,13 @@ protected:
 class Texture1D : public Texture
 {
 public:
-	inline Texture1D(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InMipLevels, const ClearValue& InOptimizedClearValue)
+	Texture1D(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InMipLevels, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Width(InWidth)
 		, MipLevels(InMipLevels)
 	{
 	}
 
-	// Casting functions
 	virtual Texture1D* AsTexture1D() override
 	{
 		return this;
@@ -226,7 +223,6 @@ public:
 		return this;
 	}
 
-	// Info
 	virtual UInt32 GetWidth() const override
 	{
 		return Width;
@@ -249,7 +245,7 @@ protected:
 class Texture1DArray : public Texture
 {
 public:
-	inline Texture1DArray(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InMipLevels, UInt32 InArrayCount, const ClearValue& InOptimizedClearValue)
+	Texture1DArray(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InMipLevels, UInt16 InArrayCount, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Width(InWidth)
 		, MipLevels(InMipLevels)
@@ -257,9 +253,6 @@ public:
 	{
 	}
 
-	~Texture1DArray() = default;
-
-	// Casting functions
 	virtual Texture1DArray* AsTexture1DArray() override
 	{
 		return this;
@@ -270,7 +263,6 @@ public:
 		return this;
 	}
 
-	// Info
 	virtual UInt32 GetWidth() const override
 	{
 		return Width;
@@ -281,7 +273,7 @@ public:
 		return MipLevels;
 	}
 
-	virtual UInt32 GetArrayCount() const override
+	virtual UInt16 GetArrayCount() const override
 	{
 		return ArrayCount;
 	}
@@ -289,7 +281,7 @@ public:
 protected:
 	UInt32 Width;
 	UInt32 MipLevels;
-	UInt32 ArrayCount;
+	UInt16 ArrayCount;
 };
 
 /*
@@ -299,7 +291,7 @@ protected:
 class Texture2D : public Texture
 {
 public:
-	inline Texture2D(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevels, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
+	Texture2D(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevels, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -308,7 +300,6 @@ public:
 	{
 	}
 
-	// Casting functions
 	virtual Texture2D* AsTexture2D() override
 	{
 		return this;
@@ -319,7 +310,6 @@ public:
 		return this;
 	}
 
-	// Info
 	virtual UInt32 GetWidth() const override
 	{
 		return Width;
@@ -340,7 +330,7 @@ public:
 		return SampleCount;
 	}
 
-	virtual bool IsMultiSampled() const override
+	virtual Bool IsMultiSampled() const override
 	{
 		return (SampleCount > 1);
 	}
@@ -359,7 +349,7 @@ protected:
 class Texture2DArray : public Texture
 {
 public:
-	inline Texture2DArray(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevels, UInt32 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
+	Texture2DArray(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevels, UInt16 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -396,7 +386,7 @@ public:
 		return MipLevels;
 	}
 
-	virtual UInt32 GetArrayCount() const override
+	virtual UInt16 GetArrayCount() const override
 	{
 		return ArrayCount;
 	}
@@ -406,7 +396,7 @@ public:
 		return SampleCount;
 	}
 
-	virtual bool IsMultiSampled() const override
+	virtual Bool IsMultiSampled() const override
 	{
 		return (SampleCount > 1);
 	}
@@ -415,7 +405,7 @@ protected:
 	UInt32 Width;
 	UInt32 Height;
 	UInt32 MipLevels;
-	UInt32 ArrayCount;
+	UInt16 ArrayCount;
 	UInt32 SampleCount;
 };
 
@@ -426,7 +416,7 @@ protected:
 class TextureCube : public Texture
 {
 public:
-	inline TextureCube(EFormat InFormat, UInt32 InUsage, UInt32 InSize, UInt32 InMipLevels, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
+	TextureCube(EFormat InFormat, UInt32 InUsage, UInt32 InSize, UInt32 InMipLevels, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Size(InSize)
 		, MipLevels(InMipLevels)
@@ -461,7 +451,7 @@ public:
 		return MipLevels;
 	}
 
-	virtual UInt32 GetArrayCount() const override
+	virtual UInt16 GetArrayCount() const override
 	{
 		constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
 		return TEXTURE_CUBE_FACE_COUNT;
@@ -472,7 +462,7 @@ public:
 		return SampleCount;
 	}
 
-	virtual bool IsMultiSampled() const override
+	virtual Bool IsMultiSampled() const override
 	{
 		return (SampleCount > 1);
 	}
@@ -490,7 +480,7 @@ protected:
 class TextureCubeArray : public Texture
 {
 public:
-	inline TextureCubeArray(EFormat InFormat, UInt32 InUsage, UInt32 InSize, UInt32 InMipLevels, UInt32 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
+	TextureCubeArray(EFormat InFormat, UInt32 InUsage, UInt32 InSize, UInt32 InMipLevels, UInt16 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Size(InSize)
 		, MipLevels(InMipLevels)
@@ -526,7 +516,7 @@ public:
 		return MipLevels;
 	}
 
-	virtual UInt32 GetArrayCount() const override
+	virtual UInt16 GetArrayCount() const override
 	{
 		constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
 		return ArrayCount * TEXTURE_CUBE_FACE_COUNT;
@@ -537,7 +527,7 @@ public:
 		return SampleCount;
 	}
 
-	virtual bool IsMultiSampled() const override
+	virtual Bool IsMultiSampled() const override
 	{
 		return (SampleCount > 1);
 	}
@@ -545,7 +535,7 @@ public:
 protected:
 	UInt32 Size;
 	UInt32 MipLevels;
-	UInt32 ArrayCount;
+	UInt16 ArrayCount;
 	UInt32 SampleCount;
 };
 
@@ -557,7 +547,7 @@ protected:
 class Texture3D : public Texture
 {
 public:
-	inline Texture3D(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InDepth, UInt32 InMipLevels, const ClearValue& InOptimizedClearValue)
+	Texture3D(EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt16 InDepth, UInt32 InMipLevels, const ClearValue& InOptimizedClearValue)
 		: Texture(InFormat, InUsage, InOptimizedClearValue)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -588,7 +578,7 @@ public:
 		return Height;
 	}
 
-	virtual UInt32 GetDepth() const override
+	virtual UInt16 GetDepth() const override
 	{
 		return Depth;
 	}
@@ -601,6 +591,6 @@ public:
 protected:
 	UInt32 Width;
 	UInt32 Height;
-	UInt32 Depth;
+	UInt16 Depth;
 	UInt32 MipLevels;
 };

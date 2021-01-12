@@ -145,7 +145,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 	BaseMaterial->MetallicMap	= WhiteTexture;
 	BaseMaterial->RoughnessMap	= WhiteTexture;
 	BaseMaterial->NormalMap		= NormalMap;
-	BaseMaterial->Initialize();
+	BaseMaterial->Init();
 
 	// Create All Materials in scene
 	TArray<TSharedPtr<Material>> LoadedMaterials;
@@ -293,7 +293,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 			NewMaterial->AlphaMask = MaterialTextures[Mat.alpha_texname];
 		}
 
-		NewMaterial->Initialize();
+		NewMaterial->Init();
 	}
 
 	// Construct Scene
@@ -373,12 +373,12 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 			TSharedPtr<Mesh> NewMesh = Mesh::Make(Data);
 
 			// Setup new actor for this shape
-			Actor* NewActor = new Actor();
+			Actor* NewActor = DBG_NEW Actor();
 			NewActor->SetName(Shape.name);
 			NewActor->GetTransform().SetScale(0.015f, 0.015f, 0.015f);
 
 			// Add a MeshComponent
-			MeshComponent* NewComponent = new MeshComponent(NewActor);
+			MeshComponent* NewComponent = DBG_NEW MeshComponent(NewActor);
 			NewComponent->Mesh = NewMesh;
 			if (MaterialID >= 0)
 			{

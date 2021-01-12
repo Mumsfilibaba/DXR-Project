@@ -19,7 +19,7 @@ Material::Material(const MaterialProperties& InProperties)
 {
 }
 
-void Material::Initialize()
+void Material::Init()
 {
 	MaterialBuffer = RenderingAPI::CreateConstantBuffer<MaterialProperties>(
 		nullptr, 
@@ -30,8 +30,8 @@ void Material::Initialize()
 	CreateInfo.AddressV			= ESamplerMode::SamplerMode_Wrap;
 	CreateInfo.AddressW			= ESamplerMode::SamplerMode_Wrap;
 	CreateInfo.ComparisonFunc	= EComparisonFunc::ComparisonFunc_Never;
-	CreateInfo.Filter			= ESamplerFilter::SamplerFilter_MinMagMipLinear;
-	CreateInfo.MaxAnisotropy	= 1;
+	CreateInfo.Filter			= ESamplerFilter::SamplerFilter_Anistrotopic;
+	CreateInfo.MaxAnisotropy	= 16;
 	CreateInfo.MaxLOD			= FLT_MAX;
 	CreateInfo.MinLOD			= -FLT_MAX;
 	CreateInfo.MipLODBias		= 0.0f;

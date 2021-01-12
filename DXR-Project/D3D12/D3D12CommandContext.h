@@ -161,7 +161,7 @@ class D3D12ShaderDescriptorTableState
 public:
 	D3D12ShaderDescriptorTableState();
 	
-	bool CreateResources(D3D12Device& Device);
+	Bool CreateResources(D3D12Device& Device);
 
 	void BindConstantBuffer(D3D12ConstantBufferView* ConstantBufferView, UInt32 Slot);
 	void BindShaderResourceView(D3D12ShaderResourceView* ShaderResourceView, UInt32 Slot);
@@ -289,7 +289,7 @@ public:
 	{
 	}
 
-	FORCEINLINE bool Reset()
+	FORCEINLINE Bool Reset()
 	{
 		if (CmdAllocator->Reset())
 		{

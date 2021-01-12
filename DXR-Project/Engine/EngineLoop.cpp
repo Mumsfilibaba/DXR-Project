@@ -48,7 +48,7 @@ Bool EngineLoop::PreInit()
 
 Bool EngineLoop::Init()
 {
-	GlobalEventDispatcher = new EventDispatcher(GlobalPlatformApplication);
+	GlobalEventDispatcher = DBG_NEW EventDispatcher(GlobalPlatformApplication);
 	GlobalPlatformApplication->SetEventHandler(GlobalEventDispatcher);
 
 	const UInt32 Style =
@@ -84,7 +84,7 @@ Bool EngineLoop::Init()
 		return false;
 	}
 
-	GlobalRenderer = new Renderer();
+	GlobalRenderer = DBG_NEW Renderer();
 	if (!GlobalRenderer->Init())
 	{
 		PlatformDialogMisc::MessageBox("ERROR", "FAILED to create Renderer");
@@ -97,7 +97,7 @@ Bool EngineLoop::Init()
 		return false;
 	}
 
-	GlobalGame = new Game();
+	GlobalGame = DBG_NEW Game();
 	if (!GlobalGame->Init())
 	{
 		PlatformDialogMisc::MessageBox("ERROR", "FAILED initialize Game");
@@ -149,10 +149,14 @@ void EngineLoop::Release()
 	DebugUI::Release();
 
 	SAFEDELETE(GlobalRenderer);
+
+	RenderingAPI::Release();
 }
 
 void EngineLoop::PostRelease()
 {
+	SAFEDELETE(GlobalEventDispatcher);
+
 	GlobalMainWindow->Release();
 
 	SAFEDELETE(GlobalPlatformApplication);

@@ -5,7 +5,7 @@
 * D3D12DefaultRootSignatures
 */
 
-bool D3D12DefaultRootSignatures::CreateRootSignatures(D3D12Device* Device)
+Bool D3D12DefaultRootSignatures::CreateRootSignatures(D3D12Device* Device)
 {
 	constexpr UInt32 ShaderRegisterOffset32BitConstants = 1;
 

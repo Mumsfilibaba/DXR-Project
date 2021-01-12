@@ -47,7 +47,7 @@ public:
 class D3D12Texture1DArray : public Texture1DArray, public D3D12Texture
 {
 public:
-	D3D12Texture1DArray(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InMipLevels, UInt32 InArrayCount, const ClearValue& InOptimizedClearValue)
+	D3D12Texture1DArray(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InMipLevels, UInt16 InArrayCount, const ClearValue& InOptimizedClearValue)
 		: Texture1DArray(InFormat, InUsage, InWidth, InMipLevels, InArrayCount, InOptimizedClearValue)
 		, D3D12Texture(InDevice)
 	{
@@ -105,7 +105,7 @@ public:
 class D3D12Texture2DArray : public Texture2DArray, public D3D12Texture
 {
 public:
-	D3D12Texture2DArray(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevels, UInt32 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
+	D3D12Texture2DArray(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevels, UInt16 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
 		: Texture2DArray(InFormat, InUsage, InWidth, InHeight, InMipLevels, InArrayCount, InSampleCount, InOptimizedClearValue)
 		, D3D12Texture(InDevice)
 	{
@@ -143,7 +143,7 @@ public:
 class D3D12TextureCubeArray : public TextureCubeArray, public D3D12Texture
 {
 public:
-	D3D12TextureCubeArray(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InSize, UInt32 InMipLevels, UInt32 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
+	D3D12TextureCubeArray(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InSize, UInt32 InMipLevels, UInt16 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
 		: TextureCubeArray(InFormat, InUsage, InSize, InMipLevels, InArrayCount, InSampleCount, InOptimizedClearValue)
 		, D3D12Texture(InDevice)
 	{
@@ -162,7 +162,7 @@ public:
 class D3D12Texture3D : public Texture3D, public D3D12Texture
 {
 public:
-	D3D12Texture3D(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InDepth, UInt32 InMipLevels, const ClearValue& InOptimizedClearValue)
+	D3D12Texture3D(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt16 InDepth, UInt32 InMipLevels, const ClearValue& InOptimizedClearValue)
 		: Texture3D(InFormat, InUsage, InWidth, InHeight, InDepth, InMipLevels, InOptimizedClearValue)
 		, D3D12Texture(InDevice)
 	{

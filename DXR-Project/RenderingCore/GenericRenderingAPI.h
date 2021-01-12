@@ -45,7 +45,7 @@ public:
 
 	virtual ~GenericRenderingAPI() = default;
 
-	virtual bool Initialize(bool EnableDebug) = 0;
+	virtual Bool Init(Bool EnableDebug) = 0;
 
 	/*
 	* Textures
@@ -65,7 +65,7 @@ public:
 		UInt32 Usage,
 		UInt32 Width,
 		UInt32 MipLevels,
-		UInt32 ArrayCount,
+		UInt16 ArrayCount,
 		const ClearValue& OptimizedClearValue) const = 0;
 
 	virtual Texture2D* CreateTexture2D(
@@ -85,7 +85,7 @@ public:
 		UInt32 Width,
 		UInt32 Height,
 		UInt32 MipLevels,
-		UInt32 ArrayCount,
+		UInt16 ArrayCount,
 		UInt32 SampleCount,
 		const ClearValue& OptimizedClearValue) const = 0;
 
@@ -104,7 +104,7 @@ public:
 		UInt32 Usage,
 		UInt32 Size,
 		UInt32 MipLevels,
-		UInt32 ArrayCount,
+		UInt16 ArrayCount,
 		UInt32 SampleCount,
 		const ClearValue& OptimizedClearValue) const = 0;
 
@@ -114,7 +114,7 @@ public:
 		UInt32 Usage,
 		UInt32 Width,
 		UInt32 Height,
-		UInt32 Depth,
+		UInt16 Depth,
 		UInt32 MipLevels,
 		const ClearValue& OptimizedClearValue) const = 0;
 
@@ -453,12 +453,12 @@ public:
 		return std::string();
 	}
 
-	FORCEINLINE virtual bool IsRayTracingSupported() const
+	FORCEINLINE virtual Bool IsRayTracingSupported() const
 	{
 		return false;
 	}
 
-	FORCEINLINE virtual bool UAVSupportsFormat(EFormat Format) const
+	FORCEINLINE virtual Bool UAVSupportsFormat(EFormat Format) const
 	{
 		UNREFERENCED_VARIABLE(Format);
 		return false;

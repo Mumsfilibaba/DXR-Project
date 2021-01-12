@@ -156,7 +156,7 @@ Bool D3D12Viewport::RetriveBackBuffers()
 			return false;
 		}
 
-		D3D12Texture2D* BackBuffer = BackBuffers.EmplaceBack(new D3D12BackBufferTexture2D(Device, BackBufferResource)).Get();
+		D3D12Texture2D* BackBuffer = BackBuffers.EmplaceBack(DBG_NEW D3D12BackBufferTexture2D(Device, BackBufferResource)).Get();
 
 		D3D12_RENDER_TARGET_VIEW_DESC Desc;
 		Memory::Memzero(&Desc);
@@ -166,7 +166,7 @@ Bool D3D12Viewport::RetriveBackBuffers()
 		Desc.Texture2D.MipSlice		= 0;
 		Desc.Texture2D.PlaneSlice	= 0;
 
-		BackBufferViews.EmplaceBack(new D3D12RenderTargetView(Device, BackBuffer, Desc));
+		BackBufferViews.EmplaceBack(DBG_NEW D3D12RenderTargetView(Device, BackBuffer, Desc));
 	}
 
 	BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();

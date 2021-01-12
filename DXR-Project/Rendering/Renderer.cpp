@@ -72,7 +72,6 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
-	CommandListExecutor::WaitForGPU();
 }
 
 void Renderer::Tick(const Scene& CurrentScene)
@@ -399,8 +398,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		0.0f);
 
 	CmdList.BindScissorRect(
-		PointLightShadowSize,
-		PointLightShadowSize,
+		static_cast<Float>(PointLightShadowSize),
+		static_cast<Float>(PointLightShadowSize),
 		0, 0);
 
 	CmdList.BindGraphicsPipelineState(LinearShadowMapPSO.Get());
@@ -558,8 +557,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		0.0f);
 
 	CmdList.BindScissorRect(
-		RenderWidth,
-		RenderHeight,
+		static_cast<Float>(RenderWidth),
+		static_cast<Float>(RenderHeight),
 		0, 0);
 
 	// Perform PrePass
@@ -834,8 +833,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		0.0f);
 
 	CmdList.BindScissorRect(
-		RenderWidth,
-		RenderHeight,
+		static_cast<Float>(RenderWidth),
+		static_cast<Float>(RenderHeight),
 		0, 0);
 
 	// Setup LightPass
@@ -970,8 +969,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Float Height;
 		} Settings;
 
-		Settings.Width	= RenderWidth;
-		Settings.Height	= RenderHeight;
+		Settings.Width	= static_cast<Float>(RenderWidth);
+		Settings.Height	= static_cast<Float>(RenderHeight);
 
 		CmdList.Bind32BitShaderConstants(
 			EShaderStage::ShaderStage_Pixel, 
@@ -1005,8 +1004,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 		0.0f);
 
 	CmdList.BindScissorRect(
-		RenderWidth,
-		RenderHeight,
+		static_cast<Float>(RenderWidth),
+		static_cast<Float>(RenderHeight),
 		0, 0);
 
 	// Render all transparent objects;
@@ -1414,7 +1413,7 @@ Bool Renderer::Init()
 
 	// Generate global specular irradiance (From Skybox)
 	const UInt16 SpecularIrradianceSize			= 128;
-	const UInt16 SpecularIrradianceMiplevels	= std::max<UInt32>(std::log2<UInt32>(SpecularIrradianceSize), 1U);
+	const UInt16 SpecularIrradianceMiplevels	= UInt16(std::max(std::log2(SpecularIrradianceSize), 1.0));
 	SpecularIrradianceMap = RenderingAPI::CreateTextureCube(
 		nullptr, 
 		EFormat::Format_R16G16B16A16_Float, 

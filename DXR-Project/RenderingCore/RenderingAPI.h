@@ -43,7 +43,7 @@ public:
 		UInt32 Usage,
 		UInt32 Width,
 		UInt32 MipLevels,
-		UInt32 ArrayCount,
+		UInt16 ArrayCount,
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
 		return GlobalRenderingAPI->CreateTexture1DArray(
@@ -84,7 +84,7 @@ public:
 		UInt32 Width, 
 		UInt32 Height, 
 		UInt32 MipLevels, 
-		UInt32 ArrayCount, 
+		UInt16 ArrayCount,
 		UInt32 SampleCount, 
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
@@ -125,7 +125,7 @@ public:
 		UInt32 Usage,
 		UInt32 Size,
 		UInt32 MipLevels,
-		UInt32 ArrayCount,
+		UInt16 ArrayCount,
 		UInt32 SampleCount,
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{
@@ -146,7 +146,7 @@ public:
 		UInt32 Usage,
 		UInt32 Width,
 		UInt32 Height,
-		UInt32 Depth,
+		UInt16 Depth,
 		UInt32 MipLevels,
 		const ClearValue& OptimizedClearValue = ClearValue())
 	{

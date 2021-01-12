@@ -349,7 +349,7 @@ public:
 		Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
 		Destination->AddRef();
-		InsertCommand<UpdateTextureCommand>(
+		InsertCommand<UpdateTexture2DCommand>(
 			Destination,
 			Width,
 			Height,

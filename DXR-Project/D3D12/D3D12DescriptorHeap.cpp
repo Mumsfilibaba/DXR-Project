@@ -3,6 +3,43 @@
 #include "D3D12Views.h"
 
 /*
+* D3D12DescriptorHeap
+*/
+
+D3D12DescriptorHeap::D3D12DescriptorHeap(D3D12Device* InDevice, const D3D12_DESCRIPTOR_HEAP_DESC& InDesc)
+	: D3D12RefCountedObject(InDevice)
+	, Heap(nullptr)
+	, CPUStart({ 0 })
+	, GPUStart({ 0 })
+	, DescriptorHandleIncrementSize(0)
+	, Desc(InDesc)
+{
+}
+
+Bool D3D12DescriptorHeap::Init()
+{
+	HRESULT Result = Device->GetDevice()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));
+	if (FAILED(Result))
+	{
+		LOG_ERROR("[D3D12DescriptorHeap]: FAILED to Create DescriptorHeap");
+		Debug::DebugBreak();
+		
+		return false;
+	}
+	else
+	{
+		LOG_INFO("[D3D12DescriptorHeap]: Created DescriptorHeap");
+	}
+
+
+	CPUStart = Heap->GetCPUDescriptorHandleForHeapStart();
+	GPUStart = Heap->GetGPUDescriptorHandleForHeapStart();
+	DescriptorHandleIncrementSize = Device->GetDescriptorHandleIncrementSize(Desc.Type);
+
+	return true;
+}
+
+/*
 * D3D12OfflineDescriptorHeap
 */
 
@@ -111,7 +148,7 @@ void D3D12OfflineDescriptorHeap::AllocateHeap()
 	constexpr UInt32 DescriptorCount = 32;
 
 	TSharedRef<D3D12DescriptorHeap> Heap = Device->CreateDescriptorHeap(Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-	if (Heap)
+	if (Heap->Init())
 	{
 		if (!Name.empty())
 		{
@@ -138,7 +175,7 @@ D3D12OnlineDescriptorHeap::D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt
 Bool D3D12OnlineDescriptorHeap::Init()
 {
 	Heap = Device->CreateDescriptorHeap(Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-	if (Heap)
+	if (Heap->Init())
 	{
 		return true;
 	}
@@ -179,7 +216,7 @@ UInt32 D3D12OnlineDescriptorHeap::AllocateHandles(UInt32 NumHandles)
 		if (HeapPool.IsEmpty())
 		{
 			Heap = Device->CreateDescriptorHeap(Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-			if (!Heap)
+			if (!Heap->Init())
 			{
 				Debug::DebugBreak();
 				return UInt32(-1);

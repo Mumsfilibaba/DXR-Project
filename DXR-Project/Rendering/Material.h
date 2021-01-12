@@ -28,7 +28,7 @@ public:
 	Material(const MaterialProperties& InProperties);
 	~Material() = default;
 
-	void Initialize();
+	void Init();
 
 	void BuildBuffer(class CommandList& CmdList);
 

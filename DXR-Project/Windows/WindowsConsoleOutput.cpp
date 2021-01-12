@@ -84,5 +84,5 @@ void WindowsConsoleOutput::SetColor(EConsoleColor Color)
 
 GenericOutputDevice* WindowsConsoleOutput::Make()
 {
-	return new WindowsConsoleOutput();
+	return DBG_NEW WindowsConsoleOutput();
 }

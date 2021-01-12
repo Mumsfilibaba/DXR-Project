@@ -2,8 +2,7 @@
 #include "RenderingCore/Buffer.h"
 
 #include "D3D12Resource.h"
-
-class D3D12ConstantBufferView;
+#include "D3D12Views.h"
 
 /*
 * D3D12Buffer
@@ -127,6 +126,11 @@ public:
 		, D3D12Buffer(InDevice)
 		, View(nullptr)
 	{
+	}
+
+	~D3D12ConstantBuffer()
+	{
+		SAFEDELETE(View);
 	}
 
 	virtual Void* Map(const Range* MappedRange) override

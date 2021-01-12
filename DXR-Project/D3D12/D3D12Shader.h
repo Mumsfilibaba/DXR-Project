@@ -120,9 +120,9 @@ public:
 
 	FORCEINLINE D3D12RootSignature* GetRootSignature() const
 	{
-		return RootSignature;
+		return RootSignature.Get();
 	}
 
 protected:
-	D3D12RootSignature* RootSignature;
+	TSharedRef<D3D12RootSignature> RootSignature;
 };

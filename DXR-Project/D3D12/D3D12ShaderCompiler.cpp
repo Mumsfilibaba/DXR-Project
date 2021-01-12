@@ -285,7 +285,7 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
 			if (SUCCEEDED(Result->GetResult(&CompiledBlob)))
 			{
 				// Copy data to resulting bytecode
-				const UInt32 BlobSize = CompiledBlob->GetBufferSize();
+				const UInt32 BlobSize = UInt32(CompiledBlob->GetBufferSize());
 				Code.Resize(BlobSize);
 				Memory::Memcpy(Code.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 

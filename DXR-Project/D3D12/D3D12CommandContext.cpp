@@ -37,7 +37,7 @@ bool D3D12ShaderDescriptorTableState::CreateResources(D3D12Device& Device)
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 		NumDefaultResourceDescriptors,
 		D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-	if (!DefaultResourceHeap)
+	if (!DefaultResourceHeap->Init())
 	{
 		return false;
 	}
@@ -51,7 +51,7 @@ bool D3D12ShaderDescriptorTableState::CreateResources(D3D12Device& Device)
 		D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
 		NumDefaultSamplerDescriptors,
 		D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-	if (!DefaultSamplerHeap)
+	if (!DefaultSamplerHeap->Init())
 	{
 		return false;
 	}
@@ -492,7 +492,7 @@ Bool D3D12CommandContext::Init()
 			return false;
 		}
 
-		TSharedRef<D3D12OnlineDescriptorHeap> ResourceOnlineHeap = new D3D12OnlineDescriptorHeap(
+		TSharedRef<D3D12OnlineDescriptorHeap> ResourceOnlineHeap = DBG_NEW D3D12OnlineDescriptorHeap(
 			Device, 
 			D3D12_DEFAULT_ONLINE_RESOURCE_DESCRIPTOR_HEAP_COUNT, 
 			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -501,7 +501,7 @@ Bool D3D12CommandContext::Init()
 			return false;
 		}
 
-		TSharedRef<D3D12OnlineDescriptorHeap> SamplerOnlineHeap = new D3D12OnlineDescriptorHeap(Device,
+		TSharedRef<D3D12OnlineDescriptorHeap> SamplerOnlineHeap = DBG_NEW D3D12OnlineDescriptorHeap(Device,
 			D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_HEAP_COUNT,
 			D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 		if (!SamplerOnlineHeap->Init())
@@ -545,12 +545,12 @@ Bool D3D12CommandContext::Init()
 		Debug::DebugBreak();
 	}
 
-	TSharedRef<D3D12ComputeShader> Shader = new D3D12ComputeShader(Device, Code);
+	TSharedRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader(Device, Code);
 	Shader->CreateRootSignature();
 
 	TSharedRef<D3D12RootSignature> RootSignature = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
 
-	GenerateMipsTex2D_PSO = new D3D12ComputePipelineState(Device, Shader, RootSignature);
+	GenerateMipsTex2D_PSO = DBG_NEW D3D12ComputePipelineState(Device, Shader, RootSignature);
 	if (!GenerateMipsTex2D_PSO->Init())
 	{
 		LOG_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTex2D PipelineState");
@@ -573,12 +573,12 @@ Bool D3D12CommandContext::Init()
 		Debug::DebugBreak();
 	}
 
-	Shader = new D3D12ComputeShader(Device, Code);
+	Shader = DBG_NEW D3D12ComputeShader(Device, Code);
 	Shader->CreateRootSignature();
 
 	RootSignature = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
 
-	GenerateMipsTexCube_PSO = new D3D12ComputePipelineState(Device, Shader, RootSignature);
+	GenerateMipsTexCube_PSO = DBG_NEW D3D12ComputePipelineState(Device, Shader, RootSignature);
 	if (!GenerateMipsTexCube_PSO->Init())
 	{
 		LOG_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTexCube PipelineState");
@@ -638,8 +638,6 @@ void D3D12CommandContext::End()
 	{
 		return;
 	}
-
-	LOG_INFO("Fence Signaled with: " + std::to_string(CurrentFenceValue));
 
 	// Reset state
 	CmdBatch	= nullptr;
@@ -720,10 +718,10 @@ void D3D12CommandContext::BindScissorRect(
 	Float y)
 {
 	D3D12_RECT ScissorRect;
-	ScissorRect.top		= y;
-	ScissorRect.bottom	= Height;
-	ScissorRect.left	= x;
-	ScissorRect.right	= Width;
+	ScissorRect.top		= LONG(y);
+	ScissorRect.bottom	= LONG(Height);
+	ScissorRect.left	= LONG(x);
+	ScissorRect.right	= LONG(Width);
 
 	CmdList->RSSetScissorRects(&ScissorRect, 1);
 }
@@ -771,6 +769,7 @@ void D3D12CommandContext::BindIndexBuffer(IndexBuffer* IndexBuffer)
 
 void D3D12CommandContext::BindRayTracingScene(RayTracingScene* RayTracingScene)
 {
+	UNREFERENCED_VARIABLE(RayTracingScene);
 	// TODO: Implement this function
 }
 
@@ -817,6 +816,7 @@ void D3D12CommandContext::BindComputePipelineState(class ComputePipelineState* P
 
 void D3D12CommandContext::BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState)
 {
+	UNREFERENCED_VARIABLE(PipelineState);
 	// TODO: Implement this function
 }
 
@@ -851,6 +851,8 @@ void D3D12CommandContext::BindShaderResourceViews(
 	UInt32 ShaderResourceViewCount, 
 	UInt32 StartSlot)
 {
+	UNREFERENCED_VARIABLE(ShaderStage);
+
 	for (UInt32 i = 0; i < ShaderResourceViewCount; i++)
 	{
 		D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceViews[i]);
@@ -864,6 +866,8 @@ void D3D12CommandContext::BindSamplerStates(
 	UInt32 SamplerStateCount, 
 	UInt32 StartSlot)
 {
+	UNREFERENCED_VARIABLE(ShaderStage);
+
 	for (UInt32 i = 0; i < SamplerStateCount; i++)
 	{
 		D3D12SamplerState* DxSamplerState = static_cast<D3D12SamplerState*>(SamplerStates[i]);
@@ -877,6 +881,8 @@ void D3D12CommandContext::BindUnorderedAccessViews(
 	UInt32 UnorderedAccessViewCount, 
 	UInt32 StartSlot)
 {
+	UNREFERENCED_VARIABLE(ShaderStage);
+
 	for (UInt32 i = 0; i < UnorderedAccessViewCount; i++)
 	{
 		D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessViews[i]);
@@ -890,6 +896,8 @@ void D3D12CommandContext::BindConstantBuffers(
 	UInt32 ConstantBufferCount, 
 	UInt32 StartSlot)
 {
+	UNREFERENCED_VARIABLE(ShaderStage);
+
 	for (UInt32 i = 0; i < ConstantBufferCount; i++)
 	{
 		D3D12ConstantBuffer* DxConstantBuffer = static_cast<D3D12ConstantBuffer*>(ConstantBuffers[i]);
@@ -926,7 +934,7 @@ void D3D12CommandContext::UpdateBuffer(
 		D3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
 		
 		//TODO: Maybe is not needed, investigate
-		const UInt64 AlignedSizeInBytes = Math::AlignUp(SizeInBytes, 16ull);
+		const UInt32 AlignedSizeInBytes = Math::AlignUp<UInt32>(UInt32(SizeInBytes), 16u);
 		Byte* GpuSourceMemory = GpuResourceUploader.LinearAllocate(*Device, AlignedSizeInBytes);
 
 		const UInt32 GpuSourceOffsetInBytes = GpuResourceUploader.GetOffsetInBytesFromPtr(GpuSourceMemory);
@@ -1068,12 +1076,16 @@ void D3D12CommandContext::DestroyResource(PipelineResource* Resource)
 
 void D3D12CommandContext::BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry)
 {
+	UNREFERENCED_VARIABLE(RayTracingGeometry);
+
 	// TODO: Implement this function
 	BarrierBatcher.FlushBarriers(*CmdList);
 }
 
 void D3D12CommandContext::BuildRayTracingScene(RayTracingScene* RayTracingScene)
 {
+	UNREFERENCED_VARIABLE(RayTracingScene);
+
 	// TODO: Implement this function
 	BarrierBatcher.FlushBarriers(*CmdList);
 }

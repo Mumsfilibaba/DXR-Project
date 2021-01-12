@@ -314,10 +314,10 @@ bool D3D12Device::Init()
 	}
 
 	// Create Global DescriptorHeaps
-	GlobalResourceDescriptorHeap		= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	GlobalRenderTargetDescriptorHeap	= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	GlobalDepthStencilDescriptorHeap	= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	GlobalSamplerDescriptorHeap			= new D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+	GlobalResourceDescriptorHeap		= DBG_NEW D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	GlobalRenderTargetDescriptorHeap	= DBG_NEW D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	GlobalDepthStencilDescriptorHeap	= DBG_NEW D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	GlobalSamplerDescriptorHeap			= DBG_NEW D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 	return true;
 }
@@ -330,7 +330,7 @@ D3D12CommandAllocator* D3D12Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TY
 	if (SUCCEEDED(hResult))
 	{
 		LOG_INFO("[D3D12Device]: Created CommandAllocator");
-		return new D3D12CommandAllocator(this, Allocator);
+		return DBG_NEW D3D12CommandAllocator(this, Allocator);
 	}
 	else
 	{
@@ -355,7 +355,7 @@ D3D12Fence* D3D12Device::CreateFence(UInt64 InitalValue)
 		else
 		{
 			LOG_INFO("[D3D12Device]: Created Fence");
-			return new D3D12Fence(this, Fence, hEvent);
+			return DBG_NEW D3D12Fence(this, Fence, hEvent);
 		}
 	}
 	else
@@ -382,7 +382,7 @@ D3D12CommandQueue* D3D12Device::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type)
 	if (SUCCEEDED(hResult))
 	{
 		LOG_INFO("[D3D12Device]: Created CommandQueue");
-		return new D3D12CommandQueue(this, Queue);
+		return DBG_NEW D3D12CommandQueue(this, Queue);
 	}
 	else
 	{
@@ -402,7 +402,7 @@ D3D12CommandList* D3D12Device::CreateCommandList(D3D12_COMMAND_LIST_TYPE Type, D
 		CmdList->Close();
 		LOG_INFO("[D3D12Device]: Created CommandList");
 
-		D3D12CommandList* CreatedCmdList = new D3D12CommandList(this, CmdList);
+		D3D12CommandList* CreatedCmdList = DBG_NEW D3D12CommandList(this, CmdList);
 		if (IsRayTracingSupported())
 		{
 			if (!CreatedCmdList->InitRayTracing())
@@ -443,15 +443,15 @@ D3D12RootSignature* D3D12Device::CreateRootSignature(const D3D12_ROOT_SIGNATURE_
 D3D12RootSignature* D3D12Device::CreateRootSignature(IDxcBlob* ShaderBlob)
 {
 	VALIDATE(ShaderBlob != nullptr);
-	return CreateRootSignature(ShaderBlob->GetBufferPointer(), ShaderBlob->GetBufferSize());
+	return CreateRootSignature(ShaderBlob->GetBufferPointer(), UInt32(ShaderBlob->GetBufferSize()));
 }
 
 D3D12RootSignature* D3D12Device::CreateRootSignature(Void* RootSignatureData, const UInt32 RootSignatureSize)
 {
 	ID3D12RootSignature* RootSignature = nullptr;
 
-	HRESULT hResult = Device->CreateRootSignature(0, RootSignatureData, RootSignatureSize, IID_PPV_ARGS(&RootSignature));
-	if (FAILED(hResult))
+	HRESULT Result = Device->CreateRootSignature(0, RootSignatureData, RootSignatureSize, IID_PPV_ARGS(&RootSignature));
+	if (FAILED(Result))
 	{
 		LOG_ERROR("[D3D12Device]: FAILED to Create RootSignature");
 		Debug::DebugBreak();
@@ -461,7 +461,7 @@ D3D12RootSignature* D3D12Device::CreateRootSignature(Void* RootSignatureData, co
 	else
 	{
 		LOG_INFO("[D3D12Device]: Created RootSignature");
-		return new D3D12RootSignature(this, RootSignature);
+		return DBG_NEW D3D12RootSignature(this, RootSignature);
 	}
 }
 
@@ -470,28 +470,14 @@ D3D12DescriptorHeap* D3D12Device::CreateDescriptorHeap(
 	UInt32 NumDescriptors,
 	D3D12_DESCRIPTOR_HEAP_FLAGS Flags)
 {
-	ID3D12DescriptorHeap* Heap = nullptr;
-
 	D3D12_DESCRIPTOR_HEAP_DESC Desc;
 	Memory::Memzero(&Desc);
 	
-	Desc.Type	= Type;
-	Desc.Flags	= Flags;
+	Desc.Type			= Type;
+	Desc.Flags			= Flags;
 	Desc.NumDescriptors = NumDescriptors;
 
-	HRESULT hResult = Device->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));
-	if (FAILED(hResult))
-	{
-		LOG_ERROR("[D3D12Device]: FAILED to Create DescriptorHeap");
-		Debug::DebugBreak();
-
-		return nullptr;
-	}
-	else
-	{
-		LOG_INFO("[D3D12Device]: Created DescriptorHeap");
-		return new D3D12DescriptorHeap(this, Heap);
-	}
+	return DBG_NEW D3D12DescriptorHeap(this, Desc);
 }
 
 Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount)
