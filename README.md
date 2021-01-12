@@ -15,7 +15,6 @@ This engine is a small hobby rendering/game engine created for testing different
 
 **Planed:**
 * Vulkan backend
-* Better API abstraction
 * Tiled Deferred Rendering
 * Screen Space Reflections
 * Cascade Shadow-maps
