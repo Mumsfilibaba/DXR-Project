@@ -73,6 +73,7 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
+	CommandListExecutor::WaitForGPU();
 }
 
 void Renderer::Tick(const Scene& CurrentScene)
@@ -81,7 +82,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	DeferredVisibleCommands.Clear();
 	ForwardVisibleCommands.Clear();
 
-	if (FrustumCullEnabled)
+	if (GlobalFrustumCullEnabled)
 	{
 		Camera* Camera = CurrentScene.GetCamera();
 		Frustum CameraFrustum = Frustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
@@ -130,7 +131,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	RenderTargetView* BackBufferView	= MainWindowViewport->GetRenderTargetView();
 
 	CmdList.Begin();
-	CmdList.InsertCommandListMarker("--BEGIN FRAME--");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
 
 	// Build acceleration structures
 	//if (RenderingAPI::IsRayTracingSupported() && RayTracingEnabled)
@@ -154,7 +155,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	//	}
 
 	//	// Build Top-Level
-	//	const bool NeedsBuild = false;// RayTracingScene->NeedsBuild();
+	//	const Bool NeedsBuild = false;// RayTracingScene->NeedsBuild();
 	//	if (NeedsBuild)
 	//	{
 	//		//TArray<BindingTableEntry> BindingTableEntries;
@@ -183,7 +184,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	//}
 
 	// UpdateLightBuffers
-	CmdList.InsertCommandListMarker("Begin UpdateLightBuffers");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin UpdateLightBuffers");
 
 	CmdList.TransitionBuffer(
 		PointLightBuffer.Get(), 
@@ -255,7 +256,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		EResourceState::ResourceState_CopyDest, 
 		EResourceState::ResourceState_VertexAndConstantBuffer);
 
-	CmdList.InsertCommandListMarker("End UpdateLightBuffers");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End UpdateLightBuffers");
 
 	// Transition GBuffer
 	CmdList.TransitionTexture(
@@ -290,7 +291,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		EResourceState::ResourceState_DepthWrite);
 	
 	// Render DirectionalLight ShadowMaps
-	CmdList.InsertCommandListMarker("Begin Render DirectionalLight ShadowMaps");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render DirectionalLight ShadowMaps");
 	
 	CmdList.ClearDepthStencilView(DirLightShadowMapDSV.Get(), DepthStencilClearValue(1.0f, 0));
 
@@ -384,10 +385,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 		}
 	}
 
-	CmdList.InsertCommandListMarker("End Render DirectionalLight ShadowMaps");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
 
 	// Render PointLight ShadowMaps
-	CmdList.InsertCommandListMarker("Begin Render PointLight ShadowMaps");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render PointLight ShadowMaps");
 	
 	const UInt32 PointLightShadowSize = CurrentLightSettings.PointLightShadowSize;
 	CmdList.BindViewport(
@@ -440,7 +441,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 					1, 0);
 
 				// Draw all objects to depthbuffer
-				if (FrustumCullEnabled)
+				if (GlobalFrustumCullEnabled)
 				{
 					Frustum CameraFrustum = Frustum(PoiLight->GetShadowFarPlane(), PoiLight->GetViewMatrix(i), PoiLight->GetProjectionMatrix(i));
 					for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
@@ -494,7 +495,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		}
 	}
 
-	CmdList.InsertCommandListMarker("End Render PointLight ShadowMaps");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render PointLight ShadowMaps");
 
 	// Transition ShadowMaps
 #if ENABLE_VSM
@@ -563,9 +564,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 		0, 0);
 
 	// Perform PrePass
-	if (PrePassEnabled)
+	if (GlobalPrePassEnabled)
 	{
-		CmdList.InsertCommandListMarker("Begin PrePass");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin PrePass");
 
 		struct PerObject
 		{
@@ -597,11 +598,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 			CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 		}
 
-		CmdList.InsertCommandListMarker("End PrePass");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End PrePass");
 	}
 
 	// Render all objects to the GBuffer
-	CmdList.InsertCommandListMarker("Begin GeometryPass");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin GeometryPass");
 
 	RenderTargetView* RenderTargets[] =
 	{
@@ -684,17 +685,17 @@ void Renderer::Tick(const Scene& CurrentScene)
 		EResourceState::ResourceState_DepthWrite, 
 		EResourceState::ResourceState_PixelShaderResource);
 
-	CmdList.InsertCommandListMarker("End GeometryPass");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
 
 	// RayTracing
-	if (RenderingAPI::IsRayTracingSupported() && RayTracingEnabled)
+	if (RenderingAPI::IsRayTracingSupported() && GlobalRayTracingEnabled)
 	{
-		CmdList.InsertCommandListMarker("Begin RayTracing");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin RayTracing");
 
 		TraceRays(BackBuffer, CmdList);
 		RayTracingGeometryInstances.Clear();
 
-		CmdList.InsertCommandListMarker("End RayTracing");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End RayTracing");
 	}
 
 	// SSAO
@@ -706,9 +707,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 	const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	CmdList.ClearUnorderedAccessView(SSAOBufferUAV.Get(), WhiteColor);
 
-	if (SSAOEnabled)
+	if (GlobalSSAOEnabled)
 	{
-		CmdList.InsertCommandListMarker("Begin SSAO");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
 		
 		CmdList.TransitionTexture(
 			GBuffer[GBUFFER_NORMAL_INDEX].Get(),
@@ -803,7 +804,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 			EResourceState::ResourceState_NonPixelShaderResource,
 			EResourceState::ResourceState_PixelShaderResource);
 
-		CmdList.InsertCommandListMarker("End SSAO");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End SSAO");
 	}
 
 	CmdList.TransitionTexture(
@@ -839,67 +840,72 @@ void Renderer::Tick(const Scene& CurrentScene)
 		0, 0);
 
 	// Setup LightPass
-	CmdList.InsertCommandListMarker("Begin LightPass");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
 
 	CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
 
 	CmdList.BindGraphicsPipelineState(LightPassPSO.Get());
 	
-	ShaderResourceView* ShaderResourceViews[] =
 	{
-		GBufferSRVs[GBUFFER_ALBEDO_INDEX].Get(),
-		GBufferSRVs[GBUFFER_NORMAL_INDEX].Get(),
-		GBufferSRVs[GBUFFER_MATERIAL_INDEX].Get(),
-		GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
-		ReflectionTextureSRV.Get(),
-		IrradianceMapSRV.Get(),
-		SpecularIrradianceMapSRV.Get(),
-		IntegrationLUTSRV.Get(),
-		DirLightShadowMapSRV.Get(),
-		PointLightShadowMapsSRV.Get(),
-		SSAOBufferSRV.Get()
-	};
+		ShaderResourceView* ShaderResourceViews[] =
+		{
+			GBufferSRVs[GBUFFER_ALBEDO_INDEX].Get(),
+			GBufferSRVs[GBUFFER_NORMAL_INDEX].Get(),
+			GBufferSRVs[GBUFFER_MATERIAL_INDEX].Get(),
+			GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
+			ReflectionTextureSRV.Get(),
+			IrradianceMapSRV.Get(),
+			SpecularIrradianceMapSRV.Get(),
+			IntegrationLUTSRV.Get(),
+			DirLightShadowMapSRV.Get(),
+			PointLightShadowMapsSRV.Get(),
+			SSAOBufferSRV.Get()
+		};
 	
-	CmdList.BindShaderResourceViews(
-		EShaderStage::ShaderStage_Pixel,
-		ShaderResourceViews, 
-		11, 0);
+		CmdList.BindShaderResourceViews(
+			EShaderStage::ShaderStage_Pixel,
+			ShaderResourceViews, 
+			11, 0);
+	}
 
-	ConstantBuffer* ConstantBuffers[] =
 	{
-		CameraBuffer.Get(),
-		PointLightBuffer.Get(),
-		DirectionalLightBuffer.Get()
-	};
+		ConstantBuffer* ConstantBuffers[] =
+		{
+			CameraBuffer.Get(),
+			PointLightBuffer.Get(),
+			DirectionalLightBuffer.Get()
+		};
 
-	CmdList.BindConstantBuffers(
-		EShaderStage::ShaderStage_Pixel,
-		ConstantBuffers, 
-		3, 
-		0);
+		CmdList.BindConstantBuffers(
+			EShaderStage::ShaderStage_Pixel,
+			ConstantBuffers, 
+			3, 0);
+	}
 
-	SamplerState* SamplerStates[] =
 	{
-		GBufferSampler.Get(),
-		IntegrationLUTSampler.Get(),
-		IrradianceSampler.Get(),
-		ShadowMapCompSampler.Get(),
-		ShadowMapSampler.Get()
-	};
+		SamplerState* SamplerStates[] =
+		{
+			GBufferSampler.Get(),
+			IntegrationLUTSampler.Get(),
+			IrradianceSampler.Get(),
+			ShadowMapCompSampler.Get(),
+			ShadowMapSampler.Get()
+		};
 
-	CmdList.BindSamplerStates(
-		EShaderStage::ShaderStage_Pixel,
-		SamplerStates,
-		5,
-		0);
+		CmdList.BindSamplerStates(
+			EShaderStage::ShaderStage_Pixel,
+			SamplerStates,
+			5,
+			0);
+	}
 
 	// Perform LightPass
 	CmdList.DrawInstanced(3, 1, 0, 0);
 
-	CmdList.InsertCommandListMarker("End LightPass");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");
 
 	// Draw skybox
-	CmdList.InsertCommandListMarker("Begin Skybox");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
 
 	CmdList.TransitionTexture(
 		GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
@@ -933,9 +939,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 		&SkyboxSampler,
 		1, 0);
 
-	CmdList.DrawIndexedInstanced(static_cast<UInt32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
+	CmdList.DrawIndexedInstanced(
+		static_cast<UInt32>(SkyboxMesh.Indices.Size()), 
+		1, 0, 0, 0);
 
-	CmdList.InsertCommandListMarker("End Skybox");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
 
 	// Render to BackBuffer
 	CmdList.TransitionTexture(
@@ -953,9 +961,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 		EShaderStage::ShaderStage_Pixel,
 		&GBufferSampler, 1, 0);
 
-	if (FXAAEnabled)
+	if (GlobalFXAAEnabled)
 	{
-		CmdList.InsertCommandListMarker("Begin FXAA");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin FXAA");
 
 		struct FXAASettings
 		{
@@ -974,20 +982,20 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 		CmdList.DrawInstanced(3, 1, 0, 0);
 
-		CmdList.InsertCommandListMarker("End FXAA");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End FXAA");
 	}
 	else
 	{
-		CmdList.InsertCommandListMarker("Begin Draw BackBuffer");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Draw BackBuffer");
 
 		CmdList.BindGraphicsPipelineState(PostPSO.Get());
 		CmdList.DrawInstanced(3, 1, 0, 0);
 
-		CmdList.InsertCommandListMarker("End Draw BackBuffer");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Draw BackBuffer");
 	}
 
 	// Forward Pass
-	CmdList.InsertCommandListMarker("Begin ForwardPass");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin ForwardPass");
 
 	CmdList.BindViewport(
 		static_cast<Float>(RenderWidth),
@@ -1008,7 +1016,50 @@ void Renderer::Tick(const Scene& CurrentScene)
 		GBufferDSV.Get());
 
 	// Setup Pipeline
-	//CommandList->SetGraphicsRootDescriptorTable(ForwardDescriptorTable->GetGPUTableStartHandle(), 1);
+	{
+		ConstantBuffer* ConstantBuffers[] =
+		{
+			CameraBuffer.Get(),
+			PointLightBuffer.Get(),
+			DirectionalLightBuffer.Get(),
+		};
+
+		CmdList.BindConstantBuffers(
+			EShaderStage::ShaderStage_Pixel,
+			ConstantBuffers,
+			3, 0);
+	}
+
+	{
+		ShaderResourceView* ShaderResourceViews[] =
+		{
+			IrradianceMapSRV.Get(),
+			SpecularIrradianceMapSRV.Get(),
+			IntegrationLUTSRV.Get(),
+			DirLightShadowMapSRV.Get(),
+			PointLightShadowMapsSRV.Get(),
+		};
+
+		CmdList.BindShaderResourceViews(
+			EShaderStage::ShaderStage_Pixel,
+			ShaderResourceViews,
+			5, 0);
+	}
+
+	{
+		SamplerState* SamplerStates[] =
+		{
+			IntegrationLUTSampler.Get(),
+			IrradianceSampler.Get(),
+			ShadowMapCompSampler.Get(),
+			ShadowMapSampler.Get()
+		};
+
+		CmdList.BindSamplerStates(
+			EShaderStage::ShaderStage_Pixel,
+			SamplerStates,
+			4, 1);
+	}
 
 	CmdList.BindGraphicsPipelineState(ForwardPSO.Get());
 	for (const MeshDrawCommand& Command : ForwardVisibleCommands)
@@ -1021,7 +1072,23 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Command.Material->BuildBuffer(CmdList);
 		}
 		
-		//CommandList->SetGraphicsRootDescriptorTable(Command.Material->GetDescriptorTable()->GetGPUTableStartHandle(), 2);
+		ConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
+		CmdList.BindConstantBuffers(
+			EShaderStage::ShaderStage_Pixel,
+			&ConstantBuffer,
+			1, 3);
+
+		ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
+		CmdList.BindShaderResourceViews(
+			EShaderStage::ShaderStage_Pixel,
+			ShaderResourceViews,
+			7, 5);
+
+		SamplerState* SamplerState = Command.Material->GetMaterialSampler();
+		CmdList.BindSamplerStates(
+			EShaderStage::ShaderStage_Pixel,
+			&SamplerState,
+			1, 0);
 
 		TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
 		TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
@@ -1033,19 +1100,21 @@ void Renderer::Tick(const Scene& CurrentScene)
 		CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 	}
 
-	CmdList.InsertCommandListMarker("End ForwardPass");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End ForwardPass");
 
 	// Draw DebugBoxes
-	if (DrawAABBs)
+	if (GlobalDrawAABBs)
 	{
-		CmdList.InsertCommandListMarker("Begin DebugPass");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin DebugPass");
 
 		CmdList.BindGraphicsPipelineState(DebugBoxPSO.Get());
 
 		CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_LineList);
 
-		SimpleCamera.Matrix = CurrentScene.GetCamera()->GetViewProjectionMatrix();
-		// CommandList->SetGraphicsRoot32BitConstants(&SimpleCamera, 16, 0, 1);
+		CmdList.BindConstantBuffers(
+			EShaderStage::ShaderStage_Vertex,
+			&CameraBuffer,
+			1, 0);
 
 		CmdList.BindVertexBuffers(&AABBVertexBuffer, 1, 0);
 		CmdList.BindIndexBuffer(AABBIndexBuffer.Get());
@@ -1070,15 +1139,15 @@ void Renderer::Tick(const Scene& CurrentScene)
 			CmdList.DrawIndexedInstanced(24, 1, 0, 0, 0);
 		}
 
-		CmdList.InsertCommandListMarker("End DebugPass");
+		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End DebugPass");
 	}
 
 	// Render UI
 	DebugUI::DrawDebugString("DrawCall Count: " + std::to_string(CmdList.GetDrawCallCount()));
 	
-	CmdList.InsertCommandListMarker("Begin UI Render");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin UI Render");
 	DebugUI::Render(CmdList);
-	CmdList.InsertCommandListMarker("End UI Render");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End UI Render");
 
 	// Finalize Commandlist
 	CmdList.TransitionTexture(
@@ -1091,12 +1160,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 		EResourceState::ResourceState_RenderTarget, 
 		EResourceState::ResourceState_Present);
 	
-	CmdList.InsertCommandListMarker("--END FRAME--");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--END FRAME--");
 	CmdList.End();
 	CommandListExecutor::ExecuteCommandList(CmdList);
 
 	// Present
-	MainWindowViewport->Present(VSyncEnabled);
+	MainWindowViewport->Present(GlobalVSyncEnabled);
 }
 
 void Renderer::TraceRays(Texture2D* BackBuffer, CommandList& InCmdList)
@@ -1133,14 +1202,12 @@ void Renderer::TraceRays(Texture2D* BackBuffer, CommandList& InCmdList)
 		EResourceState::ResourceState_CopySource);
 }
 
-bool Renderer::OnEvent(const Event& Event)
+Bool Renderer::OnEvent(const Event& Event)
 {
 	if (!IsOfEventType<WindowResizeEvent>(Event))
 	{
 		return false;
 	}
-
-	return false;
 
 	const WindowResizeEvent& ResizeEvent = EventCast<WindowResizeEvent>(Event);
 	const UInt32 Width	= ResizeEvent.GetWidth();
@@ -1148,58 +1215,12 @@ bool Renderer::OnEvent(const Event& Event)
 
 	CommandListExecutor::WaitForGPU();
 
-	//RenderingAPI::Get().GetSwapChain()->Resize(Width, Height);
+	MainWindowViewport->Resize(Width, Height);
 
-	// Update deferred
 	InitGBuffer();
+	InitSSAO_RenderTarget();
 
-	//if (RenderingAPI::Get().IsRayTracingSupported())
-	{
-		//RayGenDescriptorTable->SetUnorderedAccessView(ReflectionTexture->GetUnorderedAccessView(0).Get(), 0);
-		//RayGenDescriptorTable->CopyDescriptors();
-		//
-		//GlobalDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 5);
-		//GlobalDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).Get(), 6);
-		//GlobalDescriptorTable->CopyDescriptors();
-	}
-
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[0]->GetShaderResourceView(0).Get(), 0);
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[1]->GetShaderResourceView(0).Get(), 1);
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[2]->GetShaderResourceView(0).Get(), 2);
-	//LightDescriptorTable->SetShaderResourceView(GBuffer[3]->GetShaderResourceView(0).Get(), 3);
-	//LightDescriptorTable->CopyDescriptors();
-	//
-	//CurrentBackBufferIndex = RenderingAPI::Get().GetSwapChain()->GetCurrentBackBufferIndex();
-}
-
-void Renderer::SetPrePassEnable(bool Enabled)
-{
-	PrePassEnabled = Enabled;
-}
-
-void Renderer::SetVerticalSyncEnable(bool Enabled)
-{
-	VSyncEnabled = Enabled;
-}
-
-void Renderer::SetDrawAABBsEnable(bool Enabled)
-{
-	DrawAABBs = Enabled;
-}
-
-void Renderer::SetFrustumCullEnable(bool Enabled)
-{
-	FrustumCullEnabled = Enabled;
-}
-
-void Renderer::SetFXAAEnable(bool Enabled)
-{
-	FXAAEnabled = Enabled;
-}
-
-void Renderer::SetSSAOEnable(bool Enabled)
-{
-	SSAOEnabled = Enabled;
+	return true;
 }
 
 void Renderer::SetLightSettings(const LightSettings& InLightSettings)
@@ -1229,7 +1250,7 @@ void Renderer::SetLightSettings(const LightSettings& InLightSettings)
 	CommandListExecutor::ExecuteCommandList(CmdList);
 }
 
-bool Renderer::Init()
+Bool Renderer::Init()
 {
 	// Viewport
 	TSharedRef<GenericWindow> MainWindow = Application::Get().GetMainWindow();
@@ -1579,7 +1600,7 @@ bool Renderer::Init()
 	}
 
 	// Init RayTracing if supported
-	if (RenderingAPI::IsRayTracingSupported() && RayTracingEnabled)
+	if (RenderingAPI::IsRayTracingSupported() && GlobalRayTracingEnabled)
 	{
 		if (!InitRayTracing())
 		{
@@ -1593,7 +1614,7 @@ bool Renderer::Init()
 	return true;
 }
 
-bool Renderer::InitRayTracing()
+Bool Renderer::InitRayTracing()
 {
 	// Create RootSignatures
 	//TUniquePtr<D3D12RootSignature> RayGenLocalRoot;
@@ -1987,7 +2008,7 @@ bool Renderer::InitRayTracing()
 	return true;
 }
 
-bool Renderer::InitLightBuffers()
+Bool Renderer::InitLightBuffers()
 {
 	const UInt32 NumPointLights = 1;
 	const UInt32 NumDirLights	= 1;
@@ -2067,7 +2088,7 @@ bool Renderer::InitLightBuffers()
 	return CreateShadowMaps();
 }
 
-bool Renderer::InitPrePass()
+Bool Renderer::InitPrePass()
 {
 	using namespace Microsoft::WRL;
 
@@ -2162,7 +2183,7 @@ bool Renderer::InitPrePass()
 	return true;
 }
 
-bool Renderer::InitShadowMapPass()
+Bool Renderer::InitShadowMapPass()
 {
 	using namespace Microsoft::WRL;
 
@@ -2385,7 +2406,7 @@ bool Renderer::InitShadowMapPass()
 	return true;
 }
 
-bool Renderer::InitDeferred()
+Bool Renderer::InitDeferred()
 {
 	using namespace Microsoft::WRL;
 
@@ -2536,7 +2557,7 @@ bool Renderer::InitDeferred()
 		VShader->SetName("Fullscreen VertexShader");
 	}
 
-	const char* Value = (RenderingAPI::IsRayTracingSupported() && RayTracingEnabled) ? "1" : "0";
+	const char* Value = (RenderingAPI::IsRayTracingSupported() && GlobalRayTracingEnabled) ? "1" : "0";
 	Defines =
 	{
 		{ "ENABLE_RAYTRACING",	Value },
@@ -2682,7 +2703,7 @@ bool Renderer::InitDeferred()
 	return true;
 }
 
-bool Renderer::InitGBuffer()
+Bool Renderer::InitGBuffer()
 {
 	// Create image
 	if (!InitRayTracingTexture())
@@ -2868,7 +2889,7 @@ bool Renderer::InitGBuffer()
 	return true;
 }
 
-bool Renderer::InitIntegrationLUT()
+Bool Renderer::InitIntegrationLUT()
 {
 	constexpr UInt32 LUTSize	= 512;
 	constexpr EFormat LUTFormat	= EFormat::Format_R16G16_Float;
@@ -3034,7 +3055,7 @@ bool Renderer::InitIntegrationLUT()
 	return true;
 }
 
-bool Renderer::InitRayTracingTexture()
+Bool Renderer::InitRayTracingTexture()
 {
 	const UInt32 Width	= MainWindowViewport->GetWidth();
 	const UInt32 Height	= MainWindowViewport->GetHeight();
@@ -3065,7 +3086,7 @@ bool Renderer::InitRayTracingTexture()
 	return true;
 }
 
-bool Renderer::InitDebugStates()
+Bool Renderer::InitDebugStates()
 {
 	using namespace Microsoft::WRL;
 
@@ -3264,7 +3285,7 @@ bool Renderer::InitDebugStates()
 	return true;
 }
 
-bool Renderer::InitAA()
+Bool Renderer::InitAA()
 {
 	using namespace Microsoft::WRL;
 
@@ -3424,7 +3445,7 @@ bool Renderer::InitAA()
 	return true;
 }
 
-bool Renderer::InitForwardPass()
+Bool Renderer::InitForwardPass()
 {
 	using namespace Microsoft::WRL;
 
@@ -3553,60 +3574,13 @@ bool Renderer::InitForwardPass()
 	return true;
 }
 
-bool Renderer::InitSSAO()
+Bool Renderer::InitSSAO()
 {
 	using namespace Microsoft::WRL;
 
-	// Init texture
+	if (!InitSSAO_RenderTarget())
 	{
-		const UInt32 Width	= MainWindowViewport->GetWidth();
-		const UInt32 Height	= MainWindowViewport->GetHeight();
-		const UInt32 Usage	= TextureUsage_Default | TextureUsage_RWTexture;
-
-		SSAOBuffer = RenderingAPI::CreateTexture2D(
-			nullptr,
-			SSAOBufferFormat,
-			Usage,
-			Width,
-			Height,
-			1, 1);
-		if (!SSAOBuffer)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAOBuffer->SetName("SSAO Buffer");
-		}
-
-		SSAOBufferUAV = RenderingAPI::CreateUnorderedAccessView(
-			SSAOBuffer.Get(),
-			SSAOBufferFormat,
-			0);
-		if (!SSAOBufferUAV)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAOBufferUAV->SetName("SSAO Buffer UAV");
-		}
-
-		SSAOBufferSRV = RenderingAPI::CreateShaderResourceView(
-			SSAOBuffer.Get(),
-			SSAOBufferFormat,
-			0, 1);
-		if (!SSAOBufferSRV)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAOBufferSRV->SetName("SSAO Buffer SRV");
-		}
+		return false;
 	}
 
 	// Load shader
@@ -3820,7 +3794,64 @@ bool Renderer::InitSSAO()
 	return true;
 }
 
-bool Renderer::CreateShadowMaps()
+Bool Renderer::InitSSAO_RenderTarget()
+{
+	// Init texture
+	{
+		const UInt32 Width	= MainWindowViewport->GetWidth();
+		const UInt32 Height	= MainWindowViewport->GetHeight();
+		const UInt32 Usage	= TextureUsage_Default | TextureUsage_RWTexture;
+
+		SSAOBuffer = RenderingAPI::CreateTexture2D(
+			nullptr,
+			SSAOBufferFormat,
+			Usage,
+			Width,
+			Height,
+			1, 1);
+		if (!SSAOBuffer)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+		else
+		{
+			SSAOBuffer->SetName("SSAO Buffer");
+		}
+
+		SSAOBufferUAV = RenderingAPI::CreateUnorderedAccessView(
+			SSAOBuffer.Get(),
+			SSAOBufferFormat,
+			0);
+		if (!SSAOBufferUAV)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+		else
+		{
+			SSAOBufferUAV->SetName("SSAO Buffer UAV");
+		}
+
+		SSAOBufferSRV = RenderingAPI::CreateShaderResourceView(
+			SSAOBuffer.Get(),
+			SSAOBufferFormat,
+			0, 1);
+		if (!SSAOBufferSRV)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+		else
+		{
+			SSAOBufferSRV->SetName("SSAO Buffer SRV");
+		}
+	}
+
+	return true;
+}
+
+Bool Renderer::CreateShadowMaps()
 {
 	DirLightShadowMaps = RenderingAPI::CreateTexture2D(
 		nullptr,

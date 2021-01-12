@@ -44,18 +44,11 @@ public:
 	Renderer();
 	~Renderer();
 	
-	bool Init();
+	Bool Init();
 
 	void Tick(const Scene& CurrentScene);
 	
-	bool OnEvent(const Event& Event);
-
-	void SetPrePassEnable(bool Enabled);
-	void SetVerticalSyncEnable(bool Enabled);
-	void SetDrawAABBsEnable(bool Enabled);
-	void SetFrustumCullEnable(bool Enabled);
-	void SetFXAAEnable(bool Enabled);
-	void SetSSAOEnable(bool Enabled);
+	Bool OnEvent(const Event& Event);
 	
 	FORCEINLINE void SetSSAORadius(Float InSSAORadius)
 	{
@@ -70,36 +63,6 @@ public:
 	FORCEINLINE void SetSSAOBias(Float InSSAOBias)
 	{
 		SSAOBias = InSSAOBias;
-	}
-
-	FORCEINLINE bool IsDrawAABBsEnabled() const
-	{
-		return DrawAABBs;
-	}
-
-	FORCEINLINE bool IsFXAAEnabled() const
-	{
-		return FXAAEnabled;
-	}
-
-	FORCEINLINE bool IsPrePassEnabled() const
-	{
-		return PrePassEnabled;
-	}
-
-	FORCEINLINE bool IsVerticalSyncEnabled() const
-	{
-		return VSyncEnabled;
-	}
-
-	FORCEINLINE bool IsFrustumCullEnabled() const
-	{
-		return FrustumCullEnabled;
-	}
-
-	FORCEINLINE bool IsSSAOEnabled() const
-	{
-		return SSAOEnabled;
 	}
 
 	FORCEINLINE Float GetSSAORadius() const
@@ -125,20 +88,21 @@ public:
 	}
 	
 private:
-	bool InitRayTracing();
-	bool InitLightBuffers();
-	bool InitPrePass();
-	bool InitShadowMapPass();
-	bool InitDeferred();
-	bool InitGBuffer();
-	bool InitIntegrationLUT();
-	bool InitRayTracingTexture();
-	bool InitDebugStates();
-	bool InitAA();
-	bool InitForwardPass();
-	bool InitSSAO();
+	Bool InitRayTracing();
+	Bool InitLightBuffers();
+	Bool InitPrePass();
+	Bool InitShadowMapPass();
+	Bool InitDeferred();
+	Bool InitGBuffer();
+	Bool InitIntegrationLUT();
+	Bool InitRayTracingTexture();
+	Bool InitDebugStates();
+	Bool InitAA();
+	Bool InitForwardPass();
+	Bool InitSSAO();
+	Bool InitSSAO_RenderTarget();
 
-	bool CreateShadowMaps();
+	Bool CreateShadowMaps();
 
 	void GenerateIrradianceMap(
 		ShaderResourceView* SourceSRV,
@@ -258,17 +222,9 @@ private:
 
 	TSharedRef<Viewport> MainWindowViewport;
 
-	Bool PrePassEnabled		= true;
-	Bool DrawAABBs			= false;
-	Bool VSyncEnabled		= false;
-	Bool FrustumCullEnabled	= true;
-	Bool FXAAEnabled		= true;
-	Bool RayTracingEnabled	= false;
-
-	Bool SSAOEnabled	= true;
-	Float SSAORadius	= 0.3f;
-	Float SSAOBias		= 0.0f;
-	Int32 SSAOKernelSize = 64;
+	Float	SSAORadius		= 0.3f;
+	Float	SSAOBias		= 0.0f;
+	Int32	SSAOKernelSize	= 64;
 
 	LightSettings CurrentLightSettings;
 };

@@ -142,6 +142,8 @@ void EngineLoop::PreRelease()
 
 void EngineLoop::Release()
 {
+	CommandListExecutor::WaitForGPU();
+
 	// Destroy game instance
 	Game::GetCurrent().Destroy();
 	Game::SetCurrent(nullptr);

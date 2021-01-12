@@ -3,8 +3,6 @@
 
 #include "Memory/New.h"
 
-#include <Containers/Types.h>
-
 // Validate (a.k.a ASSERT)
 #ifndef VALIDATE
 	#define VALIDATE(Condition) assert(Condition)
@@ -36,17 +34,16 @@
 */
 
 #ifndef FORCEINLINE
-#ifndef DEBUG
 
+#ifndef DEBUG_BUILD
 #ifdef COMPILER_VISUAL_STUDIO
 	#define FORCEINLINE __forceinline
 #else
 	#define FORCEINLINE __attribute__((always_inline)) inline
 #endif // ifdef COMPILER_VISUAL_STUDIO
-
 #else
 	#define FORCEINLINE inline
-#endif // ifdef DEBUG
+#endif // ifdef DEBUG_BUILD
 
 #endif // ifndef FORCEINLINE
 

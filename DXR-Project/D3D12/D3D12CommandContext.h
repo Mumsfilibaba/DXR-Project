@@ -646,8 +646,8 @@ private:
 	UInt32 NextCmdAllocator = 0;
 	D3D12CommandBatch* CmdBatch = nullptr;
 
-	D3D12VertexBufferState VertexBufferState;
-	D3D12RenderTargetState RenderTargetState;
+	D3D12VertexBufferState			VertexBufferState;
+	D3D12RenderTargetState			RenderTargetState;
 	D3D12ShaderDescriptorTableState	ShaderDescriptorState;
 	D3D12ResourceBarrierBatcher		BarrierBatcher;
 	D3D12DefaultRootSignatures		DefaultRootSignatures;

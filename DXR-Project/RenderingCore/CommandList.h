@@ -14,6 +14,12 @@ class ShaderResourceView;
 class UnorderedAccessView;
 class Shader;
 
+#ifdef DEBUG_BUILD
+	#define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString) CmdList.InsertCommandListMarker(MarkerString);
+#else
+	#define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString)
+#endif
+
 /*
 * CommandList
 */

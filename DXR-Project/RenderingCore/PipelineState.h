@@ -116,14 +116,14 @@ struct DepthStencilOp
 
 struct DepthStencilStateCreateInfo
 {
-	EDepthWriteMask	DepthWriteMask = EDepthWriteMask::DepthWriteMask_All;
-	EComparisonFunc	DepthFunc = EComparisonFunc::ComparisonFunc_Less;
-	bool			DepthEnable = true;
-	UInt8			StencilReadMask = 0xff;
-	UInt8			StencilWriteMask = 0xff;
-	bool			StencilEnable = false;
-	DepthStencilOp	FrontFace	= DepthStencilOp();
-	DepthStencilOp	BackFace	= DepthStencilOp();
+	EDepthWriteMask	DepthWriteMask		= EDepthWriteMask::DepthWriteMask_All;
+	EComparisonFunc	DepthFunc			= EComparisonFunc::ComparisonFunc_Less;
+	bool			DepthEnable			= true;
+	UInt8			StencilReadMask		= 0xff;
+	UInt8			StencilWriteMask	= 0xff;
+	bool			StencilEnable		= false;
+	DepthStencilOp	FrontFace			= DepthStencilOp();
+	DepthStencilOp	BackFace			= DepthStencilOp();
 };
 
 /*
@@ -132,9 +132,6 @@ struct DepthStencilStateCreateInfo
 
 class DepthStencilState : public PipelineResource
 {
-public:
-	DepthStencilState()		= default;
-	~DepthStencilState()	= default;
 };
 
 /*
@@ -185,17 +182,17 @@ inline const Char* ToString(EFillMode FillMode)
 
 struct RasterizerStateCreateInfo
 {
-	EFillMode FillMode = EFillMode::FillMode_Solid;
-	ECullMode CullMode = ECullMode::CullMode_Back;
-	Bool	FrontCounterClockwise = false;
-	Int32	DepthBias = 0;
-	Float	DepthBiasClamp = 0.0f;
-	Float	SlopeScaledDepthBias = 0.0f;
-	Bool	DepthClipEnable = true;
-	Bool	MultisampleEnable = false;
-	Bool	AntialiasedLineEnable = false;
-	UInt32	ForcedSampleCount = 0;
-	Bool	EnableConservativeRaster = false;
+	EFillMode FillMode					= EFillMode::FillMode_Solid;
+	ECullMode CullMode					= ECullMode::CullMode_Back;
+	Bool	FrontCounterClockwise		= false;
+	Int32	DepthBias					= 0;
+	Float	DepthBiasClamp				= 0.0f;
+	Float	SlopeScaledDepthBias		= 0.0f;
+	Bool	DepthClipEnable				= true;
+	Bool	MultisampleEnable			= false;
+	Bool	AntialiasedLineEnable		= false;
+	UInt32	ForcedSampleCount			= 0;
+	Bool	EnableConservativeRaster	= false;
 };
 
 /*
@@ -351,12 +348,9 @@ enum EColorWriteFlag : ColorWriteFlags
 
 struct RenderTargetWriteState
 {
-	inline RenderTargetWriteState()
-		: Mask(ColorWriteFlag_All)
-	{
-	}
+	RenderTargetWriteState() = default;
 
-	inline RenderTargetWriteState(ColorWriteFlags Flags)
+	RenderTargetWriteState(ColorWriteFlags Flags)
 		: Mask(Flags)
 	{
 	}
@@ -391,7 +385,7 @@ struct RenderTargetWriteState
 		return Mask == ColorWriteFlag_All;
 	}
 
-	ColorWriteFlags Mask;
+	ColorWriteFlags Mask = ColorWriteFlag_All;
 };
 
 /*
@@ -409,7 +403,7 @@ struct RenderTargetBlendState
 	EBlend		DestBlendAlpha	= EBlend::Blend_Zero;
 	EBlendOp	BlendOpAlpha	= EBlendOp::BlendOp_Add;;
 	ELogicOp	LogicOp			= ELogicOp::LogicOp_Noop;
-	RenderTargetWriteState	RenderTargetWriteMask;
+	RenderTargetWriteState RenderTargetWriteMask;
 };
 
 /*
@@ -420,7 +414,7 @@ struct BlendStateCreateInfo
 {
 	Bool AlphaToCoverageEnable	= false;
 	Bool IndependentBlendEnable	= false;
-	RenderTargetBlendState	RenderTarget[8];
+	RenderTargetBlendState RenderTarget[8];
 };
 
 /*
@@ -457,13 +451,13 @@ inline const Char* ToString(EInputClassification BlendOp)
 
 struct InputElement
 {
-	std::string				Semantic = "";
-	UInt32					SemanticIndex = 0;
-	EFormat					Format = EFormat::Format_Unknown;
-	UInt32					InputSlot = 0;
-	UInt32					ByteOffset = 0;
-	EInputClassification	InputClassification = EInputClassification::InputClassification_Vertex;
-	UInt32					InstanceStepRate = 0;
+	std::string				Semantic			= "";
+	UInt32					SemanticIndex		= 0;
+	EFormat					Format				= EFormat::Format_Unknown;
+	UInt32					InputSlot			= 0;
+	UInt32					ByteOffset			= 0;
+	EInputClassification	InputClassification	= EInputClassification::InputClassification_Vertex;
+	UInt32					InstanceStepRate	= 0;
 };
 
 /*
@@ -474,12 +468,12 @@ struct InputLayoutStateCreateInfo
 {
 	InputLayoutStateCreateInfo() = default;
 
-	inline InputLayoutStateCreateInfo(const TArray<InputElement>& InElements)
+	InputLayoutStateCreateInfo(const TArray<InputElement>& InElements)
 		: Elements(InElements)
 	{
 	}
 
-	inline InputLayoutStateCreateInfo(std::initializer_list<InputElement> InList)
+	InputLayoutStateCreateInfo(std::initializer_list<InputElement> InList)
 		: Elements(InList)
 	{
 	}
@@ -523,16 +517,9 @@ inline const Char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 
 struct PipelineRenderTargetFormats
 {
-	inline PipelineRenderTargetFormats()
-		: RenderTargetFormats()
-		, NumRenderTargets(0)
-		, DepthStencilFormat(EFormat::Format_Unknown)
-	{
-	}
-
 	EFormat RenderTargetFormats[8];
-	UInt32	NumRenderTargets;
-	EFormat DepthStencilFormat;
+	UInt32	NumRenderTargets	= 0;
+	EFormat DepthStencilFormat	= EFormat::Format_Unknown;
 };
 
 /*

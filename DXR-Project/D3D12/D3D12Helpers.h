@@ -435,6 +435,7 @@ inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState ResourceState)
 	case EResourceState::ResourceState_ShadingRateSource:		return D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
 	case EResourceState::ResourceState_UnorderedAccess:			return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	case EResourceState::ResourceState_VertexAndConstantBuffer:	return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+	case EResourceState::ResourceState_GenericRead:				return D3D12_RESOURCE_STATE_GENERIC_READ;
 	}
 
 	return D3D12_RESOURCE_STATES();

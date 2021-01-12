@@ -9,12 +9,12 @@
 #endif
 
 // Per Frame Buffers
-ConstantBuffer<Camera>				CameraBuffer		: register(b0, space0);
-ConstantBuffer<PointLight>			PointLightBuffer	: register(b1, space0);
-ConstantBuffer<DirectionalLight>	DirLightBuffer		: register(b2, space0);
+ConstantBuffer<Camera>				CameraBuffer		: register(b1, space0);
+ConstantBuffer<PointLight>			PointLightBuffer	: register(b2, space0);
+ConstantBuffer<DirectionalLight>	DirLightBuffer		: register(b3, space0);
 
 // Per Object Buffers
-ConstantBuffer<Transform>	TransformBuffer	: register(b3, space0);
+ConstantBuffer<Transform>	TransformBuffer	: register(b0, space0);
 ConstantBuffer<Material>	MaterialBuffer	: register(b4, space0);
 
 // Per Frame Samplers
@@ -22,8 +22,8 @@ SamplerState MaterialSampler	: register(s0, space0);
 SamplerState LUTSampler			: register(s1, space0);
 SamplerState IrradianceSampler	: register(s2, space0);
 
-SamplerComparisonState ShadowMapSampler0	: register(s3, space0);
-SamplerState ShadowMapSampler1				: register(s4, space0);
+SamplerComparisonState 	ShadowMapSampler0 : register(s3, space0);
+SamplerState 			ShadowMapSampler1 : register(s4, space0);
 
 // Per Frame Textures
 TextureCube<float4> IrradianceMap			: register(t0, space0);

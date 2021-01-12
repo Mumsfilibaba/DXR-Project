@@ -25,5 +25,5 @@ void CommandListExecutor::ExecuteCommandList(CommandList& CmdList)
 
 void CommandListExecutor::WaitForGPU()
 {
-	GetContext().Flush();
+	CmdContext->Flush();
 }

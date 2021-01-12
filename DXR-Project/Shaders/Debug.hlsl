@@ -5,15 +5,12 @@ cbuffer TransformBuffer : register(b0, space0)
 	float4x4 Transform;
 };
 
-cbuffer CameraBuffer : register(b1, space0)
-{
-	float4x4 ViewProjection;
-};
+ConstantBuffer<Camera> CameraBuffer : register(b1, space0);
 
 // VertexShader
 float4 VSMain(float3 Position : POSITION0) : SV_Position
 {
-	return mul(mul(float4(Position, 1.0f), Transform), ViewProjection);
+	return mul(mul(float4(Position, 1.0f), Transform), CameraBuffer.ViewProjection);
 }
 
 // PixelShader

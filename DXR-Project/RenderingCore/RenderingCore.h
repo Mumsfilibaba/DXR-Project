@@ -91,6 +91,7 @@ enum class EResourceState
 	ResourceState_RayTracingAccelerationStructure	= 13,
 	ResourceState_ShadingRateSource					= 14,
 	ResourceState_Present							= 15,
+	ResourceState_GenericRead						= 16,
 };
 
 inline const Char* ToString(EResourceState ResourceState)

@@ -17,8 +17,8 @@
 
 static Float MainMenuBarHeight = 0.0f;
 
-static bool ShowRenderSettings	= false;
-static bool ShowSceneGraph		= false;
+static Bool ShowRenderSettings	= false;
+static Bool ShowSceneGraph		= false;
 
 /*
 * Functions
@@ -232,29 +232,10 @@ static void DrawRenderSettings()
 	ImGui::Indent();
 	ImGui::Text("Resolution: %d x %d", WindowShape.Width, WindowShape.Height);
 
-	bool Enabled = GlobalRenderer->IsPrePassEnabled();
-	if (ImGui::Checkbox("Enable Z-PrePass", &Enabled))
-	{
-		GlobalRenderer->SetPrePassEnable(Enabled);
-	}
-
-	Enabled = GlobalRenderer->IsVerticalSyncEnabled();
-	if (ImGui::Checkbox("Enable VSync", &Enabled))
-	{
-		GlobalRenderer->SetVerticalSyncEnable(Enabled);
-	}
-
-	Enabled = GlobalRenderer->IsFrustumCullEnabled();
-	if (ImGui::Checkbox("Enable Frustum Culling", &Enabled))
-	{
-		GlobalRenderer->SetFrustumCullEnable(Enabled);
-	}
-
-	Enabled = GlobalRenderer->IsDrawAABBsEnabled();
-	if (ImGui::Checkbox("Draw AABBs", &Enabled))
-	{
-		GlobalRenderer->SetDrawAABBsEnable(Enabled);
-	}
+	ImGui::Checkbox("Enable Z-PrePass", &GlobalPrePassEnabled);
+	ImGui::Checkbox("Enable VSync", &GlobalVSyncEnabled);
+	ImGui::Checkbox("Enable Frustum Culling", &GlobalFrustumCullEnabled);
+	ImGui::Checkbox("Draw AABBs", &GlobalDrawAABBs);
 
 	static const Char* AAItems[] =
 	{
@@ -263,7 +244,7 @@ static void DrawRenderSettings()
 	};
 
 	static Int32 CurrentItem = 0;
-	if (GlobalRenderer->IsFXAAEnabled())
+	if (GlobalFXAAEnabled)
 	{
 		CurrentItem = 1;
 	}
@@ -276,11 +257,11 @@ static void DrawRenderSettings()
 	{
 		if (CurrentItem == 0)
 		{
-			GlobalRenderer->SetFXAAEnable(false);
+			GlobalFXAAEnabled = false;
 		}
 		else if (CurrentItem == 1)
 		{
-			GlobalRenderer->SetFXAAEnable(true);
+			GlobalFXAAEnabled = true;
 		}
 	}
 
@@ -379,14 +360,10 @@ static void DrawRenderSettings()
 	// Text
 	ImGui::SetColumnWidth(0, 100.0f);
 
-	Enabled = GlobalRenderer->IsSSAOEnabled();
 	ImGui::Text("Enabled: ");
 	ImGui::NextColumn();
 
-	if (ImGui::Checkbox("##Enabled", &Enabled))
-	{
-		GlobalRenderer->SetSSAOEnable(Enabled);
-	}
+	ImGui::Checkbox("##Enabled", &GlobalSSAOEnabled);
 
 	ImGui::NextColumn();
 	ImGui::Text("Radius: ");
@@ -476,7 +453,7 @@ static void DrawSceneInfo()
 
 					ImGui::SameLine();
 
-					static bool Uniform = false;
+					static Bool Uniform = false;
 					ImGui::Checkbox("##Uniform", &Uniform);
 					if (ImGui::IsItemHovered())
 					{

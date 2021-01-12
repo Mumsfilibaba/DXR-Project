@@ -573,6 +573,8 @@ void D3D12CommandContext::End()
 		return;
 	}
 
+	LOG_INFO("Fence Signaled with: " + std::to_string(CurrentFenceValue));
+
 	// Reset state
 	CmdBatch	= nullptr;
 	IsReady		= false;
@@ -1448,8 +1450,13 @@ void D3D12CommandContext::ClearState()
 
 void D3D12CommandContext::Flush()
 {
-	// TODO: Wait for all pending commands that are being executed on the GPU
-	Fence->WaitForValue(FenceValue);	
+	const UInt64 NewFenceValue = ++FenceValue;
+	if (!CmdQueue->SignalFence(Fence.Get(), NewFenceValue))
+	{
+		return;
+	}
+
+	Fence->WaitForValue(FenceValue);
 }
 
 void D3D12CommandContext::InsertMarker(const std::string& Message)

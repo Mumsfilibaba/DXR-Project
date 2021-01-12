@@ -86,6 +86,9 @@ Bool D3D12Viewport::Resize(UInt32 InWidth, UInt32 InHeight)
 
 	if (InWidth != Width && InHeight != Height && InWidth > 0 && InHeight > 0)
 	{
+		BackBuffers.Clear();
+		BackBufferViews.Clear();
+
 		HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
 		if (SUCCEEDED(Result))
 		{
