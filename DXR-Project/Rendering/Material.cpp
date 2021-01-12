@@ -89,7 +89,7 @@ void Material::SetAmbientOcclusion(Float AO)
 	MaterialBufferIsDirty = true;
 }
 
-void Material::EnableHeightMap(bool EnableHeightMap)
+void Material::EnableHeightMap(Bool EnableHeightMap)
 {
 	if (EnableHeightMap)
 	{

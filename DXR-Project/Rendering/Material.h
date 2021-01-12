@@ -32,7 +32,7 @@ public:
 
 	void BuildBuffer(class CommandList& CmdList);
 
-	FORCEINLINE bool IsBufferDirty() const
+	FORCEINLINE Bool IsBufferDirty() const
 	{
 		return MaterialBufferIsDirty;
 	}
@@ -44,7 +44,7 @@ public:
 	void SetRoughness(Float Roughness);
 	void SetAmbientOcclusion(Float AO);
 
-	void EnableHeightMap(bool EnableHeightMap);
+	void EnableHeightMap(Bool EnableHeightMap);
 
 	void SetDebugName(const std::string& InDebugName);
 
@@ -62,7 +62,7 @@ public:
 		return MaterialBuffer.Get();
 	}
 
-	FORCEINLINE bool HasAlphaMask() const
+	FORCEINLINE Bool HasAlphaMask() const
 	{
 		return AlphaMask.Texture != nullptr;
 	}
