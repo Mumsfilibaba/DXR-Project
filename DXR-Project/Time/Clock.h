@@ -9,7 +9,6 @@ class Clock
 {
 public:
 	Clock();
-	~Clock() = default;
 
 	/*
 	* Measures the deltatime between this and the latest call to Clock::Tick. It also updates the totalTime that the clock
@@ -34,8 +33,8 @@ public:
 	}
 
 private:
-	Timestamp	TotalTime	= Timestamp(0);
-	Timestamp	DeltaTime	= Timestamp(0);
-	UInt64		LastTime	= 0;
-	UInt64		Frequency	= 0;
+	Timestamp TotalTime = Timestamp(0);
+	Timestamp DeltaTime = Timestamp(0);
+	UInt64 LastTime		= 0;
+	UInt64 Frequency	= 0;
 };

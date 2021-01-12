@@ -1,8 +1,5 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
-
-class D3D12Buffer;
+#include "Core.h"
 
 /*
 * MeshDrawCommand
@@ -14,11 +11,11 @@ struct MeshDrawCommand
 	class Mesh*		Mesh			= nullptr;
 	class Actor*	CurrentActor	= nullptr;
 	
-	D3D12Buffer* VertexBuffer	= nullptr;
-	D3D12Buffer* IndexBuffer	= nullptr;
+	class VertexBuffer*	VertexBuffer	= nullptr;
+	class IndexBuffer*	IndexBuffer		= nullptr;
 
 	UInt32 VertexCount	= 0;
 	UInt32 IndexCount	= 0;
 
-	class D3D12RayTracingGeometry* Geometry = nullptr;
+	class RayTracingGeometry* Geometry = nullptr;
 };

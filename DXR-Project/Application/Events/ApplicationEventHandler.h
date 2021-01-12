@@ -1,8 +1,10 @@
 #pragma once
 #include "Application/InputCodes.h"
 
+#ifdef COMPILER_VISUAL_STUDIO
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
+#endif
 
 class GenericWindow;
 struct ModifierKeyState;
@@ -10,6 +12,7 @@ struct ModifierKeyState;
 /*
 * ApplicationEventHandler
 */
+
 class ApplicationEventHandler
 {
 public:
@@ -46,9 +49,8 @@ public:
 	virtual void OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta)
 	{
 	}
-
-protected:
-	ApplicationEventHandler() = default;
 };
 
+#ifdef COMPILER_VISUAL_STUDIO
 #pragma warning(pop)
+#endif

@@ -29,9 +29,9 @@ SamplerState IrradianceSampler	: register(s2, space0);
 SamplerComparisonState	ShadowMapSampler0	: register(s3, space0);
 SamplerState			ShadowMapSampler1	: register(s4, space0);
 
-ConstantBuffer<Camera>				CameraBuffer		: register(b0, space0);
-ConstantBuffer<PointLight>			PointLightBuffer	: register(b1, space0);
-ConstantBuffer<DirectionalLight>	DirLightBuffer		: register(b2, space0);
+ConstantBuffer<Camera>				CameraBuffer		: register(b1, space0);
+ConstantBuffer<PointLight>			PointLightBuffer	: register(b2, space0);
+ConstantBuffer<DirectionalLight>	DirLightBuffer		: register(b3, space0);
 
 // Light Calculations
 float3 CalcRadiance(float3 F0, float3 InNormal, float3 InViewDir, float3 InLightDir, float3 InRadiance, float3 InAlbedo, float InRoughness, float InMetallic)
@@ -140,7 +140,8 @@ float CalculateStandardShadow(float2 Texcoords, float CompareDepth)
 		for (int y = -PCF_RANGE; y <= PCF_RANGE; y++)
 		{
 			Shadow += DirLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, Texcoords, CompareDepth, int2(x, y)).r;
-		}
+            //Shadow += DirLightShadowMaps.SampleLevel(ShadowMapSampler1, Texcoords, 0.0f, int2(x, y)).r < CompareDepth ? 0.0f : 1.0f;
+        }
 	}
 
 	Shadow /= (PCF_WIDTH * PCF_WIDTH);
@@ -202,7 +203,8 @@ float CalculatePointLightShadow(float3 WorldPosition, float3 LightPosition, floa
 	{
 		int Index = int(float(OFFSET_SAMPLES) * Random(floor(WorldPosition.xyz * 1000.0f), i)) % OFFSET_SAMPLES;
 		Shadow += PointLightShadowMaps.SampleCmpLevelZero(ShadowMapSampler0, DirToLight + SampleOffsetDirections[Index] * DiskRadius, BiasedDepth);
-	}
+        //Shadow += PointLightShadowMaps.SampleLevel(ShadowMapSampler1, DirToLight + SampleOffsetDirections[Index] * DiskRadius, 0.0f) < BiasedDepth ? 0.0f : 1.0f;
+    }
 	
 	Shadow = Shadow / SAMPLES;
 	return min(Shadow, 1.0f);

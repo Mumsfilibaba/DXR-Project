@@ -1,34 +1,63 @@
 #include "RenderingAPI.h"
+#include "CommandList.h"
+#include "Shader.h"
 
 #include "D3D12/D3D12RenderingAPI.h"
+#include "D3D12/D3D12ShaderCompiler.h"
 
-RenderingAPI* RenderingAPI::CurrentRenderAPI = nullptr;
+#define ENABLE_API_DEBUGGING 1
 
 /*
 * RenderingAPI
 */
-RenderingAPI* RenderingAPI::Make(ERenderingAPI InRenderAPI)
+
+bool RenderingAPI::Init(ERenderingAPI InRenderAPI)
 {
 	// Select RenderingAPI
-	if (InRenderAPI == ERenderingAPI::RENDERING_API_D3D12)
+	if (InRenderAPI == ERenderingAPI::RenderingAPI_D3D12)
 	{
-		CurrentRenderAPI = new D3D12RenderingAPI();
-		return CurrentRenderAPI;
+		GlobalRenderingAPI = DBG_NEW D3D12RenderingAPI();
+		
+		D3D12ShaderCompiler* Compiler = DBG_NEW D3D12ShaderCompiler();
+		if (!Compiler->Init())
+		{
+			return false;
+		}
+
+		GlobalShaderCompiler = Compiler;
 	}
 	else
 	{
-		return nullptr;
+		LOG_ERROR("[RenderingAPI::Initialize] Invalid RenderingAPI enum");
+		
+		Debug::DebugBreak();
+		return false;
 	}
-}
 
-RenderingAPI& RenderingAPI::Get()
-{
-	VALIDATE(CurrentRenderAPI);
-	return *CurrentRenderAPI;
+	// TODO: This should be in EngineConfig
+	const bool EnableDebug =
+#if ENABLE_API_DEBUGGING
+		true;
+#else
+		false;
+#endif
+
+	// Init
+	if (GlobalRenderingAPI->Init(EnableDebug))
+	{
+		ICommandContext* CmdContext = GlobalRenderingAPI->GetDefaultCommandContext();
+		CommandListExecutor::SetContext(CmdContext);
+
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void RenderingAPI::Release()
 {
-	// TODO: Fix so that there is not crash when exiting
-	//SAFEDELETE(CurrentRenderAPI);
+	SAFEDELETE(GlobalRenderingAPI);
+	SAFEDELETE(GlobalShaderCompiler);
 }

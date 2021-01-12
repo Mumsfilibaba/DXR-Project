@@ -1,12 +1,12 @@
 #pragma once
+#include "GenericWindow.h"
+#include "GenericCursor.h"
+
 #include "Application/InputCodes.h"
 
 #include "Application/Events/ApplicationEventHandler.h"
 
-#include "Containers/TSharedRef.h"
-
-#include "GenericWindow.h"
-#include "GenericCursor.h"
+#include "Core/TSharedRef.h"
 
 /*
 * ModifierKeyState
@@ -15,42 +15,43 @@
 struct ModifierKeyState
 {
 public:
-	inline ModifierKeyState(UInt32 InModifierMask)
+	ModifierKeyState() = default;
+
+	ModifierKeyState(UInt32 InModifierMask)
 		: ModifierMask(InModifierMask)
 	{
 	}
 
-	FORCEINLINE bool IsCtrlDown() const
+	FORCEINLINE Bool IsCtrlDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_CTRL);
 	}
 
-	FORCEINLINE bool IsAltDown() const
+	FORCEINLINE Bool IsAltDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_ALT);
 	}
 
-	FORCEINLINE bool IsShiftDown() const
+	FORCEINLINE Bool IsShiftDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_SHIFT);
 	}
 
-	FORCEINLINE bool IsCapsLockDown() const
+	FORCEINLINE Bool IsCapsLockDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_CAPS_LOCK);
 	}
 
-	FORCEINLINE bool IsSuperKeyDown() const
+	FORCEINLINE Bool IsSuperKeyDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_SUPER);
 	}
 
-	FORCEINLINE bool IsNumPadDown() const
+	FORCEINLINE Bool IsNumPadDown() const
 	{
 		return (ModifierMask & MODIFIER_FLAG_NUM_LOCK);
 	}
 
-private:
 	UInt32 ModifierMask = 0;
 };
 
@@ -61,45 +62,59 @@ private:
 class GenericApplication
 {
 public:
-	GenericApplication() = default;
 	virtual ~GenericApplication() = default;
 
-	virtual TSharedRef<GenericWindow> MakeWindow() = 0;
-	virtual TSharedRef<GenericCursor> MakeCursor() = 0;
+	virtual GenericWindow* MakeWindow() = 0;
+	virtual GenericCursor* MakeCursor() = 0;
 
-	virtual bool Initialize() = 0;
-	virtual bool Tick() = 0;
+	virtual Bool Init() = 0;
 
-	virtual void SetCursor(TSharedRef<GenericCursor> Cursor) = 0;
-	virtual TSharedRef<GenericCursor> GetCursor() const = 0;
+	virtual void SetCursor(GenericCursor* Cursor)	= 0;
+	virtual GenericCursor* GetCursor() const		= 0;
 
-	virtual void SetActiveWindow(TSharedRef<GenericWindow> Window) = 0;
+	virtual void SetActiveWindow(GenericWindow* Window) = 0;
 	
-	virtual void SetCapture(TSharedRef<GenericWindow> Window)
+	virtual void SetCapture(GenericWindow* Window)
 	{
 		UNREFERENCED_VARIABLE(Window);
 	}
 
-	virtual ModifierKeyState GetModifierKeyState() const = 0;
-	virtual TSharedRef<GenericWindow> GetActiveWindow() const = 0;
+	virtual GenericWindow* GetActiveWindow() const = 0;
 
 	// Some platforms does not have the concept of mouse capture, therefor return nullptr as standard
-	virtual TSharedRef<GenericWindow> GetCapture() const
+	virtual GenericWindow* GetCapture() const
 	{
-		return TSharedRef<GenericWindow>();
+		return nullptr;
 	}
 
-	virtual void SetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32 X, Int32 Y) = 0;
-	virtual void GetCursorPos(TSharedRef<GenericWindow> RelativeWindow, Int32& OutX, Int32& OutY) const = 0;
+	virtual void SetCursorPos(
+		GenericWindow* RelativeWindow, 
+		Int32 x, 
+		Int32 y) = 0;
 
-	FORCEINLINE void SetEventHandler(TSharedPtr<ApplicationEventHandler> InEventHandler)
+	virtual void GetCursorPos(
+		GenericWindow* RelativeWindow, 
+		Int32& OutX, 
+		Int32& OutY) const = 0;
+
+	FORCEINLINE void SetEventHandler(ApplicationEventHandler* InEventHandler)
 	{
 		EventHandler = InEventHandler;
 	}
 
-	FORCEINLINE TSharedPtr<ApplicationEventHandler> GetEventHandler() const
+	FORCEINLINE ApplicationEventHandler* GetEventHandler() const
 	{
 		return EventHandler;
+	}
+
+	static Bool PollPlatformEvents()
+	{
+		return false;
+	}
+
+	static ModifierKeyState GetModifierKeyState()
+	{
+		return ModifierKeyState();
 	}
 
 	static GenericApplication* Make()
@@ -108,5 +123,5 @@ public:
 	}
 
 protected:
-	TSharedPtr<ApplicationEventHandler> EventHandler;
+	ApplicationEventHandler* EventHandler;
 };

@@ -1,5 +1,5 @@
 #pragma once
-#include "Event.h"
+#include "Events.h"
 
 /*
 * EventHandlerFunc
@@ -10,6 +10,7 @@ typedef bool(*EventHandlerFunc)(const Event& Event);
 /*
 * IEventHandler
 */
+
 class IEventHandler
 {
 public:

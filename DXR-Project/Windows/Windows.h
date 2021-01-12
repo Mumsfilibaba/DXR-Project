@@ -1,4 +1,8 @@
 #pragma once
+#ifdef PLATFORM_WINDOWS
+#include "Core.h"
+
+#include "Application/Log.h"
 
 #ifndef NOMINMAX
 	#define NOMINMAX
@@ -13,4 +17,10 @@
 
 #ifdef CreateWindow
 	#undef CreateWindow
+#endif
+
+#ifdef OutputDebugString
+	#undef OutputDebugString
+#endif
+
 #endif

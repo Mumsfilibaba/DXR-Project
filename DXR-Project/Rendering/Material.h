@@ -1,7 +1,9 @@
 #pragma once
-#include "D3D12/D3D12Buffer.h"
-#include "D3D12/D3D12Texture.h"
-#include "D3D12/D3D12DescriptorHeap.h"
+#include "RenderingCore/Buffer.h"
+#include "RenderingCore/ResourceHelpers.h"
+#include "RenderingCore/SamplerState.h"
+
+#include <Containers/TStaticArray.h>
 
 /*
 * MaterialProperties
@@ -9,11 +11,11 @@
 
 struct MaterialProperties
 {
-	XMFLOAT3 Albedo			= XMFLOAT3(1.0f, 1.0f, 1.0f);
+	XMFLOAT3 Albedo		= XMFLOAT3(1.0f, 1.0f, 1.0f);
 	Float Roughness		= 0.0f;
 	Float Metallic		= 0.0f;
-	Float AO				= 0.5f;
-	Int32	EnableHeight	= 0;
+	Float AO			= 0.5f;
+	Int32 EnableHeight	= 0;
 };
 
 /*
@@ -24,13 +26,13 @@ class Material
 {
 public:
 	Material(const MaterialProperties& InProperties);
-	~Material();
+	~Material() = default;
 
-	void Initialize();
+	void Init();
 
-	void BuildBuffer(class D3D12CommandList* CommandList);
+	void BuildBuffer(class CommandList& CmdList);
 
-	FORCEINLINE bool IsBufferDirty() const
+	FORCEINLINE Bool IsBufferDirty() const
 	{
 		return MaterialBufferIsDirty;
 	}
@@ -42,18 +44,27 @@ public:
 	void SetRoughness(Float Roughness);
 	void SetAmbientOcclusion(Float AO);
 
-	void EnableHeightMap(bool EnableHeightMap);
+	void EnableHeightMap(Bool EnableHeightMap);
 
 	void SetDebugName(const std::string& InDebugName);
 
-	FORCEINLINE bool HasAlphaMask() const
+	// ShaderResourceView are sorted in the way that the deferred rendering pass wants them
+	// This means that one can call BindShaderResourceViews directly with this function
+	ShaderResourceView* const* GetShaderResourceViews() const;
+
+	FORCEINLINE SamplerState* GetMaterialSampler() const
 	{
-		return AlphaMask != nullptr;
+		return Sampler.Get();
 	}
 
-	FORCEINLINE TSharedPtr<D3D12DescriptorTable> GetDescriptorTable() const
+	FORCEINLINE ConstantBuffer* GetMaterialBuffer() const
 	{
-		return DescriptorTable;
+		return MaterialBuffer.Get();
+	}
+
+	FORCEINLINE Bool HasAlphaMask() const
+	{
+		return AlphaMask.Texture != nullptr;
 	}
 
 	FORCEINLINE const MaterialProperties& GetMaterialProperties() const 
@@ -62,19 +73,21 @@ public:
 	}
 
 public:
-	TSharedPtr<D3D12Texture> AlbedoMap;
-	TSharedPtr<D3D12Texture> NormalMap;
-	TSharedPtr<D3D12Texture> RoughnessMap;
-	TSharedPtr<D3D12Texture> HeightMap;
-	TSharedPtr<D3D12Texture> AOMap;
-	TSharedPtr<D3D12Texture> MetallicMap;
-	TSharedPtr<D3D12Texture> AlphaMask;
+	SampledTexture2D AlbedoMap;
+	SampledTexture2D NormalMap;
+	SampledTexture2D RoughnessMap;
+	SampledTexture2D HeightMap;
+	SampledTexture2D AOMap;
+	SampledTexture2D MetallicMap;
+	SampledTexture2D AlphaMask;
 
 private:
-	std::string			DebugName;
-	MaterialProperties	Properties;
-	D3D12Buffer*		MaterialBuffer	= nullptr;
-	TSharedPtr<D3D12DescriptorTable> DescriptorTable;
+	std::string	DebugName;
+	Bool MaterialBufferIsDirty = true;
+	
+	MaterialProperties			Properties;
+	TSharedRef<ConstantBuffer> 	MaterialBuffer;
+	TSharedRef<SamplerState> 	Sampler;
 
-	bool MaterialBufferIsDirty = true;
+	mutable TStaticArray<ShaderResourceView*, 7> ShaderResourceViews;
 };

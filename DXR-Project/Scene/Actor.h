@@ -15,7 +15,7 @@ class Component : public CoreObject
 
 public:
 	Component(Actor* InOwningActor);
-	virtual ~Component();
+	virtual ~Component() = default;
 
 	FORCEINLINE Actor* GetOwningActor() const
 	{
@@ -34,7 +34,6 @@ class Transform
 {
 public:
 	Transform();
-	~Transform() = default;
 
 	void SetTranslation(Float x, Float y, Float z);
 	void SetTranslation(const XMFLOAT3& InPosition);
@@ -114,16 +113,16 @@ public:
 
 	void OnAddedToScene(Scene* InScene);
 	
-	void SetDebugName(const std::string& InDebugName);
+	void SetName(const std::string& InDebugName);
 
 	FORCEINLINE void SetTransform(const Transform& InTransform)
 	{
 		Transform = InTransform;
 	}
 
-	FORCEINLINE const std::string& GetDebugName() const
+	FORCEINLINE const std::string& GetName() const
 	{
-		return DebugName;
+		return Name;
 	}
 
 	FORCEINLINE Scene* GetScene() const
@@ -161,5 +160,5 @@ private:
 	Transform Transform;
 
 	TArray<Component*>	Components;
-	std::string			DebugName;
+	std::string			Name;
 };

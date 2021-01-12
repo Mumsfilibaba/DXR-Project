@@ -4,8 +4,7 @@
 #include "Rendering/Renderer.h"
 
 #include "Engine/EngineLoop.h"
-
-#include "Application/Application.h"
+#include "Engine/EngineGlobals.h"
 
 #include "Scene/Scene.h"
 #include "Scene/Lights/DirectionalLight.h"
@@ -16,8 +15,8 @@
 
 static Float MainMenuBarHeight = 0.0f;
 
-static bool ShowRenderSettings	= false;
-static bool ShowSceneGraph		= false;
+static Bool ShowRenderSettings	= false;
+static Bool ShowSceneGraph		= false;
 
 /*
 * Functions
@@ -108,7 +107,7 @@ static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, Float R
 
 static void DrawDebugData()
 {
-	static std::string AdapterName = RenderingAPI::Get().GetAdapterName();
+	static std::string AdapterName = RenderingAPI::GetAdapterName();
 
 	const Double Delta = EngineLoop::GetDeltaTime().AsMilliSeconds();
 	DebugUI::DrawDebugString("Adapter: " + AdapterName);
@@ -134,7 +133,7 @@ static void DrawMenu()
 			{
 				if (ImGui::MenuItem("Toggle Fullscreen"))
 				{
-					Application::Get().GetMainWindow()->ToggleFullscreen();
+					GlobalMainWindow->ToggleFullscreen();
 				}
 
 				if (ImGui::MenuItem("Quit"))
@@ -169,7 +168,7 @@ static void DrawSideWindow()
 		constexpr UInt32 Width = 500;
 
 		WindowShape WindowShape;
-		Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
+		GlobalMainWindow->GetWindowShape(WindowShape);
 
 		ImGui::SetNextWindowPos(ImVec2(0, MainMenuBarHeight));
 		ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height - MainMenuBarHeight));
@@ -222,7 +221,7 @@ static void DrawRenderSettings()
 	ImGui::BeginChild("RendererInfo");
 
 	WindowShape WindowShape;
-	Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
+	GlobalMainWindow->GetWindowShape(WindowShape);
 
 	ImGui::Spacing();
 	ImGui::Text("Renderer Info");
@@ -231,29 +230,10 @@ static void DrawRenderSettings()
 	ImGui::Indent();
 	ImGui::Text("Resolution: %d x %d", WindowShape.Width, WindowShape.Height);
 
-	bool Enabled = Renderer::Get()->IsPrePassEnabled();
-	if (ImGui::Checkbox("Enable Z-PrePass", &Enabled))
-	{
-		Renderer::Get()->SetPrePassEnable(Enabled);
-	}
-
-	Enabled = Renderer::Get()->IsVerticalSyncEnabled();
-	if (ImGui::Checkbox("Enable VSync", &Enabled))
-	{
-		Renderer::Get()->SetVerticalSyncEnable(Enabled);
-	}
-
-	Enabled = Renderer::Get()->IsFrustumCullEnabled();
-	if (ImGui::Checkbox("Enable Frustum Culling", &Enabled))
-	{
-		Renderer::Get()->SetFrustumCullEnable(Enabled);
-	}
-
-	Enabled = Renderer::Get()->IsDrawAABBsEnabled();
-	if (ImGui::Checkbox("Draw AABBs", &Enabled))
-	{
-		Renderer::Get()->SetDrawAABBsEnable(Enabled);
-	}
+	ImGui::Checkbox("Enable Z-PrePass", &GlobalPrePassEnabled);
+	ImGui::Checkbox("Enable VSync", &GlobalVSyncEnabled);
+	ImGui::Checkbox("Enable Frustum Culling", &GlobalFrustumCullEnabled);
+	ImGui::Checkbox("Draw AABBs", &GlobalDrawAABBs);
 
 	static const Char* AAItems[] =
 	{
@@ -262,7 +242,7 @@ static void DrawRenderSettings()
 	};
 
 	static Int32 CurrentItem = 0;
-	if (Renderer::Get()->IsFXAAEnabled())
+	if (GlobalFXAAEnabled)
 	{
 		CurrentItem = 1;
 	}
@@ -275,11 +255,11 @@ static void DrawRenderSettings()
 	{
 		if (CurrentItem == 0)
 		{
-			Renderer::Get()->SetFXAAEnable(false);
+			GlobalFXAAEnabled = false;
 		}
 		else if (CurrentItem == 1)
 		{
-			Renderer::Get()->SetFXAAEnable(true);
+			GlobalFXAAEnabled = true;
 		}
 	}
 
@@ -298,7 +278,7 @@ static void DrawRenderSettings()
 		"256x256"
 	};
 
-	LightSettings Settings = Renderer::GetGlobalLightSettings();
+	LightSettings Settings = GlobalRenderer->GetLightSettings();
 	if (Settings.ShadowMapWidth == 8192)
 	{
 		CurrentItem = 0;
@@ -366,7 +346,7 @@ static void DrawRenderSettings()
 			Settings.ShadowMapHeight = 256;
 		}
 
-		Renderer::SetGlobalLightSettings(Settings);
+		GlobalRenderer->SetLightSettings(Settings);
 	}
 
 	ImGui::Spacing();
@@ -378,43 +358,39 @@ static void DrawRenderSettings()
 	// Text
 	ImGui::SetColumnWidth(0, 100.0f);
 
-	Enabled = Renderer::Get()->IsSSAOEnabled();
 	ImGui::Text("Enabled: ");
 	ImGui::NextColumn();
 
-	if (ImGui::Checkbox("##Enabled", &Enabled))
-	{
-		Renderer::Get()->SetSSAOEnable(Enabled);
-	}
+	ImGui::Checkbox("##Enabled", &GlobalSSAOEnabled);
 
 	ImGui::NextColumn();
 	ImGui::Text("Radius: ");
 	ImGui::NextColumn();
 
-	Float Radius = Renderer::Get()->GetSSAORadius();
+	Float Radius = GlobalRenderer->GetSSAORadius();
 	if (ImGui::SliderFloat("##Radius", &Radius, 0.05f, 5.0f, "%.3f"))
 	{
-		Renderer::Get()->SetSSAORadius(Radius);
+		GlobalRenderer->SetSSAORadius(Radius);
 	}
 
 	ImGui::NextColumn();
 	ImGui::Text("Bias: ");
 	ImGui::NextColumn();
 
-	Float Bias = Renderer::Get()->GetSSAOBias();
+	Float Bias = GlobalRenderer->GetSSAOBias();
 	if (ImGui::SliderFloat("##Bias", &Bias, 0.0f, 0.5f, "%.3f"))
 	{
-		Renderer::Get()->SetSSAOBias(Bias);
+		GlobalRenderer->SetSSAOBias(Bias);
 	}
 
 	ImGui::NextColumn();
 	ImGui::Text("KernelSize: ");
 	ImGui::NextColumn();
 
-	Int32 KernelSize = Renderer::Get()->GetSSAOKernelSize();
+	Int32 KernelSize = GlobalRenderer->GetSSAOKernelSize();
 	if (ImGui::SliderInt("##KernelSize", &KernelSize, 4, 64))
 	{
-		Renderer::Get()->SetSSAOKernelSize(KernelSize);
+		GlobalRenderer->SetSSAOKernelSize(KernelSize);
 	}
 
 	ImGui::Columns(1);
@@ -434,7 +410,7 @@ static void DrawSceneInfo()
 	ImGui::Separator();
 
 	WindowShape WindowShape;
-	Application::Get().GetMainWindow()->GetWindowShape(WindowShape);
+	GlobalMainWindow->GetWindowShape(WindowShape);
 	ImGui::BeginChild("SceneInfo", ImVec2(Width, Float(WindowShape.Height) - 100.0f));
 
 	// Actors
@@ -442,7 +418,7 @@ static void DrawSceneInfo()
 	{
 		for (Actor* Actor : Scene::GetCurrentScene()->GetActors())
 		{
-			if (ImGui::TreeNode(Actor->GetDebugName().c_str()))
+			if (ImGui::TreeNode(Actor->GetName().c_str()))
 			{
 				// Transform
 				if (ImGui::TreeNode("Transform"))
@@ -475,7 +451,7 @@ static void DrawSceneInfo()
 
 					ImGui::SameLine();
 
-					static bool Uniform = false;
+					static Bool Uniform = false;
 					ImGui::Checkbox("##Uniform", &Uniform);
 					if (ImGui::IsItemHovered())
 					{

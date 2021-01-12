@@ -1,180 +1,195 @@
 #pragma once
-#include "D3D12DeviceChild.h"
+#include <Containers/TArray.h>
 
-#include "Containers/TArray.h"
+#include "Utilities/StringUtilities.h"
+
+#include "D3D12RefCountedObject.h"
+#include "D3D12Device.h"
+
+/*
+* D3D12DescriptorHeap
+*/
+
+class D3D12DescriptorHeap : public D3D12RefCountedObject
+{
+public:
+	D3D12DescriptorHeap(D3D12Device* InDevice, const D3D12_DESCRIPTOR_HEAP_DESC& InDesc);
+
+	Bool Init();
+
+	FORCEINLINE void SetName(const std::string& Name)
+	{
+		std::wstring WideName = ConvertToWide(Name);
+		Heap->SetName(WideName.c_str());
+	}
+
+	FORCEINLINE ID3D12DescriptorHeap* GetHeap() const
+	{
+		return Heap.Get();
+	}
+
+	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart() const
+	{
+		return CPUStart;
+	}
+
+	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart() const
+	{
+		return GPUStart;
+	}
+
+	FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
+	{
+		return Desc.Type;
+	}
+
+	FORCEINLINE UInt32 GetNumDescriptors() const
+	{
+		return UInt32(Desc.NumDescriptors);
+	}
+
+	FORCEINLINE UInt32 GetDescriptorHandleIncrementSize() const
+	{
+		return DescriptorHandleIncrementSize;
+	}
+
+private:
+	TComPtr<ID3D12DescriptorHeap> Heap;
+	D3D12_CPU_DESCRIPTOR_HANDLE	CPUStart;
+	D3D12_GPU_DESCRIPTOR_HANDLE	GPUStart;
+	D3D12_DESCRIPTOR_HEAP_DESC	Desc;
+	UInt32 DescriptorHandleIncrementSize;
+};
 
 /*
 * D3D12OfflineDescriptorHeap
 */
 
-class D3D12OfflineDescriptorHeap : public D3D12DeviceChild
+class D3D12OfflineDescriptorHeap : public D3D12RefCountedObject
 {
-	struct FreeRange
-	{
-	public:
-		FreeRange()
-			: Begin({ 0 })
-			, End({ 0 })
-		{
-		}
+	/*
+	* DescriptorRange
+	*/
 
-		FreeRange(D3D12_CPU_DESCRIPTOR_HANDLE InBegin, D3D12_CPU_DESCRIPTOR_HANDLE InEnd)
+	struct DescriptorRange
+	{
+		DescriptorRange() = default;
+
+		DescriptorRange(D3D12_CPU_DESCRIPTOR_HANDLE InBegin, D3D12_CPU_DESCRIPTOR_HANDLE InEnd)
 			: Begin(InBegin)
 			, End(InEnd)
 		{
 		}
 
-		bool IsValid() const
+		FORCEINLINE bool IsValid() const
 		{
 			return Begin.ptr < End.ptr;
 		}
 
-	public:
-		D3D12_CPU_DESCRIPTOR_HANDLE Begin;
-		D3D12_CPU_DESCRIPTOR_HANDLE End;
+		D3D12_CPU_DESCRIPTOR_HANDLE Begin	= { 0 };
+		D3D12_CPU_DESCRIPTOR_HANDLE End		= { 0 };
 	};
+
+	/*
+	* DescriptorHeap
+	*/
 
 	struct DescriptorHeap
 	{
-	public:
-		DescriptorHeap()
-			: Heap(nullptr)
-			, FreeList()
+		inline DescriptorHeap(const TSharedRef<D3D12DescriptorHeap>& InHeap)
+			: FreeList()
+			, Heap(InHeap)
 		{
+			DescriptorRange WholeRange;
+			WholeRange.Begin	= Heap->GetCPUDescriptorHandleForHeapStart();
+			WholeRange.End.ptr	= WholeRange.Begin.ptr + (Heap->GetDescriptorHandleIncrementSize() * Heap->GetNumDescriptors());
+			FreeList.EmplaceBack(WholeRange);
 		}
 
-		DescriptorHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& InHeap, FreeRange FirstRange)
-			: Heap(InHeap)
-			, FreeList()
-		{
-			VALIDATE(InHeap != nullptr);
-			CPUStart = InHeap->GetCPUDescriptorHandleForHeapStart();
-
-			FreeList.EmplaceBack(FirstRange);
-		}
-
-	public:
-		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	Heap;
-		D3D12_CPU_DESCRIPTOR_HANDLE						CPUStart;
-		TArray<FreeRange>							FreeList;
+		TArray<DescriptorRange> FreeList;
+		TSharedRef<D3D12DescriptorHeap> Heap;
 	};
 
 public:
 	D3D12OfflineDescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
-	~D3D12OfflineDescriptorHeap();
 
 	D3D12_CPU_DESCRIPTOR_HANDLE Allocate(UInt32& OutHeapIndex);
 	void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, UInt32 HeapIndex);
 
-	virtual void SetDebugName(const std::string& InName) override;
+	void SetName(const std::string& InName);
 
-private:
-	void AllocateHeap();
-
-private:
-	TArray<DescriptorHeap> Heaps;
-	std::wstring				DebugName;
-
-	D3D12_DESCRIPTOR_HEAP_TYPE	Type;
-	UInt32						DescriptorSize = 0;
-};
-
-/*
-* D3D12OnlineDescriptorHeap
-*/
-
-class D3D12OnlineDescriptorHeap : public D3D12DeviceChild
-{
-public:
-	D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
-	~D3D12OnlineDescriptorHeap();
-
-	bool Initialize();
-	
-	UInt32 AllocateSlots(UInt32 NumSlots);
-
-	virtual void SetDebugName(const std::string& InName) override;
-
-	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSlotAt(UInt32 Slot) const
+	FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
 	{
-		return { CPUHeapStart.ptr + (Slot * DescriptorSize) };
-	}
-
-	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUSlotAt(UInt32 Slot) const
-	{
-		return { GPUHeapStart.ptr + (Slot * DescriptorSize) };
+		return Type;
 	}
 
 	FORCEINLINE UInt32 GetDescriptorSize() const
 	{
 		return DescriptorSize;
 	}
+
+private:
+	void AllocateHeap();
+
+private:
+	TArray<DescriptorHeap> Heaps;
+	std::string Name;
+
+	D3D12_DESCRIPTOR_HEAP_TYPE Type;
+	UInt32 DescriptorSize = 0;
+};
+
+/*
+* D3D12OnlineDescriptorHeap
+*/
+
+class D3D12OnlineDescriptorHeap : public D3D12RefCountedObject
+{
+public:
+	D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
+
+	Bool Init();
+
+	UInt32 AllocateHandles(UInt32 NumHandles);
+
+	void Reset();
+
+	FORCEINLINE void SetName(const std::string& Name)
+	{
+		Heap->SetName(Name);
+	}
+
+	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleAt(UInt32 Index) const
+	{
+		return { Heap->GetCPUDescriptorHandleForHeapStart().ptr + (Index * Heap->GetDescriptorHandleIncrementSize()) };
+	}
+
+	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleAt(UInt32 Index) const
+	{
+		return { Heap->GetGPUDescriptorHandleForHeapStart().ptr + (Index * Heap->GetDescriptorHandleIncrementSize()) };
+	}
+
+	FORCEINLINE UInt32 GetDescriptorHandleIncrementSize() const
+	{
+		return Heap->GetDescriptorHandleIncrementSize();
+	}
 	
-	FORCEINLINE ID3D12DescriptorHeap* GetHeap() const
+	FORCEINLINE ID3D12DescriptorHeap* GetNativeHeap() const
+	{
+		return Heap->GetHeap();
+	}
+
+	FORCEINLINE D3D12DescriptorHeap* GetHeap() const
 	{
 		return Heap.Get();
 	}
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> Heap;
-
-	D3D12_CPU_DESCRIPTOR_HANDLE	CPUHeapStart;
-	D3D12_GPU_DESCRIPTOR_HANDLE	GPUHeapStart;
-	D3D12_DESCRIPTOR_HEAP_TYPE	Type;
-
-	UInt32 DescriptorSize	= 0;
-	UInt32 CurrentSlot		= 0;
-	UInt32 DescriptorCount	= 0;
-};
-
-/*
-* D3D12DescriptorTable
-*/
-
-class D3D12DescriptorTable
-{
-public:
-	D3D12DescriptorTable(D3D12Device* InDevice, UInt32 InDescriptorCount);
-	~D3D12DescriptorTable();
-
-	void CopyDescriptors();
+	TSharedRef<D3D12DescriptorHeap> Heap;
+	TArray<TSharedRef<D3D12DescriptorHeap>> HeapPool;
+	TArray<TSharedRef<D3D12DescriptorHeap>> DiscardedHeaps;
 	
-	void SetUnorderedAccessView(class D3D12UnorderedAccessView* View, UInt32 SlotIndex);
-	void SetConstantBufferView(class D3D12ConstantBufferView* View, UInt32 SlotIndex);
-	void SetShaderResourceView(class D3D12ShaderResourceView* View, UInt32 SlotIndex);
-
-	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUTableStartHandle() const
-	{
-		return CPUTableStart;
-	}
-
-	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUTableStartHandle() const
-	{
-		return GPUTableStart;
-	}
-
-	FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUTableHandle(UInt32 DescriptorIndex) const
-	{
-		return { CPUTableStart.ptr + (DescriptorSize * DescriptorIndex) };
-	}
-
-	FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUTableHandle(UInt32 DescriptorIndex) const
-	{
-		return { GPUTableStart.ptr + (DescriptorSize * DescriptorIndex) };
-	}
-
-private:
-	D3D12Device* Device = nullptr;
-	
-	TArray<D3D12_CPU_DESCRIPTOR_HANDLE> OfflineHandles;
-
-	TUniquePtr<D3D12ShaderResourceView> NULLView;
-
-	D3D12_CPU_DESCRIPTOR_HANDLE	CPUTableStart;
-	D3D12_GPU_DESCRIPTOR_HANDLE	GPUTableStart;
-
-	UInt32	DescriptorSize		= 0;
-	UInt32	StartDescriptorSlot	= 0;
-	UInt32	DescriptorCount		= 0;
-	bool	IsDirty				= true;
+	D3D12_DESCRIPTOR_HEAP_TYPE Type;
+	UInt32 CurrentHandle		= 0;
+	UInt32 DescriptorCount		= 0;
 };

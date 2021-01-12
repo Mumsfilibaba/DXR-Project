@@ -1,6 +1,5 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "Core.h"
 
 /*
 * EConsoleColor
@@ -8,10 +7,10 @@
 
 enum class EConsoleColor : UInt8
 {
-	CONSOLE_COLOR_RED		= 0,
-	CONSOLE_COLOR_GREEN		= 1,
-	CONSOLE_COLOR_YELLOW	= 2,
-	CONSOLE_COLOR_WHITE		= 3
+	ConsoleColor_Red	= 0,
+	ConsoleColor_Green	= 1,
+	ConsoleColor_Yellow	= 2,
+	ConsoleColor_White	= 3
 };
 
 /*
@@ -21,7 +20,6 @@ enum class EConsoleColor : UInt8
 class GenericOutputDevice
 {
 public:
-	GenericOutputDevice() = default;
 	virtual ~GenericOutputDevice() = default;
 
 	virtual void Print(const std::string& Message) = 0;
@@ -34,16 +32,4 @@ public:
 	{
 		return nullptr;
 	}
-};
-
-/*
-* GlobalOutputDevices
-*/
-
-struct GlobalOutputDevices
-{
-	static GenericOutputDevice* Console;
-
-	static bool Initialize();
-	static bool Release();
 };

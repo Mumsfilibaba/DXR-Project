@@ -8,20 +8,25 @@
 class EngineLoop
 {
 public:
-	static bool CoreInitialize();
+	// Runs before start of loop
+	static Bool PreInit();
+	static Bool Init();
+	static Bool PostInit();
 	
-	static bool Initialize();
-
+	// Runs every frame
+	static void PreTick();
 	static void Tick();
+	static void PostTick();
 
+	// Runs at exit
+	static void PreRelease();
 	static void Release();
+	static void PostRelease();
 
-	static void CoreRelease();
+	static void Exit();
+	
+	static Bool IsRunning();
 
 	static Timestamp GetDeltaTime();
 	static Timestamp GetTotalElapsedTime();
-
-	static bool IsRunning();
-
-	static void Exit();
 };

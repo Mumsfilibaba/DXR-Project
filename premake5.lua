@@ -132,9 +132,20 @@ workspace "DXR-Project"
 			"%{prj.name}/**.inl",
 			"%{prj.name}/**.c",
 			"%{prj.name}/**.cpp",
-			"%{prj.name}/**.hlsl",
+			"%{prj.name}/**.hlsl",	
         }
-        
+		
+		-- In visual studio show natvis files
+		filter "action:vs*"
+			vpaths { ["Natvis"] = "**.natvis" }
+			
+			files 
+			{
+				"%{prj.name}/**.natvis",	
+				"Dependencies/Template-Library/Containers/*.natvis"
+			}
+		filter {}
+			
         -- We do not want to compile HLSL files so exclude them from project
         excludes 
         {	
@@ -145,7 +156,8 @@ workspace "DXR-Project"
 		{
 			"Dependencies/imgui",
 			"Dependencies/stb_image",
-			"Dependencies/tinyobjloader",
+            "Dependencies/tinyobjloader",
+            "Dependencies/Template-Library"
 		}
         
 		links 

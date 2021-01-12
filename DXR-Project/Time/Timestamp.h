@@ -1,9 +1,14 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "Core.h"
 
+#ifdef COMPILER_VISUAL_STUDIO
 #pragma warning(push)
 #pragma warning(disable : 4251)
+#endif
+
+/*
+* Timestamp
+*/
 
 class Timestamp
 {
@@ -138,4 +143,6 @@ private:
 	UInt64 TimestampInNS = 0;
 };
 
+#ifdef COMPILER_VISUAL_STUDIO
 #pragma warning(pop)
+#endif

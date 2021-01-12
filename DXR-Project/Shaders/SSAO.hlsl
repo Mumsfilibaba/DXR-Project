@@ -13,11 +13,11 @@ RWTexture2D<float3> Output : register(u0, space0);
 
 cbuffer Params : register(b0, space0)
 {
-	float2 ScreenSize;
-	float2 NoiseSize;
-	float Radius;
-	float Bias;
-	int KernelSize;
+	float2	ScreenSize;
+	float2	NoiseSize;
+	float	Radius;
+	float	Bias;
+	int		KernelSize;
 };
 
 ConstantBuffer<Camera> CameraBuffer : register(b1, space0);

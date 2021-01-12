@@ -10,13 +10,10 @@
 #include "Scene/Components/MeshComponent.h"
 
 #include "Application/Input.h"
-#include "Application/Application.h"
 
 /*
 * Game
 */
-
-Game* Game::CurrentGame = nullptr;
 
 Game::Game()
 	: CurrentScene(nullptr)
@@ -29,7 +26,7 @@ Game::~Game()
 	SAFEDELETE(CurrentScene);
 }
 
-bool Game::Initialize()
+Bool Game::Init()
 {
 	// Initialize Scene
 	constexpr Float	 SphereOffset	= 1.25f;
@@ -50,43 +47,50 @@ bool Game::Initialize()
 	SphereMesh->ShadowOffset = 0.05f;
 
 	// Create standard textures
-	Byte Pixels[] = { 255, 255, 255, 255 };
-	TSharedPtr<D3D12Texture> BaseTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	Byte Pixels[] = 
+	{ 
+		255, 
+		255, 
+		255, 
+		255 
+	};
+
+	SampledTexture2D BaseTexture = TextureFactory::LoadSampledTextureFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
 	if (!BaseTexture)
 	{
 		return false;
 	}
 	else
 	{
-		BaseTexture->SetDebugName("BaseTexture");
+		BaseTexture.SetName("BaseTexture");
 	}
 
 	Pixels[0] = 127;
 	Pixels[1] = 127;
 	Pixels[2] = 255;
 
-	TSharedPtr<D3D12Texture> BaseNormal = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	SampledTexture2D BaseNormal = TextureFactory::LoadSampledTextureFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
 	if (!BaseNormal)
 	{
 		return false;
 	}
 	else
 	{
-		BaseNormal->SetDebugName("BaseNormal");
+		BaseNormal.SetName("BaseNormal");
 	}
 
 	Pixels[0] = 255;
 	Pixels[1] = 255;
 	Pixels[2] = 255;
 
-	TSharedPtr<D3D12Texture> WhiteTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
+	SampledTexture2D WhiteTexture = TextureFactory::LoadSampledTextureFromMemory(Pixels, 1, 1, 0, EFormat::Format_R8G8B8A8_Unorm);
 	if (!WhiteTexture)
 	{
 		return false;
 	}
 	else
 	{
-		WhiteTexture->SetDebugName("WhiteTexture");
+		WhiteTexture.SetName("WhiteTexture");
 	}
 
 	MaterialProperties MatProperties;
@@ -97,15 +101,15 @@ bool Game::Initialize()
 	{
 		for (UInt32 x = 0; x < SphereCountX; x++)
 		{
-			NewActor = new Actor();
+			NewActor = DBG_NEW Actor();
 			NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 8.0f + StartPositionY + (y * SphereOffset), 0.0f);
 
-			NewActor->SetDebugName("Sphere[" + std::to_string(SphereIndex) + "]");
+			NewActor->SetName("Sphere[" + std::to_string(SphereIndex) + "]");
 			SphereIndex++;
 
 			CurrentScene->AddActor(NewActor);
 
-			NewComponent = new MeshComponent(NewActor);
+			NewComponent = DBG_NEW MeshComponent(NewActor);
 			NewComponent->Mesh		= SphereMesh;
 			NewComponent->Material	= MakeShared<Material>(MatProperties);
 
@@ -115,7 +119,7 @@ bool Game::Initialize()
 			NewComponent->Material->HeightMap		= WhiteTexture;
 			NewComponent->Material->AOMap			= WhiteTexture;
 			NewComponent->Material->MetallicMap		= WhiteTexture;
-			NewComponent->Material->Initialize();
+			NewComponent->Material->Init();
 
 			NewActor->AddComponent(NewComponent);
 
@@ -129,10 +133,10 @@ bool Game::Initialize()
 	// Create Other Meshes
 	MeshData CubeMeshData = MeshFactory::CreateCube();
 
-	NewActor = new Actor();
+	NewActor = DBG_NEW Actor();
 	CurrentScene->AddActor(NewActor);
 
-	NewActor->SetDebugName("Cube");
+	NewActor->SetName("Cube");
 	NewActor->GetTransform().SetTranslation(0.0f, 2.0f, -2.0f);
 
 	MatProperties.AO			= 1.0f;
@@ -140,68 +144,86 @@ bool Game::Initialize()
 	MatProperties.Roughness		= 1.0f;
 	MatProperties.EnableHeight	= 1;
 
-	NewComponent = new MeshComponent(NewActor);
+	NewComponent = DBG_NEW MeshComponent(NewActor);
 	NewComponent->Mesh		= Mesh::Make(CubeMeshData);
 	NewComponent->Material	= MakeShared<Material>(MatProperties);
 
-	TSharedPtr<D3D12Texture> AlbedoMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	SampledTexture2D AlbedoMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_Albedo.png", 
+		TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!AlbedoMap)
 	{
 		return false;
 	}
 	else
 	{
-		AlbedoMap->SetDebugName("AlbedoMap");
+		AlbedoMap.SetName("AlbedoMap");
 	}
 
-	TSharedPtr<D3D12Texture> NormalMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Normal.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	SampledTexture2D NormalMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_Normal.png", 
+		TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!NormalMap)
 	{
 		return false;
 	}
 	else
 	{
-		NormalMap->SetDebugName("NormalMap");
+		NormalMap.SetName("NormalMap");
 	}
 
-	TSharedPtr<D3D12Texture> AOMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	SampledTexture2D AOMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_AO.png", 
+		TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!AOMap)
 	{
 		return false;
 	}
 	else
 	{
-		AOMap->SetDebugName("AOMap");
+		AOMap.SetName("AOMap");
 	}
 
-	TSharedPtr<D3D12Texture> RoughnessMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	SampledTexture2D RoughnessMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_Roughness.png", 
+		TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!RoughnessMap)
 	{
 		return false;
 	}
 	else
 	{
-		RoughnessMap->SetDebugName("RoughnessMap");
+		RoughnessMap.SetName("RoughnessMap");
 	}
 
-	TSharedPtr<D3D12Texture> HeightMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	SampledTexture2D HeightMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_Height.png",
+		TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!HeightMap)
 	{
 		return false;
 	}
 	else
 	{
-		HeightMap->SetDebugName("HeightMap");
+		HeightMap.SetName("HeightMap");
 	}
 
-	TSharedPtr<D3D12Texture> MetallicMap = TSharedPtr(TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png", TEXTURE_FACTORY_FLAGS_GENERATE_MIPS, DXGI_FORMAT_R8G8B8A8_UNORM));
+	SampledTexture2D MetallicMap = TextureFactory::LoadSampledTextureFromFile(
+		"../Assets/Textures/Gate_Metallic.png"
+		, TextureFactoryFlag_GenerateMips, 
+		EFormat::Format_R8G8B8A8_Unorm);
 	if (!MetallicMap)
 	{
 		return false;
 	}
 	else
 	{
-		MetallicMap->SetDebugName("MetallicMap");
+		MetallicMap.SetName("MetallicMap");
 	}
 
 	NewComponent->Material->AlbedoMap		= AlbedoMap;
@@ -210,14 +232,14 @@ bool Game::Initialize()
 	NewComponent->Material->HeightMap		= HeightMap;
 	NewComponent->Material->AOMap			= AOMap;
 	NewComponent->Material->MetallicMap		= MetallicMap;
-	NewComponent->Material->Initialize();
+	NewComponent->Material->Init();
 	NewActor->AddComponent(NewComponent);
 
-	CurrentCamera = new Camera();
+	CurrentCamera = DBG_NEW Camera();
 	CurrentScene->AddCamera(CurrentCamera);
 
 	// Add PointLight- Source
-	PointLight* Light0 = new PointLight();
+	PointLight* Light0 = DBG_NEW PointLight();
 	Light0->SetPosition(14.0f, 1.0f, -0.5f);
 	Light0->SetColor(1.0f, 1.0f, 1.0f);
 	Light0->SetShadowBias(0.0005f);
@@ -227,7 +249,7 @@ bool Game::Initialize()
 	CurrentScene->AddLight(Light0);
 
 	// Add DirectionalLight- Source
-	DirectionalLight* Light1 = new DirectionalLight();
+	DirectionalLight* Light1 = DBG_NEW DirectionalLight();
 	Light1->SetShadowBias(0.0008f);
 	Light1->SetMaxShadowBias(0.008f);
 	Light1->SetShadowNearPlane(0.01f);
@@ -240,11 +262,6 @@ bool Game::Initialize()
 	return true;
 }
 
-void Game::Destroy()
-{
-	delete this;
-}
-
 void Game::Tick(Timestamp DeltaTime)
 {
 	// Run app
@@ -252,66 +269,55 @@ void Game::Tick(Timestamp DeltaTime)
 	const Float RotationSpeed = 45.0f;
 
 	Float Speed = 1.0f;
-	if (Input::IsKeyDown(EKey::KEY_LEFT_SHIFT))
+	if (Input::IsKeyDown(EKey::Key_LeftShift))
 	{
 		Speed = 4.0f;
 	}
 
-	if (Input::IsKeyDown(EKey::KEY_RIGHT))
+	if (Input::IsKeyDown(EKey::Key_Right))
 	{
 		CurrentCamera->Rotate(0.0f, XMConvertToRadians(RotationSpeed * Delta), 0.0f);
 	}
-	else if (Input::IsKeyDown(EKey::KEY_LEFT))
+	else if (Input::IsKeyDown(EKey::Key_Left))
 	{
 		CurrentCamera->Rotate(0.0f, XMConvertToRadians(-RotationSpeed * Delta), 0.0f);
 	}
 
-	if (Input::IsKeyDown(EKey::KEY_UP))
+	if (Input::IsKeyDown(EKey::Key_Up))
 	{
 		CurrentCamera->Rotate(XMConvertToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
 	}
-	else if (Input::IsKeyDown(EKey::KEY_DOWN))
+	else if (Input::IsKeyDown(EKey::Key_Down))
 	{
 		CurrentCamera->Rotate(XMConvertToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
 	}
 
-	if (Input::IsKeyDown(EKey::KEY_W))
+	if (Input::IsKeyDown(EKey::Key_W))
 	{
 		CurrentCamera->Move(0.0f, 0.0f, Speed * Delta);
 	}
-	else if (Input::IsKeyDown(EKey::KEY_S))
+	else if (Input::IsKeyDown(EKey::Key_S))
 	{
 		CurrentCamera->Move(0.0f, 0.0f, -Speed * Delta);
 	}
 
-	if (Input::IsKeyDown(EKey::KEY_A))
+	if (Input::IsKeyDown(EKey::Key_A))
 	{
 		CurrentCamera->Move(Speed * Delta, 0.0f, 0.0f);
 	}
-	else if (Input::IsKeyDown(EKey::KEY_D))
+	else if (Input::IsKeyDown(EKey::Key_D))
 	{
 		CurrentCamera->Move(-Speed * Delta, 0.0f, 0.0f);
 	}
 
-	if (Input::IsKeyDown(EKey::KEY_Q))
+	if (Input::IsKeyDown(EKey::Key_Q))
 	{
 		CurrentCamera->Move(0.0f, Speed * Delta, 0.0f);
 	}
-	else if (Input::IsKeyDown(EKey::KEY_E))
+	else if (Input::IsKeyDown(EKey::Key_E))
 	{
 		CurrentCamera->Move(0.0f, -Speed * Delta, 0.0f);
 	}
 
 	CurrentCamera->UpdateMatrices();
-}
-
-Game& Game::GetCurrent()
-{
-	VALIDATE(CurrentGame != nullptr);
-	return *CurrentGame;
-}
-
-void Game::SetCurrent(Game* InCurrentGame)
-{
-	CurrentGame = InCurrentGame;
 }

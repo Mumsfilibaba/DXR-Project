@@ -1,48 +1,46 @@
 #pragma once
+#include "RenderingCore/RayTracing.h"
+
 #include "D3D12DeviceChild.h"
 #include "D3D12Buffer.h"
 #include "D3D12Views.h"
 
-#include "Defines.h"
+#include "Core.h"
 
 class D3D12CommandList;
-class D3D12DescriptorTable;
 class Material;
 
 /*
 * D3D12RayTracingGeometry - Equal to the Bottom-Level AccelerationStructure
 */
 
-class D3D12RayTracingGeometry : public D3D12DeviceChild
+class D3D12RayTracingGeometry : public RayTracingGeometry, public D3D12DeviceChild
 {
 public:
 	D3D12RayTracingGeometry(D3D12Device* InDevice);
 	~D3D12RayTracingGeometry();
 
-	bool BuildAccelerationStructure(D3D12CommandList* CommandList, TSharedPtr<D3D12Buffer>& InVertexBuffer, UInt32 InVertexCount, TSharedPtr<D3D12Buffer>& IndexBuffer, UInt32 InIndexCount);
+	bool BuildAccelerationStructure(
+		D3D12CommandList* CommandList, 
+		TSharedRef<D3D12VertexBuffer>& InVertexBuffer, 
+		UInt32 InVertexCount, 
+		TSharedRef<D3D12IndexBuffer>& InIndexBuffer, 
+		UInt32 InIndexCount);
 
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
+	void SetName(const std::string& Name);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
 
-	FORCEINLINE TSharedPtr<D3D12DescriptorTable> GetDescriptorTable() const
-	{
-		return DescriptorTable;
-	}
-
 private:
-	TSharedPtr<D3D12Buffer> VertexBuffer;
-	TSharedPtr<D3D12Buffer> IndexBuffer;
-	TSharedPtr<D3D12DescriptorTable> DescriptorTable;
-
-	D3D12Buffer* ResultBuffer	= nullptr;
-	D3D12Buffer* ScratchBuffer	= nullptr;
+	TSharedRef<D3D12VertexBuffer>	VertexBuffer	= nullptr;
+	TSharedRef<D3D12IndexBuffer>	IndexBuffer		= nullptr;
+	D3D12StructuredBuffer* ResultBuffer		= nullptr;
+	D3D12StructuredBuffer* ScratchBuffer	= nullptr;
 	
 	UInt32 VertexCount	= 0;
 	UInt32 IndexCount	= 0;
 
-	bool IsDirty = true;
+	Bool IsDirty = true;
 };
 
 /*
@@ -83,22 +81,22 @@ struct BindingTableEntry
 public:
 	BindingTableEntry()
 		: ShaderExportName()
-		, DescriptorTable0(nullptr)
-		, DescriptorTable1(nullptr)
+		//, DescriptorTable0(nullptr)
+		//, DescriptorTable1(nullptr)
 	{
 	}
 
-	BindingTableEntry(std::string InShaderExportName, TSharedPtr<D3D12DescriptorTable> InDescriptorTable0, TSharedPtr<D3D12DescriptorTable> InDescriptorTable1)
-		: ShaderExportName(InShaderExportName)
-		, DescriptorTable0(InDescriptorTable0)
-		, DescriptorTable1(InDescriptorTable1)
-	{
-	}
+	//BindingTableEntry(std::string InShaderExportName, TSharedPtr<D3D12DescriptorTable> InDescriptorTable0, TSharedPtr<D3D12DescriptorTable> InDescriptorTable1)
+	//	: ShaderExportName(InShaderExportName)
+	//	, DescriptorTable0(InDescriptorTable0)
+	//	, DescriptorTable1(InDescriptorTable1)
+	//{
+	//}
 
 	std::string ShaderExportName;
 
-	TSharedPtr<D3D12DescriptorTable> DescriptorTable0;
-	TSharedPtr<D3D12DescriptorTable> DescriptorTable1;
+	//TSharedPtr<D3D12DescriptorTable> DescriptorTable0;
+	//TSharedPtr<D3D12DescriptorTable> DescriptorTable1;
 };
 
 /*
@@ -118,8 +116,7 @@ public:
 		TArray<BindingTableEntry>& InBindingTableEntries,
 		UInt32 InNumHitGroups);
 
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
+	void SetName(const std::string& Name);
 
 	D3D12_GPU_VIRTUAL_ADDRESS_RANGE				GetRayGenerationShaderRecord()	const;
 	D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE	GetMissShaderTable()			const;
@@ -138,15 +135,14 @@ public:
 	}
 
 private:
-	D3D12Buffer* ResultBuffer	= nullptr;
-	D3D12Buffer* ScratchBuffer	= nullptr;
-	D3D12Buffer* InstanceBuffer	= nullptr;
+	D3D12StructuredBuffer* ResultBuffer		= nullptr;
+	D3D12StructuredBuffer* ScratchBuffer	= nullptr;
+	D3D12StructuredBuffer* InstanceBuffer	= nullptr;
+	D3D12StructuredBuffer* BindingTable		= nullptr;
+	UInt32 BindingTableStride	= 0;
+	UInt32 NumHitGroups			= 0;
 
-	D3D12Buffer*	BindingTable		= nullptr;
-	UInt32			BindingTableStride	= 0;
-	UInt32			NumHitGroups		= 0;
-
-	TSharedPtr<D3D12ShaderResourceView>	View;
+	TSharedRef<D3D12ShaderResourceView>	View;
 	
 	TArray<D3D12RayTracingGeometryInstance>	Instances;
 	TArray<BindingTableEntry>				BindingTableEntries;

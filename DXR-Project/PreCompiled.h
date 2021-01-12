@@ -17,24 +17,25 @@ using namespace DirectX;
 #include <imgui.h>
 
 // Common
-#include "Defines.h"
-#include "Types.h"
+#include "Core.h"
 
 // Debug
 #include "Debug/Debug.h"
 
 // Containers
-#include "Containers/String.h"
-#include "Containers/TArray.h"
-#include "Containers/TSharedPtr.h"
-#include "Containers/TSharedRef.h"
-#include "Containers/TUniquePtr.h"
+#include <Containers/Types.h>
+#include <Containers/TArray.h>
+#include <Containers/TArrayView.h>
+#include <Containers/TStaticArray.h>
+#include <Containers/TFunction.h>
+#include <Containers/TSharedPtr.h>
+#include <Containers/TUniquePtr.h>
+#include <Containers/TUtilities.h>
 
 // Application
 #include "Application/Log.h"
 
 // Utilities
-#include "Utilities/TUtilities.h"
 #include "Utilities/HashUtilities.h"
 
 // Math
@@ -44,12 +45,13 @@ using namespace DirectX;
 #include "Core/ClassType.h"
 #include "Core/CoreObject.h"
 #include "Core/RefCountedObject.h"
+#include "Core/TSharedRef.h"
 
 // Memory
 #include "Memory/Memory.h"
 #include "Memory/New.h"
 
 // Windows
-#ifdef _WIN32
+#ifdef PLATFORM_WINDOWS
 	#include "Windows/Windows.h"
 #endif

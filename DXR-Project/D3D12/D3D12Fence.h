@@ -1,30 +1,57 @@
 #pragma once
-#include "D3D12DeviceChild.h"
-
-#include "Types.h"
+#include "D3D12RefCountedObject.h"
 
 /*
 * D3D12Fence
 */
 
-class D3D12Fence : public D3D12DeviceChild
+class D3D12Fence : public D3D12RefCountedObject
 {
 public:
-	D3D12Fence(D3D12Device* InDevice);
-	~D3D12Fence();
+	inline D3D12Fence(D3D12Device* InDevice, ID3D12Fence* InFence, HANDLE InEvent)
+		: D3D12RefCountedObject(InDevice)
+		, Fence(InFence)
+		, Event(InEvent)
+	{
+		VALIDATE(Fence != nullptr);
+		VALIDATE(Event != 0);
+	}
 
-	bool Initialize(UInt64 InitalValue);
+	inline ~D3D12Fence()
+	{
+		::CloseHandle(Event);
+	}
 
-	bool WaitForValue(UInt64 FenceValue);
+	FORCEINLINE bool WaitForValue(UInt64 Value)
+	{
+		HRESULT hResult = Fence->SetEventOnCompletion(Value, Event);
+		if (SUCCEEDED(hResult))
+		{
+			::WaitForSingleObjectEx(Event, INFINITE, FALSE);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	FORCEINLINE bool Signal(UInt64 Value)
+	{
+		HRESULT hResult = Fence->Signal(Value);
+		return SUCCEEDED(hResult);
+	}
+
+	FORCEINLINE void SetName(const std::string& Name)
+	{
+		std::wstring WideName = ConvertToWide(Name);
+		Fence->SetName(WideName.c_str());
+	}
 
 	FORCEINLINE ID3D12Fence* GetFence() const
 	{
 		return Fence.Get();
 	}
-
-public:
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12Fence> Fence;

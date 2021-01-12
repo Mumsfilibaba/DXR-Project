@@ -1,6 +1,5 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "Core.h"
 
 /*
 * RefCountedObject
@@ -9,17 +8,19 @@
 class RefCountedObject
 {
 public:
+	using RefCountType = UInt32;
+
 	RefCountedObject();
-	virtual ~RefCountedObject();
+	virtual ~RefCountedObject() = default;
 
-	UInt32 AddRef();
-	UInt32 Release();
+	RefCountType AddRef();
+	RefCountType Release();
 
-	FORCEINLINE UInt32 GetRefCount() const
+	FORCEINLINE RefCountType GetRefCount() const
 	{
 		return StrongReferences;
 	}
 
 private:
-	UInt32 StrongReferences;
+	RefCountType StrongReferences;
 };

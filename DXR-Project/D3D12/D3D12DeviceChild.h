@@ -1,14 +1,11 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
-
-#include <d3d12.h>
-
-#include <wrl/client.h>
-
-#include "Containers/String.h"
+#include "D3D12Helpers.h"
 
 class D3D12Device;
+
+/*
+* D3D12DeviceChild
+*/
 
 class D3D12DeviceChild
 {
@@ -16,14 +13,13 @@ public:
 	D3D12DeviceChild(D3D12Device* InDevice)
 		: Device(InDevice)
 	{
+		 VALIDATE(Device != nullptr);
 	}
 
-	~D3D12DeviceChild()
+	virtual ~D3D12DeviceChild()
 	{
 		Device = nullptr;
 	}
-
-	virtual void SetDebugName(const std::string& InName) = 0;
 
 	FORCEINLINE D3D12Device* GetDevice() const
 	{

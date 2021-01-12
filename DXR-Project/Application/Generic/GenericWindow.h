@@ -1,37 +1,32 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "Core.h"
 
 #include <string>
 
 /*
 * EWindowStyleFlag
 */
+
 enum EWindowStyleFlag : UInt32
 {
-	WINDOW_STYLE_FLAG_NONE			= 0x00,
-	WINDOW_STYLE_FLAG_TITLED		= FLAG(1),
-	WINDOW_STYLE_FLAG_CLOSABLE		= FLAG(2),
-	WINDOW_STYLE_FLAG_MINIMIZABLE	= FLAG(3),
-	WINDOW_STYLE_FLAG_MAXIMIZABLE	= FLAG(4),
-	WINDOW_STYLE_FLAG_RESIZEABLE	= FLAG(5),
+	WindowStyleFlag_None		= 0x0,
+	WindowStyleFlag_Titled		= FLAG(1),
+	WindowStyleFlag_Closable	= FLAG(2),
+	WindowStyleFlag_Minimizable	= FLAG(3),
+	WindowStyleFlag_Maximizable	= FLAG(4),
+	WindowStyleFlag_Resizeable	= FLAG(5),
 };
 
 /*
-* WindowInitializer
+* WindowCreateInfo
 */
-struct WindowInitializer
+
+struct WindowCreateInfo
 {
 public:
-	inline WindowInitializer()
-		: Title()
-		, Width(0)
-		, Height(0)
-		, Style(0)
-	{
-	}
+	WindowCreateInfo() = default;
 
-	inline WindowInitializer(const std::string& InTitle, UInt32 InWidth, UInt32 InHeight, UInt32 InStyle)
+	WindowCreateInfo(const std::string& InTitle, UInt32 InWidth, UInt32 InHeight, UInt32 InStyle)
 		: Title(InTitle)
 		, Width(InWidth)
 		, Height(InHeight)
@@ -39,89 +34,83 @@ public:
 	{
 	}
 
-	FORCEINLINE bool IsTitled() const
+	FORCEINLINE Bool IsTitled() const
 	{
-		return Style & WINDOW_STYLE_FLAG_TITLED;
+		return Style & WindowStyleFlag_Titled;
 	}
 
-	FORCEINLINE bool IsClosable() const
+	FORCEINLINE Bool IsClosable() const
 	{
-		return Style & WINDOW_STYLE_FLAG_CLOSABLE;
+		return Style & WindowStyleFlag_Closable;
 	}
 
-	FORCEINLINE bool IsMaximizable() const
+	FORCEINLINE Bool IsMinimizable() const
 	{
-		return Style & WINDOW_STYLE_FLAG_MAXIMIZABLE;
+		return Style & WindowStyleFlag_Minimizable;
 	}
 
-	FORCEINLINE bool IsMinimizable() const
+	FORCEINLINE Bool IsMaximizable() const
 	{
-		return Style & WINDOW_STYLE_FLAG_MINIMIZABLE;
+		return Style & WindowStyleFlag_Maximizable;
 	}
 
-	FORCEINLINE bool IsResizeable() const
+	FORCEINLINE Bool IsResizeable() const
 	{
-		return Style & WINDOW_STYLE_FLAG_RESIZEABLE;
+		return Style & WindowStyleFlag_Resizeable;
 	}
 
 	std::string Title;
-	UInt32 Width;
-	UInt32 Height;
-	UInt32 Style;
+	UInt32 Width	= 0;
+	UInt32 Height	= 0;
+	UInt32 Style	= 0;
 };
 
 /*
 * WindowShape
 */
+
 struct WindowShape
 {
-	inline WindowShape()
-		: Width(0)
-		, Height(0)
-		, Position({ 0, 0 })
-	{
-	}
+	WindowShape() = default;
 
-	inline WindowShape(UInt32 InWidth, UInt32 InHeight, Int32 x, Int32 y)
+	WindowShape(UInt32 InWidth, UInt32 InHeight, Int32 x, Int32 y)
 		: Width(InWidth)
 		, Height(InHeight)
 		, Position({ x, y })
 	{
 	}
 
-	UInt32 Width;
-	UInt32 Height;
+	UInt32 Width	= 0;
+	UInt32 Height	= 0;
 	struct
 	{
-		Int32 x;
-		Int32 y;
+		Int32 x = 0;
+		Int32 y = 0;
 	} Position;
 };
 
 /*
 * GenericWindow
 */
+
 class GenericWindow : public RefCountedObject
 {
 public:
-	GenericWindow()		= default;
-	~GenericWindow()	= default;
+	virtual Bool Init(const WindowCreateInfo& InCreateInfo) = 0;
 
-	virtual bool Initialize(const WindowInitializer& InInitializer) = 0;
-
-	virtual void Show(bool Maximized) = 0;
-	virtual void Minimize() = 0;
-	virtual void Maximize() = 0;
-	virtual void Close() = 0;
-	virtual void Restore() = 0;
+	virtual void Show(Bool Maximized) = 0;
+	virtual void Minimize()	= 0;
+	virtual void Maximize()	= 0;
+	virtual void Close()	= 0;
+	virtual void Restore()	= 0;
 	virtual void ToggleFullscreen() = 0;
 
-	virtual bool IsValid() const = 0;
-	virtual bool IsActiveWindow() const = 0;
+	virtual Bool IsValid() const		= 0;
+	virtual Bool IsActiveWindow() const = 0;
 
 	virtual void SetTitle(const std::string& Title) = 0;
 
-	virtual void SetWindowShape(const WindowShape& Shape, bool Move)	= 0;
+	virtual void SetWindowShape(const WindowShape& Shape, Bool Move)	= 0;
 	virtual void GetWindowShape(WindowShape& OutWindowShape) const		= 0;
 
 	virtual UInt32 GetWidth()	const = 0;
@@ -132,11 +121,11 @@ public:
 		return nullptr;
 	}
 
-	FORCEINLINE const WindowInitializer& GetInitializer() const
+	FORCEINLINE const WindowCreateInfo& GetCreateInfo() const
 	{
-		return Initializer;
+		return CreateInfo;
 	}
 
 protected:
-	WindowInitializer Initializer;
+	WindowCreateInfo CreateInfo;
 };

@@ -1,6 +1,5 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "Core.h"
 
 /*
 * Class for storing ClassInfo
@@ -10,8 +9,7 @@ class ClassType
 {
 public:
 	ClassType(const Char* InName, const ClassType* InSuperClass);
-	~ClassType() = default;
-
+	
 	bool IsSubClassOf(const ClassType* Class) const;
 
 	template<typename T>

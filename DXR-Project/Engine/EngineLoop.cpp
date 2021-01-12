@@ -3,13 +3,19 @@
 
 #include "Time/Clock.h"
 
-#include "Application/Application.h"
 #include "Application/Generic/GenericOutputDevice.h"
 #include "Application/Generic/GenericCursor.h"
+
 #include "Application/Platform/PlatformApplication.h"
+#include "Application/Platform/PlatformDialogMisc.h"
+#include "Application/Events/EventDispatcher.h"
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
+#include "Rendering/TextureFactory.h"
+
+#include "RenderingCore/Texture.h"
+#include "RenderingCore/CommandList.h"
 
 #include "Editor/Editor.h"
 
@@ -20,126 +26,151 @@
 */
 
 static Clock	GlobalClock;
-static bool		GlobalIsRunning = false;
+static Bool		GlobalIsRunning = false;
 
 /*
 * EngineLoop
 */
 
-bool EngineLoop::CoreInitialize()
+Bool EngineLoop::PreInit()
 {
-	GlobalOutputDevices::Initialize();
+	GlobalConsoleOutput = PlatformOutputDevice::Make();
 
-	EngineGlobals::PlatformApplication = TSharedPtr(PlatformApplication::Make());
-	if (!EngineGlobals::PlatformApplication->Initialize())
+	GlobalPlatformApplication = PlatformApplication::Make();
+	if (!GlobalPlatformApplication->Init())
 	{
-		::MessageBox(0, "Failed to create Platform Application", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "Failed to create Platform Application");
 		return false;
 	}
 
 	return true;
 }
 
-bool EngineLoop::Initialize()
+Bool EngineLoop::Init()
 {
-	// Application
-	Application* App = Application::Make();
-	if (!App->Initialize(EngineGlobals::PlatformApplication))
+	GlobalEventDispatcher = DBG_NEW EventDispatcher(GlobalPlatformApplication);
+	GlobalPlatformApplication->SetEventHandler(GlobalEventDispatcher);
+
+	const UInt32 Style =
+		WindowStyleFlag_Titled		|
+		WindowStyleFlag_Closable	|
+		WindowStyleFlag_Minimizable |
+		WindowStyleFlag_Maximizable |
+		WindowStyleFlag_Resizeable;
+
+	WindowCreateInfo WinCreateInfo("DXR Engine", 1920, 1080, Style);
+	GlobalMainWindow = GlobalPlatformApplication->MakeWindow();
+	
+	if (!GlobalMainWindow->Init(WinCreateInfo))
 	{
-		::MessageBox(0, "Failed to create Application", "ERROR", MB_ICONERROR);
-		return false;
-	}
-
-	// Cursors
-	GlobalCursors::Initialize();
-
-	// RenderAPI
-	const bool EnableDebug =
-#if ENABLE_D3D12_DEBUG
-		true;
-#else
-		false;
-#endif
-
-	RenderingAPI* RenderingAPI = RenderingAPI::Make(ERenderingAPI::RENDERING_API_D3D12);
-	if (!RenderingAPI)
-	{
-		return false;
-	}
-
-	if (!RenderingAPI->Initialize(App->GetMainWindow(), EnableDebug))
-	{
-		return false;
-	}
-
-	// Renderer
-	Renderer* Renderer = Renderer::Make();
-	if (!Renderer)
-	{
-		::MessageBox(0, "FAILED to create Renderer", "ERROR", MB_ICONERROR);
-		return false;
-	}
-
-	// ImGui
-	if (!DebugUI::Initialize())
-	{
-		::MessageBox(0, "FAILED to create ImGuiContext", "ERROR", MB_ICONERROR);
-		return false;
-	}
-
-	// Game
-	Game* GameInstance = new Game();
-	if (!GameInstance->Initialize())
-	{
-		::MessageBox(0, "FAILED initialize Game", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "Failed to create Application");
 		return false;
 	}
 	else
 	{
-		Game::SetCurrent(GameInstance);
+		GlobalMainWindow->Show(false);
 	}
 
+	GlobalCursors::Init();
+
+	// RenderAPI
+	if (!RenderingAPI::Init(ERenderingAPI::RenderingAPI_D3D12))
+	{
+		return false;
+	}
+
+	if (!TextureFactory::Init())
+	{
+		return false;
+	}
+
+	GlobalRenderer = DBG_NEW Renderer();
+	if (!GlobalRenderer->Init())
+	{
+		PlatformDialogMisc::MessageBox("ERROR", "FAILED to create Renderer");
+		return false;
+	}
+
+	if (!DebugUI::Init())
+	{
+		PlatformDialogMisc::MessageBox("ERROR", "FAILED to create ImGuiContext");
+		return false;
+	}
+
+	GlobalGame = DBG_NEW Game();
+	if (!GlobalGame->Init())
+	{
+		PlatformDialogMisc::MessageBox("ERROR", "FAILED initialize Game");
+		return false;
+	}
+
+	return true;
+}
+
+Bool EngineLoop::PostInit()
+{
 	GlobalIsRunning = true;
 	return true;
 }
 
-void EngineLoop::Tick()
+void EngineLoop::PreTick()
 {
 	GlobalClock.Tick();
 
-	// Application
-	Application::Get().Tick();
+	if (!PlatformApplication::PollPlatformEvents())
+	{
+		Exit();
+	}
+}
 
-	// Update Game
-	Game::GetCurrent().Tick(GlobalClock.GetDeltaTime());
+void EngineLoop::Tick()
+{
+	GlobalGame->Tick(GlobalClock.GetDeltaTime());
 
-	// Update renderer
-	Renderer::Get()->Tick(*Scene::GetCurrentScene());
-
-	// Update editor
 	Editor::Tick();
+}
+
+void EngineLoop::PostTick()
+{
+	GlobalRenderer->Tick(*Scene::GetCurrentScene());
+}
+
+void EngineLoop::PreRelease()
+{
+	CommandListExecutor::WaitForGPU();
+	
+	TextureFactory::Release();
 }
 
 void EngineLoop::Release()
 {
-	// Destroy game instance
-	Game::GetCurrent().Destroy();
-	Game::SetCurrent(nullptr);
+	SAFEDELETE(GlobalGame);
 
 	DebugUI::Release();
 
-	Renderer::Release();
+	SAFEDELETE(GlobalRenderer);
+
+	RenderingAPI::Release();
 }
 
-void EngineLoop::CoreRelease()
+void EngineLoop::PostRelease()
 {
-	RenderingAPI::Release();
+	SAFEDELETE(GlobalEventDispatcher);
 
-	Application::Get().Release();
+	GlobalMainWindow->Release();
 
-	EngineGlobals::PlatformApplication.Reset();
+	SAFEDELETE(GlobalPlatformApplication);
+	SAFEDELETE(GlobalConsoleOutput);
+}
 
-	GlobalOutputDevices::Release();
+void EngineLoop::Exit()
+{
+	GlobalIsRunning = false;
+}
+
+Bool EngineLoop::IsRunning()
+{
+	return GlobalIsRunning;
 }
 
 Timestamp EngineLoop::GetDeltaTime()
@@ -150,14 +181,4 @@ Timestamp EngineLoop::GetDeltaTime()
 Timestamp EngineLoop::GetTotalElapsedTime()
 {
 	return GlobalClock.GetTotalTime();
-}
-
-bool EngineLoop::IsRunning()
-{
-	return GlobalIsRunning;
-}
-
-void EngineLoop::Exit()
-{
-	GlobalIsRunning = false;
 }

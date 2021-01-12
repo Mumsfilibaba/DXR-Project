@@ -2,286 +2,331 @@
 #include "D3D12Resource.h"
 #include "D3D12Views.h"
 #include "D3D12CommandAllocator.h"
+#include "D3D12RootSignature.h"
 #include "D3D12DescriptorHeap.h"
+#include "D3D12RefCountedObject.h"
 
-class D3D12Texture;
 class D3D12ComputePipelineState;
-class D3D12RootSignature;
 
 /*
 * D3D12CommandList
 */
 
-class D3D12CommandList : public D3D12DeviceChild
+class D3D12CommandList : public D3D12RefCountedObject
 {
-	struct GenerateMipsHelper
-	{
-		TUniquePtr<D3D12ComputePipelineState>		GenerateMipsTex2D_PSO;
-		TUniquePtr<D3D12ComputePipelineState>		GenerateMipsTexCube_PSO;
-		TUniquePtr<D3D12RootSignature>				GenerateMipsRootSignature;
-		TUniquePtr<D3D12UnorderedAccessView>		NULLView;
-		TUniquePtr<D3D12DescriptorTable>			SRVDescriptorTable;
-		TArray<TUniquePtr<D3D12DescriptorTable>>	UAVDescriptorTables;
-	};
-
 public:
-	D3D12CommandList(D3D12Device* InDevice);
-	~D3D12CommandList();
-
-	bool Initialize(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline);
-
-	void GenerateMips(D3D12Texture* Dest);
-
-	void FlushDeferredResourceBarriers();
-
-	void BindGlobalOnlineDescriptorHeaps();
-
-	void UploadBufferData(class D3D12Buffer* Dest, const UInt32 DestOffset, const Void* Src, const UInt32 SizeInBytes);
-	void UploadTextureData(D3D12Texture* Dest, const Void* Src, DXGI_FORMAT Format, const UInt32 Width, const UInt32 Height, const UInt32 Depth, const UInt32 Stride, const UInt32 RowPitch);
-
-	void DeferDestruction(D3D12Resource* Resource);
-
-	void TransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
-	void UnorderedAccessBarrier(D3D12Resource* Resource);
-
-	FORCEINLINE void ReleaseDeferredResources()
+	D3D12CommandList(D3D12Device* InDevice, ID3D12GraphicsCommandList* InCmdList)
+		: D3D12RefCountedObject(InDevice)
+		, CmdList(InCmdList)
+		, DXRCmdList(nullptr)
 	{
-		UploadBufferOffset = 0;
-		ResourcesPendingRelease.Clear();
+	}
+
+	FORCEINLINE bool InitRayTracing()
+	{
+		if (FAILED(CmdList.As<ID3D12GraphicsCommandList4>(&DXRCmdList)))
+		{
+			LOG_ERROR("[D3D12CommandList]: FAILED to retrive DXR-CommandList");
+			return false;
+		}
+		else
+		{
+			return true;
+		}
 	}
 
 	FORCEINLINE bool Reset(D3D12CommandAllocator* Allocator)
 	{
-		// Reset NumDrawcalls
-		NumDrawCalls = 0;
-
-		ReleaseDeferredResources(); // TODO: Make sure that we can do this here
-		return SUCCEEDED(CommandList->Reset(Allocator->GetAllocator(), nullptr));
+		IsReady = true;
+		return SUCCEEDED(CmdList->Reset(Allocator->GetAllocator(), nullptr));
 	}
 
 	FORCEINLINE bool Close()
 	{
-		FlushDeferredResourceBarriers();
-
-		return SUCCEEDED(CommandList->Close());
+		IsReady = false;
+		return SUCCEEDED(CmdList->Close());
 	}
 
-	FORCEINLINE void ClearRenderTargetView(const D3D12RenderTargetView* View, const Float ClearColor[4])
+	FORCEINLINE void ClearRenderTargetView(
+		D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView,
+		const Float Color[4],
+		UInt32 NumRects,
+		const D3D12_RECT* Rects)
 	{
-		FlushDeferredResourceBarriers();
-
-		CommandList->ClearRenderTargetView(View->GetOfflineHandle(), ClearColor, 0, nullptr);
+		CmdList->ClearRenderTargetView(RenderTargetView, Color, NumRects, Rects);
 	}
 
-	FORCEINLINE void ClearDepthStencilView(const D3D12DepthStencilView* View, D3D12_CLEAR_FLAGS Flags, Float Depth, const UInt8 Stencil)
+	FORCEINLINE void ClearDepthStencilView(
+		D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView,
+		D3D12_CLEAR_FLAGS Flags, 
+		Float Depth, 
+		const UInt8 Stencil)
 	{
-		FlushDeferredResourceBarriers();
-
-		CommandList->ClearDepthStencilView(View->GetOfflineHandle(), Flags, Depth, Stencil, 0, nullptr);
+		CmdList->ClearDepthStencilView(DepthStencilView, Flags, Depth, Stencil, 0, nullptr);
 	}
 
-	FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const D3D12UnorderedAccessView* View, const Float ClearColor[4])
+	FORCEINLINE void ClearUnorderedAccessViewFloat(
+		D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, 
+		const D3D12UnorderedAccessView* View,
+		 const Float ClearColor[4])
 	{
-		FlushDeferredResourceBarriers();
-
-		CommandList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), View->GetResource(), ClearColor, 0, nullptr);
+		const D3D12Resource* Resource = View->GetResource();
+		CmdList->ClearUnorderedAccessViewFloat(
+			GPUHandle, 
+			View->GetOfflineHandle(), 
+			Resource->GetNativeResource(), 
+			ClearColor, 
+			0, nullptr);
 	}
 
-	FORCEINLINE void CopyBuffer(D3D12Resource* Destination, UInt64 DestinationOffset, D3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
+	FORCEINLINE void CopyBuffer(
+		D3D12Resource* Destination, 
+		UInt64 DestinationOffset, 
+		D3D12Resource* Source, 
+		UInt64 SourceOffset, 
+		UInt64 SizeInBytes)
 	{
-		FlushDeferredResourceBarriers();
-
-		CommandList->CopyBufferRegion(Destination->GetResource(), DestinationOffset, Source->GetResource(), SourceOffset, SizeInBytes);
+		CmdList->CopyBufferRegion(
+			Destination->GetNativeResource(),
+			DestinationOffset, 
+			Source->GetNativeResource(),
+			SourceOffset, 
+			SizeInBytes);
 	}
 
-	FORCEINLINE void CopyTextureRegion(const D3D12_TEXTURE_COPY_LOCATION* InDestination, UInt32 X, UInt32 Y, UInt32 Z, const D3D12_TEXTURE_COPY_LOCATION* InSource, const D3D12_BOX* InSourceBox)
+	FORCEINLINE void CopyBufferRegion(
+		ID3D12Resource* Destination,
+		UInt64 DestinationOffset,
+		ID3D12Resource* Source,
+		UInt64 SourceOffset,
+		UInt64 SizeInBytes)
 	{
-		FlushDeferredResourceBarriers();
+		CmdList->CopyBufferRegion(
+			Destination,
+			DestinationOffset,
+			Source,
+			SourceOffset,
+			SizeInBytes);
+	}
 
-		CommandList->CopyTextureRegion(InDestination, X, Y, Z, InSource, InSourceBox);
+	FORCEINLINE void CopyTextureRegion(
+		const D3D12_TEXTURE_COPY_LOCATION* Destination, 
+		UInt32 x, 
+		UInt32 y, 
+		UInt32 z, 
+		const D3D12_TEXTURE_COPY_LOCATION* Source, 
+		const D3D12_BOX* SourceBox)
+	{
+		CmdList->CopyTextureRegion(Destination, x, y, z, Source, SourceBox);
 	}
 
 	FORCEINLINE void CopyResource(D3D12Resource* Destination, D3D12Resource* Source)
 	{
-		FlushDeferredResourceBarriers();
+		CmdList->CopyResource(Destination->GetNativeResource(), Source->GetNativeResource());
+	}
 
-		CommandList->CopyResource(Destination->GetResource(), Source->GetResource());
+	FORCEINLINE void CopyNativeResource(ID3D12Resource* Destination, ID3D12Resource* Source)
+	{
+		CmdList->CopyResource(Destination, Source);
 	}
 
 	FORCEINLINE void ResolveSubresource(D3D12Resource* Destination, D3D12Resource* Source, DXGI_FORMAT Format)
 	{
-		FlushDeferredResourceBarriers();
-
-		CommandList->ResolveSubresource(Destination->GetResource(), 0, Source->GetResource(), 0, Format);
+		CmdList->ResolveSubresource(Destination->GetNativeResource(), 0, Source->GetNativeResource(), 0, Format);
 	}
 
 	FORCEINLINE void BuildRaytracingAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* Desc)
 	{
-		FlushDeferredResourceBarriers();
-
-		DXRCommandList->BuildRaytracingAccelerationStructure(Desc, 0, nullptr);
+		DXRCmdList->BuildRaytracingAccelerationStructure(Desc, 0, nullptr);
 	}
 
 	FORCEINLINE void DispatchRays(const D3D12_DISPATCH_RAYS_DESC* Desc)
 	{
-		FlushDeferredResourceBarriers();
-
-		DXRCommandList->DispatchRays(Desc);
+		DXRCmdList->DispatchRays(Desc);
 	}
 
-	FORCEINLINE void Dispatch(UInt32 ThreadGroupCountX, UInt32 ThreadGroupCountY, UInt32 ThreadGroupCountZ)
+	FORCEINLINE void Dispatch(
+		UInt32 ThreadGroupCountX, 
+		UInt32 ThreadGroupCountY, 
+		UInt32 ThreadGroupCountZ)
 	{
-		FlushDeferredResourceBarriers();
-
-		CommandList->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+		CmdList->Dispatch(
+			ThreadGroupCountX, 
+			ThreadGroupCountY, 
+			ThreadGroupCountZ);
 	}
 
-	FORCEINLINE void DrawInstanced(UInt32 VertexCountPerInstance, UInt32 InstanceCount, UInt32 StartVertexLocation, UInt32 StartInstanceLocation)
+	FORCEINLINE void DrawInstanced(
+		UInt32 VertexCountPerInstance, 
+		UInt32 InstanceCount, 
+		UInt32 StartVertexLocation, 
+		UInt32 StartInstanceLocation)
 	{
-		FlushDeferredResourceBarriers();
-
-		CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
-
-		NumDrawCalls++;
+		CmdList->DrawInstanced(
+			VertexCountPerInstance, 
+			InstanceCount, 
+			StartVertexLocation, 
+			StartInstanceLocation);
 	}
 
-	FORCEINLINE void DrawIndexedInstanced(UInt32 IndexCountPerInstance, UInt32 InstanceCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation, UInt32 StartInstanceLocation)
+	FORCEINLINE void DrawIndexedInstanced(
+		UInt32 IndexCountPerInstance, 
+		UInt32 InstanceCount, 
+		UInt32 StartIndexLocation, 
+		UInt32 BaseVertexLocation, 
+		UInt32 StartInstanceLocation)
 	{
-		FlushDeferredResourceBarriers();
-
-		CommandList->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
-
-		NumDrawCalls++;
+		CmdList->DrawIndexedInstanced(
+			IndexCountPerInstance, 
+			InstanceCount, 
+			StartIndexLocation, 
+			BaseVertexLocation, 
+			StartInstanceLocation);
 	}
 
 	FORCEINLINE void SetDescriptorHeaps(ID3D12DescriptorHeap* const* DescriptorHeaps, UInt32 DescriptorHeapCount)
 	{
-		CommandList->SetDescriptorHeaps(DescriptorHeapCount, DescriptorHeaps);
+		CmdList->SetDescriptorHeaps(DescriptorHeapCount, DescriptorHeaps);
 	}
 
 	FORCEINLINE void SetStateObject(ID3D12StateObject* StateObject)
 	{
-		DXRCommandList->SetPipelineState1(StateObject);
+		DXRCmdList->SetPipelineState1(StateObject);
 	}
 
 	FORCEINLINE void SetPipelineState(ID3D12PipelineState* PipelineState)
 	{
-		DXRCommandList->SetPipelineState(PipelineState);
+		CmdList->SetPipelineState(PipelineState);
 	}
 
-	FORCEINLINE void SetComputeRootSignature(ID3D12RootSignature* RootSignature)
+	FORCEINLINE void SetComputeRootSignature(D3D12RootSignature* RootSignature)
 	{
-		CommandList->SetComputeRootSignature(RootSignature);
+		CmdList->SetComputeRootSignature(RootSignature->GetRootSignature());
 	}
 
-	FORCEINLINE void SetGraphicsRootSignature(ID3D12RootSignature* RootSignature)
+	FORCEINLINE void SetGraphicsRootSignature(D3D12RootSignature* RootSignature)
 	{
-		CommandList->SetGraphicsRootSignature(RootSignature);
+		CmdList->SetGraphicsRootSignature(RootSignature->GetRootSignature());
 	}
 
 	FORCEINLINE void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, UInt32 RootParameterIndex)
 	{
-		FlushDeferredResourceBarriers();
-
-		CommandList->SetComputeRootDescriptorTable(RootParameterIndex, BaseDescriptor);
+		CmdList->SetComputeRootDescriptorTable(RootParameterIndex, BaseDescriptor);
 	}
 
 	FORCEINLINE void SetGraphicsRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, UInt32 RootParameterIndex)
 	{
-		FlushDeferredResourceBarriers();
-
-		CommandList->SetGraphicsRootDescriptorTable(RootParameterIndex, BaseDescriptor);
+		CmdList->SetGraphicsRootDescriptorTable(RootParameterIndex, BaseDescriptor);
 	}
 
-	FORCEINLINE void SetGraphicsRoot32BitConstants(const Void* SourceData, UInt32 Num32BitValues, UInt32 DestOffsetIn32BitValues, UInt32 RootParameterIndex)
+	FORCEINLINE void SetGraphicsRoot32BitConstants(
+		const Void* SourceData, 
+		UInt32 Num32BitValues, 
+		UInt32 DestOffsetIn32BitValues, 
+		UInt32 RootParameterIndex)
 	{
-		CommandList->SetGraphicsRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
+		CmdList->SetGraphicsRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
 	}
 
-	FORCEINLINE void SetComputeRoot32BitConstants(const Void* SourceData, UInt32 Num32BitValues, UInt32 DestOffsetIn32BitValues, UInt32 RootParameterIndex)
+	FORCEINLINE void SetComputeRoot32BitConstants(
+		const Void* SourceData, 
+		UInt32 Num32BitValues, 
+		UInt32 DestOffsetIn32BitValues, 
+		UInt32 RootParameterIndex)
 	{
-		CommandList->SetComputeRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
+		CmdList->SetComputeRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
 	}
 
-	FORCEINLINE void IASetVertexBuffers(UInt32 StartSlot, const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, UInt32 VertexBufferViewCount)
+	FORCEINLINE void IASetVertexBuffers(
+		UInt32 StartSlot, 
+		const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, 
+		UInt32 VertexBufferViewCount)
 	{
-		CommandList->IASetVertexBuffers(StartSlot, VertexBufferViewCount, VertexBufferViews);
+		CmdList->IASetVertexBuffers(StartSlot, VertexBufferViewCount, VertexBufferViews);
 	}
 
 	FORCEINLINE void IASetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW* IndexBufferView)
 	{
-		CommandList->IASetIndexBuffer(IndexBufferView);
+		CmdList->IASetIndexBuffer(IndexBufferView);
 	}
 
 	FORCEINLINE void IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology)
 	{
-		CommandList->IASetPrimitiveTopology(PrimitiveTopology);
+		CmdList->IASetPrimitiveTopology(PrimitiveTopology);
 	}
 
 	FORCEINLINE void RSSetViewports(const D3D12_VIEWPORT* Viewports, UInt32 ViewportCount)
 	{
-		CommandList->RSSetViewports(ViewportCount, Viewports);
+		CmdList->RSSetViewports(ViewportCount, Viewports);
 	}
 
 	FORCEINLINE void RSSetScissorRects(const D3D12_RECT* ScissorRects, UInt32 ScissorRectCount)
 	{
-		CommandList->RSSetScissorRects(ScissorRectCount, ScissorRects);
+		CmdList->RSSetScissorRects(ScissorRectCount, ScissorRects);
 	}
 
 	FORCEINLINE void OMSetBlendFactor(const Float BlendFactor[4])
 	{
-		CommandList->OMSetBlendFactor(BlendFactor);
+		CmdList->OMSetBlendFactor(BlendFactor);
 	}
 
-	FORCEINLINE void OMSetRenderTargets(const D3D12RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, const D3D12DepthStencilView* DepthStencilView)
+	FORCEINLINE void OMSetRenderTargets(
+		const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors,
+		UInt32 NumRenderTargetDescriptors,
+		BOOL RTsSingleHandleToDescriptorRange,
+		const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor)
 	{
-		for (UInt32 I = 0; I < RenderTargetCount; I++)
-		{
-			VALIDATE(RenderTargetViews[I] != nullptr);
-			RenderTargetHandles[I] = RenderTargetViews[I]->GetOfflineHandle();
-		}
+		CmdList->OMSetRenderTargets(
+			NumRenderTargetDescriptors, 
+			RenderTargetDescriptors, 
+			RTsSingleHandleToDescriptorRange, 
+			DepthStencilDescriptor);
+	}
 
-		if (DepthStencilView)
-		{
-			D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilHandle = DepthStencilView->GetOfflineHandle();
-			CommandList->OMSetRenderTargets(RenderTargetCount, RenderTargetHandles, FALSE, &DepthStencilHandle);
-		}
-		else
-		{
-			CommandList->OMSetRenderTargets(RenderTargetCount, RenderTargetHandles, FALSE, nullptr);
-		}
+	FORCEINLINE void ResourceBarrier(const D3D12_RESOURCE_BARRIER* Barriers, UInt32 NumBarriers)
+	{
+		CmdList->ResourceBarrier(NumBarriers, Barriers);
+	}
+
+	FORCEINLINE void UnorderedAccessBarrier(ID3D12Resource* Resource)
+	{
+		D3D12_RESOURCE_BARRIER Barrier;
+		Memory::Memzero(&Barrier);
+
+		Barrier.Type			=  D3D12_RESOURCE_BARRIER_TYPE_UAV;
+		Barrier.UAV.pResource	= Resource;
+
+		CmdList->ResourceBarrier(1, &Barrier);
+	}
+
+	FORCEINLINE bool IsRecordning() const
+	{
+		return IsReady;
+	}
+
+	FORCEINLINE void SetName(const std::string& Name)
+	{
+		std::wstring WideName = ConvertToWide(Name);
+		CmdList->SetName(WideName.c_str());
 	}
 
 	FORCEINLINE ID3D12CommandList* GetCommandList() const
 	{
-		return CommandList.Get();
+		return CmdList.Get();
 	}
-	
-	FORCEINLINE UInt32 GetNumDrawCalls() const
+
+	FORCEINLINE ID3D12GraphicsCommandList* GetGraphicsCommandList() const
 	{
-		return NumDrawCalls;
+		return CmdList.Get();
 	}
 
-public:
-	// DeviceChild
-	virtual void SetDebugName(const std::string& DebugName) override;
+	FORCEINLINE ID3D12GraphicsCommandList4* GetDXRCommandList() const
+	{
+		return DXRCmdList.Get();
+	}
 
-protected:
-	bool CreateUploadBuffer(UInt32 SizeInBytes = 1024U);
-
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>	CommandList;
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	DXRCommandList;
-
-	class D3D12Buffer* UploadBuffer = nullptr;
-	Byte*	UploadPointer		= nullptr;
-	UInt32	UploadBufferOffset	= 0;
-	UInt32	NumDrawCalls		= 0;
-
-	TArray<D3D12_RESOURCE_BARRIER> DeferredResourceBarriers;
-	TArray<Microsoft::WRL::ComPtr<ID3D12Resource>> ResourcesPendingRelease;
-
-	// There can maximum be 8 rendertargets at one time 
-	D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetHandles[8];
-
-	GenerateMipsHelper MipGenHelper;
+private:
+	TComPtr<ID3D12GraphicsCommandList>	CmdList;
+	TComPtr<ID3D12GraphicsCommandList4>	DXRCmdList;
+	Bool IsReady = false;
 };

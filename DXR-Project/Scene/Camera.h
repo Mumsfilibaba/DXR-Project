@@ -1,5 +1,5 @@
 #pragma once
-#include "Types.h"
+#include "Core.h"
 
 /*
 * Camera
@@ -9,7 +9,6 @@ class Camera
 {
 public:
 	Camera();
-	~Camera() = default;
 
 	void Move(Float X, Float Y, Float Z);
 

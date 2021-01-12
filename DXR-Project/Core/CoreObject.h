@@ -27,8 +27,7 @@ public: \
 class CoreObject
 {
 public:
-	CoreObject();
-	virtual ~CoreObject();
+	virtual ~CoreObject() = default;
 
 	FORCEINLINE const ClassType* GetClass() const
 	{

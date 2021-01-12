@@ -68,7 +68,7 @@ void RayGen()
 		return;
 	}
 	
-    float3 WorldPosition	= PositionFromDepth(Depth, TexCoord, Camera.ViewProjectionInverse);
+	float3 WorldPosition	= PositionFromDepth(Depth, TexCoord, Camera.ViewProjectionInverse);
 	float3 WorldNormal		= GBufferNormal.SampleLevel(GBufferSampler, TexCoord, 0).rgb;
 	WorldNormal = UnpackNormal(WorldNormal);
 	
@@ -207,7 +207,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 	// Cook-Torrance BRDF
     float NDF	= DistributionGGX(Normal, HalfVec, FinalRoughness);
     float G		= GeometrySmith(Normal, ViewDir, LightDir, FinalRoughness);
-	float3	F	= FresnelSchlick(saturate(dot(HalfVec, ViewDir)), F0);
+	float3 F	= FresnelSchlick(saturate(dot(HalfVec, ViewDir)), F0);
 	
 	float3	Nominator	= NDF * G * F;
 	float	Denominator = 4.0f * max(dot(Normal, ViewDir), 0.0f) * max(dot(Normal, LightDir), 0.0f);

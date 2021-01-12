@@ -1,4 +1,4 @@
-#include "Application/Application.h"
+#include "Application/Platform/PlatformDialogMisc.h"
 
 #include "Engine/EngineLoop.h"
 
@@ -12,29 +12,41 @@
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, int cmdShow)
 {
 #ifdef _DEBUG
-	Memory::SetDebugFlags(EMemoryDebugFlag::MEMORY_DEBUG_FLAGS_LEAK_CHECK);
+	Memory::SetDebugFlags(EMemoryDebugFlag::MemoryDebugFlag_LeakCheck);
 #endif
 
-	if (!EngineLoop::CoreInitialize())
+	if (!EngineLoop::PreInit())
 	{
-		::MessageBox(0, "Failed to initalize core modules", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "Pre-Initialize Failed");
 		return -1;
 	}
 
-	if (!EngineLoop::Initialize())
+	if (!EngineLoop::Init())
 	{
-		::MessageBox(0, "Failed to initalize", "ERROR", MB_ICONERROR);
+		PlatformDialogMisc::MessageBox("ERROR", "Initialize Failed");
+		return -1;
+	}
+
+	if (!EngineLoop::PostInit())
+	{
+		PlatformDialogMisc::MessageBox("ERROR", "Post-Initialize Failed");
 		return -1;
 	}
 
 	while (EngineLoop::IsRunning())
 	{
+		EngineLoop::PreTick();
+	
 		EngineLoop::Tick();
+	
+		EngineLoop::PostTick();
 	}
 
+	EngineLoop::PreRelease();
+	
 	EngineLoop::Release();
-
-	EngineLoop::CoreRelease();
+	
+	EngineLoop::PostRelease();
 
 	return 0;
 }

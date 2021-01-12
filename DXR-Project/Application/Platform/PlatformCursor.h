@@ -1,5 +1,5 @@
 #pragma once
-#ifdef WIN32
+#ifdef PLATFORM_WINDOWS
 	#include "Windows/WindowsCursor.h"
 	typedef WindowsCursor PlatformCursor;
 #else

@@ -1,12 +1,5 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
-
-#include <string>
-
-#ifdef OutputDebugString
-	#undef OutputDebugString
-#endif
+#include "Application/Platform/PlatformDebugMisc.h"
 
 /*
 * Debug
@@ -15,6 +8,13 @@
 class Debug
 {
 public:
-	static void DebugBreak();
-	static void OutputDebugString(const std::string& Message);
+	static FORCEINLINE void DebugBreak()
+	{
+		PlatformDebugMisc::DebugBreak();
+	}
+
+	static FORCEINLINE void OutputDebugString(const std::string& Message)
+	{
+		PlatformDebugMisc::OutputDebugString(Message);
+	}
 };

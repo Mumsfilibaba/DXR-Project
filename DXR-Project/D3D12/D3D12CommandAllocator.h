@@ -1,28 +1,34 @@
 #pragma once
-#include "D3D12DeviceChild.h"
+#include "D3D12RefCountedObject.h"
 
 /*
 * D3D12CommandAllocator
 */
 
-class D3D12CommandAllocator : public D3D12DeviceChild
+class D3D12CommandAllocator : public D3D12RefCountedObject
 {
 public:
-	D3D12CommandAllocator(D3D12Device* InDevice);
-	~D3D12CommandAllocator();
+	inline D3D12CommandAllocator(D3D12Device* InDevice, ID3D12CommandAllocator* InAllocator)
+		: D3D12RefCountedObject(InDevice)
+		, Allocator(InAllocator)
+	{
+	}
 
-	bool Initialize(D3D12_COMMAND_LIST_TYPE Type);
+	FORCEINLINE bool Reset()
+	{
+		return SUCCEEDED(Allocator->Reset());
+	}
 
-	bool Reset();
+	FORCEINLINE void SetName(const std::string& Name)
+	{
+		std::wstring WideName = ConvertToWide(Name);
+		Allocator->SetName(WideName.c_str());
+	}
 
 	FORCEINLINE ID3D12CommandAllocator* GetAllocator() const
 	{
 		return Allocator.Get();
 	}
-
-public:
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> Allocator;

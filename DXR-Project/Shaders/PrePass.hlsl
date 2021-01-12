@@ -1,12 +1,12 @@
 #include "PBRCommon.hlsli"
 
-// PerObject
+// PerObject Constants
 cbuffer TransformBuffer : register(b0, space0)
 {
 	float4x4 Transform;
 };
 
-// PerFrame DescriptorTable
+// PerFrame
 ConstantBuffer<Camera> Camera : register(b1, space0);
 
 // VertexShader

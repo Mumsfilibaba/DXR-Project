@@ -11,10 +11,6 @@ PointLight::PointLight()
 	CalculateMatrices();
 }
 
-PointLight::~PointLight()
-{
-}
-
 void PointLight::SetPosition(const XMFLOAT3& InPosition)
 {
 	Position = InPosition;

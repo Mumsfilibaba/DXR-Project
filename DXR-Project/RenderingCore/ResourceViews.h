@@ -1,39 +1,11 @@
-#include "Defines.h"
-#include "Types.h"
+#pragma once
+#include "Resource.h"
 
 /*
 * ShaderResourceView
 */
 
-struct ShaderResourceViewInitializer
-{
-};
-
-class ShaderResourceView
-{
-};
-
-/*
-* RenderTargetView
-*/
-
-struct RenderTargetViewInitializer
-{
-};
-
-class RenderTargetView
-{
-};
-
-/*
-* DepthStencilView
-*/
-
-struct DepthStencilViewInitializer
-{
-};
-
-class DepthStencilView
+class ShaderResourceView : public PipelineResource
 {
 };
 
@@ -41,10 +13,22 @@ class DepthStencilView
 * UnorderedAccessView
 */
 
-struct UnorderedAccessViewInitializer
+class UnorderedAccessView : public PipelineResource
 {
 };
 
-class UnorderedAccessView
+/*
+* DepthStencilView
+*/
+
+class DepthStencilView : public PipelineResource
+{
+};
+
+/*
+* RenderTargetView
+*/
+
+class RenderTargetView : public PipelineResource
 {
 };

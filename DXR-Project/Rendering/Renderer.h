@@ -1,20 +1,10 @@
 #pragma once
-#include "D3D12/D3D12Device.h"
-#include "D3D12/D3D12CommandQueue.h"
-#include "D3D12/D3D12CommandAllocator.h"
-#include "D3D12/D3D12CommandList.h"
-#include "D3D12/D3D12DescriptorHeap.h"
-#include "D3D12/D3D12Fence.h"
-#include "D3D12/D3D12SwapChain.h"
-#include "D3D12/D3D12Buffer.h"
-#include "D3D12/D3D12RayTracingScene.h"
-#include "D3D12/D3D12ImmediateCommandList.h"
-
 #include "Windows/WindowsWindow.h"
 
 #include "Time/Clock.h"
 
 #include "Application/InputCodes.h"
+#include "Application/Events/EventHandler.h"
 
 #include "Scene/Actor.h"
 #include "Scene/Scene.h"
@@ -25,13 +15,8 @@
 #include "MeshFactory.h"
 
 #include "RenderingCore/RenderingAPI.h"
-
-#include "Application/Events/EventQueue.h"
-#include "Application/Events/WindowEvent.h"
-
-class D3D12Texture;
-class D3D12GraphicsPipelineState;
-class D3D12RayTracingPipelineState;
+#include "RenderingCore/CommandList.h"
+#include "RenderingCore/Viewport.h"
 
 #define ENABLE_D3D12_DEBUG	0
 #define ENABLE_VSM			0
@@ -57,16 +42,11 @@ public:
 	Renderer();
 	~Renderer();
 	
+	Bool Init();
+
 	void Tick(const Scene& CurrentScene);
 	
-	bool OnEvent(const Event& Event);
-
-	void SetPrePassEnable(bool Enabled);
-	void SetVerticalSyncEnable(bool Enabled);
-	void SetDrawAABBsEnable(bool Enabled);
-	void SetFrustumCullEnable(bool Enabled);
-	void SetFXAAEnable(bool Enabled);
-	void SetSSAOEnable(bool Enabled);
+	Bool OnEvent(const Event& Event);
 	
 	FORCEINLINE void SetSSAORadius(Float InSSAORadius)
 	{
@@ -81,36 +61,6 @@ public:
 	FORCEINLINE void SetSSAOBias(Float InSSAOBias)
 	{
 		SSAOBias = InSSAOBias;
-	}
-
-	FORCEINLINE bool IsDrawAABBsEnabled() const
-	{
-		return DrawAABBs;
-	}
-
-	FORCEINLINE bool IsFXAAEnabled() const
-	{
-		return FXAAEnabled;
-	}
-
-	FORCEINLINE bool IsPrePassEnabled() const
-	{
-		return PrePassEnabled;
-	}
-
-	FORCEINLINE bool IsVerticalSyncEnabled() const
-	{
-		return VSyncEnabled;
-	}
-
-	FORCEINLINE bool IsFrustumCullEnabled() const
-	{
-		return FrustumCullEnabled;
-	}
-
-	FORCEINLINE bool IsSSAOEnabled() const
-	{
-		return SSAOEnabled;
 	}
 
 	FORCEINLINE Float GetSSAORadius() const
@@ -128,140 +78,151 @@ public:
 		return SSAOBias;
 	}
 
-	static void SetGlobalLightSettings(const LightSettings& InGlobalLightSettings);
+	void SetLightSettings(const LightSettings& InLightSettings);
 
-	static FORCEINLINE const LightSettings& GetGlobalLightSettings()
+	FORCEINLINE const LightSettings& GetLightSettings()
 	{
-		return GlobalLightSettings;
+		return CurrentLightSettings;
 	}
-
-	static Renderer* Make();
-	static Renderer* Get();
-
-	static void Release();
 	
 private:
-	bool Initialize();
+	Bool InitRayTracing();
+	Bool InitLightBuffers();
+	Bool InitPrePass();
+	Bool InitShadowMapPass();
+	Bool InitDeferred();
+	Bool InitGBuffer();
+	Bool InitIntegrationLUT();
+	Bool InitRayTracingTexture();
+	Bool InitDebugStates();
+	Bool InitAA();
+	Bool InitForwardPass();
+	Bool InitSSAO();
+	Bool InitSSAO_RenderTarget();
 
-	bool InitRayTracing();
-	bool InitLightBuffers();
-	bool InitPrePass();
-	bool InitShadowMapPass();
-	bool InitDeferred();
-	bool InitGBuffer();
-	bool InitIntegrationLUT();
-	bool InitRayTracingTexture();
-	bool InitDebugStates();
-	bool InitAA();
-	bool InitForwardPass();
-	bool InitSSAO();
+	Bool CreateShadowMaps();
 
-	bool CreateShadowMaps();
-	void WriteShadowMapDescriptors();
+	void GenerateIrradianceMap(
+		ShaderResourceView* SourceSRV,
+		TextureCube* Source,
+		UnorderedAccessView* DestUAV,
+		TextureCube* Dest,
+		CommandList& InCmdList);
 
-	void GenerateIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList);
-	void GenerateSpecularIrradianceMap(D3D12Texture* Source, D3D12Texture* Dest, D3D12CommandList* CommandList);
+	void GenerateSpecularIrradianceMap(
+		ShaderResourceView* SourceSRV,
+		TextureCube* Source,
+		UnorderedAccessView* const* DestUAVs,
+		UInt32 NumDestUAVs,
+		TextureCube* Dest,
+		CommandList& InCmdList);
 
-	void WaitForPendingFrames();
-
-	void TraceRays(D3D12Texture* BackBuffer, D3D12CommandList* CommandList);
+	void TraceRays(Texture2D* BackBuffer, CommandList& InCmdList);
 
 private:
-	TSharedPtr<D3D12CommandList>	CommandList;
-	TSharedPtr<D3D12Fence>			Fence;
-
-	TArray<TSharedPtr<D3D12CommandAllocator>>	CommandAllocators;
-	TArray<TSharedPtr<D3D12Resource>>			DeferredResources;
+	CommandList CmdList;
 
 	MeshData SkyboxMesh;
 
-	TSharedPtr<D3D12Buffer> CameraBuffer;
-	TSharedPtr<D3D12Buffer> SkyboxVertexBuffer;
-	TSharedPtr<D3D12Buffer> SkyboxIndexBuffer;
-	TSharedPtr<D3D12Buffer> AABBVertexBuffer;
-	TSharedPtr<D3D12Buffer> AABBIndexBuffer;
-	TSharedPtr<D3D12Buffer> PointLightBuffer;
-	TSharedPtr<D3D12Buffer> DirectionalLightBuffer;
-	TSharedPtr<D3D12Buffer> SSAOSamples;
+	TSharedRef<ConstantBuffer> CameraBuffer;
+	TSharedRef<ConstantBuffer> PointLightBuffer;
+	TSharedRef<ConstantBuffer> DirectionalLightBuffer;
+	TSharedRef<ConstantBuffer> PerShadowMapBuffer;
 
-	TSharedPtr<D3D12Texture> Skybox;
-	TSharedPtr<D3D12Texture> IrradianceMap;
-	TSharedPtr<D3D12Texture> SpecularIrradianceMap;
-	TSharedPtr<D3D12Texture> ReflectionTexture;
-	TSharedPtr<D3D12Texture> IntegrationLUT;
-	TSharedPtr<D3D12Texture> DirLightShadowMaps;
-	TSharedPtr<D3D12Texture> VSMDirLightShadowMaps;
-	TSharedPtr<D3D12Texture> PointLightShadowMaps;
-	TSharedPtr<D3D12Texture> GBuffer[4];
-	TSharedPtr<D3D12Texture> SSAOBuffer;
-	TSharedPtr<D3D12Texture> SSAONoiseTex;
-	TSharedPtr<D3D12Texture> FinalTarget;
+	TSharedRef<VertexBuffer>	SkyboxVertexBuffer;
+	TSharedRef<VertexBuffer>	AABBVertexBuffer;
+	TSharedRef<IndexBuffer>		SkyboxIndexBuffer;
+	TSharedRef<IndexBuffer>		AABBIndexBuffer;
+
+	TSharedRef<TextureCube>			IrradianceMap;
+	TSharedRef<UnorderedAccessView>	IrradianceMapUAV;
+	TSharedRef<ShaderResourceView>	IrradianceMapSRV;
+	TSharedRef<SamplerState>		IrradianceSampler;
+
+	TSharedRef<TextureCube>					SpecularIrradianceMap;
+	TSharedRef<ShaderResourceView>			SpecularIrradianceMapSRV;
+	TArray<TSharedRef<UnorderedAccessView>>	SpecularIrradianceMapUAVs;
+	TArray<UnorderedAccessView*>			WeakSpecularIrradianceMapUAVs;
+
+	TSharedRef<TextureCube>			Skybox;
+	TSharedRef<ShaderResourceView>	SkyboxSRV;
+	TSharedRef<SamplerState>		SkyboxSampler;
+
+	TSharedRef<TextureCube>					PointLightShadowMaps;
+	TArray<TSharedRef<DepthStencilView>>	PointLightShadowMapsDSVs;
+	TSharedRef<ShaderResourceView>			PointLightShadowMapsSRV;
+	TSharedRef<SamplerState>				ShadowMapSampler;
+	TSharedRef<SamplerState>				ShadowMapCompSampler;
+
+	TSharedRef<ShaderResourceView>	DirLightShadowMapSRV;
+	TSharedRef<DepthStencilView>	DirLightShadowMapDSV;
+	TSharedRef<Texture2D>			DirLightShadowMaps;
+
+	TSharedRef<ShaderResourceView>	VSMDirLightShadowMapSRV;
+	TSharedRef<RenderTargetView>	VSMDirLightShadowMapRTV;
+	TSharedRef<Texture2D>			VSMDirLightShadowMaps;
 	
-	TSharedPtr<D3D12RootSignature> PrePassRootSignature;
-	TSharedPtr<D3D12RootSignature> ShadowMapRootSignature;
-	TSharedPtr<D3D12RootSignature> GeometryRootSignature;
-	TSharedPtr<D3D12RootSignature> LightRootSignature;
-	TSharedPtr<D3D12RootSignature> SkyboxRootSignature;
-	TSharedPtr<D3D12RootSignature> GlobalRootSignature;
-	TSharedPtr<D3D12RootSignature> IrradianceGenRootSignature;
-	TSharedPtr<D3D12RootSignature> SpecIrradianceGenRootSignature;
-	TSharedPtr<D3D12RootSignature> DebugRootSignature;
-	TSharedPtr<D3D12RootSignature> PostRootSignature;
-	TSharedPtr<D3D12RootSignature> ForwardRootSignature;
-	TSharedPtr<D3D12RootSignature> SSAORootSignature;
-	TSharedPtr<D3D12RootSignature> BlurRootSignature;
+	TSharedRef<Texture2D>			ReflectionTexture;
+	TSharedRef<ShaderResourceView>	ReflectionTextureSRV;
+	TSharedRef<UnorderedAccessView>	ReflectionTextureUAV;
 
-	TSharedPtr<D3D12DescriptorTable> RayGenDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable> GlobalDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable> SSAODescriptorTable;
-	TSharedPtr<D3D12DescriptorTable> SSAOBlurDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable> GeometryDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable> ForwardDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable> PrePassDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable> LightDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable> SkyboxDescriptorTable;
-	TSharedPtr<D3D12DescriptorTable> PostDescriptorTable;
+	TSharedRef<Texture2D>			IntegrationLUT;
+	TSharedRef<ShaderResourceView>	IntegrationLUTSRV;
+	TSharedRef<SamplerState>		IntegrationLUTSampler;
 
-	TSharedPtr<D3D12RayTracingScene> RayTracingScene;
-	TArray<D3D12RayTracingGeometryInstance> RayTracingGeometryInstances;
+	TSharedRef<Texture2D>			FinalTarget;
+	TSharedRef<ShaderResourceView>	FinalTargetSRV;
+	TSharedRef<RenderTargetView>	FinalTargetRTV;
 
-	TSharedPtr<D3D12GraphicsPipelineState> PrePassPSO;
-	TSharedPtr<D3D12GraphicsPipelineState> ShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState> VSMShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState> LinearShadowMapPSO;
-	TSharedPtr<D3D12GraphicsPipelineState> GeometryPSO;
-	TSharedPtr<D3D12GraphicsPipelineState> ForwardPSO;
-	TSharedPtr<D3D12GraphicsPipelineState> LightPassPSO;
-	TSharedPtr<D3D12GraphicsPipelineState> SkyboxPSO;
-	TSharedPtr<D3D12GraphicsPipelineState> DebugBoxPSO;
-	TSharedPtr<D3D12GraphicsPipelineState> PostPSO;
-	TSharedPtr<D3D12GraphicsPipelineState> FXAAPSO;
+	TSharedRef<Texture2D>			GBuffer[4];
+	TSharedRef<ShaderResourceView>	GBufferSRVs[4];
+	TSharedRef<RenderTargetView>	GBufferRTVs[3];
+	TSharedRef<DepthStencilView>	GBufferDSV;
+	TSharedRef<SamplerState>		GBufferSampler;
 
-	TSharedPtr<D3D12ComputePipelineState> SSAOPSO;
-	TSharedPtr<D3D12ComputePipelineState> SSAOBlur;
-	TSharedPtr<D3D12ComputePipelineState> IrradicanceGenPSO;
-	TSharedPtr<D3D12ComputePipelineState> SpecIrradicanceGenPSO;
+	TSharedRef<InputLayoutState> StdInputLayout;
 
-	TSharedPtr<D3D12RayTracingPipelineState> RaytracingPSO;
+	TSharedRef<GraphicsPipelineState> PrePassPSO;
+	TSharedRef<GraphicsPipelineState> ShadowMapPSO;
+	TSharedRef<GraphicsPipelineState> VSMShadowMapPSO;
+	TSharedRef<GraphicsPipelineState> LinearShadowMapPSO;
+	TSharedPtr<GraphicsPipelineState> ForwardPSO;
+	TSharedRef<GraphicsPipelineState> GeometryPSO;
+	TSharedRef<GraphicsPipelineState> LightPassPSO;
+	TSharedRef<GraphicsPipelineState> SkyboxPSO;
+	TSharedRef<GraphicsPipelineState> DebugBoxPSO;
+	TSharedRef<GraphicsPipelineState> PostPSO;
+	TSharedRef<GraphicsPipelineState> FXAAPSO;
+
+	TSharedRef<RayTracingPipelineState>	RaytracingPSO;
+
+	TSharedRef<ComputeShader> IrradianceGenShader;
+	TSharedRef<ComputeShader> SpecIrradianceGenShader;
+	
+	TSharedRef<ComputePipelineState> IrradicanceGenPSO;
+	TSharedRef<ComputePipelineState> SpecIrradicanceGenPSO;
+	TSharedPtr<ComputePipelineState> SSAOPSO;
+	TSharedPtr<ComputePipelineState> SSAOBlur;
+
+	TSharedRef<StructuredBuffer>	SSAOSamples;
+	TSharedRef<ShaderResourceView>	SSAOSamplesSRV;
+	TSharedRef<Texture2D>			SSAOBuffer;
+	TSharedRef<ShaderResourceView>	SSAOBufferSRV;
+	TSharedRef<UnorderedAccessView>	SSAOBufferUAV;
+	TSharedRef<Texture2D>			SSAONoiseTex;
+	TSharedRef<ShaderResourceView>	SSAONoiseSRV;
+
+	TSharedPtr<RayTracingScene>			RayTracingScene;
+	TArray<RayTracingGeometryInstance>	RayTracingGeometryInstances;
 
 	TArray<MeshDrawCommand> DeferredVisibleCommands;
 	TArray<MeshDrawCommand> ForwardVisibleCommands;
 
-	TArray<UInt64> FenceValues;
-	UInt32 CurrentBackBufferIndex = 0;
+	TSharedRef<Viewport> MainWindowViewport;
 
-	bool PrePassEnabled		= true;
-	bool DrawAABBs			= false;
-	bool VSyncEnabled		= false;
-	bool FrustumCullEnabled	= true;
-	bool FXAAEnabled		= true;
-	bool RayTracingEnabled	= false;
+	Float	SSAORadius		= 0.3f;
+	Float	SSAOBias		= 0.0f;
+	Int32	SSAOKernelSize	= 64;
 
-	bool SSAOEnabled	= true;
-	Float SSAORadius	= 0.3f;
-	Float SSAOBias		= 0.0f;
-	int SSAOKernelSize	= 64;
-
-	static LightSettings		GlobalLightSettings;
-	static TUniquePtr<Renderer> RendererInstance;
+	LightSettings CurrentLightSettings;
 };

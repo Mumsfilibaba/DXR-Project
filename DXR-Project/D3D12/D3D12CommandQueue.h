@@ -1,42 +1,62 @@
 #pragma once
-#include "D3D12DeviceChild.h"
-
-#include "Types.h"
-
-class D3D12Fence;
+#include "D3D12RefCountedObject.h"
+#include "D3D12Fence.h"
+#include "D3D12CommandList.h"
 
 /*
 * D3D12CommandQueue
 */
 
-class D3D12CommandQueue : public D3D12DeviceChild
+class D3D12CommandQueue : public D3D12RefCountedObject
 {
 public:
-	D3D12CommandQueue(D3D12Device* InDevice);
-	~D3D12CommandQueue();
+	inline D3D12CommandQueue(D3D12Device* InDevice, ID3D12CommandQueue* InQueue)
+		: D3D12RefCountedObject(InDevice)
+		, Queue(InQueue)
+		, Desc()
+	{
+		VALIDATE(Queue != nullptr);
+		Desc = Queue->GetDesc();
+	}
 
-	bool Initialize(D3D12_COMMAND_LIST_TYPE Type);
-	
-	bool SignalFence(D3D12Fence* Fence, UInt64 FenceValue);
-	bool WaitForFence(D3D12Fence* Fence, UInt64 FenceValue);
+	FORCEINLINE bool SignalFence(D3D12Fence* Fence, UInt64 FenceValue)
+	{
+		return SUCCEEDED(Queue->Signal(Fence->GetFence(), FenceValue));
+	}
 
-	void WaitForCompletion();
+	FORCEINLINE bool WaitForFence(D3D12Fence* Fence, UInt64 FenceValue)
+	{
+		return SUCCEEDED(Queue->Wait(Fence->GetFence(), FenceValue));
+	}
 
-	void ExecuteCommandList(class D3D12CommandList* CommandList);
+	FORCEINLINE void ExecuteCommandList(D3D12CommandList* CommandList)
+	{
+		ID3D12CommandList* CommandLists[] = { CommandList->GetCommandList() };
+		Queue->ExecuteCommandLists(1, CommandLists);
+	}
+
+	FORCEINLINE void SetName(const std::string& Name)
+	{
+		std::wstring WideDebugName = ConvertToWide(Name);
+		Queue->SetName(WideDebugName.c_str());
+	}
 
 	FORCEINLINE ID3D12CommandQueue* GetQueue() const
 	{
 		return Queue.Get();
 	}
 
-public:
-	// DeviceChild
-	virtual void SetDebugName(const std::string& Name) override;
+	FORCEINLINE const D3D12_COMMAND_QUEUE_DESC& GetDesc() const
+	{
+		return Desc;
+	}
+
+	FORCEINLINE D3D12_COMMAND_LIST_TYPE GetType() const
+	{
+		return Desc.Type;
+	}
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> Queue;
-	TUniquePtr<D3D12Fence> QueueFence;
-	
-	UInt64 FenceValue = 0;
+	D3D12_COMMAND_QUEUE_DESC Desc;
 };
-

@@ -1,17 +1,9 @@
 #pragma once
+#include "Utilities/StringUtilities.h"
+
+#include "RenderingCore/Buffer.h"
+
 #include "D3D12DeviceChild.h"
-#include "D3D12Views.h"
-
-/*
-* EMemoryType
-*/
-
-enum class EMemoryType : UInt32
-{
-	MEMORY_TYPE_UNKNOWN	= 0,
-	MEMORY_TYPE_UPLOAD	= 1,
-	MEMORY_TYPE_DEFAULT	= 2,
-};
 
 /*
 * D3D12Resource
@@ -19,26 +11,40 @@ enum class EMemoryType : UInt32
 
 class D3D12Resource : public D3D12DeviceChild
 {
+	friend class D3D12RenderingAPI;
+
 public:
 	D3D12Resource(D3D12Device* InDevice);
-	virtual ~D3D12Resource();
+	D3D12Resource(D3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource);
+	virtual ~D3D12Resource() = default;
 
-	virtual bool Initialize(ID3D12Resource* InResource);
-	
-	// DeviceChild Interface
-	virtual void SetDebugName(const std::string& Name) override;
+	Void* Map(const Range* MappedRange);
+	void Unmap(const Range* WrittenRange);
 
-	void SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> InShaderResourceView, const UInt32 SubresourceIndex);
-	void SetUnorderedAccessView(TSharedPtr<D3D12UnorderedAccessView> InUnorderedAccessView, const UInt32 SubresourceIndex);
-
-	FORCEINLINE EMemoryType GetMemoryType() const
+	FORCEINLINE void SetName(const std::string& Name)
 	{
-		return MemoryType;
+		std::wstring WideName = ConvertToWide(Name);
+		NativeResource->SetName(WideName.c_str());
 	}
 
-	FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
+	FORCEINLINE ID3D12Resource* GetNativeResource() const
 	{
-		return Resource->GetGPUVirtualAddress();
+		return NativeResource.Get();
+	}
+
+	FORCEINLINE D3D12_RESOURCE_DIMENSION GetResourceDimension() const
+	{
+		return Desc.Dimension;
+	}
+
+	FORCEINLINE D3D12_HEAP_TYPE GetHeapType() const
+	{
+		return HeapType;
+	}
+
+	FORCEINLINE D3D12_RESOURCE_STATES GetResourceState() const
+	{
+		return ResourceState;
 	}
 
 	FORCEINLINE const D3D12_RESOURCE_DESC& GetDesc() const
@@ -46,30 +52,16 @@ public:
 		return Desc;
 	}
 
-	FORCEINLINE ID3D12Resource* GetResource() const
+	FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
 	{
-		return Resource.Get();
-	}
-
-	FORCEINLINE TSharedPtr<D3D12ShaderResourceView> GetShaderResourceView(const UInt32 SubresourceIndex) const
-	{
-		return ShaderResourceViews[SubresourceIndex];
-	}
-
-	FORCEINLINE TSharedPtr<D3D12UnorderedAccessView> GetUnorderedAccessView(const UInt32 SubresourceIndex) const
-	{
-		return UnorderedAccessViews[SubresourceIndex];
+		return Address;
 	}
 
 protected:
-	bool CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D12_CLEAR_VALUE* OptimizedClearValue, D3D12_RESOURCE_STATES InitalState, EMemoryType InMemoryType);
+	TComPtr<ID3D12Resource> NativeResource;
 
-protected:
-	Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
-
-	TArray<TSharedPtr<D3D12ShaderResourceView>>		ShaderResourceViews;
-	TArray<TSharedPtr<D3D12UnorderedAccessView>>	UnorderedAccessViews;
-
-	D3D12_RESOURCE_DESC Desc;
-	EMemoryType MemoryType;
+	D3D12_HEAP_TYPE				HeapType;
+	D3D12_RESOURCE_STATES		ResourceState;
+	D3D12_RESOURCE_DESC			Desc;
+	D3D12_GPU_VIRTUAL_ADDRESS	Address;
 };

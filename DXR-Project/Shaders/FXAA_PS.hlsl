@@ -60,7 +60,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
 	FinalImage.GetDimensions(Width, Height);
 	const float2 InvTextureSize = float2(1.0f, 1.0f) / float2(Width, Height); //TextureSize;
 	
-    float4 M = FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(0, 0));
+	float4 M = FXAASampleOffset(FinalImage, PointSampler, TexCoord, int2(0, 0));
 	float LumaM = M.a;
 #if PASSTHROUGH
 	return M;

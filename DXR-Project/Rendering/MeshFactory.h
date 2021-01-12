@@ -1,6 +1,5 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "Core.h"
 
 #include "Utilities/HashUtilities.h"
 

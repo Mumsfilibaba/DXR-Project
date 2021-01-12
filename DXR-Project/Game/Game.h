@@ -1,7 +1,4 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
-
 #include "Scene/Scene.h"
 
 /*
@@ -14,17 +11,11 @@ public:
 	Game();
 	~Game();
 
-	bool Initialize();
-	void Destroy();
+	Bool Init();
 
 	void Tick(Timestamp DeltaTime);
 
-	static Game& GetCurrent();
-	static void SetCurrent(Game* InCurrentGame);
-
 private:
-	Scene*	CurrentScene = nullptr;
-	Camera* CurrentCamera = nullptr;
-
-	static Game* CurrentGame;
+	Scene*	CurrentScene	= nullptr;
+	Camera* CurrentCamera	= nullptr;
 };

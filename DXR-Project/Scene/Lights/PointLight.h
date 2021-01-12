@@ -24,7 +24,7 @@ class PointLight : public Light
 
 public:
 	PointLight();
-	~PointLight();
+	~PointLight() = default;
 
 	void SetPosition(const XMFLOAT3& InPosition);
 	void SetPosition(Float x, Float y, Float z);

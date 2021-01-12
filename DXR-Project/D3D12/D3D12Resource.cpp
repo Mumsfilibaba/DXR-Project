@@ -1,94 +1,65 @@
 #include "D3D12Resource.h"
 #include "D3D12Device.h"
 
+/*
+* D3D12Resource
+*/
+
 D3D12Resource::D3D12Resource(D3D12Device* InDevice)
 	: D3D12DeviceChild(InDevice)
-	, Resource(nullptr)
+	, NativeResource()
+	, HeapType(D3D12_HEAP_TYPE_DEFAULT)
+	, ResourceState(D3D12_RESOURCE_STATE_COMMON)
+	, Desc()
+	, Address(0)
 {
 }
 
-D3D12Resource::~D3D12Resource()
+D3D12Resource::D3D12Resource(D3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource)
+	: D3D12DeviceChild(InDevice)
+	, NativeResource(InNativeResource)
+	, HeapType(D3D12_HEAP_TYPE_DEFAULT)
+	, ResourceState(D3D12_RESOURCE_STATE_COMMON)
+	, Desc()
+	, Address(0)
 {
 }
 
-bool D3D12Resource::CreateResource(const D3D12_RESOURCE_DESC* InDesc, const D3D12_CLEAR_VALUE* OptimizedClearValue, D3D12_RESOURCE_STATES InitalState, EMemoryType InMemoryType)
+Void* D3D12Resource::Map(const Range* MappedRange)
 {
-	// HeapProperties
-	D3D12_HEAP_PROPERTIES HeapProperties = { };
-	if (InMemoryType == EMemoryType::MEMORY_TYPE_UPLOAD)
+	Void* MappedData = nullptr;
+
+	HRESULT Result = 0;
+	if (MappedRange)
 	{
-		HeapProperties = 
-		{
-			D3D12_HEAP_TYPE_UPLOAD,
-			D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-			D3D12_MEMORY_POOL_UNKNOWN,
-			0,
-			0,
-		};
-	}
-	else if (InMemoryType == EMemoryType::MEMORY_TYPE_DEFAULT)
-	{
-		HeapProperties =
-		{
-			D3D12_HEAP_TYPE_DEFAULT,
-			D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-			D3D12_MEMORY_POOL_UNKNOWN,
-			0,
-			0,
-		};
+		D3D12_RANGE MapRange = { MappedRange->Offset, MappedRange->Offset + MappedRange->Size };
+		Result = NativeResource->Map(0, &MapRange, &MappedData);
 	}
 	else
 	{
-		Debug::DebugBreak();
+		Result = NativeResource->Map(0, nullptr, &MappedData);
 	}
 
-	// Create
-	HRESULT hResult = Device->GetDevice()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, InDesc, InitalState, OptimizedClearValue, IID_PPV_ARGS(&Resource));
-	if (SUCCEEDED(hResult))
+	if (FAILED(Result))
 	{
-		Desc		= *InDesc;
-		MemoryType	= InMemoryType;
-
-		return true;
+		LOG_ERROR("[D3D12Resource::Map] Failed");
+		return nullptr;
 	}
 	else
 	{
-		return false;
+		return MappedData;
 	}
 }
 
-bool D3D12Resource::Initialize(ID3D12Resource* InResource)
+void D3D12Resource::Unmap(const Range* WrittenRange)
 {
-	VALIDATE(InResource != nullptr);
-
-	Resource = InResource;
-	Desc = Resource->GetDesc();
-
-	return Resource != nullptr;
-}
-
-void D3D12Resource::SetShaderResourceView(TSharedPtr<D3D12ShaderResourceView> InShaderResourceView, const UInt32 SubresourceIndex)
-{
-	if (SubresourceIndex >= ShaderResourceViews.Size())
+	if (WrittenRange)
 	{
-		ShaderResourceViews.Resize(SubresourceIndex + 1);
+		D3D12_RANGE WriteRange = { WrittenRange->Offset, WrittenRange->Offset + WrittenRange->Size };
+		NativeResource->Unmap(0, &WriteRange);
 	}
-
-	ShaderResourceViews[SubresourceIndex] = InShaderResourceView;
-}
-
-void D3D12Resource::SetUnorderedAccessView(TSharedPtr<D3D12UnorderedAccessView> InUnorderedAccessView, const UInt32 SubresourceIndex)
-{
-	if (SubresourceIndex >= UnorderedAccessViews.Size())
+	else
 	{
-		UnorderedAccessViews.Resize(SubresourceIndex + 1);
+		NativeResource->Unmap(0, nullptr);
 	}
-
-	UnorderedAccessViews[SubresourceIndex] = InUnorderedAccessView;
-}
-
-void D3D12Resource::SetDebugName(const std::string& DebugName)
-{
-	std::wstring WideDebugName = ConvertToWide(DebugName);
-	Resource->SetName(WideDebugName.c_str());
 }

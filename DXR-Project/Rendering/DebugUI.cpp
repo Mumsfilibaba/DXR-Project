@@ -1,10 +1,8 @@
 #include "DebugUI.h"
 
-#include "Application/Application.h"
-#include "Application/Events/EventQueue.h"
-#include "Application/Events/KeyEvent.h"
-#include "Application/Events/MouseEvent.h"
+#include "Application/Events/EventDispatcher.h"
 #include "Application/Generic/GenericCursor.h"
+#include "Application/Platform/PlatformApplication.h"
 
 #include "Time/Clock.h"
 
@@ -12,33 +10,35 @@
 
 #include "Rendering/TextureFactory.h"
 
-#include "D3D12/D3D12Device.h"
-#include "D3D12/D3D12Buffer.h"
-#include "D3D12/D3D12Texture.h"
-#include "D3D12/D3D12DescriptorHeap.h"
-#include "D3D12/D3D12GraphicsPipelineState.h"
-#include "D3D12/D3D12CommandList.h"
-#include "D3D12/D3D12RootSignature.h"
-#include "D3D12/D3D12ShaderCompiler.h"
-
+#include "RenderingCore/Buffer.h"
+#include "RenderingCore/Texture.h"
+#include "RenderingCore/PipelineState.h"
 #include "RenderingCore/RenderingAPI.h"
+#include "RenderingCore/ShaderCompiler.h"
+#include "RenderingCore/Shader.h"
 
-static TArray<DebugUI::UIDrawFunc>	GlobalDrawFuncs;
-static TArray<std::string>			GlobalDebugStrings;
+/*
+* Helper ImGuiState
+*/
 
 struct ImGuiState
 {
 	Clock FrameClock;
 
-	TSharedPtr<D3D12Texture>			FontTexture		= nullptr;
-	TSharedPtr<D3D12DescriptorTable>	DescriptorTable = nullptr;
-
-	TSharedPtr<D3D12RootSignature>			RootSignature = nullptr;
-	TSharedPtr<D3D12GraphicsPipelineState>	PipelineState = nullptr;
-
-	TSharedPtr<D3D12Buffer> VertexBuffer	= nullptr;
-	TSharedPtr<D3D12Buffer> IndexBuffer		= nullptr;
+	SampledTexture2D					FontTexture;
+	TSharedRef<GraphicsPipelineState>	PipelineState;
+	TSharedRef<VertexBuffer>			VertexBuffer;
+	TSharedRef<IndexBuffer>				IndexBuffer;
 	
+	void Reset()
+	{
+		FontTexture.Texture.Reset();
+		FontTexture.View.Reset();
+		PipelineState.Reset();
+		VertexBuffer.Reset();
+		IndexBuffer.Reset();
+	}
+
 	ImGuiContext* Context = nullptr;
 };
 
@@ -52,11 +52,11 @@ static UInt32 GetMouseButtonIndex(EMouseButton Button)
 {
 	switch (Button)
 	{
-	case MOUSE_BUTTON_LEFT:		return 0;
-	case MOUSE_BUTTON_RIGHT:	return 1;
-	case MOUSE_BUTTON_MIDDLE:	return 2;
-	case MOUSE_BUTTON_BACK:		return 3;
-	case MOUSE_BUTTON_FORWARD:	return 4;
+	case MouseButton_Left:		return 0;
+	case MouseButton_Right:	return 1;
+	case MouseButton_Middle:	return 2;
+	case MouseButton_Back:		return 3;
+	case MouseButton_Forward:	return 4;
 	default:					return static_cast<UInt32>(-1);
 	}
 }
@@ -65,7 +65,10 @@ static UInt32 GetMouseButtonIndex(EMouseButton Button)
 * DebugUI
 */
 
-bool DebugUI::Initialize()
+static TArray<DebugUI::UIDrawFunc>	GlobalDrawFuncs;
+static TArray<std::string>			GlobalDebugStrings;
+
+bool DebugUI::Init()
 {
 	// Create context
 	IMGUI_CHECKVERSION();
@@ -82,33 +85,32 @@ bool DebugUI::Initialize()
 	IO.BackendPlatformName = "Windows";
 
 #ifdef WIN32
-	TSharedRef<WindowsWindow> Window = StaticCast<WindowsWindow>(Application::Get().GetMainWindow());
-	IO.ImeWindowHandle = Window->GetHandle();
+	IO.ImeWindowHandle = GlobalMainWindow->GetNativeHandle();
 #endif
 
 	// Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
-	IO.KeyMap[ImGuiKey_Tab]			= EKey::KEY_TAB;
-	IO.KeyMap[ImGuiKey_LeftArrow]	= EKey::KEY_LEFT;
-	IO.KeyMap[ImGuiKey_RightArrow]	= EKey::KEY_RIGHT;
-	IO.KeyMap[ImGuiKey_UpArrow]		= EKey::KEY_UP;
-	IO.KeyMap[ImGuiKey_DownArrow]	= EKey::KEY_DOWN;
-	IO.KeyMap[ImGuiKey_PageUp]		= EKey::KEY_PAGE_UP;
-	IO.KeyMap[ImGuiKey_PageDown]	= EKey::KEY_PAGE_DOWN;
-	IO.KeyMap[ImGuiKey_Home]		= EKey::KEY_HOME;
-	IO.KeyMap[ImGuiKey_End]			= EKey::KEY_END;
-	IO.KeyMap[ImGuiKey_Insert]		= EKey::KEY_INSERT;
-	IO.KeyMap[ImGuiKey_Delete]		= EKey::KEY_DELETE;
-	IO.KeyMap[ImGuiKey_Backspace]	= EKey::KEY_BACKSPACE;
-	IO.KeyMap[ImGuiKey_Space]		= EKey::KEY_SPACE;
-	IO.KeyMap[ImGuiKey_Enter]		= EKey::KEY_ENTER;
-	IO.KeyMap[ImGuiKey_Escape]		= EKey::KEY_ESCAPE;
-	IO.KeyMap[ImGuiKey_KeyPadEnter]	= EKey::KEY_KEYPAD_ENTER;
-	IO.KeyMap[ImGuiKey_A]			= EKey::KEY_A;
-	IO.KeyMap[ImGuiKey_C]			= EKey::KEY_C;
-	IO.KeyMap[ImGuiKey_V]			= EKey::KEY_V;
-	IO.KeyMap[ImGuiKey_X]			= EKey::KEY_X;
-	IO.KeyMap[ImGuiKey_Y]			= EKey::KEY_Y;
-	IO.KeyMap[ImGuiKey_Z]			= EKey::KEY_Z;
+	IO.KeyMap[ImGuiKey_Tab]			= EKey::Key_Tab;
+	IO.KeyMap[ImGuiKey_LeftArrow]	= EKey::Key_Left;
+	IO.KeyMap[ImGuiKey_RightArrow]	= EKey::Key_Right;
+	IO.KeyMap[ImGuiKey_UpArrow]		= EKey::Key_Up;
+	IO.KeyMap[ImGuiKey_DownArrow]	= EKey::Key_Down;
+	IO.KeyMap[ImGuiKey_PageUp]		= EKey::Key_PageUp;
+	IO.KeyMap[ImGuiKey_PageDown]	= EKey::Key_PageDown;
+	IO.KeyMap[ImGuiKey_Home]		= EKey::Key_Home;
+	IO.KeyMap[ImGuiKey_End]			= EKey::Key_End;
+	IO.KeyMap[ImGuiKey_Insert]		= EKey::Key_Insert;
+	IO.KeyMap[ImGuiKey_Delete]		= EKey::Key_Delete;
+	IO.KeyMap[ImGuiKey_Backspace]	= EKey::Key_Backspace;
+	IO.KeyMap[ImGuiKey_Space]		= EKey::Key_Space;
+	IO.KeyMap[ImGuiKey_Enter]		= EKey::Key_Enter;
+	IO.KeyMap[ImGuiKey_Escape]		= EKey::Key_Escape;
+	IO.KeyMap[ImGuiKey_KeyPadEnter]	= EKey::Key_KeypadEnter;
+	IO.KeyMap[ImGuiKey_A]			= EKey::Key_A;
+	IO.KeyMap[ImGuiKey_C]			= EKey::Key_C;
+	IO.KeyMap[ImGuiKey_V]			= EKey::Key_V;
+	IO.KeyMap[ImGuiKey_X]			= EKey::Key_X;
+	IO.KeyMap[ImGuiKey_Y]			= EKey::Key_Y;
+	IO.KeyMap[ImGuiKey_Z]			= EKey::Key_Z;
 
 	// Setup style
 	ImGui::StyleColorsDark();
@@ -218,188 +220,215 @@ bool DebugUI::Initialize()
 	Int32	Height	= 0;
 	IO.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-	GlobalImGuiState.FontTexture = TSharedPtr<D3D12Texture>(TextureFactory::LoadFromMemory(Pixels, Width, Height, 0, DXGI_FORMAT_R8G8B8A8_UNORM));
-	if (GlobalImGuiState.FontTexture)
+	GlobalImGuiState.FontTexture = TextureFactory::LoadSampledTextureFromMemory(
+		Pixels, 
+		Width, Height, 
+		0, 
+		EFormat::Format_R8G8B8A8_Unorm);
+	if (!GlobalImGuiState.FontTexture)
 	{
-		GlobalImGuiState.DescriptorTable = RenderingAPI::Get().CreateDescriptorTable(1);
-		GlobalImGuiState.DescriptorTable->SetShaderResourceView(GlobalImGuiState.FontTexture->GetShaderResourceView(0).Get(), 0);
-		GlobalImGuiState.DescriptorTable->CopyDescriptors();
+		return false;
+	}
+
+	static const Char* VSSource = 
+	R"*(
+	cbuffer vertexBuffer : register(b0)
+	{
+		float4x4 ProjectionMatrix;
+	};
+	struct VS_INPUT
+	{
+		float2 pos : POSITION;
+		float4 col : COLOR0;
+		float2 uv : TEXCOORD0;
+	};
+	struct PS_INPUT
+	{
+		float4 pos : SV_POSITION;
+		float4 col : COLOR0;
+		float2 uv : TEXCOORD0;
+	};
+	PS_INPUT Main(VS_INPUT input)
+	{
+		PS_INPUT output;
+		output.pos	= mul(ProjectionMatrix, float4(input.pos.xy, 0.0f, 1.0f));
+		output.col	= input.col;
+		output.uv	= input.uv;
+		return output;
+	})*";
+
+	TArray<UInt8> ShaderCode;
+	if (!ShaderCompiler::CompileShader(
+		VSSource,
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Vertex,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	TSharedRef<VertexShader> VShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	if (!VShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	static const Char* PSSource = 
+		R"*(
+		struct PS_INPUT
+		{
+			float4 pos : SV_POSITION;
+			float4 col : COLOR0;
+			float2 uv  : TEXCOORD0;
+		};
+		SamplerState sampler0	: register(s0);
+		Texture2D texture0		: register(t0);
+		float4 Main(PS_INPUT input) : SV_Target
+		{
+			float4 out_col = input.col * texture0.Sample(sampler0, input.uv);
+			return out_col;
+		})*";
+
+	if (!ShaderCompiler::CompileShader(
+		PSSource,
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Pixel,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	TSharedRef<PixelShader> PShader = RenderingAPI::CreatePixelShader(ShaderCode);
+	if (!PShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	InputLayoutStateCreateInfo InputLayoutInfo =
+	{
+		{ "POSITION",	0, EFormat::Format_R32G32_Float,	0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, pos)),	EInputClassification::InputClassification_Vertex, 0 },
+		{ "TEXCOORD",	0, EFormat::Format_R32G32_Float,	0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, uv)),	EInputClassification::InputClassification_Vertex, 0 },
+		{ "COLOR",		0, EFormat::Format_R8G8B8A8_Unorm,	0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, col)),	EInputClassification::InputClassification_Vertex, 0 },
+	};
+
+	TSharedRef<InputLayoutState> InputLayout = RenderingAPI::CreateInputLayout(InputLayoutInfo);
+	if (!InputLayout)
+	{
+		Debug::DebugBreak();
+		return false;
 	}
 	else
 	{
-		return false;
+		InputLayout->SetName("ImGui InputLayoutState");
 	}
 
-	D3D12_STATIC_SAMPLER_DESC StaticSampler = {};
-	StaticSampler.Filter			= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	StaticSampler.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSampler.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSampler.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	StaticSampler.MipLODBias		= 0.0f;
-	StaticSampler.MaxAnisotropy		= 0;
-	StaticSampler.ComparisonFunc	= D3D12_COMPARISON_FUNC_ALWAYS;
-	StaticSampler.BorderColor		= D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	StaticSampler.MinLOD			= 0.0f;
-	StaticSampler.MaxLOD			= 0.0f;
-	StaticSampler.ShaderRegister	= 0;
-	StaticSampler.RegisterSpace		= 0;
-	StaticSampler.ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;
+	DepthStencilStateCreateInfo DepthStencilStateInfo;
+	DepthStencilStateInfo.DepthEnable		= false;
+	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_Zero;
 
-	D3D12_DESCRIPTOR_RANGE DescRange = {};
-	DescRange.RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	DescRange.NumDescriptors					= 1;
-	DescRange.BaseShaderRegister				= 0;
-	DescRange.RegisterSpace						= 0;
-	DescRange.OffsetInDescriptorsFromTableStart	= 0;
-
-	D3D12_ROOT_PARAMETER Parameters[2];
-	Parameters[0].ParameterType				= D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	Parameters[0].Constants.ShaderRegister	= 0;
-	Parameters[0].Constants.RegisterSpace	= 0;
-	Parameters[0].Constants.Num32BitValues	= 16;
-	Parameters[0].ShaderVisibility			= D3D12_SHADER_VISIBILITY_VERTEX;
-
-	Parameters[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	Parameters[1].DescriptorTable.NumDescriptorRanges	= 1;
-	Parameters[1].DescriptorTable.pDescriptorRanges		= &DescRange;
-	Parameters[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;
-
-	D3D12_ROOT_SIGNATURE_DESC RootSignaturDesc;
-	RootSignaturDesc.NumParameters		= 2;
-	RootSignaturDesc.pParameters		= Parameters;
-	RootSignaturDesc.NumStaticSamplers	= 1;
-	RootSignaturDesc.pStaticSamplers	= &StaticSampler;
-	RootSignaturDesc.Flags =
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-
-	GlobalImGuiState.RootSignature = RenderingAPI::Get().CreateRootSignature(RootSignaturDesc);
-	if (!GlobalImGuiState.RootSignature)
+	TSharedRef<DepthStencilState> DepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	if (!DepthStencilState)
 	{
+		Debug::DebugBreak();
 		return false;
 	}
-
-	static const Char* VertexShader =
-		"cbuffer vertexBuffer : register(b0) \
-		{\
-			float4x4 ProjectionMatrix; \
-		};\
-		struct VS_INPUT\
-		{\
-			float2 pos : POSITION;\
-			float4 col : COLOR0;\
-			float2 uv  : TEXCOORD0;\
-		};\
-		\
-		struct PS_INPUT\
-		{\
-			float4 pos : SV_POSITION;\
-			float4 col : COLOR0;\
-			float2 uv  : TEXCOORD0;\
-		};\
-		\
-		PS_INPUT Main(VS_INPUT input)\
-		{\
-			PS_INPUT output;\
-			output.pos = mul( ProjectionMatrix, float4(input.pos.xy, 0.f, 1.f));\
-			output.col = input.col;\
-			output.uv  = input.uv;\
-			return output;\
-		}";
-
-	IDxcBlob* VSBlob = D3D12ShaderCompiler::CompileFromSource(VertexShader, "Main", "vs_6_1");
-	if (!VSBlob)
+	else
 	{
-		return false;
+		DepthStencilState->SetName("ImGui DepthStencilState");
 	}
 
-	static const Char* PixelShader =
-		"struct PS_INPUT\
-		{\
-			float4 pos : SV_POSITION;\
-			float4 col : COLOR0;\
-			float2 uv  : TEXCOORD0;\
-		};\
-		SamplerState sampler0 : register(s0);\
-		Texture2D texture0 : register(t0);\
-		\
-		float4 Main(PS_INPUT input) : SV_Target\
-		{\
-			float4 out_col = input.col * texture0.Sample(sampler0, input.uv); \
-			return out_col; \
-		}";
+	RasterizerStateCreateInfo RasterizerStateInfo;
+	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
 
-	IDxcBlob* PSBlob = D3D12ShaderCompiler::CompileFromSource(PixelShader, "Main", "ps_6_1");
-	if (!PSBlob)
+	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	if (!RasterizerState)
 	{
+		Debug::DebugBreak();
 		return false;
 	}
-
-	D3D12_INPUT_ELEMENT_DESC InputElementDesc[] =
+	else
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, pos)), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, uv)),  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, col)), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
+		RasterizerState->SetName("ImGui RasterizerState");
+	}
 
-	GraphicsPipelineStateProperties GuiPipelineProps = { };
-	GuiPipelineProps.DebugName			= "ImGui Pipeline";
-	GuiPipelineProps.RootSignature		= GlobalImGuiState.RootSignature.Get();
-	GuiPipelineProps.VSBlob				= VSBlob;
-	GuiPipelineProps.PSBlob				= PSBlob;
-	GuiPipelineProps.InputElements		= InputElementDesc;
-	GuiPipelineProps.NumInputElements	= 3;
-	GuiPipelineProps.EnableDepth		= false;
-	GuiPipelineProps.DepthBufferFormat	= DXGI_FORMAT_UNKNOWN;
-	GuiPipelineProps.EnableBlending		= true;
+	BlendStateCreateInfo BlendStateInfo;
+	BlendStateInfo.IndependentBlendEnable			= false;
+	BlendStateInfo.RenderTarget[0].BlendEnable		= true;
+	BlendStateInfo.RenderTarget[0].SrcBlend			= EBlend::Blend_SrcAlpha;
+	BlendStateInfo.RenderTarget[0].SrcBlendAlpha	= EBlend::Blend_InvSrcAlpha;
+	BlendStateInfo.RenderTarget[0].DestBlend		= EBlend::Blend_InvSrcAlpha;
+	BlendStateInfo.RenderTarget[0].DestBlendAlpha	= EBlend::Blend_Zero;
+	BlendStateInfo.RenderTarget[0].BlendOpAlpha		= EBlendOp::BlendOp_Add;
+	BlendStateInfo.RenderTarget[0].BlendOp			= EBlendOp::BlendOp_Add;
 
-	DXGI_FORMAT Formats[] =
+	TSharedRef<BlendState> BlendState = RenderingAPI::CreateBlendState(BlendStateInfo);
+	if (!BlendState)
 	{
-		DXGI_FORMAT_R8G8B8A8_UNORM
-	};
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		BlendState->SetName("ImGui BlendState");
+	}
 
-	GuiPipelineProps.RTFormats			= Formats;
-	GuiPipelineProps.NumRenderTargets	= 1;
+	GraphicsPipelineStateCreateInfo PSOProperties;
+	PSOProperties.ShaderState.VertexShader					= VShader.Get();
+	PSOProperties.ShaderState.PixelShader					= PShader.Get();
+	PSOProperties.InputLayoutState							= InputLayout.Get();
+	PSOProperties.DepthStencilState							= DepthStencilState.Get();
+	PSOProperties.BlendState								= BlendState.Get();
+	PSOProperties.RasterizerState							= RasterizerState.Get();
+	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
+	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
+	PSOProperties.PrimitiveTopologyType						= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
 
-	GlobalImGuiState.PipelineState = RenderingAPI::Get().CreateGraphicsPipelineState(GuiPipelineProps);
+	GlobalImGuiState.PipelineState = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
 	if (!GlobalImGuiState.PipelineState)
 	{
 		return false;
 	}
 
-	BufferProperties BufferProps = { };
-	BufferProps.Name		= "ImGui VertexBuffer";
-	BufferProps.SizeInBytes = 1024 * 1024 * 8;
-	BufferProps.InitalState = D3D12_RESOURCE_STATE_GENERIC_READ;
-	BufferProps.Flags		= D3D12_RESOURCE_FLAG_NONE;
-	BufferProps.MemoryType	= EMemoryType::MEMORY_TYPE_UPLOAD;
-
 	// VertexBuffer
-	GlobalImGuiState.VertexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
+	GlobalImGuiState.VertexBuffer = RenderingAPI::CreateVertexBuffer(
+		nullptr, 
+		1024 * 1024 * 8, 
+		sizeof(ImDrawVert), 
+		BufferUsage_Default);
 	if (!GlobalImGuiState.VertexBuffer)
 	{
 		return false;
 	}
 
 	// IndexBuffer
-	BufferProps.Name = "ImGui IndexBuffer";
-
-	GlobalImGuiState.IndexBuffer = RenderingAPI::Get().CreateBuffer(BufferProps);
+	GlobalImGuiState.IndexBuffer = RenderingAPI::CreateIndexBuffer(
+		nullptr, 
+		1024 * 1024 * 8, 
+		sizeof(ImDrawIdx) == 2 ? EIndexFormat::IndexFormat_UInt16 : EIndexFormat::IndexFormat_UInt32,
+		BufferUsage_Default);
 	if (!GlobalImGuiState.IndexBuffer)
 	{
 		return false;
 	}
 
 	// Register EventFunc
-	EventQueue::RegisterEventHandler(DebugUI::OnEvent, EEventCategory::EVENT_CATEGORY_INPUT);
+	GlobalEventDispatcher->RegisterEventHandler(DebugUI::OnEvent, EEventCategory::EventCategory_Input);
 
 	return true;
 }
 
 void DebugUI::Release()
 {
+	GlobalImGuiState.Reset();
+
 	ImGui::DestroyContext(GlobalImGuiState.Context);
 }
 
@@ -418,36 +447,36 @@ bool DebugUI::OnEvent(const Event& Event)
 	ImGuiIO& IO = ImGui::GetIO();
 	if (IsOfEventType<KeyPressedEvent>(Event))
 	{
-		IO.KeysDown[EventCast<KeyEvent>(Event).GetKey()] = true;
+		IO.KeysDown[CastEvent<KeyPressedEvent>(Event).Key] = true;
 	}
 	else if (IsOfEventType<KeyReleasedEvent>(Event))
 	{
-		IO.KeysDown[EventCast<KeyEvent>(Event).GetKey()] = false;
+		IO.KeysDown[CastEvent<KeyReleasedEvent>(Event).Key] = false;
 	}
 	else if (IsOfEventType<KeyTypedEvent>(Event))
 	{
-		IO.AddInputCharacter(EventCast<KeyTypedEvent>(Event).GetCharacter());
+		IO.AddInputCharacter(CastEvent<KeyTypedEvent>(Event).Character);
 	}
 	else if (IsOfEventType<MousePressedEvent>(Event))
 	{
-		UInt32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
+		const UInt32 ButtonIndex = GetMouseButtonIndex(CastEvent<MousePressedEvent>(Event).Button);
 		IO.MouseDown[ButtonIndex] = true;
 	}
 	else if (IsOfEventType<MouseReleasedEvent>(Event))
 	{
-		UInt32 ButtonIndex = GetMouseButtonIndex(EventCast<MouseButtonEvent>(Event).GetButton());
+		const UInt32 ButtonIndex = GetMouseButtonIndex(CastEvent<MousePressedEvent>(Event).Button);
 		IO.MouseDown[ButtonIndex] = false;
 	}
 	else if (IsOfEventType<MouseScrolledEvent>(Event))
 	{
-		IO.MouseWheel	+= EventCast<MouseScrolledEvent>(Event).GetVerticalDelta();
-		IO.MouseWheelH	+= EventCast<MouseScrolledEvent>(Event).GetHorizontalDelta();
+		IO.MouseWheel	+= CastEvent<MouseScrolledEvent>(Event).VerticalDelta;
+		IO.MouseWheelH	+= CastEvent<MouseScrolledEvent>(Event).HorizontalDelta;
 	}
 
 	return false;
 }
 
-void DebugUI::Render(D3D12CommandList* CommandList)
+void DebugUI::Render(CommandList& CmdList)
 {
 	ImGuiIO& IO = ImGui::GetIO();
 
@@ -455,10 +484,10 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	GlobalImGuiState.FrameClock.Tick();
 
 	// Set Mouseposition
-	TSharedRef<GenericWindow> Window = Application::Get().GetMainWindow();
+	GenericWindow* Window = GlobalMainWindow;
 	if (IO.WantSetMousePos)
 	{
-		Application::Get().SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
+		GlobalPlatformApplication->SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
 	}
 
 	// Get the display size
@@ -473,12 +502,12 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	// Get Mouseposition
 	Int32 x = 0;
 	Int32 y = 0;
-	Application::Get().GetCursorPos(Window, x, y);
+	GlobalPlatformApplication->GetCursorPos(Window, x, y);
 
 	IO.MousePos = ImVec2(static_cast<Float>(x), static_cast<Float>(y));
 
 	// Check modifer keys
-	ModifierKeyState KeyState = Application::Get().GetModifierKeyState();
+	ModifierKeyState KeyState = PlatformApplication::GetModifierKeyState();
 	IO.KeyCtrl	= KeyState.IsCtrlDown();
 	IO.KeyShift	= KeyState.IsShiftDown();
 	IO.KeyAlt	= KeyState.IsAltDown();
@@ -490,7 +519,7 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 		ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
 		if (ImguiCursor == ImGuiMouseCursor_None || IO.MouseDrawCursor)
 		{
-			Application::Get().SetCursor(nullptr);
+			GlobalPlatformApplication->SetCursor(nullptr);
 		}
 		else
 		{
@@ -498,18 +527,18 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 			TSharedRef<GenericCursor> Cursor = GlobalCursors::Arrow;
 			switch (ImguiCursor)
 			{
-			case ImGuiMouseCursor_Arrow:		Cursor = GlobalCursors::Arrow;						break;
-			case ImGuiMouseCursor_TextInput:	Cursor = GlobalCursors::TextInput;					break;
-			case ImGuiMouseCursor_ResizeAll:	Cursor = GlobalCursors::ResizeAll;					break;
-			case ImGuiMouseCursor_ResizeEW:		Cursor = GlobalCursors::ResizeEastWest;				break;
-			case ImGuiMouseCursor_ResizeNS:		Cursor = GlobalCursors::ResizeNorthSouth;			break;
-			case ImGuiMouseCursor_ResizeNESW:	Cursor = GlobalCursors::ResizeNorthEastSouthWest;	break;
-			case ImGuiMouseCursor_ResizeNWSE:	Cursor = GlobalCursors::ResizeNorthWestSouthEast;	break;
-			case ImGuiMouseCursor_Hand:			Cursor = GlobalCursors::Hand;						break;
-			case ImGuiMouseCursor_NotAllowed:	Cursor = GlobalCursors::NotAllowed;					break;
+			case ImGuiMouseCursor_Arrow:		Cursor = GlobalCursors::Arrow;		break;
+			case ImGuiMouseCursor_TextInput:	Cursor = GlobalCursors::TextInput;	break;
+			case ImGuiMouseCursor_ResizeAll:	Cursor = GlobalCursors::ResizeAll;	break;
+			case ImGuiMouseCursor_ResizeEW:		Cursor = GlobalCursors::ResizeEW;	break;
+			case ImGuiMouseCursor_ResizeNS:		Cursor = GlobalCursors::ResizeNS;	break;
+			case ImGuiMouseCursor_ResizeNESW:	Cursor = GlobalCursors::ResizeNESW;	break;
+			case ImGuiMouseCursor_ResizeNWSE:	Cursor = GlobalCursors::ResizeNWSE;	break;
+			case ImGuiMouseCursor_Hand:			Cursor = GlobalCursors::Hand;		break;
+			case ImGuiMouseCursor_NotAllowed:	Cursor = GlobalCursors::NotAllowed;	break;
 			}
 			
-			Application::Get().SetCursor(GlobalCursors::Arrow);
+			GlobalPlatformApplication->SetCursor(GlobalCursors::Arrow.Get());
 		}
 	}
 
@@ -531,15 +560,14 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	ImGui::Begin("DebugWindow", nullptr,
 		ImGuiWindowFlags_NoBackground	| 
 		ImGuiWindowFlags_NoTitleBar		| 
-		ImGuiWindowFlags_NoMove			|
+		ImGuiWindowFlags_NoMove			| 
 		ImGuiWindowFlags_NoResize		| 
 		ImGuiWindowFlags_NoDecoration	| 
-		ImGuiWindowFlags_NoScrollbar	|
+		ImGuiWindowFlags_NoScrollbar	| 
 		ImGuiWindowFlags_NoSavedSettings);
 
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
 
-	// TODO: Draw strings
 	for (const std::string& Str : GlobalDebugStrings)
 	{
 		ImGui::Text(Str.c_str());
@@ -558,13 +586,6 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 	// Get Draw data
 	ImDrawData* DrawData = ImGui::GetDrawData();
 
-	// Setup orthographic projection matrix into our constant buffer
-	// Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
-	struct VERTEX_CONSTANT_BUFFER
-	{
-		Float MVP[4][4];
-	} VertexConstantBuffer = { };
-
 	Float L = DrawData->DisplayPos.x;
 	Float R = DrawData->DisplayPos.x + DrawData->DisplaySize.x;
 	Float T = DrawData->DisplayPos.y;
@@ -577,99 +598,99 @@ void DebugUI::Render(D3D12CommandList* CommandList)
 		{ (R + L) / (L - R),	(T + B) / (B - T),	0.5f,	1.0f },
 	};
 
-	memcpy(&VertexConstantBuffer.MVP, MVP, sizeof(MVP));
-
 	// Setup viewport
-	D3D12_VIEWPORT ViewPort = { };
-	ViewPort.Width		= DrawData->DisplaySize.x;
-	ViewPort.Height		= DrawData->DisplaySize.y;
-	ViewPort.MinDepth	= 0.0f;
-	ViewPort.MaxDepth	= 1.0f;
-	ViewPort.TopLeftX	= 0.0f;
-	ViewPort.TopLeftY	= 0.0f;
-	CommandList->RSSetViewports(&ViewPort, 1);
+	CmdList.BindViewport(
+		DrawData->DisplaySize.x,
+		DrawData->DisplaySize.y, 
+		0.0f, 1.0f, 0.0f, 0.0f);
 
-	// Bind shader and vertex buffers
-	const UInt32 Stride = sizeof(ImDrawVert);
+	CmdList.Bind32BitShaderConstants(
+		EShaderStage::ShaderStage_Pixel,
+		&MVP, 16);
 
-	D3D12_VERTEX_BUFFER_VIEW VertexBufferView = { };
-	VertexBufferView.BufferLocation	= GlobalImGuiState.VertexBuffer->GetGPUVirtualAddress();
-	VertexBufferView.SizeInBytes	= DrawData->TotalVtxCount * Stride;
-	VertexBufferView.StrideInBytes	= Stride;
-	CommandList->IASetVertexBuffers(0, &VertexBufferView, 1);
+	CmdList.BindVertexBuffers(&GlobalImGuiState.VertexBuffer, 1, 0);
+	CmdList.BindIndexBuffer(GlobalImGuiState.IndexBuffer.Get());
+	CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+	CmdList.BindGraphicsPipelineState(GlobalImGuiState.PipelineState.Get());
+	CmdList.BindBlendFactor(ColorClearValue(0.0f, 0.0f, 0.0f, 0.0f));
 
-	D3D12_INDEX_BUFFER_VIEW IndexBufferView;
-	IndexBufferView.BufferLocation	= GlobalImGuiState.IndexBuffer->GetGPUVirtualAddress();
-	IndexBufferView.SizeInBytes		= DrawData->TotalIdxCount * sizeof(ImDrawIdx);
-	IndexBufferView.Format			= sizeof(ImDrawIdx) == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+	// TODO: Do not change to GenericRead, change to vertex/constantbuffer
+	CmdList.TransitionBuffer(
+		GlobalImGuiState.VertexBuffer.Get(),
+		EResourceState::ResourceState_GenericRead,
+		EResourceState::ResourceState_CopyDest);
 
-	CommandList->IASetIndexBuffer(&IndexBufferView);
-	CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	CmdList.TransitionBuffer(
+		GlobalImGuiState.IndexBuffer.Get(),
+		EResourceState::ResourceState_GenericRead,
+		EResourceState::ResourceState_CopyDest);
 
-	CommandList->SetPipelineState(GlobalImGuiState.PipelineState->GetPipelineState());
-	CommandList->SetGraphicsRootSignature(GlobalImGuiState.RootSignature->GetRootSignature());
-	CommandList->SetGraphicsRoot32BitConstants(&VertexConstantBuffer, 16, 0, 0);
-
-	// Setup BlendFactor
-	const Float BlendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	CommandList->OMSetBlendFactor(BlendFactor);
-
-	// Upload vertex/index data into a single contiguous GPU buffer
-	ImDrawVert* VertexDest	= reinterpret_cast<ImDrawVert*>(GlobalImGuiState.VertexBuffer->Map());
-	ImDrawIdx* IndexDest	= reinterpret_cast<ImDrawIdx*>(GlobalImGuiState.IndexBuffer->Map());
-	for (Int32 N = 0; N < DrawData->CmdListsCount; N++)
+	UInt32 VertexOffset	= 0;
+	UInt32 IndexOffset	= 0;
+	for (Int32 i = 0; i < DrawData->CmdListsCount; i++)
 	{
-		const ImDrawList* CmdList = DrawData->CmdLists[N];
-		memcpy(VertexDest, CmdList->VtxBuffer.Data, CmdList->VtxBuffer.Size * sizeof(ImDrawVert));
-		memcpy(IndexDest, CmdList->IdxBuffer.Data, CmdList->IdxBuffer.Size * sizeof(ImDrawIdx));
+		const ImDrawList* ImCmdList = DrawData->CmdLists[i];
+		
+		const UInt32 VertexSize = ImCmdList->VtxBuffer.Size * sizeof(ImDrawVert);
+		CmdList.UpdateBuffer(
+			GlobalImGuiState.VertexBuffer.Get(),
+			VertexOffset,
+			VertexSize,
+			ImCmdList->VtxBuffer.Data);
 
-		VertexDest	+= CmdList->VtxBuffer.Size;
-		IndexDest	+= CmdList->IdxBuffer.Size;
+		const UInt32 IndexSize = ImCmdList->IdxBuffer.Size * sizeof(ImDrawIdx);
+		CmdList.UpdateBuffer(
+			GlobalImGuiState.IndexBuffer.Get(),
+			IndexOffset,
+			IndexSize,
+			ImCmdList->IdxBuffer.Data);
+
+		VertexOffset	+= VertexSize;
+		IndexOffset		+= IndexSize;
 	}
-	GlobalImGuiState.VertexBuffer->Unmap();
-	GlobalImGuiState.IndexBuffer->Unmap();
+
+	CmdList.TransitionBuffer(
+		GlobalImGuiState.VertexBuffer.Get(),
+		EResourceState::ResourceState_CopyDest,
+		EResourceState::ResourceState_GenericRead);
+
+	CmdList.TransitionBuffer(
+		GlobalImGuiState.IndexBuffer.Get(),
+		EResourceState::ResourceState_CopyDest,
+		EResourceState::ResourceState_GenericRead);
 
 	// Render command lists
 	// (Because we merged all buffers into a single one, we maintain our own offset into them)
 	Int32	GlobalVertexOffset	= 0;
 	Int32	GlobalIndexOffset	= 0;
-	ImVec2	ClipOff = DrawData->DisplayPos;
-	for (Int32 N = 0; N < DrawData->CmdListsCount; N++)
+	ImVec2	ClipOff				= DrawData->DisplayPos;
+	for (Int32 i = 0; i < DrawData->CmdListsCount; i++)
 	{
-		const ImDrawList* CmdList = DrawData->CmdLists[N];
-		for (Int32 CmdIndex = 0; CmdIndex < CmdList->CmdBuffer.Size; CmdIndex++)
+		const ImDrawList* DrawCmdList = DrawData->CmdLists[i];
+		for (Int32 CmdIndex = 0; CmdIndex < DrawCmdList->CmdBuffer.Size; CmdIndex++)
 		{
-			const ImDrawCmd* Cmd = &CmdList->CmdBuffer[CmdIndex];
-			//if (Cmd->UserCallback != NULL)
-			//{
-			//	// User callback, registered via ImDrawList::AddCallback()
-			//	// (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
-			//	if (Cmd->UserCallback == ImDrawCallback_ResetRenderState)
-			//		ImGui_ImplDX12_SetupRenderState(draw_data, ctx, fr);
-			//	else
-			//		Cmd->UserCallback(CmdList, Cmd);
-			//}
-			//else
-			//{
-			
-			// Apply Scissor, Bind texture, Draw
-			const D3D12_RECT ScissorRect =
-			{
-				static_cast<LONG>(Cmd->ClipRect.x - ClipOff.x),
-				static_cast<LONG>(Cmd->ClipRect.y - ClipOff.y),
-				static_cast<LONG>(Cmd->ClipRect.z - ClipOff.x),
-				static_cast<LONG>(Cmd->ClipRect.w - ClipOff.y)
-			};
+			const ImDrawCmd* Cmd = &DrawCmdList->CmdBuffer[CmdIndex];
+			CmdList.BindShaderResourceViews(
+				EShaderStage::ShaderStage_Pixel,
+				&GlobalImGuiState.FontTexture.View, 
+				1, 0);
 
-			CommandList->SetGraphicsRootDescriptorTable(GlobalImGuiState.DescriptorTable->GetGPUTableStartHandle(), 1);
-			CommandList->RSSetScissorRects(&ScissorRect, 1);
+			CmdList.BindScissorRect(
+				Cmd->ClipRect.z - ClipOff.x,
+				Cmd->ClipRect.w - ClipOff.y,
+				Cmd->ClipRect.x - ClipOff.x,
+				Cmd->ClipRect.y - ClipOff.y);
 
-			CommandList->DrawIndexedInstanced(Cmd->ElemCount, 1, Cmd->IdxOffset + GlobalIndexOffset, Cmd->VtxOffset + GlobalVertexOffset, 0);
-			//}
+			CmdList.DrawIndexedInstanced(
+				Cmd->ElemCount, 
+				1, 
+				Cmd->IdxOffset + GlobalIndexOffset, 
+				Cmd->VtxOffset + GlobalVertexOffset, 
+				0);
 		}
 
-		GlobalIndexOffset	+= CmdList->IdxBuffer.Size;
-		GlobalVertexOffset	+= CmdList->VtxBuffer.Size;
+		GlobalIndexOffset	+= DrawCmdList->IdxBuffer.Size;
+		GlobalVertexOffset	+= DrawCmdList->VtxBuffer.Size;
 	}
 }
 

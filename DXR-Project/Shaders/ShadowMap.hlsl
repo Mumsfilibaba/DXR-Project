@@ -5,6 +5,9 @@ cbuffer TransformBuffer : register(b0, space0)
 	float ShadowOffset;
 };
 
+// NOTE: The constantbuffers start at b1, but when binding on the CPU side this corresponds to slot 0.
+// Due to an offset in the rootsignature when defining the constants
+
 // PerFrame DescriptorTable
 cbuffer LightBuffer : register(b1, space0)
 {
@@ -26,7 +29,7 @@ struct VSInput
 float4 Main(VSInput Input) : SV_POSITION
 {
 	float3 Normal	= normalize(Input.Normal);
-    float3 Position = Input.Position + (Normal * ShadowOffset);
+	float3 Position = Input.Position + (Normal * ShadowOffset);
 	
 	float4 WorldPosition = mul(float4(Position, 1.0f), Transform);
 	return mul(WorldPosition, LightProjection);

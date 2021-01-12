@@ -18,8 +18,6 @@ public:
 		CORE_OBJECT_INIT();
 	}
 
-	~MeshComponent() = default;
-
 	TSharedPtr<class Material>	Material;
 	TSharedPtr<class Mesh>		Mesh;
 };

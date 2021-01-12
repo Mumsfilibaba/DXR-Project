@@ -1,5 +1,7 @@
 #pragma once
-#include <dxcapi.h>
+#include "RenderingCore/ShaderCompiler.h"
+
+#include "D3D12Helpers.h"
 
 #include <string>
 
@@ -7,19 +9,43 @@
 * D3D12ShaderCompiler
 */
 
-class D3D12ShaderCompiler
+class D3D12ShaderCompiler : public IShaderCompiler
 {
 public:
-	static IDxcBlob* CompileFromFile(const std::string& Filepath, const std::string& Entrypoint, const std::string& TargetProfile, const DxcDefine* Defines = nullptr, const UInt32 NumDefines = 0);
-	static IDxcBlob* CompileFromSource(const std::string& Source, const std::string& Entrypoint, const std::string& TargetProfile, const DxcDefine* Defines = nullptr, const UInt32 NumDefines = 0);
+	D3D12ShaderCompiler();
+	~D3D12ShaderCompiler();
+
+	Bool Init();
+	
+	virtual Bool CompileFromFile(
+		const std::string& FilePath,
+		const std::string& EntryPoint,
+		const TArray<ShaderDefine>* Defines,
+		EShaderStage ShaderStage,
+		EShaderModel ShaderModel,
+		TArray<UInt8>& Code) const override final;
+
+	virtual Bool CompileShader(
+		const std::string& ShaderSource,
+		const std::string& EntryPoint,
+		const TArray<ShaderDefine>* Defines,
+		EShaderStage ShaderStage,
+		EShaderModel ShaderModel,
+		TArray<UInt8>& Code) const override final;
 
 private:
-	static bool Initialize();
-	static IDxcBlob* InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWSTR FilePath, LPCWSTR Entrypoint, LPCWSTR TargetProfile, const DxcDefine* Defines = nullptr, const UInt32 NumDefines = 0);
+	Bool InternalCompileFromSource(
+		IDxcBlob* SourceBlob, 
+		LPCWSTR FilePath, 
+		LPCWSTR Entrypoint, 
+		LPCWSTR TargetProfile, 
+		const TArray<ShaderDefine>* Defines,
+		TArray<UInt8>& Code) const;
 
-	static Microsoft::WRL::ComPtr<IDxcCompiler> DxCompiler;
-	static Microsoft::WRL::ComPtr<IDxcLibrary> DxLibrary;
-	static Microsoft::WRL::ComPtr<IDxcLinker> DxLinker;
-	static Microsoft::WRL::ComPtr<IDxcIncludeHandler> DxIncludeHandler;
-	static HMODULE DxCompilerDLL;
+private:
+	TComPtr<IDxcCompiler>		DxCompiler;
+	TComPtr<IDxcLibrary>		DxLibrary;
+	TComPtr<IDxcLinker>			DxLinker;
+	TComPtr<IDxcIncludeHandler> DxIncludeHandler;
+	HMODULE DxCompilerDLL;
 };

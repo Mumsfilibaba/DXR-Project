@@ -9,41 +9,41 @@
 #endif
 
 // Per Frame Buffers
-ConstantBuffer<Camera>				CameraBuffer		: register(b0, space1);
-ConstantBuffer<PointLight>			PointLightBuffer	: register(b1, space1);
-ConstantBuffer<DirectionalLight>	DirLightBuffer		: register(b2, space1);
-
-// Per Frame Samplers
-SamplerState MaterialSampler	: register(s0, space1);
-SamplerState LUTSampler			: register(s1, space1);
-SamplerState IrradianceSampler	: register(s2, space1);
-
-SamplerComparisonState ShadowMapSampler0	: register(s3, space1);
-SamplerState ShadowMapSampler1				: register(s4, space1);
-
-// Per Frame Textures
-TextureCube<float4> IrradianceMap			: register(t0, space1);
-TextureCube<float4> SpecularIrradianceMap	: register(t1, space1);
-Texture2D<float4>	IntegrationLUT			: register(t2, space1);
-Texture2D<float2>	DirLightShadowMaps		: register(t3, space1);
-TextureCube<float>	PointLightShadowMaps	: register(t4, space1);
+ConstantBuffer<Camera>				CameraBuffer		: register(b1, space0);
+ConstantBuffer<PointLight>			PointLightBuffer	: register(b2, space0);
+ConstantBuffer<DirectionalLight>	DirLightBuffer		: register(b3, space0);
 
 // Per Object Buffers
 ConstantBuffer<Transform>	TransformBuffer	: register(b0, space0);
-ConstantBuffer<Material>	MaterialBuffer	: register(b1, space0);
+ConstantBuffer<Material>	MaterialBuffer	: register(b4, space0);
+
+// Per Frame Samplers
+SamplerState MaterialSampler	: register(s0, space0);
+SamplerState LUTSampler			: register(s1, space0);
+SamplerState IrradianceSampler	: register(s2, space0);
+
+SamplerComparisonState 	ShadowMapSampler0 : register(s3, space0);
+SamplerState 			ShadowMapSampler1 : register(s4, space0);
+
+// Per Frame Textures
+TextureCube<float4> IrradianceMap			: register(t0, space0);
+TextureCube<float4> SpecularIrradianceMap	: register(t1, space0);
+Texture2D<float4>	IntegrationLUT			: register(t2, space0);
+Texture2D<float2>	DirLightShadowMaps		: register(t3, space0);
+TextureCube<float>	PointLightShadowMaps	: register(t4, space0);
 
 // Per Object Textures
-Texture2D<float4> AlbedoMap : register(t0, space0);
+Texture2D<float4> AlbedoMap : register(t5, space0);
 #ifdef NORMAL_MAPPING_ENABLED
-Texture2D<float4> NormalMap : register(t1, space0);
+Texture2D<float4> NormalMap : register(t6, space0);
 #endif
-Texture2D<float4> RoughnessMap : register(t2, space0);
+Texture2D<float4> RoughnessMap : register(t7, space0);
 #ifdef PARALLAX_MAPPING_ENABLED
-Texture2D<float4> HeightMap : register(t3, space0);
+Texture2D<float4> HeightMap : register(t8, space0);
 #endif
-Texture2D<float> MetallicMap	: register(t4, space0);
-Texture2D<float> AOMap			: register(t5, space0);
-Texture2D<float> AlphaMask		: register(t6, space0);
+Texture2D<float> MetallicMap	: register(t9, space0);
+Texture2D<float> AOMap			: register(t10, space0);
+Texture2D<float> AlphaMask		: register(t11, space0);
 
 // Light Calculations
 float3 CalcRadiance(float3 F0, float3 InNormal, float3 InViewDir, float3 InLightDir, float3 InRadiance, float3 InAlbedo, float InRoughness, float InMetallic)

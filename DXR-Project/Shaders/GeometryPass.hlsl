@@ -8,17 +8,15 @@
 #define NORMAL_MAPPING_ENABLED
 #endif
 
-// Per Frame Buffers
+// PerFrame
 ConstantBuffer<Camera> CameraBuffer : register(b1, space0);
 
-// Per Frame Samplers
+// PerObject Samplers
 SamplerState MaterialSampler : register(s0, space0);
 
-// Per Object Buffers
 ConstantBuffer<Transform>	TransformBuffer : register(b0, space0);
 ConstantBuffer<Material>	MaterialBuffer	: register(b2, space0);
 
-// Per Object Textures
 Texture2D<float4> AlbedoMap : register(t0, space0);
 #ifdef NORMAL_MAPPING_ENABLED
 Texture2D<float4> NormalMap : register(t1, space0);

@@ -15,25 +15,37 @@ public:
 	}
 
 	template <typename T>
-	FORCEINLINE static T AlignUp(T value, T alignment)
+	FORCEINLINE static T AlignUp(T Value, T Alignment)
 	{
 		static_assert(std::is_integral<T>());
 
-		const T mask = alignment - 1;
-		return ((value + mask) & (~mask));
+		const T mask = Alignment - 1;
+		return ((Value + mask) & (~mask));
 	}
 
 	template <typename T>
-	FORCEINLINE static T AlignDown(T value, T alignment)
+	FORCEINLINE static T AlignDown(T Value, T Alignment)
 	{
 		static_assert(std::is_integral<T>());
 
-		const T mask = alignment - 1;
-		return ((value) & (~mask));
+		const T mask = Alignment - 1;
+		return ((Value) & (~mask));
 	}
 
-	FORCEINLINE static Float Lerp(Float A, Float B, Float F)
+	FORCEINLINE static Float Lerp(Float a, Float b, Float f)
 	{
-		return (-F * B) + ((A * F) + B);
+		return (-f * b) + ((a * f) + b);
+	}
+
+	template <typename T>
+	FORCEINLINE static T Min(T a, T b)
+	{
+		return a <= b ? a : b;
+	}
+
+	template <typename T>
+	FORCEINLINE static T Max(T a, T b)
+	{
+		return a >= b ? a : b;
 	}
 };
