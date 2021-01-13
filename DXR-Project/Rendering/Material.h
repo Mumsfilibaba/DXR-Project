@@ -64,7 +64,12 @@ public:
 
 	FORCEINLINE Bool HasAlphaMask() const
 	{
-		return AlphaMask.Texture != nullptr;
+		return AlphaMask;
+	}
+
+	FORCEINLINE Bool HasHeightMap() const
+	{
+		return HeightMap;
 	}
 
 	FORCEINLINE const MaterialProperties& GetMaterialProperties() const 

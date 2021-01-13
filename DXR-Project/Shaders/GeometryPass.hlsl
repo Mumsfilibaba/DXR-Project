@@ -159,10 +159,10 @@ PSOutput PSMain(PSInput Input)
 	{
 		float3 ViewDir	= normalize(Input.TangentViewPos - Input.TangentPosition);
 		TexCoords		= ParallaxMapping(TexCoords, ViewDir);
-		//if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
-		//{
-		//	discard;
-		//}
+		if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
+		{
+			discard;
+		}
 	}
 #endif
 
