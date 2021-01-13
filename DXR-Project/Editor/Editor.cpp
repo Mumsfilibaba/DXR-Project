@@ -35,7 +35,7 @@ static void DrawSceneInfo();
 static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, Float ResetValue = 0.0f, Float ColumnWidth = 100.0f, Float Speed = 0.01f)
 {
 	ImGui::PushID(Label.c_str());
-	ImGui::Columns(2);
+	ImGui::Columns(2, nullptr, false);
 
 	// Text
 	ImGui::SetColumnWidth(0, ColumnWidth);
@@ -354,7 +354,7 @@ static void DrawRenderSettings()
 	ImGui::Text("SSAO:");
 	ImGui::Separator();
 
-	ImGui::Columns(2);
+	ImGui::Columns(2, nullptr, false);
 
 	// Text
 	ImGui::SetColumnWidth(0, 100.0f);
@@ -489,7 +489,7 @@ static void DrawSceneInfo()
 				{
 					if (ImGui::TreeNode("MeshComponent"))
 					{
-						ImGui::Columns(2);
+						ImGui::Columns(2, nullptr, false);
 						ImGui::SetColumnWidth(0, 100.0f);
 
 						// Albedo
@@ -573,7 +573,7 @@ static void DrawSceneInfo()
 					// Color
 					if (ImGui::TreeNode("Light Settings"))
 					{
-						ImGui::Columns(2);
+						ImGui::Columns(2, nullptr, false);
 						ImGui::SetColumnWidth(0, ColumnWidth);
 
 						ImGui::Text("Color");
@@ -603,7 +603,7 @@ static void DrawSceneInfo()
 					// Shadow Settings
 					if (ImGui::TreeNode("Shadows"))
 					{
-						ImGui::Columns(2);
+						ImGui::Columns(2, nullptr, false);
 						ImGui::SetColumnWidth(0, ColumnWidth);
 
 						// Bias
@@ -671,7 +671,7 @@ static void DrawSceneInfo()
 					// Color
 					if (ImGui::TreeNode("Light Settings"))
 					{
-						ImGui::Columns(2);
+						ImGui::Columns(2, nullptr, false);
 						ImGui::SetColumnWidth(0, ColumnWidth);
 
 						ImGui::Text("Color");
@@ -718,7 +718,7 @@ static void DrawSceneInfo()
 
 						CurrentDirectionalLight->SetRotation(Rotation);
 
-						ImGui::Columns(2);
+						ImGui::Columns(2, nullptr, false);
 						ImGui::SetColumnWidth(0, ColumnWidth);
 
 						ImGui::Text("Direction");
@@ -739,7 +739,7 @@ static void DrawSceneInfo()
 						DrawFloat3Control("LookAt", LookAt, 0.0f, ColumnWidth);
 						CurrentDirectionalLight->SetLookAt(LookAt);
 
-						ImGui::Columns(2);
+						ImGui::Columns(2, nullptr, false);
 						ImGui::SetColumnWidth(0, ColumnWidth);
 
 						// Read only translation

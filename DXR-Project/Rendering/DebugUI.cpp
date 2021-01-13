@@ -212,10 +212,6 @@ bool DebugUI::Init()
 	Style.Colors[ImGuiCol_TabActive].z = 0.25f;
 	Style.Colors[ImGuiCol_TabActive].w = 1.0f;
 
-	/*
-	* Setup D3D12
-	*/
-	
 	// Build texture atlas
 	Byte*	Pixels	= nullptr;
 	Int32	Width	= 0;
@@ -546,6 +542,8 @@ void DebugUI::Render(CommandList& CmdList)
 
 	// Begin new frame
 	ImGui::NewFrame();
+
+	ImGui::ShowDemoWindow();
 
 	// Call all the draw functions
 	for (UIDrawFunc Func : GlobalDrawFuncs)
