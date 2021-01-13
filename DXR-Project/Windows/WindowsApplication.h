@@ -10,6 +10,26 @@ class ApplicationEventHandler;
 class WindowsCursor;
 
 /*
+* WindowsEvent
+*/
+
+struct WindowsEvent
+{
+	WindowsEvent(HWND InHwnd, UInt32 InMessage, WPARAM InwParam, LPARAM	InlParam)
+		: Hwnd(InHwnd)
+		, Message(InMessage)
+		, wParam(InwParam)
+		, lParam(InlParam)
+	{
+	}
+
+	HWND	Hwnd;
+	UInt32	Message;
+	WPARAM	wParam; 
+	LPARAM	lParam;
+};
+
+/*
 * WindowsApplication
 */
 
@@ -46,7 +66,8 @@ public:
 	virtual GenericCursor* MakeCursor() override final;
 
 	virtual Bool Init() override final;
-	
+	virtual void Tick() override final;
+
 	virtual void SetCursor(GenericCursor* Cursor)		override final;
 	virtual void SetActiveWindow(GenericWindow* Window)	override final;
 	virtual void SetCapture(GenericWindow* Window)		override final;
@@ -72,9 +93,11 @@ public:
 
 private:
 	HINSTANCE InstanceHandle = 0;
+
+	TArray<WindowsEvent> Events;
 	
-	TSharedRef<WindowsCursor>			CurrentCursor;
-	TArray<TSharedRef<WindowsWindow>>	Windows;
+	TSharedRef<WindowsCursor> CurrentCursor;
+	TArray<TSharedRef<WindowsWindow>> Windows;
 };
 
 extern WindowsApplication* GlobalWindowsApplication;

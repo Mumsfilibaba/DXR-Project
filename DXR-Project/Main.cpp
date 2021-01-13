@@ -2,6 +2,8 @@
 
 #include "Engine/EngineLoop.h"
 
+#include "Debug/Profiler.h"
+
 #include "Memory/Memory.h"
 
 #include <crtdbg.h>
@@ -35,6 +37,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, 
 
 	while (EngineLoop::IsRunning())
 	{
+		TRACE_SCOPE("Tick");
+			
 		EngineLoop::PreTick();
 	
 		EngineLoop::Tick();

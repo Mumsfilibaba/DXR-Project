@@ -31,3 +31,12 @@ extern Bool GlobalFrustumCullEnabled;
 extern Bool GlobalFXAAEnabled;
 extern Bool GlobalRayTracingEnabled;
 extern Bool GlobalSSAOEnabled;
+
+/*
+* Debug
+*/
+
+extern class Profiler* GlobalProfiler;
+
+extern Bool GlobalProfilerEnabled;
+extern Bool GlobalDrawProfiler;

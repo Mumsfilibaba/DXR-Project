@@ -9,7 +9,9 @@
 #include "D3D12ShaderCompiler.h"
 #include "D3D12Shader.h"
 
-#include <pix3.h>
+#if D3D12_ENABLE_PIX_MARKERS
+	#include <pix3.h>
+#endif
 
 /*
 * D3D12ShaderDescriptorTableState

@@ -21,6 +21,8 @@
 
 #include "Game/Game.h"
 
+#include "Debug/Profiler.h"
+
 /*
 * Engineloop Globals
 */
@@ -34,13 +36,19 @@ static Bool		GlobalIsRunning = false;
 
 Bool EngineLoop::PreInit()
 {
-	GlobalConsoleOutput = PlatformOutputDevice::Make();
-
-	GlobalPlatformApplication = PlatformApplication::Make();
-	if (!GlobalPlatformApplication->Init())
+	GlobalProfiler = DBG_NEW Profiler();
+	
 	{
-		PlatformDialogMisc::MessageBox("ERROR", "Failed to create Platform Application");
-		return false;
+		TRACE_FUNCTION_SCOPE();
+
+		GlobalConsoleOutput = PlatformOutputDevice::Make();
+
+		GlobalPlatformApplication = PlatformApplication::Make();
+		if (!GlobalPlatformApplication->Init())
+		{
+			PlatformDialogMisc::MessageBox("ERROR", "Failed to create Platform Application");
+			return false;
+		}
 	}
 
 	return true;
@@ -48,6 +56,8 @@ Bool EngineLoop::PreInit()
 
 Bool EngineLoop::Init()
 {
+	TRACE_FUNCTION_SCOPE();
+
 	GlobalEventDispatcher = DBG_NEW EventDispatcher(GlobalPlatformApplication);
 	GlobalPlatformApplication->SetEventHandler(GlobalEventDispatcher);
 
@@ -109,22 +119,32 @@ Bool EngineLoop::Init()
 
 Bool EngineLoop::PostInit()
 {
+	TRACE_FUNCTION_SCOPE();
+
 	GlobalIsRunning = true;
 	return true;
 }
 
 void EngineLoop::PreTick()
 {
+	TRACE_FUNCTION_SCOPE();
+
+	GlobalProfiler->BeginFrame();
+
 	GlobalClock.Tick();
 
 	if (!PlatformApplication::PollPlatformEvents())
 	{
 		Exit();
 	}
+
+	GlobalPlatformApplication->Tick();
 }
 
 void EngineLoop::Tick()
 {
+	TRACE_FUNCTION_SCOPE();
+
 	GlobalGame->Tick(GlobalClock.GetDeltaTime());
 
 	Editor::Tick();
@@ -132,11 +152,17 @@ void EngineLoop::Tick()
 
 void EngineLoop::PostTick()
 {
+	TRACE_FUNCTION_SCOPE();
+
 	GlobalRenderer->Tick(*Scene::GetCurrentScene());
+
+	GlobalProfiler->EndFrame();
 }
 
 void EngineLoop::PreRelease()
 {
+	TRACE_FUNCTION_SCOPE();
+
 	CommandListExecutor::WaitForGPU();
 	
 	TextureFactory::Release();
@@ -144,6 +170,8 @@ void EngineLoop::PreRelease()
 
 void EngineLoop::Release()
 {
+	TRACE_FUNCTION_SCOPE();
+
 	SAFEDELETE(GlobalGame);
 
 	DebugUI::Release();
@@ -155,12 +183,18 @@ void EngineLoop::Release()
 
 void EngineLoop::PostRelease()
 {
-	SAFEDELETE(GlobalEventDispatcher);
+	{
+		TRACE_FUNCTION_SCOPE();
 
-	GlobalMainWindow->Release();
+		SAFEDELETE(GlobalEventDispatcher);
 
-	SAFEDELETE(GlobalPlatformApplication);
-	SAFEDELETE(GlobalConsoleOutput);
+		GlobalMainWindow->Release();
+
+		SAFEDELETE(GlobalPlatformApplication);
+		SAFEDELETE(GlobalConsoleOutput);
+	}
+
+	SAFEDELETE(GlobalProfiler);
 }
 
 void EngineLoop::Exit()

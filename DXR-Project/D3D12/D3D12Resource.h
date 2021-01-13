@@ -25,6 +25,8 @@ public:
 	{
 		std::wstring WideName = ConvertToWide(Name);
 		NativeResource->SetName(WideName.c_str());
+
+		DebugName = Name;
 	}
 
 	FORCEINLINE ID3D12Resource* GetNativeResource() const
@@ -64,4 +66,6 @@ protected:
 	D3D12_RESOURCE_STATES		ResourceState;
 	D3D12_RESOURCE_DESC			Desc;
 	D3D12_GPU_VIRTUAL_ADDRESS	Address;
+
+	std::string DebugName;
 };
