@@ -554,16 +554,17 @@ void DebugUI::Render(CommandList& CmdList)
 	ImGui::SetNextWindowPos(ImVec2(static_cast<Float>(CurrentWindowShape.Width - Width), 18.0f));
 	ImGui::SetNextWindowSize(ImVec2(Width, 0.0f));
 
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
+
 	ImGui::Begin("DebugWindow", nullptr,
 		ImGuiWindowFlags_NoTitleBar		| 
-		ImGuiWindowFlags_NoBackground	| 
 		ImGuiWindowFlags_NoMove			| 
 		ImGuiWindowFlags_NoResize		| 
 		ImGuiWindowFlags_NoDecoration	| 
 		ImGuiWindowFlags_NoScrollbar	| 
 		ImGuiWindowFlags_NoSavedSettings);
 
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 	for (const std::string& Str : GlobalDebugStrings)
 	{
@@ -575,6 +576,7 @@ void DebugUI::Render(CommandList& CmdList)
 	GlobalProfiler->DrawUI();
 #endif
 
+	ImGui::PopStyleColor();
 	ImGui::PopStyleColor();
 	ImGui::End();
 
