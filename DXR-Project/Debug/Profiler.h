@@ -23,7 +23,7 @@ class Profiler
 	{
 		Sample() = default;
 
-		Sample(Int64 InCurrentSample = 0)
+		Sample(Int64 InCurrentSample)
 			: CurrentSample(InCurrentSample)
 			, SampleCount(1)
 		{
@@ -35,8 +35,8 @@ class Profiler
 			SampleCount++;
 		}
 
-		Int64 CurrentSample;
-		Int64 SampleCount;
+		Int64 CurrentSample = 0;
+		Int64 SampleCount	= 1;
 	};
 
 public:
@@ -50,8 +50,8 @@ public:
 	void DrawUI();
 
 private:
-	Clock Clock;
-	Sample FrameTime;
+	Clock	Clock;
+	Sample	FrameTime;
 
 	std::unordered_map<std::string, Sample> Samples;
 };

@@ -85,7 +85,7 @@ void Profiler::DrawUI()
 		ImGui::Separator();
 
 		ImGui::Columns(2, nullptr, false);
-		ImGui::SetColumnWidth(-1, 260.0f);
+		ImGui::SetColumnWidth(0, 260.0f);
 
 		ImGui_PrintTiming("FrameTime", FrameTime.CurrentSample);
 		ImGui::Columns(1);
