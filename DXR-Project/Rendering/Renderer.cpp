@@ -602,16 +602,23 @@ void Renderer::Tick(const Scene& CurrentScene)
 		// Draw all objects to depthbuffer
 		for (const MeshDrawCommand& Command : DeferredVisibleCommands)
 		{
-			CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-			CmdList.BindIndexBuffer(Command.IndexBuffer);
+			if (!Command.Material->HasHeightMap())
+			{
+				CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+				CmdList.BindIndexBuffer(Command.IndexBuffer);
 
-			PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+				PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 			
-			CmdList.Bind32BitShaderConstants(
-				EShaderStage::ShaderStage_Vertex,
-				&PerObjectBuffer, 16);
+				CmdList.Bind32BitShaderConstants(
+					EShaderStage::ShaderStage_Vertex,
+					&PerObjectBuffer, 16);
 
-			CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+				CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+			}
+			else
+			{
+				LOG_INFO("Skip");
+			}
 		}
 
 		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End PrePass");
