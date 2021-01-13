@@ -84,7 +84,7 @@ void Profiler::DrawUI()
 		ImGui::Text("CPU Timings:");
 		ImGui::Separator();
 
-		ImGui::Columns(2);
+		ImGui::Columns(2, nullptr, false);
 		ImGui::SetColumnWidth(0, 260.0f);
 
 		ImGui_PrintTiming("FrameTime", FrameTime.CurrentSample);
@@ -92,7 +92,7 @@ void Profiler::DrawUI()
 
 		ImGui::Separator();
 
-		ImGui::Columns(2);
+		ImGui::Columns(2, nullptr, false);
 		for (auto& Sample : Samples)
 		{
 			const Char* Name = Sample.first.c_str();

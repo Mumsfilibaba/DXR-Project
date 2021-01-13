@@ -212,10 +212,6 @@ bool DebugUI::Init()
 	Style.Colors[ImGuiCol_TabActive].z = 0.25f;
 	Style.Colors[ImGuiCol_TabActive].w = 1.0f;
 
-	/*
-	* Setup D3D12
-	*/
-	
 	// Build texture atlas
 	Byte*	Pixels	= nullptr;
 	Int32	Width	= 0;
@@ -547,7 +543,6 @@ void DebugUI::Render(CommandList& CmdList)
 	// Begin new frame
 	ImGui::NewFrame();
 
-	// Call all the draw functions
 	for (UIDrawFunc Func : GlobalDrawFuncs)
 	{
 		Func();
@@ -559,6 +554,8 @@ void DebugUI::Render(CommandList& CmdList)
 	ImGui::SetNextWindowPos(ImVec2(static_cast<Float>(CurrentWindowShape.Width - Width), 18.0f));
 	ImGui::SetNextWindowSize(ImVec2(Width, 0.0f));
 
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
+
 	ImGui::Begin("DebugWindow", nullptr,
 		ImGuiWindowFlags_NoTitleBar		| 
 		ImGuiWindowFlags_NoMove			| 
@@ -567,8 +564,7 @@ void DebugUI::Render(CommandList& CmdList)
 		ImGuiWindowFlags_NoScrollbar	| 
 		ImGuiWindowFlags_NoSavedSettings);
 
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15f, 0.15f, 0.15f, 0.1f));
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 	for (const std::string& Str : GlobalDebugStrings)
 	{
