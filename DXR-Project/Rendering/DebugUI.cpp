@@ -543,9 +543,6 @@ void DebugUI::Render(CommandList& CmdList)
 	// Begin new frame
 	ImGui::NewFrame();
 
-	ImGui::ShowDemoWindow();
-
-	// Call all the draw functions
 	for (UIDrawFunc Func : GlobalDrawFuncs)
 	{
 		Func();
@@ -559,6 +556,7 @@ void DebugUI::Render(CommandList& CmdList)
 
 	ImGui::Begin("DebugWindow", nullptr,
 		ImGuiWindowFlags_NoTitleBar		| 
+		ImGuiWindowFlags_NoBackground	| 
 		ImGuiWindowFlags_NoMove			| 
 		ImGuiWindowFlags_NoResize		| 
 		ImGuiWindowFlags_NoDecoration	| 
@@ -566,7 +564,6 @@ void DebugUI::Render(CommandList& CmdList)
 		ImGuiWindowFlags_NoSavedSettings);
 
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15f, 0.15f, 0.15f, 0.1f));
 
 	for (const std::string& Str : GlobalDebugStrings)
 	{
@@ -578,7 +575,6 @@ void DebugUI::Render(CommandList& CmdList)
 	GlobalProfiler->DrawUI();
 #endif
 
-	ImGui::PopStyleColor();
 	ImGui::PopStyleColor();
 	ImGui::End();
 
