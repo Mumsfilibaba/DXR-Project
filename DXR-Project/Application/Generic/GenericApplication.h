@@ -69,6 +69,14 @@ public:
 
 	virtual Bool Init() = 0;
 
+	/*
+	* Events gets stored and is processed in this function. This is because events sometimes are sent
+	* from different functions than PollPlatformEvents, For example GenericWindow::ToggleFullscreen. This
+	* makes sure that all events are processed at one time.
+	*/
+
+	virtual void Tick() = 0;
+
 	virtual void SetCursor(GenericCursor* Cursor)	= 0;
 	virtual GenericCursor* GetCursor() const		= 0;
 

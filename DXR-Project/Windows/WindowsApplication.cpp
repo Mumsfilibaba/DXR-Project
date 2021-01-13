@@ -57,6 +57,166 @@ Bool WindowsApplication::Init()
 	return true;
 }
 
+void WindowsApplication::Tick()
+{
+	constexpr UInt16 SCAN_CODE_MASK		= 0x01ff;
+	constexpr UInt16 BACK_BUTTON_MASK	= 0x0001;
+
+	for (const WindowsEvent& Event : Events)
+	{
+		HWND	Hwnd	= Event.Hwnd;
+		UInt32	Message	= Event.Message;
+		WPARAM	wParam	= Event.wParam;
+		WPARAM	lParam	= Event.lParam;
+
+		TSharedRef<WindowsWindow> MessageWindow = MakeSharedRef<WindowsWindow>(GetWindowFromHWND(Hwnd));
+		switch (Message)
+		{
+			case WM_DESTROY:
+			{
+				::PostQuitMessage(0);
+				break;
+			}
+
+			case WM_SIZE:
+			{
+				if (MessageWindow)
+				{
+					const UInt16 Width = LOWORD(lParam);
+					const UInt16 Height = HIWORD(lParam);
+
+					EventHandler->OnWindowResized(MessageWindow, Width, Height);
+				}
+
+				break;
+			}
+
+			case WM_SYSKEYUP:
+			case WM_KEYUP:
+			{
+				const UInt32	ScanCode = static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
+				const EKey		Key = Input::ConvertFromScanCode(ScanCode);
+				EventHandler->OnKeyReleased(Key, GetModifierKeyState());
+				break;
+			}
+
+			case WM_SYSKEYDOWN:
+			case WM_KEYDOWN:
+			{
+				const UInt32	ScanCode = static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
+				const EKey		Key = Input::ConvertFromScanCode(ScanCode);
+				EventHandler->OnKeyPressed(Key, GetModifierKeyState());
+				break;
+			}
+
+			case WM_SYSCHAR:
+			case WM_CHAR:
+			{
+				const UInt32 Character = static_cast<UInt32>(wParam);
+				EventHandler->OnCharacterInput(Character);
+				break;
+			}
+
+			case WM_MOUSEMOVE:
+			{
+				const Int32 x = GET_X_LPARAM(lParam);
+				const Int32 y = GET_Y_LPARAM(lParam);
+
+				EventHandler->OnMouseMove(x, y);
+				break;
+			}
+
+			case WM_LBUTTONDOWN:
+			case WM_MBUTTONDOWN:
+			case WM_RBUTTONDOWN:
+			case WM_XBUTTONDOWN:
+			case WM_LBUTTONDBLCLK:
+			case WM_MBUTTONDBLCLK:
+			case WM_RBUTTONDBLCLK:
+			case WM_XBUTTONDBLCLK:
+			{
+				EMouseButton Button = EMouseButton::MOUSE_BUTTON_UNKNOWN;
+				if (Message == WM_LBUTTONDOWN || Message == WM_LBUTTONDBLCLK)
+				{
+					Button = EMouseButton::MouseButton_Left;
+				}
+				else if (Message == WM_MBUTTONDOWN || Message == WM_MBUTTONDBLCLK)
+				{
+					Button = EMouseButton::MouseButton_Middle;
+				}
+				else if (Message == WM_RBUTTONDOWN || Message == WM_RBUTTONDBLCLK)
+				{
+					Button = EMouseButton::MouseButton_Right;
+				}
+				else if (GET_XBUTTON_WPARAM(wParam) == BACK_BUTTON_MASK)
+				{
+					Button = EMouseButton::MouseButton_Back;
+				}
+				else
+				{
+					Button = EMouseButton::MouseButton_Forward;
+				}
+
+				EventHandler->OnMouseButtonPressed(Button, GetModifierKeyState());
+				break;
+			}
+
+			case WM_LBUTTONUP:
+			case WM_MBUTTONUP:
+			case WM_RBUTTONUP:
+			case WM_XBUTTONUP:
+			{
+				EMouseButton Button = EMouseButton::MOUSE_BUTTON_UNKNOWN;
+				if (Message == WM_LBUTTONUP)
+				{
+					Button = EMouseButton::MouseButton_Left;
+				}
+				else if (Message == WM_MBUTTONUP)
+				{
+					Button = EMouseButton::MouseButton_Middle;
+				}
+				else if (Message == WM_RBUTTONUP)
+				{
+					Button = EMouseButton::MouseButton_Right;
+				}
+				else if (GET_XBUTTON_WPARAM(wParam) == BACK_BUTTON_MASK)
+				{
+					Button = EMouseButton::MouseButton_Back;
+				}
+				else
+				{
+					Button = EMouseButton::MouseButton_Forward;
+				}
+
+				EventHandler->OnMouseButtonReleased(Button, GetModifierKeyState());
+				break;
+			}
+
+			case WM_MOUSEWHEEL:
+			{
+				const Float WheelDelta = static_cast<Float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float>(WHEEL_DELTA);
+				EventHandler->OnMouseScrolled(0.0f, WheelDelta);
+				break;
+			}
+
+			case WM_MOUSEHWHEEL:
+			{
+				const Float WheelDelta = static_cast<Float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float>(WHEEL_DELTA);
+				EventHandler->OnMouseScrolled(WheelDelta, 0.0f);
+				break;
+			}
+
+			default:
+			{
+				// Nothing for now
+				break;
+			}
+		}
+	}
+
+	Events.Clear();
+}
+
 void WindowsApplication::AddWindow(WindowsWindow* Window)
 {
 	Windows.EmplaceBack(MakeSharedRef<WindowsWindow>(Window));
@@ -247,66 +407,17 @@ void WindowsApplication::SetCursorPos(GenericWindow* RelativeWindow, Int32 x, In
 
 LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
-	constexpr UInt16 SCAN_CODE_MASK		= 0x01ff;
-	constexpr UInt16 BACK_BUTTON_MASK	= 0x0001;
-
-	TSharedRef<WindowsWindow> MessageWindow = MakeSharedRef<WindowsWindow>(GetWindowFromHWND(hWnd));
 	switch (uMessage)
 	{
 		case WM_DESTROY:
-		{
-			::PostQuitMessage(0);
-			return 0;
-		}
-
 		case WM_SIZE:
-		{
-			if (MessageWindow)
-			{
-				const UInt16 Width	= LOWORD(lParam);
-				const UInt16 Height = HIWORD(lParam);
-
-				EventHandler->OnWindowResized(MessageWindow, Width, Height);
-			}
-
-			return 0;
-		}
-
 		case WM_SYSKEYUP:
 		case WM_KEYUP:
-		{
-			const UInt32	ScanCode	= static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
-			const EKey		Key			= Input::ConvertFromScanCode(ScanCode);
-			EventHandler->OnKeyReleased(Key, GetModifierKeyState());
-			return 0;
-		}
-
 		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
-		{
-			const UInt32	ScanCode	= static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
-			const EKey		Key			= Input::ConvertFromScanCode(ScanCode);
-			EventHandler->OnKeyPressed(Key, GetModifierKeyState());
-			return 0;
-		}
-
 		case WM_SYSCHAR:
 		case WM_CHAR:
-		{
-			const UInt32 Character = static_cast<UInt32>(wParam);
-			EventHandler->OnCharacterInput(Character);
-			return 0;
-		}
-
 		case WM_MOUSEMOVE:
-		{
-			const Int32 x = GET_X_LPARAM(lParam);
-			const Int32 y = GET_Y_LPARAM(lParam);
-
-			EventHandler->OnMouseMove(x, y);
-			return 0;
-		}
-
 		case WM_LBUTTONDOWN:
 		case WM_MBUTTONDOWN:
 		case WM_RBUTTONDOWN:
@@ -315,83 +426,19 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 		case WM_MBUTTONDBLCLK:
 		case WM_RBUTTONDBLCLK:
 		case WM_XBUTTONDBLCLK:
-		{
-			EMouseButton Button = EMouseButton::MOUSE_BUTTON_UNKNOWN;
-			if (uMessage == WM_LBUTTONDOWN || uMessage == WM_LBUTTONDBLCLK)
-			{
-				Button = EMouseButton::MouseButton_Left;
-			}
-			else if (uMessage == WM_MBUTTONDOWN || uMessage == WM_MBUTTONDBLCLK)
-			{
-				Button = EMouseButton::MouseButton_Middle;
-			}
-			else if (uMessage == WM_RBUTTONDOWN || uMessage == WM_RBUTTONDBLCLK)
-			{
-				Button = EMouseButton::MouseButton_Right;
-			}
-			else if (GET_XBUTTON_WPARAM(wParam) == BACK_BUTTON_MASK)
-			{
-				Button = EMouseButton::MouseButton_Back;
-			}
-			else
-			{
-				Button = EMouseButton::MouseButton_Forward;
-			}
-
-			EventHandler->OnMouseButtonPressed(Button, GetModifierKeyState());
-			return 0;
-		}
-
 		case WM_LBUTTONUP:
 		case WM_MBUTTONUP:
 		case WM_RBUTTONUP:
 		case WM_XBUTTONUP:
-		{
-			EMouseButton Button = EMouseButton::MOUSE_BUTTON_UNKNOWN;
-			if (uMessage == WM_LBUTTONUP)
-			{
-				Button = EMouseButton::MouseButton_Left;
-			}
-			else if (uMessage == WM_MBUTTONUP)
-			{
-				Button = EMouseButton::MouseButton_Middle;
-			}
-			else if (uMessage == WM_RBUTTONUP)
-			{
-				Button = EMouseButton::MouseButton_Right;
-			}
-			else if (GET_XBUTTON_WPARAM(wParam) == BACK_BUTTON_MASK)
-			{
-				Button = EMouseButton::MouseButton_Back;
-			}
-			else
-			{
-				Button = EMouseButton::MouseButton_Forward;
-			}
-
-			EventHandler->OnMouseButtonReleased(Button, GetModifierKeyState());
-			return 0;
-		}
-
 		case WM_MOUSEWHEEL:
-		{
-			const Float WheelDelta = static_cast<Float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float>(WHEEL_DELTA);
-			EventHandler->OnMouseScrolled(0.0f, WheelDelta);
-			return 0;
-		}
-
 		case WM_MOUSEHWHEEL:
 		{
-			const Float WheelDelta = static_cast<Float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float>(WHEEL_DELTA);
-			EventHandler->OnMouseScrolled(WheelDelta, 0.0f);
+			Events.EmplaceBack(hWnd, uMessage, wParam, lParam);
 			return 0;
 		}
-
-		default:
-		{
-			return ::DefWindowProc(hWnd, uMessage, wParam, lParam);
-		}
 	}
+
+	return ::DefWindowProc(hWnd, uMessage, wParam, lParam);
 }
 
 LRESULT WindowsApplication::MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)

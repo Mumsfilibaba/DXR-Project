@@ -39,9 +39,6 @@ struct LightSettings
 class Renderer : public IEventHandler
 {
 public:
-	Renderer();
-	~Renderer();
-	
 	Bool Init();
 
 	void Tick(const Scene& CurrentScene);

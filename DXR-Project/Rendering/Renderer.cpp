@@ -9,9 +9,11 @@
 
 #include "Application/Events/EventDispatcher.h"
 
-#include <algorithm>
-
 #include "RenderingCore/ShaderCompiler.h"
+
+#include "Debug/Profiler.h"
+
+#include <algorithm>
 
 /*
 * Static Settings
@@ -66,14 +68,6 @@ struct PerShadowMap
 * Renderer
 */
 
-Renderer::Renderer()
-{
-}
-
-Renderer::~Renderer()
-{
-}
-
 void Renderer::Tick(const Scene& CurrentScene)
 {
 	// Perform frustum culling
@@ -82,8 +76,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	if (GlobalFrustumCullEnabled)
 	{
-		Camera* Camera = CurrentScene.GetCamera();
-		Frustum CameraFrustum = Frustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+		TRACE_SCOPE("Frustum Culling");
+
+		Camera* Camera			= CurrentScene.GetCamera();
+		Frustum CameraFrustum	= Frustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
 		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 		{
 			const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
@@ -182,79 +178,83 @@ void Renderer::Tick(const Scene& CurrentScene)
 	//}
 
 	// UpdateLightBuffers
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin UpdateLightBuffers");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Update LightBuffers");
 
-	CmdList.TransitionBuffer(
-		PointLightBuffer.Get(), 
-		EResourceState::ResourceState_VertexAndConstantBuffer, 
-		EResourceState::ResourceState_CopyDest);
-
-	CmdList.TransitionBuffer(
-		DirectionalLightBuffer.Get(), 
-		EResourceState::ResourceState_VertexAndConstantBuffer, 
-		EResourceState::ResourceState_CopyDest);
-
-	UInt32 NumPointLights	= 0;
-	UInt32 NumDirLights		= 0;
-	for (Light* Light : CurrentScene.GetLights())
 	{
-		XMFLOAT3	Color		= Light->GetColor();
-		Float		Intensity	= Light->GetIntensity();
-		if (IsSubClassOf<PointLight>(Light))
+		TRACE_SCOPE("Update LightBuffers");
+
+		CmdList.TransitionBuffer(
+			PointLightBuffer.Get(), 
+			EResourceState::ResourceState_VertexAndConstantBuffer, 
+			EResourceState::ResourceState_CopyDest);
+
+		CmdList.TransitionBuffer(
+			DirectionalLightBuffer.Get(), 
+			EResourceState::ResourceState_VertexAndConstantBuffer, 
+			EResourceState::ResourceState_CopyDest);
+
+		UInt32 NumPointLights	= 0;
+		UInt32 NumDirLights		= 0;
+		for (Light* Light : CurrentScene.GetLights())
 		{
-			PointLight* PoiLight = Cast<PointLight>(Light);
-			VALIDATE(PoiLight != nullptr);
+			XMFLOAT3	Color		= Light->GetColor();
+			Float		Intensity	= Light->GetIntensity();
+			if (IsSubClassOf<PointLight>(Light))
+			{
+				PointLight* PoiLight = Cast<PointLight>(Light);
+				VALIDATE(PoiLight != nullptr);
 
-			PointLightProperties Properties;
-			Properties.Color			= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-			Properties.Position			= PoiLight->GetPosition();
-			Properties.ShadowBias		= PoiLight->GetShadowBias();
-			Properties.MaxShadowBias	= PoiLight->GetMaxShadowBias();
-			Properties.FarPlane			= PoiLight->GetShadowFarPlane();
+				PointLightProperties Properties;
+				Properties.Color			= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
+				Properties.Position			= PoiLight->GetPosition();
+				Properties.ShadowBias		= PoiLight->GetShadowBias();
+				Properties.MaxShadowBias	= PoiLight->GetMaxShadowBias();
+				Properties.FarPlane			= PoiLight->GetShadowFarPlane();
 
-			constexpr UInt32 SizeInBytes = sizeof(PointLightProperties);
-			CmdList.UpdateBuffer(
-				PointLightBuffer.Get(), 
-				NumPointLights* SizeInBytes, 
-				SizeInBytes, 
-				&Properties);
+				constexpr UInt32 SizeInBytes = sizeof(PointLightProperties);
+				CmdList.UpdateBuffer(
+					PointLightBuffer.Get(), 
+					NumPointLights* SizeInBytes, 
+					SizeInBytes, 
+					&Properties);
 
-			NumPointLights++;
+				NumPointLights++;
+			}
+			else if (IsSubClassOf<DirectionalLight>(Light))
+			{
+				DirectionalLight* DirLight = Cast<DirectionalLight>(Light);
+				VALIDATE(DirLight != nullptr);
+
+				DirectionalLightProperties Properties;
+				Properties.Color			= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
+				Properties.ShadowBias		= DirLight->GetShadowBias();
+				Properties.Direction		= DirLight->GetDirection();
+				Properties.LightMatrix		= DirLight->GetMatrix();
+				Properties.MaxShadowBias	= DirLight->GetMaxShadowBias();
+
+				constexpr UInt32 SizeInBytes = sizeof(DirectionalLightProperties);
+				CmdList.UpdateBuffer(
+					DirectionalLightBuffer.Get(),
+					NumDirLights * SizeInBytes,
+					SizeInBytes,
+					&Properties);
+
+				NumDirLights++;
+			}
 		}
-		else if (IsSubClassOf<DirectionalLight>(Light))
-		{
-			DirectionalLight* DirLight = Cast<DirectionalLight>(Light);
-			VALIDATE(DirLight != nullptr);
 
-			DirectionalLightProperties Properties;
-			Properties.Color			= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-			Properties.ShadowBias		= DirLight->GetShadowBias();
-			Properties.Direction		= DirLight->GetDirection();
-			Properties.LightMatrix		= DirLight->GetMatrix();
-			Properties.MaxShadowBias	= DirLight->GetMaxShadowBias();
-
-			constexpr UInt32 SizeInBytes = sizeof(DirectionalLightProperties);
-			CmdList.UpdateBuffer(
-				DirectionalLightBuffer.Get(),
-				NumDirLights * SizeInBytes,
-				SizeInBytes,
-				&Properties);
-
-			NumDirLights++;
-		}
+		CmdList.TransitionBuffer(
+			PointLightBuffer.Get(), 
+			EResourceState::ResourceState_CopyDest, 
+			EResourceState::ResourceState_VertexAndConstantBuffer);
+	
+		CmdList.TransitionBuffer(
+			DirectionalLightBuffer.Get(), 
+			EResourceState::ResourceState_CopyDest, 
+			EResourceState::ResourceState_VertexAndConstantBuffer);
 	}
 
-	CmdList.TransitionBuffer(
-		PointLightBuffer.Get(), 
-		EResourceState::ResourceState_CopyDest, 
-		EResourceState::ResourceState_VertexAndConstantBuffer);
-	
-	CmdList.TransitionBuffer(
-		DirectionalLightBuffer.Get(), 
-		EResourceState::ResourceState_CopyDest, 
-		EResourceState::ResourceState_VertexAndConstantBuffer);
-
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End UpdateLightBuffers");
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Update LightBuffers");
 
 	// Transition GBuffer
 	CmdList.TransitionTexture(
@@ -291,133 +291,61 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Render DirectionalLight ShadowMaps
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render DirectionalLight ShadowMaps");
 	
-	CmdList.ClearDepthStencilView(DirLightShadowMapDSV.Get(), DepthStencilClearValue(1.0f, 0));
+	{
+		TRACE_SCOPE("Render DirectionalLight ShadowMaps");
+
+		CmdList.ClearDepthStencilView(DirLightShadowMapDSV.Get(), DepthStencilClearValue(1.0f, 0));
 
 #if ENABLE_VSM
-	CmdList.TransitionTexture(VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_RenderTarget);
+		CmdList.TransitionTexture(VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_RenderTarget);
 
-	//Float32 DepthClearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	//CmdList.ClearRenderTargetView(VSMDirLightShadowMaps->GetRenderTargetView(0).Get(), DepthClearColor);
-	//
-	//D3D12RenderTargetView* DirLightRTVS[] =
-	//{
-	//	VSMDirLightShadowMaps->GetRenderTargetView(0).Get(),
-	//};
-	//CmdList.BindRenderTargets(DirLightRTVS, 1, DirLightShadowMaps->GetDepthStencilView(0).Get());
-	//CmdList.BindGraphicsPipelineState(VSMShadowMapPSO.Get());
+		//Float32 DepthClearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		//CmdList.ClearRenderTargetView(VSMDirLightShadowMaps->GetRenderTargetView(0).Get(), DepthClearColor);
+		//
+		//D3D12RenderTargetView* DirLightRTVS[] =
+		//{
+		//	VSMDirLightShadowMaps->GetRenderTargetView(0).Get(),
+		//};
+		//CmdList.BindRenderTargets(DirLightRTVS, 1, DirLightShadowMaps->GetDepthStencilView(0).Get());
+		//CmdList.BindGraphicsPipelineState(VSMShadowMapPSO.Get());
 #else
-	CmdList.BindRenderTargets(nullptr, 0, DirLightShadowMapDSV.Get());
-	CmdList.BindGraphicsPipelineState(ShadowMapPSO.Get());
+		CmdList.BindRenderTargets(nullptr, 0, DirLightShadowMapDSV.Get());
+		CmdList.BindGraphicsPipelineState(ShadowMapPSO.Get());
 #endif
 
-	// Setup view
-	CmdList.BindViewport(
-		static_cast<Float>(CurrentLightSettings.ShadowMapWidth),
-		static_cast<Float>(CurrentLightSettings.ShadowMapHeight),
-		0.0f,
-		1.0f,
-		0.0f,
-		0.0f);
+		// Setup view
+		CmdList.BindViewport(
+			static_cast<Float>(CurrentLightSettings.ShadowMapWidth),
+			static_cast<Float>(CurrentLightSettings.ShadowMapHeight),
+			0.0f,
+			1.0f,
+			0.0f,
+			0.0f);
 
-	CmdList.BindScissorRect(
-		CurrentLightSettings.ShadowMapWidth,
-		CurrentLightSettings.ShadowMapHeight,
-		 0, 0);
+		CmdList.BindScissorRect(
+			CurrentLightSettings.ShadowMapWidth,
+			CurrentLightSettings.ShadowMapHeight,
+			 0, 0);
 
-	CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+		CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
 
-	// PerObject Structs
-	struct ShadowPerObject
-	{
-		XMFLOAT4X4 Matrix;
-		Float ShadowOffset;
-	} ShadowPerObjectBuffer;
-	
-	PerShadowMap PerShadowMapData;
-	for (Light* Light : CurrentScene.GetLights())
-	{
-		if (IsSubClassOf<DirectionalLight>(Light))
+		// PerObject Structs
+		struct ShadowPerObject
 		{
-			DirectionalLight* DirLight = Cast<DirectionalLight>(Light);
-			PerShadowMapData.Matrix		= DirLight->GetMatrix();
-			PerShadowMapData.Position	= DirLight->GetShadowMapPosition();
-			PerShadowMapData.FarPlane	= DirLight->GetShadowFarPlane();
+			XMFLOAT4X4	Matrix;
+			Float		ShadowOffset;
+		} ShadowPerObjectBuffer;
+	
+		PerShadowMap PerShadowMapData;
+		for (Light* Light : CurrentScene.GetLights())
+		{
+			if (IsSubClassOf<DirectionalLight>(Light))
+			{
+				DirectionalLight* DirLight = Cast<DirectionalLight>(Light);
+				PerShadowMapData.Matrix		= DirLight->GetMatrix();
+				PerShadowMapData.Position	= DirLight->GetShadowMapPosition();
+				PerShadowMapData.FarPlane	= DirLight->GetShadowFarPlane();
 			
-			CmdList.TransitionBuffer(
-				PerShadowMapBuffer.Get(),
-				EResourceState::ResourceState_VertexAndConstantBuffer,
-				EResourceState::ResourceState_CopyDest);
-
-			CmdList.UpdateBuffer(
-				PerShadowMapBuffer.Get(),
-				0, sizeof(PerShadowMap),
-				&PerShadowMapData);
-
-			CmdList.TransitionBuffer(
-				PerShadowMapBuffer.Get(),
-				EResourceState::ResourceState_CopyDest,
-				EResourceState::ResourceState_VertexAndConstantBuffer);
-
-			CmdList.BindConstantBuffers(
-				EShaderStage::ShaderStage_Vertex,
-				PerShadowMapBuffer.GetAddressOf(), 
-				1, 0);
-
-			// Draw all objects to depthbuffer
-			for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-			{
-				CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-				CmdList.BindIndexBuffer(Command.IndexBuffer);
-
-				ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
-				ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
-
-				CmdList.Bind32BitShaderConstants(
-					EShaderStage::ShaderStage_Vertex,
-					&ShadowPerObjectBuffer, 17);
-
-				CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-			}
-
-			break;
-		}
-	}
-
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
-
-	// Render PointLight ShadowMaps
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render PointLight ShadowMaps");
-	
-	const UInt32 PointLightShadowSize = CurrentLightSettings.PointLightShadowSize;
-	CmdList.BindViewport(
-		static_cast<Float>(PointLightShadowSize),
-		static_cast<Float>(PointLightShadowSize),
-		0.0f,
-		1.0f,
-		0.0f,
-		0.0f);
-
-	CmdList.BindScissorRect(
-		static_cast<Float>(PointLightShadowSize),
-		static_cast<Float>(PointLightShadowSize),
-		0, 0);
-
-	CmdList.BindGraphicsPipelineState(LinearShadowMapPSO.Get());
-
-	for (Light* Light : CurrentScene.GetLights())
-	{
-		if (IsSubClassOf<PointLight>(Light))
-		{
-			PointLight* PoiLight = Cast<PointLight>(Light);
-			for (UInt32 i = 0; i < 6; i++)
-			{
-				CmdList.ClearDepthStencilView(PointLightShadowMapsDSVs[i].Get(), DepthStencilClearValue(1.0f, 0));
-				CmdList.BindRenderTargets(nullptr, 0, PointLightShadowMapsDSVs[i].Get());
-
-				PerShadowMapData.Matrix		= PoiLight->GetMatrix(i);
-				PerShadowMapData.Position	= PoiLight->GetPosition();
-				PerShadowMapData.FarPlane	= PoiLight->GetShadowFarPlane();
-
 				CmdList.TransitionBuffer(
 					PerShadowMapBuffer.Get(),
 					EResourceState::ResourceState_VertexAndConstantBuffer,
@@ -435,33 +363,138 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 				CmdList.BindConstantBuffers(
 					EShaderStage::ShaderStage_Vertex,
-					PerShadowMapBuffer.GetAddressOf(),
+					PerShadowMapBuffer.GetAddressOf(), 
 					1, 0);
 
 				// Draw all objects to depthbuffer
-				if (GlobalFrustumCullEnabled)
+				for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 				{
-					Frustum CameraFrustum = Frustum(PoiLight->GetShadowFarPlane(), PoiLight->GetViewMatrix(i), PoiLight->GetProjectionMatrix(i));
-					for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-					{
-						const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
-						XMMATRIX XmTransform	= XMMatrixTranspose(XMLoadFloat4x4(&Transform));
-						XMVECTOR XmTop			= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
-						XMVECTOR XmBottom		= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
-						XmTop		= XMVector4Transform(XmTop, XmTransform);
-						XmBottom	= XMVector4Transform(XmBottom, XmTransform);
+					CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+					CmdList.BindIndexBuffer(Command.IndexBuffer);
 
-						AABB Box;
-						XMStoreFloat3(&Box.Top, XmTop);
-						XMStoreFloat3(&Box.Bottom, XmBottom);
-						if (CameraFrustum.CheckAABB(Box))
+					ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
+					ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
+
+					CmdList.Bind32BitShaderConstants(
+						EShaderStage::ShaderStage_Vertex,
+						&ShadowPerObjectBuffer, 17);
+
+					CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+				}
+
+				break;
+			}
+		}
+	}
+
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
+
+	// Render PointLight ShadowMaps
+	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render PointLight ShadowMaps");
+	
+	{
+		TRACE_SCOPE("Render PointLight ShadowMaps");
+
+		const UInt32 PointLightShadowSize = CurrentLightSettings.PointLightShadowSize;
+		CmdList.BindViewport(
+			static_cast<Float>(PointLightShadowSize),
+			static_cast<Float>(PointLightShadowSize),
+			0.0f,
+			1.0f,
+			0.0f,
+			0.0f);
+
+		CmdList.BindScissorRect(
+			static_cast<Float>(PointLightShadowSize),
+			static_cast<Float>(PointLightShadowSize),
+			0, 0);
+
+		CmdList.BindGraphicsPipelineState(LinearShadowMapPSO.Get());
+
+		// PerObject Structs
+		struct ShadowPerObject
+		{
+			XMFLOAT4X4	Matrix;
+			Float		ShadowOffset;
+		} ShadowPerObjectBuffer;
+
+		PerShadowMap PerShadowMapData;
+		for (Light* Light : CurrentScene.GetLights())
+		{
+			if (IsSubClassOf<PointLight>(Light))
+			{
+				PointLight* PoiLight = Cast<PointLight>(Light);
+				for (UInt32 i = 0; i < 6; i++)
+				{
+					CmdList.ClearDepthStencilView(PointLightShadowMapsDSVs[i].Get(), DepthStencilClearValue(1.0f, 0));
+					CmdList.BindRenderTargets(nullptr, 0, PointLightShadowMapsDSVs[i].Get());
+
+					PerShadowMapData.Matrix		= PoiLight->GetMatrix(i);
+					PerShadowMapData.Position	= PoiLight->GetPosition();
+					PerShadowMapData.FarPlane	= PoiLight->GetShadowFarPlane();
+
+					CmdList.TransitionBuffer(
+						PerShadowMapBuffer.Get(),
+						EResourceState::ResourceState_VertexAndConstantBuffer,
+						EResourceState::ResourceState_CopyDest);
+
+					CmdList.UpdateBuffer(
+						PerShadowMapBuffer.Get(),
+						0, sizeof(PerShadowMap),
+						&PerShadowMapData);
+
+					CmdList.TransitionBuffer(
+						PerShadowMapBuffer.Get(),
+						EResourceState::ResourceState_CopyDest,
+						EResourceState::ResourceState_VertexAndConstantBuffer);
+
+					CmdList.BindConstantBuffers(
+						EShaderStage::ShaderStage_Vertex,
+						PerShadowMapBuffer.GetAddressOf(),
+						1, 0);
+
+					// Draw all objects to depthbuffer
+					if (GlobalFrustumCullEnabled)
+					{
+						Frustum CameraFrustum = Frustum(PoiLight->GetShadowFarPlane(), PoiLight->GetViewMatrix(i), PoiLight->GetProjectionMatrix(i));
+						for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+						{
+							const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
+							XMMATRIX XmTransform	= XMMatrixTranspose(XMLoadFloat4x4(&Transform));
+							XMVECTOR XmTop			= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
+							XMVECTOR XmBottom		= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
+							XmTop		= XMVector4Transform(XmTop, XmTransform);
+							XmBottom	= XMVector4Transform(XmBottom, XmTransform);
+
+							AABB Box;
+							XMStoreFloat3(&Box.Top, XmTop);
+							XMStoreFloat3(&Box.Bottom, XmBottom);
+							if (CameraFrustum.CheckAABB(Box))
+							{
+								CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+								CmdList.BindIndexBuffer(Command.IndexBuffer);
+
+								ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
+								ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
+							
+								CmdList.Bind32BitShaderConstants(
+									EShaderStage::ShaderStage_Vertex,
+									&ShadowPerObjectBuffer, 17);
+
+								CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+							}
+						}
+					}
+					else
+					{
+						for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 						{
 							CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
 							CmdList.BindIndexBuffer(Command.IndexBuffer);
 
 							ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
 							ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
-							
+						
 							CmdList.Bind32BitShaderConstants(
 								EShaderStage::ShaderStage_Vertex,
 								&ShadowPerObjectBuffer, 17);
@@ -470,26 +503,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 						}
 					}
 				}
-				else
-				{
-					for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-					{
-						CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-						CmdList.BindIndexBuffer(Command.IndexBuffer);
 
-						ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
-						ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
-						
-						CmdList.Bind32BitShaderConstants(
-							EShaderStage::ShaderStage_Vertex,
-							&ShadowPerObjectBuffer, 17);
-
-						CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-					}
-				}
+				break;
 			}
-
-			break;
 		}
 	}
 
@@ -566,6 +582,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin PrePass");
 
+		TRACE_SCOPE("PrePass");
+
 		struct PerObject
 		{
 			XMFLOAT4X4 Matrix;
@@ -602,86 +620,90 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Render all objects to the GBuffer
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin GeometryPass");
 
-	RenderTargetView* RenderTargets[] =
 	{
-		GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(),
-		GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(),
-		GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get()
-	};
-	CmdList.BindRenderTargets(RenderTargets, 3, GBufferDSV.Get());
-
-	// Setup Pipeline
-	CmdList.BindGraphicsPipelineState(GeometryPSO.Get());
-
-	struct TransformBuffer
-	{
-		XMFLOAT4X4 Transform;
-		XMFLOAT4X4 TransformInv;
-	} TransformPerObject;
-
-	for (const MeshDrawCommand& Command : DeferredVisibleCommands)
-	{
-		CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-		CmdList.BindIndexBuffer(Command.IndexBuffer);
-
-		if (Command.Material->IsBufferDirty())
+		TRACE_SCOPE("GeometryPass");
+	
+		RenderTargetView* RenderTargets[] =
 		{
-			Command.Material->BuildBuffer(CmdList);
+			GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(),
+			GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(),
+			GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get()
+		};
+		CmdList.BindRenderTargets(RenderTargets, 3, GBufferDSV.Get());
+
+		// Setup Pipeline
+		CmdList.BindGraphicsPipelineState(GeometryPSO.Get());
+
+		struct TransformBuffer
+		{
+			XMFLOAT4X4 Transform;
+			XMFLOAT4X4 TransformInv;
+		} TransformPerObject;
+
+		for (const MeshDrawCommand& Command : DeferredVisibleCommands)
+		{
+			CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+			CmdList.BindIndexBuffer(Command.IndexBuffer);
+
+			if (Command.Material->IsBufferDirty())
+			{
+				Command.Material->BuildBuffer(CmdList);
+			}
+
+			CmdList.BindConstantBuffers(
+				EShaderStage::ShaderStage_Vertex,
+				&CameraBuffer,
+				1, 0);
+
+			ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
+			CmdList.BindConstantBuffers(
+				EShaderStage::ShaderStage_Pixel,
+				&MaterialBuffer,
+				1, 1);
+
+			TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
+			TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
+		
+			ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
+			CmdList.BindShaderResourceViews(
+				EShaderStage::ShaderStage_Pixel,
+				ShaderResourceViews, 
+				6, 0);
+
+			SamplerState* Sampler = Command.Material->GetMaterialSampler();
+			CmdList.BindSamplerStates(
+				EShaderStage::ShaderStage_Pixel,
+				&Sampler,
+				1, 0);
+
+			CmdList.Bind32BitShaderConstants(
+				EShaderStage::ShaderStage_Vertex,
+				&TransformPerObject, 32);
+
+			CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
 		}
 
-		CmdList.BindConstantBuffers(
-			EShaderStage::ShaderStage_Vertex,
-			&CameraBuffer,
-			1, 0);
-
-		ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
-		CmdList.BindConstantBuffers(
-			EShaderStage::ShaderStage_Pixel,
-			&MaterialBuffer,
-			1, 1);
-
-		TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
-		TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
-		
-		ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-		CmdList.BindShaderResourceViews(
-			EShaderStage::ShaderStage_Pixel,
-			ShaderResourceViews, 
-			6, 0);
-
-		SamplerState* Sampler = Command.Material->GetMaterialSampler();
-		CmdList.BindSamplerStates(
-			EShaderStage::ShaderStage_Pixel,
-			&Sampler,
-			1, 0);
-
-		CmdList.Bind32BitShaderConstants(
-			EShaderStage::ShaderStage_Vertex,
-			&TransformPerObject, 32);
-
-		CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-	}
-
-	// Setup GBuffer for Read
-	CmdList.TransitionTexture(
-		GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
-		EResourceState::ResourceState_RenderTarget, 
-		EResourceState::ResourceState_PixelShaderResource);
+		// Setup GBuffer for Read
+		CmdList.TransitionTexture(
+			GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
+			EResourceState::ResourceState_RenderTarget, 
+			EResourceState::ResourceState_PixelShaderResource);
 	
-	CmdList.TransitionTexture(
-		GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
-		EResourceState::ResourceState_RenderTarget, 
-		EResourceState::ResourceState_PixelShaderResource);
+		CmdList.TransitionTexture(
+			GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
+			EResourceState::ResourceState_RenderTarget, 
+			EResourceState::ResourceState_PixelShaderResource);
 
-	CmdList.TransitionTexture(
-		GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
-		EResourceState::ResourceState_RenderTarget, 
-		EResourceState::ResourceState_PixelShaderResource);
+		CmdList.TransitionTexture(
+			GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
+			EResourceState::ResourceState_RenderTarget, 
+			EResourceState::ResourceState_PixelShaderResource);
 
-	CmdList.TransitionTexture(
-		GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-		EResourceState::ResourceState_DepthWrite, 
-		EResourceState::ResourceState_PixelShaderResource);
+		CmdList.TransitionTexture(
+			GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
+			EResourceState::ResourceState_DepthWrite, 
+			EResourceState::ResourceState_PixelShaderResource);
+	}
 
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
 
@@ -709,6 +731,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
 		
+		TRACE_SCOPE("SSAO");
+
 		CmdList.TransitionTexture(
 			GBuffer[GBUFFER_NORMAL_INDEX].Get(),
 			EResourceState::ResourceState_PixelShaderResource,
@@ -840,106 +864,114 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Setup LightPass
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
 
-	CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+	{
+		TRACE_SCOPE("LightPass");
 
-	CmdList.BindGraphicsPipelineState(LightPassPSO.Get());
+		CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+
+		CmdList.BindGraphicsPipelineState(LightPassPSO.Get());
 	
-	{
-		ShaderResourceView* ShaderResourceViews[] =
 		{
-			GBufferSRVs[GBUFFER_ALBEDO_INDEX].Get(),
-			GBufferSRVs[GBUFFER_NORMAL_INDEX].Get(),
-			GBufferSRVs[GBUFFER_MATERIAL_INDEX].Get(),
-			GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
-			ReflectionTextureSRV.Get(),
-			IrradianceMapSRV.Get(),
-			SpecularIrradianceMapSRV.Get(),
-			IntegrationLUTSRV.Get(),
-			DirLightShadowMapSRV.Get(),
-			PointLightShadowMapsSRV.Get(),
-			SSAOBufferSRV.Get()
-		};
+			ShaderResourceView* ShaderResourceViews[] =
+			{
+				GBufferSRVs[GBUFFER_ALBEDO_INDEX].Get(),
+				GBufferSRVs[GBUFFER_NORMAL_INDEX].Get(),
+				GBufferSRVs[GBUFFER_MATERIAL_INDEX].Get(),
+				GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
+				ReflectionTextureSRV.Get(),
+				IrradianceMapSRV.Get(),
+				SpecularIrradianceMapSRV.Get(),
+				IntegrationLUTSRV.Get(),
+				DirLightShadowMapSRV.Get(),
+				PointLightShadowMapsSRV.Get(),
+				SSAOBufferSRV.Get()
+			};
 	
-		CmdList.BindShaderResourceViews(
-			EShaderStage::ShaderStage_Pixel,
-			ShaderResourceViews, 
-			11, 0);
-	}
+			CmdList.BindShaderResourceViews(
+				EShaderStage::ShaderStage_Pixel,
+				ShaderResourceViews, 
+				11, 0);
+		}
 
-	{
-		ConstantBuffer* ConstantBuffers[] =
 		{
-			CameraBuffer.Get(),
-			PointLightBuffer.Get(),
-			DirectionalLightBuffer.Get()
-		};
+			ConstantBuffer* ConstantBuffers[] =
+			{
+				CameraBuffer.Get(),
+				PointLightBuffer.Get(),
+				DirectionalLightBuffer.Get()
+			};
 
-		CmdList.BindConstantBuffers(
-			EShaderStage::ShaderStage_Pixel,
-			ConstantBuffers, 
-			3, 0);
-	}
+			CmdList.BindConstantBuffers(
+				EShaderStage::ShaderStage_Pixel,
+				ConstantBuffers, 
+				3, 0);
+		}
 
-	{
-		SamplerState* SamplerStates[] =
 		{
-			GBufferSampler.Get(),
-			IntegrationLUTSampler.Get(),
-			IrradianceSampler.Get(),
-			ShadowMapCompSampler.Get(),
-			ShadowMapSampler.Get()
-		};
+			SamplerState* SamplerStates[] =
+			{
+				GBufferSampler.Get(),
+				IntegrationLUTSampler.Get(),
+				IrradianceSampler.Get(),
+				ShadowMapCompSampler.Get(),
+				ShadowMapSampler.Get()
+			};
 
-		CmdList.BindSamplerStates(
-			EShaderStage::ShaderStage_Pixel,
-			SamplerStates,
-			5,
-			0);
+			CmdList.BindSamplerStates(
+				EShaderStage::ShaderStage_Pixel,
+				SamplerStates,
+				5,
+				0);
+		}
+
+		// Perform LightPass
+		CmdList.DrawInstanced(3, 1, 0, 0);
 	}
-
-	// Perform LightPass
-	CmdList.DrawInstanced(3, 1, 0, 0);
 
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");
 
 	// Draw skybox
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
 
-	CmdList.TransitionTexture(
-		GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-		EResourceState::ResourceState_PixelShaderResource, 
-		EResourceState::ResourceState_DepthWrite);
-	
-	CmdList.BindRenderTargets(RenderTarget, 1, GBufferDSV.Get());
-	
-	CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
-	CmdList.BindVertexBuffers(&SkyboxVertexBuffer, 1, 0);
-	CmdList.BindIndexBuffer(SkyboxIndexBuffer.Get());
-	CmdList.BindGraphicsPipelineState(SkyboxPSO.Get());
-	
-	struct SimpleCameraBuffer
 	{
-		XMFLOAT4X4 Matrix;
-	} SimpleCamera;
-	SimpleCamera.Matrix = CurrentScene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
+		TRACE_SCOPE("Render Skybox");
 
-	CmdList.Bind32BitShaderConstants(
-		EShaderStage::ShaderStage_Vertex,
-		&SimpleCamera, 16);
+		CmdList.TransitionTexture(
+			GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
+			EResourceState::ResourceState_PixelShaderResource, 
+			EResourceState::ResourceState_DepthWrite);
+	
+		CmdList.BindRenderTargets(RenderTarget, 1, GBufferDSV.Get());
+	
+		CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+		CmdList.BindVertexBuffers(&SkyboxVertexBuffer, 1, 0);
+		CmdList.BindIndexBuffer(SkyboxIndexBuffer.Get());
+		CmdList.BindGraphicsPipelineState(SkyboxPSO.Get());
+	
+		struct SimpleCameraBuffer
+		{
+			XMFLOAT4X4 Matrix;
+		} SimpleCamera;
+		SimpleCamera.Matrix = CurrentScene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
 
-	CmdList.BindShaderResourceViews(
-		EShaderStage::ShaderStage_Pixel,
-		&SkyboxSRV,
-		1, 0);
+		CmdList.Bind32BitShaderConstants(
+			EShaderStage::ShaderStage_Vertex,
+			&SimpleCamera, 16);
 
-	CmdList.BindSamplerStates(
-		EShaderStage::ShaderStage_Pixel,
-		&SkyboxSampler,
-		1, 0);
+		CmdList.BindShaderResourceViews(
+			EShaderStage::ShaderStage_Pixel,
+			&SkyboxSRV,
+			1, 0);
 
-	CmdList.DrawIndexedInstanced(
-		static_cast<UInt32>(SkyboxMesh.Indices.Size()), 
-		1, 0, 0, 0);
+		CmdList.BindSamplerStates(
+			EShaderStage::ShaderStage_Pixel,
+			&SkyboxSampler,
+			1, 0);
+
+		CmdList.DrawIndexedInstanced(
+			static_cast<UInt32>(SkyboxMesh.Indices.Size()), 
+			1, 0, 0, 0);
+	}
 
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
 
@@ -962,6 +994,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	if (GlobalFXAAEnabled)
 	{
 		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin FXAA");
+		
+		TRACE_SCOPE("FXAA");
 
 		struct FXAASettings
 		{
@@ -995,107 +1029,117 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Forward Pass
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin ForwardPass");
 
-	CmdList.BindViewport(
-		static_cast<Float>(RenderWidth),
-		static_cast<Float>(RenderHeight),
-		0.0f,
-		1.0f,
-		0.0f,
-		0.0f);
-
-	CmdList.BindScissorRect(
-		static_cast<Float>(RenderWidth),
-		static_cast<Float>(RenderHeight),
-		0, 0);
-
-	// Render all transparent objects;
-	CmdList.BindRenderTargets(
-		&BackBufferView, 1, 
-		GBufferDSV.Get());
-
-	// Setup Pipeline
 	{
-		ConstantBuffer* ConstantBuffers[] =
+		TRACE_SCOPE("ForwardPass");
+
+		CmdList.BindViewport(
+			static_cast<Float>(RenderWidth),
+			static_cast<Float>(RenderHeight),
+			0.0f,
+			1.0f,
+			0.0f,
+			0.0f);
+
+		CmdList.BindScissorRect(
+			static_cast<Float>(RenderWidth),
+			static_cast<Float>(RenderHeight),
+			0, 0);
+
+		// Render all transparent objects;
+		CmdList.BindRenderTargets(
+			&BackBufferView, 1, 
+			GBufferDSV.Get());
+
+		// Setup Pipeline
 		{
-			CameraBuffer.Get(),
-			PointLightBuffer.Get(),
-			DirectionalLightBuffer.Get(),
-		};
+			ConstantBuffer* ConstantBuffers[] =
+			{
+				CameraBuffer.Get(),
+				PointLightBuffer.Get(),
+				DirectionalLightBuffer.Get(),
+			};
 
-		CmdList.BindConstantBuffers(
-			EShaderStage::ShaderStage_Pixel,
-			ConstantBuffers,
-			3, 0);
-	}
-
-	{
-		ShaderResourceView* ShaderResourceViews[] =
-		{
-			IrradianceMapSRV.Get(),
-			SpecularIrradianceMapSRV.Get(),
-			IntegrationLUTSRV.Get(),
-			DirLightShadowMapSRV.Get(),
-			PointLightShadowMapsSRV.Get(),
-		};
-
-		CmdList.BindShaderResourceViews(
-			EShaderStage::ShaderStage_Pixel,
-			ShaderResourceViews,
-			5, 0);
-	}
-
-	{
-		SamplerState* SamplerStates[] =
-		{
-			IntegrationLUTSampler.Get(),
-			IrradianceSampler.Get(),
-			ShadowMapCompSampler.Get(),
-			ShadowMapSampler.Get()
-		};
-
-		CmdList.BindSamplerStates(
-			EShaderStage::ShaderStage_Pixel,
-			SamplerStates,
-			4, 1);
-	}
-
-	CmdList.BindGraphicsPipelineState(ForwardPSO.Get());
-	for (const MeshDrawCommand& Command : ForwardVisibleCommands)
-	{
-		CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-		CmdList.BindIndexBuffer(Command.IndexBuffer);
-
-		if (Command.Material->IsBufferDirty())
-		{
-			Command.Material->BuildBuffer(CmdList);
+			CmdList.BindConstantBuffers(
+				EShaderStage::ShaderStage_Pixel,
+				ConstantBuffers,
+				3, 0);
 		}
+
+		{
+			ShaderResourceView* ShaderResourceViews[] =
+			{
+				IrradianceMapSRV.Get(),
+				SpecularIrradianceMapSRV.Get(),
+				IntegrationLUTSRV.Get(),
+				DirLightShadowMapSRV.Get(),
+				PointLightShadowMapsSRV.Get(),
+			};
+
+			CmdList.BindShaderResourceViews(
+				EShaderStage::ShaderStage_Pixel,
+				ShaderResourceViews,
+				5, 0);
+		}
+
+		{
+			SamplerState* SamplerStates[] =
+			{
+				IntegrationLUTSampler.Get(),
+				IrradianceSampler.Get(),
+				ShadowMapCompSampler.Get(),
+				ShadowMapSampler.Get()
+			};
+
+			CmdList.BindSamplerStates(
+				EShaderStage::ShaderStage_Pixel,
+				SamplerStates,
+				4, 1);
+		}
+
+		struct TransformBuffer
+		{
+			XMFLOAT4X4 Transform;
+			XMFLOAT4X4 TransformInv;
+		} TransformPerObject;
+
+		CmdList.BindGraphicsPipelineState(ForwardPSO.Get());
+		for (const MeshDrawCommand& Command : ForwardVisibleCommands)
+		{
+			CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+			CmdList.BindIndexBuffer(Command.IndexBuffer);
+
+			if (Command.Material->IsBufferDirty())
+			{
+				Command.Material->BuildBuffer(CmdList);
+			}
 		
-		ConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
-		CmdList.BindConstantBuffers(
-			EShaderStage::ShaderStage_Pixel,
-			&ConstantBuffer,
-			1, 3);
+			ConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
+			CmdList.BindConstantBuffers(
+				EShaderStage::ShaderStage_Pixel,
+				&ConstantBuffer,
+				1, 3);
 
-		ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-		CmdList.BindShaderResourceViews(
-			EShaderStage::ShaderStage_Pixel,
-			ShaderResourceViews,
-			7, 5);
+			ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
+			CmdList.BindShaderResourceViews(
+				EShaderStage::ShaderStage_Pixel,
+				ShaderResourceViews,
+				7, 5);
 
-		SamplerState* SamplerState = Command.Material->GetMaterialSampler();
-		CmdList.BindSamplerStates(
-			EShaderStage::ShaderStage_Pixel,
-			&SamplerState,
-			1, 0);
+			SamplerState* SamplerState = Command.Material->GetMaterialSampler();
+			CmdList.BindSamplerStates(
+				EShaderStage::ShaderStage_Pixel,
+				&SamplerState,
+				1, 0);
 
-		TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
-		TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
+			TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
+			TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
 
-		CmdList.Bind32BitShaderConstants(
-			EShaderStage::ShaderStage_Vertex,
-			&TransformPerObject, 32);
+			CmdList.Bind32BitShaderConstants(
+				EShaderStage::ShaderStage_Vertex,
+				&TransformPerObject, 32);
 
-		CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+			CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+		}
 	}
 
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End ForwardPass");
@@ -1104,6 +1148,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 	if (GlobalDrawAABBs)
 	{
 		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin DebugPass");
+
+		TRACE_SCOPE("DebugPass");
 
 		CmdList.BindGraphicsPipelineState(DebugBoxPSO.Get());
 
@@ -1144,7 +1190,13 @@ void Renderer::Tick(const Scene& CurrentScene)
 	DebugUI::DrawDebugString("DrawCall Count: " + std::to_string(CmdList.GetDrawCallCount()));
 	
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin UI Render");
-	DebugUI::Render(CmdList);
+
+	{
+		TRACE_SCOPE("Render UI");
+
+		DebugUI::Render(CmdList);
+	}
+
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End UI Render");
 
 	// Finalize Commandlist
@@ -1168,6 +1220,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 void Renderer::TraceRays(Texture2D* BackBuffer, CommandList& InCmdList)
 {
+	TRACE_SCOPE("TraceRays");
+
 	InCmdList.TransitionTexture(
 		ReflectionTexture.Get(), 
 		EResourceState::ResourceState_CopySource, 
@@ -3716,6 +3770,7 @@ Bool Renderer::InitSSAO()
 		EResourceState::ResourceState_NonPixelShaderResource);
 
 	CmdList.End();
+	CommandListExecutor::ExecuteCommandList(CmdList);
 
 	// Init samples
 	{

@@ -148,6 +148,7 @@ static void DrawMenu()
 			{
 				ImGui::MenuItem("Render Settings", NULL, &ShowRenderSettings);
 				ImGui::MenuItem("SceneGraph", NULL, &ShowSceneGraph);
+				ImGui::MenuItem("Profiler", NULL, &GlobalDrawProfiler);
 
 				ImGui::EndMenu();
 			}
@@ -312,38 +313,38 @@ static void DrawRenderSettings()
 	{
 		if (CurrentItem == 0)
 		{
-			Settings.ShadowMapWidth = 8192;
-			Settings.ShadowMapHeight = 8192;
+			Settings.ShadowMapWidth		= 8192;
+			Settings.ShadowMapHeight	= 8192;
 		}
 		else if (CurrentItem == 1)
 		{
-			Settings.ShadowMapWidth = 4096;
-			Settings.ShadowMapHeight = 4096;
+			Settings.ShadowMapWidth		= 4096;
+			Settings.ShadowMapHeight	= 4096;
 		}
 		else if (CurrentItem == 2)
 		{
-			Settings.ShadowMapWidth = 3072;
-			Settings.ShadowMapHeight = 3072;
+			Settings.ShadowMapWidth		= 3072;
+			Settings.ShadowMapHeight	= 3072;
 		}
 		else if (CurrentItem == 3)
 		{
-			Settings.ShadowMapWidth = 2048;
-			Settings.ShadowMapHeight = 2048;
+			Settings.ShadowMapWidth		= 2048;
+			Settings.ShadowMapHeight	= 2048;
 		}
 		else if (CurrentItem == 4)
 		{
-			Settings.ShadowMapWidth = 1024;
-			Settings.ShadowMapHeight = 1024;
+			Settings.ShadowMapWidth		= 1024;
+			Settings.ShadowMapHeight	= 1024;
 		}
 		else if (CurrentItem == 5)
 		{
-			Settings.ShadowMapWidth = 512;
-			Settings.ShadowMapHeight = 512;
+			Settings.ShadowMapWidth		= 512;
+			Settings.ShadowMapHeight	= 512;
 		}
 		else if (CurrentItem == 6)
 		{
-			Settings.ShadowMapWidth = 256;
-			Settings.ShadowMapHeight = 256;
+			Settings.ShadowMapWidth		= 256;
+			Settings.ShadowMapHeight	= 256;
 		}
 
 		GlobalRenderer->SetLightSettings(Settings);

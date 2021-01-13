@@ -1,6 +1,8 @@
 #pragma once
 #include "GenericRenderingAPI.h"
 
+#define ENABLE_API_DEBUGGING 0
+
 /*
 * RenderingAPI
 */

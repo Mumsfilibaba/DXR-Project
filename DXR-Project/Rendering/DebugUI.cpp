@@ -1,5 +1,7 @@
 #include "DebugUI.h"
 
+#include "Debug/Profiler.h"
+
 #include "Application/Events/EventDispatcher.h"
 #include "Application/Generic/GenericCursor.h"
 #include "Application/Platform/PlatformApplication.h"
@@ -538,7 +540,7 @@ void DebugUI::Render(CommandList& CmdList)
 			case ImGuiMouseCursor_NotAllowed:	Cursor = GlobalCursors::NotAllowed;	break;
 			}
 			
-			GlobalPlatformApplication->SetCursor(GlobalCursors::Arrow.Get());
+			GlobalPlatformApplication->SetCursor(Cursor.Get());
 		}
 	}
 
@@ -553,12 +555,11 @@ void DebugUI::Render(CommandList& CmdList)
 	GlobalDrawFuncs.Clear();
 
 	// Draw DebugWindow with DebugStrings
-	constexpr Float Width = 300.0f;
-	ImGui::SetNextWindowPos(ImVec2(static_cast<Float>(CurrentWindowShape.Width - Width), 15.0f));
-	ImGui::SetNextWindowSize(ImVec2(Width, static_cast<Float>(CurrentWindowShape.Height)));
+	constexpr Float Width = 400.0f;
+	ImGui::SetNextWindowPos(ImVec2(static_cast<Float>(CurrentWindowShape.Width - Width), 18.0f));
+	ImGui::SetNextWindowSize(ImVec2(Width, 0.0f));
 
 	ImGui::Begin("DebugWindow", nullptr,
-		ImGuiWindowFlags_NoBackground	| 
 		ImGuiWindowFlags_NoTitleBar		| 
 		ImGuiWindowFlags_NoMove			| 
 		ImGuiWindowFlags_NoResize		| 
@@ -567,6 +568,7 @@ void DebugUI::Render(CommandList& CmdList)
 		ImGuiWindowFlags_NoSavedSettings);
 
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15f, 0.15f, 0.15f, 0.1f));
 
 	for (const std::string& Str : GlobalDebugStrings)
 	{
@@ -574,6 +576,11 @@ void DebugUI::Render(CommandList& CmdList)
 	}
 	GlobalDebugStrings.Clear();
 
+#if ENABLE_PROFILER
+	GlobalProfiler->DrawUI();
+#endif
+
+	ImGui::PopStyleColor();
 	ImGui::PopStyleColor();
 	ImGui::End();
 

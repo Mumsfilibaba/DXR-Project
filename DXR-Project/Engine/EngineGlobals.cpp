@@ -30,3 +30,12 @@ Bool GlobalFrustumCullEnabled	= true;
 Bool GlobalFXAAEnabled			= true;
 Bool GlobalRayTracingEnabled	= false;
 Bool GlobalSSAOEnabled			= true;
+
+/*
+* Debug
+*/
+
+class Profiler* GlobalProfiler = nullptr;
+
+Bool GlobalProfilerEnabled	= true;
+Bool GlobalDrawProfiler		= true;

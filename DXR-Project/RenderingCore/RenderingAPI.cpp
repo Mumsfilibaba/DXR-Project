@@ -5,8 +5,6 @@
 #include "D3D12/D3D12RenderingAPI.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
-#define ENABLE_API_DEBUGGING 1
-
 /*
 * RenderingAPI
 */
@@ -28,7 +26,7 @@ bool RenderingAPI::Init(ERenderingAPI InRenderAPI)
 	}
 	else
 	{
-		LOG_ERROR("[RenderingAPI::Initialize] Invalid RenderingAPI enum");
+		LOG_ERROR("[RenderingAPI::Init] Invalid RenderingAPI enum");
 		
 		Debug::DebugBreak();
 		return false;
