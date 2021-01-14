@@ -33,6 +33,7 @@ WindowsApplication::WindowsApplication(HINSTANCE InInstanceHandle)
 
 WindowsApplication::~WindowsApplication()
 {
+	Windows.Clear();
 	GlobalWindowsApplication = nullptr;
 }
 
@@ -82,10 +83,12 @@ void WindowsApplication::Tick()
 			{
 				if (MessageWindow)
 				{
-					const UInt16 Width = LOWORD(lParam);
-					const UInt16 Height = HIWORD(lParam);
+					const UInt16 Width	= LOWORD(lParam);
+					const UInt16 Height	= HIWORD(lParam);
 
 					EventHandler->OnWindowResized(MessageWindow, Width, Height);
+
+					LOG_INFO("Window Resize(" + std::to_string(Width) + ", " + std::to_string(Height) + ")");
 				}
 
 				break;
@@ -94,8 +97,8 @@ void WindowsApplication::Tick()
 			case WM_SYSKEYUP:
 			case WM_KEYUP:
 			{
-				const UInt32	ScanCode = static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
-				const EKey		Key = Input::ConvertFromScanCode(ScanCode);
+				const UInt32 ScanCode	= static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
+				const EKey Key			= Input::ConvertFromScanCode(ScanCode);
 				EventHandler->OnKeyReleased(Key, GetModifierKeyState());
 				break;
 			}
@@ -103,8 +106,8 @@ void WindowsApplication::Tick()
 			case WM_SYSKEYDOWN:
 			case WM_KEYDOWN:
 			{
-				const UInt32	ScanCode = static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
-				const EKey		Key = Input::ConvertFromScanCode(ScanCode);
+				const UInt32 ScanCode	= static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
+				const EKey Key			= Input::ConvertFromScanCode(ScanCode);
 				EventHandler->OnKeyPressed(Key, GetModifierKeyState());
 				break;
 			}

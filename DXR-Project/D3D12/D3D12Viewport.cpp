@@ -84,7 +84,7 @@ Bool D3D12Viewport::Resize(UInt32 InWidth, UInt32 InHeight)
 {
 	// TODO: Make sure that we can release the old surfaces
 
-	if (InWidth != Width && InHeight != Height && InWidth > 0 && InHeight > 0)
+	if ((InWidth != Width || InHeight != Height) && InWidth > 0 && InHeight > 0)
 	{
 		BackBuffers.Clear();
 		BackBufferViews.Clear();

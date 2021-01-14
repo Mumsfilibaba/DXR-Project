@@ -74,6 +74,7 @@ bool DebugUI::Init()
 {
 	// Create context
 	IMGUI_CHECKVERSION();
+
 	GlobalImGuiState.Context = ImGui::CreateContext();
 	if (!GlobalImGuiState.Context)
 	{
@@ -497,11 +498,12 @@ void DebugUI::Render(CommandList& CmdList)
 	IO.DisplaySize				= ImVec2(Float(CurrentWindowShape.Width), Float(CurrentWindowShape.Height));
 	IO.DisplayFramebufferScale	= ImVec2(1.0f, 1.0f);
 
+
 	// Get Mouseposition
 	Int32 x = 0;
 	Int32 y = 0;
 	GlobalPlatformApplication->GetCursorPos(Window, x, y);
-
+	
 	IO.MousePos = ImVec2(static_cast<Float>(x), static_cast<Float>(y));
 
 	// Check modifer keys
