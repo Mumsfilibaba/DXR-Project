@@ -30,6 +30,7 @@ D3D12ShaderDescriptorTableState::D3D12ShaderDescriptorTableState()
 	, IsSamplersDirty(true)
 {
 	SrcRangeSizes.Resize(D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT, 1);
+	OfflineResourceHandles.Resize(D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT * 3);
 }
 
 bool D3D12ShaderDescriptorTableState::CreateResources(D3D12Device& Device)
@@ -126,6 +127,10 @@ bool D3D12ShaderDescriptorTableState::CreateResources(D3D12Device& Device)
 	UAVOfflineHandles.Resize(D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT, DefaultUAVOfflineHandle);
 	SamplerOfflineHandles.Resize(D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT, DefaultSamplerOfflineHandle);
 
+	DescriptorHeaps.Fill(nullptr);
+	BoundGraphicsDescriptorTables.Fill({ 0 });
+	BoundComputeDescriptorTables.Fill({ 0 });
+
 	return true;
 }
 
@@ -136,8 +141,12 @@ void D3D12ShaderDescriptorTableState::BindConstantBuffer(D3D12ConstantBufferView
 		CBVOfflineHandles.Resize(Slot + 1, DefaultCBVOfflineHandle);
 	}
 
-	CBVOfflineHandles[Slot] = ConstantBufferView ? ConstantBufferView->GetOfflineHandle() : DefaultCBVOfflineHandle;
-	IsResourcesDirty = true;
+	D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle = ConstantBufferView ? ConstantBufferView->GetOfflineHandle() : DefaultCBVOfflineHandle;
+	if (CBVOfflineHandles[Slot] != OfflineHandle)
+	{
+		CBVOfflineHandles[Slot] = OfflineHandle;
+		IsResourcesDirty = true;
+	}
 }
 
 void D3D12ShaderDescriptorTableState::BindShaderResourceView(D3D12ShaderResourceView* ShaderResourceView, UInt32 Slot)
@@ -147,8 +156,12 @@ void D3D12ShaderDescriptorTableState::BindShaderResourceView(D3D12ShaderResource
 		SRVOfflineHandles.Resize(Slot + 1, DefaultSRVOfflineHandle);
 	}
 
-	SRVOfflineHandles[Slot] = ShaderResourceView ? ShaderResourceView->GetOfflineHandle() : DefaultSRVOfflineHandle;
-	IsResourcesDirty = true;
+	D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle = ShaderResourceView ? ShaderResourceView->GetOfflineHandle() : DefaultSRVOfflineHandle;
+	if (SRVOfflineHandles[Slot] != OfflineHandle)
+	{
+		SRVOfflineHandles[Slot] = OfflineHandle;
+		IsResourcesDirty = true;
+	}
 }
 
 void D3D12ShaderDescriptorTableState::BindUnorderedAccessView(D3D12UnorderedAccessView* UnorderedAccessView, UInt32 Slot)
@@ -158,8 +171,12 @@ void D3D12ShaderDescriptorTableState::BindUnorderedAccessView(D3D12UnorderedAcce
 		UAVOfflineHandles.Resize(Slot + 1, DefaultUAVOfflineHandle);
 	}
 
-	UAVOfflineHandles[Slot] = UnorderedAccessView ? UnorderedAccessView->GetOfflineHandle() : DefaultUAVOfflineHandle;
-	IsResourcesDirty = true;
+	D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle = UnorderedAccessView ? UnorderedAccessView->GetOfflineHandle() : DefaultUAVOfflineHandle;
+	if (UAVOfflineHandles[Slot] != OfflineHandle)
+	{
+		UAVOfflineHandles[Slot] = OfflineHandle;
+		IsResourcesDirty = true;
+	}
 }
 
 void D3D12ShaderDescriptorTableState::BindSamplerState(D3D12SamplerState* SamplerState, UInt32 Slot)
@@ -169,8 +186,12 @@ void D3D12ShaderDescriptorTableState::BindSamplerState(D3D12SamplerState* Sample
 		SamplerOfflineHandles.Resize(Slot + 1, DefaultSamplerOfflineHandle);
 	}
 
-	SamplerOfflineHandles[Slot] = SamplerState ? SamplerState->GetOfflineHandle() : DefaultSamplerOfflineHandle;
-	IsSamplersDirty = true;
+	D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle = SamplerState ? SamplerState->GetOfflineHandle() : DefaultSamplerOfflineHandle;
+	if (SamplerOfflineHandles[Slot] != OfflineHandle)
+	{
+		SamplerOfflineHandles[Slot] = OfflineHandle;
+		IsSamplersDirty = true;
+	}
 }
 
 void D3D12ShaderDescriptorTableState::CommitGraphicsDescriptorTables(
@@ -181,28 +202,39 @@ void D3D12ShaderDescriptorTableState::CommitGraphicsDescriptorTables(
 {
 	InternalAllocateAndCopyDescriptorHandles(Device, ResourceDescriptorHeap, SamplerDescriptorHeap);
 
-	DescriptorHeaps[0] = ResourceDescriptorHeap.GetNativeHeap();
-	DescriptorHeaps[1] = SamplerDescriptorHeap.GetNativeHeap();
-	CmdList.SetDescriptorHeaps(DescriptorHeaps.Data(), DescriptorHeaps.Size());
+	Bool ForceRebind = false;
+	if (DescriptorHeaps[0] != ResourceDescriptorHeap.GetNativeHeap() ||
+		DescriptorHeaps[1] != SamplerDescriptorHeap.GetNativeHeap())
+	{
+		DescriptorHeaps[0] = ResourceDescriptorHeap.GetNativeHeap();
+		DescriptorHeaps[1] = SamplerDescriptorHeap.GetNativeHeap();
+		CmdList.SetDescriptorHeaps(DescriptorHeaps.Data(), DescriptorHeaps.Size());
 
-	if (CBVDescriptorTable.OnlineHandleStart_GPU != 0)
+		ForceRebind = true;
+	}
+
+	if (CBVDescriptorTable.OnlineHandleStart_GPU != BoundGraphicsDescriptorTables[0] || ForceRebind)
 	{
 		CmdList.SetGraphicsRootDescriptorTable(CBVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER);
+		BoundGraphicsDescriptorTables[0] = CBVDescriptorTable.OnlineHandleStart_GPU;
 	}
 
-	if (SRVDescriptorTable.OnlineHandleStart_GPU != 0)
+	if (SRVDescriptorTable.OnlineHandleStart_GPU != BoundGraphicsDescriptorTables[1] || ForceRebind)
 	{
 		CmdList.SetGraphicsRootDescriptorTable(SRVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER);
+		BoundGraphicsDescriptorTables[1] = SRVDescriptorTable.OnlineHandleStart_GPU;
 	}
 
-	if (UAVDescriptorTable.OnlineHandleStart_GPU != 0)
+	if (UAVDescriptorTable.OnlineHandleStart_GPU != BoundGraphicsDescriptorTables[2] || ForceRebind)
 	{
 		CmdList.SetGraphicsRootDescriptorTable(UAVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER);
+		BoundGraphicsDescriptorTables[2] = UAVDescriptorTable.OnlineHandleStart_GPU;
 	}
 
-	if (SamplerDescriptorTable.OnlineHandleStart_GPU != 0)
+	if (SamplerDescriptorTable.OnlineHandleStart_GPU != BoundGraphicsDescriptorTables[3] || ForceRebind)
 	{
 		CmdList.SetGraphicsRootDescriptorTable(SamplerDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER);
+		BoundGraphicsDescriptorTables[3] = SamplerDescriptorTable.OnlineHandleStart_GPU;
 	}
 }
 
@@ -214,28 +246,39 @@ void D3D12ShaderDescriptorTableState::CommitComputeDescriptorTables(
 {
 	InternalAllocateAndCopyDescriptorHandles(Device, ResourceDescriptorHeap, SamplerDescriptorHeap);
 
-	DescriptorHeaps[0] = ResourceDescriptorHeap.GetNativeHeap();
-	DescriptorHeaps[1] = SamplerDescriptorHeap.GetNativeHeap();
-	CmdList.SetDescriptorHeaps(DescriptorHeaps.Data(), DescriptorHeaps.Size());
+	Bool ForceRebind = false;
+	if (DescriptorHeaps[0] != ResourceDescriptorHeap.GetNativeHeap() ||
+		DescriptorHeaps[1] != SamplerDescriptorHeap.GetNativeHeap())
+	{
+		DescriptorHeaps[0] = ResourceDescriptorHeap.GetNativeHeap();
+		DescriptorHeaps[1] = SamplerDescriptorHeap.GetNativeHeap();
+		CmdList.SetDescriptorHeaps(DescriptorHeaps.Data(), DescriptorHeaps.Size());
 
-	if (CBVDescriptorTable.OnlineHandleStart_GPU != 0)
+		ForceRebind = true;
+	}
+
+	if (CBVDescriptorTable.OnlineHandleStart_GPU != BoundComputeDescriptorTables[0] || ForceRebind)
 	{
 		CmdList.SetComputeRootDescriptorTable(CBVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER);
+		BoundComputeDescriptorTables[0] = CBVDescriptorTable.OnlineHandleStart_GPU;
 	}
 
-	if (SRVDescriptorTable.OnlineHandleStart_GPU != 0)
+	if (SRVDescriptorTable.OnlineHandleStart_GPU != BoundComputeDescriptorTables[1] || ForceRebind)
 	{
 		CmdList.SetComputeRootDescriptorTable(SRVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER);
+		BoundComputeDescriptorTables[1] = SRVDescriptorTable.OnlineHandleStart_GPU;
 	}
 
-	if (UAVDescriptorTable.OnlineHandleStart_GPU != 0)
+	if (UAVDescriptorTable.OnlineHandleStart_GPU != BoundComputeDescriptorTables[2] || ForceRebind)
 	{
 		CmdList.SetComputeRootDescriptorTable(UAVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER);
+		BoundComputeDescriptorTables[2] = UAVDescriptorTable.OnlineHandleStart_GPU;
 	}
 
-	if (SamplerDescriptorTable.OnlineHandleStart_GPU != 0)
+	if (SamplerDescriptorTable.OnlineHandleStart_GPU != BoundComputeDescriptorTables[3] || ForceRebind)
 	{
 		CmdList.SetComputeRootDescriptorTable(SamplerDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER);
+		BoundComputeDescriptorTables[3] = SamplerDescriptorTable.OnlineHandleStart_GPU;
 	}
 }
 
@@ -262,30 +305,37 @@ void D3D12ShaderDescriptorTableState::InternalAllocateAndCopyDescriptorHandles(
 			ResourceDescriptorHeap.GetGPUDescriptorHandleAt(StartHandle + NumDescriptorHandles * 2),
 			ResourceDescriptorHeap.GetCPUDescriptorHandleAt(StartHandle + NumDescriptorHandles * 2));
 
+		if (OfflineResourceHandles.Size() < NumResourceDescriptorHandles)
+		{
+			OfflineResourceHandles.Resize(NumResourceDescriptorHandles);
+		}
+
+		if (SrcRangeSizes.Size() < NumResourceDescriptorHandles)
+		{
+			SrcRangeSizes.Resize(NumResourceDescriptorHandles, 1);
+		}
+
+		Memory::Memcpy(
+			OfflineResourceHandles.Data(), 
+			CBVOfflineHandles.Data(), 
+			NumDescriptorHandles * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+		
+		Memory::Memcpy(
+			OfflineResourceHandles.Data() + NumDescriptorHandles, 
+			SRVOfflineHandles.Data(), 
+			NumDescriptorHandles * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+		
+		Memory::Memcpy(
+			OfflineResourceHandles.Data() + (NumDescriptorHandles * 2), 
+			UAVOfflineHandles.Data(), 
+			NumDescriptorHandles * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+
 		Device.CopyDescriptors(
 			1, 
 			&CBVDescriptorTable.OnlineHandleStart_CPU, 
-			&NumDescriptorHandles,
-			NumDescriptorHandles,
-			CBVOfflineHandles.Data(),
-			SrcRangeSizes.Data(),
-			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		
-		Device.CopyDescriptors(
-			1,
-			&SRVDescriptorTable.OnlineHandleStart_CPU,
-			&NumDescriptorHandles,
-			NumDescriptorHandles,
-			SRVOfflineHandles.Data(),
-			SrcRangeSizes.Data(),
-			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		Device.CopyDescriptors(
-			1,
-			&UAVDescriptorTable.OnlineHandleStart_CPU,
-			&NumDescriptorHandles,
-			NumDescriptorHandles,
-			UAVOfflineHandles.Data(),
+			&NumResourceDescriptorHandles,
+			NumResourceDescriptorHandles,
+			OfflineResourceHandles.Data(),
 			SrcRangeSizes.Data(),
 			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 

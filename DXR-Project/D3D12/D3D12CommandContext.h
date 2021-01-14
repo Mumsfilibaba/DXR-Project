@@ -194,6 +194,10 @@ public:
 
 		IsResourcesDirty	= true;
 		IsSamplersDirty		= true;
+
+		DescriptorHeaps.Fill(nullptr);
+		BoundGraphicsDescriptorTables.Fill({ 0 });
+		BoundComputeDescriptorTables.Fill({ 0 });
 	}
 
 private:
@@ -211,6 +215,8 @@ private:
 	TArray<D3D12_CPU_DESCRIPTOR_HANDLE> SamplerOfflineHandles;
 	DescriptorTable SamplerDescriptorTable;
 
+	TArray<D3D12_CPU_DESCRIPTOR_HANDLE> OfflineResourceHandles;
+
 	D3D12_CPU_DESCRIPTOR_HANDLE DefaultCBVOfflineHandle;
 	D3D12_CPU_DESCRIPTOR_HANDLE DefaultSRVOfflineHandle;
 	D3D12_CPU_DESCRIPTOR_HANDLE DefaultUAVOfflineHandle;
@@ -218,7 +224,10 @@ private:
 
 	TSharedRef<D3D12DescriptorHeap> DefaultResourceHeap;
 	TSharedRef<D3D12DescriptorHeap> DefaultSamplerHeap;
-	TStaticArray<ID3D12DescriptorHeap*, 2> DescriptorHeaps;
+
+	TStaticArray<ID3D12DescriptorHeap*, 2>			DescriptorHeaps;
+	TStaticArray<D3D12_GPU_DESCRIPTOR_HANDLE, 4>	BoundGraphicsDescriptorTables;
+	TStaticArray<D3D12_GPU_DESCRIPTOR_HANDLE, 4>	BoundComputeDescriptorTables;
 
 	TArray<UInt32> SrcRangeSizes;
 	Bool IsResourcesDirty	= false;

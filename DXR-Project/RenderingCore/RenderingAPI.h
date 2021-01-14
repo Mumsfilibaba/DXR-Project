@@ -214,28 +214,43 @@ public:
 	}
 
 	FORCEINLINE static ConstantBuffer* CreateConstantBuffer(
-		const ResourceData* InitalData, 
+		const ResourceData* InitalData,
 		UInt32 SizeInBytes, 
-		UInt32 Usage)
+		UInt32 Usage,
+		EResourceState InitialState)
 	{
-		return GlobalRenderingAPI->CreateConstantBuffer(InitalData, SizeInBytes, Usage);
+		return GlobalRenderingAPI->CreateConstantBuffer(
+			InitalData, 
+			SizeInBytes, 
+			Usage, 
+			InitialState);
 	}
 
 	template<typename T>
 	FORCEINLINE static ConstantBuffer* CreateConstantBuffer(
 		const ResourceData* InitalData, 
-		UInt32 Usage)
+		UInt32 Usage,
+		EResourceState InitialState)
 	{
-		return CreateConstantBuffer(InitalData, sizeof(T), Usage);
+		return CreateConstantBuffer(
+			InitalData, 
+			sizeof(T), 
+			Usage, 
+			InitialState);
 	}
 
 	template<typename T>
 	FORCEINLINE static ConstantBuffer* CreateConstantBuffer(
 		const ResourceData* InitalData, 
 		UInt32 ElementCount, 
-		UInt32 Usage)
+		UInt32 Usage,
+		EResourceState InitialState)
 	{
-		return CreateConstantBuffer(InitalData, sizeof(T) * ElementCount, Usage);
+		return CreateConstantBuffer(
+			InitalData, 
+			sizeof(T) * ElementCount, 
+			Usage, 
+			InitialState);
 	}
 
 	FORCEINLINE static StructuredBuffer* CreateStructuredBuffer(

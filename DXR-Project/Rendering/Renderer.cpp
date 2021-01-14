@@ -74,6 +74,20 @@ void Renderer::Tick(const Scene& CurrentScene)
 	DeferredVisibleCommands.Clear();
 	ForwardVisibleCommands.Clear();
 
+	PointLightFrame++;
+	if (PointLightFrame > 8)
+	{
+		UpdatePointLight	= true;
+		PointLightFrame		= 0;
+	}
+
+	DirLightFrame++;
+	if (DirLightFrame > 8)
+	{
+		UpdateDirLight	= true;
+		DirLightFrame	= 0;
+	}
+
 	if (GlobalFrustumCullEnabled)
 	{
 		TRACE_SCOPE("Frustum Culling");
@@ -199,7 +213,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		{
 			XMFLOAT3	Color		= Light->GetColor();
 			Float		Intensity	= Light->GetIntensity();
-			if (IsSubClassOf<PointLight>(Light))
+			if (IsSubClassOf<PointLight>(Light) && UpdatePointLight)
 			{
 				PointLight* PoiLight = Cast<PointLight>(Light);
 				VALIDATE(PoiLight != nullptr);
@@ -220,7 +234,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 				NumPointLights++;
 			}
-			else if (IsSubClassOf<DirectionalLight>(Light))
+			else if (IsSubClassOf<DirectionalLight>(Light) && UpdateDirLight)
 			{
 				DirectionalLight* DirLight = Cast<DirectionalLight>(Light);
 				VALIDATE(DirLight != nullptr);
@@ -291,6 +305,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Render DirectionalLight ShadowMaps
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render DirectionalLight ShadowMaps");
 	
+	if (UpdateDirLight)
 	{
 		TRACE_SCOPE("Render DirectionalLight ShadowMaps");
 
@@ -385,6 +400,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 				break;
 			}
 		}
+
+		UpdateDirLight = false;
+	}
+	else
+	{
+		CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
 	}
 
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
@@ -392,6 +413,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Render PointLight ShadowMaps
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render PointLight ShadowMaps");
 	
+	if (UpdatePointLight)
 	{
 		TRACE_SCOPE("Render PointLight ShadowMaps");
 
@@ -507,6 +529,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 				break;
 			}
 		}
+
+		UpdatePointLight = false;
 	}
 
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render PointLight ShadowMaps");
@@ -614,10 +638,6 @@ void Renderer::Tick(const Scene& CurrentScene)
 					&PerObjectBuffer, 16);
 
 				CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-			}
-			else
-			{
-				LOG_INFO("Skip");
 			}
 		}
 
@@ -1330,7 +1350,10 @@ Bool Renderer::Init()
 	SkyboxMesh	= MeshFactory::CreateSphere(1);
 
 	// Create camera
-	CameraBuffer = RenderingAPI::CreateConstantBuffer<CameraBufferDesc>(nullptr, BufferUsage_Default);
+	CameraBuffer = RenderingAPI::CreateConstantBuffer<CameraBufferDesc>(
+		nullptr, 
+		BufferUsage_Default,
+		EResourceState::ResourceState_Common);
 	if (!CameraBuffer)
 	{
 		LOG_ERROR("[Renderer]: Failed to create camerabuffer");
@@ -2075,7 +2098,8 @@ Bool Renderer::InitLightBuffers()
 	PointLightBuffer = RenderingAPI::CreateConstantBuffer<PointLightProperties>(
 		nullptr, 
 		NumPointLights, 
-		BufferUsage_Default);
+		BufferUsage_Default,
+		EResourceState::ResourceState_Common);
 	if (!PointLightBuffer)
 	{
 		Debug::DebugBreak();
@@ -2089,7 +2113,8 @@ Bool Renderer::InitLightBuffers()
 	DirectionalLightBuffer = RenderingAPI::CreateConstantBuffer<DirectionalLightProperties>(
 		nullptr, 
 		NumDirLights, 
-		BufferUsage_Default);
+		BufferUsage_Default,
+		EResourceState::ResourceState_Common);
 	if (!DirectionalLightBuffer)
 	{
 		Debug::DebugBreak();
@@ -2103,7 +2128,8 @@ Bool Renderer::InitLightBuffers()
 	PerShadowMapBuffer = RenderingAPI::CreateConstantBuffer<PerShadowMap>(
 		nullptr,
 		NumDirLights,
-		BufferUsage_Default);
+		BufferUsage_Default,
+		EResourceState::ResourceState_Common);
 	if (!PerShadowMapBuffer)
 	{
 		Debug::DebugBreak();
@@ -2113,7 +2139,6 @@ Bool Renderer::InitLightBuffers()
 	{
 		PerShadowMapBuffer->SetName("PerShadowMap Buffer");
 	}
-
 
 	{
 		SamplerStateCreateInfo CreateInfo;

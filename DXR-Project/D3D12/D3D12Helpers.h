@@ -505,6 +505,16 @@ inline Bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Valu
 	return !(DescriptorHandle == Value);
 }
 
+inline Bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
+{
+	return Left.ptr == Right.ptr;
+}
+
+inline Bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
+{
+	return !(Left == Right);
+}
+
 /*
 * Operators for D3D12_CPU_DESCRIPTOR_HANDLE
 */
@@ -517,6 +527,16 @@ inline Bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Valu
 inline Bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
 {
 	return !(DescriptorHandle == Value);
+}
+
+inline Bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right)
+{
+	return Left.ptr == Right.ptr;
+}
+
+inline Bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right)
+{
+	return !(Left == Right);
 }
 
 /*

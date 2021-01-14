@@ -143,7 +143,8 @@ public:
 	virtual ConstantBuffer* CreateConstantBuffer(
 		const ResourceData* InitalData, 
 		UInt32 SizeInBytes, 
-		UInt32 Usage) const = 0;
+		UInt32 Usage,
+		EResourceState InitialState) const = 0;
 
 	virtual StructuredBuffer* CreateStructuredBuffer(
 		const ResourceData* InitalData,
