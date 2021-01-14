@@ -221,5 +221,10 @@ private:
 	Float	SSAOBias		= 0.0f;
 	Int32	SSAOKernelSize	= 64;
 
+	Bool UpdatePointLight	= true;
+	Bool UpdateDirLight		= true;
+	UInt64 PointLightFrame	= 0;
+	UInt64 DirLightFrame	= 0;
+
 	LightSettings CurrentLightSettings;
 };

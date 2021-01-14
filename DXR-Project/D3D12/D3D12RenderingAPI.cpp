@@ -247,7 +247,12 @@ VertexBuffer* D3D12RenderingAPI::CreateVertexBuffer(
 	UInt32 StrideInBytes, 
 	UInt32 Usage) const
 {
-	D3D12VertexBuffer* NewBuffer = CreateBufferResource<D3D12VertexBuffer>(InitalData, SizeInBytes, StrideInBytes, Usage);
+	D3D12VertexBuffer* NewBuffer = CreateBufferResource<D3D12VertexBuffer>(
+		InitalData,
+		EResourceState::ResourceState_Common,
+		SizeInBytes, 
+		StrideInBytes, 
+		Usage);
 	if (!NewBuffer)
 	{
 		LOG_ERROR("[D3D12RenderingAPI]: Failed to create VertexBuffer");
@@ -271,7 +276,12 @@ IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(
 	EIndexFormat IndexFormat, 
 	UInt32 Usage) const
 {
-	D3D12IndexBuffer* NewBuffer = CreateBufferResource<D3D12IndexBuffer>(InitalData, SizeInBytes, IndexFormat, Usage);
+	D3D12IndexBuffer* NewBuffer = CreateBufferResource<D3D12IndexBuffer>(
+		InitalData, 
+		EResourceState::ResourceState_Common, 
+		SizeInBytes, 
+		IndexFormat, 
+		Usage);
 	if (!NewBuffer)
 	{
 		LOG_ERROR("[D3D12RenderingAPI]: Failed to create IndexBuffer");
@@ -296,9 +306,17 @@ IndexBuffer* D3D12RenderingAPI::CreateIndexBuffer(
 	return NewBuffer;
 }
 
-ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 Usage) const
+ConstantBuffer* D3D12RenderingAPI::CreateConstantBuffer(
+	const ResourceData* InitalData, 
+	UInt32 SizeInBytes, 
+	UInt32 Usage,
+	EResourceState InitialState) const
 {
-	D3D12ConstantBuffer* NewBuffer = CreateBufferResource<D3D12ConstantBuffer>(InitalData, SizeInBytes, Usage);
+	D3D12ConstantBuffer* NewBuffer = CreateBufferResource<D3D12ConstantBuffer>(
+		InitalData, 
+		InitialState,
+		SizeInBytes, 
+		Usage);
 	if (!NewBuffer)
 	{
 		LOG_ERROR("[D3D12RenderingAPI]: Failed to create ConstantBuffer");
@@ -322,7 +340,12 @@ StructuredBuffer* D3D12RenderingAPI::CreateStructuredBuffer(
 	UInt32 Stride, 
 	UInt32 Usage) const
 {
-	D3D12StructuredBuffer* NewBuffer = CreateBufferResource<D3D12StructuredBuffer>(InitalData, SizeInBytes, Stride, Usage);
+	D3D12StructuredBuffer* NewBuffer = CreateBufferResource<D3D12StructuredBuffer>(
+		InitalData, 
+		EResourceState::ResourceState_Common,
+		SizeInBytes, 
+		Stride, 
+		Usage);
 	if (!NewBuffer)
 	{
 		LOG_ERROR("[D3D12RenderingAPI]: Failed to create StructuredBuffer");

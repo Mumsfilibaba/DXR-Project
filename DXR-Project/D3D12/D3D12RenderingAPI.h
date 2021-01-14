@@ -167,7 +167,8 @@ public:
 	virtual ConstantBuffer* CreateConstantBuffer(
 		const ResourceData* InitalData, 
 		UInt32 SizeInBytes, 
-		UInt32 Usage) const override final;
+		UInt32 Usage,
+		EResourceState InitialState) const override final;
 
 	virtual StructuredBuffer* CreateStructuredBuffer(
 		const ResourceData* InitalData,
@@ -510,6 +511,7 @@ private:
 	template<typename TD3D12Buffer, typename... TArgs>
 	FORCEINLINE TD3D12Buffer* CreateBufferResource(
 		const ResourceData* InitalData,
+		EResourceState InitialState,
 		TArgs&&... Args) const
 	{
 		// Create buffer object and get size to allocate
@@ -541,6 +543,18 @@ private:
 		if (InitalData)
 		{
 			UploadBuffer(*NewBuffer, UInt32(SizeInBytes), InitalData);
+		}
+
+		if (InitialState != EResourceState::ResourceState_Common)
+		{
+			DirectCmdContext->Begin();
+
+			DirectCmdContext->TransitionBuffer(
+				NewBuffer,
+				EResourceState::ResourceState_Common,
+				InitialState);
+			
+			DirectCmdContext->End();
 		}
 
 		return NewBuffer;

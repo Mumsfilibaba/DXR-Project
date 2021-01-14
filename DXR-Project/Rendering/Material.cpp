@@ -23,7 +23,8 @@ void Material::Init()
 {
 	MaterialBuffer = RenderingAPI::CreateConstantBuffer<MaterialProperties>(
 		nullptr, 
-		BufferUsage_Default);
+		BufferUsage_Default,
+		EResourceState::ResourceState_Common);
 
 	SamplerStateCreateInfo CreateInfo;
 	CreateInfo.AddressU			= ESamplerMode::SamplerMode_Wrap;
