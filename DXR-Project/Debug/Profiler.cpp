@@ -1,14 +1,14 @@
 #include "Profiler.h"
 
+constexpr Double MICROSECONDS		= 1000.0;
+constexpr Double MILLISECONDS		= 1000.0 * 1000.0;
+constexpr Double SECONDS			= 1000.0 * 1000.0 * 1000.0;
+constexpr Double INV_MICROSECONDS	= 1.0 / MICROSECONDS;
+constexpr Double INV_MILLISECONDS	= 1.0 / MILLISECONDS;
+constexpr Double INV_SECONDS		= 1.0 / SECONDS;
+
 static void ImGui_PrintTiming(const Char* Text, Int64 Nanoseconds)
 {
-	constexpr Double MICROSECONDS		= 1000.0;
-	constexpr Double MILLISECONDS		= 1000.0 * 1000.0;
-	constexpr Double SECONDS			= 1000.0 * 1000.0 * 1000.0;
-	constexpr Double INV_MICROSECONDS	= 1.0 / MICROSECONDS;
-	constexpr Double INV_MILLISECONDS	= 1.0 / MILLISECONDS;
-	constexpr Double INV_SECONDS		= 1.0 / SECONDS;
-
 	ImGui::Text("%s: ", Text);
 
 	ImGui::NextColumn();
@@ -88,6 +88,15 @@ void Profiler::DrawUI()
 		ImGui::SetColumnWidth(0, 260.0f);
 
 		ImGui_PrintTiming("FrameTime", FrameTime.CurrentSample);
+		
+		const Double MilliSeconds	= Double(FrameTime.CurrentSample) / MILLISECONDS;
+		const Double Frames			= 1000.0 / MilliSeconds;
+		ImGui::Text("FPS:");
+
+		ImGui::NextColumn();
+
+		ImGui::Text("%d", UInt32(Frames));
+
 		ImGui::Columns(1);
 
 		ImGui::Separator();
