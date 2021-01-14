@@ -35,14 +35,14 @@ class CommandList
 	friend class CommandListExecutor;
 
 public:
-	inline CommandList()
+	FORCEINLINE CommandList()
 		: CmdAllocator()
 		, First(nullptr)
 		, Last(nullptr)
 	{
 	}
 
-	inline ~CommandList()
+	FORCEINLINE ~CommandList()
 	{
 		Reset();
 	}
@@ -453,7 +453,7 @@ public:
 		UInt32 StartVertexLocation)
 	{
 		InsertCommand<DrawCommand>(VertexCount, StartVertexLocation);
-		DrawCallCount++;
+		NumDrawCalls++;
 	}
 
 	FORCEINLINE void DrawIndexed(
@@ -466,7 +466,7 @@ public:
 			StartIndexLocation, 
 			BaseVertexLocation);
 
-		DrawCallCount++;
+		NumDrawCalls++;
 	}
 
 	FORCEINLINE void DrawInstanced(
@@ -481,7 +481,7 @@ public:
 			StartVertexLocation,
 			StartInstanceLocation);
 
-		DrawCallCount++;
+		NumDrawCalls++;
 	}
 
 	FORCEINLINE void DrawIndexedInstanced(
@@ -498,7 +498,7 @@ public:
 			BaseVertexLocation,
 			StartInstanceLocation);
 
-		DrawCallCount++;
+		NumDrawCalls++;
 	}
 
 	/*
@@ -515,7 +515,7 @@ public:
 			ThreadGroupCountY,
 			ThreadGroupCountZ);
 
-		DispatchCallCount++;
+		NumDispatchCalls++;
 	}
 
 	FORCEINLINE void DispatchRays(
@@ -558,20 +558,21 @@ public:
 			Last	= nullptr;
 		}
 
-		DrawCallCount		= 0;
-		DispatchCallCount	= 0;
+		NumDrawCalls		= 0;
+		NumDispatchCalls	= 0;
+		NumCommands			= 0;
 
 		CmdAllocator.Reset();
 	}
 
 	FORCEINLINE UInt32 GetDrawCallCount() const
 	{
-		return DrawCallCount;
+		return NumDrawCalls;
 	}
 
 	FORCEINLINE UInt32 GetDispatchCallCount() const
 	{
-		return DispatchCallCount;
+		return NumDispatchCalls;
 	}
 
 private:
@@ -589,9 +590,11 @@ private:
 		}
 		else
 		{
-			First = Cmd;
-			Last = First;
+			First	= Cmd;
+			Last	= First;
 		}
+
+		NumCommands++;
 	}
 
 private:
@@ -599,9 +602,9 @@ private:
 	RenderCommand* First;
 	RenderCommand* Last;
 
-	// TODO: Actually read statistics from the graphics API
-	UInt32 DrawCallCount		= 0;
-	UInt32 DispatchCallCount	= 0;
+	UInt32 NumDrawCalls		= 0;
+	UInt32 NumDispatchCalls	= 0;
+	UInt32 NumCommands		= 0;
 
 	Bool IsRecording = false;
 };
