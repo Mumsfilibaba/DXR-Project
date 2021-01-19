@@ -18,6 +18,8 @@
 #include "RenderingCore/CommandList.h"
 #include "RenderingCore/Viewport.h"
 
+#include "DebugUI.h"
+
 #define ENABLE_VSM 0
 
 /*
@@ -45,6 +47,7 @@ public:
 
 	void Tick(const Scene& CurrentScene);
 	void DrawUI();
+	void DrawDebugUI();
 	
 	Bool OnEvent(const Event& Event);
 
@@ -218,6 +221,8 @@ private:
 
 	TArray<MeshDrawCommand> DeferredVisibleCommands;
 	TArray<MeshDrawCommand> ForwardVisibleCommands;
+
+	TArray<ImGuiImage> DebugTextures;
 
 	TSharedRef<Viewport> MainWindowViewport;
 

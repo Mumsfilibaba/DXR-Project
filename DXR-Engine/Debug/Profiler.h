@@ -54,7 +54,7 @@ class Profiler
 			return Average / Float(SampleCount);
 		}
 
-		TStaticArray<Float, 25> Samples;
+		TStaticArray<Float, 50> Samples;
 		Int32 SampleCount	= 0;
 		Int32 CurrentSample	= 0;
 	};

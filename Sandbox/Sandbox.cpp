@@ -285,7 +285,7 @@ void Sandbox::Tick(Timestamp DeltaTime)
 		CurrentCamera->Rotate(XMConvertToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
 	}
 
-	Float Acceleration = 9.82f;
+	Float Acceleration = 15.0f;
 	if (Input::IsKeyDown(EKey::Key_LeftShift))
 	{
 		Acceleration = Acceleration * 3;
@@ -319,7 +319,8 @@ void Sandbox::Tick(Timestamp DeltaTime)
 		CameraAcceleration.y = -Acceleration;
 	}
 
-	CameraSpeed = CameraSpeed * 0.98f;
+	const Float Deacceleration = -5.0f;
+	CameraSpeed = CameraSpeed + (CameraSpeed * Deacceleration) * Delta;
 	CameraSpeed = CameraSpeed + (CameraAcceleration * Delta);
 
 	XMFLOAT3 Speed = CameraSpeed * Delta;

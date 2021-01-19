@@ -2,7 +2,35 @@
 #include "Application/InputCodes.h"
 #include "Application/Events/Events.h"
 
+#include "RenderingCore/Texture.h"
+#include "RenderingCore/ResourceViews.h"
+
+#include "Core/TSharedRef.h"
+
 #include <imgui.h>
+
+/*
+* ImGuiImage - Should be sent into ImGuiTextureID
+*/
+
+struct ImGuiImage
+{
+	ImGuiImage() = default;
+
+	ImGuiImage(const TSharedRef<ShaderResourceView>& InImageView, const TSharedRef<Texture>& InImage, EResourceState InBefore, EResourceState InAfter)
+		: ImageView(InImageView)
+		, Image(InImage)
+		, Before(InBefore)
+		, After(InAfter)
+	{
+	}
+
+	TSharedRef<ShaderResourceView> ImageView;
+	TSharedRef<Texture>	Image;
+	EResourceState		Before;
+	EResourceState		After;
+	Bool AllowBlending = false;
+};
 
 /*
 * DebugUI

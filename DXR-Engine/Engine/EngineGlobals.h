@@ -46,3 +46,5 @@ extern class Profiler GlobalProfiler;
 
 extern Bool GlobalProfilerEnabled;
 extern Bool GlobalDrawProfiler;
+extern Bool GlobalDrawRendererInfo;
+extern Bool GlobalDrawTextureDebugger;

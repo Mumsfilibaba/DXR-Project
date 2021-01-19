@@ -1,5 +1,7 @@
 #include "Profiler.h"
 
+#include "Rendering/DebugUI.h"
+
 #include "RenderingCore/RenderingAPI.h"
 
 constexpr Float MICROSECONDS		= 1000.0f;
@@ -107,19 +109,27 @@ Profiler::Profiler()
 
 void Profiler::Tick()
 {
-	Clock.Tick();
-
-	CurrentFps++;
-	if (Clock.GetTotalTime().AsSeconds() > 1.0f)
+	if (GlobalProfilerEnabled)
 	{
-		Fps = CurrentFps;
-		CurrentFps = 0;
-		
-		Clock.Reset();
-	}
+		Clock.Tick();
 
-	const UInt64 Delta = Clock.GetDeltaTime().AsMilliSeconds();
-	FrameTime.AddSample(Float(Delta));
+		CurrentFps++;
+		if (Clock.GetTotalTime().AsSeconds() > 1.0f)
+		{
+			Fps = CurrentFps;
+			CurrentFps = 0;
+
+			Clock.Reset();
+		}
+
+		const UInt64 Delta = Clock.GetDeltaTime().AsMilliSeconds();
+		FrameTime.AddSample(Float(Delta));
+
+		DebugUI::DrawUI([]()
+		{
+			GlobalProfiler.DrawUI();
+		});
+	}
 }
 
 void Profiler::AddSample(const Char* Name, Float NewSample)
@@ -142,7 +152,7 @@ void Profiler::AddSample(const Char* Name, Float NewSample)
 
 void Profiler::DrawUI()
 {
-	if (GlobalProfilerEnabled && GlobalDrawProfiler)
+	if (GlobalDrawProfiler)
 	{
 		// Draw DebugWindow with DebugStrings
 		UInt32 WindowWidth		= GlobalMainWindow->GetWidth();
@@ -202,7 +212,7 @@ void Profiler::DrawUI()
 
 		ImGui::Columns(2);
 
-		TStaticArray<Float, 25> Floats;
+		TStaticArray<Float, 50> Floats;
 		for (auto& Sample : Samples)
 		{
 			Memory::Memzero(Floats.Data(), Floats.SizeInBytes());
@@ -248,11 +258,15 @@ void Profiler::DrawUI()
 					"",
 					Floats.Data(),
 					Sample.second.SampleCount,
-					0,
+					Sample.second.CurrentSample,
 					nullptr,
 					0.0f,
 					Max,
 					ImVec2(0, 30.0f));
+			}
+			else
+			{
+				ImGui::NewLine();
 			}
 
 			ImGui::NextColumn();

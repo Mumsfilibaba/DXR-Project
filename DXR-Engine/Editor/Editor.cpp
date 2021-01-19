@@ -135,6 +135,7 @@ static void DrawMenu()
 				ImGui::MenuItem("Render Settings", NULL, &ShowRenderSettings);
 				ImGui::MenuItem("SceneGraph", NULL, &ShowSceneGraph);
 				ImGui::MenuItem("Profiler", NULL, &GlobalDrawProfiler);
+				ImGui::MenuItem("Texture Debugger", NULL, &GlobalDrawTextureDebugger);
 
 				ImGui::EndMenu();
 			}
