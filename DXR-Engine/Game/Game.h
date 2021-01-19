@@ -15,7 +15,7 @@ class Game
 {
 public:
 	Game();
-	~Game();
+	virtual ~Game();
 
 	virtual Bool Init()
 	{
