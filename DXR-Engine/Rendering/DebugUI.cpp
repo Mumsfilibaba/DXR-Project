@@ -42,6 +42,7 @@ struct ImGuiState
 	TSharedRef<GraphicsPipelineState>	PipelineStateNoBlending;
 	TSharedRef<VertexBuffer>			VertexBuffer;
 	TSharedRef<IndexBuffer>				IndexBuffer;
+	TArray<ImGuiImage*>					Images;
 	
 	ImGuiContext* Context = nullptr;
 };
@@ -687,6 +688,19 @@ void DebugUI::Render(CommandList& CmdList)
 			if (Cmd->TextureId)
 			{
 				ImGuiImage* Image = reinterpret_cast<ImGuiImage*>(Cmd->TextureId);
+				GlobalImGuiState.Images.EmplaceBack(Image);
+				
+				if (Image->BeforeState != EResourceState::ResourceState_PixelShaderResource)
+				{
+					CmdList.TransitionTexture(
+						Image->Image.Get(),
+						Image->BeforeState,
+						EResourceState::ResourceState_PixelShaderResource);
+
+					// TODO: Another way to do this? May break somewhere?
+					Image->BeforeState = EResourceState::ResourceState_PixelShaderResource;
+				}
+
 				CmdList.BindShaderResourceViews(
 					EShaderStage::ShaderStage_Pixel,
 					&Image->ImageView,
@@ -722,6 +736,21 @@ void DebugUI::Render(CommandList& CmdList)
 		GlobalIndexOffset	+= DrawCmdList->IdxBuffer.Size;
 		GlobalVertexOffset	+= DrawCmdList->VtxBuffer.Size;
 	}
+
+	for (ImGuiImage* Image : GlobalImGuiState.Images)
+	{
+		VALIDATE(Image != nullptr);
+
+		if (Image->AfterState != EResourceState::ResourceState_PixelShaderResource)
+		{
+			CmdList.TransitionTexture(
+				Image->Image.Get(),
+				EResourceState::ResourceState_PixelShaderResource,
+				Image->AfterState);
+		}
+	}
+
+	GlobalImGuiState.Images.Clear();
 }
 
 ImGuiContext* DebugUI::GetCurrentContext()

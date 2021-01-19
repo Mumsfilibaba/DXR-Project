@@ -755,12 +755,6 @@ void Renderer::Tick(const Scene& CurrentScene)
 			GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
 			EResourceState::ResourceState_DepthWrite, 
 			EResourceState::ResourceState_PixelShaderResource);
-
-		DebugTextures.EmplaceBack(
-			GBufferSRVs[GBUFFER_DEPTH_INDEX],
-			GBuffer[GBUFFER_DEPTH_INDEX],
-			EResourceState::ResourceState_PixelShaderResource,
-			EResourceState::ResourceState_PixelShaderResource);
 	}
 
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
@@ -1264,10 +1258,23 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 		if (GlobalDrawTextureDebugger)
 		{
+			DebugTextures.EmplaceBack(
+				GBufferSRVs[GBUFFER_DEPTH_INDEX],
+				GBuffer[GBUFFER_DEPTH_INDEX],
+				EResourceState::ResourceState_DepthWrite,
+				EResourceState::ResourceState_PixelShaderResource);
+
 			DebugUI::DrawUI([]()
 			{
 				GlobalRenderer->DrawDebugUI();
 			});
+		}
+		else
+		{
+			CmdList.TransitionTexture(
+				GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
+				EResourceState::ResourceState_DepthWrite, 
+				EResourceState::ResourceState_PixelShaderResource);
 		}
 
 		if (GlobalDrawRendererInfo)
@@ -1285,26 +1292,27 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	// Finalize Commandlist
 	CmdList.TransitionTexture(
-		GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-		EResourceState::ResourceState_DepthWrite, 
-		EResourceState::ResourceState_PixelShaderResource);
-
-	CmdList.TransitionTexture(
 		BackBuffer, 
 		EResourceState::ResourceState_RenderTarget, 
 		EResourceState::ResourceState_Present);
 	
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--END FRAME--");
+
 	CmdList.End();
 
 	LastFrameNumDrawCalls		= CmdList.GetNumDrawCalls();
 	LastFrameNumDispatchCalls	= CmdList.GetNumDispatchCalls();
 	LastFrameNumCommands		= CmdList.GetNumCommands();
 
-	CommandListExecutor::ExecuteCommandList(CmdList);
+	{
+		TRACE_SCOPE("ExecuteCommandList");
+		CommandListExecutor::ExecuteCommandList(CmdList);
+	}
 
-	// Present
-	MainWindowViewport->Present(GlobalVSyncEnabled);
+	{
+		TRACE_SCOPE("Present");
+		MainWindowViewport->Present(GlobalVSyncEnabled);
+	}
 }
 
 void Renderer::DrawUI()

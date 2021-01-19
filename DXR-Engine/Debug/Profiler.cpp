@@ -199,8 +199,8 @@ void Profiler::DrawUI()
 		ImGui::PlotLines(
 			"",
 			FrameTime.Samples.Data(),
-			FrameTime.Samples.Size(),
-			0,
+			FrameTime.SampleCount,
+			FrameTime.CurrentSample,
 			nullptr,
 			0.0f,
 			ImGui_GetMaxLimit(FtAvg),

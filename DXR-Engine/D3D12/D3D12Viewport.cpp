@@ -16,6 +16,19 @@ D3D12Viewport::D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdCo
 {
 }
 
+D3D12Viewport::~D3D12Viewport()
+{
+	BOOL FullscreenState;
+	HRESULT Result = SwapChain->GetFullscreenState(&FullscreenState, nullptr);
+	if (SUCCEEDED(Result))
+	{
+		if (FullscreenState)
+		{
+			SwapChain->SetFullscreenState(FALSE, nullptr);
+		}
+	}
+}
+
 Bool D3D12Viewport::Init()
 {
 	IDXGIFactory2* Factory		= Device->GetFactory();
@@ -24,7 +37,7 @@ Bool D3D12Viewport::Init()
 	// Save the flags
 	Flags = Device->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
-	const UInt32 NumSwapChainBuffers	= 3;
+	const UInt32 NumSwapChainBuffers	= 4;
 	const DXGI_FORMAT NativeFormat		= ConvertFormat(PixelFormat);
 
 	VALIDATE(Width > 0 && Height > 0);
@@ -40,16 +53,25 @@ Bool D3D12Viewport::Init()
 	SwapChainDesc.SampleDesc.Count		= 1;
 	SwapChainDesc.SampleDesc.Quality	= 0;
 	SwapChainDesc.Scaling				= DXGI_SCALING_STRETCH;
-	SwapChainDesc.SwapEffect			= DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	SwapChainDesc.SwapEffect			= DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 	SwapChainDesc.AlphaMode				= DXGI_ALPHA_MODE_IGNORE;
 	SwapChainDesc.Flags					= Flags;
+
+	DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc;
+	Memory::Memzero(&FullscreenDesc);
+
+	FullscreenDesc.RefreshRate.Numerator	= 0;
+	FullscreenDesc.RefreshRate.Denominator	= 1;
+	FullscreenDesc.Scaling					= DXGI_MODE_SCALING_UNSPECIFIED;
+	FullscreenDesc.ScanlineOrdering			= DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	FullscreenDesc.Windowed					= true;
 
 	TComPtr<IDXGISwapChain1> TempSwapChain;
 	HRESULT Result = Factory->CreateSwapChainForHwnd(
 		Queue.GetQueue(),
 		Hwnd, 
 		&SwapChainDesc, 
-		nullptr, 
+		&FullscreenDesc,
 		nullptr, 
 		&TempSwapChain);
 	if (SUCCEEDED(Result))

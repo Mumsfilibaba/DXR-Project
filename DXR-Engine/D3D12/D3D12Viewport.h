@@ -25,6 +25,8 @@ public:
 		UInt32 InHeight, 
 		EFormat PixelFormat);
 
+	~D3D12Viewport();
+
 	Bool Init();
 
 	virtual Bool Resize(UInt32 Width, UInt32 Height) override final;

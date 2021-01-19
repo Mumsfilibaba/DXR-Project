@@ -20,15 +20,15 @@ struct ImGuiImage
 	ImGuiImage(const TSharedRef<ShaderResourceView>& InImageView, const TSharedRef<Texture>& InImage, EResourceState InBefore, EResourceState InAfter)
 		: ImageView(InImageView)
 		, Image(InImage)
-		, Before(InBefore)
-		, After(InAfter)
+		, BeforeState(InBefore)
+		, AfterState(InAfter)
 	{
 	}
 
 	TSharedRef<ShaderResourceView> ImageView;
 	TSharedRef<Texture>	Image;
-	EResourceState		Before;
-	EResourceState		After;
+	EResourceState		BeforeState;
+	EResourceState		AfterState;
 	Bool AllowBlending = false;
 };
 

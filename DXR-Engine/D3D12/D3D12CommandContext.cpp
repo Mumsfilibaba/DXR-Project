@@ -535,7 +535,7 @@ Bool D3D12CommandContext::Init()
 {
 	VALIDATE(CmdQueue != nullptr);
 
-	// TODO: Have support for more than 3 commandbatches
+	// TODO: Have support for more than 4 commandbatches ?
 	for (UInt32 i = 0; i < 4; i++)
 	{
 		TSharedRef<D3D12CommandAllocator> CmdAllocator = Device->CreateCommandAllocator(CmdQueue->GetType());
