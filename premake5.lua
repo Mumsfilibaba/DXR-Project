@@ -1,5 +1,5 @@
 workspace "DXR-Project"
-    startproject 	"DXR-Project"
+    startproject 	"Sandbox"
     architecture 	"x64"
     warnings 		"extra"    
 	flags { "MultiProcessorCompile" }
@@ -72,22 +72,22 @@ workspace "DXR-Project"
 		
 		-- tinyobjloader Project
 		project "tinyobjloader"
-			kind "StaticLib"
-			language "C++"
-			cppdialect "C++17"
-			systemversion "latest"
-			location "Dependencies/projectfiles/tinyobjloader"
+			kind 			"StaticLib"
+			language 		"C++"
+			cppdialect 		"C++17"
+			systemversion 	"latest"
+			location 		"Dependencies/projectfiles/tinyobjloader"
 			
 			filter "configurations:Debug or Release"
-				symbols "on"
-				runtime "Release"
-				optimize "Full"
+				symbols 	"on"
+				runtime 	"Release"
+				optimize 	"Full"
 			filter{}
 			
 			filter "configurations:Production"
-				symbols "off"
-				runtime "Release"
-				optimize "Full"
+				symbols 	"off"
+				runtime 	"Release"
+				optimize 	"Full"
 			filter{}
 			
 			-- Targets
@@ -103,12 +103,12 @@ workspace "DXR-Project"
 	group ""
 
     -- Engine Project
-    project "DXR-Project"
+    project "DXR-Engine"
         language 		"C++"
         cppdialect 		"C++17"
         systemversion 	"latest"
-        location 		"DXR-Project"
-        kind 			"WindowedApp"
+        location 		"DXR-Engine"
+        kind 			"StaticLib"
 		characterset 	"Ascii"
 		
 		-- Pre-Compiled Headers
@@ -173,3 +173,66 @@ workspace "DXR-Project"
 			"%{prj.name}/Include",
         }
     project "*"
+	
+	-- Sandbox Project
+    project "Sandbox"
+		language 		"C++"
+        cppdialect 		"C++17"
+        systemversion 	"latest"
+        location 		"Sandbox"
+        kind 			"WindowedApp"
+		characterset 	"Ascii"
+	
+	    -- Targets
+		targetdir 	("Build/bin/" .. outputdir .. "/%{prj.name}")
+		objdir 		("Build/bin-int/" .. outputdir .. "/%{prj.name}")	
+	
+		sysincludedirs
+		{
+			"DXR-Engine",	
+			"Dependencies/imgui",
+            "Dependencies/Template-Library"
+		}
+		
+		-- Files to include
+		files 
+		{ 
+			"%{prj.name}/**.h",
+			"%{prj.name}/**.hpp",
+			"%{prj.name}/**.inl",
+			"%{prj.name}/**.c",
+			"%{prj.name}/**.cpp",
+			"%{prj.name}/**.hlsl",	
+        }
+		
+		-- Include Windows Main
+		filter "system:windows"
+			files
+			{
+				"DXR-Engine/Main/Windows/WindowsMain.cpp",	
+			}
+		filter {}
+		
+		-- In visual studio show natvis files
+		filter "action:vs*"
+			vpaths { ["Natvis"] = "**.natvis" }
+			
+			files 
+			{
+				"%{prj.name}/**.natvis",	
+				"Dependencies/Template-Library/Containers/*.natvis"
+			}
+		filter {}
+			
+        -- We do not want to compile HLSL files so exclude them from project
+        excludes 
+        {	
+            "**.hlsl",
+        }
+	
+		links
+		{ 
+			"DXR-Engine",
+		}
+	project "*"
+	
