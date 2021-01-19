@@ -24,6 +24,7 @@ public:
 
 	virtual void Tick(Timestamp DeltaTime)
 	{
+		UNREFERENCED_VARIABLE(DeltaTime);
 	}
 
 protected:

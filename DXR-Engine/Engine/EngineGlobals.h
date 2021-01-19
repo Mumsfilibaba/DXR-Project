@@ -27,8 +27,9 @@ extern class Game* GlobalGame;
 */
 
 extern class Renderer*				GlobalRenderer;
-extern class GenericRenderingAPI*	GlobalRenderingAPI;
+extern class GenericRenderLayer*	GlobalRenderLayer;
 extern class IShaderCompiler*		GlobalShaderCompiler;
+extern class CommandListExecutor	GlobalCmdListExecutor;
 
 extern Bool GlobalPrePassEnabled;
 extern Bool GlobalDrawAABBs;

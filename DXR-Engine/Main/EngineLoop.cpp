@@ -32,7 +32,9 @@
 
 Int32 EngineMain(const TArrayView<const Char*> Args)
 {
-	#ifdef _DEBUG
+	UNREFERENCED_VARIABLE(Args);
+
+#ifdef _DEBUG
 	Memory::SetDebugFlags(EMemoryDebugFlag::MemoryDebugFlag_LeakCheck);
 #endif
 
@@ -132,7 +134,7 @@ Bool EngineLoop::Init()
 	GlobalCursors::Init();
 
 	// RenderAPI
-	if (!RenderingAPI::Init(ERenderingAPI::RenderingAPI_D3D12))
+	if (!RenderLayer::Init(ERenderLayerApi::RenderLayerApi_D3D12))
 	{
 		return false;
 	}
@@ -208,7 +210,7 @@ Bool EngineLoop::PreRelease()
 {
 	TRACE_FUNCTION_SCOPE();
 
-	CommandListExecutor::WaitForGPU();
+	GlobalCmdListExecutor.WaitForGPU();
 	
 	TextureFactory::Release();
 
@@ -225,7 +227,7 @@ Bool EngineLoop::Release()
 
 	SAFEDELETE(GlobalRenderer);
 
-	RenderingAPI::Release();
+	RenderLayer::Release();
 
 	return true;
 }

@@ -4,6 +4,8 @@
 
 #include "Debug/Profiler.h"
 
+#include "RenderingCore/CommandList.h"
+
 /*
 * Engine
 */
@@ -30,8 +32,10 @@ class Game* GlobalGame = nullptr;
 */
 
 class Renderer*				GlobalRenderer			= nullptr;
-class GenericRenderingAPI*	GlobalRenderingAPI		= nullptr;
+class GenericRenderLayer*	GlobalRenderLayer		= nullptr;
 class IShaderCompiler*		GlobalShaderCompiler	= nullptr;
+
+CommandListExecutor	GlobalCmdListExecutor;
 
 Bool GlobalPrePassEnabled		= true;
 Bool GlobalDrawAABBs			= false;

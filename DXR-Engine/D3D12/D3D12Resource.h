@@ -11,7 +11,7 @@
 
 class D3D12Resource : public D3D12DeviceChild
 {
-	friend class D3D12RenderingAPI;
+	friend class D3D12RenderLayer;
 
 public:
 	D3D12Resource(D3D12Device* InDevice);

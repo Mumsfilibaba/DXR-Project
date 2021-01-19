@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderingCore/GenericRenderingAPI.h"
+#include "RenderingCore/GenericRenderLayer.h"
 
 #include "Windows/WindowsWindow.h"
 
@@ -60,14 +60,14 @@ inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture3D>
 }
 
 /*
-* D3D12RenderingAPI
+* D3D12RenderLayer
 */
 
-class D3D12RenderingAPI : public GenericRenderingAPI
+class D3D12RenderLayer : public GenericRenderLayer
 {
 public:
-	D3D12RenderingAPI();
-	~D3D12RenderingAPI();
+	D3D12RenderLayer();
+	~D3D12RenderLayer();
 
 	virtual Bool Init(Bool EnableDebug) override final;
 
@@ -535,7 +535,7 @@ private:
 		// Allocate
 		if (!AllocateBuffer(*NewBuffer, HeapType, InitalState, Flags, AlignedSize))
 		{
-			LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate buffer");
+			LOG_ERROR("[D3D12RenderLayer]: Failed to allocate buffer");
 			return nullptr;
 		}
 
@@ -668,7 +668,7 @@ private:
 			DxOptimizedClearValuePtr,
 			Desc))
 		{
-			LOG_ERROR("[D3D12RenderingAPI]: Failed to allocate texture");
+			LOG_ERROR("[D3D12RenderLayer]: Failed to allocate texture");
 			return nullptr;
 		}
 
@@ -690,7 +690,7 @@ private:
 	{
 		if (!Resource)
 		{
-			LOG_ERROR("[D3D12RenderingAPI]: Specified resource was invalid for creation of a ShaderResourceView");
+			LOG_ERROR("[D3D12RenderLayer]: Specified resource was invalid for creation of a ShaderResourceView");
 			return nullptr;
 		}
 		else
@@ -705,7 +705,7 @@ private:
 	{
 		if (!Resource)
 		{
-			LOG_ERROR("[D3D12RenderingAPI]: Specified resource was invalid for creation of a RenderTargetView");
+			LOG_ERROR("[D3D12RenderLayer]: Specified resource was invalid for creation of a RenderTargetView");
 			return nullptr;
 		}
 		else
@@ -720,7 +720,7 @@ private:
 	{
 		if (!Resource)
 		{
-			LOG_ERROR("[D3D12RenderingAPI]: Specified resource was invalid for creation of a DepthStencilView");
+			LOG_ERROR("[D3D12RenderLayer]: Specified resource was invalid for creation of a DepthStencilView");
 			return nullptr;
 		}
 		else
@@ -736,7 +736,7 @@ private:
 	{
 		if (!Resource)
 		{
-			LOG_ERROR("[D3D12RenderingAPI]: Specified resource was invalid for creation of a UnorderedAccessView");
+			LOG_ERROR("[D3D12RenderLayer]: Specified resource was invalid for creation of a UnorderedAccessView");
 			return nullptr;
 		}
 		else

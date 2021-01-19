@@ -134,7 +134,7 @@ private:
 
 class D3D12GraphicsPipelineState : public GraphicsPipelineState, public D3D12DeviceChild
 {
-	friend class D3D12RenderingAPI;
+	friend class D3D12RenderLayer;
 
 public:
 	D3D12GraphicsPipelineState(D3D12Device* InDevice)
@@ -170,7 +170,7 @@ private:
 
 class D3D12ComputePipelineState : public ComputePipelineState, public D3D12DeviceChild
 {
-	friend class D3D12RenderingAPI;
+	friend class D3D12RenderLayer;
 
 public:
 	D3D12ComputePipelineState(

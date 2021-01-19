@@ -3,7 +3,7 @@
 
 #include "RenderingCore/CommandList.h"
 #include "RenderingCore/PipelineState.h"
-#include "RenderingCore/RenderingAPI.h"
+#include "RenderingCore/RenderLayer.h"
 #include "RenderingCore/ShaderCompiler.h"
 
 #ifdef min
@@ -44,14 +44,14 @@ Bool TextureFactory::Init()
 		return false;
 	}
 
-	TSharedRef<ComputeShader> Shader = RenderingAPI::CreateComputeShader(Code);
+	TSharedRef<ComputeShader> Shader = RenderLayer::CreateComputeShader(Code);
 	if (!Shader)
 	{
 		return false;
 	}
 
 	// Create pipeline
-	GlobalFactoryData.PanoramaPSO = RenderingAPI::CreateComputePipelineState(ComputePipelineStateCreateInfo(Shader.Get()));
+	GlobalFactoryData.PanoramaPSO = RenderLayer::CreateComputePipelineState(ComputePipelineStateCreateInfo(Shader.Get()));
 	if (GlobalFactoryData.PanoramaPSO)
 	{
 		GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");
@@ -131,7 +131,7 @@ Texture2D* TextureFactory::LoadFromMemory(
 	VALIDATE(RowPitch > 0);
 	
 	ResourceData InitalData = ResourceData(Pixels, Width * Stride);
-	TSharedRef<Texture2D> Texture = RenderingAPI::CreateTexture2D(
+	TSharedRef<Texture2D> Texture = RenderLayer::CreateTexture2D(
 		&InitalData,
 		Format, 
 		TextureUsage_Default | TextureUsage_SRV,
@@ -170,7 +170,7 @@ Texture2D* TextureFactory::LoadFromMemory(
 	}
 
 	CmdList.End();
-	CommandListExecutor::ExecuteCommandList(CmdList);
+	GlobalCmdListExecutor.ExecuteCommandList(CmdList);
 
 	return Texture.ReleaseOwnership();
 }
@@ -189,7 +189,7 @@ SampledTexture2D TextureFactory::LoadSampledTextureFromFile(
 		return SampledTexture2D();
 	}
 
-	TSharedRef<ShaderResourceView> View = RenderingAPI::CreateShaderResourceView(
+	TSharedRef<ShaderResourceView> View = RenderLayer::CreateShaderResourceView(
 		Texture.Get(),
 		Format,
 		0,
@@ -220,7 +220,7 @@ SampledTexture2D TextureFactory::LoadSampledTextureFromMemory(
 		return SampledTexture2D();
 	}
 
-	TSharedRef<ShaderResourceView> View = RenderingAPI::CreateShaderResourceView(
+	TSharedRef<ShaderResourceView> View = RenderLayer::CreateShaderResourceView(
 		Texture.Get(),
 		Format,
 		0,
@@ -243,7 +243,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
 	const UInt16 MipLevels = (GenerateMipLevels) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
 
 	// Create statging texture
-	TSharedRef<TextureCube> StagingTexture = RenderingAPI::CreateTextureCube(
+	TSharedRef<TextureCube> StagingTexture = RenderLayer::CreateTextureCube(
 		nullptr, 
 		Format, 
 		TextureUsage_Default | TextureUsage_UAV,
@@ -260,7 +260,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
 	}
 
 	// Create UAV
-	TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderingAPI::CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
+	TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderLayer::CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
 	if (!StagingTextureUAV)
 	{
 		return nullptr;
@@ -271,7 +271,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
 	}
 
 	// Create texture
-	TSharedRef<TextureCube> Texture = RenderingAPI::CreateTextureCube(
+	TSharedRef<TextureCube> Texture = RenderLayer::CreateTextureCube(
 		nullptr, 
 		Format, 
 		TextureUsage_SRV | TextureUsage_Default, 
@@ -345,7 +345,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
 	CmdList.DestroyResource(Texture.Get());
 
 	CmdList.End();
-	CommandListExecutor::ExecuteCommandList(CmdList);
+	GlobalCmdListExecutor.ExecuteCommandList(CmdList);
 
 	return Texture.ReleaseOwnership();
 }

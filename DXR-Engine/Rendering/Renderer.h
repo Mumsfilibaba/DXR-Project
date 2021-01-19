@@ -14,7 +14,7 @@
 #include "Material.h"
 #include "MeshFactory.h"
 
-#include "RenderingCore/RenderingAPI.h"
+#include "RenderingCore/RenderLayer.h"
 #include "RenderingCore/CommandList.h"
 #include "RenderingCore/Viewport.h"
 

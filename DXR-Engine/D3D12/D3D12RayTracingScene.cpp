@@ -1,16 +1,13 @@
 #include "Rendering/MeshFactory.h"
 
-#include "RenderingCore/RenderingAPI.h"
+#include "RenderingCore/RenderLayer.h"
 
-#include "D3D12RenderingAPI.h"
+#include "D3D12RenderLayer.h"
 #include "D3D12RayTracingScene.h"
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
 #include "D3D12DescriptorHeap.h"
 #include "D3D12RayTracingPipelineState.h"
-
-
-#include "RenderingCore/RenderingAPI.h"
 
 /*
 * D3D12RayTracingGeometry
@@ -68,7 +65,7 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(
 	Memory::Memzero(&Info, sizeof(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO));
 	Device->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
 
-	ScratchBuffer = static_cast<D3D12StructuredBuffer*>(RenderingAPI::CreateStructuredBuffer(
+	ScratchBuffer = static_cast<D3D12StructuredBuffer*>(RenderLayer::CreateStructuredBuffer(
 		nullptr, 
 		UInt32(Info.ScratchDataSizeInBytes), 
 		1,
@@ -78,7 +75,7 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(
 		return false;
 	}
 
-	ResultBuffer = static_cast<D3D12StructuredBuffer*>(RenderingAPI::CreateStructuredBuffer(
+	ResultBuffer = static_cast<D3D12StructuredBuffer*>(RenderLayer::CreateStructuredBuffer(
 		nullptr, 
 		UInt32(Info.ResultDataMaxSizeInBytes), 
 		1,
@@ -198,7 +195,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(
 	BindingTableStride = StrideInBytes;
 
 	BindingTable = static_cast<D3D12StructuredBuffer*>(
-		RenderingAPI::CreateStructuredBuffer(nullptr, SizeInBytes, 1, BufferUsage_UAV | BufferUsage_Dynamic));
+		RenderLayer::CreateStructuredBuffer(nullptr, SizeInBytes, 1, BufferUsage_UAV | BufferUsage_Dynamic));
 	if (!BindingTable)
 	{
 		LOG_ERROR("[D3D12RayTracingScene]: FAILED to create BindingTable\n");
@@ -255,7 +252,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(
 	Device->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
 
 	// Create the buffers
-	ScratchBuffer = static_cast<D3D12StructuredBuffer*>(RenderingAPI::CreateStructuredBuffer(
+	ScratchBuffer = static_cast<D3D12StructuredBuffer*>(RenderLayer::CreateStructuredBuffer(
 		nullptr, 
 		UInt32(Info.ScratchDataSizeInBytes), 
 		1, 
@@ -265,7 +262,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(
 		return false;
 	}
 
-	ResultBuffer = static_cast<D3D12StructuredBuffer*>(RenderingAPI::CreateStructuredBuffer(
+	ResultBuffer = static_cast<D3D12StructuredBuffer*>(RenderLayer::CreateStructuredBuffer(
 		nullptr, 
 		UInt32(Info.ResultDataMaxSizeInBytes), 
 		1, 
@@ -277,7 +274,7 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(
 
 	const UInt32 InstanceBufferSize = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * InstanceCount;
 	InstanceBuffer = static_cast<D3D12StructuredBuffer*>(
-		RenderingAPI::CreateStructuredBuffer(nullptr, InstanceBufferSize, sizeof(D3D12_RAYTRACING_INSTANCE_DESC), BufferUsage_UAV | BufferUsage_Dynamic));
+		RenderLayer::CreateStructuredBuffer(nullptr, InstanceBufferSize, sizeof(D3D12_RAYTRACING_INSTANCE_DESC), BufferUsage_UAV | BufferUsage_Dynamic));
 	if(!InstanceBuffer)
 	{
 		return false;

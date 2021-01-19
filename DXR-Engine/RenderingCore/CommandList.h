@@ -621,21 +621,24 @@ private:
 class CommandListExecutor
 {
 public:
-	static void ExecuteCommandList(CommandList& CmdList);
-	static void WaitForGPU();
+	CommandListExecutor()	= default;
+	~CommandListExecutor()	= default;
 
-	FORCEINLINE static void SetContext(ICommandContext* InCmdContext)
+	void ExecuteCommandList(CommandList& CmdList);
+	void WaitForGPU();
+
+	FORCEINLINE void SetContext(ICommandContext* InCmdContext)
 	{
 		VALIDATE(InCmdContext != nullptr);
 		CmdContext = InCmdContext;
 	}
 
-	FORCEINLINE static ICommandContext& GetContext()
+	FORCEINLINE ICommandContext& GetContext()
 	{
 		VALIDATE(CmdContext != nullptr);
 		return *CmdContext;
 	}
 
 private:
-	static ICommandContext* CmdContext;
+	ICommandContext* CmdContext = nullptr;
 };

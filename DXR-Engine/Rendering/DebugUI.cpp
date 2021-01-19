@@ -16,7 +16,7 @@
 #include "RenderingCore/Buffer.h"
 #include "RenderingCore/Texture.h"
 #include "RenderingCore/PipelineState.h"
-#include "RenderingCore/RenderingAPI.h"
+#include "RenderingCore/RenderLayer.h"
 #include "RenderingCore/ShaderCompiler.h"
 #include "RenderingCore/Shader.h"
 
@@ -272,7 +272,7 @@ Bool DebugUI::Init()
 		return false;
 	}
 
-	TSharedRef<VertexShader> VShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
 	if (!VShader)
 	{
 		Debug::DebugBreak();
@@ -307,7 +307,7 @@ Bool DebugUI::Init()
 		return false;
 	}
 
-	TSharedRef<PixelShader> PShader = RenderingAPI::CreatePixelShader(ShaderCode);
+	TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
 	if (!PShader)
 	{
 		Debug::DebugBreak();
@@ -321,7 +321,7 @@ Bool DebugUI::Init()
 		{ "COLOR",		0, EFormat::Format_R8G8B8A8_Unorm,	0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, col)),	EInputClassification::InputClassification_Vertex, 0 },
 	};
 
-	TSharedRef<InputLayoutState> InputLayout = RenderingAPI::CreateInputLayout(InputLayoutInfo);
+	TSharedRef<InputLayoutState> InputLayout = RenderLayer::CreateInputLayout(InputLayoutInfo);
 	if (!InputLayout)
 	{
 		Debug::DebugBreak();
@@ -336,7 +336,7 @@ Bool DebugUI::Init()
 	DepthStencilStateInfo.DepthEnable		= false;
 	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_Zero;
 
-	TSharedRef<DepthStencilState> DepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
 	if (!DepthStencilState)
 	{
 		Debug::DebugBreak();
@@ -350,7 +350,7 @@ Bool DebugUI::Init()
 	RasterizerStateCreateInfo RasterizerStateInfo;
 	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
 
-	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
 	if (!RasterizerState)
 	{
 		Debug::DebugBreak();
@@ -371,7 +371,7 @@ Bool DebugUI::Init()
 	BlendStateInfo.RenderTarget[0].BlendOpAlpha		= EBlendOp::BlendOp_Add;
 	BlendStateInfo.RenderTarget[0].BlendOp			= EBlendOp::BlendOp_Add;
 
-	TSharedRef<BlendState> BlendStateBlending = RenderingAPI::CreateBlendState(BlendStateInfo);
+	TSharedRef<BlendState> BlendStateBlending = RenderLayer::CreateBlendState(BlendStateInfo);
 	if (!BlendStateBlending)
 	{
 		Debug::DebugBreak();
@@ -384,7 +384,7 @@ Bool DebugUI::Init()
 
 	BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-	TSharedRef<BlendState> BlendStateNoBlending = RenderingAPI::CreateBlendState(BlendStateInfo);
+	TSharedRef<BlendState> BlendStateNoBlending = RenderLayer::CreateBlendState(BlendStateInfo);
 	if (!BlendStateBlending)
 	{
 		Debug::DebugBreak();
@@ -406,7 +406,7 @@ Bool DebugUI::Init()
 	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
 	PSOProperties.PrimitiveTopologyType						= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
 
-	GlobalImGuiState.PipelineState = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
+	GlobalImGuiState.PipelineState = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
 	if (!GlobalImGuiState.PipelineState)
 	{
 		Debug::DebugBreak();
@@ -415,14 +415,14 @@ Bool DebugUI::Init()
 
 	PSOProperties.BlendState = BlendStateNoBlending.Get();
 
-	GlobalImGuiState.PipelineStateNoBlending = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
+	GlobalImGuiState.PipelineStateNoBlending = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
 	if (!GlobalImGuiState.PipelineStateNoBlending)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 
-	GlobalImGuiState.VertexBuffer = RenderingAPI::CreateVertexBuffer(
+	GlobalImGuiState.VertexBuffer = RenderLayer::CreateVertexBuffer(
 		nullptr, 
 		1024 * 1024 * 8, 
 		sizeof(ImDrawVert), 
@@ -432,7 +432,7 @@ Bool DebugUI::Init()
 		return false;
 	}
 
-	GlobalImGuiState.IndexBuffer = RenderingAPI::CreateIndexBuffer(
+	GlobalImGuiState.IndexBuffer = RenderLayer::CreateIndexBuffer(
 		nullptr, 
 		1024 * 1024 * 8, 
 		sizeof(ImDrawIdx) == 2 ? EIndexFormat::IndexFormat_UInt16 : EIndexFormat::IndexFormat_UInt32,

@@ -66,7 +66,7 @@ public:
 
 class ShaderCompiler
 {
-	friend class RenderingAPI;
+	friend class RenderLayer;
 
 public:
 	FORCEINLINE static Bool CompileFromFile(

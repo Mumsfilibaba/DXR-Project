@@ -2,7 +2,7 @@
 
 #include "Rendering/DebugUI.h"
 
-#include "RenderingCore/RenderingAPI.h"
+#include "RenderingCore/RenderLayer.h"
 
 constexpr Float MICROSECONDS		= 1000.0f;
 constexpr Float MILLISECONDS		= 1000.0f * 1000.0f;
@@ -122,7 +122,7 @@ void Profiler::Tick()
 			Clock.Reset();
 		}
 
-		const UInt64 Delta = Clock.GetDeltaTime().AsMilliSeconds();
+		const Double Delta = Clock.GetDeltaTime().AsMilliSeconds();
 		FrameTime.AddSample(Float(Delta));
 
 		DebugUI::DrawUI([]()

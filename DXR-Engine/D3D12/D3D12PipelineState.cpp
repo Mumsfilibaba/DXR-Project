@@ -43,12 +43,12 @@ Bool D3D12ComputePipelineState::Init()
 	HRESULT hResult = Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
 	if (SUCCEEDED(hResult))
 	{
-		LOG_INFO("[D3D12RenderingAPI]: Created ComputePipelineState");
+		LOG_INFO("[D3D12RenderLayer]: Created ComputePipelineState");
 		return true;
 	}
 	else
 	{
-		LOG_ERROR("[D3D12RenderingAPI]: FAILED to Create ComputePipelineState");
+		LOG_ERROR("[D3D12RenderLayer]: FAILED to Create ComputePipelineState");
 		return false;
 	}
 }

@@ -37,7 +37,7 @@ class Profiler
 			CurrentSample++;
 			SampleCount = Math::Min<Int32>(Samples.Size(), SampleCount + 1);
 
-			if (CurrentSample >= Samples.Size())
+			if (CurrentSample >= Int32(Samples.Size()))
 			{
 				CurrentSample	= 0;
 			}
