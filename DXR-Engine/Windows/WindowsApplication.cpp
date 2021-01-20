@@ -61,6 +61,7 @@ Bool WindowsApplication::Init()
 void WindowsApplication::Tick()
 {
 	constexpr UInt16 SCAN_CODE_MASK		= 0x01ff;
+	constexpr UInt32 KEY_REPEAT_MASK	= 0x40000000;
 	constexpr UInt16 BACK_BUTTON_MASK	= 0x0001;
 
 	for (const WindowsEvent& Event : Events)
@@ -106,9 +107,10 @@ void WindowsApplication::Tick()
 			case WM_SYSKEYDOWN:
 			case WM_KEYDOWN:
 			{
+				const Bool IsRepeat		= !!(lParam & KEY_REPEAT_MASK);
 				const UInt32 ScanCode	= static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
 				const EKey Key			= Input::ConvertFromScanCode(ScanCode);
-				EventHandler->OnKeyPressed(Key, GetModifierKeyState());
+				EventHandler->OnKeyPressed(Key, IsRepeat, GetModifierKeyState());
 				break;
 			}
 
@@ -252,7 +254,7 @@ GenericCursor* WindowsApplication::MakeCursor()
 	}
 }
 
-Bool WindowsApplication::PollPlatformEvents()
+Bool WindowsApplication::CheckWaitingPlatformEvents()
 {
 	MSG Message = { };
 	while (::PeekMessage(&Message, 0, 0, 0, PM_REMOVE))

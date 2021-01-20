@@ -2,6 +2,8 @@
 
 #include "Application/Input.h"
 
+#include <imgui.h>
+
 /*
 * EventDispatcher
 */
@@ -115,12 +117,6 @@ bool EventDispatcher::SendEvent(const Event& Event)
 	return false;
 }
 
-void EventDispatcher::OnWindowResized(TSharedRef<GenericWindow> InWindow, UInt16 Width, UInt16 Height)
-{
-	WindowResizeEvent Event(InWindow, Width, Height);
-	SendEvent(Event);
-}
-
 void EventDispatcher::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)
 {
 	Input::RegisterKeyUp(KeyCode);
@@ -129,11 +125,22 @@ void EventDispatcher::OnKeyReleased(EKey KeyCode, const ModifierKeyState& Modier
 	SendEvent(Event);
 }
 
-void EventDispatcher::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState)
+void EventDispatcher::OnKeyPressed(EKey KeyCode, Bool IsRepeat, const ModifierKeyState& ModierKeyState)
 {
-	Input::RegisterKeyDown(KeyCode);
+	// TODO: Maybe a better solution that this?
+	ImGuiIO& IO = ImGui::GetIO();
+	if (!IO.WantCaptureKeyboard)
+	{
+		Input::RegisterKeyDown(KeyCode);
+	}
 
-	KeyPressedEvent Event(KeyCode, ModierKeyState);
+	KeyPressedEvent Event(KeyCode, IsRepeat, ModierKeyState);
+	SendEvent(Event);
+}
+
+void EventDispatcher::OnCharacterInput(UInt32 Character)
+{
+	KeyTypedEvent Event(Character);
 	SendEvent(Event);
 }
 
@@ -174,8 +181,8 @@ void EventDispatcher::OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta
 	SendEvent(Event);
 }
 
-void EventDispatcher::OnCharacterInput(UInt32 Character)
+void EventDispatcher::OnWindowResized(const TSharedRef<GenericWindow>& InWindow, UInt16 Width, UInt16 Height)
 {
-	KeyTypedEvent Event(Character);
+	WindowResizeEvent Event(InWindow, Width, Height);
 	SendEvent(Event);
 }

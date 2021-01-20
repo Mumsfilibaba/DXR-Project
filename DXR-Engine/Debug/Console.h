@@ -1,4 +1,6 @@
 #pragma once
+#include "Application/Events/EventDispatcher.h"
+
 #include <unordered_map>
 
 /*
@@ -7,18 +9,17 @@
 
 struct ConsoleCommand
 {
-
 };
 
 /*
 * Console
 */
 
-class Console
+class Console : public IEventHandler
 {
 public:
-	Console();
-	~Console();
+	Console()	= default;
+	~Console()	= default;
 
 	void Init();
 
@@ -26,15 +27,16 @@ public:
 
 	void RegisterCommand(const ConsoleCommand& Cmd);
 
-	void DrawUI();
-
-	Int32 TextCallback(ImGuiInputTextCallbackData* Data);
+	virtual Bool OnEvent(const Event& Event) override final;
 
 private:
+	Int32 TextCallback(ImGuiInputTextCallbackData* Data);
+
 	TArray<std::string>		History;
 	TStaticArray<Char, 256>	Buffer;
 
 	std::string PopupSelectedText;
 	
-	Bool UpdateCursorPosition = false;
+	Bool UpdateCursorPosition	= false;
+	Bool IsActive				= false;
 };

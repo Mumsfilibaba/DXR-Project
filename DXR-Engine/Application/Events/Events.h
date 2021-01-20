@@ -104,7 +104,7 @@ struct Event
 */
 
 template<typename T>
-inline TEnableIf<std::is_base_of_v<Event, T>, Bool> IsOfEventType(const Event& InEvent)
+inline TEnableIf<std::is_base_of_v<Event, T>, Bool> IsEventOfType(const Event& InEvent)
 {
 	return (InEvent.GetType() == T::GetStaticType());
 }
@@ -129,20 +129,22 @@ struct KeyPressedEvent : public Event
 {
 	DECLARE_EVENT(EventType_KeyPressed, EventCategory_Input | EventCategory_Keyboard);
 
-	KeyPressedEvent(EKey InKey, const ModifierKeyState& InModifiers)
+	KeyPressedEvent(EKey InKey, Bool InIsRepeat, const ModifierKeyState& InModifiers)
 		: Event()
 		, Key(InKey)
+		, IsRepeat(InIsRepeat)
 		, Modifiers(InModifiers)
 	{
 	}
 
 	virtual std::string ToString() const override final
 	{
-		return std::string(GetTypeAsString()) + " = " + ::ToString(Key);
+		return std::string(GetTypeAsString()) + " = " + ::ToString(Key) + ", IsRepeat = " + (IsRepeat ? "True" : "False");
 	}
 
-	EKey				Key;
-	ModifierKeyState	Modifiers;
+	EKey Key;
+	Bool IsRepeat;
+	ModifierKeyState Modifiers;
 };
 
 /*

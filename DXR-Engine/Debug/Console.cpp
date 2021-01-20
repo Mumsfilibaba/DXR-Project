@@ -2,127 +2,168 @@
 
 #include "Rendering/DebugUI.h"
 
+#include "Main/EngineLoop.h"
+
+/*
+* Globals
+*/
+
+Bool GlobalIsConsoleActive = false;
+
 /*
 * Console
 */
 
-Console::Console()
-{
-}
-
-Console::~Console()
-{
-}
-
 void Console::Init()
 {
+	GlobalEventDispatcher->RegisterEventHandler(this);
 }
 
 void Console::Tick()
 {
-	DebugUI::DrawUI([]()
+	if (IsActive)
 	{
-		GlobalConsole.DrawUI();
-	});
+		DebugUI::DrawUI([]()
+		{
+			const UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
+			const UInt32 WindowHeight	= GlobalMainWindow->GetHeight();
+			const Float Width			= WindowWidth;
+			const Float Height			= WindowHeight * 0.15f;
+
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.8f));
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
+			ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
+			ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
+
+			ImGui::SetNextWindowPos(
+				ImVec2(0.0f, 0.0f),
+				ImGuiCond_Always,
+				ImVec2(0.0f, 0.0f));
+
+			ImGui::SetNextWindowSize(
+				ImVec2(Width, 0.0f),
+				ImGuiCond_FirstUseEver);
+
+			ImGui::SetNextWindowSizeConstraints(
+				ImVec2(Width, 140),
+				ImVec2(Width, WindowHeight * 0.5f));
+
+			ImGui::Begin(
+				"Console Window",
+				nullptr,
+				ImGuiWindowFlags_NoMove				|
+				ImGuiWindowFlags_NoTitleBar			|
+				ImGuiWindowFlags_NoScrollbar		|
+				ImGuiWindowFlags_NoCollapse			|
+				ImGuiWindowFlags_NoScrollWithMouse	|
+				ImGuiWindowFlags_NoSavedSettings);
+
+			ImGui::Text("Console:");
+
+			ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
+
+			const ImVec2 ParentSize			= ImGui::GetWindowSize();
+			const Float TextWindowWidth		= Width * 0.985f;
+			const Float TextWindowHeight	= ParentSize.y - 55.0f;
+			ImGui::BeginChild(
+				"##TextWindow",
+				ImVec2(TextWindowWidth, TextWindowHeight),
+				false,
+				ImGuiWindowFlags_None);
+
+			for (const std::string& Text : GlobalConsole.History)
+			{
+				ImGui::Text("%s", Text.c_str());
+			}
+
+			ImGui::SetScrollHereY();
+
+			ImGui::EndChild();
+
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+
+			ImGui::Text(">");
+			ImGui::SameLine();
+			
+			ImGui::PushItemWidth(TextWindowWidth - 25.0f);
+
+			const ImGuiInputTextFlags InputFlags =
+				ImGuiInputTextFlags_EnterReturnsTrue	|
+				ImGuiInputTextFlags_CallbackCompletion	|
+				ImGuiInputTextFlags_CallbackAlways		|
+				ImGuiInputTextFlags_CallbackHistory;
+
+			auto Callback = [](ImGuiTextEditCallbackData* Data)->Int32
+			{
+				Console* This = reinterpret_cast<Console*>(Data->UserData);
+				return This->TextCallback(Data);
+			};
+
+			const Bool Result = ImGui::InputText(
+				"###Input",
+				GlobalConsole.Buffer.Data(), GlobalConsole.Buffer.Size(),
+				InputFlags,
+				Callback,
+				reinterpret_cast<void*>(&GlobalConsole));
+
+			if (Result)
+			{
+				const std::string Text = std::string(GlobalConsole.Buffer.Data());
+				GlobalConsole.History.EmplaceBack(Text);
+
+				if (Text == "ShowDebug")
+				{
+					GlobalDrawTextureDebugger = true;
+				}
+				else if (Text == "Fullscreen")
+				{
+					GlobalMainWindow->ToggleFullscreen();
+				}
+				else if (Text == "Fullscreen")
+				{
+					GlobalEngineLoop.Exit();
+				}
+			}
+
+			if (ImGui::IsWindowFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+			{
+				ImGui::SetKeyboardFocusHere(-1);
+			}
+
+			ImGui::PopItemWidth();
+
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+
+			ImGui::End();
+		});
+	}
 }
 
 void Console::RegisterCommand(const ConsoleCommand& Cmd)
 {
 }
 
-void Console::DrawUI()
+Bool Console::OnEvent(const Event& Event)
 {
-	const UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
-	const UInt32 WindowHeight	= GlobalMainWindow->GetHeight();
-	const Float Width			= Math::Max(WindowWidth * 0.6f, 400.0f);
-	const Float Height			= WindowHeight * 0.15f;
-
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
-	ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
-	ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
-
-	ImGui::SetNextWindowPos(
-		ImVec2(10.0f, 10.0f),
-		ImGuiCond_Always,
-		ImVec2(0.0f, 0.0f));
-
-	ImGui::SetNextWindowSize(
-		ImVec2(Width, 0.0f),
-		ImGuiCond_FirstUseEver);
-
-	ImGui::SetNextWindowSizeConstraints(
-		ImVec2(Width, 140), 
-		ImVec2(Width, WindowHeight * 0.5f));
-
-	ImGui::Begin(
-		"Console Window",
-		nullptr,
-		ImGuiWindowFlags_NoMove			|
-		ImGuiWindowFlags_NoTitleBar		| 
-		ImGuiWindowFlags_NoScrollbar	| 
-		ImGuiWindowFlags_NoCollapse		|
-		ImGuiWindowFlags_NoSavedSettings);
-
-	ImGui::Text("Console:");
-
-	ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
-
-	const ImVec2 ParentSize			= ImGui::GetWindowSize();
-	const Float TextWindowWidth		= Width * 0.985f;
-	const Float TextWindowHeight	= ParentSize.y - 55.0f;
-	ImGui::BeginChild(
-		"##TextWindow",
-		ImVec2(TextWindowWidth, TextWindowHeight),
-		false,
-		ImGuiWindowFlags_None);
-
-	for (const std::string& Text : GlobalConsole.History)
+	if (!IsEventOfType<KeyPressedEvent>(Event))
 	{
-		ImGui::Text("%s", Text.c_str());
+		return false;
 	}
 
-	ImGui::SetScrollHereY();
-
-	ImGui::EndChild();
-
-	ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-
-	ImGui::PushItemWidth(TextWindowWidth * 0.5f);
-	
-	ImGui::Text(">");
-	ImGui::SameLine();
-
-	auto Callback = [](ImGuiInputTextCallbackData* Data)->int
+	const KeyPressedEvent& KeyEvent = CastEvent<KeyPressedEvent>(Event);
+	if (!KeyEvent.IsRepeat && KeyEvent.Key == EKey::Key_GraveAccent)
 	{
-		Console* This = reinterpret_cast<Console*>(Data->UserData);
-		return This->TextCallback(Data);
-	};
-
-	const Bool Result = ImGui::InputText(
-		"###Input",
-		Buffer.Data(), Buffer.Size(),
-		0, 
-		Callback,
-		reinterpret_cast<void*>(this));
-	
-	if (Result)
-	{
-		std::string Text = std::string(Buffer.Data());
-		History.EmplaceBack(Text);
+		IsActive = !IsActive;
 	}
 
-	ImGui::PopItemWidth();
-	ImGui::PopStyleColor();
-	ImGui::PopStyleColor();
-	ImGui::PopStyleColor();
-	ImGui::PopStyleColor();
-	ImGui::PopStyleColor();
-	ImGui::PopStyleColor();
-	ImGui::PopStyleColor();
-
-	ImGui::End();
+	return true;
 }
 
 Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)

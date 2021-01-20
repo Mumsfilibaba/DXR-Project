@@ -61,13 +61,12 @@ class Profiler
 
 public:
 	Profiler();
+	~Profiler() = default;
 
 	void Tick();
 
 	void AddSample(const Char* Name, Float Sample);
 	
-	void DrawUI();
-
 private:
 	Clock	Clock;
 	Sample	FrameTime;

@@ -6,10 +6,10 @@
 
 struct KeyTableState
 {
-	bool	KeyStates[EKey::Key_Count];
+	Bool	KeyStates[EKey::Key_Count];
 	EKey	ScanCodeTable[512];
 	UInt16	KeyTable[512];
-	bool	IsInitialized = false;
+	Bool	IsInitialized = false;
 };
 
 static KeyTableState GlobalkeyState;
@@ -190,12 +190,12 @@ void Input::RegisterKeyDown(EKey Key)
 	GlobalkeyState.KeyStates[Key] = true;
 }
 
-bool Input::IsKeyUp(EKey Key)
+Bool Input::IsKeyUp(EKey Key)
 {
 	return !GlobalkeyState.KeyStates[Key];
 }
 
-bool Input::IsKeyDown(EKey Key)
+Bool Input::IsKeyDown(EKey Key)
 {
 	return GlobalkeyState.KeyStates[Key];
 }

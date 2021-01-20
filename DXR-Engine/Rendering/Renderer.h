@@ -47,9 +47,6 @@ public:
 
 	void Tick(const Scene& CurrentScene);
 	
-	void DrawUI();
-	void DrawDebugUI();
-	
 	Bool OnEvent(const Event& Event);
 
 	void SetLightSettings(const LightSettings& InLightSettings);

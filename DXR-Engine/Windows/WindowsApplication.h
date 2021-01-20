@@ -86,7 +86,7 @@ public:
 		Int32& OutX, 
 		Int32& OutY) const override final;
 	
-	static Bool PollPlatformEvents();
+	static Bool CheckWaitingPlatformEvents();
 	static ModifierKeyState GetModifierKeyState();
 
 	static GenericApplication* Make();

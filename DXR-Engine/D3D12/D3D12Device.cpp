@@ -264,8 +264,8 @@ bool D3D12Device::Init()
 		_countof(SupportedFeatureLevels), SupportedFeatureLevels, D3D_FEATURE_LEVEL_11_0
 	};
 
-	HRESULT hr = Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
-	if (SUCCEEDED(hr))
+	HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
+	if (SUCCEEDED(Result))
 	{
 		ActiveFeatureLevel = FeatureLevels.MaxSupportedFeatureLevel;
 	}
@@ -279,17 +279,22 @@ bool D3D12Device::Init()
 		D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
 		Memory::Memzero(&Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
 
-		hr = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
-		if (SUCCEEDED(hr))
+		Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+		if (SUCCEEDED(Result))
 		{
-			if (Features5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
-			{
-				RayTracingSupported = true;
-				if (Features5.RaytracingTier >= D3D12_RAYTRACING_TIER_1_1)
-				{
-					InlineRayTracingSupported = true;
-				}
-			}
+			RayTracingTier = Features5.RaytracingTier;
+		}
+	}
+
+	// Checking for Variable Shading Rate
+	{
+		D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
+		Memory::Memzero(&Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
+
+		Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
+		if (SUCCEEDED(Result))
+		{
+			VariableShadingRateTier = Features6.VariableShadingRateTier;
 		}
 	}
 
@@ -298,18 +303,11 @@ bool D3D12Device::Init()
 		D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
 		Memory::Memzero(&Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
 
-		hr = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
-		if (SUCCEEDED(hr))
+		Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
+		if (SUCCEEDED(Result))
 		{
-			if (Features7.MeshShaderTier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
-			{
-				MeshShadersSupported = true;
-			}
-
-			if (Features7.SamplerFeedbackTier != D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED)
-			{
-				SamplerFeedbackSupported = true;
-			}
+			MeshShaderTier		= Features7.MeshShaderTier;
+			SamplerFeedBackTier	= Features7.SamplerFeedbackTier;
 		}
 	}
 

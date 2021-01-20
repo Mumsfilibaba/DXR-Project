@@ -71,7 +71,7 @@ public:
 
 	/*
 	* Events gets stored and is processed in this function. This is because events sometimes are sent
-	* from different functions than PollPlatformEvents, For example GenericWindow::ToggleFullscreen. This
+	* from different functions than CheckWaitingPlatformEvents, For example GenericWindow::ToggleFullscreen. This
 	* makes sure that all events are processed at one time.
 	*/
 
@@ -115,7 +115,7 @@ public:
 		return EventHandler;
 	}
 
-	static Bool PollPlatformEvents()
+	static Bool CheckWaitingPlatformEvents()
 	{
 		return false;
 	}

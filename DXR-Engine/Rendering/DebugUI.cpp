@@ -467,29 +467,29 @@ void DebugUI::DrawDebugString(const std::string& DebugString)
 Bool DebugUI::OnEvent(const Event& Event)
 {
 	ImGuiIO& IO = ImGui::GetIO();
-	if (IsOfEventType<KeyPressedEvent>(Event))
+	if (IsEventOfType<KeyPressedEvent>(Event))
 	{
 		IO.KeysDown[CastEvent<KeyPressedEvent>(Event).Key] = true;
 	}
-	else if (IsOfEventType<KeyReleasedEvent>(Event))
+	else if (IsEventOfType<KeyReleasedEvent>(Event))
 	{
 		IO.KeysDown[CastEvent<KeyReleasedEvent>(Event).Key] = false;
 	}
-	else if (IsOfEventType<KeyTypedEvent>(Event))
+	else if (IsEventOfType<KeyTypedEvent>(Event))
 	{
 		IO.AddInputCharacter(CastEvent<KeyTypedEvent>(Event).Character);
 	}
-	else if (IsOfEventType<MousePressedEvent>(Event))
+	else if (IsEventOfType<MousePressedEvent>(Event))
 	{
 		const UInt32 ButtonIndex = GetMouseButtonIndex(CastEvent<MousePressedEvent>(Event).Button);
 		IO.MouseDown[ButtonIndex] = true;
 	}
-	else if (IsOfEventType<MouseReleasedEvent>(Event))
+	else if (IsEventOfType<MouseReleasedEvent>(Event))
 	{
 		const UInt32 ButtonIndex = GetMouseButtonIndex(CastEvent<MousePressedEvent>(Event).Button);
 		IO.MouseDown[ButtonIndex] = false;
 	}
-	else if (IsOfEventType<MouseScrolledEvent>(Event))
+	else if (IsEventOfType<MouseScrolledEvent>(Event))
 	{
 		IO.MouseWheel	+= CastEvent<MouseScrolledEvent>(Event).VerticalDelta;
 		IO.MouseWheelH	+= CastEvent<MouseScrolledEvent>(Event).HorizontalDelta;

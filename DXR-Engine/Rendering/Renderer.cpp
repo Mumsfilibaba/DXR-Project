@@ -14,6 +14,7 @@
 #include "Debug/Profiler.h"
 
 #include <algorithm>
+#include <imgui_internal.h>
 
 /*
 * Static Settings
@@ -1266,7 +1267,88 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 			DebugUI::DrawUI([]()
 			{
-				GlobalRenderer->DrawDebugUI();
+				constexpr Float InvAspectRatio	= 16.0f / 9.0f;
+				constexpr Float AspectRatio		= 9.0f / 16.0f;
+
+				const UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
+				const UInt32 WindowHeight	= GlobalMainWindow->GetHeight();
+				const Float Width			= Math::Max(WindowWidth * 0.6f, 400.0f);
+				const Float Height			= WindowHeight * 0.75f;
+
+				ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
+
+				ImGui::SetNextWindowPos(
+					ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f),
+					ImGuiCond_Appearing,
+					ImVec2(0.5f, 0.0f));
+
+				ImGui::SetNextWindowSize(
+					ImVec2(Width, Height),
+					ImGuiCond_Appearing);
+				
+				const Char* Name = "FrameBuffer Debugger";
+				ImGuiID ID = ImGui::GetID(Name);
+				ImGui::Begin(
+					Name,
+					&GlobalDrawTextureDebugger,
+					ImGuiWindowFlags_NoResize		|
+					ImGuiWindowFlags_NoScrollbar	|
+					ImGuiWindowFlags_NoCollapse		|
+					ImGuiWindowFlags_NoSavedSettings);
+
+				ImGui::CloseButton(ID, ImVec2(20.0f, 20.0f));
+
+				ImGui::BeginChild(
+					"##ScrollBox",
+					ImVec2(Width * 0.985f, Height * 0.125f),
+					true,
+					ImGuiWindowFlags_HorizontalScrollbar);
+
+				const Int32 Count = GlobalRenderer->DebugTextures.Size();
+				static Int32 SelectedImage = -1;
+				if (SelectedImage >= Count)
+				{
+					SelectedImage = -1;
+				}
+
+				for (Int32 i = 0; i < Count; i++)
+				{
+					ImGui::PushID(i);
+
+					constexpr Float MenuImageSize = 96.0f;
+					Int32	FramePadding = 2;
+					ImVec2	Size	= ImVec2(MenuImageSize * InvAspectRatio, MenuImageSize);
+					ImVec2	Uv0		= ImVec2(0.0f, 0.0f);
+					ImVec2	Uv1		= ImVec2(1.0f, 1.0f);
+					ImVec4	BgCol	= ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+					ImVec4	TintCol	= ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+					ImGuiImage* CurrImage = &GlobalRenderer->DebugTextures[i];
+					if (ImGui::ImageButton(CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol))
+					{
+						SelectedImage = i;
+					}
+
+					ImGui::PopID();
+
+					if (i != Count - 1)
+					{
+						ImGui::SameLine();
+					}
+				}
+
+				ImGui::EndChild();
+
+				const Float ImageWidth = Width * 0.985f;
+				const Float ImageHeight = ImageWidth * AspectRatio;
+				const Int32 ImageIndex = SelectedImage < 0 ? 0 : SelectedImage;
+				ImGuiImage* CurrImage = &GlobalRenderer->DebugTextures[ImageIndex];
+				ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
+
+				ImGui::PopStyleColor();
+				ImGui::PopStyleColor();
+				ImGui::End();
 			});
 		}
 		else
@@ -1281,7 +1363,65 @@ void Renderer::Tick(const Scene& CurrentScene)
 		{
 			DebugUI::DrawUI([]()
 			{
-				GlobalRenderer->DrawUI();
+				const UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
+				const UInt32 WindowHeight	= GlobalMainWindow->GetHeight();
+				const Float Width			= 300.0f;
+				const Float Height			= WindowHeight * 0.1f;
+
+				ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
+
+				ImGui::SetNextWindowPos(
+					ImVec2(Float(WindowWidth), 10.0f),
+					ImGuiCond_Always,
+					ImVec2(1.0f, 0.0f));
+
+				ImGui::SetNextWindowSize(
+					ImVec2(Width, Height),
+					ImGuiCond_Always);
+
+				ImGui::Begin(
+					"Renderer Window",
+					nullptr,
+					ImGuiWindowFlags_NoMove |
+					ImGuiWindowFlags_NoDecoration |
+					ImGuiWindowFlags_NoSavedSettings);
+
+				ImGui::Text("Renderer Status:");
+				ImGui::Separator();
+
+				ImGui::Columns(2, nullptr, false);
+				ImGui::SetColumnWidth(0, 100.0f);
+
+				const std::string AdapterName = RenderLayer::GetAdapterName();
+				ImGui::Text("Adapter: ");
+				ImGui::NextColumn();
+
+				ImGui::Text("%s", AdapterName.c_str());
+				ImGui::NextColumn();
+
+				ImGui::Text("DrawCalls: ");
+				ImGui::NextColumn();
+
+				ImGui::Text("%d", GlobalRenderer->LastFrameNumDrawCalls);
+				ImGui::NextColumn();
+
+				ImGui::Text("DispatchCalls: ");
+				ImGui::NextColumn();
+
+				ImGui::Text("%d", GlobalRenderer->LastFrameNumDispatchCalls);
+				ImGui::NextColumn();
+
+				ImGui::Text("Command Count: ");
+				ImGui::NextColumn();
+
+				ImGui::Text("%d", GlobalRenderer->LastFrameNumCommands);
+
+				ImGui::Columns(1);
+
+				ImGui::PopStyleColor();
+				ImGui::PopStyleColor();
+				ImGui::End();
 			});
 		}
 
@@ -1313,152 +1453,6 @@ void Renderer::Tick(const Scene& CurrentScene)
 		TRACE_SCOPE("Present");
 		MainWindowViewport->Present(GlobalVSyncEnabled);
 	}
-}
-
-void Renderer::DrawUI()
-{	
-	UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
-	UInt32 WindowHeight = GlobalMainWindow->GetHeight();
-	const Float Width	= 300.0f;
-	const Float Height	= WindowHeight * 0.1f;
-
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
-
-	ImGui::SetNextWindowPos(
-		ImVec2(Float(WindowWidth), 10.0f),
-		ImGuiCond_Always,
-		ImVec2(1.0f, 0.0f));
-
-	ImGui::SetNextWindowSize(
-		ImVec2(Width, Height),
-		ImGuiCond_Always);
-
-	ImGui::Begin(
-		"Renderer Window",
-		nullptr,
-		ImGuiWindowFlags_NoMove			|
-		ImGuiWindowFlags_NoDecoration	|
-		ImGuiWindowFlags_NoSavedSettings);
-
-	ImGui::Text("Renderer Status:");
-	ImGui::Separator();
-
-	ImGui::Columns(2, nullptr, false);
-	ImGui::SetColumnWidth(0, 100.0f);
-
-	const std::string AdapterName = RenderLayer::GetAdapterName();
-	ImGui::Text("Adapter: ");
-	ImGui::NextColumn();
-
-	ImGui::Text("%s", AdapterName.c_str());
-	ImGui::NextColumn();
-
-	ImGui::Text("DrawCalls: ");
-	ImGui::NextColumn();
-
-	ImGui::Text("%d", LastFrameNumDrawCalls);
-	ImGui::NextColumn();
-
-	ImGui::Text("DispatchCalls: ");
-	ImGui::NextColumn();
-
-	ImGui::Text("%d", LastFrameNumDispatchCalls);
-	ImGui::NextColumn();
-
-	ImGui::Text("Command Count: ");
-	ImGui::NextColumn();
-
-	ImGui::Text("%d", LastFrameNumCommands);
-
-	ImGui::Columns(1);
-
-	ImGui::PopStyleColor();
-	ImGui::PopStyleColor();
-	ImGui::End();
-}
-
-void Renderer::DrawDebugUI()
-{
-	constexpr Float InvAspectRatio	= 16.0f / 9.0f;
-	constexpr Float AspectRatio		= 9.0f / 16.0f;
-
-	UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
-	UInt32 WindowHeight = GlobalMainWindow->GetHeight();
-	const Float Width	= Math::Max(WindowWidth * 0.6f, 400.0f);
-	const Float Height	= WindowHeight * 0.75f;
-
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
-
-	ImGui::SetNextWindowPos(
-		ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f),
-		ImGuiCond_Always,
-		ImVec2(0.5f, 0.0f));
-
-	ImGui::SetNextWindowSize(
-		ImVec2(Width, Height),
-		ImGuiCond_Always);
-
-	ImGui::Begin(
-		"Renderer GBuffer Debug Window",
-		nullptr,
-		ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoDecoration |
-		ImGuiWindowFlags_NoSavedSettings);
-
-	ImGui::Text("FrameBuffer Debugger");
-
-	ImGui::BeginChild(
-		"##ScrollBox",
-		ImVec2(Width * 0.985f, Height * 0.125f),
-		true, 
-		ImGuiWindowFlags_HorizontalScrollbar);
-
-	const Int32 Count = DebugTextures.Size();
-	static Int32 SelectedImage = -1;
-	if (SelectedImage >= Count)
-	{
-		SelectedImage = -1;
-	}
-
-	for (Int32 i = 0; i < Count; i++)
-	{
-		ImGui::PushID(i);
-
-		constexpr Float MenuImageSize = 96.0f;
-		Int32	FramePadding = 2;
-		ImVec2	Size		= ImVec2(MenuImageSize * InvAspectRatio, MenuImageSize);
-		ImVec2	Uv0			= ImVec2(0.0f, 0.0f);
-		ImVec2	Uv1			= ImVec2(1.0f, 1.0f);
-		ImVec4	BgCol		= ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-		ImVec4	TintCol		= ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-		
-		ImGuiImage* CurrImage = &DebugTextures[i];
-		if (ImGui::ImageButton(CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol))
-		{
-			SelectedImage = i;
-		}
-
-		ImGui::PopID();
-
-		if (i != Count - 1)
-		{
-			ImGui::SameLine();
-		}
-	}
-
-	ImGui::EndChild();
-
-	const Float ImageWidth	= Width * 0.985f;
-	const Float ImageHeight = ImageWidth * AspectRatio;
-	const Int32 ImageIndex	= SelectedImage < 0 ? 0 : SelectedImage;
-	ImGuiImage* CurrImage	= &DebugTextures[ImageIndex];
-	ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
-
-	ImGui::PopStyleColor();
-	ImGui::PopStyleColor();
-	ImGui::End();
 }
 
 void Renderer::TraceRays(Texture2D* BackBuffer, CommandList& InCmdList)
@@ -1499,7 +1493,7 @@ void Renderer::TraceRays(Texture2D* BackBuffer, CommandList& InCmdList)
 
 Bool Renderer::OnEvent(const Event& Event)
 {
-	if (!IsOfEventType<WindowResizeEvent>(Event))
+	if (!IsEventOfType<WindowResizeEvent>(Event))
 	{
 		return false;
 	}

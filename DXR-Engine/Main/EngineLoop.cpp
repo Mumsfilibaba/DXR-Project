@@ -182,7 +182,7 @@ void EngineLoop::PreTick()
 {
 	TRACE_FUNCTION_SCOPE();
 
-	if (!PlatformApplication::PollPlatformEvents())
+	if (!PlatformApplication::CheckWaitingPlatformEvents())
 	{
 		Exit();
 	}

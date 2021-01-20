@@ -18,15 +18,11 @@ class ApplicationEventHandler
 public:
 	virtual ~ApplicationEventHandler() = default;
 
-	virtual void OnWindowResized(TSharedRef<GenericWindow> Window, UInt16 Width, UInt16 Height)
-	{
-	}
-
 	virtual void OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)
 	{
 	}
 
-	virtual void OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState)
+	virtual void OnKeyPressed(EKey KeyCode, Bool IsRepeat, const ModifierKeyState& ModierKeyState)
 	{
 	}
 
@@ -47,6 +43,10 @@ public:
 	}
 
 	virtual void OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta)
+	{
+	}
+
+	virtual void OnWindowResized(const TSharedRef<GenericWindow>& Window, UInt16 Width, UInt16 Height)
 	{
 	}
 };

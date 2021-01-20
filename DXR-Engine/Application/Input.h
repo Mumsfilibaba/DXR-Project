@@ -14,6 +14,6 @@ public:
 	static void RegisterKeyUp(EKey Key);
 	static void RegisterKeyDown(EKey Key);
 
-	static bool IsKeyUp(EKey KeyCode);
-	static bool IsKeyDown(EKey KeyCode);
+	static Bool IsKeyUp(EKey KeyCode);
+	static Bool IsKeyDown(EKey KeyCode);
 };

@@ -43,7 +43,8 @@ class EventDispatcher : public ApplicationEventHandler
 
 public:
 	EventDispatcher(class GenericApplication* InApplication);
-	
+	~EventDispatcher() = default;
+
 	void RegisterEventHandler(EventHandlerFunc Func, UInt8 EventCategoryMask = EEventCategory::EventCategory_All);
 	void RegisterEventHandler(IEventHandler* EventHandler, UInt8 EventCategoryMask = EEventCategory::EventCategory_All);
 	
@@ -64,14 +65,14 @@ public:
 
 public:
 	// ApplicationEventHandler Interface
-	virtual void OnWindowResized(TSharedRef<GenericWindow> InWindow, UInt16 Width, UInt16 Height)	override final;
 	virtual void OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)				override final;
-	virtual void OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState)					override final;
+	virtual void OnKeyPressed(EKey KeyCode, Bool IsRepeat, const ModifierKeyState& ModierKeyState)	override final;
 	virtual void OnMouseMove(Int32 x, Int32 y)														override final;
 	virtual void OnMouseButtonReleased(EMouseButton Button, const ModifierKeyState& ModierKeyState)	override final;
 	virtual void OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState)	override final;
 	virtual void OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta)						override final;
 	virtual void OnCharacterInput(UInt32 Character)													override final;
+	virtual void OnWindowResized(const TSharedRef<GenericWindow>& InWindow, UInt16 Width, UInt16 Height)	override final;
 
 private:
 	class GenericApplication* Application = nullptr;
