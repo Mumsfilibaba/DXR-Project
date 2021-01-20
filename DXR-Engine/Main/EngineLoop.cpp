@@ -23,6 +23,7 @@
 #include "Game/Game.h"
 
 #include "Debug/Profiler.h"
+#include "Debug/Console.h"
 
 #include "Memory/Memory.h"
 
@@ -171,6 +172,8 @@ Bool EngineLoop::PostInit()
 {
 	TRACE_FUNCTION_SCOPE();
 
+	GlobalConsole.Init();
+
 	ShouldRun = true;
 	return true;
 }
@@ -192,18 +195,19 @@ void EngineLoop::Tick()
 	TRACE_FUNCTION_SCOPE();
 
 	EngineClock.Tick();
+	
 	GlobalGame->Tick(EngineClock.GetDeltaTime());
 
-	Editor::Tick();
+	GlobalConsole.Tick();
 }
 
 void EngineLoop::PostTick()
 {
 	TRACE_FUNCTION_SCOPE();
 
-	GlobalRenderer->Tick(*Scene::GetCurrentScene());
-
 	GlobalProfiler.Tick();
+
+	GlobalRenderer->Tick(*Scene::GetCurrentScene());
 }
 
 Bool EngineLoop::PreRelease()

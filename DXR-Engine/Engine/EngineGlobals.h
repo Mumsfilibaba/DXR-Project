@@ -43,7 +43,8 @@ extern Bool GlobalSSAOEnabled;
 * Debug
 */
 
-extern class Profiler GlobalProfiler;
+extern class Profiler	GlobalProfiler;
+extern class Console	GlobalConsole;
 
 extern Bool GlobalProfilerEnabled;
 extern Bool GlobalDrawProfiler;

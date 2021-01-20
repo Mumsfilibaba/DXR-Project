@@ -807,10 +807,13 @@ static void DrawSceneInfo()
 
 void Editor::Tick()
 {
+#if 0
 	DrawMenu();
 
 	if (ShowRenderSettings || ShowSceneGraph)
 	{
 		DrawSideWindow();
 	}
+
+#endif
 }

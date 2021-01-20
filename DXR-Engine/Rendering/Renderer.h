@@ -46,6 +46,7 @@ public:
 	Bool Init();
 
 	void Tick(const Scene& CurrentScene);
+	
 	void DrawUI();
 	void DrawDebugUI();
 	

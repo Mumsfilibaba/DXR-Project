@@ -3,6 +3,7 @@
 #include "Main/EngineLoop.h"
 
 #include "Debug/Profiler.h"
+#include "Debug/Console.h"
 
 #include "RenderingCore/CommandList.h"
 
@@ -49,7 +50,8 @@ Bool GlobalSSAOEnabled			= true;
 * Debug
 */
 
-Profiler GlobalProfiler;
+Profiler	GlobalProfiler;
+Console		GlobalConsole;
 
 Bool GlobalProfilerEnabled		= true;
 Bool GlobalDrawProfiler			= true;

@@ -1326,7 +1326,7 @@ void Renderer::DrawUI()
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
 
 	ImGui::SetNextWindowPos(
-		ImVec2(Float(WindowWidth), Float(WindowHeight) * 0.025f),
+		ImVec2(Float(WindowWidth), 10.0f),
 		ImGuiCond_Always,
 		ImVec2(1.0f, 0.0f));
 
@@ -1392,9 +1392,9 @@ void Renderer::DrawDebugUI()
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
 
 	ImGui::SetNextWindowPos(
-		ImVec2(Float(WindowWidth) * 0.2f, Float(WindowHeight) * 0.175f),
+		ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f),
 		ImGuiCond_Always,
-		ImVec2(0.0f, 0.0f));
+		ImVec2(0.5f, 0.0f));
 
 	ImGui::SetNextWindowSize(
 		ImVec2(Width, Height),

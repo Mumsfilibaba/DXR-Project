@@ -155,14 +155,17 @@ void Profiler::DrawUI()
 	if (GlobalDrawProfiler)
 	{
 		// Draw DebugWindow with DebugStrings
-		UInt32 WindowWidth		= GlobalMainWindow->GetWidth();
-		UInt32 WindowHeight		= GlobalMainWindow->GetHeight();
+		UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
+		UInt32 WindowHeight	= GlobalMainWindow->GetHeight();
 		const Float Width	= 300.0f;
 		const Float Height	= WindowHeight * 0.8f;
 
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
 		ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
+		ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
+		ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
 		ImGui::SetNextWindowPos(
 			ImVec2(Float(WindowWidth), Float(WindowHeight) * 0.15f),
@@ -171,7 +174,7 @@ void Profiler::DrawUI()
 
 		ImGui::SetNextWindowSizeConstraints(
 			ImVec2(Width, Height),
-			ImVec2(Float(WindowWidth) * 0.5f, Height));
+			ImVec2(Float(WindowWidth) * 0.3f, Height));
 
 		ImGui::Begin(
 			"Profile Window", 
@@ -274,6 +277,9 @@ void Profiler::DrawUI()
 
 		ImGui::Columns(1);
 
+		ImGui::PopStyleColor();
+		ImGui::PopStyleColor();
+		ImGui::PopStyleColor();
 		ImGui::PopStyleColor();
 		ImGui::PopStyleColor();
 		ImGui::PopStyleColor();
