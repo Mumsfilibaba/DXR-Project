@@ -53,7 +53,7 @@ Bool GlobalSSAOEnabled			= true;
 Profiler	GlobalProfiler;
 Console		GlobalConsole;
 
-Bool GlobalProfilerEnabled		= true;
-Bool GlobalDrawProfiler			= true;
+Bool GlobalProfilerEnabled		= false;
+Bool GlobalDrawProfiler			= false;
 Bool GlobalDrawRendererInfo		= true;
 Bool GlobalDrawTextureDebugger	= false;

@@ -128,10 +128,10 @@ void Profiler::Tick()
 		DebugUI::DrawUI([]()
 		{
 			// Draw DebugWindow with DebugStrings
-			UInt32 WindowWidth = GlobalMainWindow->GetWidth();
-			UInt32 WindowHeight = GlobalMainWindow->GetHeight();
-			const Float Width = 300.0f;
-			const Float Height = WindowHeight * 0.8f;
+			const UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
+			const UInt32 WindowHeight	= GlobalMainWindow->GetHeight();
+			const Float Width			= Math::Max(WindowWidth * 0.6f, 400.0f);
+			const Float Height			= WindowHeight * 0.75f;
 
 			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
@@ -141,19 +141,19 @@ void Profiler::Tick()
 			ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
 			ImGui::SetNextWindowPos(
-				ImVec2(Float(WindowWidth), Float(WindowHeight) * 0.15f),
-				ImGuiCond_Always,
-				ImVec2(1.0f, 0.0f));
+				ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f),
+				ImGuiCond_Appearing,
+				ImVec2(0.5f, 0.0f));
 
-			ImGui::SetNextWindowSizeConstraints(
+			ImGui::SetNextWindowSize(
 				ImVec2(Width, Height),
-				ImVec2(Float(WindowWidth) * 0.3f, Height));
+				ImGuiCond_Appearing);
 
 			ImGui::Begin(
-				"Profile Window",
-				nullptr,
-				ImGuiWindowFlags_NoTitleBar |
-				ImGuiWindowFlags_NoScrollbar |
+				"Profiler",
+				&GlobalDrawProfiler,
+				ImGuiWindowFlags_NoResize	| 
+				ImGuiWindowFlags_NoCollapse |
 				ImGuiWindowFlags_NoSavedSettings);
 
 			ImGui::Text("CPU Timings:");

@@ -116,11 +116,16 @@ void Console::Tick()
 				{
 					GlobalDrawTextureDebugger = true;
 				}
+				else if (Text == "ShowProfiler")
+				{
+					GlobalDrawProfiler		= true;
+					GlobalProfilerEnabled	= true;
+				}
 				else if (Text == "Fullscreen")
 				{
 					GlobalMainWindow->ToggleFullscreen();
 				}
-				else if (Text == "Fullscreen")
+				else if (Text == "Quit")
 				{
 					GlobalEngineLoop.Exit();
 				}

@@ -1287,17 +1287,13 @@ void Renderer::Tick(const Scene& CurrentScene)
 					ImVec2(Width, Height),
 					ImGuiCond_Appearing);
 				
-				const Char* Name = "FrameBuffer Debugger";
-				ImGuiID ID = ImGui::GetID(Name);
 				ImGui::Begin(
-					Name,
+					"FrameBuffer Debugger",
 					&GlobalDrawTextureDebugger,
 					ImGuiWindowFlags_NoResize		|
 					ImGuiWindowFlags_NoScrollbar	|
 					ImGuiWindowFlags_NoCollapse		|
 					ImGuiWindowFlags_NoSavedSettings);
-
-				ImGui::CloseButton(ID, ImVec2(20.0f, 20.0f));
 
 				ImGui::BeginChild(
 					"##ScrollBox",
