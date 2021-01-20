@@ -28,7 +28,13 @@ public:
 
 	void DrawUI();
 
+	Int32 TextCallback(ImGuiInputTextCallbackData* Data);
+
 private:
 	TArray<std::string>		History;
 	TStaticArray<Char, 256>	Buffer;
+
+	std::string PopupSelectedText;
+	
+	Bool UpdateCursorPosition = false;
 };
