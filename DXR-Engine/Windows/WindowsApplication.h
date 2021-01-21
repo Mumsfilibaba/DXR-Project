@@ -98,6 +98,8 @@ private:
 	
 	TSharedRef<WindowsCursor> CurrentCursor;
 	TArray<TSharedRef<WindowsWindow>> Windows;
+
+	Bool IsTrackingMouse = false;
 };
 
 extern WindowsApplication* GlobalWindowsApplication;

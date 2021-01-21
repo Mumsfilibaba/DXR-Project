@@ -49,6 +49,26 @@ public:
 	virtual void OnWindowResized(const TSharedRef<GenericWindow>& Window, UInt16 Width, UInt16 Height)
 	{
 	}
+
+	virtual void OnWindowMoved(const TSharedRef<GenericWindow>& Window, Int16 x, Int16 y)
+	{
+	}
+	
+	virtual void OnWindowFocusChanged(const TSharedRef<GenericWindow>& Window, Bool HasFocus)
+	{
+	}
+	
+	virtual void OnWindowMouseLeft(const TSharedRef<GenericWindow>& Window)
+	{
+	}
+	
+	virtual void OnWindowMouseEntered(const TSharedRef<GenericWindow>& Window)
+	{
+	}
+	
+	virtual void OnWindowClosed(const TSharedRef<GenericWindow>& Window)
+	{
+	}
 };
 
 #ifdef COMPILER_VISUAL_STUDIO

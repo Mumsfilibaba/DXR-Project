@@ -16,4 +16,6 @@ public:
 
 	static Bool IsKeyUp(EKey KeyCode);
 	static Bool IsKeyDown(EKey KeyCode);
+
+	static void ClearState();
 };

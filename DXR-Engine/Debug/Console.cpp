@@ -349,30 +349,29 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 		case ImGuiInputTextFlags_CallbackHistory:
 		{
 			//if (m_Candidates.GetSize() == 0)
-			//{
-			//	// Show history when nothing is typed (no candidates)
-			//	const int prevHistoryIndex = m_HistoryIndex;
-			//	if (data->EventKey == ImGuiKey_UpArrow)
-			//	{
-			//		if (m_HistoryIndex == -1)
-			//			m_HistoryIndex = m_History.GetSize() - 1;
-			//		else if (m_HistoryIndex > 0)
-			//			m_HistoryIndex--;
-			//	}
-			//	else if (data->EventKey == ImGuiKey_DownArrow)
-			//	{
-			//		if (m_HistoryIndex != -1)
-			//			if (++m_HistoryIndex >= (int)m_History.GetSize())
-			//				m_HistoryIndex = -1;
-			//	}
+			{
+				//const Int32 PrevHistoryIndex = m_HistoryIndex;
+				//if (Data->EventKey == ImGuiKey_UpArrow)
+				//{
+				//	if (m_HistoryIndex == -1)
+				//		m_HistoryIndex = m_History.GetSize() - 1;
+				//	else if (m_HistoryIndex > 0)
+				//		m_HistoryIndex--;
+				//}
+				//else if (Data->EventKey == ImGuiKey_DownArrow)
+				//{
+				//	if (m_HistoryIndex != -1)
+				//		if (++m_HistoryIndex >= (int)m_History.GetSize())
+				//			m_HistoryIndex = -1;
+				//}
 
-			//	if (prevHistoryIndex != m_HistoryIndex)
-			//	{
-			//		const char* historyStr = (m_HistoryIndex >= 0) ? m_History[m_HistoryIndex].c_str() : "";
-			//		data->DeleteChars(0, data->BufTextLen);
-			//		data->InsertChars(0, historyStr);
-			//	}
-			//}
+				//if (prevHistoryIndex != m_HistoryIndex)
+				//{
+				//	const char* historyStr = (m_HistoryIndex >= 0) ? m_History[m_HistoryIndex].c_str() : "";
+				//	data->DeleteChars(0, data->BufTextLen);
+				//	data->InsertChars(0, historyStr);
+				//}
+			}
 			//else
 			{
 				// Navigate candidates list

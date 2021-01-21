@@ -186,3 +186,39 @@ void EventDispatcher::OnWindowResized(const TSharedRef<GenericWindow>& InWindow,
 	WindowResizeEvent Event(InWindow, Width, Height);
 	SendEvent(Event);
 }
+
+void EventDispatcher::OnWindowMoved(const TSharedRef<GenericWindow>& Window, Int16 x, Int16 y)
+{
+	WindowMovedEvent Event(Window, x, y);
+	SendEvent(Event);
+}
+
+void EventDispatcher::OnWindowFocusChanged(const TSharedRef<GenericWindow>& Window, Bool HasFocus)
+{
+	// TODO: What if other windows loose focus?
+	if (!HasFocus)
+	{
+		Input::ClearState();
+	}
+
+	WindowFocusChangedEvent Event(Window, HasFocus);
+	SendEvent(Event);
+}
+
+void EventDispatcher::OnWindowMouseLeft(const TSharedRef<GenericWindow>& Window)
+{
+	WindowMouseLeftEvent Event(Window);
+	SendEvent(Event);
+}
+
+void EventDispatcher::OnWindowMouseEntered(const TSharedRef<GenericWindow>& Window)
+{
+	WindowMouseEnteredEvent Event(Window);
+	SendEvent(Event);
+}
+
+void EventDispatcher::OnWindowClosed(const TSharedRef<GenericWindow>& Window)
+{
+	WindowClosedEvent Event(Window);
+	SendEvent(Event);
+}
