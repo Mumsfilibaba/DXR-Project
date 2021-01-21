@@ -224,6 +224,8 @@ public:
 	void PrintWarning(const std::string& Message);
 	void PrintError(const std::string& Message);
 
+	void ClearHistory();
+
 private:
 	Int32 TextCallback(ImGuiInputTextCallbackData* Data);
 	void HandleCommand(const std::string& CmdString);

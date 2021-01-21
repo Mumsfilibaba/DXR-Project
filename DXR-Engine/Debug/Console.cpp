@@ -18,6 +18,11 @@ Bool GlobalIsConsoleActive = false;
 
 void Console::Init()
 {
+	INIT_CONSOLE_COMMAND("ClearHistory", []() 
+	{
+		GlobalConsole.ClearHistory();
+	});
+
 	auto EventHandler = [](const Event& Event)->Bool
 	{
 		if (!IsEventOfType<KeyPressedEvent>(Event))
@@ -141,8 +146,8 @@ void Console::Tick()
 				{
 					const std::string Text = std::string(GlobalConsole.TextBuffer.Data());
 					GlobalConsole.HandleCommand(Text);
-					GlobalConsole.TextBuffer[0] = 0;
-					GlobalConsole.ScrollDown = true;
+					GlobalConsole.TextBuffer[0]	= 0;
+					GlobalConsole.ScrollDown	= true;
 
 					ImGui::SetItemDefaultFocus();
 					ImGui::SetKeyboardFocusHere(-1);
@@ -154,7 +159,7 @@ void Console::Tick()
 				ImGui::SetKeyboardFocusHere(-1);
 			}
 
-			if (GlobalConsole.Candidates.Size() > 0)
+			if (!GlobalConsole.Candidates.IsEmpty())
 			{
 				Bool IsActiveIndex	= false;
 				Bool PopupOpen		= true;
@@ -340,6 +345,12 @@ void Console::PrintError(const std::string& Message)
 	GlobalConsole.Lines.EmplaceBack(Message, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
 }
 
+void Console::ClearHistory()
+{
+	History.Clear();
+	HistoryIndex = -1;
+}
+
 Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 {
 	if (UpdateCursorPosition)
@@ -367,60 +378,75 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 			}
 
 			Candidates.Clear();
+			CandidatesIndex				= -1;
+			CandidateSelectionChanged	= true;
+
+			const Int32 WordLength = static_cast<Int32>(WordEnd - WordStart);
+			if (WordLength <= 0)
+			{
+				break;
+			}
+
 			for (const std::pair<std::string, Int32>& Index : CmdIndexMap)
 			{
-				const Char* Cmd = Index.first.c_str();
-				Int32 d = -1;
-				Int32 n = (Int32)(WordEnd - WordStart);
+				if (WordLength <= Index.first.size())
+				{
+					const Char* Command = Index.first.c_str();
+					Int32 d = -1;
+					Int32 n = WordLength;
 				
-				const Char* CmdIt	= Cmd;
-				const Char* WordIt	= WordStart;
-				while (n > 0 && (d = toupper(*WordIt) - toupper(*CmdIt)) == 0 && *CmdIt)
-				{
-					CmdIt++;
-					WordIt++;
-					n--;
-				}
+					const Char* CmdIt	= Command;
+					const Char* WordIt	= WordStart;
+					while (n > 0 && (d = toupper(*WordIt) - toupper(*CmdIt)) == 0)
+					{
+						CmdIt++;
+						WordIt++;
+						n--;
+					}
 
-				if (d == 0)
-				{
-					Candidates.EmplaceBack(Index.first, "[Cmd]");
+					if (d == 0)
+					{
+						Candidates.EmplaceBack(Index.first, "[Cmd]");
+					}
 				}
 			}
 
 			for (const std::pair<std::string, Int32>& Index : VarIndexMap)
 			{
-				const Char* Var = Index.first.c_str();
-				Int32 d = -1;
-				Int32 n = (Int32)(WordEnd - WordStart);
-
-				const Char* VarIt	= Var;
-				const Char* WordIt	= WordStart;
-				while (n > 0 && (d = toupper(*WordIt) - toupper(*VarIt)) == 0 && *VarIt)
+				if (WordLength <= Index.first.size())
 				{
-					VarIt++;
-					WordIt++;
-					n--;
-				}
+					const Char* Var = Index.first.c_str();
+					Int32 d = -1;
+					Int32 n = WordLength;
 
-				if (d == 0)
-				{
-					ConsoleVariable& Variable = Variables[Index.second];
-					if (Variable.IsBool())
+					const Char* VarIt	= Var;
+					const Char* WordIt	= WordStart;
+					while (n > 0 && (d = toupper(*WordIt) - toupper(*VarIt)) == 0)
 					{
-						Candidates.EmplaceBack(Index.first, "[Boolean]");
+						VarIt++;
+						WordIt++;
+						n--;
 					}
-					else if (Variable.IsInt())
+
+					if (d == 0)
 					{
-						Candidates.EmplaceBack(Index.first, "[Integer]");
-					}
-					else if (Variable.IsFloat())
-					{
-						Candidates.EmplaceBack(Index.first, "[Float]");
-					}
-					else if (Variable.IsString())
-					{
-						Candidates.EmplaceBack(Index.first, "[String]");
+						ConsoleVariable& Variable = Variables[Index.second];
+						if (Variable.IsBool())
+						{
+							Candidates.EmplaceBack(Index.first, "= " + std::string(Variable.GetBool() ? "true" : "false") + " [Boolean]");
+						}
+						else if (Variable.IsInt())
+						{
+							Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable.GetInt32()) + " [Integer]");
+						}
+						else if (Variable.IsFloat())
+						{
+							Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable.GetFloat()) + " [Float]");
+						}
+						else if (Variable.IsString())
+						{
+							Candidates.EmplaceBack(Index.first, "= " + std::string(Variable.GetString()) + " [String]");
+						}
 					}
 				}
 			}
@@ -431,87 +457,53 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 		{
 			const Char* WordEnd		= Data->Buf + Data->CursorPos;
 			const Char* WordStart	= WordEnd;
-			while (WordStart > Data->Buf)
+			if (Data->BufTextLen > 0)
 			{
-				const Char c = WordStart[-1];
-				if (c == ' ' || c == '\t' || c == ',' || c == ';')
+				while (WordStart > Data->Buf)
 				{
-					break;
-				}
+					const Char c = WordStart[-1];
+					if (c == ' ' || c == '\t' || c == ',' || c == ';')
+					{
+						break;
+					}
 
-				WordStart--;
-			}
-
-			// Build a list of TempCandidates
-			TArray<const char*> TempCandidates;
-			Candidates.Clear();
-			for (const std::pair<std::string, Int32>& Index : CmdIndexMap)
-			{
-				const Char* Cmd = Index.first.c_str();
-				Int32 d = 0;
-				Int32 n = (Int32)(WordEnd - WordStart);
-
-				const Char* CmdIt	= Cmd;
-				const Char* WordIt	= WordStart;
-				while (n > 0 && (d = toupper(*WordIt) - toupper(*CmdIt)) == 0 && *CmdIt)
-				{
-					CmdIt++;
-					WordIt++;
-					n--;
-				}
-
-				if (d == 0)
-				{
-					TempCandidates.EmplaceBack(Cmd);
+					WordStart--;
 				}
 			}
 
-			for (const std::pair<std::string, Int32>& Index : VarIndexMap)
+			const Int32 WordLength = static_cast<Int32>(WordEnd - WordStart);
+			if (WordLength > 0)
 			{
-				const Char* Var = Index.first.c_str();
-				Int32 d = 0;
-				Int32 n = (Int32)(WordEnd - WordStart);
-
-				const Char* VarIt	= Var;
-				const Char* WordIt	= WordStart;
-				while (n > 0 && (d = toupper(*WordIt) - toupper(*VarIt)) == 0 && *VarIt)
+				if (Candidates.Size() == 1)
 				{
-					VarIt++;
-					WordIt++;
-					n--;
-				}
+					const Int32 Pos		= static_cast<Int32>(WordStart - Data->Buf);
+					const Int32 Count	= WordLength;
+					Data->DeleteChars(Pos, Count);
+					Data->InsertChars(Data->CursorPos, Candidates[0].Text.c_str());
 
-				if (d == 0)
+					CandidatesIndex				= -1;
+					CandidateSelectionChanged	= true;
+					Candidates.Clear();
+				}
+				else if (!Candidates.IsEmpty() && CandidatesIndex != -1)
 				{
-					ConsoleVariable& Variable = Variables[Index.second];
-					TempCandidates.EmplaceBack(Var);
+					const Int32 Pos		= static_cast<Int32>(WordStart - Data->Buf);
+					const Int32 Count	= WordLength;
+					Data->DeleteChars(Pos, Count);
+					Data->InsertChars(Data->CursorPos, PopupSelectedText.c_str());
+
+					PopupSelectedText			= "";
+					CandidatesIndex				= -1;
+					CandidateSelectionChanged	= true;
+					Candidates.Clear();
 				}
-			}
-
-			if (TempCandidates.Size() == 0)
-			{
-				CandidatesIndex = -1;
-			}
-			else if (TempCandidates.Size() == 1)
-			{
-				// Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
-				Data->DeleteChars((int)(WordStart - Data->Buf), (int)(WordEnd - WordStart));
-				Data->InsertChars(Data->CursorPos, TempCandidates[0]);
-			}
-			else if (CandidatesIndex != -1)
-			{
-				Data->DeleteChars((int)(WordStart - Data->Buf), (int)(WordEnd - WordStart));
-				Data->InsertChars(Data->CursorPos, PopupSelectedText.c_str());
-
-				CandidatesIndex		= -1;
-				PopupSelectedText	= "";
 			}
 
 			break;
 		}
 		case ImGuiInputTextFlags_CallbackHistory:
 		{
-			if (GlobalConsole.Candidates.Size() == 0)
+			if (Candidates.IsEmpty())
 			{
 				const Int32 PrevHistoryIndex = HistoryIndex;
 				if (Data->EventKey == ImGuiKey_UpArrow)
@@ -524,20 +516,17 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 					{
 						HistoryIndex--;
 					}
-
-					LOG_INFO("Lines Up Prev: " + std::to_string(PrevHistoryIndex) + ", New: " + std::to_string(HistoryIndex));
 				}
 				else if (Data->EventKey == ImGuiKey_DownArrow)
 				{
 					if (HistoryIndex != -1)
 					{
-						if (++HistoryIndex >= (Int32)History.Size())
+						HistoryIndex++;
+						if (HistoryIndex >= static_cast<Int32>(History.Size()))
 						{
 							HistoryIndex = -1;
 						}
 					}
-
-					LOG_INFO("Lines Down Prev: " + std::to_string(PrevHistoryIndex) + ", New: " + std::to_string(HistoryIndex));
 				}
 
 				if (PrevHistoryIndex != HistoryIndex)
@@ -551,28 +540,26 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 			{
 				if (Data->EventKey == ImGuiKey_UpArrow)
 				{
+					CandidateSelectionChanged = true;
 					if (CandidatesIndex <= 0)
 					{
-						CandidatesIndex = Int32(GlobalConsole.Candidates.Size()) - 1;
-						GlobalConsole.CandidateSelectionChanged = true;
+						CandidatesIndex = Candidates.Size() - 1;
 					}
 					else
 					{
 						CandidatesIndex--;
-						GlobalConsole.CandidateSelectionChanged = true;
 					}
 				}
 				else if (Data->EventKey == ImGuiKey_DownArrow)
 				{
-					if (CandidatesIndex >= Int32(GlobalConsole.Candidates.Size()) - 1)
+					CandidateSelectionChanged = true;
+					if (CandidatesIndex >= Int32(Candidates.Size()) - 1)
 					{
 						CandidatesIndex = 0;
-						GlobalConsole.CandidateSelectionChanged = true;
 					}
 					else
 					{
 						CandidatesIndex++;
-						GlobalConsole.CandidateSelectionChanged = true;
 					}
 				}
 			}
