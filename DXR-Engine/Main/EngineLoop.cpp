@@ -85,6 +85,8 @@ Bool EngineLoop::PreInit()
 {
 	TRACE_FUNCTION_SCOPE();
 
+	GlobalProfiler.Init();
+
 	GlobalConsoleOutput = PlatformOutputDevice::Make();
 	if (!GlobalConsoleOutput)
 	{
@@ -112,6 +114,8 @@ Bool EngineLoop::Init()
 	GlobalEventDispatcher = DBG_NEW EventDispatcher(GlobalPlatformApplication);
 	GlobalPlatformApplication->SetEventHandler(GlobalEventDispatcher);
 
+	GlobalConsole.Init();
+
 	const UInt32 Style =
 		WindowStyleFlag_Titled		|
 		WindowStyleFlag_Closable	|
@@ -130,6 +134,16 @@ Bool EngineLoop::Init()
 	else
 	{
 		GlobalMainWindow->Show(false);
+
+		INIT_CONSOLE_COMMAND("ToggleFullscreen", []() 
+		{
+			GlobalMainWindow->ToggleFullscreen();
+		});
+
+		INIT_CONSOLE_COMMAND("Quit", []()
+		{
+			GlobalEngineLoop.Exit();
+		});
 	}
 
 	GlobalCursors::Init();
@@ -172,8 +186,6 @@ Bool EngineLoop::PostInit()
 {
 	TRACE_FUNCTION_SCOPE();
 
-	GlobalConsole.Init();
-
 	ShouldRun = true;
 	return true;
 }
@@ -182,7 +194,7 @@ void EngineLoop::PreTick()
 {
 	TRACE_FUNCTION_SCOPE();
 
-	if (!PlatformApplication::CheckWaitingPlatformEvents())
+	if (!PlatformApplication::FlushSystemEventQueue())
 	{
 		Exit();
 	}

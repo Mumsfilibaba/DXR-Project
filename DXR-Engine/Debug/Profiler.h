@@ -3,7 +3,8 @@
 
 #include <unordered_map>
 
-#define ENABLE_PROFILER 1
+#define ENABLE_PROFILER			1
+#define NUM_PROFILER_SAMPLES	75
 
 #if ENABLE_PROFILER
 	#define TRACE_SCOPE(Name)		ScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(&GlobalProfiler, Name)
@@ -54,7 +55,7 @@ class Profiler
 			return Average / Float(SampleCount);
 		}
 
-		TStaticArray<Float, 50> Samples;
+		TStaticArray<Float, NUM_PROFILER_SAMPLES> Samples;
 		Int32 SampleCount	= 0;
 		Int32 CurrentSample	= 0;
 	};
@@ -63,6 +64,7 @@ public:
 	Profiler();
 	~Profiler() = default;
 
+	void Init();
 	void Tick();
 
 	void AddSample(const Char* Name, Float Sample);

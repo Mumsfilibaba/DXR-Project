@@ -123,8 +123,12 @@ Bool DebugUI::Init()
 
 	ImGuiStyle& Style = ImGui::GetStyle();
 	Style.WindowRounding	= 0.0f;
-	Style.FrameRounding		= 3.0f;
-	Style.GrabRounding		= 4.0f;
+	Style.FrameRounding		= 0.0f;
+	Style.GrabRounding		= 0.0f;
+	Style.TabRounding		= 0.0f;
+	Style.WindowBorderSize	= 0.0f;
+	Style.ScrollbarRounding = 0.0f;
+	Style.ScrollbarSize		= 12.0f;
 
 	Style.Colors[ImGuiCol_WindowBg].x = 0.15f;
 	Style.Colors[ImGuiCol_WindowBg].y = 0.15f;

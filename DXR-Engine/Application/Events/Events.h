@@ -85,6 +85,14 @@ enum EEventCategory : UInt8
 
 struct Event
 {
+	friend class EventDispatcher;
+
+public:
+	Event()
+		: HasBeenHandled(false)
+	{
+	}
+
 	virtual ~Event() = default;
 
 	virtual std::string ToString() const = 0;
@@ -93,10 +101,18 @@ struct Event
 	virtual const Char* GetTypeAsString() const	= 0;
 	virtual UInt8 GetCategoryFlags() const		= 0;
 
-	inline static EEventType GetStaticType()
+	FORCEINLINE Bool IsHandled() const
+	{
+		return HasBeenHandled;
+	}
+
+	FORCEINLINE static EEventType GetStaticType()
 	{
 		return EEventType::EventType_Unknown;
 	}
+
+private:
+	mutable Bool HasBeenHandled;
 };
 
 /*

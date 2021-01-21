@@ -20,19 +20,27 @@ enum EMemoryDebugFlag : MemoryDebugFlags
 class Memory
 {
 public:
-	static Void* Malloc(UInt64 Size);
-	static void Free(Void* Ptr);
+	static void* Malloc(UInt64 Size);
+	static void Free(void* Ptr);
 
-	static Void* Memset(Void* Destination, UInt8 Value, UInt64 Size);
-	static Void* Memzero(Void* Destination, UInt64 Size);
-	static Void* Memcpy(Void* Destination, const Void* Source, UInt64 Size);
-	static Void* Memmove(Void* Destination, const Void* Source, UInt64 Size);
+	template<typename T>
+	static T* Malloc(UInt32 Count)
+	{
+		return reinterpret_cast<T*>(Malloc(sizeof(T) * Count));
+	}
+
+	static void* Memset(void* Destination, UInt8 Value, UInt64 Size);
+	static void* Memzero(void* Destination, UInt64 Size);
+	static void* Memcpy(void* Destination, const void* Source, UInt64 Size);
+	static void* Memmove(void* Destination, const void* Source, UInt64 Size);
 	
 	template<typename T>
-	static Void* Memzero(T* Destination)
+	static void* Memzero(T* Destination)
 	{
 		return Memzero(Destination, sizeof(T));
 	}
+
+	static Char* Strcpy(Char* Destination, const Char* Source);
 
 	static void SetDebugFlags(MemoryDebugFlags Flags);
 };

@@ -12,6 +12,7 @@
 #include "RenderingCore/ShaderCompiler.h"
 
 #include "Debug/Profiler.h"
+#include "Debug/Console.h"
 
 #include <algorithm>
 #include <imgui_internal.h>
@@ -35,6 +36,9 @@ static const UInt32	 ShadowMapSampleCount	= 2;
 #define GBUFFER_NORMAL_INDEX	1
 #define GBUFFER_MATERIAL_INDEX	2
 #define GBUFFER_DEPTH_INDEX		3
+
+DECL_CONSOLE_VARIABLE(DrawTextureDebugger);
+DECL_CONSOLE_VARIABLE(DrawRendererInfo);
 
 /*
 * CameraBufferDesc
@@ -1257,7 +1261,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		TRACE_SCOPE("Render UI");
 
-		if (GlobalDrawTextureDebugger)
+		if (DrawTextureDebugger->GetBool())
 		{
 			DebugTextures.EmplaceBack(
 				GBufferSRVs[GBUFFER_DEPTH_INDEX],
@@ -1287,64 +1291,72 @@ void Renderer::Tick(const Scene& CurrentScene)
 					ImVec2(Width, Height),
 					ImGuiCond_Appearing);
 				
-				ImGui::Begin(
-					"FrameBuffer Debugger",
-					&GlobalDrawTextureDebugger,
+				const ImGuiWindowFlags Flags =
 					ImGuiWindowFlags_NoResize		|
 					ImGuiWindowFlags_NoScrollbar	|
 					ImGuiWindowFlags_NoCollapse		|
-					ImGuiWindowFlags_NoSavedSettings);
+					ImGuiWindowFlags_NoSavedSettings;
 
-				ImGui::BeginChild(
-					"##ScrollBox",
-					ImVec2(Width * 0.985f, Height * 0.125f),
-					true,
-					ImGuiWindowFlags_HorizontalScrollbar);
-
-				const Int32 Count = GlobalRenderer->DebugTextures.Size();
-				static Int32 SelectedImage = -1;
-				if (SelectedImage >= Count)
+				Bool TempDrawTextureDebugger = DrawTextureDebugger->GetBool();
+				if (ImGui::Begin(
+					"FrameBuffer Debugger",
+					&TempDrawTextureDebugger,
+					Flags))
 				{
-					SelectedImage = -1;
-				}
+					ImGui::BeginChild(
+						"##ScrollBox",
+						ImVec2(Width * 0.985f, Height * 0.125f),
+						true,
+						ImGuiWindowFlags_HorizontalScrollbar);
 
-				for (Int32 i = 0; i < Count; i++)
-				{
-					ImGui::PushID(i);
-
-					constexpr Float MenuImageSize = 96.0f;
-					Int32	FramePadding = 2;
-					ImVec2	Size	= ImVec2(MenuImageSize * InvAspectRatio, MenuImageSize);
-					ImVec2	Uv0		= ImVec2(0.0f, 0.0f);
-					ImVec2	Uv1		= ImVec2(1.0f, 1.0f);
-					ImVec4	BgCol	= ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-					ImVec4	TintCol	= ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-					ImGuiImage* CurrImage = &GlobalRenderer->DebugTextures[i];
-					if (ImGui::ImageButton(CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol))
+					const Int32 Count = GlobalRenderer->DebugTextures.Size();
+					static Int32 SelectedImage = -1;
+					if (SelectedImage >= Count)
 					{
-						SelectedImage = i;
+						SelectedImage = -1;
 					}
 
-					ImGui::PopID();
-
-					if (i != Count - 1)
+					for (Int32 i = 0; i < Count; i++)
 					{
-						ImGui::SameLine();
+						ImGui::PushID(i);
+
+						constexpr Float MenuImageSize = 96.0f;
+						Int32	FramePadding = 2;
+						ImVec2	Size = ImVec2(MenuImageSize * InvAspectRatio, MenuImageSize);
+						ImVec2	Uv0 = ImVec2(0.0f, 0.0f);
+						ImVec2	Uv1 = ImVec2(1.0f, 1.0f);
+						ImVec4	BgCol = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+						ImVec4	TintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+						ImGuiImage* CurrImage = &GlobalRenderer->DebugTextures[i];
+						if (ImGui::ImageButton(CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol))
+						{
+							SelectedImage = i;
+						}
+
+						ImGui::PopID();
+
+						if (i != Count - 1)
+						{
+							ImGui::SameLine();
+						}
 					}
+
+					ImGui::EndChild();
+
+					const Float ImageWidth = Width * 0.985f;
+					const Float ImageHeight = ImageWidth * AspectRatio;
+					const Int32 ImageIndex = SelectedImage < 0 ? 0 : SelectedImage;
+					ImGuiImage* CurrImage = &GlobalRenderer->DebugTextures[ImageIndex];
+					ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
+
+					ImGui::PopStyleColor();
+					ImGui::PopStyleColor();
 				}
 
-				ImGui::EndChild();
-
-				const Float ImageWidth = Width * 0.985f;
-				const Float ImageHeight = ImageWidth * AspectRatio;
-				const Int32 ImageIndex = SelectedImage < 0 ? 0 : SelectedImage;
-				ImGuiImage* CurrImage = &GlobalRenderer->DebugTextures[ImageIndex];
-				ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
-
-				ImGui::PopStyleColor();
-				ImGui::PopStyleColor();
 				ImGui::End();
+
+				DrawTextureDebugger->SetBool(TempDrawTextureDebugger);
 			});
 		}
 		else
@@ -1355,7 +1367,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 				EResourceState::ResourceState_PixelShaderResource);
 		}
 
-		if (GlobalDrawRendererInfo)
+		if (DrawRendererInfo->GetBool())
 		{
 			DebugUI::DrawUI([]()
 			{
@@ -1379,8 +1391,8 @@ void Renderer::Tick(const Scene& CurrentScene)
 				ImGui::Begin(
 					"Renderer Window",
 					nullptr,
-					ImGuiWindowFlags_NoMove |
-					ImGuiWindowFlags_NoDecoration |
+					ImGuiWindowFlags_NoMove			|
+					ImGuiWindowFlags_NoDecoration	|
 					ImGuiWindowFlags_NoSavedSettings);
 
 				ImGui::Text("Renderer Status:");
@@ -1537,6 +1549,12 @@ void Renderer::SetLightSettings(const LightSettings& InLightSettings)
 
 Bool Renderer::Init()
 {
+	INIT_CONSOLE_VARIABLE(DrawTextureDebugger, ConsoleVariableType_Bool);
+	DrawTextureDebugger->SetBool(false);
+
+	INIT_CONSOLE_VARIABLE(DrawRendererInfo, ConsoleVariableType_Bool);
+	DrawRendererInfo->SetBool(false);
+
 	// Viewport
 	MainWindowViewport = RenderLayer::CreateViewport(
 		GlobalMainWindow,

@@ -254,9 +254,9 @@ GenericCursor* WindowsApplication::MakeCursor()
 	}
 }
 
-Bool WindowsApplication::CheckWaitingPlatformEvents()
+Bool WindowsApplication::FlushSystemEventQueue()
 {
-	MSG Message = { };
+	MSG Message;
 	while (::PeekMessage(&Message, 0, 0, 0, PM_REMOVE))
 	{
 		::TranslateMessage(&Message);

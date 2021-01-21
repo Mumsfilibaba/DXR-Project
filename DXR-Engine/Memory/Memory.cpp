@@ -10,14 +10,19 @@
 * Memory
 */
 
-Void* Memory::Malloc(UInt64 Size)
+void* Memory::Malloc(UInt64 Size)
 {
 	return ::malloc(Size);
 }
 
-void Memory::Free(Void* Ptr)
+void Memory::Free(void* Ptr)
 {
 	::free(Ptr);
+}
+
+Char* Memory::Strcpy(Char* Destination, const Char* Source)
+{
+	return ::strcpy(Destination, Source);
 }
 
 void Memory::SetDebugFlags(MemoryDebugFlags Flags)
@@ -33,22 +38,22 @@ void Memory::SetDebugFlags(MemoryDebugFlags Flags)
 #endif
 }
 
-Void* Memory::Memset(Void* Destination, UInt8 Value, UInt64 Size)
+void* Memory::Memset(void* Destination, UInt8 Value, UInt64 Size)
 {
 	return ::memset(Destination, static_cast<int>(Value), Size);
 }
 
-Void* Memory::Memzero(Void* Destination, UInt64 Size)
+void* Memory::Memzero(void* Destination, UInt64 Size)
 {
 	return ::memset(Destination, 0, Size);
 }
 
-Void* Memory::Memcpy(Void* Destination, const Void* Source, UInt64 Size)
+void* Memory::Memcpy(void* Destination, const void* Source, UInt64 Size)
 {
 	return ::memcpy(Destination, Source, Size);
 }
 
-Void* Memory::Memmove(Void* Destination, const Void* Source, UInt64 Size)
+void* Memory::Memmove(void* Destination, const void* Source, UInt64 Size)
 {
 	return ::memmove(Destination, Source, Size);
 }

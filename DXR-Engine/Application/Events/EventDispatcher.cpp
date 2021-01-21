@@ -91,7 +91,7 @@ void EventDispatcher::UnregisterEventHandler(EventHandlerFunc Func)
 	LOG_WARNING("Handler is NOT registered as a EventHandler");
 }
 
-bool EventDispatcher::SendEvent(const Event& Event)
+Bool EventDispatcher::SendEvent(const Event& Event)
 {
 	for (EventHandlerPair& Pair : EventHandlers)
 	{
@@ -101,20 +101,20 @@ bool EventDispatcher::SendEvent(const Event& Event)
 			{
 				if (Pair.Func(Event))
 				{
-					return true;
+					Event.HasBeenHandled = true;
 				}
 			}
 			else
 			{
 				if (Pair.Handler->OnEvent(Event))
 				{
-					return true;
+					Event.HasBeenHandled = true;
 				}
 			}
 		}
 	}
 
-	return false;
+	return Event.HasBeenHandled;
 }
 
 void EventDispatcher::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)
