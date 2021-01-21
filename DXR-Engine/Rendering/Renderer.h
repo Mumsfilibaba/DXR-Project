@@ -51,37 +51,6 @@ public:
 
 	void SetLightSettings(const LightSettings& InLightSettings);
 	
-	FORCEINLINE void SetSSAORadius(Float InSSAORadius)
-	{
-		SSAORadius = InSSAORadius;
-	}
-
-	FORCEINLINE void SetSSAOKernelSize(Int32 InSSAOKernelSize)
-	{
-		SSAOKernelSize = InSSAOKernelSize;
-	}
-
-	FORCEINLINE void SetSSAOBias(Float InSSAOBias)
-	{
-		SSAOBias = InSSAOBias;
-	}
-
-	FORCEINLINE Float GetSSAORadius() const
-	{
-		return SSAORadius;
-	}
-
-	FORCEINLINE Int32 GetSSAOKernelSize() const
-	{
-		return SSAOKernelSize;
-	}
-
-	FORCEINLINE Float GetSSAOBias() const
-	{
-		return SSAOBias;
-	}
-
-
 	FORCEINLINE const LightSettings& GetLightSettings()
 	{
 		return CurrentLightSettings;
@@ -223,10 +192,6 @@ private:
 	TArray<ImGuiImage> DebugTextures;
 
 	TSharedRef<Viewport> MainWindowViewport;
-
-	Float	SSAORadius		= 0.3f;
-	Float	SSAOBias		= 0.0f;
-	Int32	SSAOKernelSize	= 64;
 
 	Bool UpdatePointLight	= true;
 	Bool UpdateDirLight		= true;

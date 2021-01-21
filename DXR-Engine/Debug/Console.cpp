@@ -344,11 +344,9 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 {
 	if (UpdateCursorPosition)
 	{
-		Data->CursorPos = Int32(PopupSelectedText.length());
-		Data->InsertChars(Data->CursorPos, " ");
-		
-		UpdateCursorPosition = false;
+		Data->CursorPos = Int32(PopupSelectedText.length());		
 		PopupSelectedText.clear();
+		UpdateCursorPosition = false;
 	}
 
 	switch (Data->EventFlag)
@@ -444,49 +442,70 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 				WordStart--;
 			}
 
-			//// Build a list of candidates
-			//TArray<const char*> candidates;
-			////GlobalConsole.Candidates.Clear();
-			//for (auto& cmd : m_CommandMap)
-			//{
-			//	const char* command = cmd.first.c_str();
-			//	int32 d = 0;
-			//	int32 n = (int32)(word_end - word_start);
-			//	const char* s1 = command;
-			//	const char* s2 = word_start;
-			//	while (n > 0 && (d = toupper(*s2) - toupper(*s1)) == 0 && *s1)
-			//	{
-			//		s1++;
-			//		s2++;
-			//		n--;
-			//	}
-			//	if (d == 0)
-			//	{
-			//		candidates.PushBack(command);
-			//	}
-			//}
+			// Build a list of TempCandidates
+			TArray<const char*> TempCandidates;
+			Candidates.Clear();
+			for (const std::pair<std::string, Int32>& Index : CmdIndexMap)
+			{
+				const Char* Cmd = Index.first.c_str();
+				Int32 d = 0;
+				Int32 n = (Int32)(WordEnd - WordStart);
 
-			//if (candidates.Size() == 0)
-			//{
-			//	// No match
-			//	m_ActivePopupIndex = -1;
-			//}
-			//else if (candidates.Size() == 1)
-			//{
-			//	// Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
-			//	data->DeleteChars((int)(word_start - data->Buf), (int)(word_end - word_start));
-			//	data->InsertChars(data->CursorPos, candidates[0]);
-			//	data->InsertChars(data->CursorPos, " ");
-			//}
-			//else if (m_ActivePopupIndex != -1)
-			//{
-			//	data->DeleteChars((int)(word_start - data->Buf), (int)(word_end - word_start));
-			//	data->InsertChars(data->CursorPos, m_PopupSelectedText.c_str());
-			//	data->InsertChars(data->CursorPos, " ");
-			//	m_ActivePopupIndex = -1;
-			//	m_PopupSelectedText = "";
-			//	GlobalConsole.Candidates.Clear();
-			//}
+				const Char* CmdIt	= Cmd;
+				const Char* WordIt	= WordStart;
+				while (n > 0 && (d = toupper(*WordIt) - toupper(*CmdIt)) == 0 && *CmdIt)
+				{
+					CmdIt++;
+					WordIt++;
+					n--;
+				}
+
+				if (d == 0)
+				{
+					TempCandidates.EmplaceBack(Cmd);
+				}
+			}
+
+			for (const std::pair<std::string, Int32>& Index : VarIndexMap)
+			{
+				const Char* Var = Index.first.c_str();
+				Int32 d = 0;
+				Int32 n = (Int32)(WordEnd - WordStart);
+
+				const Char* VarIt	= Var;
+				const Char* WordIt	= WordStart;
+				while (n > 0 && (d = toupper(*WordIt) - toupper(*VarIt)) == 0 && *VarIt)
+				{
+					VarIt++;
+					WordIt++;
+					n--;
+				}
+
+				if (d == 0)
+				{
+					ConsoleVariable& Variable = Variables[Index.second];
+					TempCandidates.EmplaceBack(Var);
+				}
+			}
+
+			if (TempCandidates.Size() == 0)
+			{
+				CandidatesIndex = -1;
+			}
+			else if (TempCandidates.Size() == 1)
+			{
+				// Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
+				Data->DeleteChars((int)(WordStart - Data->Buf), (int)(WordEnd - WordStart));
+				Data->InsertChars(Data->CursorPos, TempCandidates[0]);
+			}
+			else if (CandidatesIndex != -1)
+			{
+				Data->DeleteChars((int)(WordStart - Data->Buf), (int)(WordEnd - WordStart));
+				Data->InsertChars(Data->CursorPos, PopupSelectedText.c_str());
+
+				CandidatesIndex		= -1;
+				PopupSelectedText	= "";
+			}
 
 			break;
 		}

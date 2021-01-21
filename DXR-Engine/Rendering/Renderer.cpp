@@ -40,6 +40,10 @@ static const UInt32	 ShadowMapSampleCount	= 2;
 DECL_CONSOLE_VARIABLE(DrawTextureDebugger);
 DECL_CONSOLE_VARIABLE(DrawRendererInfo);
 
+DECL_CONSOLE_VARIABLE(SSAORadius);
+DECL_CONSOLE_VARIABLE(SSAOBias);
+DECL_CONSOLE_VARIABLE(SSAOKernelSize);
+
 /*
 * CameraBufferDesc
 */
@@ -813,9 +817,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 		const UInt32 Height	= RenderHeight;
 		SSAOSettings.ScreenSize	= XMFLOAT2(Float(Width), Float(Height));
 		SSAOSettings.NoiseSize	= XMFLOAT2(4.0f, 4.0f);
-		SSAOSettings.Radius		= SSAORadius;
-		SSAOSettings.KernelSize = SSAOKernelSize;
-		SSAOSettings.Bias		= SSAOBias;
+		SSAOSettings.Radius		= SSAORadius->GetFloat();
+		SSAOSettings.KernelSize = SSAOKernelSize->GetInt32();
+		SSAOSettings.Bias		= SSAOBias->GetFloat();
 
 		ShaderResourceView* ShaderResourceViews[] =
 		{
@@ -1556,6 +1560,15 @@ Bool Renderer::Init()
 
 	INIT_CONSOLE_VARIABLE(DrawRendererInfo, ConsoleVariableType_Bool);
 	DrawRendererInfo->SetBool(false);
+
+	INIT_CONSOLE_VARIABLE(SSAOKernelSize, ConsoleVariableType_Int);
+	SSAOKernelSize->SetInt32(48);
+
+	INIT_CONSOLE_VARIABLE(SSAOBias, ConsoleVariableType_Float);
+	SSAOBias->SetFloat(0.0001f);
+
+	INIT_CONSOLE_VARIABLE(SSAORadius, ConsoleVariableType_Float);
+	SSAORadius->SetFloat(0.3f);
 
 	// Viewport
 	MainWindowViewport = RenderLayer::CreateViewport(

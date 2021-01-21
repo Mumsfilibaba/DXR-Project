@@ -355,31 +355,31 @@ static void DrawRenderSettings()
 	ImGui::Text("Radius: ");
 	ImGui::NextColumn();
 
-	Float Radius = GlobalRenderer->GetSSAORadius();
-	if (ImGui::SliderFloat("##Radius", &Radius, 0.05f, 5.0f, "%.3f"))
-	{
-		GlobalRenderer->SetSSAORadius(Radius);
-	}
+	//Float Radius = GlobalRenderer->GetSSAORadius();
+	//if (ImGui::SliderFloat("##Radius", &Radius, 0.05f, 5.0f, "%.3f"))
+	//{
+	//	GlobalRenderer->SetSSAORadius(Radius);
+	//}
 
-	ImGui::NextColumn();
-	ImGui::Text("Bias: ");
-	ImGui::NextColumn();
+	//ImGui::NextColumn();
+	//ImGui::Text("Bias: ");
+	//ImGui::NextColumn();
 
-	Float Bias = GlobalRenderer->GetSSAOBias();
-	if (ImGui::SliderFloat("##Bias", &Bias, 0.0f, 0.5f, "%.3f"))
-	{
-		GlobalRenderer->SetSSAOBias(Bias);
-	}
+	//Float Bias = GlobalRenderer->GetSSAOBias();
+	//if (ImGui::SliderFloat("##Bias", &Bias, 0.0f, 0.5f, "%.3f"))
+	//{
+	//	GlobalRenderer->SetSSAOBias(Bias);
+	//}
 
-	ImGui::NextColumn();
-	ImGui::Text("KernelSize: ");
-	ImGui::NextColumn();
+	//ImGui::NextColumn();
+	//ImGui::Text("KernelSize: ");
+	//ImGui::NextColumn();
 
-	Int32 KernelSize = GlobalRenderer->GetSSAOKernelSize();
-	if (ImGui::SliderInt("##KernelSize", &KernelSize, 4, 64))
-	{
-		GlobalRenderer->SetSSAOKernelSize(KernelSize);
-	}
+	//Int32 KernelSize = GlobalRenderer->GetSSAOKernelSize();
+	//if (ImGui::SliderInt("##KernelSize", &KernelSize, 4, 64))
+	//{
+	//	GlobalRenderer->SetSSAOKernelSize(KernelSize);
+	//}
 
 	ImGui::Columns(1);
 	ImGui::EndChild();
