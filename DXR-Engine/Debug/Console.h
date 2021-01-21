@@ -170,11 +170,11 @@ struct ConsoleVariable
 
 class Console
 {
-	struct OutputHistory
+	struct Line
 	{
-		OutputHistory() = default;
+		Line() = default;
 
-		OutputHistory(const std::string& InString, ImVec4 InColor)
+		Line(const std::string& InString, ImVec4 InColor)
 			: String(InString)
 			, Color(InColor)
 		{
@@ -182,6 +182,23 @@ class Console
 
 		std::string	String;
 		ImVec4		Color;
+	};
+
+	struct Candidate
+	{
+		Candidate() = default;
+
+		Candidate(const std::string& InText, const std::string& InPostFix)
+			: Text(InText)
+			, PostFix(InPostFix)
+		{
+			TextSize = ImGui::CalcTextSize(Text.c_str());
+			TextSize.x += 20.0f;
+		}
+
+		std::string	Text;
+		std::string	PostFix;
+		ImVec2 TextSize;
 	};
 
 public:
@@ -215,7 +232,13 @@ private:
 	std::unordered_map<std::string, Int32> CmdIndexMap;
 	std::unordered_map<std::string, Int32> VarIndexMap;
 
-	TArray<OutputHistory>	History;
+	TArray<Line>		Lines;
+	TArray<std::string> History;
+	TArray<Candidate>	Candidates;
+	UInt32	HistoryLength	= 50;
+	Int32	HistoryIndex	= -1;
+	Int32	CandidatesIndex	= -1;
+
 	TStaticArray<Char, 256>	TextBuffer;
 	
 	TStaticArray<ConsoleCommand, MAX_CONSOLE_COMMANDS> Commands;
@@ -224,7 +247,8 @@ private:
 	TStaticArray<ConsoleVariable, MAX_CONSOLE_VARIABLES> Variables;
 	UInt32 NextVariableIndex = 0;
 
-	Bool UpdateCursorPosition	= false;
-	Bool ScrollDown				= false;
-	Bool IsActive				= false;
+	Bool UpdateCursorPosition		= false;
+	Bool CandidateSelectionChanged	= false;
+	Bool ScrollDown					= false;
+	Bool IsActive					= false;
 };

@@ -155,9 +155,11 @@ void Profiler::Tick()
 			ImGui::Begin(
 				"FPS Window", 
 				nullptr,
-				ImGuiWindowFlags_NoDecoration		|
-				ImGuiWindowFlags_NoInputs			|
-				ImGuiWindowFlags_AlwaysAutoResize	| 
+				ImGuiWindowFlags_NoDecoration			|
+				ImGuiWindowFlags_NoInputs				|
+				ImGuiWindowFlags_AlwaysAutoResize		|
+				ImGuiWindowFlags_NoBringToFrontOnFocus	|
+				ImGuiWindowFlags_NoFocusOnAppearing		|
 				ImGuiWindowFlags_NoSavedSettings);
 
 			const std::string FpsStr = std::to_string(GlobalProfiler.Fps);
@@ -201,8 +203,9 @@ void Profiler::Tick()
 				ImGuiCond_Appearing);
 
 			const ImGuiWindowFlags Flags =
-				ImGuiWindowFlags_NoResize |
-				ImGuiWindowFlags_NoCollapse |
+				ImGuiWindowFlags_NoResize			|
+				ImGuiWindowFlags_NoCollapse			|
+				ImGuiWindowFlags_NoFocusOnAppearing |
 				ImGuiWindowFlags_NoSavedSettings;
 
 			Bool TempDrawProfiler = DrawProfiler->GetBool();

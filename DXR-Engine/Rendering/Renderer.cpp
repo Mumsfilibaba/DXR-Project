@@ -1292,9 +1292,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 					ImGuiCond_Appearing);
 				
 				const ImGuiWindowFlags Flags =
-					ImGuiWindowFlags_NoResize		|
-					ImGuiWindowFlags_NoScrollbar	|
-					ImGuiWindowFlags_NoCollapse		|
+					ImGuiWindowFlags_NoResize			|
+					ImGuiWindowFlags_NoScrollbar		|
+					ImGuiWindowFlags_NoCollapse			|
+					ImGuiWindowFlags_NoFocusOnAppearing |
 					ImGuiWindowFlags_NoSavedSettings;
 
 				Bool TempDrawTextureDebugger = DrawTextureDebugger->GetBool();
@@ -1391,8 +1392,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 				ImGui::Begin(
 					"Renderer Window",
 					nullptr,
-					ImGuiWindowFlags_NoMove			|
-					ImGuiWindowFlags_NoDecoration	|
+					ImGuiWindowFlags_NoMove				|
+					ImGuiWindowFlags_NoDecoration		|
+					ImGuiWindowFlags_NoFocusOnAppearing |
 					ImGuiWindowFlags_NoSavedSettings);
 
 				ImGui::Text("Renderer Status:");
