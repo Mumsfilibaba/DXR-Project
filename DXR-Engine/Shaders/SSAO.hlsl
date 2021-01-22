@@ -22,7 +22,8 @@ cbuffer Params : register(b0, space0)
 
 ConstantBuffer<Camera> CameraBuffer : register(b1, space0);
 
-#define THREAD_COUNT 32
+#define THREAD_COUNT	16
+#define MAX_SAMPLES		64
 
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
 void Main(ComputeShaderInput Input)
@@ -54,7 +55,9 @@ void Main(ComputeShaderInput Input)
 	float Occlusion = 0.0f;
 	for (int i = 0; i < FinalKernelSize; i++)
 	{
-		const float3 Sample = Samples[i];
+        const int Index = int(float(MAX_SAMPLES) * Random(floor(ViewPosition.xyz * 1000.0f), i));
+		
+        const float3 Sample = Samples[Index];
 		float3 SamplePos = mul(Sample, TBN);
 		SamplePos = ViewPosition + SamplePos * FinalRadius;
 			

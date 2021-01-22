@@ -7,7 +7,7 @@ cbuffer Params : register(b0, space0)
 	int2 ScreenSize;
 };
 
-#define THREAD_COUNT 32
+#define THREAD_COUNT 16
 
 groupshared float gTextureCache[THREAD_COUNT][THREAD_COUNT];
 

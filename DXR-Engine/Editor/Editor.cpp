@@ -354,7 +354,7 @@ static void DrawRenderSettings()
 	ImGui::Text("Enabled: ");
 	ImGui::NextColumn();
 
-	ImGui::Checkbox("##Enabled", &GlobalSSAOEnabled);
+	//ImGui::Checkbox("##Enabled", &GlobalSSAOEnabled);
 
 	ImGui::NextColumn();
 	ImGui::Text("Radius: ");

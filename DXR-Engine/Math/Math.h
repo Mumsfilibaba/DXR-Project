@@ -48,6 +48,12 @@ public:
 	{
 		return a >= b ? a : b;
 	}
+
+	template <typename T>
+	FORCEINLINE static T Abs(T a)
+	{
+		return (a * a) / a;
+	}
 };
 
 /*

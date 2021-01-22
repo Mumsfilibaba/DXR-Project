@@ -44,7 +44,6 @@ Bool GlobalVSyncEnabled			= false;
 Bool GlobalFrustumCullEnabled	= true;
 Bool GlobalFXAAEnabled			= true;
 Bool GlobalRayTracingEnabled	= false;
-Bool GlobalSSAOEnabled			= true;
 
 /*
 * Debug

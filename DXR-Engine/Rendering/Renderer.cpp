@@ -40,6 +40,7 @@ static const UInt32	 ShadowMapSampleCount	= 2;
 ConsoleVariable GlobalDrawTextureDebugger(ConsoleVariableType_Bool);
 ConsoleVariable GlobalDrawRendererInfo(ConsoleVariableType_Bool);
 
+ConsoleVariable GlobalEnableSSAO(ConsoleVariableType_Bool);
 ConsoleVariable GlobalSSAORadius(ConsoleVariableType_Float);
 ConsoleVariable GlobalSSAOBias(ConsoleVariableType_Float);
 ConsoleVariable GlobalSSAOKernelSize(ConsoleVariableType_Int);
@@ -788,7 +789,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	CmdList.ClearUnorderedAccessView(SSAOBufferUAV.Get(), WhiteColor);
 
-	if (GlobalSSAOEnabled)
+	if (GlobalEnableSSAO.GetBool())
 	{
 		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
 		
@@ -860,9 +861,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 			EShaderStage::ShaderStage_Compute,
 			&SSAOSettings, 7);
 
-		constexpr UInt32 ThreadCount = 32;
-		const UInt32 DispatchWidth	= Math::AlignUp<UInt32>(Width, ThreadCount) / ThreadCount;
-		const UInt32 DispatchHeight = Math::AlignUp<UInt32>(Height, ThreadCount) / ThreadCount;
+		constexpr UInt32 ThreadCount = 16;
+		const UInt32 DispatchWidth	= Math::DivideByMultiple<UInt32>(Width, ThreadCount);
+		const UInt32 DispatchHeight = Math::DivideByMultiple<UInt32>(Height, ThreadCount);
 		CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
 		CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
@@ -1561,11 +1562,14 @@ Bool Renderer::Init()
 	INIT_CONSOLE_VARIABLE("DrawRendererInfo", GlobalDrawRendererInfo);
 	GlobalDrawRendererInfo.SetBool(false);
 
+	INIT_CONSOLE_VARIABLE("EnableSSAO", GlobalEnableSSAO);
+	GlobalEnableSSAO.SetBool(true);
+
 	INIT_CONSOLE_VARIABLE("SSAOKernelSize", GlobalSSAOKernelSize);
-	GlobalSSAOKernelSize.SetInt32(48);
+	GlobalSSAOKernelSize.SetInt32(16);
 
 	INIT_CONSOLE_VARIABLE("SSAOBias", GlobalSSAOBias);
-	GlobalSSAOBias.SetFloat(0.0001f);
+	GlobalSSAOBias.SetFloat(0.03f);
 
 	INIT_CONSOLE_VARIABLE("SSAORadius", GlobalSSAORadius);
 	GlobalSSAORadius.SetFloat(0.3f);
@@ -3345,8 +3349,9 @@ Bool Renderer::InitIntegrationLUT()
 		EShaderStage::ShaderStage_Compute,
 		&StagingTextureUAV, 1, 0);
 
-	const UInt32 DispatchWidth	= Math::DivideByMultiple(LUTSize, 1);
-	const UInt32 DispatchHeight	= Math::DivideByMultiple(LUTSize, 1);
+	constexpr UInt32 ThreadCount = 16;
+	const UInt32 DispatchWidth	= Math::DivideByMultiple(LUTSize, ThreadCount);
+	const UInt32 DispatchHeight	= Math::DivideByMultiple(LUTSize, ThreadCount);
 	CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
 	CmdList.UnorderedAccessTextureBarrier(StagingTexture.Get());
@@ -3951,8 +3956,11 @@ Bool Renderer::InitSSAO()
 	// Generate SSAO Kernel
 	std::uniform_real_distribution<Float> RandomFloats(0.0f, 1.0f);
 	std::default_random_engine Generator;
+	
+	XMVECTOR Normal = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	
 	TArray<XMFLOAT3> SSAOKernel;
-	for (UInt32 i = 0; i < 64; ++i)
+	for (UInt32 i = 0; i < 256 && SSAOKernel.Size() < 64; ++i)
 	{
 		XMVECTOR XmSample = XMVectorSet(
 			RandomFloats(Generator) * 2.0f - 1.0f,
@@ -3964,13 +3972,19 @@ Bool Renderer::InitSSAO()
 		XmSample = XMVector3Normalize(XmSample);
 		XmSample = XMVectorScale(XmSample, Scale);
 
+		Float Dot = XMVectorGetX(XMVector3Dot(XmSample, Normal));
+		if (Math::Abs(Dot) > 0.85f)
+		{
+			continue;
+		}
+
 		Scale = Float(i) / 64.0f;
 		Scale = Math::Lerp(0.1f, 1.0f, Scale * Scale);
 		XmSample = XMVectorScale(XmSample, Scale);
 
 		XMFLOAT3 Sample;
 		XMStoreFloat3(&Sample, XmSample);
-		SSAOKernel.PushBack(Sample);
+		SSAOKernel.EmplaceBack(Sample);
 	}
 
 	// Generate noise
@@ -4349,7 +4363,10 @@ void Renderer::GenerateIrradianceMap(
 		EShaderStage::ShaderStage_Compute,
 		&DestUAV, 1, 0);
 
-	InCmdList.Dispatch(Size, Size, 6);
+	constexpr UInt32 ThreadCount = 16;
+	const UInt32 ThreadWidth	= Math::DivideByMultiple(Size, ThreadCount);
+	const UInt32 ThreadHeight	= Math::DivideByMultiple(Size, ThreadCount);
+	InCmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
 
 	InCmdList.UnorderedAccessTextureBarrier(Dest);
 
@@ -4439,7 +4456,11 @@ void Renderer::GenerateSpecularIrradianceMap(
 			EShaderStage::ShaderStage_Compute,
 			&DestUAVs[Mip], 1, 0);
 		
-		InCmdList.Dispatch(Width, Width, 6);
+		constexpr UInt32 ThreadCount = 16;
+		const UInt32 ThreadWidth	= Math::DivideByMultiple(Width, ThreadCount);
+		const UInt32 ThreadHeight	= Math::DivideByMultiple(Width, ThreadCount);
+		InCmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
+
 		InCmdList.UnorderedAccessTextureBarrier(Dest);
 
 		Width = std::max<UInt32>(Width / 2, 1U);

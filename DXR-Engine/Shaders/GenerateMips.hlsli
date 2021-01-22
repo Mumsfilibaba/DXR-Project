@@ -7,7 +7,7 @@
 
 //#define CUBE_MAP			1
 #define BLOCK_SIZE          8
-#define CHANNEL_COMPONENTS  64
+#define CHANNEL_COMPONENTS  BLOCK_SIZE * BLOCK_SIZE
 #define POWER_OF_TWO        1
 
 #define RootSig \

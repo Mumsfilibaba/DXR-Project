@@ -37,7 +37,6 @@ extern Bool GlobalVSyncEnabled;
 extern Bool GlobalFrustumCullEnabled;
 extern Bool GlobalFXAAEnabled;
 extern Bool GlobalRayTracingEnabled;
-extern Bool GlobalSSAOEnabled;
 
 /*
 * Debug

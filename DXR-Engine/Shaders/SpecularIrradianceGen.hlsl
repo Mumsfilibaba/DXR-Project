@@ -1,6 +1,6 @@
 #include "PBRCommon.hlsli"
 
-#define BLOCK_SIZE 1
+#define BLOCK_SIZE 16
 
 /*
 * TODO: Support rootsignatures that does not need to support our default rootsignature,

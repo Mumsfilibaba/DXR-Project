@@ -138,6 +138,10 @@ float Random(float3 Seed, int i)
 	return frac(sin(DotProduct) * 43758.5453f);
 }
 
+/*
+* Lerp
+*/
+
 float Linstep(float Low, float High, float P)
 {
 	return saturate((P - Low) / (High - Low));

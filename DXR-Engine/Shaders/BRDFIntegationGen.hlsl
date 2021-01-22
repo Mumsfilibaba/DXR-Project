@@ -53,7 +53,7 @@ float2 IntegrateBRDF(float NdotV, float Roughness)
 }
 
 [RootSignature(RootSig)]
-[numthreads(1, 1, 1)]
+[numthreads(16, 16, 1)]
 void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {
 	float OutputWidth;
