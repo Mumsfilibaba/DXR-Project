@@ -22,28 +22,28 @@ class RayTracingGeometry;
 class RayTracingScene;
 
 /*
-* ERenderingAPI
+* ERenderLayer
 */
 
-enum class ERenderingAPI : UInt32
+enum class ERenderLayerApi : UInt32
 {
-	RenderingAPI_Unknown	= 0,
-	RenderingAPI_D3D12		= 1,
+	RenderLayerApi_Unknown	= 0,
+	RenderLayerApi_D3D12	= 1,
 };
 
 /*
-* GenericRenderingAPI
+* GenericRenderLayer
 */
 
-class GenericRenderingAPI
+class GenericRenderLayer
 {
 public:
-	GenericRenderingAPI(ERenderingAPI InAPI)
-		: API(InAPI)
+	GenericRenderLayer(ERenderLayerApi InApi)
+		: Api(InApi)
 	{
 	}
 
-	virtual ~GenericRenderingAPI() = default;
+	virtual ~GenericRenderLayer() = default;
 
 	virtual Bool Init(Bool EnableDebug) = 0;
 
@@ -465,11 +465,11 @@ public:
 		return false;
 	}
 
-	FORCEINLINE ERenderingAPI GetAPI() const
+	FORCEINLINE ERenderLayerApi GetApi() const
 	{
-		return API;
+		return Api;
 	}
 
 protected:
-	ERenderingAPI API;
+	ERenderLayerApi Api;
 };

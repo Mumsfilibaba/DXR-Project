@@ -86,7 +86,7 @@ public:
 		Int32& OutX, 
 		Int32& OutY) const override final;
 	
-	static Bool PollPlatformEvents();
+	static Bool FlushSystemEventQueue();
 	static ModifierKeyState GetModifierKeyState();
 
 	static GenericApplication* Make();
@@ -98,6 +98,8 @@ private:
 	
 	TSharedRef<WindowsCursor> CurrentCursor;
 	TArray<TSharedRef<WindowsWindow>> Windows;
+
+	Bool IsTrackingMouse = false;
 };
 
 extern WindowsApplication* GlobalWindowsApplication;

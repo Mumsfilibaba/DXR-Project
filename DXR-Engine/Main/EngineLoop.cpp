@@ -23,6 +23,7 @@
 #include "Game/Game.h"
 
 #include "Debug/Profiler.h"
+#include "Debug/Console.h"
 
 #include "Memory/Memory.h"
 
@@ -32,7 +33,9 @@
 
 Int32 EngineMain(const TArrayView<const Char*> Args)
 {
-	#ifdef _DEBUG
+	UNREFERENCED_VARIABLE(Args);
+
+#ifdef _DEBUG
 	Memory::SetDebugFlags(EMemoryDebugFlag::MemoryDebugFlag_LeakCheck);
 #endif
 
@@ -82,6 +85,8 @@ Bool EngineLoop::PreInit()
 {
 	TRACE_FUNCTION_SCOPE();
 
+	GlobalProfiler.Init();
+
 	GlobalConsoleOutput = PlatformOutputDevice::Make();
 	if (!GlobalConsoleOutput)
 	{
@@ -109,6 +114,8 @@ Bool EngineLoop::Init()
 	GlobalEventDispatcher = DBG_NEW EventDispatcher(GlobalPlatformApplication);
 	GlobalPlatformApplication->SetEventHandler(GlobalEventDispatcher);
 
+	GlobalConsole.Init();
+
 	const UInt32 Style =
 		WindowStyleFlag_Titled		|
 		WindowStyleFlag_Closable	|
@@ -127,12 +134,22 @@ Bool EngineLoop::Init()
 	else
 	{
 		GlobalMainWindow->Show(false);
+
+		INIT_CONSOLE_COMMAND("ToggleFullscreen", []() 
+		{
+			GlobalMainWindow->ToggleFullscreen();
+		});
+
+		INIT_CONSOLE_COMMAND("Quit", []()
+		{
+			GlobalEngineLoop.Exit();
+		});
 	}
 
 	GlobalCursors::Init();
 
 	// RenderAPI
-	if (!RenderingAPI::Init(ERenderingAPI::RenderingAPI_D3D12))
+	if (!RenderLayer::Init(ERenderLayerApi::RenderLayerApi_D3D12))
 	{
 		return false;
 	}
@@ -169,6 +186,8 @@ Bool EngineLoop::PostInit()
 {
 	TRACE_FUNCTION_SCOPE();
 
+	Editor::Init();
+
 	ShouldRun = true;
 	return true;
 }
@@ -177,7 +196,7 @@ void EngineLoop::PreTick()
 {
 	TRACE_FUNCTION_SCOPE();
 
-	if (!PlatformApplication::PollPlatformEvents())
+	if (!PlatformApplication::FlushSystemEventQueue())
 	{
 		Exit();
 	}
@@ -190,7 +209,10 @@ void EngineLoop::Tick()
 	TRACE_FUNCTION_SCOPE();
 
 	EngineClock.Tick();
+	
 	GlobalGame->Tick(EngineClock.GetDeltaTime());
+
+	GlobalConsole.Tick();
 
 	Editor::Tick();
 }
@@ -199,16 +221,16 @@ void EngineLoop::PostTick()
 {
 	TRACE_FUNCTION_SCOPE();
 
-	GlobalRenderer->Tick(*Scene::GetCurrentScene());
-
 	GlobalProfiler.Tick();
+
+	GlobalRenderer->Tick(*Scene::GetCurrentScene());
 }
 
 Bool EngineLoop::PreRelease()
 {
 	TRACE_FUNCTION_SCOPE();
 
-	CommandListExecutor::WaitForGPU();
+	GlobalCmdListExecutor.WaitForGPU();
 	
 	TextureFactory::Release();
 
@@ -225,7 +247,7 @@ Bool EngineLoop::Release()
 
 	SAFEDELETE(GlobalRenderer);
 
-	RenderingAPI::Release();
+	RenderLayer::Release();
 
 	return true;
 }

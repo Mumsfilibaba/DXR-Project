@@ -2,6 +2,8 @@
 
 #include "Application/Input.h"
 
+#include <imgui.h>
+
 /*
 * EventDispatcher
 */
@@ -89,7 +91,7 @@ void EventDispatcher::UnregisterEventHandler(EventHandlerFunc Func)
 	LOG_WARNING("Handler is NOT registered as a EventHandler");
 }
 
-bool EventDispatcher::SendEvent(const Event& Event)
+Bool EventDispatcher::SendEvent(const Event& Event)
 {
 	for (EventHandlerPair& Pair : EventHandlers)
 	{
@@ -99,26 +101,20 @@ bool EventDispatcher::SendEvent(const Event& Event)
 			{
 				if (Pair.Func(Event))
 				{
-					return true;
+					Event.HasBeenHandled = true;
 				}
 			}
 			else
 			{
 				if (Pair.Handler->OnEvent(Event))
 				{
-					return true;
+					Event.HasBeenHandled = true;
 				}
 			}
 		}
 	}
 
-	return false;
-}
-
-void EventDispatcher::OnWindowResized(TSharedRef<GenericWindow> InWindow, UInt16 Width, UInt16 Height)
-{
-	WindowResizeEvent Event(InWindow, Width, Height);
-	SendEvent(Event);
+	return Event.HasBeenHandled;
 }
 
 void EventDispatcher::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)
@@ -129,11 +125,22 @@ void EventDispatcher::OnKeyReleased(EKey KeyCode, const ModifierKeyState& Modier
 	SendEvent(Event);
 }
 
-void EventDispatcher::OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState)
+void EventDispatcher::OnKeyPressed(EKey KeyCode, Bool IsRepeat, const ModifierKeyState& ModierKeyState)
 {
-	Input::RegisterKeyDown(KeyCode);
+	// TODO: Maybe a better solution that this?
+	ImGuiIO& IO = ImGui::GetIO();
+	if (!IO.WantCaptureKeyboard)
+	{
+		Input::RegisterKeyDown(KeyCode);
+	}
 
-	KeyPressedEvent Event(KeyCode, ModierKeyState);
+	KeyPressedEvent Event(KeyCode, IsRepeat, ModierKeyState);
+	SendEvent(Event);
+}
+
+void EventDispatcher::OnCharacterInput(UInt32 Character)
+{
+	KeyTypedEvent Event(Character);
 	SendEvent(Event);
 }
 
@@ -174,8 +181,44 @@ void EventDispatcher::OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta
 	SendEvent(Event);
 }
 
-void EventDispatcher::OnCharacterInput(UInt32 Character)
+void EventDispatcher::OnWindowResized(const TSharedRef<GenericWindow>& InWindow, UInt16 Width, UInt16 Height)
 {
-	KeyTypedEvent Event(Character);
+	WindowResizeEvent Event(InWindow, Width, Height);
+	SendEvent(Event);
+}
+
+void EventDispatcher::OnWindowMoved(const TSharedRef<GenericWindow>& Window, Int16 x, Int16 y)
+{
+	WindowMovedEvent Event(Window, x, y);
+	SendEvent(Event);
+}
+
+void EventDispatcher::OnWindowFocusChanged(const TSharedRef<GenericWindow>& Window, Bool HasFocus)
+{
+	// TODO: What if other windows loose focus?
+	if (!HasFocus)
+	{
+		Input::ClearState();
+	}
+
+	WindowFocusChangedEvent Event(Window, HasFocus);
+	SendEvent(Event);
+}
+
+void EventDispatcher::OnWindowMouseLeft(const TSharedRef<GenericWindow>& Window)
+{
+	WindowMouseLeftEvent Event(Window);
+	SendEvent(Event);
+}
+
+void EventDispatcher::OnWindowMouseEntered(const TSharedRef<GenericWindow>& Window)
+{
+	WindowMouseEnteredEvent Event(Window);
+	SendEvent(Event);
+}
+
+void EventDispatcher::OnWindowClosed(const TSharedRef<GenericWindow>& Window)
+{
+	WindowClosedEvent Event(Window);
 	SendEvent(Event);
 }

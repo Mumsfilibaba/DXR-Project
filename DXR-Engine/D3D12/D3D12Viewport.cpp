@@ -16,6 +16,19 @@ D3D12Viewport::D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdCo
 {
 }
 
+D3D12Viewport::~D3D12Viewport()
+{
+	BOOL FullscreenState;
+	HRESULT Result = SwapChain->GetFullscreenState(&FullscreenState, nullptr);
+	if (SUCCEEDED(Result))
+	{
+		if (FullscreenState)
+		{
+			SwapChain->SetFullscreenState(FALSE, nullptr);
+		}
+	}
+}
+
 Bool D3D12Viewport::Init()
 {
 	IDXGIFactory2* Factory		= Device->GetFactory();
@@ -23,8 +36,9 @@ Bool D3D12Viewport::Init()
 
 	// Save the flags
 	Flags = Device->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+	Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
-	const UInt32 NumSwapChainBuffers	= 3;
+	const UInt32 NumSwapChainBuffers	= 12;
 	const DXGI_FORMAT NativeFormat		= ConvertFormat(PixelFormat);
 
 	VALIDATE(Width > 0 && Height > 0);
@@ -44,12 +58,21 @@ Bool D3D12Viewport::Init()
 	SwapChainDesc.AlphaMode				= DXGI_ALPHA_MODE_IGNORE;
 	SwapChainDesc.Flags					= Flags;
 
+	DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc;
+	Memory::Memzero(&FullscreenDesc);
+
+	FullscreenDesc.RefreshRate.Numerator	= 0;
+	FullscreenDesc.RefreshRate.Denominator	= 1;
+	FullscreenDesc.Scaling					= DXGI_MODE_SCALING_STRETCHED;
+	FullscreenDesc.ScanlineOrdering			= DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	FullscreenDesc.Windowed					= true;
+
 	TComPtr<IDXGISwapChain1> TempSwapChain;
 	HRESULT Result = Factory->CreateSwapChainForHwnd(
 		Queue.GetQueue(),
 		Hwnd, 
 		&SwapChainDesc, 
-		nullptr, 
+		&FullscreenDesc,
 		nullptr, 
 		&TempSwapChain);
 	if (SUCCEEDED(Result))
@@ -62,6 +85,8 @@ Bool D3D12Viewport::Init()
 		}
 
 		NumBackBuffers = NumSwapChainBuffers;
+
+		SwapChain->SetMaximumFrameLatency(1);
 	}
 	else
 	{
@@ -82,7 +107,7 @@ Bool D3D12Viewport::Init()
 
 Bool D3D12Viewport::Resize(UInt32 InWidth, UInt32 InHeight)
 {
-	// TODO: Make sure that we can release the old surfaces
+	// TODO: Make sure that we release the old surfaces
 
 	if ((InWidth != Width || InHeight != Height) && InWidth > 0 && InHeight > 0)
 	{
@@ -116,7 +141,8 @@ Bool D3D12Viewport::Resize(UInt32 InWidth, UInt32 InHeight)
 
 Bool D3D12Viewport::Present(Bool VerticalSync)
 {
-	UInt32 SyncInterval = UInt32(VerticalSync);
+	const UInt32 SyncInterval = !!VerticalSync;
+
 	HRESULT Result = SwapChain->Present(SyncInterval, 0);
 	if (SUCCEEDED(Result))
 	{
@@ -161,8 +187,8 @@ Bool D3D12Viewport::RetriveBackBuffers()
 		D3D12_RENDER_TARGET_VIEW_DESC Desc;
 		Memory::Memzero(&Desc);
 
-		Desc.ViewDimension	= D3D12_RTV_DIMENSION_TEXTURE2D;
-		Desc.Format			= BackBuffer->GetNativeFormat();
+		Desc.ViewDimension			= D3D12_RTV_DIMENSION_TEXTURE2D;
+		Desc.Format					= BackBuffer->GetNativeFormat();
 		Desc.Texture2D.MipSlice		= 0;
 		Desc.Texture2D.PlaneSlice	= 0;
 

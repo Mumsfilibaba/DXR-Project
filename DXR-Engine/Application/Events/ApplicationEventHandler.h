@@ -18,15 +18,11 @@ class ApplicationEventHandler
 public:
 	virtual ~ApplicationEventHandler() = default;
 
-	virtual void OnWindowResized(TSharedRef<GenericWindow> Window, UInt16 Width, UInt16 Height)
-	{
-	}
-
 	virtual void OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)
 	{
 	}
 
-	virtual void OnKeyPressed(EKey KeyCode, const ModifierKeyState& ModierKeyState)
+	virtual void OnKeyPressed(EKey KeyCode, Bool IsRepeat, const ModifierKeyState& ModierKeyState)
 	{
 	}
 
@@ -47,6 +43,30 @@ public:
 	}
 
 	virtual void OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta)
+	{
+	}
+
+	virtual void OnWindowResized(const TSharedRef<GenericWindow>& Window, UInt16 Width, UInt16 Height)
+	{
+	}
+
+	virtual void OnWindowMoved(const TSharedRef<GenericWindow>& Window, Int16 x, Int16 y)
+	{
+	}
+	
+	virtual void OnWindowFocusChanged(const TSharedRef<GenericWindow>& Window, Bool HasFocus)
+	{
+	}
+	
+	virtual void OnWindowMouseLeft(const TSharedRef<GenericWindow>& Window)
+	{
+	}
+	
+	virtual void OnWindowMouseEntered(const TSharedRef<GenericWindow>& Window)
+	{
+	}
+	
+	virtual void OnWindowClosed(const TSharedRef<GenericWindow>& Window)
 	{
 	}
 };

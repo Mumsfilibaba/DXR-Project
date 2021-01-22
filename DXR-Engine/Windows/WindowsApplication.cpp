@@ -61,6 +61,7 @@ Bool WindowsApplication::Init()
 void WindowsApplication::Tick()
 {
 	constexpr UInt16 SCAN_CODE_MASK		= 0x01ff;
+	constexpr UInt32 KEY_REPEAT_MASK	= 0x40000000;
 	constexpr UInt16 BACK_BUTTON_MASK	= 0x0001;
 
 	for (const WindowsEvent& Event : Events)
@@ -75,7 +76,35 @@ void WindowsApplication::Tick()
 		{
 			case WM_DESTROY:
 			{
+				if (MessageWindow)
+				{
+					EventHandler->OnWindowClosed(MessageWindow);
+				}
+
 				::PostQuitMessage(0);
+				break;
+			}
+
+			case WM_SETFOCUS:
+			case WM_KILLFOCUS:
+			{
+				if (MessageWindow)
+				{
+					const Bool HasFocus = (Message == WM_SETFOCUS);
+					EventHandler->OnWindowFocusChanged(MessageWindow, HasFocus);
+				}
+
+				break;
+			}
+
+			case WM_MOUSELEAVE:
+			{
+				if (MessageWindow)
+				{
+					EventHandler->OnWindowMouseLeft(MessageWindow);
+				}
+
+				IsTrackingMouse = false;
 				break;
 			}
 
@@ -85,10 +114,19 @@ void WindowsApplication::Tick()
 				{
 					const UInt16 Width	= LOWORD(lParam);
 					const UInt16 Height	= HIWORD(lParam);
-
 					EventHandler->OnWindowResized(MessageWindow, Width, Height);
+				}
 
-					LOG_INFO("Window Resize(" + std::to_string(Width) + ", " + std::to_string(Height) + ")");
+				break;
+			}
+
+			case WM_MOVE:
+			{
+				if (MessageWindow)
+				{
+					const Int16 x = (Int16)LOWORD(lParam);
+					const Int16 y = (Int16)HIWORD(lParam);
+					EventHandler->OnWindowMoved(MessageWindow, x, y);
 				}
 
 				break;
@@ -106,9 +144,10 @@ void WindowsApplication::Tick()
 			case WM_SYSKEYDOWN:
 			case WM_KEYDOWN:
 			{
+				const Bool IsRepeat		= !!(lParam & KEY_REPEAT_MASK);
 				const UInt32 ScanCode	= static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
 				const EKey Key			= Input::ConvertFromScanCode(ScanCode);
-				EventHandler->OnKeyPressed(Key, GetModifierKeyState());
+				EventHandler->OnKeyPressed(Key, IsRepeat, GetModifierKeyState());
 				break;
 			}
 
@@ -124,6 +163,21 @@ void WindowsApplication::Tick()
 			{
 				const Int32 x = GET_X_LPARAM(lParam);
 				const Int32 y = GET_Y_LPARAM(lParam);
+
+				if (!IsTrackingMouse)
+				{
+					IsTrackingMouse = true;
+
+					TRACKMOUSEEVENT TrackEvent;
+					Memory::Memzero(&TrackEvent);
+
+					TrackEvent.cbSize		= sizeof(TRACKMOUSEEVENT);
+					TrackEvent.dwFlags		= TME_LEAVE;
+					TrackEvent.hwndTrack	= Hwnd;
+					TrackMouseEvent(&TrackEvent);
+
+					EventHandler->OnWindowMouseEntered(MessageWindow);
+				}
 
 				EventHandler->OnMouseMove(x, y);
 				break;
@@ -252,9 +306,9 @@ GenericCursor* WindowsApplication::MakeCursor()
 	}
 }
 
-Bool WindowsApplication::PollPlatformEvents()
+Bool WindowsApplication::FlushSystemEventQueue()
 {
-	MSG Message = { };
+	MSG Message;
 	while (::PeekMessage(&Message, 0, 0, 0, PM_REMOVE))
 	{
 		::TranslateMessage(&Message);
@@ -413,6 +467,10 @@ LRESULT WindowsApplication::ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wPa
 	switch (uMessage)
 	{
 		case WM_DESTROY:
+		case WM_MOVE:
+		case WM_MOUSELEAVE:
+		case WM_SETFOCUS:
+		case WM_KILLFOCUS:
 		case WM_SIZE:
 		case WM_SYSKEYUP:
 		case WM_KEYUP:

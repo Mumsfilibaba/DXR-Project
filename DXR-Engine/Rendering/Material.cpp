@@ -21,7 +21,7 @@ Material::Material(const MaterialProperties& InProperties)
 
 void Material::Init()
 {
-	MaterialBuffer = RenderingAPI::CreateConstantBuffer<MaterialProperties>(
+	MaterialBuffer = RenderLayer::CreateConstantBuffer<MaterialProperties>(
 		nullptr, 
 		BufferUsage_Default,
 		EResourceState::ResourceState_Common);
@@ -37,7 +37,7 @@ void Material::Init()
 	CreateInfo.MinLOD			= -FLT_MAX;
 	CreateInfo.MipLODBias		= 0.0f;
 
-	Sampler = RenderingAPI::CreateSamplerState(CreateInfo);
+	Sampler = RenderLayer::CreateSamplerState(CreateInfo);
 }
 
 void Material::BuildBuffer(CommandList& CmdList)

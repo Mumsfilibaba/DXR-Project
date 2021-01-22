@@ -16,7 +16,7 @@
 #include "RenderingCore/Buffer.h"
 #include "RenderingCore/Texture.h"
 #include "RenderingCore/PipelineState.h"
-#include "RenderingCore/RenderingAPI.h"
+#include "RenderingCore/RenderLayer.h"
 #include "RenderingCore/ShaderCompiler.h"
 #include "RenderingCore/Shader.h"
 
@@ -39,8 +39,10 @@ struct ImGuiState
 
 	SampledTexture2D					FontTexture;
 	TSharedRef<GraphicsPipelineState>	PipelineState;
+	TSharedRef<GraphicsPipelineState>	PipelineStateNoBlending;
 	TSharedRef<VertexBuffer>			VertexBuffer;
 	TSharedRef<IndexBuffer>				IndexBuffer;
+	TArray<ImGuiImage*>					Images;
 	
 	ImGuiContext* Context = nullptr;
 };
@@ -56,7 +58,7 @@ static UInt32 GetMouseButtonIndex(EMouseButton Button)
 	switch (Button)
 	{
 	case MouseButton_Left:		return 0;
-	case MouseButton_Right:	return 1;
+	case MouseButton_Right:		return 1;
 	case MouseButton_Middle:	return 2;
 	case MouseButton_Back:		return 3;
 	case MouseButton_Forward:	return 4;
@@ -71,7 +73,7 @@ static UInt32 GetMouseButtonIndex(EMouseButton Button)
 static TArray<DebugUI::UIDrawFunc>	GlobalDrawFuncs;
 static TArray<std::string>			GlobalDebugStrings;
 
-bool DebugUI::Init()
+Bool DebugUI::Init()
 {
 	// Create context
 	IMGUI_CHECKVERSION();
@@ -121,8 +123,12 @@ bool DebugUI::Init()
 
 	ImGuiStyle& Style = ImGui::GetStyle();
 	Style.WindowRounding	= 0.0f;
-	Style.FrameRounding		= 3.0f;
-	Style.GrabRounding		= 4.0f;
+	Style.FrameRounding		= 0.0f;
+	Style.GrabRounding		= 0.0f;
+	Style.TabRounding		= 0.0f;
+	Style.WindowBorderSize	= 0.0f;
+	Style.ScrollbarRounding = 0.0f;
+	Style.ScrollbarSize		= 12.0f;
 
 	Style.Colors[ImGuiCol_WindowBg].x = 0.15f;
 	Style.Colors[ImGuiCol_WindowBg].y = 0.15f;
@@ -270,7 +276,7 @@ bool DebugUI::Init()
 		return false;
 	}
 
-	TSharedRef<VertexShader> VShader = RenderingAPI::CreateVertexShader(ShaderCode);
+	TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
 	if (!VShader)
 	{
 		Debug::DebugBreak();
@@ -305,7 +311,7 @@ bool DebugUI::Init()
 		return false;
 	}
 
-	TSharedRef<PixelShader> PShader = RenderingAPI::CreatePixelShader(ShaderCode);
+	TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
 	if (!PShader)
 	{
 		Debug::DebugBreak();
@@ -319,7 +325,7 @@ bool DebugUI::Init()
 		{ "COLOR",		0, EFormat::Format_R8G8B8A8_Unorm,	0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, col)),	EInputClassification::InputClassification_Vertex, 0 },
 	};
 
-	TSharedRef<InputLayoutState> InputLayout = RenderingAPI::CreateInputLayout(InputLayoutInfo);
+	TSharedRef<InputLayoutState> InputLayout = RenderLayer::CreateInputLayout(InputLayoutInfo);
 	if (!InputLayout)
 	{
 		Debug::DebugBreak();
@@ -334,7 +340,7 @@ bool DebugUI::Init()
 	DepthStencilStateInfo.DepthEnable		= false;
 	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_Zero;
 
-	TSharedRef<DepthStencilState> DepthStencilState = RenderingAPI::CreateDepthStencilState(DepthStencilStateInfo);
+	TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
 	if (!DepthStencilState)
 	{
 		Debug::DebugBreak();
@@ -348,7 +354,7 @@ bool DebugUI::Init()
 	RasterizerStateCreateInfo RasterizerStateInfo;
 	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
 
-	TSharedRef<RasterizerState> RasterizerState = RenderingAPI::CreateRasterizerState(RasterizerStateInfo);
+	TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
 	if (!RasterizerState)
 	{
 		Debug::DebugBreak();
@@ -369,15 +375,28 @@ bool DebugUI::Init()
 	BlendStateInfo.RenderTarget[0].BlendOpAlpha		= EBlendOp::BlendOp_Add;
 	BlendStateInfo.RenderTarget[0].BlendOp			= EBlendOp::BlendOp_Add;
 
-	TSharedRef<BlendState> BlendState = RenderingAPI::CreateBlendState(BlendStateInfo);
-	if (!BlendState)
+	TSharedRef<BlendState> BlendStateBlending = RenderLayer::CreateBlendState(BlendStateInfo);
+	if (!BlendStateBlending)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 	else
 	{
-		BlendState->SetName("ImGui BlendState");
+		BlendStateBlending->SetName("ImGui BlendState");
+	}
+
+	BlendStateInfo.RenderTarget[0].BlendEnable = false;
+
+	TSharedRef<BlendState> BlendStateNoBlending = RenderLayer::CreateBlendState(BlendStateInfo);
+	if (!BlendStateBlending)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		BlendStateBlending->SetName("ImGui BlendState No Blending");
 	}
 
 	GraphicsPipelineStateCreateInfo PSOProperties;
@@ -385,20 +404,29 @@ bool DebugUI::Init()
 	PSOProperties.ShaderState.PixelShader					= PShader.Get();
 	PSOProperties.InputLayoutState							= InputLayout.Get();
 	PSOProperties.DepthStencilState							= DepthStencilState.Get();
-	PSOProperties.BlendState								= BlendState.Get();
+	PSOProperties.BlendState								= BlendStateBlending.Get();
 	PSOProperties.RasterizerState							= RasterizerState.Get();
 	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
 	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
 	PSOProperties.PrimitiveTopologyType						= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
 
-	GlobalImGuiState.PipelineState = RenderingAPI::CreateGraphicsPipelineState(PSOProperties);
+	GlobalImGuiState.PipelineState = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
 	if (!GlobalImGuiState.PipelineState)
 	{
+		Debug::DebugBreak();
 		return false;
 	}
 
-	// VertexBuffer
-	GlobalImGuiState.VertexBuffer = RenderingAPI::CreateVertexBuffer(
+	PSOProperties.BlendState = BlendStateNoBlending.Get();
+
+	GlobalImGuiState.PipelineStateNoBlending = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+	if (!GlobalImGuiState.PipelineStateNoBlending)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	GlobalImGuiState.VertexBuffer = RenderLayer::CreateVertexBuffer(
 		nullptr, 
 		1024 * 1024 * 8, 
 		sizeof(ImDrawVert), 
@@ -408,8 +436,7 @@ bool DebugUI::Init()
 		return false;
 	}
 
-	// IndexBuffer
-	GlobalImGuiState.IndexBuffer = RenderingAPI::CreateIndexBuffer(
+	GlobalImGuiState.IndexBuffer = RenderLayer::CreateIndexBuffer(
 		nullptr, 
 		1024 * 1024 * 8, 
 		sizeof(ImDrawIdx) == 2 ? EIndexFormat::IndexFormat_UInt16 : EIndexFormat::IndexFormat_UInt32,
@@ -419,7 +446,6 @@ bool DebugUI::Init()
 		return false;
 	}
 
-	// Register EventFunc
 	GlobalEventDispatcher->RegisterEventHandler(DebugUI::OnEvent, EEventCategory::EventCategory_Input);
 
 	return true;
@@ -442,32 +468,34 @@ void DebugUI::DrawDebugString(const std::string& DebugString)
 	GlobalDebugStrings.EmplaceBack(DebugString);
 }
 
-bool DebugUI::OnEvent(const Event& Event)
+Bool DebugUI::OnEvent(const Event& Event)
 {
 	ImGuiIO& IO = ImGui::GetIO();
-	if (IsOfEventType<KeyPressedEvent>(Event))
+	if (IsEventOfType<KeyPressedEvent>(Event))
 	{
-		IO.KeysDown[CastEvent<KeyPressedEvent>(Event).Key] = true;
+		const EKey Key = CastEvent<KeyReleasedEvent>(Event).Key;
+		IO.KeysDown[Key] = true;
 	}
-	else if (IsOfEventType<KeyReleasedEvent>(Event))
+	else if (IsEventOfType<KeyReleasedEvent>(Event))
 	{
-		IO.KeysDown[CastEvent<KeyReleasedEvent>(Event).Key] = false;
+		const EKey Key = CastEvent<KeyReleasedEvent>(Event).Key;
+		IO.KeysDown[Key] = false;
 	}
-	else if (IsOfEventType<KeyTypedEvent>(Event))
+	else if (IsEventOfType<KeyTypedEvent>(Event))
 	{
 		IO.AddInputCharacter(CastEvent<KeyTypedEvent>(Event).Character);
 	}
-	else if (IsOfEventType<MousePressedEvent>(Event))
+	else if (IsEventOfType<MousePressedEvent>(Event))
 	{
 		const UInt32 ButtonIndex = GetMouseButtonIndex(CastEvent<MousePressedEvent>(Event).Button);
 		IO.MouseDown[ButtonIndex] = true;
 	}
-	else if (IsOfEventType<MouseReleasedEvent>(Event))
+	else if (IsEventOfType<MouseReleasedEvent>(Event))
 	{
 		const UInt32 ButtonIndex = GetMouseButtonIndex(CastEvent<MousePressedEvent>(Event).Button);
 		IO.MouseDown[ButtonIndex] = false;
 	}
-	else if (IsOfEventType<MouseScrolledEvent>(Event))
+	else if (IsEventOfType<MouseScrolledEvent>(Event))
 	{
 		IO.MouseWheel	+= CastEvent<MouseScrolledEvent>(Event).VerticalDelta;
 		IO.MouseWheelH	+= CastEvent<MouseScrolledEvent>(Event).HorizontalDelta;
@@ -478,19 +506,15 @@ bool DebugUI::OnEvent(const Event& Event)
 
 void DebugUI::Render(CommandList& CmdList)
 {
-	ImGuiIO& IO = ImGui::GetIO();
-
-	// Get deltatime
 	GlobalImGuiState.FrameClock.Tick();
 
-	// Set Mouseposition
+	ImGuiIO& IO = ImGui::GetIO();
 	GenericWindow* Window = GlobalMainWindow;
 	if (IO.WantSetMousePos)
 	{
 		GlobalPlatformApplication->SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
 	}
 
-	// Get the display size
 	WindowShape CurrentWindowShape;
 	Window->GetWindowShape(CurrentWindowShape);
 
@@ -499,21 +523,18 @@ void DebugUI::Render(CommandList& CmdList)
 	IO.DisplaySize				= ImVec2(Float(CurrentWindowShape.Width), Float(CurrentWindowShape.Height));
 	IO.DisplayFramebufferScale	= ImVec2(1.0f, 1.0f);
 
-	// Get Mouseposition
 	Int32 x = 0;
 	Int32 y = 0;
 	GlobalPlatformApplication->GetCursorPos(Window, x, y);
 	
 	IO.MousePos = ImVec2(static_cast<Float>(x), static_cast<Float>(y));
 
-	// Check modifer keys
 	ModifierKeyState KeyState = PlatformApplication::GetModifierKeyState();
 	IO.KeyCtrl	= KeyState.IsCtrlDown();
 	IO.KeyShift	= KeyState.IsShiftDown();
 	IO.KeyAlt	= KeyState.IsAltDown();
 	IO.KeySuper = KeyState.IsSuperKeyDown();
 
-	// Set MouseCursor
 	if (!(IO.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange))
 	{
 		ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
@@ -523,7 +544,6 @@ void DebugUI::Render(CommandList& CmdList)
 		}
 		else
 		{
-			// Show OS mouse cursor
 			TSharedRef<GenericCursor> Cursor = GlobalCursors::Arrow;
 			switch (ImguiCursor)
 			{
@@ -583,16 +603,9 @@ void DebugUI::Render(CommandList& CmdList)
 		ImGui::EndFrame();
 	}
 
-	GlobalRenderer->DrawUI();
-
-#if ENABLE_PROFILER
-	GlobalProfiler.DrawUI();
-#endif
-
 	// Render ImgGui draw data
 	ImGui::Render();
 
-	// Get Draw data
 	ImDrawData* DrawData = ImGui::GetDrawData();
 
 	Float L = DrawData->DisplayPos.x;
@@ -620,7 +633,6 @@ void DebugUI::Render(CommandList& CmdList)
 	CmdList.BindVertexBuffers(&GlobalImGuiState.VertexBuffer, 1, 0);
 	CmdList.BindIndexBuffer(GlobalImGuiState.IndexBuffer.Get());
 	CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
-	CmdList.BindGraphicsPipelineState(GlobalImGuiState.PipelineState.Get());
 	CmdList.BindBlendFactor(ColorClearValue(0.0f, 0.0f, 0.0f, 0.0f));
 
 	// TODO: Do not change to GenericRead, change to vertex/constantbuffer
@@ -668,8 +680,6 @@ void DebugUI::Render(CommandList& CmdList)
 		EResourceState::ResourceState_CopyDest,
 		EResourceState::ResourceState_GenericRead);
 
-	// Render command lists
-	// (Because we merged all buffers into a single one, we maintain our own offset into them)
 	Int32	GlobalVertexOffset	= 0;
 	Int32	GlobalIndexOffset	= 0;
 	ImVec2	ClipOff				= DrawData->DisplayPos;
@@ -678,11 +688,42 @@ void DebugUI::Render(CommandList& CmdList)
 		const ImDrawList* DrawCmdList = DrawData->CmdLists[i];
 		for (Int32 CmdIndex = 0; CmdIndex < DrawCmdList->CmdBuffer.Size; CmdIndex++)
 		{
+			CmdList.BindGraphicsPipelineState(GlobalImGuiState.PipelineState.Get());
+
 			const ImDrawCmd* Cmd = &DrawCmdList->CmdBuffer[CmdIndex];
-			CmdList.BindShaderResourceViews(
-				EShaderStage::ShaderStage_Pixel,
-				&GlobalImGuiState.FontTexture.View, 
-				1, 0);
+			if (Cmd->TextureId)
+			{
+				ImGuiImage* Image = reinterpret_cast<ImGuiImage*>(Cmd->TextureId);
+				GlobalImGuiState.Images.EmplaceBack(Image);
+				
+				if (Image->BeforeState != EResourceState::ResourceState_PixelShaderResource)
+				{
+					CmdList.TransitionTexture(
+						Image->Image.Get(),
+						Image->BeforeState,
+						EResourceState::ResourceState_PixelShaderResource);
+
+					// TODO: Another way to do this? May break somewhere?
+					Image->BeforeState = EResourceState::ResourceState_PixelShaderResource;
+				}
+
+				CmdList.BindShaderResourceViews(
+					EShaderStage::ShaderStage_Pixel,
+					&Image->ImageView,
+					1, 0);
+
+				if (!Image->AllowBlending)
+				{
+					CmdList.BindGraphicsPipelineState(GlobalImGuiState.PipelineStateNoBlending.Get());
+				}
+			}
+			else
+			{
+				CmdList.BindShaderResourceViews(
+					EShaderStage::ShaderStage_Pixel,
+					&GlobalImGuiState.FontTexture.View,
+					1, 0);
+			}
 
 			CmdList.BindScissorRect(
 				Cmd->ClipRect.z - ClipOff.x,
@@ -701,6 +742,21 @@ void DebugUI::Render(CommandList& CmdList)
 		GlobalIndexOffset	+= DrawCmdList->IdxBuffer.Size;
 		GlobalVertexOffset	+= DrawCmdList->VtxBuffer.Size;
 	}
+
+	for (ImGuiImage* Image : GlobalImGuiState.Images)
+	{
+		VALIDATE(Image != nullptr);
+
+		if (Image->AfterState != EResourceState::ResourceState_PixelShaderResource)
+		{
+			CmdList.TransitionTexture(
+				Image->Image.Get(),
+				EResourceState::ResourceState_PixelShaderResource,
+				Image->AfterState);
+		}
+	}
+
+	GlobalImGuiState.Images.Clear();
 }
 
 ImGuiContext* DebugUI::GetCurrentContext()

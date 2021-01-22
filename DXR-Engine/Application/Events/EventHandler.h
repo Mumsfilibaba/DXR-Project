@@ -5,7 +5,7 @@
 * EventHandlerFunc
 */
 
-typedef bool(*EventHandlerFunc)(const Event& Event);
+typedef Bool(*EventHandlerFunc)(const Event& Event);
 
 /*
 * IEventHandler
@@ -14,5 +14,5 @@ typedef bool(*EventHandlerFunc)(const Event& Event);
 class IEventHandler
 {
 public:
-	virtual bool OnEvent(const Event& Event) = 0;
+	virtual Bool OnEvent(const Event& Event) = 0;
 };

@@ -22,21 +22,31 @@ enum class EEventType : UInt8
 	EventType_MouseReleased	= 6,
 	EventType_MouseScrolled	= 7,
 
-	EventType_WindowResized = 8,
+	EventType_WindowResized			= 8,
+	EventType_WindowMoved			= 9,
+	EventType_WindowMouseLeft		= 10,
+	EventType_WindowMouseEntered	= 11,
+	EventType_WindowFocusChanged	= 12,
+	EventType_WindowClosed			= 13,
 };
 
 inline const Char* ToString(EEventType EventType)
 {
 	switch (EventType)
 	{
-	case EEventType::EventType_KeyPressed:		return "KeyPressed";
-	case EEventType::EventType_KeyReleased:		return "KeyReleased";
-	case EEventType::EventType_KeyTyped:		return "KeyTyped";
-	case EEventType::EventType_MouseMoved:		return "MouseMoved";
-	case EEventType::EventType_MousePressed:	return "MousePressed";
-	case EEventType::EventType_MouseReleased:	return "MouseReleased";
-	case EEventType::EventType_MouseScrolled:	return "MouseScrolled";
-	case EEventType::EventType_WindowResized:	return "WindowResized";
+	case EEventType::EventType_KeyPressed:			return "KeyPressed";
+	case EEventType::EventType_KeyReleased:			return "KeyReleased";
+	case EEventType::EventType_KeyTyped:			return "KeyTyped";
+	case EEventType::EventType_MouseMoved:			return "MouseMoved";
+	case EEventType::EventType_MousePressed:		return "MousePressed";
+	case EEventType::EventType_MouseReleased:		return "MouseReleased";
+	case EEventType::EventType_MouseScrolled:		return "MouseScrolled";
+	case EEventType::EventType_WindowResized:		return "WindowResized";
+	case EEventType::EventType_WindowMoved:			return "WindowMoved";
+	case EEventType::EventType_WindowMouseLeft:		return "WindowMouseLeft";
+	case EEventType::EventType_WindowMouseEntered:	return "WindowMouseEntered";
+	case EEventType::EventType_WindowFocusChanged:	return "WindowFocusChanged";
+	case EEventType::EventType_WindowClosed:		return "WindowClosed";
 	}
 
 	return "Unknown";
@@ -85,6 +95,14 @@ enum EEventCategory : UInt8
 
 struct Event
 {
+	friend class EventDispatcher;
+
+public:
+	Event()
+		: HasBeenHandled(false)
+	{
+	}
+
 	virtual ~Event() = default;
 
 	virtual std::string ToString() const = 0;
@@ -93,10 +111,18 @@ struct Event
 	virtual const Char* GetTypeAsString() const	= 0;
 	virtual UInt8 GetCategoryFlags() const		= 0;
 
-	inline static EEventType GetStaticType()
+	FORCEINLINE Bool IsHandled() const
+	{
+		return HasBeenHandled;
+	}
+
+	FORCEINLINE static EEventType GetStaticType()
 	{
 		return EEventType::EventType_Unknown;
 	}
+
+private:
+	mutable Bool HasBeenHandled;
 };
 
 /*
@@ -104,19 +130,19 @@ struct Event
 */
 
 template<typename T>
-inline TEnableIf<std::is_base_of_v<Event, T>, Bool> IsOfEventType(const Event& InEvent)
+TEnableIf<std::is_base_of_v<Event, T>, Bool> IsEventOfType(const Event& InEvent)
 {
 	return (InEvent.GetType() == T::GetStaticType());
 }
 
 template<typename T>
-inline TEnableIf<std::is_base_of_v<Event, T>, T&> CastEvent(Event& InEvent)
+TEnableIf<std::is_base_of_v<Event, T>, T&> CastEvent(Event& InEvent)
 {
 	return static_cast<T&>(InEvent);
 }
 
 template<typename T>
-inline TEnableIf<std::is_base_of_v<Event, T>, const T&> CastEvent(const Event& InEvent)
+TEnableIf<std::is_base_of_v<Event, T>, const T&> CastEvent(const Event& InEvent)
 {
 	return static_cast<const T&>(InEvent);
 }
@@ -129,20 +155,22 @@ struct KeyPressedEvent : public Event
 {
 	DECLARE_EVENT(EventType_KeyPressed, EventCategory_Input | EventCategory_Keyboard);
 
-	KeyPressedEvent(EKey InKey, const ModifierKeyState& InModifiers)
+	KeyPressedEvent(EKey InKey, Bool InIsRepeat, const ModifierKeyState& InModifiers)
 		: Event()
 		, Key(InKey)
+		, IsRepeat(InIsRepeat)
 		, Modifiers(InModifiers)
 	{
 	}
 
 	virtual std::string ToString() const override final
 	{
-		return std::string(GetTypeAsString()) + " = " + ::ToString(Key);
+		return std::string(GetTypeAsString()) + " = " + ::ToString(Key) + ", IsRepeat = " + (IsRepeat ? "True" : "False");
 	}
 
-	EKey				Key;
-	ModifierKeyState	Modifiers;
+	EKey Key;
+	Bool IsRepeat;
+	ModifierKeyState Modifiers;
 };
 
 /*
@@ -316,4 +344,121 @@ struct WindowResizeEvent : public Event
 	TSharedRef<GenericWindow> Window;
 	UInt16 Width;
 	UInt16 Height;
+};
+
+/*
+* WindowFocusChangedEvent
+*/
+
+struct WindowFocusChangedEvent : public Event
+{
+	DECLARE_EVENT(EventType_WindowFocusChanged, EventCategory_Window);
+
+	WindowFocusChangedEvent(const TSharedRef<GenericWindow>& InWindow, Bool hasFocus)
+		: Event()
+		, Window(InWindow)
+		, HasFocus(hasFocus)
+	{
+	}
+
+	virtual std::string ToString() const override
+	{
+		return std::string("WindowFocusChangedEvent=") + std::to_string(HasFocus);
+	}
+
+	TSharedRef<GenericWindow> Window;
+	Bool HasFocus;
+};
+
+/*
+* WindowMovedEvent
+*/
+struct WindowMovedEvent : public Event
+{
+	DECLARE_EVENT(EventType_WindowMoved, EventCategory_Window);
+	
+	WindowMovedEvent(const TSharedRef<GenericWindow>& InWindow, Int16 x, Int16 y)
+		: Event()
+		, Window(InWindow)
+		, Position({ x, y })
+	{
+	}
+
+	virtual std::string ToString() const override
+	{
+		return std::string("WindowMovedEvent=[x, ") + std::to_string(Position.x) + ", y=" + std::to_string(Position.y) + "]";
+	}
+
+	TSharedRef<GenericWindow> Window;
+	struct
+	{
+		Int16 x;
+		Int16 y;
+	} Position;
+};
+
+/*
+* WindowMouseLeftEvent
+*/
+
+struct WindowMouseLeftEvent : public Event
+{
+	DECLARE_EVENT(EventType_WindowMouseLeft, EventCategory_Window);
+	
+	WindowMouseLeftEvent(const TSharedRef<GenericWindow>& InWindow)
+		: Event()
+		, Window(InWindow)
+	{
+	}
+
+	virtual std::string ToString() const override
+	{
+		return "WindowMouseLeftEvent";
+	}
+
+	TSharedRef<GenericWindow> Window;
+};
+
+/*
+* WindowMouseEnteredEvent
+*/
+
+struct WindowMouseEnteredEvent : public Event
+{
+	DECLARE_EVENT(EventType_WindowMouseEntered, EventCategory_Window);
+	
+	WindowMouseEnteredEvent(const TSharedRef<GenericWindow>& InWindow)
+		: Event()
+		, Window(InWindow)
+	{
+	}
+
+	virtual std::string ToString() const override
+	{
+		return "WindowMouseEnteredEvent";
+	}
+
+	TSharedRef<GenericWindow> Window;
+};
+
+/*
+* WindowClosedEvent
+*/
+
+struct WindowClosedEvent : public Event
+{
+	DECLARE_EVENT(EventType_WindowClosed, EventCategory_Window);
+
+	WindowClosedEvent(const TSharedRef<GenericWindow>& InWindow)
+		: Event()
+		, Window(InWindow)
+	{
+	}
+
+	virtual std::string ToString() const override
+	{
+		return "WindowClosedEvent";
+	}
+
+	TSharedRef<GenericWindow> Window;
 };

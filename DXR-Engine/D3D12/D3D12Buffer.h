@@ -28,7 +28,7 @@ public:
 
 class D3D12VertexBuffer : public VertexBuffer, public D3D12Buffer
 {
-	friend class D3D12RenderingAPI;
+	friend class D3D12RenderLayer;
 
 public:
 	D3D12VertexBuffer::D3D12VertexBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InStride, UInt32 InUsage)
@@ -73,7 +73,7 @@ private:
 
 class D3D12IndexBuffer : public IndexBuffer, public D3D12Buffer
 {
-	friend class D3D12RenderingAPI;
+	friend class D3D12RenderLayer;
 
 public:
 	D3D12IndexBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, EIndexFormat InIndexFormat, UInt32 InUsage)
@@ -118,7 +118,7 @@ private:
 
 class D3D12ConstantBuffer : public ConstantBuffer, public D3D12Buffer
 {
-	friend class D3D12RenderingAPI;
+	friend class D3D12RenderLayer;
 
 public:
 	D3D12ConstantBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InUsage)
@@ -168,7 +168,7 @@ private:
 
 class D3D12StructuredBuffer : public StructuredBuffer, public D3D12Buffer
 {
-	friend class D3D12RenderingAPI;
+	friend class D3D12RenderLayer;
 
 public:
 	D3D12StructuredBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InStride, UInt32 InUsage)

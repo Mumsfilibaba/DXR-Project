@@ -226,22 +226,22 @@ public:
 
 	FORCEINLINE Bool IsRayTracingSupported() const
 	{
-		return RayTracingSupported;
+		return RayTracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
 	}
 
 	FORCEINLINE Bool IsInlineRayTracingSupported() const
 	{
-		return InlineRayTracingSupported;
+		return RayTracingTier != D3D12_RAYTRACING_TIER_1_1;
 	}
 
 	FORCEINLINE Bool IsMeshShadersSupported() const
 	{
-		return MeshShadersSupported;
+		return MeshShaderTier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
 	}
 
 	FORCEINLINE Bool IsSamplerFeedbackSupported() const
 	{
-		return SamplerFeedbackSupported;
+		return SamplerFeedBackTier != D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
 	}
 
 	FORCEINLINE D3D12OfflineDescriptorHeap* GetGlobalResourceDescriptorHeap() const
@@ -282,6 +282,11 @@ private:
 	D3D_FEATURE_LEVEL MinFeatureLevel		= D3D_FEATURE_LEVEL_11_0;
 	D3D_FEATURE_LEVEL ActiveFeatureLevel	= D3D_FEATURE_LEVEL_11_0;
 
+	D3D12_RAYTRACING_TIER				RayTracingTier			= D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+	D3D12_SAMPLER_FEEDBACK_TIER			SamplerFeedBackTier		= D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
+	D3D12_VARIABLE_SHADING_RATE_TIER	VariableShadingRateTier	= D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
+	D3D12_MESH_SHADER_TIER				MeshShaderTier			= D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+
 	HMODULE DXGILib		= 0;
 	HMODULE D3D12Lib	= 0;
 
@@ -292,11 +297,7 @@ private:
 
 	UInt32 AdapterID = 0;
 
-	Bool MeshShadersSupported		= false;
-	Bool SamplerFeedbackSupported	= false;
-	Bool RayTracingSupported		= false;
-	Bool InlineRayTracingSupported	= false;
-	Bool AllowTearing				= false;
-	Bool EnableDebugLayer			= false;
-	Bool EnableGPUValidation		= false;
+	Bool AllowTearing			= false;
+	Bool EnableDebugLayer		= false;
+	Bool EnableGPUValidation	= false;
 };

@@ -8,6 +8,7 @@
 #include "D3D12Buffer.h"
 #include "D3D12Views.h"
 #include "D3D12SamplerState.h"
+#include "D3D12PipelineState.h"
 
 class D3D12CommandQueue;
 class D3D12CommandAllocator;
@@ -657,6 +658,11 @@ private:
 
 	TSharedRef<D3D12ComputePipelineState>	GenerateMipsTex2D_PSO;
 	TSharedRef<D3D12ComputePipelineState>	GenerateMipsTexCube_PSO;
+
+	TSharedRef<D3D12GraphicsPipelineState>	CurrentGraphicsPipelineState;
+	TSharedRef<D3D12RootSignature>			CurrentGraphicsRootSignature;
+	TSharedRef<D3D12ComputePipelineState>	CurrentComputePipelineState;
+	TSharedRef<D3D12RootSignature>			CurrentComputeRootSignature;
 
 	D3D12VertexBufferState			VertexBufferState;
 	D3D12RenderTargetState			RenderTargetState;

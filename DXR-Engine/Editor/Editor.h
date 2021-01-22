@@ -8,5 +8,6 @@
 class Editor
 {
 public:
+	static void Init();
 	static void Tick();
 };

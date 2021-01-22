@@ -15,7 +15,7 @@ class Game
 {
 public:
 	Game();
-	~Game();
+	virtual ~Game();
 
 	virtual Bool Init()
 	{
@@ -24,6 +24,7 @@ public:
 
 	virtual void Tick(Timestamp DeltaTime)
 	{
+		UNREFERENCED_VARIABLE(DeltaTime);
 	}
 
 protected:

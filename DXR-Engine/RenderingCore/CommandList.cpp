@@ -4,8 +4,6 @@
 * CommandListExecutor
 */
 
-ICommandContext* CommandListExecutor::CmdContext = nullptr;
-
 void CommandListExecutor::ExecuteCommandList(CommandList& CmdList)
 {
 	RenderCommand* Cmd = CmdList.First;

@@ -535,7 +535,7 @@ Bool D3D12CommandContext::Init()
 {
 	VALIDATE(CmdQueue != nullptr);
 
-	// TODO: Have support for more than 3 commandbatches
+	// TODO: Have support for more than 4 commandbatches ?
 	for (UInt32 i = 0; i < 4; i++)
 	{
 		TSharedRef<D3D12CommandAllocator> CmdAllocator = Device->CreateCommandAllocator(CmdQueue->GetType());
@@ -694,6 +694,11 @@ void D3D12CommandContext::End()
 	// Reset state
 	CmdBatch	= nullptr;
 	IsReady		= false;
+
+	CurrentGraphicsPipelineState.Reset();
+	CurrentGraphicsRootSignature.Reset();
+	CurrentComputePipelineState.Reset();
+	CurrentComputeRootSignature.Reset();
 }
 
 void D3D12CommandContext::ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor)
@@ -853,8 +858,18 @@ void D3D12CommandContext::BindGraphicsPipelineState(class GraphicsPipelineState*
 	VALIDATE(PipelineState != nullptr);
 
 	D3D12GraphicsPipelineState* DxPipelineState = static_cast<D3D12GraphicsPipelineState*>(PipelineState);
-	CmdList->SetGraphicsRootSignature(DxPipelineState->GetRootSignature());
-	CmdList->SetPipelineState(DxPipelineState->GetPipeline());
+	if (DxPipelineState != CurrentGraphicsPipelineState.Get())
+	{
+		CurrentGraphicsPipelineState = MakeSharedRef<D3D12GraphicsPipelineState>(DxPipelineState);
+		CmdList->SetPipelineState(CurrentGraphicsPipelineState->GetPipeline());
+	}
+
+	D3D12RootSignature* DxRootSignature = DxPipelineState->GetRootSignature();
+	if (DxRootSignature != CurrentGraphicsRootSignature.Get())
+	{
+		CurrentGraphicsRootSignature = MakeSharedRef<D3D12RootSignature>(DxRootSignature);
+		CmdList->SetGraphicsRootSignature(CurrentGraphicsRootSignature.Get());
+	}
 }
 
 void D3D12CommandContext::BindComputePipelineState(class ComputePipelineState* PipelineState)
@@ -862,8 +877,18 @@ void D3D12CommandContext::BindComputePipelineState(class ComputePipelineState* P
 	VALIDATE(PipelineState != nullptr);
 
 	D3D12ComputePipelineState* DxPipelineState = static_cast<D3D12ComputePipelineState*>(PipelineState);
-	CmdList->SetComputeRootSignature(DxPipelineState->GetRootSignature());
-	CmdList->SetPipelineState(DxPipelineState->GetPipeline());
+	if (DxPipelineState != CurrentComputePipelineState.Get())
+	{
+		CurrentComputePipelineState = MakeSharedRef<D3D12ComputePipelineState>(DxPipelineState);
+		CmdList->SetPipelineState(CurrentComputePipelineState->GetPipeline());
+	}
+
+	D3D12RootSignature* DxRootSignature = DxPipelineState->GetRootSignature();
+	if (DxRootSignature != CurrentComputeRootSignature.Get())
+	{
+		CurrentComputeRootSignature = MakeSharedRef<D3D12RootSignature>(DxRootSignature);
+		CmdList->SetComputeRootSignature(CurrentComputeRootSignature.Get());
+	}
 }
 
 void D3D12CommandContext::BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState)
@@ -1532,6 +1557,11 @@ void D3D12CommandContext::ClearState()
 	VertexBufferState.Reset();
 	RenderTargetState.Reset();
 	ShaderDescriptorState.Reset();
+
+	CurrentGraphicsPipelineState.Reset();
+	CurrentGraphicsRootSignature.Reset();
+	CurrentComputePipelineState.Reset();
+	CurrentComputeRootSignature.Reset();
 }
 
 void D3D12CommandContext::Flush()
@@ -1550,5 +1580,7 @@ void D3D12CommandContext::InsertMarker(const std::string& Message)
 #if D3D12_ENABLE_PIX_MARKERS
 	// TODO: Look into this since "%s" is not that nice, however safer since string can contain format, that will cuase a crash
 	PIXSetMarker(CmdList->GetGraphicsCommandList(), PIX_COLOR(255, 255, 255), "%s", Message.c_str());
+#else
+	UNREFERENCED_VARIABLE(Message);
 #endif
 }
