@@ -4,13 +4,7 @@
 #include <unordered_map>
 #include <cstring>
 
-#define MAX_CONSOLE_VARIABLES	32
-#define MAX_CONSOLE_COMMANDS	32
-
-#define EXTN_CONSOLE_VARIABLE(VarName)		extern ConsoleVariable* VarName 
-#define DECL_CONSOLE_VARIABLE(VarName)		ConsoleVariable* VarName = nullptr
-#define INIT_CONSOLE_VARIABLE(VarName, Var)	VarName = GlobalConsole.RegisterVariable(#VarName, Var)
-
+#define INIT_CONSOLE_VARIABLE(VarName, Var)		GlobalConsole.RegisterVariable(VarName, &Var)
 #define INIT_CONSOLE_COMMAND(CmdName, CmdFunc)	GlobalConsole.RegisterCommand(CmdName, CmdFunc)
 
 typedef void(*ConsoleCommand)();
@@ -30,6 +24,13 @@ enum EConsoleVariableType : UInt8
 
 struct ConsoleVariable
 {
+	ConsoleVariable() = default;
+
+	ConsoleVariable(EConsoleVariableType InType)
+		: Type(InType)
+	{
+	}
+
 	~ConsoleVariable()
 	{
 		Free();
@@ -206,19 +207,21 @@ public:
 	~Console()	= default;
 
 	void Init();
-
 	void Tick();
 
 	void RegisterCommand(
 		const std::string& CmdName, 
-		ConsoleCommand Cmd);
+		ConsoleCommand Command);
 	
-	ConsoleVariable* RegisterVariable(
+	void RegisterVariable(
 		const std::string& VarName,
-		EConsoleVariableType Type);
+		ConsoleVariable* Variable);
 
-	ConsoleCommand FindCommand(const std::string& CmdName);
-	ConsoleVariable* FindVariable(const std::string& VarName);
+	ConsoleCommand FindCommand(
+		const std::string& CmdName);
+
+	ConsoleVariable* FindVariable(
+		const std::string& VarName);
 
 	void PrintMessage(const std::string& Message);
 	void PrintWarning(const std::string& Message);
@@ -233,21 +236,17 @@ private:
 	std::string PopupSelectedText;
 	std::unordered_map<std::string, Int32> CmdIndexMap;
 	std::unordered_map<std::string, Int32> VarIndexMap;
+	TArray<ConsoleCommand>		Commands;
+	TArray<ConsoleVariable*>	Variables;
 
-	TArray<Line>		Lines;
-	TArray<std::string> History;
-	TArray<Candidate>	Candidates;
-	UInt32	HistoryLength	= 50;
-	Int32	HistoryIndex	= -1;
-	Int32	CandidatesIndex	= -1;
+	TArray<Candidate>		Candidates;
+	Int32 CandidatesIndex	= -1;
 
 	TStaticArray<Char, 256>	TextBuffer;
-	
-	TStaticArray<ConsoleCommand, MAX_CONSOLE_COMMANDS> Commands;
-	UInt32 NextCommandIndex = 0;
-	
-	TStaticArray<ConsoleVariable, MAX_CONSOLE_VARIABLES> Variables;
-	UInt32 NextVariableIndex = 0;
+	TArray<Line>			Lines;
+	TArray<std::string>		History;
+	UInt32	HistoryLength	= 50;
+	Int32	HistoryIndex	= -1;
 
 	Bool UpdateCursorPosition		= false;
 	Bool CandidateSelectionChanged	= false;

@@ -473,11 +473,13 @@ Bool DebugUI::OnEvent(const Event& Event)
 	ImGuiIO& IO = ImGui::GetIO();
 	if (IsEventOfType<KeyPressedEvent>(Event))
 	{
-		IO.KeysDown[CastEvent<KeyPressedEvent>(Event).Key] = true;
+		const EKey Key = CastEvent<KeyReleasedEvent>(Event).Key;
+		IO.KeysDown[Key] = true;
 	}
 	else if (IsEventOfType<KeyReleasedEvent>(Event))
 	{
-		IO.KeysDown[CastEvent<KeyReleasedEvent>(Event).Key] = false;
+		const EKey Key = CastEvent<KeyReleasedEvent>(Event).Key;
+		IO.KeysDown[Key] = false;
 	}
 	else if (IsEventOfType<KeyTypedEvent>(Event))
 	{

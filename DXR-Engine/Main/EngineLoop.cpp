@@ -186,6 +186,8 @@ Bool EngineLoop::PostInit()
 {
 	TRACE_FUNCTION_SCOPE();
 
+	Editor::Init();
+
 	ShouldRun = true;
 	return true;
 }
@@ -211,6 +213,8 @@ void EngineLoop::Tick()
 	GlobalGame->Tick(EngineClock.GetDeltaTime());
 
 	GlobalConsole.Tick();
+
+	Editor::Tick();
 }
 
 void EngineLoop::PostTick()

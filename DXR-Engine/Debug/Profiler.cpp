@@ -101,8 +101,8 @@ static Float ImGui_GetMaxLimit(Float Num)
 * Console Vars
 */
 
-DECL_CONSOLE_VARIABLE(DrawProfiler);
-DECL_CONSOLE_VARIABLE(DrawFps);
+ConsoleVariable GlobalDrawProfiler(ConsoleVariableType_Bool);
+ConsoleVariable GlobalDrawFps(ConsoleVariableType_Bool);
 
 /*
 * Profiler
@@ -117,11 +117,11 @@ Profiler::Profiler()
 
 void Profiler::Init()
 {
-	INIT_CONSOLE_VARIABLE(DrawFps, ConsoleVariableType_Bool);
-	DrawFps->SetBool(false);
+	INIT_CONSOLE_VARIABLE("DrawFps", GlobalDrawFps);
+	GlobalDrawFps.SetBool(false);
 
-	INIT_CONSOLE_VARIABLE(DrawProfiler, ConsoleVariableType_Bool);
-	DrawProfiler->SetBool(false);
+	INIT_CONSOLE_VARIABLE("DrawProfiler", GlobalDrawProfiler);
+	GlobalDrawFps.SetBool(false);
 }
 
 void Profiler::Tick()
@@ -137,7 +137,7 @@ void Profiler::Tick()
 		Clock.Reset();
 	}
 
-	if (DrawFps->GetBool())
+	if (GlobalDrawFps.GetBool())
 	{
 		DebugUI::DrawUI([]()
 		{
@@ -173,7 +173,7 @@ void Profiler::Tick()
 		});
 	}
 
-	if (DrawProfiler->GetBool())
+	if (GlobalDrawProfiler.GetBool())
 	{
 		const Double Delta = Clock.GetDeltaTime().AsMilliSeconds();
 		FrameTime.AddSample(Float(Delta));
@@ -208,7 +208,7 @@ void Profiler::Tick()
 				ImGuiWindowFlags_NoFocusOnAppearing |
 				ImGuiWindowFlags_NoSavedSettings;
 
-			Bool TempDrawProfiler = DrawProfiler->GetBool();
+			Bool TempDrawProfiler = GlobalDrawProfiler.GetBool();
 			if (ImGui::Begin(
 				"Profiler",
 				&TempDrawProfiler,
@@ -318,14 +318,14 @@ void Profiler::Tick()
 
 			ImGui::End();
 
-			DrawProfiler->SetBool(TempDrawProfiler);
+			GlobalDrawProfiler.SetBool(TempDrawProfiler);
 		});
 	}
 }
 
 void Profiler::AddSample(const Char* Name, Float NewSample)
 {
-	if (DrawProfiler->GetBool())
+	if (GlobalDrawProfiler.GetBool())
 	{
 		const std::string ScopeName = Name;
 	

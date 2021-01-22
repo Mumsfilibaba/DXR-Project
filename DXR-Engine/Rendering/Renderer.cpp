@@ -37,12 +37,12 @@ static const UInt32	 ShadowMapSampleCount	= 2;
 #define GBUFFER_MATERIAL_INDEX	2
 #define GBUFFER_DEPTH_INDEX		3
 
-DECL_CONSOLE_VARIABLE(DrawTextureDebugger);
-DECL_CONSOLE_VARIABLE(DrawRendererInfo);
+ConsoleVariable GlobalDrawTextureDebugger(ConsoleVariableType_Bool);
+ConsoleVariable GlobalDrawRendererInfo(ConsoleVariableType_Bool);
 
-DECL_CONSOLE_VARIABLE(SSAORadius);
-DECL_CONSOLE_VARIABLE(SSAOBias);
-DECL_CONSOLE_VARIABLE(SSAOKernelSize);
+ConsoleVariable GlobalSSAORadius(ConsoleVariableType_Float);
+ConsoleVariable GlobalSSAOBias(ConsoleVariableType_Float);
+ConsoleVariable GlobalSSAOKernelSize(ConsoleVariableType_Int);
 
 /*
 * CameraBufferDesc
@@ -817,9 +817,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 		const UInt32 Height	= RenderHeight;
 		SSAOSettings.ScreenSize	= XMFLOAT2(Float(Width), Float(Height));
 		SSAOSettings.NoiseSize	= XMFLOAT2(4.0f, 4.0f);
-		SSAOSettings.Radius		= SSAORadius->GetFloat();
-		SSAOSettings.KernelSize = SSAOKernelSize->GetInt32();
-		SSAOSettings.Bias		= SSAOBias->GetFloat();
+		SSAOSettings.Radius		= GlobalSSAORadius.GetFloat();
+		SSAOSettings.KernelSize = GlobalSSAOKernelSize.GetInt32();
+		SSAOSettings.Bias		= GlobalSSAOBias.GetFloat();
 
 		ShaderResourceView* ShaderResourceViews[] =
 		{
@@ -1265,7 +1265,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		TRACE_SCOPE("Render UI");
 
-		if (DrawTextureDebugger->GetBool())
+		if (GlobalDrawTextureDebugger.GetBool())
 		{
 			DebugTextures.EmplaceBack(
 				GBufferSRVs[GBUFFER_DEPTH_INDEX],
@@ -1302,7 +1302,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 					ImGuiWindowFlags_NoFocusOnAppearing |
 					ImGuiWindowFlags_NoSavedSettings;
 
-				Bool TempDrawTextureDebugger = DrawTextureDebugger->GetBool();
+				Bool TempDrawTextureDebugger = GlobalDrawTextureDebugger.GetBool();
 				if (ImGui::Begin(
 					"FrameBuffer Debugger",
 					&TempDrawTextureDebugger,
@@ -1349,10 +1349,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 					ImGui::EndChild();
 
-					const Float ImageWidth = Width * 0.985f;
+					const Float ImageWidth	= Width * 0.985f;
 					const Float ImageHeight = ImageWidth * AspectRatio;
-					const Int32 ImageIndex = SelectedImage < 0 ? 0 : SelectedImage;
-					ImGuiImage* CurrImage = &GlobalRenderer->DebugTextures[ImageIndex];
+					const Int32 ImageIndex	= SelectedImage < 0 ? 0 : SelectedImage;
+					ImGuiImage* CurrImage	= &GlobalRenderer->DebugTextures[ImageIndex];
 					ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
 
 					ImGui::PopStyleColor();
@@ -1361,7 +1361,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 				ImGui::End();
 
-				DrawTextureDebugger->SetBool(TempDrawTextureDebugger);
+				GlobalDrawTextureDebugger.SetBool(TempDrawTextureDebugger);
 			});
 		}
 		else
@@ -1372,7 +1372,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 				EResourceState::ResourceState_PixelShaderResource);
 		}
 
-		if (DrawRendererInfo->GetBool())
+		if (GlobalDrawRendererInfo.GetBool())
 		{
 			DebugUI::DrawUI([]()
 			{
@@ -1555,20 +1555,20 @@ void Renderer::SetLightSettings(const LightSettings& InLightSettings)
 
 Bool Renderer::Init()
 {
-	INIT_CONSOLE_VARIABLE(DrawTextureDebugger, ConsoleVariableType_Bool);
-	DrawTextureDebugger->SetBool(false);
+	INIT_CONSOLE_VARIABLE("DrawTextureDebugger", GlobalDrawTextureDebugger);
+	GlobalDrawTextureDebugger.SetBool(false);
 
-	INIT_CONSOLE_VARIABLE(DrawRendererInfo, ConsoleVariableType_Bool);
-	DrawRendererInfo->SetBool(false);
+	INIT_CONSOLE_VARIABLE("DrawRendererInfo", GlobalDrawRendererInfo);
+	GlobalDrawRendererInfo.SetBool(false);
 
-	INIT_CONSOLE_VARIABLE(SSAOKernelSize, ConsoleVariableType_Int);
-	SSAOKernelSize->SetInt32(48);
+	INIT_CONSOLE_VARIABLE("SSAOKernelSize", GlobalSSAOKernelSize);
+	GlobalSSAOKernelSize.SetInt32(48);
 
-	INIT_CONSOLE_VARIABLE(SSAOBias, ConsoleVariableType_Float);
-	SSAOBias->SetFloat(0.0001f);
+	INIT_CONSOLE_VARIABLE("SSAOBias", GlobalSSAOBias);
+	GlobalSSAOBias.SetFloat(0.0001f);
 
-	INIT_CONSOLE_VARIABLE(SSAORadius, ConsoleVariableType_Float);
-	SSAORadius->SetFloat(0.3f);
+	INIT_CONSOLE_VARIABLE("SSAORadius", GlobalSSAORadius);
+	GlobalSSAORadius.SetFloat(0.3f);
 
 	// Viewport
 	MainWindowViewport = RenderLayer::CreateViewport(

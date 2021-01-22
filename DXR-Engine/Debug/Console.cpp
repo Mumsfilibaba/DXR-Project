@@ -7,12 +7,6 @@
 #include <regex>
 
 /*
-* Globals
-*/
-
-Bool GlobalIsConsoleActive = false;
-
-/*
 * Console
 */
 
@@ -268,42 +262,36 @@ void Console::Tick()
 
 void Console::RegisterCommand(
 	const std::string& CmdName, 
-	ConsoleCommand Cmd)
+	ConsoleCommand Command)
 {
 	ConsoleCommand CurrCmd = FindCommand(CmdName);
-	if (CurrCmd)
+	if (!CurrCmd)
+	{
+		const UInt32 Index = Commands.Size();
+		Commands.EmplaceBack(Command);
+		CmdIndexMap[CmdName] = Index;
+	}
+	else
 	{
 		LOG_WARNING("ConsoleCommand '" + CmdName + "' is already registered");
-		return;
 	}
-
-	CmdIndexMap[CmdName]		= NextCommandIndex;
-	Commands[NextCommandIndex]	= Cmd;
-
-	NextCommandIndex++;
 }
 
-ConsoleVariable* Console::RegisterVariable(
+void Console::RegisterVariable(
 	const std::string& VarName, 
-	EConsoleVariableType Type)
+	ConsoleVariable* Variable)
 {
 	ConsoleVariable* Var = FindVariable(VarName);
-	if (Var)
+	if (!Var)
+	{
+		const UInt32 Index = Variables.Size();
+		Variables.EmplaceBack(Variable);
+		VarIndexMap[VarName] = Index;
+	}
+	else
 	{
 		LOG_WARNING("ConsoleVariable '" + VarName + "' is already registered");
-		return Var;
 	}
-
-	const UInt32 Index = NextVariableIndex;
-	NextVariableIndex++;
-
-	// TODO: Better way of initializing a consolevar
-	VarIndexMap[VarName] = Index;
-	Var = &Variables[Index];
-	Var->Type			= Type;
-	Var->StringValue	= nullptr;
-	Var->Length			= 0;
-	return Var;
 }
 
 ConsoleCommand Console::FindCommand(const std::string& CmdName)
@@ -324,7 +312,7 @@ ConsoleVariable* Console::FindVariable(const std::string& VarName)
 	if (VarIndex != VarIndexMap.end())
 	{
 		VALIDATE(VarIndex->second >= 0);
-		return &Variables[VarIndex->second];
+		return Variables[VarIndex->second];
 	}
 
 	return nullptr;
@@ -430,22 +418,22 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 
 					if (d == 0)
 					{
-						ConsoleVariable& Variable = Variables[Index.second];
-						if (Variable.IsBool())
+						ConsoleVariable* Variable = Variables[Index.second];
+						if (Variable->IsBool())
 						{
-							Candidates.EmplaceBack(Index.first, "= " + std::string(Variable.GetBool() ? "true" : "false") + " [Boolean]");
+							Candidates.EmplaceBack(Index.first, "= " + std::string(Variable->GetBool() ? "true" : "false") + " [Boolean]");
 						}
-						else if (Variable.IsInt())
+						else if (Variable->IsInt())
 						{
-							Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable.GetInt32()) + " [Integer]");
+							Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable->GetInt32()) + " [Integer]");
 						}
-						else if (Variable.IsFloat())
+						else if (Variable->IsFloat())
 						{
-							Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable.GetFloat()) + " [Float]");
+							Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable->GetFloat()) + " [Float]");
 						}
-						else if (Variable.IsString())
+						else if (Variable->IsString())
 						{
-							Candidates.EmplaceBack(Index.first, "= " + std::string(Variable.GetString()) + " [String]");
+							Candidates.EmplaceBack(Index.first, "= " + std::string(Variable->GetString()) + " [String]");
 						}
 					}
 				}
@@ -608,7 +596,7 @@ void Console::HandleCommand(const std::string& CmdString)
 			return;
 		}
 
-		ConsoleVariable* Var = &Variables[VarIndex->second];
+		ConsoleVariable* Var = Variables[VarIndex->second];
 		Pos++;
 
 		std::string Value(CmdString.c_str() + Pos, CmdString.length() - Pos);

@@ -12,12 +12,15 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Components/MeshComponent.h"
 
+#include "Debug/Console.h"
+
 #include <imgui_internal.h>
 
 static Float MainMenuBarHeight = 0.0f;
 
 static Bool ShowRenderSettings	= false;
-static Bool ShowSceneGraph		= false;
+
+ConsoleVariable GlobalShowSceneGraph(ConsoleVariableType_Bool);
 
 /*
 * Functions
@@ -133,7 +136,7 @@ static void DrawMenu()
 			if (ImGui::BeginMenu("View"))
 			{
 				ImGui::MenuItem("Render Settings", NULL, &ShowRenderSettings);
-				ImGui::MenuItem("SceneGraph", NULL, &ShowSceneGraph);
+				//ImGui::MenuItem("SceneGraph", NULL, &ShowSceneGraph);
 				//ImGui::MenuItem("Profiler", NULL, &GlobalDrawProfiler);
 				//ImGui::MenuItem("Texture Debugger", NULL, &GlobalDrawTextureDebugger);
 
@@ -153,50 +156,52 @@ static void DrawSideWindow()
 {
 	DebugUI::DrawUI([]
 	{
-		constexpr UInt32 Width = 500;
+		const UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
+		const UInt32 WindowHeight	= GlobalMainWindow->GetHeight();
+		const Float Width			= Math::Max(WindowWidth * 0.3f, 400.0f);
+		const Float Height			= WindowHeight * 0.7f;
 
-		WindowShape WindowShape;
-		GlobalMainWindow->GetWindowShape(WindowShape);
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
+		ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
+		ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-		ImGui::SetNextWindowPos(ImVec2(0, MainMenuBarHeight));
-		ImGui::SetNextWindowSize(ImVec2(Width, WindowShape.Height - MainMenuBarHeight));
+		ImGui::SetNextWindowPos(
+			ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f),
+			ImGuiCond_Appearing,
+			ImVec2(0.5f, 0.0f));
 
-		ImGui::Begin("Window", nullptr,
-			ImGuiWindowFlags_NoMove |
-			ImGuiWindowFlags_NoResize |
-			ImGuiWindowFlags_NoTitleBar |
-			ImGuiWindowFlags_NoSavedSettings);
+		ImGui::SetNextWindowSize(
+			ImVec2(Width, Height),
+			ImGuiCond_Appearing);
 
-		if (ShowRenderSettings && ShowSceneGraph)
-		{
-			ImGuiTabBarFlags TabBarFlags = ImGuiTabBarFlags_None;
-			if (ImGui::BeginTabBar("Menu", TabBarFlags))
-			{
-				if (ImGui::BeginTabItem("Renderer"))
-				{
-					DrawRenderSettings();
-					ImGui::EndTabItem();
-				}
+		const ImGuiWindowFlags Flags =
+			ImGuiWindowFlags_NoResize			|
+			ImGuiWindowFlags_NoCollapse			|
+			ImGuiWindowFlags_NoFocusOnAppearing |
+			ImGuiWindowFlags_NoSavedSettings;
 
-				if (ImGui::BeginTabItem("Scene"))
-				{
-					DrawSceneInfo();
-					ImGui::EndTabItem();
-				}
-
-				ImGui::EndTabBar();
-			}
-		}
-		else if (ShowRenderSettings)
-		{
-			DrawRenderSettings();
-		}
-		else if (ShowSceneGraph)
+		Bool TempDrawProfiler = GlobalShowSceneGraph.GetBool();
+		if (ImGui::Begin(
+			"SceneGraph", 
+			&TempDrawProfiler,
+			Flags))
 		{
 			DrawSceneInfo();
 		}
 
+		ImGui::PopStyleColor();
+		ImGui::PopStyleColor();
+		ImGui::PopStyleColor();
+		ImGui::PopStyleColor();
+		ImGui::PopStyleColor();
+		ImGui::PopStyleColor();
+		
 		ImGui::End();
+
+		GlobalShowSceneGraph.SetBool(TempDrawProfiler);
 	});
 }
 
@@ -399,7 +404,6 @@ static void DrawSceneInfo()
 
 	WindowShape WindowShape;
 	GlobalMainWindow->GetWindowShape(WindowShape);
-	ImGui::BeginChild("SceneInfo", ImVec2(Width, Float(WindowShape.Height) - 100.0f));
 
 	// Actors
 	if (ImGui::TreeNode("Actors"))
@@ -797,23 +801,26 @@ static void DrawSceneInfo()
 
 		ImGui::TreePop();
 	}
-
-	ImGui::EndChild();
 }
 
 /*
 * Tick
 */
 
+void Editor::Init()
+{
+	INIT_CONSOLE_VARIABLE("ShowSceneGraph", GlobalShowSceneGraph);
+	GlobalShowSceneGraph.SetBool(false);
+}
+
 void Editor::Tick()
 {
 #if 0
 	DrawMenu();
+#endif
 
-	if (ShowRenderSettings || ShowSceneGraph)
+	if (GlobalShowSceneGraph.GetBool())
 	{
 		DrawSideWindow();
 	}
-
-#endif
 }

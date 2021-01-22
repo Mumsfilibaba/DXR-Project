@@ -97,13 +97,13 @@ static void InitializeKeyState()
 	GlobalKeyState.ScanCodeTable[0x047] = EKey::Key_Keypad7;
 	GlobalKeyState.ScanCodeTable[0x048] = EKey::Key_Keypad8;
 	GlobalKeyState.ScanCodeTable[0x049] = EKey::Key_Keypad9;
-	GlobalKeyState.ScanCodeTable[0x04E] = EKey::Key_KeypadDecimal;
-	GlobalKeyState.ScanCodeTable[0x053] = EKey::Key_KeypadDivide;
-	GlobalKeyState.ScanCodeTable[0x135] = EKey::Key_KeypadMultiply;
-	GlobalKeyState.ScanCodeTable[0x11C] = EKey::Key_KeypadSubtract;
-	GlobalKeyState.ScanCodeTable[0x059] = EKey::Key_KeypadAdd;
-	GlobalKeyState.ScanCodeTable[0x037] = EKey::Key_KeypadEnter;
-	GlobalKeyState.ScanCodeTable[0x04A] = EKey::Key_KeypadEqual;
+	GlobalKeyState.ScanCodeTable[0x04E] = EKey::Key_KeypadAdd;
+	GlobalKeyState.ScanCodeTable[0x053] = EKey::Key_KeypadDecimal;
+	GlobalKeyState.ScanCodeTable[0x135] = EKey::Key_KeypadDivide;
+	GlobalKeyState.ScanCodeTable[0x11C] = EKey::Key_KeypadEnter;
+	GlobalKeyState.ScanCodeTable[0x059] = EKey::Key_KeypadEqual;
+	GlobalKeyState.ScanCodeTable[0x037] = EKey::Key_KeypadMultiply;
+	GlobalKeyState.ScanCodeTable[0x04A] = EKey::Key_KeypadSubtract;
 
 	GlobalKeyState.ScanCodeTable[0x02A] = EKey::Key_LeftShift;
 	GlobalKeyState.ScanCodeTable[0x036] = EKey::Key_RightShift;
