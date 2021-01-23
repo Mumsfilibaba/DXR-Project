@@ -40,7 +40,7 @@ void Main(ComputeShaderInput Input)
 	
 	float3 ViewNormal = GBufferNormals.SampleLevel(GBufferSampler, TexCoords, 0).rgb;
 	ViewNormal = UnpackNormal(ViewNormal);
-	ViewNormal = mul(ViewNormal, (float3x3)transpose(CameraBuffer.ViewInverse));
+	//ViewNormal = mul(ViewNormal, (float3x3)transpose(CameraBuffer.ViewInverse));
 	
 	const float2 NoiseScale = ScreenSize / NoiseSize;
 	const float3 NoiseVec	= normalize(Noise.SampleLevel(NoiseSampler, TexCoords * NoiseScale, 0));

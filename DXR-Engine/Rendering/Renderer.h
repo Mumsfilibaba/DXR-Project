@@ -146,9 +146,9 @@ private:
 	TSharedRef<RenderTargetView>	FinalTargetRTV;
 	TSharedRef<UnorderedAccessView>	FinalTargetUAV;
 
-	TSharedRef<Texture2D>			GBuffer[4];
-	TSharedRef<ShaderResourceView>	GBufferSRVs[4];
-	TSharedRef<RenderTargetView>	GBufferRTVs[3];
+	TSharedRef<Texture2D>			GBuffer[5];
+	TSharedRef<ShaderResourceView>	GBufferSRVs[5];
+	TSharedRef<RenderTargetView>	GBufferRTVs[5];
 	TSharedRef<DepthStencilView>	GBufferDSV;
 	TSharedRef<SamplerState>		GBufferSampler;
 

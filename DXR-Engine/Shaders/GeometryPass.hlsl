@@ -40,6 +40,7 @@ struct VSInput
 struct VSOutput
 {
 	float3 Normal		: NORMAL0;
+    float3 ViewNormal	: NORMAL1;
 #if defined(NORMAL_MAPPING_ENABLED) || defined(PARALLAX_MAPPING_ENABLED)
 	float3 Tangent		: TANGENT0;
 	float3 Bitangent	: BITANGENT0;
@@ -59,6 +60,9 @@ VSOutput VSMain(VSInput Input)
 	const float4x4 TransformInv = transpose(TransformBuffer.TransformInv);
 	float3 Normal = mul(float4(Input.Normal, 0.0f), TransformInv).xyz;
 	Output.Normal = Normal;
+	
+    float3 ViewNormal = mul(float4(Normal, 0.0f), CameraBuffer.View).xyz;
+    Output.ViewNormal = ViewNormal;
 	
 #if defined(NORMAL_MAPPING_ENABLED) || defined(PARALLAX_MAPPING_ENABLED)
 	float3 Tangent	= normalize(mul(float4(Input.Tangent, 0.0f), TransformBuffer.Transform).xyz);
@@ -89,6 +93,7 @@ VSOutput VSMain(VSInput Input)
 struct PSInput
 {
 	float3 Normal		: NORMAL0;
+    float3 ViewNormal	: NORMAL1;
 #if defined(NORMAL_MAPPING_ENABLED) || defined(PARALLAX_MAPPING_ENABLED)
 	float3 Tangent		: TANGENT0;
 	float3 Bitangent	: BITANGENT0;
@@ -102,9 +107,10 @@ struct PSInput
 
 struct PSOutput
 {
-	float4 Albedo	: SV_Target0;
-	float4 Normal	: SV_Target1;
-	float4 Material	: SV_Target2;
+	float4 Albedo		: SV_Target0;
+	float4 Normal		: SV_Target1;
+	float4 Material		: SV_Target2;
+    float4 ViewNormal	: SV_Target3;
 };
 
 #ifdef PARALLAX_MAPPING_ENABLED
@@ -187,9 +193,10 @@ PSOutput PSMain(PSInput Input)
 	const float FinalRoughness		= min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
 	
 	PSOutput Output;
-	Output.Albedo	= float4(SampledAlbedo, 1.0f);
-	Output.Normal	= float4(MappedNormal, 1.0f);
-	Output.Material	= float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
+	Output.Albedo		= float4(SampledAlbedo, 1.0f);
+	Output.Normal		= float4(MappedNormal, 1.0f);
+	Output.Material		= float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
+    Output.ViewNormal	= float4(PackNormal(Input.ViewNormal), 1.0f);
 
 	return Output;
 }

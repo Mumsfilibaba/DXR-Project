@@ -21,21 +21,23 @@
 * Static Settings
 */
 
-static const EFormat SSAOBufferFormat		= EFormat::Format_R32G32B32A32_Float;
+static const EFormat SSAOBufferFormat		= EFormat::Format_R32_Float;
 static const EFormat FinalTargetFormat		= EFormat::Format_R16G16B16A16_Float;
 static const EFormat RenderTargetFormat		= EFormat::Format_R8G8B8A8_Unorm;
 static const EFormat AlbedoFormat			= EFormat::Format_R8G8B8A8_Unorm;
 static const EFormat MaterialFormat			= EFormat::Format_R8G8B8A8_Unorm;
 static const EFormat NormalFormat			= EFormat::Format_R10G10B10A2_Unorm;
+static const EFormat ViewNormalFormat		= EFormat::Format_R10G10B10A2_Unorm;
 static const EFormat DepthBufferFormat		= EFormat::Format_D32_Float;
 static const EFormat LightProbeFormat		= EFormat::Format_R16G16B16A16_Float;
 static const EFormat ShadowMapFormat		= EFormat::Format_D32_Float;
 static const UInt32	 ShadowMapSampleCount	= 2;
 
-#define GBUFFER_ALBEDO_INDEX	0
-#define GBUFFER_NORMAL_INDEX	1
-#define GBUFFER_MATERIAL_INDEX	2
-#define GBUFFER_DEPTH_INDEX		3
+#define GBUFFER_ALBEDO_INDEX		0
+#define GBUFFER_NORMAL_INDEX		1
+#define GBUFFER_MATERIAL_INDEX		2
+#define GBUFFER_DEPTH_INDEX			3
+#define GBUFFER_VIEW_NORMAL_INDEX	4
 
 ConsoleVariable GlobalDrawTextureDebugger(ConsoleVariableType_Bool);
 ConsoleVariable GlobalDrawRendererInfo(ConsoleVariableType_Bool);
@@ -303,6 +305,11 @@ void Renderer::Tick(const Scene& CurrentScene)
 		GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
 		EResourceState::ResourceState_PixelShaderResource,
 		EResourceState::ResourceState_DepthWrite);
+
+	CmdList.TransitionTexture(
+		GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(),
+		EResourceState::ResourceState_NonPixelShaderResource,
+		EResourceState::ResourceState_RenderTarget);
 
 	// Transition ShadowMaps
 	CmdList.TransitionTexture(
@@ -595,6 +602,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(), BlackClearColor);
 	CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(), BlackClearColor);
 	CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get(), BlackClearColor);
+	CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX].Get(), BlackClearColor);
 	CmdList.ClearDepthStencilView(GBufferDSV.Get(), DepthStencilClearValue(1.0f, 0));
 
 	// Setup view
@@ -667,9 +675,10 @@ void Renderer::Tick(const Scene& CurrentScene)
 		{
 			GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(),
 			GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(),
-			GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get()
+			GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get(),
+			GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX].Get(),
 		};
-		CmdList.BindRenderTargets(RenderTargets, 3, GBufferDSV.Get());
+		CmdList.BindRenderTargets(RenderTargets, 4, GBufferDSV.Get());
 
 		// Setup Pipeline
 		CmdList.BindGraphicsPipelineState(GeometryPSO.Get());
@@ -743,6 +752,17 @@ void Renderer::Tick(const Scene& CurrentScene)
 		DebugTextures.EmplaceBack(
 			GBufferSRVs[GBUFFER_NORMAL_INDEX],
 			GBuffer[GBUFFER_NORMAL_INDEX],
+			EResourceState::ResourceState_NonPixelShaderResource,
+			EResourceState::ResourceState_NonPixelShaderResource);
+
+		CmdList.TransitionTexture(
+			GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(),
+			EResourceState::ResourceState_RenderTarget,
+			EResourceState::ResourceState_NonPixelShaderResource);
+
+		DebugTextures.EmplaceBack(
+			GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX],
+			GBuffer[GBUFFER_VIEW_NORMAL_INDEX],
 			EResourceState::ResourceState_NonPixelShaderResource,
 			EResourceState::ResourceState_NonPixelShaderResource);
 
@@ -825,7 +845,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 		ShaderResourceView* ShaderResourceViews[] =
 		{
-			GBufferSRVs[GBUFFER_NORMAL_INDEX].Get(),
+			GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX].Get(),
 			GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
 			SSAONoiseSRV.Get(),
 			SSAOSamplesSRV.Get()
@@ -885,6 +905,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.TransitionTexture(
 		SSAOBuffer.Get(),
 		EResourceState::ResourceState_UnorderedAccess,
+		EResourceState::ResourceState_NonPixelShaderResource);
+
+	DebugTextures.EmplaceBack(
+		SSAOBufferSRV,
+		SSAOBuffer,
+		EResourceState::ResourceState_NonPixelShaderResource,
 		EResourceState::ResourceState_NonPixelShaderResource);
 
 	// Render to final output
@@ -2882,11 +2908,12 @@ Bool Renderer::InitDeferred()
 	PSOProperties.RasterizerState							= GeometryRasterizerState.Get();
 	PSOProperties.ShaderState.VertexShader					= VShader.Get();
 	PSOProperties.ShaderState.PixelShader					= PShader.Get();
-	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
+	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
+	PSOProperties.PipelineFormats.RenderTargetFormats[0]	=EFormat::Format_R8G8B8A8_Unorm;
 	PSOProperties.PipelineFormats.RenderTargetFormats[1]	= NormalFormat;
 	PSOProperties.PipelineFormats.RenderTargetFormats[2]	= EFormat::Format_R8G8B8A8_Unorm;
-	PSOProperties.PipelineFormats.NumRenderTargets			= 3;
-	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
+	PSOProperties.PipelineFormats.RenderTargetFormats[3]	= ViewNormalFormat;
+	PSOProperties.PipelineFormats.NumRenderTargets			= 4;
 
 	GeometryPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
 	if (!GeometryPSO)
@@ -3236,6 +3263,36 @@ Bool Renderer::InitGBuffer()
 			DepthBufferFormat, 
 			0);
 		if (!GBufferDSV)
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	// View Normal
+	GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateTexture2D(
+		nullptr,
+		ViewNormalFormat,
+		Usage,
+		Width,
+		Height,
+		1, 1,
+		ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
+	if (GBuffer[GBUFFER_VIEW_NORMAL_INDEX])
+	{
+		GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->SetName("GBuffer View Normal");
+
+		GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateShaderResourceView(GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), ViewNormalFormat, 0, 1);
+		if (!GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX])
+		{
+			return false;
+		}
+
+		GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateRenderTargetView(GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), ViewNormalFormat, 0);
+		if (!GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX])
 		{
 			return false;
 		}
