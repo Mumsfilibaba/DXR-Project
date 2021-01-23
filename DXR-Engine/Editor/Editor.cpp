@@ -235,25 +235,25 @@ static void DrawRenderSettings()
 	};
 
 	static Int32 CurrentItem = 0;
-	if (GlobalFXAAEnabled)
-	{
-		CurrentItem = 1;
-	}
-	else
-	{
-		CurrentItem = 0;
-	}
+	//if (GlobalFXAAEnabled)
+	//{
+	//	CurrentItem = 1;
+	//}
+	//else
+	//{
+	//	CurrentItem = 0;
+	//}
 
 	if (ImGui::Combo("Anti-Aliasing", &CurrentItem, AAItems, IM_ARRAYSIZE(AAItems)))
 	{
-		if (CurrentItem == 0)
-		{
-			GlobalFXAAEnabled = false;
-		}
-		else if (CurrentItem == 1)
-		{
-			GlobalFXAAEnabled = true;
-		}
+		//if (CurrentItem == 0)
+		//{
+		//	GlobalFXAAEnabled = false;
+		//}
+		//else if (CurrentItem == 1)
+		//{
+		//	GlobalFXAAEnabled = true;
+		//}
 	}
 
 	ImGui::Spacing();

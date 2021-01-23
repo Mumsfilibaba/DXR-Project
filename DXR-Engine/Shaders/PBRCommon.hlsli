@@ -1,3 +1,5 @@
+#include "Structs.hlsli"
+
 /*
 * Common Constants
 */
@@ -19,73 +21,6 @@ static const float3 LightColor		= float3(400.0f, 400.0f, 400.0f);
 #define GAMMA		2.2f
 #define PCF_RANGE	2
 #define PCF_WIDTH	float((PCF_RANGE * 2) + 1)
-
-/*
-* Common Structs
-*/
-
-struct Camera
-{
-	float4x4 ViewProjection;
-	float4x4 View;
-	float4x4 ViewInverse;
-	float4x4 Projection;
-	float4x4 ProjectionInverse;
-	float4x4 ViewProjectionInverse;
-	float3	Position;
-	float	NearPlane;
-	float	FarPlane;
-	float	AspectRatio;
-};
-
-struct PointLight
-{
-	float3	Color;
-	float	ShadowBias;
-	float3	Position;
-	float	FarPlane;
-	float	MaxShadowBias;
-};
-
-struct DirectionalLight
-{
-	float3		Color;
-	float		ShadowBias;
-	float3		Direction;
-	float		MaxShadowBias;
-	float4x4	LightMatrix;
-};
-
-struct Vertex
-{
-	float3 Position;
-	float3 Normal;
-	float3 Tangent;
-	float2 TexCoord;
-};
-
-struct Transform
-{
-	float4x4 Transform;
-	float4x4 TransformInv;
-};
-
-struct Material
-{
-	float3	Albedo;
-	float	Roughness;
-	float	Metallic;
-	float	AO;
-	int		EnableHeight;
-};
-
-struct ComputeShaderInput
-{
-	uint3	GroupID				: SV_GroupID;
-	uint3	GroupThreadID		: SV_GroupThreadID;
-	uint3	DispatchThreadID	: SV_DispatchThreadID;
-	uint	GroupIndex			: SV_GroupIndex;
-};
 
 /*
 * Position Helper

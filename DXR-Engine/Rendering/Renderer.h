@@ -144,6 +144,7 @@ private:
 	TSharedRef<Texture2D>			FinalTarget;
 	TSharedRef<ShaderResourceView>	FinalTargetSRV;
 	TSharedRef<RenderTargetView>	FinalTargetRTV;
+	TSharedRef<UnorderedAccessView>	FinalTargetUAV;
 
 	TSharedRef<Texture2D>			GBuffer[4];
 	TSharedRef<ShaderResourceView>	GBufferSRVs[4];
@@ -174,6 +175,7 @@ private:
 	TSharedRef<ComputePipelineState> SpecIrradicanceGenPSO;
 	TSharedPtr<ComputePipelineState> SSAOPSO;
 	TSharedPtr<ComputePipelineState> SSAOBlur;
+	TSharedPtr<ComputePipelineState> DeferredLightPass;
 
 	TSharedRef<StructuredBuffer>	SSAOSamples;
 	TSharedRef<ShaderResourceView>	SSAOSamplesSRV;

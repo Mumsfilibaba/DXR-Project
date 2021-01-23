@@ -42,7 +42,6 @@ Bool GlobalPrePassEnabled		= true;
 Bool GlobalDrawAABBs			= false;
 Bool GlobalVSyncEnabled			= false;
 Bool GlobalFrustumCullEnabled	= true;
-Bool GlobalFXAAEnabled			= true;
 Bool GlobalRayTracingEnabled	= false;
 
 /*

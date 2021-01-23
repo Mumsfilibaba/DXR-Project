@@ -374,38 +374,41 @@ void D3D12ResourceBarrierBatcher::AddTransitionBarrier(
 {
 	VALIDATE(Resource != nullptr);
 
-	// Make sure we are not already have transition for this resource
-	for (TArray<D3D12_RESOURCE_BARRIER>::Iterator It = Barriers.Begin(); It != Barriers.End(); It++)
+	if (BeforeState != AfterState)
 	{
-		if ((*It).Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
+		// Make sure we are not already have transition for this resource
+		for (TArray<D3D12_RESOURCE_BARRIER>::Iterator It = Barriers.Begin(); It != Barriers.End(); It++)
 		{
-			if ((*It).Transition.pResource == Resource)
+			if ((*It).Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
 			{
-				if ((*It).Transition.StateBefore != AfterState)
+				if ((*It).Transition.pResource == Resource)
 				{
-					(*It).Transition.StateAfter = AfterState;
-				}
-				else
-				{
-					Barriers.Erase(It);
-				}
+					if ((*It).Transition.StateBefore != AfterState)
+					{
+						(*It).Transition.StateAfter = AfterState;
+					}
+					else
+					{
+						Barriers.Erase(It);
+					}
 
-				return;
+					return;
+				}
 			}
 		}
+
+		// Add new resource barrier
+		D3D12_RESOURCE_BARRIER Barrier;
+		Memory::Memzero(&Barrier);
+
+		Barrier.Type					= D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		Barrier.Transition.pResource	= Resource;
+		Barrier.Transition.StateAfter	= AfterState;
+		Barrier.Transition.StateBefore	= BeforeState;
+		Barrier.Transition.Subresource	= D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+		Barriers.EmplaceBack(Barrier);
 	}
-
-	// Add new resource barrier
-	D3D12_RESOURCE_BARRIER Barrier;
-	Memory::Memzero(&Barrier);
-
-	Barrier.Type					= D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	Barrier.Transition.pResource	= Resource;
-	Barrier.Transition.StateAfter	= AfterState;
-	Barrier.Transition.StateBefore	= BeforeState;
-	Barrier.Transition.Subresource	= D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-	Barriers.EmplaceBack(Barrier);
 }
 
 void D3D12ResourceBarrierBatcher::AddTransitionBarrier(

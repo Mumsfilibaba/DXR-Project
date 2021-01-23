@@ -229,6 +229,8 @@ public:
 		UInt32 ShaderResourceViewCount,
 		UInt32 StartSlot)
 	{
+		VALIDATE(ShaderResourceViews != nullptr);
+
 		Void* ViewMemory = CmdAllocator.Allocate(sizeof(ShaderResourceView*) * ShaderResourceViewCount, 1);
 		ShaderResourceView** Views = reinterpret_cast<ShaderResourceView**>(ViewMemory);
 		for (UInt32 i = 0; i < ShaderResourceViewCount; i++)
@@ -250,6 +252,8 @@ public:
 		UInt32 SamplerStateCount,
 		UInt32 StartSlot)
 	{
+		VALIDATE(SamplerStates != nullptr);
+
 		Void* ViewMemory = CmdAllocator.Allocate(sizeof(SamplerState*) * SamplerStateCount, 1);
 		SamplerState** Samplers = reinterpret_cast<SamplerState**>(ViewMemory);
 		for (UInt32 i = 0; i < SamplerStateCount; i++)
@@ -271,6 +275,8 @@ public:
 		UInt32 UnorderedAccessViewCount,
 		UInt32 StartSlot)
 	{
+		VALIDATE(UnorderedAccessViews != nullptr);
+
 		Void* ViewMemory = CmdAllocator.Allocate(sizeof(UnorderedAccessView*) * UnorderedAccessViewCount, 1);
 		UnorderedAccessView** Views = reinterpret_cast<UnorderedAccessView**>(ViewMemory);
 		for (UInt32 i = 0; i < UnorderedAccessViewCount; i++)
@@ -292,6 +298,8 @@ public:
 		UInt32 ConstantBufferCount,
 		UInt32 StartSlot)
 	{
+		VALIDATE(ConstantBuffers != nullptr);
+
 		Void* ViewMemory = CmdAllocator.Allocate(sizeof(ConstantBuffer*) * ConstantBufferCount, 1);
 		ConstantBuffer** Views = reinterpret_cast<ConstantBuffer**>(ViewMemory);
 		for (UInt32 i = 0; i < ConstantBufferCount; i++)
@@ -421,8 +429,11 @@ public:
 	{
 		VALIDATE(Texture != nullptr);
 
-		Texture->AddRef();
-		InsertCommand<TransitionTextureCommand>(Texture, BeforeState, AfterState);
+		if (BeforeState != AfterState)
+		{
+			Texture->AddRef();
+			InsertCommand<TransitionTextureCommand>(Texture, BeforeState, AfterState);
+		}
 	}
 
 	FORCEINLINE void TransitionBuffer(
@@ -432,8 +443,11 @@ public:
 	{
 		VALIDATE(Buffer != nullptr);
 
-		Buffer->AddRef();
-		InsertCommand<TransitionBufferCommand>(Buffer, BeforeState, AfterState);
+		if (BeforeState != AfterState)
+		{
+			Buffer->AddRef();
+			InsertCommand<TransitionBufferCommand>(Buffer, BeforeState, AfterState);
+		}
 	}
 
 	FORCEINLINE void UnorderedAccessTextureBarrier(Texture* Texture)

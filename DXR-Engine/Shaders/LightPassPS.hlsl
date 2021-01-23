@@ -51,9 +51,8 @@ float3 CalcRadiance(
 	float G		= GeometrySmith(InNormal, InViewDir, InLightDir, InRoughness);
 	float3 F	= FresnelSchlick(saturate(dot(HalfVector, InViewDir)), F0);
 	
-	float	DotNV		= max(dot(InNormal, InViewDir), MIN_VALUE);
 	float3	Nominator	= NDF * G * F;
-	float	Denominator	= 4.0f * DotNV * max(dot(InNormal, InLightDir), 0.0f);
+    float	Denominator = 4.0f * max(dot(InNormal, InViewDir), MIN_VALUE) * max(dot(InNormal, InLightDir), 0.0f);
 	float3	Specular	= Nominator / max(Denominator, MIN_VALUE);
 		
 	// Ks is equal to Fresnel

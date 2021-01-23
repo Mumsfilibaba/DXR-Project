@@ -35,7 +35,6 @@ extern Bool GlobalPrePassEnabled;
 extern Bool GlobalDrawAABBs;
 extern Bool GlobalVSyncEnabled;
 extern Bool GlobalFrustumCullEnabled;
-extern Bool GlobalFXAAEnabled;
 extern Bool GlobalRayTracingEnabled;
 
 /*

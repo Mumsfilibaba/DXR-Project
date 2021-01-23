@@ -41,6 +41,8 @@ ConsoleVariable GlobalDrawTextureDebugger(ConsoleVariableType_Bool);
 ConsoleVariable GlobalDrawRendererInfo(ConsoleVariableType_Bool);
 
 ConsoleVariable GlobalEnableSSAO(ConsoleVariableType_Bool);
+ConsoleVariable GlobalEnableFXAA(ConsoleVariableType_Bool);
+
 ConsoleVariable GlobalSSAORadius(ConsoleVariableType_Float);
 ConsoleVariable GlobalSSAOBias(ConsoleVariableType_Float);
 ConsoleVariable GlobalSSAOKernelSize(ConsoleVariableType_Int);
@@ -284,33 +286,33 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Transition GBuffer
 	CmdList.TransitionTexture(
 		GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
-		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_NonPixelShaderResource, 
 		EResourceState::ResourceState_RenderTarget);
 
 	CmdList.TransitionTexture(
 		GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
-		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_NonPixelShaderResource,
 		EResourceState::ResourceState_RenderTarget);
 
 	CmdList.TransitionTexture(
 		GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
-		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_NonPixelShaderResource,
 		EResourceState::ResourceState_RenderTarget);
 
 	CmdList.TransitionTexture(
 		GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_PixelShaderResource,
 		EResourceState::ResourceState_DepthWrite);
 
 	// Transition ShadowMaps
 	CmdList.TransitionTexture(
 		PointLightShadowMaps.Get(), 
-		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_PixelShaderResource,
 		EResourceState::ResourceState_DepthWrite);
 	
 	CmdList.TransitionTexture(
 		DirLightShadowMaps.Get(), 
-		EResourceState::ResourceState_PixelShaderResource, 
+		EResourceState::ResourceState_PixelShaderResource,
 		EResourceState::ResourceState_DepthWrite);
 	
 	// Render DirectionalLight ShadowMaps
@@ -556,18 +558,12 @@ void Renderer::Tick(const Scene& CurrentScene)
 	CmdList.TransitionTexture(
 		DirLightShadowMaps.Get(), 
 		EResourceState::ResourceState_DepthWrite, 
-		EResourceState::ResourceState_PixelShaderResource);
-	
-	DebugTextures.EmplaceBack(
-		DirLightShadowMapSRV,
-		DirLightShadowMaps,
-		EResourceState::ResourceState_PixelShaderResource,
-		EResourceState::ResourceState_PixelShaderResource);
+		EResourceState::ResourceState_NonPixelShaderResource);
 
 	CmdList.TransitionTexture(
 		PointLightShadowMaps.Get(), 
 		EResourceState::ResourceState_DepthWrite, 
-		EResourceState::ResourceState_PixelShaderResource);
+		EResourceState::ResourceState_NonPixelShaderResource);
 
 	// Update camerabuffer
 	CameraBufferDesc CamBuff;
@@ -731,40 +727,55 @@ void Renderer::Tick(const Scene& CurrentScene)
 		CmdList.TransitionTexture(
 			GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
 			EResourceState::ResourceState_RenderTarget, 
-			EResourceState::ResourceState_PixelShaderResource);
+			EResourceState::ResourceState_NonPixelShaderResource);
 	
 		DebugTextures.EmplaceBack(
 			GBufferSRVs[GBUFFER_ALBEDO_INDEX],
 			GBuffer[GBUFFER_ALBEDO_INDEX],
-			EResourceState::ResourceState_PixelShaderResource,
-			EResourceState::ResourceState_PixelShaderResource);
+			EResourceState::ResourceState_NonPixelShaderResource,
+			EResourceState::ResourceState_NonPixelShaderResource);
 
 		CmdList.TransitionTexture(
 			GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
 			EResourceState::ResourceState_RenderTarget, 
-			EResourceState::ResourceState_PixelShaderResource);
+			EResourceState::ResourceState_NonPixelShaderResource);
 
 		DebugTextures.EmplaceBack(
 			GBufferSRVs[GBUFFER_NORMAL_INDEX],
 			GBuffer[GBUFFER_NORMAL_INDEX],
-			EResourceState::ResourceState_PixelShaderResource,
-			EResourceState::ResourceState_PixelShaderResource);
+			EResourceState::ResourceState_NonPixelShaderResource,
+			EResourceState::ResourceState_NonPixelShaderResource);
 
 		CmdList.TransitionTexture(
 			GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
 			EResourceState::ResourceState_RenderTarget, 
-			EResourceState::ResourceState_PixelShaderResource);
+			EResourceState::ResourceState_NonPixelShaderResource);
 
 		DebugTextures.EmplaceBack(
 			GBufferSRVs[GBUFFER_MATERIAL_INDEX],
 			GBuffer[GBUFFER_MATERIAL_INDEX],
-			EResourceState::ResourceState_PixelShaderResource,
-			EResourceState::ResourceState_PixelShaderResource);
+			EResourceState::ResourceState_NonPixelShaderResource,
+			EResourceState::ResourceState_NonPixelShaderResource);
 
 		CmdList.TransitionTexture(
 			GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
 			EResourceState::ResourceState_DepthWrite, 
-			EResourceState::ResourceState_PixelShaderResource);
+			EResourceState::ResourceState_NonPixelShaderResource);
+
+		CmdList.TransitionTexture(
+			IrradianceMap.Get(),
+			EResourceState::ResourceState_PixelShaderResource,
+			EResourceState::ResourceState_NonPixelShaderResource);
+
+		CmdList.TransitionTexture(
+			SpecularIrradianceMap.Get(),
+			EResourceState::ResourceState_PixelShaderResource,
+			EResourceState::ResourceState_NonPixelShaderResource);
+
+		CmdList.TransitionTexture(
+			IntegrationLUT.Get(),
+			EResourceState::ResourceState_PixelShaderResource,
+			EResourceState::ResourceState_NonPixelShaderResource);
 	}
 
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
@@ -782,9 +793,9 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 	// SSAO
 	CmdList.TransitionTexture(
-	SSAOBuffer.Get(), 
-	EResourceState::ResourceState_PixelShaderResource, 
-	EResourceState::ResourceState_UnorderedAccess);
+		SSAOBuffer.Get(), 
+		EResourceState::ResourceState_NonPixelShaderResource,
+		EResourceState::ResourceState_UnorderedAccess);
 
 	const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	CmdList.ClearUnorderedAccessView(SSAOBufferUAV.Get(), WhiteColor);
@@ -795,23 +806,13 @@ void Renderer::Tick(const Scene& CurrentScene)
 		
 		TRACE_SCOPE("SSAO");
 
-		CmdList.TransitionTexture(
-			GBuffer[GBUFFER_NORMAL_INDEX].Get(),
-			EResourceState::ResourceState_PixelShaderResource,
-			EResourceState::ResourceState_NonPixelShaderResource);
-
-		CmdList.TransitionTexture(
-			GBuffer[GBUFFER_DEPTH_INDEX].Get(),
-			EResourceState::ResourceState_PixelShaderResource,
-			EResourceState::ResourceState_NonPixelShaderResource);
-
 		struct SSAOSettings
 		{
-			XMFLOAT2 ScreenSize;
-			XMFLOAT2 NoiseSize;
-			Float Radius;
-			Float Bias;
-			Int32 KernelSize;
+			XMFLOAT2	ScreenSize;
+			XMFLOAT2	NoiseSize;
+			Float		Radius;
+			Float		Bias;
+			Int32		KernelSize;
 		} SSAOSettings;
 
 		const UInt32 Width	= RenderWidth;
@@ -878,56 +879,24 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 		CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
 
-		CmdList.TransitionTexture(
-			GBuffer[GBUFFER_NORMAL_INDEX].Get(),
-			EResourceState::ResourceState_NonPixelShaderResource,
-			EResourceState::ResourceState_PixelShaderResource);
-
-		CmdList.TransitionTexture(
-			GBuffer[GBUFFER_DEPTH_INDEX].Get(),
-			EResourceState::ResourceState_NonPixelShaderResource,
-			EResourceState::ResourceState_PixelShaderResource);
-
 		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End SSAO");
 	}
 
 	CmdList.TransitionTexture(
 		SSAOBuffer.Get(),
 		EResourceState::ResourceState_UnorderedAccess,
-		EResourceState::ResourceState_PixelShaderResource);
-
-	DebugTextures.EmplaceBack(
-		SSAOBufferSRV,
-		SSAOBuffer,
-		EResourceState::ResourceState_PixelShaderResource,
-		EResourceState::ResourceState_PixelShaderResource);
+		EResourceState::ResourceState_NonPixelShaderResource);
 
 	// Render to final output
 	CmdList.TransitionTexture(
 		FinalTarget.Get(), 
-		EResourceState::ResourceState_PixelShaderResource, 
-		EResourceState::ResourceState_RenderTarget);
+		EResourceState::ResourceState_PixelShaderResource,
+		EResourceState::ResourceState_UnorderedAccess);
 	
 	CmdList.TransitionTexture(
 		BackBuffer, 
 		EResourceState::ResourceState_Present, 
 		EResourceState::ResourceState_RenderTarget);
-
-	RenderTargetView* RenderTarget[] = { FinalTargetRTV.Get() };
-	CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
-
-	CmdList.BindViewport(
-		static_cast<Float>(RenderWidth),
-		static_cast<Float>(RenderHeight),
-		0.0f,
-		1.0f,
-		0.0f,
-		0.0f);
-
-	CmdList.BindScissorRect(
-		static_cast<Float>(RenderWidth),
-		static_cast<Float>(RenderHeight),
-		0, 0);
 
 	// Setup LightPass
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
@@ -935,65 +904,80 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		TRACE_SCOPE("LightPass");
 
-		CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+		CmdList.BindComputePipelineState(DeferredLightPass.Get());
 
-		CmdList.BindGraphicsPipelineState(LightPassPSO.Get());
+		ShaderResourceView* ShaderResourceViews[] =
+		{
+			GBufferSRVs[GBUFFER_ALBEDO_INDEX].Get(),
+			GBufferSRVs[GBUFFER_NORMAL_INDEX].Get(),
+			GBufferSRVs[GBUFFER_MATERIAL_INDEX].Get(),
+			GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
+			ReflectionTextureSRV.Get(),
+			IrradianceMapSRV.Get(),
+			SpecularIrradianceMapSRV.Get(),
+			IntegrationLUTSRV.Get(),
+			DirLightShadowMapSRV.Get(),
+			PointLightShadowMapsSRV.Get(),
+			SSAOBufferSRV.Get()
+		};
 	
+		CmdList.BindShaderResourceViews(
+			EShaderStage::ShaderStage_Compute,
+			ShaderResourceViews, 
+			11, 0);
+
+		ConstantBuffer* ConstantBuffers[] =
 		{
-			ShaderResourceView* ShaderResourceViews[] =
-			{
-				GBufferSRVs[GBUFFER_ALBEDO_INDEX].Get(),
-				GBufferSRVs[GBUFFER_NORMAL_INDEX].Get(),
-				GBufferSRVs[GBUFFER_MATERIAL_INDEX].Get(),
-				GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
-				ReflectionTextureSRV.Get(),
-				IrradianceMapSRV.Get(),
-				SpecularIrradianceMapSRV.Get(),
-				IntegrationLUTSRV.Get(),
-				DirLightShadowMapSRV.Get(),
-				PointLightShadowMapsSRV.Get(),
-				SSAOBufferSRV.Get()
-			};
-	
-			CmdList.BindShaderResourceViews(
-				EShaderStage::ShaderStage_Pixel,
-				ShaderResourceViews, 
-				11, 0);
-		}
+			CameraBuffer.Get(),
+			PointLightBuffer.Get(),
+			DirectionalLightBuffer.Get()
+		};
 
+		CmdList.BindConstantBuffers(
+			EShaderStage::ShaderStage_Compute,
+			ConstantBuffers, 
+			3, 0);
+
+		SamplerState* SamplerStates[] =
 		{
-			ConstantBuffer* ConstantBuffers[] =
-			{
-				CameraBuffer.Get(),
-				PointLightBuffer.Get(),
-				DirectionalLightBuffer.Get()
-			};
+			GBufferSampler.Get(),
+			IntegrationLUTSampler.Get(),
+			IrradianceSampler.Get(),
+			ShadowMapCompSampler.Get(),
+			ShadowMapSampler.Get()
+		};
 
-			CmdList.BindConstantBuffers(
-				EShaderStage::ShaderStage_Pixel,
-				ConstantBuffers, 
-				3, 0);
-		}
+		CmdList.BindSamplerStates(
+			EShaderStage::ShaderStage_Compute,
+			SamplerStates,
+			5,
+			0);
 
+		CmdList.BindUnorderedAccessViews(
+			EShaderStage::ShaderStage_Compute,
+			&FinalTargetUAV,
+			1,
+			0);
+
+		struct LightPassSettings
 		{
-			SamplerState* SamplerStates[] =
-			{
-				GBufferSampler.Get(),
-				IntegrationLUTSampler.Get(),
-				IrradianceSampler.Get(),
-				ShadowMapCompSampler.Get(),
-				ShadowMapSampler.Get()
-			};
+			UInt32 NumSkyLightMips;
+			UInt32 ScreenWidth;
+			UInt32 ScreenHeight;
+		} Settings;
 
-			CmdList.BindSamplerStates(
-				EShaderStage::ShaderStage_Pixel,
-				SamplerStates,
-				5,
-				0);
-		}
+		Settings.NumSkyLightMips	= SpecularIrradianceMap->GetMipLevels();
+		Settings.ScreenWidth		= FinalTarget->GetWidth();
+		Settings.ScreenHeight		= FinalTarget->GetHeight();
 
-		// Perform LightPass
-		CmdList.DrawInstanced(3, 1, 0, 0);
+		CmdList.Bind32BitShaderConstants(
+			EShaderStage::ShaderStage_Compute,
+			&Settings, 3);
+
+		constexpr UInt32 ThreadCount = 16;
+		const UInt32 WorkGroupWidth		= Math::DivideByMultiple<UInt32>(Settings.ScreenWidth, ThreadCount);
+		const UInt32 WorkGroupHeight	= Math::DivideByMultiple<UInt32>(Settings.ScreenHeight, ThreadCount);
+		CmdList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
 	}
 
 	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");
@@ -1004,10 +988,31 @@ void Renderer::Tick(const Scene& CurrentScene)
 	{
 		TRACE_SCOPE("Render Skybox");
 
+		RenderTargetView* RenderTarget[] = { FinalTargetRTV.Get() };
+		CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
+
+		CmdList.BindViewport(
+			static_cast<Float>(RenderWidth),
+			static_cast<Float>(RenderHeight),
+			0.0f,
+			1.0f,
+			0.0f,
+			0.0f);
+
+		CmdList.BindScissorRect(
+			static_cast<Float>(RenderWidth),
+			static_cast<Float>(RenderHeight),
+			0, 0);
+
 		CmdList.TransitionTexture(
 			GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-			EResourceState::ResourceState_PixelShaderResource, 
+			EResourceState::ResourceState_NonPixelShaderResource, 
 			EResourceState::ResourceState_DepthWrite);
+
+		CmdList.TransitionTexture(
+			FinalTarget.Get(),
+			EResourceState::ResourceState_UnorderedAccess,
+			EResourceState::ResourceState_RenderTarget);
 	
 		CmdList.BindRenderTargets(RenderTarget, 1, GBufferDSV.Get());
 	
@@ -1046,13 +1051,44 @@ void Renderer::Tick(const Scene& CurrentScene)
 	// Render to BackBuffer
 	CmdList.TransitionTexture(
 		FinalTarget.Get(), 
-		EResourceState::ResourceState_RenderTarget, 
+		EResourceState::ResourceState_RenderTarget,
 		EResourceState::ResourceState_PixelShaderResource);
 
 	DebugTextures.EmplaceBack(
 		FinalTargetSRV,
 		FinalTarget,
 		EResourceState::ResourceState_PixelShaderResource,
+		EResourceState::ResourceState_PixelShaderResource);
+
+	CmdList.TransitionTexture(
+		PointLightShadowMaps.Get(),
+		EResourceState::ResourceState_NonPixelShaderResource,
+		EResourceState::ResourceState_PixelShaderResource);
+
+	CmdList.TransitionTexture(
+		DirLightShadowMaps.Get(),
+		EResourceState::ResourceState_NonPixelShaderResource,
+		EResourceState::ResourceState_PixelShaderResource);
+
+	DebugTextures.EmplaceBack(
+		DirLightShadowMapSRV,
+		DirLightShadowMaps,
+		EResourceState::ResourceState_PixelShaderResource,
+		EResourceState::ResourceState_PixelShaderResource);
+
+	CmdList.TransitionTexture(
+		IrradianceMap.Get(),
+		EResourceState::ResourceState_NonPixelShaderResource,
+		EResourceState::ResourceState_PixelShaderResource);
+
+	CmdList.TransitionTexture(
+		SpecularIrradianceMap.Get(),
+		EResourceState::ResourceState_NonPixelShaderResource,
+		EResourceState::ResourceState_PixelShaderResource);
+
+	CmdList.TransitionTexture(
+		IntegrationLUT.Get(),
+		EResourceState::ResourceState_NonPixelShaderResource,
 		EResourceState::ResourceState_PixelShaderResource);
 	
 	CmdList.BindRenderTargets(&BackBufferView, 1, nullptr);
@@ -1065,7 +1101,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 		EShaderStage::ShaderStage_Pixel,
 		&GBufferSampler, 1, 0);
 
-	if (GlobalFXAAEnabled)
+	if (GlobalEnableFXAA.GetBool())
 	{
 		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin FXAA");
 		
@@ -1564,6 +1600,9 @@ Bool Renderer::Init()
 
 	INIT_CONSOLE_VARIABLE("EnableSSAO", GlobalEnableSSAO);
 	GlobalEnableSSAO.SetBool(true);
+
+	INIT_CONSOLE_VARIABLE("EnableFXAA", GlobalEnableFXAA);
+	GlobalEnableFXAA.SetBool(true);
 
 	INIT_CONSOLE_VARIABLE("SSAOKernelSize", GlobalSSAOKernelSize);
 	GlobalSSAOKernelSize.SetInt32(16);
@@ -3027,6 +3066,43 @@ Bool Renderer::InitDeferred()
 		SkyboxPSO->SetName("SkyboxPSO PipelineState");
 	}
 
+	if (!ShaderCompiler::CompileFromFile(
+		"../DXR-Engine/Shaders/DeferredLightPass.hlsl",
+		"Main",
+		nullptr,
+		EShaderStage::ShaderStage_Compute,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	TSharedRef<ComputeShader> CShader = RenderLayer::CreateComputeShader(ShaderCode);
+	if (!CShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		CShader->SetName("DeferredLightPass Shader");
+	}
+
+	ComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
+	DeferredLightPassCreateInfo.Shader = CShader.Get();
+
+	DeferredLightPass = RenderLayer::CreateComputePipelineState(DeferredLightPassCreateInfo);
+	if (!DeferredLightPass)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		DeferredLightPass->SetName("DeferredLightPass");
+	}
+
 	return true;
 }
 
@@ -3173,7 +3249,7 @@ Bool Renderer::InitGBuffer()
 	FinalTarget = RenderLayer::CreateTexture2D(
 		nullptr, 
 		FinalTargetFormat,
-		Usage, 
+		TextureUsage_Default | TextureUsage_RenderTarget | TextureUsage_UAV,
 		Width, 
 		Height, 
 		1, 1, 
@@ -3182,14 +3258,29 @@ Bool Renderer::InitGBuffer()
 	{
 		FinalTarget->SetName("Final Target");
 
-		FinalTargetSRV = RenderLayer::CreateShaderResourceView(FinalTarget.Get(), FinalTargetFormat, 0, 1);
+		FinalTargetSRV = RenderLayer::CreateShaderResourceView(
+			FinalTarget.Get(), 
+			FinalTargetFormat, 
+			0, 1);
 		if (!FinalTargetSRV)
 		{
 			return false;
 		}
 
-		FinalTargetRTV = RenderLayer::CreateRenderTargetView(FinalTarget.Get(), FinalTargetFormat, 0);
+		FinalTargetRTV = RenderLayer::CreateRenderTargetView(
+			FinalTarget.Get(),
+			FinalTargetFormat, 
+			0);
 		if (!FinalTargetRTV)
+		{
+			return false;
+		}
+
+		FinalTargetUAV = RenderLayer::CreateUnorderedAccessView(
+			FinalTarget.Get(),
+			FinalTargetFormat,
+			0);
+		if (!FinalTargetUAV)
 		{
 			return false;
 		}
