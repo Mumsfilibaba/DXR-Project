@@ -410,6 +410,8 @@ static void DrawSceneInfo()
 	{
 		for (Actor* Actor : Scene::GetCurrentScene()->GetActors())
 		{
+			ImGui::PushID(Actor);
+
 			if (ImGui::TreeNode(Actor->GetName().c_str()))
 			{
 				// Transform
@@ -534,6 +536,8 @@ static void DrawSceneInfo()
 
 				ImGui::TreePop();
 			}
+
+			ImGui::PopID();
 		}
 
 		ImGui::TreePop();
@@ -544,6 +548,8 @@ static void DrawSceneInfo()
 	{
 		for (Light* CurrentLight : Scene::GetCurrentScene()->GetLights())
 		{
+			ImGui::PushID(CurrentLight);
+
 			if (IsSubClassOf<PointLight>(CurrentLight))
 			{
 				PointLight* CurrentPointLight = Cast<PointLight>(CurrentLight);
@@ -797,6 +803,8 @@ static void DrawSceneInfo()
 					ImGui::TreePop();
 				}
 			}
+
+			ImGui::PopID();
 		}
 
 		ImGui::TreePop();

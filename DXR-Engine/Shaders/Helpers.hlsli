@@ -27,6 +27,22 @@ float Luma(float3 Color)
     return sqrt(dot(Color, float3(0.299f, 0.587f, 0.114f)));
 }
 
+float4 CreatePlane(float3 Q, float3 R)
+{
+    float3 N = normalize(cross(Q, R));
+    return float4(N, 0);
+}
+
+float GetSignedDistanceFromPlane(float3 P, float4 Plane)
+{
+    return dot(Plane.xyz, P);
+}
+
+uint DivideByMultiple(uint Value, uint Alignment)
+{
+    return ((Value + Alignment - 1) / Alignment);
+}
+
 /*
 * Random numbers
 */
@@ -60,6 +76,17 @@ float3 Lerp(float3 A, float3 B, float P)
 /*
 * Position Helper
 */
+
+float Depth_ProjToView(float Depth, float4x4 ProjectionInverse)
+{
+    return 1.0f / (Depth * ProjectionInverse._34 + ProjectionInverse._44);
+}
+
+float3 Float3_ProjToView(float3 P, float4x4 ProjectionInverse)
+{
+    float4 ViewP = mul(float4(P, 1.0f), ProjectionInverse);
+    return (ViewP / ViewP.w).xyz;
+}
 
 float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInverse)
 {

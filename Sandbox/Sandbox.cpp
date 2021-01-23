@@ -226,12 +226,12 @@ Bool Sandbox::Init()
 		MetallicMap.SetName("MetallicMap");
 	}
 
-	NewComponent->Material->AlbedoMap = AlbedoMap;
-	NewComponent->Material->NormalMap = NormalMap;
-	NewComponent->Material->RoughnessMap = RoughnessMap;
-	NewComponent->Material->HeightMap = HeightMap;
-	NewComponent->Material->AOMap = AOMap;
-	NewComponent->Material->MetallicMap = MetallicMap;
+	NewComponent->Material->AlbedoMap		= AlbedoMap;
+	NewComponent->Material->NormalMap		= NormalMap;
+	NewComponent->Material->RoughnessMap	= RoughnessMap;
+	NewComponent->Material->HeightMap		= HeightMap;
+	NewComponent->Material->AOMap			= AOMap;
+	NewComponent->Material->MetallicMap		= MetallicMap;
 	NewComponent->Material->Init();
 	NewActor->AddComponent(NewComponent);
 
@@ -240,23 +240,50 @@ Bool Sandbox::Init()
 
 	// Add PointLight- Source
 	PointLight* Light0 = DBG_NEW PointLight();
-	Light0->SetPosition(14.0f, 1.0f, -0.5f);
+	Light0->SetPosition(16.5f, 1.0f, 0.0f);
 	Light0->SetColor(1.0f, 1.0f, 1.0f);
 	Light0->SetShadowBias(0.0005f);
 	Light0->SetMaxShadowBias(0.009f);
 	Light0->SetShadowFarPlane(50.0f);
-	Light0->SetIntensity(100.0f);
+	Light0->SetIntensity(20.0f);
 	CurrentScene->AddLight(Light0);
 
-	// Add DirectionalLight- Source
-	DirectionalLight* Light1 = DBG_NEW DirectionalLight();
-	Light1->SetShadowBias(0.0008f);
-	Light1->SetMaxShadowBias(0.008f);
-	Light1->SetShadowNearPlane(0.01f);
-	Light1->SetShadowFarPlane(140.0f);
+	PointLight* Light1 = DBG_NEW PointLight();
+	Light1->SetPosition(-17.5f, 1.0f, 0.0f);
 	Light1->SetColor(1.0f, 1.0f, 1.0f);
-	Light1->SetIntensity(10.0f);
+	Light1->SetShadowBias(0.0005f);
+	Light1->SetMaxShadowBias(0.009f);
+	Light1->SetShadowFarPlane(50.0f);
+	Light1->SetIntensity(20.0f);
 	CurrentScene->AddLight(Light1);
+
+	PointLight* Light2 = DBG_NEW PointLight();
+	Light2->SetPosition(16.5f, 11.0f, 0.0f);
+	Light2->SetColor(1.0f, 1.0f, 1.0f);
+	Light2->SetShadowBias(0.0005f);
+	Light2->SetMaxShadowBias(0.009f);
+	Light2->SetShadowFarPlane(50.0f);
+	Light2->SetIntensity(20.0f);
+	CurrentScene->AddLight(Light2);
+
+	PointLight* Light3 = DBG_NEW PointLight();
+	Light3->SetPosition(-17.5f, 11.0f, 0.0f);
+	Light3->SetColor(1.0f, 1.0f, 1.0f);
+	Light3->SetShadowBias(0.0005f);
+	Light3->SetMaxShadowBias(0.009f);
+	Light3->SetShadowFarPlane(50.0f);
+	Light3->SetIntensity(20.0f);
+	CurrentScene->AddLight(Light3);
+
+	// Add DirectionalLight- Source
+	DirectionalLight* Light4 = DBG_NEW DirectionalLight();
+	Light4->SetShadowBias(0.0008f);
+	Light4->SetMaxShadowBias(0.008f);
+	Light4->SetShadowNearPlane(0.01f);
+	Light4->SetShadowFarPlane(140.0f);
+	Light4->SetColor(1.0f, 1.0f, 1.0f);
+	Light4->SetIntensity(10.0f);
+	CurrentScene->AddLight(Light4);
 
 	Scene::SetCurrentScene(CurrentScene);
 	return true;

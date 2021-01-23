@@ -595,7 +595,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(
 	VALIDATE(Texture != nullptr);
 	VALIDATE(Texture->HasShaderResourceUsage());
 	VALIDATE(MostDetailedMip + MipLevels <= Texture->GetMipLevels());
-	VALIDATE(FirstArraySlice + ArraySize < (Texture->GetArrayCount() / TEXTURE_CUBE_FACE_COUNT));
+	VALIDATE(FirstArraySlice + ArraySize <= (Texture->GetArrayCount() / TEXTURE_CUBE_FACE_COUNT));
 	VALIDATE(Format != EFormat::Format_Unknown);
 	VALIDATE(Texture->IsMultiSampled() == false);
 
@@ -604,7 +604,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(
 
 	Desc.Format									= ConvertFormat(Format);
 	Desc.Shader4ComponentMapping				= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	Desc.ViewDimension							= D3D12_SRV_DIMENSION_TEXTURECUBE;
+	Desc.ViewDimension							= D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
 	Desc.TextureCubeArray.MostDetailedMip		= MostDetailedMip;
 	Desc.TextureCubeArray.MipLevels				= MipLevels;
 	Desc.TextureCubeArray.First2DArrayFace		= FirstArraySlice * TEXTURE_CUBE_FACE_COUNT;

@@ -58,7 +58,7 @@ VSOutput VSMain(VSInput Input)
 	VSOutput Output;
 	
 	const float4x4 TransformInv = transpose(TransformBuffer.TransformInv);
-	float3 Normal = mul(float4(Input.Normal, 0.0f), TransformInv).xyz;
+    float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
 	Output.Normal = Normal;
 	
     float3 ViewNormal = mul(float4(Normal, 0.0f), CameraBuffer.View).xyz;
@@ -69,7 +69,7 @@ VSOutput VSMain(VSInput Input)
 	Tangent			= normalize(Tangent - dot(Tangent, Normal) * Normal);
 	Output.Tangent	= Tangent;
 	
-	float3 Bitangent = normalize(cross(Output.Tangent, Output.Normal));
+	float3 Bitangent = normalize(cross(Tangent, Normal));
 	Output.Bitangent = Bitangent;
 #endif
 
@@ -79,11 +79,9 @@ VSOutput VSMain(VSInput Input)
 	Output.Position			= mul(WorldPosition, CameraBuffer.ViewProjection);
 	
 #ifdef PARALLAX_MAPPING_ENABLED
-	float3x3 TBN	= float3x3(Tangent, Bitangent, Normal);
-	TBN				= transpose(TBN);
-	
-	Output.TangentViewPos	= mul(CameraBuffer.Position, TBN);
-	Output.TangentPosition	= mul(WorldPosition.xyz, TBN);
+	float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
+	Output.TangentViewPos	= mul(TBN, CameraBuffer.Position);
+	Output.TangentPosition	= mul(TBN, WorldPosition.xyz);
 #endif
 
 	return Output;
@@ -177,6 +175,7 @@ PSOutput PSMain(PSInput Input)
 #ifdef NORMAL_MAPPING_ENABLED
 	float3 SampledNormal	= NormalMap.Sample(MaterialSampler, TexCoords).rgb;
 	SampledNormal			= UnpackNormal(SampledNormal);
+	SampledNormal.y			= -SampledNormal.y;
 	
 	float3 Tangent		= normalize(Input.Tangent);
 	float3 Bitangent	= normalize(Input.Bitangent);

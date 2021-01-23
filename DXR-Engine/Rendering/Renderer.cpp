@@ -21,7 +21,7 @@
 * Static Settings
 */
 
-static const EFormat SSAOBufferFormat		= EFormat::Format_R32_Float;
+static const EFormat SSAOBufferFormat		= EFormat::Format_R16_Float;
 static const EFormat FinalTargetFormat		= EFormat::Format_R16G16B16A16_Float;
 static const EFormat RenderTargetFormat		= EFormat::Format_R8G8B8A8_Unorm;
 static const EFormat AlbedoFormat			= EFormat::Format_R8G8B8A8_Unorm;
@@ -55,16 +55,16 @@ ConsoleVariable GlobalSSAOKernelSize(ConsoleVariableType_Int);
 
 struct CameraBufferDesc
 {
-	XMFLOAT4X4 ViewProjection;
-	XMFLOAT4X4 View;
-	XMFLOAT4X4 ViewInv;
-	XMFLOAT4X4 Projection;
-	XMFLOAT4X4 ProjectionInv;
-	XMFLOAT4X4 ViewProjectionInv;
-	XMFLOAT3 Position;
-	Float NearPlane;
-	Float FarPlane;
-	Float AspectRatio;
+	XMFLOAT4X4	ViewProjection;
+	XMFLOAT4X4	View;
+	XMFLOAT4X4	ViewInv;
+	XMFLOAT4X4	Projection;
+	XMFLOAT4X4	ProjectionInv;
+	XMFLOAT4X4	ViewProjectionInv;
+	XMFLOAT3	Position;
+	Float		NearPlane;
+	Float		FarPlane;
+	Float		AspectRatio;
 };
 
 /*
@@ -230,20 +230,29 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Float		Intensity	= Light->GetIntensity();
 			if (IsSubClassOf<PointLight>(Light) && UpdatePointLight)
 			{
-				PointLight* PoiLight = Cast<PointLight>(Light);
-				VALIDATE(PoiLight != nullptr);
+				PointLight* CurrentLight = Cast<PointLight>(Light);
+				VALIDATE(CurrentLight != nullptr);
 
 				PointLightProperties Properties;
 				Properties.Color			= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-				Properties.Position			= PoiLight->GetPosition();
-				Properties.ShadowBias		= PoiLight->GetShadowBias();
-				Properties.MaxShadowBias	= PoiLight->GetMaxShadowBias();
-				Properties.FarPlane			= PoiLight->GetShadowFarPlane();
+				Properties.Position			= CurrentLight->GetPosition();
+				Properties.ShadowBias		= CurrentLight->GetShadowBias();
+				Properties.MaxShadowBias	= CurrentLight->GetMaxShadowBias();
+				Properties.FarPlane			= CurrentLight->GetShadowFarPlane();
+
+				constexpr Float MinLuma = 0.05f;
+				const Float Dot =
+					Properties.Color.x * 0.2126f +
+					Properties.Color.y * 0.7152f +
+					Properties.Color.z * 0.0722f;
+
+				Float Radius = sqrt(Dot / MinLuma);
+				Properties.Radius = Radius;
 
 				constexpr UInt32 SizeInBytes = sizeof(PointLightProperties);
 				CmdList.UpdateBuffer(
 					PointLightBuffer.Get(), 
-					NumPointLights* SizeInBytes, 
+					NumPointLights * SizeInBytes, 
 					SizeInBytes, 
 					&Properties);
 
@@ -251,15 +260,15 @@ void Renderer::Tick(const Scene& CurrentScene)
 			}
 			else if (IsSubClassOf<DirectionalLight>(Light) && UpdateDirLight)
 			{
-				DirectionalLight* DirLight = Cast<DirectionalLight>(Light);
-				VALIDATE(DirLight != nullptr);
+				DirectionalLight* CurrentLight = Cast<DirectionalLight>(Light);
+				VALIDATE(CurrentLight != nullptr);
 
 				DirectionalLightProperties Properties;
 				Properties.Color			= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-				Properties.ShadowBias		= DirLight->GetShadowBias();
-				Properties.Direction		= DirLight->GetDirection();
-				Properties.LightMatrix		= DirLight->GetMatrix();
-				Properties.MaxShadowBias	= DirLight->GetMaxShadowBias();
+				Properties.ShadowBias		= CurrentLight->GetShadowBias();
+				Properties.Direction		= CurrentLight->GetDirection();
+				Properties.LightMatrix		= CurrentLight->GetMatrix();
+				Properties.MaxShadowBias	= CurrentLight->GetMaxShadowBias();
 
 				constexpr UInt32 SizeInBytes = sizeof(DirectionalLightProperties);
 				CmdList.UpdateBuffer(
@@ -460,20 +469,22 @@ void Renderer::Tick(const Scene& CurrentScene)
 			Float		ShadowOffset;
 		} ShadowPerObjectBuffer;
 
+		UInt32 PointLightShadowIndex = 0;
 		PerShadowMap PerShadowMapData;
 		for (Light* Light : CurrentScene.GetLights())
 		{
 			if (IsSubClassOf<PointLight>(Light))
 			{
-				PointLight* PoiLight = Cast<PointLight>(Light);
-				for (UInt32 i = 0; i < 6; i++)
+				PointLight* CurrentLight = Cast<PointLight>(Light);
+				for (UInt32 Face = 0; Face < 6; Face++)
 				{
-					CmdList.ClearDepthStencilView(PointLightShadowMapsDSVs[i].Get(), DepthStencilClearValue(1.0f, 0));
-					CmdList.BindRenderTargets(nullptr, 0, PointLightShadowMapsDSVs[i].Get());
+					auto& Cube = PointLightShadowMapDSVs[PointLightShadowIndex];
+					CmdList.ClearDepthStencilView(Cube[Face].Get(), DepthStencilClearValue(1.0f, 0));
+					CmdList.BindRenderTargets(nullptr, 0, Cube[Face].Get());
 
-					PerShadowMapData.Matrix		= PoiLight->GetMatrix(i);
-					PerShadowMapData.Position	= PoiLight->GetPosition();
-					PerShadowMapData.FarPlane	= PoiLight->GetShadowFarPlane();
+					PerShadowMapData.Matrix		= CurrentLight->GetMatrix(Face);
+					PerShadowMapData.Position	= CurrentLight->GetPosition();
+					PerShadowMapData.FarPlane	= CurrentLight->GetShadowFarPlane();
 
 					CmdList.TransitionBuffer(
 						PerShadowMapBuffer.Get(),
@@ -498,7 +509,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 					// Draw all objects to depthbuffer
 					if (GlobalFrustumCullEnabled)
 					{
-						Frustum CameraFrustum = Frustum(PoiLight->GetShadowFarPlane(), PoiLight->GetViewMatrix(i), PoiLight->GetProjectionMatrix(i));
+						Frustum CameraFrustum = Frustum(CurrentLight->GetShadowFarPlane(), CurrentLight->GetViewMatrix(Face), CurrentLight->GetProjectionMatrix(Face));
 						for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
 						{
 							const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
@@ -546,7 +557,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 					}
 				}
 
-				break;
+				PointLightShadowIndex++;
 			}
 		}
 
@@ -889,7 +900,17 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 		CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
 
-		CmdList.BindComputePipelineState(SSAOBlur.Get());
+		CmdList.BindComputePipelineState(SSAOBlurHorizontal.Get());
+
+		CmdList.Bind32BitShaderConstants(
+			EShaderStage::ShaderStage_Compute,
+			&SSAOSettings.ScreenSize, 2);
+
+		CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+
+		CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
+
+		CmdList.BindComputePipelineState(SSAOBlurVertical.Get());
 
 		CmdList.Bind32BitShaderConstants(
 			EShaderStage::ShaderStage_Compute,
@@ -943,7 +964,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 			SpecularIrradianceMapSRV.Get(),
 			IntegrationLUTSRV.Get(),
 			DirLightShadowMapSRV.Get(),
-			PointLightShadowMapsSRV.Get(),
+			PointLightShadowMapSRV.Get(),
 			SSAOBufferSRV.Get()
 		};
 	
@@ -987,20 +1008,22 @@ void Renderer::Tick(const Scene& CurrentScene)
 
 		struct LightPassSettings
 		{
-			UInt32 NumSkyLightMips;
-			UInt32 ScreenWidth;
-			UInt32 ScreenHeight;
+			Int32 NumPointLights;
+			Int32 NumSkyLightMips;
+			Int32 ScreenWidth;
+			Int32 ScreenHeight;
 		} Settings;
 
+		Settings.NumPointLights		= 4;
 		Settings.NumSkyLightMips	= SpecularIrradianceMap->GetMipLevels();
 		Settings.ScreenWidth		= FinalTarget->GetWidth();
 		Settings.ScreenHeight		= FinalTarget->GetHeight();
 
 		CmdList.Bind32BitShaderConstants(
 			EShaderStage::ShaderStage_Compute,
-			&Settings, 3);
+			&Settings, 4);
 
-		constexpr UInt32 ThreadCount = 16;
+		constexpr UInt32 ThreadCount	= 16;
 		const UInt32 WorkGroupWidth		= Math::DivideByMultiple<UInt32>(Settings.ScreenWidth, ThreadCount);
 		const UInt32 WorkGroupHeight	= Math::DivideByMultiple<UInt32>(Settings.ScreenHeight, ThreadCount);
 		CmdList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
@@ -1208,7 +1231,7 @@ void Renderer::Tick(const Scene& CurrentScene)
 				SpecularIrradianceMapSRV.Get(),
 				IntegrationLUTSRV.Get(),
 				DirLightShadowMapSRV.Get(),
-				PointLightShadowMapsSRV.Get(),
+				PointLightShadowMapSRV.Get(),
 			};
 
 			CmdList.BindShaderResourceViews(
@@ -2400,7 +2423,7 @@ Bool Renderer::InitRayTracing()
 
 Bool Renderer::InitLightBuffers()
 {
-	const UInt32 NumPointLights = 1;
+	const UInt32 NumPointLights = 8;
 	const UInt32 NumDirLights	= 1;
 
 	PointLightBuffer = RenderLayer::CreateConstantBuffer<PointLightProperties>(
@@ -2926,107 +2949,6 @@ Bool Renderer::InitDeferred()
 		GeometryPSO->SetName("GeometryPass PipelineState");
 	}
 
-	// LightPass
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/FullscreenVS.hlsl",
-		"Main",
-		nullptr,
-		EShaderStage::ShaderStage_Vertex,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-
-	VShader = RenderLayer::CreateVertexShader(ShaderCode);
-	if (!VShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		VShader->SetName("Fullscreen VertexShader");
-	}
-
-	const char* Value = (RenderLayer::IsRayTracingSupported() && GlobalRayTracingEnabled) ? "1" : "0";
-	Defines =
-	{
-		{ "ENABLE_RAYTRACING",	Value },
-	};
-
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/LightPassPS.hlsl",
-		"Main",
-		&Defines,
-		EShaderStage::ShaderStage_Pixel,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-
-	PShader = RenderLayer::CreatePixelShader(ShaderCode);
-	if (!PShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PShader->SetName("../DXR-Engine/LightPass PixelShader");
-	}
-
-	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_Never;
-	DepthStencilStateInfo.DepthEnable		= false;
-	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_Zero;
-
-	TSharedRef<DepthStencilState> LightDepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
-	if (!LightDepthStencilState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		LightDepthStencilState->SetName("LightPass DepthStencilState");
-	}
-
-	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
-
-	TSharedRef<RasterizerState> NoCullRasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
-	if (!NoCullRasterizerState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		NoCullRasterizerState->SetName("No Cull RasterizerState");
-	}
-
-	PSOProperties.InputLayoutState	= nullptr;
-	PSOProperties.DepthStencilState = LightDepthStencilState.Get();
-	PSOProperties.RasterizerState	= NoCullRasterizerState.Get();
-	PSOProperties.ShaderState.VertexShader	= VShader.Get();
-	PSOProperties.ShaderState.PixelShader	= PShader.Get();
-	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= FinalTargetFormat;
-	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
-	PSOProperties.PipelineFormats.DepthStencilFormat		= EFormat::Format_Unknown;
-
-	LightPassPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
-	if (!LightPassPSO)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		LightPassPSO->SetName("LightPass PipelineState");
-	}
-
 	// SkyboxPass
 	if (!ShaderCompiler::CompileFromFile(
 		"../DXR-Engine/Shaders/Skybox.hlsl",
@@ -3074,10 +2996,24 @@ Bool Renderer::InitDeferred()
 		PShader->SetName("Skybox PixelShader");
 	}
 
-	PSOProperties.InputLayoutState	= StdInputLayout.Get();
-	PSOProperties.DepthStencilState	= GeometryDepthStencilState.Get();
-	PSOProperties.ShaderState.VertexShader	= VShader.Get();
-	PSOProperties.ShaderState.PixelShader	= PShader.Get();
+	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
+
+	TSharedRef<RasterizerState> SkyboxRasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+	if (!SkyboxRasterizerState)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		SkyboxRasterizerState->SetName("Skybox RasterizerState");
+	}
+
+	PSOProperties.InputLayoutState							= StdInputLayout.Get();
+	PSOProperties.DepthStencilState							= GeometryDepthStencilState.Get();
+	PSOProperties.RasterizerState							= SkyboxRasterizerState.Get();
+	PSOProperties.ShaderState.VertexShader					= VShader.Get();
+	PSOProperties.ShaderState.PixelShader					= PShader.Get();
 	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= FinalTargetFormat;
 	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
 	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
@@ -3093,6 +3029,7 @@ Bool Renderer::InitDeferred()
 		SkyboxPSO->SetName("SkyboxPSO PipelineState");
 	}
 
+	// LightPass
 	if (!ShaderCompiler::CompileFromFile(
 		"../DXR-Engine/Shaders/DeferredLightPass.hlsl",
 		"Main",
@@ -4240,11 +4177,14 @@ Bool Renderer::InitSSAO()
 		SSAOSamplesSRV->SetName("SSAO Samples SRV");
 	}
 
+	TArray<ShaderDefine> Defines;
+	Defines.EmplaceBack("HORIZONTAL_PASS", "1");
+
 	// Load shader
 	if (!ShaderCompiler::CompileFromFile(
 		"../DXR-Engine/Shaders/Blur.hlsl",
 		"Main",
-		nullptr,
+		&Defines,
 		EShaderStage::ShaderStage_Compute,
 		EShaderModel::ShaderModel_6_0,
 		ShaderCode))
@@ -4261,19 +4201,66 @@ Bool Renderer::InitSSAO()
 	}
 	else
 	{
-		CShader->SetName("SSAO Blur Shader");
+		CShader->SetName("SSAO Horizontal Blur Shader");
 	}
 
 	{
 		// Init PipelineState
-		ComputePipelineStateCreateInfo PSOProperties = { };
+		ComputePipelineStateCreateInfo PSOProperties;
 		PSOProperties.Shader = CShader.Get();
 
-		SSAOBlur = RenderLayer::CreateComputePipelineState(PSOProperties);
-		if (!SSAOBlur)
+		SSAOBlurHorizontal = RenderLayer::CreateComputePipelineState(PSOProperties);
+		if (!SSAOBlurHorizontal)
 		{
 			Debug::DebugBreak();
 			return false;
+		}
+		else
+		{
+			SSAOBlurHorizontal->SetName("SSAO Horizontal Blur PSO");
+		}
+	}
+
+	Defines.Clear();
+	Defines.EmplaceBack("VERTICAL_PASS", "1");
+
+	if (!ShaderCompiler::CompileFromFile(
+		"../DXR-Engine/Shaders/Blur.hlsl",
+		"Main",
+		&Defines,
+		EShaderStage::ShaderStage_Compute,
+		EShaderModel::ShaderModel_6_0,
+		ShaderCode))
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+
+	CShader = RenderLayer::CreateComputeShader(ShaderCode);
+	if (!CShader)
+	{
+		Debug::DebugBreak();
+		return false;
+	}
+	else
+	{
+		CShader->SetName("SSAO Vertcial Blur Shader");
+	}
+
+	{
+		// Init PipelineState
+		ComputePipelineStateCreateInfo PSOProperties;
+		PSOProperties.Shader = CShader.Get();
+
+		SSAOBlurVertical = RenderLayer::CreateComputePipelineState(PSOProperties);
+		if (!SSAOBlurVertical)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
+		else
+		{
+			SSAOBlurVertical->SetName("SSAO Vertical Blur PSO");
 		}
 	}
 
@@ -4414,30 +4401,44 @@ Bool Renderer::CreateShadowMaps()
 #endif
 
 	const UInt16 Size = CurrentLightSettings.PointLightShadowSize;
-	PointLightShadowMaps = RenderLayer::CreateTextureCube(
+	PointLightShadowMaps = RenderLayer::CreateTextureCubeArray(
 		nullptr,
 		ShadowMapFormat,
 		TextureUsage_ShadowMap,
 		Size,
-		1, 1,
+		1, MaxPointLightShadows, 1,
 		ClearValue(DepthStencilClearValue(1.0f, 0)));
 	if (PointLightShadowMaps)
 	{
 		PointLightShadowMaps->SetName("PointLight ShadowMaps");
 
-		PointLightShadowMapsDSVs.Resize(6);
-		for (UInt32 i = 0; i < 6; i++)
+		PointLightShadowMapDSVs.Resize(MaxPointLightShadows);
+		for (UInt32 i = 0; i < MaxPointLightShadows; i++)
 		{
-			PointLightShadowMapsDSVs[i] = RenderLayer::CreateDepthStencilView(
-				PointLightShadowMaps.Get(),
-				ShadowMapFormat,
-				0, i);
+			for (UInt32 Face = 0; Face < 6; Face++)
+			{
+				TStaticArray<TSharedRef<DepthStencilView>, 6>& DepthCube = PointLightShadowMapDSVs[i];
+				DepthCube[Face] = RenderLayer::CreateDepthStencilView(
+					PointLightShadowMaps.Get(),
+					ShadowMapFormat,
+					0, i, Face);
+				if (!DepthCube[Face])
+				{
+					Debug::DebugBreak();
+					return false;
+				}
+			}
 		}
 
-		PointLightShadowMapsSRV = RenderLayer::CreateShaderResourceView(
+		PointLightShadowMapSRV = RenderLayer::CreateShaderResourceView(
 			PointLightShadowMaps.Get(),
 			EFormat::Format_R32_Float,
-			0, 1);
+			0, 1, 0, MaxPointLightShadows);
+		if (!PointLightShadowMapSRV)
+		{
+			Debug::DebugBreak();
+			return false;
+		}
 	}
 	else
 	{

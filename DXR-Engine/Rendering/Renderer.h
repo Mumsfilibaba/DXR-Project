@@ -22,20 +22,12 @@
 
 #define ENABLE_VSM 0
 
-/*
-* LightSettings
-*/
-
 struct LightSettings
 {
 	UInt16 ShadowMapWidth		= 4096;
 	UInt16 ShadowMapHeight		= 4096;
 	UInt16 PointLightShadowSize	= 1024;
 };
-
-/*
-* Renderer
-*/
 
 class Renderer : public IEventHandler
 {
@@ -119,11 +111,12 @@ private:
 	TSharedRef<ShaderResourceView>	SkyboxSRV;
 	TSharedRef<SamplerState>		SkyboxSampler;
 
-	TSharedRef<TextureCube>					PointLightShadowMaps;
-	TArray<TSharedRef<DepthStencilView>>	PointLightShadowMapsDSVs;
-	TSharedRef<ShaderResourceView>			PointLightShadowMapsSRV;
-	TSharedRef<SamplerState>				ShadowMapSampler;
-	TSharedRef<SamplerState>				ShadowMapCompSampler;
+	const UInt32 MaxPointLightShadows = 8;
+	TSharedRef<SamplerState>		ShadowMapSampler;
+	TSharedRef<SamplerState>		ShadowMapCompSampler;
+	TSharedRef<TextureCubeArray>	PointLightShadowMaps;
+	TSharedRef<ShaderResourceView>	PointLightShadowMapSRV;
+	TArray<TStaticArray<TSharedRef<DepthStencilView>, 6>> PointLightShadowMapDSVs;
 
 	TSharedRef<ShaderResourceView>	DirLightShadowMapSRV;
 	TSharedRef<DepthStencilView>	DirLightShadowMapDSV;
@@ -160,7 +153,6 @@ private:
 	TSharedRef<GraphicsPipelineState> LinearShadowMapPSO;
 	TSharedPtr<GraphicsPipelineState> ForwardPSO;
 	TSharedRef<GraphicsPipelineState> GeometryPSO;
-	TSharedRef<GraphicsPipelineState> LightPassPSO;
 	TSharedRef<GraphicsPipelineState> SkyboxPSO;
 	TSharedRef<GraphicsPipelineState> DebugBoxPSO;
 	TSharedRef<GraphicsPipelineState> PostPSO;
@@ -174,7 +166,8 @@ private:
 	TSharedRef<ComputePipelineState> IrradicanceGenPSO;
 	TSharedRef<ComputePipelineState> SpecIrradicanceGenPSO;
 	TSharedPtr<ComputePipelineState> SSAOPSO;
-	TSharedPtr<ComputePipelineState> SSAOBlur;
+	TSharedPtr<ComputePipelineState> SSAOBlurHorizontal;
+	TSharedPtr<ComputePipelineState> SSAOBlurVertical;
 	TSharedPtr<ComputePipelineState> DeferredLightPass;
 
 	TSharedRef<StructuredBuffer>	SSAOSamples;

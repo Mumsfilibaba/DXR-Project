@@ -34,6 +34,9 @@ struct PointLight
     float3  Position;
     float   FarPlane;
     float   MaxShadowBias;
+    float   Radius;
+    float   Padding0;
+    float   Padding1;
 };
 
 struct DirectionalLight
