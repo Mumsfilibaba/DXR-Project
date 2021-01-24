@@ -1,10 +1,10 @@
 #include "TextureFactory.h"
 #include "Core.h"
 
-#include "RenderingCore/CommandList.h"
-#include "RenderingCore/PipelineState.h"
-#include "RenderingCore/RenderLayer.h"
-#include "RenderingCore/ShaderCompiler.h"
+#include "RenderLayer/CommandList.h"
+#include "RenderLayer/PipelineState.h"
+#include "RenderLayer/RenderLayer.h"
+#include "RenderLayer/ShaderCompiler.h"
 
 #ifdef min
 	#undef min
@@ -15,19 +15,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-/*
-* TextureFactoryData
-*/
-
 struct TextureFactoryData
 {
 	CommandList	CmdList;
 	TSharedRef<ComputePipelineState> PanoramaPSO;
 } static GlobalFactoryData;
-
-/*
-* TextureFactory
-*/
 
 Bool TextureFactory::Init()
 {

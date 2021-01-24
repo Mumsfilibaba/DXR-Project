@@ -1591,27 +1591,6 @@ void Renderer::TraceRays(Texture2D* BackBuffer, CommandList& InCmdList)
 		EResourceState::ResourceState_CopySource);
 }
 
-Bool Renderer::OnEvent(const Event& Event)
-{
-	if (!IsEventOfType<WindowResizeEvent>(Event))
-	{
-		return false;
-	}
-
-	const WindowResizeEvent& ResizeEvent = CastEvent<WindowResizeEvent>(Event);
-	const UInt32 Width	= ResizeEvent.Width;
-	const UInt32 Height	= ResizeEvent.Height;
-
-	GlobalCmdListExecutor.WaitForGPU();
-
-	MainWindowViewport->Resize(Width, Height);
-
-	InitGBuffer();
-	InitSSAO_RenderTarget();
-
-	return true;
-}
-
 void Renderer::SetLightSettings(const LightSettings& InLightSettings)
 {
 	CurrentLightSettings = InLightSettings;
@@ -1662,7 +1641,6 @@ Bool Renderer::Init()
 	INIT_CONSOLE_VARIABLE("SSAORadius", GlobalSSAORadius);
 	GlobalSSAORadius.SetFloat(0.3f);
 
-	// Viewport
 	MainWindowViewport = RenderLayer::CreateViewport(
 		GlobalMainWindow,
 		0, 0,
@@ -1677,228 +1655,33 @@ Bool Renderer::Init()
 		MainWindowViewport->SetName("Main Window Viewport");
 	}
 
-	// Create mesh
-	SkyboxMesh	= MeshFactory::CreateSphere(1);
-
-	// Create camera
-	CameraBuffer = RenderLayer::CreateConstantBuffer<CameraBufferDesc>(
+	Resources.CameraBuffer = RenderLayer::CreateConstantBuffer<CameraBufferDesc>(
 		nullptr, 
 		BufferUsage_Default,
 		EResourceState::ResourceState_Common);
-	if (!CameraBuffer)
+	if (!Resources.CameraBuffer)
 	{
 		LOG_ERROR("[Renderer]: Failed to create camerabuffer");
 		return false;
 	}
 	else
 	{
-		CameraBuffer->SetName("CameraBuffer");
+		Resources.CameraBuffer->SetName("CameraBuffer");
 	}
 
-	// Create VertexBuffers
-	{
-		ResourceData VertexData = ResourceData(SkyboxMesh.Vertices.Data());
-		SkyboxVertexBuffer = RenderLayer::CreateVertexBuffer<Vertex>(
-			&VertexData, 
-			SkyboxMesh.Vertices.Size(), 
-			BufferUsage_Dynamic);
-		if (!SkyboxVertexBuffer)
-		{
-			return false;
-		}
-		else
-		{
-			SkyboxVertexBuffer->SetName("SkyboxVertexBuffer");
-		}
-	}
-
-	// Create indexbuffers
-	{
-		ResourceData IndexData = ResourceData(SkyboxMesh.Indices.Data());
-
-		const UInt32 SizeInBytes = sizeof(UInt32) * static_cast<UInt64>(SkyboxMesh.Indices.Size());
-		SkyboxIndexBuffer = RenderLayer::CreateIndexBuffer(
-			&IndexData, 
-			SizeInBytes, 
-			EIndexFormat::IndexFormat_UInt32, 
-			BufferUsage_Dynamic);
-		if (!SkyboxIndexBuffer)
-		{
-			return false;
-		}
-		else
-		{
-			SkyboxIndexBuffer->SetName("SkyboxIndexBuffer");
-		}
-	}
-
-	// Create Texture Cube
-	const std::string PanoramaSourceFilename = "../Assets/Textures/arches.hdr";
-	SampledTexture2D Panorama = TextureFactory::LoadSampledTextureFromFile(
-		PanoramaSourceFilename,
-		0, 
-		EFormat::Format_R32G32B32A32_Float);
-	if (!Panorama)
-	{
-		return false;	
-	}
-	else
-	{
-		Panorama.SetName(PanoramaSourceFilename);
-	}
-
-	Skybox = TextureFactory::CreateTextureCubeFromPanorma(
-		Panorama,
-		1024, 
-		TextureFactoryFlag_GenerateMips, 
-		EFormat::Format_R16G16B16A16_Float);
-	if (!Skybox)
-	{
-		return false;
-	}
-	else
-	{
-		Skybox->SetName("Skybox");
-	}
-
-	SkyboxSRV = RenderLayer::CreateShaderResourceView(
-		Skybox.Get(),
-		EFormat::Format_R16G16B16A16_Float,
-		0, 
-		Skybox->GetMipLevels());
-	if (!SkyboxSRV)
-	{
-		return false;
-	}
-	else
-	{
-		SkyboxSRV->SetName("Skybox SRV");
-	}
-
-	{
-		SamplerStateCreateInfo CreateInfo;
-		CreateInfo.AddressU	= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.AddressV	= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.AddressW	= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.Filter	= ESamplerFilter::SamplerFilter_MinMagMipLinear;
-		CreateInfo.MinLOD	= 0.0f;
-		CreateInfo.MaxLOD	= 0.0f;
-
-		SkyboxSampler = RenderLayer::CreateSamplerState(CreateInfo);
-		if (!SkyboxSampler)
-		{
-			return false;
-		}
-	}
-
-	// Generate global irradiance (From Skybox)
-	const UInt16 IrradianceSize = 32;
-	IrradianceMap = RenderLayer::CreateTextureCube(
-		nullptr, 
-		EFormat::Format_R16G16B16A16_Float, 
-		TextureUsage_Default | TextureUsage_RWTexture,
-		IrradianceSize, 
-		1, 
-		1);
-	if (IrradianceMap)
-	{
-		IrradianceMap->SetName("Irradiance Map");
-	}
-	else
+	if (!SkyboxRenderPass.Init(Resources))
 	{
 		return false;
 	}
 
-	IrradianceMapUAV = RenderLayer::CreateUnorderedAccessView(
-		IrradianceMap.Get(), 
-		EFormat::Format_R16G16B16A16_Float, 0);
-	if (!IrradianceMapUAV)
+	if (!LightProbeRenderPass.Init(Resources))
 	{
 		return false;
-	}
-
-	IrradianceMapSRV = RenderLayer::CreateShaderResourceView(
-		IrradianceMap.Get(), 
-		EFormat::Format_R16G16B16A16_Float, 
-		0, 1);
-	if (!IrradianceMapSRV)
-	{
-		return false;
-	}
-
-	// Generate global specular irradiance (From Skybox)
-	const UInt16 SpecularIrradianceSize			= 128;
-	const UInt16 SpecularIrradianceMiplevels	= UInt16(std::max(std::log2(SpecularIrradianceSize), 1.0));
-	SpecularIrradianceMap = RenderLayer::CreateTextureCube(
-		nullptr, 
-		EFormat::Format_R16G16B16A16_Float, 
-		TextureUsage_Default | TextureUsage_RWTexture, 
-		SpecularIrradianceSize, 
-		SpecularIrradianceMiplevels, 
-		1);
-	if (SpecularIrradianceMap)
-	{
-		SpecularIrradianceMap->SetName("Specular Irradiance Map");
-	}
-	else
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-
-	for (UInt32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
-	{
-		TSharedRef<UnorderedAccessView> Uav = RenderLayer::CreateUnorderedAccessView(
-			SpecularIrradianceMap.Get(), 
-			EFormat::Format_R16G16B16A16_Float, 
-			MipLevel);
-		if (Uav)
-		{
-			SpecularIrradianceMapUAVs.EmplaceBack(Uav);
-			WeakSpecularIrradianceMapUAVs.EmplaceBack(Uav.Get());
-		}
-	}
-
-	SpecularIrradianceMapSRV = RenderLayer::CreateShaderResourceView(
-		SpecularIrradianceMap.Get(), 
-		EFormat::Format_R16G16B16A16_Float, 
-		0, 
-		SpecularIrradianceMiplevels);
-	if (!SpecularIrradianceMapSRV)
-	{
-		return false;
-	}
-
-	{
-		SamplerStateCreateInfo CreateInfo;
-		CreateInfo.AddressU	= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.AddressV	= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.AddressW	= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.Filter	= ESamplerFilter::SamplerFilter_MinMagMipLinear;
-
-		IrradianceSampler = RenderLayer::CreateSamplerState(CreateInfo);
-		if (!IrradianceSampler)
-		{
-			return false;
-		}
 	}
 
 	CmdList.Begin();
 
-	GenerateIrradianceMap(
-		SkyboxSRV.Get(), 
-		Skybox.Get(), 
-		IrradianceMapUAV.Get(), 
-		IrradianceMap.Get(), 
-		CmdList);
-
-	GenerateSpecularIrradianceMap(
-		SkyboxSRV.Get(),
-		Skybox.Get(), 
-		WeakSpecularIrradianceMapUAVs.Data(),
-		WeakSpecularIrradianceMapUAVs.Size(),
-		SpecularIrradianceMap.Get(), 
-		CmdList);
+	LightProbeRenderPass.Render(CmdList, Resources);
 
 	CmdList.End();
 	GlobalCmdListExecutor.ExecuteCommandList(CmdList);
@@ -1912,15 +1695,15 @@ Bool Renderer::Init()
 		{ "TEXCOORD",	0, EFormat::Format_R32G32_Float,	0, 36,	EInputClassification::InputClassification_Vertex, 0 },
 	};
 
-	StdInputLayout = RenderLayer::CreateInputLayout(InputLayout);
-	if (!StdInputLayout)
+	Resources.StdInputLayout = RenderLayer::CreateInputLayout(InputLayout);
+	if (!Resources.StdInputLayout)
 	{
 		Debug::DebugBreak();
 		return false;
 	}
 	else
 	{
-		StdInputLayout->SetName("Standard InputLayoutState");
+		Resources.StdInputLayout->SetName("Standard InputLayoutState");
 	}
 
 	// Init Deferred Rendering
@@ -2021,8 +1804,29 @@ Bool Renderer::Init()
 		}
 	}
 
+	auto Callback = [](const Event& Event)->Bool
+	{
+		if (!IsEventOfType<WindowResizeEvent>(Event))
+		{
+			return false;
+		}
+
+		const WindowResizeEvent& ResizeEvent = CastEvent<WindowResizeEvent>(Event);
+		const UInt32 Width = ResizeEvent.Width;
+		const UInt32 Height = ResizeEvent.Height;
+
+		GlobalCmdListExecutor.WaitForGPU();
+
+		GlobalRenderer->MainWindowViewport->Resize(Width, Height);
+
+		GlobalRenderer->InitGBuffer();
+		GlobalRenderer->InitSSAO_RenderTarget();
+
+		return true;
+	};
+
 	// Register EventFunc
-	GlobalEventDispatcher->RegisterEventHandler(this, EEventCategory::EventCategory_Window);
+	GlobalEventDispatcher->RegisterEventHandler(Callback, EEventCategory::EventCategory_Window);
 
 	return true;
 }
@@ -4446,183 +4250,4 @@ Bool Renderer::CreateShadowMaps()
 	}
 
 	return true;
-}
-
-void Renderer::GenerateIrradianceMap(
-	ShaderResourceView* SourceSRV,
-	TextureCube* Source,
-	UnorderedAccessView* DestUAV,
-	TextureCube* Dest,
-	CommandList& InCmdList)
-{
-	const UInt32 Size = static_cast<UInt32>(Dest->GetWidth());
-
-	// Create irradiancemap if it is not created
-	if (!IrradicanceGenPSO)
-	{
-		TArray<UInt8> Code;
-		if (!ShaderCompiler::CompileFromFile(
-			"../DXR-Engine/Shaders/IrradianceGen.hlsl",
-			"Main",
-			nullptr,
-			EShaderStage::ShaderStage_Compute,
-			EShaderModel::ShaderModel_6_0,
-			Code))
-		{
-			LOG_ERROR("Failed to compile IrradianceGen Shader");
-			Debug::DebugBreak();
-		}
-
-		IrradianceGenShader = RenderLayer::CreateComputeShader(Code);
-		if (!IrradianceGenShader)
-		{
-			LOG_ERROR("Failed to create IrradianceGen Shader");
-			Debug::DebugBreak();
-		}
-
-		IrradicanceGenPSO = RenderLayer::CreateComputePipelineState(ComputePipelineStateCreateInfo(IrradianceGenShader.Get()));
-		if (!IrradicanceGenPSO)
-		{
-			LOG_ERROR("Failed to create IrradianceGen PipelineState");
-			Debug::DebugBreak();
-		}
-		else
-		{
-			IrradicanceGenPSO->SetName("Irradiance Gen PSO");
-		}
-	}
-
-	InCmdList.TransitionTexture(
-		Source, 
-		EResourceState::ResourceState_PixelShaderResource, 
-		EResourceState::ResourceState_NonPixelShaderResource);
-	
-	InCmdList.TransitionTexture(
-		Dest, 
-		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_UnorderedAccess);
-
-	InCmdList.BindComputePipelineState(IrradicanceGenPSO.Get());
-
-	InCmdList.BindShaderResourceViews(
-		EShaderStage::ShaderStage_Compute, 
-		&SourceSRV, 1, 0);
-
-	InCmdList.BindUnorderedAccessViews(
-		EShaderStage::ShaderStage_Compute,
-		&DestUAV, 1, 0);
-
-	constexpr UInt32 ThreadCount = 16;
-	const UInt32 ThreadWidth	= Math::DivideByMultiple(Size, ThreadCount);
-	const UInt32 ThreadHeight	= Math::DivideByMultiple(Size, ThreadCount);
-	InCmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
-
-	InCmdList.UnorderedAccessTextureBarrier(Dest);
-
-	InCmdList.TransitionTexture(
-		Source, 
-		EResourceState::ResourceState_NonPixelShaderResource, 
-		EResourceState::ResourceState_PixelShaderResource);
-	
-	InCmdList.TransitionTexture(
-		Dest, 
-		EResourceState::ResourceState_UnorderedAccess,
-		EResourceState::ResourceState_PixelShaderResource);
-}
-
-void Renderer::GenerateSpecularIrradianceMap(
-	ShaderResourceView* SourceSRV,
-	TextureCube* Source, 
-	UnorderedAccessView* const * DestUAVs,
-	UInt32 NumDestUAVs,
-	TextureCube* Dest, 
-	CommandList& InCmdList)
-{
-	const UInt32 Miplevels = Dest->GetMipLevels();
-	VALIDATE(Miplevels == NumDestUAVs);
-
-	if (!SpecIrradicanceGenPSO)
-	{
-		TArray<UInt8> Code;
-		if (!ShaderCompiler::CompileFromFile(
-			"../DXR-Engine/Shaders/SpecularIrradianceGen.hlsl",
-			"Main",
-			nullptr,
-			EShaderStage::ShaderStage_Compute,
-			EShaderModel::ShaderModel_6_0,
-			Code))
-		{
-			LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
-			Debug::DebugBreak();
-		}
-
-		SpecIrradianceGenShader = RenderLayer::CreateComputeShader(Code);
-		if (!SpecIrradianceGenShader)
-		{
-			LOG_ERROR("Failed to create SpecularIrradianceGen Shader");
-			Debug::DebugBreak();
-		}
-
-		SpecIrradicanceGenPSO = RenderLayer::CreateComputePipelineState(ComputePipelineStateCreateInfo(SpecIrradianceGenShader.Get()));
-		if (!SpecIrradicanceGenPSO)
-		{
-			LOG_ERROR("Failed to create SpecularIrradianceGen PipelineState");
-			Debug::DebugBreak();
-		}
-		else
-		{
-			SpecIrradicanceGenPSO->SetName("Specular Irradiance Gen PSO");
-		}
-	}
-
-	InCmdList.TransitionTexture(
-		Source, 
-		EResourceState::ResourceState_PixelShaderResource, 
-		EResourceState::ResourceState_NonPixelShaderResource);
-	
-	InCmdList.TransitionTexture(
-		Dest, 
-		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_UnorderedAccess);
-
-	InCmdList.BindShaderResourceViews(
-		EShaderStage::ShaderStage_Compute,
-		&SourceSRV, 1, 0);
-
-	InCmdList.BindComputePipelineState(SpecIrradicanceGenPSO.Get());
-
-	UInt32 Width	= static_cast<UInt32>(Dest->GetWidth());
-	Float Roughness	= 0.0f;
-
-	const Float RoughnessDelta = 1.0f / (Miplevels - 1);
-	for (UInt32 Mip = 0; Mip < Miplevels; Mip++)
-	{
-		InCmdList.Bind32BitShaderConstants(
-			EShaderStage::ShaderStage_Compute,
-			&Roughness, 1);
-
-		InCmdList.BindUnorderedAccessViews(
-			EShaderStage::ShaderStage_Compute,
-			&DestUAVs[Mip], 1, 0);
-		
-		constexpr UInt32 ThreadCount = 16;
-		const UInt32 ThreadWidth	= Math::DivideByMultiple(Width, ThreadCount);
-		const UInt32 ThreadHeight	= Math::DivideByMultiple(Width, ThreadCount);
-		InCmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
-
-		InCmdList.UnorderedAccessTextureBarrier(Dest);
-
-		Width = std::max<UInt32>(Width / 2, 1U);
-		Roughness += RoughnessDelta;
-	}
-
-	InCmdList.TransitionTexture(
-		Source, 
-		EResourceState::ResourceState_NonPixelShaderResource, 
-		EResourceState::ResourceState_PixelShaderResource);
-	
-	InCmdList.TransitionTexture(
-		Dest, 
-		EResourceState::ResourceState_UnorderedAccess,
-		EResourceState::ResourceState_PixelShaderResource);
 }

@@ -13,16 +13,12 @@
 #include "Rendering/TextureFactory.h"
 #include "Rendering/Renderer.h"
 
-#include "RenderingCore/Buffer.h"
-#include "RenderingCore/Texture.h"
-#include "RenderingCore/PipelineState.h"
-#include "RenderingCore/RenderLayer.h"
-#include "RenderingCore/ShaderCompiler.h"
-#include "RenderingCore/Shader.h"
-
-/*
-* Helper ImGuiState
-*/
+#include "RenderLayer/Buffer.h"
+#include "RenderLayer/Texture.h"
+#include "RenderLayer/PipelineState.h"
+#include "RenderLayer/RenderLayer.h"
+#include "RenderLayer/ShaderCompiler.h"
+#include "RenderLayer/Shader.h"
 
 struct ImGuiState
 {
@@ -49,10 +45,6 @@ struct ImGuiState
 
 static ImGuiState GlobalImGuiState;
 
-/*
-* Helper Functions
-*/
-
 static UInt32 GetMouseButtonIndex(EMouseButton Button)
 {
 	switch (Button)
@@ -65,10 +57,6 @@ static UInt32 GetMouseButtonIndex(EMouseButton Button)
 	default:					return static_cast<UInt32>(-1);
 	}
 }
-
-/*
-* DebugUI
-*/
 
 static TArray<DebugUI::UIDrawFunc>	GlobalDrawFuncs;
 static TArray<std::string>			GlobalDebugStrings;

@@ -14,9 +14,20 @@
 #include "Material.h"
 #include "MeshFactory.h"
 
-#include "RenderingCore/RenderLayer.h"
-#include "RenderingCore/CommandList.h"
-#include "RenderingCore/Viewport.h"
+#include "RenderLayer/RenderLayer.h"
+#include "RenderLayer/CommandList.h"
+#include "RenderLayer/Viewport.h"
+
+#include "RenderPasses/DeferredSceneRenderPass.h"
+#include "RenderPasses/SkyboxSceneRenderPass.h"
+#include "RenderPasses/DebugSceneRenderPass.h"
+#include "RenderPasses/SSAOSceneRenderPass.h"
+#include "RenderPasses/PrePassSceneRenderPass.h"
+#include "RenderPasses/ForwardSceneRenderPass.h"
+#include "RenderPasses/LightProbeSceneRenderPass.h"
+#include "RenderPasses/DirectionalLightShadowSceneRenderPass.h"
+#include "RenderPasses/PointLightShadowSceneRenderPass.h"
+#include "RenderPasses/TiledDeferredLightSceneRenderPass.h"
 
 #include "DebugUI.h"
 
@@ -24,178 +35,72 @@
 
 struct LightSettings
 {
-	UInt16 ShadowMapWidth		= 4096;
-	UInt16 ShadowMapHeight		= 4096;
-	UInt16 PointLightShadowSize	= 1024;
+    UInt16 ShadowMapWidth       = 4096;
+    UInt16 ShadowMapHeight      = 4096;
+    UInt16 PointLightShadowSize = 1024;
 };
 
-class Renderer : public IEventHandler
+class Renderer
 {
 public:
-	Renderer()	= default;
-	~Renderer()	= default;
+    Renderer()  = default;
+    ~Renderer() = default;
 
-	Bool Init();
-
-	void Tick(const Scene& CurrentScene);
-	
-	Bool OnEvent(const Event& Event);
-
-	void SetLightSettings(const LightSettings& InLightSettings);
-	
-	FORCEINLINE const LightSettings& GetLightSettings()
-	{
-		return CurrentLightSettings;
-	}
-	
+    Bool Init();
+    void Tick(const Scene& CurrentScene);
+    
+    void SetLightSettings(const LightSettings& InLightSettings);
+    
+    FORCEINLINE const LightSettings& GetLightSettings()
+    {
+        return Resources.CurrentLightSettings;
+    }
+    
 private:
-	Bool InitRayTracing();
-	Bool InitLightBuffers();
-	Bool InitPrePass();
-	Bool InitShadowMapPass();
-	Bool InitDeferred();
-	Bool InitGBuffer();
-	Bool InitIntegrationLUT();
-	Bool InitRayTracingTexture();
-	Bool InitDebugStates();
-	Bool InitAA();
-	Bool InitForwardPass();
-	Bool InitSSAO();
-	Bool InitSSAO_RenderTarget();
+    Bool InitRayTracing();
+    Bool InitLightBuffers();
+    Bool InitPrePass();
+    Bool InitShadowMapPass();
+    Bool InitDeferred();
+    Bool InitGBuffer();
+    Bool InitIntegrationLUT();
+    Bool InitRayTracingTexture();
+    Bool InitDebugStates();
+    Bool InitAA();
+    Bool InitForwardPass();
+    Bool InitSSAO();
+    Bool InitSSAO_RenderTarget();
 
-	Bool CreateShadowMaps();
+    Bool CreateShadowMaps();
 
-	void GenerateIrradianceMap(
-		ShaderResourceView* SourceSRV,
-		TextureCube* Source,
-		UnorderedAccessView* DestUAV,
-		TextureCube* Dest,
-		CommandList& InCmdList);
-
-	void GenerateSpecularIrradianceMap(
-		ShaderResourceView* SourceSRV,
-		TextureCube* Source,
-		UnorderedAccessView* const* DestUAVs,
-		UInt32 NumDestUAVs,
-		TextureCube* Dest,
-		CommandList& InCmdList);
-
-	void TraceRays(Texture2D* BackBuffer, CommandList& InCmdList);
+    void TraceRays(Texture2D* BackBuffer, CommandList& InCmdList);
 
 private:
-	CommandList CmdList;
+    CommandList CmdList;
 
-	MeshData SkyboxMesh;
+    DeferredSceneRenderPass   DeferredRenderPass;
+    SkyboxSceneRenderPass     SkyboxRenderPass;
+    DebugSceneRenderPass      DebugRenderPass;
+    SSAOSceneRenderPass       SSAORenderPass;
+    PrePassSceneRenderPass    PrePassRenderPass;
+    ForwardSceneRenderPass    ForwardRenderPass;
+    LightProbeSceneRenderPass LightProbeRenderPass;
+    DirectionalLightShadowSceneRenderPass DirectionalLightShadowRenderPass;
+    PointLightShadowSceneRenderPass       PointLightShadowRenderPass;
+    TiledDeferredLightSceneRenderPass     DeferredLightRenderPass;
 
-	TSharedRef<ConstantBuffer> CameraBuffer;
-	TSharedRef<ConstantBuffer> PointLightBuffer;
-	TSharedRef<ConstantBuffer> DirectionalLightBuffer;
-	TSharedRef<ConstantBuffer> PerShadowMapBuffer;
+    SharedRenderPassResources Resources;
 
-	TSharedRef<VertexBuffer>	SkyboxVertexBuffer;
-	TSharedRef<VertexBuffer>	AABBVertexBuffer;
-	TSharedRef<IndexBuffer>		SkyboxIndexBuffer;
-	TSharedRef<IndexBuffer>		AABBIndexBuffer;
+    // TODO: Fix raytracing
+    TSharedRef<RayTracingPipelineState>	RaytracingPSO;
+    TSharedPtr<RayTracingScene>			RayTracingScene;
+    TArray<RayTracingGeometryInstance>	RayTracingGeometryInstances;
 
-	TSharedRef<TextureCube>			IrradianceMap;
-	TSharedRef<UnorderedAccessView>	IrradianceMapUAV;
-	TSharedRef<ShaderResourceView>	IrradianceMapSRV;
-	TSharedRef<SamplerState>		IrradianceSampler;
+    TSharedRef<GraphicsPipelineState> PostPSO;
 
-	TSharedRef<TextureCube>					SpecularIrradianceMap;
-	TSharedRef<ShaderResourceView>			SpecularIrradianceMapSRV;
-	TArray<TSharedRef<UnorderedAccessView>>	SpecularIrradianceMapUAVs;
-	TArray<UnorderedAccessView*>			WeakSpecularIrradianceMapUAVs;
+    TSharedRef<Viewport> MainWindowViewport;
 
-	TSharedRef<TextureCube>			Skybox;
-	TSharedRef<ShaderResourceView>	SkyboxSRV;
-	TSharedRef<SamplerState>		SkyboxSampler;
-
-	const UInt32 MaxPointLightShadows = 8;
-	TSharedRef<SamplerState>		ShadowMapSampler;
-	TSharedRef<SamplerState>		ShadowMapCompSampler;
-	TSharedRef<TextureCubeArray>	PointLightShadowMaps;
-	TSharedRef<ShaderResourceView>	PointLightShadowMapSRV;
-	TArray<TStaticArray<TSharedRef<DepthStencilView>, 6>> PointLightShadowMapDSVs;
-
-	TSharedRef<ShaderResourceView>	DirLightShadowMapSRV;
-	TSharedRef<DepthStencilView>	DirLightShadowMapDSV;
-	TSharedRef<Texture2D>			DirLightShadowMaps;
-
-	TSharedRef<ShaderResourceView>	VSMDirLightShadowMapSRV;
-	TSharedRef<RenderTargetView>	VSMDirLightShadowMapRTV;
-	TSharedRef<Texture2D>			VSMDirLightShadowMaps;
-	
-	TSharedRef<Texture2D>			ReflectionTexture;
-	TSharedRef<ShaderResourceView>	ReflectionTextureSRV;
-	TSharedRef<UnorderedAccessView>	ReflectionTextureUAV;
-
-	TSharedRef<Texture2D>			IntegrationLUT;
-	TSharedRef<ShaderResourceView>	IntegrationLUTSRV;
-	TSharedRef<SamplerState>		IntegrationLUTSampler;
-
-	TSharedRef<Texture2D>			FinalTarget;
-	TSharedRef<ShaderResourceView>	FinalTargetSRV;
-	TSharedRef<RenderTargetView>	FinalTargetRTV;
-	TSharedRef<UnorderedAccessView>	FinalTargetUAV;
-
-	TSharedRef<Texture2D>			GBuffer[5];
-	TSharedRef<ShaderResourceView>	GBufferSRVs[5];
-	TSharedRef<RenderTargetView>	GBufferRTVs[5];
-	TSharedRef<DepthStencilView>	GBufferDSV;
-	TSharedRef<SamplerState>		GBufferSampler;
-
-	TSharedRef<InputLayoutState> StdInputLayout;
-
-	TSharedRef<GraphicsPipelineState> PrePassPSO;
-	TSharedRef<GraphicsPipelineState> ShadowMapPSO;
-	TSharedRef<GraphicsPipelineState> VSMShadowMapPSO;
-	TSharedRef<GraphicsPipelineState> LinearShadowMapPSO;
-	TSharedPtr<GraphicsPipelineState> ForwardPSO;
-	TSharedRef<GraphicsPipelineState> GeometryPSO;
-	TSharedRef<GraphicsPipelineState> SkyboxPSO;
-	TSharedRef<GraphicsPipelineState> DebugBoxPSO;
-	TSharedRef<GraphicsPipelineState> PostPSO;
-	TSharedRef<GraphicsPipelineState> FXAAPSO;
-
-	TSharedRef<RayTracingPipelineState>	RaytracingPSO;
-
-	TSharedRef<ComputeShader> IrradianceGenShader;
-	TSharedRef<ComputeShader> SpecIrradianceGenShader;
-	
-	TSharedRef<ComputePipelineState> IrradicanceGenPSO;
-	TSharedRef<ComputePipelineState> SpecIrradicanceGenPSO;
-	TSharedPtr<ComputePipelineState> SSAOPSO;
-	TSharedPtr<ComputePipelineState> SSAOBlurHorizontal;
-	TSharedPtr<ComputePipelineState> SSAOBlurVertical;
-	TSharedPtr<ComputePipelineState> DeferredLightPass;
-
-	TSharedRef<StructuredBuffer>	SSAOSamples;
-	TSharedRef<ShaderResourceView>	SSAOSamplesSRV;
-	TSharedRef<Texture2D>			SSAOBuffer;
-	TSharedRef<ShaderResourceView>	SSAOBufferSRV;
-	TSharedRef<UnorderedAccessView>	SSAOBufferUAV;
-	TSharedRef<Texture2D>			SSAONoiseTex;
-	TSharedRef<ShaderResourceView>	SSAONoiseSRV;
-
-	TSharedPtr<RayTracingScene>			RayTracingScene;
-	TArray<RayTracingGeometryInstance>	RayTracingGeometryInstances;
-
-	TArray<MeshDrawCommand> DeferredVisibleCommands;
-	TArray<MeshDrawCommand> ForwardVisibleCommands;
-
-	TArray<ImGuiImage> DebugTextures;
-
-	TSharedRef<Viewport> MainWindowViewport;
-
-	Bool UpdatePointLight	= true;
-	Bool UpdateDirLight		= true;
-	UInt64 PointLightFrame	= 0;
-	UInt64 DirLightFrame	= 0;
-
-	UInt32 LastFrameNumDrawCalls		= 0;
-	UInt32 LastFrameNumDispatchCalls	= 0;
-	UInt32 LastFrameNumCommands			= 0;
-
-	LightSettings CurrentLightSettings;
+    UInt32 LastFrameNumDrawCalls		= 0;
+    UInt32 LastFrameNumDispatchCalls	= 0;
+    UInt32 LastFrameNumCommands			= 0;
 };

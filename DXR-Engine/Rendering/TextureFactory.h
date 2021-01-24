@@ -1,23 +1,15 @@
 #pragma once
-#include "RenderingCore/RenderingCore.h"
-#include "RenderingCore/Format.h"
-#include "RenderingCore/ResourceHelpers.h"
+#include "RenderLayer/RenderingCore.h"
+#include "RenderLayer/Format.h"
+#include "RenderLayer/ResourceHelpers.h"
 
 #include "Utilities/StringUtilities.h"
-
-/*
-* ETextureFactoryFlags
-*/
 
 enum ETextureFactoryFlags : UInt32
 {
 	TextureFactoryFlag_None			= 0,
 	TextureFactoryFlag_GenerateMips = FLAG(1),
 };
-
-/*
-* TextureFactory
-*/
 
 class TextureFactory
 {

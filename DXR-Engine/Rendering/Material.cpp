@@ -1,11 +1,7 @@
 #include "Material.h"
 #include "Renderer.h"
 
-#include "RenderingCore/CommandList.h"
-
-/*
-* Material
-*/
+#include "RenderLayer/CommandList.h"
 
 Material::Material(const MaterialProperties& InProperties)
 	: AlbedoMap()

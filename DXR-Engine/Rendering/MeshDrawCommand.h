@@ -1,10 +1,6 @@
 #pragma once
 #include "Core.h"
 
-/*
-* MeshDrawCommand
-*/
-
 struct MeshDrawCommand
 {
 	class Material*	Material		= nullptr;

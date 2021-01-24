@@ -3,14 +3,10 @@
 
 #include "Engine/EngineGlobals.h"
 
-#include "RenderingCore/CommandList.h"
-#include "RenderingCore/RenderLayer.h"
+#include "RenderLayer/CommandList.h"
+#include "RenderLayer/RenderLayer.h"
 
 #include <algorithm>
-
-/*
-* Mesh
-*/
 
 bool Mesh::Init(const MeshData& Data)
 {

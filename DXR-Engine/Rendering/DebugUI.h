@@ -2,17 +2,14 @@
 #include "Application/InputCodes.h"
 #include "Application/Events/Events.h"
 
-#include "RenderingCore/Texture.h"
-#include "RenderingCore/ResourceViews.h"
+#include "RenderLayer/Texture.h"
+#include "RenderLayer/ResourceViews.h"
 
 #include "Core/TSharedRef.h"
 
 #include <imgui.h>
 
-/*
-* ImGuiImage - Should be sent into ImGuiTextureID
-*/
-
+// Used when rendering images with ImGui
 struct ImGuiImage
 {
 	ImGuiImage() = default;
@@ -31,10 +28,6 @@ struct ImGuiImage
 	EResourceState		AfterState;
 	Bool AllowBlending = false;
 };
-
-/*
-* DebugUI
-*/
 
 class DebugUI
 {

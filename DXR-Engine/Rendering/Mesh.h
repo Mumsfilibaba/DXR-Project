@@ -3,15 +3,11 @@
 
 #include "Containers/TSharedPtr.h"
 
-#include "RenderingCore/Buffer.h"
-#include "RenderingCore/RayTracing.h"
-#include "RenderingCore/CommandList.h"
+#include "RenderLayer/Buffer.h"
+#include "RenderLayer/RayTracing.h"
+#include "RenderLayer/CommandList.h"
 
 #include "Scene/AABB.h"
-
-/*
-* Mesh
-*/
 
 class Mesh
 {

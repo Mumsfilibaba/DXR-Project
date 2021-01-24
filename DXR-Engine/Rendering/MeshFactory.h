@@ -3,13 +3,6 @@
 
 #include "Utilities/HashUtilities.h"
 
-#include <DirectXMath.h>
-using namespace DirectX;
-
-/*
-* Vertex
-*/
-
 struct Vertex
 {
 	XMFLOAT3 Position;
@@ -27,10 +20,6 @@ struct Vertex
 	}
 };
 
-/*
-* Vertex
-*/
-
 struct VertexHasher
 {
 	inline size_t operator()(const Vertex& V) const
@@ -46,19 +35,11 @@ struct VertexHasher
 	}
 };
 
-/*
-* MeshData
-*/
-
 struct MeshData
 {
 	TArray<Vertex> Vertices;
 	TArray<UInt32> Indices;
 };
-
-/*
-* MeshFactory
-*/
 
 class MeshFactory
 {

@@ -1,13 +1,9 @@
 #pragma once
-#include "RenderingCore/Buffer.h"
-#include "RenderingCore/ResourceHelpers.h"
-#include "RenderingCore/SamplerState.h"
+#include "RenderLayer/Buffer.h"
+#include "RenderLayer/ResourceHelpers.h"
+#include "RenderLayer/SamplerState.h"
 
 #include <Containers/TStaticArray.h>
-
-/*
-* MaterialProperties
-*/
 
 struct MaterialProperties
 {
@@ -17,10 +13,6 @@ struct MaterialProperties
 	Float AO			= 0.5f;
 	Int32 EnableHeight	= 0;
 };
-
-/*
-* Material
-*/
 
 class Material
 {
