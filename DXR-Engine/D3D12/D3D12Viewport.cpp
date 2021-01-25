@@ -142,8 +142,14 @@ Bool D3D12Viewport::Resize(UInt32 InWidth, UInt32 InHeight)
 Bool D3D12Viewport::Present(Bool VerticalSync)
 {
 	const UInt32 SyncInterval = !!VerticalSync;
+	
+	UInt32 Flags = 0;
+	if (SyncInterval == 0 && Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
+	{
+		Flags = DXGI_PRESENT_ALLOW_TEARING;
+	}
 
-	HRESULT Result = SwapChain->Present(SyncInterval, 0);
+	HRESULT Result = SwapChain->Present(SyncInterval, Flags);
 	if (SUCCEEDED(Result))
 	{
 		BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();

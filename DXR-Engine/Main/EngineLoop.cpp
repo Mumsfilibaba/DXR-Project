@@ -196,7 +196,7 @@ void EngineLoop::PreTick()
 {
 	TRACE_FUNCTION_SCOPE();
 
-	if (!PlatformApplication::FlushSystemEventQueue())
+	if (!PlatformApplication::PeekMessageUntilNoMessage())
 	{
 		Exit();
 	}

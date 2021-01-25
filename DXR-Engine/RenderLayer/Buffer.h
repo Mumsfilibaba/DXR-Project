@@ -130,9 +130,10 @@ protected:
 class VertexBuffer : public Buffer
 {
 public:
-    VertexBuffer(UInt32 SizeInBytes, UInt32 InStride, UInt32 Usage)
-        : Buffer(SizeInBytes, Usage)
+    VertexBuffer(UInt32 InSizeInBytes, UInt32 InStride, UInt32 Usage)
+        : Buffer(InSizeInBytes, Usage)
         , Stride(InStride)
+        , NumElements(InSizeInBytes / InStride)
     {
     }
 
@@ -151,8 +152,14 @@ public:
         return Stride;
     }
 
+    FORCEINLINE UInt32 GetNumElements() const
+    {
+        return NumElements;
+    }
+
 protected:
     UInt32 Stride;
+    Int32 NumElements;
 };
 
 enum class EIndexFormat
@@ -164,9 +171,10 @@ enum class EIndexFormat
 class IndexBuffer : public Buffer
 {
 public:
-    inline IndexBuffer(UInt32 SizeInBytes, EIndexFormat InIndexFormat, UInt32 Usage)
-        : Buffer(SizeInBytes, Usage)
+    inline IndexBuffer(UInt32 InSizeInBytes, EIndexFormat InIndexFormat, UInt32 Usage)
+        : Buffer(InSizeInBytes, Usage)
         , IndexFormat(InIndexFormat)
+        , NumElements(InSizeInBytes / (InIndexFormat == EIndexFormat::IndexFormat_UInt32 ? 4 : 2))
     {
     }
     
@@ -185,8 +193,14 @@ public:
         return IndexFormat;
     }
 
+    FORCEINLINE UInt32 GetNumElements() const
+    {
+        return NumElements;
+    }
+
 protected:
     EIndexFormat IndexFormat;
+    UInt32 NumElements;
 };
 
 class ConstantBuffer : public Buffer
@@ -211,9 +225,10 @@ public:
 class StructuredBuffer : public Buffer
 {
 public:
-    StructuredBuffer(UInt32 SizeInBytes, UInt32 InStride, UInt32 Usage)
-        : Buffer(SizeInBytes, Usage)
+    StructuredBuffer(UInt32 InSizeInBytes, UInt32 InStride, UInt32 Usage)
+        : Buffer(InSizeInBytes, Usage)
         , Stride(InStride)
+        , NumElements(InSizeInBytes / InStride)
     {
     }
 
@@ -232,6 +247,12 @@ public:
         return Stride;
     }
 
+    FORCEINLINE UInt32 GetNumElements() const
+    {
+        return NumElements;
+    }
+
 protected:
     UInt32 Stride;
+    UInt32 NumElements;
 };

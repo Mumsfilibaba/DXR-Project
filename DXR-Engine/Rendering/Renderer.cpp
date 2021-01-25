@@ -9,7 +9,7 @@
 
 #include "Application/Events/EventDispatcher.h"
 
-#include "RenderingCore/ShaderCompiler.h"
+#include "RenderLayer/ShaderCompiler.h"
 
 #include "Debug/Profiler.h"
 #include "Debug/Console.h"
@@ -17,27 +17,22 @@
 #include <algorithm>
 #include <imgui_internal.h>
 
-/*
-* Static Settings
-*/
+static const EFormat SSAOBufferFormat     = EFormat::Format_R16_Float;
+static const EFormat FinalTargetFormat    = EFormat::Format_R16G16B16A16_Float;
+static const EFormat RenderTargetFormat   = EFormat::Format_R8G8B8A8_Unorm;
+static const EFormat AlbedoFormat         = EFormat::Format_R8G8B8A8_Unorm;
+static const EFormat MaterialFormat       = EFormat::Format_R8G8B8A8_Unorm;
+static const EFormat NormalFormat         = EFormat::Format_R10G10B10A2_Unorm;
+static const EFormat ViewNormalFormat     = EFormat::Format_R10G10B10A2_Unorm;
+static const EFormat DepthBufferFormat    = EFormat::Format_D32_Float;
+static const EFormat LightProbeFormat     = EFormat::Format_R16G16B16A16_Float;
+static const UInt32  ShadowMapSampleCount = 2;
 
-static const EFormat SSAOBufferFormat		= EFormat::Format_R16_Float;
-static const EFormat FinalTargetFormat		= EFormat::Format_R16G16B16A16_Float;
-static const EFormat RenderTargetFormat		= EFormat::Format_R8G8B8A8_Unorm;
-static const EFormat AlbedoFormat			= EFormat::Format_R8G8B8A8_Unorm;
-static const EFormat MaterialFormat			= EFormat::Format_R8G8B8A8_Unorm;
-static const EFormat NormalFormat			= EFormat::Format_R10G10B10A2_Unorm;
-static const EFormat ViewNormalFormat		= EFormat::Format_R10G10B10A2_Unorm;
-static const EFormat DepthBufferFormat		= EFormat::Format_D32_Float;
-static const EFormat LightProbeFormat		= EFormat::Format_R16G16B16A16_Float;
-static const EFormat ShadowMapFormat		= EFormat::Format_D32_Float;
-static const UInt32	 ShadowMapSampleCount	= 2;
-
-#define GBUFFER_ALBEDO_INDEX		0
-#define GBUFFER_NORMAL_INDEX		1
-#define GBUFFER_MATERIAL_INDEX		2
-#define GBUFFER_DEPTH_INDEX			3
-#define GBUFFER_VIEW_NORMAL_INDEX	4
+#define GBUFFER_ALBEDO_INDEX      0
+#define GBUFFER_NORMAL_INDEX      1
+#define GBUFFER_MATERIAL_INDEX    2
+#define GBUFFER_DEPTH_INDEX       3
+#define GBUFFER_VIEW_NORMAL_INDEX 4
 
 ConsoleVariable GlobalDrawTextureDebugger(ConsoleVariableType_Bool);
 ConsoleVariable GlobalDrawRendererInfo(ConsoleVariableType_Bool);
@@ -49,4205 +44,4018 @@ ConsoleVariable GlobalSSAORadius(ConsoleVariableType_Float);
 ConsoleVariable GlobalSSAOBias(ConsoleVariableType_Float);
 ConsoleVariable GlobalSSAOKernelSize(ConsoleVariableType_Int);
 
-/*
-* CameraBufferDesc
-*/
-
 struct CameraBufferDesc
 {
-	XMFLOAT4X4	ViewProjection;
-	XMFLOAT4X4	View;
-	XMFLOAT4X4	ViewInv;
-	XMFLOAT4X4	Projection;
-	XMFLOAT4X4	ProjectionInv;
-	XMFLOAT4X4	ViewProjectionInv;
-	XMFLOAT3	Position;
-	Float		NearPlane;
-	Float		FarPlane;
-	Float		AspectRatio;
+    XMFLOAT4X4 ViewProjection;
+    XMFLOAT4X4 View;
+    XMFLOAT4X4 ViewInv;
+    XMFLOAT4X4 Projection;
+    XMFLOAT4X4 ProjectionInv;
+    XMFLOAT4X4 ViewProjectionInv;
+    XMFLOAT3   Position;
+    Float      NearPlane;
+    Float      FarPlane;
+    Float      AspectRatio;
 };
-
-/*
-* PerShadowMap
-*/
-
-struct PerShadowMap
-{
-	XMFLOAT4X4	Matrix;
-	XMFLOAT3	Position;
-	Float		FarPlane;
-};
-
-/*
-* Renderer
-*/
 
 void Renderer::Tick(const Scene& CurrentScene)
 {
-	// Perform frustum culling
-	DeferredVisibleCommands.Clear();
-	ForwardVisibleCommands.Clear();
-	DebugTextures.Clear();
+    // Perform frustum culling
+    DeferredVisibleCommands.Clear();
+    ForwardVisibleCommands.Clear();
+    DebugTextures.Clear();
 
-	PointLightFrame++;
-	if (PointLightFrame > 6)
-	{
-		UpdatePointLight	= true;
-		PointLightFrame		= 0;
-	}
+    PointLightFrame++;
+    if (PointLightFrame > 6)
+    {
+        UpdatePointLight    = true;
+        PointLightFrame        = 0;
+    }
 
-	DirLightFrame++;
-	if (DirLightFrame > 6)
-	{
-		UpdateDirLight	= true;
-		DirLightFrame	= 0;
-	}
+    DirLightFrame++;
+    if (DirLightFrame > 6)
+    {
+        UpdateDirLight    = true;
+        DirLightFrame    = 0;
+    }
 
-	if (GlobalFrustumCullEnabled)
-	{
-		TRACE_SCOPE("Frustum Culling");
+    if (GlobalFrustumCullEnabled)
+    {
+        TRACE_SCOPE("Frustum Culling");
 
-		Camera* Camera			= CurrentScene.GetCamera();
-		Frustum CameraFrustum	= Frustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
-		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-		{
-			const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
-			XMMATRIX XmTransform	= XMMatrixTranspose(XMLoadFloat4x4(&Transform));
-			XMVECTOR XmTop			= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
-			XMVECTOR XmBottom		= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
-			XmTop		= XMVector4Transform(XmTop, XmTransform);
-			XmBottom	= XMVector4Transform(XmBottom, XmTransform);
+        Camera* Camera            = CurrentScene.GetCamera();
+        Frustum CameraFrustum    = Frustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+        for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+        {
+            const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
+            XMMATRIX XmTransform    = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
+            XMVECTOR XmTop            = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
+            XMVECTOR XmBottom        = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
+            XmTop        = XMVector4Transform(XmTop, XmTransform);
+            XmBottom    = XMVector4Transform(XmBottom, XmTransform);
 
-			AABB Box;
-			XMStoreFloat3(&Box.Top, XmTop);
-			XMStoreFloat3(&Box.Bottom, XmBottom);
-			if (CameraFrustum.CheckAABB(Box))
-			{
-				if (Command.Material->HasAlphaMask())
-				{
-					ForwardVisibleCommands.EmplaceBack(Command);
-				}
-				else
-				{
-					DeferredVisibleCommands.EmplaceBack(Command);
-				}
-			}
-		}
-	}
-	else
-	{
-		for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-		{
-			if (Command.Material->HasAlphaMask())
-			{
-				ForwardVisibleCommands.EmplaceBack(Command);
-			}
-			else
-			{
-				DeferredVisibleCommands.EmplaceBack(Command);
-			}
-		}
-	}
+            AABB Box;
+            XMStoreFloat3(&Box.Top, XmTop);
+            XMStoreFloat3(&Box.Bottom, XmBottom);
+            if (CameraFrustum.CheckAABB(Box))
+            {
+                if (Command.Material->HasAlphaMask())
+                {
+                    ForwardVisibleCommands.EmplaceBack(Command);
+                }
+                else
+                {
+                    DeferredVisibleCommands.EmplaceBack(Command);
+                }
+            }
+        }
+    }
+    else
+    {
+        for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+        {
+            if (Command.Material->HasAlphaMask())
+            {
+                ForwardVisibleCommands.EmplaceBack(Command);
+            }
+            else
+            {
+                DeferredVisibleCommands.EmplaceBack(Command);
+            }
+        }
+    }
 
-	// Start frame
-	Texture2D* BackBuffer				= MainWindowViewport->GetBackBuffer();
-	RenderTargetView* BackBufferView	= MainWindowViewport->GetRenderTargetView();
+    // Start frame
+    Texture2D* BackBuffer                = MainWindowViewport->GetBackBuffer();
+    RenderTargetView* BackBufferView    = MainWindowViewport->GetRenderTargetView();
 
-	CmdList.Begin();
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
+    CmdList.Begin();
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
 
-	// Build acceleration structures
-	//if (RenderLayer::IsRayTracingSupported() && RayTracingEnabled)
-	//{
-	//	// Build Bottom-Level
-	//	UInt32 HitGroupIndex = 0;
-	//	for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-	//	{
-	//		CmdList.BuildRayTracingGeometry(Command.Geometry);
+    // Build acceleration structures
+    //if (RenderLayer::IsRayTracingSupported() && RayTracingEnabled)
+    //{
+    //    // Build Bottom-Level
+    //    UInt32 HitGroupIndex = 0;
+    //    for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+    //    {
+    //        CmdList.BuildRayTracingGeometry(Command.Geometry);
 
-	//		XMFLOAT4X4 Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
-	//		XMFLOAT3X4 SmallMatrix	= XMFLOAT3X4(reinterpret_cast<Float*>(&Matrix));
+    //        XMFLOAT4X4 Matrix        = Command.CurrentActor->GetTransform().GetMatrix();
+    //        XMFLOAT3X4 SmallMatrix    = XMFLOAT3X4(reinterpret_cast<Float*>(&Matrix));
 
-	//		//RayTracingGeometryInstances.EmplaceBack(
-	//		//	Command.Mesh->RayTracingGeometry,
-	//		//	Command.Material,
-	//		//	SmallMatrix,
-	//		//	HitGroupIndex, 0);
+    //        //RayTracingGeometryInstances.EmplaceBack(
+    //        //    Command.Mesh->RayTracingGeometry,
+    //        //    Command.Material,
+    //        //    SmallMatrix,
+    //        //    HitGroupIndex, 0);
 
-	//		HitGroupIndex++;
-	//	}
+    //        HitGroupIndex++;
+    //    }
 
-	//	// Build Top-Level
-	//	const Bool NeedsBuild = false;// RayTracingScene->NeedsBuild();
-	//	if (NeedsBuild)
-	//	{
-	//		//TArray<BindingTableEntry> BindingTableEntries;
-	//		//BindingTableEntries.Reserve(RayTracingGeometryInstances.Size());
+    //    // Build Top-Level
+    //    const Bool NeedsBuild = false;// RayTracingScene->NeedsBuild();
+    //    if (NeedsBuild)
+    //    {
+    //        //TArray<BindingTableEntry> BindingTableEntries;
+    //        //BindingTableEntries.Reserve(RayTracingGeometryInstances.Size());
 
-	//		//BindingTableEntries.EmplaceBack("RayGen", RayGenDescriptorTable, nullptr);
-	//		//for (D3D12RayTracingGeometryInstance& Geometry : RayTracingGeometryInstances)
-	//		//{
-	//		//	BindingTableEntries.EmplaceBack(
-	//		//		"HitGroup", 
-	//		//		Geometry.Material->GetDescriptorTable(),
-	//		//		Geometry.Geometry->GetDescriptorTable());
-	//		//}
-	//		//BindingTableEntries.EmplaceBack("Miss", nullptr, nullptr);
+    //        //BindingTableEntries.EmplaceBack("RayGen", RayGenDescriptorTable, nullptr);
+    //        //for (D3D12RayTracingGeometryInstance& Geometry : RayTracingGeometryInstances)
+    //        //{
+    //        //    BindingTableEntries.EmplaceBack(
+    //        //        "HitGroup", 
+    //        //        Geometry.Material->GetDescriptorTable(),
+    //        //        Geometry.Geometry->GetDescriptorTable());
+    //        //}
+    //        //BindingTableEntries.EmplaceBack("Miss", nullptr, nullptr);
 
-	//		//const UInt32 NumHitGroups = BindingTableEntries.Size() - 2;
-	//		//RayTracingScene->BuildAccelerationStructure(
-	//		//	CommandList.Get(),
-	//		//	RayTracingGeometryInstances,
-	//		//	BindingTableEntries,
-	//		//	NumHitGroups);
+    //        //const UInt32 NumHitGroups = BindingTableEntries.Size() - 2;
+    //        //RayTracingScene->BuildAccelerationStructure(
+    //        //    CommandList.Get(),
+    //        //    RayTracingGeometryInstances,
+    //        //    BindingTableEntries,
+    //        //    NumHitGroups);
 
-	//		//GlobalDescriptorTable->SetShaderResourceView(RayTracingScene->GetShaderResourceView(), 0);
-	//		//GlobalDescriptorTable->CopyDescriptors();
-	//	}
-	//}
+    //        //GlobalDescriptorTable->SetShaderResourceView(RayTracingScene->GetShaderResourceView(), 0);
+    //        //GlobalDescriptorTable->CopyDescriptors();
+    //    }
+    //}
 
-	// UpdateLightBuffers
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Update LightBuffers");
+    // UpdateLightBuffers
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Update LightBuffers");
 
-	{
-		TRACE_SCOPE("Update LightBuffers");
+    {
+        TRACE_SCOPE("Update LightBuffers");
 
-		CmdList.TransitionBuffer(
-			PointLightBuffer.Get(), 
-			EResourceState::ResourceState_VertexAndConstantBuffer, 
-			EResourceState::ResourceState_CopyDest);
+        CmdList.TransitionBuffer(
+            PointLightBuffer.Get(), 
+            EResourceState::ResourceState_VertexAndConstantBuffer, 
+            EResourceState::ResourceState_CopyDest);
 
-		CmdList.TransitionBuffer(
-			DirectionalLightBuffer.Get(), 
-			EResourceState::ResourceState_VertexAndConstantBuffer, 
-			EResourceState::ResourceState_CopyDest);
+        CmdList.TransitionBuffer(
+            DirectionalLightBuffer.Get(), 
+            EResourceState::ResourceState_VertexAndConstantBuffer, 
+            EResourceState::ResourceState_CopyDest);
 
-		UInt32 NumPointLights	= 0;
-		UInt32 NumDirLights		= 0;
-		for (Light* Light : CurrentScene.GetLights())
-		{
-			XMFLOAT3	Color		= Light->GetColor();
-			Float		Intensity	= Light->GetIntensity();
-			if (IsSubClassOf<PointLight>(Light) && UpdatePointLight)
-			{
-				PointLight* CurrentLight = Cast<PointLight>(Light);
-				VALIDATE(CurrentLight != nullptr);
+        UInt32 NumPointLights    = 0;
+        UInt32 NumDirLights        = 0;
+        for (Light* Light : CurrentScene.GetLights())
+        {
+            XMFLOAT3    Color        = Light->GetColor();
+            Float        Intensity    = Light->GetIntensity();
+            if (IsSubClassOf<PointLight>(Light) && UpdatePointLight)
+            {
+                PointLight* CurrentLight = Cast<PointLight>(Light);
+                VALIDATE(CurrentLight != nullptr);
 
-				PointLightProperties Properties;
-				Properties.Color			= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-				Properties.Position			= CurrentLight->GetPosition();
-				Properties.ShadowBias		= CurrentLight->GetShadowBias();
-				Properties.MaxShadowBias	= CurrentLight->GetMaxShadowBias();
-				Properties.FarPlane			= CurrentLight->GetShadowFarPlane();
+                PointLightProperties Properties;
+                Properties.Color            = XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
+                Properties.Position            = CurrentLight->GetPosition();
+                Properties.ShadowBias        = CurrentLight->GetShadowBias();
+                Properties.MaxShadowBias    = CurrentLight->GetMaxShadowBias();
+                Properties.FarPlane            = CurrentLight->GetShadowFarPlane();
 
-				constexpr Float MinLuma = 0.05f;
-				const Float Dot =
-					Properties.Color.x * 0.2126f +
-					Properties.Color.y * 0.7152f +
-					Properties.Color.z * 0.0722f;
+                constexpr Float MinLuma = 0.05f;
+                const Float Dot =
+                    Properties.Color.x * 0.2126f +
+                    Properties.Color.y * 0.7152f +
+                    Properties.Color.z * 0.0722f;
 
-				Float Radius = sqrt(Dot / MinLuma);
-				Properties.Radius = Radius;
+                Float Radius = sqrt(Dot / MinLuma);
+                Properties.Radius = Radius;
 
-				constexpr UInt32 SizeInBytes = sizeof(PointLightProperties);
-				CmdList.UpdateBuffer(
-					PointLightBuffer.Get(), 
-					NumPointLights * SizeInBytes, 
-					SizeInBytes, 
-					&Properties);
+                constexpr UInt32 SizeInBytes = sizeof(PointLightProperties);
+                CmdList.UpdateBuffer(
+                    PointLightBuffer.Get(), 
+                    NumPointLights * SizeInBytes, 
+                    SizeInBytes, 
+                    &Properties);
 
-				NumPointLights++;
-			}
-			else if (IsSubClassOf<DirectionalLight>(Light) && UpdateDirLight)
-			{
-				DirectionalLight* CurrentLight = Cast<DirectionalLight>(Light);
-				VALIDATE(CurrentLight != nullptr);
+                NumPointLights++;
+            }
+            else if (IsSubClassOf<DirectionalLight>(Light) && UpdateDirLight)
+            {
+                DirectionalLight* CurrentLight = Cast<DirectionalLight>(Light);
+                VALIDATE(CurrentLight != nullptr);
 
-				DirectionalLightProperties Properties;
-				Properties.Color			= XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-				Properties.ShadowBias		= CurrentLight->GetShadowBias();
-				Properties.Direction		= CurrentLight->GetDirection();
-				Properties.LightMatrix		= CurrentLight->GetMatrix();
-				Properties.MaxShadowBias	= CurrentLight->GetMaxShadowBias();
+                DirectionalLightProperties Properties;
+                Properties.Color            = XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
+                Properties.ShadowBias        = CurrentLight->GetShadowBias();
+                Properties.Direction        = CurrentLight->GetDirection();
+                Properties.LightMatrix        = CurrentLight->GetMatrix();
+                Properties.MaxShadowBias    = CurrentLight->GetMaxShadowBias();
 
-				constexpr UInt32 SizeInBytes = sizeof(DirectionalLightProperties);
-				CmdList.UpdateBuffer(
-					DirectionalLightBuffer.Get(),
-					NumDirLights * SizeInBytes,
-					SizeInBytes,
-					&Properties);
+                constexpr UInt32 SizeInBytes = sizeof(DirectionalLightProperties);
+                CmdList.UpdateBuffer(
+                    DirectionalLightBuffer.Get(),
+                    NumDirLights * SizeInBytes,
+                    SizeInBytes,
+                    &Properties);
 
-				NumDirLights++;
-			}
-		}
+                NumDirLights++;
+            }
+        }
 
-		CmdList.TransitionBuffer(
-			PointLightBuffer.Get(), 
-			EResourceState::ResourceState_CopyDest, 
-			EResourceState::ResourceState_VertexAndConstantBuffer);
-	
-		CmdList.TransitionBuffer(
-			DirectionalLightBuffer.Get(), 
-			EResourceState::ResourceState_CopyDest, 
-			EResourceState::ResourceState_VertexAndConstantBuffer);
-	}
+        CmdList.TransitionBuffer(
+            PointLightBuffer.Get(), 
+            EResourceState::ResourceState_CopyDest, 
+            EResourceState::ResourceState_VertexAndConstantBuffer);
+    
+        CmdList.TransitionBuffer(
+            DirectionalLightBuffer.Get(), 
+            EResourceState::ResourceState_CopyDest, 
+            EResourceState::ResourceState_VertexAndConstantBuffer);
+    }
 
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Update LightBuffers");
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Update LightBuffers");
 
-	// Transition GBuffer
-	CmdList.TransitionTexture(
-		GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
-		EResourceState::ResourceState_NonPixelShaderResource, 
-		EResourceState::ResourceState_RenderTarget);
+    // Transition GBuffer
+    CmdList.TransitionTexture(
+        GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
+        EResourceState::ResourceState_NonPixelShaderResource, 
+        EResourceState::ResourceState_RenderTarget);
 
-	CmdList.TransitionTexture(
-		GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
-		EResourceState::ResourceState_NonPixelShaderResource,
-		EResourceState::ResourceState_RenderTarget);
+    CmdList.TransitionTexture(
+        GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
+        EResourceState::ResourceState_NonPixelShaderResource,
+        EResourceState::ResourceState_RenderTarget);
 
-	CmdList.TransitionTexture(
-		GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
-		EResourceState::ResourceState_NonPixelShaderResource,
-		EResourceState::ResourceState_RenderTarget);
+    CmdList.TransitionTexture(
+        GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
+        EResourceState::ResourceState_NonPixelShaderResource,
+        EResourceState::ResourceState_RenderTarget);
 
-	CmdList.TransitionTexture(
-		GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-		EResourceState::ResourceState_PixelShaderResource,
-		EResourceState::ResourceState_DepthWrite);
+    CmdList.TransitionTexture(
+        GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
+        EResourceState::ResourceState_PixelShaderResource,
+        EResourceState::ResourceState_DepthWrite);
 
-	CmdList.TransitionTexture(
-		GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(),
-		EResourceState::ResourceState_NonPixelShaderResource,
-		EResourceState::ResourceState_RenderTarget);
+    CmdList.TransitionTexture(
+        GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(),
+        EResourceState::ResourceState_NonPixelShaderResource,
+        EResourceState::ResourceState_RenderTarget);
 
-	// Transition ShadowMaps
-	CmdList.TransitionTexture(
-		PointLightShadowMaps.Get(), 
-		EResourceState::ResourceState_PixelShaderResource,
-		EResourceState::ResourceState_DepthWrite);
-	
-	CmdList.TransitionTexture(
-		DirLightShadowMaps.Get(), 
-		EResourceState::ResourceState_PixelShaderResource,
-		EResourceState::ResourceState_DepthWrite);
-	
-	// Render DirectionalLight ShadowMaps
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render DirectionalLight ShadowMaps");
-	
-	if (UpdateDirLight)
-	{
-		TRACE_SCOPE("Render DirectionalLight ShadowMaps");
+    // Transition ShadowMaps
+    CmdList.TransitionTexture(
+        PointLightShadowMaps.Get(), 
+        EResourceState::ResourceState_PixelShaderResource,
+        EResourceState::ResourceState_DepthWrite);
+    
+    CmdList.TransitionTexture(
+        DirLightShadowMaps.Get(), 
+        EResourceState::ResourceState_PixelShaderResource,
+        EResourceState::ResourceState_DepthWrite);
+    
+    // Render DirectionalLight ShadowMaps
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render DirectionalLight ShadowMaps");
+    
+    if (UpdateDirLight)
+    {
+        TRACE_SCOPE("Render DirectionalLight ShadowMaps");
 
-		CmdList.ClearDepthStencilView(DirLightShadowMapDSV.Get(), DepthStencilClearValue(1.0f, 0));
+        CmdList.ClearDepthStencilView(DirLightShadowMapDSV.Get(), DepthStencilClearValue(1.0f, 0));
 
 #if ENABLE_VSM
-		CmdList.TransitionTexture(VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_RenderTarget);
+        CmdList.TransitionTexture(VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_RenderTarget);
 
-		//Float32 DepthClearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		//CmdList.ClearRenderTargetView(VSMDirLightShadowMaps->GetRenderTargetView(0).Get(), DepthClearColor);
-		//
-		//D3D12RenderTargetView* DirLightRTVS[] =
-		//{
-		//	VSMDirLightShadowMaps->GetRenderTargetView(0).Get(),
-		//};
-		//CmdList.BindRenderTargets(DirLightRTVS, 1, DirLightShadowMaps->GetDepthStencilView(0).Get());
-		//CmdList.BindGraphicsPipelineState(VSMShadowMapPSO.Get());
+        //Float32 DepthClearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        //CmdList.ClearRenderTargetView(VSMDirLightShadowMaps->GetRenderTargetView(0).Get(), DepthClearColor);
+        //
+        //D3D12RenderTargetView* DirLightRTVS[] =
+        //{
+        //    VSMDirLightShadowMaps->GetRenderTargetView(0).Get(),
+        //};
+        //CmdList.BindRenderTargets(DirLightRTVS, 1, DirLightShadowMaps->GetDepthStencilView(0).Get());
+        //CmdList.BindGraphicsPipelineState(VSMShadowMapPSO.Get());
 #else
-		CmdList.BindRenderTargets(nullptr, 0, DirLightShadowMapDSV.Get());
-		CmdList.BindGraphicsPipelineState(ShadowMapPSO.Get());
+        CmdList.BindRenderTargets(nullptr, 0, DirLightShadowMapDSV.Get());
+        CmdList.BindGraphicsPipelineState(ShadowMapPSO.Get());
 #endif
 
-		// Setup view
-		CmdList.BindViewport(
-			static_cast<Float>(CurrentLightSettings.ShadowMapWidth),
-			static_cast<Float>(CurrentLightSettings.ShadowMapHeight),
-			0.0f,
-			1.0f,
-			0.0f,
-			0.0f);
+        // Setup view
+        CmdList.BindViewport(
+            static_cast<Float>(CurrentLightSettings.ShadowMapWidth),
+            static_cast<Float>(CurrentLightSettings.ShadowMapHeight),
+            0.0f,
+            1.0f,
+            0.0f,
+            0.0f);
 
-		CmdList.BindScissorRect(
-			CurrentLightSettings.ShadowMapWidth,
-			CurrentLightSettings.ShadowMapHeight,
-			 0, 0);
+        CmdList.BindScissorRect(
+            CurrentLightSettings.ShadowMapWidth,
+            CurrentLightSettings.ShadowMapHeight,
+             0, 0);
 
-		CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+        CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
 
-		// PerObject Structs
-		struct ShadowPerObject
-		{
-			XMFLOAT4X4	Matrix;
-			Float		ShadowOffset;
-		} ShadowPerObjectBuffer;
-	
-		PerShadowMap PerShadowMapData;
-		for (Light* Light : CurrentScene.GetLights())
-		{
-			if (IsSubClassOf<DirectionalLight>(Light))
-			{
-				DirectionalLight* DirLight = Cast<DirectionalLight>(Light);
-				PerShadowMapData.Matrix		= DirLight->GetMatrix();
-				PerShadowMapData.Position	= DirLight->GetShadowMapPosition();
-				PerShadowMapData.FarPlane	= DirLight->GetShadowFarPlane();
-			
-				CmdList.TransitionBuffer(
-					PerShadowMapBuffer.Get(),
-					EResourceState::ResourceState_VertexAndConstantBuffer,
-					EResourceState::ResourceState_CopyDest);
+        // PerObject Structs
+        struct ShadowPerObject
+        {
+            XMFLOAT4X4    Matrix;
+            Float        ShadowOffset;
+        } ShadowPerObjectBuffer;
+    
+        PerShadowMap PerShadowMapData;
+        for (Light* Light : CurrentScene.GetLights())
+        {
+            if (IsSubClassOf<DirectionalLight>(Light))
+            {
+                DirectionalLight* DirLight = Cast<DirectionalLight>(Light);
+                PerShadowMapData.Matrix        = DirLight->GetMatrix();
+                PerShadowMapData.Position    = DirLight->GetShadowMapPosition();
+                PerShadowMapData.FarPlane    = DirLight->GetShadowFarPlane();
+            
+                CmdList.TransitionBuffer(
+                    PerShadowMapBuffer.Get(),
+                    EResourceState::ResourceState_VertexAndConstantBuffer,
+                    EResourceState::ResourceState_CopyDest);
 
-				CmdList.UpdateBuffer(
-					PerShadowMapBuffer.Get(),
-					0, sizeof(PerShadowMap),
-					&PerShadowMapData);
+                CmdList.UpdateBuffer(
+                    PerShadowMapBuffer.Get(),
+                    0, sizeof(PerShadowMap),
+                    &PerShadowMapData);
 
-				CmdList.TransitionBuffer(
-					PerShadowMapBuffer.Get(),
-					EResourceState::ResourceState_CopyDest,
-					EResourceState::ResourceState_VertexAndConstantBuffer);
+                CmdList.TransitionBuffer(
+                    PerShadowMapBuffer.Get(),
+                    EResourceState::ResourceState_CopyDest,
+                    EResourceState::ResourceState_VertexAndConstantBuffer);
 
-				CmdList.BindConstantBuffers(
-					EShaderStage::ShaderStage_Vertex,
-					PerShadowMapBuffer.GetAddressOf(), 
-					1, 0);
+                CmdList.BindConstantBuffers(
+                    EShaderStage::ShaderStage_Vertex,
+                    PerShadowMapBuffer.GetAddressOf(), 
+                    1, 0);
 
-				// Draw all objects to depthbuffer
-				for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-				{
-					CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-					CmdList.BindIndexBuffer(Command.IndexBuffer);
+                // Draw all objects to depthbuffer
+                for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+                {
+                    CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+                    CmdList.BindIndexBuffer(Command.IndexBuffer);
 
-					ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
-					ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
+                    ShadowPerObjectBuffer.Matrix        = Command.CurrentActor->GetTransform().GetMatrix();
+                    ShadowPerObjectBuffer.ShadowOffset    = Command.Mesh->ShadowOffset;
 
-					CmdList.Bind32BitShaderConstants(
-						EShaderStage::ShaderStage_Vertex,
-						&ShadowPerObjectBuffer, 17);
+                    CmdList.Bind32BitShaderConstants(
+                        EShaderStage::ShaderStage_Vertex,
+                        &ShadowPerObjectBuffer, 17);
 
-					CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-				}
+                    CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+                }
 
-				break;
-			}
-		}
+                break;
+            }
+        }
 
-		UpdateDirLight = false;
-	}
-	else
-	{
-		CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
-	}
+        UpdateDirLight = false;
+    }
+    else
+    {
+        CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+    }
 
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
 
-	// Render PointLight ShadowMaps
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render PointLight ShadowMaps");
-	
-	if (UpdatePointLight)
-	{
-		TRACE_SCOPE("Render PointLight ShadowMaps");
+    // Render PointLight ShadowMaps
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render PointLight ShadowMaps");
+    
+    if (UpdatePointLight)
+    {
+        TRACE_SCOPE("Render PointLight ShadowMaps");
 
-		const UInt32 PointLightShadowSize = CurrentLightSettings.PointLightShadowSize;
-		CmdList.BindViewport(
-			static_cast<Float>(PointLightShadowSize),
-			static_cast<Float>(PointLightShadowSize),
-			0.0f,
-			1.0f,
-			0.0f,
-			0.0f);
+        const UInt32 PointLightShadowSize = CurrentLightSettings.PointLightShadowSize;
+        CmdList.BindViewport(
+            static_cast<Float>(PointLightShadowSize),
+            static_cast<Float>(PointLightShadowSize),
+            0.0f,
+            1.0f,
+            0.0f,
+            0.0f);
 
-		CmdList.BindScissorRect(
-			static_cast<Float>(PointLightShadowSize),
-			static_cast<Float>(PointLightShadowSize),
-			0, 0);
+        CmdList.BindScissorRect(
+            static_cast<Float>(PointLightShadowSize),
+            static_cast<Float>(PointLightShadowSize),
+            0, 0);
 
-		CmdList.BindGraphicsPipelineState(LinearShadowMapPSO.Get());
+        CmdList.BindGraphicsPipelineState(LinearShadowMapPSO.Get());
 
-		// PerObject Structs
-		struct ShadowPerObject
-		{
-			XMFLOAT4X4	Matrix;
-			Float		ShadowOffset;
-		} ShadowPerObjectBuffer;
+        // PerObject Structs
+        struct ShadowPerObject
+        {
+            XMFLOAT4X4    Matrix;
+            Float        ShadowOffset;
+        } ShadowPerObjectBuffer;
 
-		UInt32 PointLightShadowIndex = 0;
-		PerShadowMap PerShadowMapData;
-		for (Light* Light : CurrentScene.GetLights())
-		{
-			if (IsSubClassOf<PointLight>(Light))
-			{
-				PointLight* CurrentLight = Cast<PointLight>(Light);
-				for (UInt32 Face = 0; Face < 6; Face++)
-				{
-					auto& Cube = PointLightShadowMapDSVs[PointLightShadowIndex];
-					CmdList.ClearDepthStencilView(Cube[Face].Get(), DepthStencilClearValue(1.0f, 0));
-					CmdList.BindRenderTargets(nullptr, 0, Cube[Face].Get());
+        UInt32 PointLightShadowIndex = 0;
+        PerShadowMap PerShadowMapData;
+        for (Light* Light : CurrentScene.GetLights())
+        {
+            if (IsSubClassOf<PointLight>(Light))
+            {
+                PointLight* CurrentLight = Cast<PointLight>(Light);
+                for (UInt32 Face = 0; Face < 6; Face++)
+                {
+                    auto& Cube = PointLightShadowMapDSVs[PointLightShadowIndex];
+                    CmdList.ClearDepthStencilView(Cube[Face].Get(), DepthStencilClearValue(1.0f, 0));
+                    CmdList.BindRenderTargets(nullptr, 0, Cube[Face].Get());
 
-					PerShadowMapData.Matrix		= CurrentLight->GetMatrix(Face);
-					PerShadowMapData.Position	= CurrentLight->GetPosition();
-					PerShadowMapData.FarPlane	= CurrentLight->GetShadowFarPlane();
+                    PerShadowMapData.Matrix        = CurrentLight->GetMatrix(Face);
+                    PerShadowMapData.Position    = CurrentLight->GetPosition();
+                    PerShadowMapData.FarPlane    = CurrentLight->GetShadowFarPlane();
 
-					CmdList.TransitionBuffer(
-						PerShadowMapBuffer.Get(),
-						EResourceState::ResourceState_VertexAndConstantBuffer,
-						EResourceState::ResourceState_CopyDest);
+                    CmdList.TransitionBuffer(
+                        PerShadowMapBuffer.Get(),
+                        EResourceState::ResourceState_VertexAndConstantBuffer,
+                        EResourceState::ResourceState_CopyDest);
 
-					CmdList.UpdateBuffer(
-						PerShadowMapBuffer.Get(),
-						0, sizeof(PerShadowMap),
-						&PerShadowMapData);
+                    CmdList.UpdateBuffer(
+                        PerShadowMapBuffer.Get(),
+                        0, sizeof(PerShadowMap),
+                        &PerShadowMapData);
 
-					CmdList.TransitionBuffer(
-						PerShadowMapBuffer.Get(),
-						EResourceState::ResourceState_CopyDest,
-						EResourceState::ResourceState_VertexAndConstantBuffer);
+                    CmdList.TransitionBuffer(
+                        PerShadowMapBuffer.Get(),
+                        EResourceState::ResourceState_CopyDest,
+                        EResourceState::ResourceState_VertexAndConstantBuffer);
 
-					CmdList.BindConstantBuffers(
-						EShaderStage::ShaderStage_Vertex,
-						PerShadowMapBuffer.GetAddressOf(),
-						1, 0);
+                    CmdList.BindConstantBuffers(
+                        EShaderStage::ShaderStage_Vertex,
+                        PerShadowMapBuffer.GetAddressOf(),
+                        1, 0);
 
-					// Draw all objects to depthbuffer
-					if (GlobalFrustumCullEnabled)
-					{
-						Frustum CameraFrustum = Frustum(CurrentLight->GetShadowFarPlane(), CurrentLight->GetViewMatrix(Face), CurrentLight->GetProjectionMatrix(Face));
-						for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-						{
-							const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
-							XMMATRIX XmTransform	= XMMatrixTranspose(XMLoadFloat4x4(&Transform));
-							XMVECTOR XmTop			= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
-							XMVECTOR XmBottom		= XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
-							XmTop		= XMVector4Transform(XmTop, XmTransform);
-							XmBottom	= XMVector4Transform(XmBottom, XmTransform);
+                    // Draw all objects to depthbuffer
+                    if (GlobalFrustumCullEnabled)
+                    {
+                        Frustum CameraFrustum = Frustum(CurrentLight->GetShadowFarPlane(), CurrentLight->GetViewMatrix(Face), CurrentLight->GetProjectionMatrix(Face));
+                        for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+                        {
+                            const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
+                            XMMATRIX XmTransform    = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
+                            XMVECTOR XmTop            = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
+                            XMVECTOR XmBottom        = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
+                            XmTop        = XMVector4Transform(XmTop, XmTransform);
+                            XmBottom    = XMVector4Transform(XmBottom, XmTransform);
 
-							AABB Box;
-							XMStoreFloat3(&Box.Top, XmTop);
-							XMStoreFloat3(&Box.Bottom, XmBottom);
-							if (CameraFrustum.CheckAABB(Box))
-							{
-								CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-								CmdList.BindIndexBuffer(Command.IndexBuffer);
+                            AABB Box;
+                            XMStoreFloat3(&Box.Top, XmTop);
+                            XMStoreFloat3(&Box.Bottom, XmBottom);
+                            if (CameraFrustum.CheckAABB(Box))
+                            {
+                                CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+                                CmdList.BindIndexBuffer(Command.IndexBuffer);
 
-								ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
-								ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
-							
-								CmdList.Bind32BitShaderConstants(
-									EShaderStage::ShaderStage_Vertex,
-									&ShadowPerObjectBuffer, 17);
+                                ShadowPerObjectBuffer.Matrix        = Command.CurrentActor->GetTransform().GetMatrix();
+                                ShadowPerObjectBuffer.ShadowOffset    = Command.Mesh->ShadowOffset;
+                            
+                                CmdList.Bind32BitShaderConstants(
+                                    EShaderStage::ShaderStage_Vertex,
+                                    &ShadowPerObjectBuffer, 17);
 
-								CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-							}
-						}
-					}
-					else
-					{
-						for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-						{
-							CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-							CmdList.BindIndexBuffer(Command.IndexBuffer);
+                                CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
+                        {
+                            CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+                            CmdList.BindIndexBuffer(Command.IndexBuffer);
 
-							ShadowPerObjectBuffer.Matrix		= Command.CurrentActor->GetTransform().GetMatrix();
-							ShadowPerObjectBuffer.ShadowOffset	= Command.Mesh->ShadowOffset;
-						
-							CmdList.Bind32BitShaderConstants(
-								EShaderStage::ShaderStage_Vertex,
-								&ShadowPerObjectBuffer, 17);
+                            ShadowPerObjectBuffer.Matrix        = Command.CurrentActor->GetTransform().GetMatrix();
+                            ShadowPerObjectBuffer.ShadowOffset    = Command.Mesh->ShadowOffset;
+                        
+                            CmdList.Bind32BitShaderConstants(
+                                EShaderStage::ShaderStage_Vertex,
+                                &ShadowPerObjectBuffer, 17);
 
-							CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-						}
-					}
-				}
+                            CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+                        }
+                    }
+                }
 
-				PointLightShadowIndex++;
-			}
-		}
+                PointLightShadowIndex++;
+            }
+        }
 
-		UpdatePointLight = false;
-	}
+        UpdatePointLight = false;
+    }
 
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render PointLight ShadowMaps");
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render PointLight ShadowMaps");
 
-	// Transition ShadowMaps
+    // Transition ShadowMaps
 #if ENABLE_VSM
-	CmdList.TransitionTexture(
-		VSMDirLightShadowMaps.Get(), 
-		EResourceState::ResourceState_RenderTarget, 
-		EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(
+        VSMDirLightShadowMaps.Get(), 
+        EResourceState::ResourceState_RenderTarget, 
+        EResourceState::ResourceState_PixelShaderResource);
 #endif
-	CmdList.TransitionTexture(
-		DirLightShadowMaps.Get(), 
-		EResourceState::ResourceState_DepthWrite, 
-		EResourceState::ResourceState_NonPixelShaderResource);
-
-	CmdList.TransitionTexture(
-		PointLightShadowMaps.Get(), 
-		EResourceState::ResourceState_DepthWrite, 
-		EResourceState::ResourceState_NonPixelShaderResource);
-
-	// Update camerabuffer
-	CameraBufferDesc CamBuff;
-	CamBuff.ViewProjection		= CurrentScene.GetCamera()->GetViewProjectionMatrix();
-	CamBuff.View				= CurrentScene.GetCamera()->GetViewMatrix();
-	CamBuff.ViewInv				= CurrentScene.GetCamera()->GetViewInverseMatrix();
-	CamBuff.Projection			= CurrentScene.GetCamera()->GetProjectionMatrix();
-	CamBuff.ProjectionInv		= CurrentScene.GetCamera()->GetProjectionInverseMatrix();
-	CamBuff.ViewProjectionInv	= CurrentScene.GetCamera()->GetViewProjectionInverseMatrix();
-	CamBuff.Position			= CurrentScene.GetCamera()->GetPosition();
-	CamBuff.NearPlane			= CurrentScene.GetCamera()->GetNearPlane();
-	CamBuff.FarPlane			= CurrentScene.GetCamera()->GetFarPlane();
-	CamBuff.AspectRatio			= CurrentScene.GetCamera()->GetAspectRatio();
-
-	CmdList.TransitionBuffer(
-		CameraBuffer.Get(), 
-		EResourceState::ResourceState_VertexAndConstantBuffer, 
-		EResourceState::ResourceState_CopyDest);
-
-	CmdList.UpdateBuffer(CameraBuffer.Get(), 0, sizeof(CameraBufferDesc), &CamBuff);
-	
-	CmdList.TransitionBuffer(
-		CameraBuffer.Get(), 
-		EResourceState::ResourceState_CopyDest, 
-		EResourceState::ResourceState_VertexAndConstantBuffer);
-
-	// Clear GBuffer
-	ColorClearValue BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(), BlackClearColor);
-	CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(), BlackClearColor);
-	CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get(), BlackClearColor);
-	CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX].Get(), BlackClearColor);
-	CmdList.ClearDepthStencilView(GBufferDSV.Get(), DepthStencilClearValue(1.0f, 0));
-
-	// Setup view
-	const UInt32 RenderWidth	= MainWindowViewport->GetWidth();
-	const UInt32 RenderHeight	= MainWindowViewport->GetHeight();
-
-	CmdList.BindViewport(
-		static_cast<Float>(RenderWidth),
-		static_cast<Float>(RenderHeight),
-		0.0f,
-		1.0f,
-		0.0f,
-		0.0f);
-
-	CmdList.BindScissorRect(
-		static_cast<Float>(RenderWidth),
-		static_cast<Float>(RenderHeight),
-		0, 0);
-
-	// Perform PrePass
-	if (GlobalPrePassEnabled)
-	{
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin PrePass");
-
-		TRACE_SCOPE("PrePass");
-
-		struct PerObject
-		{
-			XMFLOAT4X4 Matrix;
-		} PerObjectBuffer;
-
-		// Setup Pipeline
-		CmdList.BindRenderTargets(nullptr, 0, GBufferDSV.Get());
-
-		CmdList.BindGraphicsPipelineState(PrePassPSO.Get());
-		
-		CmdList.BindConstantBuffers(
-			EShaderStage::ShaderStage_Vertex,
-			CameraBuffer.GetAddressOf(),
-			1, 0);
-
-		// Draw all objects to depthbuffer
-		for (const MeshDrawCommand& Command : DeferredVisibleCommands)
-		{
-			if (!Command.Material->HasHeightMap())
-			{
-				CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-				CmdList.BindIndexBuffer(Command.IndexBuffer);
-
-				PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-			
-				CmdList.Bind32BitShaderConstants(
-					EShaderStage::ShaderStage_Vertex,
-					&PerObjectBuffer, 16);
-
-				CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-			}
-		}
-
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End PrePass");
-	}
-
-	// Render all objects to the GBuffer
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin GeometryPass");
-
-	{
-		TRACE_SCOPE("GeometryPass");
-	
-		RenderTargetView* RenderTargets[] =
-		{
-			GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(),
-			GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(),
-			GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get(),
-			GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX].Get(),
-		};
-		CmdList.BindRenderTargets(RenderTargets, 4, GBufferDSV.Get());
-
-		// Setup Pipeline
-		CmdList.BindGraphicsPipelineState(GeometryPSO.Get());
-
-		struct TransformBuffer
-		{
-			XMFLOAT4X4 Transform;
-			XMFLOAT4X4 TransformInv;
-		} TransformPerObject;
-
-		for (const MeshDrawCommand& Command : DeferredVisibleCommands)
-		{
-			CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-			CmdList.BindIndexBuffer(Command.IndexBuffer);
-
-			if (Command.Material->IsBufferDirty())
-			{
-				Command.Material->BuildBuffer(CmdList);
-			}
-
-			CmdList.BindConstantBuffers(
-				EShaderStage::ShaderStage_Vertex,
-				&CameraBuffer,
-				1, 0);
-
-			ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
-			CmdList.BindConstantBuffers(
-				EShaderStage::ShaderStage_Pixel,
-				&MaterialBuffer,
-				1, 1);
-
-			TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
-			TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
-		
-			ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-			CmdList.BindShaderResourceViews(
-				EShaderStage::ShaderStage_Pixel,
-				ShaderResourceViews, 
-				6, 0);
-
-			SamplerState* Sampler = Command.Material->GetMaterialSampler();
-			CmdList.BindSamplerStates(
-				EShaderStage::ShaderStage_Pixel,
-				&Sampler,
-				1, 0);
-
-			CmdList.Bind32BitShaderConstants(
-				EShaderStage::ShaderStage_Vertex,
-				&TransformPerObject, 32);
-
-			CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-		}
-
-		// Setup GBuffer for Read
-		CmdList.TransitionTexture(
-			GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
-			EResourceState::ResourceState_RenderTarget, 
-			EResourceState::ResourceState_NonPixelShaderResource);
-	
-		DebugTextures.EmplaceBack(
-			GBufferSRVs[GBUFFER_ALBEDO_INDEX],
-			GBuffer[GBUFFER_ALBEDO_INDEX],
-			EResourceState::ResourceState_NonPixelShaderResource,
-			EResourceState::ResourceState_NonPixelShaderResource);
-
-		CmdList.TransitionTexture(
-			GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
-			EResourceState::ResourceState_RenderTarget, 
-			EResourceState::ResourceState_NonPixelShaderResource);
-
-		DebugTextures.EmplaceBack(
-			GBufferSRVs[GBUFFER_NORMAL_INDEX],
-			GBuffer[GBUFFER_NORMAL_INDEX],
-			EResourceState::ResourceState_NonPixelShaderResource,
-			EResourceState::ResourceState_NonPixelShaderResource);
-
-		CmdList.TransitionTexture(
-			GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(),
-			EResourceState::ResourceState_RenderTarget,
-			EResourceState::ResourceState_NonPixelShaderResource);
-
-		DebugTextures.EmplaceBack(
-			GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX],
-			GBuffer[GBUFFER_VIEW_NORMAL_INDEX],
-			EResourceState::ResourceState_NonPixelShaderResource,
-			EResourceState::ResourceState_NonPixelShaderResource);
-
-		CmdList.TransitionTexture(
-			GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
-			EResourceState::ResourceState_RenderTarget, 
-			EResourceState::ResourceState_NonPixelShaderResource);
-
-		DebugTextures.EmplaceBack(
-			GBufferSRVs[GBUFFER_MATERIAL_INDEX],
-			GBuffer[GBUFFER_MATERIAL_INDEX],
-			EResourceState::ResourceState_NonPixelShaderResource,
-			EResourceState::ResourceState_NonPixelShaderResource);
-
-		CmdList.TransitionTexture(
-			GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-			EResourceState::ResourceState_DepthWrite, 
-			EResourceState::ResourceState_NonPixelShaderResource);
-
-		CmdList.TransitionTexture(
-			IrradianceMap.Get(),
-			EResourceState::ResourceState_PixelShaderResource,
-			EResourceState::ResourceState_NonPixelShaderResource);
-
-		CmdList.TransitionTexture(
-			SpecularIrradianceMap.Get(),
-			EResourceState::ResourceState_PixelShaderResource,
-			EResourceState::ResourceState_NonPixelShaderResource);
-
-		CmdList.TransitionTexture(
-			IntegrationLUT.Get(),
-			EResourceState::ResourceState_PixelShaderResource,
-			EResourceState::ResourceState_NonPixelShaderResource);
-	}
-
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
-
-	// RayTracing
-	if (RenderLayer::IsRayTracingSupported() && GlobalRayTracingEnabled)
-	{
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin RayTracing");
-
-		TraceRays(BackBuffer, CmdList);
-		RayTracingGeometryInstances.Clear();
-
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End RayTracing");
-	}
-
-	// SSAO
-	CmdList.TransitionTexture(
-		SSAOBuffer.Get(), 
-		EResourceState::ResourceState_NonPixelShaderResource,
-		EResourceState::ResourceState_UnorderedAccess);
-
-	const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	CmdList.ClearUnorderedAccessView(SSAOBufferUAV.Get(), WhiteColor);
-
-	if (GlobalEnableSSAO.GetBool())
-	{
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
-		
-		TRACE_SCOPE("SSAO");
-
-		struct SSAOSettings
-		{
-			XMFLOAT2	ScreenSize;
-			XMFLOAT2	NoiseSize;
-			Float		Radius;
-			Float		Bias;
-			Int32		KernelSize;
-		} SSAOSettings;
-
-		const UInt32 Width	= RenderWidth;
-		const UInt32 Height	= RenderHeight;
-		SSAOSettings.ScreenSize	= XMFLOAT2(Float(Width), Float(Height));
-		SSAOSettings.NoiseSize	= XMFLOAT2(4.0f, 4.0f);
-		SSAOSettings.Radius		= GlobalSSAORadius.GetFloat();
-		SSAOSettings.KernelSize = GlobalSSAOKernelSize.GetInt32();
-		SSAOSettings.Bias		= GlobalSSAOBias.GetFloat();
-
-		ShaderResourceView* ShaderResourceViews[] =
-		{
-			GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX].Get(),
-			GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
-			SSAONoiseSRV.Get(),
-			SSAOSamplesSRV.Get()
-		};
-
-		CmdList.BindComputePipelineState(SSAOPSO.Get());
-		
-		CmdList.BindShaderResourceViews(
-			EShaderStage::ShaderStage_Compute,
-			ShaderResourceViews,
-			4, 0);
-
-		SamplerState* SamplerStates[] =
-		{
-			GBufferSampler.Get()
-		};
-
-		CmdList.BindSamplerStates(
-			EShaderStage::ShaderStage_Compute,
-			SamplerStates,
-			1, 0);
-
-		CmdList.BindConstantBuffers(
-			EShaderStage::ShaderStage_Compute,
-			CameraBuffer.GetAddressOf(),
-			1, 0);
-
-		CmdList.BindUnorderedAccessViews(
-			EShaderStage::ShaderStage_Compute,
-			SSAOBufferUAV.GetAddressOf(),
-			1, 0);
-
-		CmdList.Bind32BitShaderConstants(
-			EShaderStage::ShaderStage_Compute,
-			&SSAOSettings, 7);
-
-		constexpr UInt32 ThreadCount = 16;
-		const UInt32 DispatchWidth	= Math::DivideByMultiple<UInt32>(Width, ThreadCount);
-		const UInt32 DispatchHeight = Math::DivideByMultiple<UInt32>(Height, ThreadCount);
-		CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
-
-		CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
-
-		CmdList.BindComputePipelineState(SSAOBlurHorizontal.Get());
-
-		CmdList.Bind32BitShaderConstants(
-			EShaderStage::ShaderStage_Compute,
-			&SSAOSettings.ScreenSize, 2);
-
-		CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
-
-		CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
-
-		CmdList.BindComputePipelineState(SSAOBlurVertical.Get());
-
-		CmdList.Bind32BitShaderConstants(
-			EShaderStage::ShaderStage_Compute,
-			&SSAOSettings.ScreenSize, 2);
-
-		CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
-
-		CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
-
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End SSAO");
-	}
-
-	CmdList.TransitionTexture(
-		SSAOBuffer.Get(),
-		EResourceState::ResourceState_UnorderedAccess,
-		EResourceState::ResourceState_NonPixelShaderResource);
-
-	DebugTextures.EmplaceBack(
-		SSAOBufferSRV,
-		SSAOBuffer,
-		EResourceState::ResourceState_NonPixelShaderResource,
-		EResourceState::ResourceState_NonPixelShaderResource);
-
-	// Render to final output
-	CmdList.TransitionTexture(
-		FinalTarget.Get(), 
-		EResourceState::ResourceState_PixelShaderResource,
-		EResourceState::ResourceState_UnorderedAccess);
-	
-	CmdList.TransitionTexture(
-		BackBuffer, 
-		EResourceState::ResourceState_Present, 
-		EResourceState::ResourceState_RenderTarget);
-
-	// Setup LightPass
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
-
-	{
-		TRACE_SCOPE("LightPass");
-
-		CmdList.BindComputePipelineState(DeferredLightPass.Get());
-
-		ShaderResourceView* ShaderResourceViews[] =
-		{
-			GBufferSRVs[GBUFFER_ALBEDO_INDEX].Get(),
-			GBufferSRVs[GBUFFER_NORMAL_INDEX].Get(),
-			GBufferSRVs[GBUFFER_MATERIAL_INDEX].Get(),
-			GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
-			ReflectionTextureSRV.Get(),
-			IrradianceMapSRV.Get(),
-			SpecularIrradianceMapSRV.Get(),
-			IntegrationLUTSRV.Get(),
-			DirLightShadowMapSRV.Get(),
-			PointLightShadowMapSRV.Get(),
-			SSAOBufferSRV.Get()
-		};
-	
-		CmdList.BindShaderResourceViews(
-			EShaderStage::ShaderStage_Compute,
-			ShaderResourceViews, 
-			11, 0);
-
-		ConstantBuffer* ConstantBuffers[] =
-		{
-			CameraBuffer.Get(),
-			PointLightBuffer.Get(),
-			DirectionalLightBuffer.Get()
-		};
-
-		CmdList.BindConstantBuffers(
-			EShaderStage::ShaderStage_Compute,
-			ConstantBuffers, 
-			3, 0);
-
-		SamplerState* SamplerStates[] =
-		{
-			GBufferSampler.Get(),
-			IntegrationLUTSampler.Get(),
-			IrradianceSampler.Get(),
-			ShadowMapCompSampler.Get(),
-			ShadowMapSampler.Get()
-		};
-
-		CmdList.BindSamplerStates(
-			EShaderStage::ShaderStage_Compute,
-			SamplerStates,
-			5,
-			0);
-
-		CmdList.BindUnorderedAccessViews(
-			EShaderStage::ShaderStage_Compute,
-			&FinalTargetUAV,
-			1,
-			0);
-
-		struct LightPassSettings
-		{
-			Int32 NumPointLights;
-			Int32 NumSkyLightMips;
-			Int32 ScreenWidth;
-			Int32 ScreenHeight;
-		} Settings;
-
-		Settings.NumPointLights		= 4;
-		Settings.NumSkyLightMips	= SpecularIrradianceMap->GetMipLevels();
-		Settings.ScreenWidth		= FinalTarget->GetWidth();
-		Settings.ScreenHeight		= FinalTarget->GetHeight();
-
-		CmdList.Bind32BitShaderConstants(
-			EShaderStage::ShaderStage_Compute,
-			&Settings, 4);
-
-		constexpr UInt32 ThreadCount	= 16;
-		const UInt32 WorkGroupWidth		= Math::DivideByMultiple<UInt32>(Settings.ScreenWidth, ThreadCount);
-		const UInt32 WorkGroupHeight	= Math::DivideByMultiple<UInt32>(Settings.ScreenHeight, ThreadCount);
-		CmdList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
-	}
-
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");
-
-	// Draw skybox
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
-
-	{
-		TRACE_SCOPE("Render Skybox");
-
-		RenderTargetView* RenderTarget[] = { FinalTargetRTV.Get() };
-		CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
-
-		CmdList.BindViewport(
-			static_cast<Float>(RenderWidth),
-			static_cast<Float>(RenderHeight),
-			0.0f,
-			1.0f,
-			0.0f,
-			0.0f);
-
-		CmdList.BindScissorRect(
-			static_cast<Float>(RenderWidth),
-			static_cast<Float>(RenderHeight),
-			0, 0);
-
-		CmdList.TransitionTexture(
-			GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-			EResourceState::ResourceState_NonPixelShaderResource, 
-			EResourceState::ResourceState_DepthWrite);
-
-		CmdList.TransitionTexture(
-			FinalTarget.Get(),
-			EResourceState::ResourceState_UnorderedAccess,
-			EResourceState::ResourceState_RenderTarget);
-	
-		CmdList.BindRenderTargets(RenderTarget, 1, GBufferDSV.Get());
-	
-		CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
-		CmdList.BindVertexBuffers(&SkyboxVertexBuffer, 1, 0);
-		CmdList.BindIndexBuffer(SkyboxIndexBuffer.Get());
-		CmdList.BindGraphicsPipelineState(SkyboxPSO.Get());
-	
-		struct SimpleCameraBuffer
-		{
-			XMFLOAT4X4 Matrix;
-		} SimpleCamera;
-		SimpleCamera.Matrix = CurrentScene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
-
-		CmdList.Bind32BitShaderConstants(
-			EShaderStage::ShaderStage_Vertex,
-			&SimpleCamera, 16);
-
-		CmdList.BindShaderResourceViews(
-			EShaderStage::ShaderStage_Pixel,
-			&SkyboxSRV,
-			1, 0);
-
-		CmdList.BindSamplerStates(
-			EShaderStage::ShaderStage_Pixel,
-			&SkyboxSampler,
-			1, 0);
-
-		CmdList.DrawIndexedInstanced(
-			static_cast<UInt32>(SkyboxMesh.Indices.Size()), 
-			1, 0, 0, 0);
-	}
-
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
-
-	// Render to BackBuffer
-	CmdList.TransitionTexture(
-		FinalTarget.Get(), 
-		EResourceState::ResourceState_RenderTarget,
-		EResourceState::ResourceState_PixelShaderResource);
-
-	DebugTextures.EmplaceBack(
-		FinalTargetSRV,
-		FinalTarget,
-		EResourceState::ResourceState_PixelShaderResource,
-		EResourceState::ResourceState_PixelShaderResource);
-
-	CmdList.TransitionTexture(
-		PointLightShadowMaps.Get(),
-		EResourceState::ResourceState_NonPixelShaderResource,
-		EResourceState::ResourceState_PixelShaderResource);
-
-	CmdList.TransitionTexture(
-		DirLightShadowMaps.Get(),
-		EResourceState::ResourceState_NonPixelShaderResource,
-		EResourceState::ResourceState_PixelShaderResource);
-
-	DebugTextures.EmplaceBack(
-		DirLightShadowMapSRV,
-		DirLightShadowMaps,
-		EResourceState::ResourceState_PixelShaderResource,
-		EResourceState::ResourceState_PixelShaderResource);
-
-	CmdList.TransitionTexture(
-		IrradianceMap.Get(),
-		EResourceState::ResourceState_NonPixelShaderResource,
-		EResourceState::ResourceState_PixelShaderResource);
-
-	CmdList.TransitionTexture(
-		SpecularIrradianceMap.Get(),
-		EResourceState::ResourceState_NonPixelShaderResource,
-		EResourceState::ResourceState_PixelShaderResource);
-
-	CmdList.TransitionTexture(
-		IntegrationLUT.Get(),
-		EResourceState::ResourceState_NonPixelShaderResource,
-		EResourceState::ResourceState_PixelShaderResource);
-	
-	CmdList.BindRenderTargets(&BackBufferView, 1, nullptr);
-
-	CmdList.BindShaderResourceViews(
-		EShaderStage::ShaderStage_Pixel,
-		&FinalTargetSRV, 1, 0);
-
-	CmdList.BindSamplerStates(
-		EShaderStage::ShaderStage_Pixel,
-		&GBufferSampler, 1, 0);
-
-	if (GlobalEnableFXAA.GetBool())
-	{
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin FXAA");
-		
-		TRACE_SCOPE("FXAA");
-
-		struct FXAASettings
-		{
-			Float Width;
-			Float Height;
-		} Settings;
-
-		Settings.Width	= static_cast<Float>(RenderWidth);
-		Settings.Height	= static_cast<Float>(RenderHeight);
-
-		CmdList.Bind32BitShaderConstants(
-			EShaderStage::ShaderStage_Pixel, 
-			&Settings, 2);
-
-		CmdList.BindGraphicsPipelineState(FXAAPSO.Get());
-
-		CmdList.DrawInstanced(3, 1, 0, 0);
-
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End FXAA");
-	}
-	else
-	{
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Draw BackBuffer");
-
-		CmdList.BindGraphicsPipelineState(PostPSO.Get());
-		CmdList.DrawInstanced(3, 1, 0, 0);
-
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Draw BackBuffer");
-	}
-
-	// Forward Pass
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin ForwardPass");
-
-	{
-		TRACE_SCOPE("ForwardPass");
-
-		CmdList.BindViewport(
-			static_cast<Float>(RenderWidth),
-			static_cast<Float>(RenderHeight),
-			0.0f,
-			1.0f,
-			0.0f,
-			0.0f);
-
-		CmdList.BindScissorRect(
-			static_cast<Float>(RenderWidth),
-			static_cast<Float>(RenderHeight),
-			0, 0);
-
-		// Render all transparent objects;
-		CmdList.BindRenderTargets(
-			&BackBufferView, 1, 
-			GBufferDSV.Get());
-
-		// Setup Pipeline
-		{
-			ConstantBuffer* ConstantBuffers[] =
-			{
-				CameraBuffer.Get(),
-				PointLightBuffer.Get(),
-				DirectionalLightBuffer.Get(),
-			};
-
-			CmdList.BindConstantBuffers(
-				EShaderStage::ShaderStage_Pixel,
-				ConstantBuffers,
-				3, 0);
-		}
-
-		{
-			ShaderResourceView* ShaderResourceViews[] =
-			{
-				IrradianceMapSRV.Get(),
-				SpecularIrradianceMapSRV.Get(),
-				IntegrationLUTSRV.Get(),
-				DirLightShadowMapSRV.Get(),
-				PointLightShadowMapSRV.Get(),
-			};
-
-			CmdList.BindShaderResourceViews(
-				EShaderStage::ShaderStage_Pixel,
-				ShaderResourceViews,
-				5, 0);
-		}
-
-		{
-			SamplerState* SamplerStates[] =
-			{
-				IntegrationLUTSampler.Get(),
-				IrradianceSampler.Get(),
-				ShadowMapCompSampler.Get(),
-				ShadowMapSampler.Get()
-			};
-
-			CmdList.BindSamplerStates(
-				EShaderStage::ShaderStage_Pixel,
-				SamplerStates,
-				4, 1);
-		}
-
-		struct TransformBuffer
-		{
-			XMFLOAT4X4 Transform;
-			XMFLOAT4X4 TransformInv;
-		} TransformPerObject;
-
-		CmdList.BindGraphicsPipelineState(ForwardPSO.Get());
-		for (const MeshDrawCommand& Command : ForwardVisibleCommands)
-		{
-			CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-			CmdList.BindIndexBuffer(Command.IndexBuffer);
-
-			if (Command.Material->IsBufferDirty())
-			{
-				Command.Material->BuildBuffer(CmdList);
-			}
-		
-			ConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
-			CmdList.BindConstantBuffers(
-				EShaderStage::ShaderStage_Pixel,
-				&ConstantBuffer,
-				1, 3);
-
-			ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-			CmdList.BindShaderResourceViews(
-				EShaderStage::ShaderStage_Pixel,
-				ShaderResourceViews,
-				7, 5);
-
-			SamplerState* SamplerState = Command.Material->GetMaterialSampler();
-			CmdList.BindSamplerStates(
-				EShaderStage::ShaderStage_Pixel,
-				&SamplerState,
-				1, 0);
-
-			TransformPerObject.Transform	= Command.CurrentActor->GetTransform().GetMatrix();
-			TransformPerObject.TransformInv	= Command.CurrentActor->GetTransform().GetMatrixInverse();
-
-			CmdList.Bind32BitShaderConstants(
-				EShaderStage::ShaderStage_Vertex,
-				&TransformPerObject, 32);
-
-			CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-		}
-	}
-
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End ForwardPass");
-
-	// Draw DebugBoxes
-	if (GlobalDrawAABBs)
-	{
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin DebugPass");
-
-		TRACE_SCOPE("DebugPass");
-
-		CmdList.BindGraphicsPipelineState(DebugBoxPSO.Get());
-
-		CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_LineList);
-
-		CmdList.BindConstantBuffers(
-			EShaderStage::ShaderStage_Vertex,
-			&CameraBuffer,
-			1, 0);
-
-		CmdList.BindVertexBuffers(&AABBVertexBuffer, 1, 0);
-		CmdList.BindIndexBuffer(AABBIndexBuffer.Get());
-
-		for (const MeshDrawCommand& Command : DeferredVisibleCommands)
-		{
-			AABB& Box = Command.Mesh->BoundingBox;
-			XMFLOAT3 Scale		= XMFLOAT3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
-			XMFLOAT3 Position	= Box.GetCenter();
-
-			XMMATRIX XmTranslation	= XMMatrixTranslation(Position.x, Position.y, Position.z);
-			XMMATRIX XmScale		= XMMatrixScaling(Scale.x, Scale.y, Scale.z);
-
-			XMFLOAT4X4 Transform = Command.CurrentActor->GetTransform().GetMatrix();
-			XMMATRIX XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
-			XMStoreFloat4x4(&Transform, XMMatrixMultiplyTranspose(XMMatrixMultiply(XmScale, XmTranslation), XmTransform));
-
-			CmdList.Bind32BitShaderConstants(
-				EShaderStage::ShaderStage_Vertex, 
-				&Transform, 16);
-
-			CmdList.DrawIndexedInstanced(24, 1, 0, 0, 0);
-		}
-
-		INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End DebugPass");
-	}
-
-	// Render UI
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin UI Render");
-
-	{
-		TRACE_SCOPE("Render UI");
-
-		if (GlobalDrawTextureDebugger.GetBool())
-		{
-			DebugTextures.EmplaceBack(
-				GBufferSRVs[GBUFFER_DEPTH_INDEX],
-				GBuffer[GBUFFER_DEPTH_INDEX],
-				EResourceState::ResourceState_DepthWrite,
-				EResourceState::ResourceState_PixelShaderResource);
-
-			DebugUI::DrawUI([]()
-			{
-				constexpr Float InvAspectRatio	= 16.0f / 9.0f;
-				constexpr Float AspectRatio		= 9.0f / 16.0f;
-
-				const UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
-				const UInt32 WindowHeight	= GlobalMainWindow->GetHeight();
-				const Float Width			= Math::Max(WindowWidth * 0.6f, 400.0f);
-				const Float Height			= WindowHeight * 0.75f;
-
-				ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
-				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
-
-				ImGui::SetNextWindowPos(
-					ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f),
-					ImGuiCond_Appearing,
-					ImVec2(0.5f, 0.0f));
-
-				ImGui::SetNextWindowSize(
-					ImVec2(Width, Height),
-					ImGuiCond_Appearing);
-				
-				const ImGuiWindowFlags Flags =
-					ImGuiWindowFlags_NoResize			|
-					ImGuiWindowFlags_NoScrollbar		|
-					ImGuiWindowFlags_NoCollapse			|
-					ImGuiWindowFlags_NoFocusOnAppearing |
-					ImGuiWindowFlags_NoSavedSettings;
-
-				Bool TempDrawTextureDebugger = GlobalDrawTextureDebugger.GetBool();
-				if (ImGui::Begin(
-					"FrameBuffer Debugger",
-					&TempDrawTextureDebugger,
-					Flags))
-				{
-					ImGui::BeginChild(
-						"##ScrollBox",
-						ImVec2(Width * 0.985f, Height * 0.125f),
-						true,
-						ImGuiWindowFlags_HorizontalScrollbar);
-
-					const Int32 Count = GlobalRenderer->DebugTextures.Size();
-					static Int32 SelectedImage = -1;
-					if (SelectedImage >= Count)
-					{
-						SelectedImage = -1;
-					}
-
-					for (Int32 i = 0; i < Count; i++)
-					{
-						ImGui::PushID(i);
-
-						constexpr Float MenuImageSize = 96.0f;
-						Int32	FramePadding = 2;
-						ImVec2	Size = ImVec2(MenuImageSize * InvAspectRatio, MenuImageSize);
-						ImVec2	Uv0 = ImVec2(0.0f, 0.0f);
-						ImVec2	Uv1 = ImVec2(1.0f, 1.0f);
-						ImVec4	BgCol = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-						ImVec4	TintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-						ImGuiImage* CurrImage = &GlobalRenderer->DebugTextures[i];
-						if (ImGui::ImageButton(CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol))
-						{
-							SelectedImage = i;
-						}
-
-						ImGui::PopID();
-
-						if (i != Count - 1)
-						{
-							ImGui::SameLine();
-						}
-					}
-
-					ImGui::EndChild();
-
-					const Float ImageWidth	= Width * 0.985f;
-					const Float ImageHeight = ImageWidth * AspectRatio;
-					const Int32 ImageIndex	= SelectedImage < 0 ? 0 : SelectedImage;
-					ImGuiImage* CurrImage	= &GlobalRenderer->DebugTextures[ImageIndex];
-					ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
-
-					ImGui::PopStyleColor();
-					ImGui::PopStyleColor();
-				}
-
-				ImGui::End();
-
-				GlobalDrawTextureDebugger.SetBool(TempDrawTextureDebugger);
-			});
-		}
-		else
-		{
-			CmdList.TransitionTexture(
-				GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-				EResourceState::ResourceState_DepthWrite, 
-				EResourceState::ResourceState_PixelShaderResource);
-		}
-
-		if (GlobalDrawRendererInfo.GetBool())
-		{
-			DebugUI::DrawUI([]()
-			{
-				const UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
-				const UInt32 WindowHeight	= GlobalMainWindow->GetHeight();
-				const Float Width			= 300.0f;
-				const Float Height			= WindowHeight * 0.1f;
-
-				ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
-				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
-
-				ImGui::SetNextWindowPos(
-					ImVec2(Float(WindowWidth), 10.0f),
-					ImGuiCond_Always,
-					ImVec2(1.0f, 0.0f));
-
-				ImGui::SetNextWindowSize(
-					ImVec2(Width, Height),
-					ImGuiCond_Always);
-
-				ImGui::Begin(
-					"Renderer Window",
-					nullptr,
-					ImGuiWindowFlags_NoMove				|
-					ImGuiWindowFlags_NoDecoration		|
-					ImGuiWindowFlags_NoFocusOnAppearing |
-					ImGuiWindowFlags_NoSavedSettings);
-
-				ImGui::Text("Renderer Status:");
-				ImGui::Separator();
-
-				ImGui::Columns(2, nullptr, false);
-				ImGui::SetColumnWidth(0, 100.0f);
-
-				const std::string AdapterName = RenderLayer::GetAdapterName();
-				ImGui::Text("Adapter: ");
-				ImGui::NextColumn();
-
-				ImGui::Text("%s", AdapterName.c_str());
-				ImGui::NextColumn();
-
-				ImGui::Text("DrawCalls: ");
-				ImGui::NextColumn();
-
-				ImGui::Text("%d", GlobalRenderer->LastFrameNumDrawCalls);
-				ImGui::NextColumn();
-
-				ImGui::Text("DispatchCalls: ");
-				ImGui::NextColumn();
-
-				ImGui::Text("%d", GlobalRenderer->LastFrameNumDispatchCalls);
-				ImGui::NextColumn();
-
-				ImGui::Text("Command Count: ");
-				ImGui::NextColumn();
-
-				ImGui::Text("%d", GlobalRenderer->LastFrameNumCommands);
-
-				ImGui::Columns(1);
-
-				ImGui::PopStyleColor();
-				ImGui::PopStyleColor();
-				ImGui::End();
-			});
-		}
-
-		DebugUI::Render(CmdList);
-	}
-
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End UI Render");
-
-	// Finalize Commandlist
-	CmdList.TransitionTexture(
-		BackBuffer, 
-		EResourceState::ResourceState_RenderTarget, 
-		EResourceState::ResourceState_Present);
-	
-	INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--END FRAME--");
-
-	CmdList.End();
-
-	LastFrameNumDrawCalls		= CmdList.GetNumDrawCalls();
-	LastFrameNumDispatchCalls	= CmdList.GetNumDispatchCalls();
-	LastFrameNumCommands		= CmdList.GetNumCommands();
-
-	{
-		TRACE_SCOPE("ExecuteCommandList");
-		GlobalCmdListExecutor.ExecuteCommandList(CmdList);
-	}
-
-	{
-		TRACE_SCOPE("Present");
-		MainWindowViewport->Present(GlobalVSyncEnabled);
-	}
+    CmdList.TransitionTexture(
+        DirLightShadowMaps.Get(), 
+        EResourceState::ResourceState_DepthWrite, 
+        EResourceState::ResourceState_NonPixelShaderResource);
+
+    CmdList.TransitionTexture(
+        PointLightShadowMaps.Get(), 
+        EResourceState::ResourceState_DepthWrite, 
+        EResourceState::ResourceState_NonPixelShaderResource);
+
+    // Update camerabuffer
+    CameraBufferDesc CamBuff;
+    CamBuff.ViewProjection        = CurrentScene.GetCamera()->GetViewProjectionMatrix();
+    CamBuff.View                = CurrentScene.GetCamera()->GetViewMatrix();
+    CamBuff.ViewInv                = CurrentScene.GetCamera()->GetViewInverseMatrix();
+    CamBuff.Projection            = CurrentScene.GetCamera()->GetProjectionMatrix();
+    CamBuff.ProjectionInv        = CurrentScene.GetCamera()->GetProjectionInverseMatrix();
+    CamBuff.ViewProjectionInv    = CurrentScene.GetCamera()->GetViewProjectionInverseMatrix();
+    CamBuff.Position            = CurrentScene.GetCamera()->GetPosition();
+    CamBuff.NearPlane            = CurrentScene.GetCamera()->GetNearPlane();
+    CamBuff.FarPlane            = CurrentScene.GetCamera()->GetFarPlane();
+    CamBuff.AspectRatio            = CurrentScene.GetCamera()->GetAspectRatio();
+
+    CmdList.TransitionBuffer(
+        CameraBuffer.Get(), 
+        EResourceState::ResourceState_VertexAndConstantBuffer, 
+        EResourceState::ResourceState_CopyDest);
+
+    CmdList.UpdateBuffer(CameraBuffer.Get(), 0, sizeof(CameraBufferDesc), &CamBuff);
+    
+    CmdList.TransitionBuffer(
+        CameraBuffer.Get(), 
+        EResourceState::ResourceState_CopyDest, 
+        EResourceState::ResourceState_VertexAndConstantBuffer);
+
+    // Clear GBuffer
+    ColorClearValue BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(), BlackClearColor);
+    CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(), BlackClearColor);
+    CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get(), BlackClearColor);
+    CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX].Get(), BlackClearColor);
+    CmdList.ClearDepthStencilView(GBufferDSV.Get(), DepthStencilClearValue(1.0f, 0));
+
+    // Setup view
+    const UInt32 RenderWidth    = MainWindowViewport->GetWidth();
+    const UInt32 RenderHeight    = MainWindowViewport->GetHeight();
+
+    CmdList.BindViewport(
+        static_cast<Float>(RenderWidth),
+        static_cast<Float>(RenderHeight),
+        0.0f,
+        1.0f,
+        0.0f,
+        0.0f);
+
+    CmdList.BindScissorRect(
+        static_cast<Float>(RenderWidth),
+        static_cast<Float>(RenderHeight),
+        0, 0);
+
+    // Perform PrePass
+    if (GlobalPrePassEnabled)
+    {
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin PrePass");
+
+        TRACE_SCOPE("PrePass");
+
+        struct PerObject
+        {
+            XMFLOAT4X4 Matrix;
+        } PerObjectBuffer;
+
+        // Setup Pipeline
+        CmdList.BindRenderTargets(nullptr, 0, GBufferDSV.Get());
+
+        CmdList.BindGraphicsPipelineState(PrePassPSO.Get());
+        
+        CmdList.BindConstantBuffers(
+            EShaderStage::ShaderStage_Vertex,
+            CameraBuffer.GetAddressOf(),
+            1, 0);
+
+        // Draw all objects to depthbuffer
+        for (const MeshDrawCommand& Command : DeferredVisibleCommands)
+        {
+            if (!Command.Material->HasHeightMap())
+            {
+                CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+                CmdList.BindIndexBuffer(Command.IndexBuffer);
+
+                PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+            
+                CmdList.Bind32BitShaderConstants(
+                    EShaderStage::ShaderStage_Vertex,
+                    &PerObjectBuffer, 16);
+
+                CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+            }
+        }
+
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End PrePass");
+    }
+
+    // Render all objects to the GBuffer
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin GeometryPass");
+
+    {
+        TRACE_SCOPE("GeometryPass");
+    
+        RenderTargetView* RenderTargets[] =
+        {
+            GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(),
+            GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(),
+            GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get(),
+            GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX].Get(),
+        };
+        CmdList.BindRenderTargets(RenderTargets, 4, GBufferDSV.Get());
+
+        // Setup Pipeline
+        CmdList.BindGraphicsPipelineState(GeometryPSO.Get());
+
+        struct TransformBuffer
+        {
+            XMFLOAT4X4 Transform;
+            XMFLOAT4X4 TransformInv;
+        } TransformPerObject;
+
+        for (const MeshDrawCommand& Command : DeferredVisibleCommands)
+        {
+            CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+            CmdList.BindIndexBuffer(Command.IndexBuffer);
+
+            if (Command.Material->IsBufferDirty())
+            {
+                Command.Material->BuildBuffer(CmdList);
+            }
+
+            CmdList.BindConstantBuffers(
+                EShaderStage::ShaderStage_Vertex,
+                &CameraBuffer,
+                1, 0);
+
+            ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
+            CmdList.BindConstantBuffers(
+                EShaderStage::ShaderStage_Pixel,
+                &MaterialBuffer,
+                1, 1);
+
+            TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
+            TransformPerObject.TransformInv    = Command.CurrentActor->GetTransform().GetMatrixInverse();
+        
+            ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
+            CmdList.BindShaderResourceViews(
+                EShaderStage::ShaderStage_Pixel,
+                ShaderResourceViews, 
+                6, 0);
+
+            SamplerState* Sampler = Command.Material->GetMaterialSampler();
+            CmdList.BindSamplerStates(
+                EShaderStage::ShaderStage_Pixel,
+                &Sampler,
+                1, 0);
+
+            CmdList.Bind32BitShaderConstants(
+                EShaderStage::ShaderStage_Vertex,
+                &TransformPerObject, 32);
+
+            CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+        }
+
+        // Setup GBuffer for Read
+        CmdList.TransitionTexture(
+            GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
+            EResourceState::ResourceState_RenderTarget, 
+            EResourceState::ResourceState_NonPixelShaderResource);
+    
+        DebugTextures.EmplaceBack(
+            GBufferSRVs[GBUFFER_ALBEDO_INDEX],
+            GBuffer[GBUFFER_ALBEDO_INDEX],
+            EResourceState::ResourceState_NonPixelShaderResource,
+            EResourceState::ResourceState_NonPixelShaderResource);
+
+        CmdList.TransitionTexture(
+            GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
+            EResourceState::ResourceState_RenderTarget, 
+            EResourceState::ResourceState_NonPixelShaderResource);
+
+        DebugTextures.EmplaceBack(
+            GBufferSRVs[GBUFFER_NORMAL_INDEX],
+            GBuffer[GBUFFER_NORMAL_INDEX],
+            EResourceState::ResourceState_NonPixelShaderResource,
+            EResourceState::ResourceState_NonPixelShaderResource);
+
+        CmdList.TransitionTexture(
+            GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(),
+            EResourceState::ResourceState_RenderTarget,
+            EResourceState::ResourceState_NonPixelShaderResource);
+
+        DebugTextures.EmplaceBack(
+            GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX],
+            GBuffer[GBUFFER_VIEW_NORMAL_INDEX],
+            EResourceState::ResourceState_NonPixelShaderResource,
+            EResourceState::ResourceState_NonPixelShaderResource);
+
+        CmdList.TransitionTexture(
+            GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
+            EResourceState::ResourceState_RenderTarget, 
+            EResourceState::ResourceState_NonPixelShaderResource);
+
+        DebugTextures.EmplaceBack(
+            GBufferSRVs[GBUFFER_MATERIAL_INDEX],
+            GBuffer[GBUFFER_MATERIAL_INDEX],
+            EResourceState::ResourceState_NonPixelShaderResource,
+            EResourceState::ResourceState_NonPixelShaderResource);
+
+        CmdList.TransitionTexture(
+            GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
+            EResourceState::ResourceState_DepthWrite, 
+            EResourceState::ResourceState_NonPixelShaderResource);
+
+        CmdList.TransitionTexture(
+            IrradianceMap.Get(),
+            EResourceState::ResourceState_PixelShaderResource,
+            EResourceState::ResourceState_NonPixelShaderResource);
+
+        CmdList.TransitionTexture(
+            SpecularIrradianceMap.Get(),
+            EResourceState::ResourceState_PixelShaderResource,
+            EResourceState::ResourceState_NonPixelShaderResource);
+
+        CmdList.TransitionTexture(
+            IntegrationLUT.Get(),
+            EResourceState::ResourceState_PixelShaderResource,
+            EResourceState::ResourceState_NonPixelShaderResource);
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
+
+    // RayTracing
+    if (RenderLayer::IsRayTracingSupported() && GlobalRayTracingEnabled)
+    {
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin RayTracing");
+
+        TraceRays(BackBuffer, CmdList);
+        RayTracingGeometryInstances.Clear();
+
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End RayTracing");
+    }
+
+    // SSAO
+    CmdList.TransitionTexture(
+        SSAOBuffer.Get(), 
+        EResourceState::ResourceState_NonPixelShaderResource,
+        EResourceState::ResourceState_UnorderedAccess);
+
+    const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    CmdList.ClearUnorderedAccessView(SSAOBufferUAV.Get(), WhiteColor);
+
+    if (GlobalEnableSSAO.GetBool())
+    {
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
+        
+        TRACE_SCOPE("SSAO");
+
+        struct SSAOSettings
+        {
+            XMFLOAT2    ScreenSize;
+            XMFLOAT2    NoiseSize;
+            Float        Radius;
+            Float        Bias;
+            Int32        KernelSize;
+        } SSAOSettings;
+
+        const UInt32 Width    = RenderWidth;
+        const UInt32 Height    = RenderHeight;
+        SSAOSettings.ScreenSize    = XMFLOAT2(Float(Width), Float(Height));
+        SSAOSettings.NoiseSize    = XMFLOAT2(4.0f, 4.0f);
+        SSAOSettings.Radius        = GlobalSSAORadius.GetFloat();
+        SSAOSettings.KernelSize = GlobalSSAOKernelSize.GetInt32();
+        SSAOSettings.Bias        = GlobalSSAOBias.GetFloat();
+
+        ShaderResourceView* ShaderResourceViews[] =
+        {
+            GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX].Get(),
+            GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
+            SSAONoiseSRV.Get(),
+            SSAOSamplesSRV.Get()
+        };
+
+        CmdList.BindComputePipelineState(SSAOPSO.Get());
+        
+        CmdList.BindShaderResourceViews(
+            EShaderStage::ShaderStage_Compute,
+            ShaderResourceViews,
+            4, 0);
+
+        SamplerState* SamplerStates[] =
+        {
+            GBufferSampler.Get()
+        };
+
+        CmdList.BindSamplerStates(
+            EShaderStage::ShaderStage_Compute,
+            SamplerStates,
+            1, 0);
+
+        CmdList.BindConstantBuffers(
+            EShaderStage::ShaderStage_Compute,
+            CameraBuffer.GetAddressOf(),
+            1, 0);
+
+        CmdList.BindUnorderedAccessViews(
+            EShaderStage::ShaderStage_Compute,
+            SSAOBufferUAV.GetAddressOf(),
+            1, 0);
+
+        CmdList.Bind32BitShaderConstants(
+            EShaderStage::ShaderStage_Compute,
+            &SSAOSettings, 7);
+
+        constexpr UInt32 ThreadCount = 16;
+        const UInt32 DispatchWidth    = Math::DivideByMultiple<UInt32>(Width, ThreadCount);
+        const UInt32 DispatchHeight = Math::DivideByMultiple<UInt32>(Height, ThreadCount);
+        CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+
+        CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
+
+        CmdList.BindComputePipelineState(SSAOBlurHorizontal.Get());
+
+        CmdList.Bind32BitShaderConstants(
+            EShaderStage::ShaderStage_Compute,
+            &SSAOSettings.ScreenSize, 2);
+
+        CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+
+        CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
+
+        CmdList.BindComputePipelineState(SSAOBlurVertical.Get());
+
+        CmdList.Bind32BitShaderConstants(
+            EShaderStage::ShaderStage_Compute,
+            &SSAOSettings.ScreenSize, 2);
+
+        CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+
+        CmdList.UnorderedAccessTextureBarrier(SSAOBuffer.Get());
+
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End SSAO");
+    }
+
+    CmdList.TransitionTexture(
+        SSAOBuffer.Get(),
+        EResourceState::ResourceState_UnorderedAccess,
+        EResourceState::ResourceState_NonPixelShaderResource);
+
+    DebugTextures.EmplaceBack(
+        SSAOBufferSRV,
+        SSAOBuffer,
+        EResourceState::ResourceState_NonPixelShaderResource,
+        EResourceState::ResourceState_NonPixelShaderResource);
+
+    // Render to final output
+    CmdList.TransitionTexture(
+        FinalTarget.Get(), 
+        EResourceState::ResourceState_PixelShaderResource,
+        EResourceState::ResourceState_UnorderedAccess);
+    
+    CmdList.TransitionTexture(
+        BackBuffer, 
+        EResourceState::ResourceState_Present, 
+        EResourceState::ResourceState_RenderTarget);
+
+    // Setup LightPass
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
+
+    {
+        TRACE_SCOPE("LightPass");
+
+        CmdList.BindComputePipelineState(DeferredLightPass.Get());
+
+        ShaderResourceView* ShaderResourceViews[] =
+        {
+            GBufferSRVs[GBUFFER_ALBEDO_INDEX].Get(),
+            GBufferSRVs[GBUFFER_NORMAL_INDEX].Get(),
+            GBufferSRVs[GBUFFER_MATERIAL_INDEX].Get(),
+            GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
+            ReflectionTextureSRV.Get(),
+            IrradianceMapSRV.Get(),
+            SpecularIrradianceMapSRV.Get(),
+            IntegrationLUTSRV.Get(),
+            DirLightShadowMapSRV.Get(),
+            PointLightShadowMapSRV.Get(),
+            SSAOBufferSRV.Get()
+        };
+    
+        CmdList.BindShaderResourceViews(
+            EShaderStage::ShaderStage_Compute,
+            ShaderResourceViews, 
+            11, 0);
+
+        ConstantBuffer* ConstantBuffers[] =
+        {
+            CameraBuffer.Get(),
+            PointLightBuffer.Get(),
+            DirectionalLightBuffer.Get()
+        };
+
+        CmdList.BindConstantBuffers(
+            EShaderStage::ShaderStage_Compute,
+            ConstantBuffers, 
+            3, 0);
+
+        SamplerState* SamplerStates[] =
+        {
+            GBufferSampler.Get(),
+            IntegrationLUTSampler.Get(),
+            IrradianceSampler.Get(),
+            ShadowMapCompSampler.Get(),
+            ShadowMapSampler.Get()
+        };
+
+        CmdList.BindSamplerStates(
+            EShaderStage::ShaderStage_Compute,
+            SamplerStates,
+            5,
+            0);
+
+        CmdList.BindUnorderedAccessViews(
+            EShaderStage::ShaderStage_Compute,
+            &FinalTargetUAV,
+            1,
+            0);
+
+        struct LightPassSettings
+        {
+            Int32 NumPointLights;
+            Int32 NumSkyLightMips;
+            Int32 ScreenWidth;
+            Int32 ScreenHeight;
+        } Settings;
+
+        Settings.NumPointLights        = 4;
+        Settings.NumSkyLightMips    = SpecularIrradianceMap->GetMipLevels();
+        Settings.ScreenWidth        = FinalTarget->GetWidth();
+        Settings.ScreenHeight        = FinalTarget->GetHeight();
+
+        CmdList.Bind32BitShaderConstants(
+            EShaderStage::ShaderStage_Compute,
+            &Settings, 4);
+
+        constexpr UInt32 ThreadCount    = 16;
+        const UInt32 WorkGroupWidth        = Math::DivideByMultiple<UInt32>(Settings.ScreenWidth, ThreadCount);
+        const UInt32 WorkGroupHeight    = Math::DivideByMultiple<UInt32>(Settings.ScreenHeight, ThreadCount);
+        CmdList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");
+
+    // Draw skybox
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
+
+    {
+        TRACE_SCOPE("Render Skybox");
+
+        RenderTargetView* RenderTarget[] = { FinalTargetRTV.Get() };
+        CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
+
+        CmdList.BindViewport(
+            static_cast<Float>(RenderWidth),
+            static_cast<Float>(RenderHeight),
+            0.0f,
+            1.0f,
+            0.0f,
+            0.0f);
+
+        CmdList.BindScissorRect(
+            static_cast<Float>(RenderWidth),
+            static_cast<Float>(RenderHeight),
+            0, 0);
+
+        CmdList.TransitionTexture(
+            GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
+            EResourceState::ResourceState_NonPixelShaderResource, 
+            EResourceState::ResourceState_DepthWrite);
+
+        CmdList.TransitionTexture(
+            FinalTarget.Get(),
+            EResourceState::ResourceState_UnorderedAccess,
+            EResourceState::ResourceState_RenderTarget);
+    
+        CmdList.BindRenderTargets(RenderTarget, 1, GBufferDSV.Get());
+    
+        CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+        CmdList.BindVertexBuffers(&SkyboxVertexBuffer, 1, 0);
+        CmdList.BindIndexBuffer(SkyboxIndexBuffer.Get());
+        CmdList.BindGraphicsPipelineState(SkyboxPSO.Get());
+    
+        struct SimpleCameraBuffer
+        {
+            XMFLOAT4X4 Matrix;
+        } SimpleCamera;
+        SimpleCamera.Matrix = CurrentScene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
+
+        CmdList.Bind32BitShaderConstants(
+            EShaderStage::ShaderStage_Vertex,
+            &SimpleCamera, 16);
+
+        CmdList.BindShaderResourceViews(
+            EShaderStage::ShaderStage_Pixel,
+            &SkyboxSRV,
+            1, 0);
+
+        CmdList.BindSamplerStates(
+            EShaderStage::ShaderStage_Pixel,
+            &SkyboxSampler,
+            1, 0);
+
+        CmdList.DrawIndexedInstanced(
+            static_cast<UInt32>(SkyboxMesh.Indices.Size()), 
+            1, 0, 0, 0);
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
+
+    // Render to BackBuffer
+    CmdList.TransitionTexture(
+        FinalTarget.Get(), 
+        EResourceState::ResourceState_RenderTarget,
+        EResourceState::ResourceState_PixelShaderResource);
+
+    DebugTextures.EmplaceBack(
+        FinalTargetSRV,
+        FinalTarget,
+        EResourceState::ResourceState_PixelShaderResource,
+        EResourceState::ResourceState_PixelShaderResource);
+
+    CmdList.TransitionTexture(
+        PointLightShadowMaps.Get(),
+        EResourceState::ResourceState_NonPixelShaderResource,
+        EResourceState::ResourceState_PixelShaderResource);
+
+    CmdList.TransitionTexture(
+        DirLightShadowMaps.Get(),
+        EResourceState::ResourceState_NonPixelShaderResource,
+        EResourceState::ResourceState_PixelShaderResource);
+
+    DebugTextures.EmplaceBack(
+        DirLightShadowMapSRV,
+        DirLightShadowMaps,
+        EResourceState::ResourceState_PixelShaderResource,
+        EResourceState::ResourceState_PixelShaderResource);
+
+    CmdList.TransitionTexture(
+        IrradianceMap.Get(),
+        EResourceState::ResourceState_NonPixelShaderResource,
+        EResourceState::ResourceState_PixelShaderResource);
+
+    CmdList.TransitionTexture(
+        SpecularIrradianceMap.Get(),
+        EResourceState::ResourceState_NonPixelShaderResource,
+        EResourceState::ResourceState_PixelShaderResource);
+
+    CmdList.TransitionTexture(
+        IntegrationLUT.Get(),
+        EResourceState::ResourceState_NonPixelShaderResource,
+        EResourceState::ResourceState_PixelShaderResource);
+    
+    CmdList.BindRenderTargets(&BackBufferView, 1, nullptr);
+
+    CmdList.BindShaderResourceViews(
+        EShaderStage::ShaderStage_Pixel,
+        &FinalTargetSRV, 1, 0);
+
+    CmdList.BindSamplerStates(
+        EShaderStage::ShaderStage_Pixel,
+        &GBufferSampler, 1, 0);
+
+    if (GlobalEnableFXAA.GetBool())
+    {
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin FXAA");
+        
+        TRACE_SCOPE("FXAA");
+
+        struct FXAASettings
+        {
+            Float Width;
+            Float Height;
+        } Settings;
+
+        Settings.Width    = static_cast<Float>(RenderWidth);
+        Settings.Height    = static_cast<Float>(RenderHeight);
+
+        CmdList.Bind32BitShaderConstants(
+            EShaderStage::ShaderStage_Pixel, 
+            &Settings, 2);
+
+        CmdList.BindGraphicsPipelineState(FXAAPSO.Get());
+
+        CmdList.DrawInstanced(3, 1, 0, 0);
+
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End FXAA");
+    }
+    else
+    {
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Draw BackBuffer");
+
+        CmdList.BindGraphicsPipelineState(PostPSO.Get());
+        CmdList.DrawInstanced(3, 1, 0, 0);
+
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Draw BackBuffer");
+    }
+
+    // Forward Pass
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin ForwardPass");
+
+    {
+        TRACE_SCOPE("ForwardPass");
+
+        CmdList.BindViewport(
+            static_cast<Float>(RenderWidth),
+            static_cast<Float>(RenderHeight),
+            0.0f,
+            1.0f,
+            0.0f,
+            0.0f);
+
+        CmdList.BindScissorRect(
+            static_cast<Float>(RenderWidth),
+            static_cast<Float>(RenderHeight),
+            0, 0);
+
+        // Render all transparent objects;
+        CmdList.BindRenderTargets(
+            &BackBufferView, 1, 
+            GBufferDSV.Get());
+
+        // Setup Pipeline
+        {
+            ConstantBuffer* ConstantBuffers[] =
+            {
+                CameraBuffer.Get(),
+                PointLightBuffer.Get(),
+                DirectionalLightBuffer.Get(),
+            };
+
+            CmdList.BindConstantBuffers(
+                EShaderStage::ShaderStage_Pixel,
+                ConstantBuffers,
+                3, 0);
+        }
+
+        {
+            ShaderResourceView* ShaderResourceViews[] =
+            {
+                IrradianceMapSRV.Get(),
+                SpecularIrradianceMapSRV.Get(),
+                IntegrationLUTSRV.Get(),
+                DirLightShadowMapSRV.Get(),
+                PointLightShadowMapSRV.Get(),
+            };
+
+            CmdList.BindShaderResourceViews(
+                EShaderStage::ShaderStage_Pixel,
+                ShaderResourceViews,
+                5, 0);
+        }
+
+        {
+            SamplerState* SamplerStates[] =
+            {
+                IntegrationLUTSampler.Get(),
+                IrradianceSampler.Get(),
+                ShadowMapCompSampler.Get(),
+                ShadowMapSampler.Get()
+            };
+
+            CmdList.BindSamplerStates(
+                EShaderStage::ShaderStage_Pixel,
+                SamplerStates,
+                4, 1);
+        }
+
+        struct TransformBuffer
+        {
+            XMFLOAT4X4 Transform;
+            XMFLOAT4X4 TransformInv;
+        } TransformPerObject;
+
+        CmdList.BindGraphicsPipelineState(ForwardPSO.Get());
+        for (const MeshDrawCommand& Command : ForwardVisibleCommands)
+        {
+            CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
+            CmdList.BindIndexBuffer(Command.IndexBuffer);
+
+            if (Command.Material->IsBufferDirty())
+            {
+                Command.Material->BuildBuffer(CmdList);
+            }
+        
+            ConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
+            CmdList.BindConstantBuffers(
+                EShaderStage::ShaderStage_Pixel,
+                &ConstantBuffer,
+                1, 3);
+
+            ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
+            CmdList.BindShaderResourceViews(
+                EShaderStage::ShaderStage_Pixel,
+                ShaderResourceViews,
+                7, 5);
+
+            SamplerState* SamplerState = Command.Material->GetMaterialSampler();
+            CmdList.BindSamplerStates(
+                EShaderStage::ShaderStage_Pixel,
+                &SamplerState,
+                1, 0);
+
+            TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
+            TransformPerObject.TransformInv    = Command.CurrentActor->GetTransform().GetMatrixInverse();
+
+            CmdList.Bind32BitShaderConstants(
+                EShaderStage::ShaderStage_Vertex,
+                &TransformPerObject, 32);
+
+            CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+        }
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End ForwardPass");
+
+    // Draw DebugBoxes
+    if (GlobalDrawAABBs)
+    {
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin DebugPass");
+
+        TRACE_SCOPE("DebugPass");
+
+        CmdList.BindGraphicsPipelineState(DebugBoxPSO.Get());
+
+        CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_LineList);
+
+        CmdList.BindConstantBuffers(
+            EShaderStage::ShaderStage_Vertex,
+            &CameraBuffer,
+            1, 0);
+
+        CmdList.BindVertexBuffers(&AABBVertexBuffer, 1, 0);
+        CmdList.BindIndexBuffer(AABBIndexBuffer.Get());
+
+        for (const MeshDrawCommand& Command : DeferredVisibleCommands)
+        {
+            AABB& Box = Command.Mesh->BoundingBox;
+            XMFLOAT3 Scale        = XMFLOAT3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
+            XMFLOAT3 Position    = Box.GetCenter();
+
+            XMMATRIX XmTranslation    = XMMatrixTranslation(Position.x, Position.y, Position.z);
+            XMMATRIX XmScale        = XMMatrixScaling(Scale.x, Scale.y, Scale.z);
+
+            XMFLOAT4X4 Transform = Command.CurrentActor->GetTransform().GetMatrix();
+            XMMATRIX XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
+            XMStoreFloat4x4(&Transform, XMMatrixMultiplyTranspose(XMMatrixMultiply(XmScale, XmTranslation), XmTransform));
+
+            CmdList.Bind32BitShaderConstants(
+                EShaderStage::ShaderStage_Vertex, 
+                &Transform, 16);
+
+            CmdList.DrawIndexedInstanced(24, 1, 0, 0, 0);
+        }
+
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End DebugPass");
+    }
+
+    // Render UI
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin UI Render");
+
+    {
+        TRACE_SCOPE("Render UI");
+
+        if (GlobalDrawTextureDebugger.GetBool())
+        {
+            DebugTextures.EmplaceBack(
+                GBufferSRVs[GBUFFER_DEPTH_INDEX],
+                GBuffer[GBUFFER_DEPTH_INDEX],
+                EResourceState::ResourceState_DepthWrite,
+                EResourceState::ResourceState_PixelShaderResource);
+
+            DebugUI::DrawUI([]()
+            {
+                constexpr Float InvAspectRatio    = 16.0f / 9.0f;
+                constexpr Float AspectRatio        = 9.0f / 16.0f;
+
+                const UInt32 WindowWidth    = GlobalMainWindow->GetWidth();
+                const UInt32 WindowHeight    = GlobalMainWindow->GetHeight();
+                const Float Width            = Math::Max(WindowWidth * 0.6f, 400.0f);
+                const Float Height            = WindowHeight * 0.75f;
+
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
+
+                ImGui::SetNextWindowPos(
+                    ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f),
+                    ImGuiCond_Appearing,
+                    ImVec2(0.5f, 0.0f));
+
+                ImGui::SetNextWindowSize(
+                    ImVec2(Width, Height),
+                    ImGuiCond_Appearing);
+                
+                const ImGuiWindowFlags Flags =
+                    ImGuiWindowFlags_NoResize            |
+                    ImGuiWindowFlags_NoScrollbar        |
+                    ImGuiWindowFlags_NoCollapse            |
+                    ImGuiWindowFlags_NoFocusOnAppearing |
+                    ImGuiWindowFlags_NoSavedSettings;
+
+                Bool TempDrawTextureDebugger = GlobalDrawTextureDebugger.GetBool();
+                if (ImGui::Begin(
+                    "FrameBuffer Debugger",
+                    &TempDrawTextureDebugger,
+                    Flags))
+                {
+                    ImGui::BeginChild(
+                        "##ScrollBox",
+                        ImVec2(Width * 0.985f, Height * 0.125f),
+                        true,
+                        ImGuiWindowFlags_HorizontalScrollbar);
+
+                    const Int32 Count = GlobalRenderer->DebugTextures.Size();
+                    static Int32 SelectedImage = -1;
+                    if (SelectedImage >= Count)
+                    {
+                        SelectedImage = -1;
+                    }
+
+                    for (Int32 i = 0; i < Count; i++)
+                    {
+                        ImGui::PushID(i);
+
+                        constexpr Float MenuImageSize = 96.0f;
+                        Int32    FramePadding = 2;
+                        ImVec2    Size = ImVec2(MenuImageSize * InvAspectRatio, MenuImageSize);
+                        ImVec2    Uv0 = ImVec2(0.0f, 0.0f);
+                        ImVec2    Uv1 = ImVec2(1.0f, 1.0f);
+                        ImVec4    BgCol = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+                        ImVec4    TintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+                        ImGuiImage* CurrImage = &GlobalRenderer->DebugTextures[i];
+                        if (ImGui::ImageButton(CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol))
+                        {
+                            SelectedImage = i;
+                        }
+
+                        ImGui::PopID();
+
+                        if (i != Count - 1)
+                        {
+                            ImGui::SameLine();
+                        }
+                    }
+
+                    ImGui::EndChild();
+
+                    const Float ImageWidth    = Width * 0.985f;
+                    const Float ImageHeight = ImageWidth * AspectRatio;
+                    const Int32 ImageIndex    = SelectedImage < 0 ? 0 : SelectedImage;
+                    ImGuiImage* CurrImage    = &GlobalRenderer->DebugTextures[ImageIndex];
+                    ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
+
+                    ImGui::PopStyleColor();
+                    ImGui::PopStyleColor();
+                }
+
+                ImGui::End();
+
+                GlobalDrawTextureDebugger.SetBool(TempDrawTextureDebugger);
+            });
+        }
+        else
+        {
+            CmdList.TransitionTexture(
+                GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
+                EResourceState::ResourceState_DepthWrite, 
+                EResourceState::ResourceState_PixelShaderResource);
+        }
+
+        if (GlobalDrawRendererInfo.GetBool())
+        {
+            DebugUI::DrawUI([]()
+            {
+                const UInt32 WindowWidth    = GlobalMainWindow->GetWidth();
+                const UInt32 WindowHeight    = GlobalMainWindow->GetHeight();
+                const Float Width            = 300.0f;
+                const Float Height            = WindowHeight * 0.1f;
+
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
+
+                ImGui::SetNextWindowPos(
+                    ImVec2(Float(WindowWidth), 10.0f),
+                    ImGuiCond_Always,
+                    ImVec2(1.0f, 0.0f));
+
+                ImGui::SetNextWindowSize(
+                    ImVec2(Width, Height),
+                    ImGuiCond_Always);
+
+                ImGui::Begin(
+                    "Renderer Window",
+                    nullptr,
+                    ImGuiWindowFlags_NoMove                |
+                    ImGuiWindowFlags_NoDecoration        |
+                    ImGuiWindowFlags_NoFocusOnAppearing |
+                    ImGuiWindowFlags_NoSavedSettings);
+
+                ImGui::Text("Renderer Status:");
+                ImGui::Separator();
+
+                ImGui::Columns(2, nullptr, false);
+                ImGui::SetColumnWidth(0, 100.0f);
+
+                const std::string AdapterName = RenderLayer::GetAdapterName();
+                ImGui::Text("Adapter: ");
+                ImGui::NextColumn();
+
+                ImGui::Text("%s", AdapterName.c_str());
+                ImGui::NextColumn();
+
+                ImGui::Text("DrawCalls: ");
+                ImGui::NextColumn();
+
+                ImGui::Text("%d", GlobalRenderer->LastFrameNumDrawCalls);
+                ImGui::NextColumn();
+
+                ImGui::Text("DispatchCalls: ");
+                ImGui::NextColumn();
+
+                ImGui::Text("%d", GlobalRenderer->LastFrameNumDispatchCalls);
+                ImGui::NextColumn();
+
+                ImGui::Text("Command Count: ");
+                ImGui::NextColumn();
+
+                ImGui::Text("%d", GlobalRenderer->LastFrameNumCommands);
+
+                ImGui::Columns(1);
+
+                ImGui::PopStyleColor();
+                ImGui::PopStyleColor();
+                ImGui::End();
+            });
+        }
+
+        DebugUI::Render(CmdList);
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End UI Render");
+
+    // Finalize Commandlist
+    CmdList.TransitionTexture(
+        BackBuffer, 
+        EResourceState::ResourceState_RenderTarget, 
+        EResourceState::ResourceState_Present);
+    
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--END FRAME--");
+
+    CmdList.End();
+
+    LastFrameNumDrawCalls        = CmdList.GetNumDrawCalls();
+    LastFrameNumDispatchCalls    = CmdList.GetNumDispatchCalls();
+    LastFrameNumCommands        = CmdList.GetNumCommands();
+
+    {
+        TRACE_SCOPE("ExecuteCommandList");
+        GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    }
+
+    {
+        TRACE_SCOPE("Present");
+        MainWindowViewport->Present(GlobalVSyncEnabled);
+    }
 }
 
 void Renderer::TraceRays(Texture2D* BackBuffer, CommandList& InCmdList)
 {
-	TRACE_SCOPE("TraceRays");
+    TRACE_SCOPE("TraceRays");
 
-	InCmdList.TransitionTexture(
-		ReflectionTexture.Get(), 
-		EResourceState::ResourceState_CopySource, 
-		EResourceState::ResourceState_UnorderedAccess);
+    InCmdList.TransitionTexture(
+        ReflectionTexture.Get(), 
+        EResourceState::ResourceState_CopySource, 
+        EResourceState::ResourceState_UnorderedAccess);
 
-	UNREFERENCED_VARIABLE(BackBuffer);
+    UNREFERENCED_VARIABLE(BackBuffer);
 
-	//D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-	//raytraceDesc.Width	= static_cast<UInt32>(ReflectionTexture->GetDesc().Width);
-	//raytraceDesc.Height = static_cast<UInt32>(ReflectionTexture->GetDesc().Height);
-	//raytraceDesc.Depth	= 1;
+    //D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
+    //raytraceDesc.Width    = static_cast<UInt32>(ReflectionTexture->GetDesc().Width);
+    //raytraceDesc.Height = static_cast<UInt32>(ReflectionTexture->GetDesc().Height);
+    //raytraceDesc.Depth    = 1;
 
-	// Set shader tables
-	InCmdList.BindRayTracingScene(RayTracingScene.Get());
+    // Set shader tables
+    InCmdList.BindRayTracingScene(RayTracingScene.Get());
 
-	// Bind the empty root signature
-	// InCommandList->SetComputeRootSignature(GlobalRootSignature->GetRootSignature());
-	// InCommandList->SetComputeRootDescriptorTable(GlobalDescriptorTable->GetGPUTableStartHandle(), 0);
+    // Bind the empty root signature
+    // InCommandList->SetComputeRootSignature(GlobalRootSignature->GetRootSignature());
+    // InCommandList->SetComputeRootDescriptorTable(GlobalDescriptorTable->GetGPUTableStartHandle(), 0);
 
-	// Dispatch
-	InCmdList.BindRayTracingPipelineState(RaytracingPSO.Get());
+    // Dispatch
+    InCmdList.BindRayTracingPipelineState(RaytracingPSO.Get());
 
-	// TODO: Input width and height
-	InCmdList.DispatchRays(0, 0, 1);
+    // TODO: Input width and height
+    InCmdList.DispatchRays(0, 0, 1);
 
-	// Copy the results to the back-buffer
-	InCmdList.TransitionTexture(
-		ReflectionTexture.Get(), 
-		EResourceState::ResourceState_UnorderedAccess, 
-		EResourceState::ResourceState_CopySource);
+    // Copy the results to the back-buffer
+    InCmdList.TransitionTexture(
+        ReflectionTexture.Get(), 
+        EResourceState::ResourceState_UnorderedAccess, 
+        EResourceState::ResourceState_CopySource);
 }
 
 void Renderer::SetLightSettings(const LightSettings& InLightSettings)
 {
-	CurrentLightSettings = InLightSettings;
+    CurrentLightSettings = InLightSettings;
 
-	GlobalCmdListExecutor.WaitForGPU();
+    GlobalCmdListExecutor.WaitForGPU();
 
-	CreateShadowMaps();
+    CreateShadowMaps();
 
 #if ENABLE_VSM
-	CmdList.TransitionTexture(
-		CurrentRenderer->VSMDirLightShadowMaps.Get(), 
-		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(
+        CurrentRenderer->VSMDirLightShadowMaps.Get(), 
+        EResourceState::ResourceState_Common, 
+        EResourceState::ResourceState_PixelShaderResource);
 #endif
-	CmdList.TransitionTexture(
-		DirLightShadowMaps.Get(), 
-		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_PixelShaderResource);
-		
-	CmdList.TransitionTexture(
-		PointLightShadowMaps.Get(),
-		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(
+        DirLightShadowMaps.Get(), 
+        EResourceState::ResourceState_Common, 
+        EResourceState::ResourceState_PixelShaderResource);
+        
+    CmdList.TransitionTexture(
+        PointLightShadowMaps.Get(),
+        EResourceState::ResourceState_Common, 
+        EResourceState::ResourceState_PixelShaderResource);
 
-	GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
 }
 
 Bool Renderer::Init()
 {
-	INIT_CONSOLE_VARIABLE("DrawTextureDebugger", GlobalDrawTextureDebugger);
-	GlobalDrawTextureDebugger.SetBool(false);
+    INIT_CONSOLE_VARIABLE("DrawTextureDebugger", GlobalDrawTextureDebugger);
+    GlobalDrawTextureDebugger.SetBool(false);
 
-	INIT_CONSOLE_VARIABLE("DrawRendererInfo", GlobalDrawRendererInfo);
-	GlobalDrawRendererInfo.SetBool(false);
+    INIT_CONSOLE_VARIABLE("DrawRendererInfo", GlobalDrawRendererInfo);
+    GlobalDrawRendererInfo.SetBool(false);
 
-	INIT_CONSOLE_VARIABLE("EnableSSAO", GlobalEnableSSAO);
-	GlobalEnableSSAO.SetBool(true);
+    INIT_CONSOLE_VARIABLE("EnableSSAO", GlobalEnableSSAO);
+    GlobalEnableSSAO.SetBool(true);
 
-	INIT_CONSOLE_VARIABLE("EnableFXAA", GlobalEnableFXAA);
-	GlobalEnableFXAA.SetBool(true);
+    INIT_CONSOLE_VARIABLE("EnableFXAA", GlobalEnableFXAA);
+    GlobalEnableFXAA.SetBool(true);
 
-	INIT_CONSOLE_VARIABLE("SSAOKernelSize", GlobalSSAOKernelSize);
-	GlobalSSAOKernelSize.SetInt32(16);
+    INIT_CONSOLE_VARIABLE("SSAOKernelSize", GlobalSSAOKernelSize);
+    GlobalSSAOKernelSize.SetInt32(16);
 
-	INIT_CONSOLE_VARIABLE("SSAOBias", GlobalSSAOBias);
-	GlobalSSAOBias.SetFloat(0.03f);
+    INIT_CONSOLE_VARIABLE("SSAOBias", GlobalSSAOBias);
+    GlobalSSAOBias.SetFloat(0.03f);
 
-	INIT_CONSOLE_VARIABLE("SSAORadius", GlobalSSAORadius);
-	GlobalSSAORadius.SetFloat(0.3f);
+    INIT_CONSOLE_VARIABLE("SSAORadius", GlobalSSAORadius);
+    GlobalSSAORadius.SetFloat(0.3f);
 
-	MainWindowViewport = RenderLayer::CreateViewport(
-		GlobalMainWindow,
-		0, 0,
-		EFormat::Format_R8G8B8A8_Unorm,
-		EFormat::Format_Unknown);
-	if (!MainWindowViewport)
-	{
-		return false;
-	}
-	else
-	{
-		MainWindowViewport->SetName("Main Window Viewport");
-	}
+    MainWindowViewport = RenderLayer::CreateViewport(
+        GlobalMainWindow,
+        0, 0,
+        EFormat::Format_R8G8B8A8_Unorm,
+        EFormat::Format_Unknown);
+    if (!MainWindowViewport)
+    {
+        return false;
+    }
+    else
+    {
+        MainWindowViewport->SetName("Main Window Viewport");
+    }
 
-	Resources.CameraBuffer = RenderLayer::CreateConstantBuffer<CameraBufferDesc>(
-		nullptr, 
-		BufferUsage_Default,
-		EResourceState::ResourceState_Common);
-	if (!Resources.CameraBuffer)
-	{
-		LOG_ERROR("[Renderer]: Failed to create camerabuffer");
-		return false;
-	}
-	else
-	{
-		Resources.CameraBuffer->SetName("CameraBuffer");
-	}
+    Resources.CameraBuffer = RenderLayer::CreateConstantBuffer<CameraBufferDesc>(
+        nullptr, 
+        BufferUsage_Default,
+        EResourceState::ResourceState_Common);
+    if (!Resources.CameraBuffer)
+    {
+        LOG_ERROR("[Renderer]: Failed to create camerabuffer");
+        return false;
+    }
+    else
+    {
+        Resources.CameraBuffer->SetName("CameraBuffer");
+    }
 
-	if (!SkyboxRenderPass.Init(Resources))
-	{
-		return false;
-	}
+    if (!SkyboxRenderPass.Init(Resources))
+    {
+        return false;
+    }
 
-	if (!LightProbeRenderPass.Init(Resources))
-	{
-		return false;
-	}
+    if (!LightProbeRenderPass.Init(Resources))
+    {
+        return false;
+    }
 
-	CmdList.Begin();
+    CmdList.Begin();
 
-	LightProbeRenderPass.Render(CmdList, Resources);
+    LightProbeRenderPass.Render(CmdList, Resources);
 
-	CmdList.End();
-	GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    CmdList.End();
+    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
 
-	// Init standard inputlayout
-	InputLayoutStateCreateInfo InputLayout =
-	{
-		{ "POSITION",	0, EFormat::Format_R32G32B32_Float,	0, 0,	EInputClassification::InputClassification_Vertex, 0 },
-		{ "NORMAL",		0, EFormat::Format_R32G32B32_Float,	0, 12,	EInputClassification::InputClassification_Vertex, 0 },
-		{ "TANGENT",	0, EFormat::Format_R32G32B32_Float,	0, 24,	EInputClassification::InputClassification_Vertex, 0 },
-		{ "TEXCOORD",	0, EFormat::Format_R32G32_Float,	0, 36,	EInputClassification::InputClassification_Vertex, 0 },
-	};
+    if (!PointLightShadowRenderPass.Init(Resources))
+    {
+        return false;
+    }
 
-	Resources.StdInputLayout = RenderLayer::CreateInputLayout(InputLayout);
-	if (!Resources.StdInputLayout)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		Resources.StdInputLayout->SetName("Standard InputLayoutState");
-	}
+    // Init standard inputlayout
+    InputLayoutStateCreateInfo InputLayout =
+    {
+        { "POSITION", 0, EFormat::Format_R32G32B32_Float,    0, 0,    EInputClassification::InputClassification_Vertex, 0 },
+        { "NORMAL",   0, EFormat::Format_R32G32B32_Float,    0, 12,    EInputClassification::InputClassification_Vertex, 0 },
+        { "TANGENT",  0, EFormat::Format_R32G32B32_Float,    0, 24,    EInputClassification::InputClassification_Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::Format_R32G32_Float,    0, 36,    EInputClassification::InputClassification_Vertex, 0 },
+    };
 
-	// Init Deferred Rendering
-	if (!InitLightBuffers())
-	{
-		return false;
-	}
+    Resources.StdInputLayout = RenderLayer::CreateInputLayout(InputLayout);
+    if (!Resources.StdInputLayout)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        Resources.StdInputLayout->SetName("Standard InputLayoutState");
+    }
 
-	if (!InitShadowMapPass())
-	{
-		return false;
-	}
+    {
+        SamplerStateCreateInfo CreateInfo;
+        CreateInfo.AddressU = ESamplerMode::SamplerMode_Wrap;
+        CreateInfo.AddressV = ESamplerMode::SamplerMode_Wrap;
+        CreateInfo.AddressW = ESamplerMode::SamplerMode_Wrap;
+        CreateInfo.Filter   = ESamplerFilter::SamplerFilter_MinMagMipPoint;
 
-	CmdList.Begin();
-	
-	CmdList.TransitionBuffer(
-		PointLightBuffer.Get(), 
-		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_VertexAndConstantBuffer);
-	
-	CmdList.TransitionBuffer(
-		DirectionalLightBuffer.Get(), 
-		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_VertexAndConstantBuffer);
-	
-	CmdList.TransitionBuffer(
-		PerShadowMapBuffer.Get(),
-		EResourceState::ResourceState_Common,
-		EResourceState::ResourceState_VertexAndConstantBuffer);
+        Resources.ShadowMapSampler = RenderLayer::CreateSamplerState(CreateInfo);
+        if (!Resources.ShadowMapSampler)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            Resources.ShadowMapSampler->SetName("ShadowMap Sampler");
+        }
+    }
 
-	CmdList.TransitionTexture(
-		PointLightShadowMaps.Get(), 
-		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_PixelShaderResource);
+    {
+        SamplerStateCreateInfo CreateInfo;
+        CreateInfo.AddressU       = ESamplerMode::SamplerMode_Wrap;
+        CreateInfo.AddressV       = ESamplerMode::SamplerMode_Wrap;
+        CreateInfo.AddressW       = ESamplerMode::SamplerMode_Wrap;
+        CreateInfo.Filter         = ESamplerFilter::SamplerFilter_Comparison_MinMagMipLinear;
+        CreateInfo.ComparisonFunc = EComparisonFunc::ComparisonFunc_LessEqual;
 
-	CmdList.TransitionTexture(
-		DirLightShadowMaps.Get(), 
-		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_PixelShaderResource);
+        Resources.ShadowMapCompSampler = RenderLayer::CreateSamplerState(CreateInfo);
+        if (!Resources.ShadowMapCompSampler)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            Resources.ShadowMapCompSampler->SetName("ShadowMap Comparison Sampler");
+        }
+    }
 
-	if (VSMDirLightShadowMaps)
-	{
-		CmdList.TransitionTexture(
-			VSMDirLightShadowMaps.Get(), 
-			EResourceState::ResourceState_Common, 
-			EResourceState::ResourceState_PixelShaderResource);
-	}
-	
-	CmdList.End();
-	GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    if (!InitShadowMapPass())
+    {
+        return false;
+    }
 
-	if (!InitGBuffer())
-	{
-		return false;
-	}
+    CmdList.Begin();
+    
+    CmdList.TransitionBuffer(
+        PointLightBuffer.Get(), 
+        EResourceState::ResourceState_Common, 
+        EResourceState::ResourceState_VertexAndConstantBuffer);
+    
+    CmdList.TransitionBuffer(
+        DirectionalLightBuffer.Get(), 
+        EResourceState::ResourceState_Common, 
+        EResourceState::ResourceState_VertexAndConstantBuffer);
+    
+    CmdList.TransitionBuffer(
+        PerShadowMapBuffer.Get(),
+        EResourceState::ResourceState_Common,
+        EResourceState::ResourceState_VertexAndConstantBuffer);
 
-	if (!InitPrePass())
-	{
-		return false;
-	}
-	
-	if (!InitDeferred())
-	{
-		return false;
-	}
+    CmdList.TransitionTexture(
+        PointLightShadowMaps.Get(), 
+        EResourceState::ResourceState_Common, 
+        EResourceState::ResourceState_PixelShaderResource);
 
-	if (!InitIntegrationLUT())
-	{
-		return false;
-	}
+    CmdList.TransitionTexture(
+        DirLightShadowMaps.Get(), 
+        EResourceState::ResourceState_Common, 
+        EResourceState::ResourceState_PixelShaderResource);
 
-	if (!InitDebugStates())
-	{
-		return false;
-	}
+    if (VSMDirLightShadowMaps)
+    {
+        CmdList.TransitionTexture(
+            VSMDirLightShadowMaps.Get(), 
+            EResourceState::ResourceState_Common, 
+            EResourceState::ResourceState_PixelShaderResource);
+    }
+    
+    CmdList.End();
+    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
 
-	if (!InitAA())
-	{
-		return false;
-	}
+    if (!InitGBuffer())
+    {
+        return false;
+    }
 
-	if (!InitForwardPass())
-	{
-		return false;
-	}
+    if (!InitPrePass())
+    {
+        return false;
+    }
+    
+    if (!InitDeferred())
+    {
+        return false;
+    }
 
-	if (!InitSSAO())
-	{
-		return false;
-	}
+    if (!InitIntegrationLUT())
+    {
+        return false;
+    }
 
-	// Init RayTracing if supported
-	if (RenderLayer::IsRayTracingSupported() && GlobalRayTracingEnabled)
-	{
-		if (!InitRayTracing())
-		{
-			return false;
-		}
-	}
+    if (!InitDebugStates())
+    {
+        return false;
+    }
 
-	auto Callback = [](const Event& Event)->Bool
-	{
-		if (!IsEventOfType<WindowResizeEvent>(Event))
-		{
-			return false;
-		}
+    if (!InitAA())
+    {
+        return false;
+    }
 
-		const WindowResizeEvent& ResizeEvent = CastEvent<WindowResizeEvent>(Event);
-		const UInt32 Width = ResizeEvent.Width;
-		const UInt32 Height = ResizeEvent.Height;
+    if (!InitForwardPass())
+    {
+        return false;
+    }
 
-		GlobalCmdListExecutor.WaitForGPU();
+    if (!InitSSAO())
+    {
+        return false;
+    }
 
-		GlobalRenderer->MainWindowViewport->Resize(Width, Height);
+    // Init RayTracing if supported
+    if (RenderLayer::IsRayTracingSupported() && GlobalRayTracingEnabled)
+    {
+        if (!InitRayTracing())
+        {
+            return false;
+        }
+    }
 
-		GlobalRenderer->InitGBuffer();
-		GlobalRenderer->InitSSAO_RenderTarget();
+    auto Callback = [](const Event& Event)->Bool
+    {
+        if (!IsEventOfType<WindowResizeEvent>(Event))
+        {
+            return false;
+        }
 
-		return true;
-	};
+        const WindowResizeEvent& ResizeEvent = CastEvent<WindowResizeEvent>(Event);
+        const UInt32 Width = ResizeEvent.Width;
+        const UInt32 Height = ResizeEvent.Height;
 
-	// Register EventFunc
-	GlobalEventDispatcher->RegisterEventHandler(Callback, EEventCategory::EventCategory_Window);
+        GlobalCmdListExecutor.WaitForGPU();
 
-	return true;
+        GlobalRenderer->MainWindowViewport->Resize(Width, Height);
+
+        GlobalRenderer->InitGBuffer();
+        GlobalRenderer->InitSSAO_RenderTarget();
+
+        return true;
+    };
+
+    // Register EventFunc
+    GlobalEventDispatcher->RegisterEventHandler(Callback, EEventCategory::EventCategory_Window);
+
+    return true;
 }
 
 Bool Renderer::InitRayTracing()
 {
-	// Create RootSignatures
-	//TUniquePtr<D3D12RootSignature> RayGenLocalRoot;
-	//{
-	//	D3D12_DESCRIPTOR_RANGE Ranges[1] = {};
-	//	Ranges[0].BaseShaderRegister				= 0;
-	//	Ranges[0].NumDescriptors					= 1;
-	//	Ranges[0].RegisterSpace						= 0;
-	//	Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-	//	Ranges[0].OffsetInDescriptorsFromTableStart	= 0;
+    // Create RootSignatures
+    //TUniquePtr<D3D12RootSignature> RayGenLocalRoot;
+    //{
+    //    D3D12_DESCRIPTOR_RANGE Ranges[1] = {};
+    //    Ranges[0].BaseShaderRegister                = 0;
+    //    Ranges[0].NumDescriptors                    = 1;
+    //    Ranges[0].RegisterSpace                        = 0;
+    //    Ranges[0].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    //    Ranges[0].OffsetInDescriptorsFromTableStart    = 0;
 
-	//	D3D12_ROOT_PARAMETER RootParams = { };
-	//	RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	RootParams.ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
-	//	RootParams.DescriptorTable.NumDescriptorRanges	= 1;
-	//	RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
+    //    D3D12_ROOT_PARAMETER RootParams = { };
+    //    RootParams.ParameterType                        = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    //    RootParams.ShaderVisibility                        = D3D12_SHADER_VISIBILITY_ALL;
+    //    RootParams.DescriptorTable.NumDescriptorRanges    = 1;
+    //    RootParams.DescriptorTable.pDescriptorRanges    = Ranges;
 
-	//	D3D12_ROOT_SIGNATURE_DESC RayGenLocalRootDesc = {};
-	//	RayGenLocalRootDesc.NumParameters	= 1;
-	//	RayGenLocalRootDesc.pParameters		= &RootParams;
-	//	RayGenLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+    //    D3D12_ROOT_SIGNATURE_DESC RayGenLocalRootDesc = {};
+    //    RayGenLocalRootDesc.NumParameters    = 1;
+    //    RayGenLocalRootDesc.pParameters        = &RootParams;
+    //    RayGenLocalRootDesc.Flags            = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
-	//	RayGenLocalRoot = RenderLayer::Get().CreateRootSignature(RayGenLocalRootDesc);
-	//	if (RayGenLocalRoot)
-	//	{
-	//		RayGenLocalRoot->SetDebugName("RayGen Local RootSignature");
-	//	}
-	//	else
-	//	{
-	//		return false;
-	//	}
-	//}
+    //    RayGenLocalRoot = RenderLayer::Get().CreateRootSignature(RayGenLocalRootDesc);
+    //    if (RayGenLocalRoot)
+    //    {
+    //        RayGenLocalRoot->SetDebugName("RayGen Local RootSignature");
+    //    }
+    //    else
+    //    {
+    //        return false;
+    //    }
+    //}
 
-	//TUniquePtr<D3D12RootSignature> HitLocalRoot;
-	//{
-	//	constexpr UInt32 NumRanges0 = 7;
-	//	D3D12_DESCRIPTOR_RANGE Ranges0[NumRanges0] = {};
-	//	// Albedo
-	//	Ranges0[0].BaseShaderRegister					= 0;
-	//	Ranges0[0].NumDescriptors						= 1;
-	//	Ranges0[0].RegisterSpace						= 1;
-	//	Ranges0[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges0[0].OffsetInDescriptorsFromTableStart	= 0;
+    //TUniquePtr<D3D12RootSignature> HitLocalRoot;
+    //{
+    //    constexpr UInt32 NumRanges0 = 7;
+    //    D3D12_DESCRIPTOR_RANGE Ranges0[NumRanges0] = {};
+    //    // Albedo
+    //    Ranges0[0].BaseShaderRegister                    = 0;
+    //    Ranges0[0].NumDescriptors                        = 1;
+    //    Ranges0[0].RegisterSpace                        = 1;
+    //    Ranges0[0].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges0[0].OffsetInDescriptorsFromTableStart    = 0;
 
-	//	// Normal
-	//	Ranges0[1].BaseShaderRegister					= 1;
-	//	Ranges0[1].NumDescriptors						= 1;
-	//	Ranges0[1].RegisterSpace						= 1;
-	//	Ranges0[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges0[1].OffsetInDescriptorsFromTableStart	= 1;
+    //    // Normal
+    //    Ranges0[1].BaseShaderRegister                    = 1;
+    //    Ranges0[1].NumDescriptors                        = 1;
+    //    Ranges0[1].RegisterSpace                        = 1;
+    //    Ranges0[1].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges0[1].OffsetInDescriptorsFromTableStart    = 1;
 
-	//	// Roughness
-	//	Ranges0[2].BaseShaderRegister					= 2;
-	//	Ranges0[2].NumDescriptors						= 1;
-	//	Ranges0[2].RegisterSpace						= 1;
-	//	Ranges0[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges0[2].OffsetInDescriptorsFromTableStart	= 2;
+    //    // Roughness
+    //    Ranges0[2].BaseShaderRegister                    = 2;
+    //    Ranges0[2].NumDescriptors                        = 1;
+    //    Ranges0[2].RegisterSpace                        = 1;
+    //    Ranges0[2].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges0[2].OffsetInDescriptorsFromTableStart    = 2;
 
-	//	// Height
-	//	Ranges0[3].BaseShaderRegister					= 3;
-	//	Ranges0[3].NumDescriptors						= 1;
-	//	Ranges0[3].RegisterSpace						= 1;
-	//	Ranges0[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges0[3].OffsetInDescriptorsFromTableStart	= 3;
+    //    // Height
+    //    Ranges0[3].BaseShaderRegister                    = 3;
+    //    Ranges0[3].NumDescriptors                        = 1;
+    //    Ranges0[3].RegisterSpace                        = 1;
+    //    Ranges0[3].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges0[3].OffsetInDescriptorsFromTableStart    = 3;
 
-	//	// Metallic
-	//	Ranges0[4].BaseShaderRegister					= 4;
-	//	Ranges0[4].NumDescriptors						= 1;
-	//	Ranges0[4].RegisterSpace						= 1;
-	//	Ranges0[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges0[4].OffsetInDescriptorsFromTableStart	= 4;
+    //    // Metallic
+    //    Ranges0[4].BaseShaderRegister                    = 4;
+    //    Ranges0[4].NumDescriptors                        = 1;
+    //    Ranges0[4].RegisterSpace                        = 1;
+    //    Ranges0[4].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges0[4].OffsetInDescriptorsFromTableStart    = 4;
 
-	//	// AO
-	//	Ranges0[5].BaseShaderRegister					= 5;
-	//	Ranges0[5].NumDescriptors						= 1;
-	//	Ranges0[5].RegisterSpace						= 1;
-	//	Ranges0[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges0[5].OffsetInDescriptorsFromTableStart	= 5;
+    //    // AO
+    //    Ranges0[5].BaseShaderRegister                    = 5;
+    //    Ranges0[5].NumDescriptors                        = 1;
+    //    Ranges0[5].RegisterSpace                        = 1;
+    //    Ranges0[5].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges0[5].OffsetInDescriptorsFromTableStart    = 5;
 
-	//	// MaterialBuffer
-	//	Ranges0[6].BaseShaderRegister					= 0;
-	//	Ranges0[6].NumDescriptors						= 1;
-	//	Ranges0[6].RegisterSpace						= 1;
-	//	Ranges0[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	Ranges0[6].OffsetInDescriptorsFromTableStart	= 6;
+    //    // MaterialBuffer
+    //    Ranges0[6].BaseShaderRegister                    = 0;
+    //    Ranges0[6].NumDescriptors                        = 1;
+    //    Ranges0[6].RegisterSpace                        = 1;
+    //    Ranges0[6].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+    //    Ranges0[6].OffsetInDescriptorsFromTableStart    = 6;
 
-	//	constexpr UInt32 NumRanges1 = 2;
-	//	D3D12_DESCRIPTOR_RANGE Ranges1[NumRanges1] = {};
-	//	// VertexBuffer
-	//	Ranges1[0].BaseShaderRegister					= 6;
-	//	Ranges1[0].NumDescriptors						= 1;
-	//	Ranges1[0].RegisterSpace						= 1;
-	//	Ranges1[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges1[0].OffsetInDescriptorsFromTableStart	= 0;
+    //    constexpr UInt32 NumRanges1 = 2;
+    //    D3D12_DESCRIPTOR_RANGE Ranges1[NumRanges1] = {};
+    //    // VertexBuffer
+    //    Ranges1[0].BaseShaderRegister                    = 6;
+    //    Ranges1[0].NumDescriptors                        = 1;
+    //    Ranges1[0].RegisterSpace                        = 1;
+    //    Ranges1[0].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges1[0].OffsetInDescriptorsFromTableStart    = 0;
 
-	//	// IndexBuffer
-	//	Ranges1[1].BaseShaderRegister					= 7;
-	//	Ranges1[1].NumDescriptors						= 1;
-	//	Ranges1[1].RegisterSpace						= 1;
-	//	Ranges1[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges1[1].OffsetInDescriptorsFromTableStart	= 1;
+    //    // IndexBuffer
+    //    Ranges1[1].BaseShaderRegister                    = 7;
+    //    Ranges1[1].NumDescriptors                        = 1;
+    //    Ranges1[1].RegisterSpace                        = 1;
+    //    Ranges1[1].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges1[1].OffsetInDescriptorsFromTableStart    = 1;
 
-	//	const UInt32 NumRootParams = 2;
-	//	D3D12_ROOT_PARAMETER RootParams[NumRootParams];
-	//	RootParams[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	RootParams[0].DescriptorTable.NumDescriptorRanges	= NumRanges0;
-	//	RootParams[0].DescriptorTable.pDescriptorRanges		= Ranges0;
-	//	RootParams[0].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
+    //    const UInt32 NumRootParams = 2;
+    //    D3D12_ROOT_PARAMETER RootParams[NumRootParams];
+    //    RootParams[0].ParameterType                            = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    //    RootParams[0].DescriptorTable.NumDescriptorRanges    = NumRanges0;
+    //    RootParams[0].DescriptorTable.pDescriptorRanges        = Ranges0;
+    //    RootParams[0].ShaderVisibility                        = D3D12_SHADER_VISIBILITY_ALL;
 
-	//	RootParams[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	RootParams[1].DescriptorTable.NumDescriptorRanges	= NumRanges1;
-	//	RootParams[1].DescriptorTable.pDescriptorRanges		= Ranges1;
-	//	RootParams[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
+    //    RootParams[1].ParameterType                            = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    //    RootParams[1].DescriptorTable.NumDescriptorRanges    = NumRanges1;
+    //    RootParams[1].DescriptorTable.pDescriptorRanges        = Ranges1;
+    //    RootParams[1].ShaderVisibility                        = D3D12_SHADER_VISIBILITY_ALL;
 
-	//	D3D12_ROOT_SIGNATURE_DESC HitLocalRootDesc = {};
-	//	HitLocalRootDesc.NumParameters	= NumRootParams;
-	//	HitLocalRootDesc.pParameters	= RootParams;
-	//	HitLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+    //    D3D12_ROOT_SIGNATURE_DESC HitLocalRootDesc = {};
+    //    HitLocalRootDesc.NumParameters    = NumRootParams;
+    //    HitLocalRootDesc.pParameters    = RootParams;
+    //    HitLocalRootDesc.Flags            = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
-	//	HitLocalRoot = RenderLayer::Get().CreateRootSignature(HitLocalRootDesc);
-	//	if (HitLocalRoot)
-	//	{
-	//		HitLocalRoot->SetDebugName("Closest Hit Local RootSignature");
-	//	}
-	//	else
-	//	{
-	//		return false;
-	//	}
-	//}
+    //    HitLocalRoot = RenderLayer::Get().CreateRootSignature(HitLocalRootDesc);
+    //    if (HitLocalRoot)
+    //    {
+    //        HitLocalRoot->SetDebugName("Closest Hit Local RootSignature");
+    //    }
+    //    else
+    //    {
+    //        return false;
+    //    }
+    //}
 
-	//TUniquePtr<D3D12RootSignature> MissLocalRoot;
-	//{
-	//	D3D12_ROOT_SIGNATURE_DESC MissLocalRootDesc = {};
-	//	MissLocalRootDesc.NumParameters	= 0;
-	//	MissLocalRootDesc.pParameters	= nullptr;
-	//	MissLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+    //TUniquePtr<D3D12RootSignature> MissLocalRoot;
+    //{
+    //    D3D12_ROOT_SIGNATURE_DESC MissLocalRootDesc = {};
+    //    MissLocalRootDesc.NumParameters    = 0;
+    //    MissLocalRootDesc.pParameters    = nullptr;
+    //    MissLocalRootDesc.Flags            = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
-	//TUniquePtr<D3D12RootSignature> HitLocalRoot;
-	//{
-	//	D3D12_DESCRIPTOR_RANGE Ranges[2] = {};
-	//	// VertexBuffer
-	//	Ranges[0].BaseShaderRegister				= 2;
-	//	Ranges[0].NumDescriptors					= 1;
-	//	Ranges[0].RegisterSpace						= 0;
-	//	Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[0].OffsetInDescriptorsFromTableStart = 0;
+    //TUniquePtr<D3D12RootSignature> HitLocalRoot;
+    //{
+    //    D3D12_DESCRIPTOR_RANGE Ranges[2] = {};
+    //    // VertexBuffer
+    //    Ranges[0].BaseShaderRegister                = 2;
+    //    Ranges[0].NumDescriptors                    = 1;
+    //    Ranges[0].RegisterSpace                        = 0;
+    //    Ranges[0].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[0].OffsetInDescriptorsFromTableStart = 0;
 
-	//	// IndexBuffer
-	//	Ranges[1].BaseShaderRegister				= 3;
-	//	Ranges[1].NumDescriptors					= 1;
-	//	Ranges[1].RegisterSpace						= 0;
-	//	Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[1].OffsetInDescriptorsFromTableStart	= 1;
+    //    // IndexBuffer
+    //    Ranges[1].BaseShaderRegister                = 3;
+    //    Ranges[1].NumDescriptors                    = 1;
+    //    Ranges[1].RegisterSpace                        = 0;
+    //    Ranges[1].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[1].OffsetInDescriptorsFromTableStart    = 1;
 
-	//	D3D12_ROOT_PARAMETER RootParams = { };
-	//	RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	RootParams.DescriptorTable.NumDescriptorRanges	= 2;
-	//	RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
+    //    D3D12_ROOT_PARAMETER RootParams = { };
+    //    RootParams.ParameterType                        = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    //    RootParams.DescriptorTable.NumDescriptorRanges    = 2;
+    //    RootParams.DescriptorTable.pDescriptorRanges    = Ranges;
 
-	//	D3D12_ROOT_SIGNATURE_DESC HitLocalRootDesc = {};
-	//	HitLocalRootDesc.NumParameters	= 1;
-	//	HitLocalRootDesc.pParameters	= &RootParams;
-	//	HitLocalRootDesc.Flags			= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+    //    D3D12_ROOT_SIGNATURE_DESC HitLocalRootDesc = {};
+    //    HitLocalRootDesc.NumParameters    = 1;
+    //    HitLocalRootDesc.pParameters    = &RootParams;
+    //    HitLocalRootDesc.Flags            = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
-	//	HitLocalRoot = RenderLayer::Get().CreateRootSignature(HitLocalRootDesc);
-	//	if (HitLocalRoot)
-	//	{
-	//		HitLocalRoot->SetName("Closest Hit Local RootSignature");
-	//	}
-	//	else
-	//	{
-	//		return false;
-	//	}
-	//}
+    //    HitLocalRoot = RenderLayer::Get().CreateRootSignature(HitLocalRootDesc);
+    //    if (HitLocalRoot)
+    //    {
+    //        HitLocalRoot->SetName("Closest Hit Local RootSignature");
+    //    }
+    //    else
+    //    {
+    //        return false;
+    //    }
+    //}
 
-	// Global RootSignature
-	//{
-	//	constexpr UInt32 NumRanges = 5;
-	//	D3D12_DESCRIPTOR_RANGE Ranges[NumRanges] = {};
-	//	// AccelerationStructure
-	//	Ranges[0].BaseShaderRegister				= 0;
-	//	Ranges[0].NumDescriptors					= 1;
-	//	Ranges[0].RegisterSpace						= 0;
-	//	Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[0].OffsetInDescriptorsFromTableStart	= 0;
+    // Global RootSignature
+    //{
+    //    constexpr UInt32 NumRanges = 5;
+    //    D3D12_DESCRIPTOR_RANGE Ranges[NumRanges] = {};
+    //    // AccelerationStructure
+    //    Ranges[0].BaseShaderRegister                = 0;
+    //    Ranges[0].NumDescriptors                    = 1;
+    //    Ranges[0].RegisterSpace                        = 0;
+    //    Ranges[0].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[0].OffsetInDescriptorsFromTableStart    = 0;
 
-	//	// Camera Buffer
-	//	Ranges[1].BaseShaderRegister				= 0;
-	//	Ranges[1].NumDescriptors					= 1;
-	//	Ranges[1].RegisterSpace						= 0;
-	//	Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	Ranges[1].OffsetInDescriptorsFromTableStart	= 1;
+    //    // Camera Buffer
+    //    Ranges[1].BaseShaderRegister                = 0;
+    //    Ranges[1].NumDescriptors                    = 1;
+    //    Ranges[1].RegisterSpace                        = 0;
+    //    Ranges[1].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+    //    Ranges[1].OffsetInDescriptorsFromTableStart    = 1;
 
-	//	// GBuffer NormalMap
-	//	Ranges[2].BaseShaderRegister				= 6;
-	//	Ranges[2].NumDescriptors					= 1;
-	//	Ranges[2].RegisterSpace						= 0;
-	//	Ranges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[2].OffsetInDescriptorsFromTableStart = 2;
+    //    // GBuffer NormalMap
+    //    Ranges[2].BaseShaderRegister                = 6;
+    //    Ranges[2].NumDescriptors                    = 1;
+    //    Ranges[2].RegisterSpace                        = 0;
+    //    Ranges[2].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[2].OffsetInDescriptorsFromTableStart = 2;
 
-	//	// GBuffer Depth
-	//	Ranges[3].BaseShaderRegister				= 7;
-	//	Ranges[3].NumDescriptors					= 1;
-	//	Ranges[3].RegisterSpace						= 0;
-	//	Ranges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[3].OffsetInDescriptorsFromTableStart = 3;
+    //    // GBuffer Depth
+    //    Ranges[3].BaseShaderRegister                = 7;
+    //    Ranges[3].NumDescriptors                    = 1;
+    //    Ranges[3].RegisterSpace                        = 0;
+    //    Ranges[3].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[3].OffsetInDescriptorsFromTableStart = 3;
 
-	//	// Skybox
-	//	Ranges[4].BaseShaderRegister				= 1;
-	//	Ranges[4].NumDescriptors					= 1;
-	//	Ranges[4].RegisterSpace						= 0;
-	//	Ranges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[4].OffsetInDescriptorsFromTableStart	= 4;
+    //    // Skybox
+    //    Ranges[4].BaseShaderRegister                = 1;
+    //    Ranges[4].NumDescriptors                    = 1;
+    //    Ranges[4].RegisterSpace                        = 0;
+    //    Ranges[4].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[4].OffsetInDescriptorsFromTableStart    = 4;
 
-	//	D3D12_ROOT_PARAMETER RootParams = { };
-	//	RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	RootParams.ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;
-	//	RootParams.DescriptorTable.NumDescriptorRanges	= NumRanges;
-	//	RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
+    //    D3D12_ROOT_PARAMETER RootParams = { };
+    //    RootParams.ParameterType                        = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    //    RootParams.ShaderVisibility                        = D3D12_SHADER_VISIBILITY_ALL;
+    //    RootParams.DescriptorTable.NumDescriptorRanges    = NumRanges;
+    //    RootParams.DescriptorTable.pDescriptorRanges    = Ranges;
 
-	//	D3D12_STATIC_SAMPLER_DESC Samplers[2] = { };
-	//	// Generic Sampler
-	//	Samplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
-	//	Samplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	Samplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	Samplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	Samplers[0].Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	//	Samplers[0].ShaderRegister		= 0;
-	//	Samplers[0].RegisterSpace		= 0;
-	//	Samplers[0].MinLOD				= 0.0f;
-	//	Samplers[0].MaxLOD				= FLT_MAX;
+    //    D3D12_STATIC_SAMPLER_DESC Samplers[2] = { };
+    //    // Generic Sampler
+    //    Samplers[0].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
+    //    Samplers[0].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    //    Samplers[0].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    //    Samplers[0].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    //    Samplers[0].Filter                = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    //    Samplers[0].ShaderRegister        = 0;
+    //    Samplers[0].RegisterSpace        = 0;
+    //    Samplers[0].MinLOD                = 0.0f;
+    //    Samplers[0].MaxLOD                = FLT_MAX;
  //
-	//	// GBuffer Sampler
-	//	Samplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
-	//	Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[1].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
-	//	Samplers[1].ShaderRegister		= 1;
-	//	Samplers[1].RegisterSpace		= 0;
-	//	Samplers[1].MinLOD				= 0.0f;
-	//	Samplers[1].MaxLOD				= FLT_MAX;
+    //    // GBuffer Sampler
+    //    Samplers[1].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
+    //    Samplers[1].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    //    Samplers[1].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    //    Samplers[1].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    //    Samplers[1].Filter                = D3D12_FILTER_MIN_MAG_MIP_POINT;
+    //    Samplers[1].ShaderRegister        = 1;
+    //    Samplers[1].RegisterSpace        = 0;
+    //    Samplers[1].MinLOD                = 0.0f;
+    //    Samplers[1].MaxLOD                = FLT_MAX;
 
-	//	D3D12_ROOT_SIGNATURE_DESC GlobalRootDesc = {};
-	//	GlobalRootDesc.NumStaticSamplers	= 2;
-	//	GlobalRootDesc.pStaticSamplers		= Samplers;
-	//	GlobalRootDesc.NumParameters		= 1;
-	//	GlobalRootDesc.pParameters			= &RootParams;
-	//	GlobalRootDesc.Flags				= D3D12_ROOT_SIGNATURE_FLAG_NONE;
+    //    D3D12_ROOT_SIGNATURE_DESC GlobalRootDesc = {};
+    //    GlobalRootDesc.NumStaticSamplers    = 2;
+    //    GlobalRootDesc.pStaticSamplers        = Samplers;
+    //    GlobalRootDesc.NumParameters        = 1;
+    //    GlobalRootDesc.pParameters            = &RootParams;
+    //    GlobalRootDesc.Flags                = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
-	//	GlobalRootSignature = RenderLayer::Get().CreateRootSignature(GlobalRootDesc);
-	//	if (!GlobalRootSignature)
-	//	{
-	//		return false;
-	//	}
-	//}
+    //    GlobalRootSignature = RenderLayer::Get().CreateRootSignature(GlobalRootDesc);
+    //    if (!GlobalRootSignature)
+    //    {
+    //        return false;
+    //    }
+    //}
 
-	//// Global RootSignature
-	//{
-	//	D3D12_DESCRIPTOR_RANGE Ranges[7] = {};
-	//	// AccelerationStructure
-	//	Ranges[0].BaseShaderRegister				= 0;
-	//	Ranges[0].NumDescriptors					= 1;
-	//	Ranges[0].RegisterSpace						= 0;
-	//	Ranges[0].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[0].OffsetInDescriptorsFromTableStart	= 0;
+    //// Global RootSignature
+    //{
+    //    D3D12_DESCRIPTOR_RANGE Ranges[7] = {};
+    //    // AccelerationStructure
+    //    Ranges[0].BaseShaderRegister                = 0;
+    //    Ranges[0].NumDescriptors                    = 1;
+    //    Ranges[0].RegisterSpace                        = 0;
+    //    Ranges[0].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[0].OffsetInDescriptorsFromTableStart    = 0;
 
-	//	// Camera Buffer
-	//	Ranges[1].BaseShaderRegister				= 0;
-	//	Ranges[1].NumDescriptors					= 1;
-	//	Ranges[1].RegisterSpace						= 0;
-	//	Ranges[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	//	Ranges[1].OffsetInDescriptorsFromTableStart	= 1;
+    //    // Camera Buffer
+    //    Ranges[1].BaseShaderRegister                = 0;
+    //    Ranges[1].NumDescriptors                    = 1;
+    //    Ranges[1].RegisterSpace                        = 0;
+    //    Ranges[1].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+    //    Ranges[1].OffsetInDescriptorsFromTableStart    = 1;
 
-	//	// Skybox
-	//	Ranges[2].BaseShaderRegister				= 1;
-	//	Ranges[2].NumDescriptors					= 1;
-	//	Ranges[2].RegisterSpace						= 0;
-	//	Ranges[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[2].OffsetInDescriptorsFromTableStart	= 2;
+    //    // Skybox
+    //    Ranges[2].BaseShaderRegister                = 1;
+    //    Ranges[2].NumDescriptors                    = 1;
+    //    Ranges[2].RegisterSpace                        = 0;
+    //    Ranges[2].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[2].OffsetInDescriptorsFromTableStart    = 2;
 
-	//	// Albedo
-	//	Ranges[3].BaseShaderRegister				= 4;
-	//	Ranges[3].NumDescriptors					= 1;
-	//	Ranges[3].RegisterSpace						= 0;
-	//	Ranges[3].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[3].OffsetInDescriptorsFromTableStart	= 3;
+    //    // Albedo
+    //    Ranges[3].BaseShaderRegister                = 4;
+    //    Ranges[3].NumDescriptors                    = 1;
+    //    Ranges[3].RegisterSpace                        = 0;
+    //    Ranges[3].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[3].OffsetInDescriptorsFromTableStart    = 3;
 
-	//	// Normal
-	//	Ranges[4].BaseShaderRegister				= 5;
-	//	Ranges[4].NumDescriptors					= 1;
-	//	Ranges[4].RegisterSpace						= 0;
-	//	Ranges[4].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[4].OffsetInDescriptorsFromTableStart	= 4;
+    //    // Normal
+    //    Ranges[4].BaseShaderRegister                = 5;
+    //    Ranges[4].NumDescriptors                    = 1;
+    //    Ranges[4].RegisterSpace                        = 0;
+    //    Ranges[4].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[4].OffsetInDescriptorsFromTableStart    = 4;
 
-	//	// GBuffer NormalMap
-	//	Ranges[5].BaseShaderRegister				= 6;
-	//	Ranges[5].NumDescriptors					= 1;
-	//	Ranges[5].RegisterSpace						= 0;
-	//	Ranges[5].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[5].OffsetInDescriptorsFromTableStart = 5;
+    //    // GBuffer NormalMap
+    //    Ranges[5].BaseShaderRegister                = 6;
+    //    Ranges[5].NumDescriptors                    = 1;
+    //    Ranges[5].RegisterSpace                        = 0;
+    //    Ranges[5].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[5].OffsetInDescriptorsFromTableStart = 5;
 
-	//	// GBuffer Depth
-	//	Ranges[6].BaseShaderRegister				= 7;
-	//	Ranges[6].NumDescriptors					= 1;
-	//	Ranges[6].RegisterSpace						= 0;
-	//	Ranges[6].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//	Ranges[6].OffsetInDescriptorsFromTableStart = 6;
+    //    // GBuffer Depth
+    //    Ranges[6].BaseShaderRegister                = 7;
+    //    Ranges[6].NumDescriptors                    = 1;
+    //    Ranges[6].RegisterSpace                        = 0;
+    //    Ranges[6].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    //    Ranges[6].OffsetInDescriptorsFromTableStart = 6;
 
-	//	D3D12_ROOT_PARAMETER RootParams = { };
-	//	RootParams.ParameterType						= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//	RootParams.DescriptorTable.NumDescriptorRanges	= 7;
-	//	RootParams.DescriptorTable.pDescriptorRanges	= Ranges;
+    //    D3D12_ROOT_PARAMETER RootParams = { };
+    //    RootParams.ParameterType                        = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    //    RootParams.DescriptorTable.NumDescriptorRanges    = 7;
+    //    RootParams.DescriptorTable.pDescriptorRanges    = Ranges;
 
-	//	D3D12_STATIC_SAMPLER_DESC Samplers[2] = { };
-	//	// Generic Sampler
-	//	Samplers[0].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
-	//	Samplers[0].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	Samplers[0].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	Samplers[0].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	//	Samplers[0].Filter				= D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	//	Samplers[0].ShaderRegister		= 0;
-	//	Samplers[0].RegisterSpace		= 0;
-	//	Samplers[0].MinLOD				= 0.0f;
-	//	Samplers[0].MaxLOD				= FLT_MAX;
+    //    D3D12_STATIC_SAMPLER_DESC Samplers[2] = { };
+    //    // Generic Sampler
+    //    Samplers[0].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
+    //    Samplers[0].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    //    Samplers[0].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    //    Samplers[0].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    //    Samplers[0].Filter                = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    //    Samplers[0].ShaderRegister        = 0;
+    //    Samplers[0].RegisterSpace        = 0;
+    //    Samplers[0].MinLOD                = 0.0f;
+    //    Samplers[0].MaxLOD                = FLT_MAX;
  //
-	//	// GBuffer Sampler
-	//	Samplers[1].ShaderVisibility	= D3D12_SHADER_VISIBILITY_ALL;
-	//	Samplers[1].AddressU			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[1].AddressV			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[1].AddressW			= D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	//	Samplers[1].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;
-	//	Samplers[1].ShaderRegister		= 1;
-	//	Samplers[1].RegisterSpace		= 0;
-	//	Samplers[1].MinLOD				= 0.0f;
-	//	Samplers[1].MaxLOD				= FLT_MAX;
+    //    // GBuffer Sampler
+    //    Samplers[1].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
+    //    Samplers[1].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    //    Samplers[1].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    //    Samplers[1].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    //    Samplers[1].Filter                = D3D12_FILTER_MIN_MAG_MIP_POINT;
+    //    Samplers[1].ShaderRegister        = 1;
+    //    Samplers[1].RegisterSpace        = 0;
+    //    Samplers[1].MinLOD                = 0.0f;
+    //    Samplers[1].MaxLOD                = FLT_MAX;
 
-	//	D3D12_ROOT_SIGNATURE_DESC GlobalRootDesc = {};
-	//	GlobalRootDesc.NumStaticSamplers	= 2;
-	//	GlobalRootDesc.pStaticSamplers		= Samplers;
-	//	GlobalRootDesc.NumParameters		= 1;
-	//	GlobalRootDesc.pParameters			= &RootParams;
-	//	GlobalRootDesc.Flags				= D3D12_ROOT_SIGNATURE_FLAG_NONE;
+    //    D3D12_ROOT_SIGNATURE_DESC GlobalRootDesc = {};
+    //    GlobalRootDesc.NumStaticSamplers    = 2;
+    //    GlobalRootDesc.pStaticSamplers        = Samplers;
+    //    GlobalRootDesc.NumParameters        = 1;
+    //    GlobalRootDesc.pParameters            = &RootParams;
+    //    GlobalRootDesc.Flags                = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
-	//	GlobalRootSignature = RenderLayer::Get().CreateRootSignature(GlobalRootDesc);
-	//	if (!GlobalRootSignature)
-	//	{
-	//		return false;
-	//	}
-	//}
+    //    GlobalRootSignature = RenderLayer::Get().CreateRootSignature(GlobalRootDesc);
+    //    if (!GlobalRootSignature)
+    //    {
+    //        return false;
+    //    }
+    //}
 
-	//// Create Pipeline
-	//RayTracingPipelineStateProperties PipelineProperties;
-	//PipelineProperties.DebugName				= "RayTracing PipelineState";
-	//PipelineProperties.RayGenRootSignature		= RayGenLocalRoot.Get();
-	//PipelineProperties.HitGroupRootSignature	= HitLocalRoot.Get();
-	//PipelineProperties.MissRootSignature		= MissLocalRoot.Get();
-	//PipelineProperties.GlobalRootSignature		= GlobalRootSignature.Get();
-	//PipelineProperties.MaxRecursions			= 4;
+    //// Create Pipeline
+    //RayTracingPipelineStateProperties PipelineProperties;
+    //PipelineProperties.DebugName                = "RayTracing PipelineState";
+    //PipelineProperties.RayGenRootSignature        = RayGenLocalRoot.Get();
+    //PipelineProperties.HitGroupRootSignature    = HitLocalRoot.Get();
+    //PipelineProperties.MissRootSignature        = MissLocalRoot.Get();
+    //PipelineProperties.GlobalRootSignature        = GlobalRootSignature.Get();
+    //PipelineProperties.MaxRecursions            = 4;
 
-	//RaytracingPSO = RenderLayer::Get().CreateRayTracingPipelineState(PipelineProperties);
-	//if (!RaytracingPSO)
-	//{
-	//	return false;
-	//}
+    //RaytracingPSO = RenderLayer::Get().CreateRayTracingPipelineState(PipelineProperties);
+    //if (!RaytracingPSO)
+    //{
+    //    return false;
+    //}
 
-	//// Build Acceleration Structures
-	//RenderLayer::Get().GetImmediateCommandList()->TransitionBarrier(CameraBuffer.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_VertexAndConstantBuffer);
+    //// Build Acceleration Structures
+    //RenderLayer::Get().GetImmediateCommandList()->TransitionBarrier(CameraBuffer.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_VertexAndConstantBuffer);
 
-	// Create DescriptorTables
-	//RayGenDescriptorTable = TSharedPtr(RenderLayer::Get().CreateDescriptorTable(1));
-	//GlobalDescriptorTable = TSharedPtr(RenderLayer::Get().CreateDescriptorTable(7));
+    // Create DescriptorTables
+    //RayGenDescriptorTable = TSharedPtr(RenderLayer::Get().CreateDescriptorTable(1));
+    //GlobalDescriptorTable = TSharedPtr(RenderLayer::Get().CreateDescriptorTable(7));
 
-	// Create TLAS
-	//RayTracingScene = RenderLayer::CreateRayTracingScene();
-	//if (!RayTracingScene)
-	//{
-	//	return false;
-	//}
+    // Create TLAS
+    //RayTracingScene = RenderLayer::CreateRayTracingScene();
+    //if (!RayTracingScene)
+    //{
+    //    return false;
+    //}
 
-	// Populate descriptors
-	//RayGenDescriptorTable->SetUnorderedAccessView(ReflectionTexture->GetUnorderedAccessView(0).Get(), 0);
-	//RayGenDescriptorTable->CopyDescriptors();
+    // Populate descriptors
+    //RayGenDescriptorTable->SetUnorderedAccessView(ReflectionTexture->GetUnorderedAccessView(0).Get(), 0);
+    //RayGenDescriptorTable->CopyDescriptors();
 
-	//GlobalDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 1);
-	//GlobalDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(0).Get(), 2);
-	//GlobalDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(0).Get(), 3);
-	//GlobalDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).Get(), 4);
-	//GlobalDescriptorTable->CopyDescriptors();
+    //GlobalDescriptorTable->SetConstantBufferView(CameraBuffer->GetConstantBufferView().Get(), 1);
+    //GlobalDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(0).Get(), 2);
+    //GlobalDescriptorTable->SetShaderResourceView(GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(0).Get(), 3);
+    //GlobalDescriptorTable->SetShaderResourceView(Skybox->GetShaderResourceView(0).Get(), 4);
+    //GlobalDescriptorTable->CopyDescriptors();
 
-	return true;
-}
-
-Bool Renderer::InitLightBuffers()
-{
-	const UInt32 NumPointLights = 8;
-	const UInt32 NumDirLights	= 1;
-
-	PointLightBuffer = RenderLayer::CreateConstantBuffer<PointLightProperties>(
-		nullptr, 
-		NumPointLights, 
-		BufferUsage_Default,
-		EResourceState::ResourceState_Common);
-	if (!PointLightBuffer)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PointLightBuffer->SetName("PointLight Buffer");
-	}
-
-	DirectionalLightBuffer = RenderLayer::CreateConstantBuffer<DirectionalLightProperties>(
-		nullptr, 
-		NumDirLights, 
-		BufferUsage_Default,
-		EResourceState::ResourceState_Common);
-	if (!DirectionalLightBuffer)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		DirectionalLightBuffer->SetName("DirectionalLight Buffer");
-	}
-
-	PerShadowMapBuffer = RenderLayer::CreateConstantBuffer<PerShadowMap>(
-		nullptr,
-		NumDirLights,
-		BufferUsage_Default,
-		EResourceState::ResourceState_Common);
-	if (!PerShadowMapBuffer)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PerShadowMapBuffer->SetName("PerShadowMap Buffer");
-	}
-
-	{
-		SamplerStateCreateInfo CreateInfo;
-		CreateInfo.AddressU	= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.AddressV	= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.AddressW	= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.Filter	= ESamplerFilter::SamplerFilter_MinMagMipPoint;
-
-		ShadowMapSampler = RenderLayer::CreateSamplerState(CreateInfo);
-		if (!ShadowMapSampler)
-		{
-			return false;
-		}
-	}
-
-	{
-		SamplerStateCreateInfo CreateInfo;
-		CreateInfo.AddressU			= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.AddressV			= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.AddressW			= ESamplerMode::SamplerMode_Wrap;
-		CreateInfo.Filter			= ESamplerFilter::SamplerFilter_Comparison_MinMagMipLinear;
-		CreateInfo.ComparisonFunc	= EComparisonFunc::ComparisonFunc_LessEqual;
-
-		ShadowMapCompSampler = RenderLayer::CreateSamplerState(CreateInfo);
-		if (!ShadowMapCompSampler)
-		{
-			return false;
-		}
-	}
-
-	return CreateShadowMaps();
+    return true;
 }
 
 Bool Renderer::InitPrePass()
 {
-	using namespace Microsoft::WRL;
+    using namespace Microsoft::WRL;
 
-	TArray<UInt8> ShaderCode;
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/PrePass.hlsl",
-		"Main",
-		nullptr,
-		EShaderStage::ShaderStage_Vertex,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/PrePass.hlsl",
+        "Main",
+        nullptr,
+        EShaderStage::ShaderStage_Vertex,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
-	if (!VShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		VShader->SetName("PrePass VertexShader");
-	}
+    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    if (!VShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        VShader->SetName("PrePass VertexShader");
+    }
 
-	DepthStencilStateCreateInfo DepthStencilStateInfo;
-	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_Less;
-	DepthStencilStateInfo.DepthEnable		= true;
-	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_All;
+    DepthStencilStateCreateInfo DepthStencilStateInfo;
+    DepthStencilStateInfo.DepthFunc            = EComparisonFunc::ComparisonFunc_Less;
+    DepthStencilStateInfo.DepthEnable        = true;
+    DepthStencilStateInfo.DepthWriteMask    = EDepthWriteMask::DepthWriteMask_All;
 
-	TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
-	if (!DepthStencilState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		DepthStencilState->SetName("Prepass DepthStencilState");
-	}
+    TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    if (!DepthStencilState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        DepthStencilState->SetName("Prepass DepthStencilState");
+    }
 
-	RasterizerStateCreateInfo RasterizerStateInfo;
-	RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
+    RasterizerStateCreateInfo RasterizerStateInfo;
+    RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
 
-	TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
-	if (!RasterizerState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		RasterizerState->SetName("Prepass RasterizerState");
-	}
+    TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    if (!RasterizerState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RasterizerState->SetName("Prepass RasterizerState");
+    }
 
-	BlendStateCreateInfo BlendStateInfo;
-	BlendStateInfo.IndependentBlendEnable		= false;
-	BlendStateInfo.RenderTarget[0].BlendEnable	= false;
+    BlendStateCreateInfo BlendStateInfo;
+    BlendStateInfo.IndependentBlendEnable        = false;
+    BlendStateInfo.RenderTarget[0].BlendEnable    = false;
 
-	TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
-	if (!BlendState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		BlendState->SetName("Prepass BlendState");
-	}
+    TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+    if (!BlendState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        BlendState->SetName("Prepass BlendState");
+    }
 
-	GraphicsPipelineStateCreateInfo PSOInfo;
-	PSOInfo.InputLayoutState					= StdInputLayout.Get();
-	PSOInfo.BlendState							= BlendState.Get();
-	PSOInfo.DepthStencilState					= DepthStencilState.Get();
-	PSOInfo.RasterizerState						= RasterizerState.Get();
-	PSOInfo.ShaderState.VertexShader			= VShader.Get();
-	PSOInfo.PipelineFormats.DepthStencilFormat	= DepthBufferFormat;
+    GraphicsPipelineStateCreateInfo PSOInfo;
+    PSOInfo.InputLayoutState                    = StdInputLayout.Get();
+    PSOInfo.BlendState                            = BlendState.Get();
+    PSOInfo.DepthStencilState                    = DepthStencilState.Get();
+    PSOInfo.RasterizerState                        = RasterizerState.Get();
+    PSOInfo.ShaderState.VertexShader            = VShader.Get();
+    PSOInfo.PipelineFormats.DepthStencilFormat    = DepthBufferFormat;
 
-	PrePassPSO = RenderLayer::CreateGraphicsPipelineState(PSOInfo);
-	if (!PrePassPSO)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PrePassPSO->SetName("PrePass PipelineState");
-	}
+    PrePassPSO = RenderLayer::CreateGraphicsPipelineState(PSOInfo);
+    if (!PrePassPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PrePassPSO->SetName("PrePass PipelineState");
+    }
 
-	return true;
+    return true;
 }
 
 Bool Renderer::InitShadowMapPass()
 {
-	using namespace Microsoft::WRL;
+    using namespace Microsoft::WRL;
 
-	// Directional Shadows
-	TArray<UInt8> ShaderCode;
-
-#if ENABLE_VSM
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/ShadowMap.hlsl",
-		"VSM_VSMain",
-		nullptr,
-		EShaderStage::ShaderStage_Vertex,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-
-	TSharedRef<VertexShader> VSShader = RenderLayer::CreateVertexShader(ShaderCode);
-	if (!VSShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		VSShader->SetName("ShadowMap VertexShader");
-	}
-
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/ShadowMap.hlsl",
-		"VSM_PSMain",
-		nullptr,
-		EShaderStage::ShaderStage_Pixel,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-
-	TSharedRef<PixelShader> PSShader = RenderLayer::CreatePixelShader(ShaderCode);
-	if (!PSShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PSShader->SetName("ShadowMap PixelShader");
-	}
-#else
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/ShadowMap.hlsl", 
-		"Main",
-		nullptr, 
-		EShaderStage::ShaderStage_Vertex,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-
-	TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
-	if (!VShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		VShader->SetName("ShadowMap VertexShader");
-	}
-#endif
-
-	// Init PipelineState
-	DepthStencilStateCreateInfo DepthStencilStateInfo;
-	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_LessEqual;
-	DepthStencilStateInfo.DepthEnable		= true;
-	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_All;
-	
-	TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
-	if (!DepthStencilState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		DepthStencilState->SetName("Shadow DepthStencilState");
-	}
-
-	RasterizerStateCreateInfo RasterizerStateInfo;
-	RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
-
-	TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
-	if (!RasterizerState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		RasterizerState->SetName("Shadow RasterizerState");
-	}
-
-	BlendStateCreateInfo BlendStateInfo;
-	TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
-	if (!BlendState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		BlendState->SetName("Shadow BlendState");
-	}
-
-	GraphicsPipelineStateCreateInfo ShadowMapPSOInfo;
-	ShadowMapPSOInfo.BlendState							= BlendState.Get();
-	ShadowMapPSOInfo.DepthStencilState					= DepthStencilState.Get();
-	ShadowMapPSOInfo.IBStripCutValue					= EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
-	ShadowMapPSOInfo.InputLayoutState					= StdInputLayout.Get();
-	ShadowMapPSOInfo.PrimitiveTopologyType				= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
-	ShadowMapPSOInfo.RasterizerState					= RasterizerState.Get();
-	ShadowMapPSOInfo.SampleCount						= 1;
-	ShadowMapPSOInfo.SampleQuality						= 0;
-	ShadowMapPSOInfo.SampleMask							= 0xffffffff;
-	ShadowMapPSOInfo.ShaderState.VertexShader			= VShader.Get();
-	ShadowMapPSOInfo.ShaderState.PixelShader			= nullptr;
-	ShadowMapPSOInfo.PipelineFormats.NumRenderTargets	= 0;
-	ShadowMapPSOInfo.PipelineFormats.DepthStencilFormat	= ShadowMapFormat;
+    // Directional Shadows
+    TArray<UInt8> ShaderCode;
 
 #if ENABLE_VSM
-	VSMShadowMapPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
-	if (!VSMShadowMapPSO->Initialize(PSOProperties))
-	{
-		return false;
-	}
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/ShadowMap.hlsl",
+        "VSM_VSMain",
+        nullptr,
+        EShaderStage::ShaderStage_Vertex,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    TSharedRef<VertexShader> VSShader = RenderLayer::CreateVertexShader(ShaderCode);
+    if (!VSShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        VSShader->SetName("ShadowMap VertexShader");
+    }
+
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/ShadowMap.hlsl",
+        "VSM_PSMain",
+        nullptr,
+        EShaderStage::ShaderStage_Pixel,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    TSharedRef<PixelShader> PSShader = RenderLayer::CreatePixelShader(ShaderCode);
+    if (!PSShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PSShader->SetName("ShadowMap PixelShader");
+    }
 #else
-	ShadowMapPSO = RenderLayer::CreateGraphicsPipelineState(ShadowMapPSOInfo);
-	if (!ShadowMapPSO)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		ShadowMapPSO->SetName("ShadowMap PipelineState");
-	}
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/ShadowMap.hlsl", 
+        "Main",
+        nullptr, 
+        EShaderStage::ShaderStage_Vertex,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    if (!VShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        VShader->SetName("ShadowMap VertexShader");
+    }
 #endif
 
-	// Linear Shadow Maps
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/ShadowMap.hlsl",
-		"VSMain",
-		nullptr,
-		EShaderStage::ShaderStage_Vertex,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    // Init PipelineState
+    DepthStencilStateCreateInfo DepthStencilStateInfo;
+    DepthStencilStateInfo.DepthFunc            = EComparisonFunc::ComparisonFunc_LessEqual;
+    DepthStencilStateInfo.DepthEnable        = true;
+    DepthStencilStateInfo.DepthWriteMask    = EDepthWriteMask::DepthWriteMask_All;
+    
+    TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    if (!DepthStencilState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        DepthStencilState->SetName("Shadow DepthStencilState");
+    }
 
-	VShader = RenderLayer::CreateVertexShader(ShaderCode);
-	if (!VShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		VShader->SetName("Linear ShadowMap VertexShader");
-	}
+    RasterizerStateCreateInfo RasterizerStateInfo;
+    RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
+
+    TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    if (!RasterizerState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RasterizerState->SetName("Shadow RasterizerState");
+    }
+
+    BlendStateCreateInfo BlendStateInfo;
+    TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+    if (!BlendState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        BlendState->SetName("Shadow BlendState");
+    }
+
+    GraphicsPipelineStateCreateInfo ShadowMapPSOInfo;
+    ShadowMapPSOInfo.BlendState                            = BlendState.Get();
+    ShadowMapPSOInfo.DepthStencilState                    = DepthStencilState.Get();
+    ShadowMapPSOInfo.IBStripCutValue                    = EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
+    ShadowMapPSOInfo.InputLayoutState                    = StdInputLayout.Get();
+    ShadowMapPSOInfo.PrimitiveTopologyType                = EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+    ShadowMapPSOInfo.RasterizerState                    = RasterizerState.Get();
+    ShadowMapPSOInfo.SampleCount                        = 1;
+    ShadowMapPSOInfo.SampleQuality                        = 0;
+    ShadowMapPSOInfo.SampleMask                            = 0xffffffff;
+    ShadowMapPSOInfo.ShaderState.VertexShader            = VShader.Get();
+    ShadowMapPSOInfo.ShaderState.PixelShader            = nullptr;
+    ShadowMapPSOInfo.PipelineFormats.NumRenderTargets    = 0;
+    ShadowMapPSOInfo.PipelineFormats.DepthStencilFormat    = ShadowMapFormat;
+
+#if ENABLE_VSM
+    VSMShadowMapPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
+    if (!VSMShadowMapPSO->Initialize(PSOProperties))
+    {
+        return false;
+    }
+#else
+    ShadowMapPSO = RenderLayer::CreateGraphicsPipelineState(ShadowMapPSOInfo);
+    if (!ShadowMapPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        ShadowMapPSO->SetName("ShadowMap PipelineState");
+    }
+#endif
+
+    // Linear Shadow Maps
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/ShadowMap.hlsl",
+        "VSMain",
+        nullptr,
+        EShaderStage::ShaderStage_Vertex,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    if (!VShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        VShader->SetName("Linear ShadowMap VertexShader");
+    }
 
 #if !ENABLE_VSM
-	TSharedRef<PixelShader> PShader;
+    TSharedRef<PixelShader> PShader;
 #endif
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/ShadowMap.hlsl",
-		"PSMain",
-		nullptr,
-		EShaderStage::ShaderStage_Pixel,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/ShadowMap.hlsl",
+        "PSMain",
+        nullptr,
+        EShaderStage::ShaderStage_Pixel,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	PShader = RenderLayer::CreatePixelShader(ShaderCode);
-	if (!PShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PShader->SetName("Linear ShadowMap PixelShader");
-	}
+    PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    if (!PShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PShader->SetName("Linear ShadowMap PixelShader");
+    }
 
-	// Linear ShadowMap PipelineState
-	ShadowMapPSOInfo.ShaderState.VertexShader	= VShader.Get();
-	ShadowMapPSOInfo.ShaderState.PixelShader	= PShader.Get();
+    // Linear ShadowMap PipelineState
+    ShadowMapPSOInfo.ShaderState.VertexShader    = VShader.Get();
+    ShadowMapPSOInfo.ShaderState.PixelShader    = PShader.Get();
 
-	LinearShadowMapPSO = RenderLayer::CreateGraphicsPipelineState(ShadowMapPSOInfo);
-	if (!LinearShadowMapPSO)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		LinearShadowMapPSO->SetName("Linear ShadowMap PipelineState");
-	}
+    LinearShadowMapPSO = RenderLayer::CreateGraphicsPipelineState(ShadowMapPSOInfo);
+    if (!LinearShadowMapPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        LinearShadowMapPSO->SetName("Linear ShadowMap PipelineState");
+    }
 
-	return true;
+    return true;
 }
 
 Bool Renderer::InitDeferred()
 {
-	using namespace Microsoft::WRL;
+    using namespace Microsoft::WRL;
 
-	// GeometryPass
-	TArray<ShaderDefine> Defines =
-	{
-		{ "ENABLE_PARALLAX_MAPPING", "1" },
-		{ "ENABLE_NORMAL_MAPPING",	 "1" },
-	};
+    // GeometryPass
+    TArray<ShaderDefine> Defines =
+    {
+        { "ENABLE_PARALLAX_MAPPING", "1" },
+        { "ENABLE_NORMAL_MAPPING",     "1" },
+    };
 
-	TArray<UInt8> ShaderCode;
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/GeometryPass.hlsl", 
-		"VSMain",
-		&Defines,
-		EShaderStage::ShaderStage_Vertex,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/GeometryPass.hlsl", 
+        "VSMain",
+        &Defines,
+        EShaderStage::ShaderStage_Vertex,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
-	if (!VShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		VShader->SetName("GeometryPass VertexShader");
-	}
+    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    if (!VShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        VShader->SetName("GeometryPass VertexShader");
+    }
 
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/GeometryPass.hlsl",
-		"PSMain",
-		&Defines,
-		EShaderStage::ShaderStage_Pixel,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/GeometryPass.hlsl",
+        "PSMain",
+        &Defines,
+        EShaderStage::ShaderStage_Pixel,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
-	if (!PShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PShader->SetName("GeometryPass PixelShader");
-	}
+    TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    if (!PShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PShader->SetName("GeometryPass PixelShader");
+    }
 
-	DepthStencilStateCreateInfo DepthStencilStateInfo;
-	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_LessEqual;
-	DepthStencilStateInfo.DepthEnable		= true;
-	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_All;
+    DepthStencilStateCreateInfo DepthStencilStateInfo;
+    DepthStencilStateInfo.DepthFunc            = EComparisonFunc::ComparisonFunc_LessEqual;
+    DepthStencilStateInfo.DepthEnable        = true;
+    DepthStencilStateInfo.DepthWriteMask    = EDepthWriteMask::DepthWriteMask_All;
 
-	TSharedRef<DepthStencilState> GeometryDepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
-	if (!GeometryDepthStencilState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		GeometryDepthStencilState->SetName("GeometryPass DepthStencilState");
-	}
+    TSharedRef<DepthStencilState> GeometryDepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    if (!GeometryDepthStencilState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        GeometryDepthStencilState->SetName("GeometryPass DepthStencilState");
+    }
 
-	RasterizerStateCreateInfo RasterizerStateInfo;
-	RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
+    RasterizerStateCreateInfo RasterizerStateInfo;
+    RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
 
-	TSharedRef<RasterizerState> GeometryRasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
-	if (!GeometryRasterizerState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		GeometryRasterizerState->SetName("GeometryPass RasterizerState");
-	}
+    TSharedRef<RasterizerState> GeometryRasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    if (!GeometryRasterizerState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        GeometryRasterizerState->SetName("GeometryPass RasterizerState");
+    }
 
-	BlendStateCreateInfo BlendStateInfo;
-	BlendStateInfo.IndependentBlendEnable		= false;
-	BlendStateInfo.RenderTarget[0].BlendEnable	= false;
+    BlendStateCreateInfo BlendStateInfo;
+    BlendStateInfo.IndependentBlendEnable        = false;
+    BlendStateInfo.RenderTarget[0].BlendEnable    = false;
 
-	TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
-	if (!BlendState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		BlendState->SetName("GeometryPass BlendState");
-	}
+    TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+    if (!BlendState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        BlendState->SetName("GeometryPass BlendState");
+    }
 
-	GraphicsPipelineStateCreateInfo PSOProperties;
-	PSOProperties.InputLayoutState							= StdInputLayout.Get();
-	PSOProperties.BlendState								= BlendState.Get();
-	PSOProperties.DepthStencilState							= GeometryDepthStencilState.Get();
-	PSOProperties.RasterizerState							= GeometryRasterizerState.Get();
-	PSOProperties.ShaderState.VertexShader					= VShader.Get();
-	PSOProperties.ShaderState.PixelShader					= PShader.Get();
-	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
-	PSOProperties.PipelineFormats.RenderTargetFormats[0]	=EFormat::Format_R8G8B8A8_Unorm;
-	PSOProperties.PipelineFormats.RenderTargetFormats[1]	= NormalFormat;
-	PSOProperties.PipelineFormats.RenderTargetFormats[2]	= EFormat::Format_R8G8B8A8_Unorm;
-	PSOProperties.PipelineFormats.RenderTargetFormats[3]	= ViewNormalFormat;
-	PSOProperties.PipelineFormats.NumRenderTargets			= 4;
+    GraphicsPipelineStateCreateInfo PSOProperties;
+    PSOProperties.InputLayoutState                            = StdInputLayout.Get();
+    PSOProperties.BlendState                                = BlendState.Get();
+    PSOProperties.DepthStencilState                            = GeometryDepthStencilState.Get();
+    PSOProperties.RasterizerState                            = GeometryRasterizerState.Get();
+    PSOProperties.ShaderState.VertexShader                    = VShader.Get();
+    PSOProperties.ShaderState.PixelShader                    = PShader.Get();
+    PSOProperties.PipelineFormats.DepthStencilFormat        = DepthBufferFormat;
+    PSOProperties.PipelineFormats.RenderTargetFormats[0]    =EFormat::Format_R8G8B8A8_Unorm;
+    PSOProperties.PipelineFormats.RenderTargetFormats[1]    = NormalFormat;
+    PSOProperties.PipelineFormats.RenderTargetFormats[2]    = EFormat::Format_R8G8B8A8_Unorm;
+    PSOProperties.PipelineFormats.RenderTargetFormats[3]    = ViewNormalFormat;
+    PSOProperties.PipelineFormats.NumRenderTargets            = 4;
 
-	GeometryPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
-	if (!GeometryPSO)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		GeometryPSO->SetName("GeometryPass PipelineState");
-	}
+    GeometryPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    if (!GeometryPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        GeometryPSO->SetName("GeometryPass PipelineState");
+    }
 
-	// SkyboxPass
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/Skybox.hlsl",
-		"VSMain",
-		nullptr,
-		EShaderStage::ShaderStage_Vertex,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    // SkyboxPass
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/Skybox.hlsl",
+        "VSMain",
+        nullptr,
+        EShaderStage::ShaderStage_Vertex,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	VShader = RenderLayer::CreateVertexShader(ShaderCode);
-	if (!VShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		VShader->SetName("Skybox VertexShader");
-	}
+    VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    if (!VShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        VShader->SetName("Skybox VertexShader");
+    }
 
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/Skybox.hlsl",
-		"PSMain",
-		nullptr,
-		EShaderStage::ShaderStage_Pixel,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/Skybox.hlsl",
+        "PSMain",
+        nullptr,
+        EShaderStage::ShaderStage_Pixel,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	PShader = RenderLayer::CreatePixelShader(ShaderCode);
-	if (!PShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PShader->SetName("Skybox PixelShader");
-	}
+    PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    if (!PShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PShader->SetName("Skybox PixelShader");
+    }
 
-	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
+    RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
 
-	TSharedRef<RasterizerState> SkyboxRasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
-	if (!SkyboxRasterizerState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		SkyboxRasterizerState->SetName("Skybox RasterizerState");
-	}
+    TSharedRef<RasterizerState> SkyboxRasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    if (!SkyboxRasterizerState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        SkyboxRasterizerState->SetName("Skybox RasterizerState");
+    }
 
-	PSOProperties.InputLayoutState							= StdInputLayout.Get();
-	PSOProperties.DepthStencilState							= GeometryDepthStencilState.Get();
-	PSOProperties.RasterizerState							= SkyboxRasterizerState.Get();
-	PSOProperties.ShaderState.VertexShader					= VShader.Get();
-	PSOProperties.ShaderState.PixelShader					= PShader.Get();
-	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= FinalTargetFormat;
-	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
-	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
+    PSOProperties.InputLayoutState                            = StdInputLayout.Get();
+    PSOProperties.DepthStencilState                            = GeometryDepthStencilState.Get();
+    PSOProperties.RasterizerState                            = SkyboxRasterizerState.Get();
+    PSOProperties.ShaderState.VertexShader                    = VShader.Get();
+    PSOProperties.ShaderState.PixelShader                    = PShader.Get();
+    PSOProperties.PipelineFormats.RenderTargetFormats[0]    = FinalTargetFormat;
+    PSOProperties.PipelineFormats.NumRenderTargets            = 1;
+    PSOProperties.PipelineFormats.DepthStencilFormat        = DepthBufferFormat;
 
-	SkyboxPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
-	if (!SkyboxPSO)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		SkyboxPSO->SetName("SkyboxPSO PipelineState");
-	}
+    SkyboxPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    if (!SkyboxPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        SkyboxPSO->SetName("SkyboxPSO PipelineState");
+    }
 
-	// LightPass
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/DeferredLightPass.hlsl",
-		"Main",
-		nullptr,
-		EShaderStage::ShaderStage_Compute,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    // LightPass
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/DeferredLightPass.hlsl",
+        "Main",
+        nullptr,
+        EShaderStage::ShaderStage_Compute,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<ComputeShader> CShader = RenderLayer::CreateComputeShader(ShaderCode);
-	if (!CShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		CShader->SetName("DeferredLightPass Shader");
-	}
+    TSharedRef<ComputeShader> CShader = RenderLayer::CreateComputeShader(ShaderCode);
+    if (!CShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        CShader->SetName("DeferredLightPass Shader");
+    }
 
-	ComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
-	DeferredLightPassCreateInfo.Shader = CShader.Get();
+    ComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
+    DeferredLightPassCreateInfo.Shader = CShader.Get();
 
-	DeferredLightPass = RenderLayer::CreateComputePipelineState(DeferredLightPassCreateInfo);
-	if (!DeferredLightPass)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		DeferredLightPass->SetName("DeferredLightPass");
-	}
+    DeferredLightPass = RenderLayer::CreateComputePipelineState(DeferredLightPassCreateInfo);
+    if (!DeferredLightPass)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        DeferredLightPass->SetName("DeferredLightPass");
+    }
 
-	return true;
+    return true;
 }
 
 Bool Renderer::InitGBuffer()
 {
-	// Create image
-	if (!InitRayTracingTexture())
-	{
-		return false;
-	}
+    // Create image
+    if (!InitRayTracingTexture())
+    {
+        return false;
+    }
 
-	const UInt32 Width	= MainWindowViewport->GetWidth();
-	const UInt32 Height	= MainWindowViewport->GetHeight();
-	const UInt32 Usage	= TextureUsage_Default | TextureUsage_RenderTarget;
+    const UInt32 Width    = MainWindowViewport->GetWidth();
+    const UInt32 Height    = MainWindowViewport->GetHeight();
+    const UInt32 Usage    = TextureUsage_Default | TextureUsage_RenderTarget;
 
-	GBuffer[GBUFFER_ALBEDO_INDEX] = RenderLayer::CreateTexture2D(
-		nullptr, 
-		AlbedoFormat, 
-		Usage, 
-		Width, 
-		Height, 
-		1, 1, 
-		ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
-	if (GBuffer[GBUFFER_ALBEDO_INDEX])
-	{
-		GBuffer[GBUFFER_ALBEDO_INDEX]->SetName("GBuffer Albedo");
+    GBuffer[GBUFFER_ALBEDO_INDEX] = RenderLayer::CreateTexture2D(
+        nullptr, 
+        AlbedoFormat, 
+        Usage, 
+        Width, 
+        Height, 
+        1, 1, 
+        ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
+    if (GBuffer[GBUFFER_ALBEDO_INDEX])
+    {
+        GBuffer[GBUFFER_ALBEDO_INDEX]->SetName("GBuffer Albedo");
 
-		GBufferSRVs[GBUFFER_ALBEDO_INDEX] = RenderLayer::CreateShaderResourceView(GBuffer[GBUFFER_ALBEDO_INDEX].Get(), AlbedoFormat, 0, 1);
-		if (!GBufferSRVs[GBUFFER_ALBEDO_INDEX])
-		{
-			return false;
-		}
+        GBufferSRVs[GBUFFER_ALBEDO_INDEX] = RenderLayer::CreateShaderResourceView(GBuffer[GBUFFER_ALBEDO_INDEX].Get(), AlbedoFormat, 0, 1);
+        if (!GBufferSRVs[GBUFFER_ALBEDO_INDEX])
+        {
+            return false;
+        }
 
-		GBufferRTVs[GBUFFER_ALBEDO_INDEX] = RenderLayer::CreateRenderTargetView(GBuffer[GBUFFER_ALBEDO_INDEX].Get(), AlbedoFormat, 0);
-		if (!GBufferSRVs[GBUFFER_ALBEDO_INDEX])
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
+        GBufferRTVs[GBUFFER_ALBEDO_INDEX] = RenderLayer::CreateRenderTargetView(GBuffer[GBUFFER_ALBEDO_INDEX].Get(), AlbedoFormat, 0);
+        if (!GBufferSRVs[GBUFFER_ALBEDO_INDEX])
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
 
-	// Normal
-	GBuffer[GBUFFER_NORMAL_INDEX] = RenderLayer::CreateTexture2D(
-		nullptr, 
-		NormalFormat, 
-		Usage, 
-		Width, 
-		Height, 
-		1, 1, 
-		ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
-	if (GBuffer[GBUFFER_NORMAL_INDEX])
-	{
-		GBuffer[GBUFFER_NORMAL_INDEX]->SetName("GBuffer Normal");
+    // Normal
+    GBuffer[GBUFFER_NORMAL_INDEX] = RenderLayer::CreateTexture2D(
+        nullptr, 
+        NormalFormat, 
+        Usage, 
+        Width, 
+        Height, 
+        1, 1, 
+        ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
+    if (GBuffer[GBUFFER_NORMAL_INDEX])
+    {
+        GBuffer[GBUFFER_NORMAL_INDEX]->SetName("GBuffer Normal");
 
-		GBufferSRVs[GBUFFER_NORMAL_INDEX] = RenderLayer::CreateShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX].Get(), NormalFormat, 0, 1);
-		if (!GBufferSRVs[GBUFFER_NORMAL_INDEX])
-		{
-			return false;
-		}
+        GBufferSRVs[GBUFFER_NORMAL_INDEX] = RenderLayer::CreateShaderResourceView(GBuffer[GBUFFER_NORMAL_INDEX].Get(), NormalFormat, 0, 1);
+        if (!GBufferSRVs[GBUFFER_NORMAL_INDEX])
+        {
+            return false;
+        }
 
-		GBufferRTVs[GBUFFER_NORMAL_INDEX] = RenderLayer::CreateRenderTargetView(GBuffer[GBUFFER_NORMAL_INDEX].Get(), NormalFormat, 0);
-		if (!GBufferSRVs[GBUFFER_NORMAL_INDEX])
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
+        GBufferRTVs[GBUFFER_NORMAL_INDEX] = RenderLayer::CreateRenderTargetView(GBuffer[GBUFFER_NORMAL_INDEX].Get(), NormalFormat, 0);
+        if (!GBufferSRVs[GBUFFER_NORMAL_INDEX])
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
 
-	// Material Properties
-	GBuffer[GBUFFER_MATERIAL_INDEX] = RenderLayer::CreateTexture2D(
-		nullptr, 
-		MaterialFormat, 
-		Usage, 
-		Width, 
-		Height, 
-		1, 1, 
-		ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
-	if (GBuffer[GBUFFER_MATERIAL_INDEX])
-	{
-		GBuffer[GBUFFER_MATERIAL_INDEX]->SetName("GBuffer Material");
+    // Material Properties
+    GBuffer[GBUFFER_MATERIAL_INDEX] = RenderLayer::CreateTexture2D(
+        nullptr, 
+        MaterialFormat, 
+        Usage, 
+        Width, 
+        Height, 
+        1, 1, 
+        ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
+    if (GBuffer[GBUFFER_MATERIAL_INDEX])
+    {
+        GBuffer[GBUFFER_MATERIAL_INDEX]->SetName("GBuffer Material");
 
-		GBufferSRVs[GBUFFER_MATERIAL_INDEX] = RenderLayer::CreateShaderResourceView(GBuffer[GBUFFER_MATERIAL_INDEX].Get(), MaterialFormat, 0, 1);
-		if (!GBufferSRVs[GBUFFER_MATERIAL_INDEX])
-		{
-			return false;
-		}
+        GBufferSRVs[GBUFFER_MATERIAL_INDEX] = RenderLayer::CreateShaderResourceView(GBuffer[GBUFFER_MATERIAL_INDEX].Get(), MaterialFormat, 0, 1);
+        if (!GBufferSRVs[GBUFFER_MATERIAL_INDEX])
+        {
+            return false;
+        }
 
-		GBufferRTVs[GBUFFER_MATERIAL_INDEX] = RenderLayer::CreateRenderTargetView(GBuffer[GBUFFER_MATERIAL_INDEX].Get(), MaterialFormat, 0);
-		if (!GBufferSRVs[GBUFFER_MATERIAL_INDEX])
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
+        GBufferRTVs[GBUFFER_MATERIAL_INDEX] = RenderLayer::CreateRenderTargetView(GBuffer[GBUFFER_MATERIAL_INDEX].Get(), MaterialFormat, 0);
+        if (!GBufferSRVs[GBUFFER_MATERIAL_INDEX])
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
 
-	// DepthStencil
-	const UInt32 UsageDS = TextureUsage_Default | TextureUsage_DSV | TextureUsage_SRV;
-	GBuffer[GBUFFER_DEPTH_INDEX] = RenderLayer::CreateTexture2D(
-		nullptr, 
-		EFormat::Format_R32_Typeless, 
-		UsageDS, 
-		Width, 
-		Height, 
-		1, 1, 
-		ClearValue(DepthStencilClearValue(1.0f, 0)));
-	if (GBuffer[GBUFFER_DEPTH_INDEX])
-	{
-		GBuffer[GBUFFER_DEPTH_INDEX]->SetName("GBuffer DepthStencil");
+    // DepthStencil
+    const UInt32 UsageDS = TextureUsage_Default | TextureUsage_DSV | TextureUsage_SRV;
+    GBuffer[GBUFFER_DEPTH_INDEX] = RenderLayer::CreateTexture2D(
+        nullptr, 
+        EFormat::Format_R32_Typeless, 
+        UsageDS, 
+        Width, 
+        Height, 
+        1, 1, 
+        ClearValue(DepthStencilClearValue(1.0f, 0)));
+    if (GBuffer[GBUFFER_DEPTH_INDEX])
+    {
+        GBuffer[GBUFFER_DEPTH_INDEX]->SetName("GBuffer DepthStencil");
 
-		GBufferSRVs[GBUFFER_DEPTH_INDEX] = RenderLayer::CreateShaderResourceView(
-			GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-			EFormat::Format_R32_Float, 
-			0, 
-			1);
-		if (!GBufferSRVs[GBUFFER_DEPTH_INDEX])
-		{
-			return false;
-		}
+        GBufferSRVs[GBUFFER_DEPTH_INDEX] = RenderLayer::CreateShaderResourceView(
+            GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
+            EFormat::Format_R32_Float, 
+            0, 
+            1);
+        if (!GBufferSRVs[GBUFFER_DEPTH_INDEX])
+        {
+            return false;
+        }
 
-		GBufferDSV = RenderLayer::CreateDepthStencilView(
-			GBuffer[GBUFFER_DEPTH_INDEX].Get(),
-			DepthBufferFormat, 
-			0);
-		if (!GBufferDSV)
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
+        GBufferDSV = RenderLayer::CreateDepthStencilView(
+            GBuffer[GBUFFER_DEPTH_INDEX].Get(),
+            DepthBufferFormat, 
+            0);
+        if (!GBufferDSV)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
 
-	// View Normal
-	GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateTexture2D(
-		nullptr,
-		ViewNormalFormat,
-		Usage,
-		Width,
-		Height,
-		1, 1,
-		ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
-	if (GBuffer[GBUFFER_VIEW_NORMAL_INDEX])
-	{
-		GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->SetName("GBuffer View Normal");
+    // View Normal
+    GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateTexture2D(
+        nullptr,
+        ViewNormalFormat,
+        Usage,
+        Width,
+        Height,
+        1, 1,
+        ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
+    if (GBuffer[GBUFFER_VIEW_NORMAL_INDEX])
+    {
+        GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->SetName("GBuffer View Normal");
 
-		GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateShaderResourceView(GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), ViewNormalFormat, 0, 1);
-		if (!GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX])
-		{
-			return false;
-		}
+        GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateShaderResourceView(GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), ViewNormalFormat, 0, 1);
+        if (!GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX])
+        {
+            return false;
+        }
 
-		GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateRenderTargetView(GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), ViewNormalFormat, 0);
-		if (!GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX])
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
+        GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateRenderTargetView(GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), ViewNormalFormat, 0);
+        if (!GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX])
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
 
-	// Final Image
-	FinalTarget = RenderLayer::CreateTexture2D(
-		nullptr, 
-		FinalTargetFormat,
-		TextureUsage_Default | TextureUsage_RenderTarget | TextureUsage_UAV,
-		Width, 
-		Height, 
-		1, 1, 
-		ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
-	if (FinalTarget)
-	{
-		FinalTarget->SetName("Final Target");
+    // Final Image
+    FinalTarget = RenderLayer::CreateTexture2D(
+        nullptr, 
+        FinalTargetFormat,
+        TextureUsage_Default | TextureUsage_RenderTarget | TextureUsage_UAV,
+        Width, 
+        Height, 
+        1, 1, 
+        ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
+    if (FinalTarget)
+    {
+        FinalTarget->SetName("Final Target");
 
-		FinalTargetSRV = RenderLayer::CreateShaderResourceView(
-			FinalTarget.Get(), 
-			FinalTargetFormat, 
-			0, 1);
-		if (!FinalTargetSRV)
-		{
-			return false;
-		}
+        FinalTargetSRV = RenderLayer::CreateShaderResourceView(
+            FinalTarget.Get(), 
+            FinalTargetFormat, 
+            0, 1);
+        if (!FinalTargetSRV)
+        {
+            return false;
+        }
 
-		FinalTargetRTV = RenderLayer::CreateRenderTargetView(
-			FinalTarget.Get(),
-			FinalTargetFormat, 
-			0);
-		if (!FinalTargetRTV)
-		{
-			return false;
-		}
+        FinalTargetRTV = RenderLayer::CreateRenderTargetView(
+            FinalTarget.Get(),
+            FinalTargetFormat, 
+            0);
+        if (!FinalTargetRTV)
+        {
+            return false;
+        }
 
-		FinalTargetUAV = RenderLayer::CreateUnorderedAccessView(
-			FinalTarget.Get(),
-			FinalTargetFormat,
-			0);
-		if (!FinalTargetUAV)
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
+        FinalTargetUAV = RenderLayer::CreateUnorderedAccessView(
+            FinalTarget.Get(),
+            FinalTargetFormat,
+            0);
+        if (!FinalTargetUAV)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
 
-	{
-		SamplerStateCreateInfo CreateInfo;
-		CreateInfo.AddressU	= ESamplerMode::SamplerMode_Clamp;
-		CreateInfo.AddressV	= ESamplerMode::SamplerMode_Clamp;
-		CreateInfo.AddressW	= ESamplerMode::SamplerMode_Clamp;
-		CreateInfo.Filter	= ESamplerFilter::SamplerFilter_MinMagMipPoint;
-		
-		GBufferSampler = RenderLayer::CreateSamplerState(CreateInfo);
-		if (!GBufferSampler)
-		{
-			return false;
-		}
-	}
+    {
+        SamplerStateCreateInfo CreateInfo;
+        CreateInfo.AddressU    = ESamplerMode::SamplerMode_Clamp;
+        CreateInfo.AddressV    = ESamplerMode::SamplerMode_Clamp;
+        CreateInfo.AddressW    = ESamplerMode::SamplerMode_Clamp;
+        CreateInfo.Filter    = ESamplerFilter::SamplerFilter_MinMagMipPoint;
+        
+        GBufferSampler = RenderLayer::CreateSamplerState(CreateInfo);
+        if (!GBufferSampler)
+        {
+            return false;
+        }
+    }
 
-	return true;
+    return true;
 }
 
 Bool Renderer::InitIntegrationLUT()
 {
-	constexpr UInt32 LUTSize	= 512;
-	constexpr EFormat LUTFormat	= EFormat::Format_R16G16_Float;
-	if (!RenderLayer::UAVSupportsFormat(EFormat::Format_R16G16_Float))
-	{
-		LOG_ERROR("[Renderer]: Format_R16G16_Float is not supported for UAVs");
+    constexpr UInt32 LUTSize    = 512;
+    constexpr EFormat LUTFormat    = EFormat::Format_R16G16_Float;
+    if (!RenderLayer::UAVSupportsFormat(EFormat::Format_R16G16_Float))
+    {
+        LOG_ERROR("[Renderer]: Format_R16G16_Float is not supported for UAVs");
 
-		Debug::DebugBreak();
-		return false;
-	}
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<Texture2D> StagingTexture = RenderLayer::CreateTexture2D(
-		nullptr, 
-		LUTFormat, 
-		TextureUsage_Default | TextureUsage_UAV, 
-		LUTSize, 
-		LUTSize, 
-		1, 1);
-	if (!StagingTexture)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		StagingTexture->SetName("Staging IntegrationLUT");
-	}
+    TSharedRef<Texture2D> StagingTexture = RenderLayer::CreateTexture2D(
+        nullptr, 
+        LUTFormat, 
+        TextureUsage_Default | TextureUsage_UAV, 
+        LUTSize, 
+        LUTSize, 
+        1, 1);
+    if (!StagingTexture)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        StagingTexture->SetName("Staging IntegrationLUT");
+    }
 
-	TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderLayer::CreateUnorderedAccessView(StagingTexture.Get(), LUTFormat, 0);
-	if (!StagingTextureUAV)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		StagingTextureUAV->SetName("IntegrationLUT UAV");
-	}
+    TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderLayer::CreateUnorderedAccessView(StagingTexture.Get(), LUTFormat, 0);
+    if (!StagingTextureUAV)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        StagingTextureUAV->SetName("IntegrationLUT UAV");
+    }
 
-	IntegrationLUT = RenderLayer::CreateTexture2D(
-		nullptr, 
-		LUTFormat, 
-		TextureUsage_Default | TextureUsage_SRV,
-		LUTSize, 
-		LUTSize, 
-		1, 1);
-	if (!IntegrationLUT)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		IntegrationLUT->SetName("IntegrationLUT");
-	}
+    IntegrationLUT = RenderLayer::CreateTexture2D(
+        nullptr, 
+        LUTFormat, 
+        TextureUsage_Default | TextureUsage_SRV,
+        LUTSize, 
+        LUTSize, 
+        1, 1);
+    if (!IntegrationLUT)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        IntegrationLUT->SetName("IntegrationLUT");
+    }
 
-	IntegrationLUTSRV = RenderLayer::CreateShaderResourceView(IntegrationLUT.Get(), LUTFormat, 0, 1);
-	if (!IntegrationLUTSRV)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		IntegrationLUTSRV->SetName("IntegrationLUT SRV");
-	}
+    IntegrationLUTSRV = RenderLayer::CreateShaderResourceView(IntegrationLUT.Get(), LUTFormat, 0, 1);
+    if (!IntegrationLUTSRV)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        IntegrationLUTSRV->SetName("IntegrationLUT SRV");
+    }
 
-	{
-		SamplerStateCreateInfo CreateInfo;
-		CreateInfo.AddressU	= ESamplerMode::SamplerMode_Clamp;
-		CreateInfo.AddressV	= ESamplerMode::SamplerMode_Clamp;
-		CreateInfo.AddressW	= ESamplerMode::SamplerMode_Clamp;
-		CreateInfo.Filter	= ESamplerFilter::SamplerFilter_MinMagMipPoint;
+    {
+        SamplerStateCreateInfo CreateInfo;
+        CreateInfo.AddressU    = ESamplerMode::SamplerMode_Clamp;
+        CreateInfo.AddressV    = ESamplerMode::SamplerMode_Clamp;
+        CreateInfo.AddressW    = ESamplerMode::SamplerMode_Clamp;
+        CreateInfo.Filter    = ESamplerFilter::SamplerFilter_MinMagMipPoint;
 
-		IntegrationLUTSampler = RenderLayer::CreateSamplerState(CreateInfo);
-		if (!IntegrationLUTSampler)
-		{
-			return false;
-		}
-	}
+        IntegrationLUTSampler = RenderLayer::CreateSamplerState(CreateInfo);
+        if (!IntegrationLUTSampler)
+        {
+            return false;
+        }
+    }
 
-	TArray<UInt8> ShaderCode;
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/BRDFIntegationGen.hlsl",
-		"Main",
-		nullptr,
-		EShaderStage::ShaderStage_Compute,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/BRDFIntegationGen.hlsl",
+        "Main",
+        nullptr,
+        EShaderStage::ShaderStage_Compute,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<ComputeShader> CShader = RenderLayer::CreateComputeShader(ShaderCode);
-	if (!CShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		CShader->SetName("BRDFIntegationGen ComputeShader");
-	}
+    TSharedRef<ComputeShader> CShader = RenderLayer::CreateComputeShader(ShaderCode);
+    if (!CShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        CShader->SetName("BRDFIntegationGen ComputeShader");
+    }
 
-	ComputePipelineStateCreateInfo PSOInfo;
-	PSOInfo.Shader = CShader.Get();
+    ComputePipelineStateCreateInfo PSOInfo;
+    PSOInfo.Shader = CShader.Get();
 
-	TSharedRef<ComputePipelineState> BRDFPSO = RenderLayer::CreateComputePipelineState(PSOInfo);
-	if (!BRDFPSO)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		BRDFPSO->SetName("BRDFIntegationGen PipelineState");
-	}
+    TSharedRef<ComputePipelineState> BRDFPSO = RenderLayer::CreateComputePipelineState(PSOInfo);
+    if (!BRDFPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        BRDFPSO->SetName("BRDFIntegationGen PipelineState");
+    }
 
-	CmdList.Begin();
+    CmdList.Begin();
 
-	CmdList.TransitionTexture(
-		StagingTexture.Get(),
-		EResourceState::ResourceState_Common,
-		EResourceState::ResourceState_UnorderedAccess);
+    CmdList.TransitionTexture(
+        StagingTexture.Get(),
+        EResourceState::ResourceState_Common,
+        EResourceState::ResourceState_UnorderedAccess);
 
-	CmdList.BindComputePipelineState(BRDFPSO.Get());
+    CmdList.BindComputePipelineState(BRDFPSO.Get());
 
-	CmdList.BindUnorderedAccessViews(
-		EShaderStage::ShaderStage_Compute,
-		&StagingTextureUAV, 1, 0);
+    CmdList.BindUnorderedAccessViews(
+        EShaderStage::ShaderStage_Compute,
+        &StagingTextureUAV, 1, 0);
 
-	constexpr UInt32 ThreadCount = 16;
-	const UInt32 DispatchWidth	= Math::DivideByMultiple(LUTSize, ThreadCount);
-	const UInt32 DispatchHeight	= Math::DivideByMultiple(LUTSize, ThreadCount);
-	CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+    constexpr UInt32 ThreadCount = 16;
+    const UInt32 DispatchWidth    = Math::DivideByMultiple(LUTSize, ThreadCount);
+    const UInt32 DispatchHeight    = Math::DivideByMultiple(LUTSize, ThreadCount);
+    CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
-	CmdList.UnorderedAccessTextureBarrier(StagingTexture.Get());
+    CmdList.UnorderedAccessTextureBarrier(StagingTexture.Get());
 
-	CmdList.TransitionTexture(
-		StagingTexture.Get(),
-		EResourceState::ResourceState_UnorderedAccess,
-		EResourceState::ResourceState_CopySource);
+    CmdList.TransitionTexture(
+        StagingTexture.Get(),
+        EResourceState::ResourceState_UnorderedAccess,
+        EResourceState::ResourceState_CopySource);
 
-	CmdList.TransitionTexture(
-		IntegrationLUT.Get(),
-		EResourceState::ResourceState_Common,
-		EResourceState::ResourceState_CopyDest);
+    CmdList.TransitionTexture(
+        IntegrationLUT.Get(),
+        EResourceState::ResourceState_Common,
+        EResourceState::ResourceState_CopyDest);
 
-	CmdList.CopyTexture(IntegrationLUT.Get(), StagingTexture.Get());
+    CmdList.CopyTexture(IntegrationLUT.Get(), StagingTexture.Get());
 
-	CmdList.TransitionTexture(
-		IntegrationLUT.Get(),
-		EResourceState::ResourceState_CopyDest,
-		EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(
+        IntegrationLUT.Get(),
+        EResourceState::ResourceState_CopyDest,
+        EResourceState::ResourceState_PixelShaderResource);
 
-	CmdList.DestroyResource(StagingTexture.Get());
-	CmdList.DestroyResource(StagingTextureUAV.Get());
-	CmdList.DestroyResource(BRDFPSO.Get());
+    CmdList.DestroyResource(StagingTexture.Get());
+    CmdList.DestroyResource(StagingTextureUAV.Get());
+    CmdList.DestroyResource(BRDFPSO.Get());
 
-	CmdList.End();
-	GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    CmdList.End();
+    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
 
-	return true;
+    return true;
 }
 
 Bool Renderer::InitRayTracingTexture()
 {
-	const UInt32 Width	= MainWindowViewport->GetWidth();
-	const UInt32 Height	= MainWindowViewport->GetHeight();
-	const UInt32 Usage	= TextureUsage_Default | TextureUsage_RWTexture;
-	ReflectionTexture = RenderLayer::CreateTexture2D(
-		nullptr, 
-		EFormat::Format_R8G8B8A8_Unorm, 
-		Usage, 
-		Width, 
-		Height, 
-		1, 1);
-	if (!ReflectionTexture)
-	{
-		return false;
-	}
+    const UInt32 Width    = MainWindowViewport->GetWidth();
+    const UInt32 Height    = MainWindowViewport->GetHeight();
+    const UInt32 Usage    = TextureUsage_Default | TextureUsage_RWTexture;
+    ReflectionTexture = RenderLayer::CreateTexture2D(
+        nullptr, 
+        EFormat::Format_R8G8B8A8_Unorm, 
+        Usage, 
+        Width, 
+        Height, 
+        1, 1);
+    if (!ReflectionTexture)
+    {
+        return false;
+    }
 
-	ReflectionTextureUAV = RenderLayer::CreateUnorderedAccessView(ReflectionTexture.Get(), EFormat::Format_R8G8B8A8_Unorm, 0);
-	if (!ReflectionTextureUAV)
-	{
-		return false;
-	}
+    ReflectionTextureUAV = RenderLayer::CreateUnorderedAccessView(ReflectionTexture.Get(), EFormat::Format_R8G8B8A8_Unorm, 0);
+    if (!ReflectionTextureUAV)
+    {
+        return false;
+    }
 
-	ReflectionTextureSRV = RenderLayer::CreateShaderResourceView(ReflectionTexture.Get(), EFormat::Format_R8G8B8A8_Unorm, 0, 1);
-	if (!ReflectionTextureSRV)
-	{
-		return false;
-	}
-	return true;
+    ReflectionTextureSRV = RenderLayer::CreateShaderResourceView(ReflectionTexture.Get(), EFormat::Format_R8G8B8A8_Unorm, 0, 1);
+    if (!ReflectionTextureSRV)
+    {
+        return false;
+    }
+    return true;
 }
 
 Bool Renderer::InitDebugStates()
 {
-	using namespace Microsoft::WRL;
+    using namespace Microsoft::WRL;
 
-	TArray<UInt8> ShaderCode;
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/Debug.hlsl",
-		"VSMain",
-		nullptr,
-		EShaderStage::ShaderStage_Vertex,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/Debug.hlsl",
+        "VSMain",
+        nullptr,
+        EShaderStage::ShaderStage_Vertex,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
-	if (!VShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		VShader->SetName("Debug VertexShader");
-	}
+    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    if (!VShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        VShader->SetName("Debug VertexShader");
+    }
 
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/Debug.hlsl",
-		"PSMain",
-		nullptr,
-		EShaderStage::ShaderStage_Pixel,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/Debug.hlsl",
+        "PSMain",
+        nullptr,
+        EShaderStage::ShaderStage_Pixel,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
-	if (!PShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PShader->SetName("Debug PixelShader");
-	}
+    TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    if (!PShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PShader->SetName("Debug PixelShader");
+    }
 
-	// Debug Inputlayout
-	InputLayoutStateCreateInfo InputLayout =
-	{
-		{ "POSITION", 0, EFormat::Format_R32G32B32_Float, 0, 0, EInputClassification::InputClassification_Vertex, 0 },
-	};
+    // Debug Inputlayout
+    InputLayoutStateCreateInfo InputLayout =
+    {
+        { "POSITION", 0, EFormat::Format_R32G32B32_Float, 0, 0, EInputClassification::InputClassification_Vertex, 0 },
+    };
 
-	TSharedRef<InputLayoutState> InputLayoutState = RenderLayer::CreateInputLayout(InputLayout);
-	if (!InputLayoutState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		InputLayoutState->SetName("Debug InputLayoutState");
-	}
+    TSharedRef<InputLayoutState> InputLayoutState = RenderLayer::CreateInputLayout(InputLayout);
+    if (!InputLayoutState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        InputLayoutState->SetName("Debug InputLayoutState");
+    }
 
-	DepthStencilStateCreateInfo DepthStencilStateInfo;
-	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_LessEqual;
-	DepthStencilStateInfo.DepthEnable		= false;
-	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_Zero;
+    DepthStencilStateCreateInfo DepthStencilStateInfo;
+    DepthStencilStateInfo.DepthFunc            = EComparisonFunc::ComparisonFunc_LessEqual;
+    DepthStencilStateInfo.DepthEnable        = false;
+    DepthStencilStateInfo.DepthWriteMask    = EDepthWriteMask::DepthWriteMask_Zero;
 
-	TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
-	if (!DepthStencilState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		DepthStencilState->SetName("Debug DepthStencilState");
-	}
+    TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    if (!DepthStencilState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        DepthStencilState->SetName("Debug DepthStencilState");
+    }
 
-	RasterizerStateCreateInfo RasterizerStateInfo;
-	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
+    RasterizerStateCreateInfo RasterizerStateInfo;
+    RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
 
-	TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
-	if (!RasterizerState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		RasterizerState->SetName("Debug RasterizerState");
-	}
+    TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    if (!RasterizerState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RasterizerState->SetName("Debug RasterizerState");
+    }
 
-	// Debug blendstate
-	BlendStateCreateInfo BlendStateInfo;
+    // Debug blendstate
+    BlendStateCreateInfo BlendStateInfo;
 
-	TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
-	if (!BlendState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		BlendState->SetName("Debug BlendState");
-	}
+    TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+    if (!BlendState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        BlendState->SetName("Debug BlendState");
+    }
 
-	GraphicsPipelineStateCreateInfo PSOProperties;
-	PSOProperties.BlendState								= BlendState.Get();
-	PSOProperties.DepthStencilState							= DepthStencilState.Get();
-	PSOProperties.InputLayoutState							= InputLayoutState.Get();
-	PSOProperties.RasterizerState							= RasterizerState.Get();
-	PSOProperties.ShaderState.VertexShader					= VShader.Get();
-	PSOProperties.ShaderState.PixelShader					= PShader.Get();
-	PSOProperties.PrimitiveTopologyType						= EPrimitiveTopologyType::PrimitiveTopologyType_Line;
-	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= RenderTargetFormat;
-	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
-	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
+    GraphicsPipelineStateCreateInfo PSOProperties;
+    PSOProperties.BlendState                                = BlendState.Get();
+    PSOProperties.DepthStencilState                            = DepthStencilState.Get();
+    PSOProperties.InputLayoutState                            = InputLayoutState.Get();
+    PSOProperties.RasterizerState                            = RasterizerState.Get();
+    PSOProperties.ShaderState.VertexShader                    = VShader.Get();
+    PSOProperties.ShaderState.PixelShader                    = PShader.Get();
+    PSOProperties.PrimitiveTopologyType                        = EPrimitiveTopologyType::PrimitiveTopologyType_Line;
+    PSOProperties.PipelineFormats.RenderTargetFormats[0]    = RenderTargetFormat;
+    PSOProperties.PipelineFormats.NumRenderTargets            = 1;
+    PSOProperties.PipelineFormats.DepthStencilFormat        = DepthBufferFormat;
 
-	DebugBoxPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
-	if (!DebugBoxPSO)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		DebugBoxPSO->SetName("Debug PipelineState");
-	}
+    DebugBoxPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    if (!DebugBoxPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        DebugBoxPSO->SetName("Debug PipelineState");
+    }
 
-	// Create VertexBuffer
-	XMFLOAT3 Vertices[8] =
-	{
-		{ -0.5f, -0.5f,  0.5f },
-		{  0.5f, -0.5f,  0.5f },
-		{ -0.5f,  0.5f,  0.5f },
-		{  0.5f,  0.5f,  0.5f },
+    // Create VertexBuffer
+    XMFLOAT3 Vertices[8] =
+    {
+        { -0.5f, -0.5f,  0.5f },
+        {  0.5f, -0.5f,  0.5f },
+        { -0.5f,  0.5f,  0.5f },
+        {  0.5f,  0.5f,  0.5f },
 
-		{  0.5f, -0.5f, -0.5f },
-		{ -0.5f, -0.5f, -0.5f },
-		{  0.5f,  0.5f, -0.5f },
-		{ -0.5f,  0.5f, -0.5f }
-	};
+        {  0.5f, -0.5f, -0.5f },
+        { -0.5f, -0.5f, -0.5f },
+        {  0.5f,  0.5f, -0.5f },
+        { -0.5f,  0.5f, -0.5f }
+    };
 
-	ResourceData VertexData(Vertices);
+    ResourceData VertexData(Vertices);
 
-	AABBVertexBuffer = RenderLayer::CreateVertexBuffer<XMFLOAT3>(&VertexData, 8, BufferUsage_Default);
-	if (!AABBVertexBuffer)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		AABBVertexBuffer->SetName("AABB VertexBuffer");
-	}
+    AABBVertexBuffer = RenderLayer::CreateVertexBuffer<XMFLOAT3>(&VertexData, 8, BufferUsage_Default);
+    if (!AABBVertexBuffer)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        AABBVertexBuffer->SetName("AABB VertexBuffer");
+    }
 
-	// Create IndexBuffer
-	UInt16 Indices[24] =
-	{
-		0, 1,
-		1, 3,
-		3, 2,
-		2, 0,
-		1, 4,
-		3, 6,
-		6, 4,
-		4, 5,
-		5, 7,
-		7, 6,
-		0, 5,
-		2, 7,
-	};
+    // Create IndexBuffer
+    UInt16 Indices[24] =
+    {
+        0, 1,
+        1, 3,
+        3, 2,
+        2, 0,
+        1, 4,
+        3, 6,
+        6, 4,
+        4, 5,
+        5, 7,
+        7, 6,
+        0, 5,
+        2, 7,
+    };
 
-	ResourceData IndexData(Indices);
+    ResourceData IndexData(Indices);
 
-	AABBIndexBuffer = RenderLayer::CreateIndexBuffer(
-		&IndexData, 
-		sizeof(UInt16) * 24, 
-		EIndexFormat::IndexFormat_UInt16, 
-		BufferUsage_Default);
-	if (!AABBIndexBuffer)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		AABBIndexBuffer->SetName("AABB IndexBuffer");
-	}
+    AABBIndexBuffer = RenderLayer::CreateIndexBuffer(
+        &IndexData, 
+        sizeof(UInt16) * 24, 
+        EIndexFormat::IndexFormat_UInt16, 
+        BufferUsage_Default);
+    if (!AABBIndexBuffer)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        AABBIndexBuffer->SetName("AABB IndexBuffer");
+    }
 
-	return true;
+    return true;
 }
 
 Bool Renderer::InitAA()
 {
-	using namespace Microsoft::WRL;
+    using namespace Microsoft::WRL;
 
-	// No AA
-	TArray<UInt8> ShaderCode;
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/FullscreenVS.hlsl",
-		"Main",
-		nullptr,
-		EShaderStage::ShaderStage_Vertex,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    // No AA
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/FullscreenVS.hlsl",
+        "Main",
+        nullptr,
+        EShaderStage::ShaderStage_Vertex,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
-	if (!VShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		VShader->SetName("Fullscreen VertexShader");
-	}
+    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    if (!VShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        VShader->SetName("Fullscreen VertexShader");
+    }
 
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/PostProcessPS.hlsl",
-		"Main",
-		nullptr,
-		EShaderStage::ShaderStage_Pixel,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/PostProcessPS.hlsl",
+        "Main",
+        nullptr,
+        EShaderStage::ShaderStage_Pixel,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
-	if (!PShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PShader->SetName("PostProcess PixelShader");
-	}
+    TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    if (!PShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PShader->SetName("PostProcess PixelShader");
+    }
 
-	DepthStencilStateCreateInfo DepthStencilStateInfo;
-	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_Always;
-	DepthStencilStateInfo.DepthEnable		= false;
-	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_Zero;
+    DepthStencilStateCreateInfo DepthStencilStateInfo;
+    DepthStencilStateInfo.DepthFunc            = EComparisonFunc::ComparisonFunc_Always;
+    DepthStencilStateInfo.DepthEnable        = false;
+    DepthStencilStateInfo.DepthWriteMask    = EDepthWriteMask::DepthWriteMask_Zero;
 
-	TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
-	if (!DepthStencilState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		DepthStencilState->SetName("PostProcess DepthStencilState");
-	}
+    TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    if (!DepthStencilState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        DepthStencilState->SetName("PostProcess DepthStencilState");
+    }
 
-	RasterizerStateCreateInfo RasterizerStateInfo;
-	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
+    RasterizerStateCreateInfo RasterizerStateInfo;
+    RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
 
-	TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
-	if (!RasterizerState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		RasterizerState->SetName("PostProcess RasterizerState");
-	}
+    TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    if (!RasterizerState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RasterizerState->SetName("PostProcess RasterizerState");
+    }
 
-	BlendStateCreateInfo BlendStateInfo;
-	BlendStateInfo.IndependentBlendEnable		= false;
-	BlendStateInfo.RenderTarget[0].BlendEnable	= false;
+    BlendStateCreateInfo BlendStateInfo;
+    BlendStateInfo.IndependentBlendEnable        = false;
+    BlendStateInfo.RenderTarget[0].BlendEnable    = false;
 
-	TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
-	if (!BlendState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		BlendState->SetName("PostProcess BlendState");
-	}
+    TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+    if (!BlendState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        BlendState->SetName("PostProcess BlendState");
+    }
 
-	GraphicsPipelineStateCreateInfo PSOProperties;
-	PSOProperties.InputLayoutState							= nullptr;
-	PSOProperties.BlendState								= BlendState.Get();
-	PSOProperties.DepthStencilState							= DepthStencilState.Get();
-	PSOProperties.RasterizerState							= RasterizerState.Get();
-	PSOProperties.ShaderState.VertexShader					= VShader.Get();
-	PSOProperties.ShaderState.PixelShader					= PShader.Get();
-	PSOProperties.PrimitiveTopologyType						= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
-	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= EFormat::Format_R8G8B8A8_Unorm;
-	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
-	PSOProperties.PipelineFormats.DepthStencilFormat		= EFormat::Format_Unknown;
+    GraphicsPipelineStateCreateInfo PSOProperties;
+    PSOProperties.InputLayoutState                            = nullptr;
+    PSOProperties.BlendState                                = BlendState.Get();
+    PSOProperties.DepthStencilState                            = DepthStencilState.Get();
+    PSOProperties.RasterizerState                            = RasterizerState.Get();
+    PSOProperties.ShaderState.VertexShader                    = VShader.Get();
+    PSOProperties.ShaderState.PixelShader                    = PShader.Get();
+    PSOProperties.PrimitiveTopologyType                        = EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+    PSOProperties.PipelineFormats.RenderTargetFormats[0]    = EFormat::Format_R8G8B8A8_Unorm;
+    PSOProperties.PipelineFormats.NumRenderTargets            = 1;
+    PSOProperties.PipelineFormats.DepthStencilFormat        = EFormat::Format_Unknown;
 
-	PostPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
-	if (!PostPSO)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PostPSO->SetName("PostProcess PipelineState");
-	}
+    PostPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    if (!PostPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PostPSO->SetName("PostProcess PipelineState");
+    }
 
-	// FXAA
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/FXAA_PS.hlsl",
-		"Main",
-		nullptr,
-		EShaderStage::ShaderStage_Pixel,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    // FXAA
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/FXAA_PS.hlsl",
+        "Main",
+        nullptr,
+        EShaderStage::ShaderStage_Pixel,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	PShader = RenderLayer::CreatePixelShader(ShaderCode);
-	if (!PShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PShader->SetName("FXAA PixelShader");
-	}
+    PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    if (!PShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PShader->SetName("FXAA PixelShader");
+    }
 
-	PSOProperties.ShaderState.PixelShader = PShader.Get();
+    PSOProperties.ShaderState.PixelShader = PShader.Get();
 
-	FXAAPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
-	if (!FXAAPSO)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		FXAAPSO->SetName("FXAA PipelineState");
-	}
+    FXAAPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    if (!FXAAPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        FXAAPSO->SetName("FXAA PipelineState");
+    }
 
-	return true;
+    return true;
 }
 
 Bool Renderer::InitForwardPass()
 {
-	using namespace Microsoft::WRL;
+    using namespace Microsoft::WRL;
 
-	// Init PipelineState
-	TArray<ShaderDefine> Defines =
-	{
-		{ "ENABLE_PARALLAX_MAPPING", "1" },
-		{ "ENABLE_NORMAL_MAPPING",	 "1" },
-	};
+    // Init PipelineState
+    TArray<ShaderDefine> Defines =
+    {
+        { "ENABLE_PARALLAX_MAPPING", "1" },
+        { "ENABLE_NORMAL_MAPPING",     "1" },
+    };
 
-	TArray<UInt8> ShaderCode;
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/ForwardPass.hlsl",
-		"VSMain",
-		&Defines,
-		EShaderStage::ShaderStage_Vertex,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/ForwardPass.hlsl",
+        "VSMain",
+        &Defines,
+        EShaderStage::ShaderStage_Vertex,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
-	if (!VShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		VShader->SetName("ForwardPass VertexShader");
-	}
+    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    if (!VShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        VShader->SetName("ForwardPass VertexShader");
+    }
 
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/ForwardPass.hlsl",
-		"PSMain",
-		&Defines,
-		EShaderStage::ShaderStage_Pixel,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/ForwardPass.hlsl",
+        "PSMain",
+        &Defines,
+        EShaderStage::ShaderStage_Pixel,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
-	if (!PShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		PShader->SetName("ForwardPass PixelShader");
-	}
+    TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    if (!PShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PShader->SetName("ForwardPass PixelShader");
+    }
 
-	DepthStencilStateCreateInfo DepthStencilStateInfo;
-	DepthStencilStateInfo.DepthFunc			= EComparisonFunc::ComparisonFunc_LessEqual;
-	DepthStencilStateInfo.DepthEnable		= true;
-	DepthStencilStateInfo.DepthWriteMask	= EDepthWriteMask::DepthWriteMask_All;
+    DepthStencilStateCreateInfo DepthStencilStateInfo;
+    DepthStencilStateInfo.DepthFunc            = EComparisonFunc::ComparisonFunc_LessEqual;
+    DepthStencilStateInfo.DepthEnable        = true;
+    DepthStencilStateInfo.DepthWriteMask    = EDepthWriteMask::DepthWriteMask_All;
 
-	TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
-	if (!DepthStencilState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		DepthStencilState->SetName("ForwardPass DepthStencilState");
-	}
+    TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    if (!DepthStencilState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        DepthStencilState->SetName("ForwardPass DepthStencilState");
+    }
 
-	RasterizerStateCreateInfo RasterizerStateInfo;
-	RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
+    RasterizerStateCreateInfo RasterizerStateInfo;
+    RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
 
-	TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
-	if (!RasterizerState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		RasterizerState->SetName("ForwardPass RasterizerState");
-	}
+    TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    if (!RasterizerState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RasterizerState->SetName("ForwardPass RasterizerState");
+    }
 
-	BlendStateCreateInfo BlendStateInfo;
-	BlendStateInfo.IndependentBlendEnable		= false;
-	BlendStateInfo.RenderTarget[0].BlendEnable	= true;
+    BlendStateCreateInfo BlendStateInfo;
+    BlendStateInfo.IndependentBlendEnable        = false;
+    BlendStateInfo.RenderTarget[0].BlendEnable    = true;
 
-	TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
-	if (!BlendState)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		BlendState->SetName("ForwardPass BlendState");
-	}
+    TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+    if (!BlendState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        BlendState->SetName("ForwardPass BlendState");
+    }
 
-	GraphicsPipelineStateCreateInfo PSOProperties = { };
-	PSOProperties.ShaderState.VertexShader					= VShader.Get();
-	PSOProperties.ShaderState.PixelShader					= PShader.Get();
-	PSOProperties.InputLayoutState							= StdInputLayout.Get();
-	PSOProperties.DepthStencilState							= DepthStencilState.Get();
-	PSOProperties.BlendState								= BlendState.Get();
-	PSOProperties.RasterizerState							= RasterizerState.Get();
-	PSOProperties.PipelineFormats.RenderTargetFormats[0]	= MainWindowViewport->GetColorFormat();
-	PSOProperties.PipelineFormats.NumRenderTargets			= 1;
-	PSOProperties.PipelineFormats.DepthStencilFormat		= DepthBufferFormat;
-	PSOProperties.PrimitiveTopologyType						= EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+    GraphicsPipelineStateCreateInfo PSOProperties = { };
+    PSOProperties.ShaderState.VertexShader                    = VShader.Get();
+    PSOProperties.ShaderState.PixelShader                    = PShader.Get();
+    PSOProperties.InputLayoutState                            = StdInputLayout.Get();
+    PSOProperties.DepthStencilState                            = DepthStencilState.Get();
+    PSOProperties.BlendState                                = BlendState.Get();
+    PSOProperties.RasterizerState                            = RasterizerState.Get();
+    PSOProperties.PipelineFormats.RenderTargetFormats[0]    = MainWindowViewport->GetColorFormat();
+    PSOProperties.PipelineFormats.NumRenderTargets            = 1;
+    PSOProperties.PipelineFormats.DepthStencilFormat        = DepthBufferFormat;
+    PSOProperties.PrimitiveTopologyType                        = EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
 
-	ForwardPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
-	if (!ForwardPSO)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		ForwardPSO->SetName("Forward PipelineState");
-	}
+    ForwardPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    if (!ForwardPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        ForwardPSO->SetName("Forward PipelineState");
+    }
 
-	return true;
+    return true;
 }
 
 Bool Renderer::InitSSAO()
 {
-	using namespace Microsoft::WRL;
+    using namespace Microsoft::WRL;
 
-	if (!InitSSAO_RenderTarget())
-	{
-		return false;
-	}
+    if (!InitSSAO_RenderTarget())
+    {
+        return false;
+    }
 
-	// Load shader
-	TArray<UInt8> ShaderCode;
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/SSAO.hlsl",
-		"Main",
-		nullptr,
-		EShaderStage::ShaderStage_Compute,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    // Load shader
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/SSAO.hlsl",
+        "Main",
+        nullptr,
+        EShaderStage::ShaderStage_Compute,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	TSharedRef<ComputeShader> CShader = RenderLayer::CreateComputeShader(ShaderCode);
-	if (!CShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		CShader->SetName("SSAO Shader");
-	}
+    TSharedRef<ComputeShader> CShader = RenderLayer::CreateComputeShader(ShaderCode);
+    if (!CShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        CShader->SetName("SSAO Shader");
+    }
 
-	// Init PipelineState
-	{
-		ComputePipelineStateCreateInfo PSOProperties = { };
-		PSOProperties.Shader = CShader.Get();
+    // Init PipelineState
+    {
+        ComputePipelineStateCreateInfo PSOProperties = { };
+        PSOProperties.Shader = CShader.Get();
 
-		SSAOPSO = RenderLayer::CreateComputePipelineState(PSOProperties);
-		if (!SSAOPSO)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAOPSO->SetName("SSAO PipelineState");
-		}
-	}
+        SSAOPSO = RenderLayer::CreateComputePipelineState(PSOProperties);
+        if (!SSAOPSO)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            SSAOPSO->SetName("SSAO PipelineState");
+        }
+    }
 
-	// Generate SSAO Kernel
-	std::uniform_real_distribution<Float> RandomFloats(0.0f, 1.0f);
-	std::default_random_engine Generator;
-	
-	XMVECTOR Normal = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	
-	TArray<XMFLOAT3> SSAOKernel;
-	for (UInt32 i = 0; i < 256 && SSAOKernel.Size() < 64; ++i)
-	{
-		XMVECTOR XmSample = XMVectorSet(
-			RandomFloats(Generator) * 2.0f - 1.0f,
-			RandomFloats(Generator) * 2.0f - 1.0f,
-			RandomFloats(Generator), 
-			0.0f);
+    // Generate SSAO Kernel
+    std::uniform_real_distribution<Float> RandomFloats(0.0f, 1.0f);
+    std::default_random_engine Generator;
+    
+    XMVECTOR Normal = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+    
+    TArray<XMFLOAT3> SSAOKernel;
+    for (UInt32 i = 0; i < 256 && SSAOKernel.Size() < 64; ++i)
+    {
+        XMVECTOR XmSample = XMVectorSet(
+            RandomFloats(Generator) * 2.0f - 1.0f,
+            RandomFloats(Generator) * 2.0f - 1.0f,
+            RandomFloats(Generator), 
+            0.0f);
 
-		Float Scale = RandomFloats(Generator);
-		XmSample = XMVector3Normalize(XmSample);
-		XmSample = XMVectorScale(XmSample, Scale);
+        Float Scale = RandomFloats(Generator);
+        XmSample = XMVector3Normalize(XmSample);
+        XmSample = XMVectorScale(XmSample, Scale);
 
-		Float Dot = XMVectorGetX(XMVector3Dot(XmSample, Normal));
-		if (Math::Abs(Dot) > 0.85f)
-		{
-			continue;
-		}
+        Float Dot = XMVectorGetX(XMVector3Dot(XmSample, Normal));
+        if (Math::Abs(Dot) > 0.85f)
+        {
+            continue;
+        }
 
-		Scale = Float(i) / 64.0f;
-		Scale = Math::Lerp(0.1f, 1.0f, Scale * Scale);
-		XmSample = XMVectorScale(XmSample, Scale);
+        Scale = Float(i) / 64.0f;
+        Scale = Math::Lerp(0.1f, 1.0f, Scale * Scale);
+        XmSample = XMVectorScale(XmSample, Scale);
 
-		XMFLOAT3 Sample;
-		XMStoreFloat3(&Sample, XmSample);
-		SSAOKernel.EmplaceBack(Sample);
-	}
+        XMFLOAT3 Sample;
+        XMStoreFloat3(&Sample, XmSample);
+        SSAOKernel.EmplaceBack(Sample);
+    }
 
-	// Generate noise
-	TArray<Float16> SSAONoise;
-	for (UInt32 i = 0; i < 16; i++)
-	{
-		const Float x = RandomFloats(Generator) * 2.0f - 1.0f;
-		const Float y = RandomFloats(Generator) * 2.0f - 1.0f;
-		SSAONoise.EmplaceBack(x);
-		SSAONoise.EmplaceBack(y);
-		SSAONoise.EmplaceBack(0.0f);
-		SSAONoise.EmplaceBack(0.0f);
-	}
+    // Generate noise
+    TArray<Float16> SSAONoise;
+    for (UInt32 i = 0; i < 16; i++)
+    {
+        const Float x = RandomFloats(Generator) * 2.0f - 1.0f;
+        const Float y = RandomFloats(Generator) * 2.0f - 1.0f;
+        SSAONoise.EmplaceBack(x);
+        SSAONoise.EmplaceBack(y);
+        SSAONoise.EmplaceBack(0.0f);
+        SSAONoise.EmplaceBack(0.0f);
+    }
 
-	// Init texture
-	{
-		SSAONoiseTex = RenderLayer::CreateTexture2D(
-			nullptr,
-			EFormat::Format_R16G16B16A16_Float,
-			TextureUsage_SRV,
-			4,
-			4,
-			1, 1);
-		if (!SSAONoiseTex)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAONoiseTex->SetName("SSAO Noise Texture");
-		}
+    // Init texture
+    {
+        SSAONoiseTex = RenderLayer::CreateTexture2D(
+            nullptr,
+            EFormat::Format_R16G16B16A16_Float,
+            TextureUsage_SRV,
+            4,
+            4,
+            1, 1);
+        if (!SSAONoiseTex)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            SSAONoiseTex->SetName("SSAO Noise Texture");
+        }
 
-		SSAONoiseSRV = RenderLayer::CreateShaderResourceView(
-			SSAONoiseTex.Get(),
-			EFormat::Format_R16G16B16A16_Float,
-			0, 1);
-		if (!SSAONoiseSRV)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAOBufferSRV->SetName("SSAO Noise Texture SRV");
-		}
-	}
+        SSAONoiseSRV = RenderLayer::CreateShaderResourceView(
+            SSAONoiseTex.Get(),
+            EFormat::Format_R16G16B16A16_Float,
+            0, 1);
+        if (!SSAONoiseSRV)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            SSAOBufferSRV->SetName("SSAO Noise Texture SRV");
+        }
+    }
 
-	CmdList.Begin();
-	CmdList.TransitionTexture(
-		SSAOBuffer.Get(), 
-		EResourceState::ResourceState_Common, 
-		EResourceState::ResourceState_PixelShaderResource);
+    CmdList.Begin();
+    CmdList.TransitionTexture(
+        SSAOBuffer.Get(), 
+        EResourceState::ResourceState_Common, 
+        EResourceState::ResourceState_PixelShaderResource);
 
-	CmdList.TransitionTexture(
-		SSAONoiseTex.Get(),
-		EResourceState::ResourceState_Common,
-		EResourceState::ResourceState_CopyDest);
+    CmdList.TransitionTexture(
+        SSAONoiseTex.Get(),
+        EResourceState::ResourceState_Common,
+        EResourceState::ResourceState_CopyDest);
 
-	CmdList.UpdateTexture2D(
-		SSAONoiseTex.Get(),
-		4, 4, 0,
-		SSAONoise.Data());
+    CmdList.UpdateTexture2D(
+        SSAONoiseTex.Get(),
+        4, 4, 0,
+        SSAONoise.Data());
 
-	CmdList.TransitionTexture(
-		SSAONoiseTex.Get(),
-		EResourceState::ResourceState_CopyDest,
-		EResourceState::ResourceState_NonPixelShaderResource);
+    CmdList.TransitionTexture(
+        SSAONoiseTex.Get(),
+        EResourceState::ResourceState_CopyDest,
+        EResourceState::ResourceState_NonPixelShaderResource);
 
-	CmdList.End();
-	GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    CmdList.End();
+    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
 
-	// Init samples
-	{
-		const UInt32 Stride			= sizeof(XMFLOAT3);
-		const UInt32 SizeInBytes	= Stride * SSAOKernel.Size();
-		ResourceData SSAOSampleData(SSAOKernel.Data());
-		SSAOSamples = RenderLayer::CreateStructuredBuffer(
-			&SSAOSampleData,
-			SizeInBytes,
-			Stride,
-			BufferUsage_SRV | BufferUsage_Default);
-		if (!SSAOSamples)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAOSamples->SetName("SSAO Samples");
-		}
-	}
+    // Init samples
+    {
+        const UInt32 Stride            = sizeof(XMFLOAT3);
+        const UInt32 SizeInBytes    = Stride * SSAOKernel.Size();
+        ResourceData SSAOSampleData(SSAOKernel.Data());
+        SSAOSamples = RenderLayer::CreateStructuredBuffer(
+            &SSAOSampleData,
+            SizeInBytes,
+            Stride,
+            BufferUsage_SRV | BufferUsage_Default);
+        if (!SSAOSamples)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            SSAOSamples->SetName("SSAO Samples");
+        }
+    }
 
-	SSAOSamplesSRV = RenderLayer::CreateShaderResourceView(
-		SSAOSamples.Get(),
-		0, SSAOKernel.Size(), 
-		sizeof(XMFLOAT3));
-	if (!SSAOSamplesSRV)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		SSAOSamplesSRV->SetName("SSAO Samples SRV");
-	}
+    SSAOSamplesSRV = RenderLayer::CreateShaderResourceView(
+        SSAOSamples.Get(),
+        0, SSAOKernel.Size(), 
+        sizeof(XMFLOAT3));
+    if (!SSAOSamplesSRV)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        SSAOSamplesSRV->SetName("SSAO Samples SRV");
+    }
 
-	TArray<ShaderDefine> Defines;
-	Defines.EmplaceBack("HORIZONTAL_PASS", "1");
+    TArray<ShaderDefine> Defines;
+    Defines.EmplaceBack("HORIZONTAL_PASS", "1");
 
-	// Load shader
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/Blur.hlsl",
-		"Main",
-		&Defines,
-		EShaderStage::ShaderStage_Compute,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    // Load shader
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/Blur.hlsl",
+        "Main",
+        &Defines,
+        EShaderStage::ShaderStage_Compute,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	CShader = RenderLayer::CreateComputeShader(ShaderCode);
-	if (!CShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		CShader->SetName("SSAO Horizontal Blur Shader");
-	}
+    CShader = RenderLayer::CreateComputeShader(ShaderCode);
+    if (!CShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        CShader->SetName("SSAO Horizontal Blur Shader");
+    }
 
-	{
-		// Init PipelineState
-		ComputePipelineStateCreateInfo PSOProperties;
-		PSOProperties.Shader = CShader.Get();
+    {
+        // Init PipelineState
+        ComputePipelineStateCreateInfo PSOProperties;
+        PSOProperties.Shader = CShader.Get();
 
-		SSAOBlurHorizontal = RenderLayer::CreateComputePipelineState(PSOProperties);
-		if (!SSAOBlurHorizontal)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAOBlurHorizontal->SetName("SSAO Horizontal Blur PSO");
-		}
-	}
+        SSAOBlurHorizontal = RenderLayer::CreateComputePipelineState(PSOProperties);
+        if (!SSAOBlurHorizontal)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            SSAOBlurHorizontal->SetName("SSAO Horizontal Blur PSO");
+        }
+    }
 
-	Defines.Clear();
-	Defines.EmplaceBack("VERTICAL_PASS", "1");
+    Defines.Clear();
+    Defines.EmplaceBack("VERTICAL_PASS", "1");
 
-	if (!ShaderCompiler::CompileFromFile(
-		"../DXR-Engine/Shaders/Blur.hlsl",
-		"Main",
-		&Defines,
-		EShaderStage::ShaderStage_Compute,
-		EShaderModel::ShaderModel_6_0,
-		ShaderCode))
-	{
-		Debug::DebugBreak();
-		return false;
-	}
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/Blur.hlsl",
+        "Main",
+        &Defines,
+        EShaderStage::ShaderStage_Compute,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-	CShader = RenderLayer::CreateComputeShader(ShaderCode);
-	if (!CShader)
-	{
-		Debug::DebugBreak();
-		return false;
-	}
-	else
-	{
-		CShader->SetName("SSAO Vertcial Blur Shader");
-	}
+    CShader = RenderLayer::CreateComputeShader(ShaderCode);
+    if (!CShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        CShader->SetName("SSAO Vertcial Blur Shader");
+    }
 
-	{
-		// Init PipelineState
-		ComputePipelineStateCreateInfo PSOProperties;
-		PSOProperties.Shader = CShader.Get();
+    {
+        // Init PipelineState
+        ComputePipelineStateCreateInfo PSOProperties;
+        PSOProperties.Shader = CShader.Get();
 
-		SSAOBlurVertical = RenderLayer::CreateComputePipelineState(PSOProperties);
-		if (!SSAOBlurVertical)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAOBlurVertical->SetName("SSAO Vertical Blur PSO");
-		}
-	}
+        SSAOBlurVertical = RenderLayer::CreateComputePipelineState(PSOProperties);
+        if (!SSAOBlurVertical)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            SSAOBlurVertical->SetName("SSAO Vertical Blur PSO");
+        }
+    }
 
-	return true;
+    return true;
 }
 
 Bool Renderer::InitSSAO_RenderTarget()
 {
-	// Init texture
-	{
-		const UInt32 Width	= MainWindowViewport->GetWidth();
-		const UInt32 Height	= MainWindowViewport->GetHeight();
-		const UInt32 Usage	= TextureUsage_Default | TextureUsage_RWTexture;
+    // Init texture
+    {
+        const UInt32 Width    = MainWindowViewport->GetWidth();
+        const UInt32 Height    = MainWindowViewport->GetHeight();
+        const UInt32 Usage    = TextureUsage_Default | TextureUsage_RWTexture;
 
-		SSAOBuffer = RenderLayer::CreateTexture2D(
-			nullptr,
-			SSAOBufferFormat,
-			Usage,
-			Width,
-			Height,
-			1, 1);
-		if (!SSAOBuffer)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAOBuffer->SetName("SSAO Buffer");
-		}
+        SSAOBuffer = RenderLayer::CreateTexture2D(
+            nullptr,
+            SSAOBufferFormat,
+            Usage,
+            Width,
+            Height,
+            1, 1);
+        if (!SSAOBuffer)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            SSAOBuffer->SetName("SSAO Buffer");
+        }
 
-		SSAOBufferUAV = RenderLayer::CreateUnorderedAccessView(
-			SSAOBuffer.Get(),
-			SSAOBufferFormat,
-			0);
-		if (!SSAOBufferUAV)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAOBufferUAV->SetName("SSAO Buffer UAV");
-		}
+        SSAOBufferUAV = RenderLayer::CreateUnorderedAccessView(
+            SSAOBuffer.Get(),
+            SSAOBufferFormat,
+            0);
+        if (!SSAOBufferUAV)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            SSAOBufferUAV->SetName("SSAO Buffer UAV");
+        }
 
-		SSAOBufferSRV = RenderLayer::CreateShaderResourceView(
-			SSAOBuffer.Get(),
-			SSAOBufferFormat,
-			0, 1);
-		if (!SSAOBufferSRV)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-		else
-		{
-			SSAOBufferSRV->SetName("SSAO Buffer SRV");
-		}
-	}
+        SSAOBufferSRV = RenderLayer::CreateShaderResourceView(
+            SSAOBuffer.Get(),
+            SSAOBufferFormat,
+            0, 1);
+        if (!SSAOBufferSRV)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            SSAOBufferSRV->SetName("SSAO Buffer SRV");
+        }
+    }
 
-	return true;
-}
-
-Bool Renderer::CreateShadowMaps()
-{
-	DirLightShadowMaps = RenderLayer::CreateTexture2D(
-		nullptr,
-		ShadowMapFormat,
-		TextureUsage_ShadowMap,
-		CurrentLightSettings.ShadowMapWidth,
-		CurrentLightSettings.ShadowMapHeight,
-		1, 1,
-		ClearValue(DepthStencilClearValue(1.0f, 0)));
-	if (DirLightShadowMaps)
-	{
-		DirLightShadowMaps->SetName("Directional Light ShadowMaps");
-
-		DirLightShadowMapDSV = RenderLayer::CreateDepthStencilView(
-			DirLightShadowMaps.Get(),
-			ShadowMapFormat,
-			0);
-		if (!DirLightShadowMapDSV)
-		{
-			Debug::DebugBreak();
-		}
-
-#if !ENABLE_VSM
-		DirLightShadowMapSRV = RenderLayer::CreateShaderResourceView(
-			DirLightShadowMaps.Get(),
-			EFormat::Format_R32_Float,
-			0, 1);
-		if (!DirLightShadowMapSRV)
-		{
-			Debug::DebugBreak();
-		}
-#endif
-	}
-	else
-	{
-		return false;
-	}
-
-#if ENABLE_VSM
-	VSMDirLightShadowMaps = RenderLayer::CreateTexture2D(
-		nullptr,
-		EFormat::Format_R32G32_Float,
-		TextureUsage_RenderTarget,
-		Renderer::GetGlobalLightSettings().ShadowMapWidth,
-		Renderer::GetGlobalLightSettings().ShadowMapHeight,
-		1, 1,
-		ClearValue(ColorClearValue(1.0f, 1.0f, 1.0f, 1.0f)));
-	if (VSMDirLightShadowMaps)
-	{
-		VSMDirLightShadowMaps->SetName("Directional Light VSM");
-
-		VSMDirLightShadowMapRTV = RenderLayer::CreateRenderTargetView(
-			VSMDirLightShadowMaps.Get(),
-			EFormat::Format_R32G32_Float,
-			0);
-		if (!VSMDirLightShadowMapRTV)
-		{
-			Debug::DebugBreak();
-		}
-
-		VSMDirLightShadowMapSRV = RenderLayer::CreateShaderResourceView(
-			VSMDirLightShadowMaps.Get(),
-			EFormat::Format_R32G32_Float,
-			0, 1);
-		if (!VSMDirLightShadowMapSRV)
-		{
-			Debug::DebugBreak();
-		}
-	}
-	else
-	{
-		return false;
-	}
-#endif
-
-	const UInt16 Size = CurrentLightSettings.PointLightShadowSize;
-	PointLightShadowMaps = RenderLayer::CreateTextureCubeArray(
-		nullptr,
-		ShadowMapFormat,
-		TextureUsage_ShadowMap,
-		Size,
-		1, MaxPointLightShadows, 1,
-		ClearValue(DepthStencilClearValue(1.0f, 0)));
-	if (PointLightShadowMaps)
-	{
-		PointLightShadowMaps->SetName("PointLight ShadowMaps");
-
-		PointLightShadowMapDSVs.Resize(MaxPointLightShadows);
-		for (UInt32 i = 0; i < MaxPointLightShadows; i++)
-		{
-			for (UInt32 Face = 0; Face < 6; Face++)
-			{
-				TStaticArray<TSharedRef<DepthStencilView>, 6>& DepthCube = PointLightShadowMapDSVs[i];
-				DepthCube[Face] = RenderLayer::CreateDepthStencilView(
-					PointLightShadowMaps.Get(),
-					ShadowMapFormat,
-					0, i, Face);
-				if (!DepthCube[Face])
-				{
-					Debug::DebugBreak();
-					return false;
-				}
-			}
-		}
-
-		PointLightShadowMapSRV = RenderLayer::CreateShaderResourceView(
-			PointLightShadowMaps.Get(),
-			EFormat::Format_R32_Float,
-			0, 1, 0, MaxPointLightShadows);
-		if (!PointLightShadowMapSRV)
-		{
-			Debug::DebugBreak();
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
-
-	return true;
+    return true;
 }

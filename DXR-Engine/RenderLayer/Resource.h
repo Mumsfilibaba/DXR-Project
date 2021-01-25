@@ -1,5 +1,7 @@
 #pragma once
 #include "RenderingCore.h"
+#include "Texture.h"
+#include "Buffer.h"
 
 #include "Core/RefCountedObject.h"
 
@@ -10,112 +12,99 @@ class Buffer;
 class RayTracingGeometry;
 class RayTracingScene;
 
-/*
-* PipelineResource
-*/
-
 class PipelineResource : public RefCountedObject
 {
 public: 
-	virtual ~PipelineResource()	= default;
+    virtual ~PipelineResource()	= default;
 
-	virtual void SetName(const std::string& Name)
-	{
-		UNREFERENCED_VARIABLE(Name);
-	}
+    virtual void SetName(const std::string& Name)
+    {
+        UNREFERENCED_VARIABLE(Name);
+    }
 
-	virtual Void* GetNativeResource() const
-	{
-		return nullptr;
-	}
+    virtual Void* GetNativeResource() const
+    {
+        return nullptr;
+    }
 };
-
-/*
-* ResourceData
-*/
 
 struct ResourceData
 {
-	inline ResourceData()
-		: Data(nullptr)
-		, Pitch(0)
-		, SlicePitch(0)
-	{
-	}
+    inline ResourceData()
+        : Data(nullptr)
+        , Pitch(0)
+        , SlicePitch(0)
+    {
+    }
 
-	inline ResourceData(const Void* InData)
-		: Data(InData)
-		, Pitch(0)
-		, SlicePitch(0)
-	{
-	}
+    inline ResourceData(const Void* InData)
+        : Data(InData)
+        , Pitch(0)
+        , SlicePitch(0)
+    {
+    }
 
-	inline ResourceData(const Void* InData, UInt32 InPitch)
-		: Data(InData)
-		, Pitch(InPitch)
-		, SlicePitch(0)
-	{
-	}
+    inline ResourceData(const Void* InData, UInt32 InPitch)
+        : Data(InData)
+        , Pitch(InPitch)
+        , SlicePitch(0)
+    {
+    }
 
-	inline ResourceData(const Void* InData, UInt32 InPitch, UInt32 InSlicePitch)
-		: Data(InData)
-		, Pitch(InPitch)
-		, SlicePitch(InSlicePitch)
-	{
-	}
+    inline ResourceData(const Void* InData, UInt32 InPitch, UInt32 InSlicePitch)
+        : Data(InData)
+        , Pitch(InPitch)
+        , SlicePitch(InSlicePitch)
+    {
+    }
 
-	const Void* Data;
-	UInt32 Pitch;
-	UInt32 SlicePitch;
+    const Void* Data;
+    UInt32 Pitch;
+    UInt32 SlicePitch;
 };
-
-/*
-* Resource
-*/
 
 class Resource : public PipelineResource
 {
 public:
-	virtual ~Resource()	= default;
+    virtual ~Resource()	= default;
 
-	// Casting Functions
-	virtual Texture* AsTexture()
-	{
-		return nullptr;
-	}
+    virtual Texture* AsTexture()
+    {
+        return nullptr;
+    }
 
-	virtual const Texture* AsTexture() const
-	{
-		return nullptr;
-	}
+    virtual const Texture* AsTexture() const
+    {
+        return nullptr;
+    }
 
-	virtual Buffer* AsBuffer()
-	{
-		return nullptr;
-	}
+    virtual Buffer* AsBuffer()
+    {
+        return nullptr;
+    }
 
-	virtual const Buffer* AsBuffer() const
-	{
-		return nullptr;
-	}
+    virtual const Buffer* AsBuffer() const
+    {
+        return nullptr;
+    }
 
-	virtual RayTracingGeometry* AsRayTracingGeometry()
-	{
-		return nullptr;
-	}
+    virtual RayTracingGeometry* AsRayTracingGeometry()
+    {
+        return nullptr;
+    }
 
-	virtual const RayTracingGeometry* AsRayTracingGeometry() const
-	{
-		return nullptr;
-	}
+    virtual const RayTracingGeometry* AsRayTracingGeometry() const
+    {
+        return nullptr;
+    }
 
-	virtual RayTracingScene* AsRayTracingScene()
-	{
-		return nullptr;
-	}
+    virtual RayTracingScene* AsRayTracingScene()
+    {
+        return nullptr;
+    }
 
-	virtual const RayTracingScene* AsRayTracingScene() const
-	{
-		return nullptr;
-	}
+    virtual const RayTracingScene* AsRayTracingScene() const
+    {
+        return nullptr;
+    }
 };

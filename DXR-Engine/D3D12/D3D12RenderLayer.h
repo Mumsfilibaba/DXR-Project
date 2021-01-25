@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderingCore/GenericRenderLayer.h"
+#include "RenderLayer/GenericRenderLayer.h"
 
 #include "Windows/WindowsWindow.h"
 

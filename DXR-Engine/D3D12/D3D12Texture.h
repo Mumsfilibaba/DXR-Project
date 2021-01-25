@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderingCore/Texture.h"
+#include "RenderLayer/Texture.h"
 
 #include "D3D12Resource.h"
 

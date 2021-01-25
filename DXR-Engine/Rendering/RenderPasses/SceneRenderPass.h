@@ -25,6 +25,8 @@ struct SharedRenderPassResources
     TSharedRef<TextureCube>        Skybox;
     TSharedRef<ShaderResourceView> SkyboxSRV;
 
+    const UInt32 MaxPointLights       = 256;
+    const UInt32 MaxDirectionalLights = 256;
     const UInt32 MaxPointLightShadows = 8;
     TSharedRef<SamplerState>        ShadowMapSampler;
     TSharedRef<SamplerState>        ShadowMapCompSampler;

@@ -47,6 +47,7 @@ public:
     ~Renderer() = default;
 
     Bool Init();
+
     void Tick(const Scene& CurrentScene);
     
     void SetLightSettings(const LightSettings& InLightSettings);
