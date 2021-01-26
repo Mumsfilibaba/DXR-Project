@@ -2,26 +2,22 @@
 #include "Core.h"
 
 #ifdef MessageBox
-	#undef MessageBox
+    #undef MessageBox
 #endif
 
 #ifdef COMPILER_VISUAL_STUDIO
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
-
-/*
-* GenericDialogMisc
-*/
 
 class GenericDialogMisc
 {
 public:
-	static FORCEINLINE void MessageBox(const std::string& Title, const std::string& Message)
-	{
-	}
+    static FORCEINLINE void MessageBox(const std::string& Title, const std::string& Message)
+    {
+    }
 };
 
 #ifdef COMPILER_VISUAL_STUDIO
-#pragma warning(pop)
+    #pragma warning(pop)
 #endif

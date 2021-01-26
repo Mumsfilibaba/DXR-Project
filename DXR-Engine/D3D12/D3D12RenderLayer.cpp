@@ -224,15 +224,15 @@ SamplerState* D3D12RenderLayer::CreateSamplerState(const struct SamplerStateCrea
     Memory::Memzero(&Desc);
 
     Memory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor, sizeof(Desc.BorderColor));
-    Desc.AddressU		= ConvertSamplerMode(CreateInfo.AddressU);
-    Desc.AddressV		= ConvertSamplerMode(CreateInfo.AddressV);
-    Desc.AddressW		= ConvertSamplerMode(CreateInfo.AddressW);
+    Desc.AddressU        = ConvertSamplerMode(CreateInfo.AddressU);
+    Desc.AddressV        = ConvertSamplerMode(CreateInfo.AddressV);
+    Desc.AddressW        = ConvertSamplerMode(CreateInfo.AddressW);
     Desc.ComparisonFunc = ConvertComparisonFunc(CreateInfo.ComparisonFunc);
-    Desc.Filter			= ConvertSamplerFilter(CreateInfo.Filter);
-    Desc.MaxAnisotropy	= CreateInfo.MaxAnisotropy;
-    Desc.MaxLOD			= CreateInfo.MaxLOD;
-    Desc.MinLOD			= CreateInfo.MinLOD;
-    Desc.MipLODBias		= CreateInfo.MipLODBias;
+    Desc.Filter            = ConvertSamplerFilter(CreateInfo.Filter);
+    Desc.MaxAnisotropy    = CreateInfo.MaxAnisotropy;
+    Desc.MaxLOD            = CreateInfo.MaxLOD;
+    Desc.MinLOD            = CreateInfo.MinLOD;
+    Desc.MipLODBias        = CreateInfo.MipLODBias;
 
     return DBG_NEW D3D12SamplerState(Device, Device->GetGlobalSamplerDescriptorHeap(), Desc);
 }
@@ -262,9 +262,9 @@ VertexBuffer* D3D12RenderLayer::CreateVertexBuffer(
     D3D12_VERTEX_BUFFER_VIEW View;
     Memory::Memzero(&View, sizeof(D3D12_VERTEX_BUFFER_VIEW));
 
-    View.BufferLocation	= NewBuffer->GetGPUVirtualAddress();
-    View.SizeInBytes	= SizeInBytes;
-    View.StrideInBytes	= StrideInBytes;
+    View.BufferLocation    = NewBuffer->GetGPUVirtualAddress();
+    View.SizeInBytes    = SizeInBytes;
+    View.StrideInBytes    = StrideInBytes;
 
     NewBuffer->VertexBufferView = View;
     return NewBuffer;
@@ -292,10 +292,10 @@ IndexBuffer* D3D12RenderLayer::CreateIndexBuffer(
     Memory::Memzero(&View, sizeof(D3D12_INDEX_BUFFER_VIEW));
 
     View.BufferLocation = NewBuffer->GetGPUVirtualAddress();
-    View.SizeInBytes	= SizeInBytes;
+    View.SizeInBytes    = SizeInBytes;
     if (IndexFormat == EIndexFormat::IndexFormat_UInt16)
     {
-        View.Format	= DXGI_FORMAT_R16_UINT;
+        View.Format    = DXGI_FORMAT_R16_UINT;
     }
     else if (IndexFormat == EIndexFormat::IndexFormat_UInt32)
     {
@@ -326,8 +326,8 @@ ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer(
     D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
     Memory::Memzero(&ViewDesc, sizeof(D3D12_CONSTANT_BUFFER_VIEW_DESC));
 
-    ViewDesc.BufferLocation	= NewBuffer->GetGPUVirtualAddress();
-    ViewDesc.SizeInBytes	= UInt32(NewBuffer->GetAllocatedSize());
+    ViewDesc.BufferLocation    = NewBuffer->GetGPUVirtualAddress();
+    ViewDesc.SizeInBytes    = UInt32(NewBuffer->GetAllocatedSize());
 
     D3D12ConstantBufferView* View = DBG_NEW D3D12ConstantBufferView(Device, NewBuffer, ViewDesc);
     NewBuffer->View = View;
@@ -386,13 +386,13 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 
-    Desc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
-    Desc.Shader4ComponentMapping	= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    Desc.Buffer.FirstElement		= FirstElement;
-    Desc.Buffer.NumElements			= ElementCount;
-    Desc.Format						= DXGI_FORMAT_R32_TYPELESS;
-    Desc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_RAW;
-    Desc.Buffer.StructureByteStride	= 0;
+    Desc.ViewDimension                = D3D12_SRV_DIMENSION_BUFFER;
+    Desc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    Desc.Buffer.FirstElement        = FirstElement;
+    Desc.Buffer.NumElements            = ElementCount;
+    Desc.Format                        = DXGI_FORMAT_R32_TYPELESS;
+    Desc.Buffer.Flags                = D3D12_BUFFER_SRV_FLAG_RAW;
+    Desc.Buffer.StructureByteStride    = 0;
 
     const D3D12Resource* Resource = D3D12BufferCast(Buffer);
     return CreateShaderResourceView(Resource, Desc);
@@ -411,12 +411,12 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 
-    Desc.ViewDimension				= D3D12_SRV_DIMENSION_BUFFER;
-    Desc.Shader4ComponentMapping	= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    Desc.Buffer.FirstElement		= FirstElement;
-    Desc.Buffer.NumElements			= ElementCount;
-    Desc.Format						= DXGI_FORMAT_UNKNOWN;
-    Desc.Buffer.Flags				= D3D12_BUFFER_SRV_FLAG_NONE;
+    Desc.ViewDimension                = D3D12_SRV_DIMENSION_BUFFER;
+    Desc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    Desc.Buffer.FirstElement        = FirstElement;
+    Desc.Buffer.NumElements            = ElementCount;
+    Desc.Format                        = DXGI_FORMAT_UNKNOWN;
+    Desc.Buffer.Flags                = D3D12_BUFFER_SRV_FLAG_NONE;
     Desc.Buffer.StructureByteStride = Stride;
 
     const D3D12Resource* Resource = D3D12BufferCast(Buffer);
@@ -437,12 +437,12 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 
-    Desc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE1D;
-    Desc.Format							= ConvertFormat(Format);
-    Desc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    Desc.Texture1D.MipLevels			= MipLevels;
-    Desc.Texture1D.MostDetailedMip		= MostDetailedMip;
-    Desc.Texture1D.ResourceMinLODClamp	= 0.0f;
+    Desc.ViewDimension                    = D3D12_SRV_DIMENSION_TEXTURE1D;
+    Desc.Format                            = ConvertFormat(Format);
+    Desc.Shader4ComponentMapping        = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    Desc.Texture1D.MipLevels            = MipLevels;
+    Desc.Texture1D.MostDetailedMip        = MostDetailedMip;
+    Desc.Texture1D.ResourceMinLODClamp    = 0.0f;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -466,14 +466,14 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 
-    Desc.ViewDimension						= D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-    Desc.Format								= ConvertFormat(Format);
-    Desc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    Desc.Texture1DArray.MipLevels			= MipLevels;
-    Desc.Texture1DArray.MostDetailedMip		= MostDetailedMip;
-    Desc.Texture1DArray.ArraySize			= ArraySize;
-    Desc.Texture1DArray.FirstArraySlice		= FirstArraySlice;
-    Desc.Texture1DArray.ResourceMinLODClamp	= 0.0f;
+    Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+    Desc.Format                                = ConvertFormat(Format);
+    Desc.Shader4ComponentMapping            = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    Desc.Texture1DArray.MipLevels            = MipLevels;
+    Desc.Texture1DArray.MostDetailedMip        = MostDetailedMip;
+    Desc.Texture1DArray.ArraySize            = ArraySize;
+    Desc.Texture1DArray.FirstArraySlice        = FirstArraySlice;
+    Desc.Texture1DArray.ResourceMinLODClamp    = 0.0f;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -494,15 +494,15 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 
-    Desc.Format						= ConvertFormat(Format);
-    Desc.Shader4ComponentMapping	= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;	
+    Desc.Format                        = ConvertFormat(Format);
+    Desc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;    
     if (!Texture->IsMultiSampled())
     {
-        Desc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE2D;
-        Desc.Texture2D.MipLevels			= MipLevels;
-        Desc.Texture2D.MostDetailedMip		= MostDetailedMip;
-        Desc.Texture2D.PlaneSlice			= 0;
-        Desc.Texture2D.ResourceMinLODClamp	= 0.0f;
+        Desc.ViewDimension                    = D3D12_SRV_DIMENSION_TEXTURE2D;
+        Desc.Texture2D.MipLevels            = MipLevels;
+        Desc.Texture2D.MostDetailedMip        = MostDetailedMip;
+        Desc.Texture2D.PlaneSlice            = 0;
+        Desc.Texture2D.ResourceMinLODClamp    = 0.0f;
     }
     else
     {
@@ -531,23 +531,23 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 
-    Desc.Format						= ConvertFormat(Format);
-    Desc.Shader4ComponentMapping	= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    Desc.Format                        = ConvertFormat(Format);
+    Desc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     if (!Texture->IsMultiSampled())
     {
-        Desc.ViewDimension						= D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-        Desc.Texture2DArray.ArraySize			= ArraySize;
-        Desc.Texture2DArray.MostDetailedMip		= MostDetailedMip;
-        Desc.Texture2DArray.FirstArraySlice		= FirstArraySlice;
-        Desc.Texture2DArray.MipLevels			= MipLevels;
-        Desc.Texture2DArray.PlaneSlice			= 0;
-        Desc.Texture2DArray.ResourceMinLODClamp	= 0.0f;
+        Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+        Desc.Texture2DArray.ArraySize            = ArraySize;
+        Desc.Texture2DArray.MostDetailedMip        = MostDetailedMip;
+        Desc.Texture2DArray.FirstArraySlice        = FirstArraySlice;
+        Desc.Texture2DArray.MipLevels            = MipLevels;
+        Desc.Texture2DArray.PlaneSlice            = 0;
+        Desc.Texture2DArray.ResourceMinLODClamp    = 0.0f;
     }
     else
     {
-        Desc.ViewDimension						= D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-        Desc.Texture2DMSArray.ArraySize			= ArraySize;
-        Desc.Texture2DMSArray.FirstArraySlice	= FirstArraySlice;
+        Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+        Desc.Texture2DMSArray.ArraySize            = ArraySize;
+        Desc.Texture2DMSArray.FirstArraySlice    = FirstArraySlice;
     }
 
     // Make sure that the texture actually is a textures
@@ -570,12 +570,12 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 
-    Desc.Format								= ConvertFormat(Format);
-    Desc.Shader4ComponentMapping			= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    Desc.ViewDimension						= D3D12_SRV_DIMENSION_TEXTURECUBE;
-    Desc.TextureCube.MostDetailedMip		= MostDetailedMip;
-    Desc.TextureCube.MipLevels				= MipLevels;
-    Desc.TextureCube.ResourceMinLODClamp	= 0.0f;
+    Desc.Format                                = ConvertFormat(Format);
+    Desc.Shader4ComponentMapping            = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURECUBE;
+    Desc.TextureCube.MostDetailedMip        = MostDetailedMip;
+    Desc.TextureCube.MipLevels                = MipLevels;
+    Desc.TextureCube.ResourceMinLODClamp    = 0.0f;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -602,14 +602,14 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 
-    Desc.Format									= ConvertFormat(Format);
-    Desc.Shader4ComponentMapping				= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    Desc.ViewDimension							= D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-    Desc.TextureCubeArray.MostDetailedMip		= MostDetailedMip;
-    Desc.TextureCubeArray.MipLevels				= MipLevels;
-    Desc.TextureCubeArray.First2DArrayFace		= FirstArraySlice * TEXTURE_CUBE_FACE_COUNT;
-    Desc.TextureCubeArray.NumCubes				= ArraySize;
-    Desc.TextureCubeArray.ResourceMinLODClamp	= 0.0f;
+    Desc.Format                                    = ConvertFormat(Format);
+    Desc.Shader4ComponentMapping                = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    Desc.ViewDimension                            = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+    Desc.TextureCubeArray.MostDetailedMip        = MostDetailedMip;
+    Desc.TextureCubeArray.MipLevels                = MipLevels;
+    Desc.TextureCubeArray.First2DArrayFace        = FirstArraySlice * TEXTURE_CUBE_FACE_COUNT;
+    Desc.TextureCubeArray.NumCubes                = ArraySize;
+    Desc.TextureCubeArray.ResourceMinLODClamp    = 0.0f;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -630,12 +630,12 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 
-    Desc.Format							= ConvertFormat(Format);
-    Desc.Shader4ComponentMapping		= D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    Desc.ViewDimension					= D3D12_SRV_DIMENSION_TEXTURE3D;
-    Desc.Texture3D.MostDetailedMip		= MostDetailedMip;
-    Desc.Texture3D.MipLevels			= MipLevels;
-    Desc.Texture3D.ResourceMinLODClamp	= 0.0f;
+    Desc.Format                            = ConvertFormat(Format);
+    Desc.Shader4ComponentMapping        = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    Desc.ViewDimension                    = D3D12_SRV_DIMENSION_TEXTURE3D;
+    Desc.Texture3D.MostDetailedMip        = MostDetailedMip;
+    Desc.Texture3D.MipLevels            = MipLevels;
+    Desc.Texture3D.ResourceMinLODClamp    = 0.0f;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -660,13 +660,13 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 
-    Desc.ViewDimension					= D3D12_UAV_DIMENSION_BUFFER;
-    Desc.Format							= ConvertFormat(Format);
-    Desc.Buffer.FirstElement			= FirstElement;
-    Desc.Buffer.NumElements				= NumElements;
-    Desc.Buffer.Flags					= D3D12_BUFFER_UAV_FLAG_RAW;
-    Desc.Buffer.StructureByteStride		= 0;
-    Desc.Buffer.CounterOffsetInBytes	= CounterOffsetInBytes;
+    Desc.ViewDimension                    = D3D12_UAV_DIMENSION_BUFFER;
+    Desc.Format                            = ConvertFormat(Format);
+    Desc.Buffer.FirstElement            = FirstElement;
+    Desc.Buffer.NumElements                = NumElements;
+    Desc.Buffer.Flags                    = D3D12_BUFFER_UAV_FLAG_RAW;
+    Desc.Buffer.StructureByteStride        = 0;
+    Desc.Buffer.CounterOffsetInBytes    = CounterOffsetInBytes;
 
     // Make sure we actually have a buffer
     const D3D12Resource* Resource = D3D12BufferCast(Buffer);
@@ -687,13 +687,13 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 
-    Desc.ViewDimension					= D3D12_UAV_DIMENSION_BUFFER;
-    Desc.Format							= DXGI_FORMAT_UNKNOWN;
-    Desc.Buffer.FirstElement			= FirstElement;
-    Desc.Buffer.NumElements				= NumElements;
-    Desc.Buffer.Flags					= D3D12_BUFFER_UAV_FLAG_NONE;
-    Desc.Buffer.StructureByteStride		= Stride;
-    Desc.Buffer.CounterOffsetInBytes	= CounterOffsetInBytes;
+    Desc.ViewDimension                    = D3D12_UAV_DIMENSION_BUFFER;
+    Desc.Format                            = DXGI_FORMAT_UNKNOWN;
+    Desc.Buffer.FirstElement            = FirstElement;
+    Desc.Buffer.NumElements                = NumElements;
+    Desc.Buffer.Flags                    = D3D12_BUFFER_UAV_FLAG_NONE;
+    Desc.Buffer.StructureByteStride        = Stride;
+    Desc.Buffer.CounterOffsetInBytes    = CounterOffsetInBytes;
 
     // Make sure we actually have a buffer
     const D3D12Resource* Resource = D3D12BufferCast(Buffer);
@@ -713,9 +713,9 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 
-    Desc.ViewDimension		= D3D12_UAV_DIMENSION_TEXTURE1D;
-    Desc.Format				= ConvertFormat(Format);
-    Desc.Texture1D.MipSlice	= MipSlice;
+    Desc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE1D;
+    Desc.Format                = ConvertFormat(Format);
+    Desc.Texture1D.MipSlice    = MipSlice;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -738,10 +738,10 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 
-    Desc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
-    Desc.Format							= ConvertFormat(Format);
-    Desc.Texture1DArray.MipSlice		= MipSlice;
-    Desc.Texture1DArray.ArraySize		= ArraySize;
+    Desc.ViewDimension                    = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+    Desc.Format                            = ConvertFormat(Format);
+    Desc.Texture1DArray.MipSlice        = MipSlice;
+    Desc.Texture1DArray.ArraySize        = ArraySize;
     Desc.Texture1DArray.FirstArraySlice = FirstArraySlice;
 
     // Make sure that the texture actually is a textures
@@ -763,10 +763,10 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 
-    Desc.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE2D;
-    Desc.Format					= ConvertFormat(Format);
-    Desc.Texture2D.MipSlice		= MipSlice;
-    Desc.Texture2D.PlaneSlice	= 0;
+    Desc.ViewDimension            = D3D12_UAV_DIMENSION_TEXTURE2D;
+    Desc.Format                    = ConvertFormat(Format);
+    Desc.Texture2D.MipSlice        = MipSlice;
+    Desc.Texture2D.PlaneSlice    = 0;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -790,12 +790,12 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 
-    Desc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-    Desc.Format							= ConvertFormat(Format);
-    Desc.Texture2DArray.MipSlice		= MipSlice;
-    Desc.Texture2DArray.ArraySize		= ArraySize;
-    Desc.Texture2DArray.FirstArraySlice	= FirstArraySlice;
-    Desc.Texture2DArray.PlaneSlice		= 0;
+    Desc.ViewDimension                    = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+    Desc.Format                            = ConvertFormat(Format);
+    Desc.Texture2DArray.MipSlice        = MipSlice;
+    Desc.Texture2DArray.ArraySize        = ArraySize;
+    Desc.Texture2DArray.FirstArraySlice    = FirstArraySlice;
+    Desc.Texture2DArray.PlaneSlice        = 0;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -817,12 +817,12 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(
     Memory::Memzero(&Desc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 
     constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
-    Desc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-    Desc.Format							= ConvertFormat(Format);
-    Desc.Texture2DArray.MipSlice		= MipSlice;
-    Desc.Texture2DArray.ArraySize		= TEXTURE_CUBE_FACE_COUNT;
-    Desc.Texture2DArray.FirstArraySlice	= 0;
-    Desc.Texture2DArray.PlaneSlice		= 0;
+    Desc.ViewDimension                    = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+    Desc.Format                            = ConvertFormat(Format);
+    Desc.Texture2DArray.MipSlice        = MipSlice;
+    Desc.Texture2DArray.ArraySize        = TEXTURE_CUBE_FACE_COUNT;
+    Desc.Texture2DArray.FirstArraySlice    = 0;
+    Desc.Texture2DArray.PlaneSlice        = 0;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -847,12 +847,12 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 
-    Desc.ViewDimension					= D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-    Desc.Format							= ConvertFormat(Format);
-    Desc.Texture2DArray.MipSlice		= MipSlice;
-    Desc.Texture2DArray.ArraySize		= TEXTURE_CUBE_FACE_COUNT;
-    Desc.Texture2DArray.FirstArraySlice	= ArraySlice * TEXTURE_CUBE_FACE_COUNT;
-    Desc.Texture2DArray.PlaneSlice		= 0;
+    Desc.ViewDimension                    = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+    Desc.Format                            = ConvertFormat(Format);
+    Desc.Texture2DArray.MipSlice        = MipSlice;
+    Desc.Texture2DArray.ArraySize        = TEXTURE_CUBE_FACE_COUNT;
+    Desc.Texture2DArray.FirstArraySlice    = ArraySlice * TEXTURE_CUBE_FACE_COUNT;
+    Desc.Texture2DArray.PlaneSlice        = 0;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -875,11 +875,11 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 
-    Desc.ViewDimension			= D3D12_UAV_DIMENSION_TEXTURE3D;
-    Desc.Format					= ConvertFormat(Format);
-    Desc.Texture3D.MipSlice		= MipSlice;
-    Desc.Texture3D.FirstWSlice	= FirstDepthSlice;
-    Desc.Texture3D.WSize		= DepthSlices;
+    Desc.ViewDimension            = D3D12_UAV_DIMENSION_TEXTURE3D;
+    Desc.Format                    = ConvertFormat(Format);
+    Desc.Texture3D.MipSlice        = MipSlice;
+    Desc.Texture3D.FirstWSlice    = FirstDepthSlice;
+    Desc.Texture3D.WSize        = DepthSlices;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -900,9 +900,9 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(const Texture1D* Text
     D3D12_RENDER_TARGET_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_RENDER_TARGET_VIEW_DESC));
 
-    Desc.ViewDimension		= D3D12_RTV_DIMENSION_TEXTURE1D;
-    Desc.Format				= ConvertFormat(Format);
-    Desc.Texture1D.MipSlice	= MipSlice;
+    Desc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE1D;
+    Desc.Format                = ConvertFormat(Format);
+    Desc.Texture1D.MipSlice    = MipSlice;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -924,11 +924,11 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(
     D3D12_RENDER_TARGET_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_RENDER_TARGET_VIEW_DESC));
 
-    Desc.ViewDimension					= D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
-    Desc.Format							= ConvertFormat(Format);
-    Desc.Texture1DArray.MipSlice		= MipSlice;
-    Desc.Texture1DArray.ArraySize		= ArraySize;
-    Desc.Texture1DArray.FirstArraySlice	= FirstArraySlice;
+    Desc.ViewDimension                    = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
+    Desc.Format                            = ConvertFormat(Format);
+    Desc.Texture1DArray.MipSlice        = MipSlice;
+    Desc.Texture1DArray.ArraySize        = ArraySize;
+    Desc.Texture1DArray.FirstArraySlice    = FirstArraySlice;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -948,13 +948,13 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(const Texture2D* Text
     Desc.Format = ConvertFormat(Format);
     if (!Texture->IsMultiSampled())
     {
-        Desc.ViewDimension			= D3D12_RTV_DIMENSION_TEXTURE2D;
-        Desc.Texture2D.MipSlice		= MipSlice;
-        Desc.Texture2D.PlaneSlice	= 0;
+        Desc.ViewDimension            = D3D12_RTV_DIMENSION_TEXTURE2D;
+        Desc.Texture2D.MipSlice        = MipSlice;
+        Desc.Texture2D.PlaneSlice    = 0;
     }
     else
     {
-        Desc.ViewDimension	= D3D12_RTV_DIMENSION_TEXTURE2DMS;
+        Desc.ViewDimension    = D3D12_RTV_DIMENSION_TEXTURE2DMS;
     }
 
     // Make sure that the texture actually is a textures
@@ -981,17 +981,17 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(
     Desc.Format = ConvertFormat(Format);
     if (!Texture->IsMultiSampled())
     {
-        Desc.ViewDimension					= D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-        Desc.Texture2DArray.MipSlice		= MipSlice;
-        Desc.Texture2DArray.PlaneSlice		= 0;
-        Desc.Texture2DArray.FirstArraySlice	= FirstArraySlice;
-        Desc.Texture2DArray.ArraySize		= ArraySize;
+        Desc.ViewDimension                    = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+        Desc.Texture2DArray.MipSlice        = MipSlice;
+        Desc.Texture2DArray.PlaneSlice        = 0;
+        Desc.Texture2DArray.FirstArraySlice    = FirstArraySlice;
+        Desc.Texture2DArray.ArraySize        = ArraySize;
     }
     else
     {
-        Desc.ViewDimension						= D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-        Desc.Texture2DMSArray.FirstArraySlice	= FirstArraySlice;
-        Desc.Texture2DMSArray.ArraySize			= ArraySize;
+        Desc.ViewDimension                        = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+        Desc.Texture2DMSArray.FirstArraySlice    = FirstArraySlice;
+        Desc.Texture2DMSArray.ArraySize            = ArraySize;
     }
 
     // Make sure that the texture actually is a textures
@@ -1017,17 +1017,17 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(
     Desc.Format = ConvertFormat(Format);
     if (!Texture->IsMultiSampled())
     {
-        Desc.ViewDimension					= D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-        Desc.Texture2DArray.MipSlice		= MipSlice;
-        Desc.Texture2DArray.PlaneSlice		= 0;
-        Desc.Texture2DArray.FirstArraySlice	= FaceIndex;
-        Desc.Texture2DArray.ArraySize		= 1;
+        Desc.ViewDimension                    = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+        Desc.Texture2DArray.MipSlice        = MipSlice;
+        Desc.Texture2DArray.PlaneSlice        = 0;
+        Desc.Texture2DArray.FirstArraySlice    = FaceIndex;
+        Desc.Texture2DArray.ArraySize        = 1;
     }
     else
     {
-        Desc.ViewDimension						= D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-        Desc.Texture2DMSArray.FirstArraySlice	= FaceIndex;
-        Desc.Texture2DMSArray.ArraySize			= 1;
+        Desc.ViewDimension                        = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+        Desc.Texture2DMSArray.FirstArraySlice    = FaceIndex;
+        Desc.Texture2DMSArray.ArraySize            = 1;
     }
 
     // Make sure that the texture actually is a textures
@@ -1057,17 +1057,17 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(
     Desc.Format = ConvertFormat(Format);
     if (!Texture->IsMultiSampled())
     {
-        Desc.ViewDimension					= D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-        Desc.Texture2DArray.MipSlice		= MipSlice;
-        Desc.Texture2DArray.PlaneSlice		= 0;
+        Desc.ViewDimension                    = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+        Desc.Texture2DArray.MipSlice        = MipSlice;
+        Desc.Texture2DArray.PlaneSlice        = 0;
         Desc.Texture2DArray.FirstArraySlice = (TEXTURE_CUBE_FACE_COUNT * ArraySlice) + FaceIndex;
-        Desc.Texture2DArray.ArraySize		= 1;
+        Desc.Texture2DArray.ArraySize        = 1;
     }
     else
     {
-        Desc.ViewDimension						= D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-        Desc.Texture2DMSArray.FirstArraySlice	= (TEXTURE_CUBE_FACE_COUNT * ArraySlice) + FaceIndex;
-        Desc.Texture2DMSArray.ArraySize			= 1;
+        Desc.ViewDimension                        = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+        Desc.Texture2DMSArray.FirstArraySlice    = (TEXTURE_CUBE_FACE_COUNT * ArraySlice) + FaceIndex;
+        Desc.Texture2DMSArray.ArraySize            = 1;
     }
 
     // Make sure that the texture actually is a textures
@@ -1091,11 +1091,11 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(
     D3D12_RENDER_TARGET_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_RENDER_TARGET_VIEW_DESC));
 
-    Desc.ViewDimension				= D3D12_RTV_DIMENSION_TEXTURE3D;
-    Desc.Format						= ConvertFormat(Format);
-    Desc.Texture3D.MipSlice			= MipSlice;
-    Desc.Texture3D.FirstWSlice		= FirstDepthSlice;
-    Desc.Texture3D.WSize			= DepthSlices;
+    Desc.ViewDimension                = D3D12_RTV_DIMENSION_TEXTURE3D;
+    Desc.Format                        = ConvertFormat(Format);
+    Desc.Texture3D.MipSlice            = MipSlice;
+    Desc.Texture3D.FirstWSlice        = FirstDepthSlice;
+    Desc.Texture3D.WSize            = DepthSlices;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -1116,8 +1116,8 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(const Texture1D* Text
     D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_DEPTH_STENCIL_VIEW_DESC));
 
-    Desc.ViewDimension		= D3D12_DSV_DIMENSION_TEXTURE1D;
-    Desc.Format				= ConvertFormat(Format);
+    Desc.ViewDimension        = D3D12_DSV_DIMENSION_TEXTURE1D;
+    Desc.Format                = ConvertFormat(Format);
     Desc.Texture1D.MipSlice = MipSlice;
 
     // Make sure that the texture actually is a textures
@@ -1140,11 +1140,11 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(
     D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_DEPTH_STENCIL_VIEW_DESC));
 
-    Desc.ViewDimension					= D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
-    Desc.Format							= ConvertFormat(Format);
-    Desc.Texture1DArray.MipSlice		= MipSlice;
-    Desc.Texture1DArray.ArraySize		= ArraySize;
-    Desc.Texture1DArray.FirstArraySlice	= FirstArraySlice;
+    Desc.ViewDimension                    = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
+    Desc.Format                            = ConvertFormat(Format);
+    Desc.Texture1DArray.MipSlice        = MipSlice;
+    Desc.Texture1DArray.ArraySize        = ArraySize;
+    Desc.Texture1DArray.FirstArraySlice    = FirstArraySlice;
 
     // Make sure that the texture actually is a textures
     const D3D12Resource* Resource = D3D12TextureCast(Texture);
@@ -1164,8 +1164,8 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(const Texture2D* Text
     Desc.Format = ConvertFormat(Format);
     if (!Texture->IsMultiSampled())
     {
-        Desc.ViewDimension		= D3D12_DSV_DIMENSION_TEXTURE2D;
-        Desc.Texture2D.MipSlice	= MipSlice;
+        Desc.ViewDimension        = D3D12_DSV_DIMENSION_TEXTURE2D;
+        Desc.Texture2D.MipSlice    = MipSlice;
     }
     else
     {
@@ -1196,16 +1196,16 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(
     Desc.Format = ConvertFormat(Format);
     if (!Texture->IsMultiSampled())
     {
-        Desc.ViewDimension					= D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-        Desc.Texture2DArray.MipSlice		= MipSlice;
-        Desc.Texture2DArray.ArraySize		= ArraySize;
-        Desc.Texture2DArray.FirstArraySlice	= FirstArraySlice;
+        Desc.ViewDimension                    = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+        Desc.Texture2DArray.MipSlice        = MipSlice;
+        Desc.Texture2DArray.ArraySize        = ArraySize;
+        Desc.Texture2DArray.FirstArraySlice    = FirstArraySlice;
     }
     else
     {
-        Desc.ViewDimension						= D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-        Desc.Texture2DMSArray.ArraySize			= ArraySize;
-        Desc.Texture2DMSArray.FirstArraySlice	= FirstArraySlice;
+        Desc.ViewDimension                        = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+        Desc.Texture2DMSArray.ArraySize            = ArraySize;
+        Desc.Texture2DMSArray.FirstArraySlice    = FirstArraySlice;
     }
 
     // Make sure that the texture actually is a textures
@@ -1231,16 +1231,16 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(
     Desc.Format = ConvertFormat(Format);
     if (!Texture->IsMultiSampled())
     {
-        Desc.ViewDimension					= D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-        Desc.Texture2DArray.MipSlice		= MipSlice;
-        Desc.Texture2DArray.ArraySize		= 1;
+        Desc.ViewDimension                    = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+        Desc.Texture2DArray.MipSlice        = MipSlice;
+        Desc.Texture2DArray.ArraySize        = 1;
         Desc.Texture2DArray.FirstArraySlice = FaceIndex;
     }
     else
     {
-        Desc.ViewDimension						= D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-        Desc.Texture2DMSArray.ArraySize			= 1;
-        Desc.Texture2DMSArray.FirstArraySlice	= FaceIndex;
+        Desc.ViewDimension                        = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+        Desc.Texture2DMSArray.ArraySize            = 1;
+        Desc.Texture2DMSArray.FirstArraySlice    = FaceIndex;
     }
 
     // Make sure that the texture actually is a textures
@@ -1270,16 +1270,16 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(
     Desc.Format = ConvertFormat(Format);
     if (!Texture->IsMultiSampled())
     {
-        Desc.ViewDimension					= D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-        Desc.Texture2DArray.MipSlice		= MipSlice;
-        Desc.Texture2DArray.ArraySize		= 1;
+        Desc.ViewDimension                    = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+        Desc.Texture2DArray.MipSlice        = MipSlice;
+        Desc.Texture2DArray.ArraySize        = 1;
         Desc.Texture2DArray.FirstArraySlice = (ArraySlice * TEXTURE_CUBE_FACE_COUNT) + FaceIndex;
     }
     else
     {
-        Desc.ViewDimension						= D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-        Desc.Texture2DMSArray.ArraySize			= 1;
-        Desc.Texture2DMSArray.FirstArraySlice	= (ArraySlice * TEXTURE_CUBE_FACE_COUNT) + FaceIndex;
+        Desc.ViewDimension                        = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+        Desc.Texture2DMSArray.ArraySize            = 1;
+        Desc.Texture2DMSArray.FirstArraySlice    = (ArraySlice * TEXTURE_CUBE_FACE_COUNT) + FaceIndex;
     }
 
     // Make sure that the texture actually is a textures
@@ -1370,14 +1370,14 @@ DepthStencilState* D3D12RenderLayer::CreateDepthStencilState(
     D3D12_DEPTH_STENCIL_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_DEPTH_STENCIL_DESC));
     
-    Desc.DepthEnable		= CreateInfo.DepthEnable;
-    Desc.DepthFunc			= ConvertComparisonFunc(CreateInfo.DepthFunc);
-    Desc.DepthWriteMask		= ConvertDepthWriteMask(CreateInfo.DepthWriteMask);
-    Desc.StencilEnable		= CreateInfo.StencilEnable;
-    Desc.StencilReadMask	= CreateInfo.StencilReadMask;
-    Desc.StencilWriteMask	= CreateInfo.StencilWriteMask;
-    Desc.FrontFace			= ConvertDepthStencilOp(CreateInfo.FrontFace);
-    Desc.BackFace			= ConvertDepthStencilOp(CreateInfo.BackFace);
+    Desc.DepthEnable        = CreateInfo.DepthEnable;
+    Desc.DepthFunc            = ConvertComparisonFunc(CreateInfo.DepthFunc);
+    Desc.DepthWriteMask        = ConvertDepthWriteMask(CreateInfo.DepthWriteMask);
+    Desc.StencilEnable        = CreateInfo.StencilEnable;
+    Desc.StencilReadMask    = CreateInfo.StencilReadMask;
+    Desc.StencilWriteMask    = CreateInfo.StencilWriteMask;
+    Desc.FrontFace            = ConvertDepthStencilOp(CreateInfo.FrontFace);
+    Desc.BackFace            = ConvertDepthStencilOp(CreateInfo.BackFace);
 
     return DBG_NEW D3D12DepthStencilState(Device, Desc);
 }
@@ -1388,20 +1388,20 @@ RasterizerState* D3D12RenderLayer::CreateRasterizerState(
     D3D12_RASTERIZER_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_RASTERIZER_DESC));
 
-    Desc.AntialiasedLineEnable	= CreateInfo.AntialiasedLineEnable;
+    Desc.AntialiasedLineEnable    = CreateInfo.AntialiasedLineEnable;
     Desc.ConservativeRaster =
         (CreateInfo.EnableConservativeRaster) ?
         D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON :
         D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-    Desc.CullMode				= ConvertCullMode(CreateInfo.CullMode);
-    Desc.DepthBias				= CreateInfo.DepthBias;
-    Desc.DepthBiasClamp			= CreateInfo.DepthBiasClamp;
-    Desc.DepthClipEnable		= CreateInfo.DepthClipEnable;
-    Desc.SlopeScaledDepthBias	= CreateInfo.SlopeScaledDepthBias;
-    Desc.FillMode				= ConvertFillMode(CreateInfo.FillMode);
-    Desc.ForcedSampleCount		= CreateInfo.ForcedSampleCount;
-    Desc.FrontCounterClockwise	= CreateInfo.FrontCounterClockwise;
-    Desc.MultisampleEnable		= CreateInfo.MultisampleEnable;
+    Desc.CullMode                = ConvertCullMode(CreateInfo.CullMode);
+    Desc.DepthBias                = CreateInfo.DepthBias;
+    Desc.DepthBiasClamp            = CreateInfo.DepthBiasClamp;
+    Desc.DepthClipEnable        = CreateInfo.DepthClipEnable;
+    Desc.SlopeScaledDepthBias    = CreateInfo.SlopeScaledDepthBias;
+    Desc.FillMode                = ConvertFillMode(CreateInfo.FillMode);
+    Desc.ForcedSampleCount        = CreateInfo.ForcedSampleCount;
+    Desc.FrontCounterClockwise    = CreateInfo.FrontCounterClockwise;
+    Desc.MultisampleEnable        = CreateInfo.MultisampleEnable;
 
     return DBG_NEW D3D12RasterizerState(Device, Desc);
 }
@@ -1412,20 +1412,20 @@ BlendState* D3D12RenderLayer::CreateBlendState(
     D3D12_BLEND_DESC Desc;
     Memory::Memzero(&Desc, sizeof(D3D12_BLEND_DESC));
 
-    Desc.AlphaToCoverageEnable	= CreateInfo.AlphaToCoverageEnable;
-    Desc.IndependentBlendEnable	= CreateInfo.IndependentBlendEnable;	
+    Desc.AlphaToCoverageEnable    = CreateInfo.AlphaToCoverageEnable;
+    Desc.IndependentBlendEnable    = CreateInfo.IndependentBlendEnable;    
     for (UInt32 i = 0; i < 8; i++)
     {
-        Desc.RenderTarget[i].BlendEnable			= CreateInfo.RenderTarget[i].BlendEnable;
-        Desc.RenderTarget[i].BlendOp				= ConvertBlendOp(CreateInfo.RenderTarget[i].BlendOp);
-        Desc.RenderTarget[i].BlendOpAlpha			= ConvertBlendOp(CreateInfo.RenderTarget[i].BlendOpAlpha);
-        Desc.RenderTarget[i].DestBlend				= ConvertBlend(CreateInfo.RenderTarget[i].DestBlend);
-        Desc.RenderTarget[i].DestBlendAlpha			= ConvertBlend(CreateInfo.RenderTarget[i].DestBlendAlpha);
-        Desc.RenderTarget[i].SrcBlend				= ConvertBlend(CreateInfo.RenderTarget[i].SrcBlend);
-        Desc.RenderTarget[i].SrcBlendAlpha			= ConvertBlend(CreateInfo.RenderTarget[i].SrcBlendAlpha);
-        Desc.RenderTarget[i].LogicOpEnable			= CreateInfo.RenderTarget[i].LogicOpEnable;
-        Desc.RenderTarget[i].LogicOp				= ConvertLogicOp(CreateInfo.RenderTarget[i].LogicOp);
-        Desc.RenderTarget[i].RenderTargetWriteMask	= ConvertRenderTargetWriteState(CreateInfo.RenderTarget[i].RenderTargetWriteMask);
+        Desc.RenderTarget[i].BlendEnable            = CreateInfo.RenderTarget[i].BlendEnable;
+        Desc.RenderTarget[i].BlendOp                = ConvertBlendOp(CreateInfo.RenderTarget[i].BlendOp);
+        Desc.RenderTarget[i].BlendOpAlpha            = ConvertBlendOp(CreateInfo.RenderTarget[i].BlendOpAlpha);
+        Desc.RenderTarget[i].DestBlend                = ConvertBlend(CreateInfo.RenderTarget[i].DestBlend);
+        Desc.RenderTarget[i].DestBlendAlpha            = ConvertBlend(CreateInfo.RenderTarget[i].DestBlendAlpha);
+        Desc.RenderTarget[i].SrcBlend                = ConvertBlend(CreateInfo.RenderTarget[i].SrcBlend);
+        Desc.RenderTarget[i].SrcBlendAlpha            = ConvertBlend(CreateInfo.RenderTarget[i].SrcBlendAlpha);
+        Desc.RenderTarget[i].LogicOpEnable            = CreateInfo.RenderTarget[i].LogicOpEnable;
+        Desc.RenderTarget[i].LogicOp                = ConvertLogicOp(CreateInfo.RenderTarget[i].LogicOp);
+        Desc.RenderTarget[i].RenderTargetWriteMask    = ConvertRenderTargetWriteState(CreateInfo.RenderTarget[i].RenderTargetWriteMask);
     }
 
     return DBG_NEW D3D12BlendState(Device, Desc);
@@ -1452,7 +1452,7 @@ GraphicsPipelineState* D3D12RenderLayer::CreateGraphicsPipelineState(
 
         struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
         {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE	Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT;
+            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE    Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT;
             D3D12_INPUT_LAYOUT_DESC InputLayout = { };
         };
 
@@ -1517,8 +1517,8 @@ GraphicsPipelineState* D3D12RenderLayer::CreateGraphicsPipelineState(
     D3D12InputLayoutState* DxInputLayoutState = static_cast<D3D12InputLayoutState*>(CreateInfo.InputLayoutState);
     if (!DxInputLayoutState)
     {
-        InputLayoutDesc.pInputElementDescs	= nullptr;
-        InputLayoutDesc.NumElements			= 0;
+        InputLayoutDesc.pInputElementDescs    = nullptr;
+        InputLayoutDesc.NumElements            = 0;
     }
     else
     {
@@ -1538,8 +1538,8 @@ GraphicsPipelineState* D3D12RenderLayer::CreateGraphicsPipelineState(
     D3D12_SHADER_BYTECODE& PixelShader = PipelineStream.PixelShader;
     if (!DxPixelShader)
     {
-        PixelShader.pShaderBytecode	= nullptr;
-        PixelShader.BytecodeLength	= 0;
+        PixelShader.pShaderBytecode    = nullptr;
+        PixelShader.BytecodeLength    = 0;
     }
     else
     {
@@ -1591,15 +1591,15 @@ GraphicsPipelineState* D3D12RenderLayer::CreateGraphicsPipelineState(
 
     // MSAA
     DXGI_SAMPLE_DESC& SamplerDesc = PipelineStream.SampleDesc;
-    SamplerDesc.Count	= CreateInfo.SampleCount;
-    SamplerDesc.Quality	= CreateInfo.SampleQuality;
+    SamplerDesc.Count    = CreateInfo.SampleCount;
+    SamplerDesc.Quality    = CreateInfo.SampleQuality;
 
     // Create PipelineState
     D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
     Memory::Memzero(&PipelineStreamDesc, sizeof(D3D12_PIPELINE_STATE_STREAM_DESC));
 
-    PipelineStreamDesc.pPipelineStateSubobjectStream	= &PipelineStream;
-    PipelineStreamDesc.SizeInBytes						= sizeof(GraphicsPipelineStream);
+    PipelineStreamDesc.pPipelineStateSubobjectStream    = &PipelineStream;
+    PipelineStreamDesc.SizeInBytes                        = sizeof(GraphicsPipelineStream);
 
     ComPtr<ID3D12PipelineState> PipelineState;
     HRESULT hResult = Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
@@ -1627,8 +1627,8 @@ ComputePipelineState* D3D12RenderLayer::CreateComputePipelineState(
     VALIDATE(Info.Shader != nullptr);
     
     // Check if shader contains a rootsignature, or use the default one
-    TSharedRef<D3D12ComputeShader> Shader			= MakeSharedRef<D3D12ComputeShader>(Info.Shader);
-    TSharedRef<D3D12RootSignature> RootSignature	= MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
+    TSharedRef<D3D12ComputeShader> Shader            = MakeSharedRef<D3D12ComputeShader>(Info.Shader);
+    TSharedRef<D3D12RootSignature> RootSignature    = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
     if (!RootSignature)
     {
         RootSignature = DefaultRootSignatures.Compute;
@@ -1744,23 +1744,23 @@ Bool D3D12RenderLayer::AllocateBuffer(
     D3D12_HEAP_PROPERTIES HeapProperties;
     Memory::Memzero(&HeapProperties);
 
-    HeapProperties.Type					= HeapType;
-    HeapProperties.CPUPageProperty		= D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    HeapProperties.MemoryPoolPreference	= D3D12_MEMORY_POOL_UNKNOWN;
+    HeapProperties.Type                    = HeapType;
+    HeapProperties.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.MemoryPoolPreference    = D3D12_MEMORY_POOL_UNKNOWN;
 
     D3D12_RESOURCE_DESC Desc;
     Memory::Memzero(&Desc);
 
-    Desc.Dimension				= D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags					= Flags;
-    Desc.Format					= DXGI_FORMAT_UNKNOWN;
-    Desc.Width					= SizeInBytes;
-    Desc.Height					= 1;
-    Desc.DepthOrArraySize		= 1;
-    Desc.Layout					= D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.MipLevels				= 1;
-    Desc.SampleDesc.Count		= 1;
-    Desc.SampleDesc.Quality		= 0;
+    Desc.Dimension                = D3D12_RESOURCE_DIMENSION_BUFFER;
+    Desc.Flags                    = Flags;
+    Desc.Format                    = DXGI_FORMAT_UNKNOWN;
+    Desc.Width                    = SizeInBytes;
+    Desc.Height                    = 1;
+    Desc.DepthOrArraySize        = 1;
+    Desc.Layout                    = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    Desc.MipLevels                = 1;
+    Desc.SampleDesc.Count        = 1;
+    Desc.SampleDesc.Quality        = 0;
 
     HRESULT Result = Device->CreateCommitedResource(
         &HeapProperties, 
@@ -1771,10 +1771,10 @@ Bool D3D12RenderLayer::AllocateBuffer(
         IID_PPV_ARGS(&Resource.NativeResource));
     if (SUCCEEDED(Result))
     {
-        Resource.Address		= Resource.NativeResource->GetGPUVirtualAddress();
-        Resource.Desc			= Desc;
-        Resource.HeapType		= HeapType;
-        Resource.ResourceState	= InitalState;
+        Resource.Address        = Resource.NativeResource->GetGPUVirtualAddress();
+        Resource.Desc            = Desc;
+        Resource.HeapType        = HeapType;
+        Resource.ResourceState    = InitalState;
         return true;
     }
     else
@@ -1794,9 +1794,9 @@ Bool D3D12RenderLayer::AllocateTexture(
     D3D12_HEAP_PROPERTIES HeapProperties;
     Memory::Memzero(&HeapProperties);
 
-    HeapProperties.Type					= HeapType;
-    HeapProperties.CPUPageProperty		= D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    HeapProperties.MemoryPoolPreference	= D3D12_MEMORY_POOL_UNKNOWN;
+    HeapProperties.Type                    = HeapType;
+    HeapProperties.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.MemoryPoolPreference    = D3D12_MEMORY_POOL_UNKNOWN;
 
     HRESULT Result = Device->CreateCommitedResource(
         &HeapProperties, 
@@ -1807,9 +1807,9 @@ Bool D3D12RenderLayer::AllocateTexture(
         IID_PPV_ARGS(&Resource.NativeResource));
     if (SUCCEEDED(Result))
     {
-        Resource.Address	= NULL;
-        Resource.Desc		= Desc;
-        Resource.HeapType	= HeapType;
+        Resource.Address    = NULL;
+        Resource.Desc        = Desc;
+        Resource.HeapType    = HeapType;
         Resource.ResourceState = InitalState;
         return true;
     }
@@ -1876,7 +1876,7 @@ Bool D3D12RenderLayer::UploadTexture(Texture& Texture, const ResourceData* Inita
         EResourceState::ResourceState_Common,
         EResourceState::ResourceState_CopyDest);
 
-    const UInt32 Width 	= Texture.GetWidth();
+    const UInt32 Width     = Texture.GetWidth();
     const UInt32 Height = Texture.GetHeight();
     DirectCmdContext->UpdateTexture2D(
         Texture2D,

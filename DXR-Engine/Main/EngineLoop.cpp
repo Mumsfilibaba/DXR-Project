@@ -15,8 +15,8 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/TextureFactory.h"
 
-#include "RenderingCore/Texture.h"
-#include "RenderingCore/CommandList.h"
+#include "RenderLayer/Texture.h"
+#include "RenderLayer/CommandList.h"
 
 #include "Editor/Editor.h"
 
@@ -27,261 +27,253 @@
 
 #include "Memory/Memory.h"
 
-/*
-* EngineMain 
-*/
-
 Int32 EngineMain(const TArrayView<const Char*> Args)
 {
-	UNREFERENCED_VARIABLE(Args);
+    UNREFERENCED_VARIABLE(Args);
 
 #ifdef _DEBUG
-	Memory::SetDebugFlags(EMemoryDebugFlag::MemoryDebugFlag_LeakCheck);
+    Memory::SetDebugFlags(EMemoryDebugFlag::MemoryDebugFlag_LeakCheck);
 #endif
 
-	if (!GlobalEngineLoop.PreInit())
-	{
-		PlatformDialogMisc::MessageBox("ERROR", "Pre-Initialize Failed");
-		return -1;
-	}
+    if (!GlobalEngineLoop.PreInit())
+    {
+        PlatformDialogMisc::MessageBox("ERROR", "Pre-Initialize Failed");
+        return -1;
+    }
 
-	if (!GlobalEngineLoop.Init())
-	{
-		PlatformDialogMisc::MessageBox("ERROR", "Initialize Failed");
-		return -1;
-	}
+    if (!GlobalEngineLoop.Init())
+    {
+        PlatformDialogMisc::MessageBox("ERROR", "Initialize Failed");
+        return -1;
+    }
 
-	if (!GlobalEngineLoop.PostInit())
-	{
-		PlatformDialogMisc::MessageBox("ERROR", "Post-Initialize Failed");
-		return -1;
-	}
+    if (!GlobalEngineLoop.PostInit())
+    {
+        PlatformDialogMisc::MessageBox("ERROR", "Post-Initialize Failed");
+        return -1;
+    }
 
-	while (GlobalEngineLoop.IsRunning())
-	{
-		TRACE_SCOPE("Tick");
-			
-		GlobalEngineLoop.PreTick();
-	
-		GlobalEngineLoop.Tick();
-	
-		GlobalEngineLoop.PostTick();
-	}
+    while (GlobalEngineLoop.IsRunning())
+    {
+        TRACE_SCOPE("Tick");
+            
+        GlobalEngineLoop.PreTick();
+    
+        GlobalEngineLoop.Tick();
+    
+        GlobalEngineLoop.PostTick();
+    }
 
-	GlobalEngineLoop.PreRelease();
-	
-	GlobalEngineLoop.Release();
-	
-	GlobalEngineLoop.PostRelease();
+    GlobalEngineLoop.PreRelease();
+    
+    GlobalEngineLoop.Release();
+    
+    GlobalEngineLoop.PostRelease();
 
-	return 0;
+    return 0;
 }
-
-/*
-* EngineLoop
-*/
 
 Bool EngineLoop::PreInit()
 {
-	TRACE_FUNCTION_SCOPE();
+    TRACE_FUNCTION_SCOPE();
 
-	GlobalProfiler.Init();
+    GlobalProfiler.Init();
 
-	GlobalConsoleOutput = PlatformOutputDevice::Make();
-	if (!GlobalConsoleOutput)
-	{
-		return false;
-	}
-	else
-	{
-		GlobalConsoleOutput->SetTitle("DXR-Engine Error Output");
-	}
+    GlobalConsoleOutput = PlatformOutputDevice::Make();
+    if (!GlobalConsoleOutput)
+    {
+        return false;
+    }
+    else
+    {
+        GlobalConsoleOutput->SetTitle("DXR-Engine Error Output");
+    }
 
-	GlobalPlatformApplication = PlatformApplication::Make();
-	if (!GlobalPlatformApplication->Init())
-	{
-		PlatformDialogMisc::MessageBox("ERROR", "Failed to create Platform Application");
-		return false;
-	}
+    GlobalPlatformApplication = PlatformApplication::Make();
+    if (!GlobalPlatformApplication->Init())
+    {
+        PlatformDialogMisc::MessageBox("ERROR", "Failed to create Platform Application");
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 Bool EngineLoop::Init()
 {
-	TRACE_FUNCTION_SCOPE();
+    TRACE_FUNCTION_SCOPE();
 
-	GlobalEventDispatcher = DBG_NEW EventDispatcher(GlobalPlatformApplication);
-	GlobalPlatformApplication->SetEventHandler(GlobalEventDispatcher);
+    GlobalEventDispatcher = DBG_NEW EventDispatcher(GlobalPlatformApplication);
+    GlobalPlatformApplication->SetEventHandler(GlobalEventDispatcher);
 
-	GlobalConsole.Init();
+    GlobalConsole.Init();
 
-	const UInt32 Style =
-		WindowStyleFlag_Titled		|
-		WindowStyleFlag_Closable	|
-		WindowStyleFlag_Minimizable |
-		WindowStyleFlag_Maximizable |
-		WindowStyleFlag_Resizeable;
+    const UInt32 Style =
+        WindowStyleFlag_Titled      |
+        WindowStyleFlag_Closable    |
+        WindowStyleFlag_Minimizable |
+        WindowStyleFlag_Maximizable |
+        WindowStyleFlag_Resizeable;
 
-	WindowCreateInfo WinCreateInfo("DXR Engine", 1920, 1080, Style);
-	GlobalMainWindow = GlobalPlatformApplication->MakeWindow();
-	
-	if (!GlobalMainWindow->Init(WinCreateInfo))
-	{
-		PlatformDialogMisc::MessageBox("ERROR", "Failed to create Application");
-		return false;
-	}
-	else
-	{
-		GlobalMainWindow->Show(false);
+    WindowCreateInfo WinCreateInfo("DXR Engine", 1920, 1080, Style);
+    GlobalMainWindow = GlobalPlatformApplication->MakeWindow();
+    
+    if (!GlobalMainWindow->Init(WinCreateInfo))
+    {
+        PlatformDialogMisc::MessageBox("ERROR", "Failed to create Application");
+        return false;
+    }
+    else
+    {
+        GlobalMainWindow->Show(false);
 
-		INIT_CONSOLE_COMMAND("ToggleFullscreen", []() 
-		{
-			GlobalMainWindow->ToggleFullscreen();
-		});
+        INIT_CONSOLE_COMMAND("ToggleFullscreen", []() 
+        {
+            GlobalMainWindow->ToggleFullscreen();
+        });
 
-		INIT_CONSOLE_COMMAND("Quit", []()
-		{
-			GlobalEngineLoop.Exit();
-		});
-	}
+        INIT_CONSOLE_COMMAND("Quit", []()
+        {
+            GlobalEngineLoop.Exit();
+        });
+    }
 
-	GlobalCursors::Init();
+    GlobalCursors::Init();
 
-	// RenderAPI
-	if (!RenderLayer::Init(ERenderLayerApi::RenderLayerApi_D3D12))
-	{
-		return false;
-	}
+    // RenderAPI
+    if (!RenderLayer::Init(ERenderLayerApi::RenderLayerApi_D3D12))
+    {
+        return false;
+    }
 
-	if (!TextureFactory::Init())
-	{
-		return false;
-	}
+    if (!TextureFactory::Init())
+    {
+        return false;
+    }
 
-	GlobalRenderer = DBG_NEW Renderer();
-	if (!GlobalRenderer->Init())
-	{
-		PlatformDialogMisc::MessageBox("ERROR", "FAILED to create Renderer");
-		return false;
-	}
+    GlobalRenderer = DBG_NEW Renderer();
+    if (!GlobalRenderer->Init())
+    {
+        PlatformDialogMisc::MessageBox("ERROR", "FAILED to create Renderer");
+        return false;
+    }
 
-	if (!DebugUI::Init())
-	{
-		PlatformDialogMisc::MessageBox("ERROR", "FAILED to create ImGuiContext");
-		return false;
-	}
+    if (!DebugUI::Init())
+    {
+        PlatformDialogMisc::MessageBox("ERROR", "FAILED to create ImGuiContext");
+        return false;
+    }
 
-	GlobalGame = MakeGameInstance();
-	if (!GlobalGame->Init())
-	{
-		PlatformDialogMisc::MessageBox("ERROR", "FAILED initialize Game");
-		return false;
-	}
+    GlobalGame = MakeGameInstance();
+    if (!GlobalGame->Init())
+    {
+        PlatformDialogMisc::MessageBox("ERROR", "FAILED initialize Game");
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 Bool EngineLoop::PostInit()
 {
-	TRACE_FUNCTION_SCOPE();
+    TRACE_FUNCTION_SCOPE();
 
-	Editor::Init();
+    Editor::Init();
 
-	ShouldRun = true;
-	return true;
+    ShouldRun = true;
+    return true;
 }
 
 void EngineLoop::PreTick()
 {
-	TRACE_FUNCTION_SCOPE();
+    TRACE_FUNCTION_SCOPE();
 
-	if (!PlatformApplication::PeekMessageUntilNoMessage())
-	{
-		Exit();
-	}
+    if (!PlatformApplication::PeekMessageUntilNoMessage())
+    {
+        Exit();
+    }
 
-	GlobalPlatformApplication->Tick();
+    GlobalPlatformApplication->Tick();
 }
 
 void EngineLoop::Tick()
 {
-	TRACE_FUNCTION_SCOPE();
+    TRACE_FUNCTION_SCOPE();
 
-	EngineClock.Tick();
-	
-	GlobalGame->Tick(EngineClock.GetDeltaTime());
+    EngineClock.Tick();
+    
+    GlobalGame->Tick(EngineClock.GetDeltaTime());
 
-	GlobalConsole.Tick();
+    GlobalConsole.Tick();
 
-	Editor::Tick();
+    Editor::Tick();
 }
 
 void EngineLoop::PostTick()
 {
-	TRACE_FUNCTION_SCOPE();
+    TRACE_FUNCTION_SCOPE();
 
-	GlobalProfiler.Tick();
+    GlobalProfiler.Tick();
 
-	GlobalRenderer->Tick(*Scene::GetCurrentScene());
+    GlobalRenderer->Tick(*Scene::GetCurrentScene());
 }
 
 Bool EngineLoop::PreRelease()
 {
-	TRACE_FUNCTION_SCOPE();
+    TRACE_FUNCTION_SCOPE();
 
-	GlobalCmdListExecutor.WaitForGPU();
-	
-	TextureFactory::Release();
+    GlobalCmdListExecutor.WaitForGPU();
+    
+    TextureFactory::Release();
 
-	return true;
+    return true;
 }
 
 Bool EngineLoop::Release()
 {
-	TRACE_FUNCTION_SCOPE();
+    TRACE_FUNCTION_SCOPE();
 
-	SAFEDELETE(GlobalGame);
+    SAFEDELETE(GlobalGame);
 
-	DebugUI::Release();
+    DebugUI::Release();
 
-	SAFEDELETE(GlobalRenderer);
+    SAFEDELETE(GlobalRenderer);
 
-	RenderLayer::Release();
+    RenderLayer::Release();
 
-	return true;
+    return true;
 }
 
 Bool EngineLoop::PostRelease()
 {
-	TRACE_FUNCTION_SCOPE();
+    TRACE_FUNCTION_SCOPE();
 
-	SAFEDELETE(GlobalEventDispatcher);
+    SAFEDELETE(GlobalEventDispatcher);
 
-	GlobalMainWindow->Release();
+    GlobalMainWindow->Release();
 
-	SAFEDELETE(GlobalPlatformApplication);
-	SAFEDELETE(GlobalConsoleOutput);
+    SAFEDELETE(GlobalPlatformApplication);
+    SAFEDELETE(GlobalConsoleOutput);
 
-	return true;
+    return true;
 }
 
 void EngineLoop::Exit()
 {
-	ShouldRun = false;
+    ShouldRun = false;
 }
 
 Bool EngineLoop::IsRunning() const
 {
-	return ShouldRun;
+    return ShouldRun;
 }
 
 Timestamp EngineLoop::GetDeltaTime() const
 {
-	return EngineClock.GetDeltaTime();
+    return EngineClock.GetDeltaTime();
 }
 
 Timestamp EngineLoop::GetTotalElapsedTime() const
 {
-	return EngineClock.GetTotalTime();
+    return EngineClock.GetTotalTime();
 }

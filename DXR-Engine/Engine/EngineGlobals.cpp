@@ -5,48 +5,30 @@
 #include "Debug/Profiler.h"
 #include "Debug/Console.h"
 
-#include "RenderingCore/CommandList.h"
+#include "RenderLayer/CommandList.h"
 
-/*
-* Engine
-*/
 
 EngineLoop GlobalEngineLoop;
 
-/*
-* Application
-*/
-
-class GenericWindow*		GlobalMainWindow			= nullptr;
-class GenericApplication*	GlobalPlatformApplication	= nullptr;
-class EventDispatcher*		GlobalEventDispatcher		= nullptr;
-class GenericOutputDevice*	GlobalConsoleOutput			= nullptr;
-
-/*
-* Game
-*/
+class GenericWindow*       GlobalMainWindow          = nullptr;
+class GenericApplication*  GlobalPlatformApplication = nullptr;
+class EventDispatcher*     GlobalEventDispatcher     = nullptr;
+class GenericOutputDevice* GlobalConsoleOutput       = nullptr;
 
 class Game* GlobalGame = nullptr;
 
-/*
-* Rendering
-*/
 
-class Renderer*				GlobalRenderer			= nullptr;
-class GenericRenderLayer*	GlobalRenderLayer		= nullptr;
-class IShaderCompiler*		GlobalShaderCompiler	= nullptr;
+class Renderer*           GlobalRenderer       = nullptr;
+class GenericRenderLayer* GlobalRenderLayer    = nullptr;
+class IShaderCompiler*    GlobalShaderCompiler = nullptr;
 
-CommandListExecutor	GlobalCmdListExecutor;
+CommandListExecutor GlobalCmdListExecutor;
 
-Bool GlobalPrePassEnabled		= true;
-Bool GlobalDrawAABBs			= false;
-Bool GlobalVSyncEnabled			= false;
-Bool GlobalFrustumCullEnabled	= true;
-Bool GlobalRayTracingEnabled	= false;
+Bool GlobalPrePassEnabled     = true;
+Bool GlobalDrawAABBs          = false;
+Bool GlobalVSyncEnabled       = false;
+Bool GlobalFrustumCullEnabled = true;
+Bool GlobalRayTracingEnabled  = false;
 
-/*
-* Debug
-*/
-
-Profiler	GlobalProfiler;
-Console		GlobalConsole;
+Profiler GlobalProfiler;
+Console  GlobalConsole;

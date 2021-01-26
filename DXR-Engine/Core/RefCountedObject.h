@@ -1,26 +1,20 @@
 #pragma once
 #include "Core.h"
 
-/*
-* RefCountedObject
-*/
-
 class RefCountedObject
 {
 public:
-	using RefCountType = UInt32;
+    RefCountedObject();
+    virtual ~RefCountedObject() = default;
 
-	RefCountedObject();
-	virtual ~RefCountedObject() = default;
+    UInt32 AddRef();
+    UInt32 Release();
 
-	RefCountType AddRef();
-	RefCountType Release();
-
-	FORCEINLINE RefCountType GetRefCount() const
-	{
-		return StrongReferences;
-	}
+    FORCEINLINE UInt32 GetRefCount() const
+    {
+        return StrongReferences;
+    }
 
 private:
-	RefCountType StrongReferences;
+    UInt32 StrongReferences;
 };

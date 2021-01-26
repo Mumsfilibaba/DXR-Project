@@ -3,25 +3,21 @@
 
 #include "Windows/Windows.h"
 
-/*
-* WindowsConsoleOutput
-*/
-
 class WindowsConsoleOutput : public GenericOutputDevice
 {
 public:
-	WindowsConsoleOutput();
-	~WindowsConsoleOutput();
+    WindowsConsoleOutput();
+    ~WindowsConsoleOutput();
 
-	virtual void Print(const std::string& Message) override final;
-	
-	virtual void Clear() override final;
+    virtual void Print(const std::string& Message) override final;
+    
+    virtual void Clear() override final;
 
-	virtual void SetTitle(const std::string& Title)	override final;
-	virtual void SetColor(EConsoleColor Color)		override final;
+    virtual void SetTitle(const std::string& Title) override final;
+    virtual void SetColor(EConsoleColor Color)      override final;
 
-	static GenericOutputDevice* Make();
+    static GenericOutputDevice* Make();
 
 private:
-	void* ConsoleHandle = 0;
+    void* ConsoleHandle = 0;
 };

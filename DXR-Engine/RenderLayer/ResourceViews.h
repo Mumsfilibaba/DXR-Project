@@ -1,6 +1,8 @@
 #pragma once
 #include "Resource.h"
 
+#include "Memory/Memory.h"
+
 enum EShaderResourceViewType
 {
     ShaderResourceViewType_Texture          = 0,
