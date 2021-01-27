@@ -33,13 +33,6 @@
 
 #define ENABLE_VSM 0
 
-struct LightSettings
-{
-    UInt16 ShadowMapWidth       = 4096;
-    UInt16 ShadowMapHeight      = 4096;
-    UInt16 PointLightShadowSize = 1024;
-};
-
 class Renderer
 {
 public:
@@ -59,20 +52,8 @@ public:
     
 private:
     Bool InitRayTracing();
-    Bool InitLightBuffers();
-    Bool InitPrePass();
-    Bool InitShadowMapPass();
-    Bool InitDeferred();
-    Bool InitGBuffer();
-    Bool InitIntegrationLUT();
     Bool InitRayTracingTexture();
-    Bool InitDebugStates();
     Bool InitAA();
-    Bool InitForwardPass();
-    Bool InitSSAO();
-    Bool InitSSAO_RenderTarget();
-
-    Bool CreateShadowMaps();
 
     void TraceRays(Texture2D* BackBuffer, CommandList& InCmdList);
 
@@ -98,8 +79,7 @@ private:
     TArray<RayTracingGeometryInstance>	RayTracingGeometryInstances;
 
     TSharedRef<GraphicsPipelineState> PostPSO;
-
-    TSharedRef<Viewport> MainWindowViewport;
+    TSharedRef<GraphicsPipelineState> FXAAPSO;
 
     UInt32 LastFrameNumDrawCalls		= 0;
     UInt32 LastFrameNumDispatchCalls	= 0;

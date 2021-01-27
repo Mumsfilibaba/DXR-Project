@@ -1,6 +1,22 @@
 #pragma once
-#include "RenderLayer/CommandList.h"
 #include "RenderLayer/Buffer.h"
+#include "RenderLayer/CommandList.h"
+
+#include "Rendering/DebugUI.h"
+#include "Rendering/MeshDrawCommand.h"
+
+#define GBUFFER_ALBEDO_INDEX      0
+#define GBUFFER_NORMAL_INDEX      1
+#define GBUFFER_MATERIAL_INDEX    2
+#define GBUFFER_DEPTH_INDEX       3
+#define GBUFFER_VIEW_NORMAL_INDEX 4
+
+struct LightSettings
+{
+    UInt16 ShadowMapWidth       = 4096;
+    UInt16 ShadowMapHeight      = 4096;
+    UInt16 PointLightShadowSize = 1024;
+};
 
 struct SharedRenderPassResources
 {
@@ -55,6 +71,16 @@ struct SharedRenderPassResources
     TSharedRef<RenderTargetView>    FinalTargetRTV;
     TSharedRef<UnorderedAccessView> FinalTargetUAV;
 
+   const EFormat DepthBufferFormat  = EFormat::Format_D32_Float;
+   const EFormat SSAOBufferFormat   = EFormat::Format_R16_Float;
+   const EFormat FinalTargetFormat  = EFormat::Format_R16G16B16A16_Float;
+   const EFormat RenderTargetFormat = EFormat::Format_R8G8B8A8_Unorm;
+   const EFormat AlbedoFormat       = EFormat::Format_R8G8B8A8_Unorm;
+   const EFormat MaterialFormat     = EFormat::Format_R8G8B8A8_Unorm;
+   const EFormat NormalFormat       = EFormat::Format_R10G10B10A2_Unorm;
+   const EFormat ViewNormalFormat   = EFormat::Format_R10G10B10A2_Unorm;
+   const EFormat LightProbeFormat   = EFormat::Format_R16G16B16A16_Float;
+
     TSharedRef<Texture2D>           GBuffer[5];
     TSharedRef<ShaderResourceView>  GBufferSRVs[5];
     TSharedRef<RenderTargetView>    GBufferRTVs[5];
@@ -67,6 +93,8 @@ struct SharedRenderPassResources
     TArray<MeshDrawCommand> ForwardVisibleCommands;
 
     TArray<ImGuiImage> DebugTextures;
+
+    TSharedRef<Viewport> MainWindowViewport;
 
     LightSettings CurrentLightSettings;
 };

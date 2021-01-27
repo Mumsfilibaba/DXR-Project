@@ -7,14 +7,16 @@ public:
     SSAOSceneRenderPass()  = default;
     ~SSAOSceneRenderPass() = default;
 
-    Bool Init();
+    Bool Init(SharedRenderPassResources& FrameResources);
 
     virtual void Render(CommandList& CmdList, SharedRenderPassResources& FrameResources) override;
 
 private:
-    TSharedPtr<ComputePipelineState> SSAOPSO;
-    TSharedPtr<ComputePipelineState> SSAOBlurHorizontal;
-    TSharedPtr<ComputePipelineState> SSAOBlurVertical;
+    Bool InitRenderTarget(SharedRenderPassResources& FrameResources);
+
+    TSharedPtr<ComputePipelineState> PipelineState;
+    TSharedPtr<ComputePipelineState> BlurHorizontalPSO;
+    TSharedPtr<ComputePipelineState> BlurVerticalPSO;
     TSharedRef<StructuredBuffer>     SSAOSamples;
     TSharedRef<ShaderResourceView>   SSAOSamplesSRV;
     TSharedRef<Texture2D>            SSAOBuffer;

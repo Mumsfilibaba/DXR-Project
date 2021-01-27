@@ -1,10 +1,10 @@
 #include "SkyboxSceneRenderPass.h"
 
 #include "RenderLayer/RenderLayer.h"
-
+#include "RenderLayer/ShaderCompiler.h"
 #include "Rendering/TextureFactory.h"
 
-Bool SkyboxSceneRenderPass::Init(SharedRenderPassResources& FrameResource)
+Bool SkyboxSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
 {
     SkyboxMesh = MeshFactory::CreateSphere(1);
 
@@ -52,32 +52,32 @@ Bool SkyboxSceneRenderPass::Init(SharedRenderPassResources& FrameResource)
         Panorama.SetName(PanoramaSourceFilename);
     }
 
-    FrameResource.Skybox = TextureFactory::CreateTextureCubeFromPanorma(
+    FrameResources.Skybox = TextureFactory::CreateTextureCubeFromPanorma(
         Panorama,
         1024,
         TextureFactoryFlag_GenerateMips,
         EFormat::Format_R16G16B16A16_Float);
-    if (!FrameResource.Skybox)
+    if (!FrameResources.Skybox)
     {
         return false;
     }
     else
     {
-        FrameResource.Skybox->SetName("Skybox");
+        FrameResources.Skybox->SetName("Skybox");
     }
 
-    FrameResource.SkyboxSRV = RenderLayer::CreateShaderResourceView(
-        FrameResource.Skybox.Get(),
+    FrameResources.SkyboxSRV = RenderLayer::CreateShaderResourceView(
+        FrameResources.Skybox.Get(),
         EFormat::Format_R16G16B16A16_Float,
         0,
-        FrameResource.Skybox->GetMipLevels());
-    if (!FrameResource.SkyboxSRV)
+        FrameResources.Skybox->GetMipLevels());
+    if (!FrameResources.SkyboxSRV)
     {
         return false;
     }
     else
     {
-        FrameResource.SkyboxSRV->SetName("Skybox SRV");
+        FrameResources.SkyboxSRV->SetName("Skybox SRV");
     }
 
     SamplerStateCreateInfo CreateInfo;
@@ -94,9 +94,123 @@ Bool SkyboxSceneRenderPass::Init(SharedRenderPassResources& FrameResource)
         return false;
     }
 
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/Skybox.hlsl",
+        "VSMain",
+        nullptr,
+        EShaderStage::ShaderStage_Vertex,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    if (!VShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        VShader->SetName("Skybox VertexShader");
+    }
+
+    if (!ShaderCompiler::CompileFromFile(
+        "../DXR-Engine/Shaders/Skybox.hlsl",
+        "PSMain",
+        nullptr,
+        EShaderStage::ShaderStage_Pixel,
+        EShaderModel::ShaderModel_6_0,
+        ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    if (!PShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PShader->SetName("Skybox PixelShader");
+    }
+
+    RasterizerStateCreateInfo RasterizerStateInfo;
+    RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
+
+    TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    if (!RasterizerState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RasterizerState->SetName("Skybox RasterizerState");
+    }
+
+    BlendStateCreateInfo BlendStateInfo;
+    BlendStateInfo.IndependentBlendEnable      = false;
+    BlendStateInfo.RenderTarget[0].BlendEnable = false;
+
+    TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+    if (!BlendState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        BlendState->SetName("Skybox BlendState");
+    }
+
+    DepthStencilStateCreateInfo DepthStencilStateInfo;
+    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::ComparisonFunc_LessEqual;
+    DepthStencilStateInfo.DepthEnable    = true;
+    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::DepthWriteMask_All;
+
+    TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    if (!DepthStencilState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        DepthStencilState->SetName("Skybox DepthStencilState");
+    }
+
+    GraphicsPipelineStateCreateInfo PipelineStateInfo;
+    PipelineStateInfo.InputLayoutState  = FrameResources.StdInputLayout.Get();
+    PipelineStateInfo.BlendState        = BlendState.Get();
+    PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
+    PipelineStateInfo.RasterizerState   = RasterizerState.Get();
+    PipelineStateInfo.ShaderState.VertexShader  = VShader.Get();
+    PipelineStateInfo.ShaderState.PixelShader   = PShader.Get();
+    PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
+    PipelineStateInfo.PipelineFormats.NumRenderTargets       = 1;
+    PipelineStateInfo.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+
+    PipelineState = RenderLayer::CreateGraphicsPipelineState(PipelineStateInfo);
+    if (!PipelineState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PipelineState->SetName("SkyboxPSO PipelineState");
+    }
+
     return true;
 }
 
-void SkyboxSceneRenderPass::Render(CommandList& CmdList, SharedRenderPassResources& FrameResource)
+void SkyboxSceneRenderPass::Render(CommandList& CmdList, SharedRenderPassResources& FrameResources)
 {
 }
