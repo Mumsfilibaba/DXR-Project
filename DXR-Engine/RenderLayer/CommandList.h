@@ -1,7 +1,5 @@
 #pragma once
-#include "Resource.h"
-#include "Texture.h"
-#include "Buffer.h"
+#include "Resources.h"
 #include "RayTracing.h"
 #include "SamplerState.h"
 #include "RenderCommand.h"

@@ -34,7 +34,7 @@ public:
     static void* Memcpy(void* Destination, const void* Source, UInt64 Size);
 
     template<typename T>
-    static T* Memcpy(T* Destination, T* Source)
+    static T* Memcpy(T* Destination, const T* Source)
     {
         return reinterpret_cast<T*>(Memcpy(Destination, Source, sizeof(T)));
     }

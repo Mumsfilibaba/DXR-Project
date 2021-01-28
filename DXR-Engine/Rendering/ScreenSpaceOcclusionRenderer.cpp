@@ -1,11 +1,27 @@
-#include "SSAOSceneRenderPass.h"
+#include "ScreenSpaceOcclusionRenderer.h"
 
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
-#include "RenderLayer/Viewport.h"
+#include "RenderLayer/PipelineState.h"
 
-Bool SSAOSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
+#include "Debug/Profiler.h"
+#include "Debug/Console.h"
+
+ConsoleVariable GlobalSSAORadius(ConsoleVariableType_Float);
+ConsoleVariable GlobalSSAOBias(ConsoleVariableType_Float);
+ConsoleVariable GlobalSSAOKernelSize(ConsoleVariableType_Int);
+
+Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
 {
+    INIT_CONSOLE_VARIABLE("r.SSAOKernelSize", GlobalSSAOKernelSize);
+    GlobalSSAOKernelSize.SetInt32(16);
+
+    INIT_CONSOLE_VARIABLE("r.SSAOBias", GlobalSSAOBias);
+    GlobalSSAOBias.SetFloat(0.03f);
+
+    INIT_CONSOLE_VARIABLE("r.SSAORadius", GlobalSSAORadius);
+    GlobalSSAORadius.SetFloat(0.3f);
+
     if (!CreateRenderTarget(FrameResources))
     {
         return false;
@@ -123,13 +139,13 @@ Bool SSAOSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
     }
     else
     {
-        SSAOBufferSRV->SetName("SSAO Noise Texture SRV");
+        FrameResources.SSAOBufferSRV->SetName("SSAO Noise Texture SRV");
     }
 
     CommandList CmdList;
     CmdList.Begin();
     CmdList.TransitionTexture(
-        SSAOBuffer.Get(),
+        FrameResources.SSAOBuffer.Get(),
         EResourceState::ResourceState_Common,
         EResourceState::ResourceState_PixelShaderResource);
 
@@ -266,67 +282,168 @@ Bool SSAOSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
     return true;
 }
 
-Bool SSAOSceneRenderPass::ResizeResources(SharedRenderPassResources& FrameResources)
+void ScreenSpaceOcclusionRenderer::Release()
 {
-    return CreateRenderTarget(FrameResources);
+    PipelineState.Reset();
+    BlurHorizontalPSO.Reset();
+    BlurVerticalPSO.Reset();
+    SSAOSamples.Reset();
+    SSAOSamplesSRV.Reset();
+    SSAONoiseTex.Reset();
+    SSAONoiseSRV.Reset();
 }
 
-void SSAOSceneRenderPass::Render(
+Bool ScreenSpaceOcclusionRenderer::ResizeResources(FrameResources& FrameResources)
+{
+	return CreateRenderTarget(FrameResources);
+}
+
+void ScreenSpaceOcclusionRenderer::Render(
     CommandList& CmdList, 
-    SharedRenderPassResources& FrameResources,
-    const Scene& Scene)
+    const FrameResources& FrameResources)
 {
+    const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    CmdList.ClearUnorderedAccessView(FrameResources.SSAOBufferUAV.Get(), WhiteColor);
+
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
+
+    TRACE_SCOPE("SSAO");
+
+    struct SSAOSettings
+    {
+        XMFLOAT2 ScreenSize;
+        XMFLOAT2 NoiseSize;
+        Float    Radius;
+        Float    Bias;
+        Int32    KernelSize;
+    } SSAOSettings;
+
+    const UInt32 Width      = FrameResources.SSAOBuffer->GetWidth();
+    const UInt32 Height     = FrameResources.SSAOBuffer->GetHeight();
+    SSAOSettings.ScreenSize = XMFLOAT2(Float(Width), Float(Height));
+    SSAOSettings.NoiseSize  = XMFLOAT2(4.0f, 4.0f);
+    SSAOSettings.Radius     = GlobalSSAORadius.GetFloat();
+    SSAOSettings.KernelSize = GlobalSSAOKernelSize.GetInt32();
+    SSAOSettings.Bias       = GlobalSSAOBias.GetFloat();
+
+    ShaderResourceView* ShaderResourceViews[] =
+    {
+        FrameResources.GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX].Get(),
+        FrameResources.GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
+        SSAONoiseSRV.Get(),
+        SSAOSamplesSRV.Get()
+    };
+
+    CmdList.BindComputePipelineState(PipelineState.Get());
+
+    CmdList.BindShaderResourceViews(
+        EShaderStage::ShaderStage_Compute,
+        ShaderResourceViews,
+        4, 0);
+
+    SamplerState* SamplerStates[] =
+    {
+        FrameResources.GBufferSampler.Get()
+    };
+
+    CmdList.BindSamplerStates(
+        EShaderStage::ShaderStage_Compute,
+        SamplerStates,
+        1, 0);
+
+    CmdList.BindConstantBuffers(
+        EShaderStage::ShaderStage_Compute,
+        FrameResources.CameraBuffer.GetAddressOf(),
+        1, 0);
+
+    CmdList.BindUnorderedAccessViews(
+        EShaderStage::ShaderStage_Compute,
+        FrameResources.SSAOBufferUAV.GetAddressOf(),
+        1, 0);
+
+    CmdList.Bind32BitShaderConstants(
+        EShaderStage::ShaderStage_Compute,
+        &SSAOSettings, 7);
+
+    constexpr UInt32 ThreadCount = 16;
+    const UInt32 DispatchWidth = Math::DivideByMultiple<UInt32>(Width, ThreadCount);
+    const UInt32 DispatchHeight = Math::DivideByMultiple<UInt32>(Height, ThreadCount);
+    CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+
+    CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+
+    CmdList.BindComputePipelineState(BlurHorizontalPSO.Get());
+
+    CmdList.Bind32BitShaderConstants(
+        EShaderStage::ShaderStage_Compute,
+        &SSAOSettings.ScreenSize, 2);
+
+    CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+
+    CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+
+    CmdList.BindComputePipelineState(BlurVerticalPSO.Get());
+
+    CmdList.Bind32BitShaderConstants(
+        EShaderStage::ShaderStage_Compute,
+        &SSAOSettings.ScreenSize, 2);
+
+    CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+
+    CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End SSAO");
 }
 
-Bool SSAOSceneRenderPass::CreateRenderTarget(SharedRenderPassResources& FrameResources)
+Bool ScreenSpaceOcclusionRenderer::CreateRenderTarget(FrameResources& FrameResources)
 {
     const UInt32 Width  = FrameResources.MainWindowViewport->GetWidth();
     const UInt32 Height = FrameResources.MainWindowViewport->GetHeight();
     const UInt32 Usage  = TextureUsage_Default | TextureUsage_RWTexture;
 
-    SSAOBuffer = RenderLayer::CreateTexture2D(
+    FrameResources.SSAOBuffer = RenderLayer::CreateTexture2D(
         nullptr,
         FrameResources.SSAOBufferFormat,
         Usage,
         Width,
         Height,
         1, 1);
-    if (!SSAOBuffer)
+    if (!FrameResources.SSAOBuffer)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        SSAOBuffer->SetName("SSAO Buffer");
+        FrameResources.SSAOBuffer->SetName("SSAO Buffer");
     }
 
-    SSAOBufferUAV = RenderLayer::CreateUnorderedAccessView(
-        SSAOBuffer.Get(),
+    FrameResources.SSAOBufferUAV = RenderLayer::CreateUnorderedAccessView(
+        FrameResources.SSAOBuffer.Get(),
         FrameResources.SSAOBufferFormat,
         0);
-    if (!SSAOBufferUAV)
+    if (!FrameResources.SSAOBufferUAV)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        SSAOBufferUAV->SetName("SSAO Buffer UAV");
+        FrameResources.SSAOBufferUAV->SetName("SSAO Buffer UAV");
     }
 
-    SSAOBufferSRV = RenderLayer::CreateShaderResourceView(
-        SSAOBuffer.Get(),
+    FrameResources.SSAOBufferSRV = RenderLayer::CreateShaderResourceView(
+        FrameResources.SSAOBuffer.Get(),
         FrameResources.SSAOBufferFormat,
         0, 1);
-    if (!SSAOBufferSRV)
+    if (!FrameResources.SSAOBufferSRV)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        SSAOBufferSRV->SetName("SSAO Buffer SRV");
+        FrameResources.SSAOBufferSRV->SetName("SSAO Buffer SRV");
     }
 
     return true;

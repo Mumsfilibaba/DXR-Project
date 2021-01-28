@@ -1,7 +1,7 @@
 #pragma once
 #include "Utilities/StringUtilities.h"
 
-#include "RenderLayer/Buffer.h"
+#include "RenderLayer/Resources.h"
 
 #include "D3D12DeviceChild.h"
 

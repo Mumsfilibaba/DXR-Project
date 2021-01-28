@@ -15,7 +15,7 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/TextureFactory.h"
 
-#include "RenderLayer/Texture.h"
+#include "RenderLayer/Resources.h"
 #include "RenderLayer/CommandList.h"
 
 #include "Editor/Editor.h"
@@ -151,8 +151,7 @@ Bool EngineLoop::Init()
         return false;
     }
 
-    GlobalRenderer = DBG_NEW Renderer();
-    if (!GlobalRenderer->Init())
+    if (!GlobalRenderer.Init())
     {
         PlatformDialogMisc::MessageBox("ERROR", "FAILED to create Renderer");
         return false;
@@ -215,7 +214,7 @@ void EngineLoop::PostTick()
 
     GlobalProfiler.Tick();
 
-    GlobalRenderer->Tick(*Scene::GetCurrentScene());
+    GlobalRenderer.Tick(*GlobalGame->GetCurrentScene());
 }
 
 Bool EngineLoop::PreRelease()
@@ -237,7 +236,7 @@ Bool EngineLoop::Release()
 
     DebugUI::Release();
 
-    SAFEDELETE(GlobalRenderer);
+    GlobalRenderer.Release();
 
     RenderLayer::Release();
 

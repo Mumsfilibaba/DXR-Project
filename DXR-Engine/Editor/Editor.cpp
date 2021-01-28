@@ -12,6 +12,8 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Components/MeshComponent.h"
 
+#include "Game/Game.h"
+
 #include "Debug/Console.h"
 
 #include <imgui_internal.h>
@@ -203,10 +205,10 @@ static void DrawRenderSettings()
     ImGui::Indent();
     ImGui::Text("Resolution: %d x %d", WindowShape.Width, WindowShape.Height);
 
-    ImGui::Checkbox("Enable Z-PrePass", &GlobalPrePassEnabled);
-    ImGui::Checkbox("Enable VSync", &GlobalVSyncEnabled);
-    ImGui::Checkbox("Enable Frustum Culling", &GlobalFrustumCullEnabled);
-    ImGui::Checkbox("Draw AABBs", &GlobalDrawAABBs);
+    //ImGui::Checkbox("Enable Z-PrePass", &GlobalPrePassEnabled);
+    //ImGui::Checkbox("Enable VSync", &GlobalVSyncEnabled);
+    //ImGui::Checkbox("Enable Frustum Culling", &GlobalFrustumCullEnabled);
+    //ImGui::Checkbox("Draw AABBs", &GlobalDrawAABBs);
 
     static const Char* AAItems[] =
     {
@@ -251,76 +253,76 @@ static void DrawRenderSettings()
         "256x256"
     };
 
-    LightSettings Settings = GlobalRenderer->GetLightSettings();
-    if (Settings.ShadowMapWidth == 8192)
-    {
-        CurrentItem = 0;
-    }
-    else if (Settings.ShadowMapWidth == 4096)
-    {
-        CurrentItem = 1;
-    }
-    else if (Settings.ShadowMapWidth == 3072)
-    {
-        CurrentItem = 2;
-    }
-    else if (Settings.ShadowMapWidth == 2048)
-    {
-        CurrentItem = 3;
-    }
-    else if (Settings.ShadowMapWidth == 1024)
-    {
-        CurrentItem = 4;
-    }
-    else if (Settings.ShadowMapWidth == 512)
-    {
-        CurrentItem = 5;
-    }
-    else if (Settings.ShadowMapWidth == 256)
-    {
-        CurrentItem = 6;
-    }
+    //LightSettings Settings = GlobalRenderer->GetLightSettings();
+    //if (Settings.ShadowMapWidth == 8192)
+    //{
+    //    CurrentItem = 0;
+    //}
+    //else if (Settings.ShadowMapWidth == 4096)
+    //{
+    //    CurrentItem = 1;
+    //}
+    //else if (Settings.ShadowMapWidth == 3072)
+    //{
+    //    CurrentItem = 2;
+    //}
+    //else if (Settings.ShadowMapWidth == 2048)
+    //{
+    //    CurrentItem = 3;
+    //}
+    //else if (Settings.ShadowMapWidth == 1024)
+    //{
+    //    CurrentItem = 4;
+    //}
+    //else if (Settings.ShadowMapWidth == 512)
+    //{
+    //    CurrentItem = 5;
+    //}
+    //else if (Settings.ShadowMapWidth == 256)
+    //{
+    //    CurrentItem = 6;
+    //}
 
-    if (ImGui::Combo("Directional Light ShadowMap", &CurrentItem, Items, IM_ARRAYSIZE(Items)))
-    {
-        if (CurrentItem == 0)
-        {
-            Settings.ShadowMapWidth  = 8192;
-            Settings.ShadowMapHeight = 8192;
-        }
-        else if (CurrentItem == 1)
-        {
-            Settings.ShadowMapWidth  = 4096;
-            Settings.ShadowMapHeight = 4096;
-        }
-        else if (CurrentItem == 2)
-        {
-            Settings.ShadowMapWidth  = 3072;
-            Settings.ShadowMapHeight = 3072;
-        }
-        else if (CurrentItem == 3)
-        {
-            Settings.ShadowMapWidth  = 2048;
-            Settings.ShadowMapHeight = 2048;
-        }
-        else if (CurrentItem == 4)
-        {
-            Settings.ShadowMapWidth  = 1024;
-            Settings.ShadowMapHeight = 1024;
-        }
-        else if (CurrentItem == 5)
-        {
-            Settings.ShadowMapWidth  = 512;
-            Settings.ShadowMapHeight = 512;
-        }
-        else if (CurrentItem == 6)
-        {
-            Settings.ShadowMapWidth  = 256;
-            Settings.ShadowMapHeight = 256;
-        }
+    //if (ImGui::Combo("Directional Light ShadowMap", &CurrentItem, Items, IM_ARRAYSIZE(Items)))
+    //{
+    //    if (CurrentItem == 0)
+    //    {
+    //        Settings.ShadowMapWidth  = 8192;
+    //        Settings.ShadowMapHeight = 8192;
+    //    }
+    //    else if (CurrentItem == 1)
+    //    {
+    //        Settings.ShadowMapWidth  = 4096;
+    //        Settings.ShadowMapHeight = 4096;
+    //    }
+    //    else if (CurrentItem == 2)
+    //    {
+    //        Settings.ShadowMapWidth  = 3072;
+    //        Settings.ShadowMapHeight = 3072;
+    //    }
+    //    else if (CurrentItem == 3)
+    //    {
+    //        Settings.ShadowMapWidth  = 2048;
+    //        Settings.ShadowMapHeight = 2048;
+    //    }
+    //    else if (CurrentItem == 4)
+    //    {
+    //        Settings.ShadowMapWidth  = 1024;
+    //        Settings.ShadowMapHeight = 1024;
+    //    }
+    //    else if (CurrentItem == 5)
+    //    {
+    //        Settings.ShadowMapWidth  = 512;
+    //        Settings.ShadowMapHeight = 512;
+    //    }
+    //    else if (CurrentItem == 6)
+    //    {
+    //        Settings.ShadowMapWidth  = 256;
+    //        Settings.ShadowMapHeight = 256;
+    //    }
 
-        GlobalRenderer->SetLightSettings(Settings);
-    }
+    //    GlobalRenderer->SetLightSettings(Settings);
+    //}
 
     ImGui::Spacing();
     ImGui::Text("SSAO:");
@@ -384,7 +386,7 @@ static void DrawSceneInfo()
     // Actors
     if (ImGui::TreeNode("Actors"))
     {
-        for (Actor* Actor : Scene::GetCurrentScene()->GetActors())
+        for (Actor* Actor : GlobalGame->GetCurrentScene()->GetActors())
         {
             ImGui::PushID(Actor);
 
@@ -522,7 +524,7 @@ static void DrawSceneInfo()
     // Lights
     if (ImGui::TreeNode("Lights"))
     {
-        for (Light* CurrentLight : Scene::GetCurrentScene()->GetLights())
+        for (Light* CurrentLight : GlobalGame->GetCurrentScene()->GetLights())
         {
             ImGui::PushID(CurrentLight);
 

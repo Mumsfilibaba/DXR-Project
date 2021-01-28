@@ -285,7 +285,6 @@ Bool Sandbox::Init()
 	Light4->SetIntensity(10.0f);
 	CurrentScene->AddLight(Light4);
 
-	Scene::SetCurrentScene(CurrentScene);
 	return true;
 }
 

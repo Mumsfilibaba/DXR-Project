@@ -19,6 +19,11 @@ public:
         UNREFERENCED_VARIABLE(DeltaTime);
     }
 
+    FORCEINLINE Scene* GetCurrentScene() const
+    {
+        return CurrentScene;
+    }
+
 protected:
     Scene*  CurrentScene  = nullptr;
     Camera* CurrentCamera = nullptr;

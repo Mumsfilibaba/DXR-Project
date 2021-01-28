@@ -7,8 +7,7 @@
 #include "Rendering/Material.h"
 #include "Rendering/Mesh.h"
 
-#include "RenderLayer/Texture.h"
-#include "RenderLayer/Buffer.h"
+#include "RenderLayer/Resources.h"
 
 #include <tiny_obj_loader.h>
 

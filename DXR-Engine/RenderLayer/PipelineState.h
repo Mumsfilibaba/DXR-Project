@@ -1,5 +1,5 @@
 #pragma once
-#include "Resource.h"
+#include "Resources.h"
 
 class GraphicsPipelineState;
 class ComputePipelineState;

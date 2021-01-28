@@ -1,5 +1,5 @@
 #pragma once
-#include "Resource.h"
+#include "Resources.h"
 #include "RenderingCore.h"
 
 enum class ESamplerMode : Byte

@@ -13,20 +13,16 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "MeshFactory.h"
+#include "DeferredRenderer.h"
+#include "ShadowMapRenderer.h"
+#include "ScreenSpaceOcclusionRenderer.h"
+#include "LightProbeRenderer.h"
+#include "SkyboxRenderPass.h"
+#include "ForwardRenderer.h"
 
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/CommandList.h"
 #include "RenderLayer/Viewport.h"
-
-#include "RenderPasses/DeferredSceneRenderPass.h"
-#include "RenderPasses/SkyboxSceneRenderPass.h"
-#include "RenderPasses/DebugSceneRenderPass.h"
-#include "RenderPasses/SSAOSceneRenderPass.h"
-#include "RenderPasses/ForwardSceneRenderPass.h"
-#include "RenderPasses/LightProbeSceneRenderPass.h"
-#include "RenderPasses/DirectionalLightShadowSceneRenderPass.h"
-#include "RenderPasses/PointLightShadowSceneRenderPass.h"
-#include "RenderPasses/TiledDeferredLightSceneRenderPass.h"
 
 #include "DebugUI.h"
 
@@ -39,49 +35,48 @@ public:
     ~Renderer() = default;
 
     Bool Init();
+    void Release();
 
-    void Tick(const Scene& CurrentScene);
-    
-    void SetLightSettings(const LightSettings& InLightSettings);
-    
-    FORCEINLINE const LightSettings& GetLightSettings()
-    {
-        return Resources.CurrentLightSettings;
-    }
-    
+    void PerformFrustumCulling(const Scene& Scene);
+    void PerformFXAA(CommandList& InCmdList);
+    void PerformBackBufferBlit(CommandList& InCmdList);
+    void PerformAABBDebugPass(CommandList& InCmdList);
+
+    void RenderDebugInterface();
+
+    void Tick(const Scene& Scene);
+
 private:
-    Bool InitRayTracing();
-    Bool InitRayTracingTexture();
+    Bool InitBoundingBoxDebugPass();
     Bool InitAA();
 
     void ResizeResources(UInt32 Width, UInt32 Height);
 
-    void TraceRays(Texture2D* BackBuffer, CommandList& InCmdList);
-
-private:
     CommandList CmdList;
 
-    DeferredSceneRenderPass   DeferredRenderPass;
-    SkyboxSceneRenderPass     SkyboxRenderPass;
-    DebugSceneRenderPass      DebugRenderPass;
-    SSAOSceneRenderPass       SSAORenderPass;
-    ForwardSceneRenderPass    ForwardRenderPass;
-    LightProbeSceneRenderPass LightProbeRenderPass;
-    DirectionalLightShadowSceneRenderPass DirectionalLightShadowRenderPass;
-    PointLightShadowSceneRenderPass       PointLightShadowRenderPass;
-    TiledDeferredLightSceneRenderPass     DeferredLightRenderPass;
+    DeferredRenderer             DeferredRenderer;
+    ShadowMapRenderer            ShadowMapRenderer;
+    ScreenSpaceOcclusionRenderer SSAORenderer;
+    LightProbeRenderer           LightProbeRenderer;
+    SkyboxRenderPass             SkyboxRenderPass;
+    ForwardRenderer              ForwardRenderer;
 
-    SharedRenderPassResources Resources;
+    FrameResources  Resources;
+    SceneLightSetup LightSetup;
 
     // TODO: Fix raytracing
-    TSharedRef<RayTracingPipelineState>	RaytracingPSO;
-    TSharedPtr<RayTracingScene>			RayTracingScene;
+    TSharedRef<RayTracingPipelineState> RaytracingPSO;
+    TSharedPtr<RayTracingScene>         RayTracingScene;
     TArray<RayTracingGeometryInstance>	RayTracingGeometryInstances;
+
+    TSharedRef<VertexBuffer> AABBVertexBuffer;
+    TSharedRef<IndexBuffer>  AABBIndexBuffer;
+    TSharedRef<GraphicsPipelineState> AABBDebugPipelineState;
 
     TSharedRef<GraphicsPipelineState> PostPSO;
     TSharedRef<GraphicsPipelineState> FXAAPSO;
 
-    UInt32 LastFrameNumDrawCalls		= 0;
-    UInt32 LastFrameNumDispatchCalls	= 0;
-    UInt32 LastFrameNumCommands			= 0;
+    UInt32 LastFrameNumDrawCalls     = 0;
+    UInt32 LastFrameNumDispatchCalls = 0;
+    UInt32 LastFrameNumCommands      = 0;
 };

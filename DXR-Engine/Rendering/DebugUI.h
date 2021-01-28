@@ -2,7 +2,7 @@
 #include "Application/InputCodes.h"
 #include "Application/Events/Events.h"
 
-#include "RenderLayer/Texture.h"
+#include "RenderLayer/Resources.h"
 #include "RenderLayer/ResourceViews.h"
 
 #include "Core/TSharedRef.h"

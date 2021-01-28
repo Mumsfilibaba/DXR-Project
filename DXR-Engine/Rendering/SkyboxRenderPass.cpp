@@ -1,10 +1,12 @@
-#include "SkyboxSceneRenderPass.h"
+#include "SkyboxRenderPass.h"
 
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
 #include "Rendering/TextureFactory.h"
 
-Bool SkyboxSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
+#include "Debug/Profiler.h"
+
+Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
 {
     SkyboxMesh = MeshFactory::CreateSphere(1);
 
@@ -187,12 +189,12 @@ Bool SkyboxSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
     }
 
     GraphicsPipelineStateCreateInfo PipelineStateInfo;
-    PipelineStateInfo.InputLayoutState  = FrameResources.StdInputLayout.Get();
-    PipelineStateInfo.BlendState        = BlendState.Get();
-    PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
-    PipelineStateInfo.RasterizerState   = RasterizerState.Get();
-    PipelineStateInfo.ShaderState.VertexShader  = VShader.Get();
-    PipelineStateInfo.ShaderState.PixelShader   = PShader.Get();
+    PipelineStateInfo.InputLayoutState                       = FrameResources.StdInputLayout.Get();
+    PipelineStateInfo.BlendState                             = BlendState.Get();
+    PipelineStateInfo.DepthStencilState                      = DepthStencilState.Get();
+    PipelineStateInfo.RasterizerState                        = RasterizerState.Get();
+    PipelineStateInfo.ShaderState.VertexShader               = VShader.Get();
+    PipelineStateInfo.ShaderState.PixelShader                = PShader.Get();
     PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
     PipelineStateInfo.PipelineFormats.NumRenderTargets       = 1;
     PipelineStateInfo.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
@@ -211,9 +213,84 @@ Bool SkyboxSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
     return true;
 }
 
-void SkyboxSceneRenderPass::Render(
-    CommandList& CmdList, 
-    SharedRenderPassResources& FrameResources,
+void SkyboxRenderPass::Render(
+    CommandList& CmdList,
+    const FrameResources& FrameResources,
     const Scene& Scene)
 {
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
+
+    {
+        TRACE_SCOPE("Render Skybox");
+
+        const Float RenderWidth  = Float(FrameResources.FinalTarget->GetWidth());
+        const Float RenderHeight = Float(FrameResources.FinalTarget->GetHeight());
+
+        RenderTargetView* RenderTarget[] = { FrameResources.FinalTargetRTV.Get() };
+        CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
+
+        CmdList.BindViewport(
+            RenderWidth,
+            RenderHeight,
+            0.0f,
+            1.0f,
+            0.0f,
+            0.0f);
+
+        CmdList.BindScissorRect(
+            RenderWidth,
+            RenderHeight,
+            0, 0);
+
+        CmdList.TransitionTexture(
+            FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(),
+            EResourceState::ResourceState_NonPixelShaderResource,
+            EResourceState::ResourceState_DepthWrite);
+
+        CmdList.TransitionTexture(
+            FrameResources.FinalTarget.Get(),
+            EResourceState::ResourceState_UnorderedAccess,
+            EResourceState::ResourceState_RenderTarget);
+
+        CmdList.BindRenderTargets(RenderTarget, 1, FrameResources.GBufferDSV.Get());
+
+        CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+        CmdList.BindVertexBuffers(&SkyboxVertexBuffer, 1, 0);
+        CmdList.BindIndexBuffer(SkyboxIndexBuffer.Get());
+        CmdList.BindGraphicsPipelineState(PipelineState.Get());
+
+        struct SimpleCameraBuffer
+        {
+            XMFLOAT4X4 Matrix;
+        } SimpleCamera;
+        SimpleCamera.Matrix = Scene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
+
+        CmdList.Bind32BitShaderConstants(
+            EShaderStage::ShaderStage_Vertex,
+            &SimpleCamera, 16);
+
+        CmdList.BindShaderResourceViews(
+            EShaderStage::ShaderStage_Pixel,
+            &FrameResources.SkyboxSRV,
+            1, 0);
+
+        CmdList.BindSamplerStates(
+            EShaderStage::ShaderStage_Pixel,
+            &SkyboxSampler,
+            1, 0);
+
+        CmdList.DrawIndexedInstanced(
+            static_cast<UInt32>(SkyboxMesh.Indices.Size()),
+            1, 0, 0, 0);
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
+}
+
+void SkyboxRenderPass::Release()
+{
+    PipelineState.Reset();
+    SkyboxVertexBuffer.Reset();
+    SkyboxIndexBuffer.Reset();
+    SkyboxSampler.Reset();
 }

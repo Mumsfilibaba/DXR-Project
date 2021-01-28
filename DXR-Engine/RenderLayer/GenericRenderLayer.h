@@ -2,16 +2,9 @@
 #include "Application/Generic/GenericWindow.h"
 
 #include "RenderingCore.h"
-#include "Buffer.h"
+#include "Resources.h"
 #include "CommandList.h"
 
-class Texture1D;
-class Texture1DArray;
-class Texture2D;
-class Texture2DArray;
-class TextureCube;
-class TextureCubeArray;
-class Texture3D;
 class ShaderResourceView;
 class UnorderedAccessView;
 class RenderTargetView;

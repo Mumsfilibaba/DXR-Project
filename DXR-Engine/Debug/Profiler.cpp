@@ -109,10 +109,10 @@ Profiler::Profiler()
 
 void Profiler::Init()
 {
-    INIT_CONSOLE_VARIABLE("DrawFps", GlobalDrawFps);
+    INIT_CONSOLE_VARIABLE("r.DrawFps", GlobalDrawFps);
     GlobalDrawFps.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("DrawProfiler", GlobalDrawProfiler);
+    INIT_CONSOLE_VARIABLE("r.DrawProfiler", GlobalDrawProfiler);
     GlobalDrawFps.SetBool(false);
 }
 

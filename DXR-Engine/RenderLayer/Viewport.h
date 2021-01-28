@@ -1,5 +1,6 @@
 #pragma once
-#include "Resource.h"
+#include "Resources.h"
+#include "ResourceViews.h"
 
 class Viewport : public PipelineResource
 {
@@ -14,8 +15,8 @@ public:
     virtual Bool Resize(UInt32 Width, UInt32 Height) = 0;
     virtual Bool Present(Bool VerticalSync) = 0;
 
-    virtual class RenderTargetView* GetRenderTargetView() const = 0;
-    virtual class Texture2D* GetBackBuffer() const = 0;
+    virtual RenderTargetView* GetRenderTargetView() const = 0;
+    virtual Texture2D*        GetBackBuffer()       const = 0;
 
     FORCEINLINE UInt32 GetWidth() const
     {

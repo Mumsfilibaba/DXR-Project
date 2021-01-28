@@ -1,0 +1,113 @@
+#pragma once
+#include "RenderLayer/Resources.h"
+#include "RenderLayer/SamplerState.h"
+#include "RenderLayer/Viewport.h"
+#include "RenderLayer/PipelineState.h"
+
+#include "Rendering/MeshDrawCommand.h"
+#include "Rendering/DebugUI.h"
+
+#define GBUFFER_ALBEDO_INDEX      0
+#define GBUFFER_NORMAL_INDEX      1
+#define GBUFFER_MATERIAL_INDEX    2
+#define GBUFFER_DEPTH_INDEX       3
+#define GBUFFER_VIEW_NORMAL_INDEX 4
+
+struct FrameResources
+{
+    FrameResources()  = default;
+    ~FrameResources() = default;
+
+    void Release();
+
+    Texture2D*        BackBuffer    = nullptr;
+    RenderTargetView* BackBufferRTV = nullptr;
+
+    TSharedRef<ConstantBuffer> CameraBuffer;
+    TSharedRef<ConstantBuffer> TransformBuffer;
+
+    TSharedRef<SamplerState> ShadowMapSampler;
+    TSharedRef<SamplerState> ShadowMapCompSampler;
+    TSharedRef<SamplerState> IrradianceSampler;
+
+    TSharedRef<TextureCube>        Skybox;
+    TSharedRef<ShaderResourceView> SkyboxSRV;
+
+    TSharedRef<Texture2D>           ReflectionTexture;
+    TSharedRef<ShaderResourceView>  ReflectionTextureSRV;
+    TSharedRef<UnorderedAccessView> ReflectionTextureUAV;
+
+    TSharedRef<Texture2D>          IntegrationLUT;
+    TSharedRef<ShaderResourceView> IntegrationLUTSRV;
+    TSharedRef<SamplerState>       IntegrationLUTSampler;
+
+    TSharedRef<Texture2D>           FinalTarget;
+    TSharedRef<ShaderResourceView>  FinalTargetSRV;
+    TSharedRef<RenderTargetView>    FinalTargetRTV;
+    TSharedRef<UnorderedAccessView> FinalTargetUAV;
+
+    const EFormat DepthBufferFormat  = EFormat::Format_D32_Float;
+    const EFormat SSAOBufferFormat   = EFormat::Format_R16_Float;
+    const EFormat FinalTargetFormat  = EFormat::Format_R16G16B16A16_Float;
+    const EFormat RenderTargetFormat = EFormat::Format_R8G8B8A8_Unorm;
+    const EFormat AlbedoFormat       = EFormat::Format_R8G8B8A8_Unorm;
+    const EFormat MaterialFormat     = EFormat::Format_R8G8B8A8_Unorm;
+    const EFormat NormalFormat       = EFormat::Format_R10G10B10A2_Unorm;
+    const EFormat ViewNormalFormat   = EFormat::Format_R10G10B10A2_Unorm;
+
+    TSharedRef<Texture2D>          GBuffer[5];
+    TSharedRef<ShaderResourceView> GBufferSRVs[5];
+    TSharedRef<RenderTargetView>   GBufferRTVs[5];
+    TSharedRef<DepthStencilView>   GBufferDSV;
+    TSharedRef<SamplerState>       GBufferSampler;
+
+    TSharedRef<Texture2D>            SSAOBuffer;
+    TSharedRef<ShaderResourceView>   SSAOBufferSRV;
+    TSharedRef<UnorderedAccessView>  SSAOBufferUAV;
+
+    TSharedRef<InputLayoutState> StdInputLayout;
+
+    TArray<MeshDrawCommand> DeferredVisibleCommands;
+    TArray<MeshDrawCommand> ForwardVisibleCommands;
+
+    TArray<ImGuiImage> DebugTextures;
+
+    TSharedRef<Viewport> MainWindowViewport;
+};
+
+struct SceneLightSetup
+{
+    SceneLightSetup()  = default;
+    ~SceneLightSetup() = default;
+
+    void Release();
+
+    const EFormat ShadowMapFormat      = EFormat::Format_D32_Float;
+    const EFormat LightProbeFormat     = EFormat::Format_R16G16B16A16_Float;
+    const UInt32  MaxPointLights       = 256;
+    const UInt32  MaxDirectionalLights = 256;
+    const UInt32  MaxPointLightShadows = 8;
+    const UInt16  ShadowMapWidth       = 4096;
+    const UInt16  ShadowMapHeight      = 4096;
+    const UInt16  PointLightShadowSize = 1024;
+
+    TSharedRef<ConstantBuffer> PointLightBuffer;
+    TSharedRef<ConstantBuffer> DirectionalLightBuffer;
+
+    TSharedRef<TextureCubeArray>   PointLightShadowMaps;
+    TSharedRef<ShaderResourceView> PointLightShadowMapSRV;
+    TArray<TStaticArray<TSharedRef<DepthStencilView>, 6>> PointLightShadowMapDSVs;
+
+    TSharedRef<ShaderResourceView> DirLightShadowMapSRV;
+    TSharedRef<DepthStencilView>   DirLightShadowMapDSV;
+    TSharedRef<Texture2D>          DirLightShadowMaps;
+
+    TSharedRef<TextureCube>         IrradianceMap;
+    TSharedRef<UnorderedAccessView> IrradianceMapUAV;
+    TSharedRef<ShaderResourceView>  IrradianceMapSRV;
+
+    TSharedRef<TextureCube>                 SpecularIrradianceMap;
+    TSharedRef<ShaderResourceView>          SpecularIrradianceMapSRV;
+    TArray<TSharedRef<UnorderedAccessView>> SpecularIrradianceMapUAVs;
+    TArray<UnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
+};

@@ -139,13 +139,13 @@ Bool D3D12Viewport::Present(Bool VerticalSync)
 {
     const UInt32 SyncInterval = !!VerticalSync;
     
-    UInt32 Flags = 0;
+    UInt32 PresentFlags = 0;
     if (SyncInterval == 0 && Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
     {
-        Flags = DXGI_PRESENT_ALLOW_TEARING;
+        PresentFlags = DXGI_PRESENT_ALLOW_TEARING;
     }
 
-    HRESULT Result = SwapChain->Present(SyncInterval, Flags);
+    HRESULT Result = SwapChain->Present(SyncInterval, PresentFlags);
     if (SUCCEEDED(Result))
     {
         BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();

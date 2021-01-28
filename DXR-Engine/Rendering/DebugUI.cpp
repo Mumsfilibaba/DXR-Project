@@ -13,8 +13,7 @@
 #include "Rendering/TextureFactory.h"
 #include "Rendering/Renderer.h"
 
-#include "RenderLayer/Buffer.h"
-#include "RenderLayer/Texture.h"
+#include "RenderLayer/Resources.h"
 #include "RenderLayer/PipelineState.h"
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"

@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderLayer/Buffer.h"
+#include "RenderLayer/Resources.h"
 #include "RenderLayer/ResourceHelpers.h"
 #include "RenderLayer/SamplerState.h"
 

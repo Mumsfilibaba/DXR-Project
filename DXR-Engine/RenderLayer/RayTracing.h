@@ -1,7 +1,7 @@
 #pragma once
-#include "Resource.h"
+#include "Resources.h"
 
-//RayTracing Geometry (Bottom Level Acceleration Structure)
+// RayTracing Geometry (Bottom Level Acceleration Structure)
 class RayTracingGeometry : public Resource
 {
 public:
@@ -16,7 +16,7 @@ public:
     }
 };
 
-//RayTracing Scene (Top Level Acceleration Structure)
+// RayTracing Scene (Top Level Acceleration Structure)
 class RayTracingScene : public Resource
 {
 public:
@@ -31,7 +31,7 @@ public:
     }
 };
 
-//RayTracingGeometryInstance
+// RayTracingGeometryInstance
 struct RayTracingGeometryInstance
 {
     TSharedRef<RayTracingGeometry> Geometry;

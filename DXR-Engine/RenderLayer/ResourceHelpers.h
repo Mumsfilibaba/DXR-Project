@@ -1,5 +1,5 @@
 #pragma once
-#include "Texture.h"
+#include "Resources.h"
 #include "ResourceViews.h"
 
 template<typename TTextureType>

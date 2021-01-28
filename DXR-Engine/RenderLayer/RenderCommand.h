@@ -2,6 +2,8 @@
 #include "RenderingCore.h"
 #include "ICommandContext.h"
 #include "PipelineState.h"
+#include "Resources.h"
+#include "ResourceViews.h"
 
 #include "Memory/Memory.h"
 
