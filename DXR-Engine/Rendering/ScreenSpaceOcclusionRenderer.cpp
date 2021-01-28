@@ -302,9 +302,6 @@ void ScreenSpaceOcclusionRenderer::Render(
     CommandList& CmdList, 
     const FrameResources& FrameResources)
 {
-    const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    CmdList.ClearUnorderedAccessView(FrameResources.SSAOBufferUAV.Get(), WhiteColor);
-
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
 
     TRACE_SCOPE("SSAO");

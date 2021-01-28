@@ -443,6 +443,14 @@ void Renderer::Tick(const Scene& Scene)
         EResourceState::ResourceState_NonPixelShaderResource,
         EResourceState::ResourceState_RenderTarget);
 
+    // Clear FrameResources.GBuffer
+    ColorClearValue BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    CmdList.ClearRenderTargetView(Resources.GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(), BlackClearColor);
+    CmdList.ClearRenderTargetView(Resources.GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(), BlackClearColor);
+    CmdList.ClearRenderTargetView(Resources.GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get(), BlackClearColor);
+    CmdList.ClearRenderTargetView(Resources.GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX].Get(), BlackClearColor);
+    CmdList.ClearDepthStencilView(Resources.GBufferDSV.Get(), DepthStencilClearValue(1.0f, 0));
+
     if (GlobalPrePassEnabled.GetBool())
     {
         DeferredRenderer.RenderPrePass(
@@ -504,11 +512,13 @@ void Renderer::Tick(const Scene& Scene)
         EResourceState::ResourceState_DepthWrite,
         EResourceState::ResourceState_NonPixelShaderResource);
 
-    // SSAO
     CmdList.TransitionTexture(
         Resources.SSAOBuffer.Get(), 
         EResourceState::ResourceState_NonPixelShaderResource,
         EResourceState::ResourceState_UnorderedAccess);
+
+    const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    CmdList.ClearUnorderedAccessView(Resources.SSAOBufferUAV.Get(), WhiteColor);
 
     if (GlobalEnableSSAO.GetBool())
     {

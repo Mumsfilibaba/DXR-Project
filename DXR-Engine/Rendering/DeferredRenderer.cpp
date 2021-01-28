@@ -466,14 +466,6 @@ void DeferredRenderer::RenderPrePass(
     CommandList& CmdList,
     const FrameResources& FrameResources)
 {
-    // Clear FrameResources.GBuffer
-    ColorClearValue BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    CmdList.ClearRenderTargetView(FrameResources.GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(), BlackClearColor);
-    CmdList.ClearRenderTargetView(FrameResources.GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(), BlackClearColor);
-    CmdList.ClearRenderTargetView(FrameResources.GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get(), BlackClearColor);
-    CmdList.ClearRenderTargetView(FrameResources.GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX].Get(), BlackClearColor);
-    CmdList.ClearDepthStencilView(FrameResources.GBufferDSV.Get(), DepthStencilClearValue(1.0f, 0));
-
     const Float RenderWidth  = Float(FrameResources.MainWindowViewport->GetWidth());
     const Float RenderHeight = Float(FrameResources.MainWindowViewport->GetHeight());
 
