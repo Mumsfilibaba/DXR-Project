@@ -197,6 +197,9 @@ Bool DebugSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
     return true;
 }
 
-void DebugSceneRenderPass::Render(CommandList& CmdList, SharedRenderPassResources& FrameResources)
+void DebugSceneRenderPass::Render(
+    CommandList& CmdList, 
+    SharedRenderPassResources& FrameResources,
+    const Scene& Scene)
 {
 }

@@ -211,6 +211,9 @@ Bool SkyboxSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
     return true;
 }
 
-void SkyboxSceneRenderPass::Render(CommandList& CmdList, SharedRenderPassResources& FrameResources)
+void SkyboxSceneRenderPass::Render(
+    CommandList& CmdList, 
+    SharedRenderPassResources& FrameResources,
+    const Scene& Scene)
 {
 }

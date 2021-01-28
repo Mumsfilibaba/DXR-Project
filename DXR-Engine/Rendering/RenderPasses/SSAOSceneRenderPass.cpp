@@ -6,7 +6,7 @@
 
 Bool SSAOSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
 {
-    if (!InitRenderTarget(FrameResources))
+    if (!CreateRenderTarget(FrameResources))
     {
         return false;
     }
@@ -266,11 +266,19 @@ Bool SSAOSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
     return true;
 }
 
-void SSAOSceneRenderPass::Render(CommandList& CmdList, SharedRenderPassResources& FrameResources)
+Bool SSAOSceneRenderPass::ResizeResources(SharedRenderPassResources& FrameResources)
+{
+    return CreateRenderTarget(FrameResources);
+}
+
+void SSAOSceneRenderPass::Render(
+    CommandList& CmdList, 
+    SharedRenderPassResources& FrameResources,
+    const Scene& Scene)
 {
 }
 
-Bool SSAOSceneRenderPass::InitRenderTarget(SharedRenderPassResources& FrameResources)
+Bool SSAOSceneRenderPass::CreateRenderTarget(SharedRenderPassResources& FrameResources)
 {
     const UInt32 Width  = FrameResources.MainWindowViewport->GetWidth();
     const UInt32 Height = FrameResources.MainWindowViewport->GetHeight();

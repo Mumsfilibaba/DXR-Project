@@ -5,6 +5,8 @@
 #include "Rendering/DebugUI.h"
 #include "Rendering/MeshDrawCommand.h"
 
+#include "Scene/Scene.h"
+
 #define GBUFFER_ALBEDO_INDEX      0
 #define GBUFFER_NORMAL_INDEX      1
 #define GBUFFER_MATERIAL_INDEX    2
@@ -105,9 +107,18 @@ public:
     SceneRenderPass()	= default;
     ~SceneRenderPass()	= default;
 
-    virtual void Render(CommandList& CmdList, SharedRenderPassResources& FrameResource)
+    virtual Bool Init(SharedRenderPassResources& FrameResources)
     {
-        UNREFERENCED_VARIABLE(CmdList);
-        UNREFERENCED_VARIABLE(FrameResource);
+    }
+
+    virtual Bool ResizeResources(SharedRenderPassResources& FrameResources)
+    {
+    }
+
+    virtual void Render(
+        CommandList& CmdList, 
+        SharedRenderPassResources& FrameResource,
+        const Scene& Scene)
+    {
     }
 };

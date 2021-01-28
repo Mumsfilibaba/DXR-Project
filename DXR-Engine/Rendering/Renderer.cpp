@@ -46,24 +46,11 @@ struct CameraBufferDesc
 void Renderer::Tick(const Scene& CurrentScene)
 {
     // Perform frustum culling
-    DeferredVisibleCommands.Clear();
-    ForwardVisibleCommands.Clear();
-    DebugTextures.Clear();
+    Resources.DeferredVisibleCommands.Clear();
+    Resources.ForwardVisibleCommands.Clear();
+    Resources.DebugTextures.Clear();
 
-    PointLightFrame++;
-    if (PointLightFrame > 6)
-    {
-        UpdatePointLight = true;
-        PointLightFrame  = 0;
-    }
-
-    DirLightFrame++;
-    if (DirLightFrame > 6)
-    {
-        UpdateDirLight = true;
-        DirLightFrame  = 0;
-    }
-
+    // TODO: Should this be handled in each renderpass?
     if (GlobalFrustumCullEnabled)
     {
         TRACE_SCOPE("Frustum Culling");
@@ -86,11 +73,11 @@ void Renderer::Tick(const Scene& CurrentScene)
             {
                 if (Command.Material->HasAlphaMask())
                 {
-                    ForwardVisibleCommands.EmplaceBack(Command);
+                    Resources.ForwardVisibleCommands.EmplaceBack(Command);
                 }
                 else
                 {
-                    DeferredVisibleCommands.EmplaceBack(Command);
+                    Resources.DeferredVisibleCommands.EmplaceBack(Command);
                 }
             }
         }
@@ -101,11 +88,11 @@ void Renderer::Tick(const Scene& CurrentScene)
         {
             if (Command.Material->HasAlphaMask())
             {
-                ForwardVisibleCommands.EmplaceBack(Command);
+                Resources.ForwardVisibleCommands.EmplaceBack(Command);
             }
             else
             {
-                DeferredVisibleCommands.EmplaceBack(Command);
+                Resources.DeferredVisibleCommands.EmplaceBack(Command);
             }
         }
     }
@@ -116,616 +103,52 @@ void Renderer::Tick(const Scene& CurrentScene)
     CmdList.Begin();
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Update LightBuffers");
+    PointLightShadowRenderPass.Render(
+        CmdList, 
+        Resources,
+        CurrentScene);
 
-    {
-        TRACE_SCOPE("Update LightBuffers");
-
-        CmdList.TransitionBuffer(
-            Resources.PointLightBuffer.Get(),
-            EResourceState::ResourceState_VertexAndConstantBuffer, 
-            EResourceState::ResourceState_CopyDest);
-
-        CmdList.TransitionBuffer(
-            Resources.DirectionalLightBuffer.Get(),
-            EResourceState::ResourceState_VertexAndConstantBuffer, 
-            EResourceState::ResourceState_CopyDest);
-
-        UInt32 NumPointLights    = 0;
-        UInt32 NumDirLights        = 0;
-        for (Light* Light : CurrentScene.GetLights())
-        {
-            XMFLOAT3 Color     = Light->GetColor();
-            Float    Intensity = Light->GetIntensity();
-            if (IsSubClassOf<PointLight>(Light) && UpdatePointLight)
-            {
-                PointLight* CurrentLight = Cast<PointLight>(Light);
-                VALIDATE(CurrentLight != nullptr);
-
-                PointLightProperties Properties;
-                Properties.Color         = XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-                Properties.Position      = CurrentLight->GetPosition();
-                Properties.ShadowBias    = CurrentLight->GetShadowBias();
-                Properties.MaxShadowBias = CurrentLight->GetMaxShadowBias();
-                Properties.FarPlane      = CurrentLight->GetShadowFarPlane();
-
-                constexpr Float MinLuma = 0.05f;
-                const Float Dot =
-                    Properties.Color.x * 0.2126f +
-                    Properties.Color.y * 0.7152f +
-                    Properties.Color.z * 0.0722f;
-
-                Float Radius = sqrt(Dot / MinLuma);
-                Properties.Radius = Radius;
-
-                constexpr UInt32 SizeInBytes = sizeof(PointLightProperties);
-                CmdList.UpdateBuffer(
-                    Resources.PointLightBuffer.Get(), 
-                    NumPointLights * SizeInBytes, 
-                    SizeInBytes, 
-                    &Properties);
-
-                NumPointLights++;
-            }
-            else if (IsSubClassOf<DirectionalLight>(Light) && UpdateDirLight)
-            {
-                DirectionalLight* CurrentLight = Cast<DirectionalLight>(Light);
-                VALIDATE(CurrentLight != nullptr);
-
-                DirectionalLightProperties Properties;
-                Properties.Color            = XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-                Properties.ShadowBias        = CurrentLight->GetShadowBias();
-                Properties.Direction        = CurrentLight->GetDirection();
-                Properties.LightMatrix        = CurrentLight->GetMatrix();
-                Properties.MaxShadowBias    = CurrentLight->GetMaxShadowBias();
-
-                constexpr UInt32 SizeInBytes = sizeof(DirectionalLightProperties);
-                CmdList.UpdateBuffer(
-                    DirectionalLightBuffer.Get(),
-                    NumDirLights * SizeInBytes,
-                    SizeInBytes,
-                    &Properties);
-
-                NumDirLights++;
-            }
-        }
-
-        CmdList.TransitionBuffer(
-            Resources.PointLightBuffer.Get(),
-            EResourceState::ResourceState_CopyDest, 
-            EResourceState::ResourceState_VertexAndConstantBuffer);
-    
-        CmdList.TransitionBuffer(
-            Resources.DirectionalLightBuffer.Get(),
-            EResourceState::ResourceState_CopyDest, 
-            EResourceState::ResourceState_VertexAndConstantBuffer);
-    }
-
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Update LightBuffers");
-
-    // Transition GBuffer
-    CmdList.TransitionTexture(
-        GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
-        EResourceState::ResourceState_NonPixelShaderResource, 
-        EResourceState::ResourceState_RenderTarget);
-
-    CmdList.TransitionTexture(
-        GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
-        EResourceState::ResourceState_NonPixelShaderResource,
-        EResourceState::ResourceState_RenderTarget);
-
-    CmdList.TransitionTexture(
-        GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
-        EResourceState::ResourceState_NonPixelShaderResource,
-        EResourceState::ResourceState_RenderTarget);
-
-    CmdList.TransitionTexture(
-        GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-        EResourceState::ResourceState_PixelShaderResource,
-        EResourceState::ResourceState_DepthWrite);
-
-    CmdList.TransitionTexture(
-        GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(),
-        EResourceState::ResourceState_NonPixelShaderResource,
-        EResourceState::ResourceState_RenderTarget);
-
-    // Transition ShadowMaps
-    CmdList.TransitionTexture(
-        PointLightShadowMaps.Get(), 
-        EResourceState::ResourceState_PixelShaderResource,
-        EResourceState::ResourceState_DepthWrite);
-    
-    CmdList.TransitionTexture(
-        DirLightShadowMaps.Get(), 
-        EResourceState::ResourceState_PixelShaderResource,
-        EResourceState::ResourceState_DepthWrite);
-    
-    // Render DirectionalLight ShadowMaps
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render DirectionalLight ShadowMaps");
-    
-    if (UpdateDirLight)
-    {
-        TRACE_SCOPE("Render DirectionalLight ShadowMaps");
-
-        CmdList.ClearDepthStencilView(DirLightShadowMapDSV.Get(), DepthStencilClearValue(1.0f, 0));
-
-#if ENABLE_VSM
-        CmdList.TransitionTexture(VSMDirLightShadowMaps.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_RenderTarget);
-
-        //Float32 DepthClearColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        //CmdList.ClearRenderTargetView(VSMDirLightShadowMaps->GetRenderTargetView(0).Get(), DepthClearColor);
-        //
-        //D3D12RenderTargetView* DirLightRTVS[] =
-        //{
-        //    VSMDirLightShadowMaps->GetRenderTargetView(0).Get(),
-        //};
-        //CmdList.BindRenderTargets(DirLightRTVS, 1, DirLightShadowMaps->GetDepthStencilView(0).Get());
-        //CmdList.BindGraphicsPipelineState(VSMShadowMapPSO.Get());
-#else
-        CmdList.BindRenderTargets(nullptr, 0, DirLightShadowMapDSV.Get());
-        CmdList.BindGraphicsPipelineState(ShadowMapPSO.Get());
-#endif
-
-        // Setup view
-        CmdList.BindViewport(
-            static_cast<Float>(CurrentLightSettings.ShadowMapWidth),
-            static_cast<Float>(CurrentLightSettings.ShadowMapHeight),
-            0.0f,
-            1.0f,
-            0.0f,
-            0.0f);
-
-        CmdList.BindScissorRect(
-            CurrentLightSettings.ShadowMapWidth,
-            CurrentLightSettings.ShadowMapHeight,
-             0, 0);
-
-        CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
-
-        // PerObject Structs
-        struct ShadowPerObject
-        {
-            XMFLOAT4X4    Matrix;
-            Float        ShadowOffset;
-        } ShadowPerObjectBuffer;
-    
-        PerShadowMap PerShadowMapData;
-        for (Light* Light : CurrentScene.GetLights())
-        {
-            if (IsSubClassOf<DirectionalLight>(Light))
-            {
-                DirectionalLight* DirLight = Cast<DirectionalLight>(Light);
-                PerShadowMapData.Matrix        = DirLight->GetMatrix();
-                PerShadowMapData.Position    = DirLight->GetShadowMapPosition();
-                PerShadowMapData.FarPlane    = DirLight->GetShadowFarPlane();
-            
-                CmdList.TransitionBuffer(
-                    PerShadowMapBuffer.Get(),
-                    EResourceState::ResourceState_VertexAndConstantBuffer,
-                    EResourceState::ResourceState_CopyDest);
-
-                CmdList.UpdateBuffer(
-                    PerShadowMapBuffer.Get(),
-                    0, sizeof(PerShadowMap),
-                    &PerShadowMapData);
-
-                CmdList.TransitionBuffer(
-                    PerShadowMapBuffer.Get(),
-                    EResourceState::ResourceState_CopyDest,
-                    EResourceState::ResourceState_VertexAndConstantBuffer);
-
-                CmdList.BindConstantBuffers(
-                    EShaderStage::ShaderStage_Vertex,
-                    PerShadowMapBuffer.GetAddressOf(), 
-                    1, 0);
-
-                // Draw all objects to depthbuffer
-                for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-                {
-                    CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-                    CmdList.BindIndexBuffer(Command.IndexBuffer);
-
-                    ShadowPerObjectBuffer.Matrix        = Command.CurrentActor->GetTransform().GetMatrix();
-                    ShadowPerObjectBuffer.ShadowOffset    = Command.Mesh->ShadowOffset;
-
-                    CmdList.Bind32BitShaderConstants(
-                        EShaderStage::ShaderStage_Vertex,
-                        &ShadowPerObjectBuffer, 17);
-
-                    CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-                }
-
-                break;
-            }
-        }
-
-        UpdateDirLight = false;
-    }
-    else
-    {
-        CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
-    }
-
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
-
-    // Render PointLight ShadowMaps
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render PointLight ShadowMaps");
-    
-    if (UpdatePointLight)
-    {
-        TRACE_SCOPE("Render PointLight ShadowMaps");
-
-        const UInt32 PointLightShadowSize = CurrentLightSettings.PointLightShadowSize;
-        CmdList.BindViewport(
-            static_cast<Float>(PointLightShadowSize),
-            static_cast<Float>(PointLightShadowSize),
-            0.0f,
-            1.0f,
-            0.0f,
-            0.0f);
-
-        CmdList.BindScissorRect(
-            static_cast<Float>(PointLightShadowSize),
-            static_cast<Float>(PointLightShadowSize),
-            0, 0);
-
-        CmdList.BindGraphicsPipelineState(LinearShadowMapPSO.Get());
-
-        // PerObject Structs
-        struct ShadowPerObject
-        {
-            XMFLOAT4X4    Matrix;
-            Float        ShadowOffset;
-        } ShadowPerObjectBuffer;
-
-        UInt32 PointLightShadowIndex = 0;
-        PerShadowMap PerShadowMapData;
-        for (Light* Light : CurrentScene.GetLights())
-        {
-            if (IsSubClassOf<PointLight>(Light))
-            {
-                PointLight* CurrentLight = Cast<PointLight>(Light);
-                for (UInt32 Face = 0; Face < 6; Face++)
-                {
-                    auto& Cube = PointLightShadowMapDSVs[PointLightShadowIndex];
-                    CmdList.ClearDepthStencilView(Cube[Face].Get(), DepthStencilClearValue(1.0f, 0));
-                    CmdList.BindRenderTargets(nullptr, 0, Cube[Face].Get());
-
-                    PerShadowMapData.Matrix        = CurrentLight->GetMatrix(Face);
-                    PerShadowMapData.Position    = CurrentLight->GetPosition();
-                    PerShadowMapData.FarPlane    = CurrentLight->GetShadowFarPlane();
-
-                    CmdList.TransitionBuffer(
-                        PerShadowMapBuffer.Get(),
-                        EResourceState::ResourceState_VertexAndConstantBuffer,
-                        EResourceState::ResourceState_CopyDest);
-
-                    CmdList.UpdateBuffer(
-                        PerShadowMapBuffer.Get(),
-                        0, sizeof(PerShadowMap),
-                        &PerShadowMapData);
-
-                    CmdList.TransitionBuffer(
-                        PerShadowMapBuffer.Get(),
-                        EResourceState::ResourceState_CopyDest,
-                        EResourceState::ResourceState_VertexAndConstantBuffer);
-
-                    CmdList.BindConstantBuffers(
-                        EShaderStage::ShaderStage_Vertex,
-                        PerShadowMapBuffer.GetAddressOf(),
-                        1, 0);
-
-                    // Draw all objects to depthbuffer
-                    if (GlobalFrustumCullEnabled)
-                    {
-                        Frustum CameraFrustum = Frustum(CurrentLight->GetShadowFarPlane(), CurrentLight->GetViewMatrix(Face), CurrentLight->GetProjectionMatrix(Face));
-                        for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-                        {
-                            const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
-                            XMMATRIX XmTransform    = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
-                            XMVECTOR XmTop            = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Top), 1.0f);
-                            XMVECTOR XmBottom        = XMVectorSetW(XMLoadFloat3(&Command.Mesh->BoundingBox.Bottom), 1.0f);
-                            XmTop        = XMVector4Transform(XmTop, XmTransform);
-                            XmBottom    = XMVector4Transform(XmBottom, XmTransform);
-
-                            AABB Box;
-                            XMStoreFloat3(&Box.Top, XmTop);
-                            XMStoreFloat3(&Box.Bottom, XmBottom);
-                            if (CameraFrustum.CheckAABB(Box))
-                            {
-                                CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-                                CmdList.BindIndexBuffer(Command.IndexBuffer);
-
-                                ShadowPerObjectBuffer.Matrix        = Command.CurrentActor->GetTransform().GetMatrix();
-                                ShadowPerObjectBuffer.ShadowOffset    = Command.Mesh->ShadowOffset;
-                            
-                                CmdList.Bind32BitShaderConstants(
-                                    EShaderStage::ShaderStage_Vertex,
-                                    &ShadowPerObjectBuffer, 17);
-
-                                CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (const MeshDrawCommand& Command : CurrentScene.GetMeshDrawCommands())
-                        {
-                            CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-                            CmdList.BindIndexBuffer(Command.IndexBuffer);
-
-                            ShadowPerObjectBuffer.Matrix        = Command.CurrentActor->GetTransform().GetMatrix();
-                            ShadowPerObjectBuffer.ShadowOffset    = Command.Mesh->ShadowOffset;
-                        
-                            CmdList.Bind32BitShaderConstants(
-                                EShaderStage::ShaderStage_Vertex,
-                                &ShadowPerObjectBuffer, 17);
-
-                            CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-                        }
-                    }
-                }
-
-                PointLightShadowIndex++;
-            }
-        }
-
-        UpdatePointLight = false;
-    }
-
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render PointLight ShadowMaps");
-
-    // Transition ShadowMaps
-#if ENABLE_VSM
-    CmdList.TransitionTexture(
-        VSMDirLightShadowMaps.Get(), 
-        EResourceState::ResourceState_RenderTarget, 
-        EResourceState::ResourceState_PixelShaderResource);
-#endif
-    CmdList.TransitionTexture(
-        DirLightShadowMaps.Get(), 
-        EResourceState::ResourceState_DepthWrite, 
-        EResourceState::ResourceState_NonPixelShaderResource);
-
-    CmdList.TransitionTexture(
-        PointLightShadowMaps.Get(), 
-        EResourceState::ResourceState_DepthWrite, 
-        EResourceState::ResourceState_NonPixelShaderResource);
+    DirectionalLightShadowRenderPass.Render(
+        CmdList, 
+        Resources,
+        CurrentScene);
 
     // Update camerabuffer
     CameraBufferDesc CamBuff;
-    CamBuff.ViewProjection        = CurrentScene.GetCamera()->GetViewProjectionMatrix();
-    CamBuff.View                = CurrentScene.GetCamera()->GetViewMatrix();
-    CamBuff.ViewInv                = CurrentScene.GetCamera()->GetViewInverseMatrix();
-    CamBuff.Projection            = CurrentScene.GetCamera()->GetProjectionMatrix();
-    CamBuff.ProjectionInv        = CurrentScene.GetCamera()->GetProjectionInverseMatrix();
-    CamBuff.ViewProjectionInv    = CurrentScene.GetCamera()->GetViewProjectionInverseMatrix();
-    CamBuff.Position            = CurrentScene.GetCamera()->GetPosition();
-    CamBuff.NearPlane            = CurrentScene.GetCamera()->GetNearPlane();
-    CamBuff.FarPlane            = CurrentScene.GetCamera()->GetFarPlane();
-    CamBuff.AspectRatio            = CurrentScene.GetCamera()->GetAspectRatio();
+    CamBuff.ViewProjection    = CurrentScene.GetCamera()->GetViewProjectionMatrix();
+    CamBuff.View              = CurrentScene.GetCamera()->GetViewMatrix();
+    CamBuff.ViewInv           = CurrentScene.GetCamera()->GetViewInverseMatrix();
+    CamBuff.Projection        = CurrentScene.GetCamera()->GetProjectionMatrix();
+    CamBuff.ProjectionInv     = CurrentScene.GetCamera()->GetProjectionInverseMatrix();
+    CamBuff.ViewProjectionInv = CurrentScene.GetCamera()->GetViewProjectionInverseMatrix();
+    CamBuff.Position          = CurrentScene.GetCamera()->GetPosition();
+    CamBuff.NearPlane         = CurrentScene.GetCamera()->GetNearPlane();
+    CamBuff.FarPlane          = CurrentScene.GetCamera()->GetFarPlane();
+    CamBuff.AspectRatio       = CurrentScene.GetCamera()->GetAspectRatio();
 
     CmdList.TransitionBuffer(
-        CameraBuffer.Get(), 
+        Resources.CameraBuffer.Get(), 
         EResourceState::ResourceState_VertexAndConstantBuffer, 
         EResourceState::ResourceState_CopyDest);
 
-    CmdList.UpdateBuffer(CameraBuffer.Get(), 0, sizeof(CameraBufferDesc), &CamBuff);
+    CmdList.UpdateBuffer(Resources.CameraBuffer.Get(), 0, sizeof(CameraBufferDesc), &CamBuff);
     
     CmdList.TransitionBuffer(
-        CameraBuffer.Get(), 
+        Resources.CameraBuffer.Get(),
         EResourceState::ResourceState_CopyDest, 
         EResourceState::ResourceState_VertexAndConstantBuffer);
 
-    // Clear GBuffer
-    ColorClearValue BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(), BlackClearColor);
-    CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(), BlackClearColor);
-    CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get(), BlackClearColor);
-    CmdList.ClearRenderTargetView(GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX].Get(), BlackClearColor);
-    CmdList.ClearDepthStencilView(GBufferDSV.Get(), DepthStencilClearValue(1.0f, 0));
-
-    // Setup view
-    const UInt32 RenderWidth    = MainWindowViewport->GetWidth();
-    const UInt32 RenderHeight    = MainWindowViewport->GetHeight();
-
-    CmdList.BindViewport(
-        static_cast<Float>(RenderWidth),
-        static_cast<Float>(RenderHeight),
-        0.0f,
-        1.0f,
-        0.0f,
-        0.0f);
-
-    CmdList.BindScissorRect(
-        static_cast<Float>(RenderWidth),
-        static_cast<Float>(RenderHeight),
-        0, 0);
-
-    // Perform PrePass
-    if (GlobalPrePassEnabled)
-    {
-        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin PrePass");
-
-        TRACE_SCOPE("PrePass");
-
-        struct PerObject
-        {
-            XMFLOAT4X4 Matrix;
-        } PerObjectBuffer;
-
-        // Setup Pipeline
-        CmdList.BindRenderTargets(nullptr, 0, GBufferDSV.Get());
-
-        CmdList.BindGraphicsPipelineState(PrePassPSO.Get());
-        
-        CmdList.BindConstantBuffers(
-            EShaderStage::ShaderStage_Vertex,
-            CameraBuffer.GetAddressOf(),
-            1, 0);
-
-        // Draw all objects to depthbuffer
-        for (const MeshDrawCommand& Command : DeferredVisibleCommands)
-        {
-            if (!Command.Material->HasHeightMap())
-            {
-                CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-                CmdList.BindIndexBuffer(Command.IndexBuffer);
-
-                PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-            
-                CmdList.Bind32BitShaderConstants(
-                    EShaderStage::ShaderStage_Vertex,
-                    &PerObjectBuffer, 16);
-
-                CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-            }
-        }
-
-        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End PrePass");
-    }
-
-    // Render all objects to the GBuffer
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin GeometryPass");
-
-    {
-        TRACE_SCOPE("GeometryPass");
-    
-        RenderTargetView* RenderTargets[] =
-        {
-            GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(),
-            GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(),
-            GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get(),
-            GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX].Get(),
-        };
-        CmdList.BindRenderTargets(RenderTargets, 4, GBufferDSV.Get());
-
-        // Setup Pipeline
-        CmdList.BindGraphicsPipelineState(GeometryPSO.Get());
-
-        struct TransformBuffer
-        {
-            XMFLOAT4X4 Transform;
-            XMFLOAT4X4 TransformInv;
-        } TransformPerObject;
-
-        for (const MeshDrawCommand& Command : DeferredVisibleCommands)
-        {
-            CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-            CmdList.BindIndexBuffer(Command.IndexBuffer);
-
-            if (Command.Material->IsBufferDirty())
-            {
-                Command.Material->BuildBuffer(CmdList);
-            }
-
-            CmdList.BindConstantBuffers(
-                EShaderStage::ShaderStage_Vertex,
-                &CameraBuffer,
-                1, 0);
-
-            ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
-            CmdList.BindConstantBuffers(
-                EShaderStage::ShaderStage_Pixel,
-                &MaterialBuffer,
-                1, 1);
-
-            TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
-            TransformPerObject.TransformInv    = Command.CurrentActor->GetTransform().GetMatrixInverse();
-        
-            ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-            CmdList.BindShaderResourceViews(
-                EShaderStage::ShaderStage_Pixel,
-                ShaderResourceViews, 
-                6, 0);
-
-            SamplerState* Sampler = Command.Material->GetMaterialSampler();
-            CmdList.BindSamplerStates(
-                EShaderStage::ShaderStage_Pixel,
-                &Sampler,
-                1, 0);
-
-            CmdList.Bind32BitShaderConstants(
-                EShaderStage::ShaderStage_Vertex,
-                &TransformPerObject, 32);
-
-            CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
-        }
-
-        // Setup GBuffer for Read
-        CmdList.TransitionTexture(
-            GBuffer[GBUFFER_ALBEDO_INDEX].Get(), 
-            EResourceState::ResourceState_RenderTarget, 
-            EResourceState::ResourceState_NonPixelShaderResource);
-    
-        DebugTextures.EmplaceBack(
-            GBufferSRVs[GBUFFER_ALBEDO_INDEX],
-            GBuffer[GBUFFER_ALBEDO_INDEX],
-            EResourceState::ResourceState_NonPixelShaderResource,
-            EResourceState::ResourceState_NonPixelShaderResource);
-
-        CmdList.TransitionTexture(
-            GBuffer[GBUFFER_NORMAL_INDEX].Get(), 
-            EResourceState::ResourceState_RenderTarget, 
-            EResourceState::ResourceState_NonPixelShaderResource);
-
-        DebugTextures.EmplaceBack(
-            GBufferSRVs[GBUFFER_NORMAL_INDEX],
-            GBuffer[GBUFFER_NORMAL_INDEX],
-            EResourceState::ResourceState_NonPixelShaderResource,
-            EResourceState::ResourceState_NonPixelShaderResource);
-
-        CmdList.TransitionTexture(
-            GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(),
-            EResourceState::ResourceState_RenderTarget,
-            EResourceState::ResourceState_NonPixelShaderResource);
-
-        DebugTextures.EmplaceBack(
-            GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX],
-            GBuffer[GBUFFER_VIEW_NORMAL_INDEX],
-            EResourceState::ResourceState_NonPixelShaderResource,
-            EResourceState::ResourceState_NonPixelShaderResource);
-
-        CmdList.TransitionTexture(
-            GBuffer[GBUFFER_MATERIAL_INDEX].Get(), 
-            EResourceState::ResourceState_RenderTarget, 
-            EResourceState::ResourceState_NonPixelShaderResource);
-
-        DebugTextures.EmplaceBack(
-            GBufferSRVs[GBUFFER_MATERIAL_INDEX],
-            GBuffer[GBUFFER_MATERIAL_INDEX],
-            EResourceState::ResourceState_NonPixelShaderResource,
-            EResourceState::ResourceState_NonPixelShaderResource);
-
-        CmdList.TransitionTexture(
-            GBuffer[GBUFFER_DEPTH_INDEX].Get(), 
-            EResourceState::ResourceState_DepthWrite, 
-            EResourceState::ResourceState_NonPixelShaderResource);
-
-        CmdList.TransitionTexture(
-            IrradianceMap.Get(),
-            EResourceState::ResourceState_PixelShaderResource,
-            EResourceState::ResourceState_NonPixelShaderResource);
-
-        CmdList.TransitionTexture(
-            SpecularIrradianceMap.Get(),
-            EResourceState::ResourceState_PixelShaderResource,
-            EResourceState::ResourceState_NonPixelShaderResource);
-
-        CmdList.TransitionTexture(
-            IntegrationLUT.Get(),
-            EResourceState::ResourceState_PixelShaderResource,
-            EResourceState::ResourceState_NonPixelShaderResource);
-    }
-
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
+    DeferredRenderPass.Render(
+        CmdList,
+        Resources,
+        CurrentScene);
 
     // RayTracing
     if (RenderLayer::IsRayTracingSupported() && GlobalRayTracingEnabled)
     {
         INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin RayTracing");
 
-        TraceRays(BackBuffer, CmdList);
+        TraceRays(Resources.BackBuffer, CmdList);
         RayTracingGeometryInstances.Clear();
 
         INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End RayTracing");
@@ -1502,11 +925,13 @@ void Renderer::TraceRays(Texture2D* BackBuffer, CommandList& InCmdList)
 
 void Renderer::SetLightSettings(const LightSettings& InLightSettings)
 {
-    CurrentLightSettings = InLightSettings;
-
     GlobalCmdListExecutor.WaitForGPU();
 
-    CreateShadowMaps();
+    Resources.CurrentLightSettings = InLightSettings;
+
+    PointLightShadowRenderPass.ResizeResources(Resources);
+
+    DirectionalLightShadowRenderPass.ResizeResources(Resources);
 
 #if ENABLE_VSM
     CmdList.TransitionTexture(
@@ -1578,35 +1003,13 @@ Bool Renderer::Init()
         Resources.CameraBuffer->SetName("CameraBuffer");
     }
 
-    if (!SkyboxRenderPass.Init(Resources))
-    {
-        return false;
-    }
-
-    if (!LightProbeRenderPass.Init(Resources))
-    {
-        return false;
-    }
-
-    CmdList.Begin();
-
-    LightProbeRenderPass.Render(CmdList, Resources);
-
-    CmdList.End();
-    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
-
-    if (!PointLightShadowRenderPass.Init(Resources))
-    {
-        return false;
-    }
-
     // Init standard inputlayout
     InputLayoutStateCreateInfo InputLayout =
     {
-        { "POSITION", 0, EFormat::Format_R32G32B32_Float,    0, 0,    EInputClassification::InputClassification_Vertex, 0 },
-        { "NORMAL",   0, EFormat::Format_R32G32B32_Float,    0, 12,    EInputClassification::InputClassification_Vertex, 0 },
-        { "TANGENT",  0, EFormat::Format_R32G32B32_Float,    0, 24,    EInputClassification::InputClassification_Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::Format_R32G32_Float,    0, 36,    EInputClassification::InputClassification_Vertex, 0 },
+        { "POSITION", 0, EFormat::Format_R32G32B32_Float, 0, 0,  EInputClassification::InputClassification_Vertex, 0 },
+        { "NORMAL",   0, EFormat::Format_R32G32B32_Float, 0, 12, EInputClassification::InputClassification_Vertex, 0 },
+        { "TANGENT",  0, EFormat::Format_R32G32B32_Float, 0, 24, EInputClassification::InputClassification_Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::Format_R32G32_Float,    0, 36, EInputClassification::InputClassification_Vertex, 0 },
     };
 
     Resources.StdInputLayout = RenderLayer::CreateInputLayout(InputLayout);
@@ -1664,6 +1067,73 @@ Bool Renderer::Init()
         return false;
     }
 
+    if (!InitAA())
+    {
+        return false;
+    }
+
+    if (RenderLayer::IsRayTracingSupported() && GlobalRayTracingEnabled)
+    {
+        if (!InitRayTracing())
+        {
+            return false;
+        }
+    }
+
+    if (!SkyboxRenderPass.Init(Resources))
+    {
+        return false;
+    }
+
+    if (!LightProbeRenderPass.Init(Resources))
+    {
+        return false;
+    }
+
+    CmdList.Begin();
+
+    // TODO: Remove this
+    Scene TempScene;
+    LightProbeRenderPass.Render(CmdList, Resources, TempScene);
+
+    CmdList.End();
+    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+
+    if (!PointLightShadowRenderPass.Init(Resources))
+    {
+        return false;
+    }
+
+    if (!DirectionalLightShadowRenderPass.Init(Resources))
+    {
+        return false;
+    }
+
+    if (!DeferredRenderPass.Init(Resources))
+    {
+        return false;
+    }
+
+    if (!DebugRenderPass.Init(Resources))
+    {
+        return false;
+    }
+
+    if (!SSAORenderPass.Init(Resources))
+    {
+        return false;
+    }
+
+    if (!ForwardRenderPass.Init(Resources))
+    {
+        return false;
+    }
+
+    if (!DeferredLightRenderPass.Init(Resources))
+    {
+        return false;
+    }
+
     CmdList.Begin();
 
     CmdList.TransitionTexture(
@@ -1687,20 +1157,6 @@ Bool Renderer::Init()
     CmdList.End();
     GlobalCmdListExecutor.ExecuteCommandList(CmdList);
 
-    if (!InitAA())
-    {
-        return false;
-    }
-
-    // Init RayTracing if supported
-    if (RenderLayer::IsRayTracingSupported() && GlobalRayTracingEnabled)
-    {
-        if (!InitRayTracing())
-        {
-            return false;
-        }
-    }
-
     auto Callback = [](const Event& Event)->Bool
     {
         if (!IsEventOfType<WindowResizeEvent>(Event))
@@ -1709,15 +1165,7 @@ Bool Renderer::Init()
         }
 
         const WindowResizeEvent& ResizeEvent = CastEvent<WindowResizeEvent>(Event);
-        const UInt32 Width = ResizeEvent.Width;
-        const UInt32 Height = ResizeEvent.Height;
-
-        GlobalCmdListExecutor.WaitForGPU();
-
-        GlobalRenderer->Resources.MainWindowViewport->Resize(Width, Height);
-
-        //GlobalRenderer->InitGBuffer();
-        //GlobalRenderer->InitSSAO_RenderTarget();
+        GlobalRenderer->ResizeResources(ResizeEvent.Width, ResizeEvent.Height);
 
         return true;
     };
@@ -2320,4 +1768,14 @@ Bool Renderer::InitAA()
     }
 
     return true;
+}
+
+void Renderer::ResizeResources(UInt32 Width, UInt32 Height)
+{
+    GlobalCmdListExecutor.WaitForGPU();
+
+    Resources.MainWindowViewport->Resize(Width, Height);
+
+    DeferredRenderPass.ResizeResources(Resources);
+    SSAORenderPass.ResizeResources(Resources);
 }

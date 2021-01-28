@@ -2,9 +2,15 @@
 
 #include "RenderLayer/ShaderCompiler.h"
 #include "RenderLayer/RenderLayer.h"
+#include "RenderLayer/Viewport.h"
 
 Bool TiledDeferredLightSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
 {
+    if (!CreateRenderTarget(FrameResources))
+    {
+        return false;
+    }
+
     constexpr UInt32  LUTSize   = 512;
     constexpr EFormat LUTFormat = EFormat::Format_R16G16_Float;
     if (!RenderLayer::UAVSupportsFormat(EFormat::Format_R16G16_Float))
@@ -215,6 +221,82 @@ Bool TiledDeferredLightSceneRenderPass::Init(SharedRenderPassResources& FrameRes
     return true;
 }
 
-void TiledDeferredLightSceneRenderPass::Render(CommandList& CmdList, SharedRenderPassResources& FrameResources)
+Bool TiledDeferredLightSceneRenderPass::ResizeResources(SharedRenderPassResources& FrameResources)
 {
+    return CreateRenderTarget(FrameResources);
+}
+
+void TiledDeferredLightSceneRenderPass::Render(
+    CommandList& CmdList, 
+    SharedRenderPassResources& FrameResources,
+    const Scene& Scene)
+{
+    CmdList.TransitionTexture(
+        FrameResources.IrradianceMap.Get(),
+        EResourceState::ResourceState_PixelShaderResource,
+        EResourceState::ResourceState_NonPixelShaderResource);
+
+    CmdList.TransitionTexture(
+        FrameResources.SpecularIrradianceMap.Get(),
+        EResourceState::ResourceState_PixelShaderResource,
+        EResourceState::ResourceState_NonPixelShaderResource);
+
+    CmdList.TransitionTexture(
+        FrameResources.IntegrationLUT.Get(),
+        EResourceState::ResourceState_PixelShaderResource,
+        EResourceState::ResourceState_NonPixelShaderResource);
+}
+
+Bool TiledDeferredLightSceneRenderPass::CreateRenderTarget(SharedRenderPassResources& FrameResources)
+{
+    const UInt32 Width  = FrameResources.MainWindowViewport->GetWidth();
+    const UInt32 Height = FrameResources.MainWindowViewport->GetHeight();
+    const UInt32 Usage  = TextureUsage_Default | TextureUsage_RenderTarget;
+
+    // Final Image
+    FrameResources.FinalTarget = RenderLayer::CreateTexture2D(
+        nullptr,
+        FrameResources.FinalTargetFormat,
+        TextureUsage_Default | TextureUsage_RenderTarget | TextureUsage_UAV,
+        Width,
+        Height,
+        1, 1,
+        ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 1.0f)));
+    if (FrameResources.FinalTarget)
+    {
+        FrameResources.FinalTarget->SetName("Final Target");
+
+        FrameResources.FinalTargetSRV = RenderLayer::CreateShaderResourceView(
+            FrameResources.FinalTarget.Get(),
+            FrameResources.FinalTargetFormat,
+            0, 1);
+        if (!FrameResources.FinalTargetSRV)
+        {
+            return false;
+        }
+
+        FrameResources.FinalTargetRTV = RenderLayer::CreateRenderTargetView(
+            FrameResources.FinalTarget.Get(),
+            FrameResources.FinalTargetFormat,
+            0);
+        if (!FrameResources.FinalTargetRTV)
+        {
+            return false;
+        }
+
+        FrameResources.FinalTargetUAV = RenderLayer::CreateUnorderedAccessView(
+            FrameResources.FinalTarget.Get(),
+            FrameResources.FinalTargetFormat,
+            0);
+        if (!FrameResources.FinalTargetUAV)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
 }

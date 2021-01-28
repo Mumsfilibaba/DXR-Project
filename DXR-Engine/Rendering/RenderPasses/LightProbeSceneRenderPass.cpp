@@ -167,7 +167,10 @@ Bool LightProbeSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
     return true;
 }
 
-void LightProbeSceneRenderPass::Render(CommandList& CmdList, SharedRenderPassResources& FrameResources)
+void LightProbeSceneRenderPass::Render(
+    CommandList& CmdList, 
+    SharedRenderPassResources& FrameResources,
+    const Scene& Scene)
 {
     const UInt32 IrradianceMapSize = static_cast<UInt32>(FrameResources.IrradianceMap->GetWidth());
 

@@ -9,9 +9,12 @@ public:
     SkyboxSceneRenderPass()  = default;
     ~SkyboxSceneRenderPass() = default;
 
-    Bool Init(SharedRenderPassResources& FrameResource);
+    virtual Bool Init(SharedRenderPassResources& FrameResources) override;
 
-    virtual void Render(CommandList& CmdList, SharedRenderPassResources& FrameResource) override final;
+    virtual void Render(
+        CommandList& CmdList, 
+        SharedRenderPassResources& FrameResource,
+        const Scene& Scene) override final;
 
 private:
     TSharedRef<GraphicsPipelineState> PipelineState;

@@ -22,7 +22,6 @@
 #include "RenderPasses/SkyboxSceneRenderPass.h"
 #include "RenderPasses/DebugSceneRenderPass.h"
 #include "RenderPasses/SSAOSceneRenderPass.h"
-#include "RenderPasses/PrePassSceneRenderPass.h"
 #include "RenderPasses/ForwardSceneRenderPass.h"
 #include "RenderPasses/LightProbeSceneRenderPass.h"
 #include "RenderPasses/DirectionalLightShadowSceneRenderPass.h"
@@ -55,6 +54,8 @@ private:
     Bool InitRayTracingTexture();
     Bool InitAA();
 
+    void ResizeResources(UInt32 Width, UInt32 Height);
+
     void TraceRays(Texture2D* BackBuffer, CommandList& InCmdList);
 
 private:
@@ -64,7 +65,6 @@ private:
     SkyboxSceneRenderPass     SkyboxRenderPass;
     DebugSceneRenderPass      DebugRenderPass;
     SSAOSceneRenderPass       SSAORenderPass;
-    PrePassSceneRenderPass    PrePassRenderPass;
     ForwardSceneRenderPass    ForwardRenderPass;
     LightProbeSceneRenderPass LightProbeRenderPass;
     DirectionalLightShadowSceneRenderPass DirectionalLightShadowRenderPass;

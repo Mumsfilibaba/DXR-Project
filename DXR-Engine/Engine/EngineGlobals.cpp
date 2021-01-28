@@ -7,16 +7,15 @@
 
 #include "RenderLayer/CommandList.h"
 
-
 EngineLoop GlobalEngineLoop;
 
 class GenericWindow*       GlobalMainWindow          = nullptr;
 class GenericApplication*  GlobalPlatformApplication = nullptr;
-class EventDispatcher*     GlobalEventDispatcher     = nullptr;
 class GenericOutputDevice* GlobalConsoleOutput       = nullptr;
 
-class Game* GlobalGame = nullptr;
+class EventDispatcher* GlobalEventDispatcher = nullptr;
 
+class Game* GlobalGame = nullptr;
 
 class Renderer*           GlobalRenderer       = nullptr;
 class GenericRenderLayer* GlobalRenderLayer    = nullptr;

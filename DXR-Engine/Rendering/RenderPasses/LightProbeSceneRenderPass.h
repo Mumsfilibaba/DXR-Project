@@ -7,9 +7,12 @@ public:
     LightProbeSceneRenderPass()  = default;
     ~LightProbeSceneRenderPass() = default;
 
-    Bool Init(SharedRenderPassResources& FrameResources);
+    virtual Bool Init(SharedRenderPassResources& FrameResources) override;
 
-    virtual void Render(CommandList& CmdList, SharedRenderPassResources& FrameResources) override;
+    virtual void Render(
+        CommandList& CmdList, 
+        SharedRenderPassResources& FrameResources,
+        const Scene& Scene) override;
 
 private:
     TSharedRef<ComputePipelineState> IrradianceGenPSO;

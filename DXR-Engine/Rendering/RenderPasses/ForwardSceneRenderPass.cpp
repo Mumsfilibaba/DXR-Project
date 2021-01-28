@@ -130,6 +130,9 @@ Bool ForwardSceneRenderPass::Init(SharedRenderPassResources& FrameResources)
     return true;
 }
 
-void ForwardSceneRenderPass::Render(CommandList& CmdList, SharedRenderPassResources& FrameResources)
+void ForwardSceneRenderPass::Render(
+    CommandList& CmdList, 
+    SharedRenderPassResources& FrameResources,
+    const Scene& Scene)
 {
 }
