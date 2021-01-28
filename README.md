@@ -8,16 +8,18 @@ This engine is a small hobby rendering/game engine created for testing different
 * Normal mapping
 * Parallax Occlusion Mapping
 * Physically Based Rendering with Image-Based Lightning
-* Shadow Mapping (Both Variance Shadow Mapping and "Traditional" is supported, and is selectable at compile time) _**(Variance is currently broken)**_
+* Shadow Mapping
 * Dynamic lights (Point-Lights, Directional-Lights, both with shadow support)
-* RayTraced reflections (Perfect Specular Only) _**(RayTracing is currently broken)**_
 * SSAO
 
 **Planed:**
 * Vulkan backend
-* Tiled Deferred Rendering
 * Screen Space Reflections
 * Cascade Shadow-maps
+* Ray-Traced reflections
+* TAA
+* Spotlights
+* Local Environment Probes
 
 # Screenshots
 RayTracing **Off**
