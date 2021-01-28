@@ -288,7 +288,7 @@ void Renderer::RenderDebugInterface()
 
     if (GlobalDrawRendererInfo.GetBool())
     {
-        const UInt32 WindowWidth = GlobalMainWindow->GetWidth();
+        const UInt32 WindowWidth  = GlobalMainWindow->GetWidth();
         const UInt32 WindowHeight = GlobalMainWindow->GetHeight();
         const Float Width = 300.0f;
         const Float Height = WindowHeight * 0.1f;
