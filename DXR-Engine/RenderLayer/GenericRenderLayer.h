@@ -3,12 +3,9 @@
 
 #include "RenderingCore.h"
 #include "Resources.h"
+#include "ResourceViews.h"
 #include "CommandList.h"
 
-class ShaderResourceView;
-class UnorderedAccessView;
-class RenderTargetView;
-class DepthStencilView;
 struct ResourceData;
 struct ClearValue;
 class RayTracingGeometry;
@@ -31,10 +28,6 @@ public:
     virtual ~GenericRenderLayer() = default;
 
     virtual Bool Init(Bool EnableDebug) = 0;
-
-    /*
-    * Textures
-    */
 
     virtual Texture1D* CreateTexture1D(
         const ResourceData* InitalData,
@@ -103,15 +96,8 @@ public:
         UInt32 MipLevels,
         const ClearValue& OptimizedClearValue) const = 0;
 
-    /*
-    * Samplers
-    */
-
-    virtual class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) const = 0;
-
-    /*
-    * Buffers
-    */
+    virtual class SamplerState* CreateSamplerState(
+        const struct SamplerStateCreateInfo& CreateInfo) const = 0;
 
     virtual VertexBuffer* CreateVertexBuffer(
         const ResourceData* InitalData,
@@ -137,228 +123,20 @@ public:
         UInt32 Stride,
         UInt32 Usage) const = 0;
 
-    /*
-    * RayTracing
-    */
-
     virtual RayTracingScene*    CreateRayTracingScene()    const = 0;
     virtual RayTracingGeometry* CreateRayTracingGeometry() const = 0;
 
-    /*
-    * ShaderResourceView
-    */
-
     virtual ShaderResourceView* CreateShaderResourceView(
-        const Buffer* Buffer,
-        UInt32 FirstElement,
-        UInt32 ElementCount) const = 0;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Buffer* Buffer,
-        UInt32 FirstElement,
-        UInt32 ElementCount,
-        UInt32 Stride) const = 0;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Texture1D* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels) const = 0;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const = 0;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Texture2D* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels) const = 0;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const = 0;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const TextureCube* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels) const = 0;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const = 0;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Texture3D* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels) const = 0;
-
-    /*
-    * UnorderedAccessView
-    */
+        const ShaderResourceViewCreateInfo& CreateInfo) const = 0;
 
     virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Buffer* Buffer,
-        UInt64 FirstElement,
-        UInt32 NumElements,
-        EFormat Format,
-        UInt64 CounterOffsetInBytes) const = 0;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Buffer* Buffer,
-        UInt64 FirstElement,
-        UInt32 NumElements,
-        UInt32 StructureByteStride,
-        UInt64 CounterOffsetInBytes) const = 0;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture1D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const = 0;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const = 0;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture2D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const = 0;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const = 0;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const TextureCube* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const = 0;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 ArraySlice) const = 0;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture3D* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstDepthSlice,
-        UInt32 DepthSlices) const = 0;
-
-    /*
-    * RenderTargetView
-    */
+        const UnorderedAccessViewCreateInfo& CreateInfo) const = 0;
 
     virtual RenderTargetView* CreateRenderTargetView(
-        const Texture1D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const = 0;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const = 0;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const Texture2D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const = 0;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const = 0;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const TextureCube* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FaceIndex) const = 0;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 ArraySlice,
-        UInt32 FaceIndex) const = 0;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const Texture3D* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstDepthSlice,
-        UInt32 DepthSlices) const = 0;
-
-    /*
-    * DepthStencilView
-    */
+        const RenderTargetViewCreateInfo& CreateInfo) const = 0;
 
     virtual DepthStencilView* CreateDepthStencilView(
-        const Texture1D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const = 0;
-
-    virtual DepthStencilView* CreateDepthStencilView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const = 0;
-
-    virtual DepthStencilView* CreateDepthStencilView(
-        const Texture2D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const = 0;
-
-    virtual DepthStencilView* CreateDepthStencilView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const = 0;
-
-    virtual DepthStencilView* CreateDepthStencilView(
-        const TextureCube* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FaceIndex) const = 0;
-
-    virtual DepthStencilView* CreateDepthStencilView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 ArraySlice,
-        UInt32 FaceIndex) const = 0;
-
-    /*
-    * Pipeline
-    */
+        const DepthStencilViewCreateInfo& CreateInfo) const = 0;
 
     virtual class ComputeShader* CreateComputeShader(
         const TArray<UInt8>& ShaderCode) const = 0;
@@ -413,10 +191,6 @@ public:
     
     virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const = 0;
 
-    /*
-    * Viewport
-    */
-
     virtual class Viewport* CreateViewport(
         GenericWindow* Window,
         UInt32 Width,
@@ -424,15 +198,7 @@ public:
         EFormat ColorFormat,
         EFormat DepthFormat) const = 0;
 
-    /*
-    * Context
-    */
-
     virtual class ICommandContext* GetDefaultCommandContext() const = 0;
-
-    /*
-    * Getters
-    */
 
     FORCEINLINE virtual std::string GetAdapterName() const
     {

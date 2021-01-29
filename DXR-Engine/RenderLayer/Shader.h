@@ -1,9 +1,9 @@
 #pragma once
 #include "Resources.h"
 
-class ComputeShader;
 class VertexShader;
 class PixelShader;
+class ComputeShader;
 
 enum class EShaderStage
 {
@@ -27,16 +27,6 @@ public:
     Shader()  = default;
     ~Shader() = default;
 
-    virtual ComputeShader* AsComputeShader()
-    {
-        return nullptr;
-    }
-
-    virtual const ComputeShader* AsComputeShader() const
-    {
-        return nullptr;
-    }
-
     virtual VertexShader* AsVertexShader()
     {
         return nullptr;
@@ -53,6 +43,16 @@ public:
     }
 
     virtual const PixelShader* AsPixelShader() const
+    {
+        return nullptr;
+    }
+
+    virtual ComputeShader* AsComputeShader()
+    {
+        return nullptr;
+    }
+
+    virtual const ComputeShader* AsComputeShader() const
     {
         return nullptr;
     }

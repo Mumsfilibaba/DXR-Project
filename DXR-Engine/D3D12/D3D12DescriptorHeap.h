@@ -99,6 +99,8 @@ class D3D12OfflineDescriptorHeap : public D3D12DeviceChild, public RefCountedObj
 public:
     D3D12OfflineDescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
 
+    Bool Init();
+
     D3D12_CPU_DESCRIPTOR_HANDLE Allocate(UInt32& OutHeapIndex);
     void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, UInt32 HeapIndex);
 
@@ -115,7 +117,7 @@ public:
     }
 
 private:
-    void AllocateHeap();
+    Bool AllocateHeap();
 
     D3D12_DESCRIPTOR_HEAP_TYPE Type;
     TArray<DescriptorHeap> Heaps;

@@ -100,8 +100,8 @@ Bool EngineLoop::PreInit()
         gConsoleOutput->SetTitle("DXR-Engine Error Output");
     }
 
-    gPlatformApplication = PlatformApplication::Make();
-    if (!gPlatformApplication->Init())
+    gApplication = PlatformApplication::Make();
+    if (!gApplication->Init())
     {
         PlatformDialogMisc::MessageBox("ERROR", "Failed to create Platform Application");
         return false;
@@ -114,8 +114,8 @@ Bool EngineLoop::Init()
 {
     TRACE_FUNCTION_SCOPE();
 
-    gEventDispatcher = DBG_NEW EventDispatcher(gPlatformApplication);
-    gPlatformApplication->SetEventHandler(gEventDispatcher);
+    gEventDispatcher = DBG_NEW EventDispatcher(gApplication);
+    gApplication->SetEventHandler(gEventDispatcher);
 
     gConsole.Init();
 
@@ -127,7 +127,7 @@ Bool EngineLoop::Init()
         WindowStyleFlag_Resizeable;
 
     WindowCreateInfo WinCreateInfo("DXR Engine", 1920, 1080, Style);
-    gMainWindow = gPlatformApplication->MakeWindow();
+    gMainWindow = gApplication->MakeWindow();
     
     if (!gMainWindow->Init(WinCreateInfo))
     {
@@ -203,7 +203,7 @@ void EngineLoop::PreTick()
         Exit();
     }
 
-    gPlatformApplication->Tick();
+    gApplication->Tick();
 }
 
 void EngineLoop::Tick()
@@ -262,7 +262,7 @@ Bool EngineLoop::PostRelease()
 
     gMainWindow->Release();
 
-    SAFEDELETE(gPlatformApplication);
+    SAFEDELETE(gApplication);
 
     SAFEDELETE(gConsoleOutput);
 

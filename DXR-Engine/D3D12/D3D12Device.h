@@ -36,6 +36,7 @@ public:
         D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
 
     Int32 GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount);
+
     std::string GetAdapterName() const;
 
     FORCEINLINE HRESULT CreateCommitedResource(
@@ -227,27 +228,6 @@ public:
         return SamplerFeedBackTier != D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
     }
 
-    FORCEINLINE D3D12OfflineDescriptorHeap* GetGlobalResourceDescriptorHeap() const
-    {
-        return GlobalResourceDescriptorHeap;
-    }
-
-    FORCEINLINE D3D12OfflineDescriptorHeap* GetGlobalRenderTargetDescriptorHeap() const
-    {
-        return GlobalRenderTargetDescriptorHeap;
-    }
-
-    FORCEINLINE D3D12OfflineDescriptorHeap* GetGlobalDepthStencilDescriptorHeap() const
-    {
-        return GlobalDepthStencilDescriptorHeap;
-    }
-
-    FORCEINLINE D3D12OfflineDescriptorHeap* GetGlobalSamplerDescriptorHeap() const
-    {
-        return GlobalSamplerDescriptorHeap;
-    }
-
-
 private:
     TComPtr<IDXGIFactory2> Factory;
     TComPtr<IDXGIAdapter1> Adapter;
@@ -273,11 +253,6 @@ private:
     PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER           D3D12CreateRootSignatureDeserializerFunc          = nullptr;
     PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVersionedRootSignatureFunc          = nullptr;
     PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc = nullptr;
-
-    D3D12OfflineDescriptorHeap* GlobalResourceDescriptorHeap     = nullptr;
-    D3D12OfflineDescriptorHeap* GlobalRenderTargetDescriptorHeap = nullptr;
-    D3D12OfflineDescriptorHeap* GlobalDepthStencilDescriptorHeap = nullptr;
-    D3D12OfflineDescriptorHeap* GlobalSamplerDescriptorHeap      = nullptr;
 
     UInt32 AdapterID = 0;
 

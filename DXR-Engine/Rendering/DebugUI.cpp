@@ -499,7 +499,7 @@ void DebugUI::Render(CommandList& CmdList)
     GenericWindow* Window = gMainWindow;
     if (IO.WantSetMousePos)
     {
-        gPlatformApplication->SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
+        gApplication->SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
     }
 
     WindowShape CurrentWindowShape;
@@ -512,7 +512,7 @@ void DebugUI::Render(CommandList& CmdList)
 
     Int32 x = 0;
     Int32 y = 0;
-    gPlatformApplication->GetCursorPos(Window, x, y);
+    gApplication->GetCursorPos(Window, x, y);
     
     IO.MousePos = ImVec2(static_cast<Float>(x), static_cast<Float>(y));
 
@@ -527,7 +527,7 @@ void DebugUI::Render(CommandList& CmdList)
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
         if (ImguiCursor == ImGuiMouseCursor_None || IO.MouseDrawCursor)
         {
-            gPlatformApplication->SetCursor(nullptr);
+            gApplication->SetCursor(nullptr);
         }
         else
         {
@@ -545,7 +545,7 @@ void DebugUI::Render(CommandList& CmdList)
             case ImGuiMouseCursor_NotAllowed: Cursor = GlobalCursors::NotAllowed; break;
             }
             
-            gPlatformApplication->SetCursor(Cursor.Get());
+            gApplication->SetCursor(Cursor.Get());
         }
     }
 

@@ -10,10 +10,10 @@ class D3D12OfflineDescriptorHeap;
 class D3D12View : public D3D12DeviceChild
 {
 public:
-    D3D12View(D3D12Device* InDevice, const D3D12Resource* InResource);
+    D3D12View(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap);
     virtual ~D3D12View();
-
-    void ResetResource();
+    
+    Bool Init();
 
     FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
     {
@@ -35,9 +35,9 @@ protected:
 class D3D12ConstantBufferView : public D3D12View
 {
 public:
-    D3D12ConstantBufferView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
+    D3D12ConstantBufferView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap);
 
-    void CreateView(const D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
+    Bool CreateView(const D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 
     FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const
     {
@@ -51,9 +51,9 @@ private:
 class D3D12ShaderResourceView : public ShaderResourceView, public D3D12View
 {
 public:
-    D3D12ShaderResourceView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
+    D3D12ShaderResourceView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap);
 
-    void CreateView(const D3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
+    Bool CreateView(const D3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
     FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
     {
@@ -67,26 +67,34 @@ private:
 class D3D12UnorderedAccessView : public UnorderedAccessView, public D3D12View
 {
 public:
-    D3D12UnorderedAccessView(D3D12Device* InDevice, const D3D12Resource* InCounterResource, const D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
+    D3D12UnorderedAccessView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap);
 
-    void CreateView(const D3D12Resource* InCounterResource, const D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
+    Bool CreateView(
+        const D3D12Resource* InCounterResource, 
+        const D3D12Resource* InResource, 
+        const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
     FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
     {
         return Desc;
     }
 
+    FORCEINLINE const D3D12Resource* GetCounterResource() const
+    {
+        return CounterResource;
+    }
+
 private:
-    const D3D12Resource* CounterResource;
+    const D3D12Resource* CounterResource = nullptr;
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
 };
 
 class D3D12RenderTargetView : public RenderTargetView, public D3D12View
 {
 public:
-    D3D12RenderTargetView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
+    D3D12RenderTargetView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap);
 
-    void CreateView(const D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
+    Bool CreateView(const D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
     FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const
     {
@@ -100,9 +108,9 @@ private:
 class D3D12DepthStencilView : public DepthStencilView, public D3D12View
 {
 public:
-    D3D12DepthStencilView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
+    D3D12DepthStencilView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap);
 
-    void CreateView(const D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
+    Bool CreateView(const D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 
     FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const
     {

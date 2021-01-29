@@ -125,6 +125,22 @@ struct ClearUnorderedAccessViewFloatCommand : public RenderCommand
     Float ClearColor[4];
 };
 
+// SetShadingRate RenderCommand
+struct SetShadingRateCommand : public RenderCommand
+{
+    SetShadingRateCommand(EShadingRate ShadingRate)
+        : ShadingRate(ShadingRate)
+    {
+    }
+
+    virtual void Execute(ICommandContext& CmdContext) const override
+    {
+        CmdContext.SetShadingRate(ShadingRate);
+    }
+
+    EShadingRate ShadingRate;
+};
+
 // Bind Viewport RenderCommand
 struct BindViewportCommand : public RenderCommand
 {

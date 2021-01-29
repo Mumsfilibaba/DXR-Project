@@ -26,11 +26,6 @@ D3D12Device::D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation)
 
 D3D12Device::~D3D12Device()
 {
-    SAFERELEASE(GlobalResourceDescriptorHeap);
-    SAFERELEASE(GlobalRenderTargetDescriptorHeap);
-    SAFERELEASE(GlobalDepthStencilDescriptorHeap);
-    SAFERELEASE(GlobalSamplerDescriptorHeap);
-
     if (EnableDebugLayer)
     {
         TComPtr<ID3D12DebugDevice> DebugDevice;
@@ -306,12 +301,6 @@ bool D3D12Device::Init()
             SamplerFeedBackTier = Features7.SamplerFeedbackTier;
         }
     }
-
-    // Create Global DescriptorHeaps
-    GlobalResourceDescriptorHeap     = DBG_NEW D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    GlobalRenderTargetDescriptorHeap = DBG_NEW D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    GlobalDepthStencilDescriptorHeap = DBG_NEW D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    GlobalSamplerDescriptorHeap      = DBG_NEW D3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
     return true;
 }

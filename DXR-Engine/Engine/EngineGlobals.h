@@ -5,7 +5,7 @@ extern class EngineLoop gEngineLoop;
 extern class Renderer   gRenderer;
 
 extern class GenericWindow*       gMainWindow;
-extern class GenericApplication*  gPlatformApplication;
+extern class GenericApplication*  gApplication;
 extern class GenericOutputDevice* gConsoleOutput;
 extern class EventDispatcher*     gEventDispatcher;
 

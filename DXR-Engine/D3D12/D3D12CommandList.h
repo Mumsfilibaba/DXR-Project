@@ -14,7 +14,7 @@ public:
     D3D12CommandListHandle(D3D12Device* InDevice)
         : D3D12DeviceChild(InDevice)
         , CmdList(nullptr)
-        , DXRCmdList(nullptr)
+        , CmdList5(nullptr)
     {
     }
 
@@ -34,7 +34,7 @@ public:
 
             LOG_INFO("[D3D12Device]: Created CommandList");
 
-            if (FAILED(CmdList.As<ID3D12GraphicsCommandList4>(&DXRCmdList)))
+            if (FAILED(CmdList.As<ID3D12GraphicsCommandList5>(&CmdList5)))
             {
                 LOG_ERROR("[D3D12CommandList]: FAILED to retrive DXR-CommandList");
                 return false;
@@ -171,12 +171,12 @@ public:
     FORCEINLINE void BuildRaytracingAccelerationStructure(
         const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* Desc)
     {
-        DXRCmdList->BuildRaytracingAccelerationStructure(Desc, 0, nullptr);
+        CmdList5->BuildRaytracingAccelerationStructure(Desc, 0, nullptr);
     }
 
     FORCEINLINE void DispatchRays(const D3D12_DISPATCH_RAYS_DESC* Desc)
     {
-        DXRCmdList->DispatchRays(Desc);
+        CmdList5->DispatchRays(Desc);
     }
 
     FORCEINLINE void Dispatch(
@@ -227,7 +227,7 @@ public:
 
     FORCEINLINE void SetStateObject(ID3D12StateObject* StateObject)
     {
-        DXRCmdList->SetPipelineState1(StateObject);
+        CmdList5->SetPipelineState1(StateObject);
     }
 
     FORCEINLINE void SetPipelineState(ID3D12PipelineState* PipelineState)
@@ -320,6 +320,13 @@ public:
         CmdList->RSSetScissorRects(ScissorRectCount, ScissorRects);
     }
 
+    FORCEINLINE void RSSetShadingRate(
+        D3D12_SHADING_RATE BaseShadingRate, 
+        const D3D12_SHADING_RATE_COMBINER* Combiners)
+    {
+        CmdList5->RSSetShadingRate(BaseShadingRate, Combiners);
+    }
+
     FORCEINLINE void OMSetBlendFactor(const Float BlendFactor[4])
     {
         CmdList->OMSetBlendFactor(BlendFactor);
@@ -377,11 +384,11 @@ public:
 
     FORCEINLINE ID3D12GraphicsCommandList4* GetDXRCommandList() const
     {
-        return DXRCmdList.Get();
+        return CmdList5.Get();
     }
 
 private:
     TComPtr<ID3D12GraphicsCommandList>  CmdList;
-    TComPtr<ID3D12GraphicsCommandList4> DXRCmdList;
+    TComPtr<ID3D12GraphicsCommandList5> CmdList5;
     Bool IsReady = false;
 };

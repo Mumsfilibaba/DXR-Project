@@ -9,10 +9,6 @@ public:
     static Bool Init(ERenderLayerApi InRenderApi);
     static void Release();
 
-    /*
-    * Textures
-    */
-
     FORCEINLINE static Texture1D* CreateTexture1D(
         const ResourceData* InitalData, 
         EFormat Format, 
@@ -154,18 +150,10 @@ public:
             OptimizedClearValue);
     }
 
-    /*
-    * Samplers
-    */
-
     FORCEINLINE static class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo)
     {
         return gRenderLayer->CreateSamplerState(CreateInfo);
     }
-
-    /*
-    * Buffers
-    */
 
     FORCEINLINE static VertexBuffer* CreateVertexBuffer(
         const ResourceData* InitalData,
@@ -257,460 +245,39 @@ public:
             Usage);
     }
 
-    /*
-    * RayTracingScene
-    */
-
     FORCEINLINE static RayTracingScene* CreateRayTracingScene()
     {
         return gRenderLayer->CreateRayTracingScene();
     }
-
-    /*
-    * RayTracingGeometry
-    */
 
     FORCEINLINE static RayTracingGeometry* CreateRayTracingGeometry()
     {
         return gRenderLayer->CreateRayTracingGeometry();
     }
 
-    /*
-    * ShaderResourceView
-    */
-
     FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
-        const Buffer* Buffer,
-        UInt32 FirstElement,
-        UInt32 ElementCount)
+        const ShaderResourceViewCreateInfo& CreateInfo)
     {
-        return gRenderLayer->CreateShaderResourceView(
-            Buffer,
-            FirstElement,
-            ElementCount);
-    }
-
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
-        const Buffer* Buffer,
-        UInt32 FirstElement,
-        UInt32 ElementCount,
-        UInt32 Stride)
-    {
-        return gRenderLayer->CreateShaderResourceView(
-            Buffer,
-            FirstElement,
-            ElementCount,
-            Stride);
-    }
-
-    template<typename T>
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
-        const Buffer* Buffer, 
-        UInt32 FirstElement, 
-        UInt32 ElementCount)
-    {
-        return CreateShaderResourceView(Buffer, FirstElement, ElementCount, sizeof(T));
-    }
-
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
-        const Texture1D* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels) 
-    { 
-        return gRenderLayer->CreateShaderResourceView(
-            Texture,
-            Format,
-            MostDetailedMip,
-            MipLevels);
-    }
-
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize)
-    {
-        return gRenderLayer->CreateShaderResourceView(
-            Texture,
-            Format,
-            MostDetailedMip,
-            MipLevels,
-            FirstArraySlice,
-            ArraySize);
-    }
-
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
-        const Texture2D* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels)
-    {
-        return gRenderLayer->CreateShaderResourceView(
-            Texture,
-            Format,
-            MostDetailedMip,
-            MipLevels);
-    }
-
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize)
-    {
-        return gRenderLayer->CreateShaderResourceView(
-            Texture,
-            Format,
-            MostDetailedMip,
-            MipLevels,
-            FirstArraySlice,
-            ArraySize);
-    }
-
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
-        const TextureCube* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels)
-    {
-        return gRenderLayer->CreateShaderResourceView(
-            Texture,
-            Format,
-            MostDetailedMip,
-            MipLevels);
-    }
-
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize)
-    {
-        return gRenderLayer->CreateShaderResourceView(
-            Texture,
-            Format,
-            MostDetailedMip,
-            MipLevels,
-            FirstArraySlice,
-            ArraySize);
-    }
-
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
-        const Texture3D* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels)
-    {
-        return gRenderLayer->CreateShaderResourceView(
-            Texture,
-            Format,
-            MostDetailedMip,
-            MipLevels);
-    }
-
-    /*
-    * UnorderedAccessView
-    */
-
-    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
-        const Buffer* Buffer,
-        UInt64 FirstElement,
-        UInt32 NumElements,
-        EFormat Format,
-        UInt64 CounterOffsetInBytes)
-    {
-        return gRenderLayer->CreateUnorderedAccessView(
-            Buffer,
-            FirstElement,
-            NumElements,
-            Format,
-            CounterOffsetInBytes);
+        return gRenderLayer->CreateShaderResourceView(CreateInfo);
     }
 
     FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
-        const Buffer* Buffer,
-        UInt64 FirstElement,
-        UInt32 NumElements,
-        UInt32 StructureByteStride,
-        UInt64 CounterOffsetInBytes)
+        const UnorderedAccessViewCreateInfo& CreateInfo)
     {
-        return gRenderLayer->CreateUnorderedAccessView(
-            Buffer,
-            FirstElement,
-            NumElements,
-            StructureByteStride,
-            CounterOffsetInBytes);
-    }
-
-    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture1D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice)
-    {
-        return gRenderLayer->CreateUnorderedAccessView(Texture, Format, MipSlice);
-    }
-
-    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize)
-    {
-        return gRenderLayer->CreateUnorderedAccessView(
-            Texture,
-            Format,
-            MipSlice,
-            FirstArraySlice,
-            ArraySize);
-    }
-
-    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture2D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice)
-    {
-        return gRenderLayer->CreateUnorderedAccessView(Texture, Format, MipSlice);
-    }
-
-    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize)
-    {
-        return gRenderLayer->CreateUnorderedAccessView(
-            Texture,
-            Format,
-            MipSlice,
-            FirstArraySlice,
-            ArraySize);
-    }
-
-    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
-        const TextureCube* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice)
-    {
-        return gRenderLayer->CreateUnorderedAccessView(
-            Texture,
-            Format,
-            MipSlice);
-    }
-
-    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 ArraySlice)
-    {
-        return gRenderLayer->CreateUnorderedAccessView(
-            Texture,
-            Format,
-            MipSlice,
-            ArraySlice);
-    }
-
-    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture3D* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstDepthSlice,
-        UInt32 DepthSlices) 
-    {
-        return gRenderLayer->CreateUnorderedAccessView(
-            Texture,
-            Format,
-            MipSlice,
-            FirstDepthSlice,
-            DepthSlices);
-    }
-
-    /*
-    * RenderTargetView
-    */
-
-    FORCEINLINE static RenderTargetView* CreateRenderTargetView(
-        const Texture1D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice)
-    {
-        return gRenderLayer->CreateRenderTargetView(Texture, Format, MipSlice);
+        return gRenderLayer->CreateUnorderedAccessView(CreateInfo);
     }
 
     FORCEINLINE static RenderTargetView* CreateRenderTargetView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize)
+        const RenderTargetViewCreateInfo& CreateInfo)
     {
-        return gRenderLayer->CreateRenderTargetView(
-            Texture,
-            Format,
-            MipSlice,
-            FirstArraySlice,
-            ArraySize);
-    }
-
-    FORCEINLINE static RenderTargetView* CreateRenderTargetView(
-        const Texture2D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice)
-    {
-        return gRenderLayer->CreateRenderTargetView(
-            Texture,
-            Format,
-            MipSlice);
-    }
-
-    FORCEINLINE static RenderTargetView* CreateRenderTargetView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize)
-    {
-        return gRenderLayer->CreateRenderTargetView(
-            Texture,
-            Format,
-            MipSlice,
-            FirstArraySlice,
-            ArraySize);
-    }
-
-    FORCEINLINE static RenderTargetView* CreateRenderTargetView(
-        const TextureCube* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FaceIndex)
-    {
-        return gRenderLayer->CreateRenderTargetView(
-            Texture,
-            Format,
-            MipSlice,
-            FaceIndex);
-    }
-
-    FORCEINLINE static RenderTargetView* CreateRenderTargetView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 ArraySlice,
-        UInt32 FaceIndex)
-    {
-        return gRenderLayer->CreateRenderTargetView(
-            Texture,
-            Format,
-            MipSlice,
-            ArraySlice,
-            FaceIndex);
-    }
-
-    FORCEINLINE static RenderTargetView* CreateRenderTargetView(
-        const Texture3D* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstDepthSlice,
-        UInt32 DepthSlices) 
-    {
-        return gRenderLayer->CreateRenderTargetView(
-            Texture,
-            Format,
-            MipSlice,
-            FirstDepthSlice,
-            DepthSlices);
-    }
-
-    /*
-    * DepthStencilView
-    */
-
-    FORCEINLINE static DepthStencilView* CreateDepthStencilView(
-        const Texture1D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice)
-    {
-        return gRenderLayer->CreateDepthStencilView(Texture, Format, MipSlice);
+        return gRenderLayer->CreateRenderTargetView(CreateInfo);
     }
 
     FORCEINLINE static DepthStencilView* CreateDepthStencilView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize)
+        const DepthStencilViewCreateInfo& CreateInfo)
     {
-        return gRenderLayer->CreateDepthStencilView(
-            Texture,
-            Format,
-            MipSlice,
-            FirstArraySlice,
-            ArraySize);
+        return gRenderLayer->CreateDepthStencilView(CreateInfo);
     }
-
-    FORCEINLINE static DepthStencilView* CreateDepthStencilView(
-        const Texture2D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice)
-    {
-        return gRenderLayer->CreateDepthStencilView(Texture, Format, MipSlice);
-    }
-
-    FORCEINLINE static DepthStencilView* CreateDepthStencilView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize)
-    {
-        return gRenderLayer->CreateDepthStencilView(
-            Texture,
-            Format,
-            MipSlice,
-            FirstArraySlice,
-            ArraySize);
-    }
-
-    FORCEINLINE static DepthStencilView* CreateDepthStencilView(
-        const TextureCube* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FaceIndex)
-    {
-        return gRenderLayer->CreateDepthStencilView(
-            Texture,
-            Format,
-            MipSlice,
-            FaceIndex);
-    }
-
-    FORCEINLINE static DepthStencilView* CreateDepthStencilView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 ArraySlice,
-        UInt32 FaceIndex)
-    {
-        return gRenderLayer->CreateDepthStencilView(
-            Texture,
-            Format,
-            MipSlice,
-            ArraySlice,
-            FaceIndex);
-    }
-
-    /*
-    * Pipeline
-    */
 
     FORCEINLINE static ComputeShader* CreateComputeShader(
         const TArray<UInt8>& ShaderCode)
@@ -802,7 +369,6 @@ public:
         return gRenderLayer->CreateBlendState(CreateInfo);
     }
 
-
     FORCEINLINE static ComputePipelineState* CreateComputePipelineState(
         const ComputePipelineStateCreateInfo& CreateInfo)
     {
@@ -814,10 +380,6 @@ public:
     {
         return gRenderLayer->CreateGraphicsPipelineState(CreateInfo);
     }
-
-    /*
-    * Viewport
-    */
 
     FORCEINLINE static class Viewport* CreateViewport(
         GenericWindow* Window,
@@ -834,10 +396,6 @@ public:
             DepthFormat);
     }
 
-    /*
-    * Support Features
-    */
-
     FORCEINLINE static Bool IsRayTracingSupported()
     {
         return gRenderLayer->IsRayTracingSupported();
@@ -847,10 +405,6 @@ public:
     {
         return gRenderLayer->UAVSupportsFormat(Format);
     }
-
-    /*
-    * Getters
-    */
 
     FORCEINLINE static class ICommandContext* GetDefaultCommandContext()
     {

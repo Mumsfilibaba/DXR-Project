@@ -383,6 +383,8 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.Begin();
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
 
+    CmdList.SetShadingRate(EShadingRate::ShadingRate_1x1);
+
     ShadowMapRenderer.RenderPointLightShadows(
         CmdList,
         LightSetup,
@@ -643,6 +645,8 @@ void Renderer::Tick(const Scene& Scene)
             {
                 gRenderer.RenderDebugInterface();
             });
+
+        CmdList.SetShadingRate(EShadingRate::ShadingRate_1x1);
 
         DebugUI::Render(CmdList);
     }

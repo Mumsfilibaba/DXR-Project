@@ -120,6 +120,24 @@ inline const Char* ToString(EPrimitiveTopology ResourceState)
     }
 }
 
+enum EShadingRate
+{
+    ShadingRate_1x1 = 1,
+    ShadingRate_2x2 = 2,
+    ShadingRate_4x4 = 3,
+};
+
+inline const Char* ToString(EShadingRate ShadingRate)
+{
+    switch (ShadingRate)
+    {
+    case EShadingRate::ShadingRate_1x1: return "ShadingRate_1x1";
+    case EShadingRate::ShadingRate_2x2: return "ShadingRate_2x2";
+    case EShadingRate::ShadingRate_4x4: return "ShadingRate_4x4";
+    default:                            return "";
+    }
+}
+
 struct ColorClearValue
 {
     inline ColorClearValue()

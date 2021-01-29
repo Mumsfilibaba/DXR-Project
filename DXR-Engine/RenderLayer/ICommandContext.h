@@ -44,6 +44,8 @@ public:
         UnorderedAccessView* UnorderedAccessView, 
         const Float ClearColor[4]) = 0;
 
+    virtual void SetShadingRate(EShadingRate ShadingRate) = 0;
+
     virtual void BeginRenderPass() = 0;
     virtual void EndRenderPass()   = 0;
 

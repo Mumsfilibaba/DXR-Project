@@ -87,6 +87,11 @@ public:
         InsertCommand<ClearUnorderedAccessViewFloatCommand>(UnorderedAccessView, ClearColor);
     }
 
+    FORCEINLINE void SetShadingRate(EShadingRate ShadingRate)
+    {
+        InsertCommand<SetShadingRateCommand>(ShadingRate);
+    }
+
     FORCEINLINE void BeginRenderPass()
     {
         InsertCommand<BeginRenderPassCommand>();

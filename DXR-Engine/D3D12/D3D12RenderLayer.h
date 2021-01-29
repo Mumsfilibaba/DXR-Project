@@ -63,10 +63,6 @@ public:
 
     virtual Bool Init(Bool EnableDebug) override final;
 
-    /*
-    * Textures
-    */
-
     virtual Texture1D* CreateTexture1D(
         const ResourceData* InitalData,
         EFormat Format,
@@ -134,15 +130,8 @@ public:
         UInt32 MipLevels,
         const ClearValue& OptimizedClearValue) const override final;
 
-    /*
-    * Samplers
-    */
-
-    virtual class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) const override final;
-
-    /*
-    * Buffers
-    */
+    virtual class SamplerState* CreateSamplerState(
+        const struct SamplerStateCreateInfo& CreateInfo) const override final;
 
     virtual VertexBuffer* CreateVertexBuffer(
         const ResourceData* InitalData,
@@ -168,228 +157,20 @@ public:
         UInt32 Stride,
         UInt32 Usage) const override final;
 
-    /*
-    * RayTracing
-    */
-
     virtual class RayTracingGeometry* CreateRayTracingGeometry() const override final;
     virtual class RayTracingScene*    CreateRayTracingScene()    const override final;
 
-    /*
-    * ShaderResourceView
-    */
-
     virtual ShaderResourceView* CreateShaderResourceView(
-        const Buffer* Buffer,
-        UInt32 FirstElement,
-        UInt32 ElementCount) const override final;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Buffer* Buffer,
-        UInt32 FirstElement,
-        UInt32 ElementCount,
-        UInt32 Stride) const override final;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Texture1D* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels) const override final;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const override final;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Texture2D* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels) const override final;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const override final;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const TextureCube* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels) const override final;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const override final;
-
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const Texture3D* Texture,
-        EFormat Format,
-        UInt32 MostDetailedMip,
-        UInt32 MipLevels) const override final;
-
-    /*
-    * UnorderedAccessView
-    */
+        const ShaderResourceViewCreateInfo& CreateInfo) const override final;
 
     virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Buffer* Buffer,
-        UInt64 FirstElement,
-        UInt32 NumElements,
-        EFormat Format,
-        UInt64 CounterOffsetInBytes) const override final;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Buffer* Buffer,
-        UInt64 FirstElement,
-        UInt32 NumElements,
-        UInt32 StructureByteStride,
-        UInt64 CounterOffsetInBytes) const override final;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture1D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const override final;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const override final;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture2D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const override final;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const override final;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const TextureCube* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const override final;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 ArraySlice) const override final;
-
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const Texture3D* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstDepthSlice,
-        UInt32 DepthSlices) const override final;
-
-    /*
-    * RenderTargetView
-    */
+        const UnorderedAccessViewCreateInfo& CreateInfo) const override final;
 
     virtual RenderTargetView* CreateRenderTargetView(
-        const Texture1D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const override final;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const override final;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const Texture2D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const override final;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const override final;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const TextureCube* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FaceIndex) const override final;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 ArraySlice,
-        UInt32 FaceIndex) const override final;
-
-    virtual RenderTargetView* CreateRenderTargetView(
-        const Texture3D* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstDepthSlice,
-        UInt32 DepthSlices) const override final;
-
-    /*
-    * DepthStencilView
-    */
+        const RenderTargetViewCreateInfo& CreateInfo) const override final;
     
     virtual DepthStencilView* CreateDepthStencilView(
-        const Texture1D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const override final;
-
-    virtual DepthStencilView* CreateDepthStencilView(
-        const Texture1DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const override final;
-
-    virtual DepthStencilView* CreateDepthStencilView(
-        const Texture2D* Texture, 
-        EFormat Format, 
-        UInt32 MipSlice) const override final;
-
-    virtual DepthStencilView* CreateDepthStencilView(
-        const Texture2DArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FirstArraySlice,
-        UInt32 ArraySize) const override final;
-
-    virtual DepthStencilView* CreateDepthStencilView(
-        const TextureCube* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 FaceIndex) const override final;
-
-    virtual DepthStencilView* CreateDepthStencilView(
-        const TextureCubeArray* Texture,
-        EFormat Format,
-        UInt32 MipSlice,
-        UInt32 ArraySlice,
-        UInt32 FaceIndex) const override final;
-
-    /*
-    * Pipeline
-    */
+        const DepthStencilViewCreateInfo& CreateInfo) const override final;
 
     virtual class ComputeShader* CreateComputeShader(
         const TArray<UInt8>& ShaderCode) const override final;
@@ -444,20 +225,12 @@ public:
     
     virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const override final;
 
-    /*
-    * Viewport
-    */
-
     virtual class Viewport* CreateViewport(
         GenericWindow* Window,
         UInt32 Width,
         UInt32 Height,
         EFormat ColorFormat,
         EFormat DepthFormat) const override final;
-
-    /*
-    * Supported features
-    */
 
     virtual Bool IsRayTracingSupported()           const override final;
     virtual Bool UAVSupportsFormat(EFormat Format) const override final;
@@ -495,10 +268,6 @@ private:
     Bool UploadTexture(
         Texture& Texture, 
         const ResourceData* InitalData) const;
-
-    /*
-    * Creation of basic resources
-    */
 
     template<typename TD3D12Buffer, typename... TArgs>
     FORCEINLINE TD3D12Buffer* CreateBufferResource(
@@ -672,73 +441,13 @@ private:
         return NewTexture;
     }
 
-    /*
-    * Create resource view helpers
-    */
-
-    FORCEINLINE D3D12ShaderResourceView* CreateShaderResourceView(
-        const D3D12Resource* Resource, 
-        const D3D12_SHADER_RESOURCE_VIEW_DESC& Desc) const
-    {
-        if (!Resource)
-        {
-            LOG_ERROR("[D3D12RenderLayer]: Specified resource was invalid for creation of a ShaderResourceView");
-            return nullptr;
-        }
-        else
-        {
-            return DBG_NEW D3D12ShaderResourceView(Device, Resource, Desc);
-        }
-    }
-
-    FORCEINLINE D3D12RenderTargetView* CreateRenderTargetView(
-        const D3D12Resource* Resource,
-        const D3D12_RENDER_TARGET_VIEW_DESC& Desc) const
-    {
-        if (!Resource)
-        {
-            LOG_ERROR("[D3D12RenderLayer]: Specified resource was invalid for creation of a RenderTargetView");
-            return nullptr;
-        }
-        else
-        {
-            return DBG_NEW D3D12RenderTargetView(Device, Resource, Desc);
-        }
-    }
-
-    FORCEINLINE D3D12DepthStencilView* CreateDepthStencilView(
-        const D3D12Resource* Resource,
-        const D3D12_DEPTH_STENCIL_VIEW_DESC& Desc) const
-    {
-        if (!Resource)
-        {
-            LOG_ERROR("[D3D12RenderLayer]: Specified resource was invalid for creation of a DepthStencilView");
-            return nullptr;
-        }
-        else
-        {
-            return DBG_NEW D3D12DepthStencilView(Device, Resource, Desc);
-        }
-    }
-
-    FORCEINLINE D3D12UnorderedAccessView* CreateUnorderedAccessView(
-        const D3D12Resource* CounterResource,
-        const D3D12Resource* Resource,
-        const D3D12_UNORDERED_ACCESS_VIEW_DESC& Desc) const
-    {
-        if (!Resource)
-        {
-            LOG_ERROR("[D3D12RenderLayer]: Specified resource was invalid for creation of a UnorderedAccessView");
-            return nullptr;
-        }
-        else
-        {
-            return DBG_NEW D3D12UnorderedAccessView(Device, CounterResource, Resource, Desc);
-        }
-    }
-
 private:
     D3D12Device* Device;
     TSharedRef<D3D12CommandContext> DirectCmdContext;
     D3D12DefaultRootSignatures      DefaultRootSignatures;
+
+    D3D12OfflineDescriptorHeap* ResourceOfflineDescriptorHeap     = nullptr;
+    D3D12OfflineDescriptorHeap* RenderTargetOfflineDescriptorHeap = nullptr;
+    D3D12OfflineDescriptorHeap* DepthStencilOfflineDescriptorHeap = nullptr;
+    D3D12OfflineDescriptorHeap* SamplerOfflineDescriptorHeap      = nullptr;
 };

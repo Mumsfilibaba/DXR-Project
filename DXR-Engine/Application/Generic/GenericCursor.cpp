@@ -13,55 +13,55 @@ TSharedRef<GenericCursor> GlobalCursors::NotAllowed;
 
 Bool GlobalCursors::Init()
 {
-    Arrow = gPlatformApplication->MakeCursor();
+    Arrow = gApplication->MakeCursor();
     if (!Arrow->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_Arrow)))
     {
         return false;
     }
 
-    TextInput = gPlatformApplication->MakeCursor();
+    TextInput = gApplication->MakeCursor();
     if (!TextInput->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_TextInput)))
     {
         return false;
     }
 
-    ResizeAll = gPlatformApplication->MakeCursor();
+    ResizeAll = gApplication->MakeCursor();
     if (!ResizeAll->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeAll)))
     {
         return false;
     }
 
-    ResizeEW = gPlatformApplication->MakeCursor();
+    ResizeEW = gApplication->MakeCursor();
     if (!ResizeEW->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeEW)))
     {
         return false;
     }
 
-    ResizeNS = gPlatformApplication->MakeCursor();
+    ResizeNS = gApplication->MakeCursor();
     if (!ResizeNS->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNS)))
     {
         return false;
     }
 
-    ResizeNESW = gPlatformApplication->MakeCursor();
+    ResizeNESW = gApplication->MakeCursor();
     if (!ResizeNESW->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNESW)))
     {
         return false;
     }
 
-    ResizeNWSE = gPlatformApplication->MakeCursor();
+    ResizeNWSE = gApplication->MakeCursor();
     if (!ResizeNWSE->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNWSE)))
     {
         return false;
     }
 
-    Hand = gPlatformApplication->MakeCursor();
+    Hand = gApplication->MakeCursor();
     if (!Hand->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_Hand)))
     {
         return false;
     }
 
-    NotAllowed = gPlatformApplication->MakeCursor();
+    NotAllowed = gApplication->MakeCursor();
     if (!NotAllowed->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_NotAllowed)))
     {
         return false;

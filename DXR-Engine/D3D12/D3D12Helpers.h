@@ -427,6 +427,19 @@ inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
     return D3D12_FILTER();
 }
 
+//Converts EShadingRate to D3D12_SHADING_RATE
+inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
+{
+    switch (ShadingRate)
+    {
+    case EShadingRate::ShadingRate_1x1: return D3D12_SHADING_RATE_1X1;
+    case EShadingRate::ShadingRate_2x2: return D3D12_SHADING_RATE_2X2;
+    case EShadingRate::ShadingRate_4x4: return D3D12_SHADING_RATE_4X4;
+    }
+
+    return D3D12_SHADING_RATE();
+}
+
 //Operators for D3D12_GPU_DESCRIPTOR_HANDLE
 inline Bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
 {

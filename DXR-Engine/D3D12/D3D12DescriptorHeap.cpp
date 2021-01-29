@@ -41,9 +41,12 @@ D3D12OfflineDescriptorHeap::D3D12OfflineDescriptorHeap(D3D12Device* InDevice, D3
     , Name()
     , Type(InType)
 {
-    DescriptorSize = Device->GetDescriptorHandleIncrementSize(Type);
+}
 
-    AllocateHeap();
+Bool D3D12OfflineDescriptorHeap::Init()
+{
+    DescriptorSize = Device->GetDescriptorHandleIncrementSize(Type);
+    return AllocateHeap();
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(UInt32& OutHeapIndex)
@@ -66,7 +69,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(UInt32& OutHeap
 
     if (!FoundHeap)
     {
-        AllocateHeap();
+        if (!AllocateHeap())
+        {
+            return { 0 };
+        }
+
         HeapIndex = static_cast<UInt32>(Heaps.Size()) - 1;
     }
 
@@ -132,7 +139,7 @@ void D3D12OfflineDescriptorHeap::SetName(const std::string& InName)
     }
 }
 
-void D3D12OfflineDescriptorHeap::AllocateHeap()
+Bool D3D12OfflineDescriptorHeap::AllocateHeap()
 {
     constexpr UInt32 DescriptorCount = 32;
 
@@ -146,6 +153,11 @@ void D3D12OfflineDescriptorHeap::AllocateHeap()
         }
 
         Heaps.EmplaceBack(Heap);
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 

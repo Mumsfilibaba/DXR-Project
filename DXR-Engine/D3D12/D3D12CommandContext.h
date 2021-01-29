@@ -441,6 +441,8 @@ public:
         UnorderedAccessView* UnorderedAccessView, 
         const Float ClearColor[4]) override final;
 
+    virtual void SetShadingRate(EShadingRate ShadingRate) override final;
+
     virtual void BeginRenderPass() override final;
     virtual void EndRenderPass()   override final;
 
@@ -629,8 +631,8 @@ private:
     UInt64 FenceValue = 0;
 
     TArray<D3D12CommandBatch> CmdBatches;
+    D3D12CommandBatch*        CmdBatch = nullptr;
     UInt32 NextCmdAllocator = 0;
-    D3D12CommandBatch* CmdBatch = nullptr;
 
     TSharedRef<D3D12ComputePipelineState> GenerateMipsTex2D_PSO;
     TSharedRef<D3D12ComputePipelineState> GenerateMipsTexCube_PSO;

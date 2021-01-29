@@ -3,7 +3,7 @@
 
 #include "Memory/Memory.h"
 
-enum EShaderResourceViewType
+enum class EShaderResourceViewType
 {
     ShaderResourceViewType_Texture          = 0,
     ShaderResourceViewType_VertexBuffer     = 1,
@@ -19,7 +19,7 @@ struct TextureShaderResourceViewCreateInfo
     UInt32   NumMipLevels   = 0;
     UInt32   ArraySlice     = 0;
     UInt32   NumArraySlices = 0;
-    Float    MipBias        = 0.0f;
+    Float    MinMipBias        = 0.0f;
 };
 
 struct VertexBufferShaderResourceViewCreateInfo
@@ -52,7 +52,7 @@ struct ShaderResourceViewCreateInfo
         Texture.ArraySlice     = 0;
         Texture.NumArraySlices = InTexture->GetArrayCount();
         Texture.Format         = InTexture->GetFormat();
-        Texture.MipBias        = 0.0f;
+        Texture.MinMipBias        = 0.0f;
         Texture.MipLevel       = 0;
         Texture.NumMipLevels   = InTexture->GetMipLevels();
     }
@@ -88,24 +88,34 @@ struct ShaderResourceViewCreateInfo
         Texture.ArraySlice     = 0;
         Texture.NumArraySlices = InTexture->GetArrayCount();
         Texture.Format         = Format;
-        Texture.MipBias        = 0.0f;
+        Texture.MinMipBias        = 0.0f;
         Texture.MipLevel       = 0;
         Texture.NumMipLevels   = InTexture->GetMipLevels();
     }
 
-    ShaderResourceViewCreateInfo(Texture* InTexture, EFormat Format, UInt32 ArraySlice, UInt32 NumArraySlices, UInt32 MipLevel, UInt32 NumMipLevels, Float MipBias)
+    ShaderResourceViewCreateInfo(
+        Texture* InTexture, 
+        EFormat Format, 
+        UInt32 ArraySlice, 
+        UInt32 NumArraySlices, 
+        UInt32 MipLevel, 
+        UInt32 NumMipLevels, 
+        Float MinMipBias)
         : Type(EShaderResourceViewType::ShaderResourceViewType_Texture)
     {
         Texture.Texture        = InTexture;
         Texture.ArraySlice     = ArraySlice;
         Texture.NumArraySlices = NumArraySlices;
         Texture.Format         = Format;
-        Texture.MipBias        = MipBias;
+        Texture.MinMipBias        = MinMipBias;
         Texture.MipLevel       = MipLevel;
         Texture.NumMipLevels   = NumMipLevels;
     }
 
-    ShaderResourceViewCreateInfo(VertexBuffer* InVertexBuffer, UInt32 FirstElement, UInt32 NumElements)
+    ShaderResourceViewCreateInfo(
+        VertexBuffer* InVertexBuffer, 
+        UInt32 FirstElement, 
+        UInt32 NumElements)
         : Type(EShaderResourceViewType::ShaderResourceViewType_VertexBuffer)
     {
         VertexBuffer.Buffer       = InVertexBuffer;
@@ -113,7 +123,10 @@ struct ShaderResourceViewCreateInfo
         VertexBuffer.NumElements  = NumElements;
     }
 
-    ShaderResourceViewCreateInfo(IndexBuffer* InIndexBuffer, UInt32 FirstElement, UInt32 NumElements)
+    ShaderResourceViewCreateInfo(
+        IndexBuffer* InIndexBuffer, 
+        UInt32 FirstElement, 
+        UInt32 NumElements)
         : Type(EShaderResourceViewType::ShaderResourceViewType_IndexBuffer)
     {
         IndexBuffer.Buffer       = InIndexBuffer;
@@ -121,7 +134,10 @@ struct ShaderResourceViewCreateInfo
         IndexBuffer.NumElements  = NumElements;
     }
 
-    ShaderResourceViewCreateInfo(StructuredBuffer* InStructuredBuffer, UInt32 FirstElement, UInt32 NumElements)
+    ShaderResourceViewCreateInfo(
+        StructuredBuffer* InStructuredBuffer, 
+        UInt32 FirstElement, 
+        UInt32 NumElements)
         : Type(EShaderResourceViewType::ShaderResourceViewType_StructuredBuffer)
     {
         StructuredBuffer.Buffer       = InStructuredBuffer;
@@ -162,37 +178,37 @@ struct ShaderResourceViewCreateInfo
         return &Texture;
     }
 
-    VertexBufferShaderResourceViewCreateInfo* VertexBufferShaderResourceView()
+    VertexBufferShaderResourceViewCreateInfo* AsVertexBufferShaderResourceView()
     {
         VALIDATE(Type == EShaderResourceViewType::ShaderResourceViewType_VertexBuffer);
         return &VertexBuffer;
     }
 
-    const VertexBufferShaderResourceViewCreateInfo* VertexBufferShaderResourceView() const
+    const VertexBufferShaderResourceViewCreateInfo* AsVertexBufferShaderResourceView() const
     {
         VALIDATE(Type == EShaderResourceViewType::ShaderResourceViewType_VertexBuffer);
         return &VertexBuffer;
     }
 
-    IndexBufferShaderResourceViewCreateInfo* IndexBufferShaderResourceView()
+    IndexBufferShaderResourceViewCreateInfo* AsIndexBufferShaderResourceView()
     {
         VALIDATE(Type == EShaderResourceViewType::ShaderResourceViewType_IndexBuffer);
         return &IndexBuffer;
     }
 
-    const IndexBufferShaderResourceViewCreateInfo* IndexBufferShaderResourceView() const
+    const IndexBufferShaderResourceViewCreateInfo* AsIndexBufferShaderResourceView() const
     {
         VALIDATE(Type == EShaderResourceViewType::ShaderResourceViewType_IndexBuffer);
         return &IndexBuffer;
     }
     
-    StructuredBufferShaderResourceViewCreateInfo* StructuredBufferShaderResourceView()
+    StructuredBufferShaderResourceViewCreateInfo* AsStructuredBufferShaderResourceView()
     {
         VALIDATE(Type == EShaderResourceViewType::ShaderResourceViewType_StructuredBuffer);
         return &StructuredBuffer;
     }
 
-    const StructuredBufferShaderResourceViewCreateInfo* StructuredBufferShaderResourceView() const
+    const StructuredBufferShaderResourceViewCreateInfo* AsStructuredBufferShaderResourceView() const
     {
         VALIDATE(Type == EShaderResourceViewType::ShaderResourceViewType_StructuredBuffer);
         return &StructuredBuffer;
@@ -235,22 +251,21 @@ class ShaderResourceView : public PipelineResource
 {
 };
 
-enum EUnorderedAccessViewType
+enum class EUnorderedAccessViewType
 {
-    UnorderedAccessViewType_Texture = 0,
-    UnorderedAccessViewType_VertexBuffer = 1,
-    UnorderedAccessViewType_IndexBuffer = 2,
+    UnorderedAccessViewType_Texture          = 0,
+    UnorderedAccessViewType_VertexBuffer     = 1,
+    UnorderedAccessViewType_IndexBuffer      = 2,
     UnorderedAccessViewType_StructuredBuffer = 3,
 };
 
 struct TextureUnorderedAccessViewCreateInfo
 {
-    Texture* Texture        = nullptr;
-    EFormat  Format         = EFormat::Format_Unknown;
-    UInt32   MipLevel       = 0;
-    UInt32   NumMipLevels   = 0;
-    UInt32   ArraySlice     = 0;
-    UInt32   NumArraySlices = 0;
+    Texture* Texture               = nullptr;
+    EFormat  Format                = EFormat::Format_Unknown;
+    UInt32   MipLevel              = 0;
+    UInt32   ArrayOrDepthSlice     = 0;
+    UInt32   NumArrayOrDepthSlices = 0;
 };
 
 struct VertexBufferUnorderedAccessViewCreateInfo
@@ -279,12 +294,11 @@ struct UnorderedAccessViewCreateInfo
     UnorderedAccessViewCreateInfo(Texture* InTexture)
         : Type(EUnorderedAccessViewType::UnorderedAccessViewType_Texture)
     {
-        Texture.Texture        = InTexture;
-        Texture.ArraySlice     = 0;
-        Texture.NumArraySlices = InTexture->GetArrayCount();
-        Texture.Format         = InTexture->GetFormat();
-        Texture.MipLevel       = 0;
-        Texture.NumMipLevels   = InTexture->GetMipLevels();
+        Texture.Texture               = InTexture;
+        Texture.ArrayOrDepthSlice     = 0;
+        Texture.NumArrayOrDepthSlices = InTexture->GetArrayCount();
+        Texture.Format                = InTexture->GetFormat();
+        Texture.MipLevel              = 0;
     }
 
     UnorderedAccessViewCreateInfo(VertexBuffer* InVertexBuffer)
@@ -314,26 +328,33 @@ struct UnorderedAccessViewCreateInfo
     UnorderedAccessViewCreateInfo(Texture* InTexture, EFormat Format)
         : Type(EUnorderedAccessViewType::UnorderedAccessViewType_Texture)
     {
-        Texture.Texture        = InTexture;
-        Texture.ArraySlice     = 0;
-        Texture.NumArraySlices = InTexture->GetArrayCount();
-        Texture.Format         = Format;
-        Texture.MipLevel       = 0;
-        Texture.NumMipLevels   = InTexture->GetMipLevels();
+        Texture.Texture               = InTexture;
+        Texture.ArrayOrDepthSlice     = 0;
+        Texture.NumArrayOrDepthSlices = InTexture->GetArrayCount();
+        Texture.Format                = Format;
+        Texture.MipLevel              = 0;
     }
 
-    UnorderedAccessViewCreateInfo(Texture* InTexture, EFormat Format, UInt32 ArraySlice, UInt32 NumArraySlices, UInt32 MipLevel, UInt32 NumMipLevels)
+    UnorderedAccessViewCreateInfo(
+        Texture* InTexture, 
+        EFormat Format, 
+        UInt32 ArraySlice, 
+        UInt32 NumArraySlices, 
+        UInt32 MipLevel,
+        UInt32 NumMipLevels)
         : Type(EUnorderedAccessViewType::UnorderedAccessViewType_Texture)
     {
-        Texture.Texture        = InTexture;
-        Texture.ArraySlice     = ArraySlice;
-        Texture.NumArraySlices = NumArraySlices;
-        Texture.Format         = Format;
-        Texture.MipLevel       = MipLevel;
-        Texture.NumMipLevels   = NumMipLevels;
+        Texture.Texture               = InTexture;
+        Texture.ArrayOrDepthSlice     = ArraySlice;
+        Texture.NumArrayOrDepthSlices = NumArraySlices;
+        Texture.Format                = Format;
+        Texture.MipLevel              = MipLevel;
     }
 
-    UnorderedAccessViewCreateInfo(VertexBuffer* InVertexBuffer, UInt32 FirstElement, UInt32 NumElements)
+    UnorderedAccessViewCreateInfo(
+        VertexBuffer* InVertexBuffer, 
+        UInt32 FirstElement, 
+        UInt32 NumElements)
         : Type(EUnorderedAccessViewType::UnorderedAccessViewType_VertexBuffer)
     {
         VertexBuffer.Buffer       = InVertexBuffer;
@@ -341,7 +362,10 @@ struct UnorderedAccessViewCreateInfo
         VertexBuffer.NumElements  = NumElements;
     }
 
-    UnorderedAccessViewCreateInfo(IndexBuffer* InIndexBuffer, UInt32 FirstElement, UInt32 NumElements)
+    UnorderedAccessViewCreateInfo(
+        IndexBuffer* InIndexBuffer, 
+        UInt32 FirstElement, 
+        UInt32 NumElements)
         : Type(EUnorderedAccessViewType::UnorderedAccessViewType_IndexBuffer)
     {
         IndexBuffer.Buffer       = InIndexBuffer;
@@ -349,7 +373,10 @@ struct UnorderedAccessViewCreateInfo
         IndexBuffer.NumElements  = NumElements;
     }
 
-    UnorderedAccessViewCreateInfo(StructuredBuffer* InStructuredBuffer, UInt32 FirstElement, UInt32 NumElements)
+    UnorderedAccessViewCreateInfo(
+        StructuredBuffer* InStructuredBuffer, 
+        UInt32 FirstElement, 
+        UInt32 NumElements)
         : Type(EUnorderedAccessViewType::UnorderedAccessViewType_StructuredBuffer)
     {
         StructuredBuffer.Buffer       = InStructuredBuffer;
@@ -390,37 +417,37 @@ struct UnorderedAccessViewCreateInfo
         return &Texture;
     }
 
-    VertexBufferUnorderedAccessViewCreateInfo* VertexBufferUnorderedAccessView()
+    VertexBufferUnorderedAccessViewCreateInfo* AsVertexBufferUnorderedAccessView()
     {
         VALIDATE(Type == EUnorderedAccessViewType::UnorderedAccessViewType_VertexBuffer);
         return &VertexBuffer;
     }
 
-    const VertexBufferUnorderedAccessViewCreateInfo* VertexBufferUnorderedAccessView() const
+    const VertexBufferUnorderedAccessViewCreateInfo* AsVertexBufferUnorderedAccessView() const
     {
         VALIDATE(Type == EUnorderedAccessViewType::UnorderedAccessViewType_VertexBuffer);
         return &VertexBuffer;
     }
 
-    IndexBufferUnorderedAccessViewCreateInfo* IndexBufferUnorderedAccessView()
+    IndexBufferUnorderedAccessViewCreateInfo* AsIndexBufferUnorderedAccessView()
     {
         VALIDATE(Type == EUnorderedAccessViewType::UnorderedAccessViewType_IndexBuffer);
         return &IndexBuffer;
     }
 
-    const IndexBufferUnorderedAccessViewCreateInfo* IndexBufferUnorderedAccessView() const
+    const IndexBufferUnorderedAccessViewCreateInfo* AsIndexBufferUnorderedAccessView() const
     {
         VALIDATE(Type == EUnorderedAccessViewType::UnorderedAccessViewType_IndexBuffer);
         return &IndexBuffer;
     }
 
-    StructuredBufferUnorderedAccessViewCreateInfo* StructuredBufferUnorderedAccessView()
+    StructuredBufferUnorderedAccessViewCreateInfo* AsStructuredBufferUnorderedAccessView()
     {
         VALIDATE(Type == EUnorderedAccessViewType::UnorderedAccessViewType_StructuredBuffer);
         return &StructuredBuffer;
     }
 
-    const StructuredBufferUnorderedAccessViewCreateInfo* StructuredBufferUnorderedAccessView() const
+    const StructuredBufferUnorderedAccessViewCreateInfo* AsStructuredBufferUnorderedAccessView() const
     {
         VALIDATE(Type == EUnorderedAccessViewType::UnorderedAccessViewType_StructuredBuffer);
         return &StructuredBuffer;
@@ -469,8 +496,8 @@ struct DepthStencilViewCreateInfo
         : Texture(InTexture)
         , Format(InTexture->GetFormat())
         , MipLevel(0)
-        , ArraySlice(0)
-        , NumArraySlices(InTexture->GetArrayCount())
+        , ArrayOrDepthSlice(0)
+        , NumArrayOrDepthSlices(InTexture->GetArrayCount())
     {
     }
 
@@ -478,40 +505,34 @@ struct DepthStencilViewCreateInfo
         : Texture(InTexture)
         , Format(InFormat)
         , MipLevel(0)
-        , ArraySlice(0)
-        , NumArraySlices(InTexture->GetArrayCount())
+        , ArrayOrDepthSlice(0)
+        , NumArrayOrDepthSlices(InTexture->GetArrayCount())
     {
     }
 
-    DepthStencilViewCreateInfo(Texture* InTexture, EFormat InFormat, UInt32 InArraySlice, UInt32 InNumArraySlices, UInt32 MipLevel)
+    DepthStencilViewCreateInfo(
+        Texture* InTexture, 
+        EFormat InFormat, 
+        UInt32 InFaceIndex,
+        UInt32 InArraySlice, 
+        UInt32 InNumArraySlices, 
+        UInt32 MipLevel)
         : Texture(InTexture)
         , Format(InFormat)
         , MipLevel(MipLevel)
-        , ArraySlice(InArraySlice)
-        , NumArraySlices(InNumArraySlices)
+        , FaceIndex(InFaceIndex)
+        , ArrayOrDepthSlice(InArraySlice)
+        , NumArrayOrDepthSlices(InNumArraySlices)
     {
     }
 
-    DepthStencilViewCreateInfo(const DepthStencilViewCreateInfo& Other)
-        : Texture(Other.Texture)
-        , Format(Other.Format)
-        , MipLevel(Other.MipLevel)
-        , ArraySlice(Other.ArraySlice)
-        , NumArraySlices(Other.NumArraySlices)
-    {
-    }
-
-    DepthStencilViewCreateInfo& operator=(const DepthStencilViewCreateInfo& Other)
-    {
-        Memory::Memcpy(this, &Other);
-        return *this;
-    }
-
-    Texture* Texture        = nullptr;
-    EFormat  Format         = EFormat::Format_Unknown;
-    UInt32   MipLevel       = 0;
-    UInt32   ArraySlice     = 0;
-    UInt32   NumArraySlices = 0;
+    Texture* Texture  = nullptr;
+    EFormat  Format   = EFormat::Format_Unknown;
+    UInt32   MipLevel = 0;
+    // TODO: Use enum instead
+    UInt32   FaceIndex             = 0;
+    UInt32   ArrayOrDepthSlice     = 0;
+    UInt32   NumArrayOrDepthSlices = 0;
 };
 
 class DepthStencilView : public PipelineResource
@@ -525,8 +546,8 @@ struct RenderTargetViewCreateInfo
         : Texture(InTexture)
         , Format(InTexture->GetFormat())
         , MipLevel(0)
-        , ArraySlice(0)
-        , NumArraySlices(InTexture->GetArrayCount())
+        , ArrayOrDepthSlice(0)
+        , NumArrayOrDepthSlices(InTexture->GetArrayCount())
     {
     }
 
@@ -534,40 +555,34 @@ struct RenderTargetViewCreateInfo
         : Texture(InTexture)
         , Format(InFormat)
         , MipLevel(0)
-        , ArraySlice(0)
-        , NumArraySlices(InTexture->GetArrayCount())
+        , ArrayOrDepthSlice(0)
+        , NumArrayOrDepthSlices(InTexture->GetArrayCount())
     {
     }
 
-    RenderTargetViewCreateInfo(Texture* InTexture, EFormat InFormat, UInt32 InArraySlice, UInt32 InNumArraySlices, UInt32 MipLevel)
+    RenderTargetViewCreateInfo(
+        Texture* InTexture, 
+        EFormat InFormat, 
+        UInt32 InFaceIndex,
+        UInt32 InArraySlice, 
+        UInt32 InNumArraySlices, 
+        UInt32 InMipLevel)
         : Texture(InTexture)
         , Format(InFormat)
-        , MipLevel(MipLevel)
-        , ArraySlice(InArraySlice)
-        , NumArraySlices(InNumArraySlices)
+        , MipLevel(InMipLevel)
+        , FaceIndex(InFaceIndex)
+        , ArrayOrDepthSlice(InArraySlice)
+        , NumArrayOrDepthSlices(InNumArraySlices)
     {
     }
 
-    RenderTargetViewCreateInfo(const RenderTargetViewCreateInfo& Other)
-        : Texture(Other.Texture)
-        , Format(Other.Format)
-        , MipLevel(Other.MipLevel)
-        , ArraySlice(Other.ArraySlice)
-        , NumArraySlices(Other.NumArraySlices)
-    {
-    }
-
-    RenderTargetViewCreateInfo& operator=(const RenderTargetViewCreateInfo& Other)
-    {
-        Memory::Memcpy(this, &Other);
-        return *this;
-    }
-
-    Texture* Texture = nullptr;
-    EFormat  Format = EFormat::Format_Unknown;
+    Texture* Texture  = nullptr;
+    EFormat  Format   = EFormat::Format_Unknown;
     UInt32   MipLevel = 0;
-    UInt32   ArraySlice = 0;
-    UInt32   NumArraySlices = 0;
+    // TODO: Use enum instead
+    UInt32   FaceIndex             = 0;
+    UInt32   ArrayOrDepthSlice     = 0;
+    UInt32   NumArrayOrDepthSlices = 0;
 };
 
 class RenderTargetView : public PipelineResource

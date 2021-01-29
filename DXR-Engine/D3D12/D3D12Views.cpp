@@ -2,117 +2,144 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Device.h"
 
-D3D12View::D3D12View(D3D12Device* InDevice, const D3D12Resource* InResource)
+D3D12View::D3D12View(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
     : D3D12DeviceChild(InDevice)
-    , Resource(InResource)
+    , Resource(nullptr)
+    , Heap(InHeap)
     , OfflineHandle({ 0 })
 {
+    VALIDATE(Heap != nullptr);
 }
 
 D3D12View::~D3D12View()
 {
+    // NOTE: Does not follow the rest of the engine's explicit alloc/dealloc, Ok for now
     Heap->Free(OfflineHandle, OfflineHeapIndex);
 }
 
-void D3D12View::ResetResource()
+Bool D3D12View::Init()
 {
-    Resource = nullptr;
+    OfflineHandle = Heap->Allocate(OfflineHeapIndex);
+    return OfflineHandle != 0;
 }
 
-D3D12ConstantBufferView::D3D12ConstantBufferView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
-    : D3D12View(InDevice, InResource)
+D3D12ConstantBufferView::D3D12ConstantBufferView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
+    : D3D12View(InDevice, InHeap)
     , Desc()
 {
-    Heap = InDevice->GetGlobalResourceDescriptorHeap();
-
-    OfflineHandle = Heap->Allocate(OfflineHeapIndex);
-    CreateView(InResource, InDesc);
 }
 
-void D3D12ConstantBufferView::CreateView(const D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
+Bool D3D12ConstantBufferView::CreateView(
+    const D3D12Resource* InResource, 
+    const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
+    VALIDATE(InResource != nullptr);
+    VALIDATE(OfflineHandle != 0);
+
     Resource = InResource;
     Desc     = InDesc;
     Device->CreateConstantBufferView(&Desc, OfflineHandle);
+
+    return true;
 }
 
-D3D12ShaderResourceView::D3D12ShaderResourceView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
-    : D3D12View(InDevice, InResource)
+D3D12ShaderResourceView::D3D12ShaderResourceView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
+    : D3D12View(InDevice, InHeap)
     , Desc()
 {
-    Heap = InDevice->GetGlobalResourceDescriptorHeap();
-
-    OfflineHandle = Heap->Allocate(OfflineHeapIndex);
-    CreateView(InResource, InDesc);
 }
 
-void D3D12ShaderResourceView::CreateView(const D3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
+Bool D3D12ShaderResourceView::CreateView(
+    const D3D12Resource* InResource, 
+    const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
+    VALIDATE(OfflineHandle != 0);
+
     Resource = InResource;
     Desc     = InDesc;
+    
+    ID3D12Resource* DxResource = nullptr;
+    if (Resource)
+    {
+        DxResource = Resource->GetNativeResource();
+    }
 
-    Device->CreateShaderResourceView(InResource->GetNativeResource(), &Desc, OfflineHandle);
+    Device->CreateShaderResourceView(DxResource, &Desc, OfflineHandle);
+
+    return true;
 }
 
-D3D12UnorderedAccessView::D3D12UnorderedAccessView(D3D12Device* InDevice, const D3D12Resource* InCounterResource, const D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
-    : D3D12View(InDevice, InResource)
+D3D12UnorderedAccessView::D3D12UnorderedAccessView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
+    : D3D12View(InDevice, InHeap)
     , Desc()
     , CounterResource()
 {
-    Heap = InDevice->GetGlobalResourceDescriptorHeap();
-
-    OfflineHandle = Heap->Allocate(OfflineHeapIndex);
-    CreateView(InCounterResource, InResource, InDesc);
 }
 
-void D3D12UnorderedAccessView::CreateView(
+Bool D3D12UnorderedAccessView::CreateView(
     const D3D12Resource* InCounterResource,
     const D3D12Resource* InResource,
     const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
+    VALIDATE(OfflineHandle != 0);
+
     Desc            = InDesc;
     CounterResource = InCounterResource;
     Resource        = InResource;
 
-    ID3D12Resource* CounterResourcePtr = nullptr;
+    ID3D12Resource* DxCounterResource = nullptr;
     if (CounterResource)
     {
-        CounterResourcePtr = CounterResource->GetNativeResource();
+        DxCounterResource = CounterResource->GetNativeResource();
     }
 
-    Device->CreateUnorderedAccessView(InResource->GetNativeResource(), CounterResourcePtr, &Desc, OfflineHandle);
+    ID3D12Resource* DxResource = nullptr;
+    if (Resource)
+    {
+        DxResource = Resource->GetNativeResource();
+    }
+
+    Device->CreateUnorderedAccessView(DxResource, DxCounterResource, &Desc, OfflineHandle);
+
+    return true;
 }
 
-D3D12RenderTargetView::D3D12RenderTargetView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
-    : D3D12View(InDevice, InResource)
+D3D12RenderTargetView::D3D12RenderTargetView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
+    : D3D12View(InDevice, InHeap)
     , Desc()
 {
-    Heap = InDevice->GetGlobalRenderTargetDescriptorHeap();
-
-    OfflineHandle = Heap->Allocate(OfflineHeapIndex);
-    CreateView(InResource, InDesc);
 }
 
-void D3D12RenderTargetView::CreateView(const D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
+Bool D3D12RenderTargetView::CreateView(
+    const D3D12Resource* InResource, 
+    const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
+    VALIDATE(InResource != nullptr);
+    VALIDATE(OfflineHandle != 0);
+
     Desc     = InDesc;
     Resource = InResource;
     Device->GetDevice()->CreateRenderTargetView(InResource->GetNativeResource(), &Desc, OfflineHandle);
+
+    return true;
 }
 
-D3D12DepthStencilView::D3D12DepthStencilView(D3D12Device* InDevice, const D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
-    : D3D12View(InDevice, InResource)
+D3D12DepthStencilView::D3D12DepthStencilView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
+    : D3D12View(InDevice, InHeap)
     , Desc()
 {
-    Heap = InDevice->GetGlobalDepthStencilDescriptorHeap();
-
-    OfflineHandle = Heap->Allocate(OfflineHeapIndex);
-    CreateView(InResource, InDesc);
 }
 
-void D3D12DepthStencilView::CreateView(const D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
+Bool D3D12DepthStencilView::CreateView(
+    const D3D12Resource* InResource, 
+    const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
+    VALIDATE(InResource != nullptr);
+    VALIDATE(OfflineHandle != 0);
+
     Desc     = InDesc;
     Resource = InResource;
     Device->GetDevice()->CreateDepthStencilView(InResource->GetNativeResource(), &Desc, OfflineHandle);
+
+    return true;
 }

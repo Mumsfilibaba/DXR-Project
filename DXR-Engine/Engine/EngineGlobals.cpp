@@ -13,7 +13,7 @@ EngineLoop gEngineLoop;
 Renderer   gRenderer;
 
 class GenericWindow*       gMainWindow          = nullptr;
-class GenericApplication*  gPlatformApplication = nullptr;
+class GenericApplication*  gApplication = nullptr;
 class GenericOutputDevice* gConsoleOutput       = nullptr;
 
 class EventDispatcher* gEventDispatcher = nullptr;

@@ -105,16 +105,11 @@ class D3D12ConstantBuffer : public ConstantBuffer, public D3D12Buffer
     friend class D3D12RenderLayer;
 
 public:
-    D3D12ConstantBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InUsage)
+    D3D12ConstantBuffer(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap, UInt32 InSizeInBytes, UInt32 InUsage)
         : ConstantBuffer(InSizeInBytes, InUsage)
         , D3D12Buffer(InDevice)
-        , View(nullptr)
+        , View(InDevice, InHeap)
     {
-    }
-
-    ~D3D12ConstantBuffer()
-    {
-        SAFEDELETE(View);
     }
 
     virtual Void* Map(const Range* MappedRange) override
@@ -137,13 +132,18 @@ public:
         return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
     }
 
-    FORCEINLINE D3D12ConstantBufferView* GetView() const
+    FORCEINLINE D3D12ConstantBufferView& GetView()
+    {
+        return View;
+    }
+
+    FORCEINLINE const D3D12ConstantBufferView& GetView() const
     {
         return View;
     }
 
 private:
-    D3D12ConstantBufferView* View;
+    D3D12ConstantBufferView View;
 };
 
 class D3D12StructuredBuffer : public StructuredBuffer, public D3D12Buffer

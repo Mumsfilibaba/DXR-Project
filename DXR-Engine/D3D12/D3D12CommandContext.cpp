@@ -743,6 +743,12 @@ void D3D12CommandContext::ClearUnorderedAccessViewFloat(UnorderedAccessView* Uno
     CmdList.ClearUnorderedAccessViewFloat(OnlineHandle_GPU, DxUnorderedAccessView, ClearColor);
 }
 
+void D3D12CommandContext::SetShadingRate(EShadingRate ShadingRate)
+{
+    D3D12_SHADING_RATE DxShadingRate = ConvertShadingRate(ShadingRate);
+    CmdList.RSSetShadingRate(DxShadingRate, nullptr);
+}
+
 void D3D12CommandContext::BeginRenderPass()
 {
     // Empty for now
