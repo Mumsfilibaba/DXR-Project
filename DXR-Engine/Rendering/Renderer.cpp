@@ -193,8 +193,8 @@ void Renderer::RenderDebugInterface()
         constexpr Float InvAspectRatio = 16.0f / 9.0f;
         constexpr Float AspectRatio    = 9.0f / 16.0f;
 
-        const UInt32 WindowWidth  = GlobalMainWindow->GetWidth();
-        const UInt32 WindowHeight = GlobalMainWindow->GetHeight();
+        const UInt32 WindowWidth  = gMainWindow->GetWidth();
+        const UInt32 WindowHeight = gMainWindow->GetHeight();
         const Float Width  = Math::Max(WindowWidth * 0.6f, 400.0f);
         const Float Height = WindowHeight * 0.75f;
 
@@ -288,8 +288,8 @@ void Renderer::RenderDebugInterface()
 
     if (GlobalDrawRendererInfo.GetBool())
     {
-        const UInt32 WindowWidth  = GlobalMainWindow->GetWidth();
-        const UInt32 WindowHeight = GlobalMainWindow->GetHeight();
+        const UInt32 WindowWidth  = gMainWindow->GetWidth();
+        const UInt32 WindowHeight = gMainWindow->GetHeight();
         const Float Width = 300.0f;
         const Float Height = WindowHeight * 0.1f;
 
@@ -641,7 +641,7 @@ void Renderer::Tick(const Scene& Scene)
 
         DebugUI::DrawUI([]()
             {
-                GlobalRenderer.RenderDebugInterface();
+                gRenderer.RenderDebugInterface();
             });
 
         DebugUI::Render(CmdList);
@@ -665,7 +665,7 @@ void Renderer::Tick(const Scene& Scene)
 
     {
         TRACE_SCOPE("ExecuteCommandList");
-        GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+        gCmdListExecutor.ExecuteCommandList(CmdList);
     }
 
     {
@@ -704,7 +704,7 @@ Bool Renderer::Init()
     GlobalRayTracingEnabled.SetBool(false);
 
     Resources.MainWindowViewport = RenderLayer::CreateViewport(
-        GlobalMainWindow,
+        gMainWindow,
         0, 0,
         EFormat::Format_R8G8B8A8_Unorm,
         EFormat::Format_Unknown);
@@ -838,7 +838,7 @@ Bool Renderer::Init()
         Resources);
 
     CmdList.End();
-    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    gCmdListExecutor.ExecuteCommandList(CmdList);
 
     // TODO: Fix inital state of textures
     CmdList.Begin();
@@ -854,7 +854,7 @@ Bool Renderer::Init()
         EResourceState::ResourceState_PixelShaderResource);
     
     CmdList.End();
-    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    gCmdListExecutor.ExecuteCommandList(CmdList);
 
     auto Callback = [](const Event& Event)->Bool
     {
@@ -864,20 +864,20 @@ Bool Renderer::Init()
         }
 
         const WindowResizeEvent& ResizeEvent = CastEvent<WindowResizeEvent>(Event);
-        GlobalRenderer.ResizeResources(ResizeEvent.Width, ResizeEvent.Height);
+        gRenderer.ResizeResources(ResizeEvent.Width, ResizeEvent.Height);
 
         return true;
     };
 
     // Register EventFunc
-    GlobalEventDispatcher->RegisterEventHandler(Callback, EEventCategory::EventCategory_Window);
+    gEventDispatcher->RegisterEventHandler(Callback, EEventCategory::EventCategory_Window);
 
     return true;
 }
 
 void Renderer::Release()
 {
-    GlobalCmdListExecutor.WaitForGPU();
+    gCmdListExecutor.WaitForGPU();
 
     CmdList.Reset();
 
@@ -1260,7 +1260,7 @@ Bool Renderer::InitAA()
 
 void Renderer::ResizeResources(UInt32 Width, UInt32 Height)
 {
-    GlobalCmdListExecutor.WaitForGPU();
+    gCmdListExecutor.WaitForGPU();
 
     Resources.MainWindowViewport->Resize(Width, Height);
 

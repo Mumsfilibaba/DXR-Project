@@ -14,7 +14,7 @@ bool RenderLayer::Init(ERenderLayerApi InRenderApi)
 	// Select RenderLayer
 	if (InRenderApi == ERenderLayerApi::RenderLayerApi_D3D12)
 	{
-		GlobalRenderLayer = DBG_NEW D3D12RenderLayer();
+		gRenderLayer = DBG_NEW D3D12RenderLayer();
 		
 		D3D12ShaderCompiler* Compiler = DBG_NEW D3D12ShaderCompiler();
 		if (!Compiler->Init())
@@ -22,7 +22,7 @@ bool RenderLayer::Init(ERenderLayerApi InRenderApi)
 			return false;
 		}
 
-		GlobalShaderCompiler = Compiler;
+		gShaderCompiler = Compiler;
 	}
 	else
 	{
@@ -41,10 +41,10 @@ bool RenderLayer::Init(ERenderLayerApi InRenderApi)
 #endif
 
 	// Init
-	if (GlobalRenderLayer->Init(EnableDebug))
+	if (gRenderLayer->Init(EnableDebug))
 	{
-		ICommandContext* CmdContext = GlobalRenderLayer->GetDefaultCommandContext();
-		GlobalCmdListExecutor.SetContext(CmdContext);
+		ICommandContext* CmdContext = gRenderLayer->GetDefaultCommandContext();
+		gCmdListExecutor.SetContext(CmdContext);
 
 		return true;
 	}
@@ -56,6 +56,6 @@ bool RenderLayer::Init(ERenderLayerApi InRenderApi)
 
 void RenderLayer::Release()
 {
-	SAFEDELETE(GlobalRenderLayer);
-	SAFEDELETE(GlobalShaderCompiler);
+	SAFEDELETE(gRenderLayer);
+	SAFEDELETE(gShaderCompiler);
 }

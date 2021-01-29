@@ -739,8 +739,6 @@ private:
 
 private:
     D3D12Device* Device;
-
-    TSharedRef<D3D12CommandQueue>   DirectCmdQueue;
     TSharedRef<D3D12CommandContext> DirectCmdContext;
     D3D12DefaultRootSignatures      DefaultRootSignatures;
 };

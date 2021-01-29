@@ -1,13 +1,28 @@
 #pragma once
-#include "D3D12RefCountedObject.h"
+#include "D3D12Device.h"
 
-class D3D12CommandAllocator : public D3D12RefCountedObject
+class D3D12CommandAllocatorHandle : public D3D12DeviceChild
 {
 public:
-    D3D12CommandAllocator(D3D12Device* InDevice, ID3D12CommandAllocator* InAllocator)
-        : D3D12RefCountedObject(InDevice)
-        , Allocator(InAllocator)
+    D3D12CommandAllocatorHandle(D3D12Device* InDevice)
+        : D3D12DeviceChild(InDevice)
+        , Allocator(nullptr)
     {
+    }
+
+    FORCEINLINE Bool Init(D3D12_COMMAND_LIST_TYPE Type)
+    {
+        HRESULT Result = Device->GetDevice()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
+        if (SUCCEEDED(Result))
+        {
+            LOG_INFO("[D3D12Device]: Created CommandAllocator");
+            return true;
+        }
+        else
+        {
+            LOG_ERROR("[D3D12Device]: FAILED to create CommandAllocator");
+            return false;
+        }
     }
 
     FORCEINLINE Bool Reset()

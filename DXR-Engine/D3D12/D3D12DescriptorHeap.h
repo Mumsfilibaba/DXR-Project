@@ -3,10 +3,12 @@
 
 #include "Utilities/StringUtilities.h"
 
-#include "D3D12RefCountedObject.h"
-#include "D3D12Device.h"
+#include "Core/RefCountedObject.h"
 
-class D3D12DescriptorHeap : public D3D12RefCountedObject
+#include "D3D12Device.h"
+#include "D3D12DeviceChild.h"
+
+class D3D12DescriptorHeap : public D3D12DeviceChild, public RefCountedObject
 {
 public:
     D3D12DescriptorHeap(D3D12Device* InDevice, const D3D12_DESCRIPTOR_HEAP_DESC& InDesc);
@@ -57,7 +59,7 @@ private:
     UInt32 DescriptorHandleIncrementSize;
 };
 
-class D3D12OfflineDescriptorHeap : public D3D12RefCountedObject
+class D3D12OfflineDescriptorHeap : public D3D12DeviceChild, public RefCountedObject
 {
     struct DescriptorRange
     {
@@ -115,15 +117,13 @@ public:
 private:
     void AllocateHeap();
 
-private:
+    D3D12_DESCRIPTOR_HEAP_TYPE Type;
     TArray<DescriptorHeap> Heaps;
     std::string Name;
-
-    D3D12_DESCRIPTOR_HEAP_TYPE Type;
     UInt32 DescriptorSize = 0;
 };
 
-class D3D12OnlineDescriptorHeap : public D3D12RefCountedObject
+class D3D12OnlineDescriptorHeap : public D3D12DeviceChild, public RefCountedObject
 {
 public:
     D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);

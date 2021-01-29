@@ -488,7 +488,7 @@ void ShadowMapRenderer::RenderPointLightShadows(
                         1, 0);
 
                     // Draw all objects to depthbuffer
-                    ConsoleVariable* GlobalFrustumCullEnabled = GlobalConsole.FindVariable("r.EnableFrustumCulling");
+                    ConsoleVariable* GlobalFrustumCullEnabled = gConsole.FindVariable("r.EnableFrustumCulling");
                     if (GlobalFrustumCullEnabled->GetBool())
                     {
                         Frustum CameraFrustum = Frustum(

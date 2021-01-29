@@ -133,7 +133,7 @@ void Profiler::Tick()
     {
         DebugUI::DrawUI([]()
         {
-            const UInt32 WindowWidth = GlobalMainWindow->GetWidth();
+            const UInt32 WindowWidth = gMainWindow->GetWidth();
 
             ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(5.0f, 5.0f));
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
@@ -154,7 +154,7 @@ void Profiler::Tick()
                 ImGuiWindowFlags_NoFocusOnAppearing    |
                 ImGuiWindowFlags_NoSavedSettings);
 
-            const std::string FpsStr = std::to_string(GlobalProfiler.Fps);
+            const std::string FpsStr = std::to_string(gProfiler.Fps);
             ImGui::Text("%s", FpsStr.c_str());
             
             ImGui::End();
@@ -173,8 +173,8 @@ void Profiler::Tick()
         DebugUI::DrawUI([]()
         {
             // Draw DebugWindow with DebugStrings
-            const UInt32 WindowWidth  = GlobalMainWindow->GetWidth();
-            const UInt32 WindowHeight = GlobalMainWindow->GetHeight();
+            const UInt32 WindowWidth  = gMainWindow->GetWidth();
+            const UInt32 WindowHeight = gMainWindow->GetHeight();
             const Float Width         = Math::Max(WindowWidth * 0.6f, 400.0f);
             const Float Height        = WindowHeight * 0.75f;
 
@@ -214,19 +214,19 @@ void Profiler::Tick()
                 ImGui::Text("FPS:");
                 ImGui::NextColumn();
 
-                ImGui::Text("%d", GlobalProfiler.Fps);
+                ImGui::Text("%d", gProfiler.Fps);
                 ImGui::NextColumn();
 
                 ImGui::Text("FrameTime:");
                 ImGui::NextColumn();
 
-                const Float FtAvg = GlobalProfiler.FrameTime.GetAverage();
+                const Float FtAvg = gProfiler.FrameTime.GetAverage();
                 ImGui::Text("%.4f ms", FtAvg);
                 ImGui::PlotLines(
                     "",
-                    GlobalProfiler.FrameTime.Samples.Data(),
-                    GlobalProfiler.FrameTime.SampleCount,
-                    GlobalProfiler.FrameTime.CurrentSample,
+                    gProfiler.FrameTime.Samples.Data(),
+                    gProfiler.FrameTime.SampleCount,
+                    gProfiler.FrameTime.CurrentSample,
                     nullptr,
                     0.0f,
                     ImGui_GetMaxLimit(FtAvg),
@@ -239,7 +239,7 @@ void Profiler::Tick()
                 ImGui::Columns(2);
 
                 TStaticArray<Float, NUM_PROFILER_SAMPLES> Floats;
-                for (auto& Sample : GlobalProfiler.Samples)
+                for (auto& Sample : gProfiler.Samples)
                 {
                     Memory::Memzero(Floats.Data(), Floats.SizeInBytes());
 

@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <cstring>
 
-#define INIT_CONSOLE_VARIABLE(VarName, Var)    GlobalConsole.RegisterVariable(VarName, &Var)
-#define INIT_CONSOLE_COMMAND(CmdName, CmdFunc) GlobalConsole.RegisterCommand(CmdName, CmdFunc)
+#define INIT_CONSOLE_VARIABLE(VarName, Var)    gConsole.RegisterVariable(VarName, &Var)
+#define INIT_CONSOLE_COMMAND(CmdName, CmdFunc) gConsole.RegisterCommand(CmdName, CmdFunc)
 
 typedef void(*ConsoleCommand)();
 

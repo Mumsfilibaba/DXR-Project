@@ -7,7 +7,7 @@
 class D3D12Shader : public D3D12DeviceChild
 {
 public:
-    inline D3D12Shader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12Shader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : D3D12DeviceChild(InDevice)
         , Code(InCode)
         , ByteCode()
@@ -39,7 +39,7 @@ protected:
 class D3D12VertexShader : public VertexShader, public D3D12Shader
 {
 public:
-    inline D3D12VertexShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12VertexShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : VertexShader()
         , D3D12Shader(InDevice, InCode)
     {
@@ -49,7 +49,7 @@ public:
 class D3D12PixelShader : public PixelShader, public D3D12Shader
 {
 public:
-    inline D3D12PixelShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12PixelShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : PixelShader()
         , D3D12Shader(InDevice, InCode)
     {
@@ -59,7 +59,7 @@ public:
 class D3D12ComputeShader : public ComputeShader, public D3D12Shader
 {
 public:
-    inline D3D12ComputeShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12ComputeShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : ComputeShader()
         , D3D12Shader(InDevice, InCode)
         , RootSignature(nullptr)

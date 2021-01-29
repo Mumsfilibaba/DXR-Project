@@ -112,12 +112,12 @@ static void DrawMenu()
             {
                 if (ImGui::MenuItem("Toggle Fullscreen"))
                 {
-                    GlobalMainWindow->ToggleFullscreen();
+                    gMainWindow->ToggleFullscreen();
                 }
 
                 if (ImGui::MenuItem("Quit"))
                 {
-                    GlobalEngineLoop.Exit();
+                    gEngineLoop.Exit();
                 }
 
                 ImGui::EndMenu();
@@ -142,8 +142,8 @@ static void DrawSideWindow()
 {
     DebugUI::DrawUI([]
     {
-        const UInt32 WindowWidth  = GlobalMainWindow->GetWidth();
-        const UInt32 WindowHeight = GlobalMainWindow->GetHeight();
+        const UInt32 WindowWidth  = gMainWindow->GetWidth();
+        const UInt32 WindowHeight = gMainWindow->GetHeight();
         const Float Width         = Math::Max(WindowWidth * 0.3f, 400.0f);
         const Float Height        = WindowHeight * 0.7f;
 
@@ -196,7 +196,7 @@ static void DrawRenderSettings()
     ImGui::BeginChild("RendererInfo");
 
     WindowShape WindowShape;
-    GlobalMainWindow->GetWindowShape(WindowShape);
+    gMainWindow->GetWindowShape(WindowShape);
 
     ImGui::Spacing();
     ImGui::Text("Renderer Info");
@@ -381,12 +381,12 @@ static void DrawSceneInfo()
     ImGui::Separator();
 
     WindowShape WindowShape;
-    GlobalMainWindow->GetWindowShape(WindowShape);
+    gMainWindow->GetWindowShape(WindowShape);
 
     // Actors
     if (ImGui::TreeNode("Actors"))
     {
-        for (Actor* Actor : GlobalGame->GetCurrentScene()->GetActors())
+        for (Actor* Actor : gGame->GetCurrentScene()->GetActors())
         {
             ImGui::PushID(Actor);
 
@@ -524,7 +524,7 @@ static void DrawSceneInfo()
     // Lights
     if (ImGui::TreeNode("Lights"))
     {
-        for (Light* CurrentLight : GlobalGame->GetCurrentScene()->GetLights())
+        for (Light* CurrentLight : gGame->GetCurrentScene()->GetLights())
         {
             ImGui::PushID(CurrentLight);
 

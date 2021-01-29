@@ -9,21 +9,21 @@
 
 #include "RenderLayer/CommandList.h"
 
-EngineLoop GlobalEngineLoop;
-Renderer   GlobalRenderer;
+EngineLoop gEngineLoop;
+Renderer   gRenderer;
 
-class GenericWindow*       GlobalMainWindow          = nullptr;
-class GenericApplication*  GlobalPlatformApplication = nullptr;
-class GenericOutputDevice* GlobalConsoleOutput       = nullptr;
+class GenericWindow*       gMainWindow          = nullptr;
+class GenericApplication*  gPlatformApplication = nullptr;
+class GenericOutputDevice* gConsoleOutput       = nullptr;
 
-class EventDispatcher* GlobalEventDispatcher = nullptr;
+class EventDispatcher* gEventDispatcher = nullptr;
 
-class Game* GlobalGame = nullptr;
+class Game* gGame = nullptr;
 
-class GenericRenderLayer* GlobalRenderLayer    = nullptr;
-class IShaderCompiler*    GlobalShaderCompiler = nullptr;
+class GenericRenderLayer* gRenderLayer    = nullptr;
+class IShaderCompiler*    gShaderCompiler = nullptr;
 
-CommandListExecutor GlobalCmdListExecutor;
+CommandListExecutor gCmdListExecutor;
 
-Profiler GlobalProfiler;
-Console  GlobalConsole;
+Profiler gProfiler;
+Console  gConsole;

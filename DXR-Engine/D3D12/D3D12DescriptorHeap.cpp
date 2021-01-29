@@ -3,7 +3,7 @@
 #include "D3D12Views.h"
 
 D3D12DescriptorHeap::D3D12DescriptorHeap(D3D12Device* InDevice, const D3D12_DESCRIPTOR_HEAP_DESC& InDesc)
-    : D3D12RefCountedObject(InDevice)
+    : D3D12DeviceChild(InDevice)
     , Heap(nullptr)
     , CPUStart({ 0 })
     , GPUStart({ 0 })
@@ -36,7 +36,7 @@ Bool D3D12DescriptorHeap::Init()
 }
 
 D3D12OfflineDescriptorHeap::D3D12OfflineDescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType)
-    : D3D12RefCountedObject(InDevice)
+    : D3D12DeviceChild(InDevice)
     , Heaps()
     , Name()
     , Type(InType)
@@ -150,7 +150,7 @@ void D3D12OfflineDescriptorHeap::AllocateHeap()
 }
 
 D3D12OnlineDescriptorHeap::D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType)
-    : D3D12RefCountedObject(InDevice)
+    : D3D12DeviceChild(InDevice)
     , Heap(nullptr)
     , DescriptorCount(InDescriptorCount)
     , Type(InType)

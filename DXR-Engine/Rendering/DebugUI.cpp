@@ -78,7 +78,7 @@ Bool DebugUI::Init()
     IO.BackendPlatformName = "Windows";
 
 #ifdef WIN32
-    IO.ImeWindowHandle = GlobalMainWindow->GetNativeHandle();
+    IO.ImeWindowHandle = gMainWindow->GetNativeHandle();
 #endif
 
     // Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
@@ -433,7 +433,7 @@ Bool DebugUI::Init()
         return false;
     }
 
-    GlobalEventDispatcher->RegisterEventHandler(DebugUI::OnEvent, EEventCategory::EventCategory_Input);
+    gEventDispatcher->RegisterEventHandler(DebugUI::OnEvent, EEventCategory::EventCategory_Input);
 
     return true;
 }
@@ -496,10 +496,10 @@ void DebugUI::Render(CommandList& CmdList)
     GlobalImGuiState.FrameClock.Tick();
 
     ImGuiIO& IO = ImGui::GetIO();
-    GenericWindow* Window = GlobalMainWindow;
+    GenericWindow* Window = gMainWindow;
     if (IO.WantSetMousePos)
     {
-        GlobalPlatformApplication->SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
+        gPlatformApplication->SetCursorPos(Window, static_cast<Int32>(IO.MousePos.x), static_cast<Int32>(IO.MousePos.y));
     }
 
     WindowShape CurrentWindowShape;
@@ -512,7 +512,7 @@ void DebugUI::Render(CommandList& CmdList)
 
     Int32 x = 0;
     Int32 y = 0;
-    GlobalPlatformApplication->GetCursorPos(Window, x, y);
+    gPlatformApplication->GetCursorPos(Window, x, y);
     
     IO.MousePos = ImVec2(static_cast<Float>(x), static_cast<Float>(y));
 
@@ -527,7 +527,7 @@ void DebugUI::Render(CommandList& CmdList)
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
         if (ImguiCursor == ImGuiMouseCursor_None || IO.MouseDrawCursor)
         {
-            GlobalPlatformApplication->SetCursor(nullptr);
+            gPlatformApplication->SetCursor(nullptr);
         }
         else
         {
@@ -545,7 +545,7 @@ void DebugUI::Render(CommandList& CmdList)
             case ImGuiMouseCursor_NotAllowed: Cursor = GlobalCursors::NotAllowed; break;
             }
             
-            GlobalPlatformApplication->SetCursor(Cursor.Get());
+            gPlatformApplication->SetCursor(Cursor.Get());
         }
     }
 

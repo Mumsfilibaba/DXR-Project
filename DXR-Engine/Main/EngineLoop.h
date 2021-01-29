@@ -32,5 +32,5 @@ public:
 
 private:
     Bool  ShouldRun = false;
-    Clock EngineClock;
+    Clock Clock;
 };

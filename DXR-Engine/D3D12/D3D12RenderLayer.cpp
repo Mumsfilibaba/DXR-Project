@@ -30,7 +30,6 @@
 D3D12RenderLayer::D3D12RenderLayer()
     : GenericRenderLayer(ERenderLayerApi::RenderLayerApi_D3D12)
     , Device(nullptr)
-    , DirectCmdQueue(nullptr)
     , DirectCmdContext(nullptr)
 {
 }
@@ -48,19 +47,13 @@ Bool D3D12RenderLayer::Init(Bool EnableDebug)
     {
         return false;
     }
-    
-    DirectCmdQueue = Device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-    if (!DirectCmdQueue)
-    {
-        return false;
-    }
 
     if (!DefaultRootSignatures.CreateRootSignatures(Device))
     {
         return false;
     }
 
-    DirectCmdContext = DBG_NEW D3D12CommandContext(Device, DirectCmdQueue, DefaultRootSignatures);
+    DirectCmdContext = DBG_NEW D3D12CommandContext(Device, DefaultRootSignatures);
     if (!DirectCmdContext->Init())
     {
         return false;

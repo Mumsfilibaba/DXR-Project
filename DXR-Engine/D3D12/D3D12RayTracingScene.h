@@ -7,7 +7,7 @@
 
 #include "Core.h"
 
-class D3D12CommandList;
+class D3D12CommandListHandle;
 class Material;
 
 class D3D12RayTracingGeometry : public RayTracingGeometry, public D3D12DeviceChild
@@ -17,7 +17,7 @@ public:
     ~D3D12RayTracingGeometry();
 
     bool BuildAccelerationStructure(
-        D3D12CommandList* CommandList, 
+        D3D12CommandListHandle* CommandList, 
         TSharedRef<D3D12VertexBuffer>& InVertexBuffer, 
         UInt32 InVertexCount, 
         TSharedRef<D3D12IndexBuffer>& InIndexBuffer, 
@@ -107,7 +107,7 @@ public:
 
     bool Initialize(class D3D12RayTracingPipelineState* PipelineState);
 
-    bool BuildAccelerationStructure(D3D12CommandList* CommandList,
+    bool BuildAccelerationStructure(D3D12CommandListHandle* CommandList,
         TArray<D3D12RayTracingGeometryInstance>& InInstances,
         TArray<BindingTableEntry>& InBindingTableEntries,
         UInt32 InNumHitGroups);

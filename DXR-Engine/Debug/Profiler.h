@@ -7,7 +7,7 @@
 #define NUM_PROFILER_SAMPLES 75
 
 #if ENABLE_PROFILER
-    #define TRACE_SCOPE(Name)      ScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(&GlobalProfiler, Name)
+    #define TRACE_SCOPE(Name)      ScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(&gProfiler, Name)
     #define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(__FUNCTION_SIG__)
 #else
     #define TRACE_SCOPE(Name)

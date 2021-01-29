@@ -3,24 +3,24 @@
 
 #define LOG_ERROR(Message) \
     { \
-        VALIDATE(GlobalConsoleOutput != nullptr); \
-        GlobalConsoleOutput->SetColor(EConsoleColor::ConsoleColor_Red); \
-        GlobalConsoleOutput->Print(std::string(Message) + "\n"); \
-        GlobalConsoleOutput->SetColor(EConsoleColor::ConsoleColor_White); \
+        VALIDATE(gConsoleOutput != nullptr); \
+        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_Red); \
+        gConsoleOutput->Print(std::string(Message) + "\n"); \
+        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_White); \
     }
 
 #define LOG_WARNING(Message) \
     { \
-        VALIDATE(GlobalConsoleOutput != nullptr); \
-        GlobalConsoleOutput->SetColor(EConsoleColor::ConsoleColor_Yellow); \
-        GlobalConsoleOutput->Print(std::string(Message) + "\n"); \
-        GlobalConsoleOutput->SetColor(EConsoleColor::ConsoleColor_White); \
+        VALIDATE(gConsoleOutput != nullptr); \
+        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_Yellow); \
+        gConsoleOutput->Print(std::string(Message) + "\n"); \
+        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_White); \
     }
 
 #define LOG_INFO(Message) \
     {\
-        VALIDATE(GlobalConsoleOutput != nullptr); \
-        GlobalConsoleOutput->SetColor(EConsoleColor::ConsoleColor_Green); \
-        GlobalConsoleOutput->Print(std::string(Message) + "\n"); \
-        GlobalConsoleOutput->SetColor(EConsoleColor::ConsoleColor_White); \
+        VALIDATE(gConsoleOutput != nullptr); \
+        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_Green); \
+        gConsoleOutput->Print(std::string(Message) + "\n"); \
+        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_White); \
     }

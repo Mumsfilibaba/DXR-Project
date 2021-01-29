@@ -1,5 +1,4 @@
 #include "TextureFactory.h"
-#include "Core.h"
 
 #include "RenderLayer/CommandList.h"
 #include "RenderLayer/PipelineState.h"
@@ -162,7 +161,7 @@ Texture2D* TextureFactory::LoadFromMemory(
     }
 
     CmdList.End();
-    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    gCmdListExecutor.ExecuteCommandList(CmdList);
 
     return Texture.ReleaseOwnership();
 }
@@ -337,7 +336,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(
     CmdList.DestroyResource(Texture.Get());
 
     CmdList.End();
-    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    gCmdListExecutor.ExecuteCommandList(CmdList);
 
     return Texture.ReleaseOwnership();
 }

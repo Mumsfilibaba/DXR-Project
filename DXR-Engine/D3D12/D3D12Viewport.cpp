@@ -28,7 +28,7 @@ D3D12Viewport::~D3D12Viewport()
 Bool D3D12Viewport::Init()
 {
     IDXGIFactory2* Factory   = Device->GetFactory();
-    D3D12CommandQueue& Queue = CmdContext->GetQueue();
+    D3D12CommandQueueHandle& Queue = CmdContext->GetQueue();
 
     // Save the flags
     Flags = Device->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;

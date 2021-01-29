@@ -21,7 +21,7 @@ public:
         UInt32 MipLevels, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return GlobalRenderLayer->CreateTexture1D(
+        return gRenderLayer->CreateTexture1D(
             InitalData, 
             Format, 
             Usage, 
@@ -39,7 +39,7 @@ public:
         UInt16 ArrayCount,
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return GlobalRenderLayer->CreateTexture1DArray(
+        return gRenderLayer->CreateTexture1DArray(
             InitalData,
             Format,
             Usage,
@@ -59,7 +59,7 @@ public:
         UInt32 SampleCount, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return GlobalRenderLayer->CreateTexture2D(
+        return gRenderLayer->CreateTexture2D(
             InitalData, 
             Format, 
             Usage, 
@@ -81,7 +81,7 @@ public:
         UInt32 SampleCount, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return GlobalRenderLayer->CreateTexture2DArray(
+        return gRenderLayer->CreateTexture2DArray(
             InitalData, 
             Format, 
             Usage, 
@@ -102,7 +102,7 @@ public:
         UInt32 SampleCount,
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return GlobalRenderLayer->CreateTextureCube(
+        return gRenderLayer->CreateTextureCube(
             InitalData, 
             Format,
             Usage,
@@ -122,7 +122,7 @@ public:
         UInt32 SampleCount,
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return GlobalRenderLayer->CreateTextureCubeArray(
+        return gRenderLayer->CreateTextureCubeArray(
             InitalData,
             Format,
             Usage,
@@ -143,7 +143,7 @@ public:
         UInt32 MipLevels,
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return GlobalRenderLayer->CreateTexture3D(
+        return gRenderLayer->CreateTexture3D(
             InitalData,
             Format,
             Usage,
@@ -160,7 +160,7 @@ public:
 
     FORCEINLINE static class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo)
     {
-        return GlobalRenderLayer->CreateSamplerState(CreateInfo);
+        return gRenderLayer->CreateSamplerState(CreateInfo);
     }
 
     /*
@@ -173,7 +173,7 @@ public:
         UInt32 VertexStride,
         UInt32 Usage)
     {
-        return GlobalRenderLayer->CreateVertexBuffer(
+        return gRenderLayer->CreateVertexBuffer(
             InitalData,
             SizeInBytes,
             VertexStride,
@@ -197,7 +197,7 @@ public:
         EIndexFormat IndexFormat,
         UInt32 Usage)
     {
-        return GlobalRenderLayer->CreateIndexBuffer(
+        return gRenderLayer->CreateIndexBuffer(
             InitalData,
             SizeInBytes,
             IndexFormat,
@@ -210,7 +210,7 @@ public:
         UInt32 Usage,
         EResourceState InitialState)
     {
-        return GlobalRenderLayer->CreateConstantBuffer(
+        return gRenderLayer->CreateConstantBuffer(
             InitalData, 
             SizeInBytes, 
             Usage, 
@@ -250,7 +250,7 @@ public:
         UInt32 Stride,
         UInt32 Usage)
     {
-        return GlobalRenderLayer->CreateStructuredBuffer(
+        return gRenderLayer->CreateStructuredBuffer(
             InitalData,
             SizeInBytes,
             Stride,
@@ -263,7 +263,7 @@ public:
 
     FORCEINLINE static RayTracingScene* CreateRayTracingScene()
     {
-        return GlobalRenderLayer->CreateRayTracingScene();
+        return gRenderLayer->CreateRayTracingScene();
     }
 
     /*
@@ -272,7 +272,7 @@ public:
 
     FORCEINLINE static RayTracingGeometry* CreateRayTracingGeometry()
     {
-        return GlobalRenderLayer->CreateRayTracingGeometry();
+        return gRenderLayer->CreateRayTracingGeometry();
     }
 
     /*
@@ -284,7 +284,7 @@ public:
         UInt32 FirstElement,
         UInt32 ElementCount)
     {
-        return GlobalRenderLayer->CreateShaderResourceView(
+        return gRenderLayer->CreateShaderResourceView(
             Buffer,
             FirstElement,
             ElementCount);
@@ -296,7 +296,7 @@ public:
         UInt32 ElementCount,
         UInt32 Stride)
     {
-        return GlobalRenderLayer->CreateShaderResourceView(
+        return gRenderLayer->CreateShaderResourceView(
             Buffer,
             FirstElement,
             ElementCount,
@@ -318,7 +318,7 @@ public:
         UInt32 MostDetailedMip,
         UInt32 MipLevels) 
     { 
-        return GlobalRenderLayer->CreateShaderResourceView(
+        return gRenderLayer->CreateShaderResourceView(
             Texture,
             Format,
             MostDetailedMip,
@@ -333,7 +333,7 @@ public:
         UInt32 FirstArraySlice,
         UInt32 ArraySize)
     {
-        return GlobalRenderLayer->CreateShaderResourceView(
+        return gRenderLayer->CreateShaderResourceView(
             Texture,
             Format,
             MostDetailedMip,
@@ -348,7 +348,7 @@ public:
         UInt32 MostDetailedMip,
         UInt32 MipLevels)
     {
-        return GlobalRenderLayer->CreateShaderResourceView(
+        return gRenderLayer->CreateShaderResourceView(
             Texture,
             Format,
             MostDetailedMip,
@@ -363,7 +363,7 @@ public:
         UInt32 FirstArraySlice,
         UInt32 ArraySize)
     {
-        return GlobalRenderLayer->CreateShaderResourceView(
+        return gRenderLayer->CreateShaderResourceView(
             Texture,
             Format,
             MostDetailedMip,
@@ -378,7 +378,7 @@ public:
         UInt32 MostDetailedMip,
         UInt32 MipLevels)
     {
-        return GlobalRenderLayer->CreateShaderResourceView(
+        return gRenderLayer->CreateShaderResourceView(
             Texture,
             Format,
             MostDetailedMip,
@@ -393,7 +393,7 @@ public:
         UInt32 FirstArraySlice,
         UInt32 ArraySize)
     {
-        return GlobalRenderLayer->CreateShaderResourceView(
+        return gRenderLayer->CreateShaderResourceView(
             Texture,
             Format,
             MostDetailedMip,
@@ -408,7 +408,7 @@ public:
         UInt32 MostDetailedMip,
         UInt32 MipLevels)
     {
-        return GlobalRenderLayer->CreateShaderResourceView(
+        return gRenderLayer->CreateShaderResourceView(
             Texture,
             Format,
             MostDetailedMip,
@@ -426,7 +426,7 @@ public:
         EFormat Format,
         UInt64 CounterOffsetInBytes)
     {
-        return GlobalRenderLayer->CreateUnorderedAccessView(
+        return gRenderLayer->CreateUnorderedAccessView(
             Buffer,
             FirstElement,
             NumElements,
@@ -441,7 +441,7 @@ public:
         UInt32 StructureByteStride,
         UInt64 CounterOffsetInBytes)
     {
-        return GlobalRenderLayer->CreateUnorderedAccessView(
+        return gRenderLayer->CreateUnorderedAccessView(
             Buffer,
             FirstElement,
             NumElements,
@@ -454,7 +454,7 @@ public:
         EFormat Format, 
         UInt32 MipSlice)
     {
-        return GlobalRenderLayer->CreateUnorderedAccessView(Texture, Format, MipSlice);
+        return gRenderLayer->CreateUnorderedAccessView(Texture, Format, MipSlice);
     }
 
     FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
@@ -464,7 +464,7 @@ public:
         UInt32 FirstArraySlice,
         UInt32 ArraySize)
     {
-        return GlobalRenderLayer->CreateUnorderedAccessView(
+        return gRenderLayer->CreateUnorderedAccessView(
             Texture,
             Format,
             MipSlice,
@@ -477,7 +477,7 @@ public:
         EFormat Format, 
         UInt32 MipSlice)
     {
-        return GlobalRenderLayer->CreateUnorderedAccessView(Texture, Format, MipSlice);
+        return gRenderLayer->CreateUnorderedAccessView(Texture, Format, MipSlice);
     }
 
     FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
@@ -487,7 +487,7 @@ public:
         UInt32 FirstArraySlice,
         UInt32 ArraySize)
     {
-        return GlobalRenderLayer->CreateUnorderedAccessView(
+        return gRenderLayer->CreateUnorderedAccessView(
             Texture,
             Format,
             MipSlice,
@@ -500,7 +500,7 @@ public:
         EFormat Format, 
         UInt32 MipSlice)
     {
-        return GlobalRenderLayer->CreateUnorderedAccessView(
+        return gRenderLayer->CreateUnorderedAccessView(
             Texture,
             Format,
             MipSlice);
@@ -512,7 +512,7 @@ public:
         UInt32 MipSlice,
         UInt32 ArraySlice)
     {
-        return GlobalRenderLayer->CreateUnorderedAccessView(
+        return gRenderLayer->CreateUnorderedAccessView(
             Texture,
             Format,
             MipSlice,
@@ -526,7 +526,7 @@ public:
         UInt32 FirstDepthSlice,
         UInt32 DepthSlices) 
     {
-        return GlobalRenderLayer->CreateUnorderedAccessView(
+        return gRenderLayer->CreateUnorderedAccessView(
             Texture,
             Format,
             MipSlice,
@@ -543,7 +543,7 @@ public:
         EFormat Format, 
         UInt32 MipSlice)
     {
-        return GlobalRenderLayer->CreateRenderTargetView(Texture, Format, MipSlice);
+        return gRenderLayer->CreateRenderTargetView(Texture, Format, MipSlice);
     }
 
     FORCEINLINE static RenderTargetView* CreateRenderTargetView(
@@ -553,7 +553,7 @@ public:
         UInt32 FirstArraySlice,
         UInt32 ArraySize)
     {
-        return GlobalRenderLayer->CreateRenderTargetView(
+        return gRenderLayer->CreateRenderTargetView(
             Texture,
             Format,
             MipSlice,
@@ -566,7 +566,7 @@ public:
         EFormat Format, 
         UInt32 MipSlice)
     {
-        return GlobalRenderLayer->CreateRenderTargetView(
+        return gRenderLayer->CreateRenderTargetView(
             Texture,
             Format,
             MipSlice);
@@ -579,7 +579,7 @@ public:
         UInt32 FirstArraySlice,
         UInt32 ArraySize)
     {
-        return GlobalRenderLayer->CreateRenderTargetView(
+        return gRenderLayer->CreateRenderTargetView(
             Texture,
             Format,
             MipSlice,
@@ -593,7 +593,7 @@ public:
         UInt32 MipSlice,
         UInt32 FaceIndex)
     {
-        return GlobalRenderLayer->CreateRenderTargetView(
+        return gRenderLayer->CreateRenderTargetView(
             Texture,
             Format,
             MipSlice,
@@ -607,7 +607,7 @@ public:
         UInt32 ArraySlice,
         UInt32 FaceIndex)
     {
-        return GlobalRenderLayer->CreateRenderTargetView(
+        return gRenderLayer->CreateRenderTargetView(
             Texture,
             Format,
             MipSlice,
@@ -622,7 +622,7 @@ public:
         UInt32 FirstDepthSlice,
         UInt32 DepthSlices) 
     {
-        return GlobalRenderLayer->CreateRenderTargetView(
+        return gRenderLayer->CreateRenderTargetView(
             Texture,
             Format,
             MipSlice,
@@ -639,7 +639,7 @@ public:
         EFormat Format, 
         UInt32 MipSlice)
     {
-        return GlobalRenderLayer->CreateDepthStencilView(Texture, Format, MipSlice);
+        return gRenderLayer->CreateDepthStencilView(Texture, Format, MipSlice);
     }
 
     FORCEINLINE static DepthStencilView* CreateDepthStencilView(
@@ -649,7 +649,7 @@ public:
         UInt32 FirstArraySlice,
         UInt32 ArraySize)
     {
-        return GlobalRenderLayer->CreateDepthStencilView(
+        return gRenderLayer->CreateDepthStencilView(
             Texture,
             Format,
             MipSlice,
@@ -662,7 +662,7 @@ public:
         EFormat Format, 
         UInt32 MipSlice)
     {
-        return GlobalRenderLayer->CreateDepthStencilView(Texture, Format, MipSlice);
+        return gRenderLayer->CreateDepthStencilView(Texture, Format, MipSlice);
     }
 
     FORCEINLINE static DepthStencilView* CreateDepthStencilView(
@@ -672,7 +672,7 @@ public:
         UInt32 FirstArraySlice,
         UInt32 ArraySize)
     {
-        return GlobalRenderLayer->CreateDepthStencilView(
+        return gRenderLayer->CreateDepthStencilView(
             Texture,
             Format,
             MipSlice,
@@ -686,7 +686,7 @@ public:
         UInt32 MipSlice,
         UInt32 FaceIndex)
     {
-        return GlobalRenderLayer->CreateDepthStencilView(
+        return gRenderLayer->CreateDepthStencilView(
             Texture,
             Format,
             MipSlice,
@@ -700,7 +700,7 @@ public:
         UInt32 ArraySlice,
         UInt32 FaceIndex)
     {
-        return GlobalRenderLayer->CreateDepthStencilView(
+        return gRenderLayer->CreateDepthStencilView(
             Texture,
             Format,
             MipSlice,
@@ -715,104 +715,104 @@ public:
     FORCEINLINE static ComputeShader* CreateComputeShader(
         const TArray<UInt8>& ShaderCode)
     {
-        return GlobalRenderLayer->CreateComputeShader(ShaderCode);
+        return gRenderLayer->CreateComputeShader(ShaderCode);
     }
 
     FORCEINLINE static VertexShader* CreateVertexShader(
         const TArray<UInt8>& ShaderCode)
     {
-        return GlobalRenderLayer->CreateVertexShader(ShaderCode);
+        return gRenderLayer->CreateVertexShader(ShaderCode);
     }
     
     FORCEINLINE static HullShader* CreateHullShader(
         const TArray<UInt8>& ShaderCode)
     {
-        return GlobalRenderLayer->CreateHullShader(ShaderCode);
+        return gRenderLayer->CreateHullShader(ShaderCode);
     }
     
     FORCEINLINE static DomainShader* CreateDomainShader(
         const TArray<UInt8>& ShaderCode)
     {
-        return GlobalRenderLayer->CreateDomainShader(ShaderCode);
+        return gRenderLayer->CreateDomainShader(ShaderCode);
     }
     
     FORCEINLINE static GeometryShader* CreateGeometryShader(
         const TArray<UInt8>& ShaderCode)
     {
-        return GlobalRenderLayer->CreateGeometryShader(ShaderCode);
+        return gRenderLayer->CreateGeometryShader(ShaderCode);
     }
 
     FORCEINLINE static MeshShader* CreateMeshShader(
         const TArray<UInt8>& ShaderCode)
     {
-        return GlobalRenderLayer->CreateMeshShader(ShaderCode);
+        return gRenderLayer->CreateMeshShader(ShaderCode);
     }
     
     FORCEINLINE static AmplificationShader* CreateAmplificationShader(
         const TArray<UInt8>& ShaderCode)
     {
-        return GlobalRenderLayer->CreateAmplificationShader(ShaderCode);
+        return gRenderLayer->CreateAmplificationShader(ShaderCode);
     }
 
     FORCEINLINE static PixelShader* CreatePixelShader(
         const TArray<UInt8>& ShaderCode)
     {
-        return GlobalRenderLayer->CreatePixelShader(ShaderCode);
+        return gRenderLayer->CreatePixelShader(ShaderCode);
     }
 
     FORCEINLINE static RayGenShader* CreateRayGenShader(
         const TArray<UInt8>& ShaderCode)
     {
-        return GlobalRenderLayer->CreateRayGenShader(ShaderCode);
+        return gRenderLayer->CreateRayGenShader(ShaderCode);
     }
     
     FORCEINLINE static RayHitShader* CreateRayHitShader(
         const TArray<UInt8>& ShaderCode)
     {
-        return GlobalRenderLayer->CreateRayHitShader(ShaderCode);
+        return gRenderLayer->CreateRayHitShader(ShaderCode);
     }
 
     FORCEINLINE static RayMissShader* CreateRayMissShader(
         const TArray<UInt8>& ShaderCode)
     {
-        return GlobalRenderLayer->CreateRayMissShader(ShaderCode);
+        return gRenderLayer->CreateRayMissShader(ShaderCode);
     }
 
     FORCEINLINE static InputLayoutState* CreateInputLayout(
         const InputLayoutStateCreateInfo& CreateInfo)
     {
-        return GlobalRenderLayer->CreateInputLayout(CreateInfo);
+        return gRenderLayer->CreateInputLayout(CreateInfo);
     }
 
     FORCEINLINE static DepthStencilState* CreateDepthStencilState(
         const DepthStencilStateCreateInfo& CreateInfo)
     {
-        return GlobalRenderLayer->CreateDepthStencilState(CreateInfo);
+        return gRenderLayer->CreateDepthStencilState(CreateInfo);
     }
 
     FORCEINLINE static RasterizerState* CreateRasterizerState(
         const RasterizerStateCreateInfo& CreateInfo)
     {
-        return GlobalRenderLayer->CreateRasterizerState(CreateInfo);
+        return gRenderLayer->CreateRasterizerState(CreateInfo);
     }
 
     FORCEINLINE static BlendState* CreateBlendState(
         const BlendStateCreateInfo& CreateInfo)
     {
-        return GlobalRenderLayer->CreateBlendState(CreateInfo);
+        return gRenderLayer->CreateBlendState(CreateInfo);
     }
 
 
     FORCEINLINE static ComputePipelineState* CreateComputePipelineState(
         const ComputePipelineStateCreateInfo& CreateInfo)
     {
-        return GlobalRenderLayer->CreateComputePipelineState(CreateInfo);
+        return gRenderLayer->CreateComputePipelineState(CreateInfo);
     }
 
     FORCEINLINE static GraphicsPipelineState* CreateGraphicsPipelineState(
         const GraphicsPipelineStateCreateInfo& CreateInfo)
     {
-        return GlobalRenderLayer->CreateGraphicsPipelineState(CreateInfo);
+        return gRenderLayer->CreateGraphicsPipelineState(CreateInfo);
     }
 
     /*
@@ -826,7 +826,7 @@ public:
         EFormat ColorFormat,
         EFormat DepthFormat)
     {
-        return GlobalRenderLayer->CreateViewport(
+        return gRenderLayer->CreateViewport(
             Window, 
             Width,
             Height,
@@ -840,12 +840,12 @@ public:
 
     FORCEINLINE static Bool IsRayTracingSupported()
     {
-        return GlobalRenderLayer->IsRayTracingSupported();
+        return gRenderLayer->IsRayTracingSupported();
     }
 
     FORCEINLINE static Bool UAVSupportsFormat(EFormat Format)
     {
-        return GlobalRenderLayer->UAVSupportsFormat(Format);
+        return gRenderLayer->UAVSupportsFormat(Format);
     }
 
     /*
@@ -854,16 +854,16 @@ public:
 
     FORCEINLINE static class ICommandContext* GetDefaultCommandContext()
     {
-        return GlobalRenderLayer->GetDefaultCommandContext();
+        return gRenderLayer->GetDefaultCommandContext();
     }
 
     FORCEINLINE static ERenderLayerApi GetApi()
     {
-        return GlobalRenderLayer->GetApi();
+        return gRenderLayer->GetApi();
     }
 
     FORCEINLINE static std::string GetAdapterName()
     {
-        return GlobalRenderLayer->GetAdapterName();
+        return gRenderLayer->GetAdapterName();
     }
 };

@@ -86,15 +86,11 @@ Bool D3D12ShaderCompiler::CompileFromFile(
     EShaderModel ShaderModel, 
     TArray<UInt8>& Code) const
 {
-    using namespace Microsoft::WRL;
-
-    // Convert to wide
     std::wstring WideFilePath   = ConvertToWide(FilePath);
     std::wstring WideEntrypoint = ConvertToWide(EntryPoint);
     LPCWSTR TargetProfile       = GetTargetProfile(ShaderStage, ShaderModel);
 
-    // Create SourceBlob
-    ComPtr<IDxcBlobEncoding> SourceBlob;
+    TComPtr<IDxcBlobEncoding> SourceBlob;
     HRESULT Result = DxLibrary->CreateBlobFromFile(WideFilePath.c_str(), nullptr, &SourceBlob);
     if (FAILED(Result))
     {
@@ -121,13 +117,10 @@ Bool D3D12ShaderCompiler::CompileShader(
     EShaderModel ShaderModel, 
     TArray<UInt8>& Code) const
 {
-    using namespace Microsoft::WRL;
-
     std::wstring WideEntrypoint = ConvertToWide(EntryPoint);
     LPCWSTR TargetProfile       = GetTargetProfile(ShaderStage, ShaderModel);
 
-    // Create SourceBlob
-    ComPtr<IDxcBlobEncoding> SourceBlob;
+    TComPtr<IDxcBlobEncoding> SourceBlob;
     HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(
         ShaderSource.c_str(), 
         sizeof(Char) * static_cast<UInt32>(ShaderSource.size()), 
@@ -213,8 +206,6 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
     const TArray<ShaderDefine>* Defines,
     TArray<UInt8>& Code) const
 {
-    using namespace Microsoft::WRL;
-
     LPCWSTR Args[] =
     {
         L"-O3",    // Optimization level 3
@@ -237,7 +228,7 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
     }
 
     // Compile
-    ComPtr<IDxcOperationResult> Result;
+    TComPtr<IDxcOperationResult> Result;
     HRESULT hResult = DxCompiler->Compile(
         SourceBlob, 
         FilePath, 
@@ -258,8 +249,8 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
 
     if (SUCCEEDED(Result->GetStatus(&hResult)))
     {
-        ComPtr<IDxcBlobEncoding> PrintBlob;
-        ComPtr<IDxcBlobEncoding> PrintBlob8;
+        TComPtr<IDxcBlobEncoding> PrintBlob;
+        TComPtr<IDxcBlobEncoding> PrintBlob8;
         if (SUCCEEDED(Result->GetErrorBuffer(&PrintBlob)))
         {
             DxLibrary->GetBlobAsUtf8(PrintBlob.Get(), &PrintBlob8);
@@ -273,7 +264,7 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
                 LOG_INFO(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
             }
 
-            IDxcBlob* CompiledBlob = nullptr;
+            TComPtr<IDxcBlob> CompiledBlob;
             if (SUCCEEDED(Result->GetResult(&CompiledBlob)))
             {
                 // Copy data to resulting bytecode

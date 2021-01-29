@@ -4,40 +4,60 @@
 #include "D3D12CommandAllocator.h"
 #include "D3D12RootSignature.h"
 #include "D3D12DescriptorHeap.h"
-#include "D3D12RefCountedObject.h"
+#include "D3D12Device.h"
 
 class D3D12ComputePipelineState;
 
-class D3D12CommandList : public D3D12RefCountedObject
+class D3D12CommandListHandle : public D3D12DeviceChild
 {
 public:
-    D3D12CommandList(D3D12Device* InDevice, ID3D12GraphicsCommandList* InCmdList)
-        : D3D12RefCountedObject(InDevice)
-        , CmdList(InCmdList)
+    D3D12CommandListHandle(D3D12Device* InDevice)
+        : D3D12DeviceChild(InDevice)
+        , CmdList(nullptr)
         , DXRCmdList(nullptr)
     {
     }
 
-    FORCEINLINE bool InitRayTracing()
+    FORCEINLINE Bool Init(
+        D3D12_COMMAND_LIST_TYPE Type, 
+        D3D12CommandAllocatorHandle& Allocator,
+        ID3D12PipelineState* InitalPipeline)
     {
-        if (FAILED(CmdList.As<ID3D12GraphicsCommandList4>(&DXRCmdList)))
+        HRESULT Result = Device->GetDevice()->CreateCommandList(
+            1, Type,
+            Allocator.GetAllocator(),
+            InitalPipeline,
+            IID_PPV_ARGS(&CmdList));
+        if (SUCCEEDED(Result))
         {
-            LOG_ERROR("[D3D12CommandList]: FAILED to retrive DXR-CommandList");
-            return false;
+            CmdList->Close();
+
+            LOG_INFO("[D3D12Device]: Created CommandList");
+
+            if (FAILED(CmdList.As<ID3D12GraphicsCommandList4>(&DXRCmdList)))
+            {
+                LOG_ERROR("[D3D12CommandList]: FAILED to retrive DXR-CommandList");
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
         else
         {
-            return true;
+            LOG_ERROR("[D3D12CommandList]: FAILED to create CommandList");
+            return false;
         }
     }
 
-    FORCEINLINE bool Reset(D3D12CommandAllocator* Allocator)
+    FORCEINLINE Bool Reset(D3D12CommandAllocatorHandle& Allocator)
     {
         IsReady = true;
-        return SUCCEEDED(CmdList->Reset(Allocator->GetAllocator(), nullptr));
+        return SUCCEEDED(CmdList->Reset(Allocator.GetAllocator(), nullptr));
     }
 
-    FORCEINLINE bool Close()
+    FORCEINLINE Bool Close()
     {
         IsReady = false;
         return SUCCEEDED(CmdList->Close());
@@ -58,7 +78,12 @@ public:
         Float Depth, 
         const UInt8 Stencil)
     {
-        CmdList->ClearDepthStencilView(DepthStencilView, Flags, Depth, Stencil, 0, nullptr);
+        CmdList->ClearDepthStencilView(
+            DepthStencilView, 
+            Flags, 
+            Depth, 
+            Stencil, 
+            0, nullptr);
     }
 
     FORCEINLINE void ClearUnorderedAccessViewFloat(
@@ -116,22 +141,35 @@ public:
         CmdList->CopyTextureRegion(Destination, x, y, z, Source, SourceBox);
     }
 
-    FORCEINLINE void CopyResource(D3D12Resource* Destination, D3D12Resource* Source)
+    FORCEINLINE void CopyResource(
+        D3D12Resource* Destination, 
+        D3D12Resource* Source)
     {
-        CmdList->CopyResource(Destination->GetNativeResource(), Source->GetNativeResource());
+        CmdList->CopyResource(
+            Destination->GetNativeResource(), 
+            Source->GetNativeResource());
     }
 
-    FORCEINLINE void CopyNativeResource(ID3D12Resource* Destination, ID3D12Resource* Source)
+    FORCEINLINE void CopyNativeResource(
+        ID3D12Resource* Destination, 
+        ID3D12Resource* Source)
     {
         CmdList->CopyResource(Destination, Source);
     }
 
-    FORCEINLINE void ResolveSubresource(D3D12Resource* Destination, D3D12Resource* Source, DXGI_FORMAT Format)
+    FORCEINLINE void ResolveSubresource(
+        D3D12Resource* Destination, 
+        D3D12Resource* Source, 
+        DXGI_FORMAT Format)
     {
-        CmdList->ResolveSubresource(Destination->GetNativeResource(), 0, Source->GetNativeResource(), 0, Format);
+        CmdList->ResolveSubresource(
+            Destination->GetNativeResource(), 0, 
+            Source->GetNativeResource(), 0, 
+            Format);
     }
 
-    FORCEINLINE void BuildRaytracingAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* Desc)
+    FORCEINLINE void BuildRaytracingAccelerationStructure(
+        const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* Desc)
     {
         DXRCmdList->BuildRaytracingAccelerationStructure(Desc, 0, nullptr);
     }
@@ -180,7 +218,9 @@ public:
             StartInstanceLocation);
     }
 
-    FORCEINLINE void SetDescriptorHeaps(ID3D12DescriptorHeap* const* DescriptorHeaps, UInt32 DescriptorHeapCount)
+    FORCEINLINE void SetDescriptorHeaps(
+        ID3D12DescriptorHeap* const* DescriptorHeaps, 
+        UInt32 DescriptorHeapCount)
     {
         CmdList->SetDescriptorHeaps(DescriptorHeapCount, DescriptorHeaps);
     }
@@ -205,14 +245,22 @@ public:
         CmdList->SetGraphicsRootSignature(RootSignature->GetRootSignature());
     }
 
-    FORCEINLINE void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, UInt32 RootParameterIndex)
+    FORCEINLINE void SetComputeRootDescriptorTable(
+        D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor,
+        UInt32 RootParameterIndex)
     {
-        CmdList->SetComputeRootDescriptorTable(RootParameterIndex, BaseDescriptor);
+        CmdList->SetComputeRootDescriptorTable(
+            RootParameterIndex, 
+            BaseDescriptor);
     }
 
-    FORCEINLINE void SetGraphicsRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, UInt32 RootParameterIndex)
+    FORCEINLINE void SetGraphicsRootDescriptorTable(
+        D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, 
+        UInt32 RootParameterIndex)
     {
-        CmdList->SetGraphicsRootDescriptorTable(RootParameterIndex, BaseDescriptor);
+        CmdList->SetGraphicsRootDescriptorTable(
+            RootParameterIndex, 
+            BaseDescriptor);
     }
 
     FORCEINLINE void SetGraphicsRoot32BitConstants(
@@ -221,7 +269,11 @@ public:
         UInt32 DestOffsetIn32BitValues, 
         UInt32 RootParameterIndex)
     {
-        CmdList->SetGraphicsRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
+        CmdList->SetGraphicsRoot32BitConstants(
+            RootParameterIndex, 
+            Num32BitValues, 
+            SourceData, 
+            DestOffsetIn32BitValues);
     }
 
     FORCEINLINE void SetComputeRoot32BitConstants(
@@ -230,7 +282,11 @@ public:
         UInt32 DestOffsetIn32BitValues, 
         UInt32 RootParameterIndex)
     {
-        CmdList->SetComputeRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
+        CmdList->SetComputeRoot32BitConstants(
+            RootParameterIndex, 
+            Num32BitValues, 
+            SourceData, 
+            DestOffsetIn32BitValues);
     }
 
     FORCEINLINE void IASetVertexBuffers(
@@ -238,7 +294,10 @@ public:
         const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, 
         UInt32 VertexBufferViewCount)
     {
-        CmdList->IASetVertexBuffers(StartSlot, VertexBufferViewCount, VertexBufferViews);
+        CmdList->IASetVertexBuffers(
+            StartSlot, 
+            VertexBufferViewCount, 
+            VertexBufferViews);
     }
 
     FORCEINLINE void IASetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW* IndexBufferView)
@@ -289,13 +348,13 @@ public:
         D3D12_RESOURCE_BARRIER Barrier;
         Memory::Memzero(&Barrier);
 
-        Barrier.Type            =  D3D12_RESOURCE_BARRIER_TYPE_UAV;
-        Barrier.UAV.pResource    = Resource;
+        Barrier.Type          =  D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        Barrier.UAV.pResource = Resource;
 
         CmdList->ResourceBarrier(1, &Barrier);
     }
 
-    FORCEINLINE bool IsRecordning() const
+    FORCEINLINE Bool IsRecordning() const
     {
         return IsReady;
     }

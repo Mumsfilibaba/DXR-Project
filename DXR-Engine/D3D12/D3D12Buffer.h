@@ -7,7 +7,7 @@
 class D3D12Buffer : public D3D12Resource
 {
 public:
-    D3D12Buffer::D3D12Buffer(D3D12Device* InDevice)
+    D3D12Buffer(D3D12Device* InDevice)
         : D3D12Resource(InDevice)
     {
     }
@@ -23,7 +23,7 @@ class D3D12VertexBuffer : public VertexBuffer, public D3D12Buffer
     friend class D3D12RenderLayer;
 
 public:
-    D3D12VertexBuffer::D3D12VertexBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InStride, UInt32 InUsage)
+    D3D12VertexBuffer(D3D12Device* InDevice, UInt32 InSizeInBytes, UInt32 InStride, UInt32 InUsage)
         : VertexBuffer(InSizeInBytes, InStride, InUsage)
         , D3D12Buffer(InDevice)
         , VertexBufferView()

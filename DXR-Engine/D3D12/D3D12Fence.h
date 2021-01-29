@@ -1,27 +1,49 @@
 #pragma once
-#include "D3D12RefCountedObject.h"
+#include "D3D12DeviceChild.h"
 
-class D3D12Fence : public D3D12RefCountedObject
+class D3D12FenceHandle : public D3D12DeviceChild
 {
 public:
-    D3D12Fence(D3D12Device* InDevice, ID3D12Fence* InFence, HANDLE InEvent)
-        : D3D12RefCountedObject(InDevice)
-        , Fence(InFence)
-        , Event(InEvent)
+    D3D12FenceHandle(D3D12Device* InDevice)
+        : D3D12DeviceChild(InDevice)
+        , Fence(nullptr)
+        , Event(0)
     {
-        VALIDATE(Fence != nullptr);
-        VALIDATE(Event != 0);
     }
 
-    ~D3D12Fence()
+    ~D3D12FenceHandle()
     {
         ::CloseHandle(Event);
     }
 
-    FORCEINLINE bool WaitForValue(UInt64 Value)
+    FORCEINLINE Bool Init(UInt64 InitalValue)
     {
-        HRESULT hResult = Fence->SetEventOnCompletion(Value, Event);
-        if (SUCCEEDED(hResult))
+        HRESULT Result = Device->GetDevice()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
+        if (SUCCEEDED(Result))
+        {
+            Event = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+            if (Event == NULL)
+            {
+                LOG_ERROR("[D3D12Device]: FAILED to create Event for Fence");
+                return false;
+            }
+            else
+            {
+                LOG_INFO("[D3D12Device]: Created Fence");
+                return true;
+            }
+        }
+        else
+        {
+            LOG_INFO("[D3D12Device]: FAILED to create Fence");
+            return false;
+        }
+    }
+
+    FORCEINLINE Bool WaitForValue(UInt64 Value)
+    {
+        HRESULT Result = Fence->SetEventOnCompletion(Value, Event);
+        if (SUCCEEDED(Result))
         {
             ::WaitForSingleObjectEx(Event, INFINITE, FALSE);
             return true;
@@ -32,10 +54,10 @@ public:
         }
     }
 
-    FORCEINLINE bool Signal(UInt64 Value)
+    FORCEINLINE Bool Signal(UInt64 Value)
     {
-        HRESULT hResult = Fence->Signal(Value);
-        return SUCCEEDED(hResult);
+        HRESULT Result = Fence->Signal(Value);
+        return SUCCEEDED(Result);
     }
 
     FORCEINLINE void SetName(const std::string& Name)

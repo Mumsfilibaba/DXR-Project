@@ -1,19 +1,21 @@
 #pragma once
-#include "D3D12RefCountedObject.h"
+#include "D3D12DeviceChild.h"
+
+#include "Core/RefCountedObject.h"
 
 #include "Utilities/StringUtilities.h"
 
 class D3D12RootSignature;
 
-#define D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER		0
-#define D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER			1
-#define D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER		2
-#define D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER		3
-#define D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER				4
-#define D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_COUNT				32
-#define D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT				16
-#define D3D12_DEFAULT_ONLINE_RESOURCE_DESCRIPTOR_HEAP_COUNT		2048
-#define D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_HEAP_COUNT		2048
+#define D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER 0
+#define D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER        1
+#define D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER   2
+#define D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER  3
+#define D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER          4
+#define D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_COUNT          32
+#define D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT         16
+#define D3D12_DEFAULT_ONLINE_RESOURCE_DESCRIPTOR_HEAP_COUNT 2048
+#define D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_HEAP_COUNT  2048
 
 struct D3D12DefaultRootSignatures
 {
@@ -25,11 +27,11 @@ struct D3D12DefaultRootSignatures
     Bool CreateRootSignatures(class D3D12Device* Device);
 };
 
-class D3D12RootSignature : public D3D12RefCountedObject
+class D3D12RootSignature : public D3D12DeviceChild, public RefCountedObject
 {
 public:
     D3D12RootSignature(D3D12Device* InDevice, ID3D12RootSignature* InRootSignature)
-        : D3D12RefCountedObject(InDevice)
+        : D3D12DeviceChild(InDevice)
         , RootSignature(InRootSignature)
     {
         VALIDATE(RootSignature != nullptr);

@@ -65,7 +65,7 @@ public:
 class D3D12BackBufferTexture2D : public D3D12Texture2D
 {
 public:
-    D3D12BackBufferTexture2D(D3D12Device* InDevice, TComPtr<ID3D12Resource>& Resource)
+    D3D12BackBufferTexture2D(D3D12Device* InDevice, const TComPtr<ID3D12Resource>& Resource)
         : D3D12Texture2D(InDevice, EFormat::Format_Unknown, 0, 0, 0, 0, 0, ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 0.0f)))
     {
         NativeResource = Resource;

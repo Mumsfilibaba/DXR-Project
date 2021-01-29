@@ -23,7 +23,7 @@ D3D12RayTracingGeometry::~D3D12RayTracingGeometry()
 }
 
 bool D3D12RayTracingGeometry::BuildAccelerationStructure(
-    D3D12CommandList* CommandList, 
+    D3D12CommandListHandle* CommandList, 
     TSharedRef<D3D12VertexBuffer>& InVertexBuffer,
     UInt32 InVertexCount, 
     TSharedRef<D3D12IndexBuffer>& InIndexBuffer,
@@ -168,7 +168,7 @@ bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineStat
 }
 
 bool D3D12RayTracingScene::BuildAccelerationStructure(
-    D3D12CommandList* CommandList, 
+    D3D12CommandListHandle* CommandList, 
     TArray<D3D12RayTracingGeometryInstance>& InInstances,
     TArray<BindingTableEntry>& InBindingTableEntries,
     UInt32 InNumHitGroups)

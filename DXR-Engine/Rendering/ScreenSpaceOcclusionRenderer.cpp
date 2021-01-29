@@ -165,7 +165,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         EResourceState::ResourceState_NonPixelShaderResource);
 
     CmdList.End();
-    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    gCmdListExecutor.ExecuteCommandList(CmdList);
 
     const UInt32 Stride = sizeof(XMFLOAT3);
     const UInt32 SizeInBytes = Stride * SSAOKernel.Size();

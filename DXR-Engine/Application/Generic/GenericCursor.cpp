@@ -13,55 +13,55 @@ TSharedRef<GenericCursor> GlobalCursors::NotAllowed;
 
 Bool GlobalCursors::Init()
 {
-    Arrow = GlobalPlatformApplication->MakeCursor();
+    Arrow = gPlatformApplication->MakeCursor();
     if (!Arrow->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_Arrow)))
     {
         return false;
     }
 
-    TextInput = GlobalPlatformApplication->MakeCursor();
+    TextInput = gPlatformApplication->MakeCursor();
     if (!TextInput->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_TextInput)))
     {
         return false;
     }
 
-    ResizeAll = GlobalPlatformApplication->MakeCursor();
+    ResizeAll = gPlatformApplication->MakeCursor();
     if (!ResizeAll->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeAll)))
     {
         return false;
     }
 
-    ResizeEW = GlobalPlatformApplication->MakeCursor();
+    ResizeEW = gPlatformApplication->MakeCursor();
     if (!ResizeEW->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeEW)))
     {
         return false;
     }
 
-    ResizeNS = GlobalPlatformApplication->MakeCursor();
+    ResizeNS = gPlatformApplication->MakeCursor();
     if (!ResizeNS->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNS)))
     {
         return false;
     }
 
-    ResizeNESW = GlobalPlatformApplication->MakeCursor();
+    ResizeNESW = gPlatformApplication->MakeCursor();
     if (!ResizeNESW->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNESW)))
     {
         return false;
     }
 
-    ResizeNWSE = GlobalPlatformApplication->MakeCursor();
+    ResizeNWSE = gPlatformApplication->MakeCursor();
     if (!ResizeNWSE->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNWSE)))
     {
         return false;
     }
 
-    Hand = GlobalPlatformApplication->MakeCursor();
+    Hand = gPlatformApplication->MakeCursor();
     if (!Hand->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_Hand)))
     {
         return false;
     }
 
-    NotAllowed = GlobalPlatformApplication->MakeCursor();
+    NotAllowed = gPlatformApplication->MakeCursor();
     if (!NotAllowed->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_NotAllowed)))
     {
         return false;

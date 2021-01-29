@@ -413,7 +413,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
     CmdList.DestroyResource(BRDF_PipelineState.Get());
 
     CmdList.End();
-    GlobalCmdListExecutor.ExecuteCommandList(CmdList);
+    gCmdListExecutor.ExecuteCommandList(CmdList);
 
     if (!ShaderCompiler::CompileFromFile(
         "../DXR-Engine/Shaders/DeferredLightPass.hlsl",

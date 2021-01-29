@@ -61,7 +61,7 @@ public:
         EShaderModel ShaderModel,
         TArray<UInt8>& Code)
     {
-        return GlobalShaderCompiler->CompileFromFile(
+        return gShaderCompiler->CompileFromFile(
             FilePath,
             EntryPoint,
             Defines,
@@ -78,7 +78,7 @@ public:
         EShaderModel ShaderModel,
         TArray<UInt8>& Code)
     {
-        return GlobalShaderCompiler->CompileShader(
+        return gShaderCompiler->CompileShader(
             ShaderSource,
             EntryPoint,
             Defines,

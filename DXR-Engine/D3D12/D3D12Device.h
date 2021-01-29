@@ -26,15 +26,6 @@ public:
 
     Bool Init();
 
-    class D3D12CommandQueue*     CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type);
-    class D3D12CommandAllocator* CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type);
-    
-    class D3D12CommandList* CreateCommandList(
-        D3D12_COMMAND_LIST_TYPE Type, 
-        D3D12CommandAllocator* Allocator, 
-        ID3D12PipelineState* InitalPipeline);
-
-    class D3D12Fence*   CreateFence(UInt64 InitalValue);
     D3D12RootSignature* CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc);
     D3D12RootSignature* CreateRootSignature(IDxcBlob* ShaderBlob);
     D3D12RootSignature* CreateRootSignature(Void* RootSignatureData, const UInt32 RootSignatureSize);

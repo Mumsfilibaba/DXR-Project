@@ -4,14 +4,17 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandList.h"
+#include "D3D12CommandQueue.h"
+#include "D3D12CommandAllocator.h"
 #include "D3D12DescriptorHeap.h"
+#include "D3D12Fence.h"
 #include "D3D12Buffer.h"
 #include "D3D12Views.h"
 #include "D3D12SamplerState.h"
 #include "D3D12PipelineState.h"
 
-class D3D12CommandQueue;
-class D3D12CommandAllocator;
+class D3D12CommandQueueHandle;
+class D3D12CommandAllocatorHandle;
 
 class D3D12VertexBufferState
 {
@@ -28,7 +31,8 @@ public:
             VertexBufferViews.Resize(Slot + 1);
         }
 
-        // TODO: Maybe save a ref so that we can ensure that the buffer does not get deleted until commandbatch is finished
+        // TODO: Maybe save a ref so that we can ensure that the buffer
+        //       does not get deleted until commandbatch is finished
         VALIDATE(VertexBuffer != nullptr);
         VertexBufferViews[Slot] = VertexBuffer->GetView();
     }
@@ -161,13 +165,13 @@ public:
         D3D12Device& Device,
         D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
         D3D12OnlineDescriptorHeap& SamplerDescriptorHeap,
-        D3D12CommandList& CmdList);
+        D3D12CommandListHandle& CmdList);
 
     void CommitComputeDescriptorTables(
         D3D12Device& Device,
         D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
         D3D12OnlineDescriptorHeap& SamplerDescriptorHeap,
-        D3D12CommandList& CmdList);
+        D3D12CommandListHandle& CmdList);
 
     FORCEINLINE void Reset()
     {
@@ -226,8 +230,9 @@ private:
 class D3D12GPUResourceUploader
 {
 public:
-    D3D12GPUResourceUploader()
-        : MappedMemory(nullptr)
+    D3D12GPUResourceUploader(D3D12Device* InDevice)
+        : Device(InDevice)
+        , MappedMemory(nullptr)
         , SizeInBytes(0)
         , OffsetInBytes(0)
         , Resource(nullptr)
@@ -235,10 +240,10 @@ public:
     {
     }
 
-    Bool Reserve(D3D12Device& Device, UInt32 InSizeInBytes);
+    Bool Reserve(UInt32 InSizeInBytes);
     void Reset();
 
-    Byte* LinearAllocate(D3D12Device& Device, UInt32 SizeInBytes);
+    Byte* LinearAllocate(UInt32 SizeInBytes);
 
     FORCEINLINE ID3D12Resource* GetGpuResource() const
     {
@@ -256,9 +261,10 @@ public:
     }
 
 private:
-    Byte* MappedMemory      = nullptr;
-    UInt32 SizeInBytes      = 0;
-    UInt32 OffsetInBytes    = 0;
+    D3D12Device* Device  = nullptr;
+    Byte*  MappedMemory  = nullptr;
+    UInt32 SizeInBytes   = 0;
+    UInt32 OffsetInBytes = 0;
     TComPtr<ID3D12Resource> Resource;
     TArray<TComPtr<ID3D12Resource>> GarbageResources;
 };
@@ -266,22 +272,21 @@ private:
 class D3D12CommandBatch
 {
 public:
-    D3D12CommandBatch(
-        TSharedRef<D3D12CommandAllocator>& InCmdAllocator, 
-        TSharedRef<D3D12OnlineDescriptorHeap>& InOnlineResourceDescriptorHeap,
-        TSharedRef<D3D12OnlineDescriptorHeap>& InOnlineSamplerDescriptorHeap,
-        D3D12GPUResourceUploader InGPUResourceUploader)
-        : CmdAllocator(InCmdAllocator)
-        , OnlineResourceDescriptorHeap(InOnlineResourceDescriptorHeap)
-        , OnlineSamplerDescriptorHeap(InOnlineSamplerDescriptorHeap)
-        , GpuResourceUploader(InGPUResourceUploader)
+    D3D12CommandBatch(D3D12Device* InDevice)
+        : Device(InDevice)
+        , CmdAllocator(InDevice)
+        , GpuResourceUploader(InDevice)
+        , OnlineResourceDescriptorHeap(nullptr)
+        , OnlineSamplerDescriptorHeap(nullptr)
         , Resources()
     {
     }
 
+    Bool Init();
+
     FORCEINLINE Bool Reset()
     {
-        if (CmdAllocator->Reset())
+        if (CmdAllocator.Reset())
         {
             Resources.Clear();
             NativeResources.Clear();
@@ -314,9 +319,9 @@ public:
         return GpuResourceUploader;
     }
 
-    FORCEINLINE D3D12CommandAllocator* GetCommandAllocator() const
+    FORCEINLINE D3D12CommandAllocatorHandle& GetCommandAllocator()
     {
-        return CmdAllocator.Get();
+        return CmdAllocator;
     }
 
     FORCEINLINE D3D12OnlineDescriptorHeap* GetOnlineResourceDescriptorHeap() const
@@ -330,13 +335,13 @@ public:
     }
 
 private:
-    TSharedRef<D3D12CommandAllocator>     CmdAllocator;
+    D3D12Device* Device = nullptr;
+    D3D12CommandAllocatorHandle CmdAllocator;
+    D3D12GPUResourceUploader    GpuResourceUploader;
     TSharedRef<D3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
     TSharedRef<D3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
-    
-    D3D12GPUResourceUploader             GpuResourceUploader;
-    TArray<TSharedRef<PipelineResource>> Resources;
-    TArray<TComPtr<ID3D12Resource>>      NativeResources;
+    TArray<TSharedRef<PipelineResource>>  Resources;
+    TArray<TComPtr<ID3D12Resource>>       NativeResources;
 };
 
 class D3D12ResourceBarrierBatcher
@@ -346,6 +351,8 @@ public:
         : Barriers()
     {
     }
+
+    Bool Init();
 
     void AddTransitionBarrier(
         ID3D12Resource* Resource,
@@ -364,13 +371,13 @@ public:
         D3D12_RESOURCE_BARRIER Barrier;
         Memory::Memzero(&Barrier);
 
-        Barrier.Type            = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-        Barrier.UAV.pResource    = Resource->GetNativeResource();
+        Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        Barrier.UAV.pResource = Resource->GetNativeResource();
 
         Barriers.EmplaceBack(Barrier);
     }
 
-    FORCEINLINE void FlushBarriers(D3D12CommandList& CmdList)
+    FORCEINLINE void FlushBarriers(D3D12CommandListHandle& CmdList)
     {
         if (!Barriers.IsEmpty())
         {
@@ -397,24 +404,21 @@ class D3D12CommandContext : public ICommandContext, public D3D12DeviceChild
 {
 public:
     D3D12CommandContext(
-        D3D12Device* InDevice, 
-        TSharedRef<D3D12CommandQueue>& InCmdQueue, 
+        D3D12Device* InDevice,
         const D3D12DefaultRootSignatures& InDefaultRootSignatures);
     
     ~D3D12CommandContext();
 
     Bool Init();
 
-    FORCEINLINE D3D12CommandQueue& GetQueue() const
+    FORCEINLINE D3D12CommandQueueHandle& GetQueue()
     {
-        VALIDATE(CmdQueue != nullptr);
-        return *CmdQueue;
+        return CmdQueue;
     }
 
-    FORCEINLINE D3D12CommandList& GetCommandList() const
+    FORCEINLINE D3D12CommandListHandle& GetCommandList()
     {
-        VALIDATE(CmdList != nullptr);
-        return *CmdList;
+        return CmdList;
     }
 
 public:
@@ -471,8 +475,8 @@ public:
         UInt32 BufferSlot) override final;
 
     virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
-    virtual void BindIndexBuffer(IndexBuffer* IndexBuffer) override final;
-    virtual void BindRayTracingScene(RayTracingScene* RayTracingScene) override final;
+    virtual void BindIndexBuffer(IndexBuffer* IndexBuffer)                      override final;
+    virtual void BindRayTracingScene(RayTracingScene* RayTracingScene)          override final;
 
     virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState)     override final;
     virtual void BindComputePipelineState(class ComputePipelineState* PipelineState)       override final;
@@ -619,9 +623,9 @@ public:
     virtual void InsertMarker(const std::string& Message) override final;
 
 private:
-    TSharedRef<D3D12CommandQueue> CmdQueue;
-    TSharedRef<D3D12CommandList>  CmdList;
-    TSharedRef<class D3D12Fence>  Fence;
+    D3D12CommandListHandle  CmdList;
+    D3D12FenceHandle        Fence;
+    D3D12CommandQueueHandle CmdQueue;
     UInt64 FenceValue = 0;
 
     TArray<D3D12CommandBatch> CmdBatches;

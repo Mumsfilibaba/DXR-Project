@@ -6,10 +6,9 @@
 
 #include "Application/Generic/GenericOutputDevice.h"
 #include "Application/Generic/GenericCursor.h"
-
+#include "Application/Events/EventDispatcher.h"
 #include "Application/Platform/PlatformApplication.h"
 #include "Application/Platform/PlatformDialogMisc.h"
-#include "Application/Events/EventDispatcher.h"
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
@@ -35,40 +34,52 @@ Int32 EngineMain(const TArrayView<const Char*> Args)
     Memory::SetDebugFlags(EMemoryDebugFlag::MemoryDebugFlag_LeakCheck);
 #endif
 
-    if (!GlobalEngineLoop.PreInit())
+    if (!gEngineLoop.PreInit())
     {
         PlatformDialogMisc::MessageBox("ERROR", "Pre-Initialize Failed");
         return -1;
     }
 
-    if (!GlobalEngineLoop.Init())
+    if (!gEngineLoop.Init())
     {
         PlatformDialogMisc::MessageBox("ERROR", "Initialize Failed");
         return -1;
     }
 
-    if (!GlobalEngineLoop.PostInit())
+    if (!gEngineLoop.PostInit())
     {
         PlatformDialogMisc::MessageBox("ERROR", "Post-Initialize Failed");
         return -1;
     }
 
-    while (GlobalEngineLoop.IsRunning())
+    while (gEngineLoop.IsRunning())
     {
         TRACE_SCOPE("Tick");
-            
-        GlobalEngineLoop.PreTick();
-    
-        GlobalEngineLoop.Tick();
-    
-        GlobalEngineLoop.PostTick();
+
+        gEngineLoop.PreTick();
+
+        gEngineLoop.Tick();
+
+        gEngineLoop.PostTick();
     }
 
-    GlobalEngineLoop.PreRelease();
+    if (!gEngineLoop.PreRelease())
+    {
+        PlatformDialogMisc::MessageBox("ERROR", "Pre-Release Failed");
+        return -1;
+    }
     
-    GlobalEngineLoop.Release();
+    if (!gEngineLoop.Release())
+    {
+        PlatformDialogMisc::MessageBox("ERROR", "Release Failed");
+        return -1;
+    }
     
-    GlobalEngineLoop.PostRelease();
+    if (!gEngineLoop.PostRelease())
+    {
+        PlatformDialogMisc::MessageBox("ERROR", "Post-Release Failed");
+        return -1;
+    }
 
     return 0;
 }
@@ -77,20 +88,20 @@ Bool EngineLoop::PreInit()
 {
     TRACE_FUNCTION_SCOPE();
 
-    GlobalProfiler.Init();
+    gProfiler.Init();
 
-    GlobalConsoleOutput = PlatformOutputDevice::Make();
-    if (!GlobalConsoleOutput)
+    gConsoleOutput = PlatformOutputDevice::Make();
+    if (!gConsoleOutput)
     {
         return false;
     }
     else
     {
-        GlobalConsoleOutput->SetTitle("DXR-Engine Error Output");
+        gConsoleOutput->SetTitle("DXR-Engine Error Output");
     }
 
-    GlobalPlatformApplication = PlatformApplication::Make();
-    if (!GlobalPlatformApplication->Init())
+    gPlatformApplication = PlatformApplication::Make();
+    if (!gPlatformApplication->Init())
     {
         PlatformDialogMisc::MessageBox("ERROR", "Failed to create Platform Application");
         return false;
@@ -103,10 +114,10 @@ Bool EngineLoop::Init()
 {
     TRACE_FUNCTION_SCOPE();
 
-    GlobalEventDispatcher = DBG_NEW EventDispatcher(GlobalPlatformApplication);
-    GlobalPlatformApplication->SetEventHandler(GlobalEventDispatcher);
+    gEventDispatcher = DBG_NEW EventDispatcher(gPlatformApplication);
+    gPlatformApplication->SetEventHandler(gEventDispatcher);
 
-    GlobalConsole.Init();
+    gConsole.Init();
 
     const UInt32 Style =
         WindowStyleFlag_Titled      |
@@ -116,25 +127,25 @@ Bool EngineLoop::Init()
         WindowStyleFlag_Resizeable;
 
     WindowCreateInfo WinCreateInfo("DXR Engine", 1920, 1080, Style);
-    GlobalMainWindow = GlobalPlatformApplication->MakeWindow();
+    gMainWindow = gPlatformApplication->MakeWindow();
     
-    if (!GlobalMainWindow->Init(WinCreateInfo))
+    if (!gMainWindow->Init(WinCreateInfo))
     {
         PlatformDialogMisc::MessageBox("ERROR", "Failed to create Application");
         return false;
     }
     else
     {
-        GlobalMainWindow->Show(false);
+        gMainWindow->Show(false);
 
-        INIT_CONSOLE_COMMAND("ToggleFullscreen", []() 
+        INIT_CONSOLE_COMMAND("a.ToggleFullscreen", []() 
         {
-            GlobalMainWindow->ToggleFullscreen();
+            gMainWindow->ToggleFullscreen();
         });
 
-        INIT_CONSOLE_COMMAND("Quit", []()
+        INIT_CONSOLE_COMMAND("a.Quit", []()
         {
-            GlobalEngineLoop.Exit();
+            gEngineLoop.Exit();
         });
     }
 
@@ -151,7 +162,7 @@ Bool EngineLoop::Init()
         return false;
     }
 
-    if (!GlobalRenderer.Init())
+    if (!gRenderer.Init())
     {
         PlatformDialogMisc::MessageBox("ERROR", "FAILED to create Renderer");
         return false;
@@ -163,8 +174,8 @@ Bool EngineLoop::Init()
         return false;
     }
 
-    GlobalGame = MakeGameInstance();
-    if (!GlobalGame->Init())
+    gGame = MakeGameInstance();
+    if (!gGame->Init())
     {
         PlatformDialogMisc::MessageBox("ERROR", "FAILED initialize Game");
         return false;
@@ -192,18 +203,18 @@ void EngineLoop::PreTick()
         Exit();
     }
 
-    GlobalPlatformApplication->Tick();
+    gPlatformApplication->Tick();
 }
 
 void EngineLoop::Tick()
 {
     TRACE_FUNCTION_SCOPE();
 
-    EngineClock.Tick();
-    
-    GlobalGame->Tick(EngineClock.GetDeltaTime());
+    Clock.Tick();
 
-    GlobalConsole.Tick();
+    gGame->Tick(Clock.GetDeltaTime());
+
+    gConsole.Tick();
 
     Editor::Tick();
 }
@@ -212,16 +223,16 @@ void EngineLoop::PostTick()
 {
     TRACE_FUNCTION_SCOPE();
 
-    GlobalProfiler.Tick();
+    gProfiler.Tick();
 
-    GlobalRenderer.Tick(*GlobalGame->GetCurrentScene());
+    gRenderer.Tick(*gGame->GetCurrentScene());
 }
 
 Bool EngineLoop::PreRelease()
 {
     TRACE_FUNCTION_SCOPE();
 
-    GlobalCmdListExecutor.WaitForGPU();
+    gCmdListExecutor.WaitForGPU();
     
     TextureFactory::Release();
 
@@ -232,11 +243,11 @@ Bool EngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
-    SAFEDELETE(GlobalGame);
+    SAFEDELETE(gGame);
 
     DebugUI::Release();
 
-    GlobalRenderer.Release();
+    gRenderer.Release();
 
     RenderLayer::Release();
 
@@ -247,12 +258,13 @@ Bool EngineLoop::PostRelease()
 {
     TRACE_FUNCTION_SCOPE();
 
-    SAFEDELETE(GlobalEventDispatcher);
+    SAFEDELETE(gEventDispatcher);
 
-    GlobalMainWindow->Release();
+    gMainWindow->Release();
 
-    SAFEDELETE(GlobalPlatformApplication);
-    SAFEDELETE(GlobalConsoleOutput);
+    SAFEDELETE(gPlatformApplication);
+
+    SAFEDELETE(gConsoleOutput);
 
     return true;
 }
@@ -269,10 +281,10 @@ Bool EngineLoop::IsRunning() const
 
 Timestamp EngineLoop::GetDeltaTime() const
 {
-    return EngineClock.GetDeltaTime();
+    return Clock.GetDeltaTime();
 }
 
 Timestamp EngineLoop::GetTotalElapsedTime() const
 {
-    return EngineClock.GetTotalTime();
+    return Clock.GetTotalTime();
 }
