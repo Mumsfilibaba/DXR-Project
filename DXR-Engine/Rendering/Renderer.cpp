@@ -474,7 +474,6 @@ void Renderer::Tick(const Scene& Scene)
 
     ForwardRenderer.Render(CmdList, Resources, LightSetup);
 
-    // Draw DebugBoxes
     if (GlobalDrawAABBs.GetBool())
     {
         PerformAABBDebugPass(CmdList);
@@ -497,16 +496,15 @@ void Renderer::Tick(const Scene& Scene)
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End UI Render");
 
-    // Finalize Commandlist
     CmdList.TransitionTexture(Resources.BackBuffer, EResourceState::ResourceState_RenderTarget, EResourceState::ResourceState_Present);
     
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--END FRAME--");
 
     CmdList.End();
 
-    LastFrameNumDrawCalls     = CmdList.GetNumDrawCalls();
+    LastFrameNumDrawCalls = CmdList.GetNumDrawCalls();
     LastFrameNumDispatchCalls = CmdList.GetNumDispatchCalls();
-    LastFrameNumCommands      = CmdList.GetNumCommands();
+    LastFrameNumCommands = CmdList.GetNumCommands();
 
     {
         TRACE_SCOPE("ExecuteCommandList");
