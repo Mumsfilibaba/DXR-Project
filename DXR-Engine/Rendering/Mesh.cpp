@@ -46,19 +46,13 @@ Bool Mesh::Init(const MeshData& Data)
     {
         RayTracingGeometry = RenderLayer::CreateRayTracingGeometry();
 
-        VertexBufferSRV = RenderLayer::CreateShaderResourceView<Vertex>(
-            VertexBuffer.Get(), 
-            0, 
-            VertexCount);
+        VertexBufferSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(VertexBuffer.Get()));
         if (!VertexBufferSRV)
         {
             return false;
         }
 
-        // ByteAddressBuffer
-        IndexBufferSRV = RenderLayer::CreateShaderResourceView(
-            IndexBuffer.Get(), 
-            0, IndexCount);
+        IndexBufferSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(IndexBuffer.Get()));
         if (!IndexBufferSRV)
         {
             return false;

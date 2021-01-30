@@ -538,7 +538,6 @@ void Renderer::Tick(const Scene& Scene)
         EResourceState::ResourceState_NonPixelShaderResource,
         EResourceState::ResourceState_NonPixelShaderResource);
 
-    // Render to final output
     CmdList.TransitionTexture(
         Resources.FinalTarget.Get(),
         EResourceState::ResourceState_PixelShaderResource,

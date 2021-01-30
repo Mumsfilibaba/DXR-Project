@@ -1,5 +1,6 @@
 #include "D3D12Viewport.h"
 #include "D3D12CommandQueue.h"
+#include "D3D12RenderLayer.h"
 
 D3D12Viewport::D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, UInt32 InWidth, UInt32 InHeight, EFormat InPixelFormat)
     : D3D12DeviceChild(InDevice)
@@ -27,9 +28,6 @@ D3D12Viewport::~D3D12Viewport()
 
 Bool D3D12Viewport::Init()
 {
-    IDXGIFactory2* Factory   = Device->GetFactory();
-    D3D12CommandQueueHandle& Queue = CmdContext->GetQueue();
-
     // Save the flags
     Flags = Device->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
@@ -64,8 +62,8 @@ Bool D3D12Viewport::Init()
     FullscreenDesc.Windowed                = true;
 
     TComPtr<IDXGISwapChain1> TempSwapChain;
-    HRESULT Result = Factory->CreateSwapChainForHwnd(
-        Queue.GetQueue(),
+    HRESULT Result = Device->GetFactory()->CreateSwapChainForHwnd(
+        CmdContext->GetQueue().GetQueue(),
         Hwnd, 
         &SwapChainDesc, 
         &FullscreenDesc,
@@ -90,7 +88,7 @@ Bool D3D12Viewport::Init()
         return false;
     }
 
-    Factory->MakeWindowAssociation(Hwnd, DXGI_MWA_NO_ALT_ENTER);
+    Device->GetFactory()->MakeWindowAssociation(Hwnd, DXGI_MWA_NO_ALT_ENTER);
 
     if (!RetriveBackBuffers())
     {
@@ -174,6 +172,7 @@ Bool D3D12Viewport::RetriveBackBuffers()
     BackBuffers.Clear();
     BackBufferViews.Clear();
 
+    D3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = gD3D12RenderLayer->GetRenderTargetOfflineDescriptorHeap();
     for (UInt32 i = 0; i < NumBackBuffers; i++)
     {
         TComPtr<ID3D12Resource> BackBufferResource;
@@ -194,7 +193,18 @@ Bool D3D12Viewport::RetriveBackBuffers()
         Desc.Texture2D.MipSlice   = 0;
         Desc.Texture2D.PlaneSlice = 0;
 
-        BackBufferViews.EmplaceBack(DBG_NEW D3D12RenderTargetView(Device, BackBuffer, Desc));
+        TSharedRef<D3D12RenderTargetView> View = DBG_NEW D3D12RenderTargetView(Device, RenderTargetOfflineHeap);
+        if (!View->Init())
+        {
+            return false;
+        }
+
+        if (!View->CreateView(BackBuffer, Desc))
+        {
+            return false;
+        }
+
+        BackBufferViews.EmplaceBack(View);
     }
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();

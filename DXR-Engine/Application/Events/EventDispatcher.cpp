@@ -5,7 +5,7 @@
 #include <imgui.h>
 
 EventDispatcher::EventDispatcher(GenericApplication* InApplication)
-    : ApplicationEventHandler()
+    : GenericApplicationDelegate()
     , Application(InApplication)
     , EventHandlers()
 {

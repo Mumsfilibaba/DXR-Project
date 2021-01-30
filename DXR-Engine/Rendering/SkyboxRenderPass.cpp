@@ -68,11 +68,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
         FrameResources.Skybox->SetName("Skybox");
     }
 
-    FrameResources.SkyboxSRV = RenderLayer::CreateShaderResourceView(
-        FrameResources.Skybox.Get(),
-        EFormat::Format_R16G16B16A16_Float,
-        0,
-        FrameResources.Skybox->GetMipLevels());
+    FrameResources.SkyboxSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(FrameResources.Skybox.Get()));
     if (!FrameResources.SkyboxSRV)
     {
         return false;

@@ -61,6 +61,26 @@ public:
     D3D12RenderLayer();
     ~D3D12RenderLayer();
 
+    FORCEINLINE D3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap()
+    {
+        return ResourceOfflineDescriptorHeap;
+    }
+
+    FORCEINLINE D3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap()
+    {
+        return RenderTargetOfflineDescriptorHeap;
+    }
+
+    FORCEINLINE D3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap()
+    {
+        return DepthStencilOfflineDescriptorHeap;
+    }
+
+    FORCEINLINE D3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap()
+    {
+        return SamplerOfflineDescriptorHeap;
+    }
+
     virtual Bool Init(Bool EnableDebug) override final;
 
     virtual Texture1D* CreateTexture1D(
@@ -214,14 +234,14 @@ public:
     virtual class BlendState* CreateBlendState(
         const BlendStateCreateInfo& CreateInfo) const override final;
     
-    virtual class InputLayoutState*    CreateInputLayout(
+    virtual class InputLayoutState* CreateInputLayout(
         const InputLayoutStateCreateInfo& CreateInfo) const override final;
 
     virtual class GraphicsPipelineState* CreateGraphicsPipelineState(
         const GraphicsPipelineStateCreateInfo& CreateInfo) const override final;
     
     virtual class ComputePipelineState* CreateComputePipelineState(
-        const ComputePipelineStateCreateInfo& Info) const override final;
+        const ComputePipelineStateCreateInfo& CreateInfo) const override final;
     
     virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const override final;
 
@@ -232,6 +252,7 @@ public:
         EFormat ColorFormat,
         EFormat DepthFormat) const override final;
 
+    // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
     virtual Bool IsRayTracingSupported()           const override final;
     virtual Bool UAVSupportsFormat(EFormat Format) const override final;
     
@@ -331,7 +352,8 @@ private:
         const UInt32  Usage  = NewTexture->GetUsage();
         const UInt32  Width  = NewTexture->GetWidth();
         const UInt32  Height = NewTexture->GetHeight();
-        const UInt16  DepthOrArraySize = std::max(NewTexture->GetDepth(), NewTexture->GetArrayCount());
+        const UInt16  DepthOrArraySize = std::max(NewTexture->GetDepth(), NewTexture->GetArrayCount()) * 
+            (NewTexture->AsTextureCubeArray() || NewTexture->AsTextureCube() ? 6 : 1);
         const UInt32  MipLevels   = NewTexture->GetMipLevels();
         const UInt32  SampleCount = NewTexture->GetSampleCount();
 
@@ -403,16 +425,13 @@ private:
 
             if (!IsTypeless)
             {
-                DxOptimizedClearValuePtr        = &DxOptimizedClearValue;
-                DxOptimizedClearValue.Format    = Desc.Format;
+                DxOptimizedClearValuePtr     = &DxOptimizedClearValue;
+                DxOptimizedClearValue.Format = Desc.Format;
 
                 const ClearValue& OptimizedClearValue = NewTexture->GetOptimizedClearValue();
                 if (OptimizedClearValue.Type == EClearValueType::ClearValueType_Color)
                 {
-                    Memory::Memcpy(
-                        DxOptimizedClearValue.Color, 
-                        OptimizedClearValue.Color.RGBA, 
-                        sizeof(DxOptimizedClearValue.Color));
+                    Memory::Memcpy(DxOptimizedClearValue.Color, OptimizedClearValue.Color.RGBA);
                 }
                 else
                 {
@@ -451,3 +470,5 @@ private:
     D3D12OfflineDescriptorHeap* DepthStencilOfflineDescriptorHeap = nullptr;
     D3D12OfflineDescriptorHeap* SamplerOfflineDescriptorHeap      = nullptr;
 };
+
+extern D3D12RenderLayer* gD3D12RenderLayer;

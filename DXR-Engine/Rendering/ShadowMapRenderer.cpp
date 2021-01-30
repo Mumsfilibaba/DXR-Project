@@ -196,53 +196,6 @@ Bool ShadowMapRenderer::Init(
     }
 
     {
-    #if ENABLE_VSM
-        if (!ShaderCompiler::CompileFromFile(
-            "../DXR-Engine/Shaders/ShadowMap.hlsl",
-            "VSM_VSMain",
-            nullptr,
-            EShaderStage::ShaderStage_Vertex,
-            EShaderModel::ShaderModel_6_0,
-            ShaderCode))
-        {
-            Debug::DebugBreak();
-            return false;
-        }
-
-        TSharedRef<VertexShader> VSShader = RenderLayer::CreateVertexShader(ShaderCode);
-        if (!VSShader)
-        {
-            Debug::DebugBreak();
-            return false;
-        }
-        else
-        {
-            VSShader->SetName("ShadowMap VertexShader");
-        }
-
-        if (!ShaderCompiler::CompileFromFile(
-            "../DXR-Engine/Shaders/ShadowMap.hlsl",
-            "VSM_PSMain",
-            nullptr,
-            EShaderStage::ShaderStage_Pixel,
-            EShaderModel::ShaderModel_6_0,
-            ShaderCode))
-        {
-            Debug::DebugBreak();
-            return false;
-        }
-
-        TSharedRef<PixelShader> PSShader = RenderLayer::CreatePixelShader(ShaderCode);
-        if (!PSShader)
-        {
-            Debug::DebugBreak();
-            return false;
-        }
-        else
-        {
-            PSShader->SetName("ShadowMap PixelShader");
-        }
-    #else
         if (!ShaderCompiler::CompileFromFile(
             "../DXR-Engine/Shaders/ShadowMap.hlsl",
             "Main",
@@ -265,7 +218,6 @@ Bool ShadowMapRenderer::Init(
         {
             VShader->SetName("ShadowMap VertexShader");
         }
-    #endif
 
         DepthStencilStateCreateInfo DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc      = EComparisonFunc::ComparisonFunc_LessEqual;
@@ -324,13 +276,6 @@ Bool ShadowMapRenderer::Init(
         PipelineStateInfo.PipelineFormats.NumRenderTargets   = 0;
         PipelineStateInfo.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
 
-    #if ENABLE_VSM
-        VSMShadowMapPSO = MakeShared<D3D12GraphicsPipelineState>(Device.Get());
-        if (!VSMShadowMapPSO->Initialize(PSOProperties))
-        {
-            return false;
-        }
-    #else
         DirLightPipelineState = RenderLayer::CreateGraphicsPipelineState(PipelineStateInfo);
         if (!DirLightPipelineState)
         {
@@ -341,7 +286,6 @@ Bool ShadowMapRenderer::Init(
         {
             DirLightPipelineState->SetName("ShadowMap PipelineState");
         }
-    #endif
     }
 
     return true;
@@ -360,6 +304,8 @@ void ShadowMapRenderer::RenderPointLightShadows(
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Update PointLightBuffer");
+
+    CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
 
     if (UpdatePointLight)
     {
@@ -420,7 +366,6 @@ void ShadowMapRenderer::RenderPointLightShadows(
         EResourceState::ResourceState_PixelShaderResource,
         EResourceState::ResourceState_DepthWrite);
 
-    // Render PointLight ShadowMaps
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render PointLight ShadowMaps");
 
     if (UpdatePointLight)
@@ -572,6 +517,8 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Update DirectionalLightBuffer");
 
+    CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+
     if (UpdateDirLight)
     {
         TRACE_SCOPE("Update Directional LightBuffers");
@@ -593,10 +540,10 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(
                 VALIDATE(CurrentLight != nullptr);
 
                 DirectionalLightProperties Properties;
-                Properties.Color = XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-                Properties.ShadowBias = CurrentLight->GetShadowBias();
-                Properties.Direction = CurrentLight->GetDirection();
-                Properties.LightMatrix = CurrentLight->GetMatrix();
+                Properties.Color         = XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
+                Properties.ShadowBias    = CurrentLight->GetShadowBias();
+                Properties.Direction     = CurrentLight->GetDirection();
+                Properties.LightMatrix   = CurrentLight->GetMatrix();
                 Properties.MaxShadowBias = CurrentLight->GetMaxShadowBias();
 
                 constexpr UInt32 SizeInBytes = sizeof(DirectionalLightProperties);
@@ -665,9 +612,9 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(
             if (IsSubClassOf<DirectionalLight>(Light))
             {
                 DirectionalLight* DirLight = Cast<DirectionalLight>(Light);
-                PerShadowMapData.Matrix = DirLight->GetMatrix();
-                PerShadowMapData.Position = DirLight->GetShadowMapPosition();
-                PerShadowMapData.FarPlane = DirLight->GetShadowFarPlane();
+                PerShadowMapData.Matrix    = DirLight->GetMatrix();
+                PerShadowMapData.Position  = DirLight->GetShadowMapPosition();
+                PerShadowMapData.FarPlane  = DirLight->GetShadowFarPlane();
 
                 CmdList.TransitionBuffer(
                     PerShadowMapBuffer.Get(),
@@ -695,7 +642,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(
                     CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
                     CmdList.BindIndexBuffer(Command.IndexBuffer);
 
-                    ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+                    ShadowPerObjectBuffer.Matrix       = Command.CurrentActor->GetTransform().GetMatrix();
                     ShadowPerObjectBuffer.ShadowOffset = Command.Mesh->ShadowOffset;
 
                     CmdList.Bind32BitShaderConstants(
@@ -750,10 +697,13 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
             for (UInt32 Face = 0; Face < 6; Face++)
             {
                 TStaticArray<TSharedRef<DepthStencilView>, 6>& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
-                DepthCube[Face] = RenderLayer::CreateDepthStencilView(
+
+                DepthStencilViewCreateInfo DsvInfo(
                     LightSetup.PointLightShadowMaps.Get(),
                     LightSetup.ShadowMapFormat,
-                    0, i, Face);
+                    Face, 0, i, 0);
+
+                DepthCube[Face] = RenderLayer::CreateDepthStencilView(DsvInfo);
                 if (!DepthCube[Face])
                 {
                     Debug::DebugBreak();
@@ -762,10 +712,8 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
             }
         }
 
-        LightSetup.PointLightShadowMapSRV = RenderLayer::CreateShaderResourceView(
-            LightSetup.PointLightShadowMaps.Get(),
-            EFormat::Format_R32_Float,
-            0, 1, 0, LightSetup.MaxPointLightShadows);
+        ShaderResourceViewCreateInfo PointLightShadowMapsSrvInfo(LightSetup.PointLightShadowMaps.Get(), EFormat::Format_R32_Float);
+        LightSetup.PointLightShadowMapSRV = RenderLayer::CreateShaderResourceView(PointLightShadowMapsSrvInfo);
         if (!LightSetup.PointLightShadowMapSRV)
         {
             Debug::DebugBreak();
@@ -788,10 +736,8 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
     {
         LightSetup.DirLightShadowMaps->SetName("Directional Light ShadowMaps");
 
-        LightSetup.DirLightShadowMapDSV = RenderLayer::CreateDepthStencilView(
-            LightSetup.DirLightShadowMaps.Get(),
-            LightSetup.ShadowMapFormat,
-            0);
+        DepthStencilViewCreateInfo DirLightShadowMapsDsvInfo(LightSetup.DirLightShadowMaps.Get());
+        LightSetup.DirLightShadowMapDSV = RenderLayer::CreateDepthStencilView(DirLightShadowMapsDsvInfo);
         if (!LightSetup.DirLightShadowMapDSV)
         {
             Debug::DebugBreak();
@@ -802,10 +748,8 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
             LightSetup.DirLightShadowMapDSV->SetName("DirectionalLight DepthStencilView");
         }
 
-        LightSetup.DirLightShadowMapSRV = RenderLayer::CreateShaderResourceView(
-            LightSetup.DirLightShadowMaps.Get(),
-            EFormat::Format_R32_Float,
-            0, 1);
+        ShaderResourceViewCreateInfo DirLightShadowMapsSrvInfo(LightSetup.DirLightShadowMaps.Get(), EFormat::Format_R32_Float);
+        LightSetup.DirLightShadowMapSRV = RenderLayer::CreateShaderResourceView(DirLightShadowMapsSrvInfo);
         if (!LightSetup.DirLightShadowMapSRV)
         {
             Debug::DebugBreak();

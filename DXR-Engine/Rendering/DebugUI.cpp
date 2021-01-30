@@ -72,8 +72,8 @@ Bool DebugUI::Init()
     }
 
     ImGuiIO& IO = ImGui::GetIO();
-    IO.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;    // We can honor GetMouseCursor() values (optional)
-    IO.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;    // We can honor IO.WantSetMousePos requests (optional, rarely used)
+    IO.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
+    IO.BackendFlags |= ImGuiBackendFlags_HasSetMousePos; 
     IO.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
     IO.BackendPlatformName = "Windows";
 

@@ -247,7 +247,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
 
     constexpr UInt32  LUTSize   = 512;
     constexpr EFormat LUTFormat = EFormat::Format_R16G16_Float;
-    if (!RenderLayer::UAVSupportsFormat(EFormat::Format_R16G16_Float))
+    if (!RenderLayer::UAVSupportsFormat(LUTFormat))
     {
         LOG_ERROR("[Renderer]: Format_R16G16_Float is not supported for UAVs");
 
@@ -272,9 +272,8 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         StagingTexture->SetName("Staging IntegrationLUT");
     }
 
-    TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderLayer::CreateUnorderedAccessView(
-        StagingTexture.Get(), 
-        LUTFormat, 0);
+    UnorderedAccessViewCreateInfo StagingUavInfo(StagingTexture.Get());
+    TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderLayer::CreateUnorderedAccessView(StagingUavInfo);
     if (!StagingTextureUAV)
     {
         Debug::DebugBreak();
@@ -302,10 +301,8 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         FrameResources.IntegrationLUT->SetName("IntegrationLUT");
     }
 
-    FrameResources.IntegrationLUTSRV = RenderLayer::CreateShaderResourceView(
-        FrameResources.IntegrationLUT.Get(),
-        LUTFormat,
-        0, 1);
+    ShaderResourceViewCreateInfo IntegrationLUTSRVInfo(FrameResources.IntegrationLUT.Get());
+    FrameResources.IntegrationLUTSRV = RenderLayer::CreateShaderResourceView(IntegrationLUTSRVInfo);
     if (!FrameResources.IntegrationLUTSRV)
     {
         Debug::DebugBreak();
@@ -716,16 +713,14 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
         FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->SetName("FrameResources.GBuffer Albedo");
 
         FrameResources.GBufferSRVs[GBUFFER_ALBEDO_INDEX] = RenderLayer::CreateShaderResourceView(
-            FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(),
-            FrameResources.AlbedoFormat, 0, 1);
+            ShaderResourceViewCreateInfo(FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX].Get()));
         if (!FrameResources.GBufferSRVs[GBUFFER_ALBEDO_INDEX])
         {
             return false;
         }
 
         FrameResources.GBufferRTVs[GBUFFER_ALBEDO_INDEX] = RenderLayer::CreateRenderTargetView(
-            FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(),
-            FrameResources.AlbedoFormat, 0);
+            RenderTargetViewCreateInfo(FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX].Get()));
         if (!FrameResources.GBufferSRVs[GBUFFER_ALBEDO_INDEX])
         {
             return false;
@@ -750,18 +745,14 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
         FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->SetName("FrameResources.GBuffer Normal");
 
         FrameResources.GBufferSRVs[GBUFFER_NORMAL_INDEX] = RenderLayer::CreateShaderResourceView(
-            FrameResources.GBuffer[GBUFFER_NORMAL_INDEX].Get(),
-            FrameResources.NormalFormat,
-            0, 1);
+            ShaderResourceViewCreateInfo(FrameResources.GBuffer[GBUFFER_NORMAL_INDEX].Get()));
         if (!FrameResources.GBufferSRVs[GBUFFER_NORMAL_INDEX])
         {
             return false;
         }
 
         FrameResources.GBufferRTVs[GBUFFER_NORMAL_INDEX] = RenderLayer::CreateRenderTargetView(
-            FrameResources.GBuffer[GBUFFER_NORMAL_INDEX].Get(),
-            FrameResources.NormalFormat,
-            0);
+            RenderTargetViewCreateInfo(FrameResources.GBuffer[GBUFFER_NORMAL_INDEX].Get()));
         if (!FrameResources.GBufferSRVs[GBUFFER_NORMAL_INDEX])
         {
             return false;
@@ -786,18 +777,14 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
         FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->SetName("FrameResources.GBuffer Material");
 
         FrameResources.GBufferSRVs[GBUFFER_MATERIAL_INDEX] = RenderLayer::CreateShaderResourceView(
-            FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(),
-            FrameResources.MaterialFormat,
-            0, 1);
+            ShaderResourceViewCreateInfo(FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX].Get()));
         if (!FrameResources.GBufferSRVs[GBUFFER_MATERIAL_INDEX])
         {
             return false;
         }
 
         FrameResources.GBufferRTVs[GBUFFER_MATERIAL_INDEX] = RenderLayer::CreateRenderTargetView(
-            FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(),
-            FrameResources.MaterialFormat,
-            0);
+            RenderTargetViewCreateInfo(FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX].Get()));
         if (!FrameResources.GBufferSRVs[GBUFFER_MATERIAL_INDEX])
         {
             return false;
@@ -823,19 +810,14 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
         FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->SetName("FrameResources.GBuffer DepthStencil");
 
         FrameResources.GBufferSRVs[GBUFFER_DEPTH_INDEX] = RenderLayer::CreateShaderResourceView(
-            FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(),
-            EFormat::Format_R32_Float,
-            0,
-            1);
+            ShaderResourceViewCreateInfo(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EFormat::Format_R32_Float));
         if (!FrameResources.GBufferSRVs[GBUFFER_DEPTH_INDEX])
         {
             return false;
         }
 
         FrameResources.GBufferDSV = RenderLayer::CreateDepthStencilView(
-            FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(),
-            FrameResources.DepthBufferFormat,
-            0);
+            DepthStencilViewCreateInfo(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EFormat::Format_D32_Float));
         if (!FrameResources.GBufferDSV)
         {
             return false;
@@ -860,18 +842,14 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
         FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->SetName("FrameResources.GBuffer View Normal");
 
         FrameResources.GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateShaderResourceView(
-            FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(),
-            FrameResources.ViewNormalFormat,
-            0, 1);
+            ShaderResourceViewCreateInfo(FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get()));
         if (!FrameResources.GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX])
         {
             return false;
         }
 
         FrameResources.GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateRenderTargetView(
-            FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(),
-            FrameResources.ViewNormalFormat,
-            0);
+            RenderTargetViewCreateInfo(FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get()));
         if (!FrameResources.GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX])
         {
             return false;
@@ -896,27 +874,21 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
         FrameResources.FinalTarget->SetName("Final Target");
 
         FrameResources.FinalTargetSRV = RenderLayer::CreateShaderResourceView(
-            FrameResources.FinalTarget.Get(),
-            FrameResources.FinalTargetFormat,
-            0, 1);
+            ShaderResourceViewCreateInfo(FrameResources.FinalTarget.Get()));
         if (!FrameResources.FinalTargetSRV)
         {
             return false;
         }
 
         FrameResources.FinalTargetRTV = RenderLayer::CreateRenderTargetView(
-            FrameResources.FinalTarget.Get(),
-            FrameResources.FinalTargetFormat,
-            0);
+            RenderTargetViewCreateInfo(FrameResources.FinalTarget.Get()));
         if (!FrameResources.FinalTargetRTV)
         {
             return false;
         }
 
         FrameResources.FinalTargetUAV = RenderLayer::CreateUnorderedAccessView(
-            FrameResources.FinalTarget.Get(),
-            FrameResources.FinalTargetFormat,
-            0);
+            UnorderedAccessViewCreateInfo(FrameResources.FinalTarget.Get()));
         if (!FrameResources.FinalTargetUAV)
         {
             return false;

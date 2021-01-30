@@ -18,16 +18,9 @@ public:
     {
     }
 
-    FORCEINLINE Bool Init(
-        D3D12_COMMAND_LIST_TYPE Type, 
-        D3D12CommandAllocatorHandle& Allocator,
-        ID3D12PipelineState* InitalPipeline)
+    FORCEINLINE Bool Init(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocatorHandle& Allocator,ID3D12PipelineState* InitalPipeline)
     {
-        HRESULT Result = Device->GetDevice()->CreateCommandList(
-            1, Type,
-            Allocator.GetAllocator(),
-            InitalPipeline,
-            IID_PPV_ARGS(&CmdList));
+        HRESULT Result = Device->GetDevice()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
         if (SUCCEEDED(Result))
         {
             CmdList->Close();
@@ -63,113 +56,53 @@ public:
         return SUCCEEDED(CmdList->Close());
     }
 
-    FORCEINLINE void ClearRenderTargetView(
-        D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView,
-        const Float Color[4],
-        UInt32 NumRects,
-        const D3D12_RECT* Rects)
+    FORCEINLINE void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView, const Float Color[4], UInt32 NumRects, const D3D12_RECT* Rects)
     {
         CmdList->ClearRenderTargetView(RenderTargetView, Color, NumRects, Rects);
     }
 
-    FORCEINLINE void ClearDepthStencilView(
-        D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView,
-        D3D12_CLEAR_FLAGS Flags, 
-        Float Depth, 
-        const UInt8 Stencil)
+    FORCEINLINE void ClearDepthStencilView(D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView, D3D12_CLEAR_FLAGS Flags, Float Depth, const UInt8 Stencil)
     {
-        CmdList->ClearDepthStencilView(
-            DepthStencilView, 
-            Flags, 
-            Depth, 
-            Stencil, 
-            0, nullptr);
+        CmdList->ClearDepthStencilView(DepthStencilView, Flags, Depth, Stencil, 0, nullptr);
     }
 
-    FORCEINLINE void ClearUnorderedAccessViewFloat(
-        D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, 
-        const D3D12UnorderedAccessView* View,
-         const Float ClearColor[4])
+    FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const D3D12UnorderedAccessView* View, const Float ClearColor[4])
     {
         const D3D12Resource* Resource = View->GetResource();
-        CmdList->ClearUnorderedAccessViewFloat(
-            GPUHandle, 
-            View->GetOfflineHandle(), 
-            Resource->GetNativeResource(), 
-            ClearColor, 
-            0, nullptr);
+        CmdList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), Resource->GetNativeResource(), ClearColor, 0, nullptr);
     }
 
-    FORCEINLINE void CopyBuffer(
-        D3D12Resource* Destination, 
-        UInt64 DestinationOffset, 
-        D3D12Resource* Source, 
-        UInt64 SourceOffset, 
-        UInt64 SizeInBytes)
+    FORCEINLINE void CopyBuffer(D3D12Resource* Destination, UInt64 DestinationOffset, D3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
     {
-        CmdList->CopyBufferRegion(
-            Destination->GetNativeResource(),
-            DestinationOffset, 
-            Source->GetNativeResource(),
-            SourceOffset, 
-            SizeInBytes);
+        CmdList->CopyBufferRegion(Destination->GetNativeResource(), DestinationOffset, Source->GetNativeResource(), SourceOffset, SizeInBytes);
     }
 
-    FORCEINLINE void CopyBufferRegion(
-        ID3D12Resource* Destination,
-        UInt64 DestinationOffset,
-        ID3D12Resource* Source,
-        UInt64 SourceOffset,
-        UInt64 SizeInBytes)
+    FORCEINLINE void CopyBufferRegion(ID3D12Resource* Destination, UInt64 DestinationOffset, ID3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
     {
-        CmdList->CopyBufferRegion(
-            Destination,
-            DestinationOffset,
-            Source,
-            SourceOffset,
-            SizeInBytes);
+        CmdList->CopyBufferRegion(Destination, DestinationOffset, Source, SourceOffset, SizeInBytes);
     }
 
-    FORCEINLINE void CopyTextureRegion(
-        const D3D12_TEXTURE_COPY_LOCATION* Destination, 
-        UInt32 x, 
-        UInt32 y, 
-        UInt32 z, 
-        const D3D12_TEXTURE_COPY_LOCATION* Source, 
-        const D3D12_BOX* SourceBox)
+    FORCEINLINE void CopyTextureRegion(const D3D12_TEXTURE_COPY_LOCATION* Destination, UInt32 x, UInt32 y, UInt32 z, const D3D12_TEXTURE_COPY_LOCATION* Source, const D3D12_BOX* SourceBox)
     {
         CmdList->CopyTextureRegion(Destination, x, y, z, Source, SourceBox);
     }
 
-    FORCEINLINE void CopyResource(
-        D3D12Resource* Destination, 
-        D3D12Resource* Source)
+    FORCEINLINE void CopyResource(D3D12Resource* Destination, D3D12Resource* Source)
     {
-        CmdList->CopyResource(
-            Destination->GetNativeResource(), 
-            Source->GetNativeResource());
+        CmdList->CopyResource(Destination->GetNativeResource(), Source->GetNativeResource());
     }
 
-    FORCEINLINE void CopyNativeResource(
-        ID3D12Resource* Destination, 
-        ID3D12Resource* Source)
+    FORCEINLINE void CopyNativeResource(ID3D12Resource* Destination, ID3D12Resource* Source)
     {
         CmdList->CopyResource(Destination, Source);
     }
 
-    FORCEINLINE void ResolveSubresource(
-        D3D12Resource* Destination, 
-        D3D12Resource* Source, 
-        DXGI_FORMAT Format)
+    FORCEINLINE void ResolveSubresource(D3D12Resource* Destination, D3D12Resource* Source, DXGI_FORMAT Format)
     {
-        CmdList->ResolveSubresource(
-            Destination->GetNativeResource(), 0, 
-            Source->GetNativeResource(), 0, 
-            Format);
+        CmdList->ResolveSubresource(Destination->GetNativeResource(), 0, Source->GetNativeResource(), 0, Format);
     }
 
-    FORCEINLINE void BuildRaytracingAccelerationStructure(
-        const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* Desc)
+    FORCEINLINE void BuildRaytracingAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* Desc)
     {
         CmdList5->BuildRaytracingAccelerationStructure(Desc, 0, nullptr);
     }
@@ -179,48 +112,22 @@ public:
         CmdList5->DispatchRays(Desc);
     }
 
-    FORCEINLINE void Dispatch(
-        UInt32 ThreadGroupCountX, 
-        UInt32 ThreadGroupCountY, 
-        UInt32 ThreadGroupCountZ)
+    FORCEINLINE void Dispatch(UInt32 ThreadGroupCountX, UInt32 ThreadGroupCountY, UInt32 ThreadGroupCountZ)
     {
-        CmdList->Dispatch(
-            ThreadGroupCountX, 
-            ThreadGroupCountY, 
-            ThreadGroupCountZ);
+        CmdList->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
     }
 
-    FORCEINLINE void DrawInstanced(
-        UInt32 VertexCountPerInstance, 
-        UInt32 InstanceCount, 
-        UInt32 StartVertexLocation, 
-        UInt32 StartInstanceLocation)
+    FORCEINLINE void DrawInstanced(UInt32 VertexCountPerInstance, UInt32 InstanceCount, UInt32 StartVertexLocation, UInt32 StartInstanceLocation)
     {
-        CmdList->DrawInstanced(
-            VertexCountPerInstance, 
-            InstanceCount, 
-            StartVertexLocation, 
-            StartInstanceLocation);
+        CmdList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
     }
 
-    FORCEINLINE void DrawIndexedInstanced(
-        UInt32 IndexCountPerInstance, 
-        UInt32 InstanceCount, 
-        UInt32 StartIndexLocation, 
-        UInt32 BaseVertexLocation, 
-        UInt32 StartInstanceLocation)
+    FORCEINLINE void DrawIndexedInstanced(UInt32 IndexCountPerInstance, UInt32 InstanceCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation, UInt32 StartInstanceLocation)
     {
-        CmdList->DrawIndexedInstanced(
-            IndexCountPerInstance, 
-            InstanceCount, 
-            StartIndexLocation, 
-            BaseVertexLocation, 
-            StartInstanceLocation);
+        CmdList->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
     }
 
-    FORCEINLINE void SetDescriptorHeaps(
-        ID3D12DescriptorHeap* const* DescriptorHeaps, 
-        UInt32 DescriptorHeapCount)
+    FORCEINLINE void SetDescriptorHeaps(ID3D12DescriptorHeap* const* DescriptorHeaps, UInt32 DescriptorHeapCount)
     {
         CmdList->SetDescriptorHeaps(DescriptorHeapCount, DescriptorHeaps);
     }
@@ -245,59 +152,29 @@ public:
         CmdList->SetGraphicsRootSignature(RootSignature->GetRootSignature());
     }
 
-    FORCEINLINE void SetComputeRootDescriptorTable(
-        D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor,
-        UInt32 RootParameterIndex)
+    FORCEINLINE void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, UInt32 RootParameterIndex)
     {
-        CmdList->SetComputeRootDescriptorTable(
-            RootParameterIndex, 
-            BaseDescriptor);
+        CmdList->SetComputeRootDescriptorTable(RootParameterIndex, BaseDescriptor);
     }
 
-    FORCEINLINE void SetGraphicsRootDescriptorTable(
-        D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, 
-        UInt32 RootParameterIndex)
+    FORCEINLINE void SetGraphicsRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, UInt32 RootParameterIndex)
     {
-        CmdList->SetGraphicsRootDescriptorTable(
-            RootParameterIndex, 
-            BaseDescriptor);
+        CmdList->SetGraphicsRootDescriptorTable(RootParameterIndex, BaseDescriptor);
     }
 
-    FORCEINLINE void SetGraphicsRoot32BitConstants(
-        const Void* SourceData, 
-        UInt32 Num32BitValues, 
-        UInt32 DestOffsetIn32BitValues, 
-        UInt32 RootParameterIndex)
+    FORCEINLINE void SetGraphicsRoot32BitConstants(const Void* SourceData, UInt32 Num32BitValues, UInt32 DestOffsetIn32BitValues, UInt32 RootParameterIndex)
     {
-        CmdList->SetGraphicsRoot32BitConstants(
-            RootParameterIndex, 
-            Num32BitValues, 
-            SourceData, 
-            DestOffsetIn32BitValues);
+        CmdList->SetGraphicsRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
     }
 
-    FORCEINLINE void SetComputeRoot32BitConstants(
-        const Void* SourceData, 
-        UInt32 Num32BitValues, 
-        UInt32 DestOffsetIn32BitValues, 
-        UInt32 RootParameterIndex)
+    FORCEINLINE void SetComputeRoot32BitConstants(const Void* SourceData, UInt32 Num32BitValues, UInt32 DestOffsetIn32BitValues, UInt32 RootParameterIndex)
     {
-        CmdList->SetComputeRoot32BitConstants(
-            RootParameterIndex, 
-            Num32BitValues, 
-            SourceData, 
-            DestOffsetIn32BitValues);
+        CmdList->SetComputeRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
     }
 
-    FORCEINLINE void IASetVertexBuffers(
-        UInt32 StartSlot, 
-        const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, 
-        UInt32 VertexBufferViewCount)
+    FORCEINLINE void IASetVertexBuffers(UInt32 StartSlot, const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, UInt32 VertexBufferViewCount)
     {
-        CmdList->IASetVertexBuffers(
-            StartSlot, 
-            VertexBufferViewCount, 
-            VertexBufferViews);
+        CmdList->IASetVertexBuffers(StartSlot, VertexBufferViewCount, VertexBufferViews);
     }
 
     FORCEINLINE void IASetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW* IndexBufferView)
@@ -320,9 +197,7 @@ public:
         CmdList->RSSetScissorRects(ScissorRectCount, ScissorRects);
     }
 
-    FORCEINLINE void RSSetShadingRate(
-        D3D12_SHADING_RATE BaseShadingRate, 
-        const D3D12_SHADING_RATE_COMBINER* Combiners)
+    FORCEINLINE void RSSetShadingRate(D3D12_SHADING_RATE BaseShadingRate, const D3D12_SHADING_RATE_COMBINER* Combiners)
     {
         CmdList5->RSSetShadingRate(BaseShadingRate, Combiners);
     }
@@ -338,11 +213,7 @@ public:
         BOOL RTsSingleHandleToDescriptorRange,
         const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor)
     {
-        CmdList->OMSetRenderTargets(
-            NumRenderTargetDescriptors, 
-            RenderTargetDescriptors, 
-            RTsSingleHandleToDescriptorRange, 
-            DepthStencilDescriptor);
+        CmdList->OMSetRenderTargets(NumRenderTargetDescriptors, RenderTargetDescriptors, RTsSingleHandleToDescriptorRange, DepthStencilDescriptor);
     }
 
     FORCEINLINE void ResourceBarrier(const D3D12_RESOURCE_BARRIER* Barriers, UInt32 NumBarriers)

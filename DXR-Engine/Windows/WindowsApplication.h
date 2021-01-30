@@ -1,12 +1,12 @@
 #pragma once
 #include "Application/InputCodes.h"
-#include "Application/Events/ApplicationEventHandler.h"
 #include "Application/Generic/GenericApplication.h"
+#include "Application/Generic/GenericApplicationDelegate.h"
 
 #include "Windows.h"
 
 class WindowsWindow;
-class ApplicationEventHandler;
+class GenericApplicationDelegate;
 class WindowsCursor;
 
 struct WindowsEvent
@@ -31,17 +31,9 @@ class WindowsApplication : public GenericApplication
 
     void AddWindow(WindowsWindow* Window);
 
-    LRESULT ApplicationProc(
-        HWND hWnd,
-        UINT uMessage,
-        WPARAM wParam,
-        LPARAM lParam);
+    LRESULT ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
-    static LRESULT MessageProc(
-        HWND hWnd,
-        UINT uMessage,
-        WPARAM wParam,
-        LPARAM lParam);
+    static LRESULT MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
 public:
     ~WindowsApplication();
@@ -68,15 +60,8 @@ public:
     virtual GenericWindow* GetCapture()      const override final;
     virtual GenericCursor* GetCursor()       const override final;
     
-    virtual void SetCursorPos(
-        GenericWindow* RelativeWindow, 
-        Int32 x, 
-        Int32 y) override final;
-    
-    virtual void GetCursorPos(
-        GenericWindow* RelativeWindow, 
-        Int32& OutX, 
-        Int32& OutY) const override final;
+    virtual void SetCursorPos(GenericWindow* RelativeWindow, Int32 x, Int32 y) override final;    
+    virtual void GetCursorPos(GenericWindow* RelativeWindow, Int32& OutX, Int32& OutY) const override final;
     
     static Bool PeekMessageUntilNoMessage();
     static ModifierKeyState GetModifierKeyState();

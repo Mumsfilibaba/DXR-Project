@@ -9,10 +9,10 @@
 class GenericWindow;
 struct ModifierKeyState;
 
-class ApplicationEventHandler
+class GenericApplicationDelegate
 {
 public:
-    virtual ~ApplicationEventHandler() = default;
+    virtual ~GenericApplicationDelegate() = default;
 
     virtual void OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)
     {

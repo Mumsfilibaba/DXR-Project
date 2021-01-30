@@ -58,6 +58,13 @@ public:
 
     virtual void SetName(const std::string& Name) override final
     {
+        if (Name == "SSAO Buffer")
+        {
+            LOG_INFO("FOUND IT");
+        }
+
+        T = Name;
+
         D3D12Resource::SetName(Name);
     }
 };

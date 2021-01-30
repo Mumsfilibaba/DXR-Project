@@ -115,9 +115,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         nullptr,
         EFormat::Format_R16G16B16A16_Float,
         TextureUsage_SRV,
-        4,
-        4,
-        1, 1);
+        4, 4, 1, 1);
     if (!SSAONoiseTex)
     {
         Debug::DebugBreak();
@@ -128,10 +126,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         SSAONoiseTex->SetName("SSAO Noise Texture");
     }
 
-    SSAONoiseSRV = RenderLayer::CreateShaderResourceView(
-        SSAONoiseTex.Get(),
-        EFormat::Format_R16G16B16A16_Float,
-        0, 1);
+    SSAONoiseSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(SSAONoiseTex.Get()));
     if (!SSAONoiseSRV)
     {
         Debug::DebugBreak();
@@ -144,10 +139,11 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
 
     CommandList CmdList;
     CmdList.Begin();
+
     CmdList.TransitionTexture(
         FrameResources.SSAOBuffer.Get(),
         EResourceState::ResourceState_Common,
-        EResourceState::ResourceState_PixelShaderResource);
+        EResourceState::ResourceState_NonPixelShaderResource);
 
     CmdList.TransitionTexture(
         SSAONoiseTex.Get(),
@@ -167,7 +163,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
     CmdList.End();
     gCmdListExecutor.ExecuteCommandList(CmdList);
 
-    const UInt32 Stride = sizeof(XMFLOAT3);
+    const UInt32 Stride      = sizeof(XMFLOAT3);
     const UInt32 SizeInBytes = Stride * SSAOKernel.Size();
     ResourceData SSAOSampleData(SSAOKernel.Data());
     SSAOSamples = RenderLayer::CreateStructuredBuffer(
@@ -185,10 +181,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         SSAOSamples->SetName("SSAO Samples");
     }
 
-    SSAOSamplesSRV = RenderLayer::CreateShaderResourceView(
-        SSAOSamples.Get(),
-        0, SSAOKernel.Size(),
-        sizeof(XMFLOAT3));
+    SSAOSamplesSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(SSAOSamples.Get()));
     if (!SSAOSamplesSRV)
     {
         Debug::DebugBreak();
@@ -338,14 +331,9 @@ void ScreenSpaceOcclusionRenderer::Render(
         ShaderResourceViews,
         4, 0);
 
-    SamplerState* SamplerStates[] =
-    {
-        FrameResources.GBufferSampler.Get()
-    };
-
     CmdList.BindSamplerStates(
         EShaderStage::ShaderStage_Compute,
-        SamplerStates,
+        &FrameResources.GBufferSampler,
         1, 0);
 
     CmdList.BindConstantBuffers(
@@ -363,8 +351,8 @@ void ScreenSpaceOcclusionRenderer::Render(
         &SSAOSettings, 7);
 
     constexpr UInt32 ThreadCount = 16;
-    const UInt32 DispatchWidth = Math::DivideByMultiple<UInt32>(Width, ThreadCount);
-    const UInt32 DispatchHeight = Math::DivideByMultiple<UInt32>(Height, ThreadCount);
+    const UInt32 DispatchWidth   = Math::DivideByMultiple<UInt32>(Width, ThreadCount);
+    const UInt32 DispatchHeight  = Math::DivideByMultiple<UInt32>(Height, ThreadCount);
     CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
     CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
@@ -415,10 +403,7 @@ Bool ScreenSpaceOcclusionRenderer::CreateRenderTarget(FrameResources& FrameResou
         FrameResources.SSAOBuffer->SetName("SSAO Buffer");
     }
 
-    FrameResources.SSAOBufferUAV = RenderLayer::CreateUnorderedAccessView(
-        FrameResources.SSAOBuffer.Get(),
-        FrameResources.SSAOBufferFormat,
-        0);
+    FrameResources.SSAOBufferUAV = RenderLayer::CreateUnorderedAccessView(UnorderedAccessViewCreateInfo(FrameResources.SSAOBuffer.Get()));
     if (!FrameResources.SSAOBufferUAV)
     {
         Debug::DebugBreak();
@@ -429,10 +414,7 @@ Bool ScreenSpaceOcclusionRenderer::CreateRenderTarget(FrameResources& FrameResou
         FrameResources.SSAOBufferUAV->SetName("SSAO Buffer UAV");
     }
 
-    FrameResources.SSAOBufferSRV = RenderLayer::CreateShaderResourceView(
-        FrameResources.SSAOBuffer.Get(),
-        FrameResources.SSAOBufferFormat,
-        0, 1);
+    FrameResources.SSAOBufferSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(FrameResources.SSAOBuffer.Get()));
     if (!FrameResources.SSAOBufferSRV)
     {
         Debug::DebugBreak();

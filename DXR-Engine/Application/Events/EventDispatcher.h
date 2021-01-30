@@ -1,11 +1,12 @@
 #pragma once
 #include "Events.h"
 #include "EventHandler.h"
-#include "ApplicationEventHandler.h"
+
+#include "Application/Generic/GenericApplicationDelegate.h"
 
 #include <Containers/TArray.h>
 
-class EventDispatcher : public ApplicationEventHandler
+class EventDispatcher : public GenericApplicationDelegate
 {
     struct EventHandlerPair
     {
@@ -56,7 +57,6 @@ public:
     }
 
 public:
-    // ApplicationEventHandler Interface
     virtual void OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)                override final;
     virtual void OnKeyPressed(EKey KeyCode, Bool IsRepeat, const ModifierKeyState& ModierKeyState)  override final;
     virtual void OnMouseMove(Int32 x, Int32 y)                                                      override final;

@@ -4,7 +4,7 @@
 
 #include "Application/InputCodes.h"
 
-#include "Application/Events/ApplicationEventHandler.h"
+#include "GenericApplicationDelegate.h"
 
 #include "Core/TSharedRef.h"
 
@@ -87,22 +87,15 @@ public:
         return nullptr;
     }
 
-    virtual void SetCursorPos(
-        GenericWindow* RelativeWindow, 
-        Int32 x, 
-        Int32 y) = 0;
+    virtual void SetCursorPos(GenericWindow* RelativeWindow, Int32 x, Int32 y) = 0;
+    virtual void GetCursorPos(GenericWindow* RelativeWindow, Int32& OutX, Int32& OutY) const = 0;
 
-    virtual void GetCursorPos(
-        GenericWindow* RelativeWindow, 
-        Int32& OutX, 
-        Int32& OutY) const = 0;
-
-    FORCEINLINE void SetEventHandler(ApplicationEventHandler* InEventHandler)
+    FORCEINLINE void SetEventHandler(GenericApplicationDelegate* InEventHandler)
     {
         EventHandler = InEventHandler;
     }
 
-    FORCEINLINE ApplicationEventHandler* GetEventHandler() const
+    FORCEINLINE GenericApplicationDelegate* GetEventHandler() const
     {
         return EventHandler;
     }
@@ -123,5 +116,5 @@ public:
     }
 
 protected:
-    ApplicationEventHandler* EventHandler;
+    GenericApplicationDelegate* EventHandler;
 };

@@ -65,9 +65,7 @@ public:
     {
     }
 
-    FORCEINLINE void BindRenderTargetView(
-        D3D12RenderTargetView* RenderTargetView, 
-        UInt32 Slot)
+    FORCEINLINE void BindRenderTargetView(D3D12RenderTargetView* RenderTargetView, UInt32 Slot)
     {
         if (Slot >= RenderTargetViewHandles.Size())
         {
@@ -195,7 +193,7 @@ public:
 
 private:
     void InternalAllocateAndCopyDescriptorHandles(
-        D3D12Device& Device,
+        D3D12Device& Device, 
         D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
         D3D12OnlineDescriptorHeap& SamplerDescriptorHeap);
 
@@ -352,17 +350,8 @@ public:
     {
     }
 
-    Bool Init();
-
-    void AddTransitionBarrier(
-        ID3D12Resource* Resource,
-        D3D12_RESOURCE_STATES BeforeState,
-        D3D12_RESOURCE_STATES AfterState);
-
-    void AddTransitionBarrier(
-        D3D12Resource* Resource,
-        D3D12_RESOURCE_STATES BeforeState,
-        D3D12_RESOURCE_STATES AfterState);
+    void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
+    void AddTransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
 
     FORCEINLINE void AddUnorderedAccessBarrier(D3D12Resource* Resource)
     {
@@ -423,75 +412,37 @@ public:
 
 public:
     virtual void Begin() override final;
+
     virtual void End()   override final;
 
-    /*
-    * RenderTarget Management
-    */
-
-    virtual void ClearRenderTargetView(
-        RenderTargetView* RenderTargetView, 
-        const ColorClearValue& ClearColor) override final;
-    
-    virtual void ClearDepthStencilView(
-        DepthStencilView* DepthStencilView, 
-        const DepthStencilClearValue& ClearValue) override final;
-    
-    virtual void ClearUnorderedAccessViewFloat(
-        UnorderedAccessView* UnorderedAccessView, 
-        const Float ClearColor[4]) override final;
+    virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor) override final;
+    virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) override final;
+    virtual void ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4]) override final;
 
     virtual void SetShadingRate(EShadingRate ShadingRate) override final;
 
     virtual void BeginRenderPass() override final;
     virtual void EndRenderPass()   override final;
 
-    virtual void BindViewport(
-        Float Width,
-        Float Height,
-        Float MinDepth,
-        Float MaxDepth,
-        Float x,
-        Float y) override final;
-
-    virtual void BindScissorRect(
-        Float Width,
-        Float Height,
-        Float x,
-        Float y) override final;
+    virtual void BindViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y) override final;
+    virtual void BindScissorRect(Float Width, Float Height, Float x, Float y) override final;
 
     virtual void BindBlendFactor(const ColorClearValue& Color) override final;
 
-    virtual void BindRenderTargets(
-        RenderTargetView* const * RenderTargetViews, 
-        UInt32 RenderTargetCount, 
-        DepthStencilView* DepthStencilView) override final;
+    virtual void BindRenderTargets(RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView) override final;
 
-    /*
-    * Pipeline Management
-    */
-
-    virtual void BindVertexBuffers(
-        VertexBuffer* const * VertexBuffers, 
-        UInt32 BufferCount, 
-        UInt32 BufferSlot) override final;
+    virtual void BindVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) override final;
+    virtual void BindIndexBuffer(IndexBuffer* IndexBuffer)                      override final;
 
     virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
-    virtual void BindIndexBuffer(IndexBuffer* IndexBuffer)                      override final;
+    
     virtual void BindRayTracingScene(RayTracingScene* RayTracingScene)          override final;
 
     virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState)     override final;
     virtual void BindComputePipelineState(class ComputePipelineState* PipelineState)       override final;
     virtual void BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState) override final;
 
-    /*
-    * Binding Shader Resources
-    */
-
-    virtual void Bind32BitShaderConstants(
-        EShaderStage ShaderStage,
-        const Void* Shader32BitConstants,
-        UInt32 Num32BitConstants) override final;
+    virtual void Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants) override final;
 
     virtual void BindShaderResourceViews(
         EShaderStage ShaderStage,
@@ -517,36 +468,14 @@ public:
         UInt32 ConstantBufferCount,
         UInt32 StartSlot) override final;
 
-    /*
-    * Resource Management
-    */
-
-    virtual void UpdateBuffer(
-        Buffer* Destination, 
-        UInt64 OffsetInBytes, 
-        UInt64 SizeInBytes, 
-        const Void* SourceData) override final;
-
-    virtual void UpdateTexture2D(
-        Texture2D* Destination,
-        UInt32 Width,
-        UInt32 Height,
-        UInt32 MipLevel,
-        const Void* SourceData) override final;
+    virtual void UpdateBuffer(Buffer* Destination, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData) override final;
+    virtual void UpdateTexture2D(Texture2D* Destination, UInt32 Width, UInt32 Height, UInt32 MipLevel, const Void* SourceData) override final;
 
     virtual void ResolveTexture(Texture* Destination, Texture* Source) override final;
     
-    virtual void CopyBuffer(
-        Buffer* Destination, 
-        Buffer* Source, 
-        const CopyBufferInfo& CopyInfo) override final;
-
+    virtual void CopyBuffer(Buffer* Destination, Buffer* Source, const CopyBufferInfo& CopyInfo) override final;
     virtual void CopyTexture(Texture* Destination, Texture* Source) override final;
-
-    virtual void CopyTextureRegion(
-        Texture* Destination, 
-        Texture* Source, 
-        const CopyTextureInfo& CopyTextureInfo) override final;
+    virtual void CopyTextureRegion(Texture* Destination, Texture* Source, const CopyTextureInfo& CopyTextureInfo) override final;
 
     virtual void DestroyResource(class PipelineResource* Resource) override final;
 
@@ -555,40 +484,14 @@ public:
 
     virtual void GenerateMips(Texture* Texture) override final;
 
-    /*
-    * Resource Barriers
-    */
-
-    virtual void TransitionTexture(
-        Texture* Texture,
-        EResourceState BeforeState,
-        EResourceState AfterState) override final;
-
-    virtual void TransitionBuffer(
-        Buffer* Buffer,
-        EResourceState BeforeState,
-        EResourceState AfterState) override final;
+    virtual void TransitionTexture(Texture* Texture, EResourceState BeforeState, EResourceState AfterState) override final;
+    virtual void TransitionBuffer(Buffer* Buffer, EResourceState BeforeState, EResourceState AfterState) override final;
 
     virtual void UnorderedAccessTextureBarrier(Texture* Texture) override final;
 
-    /*
-    * Draw
-    */
-
-    virtual void Draw(
-        UInt32 VertexCount, 
-        UInt32 StartVertexLocation) override final;
-    
-    virtual void DrawIndexed(
-        UInt32 IndexCount, 
-        UInt32 StartIndexLocation, 
-        UInt32 BaseVertexLocation) override final;
-    
-    virtual void DrawInstanced(
-        UInt32 VertexCountPerInstance, 
-        UInt32 InstanceCount, 
-        UInt32 StartVertexLocation, 
-        UInt32 StartInstanceLocation) override final;
+    virtual void Draw(UInt32 VertexCount, UInt32 StartVertexLocation) override final;
+    virtual void DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation) override final;
+    virtual void DrawInstanced(UInt32 VertexCountPerInstance, UInt32 InstanceCount, UInt32 StartVertexLocation, UInt32 StartInstanceLocation) override final;
     
     virtual void DrawIndexedInstanced(
         UInt32 IndexCountPerInstance, 
@@ -597,30 +500,12 @@ public:
         UInt32 BaseVertexLocation, 
         UInt32 StartInstanceLocation) override final;
 
-    /*
-    * Dispatch
-    */
-
-    virtual void Dispatch(
-        UInt32 WorkGroupsX, 
-        UInt32 WorkGroupsY, 
-        UInt32 WorkGroupsZ) override final;
-
-    virtual void DispatchRays(
-        UInt32 Width, 
-        UInt32 Height, 
-        UInt32 Depth) override final;
-
-    /*
-    * State
-    */
+    virtual void Dispatch(UInt32 WorkGroupsX, UInt32 WorkGroupsY, UInt32 WorkGroupsZ) override final;
+    virtual void DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth) override final;
 
     virtual void ClearState() override final;
-    virtual void Flush()      override final;
 
-    /*
-    * Other
-    */
+    virtual void Flush()      override final;
 
     virtual void InsertMarker(const std::string& Message) override final;
 

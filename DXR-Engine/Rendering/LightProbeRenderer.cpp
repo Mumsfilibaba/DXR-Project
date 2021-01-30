@@ -216,27 +216,23 @@ Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
         LightSetup.IrradianceMap->SetName("Irradiance Map");
     }
 
-    LightSetup.IrradianceMapUAV = RenderLayer::CreateUnorderedAccessView(
-        LightSetup.IrradianceMap.Get(),
-        EFormat::Format_R16G16B16A16_Float, 0);
+    UnorderedAccessViewCreateInfo IrradianceUavInfo(LightSetup.IrradianceMap.Get());
+    LightSetup.IrradianceMapUAV = RenderLayer::CreateUnorderedAccessView(IrradianceUavInfo);
     if (!LightSetup.IrradianceMapUAV)
     {
         Debug::DebugBreak();
         return false;
     }
 
-    LightSetup.IrradianceMapSRV = RenderLayer::CreateShaderResourceView(
-        LightSetup.IrradianceMap.Get(),
-        EFormat::Format_R16G16B16A16_Float,
-        0, 1);
+    ShaderResourceViewCreateInfo IrradianceSrvInfo(LightSetup.IrradianceMap.Get());
+    LightSetup.IrradianceMapSRV = RenderLayer::CreateShaderResourceView(IrradianceSrvInfo);
     if (!LightSetup.IrradianceMapSRV)
     {
         Debug::DebugBreak();
         return false;
     }
 
-    // Generate global specular irradiance (From Skybox)
-    const UInt16 SpecularIrradianceSize = 128;
+    const UInt16 SpecularIrradianceSize      = 128;
     const UInt16 SpecularIrradianceMiplevels = UInt16(std::max(std::log2(SpecularIrradianceSize), 1.0));
     LightSetup.SpecularIrradianceMap = RenderLayer::CreateTextureCube(
         nullptr,
@@ -257,10 +253,12 @@ Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
 
     for (UInt32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        TSharedRef<UnorderedAccessView> Uav = RenderLayer::CreateUnorderedAccessView(
+        UnorderedAccessViewCreateInfo SpecularIrradianceUavInfo(
             LightSetup.SpecularIrradianceMap.Get(),
             EFormat::Format_R16G16B16A16_Float,
             MipLevel);
+
+        TSharedRef<UnorderedAccessView> Uav = RenderLayer::CreateUnorderedAccessView(SpecularIrradianceUavInfo);
         if (Uav)
         {
             LightSetup.SpecularIrradianceMapUAVs.EmplaceBack(Uav);
@@ -273,11 +271,8 @@ Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
         }
     }
 
-    LightSetup.SpecularIrradianceMapSRV = RenderLayer::CreateShaderResourceView(
-        LightSetup.SpecularIrradianceMap.Get(),
-        EFormat::Format_R16G16B16A16_Float,
-        0,
-        SpecularIrradianceMiplevels);
+    ShaderResourceViewCreateInfo SpecularIrradianceSrvInfo(LightSetup.SpecularIrradianceMap.Get());
+    LightSetup.SpecularIrradianceMapSRV = RenderLayer::CreateShaderResourceView(SpecularIrradianceSrvInfo);
     if (!LightSetup.SpecularIrradianceMapSRV)
     {
         Debug::DebugBreak();

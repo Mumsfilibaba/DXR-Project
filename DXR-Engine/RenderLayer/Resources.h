@@ -468,6 +468,11 @@ public:
         return nullptr;
     }
 
+    virtual Bool IsMultiSampled() const
+    {
+        return false;
+    }
+
     virtual UInt32 GetWidth() const
     {
         return 0;
@@ -496,11 +501,6 @@ public:
     virtual UInt32 GetSampleCount() const
     {
         return 1;
-    }
-
-    virtual Bool IsMultiSampled() const
-    {
-        return false;
     }
 
     FORCEINLINE EFormat GetFormat() const
@@ -538,9 +538,11 @@ public:
         return OptimizedClearValue;
     }
 
+    std::string T;
+
 protected:
     EFormat Format;
-    UInt32    Usage;
+    UInt32  Usage;
     ClearValue OptimizedClearValue;
 };
 
@@ -774,8 +776,7 @@ public:
 
     virtual UInt16 GetArrayCount() const override
     {
-        constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
-        return TEXTURE_CUBE_FACE_COUNT;
+        return 1;
     }
 
     virtual UInt32 GetSampleCount() const override
@@ -833,8 +834,7 @@ public:
 
     virtual UInt16 GetArrayCount() const override
     {
-        constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
-        return ArrayCount * TEXTURE_CUBE_FACE_COUNT;
+        return ArrayCount;
     }
 
     virtual UInt32 GetSampleCount() const override

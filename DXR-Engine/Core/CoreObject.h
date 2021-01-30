@@ -9,7 +9,7 @@ private: \
 public: \
     static ClassType* GetStaticClass() \
     { \
-        static ClassType ClassInfo(#TCoreObject, Super::GetStaticClass()); \
+        static ClassType ClassInfo(#TCoreObject, Super::GetStaticClass(), sizeof(TCoreObject)); \
         return &ClassInfo; \
     }
 
@@ -28,7 +28,7 @@ public:
 
     static const ClassType* GetStaticClass()
     {
-        static ClassType ClassInfo("CoreObject", nullptr);
+        static ClassType ClassInfo("CoreObject", nullptr, sizeof(CoreObject));
         return &ClassInfo;
     }
 

@@ -53,13 +53,7 @@ public:
         IsRecording = false;
     }
 
-    /*
-    * RenderTarget Management
-    */
-
-    FORCEINLINE void ClearRenderTargetView(
-        RenderTargetView* RenderTargetView, 
-        const ColorClearValue& ClearColor)
+    FORCEINLINE void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor)
     {
         VALIDATE(RenderTargetView != nullptr);
 
@@ -67,9 +61,7 @@ public:
         InsertCommand<ClearRenderTargetViewCommand>(RenderTargetView, ClearColor);
     }
 
-    FORCEINLINE void ClearDepthStencilView(
-        DepthStencilView* DepthStencilView, 
-        const DepthStencilClearValue& ClearValue)
+    FORCEINLINE void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue)
     {
         VALIDATE(DepthStencilView != nullptr);
 
@@ -77,9 +69,7 @@ public:
         InsertCommand<ClearDepthStencilViewCommand>(DepthStencilView, ClearValue);
     }
 
-    FORCEINLINE void ClearUnorderedAccessView(
-        UnorderedAccessView* UnorderedAccessView,
-        const Float ClearColor[4])
+    FORCEINLINE void ClearUnorderedAccessView(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4])
     {
         VALIDATE(UnorderedAccessView != nullptr);
 
@@ -102,22 +92,12 @@ public:
         InsertCommand<EndRenderPassCommand>();
     }
 
-    FORCEINLINE void BindViewport(
-        Float Width, 
-        Float Height, 
-        Float MinDepth, 
-        Float MaxDepth, 
-        Float x, 
-        Float y)
+    FORCEINLINE void BindViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y)
     {
         InsertCommand<BindViewportCommand>(Width, Height, MinDepth, MaxDepth, x, y);
     }
 
-    FORCEINLINE void BindScissorRect(
-        Float Width, 
-        Float Height, 
-        Float x, 
-        Float y)
+    FORCEINLINE void BindScissorRect(Float Width, Float Height, Float x, Float y)
     {
         InsertCommand<BindScissorRectCommand>(Width, Height, x, y);
     }
@@ -127,10 +107,7 @@ public:
         InsertCommand<BindBlendFactorCommand>(Color);
     }
 
-    FORCEINLINE void BindRenderTargets(
-        RenderTargetView* const* RenderTargetViews,
-        UInt32 RenderTargetCount,
-        DepthStencilView* DepthStencilView)
+    FORCEINLINE void BindRenderTargets(RenderTargetView* const* RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView)
     {
         Void* RenderTargetMemory = CmdAllocator.Allocate(sizeof(RenderTargetView*) * RenderTargetCount, 1);
         RenderTargetView** RenderTargets = reinterpret_cast<RenderTargetView**>(RenderTargetMemory);
@@ -144,22 +121,15 @@ public:
         InsertCommand<BindRenderTargetsCommand>(RenderTargets, RenderTargetCount, DepthStencilView);
     }
 
-    /*
-    * Pipeline Management
-    */
-
     FORCEINLINE void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
     {
         InsertCommand<BindPrimitiveTopologyCommand>(PrimitveTopologyType);
     }
 
-    FORCEINLINE void BindVertexBuffers(
-        VertexBuffer* const* VertexBuffers, 
-        UInt32 VertexBufferCount, 
-        UInt32 BufferSlot)
+    FORCEINLINE void BindVertexBuffers(VertexBuffer* const* VertexBuffers, UInt32 VertexBufferCount, UInt32 BufferSlot)
     {
-        Void* BufferMemory    = CmdAllocator.Allocate(sizeof(VertexBuffer*) * VertexBufferCount, 1);
-        VertexBuffer** Buffers    = reinterpret_cast<VertexBuffer**>(BufferMemory);
+        Void* BufferMemory     = CmdAllocator.Allocate(sizeof(VertexBuffer*) * VertexBufferCount, 1);
+        VertexBuffer** Buffers = reinterpret_cast<VertexBuffer**>(BufferMemory);
         for (UInt32 i = 0; i < VertexBufferCount; i++)
         {
             Buffers[i] = VertexBuffers[i];
@@ -199,29 +169,19 @@ public:
         InsertCommand<BindRayTracingPipelineStateCommand>(PipelineState);
     }
 
-    /*
-    * Binding Shader Resources
-    */
-
-    FORCEINLINE void Bind32BitShaderConstants(
-        EShaderStage ShaderStage,
-        const Void* Shader32BitConstants,
-        UInt32 Num32BitConstants)
+    FORCEINLINE void Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants)
     {
         const UInt32 Num32BitConstantsInBytes = Num32BitConstants * 4;
         Void* Shader32BitConstantsMemory = CmdAllocator.Allocate(Num32BitConstantsInBytes, 1);
         Memory::Memcpy(Shader32BitConstantsMemory, Shader32BitConstants, Num32BitConstantsInBytes);
 
-        InsertCommand<Bind32BitShaderConstantsCommand>(
-            ShaderStage,
-            Shader32BitConstantsMemory,
-            Num32BitConstants);
+        InsertCommand<Bind32BitShaderConstantsCommand>(ShaderStage, Shader32BitConstantsMemory, Num32BitConstants);
     }
 
     FORCEINLINE void BindShaderResourceViews(
-        EShaderStage ShaderStage,
-        ShaderResourceView* const* ShaderResourceViews,
-        UInt32 ShaderResourceViewCount,
+        EShaderStage ShaderStage, 
+        ShaderResourceView* const* ShaderResourceViews, 
+        UInt32 ShaderResourceViewCount, 
         UInt32 StartSlot)
     {
         VALIDATE(ShaderResourceViews != nullptr);
@@ -234,18 +194,10 @@ public:
             SAFEADDREF(Views[i]);
         }
 
-        InsertCommand<BindShaderResourceViewsCommand>(
-            ShaderStage,
-            Views,
-            ShaderResourceViewCount,
-            StartSlot);
+        InsertCommand<BindShaderResourceViewsCommand>(ShaderStage, Views, ShaderResourceViewCount, StartSlot);
     }
 
-    FORCEINLINE void BindSamplerStates(
-        EShaderStage ShaderStage,
-        SamplerState* const* SamplerStates,
-        UInt32 SamplerStateCount,
-        UInt32 StartSlot)
+    FORCEINLINE void BindSamplerStates(EShaderStage ShaderStage, SamplerState* const* SamplerStates, UInt32 SamplerStateCount, UInt32 StartSlot)
     {
         VALIDATE(SamplerStates != nullptr);
 
@@ -257,17 +209,13 @@ public:
             SAFEADDREF(Samplers[i]);
         }
 
-        InsertCommand<BindSamplerStatesCommand>(
-            ShaderStage,
-            Samplers,
-            SamplerStateCount,
-            StartSlot);
+        InsertCommand<BindSamplerStatesCommand>(ShaderStage, Samplers, SamplerStateCount, StartSlot);
     }
 
     FORCEINLINE void BindUnorderedAccessViews(
-        EShaderStage ShaderStage,
-        UnorderedAccessView* const* UnorderedAccessViews,
-        UInt32 UnorderedAccessViewCount,
+        EShaderStage ShaderStage, 
+        UnorderedAccessView* const* UnorderedAccessViews, 
+        UInt32 UnorderedAccessViewCount, 
         UInt32 StartSlot)
     {
         VALIDATE(UnorderedAccessViews != nullptr);
@@ -280,18 +228,10 @@ public:
             SAFEADDREF(Views[i]);
         }
 
-        InsertCommand<BindUnorderedAccessViewsCommand>(
-            ShaderStage,
-            Views,
-            UnorderedAccessViewCount,
-            StartSlot);
+        InsertCommand<BindUnorderedAccessViewsCommand>(ShaderStage, Views, UnorderedAccessViewCount, StartSlot);
     }
 
-    FORCEINLINE void BindConstantBuffers(
-        EShaderStage ShaderStage,
-        ConstantBuffer* const* ConstantBuffers,
-        UInt32 ConstantBufferCount,
-        UInt32 StartSlot)
+    FORCEINLINE void BindConstantBuffers(EShaderStage ShaderStage, ConstantBuffer* const* ConstantBuffers, UInt32 ConstantBufferCount, UInt32 StartSlot)
     {
         VALIDATE(ConstantBuffers != nullptr);
 
@@ -303,16 +243,8 @@ public:
             SAFEADDREF(Views[i]);
         }
 
-        InsertCommand<BindConstantBuffersCommand>(
-            ShaderStage,
-            Views,
-            ConstantBufferCount,
-            StartSlot);
+        InsertCommand<BindConstantBuffersCommand>(ShaderStage, Views, ConstantBufferCount, StartSlot);
     }
-
-    /*
-    * Resource Management
-    */
 
     FORCEINLINE void ResolveTexture(Texture* Destination, Texture* Source)
     {
@@ -321,29 +253,16 @@ public:
         InsertCommand<ResolveTextureCommand>(Destination, Source);
     }
 
-    FORCEINLINE void UpdateBuffer(
-        Buffer* Destination, 
-        UInt64 DestinationOffsetInBytes, 
-        UInt64 SizeInBytes, 
-        const Void* SourceData)
+    FORCEINLINE void UpdateBuffer(Buffer* Destination, UInt64 DestinationOffsetInBytes, UInt64 SizeInBytes, const Void* SourceData)
     {
         Void* TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
         Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
         SAFEADDREF(Destination);
-        InsertCommand<UpdateBufferCommand>(
-            Destination, 
-            DestinationOffsetInBytes, 
-            SizeInBytes, 
-            TempSourceData);
+        InsertCommand<UpdateBufferCommand>(Destination, DestinationOffsetInBytes, SizeInBytes, TempSourceData);
     }
 
-    FORCEINLINE void UpdateTexture2D(
-        Texture2D* Destination,
-        UInt32 Width,
-        UInt32 Height,
-        UInt32 MipLevel, 
-        const Void* SourceData)
+    FORCEINLINE void UpdateTexture2D(Texture2D* Destination, UInt32 Width, UInt32 Height, UInt32 MipLevel, const Void* SourceData)
     {
         VALIDATE(Destination != nullptr);
 
@@ -352,18 +271,10 @@ public:
         Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
         Destination->AddRef();
-        InsertCommand<UpdateTexture2DCommand>(
-            Destination,
-            Width,
-            Height,
-            MipLevel,
-            TempSourceData);
+        InsertCommand<UpdateTexture2DCommand>(Destination, Width, Height, MipLevel, TempSourceData);
     }
 
-    FORCEINLINE void CopyBuffer(
-        Buffer* Destination, 
-        Buffer* Source, 
-        const CopyBufferInfo& CopyInfo)
+    FORCEINLINE void CopyBuffer(Buffer* Destination, Buffer* Source, const CopyBufferInfo& CopyInfo)
     {
         SAFEADDREF(Destination);
         SAFEADDREF(Source);
@@ -377,10 +288,7 @@ public:
         InsertCommand<CopyTextureCommand>(Destination, Source);
     }
 
-    FORCEINLINE void CopyTextureRegion(
-        Texture* Destination, 
-        Texture* Source, 
-        const CopyTextureInfo& CopyTextureInfo)
+    FORCEINLINE void CopyTextureRegion(Texture* Destination, Texture* Source, const CopyTextureInfo& CopyTextureInfo)
     {
         SAFEADDREF(Destination);
         SAFEADDREF(Source);
@@ -413,14 +321,7 @@ public:
         InsertCommand<GenerateMipsCommand>(Texture);
     }
 
-    /*
-    * Resource Barriers
-    */
-
-    FORCEINLINE void TransitionTexture(
-        Texture* Texture, 
-        EResourceState BeforeState, 
-        EResourceState AfterState)
+    FORCEINLINE void TransitionTexture(Texture* Texture, EResourceState BeforeState, EResourceState AfterState)
     {
         VALIDATE(Texture != nullptr);
 
@@ -431,10 +332,7 @@ public:
         }
     }
 
-    FORCEINLINE void TransitionBuffer(
-        Buffer* Buffer,
-        EResourceState BeforeState,
-        EResourceState AfterState)
+    FORCEINLINE void TransitionBuffer(Buffer* Buffer, EResourceState BeforeState, EResourceState AfterState)
     {
         VALIDATE(Buffer != nullptr);
 
@@ -453,43 +351,21 @@ public:
         InsertCommand<UnorderedAccessTextureBarrierCommand>(Texture);
     }
 
-    /*
-    * Resource Management
-    */
-
-    FORCEINLINE void Draw(
-        UInt32 VertexCount, 
-        UInt32 StartVertexLocation)
+    FORCEINLINE void Draw(UInt32 VertexCount, UInt32 StartVertexLocation)
     {
         InsertCommand<DrawCommand>(VertexCount, StartVertexLocation);
         NumDrawCalls++;
     }
 
-    FORCEINLINE void DrawIndexed(
-        UInt32 IndexCount, 
-        UInt32 StartIndexLocation, 
-        UInt32 BaseVertexLocation)
+    FORCEINLINE void DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation)
     {
-        InsertCommand<DrawIndexedCommand>(
-            IndexCount, 
-            StartIndexLocation, 
-            BaseVertexLocation);
-
+        InsertCommand<DrawIndexedCommand>(IndexCount, StartIndexLocation, BaseVertexLocation);
         NumDrawCalls++;
     }
 
-    FORCEINLINE void DrawInstanced(
-        UInt32 VertexCountPerInstance, 
-        UInt32 InstanceCount, 
-        UInt32 StartVertexLocation, 
-        UInt32 StartInstanceLocation)
+    FORCEINLINE void DrawInstanced(UInt32 VertexCountPerInstance, UInt32 InstanceCount, UInt32 StartVertexLocation, UInt32 StartInstanceLocation)
     {
-        InsertCommand<DrawInstancedCommand>(
-            VertexCountPerInstance,
-            InstanceCount,
-            StartVertexLocation,
-            StartInstanceLocation);
-
+        InsertCommand<DrawInstancedCommand>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
         NumDrawCalls++;
     }
 
@@ -500,56 +376,25 @@ public:
         UInt32 BaseVertexLocation, 
         UInt32 StartInstanceLocation)
     {
-        InsertCommand<DrawIndexedInstancedCommand>(
-            IndexCountPerInstance,
-            InstanceCount,
-            StartIndexLocation,
-            BaseVertexLocation,
-            StartInstanceLocation);
-
+        InsertCommand<DrawIndexedInstancedCommand>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
         NumDrawCalls++;
     }
 
-    /*
-    * Draw
-    */
-
-    FORCEINLINE void Dispatch(
-        UInt32 ThreadGroupCountX, 
-        UInt32 ThreadGroupCountY, 
-        UInt32 ThreadGroupCountZ)
+    FORCEINLINE void Dispatch(UInt32 ThreadGroupCountX, UInt32 ThreadGroupCountY, UInt32 ThreadGroupCountZ)
     {
-        InsertCommand<DispatchComputeCommand>(
-            ThreadGroupCountX, 
-            ThreadGroupCountY,
-            ThreadGroupCountZ);
-
+        InsertCommand<DispatchComputeCommand>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
         NumDispatchCalls++;
     }
 
-    FORCEINLINE void DispatchRays(
-        UInt32 Width, 
-        UInt32 Height, 
-        UInt32 Depth)
+    FORCEINLINE void DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth)
     {
-        InsertCommand<DispatchRaysCommand>(
-            Width, 
-            Height, 
-            Depth);
+        InsertCommand<DispatchRaysCommand>(Width, Height, Depth);
     }
-
-    /*
-    * Debug
-    */
 
     FORCEINLINE void InsertCommandListMarker(const std::string& Marker)
     {
         InsertCommand<InsertCommandListMarkerCommand>(Marker);
     }
-
-    /*
-    * Reset
-    */
 
     FORCEINLINE void Reset()
     {
