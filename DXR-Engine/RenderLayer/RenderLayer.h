@@ -255,145 +255,114 @@ public:
         return gRenderLayer->CreateRayTracingGeometry();
     }
 
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
-        const ShaderResourceViewCreateInfo& CreateInfo)
+    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo)
     {
         return gRenderLayer->CreateShaderResourceView(CreateInfo);
     }
 
-    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(
-        const UnorderedAccessViewCreateInfo& CreateInfo)
+    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(const UnorderedAccessViewCreateInfo& CreateInfo)
     {
         return gRenderLayer->CreateUnorderedAccessView(CreateInfo);
     }
 
-    FORCEINLINE static RenderTargetView* CreateRenderTargetView(
-        const RenderTargetViewCreateInfo& CreateInfo)
+    FORCEINLINE static RenderTargetView* CreateRenderTargetView(const RenderTargetViewCreateInfo& CreateInfo)
     {
         return gRenderLayer->CreateRenderTargetView(CreateInfo);
     }
 
-    FORCEINLINE static DepthStencilView* CreateDepthStencilView(
-        const DepthStencilViewCreateInfo& CreateInfo)
+    FORCEINLINE static DepthStencilView* CreateDepthStencilView(const DepthStencilViewCreateInfo& CreateInfo)
     {
         return gRenderLayer->CreateDepthStencilView(CreateInfo);
     }
 
-    FORCEINLINE static ComputeShader* CreateComputeShader(
-        const TArray<UInt8>& ShaderCode)
+    FORCEINLINE static ComputeShader* CreateComputeShader(const TArray<UInt8>& ShaderCode)
     {
         return gRenderLayer->CreateComputeShader(ShaderCode);
     }
 
-    FORCEINLINE static VertexShader* CreateVertexShader(
-        const TArray<UInt8>& ShaderCode)
+    FORCEINLINE static VertexShader* CreateVertexShader(const TArray<UInt8>& ShaderCode)
     {
         return gRenderLayer->CreateVertexShader(ShaderCode);
     }
     
-    FORCEINLINE static HullShader* CreateHullShader(
-        const TArray<UInt8>& ShaderCode)
+    FORCEINLINE static HullShader* CreateHullShader(const TArray<UInt8>& ShaderCode)
     {
         return gRenderLayer->CreateHullShader(ShaderCode);
     }
     
-    FORCEINLINE static DomainShader* CreateDomainShader(
-        const TArray<UInt8>& ShaderCode)
+    FORCEINLINE static DomainShader* CreateDomainShader(const TArray<UInt8>& ShaderCode)
     {
         return gRenderLayer->CreateDomainShader(ShaderCode);
     }
     
-    FORCEINLINE static GeometryShader* CreateGeometryShader(
-        const TArray<UInt8>& ShaderCode)
+    FORCEINLINE static GeometryShader* CreateGeometryShader(const TArray<UInt8>& ShaderCode)
     {
         return gRenderLayer->CreateGeometryShader(ShaderCode);
     }
 
-    FORCEINLINE static MeshShader* CreateMeshShader(
-        const TArray<UInt8>& ShaderCode)
+    FORCEINLINE static MeshShader* CreateMeshShader(const TArray<UInt8>& ShaderCode)
     {
         return gRenderLayer->CreateMeshShader(ShaderCode);
     }
     
-    FORCEINLINE static AmplificationShader* CreateAmplificationShader(
-        const TArray<UInt8>& ShaderCode)
+    FORCEINLINE static AmplificationShader* CreateAmplificationShader(const TArray<UInt8>& ShaderCode)
     {
         return gRenderLayer->CreateAmplificationShader(ShaderCode);
     }
 
-    FORCEINLINE static PixelShader* CreatePixelShader(
-        const TArray<UInt8>& ShaderCode)
+    FORCEINLINE static PixelShader* CreatePixelShader(const TArray<UInt8>& ShaderCode)
     {
         return gRenderLayer->CreatePixelShader(ShaderCode);
     }
 
-    FORCEINLINE static RayGenShader* CreateRayGenShader(
-        const TArray<UInt8>& ShaderCode)
+    FORCEINLINE static RayGenShader* CreateRayGenShader(const TArray<UInt8>& ShaderCode)
     {
         return gRenderLayer->CreateRayGenShader(ShaderCode);
     }
     
-    FORCEINLINE static RayHitShader* CreateRayHitShader(
-        const TArray<UInt8>& ShaderCode)
+    FORCEINLINE static RayHitShader* CreateRayHitShader(const TArray<UInt8>& ShaderCode)
     {
         return gRenderLayer->CreateRayHitShader(ShaderCode);
     }
 
-    FORCEINLINE static RayMissShader* CreateRayMissShader(
-        const TArray<UInt8>& ShaderCode)
+    FORCEINLINE static RayMissShader* CreateRayMissShader(const TArray<UInt8>& ShaderCode)
     {
         return gRenderLayer->CreateRayMissShader(ShaderCode);
     }
 
-    FORCEINLINE static InputLayoutState* CreateInputLayout(
-        const InputLayoutStateCreateInfo& CreateInfo)
+    FORCEINLINE static InputLayoutState* CreateInputLayout(const InputLayoutStateCreateInfo& CreateInfo)
     {
         return gRenderLayer->CreateInputLayout(CreateInfo);
     }
 
-    FORCEINLINE static DepthStencilState* CreateDepthStencilState(
-        const DepthStencilStateCreateInfo& CreateInfo)
+    FORCEINLINE static DepthStencilState* CreateDepthStencilState(const DepthStencilStateCreateInfo& CreateInfo)
     {
         return gRenderLayer->CreateDepthStencilState(CreateInfo);
     }
 
-    FORCEINLINE static RasterizerState* CreateRasterizerState(
-        const RasterizerStateCreateInfo& CreateInfo)
+    FORCEINLINE static RasterizerState* CreateRasterizerState(const RasterizerStateCreateInfo& CreateInfo)
     {
         return gRenderLayer->CreateRasterizerState(CreateInfo);
     }
 
-    FORCEINLINE static BlendState* CreateBlendState(
-        const BlendStateCreateInfo& CreateInfo)
+    FORCEINLINE static BlendState* CreateBlendState(const BlendStateCreateInfo& CreateInfo)
     {
         return gRenderLayer->CreateBlendState(CreateInfo);
     }
 
-    FORCEINLINE static ComputePipelineState* CreateComputePipelineState(
-        const ComputePipelineStateCreateInfo& CreateInfo)
+    FORCEINLINE static ComputePipelineState* CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo)
     {
         return gRenderLayer->CreateComputePipelineState(CreateInfo);
     }
 
-    FORCEINLINE static GraphicsPipelineState* CreateGraphicsPipelineState(
-        const GraphicsPipelineStateCreateInfo& CreateInfo)
+    FORCEINLINE static GraphicsPipelineState* CreateGraphicsPipelineState(const GraphicsPipelineStateCreateInfo& CreateInfo)
     {
         return gRenderLayer->CreateGraphicsPipelineState(CreateInfo);
     }
 
-    FORCEINLINE static class Viewport* CreateViewport(
-        GenericWindow* Window,
-        UInt32 Width,
-        UInt32 Height,
-        EFormat ColorFormat,
-        EFormat DepthFormat)
+    FORCEINLINE static class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat)
     {
-        return gRenderLayer->CreateViewport(
-            Window, 
-            Width,
-            Height,
-            ColorFormat, 
-            DepthFormat);
+        return gRenderLayer->CreateViewport(Window, Width, Height, ColorFormat, DepthFormat);
     }
 
     FORCEINLINE static Bool IsRayTracingSupported()

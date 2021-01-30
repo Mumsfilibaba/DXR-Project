@@ -209,10 +209,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     return true;
 }
 
-void SkyboxRenderPass::Render(
-    CommandList& CmdList,
-    const FrameResources& FrameResources,
-    const Scene& Scene)
+void SkyboxRenderPass::Render(CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
 
@@ -225,28 +222,11 @@ void SkyboxRenderPass::Render(
         RenderTargetView* RenderTarget[] = { FrameResources.FinalTargetRTV.Get() };
         CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
 
-        CmdList.BindViewport(
-            RenderWidth,
-            RenderHeight,
-            0.0f,
-            1.0f,
-            0.0f,
-            0.0f);
+        CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+        CmdList.BindScissorRect(RenderWidth, RenderHeight, 0, 0);
 
-        CmdList.BindScissorRect(
-            RenderWidth,
-            RenderHeight,
-            0, 0);
-
-        CmdList.TransitionTexture(
-            FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(),
-            EResourceState::ResourceState_NonPixelShaderResource,
-            EResourceState::ResourceState_DepthWrite);
-
-        CmdList.TransitionTexture(
-            FrameResources.FinalTarget.Get(),
-            EResourceState::ResourceState_UnorderedAccess,
-            EResourceState::ResourceState_RenderTarget);
+        CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_DepthWrite);
+        CmdList.TransitionTexture(FrameResources.FinalTarget.Get(), EResourceState::ResourceState_UnorderedAccess, EResourceState::ResourceState_RenderTarget);
 
         CmdList.BindRenderTargets(RenderTarget, 1, FrameResources.GBufferDSV.Get());
 
@@ -261,23 +241,13 @@ void SkyboxRenderPass::Render(
         } SimpleCamera;
         SimpleCamera.Matrix = Scene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
 
-        CmdList.Bind32BitShaderConstants(
-            EShaderStage::ShaderStage_Vertex,
-            &SimpleCamera, 16);
+        CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Vertex, &SimpleCamera, 16);
 
-        CmdList.BindShaderResourceViews(
-            EShaderStage::ShaderStage_Pixel,
-            &FrameResources.SkyboxSRV,
-            1, 0);
+        CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Pixel, &FrameResources.SkyboxSRV, 1, 0);
 
-        CmdList.BindSamplerStates(
-            EShaderStage::ShaderStage_Pixel,
-            &SkyboxSampler,
-            1, 0);
+        CmdList.BindSamplerStates(EShaderStage::ShaderStage_Pixel, &SkyboxSampler, 1, 0);
 
-        CmdList.DrawIndexedInstanced(
-            static_cast<UInt32>(SkyboxMesh.Indices.Size()),
-            1, 0, 0, 0);
+        CmdList.DrawIndexedInstanced(static_cast<UInt32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");

@@ -231,15 +231,8 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(const SampledTexture2D
     CommandList& CmdList = GlobalFactoryData.CmdList;
     CmdList.Begin();
     
-    CmdList.TransitionTexture(
-        PanoramaSource.Texture.Get(),
-        EResourceState::ResourceState_PixelShaderResource, 
-        EResourceState::ResourceState_NonPixelShaderResource);
-    
-    CmdList.TransitionTexture(
-        StagingTexture.Get(), 
-        EResourceState::ResourceState_Common, 
-        EResourceState::ResourceState_UnorderedAccess);
+    CmdList.TransitionTexture(PanoramaSource.Texture.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
+    CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_UnorderedAccess);
 
     CmdList.BindComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
 
@@ -258,20 +251,9 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(const SampledTexture2D
     const UInt32 ThreadsY = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
     CmdList.Dispatch(ThreadsX, ThreadsY, 6);
 
-    CmdList.TransitionTexture(
-        PanoramaSource.Texture.Get(), 
-        EResourceState::ResourceState_NonPixelShaderResource,
-        EResourceState::ResourceState_PixelShaderResource);
-    
-    CmdList.TransitionTexture(
-        StagingTexture.Get(), 
-        EResourceState::ResourceState_UnorderedAccess,
-        EResourceState::ResourceState_CopySource);
-    
-    CmdList.TransitionTexture(
-        Texture.Get(), 
-        EResourceState::ResourceState_Common, 
-        EResourceState::ResourceState_CopyDest);
+    CmdList.TransitionTexture(PanoramaSource.Texture.Get(), EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_UnorderedAccess, EResourceState::ResourceState_CopySource);
+    CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);
 
     CmdList.CopyTexture(Texture.Get(), StagingTexture.Get());
 
@@ -280,9 +262,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(const SampledTexture2D
         CmdList.GenerateMips(Texture.Get());
     }
 
-    CmdList.TransitionTexture(Texture.Get(), 
-        EResourceState::ResourceState_CopyDest, 
-        EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
     
     CmdList.DestroyResource(StagingTexture.Get());
     CmdList.DestroyResource(StagingTextureUAV.Get());

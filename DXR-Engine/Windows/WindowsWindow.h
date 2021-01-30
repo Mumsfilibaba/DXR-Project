@@ -43,11 +43,10 @@ public:
 
 private:
     WindowsApplication* OwnerApplication = nullptr;
-    
+    WINDOWPLACEMENT StoredPlacement;
+
     HWND  hWindow;
     DWORD Style;
     DWORD StyleEx;
     Bool  IsFullscreen;
-    
-    WINDOWPLACEMENT StoredPlacement;
 };

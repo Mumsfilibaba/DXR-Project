@@ -60,15 +60,7 @@ Bool WindowsWindow::Init(const WindowCreateInfo& InCreateInfo)
     INT nHeight = ClientRect.bottom - ClientRect.top;
 
     HINSTANCE hInstance = OwnerApplication->GetInstance();
-    hWindow = ::CreateWindowEx(
-        0, "WinClass", 
-        InCreateInfo.Title.c_str(), 
-        dwStyle, 
-        CW_USEDEFAULT, 
-        CW_USEDEFAULT, 
-        nWidth, nHeight, 
-        NULL, NULL, 
-        hInstance, NULL);
+    hWindow = ::CreateWindowEx(0, "WinClass", InCreateInfo.Title.c_str(), dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, hInstance, NULL);
     if (hWindow == NULL)
     {
         LOG_ERROR("[WindowsWindow]: FAILED to create window\n");
@@ -193,8 +185,8 @@ void WindowsWindow::ToggleFullscreen()
             LONG newStyleEx = StyleEx;
             newStyleEx &= ~WS_EX_WINDOWEDGE;
 
-            SetWindowLong(hWindow, GWL_STYLE, newStyle | WS_POPUP);
-            SetWindowLong(hWindow, GWL_EXSTYLE, newStyleEx | WS_EX_TOPMOST);
+            ::SetWindowLong(hWindow, GWL_STYLE, newStyle | WS_POPUP);
+            ::SetWindowLong(hWindow, GWL_EXSTYLE, newStyleEx | WS_EX_TOPMOST);
             ::ShowWindow(hWindow, SW_SHOWMAXIMIZED);
         }
         else

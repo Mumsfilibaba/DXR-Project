@@ -16,9 +16,7 @@ public:
 
     Bool ResizeResources(FrameResources& FrameResources);
 
-    void Render(
-        CommandList& CmdList,
-        const FrameResources& FrameResources);
+    void Render(CommandList& CmdList, const FrameResources& FrameResources);
 
 private:
     Bool CreateRenderTarget(FrameResources& FrameResources);

@@ -412,7 +412,6 @@ public:
 
 public:
     virtual void Begin() override final;
-
     virtual void End()   override final;
 
     virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor) override final;
@@ -432,41 +431,22 @@ public:
     virtual void BindRenderTargets(RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView) override final;
 
     virtual void BindVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) override final;
-    virtual void BindIndexBuffer(IndexBuffer* IndexBuffer)                      override final;
+    virtual void BindIndexBuffer(IndexBuffer* IndexBuffer) override final;
 
     virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
     
-    virtual void BindRayTracingScene(RayTracingScene* RayTracingScene)          override final;
+    virtual void BindRayTracingScene(RayTracingScene* RayTracingScene) override final;
 
-    virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState)     override final;
-    virtual void BindComputePipelineState(class ComputePipelineState* PipelineState)       override final;
+    virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState) override final;
+    virtual void BindComputePipelineState(class ComputePipelineState* PipelineState) override final;
     virtual void BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState) override final;
 
     virtual void Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants) override final;
 
-    virtual void BindShaderResourceViews(
-        EShaderStage ShaderStage,
-        ShaderResourceView* const* ShaderResourceViews,
-        UInt32 ShaderResourceViewCount,
-        UInt32 StartSlot) override final;
-
-    virtual void BindSamplerStates(
-        EShaderStage ShaderStage,
-        SamplerState* const* SamplerStates,
-        UInt32 SamplerStateCount,
-        UInt32 StartSlot) override final;
-
-    virtual void BindUnorderedAccessViews(
-        EShaderStage ShaderStage,
-        UnorderedAccessView* const* UnorderedAccessViews,
-        UInt32 UnorderedAccessViewCount,
-        UInt32 StartSlot) override final;
-
-    virtual void BindConstantBuffers(
-        EShaderStage ShaderStage,
-        ConstantBuffer* const* ConstantBuffers,
-        UInt32 ConstantBufferCount,
-        UInt32 StartSlot) override final;
+    virtual void BindShaderResourceViews(EShaderStage ShaderStage, ShaderResourceView* const* ShaderResourceViews, UInt32 ShaderResourceViewCount, UInt32 StartSlot) override final;
+    virtual void BindSamplerStates(EShaderStage ShaderStage, SamplerState* const* SamplerStates, UInt32 SamplerStateCount, UInt32 StartSlot) override final;
+    virtual void BindUnorderedAccessViews(EShaderStage ShaderStage, UnorderedAccessView* const* UnorderedAccessViews, UInt32 UnorderedAccessViewCount, UInt32 StartSlot) override final;
+    virtual void BindConstantBuffers(EShaderStage ShaderStage, ConstantBuffer* const* ConstantBuffers, UInt32 ConstantBufferCount, UInt32 StartSlot) override final;
 
     virtual void UpdateBuffer(Buffer* Destination, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData) override final;
     virtual void UpdateTexture2D(Texture2D* Destination, UInt32 Width, UInt32 Height, UInt32 MipLevel, const Void* SourceData) override final;
@@ -480,7 +460,7 @@ public:
     virtual void DestroyResource(class PipelineResource* Resource) override final;
 
     virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) override final;
-    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene)          override final;
+    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) override final;
 
     virtual void GenerateMips(Texture* Texture) override final;
 
@@ -492,20 +472,13 @@ public:
     virtual void Draw(UInt32 VertexCount, UInt32 StartVertexLocation) override final;
     virtual void DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation) override final;
     virtual void DrawInstanced(UInt32 VertexCountPerInstance, UInt32 InstanceCount, UInt32 StartVertexLocation, UInt32 StartInstanceLocation) override final;
-    
-    virtual void DrawIndexedInstanced(
-        UInt32 IndexCountPerInstance, 
-        UInt32 InstanceCount, 
-        UInt32 StartIndexLocation, 
-        UInt32 BaseVertexLocation, 
-        UInt32 StartInstanceLocation) override final;
+    virtual void DrawIndexedInstanced(UInt32 IndexCountPerInstance, UInt32 InstanceCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation, UInt32 StartInstanceLocation) override final;
 
     virtual void Dispatch(UInt32 WorkGroupsX, UInt32 WorkGroupsY, UInt32 WorkGroupsZ) override final;
     virtual void DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth) override final;
 
     virtual void ClearState() override final;
-
-    virtual void Flush()      override final;
+    virtual void Flush() override final;
 
     virtual void InsertMarker(const std::string& Message) override final;
 

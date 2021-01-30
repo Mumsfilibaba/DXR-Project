@@ -75,13 +75,12 @@ private:
     XMFLOAT4X4 ViewProjection;
     XMFLOAT4X4 ViewProjectionInverse;
     XMFLOAT4X4 ViewProjectionNoTranslation;
-
+    Float NearPlane;
+    Float FarPlane;
+    Float AspectRatio;
     XMFLOAT3 Position;
     XMFLOAT3 Rotation;
     XMFLOAT3 Forward;
     XMFLOAT3 Right;
     XMFLOAT3 Up;
-    Float    NearPlane;
-    Float    FarPlane;
-    Float    AspectRatio;
 };

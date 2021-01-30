@@ -29,7 +29,7 @@ Actor::~Actor()
 
 void Actor::OnAddedToScene(Scene* InScene)
 {
-    CurrentScene = InScene;
+    Scene = InScene;
 }
 
 void Actor::AddComponent(Component* InComponent)
@@ -37,9 +37,9 @@ void Actor::AddComponent(Component* InComponent)
     VALIDATE(InComponent != nullptr);
     Components.EmplaceBack(InComponent);
 
-    if (CurrentScene)
+    if (Scene)
     {
-        CurrentScene->OnAddedComponent(InComponent);
+        Scene->OnAddedComponent(InComponent);
     }
 }
 

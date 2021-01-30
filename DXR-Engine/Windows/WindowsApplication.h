@@ -32,7 +32,6 @@ class WindowsApplication : public GenericApplication
     void AddWindow(WindowsWindow* Window);
 
     LRESULT ApplicationProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
-
     static LRESULT MessageProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
 public:
@@ -71,10 +70,9 @@ public:
 private:
     HINSTANCE InstanceHandle = 0;
 
-    TArray<WindowsEvent> Events;
-    
     TSharedRef<WindowsCursor> CurrentCursor;
     TArray<TSharedRef<WindowsWindow>> Windows;
+    TArray<WindowsEvent> Events;
 
     Bool IsTrackingMouse = false;
 };

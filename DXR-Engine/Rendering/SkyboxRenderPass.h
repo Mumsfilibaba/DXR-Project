@@ -15,10 +15,7 @@ public:
 
     Bool Init(FrameResources& FrameResources);
 
-    void Render(
-        CommandList& CmdList, 
-        const FrameResources& FrameResources,
-        const Scene& Scene);
+    void Render(CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene);
 
     void Release();
 

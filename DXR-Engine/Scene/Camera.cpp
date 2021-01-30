@@ -57,7 +57,7 @@ void Camera::Rotate(Float Pitch, Float Yaw, Float Roll)
 
 void Camera::UpdateMatrices()
 {
-    Float Fov    = XMConvertToRadians(90.0f);
+    Float Fov = XMConvertToRadians(90.0f);
     XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(Fov, 1920.0f / 1080.0f, NearPlane, FarPlane);
     XMStoreFloat4x4(&Projection, XmProjection);
 

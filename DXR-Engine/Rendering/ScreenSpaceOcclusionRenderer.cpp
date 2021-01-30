@@ -74,11 +74,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
     TArray<XMFLOAT3> SSAOKernel;
     for (UInt32 i = 0; i < 256 && SSAOKernel.Size() < 64; ++i)
     {
-        XMVECTOR XmSample = XMVectorSet(
-            RandomFloats(Generator) * 2.0f - 1.0f,
-            RandomFloats(Generator) * 2.0f - 1.0f,
-            RandomFloats(Generator),
-            0.0f);
+        XMVECTOR XmSample = XMVectorSet(RandomFloats(Generator) * 2.0f - 1.0f, RandomFloats(Generator) * 2.0f - 1.0f, RandomFloats(Generator), 0.0f);
 
         Float Scale = RandomFloats(Generator);
         XmSample = XMVector3Normalize(XmSample);
@@ -140,25 +136,12 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
     CommandList CmdList;
     CmdList.Begin();
 
-    CmdList.TransitionTexture(
-        FrameResources.SSAOBuffer.Get(),
-        EResourceState::ResourceState_Common,
-        EResourceState::ResourceState_NonPixelShaderResource);
+    CmdList.TransitionTexture(FrameResources.SSAOBuffer.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_NonPixelShaderResource);
+    CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);
 
-    CmdList.TransitionTexture(
-        SSAONoiseTex.Get(),
-        EResourceState::ResourceState_Common,
-        EResourceState::ResourceState_CopyDest);
+    CmdList.UpdateTexture2D(SSAONoiseTex.Get(), 4, 4, 0, SSAONoise.Data());
 
-    CmdList.UpdateTexture2D(
-        SSAONoiseTex.Get(),
-        4, 4, 0,
-        SSAONoise.Data());
-
-    CmdList.TransitionTexture(
-        SSAONoiseTex.Get(),
-        EResourceState::ResourceState_CopyDest,
-        EResourceState::ResourceState_NonPixelShaderResource);
+    CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_NonPixelShaderResource);
 
     CmdList.End();
     gCmdListExecutor.ExecuteCommandList(CmdList);
@@ -291,9 +274,7 @@ Bool ScreenSpaceOcclusionRenderer::ResizeResources(FrameResources& FrameResource
 	return CreateRenderTarget(FrameResources);
 }
 
-void ScreenSpaceOcclusionRenderer::Render(
-    CommandList& CmdList, 
-    const FrameResources& FrameResources)
+void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, const FrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
 
@@ -326,29 +307,11 @@ void ScreenSpaceOcclusionRenderer::Render(
 
     CmdList.BindComputePipelineState(PipelineState.Get());
 
-    CmdList.BindShaderResourceViews(
-        EShaderStage::ShaderStage_Compute,
-        ShaderResourceViews,
-        4, 0);
-
-    CmdList.BindSamplerStates(
-        EShaderStage::ShaderStage_Compute,
-        &FrameResources.GBufferSampler,
-        1, 0);
-
-    CmdList.BindConstantBuffers(
-        EShaderStage::ShaderStage_Compute,
-        FrameResources.CameraBuffer.GetAddressOf(),
-        1, 0);
-
-    CmdList.BindUnorderedAccessViews(
-        EShaderStage::ShaderStage_Compute,
-        FrameResources.SSAOBufferUAV.GetAddressOf(),
-        1, 0);
-
-    CmdList.Bind32BitShaderConstants(
-        EShaderStage::ShaderStage_Compute,
-        &SSAOSettings, 7);
+    CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Compute, ShaderResourceViews, 4, 0);
+    CmdList.BindSamplerStates(EShaderStage::ShaderStage_Compute, &FrameResources.GBufferSampler, 1, 0);
+    CmdList.BindConstantBuffers(EShaderStage::ShaderStage_Compute, &FrameResources.CameraBuffer, 1, 0);
+    CmdList.BindUnorderedAccessViews(EShaderStage::ShaderStage_Compute, &FrameResources.SSAOBufferUAV, 1, 0);
+    CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Compute, &SSAOSettings, 7);
 
     constexpr UInt32 ThreadCount = 16;
     const UInt32 DispatchWidth   = Math::DivideByMultiple<UInt32>(Width, ThreadCount);
@@ -359,9 +322,7 @@ void ScreenSpaceOcclusionRenderer::Render(
 
     CmdList.BindComputePipelineState(BlurHorizontalPSO.Get());
 
-    CmdList.Bind32BitShaderConstants(
-        EShaderStage::ShaderStage_Compute,
-        &SSAOSettings.ScreenSize, 2);
+    CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Compute, &SSAOSettings.ScreenSize, 2);
 
     CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
@@ -369,9 +330,7 @@ void ScreenSpaceOcclusionRenderer::Render(
 
     CmdList.BindComputePipelineState(BlurVerticalPSO.Get());
 
-    CmdList.Bind32BitShaderConstants(
-        EShaderStage::ShaderStage_Compute,
-        &SSAOSettings.ScreenSize, 2);
+    CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Compute, &SSAOSettings.ScreenSize, 2);
 
     CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 

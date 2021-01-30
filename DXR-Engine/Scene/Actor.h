@@ -115,7 +115,7 @@ public:
 
     FORCEINLINE Scene* GetScene() const
     {
-        return CurrentScene;
+        return Scene;
     }
 
     FORCEINLINE Transform& GetTransform()
@@ -143,9 +143,8 @@ public:
     }
 
 private:
-    Scene* CurrentScene = nullptr;
+    Scene*    Scene = nullptr;
     Transform Transform;
-
     TArray<Component*> Components;
     std::string        Name;
 };

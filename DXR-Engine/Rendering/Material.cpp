@@ -38,20 +38,11 @@ void Material::Init()
 
 void Material::BuildBuffer(CommandList& CmdList)
 {
-    CmdList.TransitionBuffer(
-        MaterialBuffer.Get(),
-        EResourceState::ResourceState_VertexAndConstantBuffer,
-        EResourceState::ResourceState_CopyDest);
+    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::ResourceState_VertexAndConstantBuffer, EResourceState::ResourceState_CopyDest);
 
-    CmdList.UpdateBuffer(
-        MaterialBuffer.Get(),
-        0, sizeof(MaterialProperties),
-        &Properties);
+    CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(MaterialProperties), &Properties);
 
-    CmdList.TransitionBuffer(
-        MaterialBuffer.Get(),
-        EResourceState::ResourceState_CopyDest,
-        EResourceState::ResourceState_VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_VertexAndConstantBuffer);
 
     MaterialBufferIsDirty = false;
 }

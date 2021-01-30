@@ -152,44 +152,44 @@ public:
 
     virtual class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) const override final;
 
-    virtual VertexBuffer*     CreateVertexBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 VertexStride, UInt32 Usage) const override final;
-    virtual IndexBuffer*      CreateIndexBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, EIndexFormat IndexFormat, UInt32 Usage) const override final;
-    virtual ConstantBuffer*   CreateConstantBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 Usage, EResourceState InitialState) const override final;
+    virtual VertexBuffer* CreateVertexBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 VertexStride, UInt32 Usage) const override final;
+    virtual IndexBuffer* CreateIndexBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, EIndexFormat IndexFormat, UInt32 Usage) const override final;
+    virtual ConstantBuffer* CreateConstantBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 Usage, EResourceState InitialState) const override final;
     virtual StructuredBuffer* CreateStructuredBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 Stride, UInt32 Usage) const override final;
 
     virtual class RayTracingGeometry* CreateRayTracingGeometry() const override final;
-    virtual class RayTracingScene*    CreateRayTracingScene()    const override final;
+    virtual class RayTracingScene* CreateRayTracingScene()    const override final;
 
-    virtual ShaderResourceView*  CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) const override final;
+    virtual ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) const override final;
     virtual UnorderedAccessView* CreateUnorderedAccessView(const UnorderedAccessViewCreateInfo& CreateInfo) const override final;
-    virtual RenderTargetView*    CreateRenderTargetView(const RenderTargetViewCreateInfo& CreateInfo) const override final;
-    virtual DepthStencilView*    CreateDepthStencilView(const DepthStencilViewCreateInfo& CreateInfo) const override final;
+    virtual RenderTargetView* CreateRenderTargetView(const RenderTargetViewCreateInfo& CreateInfo) const override final;
+    virtual DepthStencilView* CreateDepthStencilView(const DepthStencilViewCreateInfo& CreateInfo) const override final;
 
-    virtual class ComputeShader*       CreateComputeShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class VertexShader*        CreateVertexShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class HullShader*          CreateHullShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class DomainShader*        CreateDomainShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class GeometryShader*      CreateGeometryShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class MeshShader*          CreateMeshShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class ComputeShader* CreateComputeShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class VertexShader* CreateVertexShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class HullShader* CreateHullShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class DomainShader* CreateDomainShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class GeometryShader* CreateGeometryShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class MeshShader* CreateMeshShader(const TArray<UInt8>& ShaderCode) const override final;
     virtual class AmplificationShader* CreateAmplificationShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class PixelShader*         CreatePixelShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class RayGenShader*        CreateRayGenShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class RayHitShader*        CreateRayHitShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class RayMissShader*       CreateRayMissShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class PixelShader* CreatePixelShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class RayGenShader* CreateRayGenShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class RayHitShader* CreateRayHitShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class RayMissShader* CreateRayMissShader(const TArray<UInt8>& ShaderCode) const override final;
 
     virtual class DepthStencilState* CreateDepthStencilState(const DepthStencilStateCreateInfo& CreateInfo) const override final;
-    virtual class RasterizerState*   CreateRasterizerState(const RasterizerStateCreateInfo& CreateInfo) const override final;
-    virtual class BlendState*        CreateBlendState(const BlendStateCreateInfo& CreateInfo) const override final;
-    virtual class InputLayoutState*  CreateInputLayout(const InputLayoutStateCreateInfo& CreateInfo) const override final;
+    virtual class RasterizerState* CreateRasterizerState(const RasterizerStateCreateInfo& CreateInfo) const override final;
+    virtual class BlendState* CreateBlendState(const BlendStateCreateInfo& CreateInfo) const override final;
+    virtual class InputLayoutState* CreateInputLayout(const InputLayoutStateCreateInfo& CreateInfo) const override final;
 
-    virtual class GraphicsPipelineState*   CreateGraphicsPipelineState(const GraphicsPipelineStateCreateInfo& CreateInfo) const override final;
-    virtual class ComputePipelineState*    CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo) const override final;
+    virtual class GraphicsPipelineState* CreateGraphicsPipelineState(const GraphicsPipelineStateCreateInfo& CreateInfo) const override final;
+    virtual class ComputePipelineState* CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo) const override final;
     virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const override final;
 
     virtual class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat) const override final;
 
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
-    virtual Bool IsRayTracingSupported()           const override final;
+    virtual Bool IsRayTracingSupported() const override final;
     virtual Bool UAVSupportsFormat(EFormat Format) const override final;
     
     virtual class ICommandContext* GetDefaultCommandContext() const override final

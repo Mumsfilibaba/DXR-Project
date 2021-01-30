@@ -32,19 +32,10 @@ public:
     ShadowMapRenderer()  = default;
     ~ShadowMapRenderer() = default;
 
-    Bool Init(
-        SceneLightSetup& LightSetup,
-        FrameResources& Resources);
+    Bool Init(SceneLightSetup& LightSetup, FrameResources& Resources);
 
-    void RenderPointLightShadows(
-        CommandList& CmdList,
-        const SceneLightSetup& LightSetup,
-        const Scene& Scene);
-
-    void RenderDirectionalLightShadows(
-        CommandList& CmdList,
-        const SceneLightSetup& LightSetup,
-        const Scene& Scene);
+    void RenderPointLightShadows(CommandList& CmdList, const SceneLightSetup& LightSetup, const Scene& Scene);
+    void RenderDirectionalLightShadows(CommandList& CmdList, const SceneLightSetup& LightSetup, const Scene& Scene);
 
     void Release();
 

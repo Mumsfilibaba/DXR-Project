@@ -178,11 +178,7 @@ public:
         InsertCommand<Bind32BitShaderConstantsCommand>(ShaderStage, Shader32BitConstantsMemory, Num32BitConstants);
     }
 
-    FORCEINLINE void BindShaderResourceViews(
-        EShaderStage ShaderStage, 
-        ShaderResourceView* const* ShaderResourceViews, 
-        UInt32 ShaderResourceViewCount, 
-        UInt32 StartSlot)
+    FORCEINLINE void BindShaderResourceViews(EShaderStage ShaderStage, ShaderResourceView* const* ShaderResourceViews, UInt32 ShaderResourceViewCount, UInt32 StartSlot)
     {
         VALIDATE(ShaderResourceViews != nullptr);
 
@@ -212,11 +208,7 @@ public:
         InsertCommand<BindSamplerStatesCommand>(ShaderStage, Samplers, SamplerStateCount, StartSlot);
     }
 
-    FORCEINLINE void BindUnorderedAccessViews(
-        EShaderStage ShaderStage, 
-        UnorderedAccessView* const* UnorderedAccessViews, 
-        UInt32 UnorderedAccessViewCount, 
-        UInt32 StartSlot)
+    FORCEINLINE void BindUnorderedAccessViews(EShaderStage ShaderStage, UnorderedAccessView* const* UnorderedAccessViews, UInt32 UnorderedAccessViewCount, UInt32 StartSlot)
     {
         VALIDATE(UnorderedAccessViews != nullptr);
 
@@ -369,12 +361,7 @@ public:
         NumDrawCalls++;
     }
 
-    FORCEINLINE void DrawIndexedInstanced(
-        UInt32 IndexCountPerInstance, 
-        UInt32 InstanceCount, 
-        UInt32 StartIndexLocation, 
-        UInt32 BaseVertexLocation, 
-        UInt32 StartInstanceLocation)
+    FORCEINLINE void DrawIndexedInstanced(UInt32 IndexCountPerInstance, UInt32 InstanceCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation, UInt32 StartInstanceLocation)
     {
         InsertCommand<DrawIndexedInstancedCommand>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
         NumDrawCalls++;
