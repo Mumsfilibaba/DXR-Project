@@ -253,7 +253,7 @@ void Renderer::RenderDebugInterface()
     {
         const UInt32 WindowWidth  = gMainWindow->GetWidth();
         const UInt32 WindowHeight = gMainWindow->GetHeight();
-        const Float Width = 300.0f;
+        const Float Width  = 300.0f;
         const Float Height = WindowHeight * 0.1f;
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
@@ -426,7 +426,11 @@ void Renderer::Tick(const Scene& Scene)
 
     CmdList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceState::ResourceState_UnorderedAccess, EResourceState::ResourceState_NonPixelShaderResource);
 
-    Resources.DebugTextures.EmplaceBack(Resources.SSAOBufferSRV, Resources.SSAOBuffer, EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
+    Resources.DebugTextures.EmplaceBack(
+        Resources.SSAOBufferSRV, 
+        Resources.SSAOBuffer, 
+        EResourceState::ResourceState_NonPixelShaderResource, 
+        EResourceState::ResourceState_NonPixelShaderResource);
 
     CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_UnorderedAccess);
     CmdList.TransitionTexture(Resources.BackBuffer, EResourceState::ResourceState_Present, EResourceState::ResourceState_RenderTarget);
@@ -440,7 +444,11 @@ void Renderer::Tick(const Scene& Scene)
 
     CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::ResourceState_RenderTarget, EResourceState::ResourceState_PixelShaderResource);
 
-    Resources.DebugTextures.EmplaceBack(Resources.FinalTargetSRV, Resources.FinalTarget, EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
+    Resources.DebugTextures.EmplaceBack(
+        Resources.FinalTargetSRV, 
+        Resources.FinalTarget, 
+        EResourceState::ResourceState_PixelShaderResource, 
+        EResourceState::ResourceState_PixelShaderResource);
 
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
     CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
