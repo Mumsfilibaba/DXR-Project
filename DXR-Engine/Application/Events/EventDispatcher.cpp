@@ -21,7 +21,7 @@ void EventDispatcher::RegisterEventHandler(EventHandlerFunc Func, UInt8 EventCat
         {
             if (Pair.Func == Func)
             {
-                LOG_WARNING("Function is already registered as a EventHandler, will not be registered again");
+                LOG_WARNING("Function is already registered as a EventHandler and will not be registered again");
                 return;
             }
         }
@@ -40,7 +40,7 @@ void EventDispatcher::RegisterEventHandler(IEventHandler* EventHandler, UInt8 Ev
         {
             if (Pair.Handler == EventHandler)
             {
-                LOG_WARNING("Handler is already registered as a EventHandler, will not be registered again");
+                LOG_WARNING("Handler is already registered as a EventHandler and will not be registered again");
                 return;
             }
         }
