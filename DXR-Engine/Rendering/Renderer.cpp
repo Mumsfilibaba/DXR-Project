@@ -734,9 +734,9 @@ void Renderer::Release()
     PostPSO.Reset();
     FXAAPSO.Reset();
 
-   LastFrameNumDrawCalls     = 0;
+   LastFrameNumDrawCalls = 0;
    LastFrameNumDispatchCalls = 0;
-   LastFrameNumCommands      = 0;
+   LastFrameNumCommands = 0;
 }
 
 Bool Renderer::InitBoundingBoxDebugPass()
