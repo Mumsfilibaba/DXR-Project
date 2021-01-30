@@ -14,7 +14,7 @@
 template<typename T>
 using TComPtr = Microsoft::WRL::ComPtr<T>;
 
-//Converts EBufferUsage- flags to D3D12_RESOURCE_FLAGS
+// Converts EBufferUsage- flags to D3D12_RESOURCE_FLAGS
 inline D3D12_RESOURCE_FLAGS ConvertBufferUsage(UInt32 Usage)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
@@ -26,7 +26,7 @@ inline D3D12_RESOURCE_FLAGS ConvertBufferUsage(UInt32 Usage)
     return Result;
 }
 
-//Converts ETextureUsage- flags to D3D12_RESOURCE_FLAGS
+// Converts ETextureUsage- flags to D3D12_RESOURCE_FLAGS
 inline D3D12_RESOURCE_FLAGS ConvertTextureUsage(UInt32 Usage)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
@@ -50,7 +50,7 @@ inline D3D12_RESOURCE_FLAGS ConvertTextureUsage(UInt32 Usage)
     return Result;
 }
 
-//Converts EFormat to DXGI_FORMAT
+// Converts EFormat to DXGI_FORMAT
 inline DXGI_FORMAT ConvertFormat(EFormat Format)
 {
     switch (Format)
@@ -133,7 +133,7 @@ inline DXGI_FORMAT ConvertFormat(EFormat Format)
     }
 }
 
-//Converts EInputClassification to D3D12_INPUT_CLASSIFICATION
+// Converts EInputClassification to D3D12_INPUT_CLASSIFICATION
 inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification(EInputClassification InputClassification)
 {
     switch (InputClassification)
@@ -145,7 +145,7 @@ inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification(EInputClassificatio
     return D3D12_INPUT_CLASSIFICATION();
 }
 
-//Converts EDepthWriteMask to DXGI_FORMAT
+// Converts EDepthWriteMask to DXGI_FORMAT
 inline D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMask)
 {
     switch (DepthWriteMask)
@@ -157,7 +157,7 @@ inline D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMa
     return D3D12_DEPTH_WRITE_MASK();
 }
 
-//Converts EComparisonFunc to D3D12_COMPARISON_FUNC
+// Converts EComparisonFunc to D3D12_COMPARISON_FUNC
 inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
@@ -175,7 +175,7 @@ inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFun
     return D3D12_COMPARISON_FUNC();
 }
 
-//Converts EStencilOp to D3D12_STENCIL_OP
+// Converts EStencilOp to D3D12_STENCIL_OP
 inline D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
 {
     switch (StencilOp)
@@ -193,7 +193,7 @@ inline D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
     return D3D12_STENCIL_OP();
 }
 
-//Converts DepthStencilOp to D3D12_DEPTH_STENCILOP_DESC
+// Converts DepthStencilOp to D3D12_DEPTH_STENCILOP_DESC
 inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const DepthStencilOp& DepthStencilOp)
 {
     return
@@ -205,7 +205,7 @@ inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const DepthStencilOp& De
     };
 }
 
-//Converts ECullMode to D3D12_CULL_MODE
+// Converts ECullMode to D3D12_CULL_MODE
 inline D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
 {
     switch (CullMode)
@@ -216,7 +216,7 @@ inline D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
     }
 }
 
-//Converts EFillMode to D3D12_FILL_MODE
+// Converts EFillMode to D3D12_FILL_MODE
 inline D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
 {
     switch (FillMode)
@@ -228,7 +228,7 @@ inline D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
     return D3D12_FILL_MODE();
 }
 
-//Converts EBlendOp to D3D12_FILL_MODE
+// Converts EBlendOp to D3D12_FILL_MODE
 inline D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
 {
     switch (BlendOp)
@@ -243,7 +243,7 @@ inline D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
     return D3D12_BLEND_OP();
 }
 
-//Converts EBlend to D3D12_BLEND
+// Converts EBlend to D3D12_BLEND
 inline D3D12_BLEND ConvertBlend(EBlend Blend)
 {
     switch (Blend)
@@ -270,7 +270,7 @@ inline D3D12_BLEND ConvertBlend(EBlend Blend)
     return D3D12_BLEND();
 }
 
-//Converts ELogicOp to D3D12_LOGIC_OP
+// Converts ELogicOp to D3D12_LOGIC_OP
 inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
 {
     switch (LogicOp)
@@ -296,7 +296,7 @@ inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
     return D3D12_LOGIC_OP();
 }
 
-//Converts RenderTargetWriteState to D3D12 RenderTargetWriteMask
+// Converts RenderTargetWriteState to D3D12 RenderTargetWriteMask
 inline UInt8 ConvertRenderTargetWriteState(const RenderTargetWriteState& RenderTargetWriteState)
 {
     UInt8 RenderTargetWriteMask = 0;
@@ -327,7 +327,7 @@ inline UInt8 ConvertRenderTargetWriteState(const RenderTargetWriteState& RenderT
     return RenderTargetWriteMask;
 }
 
-//Converts EPrimitiveTopologyType to D3D12_PRIMITIVE_TOPOLOGY_TYPE
+// Converts EPrimitiveTopologyType to D3D12_PRIMITIVE_TOPOLOGY_TYPE
 inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopologyType PrimitiveTopologyType)
 {
     switch (PrimitiveTopologyType)
@@ -342,7 +342,7 @@ inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopo
     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 }
 
-//Converts EPrimitiveTopology to D3D12_PRIMITIVE_TOPOLOGY
+// Converts EPrimitiveTopology to D3D12_PRIMITIVE_TOPOLOGY
 inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
 {
     switch (PrimitiveTopology)
@@ -358,7 +358,7 @@ inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology Prim
     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 }
 
-//Converts EResourceState to D3D12_RESOURCE_STATES
+// Converts EResourceState to D3D12_RESOURCE_STATES
 inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState ResourceState)
 {
     switch (ResourceState)
@@ -384,7 +384,7 @@ inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState ResourceState)
     return D3D12_RESOURCE_STATES();
 }
 
-//Converts ESamplerMode to D3D12_TEXTURE_ADDRESS_MODE
+// Converts ESamplerMode to D3D12_TEXTURE_ADDRESS_MODE
 inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
@@ -399,7 +399,7 @@ inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
     return D3D12_TEXTURE_ADDRESS_MODE();
 }
 
-//Converts ESamplerFilter to D3D12_FILTER
+// Converts ESamplerFilter to D3D12_FILTER
 inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
@@ -427,7 +427,7 @@ inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
     return D3D12_FILTER();
 }
 
-//Converts EShadingRate to D3D12_SHADING_RATE
+// Converts EShadingRate to D3D12_SHADING_RATE
 inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
@@ -440,7 +440,7 @@ inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
     return D3D12_SHADING_RATE();
 }
 
-//Operators for D3D12_GPU_DESCRIPTOR_HANDLE
+// Operators for D3D12_GPU_DESCRIPTOR_HANDLE
 inline Bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
 {
     return DescriptorHandle.ptr == Value;
@@ -461,7 +461,7 @@ inline Bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HA
     return !(Left == Right);
 }
 
-//Operators for D3D12_CPU_DESCRIPTOR_HANDLE
+// Operators for D3D12_CPU_DESCRIPTOR_HANDLE
 inline Bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
 {
     return DescriptorHandle.ptr == Value;
@@ -482,7 +482,7 @@ inline Bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HA
     return !(Left == Right);
 }
 
-//Other helpers
+// Other helpers
 inline Bool ShaderStageIsGraphics(EShaderStage ShaderStage)
 {
     switch (ShaderStage)

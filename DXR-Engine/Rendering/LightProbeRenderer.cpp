@@ -3,9 +3,7 @@
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
 
-Bool LightProbeRenderer::Init(
-    SceneLightSetup& LightSetup,
-    FrameResources& FrameResources)
+Bool LightProbeRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameResources)
 {
 	if (!CreateSkyLightResources(LightSetup))
 	{
@@ -81,8 +79,6 @@ Bool LightProbeRenderer::Init(
         SpecularIrradianceGenPSO->SetName("Specular IrradianceGen PSO");
     }
 
-
-
     SamplerStateCreateInfo CreateInfo;
     CreateInfo.AddressU = ESamplerMode::SamplerMode_Wrap;
     CreateInfo.AddressV = ESamplerMode::SamplerMode_Wrap;
@@ -104,32 +100,17 @@ void LightProbeRenderer::Release()
     SpecularIrradianceGenPSO.Reset();
 }
 
-void LightProbeRenderer::RenderSkyLightProbe(
-    CommandList& CmdList, 
-    const SceneLightSetup& LightSetup,
-    const FrameResources& FrameResources)
+void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const SceneLightSetup& LightSetup, const FrameResources& FrameResources)
 {
     const UInt32 IrradianceMapSize = static_cast<UInt32>(LightSetup.IrradianceMap->GetWidth());
 
-    CmdList.TransitionTexture(
-        FrameResources.Skybox.Get(),
-        EResourceState::ResourceState_PixelShaderResource,
-        EResourceState::ResourceState_NonPixelShaderResource);
-
-    CmdList.TransitionTexture(
-        LightSetup.IrradianceMap.Get(),
-        EResourceState::ResourceState_Common,
-        EResourceState::ResourceState_UnorderedAccess);
+    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_UnorderedAccess);
 
     CmdList.BindComputePipelineState(IrradianceGenPSO.Get());
 
-    CmdList.BindShaderResourceViews(
-        EShaderStage::ShaderStage_Compute,
-        &FrameResources.SkyboxSRV, 1, 0);
-
-    CmdList.BindUnorderedAccessViews(
-        EShaderStage::ShaderStage_Compute,
-        &LightSetup.IrradianceMapUAV, 1, 0);
+    CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Compute, &FrameResources.SkyboxSRV, 1, 0);
+    CmdList.BindUnorderedAccessViews(EShaderStage::ShaderStage_Compute, &LightSetup.IrradianceMapUAV, 1, 0);
 
     {
         constexpr UInt32 ThreadCount = 16;
@@ -140,19 +121,10 @@ void LightProbeRenderer::RenderSkyLightProbe(
 
     CmdList.UnorderedAccessTextureBarrier(LightSetup.IrradianceMap.Get());
 
-    CmdList.TransitionTexture(
-        LightSetup.IrradianceMap.Get(),
-        EResourceState::ResourceState_UnorderedAccess,
-        EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::ResourceState_UnorderedAccess, EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_UnorderedAccess);
 
-    CmdList.TransitionTexture(
-        LightSetup.SpecularIrradianceMap.Get(),
-        EResourceState::ResourceState_Common,
-        EResourceState::ResourceState_UnorderedAccess);
-
-    CmdList.BindShaderResourceViews(
-        EShaderStage::ShaderStage_Compute,
-        &FrameResources.SkyboxSRV, 1, 0);
+    CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Compute, &FrameResources.SkyboxSRV, 1, 0);
 
     CmdList.BindComputePipelineState(SpecularIrradianceGenPSO.Get());
 
@@ -163,13 +135,8 @@ void LightProbeRenderer::RenderSkyLightProbe(
     const Float  RoughnessDelta = 1.0f / (NumMiplevels - 1);
     for (UInt32 Mip = 0; Mip < NumMiplevels; Mip++)
     {
-        CmdList.Bind32BitShaderConstants(
-            EShaderStage::ShaderStage_Compute,
-            &Roughness, 1);
-
-        CmdList.BindUnorderedAccessViews(
-            EShaderStage::ShaderStage_Compute,
-            &LightSetup.SpecularIrradianceMapUAVs[Mip], 1, 0);
+        CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Compute, &Roughness, 1);
+        CmdList.BindUnorderedAccessViews(EShaderStage::ShaderStage_Compute, &LightSetup.SpecularIrradianceMapUAVs[Mip], 1, 0);
 
         {
             constexpr UInt32 ThreadCount = 16;
@@ -184,15 +151,8 @@ void LightProbeRenderer::RenderSkyLightProbe(
         Roughness += RoughnessDelta;
     }
 
-    CmdList.TransitionTexture(
-        FrameResources.Skybox.Get(),
-        EResourceState::ResourceState_NonPixelShaderResource,
-        EResourceState::ResourceState_PixelShaderResource);
-
-    CmdList.TransitionTexture(
-        LightSetup.SpecularIrradianceMap.Get(),
-        EResourceState::ResourceState_UnorderedAccess,
-        EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::ResourceState_UnorderedAccess, EResourceState::ResourceState_PixelShaderResource);
 }
 
 Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
@@ -253,11 +213,7 @@ Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
 
     for (UInt32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        UnorderedAccessViewCreateInfo SpecularIrradianceUavInfo(
-            LightSetup.SpecularIrradianceMap.Get(),
-            EFormat::Format_R16G16B16A16_Float,
-            MipLevel);
-
+        UnorderedAccessViewCreateInfo SpecularIrradianceUavInfo(LightSetup.SpecularIrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, MipLevel);
         TSharedRef<UnorderedAccessView> Uav = RenderLayer::CreateUnorderedAccessView(SpecularIrradianceUavInfo);
         if (Uav)
         {

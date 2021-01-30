@@ -111,7 +111,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
         BlendState->SetName("ForwardPass BlendState");
     }
 
-    GraphicsPipelineStateCreateInfo PSOProperties = { };
+    GraphicsPipelineStateCreateInfo PSOProperties;
     PSOProperties.ShaderState.VertexShader               = VShader.Get();
     PSOProperties.ShaderState.PixelShader                = PShader.Get();
     PSOProperties.InputLayoutState                       = FrameResources.StdInputLayout.Get();
@@ -142,10 +142,7 @@ void ForwardRenderer::Release()
     PipelineState.Reset();
 }
 
-void ForwardRenderer::Render(
-    CommandList& CmdList, 
-    const FrameResources& FrameResources,
-    const SceneLightSetup& LightSetup)
+void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameResources, const SceneLightSetup& LightSetup)
 {
     // Forward Pass
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin ForwardPass");
@@ -156,22 +153,10 @@ void ForwardRenderer::Render(
         const Float RenderWidth  = Float(FrameResources.FinalTarget->GetWidth());
         const Float RenderHeight = Float(FrameResources.FinalTarget->GetHeight());
 
-        CmdList.BindViewport(
-            RenderWidth,
-            RenderHeight,
-            0.0f,
-            1.0f,
-            0.0f,
-            0.0f);
+        CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+        CmdList.BindScissorRect(RenderWidth, RenderHeight, 0, 0);
 
-        CmdList.BindScissorRect(
-            RenderWidth,
-            RenderHeight,
-            0, 0);
-
-        CmdList.BindRenderTargets(
-            &FrameResources.BackBufferRTV, 1,
-            FrameResources.GBufferDSV.Get());
+        CmdList.BindRenderTargets(&FrameResources.BackBufferRTV, 1, FrameResources.GBufferDSV.Get());
 
         ConstantBuffer* ConstantBuffers[] =
         {
@@ -180,10 +165,7 @@ void ForwardRenderer::Render(
             LightSetup.DirectionalLightBuffer.Get(),
         };
 
-        CmdList.BindConstantBuffers(
-            EShaderStage::ShaderStage_Pixel,
-            ConstantBuffers,
-            3, 0);
+        CmdList.BindConstantBuffers(EShaderStage::ShaderStage_Pixel, ConstantBuffers, 3, 0);
 
         {
             ShaderResourceView* ShaderResourceViews[] =
@@ -195,10 +177,7 @@ void ForwardRenderer::Render(
                 LightSetup.PointLightShadowMapSRV.Get(),
             };
 
-            CmdList.BindShaderResourceViews(
-                EShaderStage::ShaderStage_Pixel,
-                ShaderResourceViews,
-                5, 0);
+            CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Pixel, ShaderResourceViews, 5, 0);
         }
 
         {
@@ -210,10 +189,7 @@ void ForwardRenderer::Render(
                 FrameResources.ShadowMapSampler.Get()
             };
 
-            CmdList.BindSamplerStates(
-                EShaderStage::ShaderStage_Pixel,
-                SamplerStates,
-                4, 1);
+            CmdList.BindSamplerStates(EShaderStage::ShaderStage_Pixel, SamplerStates, 4, 1);
         }
 
         struct TransformBuffer
@@ -234,29 +210,18 @@ void ForwardRenderer::Render(
             }
 
             ConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
-            CmdList.BindConstantBuffers(
-                EShaderStage::ShaderStage_Pixel,
-                &ConstantBuffer,
-                1, 3);
+            CmdList.BindConstantBuffers(EShaderStage::ShaderStage_Pixel, &ConstantBuffer, 1, 3);
 
             ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-            CmdList.BindShaderResourceViews(
-                EShaderStage::ShaderStage_Pixel,
-                ShaderResourceViews,
-                7, 5);
+            CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Pixel, ShaderResourceViews, 7, 5);
 
             SamplerState* SamplerState = Command.Material->GetMaterialSampler();
-            CmdList.BindSamplerStates(
-                EShaderStage::ShaderStage_Pixel,
-                &SamplerState,
-                1, 0);
+            CmdList.BindSamplerStates(EShaderStage::ShaderStage_Pixel, &SamplerState, 1, 0);
 
             TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
             TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
 
-            CmdList.Bind32BitShaderConstants(
-                EShaderStage::ShaderStage_Vertex,
-                &TransformPerObject, 32);
+            CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Vertex, &TransformPerObject, 32);
 
             CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
         }

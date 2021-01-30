@@ -121,10 +121,7 @@ struct ConsoleVariable
 
     FORCEINLINE Bool CanBeInteger() const
     {
-        return 
-            Type == ConsoleVariableType_Bool  ||
-            Type == ConsoleVariableType_Int   ||
-            Type == ConsoleVariableType_Float;
+        return Type == ConsoleVariableType_Bool  || Type == ConsoleVariableType_Int || Type == ConsoleVariableType_Float;
     }
 
     FORCEINLINE Bool IsBool() const
@@ -201,19 +198,11 @@ public:
     void Init();
     void Tick();
 
-    void RegisterCommand(
-        const std::string& CmdName, 
-        ConsoleCommand Command);
-    
-    void RegisterVariable(
-        const std::string& VarName,
-        ConsoleVariable* Variable);
+    void RegisterCommand(const std::string& CmdName, ConsoleCommand Command);
+    void RegisterVariable(const std::string& VarName, ConsoleVariable* Variable);
 
-    ConsoleCommand FindCommand(
-        const std::string& CmdName);
-
-    ConsoleVariable* FindVariable(
-        const std::string& VarName);
+    ConsoleCommand FindCommand(const std::string& CmdName);
+    ConsoleVariable* FindVariable(const std::string& VarName);
 
     void PrintMessage(const std::string& Message);
     void PrintWarning(const std::string& Message);

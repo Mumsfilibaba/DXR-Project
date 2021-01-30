@@ -30,10 +30,7 @@ public:
     D3D12RootSignature* CreateRootSignature(IDxcBlob* ShaderBlob);
     D3D12RootSignature* CreateRootSignature(Void* RootSignatureData, const UInt32 RootSignatureSize);
     
-    class D3D12DescriptorHeap* CreateDescriptorHeap(
-        D3D12_DESCRIPTOR_HEAP_TYPE Type,
-        UInt32 NumDescriptors,
-        D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
+    class D3D12DescriptorHeap* CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE Type, UInt32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
 
     Int32 GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount);
 
@@ -48,77 +45,40 @@ public:
         REFIID RiidResource,
         void** Resource)
     {
-        return Device->CreateCommittedResource(
-            HeapProperties, 
-            HeapFlags, 
-            Desc, 
-            InitialResourceState, 
-            OptimizedClearValue, 
-            RiidResource, 
-            Resource);
+        return Device->CreateCommittedResource(HeapProperties, HeapFlags, Desc, InitialResourceState, OptimizedClearValue, RiidResource, Resource);
     }
 
-    FORCEINLINE HRESULT CreatePipelineState(
-        const D3D12_PIPELINE_STATE_STREAM_DESC* Desc,
-        REFIID Riid,
-        void** PipelineState)
+    FORCEINLINE HRESULT CreatePipelineState(const D3D12_PIPELINE_STATE_STREAM_DESC* Desc, REFIID Riid, void** PipelineState)
     {
         return DXRDevice->CreatePipelineState(Desc, Riid, PipelineState);
     }
 
-    FORCEINLINE HRESULT CreateRootSignatureDeserializer(
-        LPCVOID SrcData,
-        SIZE_T SrcDataSizeInBytes,
-        REFIID RootSignatureDeserializerInterface,
-        void** RootSignatureDeserializer)
+    FORCEINLINE HRESULT CreateRootSignatureDeserializer(LPCVOID SrcData, SIZE_T SrcDataSizeInBytes, REFIID RootSignatureDeserializerInterface, void** RootSignatureDeserializer)
     {
-        return D3D12CreateRootSignatureDeserializerFunc(
-            SrcData,
-            SrcDataSizeInBytes, 
-            RootSignatureDeserializerInterface,
-            RootSignatureDeserializer);
+        return D3D12CreateRootSignatureDeserializerFunc(SrcData, SrcDataSizeInBytes, RootSignatureDeserializerInterface, RootSignatureDeserializer);
     }
 
-    FORCEINLINE HRESULT CreateVersionedRootSignatureDeserializer(
-        LPCVOID SrcData,
-        SIZE_T SrcDataSizeInBytes,
-        REFIID RootSignatureDeserializerInterface,
-        void** RootSignatureDeserializer)
+    FORCEINLINE HRESULT CreateVersionedRootSignatureDeserializer(LPCVOID SrcData, SIZE_T SrcDataSizeInBytes, REFIID RootSignatureDeserializerInterface, void** RootSignatureDeserializer)
     {
-        return D3D12CreateVersionedRootSignatureDeserializerFunc(
-            SrcData,
-            SrcDataSizeInBytes,
-            RootSignatureDeserializerInterface,
-            RootSignatureDeserializer);
+        return D3D12CreateVersionedRootSignatureDeserializerFunc(SrcData, SrcDataSizeInBytes, RootSignatureDeserializerInterface, RootSignatureDeserializer);
     }
 
-    FORCEINLINE void CreateConstantBufferView(
-        const D3D12_CONSTANT_BUFFER_VIEW_DESC* Desc, 
-        D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    FORCEINLINE void CreateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
         Device->CreateConstantBufferView(Desc, DestDescriptor);
     }
 
-    FORCEINLINE void CreateRenderTargetView(
-        ID3D12Resource* Resource, 
-        const D3D12_RENDER_TARGET_VIEW_DESC* Desc, 
-        D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    FORCEINLINE void CreateRenderTargetView(ID3D12Resource* Resource, const D3D12_RENDER_TARGET_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
         Device->CreateRenderTargetView(Resource, Desc, DestDescriptor);
     }
 
-    FORCEINLINE void CreateDepthStencilView(
-        ID3D12Resource* Resource, 
-        const D3D12_DEPTH_STENCIL_VIEW_DESC* Desc, 
-        D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    FORCEINLINE void CreateDepthStencilView(ID3D12Resource* Resource, const D3D12_DEPTH_STENCIL_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
         Device->CreateDepthStencilView(Resource, Desc, DestDescriptor);
     }
 
-    FORCEINLINE void CreateShaderResourceView(
-        ID3D12Resource* Resource, 
-        const D3D12_SHADER_RESOURCE_VIEW_DESC* Desc, 
-        D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    FORCEINLINE void CreateShaderResourceView(ID3D12Resource* Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
         Device->CreateShaderResourceView(Resource, Desc, DestDescriptor);
     }
@@ -132,9 +92,7 @@ public:
         Device->CreateUnorderedAccessView(Resource, CounterResource, Desc, DestDescriptor);
     }
 
-    FORCEINLINE void CreateSampler(
-        const D3D12_SAMPLER_DESC* Desc,
-        D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    FORCEINLINE void CreateSampler(const D3D12_SAMPLER_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
         Device->CreateSampler(Desc, DestDescriptor);
     }
@@ -164,11 +122,7 @@ public:
         D3D12_CPU_DESCRIPTOR_HANDLE SrcDescriptorRangeStart,
         D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType)
     {
-        Device->CopyDescriptorsSimple(
-            NumDescriptors,
-            DestDescriptorRangeStart,
-            SrcDescriptorRangeStart,
-            DescriptorHeapsType);
+        Device->CopyDescriptorsSimple(NumDescriptors, DestDescriptorRangeStart, SrcDescriptorRangeStart, DescriptorHeapsType);
     }
 
     FORCEINLINE void GetRaytracingAccelerationStructurePrebuildInfo(

@@ -272,8 +272,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         StagingTexture->SetName("Staging IntegrationLUT");
     }
 
-    UnorderedAccessViewCreateInfo StagingUavInfo(StagingTexture.Get());
-    TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderLayer::CreateUnorderedAccessView(StagingUavInfo);
+    TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderLayer::CreateUnorderedAccessView(UnorderedAccessViewCreateInfo(StagingTexture.Get()));
     if (!StagingTextureUAV)
     {
         Debug::DebugBreak();
@@ -301,8 +300,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         FrameResources.IntegrationLUT->SetName("IntegrationLUT");
     }
 
-    ShaderResourceViewCreateInfo IntegrationLUTSRVInfo(FrameResources.IntegrationLUT.Get());
-    FrameResources.IntegrationLUTSRV = RenderLayer::CreateShaderResourceView(IntegrationLUTSRVInfo);
+    FrameResources.IntegrationLUTSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(FrameResources.IntegrationLUT.Get()));
     if (!FrameResources.IntegrationLUTSRV)
     {
         Debug::DebugBreak();
@@ -370,16 +368,11 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
     CommandList CmdList;
     CmdList.Begin();
 
-    CmdList.TransitionTexture(
-        StagingTexture.Get(),
-        EResourceState::ResourceState_Common,
-        EResourceState::ResourceState_UnorderedAccess);
+    CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_UnorderedAccess);
 
     CmdList.BindComputePipelineState(BRDF_PipelineState.Get());
 
-    CmdList.BindUnorderedAccessViews(
-        EShaderStage::ShaderStage_Compute,
-        &StagingTextureUAV, 1, 0);
+    CmdList.BindUnorderedAccessViews(EShaderStage::ShaderStage_Compute, &StagingTextureUAV, 1, 0);
 
     constexpr UInt32 ThreadCount = 16;
     const UInt32 DispatchWidth  = Math::DivideByMultiple(LUTSize, ThreadCount);
@@ -388,22 +381,12 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
 
     CmdList.UnorderedAccessTextureBarrier(StagingTexture.Get());
 
-    CmdList.TransitionTexture(
-        StagingTexture.Get(),
-        EResourceState::ResourceState_UnorderedAccess,
-        EResourceState::ResourceState_CopySource);
-
-    CmdList.TransitionTexture(
-        FrameResources.IntegrationLUT.Get(),
-        EResourceState::ResourceState_Common,
-        EResourceState::ResourceState_CopyDest);
+    CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_UnorderedAccess, EResourceState::ResourceState_CopySource);
+    CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);
 
     CmdList.CopyTexture(FrameResources.IntegrationLUT.Get(), StagingTexture.Get());
 
-    CmdList.TransitionTexture(
-        FrameResources.IntegrationLUT.Get(),
-        EResourceState::ResourceState_CopyDest,
-        EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
 
     CmdList.DestroyResource(StagingTexture.Get());
     CmdList.DestroyResource(StagingTextureUAV.Get());
@@ -459,9 +442,7 @@ void DeferredRenderer::Release()
     TiledLightPassPSO.Reset();
 }
 
-void DeferredRenderer::RenderPrePass(
-    CommandList& CmdList,
-    const FrameResources& FrameResources)
+void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources)
 {
     const Float RenderWidth  = Float(FrameResources.MainWindowViewport->GetWidth());
     const Float RenderHeight = Float(FrameResources.MainWindowViewport->GetHeight());
@@ -470,18 +451,8 @@ void DeferredRenderer::RenderPrePass(
 
     TRACE_SCOPE("PrePass");
 
-    CmdList.BindViewport(
-        RenderWidth,
-        RenderHeight,
-        0.0f,
-        1.0f,
-        0.0f,
-        0.0f);
-
-    CmdList.BindScissorRect(
-        RenderWidth,
-        RenderHeight,
-        0, 0);
+    CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.BindScissorRect(RenderWidth, RenderHeight, 0, 0);
 
     struct PerObject
     {
@@ -492,10 +463,7 @@ void DeferredRenderer::RenderPrePass(
 
     CmdList.BindGraphicsPipelineState(PrePassPipelineState.Get());
 
-    CmdList.BindConstantBuffers(
-        EShaderStage::ShaderStage_Vertex,
-        FrameResources.CameraBuffer.GetAddressOf(),
-        1, 0);
+    CmdList.BindConstantBuffers(EShaderStage::ShaderStage_Vertex, FrameResources.CameraBuffer.GetAddressOf(), 1, 0);
 
     for (const MeshDrawCommand& Command : FrameResources.DeferredVisibleCommands)
     {
@@ -506,9 +474,7 @@ void DeferredRenderer::RenderPrePass(
 
             PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
-            CmdList.Bind32BitShaderConstants(
-                EShaderStage::ShaderStage_Vertex,
-                &PerObjectBuffer, 16);
+            CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Vertex, &PerObjectBuffer, 16);
 
             CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
         }
@@ -517,9 +483,7 @@ void DeferredRenderer::RenderPrePass(
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End PrePass");
 }
 
-void DeferredRenderer::RenderBasePass(
-    CommandList& CmdList,
-    const FrameResources& FrameResources)
+void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin GeometryPass");
 
@@ -528,18 +492,8 @@ void DeferredRenderer::RenderBasePass(
     const Float RenderWidth  = Float(FrameResources.MainWindowViewport->GetWidth());
     const Float RenderHeight = Float(FrameResources.MainWindowViewport->GetHeight());
 
-    CmdList.BindViewport(
-        RenderWidth,
-        RenderHeight,
-        0.0f,
-        1.0f,
-        0.0f,
-        0.0f);
-
-    CmdList.BindScissorRect(
-        RenderWidth,
-        RenderHeight,
-        0, 0);
+    CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.BindScissorRect(RenderWidth, RenderHeight, 0, 0);
 
     RenderTargetView* RenderTargets[] =
     {
@@ -569,35 +523,21 @@ void DeferredRenderer::RenderBasePass(
             Command.Material->BuildBuffer(CmdList);
         }
 
-        CmdList.BindConstantBuffers(
-            EShaderStage::ShaderStage_Vertex,
-            &FrameResources.CameraBuffer,
-            1, 0);
+        CmdList.BindConstantBuffers(EShaderStage::ShaderStage_Vertex, &FrameResources.CameraBuffer, 1, 0);
 
         ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
-        CmdList.BindConstantBuffers(
-            EShaderStage::ShaderStage_Pixel,
-            &MaterialBuffer,
-            1, 1);
+        CmdList.BindConstantBuffers(EShaderStage::ShaderStage_Pixel, &MaterialBuffer, 1, 1);
 
-        TransformPerObject.Transform = Command.CurrentActor->GetTransform().GetMatrix();
+        TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
 
         ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-        CmdList.BindShaderResourceViews(
-            EShaderStage::ShaderStage_Pixel,
-            ShaderResourceViews,
-            6, 0);
+        CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Pixel, ShaderResourceViews, 6, 0);
 
         SamplerState* Sampler = Command.Material->GetMaterialSampler();
-        CmdList.BindSamplerStates(
-            EShaderStage::ShaderStage_Pixel,
-            &Sampler,
-            1, 0);
+        CmdList.BindSamplerStates(EShaderStage::ShaderStage_Pixel, &Sampler, 1, 0);
 
-        CmdList.Bind32BitShaderConstants(
-            EShaderStage::ShaderStage_Vertex,
-            &TransformPerObject, 32);
+        CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Vertex, &TransformPerObject, 32);
 
         CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
     }
@@ -605,10 +545,7 @@ void DeferredRenderer::RenderBasePass(
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
 }
 
-void DeferredRenderer::RenderDeferredTiledLightPass(
-    CommandList& CmdList,
-    const FrameResources& FrameResources,
-    const SceneLightSetup& LightSetup)
+void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const FrameResources& FrameResources, const SceneLightSetup& LightSetup)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
 
@@ -631,10 +568,7 @@ void DeferredRenderer::RenderDeferredTiledLightPass(
         FrameResources.SSAOBufferSRV.Get()
     };
 
-    CmdList.BindShaderResourceViews(
-        EShaderStage::ShaderStage_Compute,
-        ShaderResourceViews,
-        11, 0);
+    CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Compute, ShaderResourceViews, 11, 0);
 
     ConstantBuffer* ConstantBuffers[] =
     {
@@ -643,10 +577,7 @@ void DeferredRenderer::RenderDeferredTiledLightPass(
         LightSetup.DirectionalLightBuffer.Get()
     };
 
-    CmdList.BindConstantBuffers(
-        EShaderStage::ShaderStage_Compute,
-        ConstantBuffers,
-        3, 0);
+    CmdList.BindConstantBuffers(EShaderStage::ShaderStage_Compute, ConstantBuffers, 3, 0);
 
     SamplerState* SamplerStates[] =
     {
@@ -657,17 +588,9 @@ void DeferredRenderer::RenderDeferredTiledLightPass(
         FrameResources.ShadowMapSampler.Get()
     };
 
-    CmdList.BindSamplerStates(
-        EShaderStage::ShaderStage_Compute,
-        SamplerStates,
-        5,
-        0);
+    CmdList.BindSamplerStates(EShaderStage::ShaderStage_Compute, SamplerStates, 5, 0);
 
-    CmdList.BindUnorderedAccessViews(
-        EShaderStage::ShaderStage_Compute,
-        &FrameResources.FinalTargetUAV,
-        1,
-        0);
+    CmdList.BindUnorderedAccessViews(EShaderStage::ShaderStage_Compute, &FrameResources.FinalTargetUAV, 1, 0);
 
     struct LightPassSettings
     {
@@ -682,9 +605,7 @@ void DeferredRenderer::RenderDeferredTiledLightPass(
     Settings.ScreenWidth     = FrameResources.FinalTarget->GetWidth();
     Settings.ScreenHeight    = FrameResources.FinalTarget->GetHeight();
 
-    CmdList.Bind32BitShaderConstants(
-        EShaderStage::ShaderStage_Compute,
-        &Settings, 4);
+    CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Compute, &Settings, 4);
 
     constexpr UInt32 ThreadCount = 16;
     const UInt32 WorkGroupWidth  = Math::DivideByMultiple<UInt32>(Settings.ScreenWidth, ThreadCount);
@@ -873,22 +794,19 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     {
         FrameResources.FinalTarget->SetName("Final Target");
 
-        FrameResources.FinalTargetSRV = RenderLayer::CreateShaderResourceView(
-            ShaderResourceViewCreateInfo(FrameResources.FinalTarget.Get()));
+        FrameResources.FinalTargetSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(FrameResources.FinalTarget.Get()));
         if (!FrameResources.FinalTargetSRV)
         {
             return false;
         }
 
-        FrameResources.FinalTargetRTV = RenderLayer::CreateRenderTargetView(
-            RenderTargetViewCreateInfo(FrameResources.FinalTarget.Get()));
+        FrameResources.FinalTargetRTV = RenderLayer::CreateRenderTargetView(RenderTargetViewCreateInfo(FrameResources.FinalTarget.Get()));
         if (!FrameResources.FinalTargetRTV)
         {
             return false;
         }
 
-        FrameResources.FinalTargetUAV = RenderLayer::CreateUnorderedAccessView(
-            UnorderedAccessViewCreateInfo(FrameResources.FinalTarget.Get()));
+        FrameResources.FinalTargetUAV = RenderLayer::CreateUnorderedAccessView(UnorderedAccessViewCreateInfo(FrameResources.FinalTarget.Get()));
         if (!FrameResources.FinalTargetUAV)
         {
             return false;

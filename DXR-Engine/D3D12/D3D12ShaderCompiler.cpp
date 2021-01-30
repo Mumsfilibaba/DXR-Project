@@ -100,13 +100,7 @@ Bool D3D12ShaderCompiler::CompileFromFile(
         return nullptr;
     }
 
-    return InternalCompileFromSource(
-        SourceBlob.Get(), 
-        WideFilePath.c_str(),
-        WideEntrypoint.c_str(), 
-        TargetProfile, 
-        Defines,
-        Code);
+    return InternalCompileFromSource(SourceBlob.Get(), WideFilePath.c_str(), WideEntrypoint.c_str(), TargetProfile, Defines, Code);
 }
 
 Bool D3D12ShaderCompiler::CompileShader(
@@ -134,13 +128,7 @@ Bool D3D12ShaderCompiler::CompileShader(
         return nullptr;
     }
 
-    return InternalCompileFromSource(
-        SourceBlob.Get(), 
-        nullptr, 
-        WideEntrypoint.c_str(), 
-        TargetProfile,
-        Defines, 
-        Code);
+    return InternalCompileFromSource(SourceBlob.Get(), nullptr, WideEntrypoint.c_str(), TargetProfile, Defines, Code);
 }
 
 Bool D3D12ShaderCompiler::Init()

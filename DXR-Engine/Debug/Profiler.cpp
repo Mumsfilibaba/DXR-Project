@@ -139,20 +139,17 @@ void Profiler::Tick()
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
             
-            ImGui::SetNextWindowPos(
-                ImVec2(Float(WindowWidth), 0.0f),
-                ImGuiCond_Always,
-                ImVec2(1.0f, 0.0f));
+            ImGui::SetNextWindowPos(ImVec2(Float(WindowWidth), 0.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
 
-            ImGui::Begin(
-                "FPS Window", 
-                nullptr,
+            ImGuiWindowFlags Flags =
                 ImGuiWindowFlags_NoDecoration          |
                 ImGuiWindowFlags_NoInputs              |
                 ImGuiWindowFlags_AlwaysAutoResize      |
                 ImGuiWindowFlags_NoBringToFrontOnFocus |
                 ImGuiWindowFlags_NoFocusOnAppearing    |
-                ImGuiWindowFlags_NoSavedSettings);
+                ImGuiWindowFlags_NoSavedSettings;
+
+            ImGui::Begin("FPS Window", nullptr, Flags);
 
             const std::string FpsStr = std::to_string(gProfiler.Fps);
             ImGui::Text("%s", FpsStr.c_str());
@@ -185,14 +182,8 @@ void Profiler::Tick()
             ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
             ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-            ImGui::SetNextWindowPos(
-                ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f),
-                ImGuiCond_Appearing,
-                ImVec2(0.5f, 0.0f));
-
-            ImGui::SetNextWindowSize(
-                ImVec2(Width, Height),
-                ImGuiCond_Appearing);
+            ImGui::SetNextWindowPos(ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+            ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
             const ImGuiWindowFlags Flags =
                 ImGuiWindowFlags_NoResize           |
@@ -201,10 +192,7 @@ void Profiler::Tick()
                 ImGuiWindowFlags_NoSavedSettings;
 
             Bool TempDrawProfiler = GlobalDrawProfiler.GetBool();
-            if (ImGui::Begin(
-                "Profiler",
-                &TempDrawProfiler,
-                Flags))
+            if (ImGui::Begin("Profiler", &TempDrawProfiler, Flags))
             {
                 ImGui::Text("CPU Timings:");
                 ImGui::Separator();

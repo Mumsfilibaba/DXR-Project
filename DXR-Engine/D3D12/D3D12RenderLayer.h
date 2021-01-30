@@ -150,107 +150,43 @@ public:
         UInt32 MipLevels,
         const ClearValue& OptimizedClearValue) const override final;
 
-    virtual class SamplerState* CreateSamplerState(
-        const struct SamplerStateCreateInfo& CreateInfo) const override final;
+    virtual class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) const override final;
 
-    virtual VertexBuffer* CreateVertexBuffer(
-        const ResourceData* InitalData,
-        UInt32 SizeInBytes,
-        UInt32 VertexStride,
-        UInt32 Usage) const override final;
-
-    virtual IndexBuffer* CreateIndexBuffer(
-        const ResourceData* InitalData,
-        UInt32 SizeInBytes,
-        EIndexFormat IndexFormat,
-        UInt32 Usage) const override final;
-
-    virtual ConstantBuffer* CreateConstantBuffer(
-        const ResourceData* InitalData, 
-        UInt32 SizeInBytes, 
-        UInt32 Usage,
-        EResourceState InitialState) const override final;
-
-    virtual StructuredBuffer* CreateStructuredBuffer(
-        const ResourceData* InitalData,
-        UInt32 SizeInBytes,
-        UInt32 Stride,
-        UInt32 Usage) const override final;
+    virtual VertexBuffer*     CreateVertexBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 VertexStride, UInt32 Usage) const override final;
+    virtual IndexBuffer*      CreateIndexBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, EIndexFormat IndexFormat, UInt32 Usage) const override final;
+    virtual ConstantBuffer*   CreateConstantBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 Usage, EResourceState InitialState) const override final;
+    virtual StructuredBuffer* CreateStructuredBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 Stride, UInt32 Usage) const override final;
 
     virtual class RayTracingGeometry* CreateRayTracingGeometry() const override final;
     virtual class RayTracingScene*    CreateRayTracingScene()    const override final;
 
-    virtual ShaderResourceView* CreateShaderResourceView(
-        const ShaderResourceViewCreateInfo& CreateInfo) const override final;
+    virtual ShaderResourceView*  CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) const override final;
+    virtual UnorderedAccessView* CreateUnorderedAccessView(const UnorderedAccessViewCreateInfo& CreateInfo) const override final;
+    virtual RenderTargetView*    CreateRenderTargetView(const RenderTargetViewCreateInfo& CreateInfo) const override final;
+    virtual DepthStencilView*    CreateDepthStencilView(const DepthStencilViewCreateInfo& CreateInfo) const override final;
 
-    virtual UnorderedAccessView* CreateUnorderedAccessView(
-        const UnorderedAccessViewCreateInfo& CreateInfo) const override final;
+    virtual class ComputeShader*       CreateComputeShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class VertexShader*        CreateVertexShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class HullShader*          CreateHullShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class DomainShader*        CreateDomainShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class GeometryShader*      CreateGeometryShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class MeshShader*          CreateMeshShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class AmplificationShader* CreateAmplificationShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class PixelShader*         CreatePixelShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class RayGenShader*        CreateRayGenShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class RayHitShader*        CreateRayHitShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class RayMissShader*       CreateRayMissShader(const TArray<UInt8>& ShaderCode) const override final;
 
-    virtual RenderTargetView* CreateRenderTargetView(
-        const RenderTargetViewCreateInfo& CreateInfo) const override final;
-    
-    virtual DepthStencilView* CreateDepthStencilView(
-        const DepthStencilViewCreateInfo& CreateInfo) const override final;
+    virtual class DepthStencilState* CreateDepthStencilState(const DepthStencilStateCreateInfo& CreateInfo) const override final;
+    virtual class RasterizerState*   CreateRasterizerState(const RasterizerStateCreateInfo& CreateInfo) const override final;
+    virtual class BlendState*        CreateBlendState(const BlendStateCreateInfo& CreateInfo) const override final;
+    virtual class InputLayoutState*  CreateInputLayout(const InputLayoutStateCreateInfo& CreateInfo) const override final;
 
-    virtual class ComputeShader* CreateComputeShader(
-        const TArray<UInt8>& ShaderCode) const override final;
-
-    virtual class VertexShader* CreateVertexShader(
-        const TArray<UInt8>& ShaderCode) const override final;
-
-    virtual class HullShader* CreateHullShader(
-        const TArray<UInt8>& ShaderCode) const override final;
-
-    virtual class DomainShader* CreateDomainShader(
-        const TArray<UInt8>& ShaderCode) const override final;
-
-    virtual class GeometryShader* CreateGeometryShader(
-        const TArray<UInt8>& ShaderCode) const override final;
-
-    virtual class MeshShader* CreateMeshShader(
-        const TArray<UInt8>& ShaderCode) const override final;
-
-    virtual class AmplificationShader* CreateAmplificationShader(
-        const TArray<UInt8>& ShaderCode) const override final;
-
-    virtual class PixelShader* CreatePixelShader(
-        const TArray<UInt8>& ShaderCode) const override final;
-
-    virtual class RayGenShader* CreateRayGenShader(
-        const TArray<UInt8>& ShaderCode) const override final;
-
-    virtual class RayHitShader* CreateRayHitShader(
-        const TArray<UInt8>& ShaderCode) const override final;
-
-    virtual class RayMissShader* CreateRayMissShader(
-        const TArray<UInt8>& ShaderCode) const override final;
-
-    virtual class DepthStencilState* CreateDepthStencilState(
-        const DepthStencilStateCreateInfo& CreateInfo) const override final;
-
-    virtual class RasterizerState* CreateRasterizerState(
-        const RasterizerStateCreateInfo& CreateInfo) const override final;
-
-    virtual class BlendState* CreateBlendState(
-        const BlendStateCreateInfo& CreateInfo) const override final;
-    
-    virtual class InputLayoutState* CreateInputLayout(
-        const InputLayoutStateCreateInfo& CreateInfo) const override final;
-
-    virtual class GraphicsPipelineState* CreateGraphicsPipelineState(
-        const GraphicsPipelineStateCreateInfo& CreateInfo) const override final;
-    
-    virtual class ComputePipelineState* CreateComputePipelineState(
-        const ComputePipelineStateCreateInfo& CreateInfo) const override final;
-    
+    virtual class GraphicsPipelineState*   CreateGraphicsPipelineState(const GraphicsPipelineStateCreateInfo& CreateInfo) const override final;
+    virtual class ComputePipelineState*    CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo) const override final;
     virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const override final;
 
-    virtual class Viewport* CreateViewport(
-        GenericWindow* Window,
-        UInt32 Width,
-        UInt32 Height,
-        EFormat ColorFormat,
-        EFormat DepthFormat) const override final;
+    virtual class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat) const override final;
 
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
     virtual Bool IsRayTracingSupported()           const override final;
@@ -267,12 +203,7 @@ public:
     }
 
 private:
-    Bool AllocateBuffer(
-        D3D12Resource& Resource, 
-        D3D12_HEAP_TYPE HeapType, 
-        D3D12_RESOURCE_STATES InitalState, 
-        D3D12_RESOURCE_FLAGS Flags, 
-        UInt32 SizeInBytes) const;
+    Bool AllocateBuffer(D3D12Resource& Resource, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitalState, D3D12_RESOURCE_FLAGS Flags, UInt32 SizeInBytes) const;
 
     Bool AllocateTexture(
         D3D12Resource& Resource,
@@ -281,20 +212,11 @@ private:
         D3D12_CLEAR_VALUE* OptimizedClearValue,
         const D3D12_RESOURCE_DESC& Desc) const;
     
-    Bool UploadBuffer(
-        Buffer& Buffer, 
-        UInt32 SizeInBytes, 
-        const ResourceData* InitalData) const;
-    
-    Bool UploadTexture(
-        Texture& Texture, 
-        const ResourceData* InitalData) const;
+    Bool UploadBuffer(Buffer& Buffer, UInt32 SizeInBytes, const ResourceData* InitalData) const;
+    Bool UploadTexture(Texture& Texture, const ResourceData* InitalData) const;
 
     template<typename TD3D12Buffer, typename... TArgs>
-    FORCEINLINE TD3D12Buffer* CreateBufferResource(
-        const ResourceData* InitalData,
-        EResourceState InitialState,
-        TArgs&&... Args) const
+    FORCEINLINE TD3D12Buffer* CreateBufferResource(const ResourceData* InitalData, EResourceState InitialState, TArgs&&... Args) const
     {
         // Create buffer object and get size to allocate
         TD3D12Buffer* NewBuffer  = DBG_NEW TD3D12Buffer(Device, Forward<TArgs>(Args)...);
@@ -330,12 +252,7 @@ private:
         if (InitialState != EResourceState::ResourceState_Common)
         {
             DirectCmdContext->Begin();
-
-            DirectCmdContext->TransitionBuffer(
-                NewBuffer,
-                EResourceState::ResourceState_Common,
-                InitialState);
-            
+            DirectCmdContext->TransitionBuffer(NewBuffer, EResourceState::ResourceState_Common, InitialState);
             DirectCmdContext->End();
         }
 
@@ -343,9 +260,7 @@ private:
     }
 
     template<typename TD3D12Texture, typename... TArgs>
-    FORCEINLINE TD3D12Texture* CreateTextureResource(
-        const ResourceData* InitalData,
-        TArgs&&... Args) const
+    FORCEINLINE TD3D12Texture* CreateTextureResource(const ResourceData* InitalData, TArgs&&... Args) const
     {
         TD3D12Texture* NewTexture = DBG_NEW TD3D12Texture(Device, Forward<TArgs>(Args)...);
         const EFormat Format = NewTexture->GetFormat();
@@ -372,7 +287,7 @@ private:
 
         if (SampleCount > 1)
         {
-            const Int32 Quality = Device->GetMultisampleQuality(Desc.Format, SampleCount);
+            const Int32 Quality     = Device->GetMultisampleQuality(Desc.Format, SampleCount);
             Desc.SampleDesc.Quality = std::max<Int32>(Quality - 1, 0);
         }
         else
@@ -390,8 +305,7 @@ private:
         Memory::Memzero(&DxOptimizedClearValue);
 
         D3D12_CLEAR_VALUE* DxOptimizedClearValuePtr = nullptr;
-        if ((Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) ||
-            (Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
+        if ((Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) || (Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
         {
             Bool IsTypeless = false;
             switch (Desc.Format)
@@ -441,12 +355,7 @@ private:
             }
         }
 
-        if (!AllocateTexture(
-            *NewTexture, 
-            HeapType, 
-            D3D12_RESOURCE_STATE_COMMON, 
-            DxOptimizedClearValuePtr,
-            Desc))
+        if (!AllocateTexture(*NewTexture, HeapType, D3D12_RESOURCE_STATE_COMMON, DxOptimizedClearValuePtr, Desc))
         {
             LOG_ERROR("[D3D12RenderLayer]: Failed to allocate texture");
             return nullptr;

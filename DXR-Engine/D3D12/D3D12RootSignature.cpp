@@ -127,9 +127,7 @@ Bool D3D12DefaultRootSignatures::CreateRootSignatures(D3D12Device* Device)
 
     if (Device->IsMeshShadersSupported())
     {
-        ComputeRootDesc.Flags |=
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS |
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS;
+        ComputeRootDesc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS | D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS;
     }
 
     Compute = Device->CreateRootSignature(ComputeRootDesc);

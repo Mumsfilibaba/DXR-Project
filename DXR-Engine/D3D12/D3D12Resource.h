@@ -57,11 +57,10 @@ public:
 
 protected:
     TComPtr<ID3D12Resource> NativeResource;
+    std::string DebugName;
 
     D3D12_HEAP_TYPE           HeapType;
     D3D12_RESOURCE_STATES     ResourceState;
     D3D12_RESOURCE_DESC       Desc;
     D3D12_GPU_VIRTUAL_ADDRESS Address;
-
-    std::string DebugName;
 };

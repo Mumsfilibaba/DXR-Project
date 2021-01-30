@@ -608,14 +608,9 @@ void DebugUI::Render(CommandList& CmdList)
     };
 
     // Setup viewport
-    CmdList.BindViewport(
-        DrawData->DisplaySize.x,
-        DrawData->DisplaySize.y, 
-        0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.BindViewport(DrawData->DisplaySize.x, DrawData->DisplaySize.y, 0.0f, 1.0f, 0.0f, 0.0f);
 
-    CmdList.Bind32BitShaderConstants(
-        EShaderStage::ShaderStage_Pixel,
-        &MVP, 16);
+    CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Pixel, &MVP, 16);
 
     CmdList.BindVertexBuffers(&GlobalImGuiState.VertexBuffer, 1, 0);
     CmdList.BindIndexBuffer(GlobalImGuiState.IndexBuffer.Get());
@@ -623,15 +618,8 @@ void DebugUI::Render(CommandList& CmdList)
     CmdList.BindBlendFactor(ColorClearValue(0.0f, 0.0f, 0.0f, 0.0f));
 
     // TODO: Do not change to GenericRead, change to vertex/constantbuffer
-    CmdList.TransitionBuffer(
-        GlobalImGuiState.VertexBuffer.Get(),
-        EResourceState::ResourceState_GenericRead,
-        EResourceState::ResourceState_CopyDest);
-
-    CmdList.TransitionBuffer(
-        GlobalImGuiState.IndexBuffer.Get(),
-        EResourceState::ResourceState_GenericRead,
-        EResourceState::ResourceState_CopyDest);
+    CmdList.TransitionBuffer(GlobalImGuiState.VertexBuffer.Get(), EResourceState::ResourceState_GenericRead, EResourceState::ResourceState_CopyDest);
+    CmdList.TransitionBuffer(GlobalImGuiState.IndexBuffer.Get(), EResourceState::ResourceState_GenericRead, EResourceState::ResourceState_CopyDest);
 
     UInt32 VertexOffset = 0;
     UInt32 IndexOffset  = 0;
@@ -640,32 +628,17 @@ void DebugUI::Render(CommandList& CmdList)
         const ImDrawList* ImCmdList = DrawData->CmdLists[i];
         
         const UInt32 VertexSize = ImCmdList->VtxBuffer.Size * sizeof(ImDrawVert);
-        CmdList.UpdateBuffer(
-            GlobalImGuiState.VertexBuffer.Get(),
-            VertexOffset,
-            VertexSize,
-            ImCmdList->VtxBuffer.Data);
+        CmdList.UpdateBuffer(GlobalImGuiState.VertexBuffer.Get(), VertexOffset, VertexSize, ImCmdList->VtxBuffer.Data);
 
         const UInt32 IndexSize = ImCmdList->IdxBuffer.Size * sizeof(ImDrawIdx);
-        CmdList.UpdateBuffer(
-            GlobalImGuiState.IndexBuffer.Get(),
-            IndexOffset,
-            IndexSize,
-            ImCmdList->IdxBuffer.Data);
+        CmdList.UpdateBuffer(GlobalImGuiState.IndexBuffer.Get(), IndexOffset, IndexSize, ImCmdList->IdxBuffer.Data);
 
         VertexOffset += VertexSize;
         IndexOffset  += IndexSize;
     }
 
-    CmdList.TransitionBuffer(
-        GlobalImGuiState.VertexBuffer.Get(),
-        EResourceState::ResourceState_CopyDest,
-        EResourceState::ResourceState_GenericRead);
-
-    CmdList.TransitionBuffer(
-        GlobalImGuiState.IndexBuffer.Get(),
-        EResourceState::ResourceState_CopyDest,
-        EResourceState::ResourceState_GenericRead);
+    CmdList.TransitionBuffer(GlobalImGuiState.VertexBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_GenericRead);
+    CmdList.TransitionBuffer(GlobalImGuiState.IndexBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_GenericRead);
 
     Int32  GlobalVertexOffset = 0;
     Int32  GlobalIndexOffset  = 0;
@@ -685,19 +658,13 @@ void DebugUI::Render(CommandList& CmdList)
                 
                 if (Image->BeforeState != EResourceState::ResourceState_PixelShaderResource)
                 {
-                    CmdList.TransitionTexture(
-                        Image->Image.Get(),
-                        Image->BeforeState,
-                        EResourceState::ResourceState_PixelShaderResource);
+                    CmdList.TransitionTexture(Image->Image.Get(), Image->BeforeState, EResourceState::ResourceState_PixelShaderResource);
 
                     // TODO: Another way to do this? May break somewhere?
                     Image->BeforeState = EResourceState::ResourceState_PixelShaderResource;
                 }
 
-                CmdList.BindShaderResourceViews(
-                    EShaderStage::ShaderStage_Pixel,
-                    &Image->ImageView,
-                    1, 0);
+                CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Pixel, &Image->ImageView, 1, 0);
 
                 if (!Image->AllowBlending)
                 {
@@ -706,24 +673,12 @@ void DebugUI::Render(CommandList& CmdList)
             }
             else
             {
-                CmdList.BindShaderResourceViews(
-                    EShaderStage::ShaderStage_Pixel,
-                    &GlobalImGuiState.FontTexture.View,
-                    1, 0);
+                CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Pixel, &GlobalImGuiState.FontTexture.View, 1, 0);
             }
 
-            CmdList.BindScissorRect(
-                Cmd->ClipRect.z - ClipOff.x,
-                Cmd->ClipRect.w - ClipOff.y,
-                Cmd->ClipRect.x - ClipOff.x,
-                Cmd->ClipRect.y - ClipOff.y);
+            CmdList.BindScissorRect(Cmd->ClipRect.z - ClipOff.x, Cmd->ClipRect.w - ClipOff.y, Cmd->ClipRect.x - ClipOff.x, Cmd->ClipRect.y - ClipOff.y);
 
-            CmdList.DrawIndexedInstanced(
-                Cmd->ElemCount, 
-                1, 
-                Cmd->IdxOffset + GlobalIndexOffset, 
-                Cmd->VtxOffset + GlobalVertexOffset, 
-                0);
+            CmdList.DrawIndexedInstanced(Cmd->ElemCount, 1, Cmd->IdxOffset + GlobalIndexOffset, Cmd->VtxOffset + GlobalVertexOffset, 0);
         }
 
         GlobalIndexOffset  += DrawCmdList->IdxBuffer.Size;
@@ -736,10 +691,7 @@ void DebugUI::Render(CommandList& CmdList)
 
         if (Image->AfterState != EResourceState::ResourceState_PixelShaderResource)
         {
-            CmdList.TransitionTexture(
-                Image->Image.Get(),
-                EResourceState::ResourceState_PixelShaderResource,
-                Image->AfterState);
+            CmdList.TransitionTexture(Image->Image.Get(), EResourceState::ResourceState_PixelShaderResource, Image->AfterState);
         }
     }
 

@@ -49,18 +49,10 @@ void Console::Tick()
             ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
             ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-            ImGui::SetNextWindowPos(
-                ImVec2(0.0f, 0.0f),
-                ImGuiCond_Always,
-                ImVec2(0.0f, 0.0f));
+            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always, ImVec2(0.0f, 0.0f));
+            ImGui::SetNextWindowSize(ImVec2(Width, 0.0f), ImGuiCond_FirstUseEver);
 
-            ImGui::SetNextWindowSize(
-                ImVec2(Width, 0.0f),
-                ImGuiCond_FirstUseEver);
-
-            ImGui::SetNextWindowSizeConstraints(
-                ImVec2(Width, 100),
-                ImVec2(Width, WindowHeight * 0.5f));
+            ImGui::SetNextWindowSizeConstraints(ImVec2(Width, 100), ImVec2(Width, WindowHeight * 0.5f));
 
             ImGui::Begin(
                 "Console Window",
@@ -77,11 +69,7 @@ void Console::Tick()
             const ImVec2 ParentSize      = ImGui::GetWindowSize();
             const Float TextWindowWidth  = Width * 0.985f;
             const Float TextWindowHeight = ParentSize.y - 40.0f;
-            ImGui::BeginChild(
-                "##TextWindow",
-                ImVec2(TextWindowWidth, TextWindowHeight),
-                false,
-                ImGuiWindowFlags_None);
+            ImGui::BeginChild("##TextWindow", ImVec2(TextWindowWidth, TextWindowHeight), false, ImGuiWindowFlags_None);
 
             for (const Line& Text : gConsole.Lines)
             {
@@ -116,13 +104,7 @@ void Console::Tick()
                 return This->TextCallback(Data);
             };
 
-            const Bool Result = ImGui::InputText(
-                "###Input",
-                gConsole.TextBuffer.Data(), gConsole.TextBuffer.Size(),
-                InputFlags,
-                Callback,
-                reinterpret_cast<void*>(&gConsole));
-
+            const Bool Result = ImGui::InputText("###Input", gConsole.TextBuffer.Data(), gConsole.TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(&gConsole));
             if (Result && gConsole.TextBuffer[0] != 0)
             {
                 if (gConsole.CandidatesIndex != -1)
@@ -172,16 +154,11 @@ void Console::Tick()
                     SizeY = ImGui::GetTextLineHeight() * MaxCandidates + 10.0f;
                 }
 
-                ImGui::SetNextWindowPos(
-                    ImVec2(0.0f, ParentSize.y));
+                ImGui::SetNextWindowPos(ImVec2(0.0f, ParentSize.y));
 
-                ImGui::SetNextWindowSize(
-                    ImVec2(ParentSize.x, 0.0f));
+                ImGui::SetNextWindowSize(ImVec2(ParentSize.x, 0.0f));
 
-                ImGui::Begin(
-                    "CandidatesWindow",
-                    &PopupOpen, 
-                    PopupFlags);
+                ImGui::Begin("CandidatesWindow", &PopupOpen, PopupFlags);
 
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 2));
                 ImGui::PushAllowKeyboardFocus(false);
@@ -256,9 +233,7 @@ void Console::Tick()
     }
 }
 
-void Console::RegisterCommand(
-    const std::string& CmdName, 
-    ConsoleCommand Command)
+void Console::RegisterCommand(const std::string& CmdName, ConsoleCommand Command)
 {
     ConsoleCommand CurrCmd = FindCommand(CmdName);
     if (!CurrCmd)
@@ -273,9 +248,7 @@ void Console::RegisterCommand(
     }
 }
 
-void Console::RegisterVariable(
-    const std::string& VarName, 
-    ConsoleVariable* Variable)
+void Console::RegisterVariable(const std::string& VarName, ConsoleVariable* Variable)
 {
     ConsoleVariable* Var = FindVariable(VarName);
     if (!Var)

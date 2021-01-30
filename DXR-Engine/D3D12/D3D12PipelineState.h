@@ -149,10 +149,7 @@ class D3D12ComputePipelineState : public ComputePipelineState, public D3D12Devic
     friend class D3D12RenderLayer;
 
 public:
-    D3D12ComputePipelineState(
-        D3D12Device* InDevice, 
-        const TSharedRef<D3D12ComputeShader>& InShader,
-        const TSharedRef<D3D12RootSignature>& InRootSignature);
+    D3D12ComputePipelineState(D3D12Device* InDevice, const TSharedRef<D3D12ComputeShader>& InShader, const TSharedRef<D3D12RootSignature>& InRootSignature);
 
     Bool Init();
 

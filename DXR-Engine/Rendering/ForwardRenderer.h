@@ -12,10 +12,7 @@ public:
 	Bool Init(FrameResources& FrameResources);
 	void Release();
 
-	void Render(
-		CommandList& CmdList,
-		const FrameResources& FrameResources,
-		const SceneLightSetup& LightSetup);
+	void Render(CommandList& CmdList, const FrameResources& FrameResources, const SceneLightSetup& LightSetup);
 
 private:
 	TSharedRef<GraphicsPipelineState> PipelineState;
