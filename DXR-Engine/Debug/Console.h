@@ -9,13 +9,13 @@
 
 typedef void(*ConsoleCommand)();
 
-enum EConsoleVariableType : UInt8
+enum class EConsoleVariableType : UInt8
 {
-    ConsoleVariableType_Unknown = 0,
-    ConsoleVariableType_Bool    = 1,
-    ConsoleVariableType_Int     = 2,
-    ConsoleVariableType_Float   = 3,
-    ConsoleVariableType_String  = 4,
+    Unknown = 0,
+    Bool    = 1,
+    Int     = 2,
+    Float   = 3,
+    String  = 4,
 };
 
 struct ConsoleVariable
@@ -34,7 +34,7 @@ struct ConsoleVariable
     
     FORCEINLINE void Free()
     {
-        if (Type == ConsoleVariableType_String)
+        if (Type == EConsoleVariableType::String)
         {
             Memory::Free(StringValue);
             StringValue = nullptr;
@@ -43,33 +43,33 @@ struct ConsoleVariable
 
     FORCEINLINE void SetBool(Bool Value)
     {
-        VALIDATE(Type == ConsoleVariableType_Bool);
+        VALIDATE(Type == EConsoleVariableType::Bool);
         BoolValue = Value;
     }
 
-    FORCEINLINE void SetInt32(Int32 Value)
+    FORCEINLINE void SetInt(Int32 Value)
     {
-        VALIDATE(Type == ConsoleVariableType_Int);
+        VALIDATE(Type == EConsoleVariableType::Int);
         IntValue = Value;
     }
 
     FORCEINLINE void SetFloat(Float Value)
     {
-        VALIDATE(Type == ConsoleVariableType_Float);
+        VALIDATE(Type == EConsoleVariableType::Float);
         FloatValue = Value;
     }
 
-    FORCEINLINE void SetAndConvertInt32(Int32 Value)
+    FORCEINLINE void SetAndConvertInt(Int32 Value)
     {
-        if (Type == ConsoleVariableType_Int)
+        if (Type == EConsoleVariableType::Int)
         {
             IntValue = Value;
         }
-        else if (Type == ConsoleVariableType_Bool)
+        else if (Type == EConsoleVariableType::Bool)
         {
             BoolValue = Bool(Value);
         }
-        else if (Type == ConsoleVariableType_Float)
+        else if (Type == EConsoleVariableType::Float)
         {
             FloatValue = Float(Value);
         }
@@ -81,7 +81,7 @@ struct ConsoleVariable
 
     FORCEINLINE void SetString(const Char* Value)
     {
-        VALIDATE(Type == ConsoleVariableType_String);
+        VALIDATE(Type == EConsoleVariableType::String);
         
         const Int32 Len = Int32(strlen(Value));
         if (Len < Length)
@@ -97,54 +97,39 @@ struct ConsoleVariable
 
     FORCEINLINE Bool GetBool() const
     {
-        VALIDATE(Type == ConsoleVariableType_Bool);
+        VALIDATE(Type == EConsoleVariableType::Bool);
         return BoolValue;
     }
 
     FORCEINLINE Int32 GetInt32() const
     {
-        VALIDATE(Type == ConsoleVariableType_Int);
+        VALIDATE(Type == EConsoleVariableType::Int);
         return IntValue;
     }
 
     FORCEINLINE Float GetFloat() const
     {
-        VALIDATE(Type == ConsoleVariableType_Float);
+        VALIDATE(Type == EConsoleVariableType::Float);
         return FloatValue;
     }
 
     FORCEINLINE const Char* GetString() const
     {
-        VALIDATE(Type == ConsoleVariableType_String);
+        VALIDATE(Type == EConsoleVariableType::String);
         return StringValue;
     }
 
-    FORCEINLINE Bool CanBeInteger() const
+    Bool IsBool() const { return Type == EConsoleVariableType::Bool; }
+    Bool IsInt() const { return Type == EConsoleVariableType::Int; }
+    Bool IsFloat() const { return Type == EConsoleVariableType::Float; }
+    Bool IsString() const { return Type == EConsoleVariableType::String; }
+
+    Bool CanBeInteger() const
     {
-        return Type == ConsoleVariableType_Bool  || Type == ConsoleVariableType_Int || Type == ConsoleVariableType_Float;
+        return IsBool() || IsInt() || IsFloat();
     }
 
-    FORCEINLINE Bool IsBool() const
-    {
-        return Type == ConsoleVariableType_Bool;
-    }
-
-    FORCEINLINE Bool IsInt() const
-    {
-        return Type == ConsoleVariableType_Int;
-    }
-
-    FORCEINLINE Bool IsFloat() const
-    {
-        return Type == ConsoleVariableType_Float;
-    }
-
-    FORCEINLINE Bool IsString() const
-    {
-        return Type == ConsoleVariableType_String;
-    }
-
-    EConsoleVariableType Type = ConsoleVariableType_Unknown;
+    EConsoleVariableType Type = EConsoleVariableType::Unknown;
     union
     {
         Bool  BoolValue;

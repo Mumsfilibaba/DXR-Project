@@ -3,9 +3,9 @@
 
 enum class EShaderModel
 {
-    ShaderModel_5_0 = 1,
-    ShaderModel_5_1 = 2,
-    ShaderModel_6_0 = 3,
+    _5_0 = 1,
+    _5_1 = 2,
+    _6_0 = 3,
 };
 
 struct ShaderDefine
@@ -61,13 +61,7 @@ public:
         EShaderModel ShaderModel,
         TArray<UInt8>& Code)
     {
-        return gShaderCompiler->CompileFromFile(
-            FilePath,
-            EntryPoint,
-            Defines,
-            ShaderStage,
-            ShaderModel,
-            Code);
+        return gShaderCompiler->CompileFromFile(FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
 
     FORCEINLINE static Bool CompileShader(
@@ -78,12 +72,6 @@ public:
         EShaderModel ShaderModel,
         TArray<UInt8>& Code)
     {
-        return gShaderCompiler->CompileShader(
-            ShaderSource,
-            EntryPoint,
-            Defines,
-            ShaderStage,
-            ShaderModel,
-            Code);
+        return gShaderCompiler->CompileShader(ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
 };

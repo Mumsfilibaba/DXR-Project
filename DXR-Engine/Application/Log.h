@@ -4,23 +4,23 @@
 #define LOG_ERROR(Message) \
     { \
         VALIDATE(gConsoleOutput != nullptr); \
-        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_Red); \
+        gConsoleOutput->SetColor(EConsoleColor::Red); \
         gConsoleOutput->Print(std::string(Message) + "\n"); \
-        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_White); \
+        gConsoleOutput->SetColor(EConsoleColor::White); \
     }
 
 #define LOG_WARNING(Message) \
     { \
         VALIDATE(gConsoleOutput != nullptr); \
-        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_Yellow); \
+        gConsoleOutput->SetColor(EConsoleColor::Yellow); \
         gConsoleOutput->Print(std::string(Message) + "\n"); \
-        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_White); \
+        gConsoleOutput->SetColor(EConsoleColor::White); \
     }
 
 #define LOG_INFO(Message) \
     {\
         VALIDATE(gConsoleOutput != nullptr); \
-        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_Green); \
+        gConsoleOutput->SetColor(EConsoleColor::Green); \
         gConsoleOutput->Print(std::string(Message) + "\n"); \
-        gConsoleOutput->SetColor(EConsoleColor::ConsoleColor_White); \
+        gConsoleOutput->SetColor(EConsoleColor::White); \
     }

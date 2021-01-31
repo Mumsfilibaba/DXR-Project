@@ -6,16 +6,16 @@
 
 enum class EPlatformCursor : UInt32
 {
-    PlatformCursor_None       = 0,
-    PlatformCursor_TextInput  = 1,
-    PlatformCursor_ResizeAll  = 2,
-    PlatformCursor_ResizeEW   = 3,
-    PlatformCursor_ResizeNS   = 4,
-    PlatformCursor_ResizeNESW = 5,
-    PlatformCursor_ResizeNWSE = 6,
-    PlatformCursor_Hand       = 7,
-    PlatformCursor_NotAllowed = 8,
-    PlatformCursor_Arrow      = 9,
+    None       = 0,
+    TextInput  = 1,
+    ResizeAll  = 2,
+    ResizeEW   = 3,
+    ResizeNS   = 4,
+    ResizeNESW = 5,
+    ResizeNWSE = 6,
+    Hand       = 7,
+    NotAllowed = 8,
+    Arrow      = 9,
 };
 
 struct CursorCreateInfo

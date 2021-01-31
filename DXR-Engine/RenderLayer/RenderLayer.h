@@ -10,108 +10,71 @@ public:
     static void Release();
 
     FORCEINLINE static Texture2D* CreateTexture2D(
-        const ResourceData* InitalData, 
         EFormat Format, 
-        UInt32 Usage, 
         UInt32 Width, 
         UInt32 Height, 
-        UInt32 MipLevels, 
-        UInt32 SampleCount, 
+        UInt32 NumMipLevels, 
+        UInt32 NumSamples, 
+        UInt32 Usage, 
+        EResourceState InitialState,
+        const ResourceData* InitialData, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return gRenderLayer->CreateTexture2D(
-            InitalData, 
-            Format, 
-            Usage, 
-            Width, 
-            Height, 
-            MipLevels, 
-            SampleCount, 
-            OptimizedClearValue);
+        return gRenderLayer->CreateTexture2D(Format, Width, Height, NumMipLevels, NumSamples, Usage, InitalState, InitialData, OptimizedClearValue);
     }
 
     FORCEINLINE static Texture2DArray* CreateTexture2DArray(
-        const ResourceData* InitalData, 
         EFormat Format, 
-        UInt32 Usage, 
         UInt32 Width, 
         UInt32 Height, 
-        UInt32 MipLevels, 
-        UInt16 ArrayCount,
-        UInt32 SampleCount, 
+        UInt32 NumMipLevels, 
+        UInt32 NumSamples,
+        UInt32 NumArraySlices,
+        UInt32 Usage, 
+        EResourceState InitialState,
+        const ResourceData* InitialData, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return gRenderLayer->CreateTexture2DArray(
-            InitalData, 
-            Format, 
-            Usage, 
-            Width, 
-            Height, 
-            MipLevels, 
-            ArrayCount,
-            SampleCount, 
-            OptimizedClearValue);
+        return gRenderLayer->CreateTexture2DArray(Format, Width, Height, NumMipLevels, NumSamples, NumArraySlices, Usage, InitalState, InitialData, OptimizedClearValue);
     }
 
     FORCEINLINE static TextureCube* CreateTextureCube(
-        const ResourceData* InitalData,
-        EFormat Format,
-        UInt32 Usage,
+        EFormat Format, 
         UInt32 Size,
-        UInt32 MipLevels,
-        UInt32 SampleCount,
+        UInt32 NumMipLevels,
+        UInt32 Usage, 
+        EResourceState InitialState,
+        const ResourceData* InitialData, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return gRenderLayer->CreateTextureCube(
-            InitalData, 
-            Format,
-            Usage,
-            Size,
-            MipLevels,
-            SampleCount,
-            OptimizedClearValue);
+        return gRenderLayer->CreateTextureCube(Format, Size, NumMipLevels, Usage, InitalState, InitialData, OptimizedClearValue);
     }
 
     FORCEINLINE static TextureCubeArray* CreateTextureCubeArray(
-        const ResourceData* InitalData,
-        EFormat Format,
-        UInt32 Usage,
-        UInt32 Size,
-        UInt32 MipLevels,
-        UInt16 ArrayCount,
-        UInt32 SampleCount,
+        EFormat Format, 
+        UInt32 Size, 
+        UInt32 NumMipLevels, 
+        UInt32 NumArraySlices,
+        UInt32 Usage, 
+        EResourceState InitialState,
+        const ResourceData* InitialData, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return gRenderLayer->CreateTextureCubeArray(
-            InitalData,
-            Format,
-            Usage,
-            Size,
-            MipLevels,
-            ArrayCount,
-            SampleCount,
-            OptimizedClearValue);
+        return gRenderLayer->CreateTextureCubeArray(Format, Size, NumMipLevels, NumArraySlices, Usage, InitalState, InitialData, OptimizedClearValue);
     }
 
     FORCEINLINE static Texture3D* CreateTexture3D(
-        const ResourceData* InitalData,
-        EFormat Format,
-        UInt32 Usage,
+        EFormat Format, 
         UInt32 Width,
-        UInt32 Height,
-        UInt16 Depth,
-        UInt32 MipLevels,
+        UInt32 Height, 
+        UInt32 Depth,
+        UInt32 NumMipLevels, 
+        UInt32 Usage, 
+        EResourceState InitialState,
+        const ResourceData* InitialData, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return gRenderLayer->CreateTexture3D(
-            InitalData,
-            Format,
-            Usage,
-            Width,
-            Height,
-            Depth,
-            MipLevels,
-            OptimizedClearValue);
+        return gRenderLayer->CreateTexture3D(Format, Width, Height, Depth, NumMipLevels, Usage, InitalState, InitialData, OptimizedClearValue);
     }
 
     FORCEINLINE static class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo)
@@ -119,94 +82,38 @@ public:
         return gRenderLayer->CreateSamplerState(CreateInfo);
     }
 
-    FORCEINLINE static VertexBuffer* CreateVertexBuffer(
-        const ResourceData* InitalData,
-        UInt32 SizeInBytes,
-        UInt32 VertexStride,
-        UInt32 Usage)
+    FORCEINLINE static VertexBuffer* CreateVertexBuffer(UInt32 Stride, UInt32 NumVertices, UInt32 Usage, EResourceState InitialState, const ResourceData* InitalData)
     {
-        return gRenderLayer->CreateVertexBuffer(
-            InitalData,
-            SizeInBytes,
-            VertexStride,
-            Usage);
+        return gRenderLayer->CreateVertexBuffer(Stride, NumVertices, Usage, InitialState, InitialData);
     }
 
     template<typename T>
-    FORCEINLINE static VertexBuffer* CreateVertexBuffer(
-        const ResourceData* InitalData, 
-        UInt32 VertexCount, 
-        UInt32 Usage)
+    FORCEINLINE static VertexBuffer* CreateVertexBuffer(UInt32 NumVertices, UInt32 Usage, EResourceState InitialState, const ResourceData* InitalData)
     {
         constexpr UInt32 STRIDE = sizeof(T);
-        const UInt32 SizeInByte = STRIDE * VertexCount;
-        return CreateVertexBuffer(InitalData, SizeInByte, STRIDE, Usage);
+        return CreateVertexBuffer(STRIDE, NumVertices, Usage, InitialState, InitialData);
     }
 
-    FORCEINLINE static IndexBuffer* CreateIndexBuffer(
-        const ResourceData* InitalData,
-        UInt32 SizeInBytes,
-        EIndexFormat IndexFormat,
-        UInt32 Usage)
+    FORCEINLINE static IndexBuffer* CreateIndexBuffer(EIndexFormat Format, UInt32 NumIndices, UInt32 Usage, EResourceState InitialState, const ResourceData* InitalData)
     {
-        return gRenderLayer->CreateIndexBuffer(
-            InitalData,
-            SizeInBytes,
-            IndexFormat,
-            Usage);
+        return gRenderLayer->CreateIndexBuffer(Format, NumIndices, Usage, InitialState, InitialData);
     }
 
-    FORCEINLINE static ConstantBuffer* CreateConstantBuffer(
-        const ResourceData* InitalData,
-        UInt32 SizeInBytes, 
-        UInt32 Usage,
-        EResourceState InitialState)
+    FORCEINLINE static ConstantBuffer* CreateConstantBuffer(UInt32 SizeInBytes, EResourceState InitialState, const ResourceData* InitialData)
     {
-        return gRenderLayer->CreateConstantBuffer(
-            InitalData, 
-            SizeInBytes, 
-            Usage, 
-            InitialState);
+        return gRenderLayer->CreateConstantBuffer(SizeInBytes, InitialState, InitialData);
     }
 
     template<typename T>
-    FORCEINLINE static ConstantBuffer* CreateConstantBuffer(
-        const ResourceData* InitalData, 
-        UInt32 Usage,
-        EResourceState InitialState)
+    FORCEINLINE static ConstantBuffer* CreateConstantBuffer(EResourceState InitialState, const ResourceData* InitialData)
     {
-        return CreateConstantBuffer(
-            InitalData, 
-            sizeof(T), 
-            Usage, 
-            InitialState);
+        constexpr UInt32 SIZE_IN_BYTES = sizeof(T);
+        return CreateConstantBuffer(SIZE_IN_BYTES, InitialState, InitialData);
     }
 
-    template<typename T>
-    FORCEINLINE static ConstantBuffer* CreateConstantBuffer(
-        const ResourceData* InitalData, 
-        UInt32 ElementCount, 
-        UInt32 Usage,
-        EResourceState InitialState)
+    FORCEINLINE static StructuredBuffer* CreateStructuredBuffer(UInt32 Stride, UInt32 NumElements, UInt32 Usage, EResourceState InitialState, const ResourceData* InitalData)
     {
-        return CreateConstantBuffer(
-            InitalData, 
-            sizeof(T) * ElementCount, 
-            Usage, 
-            InitialState);
-    }
-
-    FORCEINLINE static StructuredBuffer* CreateStructuredBuffer(
-        const ResourceData* InitalData,
-        UInt32 SizeInBytes,
-        UInt32 Stride,
-        UInt32 Usage)
-    {
-        return gRenderLayer->CreateStructuredBuffer(
-            InitalData,
-            SizeInBytes,
-            Stride,
-            Usage);
+        return gRenderLayer->CreateStructuredBuffer(Stride, NumElements, Usage, InitialState, InitialData);
     }
 
     FORCEINLINE static RayTracingScene* CreateRayTracingScene()

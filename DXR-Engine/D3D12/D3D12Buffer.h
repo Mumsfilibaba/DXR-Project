@@ -50,7 +50,7 @@ public:
         return 1;
     }
 
-    FORCEINLINE const D3D12_VERTEX_BUFFER_VIEW& GetView() const
+    const D3D12_VERTEX_BUFFER_VIEW& GetView() const
     {
         return VertexBufferView;
     }

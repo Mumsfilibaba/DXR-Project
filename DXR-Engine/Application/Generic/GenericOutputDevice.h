@@ -3,10 +3,10 @@
 
 enum class EConsoleColor : UInt8
 {
-    ConsoleColor_Red    = 0,
-    ConsoleColor_Green  = 1,
-    ConsoleColor_Yellow = 2,
-    ConsoleColor_White  = 3
+    Red    = 0,
+    Green  = 1,
+    Yellow = 2,
+    White  = 3
 };
 
 class GenericOutputDevice

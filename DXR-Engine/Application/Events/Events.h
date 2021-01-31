@@ -7,42 +7,42 @@
 
 enum class EEventType : UInt8
 { 
-    EventType_Unknown = 0,
+    Unknown = 0,
 
-    EventType_KeyPressed  = 1,
-    EventType_KeyReleased = 2,
-    EventType_KeyTyped    = 3,
+    KeyPressed  = 1,
+    KeyReleased = 2,
+    KeyTyped    = 3,
 
-    EventType_MouseMoved    = 4,
-    EventType_MousePressed  = 5,
-    EventType_MouseReleased = 6,
-    EventType_MouseScrolled = 7,
+    MouseMoved    = 4,
+    MousePressed  = 5,
+    MouseReleased = 6,
+    MouseScrolled = 7,
 
-    EventType_WindowResized      = 8,
-    EventType_WindowMoved        = 9,
-    EventType_WindowMouseLeft    = 10,
-    EventType_WindowMouseEntered = 11,
-    EventType_WindowFocusChanged = 12,
-    EventType_WindowClosed       = 13,
+    WindowResized      = 8,
+    WindowMoved        = 9,
+    WindowMouseLeft    = 10,
+    WindowMouseEntered = 11,
+    WindowFocusChanged = 12,
+    WindowClosed       = 13,
 };
 
 inline const Char* ToString(EEventType EventType)
 {
     switch (EventType)
     {
-    case EEventType::EventType_KeyPressed:         return "KeyPressed";
-    case EEventType::EventType_KeyReleased:        return "KeyReleased";
-    case EEventType::EventType_KeyTyped:           return "KeyTyped";
-    case EEventType::EventType_MouseMoved:         return "MouseMoved";
-    case EEventType::EventType_MousePressed:       return "MousePressed";
-    case EEventType::EventType_MouseReleased:      return "MouseReleased";
-    case EEventType::EventType_MouseScrolled:      return "MouseScrolled";
-    case EEventType::EventType_WindowResized:      return "WindowResized";
-    case EEventType::EventType_WindowMoved:        return "WindowMoved";
-    case EEventType::EventType_WindowMouseLeft:    return "WindowMouseLeft";
-    case EEventType::EventType_WindowMouseEntered: return "WindowMouseEntered";
-    case EEventType::EventType_WindowFocusChanged: return "WindowFocusChanged";
-    case EEventType::EventType_WindowClosed:       return "WindowClosed";
+    case EEventType::KeyPressed:         return "KeyPressed";
+    case EEventType::KeyReleased:        return "KeyReleased";
+    case EEventType::KeyTyped:           return "KeyTyped";
+    case EEventType::MouseMoved:         return "MouseMoved";
+    case EEventType::MousePressed:       return "MousePressed";
+    case EEventType::MouseReleased:      return "MouseReleased";
+    case EEventType::MouseScrolled:      return "MouseScrolled";
+    case EEventType::WindowResized:      return "WindowResized";
+    case EEventType::WindowMoved:        return "WindowMoved";
+    case EEventType::WindowMouseLeft:    return "WindowMouseLeft";
+    case EEventType::WindowMouseEntered: return "WindowMouseEntered";
+    case EEventType::WindowFocusChanged: return "WindowFocusChanged";
+    case EEventType::WindowClosed:       return "WindowClosed";
     }
 
     return "Unknown";
@@ -50,14 +50,14 @@ inline const Char* ToString(EEventType EventType)
 
 enum EEventCategory : UInt8
 {
-    EventCategory_Unknown = 0,
+    Unknown = 0,
     
-    EventCategory_Input    = BIT(1),
-    EventCategory_Mouse    = BIT(2),
-    EventCategory_Keyboard = BIT(3),
-    EventCategory_Window   = BIT(4),
+    Input    = BIT(1),
+    Mouse    = BIT(2),
+    Keyboard = BIT(3),
+    Window   = BIT(4),
 
-    EventCategory_All = 0xff
+    All = 0xff
 };
 
 #define DECLARE_EVENT(Type, Category) \
@@ -92,16 +92,13 @@ public:
 
     virtual std::string ToString() const = 0;
 
-    virtual EEventType GetType() const            = 0;
-    virtual const Char* GetTypeAsString() const    = 0;
-    virtual UInt8 GetCategoryFlags() const        = 0;
+    virtual EEventType GetType() const  = 0;
+    virtual const Char* GetTypeAsString() const = 0;
+    virtual UInt8 GetCategoryFlags() const = 0;
 
-    FORCEINLINE Bool IsHandled() const
-    {
-        return HasBeenHandled;
-    }
+    Bool IsHandled() const { return HasBeenHandled; }
 
-    FORCEINLINE static EEventType GetStaticType()
+    static EEventType GetStaticType()
     {
         return EEventType::EventType_Unknown;
     }

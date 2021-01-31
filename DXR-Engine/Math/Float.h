@@ -18,15 +18,9 @@ struct Float64
     {
     }
 
-    FORCEINLINE void SetFloat(Double Fp64)
-    {
-        Float = Fp64;
-    }
+    FORCEINLINE void SetFloat(Double FP64) { Float = FP64; }
 
-    FORCEINLINE Double GetFloat() const
-    {
-        return Float;
-    }
+    FORCEINLINE Double GetFloat() const { return Float; }
 
     FORCEINLINE Float64& operator=(Double Fp64)
     {
@@ -70,15 +64,9 @@ struct Float32
     {
     }
 
-    FORCEINLINE void SetFloat(Float Fp32)
-    {
-        Float = Fp32;
-    }
+    FORCEINLINE void SetFloat(Float FP32) { Float = FP32; }
 
-    FORCEINLINE Float GetFloat() const
-    {
-        return Float;
-    }
+    FORCEINLINE Float GetFloat() const { return Float; }
 
     FORCEINLINE Float32& operator=(Float Fp32)
     {

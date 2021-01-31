@@ -33,9 +33,10 @@ public:
         EFormat Format,
         UInt32 Width,
         UInt32 Height,
-        UInt32 Usage,
         UInt32 NumMipLevels,
         UInt32 NumSamples,
+        UInt32 Usage,
+        EResourceState InitialState,
         const ResourceData* InitalData,
         const ClearValue& OptimizedClearValue) const = 0;
 
@@ -43,27 +44,30 @@ public:
         EFormat Format,
         UInt32 Width,
         UInt32 Height,
-        UInt32 Usage,
         UInt32 NumMipLevels,
         UInt32 NumSamples,
         UInt32 NumArraySlices,
+        UInt32 Usage,
+        EResourceState InitialState,
         const ResourceData* InitalData,
         const ClearValue& OptimizedClearValue) const = 0;
 
     virtual TextureCube* CreateTextureCube(
         EFormat Format,
         UInt32 Size,
-        UInt32 Usage,
         UInt32 NumMipLevels,
+        UInt32 Usage,
+        EResourceState InitialState,
         const ResourceData* InitalData,
         const ClearValue& OptimizedClearValue) const = 0;
 
     virtual TextureCubeArray* CreateTextureCubeArray(
         EFormat Format,
         UInt32 Size,
-        UInt32 Usage,
         UInt32 NumMipLevels,
         UInt32 NumArraySlices,
+        UInt32 Usage,
+        EResourceState InitialState,
         const ResourceData* InitalData,
         const ClearValue& OptimizedClearValue) const = 0;
 
@@ -72,8 +76,9 @@ public:
         UInt32 Width,
         UInt32 Height,
         UInt32 Depth,
-        UInt32 Usage,
         UInt32 NumMipLevels,
+        UInt32 Usage,
+        EResourceState InitialState,
         const ResourceData* InitalData,
         const ClearValue& OptimizedClearValue) const = 0;
 

@@ -22,10 +22,6 @@ enum class EFormat
     R32G32_Float             = 16,
     R32G32_Uint              = 17,
     R32G32_Sint              = 18,
-    R32G8X24_Typeless        = 19,
-    D32_Float_S8X24_Uint     = 20,
-    R32_Float_X8X24_Typeless = 21,
-    X32_Typeless_G8X24_Uint  = 22,
     R10G10B10A2_Typeless     = 23,
     R10G10B10A2_Unorm        = 24,
     R10G10B10A2_Uint         = 25,
@@ -68,16 +64,6 @@ enum class EFormat
     R8_Uint                  = 62,
     R8_Snorm                 = 63,
     R8_Sint                  = 64,
-    A8_Unorm                 = 65,
-    R1_Unorm                 = 66,
-    B5G6R5_Unorm             = 85,
-    B5G5R5A1_Unorm           = 86,
-    B8G8R8A8_Unorm           = 87,
-    B8G8R8X8_Unorm           = 88,
-    B8G8R8A8_Typeless        = 90,
-    B8G8R8A8_Unorm_SRGB      = 91,
-    B8G8R8X8_Typeless        = 92,
-    B8G8R8X8_Unorm_SRGB      = 93,
 };
 
 inline const Char* ToString(EFormat Format)
@@ -102,10 +88,6 @@ inline const Char* ToString(EFormat Format)
     case EFormat::R32G32_Float:             return "R32G32_Float";
     case EFormat::R32G32_Uint:              return "R32G32_Uint";
     case EFormat::R32G32_Sint:              return "R32G32_Sint";
-    case EFormat::R32G8X24_Typeless:        return "R32G8X24_Typeless";
-    case EFormat::D32_Float_S8X24_Uint:     return "D32_Float_S8X24_Uint";
-    case EFormat::R32_Float_X8X24_Typeless: return "R32_Float_X8X24_Typeless";
-    case EFormat::X32_Typeless_G8X24_Uint:  return "X32_Typeless_G8X24_Uint";
     case EFormat::R10G10B10A2_Typeless:     return "R10G10B10A2_Typeless";
     case EFormat::R10G10B10A2_Unorm:        return "R10G10B10A2_Unorm";
     case EFormat::R10G10B10A2_Uint:         return "R10G10B10A2_Uint";
@@ -148,21 +130,11 @@ inline const Char* ToString(EFormat Format)
     case EFormat::R8_Uint:                  return "R8_Uint";
     case EFormat::R8_Snorm:                 return "R8_Snorm";
     case EFormat::R8_Sint:                  return "R8_Sint";
-    case EFormat::A8_Unorm:                 return "A8_Unorm";
-    case EFormat::R1_Unorm:                 return "R1_Unorm";
-    case EFormat::B5G6R5_Unorm:             return "B5G6R5_Unorm";
-    case EFormat::B5G5R5A1_Unorm:           return "B5G5R5A1_Unorm";
-    case EFormat::B8G8R8A8_Unorm:           return "B8G8R8A8_Unorm";
-    case EFormat::B8G8R8X8_Unorm:           return "B8G8R8X8_Unorm";
-    case EFormat::B8G8R8A8_Typeless:        return "B8G8R8A8_Typeless";
-    case EFormat::B8G8R8A8_Unorm_SRGB:      return "B8G8R8A8_Unorm_SRGB";
-    case EFormat::B8G8R8X8_Typeless:        return "B8G8R8X8_Typeless";
-    case EFormat::B8G8R8X8_Unorm_SRGB:      return "B8G8R8X8_Unorm_SRGB";
     default: return "Unknown";
     }
 }
 
-inline UInt32 GetStrideFromFormat(EFormat Format)
+inline UInt32 GetByteStrideFromFormat(EFormat Format)
 {
     switch (Format)
         {
@@ -192,10 +164,6 @@ inline UInt32 GetStrideFromFormat(EFormat Format)
         case EFormat::R32G32_Float:
         case EFormat::R32G32_Uint:
         case EFormat::R32G32_Sint:
-        case EFormat::R32G8X24_Typeless:
-        case EFormat::D32_Float_S8X24_Uint:
-        case EFormat::R32_Float_X8X24_Typeless:
-        case EFormat::X32_Typeless_G8X24_Uint:
         {
             return 8;
         }
@@ -250,7 +218,6 @@ inline UInt32 GetStrideFromFormat(EFormat Format)
         case EFormat::R8_Uint:
         case EFormat::R8_Snorm:
         case EFormat::R8_Sint:
-        case EFormat::A8_Unorm:
         {
             return 1;
         }

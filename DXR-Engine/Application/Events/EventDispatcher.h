@@ -2,11 +2,11 @@
 #include "Events.h"
 #include "EventHandler.h"
 
-#include "Application/Generic/GenericApplicationDelegate.h"
+#include "Application/Generic/GenericApplicationEventHandler.h"
 
 #include <Containers/TArray.h>
 
-class EventDispatcher : public GenericApplicationDelegate
+class EventDispatcher : public GenericApplicationEventHandler
 {
     struct EventHandlerPair
     {

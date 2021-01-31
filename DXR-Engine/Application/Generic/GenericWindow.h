@@ -28,30 +28,11 @@ public:
     {
     }
 
-    FORCEINLINE Bool IsTitled() const
-    {
-        return Style & WindowStyleFlag_Titled;
-    }
-
-    FORCEINLINE Bool IsClosable() const
-    {
-        return Style & WindowStyleFlag_Closable;
-    }
-
-    FORCEINLINE Bool IsMinimizable() const
-    {
-        return Style & WindowStyleFlag_Minimizable;
-    }
-
-    FORCEINLINE Bool IsMaximizable() const
-    {
-        return Style & WindowStyleFlag_Maximizable;
-    }
-
-    FORCEINLINE Bool IsResizeable() const
-    {
-        return Style & WindowStyleFlag_Resizeable;
-    }
+    Bool IsTitled() const { return Style & WindowStyleFlag_Titled; }
+    Bool IsClosable() const { return Style & WindowStyleFlag_Closable; }
+    Bool IsMinimizable() const { return Style & WindowStyleFlag_Minimizable; }
+    Bool IsMaximizable() const { return Style & WindowStyleFlag_Maximizable; }
+    Bool IsResizeable() const { return Style & WindowStyleFlag_Resizeable; }
 
     std::string Title;
     UInt32 Width  = 0;
@@ -91,7 +72,7 @@ public:
     virtual void Restore()  = 0;
     virtual void ToggleFullscreen() = 0;
 
-    virtual Bool IsValid() const        = 0;
+    virtual Bool IsValid() const = 0;
     virtual Bool IsActiveWindow() const = 0;
 
     virtual void SetTitle(const std::string& Title) = 0;

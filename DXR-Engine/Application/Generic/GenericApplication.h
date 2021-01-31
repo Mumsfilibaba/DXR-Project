@@ -18,35 +18,12 @@ public:
     {
     }
 
-    Bool IsCtrlDown() const
-    {
-        return (ModifierMask & MODIFIER_FLAG_CTRL);
-    }
-
-    Bool IsAltDown() const
-    {
-        return (ModifierMask & MODIFIER_FLAG_ALT);
-    }
-
-    Bool IsShiftDown() const
-    {
-        return (ModifierMask & MODIFIER_FLAG_SHIFT);
-    }
-
-    Bool IsCapsLockDown() const
-    {
-        return (ModifierMask & MODIFIER_FLAG_CAPS_LOCK);
-    }
-
-    Bool IsSuperKeyDown() const
-    {
-        return (ModifierMask & MODIFIER_FLAG_SUPER);
-    }
-
-    Bool IsNumPadDown() const
-    {
-        return (ModifierMask & MODIFIER_FLAG_NUM_LOCK);
-    }
+    Bool IsCtrlDown() const { return (ModifierMask & MODIFIER_FLAG_CTRL); }
+    Bool IsAltDown() const { return (ModifierMask & MODIFIER_FLAG_ALT); }
+    Bool IsShiftDown() const { return (ModifierMask & MODIFIER_FLAG_SHIFT); }
+    Bool IsCapsLockDown() const { return (ModifierMask & MODIFIER_FLAG_CAPS_LOCK); }
+    Bool IsSuperKeyDown() const { return (ModifierMask & MODIFIER_FLAG_SUPER); }
+    Bool IsNumPadDown() const { return (ModifierMask & MODIFIER_FLAG_NUM_LOCK); }
 
     UInt32 ModifierMask = 0;
 };
@@ -63,14 +40,14 @@ public:
 
     /*
     * Events gets stored and is processed in this function. This is because events sometimes are sent
-    * from different functions than FlushSystemEventQueue, For example GenericWindow::ToggleFullscreen. This
+    * from different functions than PeekMessageUntilNoMessage, For example GenericWindow::ToggleFullscreen. This
     * makes sure that all events are processed at one time.
     */
 
     virtual void Tick() = 0;
 
     virtual void SetCursor(GenericCursor* Cursor) = 0;
-    virtual GenericCursor* GetCursor() const      = 0;
+    virtual GenericCursor* GetCursor() const = 0;
 
     virtual void SetActiveWindow(GenericWindow* Window) = 0;
     
@@ -87,12 +64,12 @@ public:
     virtual void SetCursorPos(GenericWindow* RelativeWindow, Int32 x, Int32 y) = 0;
     virtual void GetCursorPos(GenericWindow* RelativeWindow, Int32& OutX, Int32& OutY) const = 0;
 
-    FORCEINLINE void SetEventHandler(GenericApplicationDelegate* InEventHandler)
+    void SetEventHandler(GenericApplicationEventHandler* InEventHandler)
     {
         EventHandler = InEventHandler;
     }
 
-    FORCEINLINE GenericApplicationDelegate* GetEventHandler() const
+    GenericApplicationEventHandler* GetEventHandler() const
     {
         return EventHandler;
     }
@@ -113,5 +90,5 @@ public:
     }
 
 protected:
-    GenericApplicationDelegate* EventHandler;
+    GenericApplicationEventHandler* EventHandler;
 };

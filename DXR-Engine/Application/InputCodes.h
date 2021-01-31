@@ -1,4 +1,3 @@
-#pragma once
 #include "Core.h"
 
 enum EKey : UInt8
@@ -143,27 +142,26 @@ enum EKey : UInt8
 
 enum EMouseButton : UInt8
 {
-    MOUSE_BUTTON_UNKNOWN = 0,
-
+    MouseButton_Unknown = 0,
     MouseButton_Left    = 1,
     MouseButton_Right   = 2,
     MouseButton_Middle  = 3,
     MouseButton_Back    = 4,
     MouseButton_Forward = 5,
 
-    MOUSE_BUTTON_LAST  = MouseButton_Back,
-    MOUSE_BUTTON_COUNT = MOUSE_BUTTON_LAST + 1
+    MouseButton_Last  = MouseButton_Back,
+    MouseButton_Count = MouseButton_Last + 1
 };
 
 enum EModifierFlag
 {
-    MODIFIER_FLAG_NONE      = 0,
-    MODIFIER_FLAG_CTRL      = FLAG(1),
-    MODIFIER_FLAG_ALT       = FLAG(2),
-    MODIFIER_FLAG_SHIFT     = FLAG(3),
-    MODIFIER_FLAG_CAPS_LOCK = FLAG(4),
-    MODIFIER_FLAG_SUPER     = FLAG(5),
-    MODIFIER_FLAG_NUM_LOCK  = FLAG(6),
+    ModifierFlag_None     = 0,
+    ModifierFlag_Ctrl     = FLAG(1),
+    ModifierFlag_Alt      = FLAG(2),
+    ModifierFlag_Shift    = FLAG(3),
+    ModifierFlag_CapsLock = FLAG(4),
+    ModifierFlag_Super    = FLAG(5),
+    ModifierFlag_NumLock  = FLAG(6),
 };
 
 inline const Char* ToString(EMouseButton Button)
