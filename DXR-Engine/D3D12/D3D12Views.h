@@ -15,15 +15,9 @@ public:
     
     Bool Init();
 
-    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
-    {
-        return OfflineHandle;
-    }
+    D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
 
-    FORCEINLINE const D3D12Resource* GetResource() const
-    {
-        return Resource;
-    }
+    const D3D12Resource* GetResource() const { return Resource; }
 
 protected:
     const D3D12Resource*        Resource = nullptr;
@@ -39,7 +33,7 @@ public:
 
     Bool CreateView(const D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 
-    FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const
+    const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -55,7 +49,7 @@ public:
 
     Bool CreateView(const D3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
-    FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
+    const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -69,20 +63,11 @@ class D3D12UnorderedAccessView : public UnorderedAccessView, public D3D12View
 public:
     D3D12UnorderedAccessView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap);
 
-    Bool CreateView(
-        const D3D12Resource* InCounterResource, 
-        const D3D12Resource* InResource, 
-        const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
+    Bool CreateView(const D3D12Resource* InCounterResource, const D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
-    FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
-    {
-        return Desc;
-    }
+    const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const { return Desc; }
 
-    FORCEINLINE const D3D12Resource* GetCounterResource() const
-    {
-        return CounterResource;
-    }
+    const D3D12Resource* GetCounterResource() const { return CounterResource; }
 
 private:
     const D3D12Resource* CounterResource = nullptr;
@@ -96,7 +81,7 @@ public:
 
     Bool CreateView(const D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
-    FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const
+    const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -112,7 +97,7 @@ public:
 
     Bool CreateView(const D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 
-    FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const
+    const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const
     {
         return Desc;
     }

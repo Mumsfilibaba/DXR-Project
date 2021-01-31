@@ -102,15 +102,9 @@ public:
     virtual UInt32 GetWidth()  const = 0;
     virtual UInt32 GetHeight() const = 0;
 
-    virtual Void* GetNativeHandle() const
-    {
-        return nullptr;
-    }
+    virtual Void* GetNativeHandle() const { return nullptr; }
 
-    FORCEINLINE const WindowCreateInfo& GetCreateInfo() const
-    {
-        return CreateInfo;
-    }
+    const WindowCreateInfo& GetCreateInfo() const { return CreateInfo; }
 
 protected:
     WindowCreateInfo CreateInfo;

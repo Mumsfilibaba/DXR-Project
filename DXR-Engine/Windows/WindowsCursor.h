@@ -18,10 +18,7 @@ public:
         return reinterpret_cast<Void*>(hCursor);
     }
 
-    FORCEINLINE HCURSOR GetCursor() const
-    {
-        return hCursor;
-    }
+    HCURSOR GetCursor() const { return hCursor; }
 
 private:
     WindowsApplication* Application;

@@ -43,10 +43,7 @@ public:
 
     virtual Bool Init(const CursorCreateInfo& InCreateInfo) = 0;
 
-    virtual Void* GetNativeHandle() const
-    {
-        return nullptr;
-    }
+    virtual Void* GetNativeHandle() const { return nullptr; }
 
 protected:
     CursorCreateInfo CreateInfo;

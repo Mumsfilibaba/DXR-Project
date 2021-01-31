@@ -31,7 +31,7 @@ struct MemoryArena
         Memory::Free(Mem);
     }
 
-    FORCEINLINE Void* MemoryArena::Allocate(UInt64 InSizeInBytes)
+    Void* MemoryArena::Allocate(UInt64 InSizeInBytes)
     {
         VALIDATE(ReservedSize() > InSizeInBytes);
 
@@ -40,24 +40,21 @@ struct MemoryArena
         return Allocated;
     }
 
-    FORCEINLINE UInt64 ReservedSize()
+    UInt64 ReservedSize()
     {
         return SizeInBytes - Offset;
     }
 
-    FORCEINLINE void Reset()
+    void Reset()
     {
         Offset = 0;
     }
 
-    FORCEINLINE UInt64 GetSizeInBytes()
-    {
-        return SizeInBytes;
-    }
+    UInt64 GetSizeInBytes() const { return SizeInBytes; }
 
     MemoryArena& operator=(const MemoryArena& Other) = delete;
 
-    FORCEINLINE MemoryArena& operator=(MemoryArena&& Other)
+    MemoryArena& operator=(MemoryArena&& Other)
     {
         if (Mem)
         {
@@ -91,12 +88,12 @@ public:
     void Reset();
 
     template<typename T>
-    FORCEINLINE Void* Allocate()
+    Void* Allocate()
     {
         return Allocate(sizeof(T), alignof(T));
     }
 
-    FORCEINLINE Byte* AllocateBytes(UInt64 SizeInBytes, UInt64 Alignment)
+    Byte* AllocateBytes(UInt64 SizeInBytes, UInt64 Alignment)
     {
         return reinterpret_cast<Byte*>(Allocate(SizeInBytes, Alignment));
     }

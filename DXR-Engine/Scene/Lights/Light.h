@@ -14,45 +14,25 @@ public:
     
     void SetIntensity(Float InIntensity);
 
-    FORCEINLINE void SetShadowBias(Float InShadowBias)
+    void SetShadowBias(Float InShadowBias)
     {
         ShadowBias = InShadowBias;
     }
 
-    FORCEINLINE void SetMaxShadowBias(Float InShadowBias)
+    void SetMaxShadowBias(Float InShadowBias)
     {
         MaxShadowBias = InShadowBias;
     }
 
-    FORCEINLINE Float GetIntensity() const
-    {
-        return Intensity;
-    }
+    Float GetIntensity() const { return Intensity; }
 
-    FORCEINLINE const XMFLOAT3& GetColor() const
-    {
-        return Color;
-    }
+    const XMFLOAT3& GetColor() const { return Color; }
 
-    FORCEINLINE Float GetShadowNearPlane() const
-    {
-        return ShadowNearPlane;
-    }
+    Float GetShadowNearPlane() const { return ShadowNearPlane; }
+    Float GetShadowFarPlane() const { return ShadowFarPlane; }
 
-    FORCEINLINE Float GetShadowFarPlane() const
-    {
-        return ShadowFarPlane;
-    }
-
-    FORCEINLINE Float GetShadowBias() const
-    {
-        return ShadowBias;
-    }
-
-    FORCEINLINE Float GetMaxShadowBias() const
-    {
-        return MaxShadowBias;
-    }
+    Float GetShadowBias() const { return ShadowBias; }
+    Float GetMaxShadowBias() const { return MaxShadowBias; }
 
 protected:
     XMFLOAT3 Color;

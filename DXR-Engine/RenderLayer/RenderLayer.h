@@ -9,42 +9,6 @@ public:
     static Bool Init(ERenderLayerApi InRenderApi);
     static void Release();
 
-    FORCEINLINE static Texture1D* CreateTexture1D(
-        const ResourceData* InitalData, 
-        EFormat Format, 
-        UInt32 Usage, 
-        UInt32 Width, 
-        UInt32 MipLevels, 
-        const ClearValue& OptimizedClearValue = ClearValue())
-    {
-        return gRenderLayer->CreateTexture1D(
-            InitalData, 
-            Format, 
-            Usage, 
-            Width, 
-            MipLevels, 
-            OptimizedClearValue);
-    }
-
-    FORCEINLINE static Texture1DArray* CreateTexture1DArray(
-        const ResourceData* InitalData,
-        EFormat Format,
-        UInt32 Usage,
-        UInt32 Width,
-        UInt32 MipLevels,
-        UInt16 ArrayCount,
-        const ClearValue& OptimizedClearValue = ClearValue())
-    {
-        return gRenderLayer->CreateTexture1DArray(
-            InitalData,
-            Format,
-            Usage,
-            Width,
-            MipLevels,
-            ArrayCount,
-            OptimizedClearValue);
-    }
-
     FORCEINLINE static Texture2D* CreateTexture2D(
         const ResourceData* InitalData, 
         EFormat Format, 

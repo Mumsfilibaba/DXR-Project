@@ -46,14 +46,14 @@ struct FrameResources
     TSharedRef<RenderTargetView>    FinalTargetRTV;
     TSharedRef<UnorderedAccessView> FinalTargetUAV;
 
-    const EFormat DepthBufferFormat  = EFormat::Format_D32_Float;
-    const EFormat SSAOBufferFormat   = EFormat::Format_R16_Float;
-    const EFormat FinalTargetFormat  = EFormat::Format_R16G16B16A16_Float;
-    const EFormat RenderTargetFormat = EFormat::Format_R8G8B8A8_Unorm;
-    const EFormat AlbedoFormat       = EFormat::Format_R8G8B8A8_Unorm;
-    const EFormat MaterialFormat     = EFormat::Format_R8G8B8A8_Unorm;
-    const EFormat NormalFormat       = EFormat::Format_R10G10B10A2_Unorm;
-    const EFormat ViewNormalFormat   = EFormat::Format_R10G10B10A2_Unorm;
+    const EFormat DepthBufferFormat  = EFormat::D32_Float;
+    const EFormat SSAOBufferFormat   = EFormat::R16_Float;
+    const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
+    const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
+    const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
+    const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
+    const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
+    const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
 
     TSharedRef<Texture2D>          GBuffer[5];
     TSharedRef<ShaderResourceView> GBufferSRVs[5];
@@ -82,8 +82,8 @@ struct SceneLightSetup
 
     void Release();
 
-    const EFormat ShadowMapFormat      = EFormat::Format_D32_Float;
-    const EFormat LightProbeFormat     = EFormat::Format_R16G16B16A16_Float;
+    const EFormat ShadowMapFormat      = EFormat::D32_Float;
+    const EFormat LightProbeFormat     = EFormat::R16G16B16A16_Float;
     const UInt32  MaxPointLights       = 256;
     const UInt32  MaxDirectionalLights = 256;
     const UInt32  MaxPointLightShadows = 8;

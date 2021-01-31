@@ -20,20 +20,10 @@ public:
         return IsSubClassOf(T::GetStaticClass());
     }
 
-    FORCEINLINE const Char* GetName() const
-    {
-        return Name;
-    }
+    const Char* GetName() const { return Name; }
+    const ClassType* GetSuperClass() const { return SuperClass; }
 
-    FORCEINLINE const ClassType* GetSuperClass() const
-    {
-        return SuperClass;
-    }
-
-    FORCEINLINE UInt32 GetSizeInBytes() const
-    {
-        return SizeInBytes;
-    }
+    UInt32 GetSizeInBytes() const { return SizeInBytes; }
 
 private:
     const Char*      Name;

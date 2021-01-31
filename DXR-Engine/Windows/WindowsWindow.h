@@ -36,10 +36,7 @@ public:
         return reinterpret_cast<Void*>(hWindow);
     }
     
-    FORCEINLINE HWND GetHandle() const
-    {
-        return hWindow;
-    }
+    HWND GetHandle() const { return hWindow; }
 
 private:
     WindowsApplication* OwnerApplication = nullptr;

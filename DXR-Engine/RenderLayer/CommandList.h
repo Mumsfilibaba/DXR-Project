@@ -1,7 +1,6 @@
 #pragma once
 #include "Resources.h"
 #include "RayTracing.h"
-#include "SamplerState.h"
 #include "RenderCommand.h"
 
 #include "Memory/LinearAllocator.h"
@@ -287,7 +286,7 @@ public:
         InsertCommand<CopyTextureRegionCommand>(Destination, Source, CopyTextureInfo);
     }
 
-    FORCEINLINE void DestroyResource(PipelineResource* Resource)
+    FORCEINLINE void DestroyResource(Resource* Resource)
     {
         SAFEADDREF(Resource);
         InsertCommand<DestroyResourceCommand>(Resource);

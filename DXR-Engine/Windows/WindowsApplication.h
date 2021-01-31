@@ -39,10 +39,7 @@ public:
 
     WindowsWindow* GetWindowFromHWND(HWND Window) const;
 
-    FORCEINLINE HINSTANCE GetInstance() const
-    {
-        return InstanceHandle;
-    }
+    HINSTANCE GetInstance() const { return InstanceHandle; }
 
     // GenericApplication Interface
     virtual GenericWindow* MakeWindow() override final;

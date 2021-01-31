@@ -14,10 +14,7 @@ public:
     Component(Actor* InOwningActor);
     virtual ~Component() = default;
 
-    FORCEINLINE Actor* GetOwningActor() const
-    {
-        return OwningActor;
-    }
+    Actor* GetOwningActor() const { return OwningActor; }
 
 protected:
     Actor* OwningActor = nullptr;
@@ -27,6 +24,7 @@ class Transform
 {
 public:
     Transform();
+    ~Transform() = default;
 
     void SetTranslation(Float x, Float y, Float z);
     void SetTranslation(const XMFLOAT3& InPosition);
@@ -37,30 +35,14 @@ public:
     void SetRotation(Float x, Float y, Float z);
     void SetRotation(const XMFLOAT3& InRotation);
 
-    FORCEINLINE const XMFLOAT3& GetTranslation() const
-    {
-        return Translation;
-    }
+    const XMFLOAT3& GetTranslation() const { return Translation; }
 
-    FORCEINLINE const XMFLOAT3& GetScale() const
-    {
-        return Scale;
-    }
+    const XMFLOAT3& GetScale() const { return Scale; }
 
-    FORCEINLINE const XMFLOAT3& GetRotation() const
-    {
-        return Rotation;
-    }
+    const XMFLOAT3& GetRotation() const { return Rotation; }
 
-    FORCEINLINE const XMFLOAT4X4& GetMatrix() const
-    {
-        return Matrix;
-    }
-
-    FORCEINLINE const XMFLOAT4X4& GetMatrixInverse() const
-    {
-        return MatrixInv;
-    }
+    const XMFLOAT4X4& GetMatrix() const { return Matrix; }
+    const XMFLOAT4X4& GetMatrixInverse() const { return MatrixInv; }
 
 private:
     void CalculateMatrix();
@@ -99,35 +81,6 @@ public:
         return false;
     }
 
-    void OnAddedToScene(Scene* InScene);
-    
-    void SetName(const std::string& InDebugName);
-
-    FORCEINLINE void SetTransform(const Transform& InTransform)
-    {
-        Transform = InTransform;
-    }
-
-    FORCEINLINE const std::string& GetName() const
-    {
-        return Name;
-    }
-
-    FORCEINLINE Scene* GetScene() const
-    {
-        return Scene;
-    }
-
-    FORCEINLINE Transform& GetTransform()
-    {
-        return Transform;
-    }
-
-    FORCEINLINE const Transform& GetTransform() const
-    {
-        return Transform;
-    }
-
     template <typename TComponent>
     FORCEINLINE TComponent* GetComponentOfType() const
     {
@@ -141,6 +94,22 @@ public:
 
         return nullptr;
     }
+
+    void OnAddedToScene(Scene* InScene);
+    
+    void SetName(const std::string& InDebugName);
+
+    FORCEINLINE void SetTransform(const Transform& InTransform)
+    {
+        Transform = InTransform;
+    }
+
+    const std::string& GetName() const { return Name; }
+
+    Scene* GetScene() const { return Scene; }
+
+    Transform& GetTransform() { return Transform; }
+    const Transform& GetTransform() const { return Transform; }
 
 private:
     Scene*    Scene = nullptr;

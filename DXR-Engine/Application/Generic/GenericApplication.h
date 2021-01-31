@@ -18,32 +18,32 @@ public:
     {
     }
 
-    FORCEINLINE Bool IsCtrlDown() const
+    Bool IsCtrlDown() const
     {
         return (ModifierMask & MODIFIER_FLAG_CTRL);
     }
 
-    FORCEINLINE Bool IsAltDown() const
+    Bool IsAltDown() const
     {
         return (ModifierMask & MODIFIER_FLAG_ALT);
     }
 
-    FORCEINLINE Bool IsShiftDown() const
+    Bool IsShiftDown() const
     {
         return (ModifierMask & MODIFIER_FLAG_SHIFT);
     }
 
-    FORCEINLINE Bool IsCapsLockDown() const
+    Bool IsCapsLockDown() const
     {
         return (ModifierMask & MODIFIER_FLAG_CAPS_LOCK);
     }
 
-    FORCEINLINE Bool IsSuperKeyDown() const
+    Bool IsSuperKeyDown() const
     {
         return (ModifierMask & MODIFIER_FLAG_SUPER);
     }
 
-    FORCEINLINE Bool IsNumPadDown() const
+    Bool IsNumPadDown() const
     {
         return (ModifierMask & MODIFIER_FLAG_NUM_LOCK);
     }
@@ -82,10 +82,7 @@ public:
     virtual GenericWindow* GetActiveWindow() const = 0;
 
     // Some platforms does not have the concept of mouse capture, therefor return nullptr as standard
-    virtual GenericWindow* GetCapture() const
-    {
-        return nullptr;
-    }
+    virtual GenericWindow* GetCapture() const { return nullptr; }
 
     virtual void SetCursorPos(GenericWindow* RelativeWindow, Int32 x, Int32 y) = 0;
     virtual void GetCursorPos(GenericWindow* RelativeWindow, Int32& OutX, Int32& OutY) const = 0;

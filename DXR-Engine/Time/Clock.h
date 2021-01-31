@@ -12,21 +12,14 @@ public:
     */
     void Tick();
 
-    FORCEINLINE void Reset()
+    void Reset()
     {
         DeltaTime = Timestamp(0);
         TotalTime = Timestamp(0);
     }
 
-    FORCEINLINE const Timestamp& GetDeltaTime() const
-    {
-        return DeltaTime;
-    }
-
-    FORCEINLINE const Timestamp& GetTotalTime() const
-    {
-        return TotalTime;
-    }
+    const Timestamp& GetDeltaTime() const { return DeltaTime; }
+    const Timestamp& GetTotalTime() const { return TotalTime; }
 
 private:
     Timestamp TotalTime = Timestamp(0);

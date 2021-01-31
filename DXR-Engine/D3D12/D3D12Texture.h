@@ -11,40 +11,7 @@ public:
     {
     }
 
-    FORCEINLINE DXGI_FORMAT GetNativeFormat() const
-    {
-        return Desc.Format;
-    }
-};
-
-class D3D12Texture1D : public Texture1D, public D3D12Texture
-{
-public:
-    D3D12Texture1D(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InMipLevels, const ClearValue& InOptimizedClearValue)
-        : Texture1D(InFormat, InUsage, InWidth, InMipLevels, InOptimizedClearValue)
-        , D3D12Texture(InDevice)
-    {
-    }
-
-    virtual void SetName(const std::string& Name) override final
-    {
-        D3D12Resource::SetName(Name);
-    }
-};
-
-class D3D12Texture1DArray : public Texture1DArray, public D3D12Texture
-{
-public:
-    D3D12Texture1DArray(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InMipLevels, UInt16 InArrayCount, const ClearValue& InOptimizedClearValue)
-        : Texture1DArray(InFormat, InUsage, InWidth, InMipLevels, InArrayCount, InOptimizedClearValue)
-        , D3D12Texture(InDevice)
-    {
-    }
-
-    virtual void SetName(const std::string& Name) override final
-    {
-        D3D12Resource::SetName(Name);
-    }
+    DXGI_FORMAT GetNativeFormat() const { return Desc.Format; }
 };
 
 class D3D12Texture2D : public Texture2D, public D3D12Texture
@@ -149,15 +116,7 @@ inline D3D12Texture* D3D12TextureCast(Texture* Texture)
 {
     VALIDATE(Texture != nullptr);
 
-    if (Texture->AsTexture1D() != nullptr)
-    {
-        return static_cast<D3D12Texture1D*>(Texture);
-    }
-    else if (Texture->AsTexture1DArray() != nullptr)
-    {
-        return static_cast<D3D12Texture1DArray*>(Texture);
-    }
-    else if (Texture->AsTexture2D() != nullptr)
+    if (Texture->AsTexture2D() != nullptr)
     {
         return static_cast<D3D12Texture2D*>(Texture);
     }
@@ -187,15 +146,7 @@ inline const D3D12Texture* D3D12TextureCast(const Texture* Texture)
 {
     VALIDATE(Texture != nullptr);
 
-    if (Texture->AsTexture1D() != nullptr)
-    {
-        return static_cast<const D3D12Texture1D*>(Texture);
-    }
-    else if (Texture->AsTexture1DArray() != nullptr)
-    {
-        return static_cast<const D3D12Texture1DArray*>(Texture);
-    }
-    else if (Texture->AsTexture2D() != nullptr)
+    if (Texture->AsTexture2D() != nullptr)
     {
         return static_cast<const D3D12Texture2D*>(Texture);
     }

@@ -650,7 +650,7 @@ struct RenderTargetViewCreateInfo
     }
 
     Texture* Texture  = nullptr;
-    EFormat  Format   = EFormat::Format_Unknown;
+    EFormat  Format   = EFormat::Unknown;
     UInt32   MipLevel = 0;
     // TODO: Use enum instead
     UInt32   FaceIndex             = 0;
@@ -658,6 +658,6 @@ struct RenderTargetViewCreateInfo
     UInt32   NumArrayOrDepthSlices = 0;
 };
 
-class RenderTargetView : public PipelineResource
+class RenderTargetView : public Resource
 {
 };

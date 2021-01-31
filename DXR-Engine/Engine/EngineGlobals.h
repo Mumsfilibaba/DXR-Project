@@ -7,7 +7,8 @@ extern class Renderer   gRenderer;
 extern class GenericWindow*       gMainWindow;
 extern class GenericApplication*  gApplication;
 extern class GenericOutputDevice* gConsoleOutput;
-extern class EventDispatcher*     gEventDispatcher;
+
+extern class EventDispatcher* gEventDispatcher;
 
 extern class Game* gGame;
 

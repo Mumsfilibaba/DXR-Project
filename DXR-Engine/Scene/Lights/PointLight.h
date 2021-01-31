@@ -15,24 +15,21 @@ public:
     void SetShadowNearPlane(Float InShadowNearPlane);
     void SetShadowFarPlane(Float InShadowFarPlane);
 
-    FORCEINLINE const XMFLOAT3& GetPosition() const
-    {
-        return Position;
-    }
+    const XMFLOAT3& GetPosition() const { return Position; }
 
-    FORCEINLINE const XMFLOAT4X4& GetMatrix(UInt32 Index) const
+    const XMFLOAT4X4& GetMatrix(UInt32 Index) const
     {
         VALIDATE(Index < 6);
         return Matrices[Index];
     }
 
-    FORCEINLINE const XMFLOAT4X4& GetViewMatrix(UInt32 Index) const
+    const XMFLOAT4X4& GetViewMatrix(UInt32 Index) const
     {
         VALIDATE(Index < 6);
         return ViewMatrices[Index];
     }
 
-    FORCEINLINE const XMFLOAT4X4& GetProjectionMatrix(UInt32 Index) const
+    const XMFLOAT4X4& GetProjectionMatrix(UInt32 Index) const
     {
         VALIDATE(Index < 6);
         return ProjMatrices[Index];

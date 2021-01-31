@@ -5,6 +5,7 @@ class Camera
 {
 public:
     Camera();
+    ~Camera() = default;
 
     void Move(Float X, Float Y, Float Z);
 
@@ -12,60 +13,22 @@ public:
 
     void UpdateMatrices();
 
-    FORCEINLINE const XMFLOAT4X4& GetViewMatrix() const
-    {
-        return View;
-    }
+    const XMFLOAT4X4& GetViewMatrix() const { return View; }
+    const XMFLOAT4X4& GetViewInverseMatrix() const { return ViewInverse; }
 
-    FORCEINLINE const XMFLOAT4X4& GetViewInverseMatrix() const
-    {
-        return ViewInverse;
-    }
+    const XMFLOAT4X4& GetProjectionMatrix() const { return Projection; }
+    const XMFLOAT4X4& GetProjectionInverseMatrix() const { return ProjectionInverse; }
 
-    FORCEINLINE const XMFLOAT4X4& GetProjectionMatrix() const
-    {
-        return Projection;
-    }
+    const XMFLOAT4X4& GetViewProjectionMatrix() const { return ViewProjection; }
+    const XMFLOAT4X4& GetViewProjectionInverseMatrix() const { return ViewProjectionInverse; }
+    const XMFLOAT4X4& GetViewProjectionWitoutTranslateMatrix() const { return ViewProjectionNoTranslation; }
 
-    FORCEINLINE const XMFLOAT4X4& GetProjectionInverseMatrix() const
-    {
-        return ProjectionInverse;
-    }
+    XMFLOAT3 GetPosition() const { return Position; }
 
-    FORCEINLINE const XMFLOAT4X4& GetViewProjectionMatrix() const
-    {
-        return ViewProjection;
-    }
+    Float GetNearPlane() const { return NearPlane; }
+    Float GetFarPlane() const { return FarPlane; }
 
-    FORCEINLINE const XMFLOAT4X4& GetViewProjectionInverseMatrix() const
-    {
-        return ViewProjectionInverse;
-    }
-
-    FORCEINLINE const XMFLOAT4X4& GetViewProjectionWitoutTranslateMatrix() const
-    {
-        return ViewProjectionNoTranslation;
-    }
-
-    FORCEINLINE XMFLOAT3 GetPosition() const
-    {
-        return Position;
-    }
-
-    FORCEINLINE Float GetNearPlane() const
-    {
-        return NearPlane;
-    }
-
-    FORCEINLINE Float GetFarPlane() const
-    {
-        return FarPlane;
-    }
-
-    FORCEINLINE Float GetAspectRatio() const
-    {
-        return AspectRatio;
-    }
+    Float GetAspectRatio() const { return AspectRatio; }
 
 private:
     XMFLOAT4X4 View;

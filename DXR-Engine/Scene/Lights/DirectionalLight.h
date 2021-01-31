@@ -19,30 +19,15 @@ public:
     void SetShadowNearPlane(Float InShadowNearPlane);
     void SetShadowFarPlane(Float InShadowFarPlane);
 
-    FORCEINLINE const XMFLOAT3& GetDirection() const
-    {
-        return Direction;
-    }
+    const XMFLOAT3& GetDirection() const { return Direction; }
 
-    FORCEINLINE const XMFLOAT3& GetRotation() const
-    {
-        return Rotation;
-    }
+    const XMFLOAT3& GetRotation() const { return Rotation; }
 
-    FORCEINLINE const XMFLOAT3& GetShadowMapPosition() const
-    {
-        return ShadowMapPosition;
-    }
+    const XMFLOAT3& GetShadowMapPosition() const { return ShadowMapPosition; }
 
-    FORCEINLINE const XMFLOAT3& GetLookAt() const
-    {
-        return LookAt;
-    }
+    const XMFLOAT3& GetLookAt() const { return LookAt; }
 
-    FORCEINLINE const XMFLOAT4X4& GetMatrix() const
-    {
-        return Matrix;
-    }
+    const XMFLOAT4X4& GetMatrix() const { return Matrix; }
 
 private:
     void CalculateMatrix();

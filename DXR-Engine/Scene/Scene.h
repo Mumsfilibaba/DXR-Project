@@ -24,16 +24,6 @@ public:
 
     void OnAddedComponent(Component* NewComponent);
 
-    FORCEINLINE const TArray<Actor*>& GetActors() const
-    {
-        return Actors;
-    }
-
-    FORCEINLINE const TArray<Light*>& GetLights() const
-    {
-        return Lights;
-    }
-
     template<typename TComponent>
     FORCEINLINE const TArray<TComponent> GetAllComponentsOfType() const
     {
@@ -52,15 +42,12 @@ public:
         return Move(Components);
     }
 
-    FORCEINLINE const TArray<MeshDrawCommand>& GetMeshDrawCommands() const
-    {
-        return MeshDrawCommands;
-    }
+    const TArray<Actor*>& GetActors() const { return Actors; }
+    const TArray<Light*>& GetLights() const { return Lights; }
+
+    const TArray<MeshDrawCommand>& GetMeshDrawCommands() const { return MeshDrawCommands; }
      
-    FORCEINLINE Camera* GetCamera() const
-    {
-        return CurrentCamera;
-    }
+    Camera* GetCamera() const { return CurrentCamera; }
 
     static Scene* LoadFromFile(const std::string& Filepath);
 
