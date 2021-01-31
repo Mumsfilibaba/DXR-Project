@@ -1,6 +1,5 @@
 #pragma once
 #include "RenderLayer/RenderingCore.h"
-#include "RenderLayer/Format.h"
 #include "RenderLayer/ResourceHelpers.h"
 
 #include "Utilities/StringUtilities.h"

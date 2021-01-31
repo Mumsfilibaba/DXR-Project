@@ -406,20 +406,9 @@ public:
         CmdAllocator.Reset();
     }
 
-    FORCEINLINE UInt32 GetNumDrawCalls() const
-    {
-        return NumDrawCalls;
-    }
-
-    FORCEINLINE UInt32 GetNumDispatchCalls() const
-    {
-        return NumDispatchCalls;
-    }
-
-    FORCEINLINE UInt32 GetNumCommands() const
-    {
-        return NumCommands;
-    }
+    FORCEINLINE UInt32 GetNumDrawCalls() const { return NumDrawCalls; }
+    FORCEINLINE UInt32 GetNumDispatchCalls() const { return NumDispatchCalls; }
+    FORCEINLINE UInt32 GetNumCommands() const { return NumCommands; }
 
 private:
     template<typename TCommand, typename... TArgs>

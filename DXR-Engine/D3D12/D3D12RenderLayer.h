@@ -296,7 +296,7 @@ private:
         }
 
         D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_DEFAULT;
-        if (Usage & TextureUsage_Dynamic)
+        if (Usage & TextureUsage_Upload)
         {
             HeapType = D3D12_HEAP_TYPE_UPLOAD;
         }

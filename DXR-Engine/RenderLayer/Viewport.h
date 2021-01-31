@@ -2,39 +2,32 @@
 #include "Resources.h"
 #include "ResourceViews.h"
 
-class Viewport : public PipelineResource
+class Viewport : public Resource
 {
 public:
-    Viewport(UInt32 InWidth, UInt32 InHeight, EFormat InPixelFormat)
-        : Width(InWidth)
+    Viewport(EFormat InFormat, UInt32 InWidth, UInt32 InHeight)
+        : Resource()
+        , Format(InFormat)
+        , Width(InWidth)
         , Height(InHeight)
-        , PixelFormat(InPixelFormat)
     {
     }
+
+    ~Viewport() = default;
 
     virtual Bool Resize(UInt32 Width, UInt32 Height) = 0;
     virtual Bool Present(Bool VerticalSync) = 0;
 
     virtual RenderTargetView* GetRenderTargetView() const = 0;
-    virtual Texture2D*        GetBackBuffer()       const = 0;
+    virtual Texture2D* GetBackBuffer() const = 0;
 
-    FORCEINLINE UInt32 GetWidth() const
-    {
-        return Width;
-    }
+    UInt32 GetWidth() const { return Width; }
+    UInt32 GetHeight() const { return Height; }
 
-    FORCEINLINE UInt32 GetHeight() const
-    {
-        return Height;
-    }
-
-    FORCEINLINE EFormat GetColorFormat() const
-    {
-        return PixelFormat;
-    }
+    EFormat GetColorFormat() const { return Format; }
 
 protected:
     UInt32 Width;
     UInt32 Height;
-    EFormat PixelFormat;
+    EFormat Format;
 };

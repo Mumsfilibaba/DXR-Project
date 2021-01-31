@@ -3,48 +3,93 @@
 
 #include "Memory/Memory.h"
 
-enum class EShaderResourceViewType
-{
-    ShaderResourceViewType_Texture          = 0,
-    ShaderResourceViewType_VertexBuffer     = 1,
-    ShaderResourceViewType_IndexBuffer      = 2,
-    ShaderResourceViewType_StructuredBuffer = 3,
-};
-
-struct TextureShaderResourceViewCreateInfo
-{
-    Texture* Texture        = nullptr;
-    EFormat  Format         = EFormat::Format_Unknown;
-    UInt32   MipLevel       = 0;
-    UInt32   NumMipLevels   = 0;
-    UInt32   ArraySlice     = 0;
-    UInt32   NumArraySlices = 0;
-    Float    MinMipBias     = 0.0f;
-};
-
-struct VertexBufferShaderResourceViewCreateInfo
-{
-    VertexBuffer* Buffer = nullptr;
-    UInt32 FirstElement  = 0;
-    UInt32 NumElements   = 0;
-};
-
-struct IndexBufferShaderResourceViewCreateInfo
-{
-    IndexBuffer* Buffer = nullptr;
-    UInt32 FirstElement = 0;
-    UInt32 NumElements  = 0;
-};
-
-struct StructuredBufferShaderResourceViewCreateInfo
-{
-    StructuredBuffer* Buffer = nullptr;
-    UInt32 FirstElement = 0;
-    UInt32 NumElements  = 0;
-};
-
 struct ShaderResourceViewCreateInfo
 {
+    enum class EType
+    {
+        Texture2D        = 1,
+        Texture2DArray   = 2,
+        TextureCube      = 3,
+        TextureCubeArray = 4,
+        Texture3D        = 5,
+        VertexBuffer     = 6,
+        IndexBuffer      = 7,
+        StructuredBuffer = 8,
+    };
+
+    struct Texture2D
+    {
+        Texture2D* Texture   = nullptr;
+        EFormat Format       = EFormat::Unknown;
+        UInt32  MipLevel     = 0;
+        UInt32  NumMipLevels = 0;
+        Float   MinMipBias   = 0.0f;
+    };
+
+    struct Texture2DArray
+    {
+        Texture2DArray* Texture = nullptr;
+        EFormat Format          = EFormat::Unknown;
+        UInt32  MipLevel        = 0;
+        UInt32  NumMipLevels    = 0;
+        UInt32  ArraySlice      = 0;
+        UInt32  NumArraySlices  = 0;
+        Float   MinMipBias      = 0.0f;
+    };
+
+    struct TextureCube
+    {
+        TextureCube* Texture = nullptr;
+        EFormat Format       = EFormat::Unknown;
+        UInt32  MipLevel     = 0;
+        UInt32  NumMipLevels = 0;
+        Float   MinMipBias   = 0.0f;
+    };
+
+    struct TextureCubeArray
+    {
+        TextureCubeArray* Texture = nullptr;
+        EFormat Format            = EFormat::Unknown;
+        UInt32  MipLevel          = 0;
+        UInt32  NumMipLevels      = 0;
+        Float   MinMipBias        = 0.0f;
+    };
+
+    struct Texture3D
+    {
+        Texture3D* Texture     = nullptr;
+        EFormat Format         = EFormat::Unknown;
+        UInt32  MipLevel       = 0;
+        UInt32  NumMipLevels   = 0;
+        UInt32  DepthSlice     = 0;
+        UInt32  NumDepthSlices = 0;
+        Float   MinMipBias     = 0.0f;
+    };
+
+    struct VertexBuffer
+    {
+        VertexBuffer* Buffer = nullptr;
+        UInt32 FirstElement  = 0;
+        UInt32 NumElements   = 0;
+    };
+
+    struct IndexBuffer
+    {
+        IndexBuffer* Buffer = nullptr;
+        UInt32 FirstElement = 0;
+        UInt32 NumElements  = 0;
+    };
+
+    struct StructuredBuffer
+    {
+        StructuredBuffer* Buffer = nullptr;
+        UInt32 FirstElement = 0;
+        UInt32 NumElements  = 0;
+    };
+
+
+
+
     ShaderResourceViewCreateInfo(Texture* InTexture)
         : Type(EShaderResourceViewType::ShaderResourceViewType_Texture)
         , Texture()
