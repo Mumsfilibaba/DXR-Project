@@ -1,7 +1,7 @@
 #pragma once
 #include "Application/InputCodes.h"
 #include "Application/Generic/GenericApplication.h"
-#include "Application/Generic/GenericApplicationDelegate.h"
+#include "Application/Generic/GenericApplicationEventHandler.h"
 
 #include "Windows.h"
 
@@ -11,7 +11,7 @@ class WindowsCursor;
 
 struct WindowsEvent
 {
-    WindowsEvent(HWND InHwnd, UInt32 InMessage, WPARAM InwParam, LPARAM    InlParam)
+    WindowsEvent(HWND InHwnd, UInt32 InMessage, WPARAM InwParam, LPARAM InlParam)
         : Hwnd(InHwnd)
         , Message(InMessage)
         , wParam(InwParam)

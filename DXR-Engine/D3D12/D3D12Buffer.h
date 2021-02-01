@@ -12,7 +12,7 @@ public:
     {
     }
 
-    FORCEINLINE UInt64 GetAllocatedSize() const
+    UInt64 GetAllocatedSize() const
     {
         return Desc.Width;
     }
@@ -30,24 +30,19 @@ public:
     {
     }
 
-    virtual Void* Map(const Range* MappedRange) override
+    virtual void* Map(UInt32 Offset, UInt32 Size) override
     {
-        return D3D12Resource::Map(MappedRange);
+        return D3D12Resource::Map(Offset, Size);
     }
 
-    virtual void Unmap(const Range* WrittenRange) override
+    virtual void Unmap(UInt32 Offset, UInt32 Size) override
     {
-        D3D12Resource::Unmap(WrittenRange);
+        D3D12Resource::Unmap(Offset, Size);
     }
 
     virtual void SetName(const std::string& Name) override final
     {
         D3D12Resource::SetName(Name);
-    }
-
-    virtual UInt64 GetRequiredAlignment() const override final
-    {
-        return 1;
     }
 
     const D3D12_VERTEX_BUFFER_VIEW& GetView() const
@@ -71,24 +66,19 @@ public:
     {
     }
 
-    virtual Void* Map(const Range* MappedRange) override
+    virtual void* Map(UInt32 Offset, UInt32 Size) override
     {
-        return D3D12Resource::Map(MappedRange);
+        return D3D12Resource::Map(Offset, Size);
     }
 
-    virtual void Unmap(const Range* WrittenRange) override
+    virtual void Unmap(UInt32 Offset, UInt32 Size) override
     {
-        D3D12Resource::Unmap(WrittenRange);
+        D3D12Resource::Unmap(Offset, Size);
     }
 
     virtual void SetName(const std::string& Name) override final
     {
         D3D12Resource::SetName(Name);
-    }
-
-    virtual UInt64 GetRequiredAlignment() const override final
-    {
-        return 1;
     }
 
     FORCEINLINE const D3D12_INDEX_BUFFER_VIEW& GetView() const
@@ -105,21 +95,21 @@ class D3D12ConstantBuffer : public ConstantBuffer, public D3D12Buffer
     friend class D3D12RenderLayer;
 
 public:
-    D3D12ConstantBuffer(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap, UInt32 InSizeInBytes, UInt32 InUsage)
-        : ConstantBuffer(InSizeInBytes, InUsage)
+    D3D12ConstantBuffer(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap, UInt32 InSizeInBytes)
+        : ConstantBuffer(InSizeInBytes)
         , D3D12Buffer(InDevice)
         , View(InDevice, InHeap)
     {
     }
 
-    virtual Void* Map(const Range* MappedRange) override
+    virtual void* Map(UInt32 Offset, UInt32 Size) override
     {
-        return D3D12Resource::Map(MappedRange);
+        return D3D12Resource::Map(Offset, Size);
     }
 
-    virtual void Unmap(const Range* WrittenRange) override
+    virtual void Unmap(UInt32 Offset, UInt32 Size) override
     {
-        D3D12Resource::Unmap(WrittenRange);
+        D3D12Resource::Unmap(Offset, Size);
     }
 
     virtual void SetName(const std::string& Name) override final
@@ -127,17 +117,12 @@ public:
         D3D12Resource::SetName(Name);
     }
 
-    virtual UInt64 GetRequiredAlignment() const override final
-    {
-        return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
-    }
-
-    FORCEINLINE D3D12ConstantBufferView& GetView()
+    D3D12ConstantBufferView& GetView()
     {
         return View;
     }
 
-    FORCEINLINE const D3D12ConstantBufferView& GetView() const
+    const D3D12ConstantBufferView& GetView() const
     {
         return View;
     }
@@ -157,71 +142,18 @@ public:
     {
     }
 
-    virtual Void* Map(const Range* MappedRange) override
+    virtual void* Map(UInt32 Offset, UInt32 Size) override
     {
-        return D3D12Resource::Map(MappedRange);
+        return D3D12Resource::Map(Offset, Size);
     }
 
-    virtual void Unmap(const Range* WrittenRange) override
+    virtual void Unmap(UInt32 Offset, UInt32 Size) override
     {
-        D3D12Resource::Unmap(WrittenRange);
+        D3D12Resource::Unmap(Offset, Size);
     }
 
     virtual void SetName(const std::string& Name) override final
     {
         D3D12Resource::SetName(Name);
     }
-
-    virtual UInt64 GetRequiredAlignment() const override final
-    {
-        return 1;
-    }
 };
-
-inline D3D12Buffer* D3D12BufferCast(Buffer* Buffer)
-{
-    if (Buffer->AsVertexBuffer())
-    {
-        return static_cast<D3D12VertexBuffer*>(Buffer);
-    }
-    else if (Buffer->AsIndexBuffer())
-    {
-        return static_cast<D3D12IndexBuffer*>(Buffer);
-    }
-    else if (Buffer->AsConstantBuffer())
-    {
-        return static_cast<D3D12ConstantBuffer*>(Buffer);
-    }
-    else if (Buffer->AsStructuredBuffer())
-    {
-        return static_cast<D3D12StructuredBuffer*>(Buffer);
-    }
-    else
-    {
-        return nullptr;
-    }
-}
-
-inline const D3D12Buffer* D3D12BufferCast(const Buffer* Buffer)
-{
-    if (Buffer->AsVertexBuffer())
-    {
-        return static_cast<const D3D12VertexBuffer*>(Buffer);
-    }
-    else if (Buffer->AsIndexBuffer())
-    {
-        return static_cast<const D3D12IndexBuffer*>(Buffer);
-    }
-    else if (Buffer->AsConstantBuffer())
-    {
-        return static_cast<const D3D12ConstantBuffer*>(Buffer);
-    }
-    else if (Buffer->AsStructuredBuffer())
-    {
-        return static_cast<const D3D12StructuredBuffer*>(Buffer);
-    }
-    else
-    {
-        return nullptr;
-    }
-}

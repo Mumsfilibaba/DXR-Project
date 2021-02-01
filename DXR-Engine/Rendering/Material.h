@@ -1,7 +1,6 @@
 #pragma once
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/ResourceHelpers.h"
-#include "RenderLayer/SamplerState.h"
 
 #include <Containers/TStaticArray.h>
 

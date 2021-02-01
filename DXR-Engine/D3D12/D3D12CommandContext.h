@@ -302,9 +302,9 @@ public:
         }
     }
 
-    FORCEINLINE void EnqueueResourceDestruction(PipelineResource* InResource)
+    FORCEINLINE void EnqueueResourceDestruction(Resource* InResource)
     {
-        Resources.EmplaceBack(MakeSharedRef<PipelineResource>(InResource));
+        Resources.EmplaceBack(MakeSharedRef<Resource>(InResource));
     }
 
     FORCEINLINE void EnqueueResourceDestruction(const TComPtr<ID3D12Resource>& Resource)
@@ -392,30 +392,22 @@ private:
 class D3D12CommandContext : public ICommandContext, public D3D12DeviceChild
 {
 public:
-    D3D12CommandContext(
-        D3D12Device* InDevice,
-        const D3D12DefaultRootSignatures& InDefaultRootSignatures);
-    
+    D3D12CommandContext(D3D12Device* InDevice, const D3D12DefaultRootSignatures& InDefaultRootSignatures);
     ~D3D12CommandContext();
 
     Bool Init();
 
-    FORCEINLINE D3D12CommandQueueHandle& GetQueue()
-    {
-        return CmdQueue;
-    }
-
-    FORCEINLINE D3D12CommandListHandle& GetCommandList()
-    {
-        return CmdList;
-    }
+    D3D12CommandQueueHandle& GetQueue() { return CmdQueue; }
+    D3D12CommandListHandle& GetCommandList() { return CmdList; }
 
 public:
     virtual void Begin() override final;
     virtual void End()   override final;
 
-    virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor) override final;
-    virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) override final;
+    virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor) override final;
+    virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilF& ClearValue) override final;
+
+    // TODO: Use ColorF
     virtual void ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4]) override final;
 
     virtual void SetShadingRate(EShadingRate ShadingRate) override final;
@@ -426,7 +418,7 @@ public:
     virtual void BindViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y) override final;
     virtual void BindScissorRect(Float Width, Float Height, Float x, Float y) override final;
 
-    virtual void BindBlendFactor(const ColorClearValue& Color) override final;
+    virtual void BindBlendFactor(const ColorF& Color) override final;
 
     virtual void BindRenderTargets(RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView) override final;
 
@@ -457,7 +449,7 @@ public:
     virtual void CopyTexture(Texture* Destination, Texture* Source) override final;
     virtual void CopyTextureRegion(Texture* Destination, Texture* Source, const CopyTextureInfo& CopyTextureInfo) override final;
 
-    virtual void DestroyResource(class PipelineResource* Resource) override final;
+    virtual void DestroyResource(class Resource* Resource) override final;
 
     virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) override final;
     virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) override final;

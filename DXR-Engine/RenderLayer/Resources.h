@@ -3,6 +3,8 @@
 
 #include "Core/RefCountedObject.h"
 
+#include "Memory/Memory.h"
+
 #include <Containers/TArray.h>
 
 enum class EIndexFormat
@@ -130,6 +132,57 @@ struct SamplerStateCreateInfo
     Float           MaxLOD         = FLT_MAX;
 };
 
+struct ColorF
+{
+    ColorF(Float InR, Float InG, Float InB, Float InA)
+        : r(InR), g(InG), b(InB), a(InA)
+    {
+    }
+
+    ColorF(const ColorF& Other)
+    {
+        Memory::Memcpy(Elements, Other.Elements);
+    }
+
+    void Set(Float InR, Float InG, Float InB, Float InA)
+    {
+        r = InR;
+        g = InG;
+        b = InB;
+        a = InA;
+    }
+
+    ColorF& operator=(const ColorF& Other)
+    {
+        Memory::Memcpy(Elements, Other.Elements);
+        return *this;
+    }
+
+    union
+    {
+        Float Elements[4];
+        struct
+        {
+            Float r;
+            Float g;
+            Float b;
+            Float a;
+        };
+    };
+};
+
+struct DepthStencilF
+{
+    DepthStencilF(Float InDepth, UInt8 InStencil)
+        : Depth(InDepth)
+        , Stencil(InStencil)
+    {
+    }
+
+    Float Depth;
+    UInt8 Stencil;
+};
+
 struct ClearValue
 {
 public:
@@ -139,57 +192,13 @@ public:
         DepthStencil = 2
     };
 
-    struct Color
+    // NOTE: Default clear color is black
+    ClearValue()
+        : Type(EType::Color)
+        , Color(0.0f, 0.0f, 0.0f, 1.0f)
     {
-        Color(Float InR, Float InG, Float InB, Float InA)
-            : r(InR), g(InG), b(InB), a(InA)
-        {
-        }
-
-        Color(const Color& Other)
-        {
-            Memory::Memcpy(Elements, Other.Elements);
-        }
-
-        void Set(Float InR, Float InG, Float InB, Float InA)
-        {
-            r = InR;
-            g = InG;
-            b = InB;
-            a = InA;
-        }
-
-        Color& operator=(const Color& Other)
-        {
-            Memory::Memcpy(Elements, Other.Elements);
-            return *this;
-        }
-
-        union
-        {
-            Float Elements[4];
-            struct
-            {
-                Float r;
-                Float g;
-                Float b;
-                Float a;
-            };
-        };
-    };
-
-    struct DepthStencil
-    {
-        DepthStencil(Float InDepth, UInt8 InStencil)
-            : Depth(InDepth)
-            , Stencil(InStencil)
-        {
-        }
-
-        Float Depth;
-        UInt8 Stencil;
-    };
-
+    }
+    
     ClearValue(Float Depth, UInt8 Stencil)
         : Type(EType::DepthStencil)
         , DepthStencil(Depth, Stencil)
@@ -230,13 +239,13 @@ public:
 
     EType GetType() const { return Type; }
     
-    Color& AsColor()
+    ColorF& AsColor()
     {
         VALIDATE(Type == EType::Color);
         return Color;
     }
 
-    DepthStencil& AsDepthStencil()
+    DepthStencilF& AsDepthStencil()
     {
         VALIDATE(Type == EType::DepthStencil);
         return DepthStencil;
@@ -246,8 +255,8 @@ private:
     EType Type;
     union
     {
-        Color        Color;
-        DepthStencil DepthStencil;
+        ColorF        Color;
+        DepthStencilF DepthStencil;
     };
 };
 
@@ -492,6 +501,7 @@ protected:
     UInt32 NumIndicies;
 };
 
+// NOTE: Constant buffers are for now not treated as other buffers and does not allow usage flags
 class ConstantBuffer : public Resource
 {
 public:
@@ -500,6 +510,9 @@ public:
         , SizeInBytes(InSizeInBytes)
     {
     }
+
+    virtual void* Map(UInt32 Offset, UInt32 Size)   = 0;
+    virtual void  Unmap(UInt32 Offset, UInt32 Size) = 0;
 
     UInt32 GetSizeInBytes() const { return SizeInBytes; }
 
@@ -555,10 +568,10 @@ public:
     Shader()  = default;
     ~Shader() = default;
 
-    virtual VertexShader* AsVertexShader() { return nullptr; }
-    virtual PixelShader* AsPixelShader() { return nullptr; }
+    virtual class VertexShader* AsVertexShader() { return nullptr; }
+    virtual class PixelShader* AsPixelShader() { return nullptr; }
 
-    virtual ComputeShader* AsComputeShader() { return nullptr; }
+    virtual class ComputeShader* AsComputeShader() { return nullptr; }
 };
 
 class ComputeShader : public Shader
@@ -611,9 +624,9 @@ public:
     PipelineState()  = default;
     ~PipelineState() = default;
 
-    virtual GraphicsPipelineState* AsGraphics() { return nullptr; }
-    virtual ComputePipelineState* AsCompute() { return nullptr; }
-    virtual RayTracingPipelineState* AsRayTracing() { return nullptr; }
+    virtual class GraphicsPipelineState* AsGraphics() { return nullptr; }
+    virtual class ComputePipelineState* AsCompute() { return nullptr; }
+    virtual class RayTracingPipelineState* AsRayTracing() { return nullptr; }
 };
 
 enum class EDepthWriteMask
@@ -863,7 +876,7 @@ struct RenderTargetWriteState
 {
     RenderTargetWriteState() = default;
 
-    RenderTargetWriteState(UInt32 InMask)
+    RenderTargetWriteState(UInt8 InMask)
         : Mask(InMask)
     {
     }

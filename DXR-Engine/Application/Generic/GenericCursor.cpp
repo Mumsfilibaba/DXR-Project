@@ -14,55 +14,55 @@ TSharedRef<GenericCursor> GlobalCursors::NotAllowed;
 Bool GlobalCursors::Init()
 {
     Arrow = gApplication->MakeCursor();
-    if (!Arrow->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_Arrow)))
+    if (!Arrow->Init(CursorCreateInfo(EPlatformCursor::Arrow)))
     {
         return false;
     }
 
     TextInput = gApplication->MakeCursor();
-    if (!TextInput->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_TextInput)))
+    if (!TextInput->Init(CursorCreateInfo(EPlatformCursor::TextInput)))
     {
         return false;
     }
 
     ResizeAll = gApplication->MakeCursor();
-    if (!ResizeAll->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeAll)))
+    if (!ResizeAll->Init(CursorCreateInfo(EPlatformCursor::ResizeAll)))
     {
         return false;
     }
 
     ResizeEW = gApplication->MakeCursor();
-    if (!ResizeEW->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeEW)))
+    if (!ResizeEW->Init(CursorCreateInfo(EPlatformCursor::ResizeEW)))
     {
         return false;
     }
 
     ResizeNS = gApplication->MakeCursor();
-    if (!ResizeNS->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNS)))
+    if (!ResizeNS->Init(CursorCreateInfo(EPlatformCursor::ResizeNS)))
     {
         return false;
     }
 
     ResizeNESW = gApplication->MakeCursor();
-    if (!ResizeNESW->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNESW)))
+    if (!ResizeNESW->Init(CursorCreateInfo(EPlatformCursor::ResizeNESW)))
     {
         return false;
     }
 
     ResizeNWSE = gApplication->MakeCursor();
-    if (!ResizeNWSE->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNWSE)))
+    if (!ResizeNWSE->Init(CursorCreateInfo(EPlatformCursor::ResizeNWSE)))
     {
         return false;
     }
 
     Hand = gApplication->MakeCursor();
-    if (!Hand->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_Hand)))
+    if (!Hand->Init(CursorCreateInfo(EPlatformCursor::Hand)))
     {
         return false;
     }
 
     NotAllowed = gApplication->MakeCursor();
-    if (!NotAllowed->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_NotAllowed)))
+    if (!NotAllowed->Init(CursorCreateInfo(EPlatformCursor::NotAllowed)))
     {
         return false;
     }

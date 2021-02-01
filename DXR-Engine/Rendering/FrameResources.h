@@ -1,8 +1,6 @@
 #pragma once
 #include "RenderLayer/Resources.h"
-#include "RenderLayer/SamplerState.h"
 #include "RenderLayer/Viewport.h"
-#include "RenderLayer/PipelineState.h"
 
 #include "Rendering/MeshDrawCommand.h"
 #include "Rendering/DebugUI.h"

@@ -1089,7 +1089,7 @@ void D3D12CommandContext::CopyTextureRegion(
     CmdList.CopyTextureRegion(&DestinationLocation, CopyInfo.Destination.x, CopyInfo.Destination.y, CopyInfo.Destination.z, &SourceLocation, &SourceBox);
 }
 
-void D3D12CommandContext::DestroyResource(PipelineResource* Resource)
+void D3D12CommandContext::DestroyResource(Resource* Resource)
 {
     CmdBatch->EnqueueResourceDestruction(Resource);
 }

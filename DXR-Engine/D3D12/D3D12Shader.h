@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderLayer/Shader.h"
+#include "RenderLayer/Resources.h"
 
 #include "D3D12RootSignature.h"
 #include "D3D12Device.h"
@@ -16,17 +16,14 @@ public:
         ByteCode.pShaderBytecode = reinterpret_cast<const void*>(Code.Data());
     }
 
-    FORCEINLINE D3D12_SHADER_BYTECODE GetShaderByteCode() const
-    {
-        return ByteCode;
-    }
+    D3D12_SHADER_BYTECODE GetShaderByteCode() const { return ByteCode; }
 
-    FORCEINLINE const void* GetCodeData() const
+    const void* GetCodeData() const
     {
         return reinterpret_cast<const void*>(Code.Data());
     }
 
-    FORCEINLINE UInt32 GetCodeSize() const
+    UInt32 GetCodeSize() const
     {
         return Code.Size();
     }

@@ -1,3 +1,4 @@
+#pragma once
 #include "Core.h"
 
 enum EKey : UInt8

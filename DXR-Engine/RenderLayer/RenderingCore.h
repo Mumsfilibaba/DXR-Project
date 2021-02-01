@@ -1,6 +1,33 @@
 #pragma once
 #include "Core.h"
 
+enum class ECubeFace
+{
+    PosX = 0,
+    NegX = 1,
+    PosY = 2,
+    NegY = 3,
+    PosZ = 4,
+    NegZ = 5,
+};
+
+inline UInt32 GetCubeFaceIndex(ECubeFace CubeFace)
+{
+    return static_cast<UInt32>(CubeFace);
+}
+
+inline ECubeFace GetCubeFaceFromIndex(UInt32 Index)
+{
+    if (Index > GetCubeFaceIndex(ECubeFace::NegZ))
+    {
+        return static_cast<ECubeFace>(-1);
+    }
+    else
+    {
+        return static_cast<ECubeFace>(Index);
+    }
+}
+
 enum class EFormat
 {
     Unknown                  = 0,

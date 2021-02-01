@@ -14,8 +14,8 @@ public:
     D3D12Resource(D3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource);
     virtual ~D3D12Resource() = default;
 
-    Void* Map(const Range* MappedRange);
-    void  Unmap(const Range* WrittenRange);
+    void* Map(UInt32 Offset, UInt32 Size);
+    void  Unmap(UInt32 Offset, UInt32 Size);
 
     FORCEINLINE void SetName(const std::string& Name)
     {

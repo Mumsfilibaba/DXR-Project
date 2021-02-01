@@ -21,7 +21,7 @@ enum class EPlatformCursor : UInt32
 struct CursorCreateInfo
 {
     CursorCreateInfo()
-        : PlatformCursor(EPlatformCursor::PlatformCursor_None)
+        : PlatformCursor(EPlatformCursor::None)
         , IsPlatformCursor(false)
     {
     }

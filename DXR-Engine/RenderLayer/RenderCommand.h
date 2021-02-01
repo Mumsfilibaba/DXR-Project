@@ -1,7 +1,6 @@
 #pragma once
 #include "RenderingCore.h"
 #include "ICommandContext.h"
-#include "PipelineState.h"
 #include "Resources.h"
 #include "ResourceViews.h"
 
@@ -55,7 +54,7 @@ struct EndCommand : public RenderCommand
 // Clear RenderTarget RenderCommand
 struct ClearRenderTargetViewCommand : public RenderCommand
 {
-    ClearRenderTargetViewCommand(RenderTargetView* InRenderTargetView, const ColorClearValue& InClearColor)
+    ClearRenderTargetViewCommand(RenderTargetView* InRenderTargetView, const ColorF& InClearColor)
         : RenderTargetView(InRenderTargetView)
         , ClearColor(InClearColor)
     {
@@ -73,13 +72,13 @@ struct ClearRenderTargetViewCommand : public RenderCommand
     }
 
     RenderTargetView* RenderTargetView;
-    ColorClearValue ClearColor;
+    ColorF ClearColor;
 };
 
 // Clear DepthStencil RenderCommand
 struct ClearDepthStencilViewCommand : public RenderCommand
 {
-    ClearDepthStencilViewCommand(DepthStencilView* InDepthStencilView, const DepthStencilClearValue& InClearValue)
+    ClearDepthStencilViewCommand(DepthStencilView* InDepthStencilView, const DepthStencilF& InClearValue)
         : DepthStencilView(InDepthStencilView)
         , ClearValue(InClearValue)
     {
@@ -97,7 +96,7 @@ struct ClearDepthStencilViewCommand : public RenderCommand
     }
 
     DepthStencilView* DepthStencilView;
-    DepthStencilClearValue ClearValue;
+    DepthStencilF     ClearValue;
 };
 
 // Clear UnorderedAccessView RenderCommand
@@ -192,7 +191,7 @@ struct BindScissorRectCommand : public RenderCommand
 // Bind BlendFactor RenderCommand
 struct BindBlendFactorCommand : public RenderCommand
 {
-    BindBlendFactorCommand(const ColorClearValue& InColor)
+    BindBlendFactorCommand(const ColorF& InColor)
         : Color(InColor)
     {
     }
@@ -202,7 +201,7 @@ struct BindBlendFactorCommand : public RenderCommand
         CmdContext.BindBlendFactor(Color);
     }
 
-    ColorClearValue Color;
+    ColorF Color;
 };
 
 // BeginRenderPass RenderCommand
@@ -775,7 +774,7 @@ struct CopyTextureRegionCommand : public RenderCommand
 // Destroy Resource RenderCommand
 struct DestroyResourceCommand : public RenderCommand
 {
-    DestroyResourceCommand(PipelineResource* InResource)
+    DestroyResourceCommand(Resource* InResource)
         : Resource(InResource)
     {
         VALIDATE(Resource != nullptr);
@@ -791,7 +790,7 @@ struct DestroyResourceCommand : public RenderCommand
         CmdContext.DestroyResource(Resource);
     }
 
-    PipelineResource* Resource;
+    Resource* Resource;
 };
 
 // Build RayTracing Geoemtry RenderCommand

@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderLayer/PipelineState.h"
+#include "RenderLayer/Resources.h"
 
 #include "Utilities/StringUtilities.h"
 

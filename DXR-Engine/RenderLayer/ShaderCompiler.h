@@ -1,5 +1,5 @@
 #pragma once
-#include "Shader.h"
+#include "Resources.h"
 
 enum class EShaderModel
 {

@@ -1,24 +1,10 @@
 #pragma once
 #include "RenderingCore.h"
-#include "Shader.h"
+#include "Resources.h"
+#include "ResourceViews.h"
 
-class Buffer;
-class VertexBuffer;
-class IndexBuffer;
-class ConstantBuffer;
-class StructuredBuffer;
-class SamplerState;
-class RenderTargetView;
-class ShaderResourceView;
-class DepthStencilView;
-class UnorderedAccessView;
-class Texture;
-class Texture2D;
 class RayTracingGeometry;
 class RayTracingScene;
-class GraphicsPipelineState;
-class ComputePipelineState;
-class RayTracingPipelineState;
 
 class ICommandContext : public RefCountedObject
 {
@@ -28,8 +14,8 @@ public:
     virtual void Begin() = 0;
     virtual void End()   = 0;
 
-    virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor) = 0;
-    virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue) = 0;
+    virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor) = 0;
+    virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilF& ClearValue) = 0;
     virtual void ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4]) = 0;
 
     virtual void SetShadingRate(EShadingRate ShadingRate) = 0;
@@ -40,7 +26,7 @@ public:
     virtual void BindViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y) = 0;
     virtual void BindScissorRect(Float Width, Float Height, Float x, Float y) = 0;
 
-    virtual void BindBlendFactor(const ColorClearValue& Color) = 0;
+    virtual void BindBlendFactor(const ColorF& Color) = 0;
 
     virtual void BindRenderTargets(RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView) = 0;
 
@@ -69,7 +55,7 @@ public:
     virtual void CopyTexture(Texture* Destination, Texture* Source) = 0;
     virtual void CopyTextureRegion(Texture* Destination, Texture* Source, const CopyTextureInfo& CopyTextureInfo) = 0;
 
-    virtual void DestroyResource(class PipelineResource* Resource) = 0;
+    virtual void DestroyResource(class Resource* Resource) = 0;
 
     virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) = 0;
     virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene)          = 0;
@@ -77,7 +63,6 @@ public:
     virtual void GenerateMips(Texture* Texture) = 0;
 
     virtual void TransitionTexture(Texture* Texture, EResourceState BeforeState, EResourceState AfterState) = 0;
-
     virtual void TransitionBuffer(Buffer* Buffer, EResourceState BeforeState, EResourceState AfterState) = 0;
 
     virtual void UnorderedAccessTextureBarrier(Texture* Texture) = 0;

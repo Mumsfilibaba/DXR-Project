@@ -38,8 +38,6 @@ struct SampledTexture
     TSharedRef<ShaderResourceView> View;
 };
 
-using SampledTexture1D        = SampledTexture<Texture1D>;
-using SampledTexture1DArray   = SampledTexture<Texture1DArray>;
 using SampledTexture2D        = SampledTexture<Texture2D>;
 using SampledTexture2DArray   = SampledTexture<Texture2DArray>;
 using SampledTexture3D        = SampledTexture<Texture3D>;

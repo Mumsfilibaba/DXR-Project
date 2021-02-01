@@ -52,7 +52,7 @@ public:
         IsRecording = false;
     }
 
-    FORCEINLINE void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorClearValue& ClearColor)
+    FORCEINLINE void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor)
     {
         VALIDATE(RenderTargetView != nullptr);
 
@@ -60,7 +60,7 @@ public:
         InsertCommand<ClearRenderTargetViewCommand>(RenderTargetView, ClearColor);
     }
 
-    FORCEINLINE void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilClearValue& ClearValue)
+    FORCEINLINE void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilF& ClearValue)
     {
         VALIDATE(DepthStencilView != nullptr);
 
@@ -101,7 +101,7 @@ public:
         InsertCommand<BindScissorRectCommand>(Width, Height, x, y);
     }
 
-    FORCEINLINE void BindBlendFactor(const ColorClearValue& Color)
+    FORCEINLINE void BindBlendFactor(const ColorF& Color)
     {
         InsertCommand<BindBlendFactorCommand>(Color);
     }
@@ -257,7 +257,7 @@ public:
     {
         VALIDATE(Destination != nullptr);
 
-        const UInt32 SizeInBytes = Width * Height * GetStrideFromFormat(Destination->GetFormat());
+        const UInt32 SizeInBytes = Width * Height * GetByteStrideFromFormat(Destination->GetFormat());
         Void* TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
         Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 

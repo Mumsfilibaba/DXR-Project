@@ -4,7 +4,7 @@
 
 #include "Application/InputCodes.h"
 
-#include "GenericApplicationDelegate.h"
+#include "GenericApplicationEventHandler.h"
 
 #include "Core/TSharedRef.h"
 
@@ -18,12 +18,12 @@ public:
     {
     }
 
-    Bool IsCtrlDown() const { return (ModifierMask & MODIFIER_FLAG_CTRL); }
-    Bool IsAltDown() const { return (ModifierMask & MODIFIER_FLAG_ALT); }
-    Bool IsShiftDown() const { return (ModifierMask & MODIFIER_FLAG_SHIFT); }
-    Bool IsCapsLockDown() const { return (ModifierMask & MODIFIER_FLAG_CAPS_LOCK); }
-    Bool IsSuperKeyDown() const { return (ModifierMask & MODIFIER_FLAG_SUPER); }
-    Bool IsNumPadDown() const { return (ModifierMask & MODIFIER_FLAG_NUM_LOCK); }
+    Bool IsCtrlDown() const { return (ModifierMask & ModifierFlag_Ctrl); }
+    Bool IsAltDown() const { return (ModifierMask & ModifierFlag_Alt); }
+    Bool IsShiftDown() const { return (ModifierMask & ModifierFlag_Shift); }
+    Bool IsCapsLockDown() const { return (ModifierMask & ModifierFlag_CapsLock); }
+    Bool IsSuperKeyDown() const { return (ModifierMask & ModifierFlag_Super); }
+    Bool IsNumPadDown() const { return (ModifierMask & ModifierFlag_NumLock); }
 
     UInt32 ModifierMask = 0;
 };

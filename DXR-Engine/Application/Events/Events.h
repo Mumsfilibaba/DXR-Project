@@ -50,14 +50,12 @@ inline const Char* ToString(EEventType EventType)
 
 enum EEventCategory : UInt8
 {
-    Unknown = 0,
-    
-    Input    = BIT(1),
-    Mouse    = BIT(2),
-    Keyboard = BIT(3),
-    Window   = BIT(4),
-
-    All = 0xff
+    EventCategory_Unknown  = 0,
+    EventCategory_Input    = BIT(1),
+    EventCategory_Mouse    = BIT(2),
+    EventCategory_Keyboard = BIT(3),
+    EventCategory_Window   = BIT(4),
+    EventCategory_All      = 0xff
 };
 
 #define DECLARE_EVENT(Type, Category) \
@@ -100,7 +98,7 @@ public:
 
     static EEventType GetStaticType()
     {
-        return EEventType::EventType_Unknown;
+        return EEventType::Unknown;
     }
 
 private:
@@ -127,7 +125,7 @@ TEnableIf<std::is_base_of_v<Event, T>, const T&> CastEvent(const Event& InEvent)
 
 struct KeyPressedEvent : public Event
 {
-    DECLARE_EVENT(EventType_KeyPressed, EventCategory_Input | EventCategory_Keyboard);
+    DECLARE_EVENT(KeyPressed, EventCategory_Input | EventCategory_Keyboard);
 
     KeyPressedEvent(EKey InKey, Bool InIsRepeat, const ModifierKeyState& InModifiers)
         : Event()
@@ -149,7 +147,7 @@ struct KeyPressedEvent : public Event
 
 struct KeyReleasedEvent : public Event
 {
-    DECLARE_EVENT(EventType_KeyReleased, EventCategory_Input | EventCategory_Keyboard);
+    DECLARE_EVENT(KeyReleased, EventCategory_Input | EventCategory_Keyboard);
 
     KeyReleasedEvent(EKey InKey, const ModifierKeyState& InModifiers)
         : Event()
@@ -169,7 +167,7 @@ struct KeyReleasedEvent : public Event
 
 struct KeyTypedEvent : public Event
 {
-    DECLARE_EVENT(EventType_KeyTyped, EventCategory_Input | EventCategory_Keyboard);
+    DECLARE_EVENT(KeyTyped, EventCategory_Input | EventCategory_Keyboard);
 
     KeyTypedEvent(UInt32 InCharacter)
         : Event()
@@ -192,7 +190,7 @@ struct KeyTypedEvent : public Event
 
 struct MouseMovedEvent : public Event
 {
-    DECLARE_EVENT(EventType_MouseMoved, EventCategory_Input | EventCategory_Mouse);
+    DECLARE_EVENT(MouseMoved, EventCategory_Input | EventCategory_Mouse);
 
     MouseMovedEvent(Int32 InX, Int32 InY)
         : Event()
@@ -212,7 +210,7 @@ struct MouseMovedEvent : public Event
 
 struct MousePressedEvent : public Event
 {
-    DECLARE_EVENT(EventType_MousePressed, EventCategory_Input | EventCategory_Mouse);
+    DECLARE_EVENT(MousePressed, EventCategory_Input | EventCategory_Mouse);
 
     MousePressedEvent(EMouseButton InButton, const ModifierKeyState& InModifiers)
         : Event()
@@ -232,7 +230,7 @@ struct MousePressedEvent : public Event
 
 struct MouseReleasedEvent : public Event
 {
-    DECLARE_EVENT(EventType_MouseReleased, EventCategory_Input | EventCategory_Mouse);
+    DECLARE_EVENT(MouseReleased, EventCategory_Input | EventCategory_Mouse);
 
     MouseReleasedEvent(EMouseButton InButton, const ModifierKeyState& InModifiers)
         : Event()
@@ -253,7 +251,7 @@ struct MouseReleasedEvent : public Event
 
 struct MouseScrolledEvent : public Event
 {
-    DECLARE_EVENT(EventType_MouseScrolled, EventCategory_Input | EventCategory_Mouse);
+    DECLARE_EVENT(MouseScrolled, EventCategory_Input | EventCategory_Mouse);
 
     MouseScrolledEvent(Float InHorizontalDelta, Float InVerticalDelta)
         : Event()
@@ -273,7 +271,7 @@ struct MouseScrolledEvent : public Event
 
 struct WindowResizeEvent : public Event
 {
-    DECLARE_EVENT(EventType_WindowResized, EventCategory_Window);
+    DECLARE_EVENT(WindowResized, EventCategory_Window);
 
     WindowResizeEvent(const TSharedRef<GenericWindow>& InWindow, UInt16 InWidth, UInt16 InHeight)
         : Event()
@@ -295,7 +293,7 @@ struct WindowResizeEvent : public Event
 
 struct WindowFocusChangedEvent : public Event
 {
-    DECLARE_EVENT(EventType_WindowFocusChanged, EventCategory_Window);
+    DECLARE_EVENT(WindowFocusChanged, EventCategory_Window);
 
     WindowFocusChangedEvent(const TSharedRef<GenericWindow>& InWindow, Bool hasFocus)
         : Event()
@@ -315,7 +313,7 @@ struct WindowFocusChangedEvent : public Event
 
 struct WindowMovedEvent : public Event
 {
-    DECLARE_EVENT(EventType_WindowMoved, EventCategory_Window);
+    DECLARE_EVENT(WindowMoved, EventCategory_Window);
     
     WindowMovedEvent(const TSharedRef<GenericWindow>& InWindow, Int16 x, Int16 y)
         : Event()
@@ -339,7 +337,7 @@ struct WindowMovedEvent : public Event
 
 struct WindowMouseLeftEvent : public Event
 {
-    DECLARE_EVENT(EventType_WindowMouseLeft, EventCategory_Window);
+    DECLARE_EVENT(WindowMouseLeft, EventCategory_Window);
     
     WindowMouseLeftEvent(const TSharedRef<GenericWindow>& InWindow)
         : Event()
@@ -357,7 +355,7 @@ struct WindowMouseLeftEvent : public Event
 
 struct WindowMouseEnteredEvent : public Event
 {
-    DECLARE_EVENT(EventType_WindowMouseEntered, EventCategory_Window);
+    DECLARE_EVENT(WindowMouseEntered, EventCategory_Window);
     
     WindowMouseEnteredEvent(const TSharedRef<GenericWindow>& InWindow)
         : Event()
@@ -375,7 +373,7 @@ struct WindowMouseEnteredEvent : public Event
 
 struct WindowClosedEvent : public Event
 {
-    DECLARE_EVENT(EventType_WindowClosed, EventCategory_Window);
+    DECLARE_EVENT(WindowClosed, EventCategory_Window);
 
     WindowClosedEvent(const TSharedRef<GenericWindow>& InWindow)
         : Event()
