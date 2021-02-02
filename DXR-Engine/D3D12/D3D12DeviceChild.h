@@ -17,10 +17,7 @@ public:
         Device = nullptr;
     }
 
-    FORCEINLINE D3D12Device* GetDevice() const
-    {
-        return Device;
-    }
+    D3D12Device* GetDevice() const { return Device; }
 
 protected:
     D3D12Device* Device = nullptr;

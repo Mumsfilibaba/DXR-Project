@@ -60,19 +60,19 @@ void WindowsConsoleOutput::SetColor(EConsoleColor Color)
         WORD wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
         switch (Color)
         {
-        case EConsoleColor::ConsoleColor_Red:
+        case EConsoleColor::Red:
             wColor = FOREGROUND_RED | FOREGROUND_INTENSITY;
             break;
 
-        case EConsoleColor::ConsoleColor_Green:
+        case EConsoleColor::Green:
             wColor = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
             break;
 
-        case EConsoleColor::ConsoleColor_Yellow:
+        case EConsoleColor::Yellow:
             wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
             break;
 
-        case EConsoleColor::ConsoleColor_White:
+        case EConsoleColor::White:
             break;
         }
 

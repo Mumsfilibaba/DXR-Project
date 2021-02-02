@@ -572,12 +572,12 @@ void Console::HandleCommand(const std::string& CmdString)
         if (std::regex_match(Value, std::regex("-[0-9]+")) && Var->CanBeInteger())
         {
             const Int32 IntValue = std::stoi(Value);
-            Var->SetAndConvertInt32(IntValue);
+            Var->SetAndConvertInt(IntValue);
         }
         else if (std::regex_match(Value, std::regex("[0-9]+")) && Var->CanBeInteger())
         {
             const Int32 IntValue = std::stoi(Value);
-            Var->SetAndConvertInt32(IntValue);
+            Var->SetAndConvertInt(IntValue);
         }
         else if (std::regex_match(Value, std::regex("(-[0-9]*\\.[0-9]+)|(-[0-9]+\\.[0-9]*)")) && Var->IsFloat())
         {

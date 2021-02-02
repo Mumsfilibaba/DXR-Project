@@ -13,7 +13,7 @@
 class D3D12Viewport : public Viewport, public D3D12DeviceChild
 {
 public:
-    D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, UInt32 InWidth, UInt32 InHeight, EFormat PixelFormat);
+    D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, UInt32 InWidth, UInt32 InHeight);
     ~D3D12Viewport();
 
     Bool Init();

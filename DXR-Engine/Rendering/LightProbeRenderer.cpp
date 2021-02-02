@@ -11,13 +11,7 @@ Bool LightProbeRenderer::Init(SceneLightSetup& LightSetup, FrameResources& Frame
 	}
 
     TArray<UInt8> Code;
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/IrradianceGen.hlsl",
-        "Main",
-        nullptr,
-        EShaderStage::ShaderStage_Compute,
-        EShaderModel::ShaderModel_6_0,
-        Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("Failed to compile IrradianceGen Shader");
         Debug::DebugBreak();
@@ -45,13 +39,7 @@ Bool LightProbeRenderer::Init(SceneLightSetup& LightSetup, FrameResources& Frame
         IrradianceGenPSO->SetName("IrradianceGen PSO");
     }
 
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/SpecularIrradianceGen.hlsl",
-        "Main",
-        nullptr,
-        EShaderStage::ShaderStage_Compute,
-        EShaderModel::ShaderModel_6_0,
-        Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
         Debug::DebugBreak();
@@ -80,10 +68,10 @@ Bool LightProbeRenderer::Init(SceneLightSetup& LightSetup, FrameResources& Frame
     }
 
     SamplerStateCreateInfo CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::SamplerMode_Wrap;
-    CreateInfo.AddressV = ESamplerMode::SamplerMode_Wrap;
-    CreateInfo.AddressW = ESamplerMode::SamplerMode_Wrap;
-    CreateInfo.Filter   = ESamplerFilter::SamplerFilter_MinMagMipLinear;
+    CreateInfo.AddressU = ESamplerMode::Wrap;
+    CreateInfo.AddressV = ESamplerMode::Wrap;
+    CreateInfo.AddressW = ESamplerMode::Wrap;
+    CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
 
     FrameResources.IrradianceSampler = RenderLayer::CreateSamplerState(CreateInfo);
     if (!FrameResources.IrradianceSampler)
@@ -102,15 +90,15 @@ void LightProbeRenderer::Release()
 
 void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const SceneLightSetup& LightSetup, const FrameResources& FrameResources)
 {
-    const UInt32 IrradianceMapSize = static_cast<UInt32>(LightSetup.IrradianceMap->GetWidth());
+    const UInt32 IrradianceMapSize = static_cast<UInt32>(LightSetup.IrradianceMap->GetSize());
 
-    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_UnorderedAccess);
+    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
     CmdList.BindComputePipelineState(IrradianceGenPSO.Get());
 
-    CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Compute, &FrameResources.SkyboxSRV, 1, 0);
-    CmdList.BindUnorderedAccessViews(EShaderStage::ShaderStage_Compute, &LightSetup.IrradianceMapUAV, 1, 0);
+    CmdList.BindShaderResourceViews(EShaderStage::Compute, &FrameResources.SkyboxSRV, 1, 0);
+    CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &LightSetup.IrradianceMapUAV, 1, 0);
 
     {
         constexpr UInt32 ThreadCount = 16;
@@ -121,22 +109,22 @@ void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const SceneLi
 
     CmdList.UnorderedAccessTextureBarrier(LightSetup.IrradianceMap.Get());
 
-    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::ResourceState_UnorderedAccess, EResourceState::ResourceState_PixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_UnorderedAccess);
+    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::UnorderedAccess, EResourceState::PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
-    CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Compute, &FrameResources.SkyboxSRV, 1, 0);
+    CmdList.BindShaderResourceViews(EShaderStage::Compute, &FrameResources.SkyboxSRV, 1, 0);
 
     CmdList.BindComputePipelineState(SpecularIrradianceGenPSO.Get());
 
-    UInt32 Width = LightSetup.SpecularIrradianceMap->GetWidth();
+    UInt32 Width = LightSetup.SpecularIrradianceMap->GetSize();
     Float  Roughness = 0.0f;
 
-    const UInt32 NumMiplevels   = LightSetup.SpecularIrradianceMap->GetMipLevels();
+    const UInt32 NumMiplevels   = LightSetup.SpecularIrradianceMap->GetNumMiplevels();
     const Float  RoughnessDelta = 1.0f / (NumMiplevels - 1);
     for (UInt32 Mip = 0; Mip < NumMiplevels; Mip++)
     {
-        CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Compute, &Roughness, 1);
-        CmdList.BindUnorderedAccessViews(EShaderStage::ShaderStage_Compute, &LightSetup.SpecularIrradianceMapUAVs[Mip], 1, 0);
+        CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &Roughness, 1);
+        CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &LightSetup.SpecularIrradianceMapUAVs[Mip], 1, 0);
 
         {
             constexpr UInt32 ThreadCount = 16;
@@ -151,8 +139,8 @@ void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const SceneLi
         Roughness += RoughnessDelta;
     }
 
-    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::ResourceState_UnorderedAccess, EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::UnorderedAccess, EResourceState::PixelShaderResource);
 }
 
 Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
@@ -160,12 +148,11 @@ Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
     // Generate global irradiance (From Skybox)
     const UInt16 IrradianceSize = 32;
     LightSetup.IrradianceMap = RenderLayer::CreateTextureCube(
-        nullptr,
-        EFormat::Format_R16G16B16A16_Float,
+        EFormat::R16G16B16A16_Float,
+        IrradianceSize, 1,
         TextureUsage_Default | TextureUsage_RWTexture,
-        IrradianceSize,
-        1,
-        1);
+        EResourceState::Common,
+        nullptr);
     if (!LightSetup.IrradianceMap)
     {
         Debug::DebugBreak();
@@ -176,16 +163,16 @@ Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
         LightSetup.IrradianceMap->SetName("Irradiance Map");
     }
 
-    UnorderedAccessViewCreateInfo IrradianceUavInfo(LightSetup.IrradianceMap.Get());
-    LightSetup.IrradianceMapUAV = RenderLayer::CreateUnorderedAccessView(IrradianceUavInfo);
+    LightSetup.IrradianceMapUAV = RenderLayer::CreateUnorderedAccessView(
+        UnorderedAccessViewCreateInfo(LightSetup.IrradianceMap.Get(), EFormat::R16G16B16A16_Float, 0));
     if (!LightSetup.IrradianceMapUAV)
     {
         Debug::DebugBreak();
         return false;
     }
 
-    ShaderResourceViewCreateInfo IrradianceSrvInfo(LightSetup.IrradianceMap.Get());
-    LightSetup.IrradianceMapSRV = RenderLayer::CreateShaderResourceView(IrradianceSrvInfo);
+    LightSetup.IrradianceMapSRV = RenderLayer::CreateShaderResourceView(
+        ShaderResourceViewCreateInfo(LightSetup.IrradianceMap.Get(), EFormat::R16G16B16A16_Float, 0, 1, 0.0f));
     if (!LightSetup.IrradianceMapSRV)
     {
         Debug::DebugBreak();
@@ -195,12 +182,12 @@ Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
     const UInt16 SpecularIrradianceSize      = 128;
     const UInt16 SpecularIrradianceMiplevels = UInt16(std::max(std::log2(SpecularIrradianceSize), 1.0));
     LightSetup.SpecularIrradianceMap = RenderLayer::CreateTextureCube(
-        nullptr,
-        EFormat::Format_R16G16B16A16_Float,
+        EFormat::R16G16B16A16_Float, 
+        SpecularIrradianceSize, 
+        SpecularIrradianceMiplevels, 
         TextureUsage_Default | TextureUsage_RWTexture,
-        SpecularIrradianceSize,
-        SpecularIrradianceMiplevels,
-        1);
+        EResourceState::Common, 
+        nullptr);
     if (!LightSetup.SpecularIrradianceMap)
     {
         Debug::DebugBreak();
@@ -213,8 +200,8 @@ Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
 
     for (UInt32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        UnorderedAccessViewCreateInfo SpecularIrradianceUavInfo(LightSetup.SpecularIrradianceMap.Get(), EFormat::Format_R16G16B16A16_Float, MipLevel);
-        TSharedRef<UnorderedAccessView> Uav = RenderLayer::CreateUnorderedAccessView(SpecularIrradianceUavInfo);
+        TSharedRef<UnorderedAccessView> Uav = RenderLayer::CreateUnorderedAccessView(
+            UnorderedAccessViewCreateInfo(LightSetup.SpecularIrradianceMap.Get(), EFormat::R16G16B16A16_Float, MipLevel));
         if (Uav)
         {
             LightSetup.SpecularIrradianceMapUAVs.EmplaceBack(Uav);
@@ -227,8 +214,8 @@ Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
         }
     }
 
-    ShaderResourceViewCreateInfo SpecularIrradianceSrvInfo(LightSetup.SpecularIrradianceMap.Get());
-    LightSetup.SpecularIrradianceMapSRV = RenderLayer::CreateShaderResourceView(SpecularIrradianceSrvInfo);
+    LightSetup.SpecularIrradianceMapSRV = RenderLayer::CreateShaderResourceView(
+        ShaderResourceViewCreateInfo(LightSetup.SpecularIrradianceMap.Get(), EFormat::R16G16B16A16_Float, 0, SpecularIrradianceMiplevels, 0.0f));
     if (!LightSetup.SpecularIrradianceMapSRV)
     {
         Debug::DebugBreak();

@@ -1,6 +1,8 @@
 #pragma once
 #include "Core.h"
 
+#include "Math/Color.h"
+
 enum class ECubeFace
 {
     PosX = 0,
@@ -351,7 +353,7 @@ inline const Char* ToString(EResourceState ResourceState)
     }
 }
 
-enum EPrimitiveTopology
+enum class EPrimitiveTopology
 {
     Undefined     = 0,
     PointList     = 1,
@@ -375,7 +377,7 @@ inline const Char* ToString(EPrimitiveTopology ResourceState)
     }
 }
 
-enum EShadingRate
+enum class EShadingRate
 {
     _1x1 = 1,
     _2x2 = 2,
@@ -393,11 +395,123 @@ inline const Char* ToString(EShadingRate ShadingRate)
     }
 }
 
+struct DepthStencilF
+{
+    DepthStencilF(Float InDepth, UInt8 InStencil)
+        : Depth(InDepth)
+        , Stencil(InStencil)
+    {
+    }
+
+    Float Depth;
+    UInt8 Stencil;
+};
+
+struct ClearValue
+{
+public:
+    enum class EType
+    {
+        Color        = 1,
+        DepthStencil = 2
+    };
+
+    // NOTE: Default clear color is black
+    ClearValue()
+        : Type(EType::Color)
+        , Format(EFormat::Unknown)
+        , Color(0.0f, 0.0f, 0.0f, 1.0f)
+    {
+    }
+
+    ClearValue(EFormat InFormat, Float Depth, UInt8 Stencil)
+        : Type(EType::DepthStencil)
+        , Format(InFormat)
+        , DepthStencil(Depth, Stencil)
+    {
+    }
+
+    ClearValue(EFormat InFormat, Float r, Float g, Float b, Float a)
+        : Type(EType::Color)
+        , Format(InFormat)
+        , Color(r, g, b, a)
+    {
+    }
+
+    ClearValue(const ClearValue& Other)
+        : Type(Other.Type)
+        , Format(Other.Format)
+        , Color()
+    {
+        if (Other.Type == EType::Color)
+        {
+            Color = Other.Color;
+        }
+        else if (Other.Type == EType::DepthStencil)
+        {
+            DepthStencil = Other.DepthStencil;
+        }
+    }
+
+    ClearValue& operator=(const ClearValue& Other)
+    {
+        Type = Other.Type;
+        Format = Other.Format;
+
+        if (Other.Type == EType::Color)
+        {
+            Color = Other.Color;
+        }
+        else if (Other.Type == EType::DepthStencil)
+        {
+            DepthStencil = Other.DepthStencil;
+        }
+
+        return *this;
+    }
+
+    EType GetType() const { return Type; }
+    EFormat GetFormat() const { return Format; }
+
+    ColorF& AsColor()
+    {
+        VALIDATE(Type == EType::Color);
+        return Color;
+    }
+
+    const ColorF& AsColor() const
+    {
+        VALIDATE(Type == EType::Color);
+        return Color;
+    }
+
+    DepthStencilF& AsDepthStencil()
+    {
+        VALIDATE(Type == EType::DepthStencil);
+        return DepthStencil;
+    }
+
+    const DepthStencilF& AsDepthStencil() const
+    {
+        VALIDATE(Type == EType::DepthStencil);
+        return DepthStencil;
+    }
+
+private:
+    EType Type;
+    EFormat Format;
+    union
+    {
+        ColorF        Color;
+        DepthStencilF DepthStencil;
+    };
+};
+
 struct CopyBufferInfo
 {
     CopyBufferInfo() = default;
 
-    inline CopyBufferInfo(UInt64 InSourceOffset, UInt32 InDestinationOffset, UInt32 InSizeInBytes)
+    CopyBufferInfo(UInt64 InSourceOffset, UInt32 InDestinationOffset, UInt32 InSizeInBytes)
         : SourceOffset(InSourceOffset)
         , DestinationOffset(InDestinationOffset)
         , SizeInBytes(InSizeInBytes)
@@ -413,7 +527,7 @@ struct CopyTextureSubresourceInfo
 {
     CopyTextureSubresourceInfo() = default;
 
-    inline CopyTextureSubresourceInfo(UInt32 InX, UInt32 InY, UInt32 InZ, UInt32 InSubresourceIndex)
+    CopyTextureSubresourceInfo(UInt32 InX, UInt32 InY, UInt32 InZ, UInt32 InSubresourceIndex)
         : x(InX)
         , y(InY)
         , z(InZ)
@@ -431,7 +545,6 @@ struct CopyTextureInfo
 {
     CopyTextureSubresourceInfo Source;
     CopyTextureSubresourceInfo Destination;
-
     UInt32 Width  = 0;
     UInt32 Height = 0;
     UInt32 Depth  = 0;

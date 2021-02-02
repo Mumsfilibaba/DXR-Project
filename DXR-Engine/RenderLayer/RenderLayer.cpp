@@ -1,18 +1,13 @@
 #include "RenderLayer.h"
 #include "CommandList.h"
-#include "Shader.h"
 
 #include "D3D12/D3D12RenderLayer.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
-/*
-* RenderLayer
-*/
-
 bool RenderLayer::Init(ERenderLayerApi InRenderApi)
 {
 	// Select RenderLayer
-	if (InRenderApi == ERenderLayerApi::RenderLayerApi_D3D12)
+	if (InRenderApi == ERenderLayerApi::D3D12)
 	{
 		gRenderLayer = DBG_NEW D3D12RenderLayer();
 		

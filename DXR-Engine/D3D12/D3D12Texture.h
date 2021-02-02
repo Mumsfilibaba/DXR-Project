@@ -3,116 +3,163 @@
 
 #include "D3D12Resource.h"
 
-class D3D12Texture : public D3D12Resource
+class D3D12BaseTexture : public D3D12DeviceChild
 {
 public:
-    D3D12Texture(D3D12Device* InDevice)
-        : D3D12Resource(InDevice)
+    D3D12BaseTexture(D3D12Device* InDevice)
+        : D3D12DeviceChild(InDevice)
+        , DxResource(InDevice)
     {
     }
 
-    DXGI_FORMAT GetNativeFormat() const { return Desc.Format; }
+    void SetResource(const D3D12Resource& InResource)
+    {
+        DxResource = InResource;
+    }
+
+    DXGI_FORMAT GetNativeFormat() const { return DxResource.GetDesc().Format; }
+
+    D3D12Resource* GetResource() { return &DxResource; }
+    const D3D12Resource* GetResource() const { return &DxResource; }
+
+protected:
+    D3D12Resource DxResource;
 };
 
-class D3D12Texture2D : public Texture2D, public D3D12Texture
+class D3D12BaseTexture2D : public Texture2D, public D3D12BaseTexture
 {
 public:
-    D3D12Texture2D(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevels, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
-        : Texture2D(InFormat, InUsage, InWidth, InHeight, InMipLevels, InSampleCount, InOptimizedClearValue)
-        , D3D12Texture(InDevice)
+    D3D12BaseTexture2D(
+        D3D12Device* InDevice,
+        EFormat InFormat,
+        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
+        UInt32 InNumMips,
+        UInt32 InNumSamples,
+        UInt32 InFlags,
+        const ClearValue& InOptimalClearValue)
+        : Texture2D(InFormat, SizeX, SizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
+        , D3D12BaseTexture(InDevice)
     {
-    }
-
-    virtual void SetName(const std::string& Name) override final
-    {
-        if (Name == "SSAO Buffer")
-        {
-            LOG_INFO("FOUND IT");
-        }
-
-        T = Name;
-
-        D3D12Resource::SetName(Name);
-    }
-};
-
-class D3D12BackBufferTexture2D : public D3D12Texture2D
-{
-public:
-    D3D12BackBufferTexture2D(D3D12Device* InDevice, const TComPtr<ID3D12Resource>& Resource)
-        : D3D12Texture2D(InDevice, EFormat::Format_Unknown, 0, 0, 0, 0, 0, ClearValue(ColorClearValue(0.0f, 0.0f, 0.0f, 0.0f)))
-    {
-        NativeResource = Resource;
-        Desc = Resource->GetDesc();
-
-        Width       = UInt32(Desc.Width);
-        Height      = Desc.Height;
-        SampleCount = Desc.SampleDesc.Count;
-        MipLevels   = Desc.MipLevels;
+        VALIDATE(SizeZ == 1);
     }
 };
 
-class D3D12Texture2DArray : public Texture2DArray, public D3D12Texture
+class D3D12BaseTexture2DArray : public Texture2DArray, public D3D12BaseTexture
 {
 public:
-    D3D12Texture2DArray(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevels, UInt16 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
-        : Texture2DArray(InFormat, InUsage, InWidth, InHeight, InMipLevels, InArrayCount, InSampleCount, InOptimizedClearValue)
-        , D3D12Texture(InDevice)
+    D3D12BaseTexture2DArray(
+        D3D12Device* InDevice,
+        EFormat InFormat,
+        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
+        UInt32 InNumMips,
+        UInt32 InNumSamples,
+        UInt32 InFlags,
+        const ClearValue& InOptimalClearValue)
+        : Texture2DArray(InFormat, SizeX, SizeY, InNumMips, InNumSamples, SizeZ, InFlags, InOptimalClearValue)
+        , D3D12BaseTexture(InDevice)
     {
-    }
-
-    virtual void SetName(const std::string& Name) override final
-    {
-        D3D12Resource::SetName(Name);
     }
 };
 
-class D3D12TextureCube : public TextureCube, public D3D12Texture
+class D3D12BaseTextureCube : public TextureCube, public D3D12BaseTexture
 {
 public:
-    D3D12TextureCube(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InSize, UInt32 InMipLevels, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
-        : TextureCube(InFormat, InUsage, InSize, InMipLevels, InSampleCount, InOptimizedClearValue)
-        , D3D12Texture(InDevice)
+    D3D12BaseTextureCube(
+        D3D12Device* InDevice,
+        EFormat InFormat,
+        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
+        UInt32 InNumMips,
+        UInt32 InNumSamples,
+        UInt32 InFlags,
+        const ClearValue& InOptimalClearValue)
+        : TextureCube(InFormat, SizeX, InNumMips, InFlags, InOptimalClearValue)
+        , D3D12BaseTexture(InDevice)
     {
-    }
-
-    virtual void SetName(const std::string& Name) override final
-    {
-        D3D12Resource::SetName(Name);
+        VALIDATE(SizeX == SizeY);
+        VALIDATE(SizeZ == 1);
+        VALIDATE(InNumSamples == 1);
     }
 };
 
-class D3D12TextureCubeArray : public TextureCubeArray, public D3D12Texture
+class D3D12BaseTextureCubeArray : public TextureCubeArray, public D3D12BaseTexture
 {
 public:
-    D3D12TextureCubeArray(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InSize, UInt32 InMipLevels, UInt16 InArrayCount, UInt32 InSampleCount, const ClearValue& InOptimizedClearValue)
-        : TextureCubeArray(InFormat, InUsage, InSize, InMipLevels, InArrayCount, InSampleCount, InOptimizedClearValue)
-        , D3D12Texture(InDevice)
+    D3D12BaseTextureCubeArray(
+        D3D12Device* InDevice,
+        EFormat InFormat,
+        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
+        UInt32 InNumMips,
+        UInt32 InNumSamples,
+        UInt32 InFlags,
+        const ClearValue& InOptimalClearValue)
+        : TextureCubeArray(InFormat, SizeX, InNumMips, SizeZ, InFlags, InOptimalClearValue)
+        , D3D12BaseTexture(InDevice)
     {
-    }
-
-    virtual void SetName(const std::string& Name) override final
-    {
-        D3D12Resource::SetName(Name);
+        VALIDATE(SizeX == SizeY);
+        VALIDATE(InNumSamples == 1);
     }
 };
 
-class D3D12Texture3D : public Texture3D, public D3D12Texture
+class D3D12BaseTexture3D : public Texture3D, public D3D12BaseTexture
 {
 public:
-    D3D12Texture3D(D3D12Device* InDevice, EFormat InFormat, UInt32 InUsage, UInt32 InWidth, UInt32 InHeight, UInt16 InDepth, UInt32 InMipLevels, const ClearValue& InOptimizedClearValue)
-        : Texture3D(InFormat, InUsage, InWidth, InHeight, InDepth, InMipLevels, InOptimizedClearValue)
-        , D3D12Texture(InDevice)
+    D3D12BaseTexture3D(
+        D3D12Device* InDevice,
+        EFormat InFormat,
+        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
+        UInt32 InNumMips,
+        UInt32 InNumSamples,
+        UInt32 InFlags,
+        const ClearValue& InOptimalClearValue)
+        : Texture3D(InFormat, SizeX, SizeY, SizeZ, InNumMips, InFlags, InOptimalClearValue)
+        , D3D12BaseTexture(InDevice)
     {
-    }
-
-    virtual void SetName(const std::string& Name) override final
-    {
-        D3D12Resource::SetName(Name);
+        VALIDATE(InNumSamples == 1);
     }
 };
 
-inline D3D12Texture* D3D12TextureCast(Texture* Texture)
+template<typename TBaseTexture>
+class TD3D12BaseTexture : public TBaseTexture
+{
+public:
+    TD3D12BaseTexture(
+        D3D12Device* InDevice,
+        EFormat InFormat,
+        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
+        UInt32 InNumMips,
+        UInt32 InNumSamples,
+        UInt32 InFlags,
+        const ClearValue& InOptimalClearValue)
+        : TBaseTexture(InDevice, InFormat, SizeX, SizeY, SizeZ, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
+    {
+    }
+
+    ~TD3D12BaseTexture() = default;
+
+    virtual void SetName(const std::string& InName) override
+    {
+        Resource::SetName(InName);
+        D3D12BaseTexture::DxResource.SetName(InName);
+    }
+
+    virtual void* GetNativeResource() const override
+    {
+        return reinterpret_cast<void*>(D3D12BaseTexture::DxResource.GetResource());
+    }
+
+    virtual Bool IsValid() const override
+    {
+        return DxResource.GetResource() != nullptr;
+    }
+};
+
+using D3D12Texture2D        = TD3D12BaseTexture<D3D12BaseTexture2D>;
+using D3D12Texture2DArray   = TD3D12BaseTexture<D3D12BaseTexture2DArray>;
+using D3D12TextureCube      = TD3D12BaseTexture<D3D12BaseTextureCube>;
+using D3D12TextureCubeArray = TD3D12BaseTexture<D3D12BaseTextureCubeArray>;
+using D3D12Texture3D        = TD3D12BaseTexture<D3D12BaseTexture3D>;
+
+inline D3D12BaseTexture* D3D12TextureCast(Texture* Texture)
 {
     VALIDATE(Texture != nullptr);
 
@@ -135,36 +182,6 @@ inline D3D12Texture* D3D12TextureCast(Texture* Texture)
     else if (Texture->AsTexture3D() != nullptr)
     {
         return static_cast<D3D12Texture3D*>(Texture);
-    }
-    else
-    {
-        return nullptr;
-    }
-}
-
-inline const D3D12Texture* D3D12TextureCast(const Texture* Texture)
-{
-    VALIDATE(Texture != nullptr);
-
-    if (Texture->AsTexture2D() != nullptr)
-    {
-        return static_cast<const D3D12Texture2D*>(Texture);
-    }
-    else if (Texture->AsTexture2DArray() != nullptr)
-    {
-        return static_cast<const D3D12Texture2DArray*>(Texture);
-    }
-    else if (Texture->AsTextureCube() != nullptr)
-    {
-        return static_cast<const D3D12TextureCube*>(Texture);
-    }
-    else if (Texture->AsTextureCubeArray() != nullptr)
-    {
-        return static_cast<const D3D12TextureCubeArray*>(Texture);
-    }
-    else if (Texture->AsTexture3D() != nullptr)
-    {
-        return static_cast<const D3D12Texture3D*>(Texture);
     }
     else
     {

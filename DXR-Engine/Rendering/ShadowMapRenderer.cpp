@@ -27,25 +27,21 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
         return false;
     }
 
-    LightSetup.PointLightBuffer = RenderLayer::CreateConstantBuffer<PointLightProperties>(
-        nullptr,
-        LightSetup.MaxPointLights,
-        BufferUsage_Default,
-        EResourceState::ResourceState_Common);
-    if (!LightSetup.PointLightBuffer)
     {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        LightSetup.PointLightBuffer->SetName("PointLight Buffer");
+        const UInt32 SizeInBytes = sizeof(PointLightProperties) * LightSetup.MaxPointLights;
+        LightSetup.PointLightBuffer = RenderLayer::CreateConstantBuffer(SizeInBytes, EResourceState::VertexAndConstantBuffer, nullptr);
+        if (!LightSetup.PointLightBuffer)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            LightSetup.PointLightBuffer->SetName("PointLight Buffer");
+        }
     }
 
-    PerShadowMapBuffer = RenderLayer::CreateConstantBuffer<PerShadowMap>(
-        nullptr, 1,
-        BufferUsage_Default,
-        EResourceState::ResourceState_Common);
+    PerShadowMapBuffer = RenderLayer::CreateConstantBuffer<PerShadowMap>(EResourceState::VertexAndConstantBuffer, nullptr);
     if (!PerShadowMapBuffer)
     {
         Debug::DebugBreak();
@@ -59,12 +55,7 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
     // Linear Shadow Maps
     TArray<UInt8> ShaderCode;
     {
-        if (!ShaderCompiler::CompileFromFile(
-            "../DXR-Engine/Shaders/ShadowMap.hlsl",
-            "VSMain",
-            nullptr,
-            EShaderStage::ShaderStage_Vertex,
-            EShaderModel::ShaderModel_6_0,
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadowMap.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0,
             ShaderCode))
         {
             Debug::DebugBreak();
@@ -85,13 +76,7 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
 #if !ENABLE_VSM
         TSharedRef<PixelShader> PShader;
 #endif
-        if (!ShaderCompiler::CompileFromFile(
-            "../DXR-Engine/Shaders/ShadowMap.hlsl",
-            "PSMain",
-            nullptr,
-            EShaderStage::ShaderStage_Pixel,
-            EShaderModel::ShaderModel_6_0,
-            ShaderCode))
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadowMap.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
         {
             Debug::DebugBreak();
             return false;
@@ -109,9 +94,9 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
         }
 
         DepthStencilStateCreateInfo DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::ComparisonFunc_LessEqual;
+        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
         DepthStencilStateInfo.DepthEnable    = true;
-        DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::DepthWriteMask_All;
+        DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
         if (!DepthStencilState)
@@ -125,7 +110,7 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
         }
 
         RasterizerStateCreateInfo RasterizerStateInfo;
-        RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
+        RasterizerStateInfo.CullMode = ECullMode::Back;
 
         TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
@@ -154,9 +139,9 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
         GraphicsPipelineStateCreateInfo PipelineStateInfo;
         PipelineStateInfo.BlendState                         = BlendState.Get();
         PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
-        PipelineStateInfo.IBStripCutValue                    = EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
+        PipelineStateInfo.IBStripCutValue                    = EIndexBufferStripCutValue::Disabled;
         PipelineStateInfo.InputLayoutState                   = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+        PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
         PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
         PipelineStateInfo.SampleCount                        = 1;
         PipelineStateInfo.SampleQuality                      = 0;
@@ -178,29 +163,22 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
         }
     }
 
-    LightSetup.DirectionalLightBuffer = RenderLayer::CreateConstantBuffer<DirectionalLightProperties>(
-        nullptr,
-        LightSetup.MaxDirectionalLights,
-        BufferUsage_Default,
-        EResourceState::ResourceState_VertexAndConstantBuffer);
-    if (!LightSetup.DirectionalLightBuffer)
     {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        LightSetup.DirectionalLightBuffer->SetName("DirectionalLight Buffer");
+        const UInt32 SizeInBytes = sizeof(PointLightProperties) * LightSetup.MaxDirectionalLights;
+        LightSetup.DirectionalLightBuffer = RenderLayer::CreateConstantBuffer(SizeInBytes, EResourceState::VertexAndConstantBuffer, nullptr);
+        if (!LightSetup.DirectionalLightBuffer)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            LightSetup.DirectionalLightBuffer->SetName("DirectionalLight Buffer");
+        }
     }
 
     {
-        if (!ShaderCompiler::CompileFromFile(
-            "../DXR-Engine/Shaders/ShadowMap.hlsl",
-            "Main",
-            nullptr,
-            EShaderStage::ShaderStage_Vertex,
-            EShaderModel::ShaderModel_6_0,
-            ShaderCode))
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadowMap.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
             Debug::DebugBreak();
             return false;
@@ -218,9 +196,9 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
         }
 
         DepthStencilStateCreateInfo DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::ComparisonFunc_LessEqual;
+        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
         DepthStencilStateInfo.DepthEnable    = true;
-        DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::DepthWriteMask_All;
+        DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
         if (!DepthStencilState)
@@ -234,7 +212,7 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
         }
 
         RasterizerStateCreateInfo RasterizerStateInfo;
-        RasterizerStateInfo.CullMode = ECullMode::CullMode_Back;
+        RasterizerStateInfo.CullMode = ECullMode::Back;
 
         TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
@@ -262,9 +240,9 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
         GraphicsPipelineStateCreateInfo PipelineStateInfo;
         PipelineStateInfo.BlendState                         = BlendState.Get();
         PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
-        PipelineStateInfo.IBStripCutValue                    = EIndexBufferStripCutValue::IndexBufferStripCutValue_Disabled;
+        PipelineStateInfo.IBStripCutValue                    = EIndexBufferStripCutValue::Disabled;
         PipelineStateInfo.InputLayoutState                   = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+        PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
         PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
         PipelineStateInfo.SampleCount                        = 1;
         PipelineStateInfo.SampleQuality                      = 0;
@@ -300,13 +278,13 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Scen
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Update PointLightBuffer");
 
-    CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+    CmdList.BindPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
     if (UpdatePointLight)
     {
         TRACE_SCOPE("Update LightBuffers");
 
-        CmdList.TransitionBuffer(LightSetup.PointLightBuffer.Get(), EResourceState::ResourceState_VertexAndConstantBuffer, EResourceState::ResourceState_CopyDest);
+        CmdList.TransitionBuffer(LightSetup.PointLightBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
         UInt32 NumPointLights = 0;
         for (Light* Light : Scene.GetLights())
@@ -338,12 +316,12 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Scen
             }
         }
 
-        CmdList.TransitionBuffer(LightSetup.PointLightBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_VertexAndConstantBuffer);
+        CmdList.TransitionBuffer(LightSetup.PointLightBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Update PointLightBuffer");
 
-    CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_DepthWrite);
+    CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render PointLight ShadowMaps");
 
@@ -374,20 +352,20 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Scen
                 for (UInt32 Face = 0; Face < 6; Face++)
                 {
                     auto& Cube = LightSetup.PointLightShadowMapDSVs[PointLightShadowIndex];
-                    CmdList.ClearDepthStencilView(Cube[Face].Get(), DepthStencilClearValue(1.0f, 0));
+                    CmdList.ClearDepthStencilView(Cube[Face].Get(), DepthStencilF(1.0f, 0));
                     CmdList.BindRenderTargets(nullptr, 0, Cube[Face].Get());
 
                     PerShadowMapData.Matrix   = CurrentLight->GetMatrix(Face);
                     PerShadowMapData.Position = CurrentLight->GetPosition();
                     PerShadowMapData.FarPlane = CurrentLight->GetShadowFarPlane();
 
-                    CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::ResourceState_VertexAndConstantBuffer, EResourceState::ResourceState_CopyDest);
+                    CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
                     CmdList.UpdateBuffer(PerShadowMapBuffer.Get(), 0, sizeof(PerShadowMap), &PerShadowMapData);
 
-                    CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_VertexAndConstantBuffer);
+                    CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
 
-                    CmdList.BindConstantBuffers(EShaderStage::ShaderStage_Vertex, &PerShadowMapBuffer, 1, 0);
+                    CmdList.BindConstantBuffers(EShaderStage::Vertex, &PerShadowMapBuffer, 1, 0);
 
                     // Draw all objects to depthbuffer
                     ConsoleVariable* GlobalFrustumCullEnabled = gConsole.FindVariable("r.EnableFrustumCulling");
@@ -414,7 +392,7 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Scen
                                 ShadowPerObjectBuffer.Matrix       = Command.CurrentActor->GetTransform().GetMatrix();
                                 ShadowPerObjectBuffer.ShadowOffset = Command.Mesh->ShadowOffset;
 
-                                CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Vertex, &ShadowPerObjectBuffer, 17);
+                                CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &ShadowPerObjectBuffer, 17);
 
                                 CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
                             }
@@ -430,7 +408,7 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Scen
                             ShadowPerObjectBuffer.Matrix       = Command.CurrentActor->GetTransform().GetMatrix();
                             ShadowPerObjectBuffer.ShadowOffset = Command.Mesh->ShadowOffset;
 
-                            CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Vertex, &ShadowPerObjectBuffer, 17);
+                            CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &ShadowPerObjectBuffer, 17);
 
                             CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
                         }
@@ -446,7 +424,7 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Scen
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render PointLight ShadowMaps");
 
-    CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::ResourceState_DepthWrite, EResourceState::ResourceState_NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
 }
 
 void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, const SceneLightSetup& LightSetup, const Scene& Scene)
@@ -460,13 +438,13 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Update DirectionalLightBuffer");
 
-    CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+    CmdList.BindPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
     if (UpdateDirLight)
     {
         TRACE_SCOPE("Update Directional LightBuffers");
 
-        CmdList.TransitionBuffer(LightSetup.DirectionalLightBuffer.Get(), EResourceState::ResourceState_VertexAndConstantBuffer, EResourceState::ResourceState_CopyDest);
+        CmdList.TransitionBuffer(LightSetup.DirectionalLightBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
         // TODO: Not efficent to loop through all lights twice 
         UInt32 NumDirLights = 0;
@@ -493,12 +471,12 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
             }
         }
 
-        CmdList.TransitionBuffer(LightSetup.DirectionalLightBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_VertexAndConstantBuffer);
+        CmdList.TransitionBuffer(LightSetup.DirectionalLightBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Update DirectionalLightBuffer");
 
-    CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_DepthWrite);
+    CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render DirectionalLight ShadowMaps");
 
@@ -506,7 +484,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
     {
         TRACE_SCOPE("Render DirectionalLight ShadowMaps");
 
-        CmdList.ClearDepthStencilView(LightSetup.DirLightShadowMapDSV.Get(), DepthStencilClearValue(1.0f, 0));
+        CmdList.ClearDepthStencilView(LightSetup.DirLightShadowMapDSV.Get(), DepthStencilF(1.0f, 0));
 
         CmdList.BindRenderTargets(nullptr, 0, LightSetup.DirLightShadowMapDSV.Get());
         CmdList.BindGraphicsPipelineState(DirLightPipelineState.Get());
@@ -514,7 +492,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
         CmdList.BindViewport(static_cast<Float>(LightSetup.ShadowMapWidth), static_cast<Float>(LightSetup.ShadowMapHeight), 0.0f, 1.0f, 0.0f, 0.0f);
         CmdList.BindScissorRect(LightSetup.ShadowMapWidth, LightSetup.ShadowMapHeight, 0, 0);
 
-        CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+        CmdList.BindPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
         // PerObject Structs
         struct ShadowPerObject
@@ -533,13 +511,13 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
                 PerShadowMapData.Position  = DirLight->GetShadowMapPosition();
                 PerShadowMapData.FarPlane  = DirLight->GetShadowFarPlane();
 
-                CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::ResourceState_VertexAndConstantBuffer, EResourceState::ResourceState_CopyDest);
+                CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
                 CmdList.UpdateBuffer(PerShadowMapBuffer.Get(), 0, sizeof(PerShadowMap), &PerShadowMapData);
 
-                CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_VertexAndConstantBuffer);
+                CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
 
-                CmdList.BindConstantBuffers(EShaderStage::ShaderStage_Vertex, &PerShadowMapBuffer, 1, 0);
+                CmdList.BindConstantBuffers(EShaderStage::Vertex, &PerShadowMapBuffer, 1, 0);
 
                 // Draw all objects to depthbuffer
                 for (const MeshDrawCommand& Command : Scene.GetMeshDrawCommands())
@@ -550,7 +528,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
                     ShadowPerObjectBuffer.Matrix       = Command.CurrentActor->GetTransform().GetMatrix();
                     ShadowPerObjectBuffer.ShadowOffset = Command.Mesh->ShadowOffset;
 
-                    CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Vertex, &ShadowPerObjectBuffer, 17);
+                    CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &ShadowPerObjectBuffer, 17);
 
                     CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
                 }
@@ -563,12 +541,12 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
     }
     else
     {
-        CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
+        CmdList.BindPrimitiveTopology(EPrimitiveTopology::TriangleList);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
 
-    CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::ResourceState_DepthWrite, EResourceState::ResourceState_NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
 }
 
 void ShadowMapRenderer::Release()
@@ -581,12 +559,12 @@ void ShadowMapRenderer::Release()
 Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
 {
     LightSetup.PointLightShadowMaps = RenderLayer::CreateTextureCubeArray(
-        nullptr,
-        LightSetup.ShadowMapFormat,
-        TextureUsage_ShadowMap,
-        LightSetup.PointLightShadowSize,
-        1, UInt16(LightSetup.MaxPointLightShadows), 1,
-        ClearValue(DepthStencilClearValue(1.0f, 0)));
+        LightSetup.ShadowMapFormat, 
+        LightSetup.PointLightShadowSize, 
+        1, LightSetup.MaxPointLightShadows, 
+        TextureUsage_ShadowMap, 
+        EResourceState::NonPixelShaderResource,
+        nullptr);
     if (LightSetup.PointLightShadowMaps)
     {
         LightSetup.PointLightShadowMaps->SetName("PointLight ShadowMaps");
@@ -598,7 +576,7 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
             {
                 TStaticArray<TSharedRef<DepthStencilView>, 6>& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
 
-                DepthStencilViewCreateInfo DsvInfo(LightSetup.PointLightShadowMaps.Get(), LightSetup.ShadowMapFormat, Face, 0, i, 0);
+                DepthStencilViewCreateInfo DsvInfo(LightSetup.PointLightShadowMaps.Get(), LightSetup.ShadowMapFormat, GetCubeFaceFromIndex(Face), 0, i, 1);
                 DepthCube[Face] = RenderLayer::CreateDepthStencilView(DsvInfo);
                 if (!DepthCube[Face])
                 {
@@ -608,7 +586,7 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
             }
         }
 
-        ShaderResourceViewCreateInfo PointLightShadowMapsSrvInfo(LightSetup.PointLightShadowMaps.Get(), EFormat::Format_R32_Float);
+        ShaderResourceViewCreateInfo PointLightShadowMapsSrvInfo(LightSetup.PointLightShadowMaps.Get(), EFormat::R32_Float, 0, 1, 0.0f);
         LightSetup.PointLightShadowMapSRV = RenderLayer::CreateShaderResourceView(PointLightShadowMapsSrvInfo);
         if (!LightSetup.PointLightShadowMapSRV)
         {
@@ -622,17 +600,17 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
     }
 
     LightSetup.DirLightShadowMaps = RenderLayer::CreateTexture2D(
-        nullptr,
         LightSetup.ShadowMapFormat,
-        TextureUsage_ShadowMap,
-        4096, 4096,
-        1, 1,
-        ClearValue(DepthStencilClearValue(1.0f, 0)));
+        LightSetup.ShadowMapWidth,
+        LightSetup.ShadowMapHeight,
+        0, 1, TextureUsage_ShadowMap,
+        EResourceState::Common,
+        nullptr);
     if (LightSetup.DirLightShadowMaps)
     {
         LightSetup.DirLightShadowMaps->SetName("Directional Light ShadowMaps");
 
-        DepthStencilViewCreateInfo DirLightShadowMapsDsvInfo(LightSetup.DirLightShadowMaps.Get());
+        DepthStencilViewCreateInfo DirLightShadowMapsDsvInfo(LightSetup.DirLightShadowMaps.Get(), LightSetup.ShadowMapFormat, 0);
         LightSetup.DirLightShadowMapDSV = RenderLayer::CreateDepthStencilView(DirLightShadowMapsDsvInfo);
         if (!LightSetup.DirLightShadowMapDSV)
         {
@@ -644,7 +622,7 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
             LightSetup.DirLightShadowMapDSV->SetName("DirectionalLight DepthStencilView");
         }
 
-        ShaderResourceViewCreateInfo DirLightShadowMapsSrvInfo(LightSetup.DirLightShadowMaps.Get(), EFormat::Format_R32_Float);
+        ShaderResourceViewCreateInfo DirLightShadowMapsSrvInfo(LightSetup.DirLightShadowMaps.Get(), EFormat::R32_Float, 0, 1, 0.0f);
         LightSetup.DirLightShadowMapSRV = RenderLayer::CreateShaderResourceView(DirLightShadowMapsSrvInfo);
         if (!LightSetup.DirLightShadowMapSRV)
         {

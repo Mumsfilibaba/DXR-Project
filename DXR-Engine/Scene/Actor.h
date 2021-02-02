@@ -95,11 +95,14 @@ public:
         return nullptr;
     }
 
-    void OnAddedToScene(Scene* InScene);
+    void OnAddedToScene(Scene* InScene)
+    {
+        Scene = InScene;
+    }
     
     void SetName(const std::string& InDebugName);
 
-    FORCEINLINE void SetTransform(const Transform& InTransform)
+    void SetTransform(const Transform& InTransform)
     {
         Transform = InTransform;
     }

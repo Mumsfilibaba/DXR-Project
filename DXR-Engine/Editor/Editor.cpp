@@ -22,7 +22,7 @@ static Float MainMenuBarHeight = 0.0f;
 
 static Bool ShowRenderSettings = false;
 
-ConsoleVariable GlobalShowSceneGraph(ConsoleVariableType_Bool);
+ConsoleVariable GlobalShowSceneGraph(EConsoleVariableType::Bool);
 
 static void DrawMenu();
 static void DrawSideWindow();

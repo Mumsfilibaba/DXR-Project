@@ -1,6 +1,8 @@
 #pragma once
 #include "RenderLayer/ICommandContext.h"
 
+#include "Core/TSharedRef.h"
+
 #include "D3D12DeviceChild.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandList.h"
@@ -338,7 +340,7 @@ private:
     D3D12GPUResourceUploader    GpuResourceUploader;
     TSharedRef<D3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
     TSharedRef<D3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
-    TArray<TSharedRef<PipelineResource>>  Resources;
+    TArray<TSharedRef<Resource>>          Resources;
     TArray<TComPtr<ID3D12Resource>>       NativeResources;
 };
 
@@ -361,7 +363,7 @@ public:
         Memory::Memzero(&Barrier);
 
         Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-        Barrier.UAV.pResource = Resource->GetNativeResource();
+        Barrier.UAV.pResource = Resource->GetResource();
 
         Barriers.EmplaceBack(Barrier);
     }

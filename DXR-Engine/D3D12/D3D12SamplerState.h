@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderLayer/SamplerState.h"
+#include "RenderLayer/Resources.h"
 
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Device.h"
@@ -22,28 +22,27 @@ public:
         OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
     }
 
-    Bool Init()
+    Bool Init(const D3D12_SAMPLER_DESC& InDesc)
     {
         OfflineHandle = OfflineHeap->Allocate(OfflineHeapIndex);
-        return OfflineHandle != 0;
+        if (OfflineHandle != 0)
+        {
+            Desc = InDesc;
+            Device->CreateSampler(&Desc, OfflineHandle);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
-    FORCEINLINE Bool CreateView(const D3D12_SAMPLER_DESC& InDesc)
-    {
-        VALIDATE(OfflineHandle != 0);
-
-        Desc = InDesc;
-        Device->CreateSampler(&Desc, OfflineHandle);
-
-        return true;
-    }
-
-    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
+    D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
     {
         return OfflineHandle;
     }
 
-    FORCEINLINE const D3D12_SAMPLER_DESC& GetDesc() const
+    const D3D12_SAMPLER_DESC& GetDesc() const
     {
         return Desc;
     }

@@ -11,10 +11,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     SkyboxMesh = MeshFactory::CreateSphere(1);
 
     ResourceData VertexData = ResourceData(SkyboxMesh.Vertices.Data());
-    SkyboxVertexBuffer = RenderLayer::CreateVertexBuffer<Vertex>(
-        &VertexData,
-        SkyboxMesh.Vertices.Size(),
-        BufferUsage_Dynamic);
+    SkyboxVertexBuffer = RenderLayer::CreateVertexBuffer<Vertex>(SkyboxMesh.Vertices.Size(), BufferUsage_Upload, EResourceState::VertexAndConstantBuffer, &VertexData);
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -25,11 +22,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     }
 
     ResourceData IndexData = ResourceData(SkyboxMesh.Indices.Data());
-    SkyboxIndexBuffer = RenderLayer::CreateIndexBuffer(
-        &IndexData,
-        SkyboxMesh.Indices.SizeInBytes(),
-        EIndexFormat::IndexFormat_UInt32,
-        BufferUsage_Dynamic);
+    SkyboxIndexBuffer = RenderLayer::CreateIndexBuffer(EIndexFormat::UInt32, SkyboxMesh.Indices.Size(), BufferUsage_Upload, EResourceState::VertexAndConstantBuffer, &IndexData);
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -41,10 +34,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
 
     // Create Texture Cube
     const std::string PanoramaSourceFilename = "../Assets/Textures/arches.hdr";
-    SampledTexture2D Panorama = TextureFactory::LoadSampledTextureFromFile(
-        PanoramaSourceFilename,
-        0,
-        EFormat::Format_R32G32B32A32_Float);
+    SampledTexture2D Panorama = TextureFactory::LoadSampledTextureFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
     if (!Panorama)
     {
         return false;
@@ -54,11 +44,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
         Panorama.SetName(PanoramaSourceFilename);
     }
 
-    FrameResources.Skybox = TextureFactory::CreateTextureCubeFromPanorma(
-        Panorama,
-        1024,
-        TextureFactoryFlag_GenerateMips,
-        EFormat::Format_R16G16B16A16_Float);
+    FrameResources.Skybox = TextureFactory::CreateTextureCubeFromPanorma(Panorama, 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
     if (!FrameResources.Skybox)
     {
         return false;
@@ -68,7 +54,8 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
         FrameResources.Skybox->SetName("Skybox");
     }
 
-    FrameResources.SkyboxSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(FrameResources.Skybox.Get()));
+    const UInt32 NumMips = FrameResources.Skybox->GetNumMiplevels();
+    FrameResources.SkyboxSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(FrameResources.Skybox.Get(), EFormat::R16G16B16A16_Float, 0, NumMips, 0.0f));
     if (!FrameResources.SkyboxSRV)
     {
         return false;
@@ -79,10 +66,10 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     }
 
     SamplerStateCreateInfo CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::SamplerMode_Wrap;
-    CreateInfo.AddressV = ESamplerMode::SamplerMode_Wrap;
-    CreateInfo.AddressW = ESamplerMode::SamplerMode_Wrap;
-    CreateInfo.Filter   = ESamplerFilter::SamplerFilter_MinMagMipLinear;
+    CreateInfo.AddressU = ESamplerMode::Wrap;
+    CreateInfo.AddressV = ESamplerMode::Wrap;
+    CreateInfo.AddressW = ESamplerMode::Wrap;
+    CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
     CreateInfo.MinLOD   = 0.0f;
     CreateInfo.MaxLOD   = 0.0f;
 
@@ -93,13 +80,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     }
 
     TArray<UInt8> ShaderCode;
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/Skybox.hlsl",
-        "VSMain",
-        nullptr,
-        EShaderStage::ShaderStage_Vertex,
-        EShaderModel::ShaderModel_6_0,
-        ShaderCode))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Skybox.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;
@@ -116,13 +97,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
         VShader->SetName("Skybox VertexShader");
     }
 
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/Skybox.hlsl",
-        "PSMain",
-        nullptr,
-        EShaderStage::ShaderStage_Pixel,
-        EShaderModel::ShaderModel_6_0,
-        ShaderCode))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Skybox.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;
@@ -140,7 +115,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     }
 
     RasterizerStateCreateInfo RasterizerStateInfo;
-    RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
+    RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
@@ -169,9 +144,9 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     }
 
     DepthStencilStateCreateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::ComparisonFunc_LessEqual;
+    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
     DepthStencilStateInfo.DepthEnable    = true;
-    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::DepthWriteMask_All;
+    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
     TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
@@ -213,42 +188,40 @@ void SkyboxRenderPass::Render(CommandList& CmdList, const FrameResources& FrameR
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
 
+    TRACE_SCOPE("Render Skybox");
+
+    const Float RenderWidth  = Float(FrameResources.FinalTarget->GetWidth());
+    const Float RenderHeight = Float(FrameResources.FinalTarget->GetHeight());
+
+    RenderTargetView* RenderTarget[] = { FrameResources.FinalTargetRTV.Get() };
+    CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
+
+    CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.BindScissorRect(RenderWidth, RenderHeight, 0, 0);
+
+    CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
+    CmdList.TransitionTexture(FrameResources.FinalTarget.Get(), EResourceState::UnorderedAccess, EResourceState::RenderTarget);
+
+    CmdList.BindRenderTargets(RenderTarget, 1, FrameResources.GBufferDSV.Get());
+
+    CmdList.BindPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    CmdList.BindVertexBuffers(&SkyboxVertexBuffer, 1, 0);
+    CmdList.BindIndexBuffer(SkyboxIndexBuffer.Get());
+    CmdList.BindGraphicsPipelineState(PipelineState.Get());
+
+    struct SimpleCameraBuffer
     {
-        TRACE_SCOPE("Render Skybox");
+        XMFLOAT4X4 Matrix;
+    } SimpleCamera;
+    SimpleCamera.Matrix = Scene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
 
-        const Float RenderWidth  = Float(FrameResources.FinalTarget->GetWidth());
-        const Float RenderHeight = Float(FrameResources.FinalTarget->GetHeight());
+    CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &SimpleCamera, 16);
 
-        RenderTargetView* RenderTarget[] = { FrameResources.FinalTargetRTV.Get() };
-        CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
+    CmdList.BindShaderResourceViews(EShaderStage::Pixel, &FrameResources.SkyboxSRV, 1, 0);
 
-        CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-        CmdList.BindScissorRect(RenderWidth, RenderHeight, 0, 0);
+    CmdList.BindSamplerStates(EShaderStage::Pixel, &SkyboxSampler, 1, 0);
 
-        CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_DepthWrite);
-        CmdList.TransitionTexture(FrameResources.FinalTarget.Get(), EResourceState::ResourceState_UnorderedAccess, EResourceState::ResourceState_RenderTarget);
-
-        CmdList.BindRenderTargets(RenderTarget, 1, FrameResources.GBufferDSV.Get());
-
-        CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
-        CmdList.BindVertexBuffers(&SkyboxVertexBuffer, 1, 0);
-        CmdList.BindIndexBuffer(SkyboxIndexBuffer.Get());
-        CmdList.BindGraphicsPipelineState(PipelineState.Get());
-
-        struct SimpleCameraBuffer
-        {
-            XMFLOAT4X4 Matrix;
-        } SimpleCamera;
-        SimpleCamera.Matrix = Scene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
-
-        CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Vertex, &SimpleCamera, 16);
-
-        CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Pixel, &FrameResources.SkyboxSRV, 1, 0);
-
-        CmdList.BindSamplerStates(EShaderStage::ShaderStage_Pixel, &SkyboxSampler, 1, 0);
-
-        CmdList.DrawIndexedInstanced(static_cast<UInt32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
-    }
+    CmdList.DrawIndexedInstanced(static_cast<UInt32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
 }

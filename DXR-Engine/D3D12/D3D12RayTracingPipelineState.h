@@ -1,10 +1,8 @@
 #pragma once
-#include "D3D12Buffer.h"
 #include "Core.h"
 
-#include <wrl/client.h>
-
-#include <dxcapi.h>
+#include "D3D12Buffer.h"
+#include "D3D12Helpers.h"
 
 class D3D12DescriptorTable;
 class D3D12RootSignature;

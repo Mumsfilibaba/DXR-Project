@@ -9,47 +9,47 @@
 
 static LPCWSTR GetTargetProfile(EShaderStage ShaderStage, EShaderModel ShaderModel)
 {
-    if (ShaderStage == EShaderStage::ShaderStage_Vertex)
+    if (ShaderStage == EShaderStage::Vertex)
     {
-        if (ShaderModel == EShaderModel::ShaderModel_5_0)
+        if (ShaderModel == EShaderModel::SM_5_0)
         {
             return L"vs_5_0";
         }
-        else if (ShaderModel == EShaderModel::ShaderModel_5_1)
+        else if (ShaderModel == EShaderModel::SM_5_1)
         {
             return L"vs_5_1";
         }
-        else if (ShaderModel == EShaderModel::ShaderModel_6_0)
+        else if (ShaderModel == EShaderModel::SM_6_0)
         {
             return L"vs_6_0";
         }
     }
-    else if (ShaderStage == EShaderStage::ShaderStage_Pixel)
+    else if (ShaderStage == EShaderStage::Pixel)
     {
-        if (ShaderModel == EShaderModel::ShaderModel_5_0)
+        if (ShaderModel == EShaderModel::SM_5_0)
         {
             return L"ps_5_0";
         }
-        else if (ShaderModel == EShaderModel::ShaderModel_5_1)
+        else if (ShaderModel == EShaderModel::SM_5_1)
         {
             return L"ps_5_1";
         }
-        else if (ShaderModel == EShaderModel::ShaderModel_6_0)
+        else if (ShaderModel == EShaderModel::SM_6_0)
         {
             return L"ps_6_0";
         }
     }
-    else if (ShaderStage == EShaderStage::ShaderStage_Compute)
+    else if (ShaderStage == EShaderStage::Compute)
     {
-        if (ShaderModel == EShaderModel::ShaderModel_5_0)
+        if (ShaderModel == EShaderModel::SM_5_0)
         {
             return L"cs_5_0";
         }
-        else if (ShaderModel == EShaderModel::ShaderModel_5_1)
+        else if (ShaderModel == EShaderModel::SM_5_1)
         {
             return L"cs_5_1";
         }
-        else if (ShaderModel == EShaderModel::ShaderModel_6_0)
+        else if (ShaderModel == EShaderModel::SM_6_0)
         {
             return L"cs_6_0";
         }

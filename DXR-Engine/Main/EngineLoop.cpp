@@ -152,7 +152,7 @@ Bool EngineLoop::Init()
     GlobalCursors::Init();
 
     // RenderAPI
-    if (!RenderLayer::Init(ERenderLayerApi::RenderLayerApi_D3D12))
+    if (!RenderLayer::Init(ERenderLayerApi::D3D12))
     {
         return false;
     }

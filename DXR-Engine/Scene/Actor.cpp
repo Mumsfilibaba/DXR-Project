@@ -27,11 +27,6 @@ Actor::~Actor()
     Components.Clear();
 }
 
-void Actor::OnAddedToScene(Scene* InScene)
-{
-    Scene = InScene;
-}
-
 void Actor::AddComponent(Component* InComponent)
 {
     VALIDATE(InComponent != nullptr);
@@ -98,8 +93,9 @@ void Transform::CalculateMatrix()
     XMVECTOR XmRotation = XMVectorSet(Rotation.z, Rotation.y, Rotation.x, 0.0f);
     
     XMMATRIX XmMatrix = XMMatrixMultiply(
-        XMMatrixMultiply(XMMatrixScalingFromVector(XmScale), XMMatrixRotationRollPitchYawFromVector(XmRotation)),
-        XMMatrixTranslationFromVector(XmTranslation));
+            XMMatrixMultiply(XMMatrixScalingFromVector(XmScale), 
+            XMMatrixRotationRollPitchYawFromVector(XmRotation)),
+            XMMatrixTranslationFromVector(XmTranslation));
     XMStoreFloat4x4(&Matrix, XMMatrixTranspose(XmMatrix));
 
     XMMATRIX XmMatrixInv = XMMatrixInverse(nullptr, XmMatrix);

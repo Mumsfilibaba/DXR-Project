@@ -2,9 +2,9 @@
 #include "D3D12CommandQueue.h"
 #include "D3D12RenderLayer.h"
 
-D3D12Viewport::D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, UInt32 InWidth, UInt32 InHeight, EFormat InPixelFormat)
+D3D12Viewport::D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, UInt32 InWidth, UInt32 InHeight)
     : D3D12DeviceChild(InDevice)
-    , Viewport(InWidth, InHeight, InPixelFormat)
+    , Viewport(InFormat, InWidth, InHeight)
     , Hwnd(InHwnd)
     , SwapChain(nullptr)
     , CmdContext(InCmdContext)
@@ -33,7 +33,7 @@ Bool D3D12Viewport::Init()
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
     const UInt32 NumSwapChainBuffers = 12;
-    const DXGI_FORMAT NativeFormat   = ConvertFormat(PixelFormat);
+    const DXGI_FORMAT NativeFormat   = ConvertFormat(Format);
 
     VALIDATE(Width > 0 && Height > 0);
 
@@ -62,13 +62,7 @@ Bool D3D12Viewport::Init()
     FullscreenDesc.Windowed                = true;
 
     TComPtr<IDXGISwapChain1> TempSwapChain;
-    HRESULT Result = Device->GetFactory()->CreateSwapChainForHwnd(
-        CmdContext->GetQueue().GetQueue(),
-        Hwnd, 
-        &SwapChainDesc, 
-        &FullscreenDesc,
-        nullptr, 
-        &TempSwapChain);
+    HRESULT Result = Device->GetFactory()->CreateSwapChainForHwnd(CmdContext->GetQueue().GetQueue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
     if (SUCCEEDED(Result))
     {
         Result = TempSwapChain.As<IDXGISwapChain3>(&SwapChain);
@@ -155,24 +149,42 @@ Bool D3D12Viewport::Present(Bool VerticalSync)
     }
 }
 
-void D3D12Viewport::SetName(const std::string& Name)
+void D3D12Viewport::SetName(const std::string& InName)
 {
-    SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Name.size()), Name.data());
+    SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(InName.size()), InName.data());
     
     UInt32 Index = 0;
     for (TSharedRef<D3D12Texture2D>& Buffer : BackBuffers)
     {
-        Buffer->SetName(Name + "Buffer [" + std::to_string(Index) + "]");
+        Buffer->SetName(InName + "Buffer [" + std::to_string(Index) + "]");
         Index++;
     }
 }
 
 Bool D3D12Viewport::RetriveBackBuffers()
 {
-    BackBuffers.Clear();
-    BackBufferViews.Clear();
+    if (BackBuffers.Size() < NumBackBuffers)
+    {
+        BackBuffers.Resize(NumBackBuffers);
+    }
 
-    D3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = gD3D12RenderLayer->GetRenderTargetOfflineDescriptorHeap();
+    if (BackBufferViews.Size() < NumBackBuffers)
+    {
+        D3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = gD3D12RenderLayer->GetRenderTargetOfflineDescriptorHeap();
+        BackBufferViews.Resize(NumBackBuffers);
+        for (TSharedRef<D3D12RenderTargetView>& View : BackBufferViews)
+        {
+            if (!View)
+            {
+                View = DBG_NEW D3D12RenderTargetView(Device, RenderTargetOfflineHeap);
+                if (!View->Init())
+                {
+                    return false;
+                }
+            }
+        }
+    }
+
     for (UInt32 i = 0; i < NumBackBuffers; i++)
     {
         TComPtr<ID3D12Resource> BackBufferResource;
@@ -183,28 +195,23 @@ Bool D3D12Viewport::RetriveBackBuffers()
             return false;
         }
 
-        D3D12Texture2D* BackBuffer = BackBuffers.EmplaceBack(DBG_NEW D3D12BackBufferTexture2D(Device, BackBufferResource)).Get();
+        BackBuffers[i] = DBG_NEW D3D12Texture2D(Device, GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, ClearValue());
+
+        D3D12Resource BackBuffer(Device, BackBufferResource);
+        BackBuffers[i]->SetResource(BackBuffer);
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;
         Memory::Memzero(&Desc);
 
         Desc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
-        Desc.Format               = BackBuffer->GetNativeFormat();
+        Desc.Format               = BackBuffers[i]->GetNativeFormat();
         Desc.Texture2D.MipSlice   = 0;
         Desc.Texture2D.PlaneSlice = 0;
 
-        TSharedRef<D3D12RenderTargetView> View = DBG_NEW D3D12RenderTargetView(Device, RenderTargetOfflineHeap);
-        if (!View->Init())
+        if (!BackBufferViews[i]->CreateView(BackBuffers[i]->GetResource(), Desc))
         {
             return false;
         }
-
-        if (!View->CreateView(BackBuffer, Desc))
-        {
-            return false;
-        }
-
-        BackBufferViews.EmplaceBack(View);
     }
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();

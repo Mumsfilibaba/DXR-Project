@@ -34,17 +34,17 @@ public:
         Desc.pInputElementDescs = GetElementData();
     }
 
-    FORCEINLINE const D3D12_INPUT_ELEMENT_DESC* GetElementData() const
+    const D3D12_INPUT_ELEMENT_DESC* GetElementData() const
     {
         return ElementDesc.Data();
     }
 
-    FORCEINLINE UInt32 GetElementCount() const
+    UInt32 GetElementCount() const
     {
         return ElementDesc.Size();
     }
 
-    FORCEINLINE const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
+    const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -65,7 +65,7 @@ public:
     {
     }
 
-    FORCEINLINE const D3D12_DEPTH_STENCIL_DESC& GetDesc() const
+    const D3D12_DEPTH_STENCIL_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -84,7 +84,7 @@ public:
     {
     }
 
-    FORCEINLINE const D3D12_RASTERIZER_DESC& GetDesc() const
+    const D3D12_RASTERIZER_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -103,7 +103,7 @@ public:
     {
     }
 
-    FORCEINLINE const D3D12_BLEND_DESC& GetDesc() const
+    const D3D12_BLEND_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -123,21 +123,16 @@ public:
     {
     }
 
-    virtual void SetName(const std::string& Name) override final
+    virtual void SetName(const std::string& InName) override final
     {
-        std::wstring WideName = ConvertToWide(Name);
+        Resource::SetName(InName);
+
+        std::wstring WideName = ConvertToWide(InName);
         PipelineState->SetName(WideName.c_str());
     }
 
-    FORCEINLINE ID3D12PipelineState* GetPipeline() const
-    {
-        return PipelineState.Get();
-    }
-
-    FORCEINLINE D3D12RootSignature* GetRootSignature() const
-    {
-        return RootSignature;
-    }
+    ID3D12PipelineState* GetPipeline() const { return PipelineState.Get(); }
+    D3D12RootSignature* GetRootSignature() const { return RootSignature; }
 
 private:
     TComPtr<ID3D12PipelineState> PipelineState;
@@ -150,20 +145,20 @@ class D3D12ComputePipelineState : public ComputePipelineState, public D3D12Devic
 
 public:
     D3D12ComputePipelineState(D3D12Device* InDevice, const TSharedRef<D3D12ComputeShader>& InShader, const TSharedRef<D3D12RootSignature>& InRootSignature);
+    ~D3D12ComputePipelineState() = default;
 
     Bool Init();
 
-    virtual void SetName(const std::string& Name) override final;
-
-    FORCEINLINE ID3D12PipelineState* GetPipeline() const
+    virtual void SetName(const std::string& InName) override final
     {
-        return PipelineState.Get();
+        Resource::SetName(InName);
+
+        std::wstring WideName = ConvertToWide(InName);
+        PipelineState->SetName(WideName.c_str());
     }
 
-    FORCEINLINE D3D12RootSignature* GetRootSignature() const
-    {
-        return RootSignature.Get();
-    }
+    ID3D12PipelineState* GetPipeline() const { return PipelineState.Get(); }
+    D3D12RootSignature* GetRootSignature() const { return RootSignature.Get(); }
 
 private:
     TComPtr<ID3D12PipelineState>   PipelineState;

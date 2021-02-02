@@ -3,9 +3,9 @@
 
 enum class EShaderModel
 {
-    _5_0 = 1,
-    _5_1 = 2,
-    _6_0 = 3,
+    SM_5_0 = 1,
+    SM_5_1 = 2,
+    SM_6_0 = 3,
 };
 
 struct ShaderDefine

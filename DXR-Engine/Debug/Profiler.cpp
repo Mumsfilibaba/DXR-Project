@@ -97,8 +97,8 @@ static Float ImGui_GetMaxLimit(Float Num)
     }
 }
 
-ConsoleVariable GlobalDrawProfiler(ConsoleVariableType_Bool);
-ConsoleVariable GlobalDrawFps(ConsoleVariableType_Bool);
+ConsoleVariable GlobalDrawProfiler(EConsoleVariableType::Bool);
+ConsoleVariable GlobalDrawFps(EConsoleVariableType::Bool);
 
 Profiler::Profiler()
     : Clock()

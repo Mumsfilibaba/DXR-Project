@@ -742,7 +742,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
         "VSMain",
         nullptr,
         EShaderStage::Vertex,
-        EShaderModel::_6_0,
+        EShaderModel::SM_6_0,
         ShaderCode))
     {
         Debug::DebugBreak();
@@ -765,7 +765,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
         "PSMain",
         nullptr,
         EShaderStage::Pixel,
-        EShaderModel::_6_0,
+        EShaderModel::SM_6_0,
         ShaderCode))
     {
         Debug::DebugBreak();
@@ -892,7 +892,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
     }
 
     // Create IndexBuffer
-    UInt16 Indices[24] =
+    TStaticArray<UInt16, 24> Indices =
     {
         0, 1,
         1, 3,
@@ -910,11 +910,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
 
     ResourceData IndexData(Indices);
 
-    AABBIndexBuffer = RenderLayer::CreateIndexBuffer(
-        &IndexData,
-        sizeof(UInt16) * 24,
-        EIndexFormat::IndexUInt16,
-        BufferUsage_Default);
+    AABBIndexBuffer = RenderLayer::CreateIndexBuffer(EIndexFormat::UInt16, Indices.Size(), BufferUsage_Default, EResourceState::Common, &IndexData);
     if (!AABBIndexBuffer)
     {
         Debug::DebugBreak();
@@ -936,7 +932,7 @@ Bool Renderer::InitAA()
         "Main",
         nullptr,
         EShaderStage::Vertex,
-        EShaderModel::_6_0,
+        EShaderModel::SM_6_0,
         ShaderCode))
     {
         Debug::DebugBreak();
@@ -959,7 +955,7 @@ Bool Renderer::InitAA()
         "Main",
         nullptr,
         EShaderStage::Pixel,
-        EShaderModel::_6_0,
+        EShaderModel::SM_6_0,
         ShaderCode))
     {
         Debug::DebugBreak();
@@ -1051,7 +1047,7 @@ Bool Renderer::InitAA()
         "Main",
         nullptr,
         EShaderStage::Pixel,
-        EShaderModel::_6_0,
+        EShaderModel::SM_6_0,
         ShaderCode))
     {
         Debug::DebugBreak();

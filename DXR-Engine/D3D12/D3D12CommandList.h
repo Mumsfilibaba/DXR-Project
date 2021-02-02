@@ -69,12 +69,12 @@ public:
     FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const D3D12UnorderedAccessView* View, const Float ClearColor[4])
     {
         const D3D12Resource* Resource = View->GetResource();
-        CmdList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), Resource->GetNativeResource(), ClearColor, 0, nullptr);
+        CmdList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), Resource->GetResource(), ClearColor, 0, nullptr);
     }
 
     FORCEINLINE void CopyBuffer(D3D12Resource* Destination, UInt64 DestinationOffset, D3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
     {
-        CmdList->CopyBufferRegion(Destination->GetNativeResource(), DestinationOffset, Source->GetNativeResource(), SourceOffset, SizeInBytes);
+        CmdList->CopyBufferRegion(Destination->GetResource(), DestinationOffset, Source->GetResource(), SourceOffset, SizeInBytes);
     }
 
     FORCEINLINE void CopyBufferRegion(ID3D12Resource* Destination, UInt64 DestinationOffset, ID3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
@@ -89,7 +89,7 @@ public:
 
     FORCEINLINE void CopyResource(D3D12Resource* Destination, D3D12Resource* Source)
     {
-        CmdList->CopyResource(Destination->GetNativeResource(), Source->GetNativeResource());
+        CmdList->CopyResource(Destination->GetResource(), Source->GetResource());
     }
 
     FORCEINLINE void CopyNativeResource(ID3D12Resource* Destination, ID3D12Resource* Source)
@@ -99,7 +99,7 @@ public:
 
     FORCEINLINE void ResolveSubresource(D3D12Resource* Destination, D3D12Resource* Source, DXGI_FORMAT Format)
     {
-        CmdList->ResolveSubresource(Destination->GetNativeResource(), 0, Source->GetNativeResource(), 0, Format);
+        CmdList->ResolveSubresource(Destination->GetResource(), 0, Source->GetResource(), 0, Format);
     }
 
     FORCEINLINE void BuildRaytracingAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* Desc)

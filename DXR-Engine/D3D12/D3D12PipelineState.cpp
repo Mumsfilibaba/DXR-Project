@@ -48,9 +48,3 @@ Bool D3D12ComputePipelineState::Init()
         return false;
     }
 }
-
-void D3D12ComputePipelineState::SetName(const std::string& Name)
-{
-    std::wstring WideName = ConvertToWide(Name);
-    PipelineState->SetName(WideName.c_str());
-}

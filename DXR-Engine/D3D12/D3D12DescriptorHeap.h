@@ -156,15 +156,9 @@ public:
         return Heap->GetDescriptorHandleIncrementSize();
     }
     
-    FORCEINLINE ID3D12DescriptorHeap* GetNativeHeap() const
-    {
-        return Heap->GetHeap();
-    }
+    FORCEINLINE ID3D12DescriptorHeap* GetNativeHeap() const { return Heap->GetHeap(); }
 
-    FORCEINLINE D3D12DescriptorHeap* GetHeap() const
-    {
-        return Heap.Get();
-    }
+    FORCEINLINE D3D12DescriptorHeap* GetHeap() const { return Heap.Get(); }
 
 private:
     TSharedRef<D3D12DescriptorHeap> Heap;

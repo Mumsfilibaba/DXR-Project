@@ -13,48 +13,6 @@ class D3D12Buffer;
 template<typename TD3D12Texture>
 D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
 
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1D>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture1DArray>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2D>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2DArray>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCube>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCubeArray>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture3D>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-}
-
 class D3D12RenderLayer : public GenericRenderLayer
 {
 public:
@@ -83,294 +41,128 @@ public:
 
     virtual Bool Init(Bool EnableDebug) override final;
 
-    virtual Texture1D* CreateTexture1D(
-        const ResourceData* InitalData,
-        EFormat Format,
-        UInt32 Usage,
-        UInt32 Width,
-        UInt32 MipLevels,
-        const ClearValue& OptimizedClearValue) const override final;
-
-    virtual Texture1DArray* CreateTexture1DArray(
-        const ResourceData* InitalData,
-        EFormat Format,
-        UInt32 Usage,
-        UInt32 Width,
-        UInt32 MipLevels,
-        UInt16 ArrayCount,
-        const ClearValue& OptimizedClearValue) const override final;
-
     virtual Texture2D* CreateTexture2D(
-        const ResourceData* InitalData,
         EFormat Format,
-        UInt32 Usage,
         UInt32 Width,
         UInt32 Height,
-        UInt32 MipLevels,
-        UInt32 SampleCount,
-        const ClearValue& OptimizedClearValue) const override final;
+        UInt32 NumMipLevels,
+        UInt32 NumSamples,
+        UInt32 Flags,
+        EResourceState InitialState,
+        const ResourceData* InitalData,
+        const ClearValue& OptimizedClearValue) override final;
 
     virtual Texture2DArray* CreateTexture2DArray(
-        const ResourceData* InitalData,
         EFormat Format,
-        UInt32 Usage,
         UInt32 Width,
         UInt32 Height,
-        UInt32 MipLevels,
-        UInt16 ArrayCount,
-        UInt32 SampleCount,
-        const ClearValue& OptimizedClearValue) const override final;
+        UInt32 NumMipLevels,
+        UInt32 NumSamples,
+        UInt32 NumArraySlices,
+        UInt32 Flags,
+        EResourceState InitialState,
+        const ResourceData* InitalData,
+        const ClearValue& OptimizedClearValue) override final;
 
     virtual TextureCube* CreateTextureCube(
-        const ResourceData* InitalData,
         EFormat Format,
-        UInt32 Usage,
         UInt32 Size,
-        UInt32 MipLevels,
-        UInt32 SampleCount,
-        const ClearValue& OptimizedClearValue) const override final;
+        UInt32 NumMipLevels,
+        UInt32 Flags,
+        EResourceState InitialState,
+        const ResourceData* InitalData,
+        const ClearValue& OptimizedClearValue) override final;
 
     virtual TextureCubeArray* CreateTextureCubeArray(
-        const ResourceData* InitalData,
         EFormat Format,
-        UInt32 Usage,
         UInt32 Size,
-        UInt32 MipLevels,
-        UInt16 ArrayCount,
-        UInt32 SampleCount,
-        const ClearValue& OptimizedClearValue) const override final;
+        UInt32 NumMipLevels,
+        UInt32 NumArraySlices,
+        UInt32 Flags,
+        EResourceState InitialState,
+        const ResourceData* InitalData,
+        const ClearValue& OptimizedClearValue) override final;
 
     virtual Texture3D* CreateTexture3D(
-        const ResourceData* InitalData,
         EFormat Format,
-        UInt32 Usage,
         UInt32 Width,
         UInt32 Height,
-        UInt16 Depth,
-        UInt32 MipLevels,
-        const ClearValue& OptimizedClearValue) const override final;
+        UInt32 Depth,
+        UInt32 NumMipLevels,
+        UInt32 Flags,
+        EResourceState InitialState,
+        const ResourceData* InitalData,
+        const ClearValue& OptimizedClearValue) override final;
 
-    virtual class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) const override final;
+    virtual class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) override final;
 
-    virtual VertexBuffer* CreateVertexBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 VertexStride, UInt32 Usage) const override final;
-    virtual IndexBuffer* CreateIndexBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, EIndexFormat IndexFormat, UInt32 Usage) const override final;
-    virtual ConstantBuffer* CreateConstantBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 Usage, EResourceState InitialState) const override final;
-    virtual StructuredBuffer* CreateStructuredBuffer(const ResourceData* InitalData, UInt32 SizeInBytes, UInt32 Stride, UInt32 Usage) const override final;
+    virtual VertexBuffer* CreateVertexBuffer(UInt32 Stride, UInt32 NumVertices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) override final;
+    virtual IndexBuffer* CreateIndexBuffer(EIndexFormat Format, UInt32 NumIndices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) override final;
+    virtual ConstantBuffer* CreateConstantBuffer(UInt32 SizeInBytes, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) override final;
+    virtual StructuredBuffer* CreateStructuredBuffer(UInt32 Stride, UInt32 NumElements, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) override final;
 
-    virtual class RayTracingGeometry* CreateRayTracingGeometry() const override final;
-    virtual class RayTracingScene* CreateRayTracingScene()    const override final;
+    virtual class RayTracingGeometry* CreateRayTracingGeometry() override final;
+    virtual class RayTracingScene* CreateRayTracingScene() override final;
 
-    virtual ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) const override final;
-    virtual UnorderedAccessView* CreateUnorderedAccessView(const UnorderedAccessViewCreateInfo& CreateInfo) const override final;
-    virtual RenderTargetView* CreateRenderTargetView(const RenderTargetViewCreateInfo& CreateInfo) const override final;
-    virtual DepthStencilView* CreateDepthStencilView(const DepthStencilViewCreateInfo& CreateInfo) const override final;
+    virtual ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) override final;
+    virtual UnorderedAccessView* CreateUnorderedAccessView(const UnorderedAccessViewCreateInfo& CreateInfo) override final;
+    virtual RenderTargetView* CreateRenderTargetView(const RenderTargetViewCreateInfo& CreateInfo) override final;
+    virtual DepthStencilView* CreateDepthStencilView(const DepthStencilViewCreateInfo& CreateInfo) override final;
 
-    virtual class ComputeShader* CreateComputeShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class VertexShader* CreateVertexShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class HullShader* CreateHullShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class DomainShader* CreateDomainShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class GeometryShader* CreateGeometryShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class MeshShader* CreateMeshShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class AmplificationShader* CreateAmplificationShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class PixelShader* CreatePixelShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class RayGenShader* CreateRayGenShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class RayHitShader* CreateRayHitShader(const TArray<UInt8>& ShaderCode) const override final;
-    virtual class RayMissShader* CreateRayMissShader(const TArray<UInt8>& ShaderCode) const override final;
+    virtual class ComputeShader* CreateComputeShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class VertexShader* CreateVertexShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class HullShader* CreateHullShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class DomainShader* CreateDomainShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class GeometryShader* CreateGeometryShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class MeshShader* CreateMeshShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class AmplificationShader* CreateAmplificationShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class PixelShader* CreatePixelShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class RayGenShader* CreateRayGenShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class RayHitShader* CreateRayHitShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class RayMissShader* CreateRayMissShader(const TArray<UInt8>& ShaderCode) override final;
 
-    virtual class DepthStencilState* CreateDepthStencilState(const DepthStencilStateCreateInfo& CreateInfo) const override final;
-    virtual class RasterizerState* CreateRasterizerState(const RasterizerStateCreateInfo& CreateInfo) const override final;
-    virtual class BlendState* CreateBlendState(const BlendStateCreateInfo& CreateInfo) const override final;
-    virtual class InputLayoutState* CreateInputLayout(const InputLayoutStateCreateInfo& CreateInfo) const override final;
+    virtual class DepthStencilState* CreateDepthStencilState(const DepthStencilStateCreateInfo& CreateInfo) override final;
+    virtual class RasterizerState* CreateRasterizerState(const RasterizerStateCreateInfo& CreateInfo) override final;
+    virtual class BlendState* CreateBlendState(const BlendStateCreateInfo& CreateInfo) override final;
+    virtual class InputLayoutState* CreateInputLayout(const InputLayoutStateCreateInfo& CreateInfo) override final;
 
-    virtual class GraphicsPipelineState* CreateGraphicsPipelineState(const GraphicsPipelineStateCreateInfo& CreateInfo) const override final;
-    virtual class ComputePipelineState* CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo) const override final;
-    virtual class RayTracingPipelineState* CreateRayTracingPipelineState() const override final;
+    virtual class GraphicsPipelineState* CreateGraphicsPipelineState(const GraphicsPipelineStateCreateInfo& CreateInfo) override final;
+    virtual class ComputePipelineState* CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo) override final;
+    virtual class RayTracingPipelineState* CreateRayTracingPipelineState() override final;
 
-    virtual class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat) const override final;
+    virtual class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat) override final;
 
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
-    virtual Bool IsRayTracingSupported() const override final;
-    virtual Bool UAVSupportsFormat(EFormat Format) const override final;
+    virtual Bool IsRayTracingSupported() override final;
+    virtual Bool UAVSupportsFormat(EFormat Format) override final;
     
-    virtual class ICommandContext* GetDefaultCommandContext() const override final
+    virtual class ICommandContext* GetDefaultCommandContext() override final
     {
         return DirectCmdContext.Get();
     }
 
-    virtual std::string GetAdapterName() const override final
+    virtual std::string GetAdapterName() override final
     {
         return Device->GetAdapterName();
     }
 
 private:
-    Bool AllocateBuffer(D3D12Resource& Resource, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitalState, D3D12_RESOURCE_FLAGS Flags, UInt32 SizeInBytes) const;
+    template<typename TD3D12Texture>
+    TD3D12Texture* CreateTexture(
+        EFormat Format, 
+        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
+        UInt32 NumMips, 
+        UInt32 NumSamples,
+        UInt32 Flags,
+        EResourceState InitialState, 
+        const ResourceData* InitialData, 
+        const ClearValue& OptimalClearValue);
 
-    Bool AllocateTexture(
-        D3D12Resource& Resource,
-        D3D12_HEAP_TYPE HeapType,
-        D3D12_RESOURCE_STATES InitalState,
-        D3D12_CLEAR_VALUE* OptimizedClearValue,
-        const D3D12_RESOURCE_DESC& Desc) const;
-    
-    Bool UploadBuffer(Buffer& Buffer, UInt32 SizeInBytes, const ResourceData* InitalData) const;
-    Bool UploadTexture(Texture& Texture, const ResourceData* InitalData) const;
-
-    template<typename TD3D12Buffer, typename... TArgs>
-    FORCEINLINE TD3D12Buffer* CreateBufferResource(const ResourceData* InitalData, EResourceState InitialState, TArgs&&... Args) const
-    {
-        // Create buffer object and get size to allocate
-        TD3D12Buffer* NewBuffer  = DBG_NEW TD3D12Buffer(Device, Forward<TArgs>(Args)...);
-        const UInt64 Alignment   = NewBuffer->GetRequiredAlignment();
-        const UInt64 SizeInBytes = NewBuffer->GetSizeInBytes();
-        const UInt32 AlignedSize = UInt32(Math::AlignUp<UInt64>(SizeInBytes, Alignment));
-
-        // Get properties based on Usage
-        const UInt32 Usage = NewBuffer->GetUsage();
-        const D3D12_RESOURCE_FLAGS Flags = ConvertBufferUsage(Usage);
-
-        D3D12_HEAP_TYPE HeapType          = D3D12_HEAP_TYPE_DEFAULT;
-        D3D12_RESOURCE_STATES InitalState = D3D12_RESOURCE_STATE_COMMON;
-        if (Usage & BufferUsage_Dynamic)
-        {
-            InitalState = D3D12_RESOURCE_STATE_GENERIC_READ;
-            HeapType    = D3D12_HEAP_TYPE_UPLOAD;
-        }
-
-        // Allocate
-        if (!AllocateBuffer(*NewBuffer, HeapType, InitalState, Flags, AlignedSize))
-        {
-            LOG_ERROR("[D3D12RenderLayer]: Failed to allocate buffer");
-            return nullptr;
-        }
-
-        // Upload initial
-        if (InitalData)
-        {
-            UploadBuffer(*NewBuffer, UInt32(SizeInBytes), InitalData);
-        }
-
-        if (InitialState != EResourceState::ResourceState_Common)
-        {
-            DirectCmdContext->Begin();
-            DirectCmdContext->TransitionBuffer(NewBuffer, EResourceState::ResourceState_Common, InitialState);
-            DirectCmdContext->End();
-        }
-
-        return NewBuffer;
-    }
-
-    template<typename TD3D12Texture, typename... TArgs>
-    FORCEINLINE TD3D12Texture* CreateTextureResource(const ResourceData* InitalData, TArgs&&... Args) const
-    {
-        TD3D12Texture* NewTexture = DBG_NEW TD3D12Texture(Device, Forward<TArgs>(Args)...);
-        const EFormat Format = NewTexture->GetFormat();
-        const UInt32  Usage  = NewTexture->GetUsage();
-        const UInt32  Width  = NewTexture->GetWidth();
-        const UInt32  Height = NewTexture->GetHeight();
-        const UInt16  DepthOrArraySize = std::max(NewTexture->GetDepth(), NewTexture->GetArrayCount()) * 
-            (NewTexture->AsTextureCubeArray() || NewTexture->AsTextureCube() ? 6 : 1);
-        const UInt32  MipLevels   = NewTexture->GetMipLevels();
-        const UInt32  SampleCount = NewTexture->GetSampleCount();
-
-        D3D12_RESOURCE_DESC Desc;
-        Memory::Memzero(&Desc);
-
-        Desc.Dimension        = GetD3D12TextureResourceDimension<TD3D12Texture>();
-        Desc.Flags            = ConvertTextureUsage(Usage);
-        Desc.Format           = ConvertFormat(Format);
-        Desc.Width            = Width;
-        Desc.Height           = Height;
-        Desc.DepthOrArraySize = DepthOrArraySize;
-        Desc.Layout           = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        Desc.MipLevels        = static_cast<UINT16>(MipLevels);
-        Desc.SampleDesc.Count = SampleCount;
-
-        if (SampleCount > 1)
-        {
-            const Int32 Quality     = Device->GetMultisampleQuality(Desc.Format, SampleCount);
-            Desc.SampleDesc.Quality = std::max<Int32>(Quality - 1, 0);
-        }
-        else
-        {
-            Desc.SampleDesc.Quality = 0;
-        }
-
-        D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_DEFAULT;
-        if (Usage & TextureUsage_Upload)
-        {
-            HeapType = D3D12_HEAP_TYPE_UPLOAD;
-        }
-
-        D3D12_CLEAR_VALUE DxOptimizedClearValue;
-        Memory::Memzero(&DxOptimizedClearValue);
-
-        D3D12_CLEAR_VALUE* DxOptimizedClearValuePtr = nullptr;
-        if ((Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) || (Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
-        {
-            Bool IsTypeless = false;
-            switch (Desc.Format)
-            {
-                case DXGI_FORMAT_R32G32B32A32_TYPELESS:
-                case DXGI_FORMAT_R32G32B32_TYPELESS:
-                case DXGI_FORMAT_R16G16B16A16_TYPELESS:
-                case DXGI_FORMAT_R32G32_TYPELESS:
-                case DXGI_FORMAT_R32G8X24_TYPELESS:
-                case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
-                case DXGI_FORMAT_R10G10B10A2_TYPELESS:
-                case DXGI_FORMAT_R8G8B8A8_TYPELESS:
-                case DXGI_FORMAT_R16G16_TYPELESS:
-                case DXGI_FORMAT_R32_TYPELESS:
-                case DXGI_FORMAT_R24G8_TYPELESS:
-                case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
-                case DXGI_FORMAT_R8G8_TYPELESS:
-                case DXGI_FORMAT_R16_TYPELESS:
-                case DXGI_FORMAT_R8_TYPELESS:
-                {
-                    IsTypeless = true;
-                    break;
-                }
-
-                default:
-                {
-                    IsTypeless = false;
-                    break;
-                }
-            };
-
-            if (!IsTypeless)
-            {
-                DxOptimizedClearValuePtr     = &DxOptimizedClearValue;
-                DxOptimizedClearValue.Format = Desc.Format;
-
-                const ClearValue& OptimizedClearValue = NewTexture->GetOptimizedClearValue();
-                if (OptimizedClearValue.Type == EClearValueType::ClearValueType_Color)
-                {
-                    Memory::Memcpy(DxOptimizedClearValue.Color, OptimizedClearValue.Color.RGBA);
-                }
-                else
-                {
-                    DxOptimizedClearValue.DepthStencil.Depth   = OptimizedClearValue.DepthStencil.Depth;
-                    DxOptimizedClearValue.DepthStencil.Stencil = OptimizedClearValue.DepthStencil.Stencil;
-                }
-            }
-        }
-
-        if (!AllocateTexture(*NewTexture, HeapType, D3D12_RESOURCE_STATE_COMMON, DxOptimizedClearValuePtr, Desc))
-        {
-            LOG_ERROR("[D3D12RenderLayer]: Failed to allocate texture");
-            return nullptr;
-        }
-
-        if (InitalData)
-        {
-            UploadTexture(*NewTexture, InitalData);
-        }
-
-        return NewTexture;
-    }
+    template<typename TD3D12Buffer>
+    Bool FinalizeBufferResource(TD3D12Buffer* Buffer, UInt32 SizeInBytes, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData);
 
 private:
-    D3D12Device* Device;
+    D3D12Device*                    Device;
     TSharedRef<D3D12CommandContext> DirectCmdContext;
     D3D12DefaultRootSignatures      DefaultRootSignatures;
 

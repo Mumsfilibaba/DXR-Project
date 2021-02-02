@@ -42,7 +42,7 @@ public:
 private:
     Bool CreateShadowMaps(SceneLightSetup& FrameResources);
 
-    TSharedRef<ConstantBuffer>        PerShadowMapBuffer;
+    TSharedRef<ConstantBuffer> PerShadowMapBuffer;
 
     TSharedRef<GraphicsPipelineState> DirLightPipelineState;
     TSharedRef<GraphicsPipelineState> PointLightPipelineState;

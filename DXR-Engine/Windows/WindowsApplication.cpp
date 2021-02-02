@@ -11,7 +11,6 @@ WindowsApplication* GlobalWindowsApplication = nullptr;
 GenericApplication* WindowsApplication::Make()
 {
     HINSTANCE hInstance = static_cast<HINSTANCE>(::GetModuleHandle(nullptr));
-
     GlobalWindowsApplication = DBG_NEW WindowsApplication(hInstance);
     return GlobalWindowsApplication;
 }
@@ -104,8 +103,8 @@ void WindowsApplication::Tick()
             {
                 if (MessageWindow)
                 {
-                    const UInt16 Width    = LOWORD(lParam);
-                    const UInt16 Height    = HIWORD(lParam);
+                    const UInt16 Width  = LOWORD(lParam);
+                    const UInt16 Height = HIWORD(lParam);
                     EventHandler->OnWindowResized(MessageWindow, Width, Height);
                 }
 
@@ -127,8 +126,8 @@ void WindowsApplication::Tick()
             case WM_SYSKEYUP:
             case WM_KEYUP:
             {
-                const UInt32 ScanCode    = static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
-                const EKey Key            = Input::ConvertFromScanCode(ScanCode);
+                const UInt32 ScanCode = static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
+                const EKey Key        = Input::ConvertFromScanCode(ScanCode);
                 EventHandler->OnKeyReleased(Key, GetModifierKeyState());
                 break;
             }
@@ -136,9 +135,9 @@ void WindowsApplication::Tick()
             case WM_SYSKEYDOWN:
             case WM_KEYDOWN:
             {
-                const Bool IsRepeat        = !!(lParam & KEY_REPEAT_MASK);
-                const UInt32 ScanCode    = static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
-                const EKey Key            = Input::ConvertFromScanCode(ScanCode);
+                const Bool IsRepeat   = !!(lParam & KEY_REPEAT_MASK);
+                const UInt32 ScanCode = static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
+                const EKey Key        = Input::ConvertFromScanCode(ScanCode);
                 EventHandler->OnKeyPressed(Key, IsRepeat, GetModifierKeyState());
                 break;
             }
@@ -163,9 +162,9 @@ void WindowsApplication::Tick()
                     TRACKMOUSEEVENT TrackEvent;
                     Memory::Memzero(&TrackEvent);
 
-                    TrackEvent.cbSize        = sizeof(TRACKMOUSEEVENT);
-                    TrackEvent.dwFlags        = TME_LEAVE;
-                    TrackEvent.hwndTrack    = Hwnd;
+                    TrackEvent.cbSize    = sizeof(TRACKMOUSEEVENT);
+                    TrackEvent.dwFlags   = TME_LEAVE;
+                    TrackEvent.hwndTrack = Hwnd;
                     TrackMouseEvent(&TrackEvent);
 
                     EventHandler->OnWindowMouseEntered(MessageWindow);
@@ -184,7 +183,7 @@ void WindowsApplication::Tick()
             case WM_RBUTTONDBLCLK:
             case WM_XBUTTONDBLCLK:
             {
-                EMouseButton Button = EMouseButton::MOUSE_BUTTON_UNKNOWN;
+                EMouseButton Button = EMouseButton::MouseButton_Unknown;
                 if (Message == WM_LBUTTONDOWN || Message == WM_LBUTTONDBLCLK)
                 {
                     Button = EMouseButton::MouseButton_Left;
@@ -215,7 +214,7 @@ void WindowsApplication::Tick()
             case WM_RBUTTONUP:
             case WM_XBUTTONUP:
             {
-                EMouseButton Button = EMouseButton::MOUSE_BUTTON_UNKNOWN;
+                EMouseButton Button = EMouseButton::MouseButton_Unknown;
                 if (Message == WM_LBUTTONUP)
                 {
                     Button = EMouseButton::MouseButton_Left;
@@ -320,27 +319,27 @@ ModifierKeyState WindowsApplication::GetModifierKeyState()
     UInt32 ModifierMask = 0;
     if (::GetKeyState(VK_CONTROL) & 0x8000)
     {
-        ModifierMask |= EModifierFlag::MODIFIER_FLAG_CTRL;
+        ModifierMask |= EModifierFlag::ModifierFlag_Ctrl;
     }
     if (::GetKeyState(VK_MENU) & 0x8000)
     {
-        ModifierMask |= EModifierFlag::MODIFIER_FLAG_ALT;
+        ModifierMask |= EModifierFlag::ModifierFlag_Alt;
     }
     if (::GetKeyState(VK_SHIFT) & 0x8000)
     {
-        ModifierMask |= EModifierFlag::MODIFIER_FLAG_SHIFT;
+        ModifierMask |= EModifierFlag::ModifierFlag_Shift;
     }
     if (::GetKeyState(VK_CAPITAL) & 1)
     {
-        ModifierMask |= EModifierFlag::MODIFIER_FLAG_CAPS_LOCK;
+        ModifierMask |= EModifierFlag::ModifierFlag_CapsLock;
     }
     if ((::GetKeyState(VK_LWIN) | ::GetKeyState(VK_RWIN)) & 0x8000)
     {
-        ModifierMask |= EModifierFlag::MODIFIER_FLAG_SUPER;
+        ModifierMask |= EModifierFlag::ModifierFlag_Super;
     }
     if (::GetKeyState(VK_NUMLOCK) & 1)
     {
-        ModifierMask |= EModifierFlag::MODIFIER_FLAG_NUM_LOCK;
+        ModifierMask |= EModifierFlag::ModifierFlag_NumLock;
     }
 
     return ModifierKeyState(ModifierMask);

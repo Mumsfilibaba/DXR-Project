@@ -11,11 +11,41 @@
 template<typename T>
 using TComPtr = Microsoft::WRL::ComPtr<T>;
 
-// Converts EBufferUsage- flags to D3D12_RESOURCE_FLAGS
-inline D3D12_RESOURCE_FLAGS ConvertBufferUsage(UInt32 Usage)
+// Returns upload heap properties
+inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
+{
+    D3D12_HEAP_PROPERTIES HeapProperties;
+    Memory::Memzero(&HeapProperties);
+
+    HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
+    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+    HeapProperties.VisibleNodeMask      = 1;
+    HeapProperties.CreationNodeMask     = 1;
+
+    return HeapProperties;
+}
+
+// Returns default heap properties
+inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
+{
+    D3D12_HEAP_PROPERTIES HeapProperties;
+    Memory::Memzero(&HeapProperties);
+
+    HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
+    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+    HeapProperties.VisibleNodeMask      = 1;
+    HeapProperties.CreationNodeMask     = 1;
+
+    return HeapProperties;
+}
+
+// Converts EBufferFlag- flags to D3D12_RESOURCE_FLAGS
+inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(UInt32 Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if (Usage & EBufferUsage::BufferUsage_UAV)
+    if (Flag & EBufferFlags::BufferFlag_UAV)
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
@@ -23,22 +53,22 @@ inline D3D12_RESOURCE_FLAGS ConvertBufferUsage(UInt32 Usage)
     return Result;
 }
 
-// Converts ETextureUsage- flags to D3D12_RESOURCE_FLAGS
-inline D3D12_RESOURCE_FLAGS ConvertTextureUsage(UInt32 Usage)
+// Converts ETextureFlag- flags to D3D12_RESOURCE_FLAGS
+inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(UInt32 Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if (Usage & ETextureUsage::TextureUsage_UAV)
+    if (Flag & ETextureFlags::TextureFlag_UAV)
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
-    if (Usage & ETextureUsage::TextureUsage_RTV)
+    if (Flag & ETextureFlags::TextureFlag_RTV)
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     }
-    if (Usage & ETextureUsage::TextureUsage_DSV)
+    if (Flag & ETextureFlags::TextureFlag_DSV)
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-        if (!(Usage & ETextureUsage::TextureUsage_SRV))
+        if (!(Flag & ETextureFlags::TextureFlag_SRV))
         {
             Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
         }

@@ -17,11 +17,11 @@ public:
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
 
-    const D3D12Resource* GetResource() const { return Resource; }
+    const D3D12Resource* GetResource() const { return DxResource; }
 
 protected:
-    const D3D12Resource*        Resource = nullptr;
-    D3D12OfflineDescriptorHeap* Heap     = nullptr;
+    const D3D12Resource*        DxResource = nullptr;
+    D3D12OfflineDescriptorHeap* Heap       = nullptr;
     UInt32                      OfflineHeapIndex = 0;
     D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle;
 };
@@ -67,10 +67,10 @@ public:
 
     const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const { return Desc; }
 
-    const D3D12Resource* GetCounterResource() const { return CounterResource; }
+    const D3D12Resource* GetCounterResource() const { return DxCounterResource; }
 
 private:
-    const D3D12Resource* CounterResource = nullptr;
+    const D3D12Resource* DxCounterResource = nullptr;
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
 };
 

@@ -14,10 +14,8 @@
 #include "Rendering/Renderer.h"
 
 #include "RenderLayer/Resources.h"
-#include "RenderLayer/PipelineState.h"
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
-#include "RenderLayer/Shader.h"
 
 struct ImGuiState
 {
@@ -213,11 +211,7 @@ Bool DebugUI::Init()
     Int32 Height = 0;
     IO.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-    GlobalImGuiState.FontTexture = TextureFactory::LoadSampledTextureFromMemory(
-        Pixels, 
-        Width, Height, 
-        0, 
-        EFormat::Format_R8G8B8A8_Unorm);
+    GlobalImGuiState.FontTexture = TextureFactory::LoadSampledTextureFromMemory(Pixels, Width, Height, 0, EFormat::R8G8B8A8_Unorm);
     if (!GlobalImGuiState.FontTexture)
     {
         return false;
@@ -251,13 +245,7 @@ Bool DebugUI::Init()
     })*";
 
     TArray<UInt8> ShaderCode;
-    if (!ShaderCompiler::CompileShader(
-        VSSource,
-        "Main",
-        nullptr,
-        EShaderStage::ShaderStage_Vertex,
-        EShaderModel::ShaderModel_6_0,
-        ShaderCode))
+    if (!ShaderCompiler::CompileShader(VSSource, "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;
@@ -286,13 +274,7 @@ Bool DebugUI::Init()
             return out_col;
         })*";
 
-    if (!ShaderCompiler::CompileShader(
-        PSSource,
-        "Main",
-        nullptr,
-        EShaderStage::ShaderStage_Pixel,
-        EShaderModel::ShaderModel_6_0,
-        ShaderCode))
+    if (!ShaderCompiler::CompileShader(PSSource, "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;
@@ -307,9 +289,9 @@ Bool DebugUI::Init()
 
     InputLayoutStateCreateInfo InputLayoutInfo =
     {
-        { "POSITION", 0, EFormat::Format_R32G32_Float,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, pos)), EInputClassification::InputClassification_Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::Format_R32G32_Float,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, uv)),  EInputClassification::InputClassification_Vertex, 0 },
-        { "COLOR",    0, EFormat::Format_R8G8B8A8_Unorm, 0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, col)), EInputClassification::InputClassification_Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32_Float,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, pos)), EInputClassification::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,   0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, uv)),  EInputClassification::Vertex, 0 },
+        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, 0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, col)), EInputClassification::Vertex, 0 },
     };
 
     TSharedRef<InputLayoutState> InputLayout = RenderLayer::CreateInputLayout(InputLayoutInfo);
@@ -325,7 +307,7 @@ Bool DebugUI::Init()
 
     DepthStencilStateCreateInfo DepthStencilStateInfo;
     DepthStencilStateInfo.DepthEnable    = false;
-    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::DepthWriteMask_Zero;
+    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
     TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
@@ -339,7 +321,7 @@ Bool DebugUI::Init()
     }
 
     RasterizerStateCreateInfo RasterizerStateInfo;
-    RasterizerStateInfo.CullMode = ECullMode::CullMode_None;
+    RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
@@ -355,12 +337,12 @@ Bool DebugUI::Init()
     BlendStateCreateInfo BlendStateInfo;
     BlendStateInfo.IndependentBlendEnable         = false;
     BlendStateInfo.RenderTarget[0].BlendEnable    = true;
-    BlendStateInfo.RenderTarget[0].SrcBlend       = EBlend::Blend_SrcAlpha;
-    BlendStateInfo.RenderTarget[0].SrcBlendAlpha  = EBlend::Blend_InvSrcAlpha;
-    BlendStateInfo.RenderTarget[0].DestBlend      = EBlend::Blend_InvSrcAlpha;
-    BlendStateInfo.RenderTarget[0].DestBlendAlpha = EBlend::Blend_Zero;
-    BlendStateInfo.RenderTarget[0].BlendOpAlpha   = EBlendOp::BlendOp_Add;
-    BlendStateInfo.RenderTarget[0].BlendOp        = EBlendOp::BlendOp_Add;
+    BlendStateInfo.RenderTarget[0].SrcBlend       = EBlend::SrcAlpha;
+    BlendStateInfo.RenderTarget[0].SrcBlendAlpha  = EBlend::InvSrcAlpha;
+    BlendStateInfo.RenderTarget[0].DestBlend      = EBlend::InvSrcAlpha;
+    BlendStateInfo.RenderTarget[0].DestBlendAlpha = EBlend::Zero;
+    BlendStateInfo.RenderTarget[0].BlendOpAlpha   = EBlendOp::Add;
+    BlendStateInfo.RenderTarget[0].BlendOp        = EBlendOp::Add;
 
     TSharedRef<BlendState> BlendStateBlending = RenderLayer::CreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
@@ -393,9 +375,9 @@ Bool DebugUI::Init()
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
     PSOProperties.BlendState                             = BlendStateBlending.Get();
     PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::Format_R8G8B8A8_Unorm;
+    PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
     PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::PrimitiveTopologyType_Triangle;
+    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
 
     GlobalImGuiState.PipelineState = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
     if (!GlobalImGuiState.PipelineState)
@@ -413,21 +395,18 @@ Bool DebugUI::Init()
         return false;
     }
 
-    GlobalImGuiState.VertexBuffer = RenderLayer::CreateVertexBuffer(
-        nullptr, 
-        1024 * 1024 * 8, 
-        sizeof(ImDrawVert), 
-        BufferUsage_Default);
+    GlobalImGuiState.VertexBuffer = RenderLayer::CreateVertexBuffer<ImDrawVert>(1024 * 1024, BufferUsage_Default, EResourceState::VertexAndConstantBuffer, nullptr);
     if (!GlobalImGuiState.VertexBuffer)
     {
         return false;
     }
 
     GlobalImGuiState.IndexBuffer = RenderLayer::CreateIndexBuffer(
-        nullptr, 
-        1024 * 1024 * 8, 
-        sizeof(ImDrawIdx) == 2 ? EIndexFormat::IndexFormat_UInt16 : EIndexFormat::IndexFormat_UInt32,
-        BufferUsage_Default);
+        sizeof(ImDrawIdx) == 2 ? EIndexFormat::UInt16 : EIndexFormat::UInt32, 
+        1024 * 1024, 
+        BufferUsage_Default, 
+        EResourceState::Common, 
+        nullptr);
     if (!GlobalImGuiState.IndexBuffer)
     {
         return false;
@@ -610,16 +589,16 @@ void DebugUI::Render(CommandList& CmdList)
     // Setup viewport
     CmdList.BindViewport(DrawData->DisplaySize.x, DrawData->DisplaySize.y, 0.0f, 1.0f, 0.0f, 0.0f);
 
-    CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Pixel, &MVP, 16);
+    CmdList.Bind32BitShaderConstants(EShaderStage::Pixel, &MVP, 16);
 
     CmdList.BindVertexBuffers(&GlobalImGuiState.VertexBuffer, 1, 0);
     CmdList.BindIndexBuffer(GlobalImGuiState.IndexBuffer.Get());
-    CmdList.BindPrimitiveTopology(EPrimitiveTopology::PrimitiveTopology_TriangleList);
-    CmdList.BindBlendFactor(ColorClearValue(0.0f, 0.0f, 0.0f, 0.0f));
+    CmdList.BindPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    CmdList.BindBlendFactor(ColorF(0.0f, 0.0f, 0.0f, 0.0f));
 
     // TODO: Do not change to GenericRead, change to vertex/constantbuffer
-    CmdList.TransitionBuffer(GlobalImGuiState.VertexBuffer.Get(), EResourceState::ResourceState_GenericRead, EResourceState::ResourceState_CopyDest);
-    CmdList.TransitionBuffer(GlobalImGuiState.IndexBuffer.Get(), EResourceState::ResourceState_GenericRead, EResourceState::ResourceState_CopyDest);
+    CmdList.TransitionBuffer(GlobalImGuiState.VertexBuffer.Get(), EResourceState::GenericRead, EResourceState::CopyDest);
+    CmdList.TransitionBuffer(GlobalImGuiState.IndexBuffer.Get(), EResourceState::GenericRead, EResourceState::CopyDest);
 
     UInt32 VertexOffset = 0;
     UInt32 IndexOffset  = 0;
@@ -637,8 +616,8 @@ void DebugUI::Render(CommandList& CmdList)
         IndexOffset  += IndexSize;
     }
 
-    CmdList.TransitionBuffer(GlobalImGuiState.VertexBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_GenericRead);
-    CmdList.TransitionBuffer(GlobalImGuiState.IndexBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_GenericRead);
+    CmdList.TransitionBuffer(GlobalImGuiState.VertexBuffer.Get(), EResourceState::CopyDest, EResourceState::GenericRead);
+    CmdList.TransitionBuffer(GlobalImGuiState.IndexBuffer.Get(), EResourceState::CopyDest, EResourceState::GenericRead);
 
     Int32  GlobalVertexOffset = 0;
     Int32  GlobalIndexOffset  = 0;
@@ -656,15 +635,15 @@ void DebugUI::Render(CommandList& CmdList)
                 ImGuiImage* Image = reinterpret_cast<ImGuiImage*>(Cmd->TextureId);
                 GlobalImGuiState.Images.EmplaceBack(Image);
                 
-                if (Image->BeforeState != EResourceState::ResourceState_PixelShaderResource)
+                if (Image->BeforeState != EResourceState::PixelShaderResource)
                 {
-                    CmdList.TransitionTexture(Image->Image.Get(), Image->BeforeState, EResourceState::ResourceState_PixelShaderResource);
+                    CmdList.TransitionTexture(Image->Image.Get(), Image->BeforeState, EResourceState::PixelShaderResource);
 
                     // TODO: Another way to do this? May break somewhere?
-                    Image->BeforeState = EResourceState::ResourceState_PixelShaderResource;
+                    Image->BeforeState = EResourceState::PixelShaderResource;
                 }
 
-                CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Pixel, &Image->ImageView, 1, 0);
+                CmdList.BindShaderResourceViews(EShaderStage::Pixel, &Image->ImageView, 1, 0);
 
                 if (!Image->AllowBlending)
                 {
@@ -673,7 +652,7 @@ void DebugUI::Render(CommandList& CmdList)
             }
             else
             {
-                CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Pixel, &GlobalImGuiState.FontTexture.View, 1, 0);
+                CmdList.BindShaderResourceViews(EShaderStage::Pixel, &GlobalImGuiState.FontTexture.View, 1, 0);
             }
 
             CmdList.BindScissorRect(Cmd->ClipRect.z - ClipOff.x, Cmd->ClipRect.w - ClipOff.y, Cmd->ClipRect.x - ClipOff.x, Cmd->ClipRect.y - ClipOff.y);
@@ -689,9 +668,9 @@ void DebugUI::Render(CommandList& CmdList)
     {
         VALIDATE(Image != nullptr);
 
-        if (Image->AfterState != EResourceState::ResourceState_PixelShaderResource)
+        if (Image->AfterState != EResourceState::PixelShaderResource)
         {
-            CmdList.TransitionTexture(Image->Image.Get(), EResourceState::ResourceState_PixelShaderResource, Image->AfterState);
+            CmdList.TransitionTexture(Image->Image.Get(), EResourceState::PixelShaderResource, Image->AfterState);
         }
     }
 

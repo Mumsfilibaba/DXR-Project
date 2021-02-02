@@ -13,54 +13,54 @@ public:
         EFormat Format, 
         UInt32 Width, 
         UInt32 Height, 
-        UInt32 NumMipLevels, 
+        UInt32 NumMips, 
         UInt32 NumSamples, 
-        UInt32 Usage, 
+        UInt32 Flags, 
         EResourceState InitialState,
         const ResourceData* InitialData, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return gRenderLayer->CreateTexture2D(Format, Width, Height, NumMipLevels, NumSamples, Usage, InitialState, InitialData, OptimizedClearValue);
+        return gRenderLayer->CreateTexture2D(Format, Width, Height, NumMips, NumSamples, Flags, InitialState, InitialData, OptimizedClearValue);
     }
 
     FORCEINLINE static Texture2DArray* CreateTexture2DArray(
         EFormat Format, 
         UInt32 Width, 
         UInt32 Height, 
-        UInt32 NumMipLevels, 
+        UInt32 NumMips, 
         UInt32 NumSamples,
         UInt32 NumArraySlices,
-        UInt32 Usage, 
+        UInt32 Flags, 
         EResourceState InitialState,
         const ResourceData* InitialData, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return gRenderLayer->CreateTexture2DArray(Format, Width, Height, NumMipLevels, NumSamples, NumArraySlices, Usage, InitialState, InitialData, OptimizedClearValue);
+        return gRenderLayer->CreateTexture2DArray(Format, Width, Height, NumMips, NumSamples, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
     }
 
     FORCEINLINE static TextureCube* CreateTextureCube(
         EFormat Format, 
         UInt32 Size,
-        UInt32 NumMipLevels,
-        UInt32 Usage, 
+        UInt32 NumMips,
+        UInt32 Flags, 
         EResourceState InitialState,
         const ResourceData* InitialData, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return gRenderLayer->CreateTextureCube(Format, Size, NumMipLevels, Usage, InitialState, InitialData, OptimizedClearValue);
+        return gRenderLayer->CreateTextureCube(Format, Size, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
     }
 
     FORCEINLINE static TextureCubeArray* CreateTextureCubeArray(
         EFormat Format, 
         UInt32 Size, 
-        UInt32 NumMipLevels, 
+        UInt32 NumMips, 
         UInt32 NumArraySlices,
-        UInt32 Usage, 
+        UInt32 Flags, 
         EResourceState InitialState,
         const ResourceData* InitialData, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return gRenderLayer->CreateTextureCubeArray(Format, Size, NumMipLevels, NumArraySlices, Usage, InitialState, InitialData, OptimizedClearValue);
+        return gRenderLayer->CreateTextureCubeArray(Format, Size, NumMips, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
     }
 
     FORCEINLINE static Texture3D* CreateTexture3D(
@@ -68,13 +68,13 @@ public:
         UInt32 Width,
         UInt32 Height, 
         UInt32 Depth,
-        UInt32 NumMipLevels, 
-        UInt32 Usage, 
+        UInt32 NumMips, 
+        UInt32 Flags, 
         EResourceState InitialState,
         const ResourceData* InitialData, 
         const ClearValue& OptimizedClearValue = ClearValue())
     {
-        return gRenderLayer->CreateTexture3D(Format, Width, Height, Depth, NumMipLevels, Usage, InitialState, InitialData, OptimizedClearValue);
+        return gRenderLayer->CreateTexture3D(Format, Width, Height, Depth, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
     }
 
     FORCEINLINE static class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo)
@@ -82,38 +82,38 @@ public:
         return gRenderLayer->CreateSamplerState(CreateInfo);
     }
 
-    FORCEINLINE static VertexBuffer* CreateVertexBuffer(UInt32 Stride, UInt32 NumVertices, UInt32 Usage, EResourceState InitialState, const ResourceData* InitialData)
+    FORCEINLINE static VertexBuffer* CreateVertexBuffer(UInt32 Stride, UInt32 NumVertices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
     {
-        return gRenderLayer->CreateVertexBuffer(Stride, NumVertices, Usage, InitialState, InitialData);
+        return gRenderLayer->CreateVertexBuffer(Stride, NumVertices, Flags, InitialState, InitialData);
     }
 
     template<typename T>
-    FORCEINLINE static VertexBuffer* CreateVertexBuffer(UInt32 NumVertices, UInt32 Usage, EResourceState InitialState, const ResourceData* InitalData)
+    FORCEINLINE static VertexBuffer* CreateVertexBuffer(UInt32 NumVertices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData)
     {
         constexpr UInt32 STRIDE = sizeof(T);
-        return CreateVertexBuffer(STRIDE, NumVertices, Usage, InitialState, InitialData);
+        return CreateVertexBuffer(STRIDE, NumVertices, Flags, InitialState, InitialData);
     }
 
-    FORCEINLINE static IndexBuffer* CreateIndexBuffer(EIndexFormat Format, UInt32 NumIndices, UInt32 Usage, EResourceState InitialState, const ResourceData* InitialData)
+    FORCEINLINE static IndexBuffer* CreateIndexBuffer(EIndexFormat Format, UInt32 NumIndices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
     {
-        return gRenderLayer->CreateIndexBuffer(Format, NumIndices, Usage, InitialState, InitialData);
+        return gRenderLayer->CreateIndexBuffer(Format, NumIndices, Flags, InitialState, InitialData);
     }
 
-    FORCEINLINE static ConstantBuffer* CreateConstantBuffer(UInt32 SizeInBytes, EResourceState InitialState, const ResourceData* InitialData)
+    FORCEINLINE static ConstantBuffer* CreateConstantBuffer(UInt32 SizeInBytes, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
     {
-        return gRenderLayer->CreateConstantBuffer(SizeInBytes, InitialState, InitialData);
+        return gRenderLayer->CreateConstantBuffer(SizeInBytes, Flags, InitialState, InitialData);
     }
 
     template<typename T>
-    FORCEINLINE static ConstantBuffer* CreateConstantBuffer(EResourceState InitialState, const ResourceData* InitialData)
+    FORCEINLINE static ConstantBuffer* CreateConstantBuffer(UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
     {
         constexpr UInt32 SIZE_IN_BYTES = sizeof(T);
-        return CreateConstantBuffer(SIZE_IN_BYTES, InitialState, InitialData);
+        return CreateConstantBuffer(SIZE_IN_BYTES, Flags, InitialState, InitialData);
     }
 
-    FORCEINLINE static StructuredBuffer* CreateStructuredBuffer(UInt32 Stride, UInt32 NumElements, UInt32 Usage, EResourceState InitialState, const ResourceData* InitialData)
+    FORCEINLINE static StructuredBuffer* CreateStructuredBuffer(UInt32 Stride, UInt32 NumElements, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
     {
-        return gRenderLayer->CreateStructuredBuffer(Stride, NumElements, Usage, InitialState, InitialData);
+        return gRenderLayer->CreateStructuredBuffer(Stride, NumElements, Flags, InitialState, InitialData);
     }
 
     FORCEINLINE static RayTracingScene* CreateRayTracingScene()
@@ -126,24 +126,143 @@ public:
         return gRenderLayer->CreateRayTracingGeometry();
     }
 
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo)
+    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(Texture2D* Texture, EFormat Format, UInt32 Mip, UInt32 NumMips, Float MinMipBias)
     {
-        return gRenderLayer->CreateShaderResourceView(CreateInfo);
+        return gRenderLayer->CreateShaderResourceView(Texture, Format, Mip, NumMips, MinMipBias);
     }
 
-    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(const UnorderedAccessViewCreateInfo& CreateInfo)
+    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
+        Texture2DArray* Texture, 
+        EFormat Format, 
+        UInt32 Mip, 
+        UInt32 NumMips, 
+        UInt32 ArraySlice, 
+        UInt32 NumArraySlices, 
+        Float MinMipBias)
     {
-        return gRenderLayer->CreateUnorderedAccessView(CreateInfo);
+        return gRenderLayer->CreateShaderResourceView(Texture, Format, Mip, NumMips, ArraySlice, NumArraySlices, MinMipBias);
     }
 
-    FORCEINLINE static RenderTargetView* CreateRenderTargetView(const RenderTargetViewCreateInfo& CreateInfo)
+    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(TextureCube* Texture, EFormat Format, UInt32 Mip, UInt32 NumMips, Float MinMipBias)
     {
-        return gRenderLayer->CreateRenderTargetView(CreateInfo);
+        return gRenderLayer->CreateShaderResourceView(Texture, Format, Mip, NumMips, MinMipBias);
     }
 
-    FORCEINLINE static DepthStencilView* CreateDepthStencilView(const DepthStencilViewCreateInfo& CreateInfo)
+    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
+        TextureCubeArray* Texture, 
+        EFormat Format, 
+        UInt32 Mip, 
+        UInt32 NumMips, 
+        UInt32 ArraySlice, 
+        UInt32 NumArraySlices, 
+        Float MinMipBias)
     {
-        return gRenderLayer->CreateDepthStencilView(CreateInfo);
+        return gRenderLayer->CreateShaderResourceView(Texture, Format, Mip, NumMips, ArraySlice, NumArraySlices, MinMipBias);
+    }
+
+    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(Texture3D* Texture, EFormat Format, UInt32 Mip, UInt32 NumMips, UInt32 DepthSlice, UInt32 NumDepthSlices, Float MinMipBias)
+    {
+        return gRenderLayer->CreateShaderResourceView(Texture, Format, Mip, NumMips, DepthSlice, NumDepthSlices, MinMipBias);
+    }
+
+    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(VertexBuffer* Buffer, UInt32 FirstVertex, UInt32 NumVertices)
+    {
+        return gRenderLayer->CreateShaderResourceView(Buffer, FirstVertex, NumVertices);
+    }
+
+    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(IndexBuffer* Buffer, UInt32 FirstIndex, UInt32 NumIndices)
+    {
+        return gRenderLayer->CreateShaderResourceView(Buffer, FirstIndex, NumIndices);
+    }
+
+    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(StructuredBuffer* Buffer, UInt32 FirstElement, UInt32 NumElements)
+    {
+        return gRenderLayer->CreateShaderResourceView(Buffer, FirstElement, NumElements);
+    }
+
+    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(Texture2D* Texture, EFormat Format, UInt32 Mip)
+    {
+        return gRenderLayer->CreateUnorderedAccessView(Texture, Format, Mip);
+    }
+
+    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(Texture2DArray* Texture, EFormat Format, UInt32 Mip, UInt32 ArraySlice, UInt32 NumArraySlices)
+    {
+        return gRenderLayer->CreateUnorderedAccessView(Texture, Format, Mip, ArraySlice, NumArraySlices);
+    }
+
+    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(TextureCube* Texture, EFormat Format, UInt32 Mip)
+    {
+        return gRenderLayer->CreateUnorderedAccessView(Texture, Format, Mip);
+    }
+
+    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(TextureCubeArray* Texture, EFormat Format, UInt32 Mip, UInt32 ArraySlice, UInt32 NumArraySlices)
+    {
+        return gRenderLayer->CreateUnorderedAccessView(Texture, Format, Mip, ArraySlice, NumArraySlices);
+    }
+
+    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(Texture3D* Texture, EFormat Format, UInt32 Mip, UInt32 DepthSlice, UInt32 NumDepthSlices)
+    {
+        return gRenderLayer->CreateUnorderedAccessView(Texture, Format, Mip, DepthSlice, NumDepthSlices);
+    }
+
+    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(VertexBuffer* Buffer, UInt32 FirstVertex, UInt32 NumVertices)
+    {
+        return gRenderLayer->CreateUnorderedAccessView(Buffer, FirstVertex, NumVertices);
+    }
+
+    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(IndexBuffer* Buffer, UInt32 FirstIndex, UInt32 NumIndices)
+    {
+        return gRenderLayer->CreateUnorderedAccessView(Buffer, FirstIndex, NumIndices);
+    }
+
+    FORCEINLINE static UnorderedAccessView* CreateUnorderedAccessView(StructuredBuffer* Buffer, UInt32 FirstElement, UInt32 NumElements)
+    {
+        return gRenderLayer->CreateUnorderedAccessView(Buffer, FirstElement, NumElements);
+    }
+
+    FORCEINLINE static RenderTargetView* CreateRenderTargetView(Texture2D* Texture, EFormat Format, UInt32 Mip)
+    {
+        return gRenderLayer->CreateRenderTargetView(Texture, Format, Mip);
+    }
+
+    FORCEINLINE static RenderTargetView* CreateRenderTargetView(Texture2DArray* Texture, EFormat Format, UInt32 Mip, UInt32 ArraySlice, UInt32 NumArraySlices)
+    {
+        return gRenderLayer->CreateRenderTargetView(Texture, Format, Mip, ArraySlice, NumArraySlices);
+    }
+
+    FORCEINLINE static RenderTargetView* CreateRenderTargetView(TextureCube* Texture, EFormat Format, ECubeFace CubeFace, UInt32 Mip)
+    {
+        return gRenderLayer->CreateRenderTargetView(Texture, Format, CubeFace, Mip);
+    }
+
+    FORCEINLINE static RenderTargetView* CreateRenderTargetView(TextureCubeArray* Texture, EFormat Format, ECubeFace CubeFace, UInt32 Mip, UInt32 ArraySlice)
+    {
+        return gRenderLayer->CreateRenderTargetView(Texture, Format, CubeFace, Mip, ArraySlice);
+    }
+
+    FORCEINLINE static RenderTargetView* CreateRenderTargetView(Texture3D* Texture, EFormat Format, UInt32 Mip, UInt32 DepthSlice, UInt32 NumDepthSlices)
+    {
+        return gRenderLayer->CreateRenderTargetView(Texture, Format, Mip, DepthSlice, NumDepthSlices);
+    }
+
+    FORCEINLINE static DepthStencilView* CreateDepthStencilView(Texture2D* Texture, EFormat Format, UInt32 Mip)
+    {
+        return gRenderLayer->CreateDepthStencilView(Texture, Format, Mip);
+    }
+
+    FORCEINLINE static DepthStencilView* CreateDepthStencilView(Texture2DArray* Texture, EFormat Format, UInt32 Mip, UInt32 ArraySlice, UInt32 NumArraySlices)
+    {
+        return gRenderLayer->CreateDepthStencilView(Texture, Format, Mip, ArraySlice, NumArraySlices);
+    }
+
+    FORCEINLINE static DepthStencilView* CreateDepthStencilView(TextureCube* Texture, EFormat Format, ECubeFace CubeFace, UInt32 Mip)
+    {
+        return gRenderLayer->CreateDepthStencilView(Texture, Format, CubeFace, Mip);
+    }
+
+    FORCEINLINE static DepthStencilView* CreateDepthStencilView(TextureCubeArray* Texture, EFormat Format, ECubeFace CubeFace, UInt32 Mip, UInt32 ArraySlice)
+    {
+        return gRenderLayer->CreateDepthStencilView(Texture, Format, CubeFace, Mip, ArraySlice);
     }
 
     FORCEINLINE static ComputeShader* CreateComputeShader(const TArray<UInt8>& ShaderCode)
