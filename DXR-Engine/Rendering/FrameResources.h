@@ -32,8 +32,8 @@ struct FrameResources
     TSharedRef<ConstantBuffer> CameraBuffer;
     TSharedRef<ConstantBuffer> TransformBuffer;
 
-    TSharedRef<SamplerState> ShadowMapSampler;
-    TSharedRef<SamplerState> ShadowMapCompSampler;
+    TSharedRef<SamplerState> DirectionalShadowSampler;
+    TSharedRef<SamplerState> PointShadowSampler;
     TSharedRef<SamplerState> IrradianceSampler;
 
     TSharedRef<TextureCube> Skybox;
@@ -57,6 +57,8 @@ struct FrameResources
     TSharedRef<Viewport> MainWindowViewport;
 };
 
+using DepthStencilViewCube = TStaticArray<TSharedRef<DepthStencilView>, 6>;
+
 struct SceneLightSetup
 {
     SceneLightSetup()  = default;
@@ -74,10 +76,11 @@ struct SceneLightSetup
     const UInt16  PointLightShadowSize = 1024;
 
     TSharedRef<ConstantBuffer> PointLightBuffer;
+    TSharedRef<ConstantBuffer> ShadowPointLightBuffer;
     TSharedRef<ConstantBuffer> DirectionalLightBuffer;
 
     TSharedRef<TextureCubeArray> PointLightShadowMaps;
-    TArray<TStaticArray<TSharedRef<DepthStencilView>, 6>> PointLightShadowMapDSVs;
+    TArray<DepthStencilViewCube> PointLightShadowMapDSVs;
 
     TSharedRef<Texture2D>           DirLightShadowMaps;
     TSharedRef<TextureCube>         IrradianceMap;

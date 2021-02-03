@@ -202,7 +202,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
 
     NewTexture->SetResource(DxResource);
 
-    if (Flags & TextureFlag_SRV)
+    if (Flags & TextureFlag_SRV && !(Flags & TextureFlag_NoDefaultSRV))
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc;
         Memory::Memzero(&ViewDesc);
@@ -275,9 +275,9 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         NewTexture->SetShaderResourceView(SRV.Get());
     }
 
-    // Default RenderTargetViews are only supported for Texture2D for now
+    // TODO: Fix for other resources that Texture2D?
     const Bool IsTexture2D = (Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D) && (SizeZ == 1);
-    if (Flags & TextureFlag_RTV && IsTexture2D)
+    if (Flags & TextureFlag_RTV && !(Flags & TextureFlag_NoDefaultRTV) && IsTexture2D)
     {
         D3D12Texture2D* NewTexture2D = static_cast<D3D12Texture2D*>(NewTexture->AsTexture2D());
 
@@ -304,7 +304,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         NewTexture2D->SetRenderTargetView(RTV.Get());
     }
 
-    if (Flags & TextureFlag_DSV && IsTexture2D)
+    if (Flags & TextureFlag_DSV && !(Flags & TextureFlag_NoDefaultDSV) && IsTexture2D)
     {
         D3D12Texture2D* NewTexture2D = static_cast<D3D12Texture2D*>(NewTexture->AsTexture2D());
 
@@ -330,7 +330,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         NewTexture2D->SetDepthStencilView(DSV.Get());
     }
 
-    if (Flags & TextureFlag_UAV && IsTexture2D)
+    if (Flags & TextureFlag_UAV && !(Flags & TextureFlag_NoDefaultUAV) && IsTexture2D)
     {
         D3D12Texture2D* NewTexture2D = static_cast<D3D12Texture2D*>(NewTexture->AsTexture2D());
 
@@ -474,7 +474,7 @@ SamplerState* D3D12RenderLayer::CreateSamplerState(const SamplerStateCreateInfo&
     Desc.MinLOD         = CreateInfo.MinLOD;
     Desc.MipLODBias     = CreateInfo.MipLODBias;
 
-    Memory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor, sizeof(Desc.BorderColor));
+    Memory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor.Elements, sizeof(Desc.BorderColor));
 
     TSharedRef<D3D12SamplerState> Sampler = DBG_NEW D3D12SamplerState(Device, SamplerOfflineDescriptorHeap);
     if (!Sampler->Init(Desc))

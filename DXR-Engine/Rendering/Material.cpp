@@ -3,6 +3,8 @@
 
 #include "RenderLayer/CommandList.h"
 
+#define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetShaderResourceView() : nullptr
+
 Material::Material(const MaterialProperties& InProperties)
     : AlbedoMap()
     , NormalMap()
@@ -93,13 +95,13 @@ void Material::SetDebugName(const std::string& InDebugName)
 
 ShaderResourceView* const* Material::GetShaderResourceViews() const
 {
-    ShaderResourceViews[0] = AlbedoMap.View.Get();
-    ShaderResourceViews[1] = NormalMap.View.Get();
-    ShaderResourceViews[2] = RoughnessMap.View.Get();
-    ShaderResourceViews[3] = HeightMap.View.Get();
-    ShaderResourceViews[4] = MetallicMap.View.Get();
-    ShaderResourceViews[5] = AOMap.View.Get();
-    ShaderResourceViews[6] = AlphaMask.View.Get();
+    ShaderResourceViews[0] = GET_SAFE_SRV(AlbedoMap);
+    ShaderResourceViews[1] = GET_SAFE_SRV(NormalMap);
+    ShaderResourceViews[2] = GET_SAFE_SRV(RoughnessMap);
+    ShaderResourceViews[3] = GET_SAFE_SRV(HeightMap);
+    ShaderResourceViews[4] = GET_SAFE_SRV(MetallicMap);
+    ShaderResourceViews[5] = GET_SAFE_SRV(AOMap);
+    ShaderResourceViews[6] = GET_SAFE_SRV(AlphaMask);
 
     return ShaderResourceViews.Data();
 }

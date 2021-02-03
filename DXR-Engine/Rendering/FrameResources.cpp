@@ -7,8 +7,8 @@ void FrameResources::Release()
     CameraBuffer.Reset();
     TransformBuffer.Reset();
 
-    ShadowMapSampler.Reset();
-    ShadowMapCompSampler.Reset();
+    DirectionalShadowSampler.Reset();
+    PointShadowSampler.Reset();
     IrradianceSampler.Reset();
 
     IntegrationLUT.Reset();
@@ -40,6 +40,7 @@ void FrameResources::Release()
 void SceneLightSetup::Release()
 {
     PointLightBuffer.Reset();
+    ShadowPointLightBuffer.Reset();
     DirectionalLightBuffer.Reset();
 
     PointLightShadowMaps.Reset();

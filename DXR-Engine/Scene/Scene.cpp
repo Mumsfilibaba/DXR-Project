@@ -101,28 +101,28 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
     // Create standard textures
     Byte Pixels[] = { 255, 255, 255, 255 };
-    SampledTexture2D WhiteTexture = TextureFactory::LoadSampledTextureFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    TSharedRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
     if (!WhiteTexture)
     {
         return nullptr;
     }
     else
     {
-        WhiteTexture.SetName("[Scene] WhiteTexture");
+        WhiteTexture->SetName("[Scene] WhiteTexture");
     }
 
     Pixels[0] = 127;
     Pixels[1] = 127;
     Pixels[2] = 255;
 
-    SampledTexture2D NormalMap = TextureFactory::LoadSampledTextureFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    TSharedRef<Texture2D> NormalMap = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
     if (!NormalMap)
     {
         return nullptr;
     }
     else
     {
-        NormalMap.SetName("[Scene] NormalMap");
+        NormalMap->SetName("[Scene] NormalMap");
     }
 
     // Create BaseMaterial
@@ -142,7 +142,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
     // Create All Materials in scene
     TArray<TSharedPtr<Material>> LoadedMaterials;
-    std::unordered_map<std::string, SampledTexture2D> MaterialTextures;
+    std::unordered_map<std::string, TSharedRef<Texture2D>> MaterialTextures;
     for (tinyobj::material_t& Mat : Materials)
     {
         // Create new material with default properties
@@ -168,10 +168,10 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
             if (MaterialTextures.count(Mat.ambient_texname) == 0)
             {
                 std::string TexName = MTLFiledir + '/' + Mat.ambient_texname;
-                SampledTexture2D Texture = TextureFactory::LoadSampledTextureFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+                TSharedRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
                 if (Texture)
                 {
-                    Texture.SetName(Mat.ambient_texname);
+                    Texture->SetName(Mat.ambient_texname);
                     MaterialTextures[Mat.ambient_texname] = Texture;
                 }
                 else
@@ -190,10 +190,10 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
             if (MaterialTextures.count(Mat.diffuse_texname) == 0)
             {
                 std::string TexName = MTLFiledir + '/' + Mat.diffuse_texname;
-                SampledTexture2D Texture = TextureFactory::LoadSampledTextureFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm); 
+                TSharedRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm); 
                 if (Texture)
                 {
-                    Texture.SetName(Mat.diffuse_texname);
+                    Texture->SetName(Mat.diffuse_texname);
                     MaterialTextures[Mat.diffuse_texname] = Texture;
                 }
                 else
@@ -212,10 +212,10 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
             if (MaterialTextures.count(Mat.specular_highlight_texname) == 0)
             {
                 std::string TexName = MTLFiledir + '/' + Mat.specular_highlight_texname;
-                SampledTexture2D Texture = TextureFactory::LoadSampledTextureFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+                TSharedRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
                 if (Texture)
                 {
-                    Texture.SetName(Mat.specular_highlight_texname);
+                    Texture->SetName(Mat.specular_highlight_texname);
                     MaterialTextures[Mat.specular_highlight_texname] = Texture;
                 }
                 else
@@ -234,10 +234,10 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
             if (MaterialTextures.count(Mat.bump_texname) == 0)
             {
                 std::string TexName = MTLFiledir + '/' + Mat.bump_texname;
-                SampledTexture2D Texture = TextureFactory::LoadSampledTextureFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+                TSharedRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
                 if (Texture)
                 {
-                    Texture.SetName(Mat.bump_texname);
+                    Texture->SetName(Mat.bump_texname);
                     MaterialTextures[Mat.bump_texname] = Texture;
                 }
                 else
@@ -256,10 +256,10 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
             if (MaterialTextures.count(Mat.alpha_texname) == 0)
             {
                 std::string TexName = MTLFiledir + '/' + Mat.alpha_texname;
-                SampledTexture2D Texture = TextureFactory::LoadSampledTextureFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+                TSharedRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
                 if (Texture)
                 {
-                    Texture.SetName(Mat.alpha_texname);
+                    Texture->SetName(Mat.alpha_texname);
                     MaterialTextures[Mat.alpha_texname] = Texture;
                 }
                 else

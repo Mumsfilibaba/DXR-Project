@@ -7,7 +7,11 @@
 #define TOTAL_THREAD_COUNT  (THREAD_COUNT * THREAD_COUNT)
 #define MAX_LIGHTS_PER_TILE 256
 
-#define DRAW_TILE_OCCUPANCY 0
+#ifdef DRAW_TILE_DEBUG 
+    #define DRAW_TILE_OCCUPANCY 1
+#else
+    #define DRAW_TILE_OCCUPANCY 0
+#endif
 
 Texture2D<float4>       AlbedoTex               : register(t0, space0);
 Texture2D<float4>       NormalTex               : register(t1, space0);
@@ -25,8 +29,8 @@ SamplerState GBufferSampler     : register(s0, space0);
 SamplerState LUTSampler         : register(s1, space0);
 SamplerState IrradianceSampler  : register(s2, space0);
 
-SamplerComparisonState ShadowMapSampler0    : register(s3, space0);
-SamplerState ShadowMapSampler1              : register(s4, space0);
+SamplerComparisonState ShadowMapSampler0 : register(s3, space0);
+SamplerComparisonState ShadowMapSampler1 : register(s4, space0);
 
 cbuffer Constants : register(b0, space0)
 {
@@ -175,13 +179,8 @@ void Main(ComputeShaderInput Input)
     {
         int Index = GroupLightIndices[i];
         const PointLight Light = PointLights[Index];
-        float ShadowFactor = PointLightShadowFactor(
-            PointLightShadowMaps, float(Index),
-            ShadowMapSampler0,
-            WorldPosition,
-            N,
-            Light);
-        
+     
+        float ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(Index), ShadowMapSampler0, WorldPosition, N, Light);
         if (ShadowFactor > 0.001f)
         {
             float3 L = Light.Position - WorldPosition;
@@ -190,12 +189,7 @@ void Main(ComputeShaderInput Input)
             L = normalize(L);
             
             float3 IncidentRadiance = Light.Color * Attenuation;
-            IncidentRadiance = DirectRadiance(
-                F0, N, V, L,
-                IncidentRadiance,
-                GBufferAlbedo,
-                GBufferRoughness,
-                GBufferMetallic);
+            IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);
             
             L0 += IncidentRadiance * ShadowFactor;
         }
@@ -204,24 +198,13 @@ void Main(ComputeShaderInput Input)
     // DirectionalLights
     {
         const DirectionalLight Light = DirLightBuffer;
-        const float ShadowFactor = DirectionalLightShadowFactor(
-            DirLightShadowMaps,
-            ShadowMapSampler0,
-            WorldPosition,
-            N,
-            Light);
-        
+        const float ShadowFactor = DirectionalLightShadowFactor(DirLightShadowMaps, ShadowMapSampler1, WorldPosition, N, Light);
         if (ShadowFactor > 0.001f)
         {
             float3 L = normalize(-Light.Direction);
             
             float3 IncidentRadiance = Light.Color;
-            IncidentRadiance = DirectRadiance(
-                F0, N, V, L,
-                IncidentRadiance,
-                GBufferAlbedo,
-                GBufferRoughness,
-                GBufferMetallic);
+            IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);
             
             L0 += IncidentRadiance * ShadowFactor;
         }

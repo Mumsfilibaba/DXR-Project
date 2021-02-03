@@ -39,17 +39,17 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
 
     // Create Texture Cube
     const std::string PanoramaSourceFilename = "../Assets/Textures/arches.hdr";
-    SampledTexture2D Panorama = TextureFactory::LoadSampledTextureFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
+    TSharedRef<Texture2D> Panorama = TextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
     if (!Panorama)
     {
         return false;
     }
     else
     {
-        Panorama.SetName(PanoramaSourceFilename);
+        Panorama->SetName(PanoramaSourceFilename);
     }
 
-    FrameResources.Skybox = TextureFactory::CreateTextureCubeFromPanorma(Panorama, 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
+    FrameResources.Skybox = TextureFactory::CreateTextureCubeFromPanorma(Panorama.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
     if (!FrameResources.Skybox)
     {
         return false;

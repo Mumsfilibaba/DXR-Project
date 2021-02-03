@@ -4,10 +4,7 @@
 #include "Constants.hlsli"
 #include "Helpers.hlsli"
 
-/*
-* ImportanceSample GGX
-*/
-
+// ImportanceSample GGX
 float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
 {
     float Alpha = Roughness * Roughness;
@@ -26,10 +23,7 @@ float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
     return TangentX * H.x + TangentY * H.y + N * H.z;
 }
 
-/*
-* GGX Distribution
-*/
-
+// GGX Distribution
 float DistributionGGX(float3 N, float3 H, float Roughness)
 {
     float Alpha  = Roughness * Roughness;
@@ -39,10 +33,7 @@ float DistributionGGX(float3 N, float3 H, float Roughness)
     return Alpha2 / max(PI * Denominator * Denominator, 0.0000001f);
 }
 
-/*
-* Fresnel Schlick
-*/
-
+// Fresnel Schlick
 float3 FresnelSchlick(float3 F0, float3 V, float3 H)
 {
     float VDotH = max(dot(V, H), 0.0f);
@@ -57,10 +48,7 @@ float3 FresnelSchlick_Roughness(float3 F0, float3 V, float3 H, float Roughness)
     return F0 + (max(Float3(1.0f - Roughness), F0) - F0) * exp2(Exp);
 }
 
-/*
-* Geometry Smitch
-*/
-
+// Geometry Smitch
 float GeometrySmithGGX1(float3 N, float3 V, float3 H, float Roughness)
 {
     float Roughness1 = Roughness + 1;
@@ -86,10 +74,7 @@ float GeometrySmithGGX_IBL(float3 N, float3 L, float3 V, float3 H, float Roughne
     return GeometrySmithGGX1_IBL(N, L, H, Roughness) * GeometrySmithGGX1_IBL(N, V, H, Roughness);
 }
 
-/*
-* Radiance
-*/
-
+// Radiance
 float3 DirectRadiance(
     float3 F0,
     float3 N,

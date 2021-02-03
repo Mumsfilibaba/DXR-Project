@@ -4,6 +4,11 @@
 class Math
 {
 public:
+    static constexpr Float PI      = 3.14159265359f;
+    static constexpr Float TWO_PI  = PI * 2.0f;
+    static constexpr Float HALF_PI = PI / 2.0f;
+
+public:
     template <typename T>
     FORCEINLINE static T DivideByMultiple(T Value, UInt32 Alignment)
     {

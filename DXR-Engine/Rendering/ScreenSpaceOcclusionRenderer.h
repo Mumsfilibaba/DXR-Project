@@ -14,9 +14,9 @@ public:
     Bool Init(FrameResources& FrameResources);
     void Release();
 
-    Bool ResizeResources(FrameResources& FrameResources);
-
     void Render(CommandList& CmdList, const FrameResources& FrameResources);
+
+    Bool ResizeResources(FrameResources& FrameResources);
 
 private:
     Bool CreateRenderTarget(FrameResources& FrameResources);

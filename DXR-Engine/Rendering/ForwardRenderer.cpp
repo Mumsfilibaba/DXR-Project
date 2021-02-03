@@ -173,8 +173,8 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
         {
             FrameResources.IntegrationLUTSampler.Get(),
             FrameResources.IrradianceSampler.Get(),
-            FrameResources.ShadowMapCompSampler.Get(),
-            FrameResources.ShadowMapSampler.Get()
+            FrameResources.PointShadowSampler.Get(),
+            FrameResources.DirectionalShadowSampler.Get()
         };
 
         CmdList.BindSamplerStates(EShaderStage::Pixel, SamplerStates, 4, 1);

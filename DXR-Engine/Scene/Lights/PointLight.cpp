@@ -48,6 +48,11 @@ void PointLight::SetShadowFarPlane(Float InShadowFarPlane)
 
 void PointLight::CalculateMatrices()
 {
+	if (!ShadowCaster)
+	{
+		return;
+	}
+
 	XMFLOAT3 Directions[6] = 
 	{
 		{  1.0f,  0.0f,  0.0f },

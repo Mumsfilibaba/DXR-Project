@@ -18,10 +18,13 @@ public:
     void RenderBasePass(CommandList& CmdList, const FrameResources& FrameResources);
     void RenderDeferredTiledLightPass(CommandList& CmdList, const FrameResources& FrameResources, const SceneLightSetup& LightSetup);
 
+    Bool ResizeResources(FrameResources& FrameResources);
+
 private:
     Bool CreateGBuffer(FrameResources& FrameResources);
 
     TSharedRef<GraphicsPipelineState> PipelineState;
     TSharedRef<GraphicsPipelineState> PrePassPipelineState;
     TSharedRef<ComputePipelineState>  TiledLightPassPSO;
+    TSharedRef<ComputePipelineState>  TiledLightPassPSODebug;
 };

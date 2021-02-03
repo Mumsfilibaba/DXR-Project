@@ -8,6 +8,10 @@ enum ETextureFlags
     TextureFlag_DSV           = FLAG(2), // DepthStencilView
     TextureFlag_UAV           = FLAG(3), // UnorderedAccessView
     TextureFlag_SRV           = FLAG(4), // ShaderResourceView
+    TextureFlag_NoDefaultRTV  = FLAG(5), // Do not create default RenderTargetView
+    TextureFlag_NoDefaultDSV  = FLAG(6), // Do not create default DepthStencilView
+    TextureFlag_NoDefaultUAV  = FLAG(7), // Do not create default UnorderedAccessView
+    TextureFlag_NoDefaultSRV  = FLAG(8), // Do not create default ShaderResourceView
     TextureFlags_RWTexture    = TextureFlag_UAV | TextureFlag_SRV,
     TextureFlags_RenderTarget = TextureFlag_RTV | TextureFlag_SRV,
     TextureFlags_ShadowMap    = TextureFlag_DSV | TextureFlag_SRV,
@@ -40,14 +44,15 @@ public:
 
     UInt32 GetNumMips() const { return NumMips; }
 
-    UInt32 GetFlags() const { return Flags; }
-
     const ClearValue& GetOptimalClearValue() const { return OptimalClearValue; }
 
-    Bool IsUAV() const { return (Flags & TextureFlag_UAV); }
-    Bool IsSRV() const { return (Flags & TextureFlag_SRV); }
-    Bool IsRTV() const { return (Flags & TextureFlag_RTV); }
-    Bool IsDSV() const { return (Flags & TextureFlag_SRV); }
+    UInt32 GetFlags() const { return Flags; }
+
+    // Checks weather a default shaderrsourceview is created by the renderlayer
+    Bool IsUAV() const { return (Flags & TextureFlag_UAV) && !(Flags & TextureFlag_NoDefaultUAV); }
+    Bool IsSRV() const { return (Flags & TextureFlag_SRV) && !(Flags & TextureFlag_NoDefaultSRV); }
+    Bool IsRTV() const { return (Flags & TextureFlag_RTV) && !(Flags & TextureFlag_NoDefaultRTV); }
+    Bool IsDSV() const { return (Flags & TextureFlag_SRV) && !(Flags & TextureFlag_NoDefaultSRV); }
 
 private:
     EFormat Format;

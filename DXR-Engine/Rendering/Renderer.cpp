@@ -597,20 +597,22 @@ Bool Renderer::Init()
 
     {
         SamplerStateCreateInfo CreateInfo;
-        CreateInfo.AddressU = ESamplerMode::Wrap;
-        CreateInfo.AddressV = ESamplerMode::Wrap;
-        CreateInfo.AddressW = ESamplerMode::Wrap;
-        CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
+        CreateInfo.AddressU       = ESamplerMode::Border;
+        CreateInfo.AddressV       = ESamplerMode::Border;
+        CreateInfo.AddressW       = ESamplerMode::Border;
+        CreateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
+        CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
+        CreateInfo.BorderColor    = ColorF(1.0f, 1.0f, 1.0f, 1.0f);
 
-        Resources.ShadowMapSampler = RenderLayer::CreateSamplerState(CreateInfo);
-        if (!Resources.ShadowMapSampler)
+        Resources.DirectionalShadowSampler = RenderLayer::CreateSamplerState(CreateInfo);
+        if (!Resources.DirectionalShadowSampler)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            Resources.ShadowMapSampler->SetName("ShadowMap Sampler");
+            Resources.DirectionalShadowSampler->SetName("ShadowMap Sampler");
         }
     }
 
@@ -622,15 +624,15 @@ Bool Renderer::Init()
         CreateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
         CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
 
-        Resources.ShadowMapCompSampler = RenderLayer::CreateSamplerState(CreateInfo);
-        if (!Resources.ShadowMapCompSampler)
+        Resources.PointShadowSampler = RenderLayer::CreateSamplerState(CreateInfo);
+        if (!Resources.PointShadowSampler)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            Resources.ShadowMapCompSampler->SetName("ShadowMap Comparison Sampler");
+            Resources.PointShadowSampler->SetName("ShadowMap Comparison Sampler");
         }
     }
 
@@ -1053,7 +1055,21 @@ void Renderer::ResizeResources(UInt32 Width, UInt32 Height)
 {
     gCmdListExecutor.WaitForGPU();
 
-    Resources.MainWindowViewport->Resize(Width, Height);
+    if (!Resources.MainWindowViewport->Resize(Width, Height))
+    {
+        Debug::DebugBreak();
+        return;
+    }
 
-    // TODO: Resize other resources
+    if (!DeferredRenderer.ResizeResources(Resources))
+    {
+        Debug::DebugBreak();
+        return;
+    }
+
+    if (!SSAORenderer.ResizeResources(Resources))
+    {
+        Debug::DebugBreak();
+        return;
+    }
 }

@@ -8,9 +8,15 @@
 #include "Rendering/Material.h"
 
 #include "Debug/Profiler.h"
+#include "Debug/Console.h"
+
+ConsoleVariable GlobalDrawTileDebug(EConsoleVariableType::Bool);
 
 Bool DeferredRenderer::Init(FrameResources& FrameResources)
 {
+    INIT_CONSOLE_VARIABLE("r.DrawTileDebug", GlobalDrawTileDebug);
+    GlobalDrawTileDebug.SetBool(false);
+
     if (!CreateGBuffer(FrameResources))
     {
         return false;
@@ -337,35 +343,75 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
     CmdList.End();
     gCmdListExecutor.ExecuteCommandList(CmdList);
 
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
-        Debug::DebugBreak();
-        return false;
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+
+        CShader = RenderLayer::CreateComputeShader(ShaderCode);
+        if (!CShader)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            CShader->SetName("DeferredLightPass Shader");
+        }
+
+        ComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
+        DeferredLightPassCreateInfo.Shader = CShader.Get();
+
+        TiledLightPassPSO = RenderLayer::CreateComputePipelineState(DeferredLightPassCreateInfo);
+        if (!TiledLightPassPSO)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            TiledLightPassPSO->SetName("DeferredLightPass PipelineState");
+        }
     }
 
-    CShader = RenderLayer::CreateComputeShader(ShaderCode);
-    if (!CShader)
     {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        CShader->SetName("DeferredLightPass Shader");
-    }
+        TArray<ShaderDefine> Defines =
+        {
+            ShaderDefine("DRAW_TILE_DEBUG", "1")
+        };
 
-    ComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
-    DeferredLightPassCreateInfo.Shader = CShader.Get();
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        {
+            Debug::DebugBreak();
+            return false;
+        }
 
-    TiledLightPassPSO = RenderLayer::CreateComputePipelineState(DeferredLightPassCreateInfo);
-    if (!TiledLightPassPSO)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        TiledLightPassPSO->SetName("DeferredLightPass PipelineState");
+        CShader = RenderLayer::CreateComputeShader(ShaderCode);
+        if (!CShader)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            CShader->SetName("DeferredLightPass Shader");
+        }
+
+        ComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
+        DeferredLightPassCreateInfo.Shader = CShader.Get();
+
+        TiledLightPassPSODebug = RenderLayer::CreateComputePipelineState(DeferredLightPassCreateInfo);
+        if (!TiledLightPassPSODebug)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            TiledLightPassPSODebug->SetName("DeferredLightPass PipelineState Debug");
+        }
     }
 
     return true;
@@ -487,7 +533,14 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
 
     TRACE_SCOPE("LightPass");
 
-    CmdList.BindComputePipelineState(TiledLightPassPSO.Get());
+    if (GlobalDrawTileDebug.GetBool())
+    {
+        CmdList.BindComputePipelineState(TiledLightPassPSODebug.Get());
+    }
+    else
+    {
+        CmdList.BindComputePipelineState(TiledLightPassPSO.Get());
+    }
 
     ShaderResourceView* ShaderResourceViews[] =
     {
@@ -520,8 +573,8 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
         FrameResources.GBufferSampler.Get(),
         FrameResources.IntegrationLUTSampler.Get(),
         FrameResources.IrradianceSampler.Get(),
-        FrameResources.ShadowMapCompSampler.Get(),
-        FrameResources.ShadowMapSampler.Get()
+        FrameResources.PointShadowSampler.Get(),
+        FrameResources.DirectionalShadowSampler.Get()
     };
 
     CmdList.BindSamplerStates(EShaderStage::Compute, SamplerStates, 5, 0);
@@ -550,6 +603,11 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
     CmdList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");
+}
+
+Bool DeferredRenderer::ResizeResources(FrameResources& FrameResources)
+{
+    return CreateGBuffer(FrameResources);
 }
 
 Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)

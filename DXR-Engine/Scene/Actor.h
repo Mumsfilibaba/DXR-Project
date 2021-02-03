@@ -32,6 +32,11 @@ public:
     void SetScale(Float x, Float y, Float z);
     void SetScale(const XMFLOAT3& InScale);
 
+    void SetUniformScale(Float InScale)
+    {
+        SetScale(InScale, InScale, InScale);
+    }
+
     void SetRotation(Float x, Float y, Float z);
     void SetRotation(const XMFLOAT3& InRotation);
 

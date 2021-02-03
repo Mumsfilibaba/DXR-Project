@@ -53,6 +53,11 @@ using namespace DirectX;
 #define BIT(Bit)	(1 << Bit)
 #define FLAG(Bit)	BIT(Bit)
 
+inline Bool HasFlag(UInt32 Mask, UInt32 Flag)
+{
+    return Mask & Flag;
+}
+
 // Unused params
 #ifndef UNREFERENCED_VARIABLE
     #define UNREFERENCED_VARIABLE(Variable) (void)(Variable)

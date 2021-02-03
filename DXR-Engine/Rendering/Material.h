@@ -1,6 +1,5 @@
 #pragma once
 #include "RenderLayer/Resources.h"
-#include "RenderLayer/ResourceHelpers.h"
 
 #include <Containers/TStaticArray.h>
 
@@ -43,39 +42,23 @@ public:
     // This means that one can call BindShaderResourceViews directly with this function
     ShaderResourceView* const* GetShaderResourceViews() const;
 
-    FORCEINLINE SamplerState* GetMaterialSampler() const
-    {
-        return Sampler.Get();
-    }
+    SamplerState* GetMaterialSampler() const { return Sampler.Get(); }
+    ConstantBuffer* GetMaterialBuffer() const { return MaterialBuffer.Get(); }
 
-    FORCEINLINE ConstantBuffer* GetMaterialBuffer() const
-    {
-        return MaterialBuffer.Get();
-    }
+    Bool HasAlphaMask() const { return AlphaMask; }
 
-    FORCEINLINE Bool HasAlphaMask() const
-    {
-        return AlphaMask;
-    }
+    Bool HasHeightMap() const { return HeightMap; }
 
-    FORCEINLINE Bool HasHeightMap() const
-    {
-        return HeightMap;
-    }
-
-    FORCEINLINE const MaterialProperties& GetMaterialProperties() const 
-    {
-        return Properties;
-    }
+    const MaterialProperties& GetMaterialProperties() const { return Properties; }
 
 public:
-    SampledTexture2D AlbedoMap;
-    SampledTexture2D NormalMap;
-    SampledTexture2D RoughnessMap;
-    SampledTexture2D HeightMap;
-    SampledTexture2D AOMap;
-    SampledTexture2D MetallicMap;
-    SampledTexture2D AlphaMask;
+    TSharedRef<Texture2D> AlbedoMap;
+    TSharedRef<Texture2D> NormalMap;
+    TSharedRef<Texture2D> RoughnessMap;
+    TSharedRef<Texture2D> HeightMap;
+    TSharedRef<Texture2D> AOMap;
+    TSharedRef<Texture2D> MetallicMap;
+    TSharedRef<Texture2D> AlphaMask;
 
 private:
     std::string	DebugName;

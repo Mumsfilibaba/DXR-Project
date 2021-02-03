@@ -15,6 +15,14 @@ public:
     void SetShadowNearPlane(Float InShadowNearPlane);
     void SetShadowFarPlane(Float InShadowFarPlane);
 
+    void SetShadowCaster(Bool InShadowCaster) 
+    { 
+        ShadowCaster = InShadowCaster;
+        CalculateMatrices();
+    }
+
+    Bool IsShadowCaster() const { return ShadowCaster; }
+
     const XMFLOAT3& GetPosition() const { return Position; }
 
     const XMFLOAT4X4& GetMatrix(UInt32 Index) const
@@ -42,4 +50,5 @@ private:
     XMFLOAT4X4 ViewMatrices[6];
     XMFLOAT4X4 ProjMatrices[6];
     XMFLOAT3   Position;
+    Bool       ShadowCaster = false;
 };

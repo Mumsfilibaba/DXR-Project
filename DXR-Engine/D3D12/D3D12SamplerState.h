@@ -37,15 +37,19 @@ public:
         }
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
+    virtual void* GetNativeResource() const override final
     {
-        return OfflineHandle;
+        return reinterpret_cast<void*>(OfflineHandle.ptr);
     }
 
-    const D3D12_SAMPLER_DESC& GetDesc() const
+    virtual Bool IsValid() const override
     {
-        return Desc;
+        return OfflineHandle != 0;
     }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
+
+    const D3D12_SAMPLER_DESC& GetDesc() const { return Desc; }
 
 private:
     D3D12OfflineDescriptorHeap* OfflineHeap      = nullptr;

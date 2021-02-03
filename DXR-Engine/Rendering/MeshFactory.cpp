@@ -4,7 +4,7 @@
 //#include <assimp/scene.h>
 //#include <assimp/postprocess.h>
 
-MeshData MeshFactory::CreateFromFile(const std::string& Filename, bool MergeMeshes, bool LeftHanded) noexcept
+MeshData MeshFactory::CreateFromFile(const std::string& Filename, Bool MergeMeshes, Bool LeftHanded) noexcept
 {
     UNREFERENCED_VARIABLE(Filename);
     UNREFERENCED_VARIABLE(MergeMeshes);
@@ -57,18 +57,18 @@ MeshData MeshFactory::CreateFromFile(const std::string& Filename, bool MergeMesh
                         data.Vertices.resize(vertexOffset + vertCount);
                         for (size_t i = 0; i < vertCount; i++)
                         {
-                            data.Vertices[vertexOffset + i].Position = vec3(pMesh->mVertices[i].x, pMesh->mVertices[i].y, pMesh->mVertices[i].z);
+                            data.Vertices[vertexOffset + i].Position = XMFLOAT3(pMesh->mVertices[i].x, pMesh->mVertices[i].y, pMesh->mVertices[i].z);
                             if (pMesh->HasNormals())
                             {
-                                data.Vertices[vertexOffset + i].Normal = vec3(pMesh->mNormals[i].x, pMesh->mNormals[i].y, pMesh->mNormals[i].z);
+                                data.Vertices[vertexOffset + i].Normal = XMFLOAT3(pMesh->mNormals[i].x, pMesh->mNormals[i].y, pMesh->mNormals[i].z);
                             }
                             if (pMesh->HasTangentsAndBitangents())
                             {
-                                data.Vertices[vertexOffset + i].Tangent = vec3(pMesh->mTangents[i].x, pMesh->mTangents[i].y, pMesh->mTangents[i].z);
+                                data.Vertices[vertexOffset + i].Tangent = XMFLOAT3(pMesh->mTangents[i].x, pMesh->mTangents[i].y, pMesh->mTangents[i].z);
                             }
                             if (pMesh->HasTextureCoords(0))
                             {
-                                data.Vertices[vertexOffset + i].TexCoord = vec2(pMesh->mTextureCoords[0][i].x, pMesh->mTextureCoords[0][i].y);
+                                data.Vertices[vertexOffset + i].TexCoord = XMFLOAT2(pMesh->mTextureCoords[0][i].x, pMesh->mTextureCoords[0][i].y);
                             }
                         }
 
@@ -190,45 +190,44 @@ MeshData MeshFactory::CreateCube(Float Width, Float Height, Float Depth) noexcep
 
 MeshData MeshFactory::CreatePlane(UInt32 Width, UInt32 Height) noexcept
 {
-    UNREFERENCED_VARIABLE(Width);
-    UNREFERENCED_VARIABLE(Height);
-
-    /*using namespace std;
-
     MeshData data;
-    if (width < 1)
-        width = 1;
-    if (height < 1)
-        height = 1;
-
-    data.Vertices.resize((width + 1) * (height + 1));
-    data.Indices.resize((width * height) * 6);
-
-    //Size of each quad, size of the plane will always be between -0.5 and 0.5
-    vec2 quadSize = vec2(1.0f / Float(width), 1.0f / Float(height));
-    vec2 uvQuadSize = vec2(1.0f / Float(width), 1.0f / Float(height));
-
-    //Initialize Vertices
-    for (UInt32 x = 0; x <= width; x++)
+    if (Width < 1)
     {
-        for (UInt32 y = 0; y <= height; y++)
+        Width = 1;
+    }
+    if (Height < 1)
+    {
+        Height = 1;
+    }
+
+    data.Vertices.Resize((Width + 1) * (Height + 1));
+    data.Indices.Resize((Width * Height) * 6);
+
+    // Size of each quad, size of the plane will always be between -0.5 and 0.5
+    XMFLOAT2 quadSize   = XMFLOAT2(1.0f / Float(Width), 1.0f / Float(Height));
+    XMFLOAT2 uvQuadSize = XMFLOAT2(1.0f / Float(Width), 1.0f / Float(Height));
+
+    for (UInt32 x = 0; x <= Width; x++)
+    {
+        for (UInt32 y = 0; y <= Height; y++)
         {
-            Int32 v = ((1 + height) * x) + y;
-            data.Vertices[v].Position = vec3(0.5f - (quadSize.x * x), 0.5f - (quadSize.y * y), 0.0f);
-            data.Vertices[v].Normal = vec3(0.0f, 0.0f, 1.0f);
-            data.Vertices[v].Tangent = vec3(1.0f, 0.0f, 0.0f);
-            data.Vertices[v].TexCoord = vec2(0.0f + (uvQuadSize.x * x), 0.0f + (uvQuadSize.y * y));
+            Int32 v = ((1 + Height) * x) + y;
+            data.Vertices[v].Position = XMFLOAT3(0.5f - (quadSize.x * x), 0.5f - (quadSize.y * y), 0.0f);
+
+            // TODO: Fix so normal is positive
+            data.Vertices[v].Normal   = XMFLOAT3(0.0f, 0.0f, -1.0f);
+            data.Vertices[v].Tangent  = XMFLOAT3(1.0f, 0.0f, 0.0f);
+            data.Vertices[v].TexCoord = XMFLOAT2(0.0f + (uvQuadSize.x * x), 0.0f + (uvQuadSize.y * y));
         }
     }
 
-    //Initialize Indices
-    for (UInt8 x = 0; x < width; x++)
+    for (UInt8 x = 0; x < Width; x++)
     {
-        for (UInt8 y = 0; y < height; y++)
+        for (UInt8 y = 0; y < Height; y++)
         {
-            Int32 quad = (height * x) + y;
-            data.Indices[(quad * 6) + 0] = (x * (1 + height)) + y + 1;
-            data.Indices[(quad * 6) + 1] = (data.Indices[quad * 6] + 2 + (height - 1));
+            Int32 quad = (Height * x) + y;
+            data.Indices[(quad * 6) + 0] = (x * (1 + Height)) + y + 1;
+            data.Indices[(quad * 6) + 1] = (data.Indices[quad * 6] + 2 + (Height - 1));
             data.Indices[(quad * 6) + 2] = data.Indices[quad * 6] - 1;
             data.Indices[(quad * 6) + 3] = data.Indices[(quad * 6) + 1];
             data.Indices[(quad * 6) + 4] = data.Indices[(quad * 6) + 1] - 1;
@@ -236,12 +235,10 @@ MeshData MeshFactory::CreatePlane(UInt32 Width, UInt32 Height) noexcept
         }
     }
 
-    //Resize array
-    data.Vertices.shrink_to_fit();
-    data.Indices.shrink_to_fit();
+    data.Vertices.ShrinkToFit();
+    data.Indices.ShrinkToFit();
 
-    return data;*/
-    return MeshData();
+    return data;
 }
 
 MeshData MeshFactory::CreateSphere(UInt32 Subdivisions, Float Radius) noexcept
@@ -249,7 +246,6 @@ MeshData MeshFactory::CreateSphere(UInt32 Subdivisions, Float Radius) noexcept
     MeshData Sphere;
     Sphere.Vertices.Resize(12);
 
-    // VERTICES
     Float T = (1.0f + sqrt(5.0f)) / 2.0f;
     Sphere.Vertices[0].Position  = XMFLOAT3(-1.0f,  T,     0.0f);
     Sphere.Vertices[1].Position  = XMFLOAT3( 1.0f,  T,     0.0f);
@@ -264,7 +260,6 @@ MeshData MeshFactory::CreateSphere(UInt32 Subdivisions, Float Radius) noexcept
     Sphere.Vertices[10].Position = XMFLOAT3(-T,     0.0f, -1.0f);
     Sphere.Vertices[11].Position = XMFLOAT3(-T,     0.0f,  1.0f);
 
-    // INDICIES
     Sphere.Indices =
     {
         0, 11, 5,
@@ -343,9 +338,9 @@ MeshData MeshFactory::CreateCone(UInt32 Sides, Float Radius, Float Height) noexc
     Float uOffset = 1.0f / Float(sides - 1);
 
     // CREATE VERTICES
-    data.Vertices[0].Position = vec3(0.0f, 0.0f, 0.0f);
-    data.Vertices[0].Normal = vec3(0.0f, -1.0f, 0.0f);
-    data.Vertices[0].TexCoord = vec2(0.25f, 0.25f);
+    data.Vertices[0].Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    data.Vertices[0].Normal = XMFLOAT3(0.0f, -1.0f, 0.0f);
+    data.Vertices[0].TexCoord = XMFLOAT2(0.25f, 0.25f);
 
     size_t offset = size_t(sides) + 1;
     size_t topOffset = offset + size_t(sides);
@@ -355,21 +350,21 @@ MeshData MeshFactory::CreateCone(UInt32 Sides, Float Radius, Float Height) noexc
         Float x = cosf((pi<Float>() / 2.0f) + (angle * i));
         Float z = sinf((pi<Float>() / 2.0f) + (angle * i));
 
-        vec3 pos = normalize(vec3(x, 0.0f, z));
+        XMFLOAT3 pos = normalize(XMFLOAT3(x, 0.0f, z));
         data.Vertices[i + 1].Position = (pos * radius);
-        data.Vertices[i + 1].Normal = vec3(0.0f, -1.0f, 0.0f);
-        data.Vertices[i + 1].TexCoord = (vec2(x + 1.0f, z + 1.0f) * 0.25f);
+        data.Vertices[i + 1].Normal = XMFLOAT3(0.0f, -1.0f, 0.0f);
+        data.Vertices[i + 1].TexCoord = (XMFLOAT2(x + 1.0f, z + 1.0f) * 0.25f);
 
         // BOTTOM SIDE VERTICES
-        vec3 normal = normalize(pos + vec3(0.0f, sin(atan(height / radius)), 0.0f));
+        XMFLOAT3 normal = normalize(pos + XMFLOAT3(0.0f, sin(atan(Height / radius)), 0.0f));
         data.Vertices[offset + i].Position = data.Vertices[i + 1].Position;
         data.Vertices[offset + i].Normal = normal;
-        data.Vertices[offset + i].TexCoord = vec2(0.0f + (uOffset * i), 1.0f);
+        data.Vertices[offset + i].TexCoord = XMFLOAT2(0.0f + (uOffset * i), 1.0f);
 
         // TOP
-        data.Vertices[topOffset + i].Position = vec3(0.0f, height, 0.0f);
+        data.Vertices[topOffset + i].Position = XMFLOAT3(0.0f, Height, 0.0f);
         data.Vertices[topOffset + i].Normal = normal;
-        data.Vertices[topOffset + i].TexCoord = vec2(0.0f + (uOffset * i), 0.25f);
+        data.Vertices[topOffset + i].TexCoord = XMFLOAT2(0.0f + (uOffset * i), 0.25f);
     }
 
     // BOTTOM CAP INDICES
@@ -407,48 +402,48 @@ MeshData MeshFactory::CreatePyramid() noexcept
     data.Indices.resize(18);
 
     // FLOOR FACE (Seen from FRONT FACE)
-    data.Vertices[0].TexCoord = vec2(0.33f, 0.33f);
-    data.Vertices[0].Position = vec3(-0.5f, -0.5f, -0.5f);
-    data.Vertices[1].TexCoord = vec2(0.66f, 0.33f);
-    data.Vertices[1].Position = vec3(0.5f, -0.5f, -0.5f);
-    data.Vertices[2].TexCoord = vec2(0.33f, 0.66f);
-    data.Vertices[2].Position = vec3(-0.5f, -0.5f, 0.5f);
-    data.Vertices[3].TexCoord = vec2(0.66f, 0.66f);
-    data.Vertices[3].Position = vec3(0.5f, -0.5f, 0.5f);
+    data.Vertices[0].TexCoord = XMFLOAT2(0.33f, 0.33f);
+    data.Vertices[0].Position = XMFLOAT3(-0.5f, -0.5f, -0.5f);
+    data.Vertices[1].TexCoord = XMFLOAT2(0.66f, 0.33f);
+    data.Vertices[1].Position = XMFLOAT3(0.5f, -0.5f, -0.5f);
+    data.Vertices[2].TexCoord = XMFLOAT2(0.33f, 0.66f);
+    data.Vertices[2].Position = XMFLOAT3(-0.5f, -0.5f, 0.5f);
+    data.Vertices[3].TexCoord = XMFLOAT2(0.66f, 0.66f);
+    data.Vertices[3].Position = XMFLOAT3(0.5f, -0.5f, 0.5f);
 
     // TOP VERTICES
     data.Vertices[4].Position =
         data.Vertices[5].Position =
         data.Vertices[6].Position =
-        data.Vertices[7].Position = vec3(0.0f, 0.5f, 0.0f);
-    data.Vertices[4].TexCoord = vec2(0.495f, 0.0f);
-    data.Vertices[5].TexCoord = vec2(0.0f, 0.495f);
-    data.Vertices[6].TexCoord = vec2(0.495f, 0.99f);
-    data.Vertices[7].TexCoord = vec2(0.99f, 0.495f);
+        data.Vertices[7].Position = XMFLOAT3(0.0f, 0.5f, 0.0f);
+    data.Vertices[4].TexCoord = XMFLOAT2(0.495f, 0.0f);
+    data.Vertices[5].TexCoord = XMFLOAT2(0.0f, 0.495f);
+    data.Vertices[6].TexCoord = XMFLOAT2(0.495f, 0.99f);
+    data.Vertices[7].TexCoord = XMFLOAT2(0.99f, 0.495f);
 
     // BACK
-    data.Vertices[8].TexCoord = vec2(0.33f, 0.33f);
-    data.Vertices[8].Position = vec3(-0.5f, -0.5f, -0.5f);
-    data.Vertices[9].TexCoord = vec2(0.66f, 0.33f);
-    data.Vertices[9].Position = vec3(0.5f, -0.5f, -0.5f);
+    data.Vertices[8].TexCoord = XMFLOAT2(0.33f, 0.33f);
+    data.Vertices[8].Position = XMFLOAT3(-0.5f, -0.5f, -0.5f);
+    data.Vertices[9].TexCoord = XMFLOAT2(0.66f, 0.33f);
+    data.Vertices[9].Position = XMFLOAT3(0.5f, -0.5f, -0.5f);
 
     // FRONT
-    data.Vertices[10].TexCoord = vec2(0.33f, 0.66f);
-    data.Vertices[10].Position = vec3(-0.5f, -0.5f, 0.5f);
-    data.Vertices[11].TexCoord = vec2(0.66f, 0.66f);
-    data.Vertices[11].Position = vec3(0.5f, -0.5f, 0.5f);
+    data.Vertices[10].TexCoord = XMFLOAT2(0.33f, 0.66f);
+    data.Vertices[10].Position = XMFLOAT3(-0.5f, -0.5f, 0.5f);
+    data.Vertices[11].TexCoord = XMFLOAT2(0.66f, 0.66f);
+    data.Vertices[11].Position = XMFLOAT3(0.5f, -0.5f, 0.5f);
 
     // LEFT
-    data.Vertices[12].TexCoord = vec2(0.33f, 0.33f);
-    data.Vertices[12].Position = vec3(-0.5f, -0.5f, -0.5f);
-    data.Vertices[13].TexCoord = vec2(0.33f, 0.66f);
-    data.Vertices[13].Position = vec3(-0.5f, -0.5f, 0.5f);
+    data.Vertices[12].TexCoord = XMFLOAT2(0.33f, 0.33f);
+    data.Vertices[12].Position = XMFLOAT3(-0.5f, -0.5f, -0.5f);
+    data.Vertices[13].TexCoord = XMFLOAT2(0.33f, 0.66f);
+    data.Vertices[13].Position = XMFLOAT3(-0.5f, -0.5f, 0.5f);
 
     // RIGHT
-    data.Vertices[14].TexCoord = vec2(0.66f, 0.33f);
-    data.Vertices[14].Position = vec3(0.5f, -0.5f, -0.5f);
-    data.Vertices[15].TexCoord = vec2(0.66f, 0.66f);
-    data.Vertices[15].Position = vec3(0.5f, -0.5f, 0.5f);
+    data.Vertices[14].TexCoord = XMFLOAT2(0.66f, 0.33f);
+    data.Vertices[14].Position = XMFLOAT3(0.5f, -0.5f, -0.5f);
+    data.Vertices[15].TexCoord = XMFLOAT2(0.66f, 0.66f);
+    data.Vertices[15].Position = XMFLOAT3(0.5f, -0.5f, 0.5f);
 
     // FLOOR FACE
     data.Indices[0] = 2;
@@ -499,8 +494,8 @@ MeshData MeshFactory::CreateCylinder(UInt32 Sides, Float Radius, Float Height) n
     MeshData data;
     if (sides < 5)
         sides = 5;
-    if (height < 0.1f)
-        height = 0.1f;
+    if (Height < 0.1f)
+        Height = 0.1f;
     if (radius < 0.1f)
         radius = 0.1f;
 
@@ -518,17 +513,17 @@ MeshData MeshFactory::CreateCylinder(UInt32 Sides, Float Radius, Float Height) n
     // Angle between verts
     Float angle = (pi<Float>() * 2.0f) / Float(sides);
     Float uOffset = 1.0f / Float(sides - 1);
-    Float halfHeight = height * 0.5f;
+    Float halfHeight = Height * 0.5f;
 
     // CREATE VERTICES
-    data.Vertices[0].Position = vec3(0.0f, halfHeight, 0.0f);
-    data.Vertices[0].Normal = vec3(0.0f, 1.0f, 0.0f);
-    data.Vertices[0].TexCoord = vec2(0.25f, 0.25f);
+    data.Vertices[0].Position = XMFLOAT3(0.0f, halfHeight, 0.0f);
+    data.Vertices[0].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
+    data.Vertices[0].TexCoord = XMFLOAT2(0.25f, 0.25f);
 
     size_t offset = size_t(sides) + 1;
-    data.Vertices[offset].Position = vec3(0.0f, -halfHeight, 0.0f);
-    data.Vertices[offset].Normal = vec3(0.0f, -1.0f, 0.0f);
-    data.Vertices[offset].TexCoord = vec2(0.75f, 0.25f);
+    data.Vertices[offset].Position = XMFLOAT3(0.0f, -halfHeight, 0.0f);
+    data.Vertices[offset].Normal = XMFLOAT3(0.0f, -1.0f, 0.0f);
+    data.Vertices[offset].TexCoord = XMFLOAT2(0.75f, 0.25f);
 
     size_t doubleOffset = offset * 2;
     size_t trippleOffset = doubleOffset + size_t(sides);
@@ -537,25 +532,25 @@ MeshData MeshFactory::CreateCylinder(UInt32 Sides, Float Radius, Float Height) n
         // TOP CAP VERTICES
         Float x = cosf((pi<Float>() / 2.0f) + (angle * i));
         Float z = sinf((pi<Float>() / 2.0f) + (angle * i));
-        vec3 pos = normalize(vec3(x, 0.0f, z));
-        data.Vertices[i + 1].Position = (pos * radius) + vec3(0.0f, halfHeight, 0.0f);
-        data.Vertices[i + 1].Normal = vec3(0.0f, 1.0f, 0.0f);
-        data.Vertices[i + 1].TexCoord = vec2(x + 1.0f, z + 1.0f) * 0.25f;
+        XMFLOAT3 pos = normalize(XMFLOAT3(x, 0.0f, z));
+        data.Vertices[i + 1].Position = (pos * radius) + XMFLOAT3(0.0f, halfHeight, 0.0f);
+        data.Vertices[i + 1].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
+        data.Vertices[i + 1].TexCoord = XMFLOAT2(x + 1.0f, z + 1.0f) * 0.25f;
 
         // BOTTOM CAP VERTICES
-        data.Vertices[offset + i + 1].Position = data.Vertices[i + 1].Position - vec3(0.0f, height, 0.0f);
-        data.Vertices[offset + i + 1].Normal = vec3(0.0f, -1.0f, 0.0f);
-        data.Vertices[offset + i + 1].TexCoord = data.Vertices[i + 1].TexCoord + vec2(0.5f, 0.5f);
+        data.Vertices[offset + i + 1].Position = data.Vertices[i + 1].Position - XMFLOAT3(0.0f, Height, 0.0f);
+        data.Vertices[offset + i + 1].Normal = XMFLOAT3(0.0f, -1.0f, 0.0f);
+        data.Vertices[offset + i + 1].TexCoord = data.Vertices[i + 1].TexCoord + XMFLOAT2(0.5f, 0.5f);
              
         // TOP SIDE VERTICES
         data.Vertices[doubleOffset + i].Position = data.Vertices[i + 1].Position;
         data.Vertices[doubleOffset + i].Normal = pos;
-        data.Vertices[doubleOffset + i].TexCoord = vec2(0.0f + (uOffset * i), 1.0f);
+        data.Vertices[doubleOffset + i].TexCoord = XMFLOAT2(0.0f + (uOffset * i), 1.0f);
 
         // BOTTOM SIDE VERTICES
         data.Vertices[trippleOffset + i].Position = data.Vertices[offset + i + 1].Position;
         data.Vertices[trippleOffset + i].Normal = pos;
-        data.Vertices[trippleOffset + i].TexCoord = vec2(0.0f + (uOffset * i), 0.25f);
+        data.Vertices[trippleOffset + i].TexCoord = XMFLOAT2(0.0f + (uOffset * i), 0.25f);
     }
 
     // TOP CAP INDICES
@@ -766,9 +761,9 @@ void MeshFactory::CalculateHardNormals(MeshData& Data) noexcept
     UNREFERENCED_VARIABLE(Data);
 
     /*
-    vec3 e1;
-    vec3 e2;
-    vec3 n;
+    XMFLOAT3 e1;
+    XMFLOAT3 e2;
+    XMFLOAT3 n;
 
     for (size_t i = 0; i < data.Indices.GetSize(); i += 3)
     {
@@ -841,11 +836,11 @@ void MeshFactory::CalculateTangents(MeshData& OutData) noexcept
 
     for (UInt32 i = 0; i < indexBuffer->GetSize(); i += 3)
     {
-        vec3 edge1 = (*vertexBuffer)[(*indexBuffer)[i + 2]].Position - (*vertexBuffer)[(*indexBuffer)[i + 1]].Position;
-        vec3 edge2 = (*vertexBuffer)[(*indexBuffer)[i]].Position - (*vertexBuffer)[(*indexBuffer)[i + 2]].Position;
-        vec3 edge3 = (*vertexBuffer)[(*indexBuffer)[i + 1]].Position - (*vertexBuffer)[(*indexBuffer)[i + 0]].Position;
+        XMFLOAT3 edge1 = (*vertexBuffer)[(*indexBuffer)[i + 2]].Position - (*vertexBuffer)[(*indexBuffer)[i + 1]].Position;
+        XMFLOAT3 edge2 = (*vertexBuffer)[(*indexBuffer)[i]].Position - (*vertexBuffer)[(*indexBuffer)[i + 2]].Position;
+        XMFLOAT3 edge3 = (*vertexBuffer)[(*indexBuffer)[i + 1]].Position - (*vertexBuffer)[(*indexBuffer)[i + 0]].Position;
 
-        vec3 Normal = edge1.Cross(edge2);
+        XMFLOAT3 Normal = edge1.Cross(edge2);
         Normal.Normalize();
 
         (*vertexBuffer)[(*indexBuffer)[i]].Normal = Normal;

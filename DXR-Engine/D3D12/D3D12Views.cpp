@@ -122,7 +122,7 @@ D3D12DepthStencilView::D3D12DepthStencilView(D3D12Device* InDevice, D3D12Offline
 {
 }
 
-Bool D3D12DepthStencilView::CreateView(const D3D12Resource* InResource,  const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
+Bool D3D12DepthStencilView::CreateView(const D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
     VALIDATE(InResource != nullptr);
     VALIDATE(OfflineHandle != 0);

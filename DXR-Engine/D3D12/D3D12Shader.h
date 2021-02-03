@@ -4,10 +4,10 @@
 #include "D3D12RootSignature.h"
 #include "D3D12Device.h"
 
-class D3D12Shader : public D3D12DeviceChild
+class D3D12BaseShader : public D3D12DeviceChild
 {
 public:
-    D3D12Shader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BaseShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : D3D12DeviceChild(InDevice)
         , Code(InCode)
         , ByteCode()
@@ -33,32 +33,32 @@ protected:
     TArray<UInt8> Code;
 };
 
-class D3D12VertexShader : public VertexShader, public D3D12Shader
+class D3D12BaseVertexShader : public VertexShader, public D3D12BaseShader
 {
 public:
-    D3D12VertexShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BaseVertexShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : VertexShader()
-        , D3D12Shader(InDevice, InCode)
+        , D3D12BaseShader(InDevice, InCode)
     {
     }
 };
 
-class D3D12PixelShader : public PixelShader, public D3D12Shader
+class D3D12BasePixelShader : public PixelShader, public D3D12BaseShader
 {
 public:
-    D3D12PixelShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BasePixelShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : PixelShader()
-        , D3D12Shader(InDevice, InCode)
+        , D3D12BaseShader(InDevice, InCode)
     {
     }
 };
 
-class D3D12ComputeShader : public ComputeShader, public D3D12Shader
+class D3D12BaseComputeShader : public ComputeShader, public D3D12BaseShader
 {
 public:
-    D3D12ComputeShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BaseComputeShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : ComputeShader()
-        , D3D12Shader(InDevice, InCode)
+        , D3D12BaseShader(InDevice, InCode)
         , RootSignature(nullptr)
     {
     }
@@ -73,18 +73,18 @@ public:
             IID_PPV_ARGS(&Deserializer));
         if (SUCCEEDED(hResult))
         {
-            LOG_INFO("[D3D12Shader]: Created ID3D12RootSignatureDeserializer");
+            LOG_INFO("[D3D12BaseShader]: Created ID3D12RootSignatureDeserializer");
 
             const D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = *Deserializer->GetRootSignatureDesc();
             RootSignature = Device->CreateRootSignature(RootSignatureDesc);
             if (!RootSignature)
             {
-                LOG_INFO("[D3D12Shader]: FAILED to create RootSignature");
+                LOG_INFO("[D3D12BaseShader]: FAILED to create RootSignature");
                 return false;
             }
             else
             {
-                LOG_INFO("[D3D12Shader]: Created RootSignature");
+                LOG_INFO("[D3D12BaseShader]: Created RootSignature");
                 return true;
             }
         }
@@ -102,3 +102,23 @@ public:
 protected:
     TSharedRef<D3D12RootSignature> RootSignature;
 };
+
+template<typename TBaseShader>
+class TD3D12Shader : public TBaseShader
+{
+public:
+    TD3D12Shader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+        : TBaseShader(InDevice, InCode)
+    {
+    }
+
+    virtual Bool IsValid() const override
+    {
+        return Code.Data() != nullptr && Code.Size() > 0;
+    }
+};
+
+using D3D12VertexShader = TD3D12Shader<D3D12BaseVertexShader>;
+using D3D12PixelShader  = TD3D12Shader<D3D12BasePixelShader>;
+
+using D3D12ComputeShader = TD3D12Shader<D3D12BaseComputeShader>;

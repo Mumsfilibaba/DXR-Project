@@ -23,7 +23,7 @@ struct ColorF
 
     ColorF(const ColorF& Other)
     {
-        Memory::Memcpy(Elements, Other.Elements);
+        Memory::Memcpy(Elements, Other.Elements, sizeof(Elements));
     }
 
     void Set(Float InR, Float InG, Float InB, Float InA)
@@ -36,7 +36,7 @@ struct ColorF
 
     ColorF& operator=(const ColorF& Other)
     {
-        Memory::Memcpy(Elements, Other.Elements);
+        Memory::Memcpy(Elements, Other.Elements, sizeof(Elements));
         return *this;
     }
 

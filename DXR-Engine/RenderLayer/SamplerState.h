@@ -82,7 +82,7 @@ struct SamplerStateCreateInfo
     EComparisonFunc ComparisonFunc  = EComparisonFunc::Never;
     Float           MipLODBias      = 0.0f;
     UInt32          MaxAnisotropy   = 1;
-    Float           BorderColor[4]  = { 0.0f,0.0f, 0.0f, 0.0f };
+    ColorF          BorderColor;
     Float           MinLOD          = -FLT_MAX;
     Float           MaxLOD          = FLT_MAX;
 };

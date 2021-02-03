@@ -1,6 +1,5 @@
 #pragma once
 #include "RenderLayer/RenderingCore.h"
-#include "RenderLayer/ResourceHelpers.h"
 
 #include "Utilities/StringUtilities.h"
 
@@ -17,11 +16,8 @@ public:
     static void Release();
 
     // TODO: Supports R8G8B8A8 and R32G32B32A32 for now, support more formats? Such as Float16?
-    static Texture2D* LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format);
-    static Texture2D* LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format);
+    static class Texture2D* LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format);
+    static class Texture2D* LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format);
 
-    static SampledTexture2D LoadSampledTextureFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format);
-    static SampledTexture2D LoadSampledTextureFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format);
-
-    static TextureCube* CreateTextureCubeFromPanorma(const SampledTexture2D& PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format);
+    static class TextureCube* CreateTextureCubeFromPanorma(class Texture2D* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format);
 };

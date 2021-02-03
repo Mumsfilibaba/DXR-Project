@@ -1,10 +1,6 @@
 #ifndef STRUCTS_HLSLI
 #define STRUCTS_HLSLI
 
-/*
-* Common Structs
-*/
-
 struct ComputeShaderInput
 {
     uint3   GroupID           : SV_GroupID;

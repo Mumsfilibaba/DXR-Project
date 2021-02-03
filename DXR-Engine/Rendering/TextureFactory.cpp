@@ -128,30 +128,10 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
     return Texture.ReleaseOwnership();
 }
 
-SampledTexture2D TextureFactory::LoadSampledTextureFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format)
+TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format)
 {
-    TSharedRef<Texture2D> Texture = LoadFromFile(Filepath, CreateFlags, Format);
-    if (!Texture)
-    {
-        return SampledTexture2D();
-    }
+    VALIDATE(PanoramaSource->IsSRV());
 
-    return SampledTexture2D(Texture, Texture->GetShaderResourceView());
-}
-
-SampledTexture2D TextureFactory::LoadSampledTextureFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format)
-{
-    TSharedRef<Texture2D> Texture = LoadFromMemory(Pixels, Width, Height, CreateFlags, Format);
-    if (!Texture)
-    {
-        return SampledTexture2D();
-    }
-
-    return SampledTexture2D(Texture, Texture->GetShaderResourceView());
-}
-
-TextureCube* TextureFactory::CreateTextureCubeFromPanorma(const SampledTexture2D& PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format)
-{
     const Bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const UInt16 NumMips = (GenerateNumMips) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
 
@@ -184,7 +164,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(const SampledTexture2D
     CommandList& CmdList = GlobalFactoryData.CmdList;
     CmdList.Begin();
     
-    CmdList.TransitionTexture(PanoramaSource.Texture.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(PanoramaSource, EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
     CmdList.BindComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
@@ -197,14 +177,16 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(const SampledTexture2D
 
     CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &CB0, 1);
     CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &StagingTextureUAV, 1, 0);
-    CmdList.BindShaderResourceViews(EShaderStage::Compute, &PanoramaSource.View, 1, 0);
+
+    ShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
+    CmdList.BindShaderResourceViews(EShaderStage::Compute, &PanoramaSourceView, 1, 0);
 
     constexpr UInt32 LocalWorkGroupCount = 16;
     const UInt32 ThreadsX = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
     const UInt32 ThreadsY = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
     CmdList.Dispatch(ThreadsX, ThreadsY, 6);
 
-    CmdList.TransitionTexture(PanoramaSource.Texture.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
+    CmdList.TransitionTexture(PanoramaSource, EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
     CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::UnorderedAccess, EResourceState::CopySource);
     CmdList.TransitionTexture(Texture.Get(), EResourceState::Common, EResourceState::CopyDest);
 

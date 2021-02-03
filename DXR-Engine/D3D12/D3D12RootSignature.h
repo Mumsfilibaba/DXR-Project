@@ -43,15 +43,8 @@ public:
         RootSignature->SetName(WideName.c_str());
     }
 
-    FORCEINLINE ID3D12RootSignature* GetRootSignature() const
-    {
-        return RootSignature.Get();
-    }
-
-    FORCEINLINE ID3D12RootSignature* const * GetAddressOfRootSignature() const
-    {
-        return RootSignature.GetAddressOf();
-    }
+    ID3D12RootSignature* GetRootSignature() const { return RootSignature.Get(); }
+    ID3D12RootSignature* const * GetAddressOfRootSignature() const { return RootSignature.GetAddressOf(); }
 
 private:
     TComPtr<ID3D12RootSignature> RootSignature;

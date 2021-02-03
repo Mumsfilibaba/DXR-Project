@@ -53,7 +53,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(UInt32& OutHeap
 {
     // Find a heap that is not empty
     UInt32 HeapIndex = 0;
-    bool FoundHeap = false;
+    Bool FoundHeap = false;
     for (DescriptorHeap& Heap : Heaps)
     {
         if (!Heap.FreeList.IsEmpty())
@@ -99,7 +99,7 @@ void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, UInt32
     DescriptorHeap& Heap = Heaps[HeapIndex];
 
     // Find a suitable range
-    bool FoundRange    = false;
+    Bool FoundRange    = false;
     for (DescriptorRange& Range : Heap.FreeList)
     {
         VALIDATE(Range.IsValid());

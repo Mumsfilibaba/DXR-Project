@@ -34,20 +34,16 @@ public:
         Desc.pInputElementDescs = GetElementData();
     }
 
-    const D3D12_INPUT_ELEMENT_DESC* GetElementData() const
+    virtual Bool IsValid() const override
     {
-        return ElementDesc.Data();
+        return true;
     }
 
-    UInt32 GetElementCount() const
-    {
-        return ElementDesc.Size();
-    }
+    const D3D12_INPUT_ELEMENT_DESC* GetElementData() const { return ElementDesc.Data(); }
 
-    const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
-    {
-        return Desc;
-    }
+    UInt32 GetElementCount() const { return ElementDesc.Size(); }
+
+    const D3D12_INPUT_LAYOUT_DESC& GetDesc() const { return Desc; }
 
 private:
     TArray<std::string> SemanticNames;
@@ -63,6 +59,11 @@ public:
         , D3D12DeviceChild(InDevice)
         , Desc(InDesc)
     {
+    }
+
+    virtual Bool IsValid() const override
+    {
+        return true;
     }
 
     const D3D12_DEPTH_STENCIL_DESC& GetDesc() const
@@ -84,6 +85,11 @@ public:
     {
     }
 
+    virtual Bool IsValid() const override
+    {
+        return true;
+    }
+
     const D3D12_RASTERIZER_DESC& GetDesc() const
     {
         return Desc;
@@ -101,6 +107,11 @@ public:
         , D3D12DeviceChild(InDevice)
         , Desc(InDesc)
     {
+    }
+
+    virtual Bool IsValid() const override
+    {
+        return true;
     }
 
     const D3D12_BLEND_DESC& GetDesc() const
@@ -131,6 +142,16 @@ public:
         PipelineState->SetName(WideName.c_str());
     }
 
+    virtual void* GetNativeResource() const override final
+    {
+        return reinterpret_cast<void*>(PipelineState.Get());
+    }
+
+    virtual Bool IsValid() const override
+    {
+        return PipelineState != nullptr && RootSignature != nullptr;
+    }
+
     ID3D12PipelineState* GetPipeline() const { return PipelineState.Get(); }
     D3D12RootSignature* GetRootSignature() const { return RootSignature; }
 
@@ -155,6 +176,16 @@ public:
 
         std::wstring WideName = ConvertToWide(InName);
         PipelineState->SetName(WideName.c_str());
+    }
+
+    virtual void* GetNativeResource() const override final
+    {
+        return reinterpret_cast<void*>(PipelineState.Get());
+    }
+
+    virtual Bool IsValid() const override
+    {
+        return PipelineState != nullptr && RootSignature != nullptr;
     }
 
     ID3D12PipelineState* GetPipeline() const { return PipelineState.Get(); }

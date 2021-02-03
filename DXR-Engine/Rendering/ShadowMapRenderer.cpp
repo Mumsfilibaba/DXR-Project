@@ -41,6 +41,20 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
         }
     }
 
+    {
+        const UInt32 SizeInBytes = sizeof(PointLightProperties) * LightSetup.MaxPointLightShadows;
+        LightSetup.ShadowPointLightBuffer = RenderLayer::CreateConstantBuffer(BufferFlag_Default, SizeInBytes, EResourceState::VertexAndConstantBuffer, nullptr);
+        if (!LightSetup.ShadowPointLightBuffer)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            LightSetup.ShadowPointLightBuffer->SetName("Shadow PointLight Buffer");
+        }
+    }
+
     PerShadowMapBuffer = RenderLayer::CreateConstantBuffer<PerShadowMap>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
     if (!PerShadowMapBuffer)
     {
@@ -55,8 +69,7 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
     // Linear Shadow Maps
     TArray<UInt8> ShaderCode;
     {
-        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadowMap.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0,
-            ShaderCode))
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadowMap.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
             Debug::DebugBreak();
             return false;
@@ -451,8 +464,8 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
         UInt32 NumDirLights = 0;
         for (Light* Light : Scene.GetLights())
         {
-            XMFLOAT3 Color = Light->GetColor();
-            Float    Intensity = Light->GetIntensity();
+            XMFLOAT3 Color  = Light->GetColor();
+            Float Intensity = Light->GetIntensity();
             if (IsSubClassOf<DirectionalLight>(Light) && UpdateDirLight)
             {
                 DirectionalLight* CurrentLight = Cast<DirectionalLight>(Light);
@@ -462,6 +475,16 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
                 Properties.Color         = XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
                 Properties.ShadowBias    = CurrentLight->GetShadowBias();
                 Properties.Direction     = CurrentLight->GetDirection();
+
+                // TODO: Should not be the done in the renderer
+                XMFLOAT3 CameraPosition = Scene.GetCamera()->GetPosition();
+                XMFLOAT3 CameraForward  = Scene.GetCamera()->GetForward();
+
+                Float Near       = Scene.GetCamera()->GetNearPlane();
+                Float DirFrustum = 35.0f;
+                XMFLOAT3 LookAt  = CameraPosition + (CameraForward * (DirFrustum + Near));
+                CurrentLight->SetLookAt(LookAt);
+
                 Properties.LightMatrix   = CurrentLight->GetMatrix();
                 Properties.MaxShadowBias = CurrentLight->GetMaxShadowBias();
 

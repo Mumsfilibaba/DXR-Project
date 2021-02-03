@@ -24,6 +24,9 @@ public:
     const XMFLOAT4X4& GetViewProjectionWitoutTranslateMatrix() const { return ViewProjectionNoTranslation; }
 
     XMFLOAT3 GetPosition() const { return Position; }
+    XMFLOAT3 GetForward() const { return Forward; }
+    XMFLOAT3 GetUp() const { return Up; }
+    XMFLOAT3 GetRight() const { return Right; }
 
     Float GetNearPlane() const { return NearPlane; }
     Float GetFarPlane() const { return FarPlane; }

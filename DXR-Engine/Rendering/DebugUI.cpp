@@ -21,8 +21,7 @@ struct ImGuiState
 {
     void Reset()
     {
-        FontTexture.Texture.Reset();
-        FontTexture.View.Reset();
+        FontTexture.Reset();
         PipelineState.Reset();
         VertexBuffer.Reset();
         IndexBuffer.Reset();
@@ -30,7 +29,7 @@ struct ImGuiState
 
     Clock FrameClock;
 
-    SampledTexture2D                  FontTexture;
+    TSharedRef<Texture2D>             FontTexture;
     TSharedRef<GraphicsPipelineState> PipelineState;
     TSharedRef<GraphicsPipelineState> PipelineStateNoBlending;
     TSharedRef<VertexBuffer>          VertexBuffer;
@@ -211,7 +210,7 @@ Bool DebugUI::Init()
     Int32 Height = 0;
     IO.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-    GlobalImGuiState.FontTexture = TextureFactory::LoadSampledTextureFromMemory(Pixels, Width, Height, 0, EFormat::R8G8B8A8_Unorm);
+    GlobalImGuiState.FontTexture = TextureFactory::LoadFromMemory(Pixels, Width, Height, 0, EFormat::R8G8B8A8_Unorm);
     if (!GlobalImGuiState.FontTexture)
     {
         return false;
@@ -652,7 +651,8 @@ void DebugUI::Render(CommandList& CmdList)
             }
             else
             {
-                CmdList.BindShaderResourceViews(EShaderStage::Pixel, &GlobalImGuiState.FontTexture.View, 1, 0);
+                ShaderResourceView* View = GlobalImGuiState.FontTexture->GetShaderResourceView();
+                CmdList.BindShaderResourceViews(EShaderStage::Pixel, &View, 1, 0);
             }
 
             CmdList.BindScissorRect(Cmd->ClipRect.z - ClipOff.x, Cmd->ClipRect.w - ClipOff.y, Cmd->ClipRect.x - ClipOff.x, Cmd->ClipRect.y - ClipOff.y);

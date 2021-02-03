@@ -3,10 +3,6 @@
 
 #include "Constants.hlsli"
 
-/*
-* Misc Helpers
-*/
-
 float2 Float2(float Single)
 {
     return float2(Single, Single);
@@ -43,20 +39,12 @@ uint DivideByMultiple(uint Value, uint Alignment)
     return ((Value + Alignment - 1) / Alignment);
 }
 
-/*
-* Random numbers
-*/
-
 float Random(float3 Seed, int i)
 {
     float4  Seed4   = float4(Seed, i);
     float   Dot     = dot(Seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
     return frac(sin(Dot) * 43758.5453f);
 }
-
-/*
-* Lerp
-*/
 
 float Linstep(float Low, float High, float P)
 {
@@ -72,10 +60,6 @@ float3 Lerp(float3 A, float3 B, float P)
 {
     return (Float3(-P) * B) + ((A * Float3(P)) + B);
 }
-
-/*
-* Position Helper
-*/
 
 float Depth_ProjToView(float Depth, float4x4 ProjectionInverse)
 {
@@ -96,13 +80,9 @@ float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInvers
 
     float4 ProjectedPos     = float4(x, y, z, 1.0f);
     float4 FinalPosition    = mul(ProjectedPos, ProjectionInverse);
-	
+    
     return FinalPosition.xyz / FinalPosition.w;
 }
-
-/*
-* HDR Helpers
-*/
 
 float3 ApplyGamma(float3 Color)
 {

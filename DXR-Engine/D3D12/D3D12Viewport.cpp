@@ -119,12 +119,10 @@ Bool D3D12Viewport::Resize(UInt32 InWidth, UInt32 InHeight)
             return false;
         }
         
-        return true;
     }
-    else
-    {
-        return false;
-    }
+
+    // NOTE: Not considered an error to try to resize when the size is the same, maybe it should?
+    return true;
 }
 
 Bool D3D12Viewport::Present(Bool VerticalSync)
