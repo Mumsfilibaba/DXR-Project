@@ -48,8 +48,26 @@ public:
         const ClearValue& InOptimalClearValue)
         : Texture2D(InFormat, SizeX, SizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
         , D3D12BaseTexture(InDevice)
+        , RenderTargetView(nullptr)
+        , DepthStencilView(nullptr)
+        , UnorderedAccessView(nullptr)
     {
         VALIDATE(SizeZ == 1);
+    }
+
+    virtual RenderTargetView* GetRenderTargetView() const override
+    { 
+        return RenderTargetView.Get();
+    }
+
+    virtual DepthStencilView* GetDepthStencilView() const override
+    { 
+        return DepthStencilView.Get(); 
+    }
+
+    virtual UnorderedAccessView* GetUnorderedAccessView() const override
+    { 
+        return UnorderedAccessView.Get();
     }
 
     void SetRenderTargetView(D3D12RenderTargetView* InRenderTargetView)

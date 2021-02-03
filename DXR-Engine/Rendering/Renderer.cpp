@@ -86,8 +86,8 @@ void Renderer::PerformFXAA(CommandList& InCmdList)
     RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
     InCmdList.BindRenderTargets(&BackBufferRTV, 1, nullptr);
 
-
-    InCmdList.BindShaderResourceViews(EShaderStage::Pixel, &Resources.FinalTargetSRV, 1, 0);
+    ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
+    InCmdList.BindShaderResourceViews(EShaderStage::Pixel, &FinalTargetSRV, 1, 0);
     InCmdList.BindSamplerStates(EShaderStage::Pixel, &Resources.GBufferSampler, 1, 0);
 
     struct FXAASettings
@@ -117,7 +117,8 @@ void Renderer::PerformBackBufferBlit(CommandList& InCmdList)
     RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
     InCmdList.BindRenderTargets(&BackBufferRTV, 1, nullptr);
 
-    InCmdList.BindShaderResourceViews(EShaderStage::Pixel, &Resources.FinalTargetSRV, 1, 0);
+    ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
+    InCmdList.BindShaderResourceViews(EShaderStage::Pixel, &FinalTargetSRV, 1, 0);
     InCmdList.BindSamplerStates(EShaderStage::Pixel, &Resources.GBufferSampler, 1, 0);
 
     InCmdList.BindGraphicsPipelineState(PostPSO.Get());
@@ -167,7 +168,7 @@ void Renderer::RenderDebugInterface()
     if (GlobalDrawTextureDebugger.GetBool())
     {
         Resources.DebugTextures.EmplaceBack(
-            Resources.GBufferSRVs[GBUFFER_DEPTH_INDEX],
+            MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView()),
             Resources.GBuffer[GBUFFER_DEPTH_INDEX],
             EResourceState::DepthWrite,
             EResourceState::PixelShaderResource);
@@ -333,8 +334,7 @@ void Renderer::Tick(const Scene& Scene)
         PerformFrustumCulling(Scene);
     }
 
-    Resources.BackBuffer    = Resources.MainWindowViewport->GetBackBuffer();
-    Resources.BackBufferRTV = Resources.MainWindowViewport->GetRenderTargetView();
+    Resources.BackBuffer = Resources.MainWindowViewport->GetBackBuffer();
 
     CmdList.Begin();
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
@@ -371,11 +371,11 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
 
     ColorF BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    CmdList.ClearRenderTargetView(Resources.GBufferRTVs[GBUFFER_ALBEDO_INDEX].Get(), BlackClearColor);
-    CmdList.ClearRenderTargetView(Resources.GBufferRTVs[GBUFFER_NORMAL_INDEX].Get(), BlackClearColor);
-    CmdList.ClearRenderTargetView(Resources.GBufferRTVs[GBUFFER_MATERIAL_INDEX].Get(), BlackClearColor);
-    CmdList.ClearRenderTargetView(Resources.GBufferRTVs[GBUFFER_VIEW_NORMAL_INDEX].Get(), BlackClearColor);
-    CmdList.ClearDepthStencilView(Resources.GBufferDSV.Get(), DepthStencilF(1.0f, 0));
+    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(), BlackClearColor);
+    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
+    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(), BlackClearColor);
+    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
+    CmdList.ClearDepthStencilView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), DepthStencilF(1.0f, 0));
 
     if (GlobalPrePassEnabled.GetBool())
     {
@@ -387,7 +387,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
-        Resources.GBufferSRVs[GBUFFER_ALBEDO_INDEX],
+        MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_ALBEDO_INDEX],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource);
@@ -395,7 +395,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
-        Resources.GBufferSRVs[GBUFFER_NORMAL_INDEX],
+        MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_NORMAL_INDEX],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource);
@@ -403,7 +403,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
-        Resources.GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX],
+        MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource);
@@ -411,7 +411,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
-        Resources.GBufferSRVs[GBUFFER_MATERIAL_INDEX],
+        MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_MATERIAL_INDEX],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource);
@@ -420,7 +420,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
 
     const Float WhiteColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    CmdList.ClearUnorderedAccessView(Resources.SSAOBufferUAV.Get(), WhiteColor);
+    CmdList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), WhiteColor);
 
     if (GlobalEnableSSAO.GetBool())
     {

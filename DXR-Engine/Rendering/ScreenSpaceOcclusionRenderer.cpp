@@ -266,8 +266,8 @@ void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, const FrameResou
 
     ShaderResourceView* ShaderResourceViews[] =
     {
-        FrameResources.GBufferSRVs[GBUFFER_VIEW_NORMAL_INDEX].Get(),
-        FrameResources.GBufferSRVs[GBUFFER_DEPTH_INDEX].Get(),
+        FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(),
+        FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(),
         SSAONoiseSRV.Get(),
         SSAOSamplesSRV.Get()
     };
@@ -277,7 +277,9 @@ void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, const FrameResou
     CmdList.BindShaderResourceViews(EShaderStage::Compute, ShaderResourceViews, 4, 0);
     CmdList.BindSamplerStates(EShaderStage::Compute, &FrameResources.GBufferSampler, 1, 0);
     CmdList.BindConstantBuffers(EShaderStage::Compute, &FrameResources.CameraBuffer, 1, 0);
-    CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &FrameResources.SSAOBufferUAV, 1, 0);
+
+    UnorderedAccessView* SSAOBufferUAV = FrameResources.SSAOBuffer->GetUnorderedAccessView();
+    CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &SSAOBufferUAV, 1, 0);
     CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &SSAOSettings, 7);
 
     constexpr UInt32 ThreadCount = 16;

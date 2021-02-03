@@ -501,7 +501,7 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
         FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(),
         FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(),
         FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(),
-        FrameResources.ReflectionTexture->GetShaderResourceView(),
+        nullptr,//FrameResources.ReflectionTexture->GetShaderResourceView(),
         LightSetup.IrradianceMap->GetShaderResourceView(),
         LightSetup.SpecularIrradianceMap->GetShaderResourceView(),
         FrameResources.IntegrationLUT->GetShaderResourceView(),
