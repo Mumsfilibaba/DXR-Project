@@ -266,7 +266,11 @@ void Renderer::RenderDebugInterface()
         ImGui::SetNextWindowPos(ImVec2(Float(WindowWidth), 10.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Always);
 
-        ImGuiWindowFlags Flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
+        const ImGuiWindowFlags Flags = 
+            ImGuiWindowFlags_NoMove             | 
+            ImGuiWindowFlags_NoDecoration       | 
+            ImGuiWindowFlags_NoFocusOnAppearing | 
+            ImGuiWindowFlags_NoSavedSettings;
 
         ImGui::Begin("Renderer Window", nullptr, Flags);
 
@@ -731,13 +735,7 @@ void Renderer::Release()
 Bool Renderer::InitBoundingBoxDebugPass()
 {
     TArray<UInt8> ShaderCode;
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/Debug.hlsl",
-        "VSMain",
-        nullptr,
-        EShaderStage::Vertex,
-        EShaderModel::SM_6_0,
-        ShaderCode))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Debug.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;
@@ -754,13 +752,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
         VShader->SetName("Debug VertexShader");
     }
 
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/Debug.hlsl",
-        "PSMain",
-        nullptr,
-        EShaderStage::Pixel,
-        EShaderModel::SM_6_0,
-        ShaderCode))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Debug.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;
@@ -921,13 +913,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
 Bool Renderer::InitAA()
 {
     TArray<UInt8> ShaderCode;
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/FullscreenVS.hlsl",
-        "Main",
-        nullptr,
-        EShaderStage::Vertex,
-        EShaderModel::SM_6_0,
-        ShaderCode))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/FullscreenVS.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;
@@ -944,13 +930,7 @@ Bool Renderer::InitAA()
         VShader->SetName("Fullscreen VertexShader");
     }
 
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/PostProcessPS.hlsl",
-        "Main",
-        nullptr,
-        EShaderStage::Pixel,
-        EShaderModel::SM_6_0,
-        ShaderCode))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/PostProcessPS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;
@@ -1036,13 +1016,7 @@ Bool Renderer::InitAA()
     }
 
     // FXAA
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/FXAA_PS.hlsl",
-        "Main",
-        nullptr,
-        EShaderStage::Pixel,
-        EShaderModel::SM_6_0,
-        ShaderCode))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/FXAA_PS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;

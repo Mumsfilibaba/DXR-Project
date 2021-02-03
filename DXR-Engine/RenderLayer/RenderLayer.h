@@ -1,7 +1,7 @@
 #pragma once
 #include "GenericRenderLayer.h"
 
-#define ENABLE_API_DEBUGGING 1
+#define ENABLE_API_DEBUGGING 0
 
 class RenderLayer
 {
@@ -82,7 +82,12 @@ public:
         return gRenderLayer->CreateSamplerState(CreateInfo);
     }
 
-    FORCEINLINE static VertexBuffer* CreateVertexBuffer(UInt32 Stride, UInt32 NumVertices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+    FORCEINLINE static VertexBuffer* CreateVertexBuffer(
+        UInt32 Stride, 
+        UInt32 NumVertices, 
+        UInt32 Flags, 
+        EResourceState InitialState, 
+        const ResourceData* InitialData)
     {
         return gRenderLayer->CreateVertexBuffer(Stride, NumVertices, Flags, InitialState, InitialData);
     }
@@ -94,7 +99,12 @@ public:
         return CreateVertexBuffer(STRIDE, NumVertices, Flags, InitialState, InitialData);
     }
 
-    FORCEINLINE static IndexBuffer* CreateIndexBuffer(EIndexFormat Format, UInt32 NumIndices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+    FORCEINLINE static IndexBuffer* CreateIndexBuffer(
+        EIndexFormat Format, 
+        UInt32 NumIndices, 
+        UInt32 Flags, 
+        EResourceState InitialState, 
+        const ResourceData* InitialData)
     {
         return gRenderLayer->CreateIndexBuffer(Format, NumIndices, Flags, InitialState, InitialData);
     }
@@ -111,7 +121,12 @@ public:
         return CreateConstantBuffer(SIZE_IN_BYTES, Flags, InitialState, InitialData);
     }
 
-    FORCEINLINE static StructuredBuffer* CreateStructuredBuffer(UInt32 Stride, UInt32 NumElements, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+    FORCEINLINE static StructuredBuffer* CreateStructuredBuffer(
+        UInt32 Stride, 
+        UInt32 NumElements, 
+        UInt32 Flags, 
+        EResourceState InitialState, 
+        const ResourceData* InitialData)
     {
         return gRenderLayer->CreateStructuredBuffer(Stride, NumElements, Flags, InitialState, InitialData);
     }
@@ -160,7 +175,14 @@ public:
         return gRenderLayer->CreateShaderResourceView(Texture, Format, Mip, NumMips, ArraySlice, NumArraySlices, MinMipBias);
     }
 
-    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(Texture3D* Texture, EFormat Format, UInt32 Mip, UInt32 NumMips, UInt32 DepthSlice, UInt32 NumDepthSlices, Float MinMipBias)
+    FORCEINLINE static ShaderResourceView* CreateShaderResourceView(
+        Texture3D* Texture, 
+        EFormat Format, 
+        UInt32 Mip, 
+        UInt32 NumMips, 
+        UInt32 DepthSlice, 
+        UInt32 NumDepthSlices, 
+        Float MinMipBias)
     {
         return gRenderLayer->CreateShaderResourceView(Texture, Format, Mip, NumMips, DepthSlice, NumDepthSlices, MinMipBias);
     }

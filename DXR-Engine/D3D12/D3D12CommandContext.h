@@ -437,9 +437,20 @@ public:
 
     virtual void Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants) override final;
 
-    virtual void BindShaderResourceViews(EShaderStage ShaderStage, ShaderResourceView* const* ShaderResourceViews, UInt32 ShaderResourceViewCount, UInt32 StartSlot) override final;
+    virtual void BindShaderResourceViews(
+        EShaderStage ShaderStage, 
+        ShaderResourceView* const* ShaderResourceViews, 
+        UInt32 ShaderResourceViewCount, 
+        UInt32 StartSlot) override final;
+    
     virtual void BindSamplerStates(EShaderStage ShaderStage, SamplerState* const* SamplerStates, UInt32 SamplerStateCount, UInt32 StartSlot) override final;
-    virtual void BindUnorderedAccessViews(EShaderStage ShaderStage, UnorderedAccessView* const* UnorderedAccessViews, UInt32 UnorderedAccessViewCount, UInt32 StartSlot) override final;
+    
+    virtual void BindUnorderedAccessViews(
+        EShaderStage ShaderStage, 
+        UnorderedAccessView* const* UnorderedAccessViews, 
+        UInt32 UnorderedAccessViewCount, 
+        UInt32 StartSlot) override final;
+    
     virtual void BindConstantBuffers(EShaderStage ShaderStage, ConstantBuffer* const* ConstantBuffers, UInt32 ConstantBufferCount, UInt32 StartSlot) override final;
 
     virtual void UpdateBuffer(Buffer* Destination, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData) override final;
@@ -466,7 +477,13 @@ public:
     virtual void Draw(UInt32 VertexCount, UInt32 StartVertexLocation) override final;
     virtual void DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation) override final;
     virtual void DrawInstanced(UInt32 VertexCountPerInstance, UInt32 InstanceCount, UInt32 StartVertexLocation, UInt32 StartInstanceLocation) override final;
-    virtual void DrawIndexedInstanced(UInt32 IndexCountPerInstance, UInt32 InstanceCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation, UInt32 StartInstanceLocation) override final;
+    
+    virtual void DrawIndexedInstanced(
+        UInt32 IndexCountPerInstance, 
+        UInt32 InstanceCount, 
+        UInt32 StartIndexLocation, 
+        UInt32 BaseVertexLocation, 
+        UInt32 StartInstanceLocation) override final;
 
     virtual void Dispatch(UInt32 WorkGroupsX, UInt32 WorkGroupsY, UInt32 WorkGroupsZ) override final;
     virtual void DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth) override final;

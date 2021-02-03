@@ -591,13 +591,7 @@ Bool D3D12CommandContext::Init()
         GenerateMipsTex2D_PSO->SetName("GenerateMipsTex2D Gen PSO");
     }
 
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/GenerateMipsTexCube.hlsl",
-        "Main",
-        nullptr,
-        EShaderStage::Compute,
-        EShaderModel::SM_6_0,
-        Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
         Debug::DebugBreak();
@@ -776,10 +770,7 @@ void D3D12CommandContext::BindVertexBuffers(VertexBuffer* const * VertexBuffers,
         VertexBufferState.BindVertexBuffer(DxVertexBuffer, BufferSlot + i);
     }
     
-    CmdList.IASetVertexBuffers(
-        0, 
-        VertexBufferState.GetVertexBufferViews(),
-        VertexBufferState.GetNumVertexBufferViews());
+    CmdList.IASetVertexBuffers(0, VertexBufferState.GetVertexBufferViews(), VertexBufferState.GetNumVertexBufferViews());
 }
 
 void D3D12CommandContext::BindIndexBuffer(IndexBuffer* IndexBuffer)
@@ -871,23 +862,19 @@ void D3D12CommandContext::Bind32BitShaderConstants(EShaderStage ShaderStage, con
 
     if (ShaderStageIsGraphics(ShaderStage))
     {
-        CmdList.SetGraphicsRoot32BitConstants(
-            Shader32BitConstants,
-            Num32BitConstants,
-            0,
-            D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER);
+        CmdList.SetGraphicsRoot32BitConstants(Shader32BitConstants, Num32BitConstants, 0, D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER);
     }
     else if (ShaderStageIsCompute(ShaderStage))
     {
-        CmdList.SetComputeRoot32BitConstants(
-            Shader32BitConstants,
-            Num32BitConstants,
-            0,
-            D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER);
+        CmdList.SetComputeRoot32BitConstants(Shader32BitConstants, Num32BitConstants, 0, D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER);
     }
 }
 
-void D3D12CommandContext::BindShaderResourceViews(EShaderStage ShaderStage, ShaderResourceView* const* ShaderResourceViews, UInt32 ShaderResourceViewCount, UInt32 StartSlot)
+void D3D12CommandContext::BindShaderResourceViews(
+    EShaderStage ShaderStage, 
+    ShaderResourceView* const* ShaderResourceViews, 
+    UInt32 ShaderResourceViewCount, 
+    UInt32 StartSlot)
 {
     UNREFERENCED_VARIABLE(ShaderStage);
 
@@ -909,7 +896,11 @@ void D3D12CommandContext::BindSamplerStates(EShaderStage ShaderStage, SamplerSta
     }
 }
 
-void D3D12CommandContext::BindUnorderedAccessViews(EShaderStage ShaderStage, UnorderedAccessView* const* UnorderedAccessViews, UInt32 UnorderedAccessViewCount, UInt32 StartSlot)
+void D3D12CommandContext::BindUnorderedAccessViews(
+    EShaderStage ShaderStage, 
+    UnorderedAccessView* const* UnorderedAccessViews, 
+    UInt32 UnorderedAccessViewCount, 
+    UInt32 StartSlot)
 {
     UNREFERENCED_VARIABLE(ShaderStage);
 
@@ -1038,10 +1029,7 @@ void D3D12CommandContext::CopyTexture(Texture* Destination, Texture* Source)
     CmdList.CopyResource(DxDestination->GetResource(), DxSource->GetResource());
 }
 
-void D3D12CommandContext::CopyTextureRegion(
-    Texture* Destination, 
-    Texture* Source, 
-    const CopyTextureInfo& CopyInfo)
+void D3D12CommandContext::CopyTextureRegion(Texture* Destination, Texture* Source, const CopyTextureInfo& CopyInfo)
 {
     D3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
     D3D12BaseTexture* DxSource      = D3D12TextureCast(Source);
@@ -1269,7 +1257,7 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
         // TODO: Copy only miplevels (Maybe faster?)
         CmdList.CopyNativeResource(DxTexture->GetResource()->GetResource(), StagingTexture.Get());
 
-        BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource()->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         BarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         BarrierBatcher.FlushBarriers(CmdList);
 

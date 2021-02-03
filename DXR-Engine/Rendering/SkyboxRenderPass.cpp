@@ -22,7 +22,12 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     }
 
     ResourceData IndexData = ResourceData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
-    SkyboxIndexBuffer = RenderLayer::CreateIndexBuffer(EIndexFormat::UInt32, SkyboxMesh.Indices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &IndexData);
+    SkyboxIndexBuffer = RenderLayer::CreateIndexBuffer(
+        EIndexFormat::UInt32, 
+        SkyboxMesh.Indices.Size(), 
+        BufferFlag_Upload, 
+        EResourceState::VertexAndConstantBuffer, 
+        &IndexData);
     if (!SkyboxIndexBuffer)
     {
         return false;

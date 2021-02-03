@@ -369,7 +369,10 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Scen
                     ConsoleVariable* GlobalFrustumCullEnabled = gConsole.FindVariable("r.EnableFrustumCulling");
                     if (GlobalFrustumCullEnabled->GetBool())
                     {
-                        Frustum CameraFrustum = Frustum(CurrentLight->GetShadowFarPlane(), CurrentLight->GetViewMatrix(Face),  CurrentLight->GetProjectionMatrix(Face));
+                        Frustum CameraFrustum = Frustum(
+                            CurrentLight->GetShadowFarPlane(), 
+                            CurrentLight->GetViewMatrix(Face), 
+                            CurrentLight->GetProjectionMatrix(Face));
                         for (const MeshDrawCommand& Command : Scene.GetMeshDrawCommands())
                         {
                             const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
@@ -562,7 +565,7 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
         LightSetup.PointLightShadowSize, 
         1, LightSetup.MaxPointLightShadows, 
         TextureFlags_ShadowMap, 
-        EResourceState::NonPixelShaderResource,
+        EResourceState::PixelShaderResource,
         nullptr);
     if (LightSetup.PointLightShadowMaps)
     {
@@ -574,7 +577,10 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
             for (UInt32 Face = 0; Face < 6; Face++)
             {
                 TStaticArray<TSharedRef<DepthStencilView>, 6>& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
-                DepthCube[Face] = RenderLayer::CreateDepthStencilView(LightSetup.PointLightShadowMaps.Get(), LightSetup.ShadowMapFormat, GetCubeFaceFromIndex(Face), 0, i);
+                DepthCube[Face] = RenderLayer::CreateDepthStencilView(
+                    LightSetup.PointLightShadowMaps.Get(), 
+                    LightSetup.ShadowMapFormat, 
+                    GetCubeFaceFromIndex(Face), 0, i);
                 if (!DepthCube[Face])
                 {
                     Debug::DebugBreak();
@@ -593,7 +599,7 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
         LightSetup.ShadowMapWidth,
         LightSetup.ShadowMapHeight,
         1, 1, TextureFlags_ShadowMap,
-        EResourceState::NonPixelShaderResource,
+        EResourceState::PixelShaderResource,
         nullptr);
     if (LightSetup.DirLightShadowMaps)
     {

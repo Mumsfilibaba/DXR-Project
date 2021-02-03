@@ -145,13 +145,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
 
     // PrePass
     {
-        if (!ShaderCompiler::CompileFromFile(
-            "../DXR-Engine/Shaders/PrePass.hlsl",
-            "Main",
-            nullptr,
-            EShaderStage::Vertex,
-            EShaderModel::SM_6_0,
-            ShaderCode))
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/PrePass.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
             Debug::DebugBreak();
             return false;
@@ -562,9 +556,14 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
 {
     const UInt32 Width  = FrameResources.MainWindowViewport->GetWidth();
     const UInt32 Height = FrameResources.MainWindowViewport->GetHeight();
-    const UInt32 Usage  = TextureFlag_RTV;
+    const UInt32 Usage  = TextureFlags_RenderTarget;
 
-    FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = RenderLayer::CreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage, EResourceState::Common, nullptr);
+    // Albedo
+    FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = RenderLayer::CreateTexture2D(
+        FrameResources.AlbedoFormat, 
+        Width, Height, 1, 1, Usage, 
+        EResourceState::Common, 
+        nullptr);
     if (FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->SetName("GBuffer Albedo");
@@ -575,7 +574,11 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     }
 
     // Normal
-    FrameResources.GBuffer[GBUFFER_NORMAL_INDEX] = RenderLayer::CreateTexture2D(FrameResources.NormalFormat, Width, Height, 1, 1, Usage, EResourceState::Common, nullptr);
+    FrameResources.GBuffer[GBUFFER_NORMAL_INDEX] = RenderLayer::CreateTexture2D(
+        FrameResources.NormalFormat, 
+        Width, Height, 1, 1, Usage, 
+        EResourceState::Common, 
+        nullptr);
     if (FrameResources.GBuffer[GBUFFER_NORMAL_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->SetName("GBuffer Normal");
@@ -586,7 +589,11 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     }
 
     // Material Properties
-    FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX] = RenderLayer::CreateTexture2D(FrameResources.MaterialFormat, Width, Height, 1, 1, Usage, EResourceState::Common, nullptr);
+    FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX] = RenderLayer::CreateTexture2D(
+        FrameResources.MaterialFormat, 
+        Width, Height, 1, 1, Usage, 
+        EResourceState::Common,
+        nullptr);
     if (FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->SetName("GBuffer Material");
@@ -598,7 +605,11 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
 
     // DepthStencil
     const UInt32 UsageDS = TextureFlag_DSV | TextureFlag_SRV;
-    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RenderLayer::CreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, UsageDS, EResourceState::Common, nullptr);
+    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RenderLayer::CreateTexture2D(
+        FrameResources.DepthBufferFormat, 
+        Width, Height, 1, 1, UsageDS, 
+        EResourceState::Common, 
+        nullptr);
     if (FrameResources.GBuffer[GBUFFER_DEPTH_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->SetName("GBuffer DepthStencil");
@@ -609,7 +620,11 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     }
 
     // View Normal
-    FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateTexture2D(FrameResources.ViewNormalFormat, Width, Height, 1, 1, Usage, EResourceState::Common, nullptr);
+    FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateTexture2D(
+        FrameResources.ViewNormalFormat, 
+        Width, Height, 1, 1, Usage, 
+        EResourceState::Common, 
+        nullptr);
     if (FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->SetName("GBuffer ViewNormal");
@@ -620,7 +635,12 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     }
 
     // Final Image
-    FrameResources.FinalTarget = RenderLayer::CreateTexture2D(FrameResources.ViewNormalFormat, Width, Height, 1, 1, Usage | TextureFlag_UAV, EResourceState::Common, nullptr);
+    FrameResources.FinalTarget = RenderLayer::CreateTexture2D(
+        FrameResources.FinalTargetFormat, 
+        Width, Height, 1, 1, 
+        Usage | TextureFlag_UAV, 
+        EResourceState::Common, 
+        nullptr);
     if (FrameResources.FinalTarget)
     {
         FrameResources.FinalTarget->SetName("Final Target");

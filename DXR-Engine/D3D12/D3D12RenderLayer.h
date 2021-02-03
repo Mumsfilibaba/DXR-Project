@@ -99,10 +99,32 @@ public:
 
     virtual class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) override final;
 
-    virtual VertexBuffer* CreateVertexBuffer(UInt32 Stride, UInt32 NumVertices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) override final;
-    virtual IndexBuffer* CreateIndexBuffer(EIndexFormat Format, UInt32 NumIndices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) override final;
-    virtual ConstantBuffer* CreateConstantBuffer(UInt32 SizeInBytes, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) override final;
-    virtual StructuredBuffer* CreateStructuredBuffer(UInt32 Stride, UInt32 NumElements, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) override final;
+    virtual VertexBuffer* CreateVertexBuffer(
+        UInt32 Stride, 
+        UInt32 NumVertices, 
+        UInt32 Flags, 
+        EResourceState InitialState, 
+        const ResourceData* InitalData) override final;
+
+    virtual IndexBuffer* CreateIndexBuffer(
+        EIndexFormat Format, 
+        UInt32 NumIndices, 
+        UInt32 Flags, 
+        EResourceState InitialState, 
+        const ResourceData* InitalData) override final;
+
+    virtual ConstantBuffer* CreateConstantBuffer(
+        UInt32 SizeInBytes, 
+        UInt32 Flags, 
+        EResourceState InitialState, 
+        const ResourceData* InitalData) override final;
+
+    virtual StructuredBuffer* CreateStructuredBuffer(
+        UInt32 Stride, 
+        UInt32 NumElements, 
+        UInt32 Flags, 
+        EResourceState InitialState, 
+        const ResourceData* InitalData) override final;
 
     virtual class RayTracingGeometry* CreateRayTracingGeometry() override final;
     virtual class RayTracingScene* CreateRayTracingScene() override final;

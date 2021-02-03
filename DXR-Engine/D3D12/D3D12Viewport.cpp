@@ -212,6 +212,8 @@ Bool D3D12Viewport::RetriveBackBuffers()
         {
             return false;
         }
+
+        BackBuffers[i]->SetRenderTargetView(BackBufferViews[i].Get());
     }
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();

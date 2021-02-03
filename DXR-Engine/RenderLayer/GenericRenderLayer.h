@@ -433,7 +433,14 @@ public:
         return CreateShaderResourceView(CreateInfo);
     }
 
-    ShaderResourceView* CreateShaderResourceView(Texture2DArray* Texture, EFormat Format, UInt32 Mip, UInt32 NumMips, UInt32 ArraySlice, UInt32 NumArraySlices, Float MinMipBias)
+    ShaderResourceView* CreateShaderResourceView(
+        Texture2DArray* Texture, 
+        EFormat Format, 
+        UInt32 Mip, 
+        UInt32 NumMips, 
+        UInt32 ArraySlice, 
+        UInt32 NumArraySlices, 
+        Float MinMipBias)
     {
         ShaderResourceViewCreateInfo CreateInfo(ShaderResourceViewCreateInfo::EType::Texture2DArray);
         CreateInfo.Texture2DArray.Texture        = Texture;
@@ -457,7 +464,14 @@ public:
         return CreateShaderResourceView(CreateInfo);
     }
 
-    ShaderResourceView* CreateShaderResourceView(TextureCubeArray* Texture, EFormat Format, UInt32 Mip, UInt32 NumMips, UInt32 ArraySlice, UInt32 NumArraySlices, Float MinMipBias)
+    ShaderResourceView* CreateShaderResourceView(
+        TextureCubeArray* Texture,
+        EFormat Format, 
+        UInt32 Mip, 
+        UInt32 NumMips, 
+        UInt32 ArraySlice, 
+        UInt32 NumArraySlices, 
+        Float MinMipBias)
     {
         ShaderResourceViewCreateInfo CreateInfo(ShaderResourceViewCreateInfo::EType::TextureCubeArray);
         CreateInfo.TextureCubeArray.Texture        = Texture;
@@ -470,7 +484,14 @@ public:
         return CreateShaderResourceView(CreateInfo);
     }
 
-    ShaderResourceView* CreateShaderResourceView(Texture3D* Texture, EFormat Format, UInt32 Mip, UInt32 NumMips, UInt32 DepthSlice, UInt32 NumDepthSlices, Float MinMipBias)
+    ShaderResourceView* CreateShaderResourceView(
+        Texture3D* Texture, 
+        EFormat Format, 
+        UInt32 Mip, 
+        UInt32 NumMips, 
+        UInt32 DepthSlice, 
+        UInt32 NumDepthSlices, 
+        Float MinMipBias)
     {
         ShaderResourceViewCreateInfo CreateInfo(ShaderResourceViewCreateInfo::EType::Texture3D);
         CreateInfo.Texture3D.Texture        = Texture;

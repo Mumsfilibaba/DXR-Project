@@ -4,6 +4,11 @@
 #include "D3D12Resource.h"
 #include "D3D12Views.h"
 
+#ifdef COMPILER_VISUAL_STUDIO
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
+#endif
+
 constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
 
 class D3D12BaseTexture : public D3D12DeviceChild
@@ -241,3 +246,7 @@ inline D3D12BaseTexture* D3D12TextureCast(Texture* Texture)
         return nullptr;
     }
 }
+
+#ifdef COMPILER_VISUAL_STUDIO
+    #pragma warning(pop)
+#endif
