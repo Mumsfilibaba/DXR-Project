@@ -31,6 +31,8 @@ ConsoleVariable GlobalVSyncEnabled(EConsoleVariableType::Bool);
 ConsoleVariable GlobalFrustumCullEnabled(EConsoleVariableType::Bool);
 ConsoleVariable GlobalRayTracingEnabled(EConsoleVariableType::Bool);
 
+ConsoleVariable GlobalFXAADebug(EConsoleVariableType::Bool);
+
 struct CameraBufferDesc
 {
     XMFLOAT4X4 ViewProjection;
@@ -88,7 +90,7 @@ void Renderer::PerformFXAA(CommandList& InCmdList)
 
     ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     InCmdList.BindShaderResourceViews(EShaderStage::Pixel, &FinalTargetSRV, 1, 0);
-    InCmdList.BindSamplerStates(EShaderStage::Pixel, &Resources.GBufferSampler, 1, 0);
+    InCmdList.BindSamplerStates(EShaderStage::Pixel, &Resources.FXAASampler, 1, 0);
 
     struct FXAASettings
     {
@@ -101,7 +103,14 @@ void Renderer::PerformFXAA(CommandList& InCmdList)
 
     InCmdList.Bind32BitShaderConstants(EShaderStage::Pixel, &Settings, 2);
 
-    InCmdList.BindGraphicsPipelineState(FXAAPSO.Get());
+    if (GlobalFXAADebug.GetBool())
+    {
+        InCmdList.BindGraphicsPipelineState(FXAADebugPSO.Get());
+    }
+    else
+    {
+        InCmdList.BindGraphicsPipelineState(FXAAPSO.Get());
+    }
 
     InCmdList.DrawInstanced(3, 1, 0, 0);
 
@@ -552,6 +561,9 @@ Bool Renderer::Init()
 
     INIT_CONSOLE_VARIABLE("r.EnableRayTracing", GlobalRayTracingEnabled);
     GlobalRayTracingEnabled.SetBool(false);
+
+    INIT_CONSOLE_VARIABLE("r.FXAADebug", GlobalFXAADebug);
+    GlobalFXAADebug.SetBool(false);
 
     Resources.MainWindowViewport = RenderLayer::CreateViewport(gMainWindow, 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
     if (!Resources.MainWindowViewport)
@@ -1018,6 +1030,18 @@ Bool Renderer::InitAA()
     }
 
     // FXAA
+    SamplerStateCreateInfo CreateInfo;
+    CreateInfo.AddressU = ESamplerMode::Clamp;
+    CreateInfo.AddressV = ESamplerMode::Clamp;
+    CreateInfo.AddressW = ESamplerMode::Clamp;
+    CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
+
+    Resources.FXAASampler = RenderLayer::CreateSamplerState(CreateInfo);
+    if (!Resources.FXAASampler)
+    {
+        return false;
+    }
+
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/FXAA_PS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
@@ -1046,6 +1070,41 @@ Bool Renderer::InitAA()
     else
     {
         FXAAPSO->SetName("FXAA PipelineState");
+    }
+
+    TArray<ShaderDefine> Defines =
+    {
+        ShaderDefine("ENABLE_DEBUG", "1")
+    };
+
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/FXAA_PS.hlsl", "Main", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    if (!PShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        PShader->SetName("FXAA PixelShader");
+    }
+
+    PSOProperties.ShaderState.PixelShader = PShader.Get();
+
+    FXAADebugPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    if (!FXAADebugPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        FXAADebugPSO->SetName("FXAA Debug PipelineState");
     }
 
     return true;

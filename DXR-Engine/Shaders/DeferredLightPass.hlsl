@@ -218,16 +218,16 @@ void Main(ComputeShaderInput Input)
         float3 F    = FresnelSchlick_Roughness(F0, V, N, GBufferRoughness);
         float3 Ks   = F;
         float3 Kd   = Float3(1.0f) - Ks;
-        float3 Irradiance   = IrradianceMap.SampleLevel(IrradianceSampler, N, 0.0f).rgb;
-        float3 Diffuse      = Irradiance * GBufferAlbedo * Kd;
+        float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, N, 0.0f).rgb;
+        float3 Diffuse    = Irradiance * GBufferAlbedo * Kd;
 
         float3 R = reflect(-V, N);
-        float3 PrefilteredMap   = SpecularIrradianceMap.SampleLevel(IrradianceSampler, R, GBufferRoughness * (NumSkyLightMips - 1.0f)).rgb;
-        float2 BRDFIntegration  = IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, GBufferRoughness), 0.0f).rg;
-        float3 Specular         = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
+        float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, R, GBufferRoughness * (NumSkyLightMips - 1.0f)).rgb;
+        float2 BRDFIntegration = IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, GBufferRoughness), 0.0f).rg;
+        float3 Specular        = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
 
-        float3 Ambient  = (Diffuse + Specular) * GBufferAO;
-        FinalColor      = Ambient + L0;
+        float3 Ambient = (Diffuse + Specular) * GBufferAO;
+        FinalColor     = Ambient + L0;
     }
     
     float4 Tint = Float4(1.0f);
@@ -252,10 +252,12 @@ void Main(ComputeShaderInput Input)
     {
         Tint = float4(1.0f, 1.0f, 0.0f, 1.0f);
     }
+    
+    FinalColor = FinalColor * Tint.rgb;
 #endif
     
     // Finalize
-    FinalColor = ApplyGammaCorrectionAndTonemapping(FinalColor * Tint.rgb);
-    float Luminance  = Luma(FinalColor);
+    float Luminance = Luma(FinalColor);
+    FinalColor = ApplyGammaCorrectionAndTonemapping(FinalColor);
     Output[TexCoord] = float4(FinalColor, Luminance);
 }

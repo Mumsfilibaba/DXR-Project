@@ -46,6 +46,7 @@ struct FrameResources
     TSharedRef<Texture2D>    FinalTarget;
     TSharedRef<Texture2D>    GBuffer[5];
     TSharedRef<SamplerState> GBufferSampler;
+    TSharedRef<SamplerState> FXAASampler;
 
     TSharedRef<InputLayoutState> StdInputLayout;
 

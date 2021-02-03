@@ -75,6 +75,7 @@ private:
 
     TSharedRef<GraphicsPipelineState> PostPSO;
     TSharedRef<GraphicsPipelineState> FXAAPSO;
+    TSharedRef<GraphicsPipelineState> FXAADebugPSO;
 
     UInt32 LastFrameNumDrawCalls     = 0;
     UInt32 LastFrameNumDispatchCalls = 0;

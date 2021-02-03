@@ -472,9 +472,9 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
                 VALIDATE(CurrentLight != nullptr);
 
                 DirectionalLightProperties Properties;
-                Properties.Color         = XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
-                Properties.ShadowBias    = CurrentLight->GetShadowBias();
-                Properties.Direction     = CurrentLight->GetDirection();
+                Properties.Color      = XMFLOAT3(Color.x * Intensity, Color.y * Intensity, Color.z * Intensity);
+                Properties.ShadowBias = CurrentLight->GetShadowBias();
+                Properties.Direction  = CurrentLight->GetDirection();
 
                 // TODO: Should not be the done in the renderer
                 XMFLOAT3 CameraPosition = Scene.GetCamera()->GetPosition();

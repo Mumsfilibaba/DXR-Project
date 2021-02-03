@@ -16,6 +16,8 @@ void FrameResources::Release()
 
     Skybox.Reset();
     
+    FXAASampler.Reset();
+
     ReflectionTexture.Reset();
     SSAOBuffer.Reset();
     FinalTarget.Reset();
