@@ -1,6 +1,8 @@
 #pragma once
 #include "Core.h"
 
+#include "Memory/Memory.h"
+
 struct ColorF
 {
     ColorF()

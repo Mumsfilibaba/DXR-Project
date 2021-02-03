@@ -395,7 +395,7 @@ Bool DebugUI::Init()
         return false;
     }
 
-    GlobalImGuiState.VertexBuffer = RenderLayer::CreateVertexBuffer<ImDrawVert>(1024 * 1024, BufferUsage_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+    GlobalImGuiState.VertexBuffer = RenderLayer::CreateVertexBuffer<ImDrawVert>(1024 * 1024, BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
     if (!GlobalImGuiState.VertexBuffer)
     {
         return false;
@@ -404,7 +404,7 @@ Bool DebugUI::Init()
     GlobalImGuiState.IndexBuffer = RenderLayer::CreateIndexBuffer(
         sizeof(ImDrawIdx) == 2 ? EIndexFormat::UInt16 : EIndexFormat::UInt32, 
         1024 * 1024, 
-        BufferUsage_Default, 
+        BufferFlag_Default,
         EResourceState::Common, 
         nullptr);
     if (!GlobalImGuiState.IndexBuffer)

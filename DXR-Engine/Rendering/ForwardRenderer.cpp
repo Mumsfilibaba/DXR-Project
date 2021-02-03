@@ -143,7 +143,8 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
     CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.BindScissorRect(RenderWidth, RenderHeight, 0, 0);
 
-    CmdList.BindRenderTargets(&FrameResources.BackBufferRTV, 1, FrameResources.GBufferDSV.Get());
+    RenderTargetView* BackBufferRTV = FrameResources.BackBuffer->GetRenderTargetView();
+    CmdList.BindRenderTargets(&BackBufferRTV, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
     ConstantBuffer* ConstantBuffers[] =
     {
@@ -157,11 +158,11 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
     {
         ShaderResourceView* ShaderResourceViews[] =
         {
-            LightSetup.IrradianceMapSRV.Get(),
-            LightSetup.SpecularIrradianceMapSRV.Get(),
-            FrameResources.IntegrationLUTSRV.Get(),
-            LightSetup.DirLightShadowMapSRV.Get(),
-            LightSetup.PointLightShadowMapSRV.Get(),
+            LightSetup.IrradianceMap->GetShaderResourceView(),
+            LightSetup.SpecularIrradianceMap->GetShaderResourceView(),
+            FrameResources.IntegrationLUT->GetShaderResourceView(),
+            LightSetup.DirLightShadowMaps->GetShaderResourceView(),
+            LightSetup.PointLightShadowMaps->GetShaderResourceView(),
         };
 
         CmdList.BindShaderResourceViews(EShaderStage::Pixel, ShaderResourceViews, 5, 0);

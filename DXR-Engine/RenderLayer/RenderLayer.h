@@ -1,7 +1,7 @@
 #pragma once
 #include "GenericRenderLayer.h"
 
-#define ENABLE_API_DEBUGGING 0
+#define ENABLE_API_DEBUGGING 1
 
 class RenderLayer
 {
@@ -88,7 +88,7 @@ public:
     }
 
     template<typename T>
-    FORCEINLINE static VertexBuffer* CreateVertexBuffer(UInt32 NumVertices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData)
+    FORCEINLINE static VertexBuffer* CreateVertexBuffer(UInt32 NumVertices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
     {
         constexpr UInt32 STRIDE = sizeof(T);
         return CreateVertexBuffer(STRIDE, NumVertices, Flags, InitialState, InitialData);

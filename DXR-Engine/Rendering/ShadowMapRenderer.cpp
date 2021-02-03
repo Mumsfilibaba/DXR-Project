@@ -29,7 +29,7 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
 
     {
         const UInt32 SizeInBytes = sizeof(PointLightProperties) * LightSetup.MaxPointLights;
-        LightSetup.PointLightBuffer = RenderLayer::CreateConstantBuffer(SizeInBytes, EResourceState::VertexAndConstantBuffer, nullptr);
+        LightSetup.PointLightBuffer = RenderLayer::CreateConstantBuffer(BufferFlag_Default, SizeInBytes, EResourceState::VertexAndConstantBuffer, nullptr);
         if (!LightSetup.PointLightBuffer)
         {
             Debug::DebugBreak();
@@ -41,7 +41,7 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
         }
     }
 
-    PerShadowMapBuffer = RenderLayer::CreateConstantBuffer<PerShadowMap>(EResourceState::VertexAndConstantBuffer, nullptr);
+    PerShadowMapBuffer = RenderLayer::CreateConstantBuffer<PerShadowMap>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
     if (!PerShadowMapBuffer)
     {
         Debug::DebugBreak();
@@ -73,9 +73,7 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
             VShader->SetName("Linear ShadowMap VertexShader");
         }
 
-#if !ENABLE_VSM
         TSharedRef<PixelShader> PShader;
-#endif
         if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadowMap.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
         {
             Debug::DebugBreak();
@@ -165,7 +163,7 @@ Bool ShadowMapRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameR
 
     {
         const UInt32 SizeInBytes = sizeof(PointLightProperties) * LightSetup.MaxDirectionalLights;
-        LightSetup.DirectionalLightBuffer = RenderLayer::CreateConstantBuffer(SizeInBytes, EResourceState::VertexAndConstantBuffer, nullptr);
+        LightSetup.DirectionalLightBuffer = RenderLayer::CreateConstantBuffer(BufferFlag_Default, SizeInBytes, EResourceState::VertexAndConstantBuffer, nullptr);
         if (!LightSetup.DirectionalLightBuffer)
         {
             Debug::DebugBreak();
@@ -484,9 +482,10 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
     {
         TRACE_SCOPE("Render DirectionalLight ShadowMaps");
 
-        CmdList.ClearDepthStencilView(LightSetup.DirLightShadowMapDSV.Get(), DepthStencilF(1.0f, 0));
+        DepthStencilView* DirLightDSV = LightSetup.DirLightShadowMaps->GetDepthStencilView();
+        CmdList.ClearDepthStencilView(DirLightDSV, DepthStencilF(1.0f, 0));
 
-        CmdList.BindRenderTargets(nullptr, 0, LightSetup.DirLightShadowMapDSV.Get());
+        CmdList.BindRenderTargets(nullptr, 0, DirLightDSV);
         CmdList.BindGraphicsPipelineState(DirLightPipelineState.Get());
 
         CmdList.BindViewport(static_cast<Float>(LightSetup.ShadowMapWidth), static_cast<Float>(LightSetup.ShadowMapHeight), 0.0f, 1.0f, 0.0f, 0.0f);
@@ -562,7 +561,7 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
         LightSetup.ShadowMapFormat, 
         LightSetup.PointLightShadowSize, 
         1, LightSetup.MaxPointLightShadows, 
-        TextureUsage_ShadowMap, 
+        TextureFlags_ShadowMap, 
         EResourceState::NonPixelShaderResource,
         nullptr);
     if (LightSetup.PointLightShadowMaps)
@@ -575,23 +574,13 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
             for (UInt32 Face = 0; Face < 6; Face++)
             {
                 TStaticArray<TSharedRef<DepthStencilView>, 6>& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
-
-                DepthStencilViewCreateInfo DsvInfo(LightSetup.PointLightShadowMaps.Get(), LightSetup.ShadowMapFormat, GetCubeFaceFromIndex(Face), 0, i, 1);
-                DepthCube[Face] = RenderLayer::CreateDepthStencilView(DsvInfo);
+                DepthCube[Face] = RenderLayer::CreateDepthStencilView(LightSetup.PointLightShadowMaps.Get(), LightSetup.ShadowMapFormat, GetCubeFaceFromIndex(Face), 0, i);
                 if (!DepthCube[Face])
                 {
                     Debug::DebugBreak();
                     return false;
                 }
             }
-        }
-
-        ShaderResourceViewCreateInfo PointLightShadowMapsSrvInfo(LightSetup.PointLightShadowMaps.Get(), EFormat::R32_Float, 0, 1, 0.0f);
-        LightSetup.PointLightShadowMapSRV = RenderLayer::CreateShaderResourceView(PointLightShadowMapsSrvInfo);
-        if (!LightSetup.PointLightShadowMapSRV)
-        {
-            Debug::DebugBreak();
-            return false;
         }
     }
     else
@@ -603,36 +592,12 @@ Bool ShadowMapRenderer::CreateShadowMaps(SceneLightSetup& LightSetup)
         LightSetup.ShadowMapFormat,
         LightSetup.ShadowMapWidth,
         LightSetup.ShadowMapHeight,
-        0, 1, TextureUsage_ShadowMap,
-        EResourceState::Common,
+        1, 1, TextureFlags_ShadowMap,
+        EResourceState::NonPixelShaderResource,
         nullptr);
     if (LightSetup.DirLightShadowMaps)
     {
         LightSetup.DirLightShadowMaps->SetName("Directional Light ShadowMaps");
-
-        DepthStencilViewCreateInfo DirLightShadowMapsDsvInfo(LightSetup.DirLightShadowMaps.Get(), LightSetup.ShadowMapFormat, 0);
-        LightSetup.DirLightShadowMapDSV = RenderLayer::CreateDepthStencilView(DirLightShadowMapsDsvInfo);
-        if (!LightSetup.DirLightShadowMapDSV)
-        {
-            Debug::DebugBreak();
-            return false;
-        }
-        else
-        {
-            LightSetup.DirLightShadowMapDSV->SetName("DirectionalLight DepthStencilView");
-        }
-
-        ShaderResourceViewCreateInfo DirLightShadowMapsSrvInfo(LightSetup.DirLightShadowMaps.Get(), EFormat::R32_Float, 0, 1, 0.0f);
-        LightSetup.DirLightShadowMapSRV = RenderLayer::CreateShaderResourceView(DirLightShadowMapsSrvInfo);
-        if (!LightSetup.DirLightShadowMapSRV)
-        {
-            Debug::DebugBreak();
-            return false;
-        }
-        else
-        {
-            LightSetup.DirLightShadowMapDSV->SetName("DirectionalLight ShaderResourceView");
-        }
     }
     else
     {

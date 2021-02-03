@@ -38,5 +38,5 @@ private:
     D3D12_HEAP_TYPE           HeapType;
     D3D12_RESOURCE_STATES     ResourceState;
     D3D12_RESOURCE_DESC       Desc;
-    D3D12_GPU_VIRTUAL_ADDRESS Address;
+    D3D12_GPU_VIRTUAL_ADDRESS Address = 0;
 };

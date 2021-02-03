@@ -2,6 +2,9 @@
 #include "RenderLayer/Resources.h"
 
 #include "D3D12Resource.h"
+#include "D3D12Views.h"
+
+constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
 
 class D3D12BaseTexture : public D3D12DeviceChild
 {
@@ -17,12 +20,18 @@ public:
         DxResource = InResource;
     }
 
+    void SetShaderResourceView(D3D12ShaderResourceView* InShaderResourceView)
+    {
+        ShaderResourceView = MakeSharedRef<D3D12ShaderResourceView>(InShaderResourceView);
+    }
+
     DXGI_FORMAT GetNativeFormat() const { return DxResource.GetDesc().Format; }
 
     D3D12Resource* GetResource() { return &DxResource; }
     const D3D12Resource* GetResource() const { return &DxResource; }
 
 protected:
+    TSharedRef<D3D12ShaderResourceView> ShaderResourceView;
     D3D12Resource DxResource;
 };
 
@@ -42,6 +51,26 @@ public:
     {
         VALIDATE(SizeZ == 1);
     }
+
+    void SetRenderTargetView(D3D12RenderTargetView* InRenderTargetView)
+    {
+        RenderTargetView = MakeSharedRef<D3D12RenderTargetView>(InRenderTargetView);
+    }
+
+    void SetDepthStencilView(D3D12DepthStencilView* InDepthStencilView)
+    {
+        DepthStencilView = MakeSharedRef<D3D12DepthStencilView>(InDepthStencilView);
+    }
+
+    void SetUnorderedAccessView(D3D12UnorderedAccessView* InUnorderedAccessView)
+    {
+        UnorderedAccessView = MakeSharedRef<D3D12UnorderedAccessView>(InUnorderedAccessView);
+    }
+
+private:
+    TSharedRef<D3D12RenderTargetView> RenderTargetView;
+    TSharedRef<D3D12DepthStencilView> DepthStencilView;
+    TSharedRef<D3D12UnorderedAccessView> UnorderedAccessView;
 };
 
 class D3D12BaseTexture2DArray : public Texture2DArray, public D3D12BaseTexture
@@ -76,7 +105,7 @@ public:
         , D3D12BaseTexture(InDevice)
     {
         VALIDATE(SizeX == SizeY);
-        VALIDATE(SizeZ == 1);
+        VALIDATE(SizeZ == TEXTURE_CUBE_FACE_COUNT);
         VALIDATE(InNumSamples == 1);
     }
 };
@@ -96,6 +125,7 @@ public:
         , D3D12BaseTexture(InDevice)
     {
         VALIDATE(SizeX == SizeY);
+        VALIDATE(SizeZ % TEXTURE_CUBE_FACE_COUNT == 0);
         VALIDATE(InNumSamples == 1);
     }
 };
@@ -139,12 +169,17 @@ public:
     virtual void SetName(const std::string& InName) override
     {
         Resource::SetName(InName);
-        D3D12BaseTexture::DxResource.SetName(InName);
+        DxResource.SetName(InName);
     }
 
     virtual void* GetNativeResource() const override
     {
-        return reinterpret_cast<void*>(D3D12BaseTexture::DxResource.GetResource());
+        return reinterpret_cast<void*>(DxResource.GetResource());
+    }
+
+    virtual class ShaderResourceView* GetShaderResourceView() const
+    {
+        return ShaderResourceView.Get();
     }
 
     virtual Bool IsValid() const override

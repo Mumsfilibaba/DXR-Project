@@ -17,17 +17,14 @@ Material::Material(const MaterialProperties& InProperties)
 
 void Material::Init()
 {
-    MaterialBuffer = RenderLayer::CreateConstantBuffer<MaterialProperties>(
-        nullptr, 
-        BufferUsage_Default,
-        EResourceState::ResourceState_Common);
+    MaterialBuffer = RenderLayer::CreateConstantBuffer<MaterialProperties>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
 
     SamplerStateCreateInfo CreateInfo;
-    CreateInfo.AddressU       = ESamplerMode::SamplerMode_Wrap;
-    CreateInfo.AddressV       = ESamplerMode::SamplerMode_Wrap;
-    CreateInfo.AddressW       = ESamplerMode::SamplerMode_Wrap;
-    CreateInfo.ComparisonFunc = EComparisonFunc::ComparisonFunc_Never;
-    CreateInfo.Filter         = ESamplerFilter::SamplerFilter_Anistrotopic;
+    CreateInfo.AddressU       = ESamplerMode::Wrap;
+    CreateInfo.AddressV       = ESamplerMode::Wrap;
+    CreateInfo.AddressW       = ESamplerMode::Wrap;
+    CreateInfo.ComparisonFunc = EComparisonFunc::Never;
+    CreateInfo.Filter         = ESamplerFilter::Anistrotopic;
     CreateInfo.MaxAnisotropy  = 16;
     CreateInfo.MaxLOD         = FLT_MAX;
     CreateInfo.MinLOD         = -FLT_MAX;
@@ -38,11 +35,11 @@ void Material::Init()
 
 void Material::BuildBuffer(CommandList& CmdList)
 {
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::ResourceState_VertexAndConstantBuffer, EResourceState::ResourceState_CopyDest);
+    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
     CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(MaterialProperties), &Properties);
 
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
 
     MaterialBufferIsDirty = false;
 }

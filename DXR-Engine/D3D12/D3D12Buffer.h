@@ -72,11 +72,11 @@ public:
 
         Memory::Memzero(&View);
 
-        EIndexFormat Format = GetFormat();
-        if (Format != EIndexFormat::Unknown)
+        EIndexFormat IndexFormat = GetFormat();
+        if (IndexFormat != EIndexFormat::Unknown)
         {
-            View.Format         = Format == EIndexFormat::UInt16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
-            View.SizeInBytes    = GetNumIndicies() * GetStrideFromIndexFormat(Format);
+            View.Format         = IndexFormat == EIndexFormat::UInt16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+            View.SizeInBytes    = GetNumIndicies() * GetStrideFromIndexFormat(IndexFormat);
             View.BufferLocation = DxResource.GetGPUVirtualAddress();
         }
     }
@@ -108,7 +108,15 @@ public:
         Memory::Memzero(&ViewDesc);
 
         ViewDesc.BufferLocation = DxResource.GetGPUVirtualAddress();
-        ViewDesc.SizeInBytes    = D3D12BaseBuffer::GetSizeInBytes();
+        ViewDesc.SizeInBytes    = (UInt32)D3D12BaseBuffer::GetSizeInBytes();
+
+        if (View.GetOfflineHandle() == 0)
+        {
+            if (!View.Init())
+            {
+                return;
+            }
+        }
 
         View.CreateView(&DxResource, ViewDesc);
     }

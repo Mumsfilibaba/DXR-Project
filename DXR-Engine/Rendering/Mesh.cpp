@@ -13,53 +13,39 @@ Bool Mesh::Init(const MeshData& Data)
     VertexCount = static_cast<UInt32>(Data.Vertices.Size());
     IndexCount	= static_cast<UInt32>(Data.Indices.Size());
 
-    const UInt32 BufferUsage =
-        RenderLayer::IsRayTracingSupported() ?
-        BufferUsage_SRV | BufferUsage_Default :
-        BufferUsage_Default;
+    const UInt32 BufferFlags = RenderLayer::IsRayTracingSupported() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
 
-    // Create VertexBuffer
-    ResourceData InitialData(Data.Vertices.Data());
-    VertexBuffer = RenderLayer::CreateVertexBuffer<Vertex>(
-        &InitialData,
-        VertexCount, 
-        BufferUsage);
+    ResourceData InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
+    VertexBuffer = RenderLayer::CreateVertexBuffer<Vertex>(VertexCount, BufferFlags, EResourceState::VertexAndConstantBuffer, &InitialData);
     if (!VertexBuffer)
     {
         return false;
     }
 
-    // Create IndexBuffer
-    InitialData = ResourceData(Data.Indices.Data());
-    IndexBuffer = RenderLayer::CreateIndexBuffer(
-        &InitialData,
-        IndexCount * sizeof(UInt32), 
-        EIndexFormat::IndexFormat_UInt32, 
-        BufferUsage);
+    InitialData = ResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
+    IndexBuffer = RenderLayer::CreateIndexBuffer(EIndexFormat::UInt32, IndexCount, BufferFlags, EResourceState::IndexBuffer, &InitialData);
     if (!IndexBuffer)
     {
         return false;
     }
 
-    // Create RaytracingGeometry if raytracing is supported
     if (RenderLayer::IsRayTracingSupported())
     {
         RayTracingGeometry = RenderLayer::CreateRayTracingGeometry();
 
-        VertexBufferSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(VertexBuffer.Get()));
+        VertexBufferSRV = RenderLayer::CreateShaderResourceView(VertexBuffer.Get(), 0, VertexCount);
         if (!VertexBufferSRV)
         {
             return false;
         }
 
-        IndexBufferSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(IndexBuffer.Get()));
+        IndexBufferSRV = RenderLayer::CreateShaderResourceView(IndexBuffer.Get(), 0, IndexCount);
         if (!IndexBufferSRV)
         {
             return false;
         }
     }
 
-    // Create AABB
     CreateBoundingBox(Data);
     return true;
 }
@@ -92,16 +78,16 @@ void Mesh::CreateBoundingBox(const MeshData& Data)
     for (const Vertex& Vertex : Data.Vertices)
     {
         // X
-        Min.x = std::min<Float>(Min.x, Vertex.Position.x);
-        Max.x = std::max<Float>(Max.x, Vertex.Position.x);
+        Min.x = Math::Min<Float>(Min.x, Vertex.Position.x);
+        Max.x = Math::Max<Float>(Max.x, Vertex.Position.x);
         // Y
-        Min.y = std::min<Float>(Min.y, Vertex.Position.y);
-        Max.y = std::max<Float>(Max.y, Vertex.Position.y);
+        Min.y = Math::Min<Float>(Min.y, Vertex.Position.y);
+        Max.y = Math::Max<Float>(Max.y, Vertex.Position.y);
         // Z
-        Min.z = std::min<Float>(Min.z, Vertex.Position.z);
-        Max.z = std::max<Float>(Max.z, Vertex.Position.z);
+        Min.z = Math::Min<Float>(Min.z, Vertex.Position.z);
+        Max.z = Math::Max<Float>(Max.z, Vertex.Position.z);
     }
 
-    BoundingBox.Top		= Max;
-    BoundingBox.Bottom	= Min;
+    BoundingBox.Top    = Max;
+    BoundingBox.Bottom = Min;
 }

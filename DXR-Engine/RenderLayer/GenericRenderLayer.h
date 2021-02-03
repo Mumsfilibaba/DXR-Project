@@ -17,7 +17,7 @@ enum class ERenderLayerApi : UInt32
     D3D12   = 1,
 };
 
-const Char* ToString(ERenderLayerApi RenderLayerApi)
+inline const Char* ToString(ERenderLayerApi RenderLayerApi)
 {
     switch (RenderLayerApi)
     {
@@ -464,8 +464,8 @@ public:
         CreateInfo.TextureCubeArray.Format         = Format;
         CreateInfo.TextureCubeArray.Mip            = Mip;
         CreateInfo.TextureCubeArray.NumMips        = NumMips;
-        CreateInfo.TextureCubeArray.ArraySlice     = Mip;
-        CreateInfo.TextureCubeArray.NumArraySlices = NumMips;
+        CreateInfo.TextureCubeArray.ArraySlice     = ArraySlice;
+        CreateInfo.TextureCubeArray.NumArraySlices = NumArraySlices;
         CreateInfo.TextureCubeArray.MinMipBias     = MinMipBias;
         return CreateShaderResourceView(CreateInfo);
     }

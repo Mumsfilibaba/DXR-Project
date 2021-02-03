@@ -173,6 +173,11 @@ bool D3D12RayTracingScene::BuildAccelerationStructure(
     TArray<BindingTableEntry>& InBindingTableEntries,
     UInt32 InNumHitGroups)
 {
+    UNREFERENCED_VARIABLE(CommandList);
+    UNREFERENCED_VARIABLE(InInstances);
+    UNREFERENCED_VARIABLE(InBindingTableEntries);
+    UNREFERENCED_VARIABLE(InNumHitGroups);
+
     //if (!IsDirty)
     //{
     //    return true;

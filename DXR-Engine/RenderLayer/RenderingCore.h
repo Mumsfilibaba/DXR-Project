@@ -507,6 +507,77 @@ private:
     };
 };
 
+struct ResourceData
+{
+    ResourceData()
+        : Data(nullptr)
+    {
+    }
+
+    ResourceData(const Void* InData, UInt32 InSizeInBytes)
+        : Data(InData)
+        , SizeInBytes(InSizeInBytes)
+    {
+    }
+
+    ResourceData(const Void* InData, EFormat InFormat, UInt32 InWidth)
+        : Data(InData)
+        , Format(InFormat)
+        , Width(InWidth)
+        , Height(0)
+    {
+    }
+
+    ResourceData(const Void* InData, EFormat InFormat, UInt32 InWidth, UInt32 InHeight)
+        : Data(InData)
+        , Format(InFormat)
+        , Width(InWidth)
+        , Height(InHeight)
+    {
+    }
+
+    void Set(const Void* InData, UInt32 InSizeInBytes)
+    {
+        Data        = InData;
+        SizeInBytes = InSizeInBytes;
+    }
+
+    void Set(const Void* InData, EFormat InFormat, UInt32 InWidth)
+    {
+        Data   = InData;
+        Format = InFormat;
+        Width  = InWidth;
+    }
+
+    void Set(const Void* InData, EFormat InFormat, UInt32 InWidth, UInt32 InHeight)
+    {
+        Set(InData, InFormat, InWidth, InHeight);
+        Height = InHeight;
+    }
+
+    const Void* GetData() const { return Data; }
+
+    UInt32 GetSizeInBytes() const { return SizeInBytes; }
+    UInt32 GetPitch() const { return GetByteStrideFromFormat(Format) * Width; }
+    UInt32 GetSlicePitch() const { return GetByteStrideFromFormat(Format) * Width * Height; }
+
+private:
+    const Void* Data;
+    union
+    {
+        struct
+        {
+            UInt32 SizeInBytes;
+        };
+        struct
+        {
+            EFormat Format;
+            UInt32  Width;
+            UInt32  Height;
+        };
+    };
+};
+
 struct CopyBufferInfo
 {
     CopyBufferInfo() = default;

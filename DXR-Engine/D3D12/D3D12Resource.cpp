@@ -43,7 +43,11 @@ Bool D3D12Resource::Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_V
     HRESULT Result = Device->CreateCommitedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, InitialState, OptimizedClearValue, IID_PPV_ARGS(&DxResource));
     if (SUCCEEDED(Result))
     {
-        Address       = DxResource->GetGPUVirtualAddress();
+        if (Desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+        {
+            Address = DxResource->GetGPUVirtualAddress();
+        }
+        
         ResourceState = InitialState;
         return true;
     }

@@ -2,8 +2,7 @@
 
 void FrameResources::Release()
 {
-    BackBuffer    = nullptr;
-    BackBufferRTV = nullptr;
+    BackBuffer = nullptr;
 
     CameraBuffer.Reset();
     TransformBuffer.Reset();
@@ -12,35 +11,21 @@ void FrameResources::Release()
     ShadowMapCompSampler.Reset();
     IrradianceSampler.Reset();
 
-    Skybox.Reset();
-    SkyboxSRV.Reset();
-
-    ReflectionTexture.Reset();
-    ReflectionTextureSRV.Reset();
-    ReflectionTextureUAV.Reset();
-
     IntegrationLUT.Reset();
-    IntegrationLUTSRV.Reset();
     IntegrationLUTSampler.Reset();
 
+    Skybox.Reset();
+    
+    ReflectionTexture.Reset();
+    SSAOBuffer.Reset();
     FinalTarget.Reset();
-    FinalTargetSRV.Reset();
-    FinalTargetRTV.Reset();
-    FinalTargetUAV.Reset();
 
     for (UInt32 i = 0; i < 5; i++)
     {
         GBuffer[i].Reset();
-        GBufferSRVs[i].Reset();
-        GBufferRTVs[i].Reset();
     }
     
-    GBufferDSV.Reset();
     GBufferSampler.Reset();
-
-    SSAOBuffer.Reset();
-    SSAOBufferSRV.Reset();
-    SSAOBufferUAV.Reset();
 
     StdInputLayout.Reset();
 
@@ -58,7 +43,6 @@ void SceneLightSetup::Release()
     DirectionalLightBuffer.Reset();
 
     PointLightShadowMaps.Reset();
-    PointLightShadowMapSRV.Reset();
     
     for (auto& DSVCube : PointLightShadowMapDSVs)
     {
@@ -68,16 +52,12 @@ void SceneLightSetup::Release()
         }
     }
 
-    DirLightShadowMapSRV.Reset();
-    DirLightShadowMapDSV.Reset();
     DirLightShadowMaps.Reset();
 
     IrradianceMap.Reset();
     IrradianceMapUAV.Reset();
-    IrradianceMapSRV.Reset();
 
     SpecularIrradianceMap.Reset();
-    SpecularIrradianceMapSRV.Reset();
 
     for (auto& UAV : SpecularIrradianceMapUAVs)
     {

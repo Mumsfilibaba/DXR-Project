@@ -19,6 +19,7 @@ public:
     Bool Init();
 
     virtual Bool Resize(UInt32 Width, UInt32 Height) override final;
+
     virtual Bool Present(Bool VerticalSync) override final;
 
     virtual void SetName(const std::string& Name) override final;
@@ -31,6 +32,16 @@ public:
     virtual Texture2D* GetBackBuffer() const override final
     {
         return BackBuffers[BackBufferIndex].Get();
+    }
+
+    virtual Bool IsValid() const
+    {
+        return SwapChain != nullptr;
+    }
+
+    virtual void* GetNativeResource() const
+    {
+        return reinterpret_cast<void*>(SwapChain.Get());
     }
 
 private:

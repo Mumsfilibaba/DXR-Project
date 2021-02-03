@@ -10,8 +10,8 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
 {
     SkyboxMesh = MeshFactory::CreateSphere(1);
 
-    ResourceData VertexData = ResourceData(SkyboxMesh.Vertices.Data());
-    SkyboxVertexBuffer = RenderLayer::CreateVertexBuffer<Vertex>(SkyboxMesh.Vertices.Size(), BufferUsage_Upload, EResourceState::VertexAndConstantBuffer, &VertexData);
+    ResourceData VertexData = ResourceData(SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes());
+    SkyboxVertexBuffer = RenderLayer::CreateVertexBuffer<Vertex>(SkyboxMesh.Vertices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &VertexData);
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -21,8 +21,8 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
         SkyboxVertexBuffer->SetName("Skybox VertexBuffer");
     }
 
-    ResourceData IndexData = ResourceData(SkyboxMesh.Indices.Data());
-    SkyboxIndexBuffer = RenderLayer::CreateIndexBuffer(EIndexFormat::UInt32, SkyboxMesh.Indices.Size(), BufferUsage_Upload, EResourceState::VertexAndConstantBuffer, &IndexData);
+    ResourceData IndexData = ResourceData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
+    SkyboxIndexBuffer = RenderLayer::CreateIndexBuffer(EIndexFormat::UInt32, SkyboxMesh.Indices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &IndexData);
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -52,17 +52,6 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     else
     {
         FrameResources.Skybox->SetName("Skybox");
-    }
-
-    const UInt32 NumMips = FrameResources.Skybox->GetNumMiplevels();
-    FrameResources.SkyboxSRV = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(FrameResources.Skybox.Get(), EFormat::R16G16B16A16_Float, 0, NumMips, 0.0f));
-    if (!FrameResources.SkyboxSRV)
-    {
-        return false;
-    }
-    else
-    {
-        FrameResources.SkyboxSRV->SetName("Skybox SRV");
     }
 
     SamplerStateCreateInfo CreateInfo;
@@ -193,7 +182,7 @@ void SkyboxRenderPass::Render(CommandList& CmdList, const FrameResources& FrameR
     const Float RenderWidth  = Float(FrameResources.FinalTarget->GetWidth());
     const Float RenderHeight = Float(FrameResources.FinalTarget->GetHeight());
 
-    RenderTargetView* RenderTarget[] = { FrameResources.FinalTargetRTV.Get() };
+    RenderTargetView* RenderTarget[] = { FrameResources.FinalTarget->GetRenderTargetView() };
     CmdList.BindRenderTargets(RenderTarget, 1, nullptr);
 
     CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
@@ -202,7 +191,7 @@ void SkyboxRenderPass::Render(CommandList& CmdList, const FrameResources& FrameR
     CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
     CmdList.TransitionTexture(FrameResources.FinalTarget.Get(), EResourceState::UnorderedAccess, EResourceState::RenderTarget);
 
-    CmdList.BindRenderTargets(RenderTarget, 1, FrameResources.GBufferDSV.Get());
+    CmdList.BindRenderTargets(RenderTarget, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
     CmdList.BindPrimitiveTopology(EPrimitiveTopology::TriangleList);
     CmdList.BindVertexBuffers(&SkyboxVertexBuffer, 1, 0);
@@ -217,7 +206,8 @@ void SkyboxRenderPass::Render(CommandList& CmdList, const FrameResources& FrameR
 
     CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &SimpleCamera, 16);
 
-    CmdList.BindShaderResourceViews(EShaderStage::Pixel, &FrameResources.SkyboxSRV, 1, 0);
+    ShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
+    CmdList.BindShaderResourceViews(EShaderStage::Pixel, &SkyboxSRV, 1, 0);
 
     CmdList.BindSamplerStates(EShaderStage::Pixel, &SkyboxSampler, 1, 0);
 

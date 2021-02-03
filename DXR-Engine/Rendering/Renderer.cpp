@@ -83,7 +83,9 @@ void Renderer::PerformFXAA(CommandList& InCmdList)
 
     TRACE_SCOPE("FXAA");
     
-    InCmdList.BindRenderTargets(&Resources.BackBufferRTV, 1, nullptr);
+    RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
+    InCmdList.BindRenderTargets(&BackBufferRTV, 1, nullptr);
+
 
     InCmdList.BindShaderResourceViews(EShaderStage::Pixel, &Resources.FinalTargetSRV, 1, 0);
     InCmdList.BindSamplerStates(EShaderStage::Pixel, &Resources.GBufferSampler, 1, 0);
@@ -112,7 +114,8 @@ void Renderer::PerformBackBufferBlit(CommandList& InCmdList)
 
     TRACE_SCOPE("Draw to BackBuffer");
 
-    InCmdList.BindRenderTargets(&Resources.BackBufferRTV, 1, nullptr);
+    RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
+    InCmdList.BindRenderTargets(&BackBufferRTV, 1, nullptr);
 
     InCmdList.BindShaderResourceViews(EShaderStage::Pixel, &Resources.FinalTargetSRV, 1, 0);
     InCmdList.BindSamplerStates(EShaderStage::Pixel, &Resources.GBufferSampler, 1, 0);
@@ -427,7 +430,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
-        Resources.SSAOBufferSRV, 
+        MakeSharedRef<ShaderResourceView>(Resources.SSAOBuffer->GetShaderResourceView()),
         Resources.SSAOBuffer, 
         EResourceState::NonPixelShaderResource, 
         EResourceState::NonPixelShaderResource);
@@ -445,7 +448,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::RenderTarget, EResourceState::PixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
-        Resources.FinalTargetSRV, 
+        MakeSharedRef<ShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()),
         Resources.FinalTarget, 
         EResourceState::PixelShaderResource, 
         EResourceState::PixelShaderResource);
@@ -454,7 +457,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
-        LightSetup.DirLightShadowMapSRV,
+        MakeSharedRef<ShaderResourceView>(LightSetup.DirLightShadowMaps->GetShaderResourceView()),
         LightSetup.DirLightShadowMaps,
         EResourceState::PixelShaderResource,
         EResourceState::PixelShaderResource);
@@ -557,7 +560,7 @@ Bool Renderer::Init()
         Resources.MainWindowViewport->SetName("Main Window Viewport");
     }
 
-    Resources.CameraBuffer = RenderLayer::CreateConstantBuffer<CameraBufferDesc>(EResourceState::Common, nullptr);
+    Resources.CameraBuffer = RenderLayer::CreateConstantBuffer<CameraBufferDesc>(BufferFlag_Default, EResourceState::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create camerabuffer");
@@ -671,15 +674,6 @@ Bool Renderer::Init()
 
     LightProbeRenderer.RenderSkyLightProbe(CmdList, LightSetup, Resources);
 
-    CmdList.End();
-    gCmdListExecutor.ExecuteCommandList(CmdList);
-
-    // TODO: Fix inital state of textures
-    CmdList.Begin();
-
-    CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::Common, EResourceState::PixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::Common, EResourceState::PixelShaderResource);
-    
     CmdList.End();
     gCmdListExecutor.ExecuteCommandList(CmdList);
 
@@ -865,22 +859,22 @@ Bool Renderer::InitBoundingBoxDebugPass()
         AABBDebugPipelineState->SetName("Debug PipelineState");
     }
 
-    XMFLOAT3 Vertices[8] =
+    TStaticArray<XMFLOAT3, 8> Vertices =
     {
-        { -0.5f, -0.5f,  0.5f },
-        {  0.5f, -0.5f,  0.5f },
-        { -0.5f,  0.5f,  0.5f },
-        {  0.5f,  0.5f,  0.5f },
+        XMFLOAT3(-0.5f, -0.5f,  0.5f),
+        XMFLOAT3( 0.5f, -0.5f,  0.5f),
+        XMFLOAT3(-0.5f,  0.5f,  0.5f),
+        XMFLOAT3( 0.5f,  0.5f,  0.5f),
 
-        {  0.5f, -0.5f, -0.5f },
-        { -0.5f, -0.5f, -0.5f },
-        {  0.5f,  0.5f, -0.5f },
-        { -0.5f,  0.5f, -0.5f }
+        XMFLOAT3( 0.5f, -0.5f, -0.5f),
+        XMFLOAT3(-0.5f, -0.5f, -0.5f),
+        XMFLOAT3( 0.5f,  0.5f, -0.5f),
+        XMFLOAT3(-0.5f,  0.5f, -0.5f)
     };
 
-    ResourceData VertexData(Vertices);
+    ResourceData VertexData(Vertices.Data(), Vertices.SizeInBytes());
 
-    AABBVertexBuffer = RenderLayer::CreateVertexBuffer<XMFLOAT3>(8, BufferUsage_Default, EResourceState::Common, &VertexData);
+    AABBVertexBuffer = RenderLayer::CreateVertexBuffer<XMFLOAT3>(Vertices.Size(), BufferFlag_Default, EResourceState::Common, &VertexData);
     if (!AABBVertexBuffer)
     {
         Debug::DebugBreak();
@@ -908,9 +902,9 @@ Bool Renderer::InitBoundingBoxDebugPass()
         2, 7,
     };
 
-    ResourceData IndexData(Indices);
+    ResourceData IndexData(Indices.Data(), Indices.SizeInBytes());
 
-    AABBIndexBuffer = RenderLayer::CreateIndexBuffer(EIndexFormat::UInt16, Indices.Size(), BufferUsage_Default, EResourceState::Common, &IndexData);
+    AABBIndexBuffer = RenderLayer::CreateIndexBuffer(EIndexFormat::UInt16, Indices.Size(), BufferFlag_Default, EResourceState::Common, &IndexData);
     if (!AABBIndexBuffer)
     {
         Debug::DebugBreak();

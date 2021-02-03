@@ -24,13 +24,7 @@ Bool TextureFactory::Init()
 {
     // Compile and create shader
     TArray<UInt8> Code;
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/CubeMapGen.hlsl",
-        "Main",
-        nullptr,
-        EShaderStage::ShaderStage_Compute,
-        EShaderModel::ShaderModel_6_0,
-        Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/CubeMapGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         return false;
     }
@@ -67,11 +61,11 @@ Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 Crea
 
     // Load based on format
     TUniquePtr<Byte> Pixels;
-    if (Format == EFormat::Format_R8G8B8A8_Unorm)
+    if (Format == EFormat::R8G8B8A8_Unorm)
     {
         Pixels = TUniquePtr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 4));
     }
-    else if (Format == EFormat::Format_R32G32B32A32_Float)
+    else if (Format == EFormat::R32G32B32A32_Float)
     {
         Pixels = TUniquePtr<Byte>(reinterpret_cast<Byte*>(stbi_loadf(Filepath.c_str(), &Width, &Height, &ChannelCount, 4)));
     }
@@ -97,52 +91,39 @@ Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 Crea
 
 Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format)
 {
-    if (Format != EFormat::Format_R8G8B8A8_Unorm && Format != EFormat::Format_R32G32B32A32_Float)
+    if (Format != EFormat::R8G8B8A8_Unorm && Format != EFormat::R32G32B32A32_Float)
     {
         LOG_ERROR("[TextureFactory]: Format not supported");
         return nullptr;
     }
 
-    const Bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const UInt32 MipLevels = GenerateMipLevels ? UInt32(std::min(std::log2(Width), std::log2(Height))) : 1;
+    const Bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
+    const UInt32 NumMips = GenerateMips ? UInt32(std::min(std::log2(Width), std::log2(Height))) : 1;
 
-    VALIDATE(MipLevels != 0);
+    VALIDATE(NumMips != 0);
 
-    const UInt32 Stride   = (Format == EFormat::Format_R8G8B8A8_Unorm) ? 4 : 16;
+    const UInt32 Stride   = (Format == EFormat::R8G8B8A8_Unorm) ? 4 : 16;
     const UInt32 RowPitch = Width * Stride;
     
     VALIDATE(RowPitch > 0);
     
-    ResourceData InitalData = ResourceData(Pixels, Width * Stride);
-    TSharedRef<Texture2D> Texture = RenderLayer::CreateTexture2D(
-        &InitalData,
-        Format, 
-        TextureUsage_Default | TextureUsage_SRV,
-        Width, 
-        Height, 
-        MipLevels, 
-        1);
+    ResourceData InitalData = ResourceData(Pixels, Format, Width);
+    TSharedRef<Texture2D> Texture = RenderLayer::CreateTexture2D(Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceState::PixelShaderResource, &InitalData);
     if (!Texture)
     {
         return nullptr;
     }
 
-    CommandList& CmdList = GlobalFactoryData.CmdList;
-    CmdList.Begin();
-
-    if (GenerateMipLevels)
+    if (GenerateMips)
     {
-        CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);    
+        CommandList& CmdList = GlobalFactoryData.CmdList;
+        CmdList.Begin();
+        CmdList.TransitionTexture(Texture.Get(), EResourceState::PixelShaderResource, EResourceState::CopyDest);
         CmdList.GenerateMips(Texture.Get());
-        CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
+        CmdList.TransitionTexture(Texture.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
+        CmdList.End();
+        gCmdListExecutor.ExecuteCommandList(CmdList);
     }
-    else
-    {
-        CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_PixelShaderResource);
-    }
-
-    CmdList.End();
-    gCmdListExecutor.ExecuteCommandList(CmdList);
 
     return Texture.ReleaseOwnership();
 }
@@ -155,13 +136,7 @@ SampledTexture2D TextureFactory::LoadSampledTextureFromFile(const std::string& F
         return SampledTexture2D();
     }
 
-    TSharedRef<ShaderResourceView> View = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(Texture.Get()));
-    if (!View)
-    {
-        return SampledTexture2D();
-    }
-
-    return SampledTexture2D(Texture, View);
+    return SampledTexture2D(Texture, Texture->GetShaderResourceView());
 }
 
 SampledTexture2D TextureFactory::LoadSampledTextureFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format)
@@ -172,28 +147,15 @@ SampledTexture2D TextureFactory::LoadSampledTextureFromMemory(const Byte* Pixels
         return SampledTexture2D();
     }
 
-    TSharedRef<ShaderResourceView> View = RenderLayer::CreateShaderResourceView(ShaderResourceViewCreateInfo(Texture.Get()));
-    if (!View)
-    {
-        return SampledTexture2D();
-    }
-
-    return SampledTexture2D(Texture, View);
+    return SampledTexture2D(Texture, Texture->GetShaderResourceView());
 }
 
 TextureCube* TextureFactory::CreateTextureCubeFromPanorma(const SampledTexture2D& PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format)
 {
-    const Bool GenerateMipLevels = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const UInt16 MipLevels = (GenerateMipLevels) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
+    const Bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
+    const UInt16 NumMips = (GenerateNumMips) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
 
-    // Create statging texture
-    TSharedRef<TextureCube> StagingTexture = RenderLayer::CreateTextureCube(
-        nullptr, 
-        Format, 
-        TextureUsage_Default | TextureUsage_UAV,
-        CubeMapSize, 
-        MipLevels, 
-        1);
+    TSharedRef<TextureCube> StagingTexture = RenderLayer::CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr);
     if (!StagingTexture)
     {
         return nullptr;
@@ -203,8 +165,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(const SampledTexture2D
         StagingTexture->SetName("TextureCube From Panorama StagingTexture");
     }
 
-    UnorderedAccessViewCreateInfo StagingTextureUavInfo(StagingTexture.Get(), Format, 0);
-    TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderLayer::CreateUnorderedAccessView(StagingTextureUavInfo);
+    TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderLayer::CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
     if (!StagingTextureUAV)
     {
         return nullptr;
@@ -214,25 +175,17 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(const SampledTexture2D
         StagingTexture->SetName("TextureCube From Panorama StagingTexture UAV");
     }
 
-    // Create texture
-    TSharedRef<TextureCube> Texture = RenderLayer::CreateTextureCube(
-        nullptr, 
-        Format, 
-        TextureUsage_SRV | TextureUsage_Default, 
-        CubeMapSize, 
-        MipLevels, 
-        1);
+    TSharedRef<TextureCube> Texture = RenderLayer::CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceState::Common, nullptr);
     if (!Texture)
     {
         return nullptr;
     }
 
-    // Create needed interfaces
     CommandList& CmdList = GlobalFactoryData.CmdList;
     CmdList.Begin();
     
-    CmdList.TransitionTexture(PanoramaSource.Texture.Get(), EResourceState::ResourceState_PixelShaderResource, EResourceState::ResourceState_NonPixelShaderResource);
-    CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_UnorderedAccess);
+    CmdList.TransitionTexture(PanoramaSource.Texture.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
     CmdList.BindComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
 
@@ -242,27 +195,27 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(const SampledTexture2D
     } CB0;
     CB0.CubeMapSize = CubeMapSize;
 
-    CmdList.Bind32BitShaderConstants(EShaderStage::ShaderStage_Compute, &CB0, 1);
-    CmdList.BindUnorderedAccessViews(EShaderStage::ShaderStage_Compute, &StagingTextureUAV, 1, 0);
-    CmdList.BindShaderResourceViews(EShaderStage::ShaderStage_Compute, &PanoramaSource.View, 1, 0);
+    CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &CB0, 1);
+    CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &StagingTextureUAV, 1, 0);
+    CmdList.BindShaderResourceViews(EShaderStage::Compute, &PanoramaSource.View, 1, 0);
 
     constexpr UInt32 LocalWorkGroupCount = 16;
     const UInt32 ThreadsX = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
     const UInt32 ThreadsY = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
     CmdList.Dispatch(ThreadsX, ThreadsY, 6);
 
-    CmdList.TransitionTexture(PanoramaSource.Texture.Get(), EResourceState::ResourceState_NonPixelShaderResource, EResourceState::ResourceState_PixelShaderResource);
-    CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::ResourceState_UnorderedAccess, EResourceState::ResourceState_CopySource);
-    CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_Common, EResourceState::ResourceState_CopyDest);
+    CmdList.TransitionTexture(PanoramaSource.Texture.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
+    CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::UnorderedAccess, EResourceState::CopySource);
+    CmdList.TransitionTexture(Texture.Get(), EResourceState::Common, EResourceState::CopyDest);
 
     CmdList.CopyTexture(Texture.Get(), StagingTexture.Get());
 
-    if (GenerateMipLevels)
+    if (GenerateNumMips)
     {
         CmdList.GenerateMips(Texture.Get());
     }
 
-    CmdList.TransitionTexture(Texture.Get(), EResourceState::ResourceState_CopyDest, EResourceState::ResourceState_PixelShaderResource);
+    CmdList.TransitionTexture(Texture.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
     
     CmdList.DestroyResource(StagingTexture.Get());
     CmdList.DestroyResource(StagingTextureUAV.Get());

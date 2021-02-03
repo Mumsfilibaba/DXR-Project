@@ -33,9 +33,12 @@ public:
     virtual class TextureCubeArray* AsTextureCubeArray() { return nullptr; }
     virtual class Texture3D* AsTexture3D() { return nullptr; }
 
+    // Returns a ShaderResourceView of the full resource if texture is created with TextureFlag_SRV
+    virtual class ShaderResourceView* GetShaderResourceView() const { return nullptr; }
+
     EFormat GetFormat() const { return Format; }
 
-    UInt32 GetNumMiplevels() const { return NumMips; }
+    UInt32 GetNumMips() const { return NumMips; }
 
     UInt32 GetFlags() const { return Flags; }
 
@@ -67,6 +70,15 @@ public:
     ~Texture2D() = default;
 
     virtual Texture2D* AsTexture2D() override { return this; }
+
+    // Returns a RenderTargetView if texture is created with TextureFlag_RTV
+    virtual class RenderTargetView* GetRenderTargetView() const { return nullptr; }
+
+    // Returns a DepthStencilView if texture is created with TextureFlag_DSV
+    virtual class DepthStencilView* GetDepthStencilView() const { return nullptr; }
+
+    // Returns a UnorderedAccessView if texture is created with TextureFlag_UAV
+    virtual class UnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
     UInt32 GetWidth() const { return Width; }
     UInt32 GetHeight() const { return Height; }

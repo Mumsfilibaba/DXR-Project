@@ -18,32 +18,6 @@ struct FrameResources
 
     void Release();
 
-    Texture2D*        BackBuffer    = nullptr;
-    RenderTargetView* BackBufferRTV = nullptr;
-
-    TSharedRef<ConstantBuffer> CameraBuffer;
-    TSharedRef<ConstantBuffer> TransformBuffer;
-
-    TSharedRef<SamplerState> ShadowMapSampler;
-    TSharedRef<SamplerState> ShadowMapCompSampler;
-    TSharedRef<SamplerState> IrradianceSampler;
-
-    TSharedRef<TextureCube>        Skybox;
-    TSharedRef<ShaderResourceView> SkyboxSRV;
-
-    TSharedRef<Texture2D>           ReflectionTexture;
-    TSharedRef<ShaderResourceView>  ReflectionTextureSRV;
-    TSharedRef<UnorderedAccessView> ReflectionTextureUAV;
-
-    TSharedRef<Texture2D>          IntegrationLUT;
-    TSharedRef<ShaderResourceView> IntegrationLUTSRV;
-    TSharedRef<SamplerState>       IntegrationLUTSampler;
-
-    TSharedRef<Texture2D>           FinalTarget;
-    TSharedRef<ShaderResourceView>  FinalTargetSRV;
-    TSharedRef<RenderTargetView>    FinalTargetRTV;
-    TSharedRef<UnorderedAccessView> FinalTargetUAV;
-
     const EFormat DepthBufferFormat  = EFormat::D32_Float;
     const EFormat SSAOBufferFormat   = EFormat::R16_Float;
     const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
@@ -53,15 +27,25 @@ struct FrameResources
     const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
     const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
 
-    TSharedRef<Texture2D>          GBuffer[5];
-    TSharedRef<ShaderResourceView> GBufferSRVs[5];
-    TSharedRef<RenderTargetView>   GBufferRTVs[5];
-    TSharedRef<DepthStencilView>   GBufferDSV;
-    TSharedRef<SamplerState>       GBufferSampler;
+    Texture2D* BackBuffer = nullptr;
 
-    TSharedRef<Texture2D>            SSAOBuffer;
-    TSharedRef<ShaderResourceView>   SSAOBufferSRV;
-    TSharedRef<UnorderedAccessView>  SSAOBufferUAV;
+    TSharedRef<ConstantBuffer> CameraBuffer;
+    TSharedRef<ConstantBuffer> TransformBuffer;
+
+    TSharedRef<SamplerState> ShadowMapSampler;
+    TSharedRef<SamplerState> ShadowMapCompSampler;
+    TSharedRef<SamplerState> IrradianceSampler;
+
+    TSharedRef<TextureCube> Skybox;
+
+    TSharedRef<Texture2D>    IntegrationLUT;
+    TSharedRef<SamplerState> IntegrationLUTSampler;
+
+    TSharedRef<Texture2D>    ReflectionTexture;
+    TSharedRef<Texture2D>    SSAOBuffer;
+    TSharedRef<Texture2D>    FinalTarget;
+    TSharedRef<Texture2D>    GBuffer[5];
+    TSharedRef<SamplerState> GBufferSampler;
 
     TSharedRef<InputLayoutState> StdInputLayout;
 
@@ -92,20 +76,14 @@ struct SceneLightSetup
     TSharedRef<ConstantBuffer> PointLightBuffer;
     TSharedRef<ConstantBuffer> DirectionalLightBuffer;
 
-    TSharedRef<TextureCubeArray>   PointLightShadowMaps;
-    TSharedRef<ShaderResourceView> PointLightShadowMapSRV;
+    TSharedRef<TextureCubeArray> PointLightShadowMaps;
     TArray<TStaticArray<TSharedRef<DepthStencilView>, 6>> PointLightShadowMapDSVs;
 
-    TSharedRef<ShaderResourceView> DirLightShadowMapSRV;
-    TSharedRef<DepthStencilView>   DirLightShadowMapDSV;
-    TSharedRef<Texture2D>          DirLightShadowMaps;
-
+    TSharedRef<Texture2D>           DirLightShadowMaps;
     TSharedRef<TextureCube>         IrradianceMap;
     TSharedRef<UnorderedAccessView> IrradianceMapUAV;
-    TSharedRef<ShaderResourceView>  IrradianceMapSRV;
 
     TSharedRef<TextureCube>                 SpecularIrradianceMap;
-    TSharedRef<ShaderResourceView>          SpecularIrradianceMapSRV;
     TArray<TSharedRef<UnorderedAccessView>> SpecularIrradianceMapUAVs;
     TArray<UnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
 };

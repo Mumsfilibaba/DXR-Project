@@ -13,6 +13,9 @@ class D3D12Buffer;
 template<typename TD3D12Texture>
 D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
 
+template<typename TD3D12Texture>
+Bool IsTextureCube();
+
 class D3D12RenderLayer : public GenericRenderLayer
 {
 public:
