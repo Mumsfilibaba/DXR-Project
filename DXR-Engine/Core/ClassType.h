@@ -1,34 +1,32 @@
 #pragma once
 #include "Core.h"
 
-/*
-* Class for storing ClassInfo
-*/
-
+// ClassType stores info about a class, for now inheritance
 class ClassType
 {
 public:
-	ClassType(const Char* InName, const ClassType* InSuperClass);
-	
-	bool IsSubClassOf(const ClassType* Class) const;
+    ClassType(
+        const Char* InName, 
+        const ClassType* InSuperClass,
+        UInt32 SizeInBytes);
 
-	template<typename T>
-	FORCEINLINE bool IsSubClassOf() const
-	{
-		return IsSubClassOf(T::GetStaticClass());
-	}
+    ~ClassType() = default;
 
-	FORCEINLINE const Char* GetName() const
-	{
-		return Name;
-	}
+    Bool IsSubClassOf(const ClassType* Class) const;
 
-	FORCEINLINE const ClassType* GetSuperClass() const
-	{
-		return SuperClass;
-	}
+    template<typename T>
+    FORCEINLINE Bool IsSubClassOf() const
+    {
+        return IsSubClassOf(T::GetStaticClass());
+    }
+
+    const Char* GetName() const { return Name; }
+    const ClassType* GetSuperClass() const { return SuperClass; }
+
+    UInt32 GetSizeInBytes() const { return SizeInBytes; }
 
 private:
-	const Char* Name;
-	const ClassType* SuperClass;
+    const Char*      Name;
+    const ClassType* SuperClass;
+    const UInt32     SizeInBytes;
 };

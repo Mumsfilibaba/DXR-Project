@@ -10,61 +10,57 @@ using namespace DirectX;
 
 // Validate (a.k.a ASSERT)
 #ifndef VALIDATE
-	#define VALIDATE(Condition) assert(Condition)
+    #define VALIDATE(Condition) assert(Condition)
 #endif
 
 // Macro for deleting objects safley
 #define SAFEDELETE(OutObject) \
-	if ((OutObject)) \
-	{ \
-		delete (OutObject); \
-		(OutObject) = nullptr; \
-	}
+    if ((OutObject)) \
+    { \
+        delete (OutObject); \
+        (OutObject) = nullptr; \
+    }
 
 #define SAFERELEASE(OutObject) \
-	if ((OutObject)) \
-	{ \
-		(OutObject)->Release(); \
-		(OutObject) = nullptr; \
-	}
+    if ((OutObject)) \
+    { \
+        (OutObject)->Release(); \
+        (OutObject) = nullptr; \
+    }
 
 #define SAFEADDREF(OutObject) \
-	if ((OutObject)) \
-	{ \
-		(OutObject)->AddRef(); \
-	}
+    if ((OutObject)) \
+    { \
+        (OutObject)->AddRef(); \
+    }
 
-/*
-* Forceinline
-*/
-
+//Forceinline
 #ifndef FORCEINLINE
 
 #ifndef DEBUG_BUILD
 #ifdef COMPILER_VISUAL_STUDIO
-	#define FORCEINLINE __forceinline
+    #define FORCEINLINE __forceinline
 #else
-	#define FORCEINLINE __attribute__((always_inline)) inline
+    #define FORCEINLINE __attribute__((always_inline)) inline
 #endif // ifdef COMPILER_VISUAL_STUDIO
 #else
-	#define FORCEINLINE inline
+    #define FORCEINLINE inline
 #endif // ifdef DEBUG_BUILD
 
 #endif // ifndef FORCEINLINE
 
-/*
-* Bit-Mask helpers
-*/
-
+// Bit-Mask helpers
 #define BIT(Bit)	(1 << Bit)
 #define FLAG(Bit)	BIT(Bit)
 
-/*
-* Unused params
-*/
+inline Bool HasFlag(UInt32 Mask, UInt32 Flag)
+{
+    return Mask & Flag;
+}
 
+// Unused params
 #ifndef UNREFERENCED_VARIABLE
-	#define UNREFERENCED_VARIABLE(Variable) (void)(Variable)
+    #define UNREFERENCED_VARIABLE(Variable) (void)(Variable)
 #endif
 
 /*
@@ -76,41 +72,29 @@ using namespace DirectX;
 #define _PREPROCESS_CONCAT(x, y) x##y
 #define PREPROCESS_CONCAT(x, y) _PREPROCESS_CONCAT(x, y)
 
-/*
-* Makes multiline strings
-*/
-
+// Makes multiline strings
 #define MULTILINE_STRING(...) #__VA_ARGS__
 
-/*
-* Function signature as a const Char* string
-*/
-
+// Function signature as a const Char* string
 #ifdef COMPILER_VISUAL_STUDIO
-	#define __FUNCTION_SIG__ __FUNCTION__
+    #define __FUNCTION_SIG__ __FUNCTION__
 #else
-	#define __FUNCTION_SIG__ __PRETTY_FUNCTION__
+    #define __FUNCTION_SIG__ __PRETTY_FUNCTION__
 #endif
 
-/*
-* Disable some warnings
-*/
-
+// Disable some warnings
 #ifdef COMPILER_VISUAL_STUDIO
-#pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
-#pragma warning(disable : 4324) // structure was padded due to alignment specifier
+    #pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
+    #pragma warning(disable : 4324) // structure was padded due to alignment specifier
 #endif
 
-/*
-* Declare warnings as errors
-*/
-
+// Declare warnings as errors
 #ifdef COMPILER_VISUAL_STUDIO
-#pragma warning(error : 4099) // wrong forward declaration
-#pragma warning(error : 4150) // cannot call destructor on incomplete type
-#pragma warning(error : 4239) // setting references to rvalues
-#pragma warning(error : 4456) // variable hides a already existing variable
-#pragma warning(error : 4458) // variable hides class member
-#pragma warning(error : 4715) // not all paths return a value
-#pragma warning(error : 4840) // using string in variadic template (When it should be const Char)
+    #pragma warning(error : 4099) // wrong forward declaration
+    #pragma warning(error : 4150) // cannot call destructor on incomplete type
+    #pragma warning(error : 4239) // setting references to rvalues
+    #pragma warning(error : 4456) // variable hides a already existing variable
+    #pragma warning(error : 4458) // variable hides class member
+    #pragma warning(error : 4715) // not all paths return a value
+    #pragma warning(error : 4840) // using string in variadic template (When it should be const Char)
 #endif

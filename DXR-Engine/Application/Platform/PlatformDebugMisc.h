@@ -1,8 +1,8 @@
 #pragma once
 #ifdef PLATFORM_WINDOWS
-	#include "Windows/WindowsDebugMisc.h"
-	typedef WindowsDebugMisc PlatformDebugMisc;
+    #include "Windows/WindowsDebugMisc.h"
+    typedef WindowsDebugMisc PlatformDebugMisc;
 #else
-	#include "Debug/GenericDebugMisc.h"
-	typedef GenericDebugMisc PlatformDebugMisc;
+    #include "Debug/GenericDebugMisc.h"
+    typedef GenericDebugMisc PlatformDebugMisc;
 #endif

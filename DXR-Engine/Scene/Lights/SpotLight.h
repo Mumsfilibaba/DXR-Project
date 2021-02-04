@@ -1,25 +1,21 @@
 #pragma once
 #include "Light.h"
 
-/*
-* SpotLight
-*/
-
 class SpotLight : public Light
 {
-	CORE_OBJECT(SpotLight, Light);
+    CORE_OBJECT(SpotLight, Light);
 
 public:
-	SpotLight();
-	~SpotLight();
+    SpotLight();
+    ~SpotLight();
 
-	void SetConeAngle(Float InConeAngle);
+    void SetConeAngle(Float InConeAngle);
 
-	FORCEINLINE Float GetConeAngle() const
-	{
-		return ConeAngle;
-	}
+    FORCEINLINE Float GetConeAngle() const
+    {
+        return ConeAngle;
+    }
 
 private:
-	Float ConeAngle;
+    Float ConeAngle;
 };

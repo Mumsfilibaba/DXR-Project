@@ -1,46 +1,20 @@
 #pragma once
 #include <Containers/Types.h>
 
-/*
-* Engine
-*/
+extern class EngineLoop gEngineLoop;
+extern class Renderer   gRenderer;
 
-extern class EngineLoop GlobalEngineLoop;
+extern class GenericWindow*       gMainWindow;
+extern class GenericApplication*  gApplication;
+extern class GenericOutputDevice* gConsoleOutput;
 
-/*
-* Application
-*/
+extern class EventDispatcher* gEventDispatcher;
 
-extern class GenericWindow*			GlobalMainWindow;
-extern class GenericApplication*	GlobalPlatformApplication;
-extern class EventDispatcher*		GlobalEventDispatcher;
-extern class GenericOutputDevice*	GlobalConsoleOutput;
+extern class Game* gGame;
 
-/*
-* Game
-*/
+extern class GenericRenderLayer* gRenderLayer;
+extern class IShaderCompiler*    gShaderCompiler;
+extern class CommandListExecutor gCmdListExecutor;
 
-extern class Game* GlobalGame;
-
-/*
-* Rendering
-*/
-
-extern class Renderer*				GlobalRenderer;
-extern class GenericRenderLayer*	GlobalRenderLayer;
-extern class IShaderCompiler*		GlobalShaderCompiler;
-extern class CommandListExecutor	GlobalCmdListExecutor;
-
-extern Bool GlobalPrePassEnabled;
-extern Bool GlobalDrawAABBs;
-extern Bool GlobalVSyncEnabled;
-extern Bool GlobalFrustumCullEnabled;
-extern Bool GlobalFXAAEnabled;
-extern Bool GlobalRayTracingEnabled;
-
-/*
-* Debug
-*/
-
-extern class Profiler	GlobalProfiler;
-extern class Console	GlobalConsole;
+extern class Profiler gProfiler;
+extern class Console  gConsole;

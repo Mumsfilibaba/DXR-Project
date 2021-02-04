@@ -13,194 +13,69 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "MeshFactory.h"
+#include "DeferredRenderer.h"
+#include "ShadowMapRenderer.h"
+#include "ScreenSpaceOcclusionRenderer.h"
+#include "LightProbeRenderer.h"
+#include "SkyboxRenderPass.h"
+#include "ForwardRenderer.h"
 
-#include "RenderingCore/RenderLayer.h"
-#include "RenderingCore/CommandList.h"
-#include "RenderingCore/Viewport.h"
+#include "RenderLayer/RenderLayer.h"
+#include "RenderLayer/CommandList.h"
+#include "RenderLayer/Viewport.h"
 
 #include "DebugUI.h"
 
-#define ENABLE_VSM 0
-
-/*
-* LightSettings
-*/
-
-struct LightSettings
-{
-	UInt16 ShadowMapWidth		= 4096;
-	UInt16 ShadowMapHeight		= 4096;
-	UInt16 PointLightShadowSize	= 1024;
-};
-
-/*
-* Renderer
-*/
-
-class Renderer : public IEventHandler
+class Renderer
 {
 public:
-	Renderer()	= default;
-	~Renderer()	= default;
+    Renderer()  = default;
+    ~Renderer() = default;
 
-	Bool Init();
+    Bool Init();
+    void Release();
 
-	void Tick(const Scene& CurrentScene);
-	
-	Bool OnEvent(const Event& Event);
+    void PerformFrustumCulling(const Scene& Scene);
+    void PerformFXAA(CommandList& InCmdList);
+    void PerformBackBufferBlit(CommandList& InCmdList);
+    void PerformAABBDebugPass(CommandList& InCmdList);
 
-	void SetLightSettings(const LightSettings& InLightSettings);
-	
-	FORCEINLINE const LightSettings& GetLightSettings()
-	{
-		return CurrentLightSettings;
-	}
-	
-private:
-	Bool InitRayTracing();
-	Bool InitLightBuffers();
-	Bool InitPrePass();
-	Bool InitShadowMapPass();
-	Bool InitDeferred();
-	Bool InitGBuffer();
-	Bool InitIntegrationLUT();
-	Bool InitRayTracingTexture();
-	Bool InitDebugStates();
-	Bool InitAA();
-	Bool InitForwardPass();
-	Bool InitSSAO();
-	Bool InitSSAO_RenderTarget();
+    void RenderDebugInterface();
 
-	Bool CreateShadowMaps();
-
-	void GenerateIrradianceMap(
-		ShaderResourceView* SourceSRV,
-		TextureCube* Source,
-		UnorderedAccessView* DestUAV,
-		TextureCube* Dest,
-		CommandList& InCmdList);
-
-	void GenerateSpecularIrradianceMap(
-		ShaderResourceView* SourceSRV,
-		TextureCube* Source,
-		UnorderedAccessView* const* DestUAVs,
-		UInt32 NumDestUAVs,
-		TextureCube* Dest,
-		CommandList& InCmdList);
-
-	void TraceRays(Texture2D* BackBuffer, CommandList& InCmdList);
+    void Tick(const Scene& Scene);
 
 private:
-	CommandList CmdList;
+    Bool InitBoundingBoxDebugPass();
+    Bool InitAA();
 
-	MeshData SkyboxMesh;
+    void ResizeResources(UInt32 Width, UInt32 Height);
 
-	TSharedRef<ConstantBuffer> CameraBuffer;
-	TSharedRef<ConstantBuffer> PointLightBuffer;
-	TSharedRef<ConstantBuffer> DirectionalLightBuffer;
-	TSharedRef<ConstantBuffer> PerShadowMapBuffer;
+    CommandList CmdList;
 
-	TSharedRef<VertexBuffer>	SkyboxVertexBuffer;
-	TSharedRef<VertexBuffer>	AABBVertexBuffer;
-	TSharedRef<IndexBuffer>		SkyboxIndexBuffer;
-	TSharedRef<IndexBuffer>		AABBIndexBuffer;
+    DeferredRenderer             DeferredRenderer;
+    ShadowMapRenderer            ShadowMapRenderer;
+    ScreenSpaceOcclusionRenderer SSAORenderer;
+    LightProbeRenderer           LightProbeRenderer;
+    SkyboxRenderPass             SkyboxRenderPass;
+    ForwardRenderer              ForwardRenderer;
 
-	TSharedRef<TextureCube>			IrradianceMap;
-	TSharedRef<UnorderedAccessView>	IrradianceMapUAV;
-	TSharedRef<ShaderResourceView>	IrradianceMapSRV;
-	TSharedRef<SamplerState>		IrradianceSampler;
+    FrameResources  Resources;
+    LightSetup LightSetup;
 
-	TSharedRef<TextureCube>					SpecularIrradianceMap;
-	TSharedRef<ShaderResourceView>			SpecularIrradianceMapSRV;
-	TArray<TSharedRef<UnorderedAccessView>>	SpecularIrradianceMapUAVs;
-	TArray<UnorderedAccessView*>			WeakSpecularIrradianceMapUAVs;
+    // TODO: Fix raytracing
+    TSharedRef<RayTracingPipelineState> RaytracingPSO;
+    TSharedPtr<RayTracingScene>         RayTracingScene;
+    TArray<RayTracingGeometryInstance>	RayTracingGeometryInstances;
 
-	TSharedRef<TextureCube>			Skybox;
-	TSharedRef<ShaderResourceView>	SkyboxSRV;
-	TSharedRef<SamplerState>		SkyboxSampler;
+    TSharedRef<VertexBuffer> AABBVertexBuffer;
+    TSharedRef<IndexBuffer>  AABBIndexBuffer;
+    TSharedRef<GraphicsPipelineState> AABBDebugPipelineState;
 
-	TSharedRef<TextureCube>					PointLightShadowMaps;
-	TArray<TSharedRef<DepthStencilView>>	PointLightShadowMapsDSVs;
-	TSharedRef<ShaderResourceView>			PointLightShadowMapsSRV;
-	TSharedRef<SamplerState>				ShadowMapSampler;
-	TSharedRef<SamplerState>				ShadowMapCompSampler;
+    TSharedRef<GraphicsPipelineState> PostPSO;
+    TSharedRef<GraphicsPipelineState> FXAAPSO;
+    TSharedRef<GraphicsPipelineState> FXAADebugPSO;
 
-	TSharedRef<ShaderResourceView>	DirLightShadowMapSRV;
-	TSharedRef<DepthStencilView>	DirLightShadowMapDSV;
-	TSharedRef<Texture2D>			DirLightShadowMaps;
-
-	TSharedRef<ShaderResourceView>	VSMDirLightShadowMapSRV;
-	TSharedRef<RenderTargetView>	VSMDirLightShadowMapRTV;
-	TSharedRef<Texture2D>			VSMDirLightShadowMaps;
-	
-	TSharedRef<Texture2D>			ReflectionTexture;
-	TSharedRef<ShaderResourceView>	ReflectionTextureSRV;
-	TSharedRef<UnorderedAccessView>	ReflectionTextureUAV;
-
-	TSharedRef<Texture2D>			IntegrationLUT;
-	TSharedRef<ShaderResourceView>	IntegrationLUTSRV;
-	TSharedRef<SamplerState>		IntegrationLUTSampler;
-
-	TSharedRef<Texture2D>			FinalTarget;
-	TSharedRef<ShaderResourceView>	FinalTargetSRV;
-	TSharedRef<RenderTargetView>	FinalTargetRTV;
-
-	TSharedRef<Texture2D>			GBuffer[4];
-	TSharedRef<ShaderResourceView>	GBufferSRVs[4];
-	TSharedRef<RenderTargetView>	GBufferRTVs[3];
-	TSharedRef<DepthStencilView>	GBufferDSV;
-	TSharedRef<SamplerState>		GBufferSampler;
-
-	TSharedRef<InputLayoutState> StdInputLayout;
-
-	TSharedRef<GraphicsPipelineState> PrePassPSO;
-	TSharedRef<GraphicsPipelineState> ShadowMapPSO;
-	TSharedRef<GraphicsPipelineState> VSMShadowMapPSO;
-	TSharedRef<GraphicsPipelineState> LinearShadowMapPSO;
-	TSharedPtr<GraphicsPipelineState> ForwardPSO;
-	TSharedRef<GraphicsPipelineState> GeometryPSO;
-	TSharedRef<GraphicsPipelineState> LightPassPSO;
-	TSharedRef<GraphicsPipelineState> SkyboxPSO;
-	TSharedRef<GraphicsPipelineState> DebugBoxPSO;
-	TSharedRef<GraphicsPipelineState> PostPSO;
-	TSharedRef<GraphicsPipelineState> FXAAPSO;
-
-	TSharedRef<RayTracingPipelineState>	RaytracingPSO;
-
-	TSharedRef<ComputeShader> IrradianceGenShader;
-	TSharedRef<ComputeShader> SpecIrradianceGenShader;
-	
-	TSharedRef<ComputePipelineState> IrradicanceGenPSO;
-	TSharedRef<ComputePipelineState> SpecIrradicanceGenPSO;
-	TSharedPtr<ComputePipelineState> SSAOPSO;
-	TSharedPtr<ComputePipelineState> SSAOBlur;
-
-	TSharedRef<StructuredBuffer>	SSAOSamples;
-	TSharedRef<ShaderResourceView>	SSAOSamplesSRV;
-	TSharedRef<Texture2D>			SSAOBuffer;
-	TSharedRef<ShaderResourceView>	SSAOBufferSRV;
-	TSharedRef<UnorderedAccessView>	SSAOBufferUAV;
-	TSharedRef<Texture2D>			SSAONoiseTex;
-	TSharedRef<ShaderResourceView>	SSAONoiseSRV;
-
-	TSharedPtr<RayTracingScene>			RayTracingScene;
-	TArray<RayTracingGeometryInstance>	RayTracingGeometryInstances;
-
-	TArray<MeshDrawCommand> DeferredVisibleCommands;
-	TArray<MeshDrawCommand> ForwardVisibleCommands;
-
-	TArray<ImGuiImage> DebugTextures;
-
-	TSharedRef<Viewport> MainWindowViewport;
-
-	Bool UpdatePointLight	= true;
-	Bool UpdateDirLight		= true;
-	UInt64 PointLightFrame	= 0;
-	UInt64 DirLightFrame	= 0;
-
-	UInt32 LastFrameNumDrawCalls		= 0;
-	UInt32 LastFrameNumDispatchCalls	= 0;
-	UInt32 LastFrameNumCommands			= 0;
-
-	LightSettings CurrentLightSettings;
+    UInt32 LastFrameNumDrawCalls     = 0;
+    UInt32 LastFrameNumDispatchCalls = 0;
+    UInt32 LastFrameNumCommands      = 0;
 };

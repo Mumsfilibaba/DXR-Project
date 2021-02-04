@@ -1,68 +1,44 @@
 #pragma once
 #include "Core/CoreObject.h"
 
-/*
-* Light
-*/
-
 class Light : public CoreObject
 {
-	CORE_OBJECT(Light, CoreObject);
+    CORE_OBJECT(Light, CoreObject);
 
 public:
-	Light();
-	virtual ~Light() = default;
+    Light();
+    virtual ~Light() = default;
 
-	void SetColor(const XMFLOAT3& InColor);
-	void SetColor(Float R, Float G, Float B);
-	
-	void SetIntensity(Float InIntensity);
+    void SetColor(const XMFLOAT3& InColor);
+    void SetColor(Float R, Float G, Float B);
+    
+    void SetIntensity(Float InIntensity);
 
-	FORCEINLINE void SetShadowBias(Float InShadowBias)
-	{
-		ShadowBias = InShadowBias;
-	}
+    void SetShadowBias(Float InShadowBias)
+    {
+        ShadowBias = InShadowBias;
+    }
 
-	FORCEINLINE void SetMaxShadowBias(Float InShadowBias)
-	{
-		MaxShadowBias = InShadowBias;
-	}
+    void SetMaxShadowBias(Float InShadowBias)
+    {
+        MaxShadowBias = InShadowBias;
+    }
 
-	FORCEINLINE Float GetIntensity() const
-	{
-		return Intensity;
-	}
+    Float GetIntensity() const { return Intensity; }
 
-	FORCEINLINE const XMFLOAT3& GetColor() const
-	{
-		return Color;
-	}
+    const XMFLOAT3& GetColor() const { return Color; }
 
-	FORCEINLINE Float GetShadowNearPlane() const
-	{
-		return ShadowNearPlane;
-	}
+    Float GetShadowNearPlane() const { return ShadowNearPlane; }
+    Float GetShadowFarPlane() const { return ShadowFarPlane; }
 
-	FORCEINLINE Float GetShadowFarPlane() const
-	{
-		return ShadowFarPlane;
-	}
-
-	FORCEINLINE Float GetShadowBias() const
-	{
-		return ShadowBias;
-	}
-
-	FORCEINLINE Float GetMaxShadowBias() const
-	{
-		return MaxShadowBias;
-	}
+    Float GetShadowBias() const { return ShadowBias; }
+    Float GetMaxShadowBias() const { return MaxShadowBias; }
 
 protected:
-	XMFLOAT3 Color;
-	Float Intensity = 1.0f;
-	Float ShadowNearPlane;
-	Float ShadowFarPlane;
-	Float ShadowBias;
-	Float MaxShadowBias;
+    XMFLOAT3 Color;
+    Float Intensity = 1.0f;
+    Float ShadowNearPlane;
+    Float ShadowFarPlane;
+    Float ShadowBias;
+    Float MaxShadowBias;
 };

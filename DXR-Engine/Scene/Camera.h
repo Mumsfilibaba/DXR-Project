@@ -1,91 +1,52 @@
 #pragma once
 #include "Core.h"
 
-/*
-* Camera
-*/
-
 class Camera
 {
 public:
-	Camera();
+    Camera();
+    ~Camera() = default;
 
-	void Move(Float X, Float Y, Float Z);
+    void Move(Float X, Float Y, Float Z);
 
-	void Rotate(Float Pitch, Float Yaw, Float Roll);
+    void Rotate(Float Pitch, Float Yaw, Float Roll);
 
-	void UpdateMatrices();
+    void UpdateMatrices();
 
-	FORCEINLINE const XMFLOAT4X4& GetViewMatrix() const
-	{
-		return View;
-	}
+    const XMFLOAT4X4& GetViewMatrix() const { return View; }
+    const XMFLOAT4X4& GetViewInverseMatrix() const { return ViewInverse; }
 
-	FORCEINLINE const XMFLOAT4X4& GetViewInverseMatrix() const
-	{
-		return ViewInverse;
-	}
+    const XMFLOAT4X4& GetProjectionMatrix() const { return Projection; }
+    const XMFLOAT4X4& GetProjectionInverseMatrix() const { return ProjectionInverse; }
 
-	FORCEINLINE const XMFLOAT4X4& GetProjectionMatrix() const
-	{
-		return Projection;
-	}
+    const XMFLOAT4X4& GetViewProjectionMatrix() const { return ViewProjection; }
+    const XMFLOAT4X4& GetViewProjectionInverseMatrix() const { return ViewProjectionInverse; }
+    const XMFLOAT4X4& GetViewProjectionWitoutTranslateMatrix() const { return ViewProjectionNoTranslation; }
 
-	FORCEINLINE const XMFLOAT4X4& GetProjectionInverseMatrix() const
-	{
-		return ProjectionInverse;
-	}
+    XMFLOAT3 GetPosition() const { return Position; }
+    XMFLOAT3 GetForward() const { return Forward; }
+    XMFLOAT3 GetUp() const { return Up; }
+    XMFLOAT3 GetRight() const { return Right; }
 
-	FORCEINLINE const XMFLOAT4X4& GetViewProjectionMatrix() const
-	{
-		return ViewProjection;
-	}
+    Float GetNearPlane() const { return NearPlane; }
+    Float GetFarPlane() const { return FarPlane; }
 
-	FORCEINLINE const XMFLOAT4X4& GetViewProjectionInverseMatrix() const
-	{
-		return ViewProjectionInverse;
-	}
-
-	FORCEINLINE const XMFLOAT4X4& GetViewProjectionWitoutTranslateMatrix() const
-	{
-		return ViewProjectionNoTranslation;
-	}
-
-	FORCEINLINE XMFLOAT3 GetPosition() const
-	{
-		return Position;
-	}
-
-	FORCEINLINE Float GetNearPlane() const
-	{
-		return NearPlane;
-	}
-
-	FORCEINLINE Float GetFarPlane() const
-	{
-		return FarPlane;
-	}
-
-	FORCEINLINE Float GetAspectRatio() const
-	{
-		return AspectRatio;
-	}
+    Float GetAspectRatio() const { return AspectRatio; }
 
 private:
-	XMFLOAT4X4 View;
-	XMFLOAT4X4 ViewInverse;
-	XMFLOAT4X4 Projection;
-	XMFLOAT4X4 ProjectionInverse;
-	XMFLOAT4X4 ViewProjection;
-	XMFLOAT4X4 ViewProjectionInverse;
-	XMFLOAT4X4 ViewProjectionNoTranslation;
-
-	XMFLOAT3 Position;
-	XMFLOAT3 Rotation;
-	XMFLOAT3 Forward;
-	XMFLOAT3 Right;
-	XMFLOAT3 Up;
-	Float	 NearPlane;
-	Float	 FarPlane;
-	Float	 AspectRatio;
+    XMFLOAT4X4 View;
+    XMFLOAT4X4 ViewInverse;
+    XMFLOAT4X4 Projection;
+    XMFLOAT4X4 ProjectionInverse;
+    XMFLOAT4X4 ViewProjection;
+    XMFLOAT4X4 ViewProjectionInverse;
+    XMFLOAT4X4 ViewProjectionNoTranslation;
+    Float NearPlane;
+    Float FarPlane;
+    Float AspectRatio;
+    XMFLOAT3 Position;
+    XMFLOAT3 Rotation;
+    XMFLOAT3 Forward;
+    XMFLOAT3 Right;
+    XMFLOAT3 Up;
 };

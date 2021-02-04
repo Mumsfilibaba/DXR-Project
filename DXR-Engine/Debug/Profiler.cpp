@@ -3,340 +3,320 @@
 
 #include "Rendering/DebugUI.h"
 
-#include "RenderingCore/RenderLayer.h"
+#include "RenderLayer/RenderLayer.h"
 
-constexpr Float MICROSECONDS		= 1000.0f;
-constexpr Float MILLISECONDS		= 1000.0f * 1000.0f;
-constexpr Float SECONDS				= 1000.0f * 1000.0f * 1000.0f;
-constexpr Float INV_MICROSECONDS	= 1.0f / MICROSECONDS;
-constexpr Float INV_MILLISECONDS	= 1.0f / MILLISECONDS;
-constexpr Float INV_SECONDS			= 1.0f / SECONDS;
+constexpr Float MICROSECONDS     = 1000.0f;
+constexpr Float MILLISECONDS     = 1000.0f * 1000.0f;
+constexpr Float SECONDS          = 1000.0f * 1000.0f * 1000.0f;
+constexpr Float INV_MICROSECONDS = 1.0f / MICROSECONDS;
+constexpr Float INV_MILLISECONDS = 1.0f / MILLISECONDS;
+constexpr Float INV_SECONDS      = 1.0f / SECONDS;
 
 constexpr Float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
 static void ImGui_PrintTiming(const Char* Text, Float Num)
 {
-	ImGui::Text("%s: ", Text);
+    ImGui::Text("%s: ", Text);
 
-	ImGui::NextColumn();
+    ImGui::NextColumn();
 
-	if (Num < MICROSECONDS)
-	{
-		ImGui::Text("%.4f ns", Num);
-	}
-	else if (Num < MICROSECONDS)
-	{
-		const Float Time = Num * INV_MICROSECONDS;
-		ImGui::Text("%.4f qs", Time);
-	}
-	else if (Num < SECONDS)
-	{
-		const Float Time = Num * INV_MILLISECONDS;
-		ImGui::Text("%.4f ms", Time);
-	}
-	else
-	{
-		const Float Time = Num * INV_SECONDS;
-		ImGui::Text("%.4f s", Time);
-	}
+    if (Num < MICROSECONDS)
+    {
+        ImGui::Text("%.4f ns", Num);
+    }
+    else if (Num < MICROSECONDS)
+    {
+        const Float Time = Num * INV_MICROSECONDS;
+        ImGui::Text("%.4f qs", Time);
+    }
+    else if (Num < SECONDS)
+    {
+        const Float Time = Num * INV_MILLISECONDS;
+        ImGui::Text("%.4f ms", Time);
+    }
+    else
+    {
+        const Float Time = Num * INV_SECONDS;
+        ImGui::Text("%.4f s", Time);
+    }
 }
 
 static Float ImGui_ConvertNumber(Float Num)
 {
-	if (Num < MICROSECONDS)
-	{
-		return Num;
-	}
-	else if (Num < MICROSECONDS)
-	{
-		return Num * INV_MICROSECONDS;
-	}
-	else if (Num < SECONDS)
-	{
-		return Num * INV_MILLISECONDS;
-	}
-	else
-	{
-		return Num * INV_SECONDS;
-	}
+    if (Num < MICROSECONDS)
+    {
+        return Num;
+    }
+    else if (Num < MICROSECONDS)
+    {
+        return Num * INV_MICROSECONDS;
+    }
+    else if (Num < SECONDS)
+    {
+        return Num * INV_MILLISECONDS;
+    }
+    else
+    {
+        return Num * INV_SECONDS;
+    }
 }
 
 static Float ImGui_GetMaxLimit(Float Num)
 {
-	if (Num < 0.01f)
-	{
-		return 0.01f;
-	}
-	else if (Num < 0.1f)
-	{
-		return 0.1f;
-	}
-	else if (Num < 1.0f)
-	{
-		return 1.0f;
-	}
-	else if (Num < 3.0f)
-	{
-		return 3.0f;
-	}
-	else if (Num < 17.0f)
-	{
-		return 17.0f;
-	}
-	else if (Num < 34.0f)
-	{
-		return 34.0f;
-	}
-	else if (Num < 100.0f)
-	{
-		return 100.0f;
-	}
-	else
-	{
-		return 1000.0f;
-	}
+    if (Num < 0.01f)
+    {
+        return 0.01f;
+    }
+    else if (Num < 0.1f)
+    {
+        return 0.1f;
+    }
+    else if (Num < 1.0f)
+    {
+        return 1.0f;
+    }
+    else if (Num < 3.0f)
+    {
+        return 3.0f;
+    }
+    else if (Num < 17.0f)
+    {
+        return 17.0f;
+    }
+    else if (Num < 34.0f)
+    {
+        return 34.0f;
+    }
+    else if (Num < 100.0f)
+    {
+        return 100.0f;
+    }
+    else
+    {
+        return 1000.0f;
+    }
 }
 
-/*
-* Console Vars
-*/
-
-ConsoleVariable GlobalDrawProfiler(ConsoleVariableType_Bool);
-ConsoleVariable GlobalDrawFps(ConsoleVariableType_Bool);
-
-/*
-* Profiler
-*/
+ConsoleVariable GlobalDrawProfiler(EConsoleVariableType::Bool);
+ConsoleVariable GlobalDrawFps(EConsoleVariableType::Bool);
 
 Profiler::Profiler()
-	: Clock()
-	, FrameTime(0)
-	, Samples()
+    : Clock()
+    , FrameTime(0)
+    , Samples()
 {
 }
 
 void Profiler::Init()
 {
-	INIT_CONSOLE_VARIABLE("DrawFps", GlobalDrawFps);
-	GlobalDrawFps.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawFps", GlobalDrawFps);
+    GlobalDrawFps.SetBool(false);
 
-	INIT_CONSOLE_VARIABLE("DrawProfiler", GlobalDrawProfiler);
-	GlobalDrawFps.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawProfiler", GlobalDrawProfiler);
+    GlobalDrawFps.SetBool(false);
 }
 
 void Profiler::Tick()
 {
-	Clock.Tick();
+    Clock.Tick();
 
-	CurrentFps++;
-	if (Clock.GetTotalTime().AsSeconds() > 1.0f)
-	{
-		Fps = CurrentFps;
-		CurrentFps = 0;
+    CurrentFps++;
+    if (Clock.GetTotalTime().AsSeconds() > 1.0f)
+    {
+        Fps = CurrentFps;
+        CurrentFps = 0;
 
-		Clock.Reset();
-	}
+        Clock.Reset();
+    }
 
-	if (GlobalDrawFps.GetBool())
-	{
-		DebugUI::DrawUI([]()
-		{
-			const UInt32 WindowWidth = GlobalMainWindow->GetWidth();
+    if (GlobalDrawFps.GetBool())
+    {
+        DebugUI::DrawUI([]()
+        {
+            const UInt32 WindowWidth = gMainWindow->GetWidth();
 
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(5.0f, 5.0f));
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
-			
-			ImGui::SetNextWindowPos(
-				ImVec2(Float(WindowWidth), 0.0f),
-				ImGuiCond_Always,
-				ImVec2(1.0f, 0.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(5.0f, 5.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
+            
+            ImGui::SetNextWindowPos(ImVec2(Float(WindowWidth), 0.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
 
-			ImGui::Begin(
-				"FPS Window", 
-				nullptr,
-				ImGuiWindowFlags_NoDecoration			|
-				ImGuiWindowFlags_NoInputs				|
-				ImGuiWindowFlags_AlwaysAutoResize		|
-				ImGuiWindowFlags_NoBringToFrontOnFocus	|
-				ImGuiWindowFlags_NoFocusOnAppearing		|
-				ImGuiWindowFlags_NoSavedSettings);
+            ImGuiWindowFlags Flags =
+                ImGuiWindowFlags_NoDecoration          |
+                ImGuiWindowFlags_NoInputs              |
+                ImGuiWindowFlags_AlwaysAutoResize      |
+                ImGuiWindowFlags_NoBringToFrontOnFocus |
+                ImGuiWindowFlags_NoFocusOnAppearing    |
+                ImGuiWindowFlags_NoSavedSettings;
 
-			const std::string FpsStr = std::to_string(GlobalProfiler.Fps);
-			ImGui::Text("%s", FpsStr.c_str());
-			
-			ImGui::End();
+            ImGui::Begin("FPS Window", nullptr, Flags);
 
-			ImGui::PopStyleColor();
-			ImGui::PopStyleVar();
-			ImGui::PopStyleVar();
-		});
-	}
+            const std::string FpsStr = std::to_string(gProfiler.Fps);
+            ImGui::Text("%s", FpsStr.c_str());
+            
+            ImGui::End();
 
-	if (GlobalDrawProfiler.GetBool())
-	{
-		const Double Delta = Clock.GetDeltaTime().AsMilliSeconds();
-		FrameTime.AddSample(Float(Delta));
+            ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
+            ImGui::PopStyleVar();
+        });
+    }
 
-		DebugUI::DrawUI([]()
-		{
-			// Draw DebugWindow with DebugStrings
-			const UInt32 WindowWidth	= GlobalMainWindow->GetWidth();
-			const UInt32 WindowHeight	= GlobalMainWindow->GetHeight();
-			const Float Width			= Math::Max(WindowWidth * 0.6f, 400.0f);
-			const Float Height			= WindowHeight * 0.75f;
+    if (GlobalDrawProfiler.GetBool())
+    {
+        const Double Delta = Clock.GetDeltaTime().AsMilliSeconds();
+        FrameTime.AddSample(Float(Delta));
 
-			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
-			ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
-			ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
-			ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
-			ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
+        DebugUI::DrawUI([]()
+        {
+            // Draw DebugWindow with DebugStrings
+            const UInt32 WindowWidth  = gMainWindow->GetWidth();
+            const UInt32 WindowHeight = gMainWindow->GetHeight();
+            const Float Width         = Math::Max(WindowWidth * 0.6f, 400.0f);
+            const Float Height        = WindowHeight * 0.75f;
 
-			ImGui::SetNextWindowPos(
-				ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f),
-				ImGuiCond_Appearing,
-				ImVec2(0.5f, 0.0f));
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
+            ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
+            ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-			ImGui::SetNextWindowSize(
-				ImVec2(Width, Height),
-				ImGuiCond_Appearing);
+            ImGui::SetNextWindowPos(ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+            ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
-			const ImGuiWindowFlags Flags =
-				ImGuiWindowFlags_NoResize			|
-				ImGuiWindowFlags_NoCollapse			|
-				ImGuiWindowFlags_NoFocusOnAppearing |
-				ImGuiWindowFlags_NoSavedSettings;
+            const ImGuiWindowFlags Flags =
+                ImGuiWindowFlags_NoResize           |
+                ImGuiWindowFlags_NoCollapse         |
+                ImGuiWindowFlags_NoFocusOnAppearing |
+                ImGuiWindowFlags_NoSavedSettings;
 
-			Bool TempDrawProfiler = GlobalDrawProfiler.GetBool();
-			if (ImGui::Begin(
-				"Profiler",
-				&TempDrawProfiler,
-				Flags))
-			{
-				ImGui::Text("CPU Timings:");
-				ImGui::Separator();
+            Bool TempDrawProfiler = GlobalDrawProfiler.GetBool();
+            if (ImGui::Begin("Profiler", &TempDrawProfiler, Flags))
+            {
+                ImGui::Text("CPU Timings:");
+                ImGui::Separator();
 
-				ImGui::Columns(2);
+                ImGui::Columns(2);
 
-				ImGui::Text("FPS:");
-				ImGui::NextColumn();
+                ImGui::Text("FPS:");
+                ImGui::NextColumn();
 
-				ImGui::Text("%d", GlobalProfiler.Fps);
-				ImGui::NextColumn();
+                ImGui::Text("%d", gProfiler.Fps);
+                ImGui::NextColumn();
 
-				ImGui::Text("FrameTime:");
-				ImGui::NextColumn();
+                ImGui::Text("FrameTime:");
+                ImGui::NextColumn();
 
-				const Float FtAvg = GlobalProfiler.FrameTime.GetAverage();
-				ImGui::Text("%.4f ms", FtAvg);
-				ImGui::PlotLines(
-					"",
-					GlobalProfiler.FrameTime.Samples.Data(),
-					GlobalProfiler.FrameTime.SampleCount,
-					GlobalProfiler.FrameTime.CurrentSample,
-					nullptr,
-					0.0f,
-					ImGui_GetMaxLimit(FtAvg),
-					ImVec2(0, 30.0f));
+                const Float FtAvg = gProfiler.FrameTime.GetAverage();
+                ImGui::Text("%.4f ms", FtAvg);
+                ImGui::PlotLines(
+                    "",
+                    gProfiler.FrameTime.Samples.Data(),
+                    gProfiler.FrameTime.SampleCount,
+                    gProfiler.FrameTime.CurrentSample,
+                    nullptr,
+                    0.0f,
+                    ImGui_GetMaxLimit(FtAvg),
+                    ImVec2(0, 30.0f));
 
-				ImGui::Columns(1);
+                ImGui::Columns(1);
 
-				ImGui::Separator();
+                ImGui::Separator();
 
-				ImGui::Columns(2);
+                ImGui::Columns(2);
 
-				TStaticArray<Float, NUM_PROFILER_SAMPLES> Floats;
-				for (auto& Sample : GlobalProfiler.Samples)
-				{
-					Memory::Memzero(Floats.Data(), Floats.SizeInBytes());
+                TStaticArray<Float, NUM_PROFILER_SAMPLES> Floats;
+                for (auto& Sample : gProfiler.Samples)
+                {
+                    Memory::Memzero(Floats.Data(), Floats.SizeInBytes());
 
-					Float Average = Sample.second.GetAverage();
-					if (Average < MICROSECONDS)
-					{
-						for (Int32 n = 0; n < Sample.second.SampleCount; n++)
-						{
-							Floats[n] = Sample.second.Samples[n];
-						}
-					}
-					else if (Average < MICROSECONDS)
-					{
-						for (Int32 n = 0; n < Sample.second.SampleCount; n++)
-						{
-							Floats[n] = Sample.second.Samples[n] * INV_MICROSECONDS;
-						}
-					}
-					else if (Average < SECONDS)
-					{
-						for (Int32 n = 0; n < Sample.second.SampleCount; n++)
-						{
-							Floats[n] = Sample.second.Samples[n] * INV_MILLISECONDS;
-						}
-					}
-					else
-					{
-						for (Int32 n = 0; n < Sample.second.SampleCount; n++)
-						{
-							Floats[n] = Sample.second.Samples[n] * INV_SECONDS;
-						}
-					}
+                    Float Average = Sample.second.GetAverage();
+                    if (Average < MICROSECONDS)
+                    {
+                        for (Int32 n = 0; n < Sample.second.SampleCount; n++)
+                        {
+                            Floats[n] = Sample.second.Samples[n];
+                        }
+                    }
+                    else if (Average < MICROSECONDS)
+                    {
+                        for (Int32 n = 0; n < Sample.second.SampleCount; n++)
+                        {
+                            Floats[n] = Sample.second.Samples[n] * INV_MICROSECONDS;
+                        }
+                    }
+                    else if (Average < SECONDS)
+                    {
+                        for (Int32 n = 0; n < Sample.second.SampleCount; n++)
+                        {
+                            Floats[n] = Sample.second.Samples[n] * INV_MILLISECONDS;
+                        }
+                    }
+                    else
+                    {
+                        for (Int32 n = 0; n < Sample.second.SampleCount; n++)
+                        {
+                            Floats[n] = Sample.second.Samples[n] * INV_SECONDS;
+                        }
+                    }
 
-					const Char* Name = Sample.first.c_str();
-					ImGui_PrintTiming(Name, Average);
+                    const Char* Name = Sample.first.c_str();
+                    ImGui_PrintTiming(Name, Average);
 
-					if (Sample.second.SampleCount > 1)
-					{
-						const Float Avg = ImGui_ConvertNumber(Average);
-						const Float Max = ImGui_GetMaxLimit(Avg);
-						ImGui::PlotLines(
-							"",
-							Floats.Data(),
-							Sample.second.SampleCount,
-							Sample.second.CurrentSample,
-							nullptr,
-							0.0f,
-							Max,
-							ImVec2(0, 30.0f));
-					}
-					else
-					{
-						ImGui::NewLine();
-					}
+                    if (Sample.second.SampleCount > 1)
+                    {
+                        const Float Avg = ImGui_ConvertNumber(Average);
+                        const Float Max = ImGui_GetMaxLimit(Avg);
+                        ImGui::PlotLines(
+                            "",
+                            Floats.Data(),
+                            Sample.second.SampleCount,
+                            Sample.second.CurrentSample,
+                            nullptr,
+                            0.0f,
+                            Max,
+                            ImVec2(0, 30.0f));
+                    }
+                    else
+                    {
+                        ImGui::NewLine();
+                    }
 
-					ImGui::NextColumn();
-				}
+                    ImGui::NextColumn();
+                }
 
-				ImGui::Columns(1);
-			}
+                ImGui::Columns(1);
+            }
 
-			ImGui::PopStyleColor();
-			ImGui::PopStyleColor();
-			ImGui::PopStyleColor();
-			ImGui::PopStyleColor();
-			ImGui::PopStyleColor();
-			ImGui::PopStyleColor();
+            ImGui::PopStyleColor();
+            ImGui::PopStyleColor();
+            ImGui::PopStyleColor();
+            ImGui::PopStyleColor();
+            ImGui::PopStyleColor();
+            ImGui::PopStyleColor();
 
-			ImGui::End();
+            ImGui::End();
 
-			GlobalDrawProfiler.SetBool(TempDrawProfiler);
-		});
-	}
+            GlobalDrawProfiler.SetBool(TempDrawProfiler);
+        });
+    }
 }
 
 void Profiler::AddSample(const Char* Name, Float NewSample)
 {
-	if (GlobalDrawProfiler.GetBool())
-	{
-		const std::string ScopeName = Name;
-	
-		auto Entry = Samples.find(ScopeName);
-		if (Entry != Samples.end())
-		{
-			Entry->second.AddSample(NewSample);
-		}
-		else
-		{
-			Samples.insert(std::make_pair(ScopeName, Sample(NewSample)));
-		}
-	}
+    if (GlobalDrawProfiler.GetBool())
+    {
+        const std::string ScopeName = Name;
+    
+        auto Entry = Samples.find(ScopeName);
+        if (Entry != Samples.end())
+        {
+            Entry->second.AddSample(NewSample);
+        }
+        else
+        {
+            Samples.insert(std::make_pair(ScopeName, Sample(NewSample)));
+        }
+    }
 }

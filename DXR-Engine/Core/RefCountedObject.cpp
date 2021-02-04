@@ -1,27 +1,23 @@
 #include "RefCountedObject.h"
 
-/*
-* RefCountedObject
-*/
-
 RefCountedObject::RefCountedObject()
-	: StrongReferences(0)
+    : StrongReferences(0)
 {
-	AddRef();
+    AddRef();
 }
 
-RefCountedObject::RefCountType RefCountedObject::AddRef()
+UInt32 RefCountedObject::AddRef()
 {
-	return ++StrongReferences;
+    return ++StrongReferences;
 }
 
-RefCountedObject::RefCountType RefCountedObject::Release()
+UInt32 RefCountedObject::Release()
 {
-	RefCountType NewRefCount = --StrongReferences;
-	if (StrongReferences <= 0)
-	{
-		delete this;
-	}
+    UInt32 NewRefCount = --StrongReferences;
+    if (StrongReferences <= 0)
+    {
+        delete this;
+    }
 
-	return NewRefCount;
+    return NewRefCount;
 }

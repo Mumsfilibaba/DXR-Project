@@ -1,62 +1,79 @@
 #pragma once
-#include "D3D12RefCountedObject.h"
+#include "D3D12DeviceChild.h"
 #include "D3D12Fence.h"
 #include "D3D12CommandList.h"
 
-/*
-* D3D12CommandQueue
-*/
-
-class D3D12CommandQueue : public D3D12RefCountedObject
+class D3D12CommandQueueHandle : public D3D12DeviceChild
 {
 public:
-	inline D3D12CommandQueue(D3D12Device* InDevice, ID3D12CommandQueue* InQueue)
-		: D3D12RefCountedObject(InDevice)
-		, Queue(InQueue)
-		, Desc()
-	{
-		VALIDATE(Queue != nullptr);
-		Desc = Queue->GetDesc();
-	}
+    D3D12CommandQueueHandle(D3D12Device* InDevice)
+        : D3D12DeviceChild(InDevice)
+        , Queue(nullptr)
+        , Desc()
+    {
+    }
+    
+    FORCEINLINE Bool Init(D3D12_COMMAND_LIST_TYPE Type)
+    {
+        D3D12_COMMAND_QUEUE_DESC QueueDesc;
+        Memory::Memzero(&QueueDesc);
 
-	FORCEINLINE bool SignalFence(D3D12Fence* Fence, UInt64 FenceValue)
-	{
-		return SUCCEEDED(Queue->Signal(Fence->GetFence(), FenceValue));
-	}
+        QueueDesc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        QueueDesc.NodeMask = 1;
+        QueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+        QueueDesc.Type     = Type;
 
-	FORCEINLINE bool WaitForFence(D3D12Fence* Fence, UInt64 FenceValue)
-	{
-		return SUCCEEDED(Queue->Wait(Fence->GetFence(), FenceValue));
-	}
+        HRESULT Result = Device->GetDevice()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
+        if (SUCCEEDED(Result))
+        {
+            LOG_INFO("[D3D12CommandQueueHandle]: Created CommandQueue");
+            return true;
+        }
+        else
+        {
+            LOG_ERROR("[D3D12CommandQueueHandle]: FAILED to create CommandQueue");
+            return false;
+        }
+    }
 
-	FORCEINLINE void ExecuteCommandList(D3D12CommandList* CommandList)
-	{
-		ID3D12CommandList* CommandLists[] = { CommandList->GetCommandList() };
-		Queue->ExecuteCommandLists(1, CommandLists);
-	}
+    FORCEINLINE Bool SignalFence(D3D12FenceHandle& Fence, UInt64 FenceValue)
+    {
+        return SUCCEEDED(Queue->Signal(Fence.GetFence(), FenceValue));
+    }
 
-	FORCEINLINE void SetName(const std::string& Name)
-	{
-		std::wstring WideDebugName = ConvertToWide(Name);
-		Queue->SetName(WideDebugName.c_str());
-	}
+    FORCEINLINE Bool WaitForFence(D3D12FenceHandle& Fence, UInt64 FenceValue)
+    {
+        return SUCCEEDED(Queue->Wait(Fence.GetFence(), FenceValue));
+    }
 
-	FORCEINLINE ID3D12CommandQueue* GetQueue() const
-	{
-		return Queue.Get();
-	}
+    FORCEINLINE void ExecuteCommandList(D3D12CommandListHandle* CommandList)
+    {
+        ID3D12CommandList* CommandLists[] = { CommandList->GetCommandList() };
+        Queue->ExecuteCommandLists(1, CommandLists);
+    }
 
-	FORCEINLINE const D3D12_COMMAND_QUEUE_DESC& GetDesc() const
-	{
-		return Desc;
-	}
+    FORCEINLINE void SetName(const std::string& Name)
+    {
+        std::wstring WideDebugName = ConvertToWide(Name);
+        Queue->SetName(WideDebugName.c_str());
+    }
 
-	FORCEINLINE D3D12_COMMAND_LIST_TYPE GetType() const
-	{
-		return Desc.Type;
-	}
+    FORCEINLINE ID3D12CommandQueue* GetQueue() const
+    {
+        return Queue.Get();
+    }
+
+    FORCEINLINE const D3D12_COMMAND_QUEUE_DESC& GetDesc() const
+    {
+        return Desc;
+    }
+
+    FORCEINLINE D3D12_COMMAND_LIST_TYPE GetType() const
+    {
+        return Desc.Type;
+    }
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12CommandQueue> Queue;
-	D3D12_COMMAND_QUEUE_DESC Desc;
+    TComPtr<ID3D12CommandQueue> Queue;
+    D3D12_COMMAND_QUEUE_DESC    Desc;
 };

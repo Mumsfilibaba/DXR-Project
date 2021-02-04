@@ -1,10 +1,6 @@
 #include "GenericCursor.h"
 #include "GenericApplication.h"
 
-/*
-* GlobalCursors
-*/
-
 TSharedRef<GenericCursor> GlobalCursors::Arrow;
 TSharedRef<GenericCursor> GlobalCursors::TextInput;
 TSharedRef<GenericCursor> GlobalCursors::ResizeAll;
@@ -15,74 +11,74 @@ TSharedRef<GenericCursor> GlobalCursors::ResizeNWSE;
 TSharedRef<GenericCursor> GlobalCursors::Hand;
 TSharedRef<GenericCursor> GlobalCursors::NotAllowed;
 
-bool GlobalCursors::Init()
+Bool GlobalCursors::Init()
 {
-	Arrow = GlobalPlatformApplication->MakeCursor();
-	if (!Arrow->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_Arrow)))
-	{
-		return false;
-	}
+    Arrow = gApplication->MakeCursor();
+    if (!Arrow->Init(CursorCreateInfo(EPlatformCursor::Arrow)))
+    {
+        return false;
+    }
 
-	TextInput = GlobalPlatformApplication->MakeCursor();
-	if (!TextInput->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_TextInput)))
-	{
-		return false;
-	}
+    TextInput = gApplication->MakeCursor();
+    if (!TextInput->Init(CursorCreateInfo(EPlatformCursor::TextInput)))
+    {
+        return false;
+    }
 
-	ResizeAll = GlobalPlatformApplication->MakeCursor();
-	if (!ResizeAll->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeAll)))
-	{
-		return false;
-	}
+    ResizeAll = gApplication->MakeCursor();
+    if (!ResizeAll->Init(CursorCreateInfo(EPlatformCursor::ResizeAll)))
+    {
+        return false;
+    }
 
-	ResizeEW = GlobalPlatformApplication->MakeCursor();
-	if (!ResizeEW->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeEW)))
-	{
-		return false;
-	}
+    ResizeEW = gApplication->MakeCursor();
+    if (!ResizeEW->Init(CursorCreateInfo(EPlatformCursor::ResizeEW)))
+    {
+        return false;
+    }
 
-	ResizeNS = GlobalPlatformApplication->MakeCursor();
-	if (!ResizeNS->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNS)))
-	{
-		return false;
-	}
+    ResizeNS = gApplication->MakeCursor();
+    if (!ResizeNS->Init(CursorCreateInfo(EPlatformCursor::ResizeNS)))
+    {
+        return false;
+    }
 
-	ResizeNESW = GlobalPlatformApplication->MakeCursor();
-	if (!ResizeNESW->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNESW)))
-	{
-		return false;
-	}
+    ResizeNESW = gApplication->MakeCursor();
+    if (!ResizeNESW->Init(CursorCreateInfo(EPlatformCursor::ResizeNESW)))
+    {
+        return false;
+    }
 
-	ResizeNWSE = GlobalPlatformApplication->MakeCursor();
-	if (!ResizeNWSE->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_ResizeNWSE)))
-	{
-		return false;
-	}
+    ResizeNWSE = gApplication->MakeCursor();
+    if (!ResizeNWSE->Init(CursorCreateInfo(EPlatformCursor::ResizeNWSE)))
+    {
+        return false;
+    }
 
-	Hand = GlobalPlatformApplication->MakeCursor();
-	if (!Hand->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_Hand)))
-	{
-		return false;
-	}
+    Hand = gApplication->MakeCursor();
+    if (!Hand->Init(CursorCreateInfo(EPlatformCursor::Hand)))
+    {
+        return false;
+    }
 
-	NotAllowed = GlobalPlatformApplication->MakeCursor();
-	if (!NotAllowed->Init(CursorCreateInfo(EPlatformCursor::PlatformCursor_NotAllowed)))
-	{
-		return false;
-	}
+    NotAllowed = gApplication->MakeCursor();
+    if (!NotAllowed->Init(CursorCreateInfo(EPlatformCursor::NotAllowed)))
+    {
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 void GlobalCursors::Release()
 {
-	Arrow.Reset();
-	TextInput.Reset();
-	ResizeAll.Reset();
-	ResizeEW.Reset();
-	ResizeNS.Reset();
-	ResizeNESW.Reset();
-	ResizeNWSE.Reset();
-	Hand.Reset();
-	NotAllowed.Reset();
+    Arrow.Reset();
+    TextInput.Reset();
+    ResizeAll.Reset();
+    ResizeEW.Reset();
+    ResizeNS.Reset();
+    ResizeNESW.Reset();
+    ResizeNWSE.Reset();
+    Hand.Reset();
+    NotAllowed.Reset();
 }

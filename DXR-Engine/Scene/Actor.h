@@ -3,162 +3,125 @@
 
 #include <Containers/TArray.h>
 
-/*
-* Component Base-Class
-*/
-
 class Actor;
 
+// Component BaseClass
 class Component : public CoreObject
 {
-	CORE_OBJECT(Component, CoreObject);
+    CORE_OBJECT(Component, CoreObject);
 
 public:
-	Component(Actor* InOwningActor);
-	virtual ~Component() = default;
+    Component(Actor* InOwningActor);
+    virtual ~Component() = default;
 
-	FORCEINLINE Actor* GetOwningActor() const
-	{
-		return OwningActor;
-	}
+    Actor* GetOwningActor() const { return OwningActor; }
 
 protected:
-	Actor* OwningActor = nullptr;
+    Actor* OwningActor = nullptr;
 };
-
-/*
-* Transform
-*/
 
 class Transform
 {
 public:
-	Transform();
+    Transform();
+    ~Transform() = default;
 
-	void SetTranslation(Float x, Float y, Float z);
-	void SetTranslation(const XMFLOAT3& InPosition);
+    void SetTranslation(Float x, Float y, Float z);
+    void SetTranslation(const XMFLOAT3& InPosition);
 
-	void SetScale(Float x, Float y, Float z);
-	void SetScale(const XMFLOAT3& InScale);
+    void SetScale(Float x, Float y, Float z);
+    void SetScale(const XMFLOAT3& InScale);
 
-	void SetRotation(Float x, Float y, Float z);
-	void SetRotation(const XMFLOAT3& InRotation);
+    void SetUniformScale(Float InScale)
+    {
+        SetScale(InScale, InScale, InScale);
+    }
 
-	FORCEINLINE const XMFLOAT3& GetTranslation() const
-	{
-		return Translation;
-	}
+    void SetRotation(Float x, Float y, Float z);
+    void SetRotation(const XMFLOAT3& InRotation);
 
-	FORCEINLINE const XMFLOAT3& GetScale() const
-	{
-		return Scale;
-	}
+    const XMFLOAT3& GetTranslation() const { return Translation; }
 
-	FORCEINLINE const XMFLOAT3& GetRotation() const
-	{
-		return Rotation;
-	}
+    const XMFLOAT3& GetScale() const { return Scale; }
 
-	FORCEINLINE const XMFLOAT4X4& GetMatrix() const
-	{
-		return Matrix;
-	}
+    const XMFLOAT3& GetRotation() const { return Rotation; }
 
-	FORCEINLINE const XMFLOAT4X4& GetMatrixInverse() const
-	{
-		return MatrixInv;
-	}
+    const XMFLOAT4X4& GetMatrix() const { return Matrix; }
+    const XMFLOAT4X4& GetMatrixInverse() const { return MatrixInv; }
 
 private:
-	void CalculateMatrix();
+    void CalculateMatrix();
 
-private:
-	XMFLOAT4X4	Matrix;
-	XMFLOAT4X4	MatrixInv;
-	XMFLOAT3	Translation;
-	XMFLOAT3	Scale;
-	XMFLOAT3	Rotation;
+    XMFLOAT4X4 Matrix;
+    XMFLOAT4X4 MatrixInv;
+    XMFLOAT3   Translation;
+    XMFLOAT3   Scale;
+    XMFLOAT3   Rotation;
 };
-
-/*
-* Actor
-*/
 
 class Scene;
 
 class Actor : public CoreObject
 {
-	CORE_OBJECT(Actor, CoreObject);
+    CORE_OBJECT(Actor, CoreObject);
 
 public:
-	Actor();
-	~Actor();
+    Actor();
+    ~Actor();
 
-	void AddComponent(Component* InComponent);
+    void AddComponent(Component* InComponent);
 
-	template<typename TComponent>
-	FORCEINLINE bool HasComponentOfType() const noexcept
-	{
-		TComponent* Result = nullptr;
-		for (Component* Component : Components)
-		{
-			if (IsSubClassOf<TComponent>(Component))
-			{
-				return true;
-			}
-		}
+    template<typename TComponent>
+    FORCEINLINE bool HasComponentOfType() const noexcept
+    {
+        TComponent* Result = nullptr;
+        for (Component* Component : Components)
+        {
+            if (IsSubClassOf<TComponent>(Component))
+            {
+                return true;
+            }
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	void OnAddedToScene(Scene* InScene);
-	
-	void SetName(const std::string& InDebugName);
+    template <typename TComponent>
+    FORCEINLINE TComponent* GetComponentOfType() const
+    {
+        for (Component* Component : Components)
+        {
+            if (IsSubClassOf<TComponent>(Component))
+            {
+                return static_cast<TComponent*>(Component);
+            }
+        }
 
-	FORCEINLINE void SetTransform(const Transform& InTransform)
-	{
-		Transform = InTransform;
-	}
+        return nullptr;
+    }
 
-	FORCEINLINE const std::string& GetName() const
-	{
-		return Name;
-	}
+    void OnAddedToScene(Scene* InScene)
+    {
+        Scene = InScene;
+    }
+    
+    void SetName(const std::string& InDebugName);
 
-	FORCEINLINE Scene* GetScene() const
-	{
-		return CurrentScene;
-	}
+    void SetTransform(const Transform& InTransform)
+    {
+        Transform = InTransform;
+    }
 
-	FORCEINLINE Transform& GetTransform()
-	{
-		return Transform;
-	}
+    const std::string& GetName() const { return Name; }
 
-	FORCEINLINE const Transform& GetTransform() const
-	{
-		return Transform;
-	}
+    Scene* GetScene() const { return Scene; }
 
-	template <typename TComponent>
-	FORCEINLINE TComponent* GetComponentOfType() const
-	{
-		for (Component* Component : Components)
-		{
-			if (IsSubClassOf<TComponent>(Component))
-			{
-				return static_cast<TComponent*>(Component);
-			}
-		}
-
-		return nullptr;
-	}
+    Transform& GetTransform() { return Transform; }
+    const Transform& GetTransform() const { return Transform; }
 
 private:
-	Scene* CurrentScene = nullptr;
-
-	Transform Transform;
-
-	TArray<Component*>	Components;
-	std::string			Name;
+    Scene*    Scene = nullptr;
+    Transform Transform;
+    TArray<Component*> Components;
+    std::string        Name;
 };

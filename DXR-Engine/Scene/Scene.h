@@ -10,75 +10,53 @@
 
 #include <Containers/TArray.h>
 
-/*
-* Scene
-*/
-
 class Scene
 {
 public:
-	Scene();
-	~Scene();
+    Scene();
+    ~Scene();
 
-	void Tick(Timestamp DeltaTime);
+    void Tick(Timestamp DeltaTime);
 
-	void AddCamera(Camera* InCamera);
-	void AddActor(Actor* InActor);
-	void AddLight(Light* InLight);
+    void AddCamera(Camera* InCamera);
+    void AddActor(Actor* InActor);
+    void AddLight(Light* InLight);
 
-	void OnAddedComponent(Component* NewComponent);
+    void OnAddedComponent(Component* NewComponent);
 
-	FORCEINLINE const TArray<Actor*>& GetActors() const
-	{
-		return Actors;
-	}
+    template<typename TComponent>
+    FORCEINLINE const TArray<TComponent> GetAllComponentsOfType() const
+    {
+        // TODO: Cache this result
 
-	FORCEINLINE const TArray<Light*>& GetLights() const
-	{
-		return Lights;
-	}
+        TArray<TComponent> Components;
+        for (Actor* Actor : Actors)
+        {
+            TComponent* Component = Actor->GetComponentOfType<TComponent>();
+            if (Component)
+            {
+                Components.EmplaceBack(*Component);
+            }
+        }
 
-	template<typename TComponent>
-	FORCEINLINE const TArray<TComponent> GetAllComponentsOfType() const
-	{
-		// TODO: Cache this result
+        return Move(Components);
+    }
 
-		TArray<TComponent> Components;
-		for (Actor* Actor : Actors)
-		{
-			TComponent* Component = Actor->GetComponentOfType<TComponent>();
-			if (Component)
-			{
-				Components.EmplaceBack(*Component);
-			}
-		}
+    const TArray<Actor*>& GetActors() const { return Actors; }
+    const TArray<Light*>& GetLights() const { return Lights; }
 
-		return Move(Components);
-	}
+    const TArray<MeshDrawCommand>& GetMeshDrawCommands() const { return MeshDrawCommands; }
+     
+    Camera* GetCamera() const { return CurrentCamera; }
 
-	FORCEINLINE const TArray<MeshDrawCommand>& GetMeshDrawCommands() const
-	{
-		return MeshDrawCommands;
-	}
-	 
-	FORCEINLINE Camera* GetCamera() const
-	{
-		return CurrentCamera;
-	}
-
-	static Scene* LoadFromFile(const std::string& Filepath);
-	
-	static void SetCurrentScene(Scene* InCurrentScene);
-	static Scene* GetCurrentScene();
+    static Scene* LoadFromFile(const std::string& Filepath);
 
 private:
-	void AddMeshComponent(class MeshComponent* Component);
+    void AddMeshComponent(class MeshComponent* Component);
 
-	TArray<Actor*> Actors;
-	TArray<Light*> Lights;
-	TArray<MeshDrawCommand> MeshDrawCommands;
+    TArray<Actor*> Actors;
+    TArray<Light*> Lights;
+    TArray<MeshDrawCommand> MeshDrawCommands;
 
-	Camera* CurrentCamera = nullptr;
-
-	static Scene* CurrentScene;
+    Camera* CurrentCamera = nullptr;
 };
