@@ -25,10 +25,10 @@ float PointLightShadowFactor(
     in SamplerComparisonState Sampler,
     float3 WorldPosition, 
     float3 Normal,
-    PointLight Light)
+    ShadowPointLight Light, PositionRadius LightPos)
 {
-    const float3 DirToLight   = WorldPosition - Light.Position;
-    const float3 LightDir     = normalize(Light.Position - WorldPosition);
+    const float3 DirToLight = WorldPosition - LightPos.Position;
+    const float3 LightDir   = normalize(LightPos.Position - WorldPosition);
 
     const float ShadowBias = max(Light.MaxShadowBias * (1.0f - (max(dot(Normal, LightDir), 0.0f))), Light.ShadowBias);
     float Depth = length(DirToLight) / Light.FarPlane;
@@ -48,15 +48,16 @@ float PointLightShadowFactor(
     return min(Shadow, 1.0f);
 }
 
+// TODO: Reuse code form other func?
 float PointLightShadowFactor(
     in TextureCubeArray<float> ShadowMap, float Index,
     in SamplerComparisonState Sampler,
     float3 WorldPosition,
     float3 Normal,
-    PointLight Light)
+    ShadowPointLight Light, PositionRadius LightPos)
 {
-    const float3 DirToLight = WorldPosition - Light.Position;
-    const float3 LightDir   = normalize(Light.Position - WorldPosition);
+    const float3 DirToLight = WorldPosition - LightPos.Position;
+    const float3 LightDir   = normalize(LightPos.Position - WorldPosition);
 
     const float ShadowBias = max(Light.MaxShadowBias * (1.0f - (max(dot(Normal, LightDir), 0.0f))), Light.ShadowBias);
     float Depth = length(DirToLight) / Light.FarPlane;

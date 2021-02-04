@@ -13,6 +13,10 @@
 
 #include "Application/Input.h"
 
+#include <random>
+
+#define ENABLE_LIGHT_TEST 0
+
 Game* MakeGameInstance()
 {
     return DBG_NEW Sandbox();
@@ -239,13 +243,15 @@ Bool Sandbox::Init()
     CurrentScene->AddCamera(CurrentCamera);
 
     // Add PointLight- Source
+    const Float Intensity = 50.0f;
+
     PointLight* Light0 = DBG_NEW PointLight();
     Light0->SetPosition(16.5f, 1.0f, 0.0f);
     Light0->SetColor(1.0f, 1.0f, 1.0f);
     Light0->SetShadowBias(0.0005f);
     Light0->SetMaxShadowBias(0.009f);
     Light0->SetShadowFarPlane(50.0f);
-    Light0->SetIntensity(20.0f);
+    Light0->SetIntensity(Intensity);
     Light0->SetShadowCaster(true);
     CurrentScene->AddLight(Light0);
 
@@ -255,7 +261,7 @@ Bool Sandbox::Init()
     Light1->SetShadowBias(0.0005f);
     Light1->SetMaxShadowBias(0.009f);
     Light1->SetShadowFarPlane(50.0f);
-    Light1->SetIntensity(20.0f);
+    Light1->SetIntensity(Intensity);
     Light1->SetShadowCaster(true);
     CurrentScene->AddLight(Light1);
 
@@ -265,7 +271,7 @@ Bool Sandbox::Init()
     Light2->SetShadowBias(0.0005f);
     Light2->SetMaxShadowBias(0.009f);
     Light2->SetShadowFarPlane(50.0f);
-    Light2->SetIntensity(20.0f);
+    Light2->SetIntensity(Intensity);
     Light2->SetShadowCaster(true);
     CurrentScene->AddLight(Light2);
 
@@ -275,9 +281,29 @@ Bool Sandbox::Init()
     Light3->SetShadowBias(0.0005f);
     Light3->SetMaxShadowBias(0.009f);
     Light3->SetShadowFarPlane(50.0f);
-    Light3->SetIntensity(20.0f);
+    Light3->SetIntensity(Intensity);
     Light3->SetShadowCaster(true);
     CurrentScene->AddLight(Light3);
+
+#if ENABLE_LIGHT_TEST
+    // Add multiple lights
+    std::uniform_real_distribution<Float> RandomFloats(0.0f, 1.0f);
+    std::default_random_engine Generator;
+
+    for (UInt32 i = 0; i < 256; i++)
+    {
+        Float x = RandomFloats(Generator) * 35.0f - 17.5f;
+        Float y = RandomFloats(Generator) * 22.0f;
+        Float z = RandomFloats(Generator) * 16.0f - 8.0f;
+        Float Intentsity = RandomFloats(Generator) * 10.0f + 1.0f;
+
+        PointLight* Light = DBG_NEW PointLight();
+        Light->SetPosition(x, y, z);
+        Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
+        Light->SetIntensity(Intentsity);
+        CurrentScene->AddLight(Light);
+    }
+#endif
 
     // Add DirectionalLight- Source
     DirectionalLight* Light4 = DBG_NEW DirectionalLight();

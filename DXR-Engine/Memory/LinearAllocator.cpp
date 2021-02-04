@@ -20,7 +20,7 @@ Void* LinearAllocator::Allocate(UInt64 SizeInBytes, UInt64 Alignment)
     // Size for new arena
     const UInt64 CurrentSize = CurrentArena->GetSizeInBytes();
     UInt64 NewArenaSize = CurrentSize + CurrentSize;
-    if (NewArenaSize < AlignedSize)
+    if (NewArenaSize <= AlignedSize)
     {
         NewArenaSize = NewArenaSize + SizeInBytes;
     }

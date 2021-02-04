@@ -24,29 +24,44 @@ ConstantBuffer<Camera> CameraBuffer : register(b1, space0);
 
 cbuffer PointLightsBuffer : register(b2, space0)
 {
-    PointLight PointLights[8];
+    PointLight PointLights[32];
 }
 
-ConstantBuffer<DirectionalLight> DirLightBuffer : register(b3, space0);
+cbuffer PointLightsPosRadBuffer : register(b3, space0)
+{
+    PositionRadius PointLightsPosRad[32];
+}
+
+cbuffer ShadowCastingPointLightsBuffer : register(b4, space0)
+{
+    ShadowPointLight ShadowCastingPointLights[8];
+}
+
+cbuffer ShadowCastingPointLightsPosRadBuffer : register(b5, space0)
+{
+    PositionRadius ShadowCastingPointLightsPosRad[8];
+}
+
+ConstantBuffer<DirectionalLight> DirLightBuffer : register(b6, space0);
 
 // Per Object Buffers
-ConstantBuffer<Transform>	TransformBuffer	: register(b0, space0);
-ConstantBuffer<Material>	MaterialBuffer	: register(b4, space0);
+ConstantBuffer<Transform> TransformBuffer : register(b0, space0);
+ConstantBuffer<Material>  MaterialBuffer  : register(b7, space0);
 
 // Per Frame Samplers
-SamplerState MaterialSampler	: register(s0, space0);
-SamplerState LUTSampler			: register(s1, space0);
-SamplerState IrradianceSampler	: register(s2, space0);
+SamplerState MaterialSampler   : register(s0, space0);
+SamplerState LUTSampler        : register(s1, space0);
+SamplerState IrradianceSampler : register(s2, space0);
 
 SamplerComparisonState ShadowMapSampler0 : register(s3, space0);
 SamplerComparisonState ShadowMapSampler1 : register(s4, space0);
 
 // Per Frame Textures
-TextureCube<float4>		IrradianceMap			: register(t0, space0);
-TextureCube<float4>		SpecularIrradianceMap	: register(t1, space0);
-Texture2D<float4>		IntegrationLUT			: register(t2, space0);
-Texture2D<float>		DirLightShadowMaps		: register(t3, space0);
-TextureCubeArray<float>	PointLightShadowMaps	: register(t4, space0);
+TextureCube<float4>     IrradianceMap         : register(t0, space0);
+TextureCube<float4>     SpecularIrradianceMap : register(t1, space0);
+Texture2D<float4>       IntegrationLUT        : register(t2, space0);
+Texture2D<float>        DirLightShadowMaps    : register(t3, space0);
+TextureCubeArray<float> PointLightShadowMaps  : register(t4, space0);
 
 // Per Object Textures
 Texture2D<float4> AlbedoTex : register(t5, space0);
@@ -57,9 +72,9 @@ Texture2D<float4> RoughnessTex : register(t7, space0);
 #ifdef PARALLAX_MAPPING_ENABLED
 Texture2D<float4> HeightMap : register(t8, space0);
 #endif
-Texture2D<float> MetallicTex	: register(t9, space0);
-Texture2D<float> AOTex			: register(t10, space0);
-Texture2D<float> AlphaTex		: register(t11, space0);
+Texture2D<float> MetallicTex : register(t9, space0);
+Texture2D<float> AOTex       : register(t10, space0);
+Texture2D<float> AlphaTex    : register(t11, space0);
 
 struct VSInput
 {
@@ -71,16 +86,16 @@ struct VSInput
 
 struct VSOutput
 {
-    float3 WorldPosition	: POSITION0;
-    float3 Normal			: NORMAL0;
+    float3 WorldPosition : POSITION0;
+    float3 Normal        : NORMAL0;
 #ifdef NORMAL_MAPPING_ENABLED
-    float3 Tangent		: TANGENT0;
-    float3 Bitangent	: BITANGENT0;
+    float3 Tangent   : TANGENT0;
+    float3 Bitangent : BITANGENT0;
 #endif
     float2 TexCoord : TEXCOORD0;
 #ifdef PARALLAX_MAPPING_ENABLED
-    float3 TangentViewPos	: TANGENTVIEWPOS0;
-    float3 TangentPosition	: TANGENTPOSITION0;
+    float3 TangentViewPos  : TANGENTVIEWPOS0;
+    float3 TangentPosition : TANGENTPOSITION0;
 #endif
     float4 Position : SV_Position;
 };
@@ -93,9 +108,9 @@ VSOutput VSMain(VSInput Input)
     Output.Normal = Normal;
     
 #ifdef NORMAL_MAPPING_ENABLED
-    float3 Tangent	= normalize(mul(float4(Input.Tangent, 0.0f), TransformBuffer.Transform).xyz);
-    Tangent			= normalize(Tangent - dot(Tangent, Normal) * Normal);
-    Output.Tangent	= Tangent;
+    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), TransformBuffer.Transform).xyz);
+    Tangent        = normalize(Tangent - dot(Tangent, Normal) * Normal);
+    Output.Tangent = Tangent;
     
     float3 Bitangent = normalize(cross(Output.Tangent, Output.Normal));
     Output.Bitangent = Bitangent;
@@ -103,16 +118,16 @@ VSOutput VSMain(VSInput Input)
 
     Output.TexCoord = Input.TexCoord;
 
-    float4 WorldPosition	= mul(float4(Input.Position, 1.0f), TransformBuffer.Transform);
-    Output.Position			= mul(WorldPosition, CameraBuffer.ViewProjection);
-    Output.WorldPosition	= WorldPosition.xyz;
+    float4 WorldPosition = mul(float4(Input.Position, 1.0f), TransformBuffer.Transform);
+    Output.Position      = mul(WorldPosition, CameraBuffer.ViewProjection);
+    Output.WorldPosition = WorldPosition.xyz;
 
 #ifdef PARALLAX_MAPPING_ENABLED
-    float3x3 TBN	= float3x3(Tangent, Bitangent, Normal);
-    TBN				= transpose(TBN);
+    float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
+    TBN          = transpose(TBN);
     
-    Output.TangentViewPos	= mul(CameraBuffer.Position, TBN);
-    Output.TangentPosition	= mul(WorldPosition.xyz, TBN);
+    Output.TangentViewPos  = mul(CameraBuffer.Position, TBN);
+    Output.TangentPosition = mul(WorldPosition.xyz, TBN);
 #endif	
 
     return Output;
@@ -120,16 +135,16 @@ VSOutput VSMain(VSInput Input)
 
 struct PSInput
 {
-    float3 WorldPosition	: POSITION0;
-    float3 Normal			: NORMAL0;
+    float3 WorldPosition : POSITION0;
+    float3 Normal        : NORMAL0;
 #ifdef NORMAL_MAPPING_ENABLED
-    float3 Tangent		: TANGENT0;
-    float3 Bitangent	: BITANGENT0;
+    float3 Tangent   : TANGENT0;
+    float3 Bitangent : BITANGENT0;
 #endif
     float2 TexCoord : TEXCOORD0;
 #ifdef PARALLAX_MAPPING_ENABLED
-    float3 TangentViewPos	: TANGENTVIEWPOS0;
-    float3 TangentPosition	: TANGENTPOSITION0;
+    float3 TangentViewPos  : TANGENTVIEWPOS0;
+    float3 TangentPosition : TANGENTPOSITION0;
 #endif
     bool IsFrontFace : SV_IsFrontFace;
 };
@@ -184,8 +199,8 @@ float4 PSMain(PSInput Input) : SV_Target0
 #ifdef PARALLAX_MAPPING_ENABLED
     if (MaterialBuffer.EnableHeight != 0)
     {
-        float3 ViewDir	= normalize(Input.TangentViewPos - Input.TangentPosition);
-        TexCoords		= ParallaxMapping(TexCoords, ViewDir);
+        float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
+        TexCoords      = ParallaxMapping(TexCoords, ViewDir);
         if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
         {
             discard;
@@ -204,20 +219,20 @@ float4 PSMain(PSInput Input) : SV_Target0
     }
     
 #ifdef NORMAL_MAPPING_ENABLED
-    float3 SampledNormal	= NormalTex.Sample(MaterialSampler, TexCoords).rgb;
-    SampledNormal			= UnpackNormal(SampledNormal);
+    float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords).rgb;
+    SampledNormal        = UnpackNormal(SampledNormal);
     
-    float3 Tangent		= normalize(Input.Tangent);
-    float3 Bitangent	= normalize(Input.Bitangent);
-    float3 Normal		= normalize(N);
+    float3 Tangent   = normalize(Input.Tangent);
+    float3 Bitangent = normalize(Input.Bitangent);
+    float3 Normal    = normalize(N);
     N = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
 #endif	
 
-    const float SampledAO			= AOTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.AO;
-    const float SampledMetallic		= MetallicTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Metallic;
-    const float SampledRoughness	= RoughnessTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Roughness;
-    const float	SampledAlpha		= AlphaTex.Sample(MaterialSampler, TexCoords);
-    const float Roughness			= SampledRoughness;
+    const float SampledAO        = AOTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.AO;
+    const float SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Metallic;
+    const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Roughness;
+    const float	SampledAlpha     = AlphaTex.Sample(MaterialSampler, TexCoords);
+    const float Roughness        = SampledRoughness;
     if (SampledAlpha < 0.1f)
     {
         discard;
@@ -230,16 +245,34 @@ float4 PSMain(PSInput Input) : SV_Target0
     float3 L0 = Float3(0.0f);
     
     // Pointlights
+    for (int i = 0; i < 0; i++)
+    {
+        const PointLight     Light       = PointLights[i];
+        const PositionRadius LightPosRad = PointLightsPosRad[i];
+
+        float3 L = LightPosRad.Position - WorldPosition;
+        float DistanceSqrd = dot(L, L);
+        float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
+        L = normalize(L);
+
+        float3 IncidentRadiance = Light.Color * Attenuation;
+        IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, SampledAlbedo, Roughness, SampledMetallic);
+            
+        L0 += IncidentRadiance;
+    }
+    
     for (int i = 0; i < 4; i++)
     {
-        const PointLight Light = PointLights[i];
-        const float ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(i), ShadowMapSampler0, WorldPosition, N, Light);
+        const ShadowPointLight Light       = ShadowCastingPointLights[i];
+        const PositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[i];
+     
+        float ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(i), ShadowMapSampler0, WorldPosition, N, Light, LightPosRad);
         if (ShadowFactor > 0.001f)
         {
-            float3 L = normalize(Light.Position - WorldPosition);
-            float3 H = normalize(L + V);
-            float Distance		= length(Light.Position - WorldPosition);
-            float Attenuation	= 1.0f / (Distance * Distance);
+            float3 L = LightPosRad.Position - WorldPosition;
+            float DistanceSqrd = dot(L, L);
+            float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
+            L = normalize(L);
             
             float3 IncidentRadiance = Light.Color * Attenuation;
             IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, SampledAlbedo, Roughness, SampledMetallic);
@@ -269,23 +302,23 @@ float4 PSMain(PSInput Input) : SV_Target0
     {
         const float NDotV = max(dot(N, V), 0.0f);
         
-        float3 F	= FresnelSchlick_Roughness(F0, V, N, Roughness);
-        float3 Ks	= F;
-        float3 Kd	= Float3(1.0f) - Ks;
-        float3 Irradiance	= IrradianceMap.SampleLevel(IrradianceSampler, N, 0.0f).rgb;
-        float3 Diffuse		= Irradiance * SampledAlbedo * Kd;
+        float3 F  = FresnelSchlick_Roughness(F0, V, N, Roughness);
+        float3 Ks = F;
+        float3 Kd = Float3(1.0f) - Ks;
+        float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, N, 0.0f).rgb;
+        float3 Diffuse    = Irradiance * SampledAlbedo * Kd;
 
         float3 R = reflect(-V, N);
-        float3 PrefilteredMap	= SpecularIrradianceMap.SampleLevel(IrradianceSampler, R, Roughness * (7.0f - 1.0f)).rgb;
-        float2 BRDFIntegration	= IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0f).rg;
-        float3 Specular			= PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
+        float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, R, Roughness * (7.0f - 1.0f)).rgb;
+        float2 BRDFIntegration = IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0f).rg;
+        float3 Specular        = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
 
         float3 Ambient = (Diffuse + Specular) * SampledAO;
         FinalColor = Ambient + L0;
     }
     
     // Finalize
-    FinalColor		= ApplyGammaCorrectionAndTonemapping(FinalColor);
-    float Luminance	= Luma(FinalColor);
+    float Luminance = Luma(FinalColor);
+    FinalColor      = ApplyGammaCorrectionAndTonemapping(FinalColor);
     return float4(FinalColor, Luminance);
 }

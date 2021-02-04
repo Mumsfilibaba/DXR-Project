@@ -3,12 +3,12 @@
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
 
-Bool LightProbeRenderer::Init(SceneLightSetup& LightSetup, FrameResources& FrameResources)
+Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResources)
 {
-	if (!CreateSkyLightResources(LightSetup))
-	{
-		return false;
-	}
+    if (!CreateSkyLightResources(LightSetup))
+    {
+        return false;
+    }
 
     TArray<UInt8> Code;
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
@@ -88,7 +88,7 @@ void LightProbeRenderer::Release()
     SpecularIrradianceGenPSO.Reset();
 }
 
-void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const SceneLightSetup& LightSetup, const FrameResources& FrameResources)
+void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources)
 {
     const UInt32 IrradianceMapSize = static_cast<UInt32>(LightSetup.IrradianceMap->GetSize());
 
@@ -144,7 +144,7 @@ void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const SceneLi
     CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::UnorderedAccess, EResourceState::PixelShaderResource);
 }
 
-Bool LightProbeRenderer::CreateSkyLightResources(SceneLightSetup& LightSetup)
+Bool LightProbeRenderer::CreateSkyLightResources(LightSetup& LightSetup)
 {
     // Generate global irradiance (From Skybox)
     const UInt16 IrradianceSize = 32;

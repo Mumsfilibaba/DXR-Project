@@ -354,6 +354,8 @@ void Renderer::Tick(const Scene& Scene)
 
     CmdList.SetShadingRate(EShadingRate::_1x1);
 
+    LightSetup.BeginFrame(CmdList, Scene);
+
     ShadowMapRenderer.RenderPointLightShadows(CmdList, LightSetup, Scene);
 
     ShadowMapRenderer.RenderDirectionalLightShadows(CmdList, LightSetup, Scene);
@@ -479,6 +481,8 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
     CmdList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
 
+    ForwardRenderer.Render(CmdList, Resources, LightSetup);
+    
     if (GlobalEnableFXAA.GetBool())
     {
         PerformFXAA(CmdList);
@@ -488,7 +492,6 @@ void Renderer::Tick(const Scene& Scene)
         PerformBackBufferBlit(CmdList);
     }
 
-    ForwardRenderer.Render(CmdList, Resources, LightSetup);
 
     if (GlobalDrawAABBs.GetBool())
     {
@@ -654,6 +657,11 @@ Bool Renderer::Init()
     }
 
     if (!InitBoundingBoxDebugPass())
+    {
+        return false;
+    }
+
+    if (!LightSetup.Init())
     {
         return false;
     }

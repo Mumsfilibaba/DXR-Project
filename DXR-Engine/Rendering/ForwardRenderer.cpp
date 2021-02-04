@@ -106,7 +106,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
     PSOProperties.BlendState                             = BlendState.Get();
     PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = FrameResources.MainWindowViewport->GetColorFormat();
+    PSOProperties.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
     PSOProperties.PipelineFormats.NumRenderTargets       = 1;
     PSOProperties.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
     PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
@@ -130,7 +130,7 @@ void ForwardRenderer::Release()
     PipelineState.Reset();
 }
 
-void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameResources, const SceneLightSetup& LightSetup)
+void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup)
 {
     // Forward Pass
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin ForwardPass");
@@ -143,17 +143,20 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
     CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.BindScissorRect(RenderWidth, RenderHeight, 0, 0);
 
-    RenderTargetView* BackBufferRTV = FrameResources.BackBuffer->GetRenderTargetView();
-    CmdList.BindRenderTargets(&BackBufferRTV, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
+    RenderTargetView* FinalTargetRTV = FrameResources.FinalTarget->GetRenderTargetView();
+    CmdList.BindRenderTargets(&FinalTargetRTV, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
     ConstantBuffer* ConstantBuffers[] =
     {
         FrameResources.CameraBuffer.Get(),
-        LightSetup.PointLightBuffer.Get(),
-        LightSetup.DirectionalLightBuffer.Get(),
+        LightSetup.PointLightsBuffer.Get(),
+        LightSetup.PointLightsPosRadBuffer.Get(),
+        LightSetup.ShadowCastingPointLightsBuffer.Get(),
+        LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(),
+        LightSetup.DirectionalLightsBuffer.Get(),
     };
 
-    CmdList.BindConstantBuffers(EShaderStage::Pixel, ConstantBuffers, 3, 0);
+    CmdList.BindConstantBuffers(EShaderStage::Pixel, ConstantBuffers, 6, 0);
 
     {
         ShaderResourceView* ShaderResourceViews[] =
@@ -198,7 +201,7 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
         }
 
         ConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
-        CmdList.BindConstantBuffers(EShaderStage::Pixel, &ConstantBuffer, 1, 3);
+        CmdList.BindConstantBuffers(EShaderStage::Pixel, &ConstantBuffer, 1, 6);
 
         ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
         CmdList.BindShaderResourceViews(EShaderStage::Pixel, ShaderResourceViews, 7, 5);

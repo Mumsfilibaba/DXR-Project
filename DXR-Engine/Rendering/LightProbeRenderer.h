@@ -1,5 +1,6 @@
 #pragma once
 #include "FrameResources.h"
+#include "LightSetup.h"
 
 #include "RenderLayer/CommandList.h"
 
@@ -9,14 +10,14 @@ public:
     LightProbeRenderer()  = default;
     ~LightProbeRenderer() = default;
 
-    Bool Init(SceneLightSetup& LightSetup, FrameResources& FrameResources);
+    Bool Init(LightSetup& LightSetup, FrameResources& FrameResources);
     
     void Release();
 
-    void RenderSkyLightProbe(CommandList& CmdList, const SceneLightSetup& LightSetup, const FrameResources& Resources);
+    void RenderSkyLightProbe(CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& Resources);
 
 private:
-    Bool CreateSkyLightResources(SceneLightSetup& LightSetup);
+    Bool CreateSkyLightResources(LightSetup& LightSetup);
 
     TSharedRef<ComputePipelineState> IrradianceGenPSO;
     TSharedRef<ComputePipelineState> SpecularIrradianceGenPSO;

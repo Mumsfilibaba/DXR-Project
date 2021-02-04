@@ -33,7 +33,7 @@ struct MemoryArena
 
     Void* MemoryArena::Allocate(UInt64 InSizeInBytes)
     {
-        VALIDATE(ReservedSize() > InSizeInBytes);
+        VALIDATE(ReservedSize() >= InSizeInBytes);
 
         Void* Allocated = reinterpret_cast<Void*>(Mem + Offset);
         Offset += InSizeInBytes;

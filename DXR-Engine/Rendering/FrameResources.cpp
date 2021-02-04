@@ -1,4 +1,5 @@
 #include "FrameResources.h"
+#include "LightSetup.h"
 
 void FrameResources::Release()
 {
@@ -37,33 +38,4 @@ void FrameResources::Release()
     DebugTextures.Clear();
 
     MainWindowViewport.Reset();
-}
-
-void SceneLightSetup::Release()
-{
-    PointLightBuffer.Reset();
-    ShadowPointLightBuffer.Reset();
-    DirectionalLightBuffer.Reset();
-
-    PointLightShadowMaps.Reset();
-    
-    for (auto& DSVCube : PointLightShadowMapDSVs)
-    {
-        for (UInt32 i = 0; i < 6; i++)
-        {
-            DSVCube[i].Reset();
-        }
-    }
-
-    DirLightShadowMaps.Reset();
-
-    IrradianceMap.Reset();
-    IrradianceMapUAV.Reset();
-
-    SpecularIrradianceMap.Reset();
-
-    for (auto& UAV : SpecularIrradianceMapUAVs)
-    {
-        UAV.Reset();
-    }
 }

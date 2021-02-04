@@ -1,5 +1,6 @@
 #pragma once
 #include "FrameResources.h"
+#include "LightSetup.h"
 
 #include "Scene/Scene.h"
 
@@ -16,7 +17,7 @@ public:
 
     void RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources);
     void RenderBasePass(CommandList& CmdList, const FrameResources& FrameResources);
-    void RenderDeferredTiledLightPass(CommandList& CmdList, const FrameResources& FrameResources, const SceneLightSetup& LightSetup);
+    void RenderDeferredTiledLightPass(CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup);
 
     Bool ResizeResources(FrameResources& FrameResources);
 

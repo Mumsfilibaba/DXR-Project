@@ -23,16 +23,26 @@ struct Camera
     float       AspectRatio;
 };
 
+struct PositionRadius
+{
+    float3 Position;
+    float  Radius;
+};
+
 struct PointLight
 {
-    float3  Color;
-    float   ShadowBias;
-    float3  Position;
-    float   FarPlane;
-    float   MaxShadowBias;
-    float   Radius;
-    float   Padding0;
-    float   Padding1;
+    float3 Color;
+    float  Padding0;
+};
+
+struct ShadowPointLight
+{
+    float3 Color;
+    float  ShadowBias;
+    float  FarPlane;
+    float  MaxShadowBias;
+    float  Padding0;
+    float  Padding1;
 };
 
 struct DirectionalLight

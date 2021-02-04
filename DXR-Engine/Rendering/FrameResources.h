@@ -58,36 +58,3 @@ struct FrameResources
     TSharedRef<Viewport> MainWindowViewport;
 };
 
-using DepthStencilViewCube = TStaticArray<TSharedRef<DepthStencilView>, 6>;
-
-struct SceneLightSetup
-{
-    SceneLightSetup()  = default;
-    ~SceneLightSetup() = default;
-
-    void Release();
-
-    const EFormat ShadowMapFormat      = EFormat::D32_Float;
-    const EFormat LightProbeFormat     = EFormat::R16G16B16A16_Float;
-    const UInt32  MaxPointLights       = 256;
-    const UInt32  MaxDirectionalLights = 256;
-    const UInt32  MaxPointLightShadows = 8;
-    const UInt16  ShadowMapWidth       = 4096;
-    const UInt16  ShadowMapHeight      = 4096;
-    const UInt16  PointLightShadowSize = 1024;
-
-    TSharedRef<ConstantBuffer> PointLightBuffer;
-    TSharedRef<ConstantBuffer> ShadowPointLightBuffer;
-    TSharedRef<ConstantBuffer> DirectionalLightBuffer;
-
-    TSharedRef<TextureCubeArray> PointLightShadowMaps;
-    TArray<DepthStencilViewCube> PointLightShadowMapDSVs;
-
-    TSharedRef<Texture2D>           DirLightShadowMaps;
-    TSharedRef<TextureCube>         IrradianceMap;
-    TSharedRef<UnorderedAccessView> IrradianceMapUAV;
-
-    TSharedRef<TextureCube>                 SpecularIrradianceMap;
-    TArray<TSharedRef<UnorderedAccessView>> SpecularIrradianceMapUAVs;
-    TArray<UnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
-};

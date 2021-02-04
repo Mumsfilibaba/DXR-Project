@@ -26,8 +26,6 @@
 
 #include "DebugUI.h"
 
-#define ENABLE_VSM 0
-
 class Renderer
 {
 public:
@@ -62,7 +60,7 @@ private:
     ForwardRenderer              ForwardRenderer;
 
     FrameResources  Resources;
-    SceneLightSetup LightSetup;
+    LightSetup LightSetup;
 
     // TODO: Fix raytracing
     TSharedRef<RayTracingPipelineState> RaytracingPSO;

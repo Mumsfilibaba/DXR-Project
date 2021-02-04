@@ -527,7 +527,7 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
 }
 
-void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const FrameResources& FrameResources, const SceneLightSetup& LightSetup)
+void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
 
@@ -562,13 +562,16 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
     ConstantBuffer* ConstantBuffers[] =
     {
         FrameResources.CameraBuffer.Get(),
-        LightSetup.PointLightBuffer.Get(),
-        LightSetup.DirectionalLightBuffer.Get()
+        LightSetup.PointLightsBuffer.Get(),
+        LightSetup.PointLightsPosRadBuffer.Get(),
+        LightSetup.ShadowCastingPointLightsBuffer.Get(),
+        LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(),
+        LightSetup.DirectionalLightsBuffer.Get()
     };
 
-    CmdList.BindConstantBuffers(EShaderStage::Compute, ConstantBuffers, 3, 0);
+    CmdList.BindConstantBuffers(EShaderStage::Compute, ConstantBuffers, 6, 0);
 
-    SamplerState* SamplerStates[] =
+    TStaticArray<SamplerState*, 5> SamplerStates =
     {
         FrameResources.GBufferSampler.Get(),
         FrameResources.IntegrationLUTSampler.Get(),
@@ -577,7 +580,7 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
         FrameResources.DirectionalShadowSampler.Get()
     };
 
-    CmdList.BindSamplerStates(EShaderStage::Compute, SamplerStates, 5, 0);
+    CmdList.BindSamplerStates(EShaderStage::Compute, SamplerStates.Data(), SamplerStates.Size(), 0);
 
     UnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
     CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &FinalTargetUAV, 1, 0);
@@ -585,17 +588,19 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
     struct LightPassSettings
     {
         Int32 NumPointLights;
+        Int32 NumShadowCastingPointLights;
         Int32 NumSkyLightMips;
         Int32 ScreenWidth;
         Int32 ScreenHeight;
     } Settings;
 
-    Settings.NumPointLights  = 4;
+    Settings.NumShadowCastingPointLights = LightSetup.ShadowCastingPointLightsData.Size();
+    Settings.NumPointLights  = LightSetup.PointLightsData.Size();
     Settings.NumSkyLightMips = LightSetup.SpecularIrradianceMap->GetNumMips();
     Settings.ScreenWidth     = FrameResources.FinalTarget->GetWidth();
     Settings.ScreenHeight    = FrameResources.FinalTarget->GetHeight();
 
-    CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &Settings, 4);
+    CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &Settings, 5);
 
     constexpr UInt32 ThreadCount = 16;
     const UInt32 WorkGroupWidth  = Math::DivideByMultiple<UInt32>(Settings.ScreenWidth, ThreadCount);

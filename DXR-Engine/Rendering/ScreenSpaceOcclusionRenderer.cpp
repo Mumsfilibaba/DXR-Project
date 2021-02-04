@@ -27,13 +27,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
     }
 
     TArray<UInt8> ShaderCode;
-    if (!ShaderCompiler::CompileFromFile(
-        "../DXR-Engine/Shaders/SSAO.hlsl",
-        "Main",
-        nullptr,
-        EShaderStage::Compute,
-        EShaderModel::SM_6_0,
-        ShaderCode))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/SSAO.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;
