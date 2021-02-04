@@ -4,7 +4,7 @@ This engine is a small hobby rendering/game engine created for testing different
 # Features
 **Current:**
 * FXAA
-* Deferred Rendering
+* Tiled Deferred Rendering
 * Normal mapping
 * Parallax Occlusion Mapping
 * Physically Based Rendering with Image-Based Lightning
