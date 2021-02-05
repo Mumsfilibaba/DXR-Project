@@ -20,7 +20,7 @@ public:
 
     void AddCamera(Camera* InCamera);
     void AddActor(Actor* InActor);
-    void AddLight(Light* InLight);
+    void AddLight(BaseLight* InLight);
 
     void OnAddedComponent(Component* NewComponent);
 
@@ -43,7 +43,7 @@ public:
     }
 
     const TArray<Actor*>& GetActors() const { return Actors; }
-    const TArray<Light*>& GetLights() const { return Lights; }
+    const TArray<BaseLight*>& GetLights() const { return Lights; }
 
     const TArray<MeshDrawCommand>& GetMeshDrawCommands() const { return MeshDrawCommands; }
      
@@ -54,8 +54,8 @@ public:
 private:
     void AddMeshComponent(class MeshComponent* Component);
 
-    TArray<Actor*> Actors;
-    TArray<Light*> Lights;
+    TArray<Actor*>     Actors;
+    TArray<BaseLight*> Lights;
     TArray<MeshDrawCommand> MeshDrawCommands;
 
     Camera* CurrentCamera = nullptr;

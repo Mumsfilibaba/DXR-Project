@@ -21,10 +21,7 @@ class CoreObject
 public:
     virtual ~CoreObject() = default;
 
-    FORCEINLINE const ClassType* GetClass() const
-    {
-        return Class;
-    }
+    const ClassType* GetClass() const { return Class; }
 
     static const ClassType* GetStaticClass()
     {
@@ -33,10 +30,7 @@ public:
     }
 
 protected:
-    FORCEINLINE void SetClass(const ClassType* InClass)
-    {
-        Class = InClass;
-    }
+    void SetClass(const ClassType* InClass) { Class = InClass; }
 
 private:
     const ClassType* Class = nullptr;

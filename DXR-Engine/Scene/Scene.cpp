@@ -26,7 +26,7 @@ Scene::~Scene()
     }
     Actors.Clear();
 
-    for (Light* CurrentLight : Lights)
+    for (BaseLight* CurrentLight : Lights)
     {
         SAFEDELETE(CurrentLight);
     }
@@ -64,7 +64,7 @@ void Scene::AddActor(Actor* InActor)
     }
 }
 
-void Scene::AddLight(Light* InLight)
+void Scene::AddLight(BaseLight* InLight)
 {
     VALIDATE(InLight != nullptr);
     Lights.EmplaceBack(InLight);

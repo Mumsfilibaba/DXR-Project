@@ -71,19 +71,12 @@ public:
 
     void AddComponent(Component* InComponent);
 
-    template<typename TComponent>
-    FORCEINLINE bool HasComponentOfType() const noexcept
-    {
-        TComponent* Result = nullptr;
-        for (Component* Component : Components)
-        {
-            if (IsSubClassOf<TComponent>(Component))
-            {
-                return true;
-            }
-        }
+    Bool HasComponentOfType(const ClassType* Class);
 
-        return false;
+    template<typename TComponent>
+    FORCEINLINE Bool HasComponentOfType() const noexcept
+    {
+        return HasComponentOfType(TComponent::GetStaticClass());
     }
 
     template <typename TComponent>

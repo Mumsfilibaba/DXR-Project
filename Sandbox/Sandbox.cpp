@@ -25,8 +25,8 @@ Game* MakeGameInstance()
 Bool Sandbox::Init()
 {
     // Initialize Scene
-    Actor* NewActor				= nullptr;
-    MeshComponent* NewComponent	= nullptr;
+    Actor*         NewActor     = nullptr;
+    MeshComponent* NewComponent = nullptr;
     CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
 
     // Create Spheres
@@ -81,13 +81,13 @@ Bool Sandbox::Init()
         WhiteTexture->SetName("WhiteTexture");
     }
 
-    constexpr Float	 SphereOffset   = 1.25f;
+    constexpr Float  SphereOffset   = 1.25f;
     constexpr UInt32 SphereCountX   = 8;
-    constexpr Float	 StartPositionX = (-static_cast<Float>(SphereCountX) * SphereOffset) / 2.0f;
+    constexpr Float  StartPositionX = (-static_cast<Float>(SphereCountX) * SphereOffset) / 2.0f;
     constexpr UInt32 SphereCountY   = 8;
-    constexpr Float	 StartPositionY = (-static_cast<Float>(SphereCountY) * SphereOffset) / 2.0f;
-    constexpr Float	 MetallicDelta  = 1.0f / SphereCountY;
-    constexpr Float	 RoughnessDelta = 1.0f / SphereCountX;
+    constexpr Float  StartPositionY = (-static_cast<Float>(SphereCountY) * SphereOffset) / 2.0f;
+    constexpr Float  MetallicDelta  = 1.0f / SphereCountY;
+    constexpr Float  RoughnessDelta = 1.0f / SphereCountX;
 
     MaterialProperties MatProperties;
     MatProperties.AO = 1.0f;
@@ -109,12 +109,12 @@ Bool Sandbox::Init()
             NewComponent->Mesh     = SphereMesh;
             NewComponent->Material = MakeShared<Material>(MatProperties);
 
-            NewComponent->Material->AlbedoMap		= BaseTexture;
-            NewComponent->Material->NormalMap		= BaseNormal;
-            NewComponent->Material->RoughnessMap	= WhiteTexture;
-            NewComponent->Material->HeightMap		= WhiteTexture;
-            NewComponent->Material->AOMap			= WhiteTexture;
-            NewComponent->Material->MetallicMap		= WhiteTexture;
+            NewComponent->Material->AlbedoMap    = BaseTexture;
+            NewComponent->Material->NormalMap    = BaseNormal;
+            NewComponent->Material->RoughnessMap = WhiteTexture;
+            NewComponent->Material->HeightMap    = WhiteTexture;
+            NewComponent->Material->AOMap        = WhiteTexture;
+            NewComponent->Material->MetallicMap  = WhiteTexture;
             NewComponent->Material->Init();
 
             NewActor->AddComponent(NewComponent);
@@ -135,14 +135,14 @@ Bool Sandbox::Init()
     NewActor->SetName("Cube");
     NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 42.0f);
 
-    MatProperties.AO            = 1.0f;
-    MatProperties.Metallic      = 1.0f;
-    MatProperties.Roughness     = 1.0f;
-    MatProperties.EnableHeight  = 1;
+    MatProperties.AO           = 1.0f;
+    MatProperties.Metallic     = 1.0f;
+    MatProperties.Roughness    = 1.0f;
+    MatProperties.EnableHeight = 1;
 
-    NewComponent            = DBG_NEW MeshComponent(NewActor);
-    NewComponent->Mesh      = Mesh::Make(CubeMeshData);
-    NewComponent->Material  = MakeShared<Material>(MatProperties);
+    NewComponent           = DBG_NEW MeshComponent(NewActor);
+    NewComponent->Mesh     = Mesh::Make(CubeMeshData);
+    NewComponent->Material = MakeShared<Material>(MatProperties);
 
     TSharedRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
     if (!AlbedoMap)

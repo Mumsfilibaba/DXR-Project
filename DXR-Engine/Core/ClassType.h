@@ -5,13 +5,10 @@
 class ClassType
 {
 public:
-    ClassType(
-        const Char* InName, 
-        const ClassType* InSuperClass,
-        UInt32 SizeInBytes);
-
+    ClassType(const Char* InName, const ClassType* InSuperClass, UInt32 SizeInBytes);
     ~ClassType() = default;
 
+    Bool IsSame(const ClassType* Class) const;
     Bool IsSubClassOf(const ClassType* Class) const;
 
     template<typename T>

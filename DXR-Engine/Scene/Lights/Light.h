@@ -1,13 +1,13 @@
 #pragma once
-#include "Core/CoreObject.h"
+#include "BaseLight.h"
 
-class Light : public CoreObject
+class Light : public BaseLight
 {
-    CORE_OBJECT(Light, CoreObject);
+    CORE_OBJECT(Light, BaseLight);
 
 public:
     Light();
-    virtual ~Light() = default;
+    ~Light() = default;
 
     void SetColor(const XMFLOAT3& InColor);
     void SetColor(Float R, Float G, Float B);

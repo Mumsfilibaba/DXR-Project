@@ -1,7 +1,8 @@
 #include "Light.h"
 
 Light::Light()
-    : Color()
+    : BaseLight()
+    , Color()
     , ShadowBias(0.005f)
     , MaxShadowBias(0.05f)
     , ShadowNearPlane(1.0f)

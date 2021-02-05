@@ -30,12 +30,28 @@ Actor::~Actor()
 void Actor::AddComponent(Component* InComponent)
 {
     VALIDATE(InComponent != nullptr);
+
+    InComponent->GetClass();
+
     Components.EmplaceBack(InComponent);
 
     if (Scene)
     {
         Scene->OnAddedComponent(InComponent);
     }
+}
+
+Bool Actor::HasComponentOfType(const ClassType* Class)
+{
+    for (Component* Component : Components)
+    {
+        if (Component->GetClass()->IsSame(Class))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void Actor::SetName(const std::string& InName)

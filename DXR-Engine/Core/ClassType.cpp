@@ -1,13 +1,18 @@
 #include "ClassType.h"
 
-ClassType::ClassType(
-    const Char* InName,
-    const ClassType* InSuperClass,
-    UInt32 SizeInBytes)
+#include <cstring>
+
+ClassType::ClassType(const Char* InName, const ClassType* InSuperClass, UInt32 SizeInBytes)
     : Name(InName)
     , SuperClass(InSuperClass)
     , SizeInBytes(SizeInBytes)
 {
+}
+
+Bool ClassType::IsSame(const ClassType* Class) const
+{
+    // Since all classes should be a global variable, a class that is same should have same pointer value
+    return this == Class;
 }
 
 Bool ClassType::IsSubClassOf(const ClassType* Class) const
