@@ -14,11 +14,11 @@ void Main(ComputeShaderInput Input)
     float2 Center   = float2(Width / 2, Height / 2);
     float  Distance = length(float2(TexCoord) - Center);
     
-    if (Distance > 50.0f)
+    if (Distance > 40.0f)
     {
         Output[TexCoord] = SHADING_RATE_4x4;
     }
-    else if (Distance > 25.0f)
+    else if (Distance > 12.0f)
     {
         Output[TexCoord] = SHADING_RATE_2x2;
     }
