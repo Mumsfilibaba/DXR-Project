@@ -65,25 +65,25 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
     uint Elements;
     IrradianceMap.GetDimensions(Width, Height, Elements);
     
-    float3 Normal	= float3((TexCoord.xy / float(Width)) - 0.5f, 0.5f);
-    Normal			= normalize(mul(RotateUV[TexCoord.z], Normal));
+    float3 Normal = float3((TexCoord.xy / float(Width)) - 0.5f, 0.5f);
+    Normal        = normalize(mul(RotateUV[TexCoord.z], Normal));
     
-    float3 Up		= float3(0.0f, 1.0f, 0.0f);
-    float3 Right	= cross(Up, Normal);
-    Up				= cross(Normal, Right);
+    float3 Up    = float3(0.0f, 1.0f, 0.0f);
+    float3 Right = cross(Up, Normal);
+    Up           = cross(Normal, Right);
 
-    float	SampleDelta	= 0.025f;
-    float	NrSamples	= 0.0f;
-    float3	Irradiance	= float3(0.0f, 0.0f, 0.0f);
+    float  SampleDelta = 0.025f;
+    float  NrSamples   = 0.0f;
+    float3 Irradiance  = float3(0.0f, 0.0f, 0.0f);
     for (float Phi = 0.0f; Phi < 2.0f * PI; Phi += SampleDelta)
     {
         for (float Theta = 0.0f; Theta < 0.5f * PI; Theta += SampleDelta)
         {
-            float3 TangentSample	= float3(sin(Theta) * cos(Phi), sin(Theta) * sin(Phi), cos(Theta));
-            float3 SampleVec		= TangentSample.x * Right + TangentSample.y * Up + TangentSample.z * Normal;
+            float3 TangentSample = float3(sin(Theta) * cos(Phi), sin(Theta) * sin(Phi), cos(Theta));
+            float3 SampleVec     = TangentSample.x * Right + TangentSample.y * Up + TangentSample.z * Normal;
 
-            Irradiance	+= EnvironmentMap.SampleLevel(EnvironmentSampler, SampleVec, 0).rgb * cos(Theta) * sin(Theta);
-            NrSamples	+= 1.0f;
+            Irradiance += EnvironmentMap.SampleLevel(EnvironmentSampler, SampleVec, 0).rgb * cos(Theta) * sin(Theta);
+            NrSamples  += 1.0f;
         }
     }
     

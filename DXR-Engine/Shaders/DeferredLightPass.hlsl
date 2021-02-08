@@ -319,7 +319,7 @@ void Main(ComputeShaderInput Input)
 #endif
     
     // Finalize
-    float Luminance = Luma(FinalColor);
+    float FinalLuminance = Luminance(FinalColor);
     FinalColor = ApplyGammaCorrectionAndTonemapping(FinalColor);
-    Output[TexCoord] = float4(FinalColor, Luminance);
+    Output[TexCoord] = float4(FinalColor, FinalLuminance);
 }

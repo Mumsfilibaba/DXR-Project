@@ -24,6 +24,7 @@ ConsoleVariable GlobalDrawRendererInfo(EConsoleVariableType::Bool);
 
 ConsoleVariable GlobalEnableSSAO(EConsoleVariableType::Bool);
 ConsoleVariable GlobalEnableFXAA(EConsoleVariableType::Bool);
+ConsoleVariable GlobalEnableVariableRateShading(EConsoleVariableType::Bool);
 
 ConsoleVariable GlobalPrePassEnabled(EConsoleVariableType::Bool);
 ConsoleVariable GlobalDrawAABBs(EConsoleVariableType::Bool);
@@ -352,7 +353,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.Begin();
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
 
-    if (ShadingImage)
+    if (ShadingImage && GlobalEnableVariableRateShading.GetBool())
     {
         INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin VRS Image");
         CmdList.SetShadingRate(EShadingRate::VRS_1x1);
@@ -571,6 +572,9 @@ Bool Renderer::Init()
 
     INIT_CONSOLE_VARIABLE("r.EnableFXAA", GlobalEnableFXAA);
     GlobalEnableFXAA.SetBool(true);
+
+    INIT_CONSOLE_VARIABLE("r.EnableVariableRateShading", GlobalEnableVariableRateShading);
+    GlobalEnableVariableRateShading.SetBool(false);
 
     INIT_CONSOLE_VARIABLE("r.EnablePrePass", GlobalPrePassEnabled);
     GlobalPrePassEnabled.SetBool(true);

@@ -318,7 +318,7 @@ float4 PSMain(PSInput Input) : SV_Target0
     }
     
     // Finalize
-    float Luminance = Luma(FinalColor);
-    FinalColor      = ApplyGammaCorrectionAndTonemapping(FinalColor);
-    return float4(FinalColor, Luminance);
+    float FinalLuminance = Luminance(FinalColor);
+    FinalColor = ApplyGammaCorrectionAndTonemapping(FinalColor);
+    return float4(FinalColor, FinalLuminance);
 }
