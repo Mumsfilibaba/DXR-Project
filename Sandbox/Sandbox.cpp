@@ -248,7 +248,7 @@ Bool Sandbox::Init()
     PointLight* Light0 = DBG_NEW PointLight();
     Light0->SetPosition(16.5f, 1.0f, 0.0f);
     Light0->SetColor(1.0f, 1.0f, 1.0f);
-    Light0->SetShadowBias(0.0005f);
+    Light0->SetShadowBias(0.001f);
     Light0->SetMaxShadowBias(0.009f);
     Light0->SetShadowFarPlane(50.0f);
     Light0->SetIntensity(Intensity);
@@ -258,7 +258,7 @@ Bool Sandbox::Init()
     PointLight* Light1 = DBG_NEW PointLight();
     Light1->SetPosition(-17.5f, 1.0f, 0.0f);
     Light1->SetColor(1.0f, 1.0f, 1.0f);
-    Light1->SetShadowBias(0.0005f);
+    Light1->SetShadowBias(0.001f);
     Light1->SetMaxShadowBias(0.009f);
     Light1->SetShadowFarPlane(50.0f);
     Light1->SetIntensity(Intensity);
@@ -268,7 +268,7 @@ Bool Sandbox::Init()
     PointLight* Light2 = DBG_NEW PointLight();
     Light2->SetPosition(16.5f, 11.0f, 0.0f);
     Light2->SetColor(1.0f, 1.0f, 1.0f);
-    Light2->SetShadowBias(0.0005f);
+    Light2->SetShadowBias(0.001f);
     Light2->SetMaxShadowBias(0.009f);
     Light2->SetShadowFarPlane(50.0f);
     Light2->SetIntensity(Intensity);
@@ -278,7 +278,7 @@ Bool Sandbox::Init()
     PointLight* Light3 = DBG_NEW PointLight();
     Light3->SetPosition(-17.5f, 11.0f, 0.0f);
     Light3->SetColor(1.0f, 1.0f, 1.0f);
-    Light3->SetShadowBias(0.0005f);
+    Light3->SetShadowBias(0.001f);
     Light3->SetMaxShadowBias(0.009f);
     Light3->SetShadowFarPlane(50.0f);
     Light3->SetIntensity(Intensity);
@@ -295,7 +295,7 @@ Bool Sandbox::Init()
         Float x = RandomFloats(Generator) * 35.0f - 17.5f;
         Float y = RandomFloats(Generator) * 22.0f;
         Float z = RandomFloats(Generator) * 16.0f - 8.0f;
-        Float Intentsity = RandomFloats(Generator) * 10.0f + 1.0f;
+        Float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
 
         PointLight* Light = DBG_NEW PointLight();
         Light->SetPosition(x, y, z);

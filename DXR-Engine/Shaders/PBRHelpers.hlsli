@@ -28,22 +28,22 @@ float DistributionGGX(float3 N, float3 H, float Roughness)
 {
     float Alpha  = Roughness * Roughness;
     float Alpha2 = Alpha * Alpha;
-    float NDotH  = max(dot(N, H), 0.0f);
-    float Denominator = NDotH * NDotH * (Alpha2 - 1) + 1;
+    float NDotH  = max(dot(N, H), 0.0000001f);
+    float Denominator = NDotH * NDotH * (Alpha2 - 1.0f) + 1.0f;
     return Alpha2 / max(PI * Denominator * Denominator, 0.0000001f);
 }
 
 // Fresnel Schlick
 float3 FresnelSchlick(float3 F0, float3 V, float3 H)
 {
-    float VDotH = max(dot(V, H), 0.0f);
+    float VDotH = max(dot(V, H), 0.0000001f);
     float Exp   = (-5.55473f * VDotH - 6.98316f) * VDotH;
     return F0 + (1.0f - F0) * exp2(Exp);
 }
 
 float3 FresnelSchlick_Roughness(float3 F0, float3 V, float3 H, float Roughness)
 {
-    float VDotH = max(dot(V, H), 0.0f);
+    float VDotH = max(dot(V, H), 0.0000001f);
     float Exp   = (-5.55473f * VDotH - 6.98316f) * VDotH;
     return F0 + (max(Float3(1.0f - Roughness), F0) - F0) * exp2(Exp);
 }
@@ -53,7 +53,7 @@ float GeometrySmithGGX1(float3 N, float3 V, float3 H, float Roughness)
 {
     float Roughness1 = Roughness + 1;
     float K     = (Roughness1 * Roughness1) / 8.0f;
-    float NDotV = max(dot(N, V), 0.0f);
+    float NDotV = max(dot(N, V), 0.0000001f);
     return NDotV / max(NDotV * (1.0f - K) + K, 0.0000001f);
 }
 
@@ -65,7 +65,7 @@ float GeometrySmithGGX(float3 N, float3 L, float3 V, float3 H, float Roughness)
 float GeometrySmithGGX1_IBL(float3 N, float3 V, float3 H, float Roughness)
 {
     float K     = (Roughness * Roughness) / 2.0f;
-    float NDotV = max(dot(N, V), 0.0f);
+    float NDotV = max(dot(N, V), 0.0000001f);
     return NDotV / max(NDotV * (1.0f - K) + K, 0.0000001f);
 }
 

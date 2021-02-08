@@ -20,7 +20,12 @@ float4 Float4(float Single)
 
 float Luma(float3 Color)
 {
-    return sqrt(dot(Color, float3(0.299f, 0.587f, 0.114f)));
+    return sqrt(dot(Color, float3(0.2126f, 0.587f, 0.114f)));
+}
+
+float Luminance(float3 Color)
+{
+    return dot(Color, float3(0.2126f, 0.7152f, 0.0722f));
 }
 
 float4 CreatePlane(float3 Q, float3 R)
@@ -94,15 +99,43 @@ float3 ApplyGammaInv(float3 InputColor)
     return pow(InputColor, Float3(1.0f / GAMMA));
 }
 
-float3 ReinhardMapping(float3 Color, float Intensity)
+float3 SimpleReinhardMapping(float3 Color, float Intensity)
 {
-    return Color / (Color + Float3(Intensity));
+    return Color / (Float3(Intensity) + Color);
+}
+
+float3 RTTAndODTFit(float3 v)
+{
+    float3 a = v * (v + 0.0245786f) - 0.000090537f;
+    float3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
+    return a / b;
+}
+
+float3 AcesFitted(float3 Color)
+{
+    const float3x3 InputMatrix =
+    {
+        { 0.59719f, 0.35458f, 0.04823f },
+        { 0.07600f, 0.90834f, 0.01566f },
+        { 0.02840f, 0.13383f, 0.83777f },
+    };
+
+    const float3x3 OutputMatrix =
+    {
+        { 1.60475f, -0.53108f, -0.07367f },
+        { -0.10208f, 1.10813f, -0.00605f },
+        { -0.00327f, -0.07276f, 1.07602f },
+    };
+
+    Color = mul(InputMatrix, Color);
+    Color = RTTAndODTFit(Color);
+    return saturate(mul(OutputMatrix, Color));
 }
 
 float3 ApplyGammaCorrectionAndTonemapping(float3 Color)
 {
-    const float INTENSITY = 0.75f;
-    return ApplyGammaInv(ReinhardMapping(Color, INTENSITY));
+    const float INTENSITY = 1.0f;
+    return ApplyGammaInv(AcesFitted(Color));
 }
 
 float3 ApplyNormalMapping(float3 MappedNormal, float3 Normal, float3 Tangent, float3 Bitangent)

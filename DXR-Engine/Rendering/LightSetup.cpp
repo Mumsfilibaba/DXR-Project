@@ -92,7 +92,7 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
             PointLight* CurrentLight = Cast<PointLight>(Light);
             VALIDATE(CurrentLight != nullptr);
 
-            constexpr Float MinLuma = 0.05f;
+            constexpr Float MinLuma = 0.005f;
             Float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
             Float Radius = sqrt(Dot / MinLuma);
             
