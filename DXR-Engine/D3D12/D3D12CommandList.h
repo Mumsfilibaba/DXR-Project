@@ -211,6 +211,11 @@ public:
         CmdList5->RSSetShadingRate(BaseShadingRate, Combiners);
     }
 
+    FORCEINLINE void RSSetShadingRateImage(ID3D12Resource* ShadingRateImage)
+    {
+        CmdList5->RSSetShadingRateImage(ShadingRateImage);
+    }
+
     FORCEINLINE void OMSetBlendFactor(const Float BlendFactor[4])
     {
         CmdList->OMSetBlendFactor(BlendFactor);

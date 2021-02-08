@@ -355,6 +355,8 @@ void Renderer::Tick(const Scene& Scene)
     if (ShadingImage)
     {
         INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin VRS Image");
+        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+
         CmdList.TransitionTexture(ShadingImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
         
         CmdList.BindComputePipelineState(ShadingRatePipeline.Get());
@@ -773,9 +775,12 @@ void Renderer::Release()
     PostPSO.Reset();
     FXAAPSO.Reset();
 
-   LastFrameNumDrawCalls = 0;
-   LastFrameNumDispatchCalls = 0;
-   LastFrameNumCommands = 0;
+    ShadingImage.Reset();
+    ShadingRatePipeline.Reset();
+
+    LastFrameNumDrawCalls     = 0;
+    LastFrameNumDispatchCalls = 0;
+    LastFrameNumCommands      = 0;
 }
 
 Bool Renderer::InitBoundingBoxDebugPass()

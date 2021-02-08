@@ -337,9 +337,6 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
 
     CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
 
-    CmdList.DestroyResource(StagingTexture.Get());
-    CmdList.DestroyResource(BRDF_PipelineState.Get());
-
     CmdList.End();
     gCmdListExecutor.ExecuteCommandList(CmdList);
 

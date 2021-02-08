@@ -7,5 +7,5 @@ RWTexture2D<uint> Output : register(u0, space0);
 void Main(ComputeShaderInput Input)
 {
     uint2 TexCoord   = Input.DispatchThreadID.xy;
-    Output[TexCoord] = SHADING_RATE_2x2;
+    Output[TexCoord] = SHADING_RATE_4x4;
 }

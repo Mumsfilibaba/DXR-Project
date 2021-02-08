@@ -153,6 +153,7 @@ class D3D12ShaderDescriptorTableState
 
 public:
     D3D12ShaderDescriptorTableState();
+    ~D3D12ShaderDescriptorTableState() = default;
     
     Bool CreateResources(D3D12Device& Device);
 
@@ -284,7 +285,7 @@ public:
 
     Bool Init();
 
-    FORCEINLINE Bool Reset()
+    Bool Reset()
     {
         if (CmdAllocator.Reset())
         {
@@ -304,14 +305,20 @@ public:
         }
     }
 
-    FORCEINLINE void EnqueueResourceDestruction(Resource* InResource)
+    FORCEINLINE void AddInUseResource(Resource* InResource)
     {
-        Resources.EmplaceBack(MakeSharedRef<Resource>(InResource));
+        if (InResource)
+        {
+            Resources.EmplaceBack(MakeSharedRef<Resource>(InResource));
+        }
     }
 
-    FORCEINLINE void EnqueueResourceDestruction(const TComPtr<ID3D12Resource>& Resource)
+    FORCEINLINE void AddInUseResource(const TComPtr<ID3D12Resource>& InResource)
     {
-        NativeResources.EmplaceBack(Resource);
+        if (InResource)
+        {
+            NativeResources.EmplaceBack(InResource);
+        }
     }
 
     FORCEINLINE D3D12GPUResourceUploader& GetGpuResourceUploader()
@@ -336,12 +343,15 @@ public:
 
 private:
     D3D12Device* Device = nullptr;
+    
     D3D12CommandAllocatorHandle CmdAllocator;
     D3D12GPUResourceUploader    GpuResourceUploader;
+    
     TSharedRef<D3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
     TSharedRef<D3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
-    TArray<TSharedRef<Resource>>          Resources;
-    TArray<TComPtr<ID3D12Resource>>       NativeResources;
+    
+    TArray<TSharedRef<Resource>>    Resources;
+    TArray<TComPtr<ID3D12Resource>> NativeResources;
 };
 
 class D3D12ResourceBarrierBatcher
@@ -502,7 +512,7 @@ private:
 
     TArray<D3D12CommandBatch> CmdBatches;
     D3D12CommandBatch*        CmdBatch = nullptr;
-    UInt32 NextCmdAllocator = 0;
+    UInt32 NextCmdBatch = 0;
 
     TSharedRef<D3D12ComputePipelineState> GenerateMipsTex2D_PSO;
     TSharedRef<D3D12ComputePipelineState> GenerateMipsTexCube_PSO;

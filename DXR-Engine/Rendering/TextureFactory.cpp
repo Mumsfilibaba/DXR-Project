@@ -199,11 +199,6 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
     }
 
     CmdList.TransitionTexture(Texture.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
-    
-    CmdList.DestroyResource(StagingTexture.Get());
-    CmdList.DestroyResource(StagingTextureUAV.Get());
-    CmdList.DestroyResource(Texture.Get());
-
     CmdList.End();
     gCmdListExecutor.ExecuteCommandList(CmdList);
 

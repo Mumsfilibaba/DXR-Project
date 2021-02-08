@@ -83,12 +83,14 @@ D3D12RenderLayer::D3D12RenderLayer()
 
 D3D12RenderLayer::~D3D12RenderLayer()
 {
-    SAFEDELETE(Device);
+    DirectCmdContext.Reset();
 
     SAFERELEASE(ResourceOfflineDescriptorHeap);
     SAFERELEASE(RenderTargetOfflineDescriptorHeap);
     SAFERELEASE(DepthStencilOfflineDescriptorHeap);
     SAFERELEASE(SamplerOfflineDescriptorHeap);
+    
+    SAFEDELETE(Device);
 
     gD3D12RenderLayer = nullptr;
 }

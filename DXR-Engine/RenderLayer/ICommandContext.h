@@ -2,9 +2,7 @@
 #include "RenderingCore.h"
 #include "Resources.h"
 #include "ResourceViews.h"
-
-class RayTracingGeometry;
-class RayTracingScene;
+#include "RayTracing.h"
 
 class ICommandContext : public RefCountedObject
 {
