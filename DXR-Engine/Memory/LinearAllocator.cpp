@@ -1,5 +1,27 @@
 #include "LinearAllocator.h"
 
+void* operator new(size_t Size, LinearAllocator& Allocator)
+{
+    void* Memory = Allocator.Allocate(Size, 1);
+    VALIDATE(Memory != nullptr);
+    return Memory;
+}
+
+void* operator new[](size_t Size, LinearAllocator& Allocator)
+{
+    void* Memory = Allocator.Allocate(Size, 1);
+    VALIDATE(Memory != nullptr);
+    return Memory;
+}
+
+void operator delete (void*, LinearAllocator&)
+{
+}
+
+void operator delete[](void*, LinearAllocator&)
+{
+}
+
 LinearAllocator::LinearAllocator(UInt32 StartSize)
     : CurrentArena(nullptr)
     , Arenas()

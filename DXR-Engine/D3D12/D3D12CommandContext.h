@@ -355,7 +355,7 @@ public:
     void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
     void AddTransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
 
-    FORCEINLINE void AddUnorderedAccessBarrier(D3D12Resource* Resource)
+    void AddUnorderedAccessBarrier(D3D12Resource* Resource)
     {
         VALIDATE(Resource != nullptr);
 
@@ -368,7 +368,7 @@ public:
         Barriers.EmplaceBack(Barrier);
     }
 
-    FORCEINLINE void FlushBarriers(D3D12CommandListHandle& CmdList)
+    void FlushBarriers(D3D12CommandListHandle& CmdList)
     {
         if (!Barriers.IsEmpty())
         {
@@ -413,6 +413,7 @@ public:
     virtual void ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4]) override final;
 
     virtual void SetShadingRate(EShadingRate ShadingRate) override final;
+    virtual void SetShadingRateImage(Texture2D* ShadingImage) override final;
 
     virtual void BeginRenderPass() override final;
     virtual void EndRenderPass()   override final;

@@ -122,6 +122,22 @@ struct SetShadingRateCommand : public RenderCommand
     EShadingRate ShadingRate;
 };
 
+// SetShadingRateImage RenderCommand
+struct SetShadingRateImageCommand : public RenderCommand
+{
+    SetShadingRateImageCommand(Texture2D* InShadingImage)
+        : ShadingImage(InShadingImage)
+    {
+    }
+
+    virtual void Execute(ICommandContext& CmdContext) const override
+    {
+        CmdContext.SetShadingRateImage(ShadingImage.Get());
+    }
+
+    TSharedRef<Texture2D> ShadingImage;
+};
+
 // Bind Viewport RenderCommand
 struct BindViewportCommand : public RenderCommand
 {

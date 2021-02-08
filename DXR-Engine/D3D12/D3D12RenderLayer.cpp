@@ -1574,3 +1574,28 @@ Bool D3D12RenderLayer::UAVSupportsFormat(EFormat Format)
 
     return true;
 }
+
+void D3D12RenderLayer::CheckShadingRateSupport(ShadingRateSupport& OutSupport)
+{
+    D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
+    Memory::Memzero(&Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
+
+    HRESULT Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
+    if (SUCCEEDED(Result))
+    {
+        OutSupport.ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
+
+        if (Features6.VariableShadingRateTier == D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED)
+        {
+            OutSupport.Tier = EShadingRateTier::NotSupported;
+        }
+        else if (Features6.VariableShadingRateTier == D3D12_VARIABLE_SHADING_RATE_TIER_1)
+        {
+            OutSupport.Tier = EShadingRateTier::Tier1;
+        }
+        else if (Features6.VariableShadingRateTier == D3D12_VARIABLE_SHADING_RATE_TIER_2)
+        {
+            OutSupport.Tier = EShadingRateTier::Tier2;
+        }
+    }
+}

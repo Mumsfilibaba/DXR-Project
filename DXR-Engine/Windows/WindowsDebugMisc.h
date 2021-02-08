@@ -15,4 +15,9 @@ public:
     {
         ::OutputDebugStringA(Message.c_str());
     }
+
+    static FORCEINLINE Bool IsDebuggerPresent()
+    {
+        return ::IsDebuggerPresent();
+    }
 };

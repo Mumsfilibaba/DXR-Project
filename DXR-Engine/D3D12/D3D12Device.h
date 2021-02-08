@@ -53,12 +53,20 @@ public:
         return DXRDevice->CreatePipelineState(Desc, Riid, PipelineState);
     }
 
-    FORCEINLINE HRESULT CreateRootSignatureDeserializer(LPCVOID SrcData, SIZE_T SrcDataSizeInBytes, REFIID RootSignatureDeserializerInterface, void** RootSignatureDeserializer)
+    FORCEINLINE HRESULT CreateRootSignatureDeserializer(
+        LPCVOID SrcData, 
+        SIZE_T SrcDataSizeInBytes, 
+        REFIID RootSignatureDeserializerInterface, 
+        void** RootSignatureDeserializer)
     {
         return D3D12CreateRootSignatureDeserializerFunc(SrcData, SrcDataSizeInBytes, RootSignatureDeserializerInterface, RootSignatureDeserializer);
     }
 
-    FORCEINLINE HRESULT CreateVersionedRootSignatureDeserializer(LPCVOID SrcData, SIZE_T SrcDataSizeInBytes, REFIID RootSignatureDeserializerInterface, void** RootSignatureDeserializer)
+    FORCEINLINE HRESULT CreateVersionedRootSignatureDeserializer(
+        LPCVOID SrcData, 
+        SIZE_T SrcDataSizeInBytes, 
+        REFIID RootSignatureDeserializerInterface, 
+        void** RootSignatureDeserializer)
     {
         return D3D12CreateVersionedRootSignatureDeserializerFunc(SrcData, SrcDataSizeInBytes, RootSignatureDeserializerInterface, RootSignatureDeserializer);
     }
@@ -137,30 +145,14 @@ public:
         return Device->GetDescriptorHandleIncrementSize(DescriptorHeapType);
     }
 
-    FORCEINLINE ID3D12Device* GetDevice() const
-    {
-        return Device.Get();
-    }
+    FORCEINLINE ID3D12Device* GetDevice() const { return Device.Get(); }
+    FORCEINLINE ID3D12Device5* GetDXRDevice() const { return DXRDevice.Get(); }
 
-    FORCEINLINE ID3D12Device5* GetDXRDevice() const
-    {
-        return DXRDevice.Get();
-    }
+    FORCEINLINE IDXGIFactory2* GetFactory() const { return Factory.Get(); }
 
-    FORCEINLINE IDXGIFactory2* GetFactory() const
-    {
-        return Factory.Get();
-    }
+    FORCEINLINE IDXGIAdapter1* GetAdapter() const { return Adapter.Get(); }
 
-    FORCEINLINE IDXGIAdapter1* GetAdapter() const
-    {
-        return Adapter.Get();
-    }
-
-    FORCEINLINE Bool IsTearingSupported() const
-    {
-        return AllowTearing;
-    }
+    FORCEINLINE Bool IsTearingSupported() const { return AllowTearing; }
 
     FORCEINLINE Bool IsRayTracingSupported() const
     {

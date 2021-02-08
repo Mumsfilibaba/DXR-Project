@@ -366,6 +366,8 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
     //{
         TRACE_SCOPE("Render DirectionalLight ShadowMaps");
 
+        CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
+
         DepthStencilView* DirLightDSV = LightSetup.DirLightShadowMaps->GetDepthStencilView();
         CmdList.ClearDepthStencilView(DirLightDSV, DepthStencilF(1.0f, 0));
 
@@ -413,8 +415,6 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
 
                 CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
             }
-
-            break;
         }
 
     //    UpdateDirLight = false;

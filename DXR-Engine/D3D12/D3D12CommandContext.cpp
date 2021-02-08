@@ -360,6 +360,7 @@ void D3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource,
     if (BeforeState != AfterState)
     {
         // Make sure we are not already have transition for this resource
+        Bool InsertBarrier = true;
         for (TArray<D3D12_RESOURCE_BARRIER>::Iterator It = Barriers.Begin(); It != Barriers.End(); It++)
         {
             if ((*It).Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
@@ -372,26 +373,32 @@ void D3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource,
                     }
                     else
                     {
-                        Barriers.Erase(It);
+                        auto End = Barriers.end();
+                        It = Barriers.Erase(It);
                     }
 
-                    return;
+                    InsertBarrier = false;
                 }
             }
         }
 
-        // Add new resource barrier
-        D3D12_RESOURCE_BARRIER Barrier;
-        Memory::Memzero(&Barrier);
+        if (InsertBarrier)
+        {
+            // Add new resource barrier
+            D3D12_RESOURCE_BARRIER Barrier;
+            Memory::Memzero(&Barrier);
 
-        Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        Barrier.Transition.pResource   = Resource;
-        Barrier.Transition.StateAfter  = AfterState;
-        Barrier.Transition.StateBefore = BeforeState;
-        Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+            Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+            Barrier.Transition.pResource   = Resource;
+            Barrier.Transition.StateAfter  = AfterState;
+            Barrier.Transition.StateBefore = BeforeState;
+            Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
-        Barriers.EmplaceBack(Barrier);
+            Barriers.EmplaceBack(Barrier);
+        }
     }
+
+    return;
 }
 
 void D3D12ResourceBarrierBatcher::AddTransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
@@ -715,6 +722,10 @@ void D3D12CommandContext::SetShadingRate(EShadingRate ShadingRate)
 {
     D3D12_SHADING_RATE DxShadingRate = ConvertShadingRate(ShadingRate);
     CmdList.RSSetShadingRate(DxShadingRate, nullptr);
+}
+
+void D3D12CommandContext::SetShadingRateImage(Texture2D* ShadingImage)
+{
 }
 
 void D3D12CommandContext::BeginRenderPass()

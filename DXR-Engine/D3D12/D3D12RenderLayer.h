@@ -171,6 +171,8 @@ public:
         return Device->GetAdapterName();
     }
 
+    virtual void CheckShadingRateSupport(ShadingRateSupport& OutSupport) override final;
+
 private:
     template<typename TD3D12Texture>
     TD3D12Texture* CreateTexture(

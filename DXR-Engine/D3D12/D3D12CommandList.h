@@ -82,7 +82,11 @@ public:
         CmdList->CopyBufferRegion(Destination, DestinationOffset, Source, SourceOffset, SizeInBytes);
     }
 
-    FORCEINLINE void CopyTextureRegion(const D3D12_TEXTURE_COPY_LOCATION* Destination, UInt32 x, UInt32 y, UInt32 z, const D3D12_TEXTURE_COPY_LOCATION* Source, const D3D12_BOX* SourceBox)
+    FORCEINLINE void CopyTextureRegion(
+        const D3D12_TEXTURE_COPY_LOCATION* Destination, 
+        UInt32 x, UInt32 y, UInt32 z, 
+        const D3D12_TEXTURE_COPY_LOCATION* Source, 
+        const D3D12_BOX* SourceBox)
     {
         CmdList->CopyTextureRegion(Destination, x, y, z, Source, SourceBox);
     }
@@ -122,7 +126,12 @@ public:
         CmdList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
     }
 
-    FORCEINLINE void DrawIndexedInstanced(UInt32 IndexCountPerInstance, UInt32 InstanceCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation, UInt32 StartInstanceLocation)
+    FORCEINLINE void DrawIndexedInstanced(
+        UInt32 IndexCountPerInstance, 
+        UInt32 InstanceCount, 
+        UInt32 StartIndexLocation, 
+        UInt32 BaseVertexLocation, 
+        UInt32 StartInstanceLocation)
     {
         CmdList->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
     }
