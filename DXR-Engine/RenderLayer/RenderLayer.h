@@ -401,4 +401,9 @@ public:
     {
         return gRenderLayer->GetAdapterName();
     }
+
+    FORCEINLINE static void CheckShadingRateSupport(ShadingRateSupport& OutSupport) 
+    {
+        gRenderLayer->CheckShadingRateSupport(OutSupport);
+    }
 };

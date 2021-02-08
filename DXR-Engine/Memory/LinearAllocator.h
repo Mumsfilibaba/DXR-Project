@@ -83,12 +83,12 @@ public:
     LinearAllocator(UInt32 StartSize = 4096);
     ~LinearAllocator() = default;
 
-    Void* Allocate(UInt64 SizeInBytes, UInt64 Alignment);
+    void* Allocate(UInt64 SizeInBytes, UInt64 Alignment);
     
     void Reset();
 
     template<typename T>
-    Void* Allocate()
+    void* Allocate()
     {
         return Allocate(sizeof(T), alignof(T));
     }
@@ -102,3 +102,8 @@ private:
     MemoryArena* CurrentArena;
     TArray<MemoryArena> Arenas;
 };
+
+void* operator new  (size_t Size, LinearAllocator& Allocator);
+void* operator new[](size_t Size, LinearAllocator& Allocator);
+void  operator delete  (void*, LinearAllocator&);
+void  operator delete[](void*, LinearAllocator&);

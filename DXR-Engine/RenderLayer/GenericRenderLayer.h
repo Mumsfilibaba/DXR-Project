@@ -26,6 +26,19 @@ inline const Char* ToString(ERenderLayerApi RenderLayerApi)
     }
 }
 
+enum EShadingRateTier
+{
+    NotSupported = 0,
+    Tier1 = 1,
+    Tier2 = 2,
+};
+
+struct ShadingRateSupport
+{
+    EShadingRateTier Tier = EShadingRateTier::NotSupported;
+    UInt32           ShadingRateImageTileSize = 0;
+};
+
 class GenericRenderLayer
 {
 public:
@@ -420,6 +433,8 @@ public:
     virtual class ICommandContext* GetDefaultCommandContext() = 0;
 
     virtual std::string GetAdapterName() { return std::string(); }
+
+    virtual void CheckShadingRateSupport(ShadingRateSupport& OutSupport) = 0;
 
     virtual Bool IsRayTracingSupported() { return false; }
 

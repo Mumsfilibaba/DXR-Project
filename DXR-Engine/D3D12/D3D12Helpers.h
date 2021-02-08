@@ -445,9 +445,13 @@ inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
-    case EShadingRate::_1x1: return D3D12_SHADING_RATE_1X1;
-    case EShadingRate::_2x2: return D3D12_SHADING_RATE_2X2;
-    case EShadingRate::_4x4: return D3D12_SHADING_RATE_4X4;
+    case EShadingRate::VRS_1x1: return D3D12_SHADING_RATE_1X1;
+    case EShadingRate::VRS_1x2: return D3D12_SHADING_RATE_1X2;
+    case EShadingRate::VRS_2x1: return D3D12_SHADING_RATE_2X1;
+    case EShadingRate::VRS_2x2: return D3D12_SHADING_RATE_2X2;
+    case EShadingRate::VRS_2x4: return D3D12_SHADING_RATE_2X4;
+    case EShadingRate::VRS_4x2: return D3D12_SHADING_RATE_4X2;
+    case EShadingRate::VRS_4x4: return D3D12_SHADING_RATE_4X4;
     }
 
     return D3D12_SHADING_RATE();

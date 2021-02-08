@@ -2,9 +2,7 @@
 #include "RenderingCore.h"
 #include "Resources.h"
 #include "ResourceViews.h"
-
-class RayTracingGeometry;
-class RayTracingScene;
+#include "RayTracing.h"
 
 class ICommandContext : public RefCountedObject
 {
@@ -19,6 +17,7 @@ public:
     virtual void ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4]) = 0;
 
     virtual void SetShadingRate(EShadingRate ShadingRate) = 0;
+    virtual void SetShadingRateImage(Texture2D* ShadingImage) = 0;
 
     virtual void BeginRenderPass() = 0;
     virtual void EndRenderPass()   = 0;

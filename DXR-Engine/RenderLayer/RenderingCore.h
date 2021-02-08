@@ -379,32 +379,42 @@ inline const Char* ToString(EPrimitiveTopology ResourceState)
 
 enum class EShadingRate
 {
-    _1x1 = 1,
-    _2x2 = 2,
-    _4x4 = 3,
+    VRS_1x1 = 0x0,
+    VRS_1x2 = 0x1,
+    VRS_2x1 = 0x4,
+    VRS_2x2 = 0x5,
+    VRS_2x4 = 0x6,
+    VRS_4x2 = 0x9,
+    VRS_4x4 = 0xa,
 };
 
 inline const Char* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
-    case EShadingRate::_1x1: return "_1x1";
-    case EShadingRate::_2x2: return "_2x2";
-    case EShadingRate::_4x4: return "_4x4";
+    case EShadingRate::VRS_1x1: return "VRS_1x1";
+    case EShadingRate::VRS_1x2: return "VRS_1x2";
+    case EShadingRate::VRS_2x1: return "VRS_2x1";
+    case EShadingRate::VRS_2x2: return "VRS_2x2";
+    case EShadingRate::VRS_2x4: return "VRS_2x4";
+    case EShadingRate::VRS_4x2: return "VRS_4x2";
+    case EShadingRate::VRS_4x4: return "VRS_4x4";
     default: return "Unknown";
     }
 }
 
 struct DepthStencilF
 {
+    DepthStencilF() = default;
+
     DepthStencilF(Float InDepth, UInt8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     {
     }
 
-    Float Depth;
-    UInt8 Stencil;
+    Float Depth   = 1.0f;
+    UInt8 Stencil = 0;
 };
 
 struct ClearValue

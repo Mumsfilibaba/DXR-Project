@@ -352,12 +352,34 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.Begin();
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
 
-    CmdList.SetShadingRate(EShadingRate::_1x1);
+    if (ShadingImage)
+    {
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin VRS Image");
+        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+
+        CmdList.TransitionTexture(ShadingImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
+        
+        CmdList.BindComputePipelineState(ShadingRatePipeline.Get());
+
+        UnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
+        CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &ShadingImageUAV, 1, 0);
+        
+        CmdList.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
+        
+        CmdList.TransitionTexture(ShadingImage.Get(), EResourceState::UnorderedAccess, EResourceState::ShadingRateSource);
+
+        CmdList.SetShadingRateImage(ShadingImage.Get());
+
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End VRS Image");
+    }
+    else
+    {
+        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+    }
 
     LightSetup.BeginFrame(CmdList, Scene);
 
     ShadowMapRenderer.RenderPointLightShadows(CmdList, LightSetup, Scene);
-
     ShadowMapRenderer.RenderDirectionalLightShadows(CmdList, LightSetup, Scene);
 
     // Update camerabuffer
@@ -460,14 +482,6 @@ void Renderer::Tick(const Scene& Scene)
 
     SkyboxRenderPass.Render(CmdList, Resources, Scene);
 
-    CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::RenderTarget, EResourceState::PixelShaderResource);
-
-    Resources.DebugTextures.EmplaceBack(
-        MakeSharedRef<ShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()),
-        Resources.FinalTarget, 
-        EResourceState::PixelShaderResource, 
-        EResourceState::PixelShaderResource);
-
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
     CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
 
@@ -483,6 +497,14 @@ void Renderer::Tick(const Scene& Scene)
 
     ForwardRenderer.Render(CmdList, Resources, LightSetup);
     
+    CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::RenderTarget, EResourceState::PixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()),
+        Resources.FinalTarget, 
+        EResourceState::PixelShaderResource, 
+        EResourceState::PixelShaderResource);
+
     if (GlobalEnableFXAA.GetBool())
     {
         PerformFXAA(CmdList);
@@ -491,7 +513,6 @@ void Renderer::Tick(const Scene& Scene)
     {
         PerformBackBufferBlit(CmdList);
     }
-
 
     if (GlobalDrawAABBs.GetBool())
     {
@@ -508,7 +529,8 @@ void Renderer::Tick(const Scene& Scene)
             gRenderer.RenderDebugInterface();
         });
 
-        CmdList.SetShadingRate(EShadingRate::_1x1);
+        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+        CmdList.SetShadingRateImage(nullptr);
 
         DebugUI::Render(CmdList);
     }
@@ -521,9 +543,9 @@ void Renderer::Tick(const Scene& Scene)
 
     CmdList.End();
 
-    LastFrameNumDrawCalls = CmdList.GetNumDrawCalls();
+    LastFrameNumDrawCalls     = CmdList.GetNumDrawCalls();
     LastFrameNumDispatchCalls = CmdList.GetNumDispatchCalls();
-    LastFrameNumCommands = CmdList.GetNumCommands();
+    LastFrameNumCommands      = CmdList.GetNumCommands();
 
     {
         TRACE_SCOPE("ExecuteCommandList");
@@ -661,6 +683,11 @@ Bool Renderer::Init()
         return false;
     }
 
+    if (!InitShadingImage())
+    {
+        return false;
+    }
+
     if (!LightSetup.Init())
     {
         return false;
@@ -749,9 +776,12 @@ void Renderer::Release()
     PostPSO.Reset();
     FXAAPSO.Reset();
 
-   LastFrameNumDrawCalls = 0;
-   LastFrameNumDispatchCalls = 0;
-   LastFrameNumCommands = 0;
+    ShadingImage.Reset();
+    ShadingRatePipeline.Reset();
+
+    LastFrameNumDrawCalls     = 0;
+    LastFrameNumDispatchCalls = 0;
+    LastFrameNumCommands      = 0;
 }
 
 Bool Renderer::InitBoundingBoxDebugPass()
@@ -1113,6 +1143,62 @@ Bool Renderer::InitAA()
     else
     {
         FXAADebugPSO->SetName("FXAA Debug PipelineState");
+    }
+
+    return true;
+}
+
+Bool Renderer::InitShadingImage()
+{
+    ShadingRateSupport Support;
+    RenderLayer::CheckShadingRateSupport(Support);
+
+    if (Support.Tier != EShadingRateTier::Tier2)
+    {
+        return true;
+    }
+
+    UInt32 Width  = Resources.MainWindowViewport->GetWidth()  / Support.ShadingRateImageTileSize;
+    UInt32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
+    ShadingImage = RenderLayer::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::ShadingRateSource, nullptr);
+    if (!ShadingImage)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        ShadingImage->SetName("Shading Rate Image");
+    }
+
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadingImage.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    TSharedRef<ComputeShader> Shader = RenderLayer::CreateComputeShader(ShaderCode);
+    if (!Shader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        Shader->SetName("ShadingRate Image Shader");
+    }
+
+    ComputePipelineStateCreateInfo CreateInfo(Shader.Get());
+    ShadingRatePipeline = RenderLayer::CreateComputePipelineState(CreateInfo);
+    if (!ShadingRatePipeline)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        ShadingRatePipeline->SetName("ShadingRate Image Pipeline");
     }
 
     return true;

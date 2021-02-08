@@ -38,6 +38,7 @@ public:
     void PerformFrustumCulling(const Scene& Scene);
     void PerformFXAA(CommandList& InCmdList);
     void PerformBackBufferBlit(CommandList& InCmdList);
+
     void PerformAABBDebugPass(CommandList& InCmdList);
 
     void RenderDebugInterface();
@@ -47,6 +48,7 @@ public:
 private:
     Bool InitBoundingBoxDebugPass();
     Bool InitAA();
+    Bool InitShadingImage();
 
     void ResizeResources(UInt32 Width, UInt32 Height);
 
@@ -59,13 +61,16 @@ private:
     SkyboxRenderPass             SkyboxRenderPass;
     ForwardRenderer              ForwardRenderer;
 
-    FrameResources  Resources;
-    LightSetup LightSetup;
+    FrameResources Resources;
+    LightSetup     LightSetup;
 
     // TODO: Fix raytracing
     TSharedRef<RayTracingPipelineState> RaytracingPSO;
     TSharedPtr<RayTracingScene>         RayTracingScene;
     TArray<RayTracingGeometryInstance>	RayTracingGeometryInstances;
+
+    TSharedRef<Texture2D>            ShadingImage;
+    TSharedRef<ComputePipelineState> ShadingRatePipeline;
 
     TSharedRef<VertexBuffer> AABBVertexBuffer;
     TSharedRef<IndexBuffer>  AABBIndexBuffer;
