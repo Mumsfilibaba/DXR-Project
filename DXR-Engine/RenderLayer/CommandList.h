@@ -83,7 +83,7 @@ public:
 
     void SetShadingRateImage(Texture2D* ShadingRateImage)
     {
-        ShadingRateImage->AddRef();
+        SAFEADDREF(ShadingRateImage);
         InsertCommand<SetShadingRateImageCommand>(ShadingRateImage);
     }
 

@@ -530,6 +530,7 @@ void Renderer::Tick(const Scene& Scene)
         });
 
         CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+        CmdList.SetShadingRateImage(nullptr);
 
         DebugUI::Render(CmdList);
     }
