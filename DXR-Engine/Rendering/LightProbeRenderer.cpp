@@ -17,7 +17,7 @@ Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResou
         Debug::DebugBreak();
     }
 
-    TSharedRef<ComputeShader> IrradianceGenShader = RenderLayer::CreateComputeShader(Code);
+    TSharedRef<ComputeShader> IrradianceGenShader = CreateComputeShader(Code);
     if (!IrradianceGenShader)
     {
         LOG_ERROR("Failed to create IrradianceGen Shader");
@@ -28,7 +28,7 @@ Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResou
         IrradianceGenShader->SetName("IrradianceGen Shader");
     }
 
-    IrradianceGenPSO = RenderLayer::CreateComputePipelineState(ComputePipelineStateCreateInfo(IrradianceGenShader.Get()));
+    IrradianceGenPSO = CreateComputePipelineState(ComputePipelineStateCreateInfo(IrradianceGenShader.Get()));
     if (!IrradianceGenPSO)
     {
         LOG_ERROR("Failed to create IrradianceGen PipelineState");
@@ -45,7 +45,7 @@ Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResou
         Debug::DebugBreak();
     }
 
-    TSharedRef<ComputeShader> SpecularIrradianceGenShader = RenderLayer::CreateComputeShader(Code);
+    TSharedRef<ComputeShader> SpecularIrradianceGenShader = CreateComputeShader(Code);
     if (!SpecularIrradianceGenShader)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen Shader");
@@ -56,7 +56,7 @@ Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResou
         SpecularIrradianceGenShader->SetName("Specular IrradianceGen Shader");
     }
 
-    SpecularIrradianceGenPSO = RenderLayer::CreateComputePipelineState(ComputePipelineStateCreateInfo(SpecularIrradianceGenShader.Get()));
+    SpecularIrradianceGenPSO = CreateComputePipelineState(ComputePipelineStateCreateInfo(SpecularIrradianceGenShader.Get()));
     if (!SpecularIrradianceGenPSO)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen PipelineState");
@@ -73,7 +73,7 @@ Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResou
     CreateInfo.AddressW = ESamplerMode::Wrap;
     CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    FrameResources.IrradianceSampler = RenderLayer::CreateSamplerState(CreateInfo);
+    FrameResources.IrradianceSampler = CreateSamplerState(CreateInfo);
     if (!FrameResources.IrradianceSampler)
     {
         return false;
@@ -148,7 +148,7 @@ Bool LightProbeRenderer::CreateSkyLightResources(LightSetup& LightSetup)
 {
     // Generate global irradiance (From Skybox)
     const UInt16 IrradianceSize = 32;
-    LightSetup.IrradianceMap = RenderLayer::CreateTextureCube(EFormat::R16G16B16A16_Float, IrradianceSize, 1, TextureFlags_RWTexture, EResourceState::Common, nullptr);
+    LightSetup.IrradianceMap = CreateTextureCube(EFormat::R16G16B16A16_Float, IrradianceSize, 1, TextureFlags_RWTexture, EResourceState::Common, nullptr);
     if (!LightSetup.IrradianceMap)
     {
         Debug::DebugBreak();
@@ -159,7 +159,7 @@ Bool LightProbeRenderer::CreateSkyLightResources(LightSetup& LightSetup)
         LightSetup.IrradianceMap->SetName("Irradiance Map");
     }
 
-    LightSetup.IrradianceMapUAV = RenderLayer::CreateUnorderedAccessView(LightSetup.IrradianceMap.Get(), EFormat::R16G16B16A16_Float, 0);
+    LightSetup.IrradianceMapUAV = CreateUnorderedAccessView(LightSetup.IrradianceMap.Get(), EFormat::R16G16B16A16_Float, 0);
     if (!LightSetup.IrradianceMapUAV)
     {
         Debug::DebugBreak();
@@ -168,7 +168,7 @@ Bool LightProbeRenderer::CreateSkyLightResources(LightSetup& LightSetup)
 
     const UInt16 SpecularIrradianceSize      = 128;
     const UInt16 SpecularIrradianceMiplevels = UInt16(std::max(std::log2(SpecularIrradianceSize), 1.0));
-    LightSetup.SpecularIrradianceMap = RenderLayer::CreateTextureCube(
+    LightSetup.SpecularIrradianceMap = CreateTextureCube(
         EFormat::R16G16B16A16_Float, 
         SpecularIrradianceSize, 
         SpecularIrradianceMiplevels, 
@@ -187,7 +187,7 @@ Bool LightProbeRenderer::CreateSkyLightResources(LightSetup& LightSetup)
 
     for (UInt32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        TSharedRef<UnorderedAccessView> Uav = RenderLayer::CreateUnorderedAccessView(LightSetup.SpecularIrradianceMap.Get(), EFormat::R16G16B16A16_Float, MipLevel);
+        TSharedRef<UnorderedAccessView> Uav = CreateUnorderedAccessView(LightSetup.SpecularIrradianceMap.Get(), EFormat::R16G16B16A16_Float, MipLevel);
         if (Uav)
         {
             LightSetup.SpecularIrradianceMapUAVs.EmplaceBack(Uav);

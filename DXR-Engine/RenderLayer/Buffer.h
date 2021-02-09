@@ -135,18 +135,18 @@ private:
 class ConstantBuffer : public Buffer
 {
 public:
-    ConstantBuffer(UInt32 InSizeInBytes, UInt32 InFlags)
+    ConstantBuffer(UInt32 InSize, UInt32 InFlags)
         : Buffer(InFlags)
-        , SizeInBytes(InSizeInBytes)
+        , Size(InSize)
     {
     }
 
     virtual ConstantBuffer* AsConstantBuffer() override { return this; }
 
-    UInt32 GetSizeInBytes() const { return SizeInBytes; }
+    UInt32 GetSize() const { return Size; }
 
 private:
-    UInt32 SizeInBytes;
+    UInt32 Size;
 };
 
 class StructuredBuffer : public Buffer

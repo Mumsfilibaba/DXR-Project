@@ -1,45 +1,40 @@
 #include "Mesh.h"
-#include "Renderer.h"
-
-#include "Engine/EngineGlobals.h"
 
 #include "RenderLayer/CommandList.h"
 #include "RenderLayer/RenderLayer.h"
-
-#include <algorithm>
 
 Bool Mesh::Init(const MeshData& Data)
 {
     VertexCount = static_cast<UInt32>(Data.Vertices.Size());
     IndexCount	= static_cast<UInt32>(Data.Indices.Size());
 
-    const UInt32 BufferFlags = RenderLayer::IsRayTracingSupported() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
+    const UInt32 BufferFlags = IsRayTracingSupported() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
 
     ResourceData InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
-    VertexBuffer = RenderLayer::CreateVertexBuffer<Vertex>(VertexCount, BufferFlags, EResourceState::VertexAndConstantBuffer, &InitialData);
+    VertexBuffer = CreateVertexBuffer<Vertex>(VertexCount, BufferFlags, EResourceState::VertexAndConstantBuffer, &InitialData);
     if (!VertexBuffer)
     {
         return false;
     }
 
     InitialData = ResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
-    IndexBuffer = RenderLayer::CreateIndexBuffer(EIndexFormat::UInt32, IndexCount, BufferFlags, EResourceState::IndexBuffer, &InitialData);
+    IndexBuffer = CreateIndexBuffer(EIndexFormat::UInt32, IndexCount, BufferFlags, EResourceState::IndexBuffer, &InitialData);
     if (!IndexBuffer)
     {
         return false;
     }
 
-    if (RenderLayer::IsRayTracingSupported())
+    if (IsRayTracingSupported())
     {
-        RayTracingGeometry = RenderLayer::CreateRayTracingGeometry();
+        RTGeometry = CreateRayTracingGeometry(RayTracingStructureFlag_PreferFastTrace, VertexBuffer.Get(), IndexBuffer.Get());
 
-        VertexBufferSRV = RenderLayer::CreateShaderResourceView(VertexBuffer.Get(), 0, VertexCount);
+        VertexBufferSRV = CreateShaderResourceView(VertexBuffer.Get(), 0, VertexCount);
         if (!VertexBufferSRV)
         {
             return false;
         }
 
-        IndexBufferSRV = RenderLayer::CreateShaderResourceView(IndexBuffer.Get(), 0, IndexCount);
+        IndexBufferSRV = CreateShaderResourceView(IndexBuffer.Get(), 0, IndexCount);
         if (!IndexBufferSRV)
         {
             return false;
@@ -52,7 +47,7 @@ Bool Mesh::Init(const MeshData& Data)
 
 Bool Mesh::BuildAccelerationStructure(CommandList& CmdList)
 {
-    CmdList.BuildRayTracingGeometry(RayTracingGeometry.Get());
+    CmdList.BuildRayTracingGeometry(RTGeometry.Get());
     return true;
 }
 

@@ -2,10 +2,10 @@
 
 #include "Components/MeshComponent.h"
 
-#include "Rendering/TextureFactory.h"
-#include "Rendering/MeshFactory.h"
-#include "Rendering/Material.h"
-#include "Rendering/Mesh.h"
+#include "Rendering/Resources/TextureFactory.h"
+#include "Rendering/Resources/MeshFactory.h"
+#include "Rendering/Resources/Material.h"
+#include "Rendering/Resources/Mesh.h"
 
 #include "RenderLayer/Resources.h"
 
@@ -380,7 +380,7 @@ void Scene::AddMeshComponent(MeshComponent* Component)
 {
     MeshDrawCommand Command;
     Command.CurrentActor = Component->GetOwningActor();
-    Command.Geometry     = Component->Mesh->RayTracingGeometry.Get();
+    Command.Geometry     = Component->Mesh->RTGeometry.Get();
     Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();
     Command.VertexCount  = Component->Mesh->VertexCount;
     Command.IndexBuffer  = Component->Mesh->IndexBuffer.Get();

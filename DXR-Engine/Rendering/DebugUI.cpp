@@ -8,14 +8,14 @@
 
 #include "Time/Clock.h"
 
-#include "Containers/TArray.h"
-
-#include "Rendering/TextureFactory.h"
+#include "Rendering/Resources/TextureFactory.h"
 #include "Rendering/Renderer.h"
 
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
+
+#include <Containers/Array.h>
 
 struct ImGuiState
 {
@@ -250,7 +250,7 @@ Bool DebugUI::Init()
         return false;
     }
 
-    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    TSharedRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         Debug::DebugBreak();
@@ -279,7 +279,7 @@ Bool DebugUI::Init()
         return false;
     }
 
-    TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    TSharedRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
     if (!PShader)
     {
         Debug::DebugBreak();
@@ -293,7 +293,7 @@ Bool DebugUI::Init()
         { "COLOR",    0, EFormat::R8G8B8A8_Unorm, 0, static_cast<UINT>(IM_OFFSETOF(ImDrawVert, col)), EInputClassification::Vertex, 0 },
     };
 
-    TSharedRef<InputLayoutState> InputLayout = RenderLayer::CreateInputLayout(InputLayoutInfo);
+    TSharedRef<InputLayoutState> InputLayout = CreateInputLayout(InputLayoutInfo);
     if (!InputLayout)
     {
         Debug::DebugBreak();
@@ -308,7 +308,7 @@ Bool DebugUI::Init()
     DepthStencilStateInfo.DepthEnable    = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         Debug::DebugBreak();
@@ -322,7 +322,7 @@ Bool DebugUI::Init()
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         Debug::DebugBreak();
@@ -343,7 +343,7 @@ Bool DebugUI::Init()
     BlendStateInfo.RenderTarget[0].BlendOpAlpha   = EBlendOp::Add;
     BlendStateInfo.RenderTarget[0].BlendOp        = EBlendOp::Add;
 
-    TSharedRef<BlendState> BlendStateBlending = RenderLayer::CreateBlendState(BlendStateInfo);
+    TSharedRef<BlendState> BlendStateBlending = CreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
         Debug::DebugBreak();
@@ -356,7 +356,7 @@ Bool DebugUI::Init()
 
     BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-    TSharedRef<BlendState> BlendStateNoBlending = RenderLayer::CreateBlendState(BlendStateInfo);
+    TSharedRef<BlendState> BlendStateNoBlending = CreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
         Debug::DebugBreak();
@@ -378,7 +378,7 @@ Bool DebugUI::Init()
     PSOProperties.PipelineFormats.NumRenderTargets       = 1;
     PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
 
-    GlobalImGuiState.PipelineState = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    GlobalImGuiState.PipelineState = CreateGraphicsPipelineState(PSOProperties);
     if (!GlobalImGuiState.PipelineState)
     {
         Debug::DebugBreak();
@@ -387,20 +387,20 @@ Bool DebugUI::Init()
 
     PSOProperties.BlendState = BlendStateNoBlending.Get();
 
-    GlobalImGuiState.PipelineStateNoBlending = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    GlobalImGuiState.PipelineStateNoBlending = CreateGraphicsPipelineState(PSOProperties);
     if (!GlobalImGuiState.PipelineStateNoBlending)
     {
         Debug::DebugBreak();
         return false;
     }
 
-    GlobalImGuiState.VertexBuffer = RenderLayer::CreateVertexBuffer<ImDrawVert>(1024 * 1024, BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+    GlobalImGuiState.VertexBuffer = CreateVertexBuffer<ImDrawVert>(1024 * 1024, BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
     if (!GlobalImGuiState.VertexBuffer)
     {
         return false;
     }
 
-    GlobalImGuiState.IndexBuffer = RenderLayer::CreateIndexBuffer(
+    GlobalImGuiState.IndexBuffer = CreateIndexBuffer(
         sizeof(ImDrawIdx) == 2 ? EIndexFormat::UInt16 : EIndexFormat::UInt32, 
         1024 * 1024, 
         BufferFlag_Default,

@@ -1,64 +1,57 @@
-#include "Rendering/MeshFactory.h"
-
 #include "RenderLayer/RenderLayer.h"
 
+#include "Rendering/Resources/MeshFactory.h"
+
 #include "D3D12RenderLayer.h"
-#include "D3D12RayTracingScene.h"
+#include "D3D12RayTracing.h"
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
 #include "D3D12DescriptorHeap.h"
 #include "D3D12RayTracingPipelineState.h"
 
-D3D12RayTracingGeometry::D3D12RayTracingGeometry(D3D12Device* InDevice)
+D3D12RayTracingGeometry::D3D12RayTracingGeometry(D3D12Device* InDevice, D3D12VertexBuffer* InVertexBuffer, D3D12IndexBuffer* InIndexBuffer)
     : D3D12DeviceChild(InDevice)
-    , VertexBuffer(nullptr)
-    , IndexBuffer(nullptr)
+    , VertexBuffer(MakeSharedRef<D3D12VertexBuffer>(InVertexBuffer))
+    , IndexBuffer(MakeSharedRef<D3D12IndexBuffer>(InIndexBuffer))
+    , ResultBuffer(nullptr)
+    , ScratchBuffer(nullptr)
 {
 }
 
-D3D12RayTracingGeometry::~D3D12RayTracingGeometry()
+Bool D3D12RayTracingGeometry::Init()
 {
-    SAFERELEASE(ScratchBuffer);
-    SAFERELEASE(ResultBuffer);
-}
-
-bool D3D12RayTracingGeometry::BuildAccelerationStructure(
-    D3D12CommandListHandle* CommandList, 
-    TSharedRef<D3D12VertexBuffer>& InVertexBuffer,
-    UInt32 InVertexCount, 
-    TSharedRef<D3D12IndexBuffer>& InIndexBuffer,
-    UInt32 InIndexCount)
-{
-    if (!IsDirty)
-    {
-        return true;
-    }
+    VALIDATE(VertexBuffer != nullptr);
 
     D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc;
-    Memory::Memzero(&GeometryDesc, sizeof(D3D12_RAYTRACING_GEOMETRY_DESC));
+    Memory::Memzero(&GeometryDesc);
 
-    //GeometryDesc.Type									= D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-    //GeometryDesc.Triangles.VertexBuffer.StartAddress	= InVertexBuffer->GetGPUVirtualAddress();
-    //GeometryDesc.Triangles.VertexBuffer.StrideInBytes	= sizeof(Vertex);
-    //GeometryDesc.Triangles.VertexFormat					= DXGI_FORMAT_R32G32B32_FLOAT;
-    //GeometryDesc.Triangles.VertexCount					= InVertexCount;
-    //GeometryDesc.Triangles.IndexFormat					= DXGI_FORMAT_R32_UINT;
-    //GeometryDesc.Triangles.IndexBuffer					= InIndexBuffer->GetGPUVirtualAddress();
-    //GeometryDesc.Triangles.IndexCount					= InIndexCount;
-    //GeometryDesc.Flags									= D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+    GeometryDesc.Type                                 = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+    GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetResource()->GetGPUVirtualAddress();
+    GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetStride();
+    GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
+    GeometryDesc.Triangles.VertexCount                = VertexBuffer->GetNumVertices();
+    GeometryDesc.Flags                                = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+
+    if (IndexBuffer)
+    {
+        EIndexFormat IndexFormat = IndexBuffer->GetFormat();
+        GeometryDesc.Triangles.IndexFormat = IndexFormat == EIndexFormat::UInt32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+        GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetResource()->GetGPUVirtualAddress();
+        GeometryDesc.Triangles.IndexCount  = IndexBuffer->GetNumIndicies();
+    }
 
     // Get the size requirements for the scratch and AS buffers
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
-    Memory::Memzero(&Inputs, sizeof(D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS));
+    Memory::Memzero(&Inputs);
 
-    Inputs.DescsLayout		= D3D12_ELEMENTS_LAYOUT_ARRAY;
-    Inputs.Flags			= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-    Inputs.NumDescs			= 1;
-    Inputs.pGeometryDescs	= &GeometryDesc;
-    Inputs.Type				= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+    Inputs.DescsLayout    = D3D12_ELEMENTS_LAYOUT_ARRAY;
+    Inputs.Flags          = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+    Inputs.NumDescs       = 1;
+    Inputs.pGeometryDescs = &GeometryDesc;
+    Inputs.Type           = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO Info;
-    Memory::Memzero(&Info, sizeof(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO));
+    Memory::Memzero(&Info);
     Device->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &Info);
 
     //ScratchBuffer = static_cast<D3D12StructuredBuffer*>(RenderLayer::CreateStructuredBuffer(
@@ -89,23 +82,7 @@ bool D3D12RayTracingGeometry::BuildAccelerationStructure(
     //AccelerationStructureDesc.DestAccelerationStructureData		= ResultBuffer->GetGPUVirtualAddress();
     //AccelerationStructureDesc.ScratchAccelerationStructureData	= ScratchBuffer->GetGPUVirtualAddress();
 
-    CommandList->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc);
-
-    // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
-    //CommandList->UnorderedAccessBarrier(ResultBuffer);
-
-    // Keep instance of buffers
-    VertexBuffer	= InVertexBuffer;
-    IndexBuffer		= InIndexBuffer;
-    VertexCount		= InVertexCount;
-    IndexCount		= InIndexCount;
-    
-    // Write descriptors
-    //DescriptorTable->SetShaderResourceView(VertexBuffer->GetShaderResourceView(0).Get(), 0);
-    //DescriptorTable->SetShaderResourceView(IndexBuffer->GetShaderResourceView(0).Get(), 1);
-    //DescriptorTable->CopyDescriptors();
-
-    IsDirty = false;
+    //CommandList->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc);
     return true;
 }
 
@@ -147,7 +124,7 @@ D3D12RayTracingScene::~D3D12RayTracingScene()
     SAFEDELETE(BindingTable);
 }
 
-bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineState)
+Bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineState)
 {
     using namespace Microsoft::WRL;
 
@@ -167,7 +144,7 @@ bool D3D12RayTracingScene::Initialize(D3D12RayTracingPipelineState* PipelineStat
     return true;
 }
 
-bool D3D12RayTracingScene::BuildAccelerationStructure(
+Bool D3D12RayTracingScene::BuildAccelerationStructure(
     D3D12CommandListHandle* CommandList, 
     TArray<D3D12RayTracingGeometryInstance>& InInstances,
     TArray<BindingTableEntry>& InBindingTableEntries,

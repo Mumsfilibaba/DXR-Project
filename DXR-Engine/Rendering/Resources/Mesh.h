@@ -1,7 +1,7 @@
 #pragma once
 #include "MeshFactory.h"
 
-#include <Containers/TSharedPtr.h>
+#include <Containers/SharedPtr.h>
 
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/RayTracing.h"
@@ -28,7 +28,7 @@ public:
     TSharedRef<ShaderResourceView> VertexBufferSRV;
     TSharedRef<IndexBuffer>        IndexBuffer;
     TSharedRef<ShaderResourceView> IndexBufferSRV;
-    TSharedRef<RayTracingGeometry> RayTracingGeometry;
+    TSharedRef<RayTracingGeometry> RTGeometry;
     
     UInt32 VertexCount = 0;
     UInt32 IndexCount  = 0;

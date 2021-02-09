@@ -33,7 +33,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<ComputeShader> CShader = RenderLayer::CreateComputeShader(ShaderCode);
+    TSharedRef<ComputeShader> CShader = CreateComputeShader(ShaderCode);
     if (!CShader)
     {
         Debug::DebugBreak();
@@ -47,7 +47,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
     ComputePipelineStateCreateInfo PipelineStateInfo;
     PipelineStateInfo.Shader = CShader.Get();
 
-    PipelineState = RenderLayer::CreateComputePipelineState(PipelineStateInfo);
+    PipelineState = CreateComputePipelineState(PipelineStateInfo);
     if (!PipelineState)
     {
         Debug::DebugBreak();
@@ -100,7 +100,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         SSAONoise.EmplaceBack(0.0f);
     }
 
-    SSAONoiseTex = RenderLayer::CreateTexture2D(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, EResourceState::NonPixelShaderResource, nullptr);
+    SSAONoiseTex = CreateTexture2D(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, EResourceState::NonPixelShaderResource, nullptr);
     if (!SSAONoiseTex)
     {
         Debug::DebugBreak();
@@ -126,7 +126,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
 
     const UInt32 Stride = sizeof(XMFLOAT3);
     ResourceData SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
-    SSAOSamples = RenderLayer::CreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, EResourceState::Common, &SSAOSampleData);
+    SSAOSamples = CreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, EResourceState::Common, &SSAOSampleData);
     if (!SSAOSamples)
     {
         Debug::DebugBreak();
@@ -137,7 +137,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         SSAOSamples->SetName("SSAO Samples");
     }
 
-    SSAOSamplesSRV = RenderLayer::CreateShaderResourceView(SSAOSamples.Get(), 0, SSAOKernel.Size());
+    SSAOSamplesSRV = CreateShaderResourceView(SSAOSamples.Get(), 0, SSAOKernel.Size());
     if (!SSAOSamplesSRV)
     {
         Debug::DebugBreak();
@@ -158,7 +158,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    CShader = RenderLayer::CreateComputeShader(ShaderCode);
+    CShader = CreateComputeShader(ShaderCode);
     if (!CShader)
     {
         Debug::DebugBreak();
@@ -172,7 +172,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
     ComputePipelineStateCreateInfo PSOProperties;
     PSOProperties.Shader = CShader.Get();
 
-    BlurHorizontalPSO = RenderLayer::CreateComputePipelineState(PSOProperties);
+    BlurHorizontalPSO = CreateComputePipelineState(PSOProperties);
     if (!BlurHorizontalPSO)
     {
         Debug::DebugBreak();
@@ -192,7 +192,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    CShader = RenderLayer::CreateComputeShader(ShaderCode);
+    CShader = CreateComputeShader(ShaderCode);
     if (!CShader)
     {
         Debug::DebugBreak();
@@ -205,7 +205,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
 
     PSOProperties.Shader = CShader.Get();
 
-    BlurVerticalPSO = RenderLayer::CreateComputePipelineState(PSOProperties);
+    BlurVerticalPSO = CreateComputePipelineState(PSOProperties);
     if (!BlurVerticalPSO)
     {
         Debug::DebugBreak();
@@ -308,7 +308,7 @@ Bool ScreenSpaceOcclusionRenderer::CreateRenderTarget(FrameResources& FrameResou
     const UInt32 Height = FrameResources.MainWindowViewport->GetHeight();
     const UInt32 Flags  = TextureFlags_RWTexture;
 
-    FrameResources.SSAOBuffer = RenderLayer::CreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceState::Common, nullptr);
+    FrameResources.SSAOBuffer = CreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceState::Common, nullptr);
     if (!FrameResources.SSAOBuffer)
     {
         Debug::DebugBreak();

@@ -114,7 +114,7 @@ public:
         const ResourceData* InitalData) override final;
 
     virtual ConstantBuffer* CreateConstantBuffer(
-        UInt32 SizeInBytes, 
+        UInt32 Size,
         UInt32 Flags, 
         EResourceState InitialState, 
         const ResourceData* InitalData) override final;
@@ -126,8 +126,8 @@ public:
         EResourceState InitialState, 
         const ResourceData* InitalData) override final;
 
-    virtual class RayTracingGeometry* CreateRayTracingGeometry() override final;
     virtual class RayTracingScene* CreateRayTracingScene() override final;
+    virtual class RayTracingGeometry* CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer) override final;
 
     virtual ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) override final;
     virtual UnorderedAccessView* CreateUnorderedAccessView(const UnorderedAccessViewCreateInfo& CreateInfo) override final;
@@ -158,7 +158,6 @@ public:
     virtual class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat) override final;
 
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
-    virtual Bool IsRayTracingSupported() override final;
     virtual Bool UAVSupportsFormat(EFormat Format) override final;
     
     virtual class ICommandContext* GetDefaultCommandContext() override final
@@ -171,6 +170,7 @@ public:
         return Device->GetAdapterName();
     }
 
+    virtual void CheckRayTracingSupport(RayTracingSupport& OutSupport) override final;
     virtual void CheckShadingRateSupport(ShadingRateSupport& OutSupport) override final;
 
 private:

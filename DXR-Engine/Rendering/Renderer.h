@@ -10,15 +10,17 @@
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 
-#include "Mesh.h"
-#include "Material.h"
-#include "MeshFactory.h"
+#include "Resources/Mesh.h"
+#include "Resources/Material.h"
+#include "Resources/MeshFactory.h"
+
 #include "DeferredRenderer.h"
 #include "ShadowMapRenderer.h"
 #include "ScreenSpaceOcclusionRenderer.h"
 #include "LightProbeRenderer.h"
 #include "SkyboxRenderPass.h"
 #include "ForwardRenderer.h"
+#include "RayTracer.h"
 
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/CommandList.h"
@@ -60,14 +62,10 @@ private:
     LightProbeRenderer           LightProbeRenderer;
     SkyboxRenderPass             SkyboxRenderPass;
     ForwardRenderer              ForwardRenderer;
+    RayTracer                    RayTracer;
 
     FrameResources Resources;
-    LightSetup     LightSetup;
-
-    // TODO: Fix raytracing
-    TSharedRef<RayTracingPipelineState> RaytracingPSO;
-    TSharedPtr<RayTracingScene>         RayTracingScene;
-    TArray<RayTracingGeometryInstance>	RayTracingGeometryInstances;
+    LightSetup     LightSetup;    
 
     TSharedRef<Texture2D>            ShadingImage;
     TSharedRef<ComputePipelineState> ShadingRatePipeline;

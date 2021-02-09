@@ -12,7 +12,7 @@
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
-#include "Rendering/TextureFactory.h"
+#include "Rendering/Resources/TextureFactory.h"
 
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/CommandList.h"

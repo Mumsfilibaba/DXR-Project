@@ -1,5 +1,3 @@
-#include "Containers/TUniquePtr.h"
-
 #include "Windows/WindowsWindow.h"
 
 #include "D3D12RenderLayer.h"
@@ -12,7 +10,7 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Fence.h"
 #include "D3D12RayTracingPipelineState.h"
-#include "D3D12RayTracingScene.h"
+#include "D3D12RayTracing.h"
 #include "D3D12RootSignature.h"
 #include "D3D12Views.h"
 #include "D3D12Helpers.h"
@@ -196,13 +194,15 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         }
     }
 
-    D3D12Resource DxResource = D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
-    if (!DxResource.Init(D3D12_RESOURCE_STATE_COMMON, ClearValuePtr))
+    TSharedRef<D3D12Resource> Resource = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+    if (!Resource->Init(D3D12_RESOURCE_STATE_COMMON, ClearValuePtr))
     {
         return nullptr;
     }
-
-    NewTexture->SetResource(DxResource);
+    else
+    {
+        NewTexture->SetResource(Resource.ReleaseOwnership());
+    }
 
     if (Flags & TextureFlag_SRV && !(Flags & TextureFlag_NoDefaultSRV))
     {
@@ -274,7 +274,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
             return nullptr;
         }
 
-        NewTexture->SetShaderResourceView(SRV.Get());
+        NewTexture->SetShaderResourceView(SRV.ReleaseOwnership());
     }
 
     // TODO: Fix for other resources that Texture2D?
@@ -303,7 +303,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
             return nullptr;
         }
 
-        NewTexture2D->SetRenderTargetView(RTV.Get());
+        NewTexture2D->SetRenderTargetView(RTV.ReleaseOwnership());
     }
 
     if (Flags & TextureFlag_DSV && !(Flags & TextureFlag_NoDefaultDSV) && IsTexture2D)
@@ -329,7 +329,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
             return nullptr;
         }
 
-        NewTexture2D->SetDepthStencilView(DSV.Get());
+        NewTexture2D->SetDepthStencilView(DSV.ReleaseOwnership());
     }
 
     if (Flags & TextureFlag_UAV && !(Flags & TextureFlag_NoDefaultUAV) && IsTexture2D)
@@ -356,7 +356,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
             return nullptr;
         }
 
-        NewTexture2D->SetUnorderedAccessView(UAV.Get());
+        NewTexture2D->SetUnorderedAccessView(UAV.ReleaseOwnership());
     }
 
     if (InitialData)
@@ -515,21 +515,21 @@ Bool D3D12RenderLayer::FinalizeBufferResource(TD3D12Buffer* Buffer, UInt32 SizeI
         DxInitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
-    D3D12Resource DxResource = D3D12Resource(Device, Desc, DxHeapType);
-    if (!DxResource.Init(DxInitialState, nullptr))
+    TSharedRef<D3D12Resource> Resource = DBG_NEW D3D12Resource(Device, Desc, DxHeapType);
+    if (!Resource->Init(DxInitialState, nullptr))
     {
         return false;
     }
     else
     {
-        Buffer->SetResource(DxResource);
+        Buffer->SetResource(Resource.ReleaseOwnership());
     }
 
     if (InitialData)
     {
         if (Buffer->IsUpload())
         {
-            VALIDATE(DxResource.GetDesc().Width <= SizeInBytes);
+            VALIDATE(Buffer->GetSizeInBytes() <= SizeInBytes);
 
             Void* HostData = Buffer->Map(0, 0);
             if (!HostData)
@@ -598,13 +598,13 @@ IndexBuffer* D3D12RenderLayer::CreateIndexBuffer(EIndexFormat Format, UInt32 Num
     }
 }
 
-ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer(UInt32 SizeInBytes, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer(UInt32 Size, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
     VALIDATE(!(Flags & BufferFlag_UAV) && !(Flags & BufferFlag_SRV));
 
-    const UInt32 AlignedSizeInBytes = Math::AlignUp<UInt32>(SizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+    const UInt32 AlignedSizeInBytes = Math::AlignUp<UInt32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
-    TSharedRef<D3D12ConstantBuffer> NewBuffer = DBG_NEW D3D12ConstantBuffer(Device, ResourceOfflineDescriptorHeap, SizeInBytes, Flags);
+    TSharedRef<D3D12ConstantBuffer> NewBuffer = DBG_NEW D3D12ConstantBuffer(Device, ResourceOfflineDescriptorHeap, Size, Flags);
     if (!FinalizeBufferResource(NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to create ConstantBuffer");
@@ -632,11 +632,7 @@ StructuredBuffer* D3D12RenderLayer::CreateStructuredBuffer(UInt32 Stride, UInt32
     }
 }
 
-/*
-* RayTracing
-*/
-
-RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry()
+RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer)
 {
     return nullptr;
 }
@@ -1544,11 +1540,6 @@ Viewport* D3D12RenderLayer::CreateViewport(GenericWindow* Window, UInt32 Width, 
     }
 }
 
-Bool D3D12RenderLayer::IsRayTracingSupported()
-{
-    return Device->IsRayTracingSupported();
-}
-
 Bool D3D12RenderLayer::UAVSupportsFormat(EFormat Format)
 {
     D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
@@ -1577,27 +1568,44 @@ Bool D3D12RenderLayer::UAVSupportsFormat(EFormat Format)
     return true;
 }
 
+void D3D12RenderLayer::CheckRayTracingSupport(RayTracingSupport& OutSupport)
+{
+    D3D12_RAYTRACING_TIER Tier = Device->GetRayTracingTier();
+    if (Tier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+    {
+        if (Tier == D3D12_RAYTRACING_TIER_1_1)
+        {
+            OutSupport.Tier = ERayTracingTier::Tier1_1;
+        }
+        else if (Tier == D3D12_RAYTRACING_TIER_1_0)
+        {
+            OutSupport.Tier = ERayTracingTier::Tier1;
+        }
+
+        // Defined in spec
+        OutSupport.MaxRecursionDepth = 31;
+    }
+    else
+    {
+        OutSupport.Tier = ERayTracingTier::NotSupported;
+    }
+}
+
 void D3D12RenderLayer::CheckShadingRateSupport(ShadingRateSupport& OutSupport)
 {
-    D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
-    Memory::Memzero(&Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
-
-    HRESULT Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
-    if (SUCCEEDED(Result))
+    D3D12_VARIABLE_SHADING_RATE_TIER Tier = Device->GetVariableRateShadingTier();
+    if (Tier == D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED)
     {
-        OutSupport.ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
-
-        if (Features6.VariableShadingRateTier == D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED)
-        {
-            OutSupport.Tier = EShadingRateTier::NotSupported;
-        }
-        else if (Features6.VariableShadingRateTier == D3D12_VARIABLE_SHADING_RATE_TIER_1)
-        {
-            OutSupport.Tier = EShadingRateTier::Tier1;
-        }
-        else if (Features6.VariableShadingRateTier == D3D12_VARIABLE_SHADING_RATE_TIER_2)
-        {
-            OutSupport.Tier = EShadingRateTier::Tier2;
-        }
+        OutSupport.Tier = EShadingRateTier::NotSupported;
     }
+    else if (Tier == D3D12_VARIABLE_SHADING_RATE_TIER_1)
+    {
+        OutSupport.Tier = EShadingRateTier::Tier1;
+    }
+    else if (Tier == D3D12_VARIABLE_SHADING_RATE_TIER_2)
+    {
+        OutSupport.Tier = EShadingRateTier::Tier2;
+    }
+
+    OutSupport.ShadingRateImageTileSize = Device->GetVariableRateShadingTileSize();
 }

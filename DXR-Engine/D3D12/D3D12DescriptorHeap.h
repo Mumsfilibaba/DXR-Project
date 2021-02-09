@@ -1,5 +1,5 @@
 #pragma once
-#include <Containers/TArray.h>
+#include <Containers/Array.h>
 
 #include "Utilities/StringUtilities.h"
 
@@ -15,41 +15,22 @@ public:
 
     Bool Init();
 
-    FORCEINLINE void SetName(const std::string& Name)
+    void SetName(const std::string& Name)
     {
         std::wstring WideName = ConvertToWide(Name);
         Heap->SetName(WideName.c_str());
     }
 
-    FORCEINLINE ID3D12DescriptorHeap* GetHeap() const
-    {
-        return Heap.Get();
-    }
+    FORCEINLINE ID3D12DescriptorHeap* GetHeap() const { return Heap.Get(); }
 
-    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart() const
-    {
-        return CPUStart;
-    }
+    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart() const { return CPUStart; }
+    FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart() const { return GPUStart; }
 
-    FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart() const
-    {
-        return GPUStart;
-    }
+    FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const { return Desc.Type; }
 
-    FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
-    {
-        return Desc.Type;
-    }
+    FORCEINLINE UInt32 GetNumDescriptors() const { return UInt32(Desc.NumDescriptors); }
 
-    FORCEINLINE UInt32 GetNumDescriptors() const
-    {
-        return UInt32(Desc.NumDescriptors);
-    }
-
-    FORCEINLINE UInt32 GetDescriptorHandleIncrementSize() const
-    {
-        return DescriptorHandleIncrementSize;
-    }
+    FORCEINLINE UInt32 GetDescriptorHandleIncrementSize() const { return DescriptorHandleIncrementSize; }
 
 private:
     TComPtr<ID3D12DescriptorHeap> Heap;
@@ -71,7 +52,7 @@ class D3D12OfflineDescriptorHeap : public D3D12DeviceChild, public RefCountedObj
         {
         }
 
-        FORCEINLINE bool IsValid() const
+        FORCEINLINE Bool IsValid() const
         {
             return Begin.ptr < End.ptr;
         }

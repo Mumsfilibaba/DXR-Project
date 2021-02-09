@@ -6,7 +6,8 @@
 #include "Debug/Profiler.h"
 #include "Debug/Console.h"
 
-#include "Rendering/Mesh.h"
+#include "Rendering/Resources/Mesh.h"
+
 #include "Rendering/MeshDrawCommand.h"
 
 #include "Scene/Frustum.h"
@@ -27,7 +28,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         return false;
     }
 
-    PerShadowMapBuffer = RenderLayer::CreateConstantBuffer<PerShadowMap>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+    PerShadowMapBuffer = CreateConstantBuffer<PerShadowMap>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
     if (!PerShadowMapBuffer)
     {
         Debug::DebugBreak();
@@ -47,7 +48,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
             return false;
         }
 
-        TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+        TSharedRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
         if (!VShader)
         {
             Debug::DebugBreak();
@@ -65,7 +66,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
             return false;
         }
 
-        PShader = RenderLayer::CreatePixelShader(ShaderCode);
+        PShader = CreatePixelShader(ShaderCode);
         if (!PShader)
         {
             Debug::DebugBreak();
@@ -81,7 +82,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         DepthStencilStateInfo.DepthEnable    = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+        TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
         if (!DepthStencilState)
         {
             Debug::DebugBreak();
@@ -95,7 +96,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         RasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+        TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             Debug::DebugBreak();
@@ -108,7 +109,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
 
         BlendStateCreateInfo BlendStateInfo;
 
-        TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+        TSharedRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             Debug::DebugBreak();
@@ -134,7 +135,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         PipelineStateInfo.PipelineFormats.NumRenderTargets   = 0;
         PipelineStateInfo.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
 
-        PointLightPipelineState = RenderLayer::CreateGraphicsPipelineState(PipelineStateInfo);
+        PointLightPipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
         if (!PointLightPipelineState)
         {
             Debug::DebugBreak();
@@ -153,7 +154,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
             return false;
         }
 
-        TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+        TSharedRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
         if (!VShader)
         {
             Debug::DebugBreak();
@@ -169,7 +170,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         DepthStencilStateInfo.DepthEnable    = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+        TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
         if (!DepthStencilState)
         {
             Debug::DebugBreak();
@@ -183,7 +184,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         RasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+        TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             Debug::DebugBreak();
@@ -195,7 +196,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         }
 
         BlendStateCreateInfo BlendStateInfo;
-        TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+        TSharedRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             Debug::DebugBreak();
@@ -221,7 +222,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         PipelineStateInfo.PipelineFormats.NumRenderTargets   = 0;
         PipelineStateInfo.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
 
-        DirLightPipelineState = RenderLayer::CreateGraphicsPipelineState(PipelineStateInfo);
+        DirLightPipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
         if (!DirLightPipelineState)
         {
             Debug::DebugBreak();
@@ -438,7 +439,7 @@ void ShadowMapRenderer::Release()
 
 Bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
 {
-    LightSetup.PointLightShadowMaps = RenderLayer::CreateTextureCubeArray(
+    LightSetup.PointLightShadowMaps = CreateTextureCubeArray(
         LightSetup.ShadowMapFormat, 
         LightSetup.PointLightShadowSize, 
         1, LightSetup.MaxPointLightShadows, 
@@ -455,7 +456,7 @@ Bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
             for (UInt32 Face = 0; Face < 6; Face++)
             {
                 TStaticArray<TSharedRef<DepthStencilView>, 6>& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
-                DepthCube[Face] = RenderLayer::CreateDepthStencilView(
+                DepthCube[Face] = CreateDepthStencilView(
                     LightSetup.PointLightShadowMaps.Get(), 
                     LightSetup.ShadowMapFormat, 
                     GetCubeFaceFromIndex(Face), 0, i);
@@ -472,7 +473,7 @@ Bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
         return false;
     }
 
-    LightSetup.DirLightShadowMaps = RenderLayer::CreateTexture2D(
+    LightSetup.DirLightShadowMaps = CreateTexture2D(
         LightSetup.ShadowMapFormat,
         LightSetup.ShadowMapWidth,
         LightSetup.ShadowMapHeight,

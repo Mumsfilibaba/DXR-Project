@@ -50,6 +50,9 @@ struct FrameResources
 
     TSharedRef<InputLayoutState> StdInputLayout;
 
+    TSharedRef<RayTracingScene>        RTScene;
+    TArray<RayTracingGeometryInstance> RTGeometryInstances;
+
     TArray<MeshDrawCommand> DeferredVisibleCommands;
     TArray<MeshDrawCommand> ForwardVisibleCommands;
 

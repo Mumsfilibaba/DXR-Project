@@ -2,7 +2,7 @@
 
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
-#include "Rendering/TextureFactory.h"
+#include "Rendering/Resources/TextureFactory.h"
 
 #include "Debug/Profiler.h"
 
@@ -11,7 +11,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     SkyboxMesh = MeshFactory::CreateSphere(1);
 
     ResourceData VertexData = ResourceData(SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes());
-    SkyboxVertexBuffer = RenderLayer::CreateVertexBuffer<Vertex>(SkyboxMesh.Vertices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &VertexData);
+    SkyboxVertexBuffer = CreateVertexBuffer<Vertex>(SkyboxMesh.Vertices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &VertexData);
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -22,7 +22,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     }
 
     ResourceData IndexData = ResourceData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
-    SkyboxIndexBuffer = RenderLayer::CreateIndexBuffer(
+    SkyboxIndexBuffer = CreateIndexBuffer(
         EIndexFormat::UInt32, 
         SkyboxMesh.Indices.Size(), 
         BufferFlag_Upload, 
@@ -67,7 +67,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     CreateInfo.MinLOD   = 0.0f;
     CreateInfo.MaxLOD   = 0.0f;
 
-    SkyboxSampler = RenderLayer::CreateSamplerState(CreateInfo);
+    SkyboxSampler = CreateSamplerState(CreateInfo);
     if (!SkyboxSampler)
     {
         return false;
@@ -80,7 +80,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    TSharedRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         Debug::DebugBreak();
@@ -97,7 +97,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    TSharedRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
     if (!PShader)
     {
         Debug::DebugBreak();
@@ -111,7 +111,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         Debug::DebugBreak();
@@ -126,7 +126,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     BlendStateInfo.IndependentBlendEnable      = false;
     BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-    TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+    TSharedRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         Debug::DebugBreak();
@@ -142,7 +142,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     DepthStencilStateInfo.DepthEnable    = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         Debug::DebugBreak();
@@ -164,7 +164,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     PipelineStateInfo.PipelineFormats.NumRenderTargets       = 1;
     PipelineStateInfo.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
 
-    PipelineState = RenderLayer::CreateGraphicsPipelineState(PipelineStateInfo);
+    PipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
     if (!PipelineState)
     {
         Debug::DebugBreak();

@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/CoreObject.h"
 
-#include <Containers/TArray.h>
+#include <Containers/Array.h>
 
 class Actor;
 

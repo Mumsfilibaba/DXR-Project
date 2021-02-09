@@ -1,13 +1,14 @@
 #pragma once
 #include "Utilities/StringUtilities.h"
 
+#include "Core/RefCountedObject.h"
+
 #include "D3D12DeviceChild.h"
 #include "D3D12Helpers.h"
 
-class D3D12Resource : public D3D12DeviceChild
+class D3D12Resource : public D3D12DeviceChild, public RefCountedObject
 {
 public:
-    D3D12Resource(D3D12Device* InDevice);
     D3D12Resource(D3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource);
     D3D12Resource(D3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType);
     ~D3D12Resource() = default;

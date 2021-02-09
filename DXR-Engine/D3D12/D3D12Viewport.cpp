@@ -15,7 +15,7 @@ D3D12Viewport::D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdCo
 
 D3D12Viewport::~D3D12Viewport()
 {
-    BOOL FullscreenState;
+    BOOL    FullscreenState;
     HRESULT Result = SwapChain->GetFullscreenState(&FullscreenState, nullptr);
     if (SUCCEEDED(Result))
     {
@@ -194,9 +194,7 @@ Bool D3D12Viewport::RetriveBackBuffers()
         }
 
         BackBuffers[i] = DBG_NEW D3D12Texture2D(Device, GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, ClearValue());
-
-        D3D12Resource BackBuffer(Device, BackBufferResource);
-        BackBuffers[i]->SetResource(BackBuffer);
+        BackBuffers[i]->SetResource(DBG_NEW D3D12Resource(Device, BackBufferResource));
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;
         Memory::Memzero(&Desc);

@@ -1,7 +1,7 @@
 #pragma once
 #include "FrameResources.h"
 
-#include "Rendering/MeshFactory.h"
+#include "Rendering/Resources/MeshFactory.h"
 
 #include "RenderLayer/CommandList.h"
 

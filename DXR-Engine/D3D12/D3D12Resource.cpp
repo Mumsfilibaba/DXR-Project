@@ -1,18 +1,9 @@
 #include "D3D12Resource.h"
 #include "D3D12Device.h"
 
-D3D12Resource::D3D12Resource(D3D12Device* InDevice)
-    : D3D12DeviceChild(InDevice)
-    , DxResource()
-    , HeapType(D3D12_HEAP_TYPE_DEFAULT)
-    , ResourceState(D3D12_RESOURCE_STATE_COMMON)
-    , Desc()
-    , Address(0)
-{
-}
-
 D3D12Resource::D3D12Resource(D3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource)
-    : D3D12DeviceChild(InDevice)
+    : RefCountedObject()
+    , D3D12DeviceChild(InDevice)
     , DxResource(InNativeResource)
     , HeapType(D3D12_HEAP_TYPE_DEFAULT)
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
@@ -22,7 +13,8 @@ D3D12Resource::D3D12Resource(D3D12Device* InDevice, const TComPtr<ID3D12Resource
 }
 
 D3D12Resource::D3D12Resource(D3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
-    : D3D12DeviceChild(InDevice)
+    : RefCountedObject()
+    , D3D12DeviceChild(InDevice)
     , DxResource(nullptr)
     , HeapType(InHeapType)
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)

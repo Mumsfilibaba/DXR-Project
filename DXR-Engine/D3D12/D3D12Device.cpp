@@ -285,7 +285,8 @@ bool D3D12Device::Init()
         Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
         if (SUCCEEDED(Result))
         {
-            VariableShadingRateTier = Features6.VariableShadingRateTier;
+            VariableShadingRateTier     = Features6.VariableShadingRateTier;
+            VariableShadingRateTileSize = Features6.ShadingRateImageTileSize;
         }
     }
 

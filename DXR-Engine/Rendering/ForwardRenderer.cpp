@@ -4,8 +4,8 @@
 #include "RenderLayer/ShaderCompiler.h"
 
 #include "Rendering/MeshDrawCommand.h"
-#include "Rendering/Mesh.h"
-#include "Rendering/Material.h"
+#include "Rendering/Resources/Mesh.h"
+#include "Rendering/Resources/Material.h"
 
 #include "Scene/Actor.h"
 
@@ -26,7 +26,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    TSharedRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         Debug::DebugBreak();
@@ -43,7 +43,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
+    TSharedRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
     if (!PShader)
     {
         Debug::DebugBreak();
@@ -59,7 +59,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
     DepthStencilStateInfo.DepthEnable    = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         Debug::DebugBreak();
@@ -73,7 +73,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         Debug::DebugBreak();
@@ -88,7 +88,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
     BlendStateInfo.IndependentBlendEnable      = false;
     BlendStateInfo.RenderTarget[0].BlendEnable = true;
 
-    TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+    TSharedRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         Debug::DebugBreak();
@@ -111,7 +111,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
     PSOProperties.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
     PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
 
-    PipelineState = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    PipelineState = CreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)
     {
         Debug::DebugBreak();

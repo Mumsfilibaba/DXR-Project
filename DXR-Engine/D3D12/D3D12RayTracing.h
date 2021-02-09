@@ -13,10 +13,12 @@ class Material;
 class D3D12RayTracingGeometry : public RayTracingGeometry, public D3D12DeviceChild
 {
 public:
-    D3D12RayTracingGeometry(D3D12Device* InDevice);
-    ~D3D12RayTracingGeometry();
+    D3D12RayTracingGeometry(D3D12Device* InDevice, D3D12VertexBuffer* InVertexBuffer, D3D12IndexBuffer* InIndexBuffer);
+    ~D3D12RayTracingGeometry() = default;
 
-    bool BuildAccelerationStructure(
+    Bool Init();
+
+    Bool BuildAccelerationStructure(
         D3D12CommandListHandle* CommandList, 
         TSharedRef<D3D12VertexBuffer>& InVertexBuffer, 
         UInt32 InVertexCount, 
@@ -28,15 +30,10 @@ public:
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
 
 private:
-    TSharedRef<D3D12VertexBuffer> VertexBuffer = nullptr;
-    TSharedRef<D3D12IndexBuffer>  IndexBuffer  = nullptr;
-    D3D12StructuredBuffer* ResultBuffer        = nullptr;
-    D3D12StructuredBuffer* ScratchBuffer       = nullptr;
-    
-    UInt32 VertexCount = 0;
-    UInt32 IndexCount  = 0;
-
-    Bool IsDirty = true;
+    TSharedRef<D3D12VertexBuffer> VertexBuffer;
+    TSharedRef<D3D12IndexBuffer>  IndexBuffer;
+    TSharedRef<D3D12Resource>     ResultBuffer;
+    TSharedRef<D3D12Resource>     ScratchBuffer;
 };
 
 /*
@@ -105,9 +102,9 @@ public:
     D3D12RayTracingScene(D3D12Device* InDevice);
     ~D3D12RayTracingScene();
 
-    bool Initialize(class D3D12RayTracingPipelineState* PipelineState);
+    Bool Initialize(class D3D12RayTracingPipelineState* PipelineState);
 
-    bool BuildAccelerationStructure(D3D12CommandListHandle* CommandList,
+    Bool BuildAccelerationStructure(D3D12CommandListHandle* CommandList,
         TArray<D3D12RayTracingGeometryInstance>& InInstances,
         TArray<BindingTableEntry>& InBindingTableEntries,
         UInt32 InNumHitGroups);
@@ -125,7 +122,7 @@ public:
         return View.Get();
     }
 
-    FORCEINLINE bool NeedsBuild() const
+    FORCEINLINE Bool NeedsBuild() const
     {
         return IsDirty;
     }
@@ -145,5 +142,5 @@ private:
 
     TComPtr<ID3D12StateObjectProperties> PipelineStateProperties;
 
-    bool IsDirty = true;
+    Bool IsDirty = true;
 };

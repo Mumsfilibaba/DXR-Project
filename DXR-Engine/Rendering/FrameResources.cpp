@@ -32,6 +32,9 @@ void FrameResources::Release()
 
     StdInputLayout.Reset();
 
+    RTScene.Reset();
+    RTGeometryInstances.Clear();
+
     DeferredVisibleCommands.Clear();
     ForwardVisibleCommands.Clear();
 

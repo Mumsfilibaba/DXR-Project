@@ -154,25 +154,12 @@ public:
 
     FORCEINLINE Bool IsTearingSupported() const { return AllowTearing; }
 
-    FORCEINLINE Bool IsRayTracingSupported() const
-    {
-        return RayTracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
-    }
+    FORCEINLINE D3D12_RAYTRACING_TIER GetRayTracingTier() const { return RayTracingTier; }
+    FORCEINLINE D3D12_SAMPLER_FEEDBACK_TIER GetSamplerFeedbackTier() const { return SamplerFeedBackTier; }
+    FORCEINLINE D3D12_VARIABLE_SHADING_RATE_TIER GetVariableRateShadingTier() const { return VariableShadingRateTier; }
+    FORCEINLINE D3D12_MESH_SHADER_TIER GetMeshShaderTier() const { return MeshShaderTier; }
 
-    FORCEINLINE Bool IsInlineRayTracingSupported() const
-    {
-        return RayTracingTier != D3D12_RAYTRACING_TIER_1_1;
-    }
-
-    FORCEINLINE Bool IsMeshShadersSupported() const
-    {
-        return MeshShaderTier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
-    }
-
-    FORCEINLINE Bool IsSamplerFeedbackSupported() const
-    {
-        return SamplerFeedBackTier != D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
-    }
+    FORCEINLINE UInt32 GetVariableRateShadingTileSize() const { return VariableShadingRateTileSize; }
 
 private:
     TComPtr<IDXGIFactory2> Factory;
@@ -186,7 +173,8 @@ private:
     D3D12_RAYTRACING_TIER            RayTracingTier          = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
     D3D12_SAMPLER_FEEDBACK_TIER      SamplerFeedBackTier     = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
     D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
-    D3D12_MESH_SHADER_TIER           MeshShaderTier          = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+    UInt32 VariableShadingRateTileSize = 0;
+    D3D12_MESH_SHADER_TIER MeshShaderTier = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
 
     HMODULE DXGILib  = 0;
     HMODULE D3D12Lib = 0;

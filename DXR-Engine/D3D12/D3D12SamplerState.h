@@ -42,10 +42,7 @@ public:
         return reinterpret_cast<void*>(OfflineHandle.ptr);
     }
 
-    virtual Bool IsValid() const override
-    {
-        return OfflineHandle != 0;
-    }
+    virtual Bool IsValid() const override { return OfflineHandle != 0; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
 
