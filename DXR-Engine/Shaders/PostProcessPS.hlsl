@@ -1,7 +1,5 @@
-#include "PBRCommon.hlsli"
-
-Texture2D FinalImage		: register(t0, space0);
-SamplerState PointSampler	: register(s0, space0);
+Texture2D FinalImage      : register(t0, space0);
+SamplerState PointSampler : register(s0, space0);
 
 float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET
 {

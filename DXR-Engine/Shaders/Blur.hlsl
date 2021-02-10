@@ -1,4 +1,4 @@
-#include "PBRCommon.hlsli"
+#include "Structs.hlsli"
 
 RWTexture2D<float> Texture : register(u0, space0);
 
@@ -47,10 +47,10 @@ void Main(ComputeShaderInput Input)
         
         // TODO: Handle when we need to sample outside the tile
 #ifdef HORIZONTAL_PASS
-        const int CurrentTexCoord = max(0, min(MAX_SIZE, GroupThreadID.x + Offset));
+        const int CurrentTexCoord = max(0, min(MAX_SIZE.y, GroupThreadID.x + Offset));
         Result += gTextureCache[CurrentTexCoord.x][GroupThreadID.y] * Weight;
 #else
-        const int CurrentTexCoord = max(0, min(MAX_SIZE, GroupThreadID.y + Offset));
+        const int CurrentTexCoord = max(0, min(MAX_SIZE.y, GroupThreadID.y + Offset));
         Result += gTextureCache[GroupThreadID.x][CurrentTexCoord] * Weight;
 #endif
     }

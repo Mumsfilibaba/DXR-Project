@@ -9,7 +9,7 @@
 */
 
 #define POINT_LIGHT_SAMPLES 4
-#define OFFSET_SAMPLES	    20
+#define OFFSET_SAMPLES      20
 
 static const float3 SampleOffsetDirections[OFFSET_SAMPLES] =
 {
@@ -187,9 +187,9 @@ float DirectionalLightShadowFactor(
     float4 LightSpacePosition = mul(float4(WorldPosition, 1.0f), Light.LightMatrix);
     float3 L = normalize(-Light.Direction);
     
-    float3 ProjCoords   = LightSpacePosition.xyz / LightSpacePosition.w;
-    ProjCoords.xy       = (ProjCoords.xy * 0.5f) + 0.5f;
-    ProjCoords.y        = 1.0f - ProjCoords.y;
+    float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;
+    ProjCoords.xy     = (ProjCoords.xy * 0.5f) + 0.5f;
+    ProjCoords.y      = 1.0f - ProjCoords.y;
     
     float Depth = ProjCoords.z;
     if (Depth >= 1.0f)

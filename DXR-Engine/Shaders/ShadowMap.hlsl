@@ -11,9 +11,9 @@ cbuffer TransformBuffer : register(b0, space0)
 // PerFrame DescriptorTable
 cbuffer LightBuffer : register(b1, space0)
 {
-    float4x4	LightProjection;
-    float3		LightPosition;
-    float		LightFarPlane;
+    float4x4 LightProjection;
+    float3   LightPosition;
+    float    LightFarPlane;
 }
 
 // VS

@@ -1,4 +1,4 @@
-#include "PBRCommon.hlsli"
+#include "Structs.hlsli"
 
 /*
 * Based on GenerateMipsCS.hlsli by Microsoft

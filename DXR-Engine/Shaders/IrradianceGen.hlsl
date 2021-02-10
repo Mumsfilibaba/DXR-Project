@@ -1,4 +1,4 @@
-#include "PBRCommon.hlsli"
+#include "PBRHelpers.hlsli"
 
 #define BLOCK_SIZE 16
 
@@ -29,29 +29,29 @@ RWTexture2DArray<float4> IrradianceMap : register(u0);
 static const float3x3 RotateUV[6] =
 {
     // +X
-    float3x3(	 0,  0, 1,
-                 0, -1, 0,
-                -1,  0, 0),
+    float3x3(  0,  0,  1,
+               0, -1,  0,
+              -1,  0,  0),
     // -X
-    float3x3(	0,  0, -1,
-                0, -1,  0,
-                1,  0,  0),
+    float3x3(  0,  0, -1,
+               0, -1,  0,
+               1,  0,  0),
     // +Y
-    float3x3(	1, 0, 0,
-                0, 0, 1,
-                0, 1, 0),
+    float3x3(  1,  0,  0,
+               0,  0,  1,
+               0,  1,  0),
     // -Y
-    float3x3(	1,  0,  0,
-                0,  0, -1,
-                0, -1,  0),
+    float3x3(  1,  0,  0,
+               0,  0, -1,
+               0, -1,  0),
     // +Z
-    float3x3(	1,  0, 0,
-                0, -1, 0,
-                0,  0, 1),
+    float3x3(  1,  0,  0,
+               0, -1,  0,
+               0,  0,  1),
     // -Z
-    float3x3(	-1,  0,  0,
-                 0, -1,  0,
-                 0,  0, -1)
+    float3x3( -1,  0,  0,
+               0, -1,  0,
+               0,  0, -1)
 };
 
 [RootSignature(RootSig)]

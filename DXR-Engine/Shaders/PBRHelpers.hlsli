@@ -33,6 +33,17 @@ float DistributionGGX(float3 N, float3 H, float Roughness)
     return Alpha2 / max(PI * Denominator * Denominator, 0.0000001f);
 }
 
+//float3 FresnelSchlick(float CosTheta, float3 F0)
+//{
+//    return F0 + (1.0f - F0) * pow(1.0f - CosTheta, 5.0f);
+//}
+
+//float3 FresnelSchlickRoughness(float CosTheta, float3 F0, float Roughness)
+//{
+//    float R = 1.0f - Roughness;
+//    return F0 + (max(float3(R, R, R), F0) - F0) * pow(1.0f - CosTheta, 5.0f);
+//}
+
 // Fresnel Schlick
 float3 FresnelSchlick(float3 F0, float3 V, float3 H)
 {

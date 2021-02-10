@@ -68,9 +68,9 @@ Texture2D<float4> AlbedoTex : register(t5, space0);
 #ifdef NORMAL_MAPPING_ENABLED
 Texture2D<float4> NormalTex : register(t6, space0);
 #endif
-Texture2D<float4> RoughnessTex : register(t7, space0);
+Texture2D<float> RoughnessTex : register(t7, space0);
 #ifdef PARALLAX_MAPPING_ENABLED
-Texture2D<float4> HeightMap : register(t8, space0);
+Texture2D<float> HeightMap : register(t8, space0);
 #endif
 Texture2D<float> MetallicTex : register(t9, space0);
 Texture2D<float> AOTex       : register(t10, space0);

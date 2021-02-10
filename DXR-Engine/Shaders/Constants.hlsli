@@ -4,6 +4,12 @@
 #define PI    (3.14159265359f)
 #define GAMMA (2.2f)
 
+#define MIN_ROUGHNESS (0.05f)
+#define MAX_ROUGHNESS (1.0f)
+#define MIN_VALUE     (0.0000001f)
+#define EPSILON       (0.0001f)
+#define RAY_OFFSET    (0.2f)
+
 #define SHADING_RATE_1x1 (0x0)
 #define SHADING_RATE_1x2 (0x1)
 #define SHADING_RATE_2x1 (0x4)

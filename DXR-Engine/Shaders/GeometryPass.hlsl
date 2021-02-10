@@ -1,11 +1,12 @@
-#include "PBRCommon.hlsli"
+#include "PBRHelpers.hlsli"
+#include "Structs.hlsli"
 
 #if ENABLE_PARALLAX_MAPPING
-#define PARALLAX_MAPPING_ENABLED
+    #define PARALLAX_MAPPING_ENABLED
 #endif
 
 #if ENABLE_NORMAL_MAPPING
-#define NORMAL_MAPPING_ENABLED
+    #define NORMAL_MAPPING_ENABLED
 #endif
 
 // PerFrame
