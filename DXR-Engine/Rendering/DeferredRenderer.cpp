@@ -455,7 +455,7 @@ void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources&
 
             CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &PerObjectBuffer, 16);
 
-            CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+            CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
         }
     }
 
@@ -518,7 +518,7 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
 
         CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &TransformPerObject, 32);
 
-        CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+        CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");

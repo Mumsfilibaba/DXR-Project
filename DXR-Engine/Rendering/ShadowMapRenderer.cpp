@@ -318,7 +318,7 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
 
                             CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &ShadowPerObjectBuffer, 17);
 
-                            CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+                            CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
                         }
                     }
                 }
@@ -334,7 +334,7 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
 
                         CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &ShadowPerObjectBuffer, 17);
 
-                        CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+                        CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
                     }
                 }
             }
@@ -414,7 +414,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
 
                 CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &ShadowPerObjectBuffer, 17);
 
-                CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+                CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
             }
         }
 

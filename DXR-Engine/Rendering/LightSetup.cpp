@@ -158,13 +158,9 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
     if (DirectionalLightsData.SizeInBytes() > DirectionalLightsBuffer->GetSize())
     {
-        CmdList.DestroyResource(DirectionalLightsBuffer.Get());
+        CmdList.DiscardResource(DirectionalLightsBuffer.Get());
 
-        DirectionalLightsBuffer = CreateConstantBuffer(
-            DirectionalLightsData.CapacityInBytes(), 
-            BufferFlag_Default, 
-            EResourceState::VertexAndConstantBuffer, 
-            nullptr);
+        DirectionalLightsBuffer = CreateConstantBuffer(DirectionalLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
         if (!DirectionalLightsBuffer)
         {
             Debug::DebugBreak();
@@ -173,7 +169,7 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
     if (PointLightsData.SizeInBytes() > PointLightsBuffer->GetSize())
     {
-        CmdList.DestroyResource(PointLightsBuffer.Get());
+        CmdList.DiscardResource(PointLightsBuffer.Get());
 
         PointLightsBuffer = CreateConstantBuffer(PointLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
         if (!PointLightsBuffer)
@@ -184,13 +180,9 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
     if (PointLightsPosRad.SizeInBytes() > PointLightsPosRadBuffer->GetSize())
     {
-        CmdList.DestroyResource(PointLightsPosRadBuffer.Get());
+        CmdList.DiscardResource(PointLightsPosRadBuffer.Get());
 
-        PointLightsPosRadBuffer = CreateConstantBuffer(
-            PointLightsPosRad.CapacityInBytes(), 
-            BufferFlag_Default, 
-            EResourceState::VertexAndConstantBuffer, 
-            nullptr);
+        PointLightsPosRadBuffer = CreateConstantBuffer(PointLightsPosRad.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
         if (!PointLightsPosRadBuffer)
         {
             Debug::DebugBreak();
@@ -199,7 +191,7 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
     if (ShadowCastingPointLightsData.SizeInBytes() > ShadowCastingPointLightsBuffer->GetSize())
     {
-        CmdList.DestroyResource(ShadowCastingPointLightsBuffer.Get());
+        CmdList.DiscardResource(ShadowCastingPointLightsBuffer.Get());
 
         ShadowCastingPointLightsBuffer = CreateConstantBuffer(
             ShadowCastingPointLightsData.CapacityInBytes(), 
@@ -214,7 +206,7 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
     if (ShadowCastingPointLightsPosRad.SizeInBytes() > ShadowCastingPointLightsPosRadBuffer->GetSize())
     {
-        CmdList.DestroyResource(ShadowCastingPointLightsPosRadBuffer.Get());
+        CmdList.DiscardResource(ShadowCastingPointLightsPosRadBuffer.Get());
 
         ShadowCastingPointLightsPosRadBuffer = CreateConstantBuffer(
             ShadowCastingPointLightsPosRad.CapacityInBytes(), 

@@ -667,12 +667,20 @@ inline DXGI_FORMAT CastShaderResourceFormat(DXGI_FORMAT Format)
     }
 }
 
-inline UInt32 ConvertAccelerationStructureBuildFlags(UInt32 InFlags)
+inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(UInt32 InFlags)
 {
-    UInt32 Flags = 0;
-    if (InFlags & RayTracingStructureFlag_AllowUpdate)
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+    if (InFlags & RayTracingStructureBuildFlag_AllowUpdate)
     {
         Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
+    }
+    if (InFlags & RayTracingStructureBuildFlag_PreferFastTrace)
+    {
+        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+    }
+    if (InFlags & RayTracingStructureBuildFlag_PreferFastBuild)
+    {
+        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
     }
 
     return Flags;

@@ -72,9 +72,9 @@ public:
         CmdList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), Resource->GetResource(), ClearColor, 0, nullptr);
     }
 
-    FORCEINLINE void CopyBuffer(D3D12Resource* Destination, UInt64 DestinationOffset, D3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
+    FORCEINLINE void CopyBufferRegion(D3D12Resource* Destination, UInt64 DestinationOffset, D3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
     {
-        CmdList->CopyBufferRegion(Destination->GetResource(), DestinationOffset, Source->GetResource(), SourceOffset, SizeInBytes);
+        CopyBufferRegion(Destination->GetResource(), DestinationOffset, Source->GetResource(), SourceOffset, SizeInBytes);
     }
 
     FORCEINLINE void CopyBufferRegion(ID3D12Resource* Destination, UInt64 DestinationOffset, ID3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
@@ -93,10 +93,10 @@ public:
 
     FORCEINLINE void CopyResource(D3D12Resource* Destination, D3D12Resource* Source)
     {
-        CmdList->CopyResource(Destination->GetResource(), Source->GetResource());
+        CopyResource(Destination->GetResource(), Source->GetResource());
     }
 
-    FORCEINLINE void CopyNativeResource(ID3D12Resource* Destination, ID3D12Resource* Source)
+    FORCEINLINE void CopyResource(ID3D12Resource* Destination, ID3D12Resource* Source)
     {
         CmdList->CopyResource(Destination, Source);
     }

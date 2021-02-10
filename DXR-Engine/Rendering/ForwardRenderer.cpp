@@ -214,7 +214,7 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
 
         CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &TransformPerObject, 32);
 
-        CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+        CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End ForwardPass");

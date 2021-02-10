@@ -294,16 +294,18 @@ public:
         InsertCommand<CopyTextureRegionCommand>(Destination, Source, CopyTextureInfo);
     }
 
-    void DestroyResource(Resource* Resource)
+    void DiscardResource(Resource* Resource)
     {
         SAFEADDREF(Resource);
-        InsertCommand<DestroyResourceCommand>(Resource);
+        InsertCommand<DiscardResourceCommand>(Resource);
     }
 
-    void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry)
+    void BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update)
     {
-        SAFEADDREF(RayTracingGeometry);
-        InsertCommand<BuildRayTracingGeometryCommand>(RayTracingGeometry);
+        SAFEADDREF(Geometry);
+        SAFEADDREF(VertexBuffer);
+        SAFEADDREF(IndexBuffer);
+        InsertCommand<BuildRayTracingGeometryCommand>(Geometry, VertexBuffer, IndexBuffer, Update);
     }
 
     void BuildRayTracingScene(RayTracingScene* RayTracingScene)

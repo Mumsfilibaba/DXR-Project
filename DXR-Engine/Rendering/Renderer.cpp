@@ -384,6 +384,11 @@ void Renderer::Tick(const Scene& Scene)
     ShadowMapRenderer.RenderPointLightShadows(CmdList, LightSetup, Scene);
     ShadowMapRenderer.RenderDirectionalLightShadows(CmdList, LightSetup, Scene);
 
+    if (IsRayTracingSupported())
+    {
+        RayTracer.PreRender(CmdList, Resources, Scene);
+    }
+
     // Update camerabuffer
     CameraBufferDesc CamBuff;
     CamBuff.ViewProjection    = Scene.GetCamera()->GetViewProjectionMatrix();
@@ -1154,7 +1159,7 @@ Bool Renderer::InitShadingImage()
     ShadingRateSupport Support;
     CheckShadingRateSupport(Support);
 
-    if (Support.Tier != EShadingRateTier::Tier2 || Support.ShadingRateImageTileSize > 0)
+    if (Support.Tier != EShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)
     {
         return true;
     }
@@ -1207,8 +1212,6 @@ Bool Renderer::InitShadingImage()
 
 void Renderer::ResizeResources(UInt32 Width, UInt32 Height)
 {
-    gCmdListExecutor.WaitForGPU();
-
     if (!Resources.MainWindowViewport->Resize(Width, Height))
     {
         Debug::DebugBreak();

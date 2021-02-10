@@ -674,16 +674,16 @@ struct CopyTextureRegionCommand : public RenderCommand
 };
 
 // Destroy Resource RenderCommand
-struct DestroyResourceCommand : public RenderCommand
+struct DiscardResourceCommand : public RenderCommand
 {
-    DestroyResourceCommand(Resource* InResource)
+    DiscardResourceCommand(Resource* InResource)
         : Resource(InResource)
     {
     }
 
     virtual void Execute(ICommandContext& CmdContext) const override
     {
-        CmdContext.DestroyResource(Resource.Get());
+        CmdContext.DiscardResource(Resource.Get());
     }
 
     TSharedRef<Resource> Resource;
@@ -692,17 +692,23 @@ struct DestroyResourceCommand : public RenderCommand
 // Build RayTracing Geoemtry RenderCommand
 struct BuildRayTracingGeometryCommand : public RenderCommand
 {
-    BuildRayTracingGeometryCommand(RayTracingGeometry* InRayTracingGeometry)
+    BuildRayTracingGeometryCommand(RayTracingGeometry* InRayTracingGeometry, VertexBuffer* InVertexBuffer, IndexBuffer* InIndexBuffer, Bool InUpdate)
         : RayTracingGeometry(InRayTracingGeometry)
+        , VertexBuffer(InVertexBuffer)
+        , IndexBuffer(InIndexBuffer)
+        , Update(InUpdate)
     {
     }
 
     virtual void Execute(ICommandContext& CmdContext) const override
     {
-        CmdContext.BuildRayTracingGeometry(RayTracingGeometry.Get());
+        CmdContext.BuildRayTracingGeometry(RayTracingGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), Update);
     }
 
     TSharedRef<RayTracingGeometry> RayTracingGeometry;
+    TSharedRef<VertexBuffer> VertexBuffer;
+    TSharedRef<IndexBuffer>  IndexBuffer;
+    Bool Update;
 };
 
 // Build RayTracing Scene RenderCommand

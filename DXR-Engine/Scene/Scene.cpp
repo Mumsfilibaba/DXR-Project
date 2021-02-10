@@ -382,9 +382,7 @@ void Scene::AddMeshComponent(MeshComponent* Component)
     Command.CurrentActor = Component->GetOwningActor();
     Command.Geometry     = Component->Mesh->RTGeometry.Get();
     Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();
-    Command.VertexCount  = Component->Mesh->VertexCount;
     Command.IndexBuffer  = Component->Mesh->IndexBuffer.Get();
-    Command.IndexCount   = Component->Mesh->IndexCount;
     Command.Material     = Component->Material.Get();
     Command.Mesh         = Component->Mesh.Get();
     MeshDrawCommands.PushBack(Command);

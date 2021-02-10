@@ -26,7 +26,7 @@ Bool Mesh::Init(const MeshData& Data)
 
     if (IsRayTracingSupported())
     {
-        RTGeometry = CreateRayTracingGeometry(RayTracingStructureFlag_PreferFastTrace, VertexBuffer.Get(), IndexBuffer.Get());
+        RTGeometry = CreateRayTracingGeometry(RayTracingStructureBuildFlag_None, VertexBuffer.Get(), IndexBuffer.Get());
 
         VertexBufferSRV = CreateShaderResourceView(VertexBuffer.Get(), 0, VertexCount);
         if (!VertexBufferSRV)
@@ -47,7 +47,7 @@ Bool Mesh::Init(const MeshData& Data)
 
 Bool Mesh::BuildAccelerationStructure(CommandList& CmdList)
 {
-    CmdList.BuildRayTracingGeometry(RTGeometry.Get());
+    CmdList.BuildRayTracingGeometry(RTGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), true);
     return true;
 }
 

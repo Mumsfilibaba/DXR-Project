@@ -99,6 +99,8 @@ Bool D3D12Viewport::Resize(UInt32 InWidth, UInt32 InHeight)
 
     if ((InWidth != Width || InHeight != Height) && InWidth > 0 && InHeight > 0)
     {
+        CmdContext->ClearState();
+
         BackBuffers.Clear();
         BackBufferViews.Clear();
 

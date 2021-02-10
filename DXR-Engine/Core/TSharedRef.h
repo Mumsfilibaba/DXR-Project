@@ -178,31 +178,39 @@ public:
     }
 
     template<typename TOther>
-    FORCEINLINE Bool operator==(TOther* InPtr) const noexcept
+    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator==(TOther* RHS) const noexcept
     {
-        static_assert(std::is_convertible<TOther*, T*>());
-        return (RefPtr == InPtr);
+        return (RefPtr == RHS);
     }
 
     template<typename TOther>
-    FORCEINLINE Bool operator==(const TSharedRef<TOther>& Other) const noexcept
+    friend FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator==(TOther* LHS, const TSharedRef& RHS) noexcept
     {
-        static_assert(std::is_convertible<TOther*, T*>());
-        return (RefPtr == Other.RefPtr);
+        return (RHS == LHS);
     }
 
     template<typename TOther>
-    FORCEINLINE Bool operator!=(TOther* InPtr) const noexcept
+    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator==(const TSharedRef<TOther>& RHS) const noexcept
     {
-        static_assert(std::is_convertible<TOther*, T*>());
-        return (RefPtr != InPtr);
+        return (RefPtr == RHS.RefPtr);
     }
 
     template<typename TOther>
-    FORCEINLINE Bool operator!=(const TSharedRef<TOther>& Other) const noexcept
+    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator!=(TOther* RHS) const noexcept
     {
-        static_assert(std::is_convertible<TOther*, T*>());
-        return (RefPtr != Other.RefPtr);
+        return (RefPtr != RHS);
+    }
+
+    template<typename TOther>
+    friend FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator!=(TOther* LHS, const TSharedRef& RHS) noexcept
+    {
+        return (RHS != LHS);
+    }
+
+    template<typename TOther>
+    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator!=(const TSharedRef<TOther>& RHS) const noexcept
+    {
+        return (RefPtr != RHS.RefPtr);
     }
 
     FORCEINLINE operator Bool() const noexcept

@@ -105,7 +105,7 @@ Bool Sandbox::Init()
 
             CurrentScene->AddActor(NewActor);
 
-            NewComponent           = DBG_NEW MeshComponent(NewActor);
+            NewComponent = DBG_NEW MeshComponent(NewActor);
             NewComponent->Mesh     = SphereMesh;
             NewComponent->Material = MakeShared<Material>(MatProperties);
 
@@ -140,7 +140,7 @@ Bool Sandbox::Init()
     MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 1;
 
-    NewComponent           = DBG_NEW MeshComponent(NewActor);
+    NewComponent = DBG_NEW MeshComponent(NewActor);
     NewComponent->Mesh     = Mesh::Make(CubeMeshData);
     NewComponent->Material = MakeShared<Material>(MatProperties);
 
@@ -227,7 +227,7 @@ Bool Sandbox::Init()
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo       = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
-    NewComponent           = DBG_NEW MeshComponent(NewActor);
+    NewComponent = DBG_NEW MeshComponent(NewActor);
     NewComponent->Mesh     = Mesh::Make(MeshFactory::CreatePlane(10, 10));
     NewComponent->Material = MakeShared<Material>(MatProperties);
     NewComponent->Material->AlbedoMap    = BaseTexture;

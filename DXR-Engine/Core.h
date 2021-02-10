@@ -50,8 +50,8 @@ using namespace DirectX;
 #endif // ifndef FORCEINLINE
 
 // Bit-Mask helpers
-#define BIT(Bit)	(1 << Bit)
-#define FLAG(Bit)	BIT(Bit)
+#define BIT(Bit)  (1 << Bit)
+#define FLAG(Bit) BIT(Bit)
 
 inline Bool HasFlag(UInt32 Mask, UInt32 Flag)
 {
@@ -65,8 +65,8 @@ inline Bool HasFlag(UInt32 Mask, UInt32 Flag)
 
 /*
 * String preprocessor handling
-*	There are two versions of PREPROCESS_CONCAT, this is so that you can use __LINE__, __FILE__ etc. within the macro,
-*	therefore always use PREPROCESS_CONCAT
+*   There are two versions of PREPROCESS_CONCAT, this is so that you can use __LINE__, __FILE__ etc. within the macro,
+*   therefore always use PREPROCESS_CONCAT
 */
 
 #define _PREPROCESS_CONCAT(x, y) x##y

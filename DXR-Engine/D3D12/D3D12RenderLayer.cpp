@@ -634,12 +634,41 @@ StructuredBuffer* D3D12RenderLayer::CreateStructuredBuffer(UInt32 Stride, UInt32
 
 RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer)
 {
-    return nullptr;
+    D3D12VertexBuffer* DxVertexBuffer = static_cast<D3D12VertexBuffer*>(VertexBuffer);
+    D3D12IndexBuffer*  DxIndexBuffer  = static_cast<D3D12IndexBuffer*>(IndexBuffer);
+
+    TSharedRef<D3D12RayTracingGeometry> Geometry = DBG_NEW D3D12RayTracingGeometry(Device, Flags);
+    Geometry->VertexBuffer = MakeSharedRef<D3D12VertexBuffer>(DxVertexBuffer);
+    Geometry->IndexBuffer  = MakeSharedRef<D3D12IndexBuffer>(DxIndexBuffer);
+    
+    DirectCmdContext->Begin();
+    
+    if (!Geometry->Build(*DirectCmdContext, false))
+    {
+        Debug::DebugBreak();
+        Geometry.Reset();
+    }
+
+    DirectCmdContext->End();
+
+    return Geometry.ReleaseOwnership();
 }
 
-RayTracingScene* D3D12RenderLayer::CreateRayTracingScene()
+RayTracingScene* D3D12RenderLayer::CreateRayTracingScene(UInt32 Flags, const TArray<RayTracingGeometryInstance>& Instances)
 {
-    return nullptr;
+    TSharedRef<D3D12RayTracingScene> Scene = DBG_NEW D3D12RayTracingScene(Device, Flags);
+
+    DirectCmdContext->Begin();
+
+    if (!Scene->Build(*DirectCmdContext, Instances, false))
+    {
+        Debug::DebugBreak();
+        Scene.Reset();
+    }
+
+    DirectCmdContext->End();
+
+    return Scene.ReleaseOwnership();
 }
 
 ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo)
@@ -1582,8 +1611,7 @@ void D3D12RenderLayer::CheckRayTracingSupport(RayTracingSupport& OutSupport)
             OutSupport.Tier = ERayTracingTier::Tier1;
         }
 
-        // Defined in spec
-        OutSupport.MaxRecursionDepth = 31;
+        OutSupport.MaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
     }
     else
     {

@@ -2,7 +2,6 @@
 #include "RenderingCore.h"
 #include "Resources.h"
 #include "ResourceViews.h"
-#include "RayTracing.h"
 
 class ICommandContext : public RefCountedObject
 {
@@ -66,10 +65,10 @@ public:
     virtual void CopyTexture(Texture* Destination, Texture* Source) = 0;
     virtual void CopyTextureRegion(Texture* Destination, Texture* Source, const CopyTextureInfo& CopyTextureInfo) = 0;
 
-    virtual void DestroyResource(class Resource* Resource) = 0;
+    virtual void DiscardResource(class Resource* Resource) = 0;
 
-    virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) = 0;
-    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene)          = 0;
+    virtual void BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update) = 0;
+    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) = 0;
 
     virtual void GenerateMips(Texture* Texture) = 0;
 

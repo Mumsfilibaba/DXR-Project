@@ -3,15 +3,17 @@
 
 #include "RenderLayer/CommandList.h"
 
+#include "Scene/Scene.h"
+
 class RayTracer
 {
 public:
     RayTracer()  = default;
     ~RayTracer() = default;
 
-    Bool Init(FrameResources& Resource);
+    Bool Init();
 
-    void PreRender(CommandList& CmdList, FrameResources& Resources);
+    void PreRender(CommandList& CmdList, FrameResources& Resources, const Scene& Scene);
 
 private:
     TSharedRef<RayTracingPipelineState> Pipeline;

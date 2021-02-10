@@ -5,6 +5,7 @@
 #include "Resources.h"
 #include "ResourceViews.h"
 #include "CommandList.h"
+#include "GeometryInstance.h"
 
 struct ResourceData;
 struct ClearValue;
@@ -124,7 +125,7 @@ public:
     virtual ConstantBuffer* CreateConstantBuffer(UInt32 Size, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
     virtual StructuredBuffer* CreateStructuredBuffer(UInt32 Stride, UInt32 NumElements, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
 
-    virtual RayTracingScene* CreateRayTracingScene() = 0;
+    virtual RayTracingScene* CreateRayTracingScene(UInt32 Flags, const TArray<RayTracingGeometryInstance>& Instances) = 0;
     virtual RayTracingGeometry* CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer) = 0;
 
     virtual ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) = 0;
@@ -301,9 +302,9 @@ FORCEINLINE StructuredBuffer* CreateStructuredBuffer(
     return gRenderLayer->CreateStructuredBuffer(Stride, NumElements, Flags, InitialState, InitialData);
 }
 
-FORCEINLINE RayTracingScene* CreateRayTracingScene()
+FORCEINLINE RayTracingScene* CreateRayTracingScene(UInt32 Flags, const TArray<RayTracingGeometryInstance>& Instances)
 {
-    return gRenderLayer->CreateRayTracingScene();
+    return gRenderLayer->CreateRayTracingScene(Flags, Instances);
 }
 
 FORCEINLINE RayTracingGeometry* CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer)

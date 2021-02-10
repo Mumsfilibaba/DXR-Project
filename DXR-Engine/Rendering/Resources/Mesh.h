@@ -4,7 +4,6 @@
 #include <Containers/SharedPtr.h>
 
 #include "RenderLayer/Resources.h"
-#include "RenderLayer/RayTracing.h"
 #include "RenderLayer/CommandList.h"
 
 #include "Scene/AABB.h"

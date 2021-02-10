@@ -8,6 +8,7 @@
 #include "D3D12PipelineState.h"
 #include "D3D12ShaderCompiler.h"
 #include "D3D12Shader.h"
+#include "D3D12RayTracing.h"
 
 #if D3D12_ENABLE_PIX_MARKERS
     #include <pix3.h>
@@ -392,13 +393,6 @@ void D3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource,
 
         Barriers.EmplaceBack(Barrier);
     }
-
-    return;
-}
-
-void D3D12ResourceBarrierBatcher::AddTransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
-{
-    AddTransitionBarrier(Resource->GetResource(), BeforeState, AfterState);
 }
 
 Bool D3D12GPUResourceUploader::Reserve(UInt32 InSizeInBytes)
@@ -436,20 +430,14 @@ Bool D3D12GPUResourceUploader::Reserve(UInt32 InSizeInBytes)
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    HRESULT Result = Device->CreateCommitedResource(
-        &HeapProperties,
-        D3D12_HEAP_FLAG_NONE,
-        &Desc, 
-        D3D12_RESOURCE_STATE_GENERIC_READ, 
-        nullptr,
-        IID_PPV_ARGS(&Resource));
+    HRESULT Result = Device->CreateCommitedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&Resource));
     if (SUCCEEDED(Result))
     {
         Resource->SetName(L"[D3D12GPUResourceUploader] Buffer");
         Resource->Map(0, nullptr, reinterpret_cast<Void**>(&MappedMemory));
         
-        SizeInBytes        = InSizeInBytes;
-        OffsetInBytes    = 0;
+        SizeInBytes   = InSizeInBytes;
+        OffsetInBytes = 0;
         return true;
     }
     else
@@ -474,7 +462,7 @@ void D3D12GPUResourceUploader::Reset()
     OffsetInBytes = 0;
 }
 
-Byte* D3D12GPUResourceUploader::LinearAllocate(UInt32 InSizeInBytes)
+D3D12UploadAllocation D3D12GPUResourceUploader::LinearAllocate(UInt32 InSizeInBytes)
 {
     constexpr UInt32 EXTRA_BYTES_ALLOCATED = 1024;
 
@@ -484,9 +472,11 @@ Byte* D3D12GPUResourceUploader::LinearAllocate(UInt32 InSizeInBytes)
         Reserve(NeededSize + EXTRA_BYTES_ALLOCATED);
     }
 
-    Byte* ResultPtr = MappedMemory + OffsetInBytes;
+    D3D12UploadAllocation Allocation;
+    Allocation.MappedPtr      = MappedMemory + OffsetInBytes;
+    Allocation.ResourceOffset = OffsetInBytes;
     OffsetInBytes += InSizeInBytes;
-    return ResultPtr;
+    return Allocation;
 }
 
 Bool D3D12CommandBatch::Init()
@@ -621,6 +611,23 @@ Bool D3D12CommandContext::Init()
     return true;
 }
 
+void D3D12CommandContext::UpdateBuffer(D3D12Resource* Resource, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData)
+{
+    if (SizeInBytes != 0)
+    {
+        FlushResourceBarriers();
+
+        D3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
+
+        D3D12UploadAllocation Allocation = GpuResourceUploader.LinearAllocate((UInt32)SizeInBytes);
+        Memory::Memcpy(Allocation.MappedPtr, SourceData, SizeInBytes);
+
+        CmdList.CopyBufferRegion(Resource->GetResource(), OffsetInBytes, GpuResourceUploader.GetGpuResource(), Allocation.ResourceOffset, SizeInBytes);
+
+        CmdBatch->AddInUseResource(Resource);
+    }
+}
+
 void D3D12CommandContext::Begin()
 {
     VALIDATE(IsReady == false);
@@ -637,13 +644,15 @@ void D3D12CommandContext::Begin()
 
     if (!CmdBatch->Reset())
     {
+        Debug::DebugBreak();
         return;
     }
 
-    ClearState();
+    InternalClearState();
 
     if (!CmdList.Reset(CmdBatch->GetCommandAllocator()))
     {
+        Debug::DebugBreak();
         return;
     }
 
@@ -654,10 +663,21 @@ void D3D12CommandContext::End()
 {
     VALIDATE(IsReady == true);
 
-    BarrierBatcher.FlushBarriers(CmdList);
+    // Reset state
+    FlushResourceBarriers();
 
+    CmdBatch = nullptr;
+    IsReady  = false;
+
+    CurrentGraphicsPipelineState.Reset();
+    CurrentGraphicsRootSignature.Reset();
+    CurrentComputePipelineState.Reset();
+    CurrentComputeRootSignature.Reset();
+
+    // Execute
     if (!CmdList.Close())
     {
+        Debug::DebugBreak();
         return;
     }
 
@@ -666,24 +686,16 @@ void D3D12CommandContext::End()
     const UInt64 CurrentFenceValue = ++FenceValue;
     if (!CmdQueue.SignalFence(Fence, CurrentFenceValue))
     {
+        Debug::DebugBreak();
         return;
     }
-
-    // Reset state
-    CmdBatch = nullptr;
-    IsReady  = false;
-
-    CurrentGraphicsPipelineState.Reset();
-    CurrentGraphicsRootSignature.Reset();
-    CurrentComputePipelineState.Reset();
-    CurrentComputeRootSignature.Reset();
 }
 
 void D3D12CommandContext::ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor)
 {
     VALIDATE(RenderTargetView != nullptr);
 
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
     D3D12RenderTargetView* DxRenderTargetView = static_cast<D3D12RenderTargetView*>(RenderTargetView);
     CmdBatch->AddInUseResource(DxRenderTargetView);
@@ -695,7 +707,7 @@ void D3D12CommandContext::ClearDepthStencilView(DepthStencilView* DepthStencilVi
 {
     VALIDATE(DepthStencilView != nullptr);
 
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
     D3D12DepthStencilView* DxDepthStencilView = static_cast<D3D12DepthStencilView*>(DepthStencilView);
     CmdBatch->AddInUseResource(DxDepthStencilView);
@@ -705,7 +717,7 @@ void D3D12CommandContext::ClearDepthStencilView(DepthStencilView* DepthStencilVi
 
 void D3D12CommandContext::ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4])
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
     
     D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessView);
     CmdBatch->AddInUseResource(DxUnorderedAccessView);
@@ -736,7 +748,7 @@ void D3D12CommandContext::SetShadingRate(EShadingRate ShadingRate)
 
 void D3D12CommandContext::SetShadingRateImage(Texture2D* ShadingImage)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
     
     if (ShadingImage)
     {
@@ -979,7 +991,7 @@ void D3D12CommandContext::BindConstantBuffers(EShaderStage ShaderStage, Constant
 
 void D3D12CommandContext::ResolveTexture(Texture* Destination, Texture* Source)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
  
     D3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
     D3D12BaseTexture* DxSource      = D3D12TextureCast(Source);
@@ -997,31 +1009,17 @@ void D3D12CommandContext::ResolveTexture(Texture* Destination, Texture* Source)
 
 void D3D12CommandContext::UpdateBuffer(Buffer* Destination, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData)
 {
-    if (SizeInBytes != 0)
-    {
-        BarrierBatcher.FlushBarriers(CmdList);
+    D3D12BaseBuffer* DxDestination = D3D12BufferCast(Destination);
+    UpdateBuffer(DxDestination->GetResource(), OffsetInBytes, SizeInBytes, SourceData);
 
-        D3D12BaseBuffer* DxDestination = D3D12BufferCast(Destination);
-        D3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
-        
-        //TODO: Maybe is not needed, investigate
-        const UInt32 AlignedSizeInBytes = Math::AlignUp<UInt32>(UInt32(SizeInBytes), 16u);
-        Byte* GpuSourceMemory = GpuResourceUploader.LinearAllocate(AlignedSizeInBytes);
-
-        const UInt32 GpuSourceOffsetInBytes = GpuResourceUploader.GetOffsetInBytesFromPtr(GpuSourceMemory);
-        Memory::Memcpy(GpuSourceMemory, SourceData, SizeInBytes);
-
-        CmdList.CopyBufferRegion(DxDestination->GetResource()->GetResource(), OffsetInBytes, GpuResourceUploader.GetGpuResource(), GpuSourceOffsetInBytes, SizeInBytes);
-        
-        CmdBatch->AddInUseResource(Destination);
-    }
+    CmdBatch->AddInUseResource(Destination);
 }
 
 void D3D12CommandContext::UpdateTexture2D(Texture2D* Destination, UInt32 Width, UInt32 Height, UInt32 MipLevel, const Void* SourceData)
 {
     if (Width > 0 && Height > 0)
     {
-        BarrierBatcher.FlushBarriers(CmdList);
+        FlushResourceBarriers();
 
         D3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
         const DXGI_FORMAT NativeFormat  = DxDestination->GetNativeFormat();
@@ -1030,13 +1028,12 @@ void D3D12CommandContext::UpdateTexture2D(Texture2D* Destination, UInt32 Width, 
         const UInt32 SizeInBytes = Height * RowPitch;
     
         D3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
-        Byte* SourceMemory = GpuResourceUploader.LinearAllocate(SizeInBytes);
+        D3D12UploadAllocation Allocation = GpuResourceUploader.LinearAllocate(SizeInBytes);
 
-        const UInt32 SourceOffsetInBytes = GpuResourceUploader.GetOffsetInBytesFromPtr(SourceMemory);
         const Byte* Source = reinterpret_cast<const Byte*>(SourceData);
         for (UInt32 y = 0; y < Height; y++)
         {
-            Memory::Memcpy(SourceMemory + (y * RowPitch), Source + (y * Width * Stride), Width * Stride);
+            Memory::Memcpy(Allocation.MappedPtr + (y * RowPitch), Source + (y * Width * Stride), Width * Stride);
         }
 
         // Copy to Dest
@@ -1050,6 +1047,7 @@ void D3D12CommandContext::UpdateTexture2D(Texture2D* Destination, UInt32 Width, 
         SourceLocation.PlacedFootprint.Footprint.Height   = Height;
         SourceLocation.PlacedFootprint.Footprint.Depth    = 1;
         SourceLocation.PlacedFootprint.Footprint.RowPitch = RowPitch;
+        SourceLocation.PlacedFootprint.Offset             = Allocation.ResourceOffset;
 
         // TODO: Miplevel may not be the correct subresource
         D3D12_TEXTURE_COPY_LOCATION DestLocation;
@@ -1067,11 +1065,11 @@ void D3D12CommandContext::UpdateTexture2D(Texture2D* Destination, UInt32 Width, 
 
 void D3D12CommandContext::CopyBuffer(Buffer* Destination, Buffer* Source, const CopyBufferInfo& CopyInfo)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
     D3D12BaseBuffer* DxDestination = D3D12BufferCast(Destination);
     D3D12BaseBuffer* DxSource      = D3D12BufferCast(Source);
-    CmdList.CopyBuffer(DxDestination->GetResource(), CopyInfo.DestinationOffset, DxSource->GetResource(), CopyInfo.SourceOffset, CopyInfo.SizeInBytes);
+    CmdList.CopyBufferRegion(DxDestination->GetResource(), CopyInfo.DestinationOffset, DxSource->GetResource(), CopyInfo.SourceOffset, CopyInfo.SizeInBytes);
 
     CmdBatch->AddInUseResource(Destination);
     CmdBatch->AddInUseResource(Source);
@@ -1079,7 +1077,7 @@ void D3D12CommandContext::CopyBuffer(Buffer* Destination, Buffer* Source, const 
 
 void D3D12CommandContext::CopyTexture(Texture* Destination, Texture* Source)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
     D3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
     D3D12BaseTexture* DxSource      = D3D12TextureCast(Source);
@@ -1118,7 +1116,7 @@ void D3D12CommandContext::CopyTextureRegion(Texture* Destination, Texture* Sourc
     DestinationLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     DestinationLocation.SubresourceIndex = CopyInfo.Destination.SubresourceIndex;
 
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
     CmdList.CopyTextureRegion(&DestinationLocation, CopyInfo.Destination.x, CopyInfo.Destination.y, CopyInfo.Destination.z, &SourceLocation, &SourceBox);
 
@@ -1126,18 +1124,25 @@ void D3D12CommandContext::CopyTextureRegion(Texture* Destination, Texture* Sourc
     CmdBatch->AddInUseResource(Source);
 }
 
-void D3D12CommandContext::DestroyResource(Resource* Resource)
+void D3D12CommandContext::DiscardResource(Resource* Resource)
 {
     CmdBatch->AddInUseResource(Resource);
 }
 
-void D3D12CommandContext::BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry)
+void D3D12CommandContext::BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update)
 {
-    UNREFERENCED_VARIABLE(RayTracingGeometry);
+    FlushResourceBarriers();
 
-    // TODO: Implement this function
-    BarrierBatcher.FlushBarriers(CmdList);
-    CmdBatch->AddInUseResource(RayTracingGeometry);
+    D3D12VertexBuffer* DxVertexBuffer   = static_cast<D3D12VertexBuffer*>(VertexBuffer);
+    D3D12IndexBuffer*  DxIndexBuffer    = static_cast<D3D12IndexBuffer*>(IndexBuffer);
+    D3D12RayTracingGeometry* DxGeometry = static_cast<D3D12RayTracingGeometry*>(Geometry);
+    DxGeometry->VertexBuffer = DxVertexBuffer;
+    DxGeometry->IndexBuffer  = DxIndexBuffer;
+    DxGeometry->Build(*this, Update);
+
+    CmdBatch->AddInUseResource(Geometry);
+    CmdBatch->AddInUseResource(VertexBuffer);
+    CmdBatch->AddInUseResource(IndexBuffer);
 }
 
 void D3D12CommandContext::BuildRayTracingScene(RayTracingScene* RayTracingScene)
@@ -1145,7 +1150,7 @@ void D3D12CommandContext::BuildRayTracingScene(RayTracingScene* RayTracingScene)
     UNREFERENCED_VARIABLE(RayTracingScene);
 
     // TODO: Implement this function
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
     CmdBatch->AddInUseResource(RayTracingScene);
 }
 
@@ -1159,18 +1164,8 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
     
     VALIDATE(Desc.MipLevels > 1);
 
-    D3D12_HEAP_PROPERTIES HeapProperties;
-    Memory::Memzero(&HeapProperties);
-
-    HeapProperties.Type                 = DxTexture->GetResource()->GetHeapType();
-    HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    HeapProperties.CreationNodeMask     = 0;
-    HeapProperties.VisibleNodeMask      = 0;
-
-    TComPtr<ID3D12Resource> StagingTexture;
-    HRESULT Result = Device->CreateCommitedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&StagingTexture));
-    if (FAILED(Result))
+    TSharedRef<D3D12Resource> StagingTexture = DBG_NEW D3D12Resource(Device, Desc, DxTexture->GetResource()->GetHeapType());
+    if (!StagingTexture->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
     {
         LOG_ERROR("[D3D12CommandContext] Failed to create StagingTexture for GenerateMips");
         return;
@@ -1239,7 +1234,7 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
         }
 
         const D3D12_CPU_DESCRIPTOR_HANDLE UavHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(UavStartDescriptorHandleIndex + i);
-        Device->CreateUnorderedAccessView(StagingTexture.Get(), nullptr, &UavDesc, UavHandle_CPU);
+        Device->CreateUnorderedAccessView(StagingTexture->GetResource(), nullptr, &UavDesc, UavHandle_CPU);
     }
 
     for (UInt32 i = Desc.MipLevels; i < UavDescriptorHandleCount; i++)
@@ -1258,15 +1253,15 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
     }
 
     // We assume the destination is in D3D12_RESOURCE_STATE_COPY_DEST
-    BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    BarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-    BarrierBatcher.FlushBarriers(CmdList);
+    TransitionResource(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+    FlushResourceBarriers();
 
-    CmdList.CopyNativeResource(StagingTexture.Get(), DxTexture->GetResource()->GetResource());
+    CmdList.CopyResource(StagingTexture.Get(), DxTexture->GetResource());
 
-    BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-    BarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    BarrierBatcher.FlushBarriers(CmdList);
+    TransitionResource(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    FlushResourceBarriers();
 
     if (IsTextureCube)
     {
@@ -1313,18 +1308,18 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
         const UInt32 ThreadsY = Math::DivideByMultiple(DstHeight, ThreadCount);
         CmdList.Dispatch(ThreadsX, ThreadsY, ThreadsZ);
 
-        CmdList.UnorderedAccessBarrier(StagingTexture.Get());
+        UnorderedAccessBarrier(StagingTexture.Get());
 
-        BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-        BarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        BarrierBatcher.FlushBarriers(CmdList);
+        TransitionResource(DxTexture->GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+        TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        FlushResourceBarriers();
 
         // TODO: Copy only miplevels (Maybe faster?)
-        CmdList.CopyNativeResource(DxTexture->GetResource()->GetResource(), StagingTexture.Get());
+        CmdList.CopyResource(DxTexture->GetResource(), StagingTexture.Get());
 
-        BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        BarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        BarrierBatcher.FlushBarriers(CmdList);
+        TransitionResource(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        FlushResourceBarriers();
 
         DstWidth  = DstWidth / 16;
         DstHeight = DstHeight / 16;
@@ -1333,11 +1328,11 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
         RemainingMiplevels -= MipLevelsPerDispatch;
     }
 
-    BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-    BarrierBatcher.FlushBarriers(CmdList);
+    TransitionResource(DxTexture->GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    FlushResourceBarriers();
 
     CmdBatch->AddInUseResource(Texture);
-    CmdBatch->AddInUseResource(StagingTexture);
+    CmdBatch->AddInUseResource(StagingTexture.Get());
 }
 
 void D3D12CommandContext::TransitionTexture(Texture* Texture, EResourceState BeforeState, EResourceState AfterState)
@@ -1346,7 +1341,7 @@ void D3D12CommandContext::TransitionTexture(Texture* Texture, EResourceState Bef
     const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);
 
     D3D12BaseTexture* Resource = D3D12TextureCast(Texture);
-    BarrierBatcher.AddTransitionBarrier(Resource->GetResource(), DxBeforeState, DxAfterState);
+    TransitionResource(Resource->GetResource(), DxBeforeState, DxAfterState);
 
     CmdBatch->AddInUseResource(Texture);
 }
@@ -1357,7 +1352,7 @@ void D3D12CommandContext::TransitionBuffer(Buffer* Buffer, EResourceState Before
     const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);
     
     D3D12BaseBuffer* Resource = D3D12BufferCast(Buffer);
-    BarrierBatcher.AddTransitionBarrier(Resource->GetResource(), DxBeforeState, DxAfterState);
+    TransitionResource(Resource->GetResource(), DxBeforeState, DxAfterState);
 
     CmdBatch->AddInUseResource(Buffer);
 }
@@ -1365,14 +1360,15 @@ void D3D12CommandContext::TransitionBuffer(Buffer* Buffer, EResourceState Before
 void D3D12CommandContext::UnorderedAccessTextureBarrier(Texture* Texture)
 {
     D3D12BaseTexture* Resource = D3D12TextureCast(Texture);
-    BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetResource());
+    UnorderedAccessBarrier(Resource->GetResource());
 
     CmdBatch->AddInUseResource(Texture);
 }
 
 void D3D12CommandContext::Draw(UInt32 VertexCount, UInt32 StartVertexLocation)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    // TODO: Commit current state
+    FlushResourceBarriers();
 
     D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
@@ -1382,7 +1378,9 @@ void D3D12CommandContext::Draw(UInt32 VertexCount, UInt32 StartVertexLocation)
 
 void D3D12CommandContext::DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    // TODO: Commit current state
+
+    FlushResourceBarriers();
 
     D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
@@ -1392,7 +1390,9 @@ void D3D12CommandContext::DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocati
 
 void D3D12CommandContext::DrawInstanced(UInt32 VertexCountPerInstance, UInt32 InstanceCount, UInt32 StartVertexLocation, UInt32 StartInstanceLocation)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    // TODO: Commit current state
+
+    FlushResourceBarriers();
 
     D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
@@ -1407,7 +1407,9 @@ void D3D12CommandContext::DrawIndexedInstanced(
     UInt32 BaseVertexLocation, 
     UInt32 StartInstanceLocation)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    // TODO: Commit current state
+
+    FlushResourceBarriers();
     
     D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
@@ -1417,7 +1419,9 @@ void D3D12CommandContext::DrawIndexedInstanced(
 
 void D3D12CommandContext::Dispatch(UInt32 ThreadGroupCountX, UInt32 ThreadGroupCountY, UInt32 ThreadGroupCountZ)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    // TODO: Commit current state
+
+    FlushResourceBarriers();
     
     D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
@@ -1430,7 +1434,7 @@ void D3D12CommandContext::DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth
     // TODO: Finish this function
     VALIDATE(false);
 
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
     D3D12_DISPATCH_RAYS_DESC RayDispatchDesc;
     Memory::Memzero(&RayDispatchDesc);
@@ -1444,14 +1448,14 @@ void D3D12CommandContext::DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth
 
 void D3D12CommandContext::ClearState()
 {
-    VertexBufferState.Reset();
-    RenderTargetState.Reset();
-    ShaderDescriptorState.Reset();
+    Flush();
 
-    CurrentGraphicsPipelineState.Reset();
-    CurrentGraphicsRootSignature.Reset();
-    CurrentComputePipelineState.Reset();
-    CurrentComputeRootSignature.Reset();
+    for (D3D12CommandBatch& Batch : CmdBatches)
+    {
+        Batch.Reset();
+    }
+
+    InternalClearState();
 }
 
 void D3D12CommandContext::Flush()
@@ -1473,4 +1477,16 @@ void D3D12CommandContext::InsertMarker(const std::string& Message)
 #else
     UNREFERENCED_VARIABLE(Message);
 #endif
+}
+
+void D3D12CommandContext::InternalClearState()
+{
+    VertexBufferState.Reset();
+    RenderTargetState.Reset();
+    ShaderDescriptorState.Reset();
+
+    CurrentGraphicsPipelineState.Reset();
+    CurrentGraphicsRootSignature.Reset();
+    CurrentComputePipelineState.Reset();
+    CurrentComputeRootSignature.Reset();
 }

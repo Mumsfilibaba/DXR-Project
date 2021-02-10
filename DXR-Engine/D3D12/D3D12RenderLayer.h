@@ -126,7 +126,7 @@ public:
         EResourceState InitialState, 
         const ResourceData* InitalData) override final;
 
-    virtual class RayTracingScene* CreateRayTracingScene() override final;
+    virtual class RayTracingScene* CreateRayTracingScene(UInt32 Flags, const TArray<RayTracingGeometryInstance>& Instances) override final;
     virtual class RayTracingGeometry* CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer) override final;
 
     virtual ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) override final;

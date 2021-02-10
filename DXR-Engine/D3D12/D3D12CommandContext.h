@@ -228,6 +228,12 @@ private:
     Bool IsSamplersDirty  = false;
 };
 
+struct D3D12UploadAllocation
+{
+    Byte*  MappedPtr      = nullptr;
+    UInt64 ResourceOffset = 0;
+};
+
 class D3D12GPUResourceUploader
 {
 public:
@@ -244,16 +250,11 @@ public:
     Bool Reserve(UInt32 InSizeInBytes);
     void Reset();
 
-    Byte* LinearAllocate(UInt32 SizeInBytes);
+    D3D12UploadAllocation LinearAllocate(UInt32 SizeInBytes);
 
     FORCEINLINE ID3D12Resource* GetGpuResource() const
     {
         return Resource.Get();
-    }
-
-    FORCEINLINE UInt32 GetOffsetInBytesFromPtr(Byte* Ptr) const
-    {
-        return UInt32(Ptr - MappedMemory);
     }
 
     FORCEINLINE UInt32 GetSizeInBytes() const
@@ -305,7 +306,7 @@ public:
         }
     }
 
-    FORCEINLINE void AddInUseResource(Resource* InResource)
+    void AddInUseResource(Resource* InResource)
     {
         if (InResource)
         {
@@ -313,7 +314,15 @@ public:
         }
     }
 
-    FORCEINLINE void AddInUseResource(const TComPtr<ID3D12Resource>& InResource)
+    void AddInUseResource(D3D12Resource* InResource)
+    {
+        if (InResource)
+        {
+            DxResources.EmplaceBack(MakeSharedRef<D3D12Resource>(InResource));
+        }
+    }
+
+    void AddInUseResource(const TComPtr<ID3D12Resource>& InResource)
     {
         if (InResource)
         {
@@ -350,22 +359,20 @@ private:
     TSharedRef<D3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
     TSharedRef<D3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
     
-    TArray<TSharedRef<Resource>>    Resources;
-    TArray<TComPtr<ID3D12Resource>> NativeResources;
+    TArray<TSharedRef<D3D12Resource>> DxResources;
+    TArray<TSharedRef<Resource>>      Resources;
+    TArray<TComPtr<ID3D12Resource>>   NativeResources;
 };
 
 class D3D12ResourceBarrierBatcher
 {
 public:
-    D3D12ResourceBarrierBatcher()
-        : Barriers()
-    {
-    }
+    D3D12ResourceBarrierBatcher()  = default;
+    ~D3D12ResourceBarrierBatcher() = default;
 
     void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
-    void AddTransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
 
-    void AddUnorderedAccessBarrier(D3D12Resource* Resource)
+    void AddUnorderedAccessBarrier(ID3D12Resource* Resource)
     {
         VALIDATE(Resource != nullptr);
 
@@ -373,7 +380,7 @@ public:
         Memory::Memzero(&Barrier);
 
         Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-        Barrier.UAV.pResource = Resource->GetResource();
+        Barrier.UAV.pResource = Resource;
 
         Barriers.EmplaceBack(Barrier);
     }
@@ -409,8 +416,30 @@ public:
 
     Bool Init();
 
-    D3D12CommandQueueHandle& GetQueue() { return CmdQueue; }
+    D3D12CommandQueueHandle& GetQueue()      { return CmdQueue; }
     D3D12CommandListHandle& GetCommandList() { return CmdList; }
+
+    void UpdateBuffer(D3D12Resource* Resource, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData);
+
+    void UnorderedAccessBarrier(D3D12Resource* Resource)
+    {
+        BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetResource());
+    }
+
+    void TransitionResource(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
+    {
+        BarrierBatcher.AddTransitionBarrier(Resource->GetResource(), BeforeState, AfterState);
+    }
+
+    void FlushResourceBarriers()
+    {
+        BarrierBatcher.FlushBarriers(CmdList);
+    }
+
+    void DiscardResource(D3D12Resource* Resource)
+    {
+        CmdBatch->AddInUseResource(Resource);
+    }
 
 public:
     virtual void Begin() override final;
@@ -473,9 +502,9 @@ public:
     virtual void CopyTexture(Texture* Destination, Texture* Source) override final;
     virtual void CopyTextureRegion(Texture* Destination, Texture* Source, const CopyTextureInfo& CopyTextureInfo) override final;
 
-    virtual void DestroyResource(class Resource* Resource) override final;
+    virtual void DiscardResource(class Resource* Resource) override final;
 
-    virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) override final;
+    virtual void BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update) override final;
     virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) override final;
 
     virtual void GenerateMips(Texture* Texture) override final;
@@ -505,6 +534,8 @@ public:
     virtual void InsertMarker(const std::string& Message) override final;
 
 private:
+    void InternalClearState();
+
     D3D12CommandListHandle  CmdList;
     D3D12FenceHandle        Fence;
     D3D12CommandQueueHandle CmdQueue;

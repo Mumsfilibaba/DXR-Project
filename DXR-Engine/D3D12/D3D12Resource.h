@@ -33,6 +33,7 @@ public:
     D3D12_RESOURCE_STATES GetState() const { return ResourceState; }
     
     const D3D12_RESOURCE_DESC& GetDesc() const { return Desc; }
+    UInt64 GetWidth() const { return Desc.Width; }
 
 private:
     TComPtr<ID3D12Resource>   DxResource;

@@ -49,11 +49,14 @@ public:
     const XMFLOAT4X4& GetMatrix() const { return Matrix; }
     const XMFLOAT4X4& GetMatrixInverse() const { return MatrixInv; }
 
+    const XMFLOAT3X4& GetTinyMatrix() const { return TinyMatrix; }
+
 private:
     void CalculateMatrix();
 
     XMFLOAT4X4 Matrix;
     XMFLOAT4X4 MatrixInv;
+    XMFLOAT3X4 TinyMatrix;
     XMFLOAT3   Translation;
     XMFLOAT3   Scale;
     XMFLOAT3   Rotation;
