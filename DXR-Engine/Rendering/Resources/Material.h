@@ -52,21 +52,21 @@ public:
     const MaterialProperties& GetMaterialProperties() const { return Properties; }
 
 public:
-    TSharedRef<Texture2D> AlbedoMap;
-    TSharedRef<Texture2D> NormalMap;
-    TSharedRef<Texture2D> RoughnessMap;
-    TSharedRef<Texture2D> HeightMap;
-    TSharedRef<Texture2D> AOMap;
-    TSharedRef<Texture2D> MetallicMap;
-    TSharedRef<Texture2D> AlphaMask;
+    TRef<Texture2D> AlbedoMap;
+    TRef<Texture2D> NormalMap;
+    TRef<Texture2D> RoughnessMap;
+    TRef<Texture2D> HeightMap;
+    TRef<Texture2D> AOMap;
+    TRef<Texture2D> MetallicMap;
+    TRef<Texture2D> AlphaMask;
 
 private:
     std::string	DebugName;
     Bool MaterialBufferIsDirty = true;
     
     MaterialProperties         Properties;
-    TSharedRef<ConstantBuffer> MaterialBuffer;
-    TSharedRef<SamplerState>   Sampler;
+    TRef<ConstantBuffer> MaterialBuffer;
+    TRef<SamplerState>   Sampler;
 
     mutable TStaticArray<ShaderResourceView*, 7> ShaderResourceViews;
 };

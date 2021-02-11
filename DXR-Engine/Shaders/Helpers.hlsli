@@ -46,8 +46,8 @@ uint DivideByMultiple(uint Value, uint Alignment)
 
 float Random(float3 Seed, int i)
 {
-    float4  Seed4   = float4(Seed, i);
-    float   Dot     = dot(Seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
+    float4 Seed4 = float4(Seed, i);
+    float  Dot   = dot(Seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
     return frac(sin(Dot) * 43758.5453f);
 }
 
@@ -83,8 +83,8 @@ float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInvers
     float x = TexCoord.x * 2.0f - 1.0f;
     float y = (1.0f - TexCoord.y) * 2.0f - 1.0f;
 
-    float4 ProjectedPos     = float4(x, y, z, 1.0f);
-    float4 FinalPosition    = mul(ProjectedPos, ProjectionInverse);
+    float4 ProjectedPos  = float4(x, y, z, 1.0f);
+    float4 FinalPosition = mul(ProjectedPos, ProjectionInverse);
     
     return FinalPosition.xyz / FinalPosition.w;
 }

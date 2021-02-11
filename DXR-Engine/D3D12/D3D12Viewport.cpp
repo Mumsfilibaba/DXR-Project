@@ -35,7 +35,7 @@ Bool D3D12Viewport::Init()
     const UInt32 NumSwapChainBuffers = 12;
     const DXGI_FORMAT NativeFormat   = ConvertFormat(Format);
 
-    VALIDATE(Width > 0 && Height > 0);
+    Assert(Width > 0 && Height > 0);
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
     Memory::Memzero(&SwapChainDesc);
@@ -154,7 +154,7 @@ void D3D12Viewport::SetName(const std::string& InName)
     SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(InName.size()), InName.data());
     
     UInt32 Index = 0;
-    for (TSharedRef<D3D12Texture2D>& Buffer : BackBuffers)
+    for (TRef<D3D12Texture2D>& Buffer : BackBuffers)
     {
         Buffer->SetName(InName + "Buffer [" + std::to_string(Index) + "]");
         Index++;
@@ -172,7 +172,7 @@ Bool D3D12Viewport::RetriveBackBuffers()
     {
         D3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = gD3D12RenderLayer->GetRenderTargetOfflineDescriptorHeap();
         BackBufferViews.Resize(NumBackBuffers);
-        for (TSharedRef<D3D12RenderTargetView>& View : BackBufferViews)
+        for (TRef<D3D12RenderTargetView>& View : BackBufferViews)
         {
             if (!View)
             {

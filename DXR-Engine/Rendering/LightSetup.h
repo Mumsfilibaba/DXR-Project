@@ -67,26 +67,26 @@ struct LightSetup
 
     TArray<XMFLOAT4>           PointLightsPosRad;
     TArray<PointLightData>     PointLightsData;
-    TSharedRef<ConstantBuffer> PointLightsBuffer;
-    TSharedRef<ConstantBuffer> PointLightsPosRadBuffer;
+    TRef<ConstantBuffer> PointLightsBuffer;
+    TRef<ConstantBuffer> PointLightsPosRadBuffer;
 
     TArray<PointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
     TArray<XMFLOAT4>                    ShadowCastingPointLightsPosRad;
     TArray<ShadowCastingPointLightData> ShadowCastingPointLightsData;
-    TSharedRef<ConstantBuffer>          ShadowCastingPointLightsBuffer;
-    TSharedRef<ConstantBuffer>          ShadowCastingPointLightsPosRadBuffer;
-    TSharedRef<TextureCubeArray>        PointLightShadowMaps;
+    TRef<ConstantBuffer>          ShadowCastingPointLightsBuffer;
+    TRef<ConstantBuffer>          ShadowCastingPointLightsPosRadBuffer;
+    TRef<TextureCubeArray>        PointLightShadowMaps;
     TArray<DepthStencilViewCube>        PointLightShadowMapDSVs;
 
     TArray<DirLightShadowMapGenerationData> DirLightShadowMapsGenerationData;
     TArray<DirectionalLightData> DirectionalLightsData;
-    TSharedRef<ConstantBuffer>   DirectionalLightsBuffer;
-    TSharedRef<Texture2D>        DirLightShadowMaps;
+    TRef<ConstantBuffer>   DirectionalLightsBuffer;
+    TRef<Texture2D>        DirLightShadowMaps;
 
-    TSharedRef<TextureCube>         IrradianceMap;
-    TSharedRef<UnorderedAccessView> IrradianceMapUAV;
+    TRef<TextureCube>         IrradianceMap;
+    TRef<UnorderedAccessView> IrradianceMapUAV;
 
-    TSharedRef<TextureCube>                 SpecularIrradianceMap;
-    TArray<TSharedRef<UnorderedAccessView>> SpecularIrradianceMapUAVs;
+    TRef<TextureCube>                 SpecularIrradianceMap;
+    TArray<TRef<UnorderedAccessView>> SpecularIrradianceMapUAVs;
     TArray<UnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
 };

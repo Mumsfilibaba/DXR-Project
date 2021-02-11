@@ -2,6 +2,9 @@
 #include "RenderingCore.h"
 #include "Resources.h"
 #include "ResourceViews.h"
+#include "GeometryInstance.h"
+
+#include <Containers/ArrayView.h>
 
 class ICommandContext : public RefCountedObject
 {
@@ -68,7 +71,7 @@ public:
     virtual void DiscardResource(class Resource* Resource) = 0;
 
     virtual void BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update) = 0;
-    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) = 0;
+    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene, TArrayView<RayTracingGeometryInstance> Instances, Bool Update) = 0;
 
     virtual void GenerateMips(Texture* Texture) = 0;
 

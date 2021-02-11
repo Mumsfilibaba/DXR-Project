@@ -27,19 +27,19 @@ public:
 
     const XMFLOAT4X4& GetMatrix(UInt32 Index) const
     {
-        VALIDATE(Index < 6);
+        Assert(Index < 6);
         return Matrices[Index];
     }
 
     const XMFLOAT4X4& GetViewMatrix(UInt32 Index) const
     {
-        VALIDATE(Index < 6);
+        Assert(Index < 6);
         return ViewMatrices[Index];
     }
 
     const XMFLOAT4X4& GetProjectionMatrix(UInt32 Index) const
     {
-        VALIDATE(Index < 6);
+        Assert(Index < 6);
         return ProjMatrices[Index];
     }
 

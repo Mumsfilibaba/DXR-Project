@@ -17,7 +17,7 @@
 struct TextureFactoryData
 {
     CommandList    CmdList;
-    TSharedRef<ComputePipelineState> PanoramaPSO;
+    TRef<ComputePipelineState> PanoramaPSO;
 } static GlobalFactoryData;
 
 Bool TextureFactory::Init()
@@ -29,7 +29,7 @@ Bool TextureFactory::Init()
         return false;
     }
 
-    TSharedRef<ComputeShader> Shader = CreateComputeShader(Code);
+    TRef<ComputeShader> Shader = CreateComputeShader(Code);
     if (!Shader)
     {
         return false;
@@ -100,15 +100,15 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
     const Bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const UInt32 NumMips = GenerateMips ? UInt32(std::min(std::log2(Width), std::log2(Height))) : 1;
 
-    VALIDATE(NumMips != 0);
+    Assert(NumMips != 0);
 
     const UInt32 Stride   = (Format == EFormat::R8G8B8A8_Unorm) ? 4 : 16;
     const UInt32 RowPitch = Width * Stride;
     
-    VALIDATE(RowPitch > 0);
+    Assert(RowPitch > 0);
     
     ResourceData InitalData = ResourceData(Pixels, Format, Width);
-    TSharedRef<Texture2D> Texture = CreateTexture2D(Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceState::PixelShaderResource, &InitalData);
+    TRef<Texture2D> Texture = CreateTexture2D(Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceState::PixelShaderResource, &InitalData);
     if (!Texture)
     {
         Debug::DebugBreak();
@@ -131,12 +131,12 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
 
 TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format)
 {
-    VALIDATE(PanoramaSource->IsSRV());
+    Assert(PanoramaSource->IsSRV());
 
     const Bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const UInt16 NumMips = (GenerateNumMips) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
 
-    TSharedRef<TextureCube> StagingTexture = CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr);
+    TRef<TextureCube> StagingTexture = CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr);
     if (!StagingTexture)
     {
         return nullptr;
@@ -146,7 +146,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
         StagingTexture->SetName("TextureCube From Panorama StagingTexture");
     }
 
-    TSharedRef<UnorderedAccessView> StagingTextureUAV = CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
+    TRef<UnorderedAccessView> StagingTextureUAV = CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
     if (!StagingTextureUAV)
     {
         return nullptr;
@@ -156,7 +156,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
         StagingTexture->SetName("TextureCube From Panorama StagingTexture UAV");
     }
 
-    TSharedRef<TextureCube> Texture = CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceState::Common, nullptr);
+    TRef<TextureCube> Texture = CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceState::Common, nullptr);
     if (!Texture)
     {
         return nullptr;

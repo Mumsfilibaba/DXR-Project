@@ -38,7 +38,7 @@ public:
 
     void Begin()
     {
-        VALIDATE(IsRecording == false);
+        Assert(IsRecording == false);
 
         InsertCommand<BeginCommand>();
         IsRecording = true;
@@ -46,7 +46,7 @@ public:
 
     void End()
     {
-        VALIDATE(IsRecording == true);
+        Assert(IsRecording == true);
 
         InsertCommand<EndCommand>();
         IsRecording = false;
@@ -54,7 +54,7 @@ public:
 
     void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor)
     {
-        VALIDATE(RenderTargetView != nullptr);
+        Assert(RenderTargetView != nullptr);
 
         RenderTargetView->AddRef();
         InsertCommand<ClearRenderTargetViewCommand>(RenderTargetView, ClearColor);
@@ -62,7 +62,7 @@ public:
 
     void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilF& ClearValue)
     {
-        VALIDATE(DepthStencilView != nullptr);
+        Assert(DepthStencilView != nullptr);
 
         DepthStencilView->AddRef();
         InsertCommand<ClearDepthStencilViewCommand>(DepthStencilView, ClearValue);
@@ -70,7 +70,7 @@ public:
 
     void ClearUnorderedAccessView(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4])
     {
-        VALIDATE(UnorderedAccessView != nullptr);
+        Assert(UnorderedAccessView != nullptr);
 
         UnorderedAccessView->AddRef();
         InsertCommand<ClearUnorderedAccessViewFloatCommand>(UnorderedAccessView, ClearColor);
@@ -83,7 +83,7 @@ public:
 
     void SetShadingRateImage(Texture2D* ShadingRateImage)
     {
-        SAFEADDREF(ShadingRateImage);
+        SafeAddRef(ShadingRateImage);
         InsertCommand<SetShadingRateImageCommand>(ShadingRateImage);
     }
 
@@ -118,10 +118,10 @@ public:
         for (UInt32 i = 0; i < RenderTargetCount; i++)
         {
             RenderTargets[i] = RenderTargetViews[i];
-            SAFEADDREF(RenderTargets[i]);
+            SafeAddRef(RenderTargets[i]);
         }
 
-        SAFEADDREF(DepthStencilView);
+        SafeAddRef(DepthStencilView);
         InsertCommand<BindRenderTargetsCommand>(RenderTargets, RenderTargetCount, DepthStencilView);
     }
 
@@ -136,7 +136,7 @@ public:
         for (UInt32 i = 0; i < VertexBufferCount; i++)
         {
             Buffers[i] = VertexBuffers[i];
-            SAFEADDREF(Buffers[i]);
+            SafeAddRef(Buffers[i]);
         }
 
         InsertCommand<BindVertexBuffersCommand>(Buffers, VertexBufferCount, BufferSlot);
@@ -144,31 +144,31 @@ public:
 
     void BindIndexBuffer(IndexBuffer* IndexBuffer)
     {
-        SAFEADDREF(IndexBuffer);
+        SafeAddRef(IndexBuffer);
         InsertCommand<BindIndexBufferCommand>(IndexBuffer);
     }
 
     void BindRayTracingScene(RayTracingScene* RayTracingScene)
     {
-        SAFEADDREF(RayTracingScene);
+        SafeAddRef(RayTracingScene);
         InsertCommand<BindRayTracingSceneCommand>(RayTracingScene);
     }
 
     void BindGraphicsPipelineState(GraphicsPipelineState* PipelineState)
     {
-        SAFEADDREF(PipelineState);
+        SafeAddRef(PipelineState);
         InsertCommand<BindGraphicsPipelineStateCommand>(PipelineState);
     }
 
     void BindComputePipelineState(ComputePipelineState* PipelineState)
     {
-        SAFEADDREF(PipelineState);
+        SafeAddRef(PipelineState);
         InsertCommand<BindComputePipelineStateCommand>(PipelineState);
     }
 
     void BindRayTracingPipelineState(RayTracingPipelineState* PipelineState)
     {
-        SAFEADDREF(PipelineState);
+        SafeAddRef(PipelineState);
         InsertCommand<BindRayTracingPipelineStateCommand>(PipelineState);
     }
 
@@ -187,13 +187,13 @@ public:
         UInt32 ShaderResourceViewCount, 
         UInt32 StartSlot)
     {
-        VALIDATE(ShaderResourceViews != nullptr);
+        Assert(ShaderResourceViews != nullptr);
 
         ShaderResourceView** Views = new(CmdAllocator) ShaderResourceView*[ShaderResourceViewCount];
         for (UInt32 i = 0; i < ShaderResourceViewCount; i++)
         {
             Views[i] = ShaderResourceViews[i];
-            SAFEADDREF(Views[i]);
+            SafeAddRef(Views[i]);
         }
 
         InsertCommand<BindShaderResourceViewsCommand>(ShaderStage, Views, ShaderResourceViewCount, StartSlot);
@@ -201,13 +201,13 @@ public:
 
     void BindSamplerStates(EShaderStage ShaderStage, SamplerState* const* SamplerStates, UInt32 SamplerStateCount, UInt32 StartSlot)
     {
-        VALIDATE(SamplerStates != nullptr);
+        Assert(SamplerStates != nullptr);
 
         SamplerState** Samplers = new(CmdAllocator) SamplerState*[SamplerStateCount];
         for (UInt32 i = 0; i < SamplerStateCount; i++)
         {
             Samplers[i] = SamplerStates[i];
-            SAFEADDREF(Samplers[i]);
+            SafeAddRef(Samplers[i]);
         }
 
         InsertCommand<BindSamplerStatesCommand>(ShaderStage, Samplers, SamplerStateCount, StartSlot);
@@ -219,13 +219,13 @@ public:
         UInt32 UnorderedAccessViewCount, 
         UInt32 StartSlot)
     {
-        VALIDATE(UnorderedAccessViews != nullptr);
+        Assert(UnorderedAccessViews != nullptr);
 
         UnorderedAccessView** Views = new(CmdAllocator) UnorderedAccessView*[UnorderedAccessViewCount];
         for (UInt32 i = 0; i < UnorderedAccessViewCount; i++)
         {
             Views[i] = UnorderedAccessViews[i];
-            SAFEADDREF(Views[i]);
+            SafeAddRef(Views[i]);
         }
 
         InsertCommand<BindUnorderedAccessViewsCommand>(ShaderStage, Views, UnorderedAccessViewCount, StartSlot);
@@ -233,13 +233,13 @@ public:
 
     void BindConstantBuffers(EShaderStage ShaderStage, ConstantBuffer* const* ConstantBuffers, UInt32 ConstantBufferCount, UInt32 StartSlot)
     {
-        VALIDATE(ConstantBuffers != nullptr);
+        Assert(ConstantBuffers != nullptr);
 
         ConstantBuffer** Buffers = new(CmdAllocator) ConstantBuffer*[ConstantBufferCount];
         for (UInt32 i = 0; i < ConstantBufferCount; i++)
         {
             Buffers[i] = ConstantBuffers[i];
-            SAFEADDREF(Buffers[i]);
+            SafeAddRef(Buffers[i]);
         }
 
         InsertCommand<BindConstantBuffersCommand>(ShaderStage, Buffers, ConstantBufferCount, StartSlot);
@@ -247,8 +247,8 @@ public:
 
     void ResolveTexture(Texture* Destination, Texture* Source)
     {
-        SAFEADDREF(Destination);
-        SAFEADDREF(Source);
+        SafeAddRef(Destination);
+        SafeAddRef(Source);
         InsertCommand<ResolveTextureCommand>(Destination, Source);
     }
 
@@ -257,13 +257,13 @@ public:
         Void* TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
         Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
-        SAFEADDREF(Destination);
+        SafeAddRef(Destination);
         InsertCommand<UpdateBufferCommand>(Destination, DestinationOffsetInBytes, SizeInBytes, TempSourceData);
     }
 
     void UpdateTexture2D(Texture2D* Destination, UInt32 Width, UInt32 Height, UInt32 MipLevel, const Void* SourceData)
     {
-        VALIDATE(Destination != nullptr);
+        Assert(Destination != nullptr);
 
         const UInt32 SizeInBytes = Width * Height * GetByteStrideFromFormat(Destination->GetFormat());
         Void* TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
@@ -275,48 +275,54 @@ public:
 
     void CopyBuffer(Buffer* Destination, Buffer* Source, const CopyBufferInfo& CopyInfo)
     {
-        SAFEADDREF(Destination);
-        SAFEADDREF(Source);
+        SafeAddRef(Destination);
+        SafeAddRef(Source);
         InsertCommand<CopyBufferCommand>(Destination, Source, CopyInfo);
     }
 
     void CopyTexture(Texture* Destination, Texture* Source)
     {
-        SAFEADDREF(Destination);
-        SAFEADDREF(Source);
+        SafeAddRef(Destination);
+        SafeAddRef(Source);
         InsertCommand<CopyTextureCommand>(Destination, Source);
     }
 
     void CopyTextureRegion(Texture* Destination, Texture* Source, const CopyTextureInfo& CopyTextureInfo)
     {
-        SAFEADDREF(Destination);
-        SAFEADDREF(Source);
+        SafeAddRef(Destination);
+        SafeAddRef(Source);
         InsertCommand<CopyTextureRegionCommand>(Destination, Source, CopyTextureInfo);
     }
 
     void DiscardResource(Resource* Resource)
     {
-        SAFEADDREF(Resource);
+        SafeAddRef(Resource);
         InsertCommand<DiscardResourceCommand>(Resource);
     }
 
     void BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update)
     {
-        SAFEADDREF(Geometry);
-        SAFEADDREF(VertexBuffer);
-        SAFEADDREF(IndexBuffer);
+        Assert(Geometry != nullptr);
+        Assert(!Update || (Update && Geometry->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate));
+
+        SafeAddRef(Geometry);
+        SafeAddRef(VertexBuffer);
+        SafeAddRef(IndexBuffer);
         InsertCommand<BuildRayTracingGeometryCommand>(Geometry, VertexBuffer, IndexBuffer, Update);
     }
 
-    void BuildRayTracingScene(RayTracingScene* RayTracingScene)
+    void BuildRayTracingScene(RayTracingScene* Scene, TArrayView<RayTracingGeometryInstance> Instances, Bool Update)
     {
-        SAFEADDREF(RayTracingScene);
-        InsertCommand<BuildRayTracingSceneCommand>(RayTracingScene);
+        Assert(Scene != nullptr);
+        Assert(!Update || (Update && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate));
+
+        SafeAddRef(Scene);
+        InsertCommand<BuildRayTracingSceneCommand>(Scene, Instances, Update);
     }
 
     void GenerateMips(Texture* Texture)
     {
-        VALIDATE(Texture != nullptr);
+        Assert(Texture != nullptr);
 
         Texture->AddRef();
         InsertCommand<GenerateMipsCommand>(Texture);
@@ -324,7 +330,7 @@ public:
 
     void TransitionTexture(Texture* Texture, EResourceState BeforeState, EResourceState AfterState)
     {
-        VALIDATE(Texture != nullptr);
+        Assert(Texture != nullptr);
 
         if (BeforeState != AfterState)
         {
@@ -339,7 +345,7 @@ public:
 
     void TransitionBuffer(Buffer* Buffer, EResourceState BeforeState, EResourceState AfterState)
     {
-        VALIDATE(Buffer != nullptr);
+        Assert(Buffer != nullptr);
 
         if (BeforeState != AfterState)
         {
@@ -350,7 +356,7 @@ public:
 
     void UnorderedAccessTextureBarrier(Texture* Texture)
     {
-        VALIDATE(Texture != nullptr);
+        Assert(Texture != nullptr);
 
         Texture->AddRef();
         InsertCommand<UnorderedAccessTextureBarrierCommand>(Texture);
@@ -470,13 +476,13 @@ public:
 
     void SetContext(ICommandContext* InCmdContext)
     {
-        VALIDATE(InCmdContext != nullptr);
+        Assert(InCmdContext != nullptr);
         CmdContext = InCmdContext;
     }
 
     ICommandContext& GetContext()
     {
-        VALIDATE(CmdContext != nullptr);
+        Assert(CmdContext != nullptr);
         return *CmdContext;
     }
 

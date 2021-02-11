@@ -23,7 +23,7 @@ public:
     const D3D12Resource* GetResource() const { return Resource.Get(); }
 
 protected:
-    TSharedRef<D3D12Resource> Resource;
+    TRef<D3D12Resource> Resource;
 };
 
 class D3D12BaseVertexBuffer : public VertexBuffer, public D3D12BaseBuffer

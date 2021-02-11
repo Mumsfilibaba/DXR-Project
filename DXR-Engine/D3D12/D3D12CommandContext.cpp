@@ -356,7 +356,7 @@ void D3D12ShaderDescriptorTableState::InternalAllocateAndCopyDescriptorHandles(
 
 void D3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
 {
-    VALIDATE(Resource != nullptr);
+    Assert(Resource != nullptr);
 
     if (BeforeState != AfterState)
     {
@@ -508,14 +508,13 @@ Bool D3D12CommandBatch::Init()
     return true;
 }
 
-D3D12CommandContext::D3D12CommandContext(D3D12Device* InDevice, const D3D12DefaultRootSignatures& InDefaultRootSignatures)
+D3D12CommandContext::D3D12CommandContext(D3D12Device* InDevice)
     : ICommandContext()
     , D3D12DeviceChild(InDevice)
     , CmdQueue(InDevice)
     , CmdList(InDevice)
     , Fence(InDevice)
     , CmdBatches()
-    , DefaultRootSignatures(InDefaultRootSignatures)
     , VertexBufferState()
     , RenderTargetState()
     , BarrierBatcher()
@@ -567,10 +566,10 @@ Bool D3D12CommandContext::Init()
         Debug::DebugBreak();
     }
 
-    TSharedRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader(Device, Code);
+    TRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader(Device, Code);
     Shader->CreateRootSignature();
 
-    TSharedRef<D3D12RootSignature> RootSignature = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
+    TRef<D3D12RootSignature> RootSignature = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
 
     GenerateMipsTex2D_PSO = DBG_NEW D3D12ComputePipelineState(Device, Shader, RootSignature);
     if (!GenerateMipsTex2D_PSO->Init())
@@ -630,7 +629,7 @@ void D3D12CommandContext::UpdateBuffer(D3D12Resource* Resource, UInt64 OffsetInB
 
 void D3D12CommandContext::Begin()
 {
-    VALIDATE(IsReady == false);
+    Assert(IsReady == false);
 
     CmdBatch     = &CmdBatches[NextCmdBatch];
     NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
@@ -661,7 +660,7 @@ void D3D12CommandContext::Begin()
 
 void D3D12CommandContext::End()
 {
-    VALIDATE(IsReady == true);
+    Assert(IsReady == true);
 
     // Reset state
     FlushResourceBarriers();
@@ -693,7 +692,7 @@ void D3D12CommandContext::End()
 
 void D3D12CommandContext::ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor)
 {
-    VALIDATE(RenderTargetView != nullptr);
+    Assert(RenderTargetView != nullptr);
 
     FlushResourceBarriers();
 
@@ -705,7 +704,7 @@ void D3D12CommandContext::ClearRenderTargetView(RenderTargetView* RenderTargetVi
 
 void D3D12CommandContext::ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilF& ClearValue) 
 {
-    VALIDATE(DepthStencilView != nullptr);
+    Assert(DepthStencilView != nullptr);
 
     FlushResourceBarriers();
 
@@ -865,7 +864,7 @@ void D3D12CommandContext::BindRenderTargets(RenderTargetView* const* RenderTarge
 
 void D3D12CommandContext::BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState)
 {
-    VALIDATE(PipelineState != nullptr);
+    Assert(PipelineState != nullptr);
 
     D3D12GraphicsPipelineState* DxPipelineState = static_cast<D3D12GraphicsPipelineState*>(PipelineState);
     if (DxPipelineState != CurrentGraphicsPipelineState.Get())
@@ -884,7 +883,7 @@ void D3D12CommandContext::BindGraphicsPipelineState(class GraphicsPipelineState*
 
 void D3D12CommandContext::BindComputePipelineState(class ComputePipelineState* PipelineState)
 {
-    VALIDATE(PipelineState != nullptr);
+    Assert(PipelineState != nullptr);
 
     D3D12ComputePipelineState* DxPipelineState = static_cast<D3D12ComputePipelineState*>(PipelineState);
     if (DxPipelineState != CurrentComputePipelineState.Get())
@@ -909,7 +908,7 @@ void D3D12CommandContext::BindRayTracingPipelineState(class RayTracingPipelineSt
 
 void D3D12CommandContext::Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants)
 {
-    VALIDATE(Num32BitConstants <= D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_COUNT);
+    Assert(Num32BitConstants <= D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_COUNT);
 
     if (ShaderStageIsGraphics(ShaderStage))
     {
@@ -921,7 +920,7 @@ void D3D12CommandContext::Bind32BitShaderConstants(EShaderStage ShaderStage, con
     }
     else
     {
-        VALIDATE(false);
+        Assert(false);
     }
 }
 
@@ -999,7 +998,7 @@ void D3D12CommandContext::ResolveTexture(Texture* Destination, Texture* Source)
     const DXGI_FORMAT SrcFormat = DxSource->GetNativeFormat();
     
     //TODO: For now texture must be the same format. I.e typeless does probably not work
-    VALIDATE(DstFormat == SrcFormat);
+    Assert(DstFormat == SrcFormat);
 
     CmdList.ResolveSubresource(DxDestination->GetResource(), DxSource->GetResource(), DstFormat);
 
@@ -1145,26 +1144,27 @@ void D3D12CommandContext::BuildRayTracingGeometry(RayTracingGeometry* Geometry, 
     CmdBatch->AddInUseResource(IndexBuffer);
 }
 
-void D3D12CommandContext::BuildRayTracingScene(RayTracingScene* RayTracingScene)
+void D3D12CommandContext::BuildRayTracingScene(RayTracingScene* RayTracingScene, TArrayView<RayTracingGeometryInstance> Instances, Bool Update)
 {
-    UNREFERENCED_VARIABLE(RayTracingScene);
-
-    // TODO: Implement this function
     FlushResourceBarriers();
+
+    D3D12RayTracingScene* DxScene = static_cast<D3D12RayTracingScene*>(RayTracingScene);
+    DxScene->Build(*this, Instances, Update);
+
     CmdBatch->AddInUseResource(RayTracingScene);
 }
 
 void D3D12CommandContext::GenerateMips(Texture* Texture)
 {
     D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
-    VALIDATE(DxTexture != nullptr);
+    Assert(DxTexture != nullptr);
 
     D3D12_RESOURCE_DESC Desc = DxTexture->GetResource()->GetDesc();
     Desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     
-    VALIDATE(Desc.MipLevels > 1);
+    Assert(Desc.MipLevels > 1);
 
-    TSharedRef<D3D12Resource> StagingTexture = DBG_NEW D3D12Resource(Device, Desc, DxTexture->GetResource()->GetHeapType());
+    TRef<D3D12Resource> StagingTexture = DBG_NEW D3D12Resource(Device, Desc, DxTexture->GetResource()->GetHeapType());
     if (!StagingTexture->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
     {
         LOG_ERROR("[D3D12CommandContext] Failed to create StagingTexture for GenerateMips");
@@ -1432,7 +1432,7 @@ void D3D12CommandContext::Dispatch(UInt32 ThreadGroupCountX, UInt32 ThreadGroupC
 void D3D12CommandContext::DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth)
 {
     // TODO: Finish this function
-    VALIDATE(false);
+    Assert(false);
 
     FlushResourceBarriers();
 

@@ -132,7 +132,8 @@ workspace "DXR-Project"
 			"%{prj.name}/**.inl",
 			"%{prj.name}/**.c",
 			"%{prj.name}/**.cpp",
-			"%{prj.name}/**.hlsl",	
+			"%{prj.name}/**.hlsl",
+			"%{prj.name}/**.hlsli",	
         }
 		
 		-- In visual studio show natvis files
@@ -150,6 +151,7 @@ workspace "DXR-Project"
         excludes 
         {	
             "**.hlsl",
+			"**.hlsli",
         }
 
 		sysincludedirs
@@ -228,6 +230,7 @@ workspace "DXR-Project"
         excludes 
         {	
             "**.hlsl",
+			"**.hlsli",
         }
 	
 		links

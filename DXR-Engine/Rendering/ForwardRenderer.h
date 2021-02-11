@@ -16,5 +16,5 @@ public:
 	void Render(CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup);
 
 private:
-	TSharedRef<GraphicsPipelineState> PipelineState;
+	TRef<GraphicsPipelineState> PipelineState;
 };

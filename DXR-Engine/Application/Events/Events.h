@@ -6,16 +6,16 @@
 enum class EEventType : UInt8
 { 
     Unknown = 0,
-
+    // Keys
     KeyPressed  = 1,
     KeyReleased = 2,
     KeyTyped    = 3,
-
+    // Mouse
     MouseMoved    = 4,
     MousePressed  = 5,
     MouseReleased = 6,
     MouseScrolled = 7,
-
+    // Window
     WindowResized      = 8,
     WindowMoved        = 9,
     WindowMouseLeft    = 10,
@@ -271,7 +271,7 @@ struct WindowResizeEvent : public Event
 {
     DECLARE_EVENT(WindowResized, EventCategory_Window);
 
-    WindowResizeEvent(const TSharedRef<GenericWindow>& InWindow, UInt16 InWidth, UInt16 InHeight)
+    WindowResizeEvent(const TRef<GenericWindow>& InWindow, UInt16 InWidth, UInt16 InHeight)
         : Event()
         , Window(InWindow)
         , Width(InWidth)
@@ -284,7 +284,7 @@ struct WindowResizeEvent : public Event
         return std::string(GetTypeAsString()) + " = (" + std::to_string(Width) + ", " + std::to_string(Height) + ")";
     }
 
-    TSharedRef<GenericWindow> Window;
+    TRef<GenericWindow> Window;
     UInt16 Width;
     UInt16 Height;
 };
@@ -293,7 +293,7 @@ struct WindowFocusChangedEvent : public Event
 {
     DECLARE_EVENT(WindowFocusChanged, EventCategory_Window);
 
-    WindowFocusChangedEvent(const TSharedRef<GenericWindow>& InWindow, Bool hasFocus)
+    WindowFocusChangedEvent(const TRef<GenericWindow>& InWindow, Bool hasFocus)
         : Event()
         , Window(InWindow)
         , HasFocus(hasFocus)
@@ -305,7 +305,7 @@ struct WindowFocusChangedEvent : public Event
         return std::string("WindowFocusChangedEvent=") + std::to_string(HasFocus);
     }
 
-    TSharedRef<GenericWindow> Window;
+    TRef<GenericWindow> Window;
     Bool HasFocus;
 };
 
@@ -313,7 +313,7 @@ struct WindowMovedEvent : public Event
 {
     DECLARE_EVENT(WindowMoved, EventCategory_Window);
     
-    WindowMovedEvent(const TSharedRef<GenericWindow>& InWindow, Int16 x, Int16 y)
+    WindowMovedEvent(const TRef<GenericWindow>& InWindow, Int16 x, Int16 y)
         : Event()
         , Window(InWindow)
         , Position({ x, y })
@@ -325,7 +325,7 @@ struct WindowMovedEvent : public Event
         return std::string("WindowMovedEvent=[x, ") + std::to_string(Position.x) + ", y=" + std::to_string(Position.y) + "]";
     }
 
-    TSharedRef<GenericWindow> Window;
+    TRef<GenericWindow> Window;
     struct
     {
         Int16 x;
@@ -337,7 +337,7 @@ struct WindowMouseLeftEvent : public Event
 {
     DECLARE_EVENT(WindowMouseLeft, EventCategory_Window);
     
-    WindowMouseLeftEvent(const TSharedRef<GenericWindow>& InWindow)
+    WindowMouseLeftEvent(const TRef<GenericWindow>& InWindow)
         : Event()
         , Window(InWindow)
     {
@@ -348,14 +348,14 @@ struct WindowMouseLeftEvent : public Event
         return "WindowMouseLeftEvent";
     }
 
-    TSharedRef<GenericWindow> Window;
+    TRef<GenericWindow> Window;
 };
 
 struct WindowMouseEnteredEvent : public Event
 {
     DECLARE_EVENT(WindowMouseEntered, EventCategory_Window);
     
-    WindowMouseEnteredEvent(const TSharedRef<GenericWindow>& InWindow)
+    WindowMouseEnteredEvent(const TRef<GenericWindow>& InWindow)
         : Event()
         , Window(InWindow)
     {
@@ -366,14 +366,14 @@ struct WindowMouseEnteredEvent : public Event
         return "WindowMouseEnteredEvent";
     }
 
-    TSharedRef<GenericWindow> Window;
+    TRef<GenericWindow> Window;
 };
 
 struct WindowClosedEvent : public Event
 {
     DECLARE_EVENT(WindowClosed, EventCategory_Window);
 
-    WindowClosedEvent(const TSharedRef<GenericWindow>& InWindow)
+    WindowClosedEvent(const TRef<GenericWindow>& InWindow)
         : Event()
         , Window(InWindow)
     {
@@ -384,5 +384,5 @@ struct WindowClosedEvent : public Event
         return "WindowClosedEvent";
     }
 
-    TSharedRef<GenericWindow> Window;
+    TRef<GenericWindow> Window;
 };

@@ -21,7 +21,7 @@ class RenderTargetView : public Resource
 {
 };
 
-using DepthStencilViewCube = TStaticArray<TSharedRef<DepthStencilView>, 6>;
+using DepthStencilViewCube = TStaticArray<TRef<DepthStencilView>, 6>;
 
 struct ShaderResourceViewCreateInfo
 {

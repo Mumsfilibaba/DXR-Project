@@ -2,7 +2,7 @@
 #include "Core.h"
 
 #include "Core/RefCountedObject.h"
-#include "Core/TSharedRef.h"
+#include "Core/Ref.h"
 
 enum class EPlatformCursor : UInt32
 {
@@ -51,15 +51,15 @@ protected:
 
 struct GlobalCursors
 {
-    static TSharedRef<GenericCursor> Arrow;
-    static TSharedRef<GenericCursor> TextInput;
-    static TSharedRef<GenericCursor> ResizeAll;
-    static TSharedRef<GenericCursor> ResizeEW;
-    static TSharedRef<GenericCursor> ResizeNS;
-    static TSharedRef<GenericCursor> ResizeNESW;
-    static TSharedRef<GenericCursor> ResizeNWSE;
-    static TSharedRef<GenericCursor> Hand;
-    static TSharedRef<GenericCursor> NotAllowed;
+    static TRef<GenericCursor> Arrow;
+    static TRef<GenericCursor> TextInput;
+    static TRef<GenericCursor> ResizeAll;
+    static TRef<GenericCursor> ResizeEW;
+    static TRef<GenericCursor> ResizeNS;
+    static TRef<GenericCursor> ResizeNESW;
+    static TRef<GenericCursor> ResizeNWSE;
+    static TRef<GenericCursor> Hand;
+    static TRef<GenericCursor> NotAllowed;
 
     static Bool Init();
     static void Release();

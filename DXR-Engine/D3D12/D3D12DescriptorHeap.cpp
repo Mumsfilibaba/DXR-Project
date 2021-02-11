@@ -95,14 +95,14 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(UInt32& OutHeap
 
 void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, UInt32 HeapIndex)
 {
-    VALIDATE(HeapIndex < Heaps.Size());
+    Assert(HeapIndex < Heaps.Size());
     DescriptorHeap& Heap = Heaps[HeapIndex];
 
     // Find a suitable range
     Bool FoundRange    = false;
     for (DescriptorRange& Range : Heap.FreeList)
     {
-        VALIDATE(Range.IsValid());
+        Assert(Range.IsValid());
 
         if (Handle.ptr + DescriptorSize == Range.Begin.ptr)
         {
@@ -143,7 +143,7 @@ Bool D3D12OfflineDescriptorHeap::AllocateHeap()
 {
     constexpr UInt32 DescriptorCount = 32;
 
-    TSharedRef<D3D12DescriptorHeap> Heap = Device->CreateDescriptorHeap(Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+    TRef<D3D12DescriptorHeap> Heap = Device->CreateDescriptorHeap(Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
     if (Heap->Init())
     {
         if (!Name.empty())
@@ -186,7 +186,7 @@ void D3D12OnlineDescriptorHeap::Reset()
 {
     if (!HeapPool.IsEmpty())
     {
-        for (TSharedRef<D3D12DescriptorHeap>& CurrentHeap : DiscardedHeaps)
+        for (TRef<D3D12DescriptorHeap>& CurrentHeap : DiscardedHeaps)
         {
             HeapPool.EmplaceBack(CurrentHeap);
         }
@@ -203,7 +203,7 @@ void D3D12OnlineDescriptorHeap::Reset()
 
 UInt32 D3D12OnlineDescriptorHeap::AllocateHandles(UInt32 NumHandles)
 {
-    VALIDATE(NumHandles <= DescriptorCount);
+    Assert(NumHandles <= DescriptorCount);
 
     const UInt32 NewCurrentHandle = CurrentHandle + NumHandles;
     if (NewCurrentHandle >= DescriptorCount)

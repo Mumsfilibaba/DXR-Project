@@ -5,14 +5,14 @@
 
 struct RayTracingGeometryInstance
 {
-    RayTracingGeometryInstance(const TSharedRef<RayTracingGeometry>& InInstance, Material* InMaterial, const XMFLOAT3X4& InTransform)
+    RayTracingGeometryInstance(const TRef<RayTracingGeometry>& InInstance, Material* InMaterial, const XMFLOAT3X4& InTransform)
         : Instance(InInstance)
         , Material(InMaterial)
         , Transform(InTransform)
     {
     }
 
-    TSharedRef<RayTracingGeometry> Instance;
+    TRef<RayTracingGeometry> Instance;
     Material*  Material;
     XMFLOAT3X4 Transform;
 };

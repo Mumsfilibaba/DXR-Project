@@ -8,31 +8,42 @@
 #include <DirectXMath.h>
 using namespace DirectX;
 
-// Validate (a.k.a ASSERT)
-#ifndef VALIDATE
-    #define VALIDATE(Condition) assert(Condition)
+// Assert
+#ifdef DEBUG_BUILD
+    #define ENABLE_ASSERTS 1
+#endif
+
+#ifndef Assert
+#if ENABLE_ASSERTS
+    #define Assert(Condition) assert(Condition)
+#else
+    #define Assert(Condition) (void)
+#endif
 #endif
 
 // Macro for deleting objects safley
-#define SAFEDELETE(OutObject) \
+#define SafeDelete(OutObject) \
     if ((OutObject)) \
     { \
         delete (OutObject); \
         (OutObject) = nullptr; \
     }
 
-#define SAFERELEASE(OutObject) \
+#define SafeRelease(OutObject) \
     if ((OutObject)) \
     { \
         (OutObject)->Release(); \
         (OutObject) = nullptr; \
     }
 
-#define SAFEADDREF(OutObject) \
+#define SafeAddRef(OutObject) \
     if ((OutObject)) \
     { \
         (OutObject)->AddRef(); \
     }
+
+// Helper Macros
+#define ArrayCount(Array) (sizeof(Array) / sizeof(Array[0]))
 
 //Forceinline
 #ifndef FORCEINLINE

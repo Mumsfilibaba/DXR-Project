@@ -43,19 +43,19 @@ struct ConsoleVariable
 
     FORCEINLINE void SetBool(Bool Value)
     {
-        VALIDATE(Type == EConsoleVariableType::Bool);
+        Assert(Type == EConsoleVariableType::Bool);
         BoolValue = Value;
     }
 
     FORCEINLINE void SetInt(Int32 Value)
     {
-        VALIDATE(Type == EConsoleVariableType::Int);
+        Assert(Type == EConsoleVariableType::Int);
         IntValue = Value;
     }
 
     FORCEINLINE void SetFloat(Float Value)
     {
-        VALIDATE(Type == EConsoleVariableType::Float);
+        Assert(Type == EConsoleVariableType::Float);
         FloatValue = Value;
     }
 
@@ -75,13 +75,13 @@ struct ConsoleVariable
         }
         else
         {
-            VALIDATE(false);
+            Assert(false);
         }
     }
 
     FORCEINLINE void SetString(const Char* Value)
     {
-        VALIDATE(Type == EConsoleVariableType::String);
+        Assert(Type == EConsoleVariableType::String);
         
         const Int32 Len = Int32(strlen(Value));
         if (Len < Length)
@@ -97,25 +97,25 @@ struct ConsoleVariable
 
     FORCEINLINE Bool GetBool() const
     {
-        VALIDATE(Type == EConsoleVariableType::Bool);
+        Assert(Type == EConsoleVariableType::Bool);
         return BoolValue;
     }
 
     FORCEINLINE Int32 GetInt32() const
     {
-        VALIDATE(Type == EConsoleVariableType::Int);
+        Assert(Type == EConsoleVariableType::Int);
         return IntValue;
     }
 
     FORCEINLINE Float GetFloat() const
     {
-        VALIDATE(Type == EConsoleVariableType::Float);
+        Assert(Type == EConsoleVariableType::Float);
         return FloatValue;
     }
 
     FORCEINLINE const Char* GetString() const
     {
-        VALIDATE(Type == EConsoleVariableType::String);
+        Assert(Type == EConsoleVariableType::String);
         return StringValue;
     }
 

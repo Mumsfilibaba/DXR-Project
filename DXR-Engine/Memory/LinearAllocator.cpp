@@ -3,14 +3,14 @@
 void* operator new(size_t Size, LinearAllocator& Allocator)
 {
     void* Memory = Allocator.Allocate(Size, 1);
-    VALIDATE(Memory != nullptr);
+    Assert(Memory != nullptr);
     return Memory;
 }
 
 void* operator new[](size_t Size, LinearAllocator& Allocator)
 {
     void* Memory = Allocator.Allocate(Size, 1);
-    VALIDATE(Memory != nullptr);
+    Assert(Memory != nullptr);
     return Memory;
 }
 
@@ -31,7 +31,7 @@ LinearAllocator::LinearAllocator(UInt32 StartSize)
 
 Void* LinearAllocator::Allocate(UInt64 SizeInBytes, UInt64 Alignment)
 {
-    VALIDATE(CurrentArena != nullptr);
+    Assert(CurrentArena != nullptr);
 
     const UInt64 AlignedSize = Math::AlignUp(SizeInBytes, Alignment);
     if (CurrentArena->ReservedSize() > AlignedSize)
@@ -50,13 +50,13 @@ Void* LinearAllocator::Allocate(UInt64 SizeInBytes, UInt64 Alignment)
     // Allocate new arena
     CurrentArena = &Arenas.EmplaceBack(NewArenaSize);
 
-    VALIDATE(CurrentArena != nullptr);
+    Assert(CurrentArena != nullptr);
     return CurrentArena->Allocate(AlignedSize);
 }
 
 void LinearAllocator::Reset()
 {
-    VALIDATE(CurrentArena != nullptr);
+    Assert(CurrentArena != nullptr);
     CurrentArena->Reset();
 
     if (Arenas.Size() > 1)

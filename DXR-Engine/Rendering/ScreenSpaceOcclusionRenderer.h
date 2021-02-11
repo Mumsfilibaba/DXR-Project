@@ -24,8 +24,8 @@ private:
     TSharedPtr<ComputePipelineState> PipelineState;
     TSharedPtr<ComputePipelineState> BlurHorizontalPSO;
     TSharedPtr<ComputePipelineState> BlurVerticalPSO;
-    TSharedRef<StructuredBuffer>     SSAOSamples;
-    TSharedRef<ShaderResourceView>   SSAOSamplesSRV;
-    TSharedRef<Texture2D>            SSAONoiseTex;
-    TSharedRef<ShaderResourceView>   SSAONoiseSRV;
+    TRef<StructuredBuffer>     SSAOSamples;
+    TRef<ShaderResourceView>   SSAOSamplesSRV;
+    TRef<Texture2D>            SSAONoiseTex;
+    TRef<ShaderResourceView>   SSAONoiseSRV;
 };

@@ -22,10 +22,10 @@ public:
 private:
     Bool CreateShadowMaps(LightSetup& FrameResources);
 
-    TSharedRef<ConstantBuffer> PerShadowMapBuffer;
+    TRef<ConstantBuffer> PerShadowMapBuffer;
 
-    TSharedRef<GraphicsPipelineState> DirLightPipelineState;
-    TSharedRef<GraphicsPipelineState> PointLightPipelineState;
+    TRef<GraphicsPipelineState> DirLightPipelineState;
+    TRef<GraphicsPipelineState> PointLightPipelineState;
 
     Bool   UpdateDirLight   = true;
     Bool   UpdatePointLight = true;

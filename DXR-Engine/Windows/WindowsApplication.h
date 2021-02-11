@@ -67,8 +67,8 @@ public:
 private:
     HINSTANCE InstanceHandle = 0;
 
-    TSharedRef<WindowsCursor> CurrentCursor;
-    TArray<TSharedRef<WindowsWindow>> Windows;
+    TRef<WindowsCursor> CurrentCursor;
+    TArray<TRef<WindowsWindow>> Windows;
     TArray<WindowsEvent> Events;
 
     Bool IsTrackingMouse = false;

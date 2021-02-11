@@ -6,7 +6,7 @@
 
 #include "GenericApplicationEventHandler.h"
 
-#include "Core/TSharedRef.h"
+#include "Core/Ref.h"
 
 struct ModifierKeyState
 {

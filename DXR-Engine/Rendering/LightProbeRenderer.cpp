@@ -17,7 +17,7 @@ Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResou
         Debug::DebugBreak();
     }
 
-    TSharedRef<ComputeShader> IrradianceGenShader = CreateComputeShader(Code);
+    TRef<ComputeShader> IrradianceGenShader = CreateComputeShader(Code);
     if (!IrradianceGenShader)
     {
         LOG_ERROR("Failed to create IrradianceGen Shader");
@@ -45,7 +45,7 @@ Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResou
         Debug::DebugBreak();
     }
 
-    TSharedRef<ComputeShader> SpecularIrradianceGenShader = CreateComputeShader(Code);
+    TRef<ComputeShader> SpecularIrradianceGenShader = CreateComputeShader(Code);
     if (!SpecularIrradianceGenShader)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen Shader");
@@ -187,7 +187,7 @@ Bool LightProbeRenderer::CreateSkyLightResources(LightSetup& LightSetup)
 
     for (UInt32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        TSharedRef<UnorderedAccessView> Uav = CreateUnorderedAccessView(LightSetup.SpecularIrradianceMap.Get(), EFormat::R16G16B16A16_Float, MipLevel);
+        TRef<UnorderedAccessView> Uav = CreateUnorderedAccessView(LightSetup.SpecularIrradianceMap.Get(), EFormat::R16G16B16A16_Float, MipLevel);
         if (Uav)
         {
             LightSetup.SpecularIrradianceMapUAVs.EmplaceBack(Uav);

@@ -13,7 +13,7 @@ EventDispatcher::EventDispatcher(GenericApplication* InApplication)
 
 void EventDispatcher::RegisterEventHandler(EventHandlerFunc Func, UInt8 EventCategoryMask)
 {
-    VALIDATE(Func != nullptr);
+    Assert(Func != nullptr);
 
     for (EventHandlerPair& Pair : EventHandlers)
     {
@@ -32,7 +32,7 @@ void EventDispatcher::RegisterEventHandler(EventHandlerFunc Func, UInt8 EventCat
 
 void EventDispatcher::RegisterEventHandler(IEventHandler* EventHandler, UInt8 EventCategoryMask)
 {
-    VALIDATE(EventHandler != nullptr);
+    Assert(EventHandler != nullptr);
 
     for (EventHandlerPair& Pair : EventHandlers)
     {
@@ -51,7 +51,7 @@ void EventDispatcher::RegisterEventHandler(IEventHandler* EventHandler, UInt8 Ev
 
 void EventDispatcher::UnregisterEventHandler(IEventHandler* EventHandler)
 {
-    VALIDATE(EventHandler != nullptr);
+    Assert(EventHandler != nullptr);
 
     for (TArray<EventHandlerPair>::Iterator It = EventHandlers.Begin(); It != EventHandlers.End(); It++)
     {
@@ -70,7 +70,7 @@ void EventDispatcher::UnregisterEventHandler(IEventHandler* EventHandler)
 
 void EventDispatcher::UnregisterEventHandler(EventHandlerFunc Func)
 {
-    VALIDATE(Func != nullptr);
+    Assert(Func != nullptr);
 
     for (TArray<EventHandlerPair>::Iterator It = EventHandlers.Begin(); It != EventHandlers.End(); It++)
     {
@@ -177,19 +177,19 @@ void EventDispatcher::OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta
     SendEvent(Event);
 }
 
-void EventDispatcher::OnWindowResized(const TSharedRef<GenericWindow>& InWindow, UInt16 Width, UInt16 Height)
+void EventDispatcher::OnWindowResized(const TRef<GenericWindow>& InWindow, UInt16 Width, UInt16 Height)
 {
     WindowResizeEvent Event(InWindow, Width, Height);
     SendEvent(Event);
 }
 
-void EventDispatcher::OnWindowMoved(const TSharedRef<GenericWindow>& Window, Int16 x, Int16 y)
+void EventDispatcher::OnWindowMoved(const TRef<GenericWindow>& Window, Int16 x, Int16 y)
 {
     WindowMovedEvent Event(Window, x, y);
     SendEvent(Event);
 }
 
-void EventDispatcher::OnWindowFocusChanged(const TSharedRef<GenericWindow>& Window, Bool HasFocus)
+void EventDispatcher::OnWindowFocusChanged(const TRef<GenericWindow>& Window, Bool HasFocus)
 {
     // TODO: What if other windows loose focus?
     if (!HasFocus)
@@ -201,19 +201,19 @@ void EventDispatcher::OnWindowFocusChanged(const TSharedRef<GenericWindow>& Wind
     SendEvent(Event);
 }
 
-void EventDispatcher::OnWindowMouseLeft(const TSharedRef<GenericWindow>& Window)
+void EventDispatcher::OnWindowMouseLeft(const TRef<GenericWindow>& Window)
 {
     WindowMouseLeftEvent Event(Window);
     SendEvent(Event);
 }
 
-void EventDispatcher::OnWindowMouseEntered(const TSharedRef<GenericWindow>& Window)
+void EventDispatcher::OnWindowMouseEntered(const TRef<GenericWindow>& Window)
 {
     WindowMouseEnteredEvent Event(Window);
     SendEvent(Event);
 }
 
-void EventDispatcher::OnWindowClosed(const TSharedRef<GenericWindow>& Window)
+void EventDispatcher::OnWindowClosed(const TRef<GenericWindow>& Window)
 {
     WindowClosedEvent Event(Window);
     SendEvent(Event);

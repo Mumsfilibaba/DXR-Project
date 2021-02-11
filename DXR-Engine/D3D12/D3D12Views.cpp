@@ -8,7 +8,7 @@ D3D12View::D3D12View(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
     , Heap(InHeap)
     , OfflineHandle({ 0 })
 {
-    VALIDATE(Heap != nullptr);
+    Assert(Heap != nullptr);
 }
 
 D3D12View::~D3D12View()
@@ -31,8 +31,8 @@ D3D12ConstantBufferView::D3D12ConstantBufferView(D3D12Device* InDevice, D3D12Off
 
 Bool D3D12ConstantBufferView::CreateView(D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
-    VALIDATE(InResource != nullptr);
-    VALIDATE(OfflineHandle != 0);
+    Assert(InResource != nullptr);
+    Assert(OfflineHandle != 0);
 
     Resource = MakeSharedRef<D3D12Resource>(InResource);
     Desc     = InDesc;
@@ -49,7 +49,7 @@ D3D12BaseShaderResourceView::D3D12BaseShaderResourceView(D3D12Device* InDevice, 
 
 Bool D3D12BaseShaderResourceView::CreateView(D3D12Resource* InResource,  const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
-    VALIDATE(OfflineHandle != 0);
+    Assert(OfflineHandle != 0);
 
     D3D12View::Resource = MakeSharedRef<D3D12Resource>(InResource);
     Desc                = InDesc;
@@ -73,7 +73,7 @@ D3D12BaseUnorderedAccessView::D3D12BaseUnorderedAccessView(D3D12Device* InDevice
 
 Bool D3D12BaseUnorderedAccessView::CreateView(D3D12Resource* InCounterResource, D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
-    VALIDATE(OfflineHandle != 0);
+    Assert(OfflineHandle != 0);
 
     Desc                = InDesc;
     CounterResource     = InCounterResource;
@@ -103,8 +103,8 @@ D3D12BaseRenderTargetView::D3D12BaseRenderTargetView(D3D12Device* InDevice, D3D1
 
 Bool D3D12BaseRenderTargetView::CreateView(D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
-    VALIDATE(InResource != nullptr);
-    VALIDATE(OfflineHandle != 0);
+    Assert(InResource != nullptr);
+    Assert(OfflineHandle != 0);
 
     Desc                = InDesc;
     D3D12View::Resource = MakeSharedRef<D3D12Resource>(InResource);
@@ -121,8 +121,8 @@ D3D12BaseDepthStencilView::D3D12BaseDepthStencilView(D3D12Device* InDevice, D3D1
 
 Bool D3D12BaseDepthStencilView::CreateView(D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
-    VALIDATE(InResource != nullptr);
-    VALIDATE(OfflineHandle != 0);
+    Assert(InResource != nullptr);
+    Assert(OfflineHandle != 0);
 
     Desc                = InDesc;
     D3D12View::Resource = MakeSharedRef<D3D12Resource>(InResource);

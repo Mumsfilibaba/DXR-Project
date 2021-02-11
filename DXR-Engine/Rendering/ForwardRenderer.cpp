@@ -26,7 +26,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
+    TRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         Debug::DebugBreak();
@@ -43,7 +43,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
+    TRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
     if (!PShader)
     {
         Debug::DebugBreak();
@@ -59,7 +59,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
     DepthStencilStateInfo.DepthEnable    = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
+    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         Debug::DebugBreak();
@@ -73,7 +73,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
+    TRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         Debug::DebugBreak();
@@ -88,7 +88,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
     BlendStateInfo.IndependentBlendEnable      = false;
     BlendStateInfo.RenderTarget[0].BlendEnable = true;
 
-    TSharedRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
+    TRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         Debug::DebugBreak();

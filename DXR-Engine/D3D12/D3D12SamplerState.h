@@ -14,7 +14,7 @@ public:
         , OfflineHandle({ 0 })
         , Desc()
     {
-        VALIDATE(InOfflineHeap !=  nullptr);
+        Assert(InOfflineHeap !=  nullptr);
     }
 
     ~D3D12SamplerState()

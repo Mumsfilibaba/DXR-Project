@@ -30,28 +30,28 @@ struct FrameResources
 
     Texture2D* BackBuffer = nullptr;
 
-    TSharedRef<ConstantBuffer> CameraBuffer;
-    TSharedRef<ConstantBuffer> TransformBuffer;
+    TRef<ConstantBuffer> CameraBuffer;
+    TRef<ConstantBuffer> TransformBuffer;
 
-    TSharedRef<SamplerState> DirectionalShadowSampler;
-    TSharedRef<SamplerState> PointShadowSampler;
-    TSharedRef<SamplerState> IrradianceSampler;
+    TRef<SamplerState> DirectionalShadowSampler;
+    TRef<SamplerState> PointShadowSampler;
+    TRef<SamplerState> IrradianceSampler;
 
-    TSharedRef<TextureCube> Skybox;
+    TRef<TextureCube> Skybox;
 
-    TSharedRef<Texture2D>    IntegrationLUT;
-    TSharedRef<SamplerState> IntegrationLUTSampler;
+    TRef<Texture2D>    IntegrationLUT;
+    TRef<SamplerState> IntegrationLUTSampler;
 
-    TSharedRef<Texture2D>    ReflectionTexture;
-    TSharedRef<Texture2D>    SSAOBuffer;
-    TSharedRef<Texture2D>    FinalTarget;
-    TSharedRef<Texture2D>    GBuffer[5];
-    TSharedRef<SamplerState> GBufferSampler;
-    TSharedRef<SamplerState> FXAASampler;
+    TRef<Texture2D>    ReflectionTexture;
+    TRef<Texture2D>    SSAOBuffer;
+    TRef<Texture2D>    FinalTarget;
+    TRef<Texture2D>    GBuffer[5];
+    TRef<SamplerState> GBufferSampler;
+    TRef<SamplerState> FXAASampler;
 
-    TSharedRef<InputLayoutState> StdInputLayout;
+    TRef<InputLayoutState> StdInputLayout;
 
-    TSharedRef<RayTracingScene>        RTScene;
+    TRef<RayTracingScene>        RTScene;
     TArray<RayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<MeshDrawCommand> DeferredVisibleCommands;
@@ -59,6 +59,6 @@ struct FrameResources
 
     TArray<ImGuiImage> DebugTextures;
 
-    TSharedRef<Viewport> MainWindowViewport;
+    TRef<Viewport> MainWindowViewport;
 };
 

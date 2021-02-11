@@ -243,7 +243,7 @@ Bool EngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
-    SAFEDELETE(gGame);
+    SafeDelete(gGame);
 
     DebugUI::Release();
 
@@ -258,13 +258,13 @@ Bool EngineLoop::PostRelease()
 {
     TRACE_FUNCTION_SCOPE();
 
-    SAFEDELETE(gEventDispatcher);
+    SafeDelete(gEventDispatcher);
 
     gMainWindow->Release();
 
-    SAFEDELETE(gApplication);
+    SafeDelete(gApplication);
 
-    SAFEDELETE(gConsoleOutput);
+    SafeDelete(gConsoleOutput);
 
     return true;
 }

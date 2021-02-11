@@ -1,5 +1,6 @@
 #pragma once
 #include "ResourceBase.h"
+#include "Shader.h"
 
 class PipelineState : public Resource
 {
@@ -429,6 +430,17 @@ public:
     ~ComputePipelineState() = default;
 
     virtual ComputePipelineState* AsCompute() override { return this; }
+};
+
+struct RayTracingPipelineStateCreateInfo
+{
+    RayGenShader*                RayGen = nullptr;
+    TArray<RayAnyHitShader*>     AnyHitShaders;
+    TArray<RayClosestHitShader*> ClosestHitShaders;
+    TArray<RayMissShader*>       MissShaders;
+    UInt32 MaxAttributeSizeInBytes = 0;
+    UInt32 MaxPayloadSizeInBytes   = 0;
+    UInt32 MaxRecursionDepth          = 1;
 };
 
 class RayTracingPipelineState : public PipelineState

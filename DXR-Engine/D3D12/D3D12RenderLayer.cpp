@@ -9,7 +9,6 @@
 #include "D3D12PipelineState.h"
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Fence.h"
-#include "D3D12RayTracingPipelineState.h"
 #include "D3D12RayTracing.h"
 #include "D3D12RootSignature.h"
 #include "D3D12Views.h"
@@ -83,12 +82,12 @@ D3D12RenderLayer::~D3D12RenderLayer()
 {
     DirectCmdContext.Reset();
 
-    SAFERELEASE(ResourceOfflineDescriptorHeap);
-    SAFERELEASE(RenderTargetOfflineDescriptorHeap);
-    SAFERELEASE(DepthStencilOfflineDescriptorHeap);
-    SAFERELEASE(SamplerOfflineDescriptorHeap);
+    SafeRelease(ResourceOfflineDescriptorHeap);
+    SafeRelease(RenderTargetOfflineDescriptorHeap);
+    SafeRelease(DepthStencilOfflineDescriptorHeap);
+    SafeRelease(SamplerOfflineDescriptorHeap);
     
-    SAFEDELETE(Device);
+    SafeDelete(Device);
 
     gD3D12RenderLayer = nullptr;
 }
@@ -106,7 +105,7 @@ Bool D3D12RenderLayer::Init(Bool EnableDebug)
         return false;
     }
 
-    DirectCmdContext = DBG_NEW D3D12CommandContext(Device, DefaultRootSignatures);
+    DirectCmdContext = DBG_NEW D3D12CommandContext(Device);
     if (!DirectCmdContext->Init())
     {
         return false;
@@ -150,7 +149,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
     const ResourceData* InitialData,
     const ClearValue& OptimalClearValue)
 {
-    TSharedRef<TD3D12Texture> NewTexture = DBG_NEW TD3D12Texture(Device, Format, SizeX, SizeY, SizeZ, NumMips, NumSamples, Flags, OptimalClearValue);
+    TRef<TD3D12Texture> NewTexture = DBG_NEW TD3D12Texture(Device, Format, SizeX, SizeY, SizeZ, NumMips, NumSamples, Flags, OptimalClearValue);
 
     D3D12_RESOURCE_DESC Desc;
     Memory::Memzero(&Desc);
@@ -194,7 +193,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         }
     }
 
-    TSharedRef<D3D12Resource> Resource = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+    TRef<D3D12Resource> Resource = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
     if (!Resource->Init(D3D12_RESOURCE_STATE_COMMON, ClearValuePtr))
     {
         return nullptr;
@@ -259,11 +258,11 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         }
         else
         {
-            VALIDATE(false);
+            Assert(false);
             return nullptr;
         }
 
-        TSharedRef<D3D12ShaderResourceView> SRV = DBG_NEW D3D12ShaderResourceView(Device, ResourceOfflineDescriptorHeap);
+        TRef<D3D12ShaderResourceView> SRV = DBG_NEW D3D12ShaderResourceView(Device, ResourceOfflineDescriptorHeap);
         if (!SRV->Init())
         {
             return nullptr;
@@ -292,7 +291,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         ViewDesc.Texture2D.MipSlice   = 0;
         ViewDesc.Texture2D.PlaneSlice = 0;
 
-        TSharedRef<D3D12RenderTargetView> RTV = DBG_NEW D3D12RenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
+        TRef<D3D12RenderTargetView> RTV = DBG_NEW D3D12RenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
         if (!RTV->Init())
         {
             return nullptr;
@@ -318,7 +317,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         ViewDesc.ViewDimension      = D3D12_DSV_DIMENSION_TEXTURE2D;
         ViewDesc.Texture2D.MipSlice = 0;
 
-        TSharedRef<D3D12DepthStencilView> DSV = DBG_NEW D3D12DepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
+        TRef<D3D12DepthStencilView> DSV = DBG_NEW D3D12DepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
         if (!DSV->Init())
         {
             return nullptr;
@@ -345,7 +344,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         ViewDesc.Texture2D.MipSlice   = 0;
         ViewDesc.Texture2D.PlaneSlice = 0;
 
-        TSharedRef<D3D12UnorderedAccessView> UAV = DBG_NEW D3D12UnorderedAccessView(Device, ResourceOfflineDescriptorHeap);
+        TRef<D3D12UnorderedAccessView> UAV = DBG_NEW D3D12UnorderedAccessView(Device, ResourceOfflineDescriptorHeap);
         if (!UAV->Init())
         {
             return nullptr;
@@ -478,7 +477,7 @@ SamplerState* D3D12RenderLayer::CreateSamplerState(const SamplerStateCreateInfo&
 
     Memory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor.Elements, sizeof(Desc.BorderColor));
 
-    TSharedRef<D3D12SamplerState> Sampler = DBG_NEW D3D12SamplerState(Device, SamplerOfflineDescriptorHeap);
+    TRef<D3D12SamplerState> Sampler = DBG_NEW D3D12SamplerState(Device, SamplerOfflineDescriptorHeap);
     if (!Sampler->Init(Desc))
     {
         return nullptr;
@@ -515,7 +514,7 @@ Bool D3D12RenderLayer::FinalizeBufferResource(TD3D12Buffer* Buffer, UInt32 SizeI
         DxInitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
-    TSharedRef<D3D12Resource> Resource = DBG_NEW D3D12Resource(Device, Desc, DxHeapType);
+    TRef<D3D12Resource> Resource = DBG_NEW D3D12Resource(Device, Desc, DxHeapType);
     if (!Resource->Init(DxInitialState, nullptr))
     {
         return false;
@@ -529,7 +528,7 @@ Bool D3D12RenderLayer::FinalizeBufferResource(TD3D12Buffer* Buffer, UInt32 SizeI
     {
         if (Buffer->IsUpload())
         {
-            VALIDATE(Buffer->GetSizeInBytes() <= SizeInBytes);
+            Assert(Buffer->GetSizeInBytes() <= SizeInBytes);
 
             Void* HostData = Buffer->Map(0, 0);
             if (!HostData)
@@ -570,7 +569,7 @@ VertexBuffer* D3D12RenderLayer::CreateVertexBuffer(UInt32 Stride, UInt32 NumVert
 {
     const UInt32 SizeInBytes = NumVertices * Stride;
 
-    TSharedRef<D3D12VertexBuffer> NewBuffer = DBG_NEW D3D12VertexBuffer(Device, NumVertices, Stride, Flags);
+    TRef<D3D12VertexBuffer> NewBuffer = DBG_NEW D3D12VertexBuffer(Device, NumVertices, Stride, Flags);
     if (!FinalizeBufferResource(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to create VertexBuffer");
@@ -586,7 +585,7 @@ IndexBuffer* D3D12RenderLayer::CreateIndexBuffer(EIndexFormat Format, UInt32 Num
 {
     const UInt32 SizeInBytes = NumIndices * GetStrideFromIndexFormat(Format);
 
-    TSharedRef<D3D12IndexBuffer> NewBuffer = DBG_NEW D3D12IndexBuffer(Device, Format, NumIndices, Flags);
+    TRef<D3D12IndexBuffer> NewBuffer = DBG_NEW D3D12IndexBuffer(Device, Format, NumIndices, Flags);
     if (!FinalizeBufferResource(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to create IndexBuffer");
@@ -600,11 +599,11 @@ IndexBuffer* D3D12RenderLayer::CreateIndexBuffer(EIndexFormat Format, UInt32 Num
 
 ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer(UInt32 Size, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
-    VALIDATE(!(Flags & BufferFlag_UAV) && !(Flags & BufferFlag_SRV));
+    Assert(!(Flags & BufferFlag_UAV) && !(Flags & BufferFlag_SRV));
 
     const UInt32 AlignedSizeInBytes = Math::AlignUp<UInt32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
-    TSharedRef<D3D12ConstantBuffer> NewBuffer = DBG_NEW D3D12ConstantBuffer(Device, ResourceOfflineDescriptorHeap, Size, Flags);
+    TRef<D3D12ConstantBuffer> NewBuffer = DBG_NEW D3D12ConstantBuffer(Device, ResourceOfflineDescriptorHeap, Size, Flags);
     if (!FinalizeBufferResource(NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to create ConstantBuffer");
@@ -620,7 +619,7 @@ StructuredBuffer* D3D12RenderLayer::CreateStructuredBuffer(UInt32 Stride, UInt32
 {
     const UInt32 SizeInBytes = NumElements * Stride;
 
-    TSharedRef<D3D12StructuredBuffer> NewBuffer = DBG_NEW D3D12StructuredBuffer(Device, NumElements, Stride, Flags);
+    TRef<D3D12StructuredBuffer> NewBuffer = DBG_NEW D3D12StructuredBuffer(Device, NumElements, Stride, Flags);
     if (!FinalizeBufferResource(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to create StructuredBuffer");
@@ -637,7 +636,7 @@ RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry(UInt32 Flags, Ver
     D3D12VertexBuffer* DxVertexBuffer = static_cast<D3D12VertexBuffer*>(VertexBuffer);
     D3D12IndexBuffer*  DxIndexBuffer  = static_cast<D3D12IndexBuffer*>(IndexBuffer);
 
-    TSharedRef<D3D12RayTracingGeometry> Geometry = DBG_NEW D3D12RayTracingGeometry(Device, Flags);
+    TRef<D3D12RayTracingGeometry> Geometry = DBG_NEW D3D12RayTracingGeometry(Device, Flags);
     Geometry->VertexBuffer = MakeSharedRef<D3D12VertexBuffer>(DxVertexBuffer);
     Geometry->IndexBuffer  = MakeSharedRef<D3D12IndexBuffer>(DxIndexBuffer);
     
@@ -654,9 +653,9 @@ RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry(UInt32 Flags, Ver
     return Geometry.ReleaseOwnership();
 }
 
-RayTracingScene* D3D12RenderLayer::CreateRayTracingScene(UInt32 Flags, const TArray<RayTracingGeometryInstance>& Instances)
+RayTracingScene* D3D12RenderLayer::CreateRayTracingScene(UInt32 Flags, TArrayView<RayTracingGeometryInstance> Instances)
 {
-    TSharedRef<D3D12RayTracingScene> Scene = DBG_NEW D3D12RayTracingScene(Device, Flags);
+    TRef<D3D12RayTracingScene> Scene = DBG_NEW D3D12RayTracingScene(Device, Flags);
 
     DirectCmdContext->Begin();
 
@@ -686,7 +685,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResou
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsSRV() && CreateInfo.Texture2D.Format != EFormat::Unknown);
+        Assert(Texture->IsSRV() && CreateInfo.Texture2D.Format != EFormat::Unknown);
 
         Desc.Format = ConvertFormat(CreateInfo.Texture2D.Format);
         if (!Texture->IsMultiSampled())
@@ -708,7 +707,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResou
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsSRV() && CreateInfo.Texture2DArray.Format != EFormat::Unknown);
+        Assert(Texture->IsSRV() && CreateInfo.Texture2DArray.Format != EFormat::Unknown);
 
         Desc.Format = ConvertFormat(CreateInfo.Texture2DArray.Format);
         if (!Texture->IsMultiSampled())
@@ -734,7 +733,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResou
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsSRV() && CreateInfo.TextureCube.Format != EFormat::Unknown);
+        Assert(Texture->IsSRV() && CreateInfo.TextureCube.Format != EFormat::Unknown);
 
         Desc.Format                          = ConvertFormat(CreateInfo.Texture2D.Format);
         Desc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
@@ -748,7 +747,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResou
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsSRV() && CreateInfo.TextureCubeArray.Format != EFormat::Unknown);
+        Assert(Texture->IsSRV() && CreateInfo.TextureCubeArray.Format != EFormat::Unknown);
 
         Desc.Format                               = ConvertFormat(CreateInfo.Texture2D.Format);
         Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
@@ -765,7 +764,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResou
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsSRV() && CreateInfo.Texture3D.Format != EFormat::Unknown);
+        Assert(Texture->IsSRV() && CreateInfo.Texture3D.Format != EFormat::Unknown);
 
         Desc.Format                        = ConvertFormat(CreateInfo.Texture3D.Format);
         Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE3D;
@@ -779,7 +778,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResou
         D3D12BaseBuffer* DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        VALIDATE(Buffer->IsSRV());
+        Assert(Buffer->IsSRV());
 
         Desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = CreateInfo.VertexBuffer.FirstVertex;
@@ -794,14 +793,14 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResou
         D3D12BaseBuffer* DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        VALIDATE(Buffer->IsSRV());
+        Assert(Buffer->IsSRV());
 
         Desc.ViewDimension       = D3D12_SRV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement = CreateInfo.IndexBuffer.FirstIndex;
         Desc.Buffer.NumElements  = CreateInfo.IndexBuffer.NumIndices;
 
         // TODO: What if the index type is 16-bit?
-        VALIDATE(Buffer->GetFormat() != EIndexFormat::UInt16);
+        Assert(Buffer->GetFormat() != EIndexFormat::UInt16);
         
         Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
         Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
@@ -813,7 +812,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResou
         D3D12BaseBuffer*  DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        VALIDATE(Buffer->IsSRV());
+        Assert(Buffer->IsSRV());
 
         Desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = CreateInfo.StructuredBuffer.FirstElement;
@@ -823,9 +822,9 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResou
         Desc.Buffer.StructureByteStride = Buffer->GetStride();
     }
 
-    VALIDATE(Resource != nullptr);
+    Assert(Resource != nullptr);
 
-    TSharedRef<D3D12ShaderResourceView> DxView = DBG_NEW D3D12ShaderResourceView(Device, ResourceOfflineDescriptorHeap);
+    TRef<D3D12ShaderResourceView> DxView = DBG_NEW D3D12ShaderResourceView(Device, ResourceOfflineDescriptorHeap);
     if (!DxView->Init())
     {
         return nullptr;
@@ -853,7 +852,7 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(const Unordered
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsUAV() && CreateInfo.Texture2D.Format != EFormat::Unknown);
+        Assert(Texture->IsUAV() && CreateInfo.Texture2D.Format != EFormat::Unknown);
 
         Desc.Format               = ConvertFormat(CreateInfo.Texture2D.Format);
         Desc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
@@ -866,7 +865,7 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(const Unordered
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsUAV() && CreateInfo.Texture2DArray.Format != EFormat::Unknown);
+        Assert(Texture->IsUAV() && CreateInfo.Texture2DArray.Format != EFormat::Unknown);
 
         Desc.Format                         = ConvertFormat(CreateInfo.Texture2DArray.Format);
         Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
@@ -881,7 +880,7 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(const Unordered
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsUAV() && CreateInfo.TextureCube.Format != EFormat::Unknown);
+        Assert(Texture->IsUAV() && CreateInfo.TextureCube.Format != EFormat::Unknown);
 
         Desc.Format                         = ConvertFormat(CreateInfo.TextureCube.Format);
         Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
@@ -896,7 +895,7 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(const Unordered
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsUAV() && CreateInfo.TextureCubeArray.Format != EFormat::Unknown);
+        Assert(Texture->IsUAV() && CreateInfo.TextureCubeArray.Format != EFormat::Unknown);
 
         Desc.Format                         = ConvertFormat(CreateInfo.TextureCubeArray.Format);
         Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
@@ -911,7 +910,7 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(const Unordered
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsUAV() && CreateInfo.Texture3D.Format != EFormat::Unknown);
+        Assert(Texture->IsUAV() && CreateInfo.Texture3D.Format != EFormat::Unknown);
 
         Desc.Format                = ConvertFormat(CreateInfo.Texture3D.Format);
         Desc.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE3D;
@@ -925,7 +924,7 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(const Unordered
         D3D12BaseBuffer* DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        VALIDATE(Buffer->IsUAV());
+        Assert(Buffer->IsUAV());
 
         Desc.ViewDimension              = D3D12_UAV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = CreateInfo.VertexBuffer.FirstVertex;
@@ -940,14 +939,14 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(const Unordered
         D3D12BaseBuffer* DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        VALIDATE(Buffer->IsUAV());
+        Assert(Buffer->IsUAV());
 
         Desc.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement = CreateInfo.IndexBuffer.FirstIndex;
         Desc.Buffer.NumElements  = CreateInfo.IndexBuffer.NumIndices;
 
         // TODO: What if the index type is 16-bit?
-        VALIDATE(Buffer->GetFormat() != EIndexFormat::UInt16);
+        Assert(Buffer->GetFormat() != EIndexFormat::UInt16);
 
         Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
         Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_RAW;
@@ -959,7 +958,7 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(const Unordered
         D3D12BaseBuffer*  DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        VALIDATE(Buffer->IsUAV());
+        Assert(Buffer->IsUAV());
 
         Desc.ViewDimension              = D3D12_UAV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = CreateInfo.StructuredBuffer.FirstElement;
@@ -969,13 +968,13 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(const Unordered
         Desc.Buffer.StructureByteStride = Buffer->GetStride();
     }
 
-    TSharedRef<D3D12UnorderedAccessView> DxView = DBG_NEW D3D12UnorderedAccessView(Device, ResourceOfflineDescriptorHeap);
+    TRef<D3D12UnorderedAccessView> DxView = DBG_NEW D3D12UnorderedAccessView(Device, ResourceOfflineDescriptorHeap);
     if (!DxView->Init())
     {
         return nullptr;
     }
 
-    VALIDATE(Resource != nullptr);
+    Assert(Resource != nullptr);
     
     // TODO: Expose counterresource
     if (DxView->CreateView(nullptr, Resource, Desc))
@@ -996,7 +995,7 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(const RenderTargetVie
     D3D12Resource* Resource = nullptr;
 
     Desc.Format = ConvertFormat(CreateInfo.Format);
-    VALIDATE(CreateInfo.Format != EFormat::Unknown);
+    Assert(CreateInfo.Format != EFormat::Unknown);
 
     if (CreateInfo.Type == RenderTargetViewCreateInfo::EType::Texture2D)
     {
@@ -1004,7 +1003,7 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(const RenderTargetVie
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsRTV());
+        Assert(Texture->IsRTV());
 
         if (Texture->IsMultiSampled())
         {
@@ -1023,7 +1022,7 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(const RenderTargetVie
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsRTV());
+        Assert(Texture->IsRTV());
 
         if (Texture->IsMultiSampled())
         {
@@ -1046,7 +1045,7 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(const RenderTargetVie
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsRTV());
+        Assert(Texture->IsRTV());
 
         Desc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = CreateInfo.TextureCube.Mip;
@@ -1060,7 +1059,7 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(const RenderTargetVie
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsRTV());
+        Assert(Texture->IsRTV());
 
         Desc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = CreateInfo.TextureCubeArray.Mip;
@@ -1074,7 +1073,7 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(const RenderTargetVie
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsRTV());
+        Assert(Texture->IsRTV());
 
         Desc.ViewDimension         = D3D12_RTV_DIMENSION_TEXTURE3D;
         Desc.Texture3D.MipSlice    = CreateInfo.Texture3D.Mip;
@@ -1082,13 +1081,13 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView(const RenderTargetVie
         Desc.Texture3D.WSize       = CreateInfo.Texture3D.NumDepthSlices;
     }
 
-    TSharedRef<D3D12RenderTargetView> DxView = DBG_NEW D3D12RenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
+    TRef<D3D12RenderTargetView> DxView = DBG_NEW D3D12RenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
     if (!DxView->Init())
     {
         return nullptr;
     }
 
-    VALIDATE(Resource != nullptr);
+    Assert(Resource != nullptr);
 
     if (!DxView->CreateView(Resource, Desc))
     {
@@ -1108,7 +1107,7 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(const DepthStencilVie
     D3D12Resource* Resource = nullptr;
     
     Desc.Format = ConvertFormat(CreateInfo.Format);
-    VALIDATE(CreateInfo.Format != EFormat::Unknown);
+    Assert(CreateInfo.Format != EFormat::Unknown);
     
     if (CreateInfo.Type == DepthStencilViewCreateInfo::EType::Texture2D)
     {
@@ -1116,7 +1115,7 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(const DepthStencilVie
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsDSV());
+        Assert(Texture->IsDSV());
 
         if (Texture->IsMultiSampled())
         {
@@ -1134,7 +1133,7 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(const DepthStencilVie
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsDSV());
+        Assert(Texture->IsDSV());
 
         if (Texture->IsMultiSampled())
         {
@@ -1156,7 +1155,7 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(const DepthStencilVie
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsDSV());
+        Assert(Texture->IsDSV());
 
         Desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = CreateInfo.TextureCube.Mip;
@@ -1169,7 +1168,7 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(const DepthStencilVie
         D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
         Resource = DxTexture->GetResource();
 
-        VALIDATE(Texture->IsDSV());
+        Assert(Texture->IsDSV());
 
         Desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = CreateInfo.TextureCubeArray.Mip;
@@ -1177,7 +1176,7 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(const DepthStencilVie
         Desc.Texture2DArray.FirstArraySlice = CreateInfo.TextureCubeArray.ArraySlice * TEXTURE_CUBE_FACE_COUNT + GetCubeFaceIndex(CreateInfo.TextureCube.CubeFace);
     }
 
-    TSharedRef<D3D12DepthStencilView> DxView = DBG_NEW D3D12DepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
+    TRef<D3D12DepthStencilView> DxView = DBG_NEW D3D12DepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
     if (!DxView->Init())
     {
         return nullptr;
@@ -1247,23 +1246,22 @@ PixelShader* D3D12RenderLayer::CreatePixelShader(const TArray<UInt8>& ShaderCode
 
 RayGenShader* D3D12RenderLayer::CreateRayGenShader(const TArray<UInt8>& ShaderCode)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(ShaderCode);
-    return nullptr;
+    return DBG_NEW D3D12RayGenShader(Device, ShaderCode);
 }
 
-RayHitShader* D3D12RenderLayer::CreateRayHitShader(const TArray<UInt8>& ShaderCode)
+RayAnyHitShader* D3D12RenderLayer::CreateRayAnyHitShader(const TArray<UInt8>& ShaderCode)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(ShaderCode);
-    return nullptr;
+    return DBG_NEW D3D12RayAnyhitShader(Device, ShaderCode);
+}
+
+RayClosestHitShader* D3D12RenderLayer::CreateRayClosestHitShader(const TArray<UInt8>& ShaderCode)
+{
+    return DBG_NEW D3D12RayClosestHitShader(Device, ShaderCode);
 }
 
 RayMissShader* D3D12RenderLayer::CreateRayMissShader(const TArray<UInt8>& ShaderCode)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(ShaderCode);
-    return nullptr;
+    return DBG_NEW D3D12RayMissShader(Device, ShaderCode);
 }
 
 DepthStencilState* D3D12RenderLayer::CreateDepthStencilState(const DepthStencilStateCreateInfo& CreateInfo)
@@ -1334,211 +1332,52 @@ InputLayoutState* D3D12RenderLayer::CreateInputLayout(const InputLayoutStateCrea
 
 GraphicsPipelineState* D3D12RenderLayer::CreateGraphicsPipelineState(const GraphicsPipelineStateCreateInfo& CreateInfo)
 {
-    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) GraphicsPipelineStream
+    TRef<D3D12RootSignature>         RootSignature    = DefaultRootSignatures.Graphics;
+    TRef<D3D12GraphicsPipelineState> NewPipelineState = DBG_NEW D3D12GraphicsPipelineState(Device, RootSignature);
+    if (NewPipelineState->Init(CreateInfo))
     {
-        struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
-        {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
-            ID3D12RootSignature* RootSignature = nullptr;
-        };
-
-        struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
-        {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE    Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT;
-            D3D12_INPUT_LAYOUT_DESC InputLayout = { };
-        };
-
-        struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
-        {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type2 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PRIMITIVE_TOPOLOGY;
-            D3D12_PRIMITIVE_TOPOLOGY_TYPE PrimitiveTopologyType = { };
-        };
-
-        struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
-        {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type3 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS;
-            D3D12_SHADER_BYTECODE VertexShader = { };
-        };
-
-        struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
-        {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type4 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS;
-            D3D12_SHADER_BYTECODE PixelShader = { };
-        };
-
-        struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
-        {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type5 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS;
-            D3D12_RT_FORMAT_ARRAY RenderTargetInfo = { };
-        };
-
-        struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
-        {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type6 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT;
-            DXGI_FORMAT DepthBufferFormat = { };
-        };
-
-        struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
-        {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type7 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER;
-            D3D12_RASTERIZER_DESC RasterizerDesc = { };
-        };
-
-        struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
-        {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type8 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL;
-            D3D12_DEPTH_STENCIL_DESC DepthStencilDesc = { };
-        };
-
-        struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
-        {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type9 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND;
-            D3D12_BLEND_DESC BlendStateDesc = { };
-        };
-
-        struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
-        {
-            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type10 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC;
-            DXGI_SAMPLE_DESC SampleDesc = { };
-        };
-    } PipelineStream;
-
-    // InputLayout
-    D3D12_INPUT_LAYOUT_DESC& InputLayoutDesc = PipelineStream.InputLayout;
-    
-    D3D12InputLayoutState* DxInputLayoutState = static_cast<D3D12InputLayoutState*>(CreateInfo.InputLayoutState);
-    if (!DxInputLayoutState)
-    {
-        InputLayoutDesc.pInputElementDescs = nullptr;
-        InputLayoutDesc.NumElements        = 0;
+        return NewPipelineState.ReleaseOwnership();
     }
     else
     {
-        InputLayoutDesc = DxInputLayoutState->GetDesc();
-    }
-
-    // VertexShader
-    D3D12VertexShader* DxVertexShader = static_cast<D3D12VertexShader*>(CreateInfo.ShaderState.VertexShader);
-    VALIDATE(DxVertexShader != nullptr);
-
-    D3D12_SHADER_BYTECODE& VertexShader = PipelineStream.VertexShader;
-    VertexShader = DxVertexShader->GetShaderByteCode();
-
-    // PixelShader
-    D3D12PixelShader* DxPixelShader = static_cast<D3D12PixelShader*>(CreateInfo.ShaderState.PixelShader);
-    
-    D3D12_SHADER_BYTECODE& PixelShader = PipelineStream.PixelShader;
-    if (!DxPixelShader)
-    {
-        PixelShader.pShaderBytecode    = nullptr;
-        PixelShader.BytecodeLength    = 0;
-    }
-    else
-    {
-        PixelShader = DxPixelShader->GetShaderByteCode();
-    }
-
-    // RenderTarget
-    D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = PipelineStream.RenderTargetInfo;
-
-    const UInt32 NumRenderTargets = CreateInfo.PipelineFormats.NumRenderTargets;
-    for (UInt32 Index = 0; Index < NumRenderTargets; Index++)
-    {
-        RenderTargetInfo.RTFormats[Index] = ConvertFormat(CreateInfo.PipelineFormats.RenderTargetFormats[Index]);
-    }
-    RenderTargetInfo.NumRenderTargets = NumRenderTargets;
-
-    // DepthStencil
-    PipelineStream.DepthBufferFormat = ConvertFormat(CreateInfo.PipelineFormats.DepthStencilFormat);
-
-    // RasterizerState
-    D3D12RasterizerState* DxRasterizerState = static_cast<D3D12RasterizerState*>(CreateInfo.RasterizerState);
-    VALIDATE(DxRasterizerState != nullptr);
-
-    D3D12_RASTERIZER_DESC& RasterizerDesc = PipelineStream.RasterizerDesc;
-    RasterizerDesc = DxRasterizerState->GetDesc();
-
-    // DepthStencilState
-    D3D12DepthStencilState* DxDepthStencilState = static_cast<D3D12DepthStencilState*>(CreateInfo.DepthStencilState);
-    VALIDATE(DxDepthStencilState != nullptr);
-
-    D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc = PipelineStream.DepthStencilDesc;
-    DepthStencilDesc = DxDepthStencilState->GetDesc();
-
-    // BlendState
-    D3D12BlendState* DxBlendState = static_cast<D3D12BlendState*>(CreateInfo.BlendState);
-    VALIDATE(DxBlendState != nullptr);
-
-    D3D12_BLEND_DESC& BlendStateDesc = PipelineStream.BlendStateDesc;
-    BlendStateDesc = DxBlendState->GetDesc();
-
-    // RootSignature
-    VALIDATE(DefaultRootSignatures.Graphics != nullptr);
-
-    D3D12RootSignature* RootSignature = DefaultRootSignatures.Graphics.Get();
-    PipelineStream.RootSignature = RootSignature->GetRootSignature();
-
-    // Topology
-    PipelineStream.PrimitiveTopologyType = ConvertPrimitiveTopologyType(CreateInfo.PrimitiveTopologyType);
-
-    // MSAA
-    DXGI_SAMPLE_DESC& SamplerDesc = PipelineStream.SampleDesc;
-    SamplerDesc.Count   = CreateInfo.SampleCount;
-    SamplerDesc.Quality = CreateInfo.SampleQuality;
-
-    // Create PipelineState
-    D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
-    Memory::Memzero(&PipelineStreamDesc, sizeof(D3D12_PIPELINE_STATE_STREAM_DESC));
-
-    PipelineStreamDesc.pPipelineStateSubobjectStream = &PipelineStream;
-    PipelineStreamDesc.SizeInBytes                   = sizeof(GraphicsPipelineStream);
-
-    TComPtr<ID3D12PipelineState> NewPipelineState;
-    HRESULT hResult = Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&NewPipelineState));
-    if (SUCCEEDED(hResult))
-    {
-        D3D12GraphicsPipelineState* Pipeline = DBG_NEW D3D12GraphicsPipelineState(Device);
-        Pipeline->PipelineState = NewPipelineState;
-
-        // TODO: This should be refcounted
-        Pipeline->RootSignature = RootSignature;
-
-        LOG_INFO("[D3D12RenderLayer]: Created GraphicsPipelineState");
-        return Pipeline;
-    }
-    else
-    {
-        LOG_ERROR("[D3D12RenderLayer]: FAILED to Create GraphicsPipelineState");
         return nullptr;
     }
 }
 
 ComputePipelineState* D3D12RenderLayer::CreateComputePipelineState(const ComputePipelineStateCreateInfo& Info)
 {
-    VALIDATE(Info.Shader != nullptr);
+    Assert(Info.Shader != nullptr);
     
     // Check if shader contains a rootsignature, or use the default one
-    TSharedRef<D3D12ComputeShader> Shader        = MakeSharedRef<D3D12ComputeShader>(Info.Shader);
-    TSharedRef<D3D12RootSignature> RootSignature = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
+    TRef<D3D12ComputeShader> Shader        = MakeSharedRef<D3D12ComputeShader>(Info.Shader);
+    TRef<D3D12RootSignature> RootSignature = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
     if (!RootSignature)
     {
         RootSignature = DefaultRootSignatures.Compute;
     }
 
-    D3D12ComputePipelineState* NewPipelineState = DBG_NEW D3D12ComputePipelineState(Device, Shader, RootSignature);
+    TRef<D3D12ComputePipelineState> NewPipelineState = DBG_NEW D3D12ComputePipelineState(Device, Shader, RootSignature);
     if (NewPipelineState->Init())
     {
-        return NewPipelineState;
-    }
+        return NewPipelineState.ReleaseOwnership();
+    } 
     else
     {
         return nullptr;
     }
 }
 
-RayTracingPipelineState* D3D12RenderLayer::CreateRayTracingPipelineState()
+RayTracingPipelineState* D3D12RenderLayer::CreateRayTracingPipelineState(const RayTracingPipelineStateCreateInfo& CreateInfo)
 {
-    return nullptr;
+    TRef<D3D12RayTracingPipelineState> NewPipelineState = DBG_NEW D3D12RayTracingPipelineState(Device);
+    if (NewPipelineState->Init(CreateInfo, DefaultRootSignatures))
+    {
+        return NewPipelineState.ReleaseOwnership();
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 Viewport* D3D12RenderLayer::CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat)
@@ -1547,7 +1386,7 @@ Viewport* D3D12RenderLayer::CreateViewport(GenericWindow* Window, UInt32 Width, 
 
     // TODO: Take DepthFormat into account
 
-    TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>(Window);
+    TRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>(Window);
     if (Width == 0)
     {
         Width = WinWindow->GetWidth();
@@ -1558,7 +1397,7 @@ Viewport* D3D12RenderLayer::CreateViewport(GenericWindow* Window, UInt32 Width, 
         Height = WinWindow->GetHeight();
     }
 
-    TSharedRef<D3D12Viewport> Viewport = DBG_NEW D3D12Viewport(Device, DirectCmdContext.Get(), WinWindow->GetHandle(), ColorFormat, Width, Height);
+    TRef<D3D12Viewport> Viewport = DBG_NEW D3D12Viewport(Device, DirectCmdContext.Get(), WinWindow->GetHandle(), ColorFormat, Width, Height);
     if (Viewport->Init())
     {
         return Viewport.ReleaseOwnership();

@@ -5,7 +5,7 @@
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/ResourceViews.h"
 
-#include "Core/TSharedRef.h"
+#include "Core/Ref.h"
 
 #include <imgui.h>
 
@@ -14,7 +14,7 @@ struct ImGuiImage
 {
     ImGuiImage() = default;
 
-    ImGuiImage(const TSharedRef<ShaderResourceView>& InImageView, const TSharedRef<Texture>& InImage, EResourceState InBefore, EResourceState InAfter)
+    ImGuiImage(const TRef<ShaderResourceView>& InImageView, const TRef<Texture>& InImage, EResourceState InBefore, EResourceState InAfter)
         : ImageView(InImageView)
         , Image(InImage)
         , BeforeState(InBefore)
@@ -22,8 +22,8 @@ struct ImGuiImage
     {
     }
 
-    TSharedRef<ShaderResourceView> ImageView;
-    TSharedRef<Texture> Image;
+    TRef<ShaderResourceView> ImageView;
+    TRef<Texture> Image;
     EResourceState      BeforeState;
     EResourceState      AfterState;
     Bool AllowBlending = false;

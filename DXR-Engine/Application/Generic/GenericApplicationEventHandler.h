@@ -42,27 +42,27 @@ public:
     {
     }
 
-    virtual void OnWindowResized(const TSharedRef<GenericWindow>& Window, UInt16 Width, UInt16 Height)
+    virtual void OnWindowResized(const TRef<GenericWindow>& Window, UInt16 Width, UInt16 Height)
     {
     }
 
-    virtual void OnWindowMoved(const TSharedRef<GenericWindow>& Window, Int16 x, Int16 y)
+    virtual void OnWindowMoved(const TRef<GenericWindow>& Window, Int16 x, Int16 y)
     {
     }
     
-    virtual void OnWindowFocusChanged(const TSharedRef<GenericWindow>& Window, Bool HasFocus)
+    virtual void OnWindowFocusChanged(const TRef<GenericWindow>& Window, Bool HasFocus)
     {
     }
     
-    virtual void OnWindowMouseLeft(const TSharedRef<GenericWindow>& Window)
+    virtual void OnWindowMouseLeft(const TRef<GenericWindow>& Window)
     {
     }
     
-    virtual void OnWindowMouseEntered(const TSharedRef<GenericWindow>& Window)
+    virtual void OnWindowMouseEntered(const TRef<GenericWindow>& Window)
     {
     }
     
-    virtual void OnWindowClosed(const TSharedRef<GenericWindow>& Window)
+    virtual void OnWindowClosed(const TRef<GenericWindow>& Window)
     {
     }
 };

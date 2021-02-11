@@ -33,7 +33,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<ComputeShader> CShader = CreateComputeShader(ShaderCode);
+    TRef<ComputeShader> CShader = CreateComputeShader(ShaderCode);
     if (!CShader)
     {
         Debug::DebugBreak();

@@ -24,8 +24,8 @@ public:
 private:
     Bool CreateGBuffer(FrameResources& FrameResources);
 
-    TSharedRef<GraphicsPipelineState> PipelineState;
-    TSharedRef<GraphicsPipelineState> PrePassPipelineState;
-    TSharedRef<ComputePipelineState>  TiledLightPassPSO;
-    TSharedRef<ComputePipelineState>  TiledLightPassPSODebug;
+    TRef<GraphicsPipelineState> PipelineState;
+    TRef<GraphicsPipelineState> PrePassPipelineState;
+    TRef<ComputePipelineState>  TiledLightPassPSO;
+    TRef<ComputePipelineState>  TiledLightPassPSODebug;
 };

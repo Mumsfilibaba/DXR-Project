@@ -16,17 +16,10 @@ public:
         ByteCode.pShaderBytecode = reinterpret_cast<const void*>(Code.Data());
     }
 
+    const void* GetCodeData() const { return reinterpret_cast<const void*>(Code.Data()); }
+    UInt32 GetCodeSize() const { return Code.Size(); }
+
     D3D12_SHADER_BYTECODE GetShaderByteCode() const { return ByteCode; }
-
-    const void* GetCodeData() const
-    {
-        return reinterpret_cast<const void*>(Code.Data());
-    }
-
-    UInt32 GetCodeSize() const
-    {
-        return Code.Size();
-    }
 
 protected:
     D3D12_SHADER_BYTECODE ByteCode;
@@ -53,6 +46,46 @@ public:
     }
 };
 
+class D3D12BaseRayGenShader : public RayGenShader, public D3D12BaseShader
+{
+public:
+    D3D12BaseRayGenShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+        : RayGenShader()
+        , D3D12BaseShader(InDevice, InCode)
+    {
+    }
+};
+
+class D3D12BaseRayAnyhitShader : public RayAnyHitShader, public D3D12BaseShader
+{
+public:
+    D3D12BaseRayAnyhitShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+        : RayAnyHitShader()
+        , D3D12BaseShader(InDevice, InCode)
+    {
+    }
+};
+
+class D3D12BaseRayClosestHitShader : public RayClosestHitShader, public D3D12BaseShader
+{
+public:
+    D3D12BaseRayClosestHitShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+        : RayClosestHitShader()
+        , D3D12BaseShader(InDevice, InCode)
+    {
+    }
+};
+
+class D3D12BaseRayMissShader : public RayMissShader, public D3D12BaseShader
+{
+public:
+    D3D12BaseRayMissShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+        : RayMissShader()
+        , D3D12BaseShader(InDevice, InCode)
+    {
+    }
+};
+
 class D3D12BaseComputeShader : public ComputeShader, public D3D12BaseShader
 {
 public:
@@ -63,7 +96,7 @@ public:
     {
     }
 
-    FORCEINLINE Bool CreateRootSignature()
+    Bool CreateRootSignature()
     {
         // Create RootSignature if the shader contains one
         TComPtr<ID3D12RootSignatureDeserializer> Deserializer;
@@ -94,13 +127,10 @@ public:
         }
     }
 
-    FORCEINLINE D3D12RootSignature* GetRootSignature() const
-    {
-        return RootSignature.Get();
-    }
+    D3D12RootSignature* GetRootSignature() const { return RootSignature.Get(); }
 
 protected:
-    TSharedRef<D3D12RootSignature> RootSignature;
+    TRef<D3D12RootSignature> RootSignature;
 };
 
 template<typename TBaseShader>
@@ -122,3 +152,8 @@ using D3D12VertexShader = TD3D12Shader<D3D12BaseVertexShader>;
 using D3D12PixelShader  = TD3D12Shader<D3D12BasePixelShader>;
 
 using D3D12ComputeShader = TD3D12Shader<D3D12BaseComputeShader>;
+
+using D3D12RayGenShader        = TD3D12Shader<D3D12BaseRayGenShader>;
+using D3D12RayAnyhitShader     = TD3D12Shader<D3D12BaseRayAnyhitShader>;
+using D3D12RayClosestHitShader = TD3D12Shader<D3D12BaseRayClosestHitShader>;
+using D3D12RayMissShader       = TD3D12Shader<D3D12BaseRayMissShader>;

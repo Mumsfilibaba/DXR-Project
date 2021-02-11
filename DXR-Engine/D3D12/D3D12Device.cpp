@@ -328,7 +328,7 @@ D3D12RootSignature* D3D12Device::CreateRootSignature(const D3D12_ROOT_SIGNATURE_
 
 D3D12RootSignature* D3D12Device::CreateRootSignature(IDxcBlob* ShaderBlob)
 {
-    VALIDATE(ShaderBlob != nullptr);
+    Assert(ShaderBlob != nullptr);
     return CreateRootSignature(ShaderBlob->GetBufferPointer(), UInt32(ShaderBlob->GetBufferSize()));
 }
 

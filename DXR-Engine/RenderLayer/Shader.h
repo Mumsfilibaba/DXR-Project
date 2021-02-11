@@ -65,7 +65,11 @@ class RayGenShader : public Shader
 {
 };
 
-class RayHitShader : public Shader
+class RayAnyHitShader : public Shader
+{
+};
+
+class RayClosestHitShader : public Shader
 {
 };
 

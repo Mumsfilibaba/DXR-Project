@@ -50,7 +50,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
             return false;
         }
 
-        TSharedRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
+        TRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
         if (!VShader)
         {
             Debug::DebugBreak();
@@ -67,7 +67,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
             return false;
         }
 
-        TSharedRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
+        TRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
         if (!PShader)
         {
             Debug::DebugBreak();
@@ -83,7 +83,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         DepthStencilStateInfo.DepthEnable    = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<DepthStencilState> GeometryDepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
+        TRef<DepthStencilState> GeometryDepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
         if (!GeometryDepthStencilState)
         {
             Debug::DebugBreak();
@@ -97,7 +97,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         RasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<RasterizerState> GeometryRasterizerState = CreateRasterizerState(RasterizerStateInfo);
+        TRef<RasterizerState> GeometryRasterizerState = CreateRasterizerState(RasterizerStateInfo);
         if (!GeometryRasterizerState)
         {
             Debug::DebugBreak();
@@ -112,7 +112,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         BlendStateInfo.IndependentBlendEnable      = false;
         BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-        TSharedRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
+        TRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             Debug::DebugBreak();
@@ -157,7 +157,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
             return false;
         }
 
-        TSharedRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
+        TRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
         if (!VShader)
         {
             Debug::DebugBreak();
@@ -173,7 +173,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         DepthStencilStateInfo.DepthEnable    = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
+        TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
         if (!DepthStencilState)
         {
             Debug::DebugBreak();
@@ -187,7 +187,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         RasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
+        TRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             Debug::DebugBreak();
@@ -202,7 +202,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         BlendStateInfo.IndependentBlendEnable      = false;
         BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-        TSharedRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
+        TRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             Debug::DebugBreak();
@@ -243,7 +243,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<Texture2D> StagingTexture = CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceState::Common, nullptr);
+    TRef<Texture2D> StagingTexture = CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceState::Common, nullptr);
     if (!StagingTexture)
     {
         Debug::DebugBreak();
@@ -288,7 +288,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<ComputeShader> CShader = CreateComputeShader(ShaderCode);
+    TRef<ComputeShader> CShader = CreateComputeShader(ShaderCode);
     if (!CShader)
     {
         Debug::DebugBreak();
@@ -302,7 +302,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
     ComputePipelineStateCreateInfo PipelineStateInfo;
     PipelineStateInfo.Shader = CShader.Get();
 
-    TSharedRef<ComputePipelineState> BRDF_PipelineState = CreateComputePipelineState(PipelineStateInfo);
+    TRef<ComputePipelineState> BRDF_PipelineState = CreateComputePipelineState(PipelineStateInfo);
     if (!BRDF_PipelineState)
     {
         Debug::DebugBreak();

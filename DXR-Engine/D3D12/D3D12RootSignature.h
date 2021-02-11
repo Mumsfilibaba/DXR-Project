@@ -19,10 +19,12 @@ class D3D12RootSignature;
 
 struct D3D12DefaultRootSignatures
 {
-    TSharedRef<D3D12RootSignature> Graphics;
-    TSharedRef<D3D12RootSignature> Compute;
-    TSharedRef<D3D12RootSignature> GlobalRayTracing;
-    TSharedRef<D3D12RootSignature> LocalRayTracing;
+    TRef<D3D12RootSignature> Graphics;
+    TRef<D3D12RootSignature> Compute;
+    TRef<D3D12RootSignature> GlobalRayGen;
+    TRef<D3D12RootSignature> LocalRayGen;
+    TRef<D3D12RootSignature> LocalRayMiss;
+    TRef<D3D12RootSignature> LocalRayHit;
 
     Bool CreateRootSignatures(class D3D12Device* Device);
 };
@@ -34,7 +36,7 @@ public:
         : D3D12DeviceChild(InDevice)
         , RootSignature(InRootSignature)
     {
-        VALIDATE(RootSignature != nullptr);
+        Assert(RootSignature != nullptr);
     }
 
     FORCEINLINE void SetName(const std::string& Name)
@@ -46,6 +48,5 @@ public:
     ID3D12RootSignature* GetRootSignature() const { return RootSignature.Get(); }
     ID3D12RootSignature* const * GetAddressOfRootSignature() const { return RootSignature.GetAddressOf(); }
 
-private:
     TComPtr<ID3D12RootSignature> RootSignature;
 };

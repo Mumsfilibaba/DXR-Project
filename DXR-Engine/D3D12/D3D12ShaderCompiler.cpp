@@ -7,55 +7,155 @@
 
 #include "Application/Platform/PlatformDialogMisc.h"
 
-static LPCWSTR GetTargetProfile(EShaderStage ShaderStage, EShaderModel ShaderModel)
+// TODO: Maybe a compile time version?
+static LPCWSTR GetTargetProfile(EShaderStage Stage, EShaderModel Model)
 {
-    if (ShaderStage == EShaderStage::Vertex)
+    switch (Stage)
     {
-        if (ShaderModel == EShaderModel::SM_5_0)
+        case EShaderStage::Compute:
         {
-            return L"vs_5_0";
+            switch (Model)
+            {
+                case EShaderModel::SM_5_0: return L"cs_5_0";
+                case EShaderModel::SM_5_1: return L"cs_5_1";
+                case EShaderModel::SM_6_0: return L"cs_6_0";
+                case EShaderModel::SM_6_1: return L"cs_6_1";
+                case EShaderModel::SM_6_2: return L"cs_6_2";
+                case EShaderModel::SM_6_3: return L"cs_6_3";
+                case EShaderModel::SM_6_4: return L"cs_6_4";
+                case EShaderModel::SM_6_5: return L"cs_6_5";
+                default: break;
+            }
         }
-        else if (ShaderModel == EShaderModel::SM_5_1)
+
+        case EShaderStage::Vertex:
         {
-            return L"vs_5_1";
+            switch (Model)
+            {
+                case EShaderModel::SM_5_0: return L"vs_5_0";
+                case EShaderModel::SM_5_1: return L"vs_5_1";
+                case EShaderModel::SM_6_0: return L"vs_6_0";
+                case EShaderModel::SM_6_1: return L"vs_6_1";
+                case EShaderModel::SM_6_2: return L"vs_6_2";
+                case EShaderModel::SM_6_3: return L"vs_6_3";
+                case EShaderModel::SM_6_4: return L"vs_6_4";
+                case EShaderModel::SM_6_5: return L"vs_6_5";
+                default: break;
+            }
         }
-        else if (ShaderModel == EShaderModel::SM_6_0)
+
+        case EShaderStage::Hull:
         {
-            return L"vs_6_0";
+            switch (Model)
+            {
+                case EShaderModel::SM_5_0: return L"hs_5_0";
+                case EShaderModel::SM_5_1: return L"hs_5_1";
+                case EShaderModel::SM_6_0: return L"hs_6_0";
+                case EShaderModel::SM_6_1: return L"hs_6_1";
+                case EShaderModel::SM_6_2: return L"hs_6_2";
+                case EShaderModel::SM_6_3: return L"hs_6_3";
+                case EShaderModel::SM_6_4: return L"hs_6_4";
+                case EShaderModel::SM_6_5: return L"hs_6_5";
+                default: break;
+            }
         }
-    }
-    else if (ShaderStage == EShaderStage::Pixel)
-    {
-        if (ShaderModel == EShaderModel::SM_5_0)
+
+        case EShaderStage::Domain:
         {
-            return L"ps_5_0";
+            switch (Model)
+            {
+                case EShaderModel::SM_5_0: return L"ds_5_0";
+                case EShaderModel::SM_5_1: return L"ds_5_1";
+                case EShaderModel::SM_6_0: return L"ds_6_0";
+                case EShaderModel::SM_6_1: return L"ds_6_1";
+                case EShaderModel::SM_6_2: return L"ds_6_2";
+                case EShaderModel::SM_6_3: return L"ds_6_3";
+                case EShaderModel::SM_6_4: return L"ds_6_4";
+                case EShaderModel::SM_6_5: return L"ds_6_5";
+                default: break;
+            }
         }
-        else if (ShaderModel == EShaderModel::SM_5_1)
+
+        case EShaderStage::Geometry:
         {
-            return L"ps_5_1";
+            switch (Model)
+            {
+                case EShaderModel::SM_5_0: return L"gs_5_0";
+                case EShaderModel::SM_5_1: return L"gs_5_1";
+                case EShaderModel::SM_6_0: return L"gs_6_0";
+                case EShaderModel::SM_6_1: return L"gs_6_1";
+                case EShaderModel::SM_6_2: return L"gs_6_2";
+                case EShaderModel::SM_6_3: return L"gs_6_3";
+                case EShaderModel::SM_6_4: return L"gs_6_4";
+                case EShaderModel::SM_6_5: return L"gs_6_5";
+                default: break;
+            }
         }
-        else if (ShaderModel == EShaderModel::SM_6_0)
+
+        case EShaderStage::Pixel:
         {
-            return L"ps_6_0";
+            switch (Model)
+            {
+                case EShaderModel::SM_5_0: return L"ps_5_0";
+                case EShaderModel::SM_5_1: return L"ps_5_1";
+                case EShaderModel::SM_6_0: return L"ps_6_0";
+                case EShaderModel::SM_6_1: return L"ps_6_1";
+                case EShaderModel::SM_6_2: return L"ps_6_2";
+                case EShaderModel::SM_6_3: return L"ps_6_3";
+                case EShaderModel::SM_6_4: return L"ps_6_4";
+                case EShaderModel::SM_6_5: return L"ps_6_5";
+                default: break;
+            }
         }
-    }
-    else if (ShaderStage == EShaderStage::Compute)
-    {
-        if (ShaderModel == EShaderModel::SM_5_0)
+
+        case EShaderStage::Mesh:
         {
-            return L"cs_5_0";
+            switch (Model)
+            {
+                case EShaderModel::SM_5_0: return L"ms_5_0";
+                case EShaderModel::SM_5_1: return L"ms_5_1";
+                case EShaderModel::SM_6_0: return L"ms_6_0";
+                case EShaderModel::SM_6_1: return L"ms_6_1";
+                case EShaderModel::SM_6_2: return L"ms_6_2";
+                case EShaderModel::SM_6_3: return L"ms_6_3";
+                case EShaderModel::SM_6_4: return L"ms_6_4";
+                case EShaderModel::SM_6_5: return L"ms_6_5";
+                default: break;
+            }
         }
-        else if (ShaderModel == EShaderModel::SM_5_1)
+
+        case EShaderStage::Amplification:
         {
-            return L"cs_5_1";
+            switch (Model)
+            {
+                case EShaderModel::SM_5_0: return L"as_5_0";
+                case EShaderModel::SM_5_1: return L"as_5_1";
+                case EShaderModel::SM_6_0: return L"as_6_0";
+                case EShaderModel::SM_6_1: return L"as_6_1";
+                case EShaderModel::SM_6_2: return L"as_6_2";
+                case EShaderModel::SM_6_3: return L"as_6_3";
+                case EShaderModel::SM_6_4: return L"as_6_4";
+                case EShaderModel::SM_6_5: return L"as_6_5";
+                default: break;
+            }
         }
-        else if (ShaderModel == EShaderModel::SM_6_0)
+
+        case EShaderStage::RayGen:
+        case EShaderStage::RayAnyHit:
+        case EShaderStage::RayClosestHit:
+        case EShaderStage::RayMiss: 
         {
-            return L"cs_6_0";
+            switch (Model)
+            {
+                case EShaderModel::SM_6_3: return L"lib_6_3";
+                case EShaderModel::SM_6_4: return L"lib_6_4";
+                case EShaderModel::SM_6_5: return L"lib_6_5";
+                default: break;
+            }
         }
     }
 
-    return L"";
+    return L"Unknown";
 }
 
 D3D12ShaderCompiler::D3D12ShaderCompiler()
@@ -196,7 +296,7 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
 {
     LPCWSTR Args[] =
     {
-        L"-O3",    // Optimization level 3
+        L"-O3", // Optimization level 3
     };
 
     // Convert defines
@@ -215,7 +315,6 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
         }
     }
 
-    // Compile
     TComPtr<IDxcOperationResult> Result;
     HRESULT hResult = DxCompiler->Compile(
         SourceBlob, 

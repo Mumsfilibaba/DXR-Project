@@ -16,5 +16,5 @@ public:
     void PreRender(CommandList& CmdList, FrameResources& Resources, const Scene& Scene);
 
 private:
-    TSharedRef<RayTracingPipelineState> Pipeline;
+    TRef<RayTracingPipelineState> Pipeline;
 };

@@ -82,7 +82,7 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
         if (IsSubClassOf<PointLight>(Light))
         {
             PointLight* CurrentLight = Cast<PointLight>(Light);
-            VALIDATE(CurrentLight != nullptr);
+            Assert(CurrentLight != nullptr);
 
             constexpr Float MinLuma = 0.005f;
             Float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
@@ -126,7 +126,7 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
         else if (IsSubClassOf<DirectionalLight>(Light))
         {
             DirectionalLight* CurrentLight = Cast<DirectionalLight>(Light);
-            VALIDATE(CurrentLight != nullptr);
+            Assert(CurrentLight != nullptr);
 
             DirectionalLightData Data;
             Data.Color      = Color;

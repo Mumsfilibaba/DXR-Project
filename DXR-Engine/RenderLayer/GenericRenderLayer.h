@@ -125,7 +125,7 @@ public:
     virtual ConstantBuffer* CreateConstantBuffer(UInt32 Size, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
     virtual StructuredBuffer* CreateStructuredBuffer(UInt32 Stride, UInt32 NumElements, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
 
-    virtual RayTracingScene* CreateRayTracingScene(UInt32 Flags, const TArray<RayTracingGeometryInstance>& Instances) = 0;
+    virtual RayTracingScene* CreateRayTracingScene(UInt32 Flags, TArrayView<RayTracingGeometryInstance> Instances) = 0;
     virtual RayTracingGeometry* CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer) = 0;
 
     virtual ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) = 0;
@@ -144,7 +144,8 @@ public:
     virtual class PixelShader* CreatePixelShader(const TArray<UInt8>& ShaderCode) = 0;
     
     virtual class RayGenShader* CreateRayGenShader(const TArray<UInt8>& ShaderCode) = 0;
-    virtual class RayHitShader* CreateRayHitShader(const TArray<UInt8>& ShaderCode) = 0;
+    virtual class RayAnyHitShader* CreateRayAnyHitShader(const TArray<UInt8>& ShaderCode) = 0;
+    virtual class RayClosestHitShader* CreateRayClosestHitShader(const TArray<UInt8>& ShaderCode) = 0;
     virtual class RayMissShader* CreateRayMissShader(const TArray<UInt8>& ShaderCode) = 0;
 
     virtual class DepthStencilState* CreateDepthStencilState(const DepthStencilStateCreateInfo& CreateInfo) = 0;
@@ -157,7 +158,7 @@ public:
 
     virtual class GraphicsPipelineState* CreateGraphicsPipelineState(const GraphicsPipelineStateCreateInfo& CreateInfo) = 0;
     virtual class ComputePipelineState* CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo) = 0;
-    virtual class RayTracingPipelineState* CreateRayTracingPipelineState() = 0;
+    virtual class RayTracingPipelineState* CreateRayTracingPipelineState(const RayTracingPipelineStateCreateInfo& CreateInfo) = 0;
 
     virtual class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
 
@@ -302,7 +303,7 @@ FORCEINLINE StructuredBuffer* CreateStructuredBuffer(
     return gRenderLayer->CreateStructuredBuffer(Stride, NumElements, Flags, InitialState, InitialData);
 }
 
-FORCEINLINE RayTracingScene* CreateRayTracingScene(UInt32 Flags, const TArray<RayTracingGeometryInstance>& Instances)
+FORCEINLINE RayTracingScene* CreateRayTracingScene(UInt32 Flags, TArrayView<RayTracingGeometryInstance> Instances)
 {
     return gRenderLayer->CreateRayTracingScene(Flags, Instances);
 }
@@ -657,9 +658,14 @@ FORCEINLINE RayGenShader* CreateRayGenShader(const TArray<UInt8>& ShaderCode)
     return gRenderLayer->CreateRayGenShader(ShaderCode);
 }
 
-FORCEINLINE RayHitShader* CreateRayHitShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE RayAnyHitShader* CreateRayAnyHitShader(const TArray<UInt8>& ShaderCode)
 {
-    return gRenderLayer->CreateRayHitShader(ShaderCode);
+    return gRenderLayer->CreateRayAnyHitShader(ShaderCode);
+}
+
+FORCEINLINE RayClosestHitShader* CreateRayClosestHitShader(const TArray<UInt8>& ShaderCode)
+{
+    return gRenderLayer->CreateRayClosestHitShader(ShaderCode);
 }
 
 FORCEINLINE RayMissShader* CreateRayMissShader(const TArray<UInt8>& ShaderCode)
@@ -695,6 +701,11 @@ FORCEINLINE ComputePipelineState* CreateComputePipelineState(const ComputePipeli
 FORCEINLINE GraphicsPipelineState* CreateGraphicsPipelineState(const GraphicsPipelineStateCreateInfo& CreateInfo)
 {
     return gRenderLayer->CreateGraphicsPipelineState(CreateInfo);
+}
+
+FORCEINLINE RayTracingPipelineState* CreateRayTracingPipelineState(const RayTracingPipelineStateCreateInfo& CreateInfo)
+{
+    return gRenderLayer->CreateRayTracingPipelineState(CreateInfo);
 }
 
 FORCEINLINE class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat)

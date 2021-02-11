@@ -39,7 +39,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
 
     // Create Texture Cube
     const std::string PanoramaSourceFilename = "../Assets/Textures/arches.hdr";
-    TSharedRef<Texture2D> Panorama = TextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
+    TRef<Texture2D> Panorama = TextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
     if (!Panorama)
     {
         return false;
@@ -80,7 +80,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
+    TRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         Debug::DebugBreak();
@@ -97,7 +97,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
+    TRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
     if (!PShader)
     {
         Debug::DebugBreak();
@@ -111,7 +111,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
+    TRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         Debug::DebugBreak();
@@ -126,7 +126,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     BlendStateInfo.IndependentBlendEnable      = false;
     BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-    TSharedRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
+    TRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         Debug::DebugBreak();
@@ -142,7 +142,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     DepthStencilStateInfo.DepthEnable    = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
+    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         Debug::DebugBreak();

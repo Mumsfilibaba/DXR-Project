@@ -29,14 +29,14 @@ public:
 
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const 
     { 
-        VALIDATE(ResultBuffer != nullptr);
+        Assert(ResultBuffer != nullptr);
         return ResultBuffer->GetGPUVirtualAddress();
     }
 
-    TSharedRef<D3D12VertexBuffer> VertexBuffer;
-    TSharedRef<D3D12IndexBuffer>  IndexBuffer;
-    TSharedRef<D3D12Resource> ResultBuffer;
-    TSharedRef<D3D12Resource> ScratchBuffer;
+    TRef<D3D12VertexBuffer> VertexBuffer;
+    TRef<D3D12IndexBuffer>  IndexBuffer;
+    TRef<D3D12Resource> ResultBuffer;
+    TRef<D3D12Resource> ScratchBuffer;
 };
 
 class D3D12RayTracingScene : public RayTracingScene, public D3D12DeviceChild
@@ -45,7 +45,7 @@ public:
     D3D12RayTracingScene(D3D12Device* InDevice, UInt32 InFlags);
     ~D3D12RayTracingScene() = default;
 
-    Bool Build(class D3D12CommandContext& CmdContext, const TArray<RayTracingGeometryInstance>& InInstances, Bool Update);
+    Bool Build(class D3D12CommandContext& CmdContext, TArrayView<RayTracingGeometryInstance> InInstances, Bool Update);
 
     virtual void SetName(const std::string& InName) override
     {
@@ -61,7 +61,7 @@ public:
     
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
     {
-        VALIDATE(ResultBuffer != nullptr);
+        Assert(ResultBuffer != nullptr);
         return ResultBuffer->GetGPUVirtualAddress();
     }
 
@@ -69,11 +69,11 @@ public:
 
 private:
     TArray<RayTracingGeometryInstance>  Instances;
-    TSharedRef<D3D12ShaderResourceView> View;
-    TSharedRef<D3D12Resource> ResultBuffer;
-    TSharedRef<D3D12Resource> ScratchBuffer;
-    TSharedRef<D3D12Resource> InstanceBuffer;
-    TSharedRef<D3D12Resource> BindingTable;
+    TRef<D3D12ShaderResourceView> View;
+    TRef<D3D12Resource> ResultBuffer;
+    TRef<D3D12Resource> ScratchBuffer;
+    TRef<D3D12Resource> InstanceBuffer;
+    TRef<D3D12Resource> BindingTable;
     UInt32 BindingTableStride = 0;
     UInt32 NumHitGroups       = 0;
 };

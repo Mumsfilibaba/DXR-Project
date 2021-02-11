@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderLayer/ICommandContext.h"
 
-#include "Core/TSharedRef.h"
+#include "Core/Ref.h"
 
 #include "D3D12DeviceChild.h"
 #include "D3D12RootSignature.h"
@@ -35,7 +35,7 @@ public:
 
         // TODO: Maybe save a ref so that we can ensure that the buffer
         //       does not get deleted until commandbatch is finished
-        VALIDATE(VertexBuffer != nullptr);
+        Assert(VertexBuffer != nullptr);
         VertexBufferViews[Slot] = VertexBuffer->GetView();
     }
 
@@ -216,8 +216,8 @@ private:
     D3D12_CPU_DESCRIPTOR_HANDLE DefaultUAVOfflineHandle;
     D3D12_CPU_DESCRIPTOR_HANDLE DefaultSamplerOfflineHandle;
 
-    TSharedRef<D3D12DescriptorHeap> DefaultResourceHeap;
-    TSharedRef<D3D12DescriptorHeap> DefaultSamplerHeap;
+    TRef<D3D12DescriptorHeap> DefaultResourceHeap;
+    TRef<D3D12DescriptorHeap> DefaultSamplerHeap;
 
     TStaticArray<ID3D12DescriptorHeap*, 2>       DescriptorHeaps;
     TStaticArray<D3D12_GPU_DESCRIPTOR_HANDLE, 4> BoundGraphicsDescriptorTables;
@@ -356,11 +356,11 @@ private:
     D3D12CommandAllocatorHandle CmdAllocator;
     D3D12GPUResourceUploader    GpuResourceUploader;
     
-    TSharedRef<D3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
-    TSharedRef<D3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
+    TRef<D3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
+    TRef<D3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
     
-    TArray<TSharedRef<D3D12Resource>> DxResources;
-    TArray<TSharedRef<Resource>>      Resources;
+    TArray<TRef<D3D12Resource>> DxResources;
+    TArray<TRef<Resource>>      Resources;
     TArray<TComPtr<ID3D12Resource>>   NativeResources;
 };
 
@@ -374,7 +374,7 @@ public:
 
     void AddUnorderedAccessBarrier(ID3D12Resource* Resource)
     {
-        VALIDATE(Resource != nullptr);
+        Assert(Resource != nullptr);
 
         D3D12_RESOURCE_BARRIER Barrier;
         Memory::Memzero(&Barrier);
@@ -411,7 +411,7 @@ private:
 class D3D12CommandContext : public ICommandContext, public D3D12DeviceChild
 {
 public:
-    D3D12CommandContext(D3D12Device* InDevice, const D3D12DefaultRootSignatures& InDefaultRootSignatures);
+    D3D12CommandContext(D3D12Device* InDevice);
     ~D3D12CommandContext();
 
     Bool Init();
@@ -505,7 +505,7 @@ public:
     virtual void DiscardResource(class Resource* Resource) override final;
 
     virtual void BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update) override final;
-    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene) override final;
+    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene, TArrayView<RayTracingGeometryInstance> Instances, Bool Update) override final;
 
     virtual void GenerateMips(Texture* Texture) override final;
 
@@ -545,13 +545,13 @@ private:
     D3D12CommandBatch*        CmdBatch = nullptr;
     UInt32 NextCmdBatch = 0;
 
-    TSharedRef<D3D12ComputePipelineState> GenerateMipsTex2D_PSO;
-    TSharedRef<D3D12ComputePipelineState> GenerateMipsTexCube_PSO;
+    TRef<D3D12ComputePipelineState> GenerateMipsTex2D_PSO;
+    TRef<D3D12ComputePipelineState> GenerateMipsTexCube_PSO;
 
-    TSharedRef<D3D12GraphicsPipelineState> CurrentGraphicsPipelineState;
-    TSharedRef<D3D12RootSignature>         CurrentGraphicsRootSignature;
-    TSharedRef<D3D12ComputePipelineState>  CurrentComputePipelineState;
-    TSharedRef<D3D12RootSignature>         CurrentComputeRootSignature;
+    TRef<D3D12GraphicsPipelineState> CurrentGraphicsPipelineState;
+    TRef<D3D12RootSignature>         CurrentGraphicsRootSignature;
+    TRef<D3D12ComputePipelineState>  CurrentComputePipelineState;
+    TRef<D3D12RootSignature>         CurrentComputeRootSignature;
 
     D3D12VertexBufferState          VertexBufferState;
     D3D12RenderTargetState          RenderTargetState;

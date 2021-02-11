@@ -67,16 +67,16 @@ private:
     FrameResources Resources;
     LightSetup     LightSetup;    
 
-    TSharedRef<Texture2D>            ShadingImage;
-    TSharedRef<ComputePipelineState> ShadingRatePipeline;
+    TRef<Texture2D>            ShadingImage;
+    TRef<ComputePipelineState> ShadingRatePipeline;
 
-    TSharedRef<VertexBuffer> AABBVertexBuffer;
-    TSharedRef<IndexBuffer>  AABBIndexBuffer;
-    TSharedRef<GraphicsPipelineState> AABBDebugPipelineState;
+    TRef<VertexBuffer> AABBVertexBuffer;
+    TRef<IndexBuffer>  AABBIndexBuffer;
+    TRef<GraphicsPipelineState> AABBDebugPipelineState;
 
-    TSharedRef<GraphicsPipelineState> PostPSO;
-    TSharedRef<GraphicsPipelineState> FXAAPSO;
-    TSharedRef<GraphicsPipelineState> FXAADebugPSO;
+    TRef<GraphicsPipelineState> PostPSO;
+    TRef<GraphicsPipelineState> FXAAPSO;
+    TRef<GraphicsPipelineState> FXAADebugPSO;
 
     UInt32 LastFrameNumDrawCalls     = 0;
     UInt32 LastFrameNumDispatchCalls = 0;

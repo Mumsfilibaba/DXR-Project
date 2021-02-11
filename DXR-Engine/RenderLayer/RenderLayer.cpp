@@ -51,6 +51,6 @@ bool RenderLayer::Init(ERenderLayerApi InRenderApi)
 
 void RenderLayer::Release()
 {
-	SAFEDELETE(gRenderLayer);
-	SAFEDELETE(gShaderCompiler);
+	SafeDelete(gRenderLayer);
+	SafeDelete(gShaderCompiler);
 }

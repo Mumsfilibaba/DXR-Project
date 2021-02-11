@@ -7,7 +7,6 @@
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
 #include "D3D12DescriptorHeap.h"
-#include "D3D12RayTracingPipelineState.h"
 
 D3D12RayTracingGeometry::D3D12RayTracingGeometry(D3D12Device* InDevice, UInt32 InFlags)
     : RayTracingGeometry(InFlags)
@@ -21,7 +20,7 @@ D3D12RayTracingGeometry::D3D12RayTracingGeometry(D3D12Device* InDevice, UInt32 I
 
 Bool D3D12RayTracingGeometry::Build(D3D12CommandContext& CmdContext, Bool Update)
 {
-    VALIDATE(VertexBuffer != nullptr);
+    Assert(VertexBuffer != nullptr);
 
     D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc;
     Memory::Memzero(&GeometryDesc);
@@ -76,7 +75,7 @@ Bool D3D12RayTracingGeometry::Build(D3D12CommandContext& CmdContext, Bool Update
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TSharedRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Init(D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr))
         {
             Debug::DebugBreak();
@@ -107,7 +106,7 @@ Bool D3D12RayTracingGeometry::Build(D3D12CommandContext& CmdContext, Bool Update
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TSharedRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
             Debug::DebugBreak();
@@ -152,7 +151,7 @@ D3D12RayTracingScene::D3D12RayTracingScene(D3D12Device* InDevice, UInt32 InFlags
 {
 }
 
-Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const TArray<RayTracingGeometryInstance>& InInstances, Bool Update)
+Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, TArrayView<RayTracingGeometryInstance> InInstances, Bool Update)
 {
     //// Struct for each entry in shaderbinding table
     struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) TableEntry
@@ -208,15 +207,19 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const TArray<R
     //BindingTableEntries	= InBindingTableEntries;
 
     // Init accelerationstructure
-    VALIDATE(InInstances.IsEmpty() == false);
+    Assert(InInstances.IsEmpty() == false);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
     Memory::Memzero(&Inputs);
 
     Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    Inputs.Flags       = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
     Inputs.NumDescs    = InInstances.Size();
     Inputs.Type        = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
+    Inputs.Flags       = ConvertAccelerationStructureBuildFlags(GetFlags());
+    if (Update && GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)
+    {
+        Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
+    }
 
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo;
     Memory::Memzero(&PreBuildInfo);
@@ -240,7 +243,7 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const TArray<R
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TSharedRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Init(D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr))
         {
             Debug::DebugBreak();
@@ -271,7 +274,7 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const TArray<R
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TSharedRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
             Debug::DebugBreak();
@@ -317,7 +320,7 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const TArray<R
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TSharedRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
             Debug::DebugBreak();
@@ -342,7 +345,11 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const TArray<R
     AccelerationStructureDesc.Inputs.InstanceDescs             = InstanceBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.DestAccelerationStructureData    = ResultBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
-    
+    if (Update && GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)
+    {
+        AccelerationStructureDesc.SourceAccelerationStructureData = ResultBuffer->GetGPUVirtualAddress();
+    }
+
     CmdContext.FlushResourceBarriers();
 
     D3D12CommandListHandle& CmdList = CmdContext.GetCommandList();
@@ -351,8 +358,7 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const TArray<R
     CmdContext.UnorderedAccessBarrier(ResultBuffer.Get());
 
     // Copy the instances
-    Instances = InInstances;
-
+    Instances = TArray<RayTracingGeometryInstance>(InInstances.Begin(), InInstances.End());
     return true;
 }
 

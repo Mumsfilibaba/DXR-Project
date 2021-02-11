@@ -63,7 +63,7 @@ class D3D12OfflineDescriptorHeap : public D3D12DeviceChild, public RefCountedObj
 
     struct DescriptorHeap
     {
-        DescriptorHeap(const TSharedRef<D3D12DescriptorHeap>& InHeap)
+        DescriptorHeap(const TRef<D3D12DescriptorHeap>& InHeap)
             : FreeList()
             , Heap(InHeap)
         {
@@ -74,7 +74,7 @@ class D3D12OfflineDescriptorHeap : public D3D12DeviceChild, public RefCountedObj
         }
 
         TArray<DescriptorRange> FreeList;
-        TSharedRef<D3D12DescriptorHeap> Heap;
+        TRef<D3D12DescriptorHeap> Heap;
     };
 
 public:
@@ -142,9 +142,9 @@ public:
     FORCEINLINE D3D12DescriptorHeap* GetHeap() const { return Heap.Get(); }
 
 private:
-    TSharedRef<D3D12DescriptorHeap> Heap;
-    TArray<TSharedRef<D3D12DescriptorHeap>> HeapPool;
-    TArray<TSharedRef<D3D12DescriptorHeap>> DiscardedHeaps;
+    TRef<D3D12DescriptorHeap> Heap;
+    TArray<TRef<D3D12DescriptorHeap>> HeapPool;
+    TArray<TRef<D3D12DescriptorHeap>> DiscardedHeaps;
     
     D3D12_DESCRIPTOR_HEAP_TYPE Type;
     UInt32 CurrentHandle   = 0;

@@ -733,6 +733,14 @@ Bool Renderer::Init()
         return false;
     }
 
+    if (IsRayTracingSupported())
+    {
+        if (!RayTracer.Init())
+        {
+            return false;
+        }
+    }
+
     CmdList.Begin();
 
     LightProbeRenderer.RenderSkyLightProbe(CmdList, LightSetup, Resources);
@@ -799,7 +807,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    TSharedRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
+    TRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         Debug::DebugBreak();
@@ -816,7 +824,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    TSharedRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
+    TRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
     if (!PShader)
     {
         Debug::DebugBreak();
@@ -832,7 +840,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
         { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0, EInputClassification::Vertex, 0 },
     };
 
-    TSharedRef<InputLayoutState> InputLayoutState = CreateInputLayout(InputLayout);
+    TRef<InputLayoutState> InputLayoutState = CreateInputLayout(InputLayout);
     if (!InputLayoutState)
     {
         Debug::DebugBreak();
@@ -848,7 +856,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
     DepthStencilStateInfo.DepthEnable    = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
+    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         Debug::DebugBreak();
@@ -862,7 +870,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
+    TRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         Debug::DebugBreak();
@@ -875,7 +883,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
 
     BlendStateCreateInfo BlendStateInfo;
 
-    TSharedRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
+    TRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         Debug::DebugBreak();
@@ -977,7 +985,7 @@ Bool Renderer::InitAA()
         return false;
     }
 
-    TSharedRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
+    TRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         Debug::DebugBreak();
@@ -994,7 +1002,7 @@ Bool Renderer::InitAA()
         return false;
     }
 
-    TSharedRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
+    TRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
     if (!PShader)
     {
         Debug::DebugBreak();
@@ -1010,7 +1018,7 @@ Bool Renderer::InitAA()
     DepthStencilStateInfo.DepthEnable    = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
+    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         Debug::DebugBreak();
@@ -1024,7 +1032,7 @@ Bool Renderer::InitAA()
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
+    TRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         Debug::DebugBreak();
@@ -1039,7 +1047,7 @@ Bool Renderer::InitAA()
     BlendStateInfo.IndependentBlendEnable      = false;
     BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-    TSharedRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
+    TRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         Debug::DebugBreak();
@@ -1184,7 +1192,7 @@ Bool Renderer::InitShadingImage()
         return false;
     }
 
-    TSharedRef<ComputeShader> Shader = CreateComputeShader(ShaderCode);
+    TRef<ComputeShader> Shader = CreateComputeShader(ShaderCode);
     if (!Shader)
     {
         Debug::DebugBreak();

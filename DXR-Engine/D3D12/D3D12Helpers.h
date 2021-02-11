@@ -1,10 +1,16 @@
 #pragma once
 #include "RenderLayer/Resources.h"
 
-#include <d3d12.h>
+#ifdef Validate
+    #undef Validate
+#endif
+
 #include <dxcapi.h>
+#include <d3d12.h>
 
 #include <wrl/client.h>
+
+#include "Core.h"
 
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
 

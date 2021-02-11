@@ -34,8 +34,8 @@ public:
     const D3D12Resource* GetResource() const { return Resource.Get(); }
 
 protected:
-    TSharedRef<D3D12Resource>           Resource;
-    TSharedRef<D3D12ShaderResourceView> ShaderResourceView;
+    TRef<D3D12Resource>           Resource;
+    TRef<D3D12ShaderResourceView> ShaderResourceView;
 };
 
 class D3D12BaseTexture2D : public Texture2D, public D3D12BaseTexture
@@ -68,9 +68,9 @@ public:
     void SetUnorderedAccessView(D3D12UnorderedAccessView* InUnorderedAccessView) { UnorderedAccessView = InUnorderedAccessView; }
 
 private:
-    TSharedRef<D3D12RenderTargetView> RenderTargetView;
-    TSharedRef<D3D12DepthStencilView> DepthStencilView;
-    TSharedRef<D3D12UnorderedAccessView> UnorderedAccessView;
+    TRef<D3D12RenderTargetView> RenderTargetView;
+    TRef<D3D12DepthStencilView> DepthStencilView;
+    TRef<D3D12UnorderedAccessView> UnorderedAccessView;
 };
 
 class D3D12BaseTexture2DArray : public Texture2DArray, public D3D12BaseTexture
@@ -197,7 +197,7 @@ using D3D12Texture3D        = TD3D12BaseTexture<D3D12BaseTexture3D>;
 
 inline D3D12BaseTexture* D3D12TextureCast(Texture* Texture)
 {
-    VALIDATE(Texture != nullptr);
+    Assert(Texture != nullptr);
 
     if (Texture->AsTexture2D() != nullptr)
     {

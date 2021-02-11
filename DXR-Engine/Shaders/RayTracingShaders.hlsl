@@ -17,6 +17,9 @@ SamplerState GBufferSampler : register(s1, space0);
 
 RWTexture2D<float4> OutTexture 	: register(u0, space0);
 
+static const float3 LightPosition = float3(0.0f, 1.0f, 0.0f);
+static const float3 LightColor    = float3(1.0f, 1.0f, 1.0f);
+
 // Local RootSignature
 cbuffer MaterialBuffer : register(b0, space1)
 {
@@ -170,7 +173,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     const float SampledRoughness = RoughnessMap.SampleLevel(TextureSampler, TexCoords, 0).r * Roughness;
     const float FinalRoughness   = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
     
-    float3 ReflectedColor = ToFloat3(0.0f);
+    float3 ReflectedColor = Float3(0.0f);
     if (PayLoad.CurrentRecursionDepth < 4)
     {
         RayDesc Ray;
@@ -192,14 +195,14 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
         ReflectedColor = Skybox.SampleLevel(TextureSampler, WorldRayDirection(), 0).rgb;
     }
     
-    float3 FresnelReflect = FresnelSchlick(saturate(dot(-WorldRayDirection(), Normal)), AlbedoColor);
+    float3 FresnelReflect = FresnelSchlick(-WorldRayDirection(), Normal, AlbedoColor);
     ReflectedColor = FresnelReflect * ReflectedColor;
 
-    float3 F0 = ToFloat3(0.04f);
+    float3 F0 = Float3(0.04f);
     F0 = lerp(F0, AlbedoColor, SampledMetallic);
 
     // Reflectance equation
-    float3 Lo = ToFloat3(0.0f);
+    float3 Lo = Float3(0.0f);
 
     // Calculate per-light radiance
     float  Distance	   = length(LightPosition - HitPosition);
@@ -208,8 +211,8 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 
     // Cook-Torrance BRDF
     float  NDF = DistributionGGX(Normal, HalfVec, FinalRoughness);
-    float  G   = GeometrySmith(Normal, ViewDir, LightDir, FinalRoughness);
-    float3 F   = FresnelSchlick(saturate(dot(HalfVec, ViewDir)), F0);
+    float  G   = GeometrySmithGGX(Normal, LightDir, ViewDir, HalfVec, FinalRoughness);
+    float3 F   = FresnelSchlick(ViewDir, HalfVec, F0);
     
     float3 Nominator   = NDF * G * F;
     float  Denominator = 4.0f * max(dot(Normal, ViewDir), 0.0f) * max(dot(Normal, LightDir), 0.0f);
@@ -220,7 +223,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     // For energy conservation, the diffuse and specular light can't
     // be above 1.0 (unless the surface emits light); to preserve this
     // relationship the diffuse component (kD) should equal 1.0 - kS.
-    float3 Kd = ToFloat3(1.0f) - Ks;
+    float3 Kd = Float3(1.0f) - Ks;
     // Multiply kD by the inverse metalness such that only non-metals 
     // have diffuse lighting, or a linear blend if partly metal (pure metals
     // have no diffuse light).
@@ -232,7 +235,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     // Add to outgoing radiance Lo
     Lo += (((Kd * AlbedoColor) / PI) + Specular) * Radiance * NdotL;
     
-    float3 Ambient = ToFloat3(0.03f) * AlbedoColor * SampledAO;
+    float3 Ambient = Float3(0.03f) * AlbedoColor * SampledAO;
     float3 Color   = Ambient + Lo;
     
     // Add rays together
