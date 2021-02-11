@@ -230,7 +230,8 @@ Bool D3D12ComputePipelineState::Init()
 struct D3D12RootSignatureAssociation
 {
     D3D12RootSignatureAssociation(const TComPtr<ID3D12RootSignature>& InRootSignature, const TArray<std::wstring>& InShaderExportNames)
-        : RootSignature(InRootSignature)
+        : ExportAssociation()
+        , RootSignature(InRootSignature)
         , ShaderExportNames(InShaderExportNames)
         , ShaderExportNamesRef(InShaderExportNames.Size())
     {
@@ -240,7 +241,8 @@ struct D3D12RootSignatureAssociation
         }
     }
 
-    TComPtr<ID3D12RootSignature> RootSignature;
+    D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION ExportAssociation;
+    TComPtr<ID3D12RootSignature>           RootSignature;
     TArray<std::wstring> ShaderExportNames;
     TArray<LPCWSTR>      ShaderExportNamesRef;
 };
@@ -254,11 +256,21 @@ struct D3D12HitGroup
         , AnyHit(InAnyHit)
         , Intersection(InIntersection)
     {
-        Desc.Type                     = D3D12_HIT_GROUP_TYPE_TRIANGLES;
-        Desc.AnyHitShaderImport       = AnyHit.c_str();
-        Desc.ClosestHitShaderImport   = ClosestHit.c_str();
-        Desc.HitGroupExport           = HitGroupName.c_str();
-        Desc.IntersectionShaderImport = Intersection.c_str();
+        Memory::Memzero(&Desc);
+
+        Desc.Type                   = D3D12_HIT_GROUP_TYPE_TRIANGLES;
+        Desc.HitGroupExport         = HitGroupName.c_str();
+        Desc.ClosestHitShaderImport = ClosestHit.c_str();
+
+        if (AnyHit != L"")
+        {
+            Desc.AnyHitShaderImport = AnyHit.c_str();
+        }
+
+        if (Desc.Type != D3D12_HIT_GROUP_TYPE_TRIANGLES )
+        {
+            Desc.IntersectionShaderImport = Intersection.c_str();
+        }
     }
 
     D3D12_HIT_GROUP_DESC Desc;
@@ -340,30 +352,22 @@ public:
             LocalRootSubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
             LocalRootSubObject.pDesc = Association.RootSignature.GetAddressOf();
 
-            D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION RayGenLocalRootAssociation;
-            RayGenLocalRootAssociation.pExports   = Association.ShaderExportNamesRef.Data();
-            RayGenLocalRootAssociation.NumExports = Association.ShaderExportNamesRef.Size();
-            RayGenLocalRootAssociation.pSubobjectToAssociate = &LocalRootSubObject;
+            Association.ExportAssociation.pExports   = Association.ShaderExportNamesRef.Data();
+            Association.ExportAssociation.NumExports = Association.ShaderExportNamesRef.Size();
+            Association.ExportAssociation.pSubobjectToAssociate = &SubObjects[SubObjectIndex - 1];
 
             D3D12_STATE_SUBOBJECT& SubObject = SubObjects[SubObjectIndex++];
             SubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-            SubObject.pDesc = &RayGenLocalRootAssociation;
+            SubObject.pDesc = &Association.ExportAssociation;
         }
 
         D3D12_STATE_SUBOBJECT& GlobalRootSubObject = SubObjects[SubObjectIndex++];
         GlobalRootSubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
         GlobalRootSubObject.pDesc = GlobalRootSignature.GetAddressOf();
 
-        D3D12_RAYTRACING_PIPELINE_CONFIG PipelineConfig;
-        PipelineConfig.MaxTraceRecursionDepth = MaxRecursionDepth;
-
         D3D12_STATE_SUBOBJECT& PipelineConfigSubObject = SubObjects[SubObjectIndex++];
         PipelineConfigSubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
         PipelineConfigSubObject.pDesc = &PipelineConfig;
-
-        D3D12_RAYTRACING_SHADER_CONFIG ShaderConfig;
-        ShaderConfig.MaxPayloadSizeInBytes   = MaxPayLoadSize;
-        ShaderConfig.MaxAttributeSizeInBytes = MaxAttributeSize;
 
         D3D12_STATE_SUBOBJECT& ShaderConfigObject = SubObjects[SubObjectIndex++];
         ShaderConfigObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
@@ -375,12 +379,11 @@ public:
             PayLoadExportNamesRef[i] = PayLoadExportNames[i].c_str();
         }
 
-        D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION ShaderConfigAssociation;
         ShaderConfigAssociation.pExports   = PayLoadExportNamesRef.Data();
         ShaderConfigAssociation.NumExports = PayLoadExportNamesRef.Size();
-        ShaderConfigAssociation.pSubobjectToAssociate = &ShaderConfigObject;
+        ShaderConfigAssociation.pSubobjectToAssociate = &SubObjects[SubObjectIndex-1];
 
-        D3D12_STATE_SUBOBJECT&ShaderConfigAssociationSubObject = SubObjects[SubObjectIndex++];
+        D3D12_STATE_SUBOBJECT& ShaderConfigAssociationSubObject = SubObjects[SubObjectIndex++];
         ShaderConfigAssociationSubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
         ShaderConfigAssociationSubObject.pDesc = &ShaderConfigAssociation;
     }
@@ -389,10 +392,10 @@ public:
     TArray<D3D12HitGroup> HitGroups;
     TArray<D3D12RootSignatureAssociation> RootSignatureAssociations;
 
-    UInt32 MaxAttributeSize;
-    UInt32 MaxPayLoadSize;
-    UInt32 MaxRecursionDepth;
-    
+    D3D12_RAYTRACING_PIPELINE_CONFIG       PipelineConfig;
+    D3D12_RAYTRACING_SHADER_CONFIG         ShaderConfig;
+    D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION ShaderConfigAssociation;
+
     TArray<std::wstring> PayLoadExportNames;
     TArray<LPCWSTR>      PayLoadExportNamesRef;
 
@@ -429,7 +432,7 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
     {
         D3D12RayClosestHitShader* DxClosestHit = static_cast<D3D12RayClosestHitShader*>(ClosestHit);
         PipelineStream.AddLibrary(DxClosestHit->GetShaderByteCode(), { L"ClosestHit" });
-        PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayHit->RootSignature, { L"Closesthit" });
+        PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayHit->RootSignature, { L"ClosestHit" });
     }
 
     for (RayMissShader* Miss : CreateInfo.MissShaders)
@@ -439,11 +442,11 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
         PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayMiss->RootSignature, { L"Miss" });
     }
 
-    PipelineStream.MaxAttributeSize    = CreateInfo.MaxAttributeSizeInBytes;
-    PipelineStream.MaxPayLoadSize      = CreateInfo.MaxPayloadSizeInBytes;
-    PipelineStream.PayLoadExportNames  = { L"ClosestHit", L"Miss", L"RayGen" };
-    PipelineStream.MaxRecursionDepth   = CreateInfo.MaxRecursionDepth;
-    PipelineStream.GlobalRootSignature = DefaultRootSignatures.GlobalRayGen->RootSignature;
+    PipelineStream.ShaderConfig.MaxAttributeSizeInBytes  = CreateInfo.MaxAttributeSizeInBytes;
+    PipelineStream.ShaderConfig.MaxPayloadSizeInBytes    = CreateInfo.MaxPayloadSizeInBytes;
+    PipelineStream.PayLoadExportNames                    = { L"ClosestHit", L"Miss", L"RayGen" };
+    PipelineStream.PipelineConfig.MaxTraceRecursionDepth = CreateInfo.MaxRecursionDepth;
+    PipelineStream.GlobalRootSignature                   = DefaultRootSignatures.GlobalRayGen->RootSignature;
 
     PipelineStream.Generate();
 
