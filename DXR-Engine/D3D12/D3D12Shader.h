@@ -46,42 +46,53 @@ public:
     }
 };
 
-class D3D12BaseRayGenShader : public RayGenShader, public D3D12BaseShader
+class D3D12BaseRayTracingShader : public D3D12BaseShader
+{
+public:
+    D3D12BaseRayTracingShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+        : D3D12BaseShader(InDevice, InCode)
+    {
+    }
+
+    std::string Identifier;
+};
+
+class D3D12BaseRayGenShader : public RayGenShader, public D3D12BaseRayTracingShader
 {
 public:
     D3D12BaseRayGenShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : RayGenShader()
-        , D3D12BaseShader(InDevice, InCode)
+        , D3D12BaseRayTracingShader(InDevice, InCode)
     {
     }
 };
 
-class D3D12BaseRayAnyhitShader : public RayAnyHitShader, public D3D12BaseShader
+class D3D12BaseRayAnyhitShader : public RayAnyHitShader, public D3D12BaseRayTracingShader
 {
 public:
     D3D12BaseRayAnyhitShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : RayAnyHitShader()
-        , D3D12BaseShader(InDevice, InCode)
+        , D3D12BaseRayTracingShader(InDevice, InCode)
     {
     }
 };
 
-class D3D12BaseRayClosestHitShader : public RayClosestHitShader, public D3D12BaseShader
+class D3D12BaseRayClosestHitShader : public RayClosestHitShader, public D3D12BaseRayTracingShader
 {
 public:
     D3D12BaseRayClosestHitShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : RayClosestHitShader()
-        , D3D12BaseShader(InDevice, InCode)
+        , D3D12BaseRayTracingShader(InDevice, InCode)
     {
     }
 };
 
-class D3D12BaseRayMissShader : public RayMissShader, public D3D12BaseShader
+class D3D12BaseRayMissShader : public RayMissShader, public D3D12BaseRayTracingShader
 {
 public:
     D3D12BaseRayMissShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : RayMissShader()
-        , D3D12BaseShader(InDevice, InCode)
+        , D3D12BaseRayTracingShader(InDevice, InCode)
     {
     }
 };

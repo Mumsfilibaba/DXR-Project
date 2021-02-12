@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <imgui_internal.h>
 
-static const UInt32  ShadowMapSampleCount = 2;
+static const UInt32 ShadowMapSampleCount = 2;
 
 ConsoleVariable GlobalDrawTextureDebugger(EConsoleVariableType::Bool);
 ConsoleVariable GlobalDrawRendererInfo(EConsoleVariableType::Bool);

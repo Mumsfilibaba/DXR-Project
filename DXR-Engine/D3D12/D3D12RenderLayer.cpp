@@ -1244,24 +1244,106 @@ PixelShader* D3D12RenderLayer::CreatePixelShader(const TArray<UInt8>& ShaderCode
     return DBG_NEW D3D12PixelShader(Device, ShaderCode);
 }
 
+static Bool GetRayTracingReflection(D3D12BaseRayTracingShader* Shader)
+{
+    TComPtr<ID3D12LibraryReflection> Reflection;
+    if (!gD3D12ShaderCompiler->GetLibraryReflection(Shader, &Reflection))
+    {
+        return false;
+    }
+
+    D3D12_LIBRARY_DESC LibDesc;
+    Memory::Memzero(&LibDesc);
+
+    HRESULT Result = Reflection->GetDesc(&LibDesc);
+    if (FAILED(Result))
+    {
+        return false;
+    }
+
+    Assert(LibDesc.FunctionCount > 0);
+
+    // Make sure that the first shader is the one we wanted
+    ID3D12FunctionReflection* Function = Reflection->GetFunctionByIndex(0);
+
+    D3D12_FUNCTION_DESC FuncDesc;
+    Memory::Memzero(&FuncDesc);
+
+    Function->GetDesc(&FuncDesc);
+    if (FAILED(Result))
+    {
+        return false;
+    }
+
+    // NOTE: Since the Nvidia driver can't handle these names, we have to change the names :(
+    std::string Identifier = FuncDesc.Name;
+
+    auto NameStart = Identifier.find_last_of("\x1?");
+    if (NameStart != std::string::npos)
+    {
+        NameStart++;
+    }
+
+    auto NameEnd = Identifier.find_first_of("@");
+
+    Shader->Identifier = Identifier.substr(NameStart, NameEnd - NameStart);
+    return true;
+}
+
 RayGenShader* D3D12RenderLayer::CreateRayGenShader(const TArray<UInt8>& ShaderCode)
 {
-    return DBG_NEW D3D12RayGenShader(Device, ShaderCode);
+    TRef<D3D12RayGenShader> Shader = DBG_NEW D3D12RayGenShader(Device, ShaderCode);
+    if (!GetRayTracingReflection(Shader.Get()))
+    {
+        LOG_ERROR("[D3D12RenderLayer]: Failed to retrive Shader Identifier");
+        return nullptr;
+    }
+    else
+    {
+        return Shader.ReleaseOwnership();
+    }
 }
 
 RayAnyHitShader* D3D12RenderLayer::CreateRayAnyHitShader(const TArray<UInt8>& ShaderCode)
 {
-    return DBG_NEW D3D12RayAnyhitShader(Device, ShaderCode);
+    TRef<D3D12RayAnyhitShader> Shader = DBG_NEW D3D12RayAnyhitShader(Device, ShaderCode);
+    if (!GetRayTracingReflection(Shader.Get()))
+    {
+        LOG_ERROR("[D3D12RenderLayer]: Failed to retrive Shader Identifier");
+        return nullptr;
+    }
+    else
+    {
+        return Shader.ReleaseOwnership();
+    }
 }
 
 RayClosestHitShader* D3D12RenderLayer::CreateRayClosestHitShader(const TArray<UInt8>& ShaderCode)
 {
-    return DBG_NEW D3D12RayClosestHitShader(Device, ShaderCode);
+    TRef<D3D12RayClosestHitShader> Shader = DBG_NEW D3D12RayClosestHitShader(Device, ShaderCode);
+    if (!GetRayTracingReflection(Shader.Get()))
+    {
+        LOG_ERROR("[D3D12RenderLayer]: Failed to retrive Shader Identifier");
+        return nullptr;
+    }
+    else
+    {
+        return Shader.ReleaseOwnership();
+    }
 }
 
 RayMissShader* D3D12RenderLayer::CreateRayMissShader(const TArray<UInt8>& ShaderCode)
 {
-    return DBG_NEW D3D12RayMissShader(Device, ShaderCode);
+    TRef<D3D12RayMissShader> Shader = DBG_NEW D3D12RayMissShader(Device, ShaderCode);
+    if (!GetRayTracingReflection(Shader.Get()))
+    {
+        LOG_ERROR("[D3D12RenderLayer]: Failed to retrive Shader Identifier");
+        return nullptr;
+    }
+    else
+    {
+        return Shader.ReleaseOwnership();
+    }
 }
 
 DepthStencilState* D3D12RenderLayer::CreateDepthStencilState(const DepthStencilStateCreateInfo& CreateInfo)

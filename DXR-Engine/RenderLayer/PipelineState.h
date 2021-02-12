@@ -432,15 +432,32 @@ public:
     virtual ComputePipelineState* AsCompute() override { return this; }
 };
 
+struct RayTracingHitGroup
+{
+    RayTracingHitGroup() = default;
+    
+    RayTracingHitGroup(const std::string& InName, RayAnyHitShader* InAnyHit, RayClosestHitShader* InClosestHit)
+        : Name(InName)
+        , AnyHit(InAnyHit)
+        , ClosestHit(InClosestHit)
+    {
+    }
+
+    std::string          Name;
+    RayAnyHitShader*     AnyHit;
+    RayClosestHitShader* ClosestHit;
+};
+
 struct RayTracingPipelineStateCreateInfo
 {
     RayGenShader*                RayGen = nullptr;
     TArray<RayAnyHitShader*>     AnyHitShaders;
     TArray<RayClosestHitShader*> ClosestHitShaders;
     TArray<RayMissShader*>       MissShaders;
+    TArray<RayTracingHitGroup>   HitGroups;
     UInt32 MaxAttributeSizeInBytes = 0;
     UInt32 MaxPayloadSizeInBytes   = 0;
-    UInt32 MaxRecursionDepth          = 1;
+    UInt32 MaxRecursionDepth       = 1;
 };
 
 class RayTracingPipelineState : public PipelineState

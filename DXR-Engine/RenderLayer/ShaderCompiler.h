@@ -43,7 +43,7 @@ public:
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<UInt8>& Code) const = 0;
+        TArray<UInt8>& Code) = 0;
 
     virtual Bool CompileShader(
         const std::string& ShaderSource,
@@ -51,13 +51,11 @@ public:
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<UInt8>& Code) const = 0;
+        TArray<UInt8>& Code) = 0;
 };
 
 class ShaderCompiler
 {
-    friend class RenderLayer;
-
 public:
     FORCEINLINE static Bool CompileFromFile(
         const std::string& FilePath,

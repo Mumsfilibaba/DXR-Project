@@ -76,3 +76,65 @@ class RayClosestHitShader : public Shader
 class RayMissShader : public Shader
 {
 };
+
+// helpers
+inline Bool ShaderStageIsGraphics(EShaderStage ShaderStage)
+{
+    switch (ShaderStage)
+    {
+    case EShaderStage::Vertex:
+    case EShaderStage::Hull:
+    case EShaderStage::Domain:
+    case EShaderStage::Geometry:
+    case EShaderStage::Pixel:
+    case EShaderStage::Mesh:
+    case EShaderStage::Amplification:
+    {
+        return true;
+    }
+
+    default:
+    {
+        return false;
+    }
+    }
+}
+
+inline Bool ShaderStageIsCompute(EShaderStage ShaderStage)
+{
+    switch (ShaderStage)
+    {
+        case EShaderStage::Compute:
+        case EShaderStage::RayGen:
+        case EShaderStage::RayClosestHit:
+        case EShaderStage::RayAnyHit:
+        case EShaderStage::RayMiss:
+        {
+            return true;
+        }
+
+        default:
+        {
+            return false;
+        }
+    }
+}
+
+inline Bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
+{
+    switch (ShaderStage)
+    {
+    case EShaderStage::RayGen:
+    case EShaderStage::RayClosestHit:
+    case EShaderStage::RayAnyHit:
+    case EShaderStage::RayMiss:
+    {
+        return true;
+    }
+
+    default:
+    {
+        return false;
+    }
+    }
+}

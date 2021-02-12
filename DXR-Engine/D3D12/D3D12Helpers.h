@@ -505,49 +505,6 @@ inline Bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HA
     return !(Left == Right);
 }
 
-// Other helpers
-inline Bool ShaderStageIsGraphics(EShaderStage ShaderStage)
-{
-    switch (ShaderStage)
-    {
-        case EShaderStage::Vertex:
-        case EShaderStage::Hull:
-        case EShaderStage::Domain:
-        case EShaderStage::Geometry:
-        case EShaderStage::Pixel:
-        case EShaderStage::Mesh:
-        case EShaderStage::Amplification:
-        {
-            return true;
-        }
-
-        default: 
-        {
-            return false;
-        }
-    }
-}
-
-inline Bool ShaderStageIsCompute(EShaderStage ShaderStage)
-{
-    switch (ShaderStage)
-    {
-        case EShaderStage::Compute:
-        case EShaderStage::RayGen:
-        case EShaderStage::RayClosestHit:
-        case EShaderStage::RayAnyHit:
-        case EShaderStage::RayMiss:
-        {
-            return true;
-        }
-
-        default:
-        {
-            return false;
-        }
-    }
-}
-
 inline UInt32 GetFormatStride(DXGI_FORMAT Format)
 {
     switch (Format)

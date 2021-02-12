@@ -192,9 +192,9 @@ private:
     Bool FinalizeBufferResource(TD3D12Buffer* Buffer, UInt32 SizeInBytes, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData);
 
 private:
-    D3D12Device*                    Device;
-    TRef<D3D12CommandContext> DirectCmdContext;
-    D3D12DefaultRootSignatures      DefaultRootSignatures;
+    D3D12Device*               Device;
+    TRef<D3D12CommandContext>  DirectCmdContext;
+    D3D12DefaultRootSignatures DefaultRootSignatures;
 
     D3D12OfflineDescriptorHeap* ResourceOfflineDescriptorHeap     = nullptr;
     D3D12OfflineDescriptorHeap* RenderTargetOfflineDescriptorHeap = nullptr;

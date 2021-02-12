@@ -8,7 +8,7 @@
 Bool RayTracer::Init()
 {
     TArray<UInt8> Code;
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RayTracingShaders.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RayGen.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code))
     {
         Debug::DebugBreak();
         return false;
@@ -21,7 +21,7 @@ Bool RayTracer::Init()
         return false;
     }
 
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RayTracingShaders.hlsl", "ClosestHit", nullptr, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code))
     {
         Debug::DebugBreak();
         return false;
@@ -34,7 +34,7 @@ Bool RayTracer::Init()
         return false;
     }
 
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RayTracingShaders.hlsl", "Miss", nullptr, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Miss.hlsl", "Miss", nullptr, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code))
     {
         Debug::DebugBreak();
         return false;
@@ -51,7 +51,8 @@ Bool RayTracer::Init()
     CreateInfo.RayGen                  = RayGen.Get();
     CreateInfo.ClosestHitShaders       = { ClosestHit.Get() };
     CreateInfo.MissShaders             = { Miss.Get() };
-    CreateInfo.MaxRecursionDepth          = 4;
+    CreateInfo.HitGroups               = { RayTracingHitGroup("HitGroup", nullptr, ClosestHit.Get()) };
+    CreateInfo.MaxRecursionDepth       = 4;
     CreateInfo.MaxAttributeSizeInBytes = sizeof(Float) * 2;
     CreateInfo.MaxPayloadSizeInBytes   = sizeof(Float) * 3 + sizeof(UInt32);
 

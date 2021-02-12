@@ -413,38 +413,48 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
 {
     D3D12RayTracingPipelineStateStream PipelineStream;
     
-    // TODO: Solve how to send name into creation
+    // TODO: Do not call converttowide for all
     D3D12RayGenShader* RayGen = static_cast<D3D12RayGenShader*>(CreateInfo.RayGen);
-    PipelineStream.AddLibrary(RayGen->GetShaderByteCode(), { L"RayGen" });
-    PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayGen->RootSignature, { L"RayGen" });
+    PipelineStream.AddLibrary(RayGen->GetShaderByteCode(), { ConvertToWide(RayGen->Identifier) });
+    PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayGen->RootSignature, { ConvertToWide(RayGen->Identifier) });
+    PipelineStream.PayLoadExportNames.EmplaceBack(ConvertToWide(RayGen->Identifier));
 
-    // TODO: Expose HitGroups
-    PipelineStream.AddHitGroup(L"HitGroup", L"ClosestHit", L"", L"");
+    for (const RayTracingHitGroup& HitGroup : CreateInfo.HitGroups)
+    {
+        D3D12RayAnyhitShader*     DxAnyHit     = static_cast<D3D12RayAnyhitShader*>(HitGroup.AnyHit);
+        D3D12RayClosestHitShader* DxClosestHit = static_cast<D3D12RayClosestHitShader*>(HitGroup.ClosestHit);
+        
+        Assert(DxClosestHit != nullptr);
+
+        PipelineStream.AddHitGroup(ConvertToWide(HitGroup.Name), ConvertToWide(DxClosestHit->Identifier), DxAnyHit ? ConvertToWide(DxAnyHit->Identifier) : L"", L"");
+    }
 
     for (RayAnyHitShader* AnyHit : CreateInfo.AnyHitShaders)
     {
         D3D12RayAnyhitShader* DxAnyHit = static_cast<D3D12RayAnyhitShader*>(AnyHit);
-        PipelineStream.AddLibrary(DxAnyHit->GetShaderByteCode(), { L"AnyHit" });
-        PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayHit->RootSignature, { L"AnyHit" });
+        PipelineStream.AddLibrary(DxAnyHit->GetShaderByteCode(), { ConvertToWide(DxAnyHit->Identifier) });
+        PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayHit->RootSignature, { ConvertToWide(DxAnyHit->Identifier) });
+        PipelineStream.PayLoadExportNames.EmplaceBack(ConvertToWide(DxAnyHit->Identifier));
     }
 
     for (RayClosestHitShader* ClosestHit : CreateInfo.ClosestHitShaders)
     {
         D3D12RayClosestHitShader* DxClosestHit = static_cast<D3D12RayClosestHitShader*>(ClosestHit);
-        PipelineStream.AddLibrary(DxClosestHit->GetShaderByteCode(), { L"ClosestHit" });
-        PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayHit->RootSignature, { L"ClosestHit" });
+        PipelineStream.AddLibrary(DxClosestHit->GetShaderByteCode(), { ConvertToWide(DxClosestHit->Identifier) });
+        PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayHit->RootSignature, { ConvertToWide(DxClosestHit->Identifier) });
+        PipelineStream.PayLoadExportNames.EmplaceBack(ConvertToWide(DxClosestHit->Identifier));
     }
 
     for (RayMissShader* Miss : CreateInfo.MissShaders)
     {
         D3D12RayMissShader* DxMiss = static_cast<D3D12RayMissShader*>(Miss);
-        PipelineStream.AddLibrary(DxMiss->GetShaderByteCode(), { L"Miss" });
-        PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayMiss->RootSignature, { L"Miss" });
+        PipelineStream.AddLibrary(DxMiss->GetShaderByteCode(), { ConvertToWide(DxMiss->Identifier) });
+        PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayMiss->RootSignature, { ConvertToWide(DxMiss->Identifier) });
+        PipelineStream.PayLoadExportNames.EmplaceBack(ConvertToWide(DxMiss->Identifier));
     }
 
     PipelineStream.ShaderConfig.MaxAttributeSizeInBytes  = CreateInfo.MaxAttributeSizeInBytes;
     PipelineStream.ShaderConfig.MaxPayloadSizeInBytes    = CreateInfo.MaxPayloadSizeInBytes;
-    PipelineStream.PayLoadExportNames                    = { L"ClosestHit", L"Miss", L"RayGen" };
     PipelineStream.PipelineConfig.MaxTraceRecursionDepth = CreateInfo.MaxRecursionDepth;
     PipelineStream.GlobalRootSignature                   = DefaultRootSignatures.GlobalRayGen->RootSignature;
 
