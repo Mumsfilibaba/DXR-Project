@@ -648,3 +648,26 @@ inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationSt
 
     return Flags;
 }
+
+inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(UInt32 InFlags)
+{
+    D3D12_RAYTRACING_INSTANCE_FLAGS Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+    if (InFlags & RayTracingInstanceFlags_CullDisable)
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
+    }
+    if (InFlags & RayTracingInstanceFlags_FrontCounterClockwise)
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+    }
+    if (InFlags & RayTracingInstanceFlags_ForceOpaque)
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
+    }
+    if (InFlags & RayTracingInstanceFlags_ForceNonOpaque)
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
+    }
+
+    return Flags;
+}

@@ -64,7 +64,7 @@ float GeometrySmithGGX1(float3 N, float3 V, float3 H, float Roughness)
 {
     float Roughness1 = Roughness + 1;
     float K     = (Roughness1 * Roughness1) / 8.0f;
-    float NDotV = max(dot(N, V), 0.0000001f);
+    float NDotV = max(dot(N, V), 0.0f);
     return NDotV / max(NDotV * (1.0f - K) + K, 0.0000001f);
 }
 
@@ -76,7 +76,7 @@ float GeometrySmithGGX(float3 N, float3 L, float3 V, float3 H, float Roughness)
 float GeometrySmithGGX1_IBL(float3 N, float3 V, float3 H, float Roughness)
 {
     float K     = (Roughness * Roughness) / 2.0f;
-    float NDotV = max(dot(N, V), 0.0000001f);
+    float NDotV = max(dot(N, V), 0.0f);
     return NDotV / max(NDotV * (1.0f - K) + K, 0.0000001f);
 }
 

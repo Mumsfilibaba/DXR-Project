@@ -375,6 +375,12 @@ void Renderer::Tick(const Scene& Scene)
         
         CmdList.TransitionTexture(ShadingImage.Get(), EResourceState::UnorderedAccess, EResourceState::ShadingRateSource);
 
+        Resources.DebugTextures.EmplaceBack(
+            MakeSharedRef<ShaderResourceView>(ShadingImage->GetShaderResourceView()),
+            ShadingImage,
+            EResourceState::ShadingRateSource,
+            EResourceState::ShadingRateSource);
+
         CmdList.SetShadingRateImage(ShadingImage.Get());
 
         INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End VRS Image");

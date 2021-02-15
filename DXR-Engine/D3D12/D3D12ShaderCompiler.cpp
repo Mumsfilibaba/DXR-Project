@@ -533,7 +533,7 @@ Bool D3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Shad
 
     // Make sure that the first shader is the one we wanted
     ID3D12FunctionReflection* Function = LibaryReflection->GetFunctionByIndex(0);
-       
+    
     D3D12_FUNCTION_DESC FuncDesc;
     Memory::Memzero(&FuncDesc);
 
@@ -544,7 +544,7 @@ Bool D3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Shad
         return false;
     }
 
-    UInt32 Length = wcslen(Entrypoint) + 1;
+    size_t Length = wcslen(Entrypoint) + 1;
     char Buffer[256];
 
     size_t ConvertedChars;

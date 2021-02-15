@@ -290,7 +290,7 @@ Bool D3D12DefaultRootSignatures::CreateRootSignatures(D3D12Device* Device)
     if (LocalRayGen)
     {
         LOG_INFO("Created Default LocalRay RootSignature");
-        Compute->SetName("Default LocalRay RootSignature");
+        LocalRayGen->SetName("Default LocalRay RootSignature");
 
         LocalRayHit  = LocalRayGen;
         LocalRayMiss = LocalRayGen;

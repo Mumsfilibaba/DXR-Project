@@ -1,7 +1,6 @@
 #pragma once
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/Viewport.h"
-#include "RenderLayer/GeometryInstance.h"
 
 #include "Rendering/MeshDrawCommand.h"
 #include "Rendering/DebugUI.h"
@@ -22,6 +21,7 @@ struct FrameResources
     const EFormat DepthBufferFormat  = EFormat::D32_Float;
     const EFormat SSAOBufferFormat   = EFormat::R16_Float;
     const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
+    const EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
     const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
     const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
     const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
@@ -51,8 +51,10 @@ struct FrameResources
 
     TRef<InputLayoutState> StdInputLayout;
 
-    TRef<RayTracingScene>        RTScene;
+    TRef<Texture2D>       RTOutput;
+    TRef<RayTracingScene> RTScene;
     TArray<RayTracingGeometryInstance> RTGeometryInstances;
+    TArray<RayTracingShaderResources>  RTHitGroupResources;
 
     TArray<MeshDrawCommand> DeferredVisibleCommands;
     TArray<MeshDrawCommand> ForwardVisibleCommands;

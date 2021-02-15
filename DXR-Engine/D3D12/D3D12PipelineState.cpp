@@ -469,14 +469,27 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
 
     TComPtr<ID3D12StateObject> TempStateObject;
     HRESULT Result = Device->GetDXRDevice()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
-    if (SUCCEEDED(Result))
-    {
-        StateObject = TempStateObject;
-        return true;
-    }
-    else
+    if (FAILED(Result))
     {
         Debug::DebugBreak();
         return false;
     }
+    else
+    {
+        StateObject = TempStateObject;
+    }
+    
+    TComPtr<ID3D12StateObjectProperties> TempStateObjectProperties;
+    Result = StateObject->QueryInterface(IID_PPV_ARGS(&TempStateObjectProperties));
+    if (FAILED(Result))
+    {
+        LOG_ERROR("[D3D12RayTracingPipelineState] Failed to retrive ID3D12StateObjectProperties");
+        return false;
+    }
+    else
+    {
+        StateObjectProperties = TempStateObjectProperties;
+    }
+
+    return true;
 }

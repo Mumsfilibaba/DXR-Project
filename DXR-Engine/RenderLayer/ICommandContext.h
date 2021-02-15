@@ -2,7 +2,6 @@
 #include "RenderingCore.h"
 #include "Resources.h"
 #include "ResourceViews.h"
-#include "GeometryInstance.h"
 
 #include <Containers/ArrayView.h>
 
@@ -34,12 +33,12 @@ public:
     virtual void BindVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) = 0;
     virtual void BindIndexBuffer(IndexBuffer* IndexBuffer) = 0;
 
-    virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) = 0;
-    virtual void BindRayTracingScene(RayTracingScene* RayTracingScene) = 0;
+    virtual void SetHitGroups(RayTracingScene* Scene, RayTracingPipelineState* PipelineState, const TArrayView<RayTracingShaderResources>& LocalShaderResources) = 0;
 
-    virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState)     = 0;
-    virtual void BindComputePipelineState(class ComputePipelineState* PipelineState)       = 0;
-    virtual void BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState) = 0;
+    virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) = 0;
+
+    virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState) = 0;
+    virtual void BindComputePipelineState(class ComputePipelineState* PipelineState)   = 0;
 
     virtual void Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants) = 0;
     
@@ -79,6 +78,7 @@ public:
     virtual void TransitionBuffer(Buffer* Buffer, EResourceState BeforeState, EResourceState AfterState) = 0;
 
     virtual void UnorderedAccessTextureBarrier(Texture* Texture) = 0;
+    virtual void UnorderedAccessBufferBarrier(Buffer* Buffer) = 0;
 
     virtual void Draw(UInt32 VertexCount, UInt32 StartVertexLocation) = 0;
     virtual void DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation) = 0;
@@ -92,7 +92,15 @@ public:
         UInt32 StartInstanceLocation) = 0;
 
     virtual void Dispatch(UInt32 WorkGroupsX, UInt32 WorkGroupsY, UInt32 WorkGroupsZ) = 0;
-    virtual void DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth) = 0;
+    
+    virtual void DispatchRays(
+        RayTracingScene* InScene,
+        Texture2D* InOutputImage,
+        RayTracingPipelineState* InPipelineState,
+        const RayTracingShaderResources& InGlobalShaderResources,
+        UInt32 InWidth,
+        UInt32 InHeight,
+        UInt32 InDepth) = 0;
 
     virtual void ClearState() = 0;
     virtual void Flush()      = 0;

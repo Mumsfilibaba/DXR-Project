@@ -297,22 +297,6 @@ struct BindIndexBufferCommand : public RenderCommand
     TRef<IndexBuffer> IndexBuffer;
 };
 
-// Bind RayTracingScene RenderCommand
-struct BindRayTracingSceneCommand : public RenderCommand
-{
-    BindRayTracingSceneCommand(RayTracingScene* InRayTracingScene)
-        : RayTracingScene(InRayTracingScene)
-    {
-    }
-
-    virtual void Execute(ICommandContext& CmdContext) const override
-    {
-        CmdContext.BindRayTracingScene(RayTracingScene.Get());
-    }
-
-    TRef<RayTracingScene> RayTracingScene;
-};
-
 // Bind BlendFactor RenderCommand
 struct BindRenderTargetsCommand : public RenderCommand
 {
@@ -342,6 +326,26 @@ struct BindRenderTargetsCommand : public RenderCommand
     RenderTargetView* const* RenderTargetViews;
     UInt32 RenderTargetViewCount;
     TRef<DepthStencilView> DepthStencilView;
+};
+
+// Bind SetHitGroups RenderCommand
+struct SetHitGroupsCommand : public RenderCommand
+{
+    SetHitGroupsCommand(RayTracingScene* InScene, RayTracingPipelineState* InPipelineState, const TArrayView<RayTracingShaderResources>& InLocalShaderResources)
+        : Scene(InScene)
+        , PipelineState(InPipelineState)
+        , LocalShaderResources(InLocalShaderResources)
+    {
+    }
+
+    virtual void Execute(ICommandContext& CmdContext) const override
+    {
+        CmdContext.SetHitGroups(Scene.Get(), PipelineState.Get(), LocalShaderResources);
+    }
+
+    TRef<RayTracingScene>         Scene;
+    TRef<RayTracingPipelineState> PipelineState;
+    TArrayView<RayTracingShaderResources> LocalShaderResources;
 };
 
 // Bind GraphicsPipelineState RenderCommand
@@ -374,22 +378,6 @@ struct BindComputePipelineStateCommand : public RenderCommand
     }
 
     TRef<ComputePipelineState> PipelineState;
-};
-
-// Bind RayTracingPipelineState RenderCommand
-struct BindRayTracingPipelineStateCommand : public RenderCommand
-{
-    BindRayTracingPipelineStateCommand(RayTracingPipelineState* InPipelineState)
-        : PipelineState(InPipelineState)
-    {
-    }
-
-    virtual void Execute(ICommandContext& CmdContext) const override
-    {
-        CmdContext.BindRayTracingPipelineState(PipelineState.Get());
-    }
-
-    TRef<RayTracingPipelineState> PipelineState;
 };
 
 // Bind ShaderResourceViews RenderCommand
@@ -718,7 +706,7 @@ struct BuildRayTracingGeometryCommand : public RenderCommand
 // Build RayTracing Scene RenderCommand
 struct BuildRayTracingSceneCommand : public RenderCommand
 {
-    BuildRayTracingSceneCommand(RayTracingScene* InRayTracingScene, TArrayView<RayTracingGeometryInstance> InInstances, Bool InUpdate)
+    BuildRayTracingSceneCommand(RayTracingScene* InRayTracingScene, const TArrayView<RayTracingGeometryInstance>& InInstances, Bool InUpdate)
         : RayTracingScene(InRayTracingScene)
         , Instances(InInstances)
         , Update(InUpdate)
@@ -807,6 +795,22 @@ struct UnorderedAccessTextureBarrierCommand : public RenderCommand
     TRef<Texture> Texture;
 };
 
+// UnorderedAccessBufferBarrier RenderCommand
+struct UnorderedAccessBufferBarrierCommand : public RenderCommand
+{
+    UnorderedAccessBufferBarrierCommand(Buffer* InBuffer)
+        : Buffer(InBuffer)
+    {
+    }
+
+    virtual void Execute(ICommandContext& CmdContext) const override
+    {
+        CmdContext.UnorderedAccessBufferBarrier(Buffer.Get());
+    }
+
+    TRef<Buffer> Buffer;
+};
+
 // Draw RenderCommand
 struct DrawCommand : public RenderCommand
 {
@@ -887,7 +891,7 @@ struct DrawIndexedInstancedCommand : public RenderCommand
     UInt32 IndexCountPerInstance;
     UInt32 InstanceCount;
     UInt32 StartIndexLocation;
-    Int32  BaseVertexLocation;
+    UInt32 BaseVertexLocation;
     UInt32 StartInstanceLocation;
 };
 
@@ -914,18 +918,33 @@ struct DispatchComputeCommand : public RenderCommand
 // Dispatch Rays RenderCommand
 struct DispatchRaysCommand : public RenderCommand
 {
-    DispatchRaysCommand(UInt32 InWidth, UInt32 InHeigh, UInt32 InDepth)
-        : Width(InWidth)
-        , Height(InHeigh)
+    DispatchRaysCommand(
+        RayTracingScene* InScene, 
+        Texture2D* InOutputImage, 
+        RayTracingPipelineState* InPipelineState, 
+        const RayTracingShaderResources& InGlobalShaderResources, 
+        UInt32 InWidth, 
+        UInt32 InHeight, 
+        UInt32 InDepth)
+        : Scene(InScene)
+        , OutputImage(InOutputImage)
+        , PipelineState(InPipelineState)
+        , GlobalShaderResources(InGlobalShaderResources)
+        , Width(InWidth)
+        , Height(InHeight)
         , Depth(InDepth)
     {
     }
 
     virtual void Execute(ICommandContext& CmdContext) const override
     {
-        CmdContext.Dispatch(Width, Height, Depth);
+        CmdContext.DispatchRays(Scene.Get(), OutputImage.Get(), PipelineState.Get(), GlobalShaderResources, Width, Height, Depth);
     }
 
+    TRef<RayTracingScene> Scene;
+    TRef<Texture2D>       OutputImage;
+    TRef<RayTracingPipelineState> PipelineState;
+    RayTracingShaderResources     GlobalShaderResources;
     UInt32 Width;
     UInt32 Height;
     UInt32 Depth;

@@ -467,13 +467,12 @@ public:
     virtual void BindVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) override final;
     virtual void BindIndexBuffer(IndexBuffer* IndexBuffer) override final;
 
+    virtual void SetHitGroups(RayTracingScene* Scene, RayTracingPipelineState* PipelineState, const TArrayView<RayTracingShaderResources>& LocalShaderResources) override final;
+
     virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
-    
-    virtual void BindRayTracingScene(RayTracingScene* RayTracingScene) override final;
 
     virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState) override final;
     virtual void BindComputePipelineState(class ComputePipelineState* PipelineState) override final;
-    virtual void BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState) override final;
 
     virtual void Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants) override final;
 
@@ -513,6 +512,7 @@ public:
     virtual void TransitionBuffer(Buffer* Buffer, EResourceState BeforeState, EResourceState AfterState) override final;
 
     virtual void UnorderedAccessTextureBarrier(Texture* Texture) override final;
+    virtual void UnorderedAccessBufferBarrier(Buffer* Buffer) override final;
 
     virtual void Draw(UInt32 VertexCount, UInt32 StartVertexLocation) override final;
     virtual void DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation) override final;
@@ -526,7 +526,15 @@ public:
         UInt32 StartInstanceLocation) override final;
 
     virtual void Dispatch(UInt32 WorkGroupsX, UInt32 WorkGroupsY, UInt32 WorkGroupsZ) override final;
-    virtual void DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth) override final;
+    
+    virtual void DispatchRays(
+        RayTracingScene* InScene,
+        Texture2D* InOutputImage,
+        RayTracingPipelineState* InPipelineState,
+        const RayTracingShaderResources& InGlobalShaderResources,
+        UInt32 InWidth,
+        UInt32 InHeight,
+        UInt32 InDepth) override final;
 
     virtual void ClearState() override final;
     virtual void Flush() override final;

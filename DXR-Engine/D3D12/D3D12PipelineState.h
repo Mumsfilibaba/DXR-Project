@@ -182,10 +182,12 @@ public:
 
     virtual Bool IsValid() const { return StateObject != nullptr; }
 
-    ID3D12StateObject*  GetStateObject()         const { return StateObject.Get(); }
-    D3D12RootSignature* GetGlobalRootSignature() const { return GlobalRootSignature.Get(); }
+    ID3D12StateObject*           GetStateObject()           const { return StateObject.Get(); }
+    ID3D12StateObjectProperties* GetStateObjectProperties() const { return StateObjectProperties.Get(); }
+    D3D12RootSignature*          GetGlobalRootSignature()   const { return GlobalRootSignature.Get(); }
 
 private:
-    TComPtr<ID3D12StateObject> StateObject;
-    TRef<D3D12RootSignature>   GlobalRootSignature;
+    TComPtr<ID3D12StateObject>           StateObject;
+    TComPtr<ID3D12StateObjectProperties> StateObjectProperties;
+    TRef<D3D12RootSignature>             GlobalRootSignature;
 };

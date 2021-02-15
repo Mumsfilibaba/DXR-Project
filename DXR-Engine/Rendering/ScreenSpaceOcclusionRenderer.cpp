@@ -241,6 +241,8 @@ void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, const FrameResou
 
     TRACE_SCOPE("SSAO");
 
+    CmdList.BindComputePipelineState(PipelineState.Get());
+    
     struct SSAOSettings
     {
         XMFLOAT2 ScreenSize;
@@ -258,6 +260,8 @@ void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, const FrameResou
     SSAOSettings.KernelSize = GlobalSSAOKernelSize.GetInt32();
     SSAOSettings.Bias       = GlobalSSAOBias.GetFloat();
 
+    CmdList.BindConstantBuffers(EShaderStage::Compute, &FrameResources.CameraBuffer, 1, 0);
+    
     ShaderResourceView* ShaderResourceViews[] =
     {
         FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(),
@@ -266,11 +270,9 @@ void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, const FrameResou
         SSAOSamplesSRV.Get()
     };
 
-    CmdList.BindComputePipelineState(PipelineState.Get());
-
     CmdList.BindShaderResourceViews(EShaderStage::Compute, ShaderResourceViews, 4, 0);
+
     CmdList.BindSamplerStates(EShaderStage::Compute, &FrameResources.GBufferSampler, 1, 0);
-    CmdList.BindConstantBuffers(EShaderStage::Compute, &FrameResources.CameraBuffer, 1, 0);
 
     UnorderedAccessView* SSAOBufferUAV = FrameResources.SSAOBuffer->GetUnorderedAccessView();
     CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &SSAOBufferUAV, 1, 0);
@@ -283,21 +285,21 @@ void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, const FrameResou
 
     CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
 
-    CmdList.BindComputePipelineState(BlurHorizontalPSO.Get());
+    //CmdList.BindComputePipelineState(BlurHorizontalPSO.Get());
 
-    CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &SSAOSettings.ScreenSize, 2);
+    //CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &SSAOSettings.ScreenSize, 2);
 
-    CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+    //CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
-    CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+    //CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
 
-    CmdList.BindComputePipelineState(BlurVerticalPSO.Get());
+    //CmdList.BindComputePipelineState(BlurVerticalPSO.Get());
 
-    CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &SSAOSettings.ScreenSize, 2);
+    //CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &SSAOSettings.ScreenSize, 2);
 
-    CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+    //CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
-    CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+    //CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End SSAO");
 }

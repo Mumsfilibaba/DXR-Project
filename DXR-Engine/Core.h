@@ -17,7 +17,7 @@ using namespace DirectX;
 #if ENABLE_ASSERTS
     #define Assert(Condition) assert(Condition)
 #else
-    #define Assert(Condition) (void)
+    #define Assert(Condition) (void)(0)
 #endif
 #endif
 

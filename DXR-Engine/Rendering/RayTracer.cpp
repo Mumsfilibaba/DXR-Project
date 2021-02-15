@@ -71,10 +71,25 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
     TRACE_SCOPE("Gather Instances");
 
     Resources.RTGeometryInstances.Clear();
+
+    UInt32 InstanceIndexIndex = 0;
+    RayTracingShaderResources HitGroupResources;
     for (const MeshDrawCommand& Cmd : Scene.GetMeshDrawCommands())
     {
         const XMFLOAT3X4 TinyTransform = Cmd.CurrentActor->GetTransform().GetTinyMatrix();
-        Resources.RTGeometryInstances.EmplaceBack(MakeSharedRef<RayTracingGeometry>(Cmd.Geometry), Cmd.Material, TinyTransform);
+
+        HitGroupResources.Reset();
+        Resources.RTHitGroupResources.EmplaceBack(HitGroupResources);
+
+
+        RayTracingGeometryInstance Instance;
+        Instance.Instance      = MakeSharedRef<RayTracingGeometry>(Cmd.Geometry);
+        Instance.Flags         = RayTracingInstanceFlags_None;
+        Instance.HitGroupIndex = 0;
+        Instance.InstanceIndex = InstanceIndexIndex++;
+        Instance.Mask          = 0xff;
+        Instance.Transform     = TinyTransform;
+        Resources.RTGeometryInstances.EmplaceBack(Instance);
     }
 
     if (!Resources.RTScene)
@@ -85,4 +100,6 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
     {
         CmdList.BuildRayTracingScene(Resources.RTScene.Get(), TArrayView<RayTracingGeometryInstance>(Resources.RTGeometryInstances), true);
     }
+
+    CmdList.SetHitGroups(Resources.RTScene.Get(), Pipeline.Get(), TArrayView<RayTracingShaderResources>(Resources.RTHitGroupResources));
 }

@@ -65,7 +65,7 @@ private:
     RayTracer                    RayTracer;
 
     FrameResources Resources;
-    LightSetup     LightSetup;    
+    LightSetup     LightSetup;
 
     TRef<Texture2D>            ShadingImage;
     TRef<ComputePipelineState> ShadingRatePipeline;

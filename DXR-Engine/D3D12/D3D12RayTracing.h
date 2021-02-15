@@ -1,12 +1,9 @@
 #pragma once
 #include "RenderLayer/RayTracing.h"
-#include "RenderLayer/GeometryInstance.h"
 
 #include "D3D12DeviceChild.h"
 #include "D3D12Buffer.h"
 #include "D3D12Views.h"
-
-#include "Core.h"
 
 class D3D12CommandListHandle;
 class Material;
@@ -35,8 +32,17 @@ public:
 
     TRef<D3D12VertexBuffer> VertexBuffer;
     TRef<D3D12IndexBuffer>  IndexBuffer;
-    TRef<D3D12Resource> ResultBuffer;
-    TRef<D3D12Resource> ScratchBuffer;
+    TRef<D3D12Resource>     ResultBuffer;
+    TRef<D3D12Resource>     ScratchBuffer;
+};
+
+struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) D3D12ShaderBindingTableEntry
+{
+    Byte ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
+    D3D12_GPU_DESCRIPTOR_HANDLE	ConstantBufferTable      = { 0 };
+    D3D12_GPU_DESCRIPTOR_HANDLE	ShaderResourceViewTable  = { 0 };
+    D3D12_GPU_DESCRIPTOR_HANDLE	UnorderedAccessViewTable = { 0 };
+    D3D12_GPU_DESCRIPTOR_HANDLE	SamplerStateTable        = { 0 };
 };
 
 class D3D12RayTracingScene : public RayTracingScene, public D3D12DeviceChild
@@ -65,15 +71,17 @@ public:
         return ResultBuffer->GetGPUVirtualAddress();
     }
 
-    D3D12ShaderResourceView* GetShaderResourceView() const { return View.Get(); }
+    D3D12ShaderResourceView* GetShaderResourceView() const { return ShaderResourceView.Get(); }
 
 private:
-    TArray<RayTracingGeometryInstance>  Instances;
-    TRef<D3D12ShaderResourceView> View;
+    TArray<RayTracingGeometryInstance> Instances;
+    TRef<D3D12ShaderResourceView>      ShaderResourceView;
+    
     TRef<D3D12Resource> ResultBuffer;
     TRef<D3D12Resource> ScratchBuffer;
     TRef<D3D12Resource> InstanceBuffer;
     TRef<D3D12Resource> BindingTable;
+
     UInt32 BindingTableStride = 0;
     UInt32 NumHitGroups       = 0;
 };

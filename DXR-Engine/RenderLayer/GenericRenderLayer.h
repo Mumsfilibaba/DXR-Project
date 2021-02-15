@@ -5,7 +5,6 @@
 #include "Resources.h"
 #include "ResourceViews.h"
 #include "CommandList.h"
-#include "GeometryInstance.h"
 
 struct ResourceData;
 struct ClearValue;

@@ -146,67 +146,13 @@ D3D12RayTracingScene::D3D12RayTracingScene(D3D12Device* InDevice, UInt32 InFlags
     , BindingTable(nullptr)
     , BindingTableStride(0)
     , NumHitGroups(0)
-    , View(nullptr)
+    , ShaderResourceView(nullptr)
     , Instances()
 {
 }
 
 Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, TArrayView<RayTracingGeometryInstance> InInstances, Bool Update)
 {
-    //// Struct for each entry in shaderbinding table
-    struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) TableEntry
-    {
-        Byte ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
-        D3D12_GPU_DESCRIPTOR_HANDLE	DescriptorTable0;
-        D3D12_GPU_DESCRIPTOR_HANDLE	DescriptorTable1;
-    };
-
-    //const UInt32 StrideInBytes	= sizeof(TableEntry);
-    //const UInt32 SizeInBytes	= StrideInBytes * static_cast<UInt32>(InBindingTableEntries.Size());
-    //BindingTableStride = StrideInBytes;
-
-    //BindingTable = static_cast<D3D12StructuredBuffer*>(
-    //    RenderLayer::CreateStructuredBuffer(nullptr, SizeInBytes, 1, BufferUsage_UAV | BufferUsage_Dynamic));
-    //if (!BindingTable)
-    //{
-    //    LOG_ERROR("[D3D12RayTracingScene]: FAILED to create BindingTable\n");
-    //    return false;
-    //}
-
-    // Map the buffer
-    //Byte* Data = reinterpret_cast<Byte*>(BindingTable->Map(nullptr));
-    //for (BindingTableEntry& Entry : InBindingTableEntries)
-    //{
-    //    TableEntry TableData;
-    //    //if (Entry.DescriptorTable0)
-    //    //{
-    //    //	TableData.DescriptorTable0 = Entry.DescriptorTable0->GetGPUTableStartHandle();
-    //    //}
-    //    //else
-    //    {
-    //        TableData.DescriptorTable0 = { 0 };
-    //    }
-
-    //    //if (Entry.DescriptorTable1)
-    //    //{
-    //    //	TableData.DescriptorTable1 = Entry.DescriptorTable1->GetGPUTableStartHandle();
-    //    //}
-    //    //else
-    //    {
-    //        TableData.DescriptorTable1 = { 0 };
-    //    }
-
-    //    std::wstring WideShaderExportName = ConvertToWide(Entry.ShaderExportName);
-    //    Memory::Memcpy(TableData.ShaderIdentifier, PipelineStateProperties->GetShaderIdentifier(WideShaderExportName.c_str()), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-    //    Memory::Memcpy(Data, &TableData, StrideInBytes);
-    //    Data += StrideInBytes;
-    //}
-    //BindingTable->Unmap(nullptr);
-
-    //NumHitGroups		= InNumHitGroups;
-    //BindingTableEntries	= InBindingTableEntries;
-
-    // Init accelerationstructure
     Assert(InInstances.IsEmpty() == false);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
@@ -288,18 +234,17 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, TArrayView<Ray
         CmdContext.TransitionResource(ScratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    // Map and set each instance matrix
     TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(InInstances.Size());
     for (UInt32 i = 0; i < InstanceDescs.Size(); i++)
     {
         D3D12RayTracingGeometry* DxGeometry = static_cast<D3D12RayTracingGeometry*>(InInstances[i].Instance.Get());
-        InstanceDescs[i].AccelerationStructure = DxGeometry->GetGPUVirtualAddress();
-        InstanceDescs[i].InstanceID            = i;
-        InstanceDescs[i].Flags                 = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-        InstanceDescs[i].InstanceMask          = 0xff;
-        InstanceDescs[i].InstanceContributionToHitGroupIndex = i;
-
         Memory::Memcpy(&InstanceDescs[i].Transform, &InInstances[i].Transform, sizeof(XMFLOAT3X4));
+        
+        InstanceDescs[i].AccelerationStructure = DxGeometry->GetGPUVirtualAddress();
+        InstanceDescs[i].InstanceID            = InInstances[i].InstanceIndex;
+        InstanceDescs[i].Flags                 = ConvertRayTracingInstanceFlags(InInstances[i].Flags);
+        InstanceDescs[i].InstanceMask          = InInstances[i].Mask;
+        InstanceDescs[i].InstanceContributionToHitGroupIndex = InInstances[i].HitGroupIndex;
     }
 
     CurrentSize = InstanceBuffer ? InstanceBuffer->GetWidth() : 0;
@@ -364,12 +309,16 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, TArrayView<Ray
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE D3D12RayTracingScene::GetRayGenerationShaderRecord() const
 {
+    Assert(BindingTable != nullptr);
+
     const UInt64 BindingTableAdress = BindingTable->GetGPUVirtualAddress();
     return { BindingTableAdress, BindingTableStride };
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingScene::GetHitGroupTable() const
 {
+    Assert(BindingTable != nullptr);
+
     const UInt64 BindingTableAdress = BindingTable->GetGPUVirtualAddress();
     const UInt64 SizeInBytes        = (BindingTableStride * NumHitGroups);
     return { BindingTableAdress + BindingTableStride, SizeInBytes, BindingTableStride };
@@ -377,6 +326,8 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingScene::GetHitGroupTabl
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingScene::GetMissShaderTable() const
 {
+    Assert(BindingTable != nullptr);
+
     const UInt64 BindingTableAdress  = BindingTable->GetGPUVirtualAddress();
     const UInt64 HitGroupSizeInBytes = (BindingTableStride * NumHitGroups);
     return { BindingTableAdress + BindingTableStride + HitGroupSizeInBytes, BindingTableStride, BindingTableStride };

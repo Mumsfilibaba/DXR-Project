@@ -834,10 +834,8 @@ void D3D12CommandContext::BindIndexBuffer(IndexBuffer* IndexBuffer)
     }
 }
 
-void D3D12CommandContext::BindRayTracingScene(RayTracingScene* RayTracingScene)
+void D3D12CommandContext::SetHitGroups(RayTracingScene* Scene, RayTracingPipelineState* PipelineState, const TArrayView<RayTracingShaderResources>& LocalShaderResources)
 {
-    UNREFERENCED_VARIABLE(RayTracingScene);
-    // TODO: Implement this function
 }
 
 void D3D12CommandContext::BindRenderTargets(RenderTargetView* const* RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView)
@@ -898,12 +896,6 @@ void D3D12CommandContext::BindComputePipelineState(class ComputePipelineState* P
         CurrentComputeRootSignature = MakeSharedRef<D3D12RootSignature>(DxRootSignature);
         CmdList.SetComputeRootSignature(CurrentComputeRootSignature.Get());
     }
-}
-
-void D3D12CommandContext::BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState)
-{
-    UNREFERENCED_VARIABLE(PipelineState);
-    // TODO: Implement this function
 }
 
 void D3D12CommandContext::Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants)
@@ -1365,6 +1357,14 @@ void D3D12CommandContext::UnorderedAccessTextureBarrier(Texture* Texture)
     CmdBatch->AddInUseResource(Texture);
 }
 
+void D3D12CommandContext::UnorderedAccessBufferBarrier(Buffer* Buffer)
+{
+    D3D12BaseBuffer* Resource = D3D12BufferCast(Buffer);
+    UnorderedAccessBarrier(Resource->GetResource());
+
+    CmdBatch->AddInUseResource(Buffer);
+}
+
 void D3D12CommandContext::Draw(UInt32 VertexCount, UInt32 StartVertexLocation)
 {
     // TODO: Commit current state
@@ -1429,12 +1429,22 @@ void D3D12CommandContext::Dispatch(UInt32 ThreadGroupCountX, UInt32 ThreadGroupC
     CmdList.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
 
-void D3D12CommandContext::DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth)
+void D3D12CommandContext::DispatchRays(
+    RayTracingScene* Scene,
+    Texture2D* OutputImage,
+    RayTracingPipelineState* PipelineState,
+    const RayTracingShaderResources& GlobalShaderResources,
+    UInt32 Width,
+    UInt32 Height,
+    UInt32 Depth)
 {
-    // TODO: Finish this function
-    Assert(false);
-
     FlushResourceBarriers();
+
+    CmdBatch->AddInUseResource(Scene);
+    CmdBatch->AddInUseResource(OutputImage);
+    CmdBatch->AddInUseResource(PipelineState);
+
+
 
     D3D12_DISPATCH_RAYS_DESC RayDispatchDesc;
     Memory::Memzero(&RayDispatchDesc);

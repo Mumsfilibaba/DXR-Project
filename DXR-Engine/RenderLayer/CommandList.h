@@ -148,10 +148,11 @@ public:
         InsertCommand<BindIndexBufferCommand>(IndexBuffer);
     }
 
-    void BindRayTracingScene(RayTracingScene* RayTracingScene)
+    void SetHitGroups(RayTracingScene* RayTracingScene, RayTracingPipelineState* PipelineState, const TArrayView<RayTracingShaderResources>& LocalShaderResources)
     {
         SafeAddRef(RayTracingScene);
-        InsertCommand<BindRayTracingSceneCommand>(RayTracingScene);
+        SafeAddRef(PipelineState);
+        InsertCommand<SetHitGroupsCommand>(RayTracingScene, PipelineState, LocalShaderResources);
     }
 
     void BindGraphicsPipelineState(GraphicsPipelineState* PipelineState)
@@ -164,12 +165,6 @@ public:
     {
         SafeAddRef(PipelineState);
         InsertCommand<BindComputePipelineStateCommand>(PipelineState);
-    }
-
-    void BindRayTracingPipelineState(RayTracingPipelineState* PipelineState)
-    {
-        SafeAddRef(PipelineState);
-        InsertCommand<BindRayTracingPipelineStateCommand>(PipelineState);
     }
 
     void Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants)
@@ -266,6 +261,7 @@ public:
         Assert(Destination != nullptr);
 
         const UInt32 SizeInBytes = Width * Height * GetByteStrideFromFormat(Destination->GetFormat());
+
         Void* TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
         Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
@@ -311,7 +307,7 @@ public:
         InsertCommand<BuildRayTracingGeometryCommand>(Geometry, VertexBuffer, IndexBuffer, Update);
     }
 
-    void BuildRayTracingScene(RayTracingScene* Scene, TArrayView<RayTracingGeometryInstance> Instances, Bool Update)
+    void BuildRayTracingScene(RayTracingScene* Scene, const TArrayView<RayTracingGeometryInstance>& Instances, Bool Update)
     {
         Assert(Scene != nullptr);
         Assert(!Update || (Update && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate));
@@ -362,6 +358,14 @@ public:
         InsertCommand<UnorderedAccessTextureBarrierCommand>(Texture);
     }
 
+    void UnorderedAccessBufferBarrier(Buffer* Buffer)
+    {
+        Assert(Buffer != nullptr);
+
+        Buffer->AddRef();
+        InsertCommand<UnorderedAccessBufferBarrierCommand>(Buffer);
+    }
+
     void Draw(UInt32 VertexCount, UInt32 StartVertexLocation)
     {
         InsertCommand<DrawCommand>(VertexCount, StartVertexLocation);
@@ -397,9 +401,22 @@ public:
         NumDispatchCalls++;
     }
 
-    void DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth)
+    void DispatchRays(
+        RayTracingScene* Scene, 
+        Texture2D* OutputImage, 
+        RayTracingPipelineState* PipelineState, 
+        const RayTracingShaderResources& GlobalShaderResources,
+        UInt32 Width, 
+        UInt32 Height, 
+        UInt32 Depth)
     {
-        InsertCommand<DispatchRaysCommand>(Width, Height, Depth);
+        Assert(OutputImage->IsUAV());
+
+        SafeAddRef(Scene);
+        SafeAddRef(OutputImage);
+        SafeAddRef(PipelineState);
+
+        InsertCommand<DispatchRaysCommand>(Scene, OutputImage, PipelineState, GlobalShaderResources, Width, Height, Depth);
     }
 
     void InsertCommandListMarker(const std::string& Marker)
@@ -430,9 +447,9 @@ public:
         CmdAllocator.Reset();
     }
 
-    UInt32 GetNumDrawCalls() const { return NumDrawCalls; }
+    UInt32 GetNumDrawCalls()     const { return NumDrawCalls; }
     UInt32 GetNumDispatchCalls() const { return NumDispatchCalls; }
-    UInt32 GetNumCommands() const { return NumCommands; }
+    UInt32 GetNumCommands()      const { return NumCommands; }
 
 private:
     template<typename TCommand, typename... TArgs>
@@ -453,10 +470,9 @@ private:
         NumCommands++;
     }
 
-private:
     LinearAllocator CmdAllocator;
-    RenderCommand* First;
-    RenderCommand* Last;
+    RenderCommand*  First;
+    RenderCommand*  Last;
 
     UInt32 NumDrawCalls     = 0;
     UInt32 NumDispatchCalls = 0;
