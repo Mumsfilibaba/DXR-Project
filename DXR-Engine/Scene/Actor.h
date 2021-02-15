@@ -75,7 +75,7 @@ public:
     void AddComponent(Component* InComponent);
 
     template<typename TComponent>
-    FORCEINLINE bool HasComponentOfType() const noexcept
+    FORCEINLINE Bool HasComponentOfType() const noexcept
     {
         TComponent* Result = nullptr;
         for (Component* Component : Components)

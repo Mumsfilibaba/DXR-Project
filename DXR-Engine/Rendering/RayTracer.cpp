@@ -71,6 +71,7 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
     TRACE_SCOPE("Gather Instances");
 
     Resources.RTGeometryInstances.Clear();
+    Resources.RTHitGroupResources.Clear();
 
     UInt32 InstanceIndexIndex = 0;
     RayTracingShaderResources HitGroupResources;
@@ -80,7 +81,6 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
 
         HitGroupResources.Reset();
         Resources.RTHitGroupResources.EmplaceBack(HitGroupResources);
-
 
         RayTracingGeometryInstance Instance;
         Instance.Instance      = MakeSharedRef<RayTracingGeometry>(Cmd.Geometry);
@@ -98,7 +98,7 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
     }
     else
     {
-        CmdList.BuildRayTracingScene(Resources.RTScene.Get(), TArrayView<RayTracingGeometryInstance>(Resources.RTGeometryInstances), true);
+        CmdList.BuildRayTracingScene(Resources.RTScene.Get(), TArrayView<RayTracingGeometryInstance>(Resources.RTGeometryInstances), false);
     }
 
     CmdList.SetHitGroups(Resources.RTScene.Get(), Pipeline.Get(), TArrayView<RayTracingShaderResources>(Resources.RTHitGroupResources));

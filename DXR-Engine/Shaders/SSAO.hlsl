@@ -10,7 +10,7 @@ StructuredBuffer<float3> Samples : register(t3, space0);
 SamplerState GBufferSampler : register(s0, space0);
 SamplerState NoiseSampler   : register(s1, space0);
 
-RWTexture2D<float3> Output : register(u0, space0);
+RWTexture2D<float> Output : register(u0, space0);
 
 cbuffer Params : register(b0, space0)
 {

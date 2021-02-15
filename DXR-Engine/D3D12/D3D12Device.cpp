@@ -36,10 +36,13 @@ D3D12Device::~D3D12Device()
     }
 
     ::FreeLibrary(DXGILib);
+    DXGILib = 0;
+
     ::FreeLibrary(D3D12Lib);
+    D3D12Lib = 0;
 }
 
-bool D3D12Device::Init()
+Bool D3D12Device::Init()
 {
     DXGILib = ::LoadLibrary("dxgi.dll");
     if (DXGILib == NULL)

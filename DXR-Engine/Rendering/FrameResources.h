@@ -19,7 +19,7 @@ struct FrameResources
     void Release();
 
     const EFormat DepthBufferFormat  = EFormat::D32_Float;
-    const EFormat SSAOBufferFormat   = EFormat::R16G16B16A16_Float;
+    const EFormat SSAOBufferFormat   = EFormat::R16_Float;
     const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
     const EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
     const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;

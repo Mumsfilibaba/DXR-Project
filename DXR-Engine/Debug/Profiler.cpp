@@ -14,12 +14,8 @@ constexpr Float INV_SECONDS      = 1.0f / SECONDS;
 
 constexpr Float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
-static void ImGui_PrintTiming(const Char* Text, Float Num)
+static void ImGui_PrintTime(Float Num)
 {
-    ImGui::Text("%s: ", Text);
-
-    ImGui::NextColumn();
-
     if (Num < MICROSECONDS)
     {
         ImGui::Text("%.4f ns", Num);
@@ -39,6 +35,22 @@ static void ImGui_PrintTiming(const Char* Text, Float Num)
         const Float Time = Num * INV_SECONDS;
         ImGui::Text("%.4f s", Time);
     }
+}
+
+static void ImGui_PrintTiming(const Char* Text, Float Num)
+{
+    ImGui::Text("%s: ", Text);
+
+    ImGui::NextColumn();
+
+    ImGui_PrintTime(Num);
+}
+
+static void ImGui_PrintTiming_SameLine(const Char* Text, Float Num)
+{
+    ImGui::Text("%s: ", Text);
+    ImGui::SameLine();
+    ImGui_PrintTime(Num);
 }
 
 static Float ImGui_ConvertNumber(Float Num)
@@ -263,6 +275,14 @@ void Profiler::Tick()
 
                     const Char* Name = Sample.first.c_str();
                     ImGui_PrintTiming(Name, Average);
+
+                    ImGui::SameLine();
+
+                    ImGui_PrintTiming_SameLine("Min", Sample.second.Min);
+
+                    ImGui::SameLine();
+
+                    ImGui_PrintTiming_SameLine("Max", Sample.second.Max);
 
                     if (Sample.second.SampleCount > 1)
                     {

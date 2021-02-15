@@ -26,6 +26,7 @@ struct ImGuiState
         PipelineStateNoBlending.Reset();
         VertexBuffer.Reset();
         IndexBuffer.Reset();
+        PointSampler.Reset();
     }
 
     Clock FrameClock;

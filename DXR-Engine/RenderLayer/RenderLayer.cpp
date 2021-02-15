@@ -4,7 +4,7 @@
 #include "D3D12/D3D12RenderLayer.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
-bool RenderLayer::Init(ERenderLayerApi InRenderApi)
+Bool RenderLayer::Init(ERenderLayerApi InRenderApi)
 {
 	// Select RenderLayer
 	if (InRenderApi == ERenderLayerApi::D3D12)
@@ -28,7 +28,7 @@ bool RenderLayer::Init(ERenderLayerApi InRenderApi)
 	}
 
 	// TODO: This should be in EngineConfig
-	const bool EnableDebug =
+	const Bool EnableDebug =
 #if ENABLE_API_DEBUGGING
 		true;
 #else

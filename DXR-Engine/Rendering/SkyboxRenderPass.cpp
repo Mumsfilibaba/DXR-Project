@@ -193,9 +193,6 @@ void SkyboxRenderPass::Render(CommandList& CmdList, const FrameResources& FrameR
     CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.BindScissorRect(RenderWidth, RenderHeight, 0, 0);
 
-    CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
-    CmdList.TransitionTexture(FrameResources.FinalTarget.Get(), EResourceState::UnorderedAccess, EResourceState::RenderTarget);
-
     CmdList.BindRenderTargets(RenderTarget, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
     CmdList.BindPrimitiveTopology(EPrimitiveTopology::TriangleList);

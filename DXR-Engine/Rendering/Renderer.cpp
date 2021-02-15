@@ -178,12 +178,6 @@ void Renderer::RenderDebugInterface()
 {
     if (GlobalDrawTextureDebugger.GetBool())
     {
-        Resources.DebugTextures.EmplaceBack(
-            MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView()),
-            Resources.GBuffer[GBUFFER_DEPTH_INDEX],
-            EResourceState::DepthWrite,
-            EResourceState::PixelShaderResource);
-
         constexpr Float InvAspectRatio = 16.0f / 9.0f;
         constexpr Float AspectRatio    = 9.0f / 16.0f;
 
@@ -263,10 +257,6 @@ void Renderer::RenderDebugInterface()
         ImGui::End();
 
         GlobalDrawTextureDebugger.SetBool(TempDrawTextureDebugger);
-    }
-    else
-    {
-        CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::PixelShaderResource);
     }
 
     if (GlobalDrawRendererInfo.GetBool())
@@ -416,8 +406,8 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
-    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
 
     ColorF BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(), BlackClearColor);
@@ -492,6 +482,9 @@ void Renderer::Tick(const Scene& Scene)
 
     DeferredRenderer.RenderDeferredTiledLightPass(CmdList, Resources, LightSetup);
 
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
+    CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::UnorderedAccess, EResourceState::RenderTarget);
+
     SkyboxRenderPass.Render(CmdList, Resources, Scene);
 
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
@@ -521,6 +514,14 @@ void Renderer::Tick(const Scene& Scene)
         MakeSharedRef<ShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()),
         Resources.FinalTarget, 
         EResourceState::PixelShaderResource, 
+        EResourceState::PixelShaderResource);
+
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::PixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView()),
+        Resources.GBuffer[GBUFFER_DEPTH_INDEX],
+        EResourceState::PixelShaderResource,
         EResourceState::PixelShaderResource);
 
     if (GlobalEnableFXAA.GetBool())
