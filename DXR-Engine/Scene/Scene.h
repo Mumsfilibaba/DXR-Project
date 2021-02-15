@@ -8,7 +8,7 @@
 
 #include "Time/Timestamp.h"
 
-#include <Containers/TArray.h>
+#include <Containers/Array.h>
 
 class Scene
 {

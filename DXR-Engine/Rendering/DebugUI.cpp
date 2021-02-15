@@ -8,7 +8,7 @@
 
 #include "Time/Clock.h"
 
-#include "Containers/TArray.h"
+#include "Containers/Array.h"
 
 #include "Rendering/TextureFactory.h"
 #include "Rendering/Renderer.h"

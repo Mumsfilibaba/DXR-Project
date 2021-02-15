@@ -3,7 +3,7 @@
 
 #include "Application/Generic/GenericApplication.h"
 
-#include <Containers/TSharedPtr.h>
+#include <Containers/SharedPtr.h>
 
 enum class EEventType : UInt8
 { 

@@ -21,13 +21,13 @@
 
 // Containers
 #include <Containers/Types.h>
-#include <Containers/TArray.h>
-#include <Containers/TArrayView.h>
-#include <Containers/TStaticArray.h>
-#include <Containers/TFunction.h>
-#include <Containers/TSharedPtr.h>
-#include <Containers/TUniquePtr.h>
-#include <Containers/TUtilities.h>
+#include <Containers/Array.h>
+#include <Containers/ArrayView.h>
+#include <Containers/StaticArray.h>
+#include <Containers/Function.h>
+#include <Containers/SharedPtr.h>
+#include <Containers/UniquePtr.h>
+#include <Containers/Utilities.h>
 
 // Application
 #include "Application/Log.h"

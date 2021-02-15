@@ -4,7 +4,7 @@
 
 #include "Application/Generic/GenericApplicationEventHandler.h"
 
-#include <Containers/TArray.h>
+#include <Containers/Array.h>
 
 class EventDispatcher : public GenericApplicationEventHandler
 {

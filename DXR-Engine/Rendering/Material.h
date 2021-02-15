@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderLayer/Resources.h"
 
-#include <Containers/TStaticArray.h>
+#include <Containers/StaticArray.h>
 
 struct MaterialProperties
 {

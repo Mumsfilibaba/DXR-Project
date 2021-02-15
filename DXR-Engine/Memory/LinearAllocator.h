@@ -1,7 +1,7 @@
 #pragma once
 #include "Memory.h"
 
-#include <Containers/TArray.h>
+#include <Containers/Array.h>
 
 struct MemoryArena
 {

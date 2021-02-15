@@ -1,7 +1,7 @@
 #pragma once
 #include "MeshFactory.h"
 
-#include <Containers/TSharedPtr.h>
+#include <Containers/SharedPtr.h>
 
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/RayTracing.h"

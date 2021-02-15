@@ -3,7 +3,7 @@
 
 #include "Memory/Memory.h"
 
-#include <Containers/TStaticArray.h>
+#include <Containers/StaticArray.h>
 
 class ShaderResourceView : public Resource
 {
