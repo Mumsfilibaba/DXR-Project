@@ -14,7 +14,7 @@ public:
     Bool Init(FrameResources& FrameResources);
     void Release();
 
-    void Render(CommandList& CmdList, const FrameResources& FrameResources);
+    void Render(CommandList& CmdList, FrameResources& FrameResources);
 
     Bool ResizeResources(FrameResources& FrameResources);
 
@@ -24,8 +24,7 @@ private:
     TSharedPtr<ComputePipelineState> PipelineState;
     TSharedPtr<ComputePipelineState> BlurHorizontalPSO;
     TSharedPtr<ComputePipelineState> BlurVerticalPSO;
-    TRef<StructuredBuffer>     SSAOSamples;
-    TRef<ShaderResourceView>   SSAOSamplesSRV;
-    TRef<Texture2D>            SSAONoiseTex;
-    TRef<ShaderResourceView>   SSAONoiseSRV;
+    TRef<StructuredBuffer>   SSAOSamples;
+    TRef<ShaderResourceView> SSAOSamplesSRV;
+    TRef<Texture2D>          SSAONoiseTex;
 };

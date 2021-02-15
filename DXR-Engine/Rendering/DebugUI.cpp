@@ -23,6 +23,7 @@ struct ImGuiState
     {
         FontTexture.Reset();
         PipelineState.Reset();
+        PipelineStateNoBlending.Reset();
         VertexBuffer.Reset();
         IndexBuffer.Reset();
     }
@@ -34,7 +35,8 @@ struct ImGuiState
     TRef<GraphicsPipelineState> PipelineStateNoBlending;
     TRef<VertexBuffer>          VertexBuffer;
     TRef<IndexBuffer>           IndexBuffer;
-    TArray<ImGuiImage*>               Images;
+    TRef<SamplerState>          PointSampler;
+    TArray<ImGuiImage*>         Images;
     
     ImGuiContext* Context = nullptr;
 };
@@ -73,10 +75,7 @@ Bool DebugUI::Init()
     IO.BackendFlags |= ImGuiBackendFlags_HasSetMousePos; 
     IO.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
     IO.BackendPlatformName = "Windows";
-
-#ifdef WIN32
-    IO.ImeWindowHandle = gMainWindow->GetNativeHandle();
-#endif
+    IO.ImeWindowHandle     = gMainWindow->GetNativeHandle();
 
     // Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
     IO.KeyMap[ImGuiKey_Tab]         = EKey::Key_Tab;
@@ -226,20 +225,20 @@ Bool DebugUI::Init()
     {
         float2 pos : POSITION;
         float4 col : COLOR0;
-        float2 uv : TEXCOORD0;
+        float2 uv  : TEXCOORD0;
     };
     struct PS_INPUT
     {
         float4 pos : SV_POSITION;
         float4 col : COLOR0;
-        float2 uv : TEXCOORD0;
+        float2 uv  : TEXCOORD0;
     };
     PS_INPUT Main(VS_INPUT input)
     {
         PS_INPUT output;
-        output.pos    = mul(ProjectionMatrix, float4(input.pos.xy, 0.0f, 1.0f));
-        output.col    = input.col;
-        output.uv    = input.uv;
+        output.pos = mul(ProjectionMatrix, float4(input.pos.xy, 0.0f, 1.0f));
+        output.col = input.col;
+        output.uv  = input.uv;
         return output;
     })*";
 
@@ -265,8 +264,8 @@ Bool DebugUI::Init()
             float4 col : COLOR0;
             float2 uv  : TEXCOORD0;
         };
-        SamplerState sampler0    : register(s0);
-        Texture2D texture0        : register(t0);
+        SamplerState sampler0 : register(s0);
+        Texture2D texture0    : register(t0);
         float4 Main(PS_INPUT input) : SV_Target
         {
             float4 out_col = input.col * texture0.Sample(sampler0, input.uv);
@@ -407,6 +406,18 @@ Bool DebugUI::Init()
         EResourceState::Common, 
         nullptr);
     if (!GlobalImGuiState.IndexBuffer)
+    {
+        return false;
+    }
+
+    SamplerStateCreateInfo CreateInfo;
+    CreateInfo.AddressU = ESamplerMode::Clamp;
+    CreateInfo.AddressV = ESamplerMode::Clamp;
+    CreateInfo.AddressW = ESamplerMode::Clamp;
+    CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
+
+    GlobalImGuiState.PointSampler = CreateSamplerState(CreateInfo);
+    if (!GlobalImGuiState.PointSampler)
     {
         return false;
     }
@@ -617,6 +628,8 @@ void DebugUI::Render(CommandList& CmdList)
 
     CmdList.TransitionBuffer(GlobalImGuiState.VertexBuffer.Get(), EResourceState::CopyDest, EResourceState::GenericRead);
     CmdList.TransitionBuffer(GlobalImGuiState.IndexBuffer.Get(), EResourceState::CopyDest, EResourceState::GenericRead);
+
+    CmdList.BindSamplerStates(EShaderStage::Pixel, &GlobalImGuiState.PointSampler, 1, 0);
 
     Int32  GlobalVertexOffset = 0;
     Int32  GlobalIndexOffset  = 0;

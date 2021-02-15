@@ -152,7 +152,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
 
     // Cook-Torrance BRDF
     float NDF = DistributionGGX(Normal, HalfVec, FinalRoughness);
-    float G   = GeometrySmithGGX(Normal, LightDir, ViewDir, HalfVec, FinalRoughness);
+    float G   = GeometrySmithGGX(Normal, LightDir, ViewDir, FinalRoughness);
     float3 F  = FresnelSchlick(ViewDir, HalfVec, F0);
     
     float3 Nominator   = NDF * G * F;

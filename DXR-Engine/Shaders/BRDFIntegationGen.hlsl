@@ -40,7 +40,7 @@ float2 IntegrateBRDF(float NdotV, float Roughness)
 
         if (NdotL > 0.0f)
         {
-            float G     = GeometrySmithGGX_IBL(N, L, V, H, Roughness);
+            float G     = GeometrySmithGGX_IBL(N, L, V, Roughness);
             float G_Vis = (G * VdotH) / (NdotH * NdotV);
             float Fc    = pow(1.0f - VdotH, 5.0f);
 
@@ -63,7 +63,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     float2 TexCoord = (float2(DispatchThreadID.xy) + Float2(0.5f)) / float2(OutputWidth, OutputHeight);
     
     float NdotV     = max(TexCoord.x, MIN_VALUE);
-    float Roughness = min(max(1.0 - TexCoord.y, MIN_ROUGHNESS), MIN_ROUGHNESS);
+    float Roughness = min(max(1.0f - TexCoord.y, MIN_ROUGHNESS), MAX_ROUGHNESS);
     
     float2 IntegratedBDRF = IntegrateBRDF(NdotV, Roughness);
     IntegrationMap[DispatchThreadID.xy] = IntegratedBDRF;
