@@ -20,7 +20,7 @@ public:
 
     FORCEINLINE Bool Init(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocatorHandle& Allocator,ID3D12PipelineState* InitalPipeline)
     {
-        HRESULT Result = Device->GetDevice()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
+        HRESULT Result = GetDevice()->GetDevice()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
         if (SUCCEEDED(Result))
         {
             CmdList->Close();
@@ -257,20 +257,9 @@ public:
         CmdList->SetName(WideName.c_str());
     }
 
-    FORCEINLINE ID3D12CommandList* GetCommandList() const
-    {
-        return CmdList.Get();
-    }
-
-    FORCEINLINE ID3D12GraphicsCommandList* GetGraphicsCommandList() const
-    {
-        return CmdList.Get();
-    }
-
-    FORCEINLINE ID3D12GraphicsCommandList4* GetDXRCommandList() const
-    {
-        return CmdList5.Get();
-    }
+    FORCEINLINE ID3D12CommandList*          GetCommandList()         const { return CmdList.Get(); }
+    FORCEINLINE ID3D12GraphicsCommandList*  GetGraphicsCommandList() const { return CmdList.Get(); }
+    FORCEINLINE ID3D12GraphicsCommandList4* GetDXRCommandList()      const { return CmdList5.Get(); }
 
 private:
     TComPtr<ID3D12GraphicsCommandList>  CmdList;

@@ -72,6 +72,10 @@ public:
     }
 
     D3D12ShaderResourceView* GetShaderResourceView() const { return ShaderResourceView.Get(); }
+    
+    D3D12Resource* GetResultBuffer()  const { return ResultBuffer.Get(); }
+    D3D12Resource* GetInstanceuffer() const { return InstanceBuffer.Get(); }
+    D3D12Resource* GetBindingTable()  const { return BindingTable.Get(); }
 
 private:
     TArray<RayTracingGeometryInstance> Instances;

@@ -30,8 +30,6 @@ public:
     {
     }
 
-    ~RayTracingGeometry() = default;
-
     UInt32 GetFlags() const { return Flags; }
 
 private:
@@ -46,8 +44,6 @@ public:
         : Flags(InFlags)
     {
     }
-
-    ~RayTracingScene() = default;
 
     UInt32 GetFlags() const { return Flags; }
 

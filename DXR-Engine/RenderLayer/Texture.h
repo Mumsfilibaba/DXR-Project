@@ -29,8 +29,6 @@ public:
     {
     }
 
-    ~Texture() = default;
-
     virtual class Texture2D*        AsTexture2D()        { return nullptr; }
     virtual class Texture2DArray*   AsTexture2DArray()   { return nullptr; }
     virtual class TextureCube*      AsTextureCube()      { return nullptr; }
@@ -71,8 +69,6 @@ public:
         , NumSamples(InNumSamples)
     {
     }
-
-    ~Texture2D() = default;
 
     virtual Texture2D* AsTexture2D() override { return this; }
 
@@ -115,8 +111,6 @@ public:
     {
     }
 
-    ~Texture2DArray() = default;
-
     virtual Texture2D*      AsTexture2D()      override { return nullptr; }
     virtual Texture2DArray* AsTexture2DArray() override { return this; }
 
@@ -135,8 +129,6 @@ public:
     {
     }
 
-    ~TextureCube() = default;
-
     virtual TextureCube* AsTextureCube() override { return this; }
 
     UInt32 GetSize() const { return Size; }
@@ -153,8 +145,6 @@ public:
         , NumArraySlices(InNumArraySlices)
     {
     }
-
-    ~TextureCubeArray() = default;
 
     virtual TextureCube*      AsTextureCube()      override { return nullptr; }
     virtual TextureCubeArray* AsTextureCubeArray() override { return this; }
@@ -175,8 +165,6 @@ public:
         , Depth(InDepth)
     {
     }
-
-    ~Texture3D() = default;
 
     virtual Texture3D* AsTexture3D() override { return this; }
 

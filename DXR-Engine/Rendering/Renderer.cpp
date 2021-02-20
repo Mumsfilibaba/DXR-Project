@@ -579,6 +579,30 @@ void Renderer::Tick(const Scene& Scene)
 
 Bool Renderer::Init()
 {
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ComputeShader.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    TRef<ComputeShader> Shader = CreateComputeShader(ShaderCode);
+    if (!Shader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    ComputePipelineStateCreateInfo PipelineStateInfo;
+    PipelineStateInfo.Shader = Shader.Get();
+
+    TRef<ComputePipelineState> Pipeline = CreateComputePipelineState(PipelineStateInfo);
+    if (!Pipeline)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
     INIT_CONSOLE_VARIABLE("r.DrawTextureDebugger", GlobalDrawTextureDebugger);
     GlobalDrawTextureDebugger.SetBool(false);
 

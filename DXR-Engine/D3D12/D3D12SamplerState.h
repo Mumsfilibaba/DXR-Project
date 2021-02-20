@@ -28,7 +28,7 @@ public:
         if (OfflineHandle != 0)
         {
             Desc = InDesc;
-            Device->CreateSampler(&Desc, OfflineHandle);
+            GetDevice()->CreateSampler(&Desc, OfflineHandle);
             return true;
         }
         else

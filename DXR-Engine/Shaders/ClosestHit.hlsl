@@ -18,10 +18,10 @@ SamplerState GBufferSampler : register(s1, space0);
 RWTexture2D<float4> OutTexture : register(u0, space0);
 
 static const float3 LightPosition = float3(0.0f, 1.0f, 0.0f);
-static const float3 LightColor = float3(1.0f, 1.0f, 1.0f);
+static const float3 LightColor    = float3(1.0f, 1.0f, 1.0f);
 
 // Local RootSignature
-cbuffer MaterialBuffer : register(b0, space1)
+cbuffer MaterialBuffer : register(b0, space2)
 {
     float3 Albedo;
     float  Roughness;
@@ -30,15 +30,15 @@ cbuffer MaterialBuffer : register(b0, space1)
     int    EnableHeight;
 };
 
-Texture2D<float4> AlbedoMap    : register(t0, space1);
-Texture2D<float4> NormalMap    : register(t1, space1);
-Texture2D<float4> RoughnessMap : register(t2, space1);
-Texture2D<float4> HeightMap    : register(t3, space1);
-Texture2D<float4> MetallicMap  : register(t4, space1);
-Texture2D<float4> AOMap        : register(t5, space1);
+Texture2D<float4> AlbedoMap    : register(t0, space2);
+Texture2D<float4> NormalMap    : register(t1, space2);
+Texture2D<float4> RoughnessMap : register(t2, space2);
+Texture2D<float4> HeightMap    : register(t3, space2);
+Texture2D<float4> MetallicMap  : register(t4, space2);
+Texture2D<float4> AOMap        : register(t5, space2);
 
-StructuredBuffer<Vertex> Vertices : register(t6, space1);
-ByteAddressBuffer InIndices       : register(t7, space1);
+StructuredBuffer<Vertex> Vertices : register(t6, space2);
+ByteAddressBuffer InIndices       : register(t7, space2);
 
 [shader("closesthit")]
 void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttributes IntersectionAttributes)

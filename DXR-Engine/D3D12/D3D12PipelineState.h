@@ -106,7 +106,7 @@ private:
 class D3D12GraphicsPipelineState : public GraphicsPipelineState, public D3D12DeviceChild
 {
 public:
-    D3D12GraphicsPipelineState(D3D12Device* InDevice, const TRef<D3D12RootSignature>& InRootSignature);
+    D3D12GraphicsPipelineState(D3D12Device* InDevice);
     ~D3D12GraphicsPipelineState() = default;
 
     Bool Init(const GraphicsPipelineStateCreateInfo& CreateInfo);
@@ -133,10 +133,8 @@ private:
 
 class D3D12ComputePipelineState : public ComputePipelineState, public D3D12DeviceChild
 {
-    friend class D3D12RenderLayer;
-
 public:
-    D3D12ComputePipelineState(D3D12Device* InDevice, const TRef<D3D12ComputeShader>& InShader, const TRef<D3D12RootSignature>& InRootSignature);
+    D3D12ComputePipelineState(D3D12Device* InDevice, const TRef<D3D12ComputeShader>& InShader);
     ~D3D12ComputePipelineState() = default;
 
     Bool Init();
@@ -168,7 +166,7 @@ public:
     D3D12RayTracingPipelineState(D3D12Device* InDevice);
     ~D3D12RayTracingPipelineState() = default;
 
-    Bool Init(const RayTracingPipelineStateCreateInfo& CreateInfo, const D3D12DefaultRootSignatures& DefaultRootSignatures);
+    Bool Init(const RayTracingPipelineStateCreateInfo& CreateInfo);
 
     virtual void SetName(const std::string& InName) override
     {

@@ -35,6 +35,8 @@ public:
     Bool GetReflection(D3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection);
     Bool GetLibraryReflection(D3D12BaseShader* Shader, ID3D12LibraryReflection** Reflection);
 
+    Bool HasRootSignature(D3D12BaseShader* Shader);
+
 private:
     Bool InternalCompileFromSource(
         IDxcBlob* SourceBlob, 
@@ -58,4 +60,5 @@ private:
     HMODULE DxCompilerDLL;
 };
 
-extern D3D12ShaderCompiler* gD3D12ShaderCompiler;
+extern D3D12ShaderCompiler*  gD3D12ShaderCompiler;
+extern DxcCreateInstanceProc DxcCreateInstanceFunc;

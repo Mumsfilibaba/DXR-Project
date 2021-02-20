@@ -5,6 +5,8 @@
 #include "Rendering/MeshDrawCommand.h"
 #include "Rendering/DebugUI.h"
 
+#include <unordered_map>
+
 #define GBUFFER_ALBEDO_INDEX      0
 #define GBUFFER_NORMAL_INDEX      1
 #define GBUFFER_MATERIAL_INDEX    2
@@ -55,6 +57,7 @@ struct FrameResources
     TRef<RayTracingScene> RTScene;
     TArray<RayTracingGeometryInstance> RTGeometryInstances;
     TArray<RayTracingShaderResources>  RTHitGroupResources;
+    std::unordered_map<class Material*, UInt32> RTMaterialToHitGroupIndex;
 
     TArray<MeshDrawCommand> DeferredVisibleCommands;
     TArray<MeshDrawCommand> ForwardVisibleCommands;

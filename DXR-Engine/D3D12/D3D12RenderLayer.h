@@ -6,6 +6,7 @@
 #include "D3D12Device.h"
 #include "D3D12CommandContext.h"
 #include "D3D12Texture.h"
+#include "D3D12RootSignature.h"
 
 class D3D12CommandContext;
 class D3D12Buffer;
@@ -192,9 +193,9 @@ private:
     Bool FinalizeBufferResource(TD3D12Buffer* Buffer, UInt32 SizeInBytes, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData);
 
 private:
-    D3D12Device*               Device;
-    TRef<D3D12CommandContext>  DirectCmdContext;
-    D3D12DefaultRootSignatures DefaultRootSignatures;
+    D3D12Device*              Device;
+    TRef<D3D12CommandContext> DirectCmdContext;
+    D3D12RootSignatureCache*  RootSignatureCache;
 
     D3D12OfflineDescriptorHeap* ResourceOfflineDescriptorHeap     = nullptr;
     D3D12OfflineDescriptorHeap* RenderTargetOfflineDescriptorHeap = nullptr;

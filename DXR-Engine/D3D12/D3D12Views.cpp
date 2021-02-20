@@ -36,7 +36,7 @@ Bool D3D12ConstantBufferView::CreateView(D3D12Resource* InResource, const D3D12_
 
     Resource = MakeSharedRef<D3D12Resource>(InResource);
     Desc     = InDesc;
-    Device->CreateConstantBufferView(&Desc, OfflineHandle);
+    GetDevice()->CreateConstantBufferView(&Desc, OfflineHandle);
 
     return true;
 }
@@ -60,7 +60,7 @@ Bool D3D12BaseShaderResourceView::CreateView(D3D12Resource* InResource,  const D
         NativeResource = D3D12View::Resource->GetResource();
     }
 
-    Device->CreateShaderResourceView(NativeResource, &Desc, OfflineHandle);
+    GetDevice()->CreateShaderResourceView(NativeResource, &Desc, OfflineHandle);
     return true;
 }
 
@@ -91,7 +91,7 @@ Bool D3D12BaseUnorderedAccessView::CreateView(D3D12Resource* InCounterResource, 
         NativeResource = D3D12View::Resource->GetResource();
     }
 
-    Device->CreateUnorderedAccessView(NativeResource, NativeCounterResource, &Desc, OfflineHandle);
+    GetDevice()->CreateUnorderedAccessView(NativeResource, NativeCounterResource, &Desc, OfflineHandle);
     return true;
 }
 
@@ -108,7 +108,7 @@ Bool D3D12BaseRenderTargetView::CreateView(D3D12Resource* InResource, const D3D1
 
     Desc                = InDesc;
     D3D12View::Resource = MakeSharedRef<D3D12Resource>(InResource);
-    Device->GetDevice()->CreateRenderTargetView(D3D12View::Resource->GetResource(), &Desc, OfflineHandle);
+    GetDevice()->GetDevice()->CreateRenderTargetView(D3D12View::Resource->GetResource(), &Desc, OfflineHandle);
 
     return true;
 }
@@ -126,7 +126,7 @@ Bool D3D12BaseDepthStencilView::CreateView(D3D12Resource* InResource, const D3D1
 
     Desc                = InDesc;
     D3D12View::Resource = MakeSharedRef<D3D12Resource>(InResource);
-    Device->GetDevice()->CreateDepthStencilView(D3D12View::Resource->GetResource(), &Desc, OfflineHandle);
+    GetDevice()->GetDevice()->CreateDepthStencilView(D3D12View::Resource->GetResource(), &Desc, OfflineHandle);
 
     return true;
 }

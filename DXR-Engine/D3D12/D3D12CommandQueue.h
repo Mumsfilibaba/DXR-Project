@@ -13,7 +13,7 @@ public:
     {
     }
     
-    FORCEINLINE Bool Init(D3D12_COMMAND_LIST_TYPE Type)
+    Bool Init(D3D12_COMMAND_LIST_TYPE Type)
     {
         D3D12_COMMAND_QUEUE_DESC QueueDesc;
         Memory::Memzero(&QueueDesc);
@@ -23,7 +23,7 @@ public:
         QueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
         QueueDesc.Type     = Type;
 
-        HRESULT Result = Device->GetDevice()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
+        HRESULT Result = GetDevice()->GetDevice()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
         if (SUCCEEDED(Result))
         {
             LOG_INFO("[D3D12CommandQueueHandle]: Created CommandQueue");
@@ -36,39 +36,39 @@ public:
         }
     }
 
-    FORCEINLINE Bool SignalFence(D3D12FenceHandle& Fence, UInt64 FenceValue)
+    Bool SignalFence(D3D12FenceHandle& Fence, UInt64 FenceValue)
     {
         return SUCCEEDED(Queue->Signal(Fence.GetFence(), FenceValue));
     }
 
-    FORCEINLINE Bool WaitForFence(D3D12FenceHandle& Fence, UInt64 FenceValue)
+    Bool WaitForFence(D3D12FenceHandle& Fence, UInt64 FenceValue)
     {
         return SUCCEEDED(Queue->Wait(Fence.GetFence(), FenceValue));
     }
 
-    FORCEINLINE void ExecuteCommandList(D3D12CommandListHandle* CommandList)
+    void ExecuteCommandList(D3D12CommandListHandle* CommandList)
     {
         ID3D12CommandList* CommandLists[] = { CommandList->GetCommandList() };
         Queue->ExecuteCommandLists(1, CommandLists);
     }
 
-    FORCEINLINE void SetName(const std::string& Name)
+    void SetName(const std::string& Name)
     {
         std::wstring WideDebugName = ConvertToWide(Name);
         Queue->SetName(WideDebugName.c_str());
     }
 
-    FORCEINLINE ID3D12CommandQueue* GetQueue() const
+    ID3D12CommandQueue* GetQueue() const
     {
         return Queue.Get();
     }
 
-    FORCEINLINE const D3D12_COMMAND_QUEUE_DESC& GetDesc() const
+    const D3D12_COMMAND_QUEUE_DESC& GetDesc() const
     {
         return Desc;
     }
 
-    FORCEINLINE D3D12_COMMAND_LIST_TYPE GetType() const
+    D3D12_COMMAND_LIST_TYPE GetType() const
     {
         return Desc.Type;
     }

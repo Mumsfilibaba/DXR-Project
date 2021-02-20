@@ -19,6 +19,6 @@ public:
 
     D3D12Device* GetDevice() const { return Device; }
 
-protected:
-    D3D12Device* Device = nullptr;
+private:
+    D3D12Device* Device;
 };

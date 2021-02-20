@@ -14,6 +14,15 @@
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 
+PFN_CREATE_DXGI_FACTORY_2                              CreateDXGIFactory2Func                            = nullptr;
+PFN_DXGI_GET_DEBUG_INTERFACE_1                         DXGIGetDebugInterface1Func                        = nullptr;
+PFN_D3D12_CREATE_DEVICE                                D3D12CreateDeviceFunc                             = nullptr;
+PFN_D3D12_GET_DEBUG_INTERFACE                          D3D12GetDebugInterfaceFunc                        = nullptr;
+PFN_D3D12_SERIALIZE_ROOT_SIGNATURE                     D3D12SerializeRootSignatureFunc                   = nullptr;
+PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER           D3D12CreateRootSignatureDeserializerFunc          = nullptr;
+PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVersionedRootSignatureFunc          = nullptr;
+PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc = nullptr;
+
 D3D12Device::D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation)
     : Factory(nullptr)
     , Adapter(nullptr)
@@ -307,66 +316,6 @@ Bool D3D12Device::Init()
     }
 
     return true;
-}
-
-D3D12RootSignature* D3D12Device::CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc)
-{
-    TComPtr<ID3DBlob> ErrorBlob;
-    TComPtr<ID3DBlob> SignatureBlob;
-    
-    HRESULT hResult = D3D12SerializeRootSignatureFunc(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, &SignatureBlob, &ErrorBlob);
-    if (FAILED(hResult))
-    {
-        LOG_ERROR("[D3D12Device]: FAILED to Serialize RootSignature");
-        LOG_ERROR(reinterpret_cast<const Char*>(ErrorBlob->GetBufferPointer()));
-
-        Debug::DebugBreak();
-        return nullptr;
-    }
-    else
-    {
-        return CreateRootSignature(SignatureBlob->GetBufferPointer(), static_cast<UInt32>(SignatureBlob->GetBufferSize()));
-    }
-}
-
-D3D12RootSignature* D3D12Device::CreateRootSignature(IDxcBlob* ShaderBlob)
-{
-    Assert(ShaderBlob != nullptr);
-    return CreateRootSignature(ShaderBlob->GetBufferPointer(), UInt32(ShaderBlob->GetBufferSize()));
-}
-
-D3D12RootSignature* D3D12Device::CreateRootSignature(Void* RootSignatureData, const UInt32 RootSignatureSize)
-{
-    ID3D12RootSignature* RootSignature = nullptr;
-
-    HRESULT Result = Device->CreateRootSignature(0, RootSignatureData, RootSignatureSize, IID_PPV_ARGS(&RootSignature));
-    if (FAILED(Result))
-    {
-        LOG_ERROR("[D3D12Device]: FAILED to Create RootSignature");
-        Debug::DebugBreak();
-
-        return nullptr;
-    }
-    else
-    {
-        LOG_INFO("[D3D12Device]: Created RootSignature");
-        return DBG_NEW D3D12RootSignature(this, RootSignature);
-    }
-}
-
-D3D12DescriptorHeap* D3D12Device::CreateDescriptorHeap(
-    D3D12_DESCRIPTOR_HEAP_TYPE Type,
-    UInt32 NumDescriptors,
-    D3D12_DESCRIPTOR_HEAP_FLAGS Flags)
-{
-    D3D12_DESCRIPTOR_HEAP_DESC Desc;
-    Memory::Memzero(&Desc);
-    
-    Desc.Type           = Type;
-    Desc.Flags          = Flags;
-    Desc.NumDescriptors = NumDescriptors;
-
-    return DBG_NEW D3D12DescriptorHeap(this, Desc);
 }
 
 Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount)

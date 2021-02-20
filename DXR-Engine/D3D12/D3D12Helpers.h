@@ -1,9 +1,7 @@
 #pragma once
 #include "RenderLayer/Resources.h"
 
-#ifdef Validate
-    #undef Validate
-#endif
+#include "D3D12Constants.h"
 
 #include <dxcapi.h>
 #include <d3d12.h>
@@ -670,4 +668,69 @@ inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(UInt32 InF
     }
 
     return Flags;
+}
+
+inline Bool operator<=(const D3D12_ROOT_CONSTANTS& LHS, const D3D12_ROOT_CONSTANTS& RHS)
+{
+    return LHS.Num32BitValues <= RHS.Num32BitValues && LHS.RegisterSpace == RHS.RegisterSpace && LHS.ShaderRegister == RHS.ShaderRegister;
+}
+
+inline Bool operator==(const D3D12_DESCRIPTOR_RANGE& LHS, const D3D12_DESCRIPTOR_RANGE& RHS)
+{
+    return
+        LHS.BaseShaderRegister == RHS.BaseShaderRegister &&
+        LHS.RegisterSpace == RHS.RegisterSpace &&
+        LHS.BaseShaderRegister == RHS.BaseShaderRegister &&
+        LHS.NumDescriptors == RHS.NumDescriptors;
+}
+
+inline Bool operator!=(const D3D12_DESCRIPTOR_RANGE& LHS, const D3D12_DESCRIPTOR_RANGE& RHS)
+{
+    return !(LHS == RHS);
+}
+
+inline Bool IsAliasing(const D3D12_ROOT_PARAMETER& LHS, const D3D12_ROOT_PARAMETER& RHS)
+{
+    if (LHS.ParameterType == RHS.ParameterType && LHS.ShaderVisibility == RHS.ShaderVisibility)
+    {
+        switch (LHS.ParameterType)
+        {
+        case D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE:
+        {
+            for (UInt32 i = 0; i < LHS.DescriptorTable.NumDescriptorRanges; i++)
+            {
+                const D3D12_DESCRIPTOR_RANGE& Range0 = LHS.DescriptorTable.pDescriptorRanges[i];
+                for (UInt32 j = 0; j < RHS.DescriptorTable.NumDescriptorRanges; j++)
+                {
+                    const D3D12_DESCRIPTOR_RANGE& Range1 = RHS.DescriptorTable.pDescriptorRanges[j];
+                    if (Range0 == Range1)
+                    {
+                        return true;
+                    }
+                }
+            }
+            break;
+        }
+
+        case D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS:
+        {
+            if (LHS.Constants <= RHS.Constants)
+            {
+                return true;
+            }
+            break;
+        }
+
+        case D3D12_ROOT_PARAMETER_TYPE_CBV:
+        case D3D12_ROOT_PARAMETER_TYPE_SRV:
+        case D3D12_ROOT_PARAMETER_TYPE_UAV:
+        default:
+        {
+            Assert(false);
+            break;
+        }
+        }
+    }
+
+    return false;
 }

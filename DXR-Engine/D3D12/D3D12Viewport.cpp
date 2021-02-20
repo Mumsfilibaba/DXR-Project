@@ -29,7 +29,7 @@ D3D12Viewport::~D3D12Viewport()
 Bool D3D12Viewport::Init()
 {
     // Save the flags
-    Flags = Device->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+    Flags = GetDevice()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
     const UInt32 NumSwapChainBuffers = 12;
@@ -62,7 +62,7 @@ Bool D3D12Viewport::Init()
     FullscreenDesc.Windowed                = true;
 
     TComPtr<IDXGISwapChain1> TempSwapChain;
-    HRESULT Result = Device->GetFactory()->CreateSwapChainForHwnd(CmdContext->GetQueue().GetQueue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
+    HRESULT Result = GetDevice()->GetFactory()->CreateSwapChainForHwnd(CmdContext->GetQueue().GetQueue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
     if (SUCCEEDED(Result))
     {
         Result = TempSwapChain.As<IDXGISwapChain3>(&SwapChain);
@@ -82,7 +82,7 @@ Bool D3D12Viewport::Init()
         return false;
     }
 
-    Device->GetFactory()->MakeWindowAssociation(Hwnd, DXGI_MWA_NO_ALT_ENTER);
+    GetDevice()->GetFactory()->MakeWindowAssociation(Hwnd, DXGI_MWA_NO_ALT_ENTER);
 
     if (!RetriveBackBuffers())
     {
@@ -176,7 +176,7 @@ Bool D3D12Viewport::RetriveBackBuffers()
         {
             if (!View)
             {
-                View = DBG_NEW D3D12RenderTargetView(Device, RenderTargetOfflineHeap);
+                View = DBG_NEW D3D12RenderTargetView(GetDevice(), RenderTargetOfflineHeap);
                 if (!View->Init())
                 {
                     return false;
@@ -195,8 +195,8 @@ Bool D3D12Viewport::RetriveBackBuffers()
             return false;
         }
 
-        BackBuffers[i] = DBG_NEW D3D12Texture2D(Device, GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, ClearValue());
-        BackBuffers[i]->SetResource(DBG_NEW D3D12Resource(Device, BackBufferResource));
+        BackBuffers[i] = DBG_NEW D3D12Texture2D(GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, ClearValue());
+        BackBuffers[i]->SetResource(DBG_NEW D3D12Resource(GetDevice(), BackBufferResource));
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;
         Memory::Memzero(&Desc);

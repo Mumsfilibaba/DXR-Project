@@ -7,6 +7,33 @@
 
 #include "Application/Platform/PlatformDialogMisc.h"
 
+DxcCreateInstanceProc DxcCreateInstanceFunc = nullptr;
+
+#ifndef MAKEFOURCC
+    #define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | (unsigned char)(b) << 8 | (unsigned char)(c) << 16 | (unsigned char)(d) << 24)
+#endif
+
+enum DxilFourCC 
+{
+    DFCC_Container               = MAKEFOURCC('D', 'X', 'B', 'C'),
+    DFCC_ResourceDef             = MAKEFOURCC('R', 'D', 'E', 'F'),
+    DFCC_InputSignature          = MAKEFOURCC('I', 'S', 'G', '1'),
+    DFCC_OutputSignature         = MAKEFOURCC('O', 'S', 'G', '1'),
+    DFCC_PatchConstantSignature  = MAKEFOURCC('P', 'S', 'G', '1'),
+    DFCC_ShaderStatistics        = MAKEFOURCC('S', 'T', 'A', 'T'),
+    DFCC_ShaderDebugInfoDXIL     = MAKEFOURCC('I', 'L', 'D', 'B'),
+    DFCC_ShaderDebugName         = MAKEFOURCC('I', 'L', 'D', 'N'),
+    DFCC_FeatureInfo             = MAKEFOURCC('S', 'F', 'I', '0'),
+    DFCC_PrivateData             = MAKEFOURCC('P', 'R', 'I', 'V'),
+    DFCC_RootSignature           = MAKEFOURCC('R', 'T', 'S', '0'),
+    DFCC_DXIL                    = MAKEFOURCC('D', 'X', 'I', 'L'),
+    DFCC_PipelineStateValidation = MAKEFOURCC('P', 'S', 'V', '0'),
+    DFCC_RuntimeData             = MAKEFOURCC('R', 'D', 'A', 'T'),
+    DFCC_ShaderHash              = MAKEFOURCC('H', 'A', 'S', 'H'),
+};
+
+#undef MAKEFOURCC
+
 // TODO: Maybe a compile time version?
 static LPCWSTR GetTargetProfile(EShaderStage Stage, EShaderModel Model)
 {
@@ -307,14 +334,42 @@ Bool D3D12ShaderCompiler::CompileShader(
 
 Bool D3D12ShaderCompiler::GetReflection(D3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection)
 {
-    TComPtr<IDxcBlob> ShaderBlob = DBG_NEW ExistingBlob((LPVOID)Shader->GetCodeData(), Shader->GetCodeSize());
+    TComPtr<IDxcBlob> ShaderBlob = DBG_NEW ExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     return InternalGetReflection(ShaderBlob, IID_PPV_ARGS(Reflection));
 }
 
 Bool D3D12ShaderCompiler::GetLibraryReflection(D3D12BaseShader* Shader, ID3D12LibraryReflection** Reflection)
 {
-    TComPtr<IDxcBlob> ShaderBlob = DBG_NEW ExistingBlob((LPVOID)Shader->GetCodeData(), Shader->GetCodeSize());
+    TComPtr<IDxcBlob> ShaderBlob = DBG_NEW ExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     return InternalGetReflection(ShaderBlob, IID_PPV_ARGS(Reflection));
+}
+
+Bool D3D12ShaderCompiler::HasRootSignature(D3D12BaseShader* Shader)
+{
+    TComPtr<IDxcContainerReflection> Reflection;
+    HRESULT Result = DxcCreateInstanceFunc(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
+    if (FAILED(Result))
+    {
+        LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create IDxcContainerReflection");
+        return false;
+    }
+
+    TComPtr<IDxcBlob> ShaderBlob = DBG_NEW ExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
+    Result = Reflection->Load(ShaderBlob.Get());
+    if (FAILED(Result))
+    {
+        LOG_ERROR("[D3D12ShaderCompiler]: Reflection were not able to load shader");
+        return false;
+    }
+
+    UInt32 PartIndex;
+    Result = Reflection->FindFirstPartKind(DFCC_RootSignature, &PartIndex);
+    if (FAILED(Result))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 Bool D3D12ShaderCompiler::Init()
@@ -326,7 +381,7 @@ Bool D3D12ShaderCompiler::Init()
         return false;
     }
 
-    DxcCreateInstanceProc DxcCreateInstanceFunc = GetTypedProcAddress<DxcCreateInstanceProc>(DxCompilerDLL, "DxcCreateInstance");
+    DxcCreateInstanceFunc = GetTypedProcAddress<DxcCreateInstanceProc>(DxCompilerDLL, "DxcCreateInstance");
     if (!DxcCreateInstanceFunc)
     {
         LOG_ERROR("[D3D12ShaderCompiler]: FAILED to load DxcCreateInstance");
@@ -441,18 +496,22 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
 
     if (FAILED(hResult))
     {
-        LOG_ERROR("[D3D12ShaderCompiler]: FAILED to compile with the following error:");
         if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
         {
+            LOG_ERROR("[D3D12ShaderCompiler]: FAILED to compile with the following error:");
             LOG_ERROR(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+        }
+        else
+        {
+            LOG_ERROR("[D3D12ShaderCompiler]: FAILED to compile with. Unknown ERROR.");
         }
 
         return false;
     }
 
-    LOG_INFO("[D3D12ShaderCompiler]: Compiled with the following output:");
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
+        LOG_INFO("[D3D12ShaderCompiler]: Successfully compiled with the following output:");
         LOG_INFO(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
     }
 
@@ -487,19 +546,13 @@ Bool D3D12ShaderCompiler::InternalGetReflection(const TComPtr<IDxcBlob>& ShaderB
         return false;
     }
 
-#ifndef MAKEFOURCC
-    #define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | (unsigned char)(b) << 8 | (unsigned char)(c) << 16 | (unsigned char)(d) << 24)
-#endif
-
     UInt32 PartIndex;
-    Result = DxReflection->FindFirstPartKind(MAKEFOURCC('D', 'X', 'I', 'L'), &PartIndex);
+    Result = DxReflection->FindFirstPartKind(DFCC_DXIL, &PartIndex);
     if (FAILED(Result))
     {
         LOG_ERROR("[D3D12ShaderCompiler]: Were not able to validate ray tracing shader");
         return false;
     }
-
-#undef MAKEFOURCC
 
     Result = DxReflection->GetPartReflection(PartIndex, iid, ppvObject);
     if (FAILED(Result))
@@ -544,8 +597,8 @@ Bool D3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Shad
         return false;
     }
 
-    size_t Length = wcslen(Entrypoint) + 1;
-    char Buffer[256];
+    Char Buffer[256];
+    Memory::Memzero(Buffer, sizeof(Buffer));
 
     size_t ConvertedChars;
     wcstombs_s(&ConvertedChars, Buffer, 256, Entrypoint, _TRUNCATE);

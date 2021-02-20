@@ -1,9 +1,10 @@
 #include "D3D12PipelineState.h"
+#include "D3D12ShaderCompiler.h"
 
-D3D12GraphicsPipelineState::D3D12GraphicsPipelineState(D3D12Device* InDevice, const TRef<D3D12RootSignature>& InRootSignature)
+D3D12GraphicsPipelineState::D3D12GraphicsPipelineState(D3D12Device* InDevice)
     : D3D12DeviceChild(InDevice)
     , PipelineState(nullptr)
-    , RootSignature(InRootSignature)
+    , RootSignature(nullptr)
 {
 }
 
@@ -85,32 +86,47 @@ Bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
     if (!DxInputLayoutState)
     {
         InputLayoutDesc.pInputElementDescs = nullptr;
-        InputLayoutDesc.NumElements        = 0;
+        InputLayoutDesc.NumElements = 0;
     }
     else
     {
         InputLayoutDesc = DxInputLayoutState->GetDesc();
     }
 
+    TArray<D3D12BaseShader*> ShadersWithRootSignature;
+    TArray<D3D12BaseShader*> BaseShaders;
+
     // VertexShader
     D3D12VertexShader* DxVertexShader = static_cast<D3D12VertexShader*>(CreateInfo.ShaderState.VertexShader);
     Assert(DxVertexShader != nullptr);
 
+    if (DxVertexShader->HasRootSignature())
+    {
+        ShadersWithRootSignature.EmplaceBack(DxVertexShader);
+    }
+
     D3D12_SHADER_BYTECODE& VertexShader = PipelineStream.VertexShader;
-    VertexShader = DxVertexShader->GetShaderByteCode();
+    VertexShader = DxVertexShader->GetByteCode();
+    BaseShaders.EmplaceBack(DxVertexShader);
 
     // PixelShader
     D3D12PixelShader* DxPixelShader = static_cast<D3D12PixelShader*>(CreateInfo.ShaderState.PixelShader);
 
     D3D12_SHADER_BYTECODE& PixelShader = PipelineStream.PixelShader;
-    if (!DxPixelShader)
+    if (DxPixelShader)
     {
-        PixelShader.pShaderBytecode = nullptr;
-        PixelShader.BytecodeLength  = 0;
+        PixelShader = DxPixelShader->GetByteCode();
+        BaseShaders.EmplaceBack(DxPixelShader);
+
+        if (DxPixelShader->HasRootSignature())
+        {
+            ShadersWithRootSignature.EmplaceBack(DxPixelShader);
+        }
     }
     else
     {
-        PixelShader = DxPixelShader->GetShaderByteCode();
+        PixelShader.pShaderBytecode = nullptr;
+        PixelShader.BytecodeLength  = 0;
     }
 
     // RenderTarget
@@ -156,6 +172,34 @@ Bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
     SamplerDesc.Quality = CreateInfo.SampleQuality;
 
     // RootSignature
+    if (ShadersWithRootSignature.IsEmpty())
+    {
+        D3D12RootSignatureResourceCount ResourceCounts;
+        ResourceCounts.Type                = ERootSignatureType::Graphics;
+        // TODO: Check if any shader actually uses the input assembler
+        ResourceCounts.AllowInputAssembler = true;
+
+        // NOTE: For now all constants are put in visibility_all
+        UInt32 Num32BitConstants = 0;
+        for (D3D12BaseShader* DxShader : BaseShaders)
+        {
+            UInt32 Index = DxShader->GetShaderVisibility();
+            ResourceCounts.ResourceCounts[Index] = DxShader->GetShaderResourceCount();
+            Num32BitConstants = Math::Max<UInt32>(Num32BitConstants, ResourceCounts.ResourceCounts[Index].Num32BitConstants);
+        }
+
+        ResourceCounts.ResourceCounts[ShaderVisibility_All].Num32BitConstants = Num32BitConstants;
+
+        RootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts);
+    }
+    else
+    {
+        // TODO: Maybe use all shaders and create one that fits all
+        RootSignature = D3D12RootSignatureCache::Get().CreateFromByteCode(ShadersWithRootSignature.Back()->GetByteCode());
+    }
+
+    Assert(RootSignature != nullptr);
+
     PipelineStream.RootSignature = RootSignature->GetRootSignature();
     
     // Create PipelineState
@@ -166,24 +210,23 @@ Bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
     PipelineStreamDesc.SizeInBytes                   = sizeof(GraphicsPipelineStream);
 
     TComPtr<ID3D12PipelineState> NewPipelineState;
-    HRESULT hResult = Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&NewPipelineState));
-    if (SUCCEEDED(hResult))
+    HRESULT Result = GetDevice()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&NewPipelineState));
+    if (FAILED(Result))
     {
-        PipelineState = NewPipelineState;
-        return true;
-    }
-    else
-    {
+        LOG_ERROR("[D3D12GraphicsPipelineState]: FAILED to Create GraphicsPipelineState");
         return false;
     }
+
+    PipelineState = NewPipelineState;
+    return true;
 }
 
-D3D12ComputePipelineState::D3D12ComputePipelineState(D3D12Device* InDevice, const TRef<D3D12ComputeShader>& InShader, const TRef<D3D12RootSignature>& InRootSignature)
+D3D12ComputePipelineState::D3D12ComputePipelineState(D3D12Device* InDevice, const TRef<D3D12ComputeShader>& InShader)
     : ComputePipelineState()
     , D3D12DeviceChild(InDevice)
     , PipelineState(nullptr)
     , Shader(InShader)
-    , RootSignature(InRootSignature)
+    , RootSignature(nullptr)
 {
 }
 
@@ -204,7 +247,25 @@ Bool D3D12ComputePipelineState::Init()
         };
     } PipelineStream;
 
-    PipelineStream.ComputeShader = Shader->GetShaderByteCode();
+    PipelineStream.ComputeShader = Shader->GetByteCode();
+
+    if (!Shader->HasRootSignature())
+    {
+        D3D12RootSignatureResourceCount ResourceCounts;
+        ResourceCounts.Type                = ERootSignatureType::Compute;
+        ResourceCounts.AllowInputAssembler = false;
+        ResourceCounts.ResourceCounts[ShaderVisibility_All] = Shader->GetShaderResourceCount();
+
+        D3D12BaseShader* BaseShader = Shader.Get();
+        RootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts);
+    }
+    else
+    {
+        RootSignature = D3D12RootSignatureCache::Get().CreateFromByteCode(Shader->GetByteCode());
+    }
+
+    Assert(RootSignature != nullptr);
+
     PipelineStream.RootSignature = RootSignature->GetRootSignature();
 
     // Create PipelineState
@@ -214,22 +275,19 @@ Bool D3D12ComputePipelineState::Init()
     PipelineStreamDesc.pPipelineStateSubobjectStream = &PipelineStream;
     PipelineStreamDesc.SizeInBytes                   = sizeof(ComputePipelineStream);
 
-    HRESULT hResult = Device->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
-    if (SUCCEEDED(hResult))
+    HRESULT Result = GetDevice()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
+    if (FAILED(Result))
     {
-        LOG_INFO("[D3D12RenderLayer]: Created ComputePipelineState");
-        return true;
-    }
-    else
-    {
-        LOG_ERROR("[D3D12RenderLayer]: FAILED to Create ComputePipelineState");
+        LOG_ERROR("[D3D12ComputePipelineState]: FAILED to Create ComputePipelineState");
         return false;
     }
+   
+    return true;
 }
 
 struct D3D12RootSignatureAssociation
 {
-    D3D12RootSignatureAssociation(const TComPtr<ID3D12RootSignature>& InRootSignature, const TArray<std::wstring>& InShaderExportNames)
+    D3D12RootSignatureAssociation(ID3D12RootSignature* InRootSignature, const TArray<std::wstring>& InShaderExportNames)
         : ExportAssociation()
         , RootSignature(InRootSignature)
         , ShaderExportNames(InShaderExportNames)
@@ -242,7 +300,7 @@ struct D3D12RootSignatureAssociation
     }
 
     D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION ExportAssociation;
-    TComPtr<ID3D12RootSignature>           RootSignature;
+    ID3D12RootSignature* RootSignature;
     TArray<std::wstring> ShaderExportNames;
     TArray<LPCWSTR>      ShaderExportNamesRef;
 };
@@ -305,12 +363,8 @@ struct D3D12Library
     D3D12_DXIL_LIBRARY_DESC   Desc;
 };
 
-class D3D12RayTracingPipelineStateStream
+struct D3D12RayTracingPipelineStateStream
 {
-public:
-    D3D12RayTracingPipelineStateStream()  = default;
-    ~D3D12RayTracingPipelineStateStream() = default;
-
     void AddLibrary(D3D12_SHADER_BYTECODE ByteCode, const TArray<std::wstring>& ExportNames)
     {
         Libraries.EmplaceBack(ByteCode, ExportNames);
@@ -321,7 +375,7 @@ public:
         HitGroups.EmplaceBack(HitGroupName, ClosestHit, AnyHit, Intersection);
     }
 
-    void AddRootSignatureAssociation(const TComPtr<ID3D12RootSignature>& RootSignature, const TArray<std::wstring>& ShaderExportNames)
+    void AddRootSignatureAssociation(ID3D12RootSignature* RootSignature, const TArray<std::wstring>& ShaderExportNames)
     {
         RootSignatureAssociations.EmplaceBack(RootSignature, ShaderExportNames);
     }
@@ -350,7 +404,7 @@ public:
         {
             D3D12_STATE_SUBOBJECT& LocalRootSubObject = SubObjects[SubObjectIndex++];
             LocalRootSubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
-            LocalRootSubObject.pDesc = Association.RootSignature.GetAddressOf();
+            LocalRootSubObject.pDesc = &Association.RootSignature;
 
             Association.ExportAssociation.pExports   = Association.ShaderExportNamesRef.Data();
             Association.ExportAssociation.NumExports = Association.ShaderExportNamesRef.Size();
@@ -363,7 +417,7 @@ public:
 
         D3D12_STATE_SUBOBJECT& GlobalRootSubObject = SubObjects[SubObjectIndex++];
         GlobalRootSubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
-        GlobalRootSubObject.pDesc = GlobalRootSignature.GetAddressOf();
+        GlobalRootSubObject.pDesc = &GlobalRootSignature;
 
         D3D12_STATE_SUBOBJECT& PipelineConfigSubObject = SubObjects[SubObjectIndex++];
         PipelineConfigSubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
@@ -399,7 +453,7 @@ public:
     TArray<std::wstring> PayLoadExportNames;
     TArray<LPCWSTR>      PayLoadExportNamesRef;
 
-    TComPtr<ID3D12RootSignature>  GlobalRootSignature;
+    ID3D12RootSignature* GlobalRootSignature;
     TArray<D3D12_STATE_SUBOBJECT> SubObjects;
 };
 
@@ -409,54 +463,76 @@ D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(D3D12Device* InDevice
 {
 }
 
-Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo& CreateInfo, const D3D12DefaultRootSignatures& DefaultRootSignatures)
+Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo& CreateInfo)
 {
     D3D12RayTracingPipelineStateStream PipelineStream;
-    
-    // TODO: Do not call converttowide for all
+
     D3D12RayGenShader* RayGen = static_cast<D3D12RayGenShader*>(CreateInfo.RayGen);
-    PipelineStream.AddLibrary(RayGen->GetShaderByteCode(), { ConvertToWide(RayGen->Identifier) });
-    PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayGen->RootSignature, { ConvertToWide(RayGen->Identifier) });
-    PipelineStream.PayLoadExportNames.EmplaceBack(ConvertToWide(RayGen->Identifier));
+    
+    // TODO: Fix this
+    D3D12RootSignatureResourceCount RayGenLocalResourceCounts;
+    RayGenLocalResourceCounts.Type                = ERootSignatureType::RayTracingLocal;
+    RayGenLocalResourceCounts.AllowInputAssembler = false;
+
+    // TODO: Do not use this for all
+    D3D12RootSignature* RayGenLocal = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(RayGenLocalResourceCounts);
+    if (!RayGenLocal)
+    {
+        return false;
+    }
+
+    std::wstring RayGenIdentifier = ConvertToWide(RayGen->GetIdentifier());
+    PipelineStream.AddLibrary(RayGen->GetByteCode(), { RayGenIdentifier });
+    PipelineStream.AddRootSignatureAssociation(RayGenLocal->GetRootSignature(), { RayGenIdentifier });
+    PipelineStream.PayLoadExportNames.EmplaceBack(RayGenIdentifier);
 
     for (const RayTracingHitGroup& HitGroup : CreateInfo.HitGroups)
     {
-        D3D12RayAnyhitShader*     DxAnyHit     = static_cast<D3D12RayAnyhitShader*>(HitGroup.AnyHit);
+        D3D12RayAnyHitShader*     DxAnyHit     = static_cast<D3D12RayAnyHitShader*>(HitGroup.AnyHit);
         D3D12RayClosestHitShader* DxClosestHit = static_cast<D3D12RayClosestHitShader*>(HitGroup.ClosestHit);
         
         Assert(DxClosestHit != nullptr);
 
-        PipelineStream.AddHitGroup(ConvertToWide(HitGroup.Name), ConvertToWide(DxClosestHit->Identifier), DxAnyHit ? ConvertToWide(DxAnyHit->Identifier) : L"", L"");
+        PipelineStream.AddHitGroup(
+            ConvertToWide(HitGroup.Name), 
+            ConvertToWide(DxClosestHit->GetIdentifier()), 
+            DxAnyHit ? ConvertToWide(DxAnyHit->GetIdentifier()) : L"", L"");
     }
 
     for (RayAnyHitShader* AnyHit : CreateInfo.AnyHitShaders)
     {
-        D3D12RayAnyhitShader* DxAnyHit = static_cast<D3D12RayAnyhitShader*>(AnyHit);
-        PipelineStream.AddLibrary(DxAnyHit->GetShaderByteCode(), { ConvertToWide(DxAnyHit->Identifier) });
-        PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayHit->RootSignature, { ConvertToWide(DxAnyHit->Identifier) });
-        PipelineStream.PayLoadExportNames.EmplaceBack(ConvertToWide(DxAnyHit->Identifier));
+        D3D12RayAnyHitShader* DxAnyHit = static_cast<D3D12RayAnyHitShader*>(AnyHit);
+
+        std::wstring AnyHitIdentifier = ConvertToWide(RayGen->GetIdentifier());
+        PipelineStream.AddLibrary(DxAnyHit->GetByteCode(), { AnyHitIdentifier });
+        PipelineStream.AddRootSignatureAssociation(RayGenLocal->GetRootSignature(), { AnyHitIdentifier });
+        PipelineStream.PayLoadExportNames.EmplaceBack(AnyHitIdentifier);
     }
 
     for (RayClosestHitShader* ClosestHit : CreateInfo.ClosestHitShaders)
     {
         D3D12RayClosestHitShader* DxClosestHit = static_cast<D3D12RayClosestHitShader*>(ClosestHit);
-        PipelineStream.AddLibrary(DxClosestHit->GetShaderByteCode(), { ConvertToWide(DxClosestHit->Identifier) });
-        PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayHit->RootSignature, { ConvertToWide(DxClosestHit->Identifier) });
-        PipelineStream.PayLoadExportNames.EmplaceBack(ConvertToWide(DxClosestHit->Identifier));
+
+        std::wstring ClosestHitIdentifier = ConvertToWide(RayGen->GetIdentifier());
+        PipelineStream.AddLibrary(DxClosestHit->GetByteCode(), { ClosestHitIdentifier });
+        PipelineStream.AddRootSignatureAssociation(RayGenLocal->GetRootSignature(), { ClosestHitIdentifier });
+        PipelineStream.PayLoadExportNames.EmplaceBack(ClosestHitIdentifier);
     }
 
     for (RayMissShader* Miss : CreateInfo.MissShaders)
     {
         D3D12RayMissShader* DxMiss = static_cast<D3D12RayMissShader*>(Miss);
-        PipelineStream.AddLibrary(DxMiss->GetShaderByteCode(), { ConvertToWide(DxMiss->Identifier) });
-        PipelineStream.AddRootSignatureAssociation(DefaultRootSignatures.LocalRayMiss->RootSignature, { ConvertToWide(DxMiss->Identifier) });
-        PipelineStream.PayLoadExportNames.EmplaceBack(ConvertToWide(DxMiss->Identifier));
+
+        std::wstring MissIdentifier = ConvertToWide(RayGen->GetIdentifier());
+        PipelineStream.AddLibrary(DxMiss->GetByteCode(), { MissIdentifier });
+        PipelineStream.AddRootSignatureAssociation(RayGenLocal->GetRootSignature(), { MissIdentifier });
+        PipelineStream.PayLoadExportNames.EmplaceBack(MissIdentifier);
     }
 
     PipelineStream.ShaderConfig.MaxAttributeSizeInBytes  = CreateInfo.MaxAttributeSizeInBytes;
     PipelineStream.ShaderConfig.MaxPayloadSizeInBytes    = CreateInfo.MaxPayloadSizeInBytes;
     PipelineStream.PipelineConfig.MaxTraceRecursionDepth = CreateInfo.MaxRecursionDepth;
-    PipelineStream.GlobalRootSignature                   = DefaultRootSignatures.GlobalRayGen->RootSignature;
+    PipelineStream.GlobalRootSignature                   = RayGenLocal->GetRootSignature();
 
     PipelineStream.Generate();
 
@@ -468,28 +544,23 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
     RayTracingPipeline.NumSubobjects = PipelineStream.SubObjects.Size();
 
     TComPtr<ID3D12StateObject> TempStateObject;
-    HRESULT Result = Device->GetDXRDevice()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
+    HRESULT Result = GetDevice()->GetDXRDevice()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
     if (FAILED(Result))
     {
         Debug::DebugBreak();
         return false;
     }
-    else
-    {
-        StateObject = TempStateObject;
-    }
     
     TComPtr<ID3D12StateObjectProperties> TempStateObjectProperties;
-    Result = StateObject->QueryInterface(IID_PPV_ARGS(&TempStateObjectProperties));
+    Result = TempStateObject->QueryInterface(IID_PPV_ARGS(&TempStateObjectProperties));
     if (FAILED(Result))
     {
         LOG_ERROR("[D3D12RayTracingPipelineState] Failed to retrive ID3D12StateObjectProperties");
         return false;
     }
-    else
-    {
-        StateObjectProperties = TempStateObjectProperties;
-    }
+
+    StateObject           = TempStateObject;
+    StateObjectProperties = TempStateObjectProperties;
 
     return true;
 }

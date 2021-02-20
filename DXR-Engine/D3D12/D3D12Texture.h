@@ -20,18 +20,12 @@ public:
     {
     }
 
-    ~D3D12BaseTexture()
-    {
-        Resource.Reset();
-    }
-
     void SetResource(D3D12Resource* InResource) { Resource = InResource; }
     void SetShaderResourceView(D3D12ShaderResourceView* InShaderResourceView) { ShaderResourceView = InShaderResourceView; }
 
     DXGI_FORMAT GetNativeFormat() const { return Resource->GetDesc().Format; }
 
     D3D12Resource* GetResource() { return Resource.Get(); }
-    const D3D12Resource* GetResource() const { return Resource.Get(); }
 
 protected:
     TRef<D3D12Resource>           Resource;
@@ -57,14 +51,12 @@ public:
     {
     }
 
-    ~D3D12BaseTexture2D() = default;
-
-    virtual RenderTargetView* GetRenderTargetView() const override { return RenderTargetView.Get(); }
-    virtual DepthStencilView* GetDepthStencilView() const override { return DepthStencilView.Get(); }
+    virtual RenderTargetView*    GetRenderTargetView() const override    { return RenderTargetView.Get(); }
+    virtual DepthStencilView*    GetDepthStencilView() const override    { return DepthStencilView.Get(); }
     virtual UnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
 
-    void SetRenderTargetView(D3D12RenderTargetView* InRenderTargetView) { RenderTargetView = InRenderTargetView; }
-    void SetDepthStencilView(D3D12DepthStencilView* InDepthStencilView) { DepthStencilView = InDepthStencilView; }
+    void SetRenderTargetView(D3D12RenderTargetView* InRenderTargetView)          { RenderTargetView = InRenderTargetView; }
+    void SetDepthStencilView(D3D12DepthStencilView* InDepthStencilView)          { DepthStencilView = InDepthStencilView; }
     void SetUnorderedAccessView(D3D12UnorderedAccessView* InUnorderedAccessView) { UnorderedAccessView = InUnorderedAccessView; }
 
 private:
@@ -88,8 +80,6 @@ public:
         , D3D12BaseTexture(InDevice)
     {
     }
-
-    ~D3D12BaseTexture2DArray() = default;
 };
 
 class D3D12BaseTextureCube : public TextureCube, public D3D12BaseTexture
@@ -107,8 +97,6 @@ public:
         , D3D12BaseTexture(InDevice)
     {
     }
-
-    ~D3D12BaseTextureCube() = default;
 };
 
 class D3D12BaseTextureCubeArray : public TextureCubeArray, public D3D12BaseTexture
@@ -126,8 +114,6 @@ public:
         , D3D12BaseTexture(InDevice)
     {
     }
-
-    ~D3D12BaseTextureCubeArray() = default;
 };
 
 class D3D12BaseTexture3D : public Texture3D, public D3D12BaseTexture
@@ -145,8 +131,6 @@ public:
         , D3D12BaseTexture(InDevice)
     {
     }
-
-    ~D3D12BaseTexture3D() = default;
 };
 
 template<typename TBaseTexture>
@@ -164,8 +148,6 @@ public:
         : TBaseTexture(InDevice, InFormat, SizeX, SizeY, SizeZ, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
     {
     }
-
-    ~TD3D12BaseTexture() = default;
 
     virtual void SetName(const std::string& InName) override
     {

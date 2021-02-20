@@ -13,14 +13,11 @@ public:
     {
     }
 
-    ~D3D12BaseBuffer() = default;
-
     virtual void SetResource(D3D12Resource* InResource) { Resource = InResource; }
 
     UInt64 GetSizeInBytes() const { return Resource->GetDesc().Width; }
     
     D3D12Resource* GetResource() { return Resource.Get(); }
-    const D3D12Resource* GetResource() const { return Resource.Get(); }
 
 protected:
     TRef<D3D12Resource> Resource;
@@ -35,8 +32,6 @@ public:
         , View()
     {
     }
-
-    ~D3D12BaseVertexBuffer() = default;
 
     virtual void SetResource(D3D12Resource* InResource) override
     {
@@ -63,8 +58,6 @@ public:
         , View()
     {
     }
-
-    ~D3D12BaseIndexBuffer() = default;
 
     virtual void SetResource(D3D12Resource* InResource) override
     {
@@ -96,8 +89,6 @@ public:
         , View(InDevice, InHeap)
     {
     }
-
-    ~D3D12BaseConstantBuffer() = default;
 
     virtual void SetResource(D3D12Resource* InResource) override
     {
@@ -135,8 +126,6 @@ public:
         , D3D12BaseBuffer(InDevice)
     {
     }
-
-    ~D3D12BaseStructuredBuffer() = default;
 };
 
 template<typename TBaseBuffer>
@@ -148,8 +137,6 @@ public:
         : TBaseBuffer(InDevice, ::Forward<TBufferArgs>(BufferArgs)...)
     {
     }
-
-    ~TD3D12BaseBuffer() = default;
 
     virtual void* Map(UInt32 Offset, UInt32 InSize) override
     {
@@ -185,8 +172,6 @@ public:
         : TD3D12BaseBuffer<D3D12BaseVertexBuffer>(InDevice, InNumVertices, InStride, InFlags)
     {
     }
-
-    ~D3D12VertexBuffer() = default;
 };
 
 class D3D12IndexBuffer : public TD3D12BaseBuffer<D3D12BaseIndexBuffer>
@@ -196,8 +181,6 @@ public:
         : TD3D12BaseBuffer<D3D12BaseIndexBuffer>(InDevice, InIndexFormat, InNumIndices, InFlags)
     {
     }
-
-    ~D3D12IndexBuffer() = default;
 };
 
 class D3D12ConstantBuffer : public TD3D12BaseBuffer<D3D12BaseConstantBuffer>
@@ -207,8 +190,6 @@ public:
         : TD3D12BaseBuffer<D3D12BaseConstantBuffer>(InDevice, InHeap, InSizeInBytes, InFlags)
     {
     }
-
-    ~D3D12ConstantBuffer() = default;
 };
 
 class D3D12StructuredBuffer : public TD3D12BaseBuffer<D3D12BaseStructuredBuffer>
@@ -218,8 +199,6 @@ public:
         : TD3D12BaseBuffer<D3D12BaseStructuredBuffer>(InDevice, InNumElements, InStride, InFlags)
     {
     }
-
-    ~D3D12StructuredBuffer() = default;
 };
 
 inline D3D12BaseBuffer* D3D12BufferCast(Buffer* Buffer)

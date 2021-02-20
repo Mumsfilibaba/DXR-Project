@@ -2,11 +2,11 @@
 #include <utility>
 #include <functional>
 
-template<typename T>
-inline void HashCombine(size_t& OutHash, const T& Value)
+template<typename T, typename THashType = size_t>
+inline void HashCombine(THashType& OutHash, const T& Value)
 {
     std::hash<T> Hasher;
-    OutHash ^= Hasher(Value) + 0x9e3779b9 + (OutHash << 6) + (OutHash >> 2);
+    OutHash ^= (THashType)Hasher(Value) + 0x9e3779b9 + (OutHash << 6) + (OutHash >> 2);
 }
 
 namespace std

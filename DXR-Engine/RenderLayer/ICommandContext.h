@@ -8,8 +8,6 @@
 class ICommandContext : public RefCountedObject
 {
 public:
-    virtual ~ICommandContext() = default;
-
     virtual void Begin() = 0;
     virtual void End()   = 0;
 
@@ -57,6 +55,18 @@ public:
         UInt32 StartSlot) = 0;
     
     virtual void BindConstantBuffers(EShaderStage ShaderStage, ConstantBuffer* const * ConstantBuffers, UInt32 ConstantBufferCount, UInt32 StartSlot) = 0;
+
+    virtual void SetShaderResourceView(Shader* Shader, ShaderResourceView* ShaderResourceView, UInt32 ParameterIndex) = 0;
+    virtual void SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceView, UInt32 NumShaderResourceViews, UInt32 ParameterIndex) = 0;
+
+    virtual void SetUnorderedAccessView(Shader* Shader, UnorderedAccessView* UnorderedAccessView, UInt32 ParameterIndex) = 0;
+    virtual void SetUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, UInt32 NumUnorderedAccessViews, UInt32 ParameterIndex) = 0;
+
+    virtual void SetConstantBuffer(Shader* Shader, ConstantBuffer* ConstantBuffer, UInt32 ParameterIndex) = 0;
+    virtual void SetConstantBuffers(Shader* Shader, ConstantBuffer* const* ConstantBuffers, UInt32 NumConstantBuffers, UInt32 ParameterIndex) = 0;
+
+    virtual void SetSamplerState(Shader* Shader, SamplerState* SamplerState, UInt32 ParameterIndex) = 0;
+    virtual void SetSamplerStates(Shader* Shader, SamplerState* const* SamplerStates, UInt32 NumSamplerStates, UInt32 ParameterIndex) = 0;
 
     virtual void UpdateBuffer(Buffer* Destination, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData) = 0;
     virtual void UpdateTexture2D(Texture2D* Destination, UInt32 Width, UInt32 Height, UInt32 MipLevel, const Void* SourceData) = 0;

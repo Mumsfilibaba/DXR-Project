@@ -21,8 +21,8 @@ inline const Char* ToString(ERenderLayerApi RenderLayerApi)
 {
     switch (RenderLayerApi)
     {
-    case ERenderLayerApi::D3D12: return "D3D12";
-    default: return "Unknown";
+        case ERenderLayerApi::D3D12: return "D3D12";
+        default: return "Unknown";
     }
 }
 

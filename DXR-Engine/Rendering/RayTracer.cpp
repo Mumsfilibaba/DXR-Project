@@ -5,6 +5,8 @@
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
 
+#include "Resources/Material.h"
+
 Bool RayTracer::Init()
 {
     TArray<UInt8> Code;
@@ -72,20 +74,43 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
 
     Resources.RTGeometryInstances.Clear();
     Resources.RTHitGroupResources.Clear();
+    Resources.RTMaterialToHitGroupIndex.clear();
 
     UInt32 InstanceIndexIndex = 0;
-    RayTracingShaderResources HitGroupResources;
     for (const MeshDrawCommand& Cmd : Scene.GetMeshDrawCommands())
     {
         const XMFLOAT3X4 TinyTransform = Cmd.CurrentActor->GetTransform().GetTinyMatrix();
 
-        HitGroupResources.Reset();
-        Resources.RTHitGroupResources.EmplaceBack(HitGroupResources);
+        UInt32 HitGroupIndex = 0;
+
+        // TODO: Change this to something less performant
+        auto HitGroupIndexPair = Resources.RTMaterialToHitGroupIndex.find(Cmd.Material);
+        if (HitGroupIndexPair == Resources.RTMaterialToHitGroupIndex.end())
+        {
+            HitGroupIndex = Resources.RTHitGroupResources.Size();
+            Resources.RTMaterialToHitGroupIndex[Cmd.Material] = HitGroupIndex;
+
+            RayTracingShaderResources HitGroupResources;
+            HitGroupResources.AddConstantBuffer(MakeSharedRef<ConstantBuffer>(Cmd.Material->GetMaterialBuffer()));
+            HitGroupResources.AddSamplerState(MakeSharedRef<SamplerState>(Cmd.Material->GetMaterialSampler()));
+            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->AlbedoMap->GetShaderResourceView()));
+            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->NormalMap->GetShaderResourceView()));
+            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->RoughnessMap->GetShaderResourceView()));
+            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->HeightMap->GetShaderResourceView()));
+            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->MetallicMap->GetShaderResourceView()));
+            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->AOMap->GetShaderResourceView()));
+            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->AlphaMask->GetShaderResourceView()));
+            Resources.RTHitGroupResources.EmplaceBack(HitGroupResources);
+        }
+        else
+        {
+            HitGroupIndex = HitGroupIndexPair->second;
+        }
 
         RayTracingGeometryInstance Instance;
         Instance.Instance      = MakeSharedRef<RayTracingGeometry>(Cmd.Geometry);
         Instance.Flags         = RayTracingInstanceFlags_None;
-        Instance.HitGroupIndex = 0;
+        Instance.HitGroupIndex = HitGroupIndex;
         Instance.InstanceIndex = InstanceIndexIndex++;
         Instance.Mask          = 0xff;
         Instance.Transform     = TinyTransform;

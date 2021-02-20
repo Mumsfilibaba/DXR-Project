@@ -55,7 +55,7 @@ Bool D3D12RayTracingGeometry::Build(D3D12CommandContext& CmdContext, Bool Update
 
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo;
     Memory::Memzero(&PreBuildInfo);
-    Device->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
+    GetDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
 
     UInt64 CurrentSize = ResultBuffer ? ResultBuffer->GetWidth() : 0;
     if (CurrentSize < PreBuildInfo.ResultDataMaxSizeInBytes)
@@ -75,7 +75,7 @@ Bool D3D12RayTracingGeometry::Build(D3D12CommandContext& CmdContext, Bool Update
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Init(D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr))
         {
             Debug::DebugBreak();
@@ -106,7 +106,7 @@ Bool D3D12RayTracingGeometry::Build(D3D12CommandContext& CmdContext, Bool Update
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
             Debug::DebugBreak();
@@ -169,7 +169,7 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, TArrayView<Ray
 
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo;
     Memory::Memzero(&PreBuildInfo);
-    Device->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
+    GetDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
 
     UInt64 CurrentSize = ResultBuffer ? ResultBuffer->GetWidth() : 0;
     if (CurrentSize < PreBuildInfo.ResultDataMaxSizeInBytes)
@@ -189,7 +189,7 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, TArrayView<Ray
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Init(D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr))
         {
             Debug::DebugBreak();
@@ -220,7 +220,7 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, TArrayView<Ray
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
             Debug::DebugBreak();
@@ -265,7 +265,7 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, TArrayView<Ray
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
+        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
         if (!Buffer->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
         {
             Debug::DebugBreak();

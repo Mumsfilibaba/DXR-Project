@@ -12,7 +12,7 @@ public:
 
     FORCEINLINE Bool Init(D3D12_COMMAND_LIST_TYPE Type)
     {
-        HRESULT Result = Device->GetDevice()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
+        HRESULT Result = GetDevice()->GetDevice()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
         if (SUCCEEDED(Result))
         {
             LOG_INFO("[D3D12Device]: Created CommandAllocator");

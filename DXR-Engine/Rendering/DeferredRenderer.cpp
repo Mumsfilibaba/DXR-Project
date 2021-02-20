@@ -321,7 +321,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
     CmdList.BindComputePipelineState(BRDF_PipelineState.Get());
 
     UnorderedAccessView* StagingUAV = StagingTexture->GetUnorderedAccessView();
-    CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &StagingUAV, 1, 0);
+    CmdList.SetUnorderedAccessView(CShader.Get(), StagingUAV, 0);
 
     constexpr UInt32 ThreadCount = 16;
     const UInt32 DispatchWidth  = Math::DivideByMultiple(LUTSize, ThreadCount);

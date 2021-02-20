@@ -100,7 +100,8 @@ Bool D3D12RenderLayer::Init(Bool EnableDebug)
         return false;
     }
 
-    if (!DefaultRootSignatures.CreateRootSignatures(Device))
+    RootSignatureCache = DBG_NEW D3D12RootSignatureCache(Device);
+    if (!RootSignatureCache->Init())
     {
         return false;
     }
@@ -1194,14 +1195,24 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(const DepthStencilVie
 
 ComputeShader* D3D12RenderLayer::CreateComputeShader(const TArray<UInt8>& ShaderCode)
 {
-    D3D12ComputeShader* Shader = DBG_NEW D3D12ComputeShader(Device, ShaderCode);
-    Shader->CreateRootSignature();
-    return Shader;
+    TRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader(Device, ShaderCode);
+    if (!Shader->Init())
+    {
+        return nullptr;
+    }
+
+    return Shader.ReleaseOwnership();
 }
 
 VertexShader* D3D12RenderLayer::CreateVertexShader(const TArray<UInt8>& ShaderCode)
 {
-    return DBG_NEW D3D12VertexShader(Device, ShaderCode);
+    TRef<D3D12VertexShader> Shader = DBG_NEW D3D12VertexShader(Device, ShaderCode);
+    if (!D3D12BaseShader::GetShaderReflection(Shader.Get()))
+    {
+        return nullptr;
+    }
+
+    return Shader.ReleaseOwnership();
 }
 
 HullShader* D3D12RenderLayer::CreateHullShader(const TArray<UInt8>& ShaderCode)
@@ -1241,59 +1252,19 @@ AmplificationShader* D3D12RenderLayer::CreateAmplificationShader(const TArray<UI
 
 PixelShader* D3D12RenderLayer::CreatePixelShader(const TArray<UInt8>& ShaderCode)
 {
-    return DBG_NEW D3D12PixelShader(Device, ShaderCode);
-}
-
-static Bool GetRayTracingReflection(D3D12BaseRayTracingShader* Shader)
-{
-    TComPtr<ID3D12LibraryReflection> Reflection;
-    if (!gD3D12ShaderCompiler->GetLibraryReflection(Shader, &Reflection))
+    TRef<D3D12PixelShader> Shader = DBG_NEW D3D12PixelShader(Device, ShaderCode);
+    if (!D3D12BaseShader::GetShaderReflection(Shader.Get()))
     {
-        return false;
+        return nullptr;
     }
 
-    D3D12_LIBRARY_DESC LibDesc;
-    Memory::Memzero(&LibDesc);
-
-    HRESULT Result = Reflection->GetDesc(&LibDesc);
-    if (FAILED(Result))
-    {
-        return false;
-    }
-
-    Assert(LibDesc.FunctionCount > 0);
-
-    // Make sure that the first shader is the one we wanted
-    ID3D12FunctionReflection* Function = Reflection->GetFunctionByIndex(0);
-
-    D3D12_FUNCTION_DESC FuncDesc;
-    Memory::Memzero(&FuncDesc);
-
-    Function->GetDesc(&FuncDesc);
-    if (FAILED(Result))
-    {
-        return false;
-    }
-
-    // NOTE: Since the Nvidia driver can't handle these names, we have to change the names :(
-    std::string Identifier = FuncDesc.Name;
-
-    auto NameStart = Identifier.find_last_of("\x1?");
-    if (NameStart != std::string::npos)
-    {
-        NameStart++;
-    }
-
-    auto NameEnd = Identifier.find_first_of("@");
-
-    Shader->Identifier = Identifier.substr(NameStart, NameEnd - NameStart);
-    return true;
+    return Shader.ReleaseOwnership();
 }
 
 RayGenShader* D3D12RenderLayer::CreateRayGenShader(const TArray<UInt8>& ShaderCode)
 {
     TRef<D3D12RayGenShader> Shader = DBG_NEW D3D12RayGenShader(Device, ShaderCode);
-    if (!GetRayTracingReflection(Shader.Get()))
+    if (!D3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to retrive Shader Identifier");
         return nullptr;
@@ -1306,8 +1277,8 @@ RayGenShader* D3D12RenderLayer::CreateRayGenShader(const TArray<UInt8>& ShaderCo
 
 RayAnyHitShader* D3D12RenderLayer::CreateRayAnyHitShader(const TArray<UInt8>& ShaderCode)
 {
-    TRef<D3D12RayAnyhitShader> Shader = DBG_NEW D3D12RayAnyhitShader(Device, ShaderCode);
-    if (!GetRayTracingReflection(Shader.Get()))
+    TRef<D3D12RayAnyHitShader> Shader = DBG_NEW D3D12RayAnyHitShader(Device, ShaderCode);
+    if (!D3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to retrive Shader Identifier");
         return nullptr;
@@ -1321,7 +1292,7 @@ RayAnyHitShader* D3D12RenderLayer::CreateRayAnyHitShader(const TArray<UInt8>& Sh
 RayClosestHitShader* D3D12RenderLayer::CreateRayClosestHitShader(const TArray<UInt8>& ShaderCode)
 {
     TRef<D3D12RayClosestHitShader> Shader = DBG_NEW D3D12RayClosestHitShader(Device, ShaderCode);
-    if (!GetRayTracingReflection(Shader.Get()))
+    if (!D3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to retrive Shader Identifier");
         return nullptr;
@@ -1335,7 +1306,7 @@ RayClosestHitShader* D3D12RenderLayer::CreateRayClosestHitShader(const TArray<UI
 RayMissShader* D3D12RenderLayer::CreateRayMissShader(const TArray<UInt8>& ShaderCode)
 {
     TRef<D3D12RayMissShader> Shader = DBG_NEW D3D12RayMissShader(Device, ShaderCode);
-    if (!GetRayTracingReflection(Shader.Get()))
+    if (!D3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to retrive Shader Identifier");
         return nullptr;
@@ -1414,45 +1385,33 @@ InputLayoutState* D3D12RenderLayer::CreateInputLayout(const InputLayoutStateCrea
 
 GraphicsPipelineState* D3D12RenderLayer::CreateGraphicsPipelineState(const GraphicsPipelineStateCreateInfo& CreateInfo)
 {
-    TRef<D3D12RootSignature>         RootSignature    = DefaultRootSignatures.Graphics;
-    TRef<D3D12GraphicsPipelineState> NewPipelineState = DBG_NEW D3D12GraphicsPipelineState(Device, RootSignature);
-    if (NewPipelineState->Init(CreateInfo))
-    {
-        return NewPipelineState.ReleaseOwnership();
-    }
-    else
+    TRef<D3D12GraphicsPipelineState> NewPipelineState = DBG_NEW D3D12GraphicsPipelineState(Device);
+    if (!NewPipelineState->Init(CreateInfo))
     {
         return nullptr;
     }
+
+    return NewPipelineState.ReleaseOwnership();
 }
 
 ComputePipelineState* D3D12RenderLayer::CreateComputePipelineState(const ComputePipelineStateCreateInfo& Info)
 {
     Assert(Info.Shader != nullptr);
     
-    // Check if shader contains a rootsignature, or use the default one
-    TRef<D3D12ComputeShader> Shader        = MakeSharedRef<D3D12ComputeShader>(Info.Shader);
-    TRef<D3D12RootSignature> RootSignature = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
-    if (!RootSignature)
-    {
-        RootSignature = DefaultRootSignatures.Compute;
-    }
-
-    TRef<D3D12ComputePipelineState> NewPipelineState = DBG_NEW D3D12ComputePipelineState(Device, Shader, RootSignature);
-    if (NewPipelineState->Init())
-    {
-        return NewPipelineState.ReleaseOwnership();
-    } 
-    else
+    TRef<D3D12ComputeShader> Shader = MakeSharedRef<D3D12ComputeShader>(Info.Shader);
+    TRef<D3D12ComputePipelineState> NewPipelineState = DBG_NEW D3D12ComputePipelineState(Device, Shader);
+    if (!NewPipelineState->Init())
     {
         return nullptr;
-    }
+    } 
+
+    return NewPipelineState.ReleaseOwnership();
 }
 
 RayTracingPipelineState* D3D12RenderLayer::CreateRayTracingPipelineState(const RayTracingPipelineStateCreateInfo& CreateInfo)
 {
     TRef<D3D12RayTracingPipelineState> NewPipelineState = DBG_NEW D3D12RayTracingPipelineState(Device);
-    if (NewPipelineState->Init(CreateInfo, DefaultRootSignatures))
+    if (NewPipelineState->Init(CreateInfo))
     {
         return NewPipelineState.ReleaseOwnership();
     }

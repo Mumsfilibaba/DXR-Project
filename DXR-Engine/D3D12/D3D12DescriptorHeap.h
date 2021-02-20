@@ -11,7 +11,8 @@
 class D3D12DescriptorHeap : public D3D12DeviceChild, public RefCountedObject
 {
 public:
-    D3D12DescriptorHeap(D3D12Device* InDevice, const D3D12_DESCRIPTOR_HEAP_DESC& InDesc);
+    D3D12DescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE Type, UInt32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
+    ~D3D12DescriptorHeap() = default;
 
     Bool Init();
 
@@ -21,22 +22,24 @@ public:
         Heap->SetName(WideName.c_str());
     }
 
-    FORCEINLINE ID3D12DescriptorHeap* GetHeap() const { return Heap.Get(); }
+    ID3D12DescriptorHeap* GetHeap() const { return Heap.Get(); }
 
-    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart() const { return CPUStart; }
-    FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart() const { return GPUStart; }
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart() const { return CPUStart; }
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart() const { return GPUStart; }
 
-    FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const { return Desc.Type; }
+    D3D12_DESCRIPTOR_HEAP_TYPE GetType() const { return Type; }
 
-    FORCEINLINE UInt32 GetNumDescriptors() const { return UInt32(Desc.NumDescriptors); }
+    UInt32 GetNumDescriptors() const { return UInt32(NumDescriptors); }
 
-    FORCEINLINE UInt32 GetDescriptorHandleIncrementSize() const { return DescriptorHandleIncrementSize; }
+    UInt32 GetDescriptorHandleIncrementSize() const { return DescriptorHandleIncrementSize; }
 
 private:
     TComPtr<ID3D12DescriptorHeap> Heap;
     D3D12_CPU_DESCRIPTOR_HANDLE   CPUStart;
     D3D12_GPU_DESCRIPTOR_HANDLE   GPUStart;
-    D3D12_DESCRIPTOR_HEAP_DESC    Desc;
+    D3D12_DESCRIPTOR_HEAP_TYPE    Type;
+    D3D12_DESCRIPTOR_HEAP_FLAGS   Flags;
+    UInt32 NumDescriptors; 
     UInt32 DescriptorHandleIncrementSize;
 };
 
@@ -52,7 +55,7 @@ class D3D12OfflineDescriptorHeap : public D3D12DeviceChild, public RefCountedObj
         {
         }
 
-        FORCEINLINE Bool IsValid() const
+        Bool IsValid() const
         {
             return Begin.ptr < End.ptr;
         }
@@ -73,12 +76,13 @@ class D3D12OfflineDescriptorHeap : public D3D12DeviceChild, public RefCountedObj
             FreeList.EmplaceBack(WholeRange);
         }
 
-        TArray<DescriptorRange> FreeList;
+        TArray<DescriptorRange>   FreeList;
         TRef<D3D12DescriptorHeap> Heap;
     };
 
 public:
     D3D12OfflineDescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
+    ~D3D12OfflineDescriptorHeap() = default;
 
     Bool Init();
 
@@ -87,12 +91,12 @@ public:
 
     void SetName(const std::string& InName);
 
-    FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
+    D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
     {
         return Type;
     }
 
-    FORCEINLINE UInt32 GetDescriptorSize() const
+    UInt32 GetDescriptorSize() const
     {
         return DescriptorSize;
     }
@@ -110,6 +114,7 @@ class D3D12OnlineDescriptorHeap : public D3D12DeviceChild, public RefCountedObje
 {
 public:
     D3D12OnlineDescriptorHeap(D3D12Device* InDevice, UInt32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
+    ~D3D12OnlineDescriptorHeap() = default;
 
     Bool Init();
 
@@ -117,32 +122,32 @@ public:
 
     void Reset();
 
-    FORCEINLINE void SetName(const std::string& Name)
+    void SetName(const std::string& Name)
     {
         Heap->SetName(Name);
     }
 
-    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleAt(UInt32 Index) const
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleAt(UInt32 Index) const
     {
         return { Heap->GetCPUDescriptorHandleForHeapStart().ptr + (Index * Heap->GetDescriptorHandleIncrementSize()) };
     }
 
-    FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleAt(UInt32 Index) const
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleAt(UInt32 Index) const
     {
         return { Heap->GetGPUDescriptorHandleForHeapStart().ptr + (Index * Heap->GetDescriptorHandleIncrementSize()) };
     }
 
-    FORCEINLINE UInt32 GetDescriptorHandleIncrementSize() const
+    UInt32 GetDescriptorHandleIncrementSize() const
     {
         return Heap->GetDescriptorHandleIncrementSize();
     }
     
-    FORCEINLINE ID3D12DescriptorHeap* GetNativeHeap() const { return Heap->GetHeap(); }
-
-    FORCEINLINE D3D12DescriptorHeap* GetHeap() const { return Heap.Get(); }
+    ID3D12DescriptorHeap* GetNativeHeap() const { return Heap->GetHeap(); }
+    D3D12DescriptorHeap*  GetHeap()       const { return Heap.Get(); }
 
 private:
     TRef<D3D12DescriptorHeap> Heap;
+
     TArray<TRef<D3D12DescriptorHeap>> HeapPool;
     TArray<TRef<D3D12DescriptorHeap>> DiscardedHeaps;
     

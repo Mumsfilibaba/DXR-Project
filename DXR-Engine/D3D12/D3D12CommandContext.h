@@ -14,9 +14,7 @@
 #include "D3D12Views.h"
 #include "D3D12SamplerState.h"
 #include "D3D12PipelineState.h"
-
-class D3D12CommandQueueHandle;
-class D3D12CommandAllocatorHandle;
+#include "D3D12DescriptorCache.h"
 
 class D3D12VertexBufferState
 {
@@ -44,15 +42,9 @@ public:
         VertexBufferViews.Clear();
     }
 
-    FORCEINLINE const D3D12_VERTEX_BUFFER_VIEW* GetVertexBufferViews() const
-    {
-        return VertexBufferViews.Data();
-    }
+    FORCEINLINE const D3D12_VERTEX_BUFFER_VIEW* GetVertexBufferViews() const { return VertexBufferViews.Data(); }
 
-    FORCEINLINE UInt32 GetNumVertexBufferViews() const
-    {
-        return VertexBufferViews.Size();
-    }
+    FORCEINLINE UInt32 GetNumVertexBufferViews() const { return VertexBufferViews.Size(); }
 
 private:
     TArray<D3D12_VERTEX_BUFFER_VIEW> VertexBufferViews;
@@ -102,15 +94,9 @@ public:
         DepthStencilViewHandle = { 0 };
     }
 
-    FORCEINLINE const D3D12_CPU_DESCRIPTOR_HANDLE* GetRenderTargetViewHandles() const
-    {
-        return RenderTargetViewHandles.Data();
-    }
+    FORCEINLINE const D3D12_CPU_DESCRIPTOR_HANDLE* GetRenderTargetViewHandles() const { return RenderTargetViewHandles.Data(); }
 
-    FORCEINLINE UInt32 GetNumRenderTargetViewHandles() const
-    {
-        return RenderTargetViewHandles.Size();
-    }
+    FORCEINLINE UInt32 GetNumRenderTargetViewHandles() const { return RenderTargetViewHandles.Size(); }
 
     FORCEINLINE const D3D12_CPU_DESCRIPTOR_HANDLE* GetDepthStencilHandle() const
     {
@@ -136,9 +122,7 @@ class D3D12ShaderDescriptorTableState
         D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandleStart_GPU = { 0 };
         D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandleStart_CPU = { 0 };
 
-        FORCEINLINE void SetStart(
-            D3D12_GPU_DESCRIPTOR_HANDLE InOnlineHandleStart_GPU,
-            D3D12_CPU_DESCRIPTOR_HANDLE InOnlineHandleStart_CPU)
+        FORCEINLINE void SetStart(D3D12_GPU_DESCRIPTOR_HANDLE InOnlineHandleStart_GPU, D3D12_CPU_DESCRIPTOR_HANDLE InOnlineHandleStart_CPU)
         {
             OnlineHandleStart_GPU = InOnlineHandleStart_GPU;
             OnlineHandleStart_CPU = InOnlineHandleStart_CPU;
@@ -274,15 +258,8 @@ private:
 class D3D12CommandBatch
 {
 public:
-    D3D12CommandBatch(D3D12Device* InDevice)
-        : Device(InDevice)
-        , CmdAllocator(InDevice)
-        , GpuResourceUploader(InDevice)
-        , OnlineResourceDescriptorHeap(nullptr)
-        , OnlineSamplerDescriptorHeap(nullptr)
-        , Resources()
-    {
-    }
+    D3D12CommandBatch(D3D12Device* InDevice);
+    ~D3D12CommandBatch() = default;
 
     Bool Init();
 
@@ -350,7 +327,6 @@ public:
         return OnlineSamplerDescriptorHeap.Get();
     }
 
-private:
     D3D12Device* Device = nullptr;
     
     D3D12CommandAllocatorHandle CmdAllocator;
@@ -359,9 +335,12 @@ private:
     TRef<D3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
     TRef<D3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
     
-    TArray<TRef<D3D12Resource>> DxResources;
-    TArray<TRef<Resource>>      Resources;
-    TArray<TComPtr<ID3D12Resource>>   NativeResources;
+    TRef<D3D12OnlineDescriptorHeap> OnlineRayTracingResourceDescriptorHeap;
+    TRef<D3D12OnlineDescriptorHeap> OnlineRayTracingSamplerDescriptorHeap;
+    
+    TArray<TRef<D3D12Resource>>     DxResources;
+    TArray<TRef<Resource>>          Resources;
+    TArray<TComPtr<ID3D12Resource>> NativeResources;
 };
 
 class D3D12ResourceBarrierBatcher
@@ -479,7 +458,7 @@ public:
     virtual void BindShaderResourceViews(
         EShaderStage ShaderStage, 
         ShaderResourceView* const* ShaderResourceViews, 
-        UInt32 ShaderResourceViewCount, 
+        UInt32 ShaderResourceViewCount,
         UInt32 StartSlot) override final;
     
     virtual void BindSamplerStates(EShaderStage ShaderStage, SamplerState* const* SamplerStates, UInt32 SamplerStateCount, UInt32 StartSlot) override final;
@@ -491,6 +470,18 @@ public:
         UInt32 StartSlot) override final;
     
     virtual void BindConstantBuffers(EShaderStage ShaderStage, ConstantBuffer* const* ConstantBuffers, UInt32 ConstantBufferCount, UInt32 StartSlot) override final;
+
+    virtual void SetShaderResourceView(Shader* Shader, ShaderResourceView* ShaderResourceView, UInt32 ParameterIndex) override final;
+    virtual void SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceView, UInt32 NumShaderResourceViews, UInt32 ParameterIndex) override final;
+
+    virtual void SetUnorderedAccessView(Shader* Shader, UnorderedAccessView* UnorderedAccessView, UInt32 ParameterIndex) override final;
+    virtual void SetUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, UInt32 NumUnorderedAccessViews, UInt32 ParameterIndex) override final;
+
+    virtual void SetConstantBuffer(Shader* Shader, ConstantBuffer* ConstantBuffer, UInt32 ParameterIndex) override final;
+    virtual void SetConstantBuffers(Shader* Shader, ConstantBuffer* const* ConstantBuffers, UInt32 NumConstantBuffers, UInt32 ParameterIndex) override final;
+
+    virtual void SetSamplerState(Shader* Shader, SamplerState* SamplerState, UInt32 ParameterIndex) override final;
+    virtual void SetSamplerStates(Shader* Shader, SamplerState* const* SamplerStates, UInt32 NumSamplerStates, UInt32 ParameterIndex) override final;
 
     virtual void UpdateBuffer(Buffer* Destination, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData) override final;
     virtual void UpdateTexture2D(Texture2D* Destination, UInt32 Width, UInt32 Height, UInt32 MipLevel, const Void* SourceData) override final;
@@ -547,11 +538,12 @@ private:
     D3D12CommandListHandle  CmdList;
     D3D12FenceHandle        Fence;
     D3D12CommandQueueHandle CmdQueue;
-    UInt64 FenceValue = 0;
+    
+    UInt64 FenceValue   = 0;
+    UInt32 NextCmdBatch = 0;
 
     TArray<D3D12CommandBatch> CmdBatches;
     D3D12CommandBatch*        CmdBatch = nullptr;
-    UInt32 NextCmdBatch = 0;
 
     TRef<D3D12ComputePipelineState> GenerateMipsTex2D_PSO;
     TRef<D3D12ComputePipelineState> GenerateMipsTexCube_PSO;
@@ -561,11 +553,16 @@ private:
     TRef<D3D12ComputePipelineState>  CurrentComputePipelineState;
     TRef<D3D12RootSignature>         CurrentComputeRootSignature;
 
+    D3D12ShaderResourceViewCache  ShaderResourceViewCache;
+    D3D12UnorderedAccessViewCache UnorderedAccessViewCache;
+    D3D12ConstantBufferViewCache  ConstantBufferViewCache;
+    D3D12SamplerStateCache        SamplerStateCache;
+    D3D12DescriptorCache          DescriptorCache;
+
     D3D12VertexBufferState          VertexBufferState;
     D3D12RenderTargetState          RenderTargetState;
     D3D12ShaderDescriptorTableState ShaderDescriptorState;
     D3D12ResourceBarrierBatcher     BarrierBatcher;
-    D3D12DefaultRootSignatures      DefaultRootSignatures;
 
     Bool IsReady = false;
 };

@@ -5,11 +5,8 @@
 class PipelineState : public Resource
 {
 public:
-    PipelineState()  = default;
-    ~PipelineState() = default;
-
-    virtual class GraphicsPipelineState* AsGraphics() { return nullptr; }
-    virtual class ComputePipelineState* AsCompute() { return nullptr; }
+    virtual class GraphicsPipelineState*   AsGraphics()   { return nullptr; }
+    virtual class ComputePipelineState*    AsCompute()    { return nullptr; }
     virtual class RayTracingPipelineState* AsRayTracing() { return nullptr; }
 };
 
@@ -265,12 +262,12 @@ struct RenderTargetWriteState
     {
     }
 
-    Bool WriteNone() const { return Mask == ColorWriteFlag_None; }
-    Bool WriteRed() const { return (Mask & ColorWriteFlag_Red); }
+    Bool WriteNone() const  { return Mask == ColorWriteFlag_None; }
+    Bool WriteRed() const   { return (Mask & ColorWriteFlag_Red); }
     Bool WriteGreen() const { return (Mask & ColorWriteFlag_Green); }
-    Bool WriteBlue() const { return (Mask & ColorWriteFlag_Blue); }
+    Bool WriteBlue() const  { return (Mask & ColorWriteFlag_Blue); }
     Bool WriteAlpha() const { return (Mask & ColorWriteFlag_Alpha); }
-    Bool WriteAll() const { return Mask == ColorWriteFlag_All; }
+    Bool WriteAll() const   { return Mask == ColorWriteFlag_All; }
 
     UInt8 Mask = ColorWriteFlag_All;
 };
@@ -405,9 +402,6 @@ struct GraphicsPipelineStateCreateInfo
 class GraphicsPipelineState : public PipelineState
 {
 public:
-    GraphicsPipelineState()  = default;
-    ~GraphicsPipelineState() = default;
-
     virtual GraphicsPipelineState* AsGraphics() override { return this; }
 };
 
@@ -426,9 +420,6 @@ struct ComputePipelineStateCreateInfo
 class ComputePipelineState : public PipelineState
 {
 public:
-    ComputePipelineState()  = default;
-    ~ComputePipelineState() = default;
-
     virtual ComputePipelineState* AsCompute() override { return this; }
 };
 
@@ -463,8 +454,5 @@ struct RayTracingPipelineStateCreateInfo
 class RayTracingPipelineState : public PipelineState
 {
 public:
-    RayTracingPipelineState()  = default;
-    ~RayTracingPipelineState() = default;
-
     virtual RayTracingPipelineState* AsRayTracing() override { return this; }
 };
