@@ -73,7 +73,7 @@ public:
 
     Bool Init(const D3D12RootSignatureResourceCount& RootSignatureInfo);
     Bool Init(const D3D12_ROOT_SIGNATURE_DESC& Desc);
-    Bool Init(const void* BlobWithRootSignature, SIZE_T BlobLengthInBytes);
+    Bool Init(const void* BlobWithRootSignature, UInt64 BlobLengthInBytes);
 
     // Returns -1 if root parameter is not valid
     Int32 GetRootParameterIndex(EShaderVisibility Visibility, EShaderResourceType Type)
@@ -93,6 +93,8 @@ public:
     static Bool Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
 
 private:
+    Bool InternalInit(const void* BlobWithRootSignature, UInt64 BlobLengthInBytes);
+
     TComPtr<ID3D12RootSignature> RootSignature;
     Int32 RootParameterMap[ShaderVisibility_Count][ShaderResource_Count];
 };

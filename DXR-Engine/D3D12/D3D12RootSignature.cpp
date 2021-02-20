@@ -181,15 +181,30 @@ Bool D3D12RootSignature::Init(const D3D12RootSignatureResourceCount& RootSignatu
 Bool D3D12RootSignature::Init(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 {
     TComPtr<ID3DBlob> SignatureBlob;
+
     if (!Serialize(Desc, &SignatureBlob))
     {
         return false;
     }
 
-    return Init(SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize());
+    return InternalInit(SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize());
 }
 
-Bool D3D12RootSignature::Init(const void* BlobWithRootSignature, SIZE_T BlobLengthInBytes)
+Bool D3D12RootSignature::Init(const void* BlobWithRootSignature, UInt64 BlobLengthInBytes)
+{
+    HRESULT Result = GetDevice()->CreateRootSignature(1, BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&RootSignature));
+    if (FAILED(Result))
+    {
+        LOG_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
+
+        Debug::DebugBreak();
+        return false;
+    }
+
+    return InternalInit(BlobWithRootSignature, BlobLengthInBytes);
+}
+
+Bool D3D12RootSignature::InternalInit(const void* BlobWithRootSignature, UInt64 BlobLengthInBytes)
 {
     HRESULT Result = GetDevice()->CreateRootSignature(1, BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&RootSignature));
     if (FAILED(Result))
