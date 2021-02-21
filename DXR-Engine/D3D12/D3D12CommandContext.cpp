@@ -1486,9 +1486,7 @@ void D3D12CommandContext::Draw(UInt32 VertexCount, UInt32 StartVertexLocation)
     // TODO: Commit current state
     FlushResourceBarriers();
 
-    D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
-    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, *CurrentGraphicsRootSignature);
+    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, CmdBatch, CurrentGraphicsRootSignature.Get());
     CmdList.DrawInstanced(VertexCount, 1, StartVertexLocation, 0);
 }
 
@@ -1498,9 +1496,7 @@ void D3D12CommandContext::DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocati
 
     FlushResourceBarriers();
 
-    D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
-    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, *CurrentGraphicsRootSignature);
+    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, CmdBatch, CurrentGraphicsRootSignature.Get());
     CmdList.DrawIndexedInstanced(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
 }
 
@@ -1510,9 +1506,7 @@ void D3D12CommandContext::DrawInstanced(UInt32 VertexCountPerInstance, UInt32 In
 
     FlushResourceBarriers();
 
-    D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
-    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, *CurrentGraphicsRootSignature);
+    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, CmdBatch, CurrentGraphicsRootSignature.Get());
     CmdList.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
@@ -1526,10 +1520,8 @@ void D3D12CommandContext::DrawIndexedInstanced(
     // TODO: Commit current state
 
     FlushResourceBarriers();
-    
-    D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
-    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, *CurrentGraphicsRootSignature);
+
+    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, CmdBatch, CurrentGraphicsRootSignature.Get());
     CmdList.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
 
@@ -1539,9 +1531,7 @@ void D3D12CommandContext::Dispatch(UInt32 ThreadGroupCountX, UInt32 ThreadGroupC
 
     FlushResourceBarriers();
     
-    D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
-    DescriptorCache.CommitComputeDescriptorTables(CmdList, *CurrentComputeRootSignature);
+    DescriptorCache.CommitComputeDescriptorTables(CmdList, CmdBatch, CurrentComputeRootSignature.Get());
     CmdList.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
 
@@ -1569,7 +1559,7 @@ void D3D12CommandContext::DispatchRays(
 
     // TODO: Fix this
     Assert(false);
-    DescriptorCache.CommitComputeDescriptorTables(CmdList, *CurrentComputeRootSignature);
+    DescriptorCache.CommitComputeDescriptorTables(CmdList, CmdBatch, CurrentComputeRootSignature.Get());
     CmdList.DispatchRays(&RayDispatchDesc);
 }
 

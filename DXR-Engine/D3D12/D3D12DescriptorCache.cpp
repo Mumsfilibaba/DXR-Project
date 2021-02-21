@@ -105,24 +105,70 @@ Bool D3D12DescriptorCache::Init()
 
 void D3D12DescriptorCache::CommitGraphicsDescriptorTables(D3D12CommandListHandle& CmdList, D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature)
 {
-    ID3D12CommandList* DxCmdList = CmdList.GetCommandList();
-    CmdBatch->GetOnlineResourceDescriptorHeap
-    
+
 }
 
 void D3D12DescriptorCache::CommitComputeDescriptorTables(D3D12CommandListHandle& CmdList, D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature)
 {
-    ID3D12CommandList* DxCmdList = CmdList.GetCommandList();
+    Assert(CmdBatch != nullptr);
+    Assert(RootSignature != nullptr);
+
+    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+
+    UInt32 NumResourceDescriptors = 0;
+    UInt32 NumSamplerDescriptors  = 0;
+    for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
+    {
+        UInt64 NumCBVs = ConstantBufferViewCache.DescriptorRangeLengths[i];
+        NumResourceDescriptors += NumCBVs;
+        Assert(NumResourceDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_HEAP_COUNT);
+
+        UInt64 NumSRVs = ShaderResourceViewCache.DescriptorRangeLengths[i];
+        NumResourceDescriptors += NumSRVs;
+        Assert(NumResourceDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_HEAP_COUNT);
+
+        UInt64 NumUAVs = UnorderedAccessViewCache.DescriptorRangeLengths[i];
+        NumResourceDescriptors += NumUAVs;
+        Assert(NumResourceDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_HEAP_COUNT);
+
+        UInt64 NumSamplers = SamplerStateCache.DescriptorRangeLengths[i];
+        NumSamplerDescriptors += NumSamplers;
+        Assert(NumSamplerDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_HEAP_COUNT);
+    }
+
+    D3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
+    UInt32 ResourceDescriptors = ResourceHeap->AllocateHandles(NumResourceDescriptors);
+    Assert(ResourceDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_HEAP_COUNT);
+
+    D3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
+    UInt32 SamplerDescriptors = SamplerHeap->AllocateHandles(NumSamplerDescriptors);
+    Assert(SamplerDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_HEAP_COUNT);
+
+    DxCmdList->SetGraphicsRootSignature(RootSignature->GetRootSignature());
+
+    ID3D12DescriptorHeap* DescriptorHeaps[] =
+    {
+        ResourceHeap->GetNativeHeap(),
+        SamplerHeap->GetNativeHeap()
+    };
+
+    DxCmdList->SetDescriptorHeaps(ArrayCount(DescriptorHeaps), DescriptorHeaps);
+
+    for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
+    {
+        EShaderVisibility Visibility = (EShaderVisibility)i;
+        Int32 ParameterIndex = RootSignature->GetRootParameterIndex(Visibility, EResourceType::ResourceType_UAV);
+        if (ParameterIndex >= 0)
+        {
+            D3D12_GPU_DESCRIPTOR_HANDLE GpuHandle = ResourceHeap->GetGPUDescriptorHandleAt(ResourceDescriptors);
+            DxCmdList->SetGraphicsRootDescriptorTable(ParameterIndex, GpuHandle);
+        }
+    }
+
+    return;
 }
 
 void D3D12DescriptorCache::CopyDescriptors(D3D12CommandListHandle& CmdList, D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature)
 {
-    for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
-    {
-        EShaderVisibility Visibility = (EShaderVisibility)i;
-        UInt64 NumCBVs     = ConstantBufferViewCache.DescriptorRangeLengths[i];
-        UInt64 NumSRVs     = ShaderResourceViewCache.DescriptorRangeLengths[i];
-        UInt64 NumUAVs     = UnorderedAccessViewCache.DescriptorRangeLengths[i];
-        UInt64 NumSamplers = SamplerStateCache.DescriptorRangeLengths[i];
-    }
+
 }
