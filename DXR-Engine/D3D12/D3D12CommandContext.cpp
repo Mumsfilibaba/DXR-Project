@@ -582,6 +582,11 @@ Bool D3D12CommandContext::Init()
         return false;
     }
 
+    if (!DescriptorCache.Init())
+    {
+        return false;
+    }
+
     if (!ShaderDescriptorState.CreateResources(*GetDevice()))
     {
         return false;
@@ -1028,7 +1033,7 @@ void D3D12CommandContext::SetShaderResourceView(Shader* Shader, ShaderResourceVi
     Assert(ParameterInfo.Space == 0);
 
     D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceView);
-    ShaderResourceViewCache.Set(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
+   // ShaderResourceViewCache.Set(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
 }
 
 void D3D12CommandContext::SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceView, UInt32 NumShaderResourceViews, UInt32 ParameterIndex)
@@ -1042,7 +1047,7 @@ void D3D12CommandContext::SetShaderResourceViews(Shader* Shader, ShaderResourceV
     for (UInt32 i = 0; i < ParameterInfo.NumDescriptors; i++)
     {
         D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceView[i]);
-        ShaderResourceViewCache.Set(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
+      //  ShaderResourceViewCache.Set(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
     }
 }
 
@@ -1055,7 +1060,7 @@ void D3D12CommandContext::SetUnorderedAccessView(Shader* Shader, UnorderedAccess
     Assert(ParameterInfo.Space == 0);
     
     D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessView);
-    UnorderedAccessViewCache.Set(DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
+    DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
 }
 
 void D3D12CommandContext::SetUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, UInt32 NumUnorderedAccessViews, UInt32 ParameterIndex)

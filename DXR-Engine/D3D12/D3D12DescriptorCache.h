@@ -37,7 +37,7 @@ struct TD3D12DescriptorCache
             Mask |= BIT(Bit);
 
             UInt64& RangeLength = DescriptorRangeLengths[Visibility];
-            RangeLength = Math::Max<UInt32>(RangeLength, ShaderRegister);
+            RangeLength = Math::Max<UInt32>(RangeLength, ShaderRegister + 1);
 
             Dirty = true;
         }
@@ -56,8 +56,8 @@ struct TD3D12DescriptorCache
     //       handles descriptorbindings. class ResourceTable? That can be stored outside the renderlayer
     //       problem is how we deal with ClearUnorderedAccessView, should we change heap when this happens?
     //       However this would better support unbound resources.
-    UInt64 DirtyMasks[NUM_VISIBILITIES][NUM_DIRTY_MASKS];
     D3D12_CPU_DESCRIPTOR_HANDLE Descriptors[NUM_VISIBILITIES][NUM_DESCRIPTORS];
+    UInt64 DirtyMasks[NUM_VISIBILITIES][NUM_DIRTY_MASKS];
     UInt64 DescriptorRangeLengths[NUM_VISIBILITIES];
     Bool Dirty;
 };
@@ -71,21 +71,33 @@ class D3D12DescriptorCache : public D3D12DeviceChild
 {
 public:
     D3D12DescriptorCache(D3D12Device* Device);
-    ~D3D12DescriptorCache() = default;
+    ~D3D12DescriptorCache();
 
     Bool Init();
 
     void SetUnorderedAccessView(D3D12UnorderedAccessView* Descriptor, EShaderVisibility Visibility, UInt32 ShaderRegister)
     {
-        
+        if (Descriptor)
+        {
+            Descriptor = NullUAV;
+        }
+
+        UnorderedAccessViewCache.Set(Descriptor, Visibility, ShaderRegister);
     }
 
-    void CommitGraphicsDescriptorTables(D3D12CommandListHandle& CmdList, D3D12RootSignature& RootSignature);
-    void CommitComputeDescriptorTables(D3D12CommandListHandle& CmdList, D3D12RootSignature& RootSignature);
+    void CommitGraphicsDescriptorTables(D3D12CommandListHandle& CmdList, class D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature);
+    void CommitComputeDescriptorTables(D3D12CommandListHandle& CmdList, class D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature);
 
     void Reset();
 
 private:
+    void CopyDescriptors(D3D12CommandListHandle& CmdList, class D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature);
+    
+    D3D12ConstantBufferView*  NullCBV     = nullptr;
+    D3D12ShaderResourceView*  NullSRV     = nullptr;
+    D3D12UnorderedAccessView* NullUAV     = nullptr;
+    D3D12SamplerState*        NullSampler = nullptr;
+
     D3D12ShaderResourceViewCache  ShaderResourceViewCache;
     D3D12UnorderedAccessViewCache UnorderedAccessViewCache;
     D3D12ConstantBufferViewCache  ConstantBufferViewCache;

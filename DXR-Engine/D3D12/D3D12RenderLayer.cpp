@@ -106,12 +106,6 @@ Bool D3D12RenderLayer::Init(Bool EnableDebug)
         return false;
     }
 
-    DirectCmdContext = DBG_NEW D3D12CommandContext(Device);
-    if (!DirectCmdContext->Init())
-    {
-        return false;
-    }
-
     ResourceOfflineDescriptorHeap = DBG_NEW D3D12OfflineDescriptorHeap(Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     if (!ResourceOfflineDescriptorHeap->Init())
     {
@@ -132,6 +126,12 @@ Bool D3D12RenderLayer::Init(Bool EnableDebug)
 
     SamplerOfflineDescriptorHeap = DBG_NEW D3D12OfflineDescriptorHeap(Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
     if (!SamplerOfflineDescriptorHeap->Init())
+    {
+        return false;
+    }
+
+    DirectCmdContext = DBG_NEW D3D12CommandContext(Device);
+    if (!DirectCmdContext->Init())
     {
         return false;
     }

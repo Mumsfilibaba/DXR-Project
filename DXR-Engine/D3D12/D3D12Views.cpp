@@ -31,7 +31,6 @@ D3D12ConstantBufferView::D3D12ConstantBufferView(D3D12Device* InDevice, D3D12Off
 
 Bool D3D12ConstantBufferView::CreateView(D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
-    Assert(InResource != nullptr);
     Assert(OfflineHandle != 0);
 
     Resource = MakeSharedRef<D3D12Resource>(InResource);
