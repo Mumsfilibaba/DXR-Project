@@ -1024,7 +1024,9 @@ void D3D12CommandContext::SetShaderResourceView(Shader* Shader, ShaderResourceVi
     D3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     Assert(DxShader != nullptr);
 
-    D3D12ShaderParameter     ParameterInfo        = DxShader->GetShaderResourceParameter(ParameterIndex);
+    D3D12ShaderParameter ParameterInfo = DxShader->GetShaderResourceParameter(ParameterIndex);
+    Assert(ParameterInfo.Space == 0);
+
     D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceView);
     ShaderResourceViewCache.Set(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
 }
@@ -1035,6 +1037,8 @@ void D3D12CommandContext::SetShaderResourceViews(Shader* Shader, ShaderResourceV
     Assert(DxShader != nullptr);
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetShaderResourceParameter(ParameterIndex);
+    Assert(ParameterInfo.Space == 0);
+
     for (UInt32 i = 0; i < ParameterInfo.NumDescriptors; i++)
     {
         D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceView[i]);
@@ -1047,7 +1051,9 @@ void D3D12CommandContext::SetUnorderedAccessView(Shader* Shader, UnorderedAccess
     D3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     Assert(DxShader != nullptr);
 
-    D3D12ShaderParameter      ParameterInfo         = DxShader->GetUnorderedAccessParameter(ParameterIndex);
+    D3D12ShaderParameter ParameterInfo = DxShader->GetUnorderedAccessParameter(ParameterIndex);
+    Assert(ParameterInfo.Space == 0);
+    
     D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessView);
     UnorderedAccessViewCache.Set(DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
 }

@@ -18,13 +18,14 @@ enum EShaderVisibility
     ShaderVisibility_Count    = ShaderVisibility_Pixel + 1
 };
 
-enum EShaderResourceType
+enum EResourceType
 {
-    ShaderResource_CBV     = 0,
-    ShaderResource_SRV     = 1,
-    ShaderResource_UAV     = 2,
-    ShaderResource_Sampler = 3,
-    ShaderResource_Count   = 4,
+    ResourceType_CBV     = 0,
+    ResourceType_SRV     = 1,
+    ResourceType_UAV     = 2,
+    ResourceType_Sampler = 3,
+    ResourceType_Count   = ResourceType_Sampler + 1,
+    ResourceType_Unknown = 5,
 };
 
 struct ShaderResourceRange

@@ -73,7 +73,12 @@ public:
     D3D12DescriptorCache(D3D12Device* Device);
     ~D3D12DescriptorCache() = default;
 
-    void SetUnorderedAccessViews(D3D12UnorderedAccessViewCache& UAVCache, D3D12CommandListHandle& CmdList, D3D12RootSignature& RootSignature);
+    Bool Init();
+
+    void SetUnorderedAccessView(D3D12UnorderedAccessView* Descriptor, EShaderVisibility Visibility, UInt32 ShaderRegister)
+    {
+        
+    }
 
     void CommitGraphicsDescriptorTables(D3D12CommandListHandle& CmdList, D3D12RootSignature& RootSignature);
     void CommitComputeDescriptorTables(D3D12CommandListHandle& CmdList, D3D12RootSignature& RootSignature);
@@ -81,5 +86,8 @@ public:
     void Reset();
 
 private:
-
+    D3D12ShaderResourceViewCache  ShaderResourceViewCache;
+    D3D12UnorderedAccessViewCache UnorderedAccessViewCache;
+    D3D12ConstantBufferViewCache  ConstantBufferViewCache;
+    D3D12SamplerStateCache        SamplerStateCache;
 };

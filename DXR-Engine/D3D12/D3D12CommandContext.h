@@ -553,12 +553,7 @@ private:
     TRef<D3D12ComputePipelineState>  CurrentComputePipelineState;
     TRef<D3D12RootSignature>         CurrentComputeRootSignature;
 
-    D3D12ShaderResourceViewCache  ShaderResourceViewCache;
-    D3D12UnorderedAccessViewCache UnorderedAccessViewCache;
-    D3D12ConstantBufferViewCache  ConstantBufferViewCache;
-    D3D12SamplerStateCache        SamplerStateCache;
-    D3D12DescriptorCache          DescriptorCache;
-
+    D3D12DescriptorCache            DescriptorCache;
     D3D12VertexBufferState          VertexBufferState;
     D3D12RenderTargetState          RenderTargetState;
     D3D12ShaderDescriptorTableState ShaderDescriptorState;

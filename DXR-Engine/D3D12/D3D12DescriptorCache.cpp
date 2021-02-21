@@ -9,7 +9,7 @@ void D3D12DescriptorCache::SetUnorderedAccessViews(D3D12UnorderedAccessViewCache
 {
     for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
     {
-        Int32 RootParameterIndex = RootSignature.GetRootParameterIndex(i, ShaderResource_UAV);
+        Int32 RootParameterIndex = RootSignature.GetRootParameterIndex((EShaderVisibility)i, ResourceType_UAV);
     }
 }
 
