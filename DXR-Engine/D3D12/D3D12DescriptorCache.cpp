@@ -116,7 +116,7 @@ Bool D3D12DescriptorCache::Init()
     return true;
 }
 
-void D3D12DescriptorCache::CommitGraphicsDescriptorTables(D3D12CommandListHandle& CmdList, D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature)
+void D3D12DescriptorCache::CommitGraphicsDescriptors(D3D12CommandListHandle& CmdList, D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature)
 {
     Assert(CmdBatch != nullptr);
     Assert(RootSignature != nullptr);
@@ -136,7 +136,13 @@ void D3D12DescriptorCache::CommitGraphicsDescriptorTables(D3D12CommandListHandle
         SamplerHeap->GetNativeHeap()
     };
 
-    DxCmdList->SetDescriptorHeaps(ArrayCount(DescriptorHeaps), DescriptorHeaps);
+    if (PreviousDescriptorHeaps[0] != DescriptorHeaps[0] || PreviousDescriptorHeaps[1] != DescriptorHeaps[1])
+    {
+        DxCmdList->SetDescriptorHeaps(ArrayCount(DescriptorHeaps), DescriptorHeaps);
+
+        PreviousDescriptorHeaps[0] = DescriptorHeaps[0];
+        PreviousDescriptorHeaps[1] = DescriptorHeaps[1];
+    }
 
     for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
     {
@@ -176,7 +182,7 @@ void D3D12DescriptorCache::CommitGraphicsDescriptorTables(D3D12CommandListHandle
     }
 }
 
-void D3D12DescriptorCache::CommitComputeDescriptorTables(D3D12CommandListHandle& CmdList, D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature)
+void D3D12DescriptorCache::CommitComputeDescriptors(D3D12CommandListHandle& CmdList, D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature)
 {
     Assert(CmdBatch != nullptr);
     Assert(RootSignature != nullptr);
@@ -193,7 +199,13 @@ void D3D12DescriptorCache::CommitComputeDescriptorTables(D3D12CommandListHandle&
         SamplerHeap->GetNativeHeap()
     };
 
-    DxCmdList->SetDescriptorHeaps(ArrayCount(DescriptorHeaps), DescriptorHeaps);
+    if (PreviousDescriptorHeaps[0] != DescriptorHeaps[0] || PreviousDescriptorHeaps[1] != DescriptorHeaps[1])
+    {
+        DxCmdList->SetDescriptorHeaps(ArrayCount(DescriptorHeaps), DescriptorHeaps);
+
+        PreviousDescriptorHeaps[0] = DescriptorHeaps[0];
+        PreviousDescriptorHeaps[1] = DescriptorHeaps[1];
+    }
 
     EShaderVisibility Visibility = ShaderVisibility_All;
 
@@ -239,6 +251,9 @@ void D3D12DescriptorCache::Reset()
     ShaderResourceViewCache.Reset();
     UnorderedAccessViewCache.Reset();
     SamplerStateCache.Reset();
+
+    PreviousDescriptorHeaps[0] = nullptr;
+    PreviousDescriptorHeaps[1] = nullptr;
 }
 
 void D3D12DescriptorCache::CopyDescriptors(D3D12OnlineDescriptorHeap* ResourceHeap, D3D12OnlineDescriptorHeap* SamplerHeap)

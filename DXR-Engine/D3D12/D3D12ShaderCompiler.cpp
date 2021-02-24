@@ -525,6 +525,8 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
     const UInt32 BlobSize = UInt32(CompiledBlob->GetBufferSize());
     Code.Resize(BlobSize);
 
+    LOG_INFO("[D3D12ShaderCompiler]: Compiled Size: " + std::to_string(BlobSize) + " Bytes");
+
     Memory::Memcpy(Code.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 
     if (ShaderStageIsRayTracing(ShaderStage))

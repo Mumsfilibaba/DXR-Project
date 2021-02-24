@@ -227,8 +227,8 @@ Bool D3D12CommandContext::Init()
         return false;
     }
 
-    // TODO: Have support for more than 4 commandbatches?
-    for (UInt32 i = 0; i < 4; i++)
+    // TODO: Have support for more than 3 commandbatches?
+    for (UInt32 i = 0; i < 3; i++)
     {
         D3D12CommandBatch& Batch = CmdBatches.EmplaceBack(GetDevice());
         if (!Batch.Init())
@@ -1109,7 +1109,7 @@ void D3D12CommandContext::Draw(UInt32 VertexCount, UInt32 StartVertexLocation)
     FlushResourceBarriers();
 
     ShaderConstantsCache.CommitGraphics(CmdList, CurrentRootSignature.Get());
-    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, CmdBatch, CurrentRootSignature.Get());
+    DescriptorCache.CommitGraphicsDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
 
     CmdList.DrawInstanced(VertexCount, 1, StartVertexLocation, 0);
 }
@@ -1119,7 +1119,7 @@ void D3D12CommandContext::DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocati
     FlushResourceBarriers();
 
     ShaderConstantsCache.CommitGraphics(CmdList, CurrentRootSignature.Get());
-    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, CmdBatch, CurrentRootSignature.Get());
+    DescriptorCache.CommitGraphicsDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
     
     CmdList.DrawIndexedInstanced(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
 }
@@ -1129,7 +1129,7 @@ void D3D12CommandContext::DrawInstanced(UInt32 VertexCountPerInstance, UInt32 In
     FlushResourceBarriers();
 
     ShaderConstantsCache.CommitGraphics(CmdList, CurrentRootSignature.Get());
-    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, CmdBatch, CurrentRootSignature.Get());
+    DescriptorCache.CommitGraphicsDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
 
     CmdList.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
@@ -1144,7 +1144,7 @@ void D3D12CommandContext::DrawIndexedInstanced(
     FlushResourceBarriers();
 
     ShaderConstantsCache.CommitGraphics(CmdList, CurrentRootSignature.Get());
-    DescriptorCache.CommitGraphicsDescriptorTables(CmdList, CmdBatch, CurrentRootSignature.Get());
+    DescriptorCache.CommitGraphicsDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
 
     CmdList.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
@@ -1154,7 +1154,7 @@ void D3D12CommandContext::Dispatch(UInt32 ThreadGroupCountX, UInt32 ThreadGroupC
     FlushResourceBarriers();
 
     ShaderConstantsCache.CommitCompute(CmdList, CurrentRootSignature.Get());
-    DescriptorCache.CommitComputeDescriptorTables(CmdList, CmdBatch, CurrentRootSignature.Get());
+    DescriptorCache.CommitComputeDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
     
     CmdList.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
@@ -1183,7 +1183,7 @@ void D3D12CommandContext::DispatchRays(
 
     // TODO: Fix this
     Assert(false);
-    DescriptorCache.CommitComputeDescriptorTables(CmdList, CmdBatch, CurrentRootSignature.Get());
+    DescriptorCache.CommitComputeDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
     CmdList.DispatchRays(&RayDispatchDesc);
 }
 

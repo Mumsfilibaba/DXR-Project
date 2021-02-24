@@ -86,6 +86,8 @@ void LightProbeRenderer::Release()
 {
     IrradianceGenPSO.Reset();
     SpecularIrradianceGenPSO.Reset();
+    IrradianceGenShader.Reset();
+    SpecularIrradianceGenShader.Reset();
 }
 
 void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources)

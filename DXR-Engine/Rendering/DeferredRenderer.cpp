@@ -419,6 +419,12 @@ void DeferredRenderer::Release()
     PipelineState.Reset();
     PrePassPipelineState.Reset();
     TiledLightPassPSO.Reset();
+    BaseVertexShader.Reset();
+    BasePixelShader.Reset();
+    PrePassVertexShader.Reset();
+    TiledLightPassPSODebug.Reset();
+    TiledLightShader.Reset();
+    TiledLightDebugShader.Reset();
 }
 
 void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources)

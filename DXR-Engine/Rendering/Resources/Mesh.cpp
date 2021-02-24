@@ -6,7 +6,7 @@
 Bool Mesh::Init(const MeshData& Data)
 {
     VertexCount = static_cast<UInt32>(Data.Vertices.Size());
-    IndexCount	= static_cast<UInt32>(Data.Indices.Size());
+    IndexCount  = static_cast<UInt32>(Data.Indices.Size());
 
     const UInt32 BufferFlags = IsRayTracingSupported() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
 

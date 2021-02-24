@@ -7,8 +7,7 @@
 #include "D3D12CommandList.h"
 
 #define NUM_VISIBILITIES (ShaderVisibility_Count)
-#define NUM_DESCRIPTORS  (D3D12_MAX_ONLINE_DESCRIPTOR_COUNT)
-#define NUM_DIRTY_MASKS  (NUM_DESCRIPTORS / 64)
+#define NUM_DESCRIPTORS  (D3D12_MAX_ONLINE_DESCRIPTOR_COUNT / 4)
 
 template <typename TD3D12DescriptorViewType>
 struct TD3D12DescriptorViewCache
@@ -90,6 +89,14 @@ struct TD3D12DescriptorViewCache
 
                 Dirty[i] = false;
             }
+        }
+    }
+
+    FORCEINLINE void InvalidateAll()
+    {
+        for (UInt32 i = 0; i < NUM_VISIBILITIES; i++)
+        {
+            Dirty[i] = true;
         }
     }
 
@@ -287,8 +294,8 @@ public:
 
     Bool Init();
 
-    void CommitGraphicsDescriptorTables(D3D12CommandListHandle& CmdList, class D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature);
-    void CommitComputeDescriptorTables(D3D12CommandListHandle& CmdList, class D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature);
+    void CommitGraphicsDescriptors(D3D12CommandListHandle& CmdList, class D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature);
+    void CommitComputeDescriptors(D3D12CommandListHandle& CmdList, class D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature);
 
     void Reset();
 
@@ -366,6 +373,8 @@ private:
     D3D12UnorderedAccessViewCache UnorderedAccessViewCache;
     D3D12ConstantBufferViewCache  ConstantBufferViewCache;
     D3D12SamplerStateCache        SamplerStateCache;
+
+    ID3D12DescriptorHeap* PreviousDescriptorHeaps[2] = { nullptr, nullptr };
 
     UINT RangeSizes[NUM_DESCRIPTORS];
 };

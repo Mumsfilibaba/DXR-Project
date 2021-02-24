@@ -435,6 +435,9 @@ void ShadowMapRenderer::Release()
     PerShadowMapBuffer.Reset();
     DirLightPipelineState.Reset();
     PointLightPipelineState.Reset();
+    DirLightShader.Reset();
+    PointLightVertexShader.Reset();
+    PointLightPixelShader.Reset();
 }
 
 Bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)

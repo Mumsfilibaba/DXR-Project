@@ -43,19 +43,26 @@ D3D12Device::~D3D12Device()
         {
             DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
         }
+
+        PIXCaptureInterface.Reset();
+
+        if (PIXLib)
+        {
+            ::FreeLibrary(PIXLib);
+            PIXLib = 0;
+        }
     }
+
+    Factory.Reset();
+    Adapter.Reset();
+    Device.Reset();
+    DXRDevice.Reset();
 
     ::FreeLibrary(DXGILib);
     DXGILib = 0;
 
     ::FreeLibrary(D3D12Lib);
     D3D12Lib = 0;
-
-    if (PIXLib)
-    {
-        ::FreeLibrary(PIXLib);
-        PIXLib = 0;
-    }
 }
 
 Bool D3D12Device::Init()

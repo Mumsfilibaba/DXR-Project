@@ -801,12 +801,19 @@ void Renderer::Release()
     AABBVertexBuffer.Reset();
     AABBIndexBuffer.Reset();
     AABBDebugPipelineState.Reset();
+    AABBVertexShader.Reset();
+    AABBPixelShader.Reset();
 
     PostPSO.Reset();
+    PostShader.Reset();
     FXAAPSO.Reset();
+    FXAAShader.Reset();
+    FXAADebugPSO.Reset();
+    FXAADebugShader.Reset();
 
     ShadingImage.Reset();
     ShadingRatePipeline.Reset();
+    ShadingRateShader.Reset();
 
     LastFrameNumDrawCalls     = 0;
     LastFrameNumDispatchCalls = 0;

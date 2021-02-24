@@ -128,6 +128,8 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
 void ForwardRenderer::Release()
 {
     PipelineState.Reset();
+    VShader.Reset();
+    PShader.Reset();
 }
 
 void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup)

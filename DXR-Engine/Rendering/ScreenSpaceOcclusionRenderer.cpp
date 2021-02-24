@@ -227,6 +227,9 @@ void ScreenSpaceOcclusionRenderer::Release()
     SSAOSamples.Reset();
     SSAOSamplesSRV.Reset();
     SSAONoiseTex.Reset();
+    SSAOShader.Reset();
+    BlurHorizontalShader.Reset();
+    BlurVerticalShader.Reset();
 }
 
 Bool ScreenSpaceOcclusionRenderer::ResizeResources(FrameResources& FrameResources)

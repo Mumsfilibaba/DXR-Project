@@ -27,6 +27,7 @@ struct ImGuiState
         VertexBuffer.Reset();
         IndexBuffer.Reset();
         PointSampler.Reset();
+        PShader.Reset();
     }
 
     Clock FrameClock;

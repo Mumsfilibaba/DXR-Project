@@ -219,4 +219,6 @@ void SkyboxRenderPass::Release()
     SkyboxVertexBuffer.Reset();
     SkyboxIndexBuffer.Reset();
     SkyboxSampler.Reset();
+    SkyboxVertexShader.Reset();
+    SkyboxPixelShader.Reset();
 }
