@@ -21,6 +21,8 @@ public:
 
 private:
     TRef<GraphicsPipelineState> PipelineState;
+    TRef<VertexShader> SkyboxVertexShader;
+    TRef<PixelShader>  SkyboxPixelShader;
     TRef<VertexBuffer> SkyboxVertexBuffer;
     TRef<IndexBuffer>  SkyboxIndexBuffer;
     TRef<SamplerState> SkyboxSampler;

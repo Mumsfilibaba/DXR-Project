@@ -1,7 +1,8 @@
 #include "Helpers.hlsli"
+#include "Constants.hlsli"
 
 // Resources
-cbuffer CameraBuffer : register(b0)
+cbuffer CameraBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     float4x4 ViewProjection;
 };

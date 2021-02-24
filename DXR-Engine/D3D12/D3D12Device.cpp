@@ -22,6 +22,7 @@ PFN_D3D12_SERIALIZE_ROOT_SIGNATURE                     D3D12SerializeRootSignatu
 PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER           D3D12CreateRootSignatureDeserializerFunc          = nullptr;
 PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVersionedRootSignatureFunc          = nullptr;
 PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc = nullptr;
+PFN_SetMarkerOnCommandList                             SetMarkerOnCommandListFunc                        = nullptr;
 
 D3D12Device::D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation)
     : Factory(nullptr)
@@ -49,6 +50,12 @@ D3D12Device::~D3D12Device()
 
     ::FreeLibrary(D3D12Lib);
     D3D12Lib = 0;
+
+    if (PIXLib)
+    {
+        ::FreeLibrary(PIXLib);
+        PIXLib = 0;
+    }
 }
 
 Bool D3D12Device::Init()
@@ -102,6 +109,20 @@ Bool D3D12Device::Init()
 
     if (EnableDebugLayer)
     {
+        PIXLib = LoadLibrary("WinPixEventRuntime.dll");
+        if (PIXLib != NULL)
+        {
+            LOG_INFO("Loaded WinPixEventRuntime.dll");
+
+            SetMarkerOnCommandListFunc = GetTypedProcAddress<PFN_SetMarkerOnCommandList>(
+                PIXLib,
+                "PIXSetMarkerOnCommandList");
+        }
+        else
+        {
+            LOG_INFO("PIX Runtime NOT found");
+        }
+
         TComPtr<ID3D12Debug> DebugInterface;
         if (FAILED(D3D12GetDebugInterfaceFunc(IID_PPV_ARGS(&DebugInterface))))
         {
@@ -136,6 +157,16 @@ Bool D3D12Device::Init()
         else
         {
             LOG_ERROR("[D3D12Device]: FAILED to retrive InfoQueue");
+        }
+
+        TComPtr<IDXGraphicsAnalysis> TempPIXCaptureInterface;
+        if (SUCCEEDED(DXGIGetDebugInterface1Func(0, IID_PPV_ARGS(&TempPIXCaptureInterface))))
+        {
+            PIXCaptureInterface = TempPIXCaptureInterface;
+        }
+        else
+        {
+            LOG_INFO("[D3D12Device]: PIX is not connected to the application");
         }
     }
 

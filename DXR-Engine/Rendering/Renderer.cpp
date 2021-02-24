@@ -87,13 +87,6 @@ void Renderer::PerformFXAA(CommandList& InCmdList)
 
     TRACE_SCOPE("FXAA");
     
-    RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
-    InCmdList.BindRenderTargets(&BackBufferRTV, 1, nullptr);
-
-    ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
-    InCmdList.BindShaderResourceViews(EShaderStage::Pixel, &FinalTargetSRV, 1, 0);
-    InCmdList.BindSamplerStates(EShaderStage::Pixel, &Resources.FXAASampler, 1, 0);
-
     struct FXAASettings
     {
         Float Width;
@@ -103,15 +96,23 @@ void Renderer::PerformFXAA(CommandList& InCmdList)
     Settings.Width  = static_cast<Float>(Resources.BackBuffer->GetWidth());
     Settings.Height = static_cast<Float>(Resources.BackBuffer->GetHeight());
 
-    InCmdList.Bind32BitShaderConstants(EShaderStage::Pixel, &Settings, 2);
+    RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
+    InCmdList.SetRenderTargets(&BackBufferRTV, 1, nullptr);
 
+    ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     if (GlobalFXAADebug.GetBool())
     {
-        InCmdList.BindGraphicsPipelineState(FXAADebugPSO.Get());
+        InCmdList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
+        InCmdList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
+        InCmdList.Set32BitShaderConstants(FXAADebugShader.Get(), &Settings, 2);
+        InCmdList.SetGraphicsPipelineState(FXAADebugPSO.Get());
     }
     else
     {
-        InCmdList.BindGraphicsPipelineState(FXAAPSO.Get());
+        InCmdList.SetShaderResourceView(FXAAShader.Get(), FinalTargetSRV, 0);
+        InCmdList.SetSamplerState(FXAAShader.Get(), Resources.FXAASampler.Get(), 0);
+        InCmdList.Set32BitShaderConstants(FXAAShader.Get(), &Settings, 2);
+        InCmdList.SetGraphicsPipelineState(FXAAPSO.Get());
     }
 
     InCmdList.DrawInstanced(3, 1, 0, 0);
@@ -126,13 +127,13 @@ void Renderer::PerformBackBufferBlit(CommandList& InCmdList)
     TRACE_SCOPE("Draw to BackBuffer");
 
     RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
-    InCmdList.BindRenderTargets(&BackBufferRTV, 1, nullptr);
+    InCmdList.SetRenderTargets(&BackBufferRTV, 1, nullptr);
 
     ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
-    InCmdList.BindShaderResourceViews(EShaderStage::Pixel, &FinalTargetSRV, 1, 0);
-    InCmdList.BindSamplerStates(EShaderStage::Pixel, &Resources.GBufferSampler, 1, 0);
+    InCmdList.SetShaderResourceView(PostShader.Get(), FinalTargetSRV, 0);
+    InCmdList.SetSamplerState(PostShader.Get(), Resources.GBufferSampler.Get(), 0);
 
-    InCmdList.BindGraphicsPipelineState(PostPSO.Get());
+    InCmdList.SetGraphicsPipelineState(PostPSO.Get());
     InCmdList.DrawInstanced(3, 1, 0, 0);
 
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End Draw BackBuffer");
@@ -144,14 +145,14 @@ void Renderer::PerformAABBDebugPass(CommandList& InCmdList)
 
     TRACE_SCOPE("DebugPass");
 
-    InCmdList.BindGraphicsPipelineState(AABBDebugPipelineState.Get());
+    InCmdList.SetGraphicsPipelineState(AABBDebugPipelineState.Get());
 
-    InCmdList.BindPrimitiveTopology(EPrimitiveTopology::LineList);
+    InCmdList.SetPrimitiveTopology(EPrimitiveTopology::LineList);
 
-    InCmdList.BindConstantBuffers(EShaderStage::Vertex, &Resources.CameraBuffer, 1, 0);
+    InCmdList.SetConstantBuffer(AABBVertexShader.Get(), Resources.CameraBuffer.Get(), 0);
 
-    InCmdList.BindVertexBuffers(&AABBVertexBuffer, 1, 0);
-    InCmdList.BindIndexBuffer(AABBIndexBuffer.Get());
+    InCmdList.SetVertexBuffers(&AABBVertexBuffer, 1, 0);
+    InCmdList.SetIndexBuffer(AABBIndexBuffer.Get());
 
     for (const MeshDrawCommand& Command : Resources.DeferredVisibleCommands)
     {
@@ -166,7 +167,7 @@ void Renderer::PerformAABBDebugPass(CommandList& InCmdList)
         XMMATRIX   XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
         XMStoreFloat4x4(&Transform, XMMatrixMultiplyTranspose(XMMatrixMultiply(XmScale, XmTranslation), XmTransform));
 
-        InCmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &Transform, 16);
+        InCmdList.Set32BitShaderConstants(AABBVertexShader.Get(), &Transform, 16);
 
         InCmdList.DrawIndexedInstanced(24, 1, 0, 0, 0);
     }
@@ -346,6 +347,7 @@ void Renderer::Tick(const Scene& Scene)
 
     Resources.BackBuffer = Resources.MainWindowViewport->GetBackBuffer();
 
+    CmdList.BeginExternalCapture();
     CmdList.Begin();
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
 
@@ -356,10 +358,10 @@ void Renderer::Tick(const Scene& Scene)
 
         CmdList.TransitionTexture(ShadingImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
         
-        CmdList.BindComputePipelineState(ShadingRatePipeline.Get());
+        CmdList.SetComputePipelineState(ShadingRatePipeline.Get());
 
         UnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
-        CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &ShadingImageUAV, 1, 0);
+        CmdList.SetUnorderedAccessView(ShadingRateShader.Get(), ShadingImageUAV, 0);
         
         CmdList.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
         
@@ -561,6 +563,7 @@ void Renderer::Tick(const Scene& Scene)
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--END FRAME--");
 
     CmdList.End();
+    CmdList.EndExternalCapture();
 
     LastFrameNumDrawCalls     = CmdList.GetNumDrawCalls();
     LastFrameNumDispatchCalls = CmdList.GetNumDispatchCalls();
@@ -579,30 +582,6 @@ void Renderer::Tick(const Scene& Scene)
 
 Bool Renderer::Init()
 {
-    TArray<UInt8> ShaderCode;
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ComputeShader.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-
-    TRef<ComputeShader> Shader = CreateComputeShader(ShaderCode);
-    if (!Shader)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-
-    ComputePipelineStateCreateInfo PipelineStateInfo;
-    PipelineStateInfo.Shader = Shader.Get();
-
-    TRef<ComputePipelineState> Pipeline = CreateComputePipelineState(PipelineStateInfo);
-    if (!Pipeline)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-
     INIT_CONSOLE_VARIABLE("r.DrawTextureDebugger", GlobalDrawTextureDebugger);
     GlobalDrawTextureDebugger.SetBool(false);
 
@@ -843,15 +822,15 @@ Bool Renderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    TRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
-    if (!VShader)
+    AABBVertexShader = CreateVertexShader(ShaderCode);
+    if (!AABBVertexShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        VShader->SetName("Debug VertexShader");
+        AABBVertexShader->SetName("Debug VertexShader");
     }
 
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Debug.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
@@ -860,15 +839,15 @@ Bool Renderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    TRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
-    if (!PShader)
+    AABBPixelShader = CreatePixelShader(ShaderCode);
+    if (!AABBPixelShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        PShader->SetName("Debug PixelShader");
+        AABBPixelShader->SetName("Debug PixelShader");
     }
 
     InputLayoutStateCreateInfo InputLayout =
@@ -935,8 +914,8 @@ Bool Renderer::InitBoundingBoxDebugPass()
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
     PSOProperties.InputLayoutState                       = InputLayoutState.Get();
     PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PShader.Get();
+    PSOProperties.ShaderState.VertexShader               = AABBVertexShader.Get();
+    PSOProperties.ShaderState.PixelShader                = AABBPixelShader.Get();
     PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Line;
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = Resources.RenderTargetFormat;
     PSOProperties.PipelineFormats.NumRenderTargets       = 1;
@@ -1038,15 +1017,15 @@ Bool Renderer::InitAA()
         return false;
     }
 
-    TRef<PixelShader> PShader = CreatePixelShader(ShaderCode);
-    if (!PShader)
+    PostShader = CreatePixelShader(ShaderCode);
+    if (!PostShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        PShader->SetName("PostProcess PixelShader");
+        PostShader->SetName("PostProcess PixelShader");
     }
 
     DepthStencilStateCreateInfo DepthStencilStateInfo;
@@ -1100,7 +1079,7 @@ Bool Renderer::InitAA()
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
     PSOProperties.RasterizerState                        = RasterizerState.Get();
     PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PShader.Get();
+    PSOProperties.ShaderState.PixelShader                = PostShader.Get();
     PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
     PSOProperties.PipelineFormats.NumRenderTargets       = 1;
@@ -1136,18 +1115,18 @@ Bool Renderer::InitAA()
         return false;
     }
 
-    PShader = CreatePixelShader(ShaderCode);
-    if (!PShader)
+    FXAAShader = CreatePixelShader(ShaderCode);
+    if (!FXAAShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        PShader->SetName("FXAA PixelShader");
+        FXAAShader->SetName("FXAA PixelShader");
     }
 
-    PSOProperties.ShaderState.PixelShader = PShader.Get();
+    PSOProperties.ShaderState.PixelShader = FXAAShader.Get();
 
     FXAAPSO = CreateGraphicsPipelineState(PSOProperties);
     if (!FXAAPSO)
@@ -1171,18 +1150,18 @@ Bool Renderer::InitAA()
         return false;
     }
 
-    PShader = CreatePixelShader(ShaderCode);
-    if (!PShader)
+    FXAADebugShader = CreatePixelShader(ShaderCode);
+    if (!FXAADebugShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        PShader->SetName("FXAA PixelShader");
+        FXAADebugShader->SetName("FXAA PixelShader");
     }
 
-    PSOProperties.ShaderState.PixelShader = PShader.Get();
+    PSOProperties.ShaderState.PixelShader = FXAADebugShader.Get();
 
     FXAADebugPSO = CreateGraphicsPipelineState(PSOProperties);
     if (!FXAADebugPSO)
@@ -1228,18 +1207,18 @@ Bool Renderer::InitShadingImage()
         return false;
     }
 
-    TRef<ComputeShader> Shader = CreateComputeShader(ShaderCode);
-    if (!Shader)
+    ShadingRateShader = CreateComputeShader(ShaderCode);
+    if (!ShadingRateShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        Shader->SetName("ShadingRate Image Shader");
+        ShadingRateShader->SetName("ShadingRate Image Shader");
     }
 
-    ComputePipelineStateCreateInfo CreateInfo(Shader.Get());
+    ComputePipelineStateCreateInfo CreateInfo(ShadingRateShader.Get());
     ShadingRatePipeline = CreateComputePipelineState(CreateInfo);
     if (!ShadingRatePipeline)
     {

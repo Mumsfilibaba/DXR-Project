@@ -11,7 +11,7 @@ class ShaderResourceView;
 class UnorderedAccessView;
 class Shader;
 
-#define ENABLE_INSERT_DEBUG_CMDLIST_MARKER 0
+#define ENABLE_INSERT_DEBUG_CMDLIST_MARKER 1
 
 #if ENABLE_INSERT_DEBUG_CMDLIST_MARKER
     #define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString) CmdList.InsertCommandListMarker(MarkerString);
@@ -97,22 +97,22 @@ public:
         InsertCommand<EndRenderPassRenderCommand>();
     }
 
-    void BindViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y)
+    void SetViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y)
     {
-        InsertCommand<BindViewportRenderCommand>(Width, Height, MinDepth, MaxDepth, x, y);
+        InsertCommand<SetViewportRenderCommand>(Width, Height, MinDepth, MaxDepth, x, y);
     }
 
-    void BindScissorRect(Float Width, Float Height, Float x, Float y)
+    void SetScissorRect(Float Width, Float Height, Float x, Float y)
     {
-        InsertCommand<BindScissorRectRenderCommand>(Width, Height, x, y);
+        InsertCommand<SetScissorRectRenderCommand>(Width, Height, x, y);
     }
 
-    void BindBlendFactor(const ColorF& Color)
+    void SetBlendFactor(const ColorF& Color)
     {
-        InsertCommand<BindBlendFactorRenderCommand>(Color);
+        InsertCommand<SetBlendFactorRenderCommand>(Color);
     }
 
-    void BindRenderTargets(RenderTargetView* const* RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView)
+    void SetRenderTargets(RenderTargetView* const* RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView)
     {
         RenderTargetView** RenderTargets = new(CmdAllocator) RenderTargetView*[RenderTargetCount];
         for (UInt32 i = 0; i < RenderTargetCount; i++)
@@ -122,15 +122,15 @@ public:
         }
 
         SafeAddRef(DepthStencilView);
-        InsertCommand<BindRenderTargetsRenderCommand>(RenderTargets, RenderTargetCount, DepthStencilView);
+        InsertCommand<SetRenderTargetsRenderCommand>(RenderTargets, RenderTargetCount, DepthStencilView);
     }
 
-    void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
+    void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
     {
-        InsertCommand<BindPrimitiveTopologyRenderCommand>(PrimitveTopologyType);
+        InsertCommand<SetPrimitiveTopologyRenderCommand>(PrimitveTopologyType);
     }
 
-    void BindVertexBuffers(VertexBuffer* const* VertexBuffers, UInt32 VertexBufferCount, UInt32 BufferSlot)
+    void SetVertexBuffers(VertexBuffer* const* VertexBuffers, UInt32 VertexBufferCount, UInt32 BufferSlot)
     {
         VertexBuffer** Buffers = new(CmdAllocator) VertexBuffer*[VertexBufferCount];
         for (UInt32 i = 0; i < VertexBufferCount; i++)
@@ -139,13 +139,13 @@ public:
             SafeAddRef(Buffers[i]);
         }
 
-        InsertCommand<BindVertexBuffersRenderCommand>(Buffers, VertexBufferCount, BufferSlot);
+        InsertCommand<SetVertexBuffersRenderCommand>(Buffers, VertexBufferCount, BufferSlot);
     }
 
-    void BindIndexBuffer(IndexBuffer* IndexBuffer)
+    void SetIndexBuffer(IndexBuffer* IndexBuffer)
     {
         SafeAddRef(IndexBuffer);
-        InsertCommand<BindIndexBufferRenderCommand>(IndexBuffer);
+        InsertCommand<SetIndexBufferRenderCommand>(IndexBuffer);
     }
 
     void SetHitGroups(RayTracingScene* RayTracingScene, RayTracingPipelineState* PipelineState, const TArrayView<RayTracingShaderResources>& LocalShaderResources)
@@ -155,102 +155,108 @@ public:
         InsertCommand<SetHitGroupsRenderCommand>(RayTracingScene, PipelineState, LocalShaderResources);
     }
 
-    void BindGraphicsPipelineState(GraphicsPipelineState* PipelineState)
+    void SetGraphicsPipelineState(GraphicsPipelineState* PipelineState)
     {
         SafeAddRef(PipelineState);
-        InsertCommand<BindGraphicsPipelineStateRenderCommand>(PipelineState);
+        InsertCommand<SetGraphicsPipelineStateRenderCommand>(PipelineState);
     }
 
-    void BindComputePipelineState(ComputePipelineState* PipelineState)
+    void SetComputePipelineState(ComputePipelineState* PipelineState)
     {
         SafeAddRef(PipelineState);
-        InsertCommand<BindComputePipelineStateRenderCommand>(PipelineState);
+        InsertCommand<SetComputePipelineStateRenderCommand>(PipelineState);
     }
 
-    void Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants)
+    void Set32BitShaderConstants(Shader* Shader, const Void* Shader32BitConstants, UInt32 Num32BitConstants)
     {
         const UInt32 Num32BitConstantsInBytes = Num32BitConstants * 4;
         Void* Shader32BitConstantsMemory = CmdAllocator.Allocate(Num32BitConstantsInBytes, 1);
         Memory::Memcpy(Shader32BitConstantsMemory, Shader32BitConstants, Num32BitConstantsInBytes);
 
-        InsertCommand<Bind32BitShaderConstantsRenderCommand>(ShaderStage, Shader32BitConstantsMemory, Num32BitConstants);
+        SafeAddRef(Shader);
+        InsertCommand<Set32BitShaderConstantsRenderCommand>(Shader, Shader32BitConstantsMemory, Num32BitConstants);
     }
 
-    void BindShaderResourceViews(
-        EShaderStage ShaderStage, 
-        ShaderResourceView* const* ShaderResourceViews, 
-        UInt32 ShaderResourceViewCount, 
-        UInt32 StartSlot)
+    void SetShaderResourceView(Shader* Shader, ShaderResourceView* ShaderResourceView, UInt32 ParameterIndex)
     {
-        Assert(ShaderResourceViews != nullptr);
+        SafeAddRef(Shader);
+        SafeAddRef(ShaderResourceView);
+        InsertCommand<SetShaderResourceViewRenderCommand>(Shader, ShaderResourceView, ParameterIndex);
+    }
 
-        ShaderResourceView** Views = new(CmdAllocator) ShaderResourceView*[ShaderResourceViewCount];
-        for (UInt32 i = 0; i < ShaderResourceViewCount; i++)
+    void SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceViews, UInt32 NumShaderResourceViews, UInt32 ParameterIndex)
+    {
+        SafeAddRef(Shader);
+
+        ShaderResourceView** TempShaderResourceViews = new(CmdAllocator) ShaderResourceView * [NumShaderResourceViews];
+        for (UInt32 i = 0; i < NumShaderResourceViews; i++)
         {
-            Views[i] = ShaderResourceViews[i];
-            SafeAddRef(Views[i]);
+            TempShaderResourceViews[i] = ShaderResourceViews[i];
+            SafeAddRef(TempShaderResourceViews[i]);
         }
 
-        InsertCommand<BindShaderResourceViewsRenderCommand>(ShaderStage, Views, ShaderResourceViewCount, StartSlot);
+        InsertCommand<SetShaderResourceViewsRenderCommand>(Shader, TempShaderResourceViews, NumShaderResourceViews, ParameterIndex);
     }
 
-    void BindSamplerStates(EShaderStage ShaderStage, SamplerState* const* SamplerStates, UInt32 SamplerStateCount, UInt32 StartSlot)
+    void SetUnorderedAccessView(Shader* Shader, UnorderedAccessView* UnorderedAccessView, UInt32 ParameterIndex)
     {
-        Assert(SamplerStates != nullptr);
+        SafeAddRef(Shader);
+        SafeAddRef(UnorderedAccessView);
+        InsertCommand<SetUnorderedAccessViewRenderCommand>(Shader, UnorderedAccessView, ParameterIndex);
+    }
 
-        SamplerState** Samplers = new(CmdAllocator) SamplerState*[SamplerStateCount];
-        for (UInt32 i = 0; i < SamplerStateCount; i++)
+    void SetUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, UInt32 NumUnorderedAccessViews, UInt32 ParameterIndex)
+    {
+        UnorderedAccessView** TempUnorderedAccessViews = new(CmdAllocator) UnorderedAccessView * [NumUnorderedAccessViews];
+        for (UInt32 i = 0; i < NumUnorderedAccessViews; i++)
         {
-            Samplers[i] = SamplerStates[i];
-            SafeAddRef(Samplers[i]);
+            TempUnorderedAccessViews[i] = UnorderedAccessViews[i];
+            SafeAddRef(TempUnorderedAccessViews[i]);
         }
 
-        InsertCommand<BindSamplerStatesRenderCommand>(ShaderStage, Samplers, SamplerStateCount, StartSlot);
+        SafeAddRef(Shader);
+        InsertCommand<SetUnorderedAccessViewsRenderCommand>(Shader, TempUnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
     }
 
-    void BindUnorderedAccessViews(
-        EShaderStage ShaderStage, 
-        UnorderedAccessView* const* UnorderedAccessViews, 
-        UInt32 UnorderedAccessViewCount, 
-        UInt32 StartSlot)
+    void SetConstantBuffer(Shader* Shader, ConstantBuffer* ConstantBuffer, UInt32 ParameterIndex)
     {
-        Assert(UnorderedAccessViews != nullptr);
+        SafeAddRef(Shader);
+        SafeAddRef(ConstantBuffer);
+        InsertCommand<SetConstantBufferRenderCommand>(Shader, ConstantBuffer, ParameterIndex);
+    }
 
-        UnorderedAccessView** Views = new(CmdAllocator) UnorderedAccessView*[UnorderedAccessViewCount];
-        for (UInt32 i = 0; i < UnorderedAccessViewCount; i++)
+    void SetConstantBuffers(Shader* Shader, ConstantBuffer* const* ConstantBuffers, UInt32 NumConstantBuffers, UInt32 ParameterIndex)
+    {
+        ConstantBuffer** TempConstantBuffers = new(CmdAllocator) ConstantBuffer * [NumConstantBuffers];
+        for (UInt32 i = 0; i < NumConstantBuffers; i++)
         {
-            Views[i] = UnorderedAccessViews[i];
-            SafeAddRef(Views[i]);
+            TempConstantBuffers[i] = ConstantBuffers[i];
+            SafeAddRef(TempConstantBuffers[i]);
         }
 
-        InsertCommand<BindUnorderedAccessViewsRenderCommand>(ShaderStage, Views, UnorderedAccessViewCount, StartSlot);
+        SafeAddRef(Shader);
+        InsertCommand<SetConstantBuffersRenderCommand>(Shader, TempConstantBuffers, NumConstantBuffers, ParameterIndex);
     }
 
-    void BindConstantBuffers(EShaderStage ShaderStage, ConstantBuffer* const* ConstantBuffers, UInt32 ConstantBufferCount, UInt32 StartSlot)
+    void SetSamplerState(Shader* Shader, SamplerState* SamplerState, UInt32 ParameterIndex)
     {
-        Assert(ConstantBuffers != nullptr);
+        SafeAddRef(Shader);
+        SafeAddRef(SamplerState);
+        InsertCommand<SetSamplerStateRenderCommand>(Shader, SamplerState, ParameterIndex);
+    }
 
-        ConstantBuffer** Buffers = new(CmdAllocator) ConstantBuffer*[ConstantBufferCount];
-        for (UInt32 i = 0; i < ConstantBufferCount; i++)
+    void SetSamplerStates(Shader* Shader, SamplerState* const* SamplerStates, UInt32 NumSamplerStates, UInt32 ParameterIndex)
+    {
+        SamplerState** TempSamplerStates = new(CmdAllocator) SamplerState * [NumSamplerStates];
+        for (UInt32 i = 0; i < NumSamplerStates; i++)
         {
-            Buffers[i] = ConstantBuffers[i];
-            SafeAddRef(Buffers[i]);
+            TempSamplerStates[i] = SamplerStates[i];
+            SafeAddRef(TempSamplerStates[i]);
         }
 
-        InsertCommand<BindConstantBuffersRenderCommand>(ShaderStage, Buffers, ConstantBufferCount, StartSlot);
+        SafeAddRef(Shader);
+        InsertCommand<SetSamplerStatesRenderCommand>(Shader, TempSamplerStates, NumSamplerStates, ParameterIndex);
     }
-
-    void SetShaderResourceView(Shader* Shader, ShaderResourceView* ShaderResourceView, UInt32 ParameterIndex);
-    void SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceView, UInt32 NumShaderResourceViews, UInt32 ParameterIndex);
-
-    void SetUnorderedAccessView(Shader* Shader, UnorderedAccessView* UnorderedAccessView, UInt32 ParameterIndex);
-    void SetUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, UInt32 NumUnorderedAccessViews, UInt32 ParameterIndex);
-
-    void SetConstantBuffer(Shader* Shader, ConstantBuffer* ConstantBuffer, UInt32 ParameterIndex);
-    void SetConstantBuffers(Shader* Shader, ConstantBuffer* const* ConstantBuffers, UInt32 NumConstantBuffers, UInt32 ParameterIndex);
-
-    void SetSamplerState(Shader* Shader, SamplerState* SamplerState, UInt32 ParameterIndex);
-    void SetSamplerStates(Shader* Shader, SamplerState* const* SamplerStates, UInt32 NumSamplerStates, UInt32 ParameterIndex);
 
     void ResolveTexture(Texture* Destination, Texture* Source)
     {
@@ -436,6 +442,21 @@ public:
         InsertCommand<InsertCommandListMarkerRenderCommand>(Marker);
     }
 
+    void DebugBreak()
+    {
+        InsertCommand<DebugBreakRenderCommand>();
+    }
+
+    void BeginExternalCapture()
+    {
+        InsertCommand<BeginExternalCaptureRenderCommand>();
+    }
+
+    void EndExternalCapture()
+    {
+        InsertCommand<EndExternalCaptureRenderCommand>();
+    }
+
     void Reset()
     {
         if (First != nullptr)
@@ -492,87 +513,6 @@ private:
 
     Bool IsRecording = false;
 };
-
-inline void CommandList::SetShaderResourceView(Shader* Shader, ShaderResourceView* ShaderResourceView, UInt32 ParameterIndex)
-{
-    SafeAddRef(Shader);
-    SafeAddRef(ShaderResourceView);
-    InsertCommand<SetShaderResourceViewRenderCommand>(Shader, ShaderResourceView, ParameterIndex);
-}
-
-inline void CommandList::SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceViews, UInt32 NumShaderResourceViews, UInt32 ParameterIndex)
-{
-    SafeAddRef(Shader);
-
-    ShaderResourceView** TempShaderResourceViews = new(CmdAllocator) ShaderResourceView*[NumShaderResourceViews];
-    for (UInt32 i = 0; i < NumShaderResourceViews; i++)
-    {
-        TempShaderResourceViews[i] = ShaderResourceViews[i];
-        SafeAddRef(TempShaderResourceViews[i]);
-    }
-
-    InsertCommand<SetShaderResourceViewsRenderCommand>(Shader, TempShaderResourceViews, NumShaderResourceViews, ParameterIndex);
-}
-
-inline void CommandList::SetUnorderedAccessView(Shader* Shader, UnorderedAccessView* UnorderedAccessView, UInt32 ParameterIndex)
-{
-    SafeAddRef(Shader);
-    SafeAddRef(UnorderedAccessView);
-    InsertCommand<SetUnorderedAccessViewRenderCommand>(Shader, UnorderedAccessView, ParameterIndex);
-}
-
-inline void CommandList::SetUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, UInt32 NumUnorderedAccessViews, UInt32 ParameterIndex)
-{
-    UnorderedAccessView** TempUnorderedAccessViews = new(CmdAllocator) UnorderedAccessView*[NumUnorderedAccessViews];
-    for (UInt32 i = 0; i < NumUnorderedAccessViews; i++)
-    {
-        TempUnorderedAccessViews[i] = UnorderedAccessViews[i];
-        SafeAddRef(TempUnorderedAccessViews[i]);
-    }
-
-    SafeAddRef(Shader);
-    InsertCommand<SetUnorderedAccessViewsRenderCommand>(Shader, TempUnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
-}
-
-inline void CommandList::SetConstantBuffer(Shader* Shader, ConstantBuffer* ConstantBuffer, UInt32 ParameterIndex)
-{
-    SafeAddRef(Shader);
-    SafeAddRef(ConstantBuffer);
-    InsertCommand<SetConstantBufferRenderCommand>(Shader, ConstantBuffer, ParameterIndex);
-}
-
-inline void CommandList::SetConstantBuffers(Shader* Shader, ConstantBuffer* const* ConstantBuffers, UInt32 NumConstantBuffers, UInt32 ParameterIndex)
-{
-    ConstantBuffer** TempConstantBuffers = new(CmdAllocator) ConstantBuffer*[NumConstantBuffers];
-    for (UInt32 i = 0; i < NumConstantBuffers; i++)
-    {
-        TempConstantBuffers[i] = ConstantBuffers[i];
-        SafeAddRef(TempConstantBuffers[i]);
-    }
-
-    SafeAddRef(Shader);
-    InsertCommand<SetConstantBuffersRenderCommand>(Shader, TempConstantBuffers, NumConstantBuffers, ParameterIndex);
-}
-
-inline void CommandList::SetSamplerState(Shader* Shader, SamplerState* SamplerState, UInt32 ParameterIndex)
-{
-    SafeAddRef(Shader);
-    SafeAddRef(SamplerState);
-    InsertCommand<SetSamplerStateRenderCommand>(Shader, SamplerState, ParameterIndex);
-}
-
-inline void CommandList::SetSamplerStates(Shader* Shader, SamplerState* const* SamplerStates, UInt32 NumSamplerStates, UInt32 ParameterIndex)
-{
-    SamplerState** TempSamplerStates = new(CmdAllocator) SamplerState*[NumSamplerStates];
-    for (UInt32 i = 0; i < NumSamplerStates; i++)
-    {
-        TempSamplerStates[i] = SamplerStates[i];
-        SafeAddRef(TempSamplerStates[i]);
-    }
-
-    SafeAddRef(Shader);
-    InsertCommand<SetSamplerStatesRenderCommand>(Shader, TempSamplerStates, NumSamplerStates, ParameterIndex);
-}
 
 class CommandListExecutor
 {

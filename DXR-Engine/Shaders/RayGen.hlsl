@@ -27,12 +27,6 @@ float2 GetTexCoord()
     return float2(DispatchIndex.xy) / float2(DispatchDimensions.xy);
 }
 
-[shader("miss")]
-void Miss(inout RayPayload PayLoad)
-{
-    PayLoad.Color = Skybox.SampleLevel(TextureSampler, WorldRayDirection(), 0).rgb; // float3(0.3921f, 0.5843f, 0.9394f);
-}
-
 [shader("raygeneration")]
 void RayGen()
 {

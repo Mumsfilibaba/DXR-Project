@@ -22,18 +22,11 @@ struct D3D12UploadAllocation
     UInt64 ResourceOffset = 0;
 };
 
-class D3D12GPUResourceUploader
+class D3D12GPUResourceUploader : public D3D12DeviceChild
 {
 public:
-    D3D12GPUResourceUploader(D3D12Device* InDevice)
-        : Device(InDevice)
-        , MappedMemory(nullptr)
-        , SizeInBytes(0)
-        , OffsetInBytes(0)
-        , Resource(nullptr)
-        , GarbageResources()
-    {
-    }
+    D3D12GPUResourceUploader(D3D12Device* InDevice);
+    ~D3D12GPUResourceUploader() = default;
 
     Bool Reserve(UInt32 InSizeInBytes);
     void Reset();
@@ -51,7 +44,6 @@ public:
     }
 
 private:
-    D3D12Device* Device  = nullptr;
     Byte*  MappedMemory  = nullptr;
     UInt32 SizeInBytes   = 0;
     UInt32 OffsetInBytes = 0;
@@ -240,40 +232,24 @@ public:
     virtual void BeginRenderPass() override final;
     virtual void EndRenderPass()   override final;
 
-    virtual void BindViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y) override final;
-    virtual void BindScissorRect(Float Width, Float Height, Float x, Float y) override final;
+    virtual void SetViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y) override final;
+    virtual void SetScissorRect(Float Width, Float Height, Float x, Float y) override final;
 
-    virtual void BindBlendFactor(const ColorF& Color) override final;
+    virtual void SetBlendFactor(const ColorF& Color) override final;
 
-    virtual void BindRenderTargets(RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView) override final;
+    virtual void SetRenderTargets(RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView) override final;
 
-    virtual void BindVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) override final;
-    virtual void BindIndexBuffer(IndexBuffer* IndexBuffer) override final;
+    virtual void SetVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) override final;
+    virtual void SetIndexBuffer(IndexBuffer* IndexBuffer) override final;
 
     virtual void SetHitGroups(RayTracingScene* Scene, RayTracingPipelineState* PipelineState, const TArrayView<RayTracingShaderResources>& LocalShaderResources) override final;
 
-    virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
+    virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
 
-    virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState) override final;
-    virtual void BindComputePipelineState(class ComputePipelineState* PipelineState) override final;
+    virtual void SetGraphicsPipelineState(class GraphicsPipelineState* PipelineState) override final;
+    virtual void SetComputePipelineState(class ComputePipelineState* PipelineState) override final;
 
-    virtual void Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants) override final;
-
-    virtual void BindShaderResourceViews(
-        EShaderStage ShaderStage, 
-        ShaderResourceView* const* ShaderResourceViews, 
-        UInt32 ShaderResourceViewCount,
-        UInt32 StartSlot) override final;
-    
-    virtual void BindSamplerStates(EShaderStage ShaderStage, SamplerState* const* SamplerStates, UInt32 SamplerStateCount, UInt32 StartSlot) override final;
-    
-    virtual void BindUnorderedAccessViews(
-        EShaderStage ShaderStage, 
-        UnorderedAccessView* const* UnorderedAccessViews, 
-        UInt32 UnorderedAccessViewCount, 
-        UInt32 StartSlot) override final;
-    
-    virtual void BindConstantBuffers(EShaderStage ShaderStage, ConstantBuffer* const* ConstantBuffers, UInt32 ConstantBufferCount, UInt32 StartSlot) override final;
+    virtual void Set32BitShaderConstants(Shader* Shader, const Void* Shader32BitConstants, UInt32 Num32BitConstants) override final;
 
     virtual void SetShaderResourceView(Shader* Shader, ShaderResourceView* ShaderResourceView, UInt32 ParameterIndex) override final;
     virtual void SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceView, UInt32 NumShaderResourceViews, UInt32 ParameterIndex) override final;
@@ -336,6 +312,9 @@ public:
 
     virtual void InsertMarker(const std::string& Message) override final;
 
+    virtual void BeginExternalCapture() override final;
+    virtual void EndExternalCapture()   override final;
+
 private:
     void InternalClearState();
 
@@ -353,12 +332,13 @@ private:
     TRef<D3D12ComputePipelineState> GenerateMipsTexCube_PSO;
 
     TRef<D3D12GraphicsPipelineState> CurrentGraphicsPipelineState;
-    TRef<D3D12RootSignature>         CurrentGraphicsRootSignature;
     TRef<D3D12ComputePipelineState>  CurrentComputePipelineState;
-    TRef<D3D12RootSignature>         CurrentComputeRootSignature;
+    TRef<D3D12RootSignature>         CurrentRootSignature;
 
+    D3D12ShaderConstantsCache   ShaderConstantsCache;
     D3D12DescriptorCache        DescriptorCache;
     D3D12ResourceBarrierBatcher BarrierBatcher;
 
-    Bool IsReady = false;
+    Bool IsReady     = false;
+    Bool IsCapturing = false;
 };

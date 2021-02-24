@@ -20,5 +20,7 @@ private:
     Bool CreateSkyLightResources(LightSetup& LightSetup);
 
     TRef<ComputePipelineState> IrradianceGenPSO;
+    TRef<ComputeShader>        IrradianceGenShader;
     TRef<ComputePipelineState> SpecularIrradianceGenPSO;
+    TRef<ComputeShader>        SpecularIrradianceGenShader;
 };

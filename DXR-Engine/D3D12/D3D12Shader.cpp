@@ -94,7 +94,6 @@ Bool D3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Refle
             }
 
             UInt32 Num32BitConstants = SizeInBytes / 4;
-            ConstantBufferParameters.EmplaceBack(ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, SizeInBytes);
             
             if (ShaderBindDesc.Space == D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
             {
@@ -108,7 +107,7 @@ Bool D3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Refle
             }
             else
             {
-                
+                ConstantBufferParameters.EmplaceBack(ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, SizeInBytes);
                 ResourceCount.Ranges.ConstantBufferViewCount = Math::Max(ResourceCount.Ranges.ConstantBufferViewCount, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
             }
         }

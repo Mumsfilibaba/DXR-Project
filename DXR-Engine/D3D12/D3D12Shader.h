@@ -84,7 +84,7 @@ public:
     D3D12ShaderParameter GetUnorderedAccessParameter(UInt32 ParameterIndex) { return UnorderedAccessParameters[ParameterIndex]; }
     UInt32 GetNumUnorderedAccessParameters() { return UnorderedAccessParameters.Size(); }
 
-    D3D12ShaderParameter GetSamplerStateParameter(UInt32 ParameterIndex)    { return SamplerParameters[ParameterIndex]; }
+    D3D12ShaderParameter GetSamplerStateParameter(UInt32 ParameterIndex) { return SamplerParameters[ParameterIndex]; }
     UInt32 GetNumSamplerStateParameters() { return SamplerParameters.Size(); }
 
     Bool HasRootSignature() const { return ContainsRootSignature; }
@@ -192,7 +192,7 @@ public:
     D3D12BaseComputeShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
         : ComputeShader()
         , D3D12BaseShader(InDevice, InCode, ShaderVisibility_All)
-        , ThreadGroupXYZ(0.0f, 0.0f, 0.0f)
+        , ThreadGroupXYZ(0, 0, 0)
     {
     }
 

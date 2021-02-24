@@ -186,6 +186,7 @@ Bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
             UInt32 Index = DxShader->GetShaderVisibility();
             ResourceCounts.ResourceCounts[Index] = DxShader->GetShaderResourceCount();
             Num32BitConstants = Math::Max<UInt32>(Num32BitConstants, ResourceCounts.ResourceCounts[Index].Num32BitConstants);
+            ResourceCounts.ResourceCounts[Index].Num32BitConstants = 0;
         }
 
         ResourceCounts.ResourceCounts[ShaderVisibility_All].Num32BitConstants = Num32BitConstants;

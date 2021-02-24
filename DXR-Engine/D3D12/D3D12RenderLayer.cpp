@@ -87,6 +87,7 @@ D3D12RenderLayer::~D3D12RenderLayer()
     SafeRelease(DepthStencilOfflineDescriptorHeap);
     SafeRelease(SamplerOfflineDescriptorHeap);
     
+    SafeDelete(RootSignatureCache);
     SafeDelete(Device);
 
     gD3D12RenderLayer = nullptr;

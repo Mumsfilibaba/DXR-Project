@@ -2,6 +2,7 @@
 #include <dxgi1_6.h>
 #include <d3d12.h>
 #include <dxcapi.h>
+#include <DXProgrammableCapture.h>
 
 #include "D3D12Helpers.h"
 
@@ -17,6 +18,7 @@ class D3D12RootSignature;
 
 typedef HRESULT(WINAPI* PFN_CREATE_DXGI_FACTORY_2)(UINT Flags, REFIID riid, _COM_Outptr_ void** ppFactory);
 typedef HRESULT(WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1)(UINT Flags, REFIID riid, _COM_Outptr_ void** pDebug);
+typedef HRESULT(WINAPI* PFN_SetMarkerOnCommandList)(ID3D12GraphicsCommandList* commandList, UINT64 color, _In_ PCSTR formatString);
 
 extern PFN_CREATE_DXGI_FACTORY_2                              CreateDXGIFactory2Func;
 extern PFN_DXGI_GET_DEBUG_INTERFACE_1                         DXGIGetDebugInterface1Func;
@@ -26,6 +28,7 @@ extern PFN_D3D12_SERIALIZE_ROOT_SIGNATURE                     D3D12SerializeRoot
 extern PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER           D3D12CreateRootSignatureDeserializerFunc;
 extern PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVersionedRootSignatureFunc;
 extern PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc;
+extern PFN_SetMarkerOnCommandList                             SetMarkerOnCommandListFunc;
 
 class D3D12Device
 {
@@ -138,6 +141,8 @@ public:
     FORCEINLINE ID3D12Device*  GetDevice()    const { return Device.Get(); }
     FORCEINLINE ID3D12Device5* GetDXRDevice() const { return DXRDevice.Get(); }
 
+    FORCEINLINE IDXGraphicsAnalysis* GetPIXCaptureInterface() const { return PIXCaptureInterface.Get(); }
+
     FORCEINLINE IDXGIFactory2* GetFactory() const { return Factory.Get(); }
 
     FORCEINLINE IDXGIAdapter1* GetAdapter() const { return Adapter.Get(); }
@@ -157,6 +162,8 @@ private:
     TComPtr<ID3D12Device>  Device;
     TComPtr<ID3D12Device5> DXRDevice;
 
+    TComPtr<IDXGraphicsAnalysis> PIXCaptureInterface;
+
     D3D_FEATURE_LEVEL MinFeatureLevel    = D3D_FEATURE_LEVEL_12_0;
     D3D_FEATURE_LEVEL ActiveFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
@@ -168,6 +175,7 @@ private:
 
     HMODULE DXGILib  = 0;
     HMODULE D3D12Lib = 0;
+    HMODULE PIXLib   = 0;
 
     UInt32 AdapterID = 0;
 

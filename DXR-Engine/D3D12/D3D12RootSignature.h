@@ -76,9 +76,14 @@ public:
     Bool Init(const void* BlobWithRootSignature, UInt64 BlobLengthInBytes);
 
     // Returns -1 if root parameter is not valid
-    Int32 GetRootParameterIndex(EShaderVisibility Visibility, EResourceType Type)
+    Int32 GetRootParameterIndex(EShaderVisibility Visibility, EResourceType Type) const
     {
         return RootParameterMap[Visibility][Type];
+    }
+
+    Int32 Get32BitConstantsIndex() const
+    {
+        return ConstantRootParameterIndex;
     }
 
     void SetName(const std::string& Name)
@@ -98,6 +103,8 @@ private:
 
     TComPtr<ID3D12RootSignature> RootSignature;
     Int32 RootParameterMap[ShaderVisibility_Count][ResourceType_Count];
+    // TODO: Enable this for all shader visibilities
+    Int32 ConstantRootParameterIndex;
 };
 
 class D3D12RootSignatureCache : public D3D12DeviceChild

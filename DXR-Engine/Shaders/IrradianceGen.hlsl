@@ -2,26 +2,19 @@
 
 #define BLOCK_SIZE 16
 
-/*
-* TODO: Support rootsignatures that does not need to support our default rootsignature,
-* since this sort of removes the need for the custom rootsignature support
-*/
-
 #define RootSig \
     "RootFlags(0), " \
     "RootConstants(b0, num32BitConstants = 1), " \
-    "DescriptorTable(CBV(b1, numDescriptors = 1))," \
     "DescriptorTable(SRV(t0, numDescriptors = 1))," \
     "DescriptorTable(UAV(u0, numDescriptors = 1))," \
-    "DescriptorTable(Sampler(s1, numDescriptors = 1))," \
     "StaticSampler(s0," \
         "addressU = TEXTURE_ADDRESS_WRAP," \
         "addressV = TEXTURE_ADDRESS_WRAP," \
         "addressW = TEXTURE_ADDRESS_WRAP," \
         "filter = FILTER_MIN_MAG_LINEAR_MIP_POINT)"
 
-TextureCube<float4> EnvironmentMap		: register(t0, space0);
-SamplerState		EnvironmentSampler	: register(s0, space0);
+TextureCube<float4> EnvironmentMap     : register(t0, space0);
+SamplerState        EnvironmentSampler : register(s0, space0);
 
 RWTexture2DArray<float4> IrradianceMap : register(u0);
 
@@ -60,6 +53,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 {
     uint3 TexCoord = DispatchThreadID;
     
+    // TODO: Put this in shaderconstants
     uint Width;
     uint Height;
     uint Elements;

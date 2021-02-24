@@ -25,7 +25,10 @@ private:
     TRef<ConstantBuffer> PerShadowMapBuffer;
 
     TRef<GraphicsPipelineState> DirLightPipelineState;
+    TRef<VertexShader>          DirLightShader;
     TRef<GraphicsPipelineState> PointLightPipelineState;
+    TRef<VertexShader>          PointLightVertexShader;
+    TRef<PixelShader>           PointLightPixelShader;
 
     Bool   UpdateDirLight   = true;
     Bool   UpdatePointLight = true;

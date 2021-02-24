@@ -742,5 +742,5 @@ FORCEINLINE Bool IsRayTracingSupported()
     RayTracingSupport Support;
     CheckRayTracingSupport(Support);
 
-    return Support.Tier != ERayTracingTier::NotSupported;
+    return false;// Support.Tier != ERayTracingTier::NotSupported;
 }

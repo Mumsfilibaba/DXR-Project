@@ -1,14 +1,15 @@
 #include "Structs.hlsli"
+#include "Constants.hlsli"
 
 RWTexture2D<float> Texture : register(u0, space0);
 
-cbuffer Params : register(b0, space0)
+cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     int2 ScreenSize;
 };
 
-#define THREAD_COUNT	16
-#define KERNEL_SIZE		5
+#define THREAD_COUNT 16
+#define KERNEL_SIZE  5
 
 groupshared float gTextureCache[THREAD_COUNT][THREAD_COUNT];
 

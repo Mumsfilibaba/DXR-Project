@@ -25,7 +25,12 @@ private:
     Bool CreateGBuffer(FrameResources& FrameResources);
 
     TRef<GraphicsPipelineState> PipelineState;
+    TRef<VertexShader>          BaseVertexShader;
+    TRef<PixelShader>           BasePixelShader;
     TRef<GraphicsPipelineState> PrePassPipelineState;
+    TRef<VertexShader>          PrePassVertexShader;
     TRef<ComputePipelineState>  TiledLightPassPSO;
+    TRef<ComputeShader>         TiledLightShader;
     TRef<ComputePipelineState>  TiledLightPassPSODebug;
+    TRef<ComputeShader>         TiledLightDebugShader;
 };

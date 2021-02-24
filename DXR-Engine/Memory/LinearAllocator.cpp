@@ -65,6 +65,4 @@ void LinearAllocator::Reset()
         Arenas.Resize(1); // Keep memory for the pointers
         CurrentArena = &Arenas.Front();
     }
-
-    return;
 }

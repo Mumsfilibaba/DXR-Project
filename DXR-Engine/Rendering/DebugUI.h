@@ -23,9 +23,9 @@ struct ImGuiImage
     }
 
     TRef<ShaderResourceView> ImageView;
-    TRef<Texture> Image;
-    EResourceState      BeforeState;
-    EResourceState      AfterState;
+    TRef<Texture>  Image;
+    EResourceState BeforeState;
+    EResourceState AfterState;
     Bool AllowBlending = false;
 };
 

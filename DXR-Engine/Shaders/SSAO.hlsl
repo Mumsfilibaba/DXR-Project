@@ -12,7 +12,7 @@ SamplerState NoiseSampler   : register(s1, space0);
 
 RWTexture2D<float> Output : register(u0, space0);
 
-cbuffer Params : register(b0, space0)
+cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     float2 ScreenSize;
     float2 NoiseSize;
@@ -21,7 +21,7 @@ cbuffer Params : register(b0, space0)
     int    KernelSize;
 };
 
-ConstantBuffer<Camera> CameraBuffer : register(b1, space0);
+ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
 
 #define THREAD_COUNT 16
 #define MAX_SAMPLES  64

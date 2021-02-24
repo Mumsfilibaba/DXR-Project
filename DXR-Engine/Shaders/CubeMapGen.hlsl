@@ -1,14 +1,10 @@
-#define BLOCK_SIZE 16
+#include "Constants.hlsli"
 
-/*
-* TODO: Support rootsignatures that does not need to support our default rootsignature,
-* since this sort of removes the need for the custom rootsignature support
-*/
+#define BLOCK_SIZE 16
 
 #define RootSig \
     "RootFlags(0), " \
-    "RootConstants(b0, num32BitConstants = 1), " \
-    "DescriptorTable(CBV(b1, numDescriptors = 1))," \
+    "RootConstants(b0, space = 1, num32BitConstants = 1), " \
     "DescriptorTable(SRV(t0, numDescriptors = 1))," \
     "DescriptorTable(UAV(u0, numDescriptors = 1))," \
     "DescriptorTable(Sampler(s1, numDescriptors = 1))," \
@@ -18,7 +14,7 @@
         "addressW = TEXTURE_ADDRESS_WRAP," \
         "filter = FILTER_MIN_MAG_LINEAR_MIP_POINT)"
 
-cbuffer CB0 : register(b0, space0)
+cbuffer CB0 : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     uint CubeMapSize; // Size of one side of the TextureCube
 }

@@ -17,7 +17,7 @@ Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResou
         Debug::DebugBreak();
     }
 
-    TRef<ComputeShader> IrradianceGenShader = CreateComputeShader(Code);
+    IrradianceGenShader = CreateComputeShader(Code);
     if (!IrradianceGenShader)
     {
         LOG_ERROR("Failed to create IrradianceGen Shader");
@@ -45,7 +45,7 @@ Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResou
         Debug::DebugBreak();
     }
 
-    TRef<ComputeShader> SpecularIrradianceGenShader = CreateComputeShader(Code);
+    SpecularIrradianceGenShader = CreateComputeShader(Code);
     if (!SpecularIrradianceGenShader)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen Shader");
@@ -95,16 +95,16 @@ void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const LightSe
     CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
-    CmdList.BindComputePipelineState(IrradianceGenPSO.Get());
+    CmdList.SetComputePipelineState(IrradianceGenPSO.Get());
     
     ShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
-    CmdList.BindShaderResourceViews(EShaderStage::Compute, &SkyboxSRV, 1, 0);
-    CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &LightSetup.IrradianceMapUAV, 1, 0);
+    CmdList.SetShaderResourceView(IrradianceGenShader.Get(), SkyboxSRV, 0);
+    CmdList.SetUnorderedAccessView(IrradianceGenShader.Get(), LightSetup.IrradianceMapUAV.Get(), 0);
 
     {
-        constexpr UInt32 ThreadCount = 16;
-        const UInt32 ThreadWidth  = Math::DivideByMultiple(IrradianceMapSize, ThreadCount);
-        const UInt32 ThreadHeight = Math::DivideByMultiple(IrradianceMapSize, ThreadCount);
+        const XMUINT3 ThreadCount = IrradianceGenShader->GetThreadGroupXYZ();
+        const UInt32 ThreadWidth  = Math::DivideByMultiple(IrradianceMapSize, ThreadCount.x);
+        const UInt32 ThreadHeight = Math::DivideByMultiple(IrradianceMapSize, ThreadCount.y);
         CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
     }
 
@@ -113,9 +113,9 @@ void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const LightSe
     CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::UnorderedAccess, EResourceState::PixelShaderResource);
     CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
-    CmdList.BindShaderResourceViews(EShaderStage::Compute, &SkyboxSRV, 1, 0);
+    CmdList.SetShaderResourceView(IrradianceGenShader.Get(), SkyboxSRV, 0);
 
-    CmdList.BindComputePipelineState(SpecularIrradianceGenPSO.Get());
+    CmdList.SetComputePipelineState(SpecularIrradianceGenPSO.Get());
 
     UInt32 Width = LightSetup.SpecularIrradianceMap->GetSize();
     Float  Roughness = 0.0f;
@@ -124,13 +124,13 @@ void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const LightSe
     const Float  RoughnessDelta = 1.0f / (NumMiplevels - 1);
     for (UInt32 Mip = 0; Mip < NumMiplevels; Mip++)
     {
-        CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &Roughness, 1);
-        CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &LightSetup.SpecularIrradianceMapUAVs[Mip], 1, 0);
+        CmdList.Set32BitShaderConstants(SpecularIrradianceGenShader.Get(), &Roughness, 1);
+        CmdList.SetUnorderedAccessView(SpecularIrradianceGenShader.Get(), LightSetup.SpecularIrradianceMapUAVs[Mip].Get(), 0);
 
         {
-            constexpr UInt32 ThreadCount = 16;
-            const UInt32 ThreadWidth  = Math::DivideByMultiple(Width, ThreadCount);
-            const UInt32 ThreadHeight = Math::DivideByMultiple(Width, ThreadCount);
+            const XMUINT3 ThreadCount = SpecularIrradianceGenShader->GetThreadGroupXYZ();
+            const UInt32 ThreadWidth  = Math::DivideByMultiple(Width, ThreadCount.x);
+            const UInt32 ThreadHeight = Math::DivideByMultiple(Width, ThreadCount.y);
             CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
         }
 

@@ -69,14 +69,20 @@ private:
 
     TRef<Texture2D>            ShadingImage;
     TRef<ComputePipelineState> ShadingRatePipeline;
+    TRef<ComputeShader>        ShadingRateShader;
 
     TRef<VertexBuffer> AABBVertexBuffer;
     TRef<IndexBuffer>  AABBIndexBuffer;
     TRef<GraphicsPipelineState> AABBDebugPipelineState;
+    TRef<VertexShader>          AABBVertexShader;
+    TRef<PixelShader>           AABBPixelShader;
 
     TRef<GraphicsPipelineState> PostPSO;
+    TRef<PixelShader>           PostShader;
     TRef<GraphicsPipelineState> FXAAPSO;
+    TRef<PixelShader>           FXAAShader;
     TRef<GraphicsPipelineState> FXAADebugPSO;
+    TRef<PixelShader>           FXAADebugShader;
 
     UInt32 LastFrameNumDrawCalls     = 0;
     UInt32 LastFrameNumDispatchCalls = 0;

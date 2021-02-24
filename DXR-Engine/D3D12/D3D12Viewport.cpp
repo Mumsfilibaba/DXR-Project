@@ -15,7 +15,7 @@ D3D12Viewport::D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdCo
 
 D3D12Viewport::~D3D12Viewport()
 {
-    BOOL    FullscreenState;
+    BOOL FullscreenState;
     HRESULT Result = SwapChain->GetFullscreenState(&FullscreenState, nullptr);
     if (SUCCEEDED(Result))
     {

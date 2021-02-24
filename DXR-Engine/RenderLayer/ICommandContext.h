@@ -21,41 +21,25 @@ public:
     virtual void BeginRenderPass() = 0;
     virtual void EndRenderPass()   = 0;
 
-    virtual void BindViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y) = 0;
-    virtual void BindScissorRect(Float Width, Float Height, Float x, Float y) = 0;
+    virtual void SetViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y) = 0;
+    virtual void SetScissorRect(Float Width, Float Height, Float x, Float y) = 0;
 
-    virtual void BindBlendFactor(const ColorF& Color) = 0;
+    virtual void SetBlendFactor(const ColorF& Color) = 0;
 
-    virtual void BindRenderTargets(RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView) = 0;
+    virtual void SetRenderTargets(RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView) = 0;
 
-    virtual void BindVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) = 0;
-    virtual void BindIndexBuffer(IndexBuffer* IndexBuffer) = 0;
+    virtual void SetVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) = 0;
+    virtual void SetIndexBuffer(IndexBuffer* IndexBuffer) = 0;
 
     virtual void SetHitGroups(RayTracingScene* Scene, RayTracingPipelineState* PipelineState, const TArrayView<RayTracingShaderResources>& LocalShaderResources) = 0;
 
-    virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) = 0;
+    virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) = 0;
 
-    virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState) = 0;
-    virtual void BindComputePipelineState(class ComputePipelineState* PipelineState)   = 0;
+    virtual void SetGraphicsPipelineState(class GraphicsPipelineState* PipelineState) = 0;
+    virtual void SetComputePipelineState(class ComputePipelineState* PipelineState)   = 0;
 
-    virtual void Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants) = 0;
+    virtual void Set32BitShaderConstants(Shader* Shader, const Void* Shader32BitConstants, UInt32 Num32BitConstants) = 0;
     
-    virtual void BindShaderResourceViews(
-        EShaderStage ShaderStage, 
-        ShaderResourceView* const* ShaderResourceViews, 
-        UInt32 ShaderResourceViewCount, 
-        UInt32 StartSlot) = 0;
-    
-    virtual void BindSamplerStates(EShaderStage ShaderStage, SamplerState* const* SamplerStates, UInt32 SamplerStateCount, UInt32 StartSlot) = 0;
-    
-    virtual void BindUnorderedAccessViews(
-        EShaderStage ShaderStage, 
-        UnorderedAccessView* const* UnorderedAccessViews,
-        UInt32 UnorderedAccessViewCount, 
-        UInt32 StartSlot) = 0;
-    
-    virtual void BindConstantBuffers(EShaderStage ShaderStage, ConstantBuffer* const * ConstantBuffers, UInt32 ConstantBufferCount, UInt32 StartSlot) = 0;
-
     virtual void SetShaderResourceView(Shader* Shader, ShaderResourceView* ShaderResourceView, UInt32 ParameterIndex) = 0;
     virtual void SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceView, UInt32 NumShaderResourceViews, UInt32 ParameterIndex) = 0;
 
@@ -116,4 +100,7 @@ public:
     virtual void Flush()      = 0;
 
     virtual void InsertMarker(const std::string& Message) = 0;
+
+    virtual void BeginExternalCapture() = 0;
+    virtual void EndExternalCapture()   = 0;
 };

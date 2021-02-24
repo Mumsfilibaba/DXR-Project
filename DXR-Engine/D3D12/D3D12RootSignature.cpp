@@ -212,6 +212,7 @@ D3D12RootSignature::D3D12RootSignature(D3D12Device* InDevice)
     : D3D12DeviceChild(InDevice)
     , RootSignature(nullptr)
     , RootParameterMap()
+    , ConstantRootParameterIndex(-1)
 {
     constexpr UInt32 NumElements = sizeof(RootParameterMap) / sizeof(UInt32);
 
@@ -286,6 +287,11 @@ void D3D12RootSignature::CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC&
 
             UInt32 ResourceType = GetResourceType(Range.RangeType);
             RootParameterMap[ShaderVisibility][ResourceType] = i;
+        }
+        else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS)
+        {
+            Assert(ConstantRootParameterIndex == -1);
+            ConstantRootParameterIndex = i;
         }
     }
 }

@@ -1,15 +1,14 @@
+#include "Constants.hlsli"
+
 // PerObject
-cbuffer TransformBuffer : register(b0, space0)
+cbuffer TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     float4x4 Transform;
     float ShadowOffset;
 };
 
-// NOTE: The constantbuffers start at b1, but when binding on the CPU side this corresponds to slot 0.
-// Due to an offset in the rootsignature when defining the constants
-
 // PerFrame DescriptorTable
-cbuffer LightBuffer : register(b1, space0)
+cbuffer LightBuffer : register(b0, space0)
 {
     float4x4 LightProjection;
     float3   LightPosition;

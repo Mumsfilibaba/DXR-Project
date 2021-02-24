@@ -1,5 +1,6 @@
 #include "PBRHelpers.hlsli"
 #include "Structs.hlsli"
+#include "Constants.hlsli"
 
 #if ENABLE_PARALLAX_MAPPING
     #define PARALLAX_MAPPING_ENABLED
@@ -10,13 +11,13 @@
 #endif
 
 // PerFrame
-ConstantBuffer<Camera> CameraBuffer : register(b1, space0);
+ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
 
 // PerObject Samplers
 SamplerState MaterialSampler : register(s0, space0);
 
-ConstantBuffer<Transform>	TransformBuffer : register(b0, space0);
-ConstantBuffer<Material>	MaterialBuffer	: register(b2, space0);
+ConstantBuffer<Transform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
+ConstantBuffer<Material>  MaterialBuffer  : register(b1, space0);
 
 Texture2D<float4> AlbedoMap : register(t0, space0);
 #ifdef NORMAL_MAPPING_ENABLED

@@ -1,4 +1,5 @@
 #include "Structs.hlsli"
+#include "Constants.hlsli"
 
 /*
 * Based on GenerateMipsCS.hlsli by Microsoft
@@ -12,7 +13,7 @@
 
 #define RootSig \
     "RootFlags(0), " \
-    "RootConstants(b0, num32BitConstants = 4), " \
+    "RootConstants(b0, space = 1, num32BitConstants = 4), " \
     "DescriptorTable(SRV(t0, numDescriptors = 1))," \
     "DescriptorTable(UAV(u0, numDescriptors = 4))," \
     "StaticSampler(s0," \
@@ -45,11 +46,11 @@
 SamplerState LinearSampler : register(s0);
 
 // Properties
-cbuffer CB0 : register(b0)
+cbuffer CB0 : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
-    uint	SrcMipLevel;	// Texture level of source mip
-    uint	NumMipLevels;	// Number of OutMips to write: [1, 4]
-    float2	TexelSize;		// 1.0 / OutMip1.Dimensions
+    uint   SrcMipLevel;   // Texture level of source mip
+    uint   NumMipLevels;  // Number of OutMips to write: [1, 4]
+    float2 TexelSize;     // 1.0 / OutMip1.Dimensions
 }
 
 // The reason for separating channels is to reduce bank conflicts in the

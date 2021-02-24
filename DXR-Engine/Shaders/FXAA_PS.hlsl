@@ -1,4 +1,5 @@
 #include "Helpers.hlsli"
+#include "Constants.hlsli"
 
 // Debugging
 #ifdef ENABLE_DEBUG
@@ -22,7 +23,7 @@
 #define FXAA_SEARCH_THRESHOLD	(1.0f / 4.0f)
 #define FXAA_SEARCH_STEPS		24
 
-cbuffer CB0 : register(b0, space0)
+cbuffer CB0 : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     float2 TextureSize;
 }

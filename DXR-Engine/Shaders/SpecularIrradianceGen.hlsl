@@ -1,32 +1,26 @@
 #include "PBRHelpers.hlsli"
+#include "Constants.hlsli"
 
 #define BLOCK_SIZE 16
 
-/*
-* TODO: Support rootsignatures that does not need to support our default rootsignature,
-* since this sort of removes the need for the custom rootsignature support
-*/
-
 #define RootSig \
     "RootFlags(0), " \
-    "RootConstants(b0, num32BitConstants = 1), " \
-    "DescriptorTable(CBV(b1, numDescriptors = 1))," \
+    "RootConstants(b0, space = 1, num32BitConstants = 1), " \
     "DescriptorTable(SRV(t0, numDescriptors = 1))," \
     "DescriptorTable(UAV(u0, numDescriptors = 1))," \
-    "DescriptorTable(Sampler(s1, numDescriptors = 1))," \
     "StaticSampler(s0," \
         "addressU = TEXTURE_ADDRESS_WRAP," \
         "addressV = TEXTURE_ADDRESS_WRAP," \
         "addressW = TEXTURE_ADDRESS_WRAP," \
         "filter = FILTER_MIN_MAG_MIP_LINEAR)"
 
-cbuffer CB0 : register(b0, space0)
+cbuffer CB0 : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     float Roughness;
 };
 
-TextureCube<float4>	EnvironmentMap		: register(t0, space0);
-SamplerState		EnvironmentSampler	: register(s0, space0);
+TextureCube<float4> EnvironmentMap     : register(t0, space0);
+SamplerState        EnvironmentSampler : register(s0, space0);
 
 RWTexture2DArray<float4> SpecularIrradianceMap : register(u0, space0);
 

@@ -36,7 +36,6 @@ Bool D3D12DescriptorHeap::Init()
         LOG_INFO("[D3D12DescriptorHeap]: Created DescriptorHeap");
     }
 
-
     CPUStart = Heap->GetCPUDescriptorHandleForHeapStart();
     GPUStart = Heap->GetGPUDescriptorHandleForHeapStart();
     DescriptorHandleIncrementSize = GetDevice()->GetDescriptorHandleIncrementSize(Desc.Type);
@@ -150,7 +149,7 @@ void D3D12OfflineDescriptorHeap::SetName(const std::string& InName)
 
 Bool D3D12OfflineDescriptorHeap::AllocateHeap()
 {
-    constexpr UInt32 DescriptorCount = 32;
+    constexpr UInt32 DescriptorCount = D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT;
 
     TRef<D3D12DescriptorHeap> Heap = DBG_NEW D3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
     if (Heap->Init())

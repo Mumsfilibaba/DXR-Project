@@ -1,10 +1,5 @@
 #include "PBRHelpers.hlsli"
 
-/*
-* TODO: Support rootsignatures that does not need to support our default rootsignature,
-* since this sort of removes the need for the custom rootsignature support
-*/
-
 #define RootSig \
     "RootFlags(0), " \
     "DescriptorTable(UAV(u0, numDescriptors = 1))," \

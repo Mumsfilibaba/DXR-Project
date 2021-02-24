@@ -16,9 +16,12 @@
 
 struct TextureFactoryData
 {
-    CommandList    CmdList;
     TRef<ComputePipelineState> PanoramaPSO;
-} static GlobalFactoryData;
+    TRef<ComputeShader>        ComputeShader;
+    CommandList CmdList;
+};
+
+static TextureFactoryData GlobalFactoryData;
 
 Bool TextureFactory::Init()
 {
@@ -29,14 +32,14 @@ Bool TextureFactory::Init()
         return false;
     }
 
-    TRef<ComputeShader> Shader = CreateComputeShader(Code);
-    if (!Shader)
+    GlobalFactoryData.ComputeShader = CreateComputeShader(Code);
+    if (!GlobalFactoryData.ComputeShader)
     {
         return false;
     }
 
     // Create pipeline
-    GlobalFactoryData.PanoramaPSO = CreateComputePipelineState(ComputePipelineStateCreateInfo(Shader.Get()));
+    GlobalFactoryData.PanoramaPSO = CreateComputePipelineState(ComputePipelineStateCreateInfo(GlobalFactoryData.ComputeShader.Get()));
     if (GlobalFactoryData.PanoramaPSO)
     {
         GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");
@@ -51,6 +54,7 @@ Bool TextureFactory::Init()
 void TextureFactory::Release()
 {
     GlobalFactoryData.PanoramaPSO.Reset();
+    GlobalFactoryData.ComputeShader.Reset();
 }
 
 Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format)
@@ -168,7 +172,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
     CmdList.TransitionTexture(PanoramaSource, EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
-    CmdList.BindComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
+    CmdList.SetComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
 
     struct ConstantBuffer
     {
@@ -176,11 +180,11 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
     } CB0;
     CB0.CubeMapSize = CubeMapSize;
 
-    CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &CB0, 1);
-    CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &StagingTextureUAV, 1, 0);
+    CmdList.Set32BitShaderConstants(GlobalFactoryData.ComputeShader.Get(), &CB0, 1);
+    CmdList.SetUnorderedAccessView(GlobalFactoryData.ComputeShader.Get(), StagingTextureUAV.Get(), 0);
 
     ShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
-    CmdList.BindShaderResourceViews(EShaderStage::Compute, &PanoramaSourceView, 1, 0);
+    CmdList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
 
     constexpr UInt32 LocalWorkGroupCount = 16;
     const UInt32 ThreadsX = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
