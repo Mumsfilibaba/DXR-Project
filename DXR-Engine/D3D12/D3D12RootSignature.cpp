@@ -216,7 +216,7 @@ D3D12RootSignature::D3D12RootSignature(D3D12Device* InDevice)
 {
     constexpr UInt32 NumElements = sizeof(RootParameterMap) / sizeof(UInt32);
 
-    UInt32* Ptr = reinterpret_cast<UInt32*>(&RootParameterMap);
+    Int32* Ptr = reinterpret_cast<Int32*>(&RootParameterMap);
     for (UInt32 i = 0; i < NumElements; i++)
     {
         *(Ptr++) = -1;
@@ -260,7 +260,14 @@ Bool D3D12RootSignature::Init(const void* BlobWithRootSignature, UInt64 BlobLeng
 
     CreateRootParameterMap(*Desc);
 
-    Result = GetDevice()->CreateRootSignature(1, BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&RootSignature));
+    // Force a new serialization with Root Signature 1.0
+    TComPtr<ID3DBlob> Blob;
+    if (!Serialize(*Desc, &Blob))
+    {
+        return false;
+    }
+
+    Result = GetDevice()->CreateRootSignature(1, Blob->GetBufferPointer(), Blob->GetBufferSize(), IID_PPV_ARGS(&RootSignature));
     if (FAILED(Result))
     {
         LOG_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
@@ -463,30 +470,6 @@ D3D12RootSignature* D3D12RootSignatureCache::GetOrCreateRootSignature(const D3D1
     }
 
     return CreateRootSignature(NewResourceCount);
-}
-
-D3D12RootSignature* D3D12RootSignatureCache::CreateFromByteCode(D3D12_SHADER_BYTECODE ByteCode)
-{
-    Assert(ByteCode.pShaderBytecode != nullptr);
-    Assert(ByteCode.BytecodeLength != 0);
-
-    TComPtr<ID3D12RootSignatureDeserializer> Deserializer;
-    HRESULT Result = D3D12CreateRootSignatureDeserializerFunc(ByteCode.pShaderBytecode, ByteCode.BytecodeLength, IID_PPV_ARGS(&Deserializer));
-    if (FAILED(Result))
-    {
-        LOG_INFO("[D3D12RootSignatureCache]: Failed to create ID3D12RootSignatureDeserializer");
-        return false;
-    }
-
-    D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = *Deserializer->GetRootSignatureDesc();
-    TRef<D3D12RootSignature> RootSignature = DBG_NEW D3D12RootSignature(GetDevice());
-    if (!RootSignature->Init(RootSignatureDesc))
-    {
-        return nullptr;
-    }
-
-    LOG_INFO("Created new root signature from bytecode");
-    return RootSignature.ReleaseOwnership();
 }
 
 D3D12RootSignatureCache& D3D12RootSignatureCache::Get()

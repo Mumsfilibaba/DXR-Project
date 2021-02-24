@@ -33,7 +33,7 @@ struct TD3D12DescriptorViewCache
             DescriptorViews[Visibility][ShaderRegister] = DescriptorView;
             Dirty[Visibility] = true;
         
-            UInt64& RangeLength = DescriptorRangeLengths[Visibility];
+            UInt32& RangeLength = DescriptorRangeLengths[Visibility];
             RangeLength = Math::Max<UInt32>(RangeLength, ShaderRegister + 1);
         }
     }
@@ -85,7 +85,7 @@ struct TD3D12DescriptorViewCache
             if (Dirty[i])
             {
                 Descriptors[i] = StartHandle;
-                StartHandle.ptr += DescriptorRangeLengths[i] * DescriptorSize;
+                StartHandle.ptr += (UInt64)DescriptorRangeLengths[i] * DescriptorSize;
 
                 Dirty[i] = false;
             }
@@ -104,7 +104,7 @@ struct TD3D12DescriptorViewCache
     D3D12_GPU_DESCRIPTOR_HANDLE Descriptors[NUM_VISIBILITIES];
     D3D12_CPU_DESCRIPTOR_HANDLE CopyDescriptors[NUM_DESCRIPTORS];
     Bool   Dirty[NUM_VISIBILITIES];
-    UInt64 DescriptorRangeLengths[NUM_VISIBILITIES];
+    UInt32 DescriptorRangeLengths[NUM_VISIBILITIES];
     UInt32 TotalNumDescriptors;
 };
 

@@ -196,7 +196,17 @@ Bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
     else
     {
         // TODO: Maybe use all shaders and create one that fits all
-        RootSignature = D3D12RootSignatureCache::Get().CreateFromByteCode(ShadersWithRootSignature.Back()->GetByteCode());
+        D3D12_SHADER_BYTECODE ByteCode = ShadersWithRootSignature.Front()->GetByteCode();
+
+        RootSignature = DBG_NEW D3D12RootSignature(GetDevice());
+        if (!RootSignature->Init(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
+        {
+            return false;
+        }
+        else
+        {
+            RootSignature->SetName("Custom Graphics RootSignature");
+        }
     }
 
     Assert(RootSignature != nullptr);
@@ -257,12 +267,21 @@ Bool D3D12ComputePipelineState::Init()
         ResourceCounts.AllowInputAssembler = false;
         ResourceCounts.ResourceCounts[ShaderVisibility_All] = Shader->GetShaderResourceCount();
 
-        D3D12BaseShader* BaseShader = Shader.Get();
         RootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts);
     }
     else
     {
-        RootSignature = D3D12RootSignatureCache::Get().CreateFromByteCode(Shader->GetByteCode());
+        D3D12_SHADER_BYTECODE ByteCode = Shader->GetByteCode();
+
+        RootSignature = DBG_NEW D3D12RootSignature(GetDevice());
+        if (!RootSignature->Init(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
+        {
+            return false;
+        }
+        else
+        {
+            RootSignature->SetName("Custom Compute RootSignature");
+        }
     }
 
     Assert(RootSignature != nullptr);

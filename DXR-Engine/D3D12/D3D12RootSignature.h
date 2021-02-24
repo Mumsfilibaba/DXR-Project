@@ -116,7 +116,6 @@ public:
     Bool Init();
     void ReleaseAll();
 
-    D3D12RootSignature* CreateFromByteCode(D3D12_SHADER_BYTECODE ShaderByteCode);
     D3D12RootSignature* GetOrCreateRootSignature(const D3D12RootSignatureResourceCount& ResourceCount);
 
     static D3D12RootSignatureCache& Get();

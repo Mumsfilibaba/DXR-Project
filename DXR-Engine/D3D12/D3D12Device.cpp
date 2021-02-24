@@ -89,21 +89,16 @@ Bool D3D12Device::Init()
         LOG_INFO("Loaded d3d12.dll");
     }
 
-    CreateDXGIFactory2Func = GetTypedProcAddress<PFN_CREATE_DXGI_FACTORY_2>(
-        DXGILib, 
-        "CreateDXGIFactory2");
-    DXGIGetDebugInterface1Func = GetTypedProcAddress<PFN_DXGI_GET_DEBUG_INTERFACE_1>(
-        DXGILib, 
-        "DXGIGetDebugInterface1");
-    D3D12CreateDeviceFunc = GetTypedProcAddress<PFN_D3D12_CREATE_DEVICE>(
-        D3D12Lib, 
-        "D3D12CreateDevice");
-    D3D12GetDebugInterfaceFunc = GetTypedProcAddress<PFN_D3D12_GET_DEBUG_INTERFACE>(
-        D3D12Lib, 
-        "D3D12GetDebugInterface");
-    D3D12SerializeRootSignatureFunc = GetTypedProcAddress<PFN_D3D12_SERIALIZE_ROOT_SIGNATURE>(
-        D3D12Lib, 
-        "D3D12SerializeRootSignature");
+    CreateDXGIFactory2Func = GetTypedProcAddress<PFN_CREATE_DXGI_FACTORY_2>(DXGILib, "CreateDXGIFactory2");
+
+    DXGIGetDebugInterface1Func = GetTypedProcAddress<PFN_DXGI_GET_DEBUG_INTERFACE_1>(DXGILib, "DXGIGetDebugInterface1");
+    
+    D3D12CreateDeviceFunc = GetTypedProcAddress<PFN_D3D12_CREATE_DEVICE>(D3D12Lib, "D3D12CreateDevice");
+
+    D3D12GetDebugInterfaceFunc = GetTypedProcAddress<PFN_D3D12_GET_DEBUG_INTERFACE>(D3D12Lib, "D3D12GetDebugInterface");
+
+    D3D12SerializeRootSignatureFunc = GetTypedProcAddress<PFN_D3D12_SERIALIZE_ROOT_SIGNATURE>(D3D12Lib, "D3D12SerializeRootSignature");
+
     D3D12SerializeVersionedRootSignatureFunc = GetTypedProcAddress<PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE>(
         D3D12Lib, 
         "D3D12SerializeVersionedRootSignature");
@@ -120,10 +115,7 @@ Bool D3D12Device::Init()
         if (PIXLib != NULL)
         {
             LOG_INFO("Loaded WinPixEventRuntime.dll");
-
-            SetMarkerOnCommandListFunc = GetTypedProcAddress<PFN_SetMarkerOnCommandList>(
-                PIXLib,
-                "PIXSetMarkerOnCommandList");
+            SetMarkerOnCommandListFunc = GetTypedProcAddress<PFN_SetMarkerOnCommandList>(PIXLib, "PIXSetMarkerOnCommandList");
         }
         else
         {

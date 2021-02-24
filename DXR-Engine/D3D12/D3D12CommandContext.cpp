@@ -603,6 +603,7 @@ void D3D12CommandContext::SetShaderResourceView(Shader* Shader, ShaderResourceVi
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetShaderResourceParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == 1);
 
     D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceView);
     DescriptorCache.SetShaderResourceView(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
@@ -615,8 +616,9 @@ void D3D12CommandContext::SetShaderResourceViews(Shader* Shader, ShaderResourceV
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetShaderResourceParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == NumShaderResourceViews);
 
-    for (UInt32 i = 0; i < ParameterInfo.NumDescriptors; i++)
+    for (UInt32 i = 0; i < NumShaderResourceViews; i++)
     {
         D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceView[i]);
         DescriptorCache.SetShaderResourceView(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
@@ -630,6 +632,7 @@ void D3D12CommandContext::SetUnorderedAccessView(Shader* Shader, UnorderedAccess
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetUnorderedAccessParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == 1);
     
     D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessView);
     DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
@@ -642,8 +645,9 @@ void D3D12CommandContext::SetUnorderedAccessViews(Shader* Shader, UnorderedAcces
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetUnorderedAccessParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == NumUnorderedAccessViews);
 
-    for (UInt32 i = 0; i < ParameterInfo.NumDescriptors; i++)
+    for (UInt32 i = 0; i < NumUnorderedAccessViews; i++)
     {
         D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessViews[i]);
         DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
@@ -657,6 +661,7 @@ void D3D12CommandContext::SetConstantBuffer(Shader* Shader, ConstantBuffer* Cons
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetConstantBufferParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == 1);
 
     if (ConstantBuffer)
     {
@@ -676,6 +681,7 @@ void D3D12CommandContext::SetConstantBuffers(Shader* Shader, ConstantBuffer* con
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetConstantBufferParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == NumConstantBuffers);
 
     for (UInt32 i = 0; i < NumConstantBuffers; i++)
     {
@@ -698,6 +704,7 @@ void D3D12CommandContext::SetSamplerState(Shader* Shader, SamplerState* SamplerS
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetSamplerStateParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == 1);
 
     D3D12SamplerState* DxSamplerState = static_cast<D3D12SamplerState*>(SamplerState);
     DescriptorCache.SetSamplerState(DxSamplerState, DxShader->GetShaderVisibility(), ParameterInfo.Register);
@@ -710,6 +717,7 @@ void D3D12CommandContext::SetSamplerStates(Shader* Shader, SamplerState* const* 
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetSamplerStateParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == NumSamplerStates);
 
     for (UInt32 i = 0; i < NumSamplerStates; i++)
     {
@@ -901,6 +909,10 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
         LOG_ERROR("[D3D12CommandContext] Failed to create StagingTexture for GenerateMips");
         return;
     }
+    else
+    {
+        StagingTexture->SetName("GenerateMips StagingTexture");
+    }
 
     // Check Type
     const Bool IsTextureCube = Texture->AsTextureCube();
@@ -1008,7 +1020,6 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
     const D3D12_GPU_DESCRIPTOR_HANDLE SrvHandle_GPU = ResourceHeap->GetGPUDescriptorHandleAt(StartDescriptorHandleIndex);
     ID3D12DescriptorHeap* OnlineResourceHeap        = ResourceHeap->GetHeap()->GetHeap();    
     CmdList.SetDescriptorHeaps(&OnlineResourceHeap, 1);
-    CmdList.SetComputeRootDescriptorTable(SrvHandle_GPU, 1);
 
     struct ConstantBuffer
     {
@@ -1029,8 +1040,11 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
         ConstantData.NumMipLevels = Math::Min<UInt32>(4, RemainingMiplevels);
 
         CmdList.SetComputeRoot32BitConstants(&ConstantData, 4, 0, 0);
+        
+        // Because of DATA_STATIC_WHILE_SET_AT_EXECUTE error
+        CmdList.SetComputeRootDescriptorTable(SrvHandle_GPU, 1);
 
-        const UInt32 GPUDescriptorHandleIndex = i * MipLevelsPerDispatch;
+        const UInt32 GPUDescriptorHandleIndex           = i * MipLevelsPerDispatch;
         const D3D12_GPU_DESCRIPTOR_HANDLE UavHandle_GPU = ResourceHeap->GetGPUDescriptorHandleAt(UavStartDescriptorHandleIndex + GPUDescriptorHandleIndex);
         CmdList.SetComputeRootDescriptorTable(UavHandle_GPU, 2);
 
