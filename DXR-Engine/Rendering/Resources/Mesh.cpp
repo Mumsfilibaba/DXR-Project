@@ -16,17 +16,50 @@ Bool Mesh::Init(const MeshData& Data)
     {
         return false;
     }
+    else
+    {
+        VertexBuffer->SetName("VertexBuffer");
+    }
 
-    InitialData = ResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
-    IndexBuffer = CreateIndexBuffer(EIndexFormat::UInt32, IndexCount, BufferFlags, EResourceState::IndexBuffer, &InitialData);
+    TArray<UInt16> SmallIndicies;
+    EIndexFormat Format = EIndexFormat::UInt32;
+    if (VertexCount < UINT16_MAX)
+    {
+        Format = EIndexFormat::UInt16;
+        SmallIndicies.Resize(Data.Indices.Size());
+        for (UInt32 i = 0; i < IndexCount; i++)
+        {
+            SmallIndicies[i] = (UInt16)Data.Indices[i];
+        }
+
+        InitialData = ResourceData(SmallIndicies.Data(), SmallIndicies.SizeInBytes());
+    }
+    else
+    {
+        InitialData = ResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
+    }
+
+    IndexBuffer = CreateIndexBuffer(Format, IndexCount, BufferFlags, EResourceState::IndexBuffer, &InitialData);
     if (!IndexBuffer)
     {
         return false;
+    }
+    else
+    {
+        IndexBuffer->SetName("IndexBuffer");
     }
 
     if (IsRayTracingSupported())
     {
         RTGeometry = CreateRayTracingGeometry(RayTracingStructureBuildFlag_None, VertexBuffer.Get(), IndexBuffer.Get());
+        if (!RTGeometry)
+        {
+            return false;
+        }
+        else
+        {
+            RTGeometry->SetName("RayTracing Geometry");
+        }
 
         VertexBufferSRV = CreateShaderResourceView(VertexBuffer.Get(), 0, VertexCount);
         if (!VertexBufferSRV)

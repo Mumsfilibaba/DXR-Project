@@ -65,6 +65,7 @@ public:
         {
             Resources.Clear();
             NativeResources.Clear();
+            DxResources.Clear();
 
             GpuResourceUploader.Reset();
 

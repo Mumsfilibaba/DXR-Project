@@ -20,6 +20,10 @@ Material::Material(const MaterialProperties& InProperties)
 void Material::Init()
 {
     MaterialBuffer = CreateConstantBuffer<MaterialProperties>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+    if (MaterialBuffer)
+    {
+        MaterialBuffer->SetName("MaterialBuffer");
+    }
 
     SamplerStateCreateInfo CreateInfo;
     CreateInfo.AddressU       = ESamplerMode::Wrap;

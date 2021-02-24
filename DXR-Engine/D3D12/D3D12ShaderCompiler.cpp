@@ -509,10 +509,15 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
         return false;
     }
 
+    std::string AsciiFilePath = FilePath != nullptr ? ConvertToAscii(FilePath) : "";
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
-        LOG_INFO("[D3D12ShaderCompiler]: Successfully compiled with the following output:");
+        LOG_INFO("[D3D12ShaderCompiler]: Successfully compiled shader '" + AsciiFilePath + "' with the following output:");
         LOG_INFO(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+    }
+    else
+    {
+        LOG_INFO("[D3D12ShaderCompiler]: Successfully compiled shader '" + AsciiFilePath + "'.");
     }
 
     TComPtr<IDxcBlob> CompiledBlob;

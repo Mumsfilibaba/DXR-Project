@@ -16,6 +16,10 @@ Bool LightSetup::Init()
         Debug::DebugBreak();
         return false;
     }
+    else
+    {
+        DirectionalLightsBuffer->SetName("DirectionalLightsBuffer");
+    }
     
     PointLightsData.Reserve(256);
     PointLightsBuffer = CreateConstantBuffer(PointLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
@@ -24,6 +28,10 @@ Bool LightSetup::Init()
         Debug::DebugBreak();
         return false;
     }
+    else
+    {
+        PointLightsBuffer->SetName("PointLightsBuffer");
+    }
 
     PointLightsPosRad.Reserve(256);
     PointLightsPosRadBuffer = CreateConstantBuffer(PointLightsPosRad.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
@@ -31,6 +39,10 @@ Bool LightSetup::Init()
     {
         Debug::DebugBreak();
         return false;
+    }
+    else
+    {
+        PointLightsPosRadBuffer->SetName("PointLightsPosRadBuffer");
     }
 
     ShadowCastingPointLightsData.Reserve(8);
@@ -44,6 +56,10 @@ Bool LightSetup::Init()
         Debug::DebugBreak();
         return false;
     }
+    else
+    {
+        ShadowCastingPointLightsBuffer->SetName("ShadowCastingPointLightsBuffer");
+    }
 
     ShadowCastingPointLightsPosRad.Reserve(8);
     ShadowCastingPointLightsPosRadBuffer = CreateConstantBuffer(
@@ -55,6 +71,10 @@ Bool LightSetup::Init()
     {
         Debug::DebugBreak();
         return false;
+    }
+    else
+    {
+        ShadowCastingPointLightsPosRadBuffer->SetName("ShadowCastingPointLightsPosRadBuffer");
     }
 
     return true;

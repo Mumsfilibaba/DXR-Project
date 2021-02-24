@@ -164,7 +164,7 @@ Bool Sandbox::Init()
         NormalMap->SetName("NormalMap");
     }
 
-    TRef<Texture2D> AOMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> AOMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (!AOMap)
     {
         return false;
@@ -174,7 +174,7 @@ Bool Sandbox::Init()
         AOMap->SetName("AOMap");
     }
 
-    TRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (!RoughnessMap)
     {
         return false;
@@ -184,7 +184,7 @@ Bool Sandbox::Init()
         RoughnessMap->SetName("RoughnessMap");
     }
 
-    TRef<Texture2D> HeightMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> HeightMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (!HeightMap)
     {
         return false;
@@ -194,7 +194,7 @@ Bool Sandbox::Init()
         HeightMap->SetName("HeightMap");
     }
 
-    TRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png" , TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png" , TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (!MetallicMap)
     {
         return false;

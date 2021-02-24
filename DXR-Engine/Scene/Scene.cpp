@@ -168,7 +168,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
             if (MaterialTextures.count(Mat.ambient_texname) == 0)
             {
                 std::string TexName = MTLFiledir + '/' + Mat.ambient_texname;
-                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
                 if (Texture)
                 {
                     Texture->SetName(Mat.ambient_texname);
@@ -212,7 +212,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
             if (MaterialTextures.count(Mat.specular_highlight_texname) == 0)
             {
                 std::string TexName = MTLFiledir + '/' + Mat.specular_highlight_texname;
-                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
                 if (Texture)
                 {
                     Texture->SetName(Mat.specular_highlight_texname);
@@ -256,7 +256,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
             if (MaterialTextures.count(Mat.alpha_texname) == 0)
             {
                 std::string TexName = MTLFiledir + '/' + Mat.alpha_texname;
-                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
                 if (Texture)
                 {
                     Texture->SetName(Mat.alpha_texname);

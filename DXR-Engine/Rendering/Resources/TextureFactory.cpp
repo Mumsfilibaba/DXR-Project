@@ -69,6 +69,10 @@ Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 Crea
     {
         Pixels = TUniquePtr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 4));
     }
+    else if (Format == EFormat::R8_Unorm)
+    {
+        Pixels = TUniquePtr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 1));
+    }
     else if (Format == EFormat::R32G32B32A32_Float)
     {
         Pixels = TUniquePtr<Byte>(reinterpret_cast<Byte*>(stbi_loadf(Filepath.c_str(), &Width, &Height, &ChannelCount, 4)));
@@ -95,18 +99,18 @@ Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 Crea
 
 Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format)
 {
-    if (Format != EFormat::R8G8B8A8_Unorm && Format != EFormat::R32G32B32A32_Float)
+    if (Format != EFormat::R8_Unorm && Format != EFormat::R8G8B8A8_Unorm && Format != EFormat::R32G32B32A32_Float)
     {
         LOG_ERROR("[TextureFactory]: Format not supported");
         return nullptr;
     }
 
     const Bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const UInt32 NumMips = GenerateMips ? UInt32(std::min(std::log2(Width), std::log2(Height))) : 1;
+    const UInt32 NumMips    = GenerateMips ? UInt32(std::min(std::log2(Width), std::log2(Height))) : 1;
 
     Assert(NumMips != 0);
 
-    const UInt32 Stride   = (Format == EFormat::R8G8B8A8_Unorm) ? 4 : 16;
+    const UInt32 Stride   = GetByteStrideFromFormat(Format);
     const UInt32 RowPitch = Width * Stride;
     
     Assert(RowPitch > 0);

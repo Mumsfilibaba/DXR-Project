@@ -572,7 +572,7 @@ VertexBuffer* D3D12RenderLayer::CreateVertexBuffer(UInt32 Stride, UInt32 NumVert
     const UInt32 SizeInBytes = NumVertices * Stride;
 
     TRef<D3D12VertexBuffer> NewBuffer = DBG_NEW D3D12VertexBuffer(Device, NumVertices, Stride, Flags);
-    if (!FinalizeBufferResource(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
+    if (!FinalizeBufferResource<D3D12VertexBuffer>(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to create VertexBuffer");
         return nullptr;
@@ -588,7 +588,7 @@ IndexBuffer* D3D12RenderLayer::CreateIndexBuffer(EIndexFormat Format, UInt32 Num
     const UInt32 SizeInBytes = NumIndices * GetStrideFromIndexFormat(Format);
 
     TRef<D3D12IndexBuffer> NewBuffer = DBG_NEW D3D12IndexBuffer(Device, Format, NumIndices, Flags);
-    if (!FinalizeBufferResource(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
+    if (!FinalizeBufferResource<D3D12IndexBuffer>(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to create IndexBuffer");
         return nullptr;
@@ -606,7 +606,7 @@ ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer(UInt32 Size, UInt32 Flags
     const UInt32 AlignedSizeInBytes = Math::AlignUp<UInt32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
     TRef<D3D12ConstantBuffer> NewBuffer = DBG_NEW D3D12ConstantBuffer(Device, ResourceOfflineDescriptorHeap, Size, Flags);
-    if (!FinalizeBufferResource(NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData))
+    if (!FinalizeBufferResource<D3D12ConstantBuffer>(NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to create ConstantBuffer");
         return nullptr;
@@ -622,7 +622,7 @@ StructuredBuffer* D3D12RenderLayer::CreateStructuredBuffer(UInt32 Stride, UInt32
     const UInt32 SizeInBytes = NumElements * Stride;
 
     TRef<D3D12StructuredBuffer> NewBuffer = DBG_NEW D3D12StructuredBuffer(Device, NumElements, Stride, Flags);
-    if (!FinalizeBufferResource(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
+    if (!FinalizeBufferResource<D3D12StructuredBuffer>(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to create StructuredBuffer");
         return nullptr;

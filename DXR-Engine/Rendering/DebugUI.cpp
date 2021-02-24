@@ -401,6 +401,10 @@ Bool DebugUI::Init()
     {
         return false;
     }
+    else
+    {
+        GlobalImGuiState.VertexBuffer->SetName("ImGui VertexBuffer");
+    }
 
     GlobalImGuiState.IndexBuffer = CreateIndexBuffer(
         sizeof(ImDrawIdx) == 2 ? EIndexFormat::UInt16 : EIndexFormat::UInt32, 
@@ -411,6 +415,10 @@ Bool DebugUI::Init()
     if (!GlobalImGuiState.IndexBuffer)
     {
         return false;
+    }
+    else
+    {
+        GlobalImGuiState.IndexBuffer->SetName("ImGui IndexBuffer");
     }
 
     SamplerStateCreateInfo CreateInfo;
