@@ -33,24 +33,24 @@ void RayGen()
 
     float2 TexCoord = GetTexCoord();
 
-    // Sample Normal and Position
-    float Depth = GBufferDepth.SampleLevel(GBufferSampler, TexCoord, 0).r;
-    if (Depth >= 1.0f)
-    {
-        OutTexture[DispatchIndex.xy] = float4(0.0f, 0.0f, 0.0f, 1.0f);
-        return;
-    }
+    //// Sample Normal and Position
+    //float Depth = GBufferDepth.SampleLevel(GBufferSampler, TexCoord, 0).r;
+    //if (Depth >= 1.0f)
+    //{
+    //    OutTexture[DispatchIndex.xy] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    //    return;
+    //}
     
-    float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
-    float3 WorldNormal   = GBufferNormal.SampleLevel(GBufferSampler, TexCoord, 0).rgb;
-    WorldNormal = UnpackNormal(WorldNormal);
+    //float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
+    //float3 WorldNormal   = GBufferNormal.SampleLevel(GBufferSampler, TexCoord, 0).rgb;
+    //WorldNormal = UnpackNormal(WorldNormal);
     
-    float3 ViewDir = normalize(WorldPosition - CameraBuffer.Position);
+    //float3 ViewDir = normalize(WorldPosition - CameraBuffer.Position);
     
     // Send inital ray
     RayDesc Ray;
-    Ray.Origin    = WorldPosition + (WorldNormal * RAY_OFFSET);
-    Ray.Direction = reflect(ViewDir, WorldNormal);
+    Ray.Origin    = LightPosition;//WorldPosition + (WorldNormal * RAY_OFFSET);
+    Ray.Direction = normalize(LightPosition + float3(TexCoord.x, TexCoord.y, 0.0f)); //reflect(ViewDir, WorldNormal);
 
     Ray.TMin = 0;
     Ray.TMax = 100000;
