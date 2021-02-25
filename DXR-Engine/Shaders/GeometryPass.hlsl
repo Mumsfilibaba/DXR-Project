@@ -188,16 +188,16 @@ PSOutput PSMain(PSInput Input)
 #endif	
     MappedNormal = PackNormal(MappedNormal);
 
-    const float SampledAO			= AOMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.AO;
-    const float SampledMetallic		= MetallicMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Metallic;
-    const float SampledRoughness	= RoughnessMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Roughness;
-    const float FinalRoughness		= min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    const float SampledAO        = AOMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.AO;
+    const float SampledMetallic  = MetallicMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Metallic;
+    const float SampledRoughness = RoughnessMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Roughness;
+    const float FinalRoughness   = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
     
     PSOutput Output;
-    Output.Albedo		= float4(SampledAlbedo, 1.0f);
-    Output.Normal		= float4(MappedNormal, 1.0f);
-    Output.Material		= float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
-    Output.ViewNormal	= float4(PackNormal(Input.ViewNormal), 1.0f);
+    Output.Albedo     = float4(SampledAlbedo, 1.0f);
+    Output.Normal     = float4(MappedNormal, 1.0f);
+    Output.Material   = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
+    Output.ViewNormal = float4(PackNormal(Input.ViewNormal), 1.0f);
 
     return Output;
 }

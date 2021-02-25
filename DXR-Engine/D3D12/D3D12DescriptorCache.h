@@ -51,6 +51,20 @@ struct TD3D12DescriptorViewCache
         }
     }
 
+    UInt32 CountNeededDescriptors() const
+    {
+        UInt32 NumDescriptors = 0;
+        for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
+        {
+            if (Dirty[i])
+            {
+                NumDescriptors += DescriptorRangeLengths[i];
+            }
+        }
+
+        return NumDescriptors;
+    }
+
     void PrepareForCopy(TD3D12DescriptorViewType* DefaultView)
     {
         TotalNumDescriptors = 0;
@@ -360,7 +374,7 @@ public:
     }
 
 private:
-    void CopyDescriptors(D3D12OnlineDescriptorHeap* ResourceHeap, D3D12OnlineDescriptorHeap* SamplerHeap);
+    void CopyDescriptorsAndSetHeaps(ID3D12GraphicsCommandList* CmdList, D3D12OnlineDescriptorHeap* ResourceHeap, D3D12OnlineDescriptorHeap* SamplerHeap);
     
     D3D12ConstantBufferView*  NullCBV     = nullptr;
     D3D12ShaderResourceView*  NullSRV     = nullptr;

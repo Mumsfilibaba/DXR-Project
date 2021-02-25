@@ -194,7 +194,7 @@ public:
 
     D3D12CommandQueueHandle& GetQueue()      { return CmdQueue; }
     D3D12CommandListHandle& GetCommandList() { return CmdList; }
-
+    
     void UpdateBuffer(D3D12Resource* Resource, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData);
 
     void UnorderedAccessBarrier(D3D12Resource* Resource)
@@ -326,7 +326,7 @@ private:
     D3D12CommandListHandle  CmdList;
     D3D12FenceHandle        Fence;
     D3D12CommandQueueHandle CmdQueue;
-    
+
     UInt64 FenceValue   = 0;
     UInt32 NextCmdBatch = 0;
 

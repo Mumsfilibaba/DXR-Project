@@ -96,9 +96,9 @@ void Transform::CalculateMatrix()
             XMMatrixMultiply(XMMatrixScalingFromVector(XmScale), 
             XMMatrixRotationRollPitchYawFromVector(XmRotation)),
             XMMatrixTranslationFromVector(XmTranslation));
+    XMStoreFloat3x4(&TinyMatrix, XmMatrix);
     XmMatrix = XMMatrixTranspose(XmMatrix);
     XMStoreFloat4x4(&Matrix, XmMatrix);
-    XMStoreFloat3x4(&TinyMatrix, XmMatrix);
 
     XMMATRIX XmMatrixInv = XMMatrixInverse(nullptr, XmMatrix);
     XMStoreFloat4x4(&MatrixInv, XMMatrixTranspose(XmMatrixInv));

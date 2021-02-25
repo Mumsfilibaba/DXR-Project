@@ -3,9 +3,9 @@
 
 #define D3D12_MAX_ROOT_PARAMETERS              (64)
 #define D3D12_MAX_SHADER_PARAMETERS            (16)
-#define D3D12_MAX_HIT_GROUPS                   (128)
+#define D3D12_MAX_HIT_GROUPS                   (512)
 #define D3D12_MAX_DESCRIPTOR_RANGES            (64)
-#define D3D12_MAX_DESCRIPTOR_RANGE_SIZE        (128)
+#define D3D12_MAX_DESCRIPTOR_RANGE_SIZE        (256)
 #define D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT (32)
 #define D3D12_MAX_VERTEX_BUFFER_SLOTS          (8)
 #define D3D12_MAX_RENDER_TARGET_COUNT          (8)

@@ -404,11 +404,11 @@ Bool D3D12RootSignatureCache::Init()
     D3D12RootSignatureResourceCount RTGlobalKey;
     RTGlobalKey.Type                = ERootSignatureType::RayTracingGlobal;
     RTGlobalKey.AllowInputAssembler = false;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants                  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs  = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs  = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers             = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
 
     D3D12RootSignature* RTGlobalRootSignature = CreateRootSignature(RTGlobalKey);
     if (!RTGlobalRootSignature)

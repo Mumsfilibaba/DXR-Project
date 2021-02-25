@@ -36,7 +36,13 @@ void Main(ComputeShaderInput Input)
     }
     
     const float2 TexCoords = (float2(OutputTexCoords) + 0.5f) / ScreenSize;
-    const float  Depth  = GBufferDepth.SampleLevel(GBufferSampler, TexCoords, 0);
+    const float  Depth     = GBufferDepth.SampleLevel(GBufferSampler, TexCoords, 0);
+    if (Depth >= 1.0f)
+    {
+        Output[OutputTexCoords] = 1.0f;
+        return;
+    }
+    
     float3 ViewPosition = PositionFromDepth(Depth, TexCoords, CameraBuffer.ProjectionInverse);
     
     float3 ViewNormal = GBufferNormals.SampleLevel(GBufferSampler, TexCoords, 0).rgb;

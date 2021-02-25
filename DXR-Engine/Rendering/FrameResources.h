@@ -13,6 +13,47 @@
 #define GBUFFER_DEPTH_INDEX       3
 #define GBUFFER_VIEW_NORMAL_INDEX 4
 
+template<typename TResource>
+class PtrResourceCache
+{
+public:
+    Int32 Add(TResource* Resource)
+    {
+        if (Resource == nullptr)
+        {
+            return -1;
+        }
+
+        auto TextureIndexPair = ResourceIndices.find(Resource);
+        if (TextureIndexPair == ResourceIndices.end())
+        {
+            Int32 NewIndex = Resources.Size();
+            ResourceIndices[Resource] = NewIndex;
+            Resources.EmplaceBack(Resource);
+
+            return NewIndex;
+        }
+        else
+        {
+            return TextureIndexPair->second;
+        }
+    }
+
+    TResource* Get(UInt32 Index) const
+    {
+        return Resources[Index];
+    }
+
+    UInt32 Size() const
+    {
+        return Resources.Size();
+    }
+
+private:
+    TArray<TResource*>                    Resources;
+    std::unordered_map<TResource*, Int32> ResourceIndices;
+};
+
 struct FrameResources
 {
     FrameResources()  = default;
@@ -55,12 +96,14 @@ struct FrameResources
     TRef<Texture2D>       RTOutput;
     TRef<RayTracingScene> RTScene;
 
-    RayTracingShaderResources GlobalResources;
-    RayTracingShaderResources RayGenLocalResources;
-    RayTracingShaderResources MissLocalResources;
+    RayTracingShaderResources   GlobalResources;
+    RayTracingShaderResources   RayGenLocalResources;
+    RayTracingShaderResources   MissLocalResources;
     TArray<RayTracingGeometryInstance> RTGeometryInstances;
-    TArray<RayTracingShaderResources>  RTHitGroupResources;
-    std::unordered_map<class Material*, UInt32> RTMaterialToHitGroupIndex;
+
+    TArray<RayTracingShaderResources>       RTHitGroupResources;
+    std::unordered_map<class Mesh*, UInt32> RTMeshToHitGroupIndex;
+    PtrResourceCache<ShaderResourceView>    RTMaterialTextureCache;
 
     TArray<MeshDrawCommand> DeferredVisibleCommands;
     TArray<MeshDrawCommand> ForwardVisibleCommands;

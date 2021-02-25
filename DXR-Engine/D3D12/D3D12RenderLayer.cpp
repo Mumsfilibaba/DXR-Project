@@ -96,8 +96,19 @@ D3D12RenderLayer::~D3D12RenderLayer()
 
 Bool D3D12RenderLayer::Init(Bool EnableDebug)
 {
-    Bool GPUBasedValidationOn = EnableDebug ? true : false;
-    Bool DREDOn = EnableDebug ? true : false;
+    // NOTE: GPUBasedValidation does not work with ray tracing since it causes Device Removed (2021-02-25)
+    Bool GPUBasedValidationOn =
+#if ENABLE_API_GPU_DEBUGGING
+        EnableDebug;
+#else
+        false;
+#endif
+    Bool DREDOn =
+#if ENABLE_API_GPU_BREADCRUMBS
+        EnableDebug;
+#else
+        false;
+#endif
 
     Device = DBG_NEW D3D12Device(EnableDebug, GPUBasedValidationOn, DREDOn);
     if (!Device->Init())

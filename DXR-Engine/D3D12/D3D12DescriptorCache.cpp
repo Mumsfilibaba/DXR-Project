@@ -128,21 +128,7 @@ void D3D12DescriptorCache::CommitGraphicsDescriptors(D3D12CommandListHandle& Cmd
     D3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     D3D12OnlineDescriptorHeap* SamplerHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
 
-    CopyDescriptors(ResourceHeap, SamplerHeap);
-
-    ID3D12DescriptorHeap* DescriptorHeaps[] =
-    {
-        ResourceHeap->GetNativeHeap(),
-        SamplerHeap->GetNativeHeap()
-    };
-
-    if (PreviousDescriptorHeaps[0] != DescriptorHeaps[0] || PreviousDescriptorHeaps[1] != DescriptorHeaps[1])
-    {
-        DxCmdList->SetDescriptorHeaps(ArrayCount(DescriptorHeaps), DescriptorHeaps);
-
-        PreviousDescriptorHeaps[0] = DescriptorHeaps[0];
-        PreviousDescriptorHeaps[1] = DescriptorHeaps[1];
-    }
+    CopyDescriptorsAndSetHeaps(DxCmdList, ResourceHeap, SamplerHeap);
 
     for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
     {
@@ -191,21 +177,7 @@ void D3D12DescriptorCache::CommitComputeDescriptors(D3D12CommandListHandle& CmdL
     D3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     D3D12OnlineDescriptorHeap* SamplerHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
 
-    CopyDescriptors(ResourceHeap, SamplerHeap);
-
-    ID3D12DescriptorHeap* DescriptorHeaps[] =
-    {
-        ResourceHeap->GetNativeHeap(),
-        SamplerHeap->GetNativeHeap()
-    };
-
-    if (PreviousDescriptorHeaps[0] != DescriptorHeaps[0] || PreviousDescriptorHeaps[1] != DescriptorHeaps[1])
-    {
-        DxCmdList->SetDescriptorHeaps(ArrayCount(DescriptorHeaps), DescriptorHeaps);
-
-        PreviousDescriptorHeaps[0] = DescriptorHeaps[0];
-        PreviousDescriptorHeaps[1] = DescriptorHeaps[1];
-    }
+    CopyDescriptorsAndSetHeaps(DxCmdList, ResourceHeap, SamplerHeap);
 
     EShaderVisibility Visibility = ShaderVisibility_All;
 
@@ -256,27 +228,59 @@ void D3D12DescriptorCache::Reset()
     PreviousDescriptorHeaps[1] = nullptr;
 }
 
-void D3D12DescriptorCache::CopyDescriptors(D3D12OnlineDescriptorHeap* ResourceHeap, D3D12OnlineDescriptorHeap* SamplerHeap)
+void D3D12DescriptorCache::CopyDescriptorsAndSetHeaps(
+    ID3D12GraphicsCommandList* CmdList, 
+    D3D12OnlineDescriptorHeap* ResourceHeap, 
+    D3D12OnlineDescriptorHeap* SamplerHeap)
 {
+    UInt32 NumResourceDescriptors =
+        ConstantBufferViewCache.CountNeededDescriptors() +
+        ShaderResourceViewCache.CountNeededDescriptors() +
+        UnorderedAccessViewCache.CountNeededDescriptors();
+
+    if (!ResourceHeap->HasSpace(NumResourceDescriptors))
+    {
+        ResourceHeap->AllocateFreshHeap();
+
+        ConstantBufferViewCache.InvalidateAll();
+        ShaderResourceViewCache.InvalidateAll();
+        UnorderedAccessViewCache.InvalidateAll();
+    }
+
     ConstantBufferViewCache.PrepareForCopy(NullCBV);
     ShaderResourceViewCache.PrepareForCopy(NullSRV);
     UnorderedAccessViewCache.PrepareForCopy(NullUAV);
+
+    UInt32 NumSamplerDescriptors = SamplerStateCache.CountNeededDescriptors();
+    if (!SamplerHeap->HasSpace(NumSamplerDescriptors))
+    {
+        SamplerHeap->AllocateFreshHeap();
+        SamplerStateCache.InvalidateAll();
+    }
+    
     SamplerStateCache.PrepareForCopy(NullSampler);
 
-    ID3D12Device* DxDevice = GetDevice()->GetDevice();
-
-    UInt32 NumResourceDescriptors =
-        ConstantBufferViewCache.TotalNumDescriptors +
-        ShaderResourceViewCache.TotalNumDescriptors +
-        UnorderedAccessViewCache.TotalNumDescriptors;
-    UInt32 NumSamplerDescriptors = SamplerStateCache.TotalNumDescriptors;
-
+    Assert(NumResourceDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
     UInt32 ResourceDescriptorHandle = ResourceHeap->AllocateHandles(NumResourceDescriptors);
-    Assert(ResourceDescriptorHandle < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
 
+    Assert(NumSamplerDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
     UInt32 SamplerDescriptorHandle = SamplerHeap->AllocateHandles(NumSamplerDescriptors);
-    Assert(SamplerDescriptorHandle < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
 
+    ID3D12DescriptorHeap* DescriptorHeaps[] =
+    {
+        ResourceHeap->GetNativeHeap(),
+        SamplerHeap->GetNativeHeap()
+    };
+
+    if (PreviousDescriptorHeaps[0] != DescriptorHeaps[0] || PreviousDescriptorHeaps[1] != DescriptorHeaps[1])
+    {
+        CmdList->SetDescriptorHeaps(ArrayCount(DescriptorHeaps), DescriptorHeaps);
+
+        PreviousDescriptorHeaps[0] = DescriptorHeaps[0];
+        PreviousDescriptorHeaps[1] = DescriptorHeaps[1];
+    }
+
+    ID3D12Device* DxDevice = GetDevice()->GetDevice();
     if (ConstantBufferViewCache.TotalNumDescriptors > 0)
     {
         D3D12_CPU_DESCRIPTOR_HANDLE CpuHandle = ResourceHeap->GetCPUDescriptorHandleAt(ResourceDescriptorHandle);

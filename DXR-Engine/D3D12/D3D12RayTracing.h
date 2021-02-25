@@ -93,11 +93,7 @@ public:
         const RayTracingShaderResources* HitGroupResources,
         UInt32 NumHitGroupResources);
 
-    virtual void SetName(const std::string& InName) override
-    {
-        Resource::SetName(InName);
-        ResultBuffer->SetName(InName);
-    }
+    virtual void SetName(const std::string& InName) override;
 
     virtual Bool IsValid() const override { return ResultBuffer != nullptr; }
 

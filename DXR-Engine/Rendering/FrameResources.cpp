@@ -35,7 +35,7 @@ void FrameResources::Release()
     RTOutput.Reset();
     RTGeometryInstances.Clear();
     RTHitGroupResources.Clear();
-    RTMaterialToHitGroupIndex.clear();
+    RTMeshToHitGroupIndex.clear();
 
     DeferredVisibleCommands.Clear();
     ForwardVisibleCommands.Clear();

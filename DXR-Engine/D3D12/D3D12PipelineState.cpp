@@ -345,7 +345,7 @@ struct D3D12HitGroup
             Desc.AnyHitShaderImport = AnyHit.c_str();
         }
 
-        if (Desc.Type != D3D12_HIT_GROUP_TYPE_TRIANGLES )
+        if (Desc.Type != D3D12_HIT_GROUP_TYPE_TRIANGLES)
         {
             Desc.IntersectionShaderImport = Intersection.c_str();
         }
@@ -496,7 +496,7 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
     RayGenLocalResourceCounts.AllowInputAssembler = false;
     RayGenLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = RayGen->GetRTLocalResourceCount();
 
-    RayGenLocalRootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(RayGenLocalResourceCounts);
+    RayGenLocalRootSignature = MakeSharedRef<D3D12RootSignature>(D3D12RootSignatureCache::Get().GetOrCreateRootSignature(RayGenLocalResourceCounts));
     if (!RayGenLocalRootSignature)
     {
         return false;
@@ -535,7 +535,7 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
         AnyHitLocalResourceCounts.AllowInputAssembler = false;
         AnyHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = DxAnyHit->GetRTLocalResourceCount();
 
-        HitLocalRootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(AnyHitLocalResourceCounts);
+        HitLocalRootSignature = MakeSharedRef<D3D12RootSignature>(D3D12RootSignatureCache::Get().GetOrCreateRootSignature(AnyHitLocalResourceCounts));
         if (!HitLocalRootSignature)
         {
             return false;
@@ -557,7 +557,7 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
         ClosestHitLocalResourceCounts.AllowInputAssembler = false;
         ClosestHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = DxClosestHit->GetRTLocalResourceCount();
 
-        HitLocalRootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ClosestHitLocalResourceCounts);
+        HitLocalRootSignature = MakeSharedRef<D3D12RootSignature>(D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ClosestHitLocalResourceCounts));
         if (!HitLocalRootSignature)
         {
             return false;
@@ -579,7 +579,7 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
         MissLocalResourceCounts.AllowInputAssembler = false;
         MissLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = DxMiss->GetRTLocalResourceCount();
 
-        MissLocalRootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(MissLocalResourceCounts);
+        MissLocalRootSignature = MakeSharedRef<D3D12RootSignature>(D3D12RootSignatureCache::Get().GetOrCreateRootSignature(MissLocalResourceCounts));
         if (!MissLocalRootSignature)
         {
             return false;
@@ -607,7 +607,7 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
     GlobalResourceCounts.AllowInputAssembler = false;
     GlobalResourceCounts.ResourceCounts[ShaderVisibility_All] = CombinedResourceCount;
 
-    GlobalRootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(GlobalResourceCounts);
+    GlobalRootSignature = MakeSharedRef<D3D12RootSignature>(D3D12RootSignatureCache::Get().GetOrCreateRootSignature(GlobalResourceCounts));
     if (!GlobalRootSignature)
     {
         return false;

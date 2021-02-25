@@ -45,6 +45,7 @@ struct CameraBufferDesc
     XMFLOAT4X4 ViewProjectionInv;
     XMFLOAT3   Position;
     Float      NearPlane;
+    XMFLOAT3   Forward;
     Float      FarPlane;
     Float      AspectRatio;
 };
@@ -395,6 +396,7 @@ void Renderer::Tick(const Scene& Scene)
     CamBuff.ProjectionInv     = Scene.GetCamera()->GetProjectionInverseMatrix();
     CamBuff.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
     CamBuff.Position          = Scene.GetCamera()->GetPosition();
+    CamBuff.Forward           = Scene.GetCamera()->GetForward();
     CamBuff.NearPlane         = Scene.GetCamera()->GetNearPlane();
     CamBuff.FarPlane          = Scene.GetCamera()->GetFarPlane();
     CamBuff.AspectRatio       = Scene.GetCamera()->GetAspectRatio();

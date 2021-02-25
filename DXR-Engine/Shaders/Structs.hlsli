@@ -19,6 +19,7 @@ struct Camera
     float4x4 ViewProjectionInverse;
     float3   Position;
     float    NearPlane;
+    float3   Forward;
     float    FarPlane;
     float    AspectRatio;
 };

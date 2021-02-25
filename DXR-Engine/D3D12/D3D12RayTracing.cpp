@@ -163,8 +163,9 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const RayTraci
     Inputs.NumDescs    = NumInstances;
     Inputs.Type        = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
     Inputs.Flags       = ConvertAccelerationStructureBuildFlags(GetFlags());
-    if (Update && GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)
+    if (Update)
     {
+        Assert(GetFlags() & RayTracingStructureBuildFlag_AllowUpdate);
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
     }
 
@@ -309,8 +310,9 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const RayTraci
     AccelerationStructureDesc.Inputs.InstanceDescs             = InstanceBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.DestAccelerationStructureData    = ResultBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
-    if (Update && GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)
+    if (Update)
     {
+        Assert(GetFlags() & RayTracingStructureBuildFlag_AllowUpdate);
         AccelerationStructureDesc.SourceAccelerationStructureData = ResultBuffer->GetGPUVirtualAddress();
     }
 
@@ -412,6 +414,7 @@ Bool D3D12RayTracingScene::BuildBindingTable(
         else
         {
             BindingTable = Buffer;
+            BindingTable->SetName(GetName() + " BindingTable");
         }
 
         CmdContext.TransitionResource(BindingTable.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
@@ -432,6 +435,24 @@ Bool D3D12RayTracingScene::BuildBindingTable(
     NumHitGroups       = NumHitGroupResources;
 
     return true;
+}
+
+void D3D12RayTracingScene::SetName(const std::string& InName)
+{
+    Resource::SetName(InName);
+    ResultBuffer->SetName(InName);
+    if (ScratchBuffer)
+    {
+        ScratchBuffer->SetName(InName + " Scratch");
+    }
+    if (InstanceBuffer)
+    {
+        InstanceBuffer->SetName(InName + " Instance");
+    }
+    if (BindingTable)
+    {
+        BindingTable->SetName(InName + " BindingTable");
+    }
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingScene::GetHitGroupTable() const

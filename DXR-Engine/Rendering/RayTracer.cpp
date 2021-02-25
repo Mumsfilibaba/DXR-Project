@@ -104,51 +104,37 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
     TRACE_SCOPE("Gather Instances");
 
     Resources.RTGeometryInstances.Clear();
-    Resources.RTHitGroupResources.Clear();
-    Resources.RTMaterialToHitGroupIndex.clear();
 
-    UInt32 HitGroupIndex      = 0;
-    UInt32 InstanceIndexIndex = 0;
+    UInt32 InstanceIndex  = 0;
+    SamplerState* Sampler = nullptr;
+
     for (const MeshDrawCommand& Cmd : Scene.GetMeshDrawCommands())
     {
-        const XMFLOAT3X4 TinyTransform = Cmd.CurrentActor->GetTransform().GetTinyMatrix();
+        Material* Mat = Cmd.Material;
+        if (Cmd.Material->HasAlphaMask())
+        {
+            continue;
+        }
 
-        // TODO: Change this to something less performant
-        auto HitGroupIndexPair = Resources.RTMaterialToHitGroupIndex.find(Cmd.Material);
-        if (HitGroupIndex < 1)
+        UInt32 AlbedoIndex = Resources.RTMaterialTextureCache.Add(Mat->AlbedoMap->GetShaderResourceView());
+        Resources.RTMaterialTextureCache.Add(Mat->NormalMap->GetShaderResourceView());
+        Resources.RTMaterialTextureCache.Add(Mat->RoughnessMap->GetShaderResourceView());
+        Resources.RTMaterialTextureCache.Add(Mat->HeightMap->GetShaderResourceView());
+        Resources.RTMaterialTextureCache.Add(Mat->MetallicMap->GetShaderResourceView());
+        Resources.RTMaterialTextureCache.Add(Mat->AOMap->GetShaderResourceView());
+        Sampler = Mat->GetMaterialSampler();
+
+        const XMFLOAT3X4 TinyTransform = Cmd.CurrentActor->GetTransform().GetTinyMatrix();
+        UInt32 HitGroupIndex = 0;
+
+        auto HitGroupIndexPair = Resources.RTMeshToHitGroupIndex.find(Cmd.Mesh);
+        if (HitGroupIndexPair == Resources.RTMeshToHitGroupIndex.end())
         {
             HitGroupIndex = Resources.RTHitGroupResources.Size();
-            Resources.RTMaterialToHitGroupIndex[Cmd.Material] = HitGroupIndex;
-            HitGroupIndex++;
+            Resources.RTMeshToHitGroupIndex[Cmd.Mesh] = HitGroupIndex;
 
             RayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";
-           /* HitGroupResources.AddConstantBuffer(Cmd.Material->GetMaterialBuffer());
-            HitGroupResources.AddSamplerState(Cmd.Material->GetMaterialSampler());
-            if (Cmd.Material->AlbedoMap)
-            {
-                HitGroupResources.AddShaderResourceView(Cmd.Material->AlbedoMap->GetShaderResourceView());
-            }
-            if (Cmd.Material->NormalMap)
-            {
-                HitGroupResources.AddShaderResourceView(Cmd.Material->NormalMap->GetShaderResourceView());
-            }
-            if (Cmd.Material->RoughnessMap)
-            {
-                HitGroupResources.AddShaderResourceView(Cmd.Material->RoughnessMap->GetShaderResourceView());
-            }
-            if (Cmd.Material->HeightMap)
-            {
-                HitGroupResources.AddShaderResourceView(Cmd.Material->HeightMap->GetShaderResourceView());
-            }
-            if (Cmd.Material->MetallicMap)
-            {
-                HitGroupResources.AddShaderResourceView(Cmd.Material->MetallicMap->GetShaderResourceView());
-            }
-            if (Cmd.Material->AOMap)
-            {
-                HitGroupResources.AddShaderResourceView(Cmd.Material->AOMap->GetShaderResourceView());
-            }
             if (Cmd.Mesh->VertexBufferSRV)
             {
                 HitGroupResources.AddShaderResourceView(Cmd.Mesh->VertexBufferSRV.Get());
@@ -156,20 +142,20 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
             if (Cmd.Mesh->IndexBufferSRV)
             {
                 HitGroupResources.AddShaderResourceView(Cmd.Mesh->IndexBufferSRV.Get());
-            }*/
+            }
 
             Resources.RTHitGroupResources.EmplaceBack(HitGroupResources);
         }
-        //else
-        //{
-        //    HitGroupIndex = HitGroupIndexPair->second;
-        //}
+        else
+        {
+            HitGroupIndex = HitGroupIndexPair->second;
+        }
 
         RayTracingGeometryInstance Instance;
         Instance.Instance      = MakeSharedRef<RayTracingGeometry>(Cmd.Geometry);
         Instance.Flags         = RayTracingInstanceFlags_None;
-        Instance.HitGroupIndex = 0;
-        Instance.InstanceIndex = InstanceIndexIndex++;
+        Instance.HitGroupIndex = HitGroupIndex;
+        Instance.InstanceIndex = AlbedoIndex;
         Instance.Mask          = 0xff;
         Instance.Transform     = TinyTransform;
         Resources.RTGeometryInstances.EmplaceBack(Instance);
@@ -177,7 +163,11 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
 
     if (!Resources.RTScene)
     {
-        Resources.RTScene = CreateRayTracingScene(RayTracingStructureBuildFlag_AllowUpdate, Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size());
+        Resources.RTScene = CreateRayTracingScene(RayTracingStructureBuildFlag_None, Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size());
+        if (Resources.RTScene)
+        {
+            Resources.RTScene->SetName("RayTracingScene");
+        }
     }
     else
     {
@@ -187,13 +177,17 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
     Resources.GlobalResources.Reset();
     Resources.GlobalResources.AddUnorderedAccessView(Resources.RTOutput->GetUnorderedAccessView());
     Resources.GlobalResources.AddConstantBuffer(Resources.CameraBuffer.Get());
-    // TODO: Change to correct samplers
     Resources.GlobalResources.AddSamplerState(Resources.GBufferSampler.Get());
-    Resources.GlobalResources.AddSamplerState(Resources.GBufferSampler.Get());
+    Resources.GlobalResources.AddSamplerState(Sampler);
     Resources.GlobalResources.AddShaderResourceView(Resources.RTScene->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.Skybox->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView());
+
+    for (UInt32 i = 0; i < Resources.RTMaterialTextureCache.Size(); i++)
+    {
+        Resources.GlobalResources.AddShaderResourceView(Resources.RTMaterialTextureCache.Get(i));
+    }
 
     Resources.RayGenLocalResources.Reset();
     Resources.RayGenLocalResources.Identifier = "RayGen";
@@ -214,4 +208,12 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
     UInt32 Width  = Resources.RTOutput->GetWidth();
     UInt32 Height = Resources.RTOutput->GetHeight();
     CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
+
+    CmdList.UnorderedAccessTextureBarrier(Resources.RTOutput.Get());
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(Resources.RTOutput->GetShaderResourceView()),
+        Resources.RTOutput,
+        EResourceState::UnorderedAccess,
+        EResourceState::UnorderedAccess);
 }
