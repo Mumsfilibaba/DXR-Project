@@ -160,6 +160,11 @@ private:
     TRef<D3D12RootSignature>     RootSignature;
 };
 
+struct RayTracingShaderIdentifer
+{
+    Char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
+};
+
 class D3D12RayTracingPipelineState : public RayTracingPipelineState, public D3D12DeviceChild
 {
 public:
@@ -180,6 +185,8 @@ public:
 
     virtual Bool IsValid() const { return StateObject != nullptr; }
 
+    void* GetShaderIdentifer(const std::string& ExportName);
+
     ID3D12StateObject*           GetStateObject()           const { return StateObject.Get(); }
     ID3D12StateObjectProperties* GetStateObjectProperties() const { return StateObjectProperties.Get(); }
     
@@ -196,4 +203,6 @@ private:
     TRef<D3D12RootSignature> RayGenLocalRootSignature;
     TRef<D3D12RootSignature> MissLocalRootSignature;
     TRef<D3D12RootSignature> HitLocalRootSignature;
+
+    std::unordered_map<std::string, RayTracingShaderIdentifer> ShaderIdentifers;
 };

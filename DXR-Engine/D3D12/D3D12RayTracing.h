@@ -49,7 +49,7 @@ public:
     ~D3D12ShaderBindingTableBuilder() = default;
 
     void PopulateEntry(
-        ID3D12StateObjectProperties* StateObjectProperties,
+        D3D12RayTracingPipelineState* PipelineState,
         D3D12RootSignature* RootSignature,
         D3D12OnlineDescriptorHeap* ResourceHeap,
         D3D12OnlineDescriptorHeap* SamplerHeap,

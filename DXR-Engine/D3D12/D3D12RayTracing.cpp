@@ -348,7 +348,7 @@ Bool D3D12RayTracingScene::BuildBindingTable(
 
     D3D12ShaderBindingTableEntry RayGenEntry;
     ShaderBindingTableBuilder.PopulateEntry(
-        StateObjectProperties,
+        PipelineState,
         PipelineState->GetRayGenLocalRootSignature(),
         ResourceHeap,
         SamplerHeap,
@@ -359,7 +359,7 @@ Bool D3D12RayTracingScene::BuildBindingTable(
 
     D3D12ShaderBindingTableEntry MissEntry;
     ShaderBindingTableBuilder.PopulateEntry(
-        StateObjectProperties,
+        PipelineState,
         PipelineState->GetMissLocalRootSignature(),
         ResourceHeap,
         SamplerHeap,
@@ -373,7 +373,7 @@ Bool D3D12RayTracingScene::BuildBindingTable(
     for (UInt32 i = 0; i < NumHitGroupResources; i++)
     {
         ShaderBindingTableBuilder.PopulateEntry(
-            StateObjectProperties,
+            PipelineState,
             PipelineState->GetHitLocalRootSignature(),
             ResourceHeap,
             SamplerHeap,
@@ -492,21 +492,19 @@ D3D12ShaderBindingTableBuilder::D3D12ShaderBindingTableBuilder(D3D12Device* InDe
 }
 
 void D3D12ShaderBindingTableBuilder::PopulateEntry(
-    ID3D12StateObjectProperties* StateObjectProperties,
+    D3D12RayTracingPipelineState* PipelineState,
     D3D12RootSignature* RootSignature,
     D3D12OnlineDescriptorHeap* ResourceHeap,
     D3D12OnlineDescriptorHeap* SamplerHeap,
     D3D12ShaderBindingTableEntry& OutShaderBindingEntry, 
     const RayTracingShaderResources& Resources)
 {
-    Assert(StateObjectProperties != nullptr);
+    Assert(PipelineState != nullptr);
     Assert(RootSignature != nullptr);
     Assert(ResourceHeap != nullptr);
     Assert(SamplerHeap != nullptr);
 
-    // TODO: Maybe a small buffer class for this purpose? However SSO probably fixes this for us 
-    std::wstring Identifier = ConvertToWide(Resources.Identifier);
-    Memory::Memcpy(OutShaderBindingEntry.ShaderIdentifier, StateObjectProperties->GetShaderIdentifier(Identifier.c_str()), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+    Memory::Memcpy(OutShaderBindingEntry.ShaderIdentifier, PipelineState->GetShaderIdentifer(Resources.Identifier), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
     if (!Resources.ConstantBuffers.IsEmpty())
     {

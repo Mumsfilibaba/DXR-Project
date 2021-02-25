@@ -645,3 +645,28 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
 
     return true;
 }
+
+void* D3D12RayTracingPipelineState::GetShaderIdentifer(const std::string& ExportName)
+{
+    auto MapItem = ShaderIdentifers.find(ExportName);
+    if (MapItem == ShaderIdentifers.end())
+    {
+        std::wstring WideExportName = ConvertToWide(ExportName);
+        
+        void* Result = StateObjectProperties->GetShaderIdentifier(WideExportName.c_str());
+        if (!Result)
+        {
+            return nullptr;
+        }
+
+        RayTracingShaderIdentifer Identifier;
+        Memory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+
+        ShaderIdentifers.insert(std::make_pair(ExportName, Identifier));
+        return Identifier.ShaderIdentifier;
+    }
+    else
+    {
+        return MapItem->second.ShaderIdentifier;
+    }
+}

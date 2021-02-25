@@ -396,8 +396,15 @@ private:
 class D3D12ShaderConstantsCache
 {
 public:
+    D3D12ShaderConstantsCache()
+    {
+        Reset();
+    }
+
     void Set32BitShaderConstants(UInt32* InConstants, UInt32 InNumConstants)
     {
+        Assert(InNumConstants < D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
+
         Memory::Memcpy(Constants, InConstants, sizeof(UInt32) * InNumConstants);
         NumConstants = InNumConstants;
     }
@@ -424,6 +431,7 @@ public:
 
     void Reset()
     {
+        Memory::Memzero(Constants, sizeof(Constants));
         NumConstants = 0;
     }
 
