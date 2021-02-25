@@ -975,6 +975,14 @@ void D3D12CommandContext::SetRayTracingBindings(
 
     ID3D12GraphicsCommandList4* DXRCommandList = CmdList.GetDXRCommandList();
     D3D12RootSignature* GlobalRootSignature    = DxPipelineState->GetGlobalRootSignature();
+
+    ID3D12DescriptorHeap* DescriptorHeaps[] =
+    {
+        ResourceHeap->GetNativeHeap(),
+        SamplerHeap->GetNativeHeap()
+    };
+
+    DXRCommandList->SetDescriptorHeaps(ArrayCount(DescriptorHeaps), DescriptorHeaps);
     DXRCommandList->SetComputeRootSignature(GlobalRootSignature->GetRootSignature());
     CurrentRootSignature = MakeSharedRef<D3D12RootSignature>(GlobalRootSignature);
 

@@ -11,8 +11,7 @@ Texture2D<float4>   GBufferDepth  : register(t3, space0);
 
 ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
 
-SamplerState TextureSampler : register(s0, space0);
-SamplerState GBufferSampler : register(s1, space0);
+SamplerState GBufferSampler : register(s0, space0);
 
 RWTexture2D<float4> OutTexture 	: register(u0, space0);
 

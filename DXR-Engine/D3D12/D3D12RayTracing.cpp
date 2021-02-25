@@ -200,6 +200,24 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const RayTraci
         {
             ResultBuffer = Buffer;
         }
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
+        Memory::Memzero(&SrvDesc);
+
+        SrvDesc.ViewDimension                            = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+        SrvDesc.Shader4ComponentMapping                  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
+
+        View = DBG_NEW D3D12ShaderResourceView(GetDevice(), gD3D12RenderLayer->GetResourceOfflineDescriptorHeap());
+        if (!View->Init())
+        {
+            return false;
+        }
+
+        if (!View->CreateView(nullptr, SrvDesc))
+        {
+            return false;
+        }
     }
 
     UInt64 RequiredSize = Math::Max(PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes);

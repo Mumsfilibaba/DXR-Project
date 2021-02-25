@@ -4,176 +4,171 @@
 #include "Constants.hlsli"
 
 // Global RootSignature
-RaytracingAccelerationStructure Scene : register(t0, space0);
+//RaytracingAccelerationStructure Scene : register(t0, space0);
 
-ConstantBuffer<Camera> Camera : register(b0, space0);
+//ConstantBuffer<Camera> Camera : register(b0, space0);
 
-TextureCube<float4> Skybox : register(t1, space0);
-
-SamplerState TextureSampler : register(s0, space0);
+//TextureCube<float4> Skybox : register(t1, space0);
 
 static const float3 LightPosition = float3(0.0f, 1.0f, 0.0f);
 static const float3 LightColor    = float3(1.0f, 1.0f, 1.0f);
 
 // Local RootSignature
-cbuffer MaterialBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL)
-{
-    float3 Albedo;
-    float  Roughness;
-    float  Metallic;
-    float  AO;
-    int    EnableHeight;
-};
+//ConstantBuffer<Material> Material : register(b0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
 
-Texture2D<float4> AlbedoMap    : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-Texture2D<float4> NormalMap    : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-Texture2D<float4> RoughnessMap : register(t2, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-Texture2D<float4> HeightMap    : register(t3, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-Texture2D<float4> MetallicMap  : register(t4, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-Texture2D<float4> AOMap        : register(t5, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+//Texture2D<float4> AlbedoMap    : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+//Texture2D<float4> NormalMap    : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+//Texture2D<float4> RoughnessMap : register(t2, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+//Texture2D<float4> HeightMap    : register(t3, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+//Texture2D<float4> MetallicMap  : register(t4, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+//Texture2D<float4> AOMap        : register(t5, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
 
-StructuredBuffer<Vertex> Vertices : register(t6, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-ByteAddressBuffer InIndices       : register(t7, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+//StructuredBuffer<Vertex> Vertices  : register(t6, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+//ByteAddressBuffer        InIndices : register(t7, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+
+//SamplerState TextureSampler : register(s0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
 
 [shader("closesthit")]
 void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttributes IntersectionAttributes)
 {
+    PayLoad.Color = LightColor;
+    
     // Get the base index of the triangle's first 16 bit index.
-    const uint IndexSizeInBytes    = 4;
-    const uint IndicesPerTriangle  = 3;
-    const uint TriangleIndexStride = IndicesPerTriangle * IndexSizeInBytes;
-    const uint BaseIndex           = PrimitiveIndex() * TriangleIndexStride;
+    //const uint IndexSizeInBytes    = 4;
+    //const uint IndicesPerTriangle  = 3;
+    //const uint TriangleIndexStride = IndicesPerTriangle * IndexSizeInBytes;
+    //const uint BaseIndex           = PrimitiveIndex() * TriangleIndexStride;
 
-    // Load up three indices for the triangle.
-    uint3 Indices = InIndices.Load3(BaseIndex);
+    //// Load up three indices for the triangle.
+    //uint3 Indices = InIndices.Load3(BaseIndex);
 
-    // Retrieve corresponding vertex normals for the triangle vertices.
-    float3 TriangleNormals[3] =
-    {
-        Vertices[Indices[0]].Normal,
-        Vertices[Indices[1]].Normal,
-        Vertices[Indices[2]].Normal
-    };
+    //// Retrieve corresponding vertex normals for the triangle vertices.
+    //float3 TriangleNormals[3] =
+    //{
+    //    Vertices[Indices[0]].Normal,
+    //    Vertices[Indices[1]].Normal,
+    //    Vertices[Indices[2]].Normal
+    //};
 
-    float3 BarycentricCoords = float3(
-        1.0f - IntersectionAttributes.barycentrics.x - IntersectionAttributes.barycentrics.y, 
-        IntersectionAttributes.barycentrics.x, 
-        IntersectionAttributes.barycentrics.y);
+    //float3 BarycentricCoords = float3(
+    //    1.0f - IntersectionAttributes.barycentrics.x - IntersectionAttributes.barycentrics.y, 
+    //    IntersectionAttributes.barycentrics.x, 
+    //    IntersectionAttributes.barycentrics.y);
     
-    float3 Normal = (TriangleNormals[0] * BarycentricCoords.x) + (TriangleNormals[1] * BarycentricCoords.y) + (TriangleNormals[2] * BarycentricCoords.z);
-    Normal = normalize(Normal);
+    //float3 Normal = (TriangleNormals[0] * BarycentricCoords.x) + (TriangleNormals[1] * BarycentricCoords.y) + (TriangleNormals[2] * BarycentricCoords.z);
+    //Normal = normalize(Normal);
     
-    float3 TriangleTangent[3] =
-    {
-        Vertices[Indices[0]].Tangent,
-        Vertices[Indices[1]].Tangent,
-        Vertices[Indices[2]].Tangent
-    };
+    //float3 TriangleTangent[3] =
+    //{
+    //    Vertices[Indices[0]].Tangent,
+    //    Vertices[Indices[1]].Tangent,
+    //    Vertices[Indices[2]].Tangent
+    //};
 
-    float2 TriangleTexCoords[3] =
-    {
-        Vertices[Indices[0]].TexCoord,
-        Vertices[Indices[1]].TexCoord,
-        Vertices[Indices[2]].TexCoord
-    };
+    //float2 TriangleTexCoords[3] =
+    //{
+    //    Vertices[Indices[0]].TexCoord,
+    //    Vertices[Indices[1]].TexCoord,
+    //    Vertices[Indices[2]].TexCoord
+    //};
 
-    float2 TexCoords =
-        (TriangleTexCoords[0] * BarycentricCoords.x) +
-        (TriangleTexCoords[1] * BarycentricCoords.y) +
-        (TriangleTexCoords[2] * BarycentricCoords.z);
+    //float2 TexCoords =
+    //    (TriangleTexCoords[0] * BarycentricCoords.x) +
+    //    (TriangleTexCoords[1] * BarycentricCoords.y) +
+    //    (TriangleTexCoords[2] * BarycentricCoords.z);
     
-    float3 Tangent =
-        (TriangleTangent[0] * BarycentricCoords.x) +
-        (TriangleTangent[1] * BarycentricCoords.y) +
-        (TriangleTangent[2] * BarycentricCoords.z);
-    Tangent = normalize(Tangent);
+    //float3 Tangent =
+    //    (TriangleTangent[0] * BarycentricCoords.x) +
+    //    (TriangleTangent[1] * BarycentricCoords.y) +
+    //    (TriangleTangent[2] * BarycentricCoords.z);
+    //Tangent = normalize(Tangent);
 
-    float3 MappedNormal = NormalMap.SampleLevel(TextureSampler, TexCoords, 0).rgb;
-    MappedNormal = UnpackNormal(MappedNormal);
+    //float3 MappedNormal = NormalMap.SampleLevel(TextureSampler, TexCoords, 0).rgb;
+    //MappedNormal = UnpackNormal(MappedNormal);
     
-    float3 Bitangent = normalize(cross(Normal, Tangent));
-    Normal = ApplyNormalMapping(MappedNormal, Normal, Tangent, Bitangent);
+    //float3 Bitangent = normalize(cross(Normal, Tangent));
+    //Normal = ApplyNormalMapping(MappedNormal, Normal, Tangent, Bitangent);
     
-    float3 AlbedoColor = AlbedoMap.SampleLevel(TextureSampler, TexCoords, 0).rgb;
-    AlbedoColor = AlbedoColor * Albedo;
+    //float3 AlbedoColor = AlbedoMap.SampleLevel(TextureSampler, TexCoords, 0).rgb;
+    //AlbedoColor = AlbedoColor * Material.Albedo;
     
-    // Send a new ray for reflection
-    const float3 HitPosition = WorldHitPosition();
-    const float3 LightDir    = normalize(LightPosition - HitPosition);
-    const float3 ViewDir     = WorldRayDirection(); //normalize(Camera.Position - HitPosition);
-    const float3 HalfVec     = normalize(ViewDir + LightDir);
+    //// Send a new ray for reflection
+    //const float3 HitPosition = WorldHitPosition();
+    //const float3 LightDir    = normalize(LightPosition - HitPosition);
+    //const float3 ViewDir     = WorldRayDirection(); //normalize(Camera.Position - HitPosition);
+    //const float3 HalfVec     = normalize(ViewDir + LightDir);
     
-    // MaterialProperties
-    const float SampledAO        = AOMap.SampleLevel(TextureSampler, TexCoords, 0).r * AO;
-    const float SampledMetallic  = MetallicMap.SampleLevel(TextureSampler, TexCoords, 0).r * Metallic;
-    const float SampledRoughness = RoughnessMap.SampleLevel(TextureSampler, TexCoords, 0).r * Roughness;
-    const float FinalRoughness   = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    //// MaterialProperties
+    //const float SampledAO        = AOMap.SampleLevel(TextureSampler, TexCoords, 0).r * Material.AO;
+    //const float SampledMetallic  = MetallicMap.SampleLevel(TextureSampler, TexCoords, 0).r * Material.Metallic;
+    //const float SampledRoughness = RoughnessMap.SampleLevel(TextureSampler, TexCoords, 0).r * Material.Roughness;
+    //const float FinalRoughness   = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
     
-    float3 ReflectedColor = Float3(0.0f);
-    if (PayLoad.CurrentDepth < 4)
-    {
-        RayDesc Ray;
-        Ray.Origin = HitPosition + (Normal * RAY_OFFSET);
-        Ray.Direction = reflect(WorldRayDirection(), Normal);
+    //float3 ReflectedColor = Float3(0.0f);
+    //if (PayLoad.CurrentDepth < 4)
+    //{
+    //    RayDesc Ray;
+    //    Ray.Origin    = HitPosition + (Normal * RAY_OFFSET);
+    //    Ray.Direction = reflect(WorldRayDirection(), Normal);
 
-        Ray.TMin = 0;
-        Ray.TMax = 100000;
+    //    Ray.TMin = 0;
+    //    Ray.TMax = 100000;
 
-        RayPayload ReflectancePayLoad;
-        ReflectancePayLoad.CurrentDepth = PayLoad.CurrentDepth + 1;
+    //    RayPayload ReflectancePayLoad;
+    //    ReflectancePayLoad.CurrentDepth = PayLoad.CurrentDepth + 1;
 
-        TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, ReflectancePayLoad);
+    //    TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, ReflectancePayLoad);
 
-        ReflectedColor = ReflectancePayLoad.Color;
-    }
-    else
-    {
-        ReflectedColor = Skybox.SampleLevel(TextureSampler, WorldRayDirection(), 0).rgb;
-    }
+    //    ReflectedColor = ReflectancePayLoad.Color;
+    //}
+    //else
+    //{
+    //    ReflectedColor = Skybox.SampleLevel(TextureSampler, WorldRayDirection(), 0).rgb;
+    //}
     
-    float3 FresnelReflect = FresnelSchlick(-WorldRayDirection(), Normal, AlbedoColor);
-    ReflectedColor = FresnelReflect * ReflectedColor;
+    //float3 FresnelReflect = FresnelSchlick(-WorldRayDirection(), Normal, AlbedoColor);
+    //ReflectedColor = FresnelReflect * ReflectedColor;
 
-    float3 F0 = Float3(0.04f);
-    F0 = lerp(F0, AlbedoColor, SampledMetallic);
+    //float3 F0 = Float3(0.04f);
+    //F0 = lerp(F0, AlbedoColor, SampledMetallic);
 
-    // Reflectance equation
-    float3 Lo = Float3(0.0f);
+    //// Reflectance equation
+    //float3 Lo = Float3(0.0f);
 
-    // Calculate per-light radiance
-    float  Distance    = length(LightPosition - HitPosition);
-    float  Attenuation = 1.0f / (Distance * Distance);
-    float3 Radiance    = LightColor * Attenuation;
+    //// Calculate per-light radiance
+    //float  Distance    = length(LightPosition - HitPosition);
+    //float  Attenuation = 1.0f / (Distance * Distance);
+    //float3 Radiance    = LightColor * Attenuation;
 
-    // Cook-Torrance BRDF
-    float NDF = DistributionGGX(Normal, HalfVec, FinalRoughness);
-    float G   = GeometrySmithGGX(Normal, LightDir, ViewDir, FinalRoughness);
-    float3 F  = FresnelSchlick(ViewDir, HalfVec, F0);
+    //// Cook-Torrance BRDF
+    //float NDF = DistributionGGX(Normal, HalfVec, FinalRoughness);
+    //float G   = GeometrySmithGGX(Normal, LightDir, ViewDir, FinalRoughness);
+    //float3 F  = FresnelSchlick(ViewDir, HalfVec, F0);
     
-    float3 Nominator   = NDF * G * F;
-    float  Denominator = 4.0f * max(dot(Normal, ViewDir), 0.0f) * max(dot(Normal, LightDir), 0.0f);
-    float3 Specular    = Nominator / max(Denominator, MIN_VALUE);
+    //float3 Nominator   = NDF * G * F;
+    //float  Denominator = 4.0f * max(dot(Normal, ViewDir), 0.0f) * max(dot(Normal, LightDir), 0.0f);
+    //float3 Specular    = Nominator / max(Denominator, MIN_VALUE);
         
-    // Ks is equal to Fresnel
-    float3 Ks = F;
-    // For energy conservation, the diffuse and specular light can't
-    // be above 1.0 (unless the surface emits light); to preserve this
-    // relationship the diffuse component (kD) should equal 1.0 - kS.
-    float3 Kd = Float3(1.0f) - Ks;
-    // Multiply kD by the inverse metalness such that only non-metals 
-    // have diffuse lighting, or a linear blend if partly metal (pure metals
-    // have no diffuse light).
-    Kd *= 1.0f - SampledMetallic;
+    //// Ks is equal to Fresnel
+    //float3 Ks = F;
+    //// For energy conservation, the diffuse and specular light can't
+    //// be above 1.0 (unless the surface emits light); to preserve this
+    //// relationship the diffuse component (kD) should equal 1.0 - kS.
+    //float3 Kd = Float3(1.0f) - Ks;
+    //// Multiply kD by the inverse metalness such that only non-metals 
+    //// have diffuse lighting, or a linear blend if partly metal (pure metals
+    //// have no diffuse light).
+    //Kd *= 1.0f - SampledMetallic;
 
-    // Scale light by NdotL
-    float NdotL = max(dot(Normal, LightDir), 0.0f);
+    //// Scale light by NdotL
+    //float NdotL = max(dot(Normal, LightDir), 0.0f);
 
-    // Add to outgoing radiance Lo
-    Lo += (((Kd * AlbedoColor) / PI) + Specular) * Radiance * NdotL;
+    //// Add to outgoing radiance Lo
+    //Lo += (((Kd * AlbedoColor) / PI) + Specular) * Radiance * NdotL;
     
-    float3 Ambient = Float3(0.03f) * AlbedoColor * SampledAO;
-    float3 Color = Ambient + Lo;
+    //float3 Ambient = Float3(0.03f) * AlbedoColor * SampledAO;
+    //float3 Color = Ambient + Lo;
     
-    // Add rays together
-    PayLoad.Color = Color + ReflectedColor;
+    //// Add rays together
+    //PayLoad.Color = Color + ReflectedColor;
 }
