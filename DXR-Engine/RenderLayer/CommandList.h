@@ -148,11 +148,24 @@ public:
         InsertCommand<SetIndexBufferRenderCommand>(IndexBuffer);
     }
 
-    void SetHitGroups(RayTracingScene* RayTracingScene, RayTracingPipelineState* PipelineState, const TArrayView<RayTracingShaderResources>& LocalShaderResources)
+    void SetRayTracingBindings(
+        RayTracingScene* RayTracingScene, 
+        RayTracingPipelineState* PipelineState, 
+        const RayTracingShaderResources* GlobalResource,
+        const RayTracingShaderResources* RayGenLocalResources, 
+        const RayTracingShaderResources* MissLocalResources,
+        const RayTracingShaderResources* HitGroupResources, UInt32 NumHitGroupResources)
     {
         SafeAddRef(RayTracingScene);
         SafeAddRef(PipelineState);
-        InsertCommand<SetHitGroupsRenderCommand>(RayTracingScene, PipelineState, LocalShaderResources);
+        InsertCommand<SetRayTracingBindingsRenderCommand>(
+            RayTracingScene, 
+            PipelineState, 
+            GlobalResource, 
+            RayGenLocalResources, 
+            MissLocalResources, 
+            HitGroupResources, 
+            NumHitGroupResources);
     }
 
     void SetGraphicsPipelineState(GraphicsPipelineState* PipelineState)
@@ -325,13 +338,13 @@ public:
         InsertCommand<BuildRayTracingGeometryRenderCommand>(Geometry, VertexBuffer, IndexBuffer, Update);
     }
 
-    void BuildRayTracingScene(RayTracingScene* Scene, const TArrayView<RayTracingGeometryInstance>& Instances, Bool Update)
+    void BuildRayTracingScene(RayTracingScene* Scene, const RayTracingGeometryInstance* Instances, UInt32 NumInstances, Bool Update)
     {
         Assert(Scene != nullptr);
         Assert(!Update || (Update && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate));
 
         SafeAddRef(Scene);
-        InsertCommand<BuildRayTracingSceneRenderCommand>(Scene, Instances, Update);
+        InsertCommand<BuildRayTracingSceneRenderCommand>(Scene, Instances, NumInstances, Update);
     }
 
     void GenerateMips(Texture* Texture)
@@ -420,21 +433,15 @@ public:
     }
 
     void DispatchRays(
-        RayTracingScene* Scene, 
-        Texture2D* OutputImage, 
-        RayTracingPipelineState* PipelineState, 
-        const RayTracingShaderResources& GlobalShaderResources,
+        RayTracingScene* Scene,
+        RayTracingPipelineState* PipelineState,
         UInt32 Width, 
         UInt32 Height, 
         UInt32 Depth)
     {
-        Assert(OutputImage->IsUAV());
-
         SafeAddRef(Scene);
-        SafeAddRef(OutputImage);
         SafeAddRef(PipelineState);
-
-        InsertCommand<DispatchRaysRenderCommand>(Scene, OutputImage, PipelineState, GlobalShaderResources, Width, Height, Depth);
+        InsertCommand<DispatchRaysRenderCommand>(Scene, PipelineState, Width, Height, Depth);
     }
 
     void InsertCommandListMarker(const std::string& Marker)

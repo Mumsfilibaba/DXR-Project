@@ -182,10 +182,18 @@ public:
 
     ID3D12StateObject*           GetStateObject()           const { return StateObject.Get(); }
     ID3D12StateObjectProperties* GetStateObjectProperties() const { return StateObjectProperties.Get(); }
-    D3D12RootSignature*          GetGlobalRootSignature()   const { return GlobalRootSignature.Get(); }
+    
+    D3D12RootSignature* GetGlobalRootSignature()      const { return GlobalRootSignature.Get(); }
+    D3D12RootSignature* GetRayGenLocalRootSignature() const { return RayGenLocalRootSignature.Get(); }
+    D3D12RootSignature* GetMissLocalRootSignature()   const { return MissLocalRootSignature.Get(); }
+    D3D12RootSignature* GetHitLocalRootSignature()    const { return HitLocalRootSignature.Get(); }
 
 private:
     TComPtr<ID3D12StateObject>           StateObject;
     TComPtr<ID3D12StateObjectProperties> StateObjectProperties;
-    TRef<D3D12RootSignature>             GlobalRootSignature;
+    // TODO: There could be more than one rootdignature for locals
+    TRef<D3D12RootSignature> GlobalRootSignature;
+    TRef<D3D12RootSignature> RayGenLocalRootSignature;
+    TRef<D3D12RootSignature> MissLocalRootSignature;
+    TRef<D3D12RootSignature> HitLocalRootSignature;
 };

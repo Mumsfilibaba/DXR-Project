@@ -45,6 +45,8 @@ public:
     {
     }
 
+    virtual ShaderResourceView* GetShaderResourceView() const = 0;
+
     UInt32 GetFlags() const { return Flags; }
 
 private:
@@ -61,26 +63,48 @@ struct RayTracingGeometryInstance
     XMFLOAT3X4 Transform;
 };
 
+struct RayPayload
+{
+    XMFLOAT3 Color;
+    UInt32   CurrentDepth;
+};
+
+struct RayIntersectionAttributes
+{
+    Float Attrib0;
+    Float Attrib1;
+};
+
 struct RayTracingShaderResources
 {
-    void AddConstantBuffer(const TRef<ConstantBuffer>& Buffer)
+    void AddConstantBuffer(ConstantBuffer* Buffer)
     {
         ConstantBuffers.EmplaceBack(Buffer);
     }
 
-    void AddShaderResourceView(const TRef<ShaderResourceView>& View)
+    void AddShaderResourceView(ShaderResourceView* View)
     {
         ShaderResourceViews.EmplaceBack(View);
     }
 
-    void AddUnorderedAccessView(const TRef<UnorderedAccessView>& View)
+    void AddUnorderedAccessView(UnorderedAccessView* View)
     {
         UnorderedAccessViews.EmplaceBack(View);
     }
 
-    void AddSamplerState(const TRef<SamplerState>& State)
+    void AddSamplerState(SamplerState* State)
     {
         SamplerStates.EmplaceBack(State);
+    }
+
+    UInt32 NumResources() const
+    {
+        return ConstantBuffers.Size() + ShaderResourceViews.Size() + UnorderedAccessViews.Size();
+    }
+
+    UInt32 NumSamplers() const
+    {
+        return SamplerStates.Size();
     }
 
     void Reset()
@@ -91,8 +115,9 @@ struct RayTracingShaderResources
         SamplerStates.Clear();
     }
 
-    TArray<TRef<ConstantBuffer>>      ConstantBuffers;
-    TArray<TRef<ShaderResourceView>>  ShaderResourceViews;
-    TArray<TRef<UnorderedAccessView>> UnorderedAccessViews;
-    TArray<TRef<SamplerState>>        SamplerStates;
+    std::string Identifier;
+    TArray<ConstantBuffer*>      ConstantBuffers;
+    TArray<ShaderResourceView*>  ShaderResourceViews;
+    TArray<UnorderedAccessView*> UnorderedAccessViews;
+    TArray<SamplerState*>        SamplerStates;
 };

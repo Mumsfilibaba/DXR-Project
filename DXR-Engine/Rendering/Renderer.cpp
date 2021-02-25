@@ -750,7 +750,7 @@ Bool Renderer::Init()
 
     if (IsRayTracingSupported())
     {
-        if (!RayTracer.Init())
+        if (!RayTracer.Init(Resources))
         {
             return false;
         }
@@ -794,6 +794,7 @@ void Renderer::Release()
     LightProbeRenderer.Release();
     SkyboxRenderPass.Release();
     ForwardRenderer.Release();
+    RayTracer.Release();
 
     Resources.Release();
     LightSetup.Release();

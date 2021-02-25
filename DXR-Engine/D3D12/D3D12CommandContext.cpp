@@ -523,17 +523,6 @@ void D3D12CommandContext::SetIndexBuffer(IndexBuffer* IndexBuffer)
     CmdBatch->AddInUseResource(DxIndexBuffer);
 }
 
-void D3D12CommandContext::SetHitGroups(RayTracingScene* Scene, RayTracingPipelineState* PipelineState, const TArrayView<RayTracingShaderResources>& LocalShaderResources)
-{
-    D3D12RayTracingScene*         DxScene         = static_cast<D3D12RayTracingScene*>(Scene);
-    D3D12RayTracingPipelineState* DxPipelineState = static_cast<D3D12RayTracingPipelineState*>(PipelineState);
-
-    for (const RayTracingShaderResources& Resources : LocalShaderResources)
-    {
-
-    }
-}
-
 void D3D12CommandContext::SetRenderTargets(RenderTargetView* const* RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView)
 {
     for (UInt32 i = 0; i < RenderTargetCount; i++)
@@ -882,14 +871,114 @@ void D3D12CommandContext::BuildRayTracingGeometry(RayTracingGeometry* Geometry, 
     CmdBatch->AddInUseResource(IndexBuffer);
 }
 
-void D3D12CommandContext::BuildRayTracingScene(RayTracingScene* RayTracingScene, TArrayView<RayTracingGeometryInstance> Instances, Bool Update)
+void D3D12CommandContext::BuildRayTracingScene(RayTracingScene* RayTracingScene, const RayTracingGeometryInstance* Instances, UInt32 NumInstances, Bool Update)
 {
     FlushResourceBarriers();
 
     D3D12RayTracingScene* DxScene = static_cast<D3D12RayTracingScene*>(RayTracingScene);
-    DxScene->Build(*this, Instances, Update);
+    DxScene->Build(*this, Instances, NumInstances, Update);
 
     CmdBatch->AddInUseResource(RayTracingScene);
+}
+
+void D3D12CommandContext::SetRayTracingBindings(
+    RayTracingScene* RayTracingScene, 
+    RayTracingPipelineState* PipelineState, 
+    const RayTracingShaderResources* GlobalResource, 
+    const RayTracingShaderResources* RayGenLocalResources, 
+    const RayTracingShaderResources* MissLocalResources, 
+    const RayTracingShaderResources* HitGroupResources, 
+    UInt32 NumHitGroupResources)
+{
+    D3D12RayTracingScene*         DxScene         = static_cast<D3D12RayTracingScene*>(RayTracingScene);
+    D3D12RayTracingPipelineState* DxPipelineState = static_cast<D3D12RayTracingPipelineState*>(PipelineState);
+    Assert(DxScene != nullptr);
+    Assert(DxPipelineState != nullptr);
+
+    UInt32 NumDescriptorsNeeded = 0;
+    UInt32 NumSamplersNeeded    = 0;
+    if (GlobalResource)
+    {
+        NumDescriptorsNeeded += GlobalResource->NumResources();
+        NumSamplersNeeded    += GlobalResource->NumSamplers();
+    }
+    if (RayGenLocalResources)
+    {
+        NumDescriptorsNeeded += RayGenLocalResources->NumResources();
+        NumSamplersNeeded    += RayGenLocalResources->NumSamplers();
+    }
+    if (MissLocalResources)
+    {
+        NumDescriptorsNeeded += MissLocalResources->NumResources();
+        NumSamplersNeeded    += MissLocalResources->NumSamplers();
+    }
+
+    for (UInt32 i = 0; i < NumHitGroupResources; i++)
+    {
+        NumDescriptorsNeeded += HitGroupResources[i].NumResources();
+        NumSamplersNeeded    += HitGroupResources[i].NumSamplers();
+    }
+
+    Assert(NumDescriptorsNeeded < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
+    D3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
+    if (!ResourceHeap->HasSpace(NumDescriptorsNeeded))
+    {
+        ResourceHeap->AllocateFreshHeap();
+    }
+
+    Assert(NumSamplersNeeded < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
+    D3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
+    if (!SamplerHeap->HasSpace(NumSamplersNeeded))
+    {
+        SamplerHeap->AllocateFreshHeap();
+    }
+
+    if (!DxScene->BuildBindingTable(*this, DxPipelineState, ResourceHeap, SamplerHeap, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources))
+    {
+        LOG_ERROR("[D3D12CommandContext]: FAILED to Build Shader Binding Table");
+    }
+
+    Assert(GlobalResource != nullptr);
+
+    if (!GlobalResource->ConstantBuffers.IsEmpty())
+    {
+        for (UInt32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
+        {
+            D3D12ConstantBufferView& DxConstantBufferView = static_cast<D3D12ConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
+            DescriptorCache.SetConstantBufferView(&DxConstantBufferView, ShaderVisibility_All, i);
+        }
+    }
+    if (!GlobalResource->ShaderResourceViews.IsEmpty())
+    {
+        for (UInt32 i = 0; i < GlobalResource->ShaderResourceViews.Size(); i++)
+        {
+            D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(GlobalResource->ShaderResourceViews[i]);
+            DescriptorCache.SetShaderResourceView(DxShaderResourceView, ShaderVisibility_All, i);
+        }
+    }
+    if (!GlobalResource->UnorderedAccessViews.IsEmpty())
+    {
+        for (UInt32 i = 0; i < GlobalResource->UnorderedAccessViews.Size(); i++)
+        {
+            D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(GlobalResource->UnorderedAccessViews[i]);
+            DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, ShaderVisibility_All, i);
+        }
+    }
+    if (!GlobalResource->SamplerStates.IsEmpty())
+    {
+        for (UInt32 i = 0; i < GlobalResource->SamplerStates.Size(); i++)
+        {
+            D3D12SamplerState* DxSampler = static_cast<D3D12SamplerState*>(GlobalResource->SamplerStates[i]);
+            DescriptorCache.SetSamplerState(DxSampler, ShaderVisibility_All, i);
+        }
+    }
+
+    ID3D12GraphicsCommandList4* DXRCommandList = CmdList.GetDXRCommandList();
+    D3D12RootSignature* GlobalRootSignature    = DxPipelineState->GetGlobalRootSignature();
+    DXRCommandList->SetComputeRootSignature(GlobalRootSignature->GetRootSignature());
+    CurrentRootSignature = MakeSharedRef<D3D12RootSignature>(GlobalRootSignature);
+
+    DescriptorCache.CommitComputeDescriptors(CmdList, CmdBatch, GlobalRootSignature);
 }
 
 void D3D12CommandContext::GenerateMips(Texture* Texture)
@@ -1041,7 +1130,7 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
 
         CmdList.SetComputeRoot32BitConstants(&ConstantData, 4, 0, 0);
         
-        // Because of DATA_STATIC_WHILE_SET_AT_EXECUTE error
+        // Because of DATA_STATIC_WHILE_SET_AT_EXECUTE error. Why we get this when we only use Root Signature 1.0 is beyond me.
         CmdList.SetComputeRootDescriptorTable(SrvHandle_GPU, 1);
 
         const UInt32 GPUDescriptorHandleIndex           = i * MipLevelsPerDispatch;
@@ -1175,30 +1264,33 @@ void D3D12CommandContext::Dispatch(UInt32 ThreadGroupCountX, UInt32 ThreadGroupC
 
 void D3D12CommandContext::DispatchRays(
     RayTracingScene* Scene,
-    Texture2D* OutputImage,
     RayTracingPipelineState* PipelineState,
-    const RayTracingShaderResources& GlobalShaderResources,
     UInt32 Width,
     UInt32 Height,
     UInt32 Depth)
 {
-    FlushResourceBarriers();
+    D3D12RayTracingScene*         DxScene         = static_cast<D3D12RayTracingScene*>(Scene);
+    D3D12RayTracingPipelineState* DxPipelineState = static_cast<D3D12RayTracingPipelineState*>(PipelineState);
+    Assert(DxScene != nullptr);
+    Assert(DxPipelineState != nullptr);
 
-    CmdBatch->AddInUseResource(Scene);
-    CmdBatch->AddInUseResource(OutputImage);
-    CmdBatch->AddInUseResource(PipelineState);
+    ID3D12GraphicsCommandList4* DXRCommandList = CmdList.GetDXRCommandList();
+
+    FlushResourceBarriers();
 
     D3D12_DISPATCH_RAYS_DESC RayDispatchDesc;
     Memory::Memzero(&RayDispatchDesc);
+
+    RayDispatchDesc.RayGenerationShaderRecord = DxScene->GetRayGenShaderRecord();
+    RayDispatchDesc.MissShaderTable           = DxScene->GetMissShaderTable();
+    RayDispatchDesc.HitGroupTable             = DxScene->GetHitGroupTable();
 
     RayDispatchDesc.Width  = Width;
     RayDispatchDesc.Height = Height;
     RayDispatchDesc.Depth  = Depth;
 
-    // TODO: Fix this
-    Assert(false);
-    DescriptorCache.CommitComputeDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
-    CmdList.DispatchRays(&RayDispatchDesc);
+    DXRCommandList->SetPipelineState1(DxPipelineState->GetStateObject());
+    DXRCommandList->DispatchRays(&RayDispatchDesc);
 }
 
 void D3D12CommandContext::ClearState()

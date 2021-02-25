@@ -27,7 +27,13 @@ public:
 
     FORCEINLINE Bool Reset()
     {
-        return SUCCEEDED(Allocator->Reset());
+        HRESULT Result = Allocator->Reset();
+        if (Result == DXGI_ERROR_DEVICE_REMOVED)
+        {
+            DeviceRemovedHandler(GetDevice());
+        }
+
+        return SUCCEEDED(Result);
     }
 
     FORCEINLINE void SetName(const std::string& Name)

@@ -19,7 +19,6 @@ void FrameResources::Release()
     
     FXAASampler.Reset();
 
-    ReflectionTexture.Reset();
     SSAOBuffer.Reset();
     FinalTarget.Reset();
 
@@ -33,7 +32,10 @@ void FrameResources::Release()
     StdInputLayout.Reset();
 
     RTScene.Reset();
+    RTOutput.Reset();
     RTGeometryInstances.Clear();
+    RTHitGroupResources.Clear();
+    RTMaterialToHitGroupIndex.clear();
 
     DeferredVisibleCommands.Clear();
     ForwardVisibleCommands.Clear();

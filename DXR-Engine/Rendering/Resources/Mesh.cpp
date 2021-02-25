@@ -21,25 +21,10 @@ Bool Mesh::Init(const MeshData& Data)
         VertexBuffer->SetName("VertexBuffer");
     }
 
-    TArray<UInt16> SmallIndicies;
-    EIndexFormat Format = EIndexFormat::UInt32;
-    if (VertexCount < UINT16_MAX)
-    {
-        Format = EIndexFormat::UInt16;
-        SmallIndicies.Resize(Data.Indices.Size());
-        for (UInt32 i = 0; i < IndexCount; i++)
-        {
-            SmallIndicies[i] = (UInt16)Data.Indices[i];
-        }
-
-        InitialData = ResourceData(SmallIndicies.Data(), SmallIndicies.SizeInBytes());
-    }
-    else
-    {
-        InitialData = ResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
-    }
-
-    IndexBuffer = CreateIndexBuffer(Format, IndexCount, BufferFlags, EResourceState::IndexBuffer, &InitialData);
+    const Bool RTOn = IsRayTracingSupported();
+    
+    InitialData = ResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
+    IndexBuffer = CreateIndexBuffer(EIndexFormat::UInt32, IndexCount, BufferFlags, EResourceState::IndexBuffer, &InitialData);
     if (!IndexBuffer)
     {
         return false;
@@ -49,7 +34,7 @@ Bool Mesh::Init(const MeshData& Data)
         IndexBuffer->SetName("IndexBuffer");
     }
 
-    if (IsRayTracingSupported())
+    if (RTOn)
     {
         RTGeometry = CreateRayTracingGeometry(RayTracingStructureBuildFlag_None, VertexBuffer.Get(), IndexBuffer.Get());
         if (!RTGeometry)

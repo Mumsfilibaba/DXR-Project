@@ -146,20 +146,21 @@ D3D12RayTracingScene::D3D12RayTracingScene(D3D12Device* InDevice, UInt32 InFlags
     , BindingTable(nullptr)
     , BindingTableStride(0)
     , NumHitGroups(0)
-    , ShaderResourceView(nullptr)
+    , View(nullptr)
     , Instances()
+    , ShaderBindingTableBuilder(InDevice)
 {
 }
 
-Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, TArrayView<RayTracingGeometryInstance> InInstances, Bool Update)
+Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const RayTracingGeometryInstance* InInstances, UInt32 NumInstances, Bool Update)
 {
-    Assert(InInstances.IsEmpty() == false);
+    Assert(InInstances != nullptr && NumInstances != 0);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
     Memory::Memzero(&Inputs);
 
     Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    Inputs.NumDescs    = InInstances.Size();
+    Inputs.NumDescs    = NumInstances;
     Inputs.Type        = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
     Inputs.Flags       = ConvertAccelerationStructureBuildFlags(GetFlags());
     if (Update && GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)
@@ -234,7 +235,7 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, TArrayView<Ray
         CmdContext.TransitionResource(ScratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(InInstances.Size());
+    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(NumInstances);
     for (UInt32 i = 0; i < InstanceDescs.Size(); i++)
     {
         D3D12RayTracingGeometry* DxGeometry = static_cast<D3D12RayTracingGeometry*>(InInstances[i].Instance.Get());
@@ -303,32 +304,267 @@ Bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, TArrayView<Ray
     CmdContext.UnorderedAccessBarrier(ResultBuffer.Get());
 
     // Copy the instances
-    Instances = TArray<RayTracingGeometryInstance>(InInstances.Begin(), InInstances.End());
+    Instances = TArray<RayTracingGeometryInstance>(InInstances, InInstances + NumInstances);
     return true;
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS_RANGE D3D12RayTracingScene::GetRayGenerationShaderRecord() const
+Bool D3D12RayTracingScene::BuildBindingTable(
+    D3D12CommandContext& CmdContext, 
+    D3D12RayTracingPipelineState* PipelineState,
+    D3D12OnlineDescriptorHeap* ResourceHeap, 
+    D3D12OnlineDescriptorHeap* SamplerHeap, 
+    const RayTracingShaderResources* RayGenLocalResources, 
+    const RayTracingShaderResources* MissLocalResources, 
+    const RayTracingShaderResources* HitGroupResources, 
+    UInt32 NumHitGroupResources)
 {
-    Assert(BindingTable != nullptr);
+    Assert(ResourceHeap != nullptr);
+    Assert(SamplerHeap != nullptr);
+    Assert(PipelineState != nullptr);
 
-    const UInt64 BindingTableAdress = BindingTable->GetGPUVirtualAddress();
-    return { BindingTableAdress, BindingTableStride };
+    ID3D12StateObjectProperties* StateObjectProperties = PipelineState->GetStateObjectProperties();
+
+    Assert(RayGenLocalResources != nullptr);
+
+    D3D12ShaderBindingTableEntry RayGenEntry;
+    ShaderBindingTableBuilder.PopulateEntry(
+        StateObjectProperties,
+        PipelineState->GetRayGenLocalRootSignature(),
+        ResourceHeap,
+        SamplerHeap,
+        RayGenEntry,
+        *RayGenLocalResources);
+
+    Assert(MissLocalResources != nullptr);
+
+    D3D12ShaderBindingTableEntry MissEntry;
+    ShaderBindingTableBuilder.PopulateEntry(
+        StateObjectProperties,
+        PipelineState->GetMissLocalRootSignature(),
+        ResourceHeap,
+        SamplerHeap,
+        MissEntry,
+        *MissLocalResources);
+
+    Assert(HitGroupResources != nullptr);
+    Assert(NumHitGroupResources <= D3D12_MAX_HIT_GROUPS);
+
+    D3D12ShaderBindingTableEntry HitGroupEntries[D3D12_MAX_HIT_GROUPS];
+    for (UInt32 i = 0; i < NumHitGroupResources; i++)
+    {
+        ShaderBindingTableBuilder.PopulateEntry(
+            StateObjectProperties,
+            PipelineState->GetHitLocalRootSignature(),
+            ResourceHeap,
+            SamplerHeap,
+            HitGroupEntries[i],
+            HitGroupResources[i]);
+    }
+
+    ShaderBindingTableBuilder.CopyDescriptors();
+
+    // TODO: More dynamic size of binding table
+    UInt32 TableEntrySize   = sizeof(D3D12ShaderBindingTableEntry);
+    UInt64 BindingTableSize = TableEntrySize + TableEntrySize + (TableEntrySize * NumHitGroupResources);
+
+    UInt64 CurrentSize = BindingTable ? BindingTable->GetWidth() : 0;
+    if (CurrentSize < BindingTableSize)
+    {
+        D3D12_RESOURCE_DESC Desc;
+        Memory::Memzero(&Desc);
+
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = BindingTableSize;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
+        Desc.SampleDesc.Quality = 0;
+
+        TRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
+        if (!Buffer->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            BindingTable = Buffer;
+        }
+
+        CmdContext.TransitionResource(BindingTable.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    }
+
+    // NOTE: With resource tracking this would not be needed
+    CmdContext.TransitionResource(BindingTable.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    CmdContext.UpdateBuffer(BindingTable.Get(), 0, TableEntrySize, &RayGenEntry);
+    CmdContext.UpdateBuffer(BindingTable.Get(), TableEntrySize, TableEntrySize, &MissEntry);
+    CmdContext.UpdateBuffer(BindingTable.Get(), TableEntrySize * 2, NumHitGroupResources * TableEntrySize, HitGroupEntries);
+    CmdContext.TransitionResource(BindingTable.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+    ShaderBindingTableBuilder.Reset();
+    BindingTableHeaps[0] = ResourceHeap->GetNativeHeap();
+    BindingTableHeaps[1] = SamplerHeap->GetNativeHeap();
+
+    BindingTableStride = sizeof(D3D12ShaderBindingTableEntry);
+    NumHitGroups       = NumHitGroupResources;
+
+    return true;
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingScene::GetHitGroupTable() const
 {
     Assert(BindingTable != nullptr);
+    Assert(BindingTableStride != 0);
 
-    const UInt64 BindingTableAdress = BindingTable->GetGPUVirtualAddress();
-    const UInt64 SizeInBytes        = (BindingTableStride * NumHitGroups);
-    return { BindingTableAdress + BindingTableStride, SizeInBytes, BindingTableStride };
+    UInt64 BindingTableAdress = BindingTable->GetGPUVirtualAddress();
+    UInt64 AddressOffset      = BindingTableStride * 2;
+    UInt64 SizeInBytes        = (BindingTableStride * NumHitGroups);
+    return { BindingTableAdress + AddressOffset, SizeInBytes, BindingTableStride };
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS_RANGE D3D12RayTracingScene::GetRayGenShaderRecord() const
+{
+    Assert(BindingTable != nullptr);
+    Assert(BindingTableStride != 0);
+
+    UInt64 BindingTableAdress = BindingTable->GetGPUVirtualAddress();
+    return { BindingTableAdress, BindingTableStride };
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE D3D12RayTracingScene::GetMissShaderTable() const
 {
     Assert(BindingTable != nullptr);
+    Assert(BindingTableStride != 0);
 
-    const UInt64 BindingTableAdress  = BindingTable->GetGPUVirtualAddress();
-    const UInt64 HitGroupSizeInBytes = (BindingTableStride * NumHitGroups);
-    return { BindingTableAdress + BindingTableStride + HitGroupSizeInBytes, BindingTableStride, BindingTableStride };
+    UInt64 BindingTableAdress = BindingTable->GetGPUVirtualAddress();
+    UInt64 AddressOffset      = BindingTableStride;
+    return { BindingTableAdress + AddressOffset, BindingTableStride, BindingTableStride };
+}
+
+D3D12ShaderBindingTableBuilder::D3D12ShaderBindingTableBuilder(D3D12Device* InDevice)
+    : D3D12DeviceChild(InDevice)
+{
+    Reset();
+}
+
+void D3D12ShaderBindingTableBuilder::PopulateEntry(
+    ID3D12StateObjectProperties* StateObjectProperties,
+    D3D12RootSignature* RootSignature,
+    D3D12OnlineDescriptorHeap* ResourceHeap,
+    D3D12OnlineDescriptorHeap* SamplerHeap,
+    D3D12ShaderBindingTableEntry& OutShaderBindingEntry, 
+    const RayTracingShaderResources& Resources)
+{
+    Assert(StateObjectProperties != nullptr);
+    Assert(RootSignature != nullptr);
+    Assert(ResourceHeap != nullptr);
+    Assert(SamplerHeap != nullptr);
+
+    // TODO: Maybe a small buffer class for this purpose? However SSO probably fixes this for us 
+    std::wstring Identifier = ConvertToWide(Resources.Identifier);
+    Memory::Memcpy(OutShaderBindingEntry.ShaderIdentifier, StateObjectProperties->GetShaderIdentifier(Identifier.c_str()), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+
+    if (!Resources.ConstantBuffers.IsEmpty())
+    {
+        UInt32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_CBV);
+        Assert(RootIndex < 4);
+        
+        UInt32 NumDescriptors = Resources.ConstantBuffers.Size();
+        UInt32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
+        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
+
+        GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
+        GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
+
+        for (ConstantBuffer* CBuffer : Resources.ConstantBuffers)
+        {
+            D3D12ConstantBuffer* DxConstantBuffer = static_cast<D3D12ConstantBuffer*>(CBuffer);
+            ResourceHandles[CPUResourceIndex++] = DxConstantBuffer->GetView().GetOfflineHandle();
+        }
+    }
+    if (!Resources.ShaderResourceViews.IsEmpty())
+    {
+        UInt32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_SRV);
+        Assert(RootIndex < 4);
+
+        UInt32 NumDescriptors = Resources.ShaderResourceViews.Size();
+        UInt32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
+        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
+
+        GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
+        GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
+
+        for (ShaderResourceView* ShaderResourceView : Resources.ShaderResourceViews)
+        {
+            D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceView);
+            ResourceHandles[CPUResourceIndex++] = DxShaderResourceView->GetOfflineHandle();
+        }
+    }
+    if (!Resources.UnorderedAccessViews.IsEmpty())
+    {
+        UInt32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_UAV);
+        Assert(RootIndex < 4);
+
+        UInt32 NumDescriptors = Resources.UnorderedAccessViews.Size();
+        UInt32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
+        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
+
+        GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
+        GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
+
+        for (UnorderedAccessView* UnorderedAccessView : Resources.UnorderedAccessViews)
+        {
+            D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessView);
+            ResourceHandles[CPUResourceIndex++] = DxUnorderedAccessView->GetOfflineHandle();
+        }
+    }
+    if (!Resources.SamplerStates.IsEmpty())
+    {
+        UInt32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_Sampler);
+        Assert(RootIndex < 4);
+
+        UInt32 NumDescriptors = Resources.SamplerStates.Size();
+        UInt32 Handle         = SamplerHeap->AllocateHandles(NumDescriptors);
+        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = SamplerHeap->GetGPUDescriptorHandleAt(Handle);
+
+        GPUSamplerHandles[GPUSamplerIndex]       = SamplerHeap->GetCPUDescriptorHandleAt(Handle);
+        GPUSamplerHandleSizes[GPUSamplerIndex++] = NumDescriptors;
+
+        for (SamplerState* Sampler : Resources.SamplerStates)
+        {
+            D3D12SamplerState* DxSampler      = static_cast<D3D12SamplerState*>(Sampler);
+            SamplerHandles[CPUSamplerIndex++] = DxSampler->GetOfflineHandle();
+        }
+    }
+}
+
+void D3D12ShaderBindingTableBuilder::CopyDescriptors()
+{
+    GetDevice()->CopyDescriptors(
+        GPUResourceIndex, GPUResourceHandles, GPUResourceHandleSizes,
+        CPUResourceIndex, ResourceHandles, CPUHandleSizes,
+        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    GetDevice()->CopyDescriptors(
+        GPUSamplerIndex, GPUSamplerHandles, GPUSamplerHandleSizes,
+        CPUSamplerIndex, SamplerHandles, CPUHandleSizes,
+        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+}
+
+void D3D12ShaderBindingTableBuilder::Reset()
+{
+    for (UInt32 i = 0; i < ArrayCount(CPUHandleSizes); i++)
+    {
+        CPUHandleSizes[i] = 1;
+    }
+
+    CPUResourceIndex = 0;
+    CPUSamplerIndex  = 0;
+    GPUResourceIndex = 0;
+    GPUSamplerIndex  = 0;
 }

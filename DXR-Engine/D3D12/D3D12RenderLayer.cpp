@@ -82,12 +82,13 @@ D3D12RenderLayer::~D3D12RenderLayer()
 {
     DirectCmdContext.Reset();
 
+    SafeDelete(RootSignatureCache);
+
     SafeRelease(ResourceOfflineDescriptorHeap);
     SafeRelease(RenderTargetOfflineDescriptorHeap);
     SafeRelease(DepthStencilOfflineDescriptorHeap);
     SafeRelease(SamplerOfflineDescriptorHeap);
     
-    SafeDelete(RootSignatureCache);
     SafeDelete(Device);
 
     gD3D12RenderLayer = nullptr;
@@ -95,7 +96,10 @@ D3D12RenderLayer::~D3D12RenderLayer()
 
 Bool D3D12RenderLayer::Init(Bool EnableDebug)
 {
-    Device = DBG_NEW D3D12Device(EnableDebug, EnableDebug ? true : false);
+    Bool GPUBasedValidationOn = EnableDebug ? true : false;
+    Bool DREDOn = EnableDebug ? true : false;
+
+    Device = DBG_NEW D3D12Device(EnableDebug, GPUBasedValidationOn, DREDOn);
     if (!Device->Init())
     {
         return false;
@@ -585,10 +589,11 @@ VertexBuffer* D3D12RenderLayer::CreateVertexBuffer(UInt32 Stride, UInt32 NumVert
 
 IndexBuffer* D3D12RenderLayer::CreateIndexBuffer(EIndexFormat Format, UInt32 NumIndices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
-    const UInt32 SizeInBytes = NumIndices * GetStrideFromIndexFormat(Format);
+    const UInt32 SizeInBytes        = NumIndices * GetStrideFromIndexFormat(Format);
+    const UInt32 AlignedSizeInBytes = Math::AlignUp<UInt32>(SizeInBytes, sizeof(UInt32));
 
     TRef<D3D12IndexBuffer> NewBuffer = DBG_NEW D3D12IndexBuffer(Device, Format, NumIndices, Flags);
-    if (!FinalizeBufferResource<D3D12IndexBuffer>(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
+    if (!FinalizeBufferResource<D3D12IndexBuffer>(NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData))
     {
         LOG_ERROR("[D3D12RenderLayer]: Failed to create IndexBuffer");
         return nullptr;
@@ -655,13 +660,13 @@ RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry(UInt32 Flags, Ver
     return Geometry.ReleaseOwnership();
 }
 
-RayTracingScene* D3D12RenderLayer::CreateRayTracingScene(UInt32 Flags, TArrayView<RayTracingGeometryInstance> Instances)
+RayTracingScene* D3D12RenderLayer::CreateRayTracingScene(UInt32 Flags, RayTracingGeometryInstance* Instances, UInt32 NumInstances)
 {
     TRef<D3D12RayTracingScene> Scene = DBG_NEW D3D12RayTracingScene(Device, Flags);
 
     DirectCmdContext->Begin();
 
-    if (!Scene->Build(*DirectCmdContext, Instances, false))
+    if (!Scene->Build(*DirectCmdContext, Instances, NumInstances, false))
     {
         Debug::DebugBreak();
         Scene.Reset();
@@ -796,14 +801,11 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResou
         Resource = DxBuffer->GetResource();
 
         Assert(Buffer->IsSRV());
-
-        Desc.ViewDimension       = D3D12_SRV_DIMENSION_BUFFER;
-        Desc.Buffer.FirstElement = CreateInfo.IndexBuffer.FirstIndex;
-        Desc.Buffer.NumElements  = CreateInfo.IndexBuffer.NumIndices;
-
-        // TODO: What if the index type is 16-bit?
         Assert(Buffer->GetFormat() != EIndexFormat::UInt16);
-        
+
+        Desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
+        Desc.Buffer.FirstElement        = CreateInfo.IndexBuffer.FirstIndex;
+        Desc.Buffer.NumElements         = CreateInfo.IndexBuffer.NumIndices;
         Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
         Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
         Desc.Buffer.StructureByteStride = 0;

@@ -5,12 +5,11 @@
 // Global RootSignature
 RaytracingAccelerationStructure Scene : register(t0, space0);
 
+TextureCube<float4> Skybox        : register(t1, space0);
+Texture2D<float4>   GBufferNormal : register(t2, space0);
+Texture2D<float4>   GBufferDepth  : register(t3, space0);
+
 ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
-
-Texture2D<float4> GBufferNormal : register(t6, space0);
-Texture2D<float4> GBufferDepth  : register(t7, space0);
-
-TextureCube<float4> Skybox : register(t1, space0);
 
 SamplerState TextureSampler : register(s0, space0);
 SamplerState GBufferSampler : register(s1, space0);

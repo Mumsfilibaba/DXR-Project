@@ -124,7 +124,7 @@ public:
     virtual ConstantBuffer* CreateConstantBuffer(UInt32 Size, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
     virtual StructuredBuffer* CreateStructuredBuffer(UInt32 Stride, UInt32 NumElements, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
 
-    virtual RayTracingScene* CreateRayTracingScene(UInt32 Flags, TArrayView<RayTracingGeometryInstance> Instances) = 0;
+    virtual RayTracingScene* CreateRayTracingScene(UInt32 Flags, RayTracingGeometryInstance* Instances, UInt32 NumInstances) = 0;
     virtual RayTracingGeometry* CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer) = 0;
 
     virtual ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) = 0;
@@ -302,9 +302,9 @@ FORCEINLINE StructuredBuffer* CreateStructuredBuffer(
     return gRenderLayer->CreateStructuredBuffer(Stride, NumElements, Flags, InitialState, InitialData);
 }
 
-FORCEINLINE RayTracingScene* CreateRayTracingScene(UInt32 Flags, TArrayView<RayTracingGeometryInstance> Instances)
+FORCEINLINE RayTracingScene* CreateRayTracingScene(UInt32 Flags, RayTracingGeometryInstance* Instances, UInt32 NumInstances)
 {
-    return gRenderLayer->CreateRayTracingScene(Flags, Instances);
+    return gRenderLayer->CreateRayTracingScene(Flags, Instances, NumInstances);
 }
 
 FORCEINLINE RayTracingGeometry* CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer)
@@ -742,5 +742,5 @@ FORCEINLINE Bool IsRayTracingSupported()
     RayTracingSupport Support;
     CheckRayTracingSupport(Support);
 
-    return false;// Support.Tier != ERayTracingTier::NotSupported;
+    return Support.Tier != ERayTracingTier::NotSupported;
 }

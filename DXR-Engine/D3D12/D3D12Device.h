@@ -30,10 +30,12 @@ extern PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVers
 extern PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc;
 extern PFN_SetMarkerOnCommandList                             SetMarkerOnCommandListFunc;
 
+void DeviceRemovedHandler(class D3D12Device* Device);
+
 class D3D12Device
 {
 public:
-    D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation);
+    D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation, Bool InEnableDRED);
     ~D3D12Device();
 
     Bool Init();
@@ -182,4 +184,5 @@ private:
     Bool AllowTearing        = false;
     Bool EnableDebugLayer    = false;
     Bool EnableGPUValidation = false;
+    Bool EnableDRED          = false;
 };

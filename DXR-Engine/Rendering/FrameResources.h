@@ -44,7 +44,6 @@ struct FrameResources
     TRef<Texture2D>    IntegrationLUT;
     TRef<SamplerState> IntegrationLUTSampler;
 
-    TRef<Texture2D>    ReflectionTexture;
     TRef<Texture2D>    SSAOBuffer;
     TRef<Texture2D>    FinalTarget;
     TRef<Texture2D>    GBuffer[5];
@@ -55,6 +54,10 @@ struct FrameResources
 
     TRef<Texture2D>       RTOutput;
     TRef<RayTracingScene> RTScene;
+
+    RayTracingShaderResources GlobalResources;
+    RayTracingShaderResources RayGenLocalResources;
+    RayTracingShaderResources MissLocalResources;
     TArray<RayTracingGeometryInstance> RTGeometryInstances;
     TArray<RayTracingShaderResources>  RTHitGroupResources;
     std::unordered_map<class Material*, UInt32> RTMaterialToHitGroupIndex;

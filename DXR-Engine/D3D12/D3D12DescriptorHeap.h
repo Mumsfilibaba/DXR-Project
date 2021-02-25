@@ -119,6 +119,9 @@ public:
     Bool Init();
 
     UInt32 AllocateHandles(UInt32 NumHandles);
+    Bool AllocateFreshHeap();
+
+    Bool HasSpace(UInt32 NumHandles) const;
 
     void Reset();
 

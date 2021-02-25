@@ -7,7 +7,7 @@
 
 #include "Resources/Material.h"
 
-Bool RayTracer::Init()
+Bool RayTracer::Init(FrameResources& Resources)
 {
     TArray<UInt8> Code;
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RayGen.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code))
@@ -16,11 +16,15 @@ Bool RayTracer::Init()
         return false;
     }
 
-    TRef<RayGenShader> RayGen = CreateRayGenShader(Code);
-    if (!RayGen)
+    RayGenShader = CreateRayGenShader(Code);
+    if (!RayGenShader)
     {
         Debug::DebugBreak();
         return false;
+    }
+    else
+    {
+        RayGenShader->SetName("RayGenShader");
     }
 
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code))
@@ -29,11 +33,15 @@ Bool RayTracer::Init()
         return false;
     }
 
-    TRef<RayClosestHitShader> ClosestHit = CreateRayClosestHitShader(Code);
-    if (!ClosestHit)
+    RayClosestHitShader = CreateRayClosestHitShader(Code);
+    if (!RayClosestHitShader)
     {
         Debug::DebugBreak();
         return false;
+    }
+    else
+    {
+        RayClosestHitShader->SetName("RayClosestHitShader");
     }
 
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Miss.hlsl", "Miss", nullptr, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code))
@@ -42,21 +50,25 @@ Bool RayTracer::Init()
         return false;
     }
 
-    TRef<RayMissShader> Miss = CreateRayMissShader(Code);
-    if (!Miss)
+    RayMissShader = CreateRayMissShader(Code);
+    if (!RayMissShader)
     {
         Debug::DebugBreak();
         return false;
     }
+    else
+    {
+        RayMissShader->SetName("RayMissShader");
+    }
 
     RayTracingPipelineStateCreateInfo CreateInfo;
-    CreateInfo.RayGen                  = RayGen.Get();
-    CreateInfo.ClosestHitShaders       = { ClosestHit.Get() };
-    CreateInfo.MissShaders             = { Miss.Get() };
-    CreateInfo.HitGroups               = { RayTracingHitGroup("HitGroup", nullptr, ClosestHit.Get()) };
+    CreateInfo.RayGen                  = RayGenShader.Get();
+    CreateInfo.ClosestHitShaders       = { RayClosestHitShader.Get() };
+    CreateInfo.MissShaders             = { RayMissShader.Get() };
+    CreateInfo.HitGroups               = { RayTracingHitGroup("HitGroup", nullptr, RayClosestHitShader.Get()) };
     CreateInfo.MaxRecursionDepth       = 4;
-    CreateInfo.MaxAttributeSizeInBytes = sizeof(Float) * 2;
-    CreateInfo.MaxPayloadSizeInBytes   = sizeof(Float) * 3 + sizeof(UInt32);
+    CreateInfo.MaxAttributeSizeInBytes = sizeof(RayIntersectionAttributes);
+    CreateInfo.MaxPayloadSizeInBytes   = sizeof(RayPayload);
 
     Pipeline = CreateRayTracingPipelineState(CreateInfo);
     if (!Pipeline)
@@ -65,7 +77,25 @@ Bool RayTracer::Init()
         return false;
     }
 
+    UInt32 Width  = Resources.MainWindowViewport->GetWidth();
+    UInt32 Height = Resources.MainWindowViewport->GetHeight();
+    Resources.RTOutput = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!Resources.RTOutput)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        Resources.RTOutput->SetName("RayTracing Output");
+    }
+
     return true;
+}
+
+void RayTracer::Release()
+{
+    Pipeline.Reset();
 }
 
 void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const Scene& Scene)
@@ -91,15 +121,38 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
             Resources.RTMaterialToHitGroupIndex[Cmd.Material] = HitGroupIndex;
 
             RayTracingShaderResources HitGroupResources;
-            HitGroupResources.AddConstantBuffer(MakeSharedRef<ConstantBuffer>(Cmd.Material->GetMaterialBuffer()));
-            HitGroupResources.AddSamplerState(MakeSharedRef<SamplerState>(Cmd.Material->GetMaterialSampler()));
-            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->AlbedoMap->GetShaderResourceView()));
-            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->NormalMap->GetShaderResourceView()));
-            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->RoughnessMap->GetShaderResourceView()));
-            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->HeightMap->GetShaderResourceView()));
-            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->MetallicMap->GetShaderResourceView()));
-            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->AOMap->GetShaderResourceView()));
-            HitGroupResources.AddShaderResourceView(MakeSharedRef<ShaderResourceView>(Cmd.Material->AlphaMask->GetShaderResourceView()));
+            HitGroupResources.Identifier = "HitGroup";
+            HitGroupResources.AddConstantBuffer(Cmd.Material->GetMaterialBuffer());
+            HitGroupResources.AddSamplerState(Cmd.Material->GetMaterialSampler());
+            if (Cmd.Material->AlbedoMap)
+            {
+                HitGroupResources.AddShaderResourceView(Cmd.Material->AlbedoMap->GetShaderResourceView());
+            }
+            if (Cmd.Material->NormalMap)
+            {
+                HitGroupResources.AddShaderResourceView(Cmd.Material->NormalMap->GetShaderResourceView());
+            }
+            if (Cmd.Material->RoughnessMap)
+            {
+                HitGroupResources.AddShaderResourceView(Cmd.Material->RoughnessMap->GetShaderResourceView());
+            }
+            if (Cmd.Material->HeightMap)
+            {
+                HitGroupResources.AddShaderResourceView(Cmd.Material->HeightMap->GetShaderResourceView());
+            }
+            if (Cmd.Material->MetallicMap)
+            {
+                HitGroupResources.AddShaderResourceView(Cmd.Material->MetallicMap->GetShaderResourceView());
+            }
+            if (Cmd.Material->AOMap)
+            {
+                HitGroupResources.AddShaderResourceView(Cmd.Material->AOMap->GetShaderResourceView());
+            }
+            if (Cmd.Material->AlphaMask)
+            {
+                HitGroupResources.AddShaderResourceView(Cmd.Material->AlphaMask->GetShaderResourceView());
+            }
+
             Resources.RTHitGroupResources.EmplaceBack(HitGroupResources);
         }
         else
@@ -119,12 +172,40 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
 
     if (!Resources.RTScene)
     {
-        Resources.RTScene = CreateRayTracingScene(RayTracingStructureBuildFlag_AllowUpdate, TArrayView<RayTracingGeometryInstance>(Resources.RTGeometryInstances));
+        Resources.RTScene = CreateRayTracingScene(RayTracingStructureBuildFlag_AllowUpdate, Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size());
     }
     else
     {
-        CmdList.BuildRayTracingScene(Resources.RTScene.Get(), TArrayView<RayTracingGeometryInstance>(Resources.RTGeometryInstances), false);
+        CmdList.BuildRayTracingScene(Resources.RTScene.Get(), Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size(), false);
     }
 
-    CmdList.SetHitGroups(Resources.RTScene.Get(), Pipeline.Get(), TArrayView<RayTracingShaderResources>(Resources.RTHitGroupResources));
+    Resources.GlobalResources.Reset();
+    Resources.GlobalResources.AddUnorderedAccessView(Resources.RTOutput->GetUnorderedAccessView());
+    Resources.GlobalResources.AddConstantBuffer(Resources.CameraBuffer.Get());
+    // TODO: Change to correct samplers
+    Resources.GlobalResources.AddSamplerState(Resources.GBufferSampler.Get());
+    Resources.GlobalResources.AddSamplerState(Resources.GBufferSampler.Get());
+    Resources.GlobalResources.AddShaderResourceView(Resources.Skybox->GetShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView());
+
+    Resources.RayGenLocalResources.Reset();
+    Resources.RayGenLocalResources.Identifier = "RayGen";
+    
+    Resources.MissLocalResources.Reset();
+    Resources.MissLocalResources.Identifier = "Miss";
+
+    // TODO: NO MORE BINDINGS CAN BE BOUND BEFORE DISPATCH RAYS, FIX THIS
+    CmdList.SetRayTracingBindings(
+        Resources.RTScene.Get(), 
+        Pipeline.Get(), 
+        &Resources.GlobalResources, 
+        &Resources.RayGenLocalResources, 
+        &Resources.MissLocalResources,
+        Resources.RTHitGroupResources.Data(), 
+        Resources.RTHitGroupResources.Size());
+
+    UInt32 Width  = Resources.RTOutput->GetWidth();
+    UInt32 Height = Resources.RTOutput->GetHeight();
+    CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
 }

@@ -213,30 +213,44 @@ UInt32 D3D12OnlineDescriptorHeap::AllocateHandles(UInt32 NumHandles)
 {
     Assert(NumHandles <= DescriptorCount);
 
-    const UInt32 NewCurrentHandle = CurrentHandle + NumHandles;
-    if (NewCurrentHandle >= DescriptorCount)
+    if (!HasSpace(NumHandles))
     {
-        DiscardedHeaps.EmplaceBack(Heap);
-
-        if (HeapPool.IsEmpty())
+        if (!AllocateFreshHeap())
         {
-            Heap = DBG_NEW D3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-            if (!Heap->Init())
-            {
-                Debug::DebugBreak();
-                return UInt32(-1);
-            }
+            return (UInt32)-1;
         }
-        else
-        {
-            Heap = HeapPool.Back();
-            HeapPool.PopBack();
-        }
-
-        CurrentHandle = 0;
     }
 
     const UInt32 Handle = CurrentHandle;
     CurrentHandle += NumHandles;
     return Handle;
+}
+
+Bool D3D12OnlineDescriptorHeap::AllocateFreshHeap()
+{
+    DiscardedHeaps.EmplaceBack(Heap);
+
+    if (HeapPool.IsEmpty())
+    {
+        Heap = DBG_NEW D3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+        if (!Heap->Init())
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+    }
+    else
+    {
+        Heap = HeapPool.Back();
+        HeapPool.PopBack();
+    }
+
+    CurrentHandle = 0;
+    return true;
+}
+
+Bool D3D12OnlineDescriptorHeap::HasSpace(UInt32 NumHandles) const
+{
+    const UInt32 NewCurrentHandle = CurrentHandle + NumHandles;
+    return NewCurrentHandle < DescriptorCount;
 }

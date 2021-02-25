@@ -30,14 +30,15 @@ enum EResourceType
 
 struct ShaderResourceRange
 {
-    UInt32 ConstantBufferViewCount  = 0;
-    UInt32 ShaderResourceViewCount  = 0;
-    UInt32 UnorderedAccessViewCount = 0;
-    UInt32 SamplerCount             = 0;
+    UInt32 NumCBVs     = 0;
+    UInt32 NumSRVs     = 0;
+    UInt32 NumUAVs     = 0;
+    UInt32 NumSamplers = 0;
 };
 
 struct ShaderResourceCount
 {
+    void Combine(const ShaderResourceCount& Other);
     Bool IsCompatible(const ShaderResourceCount& Other) const;
 
     ShaderResourceRange Ranges;
@@ -91,7 +92,8 @@ public:
 
     EShaderVisibility GetShaderVisibility() const { return Visibility; };
 
-    const ShaderResourceCount& GetShaderResourceCount() const { return ResourceCount; }
+    const ShaderResourceCount& GetResourceCount() const        { return ResourceCount; }
+    const ShaderResourceCount& GetRTLocalResourceCount() const { return RTLocalResourceCount; }
 
     static Bool GetShaderReflection(class D3D12BaseShader* Shader);
 
@@ -106,6 +108,7 @@ protected:
     TArray<D3D12ShaderParameter> SamplerParameters;
     EShaderVisibility            Visibility;
     ShaderResourceCount          ResourceCount;
+    ShaderResourceCount          RTLocalResourceCount;
 
     Bool ContainsRootSignature = false;
 };

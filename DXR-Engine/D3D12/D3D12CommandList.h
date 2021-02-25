@@ -47,13 +47,27 @@ public:
     FORCEINLINE Bool Reset(D3D12CommandAllocatorHandle& Allocator)
     {
         IsReady = true;
-        return SUCCEEDED(CmdList->Reset(Allocator.GetAllocator(), nullptr));
+
+        HRESULT Result = CmdList->Reset(Allocator.GetAllocator(), nullptr);
+        if (Result == DXGI_ERROR_DEVICE_REMOVED)
+        {
+            DeviceRemovedHandler(GetDevice());
+        }
+
+        return SUCCEEDED(Result);
     }
 
     FORCEINLINE Bool Close()
     {
         IsReady = false;
-        return SUCCEEDED(CmdList->Close());
+
+        HRESULT Result = CmdList->Close();
+        if (Result == DXGI_ERROR_DEVICE_REMOVED)
+        {
+            DeviceRemovedHandler(GetDevice());
+        }
+
+        return SUCCEEDED(Result);
     }
 
     FORCEINLINE void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView, const Float Color[4], UInt32 NumRects, const D3D12_RECT* Rects)

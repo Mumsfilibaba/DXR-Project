@@ -31,8 +31,6 @@ public:
     virtual void SetVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) = 0;
     virtual void SetIndexBuffer(IndexBuffer* IndexBuffer) = 0;
 
-    virtual void SetHitGroups(RayTracingScene* Scene, RayTracingPipelineState* PipelineState, const TArrayView<RayTracingShaderResources>& LocalShaderResources) = 0;
-
     virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) = 0;
 
     virtual void SetGraphicsPipelineState(class GraphicsPipelineState* PipelineState) = 0;
@@ -64,7 +62,15 @@ public:
     virtual void DiscardResource(class Resource* Resource) = 0;
 
     virtual void BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update) = 0;
-    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene, TArrayView<RayTracingGeometryInstance> Instances, Bool Update) = 0;
+    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene, const RayTracingGeometryInstance* Instances, UInt32 NumInstances, Bool Update) = 0;
+
+    virtual void SetRayTracingBindings(
+        RayTracingScene* RayTracingScene,
+        RayTracingPipelineState* PipelineState,
+        const RayTracingShaderResources* GlobalResource,
+        const RayTracingShaderResources* RayGenLocalResources,
+        const RayTracingShaderResources* MissLocalResources,
+        const RayTracingShaderResources* HitGroupResources, UInt32 NumHitGroupResources) = 0;
 
     virtual void GenerateMips(Texture* Texture) = 0;
 
@@ -89,9 +95,7 @@ public:
     
     virtual void DispatchRays(
         RayTracingScene* InScene,
-        Texture2D* InOutputImage,
         RayTracingPipelineState* InPipelineState,
-        const RayTracingShaderResources& InGlobalShaderResources,
         UInt32 InWidth,
         UInt32 InHeight,
         UInt32 InDepth) = 0;

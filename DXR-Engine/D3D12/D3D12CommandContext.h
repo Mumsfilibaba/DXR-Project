@@ -243,8 +243,6 @@ public:
     virtual void SetVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) override final;
     virtual void SetIndexBuffer(IndexBuffer* IndexBuffer) override final;
 
-    virtual void SetHitGroups(RayTracingScene* Scene, RayTracingPipelineState* PipelineState, const TArrayView<RayTracingShaderResources>& LocalShaderResources) override final;
-
     virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
 
     virtual void SetGraphicsPipelineState(class GraphicsPipelineState* PipelineState) override final;
@@ -276,7 +274,15 @@ public:
     virtual void DiscardResource(class Resource* Resource) override final;
 
     virtual void BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update) override final;
-    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene, TArrayView<RayTracingGeometryInstance> Instances, Bool Update) override final;
+    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene, const RayTracingGeometryInstance* Instances, UInt32 NumInstances, Bool Update) override final;
+
+    virtual void SetRayTracingBindings(
+        RayTracingScene* RayTracingScene,
+        RayTracingPipelineState* PipelineState,
+        const RayTracingShaderResources* GlobalResource,
+        const RayTracingShaderResources* RayGenLocalResources,
+        const RayTracingShaderResources* MissLocalResources,
+        const RayTracingShaderResources* HitGroupResources, UInt32 NumHitGroupResources) override final;
 
     virtual void GenerateMips(Texture* Texture) override final;
 
@@ -301,9 +307,7 @@ public:
     
     virtual void DispatchRays(
         RayTracingScene* InScene,
-        Texture2D* InOutputImage,
         RayTracingPipelineState* InPipelineState,
-        const RayTracingShaderResources& InGlobalShaderResources,
         UInt32 InWidth,
         UInt32 InHeight,
         UInt32 InDepth) override final;

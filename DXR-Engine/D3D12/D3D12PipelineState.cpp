@@ -184,7 +184,7 @@ Bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
         for (D3D12BaseShader* DxShader : BaseShaders)
         {
             UInt32 Index = DxShader->GetShaderVisibility();
-            ResourceCounts.ResourceCounts[Index] = DxShader->GetShaderResourceCount();
+            ResourceCounts.ResourceCounts[Index] = DxShader->GetResourceCount();
             Num32BitConstants = Math::Max<UInt32>(Num32BitConstants, ResourceCounts.ResourceCounts[Index].Num32BitConstants);
             ResourceCounts.ResourceCounts[Index].Num32BitConstants = 0;
         }
@@ -265,7 +265,7 @@ Bool D3D12ComputePipelineState::Init()
         D3D12RootSignatureResourceCount ResourceCounts;
         ResourceCounts.Type                = ERootSignatureType::Compute;
         ResourceCounts.AllowInputAssembler = false;
-        ResourceCounts.ResourceCounts[ShaderVisibility_All] = Shader->GetShaderResourceCount();
+        ResourceCounts.ResourceCounts[ShaderVisibility_All] = Shader->GetResourceCount();
 
         RootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts);
     }
@@ -487,24 +487,29 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
 {
     D3D12RayTracingPipelineStateStream PipelineStream;
 
+    TArray<D3D12BaseShader*> Shaders;
     D3D12RayGenShader* RayGen = static_cast<D3D12RayGenShader*>(CreateInfo.RayGen);
-    
-    // TODO: Fix this
+    Shaders.EmplaceBack(RayGen);
+
     D3D12RootSignatureResourceCount RayGenLocalResourceCounts;
     RayGenLocalResourceCounts.Type                = ERootSignatureType::RayTracingLocal;
     RayGenLocalResourceCounts.AllowInputAssembler = false;
+    RayGenLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = RayGen->GetRTLocalResourceCount();
 
-    // TODO: Do not use this for all
-    D3D12RootSignature* RayGenLocal = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(RayGenLocalResourceCounts);
-    if (!RayGenLocal)
+    RayGenLocalRootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(RayGenLocalResourceCounts);
+    if (!RayGenLocalRootSignature)
     {
         return false;
     }
 
     std::wstring RayGenIdentifier = ConvertToWide(RayGen->GetIdentifier());
     PipelineStream.AddLibrary(RayGen->GetByteCode(), { RayGenIdentifier });
-    PipelineStream.AddRootSignatureAssociation(RayGenLocal->GetRootSignature(), { RayGenIdentifier });
+    PipelineStream.AddRootSignatureAssociation(RayGenLocalRootSignature->GetRootSignature(), { RayGenIdentifier });
     PipelineStream.PayLoadExportNames.EmplaceBack(RayGenIdentifier);
+
+    std::wstring HitGroupName;
+    std::wstring ClosestHitName;
+    std::wstring AnyHitName;
 
     for (const RayTracingHitGroup& HitGroup : CreateInfo.HitGroups)
     {
@@ -513,46 +518,102 @@ Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo&
         
         Assert(DxClosestHit != nullptr);
 
-        PipelineStream.AddHitGroup(
-            ConvertToWide(HitGroup.Name), 
-            ConvertToWide(DxClosestHit->GetIdentifier()), 
-            DxAnyHit ? ConvertToWide(DxAnyHit->GetIdentifier()) : L"", L"");
+        HitGroupName   = ConvertToWide(HitGroup.Name);
+        ClosestHitName = ConvertToWide(DxClosestHit->GetIdentifier());
+        AnyHitName     = DxAnyHit ? ConvertToWide(DxAnyHit->GetIdentifier()) : L"";
+
+        PipelineStream.AddHitGroup(HitGroupName, ClosestHitName, AnyHitName, L"");
     }
 
     for (RayAnyHitShader* AnyHit : CreateInfo.AnyHitShaders)
     {
         D3D12RayAnyHitShader* DxAnyHit = static_cast<D3D12RayAnyHitShader*>(AnyHit);
+        Shaders.EmplaceBack(DxAnyHit);
 
-        std::wstring AnyHitIdentifier = ConvertToWide(RayGen->GetIdentifier());
+        D3D12RootSignatureResourceCount AnyHitLocalResourceCounts;
+        AnyHitLocalResourceCounts.Type                = ERootSignatureType::RayTracingLocal;
+        AnyHitLocalResourceCounts.AllowInputAssembler = false;
+        AnyHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = DxAnyHit->GetRTLocalResourceCount();
+
+        HitLocalRootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(AnyHitLocalResourceCounts);
+        if (!HitLocalRootSignature)
+        {
+            return false;
+        }
+
+        std::wstring AnyHitIdentifier = ConvertToWide(DxAnyHit->GetIdentifier());
         PipelineStream.AddLibrary(DxAnyHit->GetByteCode(), { AnyHitIdentifier });
-        PipelineStream.AddRootSignatureAssociation(RayGenLocal->GetRootSignature(), { AnyHitIdentifier });
+        PipelineStream.AddRootSignatureAssociation(HitLocalRootSignature->GetRootSignature(), { AnyHitIdentifier });
         PipelineStream.PayLoadExportNames.EmplaceBack(AnyHitIdentifier);
     }
 
     for (RayClosestHitShader* ClosestHit : CreateInfo.ClosestHitShaders)
     {
         D3D12RayClosestHitShader* DxClosestHit = static_cast<D3D12RayClosestHitShader*>(ClosestHit);
+        Shaders.EmplaceBack(DxClosestHit);
 
-        std::wstring ClosestHitIdentifier = ConvertToWide(RayGen->GetIdentifier());
+        D3D12RootSignatureResourceCount ClosestHitLocalResourceCounts;
+        ClosestHitLocalResourceCounts.Type                = ERootSignatureType::RayTracingLocal;
+        ClosestHitLocalResourceCounts.AllowInputAssembler = false;
+        ClosestHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = DxClosestHit->GetRTLocalResourceCount();
+
+        HitLocalRootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ClosestHitLocalResourceCounts);
+        if (!HitLocalRootSignature)
+        {
+            return false;
+        }
+
+        std::wstring ClosestHitIdentifier = ConvertToWide(DxClosestHit->GetIdentifier());
         PipelineStream.AddLibrary(DxClosestHit->GetByteCode(), { ClosestHitIdentifier });
-        PipelineStream.AddRootSignatureAssociation(RayGenLocal->GetRootSignature(), { ClosestHitIdentifier });
+        PipelineStream.AddRootSignatureAssociation(HitLocalRootSignature->GetRootSignature(), { ClosestHitIdentifier });
         PipelineStream.PayLoadExportNames.EmplaceBack(ClosestHitIdentifier);
     }
 
     for (RayMissShader* Miss : CreateInfo.MissShaders)
     {
         D3D12RayMissShader* DxMiss = static_cast<D3D12RayMissShader*>(Miss);
+        Shaders.EmplaceBack(DxMiss);
 
-        std::wstring MissIdentifier = ConvertToWide(RayGen->GetIdentifier());
+        D3D12RootSignatureResourceCount MissLocalResourceCounts;
+        MissLocalResourceCounts.Type                = ERootSignatureType::RayTracingLocal;
+        MissLocalResourceCounts.AllowInputAssembler = false;
+        MissLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = DxMiss->GetRTLocalResourceCount();
+
+        MissLocalRootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(MissLocalResourceCounts);
+        if (!MissLocalRootSignature)
+        {
+            return false;
+        }
+
+        std::wstring MissIdentifier = ConvertToWide(DxMiss->GetIdentifier());
         PipelineStream.AddLibrary(DxMiss->GetByteCode(), { MissIdentifier });
-        PipelineStream.AddRootSignatureAssociation(RayGenLocal->GetRootSignature(), { MissIdentifier });
+        PipelineStream.AddRootSignatureAssociation(MissLocalRootSignature->GetRootSignature(), { MissIdentifier });
         PipelineStream.PayLoadExportNames.EmplaceBack(MissIdentifier);
     }
 
     PipelineStream.ShaderConfig.MaxAttributeSizeInBytes  = CreateInfo.MaxAttributeSizeInBytes;
     PipelineStream.ShaderConfig.MaxPayloadSizeInBytes    = CreateInfo.MaxPayloadSizeInBytes;
     PipelineStream.PipelineConfig.MaxTraceRecursionDepth = CreateInfo.MaxRecursionDepth;
-    PipelineStream.GlobalRootSignature                   = RayGenLocal->GetRootSignature();
+
+    ShaderResourceCount CombinedResourceCount;
+    for (D3D12BaseShader* Shader : Shaders)
+    {
+        Assert(Shader != nullptr);
+        CombinedResourceCount.Combine(Shader->GetResourceCount());
+    }
+
+    D3D12RootSignatureResourceCount GlobalResourceCounts;
+    GlobalResourceCounts.Type                = ERootSignatureType::RayTracingGlobal;
+    GlobalResourceCounts.AllowInputAssembler = false;
+    GlobalResourceCounts.ResourceCounts[ShaderVisibility_All] = CombinedResourceCount;
+
+    GlobalRootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(GlobalResourceCounts);
+    if (!GlobalRootSignature)
+    {
+        return false;
+    }
+
+    PipelineStream.GlobalRootSignature = GlobalRootSignature->GetRootSignature();
 
     PipelineStream.Generate();
 

@@ -84,61 +84,61 @@ D3D12RootSignatureDescHelper::D3D12RootSignatureDescHelper(const D3D12RootSignat
     };
 
     // NOTE: This can crash it pipeline is using to many tables, max is 64
+    UInt32 Space = RootSignatureInfo.Type == ERootSignatureType::RayTracingLocal ? D3D12_SHADER_REGISTER_SPACE_RT_LOCAL : 0;
     UInt32 NumRootParameters = 0;
     for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
     {
         Bool AddFlag = true;
 
         const ShaderResourceCount& ResourceCounts = RootSignatureInfo.ResourceCounts[i];
-        if (ResourceCounts.Ranges.ConstantBufferViewCount > 0)
+        if (ResourceCounts.Ranges.NumCBVs > 0)
         {
             Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
             Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
-            InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_CBV, ResourceCounts.Ranges.ConstantBufferViewCount, 0, 0);
+            InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_CBV, ResourceCounts.Ranges.NumCBVs, 0, Space);
             InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
             NumDescriptorRanges++;
             NumRootParameters++;
 
             AddFlag = false;
         }
-        if (ResourceCounts.Ranges.ShaderResourceViewCount > 0)
+        if (ResourceCounts.Ranges.NumSRVs > 0)
         {
             Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
             Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
-            InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ResourceCounts.Ranges.ShaderResourceViewCount, 0, 0);
+            InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ResourceCounts.Ranges.NumSRVs, 0, Space);
             InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
             NumDescriptorRanges++;
             NumRootParameters++;
 
             AddFlag = false;
         }
-        if (ResourceCounts.Ranges.UnorderedAccessViewCount > 0)
+        if (ResourceCounts.Ranges.NumUAVs > 0)
         {
             Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
             Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
-            InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_UAV, ResourceCounts.Ranges.UnorderedAccessViewCount, 0, 0);
+            InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_UAV, ResourceCounts.Ranges.NumUAVs, 0, Space);
             InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
             NumDescriptorRanges++;
             NumRootParameters++;
 
             AddFlag = false;
         }
-        if (ResourceCounts.Ranges.SamplerCount > 0)
+        if (ResourceCounts.Ranges.NumSamplers > 0)
         {
             Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
             Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
-            InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ResourceCounts.Ranges.SamplerCount, 0, 0);
+            InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ResourceCounts.Ranges.NumSamplers, 0, Space);
             InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
             NumDescriptorRanges++;
             NumRootParameters++;
 
             AddFlag = false;
         }
-
         if (ResourceCounts.Num32BitConstants > 0)
         {
             Assert(ResourceCounts.Num32BitConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
@@ -165,6 +165,10 @@ D3D12RootSignatureDescHelper::D3D12RootSignatureDescHelper(const D3D12RootSignat
     if (RootSignatureInfo.AllowInputAssembler)
     {
         Desc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+    }
+    else if (RootSignatureInfo.Type == ERootSignatureType::RayTracingLocal)
+    {
+        Desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
     }
 }
 
@@ -360,10 +364,10 @@ Bool D3D12RootSignatureCache::Init()
     // NOTE: Skips visibility all, however constants are still visibile to all stages
     for (UInt32 i = 1; i < ShaderVisibility_Count; i++)
     {
-        GraphicsKey.ResourceCounts[i].Ranges.ConstantBufferViewCount  = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
-        GraphicsKey.ResourceCounts[i].Ranges.ShaderResourceViewCount  = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
-        GraphicsKey.ResourceCounts[i].Ranges.UnorderedAccessViewCount = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
-        GraphicsKey.ResourceCounts[i].Ranges.SamplerCount             = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
+        GraphicsKey.ResourceCounts[i].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
+        GraphicsKey.ResourceCounts[i].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
+        GraphicsKey.ResourceCounts[i].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
+        GraphicsKey.ResourceCounts[i].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
     }
 
     D3D12RootSignature* GraphicsRootSignature = CreateRootSignature(GraphicsKey);
@@ -372,15 +376,19 @@ Bool D3D12RootSignatureCache::Init()
         Debug::DebugBreak();
         return false;
     }
+    else
+    {
+        GraphicsRootSignature->SetName("Default Graphics RootSignature");
+    }
 
     D3D12RootSignatureResourceCount ComputeKey;
     ComputeKey.Type                = ERootSignatureType::Compute;
     ComputeKey.AllowInputAssembler = false;
-    ComputeKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants               = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
-    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.ConstantBufferViewCount  = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
-    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.ShaderResourceViewCount  = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
-    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.UnorderedAccessViewCount = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
-    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.SamplerCount             = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
+    ComputeKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
+    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
+    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
+    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
+    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
 
     D3D12RootSignature* ComputeRootSignature = CreateRootSignature(ComputeKey);
     if (!ComputeRootSignature)
@@ -388,15 +396,19 @@ Bool D3D12RootSignatureCache::Init()
         Debug::DebugBreak();
         return false;
     }
+    else
+    {
+        ComputeRootSignature->SetName("Default Compute RootSignature");
+    }
 
     D3D12RootSignatureResourceCount RTGlobalKey;
     RTGlobalKey.Type                = ERootSignatureType::RayTracingGlobal;
     RTGlobalKey.AllowInputAssembler = false;
     RTGlobalKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants                  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.ConstantBufferViewCount  = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.ShaderResourceViewCount  = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.UnorderedAccessViewCount = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.SamplerCount             = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs  = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs  = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers             = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
 
     D3D12RootSignature* RTGlobalRootSignature = CreateRootSignature(RTGlobalKey);
     if (!RTGlobalRootSignature)
@@ -404,20 +416,28 @@ Bool D3D12RootSignatureCache::Init()
         Debug::DebugBreak();
         return false;
     }
+    else
+    {
+        RTGlobalRootSignature->SetName("Default Global RayTracing RootSignature");
+    }
 
     D3D12RootSignatureResourceCount RTLocalKey;
     RTLocalKey.Type                = ERootSignatureType::RayTracingLocal;
     RTLocalKey.AllowInputAssembler = false;
-    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.ConstantBufferViewCount  = D3D12_DEFAULT_LOCAL_CONSTANT_BUFFER_COUNT;
-    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.ShaderResourceViewCount  = D3D12_DEFAULT_LOCAL_SHADER_RESOURCE_VIEW_COUNT;
-    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.UnorderedAccessViewCount = D3D12_DEFAULT_LOCAL_UNORDERED_ACCESS_VIEW_COUNT;
-    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.SamplerCount             = D3D12_DEFAULT_LOCAL_SAMPLER_STATE_COUNT;
+    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_LOCAL_CONSTANT_BUFFER_COUNT;
+    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_LOCAL_SHADER_RESOURCE_VIEW_COUNT;
+    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_LOCAL_UNORDERED_ACCESS_VIEW_COUNT;
+    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers = D3D12_DEFAULT_LOCAL_SAMPLER_STATE_COUNT;
 
     D3D12RootSignature* RTLocalRootSignature = CreateRootSignature(RTLocalKey);
     if (!RTLocalRootSignature)
     {
         Debug::DebugBreak();
         return false;
+    }
+    else
+    {
+        RTLocalRootSignature->SetName("Default Local RayTracing RootSignature");
     }
 
     return true;
@@ -451,21 +471,21 @@ D3D12RootSignature* D3D12RootSignatureCache::GetOrCreateRootSignature(const D3D1
     for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
     {
         ShaderResourceCount& Count = NewResourceCount.ResourceCounts[i];
-        if (Count.Ranges.ConstantBufferViewCount > 0)
+        if (Count.Ranges.NumCBVs > 0)
         {
-            Count.Ranges.ConstantBufferViewCount = Math::Max<UInt32>(Count.Ranges.ConstantBufferViewCount, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
+            Count.Ranges.NumCBVs = Math::Max<UInt32>(Count.Ranges.NumCBVs, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
         }
-        if (Count.Ranges.ShaderResourceViewCount > 0)
+        if (Count.Ranges.NumSRVs > 0)
         {
-            Count.Ranges.ShaderResourceViewCount = Math::Max<UInt32>(Count.Ranges.ShaderResourceViewCount, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+            Count.Ranges.NumSRVs = Math::Max<UInt32>(Count.Ranges.NumSRVs, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
         }
-        if (Count.Ranges.UnorderedAccessViewCount > 0)
+        if (Count.Ranges.NumUAVs > 0)
         {
-            Count.Ranges.UnorderedAccessViewCount = Math::Max<UInt32>(Count.Ranges.UnorderedAccessViewCount, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+            Count.Ranges.NumUAVs = Math::Max<UInt32>(Count.Ranges.NumUAVs, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
         }
-        if (Count.Ranges.SamplerCount > 0)
+        if (Count.Ranges.NumSamplers > 0)
         {
-            Count.Ranges.SamplerCount = Math::Max<UInt32>(Count.Ranges.SamplerCount, D3D12_DEFAULT_SAMPLER_STATE_COUNT);
+            Count.Ranges.NumSamplers = Math::Max<UInt32>(Count.Ranges.NumSamplers, D3D12_DEFAULT_SAMPLER_STATE_COUNT);
         }
     }
 

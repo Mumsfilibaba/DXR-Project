@@ -138,6 +138,11 @@ Bool D3D12Viewport::Present(Bool VerticalSync)
     }
 
     HRESULT Result = SwapChain->Present(SyncInterval, PresentFlags);
+    if (Result == DXGI_ERROR_DEVICE_REMOVED)
+    {
+        DeviceRemovedHandler(GetDevice());
+    }
+    
     if (SUCCEEDED(Result))
     {
         BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
