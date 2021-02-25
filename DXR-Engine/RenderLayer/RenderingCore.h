@@ -485,25 +485,25 @@ public:
 
     ColorF& AsColor()
     {
-        VALIDATE(Type == EType::Color);
+        Assert(Type == EType::Color);
         return Color;
     }
 
     const ColorF& AsColor() const
     {
-        VALIDATE(Type == EType::Color);
+        Assert(Type == EType::Color);
         return Color;
     }
 
     DepthStencilF& AsDepthStencil()
     {
-        VALIDATE(Type == EType::DepthStencil);
+        Assert(Type == EType::DepthStencil);
         return DepthStencil;
     }
 
     const DepthStencilF& AsDepthStencil() const
     {
-        VALIDATE(Type == EType::DepthStencil);
+        Assert(Type == EType::DepthStencil);
         return DepthStencil;
     }
 

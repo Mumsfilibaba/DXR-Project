@@ -8,24 +8,26 @@
 class ScreenSpaceOcclusionRenderer
 {
 public:
-	ScreenSpaceOcclusionRenderer()  = default;
-	~ScreenSpaceOcclusionRenderer() = default;
+    ScreenSpaceOcclusionRenderer()  = default;
+    ~ScreenSpaceOcclusionRenderer() = default;
 
     Bool Init(FrameResources& FrameResources);
     void Release();
 
-    void Render(CommandList& CmdList, const FrameResources& FrameResources);
+    void Render(CommandList& CmdList, FrameResources& FrameResources);
 
     Bool ResizeResources(FrameResources& FrameResources);
 
 private:
     Bool CreateRenderTarget(FrameResources& FrameResources);
 
-    TSharedPtr<ComputePipelineState> PipelineState;
-    TSharedPtr<ComputePipelineState> BlurHorizontalPSO;
-    TSharedPtr<ComputePipelineState> BlurVerticalPSO;
-    TSharedRef<StructuredBuffer>     SSAOSamples;
-    TSharedRef<ShaderResourceView>   SSAOSamplesSRV;
-    TSharedRef<Texture2D>            SSAONoiseTex;
-    TSharedRef<ShaderResourceView>   SSAONoiseSRV;
+    TRef<ComputePipelineState> PipelineState;
+    TRef<ComputeShader>        SSAOShader;
+    TRef<ComputePipelineState> BlurHorizontalPSO;
+    TRef<ComputeShader>        BlurHorizontalShader;
+    TRef<ComputePipelineState> BlurVerticalPSO;
+    TRef<ComputeShader>        BlurVerticalShader;
+    TRef<StructuredBuffer>     SSAOSamples;
+    TRef<ShaderResourceView>   SSAOSamplesSRV;
+    TRef<Texture2D>            SSAONoiseTex;
 };

@@ -8,14 +8,18 @@
 
 #include "Debug/Debug.h"
 
+#include "Application/Log.h"
+
+#include <Containers/ArrayView.h>
+
 // Base rendercommand
 struct RenderCommand
 {
     virtual ~RenderCommand() = default;
 
-    virtual void Execute(ICommandContext&) const = 0;
+    virtual void Execute(ICommandContext&) = 0;
 
-    FORCEINLINE void operator()(ICommandContext& CmdContext) const
+    FORCEINLINE void operator()(ICommandContext& CmdContext)
     {
         Execute(CmdContext);
     }
@@ -24,97 +28,97 @@ struct RenderCommand
 };
 
 // Begin RenderCommand
-struct BeginCommand : public RenderCommand
+struct BeginRenderCommand : public RenderCommand
 {
-    BeginCommand()
+    BeginRenderCommand()
     {
         // Empty for now
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.Begin();
     }
 };
 
 // End RenderCommand
-struct EndCommand : public RenderCommand
+struct EndRenderCommand : public RenderCommand
 {
-    EndCommand()
+    EndRenderCommand()
     {
         // Empty for now
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.End();
     }
 };
 
 // Clear RenderTarget RenderCommand
-struct ClearRenderTargetViewCommand : public RenderCommand
+struct ClearRenderTargetViewRenderCommand : public RenderCommand
 {
-    ClearRenderTargetViewCommand(RenderTargetView* InRenderTargetView, const ColorF& InClearColor)
+    ClearRenderTargetViewRenderCommand(RenderTargetView* InRenderTargetView, const ColorF& InClearColor)
         : RenderTargetView(InRenderTargetView)
         , ClearColor(InClearColor)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.ClearRenderTargetView(RenderTargetView.Get(), ClearColor);
     }
 
-    TSharedRef<RenderTargetView> RenderTargetView;
+    TRef<RenderTargetView> RenderTargetView;
     ColorF ClearColor;
 };
 
 // Clear DepthStencil RenderCommand
-struct ClearDepthStencilViewCommand : public RenderCommand
+struct ClearDepthStencilViewRenderCommand : public RenderCommand
 {
-    ClearDepthStencilViewCommand(DepthStencilView* InDepthStencilView, const DepthStencilF& InClearValue)
+    ClearDepthStencilViewRenderCommand(DepthStencilView* InDepthStencilView, const DepthStencilF& InClearValue)
         : DepthStencilView(InDepthStencilView)
         , ClearValue(InClearValue)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.ClearDepthStencilView(DepthStencilView.Get(), ClearValue);
     }
 
-    TSharedRef<DepthStencilView> DepthStencilView;
+    TRef<DepthStencilView> DepthStencilView;
     DepthStencilF ClearValue;
 };
 
 // Clear UnorderedAccessView RenderCommand
-struct ClearUnorderedAccessViewFloatCommand : public RenderCommand
+struct ClearUnorderedAccessViewFloatRenderCommand : public RenderCommand
 {
-    ClearUnorderedAccessViewFloatCommand(UnorderedAccessView* InUnorderedAccessView, const Float InClearColor[4])
+    ClearUnorderedAccessViewFloatRenderCommand(UnorderedAccessView* InUnorderedAccessView, const Float InClearColor[4])
         : UnorderedAccessView(InUnorderedAccessView)
         , ClearColor()
     {
         Memory::Memcpy(ClearColor, InClearColor, sizeof(InClearColor));
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.ClearUnorderedAccessViewFloat(UnorderedAccessView.Get(), ClearColor);
     }
 
-    TSharedRef<UnorderedAccessView> UnorderedAccessView;
+    TRef<UnorderedAccessView> UnorderedAccessView;
     Float ClearColor[4];
 };
 
 // SetShadingRate RenderCommand
-struct SetShadingRateCommand : public RenderCommand
+struct SetShadingRateRenderCommand : public RenderCommand
 {
-    SetShadingRateCommand(EShadingRate ShadingRate)
+    SetShadingRateRenderCommand(EShadingRate ShadingRate)
         : ShadingRate(ShadingRate)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.SetShadingRate(ShadingRate);
     }
@@ -123,25 +127,25 @@ struct SetShadingRateCommand : public RenderCommand
 };
 
 // SetShadingRateImage RenderCommand
-struct SetShadingRateImageCommand : public RenderCommand
+struct SetShadingRateImageRenderCommand : public RenderCommand
 {
-    SetShadingRateImageCommand(Texture2D* InShadingImage)
+    SetShadingRateImageRenderCommand(Texture2D* InShadingImage)
         : ShadingImage(InShadingImage)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.SetShadingRateImage(ShadingImage.Get());
     }
 
-    TSharedRef<Texture2D> ShadingImage;
+    TRef<Texture2D> ShadingImage;
 };
 
-// Bind Viewport RenderCommand
-struct BindViewportCommand : public RenderCommand
+// Set Viewport RenderCommand
+struct SetViewportRenderCommand : public RenderCommand
 {
-    BindViewportCommand(Float InWidth, Float InHeight, Float InMinDepth, Float InMaxDepth, Float InX, Float InY)
+    SetViewportRenderCommand(Float InWidth, Float InHeight, Float InMinDepth, Float InMaxDepth, Float InX, Float InY)
         : Width(InWidth)
         , Height(InHeight)
         , MinDepth(InMinDepth)
@@ -151,9 +155,9 @@ struct BindViewportCommand : public RenderCommand
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindViewport(Width, Height, MinDepth, MaxDepth, x, y);
+        CmdContext.SetViewport(Width, Height, MinDepth, MaxDepth, x, y);
     }
 
     Float Width;
@@ -164,10 +168,10 @@ struct BindViewportCommand : public RenderCommand
     Float y;
 };
 
-// Bind ScissorRect RenderCommand
-struct BindScissorRectCommand : public RenderCommand
+// Set ScissorRect RenderCommand
+struct SetScissorRectRenderCommand : public RenderCommand
 {
-    BindScissorRectCommand(Float InWidth, Float InHeight, Float InX, Float InY)
+    SetScissorRectRenderCommand(Float InWidth, Float InHeight, Float InX, Float InY)
         : Width(InWidth)
         , Height(InHeight)
         , x(InX)
@@ -175,9 +179,9 @@ struct BindScissorRectCommand : public RenderCommand
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindScissorRect(Width, Height, x, y);
+        CmdContext.SetScissorRect(Width, Height, x, y);
     }
 
     Float Width;
@@ -186,429 +190,498 @@ struct BindScissorRectCommand : public RenderCommand
     Float y;
 };
 
-// Bind BlendFactor RenderCommand
-struct BindBlendFactorCommand : public RenderCommand
+// Set BlendFactor RenderCommand
+struct SetBlendFactorRenderCommand : public RenderCommand
 {
-    BindBlendFactorCommand(const ColorF& InColor)
+    SetBlendFactorRenderCommand(const ColorF& InColor)
         : Color(InColor)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindBlendFactor(Color);
+        CmdContext.SetBlendFactor(Color);
     }
 
     ColorF Color;
 };
 
 // BeginRenderPass RenderCommand
-struct BeginRenderPassCommand : public RenderCommand
+struct BeginRenderPassRenderCommand : public RenderCommand
 {
-    BeginRenderPassCommand()
+    BeginRenderPassRenderCommand()
     {
         // Empty for now
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.BeginRenderPass();
     }
 };
 
 // End RenderCommand
-struct EndRenderPassCommand : public RenderCommand
+struct EndRenderPassRenderCommand : public RenderCommand
 {
-    EndRenderPassCommand()
+    EndRenderPassRenderCommand()
     {
         // Empty for now
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.EndRenderPass();
     }
 };
 
 // Bind PrimitiveTopology RenderCommand
-struct BindPrimitiveTopologyCommand : public RenderCommand
+struct SetPrimitiveTopologyRenderCommand : public RenderCommand
 {
-    BindPrimitiveTopologyCommand(EPrimitiveTopology InPrimitiveTopologyType)
+    SetPrimitiveTopologyRenderCommand(EPrimitiveTopology InPrimitiveTopologyType)
         : PrimitiveTopologyType(InPrimitiveTopologyType)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindPrimitiveTopology(PrimitiveTopologyType);
+        CmdContext.SetPrimitiveTopology(PrimitiveTopologyType);
     }
 
     EPrimitiveTopology PrimitiveTopologyType;
 };
 
-// Bind VertexBuffers RenderCommand
-struct BindVertexBuffersCommand : public RenderCommand
+// Set VertexBuffers RenderCommand
+struct SetVertexBuffersRenderCommand : public RenderCommand
 {
-    BindVertexBuffersCommand(VertexBuffer* const * InVertexBuffers, UInt32 InVertexBufferCount, UInt32 InStartSlot)
+    SetVertexBuffersRenderCommand(VertexBuffer** InVertexBuffers, UInt32 InVertexBufferCount, UInt32 InStartSlot)
         : VertexBuffers(InVertexBuffers)
         , VertexBufferCount(InVertexBufferCount)
         , StartSlot(InStartSlot)
     {
     }
 
-    ~BindVertexBuffersCommand()
+    ~SetVertexBuffersRenderCommand()
     {
         for (UInt32 i = 0; i < VertexBufferCount; i++)
         {
-            if (VertexBuffers[i])
-            {
-                VertexBuffers[i]->Release();
-            }
+            SafeRelease(VertexBuffers[i]);
         }
+
+        VertexBuffers = nullptr;
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindVertexBuffers(VertexBuffers, VertexBufferCount, StartSlot);
+        CmdContext.SetVertexBuffers(VertexBuffers, VertexBufferCount, StartSlot);
     }
 
-    VertexBuffer* const* VertexBuffers;
+    VertexBuffer** VertexBuffers;
     UInt32 VertexBufferCount;
     UInt32 StartSlot;
 };
 
-// Bind IndexBuffer RenderCommand
-struct BindIndexBufferCommand : public RenderCommand
+// Set IndexBuffer RenderCommand
+struct SetIndexBufferRenderCommand : public RenderCommand
 {
-    BindIndexBufferCommand(IndexBuffer* InIndexBuffer)
+    SetIndexBufferRenderCommand(IndexBuffer* InIndexBuffer)
         : IndexBuffer(InIndexBuffer)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindIndexBuffer(IndexBuffer.Get());
+        CmdContext.SetIndexBuffer(IndexBuffer.Get());
     }
 
-    TSharedRef<IndexBuffer> IndexBuffer;
+    TRef<IndexBuffer> IndexBuffer;
 };
 
-// Bind RayTracingScene RenderCommand
-struct BindRayTracingSceneCommand : public RenderCommand
+// Set RenderTargets RenderCommand
+struct SetRenderTargetsRenderCommand : public RenderCommand
 {
-    BindRayTracingSceneCommand(RayTracingScene* InRayTracingScene)
-        : RayTracingScene(InRayTracingScene)
-    {
-    }
-
-    virtual void Execute(ICommandContext& CmdContext) const override
-    {
-        CmdContext.BindRayTracingScene(RayTracingScene.Get());
-    }
-
-    TSharedRef<RayTracingScene> RayTracingScene;
-};
-
-// Bind BlendFactor RenderCommand
-struct BindRenderTargetsCommand : public RenderCommand
-{
-    BindRenderTargetsCommand(RenderTargetView* const * InRenderTargetViews, UInt32 InRenderTargetViewCount, DepthStencilView* InDepthStencilView)
+    SetRenderTargetsRenderCommand(RenderTargetView** InRenderTargetViews, UInt32 InRenderTargetViewCount, DepthStencilView* InDepthStencilView)
         : RenderTargetViews(InRenderTargetViews)
         , RenderTargetViewCount(InRenderTargetViewCount)
         , DepthStencilView(InDepthStencilView)
     {
     }
 
-    ~BindRenderTargetsCommand()
+    ~SetRenderTargetsRenderCommand()
     {
         for (UInt32 i = 0; i < RenderTargetViewCount; i++)
         {
-            if (RenderTargetViews[i])
-            {
-                RenderTargetViews[i]->Release();
-            }
+            SafeRelease(RenderTargetViews[i]);
         }
+
+        RenderTargetViews = nullptr;
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindRenderTargets(RenderTargetViews, RenderTargetViewCount, DepthStencilView.Get());
+        CmdContext.SetRenderTargets(RenderTargetViews, RenderTargetViewCount, DepthStencilView.Get());
     }
 
-    RenderTargetView* const* RenderTargetViews;
+    RenderTargetView** RenderTargetViews;
     UInt32 RenderTargetViewCount;
-    TSharedRef<DepthStencilView> DepthStencilView;
+    TRef<DepthStencilView> DepthStencilView;
 };
 
-// Bind GraphicsPipelineState RenderCommand
-struct BindGraphicsPipelineStateCommand : public RenderCommand
+// SetRayTracingBindings RenderCommand
+struct SetRayTracingBindingsRenderCommand : public RenderCommand
 {
-    BindGraphicsPipelineStateCommand(GraphicsPipelineState* InPipelineState)
+    SetRayTracingBindingsRenderCommand(
+        RayTracingScene* InRayTracingScene, 
+        RayTracingPipelineState* InPipelineState, 
+        const RayTracingShaderResources* InGlobalResources, 
+        const RayTracingShaderResources* InRayGenLocalResources,
+        const RayTracingShaderResources* InMissLocalResources, 
+        const RayTracingShaderResources* InHitGroupResources, 
+        UInt32 InNumHitGroupResources)
+        : Scene(InRayTracingScene)
+        , PipelineState(InPipelineState)
+        , GlobalResources(InGlobalResources)
+        , RayGenLocalResources(InRayGenLocalResources)
+        , MissLocalResources(InMissLocalResources)
+        , HitGroupResources(InHitGroupResources)
+        , NumHitGroupResources(InNumHitGroupResources)
+    {
+    }
+
+    virtual void Execute(ICommandContext& CmdContext) override
+    {
+        CmdContext.SetRayTracingBindings(Scene.Get(), PipelineState.Get(), GlobalResources, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
+    }
+
+    TRef<RayTracingScene>            Scene;
+    TRef<RayTracingPipelineState>    PipelineState;
+    const RayTracingShaderResources* GlobalResources;
+    const RayTracingShaderResources* RayGenLocalResources;
+    const RayTracingShaderResources* MissLocalResources;
+    const RayTracingShaderResources* HitGroupResources;
+    UInt32 NumHitGroupResources;
+};
+
+// Set GraphicsPipelineState RenderCommand
+struct SetGraphicsPipelineStateRenderCommand : public RenderCommand
+{
+    SetGraphicsPipelineStateRenderCommand(GraphicsPipelineState* InPipelineState)
         : PipelineState(InPipelineState)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindGraphicsPipelineState(PipelineState.Get());
+        CmdContext.SetGraphicsPipelineState(PipelineState.Get());
     }
 
-    TSharedRef<GraphicsPipelineState> PipelineState;
+    TRef<GraphicsPipelineState> PipelineState;
 };
 
 // Bind ComputePipelineState RenderCommand
-struct BindComputePipelineStateCommand : public RenderCommand
+struct SetComputePipelineStateRenderCommand : public RenderCommand
 {
-    BindComputePipelineStateCommand(ComputePipelineState* InPipelineState)
+    SetComputePipelineStateRenderCommand(ComputePipelineState* InPipelineState)
         : PipelineState(InPipelineState)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindComputePipelineState(PipelineState.Get());
+        CmdContext.SetComputePipelineState(PipelineState.Get());
     }
 
-    TSharedRef<ComputePipelineState> PipelineState;
+    TRef<ComputePipelineState> PipelineState;
 };
 
-// Bind RayTracingPipelineState RenderCommand
-struct BindRayTracingPipelineStateCommand : public RenderCommand
+// Set UseShaderResourceViews RenderCommand
+struct Set32BitShaderConstantsRenderCommand : public RenderCommand
 {
-    BindRayTracingPipelineStateCommand(RayTracingPipelineState* InPipelineState)
-        : PipelineState(InPipelineState)
-    {
-    }
-
-    virtual void Execute(ICommandContext& CmdContext) const override
-    {
-        CmdContext.BindRayTracingPipelineState(PipelineState.Get());
-    }
-
-    TSharedRef<RayTracingPipelineState> PipelineState;
-};
-
-// Bind ShaderResourceViews RenderCommand
-struct Bind32BitShaderConstantsCommand : public RenderCommand
-{
-    Bind32BitShaderConstantsCommand(EShaderStage InShaderStage, const Void* InShader32BitConstants, UInt32 InNum32BitConstants)
-        : ShaderStage(InShaderStage)
+    Set32BitShaderConstantsRenderCommand(Shader* InShader, const Void* InShader32BitConstants, UInt32 InNum32BitConstants)
+        : Shader(InShader)
         , Shader32BitConstants(InShader32BitConstants)
         , Num32BitConstants(InNum32BitConstants)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.Bind32BitShaderConstants(ShaderStage, Shader32BitConstants, Num32BitConstants);
+        CmdContext.Set32BitShaderConstants(Shader.Get(), Shader32BitConstants, Num32BitConstants);
     }
 
-    EShaderStage ShaderStage;
-    const Void* Shader32BitConstants;
-    UInt32 Num32BitConstants;
+    TRef<Shader> Shader;
+    const Void*  Shader32BitConstants;
+    UInt32       Num32BitConstants;
 };
 
-// Bind ConstantBuffers RenderCommand
-struct BindConstantBuffersCommand : public RenderCommand
+// Set ShaderResourceViewRenderCommand
+struct SetShaderResourceViewRenderCommand : public RenderCommand
 {
-    BindConstantBuffersCommand(EShaderStage InShaderStage, ConstantBuffer* const* InConstantBuffers, UInt32 InConstantBufferCount, UInt32 InStartSlot)
-        : ShaderStage(InShaderStage)
-        , ConstantBuffers(InConstantBuffers)
-        , ConstantBufferCount(InConstantBufferCount)
-        , StartSlot(InStartSlot)
+    SetShaderResourceViewRenderCommand(Shader* InShader, ShaderResourceView* InShaderResourceView, UInt32 InParameterIndex)
+        : Shader(InShader)
+        , ShaderResourceView(InShaderResourceView)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
-    ~BindConstantBuffersCommand()
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        for (UInt32 i = 0; i < ConstantBufferCount; i++)
-        {
-            if (ConstantBuffers[i])
-            {
-                ConstantBuffers[i]->Release();
-            }
-        }
-
-        ConstantBuffers = nullptr;
+        CmdContext.SetShaderResourceView(Shader.Get(), ShaderResourceView.Get(), ParameterIndex);
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
-    {
-        CmdContext.BindConstantBuffers(ShaderStage, ConstantBuffers, ConstantBufferCount, StartSlot);
-    }
-
-    EShaderStage ShaderStage;
-    ConstantBuffer* const* ConstantBuffers;
-    UInt32 ConstantBufferCount;
-    UInt32 StartSlot;
+    TRef<Shader>             Shader;
+    TRef<ShaderResourceView> ShaderResourceView;
+    UInt32                   ParameterIndex;
 };
 
-// Bind ShaderResourceView RenderCommand
-struct BindShaderResourceViewsCommand : public RenderCommand
+// Set ShaderResourceViewsRenderCommand
+struct SetShaderResourceViewsRenderCommand : public RenderCommand
 {
-    BindShaderResourceViewsCommand(EShaderStage InShaderStage, ShaderResourceView* const* InShaderResourceViews, UInt32 InConstantBufferCount, UInt32 InStartSlot)
-        : ShaderStage(InShaderStage)
+    SetShaderResourceViewsRenderCommand(Shader* InShader, ShaderResourceView** InShaderResourceViews, UInt32 InNumShaderResourceViews, UInt32 InParameterIndex)
+        : Shader(InShader)
         , ShaderResourceViews(InShaderResourceViews)
-        , ShaderResourceViewCount(InConstantBufferCount)
-        , StartSlot(InStartSlot)
+        , NumShaderResourceViews(InNumShaderResourceViews)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
-    ~BindShaderResourceViewsCommand()
+    ~SetShaderResourceViewsRenderCommand()
     {
-        for (UInt32 i = 0; i < ShaderResourceViewCount; i++)
+        for (UInt32 i = 0; i < NumShaderResourceViews; i++)
         {
-            if (ShaderResourceViews[i])
-            {
-                ShaderResourceViews[i]->Release();
-            }
+            SafeRelease(ShaderResourceViews[i]);
         }
 
         ShaderResourceViews = nullptr;
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindShaderResourceViews(ShaderStage, ShaderResourceViews, ShaderResourceViewCount, StartSlot);
+        CmdContext.SetShaderResourceViews(Shader.Get(), ShaderResourceViews, NumShaderResourceViews, ParameterIndex);
     }
 
-    EShaderStage ShaderStage;
-    ShaderResourceView* const* ShaderResourceViews;
-    UInt32 ShaderResourceViewCount;
-    UInt32 StartSlot;
+    TRef<Shader>         Shader;
+    ShaderResourceView** ShaderResourceViews;
+    UInt32 NumShaderResourceViews;
+    UInt32 ParameterIndex;
 };
 
-// Bind UnorderedAccessViews RenderCommand
-struct BindUnorderedAccessViewsCommand : public RenderCommand
+// Set UnorderedAccessViewRenderCommand
+struct SetUnorderedAccessViewRenderCommand : public RenderCommand
 {
-    BindUnorderedAccessViewsCommand(EShaderStage InShaderStage, UnorderedAccessView* const* InUnorderedAccessViews, UInt32 InUnorderedAccessViewCount, UInt32 InStartSlot)
-        : ShaderStage(InShaderStage)
-        , UnorderedAccessViews(InUnorderedAccessViews)
-        , UnorderedAccessViewCount(InUnorderedAccessViewCount)
-        , StartSlot(InStartSlot)
+    SetUnorderedAccessViewRenderCommand(Shader* InShader, UnorderedAccessView* InUnorderedAccessView, UInt32 InParameterIndex)
+        : Shader(InShader)
+        , UnorderedAccessView(InUnorderedAccessView)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
-    ~BindUnorderedAccessViewsCommand()
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        for (UInt32 i = 0; i < UnorderedAccessViewCount; i++)
+        CmdContext.SetUnorderedAccessView(Shader.Get(), UnorderedAccessView.Get(), ParameterIndex);
+    }
+
+    TRef<Shader>              Shader;
+    TRef<UnorderedAccessView> UnorderedAccessView;
+    UInt32                    ParameterIndex;
+};
+
+// Set UnorderedAccessViewsRenderCommand
+struct SetUnorderedAccessViewsRenderCommand : public RenderCommand
+{
+    SetUnorderedAccessViewsRenderCommand(Shader* InShader, UnorderedAccessView** InUnorderedAccessViews, UInt32 InNumUnorderedAccessViews, UInt32 InParameterIndex)
+        : Shader(InShader)
+        , UnorderedAccessViews(InUnorderedAccessViews)
+        , NumUnorderedAccessViews(InNumUnorderedAccessViews)
+        , ParameterIndex(InParameterIndex)
+    {
+    }
+
+    ~SetUnorderedAccessViewsRenderCommand()
+    {
+        for (UInt32 i = 0; i < NumUnorderedAccessViews; i++)
         {
-            if (UnorderedAccessViews[i])
-            {
-                UnorderedAccessViews[i]->Release();
-            }
+            SafeRelease(UnorderedAccessViews[i]);
         }
 
         UnorderedAccessViews = nullptr;
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindUnorderedAccessViews(ShaderStage, UnorderedAccessViews, UnorderedAccessViewCount, StartSlot);
+        CmdContext.SetUnorderedAccessViews(Shader.Get(), UnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
     }
 
-    EShaderStage ShaderStage;
-    UnorderedAccessView* const* UnorderedAccessViews;
-    UInt32 UnorderedAccessViewCount;
-    UInt32 StartSlot;
+    TRef<Shader>          Shader;
+    UnorderedAccessView** UnorderedAccessViews;
+    UInt32 NumUnorderedAccessViews;
+    UInt32 ParameterIndex;
 };
 
-// Bind SamplerStates RenderCommand
-struct BindSamplerStatesCommand : public RenderCommand
+// Set ConstantBufferRenderCommand
+struct SetConstantBufferRenderCommand : public RenderCommand
 {
-    BindSamplerStatesCommand(EShaderStage InShaderStage, SamplerState* const* InSamplerStates, UInt32 InSamplerStateCount, UInt32 InStartSlot)
-        : ShaderStage(InShaderStage)
-        , SamplerStates(InSamplerStates)
-        , SamplerStateCount(InSamplerStateCount)
-        , StartSlot(InStartSlot)
+    SetConstantBufferRenderCommand(Shader* InShader, ConstantBuffer* InConstantBuffer, UInt32 InParameterIndex)
+        : Shader(InShader)
+        , ConstantBuffer(InConstantBuffer)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
-    ~BindSamplerStatesCommand()
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        for (UInt32 i = 0; i < SamplerStateCount; i++)
+        CmdContext.SetConstantBuffer(Shader.Get(), ConstantBuffer.Get(), ParameterIndex);
+    }
+
+    TRef<Shader>         Shader;
+    TRef<ConstantBuffer> ConstantBuffer;
+    UInt32               ParameterIndex;
+};
+
+// Set ConstantBuffersRenderCommand
+struct SetConstantBuffersRenderCommand : public RenderCommand
+{
+    SetConstantBuffersRenderCommand(Shader* InShader, ConstantBuffer** InConstantBuffers, UInt32 InNumConstantBuffers, UInt32 InParameterIndex)
+        : Shader(InShader)
+        , ConstantBuffers(InConstantBuffers)
+        , NumConstantBuffers(InNumConstantBuffers)
+        , ParameterIndex(InParameterIndex)
+    {
+    }
+
+    ~SetConstantBuffersRenderCommand()
+    {
+        for (UInt32 i = 0; i < NumConstantBuffers; i++)
         {
-            if (SamplerStates[i])
-            {
-                SamplerStates[i]->Release();
-            }
+            SafeRelease(ConstantBuffers[i]);
+        }
+
+        ConstantBuffers = nullptr;
+    }
+
+    virtual void Execute(ICommandContext& CmdContext) override
+    {
+        CmdContext.SetConstantBuffers(Shader.Get(), ConstantBuffers, NumConstantBuffers, ParameterIndex);
+    }
+
+    TRef<Shader>     Shader;
+    ConstantBuffer** ConstantBuffers;
+    UInt32 NumConstantBuffers;
+    UInt32 ParameterIndex;
+};
+
+// Set SamplerStateRenderCommand
+struct SetSamplerStateRenderCommand : public RenderCommand
+{
+    SetSamplerStateRenderCommand(Shader* InShader, SamplerState* InSamplerState, UInt32 InParameterIndex)
+        : Shader(InShader)
+        , SamplerState(InSamplerState)
+        , ParameterIndex(InParameterIndex)
+    {
+    }
+
+    virtual void Execute(ICommandContext& CmdContext) override
+    {
+        CmdContext.SetSamplerState(Shader.Get(), SamplerState.Get(), ParameterIndex);
+    }
+
+    TRef<Shader>       Shader;
+    TRef<SamplerState> SamplerState;
+    UInt32             ParameterIndex;
+};
+
+// Set SamplerStatesRenderCommand
+struct SetSamplerStatesRenderCommand : public RenderCommand
+{
+    SetSamplerStatesRenderCommand(Shader* InShader, SamplerState** InSamplerStates, UInt32 InNumSamplerStates, UInt32 InParameterIndex)
+        : Shader(InShader)
+        , SamplerStates(InSamplerStates)
+        , NumSamplerStates(InNumSamplerStates)
+        , ParameterIndex(InParameterIndex)
+    {
+    }
+
+    ~SetSamplerStatesRenderCommand()
+    {
+        for (UInt32 i = 0; i < NumSamplerStates; i++)
+        {
+            SafeRelease(SamplerStates[i]);
         }
 
         SamplerStates = nullptr;
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BindSamplerStates(ShaderStage, SamplerStates, SamplerStateCount, StartSlot);
+        CmdContext.SetSamplerStates(Shader.Get(), SamplerStates, NumSamplerStates, ParameterIndex);
     }
 
-    EShaderStage ShaderStage;
-    SamplerState* const* SamplerStates;
-    UInt32 SamplerStateCount;
-    UInt32 StartSlot;
+    TRef<Shader>   Shader;
+    SamplerState** SamplerStates;
+    UInt32 NumSamplerStates;
+    UInt32 ParameterIndex;
 };
 
 // Resolve Texture RenderCommand
-struct ResolveTextureCommand : public RenderCommand
+struct ResolveTextureRenderCommand : public RenderCommand
 {
-    ResolveTextureCommand(Texture* InDestination, Texture* InSource)
+    ResolveTextureRenderCommand(Texture* InDestination, Texture* InSource)
         : Destination(InDestination)
         , Source(InSource)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.ResolveTexture(Destination.Get(), Source.Get());
     }
 
-    TSharedRef<Texture> Destination;
-    TSharedRef<Texture> Source;
+    TRef<Texture> Destination;
+    TRef<Texture> Source;
 };
 
 // Update Buffer RenderCommand
-struct UpdateBufferCommand : public RenderCommand
+struct UpdateBufferRenderCommand : public RenderCommand
 {
-    UpdateBufferCommand(Buffer* InDestination, UInt64 InDestinationOffsetInBytes, UInt64 InSizeInBytes, const Void* InSourceData)
+    UpdateBufferRenderCommand(Buffer* InDestination, UInt64 InDestinationOffsetInBytes, UInt64 InSizeInBytes, const Void* InSourceData)
         : Destination(InDestination)
         , DestinationOffsetInBytes(InDestinationOffsetInBytes)
         , SizeInBytes(InSizeInBytes)
         , SourceData(InSourceData)
     {
-        VALIDATE(InSourceData != nullptr);
-        VALIDATE(InSizeInBytes != 0);
+        Assert(InSourceData != nullptr);
+        Assert(InSizeInBytes != 0);
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.UpdateBuffer(Destination.Get(), DestinationOffsetInBytes, SizeInBytes, SourceData);
     }
 
-    TSharedRef<Buffer> Destination;
+    TRef<Buffer> Destination;
     UInt64 DestinationOffsetInBytes;
     UInt64 SizeInBytes;
     const Void* SourceData;
 };
 
 // Update Texture2D RenderCommand
-struct UpdateTexture2DCommand : public RenderCommand
+struct UpdateTexture2DRenderCommand : public RenderCommand
 {
-    UpdateTexture2DCommand(Texture2D* InDestination, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevel, const Void* InSourceData)
+    UpdateTexture2DRenderCommand(Texture2D* InDestination, UInt32 InWidth, UInt32 InHeight, UInt32 InMipLevel, const Void* InSourceData)
         : Destination(InDestination)
         , Width(InWidth)
         , Height(InHeight)
         , MipLevel(InMipLevel)
         , SourceData(InSourceData)
     {
-        VALIDATE(InSourceData != nullptr);
+        Assert(InSourceData != nullptr);
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.UpdateTexture2D(Destination.Get(), Width, Height, MipLevel, SourceData);
     }
 
-    TSharedRef<Texture2D> Destination;
+    TRef<Texture2D> Destination;
     UInt32 Width;
     UInt32 Height;
     UInt32 MipLevel;
@@ -616,193 +689,221 @@ struct UpdateTexture2DCommand : public RenderCommand
 };
 
 // Copy Buffer RenderCommand
-struct CopyBufferCommand : public RenderCommand
+struct CopyBufferRenderCommand : public RenderCommand
 {
-    CopyBufferCommand(Buffer* InDestination, Buffer* InSource, const CopyBufferInfo& InCopyBufferInfo)
+    CopyBufferRenderCommand(Buffer* InDestination, Buffer* InSource, const CopyBufferInfo& InCopyBufferInfo)
         : Destination(InDestination)
         , Source(InSource)
         , CopyBufferInfo(InCopyBufferInfo)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.CopyBuffer(Destination.Get(), Source.Get(), CopyBufferInfo);
     }
 
-    TSharedRef<Buffer> Destination;
-    TSharedRef<Buffer> Source;
+    TRef<Buffer> Destination;
+    TRef<Buffer> Source;
     CopyBufferInfo CopyBufferInfo;
 };
 
 // Copy Texture RenderCommand
-struct CopyTextureCommand : public RenderCommand
+struct CopyTextureRenderCommand : public RenderCommand
 {
-    CopyTextureCommand(Texture* InDestination, Texture* InSource)
+    CopyTextureRenderCommand(Texture* InDestination, Texture* InSource)
         : Destination(InDestination)
         , Source(InSource)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.CopyTexture(Destination.Get(), Source.Get());
     }
 
-    TSharedRef<Texture> Destination;
-    TSharedRef<Texture> Source;
+    TRef<Texture> Destination;
+    TRef<Texture> Source;
 };
 
 // Copy Texture RenderCommand
-struct CopyTextureRegionCommand : public RenderCommand
+struct CopyTextureRegionRenderCommand : public RenderCommand
 {
-    CopyTextureRegionCommand(Texture* InDestination, Texture* InSource, const CopyTextureInfo& InCopyTextureInfo)
+    CopyTextureRegionRenderCommand(Texture* InDestination, Texture* InSource, const CopyTextureInfo& InCopyTextureInfo)
         : Destination(InDestination)
         , Source(InSource)
         , CopyTextureInfo(InCopyTextureInfo)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.CopyTextureRegion(Destination.Get(), Source.Get(), CopyTextureInfo);
     }
 
-    TSharedRef<Texture> Destination;
-    TSharedRef<Texture> Source;
+    TRef<Texture> Destination;
+    TRef<Texture> Source;
     CopyTextureInfo CopyTextureInfo;
 };
 
 // Destroy Resource RenderCommand
-struct DestroyResourceCommand : public RenderCommand
+struct DiscardResourceRenderCommand : public RenderCommand
 {
-    DestroyResourceCommand(Resource* InResource)
+    DiscardResourceRenderCommand(Resource* InResource)
         : Resource(InResource)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.DestroyResource(Resource.Get());
+        CmdContext.DiscardResource(Resource.Get());
     }
 
-    TSharedRef<Resource> Resource;
+    TRef<Resource> Resource;
 };
 
 // Build RayTracing Geoemtry RenderCommand
-struct BuildRayTracingGeometryCommand : public RenderCommand
+struct BuildRayTracingGeometryRenderCommand : public RenderCommand
 {
-    BuildRayTracingGeometryCommand(RayTracingGeometry* InRayTracingGeometry)
+    BuildRayTracingGeometryRenderCommand(RayTracingGeometry* InRayTracingGeometry, VertexBuffer* InVertexBuffer, IndexBuffer* InIndexBuffer, Bool InUpdate)
         : RayTracingGeometry(InRayTracingGeometry)
+        , VertexBuffer(InVertexBuffer)
+        , IndexBuffer(InIndexBuffer)
+        , Update(InUpdate)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BuildRayTracingGeometry(RayTracingGeometry.Get());
+        CmdContext.BuildRayTracingGeometry(RayTracingGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), Update);
     }
 
-    TSharedRef<RayTracingGeometry> RayTracingGeometry;
+    TRef<RayTracingGeometry> RayTracingGeometry;
+    TRef<VertexBuffer> VertexBuffer;
+    TRef<IndexBuffer>  IndexBuffer;
+    Bool Update;
 };
 
 // Build RayTracing Scene RenderCommand
-struct BuildRayTracingSceneCommand : public RenderCommand
+struct BuildRayTracingSceneRenderCommand : public RenderCommand
 {
-    BuildRayTracingSceneCommand(RayTracingScene* InRayTracingScene)
+    BuildRayTracingSceneRenderCommand(RayTracingScene* InRayTracingScene, const RayTracingGeometryInstance* InInstances, UInt32 InNumInstances, Bool InUpdate)
         : RayTracingScene(InRayTracingScene)
+        , Instances(InInstances)
+        , NumInstances(InNumInstances)
+        , Update(InUpdate)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.BuildRayTracingScene(RayTracingScene.Get());
+        CmdContext.BuildRayTracingScene(RayTracingScene.Get(), Instances, NumInstances, Update);
     }
 
-    TSharedRef<RayTracingScene> RayTracingScene;
+    TRef<RayTracingScene> RayTracingScene;
+    const RayTracingGeometryInstance* Instances;
+    UInt32 NumInstances;
+    Bool Update;
 };
 
 // GenerateMips RenderCommand
-struct GenerateMipsCommand : public RenderCommand
+struct GenerateMipsRenderCommand : public RenderCommand
 {
-    GenerateMipsCommand(Texture* InTexture)
+    GenerateMipsRenderCommand(Texture* InTexture)
         : Texture(InTexture)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.GenerateMips(Texture.Get());
     }
 
-    TSharedRef<Texture> Texture;
+    TRef<Texture> Texture;
 };
 
 // TransitionTexture RenderCommand
-struct TransitionTextureCommand : public RenderCommand
+struct TransitionTextureRenderCommand : public RenderCommand
 {
-    TransitionTextureCommand(Texture* InTexture, EResourceState InBeforeState, EResourceState InAfterState)
+    TransitionTextureRenderCommand(Texture* InTexture, EResourceState InBeforeState, EResourceState InAfterState)
         : Texture(InTexture)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.TransitionTexture(Texture.Get(), BeforeState, AfterState);
     }
 
-    TSharedRef<Texture> Texture;
+    TRef<Texture> Texture;
     EResourceState BeforeState;
     EResourceState AfterState;
 };
 
 // TransitionBuffer RenderCommand
-struct TransitionBufferCommand : public RenderCommand
+struct TransitionBufferRenderCommand : public RenderCommand
 {
-    TransitionBufferCommand(Buffer* InBuffer, EResourceState InBeforeState, EResourceState InAfterState)
+    TransitionBufferRenderCommand(Buffer* InBuffer, EResourceState InBeforeState, EResourceState InAfterState)
         : Buffer(InBuffer)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.TransitionBuffer(Buffer.Get(), BeforeState, AfterState);
     }
 
-    TSharedRef<Buffer> Buffer;
+    TRef<Buffer> Buffer;
     EResourceState BeforeState;
     EResourceState AfterState;
 };
 
 // UnorderedAccessTextureBarrier RenderCommand
-struct UnorderedAccessTextureBarrierCommand : public RenderCommand
+struct UnorderedAccessTextureBarrierRenderCommand : public RenderCommand
 {
-    UnorderedAccessTextureBarrierCommand(Texture* InTexture)
+    UnorderedAccessTextureBarrierRenderCommand(Texture* InTexture)
         : Texture(InTexture)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.UnorderedAccessTextureBarrier(Texture.Get());
     }
 
-    TSharedRef<Texture> Texture;
+    TRef<Texture> Texture;
+};
+
+// UnorderedAccessBufferBarrier RenderCommand
+struct UnorderedAccessBufferBarrierRenderCommand : public RenderCommand
+{
+    UnorderedAccessBufferBarrierRenderCommand(Buffer* InBuffer)
+        : Buffer(InBuffer)
+    {
+    }
+
+    virtual void Execute(ICommandContext& CmdContext) override
+    {
+        CmdContext.UnorderedAccessBufferBarrier(Buffer.Get());
+    }
+
+    TRef<Buffer> Buffer;
 };
 
 // Draw RenderCommand
-struct DrawCommand : public RenderCommand
+struct DrawRenderCommand : public RenderCommand
 {
-    DrawCommand(UInt32 InVertexCount, UInt32 InStartVertexLocation)
+    DrawRenderCommand(UInt32 InVertexCount, UInt32 InStartVertexLocation)
         : VertexCount(InVertexCount)
         , StartVertexLocation(InStartVertexLocation)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.Draw(VertexCount, StartVertexLocation);
     }
@@ -812,16 +913,16 @@ struct DrawCommand : public RenderCommand
 };
 
 // DrawIndexed RenderCommand
-struct DrawIndexedCommand : public RenderCommand
+struct DrawIndexedRenderCommand : public RenderCommand
 {
-    DrawIndexedCommand(UInt32 InIndexCount, UInt32 InStartIndexLocation, UInt32 InBaseVertexLocation)
+    DrawIndexedRenderCommand(UInt32 InIndexCount, UInt32 InStartIndexLocation, UInt32 InBaseVertexLocation)
         : IndexCount(InIndexCount)
         , StartIndexLocation(InStartIndexLocation)
         , BaseVertexLocation(InBaseVertexLocation)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
     }
@@ -832,9 +933,9 @@ struct DrawIndexedCommand : public RenderCommand
 };
 
 // DrawInstanced RenderCommand
-struct DrawInstancedCommand : public RenderCommand
+struct DrawInstancedRenderCommand : public RenderCommand
 {
-    DrawInstancedCommand(UInt32 InVertexCountPerInstance, UInt32 InInstanceCount, UInt32 InStartVertexLocation, UInt32 InStartInstanceLocation)
+    DrawInstancedRenderCommand(UInt32 InVertexCountPerInstance, UInt32 InInstanceCount, UInt32 InStartVertexLocation, UInt32 InStartInstanceLocation)
         : VertexCountPerInstance(InVertexCountPerInstance)
         , InstanceCount(InInstanceCount)
         , StartVertexLocation(InStartVertexLocation)
@@ -842,7 +943,7 @@ struct DrawInstancedCommand : public RenderCommand
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
     }
@@ -854,9 +955,9 @@ struct DrawInstancedCommand : public RenderCommand
 };
 
 // DrawIndexedInstanced RenderCommand
-struct DrawIndexedInstancedCommand : public RenderCommand
+struct DrawIndexedInstancedRenderCommand : public RenderCommand
 {
-    DrawIndexedInstancedCommand(UInt32 InIndexCountPerInstance, UInt32 InInstanceCount, UInt32 InStartIndexLocation, UInt32 InBaseVertexLocation, UInt32 InStartInstanceLocation)
+    DrawIndexedInstancedRenderCommand(UInt32 InIndexCountPerInstance, UInt32 InInstanceCount, UInt32 InStartIndexLocation, UInt32 InBaseVertexLocation, UInt32 InStartInstanceLocation)
         : IndexCountPerInstance(InIndexCountPerInstance)
         , InstanceCount(InInstanceCount)
         , StartIndexLocation(InStartIndexLocation)
@@ -865,7 +966,7 @@ struct DrawIndexedInstancedCommand : public RenderCommand
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
     }
@@ -873,21 +974,21 @@ struct DrawIndexedInstancedCommand : public RenderCommand
     UInt32 IndexCountPerInstance;
     UInt32 InstanceCount;
     UInt32 StartIndexLocation;
-    Int32  BaseVertexLocation;
+    UInt32 BaseVertexLocation;
     UInt32 StartInstanceLocation;
 };
 
 // Dispatch Compute RenderCommand
-struct DispatchComputeCommand : public RenderCommand
+struct DispatchComputeRenderCommand : public RenderCommand
 {
-    DispatchComputeCommand(UInt32 InThreadGroupCountX, UInt32 InThreadGroupCountY, UInt32 InThreadGroupCountZ)
+    DispatchComputeRenderCommand(UInt32 InThreadGroupCountX, UInt32 InThreadGroupCountY, UInt32 InThreadGroupCountZ)
         : ThreadGroupCountX(InThreadGroupCountX)
         , ThreadGroupCountY(InThreadGroupCountY)
         , ThreadGroupCountZ(InThreadGroupCountZ)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         CmdContext.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
     }
@@ -898,34 +999,43 @@ struct DispatchComputeCommand : public RenderCommand
 };
 
 // Dispatch Rays RenderCommand
-struct DispatchRaysCommand : public RenderCommand
+struct DispatchRaysRenderCommand : public RenderCommand
 {
-    DispatchRaysCommand(UInt32 InWidth, UInt32 InHeigh, UInt32 InDepth)
-        : Width(InWidth)
-        , Height(InHeigh)
+    DispatchRaysRenderCommand(
+        RayTracingScene* InScene, 
+        RayTracingPipelineState* InPipelineState, 
+        UInt32 InWidth, 
+        UInt32 InHeight, 
+        UInt32 InDepth)
+        : Scene(InScene)
+        , PipelineState(InPipelineState)
+        , Width(InWidth)
+        , Height(InHeight)
         , Depth(InDepth)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
-        CmdContext.Dispatch(Width, Height, Depth);
+        CmdContext.DispatchRays(Scene.Get(), PipelineState.Get(), Width, Height, Depth);
     }
 
+    TRef<RayTracingScene>         Scene;
+    TRef<RayTracingPipelineState> PipelineState;
     UInt32 Width;
     UInt32 Height;
     UInt32 Depth;
 };
 
 // InsertCommandListMarker RenderCommand
-struct InsertCommandListMarkerCommand : public RenderCommand
+struct InsertCommandListMarkerRenderCommand : public RenderCommand
 {
-    InsertCommandListMarkerCommand(const std::string& InMarker)
+    InsertCommandListMarkerRenderCommand(const std::string& InMarker)
         : Marker(InMarker)
     {
     }
 
-    virtual void Execute(ICommandContext& CmdContext) const override
+    virtual void Execute(ICommandContext& CmdContext) override
     {
         Debug::OutputDebugString(Marker + '\n');
         LOG_INFO(Marker);
@@ -934,4 +1044,32 @@ struct InsertCommandListMarkerCommand : public RenderCommand
     }
 
     std::string Marker;
+};
+
+// DebugBreak RenderCommand
+struct DebugBreakRenderCommand : public RenderCommand
+{
+    virtual void Execute(ICommandContext& CmdContext) override
+    {
+        UNREFERENCED_VARIABLE(CmdContext);
+        Debug::DebugBreak();
+    }
+};
+
+// BeginExternalCapture RenderCommand
+struct BeginExternalCaptureRenderCommand : public RenderCommand
+{
+    virtual void Execute(ICommandContext& CmdContext) override
+    {
+        CmdContext.BeginExternalCapture();
+    }
+};
+
+// EndExternalCapture RenderCommand
+struct EndExternalCaptureRenderCommand : public RenderCommand
+{
+    virtual void Execute(ICommandContext& CmdContext) override
+    {
+        CmdContext.EndExternalCapture();
+    }
 };

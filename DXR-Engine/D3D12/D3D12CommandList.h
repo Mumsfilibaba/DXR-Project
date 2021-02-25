@@ -20,7 +20,7 @@ public:
 
     FORCEINLINE Bool Init(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocatorHandle& Allocator,ID3D12PipelineState* InitalPipeline)
     {
-        HRESULT Result = Device->GetDevice()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
+        HRESULT Result = GetDevice()->GetDevice()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
         if (SUCCEEDED(Result))
         {
             CmdList->Close();
@@ -47,13 +47,27 @@ public:
     FORCEINLINE Bool Reset(D3D12CommandAllocatorHandle& Allocator)
     {
         IsReady = true;
-        return SUCCEEDED(CmdList->Reset(Allocator.GetAllocator(), nullptr));
+
+        HRESULT Result = CmdList->Reset(Allocator.GetAllocator(), nullptr);
+        if (Result == DXGI_ERROR_DEVICE_REMOVED)
+        {
+            DeviceRemovedHandler(GetDevice());
+        }
+
+        return SUCCEEDED(Result);
     }
 
     FORCEINLINE Bool Close()
     {
         IsReady = false;
-        return SUCCEEDED(CmdList->Close());
+
+        HRESULT Result = CmdList->Close();
+        if (Result == DXGI_ERROR_DEVICE_REMOVED)
+        {
+            DeviceRemovedHandler(GetDevice());
+        }
+
+        return SUCCEEDED(Result);
     }
 
     FORCEINLINE void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView, const Float Color[4], UInt32 NumRects, const D3D12_RECT* Rects)
@@ -72,9 +86,9 @@ public:
         CmdList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), Resource->GetResource(), ClearColor, 0, nullptr);
     }
 
-    FORCEINLINE void CopyBuffer(D3D12Resource* Destination, UInt64 DestinationOffset, D3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
+    FORCEINLINE void CopyBufferRegion(D3D12Resource* Destination, UInt64 DestinationOffset, D3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
     {
-        CmdList->CopyBufferRegion(Destination->GetResource(), DestinationOffset, Source->GetResource(), SourceOffset, SizeInBytes);
+        CopyBufferRegion(Destination->GetResource(), DestinationOffset, Source->GetResource(), SourceOffset, SizeInBytes);
     }
 
     FORCEINLINE void CopyBufferRegion(ID3D12Resource* Destination, UInt64 DestinationOffset, ID3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
@@ -93,10 +107,10 @@ public:
 
     FORCEINLINE void CopyResource(D3D12Resource* Destination, D3D12Resource* Source)
     {
-        CmdList->CopyResource(Destination->GetResource(), Source->GetResource());
+        CopyResource(Destination->GetResource(), Source->GetResource());
     }
 
-    FORCEINLINE void CopyNativeResource(ID3D12Resource* Destination, ID3D12Resource* Source)
+    FORCEINLINE void CopyResource(ID3D12Resource* Destination, ID3D12Resource* Source)
     {
         CmdList->CopyResource(Destination, Source);
     }
@@ -257,20 +271,9 @@ public:
         CmdList->SetName(WideName.c_str());
     }
 
-    FORCEINLINE ID3D12CommandList* GetCommandList() const
-    {
-        return CmdList.Get();
-    }
-
-    FORCEINLINE ID3D12GraphicsCommandList* GetGraphicsCommandList() const
-    {
-        return CmdList.Get();
-    }
-
-    FORCEINLINE ID3D12GraphicsCommandList4* GetDXRCommandList() const
-    {
-        return CmdList5.Get();
-    }
+    FORCEINLINE ID3D12CommandList*          GetCommandList()         const { return CmdList.Get(); }
+    FORCEINLINE ID3D12GraphicsCommandList*  GetGraphicsCommandList() const { return CmdList.Get(); }
+    FORCEINLINE ID3D12GraphicsCommandList4* GetDXRCommandList()      const { return CmdList5.Get(); }
 
 private:
     TComPtr<ID3D12GraphicsCommandList>  CmdList;

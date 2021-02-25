@@ -8,31 +8,42 @@
 #include <DirectXMath.h>
 using namespace DirectX;
 
-// Validate (a.k.a ASSERT)
-#ifndef VALIDATE
-    #define VALIDATE(Condition) assert(Condition)
+// Assert
+#ifdef DEBUG_BUILD
+    #define ENABLE_ASSERTS 1
+#endif
+
+#ifndef Assert
+#if ENABLE_ASSERTS
+    #define Assert(Condition) assert(Condition)
+#else
+    #define Assert(Condition) (void)(0)
+#endif
 #endif
 
 // Macro for deleting objects safley
-#define SAFEDELETE(OutObject) \
+#define SafeDelete(OutObject) \
     if ((OutObject)) \
     { \
         delete (OutObject); \
         (OutObject) = nullptr; \
     }
 
-#define SAFERELEASE(OutObject) \
+#define SafeRelease(OutObject) \
     if ((OutObject)) \
     { \
         (OutObject)->Release(); \
         (OutObject) = nullptr; \
     }
 
-#define SAFEADDREF(OutObject) \
+#define SafeAddRef(OutObject) \
     if ((OutObject)) \
     { \
         (OutObject)->AddRef(); \
     }
+
+// Helper Macros
+#define ArrayCount(Array) (sizeof(Array) / sizeof(Array[0]))
 
 //Forceinline
 #ifndef FORCEINLINE
@@ -50,8 +61,8 @@ using namespace DirectX;
 #endif // ifndef FORCEINLINE
 
 // Bit-Mask helpers
-#define BIT(Bit)	(1 << Bit)
-#define FLAG(Bit)	BIT(Bit)
+#define BIT(Bit)  (1 << Bit)
+#define FLAG(Bit) BIT(Bit)
 
 inline Bool HasFlag(UInt32 Mask, UInt32 Flag)
 {
@@ -65,8 +76,8 @@ inline Bool HasFlag(UInt32 Mask, UInt32 Flag)
 
 /*
 * String preprocessor handling
-*	There are two versions of PREPROCESS_CONCAT, this is so that you can use __LINE__, __FILE__ etc. within the macro,
-*	therefore always use PREPROCESS_CONCAT
+*   There are two versions of PREPROCESS_CONCAT, this is so that you can use __LINE__, __FILE__ etc. within the macro,
+*   therefore always use PREPROCESS_CONCAT
 */
 
 #define _PREPROCESS_CONCAT(x, y) x##y

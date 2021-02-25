@@ -1,7 +1,7 @@
 #pragma once
 #include "FrameResources.h"
 
-#include "Rendering/MeshFactory.h"
+#include "Rendering/Resources/MeshFactory.h"
 
 #include "RenderLayer/CommandList.h"
 
@@ -20,10 +20,12 @@ public:
     void Release();
 
 private:
-    TSharedRef<GraphicsPipelineState> PipelineState;
-    TSharedRef<VertexBuffer> SkyboxVertexBuffer;
-    TSharedRef<IndexBuffer>  SkyboxIndexBuffer;
-    TSharedRef<SamplerState> SkyboxSampler;
+    TRef<GraphicsPipelineState> PipelineState;
+    TRef<VertexShader> SkyboxVertexShader;
+    TRef<PixelShader>  SkyboxPixelShader;
+    TRef<VertexBuffer> SkyboxVertexBuffer;
+    TRef<IndexBuffer>  SkyboxIndexBuffer;
+    TRef<SamplerState> SkyboxSampler;
 
     MeshData SkyboxMesh;
 };

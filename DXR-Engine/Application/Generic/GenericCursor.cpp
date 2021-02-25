@@ -1,15 +1,15 @@
 #include "GenericCursor.h"
 #include "GenericApplication.h"
 
-TSharedRef<GenericCursor> GlobalCursors::Arrow;
-TSharedRef<GenericCursor> GlobalCursors::TextInput;
-TSharedRef<GenericCursor> GlobalCursors::ResizeAll;
-TSharedRef<GenericCursor> GlobalCursors::ResizeEW;
-TSharedRef<GenericCursor> GlobalCursors::ResizeNS;
-TSharedRef<GenericCursor> GlobalCursors::ResizeNESW;
-TSharedRef<GenericCursor> GlobalCursors::ResizeNWSE;
-TSharedRef<GenericCursor> GlobalCursors::Hand;
-TSharedRef<GenericCursor> GlobalCursors::NotAllowed;
+TRef<GenericCursor> GlobalCursors::Arrow;
+TRef<GenericCursor> GlobalCursors::TextInput;
+TRef<GenericCursor> GlobalCursors::ResizeAll;
+TRef<GenericCursor> GlobalCursors::ResizeEW;
+TRef<GenericCursor> GlobalCursors::ResizeNS;
+TRef<GenericCursor> GlobalCursors::ResizeNESW;
+TRef<GenericCursor> GlobalCursors::ResizeNWSE;
+TRef<GenericCursor> GlobalCursors::Hand;
+TRef<GenericCursor> GlobalCursors::NotAllowed;
 
 Bool GlobalCursors::Init()
 {

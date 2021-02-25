@@ -43,10 +43,10 @@ private:
 };
 
 template<typename T>
-bool IsSubClassOf(CoreObject* Object)
+Bool IsSubClassOf(CoreObject* Object)
 {
-    VALIDATE(Object != nullptr);
-    VALIDATE(Object->GetClass() != nullptr);
+    Assert(Object != nullptr);
+    Assert(Object->GetClass() != nullptr);
     return Object->GetClass()->IsSubClassOf<T>();
 }
 

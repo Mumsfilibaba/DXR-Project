@@ -64,12 +64,12 @@ public:
     virtual void OnMouseButtonPressed(EMouseButton Button, const ModifierKeyState& ModierKeyState) override final;
     virtual void OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta) override final;
     virtual void OnCharacterInput(UInt32 Character) override final;
-    virtual void OnWindowResized(const TSharedRef<GenericWindow>& InWindow, UInt16 Width, UInt16 Height) override final;
-    virtual void OnWindowMoved(const TSharedRef<GenericWindow>& Window, Int16 x, Int16 y) override final;
-    virtual void OnWindowFocusChanged(const TSharedRef<GenericWindow>& Window, Bool HasFocus) override final;
-    virtual void OnWindowMouseLeft(const TSharedRef<GenericWindow>& Window) override final;
-    virtual void OnWindowMouseEntered(const TSharedRef<GenericWindow>& Window) override final;
-    virtual void OnWindowClosed(const TSharedRef<GenericWindow>& Window) override final;
+    virtual void OnWindowResized(const TRef<GenericWindow>& InWindow, UInt16 Width, UInt16 Height) override final;
+    virtual void OnWindowMoved(const TRef<GenericWindow>& Window, Int16 x, Int16 y) override final;
+    virtual void OnWindowFocusChanged(const TRef<GenericWindow>& Window, Bool HasFocus) override final;
+    virtual void OnWindowMouseLeft(const TRef<GenericWindow>& Window) override final;
+    virtual void OnWindowMouseEntered(const TRef<GenericWindow>& Window) override final;
+    virtual void OnWindowClosed(const TRef<GenericWindow>& Window) override final;
 
 private:
     class GenericApplication* Application = nullptr;

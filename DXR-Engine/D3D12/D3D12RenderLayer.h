@@ -6,6 +6,7 @@
 #include "D3D12Device.h"
 #include "D3D12CommandContext.h"
 #include "D3D12Texture.h"
+#include "D3D12RootSignature.h"
 
 class D3D12CommandContext;
 class D3D12Buffer;
@@ -114,7 +115,7 @@ public:
         const ResourceData* InitalData) override final;
 
     virtual ConstantBuffer* CreateConstantBuffer(
-        UInt32 SizeInBytes, 
+        UInt32 Size,
         UInt32 Flags, 
         EResourceState InitialState, 
         const ResourceData* InitalData) override final;
@@ -126,8 +127,8 @@ public:
         EResourceState InitialState, 
         const ResourceData* InitalData) override final;
 
-    virtual class RayTracingGeometry* CreateRayTracingGeometry() override final;
-    virtual class RayTracingScene* CreateRayTracingScene() override final;
+    virtual class RayTracingScene* CreateRayTracingScene(UInt32 Flags, RayTracingGeometryInstance* Instances, UInt32 NumInstances) override final;
+    virtual class RayTracingGeometry* CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer) override final;
 
     virtual ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) override final;
     virtual UnorderedAccessView* CreateUnorderedAccessView(const UnorderedAccessViewCreateInfo& CreateInfo) override final;
@@ -135,6 +136,7 @@ public:
     virtual DepthStencilView* CreateDepthStencilView(const DepthStencilViewCreateInfo& CreateInfo) override final;
 
     virtual class ComputeShader* CreateComputeShader(const TArray<UInt8>& ShaderCode) override final;
+    
     virtual class VertexShader* CreateVertexShader(const TArray<UInt8>& ShaderCode) override final;
     virtual class HullShader* CreateHullShader(const TArray<UInt8>& ShaderCode) override final;
     virtual class DomainShader* CreateDomainShader(const TArray<UInt8>& ShaderCode) override final;
@@ -142,8 +144,10 @@ public:
     virtual class MeshShader* CreateMeshShader(const TArray<UInt8>& ShaderCode) override final;
     virtual class AmplificationShader* CreateAmplificationShader(const TArray<UInt8>& ShaderCode) override final;
     virtual class PixelShader* CreatePixelShader(const TArray<UInt8>& ShaderCode) override final;
+    
     virtual class RayGenShader* CreateRayGenShader(const TArray<UInt8>& ShaderCode) override final;
-    virtual class RayHitShader* CreateRayHitShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class RayAnyHitShader* CreateRayAnyHitShader(const TArray<UInt8>& ShaderCode) override final;
+    virtual class RayClosestHitShader* CreateRayClosestHitShader(const TArray<UInt8>& ShaderCode) override final;
     virtual class RayMissShader* CreateRayMissShader(const TArray<UInt8>& ShaderCode) override final;
 
     virtual class DepthStencilState* CreateDepthStencilState(const DepthStencilStateCreateInfo& CreateInfo) override final;
@@ -153,12 +157,11 @@ public:
 
     virtual class GraphicsPipelineState* CreateGraphicsPipelineState(const GraphicsPipelineStateCreateInfo& CreateInfo) override final;
     virtual class ComputePipelineState* CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo) override final;
-    virtual class RayTracingPipelineState* CreateRayTracingPipelineState() override final;
+    virtual class RayTracingPipelineState* CreateRayTracingPipelineState(const RayTracingPipelineStateCreateInfo& CreateInfo) override final;
 
     virtual class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat) override final;
 
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
-    virtual Bool IsRayTracingSupported() override final;
     virtual Bool UAVSupportsFormat(EFormat Format) override final;
     
     virtual class ICommandContext* GetDefaultCommandContext() override final
@@ -171,6 +174,7 @@ public:
         return Device->GetAdapterName();
     }
 
+    virtual void CheckRayTracingSupport(RayTracingSupport& OutSupport) override final;
     virtual void CheckShadingRateSupport(ShadingRateSupport& OutSupport) override final;
 
 private:
@@ -189,9 +193,9 @@ private:
     Bool FinalizeBufferResource(TD3D12Buffer* Buffer, UInt32 SizeInBytes, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData);
 
 private:
-    D3D12Device*                    Device;
-    TSharedRef<D3D12CommandContext> DirectCmdContext;
-    D3D12DefaultRootSignatures      DefaultRootSignatures;
+    D3D12Device*              Device;
+    TRef<D3D12CommandContext> DirectCmdContext;
+    D3D12RootSignatureCache*  RootSignatureCache;
 
     D3D12OfflineDescriptorHeap* ResourceOfflineDescriptorHeap     = nullptr;
     D3D12OfflineDescriptorHeap* RenderTargetOfflineDescriptorHeap = nullptr;

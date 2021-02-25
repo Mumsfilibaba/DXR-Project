@@ -3,9 +3,15 @@
 
 enum class EShaderModel
 {
-    SM_5_0 = 1,
-    SM_5_1 = 2,
-    SM_6_0 = 3,
+    Unknown = 0,
+    SM_5_0  = 1,
+    SM_5_1  = 2,
+    SM_6_0  = 3,
+    SM_6_1  = 4,
+    SM_6_2  = 5,
+    SM_6_3  = 6,
+    SM_6_4  = 7,
+    SM_6_5  = 8,
 };
 
 struct ShaderDefine
@@ -37,7 +43,7 @@ public:
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<UInt8>& Code) const = 0;
+        TArray<UInt8>& Code) = 0;
 
     virtual Bool CompileShader(
         const std::string& ShaderSource,
@@ -45,13 +51,11 @@ public:
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<UInt8>& Code) const = 0;
+        TArray<UInt8>& Code) = 0;
 };
 
 class ShaderCompiler
 {
-    friend class RenderLayer;
-
 public:
     FORCEINLINE static Bool CompileFromFile(
         const std::string& FilePath,

@@ -16,9 +16,12 @@
 
 struct TextureFactoryData
 {
-    CommandList    CmdList;
-    TSharedRef<ComputePipelineState> PanoramaPSO;
-} static GlobalFactoryData;
+    TRef<ComputePipelineState> PanoramaPSO;
+    TRef<ComputeShader>        ComputeShader;
+    CommandList CmdList;
+};
+
+static TextureFactoryData GlobalFactoryData;
 
 Bool TextureFactory::Init()
 {
@@ -29,14 +32,14 @@ Bool TextureFactory::Init()
         return false;
     }
 
-    TSharedRef<ComputeShader> Shader = RenderLayer::CreateComputeShader(Code);
-    if (!Shader)
+    GlobalFactoryData.ComputeShader = CreateComputeShader(Code);
+    if (!GlobalFactoryData.ComputeShader)
     {
         return false;
     }
 
     // Create pipeline
-    GlobalFactoryData.PanoramaPSO = RenderLayer::CreateComputePipelineState(ComputePipelineStateCreateInfo(Shader.Get()));
+    GlobalFactoryData.PanoramaPSO = CreateComputePipelineState(ComputePipelineStateCreateInfo(GlobalFactoryData.ComputeShader.Get()));
     if (GlobalFactoryData.PanoramaPSO)
     {
         GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");
@@ -51,6 +54,7 @@ Bool TextureFactory::Init()
 void TextureFactory::Release()
 {
     GlobalFactoryData.PanoramaPSO.Reset();
+    GlobalFactoryData.ComputeShader.Reset();
 }
 
 Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format)
@@ -64,6 +68,10 @@ Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 Crea
     if (Format == EFormat::R8G8B8A8_Unorm)
     {
         Pixels = TUniquePtr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 4));
+    }
+    else if (Format == EFormat::R8_Unorm)
+    {
+        Pixels = TUniquePtr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 1));
     }
     else if (Format == EFormat::R32G32B32A32_Float)
     {
@@ -91,24 +99,24 @@ Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 Crea
 
 Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format)
 {
-    if (Format != EFormat::R8G8B8A8_Unorm && Format != EFormat::R32G32B32A32_Float)
+    if (Format != EFormat::R8_Unorm && Format != EFormat::R8G8B8A8_Unorm && Format != EFormat::R32G32B32A32_Float)
     {
         LOG_ERROR("[TextureFactory]: Format not supported");
         return nullptr;
     }
 
     const Bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const UInt32 NumMips = GenerateMips ? UInt32(std::min(std::log2(Width), std::log2(Height))) : 1;
+    const UInt32 NumMips    = GenerateMips ? UInt32(std::min(std::log2(Width), std::log2(Height))) : 1;
 
-    VALIDATE(NumMips != 0);
+    Assert(NumMips != 0);
 
-    const UInt32 Stride   = (Format == EFormat::R8G8B8A8_Unorm) ? 4 : 16;
+    const UInt32 Stride   = GetByteStrideFromFormat(Format);
     const UInt32 RowPitch = Width * Stride;
     
-    VALIDATE(RowPitch > 0);
+    Assert(RowPitch > 0);
     
     ResourceData InitalData = ResourceData(Pixels, Format, Width);
-    TSharedRef<Texture2D> Texture = RenderLayer::CreateTexture2D(Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceState::PixelShaderResource, &InitalData);
+    TRef<Texture2D> Texture = CreateTexture2D(Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceState::PixelShaderResource, &InitalData);
     if (!Texture)
     {
         Debug::DebugBreak();
@@ -131,12 +139,12 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
 
 TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format)
 {
-    VALIDATE(PanoramaSource->IsSRV());
+    Assert(PanoramaSource->IsSRV());
 
     const Bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const UInt16 NumMips = (GenerateNumMips) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
 
-    TSharedRef<TextureCube> StagingTexture = RenderLayer::CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr);
+    TRef<TextureCube> StagingTexture = CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr);
     if (!StagingTexture)
     {
         return nullptr;
@@ -146,7 +154,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
         StagingTexture->SetName("TextureCube From Panorama StagingTexture");
     }
 
-    TSharedRef<UnorderedAccessView> StagingTextureUAV = RenderLayer::CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
+    TRef<UnorderedAccessView> StagingTextureUAV = CreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
     if (!StagingTextureUAV)
     {
         return nullptr;
@@ -156,7 +164,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
         StagingTexture->SetName("TextureCube From Panorama StagingTexture UAV");
     }
 
-    TSharedRef<TextureCube> Texture = RenderLayer::CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceState::Common, nullptr);
+    TRef<TextureCube> Texture = CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceState::Common, nullptr);
     if (!Texture)
     {
         return nullptr;
@@ -168,7 +176,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
     CmdList.TransitionTexture(PanoramaSource, EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
-    CmdList.BindComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
+    CmdList.SetComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
 
     struct ConstantBuffer
     {
@@ -176,11 +184,11 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
     } CB0;
     CB0.CubeMapSize = CubeMapSize;
 
-    CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &CB0, 1);
-    CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &StagingTextureUAV, 1, 0);
+    CmdList.Set32BitShaderConstants(GlobalFactoryData.ComputeShader.Get(), &CB0, 1);
+    CmdList.SetUnorderedAccessView(GlobalFactoryData.ComputeShader.Get(), StagingTextureUAV.Get(), 0);
 
     ShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
-    CmdList.BindShaderResourceViews(EShaderStage::Compute, &PanoramaSourceView, 1, 0);
+    CmdList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
 
     constexpr UInt32 LocalWorkGroupCount = 16;
     const UInt32 ThreadsX = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);

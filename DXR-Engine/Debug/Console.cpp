@@ -268,7 +268,7 @@ ConsoleCommand Console::FindCommand(const std::string& CmdName)
     auto CmdIndex = CmdIndexMap.find(CmdName.c_str());
     if (CmdIndex != CmdIndexMap.end())
     {
-        VALIDATE(CmdIndex->second >= 0);
+        Assert(CmdIndex->second >= 0);
         return Commands[CmdIndex->second];
     }
 
@@ -280,7 +280,7 @@ ConsoleVariable* Console::FindVariable(const std::string& VarName)
     auto VarIndex = VarIndexMap.find(VarName.c_str());
     if (VarIndex != VarIndexMap.end())
     {
-        VALIDATE(VarIndex->second >= 0);
+        Assert(VarIndex->second >= 0);
         return Variables[VarIndex->second];
     }
 
@@ -545,7 +545,7 @@ void Console::HandleCommand(const std::string& CmdString)
         if (CmdIndex != CmdIndexMap.end())
         {
             ConsoleCommand Cmd = Commands[CmdIndex->second];
-            VALIDATE(Cmd != nullptr);
+            Assert(Cmd != nullptr);
 
             Cmd();
         }

@@ -10,7 +10,7 @@ struct Vertex
     XMFLOAT3 Tangent;
     XMFLOAT2 TexCoord;
 
-    FORCEINLINE bool operator==(const Vertex& Other) const
+    FORCEINLINE Bool operator==(const Vertex& Other) const
     {
         return
             ((Position.x == Other.Position.x) && (Position.y == Other.Position.y) && (Position.z == Other.Position.z)) &&
@@ -44,7 +44,7 @@ struct MeshData
 class MeshFactory
 {
 public:
-    static MeshData CreateFromFile(const std::string& Filename, bool MergeMeshes = true, bool LeftHanded = true) noexcept;
+    static MeshData CreateFromFile(const std::string& Filename, Bool MergeMeshes = true, Bool LeftHanded = true) noexcept;
     static MeshData CreateCube(Float Width = 1.0f, Float Height = 1.0f, Float Depth = 1.0f) noexcept;
     static MeshData CreatePlane(UInt32 Width = 1, UInt32 Height = 1) noexcept;
     static MeshData CreateSphere(UInt32 Subdivisions = 0, Float Radius = 0.5f) noexcept;

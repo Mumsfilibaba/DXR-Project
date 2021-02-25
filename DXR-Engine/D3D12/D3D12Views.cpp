@@ -4,11 +4,11 @@
 
 D3D12View::D3D12View(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
     : D3D12DeviceChild(InDevice)
-    , DxResource(nullptr)
+    , Resource(nullptr)
     , Heap(InHeap)
     , OfflineHandle({ 0 })
 {
-    VALIDATE(Heap != nullptr);
+    Assert(Heap != nullptr);
 }
 
 D3D12View::~D3D12View()
@@ -29,107 +29,103 @@ D3D12ConstantBufferView::D3D12ConstantBufferView(D3D12Device* InDevice, D3D12Off
 {
 }
 
-Bool D3D12ConstantBufferView::CreateView(const D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
+Bool D3D12ConstantBufferView::CreateView(D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
-    VALIDATE(InResource != nullptr);
-    VALIDATE(OfflineHandle != 0);
+    Assert(OfflineHandle != 0);
 
-    DxResource = InResource;
-    Desc       = InDesc;
-    Device->CreateConstantBufferView(&Desc, OfflineHandle);
+    Resource = MakeSharedRef<D3D12Resource>(InResource);
+    Desc     = InDesc;
+    GetDevice()->CreateConstantBufferView(&Desc, OfflineHandle);
 
     return true;
 }
 
-D3D12ShaderResourceView::D3D12ShaderResourceView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
+D3D12BaseShaderResourceView::D3D12BaseShaderResourceView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
     : D3D12View(InDevice, InHeap)
     , Desc()
 {
 }
 
-Bool D3D12ShaderResourceView::CreateView(const D3D12Resource* InResource,  const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
+Bool D3D12BaseShaderResourceView::CreateView(D3D12Resource* InResource,  const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
-    VALIDATE(OfflineHandle != 0);
+    Assert(OfflineHandle != 0);
 
-    DxResource = InResource;
-    Desc       = InDesc;
+    D3D12View::Resource = MakeSharedRef<D3D12Resource>(InResource);
+    Desc                = InDesc;
     
     ID3D12Resource* NativeResource = nullptr;
-    if (DxResource)
+    if (D3D12View::Resource)
     {
-        NativeResource = DxResource->GetResource();
+        NativeResource = D3D12View::Resource->GetResource();
     }
 
-    Device->CreateShaderResourceView(NativeResource, &Desc, OfflineHandle);
-
+    GetDevice()->CreateShaderResourceView(NativeResource, &Desc, OfflineHandle);
     return true;
 }
 
-D3D12UnorderedAccessView::D3D12UnorderedAccessView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
+D3D12BaseUnorderedAccessView::D3D12BaseUnorderedAccessView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
     : D3D12View(InDevice, InHeap)
     , Desc()
-    , DxCounterResource(nullptr)
+    , CounterResource(nullptr)
 {
 }
 
-Bool D3D12UnorderedAccessView::CreateView(const D3D12Resource* InCounterResource, const D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
+Bool D3D12BaseUnorderedAccessView::CreateView(D3D12Resource* InCounterResource, D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
-    VALIDATE(OfflineHandle != 0);
+    Assert(OfflineHandle != 0);
 
-    Desc              = InDesc;
-    DxCounterResource = InCounterResource;
-    DxResource        = InResource;
+    Desc                = InDesc;
+    CounterResource     = InCounterResource;
+    D3D12View::Resource = MakeSharedRef<D3D12Resource>(InResource);
 
     ID3D12Resource* NativeCounterResource = nullptr;
-    if (DxCounterResource)
+    if (CounterResource)
     {
-        NativeCounterResource = DxCounterResource->GetResource();
+        NativeCounterResource = CounterResource->GetResource();
     }
 
     ID3D12Resource* NativeResource = nullptr;
-    if (DxResource)
+    if (D3D12View::Resource)
     {
-        NativeResource = DxResource->GetResource();
+        NativeResource = D3D12View::Resource->GetResource();
     }
 
-    Device->CreateUnorderedAccessView(NativeResource, NativeCounterResource, &Desc, OfflineHandle);
+    GetDevice()->CreateUnorderedAccessView(NativeResource, NativeCounterResource, &Desc, OfflineHandle);
     return true;
 }
 
-D3D12RenderTargetView::D3D12RenderTargetView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
+D3D12BaseRenderTargetView::D3D12BaseRenderTargetView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
     : D3D12View(InDevice, InHeap)
     , Desc()
 {
 }
 
-Bool D3D12RenderTargetView::CreateView(
-    const D3D12Resource* InResource, 
-    const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
+Bool D3D12BaseRenderTargetView::CreateView(D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
-    VALIDATE(InResource != nullptr);
-    VALIDATE(OfflineHandle != 0);
+    Assert(InResource != nullptr);
+    Assert(OfflineHandle != 0);
 
-    Desc       = InDesc;
-    DxResource = InResource;
-    Device->GetDevice()->CreateRenderTargetView(DxResource->GetResource(), &Desc, OfflineHandle);
+    Desc                = InDesc;
+    D3D12View::Resource = MakeSharedRef<D3D12Resource>(InResource);
+    GetDevice()->GetDevice()->CreateRenderTargetView(D3D12View::Resource->GetResource(), &Desc, OfflineHandle);
 
     return true;
 }
 
-D3D12DepthStencilView::D3D12DepthStencilView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
+D3D12BaseDepthStencilView::D3D12BaseDepthStencilView(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap)
     : D3D12View(InDevice, InHeap)
     , Desc()
 {
 }
 
-Bool D3D12DepthStencilView::CreateView(const D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
+Bool D3D12BaseDepthStencilView::CreateView(D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
-    VALIDATE(InResource != nullptr);
-    VALIDATE(OfflineHandle != 0);
+    Assert(InResource != nullptr);
+    Assert(OfflineHandle != 0);
 
-    Desc       = InDesc;
-    DxResource = InResource;
-    Device->GetDevice()->CreateDepthStencilView(DxResource->GetResource(), &Desc, OfflineHandle);
+    Desc                = InDesc;
+    D3D12View::Resource = MakeSharedRef<D3D12Resource>(InResource);
+    GetDevice()->GetDevice()->CreateDepthStencilView(D3D12View::Resource->GetResource(), &Desc, OfflineHandle);
 
     return true;
 }

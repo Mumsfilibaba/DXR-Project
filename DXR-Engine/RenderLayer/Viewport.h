@@ -21,13 +21,13 @@ public:
     virtual RenderTargetView* GetRenderTargetView() const = 0;
     virtual Texture2D* GetBackBuffer() const = 0;
 
-    UInt32 GetWidth() const { return Width; }
+    UInt32 GetWidth()  const { return Width; }
     UInt32 GetHeight() const { return Height; }
 
     EFormat GetColorFormat() const { return Format; }
 
 protected:
-    UInt32 Width;
-    UInt32 Height;
+    UInt32  Width;
+    UInt32  Height;
     EFormat Format;
 };

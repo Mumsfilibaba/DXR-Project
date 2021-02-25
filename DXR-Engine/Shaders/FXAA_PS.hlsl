@@ -1,4 +1,5 @@
-#include "PBRCommon.hlsli"
+#include "Helpers.hlsli"
+#include "Constants.hlsli"
 
 // Debugging
 #ifdef ENABLE_DEBUG
@@ -22,7 +23,7 @@
 #define FXAA_SEARCH_THRESHOLD	(1.0f / 4.0f)
 #define FXAA_SEARCH_STEPS		24
 
-cbuffer CB0 : register(b0, space0)
+cbuffer CB0 : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     float2 TextureSize;
 }
@@ -110,7 +111,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
     float LumaSE = SE.a;
     
     float3 ColorL = (M.rgb + N.rgb + S.rgb + W.rgb + E.rgb) + (NW.rgb + SW.rgb + NE.rgb + SE.rgb);
-    ColorL        = ColorL * ToFloat3(1.0f / 9.0f);
+    ColorL        = ColorL * Float3(1.0f / 9.0f);
     
     float EdgeVert =
         abs((0.25f * LumaNW) + (-0.5f * LumaN) + (0.25f * LumaNE)) +

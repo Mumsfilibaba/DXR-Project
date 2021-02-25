@@ -1,10 +1,14 @@
 #pragma once
 #include "RenderLayer/Resources.h"
 
-#include <d3d12.h>
+#include "D3D12Constants.h"
+
 #include <dxcapi.h>
+#include <d3d12.h>
 
 #include <wrl/client.h>
+
+#include "Core.h"
 
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
 
@@ -499,49 +503,6 @@ inline Bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HA
     return !(Left == Right);
 }
 
-// Other helpers
-inline Bool ShaderStageIsGraphics(EShaderStage ShaderStage)
-{
-    switch (ShaderStage)
-    {
-        case EShaderStage::Vertex:
-        case EShaderStage::Hull:
-        case EShaderStage::Domain:
-        case EShaderStage::Geometry:
-        case EShaderStage::Pixel:
-        case EShaderStage::Mesh:
-        case EShaderStage::Amplification:
-        {
-            return true;
-        }
-
-        default: 
-        {
-            return false;
-        }
-    }
-}
-
-inline Bool ShaderStageIsCompute(EShaderStage ShaderStage)
-{
-    switch (ShaderStage)
-    {
-        case EShaderStage::Compute:
-        case EShaderStage::RayGen:
-        case EShaderStage::RayClosestHit:
-        case EShaderStage::RayAnyHit:
-        case EShaderStage::RayMiss:
-        {
-            return true;
-        }
-
-        default:
-        {
-            return false;
-        }
-    }
-}
-
 inline UInt32 GetFormatStride(DXGI_FORMAT Format)
 {
     switch (Format)
@@ -665,4 +626,46 @@ inline DXGI_FORMAT CastShaderResourceFormat(DXGI_FORMAT Format)
         case DXGI_FORMAT_R8_TYPELESS:           return DXGI_FORMAT_R8_UNORM;
         default: return Format;
     }
+}
+
+inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(UInt32 InFlags)
+{
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+    if (InFlags & RayTracingStructureBuildFlag_AllowUpdate)
+    {
+        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
+    }
+    if (InFlags & RayTracingStructureBuildFlag_PreferFastTrace)
+    {
+        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+    }
+    if (InFlags & RayTracingStructureBuildFlag_PreferFastBuild)
+    {
+        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
+    }
+
+    return Flags;
+}
+
+inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(UInt32 InFlags)
+{
+    D3D12_RAYTRACING_INSTANCE_FLAGS Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+    if (InFlags & RayTracingInstanceFlags_CullDisable)
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
+    }
+    if (InFlags & RayTracingInstanceFlags_FrontCounterClockwise)
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+    }
+    if (InFlags & RayTracingInstanceFlags_ForceOpaque)
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
+    }
+    if (InFlags & RayTracingInstanceFlags_ForceNonOpaque)
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
+    }
+
+    return Flags;
 }

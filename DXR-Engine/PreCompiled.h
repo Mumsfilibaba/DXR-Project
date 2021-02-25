@@ -5,11 +5,16 @@
 #include <random>
 
 // Libs
-#define NOMINMAX
-#include <dxgi1_6.h>
-#include <d3d12.h>
+#ifdef PLATFORM_WINDOWS
+    // Windows
+    #define NOMINMAX
+    #include "Windows/Windows.h"
 
-#include <wrl/client.h>
+    #include <dxgi1_6.h>
+    #include <d3d12.h>
+
+    #include <wrl/client.h>
+#endif
 
 #include <imgui.h>
 
@@ -34,6 +39,7 @@
 
 // Utilities
 #include "Utilities/HashUtilities.h"
+#include "Utilities/StringUtilities.h"
 
 // Math
 #include "Math/Math.h"
@@ -42,13 +48,8 @@
 #include "Core/ClassType.h"
 #include "Core/CoreObject.h"
 #include "Core/RefCountedObject.h"
-#include "Core/TSharedRef.h"
+#include "Core/Ref.h"
 
 // Memory
 #include "Memory/Memory.h"
 #include "Memory/New.h"
-
-// Windows
-#ifdef PLATFORM_WINDOWS
-    #include "Windows/Windows.h"
-#endif

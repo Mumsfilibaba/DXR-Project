@@ -37,12 +37,12 @@ public:
         return TimestampInNS;
     }
 
-    FORCEINLINE bool operator==(const Timestamp& Other) const
+    FORCEINLINE Bool operator==(const Timestamp& Other) const
     {
         return TimestampInNS == Other.TimestampInNS;
     }
 
-    FORCEINLINE bool operator!=(const Timestamp& Other) const
+    FORCEINLINE Bool operator!=(const Timestamp& Other) const
     {
         return TimestampInNS != Other.TimestampInNS;
     }
@@ -115,22 +115,22 @@ public:
         return Timestamp(Left.TimestampInNS / Right.TimestampInNS);
     }
 
-    FORCEINLINE friend bool operator>(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend Bool operator>(const Timestamp& Left, const Timestamp& Right)
     {
         return Left.TimestampInNS > Right.TimestampInNS;
     }
 
-    FORCEINLINE friend bool operator<(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend Bool operator<(const Timestamp& Left, const Timestamp& Right)
     {
         return Left.TimestampInNS < Right.TimestampInNS;
     }
 
-    FORCEINLINE friend bool operator>=(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend Bool operator>=(const Timestamp& Left, const Timestamp& Right)
     {
         return (Left.TimestampInNS >= Right.TimestampInNS);
     }
 
-    FORCEINLINE friend bool operator<=(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend Bool operator<=(const Timestamp& Left, const Timestamp& Right)
     {
         return (Left.TimestampInNS <= Right.TimestampInNS);
     }

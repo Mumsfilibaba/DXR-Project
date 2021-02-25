@@ -8,354 +8,14 @@
 #include "D3D12PipelineState.h"
 #include "D3D12ShaderCompiler.h"
 #include "D3D12Shader.h"
+#include "D3D12RayTracing.h"
+#include "D3D12RenderLayer.h"
 
-#if D3D12_ENABLE_PIX_MARKERS
-    #include <pix3.h>
-#endif
-
-D3D12ShaderDescriptorTableState::D3D12ShaderDescriptorTableState()
-    : CBVOfflineHandles()
-    , CBVDescriptorTable()
-    , SRVOfflineHandles()
-    , SRVDescriptorTable()
-    , UAVOfflineHandles()
-    , UAVDescriptorTable()
-    , SamplerOfflineHandles()
-    , SamplerDescriptorTable()
-    , IsResourcesDirty(true)
-    , IsSamplersDirty(true)
-{
-    SrcRangeSizes.Resize(D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT, 1);
-    OfflineResourceHandles.Resize(D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT * 3);
-}
-
-Bool D3D12ShaderDescriptorTableState::CreateResources(D3D12Device& Device)
-{
-    const UInt32 NumDefaultResourceDescriptors = 4;
-    DefaultResourceHeap = Device.CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, NumDefaultResourceDescriptors, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-    if (!DefaultResourceHeap->Init())
-    {
-        return false;
-    }
-    else
-    {
-        DefaultResourceHeap->SetName("[D3D12ShaderDescriptorTableState] Default Resource DescriptorHeap");
-    }
-
-    const UInt32 NumDefaultSamplerDescriptors = 2;
-    DefaultSamplerHeap = Device.CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, NumDefaultSamplerDescriptors, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-    if (!DefaultSamplerHeap->Init())
-    {
-        return false;
-    }
-    else
-    {
-        DefaultSamplerHeap->SetName("[D3D12ShaderDescriptorTableState] Default Sampler DescriptorHeap");
-    }
-
-    const UInt32 ResourceDescriptorHandleIncrementSize           = DefaultResourceHeap->GetDescriptorHandleIncrementSize();
-    const D3D12_CPU_DESCRIPTOR_HANDLE ResourceHandleForHeapStart = DefaultResourceHeap->GetCPUDescriptorHandleForHeapStart();
-
-    D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
-    Memory::Memzero(&CBVDesc);
-
-    CBVDesc.BufferLocation = 0;
-    CBVDesc.SizeInBytes    = 0;
-
-    DefaultCBVOfflineHandle = ResourceHandleForHeapStart;
-    Device.CreateConstantBufferView(&CBVDesc, DefaultCBVOfflineHandle);
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
-    Memory::Memzero(&SrvDesc);
-
-    SrvDesc.Format                        = DXGI_FORMAT_R8G8B8A8_UNORM;
-    SrvDesc.Shader4ComponentMapping       = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    SrvDesc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
-    SrvDesc.Texture2D.MipLevels           = 1;
-    SrvDesc.Texture2D.MostDetailedMip     = 0;
-    SrvDesc.Texture2D.PlaneSlice          = 0;
-    SrvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-
-    DefaultSRVOfflineHandle = D3D12_DESCRIPTOR_HANDLE_INCREMENT(DefaultCBVOfflineHandle, ResourceDescriptorHandleIncrementSize);
-    Device.CreateShaderResourceView(nullptr, &SrvDesc, DefaultSRVOfflineHandle);
-
-    D3D12_UNORDERED_ACCESS_VIEW_DESC UavDesc;
-    Memory::Memzero(&UavDesc);
-
-    UavDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
-    UavDesc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
-    UavDesc.Texture2D.MipSlice   = 0;
-    UavDesc.Texture2D.PlaneSlice = 0;
-
-    DefaultUAVOfflineHandle = D3D12_DESCRIPTOR_HANDLE_INCREMENT(DefaultSRVOfflineHandle, ResourceDescriptorHandleIncrementSize);
-    Device.CreateUnorderedAccessView(nullptr, nullptr, &UavDesc, DefaultUAVOfflineHandle);
-
-    const D3D12_CPU_DESCRIPTOR_HANDLE SamplerHandleForHeapStart = DefaultSamplerHeap->GetCPUDescriptorHandleForHeapStart();
-
-    D3D12_SAMPLER_DESC SamplerDesc;
-    Memory::Memzero(&SamplerDesc);
-
-    SamplerDesc.AddressU       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    SamplerDesc.AddressV       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    SamplerDesc.AddressW       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    SamplerDesc.BorderColor[0] = 1.0f;
-    SamplerDesc.BorderColor[1] = 1.0f;
-    SamplerDesc.BorderColor[2] = 1.0f;
-    SamplerDesc.BorderColor[3] = 1.0f;
-    SamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    SamplerDesc.Filter         = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-    SamplerDesc.MaxAnisotropy  = 1;
-    SamplerDesc.MaxLOD         = FLT_MAX;
-    SamplerDesc.MinLOD         = -FLT_MAX;
-    SamplerDesc.MipLODBias     = 0.0f;
-
-    DefaultSamplerOfflineHandle = SamplerHandleForHeapStart;
-    Device.CreateSampler(&SamplerDesc, DefaultSamplerOfflineHandle);
-
-    CBVOfflineHandles.Resize(D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT, DefaultCBVOfflineHandle);
-    SRVOfflineHandles.Resize(D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT, DefaultSRVOfflineHandle);
-    UAVOfflineHandles.Resize(D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT, DefaultUAVOfflineHandle);
-    SamplerOfflineHandles.Resize(D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT, DefaultSamplerOfflineHandle);
-
-    DescriptorHeaps.Fill(nullptr);
-    BoundGraphicsDescriptorTables.Fill({ 0 });
-    BoundComputeDescriptorTables.Fill({ 0 });
-
-    return true;
-}
-
-void D3D12ShaderDescriptorTableState::BindConstantBuffer(D3D12ConstantBufferView* ConstantBufferView, UInt32 Slot)
-{
-    if (Slot >= CBVOfflineHandles.Size())
-    {
-        CBVOfflineHandles.Resize(Slot + 1, DefaultCBVOfflineHandle);
-    }
-
-    D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle = ConstantBufferView ? ConstantBufferView->GetOfflineHandle() : DefaultCBVOfflineHandle;
-    if (CBVOfflineHandles[Slot] != OfflineHandle)
-    {
-        CBVOfflineHandles[Slot] = OfflineHandle;
-        IsResourcesDirty = true;
-    }
-}
-
-void D3D12ShaderDescriptorTableState::BindShaderResourceView(D3D12ShaderResourceView* ShaderResourceView, UInt32 Slot)
-{
-    if (Slot >= SRVOfflineHandles.Size())
-    {
-        SRVOfflineHandles.Resize(Slot + 1, DefaultSRVOfflineHandle);
-    }
-
-    D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle = ShaderResourceView ? ShaderResourceView->GetOfflineHandle() : DefaultSRVOfflineHandle;
-    if (SRVOfflineHandles[Slot] != OfflineHandle)
-    {
-        SRVOfflineHandles[Slot] = OfflineHandle;
-        IsResourcesDirty = true;
-    }
-}
-
-void D3D12ShaderDescriptorTableState::BindUnorderedAccessView(D3D12UnorderedAccessView* UnorderedAccessView, UInt32 Slot)
-{
-    if (Slot >= UAVOfflineHandles.Size())
-    {
-        UAVOfflineHandles.Resize(Slot + 1, DefaultUAVOfflineHandle);
-    }
-
-    D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle = UnorderedAccessView ? UnorderedAccessView->GetOfflineHandle() : DefaultUAVOfflineHandle;
-    if (UAVOfflineHandles[Slot] != OfflineHandle)
-    {
-        UAVOfflineHandles[Slot] = OfflineHandle;
-        IsResourcesDirty = true;
-    }
-}
-
-void D3D12ShaderDescriptorTableState::BindSamplerState(D3D12SamplerState* SamplerState, UInt32 Slot)
-{
-    if (Slot >= SamplerOfflineHandles.Size())
-    {
-        SamplerOfflineHandles.Resize(Slot + 1, DefaultSamplerOfflineHandle);
-    }
-
-    D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle = SamplerState ? SamplerState->GetOfflineHandle() : DefaultSamplerOfflineHandle;
-    if (SamplerOfflineHandles[Slot] != OfflineHandle)
-    {
-        SamplerOfflineHandles[Slot] = OfflineHandle;
-        IsSamplersDirty = true;
-    }
-}
-
-void D3D12ShaderDescriptorTableState::CommitGraphicsDescriptorTables(
-    D3D12Device& Device,
-    D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
-    D3D12OnlineDescriptorHeap& SamplerDescriptorHeap,
-    D3D12CommandListHandle& CmdList)
-{
-    InternalAllocateAndCopyDescriptorHandles(Device, ResourceDescriptorHeap, SamplerDescriptorHeap);
-
-    Bool ForceRebind = false;
-    if (DescriptorHeaps[0] != ResourceDescriptorHeap.GetNativeHeap() ||
-        DescriptorHeaps[1] != SamplerDescriptorHeap.GetNativeHeap())
-    {
-        DescriptorHeaps[0] = ResourceDescriptorHeap.GetNativeHeap();
-        DescriptorHeaps[1] = SamplerDescriptorHeap.GetNativeHeap();
-        CmdList.SetDescriptorHeaps(DescriptorHeaps.Data(), DescriptorHeaps.Size());
-
-        ForceRebind = true;
-    }
-
-    if (CBVDescriptorTable.OnlineHandleStart_GPU != BoundGraphicsDescriptorTables[0] || ForceRebind)
-    {
-        CmdList.SetGraphicsRootDescriptorTable(CBVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER);
-        BoundGraphicsDescriptorTables[0] = CBVDescriptorTable.OnlineHandleStart_GPU;
-    }
-
-    if (SRVDescriptorTable.OnlineHandleStart_GPU != BoundGraphicsDescriptorTables[1] || ForceRebind)
-    {
-        CmdList.SetGraphicsRootDescriptorTable(SRVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER);
-        BoundGraphicsDescriptorTables[1] = SRVDescriptorTable.OnlineHandleStart_GPU;
-    }
-
-    if (UAVDescriptorTable.OnlineHandleStart_GPU != BoundGraphicsDescriptorTables[2] || ForceRebind)
-    {
-        CmdList.SetGraphicsRootDescriptorTable(UAVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER);
-        BoundGraphicsDescriptorTables[2] = UAVDescriptorTable.OnlineHandleStart_GPU;
-    }
-
-    if (SamplerDescriptorTable.OnlineHandleStart_GPU != BoundGraphicsDescriptorTables[3] || ForceRebind)
-    {
-        CmdList.SetGraphicsRootDescriptorTable(SamplerDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER);
-        BoundGraphicsDescriptorTables[3] = SamplerDescriptorTable.OnlineHandleStart_GPU;
-    }
-}
-
-void D3D12ShaderDescriptorTableState::CommitComputeDescriptorTables(
-    D3D12Device& Device, 
-    D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
-    D3D12OnlineDescriptorHeap& SamplerDescriptorHeap,
-    D3D12CommandListHandle& CmdList)
-{
-    InternalAllocateAndCopyDescriptorHandles(Device, ResourceDescriptorHeap, SamplerDescriptorHeap);
-
-    Bool ForceRebind = false;
-    if (DescriptorHeaps[0] != ResourceDescriptorHeap.GetNativeHeap() ||
-        DescriptorHeaps[1] != SamplerDescriptorHeap.GetNativeHeap())
-    {
-        DescriptorHeaps[0] = ResourceDescriptorHeap.GetNativeHeap();
-        DescriptorHeaps[1] = SamplerDescriptorHeap.GetNativeHeap();
-        CmdList.SetDescriptorHeaps(DescriptorHeaps.Data(), DescriptorHeaps.Size());
-
-        ForceRebind = true;
-    }
-
-    if (CBVDescriptorTable.OnlineHandleStart_GPU != BoundComputeDescriptorTables[0] || ForceRebind)
-    {
-        CmdList.SetComputeRootDescriptorTable(CBVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_CONSTANT_BUFFER_ROOT_PARAMETER);
-        BoundComputeDescriptorTables[0] = CBVDescriptorTable.OnlineHandleStart_GPU;
-    }
-
-    if (SRVDescriptorTable.OnlineHandleStart_GPU != BoundComputeDescriptorTables[1] || ForceRebind)
-    {
-        CmdList.SetComputeRootDescriptorTable(SRVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_ROOT_PARAMETER);
-        BoundComputeDescriptorTables[1] = SRVDescriptorTable.OnlineHandleStart_GPU;
-    }
-
-    if (UAVDescriptorTable.OnlineHandleStart_GPU != BoundComputeDescriptorTables[2] || ForceRebind)
-    {
-        CmdList.SetComputeRootDescriptorTable(UAVDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_ROOT_PARAMETER);
-        BoundComputeDescriptorTables[2] = UAVDescriptorTable.OnlineHandleStart_GPU;
-    }
-
-    if (SamplerDescriptorTable.OnlineHandleStart_GPU != BoundComputeDescriptorTables[3] || ForceRebind)
-    {
-        CmdList.SetComputeRootDescriptorTable(SamplerDescriptorTable.OnlineHandleStart_GPU, D3D12_DEFAULT_SAMPLER_STATE_ROOT_PARAMETER);
-        BoundComputeDescriptorTables[3] = SamplerDescriptorTable.OnlineHandleStart_GPU;
-    }
-}
-
-void D3D12ShaderDescriptorTableState::InternalAllocateAndCopyDescriptorHandles(
-    D3D12Device& Device, 
-    D3D12OnlineDescriptorHeap& ResourceDescriptorHeap,
-    D3D12OnlineDescriptorHeap& SamplerDescriptorHeap)
-{
-    const UInt32 NumDescriptorHandles = D3D12_DEFAULT_DESCRIPTOR_TABLE_HANDLE_COUNT;
-    
-    Bool ForceRealloc = DescriptorHeaps[0] != ResourceDescriptorHeap.GetNativeHeap();
-    if (IsResourcesDirty || ForceRealloc)
-    {
-        const UInt32 NumResourceDescriptorHandles = NumDescriptorHandles * 3;
-        const UInt32 StartHandle = ResourceDescriptorHeap.AllocateHandles(NumResourceDescriptorHandles);
-
-        CBVDescriptorTable.SetStart(
-            ResourceDescriptorHeap.GetGPUDescriptorHandleAt(StartHandle),
-            ResourceDescriptorHeap.GetCPUDescriptorHandleAt(StartHandle));
-        SRVDescriptorTable.SetStart(
-            ResourceDescriptorHeap.GetGPUDescriptorHandleAt(StartHandle + NumDescriptorHandles),
-            ResourceDescriptorHeap.GetCPUDescriptorHandleAt(StartHandle + NumDescriptorHandles));
-        UAVDescriptorTable.SetStart(
-            ResourceDescriptorHeap.GetGPUDescriptorHandleAt(StartHandle + NumDescriptorHandles * 2),
-            ResourceDescriptorHeap.GetCPUDescriptorHandleAt(StartHandle + NumDescriptorHandles * 2));
-
-        if (OfflineResourceHandles.Size() < NumResourceDescriptorHandles)
-        {
-            OfflineResourceHandles.Resize(NumResourceDescriptorHandles);
-        }
-
-        if (SrcRangeSizes.Size() < NumResourceDescriptorHandles)
-        {
-            SrcRangeSizes.Resize(NumResourceDescriptorHandles, 1);
-        }
-
-        Memory::Memcpy(
-            OfflineResourceHandles.Data(), 
-            CBVOfflineHandles.Data(), 
-            NumDescriptorHandles * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
-        
-        Memory::Memcpy(
-            OfflineResourceHandles.Data() + NumDescriptorHandles, 
-            SRVOfflineHandles.Data(), 
-            NumDescriptorHandles * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
-        
-        Memory::Memcpy(
-            OfflineResourceHandles.Data() + (NumDescriptorHandles * 2), 
-            UAVOfflineHandles.Data(), 
-            NumDescriptorHandles * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
-
-        Device.CopyDescriptors(
-            1, 
-            &CBVDescriptorTable.OnlineHandleStart_CPU, 
-            &NumResourceDescriptorHandles,
-            NumResourceDescriptorHandles,
-            OfflineResourceHandles.Data(),
-            SrcRangeSizes.Data(),
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-        IsResourcesDirty = false;
-    }
-
-    ForceRealloc = DescriptorHeaps[1] != SamplerDescriptorHeap.GetNativeHeap();
-    if (IsSamplersDirty || ForceRealloc)
-    {
-        const UInt32 StartHandle = SamplerDescriptorHeap.AllocateHandles(NumDescriptorHandles);
-        SamplerDescriptorTable.SetStart(
-            SamplerDescriptorHeap.GetGPUDescriptorHandleAt(StartHandle),
-            SamplerDescriptorHeap.GetCPUDescriptorHandleAt(StartHandle));
-
-        Device.CopyDescriptors(
-            1,
-            &SamplerDescriptorTable.OnlineHandleStart_CPU,
-            &NumDescriptorHandles,
-            NumDescriptorHandles,
-            SamplerOfflineHandles.Data(),
-            SrcRangeSizes.Data(),
-            D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-
-        IsSamplersDirty = false;
-    }
-}
+#include <pix.h>
 
 void D3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
 {
-    VALIDATE(Resource != nullptr);
+    Assert(Resource != nullptr);
 
     if (BeforeState != AfterState)
     {
@@ -392,13 +52,16 @@ void D3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource,
 
         Barriers.EmplaceBack(Barrier);
     }
-
-    return;
 }
 
-void D3D12ResourceBarrierBatcher::AddTransitionBarrier(D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
+D3D12GPUResourceUploader::D3D12GPUResourceUploader(D3D12Device* InDevice)
+    : D3D12DeviceChild(InDevice)
+    , MappedMemory(nullptr)
+    , SizeInBytes(0)
+    , OffsetInBytes(0)
+    , Resource(nullptr)
+    , GarbageResources()
 {
-    AddTransitionBarrier(Resource->GetResource(), BeforeState, AfterState);
 }
 
 Bool D3D12GPUResourceUploader::Reserve(UInt32 InSizeInBytes)
@@ -436,20 +99,14 @@ Bool D3D12GPUResourceUploader::Reserve(UInt32 InSizeInBytes)
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    HRESULT Result = Device->CreateCommitedResource(
-        &HeapProperties,
-        D3D12_HEAP_FLAG_NONE,
-        &Desc, 
-        D3D12_RESOURCE_STATE_GENERIC_READ, 
-        nullptr,
-        IID_PPV_ARGS(&Resource));
+    HRESULT Result = GetDevice()->CreateCommitedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&Resource));
     if (SUCCEEDED(Result))
     {
         Resource->SetName(L"[D3D12GPUResourceUploader] Buffer");
         Resource->Map(0, nullptr, reinterpret_cast<Void**>(&MappedMemory));
         
-        SizeInBytes        = InSizeInBytes;
-        OffsetInBytes    = 0;
+        SizeInBytes   = InSizeInBytes;
+        OffsetInBytes = 0;
         return true;
     }
     else
@@ -474,7 +131,7 @@ void D3D12GPUResourceUploader::Reset()
     OffsetInBytes = 0;
 }
 
-Byte* D3D12GPUResourceUploader::LinearAllocate(UInt32 InSizeInBytes)
+D3D12UploadAllocation D3D12GPUResourceUploader::LinearAllocate(UInt32 InSizeInBytes)
 {
     constexpr UInt32 EXTRA_BYTES_ALLOCATED = 1024;
 
@@ -484,9 +141,21 @@ Byte* D3D12GPUResourceUploader::LinearAllocate(UInt32 InSizeInBytes)
         Reserve(NeededSize + EXTRA_BYTES_ALLOCATED);
     }
 
-    Byte* ResultPtr = MappedMemory + OffsetInBytes;
+    D3D12UploadAllocation Allocation;
+    Allocation.MappedPtr      = MappedMemory + OffsetInBytes;
+    Allocation.ResourceOffset = OffsetInBytes;
     OffsetInBytes += InSizeInBytes;
-    return ResultPtr;
+    return Allocation;
+}
+
+D3D12CommandBatch::D3D12CommandBatch(D3D12Device* InDevice)
+    : Device(InDevice)
+    , CmdAllocator(InDevice)
+    , GpuResourceUploader(InDevice)
+    , OnlineResourceDescriptorHeap(nullptr)
+    , OnlineSamplerDescriptorHeap(nullptr)
+    , Resources()
+{
 }
 
 Bool D3D12CommandBatch::Init()
@@ -499,7 +168,7 @@ Bool D3D12CommandBatch::Init()
 
     OnlineResourceDescriptorHeap = DBG_NEW D3D12OnlineDescriptorHeap(
         Device,
-        D3D12_DEFAULT_ONLINE_RESOURCE_DESCRIPTOR_HEAP_COUNT,
+        D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     if (!OnlineResourceDescriptorHeap->Init())
     {
@@ -507,9 +176,26 @@ Bool D3D12CommandBatch::Init()
     }
 
     OnlineSamplerDescriptorHeap = DBG_NEW D3D12OnlineDescriptorHeap(Device,
-        D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_HEAP_COUNT,
+        D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
         D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
     if (!OnlineSamplerDescriptorHeap->Init())
+    {
+        return false;
+    }
+
+    OnlineRayTracingResourceDescriptorHeap = DBG_NEW D3D12OnlineDescriptorHeap(
+        Device,
+        D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
+        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    if (!OnlineRayTracingResourceDescriptorHeap->Init())
+    {
+        return false;
+    }
+
+    OnlineRayTracingSamplerDescriptorHeap = DBG_NEW D3D12OnlineDescriptorHeap(Device,
+        D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
+        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+    if (!OnlineRayTracingSamplerDescriptorHeap->Init())
     {
         return false;
     }
@@ -518,16 +204,14 @@ Bool D3D12CommandBatch::Init()
     return true;
 }
 
-D3D12CommandContext::D3D12CommandContext(D3D12Device* InDevice, const D3D12DefaultRootSignatures& InDefaultRootSignatures)
+D3D12CommandContext::D3D12CommandContext(D3D12Device* InDevice)
     : ICommandContext()
     , D3D12DeviceChild(InDevice)
     , CmdQueue(InDevice)
     , CmdList(InDevice)
     , Fence(InDevice)
+    , DescriptorCache(InDevice)
     , CmdBatches()
-    , DefaultRootSignatures(InDefaultRootSignatures)
-    , VertexBufferState()
-    , RenderTargetState()
     , BarrierBatcher()
 {
 }
@@ -544,10 +228,10 @@ Bool D3D12CommandContext::Init()
         return false;
     }
 
-    // TODO: Have support for more than 4 commandbatches?
-    for (UInt32 i = 0; i < 4; i++)
+    // TODO: Have support for more than 3 commandbatches?
+    for (UInt32 i = 0; i < 3; i++)
     {
-        D3D12CommandBatch& Batch = CmdBatches.EmplaceBack(Device);
+        D3D12CommandBatch& Batch = CmdBatches.EmplaceBack(GetDevice());
         if (!Batch.Init())
         {
             return false;
@@ -565,24 +249,28 @@ Bool D3D12CommandContext::Init()
         return false;
     }
 
-    if (!ShaderDescriptorState.CreateResources(*Device))
+    if (!DescriptorCache.Init())
     {
         return false;
     }
 
     TArray<UInt8> Code;
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!gD3D12ShaderCompiler->CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
+        
         Debug::DebugBreak();
+        return false;
     }
 
-    TSharedRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader(Device, Code);
-    Shader->CreateRootSignature();
+    TRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader(GetDevice(), Code);
+    if (!Shader->Init())
+    {
+        Debug::DebugBreak();
+        return false;
+    }
 
-    TSharedRef<D3D12RootSignature> RootSignature = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
-
-    GenerateMipsTex2D_PSO = DBG_NEW D3D12ComputePipelineState(Device, Shader, RootSignature);
+    GenerateMipsTex2D_PSO = DBG_NEW D3D12ComputePipelineState(GetDevice(), Shader);
     if (!GenerateMipsTex2D_PSO->Init())
     {
         LOG_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTex2D PipelineState");
@@ -593,21 +281,20 @@ Bool D3D12CommandContext::Init()
         GenerateMipsTex2D_PSO->SetName("GenerateMipsTex2D Gen PSO");
     }
 
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!gD3D12ShaderCompiler->CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
         Debug::DebugBreak();
     }
 
-    Shader = DBG_NEW D3D12ComputeShader(Device, Code);
-    if (!Shader->CreateRootSignature())
+    Shader = DBG_NEW D3D12ComputeShader(GetDevice(), Code);
+    if (!Shader->Init())
     {
+        Debug::DebugBreak();
         return false;
     }
 
-    RootSignature = MakeSharedRef<D3D12RootSignature>(Shader->GetRootSignature());
-
-    GenerateMipsTexCube_PSO = DBG_NEW D3D12ComputePipelineState(Device, Shader, RootSignature);
+    GenerateMipsTexCube_PSO = DBG_NEW D3D12ComputePipelineState(GetDevice(), Shader);
     if (!GenerateMipsTexCube_PSO->Init())
     {
         LOG_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTexCube PipelineState");
@@ -621,29 +308,49 @@ Bool D3D12CommandContext::Init()
     return true;
 }
 
+void D3D12CommandContext::UpdateBuffer(D3D12Resource* Resource, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData)
+{
+    if (SizeInBytes != 0)
+    {
+        FlushResourceBarriers();
+
+        D3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
+
+        D3D12UploadAllocation Allocation = GpuResourceUploader.LinearAllocate((UInt32)SizeInBytes);
+        Memory::Memcpy(Allocation.MappedPtr, SourceData, SizeInBytes);
+
+        CmdList.CopyBufferRegion(Resource->GetResource(), OffsetInBytes, GpuResourceUploader.GetGpuResource(), Allocation.ResourceOffset, SizeInBytes);
+
+        CmdBatch->AddInUseResource(Resource);
+    }
+}
+
 void D3D12CommandContext::Begin()
 {
-    VALIDATE(IsReady == false);
+    Assert(IsReady == false);
 
     CmdBatch     = &CmdBatches[NextCmdBatch];
     NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
 
+
     // TODO: Investigate better ways of doing this 
     if (FenceValue >= CmdBatches.Size())
     {
-        const UInt64 WaitValue = Math::Max(FenceValue - (CmdBatches.Size() - 1), 0ULL);
+        const UInt64 WaitValue = Math::Max<UInt64>(FenceValue - (CmdBatches.Size() - 1), 0);
         Fence.WaitForValue(WaitValue);
     }
 
     if (!CmdBatch->Reset())
     {
+        Debug::DebugBreak();
         return;
     }
 
-    ClearState();
+    InternalClearState();
 
     if (!CmdList.Reset(CmdBatch->GetCommandAllocator()))
     {
+        Debug::DebugBreak();
         return;
     }
 
@@ -652,12 +359,18 @@ void D3D12CommandContext::Begin()
 
 void D3D12CommandContext::End()
 {
-    VALIDATE(IsReady == true);
+    Assert(IsReady == true);
 
-    BarrierBatcher.FlushBarriers(CmdList);
+    // Reset state
+    FlushResourceBarriers();
 
+    CmdBatch = nullptr;
+    IsReady  = false;
+
+    // Execute
     if (!CmdList.Close())
     {
+        Debug::DebugBreak();
         return;
     }
 
@@ -666,24 +379,16 @@ void D3D12CommandContext::End()
     const UInt64 CurrentFenceValue = ++FenceValue;
     if (!CmdQueue.SignalFence(Fence, CurrentFenceValue))
     {
+        Debug::DebugBreak();
         return;
     }
-
-    // Reset state
-    CmdBatch = nullptr;
-    IsReady  = false;
-
-    CurrentGraphicsPipelineState.Reset();
-    CurrentGraphicsRootSignature.Reset();
-    CurrentComputePipelineState.Reset();
-    CurrentComputeRootSignature.Reset();
 }
 
 void D3D12CommandContext::ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor)
 {
-    VALIDATE(RenderTargetView != nullptr);
+    Assert(RenderTargetView != nullptr);
 
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
     D3D12RenderTargetView* DxRenderTargetView = static_cast<D3D12RenderTargetView*>(RenderTargetView);
     CmdBatch->AddInUseResource(DxRenderTargetView);
@@ -693,9 +398,9 @@ void D3D12CommandContext::ClearRenderTargetView(RenderTargetView* RenderTargetVi
 
 void D3D12CommandContext::ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilF& ClearValue) 
 {
-    VALIDATE(DepthStencilView != nullptr);
+    Assert(DepthStencilView != nullptr);
 
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
     D3D12DepthStencilView* DxDepthStencilView = static_cast<D3D12DepthStencilView*>(DepthStencilView);
     CmdBatch->AddInUseResource(DxDepthStencilView);
@@ -705,7 +410,7 @@ void D3D12CommandContext::ClearDepthStencilView(DepthStencilView* DepthStencilVi
 
 void D3D12CommandContext::ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4])
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
     
     D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessView);
     CmdBatch->AddInUseResource(DxUnorderedAccessView);
@@ -715,7 +420,7 @@ void D3D12CommandContext::ClearUnorderedAccessViewFloat(UnorderedAccessView* Uno
 
     const D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle    = DxUnorderedAccessView->GetOfflineHandle();
     const D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle_CPU = OnlineDescriptorHeap->GetCPUDescriptorHandleAt(OnlineDescriptorHandleIndex);
-    Device->CopyDescriptorsSimple(1, OnlineHandle_CPU, OfflineHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    GetDevice()->CopyDescriptorsSimple(1, OnlineHandle_CPU, OfflineHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     const D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandle_GPU = OnlineDescriptorHeap->GetGPUDescriptorHandleAt(OnlineDescriptorHandleIndex);
     CmdList.ClearUnorderedAccessViewFloat(OnlineHandle_GPU, DxUnorderedAccessView, ClearColor);
@@ -736,7 +441,7 @@ void D3D12CommandContext::SetShadingRate(EShadingRate ShadingRate)
 
 void D3D12CommandContext::SetShadingRateImage(Texture2D* ShadingImage)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
     
     if (ShadingImage)
     {
@@ -760,7 +465,7 @@ void D3D12CommandContext::EndRenderPass()
     // Empty for now
 }
 
-void D3D12CommandContext::BindViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y)
+void D3D12CommandContext::SetViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y)
 {
     D3D12_VIEWPORT Viewport;
     Viewport.Width    = Width;
@@ -773,7 +478,7 @@ void D3D12CommandContext::BindViewport(Float Width, Float Height, Float MinDepth
     CmdList.RSSetViewports(&Viewport, 1);
 }
 
-void D3D12CommandContext::BindScissorRect(Float Width, Float Height, Float x, Float y)
+void D3D12CommandContext::SetScissorRect(Float Width, Float Height, Float x, Float y)
 {
     D3D12_RECT ScissorRect;
     ScissorRect.top    = LONG(y);
@@ -784,76 +489,60 @@ void D3D12CommandContext::BindScissorRect(Float Width, Float Height, Float x, Fl
     CmdList.RSSetScissorRects(&ScissorRect, 1);
 }
 
-void D3D12CommandContext::BindBlendFactor(const ColorF& Color)
+void D3D12CommandContext::SetBlendFactor(const ColorF& Color)
 {
     CmdList.OMSetBlendFactor(Color.Elements);
 }
 
-void D3D12CommandContext::BindPrimitiveTopology(EPrimitiveTopology InPrimitveTopology)
+void D3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTopology)
 {
     const D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = ConvertPrimitiveTopology(InPrimitveTopology);
     CmdList.IASetPrimitiveTopology(PrimitiveTopology);
 }
 
-void D3D12CommandContext::BindVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot)
+void D3D12CommandContext::SetVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot)
 {
+    Assert(BufferSlot + BufferCount < D3D12_MAX_VERTEX_BUFFER_SLOTS);
+
     for (UInt32 i = 0; i < BufferCount; i++)
     {
+        UInt32 Slot = BufferSlot + i;
         D3D12VertexBuffer* DxVertexBuffer = static_cast<D3D12VertexBuffer*>(VertexBuffers[i]);
-        VertexBufferState.BindVertexBuffer(DxVertexBuffer, BufferSlot + i);
+        DescriptorCache.SetVertexBuffer(DxVertexBuffer, Slot);
         
-        // TODO: The vertexbuffer state maybe should have this responsibility?
+        // TODO: The DescriptorCache maybe should have this responsibility?
         CmdBatch->AddInUseResource(DxVertexBuffer);
     }
-    
-    CmdList.IASetVertexBuffers(0, VertexBufferState.GetVertexBufferViews(), VertexBufferState.GetNumVertexBufferViews());
 }
 
-void D3D12CommandContext::BindIndexBuffer(IndexBuffer* IndexBuffer)
+void D3D12CommandContext::SetIndexBuffer(IndexBuffer* IndexBuffer)
 {
-    if (IndexBuffer)
-    {
-        D3D12IndexBuffer* DxIndexBuffer = static_cast<D3D12IndexBuffer*>(IndexBuffer);
-        CmdList.IASetIndexBuffer(&DxIndexBuffer->GetView());
-        CmdBatch->AddInUseResource(DxIndexBuffer);
-    }
-    else
-    {
-        CmdList.IASetIndexBuffer(nullptr);
-    }
+    D3D12IndexBuffer* DxIndexBuffer = static_cast<D3D12IndexBuffer*>(IndexBuffer);
+    DescriptorCache.SetIndexBuffer(DxIndexBuffer);
+
+    // TODO: Maybe this should be done by the descriptorcache
+    CmdBatch->AddInUseResource(DxIndexBuffer);
 }
 
-void D3D12CommandContext::BindRayTracingScene(RayTracingScene* RayTracingScene)
+void D3D12CommandContext::SetRenderTargets(RenderTargetView* const* RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView)
 {
-    UNREFERENCED_VARIABLE(RayTracingScene);
-    // TODO: Implement this function
-}
-
-void D3D12CommandContext::BindRenderTargets(RenderTargetView* const* RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView)
-{
-    RenderTargetState.Reset();
-
     for (UInt32 i = 0; i < RenderTargetCount; i++)
     {
         D3D12RenderTargetView* DxRenderTargetView = static_cast<D3D12RenderTargetView*>(RenderTargetViews[i]);
-        RenderTargetState.BindRenderTargetView(DxRenderTargetView, i);
+        DescriptorCache.SetRenderTargetView(DxRenderTargetView, i);
+
+        // TODO: Maybe this should be handled by the descriptorcache
         CmdBatch->AddInUseResource(DxRenderTargetView);
     }
 
     D3D12DepthStencilView* DxDepthStencilView = static_cast<D3D12DepthStencilView*>(DepthStencilView);
-    RenderTargetState.BindDepthStencilView(DxDepthStencilView);
+    DescriptorCache.SetDepthStencilView(DxDepthStencilView);
     CmdBatch->AddInUseResource(DxDepthStencilView);
-
-    CmdList.OMSetRenderTargets(
-        RenderTargetState.GetRenderTargetViewHandles(), 
-        RenderTargetState.GetNumRenderTargetViewHandles(),
-        FALSE, 
-        RenderTargetState.GetDepthStencilHandle());
 }
 
-void D3D12CommandContext::BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState)
+void D3D12CommandContext::SetGraphicsPipelineState(class GraphicsPipelineState* PipelineState)
 {
-    VALIDATE(PipelineState != nullptr);
+    Assert(PipelineState != nullptr);
 
     D3D12GraphicsPipelineState* DxPipelineState = static_cast<D3D12GraphicsPipelineState*>(PipelineState);
     if (DxPipelineState != CurrentGraphicsPipelineState.Get())
@@ -863,16 +552,16 @@ void D3D12CommandContext::BindGraphicsPipelineState(class GraphicsPipelineState*
     }
 
     D3D12RootSignature* DxRootSignature = DxPipelineState->GetRootSignature();
-    if (DxRootSignature != CurrentGraphicsRootSignature.Get())
+    if (DxRootSignature != CurrentRootSignature.Get())
     {
-        CurrentGraphicsRootSignature = MakeSharedRef<D3D12RootSignature>(DxRootSignature);
-        CmdList.SetGraphicsRootSignature(CurrentGraphicsRootSignature.Get());
+        CurrentRootSignature = MakeSharedRef<D3D12RootSignature>(DxRootSignature);
+        CmdList.SetGraphicsRootSignature(CurrentRootSignature.Get());
     }
 }
 
-void D3D12CommandContext::BindComputePipelineState(class ComputePipelineState* PipelineState)
+void D3D12CommandContext::SetComputePipelineState(class ComputePipelineState* PipelineState)
 {
-    VALIDATE(PipelineState != nullptr);
+    Assert(PipelineState != nullptr);
 
     D3D12ComputePipelineState* DxPipelineState = static_cast<D3D12ComputePipelineState*>(PipelineState);
     if (DxPipelineState != CurrentComputePipelineState.Get())
@@ -882,104 +571,154 @@ void D3D12CommandContext::BindComputePipelineState(class ComputePipelineState* P
     }
 
     D3D12RootSignature* DxRootSignature = DxPipelineState->GetRootSignature();
-    if (DxRootSignature != CurrentComputeRootSignature.Get())
+    if (DxRootSignature != CurrentRootSignature.Get())
     {
-        CurrentComputeRootSignature = MakeSharedRef<D3D12RootSignature>(DxRootSignature);
-        CmdList.SetComputeRootSignature(CurrentComputeRootSignature.Get());
+        CurrentRootSignature = MakeSharedRef<D3D12RootSignature>(DxRootSignature);
+        CmdList.SetComputeRootSignature(CurrentRootSignature.Get());
     }
 }
 
-void D3D12CommandContext::BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState)
+void D3D12CommandContext::Set32BitShaderConstants(Shader* Shader, const Void* Shader32BitConstants, UInt32 Num32BitConstants)
 {
-    UNREFERENCED_VARIABLE(PipelineState);
-    // TODO: Implement this function
+    UNREFERENCED_VARIABLE(Shader);
+
+    Assert(Num32BitConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
+    ShaderConstantsCache.Set32BitShaderConstants((UInt32*)Shader32BitConstants, Num32BitConstants);
 }
 
-void D3D12CommandContext::Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants)
+void D3D12CommandContext::SetShaderResourceView(Shader* Shader, ShaderResourceView* ShaderResourceView, UInt32 ParameterIndex)
 {
-    VALIDATE(Num32BitConstants <= D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_COUNT);
+    D3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    Assert(DxShader != nullptr);
 
-    if (ShaderStageIsGraphics(ShaderStage))
+    D3D12ShaderParameter ParameterInfo = DxShader->GetShaderResourceParameter(ParameterIndex);
+    Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == 1);
+
+    D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceView);
+    DescriptorCache.SetShaderResourceView(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
+}
+
+void D3D12CommandContext::SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceView, UInt32 NumShaderResourceViews, UInt32 ParameterIndex)
+{
+    D3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    Assert(DxShader != nullptr);
+
+    D3D12ShaderParameter ParameterInfo = DxShader->GetShaderResourceParameter(ParameterIndex);
+    Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == NumShaderResourceViews);
+
+    for (UInt32 i = 0; i < NumShaderResourceViews; i++)
     {
-        CmdList.SetGraphicsRoot32BitConstants(Shader32BitConstants, Num32BitConstants, 0, D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER);
+        D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceView[i]);
+        DescriptorCache.SetShaderResourceView(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
     }
-    else if (ShaderStageIsCompute(ShaderStage))
+}
+
+void D3D12CommandContext::SetUnorderedAccessView(Shader* Shader, UnorderedAccessView* UnorderedAccessView, UInt32 ParameterIndex)
+{
+    D3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    Assert(DxShader != nullptr);
+
+    D3D12ShaderParameter ParameterInfo = DxShader->GetUnorderedAccessParameter(ParameterIndex);
+    Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == 1);
+    
+    D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessView);
+    DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
+}
+
+void D3D12CommandContext::SetUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, UInt32 NumUnorderedAccessViews, UInt32 ParameterIndex)
+{
+    D3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    Assert(DxShader != nullptr);
+
+    D3D12ShaderParameter ParameterInfo = DxShader->GetUnorderedAccessParameter(ParameterIndex);
+    Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == NumUnorderedAccessViews);
+
+    for (UInt32 i = 0; i < NumUnorderedAccessViews; i++)
     {
-        CmdList.SetComputeRoot32BitConstants(Shader32BitConstants, Num32BitConstants, 0, D3D12_DEFAULT_SHADER_32BIT_CONSTANTS_ROOT_PARAMETER);
+        D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessViews[i]);
+        DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
+    }
+}
+
+void D3D12CommandContext::SetConstantBuffer(Shader* Shader, ConstantBuffer* ConstantBuffer, UInt32 ParameterIndex)
+{
+    D3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    Assert(DxShader != nullptr);
+
+    D3D12ShaderParameter ParameterInfo = DxShader->GetConstantBufferParameter(ParameterIndex);
+    Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == 1);
+
+    if (ConstantBuffer)
+    {
+        D3D12ConstantBufferView& DxConstantBufferView = static_cast<D3D12ConstantBuffer*>(ConstantBuffer)->GetView();
+        DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
     }
     else
     {
-        VALIDATE(false);
+        DescriptorCache.SetConstantBufferView(nullptr, DxShader->GetShaderVisibility(), ParameterInfo.Register);
     }
 }
 
-void D3D12CommandContext::BindShaderResourceViews(
-    EShaderStage ShaderStage, 
-    ShaderResourceView* const* ShaderResourceViews, 
-    UInt32 ShaderResourceViewCount, 
-    UInt32 StartSlot)
+void D3D12CommandContext::SetConstantBuffers(Shader* Shader, ConstantBuffer* const* ConstantBuffers, UInt32 NumConstantBuffers, UInt32 ParameterIndex)
 {
-    UNREFERENCED_VARIABLE(ShaderStage);
+    D3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    Assert(DxShader != nullptr);
 
-    for (UInt32 i = 0; i < ShaderResourceViewCount; i++)
+    D3D12ShaderParameter ParameterInfo = DxShader->GetConstantBufferParameter(ParameterIndex);
+    Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == NumConstantBuffers);
+
+    for (UInt32 i = 0; i < NumConstantBuffers; i++)
     {
-        D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceViews[i]);
-        ShaderDescriptorState.BindShaderResourceView(DxShaderResourceView, StartSlot + i);
-        CmdBatch->AddInUseResource(DxShaderResourceView);
-    }
-}
-
-void D3D12CommandContext::BindSamplerStates(EShaderStage ShaderStage, SamplerState* const* SamplerStates, UInt32 SamplerStateCount, UInt32 StartSlot)
-{
-    UNREFERENCED_VARIABLE(ShaderStage);
-
-    for (UInt32 i = 0; i < SamplerStateCount; i++)
-    {
-        D3D12SamplerState* DxSamplerState = static_cast<D3D12SamplerState*>(SamplerStates[i]);
-        ShaderDescriptorState.BindSamplerState(DxSamplerState, StartSlot + i);
-        CmdBatch->AddInUseResource(DxSamplerState);
-    }
-}
-
-void D3D12CommandContext::BindUnorderedAccessViews(
-    EShaderStage ShaderStage, 
-    UnorderedAccessView* const* UnorderedAccessViews, 
-    UInt32 UnorderedAccessViewCount, 
-    UInt32 StartSlot)
-{
-    UNREFERENCED_VARIABLE(ShaderStage);
-
-    for (UInt32 i = 0; i < UnorderedAccessViewCount; i++)
-    {
-        D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessViews[i]);
-        ShaderDescriptorState.BindUnorderedAccessView(DxUnorderedAccessView, StartSlot + i);
-        CmdBatch->AddInUseResource(DxUnorderedAccessView);
-    }
-}
-
-void D3D12CommandContext::BindConstantBuffers(EShaderStage ShaderStage, ConstantBuffer* const* ConstantBuffers, UInt32 ConstantBufferCount, UInt32 StartSlot)
-{
-    UNREFERENCED_VARIABLE(ShaderStage);
-
-    for (UInt32 i = 0; i < ConstantBufferCount; i++)
-    {
-        D3D12ConstantBuffer* DxConstantBuffer = static_cast<D3D12ConstantBuffer*>(ConstantBuffers[i]);
-        if (DxConstantBuffer)
+        if (ConstantBuffers[i])
         {
-            D3D12ConstantBufferView& View = DxConstantBuffer->GetView();
-            ShaderDescriptorState.BindConstantBuffer(&View, StartSlot + i);
-            CmdBatch->AddInUseResource(DxConstantBuffer);
+            D3D12ConstantBufferView& DxConstantBufferView = static_cast<D3D12ConstantBuffer*>(ConstantBuffers[i])->GetView();
+            DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
         }
         else
         {
-            ShaderDescriptorState.BindConstantBuffer(nullptr, StartSlot + i);
+            DescriptorCache.SetConstantBufferView(nullptr, DxShader->GetShaderVisibility(), ParameterInfo.Register);
         }
+    }
+}
+
+void D3D12CommandContext::SetSamplerState(Shader* Shader, SamplerState* SamplerState, UInt32 ParameterIndex)
+{
+    D3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    Assert(DxShader != nullptr);
+
+    D3D12ShaderParameter ParameterInfo = DxShader->GetSamplerStateParameter(ParameterIndex);
+    Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == 1);
+
+    D3D12SamplerState* DxSamplerState = static_cast<D3D12SamplerState*>(SamplerState);
+    DescriptorCache.SetSamplerState(DxSamplerState, DxShader->GetShaderVisibility(), ParameterInfo.Register);
+}
+
+void D3D12CommandContext::SetSamplerStates(Shader* Shader, SamplerState* const* SamplerStates, UInt32 NumSamplerStates, UInt32 ParameterIndex)
+{
+    D3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    Assert(DxShader != nullptr);
+
+    D3D12ShaderParameter ParameterInfo = DxShader->GetSamplerStateParameter(ParameterIndex);
+    Assert(ParameterInfo.Space == 0);
+    Assert(ParameterInfo.NumDescriptors == NumSamplerStates);
+
+    for (UInt32 i = 0; i < NumSamplerStates; i++)
+    {
+        D3D12SamplerState* DxSamplerState = static_cast<D3D12SamplerState*>(SamplerStates[i]);
+        DescriptorCache.SetSamplerState(DxSamplerState, DxShader->GetShaderVisibility(), ParameterInfo.Register);
     }
 }
 
 void D3D12CommandContext::ResolveTexture(Texture* Destination, Texture* Source)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
  
     D3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
     D3D12BaseTexture* DxSource      = D3D12TextureCast(Source);
@@ -987,7 +726,7 @@ void D3D12CommandContext::ResolveTexture(Texture* Destination, Texture* Source)
     const DXGI_FORMAT SrcFormat = DxSource->GetNativeFormat();
     
     //TODO: For now texture must be the same format. I.e typeless does probably not work
-    VALIDATE(DstFormat == SrcFormat);
+    Assert(DstFormat == SrcFormat);
 
     CmdList.ResolveSubresource(DxDestination->GetResource(), DxSource->GetResource(), DstFormat);
 
@@ -997,31 +736,17 @@ void D3D12CommandContext::ResolveTexture(Texture* Destination, Texture* Source)
 
 void D3D12CommandContext::UpdateBuffer(Buffer* Destination, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData)
 {
-    if (SizeInBytes != 0)
-    {
-        BarrierBatcher.FlushBarriers(CmdList);
+    D3D12BaseBuffer* DxDestination = D3D12BufferCast(Destination);
+    UpdateBuffer(DxDestination->GetResource(), OffsetInBytes, SizeInBytes, SourceData);
 
-        D3D12BaseBuffer* DxDestination = D3D12BufferCast(Destination);
-        D3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
-        
-        //TODO: Maybe is not needed, investigate
-        const UInt32 AlignedSizeInBytes = Math::AlignUp<UInt32>(UInt32(SizeInBytes), 16u);
-        Byte* GpuSourceMemory = GpuResourceUploader.LinearAllocate(AlignedSizeInBytes);
-
-        const UInt32 GpuSourceOffsetInBytes = GpuResourceUploader.GetOffsetInBytesFromPtr(GpuSourceMemory);
-        Memory::Memcpy(GpuSourceMemory, SourceData, SizeInBytes);
-
-        CmdList.CopyBufferRegion(DxDestination->GetResource()->GetResource(), OffsetInBytes, GpuResourceUploader.GetGpuResource(), GpuSourceOffsetInBytes, SizeInBytes);
-        
-        CmdBatch->AddInUseResource(Destination);
-    }
+    CmdBatch->AddInUseResource(Destination);
 }
 
 void D3D12CommandContext::UpdateTexture2D(Texture2D* Destination, UInt32 Width, UInt32 Height, UInt32 MipLevel, const Void* SourceData)
 {
     if (Width > 0 && Height > 0)
     {
-        BarrierBatcher.FlushBarriers(CmdList);
+        FlushResourceBarriers();
 
         D3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
         const DXGI_FORMAT NativeFormat  = DxDestination->GetNativeFormat();
@@ -1030,13 +755,12 @@ void D3D12CommandContext::UpdateTexture2D(Texture2D* Destination, UInt32 Width, 
         const UInt32 SizeInBytes = Height * RowPitch;
     
         D3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
-        Byte* SourceMemory = GpuResourceUploader.LinearAllocate(SizeInBytes);
+        D3D12UploadAllocation Allocation = GpuResourceUploader.LinearAllocate(SizeInBytes);
 
-        const UInt32 SourceOffsetInBytes = GpuResourceUploader.GetOffsetInBytesFromPtr(SourceMemory);
         const Byte* Source = reinterpret_cast<const Byte*>(SourceData);
         for (UInt32 y = 0; y < Height; y++)
         {
-            Memory::Memcpy(SourceMemory + (y * RowPitch), Source + (y * Width * Stride), Width * Stride);
+            Memory::Memcpy(Allocation.MappedPtr + (y * RowPitch), Source + (y * Width * Stride), Width * Stride);
         }
 
         // Copy to Dest
@@ -1050,6 +774,7 @@ void D3D12CommandContext::UpdateTexture2D(Texture2D* Destination, UInt32 Width, 
         SourceLocation.PlacedFootprint.Footprint.Height   = Height;
         SourceLocation.PlacedFootprint.Footprint.Depth    = 1;
         SourceLocation.PlacedFootprint.Footprint.RowPitch = RowPitch;
+        SourceLocation.PlacedFootprint.Offset             = Allocation.ResourceOffset;
 
         // TODO: Miplevel may not be the correct subresource
         D3D12_TEXTURE_COPY_LOCATION DestLocation;
@@ -1067,11 +792,11 @@ void D3D12CommandContext::UpdateTexture2D(Texture2D* Destination, UInt32 Width, 
 
 void D3D12CommandContext::CopyBuffer(Buffer* Destination, Buffer* Source, const CopyBufferInfo& CopyInfo)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
     D3D12BaseBuffer* DxDestination = D3D12BufferCast(Destination);
     D3D12BaseBuffer* DxSource      = D3D12BufferCast(Source);
-    CmdList.CopyBuffer(DxDestination->GetResource(), CopyInfo.DestinationOffset, DxSource->GetResource(), CopyInfo.SourceOffset, CopyInfo.SizeInBytes);
+    CmdList.CopyBufferRegion(DxDestination->GetResource(), CopyInfo.DestinationOffset, DxSource->GetResource(), CopyInfo.SourceOffset, CopyInfo.SizeInBytes);
 
     CmdBatch->AddInUseResource(Destination);
     CmdBatch->AddInUseResource(Source);
@@ -1079,7 +804,7 @@ void D3D12CommandContext::CopyBuffer(Buffer* Destination, Buffer* Source, const 
 
 void D3D12CommandContext::CopyTexture(Texture* Destination, Texture* Source)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
     D3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
     D3D12BaseTexture* DxSource      = D3D12TextureCast(Source);
@@ -1118,7 +843,7 @@ void D3D12CommandContext::CopyTextureRegion(Texture* Destination, Texture* Sourc
     DestinationLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     DestinationLocation.SubresourceIndex = CopyInfo.Destination.SubresourceIndex;
 
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
     CmdList.CopyTextureRegion(&DestinationLocation, CopyInfo.Destination.x, CopyInfo.Destination.y, CopyInfo.Destination.z, &SourceLocation, &SourceBox);
 
@@ -1126,54 +851,158 @@ void D3D12CommandContext::CopyTextureRegion(Texture* Destination, Texture* Sourc
     CmdBatch->AddInUseResource(Source);
 }
 
-void D3D12CommandContext::DestroyResource(Resource* Resource)
+void D3D12CommandContext::DiscardResource(Resource* Resource)
 {
     CmdBatch->AddInUseResource(Resource);
 }
 
-void D3D12CommandContext::BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry)
+void D3D12CommandContext::BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update)
 {
-    UNREFERENCED_VARIABLE(RayTracingGeometry);
+    FlushResourceBarriers();
 
-    // TODO: Implement this function
-    BarrierBatcher.FlushBarriers(CmdList);
-    CmdBatch->AddInUseResource(RayTracingGeometry);
+    D3D12VertexBuffer* DxVertexBuffer   = static_cast<D3D12VertexBuffer*>(VertexBuffer);
+    D3D12IndexBuffer*  DxIndexBuffer    = static_cast<D3D12IndexBuffer*>(IndexBuffer);
+    D3D12RayTracingGeometry* DxGeometry = static_cast<D3D12RayTracingGeometry*>(Geometry);
+    DxGeometry->VertexBuffer = DxVertexBuffer;
+    DxGeometry->IndexBuffer  = DxIndexBuffer;
+    DxGeometry->Build(*this, Update);
+
+    CmdBatch->AddInUseResource(Geometry);
+    CmdBatch->AddInUseResource(VertexBuffer);
+    CmdBatch->AddInUseResource(IndexBuffer);
 }
 
-void D3D12CommandContext::BuildRayTracingScene(RayTracingScene* RayTracingScene)
+void D3D12CommandContext::BuildRayTracingScene(RayTracingScene* RayTracingScene, const RayTracingGeometryInstance* Instances, UInt32 NumInstances, Bool Update)
 {
-    UNREFERENCED_VARIABLE(RayTracingScene);
+    FlushResourceBarriers();
 
-    // TODO: Implement this function
-    BarrierBatcher.FlushBarriers(CmdList);
+    D3D12RayTracingScene* DxScene = static_cast<D3D12RayTracingScene*>(RayTracingScene);
+    DxScene->Build(*this, Instances, NumInstances, Update);
+
     CmdBatch->AddInUseResource(RayTracingScene);
+}
+
+void D3D12CommandContext::SetRayTracingBindings(
+    RayTracingScene* RayTracingScene, 
+    RayTracingPipelineState* PipelineState, 
+    const RayTracingShaderResources* GlobalResource, 
+    const RayTracingShaderResources* RayGenLocalResources, 
+    const RayTracingShaderResources* MissLocalResources, 
+    const RayTracingShaderResources* HitGroupResources, 
+    UInt32 NumHitGroupResources)
+{
+    D3D12RayTracingScene*         DxScene         = static_cast<D3D12RayTracingScene*>(RayTracingScene);
+    D3D12RayTracingPipelineState* DxPipelineState = static_cast<D3D12RayTracingPipelineState*>(PipelineState);
+    Assert(DxScene != nullptr);
+    Assert(DxPipelineState != nullptr);
+
+    UInt32 NumDescriptorsNeeded = 0;
+    UInt32 NumSamplersNeeded    = 0;
+    if (GlobalResource)
+    {
+        NumDescriptorsNeeded += GlobalResource->NumResources();
+        NumSamplersNeeded    += GlobalResource->NumSamplers();
+    }
+    if (RayGenLocalResources)
+    {
+        NumDescriptorsNeeded += RayGenLocalResources->NumResources();
+        NumSamplersNeeded    += RayGenLocalResources->NumSamplers();
+    }
+    if (MissLocalResources)
+    {
+        NumDescriptorsNeeded += MissLocalResources->NumResources();
+        NumSamplersNeeded    += MissLocalResources->NumSamplers();
+    }
+
+    for (UInt32 i = 0; i < NumHitGroupResources; i++)
+    {
+        NumDescriptorsNeeded += HitGroupResources[i].NumResources();
+        NumSamplersNeeded    += HitGroupResources[i].NumSamplers();
+    }
+
+    Assert(NumDescriptorsNeeded < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
+    D3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
+    if (!ResourceHeap->HasSpace(NumDescriptorsNeeded))
+    {
+        ResourceHeap->AllocateFreshHeap();
+    }
+
+    Assert(NumSamplersNeeded < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
+    D3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
+    if (!SamplerHeap->HasSpace(NumSamplersNeeded))
+    {
+        SamplerHeap->AllocateFreshHeap();
+    }
+
+    if (!DxScene->BuildBindingTable(*this, DxPipelineState, ResourceHeap, SamplerHeap, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources))
+    {
+        LOG_ERROR("[D3D12CommandContext]: FAILED to Build Shader Binding Table");
+    }
+
+    Assert(GlobalResource != nullptr);
+
+    if (!GlobalResource->ConstantBuffers.IsEmpty())
+    {
+        for (UInt32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
+        {
+            D3D12ConstantBufferView& DxConstantBufferView = static_cast<D3D12ConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
+            DescriptorCache.SetConstantBufferView(&DxConstantBufferView, ShaderVisibility_All, i);
+        }
+    }
+    if (!GlobalResource->ShaderResourceViews.IsEmpty())
+    {
+        for (UInt32 i = 0; i < GlobalResource->ShaderResourceViews.Size(); i++)
+        {
+            D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(GlobalResource->ShaderResourceViews[i]);
+            DescriptorCache.SetShaderResourceView(DxShaderResourceView, ShaderVisibility_All, i);
+        }
+    }
+    if (!GlobalResource->UnorderedAccessViews.IsEmpty())
+    {
+        for (UInt32 i = 0; i < GlobalResource->UnorderedAccessViews.Size(); i++)
+        {
+            D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(GlobalResource->UnorderedAccessViews[i]);
+            DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, ShaderVisibility_All, i);
+        }
+    }
+    if (!GlobalResource->SamplerStates.IsEmpty())
+    {
+        for (UInt32 i = 0; i < GlobalResource->SamplerStates.Size(); i++)
+        {
+            D3D12SamplerState* DxSampler = static_cast<D3D12SamplerState*>(GlobalResource->SamplerStates[i]);
+            DescriptorCache.SetSamplerState(DxSampler, ShaderVisibility_All, i);
+        }
+    }
+
+    ID3D12GraphicsCommandList4* DXRCommandList = CmdList.GetDXRCommandList();
+
+    D3D12RootSignature* GlobalRootSignature = DxPipelineState->GetGlobalRootSignature();
+    CurrentRootSignature = MakeSharedRef<D3D12RootSignature>(GlobalRootSignature);
+    DXRCommandList->SetComputeRootSignature(CurrentRootSignature->GetRootSignature());
+
+    DescriptorCache.CommitComputeDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
 }
 
 void D3D12CommandContext::GenerateMips(Texture* Texture)
 {
     D3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
-    VALIDATE(DxTexture != nullptr);
+    Assert(DxTexture != nullptr);
 
     D3D12_RESOURCE_DESC Desc = DxTexture->GetResource()->GetDesc();
     Desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     
-    VALIDATE(Desc.MipLevels > 1);
+    Assert(Desc.MipLevels > 1);
 
-    D3D12_HEAP_PROPERTIES HeapProperties;
-    Memory::Memzero(&HeapProperties);
-
-    HeapProperties.Type                 = DxTexture->GetResource()->GetHeapType();
-    HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    HeapProperties.CreationNodeMask     = 0;
-    HeapProperties.VisibleNodeMask      = 0;
-
-    TComPtr<ID3D12Resource> StagingTexture;
-    HRESULT Result = Device->CreateCommitedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&StagingTexture));
-    if (FAILED(Result))
+    // TODO: Create this placed from a Heap? See what performance is 
+    TRef<D3D12Resource> StagingTexture = DBG_NEW D3D12Resource(GetDevice(), Desc, DxTexture->GetResource()->GetHeapType());
+    if (!StagingTexture->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
     {
         LOG_ERROR("[D3D12CommandContext] Failed to create StagingTexture for GenerateMips");
         return;
+    }
+    else
+    {
+        StagingTexture->SetName("GenerateMips StagingTexture");
     }
 
     // Check Type
@@ -1224,7 +1053,7 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
     // Allocate an extra handle for SRV
     const UInt32 StartDescriptorHandleIndex         = ResourceHeap->AllocateHandles(UavDescriptorHandleCount + 1); 
     const D3D12_CPU_DESCRIPTOR_HANDLE SrvHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(StartDescriptorHandleIndex);
-    Device->CreateShaderResourceView(DxTexture->GetResource()->GetResource(), &SrvDesc, SrvHandle_CPU);
+    GetDevice()->CreateShaderResourceView(DxTexture->GetResource()->GetResource(), &SrvDesc, SrvHandle_CPU);
 
     const UInt32 UavStartDescriptorHandleIndex = StartDescriptorHandleIndex + 1;
     for (UInt32 i = 0; i < Desc.MipLevels; i++)
@@ -1239,7 +1068,7 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
         }
 
         const D3D12_CPU_DESCRIPTOR_HANDLE UavHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(UavStartDescriptorHandleIndex + i);
-        Device->CreateUnorderedAccessView(StagingTexture.Get(), nullptr, &UavDesc, UavHandle_CPU);
+        GetDevice()->CreateUnorderedAccessView(StagingTexture->GetResource(), nullptr, &UavDesc, UavHandle_CPU);
     }
 
     for (UInt32 i = Desc.MipLevels; i < UavDescriptorHandleCount; i++)
@@ -1254,19 +1083,19 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
         }
 
         const D3D12_CPU_DESCRIPTOR_HANDLE UavHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(UavStartDescriptorHandleIndex + i);
-        Device->CreateUnorderedAccessView(nullptr, nullptr, &UavDesc, UavHandle_CPU);
+        GetDevice()->CreateUnorderedAccessView(nullptr, nullptr, &UavDesc, UavHandle_CPU);
     }
 
     // We assume the destination is in D3D12_RESOURCE_STATE_COPY_DEST
-    BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    BarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-    BarrierBatcher.FlushBarriers(CmdList);
+    TransitionResource(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+    FlushResourceBarriers();
 
-    CmdList.CopyNativeResource(StagingTexture.Get(), DxTexture->GetResource()->GetResource());
+    CmdList.CopyResource(StagingTexture.Get(), DxTexture->GetResource());
 
-    BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-    BarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    BarrierBatcher.FlushBarriers(CmdList);
+    TransitionResource(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    FlushResourceBarriers();
 
     if (IsTextureCube)
     {
@@ -1282,7 +1111,6 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
     const D3D12_GPU_DESCRIPTOR_HANDLE SrvHandle_GPU = ResourceHeap->GetGPUDescriptorHandleAt(StartDescriptorHandleIndex);
     ID3D12DescriptorHeap* OnlineResourceHeap        = ResourceHeap->GetHeap()->GetHeap();    
     CmdList.SetDescriptorHeaps(&OnlineResourceHeap, 1);
-    CmdList.SetComputeRootDescriptorTable(SrvHandle_GPU, 1);
 
     struct ConstantBuffer
     {
@@ -1303,8 +1131,11 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
         ConstantData.NumMipLevels = Math::Min<UInt32>(4, RemainingMiplevels);
 
         CmdList.SetComputeRoot32BitConstants(&ConstantData, 4, 0, 0);
+        
+        // Because of DATA_STATIC_WHILE_SET_AT_EXECUTE error. Why we get this when we only use Root Signature 1.0 is beyond me.
+        CmdList.SetComputeRootDescriptorTable(SrvHandle_GPU, 1);
 
-        const UInt32 GPUDescriptorHandleIndex = i * MipLevelsPerDispatch;
+        const UInt32 GPUDescriptorHandleIndex           = i * MipLevelsPerDispatch;
         const D3D12_GPU_DESCRIPTOR_HANDLE UavHandle_GPU = ResourceHeap->GetGPUDescriptorHandleAt(UavStartDescriptorHandleIndex + GPUDescriptorHandleIndex);
         CmdList.SetComputeRootDescriptorTable(UavHandle_GPU, 2);
 
@@ -1313,18 +1144,18 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
         const UInt32 ThreadsY = Math::DivideByMultiple(DstHeight, ThreadCount);
         CmdList.Dispatch(ThreadsX, ThreadsY, ThreadsZ);
 
-        CmdList.UnorderedAccessBarrier(StagingTexture.Get());
+        UnorderedAccessBarrier(StagingTexture.Get());
 
-        BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-        BarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        BarrierBatcher.FlushBarriers(CmdList);
+        TransitionResource(DxTexture->GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+        TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        FlushResourceBarriers();
 
         // TODO: Copy only miplevels (Maybe faster?)
-        CmdList.CopyNativeResource(DxTexture->GetResource()->GetResource(), StagingTexture.Get());
+        CmdList.CopyResource(DxTexture->GetResource(), StagingTexture.Get());
 
-        BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        BarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        BarrierBatcher.FlushBarriers(CmdList);
+        TransitionResource(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        FlushResourceBarriers();
 
         DstWidth  = DstWidth / 16;
         DstHeight = DstHeight / 16;
@@ -1333,11 +1164,11 @@ void D3D12CommandContext::GenerateMips(Texture* Texture)
         RemainingMiplevels -= MipLevelsPerDispatch;
     }
 
-    BarrierBatcher.AddTransitionBarrier(DxTexture->GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-    BarrierBatcher.FlushBarriers(CmdList);
+    TransitionResource(DxTexture->GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    FlushResourceBarriers();
 
     CmdBatch->AddInUseResource(Texture);
-    CmdBatch->AddInUseResource(StagingTexture);
+    CmdBatch->AddInUseResource(StagingTexture.Get());
 }
 
 void D3D12CommandContext::TransitionTexture(Texture* Texture, EResourceState BeforeState, EResourceState AfterState)
@@ -1346,7 +1177,7 @@ void D3D12CommandContext::TransitionTexture(Texture* Texture, EResourceState Bef
     const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);
 
     D3D12BaseTexture* Resource = D3D12TextureCast(Texture);
-    BarrierBatcher.AddTransitionBarrier(Resource->GetResource(), DxBeforeState, DxAfterState);
+    TransitionResource(Resource->GetResource(), DxBeforeState, DxAfterState);
 
     CmdBatch->AddInUseResource(Texture);
 }
@@ -1357,7 +1188,7 @@ void D3D12CommandContext::TransitionBuffer(Buffer* Buffer, EResourceState Before
     const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);
     
     D3D12BaseBuffer* Resource = D3D12BufferCast(Buffer);
-    BarrierBatcher.AddTransitionBarrier(Resource->GetResource(), DxBeforeState, DxAfterState);
+    TransitionResource(Resource->GetResource(), DxBeforeState, DxAfterState);
 
     CmdBatch->AddInUseResource(Buffer);
 }
@@ -1365,38 +1196,46 @@ void D3D12CommandContext::TransitionBuffer(Buffer* Buffer, EResourceState Before
 void D3D12CommandContext::UnorderedAccessTextureBarrier(Texture* Texture)
 {
     D3D12BaseTexture* Resource = D3D12TextureCast(Texture);
-    BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetResource());
+    UnorderedAccessBarrier(Resource->GetResource());
 
     CmdBatch->AddInUseResource(Texture);
 }
 
+void D3D12CommandContext::UnorderedAccessBufferBarrier(Buffer* Buffer)
+{
+    D3D12BaseBuffer* Resource = D3D12BufferCast(Buffer);
+    UnorderedAccessBarrier(Resource->GetResource());
+
+    CmdBatch->AddInUseResource(Buffer);
+}
+
 void D3D12CommandContext::Draw(UInt32 VertexCount, UInt32 StartVertexLocation)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
-    D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
-    ShaderDescriptorState.CommitGraphicsDescriptorTables(*Device, *OnlineResourceDescriptorHeap, *OnlineSamplerDescriptorHeap, CmdList);
+    ShaderConstantsCache.CommitGraphics(CmdList, CurrentRootSignature.Get());
+    DescriptorCache.CommitGraphicsDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
+
     CmdList.DrawInstanced(VertexCount, 1, StartVertexLocation, 0);
 }
 
 void D3D12CommandContext::DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
-    D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
-    ShaderDescriptorState.CommitGraphicsDescriptorTables(*Device, *OnlineResourceDescriptorHeap, *OnlineSamplerDescriptorHeap, CmdList);
+    ShaderConstantsCache.CommitGraphics(CmdList, CurrentRootSignature.Get());
+    DescriptorCache.CommitGraphicsDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
+    
     CmdList.DrawIndexedInstanced(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
 }
 
 void D3D12CommandContext::DrawInstanced(UInt32 VertexCountPerInstance, UInt32 InstanceCount, UInt32 StartVertexLocation, UInt32 StartInstanceLocation)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
 
-    D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
-    ShaderDescriptorState.CommitGraphicsDescriptorTables(*Device, *OnlineResourceDescriptorHeap, *OnlineSamplerDescriptorHeap, CmdList);
+    ShaderConstantsCache.CommitGraphics(CmdList, CurrentRootSignature.Get());
+    DescriptorCache.CommitGraphicsDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
+
     CmdList.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
@@ -1407,51 +1246,65 @@ void D3D12CommandContext::DrawIndexedInstanced(
     UInt32 BaseVertexLocation, 
     UInt32 StartInstanceLocation)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
-    
-    D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
-    ShaderDescriptorState.CommitGraphicsDescriptorTables(*Device, *OnlineResourceDescriptorHeap, *OnlineSamplerDescriptorHeap, CmdList);
+    FlushResourceBarriers();
+
+    ShaderConstantsCache.CommitGraphics(CmdList, CurrentRootSignature.Get());
+    DescriptorCache.CommitGraphicsDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
+
     CmdList.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
 
 void D3D12CommandContext::Dispatch(UInt32 ThreadGroupCountX, UInt32 ThreadGroupCountY, UInt32 ThreadGroupCountZ)
 {
-    BarrierBatcher.FlushBarriers(CmdList);
+    FlushResourceBarriers();
+
+    ShaderConstantsCache.CommitCompute(CmdList, CurrentRootSignature.Get());
+    DescriptorCache.CommitComputeDescriptors(CmdList, CmdBatch, CurrentRootSignature.Get());
     
-    D3D12OnlineDescriptorHeap* OnlineResourceDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* OnlineSamplerDescriptorHeap  = CmdBatch->GetOnlineSamplerDescriptorHeap();
-    ShaderDescriptorState.CommitComputeDescriptorTables(*Device, *OnlineResourceDescriptorHeap, *OnlineSamplerDescriptorHeap, CmdList);
     CmdList.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
 
-void D3D12CommandContext::DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth)
+void D3D12CommandContext::DispatchRays(
+    RayTracingScene* Scene,
+    RayTracingPipelineState* PipelineState,
+    UInt32 Width,
+    UInt32 Height,
+    UInt32 Depth)
 {
-    // TODO: Finish this function
-    VALIDATE(false);
+    D3D12RayTracingScene*         DxScene         = static_cast<D3D12RayTracingScene*>(Scene);
+    D3D12RayTracingPipelineState* DxPipelineState = static_cast<D3D12RayTracingPipelineState*>(PipelineState);
+    Assert(DxScene != nullptr);
+    Assert(DxPipelineState != nullptr);
 
-    BarrierBatcher.FlushBarriers(CmdList);
+    ID3D12GraphicsCommandList4* DXRCommandList = CmdList.GetDXRCommandList();
+
+    FlushResourceBarriers();
 
     D3D12_DISPATCH_RAYS_DESC RayDispatchDesc;
     Memory::Memzero(&RayDispatchDesc);
+
+    RayDispatchDesc.RayGenerationShaderRecord = DxScene->GetRayGenShaderRecord();
+    RayDispatchDesc.MissShaderTable           = DxScene->GetMissShaderTable();
+    RayDispatchDesc.HitGroupTable             = DxScene->GetHitGroupTable();
 
     RayDispatchDesc.Width  = Width;
     RayDispatchDesc.Height = Height;
     RayDispatchDesc.Depth  = Depth;
 
-    CmdList.DispatchRays(&RayDispatchDesc);
+    DXRCommandList->SetPipelineState1(DxPipelineState->GetStateObject());
+    DXRCommandList->DispatchRays(&RayDispatchDesc);
 }
 
 void D3D12CommandContext::ClearState()
 {
-    VertexBufferState.Reset();
-    RenderTargetState.Reset();
-    ShaderDescriptorState.Reset();
+    Flush();
 
-    CurrentGraphicsPipelineState.Reset();
-    CurrentGraphicsRootSignature.Reset();
-    CurrentComputePipelineState.Reset();
-    CurrentComputeRootSignature.Reset();
+    for (D3D12CommandBatch& Batch : CmdBatches)
+    {
+        Batch.Reset();
+    }
+
+    InternalClearState();
 }
 
 void D3D12CommandContext::Flush()
@@ -1467,10 +1320,38 @@ void D3D12CommandContext::Flush()
 
 void D3D12CommandContext::InsertMarker(const std::string& Message)
 {
-#if D3D12_ENABLE_PIX_MARKERS
-    // TODO: Look into this since "%s" is not that nice, however safer since string can contain format, that will cuase a crash
-    PIXSetMarker(CmdList.GetGraphicsCommandList(), PIX_COLOR(255, 255, 255), "%s", Message.c_str());
-#else
-    UNREFERENCED_VARIABLE(Message);
-#endif
+    if (SetMarkerOnCommandListFunc)
+    {
+        SetMarkerOnCommandListFunc(CmdList.GetGraphicsCommandList(), PIX_COLOR(255, 255, 255), Message.c_str());
+    }
+}
+
+void D3D12CommandContext::BeginExternalCapture()
+{
+    IDXGraphicsAnalysis* PIX = GetDevice()->GetPIXCaptureInterface();
+    if (PIX && !IsCapturing)
+    {
+        PIX->BeginCapture();
+        IsCapturing = true;
+    }
+}
+
+void D3D12CommandContext::EndExternalCapture()
+{
+    IDXGraphicsAnalysis* PIX = GetDevice()->GetPIXCaptureInterface();
+    if (PIX && IsCapturing)
+    {
+        PIX->EndCapture();
+        IsCapturing = false;
+    }
+}
+
+void D3D12CommandContext::InternalClearState()
+{
+    DescriptorCache.Reset();
+    ShaderConstantsCache.Reset();
+
+    CurrentGraphicsPipelineState.Reset();
+    CurrentRootSignature.Reset();
+    CurrentComputePipelineState.Reset();
 }

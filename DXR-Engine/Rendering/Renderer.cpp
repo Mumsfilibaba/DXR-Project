@@ -1,7 +1,8 @@
 #include "Renderer.h"
-#include "TextureFactory.h"
 #include "DebugUI.h"
-#include "Mesh.h"
+
+#include "Resources/TextureFactory.h"
+#include "Resources/Mesh.h"
 
 #include "Scene/Frustum.h"
 #include "Scene/Lights/PointLight.h"
@@ -17,7 +18,7 @@
 #include <algorithm>
 #include <imgui_internal.h>
 
-static const UInt32  ShadowMapSampleCount = 2;
+static const UInt32 ShadowMapSampleCount = 2;
 
 ConsoleVariable GlobalDrawTextureDebugger(EConsoleVariableType::Bool);
 ConsoleVariable GlobalDrawRendererInfo(EConsoleVariableType::Bool);
@@ -44,6 +45,7 @@ struct CameraBufferDesc
     XMFLOAT4X4 ViewProjectionInv;
     XMFLOAT3   Position;
     Float      NearPlane;
+    XMFLOAT3   Forward;
     Float      FarPlane;
     Float      AspectRatio;
 };
@@ -86,13 +88,6 @@ void Renderer::PerformFXAA(CommandList& InCmdList)
 
     TRACE_SCOPE("FXAA");
     
-    RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
-    InCmdList.BindRenderTargets(&BackBufferRTV, 1, nullptr);
-
-    ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
-    InCmdList.BindShaderResourceViews(EShaderStage::Pixel, &FinalTargetSRV, 1, 0);
-    InCmdList.BindSamplerStates(EShaderStage::Pixel, &Resources.FXAASampler, 1, 0);
-
     struct FXAASettings
     {
         Float Width;
@@ -102,15 +97,23 @@ void Renderer::PerformFXAA(CommandList& InCmdList)
     Settings.Width  = static_cast<Float>(Resources.BackBuffer->GetWidth());
     Settings.Height = static_cast<Float>(Resources.BackBuffer->GetHeight());
 
-    InCmdList.Bind32BitShaderConstants(EShaderStage::Pixel, &Settings, 2);
+    RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
+    InCmdList.SetRenderTargets(&BackBufferRTV, 1, nullptr);
 
+    ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     if (GlobalFXAADebug.GetBool())
     {
-        InCmdList.BindGraphicsPipelineState(FXAADebugPSO.Get());
+        InCmdList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
+        InCmdList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
+        InCmdList.Set32BitShaderConstants(FXAADebugShader.Get(), &Settings, 2);
+        InCmdList.SetGraphicsPipelineState(FXAADebugPSO.Get());
     }
     else
     {
-        InCmdList.BindGraphicsPipelineState(FXAAPSO.Get());
+        InCmdList.SetShaderResourceView(FXAAShader.Get(), FinalTargetSRV, 0);
+        InCmdList.SetSamplerState(FXAAShader.Get(), Resources.FXAASampler.Get(), 0);
+        InCmdList.Set32BitShaderConstants(FXAAShader.Get(), &Settings, 2);
+        InCmdList.SetGraphicsPipelineState(FXAAPSO.Get());
     }
 
     InCmdList.DrawInstanced(3, 1, 0, 0);
@@ -125,13 +128,13 @@ void Renderer::PerformBackBufferBlit(CommandList& InCmdList)
     TRACE_SCOPE("Draw to BackBuffer");
 
     RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
-    InCmdList.BindRenderTargets(&BackBufferRTV, 1, nullptr);
+    InCmdList.SetRenderTargets(&BackBufferRTV, 1, nullptr);
 
     ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
-    InCmdList.BindShaderResourceViews(EShaderStage::Pixel, &FinalTargetSRV, 1, 0);
-    InCmdList.BindSamplerStates(EShaderStage::Pixel, &Resources.GBufferSampler, 1, 0);
+    InCmdList.SetShaderResourceView(PostShader.Get(), FinalTargetSRV, 0);
+    InCmdList.SetSamplerState(PostShader.Get(), Resources.GBufferSampler.Get(), 0);
 
-    InCmdList.BindGraphicsPipelineState(PostPSO.Get());
+    InCmdList.SetGraphicsPipelineState(PostPSO.Get());
     InCmdList.DrawInstanced(3, 1, 0, 0);
 
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End Draw BackBuffer");
@@ -143,14 +146,14 @@ void Renderer::PerformAABBDebugPass(CommandList& InCmdList)
 
     TRACE_SCOPE("DebugPass");
 
-    InCmdList.BindGraphicsPipelineState(AABBDebugPipelineState.Get());
+    InCmdList.SetGraphicsPipelineState(AABBDebugPipelineState.Get());
 
-    InCmdList.BindPrimitiveTopology(EPrimitiveTopology::LineList);
+    InCmdList.SetPrimitiveTopology(EPrimitiveTopology::LineList);
 
-    InCmdList.BindConstantBuffers(EShaderStage::Vertex, &Resources.CameraBuffer, 1, 0);
+    InCmdList.SetConstantBuffer(AABBVertexShader.Get(), Resources.CameraBuffer.Get(), 0);
 
-    InCmdList.BindVertexBuffers(&AABBVertexBuffer, 1, 0);
-    InCmdList.BindIndexBuffer(AABBIndexBuffer.Get());
+    InCmdList.SetVertexBuffers(&AABBVertexBuffer, 1, 0);
+    InCmdList.SetIndexBuffer(AABBIndexBuffer.Get());
 
     for (const MeshDrawCommand& Command : Resources.DeferredVisibleCommands)
     {
@@ -165,7 +168,7 @@ void Renderer::PerformAABBDebugPass(CommandList& InCmdList)
         XMMATRIX   XmTransform = XMMatrixTranspose(XMLoadFloat4x4(&Transform));
         XMStoreFloat4x4(&Transform, XMMatrixMultiplyTranspose(XMMatrixMultiply(XmScale, XmTranslation), XmTransform));
 
-        InCmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &Transform, 16);
+        InCmdList.Set32BitShaderConstants(AABBVertexShader.Get(), &Transform, 16);
 
         InCmdList.DrawIndexedInstanced(24, 1, 0, 0, 0);
     }
@@ -177,12 +180,6 @@ void Renderer::RenderDebugInterface()
 {
     if (GlobalDrawTextureDebugger.GetBool())
     {
-        Resources.DebugTextures.EmplaceBack(
-            MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView()),
-            Resources.GBuffer[GBUFFER_DEPTH_INDEX],
-            EResourceState::DepthWrite,
-            EResourceState::PixelShaderResource);
-
         constexpr Float InvAspectRatio = 16.0f / 9.0f;
         constexpr Float AspectRatio    = 9.0f / 16.0f;
 
@@ -234,6 +231,11 @@ void Renderer::RenderDebugInterface()
                     SelectedImage = i;
                 }
 
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip("%s", CurrImage->Image->GetName().c_str());
+                }
+
                 ImGui::PopID();
 
                 if (i != Count - 1)
@@ -257,10 +259,6 @@ void Renderer::RenderDebugInterface()
         ImGui::End();
 
         GlobalDrawTextureDebugger.SetBool(TempDrawTextureDebugger);
-    }
-    else
-    {
-        CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::PixelShaderResource);
     }
 
     if (GlobalDrawRendererInfo.GetBool())
@@ -290,7 +288,7 @@ void Renderer::RenderDebugInterface()
         ImGui::Columns(2, nullptr, false);
         ImGui::SetColumnWidth(0, 100.0f);
 
-        const std::string AdapterName = RenderLayer::GetAdapterName();
+        const std::string AdapterName = GetAdapterName();
         ImGui::Text("Adapter: ");
         ImGui::NextColumn();
 
@@ -350,6 +348,7 @@ void Renderer::Tick(const Scene& Scene)
 
     Resources.BackBuffer = Resources.MainWindowViewport->GetBackBuffer();
 
+    CmdList.BeginExternalCapture();
     CmdList.Begin();
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
 
@@ -360,10 +359,10 @@ void Renderer::Tick(const Scene& Scene)
 
         CmdList.TransitionTexture(ShadingImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
         
-        CmdList.BindComputePipelineState(ShadingRatePipeline.Get());
+        CmdList.SetComputePipelineState(ShadingRatePipeline.Get());
 
         UnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
-        CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &ShadingImageUAV, 1, 0);
+        CmdList.SetUnorderedAccessView(ShadingRateShader.Get(), ShadingImageUAV, 0);
         
         CmdList.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
         
@@ -383,6 +382,11 @@ void Renderer::Tick(const Scene& Scene)
     ShadowMapRenderer.RenderPointLightShadows(CmdList, LightSetup, Scene);
     ShadowMapRenderer.RenderDirectionalLightShadows(CmdList, LightSetup, Scene);
 
+    if (IsRayTracingSupported())
+    {
+        RayTracer.PreRender(CmdList, Resources, Scene);
+    }
+
     // Update camerabuffer
     CameraBufferDesc CamBuff;
     CamBuff.ViewProjection    = Scene.GetCamera()->GetViewProjectionMatrix();
@@ -392,6 +396,7 @@ void Renderer::Tick(const Scene& Scene)
     CamBuff.ProjectionInv     = Scene.GetCamera()->GetProjectionInverseMatrix();
     CamBuff.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
     CamBuff.Position          = Scene.GetCamera()->GetPosition();
+    CamBuff.Forward           = Scene.GetCamera()->GetForward();
     CamBuff.NearPlane         = Scene.GetCamera()->GetNearPlane();
     CamBuff.FarPlane          = Scene.GetCamera()->GetFarPlane();
     CamBuff.AspectRatio       = Scene.GetCamera()->GetAspectRatio();
@@ -405,8 +410,8 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
-    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
 
     ColorF BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(), BlackClearColor);
@@ -481,6 +486,9 @@ void Renderer::Tick(const Scene& Scene)
 
     DeferredRenderer.RenderDeferredTiledLightPass(CmdList, Resources, LightSetup);
 
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
+    CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::UnorderedAccess, EResourceState::RenderTarget);
+
     SkyboxRenderPass.Render(CmdList, Resources, Scene);
 
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
@@ -496,6 +504,12 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
     CmdList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
 
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(Resources.IntegrationLUT->GetShaderResourceView()),
+        Resources.IntegrationLUT,
+        EResourceState::PixelShaderResource,
+        EResourceState::PixelShaderResource);
+
     ForwardRenderer.Render(CmdList, Resources, LightSetup);
     
     CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::RenderTarget, EResourceState::PixelShaderResource);
@@ -504,6 +518,14 @@ void Renderer::Tick(const Scene& Scene)
         MakeSharedRef<ShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()),
         Resources.FinalTarget, 
         EResourceState::PixelShaderResource, 
+        EResourceState::PixelShaderResource);
+
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::PixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView()),
+        Resources.GBuffer[GBUFFER_DEPTH_INDEX],
+        EResourceState::PixelShaderResource,
         EResourceState::PixelShaderResource);
 
     if (GlobalEnableFXAA.GetBool())
@@ -543,6 +565,7 @@ void Renderer::Tick(const Scene& Scene)
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--END FRAME--");
 
     CmdList.End();
+    CmdList.EndExternalCapture();
 
     LastFrameNumDrawCalls     = CmdList.GetNumDrawCalls();
     LastFrameNumDispatchCalls = CmdList.GetNumDispatchCalls();
@@ -594,7 +617,7 @@ Bool Renderer::Init()
     INIT_CONSOLE_VARIABLE("r.FXAADebug", GlobalFXAADebug);
     GlobalFXAADebug.SetBool(false);
 
-    Resources.MainWindowViewport = RenderLayer::CreateViewport(gMainWindow, 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
+    Resources.MainWindowViewport = CreateViewport(gMainWindow, 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
     if (!Resources.MainWindowViewport)
     {
         Debug::DebugBreak();
@@ -605,7 +628,7 @@ Bool Renderer::Init()
         Resources.MainWindowViewport->SetName("Main Window Viewport");
     }
 
-    Resources.CameraBuffer = RenderLayer::CreateConstantBuffer<CameraBufferDesc>(BufferFlag_Default, EResourceState::Common, nullptr);
+    Resources.CameraBuffer = CreateConstantBuffer<CameraBufferDesc>(BufferFlag_Default, EResourceState::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create camerabuffer");
@@ -625,7 +648,7 @@ Bool Renderer::Init()
         { "TEXCOORD", 0, EFormat::R32G32_Float,    0, 36, EInputClassification::Vertex, 0 },
     };
 
-    Resources.StdInputLayout = RenderLayer::CreateInputLayout(InputLayout);
+    Resources.StdInputLayout = CreateInputLayout(InputLayout);
     if (!Resources.StdInputLayout)
     {
         Debug::DebugBreak();
@@ -645,7 +668,7 @@ Bool Renderer::Init()
         CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
         CreateInfo.BorderColor    = ColorF(1.0f, 1.0f, 1.0f, 1.0f);
 
-        Resources.DirectionalShadowSampler = RenderLayer::CreateSamplerState(CreateInfo);
+        Resources.DirectionalShadowSampler = CreateSamplerState(CreateInfo);
         if (!Resources.DirectionalShadowSampler)
         {
             Debug::DebugBreak();
@@ -665,7 +688,7 @@ Bool Renderer::Init()
         CreateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
         CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
 
-        Resources.PointShadowSampler = RenderLayer::CreateSamplerState(CreateInfo);
+        Resources.PointShadowSampler = CreateSamplerState(CreateInfo);
         if (!Resources.PointShadowSampler)
         {
             Debug::DebugBreak();
@@ -727,6 +750,14 @@ Bool Renderer::Init()
         return false;
     }
 
+    if (IsRayTracingSupported())
+    {
+        if (!RayTracer.Init(Resources))
+        {
+            return false;
+        }
+    }
+
     CmdList.Begin();
 
     LightProbeRenderer.RenderSkyLightProbe(CmdList, LightSetup, Resources);
@@ -765,23 +796,27 @@ void Renderer::Release()
     LightProbeRenderer.Release();
     SkyboxRenderPass.Release();
     ForwardRenderer.Release();
+    RayTracer.Release();
 
     Resources.Release();
     LightSetup.Release();
 
-    RaytracingPSO.Reset();
-    RayTracingScene.Reset();
-    RayTracingGeometryInstances.Clear();
-
     AABBVertexBuffer.Reset();
     AABBIndexBuffer.Reset();
     AABBDebugPipelineState.Reset();
+    AABBVertexShader.Reset();
+    AABBPixelShader.Reset();
 
     PostPSO.Reset();
+    PostShader.Reset();
     FXAAPSO.Reset();
+    FXAAShader.Reset();
+    FXAADebugPSO.Reset();
+    FXAADebugShader.Reset();
 
     ShadingImage.Reset();
     ShadingRatePipeline.Reset();
+    ShadingRateShader.Reset();
 
     LastFrameNumDrawCalls     = 0;
     LastFrameNumDispatchCalls = 0;
@@ -797,15 +832,15 @@ Bool Renderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
-    if (!VShader)
+    AABBVertexShader = CreateVertexShader(ShaderCode);
+    if (!AABBVertexShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        VShader->SetName("Debug VertexShader");
+        AABBVertexShader->SetName("Debug VertexShader");
     }
 
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Debug.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
@@ -814,15 +849,15 @@ Bool Renderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
-    if (!PShader)
+    AABBPixelShader = CreatePixelShader(ShaderCode);
+    if (!AABBPixelShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        PShader->SetName("Debug PixelShader");
+        AABBPixelShader->SetName("Debug PixelShader");
     }
 
     InputLayoutStateCreateInfo InputLayout =
@@ -830,7 +865,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
         { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0, EInputClassification::Vertex, 0 },
     };
 
-    TSharedRef<InputLayoutState> InputLayoutState = RenderLayer::CreateInputLayout(InputLayout);
+    TRef<InputLayoutState> InputLayoutState = CreateInputLayout(InputLayout);
     if (!InputLayoutState)
     {
         Debug::DebugBreak();
@@ -846,7 +881,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
     DepthStencilStateInfo.DepthEnable    = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         Debug::DebugBreak();
@@ -860,7 +895,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    TRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         Debug::DebugBreak();
@@ -873,7 +908,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
 
     BlendStateCreateInfo BlendStateInfo;
 
-    TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+    TRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         Debug::DebugBreak();
@@ -889,14 +924,14 @@ Bool Renderer::InitBoundingBoxDebugPass()
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
     PSOProperties.InputLayoutState                       = InputLayoutState.Get();
     PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PShader.Get();
+    PSOProperties.ShaderState.VertexShader               = AABBVertexShader.Get();
+    PSOProperties.ShaderState.PixelShader                = AABBPixelShader.Get();
     PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Line;
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = Resources.RenderTargetFormat;
     PSOProperties.PipelineFormats.NumRenderTargets       = 1;
     PSOProperties.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
 
-    AABBDebugPipelineState = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    AABBDebugPipelineState = CreateGraphicsPipelineState(PSOProperties);
     if (!AABBDebugPipelineState)
     {
         Debug::DebugBreak();
@@ -922,7 +957,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
 
     ResourceData VertexData(Vertices.Data(), Vertices.SizeInBytes());
 
-    AABBVertexBuffer = RenderLayer::CreateVertexBuffer<XMFLOAT3>(Vertices.Size(), BufferFlag_Default, EResourceState::Common, &VertexData);
+    AABBVertexBuffer = CreateVertexBuffer<XMFLOAT3>(Vertices.Size(), BufferFlag_Default, EResourceState::Common, &VertexData);
     if (!AABBVertexBuffer)
     {
         Debug::DebugBreak();
@@ -952,7 +987,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
 
     ResourceData IndexData(Indices.Data(), Indices.SizeInBytes());
 
-    AABBIndexBuffer = RenderLayer::CreateIndexBuffer(EIndexFormat::UInt16, Indices.Size(), BufferFlag_Default, EResourceState::Common, &IndexData);
+    AABBIndexBuffer = CreateIndexBuffer(EIndexFormat::UInt16, Indices.Size(), BufferFlag_Default, EResourceState::Common, &IndexData);
     if (!AABBIndexBuffer)
     {
         Debug::DebugBreak();
@@ -975,7 +1010,7 @@ Bool Renderer::InitAA()
         return false;
     }
 
-    TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
+    TRef<VertexShader> VShader = CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         Debug::DebugBreak();
@@ -992,15 +1027,15 @@ Bool Renderer::InitAA()
         return false;
     }
 
-    TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
-    if (!PShader)
+    PostShader = CreatePixelShader(ShaderCode);
+    if (!PostShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        PShader->SetName("PostProcess PixelShader");
+        PostShader->SetName("PostProcess PixelShader");
     }
 
     DepthStencilStateCreateInfo DepthStencilStateInfo;
@@ -1008,7 +1043,7 @@ Bool Renderer::InitAA()
     DepthStencilStateInfo.DepthEnable    = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         Debug::DebugBreak();
@@ -1022,7 +1057,7 @@ Bool Renderer::InitAA()
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+    TRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         Debug::DebugBreak();
@@ -1037,7 +1072,7 @@ Bool Renderer::InitAA()
     BlendStateInfo.IndependentBlendEnable      = false;
     BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-    TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+    TRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         Debug::DebugBreak();
@@ -1054,13 +1089,13 @@ Bool Renderer::InitAA()
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
     PSOProperties.RasterizerState                        = RasterizerState.Get();
     PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PShader.Get();
+    PSOProperties.ShaderState.PixelShader                = PostShader.Get();
     PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
     PSOProperties.PipelineFormats.NumRenderTargets       = 1;
     PSOProperties.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
 
-    PostPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    PostPSO = CreateGraphicsPipelineState(PSOProperties);
     if (!PostPSO)
     {
         Debug::DebugBreak();
@@ -1078,7 +1113,7 @@ Bool Renderer::InitAA()
     CreateInfo.AddressW = ESamplerMode::Clamp;
     CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    Resources.FXAASampler = RenderLayer::CreateSamplerState(CreateInfo);
+    Resources.FXAASampler = CreateSamplerState(CreateInfo);
     if (!Resources.FXAASampler)
     {
         return false;
@@ -1090,20 +1125,20 @@ Bool Renderer::InitAA()
         return false;
     }
 
-    PShader = RenderLayer::CreatePixelShader(ShaderCode);
-    if (!PShader)
+    FXAAShader = CreatePixelShader(ShaderCode);
+    if (!FXAAShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        PShader->SetName("FXAA PixelShader");
+        FXAAShader->SetName("FXAA PixelShader");
     }
 
-    PSOProperties.ShaderState.PixelShader = PShader.Get();
+    PSOProperties.ShaderState.PixelShader = FXAAShader.Get();
 
-    FXAAPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    FXAAPSO = CreateGraphicsPipelineState(PSOProperties);
     if (!FXAAPSO)
     {
         Debug::DebugBreak();
@@ -1125,20 +1160,20 @@ Bool Renderer::InitAA()
         return false;
     }
 
-    PShader = RenderLayer::CreatePixelShader(ShaderCode);
-    if (!PShader)
+    FXAADebugShader = CreatePixelShader(ShaderCode);
+    if (!FXAADebugShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        PShader->SetName("FXAA PixelShader");
+        FXAADebugShader->SetName("FXAA PixelShader");
     }
 
-    PSOProperties.ShaderState.PixelShader = PShader.Get();
+    PSOProperties.ShaderState.PixelShader = FXAADebugShader.Get();
 
-    FXAADebugPSO = RenderLayer::CreateGraphicsPipelineState(PSOProperties);
+    FXAADebugPSO = CreateGraphicsPipelineState(PSOProperties);
     if (!FXAADebugPSO)
     {
         Debug::DebugBreak();
@@ -1155,16 +1190,16 @@ Bool Renderer::InitAA()
 Bool Renderer::InitShadingImage()
 {
     ShadingRateSupport Support;
-    RenderLayer::CheckShadingRateSupport(Support);
+    CheckShadingRateSupport(Support);
 
-    if (Support.Tier != EShadingRateTier::Tier2)
+    if (Support.Tier != EShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)
     {
         return true;
     }
 
     UInt32 Width  = Resources.MainWindowViewport->GetWidth()  / Support.ShadingRateImageTileSize;
     UInt32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
-    ShadingImage = RenderLayer::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::ShadingRateSource, nullptr);
+    ShadingImage = CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::ShadingRateSource, nullptr);
     if (!ShadingImage)
     {
         Debug::DebugBreak();
@@ -1182,19 +1217,19 @@ Bool Renderer::InitShadingImage()
         return false;
     }
 
-    TSharedRef<ComputeShader> Shader = RenderLayer::CreateComputeShader(ShaderCode);
-    if (!Shader)
+    ShadingRateShader = CreateComputeShader(ShaderCode);
+    if (!ShadingRateShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        Shader->SetName("ShadingRate Image Shader");
+        ShadingRateShader->SetName("ShadingRate Image Shader");
     }
 
-    ComputePipelineStateCreateInfo CreateInfo(Shader.Get());
-    ShadingRatePipeline = RenderLayer::CreateComputePipelineState(CreateInfo);
+    ComputePipelineStateCreateInfo CreateInfo(ShadingRateShader.Get());
+    ShadingRatePipeline = CreateComputePipelineState(CreateInfo);
     if (!ShadingRatePipeline)
     {
         Debug::DebugBreak();
@@ -1210,8 +1245,6 @@ Bool Renderer::InitShadingImage()
 
 void Renderer::ResizeResources(UInt32 Width, UInt32 Height)
 {
-    gCmdListExecutor.WaitForGPU();
-
     if (!Resources.MainWindowViewport->Resize(Width, Height))
     {
         Debug::DebugBreak();

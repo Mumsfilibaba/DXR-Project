@@ -1,4 +1,4 @@
-#include "Rendering/MeshFactory.h"
+#include "Rendering/Resources/MeshFactory.h"
 
 //#include <assimp/Importer.hpp>
 //#include <assimp/scene.h>
@@ -213,9 +213,7 @@ MeshData MeshFactory::CreatePlane(UInt32 Width, UInt32 Height) noexcept
         {
             Int32 v = ((1 + Height) * x) + y;
             data.Vertices[v].Position = XMFLOAT3(0.5f - (quadSize.x * x), 0.5f - (quadSize.y * y), 0.0f);
-
-            // TODO: Fix so normal is positive
-            data.Vertices[v].Normal   = XMFLOAT3(0.0f, 0.0f, -1.0f);
+            data.Vertices[v].Normal   = XMFLOAT3(0.0f, 0.0f, 1.0f);
             data.Vertices[v].Tangent  = XMFLOAT3(1.0f, 0.0f, 0.0f);
             data.Vertices[v].TexCoord = XMFLOAT2(0.0f + (uvQuadSize.x * x), 0.0f + (uvQuadSize.y * y));
         }

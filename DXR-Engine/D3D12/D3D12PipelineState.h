@@ -5,6 +5,7 @@
 
 #include "D3D12Shader.h"
 #include "D3D12Helpers.h"
+#include "D3D12RootSignature.h"
 
 class D3D12InputLayoutState : public InputLayoutState, public D3D12DeviceChild
 {
@@ -34,10 +35,7 @@ public:
         Desc.pInputElementDescs = GetElementData();
     }
 
-    virtual Bool IsValid() const override
-    {
-        return true;
-    }
+    virtual Bool IsValid() const override { return true; }
 
     const D3D12_INPUT_ELEMENT_DESC* GetElementData() const { return ElementDesc.Data(); }
 
@@ -61,15 +59,9 @@ public:
     {
     }
 
-    virtual Bool IsValid() const override
-    {
-        return true;
-    }
+    virtual Bool IsValid() const override { return true; }
 
-    const D3D12_DEPTH_STENCIL_DESC& GetDesc() const
-    {
-        return Desc;
-    }
+    const D3D12_DEPTH_STENCIL_DESC& GetDesc() const { return Desc; }
 
 private:
     D3D12_DEPTH_STENCIL_DESC Desc;
@@ -85,15 +77,9 @@ public:
     {
     }
 
-    virtual Bool IsValid() const override
-    {
-        return true;
-    }
+    virtual Bool IsValid() const override { return true; }
 
-    const D3D12_RASTERIZER_DESC& GetDesc() const
-    {
-        return Desc;
-    }
+    const D3D12_RASTERIZER_DESC& GetDesc() const { return Desc; }
 
 private:
     D3D12_RASTERIZER_DESC Desc;
@@ -109,15 +95,9 @@ public:
     {
     }
 
-    virtual Bool IsValid() const override
-    {
-        return true;
-    }
+    virtual Bool IsValid() const override { return true; }
 
-    const D3D12_BLEND_DESC& GetDesc() const
-    {
-        return Desc;
-    }
+    const D3D12_BLEND_DESC& GetDesc() const { return Desc; }
 
 private:
     D3D12_BLEND_DESC Desc;
@@ -125,14 +105,11 @@ private:
 
 class D3D12GraphicsPipelineState : public GraphicsPipelineState, public D3D12DeviceChild
 {
-    friend class D3D12RenderLayer;
-
 public:
-    D3D12GraphicsPipelineState(D3D12Device* InDevice)
-        : D3D12DeviceChild(InDevice)
-        , PipelineState(nullptr)
-    {
-    }
+    D3D12GraphicsPipelineState(D3D12Device* InDevice);
+    ~D3D12GraphicsPipelineState() = default;
+
+    Bool Init(const GraphicsPipelineStateCreateInfo& CreateInfo);
 
     virtual void SetName(const std::string& InName) override final
     {
@@ -142,30 +119,22 @@ public:
         PipelineState->SetName(WideName.c_str());
     }
 
-    virtual void* GetNativeResource() const override final
-    {
-        return reinterpret_cast<void*>(PipelineState.Get());
-    }
+    virtual void* GetNativeResource() const override final { return reinterpret_cast<void*>(PipelineState.Get()); }
 
-    virtual Bool IsValid() const override
-    {
-        return PipelineState != nullptr && RootSignature != nullptr;
-    }
+    virtual Bool IsValid() const override { return PipelineState != nullptr && RootSignature != nullptr; }
 
-    ID3D12PipelineState* GetPipeline() const { return PipelineState.Get(); }
-    D3D12RootSignature* GetRootSignature() const { return RootSignature; }
+    ID3D12PipelineState* GetPipeline()      const { return PipelineState.Get(); }
+    D3D12RootSignature*  GetRootSignature() const { return RootSignature.Get(); }
 
 private:
     TComPtr<ID3D12PipelineState> PipelineState;
-    D3D12RootSignature* RootSignature;
+    TRef<D3D12RootSignature>     RootSignature;
 };
 
 class D3D12ComputePipelineState : public ComputePipelineState, public D3D12DeviceChild
 {
-    friend class D3D12RenderLayer;
-
 public:
-    D3D12ComputePipelineState(D3D12Device* InDevice, const TSharedRef<D3D12ComputeShader>& InShader, const TSharedRef<D3D12RootSignature>& InRootSignature);
+    D3D12ComputePipelineState(D3D12Device* InDevice, const TRef<D3D12ComputeShader>& InShader);
     ~D3D12ComputePipelineState() = default;
 
     Bool Init();
@@ -178,21 +147,62 @@ public:
         PipelineState->SetName(WideName.c_str());
     }
 
-    virtual void* GetNativeResource() const override final
-    {
-        return reinterpret_cast<void*>(PipelineState.Get());
-    }
+    virtual void* GetNativeResource() const override final { return reinterpret_cast<void*>(PipelineState.Get()); }
 
-    virtual Bool IsValid() const override
-    {
-        return PipelineState != nullptr && RootSignature != nullptr;
-    }
+    virtual Bool IsValid() const override { return PipelineState != nullptr && RootSignature != nullptr; }
 
-    ID3D12PipelineState* GetPipeline() const { return PipelineState.Get(); }
-    D3D12RootSignature* GetRootSignature() const { return RootSignature.Get(); }
+    ID3D12PipelineState* GetPipeline()      const { return PipelineState.Get(); }
+    D3D12RootSignature*  GetRootSignature() const { return RootSignature.Get(); }
 
 private:
-    TComPtr<ID3D12PipelineState>   PipelineState;
-    TSharedRef<D3D12ComputeShader> Shader;
-    TSharedRef<D3D12RootSignature> RootSignature;
+    TComPtr<ID3D12PipelineState> PipelineState;
+    TRef<D3D12ComputeShader>     Shader;
+    TRef<D3D12RootSignature>     RootSignature;
+};
+
+struct RayTracingShaderIdentifer
+{
+    Char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
+};
+
+class D3D12RayTracingPipelineState : public RayTracingPipelineState, public D3D12DeviceChild
+{
+public:
+    D3D12RayTracingPipelineState(D3D12Device* InDevice);
+    ~D3D12RayTracingPipelineState() = default;
+
+    Bool Init(const RayTracingPipelineStateCreateInfo& CreateInfo);
+
+    virtual void SetName(const std::string& InName) override
+    {
+        Resource::SetName(InName);
+
+        std::wstring WideName = ConvertToWide(InName);
+        StateObject->SetName(WideName.c_str());
+    }
+
+    virtual void* GetNativeResource() const override final { return reinterpret_cast<void*>(StateObject.Get()); }
+
+    virtual Bool IsValid() const { return StateObject != nullptr; }
+
+    void* GetShaderIdentifer(const std::string& ExportName);
+
+    ID3D12StateObject*           GetStateObject()           const { return StateObject.Get(); }
+    ID3D12StateObjectProperties* GetStateObjectProperties() const { return StateObjectProperties.Get(); }
+    
+    D3D12RootSignature* GetGlobalRootSignature()      const { return GlobalRootSignature.Get(); }
+    D3D12RootSignature* GetRayGenLocalRootSignature() const { return RayGenLocalRootSignature.Get(); }
+    D3D12RootSignature* GetMissLocalRootSignature()   const { return MissLocalRootSignature.Get(); }
+    D3D12RootSignature* GetHitLocalRootSignature()    const { return HitLocalRootSignature.Get(); }
+
+private:
+    TComPtr<ID3D12StateObject>           StateObject;
+    TComPtr<ID3D12StateObjectProperties> StateObjectProperties;
+    // TODO: There could be more than one rootdignature for locals
+    TRef<D3D12RootSignature> GlobalRootSignature;
+    TRef<D3D12RootSignature> RayGenLocalRootSignature;
+    TRef<D3D12RootSignature> MissLocalRootSignature;
+    TRef<D3D12RootSignature> HitLocalRootSignature;
+
+    std::unordered_map<std::string, RayTracingShaderIdentifer> ShaderIdentifers;
 };

@@ -8,5 +8,5 @@ Game::Game()
 
 Game::~Game()
 {
-    SAFEDELETE(CurrentScene);
+    SafeDelete(CurrentScene);
 }

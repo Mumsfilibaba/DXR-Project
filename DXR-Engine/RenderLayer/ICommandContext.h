@@ -2,13 +2,12 @@
 #include "RenderingCore.h"
 #include "Resources.h"
 #include "ResourceViews.h"
-#include "RayTracing.h"
+
+#include <Containers/ArrayView.h>
 
 class ICommandContext : public RefCountedObject
 {
 public:
-    virtual ~ICommandContext() = default;
-
     virtual void Begin() = 0;
     virtual void End()   = 0;
 
@@ -22,40 +21,34 @@ public:
     virtual void BeginRenderPass() = 0;
     virtual void EndRenderPass()   = 0;
 
-    virtual void BindViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y) = 0;
-    virtual void BindScissorRect(Float Width, Float Height, Float x, Float y) = 0;
+    virtual void SetViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y) = 0;
+    virtual void SetScissorRect(Float Width, Float Height, Float x, Float y) = 0;
 
-    virtual void BindBlendFactor(const ColorF& Color) = 0;
+    virtual void SetBlendFactor(const ColorF& Color) = 0;
 
-    virtual void BindRenderTargets(RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView) = 0;
+    virtual void SetRenderTargets(RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView) = 0;
 
-    virtual void BindVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) = 0;
-    virtual void BindIndexBuffer(IndexBuffer* IndexBuffer) = 0;
+    virtual void SetVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) = 0;
+    virtual void SetIndexBuffer(IndexBuffer* IndexBuffer) = 0;
 
-    virtual void BindPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) = 0;
-    virtual void BindRayTracingScene(RayTracingScene* RayTracingScene) = 0;
+    virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) = 0;
 
-    virtual void BindGraphicsPipelineState(class GraphicsPipelineState* PipelineState)     = 0;
-    virtual void BindComputePipelineState(class ComputePipelineState* PipelineState)       = 0;
-    virtual void BindRayTracingPipelineState(class RayTracingPipelineState* PipelineState) = 0;
+    virtual void SetGraphicsPipelineState(class GraphicsPipelineState* PipelineState) = 0;
+    virtual void SetComputePipelineState(class ComputePipelineState* PipelineState)   = 0;
 
-    virtual void Bind32BitShaderConstants(EShaderStage ShaderStage, const Void* Shader32BitConstants, UInt32 Num32BitConstants) = 0;
+    virtual void Set32BitShaderConstants(Shader* Shader, const Void* Shader32BitConstants, UInt32 Num32BitConstants) = 0;
     
-    virtual void BindShaderResourceViews(
-        EShaderStage ShaderStage, 
-        ShaderResourceView* const* ShaderResourceViews, 
-        UInt32 ShaderResourceViewCount, 
-        UInt32 StartSlot) = 0;
-    
-    virtual void BindSamplerStates(EShaderStage ShaderStage, SamplerState* const* SamplerStates, UInt32 SamplerStateCount, UInt32 StartSlot) = 0;
-    
-    virtual void BindUnorderedAccessViews(
-        EShaderStage ShaderStage, 
-        UnorderedAccessView* const* UnorderedAccessViews,
-        UInt32 UnorderedAccessViewCount, 
-        UInt32 StartSlot) = 0;
-    
-    virtual void BindConstantBuffers(EShaderStage ShaderStage, ConstantBuffer* const * ConstantBuffers, UInt32 ConstantBufferCount, UInt32 StartSlot) = 0;
+    virtual void SetShaderResourceView(Shader* Shader, ShaderResourceView* ShaderResourceView, UInt32 ParameterIndex) = 0;
+    virtual void SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceView, UInt32 NumShaderResourceViews, UInt32 ParameterIndex) = 0;
+
+    virtual void SetUnorderedAccessView(Shader* Shader, UnorderedAccessView* UnorderedAccessView, UInt32 ParameterIndex) = 0;
+    virtual void SetUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, UInt32 NumUnorderedAccessViews, UInt32 ParameterIndex) = 0;
+
+    virtual void SetConstantBuffer(Shader* Shader, ConstantBuffer* ConstantBuffer, UInt32 ParameterIndex) = 0;
+    virtual void SetConstantBuffers(Shader* Shader, ConstantBuffer* const* ConstantBuffers, UInt32 NumConstantBuffers, UInt32 ParameterIndex) = 0;
+
+    virtual void SetSamplerState(Shader* Shader, SamplerState* SamplerState, UInt32 ParameterIndex) = 0;
+    virtual void SetSamplerStates(Shader* Shader, SamplerState* const* SamplerStates, UInt32 NumSamplerStates, UInt32 ParameterIndex) = 0;
 
     virtual void UpdateBuffer(Buffer* Destination, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData) = 0;
     virtual void UpdateTexture2D(Texture2D* Destination, UInt32 Width, UInt32 Height, UInt32 MipLevel, const Void* SourceData) = 0;
@@ -66,10 +59,18 @@ public:
     virtual void CopyTexture(Texture* Destination, Texture* Source) = 0;
     virtual void CopyTextureRegion(Texture* Destination, Texture* Source, const CopyTextureInfo& CopyTextureInfo) = 0;
 
-    virtual void DestroyResource(class Resource* Resource) = 0;
+    virtual void DiscardResource(class Resource* Resource) = 0;
 
-    virtual void BuildRayTracingGeometry(RayTracingGeometry* RayTracingGeometry) = 0;
-    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene)          = 0;
+    virtual void BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update) = 0;
+    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene, const RayTracingGeometryInstance* Instances, UInt32 NumInstances, Bool Update) = 0;
+
+    virtual void SetRayTracingBindings(
+        RayTracingScene* RayTracingScene,
+        RayTracingPipelineState* PipelineState,
+        const RayTracingShaderResources* GlobalResource,
+        const RayTracingShaderResources* RayGenLocalResources,
+        const RayTracingShaderResources* MissLocalResources,
+        const RayTracingShaderResources* HitGroupResources, UInt32 NumHitGroupResources) = 0;
 
     virtual void GenerateMips(Texture* Texture) = 0;
 
@@ -77,6 +78,7 @@ public:
     virtual void TransitionBuffer(Buffer* Buffer, EResourceState BeforeState, EResourceState AfterState) = 0;
 
     virtual void UnorderedAccessTextureBarrier(Texture* Texture) = 0;
+    virtual void UnorderedAccessBufferBarrier(Buffer* Buffer) = 0;
 
     virtual void Draw(UInt32 VertexCount, UInt32 StartVertexLocation) = 0;
     virtual void DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation) = 0;
@@ -90,10 +92,19 @@ public:
         UInt32 StartInstanceLocation) = 0;
 
     virtual void Dispatch(UInt32 WorkGroupsX, UInt32 WorkGroupsY, UInt32 WorkGroupsZ) = 0;
-    virtual void DispatchRays(UInt32 Width, UInt32 Height, UInt32 Depth) = 0;
+    
+    virtual void DispatchRays(
+        RayTracingScene* InScene,
+        RayTracingPipelineState* InPipelineState,
+        UInt32 InWidth,
+        UInt32 InHeight,
+        UInt32 InDepth) = 0;
 
     virtual void ClearState() = 0;
     virtual void Flush()      = 0;
 
     virtual void InsertMarker(const std::string& Message) = 0;
+
+    virtual void BeginExternalCapture() = 0;
+    virtual void EndExternalCapture()   = 0;
 };

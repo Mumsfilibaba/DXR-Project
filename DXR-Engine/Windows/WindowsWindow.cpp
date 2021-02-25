@@ -91,7 +91,7 @@ Bool WindowsWindow::Init(const WindowCreateInfo& InCreateInfo)
 
 void WindowsWindow::Show(Bool Maximized)
 {
-    VALIDATE(hWindow != 0);
+    Assert(hWindow != 0);
 
     if (IsValid())
     {
@@ -108,7 +108,7 @@ void WindowsWindow::Show(Bool Maximized)
 
 void WindowsWindow::Close()
 {
-    VALIDATE(hWindow != 0);
+    Assert(hWindow != 0);
 
     if (IsValid())
     {
@@ -121,7 +121,7 @@ void WindowsWindow::Close()
 
 void WindowsWindow::Minimize()
 {
-    VALIDATE(hWindow != 0);
+    Assert(hWindow != 0);
     
     if (CreateInfo.IsMinimizable())
     {
@@ -145,7 +145,7 @@ void WindowsWindow::Maximize()
 
 void WindowsWindow::Restore()
 {
-    VALIDATE(hWindow != 0);
+    Assert(hWindow != 0);
 
     if (IsValid())
     {
@@ -159,7 +159,7 @@ void WindowsWindow::Restore()
 
 void WindowsWindow::ToggleFullscreen()
 {
-    VALIDATE(hWindow != 0);
+    Assert(hWindow != 0);
 
     if (IsValid())
     {
@@ -214,7 +214,7 @@ Bool WindowsWindow::IsActiveWindow() const
 
 void WindowsWindow::SetTitle(const std::string& Title)
 {
-    VALIDATE(hWindow != 0);
+    Assert(hWindow != 0);
 
     if (CreateInfo.IsTitled())
     {
@@ -227,7 +227,7 @@ void WindowsWindow::SetTitle(const std::string& Title)
 
 void WindowsWindow::SetWindowShape(const WindowShape& Shape, Bool Move)
 {
-    VALIDATE(hWindow != 0);
+    Assert(hWindow != 0);
 
     if (IsValid())
     {
@@ -243,7 +243,7 @@ void WindowsWindow::SetWindowShape(const WindowShape& Shape, Bool Move)
 
 void WindowsWindow::GetWindowShape(WindowShape& OutWindowShape) const
 {
-    VALIDATE(hWindow != 0);
+    Assert(hWindow != 0);
 
     if (IsValid())
     {

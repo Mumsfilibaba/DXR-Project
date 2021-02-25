@@ -20,33 +20,33 @@
 //    int NumSkyLightMips;
 //};
 
-ConstantBuffer<Camera> CameraBuffer : register(b1, space0);
+ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
 
-cbuffer PointLightsBuffer : register(b2, space0)
+cbuffer PointLightsBuffer : register(b1, space0)
 {
     PointLight PointLights[32];
 }
 
-cbuffer PointLightsPosRadBuffer : register(b3, space0)
+cbuffer PointLightsPosRadBuffer : register(b2, space0)
 {
     PositionRadius PointLightsPosRad[32];
 }
 
-cbuffer ShadowCastingPointLightsBuffer : register(b4, space0)
+cbuffer ShadowCastingPointLightsBuffer : register(b3, space0)
 {
     ShadowPointLight ShadowCastingPointLights[8];
 }
 
-cbuffer ShadowCastingPointLightsPosRadBuffer : register(b5, space0)
+cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4, space0)
 {
     PositionRadius ShadowCastingPointLightsPosRad[8];
 }
 
-ConstantBuffer<DirectionalLight> DirLightBuffer : register(b6, space0);
+ConstantBuffer<DirectionalLight> DirLightBuffer : register(b5, space0);
 
 // Per Object Buffers
-ConstantBuffer<Transform> TransformBuffer : register(b0, space0);
-ConstantBuffer<Material>  MaterialBuffer  : register(b7, space0);
+ConstantBuffer<Transform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
+ConstantBuffer<Material>  MaterialBuffer  : register(b6, space0);
 
 // Per Frame Samplers
 SamplerState MaterialSampler   : register(s0, space0);
@@ -68,9 +68,9 @@ Texture2D<float4> AlbedoTex : register(t5, space0);
 #ifdef NORMAL_MAPPING_ENABLED
 Texture2D<float4> NormalTex : register(t6, space0);
 #endif
-Texture2D<float4> RoughnessTex : register(t7, space0);
+Texture2D<float> RoughnessTex : register(t7, space0);
 #ifdef PARALLAX_MAPPING_ENABLED
-Texture2D<float4> HeightMap : register(t8, space0);
+Texture2D<float> HeightMap : register(t8, space0);
 #endif
 Texture2D<float> MetallicTex : register(t9, space0);
 Texture2D<float> AOTex       : register(t10, space0);

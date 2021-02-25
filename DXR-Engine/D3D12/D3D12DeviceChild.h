@@ -9,7 +9,7 @@ public:
     D3D12DeviceChild(D3D12Device* InDevice)
         : Device(InDevice)
     {
-         VALIDATE(Device != nullptr);
+         Assert(Device != nullptr);
     }
 
     virtual ~D3D12DeviceChild()
@@ -19,6 +19,6 @@ public:
 
     D3D12Device* GetDevice() const { return Device; }
 
-protected:
-    D3D12Device* Device = nullptr;
+private:
+    D3D12Device* Device;
 };

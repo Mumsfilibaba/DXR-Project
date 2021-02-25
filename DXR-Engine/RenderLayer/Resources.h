@@ -5,3 +5,4 @@
 #include "Buffer.h"
 #include "PipelineState.h"
 #include "SamplerState.h"
+#include "RayTracing.h"

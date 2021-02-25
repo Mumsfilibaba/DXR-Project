@@ -1,6 +1,6 @@
 #include "Material.h"
-#include "Renderer.h"
 
+#include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/CommandList.h"
 
 #define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetShaderResourceView() : nullptr
@@ -19,7 +19,11 @@ Material::Material(const MaterialProperties& InProperties)
 
 void Material::Init()
 {
-    MaterialBuffer = RenderLayer::CreateConstantBuffer<MaterialProperties>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+    MaterialBuffer = CreateConstantBuffer<MaterialProperties>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+    if (MaterialBuffer)
+    {
+        MaterialBuffer->SetName("MaterialBuffer");
+    }
 
     SamplerStateCreateInfo CreateInfo;
     CreateInfo.AddressU       = ESamplerMode::Wrap;
@@ -32,15 +36,13 @@ void Material::Init()
     CreateInfo.MinLOD         = -FLT_MAX;
     CreateInfo.MipLODBias     = 0.0f;
 
-    Sampler = RenderLayer::CreateSamplerState(CreateInfo);
+    Sampler = CreateSamplerState(CreateInfo);
 }
 
 void Material::BuildBuffer(CommandList& CmdList)
 {
     CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
-
     CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(MaterialProperties), &Properties);
-
     CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
 
     MaterialBufferIsDirty = false;

@@ -4,7 +4,6 @@
 #include <Containers/SharedPtr.h>
 
 #include "RenderLayer/Resources.h"
-#include "RenderLayer/RayTracing.h"
 #include "RenderLayer/CommandList.h"
 
 #include "Scene/AABB.h"
@@ -24,11 +23,11 @@ public:
 public:
     void CreateBoundingBox(const MeshData& Data);
 
-    TSharedRef<VertexBuffer>       VertexBuffer;
-    TSharedRef<ShaderResourceView> VertexBufferSRV;
-    TSharedRef<IndexBuffer>        IndexBuffer;
-    TSharedRef<ShaderResourceView> IndexBufferSRV;
-    TSharedRef<RayTracingGeometry> RayTracingGeometry;
+    TRef<VertexBuffer>       VertexBuffer;
+    TRef<ShaderResourceView> VertexBufferSRV;
+    TRef<IndexBuffer>        IndexBuffer;
+    TRef<ShaderResourceView> IndexBufferSRV;
+    TRef<RayTracingGeometry> RTGeometry;
     
     UInt32 VertexCount = 0;
     UInt32 IndexCount  = 0;

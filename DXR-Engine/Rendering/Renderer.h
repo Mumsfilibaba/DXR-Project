@@ -10,15 +10,17 @@
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 
-#include "Mesh.h"
-#include "Material.h"
-#include "MeshFactory.h"
+#include "Resources/Mesh.h"
+#include "Resources/Material.h"
+#include "Resources/MeshFactory.h"
+
 #include "DeferredRenderer.h"
 #include "ShadowMapRenderer.h"
 #include "ScreenSpaceOcclusionRenderer.h"
 #include "LightProbeRenderer.h"
 #include "SkyboxRenderPass.h"
 #include "ForwardRenderer.h"
+#include "RayTracer.h"
 
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/CommandList.h"
@@ -60,25 +62,27 @@ private:
     LightProbeRenderer           LightProbeRenderer;
     SkyboxRenderPass             SkyboxRenderPass;
     ForwardRenderer              ForwardRenderer;
+    RayTracer                    RayTracer;
 
     FrameResources Resources;
     LightSetup     LightSetup;
 
-    // TODO: Fix raytracing
-    TSharedRef<RayTracingPipelineState> RaytracingPSO;
-    TSharedPtr<RayTracingScene>         RayTracingScene;
-    TArray<RayTracingGeometryInstance>	RayTracingGeometryInstances;
+    TRef<Texture2D>            ShadingImage;
+    TRef<ComputePipelineState> ShadingRatePipeline;
+    TRef<ComputeShader>        ShadingRateShader;
 
-    TSharedRef<Texture2D>            ShadingImage;
-    TSharedRef<ComputePipelineState> ShadingRatePipeline;
+    TRef<VertexBuffer> AABBVertexBuffer;
+    TRef<IndexBuffer>  AABBIndexBuffer;
+    TRef<GraphicsPipelineState> AABBDebugPipelineState;
+    TRef<VertexShader>          AABBVertexShader;
+    TRef<PixelShader>           AABBPixelShader;
 
-    TSharedRef<VertexBuffer> AABBVertexBuffer;
-    TSharedRef<IndexBuffer>  AABBIndexBuffer;
-    TSharedRef<GraphicsPipelineState> AABBDebugPipelineState;
-
-    TSharedRef<GraphicsPipelineState> PostPSO;
-    TSharedRef<GraphicsPipelineState> FXAAPSO;
-    TSharedRef<GraphicsPipelineState> FXAADebugPSO;
+    TRef<GraphicsPipelineState> PostPSO;
+    TRef<PixelShader>           PostShader;
+    TRef<GraphicsPipelineState> FXAAPSO;
+    TRef<PixelShader>           FXAAShader;
+    TRef<GraphicsPipelineState> FXAADebugPSO;
+    TRef<PixelShader>           FXAADebugShader;
 
     UInt32 LastFrameNumDrawCalls     = 0;
     UInt32 LastFrameNumDispatchCalls = 0;

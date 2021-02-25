@@ -2,6 +2,7 @@
 #include <dxgi1_6.h>
 #include <d3d12.h>
 #include <dxcapi.h>
+#include <DXProgrammableCapture.h>
 
 #include "D3D12Helpers.h"
 
@@ -17,24 +18,36 @@ class D3D12RootSignature;
 
 typedef HRESULT(WINAPI* PFN_CREATE_DXGI_FACTORY_2)(UINT Flags, REFIID riid, _COM_Outptr_ void** ppFactory);
 typedef HRESULT(WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1)(UINT Flags, REFIID riid, _COM_Outptr_ void** pDebug);
+typedef HRESULT(WINAPI* PFN_SetMarkerOnCommandList)(ID3D12GraphicsCommandList* commandList, UINT64 color, _In_ PCSTR formatString);
+
+extern PFN_CREATE_DXGI_FACTORY_2                              CreateDXGIFactory2Func;
+extern PFN_DXGI_GET_DEBUG_INTERFACE_1                         DXGIGetDebugInterface1Func;
+extern PFN_D3D12_CREATE_DEVICE                                D3D12CreateDeviceFunc;
+extern PFN_D3D12_GET_DEBUG_INTERFACE                          D3D12GetDebugInterfaceFunc;
+extern PFN_D3D12_SERIALIZE_ROOT_SIGNATURE                     D3D12SerializeRootSignatureFunc;
+extern PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER           D3D12CreateRootSignatureDeserializerFunc;
+extern PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVersionedRootSignatureFunc;
+extern PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc;
+extern PFN_SetMarkerOnCommandList                             SetMarkerOnCommandListFunc;
+
+void DeviceRemovedHandler(class D3D12Device* Device);
 
 class D3D12Device
 {
 public:
-    D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation);
+    D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation, Bool InEnableDRED);
     ~D3D12Device();
 
     Bool Init();
 
-    D3D12RootSignature* CreateRootSignature(const D3D12_ROOT_SIGNATURE_DESC& Desc);
-    D3D12RootSignature* CreateRootSignature(IDxcBlob* ShaderBlob);
-    D3D12RootSignature* CreateRootSignature(Void* RootSignatureData, const UInt32 RootSignatureSize);
-    
-    class D3D12DescriptorHeap* CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE Type, UInt32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
-
     Int32 GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount);
 
     std::string GetAdapterName() const;
+
+    FORCEINLINE HRESULT CreateRootSignature(UINT NodeMask, const void* BlobWithRootSignature, SIZE_T BlobLengthInBytes, REFIID Riid, void** RootSignature)
+    {
+        return Device->CreateRootSignature(NodeMask, BlobWithRootSignature, BlobLengthInBytes, Riid, RootSignature);
+    }
 
     FORCEINLINE HRESULT CreateCommitedResource(
         const D3D12_HEAP_PROPERTIES* HeapProperties,
@@ -51,24 +64,6 @@ public:
     FORCEINLINE HRESULT CreatePipelineState(const D3D12_PIPELINE_STATE_STREAM_DESC* Desc, REFIID Riid, void** PipelineState)
     {
         return DXRDevice->CreatePipelineState(Desc, Riid, PipelineState);
-    }
-
-    FORCEINLINE HRESULT CreateRootSignatureDeserializer(
-        LPCVOID SrcData, 
-        SIZE_T SrcDataSizeInBytes, 
-        REFIID RootSignatureDeserializerInterface, 
-        void** RootSignatureDeserializer)
-    {
-        return D3D12CreateRootSignatureDeserializerFunc(SrcData, SrcDataSizeInBytes, RootSignatureDeserializerInterface, RootSignatureDeserializer);
-    }
-
-    FORCEINLINE HRESULT CreateVersionedRootSignatureDeserializer(
-        LPCVOID SrcData, 
-        SIZE_T SrcDataSizeInBytes, 
-        REFIID RootSignatureDeserializerInterface, 
-        void** RootSignatureDeserializer)
-    {
-        return D3D12CreateVersionedRootSignatureDeserializerFunc(SrcData, SrcDataSizeInBytes, RootSignatureDeserializerInterface, RootSignatureDeserializer);
     }
 
     FORCEINLINE void CreateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
@@ -145,8 +140,10 @@ public:
         return Device->GetDescriptorHandleIncrementSize(DescriptorHeapType);
     }
 
-    FORCEINLINE ID3D12Device* GetDevice() const { return Device.Get(); }
+    FORCEINLINE ID3D12Device*  GetDevice()    const { return Device.Get(); }
     FORCEINLINE ID3D12Device5* GetDXRDevice() const { return DXRDevice.Get(); }
+
+    FORCEINLINE IDXGraphicsAnalysis* GetPIXCaptureInterface() const { return PIXCaptureInterface.Get(); }
 
     FORCEINLINE IDXGIFactory2* GetFactory() const { return Factory.Get(); }
 
@@ -154,25 +151,12 @@ public:
 
     FORCEINLINE Bool IsTearingSupported() const { return AllowTearing; }
 
-    FORCEINLINE Bool IsRayTracingSupported() const
-    {
-        return RayTracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
-    }
+    FORCEINLINE D3D12_RAYTRACING_TIER GetRayTracingTier()                     const { return RayTracingTier; }
+    FORCEINLINE D3D12_SAMPLER_FEEDBACK_TIER GetSamplerFeedbackTier()          const { return SamplerFeedBackTier; }
+    FORCEINLINE D3D12_VARIABLE_SHADING_RATE_TIER GetVariableRateShadingTier() const { return VariableShadingRateTier; }
+    FORCEINLINE D3D12_MESH_SHADER_TIER GetMeshShaderTier()                    const { return MeshShaderTier; }
 
-    FORCEINLINE Bool IsInlineRayTracingSupported() const
-    {
-        return RayTracingTier != D3D12_RAYTRACING_TIER_1_1;
-    }
-
-    FORCEINLINE Bool IsMeshShadersSupported() const
-    {
-        return MeshShaderTier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
-    }
-
-    FORCEINLINE Bool IsSamplerFeedbackSupported() const
-    {
-        return SamplerFeedBackTier != D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
-    }
+    FORCEINLINE UInt32 GetVariableRateShadingTileSize() const { return VariableShadingRateTileSize; }
 
 private:
     TComPtr<IDXGIFactory2> Factory;
@@ -180,29 +164,25 @@ private:
     TComPtr<ID3D12Device>  Device;
     TComPtr<ID3D12Device5> DXRDevice;
 
-    D3D_FEATURE_LEVEL MinFeatureLevel    = D3D_FEATURE_LEVEL_11_0;
+    TComPtr<IDXGraphicsAnalysis> PIXCaptureInterface;
+
+    D3D_FEATURE_LEVEL MinFeatureLevel    = D3D_FEATURE_LEVEL_12_0;
     D3D_FEATURE_LEVEL ActiveFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
     D3D12_RAYTRACING_TIER            RayTracingTier          = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
     D3D12_SAMPLER_FEEDBACK_TIER      SamplerFeedBackTier     = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
-    D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
     D3D12_MESH_SHADER_TIER           MeshShaderTier          = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+    D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
+    UInt32 VariableShadingRateTileSize = 0;
 
     HMODULE DXGILib  = 0;
     HMODULE D3D12Lib = 0;
-
-    PFN_CREATE_DXGI_FACTORY_2                              CreateDXGIFactory2Func                            = nullptr;
-    PFN_DXGI_GET_DEBUG_INTERFACE_1                         DXGIGetDebugInterface1Func                        = nullptr;
-    PFN_D3D12_CREATE_DEVICE                                D3D12CreateDeviceFunc                             = nullptr;
-    PFN_D3D12_GET_DEBUG_INTERFACE                          D3D12GetDebugInterfaceFunc                        = nullptr;
-    PFN_D3D12_SERIALIZE_ROOT_SIGNATURE                     D3D12SerializeRootSignatureFunc                   = nullptr;
-    PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER           D3D12CreateRootSignatureDeserializerFunc          = nullptr;
-    PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVersionedRootSignatureFunc          = nullptr;
-    PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc = nullptr;
+    HMODULE PIXLib   = 0;
 
     UInt32 AdapterID = 0;
 
     Bool AllowTearing        = false;
     Bool EnableDebugLayer    = false;
     Bool EnableGPUValidation = false;
+    Bool EnableDRED          = false;
 };

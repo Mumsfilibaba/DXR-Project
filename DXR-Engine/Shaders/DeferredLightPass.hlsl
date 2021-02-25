@@ -2,6 +2,7 @@
 #include "ShadowHelpers.hlsli"
 #include "Helpers.hlsli"
 #include "Structs.hlsli"
+#include "Constants.hlsli"
 
 #define THREAD_COUNT        16
 #define TOTAL_THREAD_COUNT  (THREAD_COUNT * THREAD_COUNT)
@@ -25,14 +26,13 @@ Texture2D<float>        DirLightShadowMaps    : register(t8, space0);
 TextureCubeArray<float> PointLightShadowMaps  : register(t9, space0);
 Texture2D<float3>       SSAO                  : register(t10, space0);
 
-SamplerState GBufferSampler     : register(s0, space0);
-SamplerState LUTSampler         : register(s1, space0);
-SamplerState IrradianceSampler  : register(s2, space0);
+SamplerState LUTSampler        : register(s0, space0);
+SamplerState IrradianceSampler : register(s1, space0);
 
-SamplerComparisonState ShadowMapSampler0 : register(s3, space0);
-SamplerComparisonState ShadowMapSampler1 : register(s4, space0);
+SamplerComparisonState ShadowMapSampler0 : register(s2, space0);
+SamplerComparisonState ShadowMapSampler1 : register(s3, space0);
 
-cbuffer Constants : register(b0, space0)
+cbuffer Constants : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     int NumPointLights;
     int NumShadowCastingPointLights;
@@ -41,29 +41,29 @@ cbuffer Constants : register(b0, space0)
     int ScreenHeight;
 };
 
-ConstantBuffer<Camera> CameraBuffer : register(b1, space0);
+ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
 
-cbuffer PointLightsBuffer : register(b2, space0)
+cbuffer PointLightsBuffer : register(b1, space0)
 {
     PointLight PointLights[MAX_LIGHTS_PER_TILE];
 }
 
-cbuffer PointLightsPosRadBuffer : register(b3, space0)
+cbuffer PointLightsPosRadBuffer : register(b2, space0)
 {
     PositionRadius PointLightsPosRad[MAX_LIGHTS_PER_TILE];
 }
 
-cbuffer ShadowCastingPointLightsBuffer : register(b4, space0)
+cbuffer ShadowCastingPointLightsBuffer : register(b3, space0)
 {
     ShadowPointLight ShadowCastingPointLights[8];
 }
 
-cbuffer ShadowCastingPointLightsPosRadBuffer : register(b5, space0)
+cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4, space0)
 {
     PositionRadius ShadowCastingPointLightsPosRad[8];
 }
 
-ConstantBuffer<DirectionalLight> DirLightBuffer : register(b6, space0);
+ConstantBuffer<DirectionalLight> DirLightBuffer : register(b5, space0);
 
 RWTexture2D<float4> Output : register(u0, space0);
 

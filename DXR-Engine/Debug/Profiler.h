@@ -31,6 +31,9 @@ class Profiler
         FORCEINLINE void AddSample(Float NewSample)
         {
             Samples[CurrentSample] = NewSample;
+            Min = Math::Min(NewSample, Min);
+            Max = Math::Max(NewSample, Max);
+
             CurrentSample++;
             SampleCount = Math::Min<Int32>(Samples.Size(), SampleCount + 1);
 
@@ -52,6 +55,8 @@ class Profiler
         }
 
         TStaticArray<Float, NUM_PROFILER_SAMPLES> Samples;
+        Float Max           = -FLT_MAX;
+        Float Min           = FLT_MAX;
         Int32 SampleCount   = 0;
         Int32 CurrentSample = 0;
     };

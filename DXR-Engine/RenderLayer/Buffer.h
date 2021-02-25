@@ -55,8 +55,8 @@ enum EBufferFlags : UInt32
     BufferFlag_None    = 0,
     BufferFlag_Default = FLAG(1), // Default Device Memory
     BufferFlag_Upload  = FLAG(2), // Upload Memory
-    BufferFlag_UAV     = FLAG(3), // Can be used in UnorderedAccessViews
-    BufferFlag_SRV     = FLAG(4), // Can be used in ShaderResourceViews
+    BufferFlag_UAV     = FLAG(3), // Can be used in UseUnorderedAccessViews
+    BufferFlag_SRV     = FLAG(4), // Can be used in UseShaderResourceViews
 };
 
 class Buffer : public Resource
@@ -68,21 +68,19 @@ public:
     {
     }
 
-    ~Buffer() = default;
-
-    virtual class VertexBuffer* AsVertexBuffer() { return nullptr; }
-    virtual class IndexBuffer* AsIndexBuffer() { return nullptr; }
-    virtual class ConstantBuffer* AsConstantBuffer() { return nullptr; }
+    virtual class VertexBuffer*     AsVertexBuffer()     { return nullptr; }
+    virtual class IndexBuffer*      AsIndexBuffer()      { return nullptr; }
+    virtual class ConstantBuffer*   AsConstantBuffer()   { return nullptr; }
     virtual class StructuredBuffer* AsStructuredBuffer() { return nullptr; }
 
-    virtual void* Map(UInt32 Offset, UInt32 Size) = 0;
+    virtual void* Map(UInt32 Offset, UInt32 Size)   = 0;
     virtual void  Unmap(UInt32 Offset, UInt32 Size) = 0;
 
     UInt32 GetFlags() const { return Flags; }
 
     Bool IsUpload() const { return (Flags & BufferFlag_Upload); }
-    Bool IsUAV() const { return (Flags & BufferFlag_UAV); }
-    Bool IsSRV() const { return (Flags & BufferFlag_SRV); }
+    Bool IsUAV() const    { return (Flags & BufferFlag_UAV); }
+    Bool IsSRV() const    { return (Flags & BufferFlag_SRV); }
 
 private:
     UInt32 Flags;
@@ -98,11 +96,9 @@ public:
     {
     }
 
-    ~VertexBuffer() = default;
-
     virtual VertexBuffer* AsVertexBuffer() override { return this; }
 
-    UInt32 GetStride() const { return Stride; }
+    UInt32 GetStride() const      { return Stride; }
     UInt32 GetNumVertices() const { return NumVertices; }
 
 private:
@@ -120,12 +116,10 @@ public:
     {
     }
 
-    ~IndexBuffer() = default;
-
     virtual IndexBuffer* AsIndexBuffer() override { return this; }
 
-    EIndexFormat GetFormat() const { return Format; }
-    UInt32 GetNumIndicies() const { return NumIndicies; }
+    EIndexFormat GetFormat() const      { return Format; }
+    UInt32       GetNumIndicies() const { return NumIndicies; }
 
 private:
     EIndexFormat Format;
@@ -135,18 +129,18 @@ private:
 class ConstantBuffer : public Buffer
 {
 public:
-    ConstantBuffer(UInt32 InSizeInBytes, UInt32 InFlags)
+    ConstantBuffer(UInt32 InSize, UInt32 InFlags)
         : Buffer(InFlags)
-        , SizeInBytes(InSizeInBytes)
+        , Size(InSize)
     {
     }
 
     virtual ConstantBuffer* AsConstantBuffer() override { return this; }
 
-    UInt32 GetSizeInBytes() const { return SizeInBytes; }
+    UInt32 GetSize() const { return Size; }
 
 private:
-    UInt32 SizeInBytes;
+    UInt32 Size;
 };
 
 class StructuredBuffer : public Buffer
@@ -159,11 +153,9 @@ public:
     {
     }
 
-    ~StructuredBuffer() = default;
-
     virtual StructuredBuffer* AsStructuredBuffer() override { return this; }
 
-    UInt32 GetStride() const { return Stride; }
+    UInt32 GetStride()      const { return Stride; }
     UInt32 GetNumElements() const { return NumElements; }
 
 private:

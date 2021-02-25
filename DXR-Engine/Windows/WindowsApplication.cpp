@@ -62,7 +62,7 @@ void WindowsApplication::Tick()
         WPARAM wParam  = Event.wParam;
         WPARAM lParam  = Event.lParam;
 
-        TSharedRef<WindowsWindow> MessageWindow = MakeSharedRef<WindowsWindow>(GetWindowFromHWND(Hwnd));
+        TRef<WindowsWindow> MessageWindow = MakeSharedRef<WindowsWindow>(GetWindowFromHWND(Hwnd));
         switch (Message)
         {
             case WM_DESTROY:
@@ -272,7 +272,7 @@ void WindowsApplication::AddWindow(WindowsWindow* Window)
 
 GenericWindow* WindowsApplication::MakeWindow()
 {
-    TSharedRef<WindowsWindow> Window = DBG_NEW WindowsWindow(this);
+    TRef<WindowsWindow> Window = DBG_NEW WindowsWindow(this);
     if (Window)
     {
         AddWindow(Window.Get());
@@ -286,7 +286,7 @@ GenericWindow* WindowsApplication::MakeWindow()
 
 GenericCursor* WindowsApplication::MakeCursor()
 {
-    TSharedRef<WindowsCursor> Cursor = DBG_NEW WindowsCursor(this);
+    TRef<WindowsCursor> Cursor = DBG_NEW WindowsCursor(this);
     if (Cursor)
     {
         return Cursor.ReleaseOwnership();
@@ -347,7 +347,7 @@ ModifierKeyState WindowsApplication::GetModifierKeyState()
 
 WindowsWindow* WindowsApplication::GetWindowFromHWND(HWND Window) const
 {
-    for (const TSharedRef<WindowsWindow>& CurrentWindow : Windows)
+    for (const TRef<WindowsWindow>& CurrentWindow : Windows)
     {
         if (CurrentWindow->GetHandle() == Window)
         {
@@ -377,7 +377,7 @@ GenericCursor* WindowsApplication::GetCursor() const
 
 void WindowsApplication::GetCursorPos(GenericWindow* RelativeWindow, Int32& OutX, Int32& OutY) const
 {
-    TSharedRef<WindowsWindow> WinRelative = MakeSharedRef<WindowsWindow>(RelativeWindow);
+    TRef<WindowsWindow> WinRelative = MakeSharedRef<WindowsWindow>(RelativeWindow);
     HWND hRelative = WinRelative->GetHandle();
 
     POINT CursorPos = { };
@@ -395,7 +395,7 @@ void WindowsApplication::SetCursor(GenericCursor* Cursor)
 {
     if (Cursor)
     {
-        TSharedRef<WindowsCursor> WinCursor = MakeSharedRef<WindowsCursor>(Cursor);
+        TRef<WindowsCursor> WinCursor = MakeSharedRef<WindowsCursor>(Cursor);
         CurrentCursor = WinCursor;
 
         HCURSOR hCursor = WinCursor->GetCursor();
@@ -409,7 +409,7 @@ void WindowsApplication::SetCursor(GenericCursor* Cursor)
 
 void WindowsApplication::SetActiveWindow(GenericWindow* Window)
 {
-    TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>(Window);
+    TRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>(Window);
     HWND hActiveWindow = WinWindow->GetHandle();
     if (::IsWindow(hActiveWindow))
     {
@@ -421,7 +421,7 @@ void WindowsApplication::SetCapture(GenericWindow* CaptureWindow)
 {
     if (CaptureWindow)
     {
-        TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>(CaptureWindow);
+        TRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>(CaptureWindow);
         HWND hCapture = WinWindow->GetHandle();
         if (::IsWindow(hCapture))
         {
@@ -438,7 +438,7 @@ void WindowsApplication::SetCursorPos(GenericWindow* RelativeWindow, Int32 x, In
 {
     if (RelativeWindow)
     {
-        TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>(RelativeWindow);
+        TRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>(RelativeWindow);
         HWND hRelative = WinWindow->GetHandle();
     
         POINT CursorPos = { x, y };

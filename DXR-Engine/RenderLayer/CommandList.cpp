@@ -2,6 +2,8 @@
 
 void CommandListExecutor::ExecuteCommandList(CommandList& CmdList)
 {
+    Assert(CmdList.IsRecording == false);
+
     RenderCommand* Cmd = CmdList.First;
     while (Cmd != nullptr)
     {

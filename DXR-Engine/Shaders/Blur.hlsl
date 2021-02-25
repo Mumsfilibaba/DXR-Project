@@ -1,14 +1,15 @@
-#include "PBRCommon.hlsli"
+#include "Structs.hlsli"
+#include "Constants.hlsli"
 
 RWTexture2D<float> Texture : register(u0, space0);
 
-cbuffer Params : register(b0, space0)
+cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     int2 ScreenSize;
 };
 
-#define THREAD_COUNT	16
-#define KERNEL_SIZE		5
+#define THREAD_COUNT 16
+#define KERNEL_SIZE  5
 
 groupshared float gTextureCache[THREAD_COUNT][THREAD_COUNT];
 
@@ -47,10 +48,10 @@ void Main(ComputeShaderInput Input)
         
         // TODO: Handle when we need to sample outside the tile
 #ifdef HORIZONTAL_PASS
-        const int CurrentTexCoord = max(0, min(MAX_SIZE, GroupThreadID.x + Offset));
+        const int CurrentTexCoord = max(0, min(MAX_SIZE.y, GroupThreadID.x + Offset));
         Result += gTextureCache[CurrentTexCoord.x][GroupThreadID.y] * Weight;
 #else
-        const int CurrentTexCoord = max(0, min(MAX_SIZE, GroupThreadID.y + Offset));
+        const int CurrentTexCoord = max(0, min(MAX_SIZE.y, GroupThreadID.y + Offset));
         Result += gTextureCache[GroupThreadID.x][CurrentTexCoord] * Weight;
 #endif
     }

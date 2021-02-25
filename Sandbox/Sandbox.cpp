@@ -4,7 +4,7 @@
 
 #include "Rendering/Renderer.h"
 #include "Rendering/DebugUI.h"
-#include "Rendering/TextureFactory.h"
+#include "Rendering/Resources/TextureFactory.h"
 
 #include "Scene/Scene.h"
 #include "Scene/Lights/PointLight.h"
@@ -25,8 +25,8 @@ Game* MakeGameInstance()
 Bool Sandbox::Init()
 {
     // Initialize Scene
-    Actor* NewActor				= nullptr;
-    MeshComponent* NewComponent	= nullptr;
+    Actor* NewActor             = nullptr;
+    MeshComponent* NewComponent = nullptr;
     CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
 
     // Create Spheres
@@ -43,7 +43,7 @@ Bool Sandbox::Init()
         255
     };
 
-    TSharedRef<Texture2D> BaseTexture = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> BaseTexture = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
     if (!BaseTexture)
     {
         return false;
@@ -57,7 +57,7 @@ Bool Sandbox::Init()
     Pixels[1] = 127;
     Pixels[2] = 255;
 
-    TSharedRef<Texture2D> BaseNormal = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> BaseNormal = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
     if (!BaseNormal)
     {
         return false;
@@ -71,7 +71,7 @@ Bool Sandbox::Init()
     Pixels[1] = 255;
     Pixels[2] = 255;
 
-    TSharedRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
     if (!WhiteTexture)
     {
         return false;
@@ -105,16 +105,16 @@ Bool Sandbox::Init()
 
             CurrentScene->AddActor(NewActor);
 
-            NewComponent           = DBG_NEW MeshComponent(NewActor);
+            NewComponent = DBG_NEW MeshComponent(NewActor);
             NewComponent->Mesh     = SphereMesh;
             NewComponent->Material = MakeShared<Material>(MatProperties);
 
-            NewComponent->Material->AlbedoMap		= BaseTexture;
-            NewComponent->Material->NormalMap		= BaseNormal;
-            NewComponent->Material->RoughnessMap	= WhiteTexture;
-            NewComponent->Material->HeightMap		= WhiteTexture;
-            NewComponent->Material->AOMap			= WhiteTexture;
-            NewComponent->Material->MetallicMap		= WhiteTexture;
+            NewComponent->Material->AlbedoMap    = BaseTexture;
+            NewComponent->Material->NormalMap    = BaseNormal;
+            NewComponent->Material->RoughnessMap = WhiteTexture;
+            NewComponent->Material->HeightMap    = WhiteTexture;
+            NewComponent->Material->AOMap        = WhiteTexture;
+            NewComponent->Material->MetallicMap  = WhiteTexture;
             NewComponent->Material->Init();
 
             NewActor->AddComponent(NewComponent);
@@ -135,16 +135,16 @@ Bool Sandbox::Init()
     NewActor->SetName("Cube");
     NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 42.0f);
 
-    MatProperties.AO            = 1.0f;
-    MatProperties.Metallic      = 1.0f;
-    MatProperties.Roughness     = 1.0f;
-    MatProperties.EnableHeight  = 1;
+    MatProperties.AO           = 1.0f;
+    MatProperties.Metallic     = 1.0f;
+    MatProperties.Roughness    = 1.0f;
+    MatProperties.EnableHeight = 1;
 
-    NewComponent            = DBG_NEW MeshComponent(NewActor);
-    NewComponent->Mesh      = Mesh::Make(CubeMeshData);
-    NewComponent->Material  = MakeShared<Material>(MatProperties);
+    NewComponent = DBG_NEW MeshComponent(NewActor);
+    NewComponent->Mesh     = Mesh::Make(CubeMeshData);
+    NewComponent->Material = MakeShared<Material>(MatProperties);
 
-    TSharedRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
     if (!AlbedoMap)
     {
         return false;
@@ -154,7 +154,7 @@ Bool Sandbox::Init()
         AlbedoMap->SetName("AlbedoMap");
     }
 
-    TSharedRef<Texture2D> NormalMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> NormalMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
     if (!NormalMap)
     {
         return false;
@@ -164,7 +164,7 @@ Bool Sandbox::Init()
         NormalMap->SetName("NormalMap");
     }
 
-    TSharedRef<Texture2D> AOMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> AOMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (!AOMap)
     {
         return false;
@@ -174,7 +174,7 @@ Bool Sandbox::Init()
         AOMap->SetName("AOMap");
     }
 
-    TSharedRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (!RoughnessMap)
     {
         return false;
@@ -184,7 +184,7 @@ Bool Sandbox::Init()
         RoughnessMap->SetName("RoughnessMap");
     }
 
-    TSharedRef<Texture2D> HeightMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> HeightMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (!HeightMap)
     {
         return false;
@@ -194,7 +194,7 @@ Bool Sandbox::Init()
         HeightMap->SetName("HeightMap");
     }
 
-    TSharedRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png" , TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    TRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Metallic.png" , TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
     if (!MetallicMap)
     {
         return false;
@@ -227,7 +227,7 @@ Bool Sandbox::Init()
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo       = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
-    NewComponent           = DBG_NEW MeshComponent(NewActor);
+    NewComponent = DBG_NEW MeshComponent(NewActor);
     NewComponent->Mesh     = Mesh::Make(MeshFactory::CreatePlane(10, 10));
     NewComponent->Material = MakeShared<Material>(MatProperties);
     NewComponent->Material->AlbedoMap    = BaseTexture;

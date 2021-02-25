@@ -1,13 +1,14 @@
-#include "PBRCommon.hlsli"
+#include "Structs.hlsli"
+#include "Constants.hlsli"
 
 // PerObject Constants
-cbuffer TransformBuffer : register(b0, space0)
+cbuffer TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
-    float4x4 Transform;
+    float4x4 TransformMat;
 };
 
 // PerFrame
-ConstantBuffer<Camera> Camera : register(b1, space0);
+ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
 
 // VertexShader
 struct VSInput
@@ -20,6 +21,6 @@ struct VSInput
 
 float4 Main(VSInput Input) : SV_POSITION
 {
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Transform);
-    return mul(WorldPosition, Camera.ViewProjection);
+    float4 WorldPosition = mul(float4(Input.Position, 1.0f), TransformMat);
+    return mul(WorldPosition, CameraBuffer.ViewProjection);
 }

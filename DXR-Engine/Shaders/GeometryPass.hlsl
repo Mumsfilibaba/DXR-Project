@@ -1,21 +1,23 @@
-#include "PBRCommon.hlsli"
+#include "PBRHelpers.hlsli"
+#include "Structs.hlsli"
+#include "Constants.hlsli"
 
 #if ENABLE_PARALLAX_MAPPING
-#define PARALLAX_MAPPING_ENABLED
+    #define PARALLAX_MAPPING_ENABLED
 #endif
 
 #if ENABLE_NORMAL_MAPPING
-#define NORMAL_MAPPING_ENABLED
+    #define NORMAL_MAPPING_ENABLED
 #endif
 
 // PerFrame
-ConstantBuffer<Camera> CameraBuffer : register(b1, space0);
+ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
 
 // PerObject Samplers
 SamplerState MaterialSampler : register(s0, space0);
 
-ConstantBuffer<Transform>	TransformBuffer : register(b0, space0);
-ConstantBuffer<Material>	MaterialBuffer	: register(b2, space0);
+ConstantBuffer<Transform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
+ConstantBuffer<Material>  MaterialBuffer  : register(b1, space0);
 
 Texture2D<float4> AlbedoMap : register(t0, space0);
 #ifdef NORMAL_MAPPING_ENABLED
@@ -186,16 +188,16 @@ PSOutput PSMain(PSInput Input)
 #endif	
     MappedNormal = PackNormal(MappedNormal);
 
-    const float SampledAO			= AOMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.AO;
-    const float SampledMetallic		= MetallicMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Metallic;
-    const float SampledRoughness	= RoughnessMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Roughness;
-    const float FinalRoughness		= min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    const float SampledAO        = AOMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.AO;
+    const float SampledMetallic  = MetallicMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Metallic;
+    const float SampledRoughness = RoughnessMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Roughness;
+    const float FinalRoughness   = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
     
     PSOutput Output;
-    Output.Albedo		= float4(SampledAlbedo, 1.0f);
-    Output.Normal		= float4(MappedNormal, 1.0f);
-    Output.Material		= float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
-    Output.ViewNormal	= float4(PackNormal(Input.ViewNormal), 1.0f);
+    Output.Albedo     = float4(SampledAlbedo, 1.0f);
+    Output.Normal     = float4(MappedNormal, 1.0f);
+    Output.Material   = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
+    Output.ViewNormal = float4(PackNormal(Input.ViewNormal), 1.0f);
 
     return Output;
 }

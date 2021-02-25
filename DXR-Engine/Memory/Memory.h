@@ -22,7 +22,6 @@ public:
     }
 
     static void* Memset(void* Destination, UInt8 Value, UInt64 Size);
-    
     static void* Memzero(void* Destination, UInt64 Size);
     
     template<typename T>

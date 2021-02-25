@@ -16,28 +16,20 @@ class D3D12BaseTexture : public D3D12DeviceChild
 public:
     D3D12BaseTexture(D3D12Device* InDevice)
         : D3D12DeviceChild(InDevice)
-        , DxResource(InDevice)
+        , Resource(nullptr)
     {
     }
 
-    void SetResource(const D3D12Resource& InResource)
-    {
-        DxResource = InResource;
-    }
+    void SetResource(D3D12Resource* InResource) { Resource = InResource; }
+    void SetShaderResourceView(D3D12ShaderResourceView* InShaderResourceView) { ShaderResourceView = InShaderResourceView; }
 
-    void SetShaderResourceView(D3D12ShaderResourceView* InShaderResourceView)
-    {
-        ShaderResourceView = MakeSharedRef<D3D12ShaderResourceView>(InShaderResourceView);
-    }
+    DXGI_FORMAT GetNativeFormat() const { return Resource->GetDesc().Format; }
 
-    DXGI_FORMAT GetNativeFormat() const { return DxResource.GetDesc().Format; }
-
-    D3D12Resource* GetResource() { return &DxResource; }
-    const D3D12Resource* GetResource() const { return &DxResource; }
+    D3D12Resource* GetResource() { return Resource.Get(); }
 
 protected:
-    TSharedRef<D3D12ShaderResourceView> ShaderResourceView;
-    D3D12Resource DxResource;
+    TRef<D3D12Resource>           Resource;
+    TRef<D3D12ShaderResourceView> ShaderResourceView;
 };
 
 class D3D12BaseTexture2D : public Texture2D, public D3D12BaseTexture
@@ -57,43 +49,20 @@ public:
         , DepthStencilView(nullptr)
         , UnorderedAccessView(nullptr)
     {
-        VALIDATE(SizeZ == 1);
     }
 
-    virtual RenderTargetView* GetRenderTargetView() const override
-    { 
-        return RenderTargetView.Get();
-    }
+    virtual RenderTargetView*    GetRenderTargetView() const override    { return RenderTargetView.Get(); }
+    virtual DepthStencilView*    GetDepthStencilView() const override    { return DepthStencilView.Get(); }
+    virtual UnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
 
-    virtual DepthStencilView* GetDepthStencilView() const override
-    { 
-        return DepthStencilView.Get(); 
-    }
-
-    virtual UnorderedAccessView* GetUnorderedAccessView() const override
-    { 
-        return UnorderedAccessView.Get();
-    }
-
-    void SetRenderTargetView(D3D12RenderTargetView* InRenderTargetView)
-    {
-        RenderTargetView = MakeSharedRef<D3D12RenderTargetView>(InRenderTargetView);
-    }
-
-    void SetDepthStencilView(D3D12DepthStencilView* InDepthStencilView)
-    {
-        DepthStencilView = MakeSharedRef<D3D12DepthStencilView>(InDepthStencilView);
-    }
-
-    void SetUnorderedAccessView(D3D12UnorderedAccessView* InUnorderedAccessView)
-    {
-        UnorderedAccessView = MakeSharedRef<D3D12UnorderedAccessView>(InUnorderedAccessView);
-    }
+    void SetRenderTargetView(D3D12RenderTargetView* InRenderTargetView)          { RenderTargetView = InRenderTargetView; }
+    void SetDepthStencilView(D3D12DepthStencilView* InDepthStencilView)          { DepthStencilView = InDepthStencilView; }
+    void SetUnorderedAccessView(D3D12UnorderedAccessView* InUnorderedAccessView) { UnorderedAccessView = InUnorderedAccessView; }
 
 private:
-    TSharedRef<D3D12RenderTargetView> RenderTargetView;
-    TSharedRef<D3D12DepthStencilView> DepthStencilView;
-    TSharedRef<D3D12UnorderedAccessView> UnorderedAccessView;
+    TRef<D3D12RenderTargetView> RenderTargetView;
+    TRef<D3D12DepthStencilView> DepthStencilView;
+    TRef<D3D12UnorderedAccessView> UnorderedAccessView;
 };
 
 class D3D12BaseTexture2DArray : public Texture2DArray, public D3D12BaseTexture
@@ -127,9 +96,6 @@ public:
         : TextureCube(InFormat, SizeX, InNumMips, InFlags, InOptimalClearValue)
         , D3D12BaseTexture(InDevice)
     {
-        VALIDATE(SizeX == SizeY);
-        VALIDATE(SizeZ == TEXTURE_CUBE_FACE_COUNT);
-        VALIDATE(InNumSamples == 1);
     }
 };
 
@@ -147,9 +113,6 @@ public:
         : TextureCubeArray(InFormat, SizeX, InNumMips, SizeZ, InFlags, InOptimalClearValue)
         , D3D12BaseTexture(InDevice)
     {
-        VALIDATE(SizeX == SizeY);
-        VALIDATE(SizeZ % TEXTURE_CUBE_FACE_COUNT == 0);
-        VALIDATE(InNumSamples == 1);
     }
 };
 
@@ -167,7 +130,6 @@ public:
         : Texture3D(InFormat, SizeX, SizeY, SizeZ, InNumMips, InFlags, InOptimalClearValue)
         , D3D12BaseTexture(InDevice)
     {
-        VALIDATE(InNumSamples == 1);
     }
 };
 
@@ -187,27 +149,25 @@ public:
     {
     }
 
-    ~TD3D12BaseTexture() = default;
-
     virtual void SetName(const std::string& InName) override
     {
         Resource::SetName(InName);
-        DxResource.SetName(InName);
+        D3D12BaseTexture::Resource->SetName(InName);
     }
 
     virtual void* GetNativeResource() const override
     {
-        return reinterpret_cast<void*>(DxResource.GetResource());
+        return reinterpret_cast<void*>(D3D12BaseTexture::Resource->GetResource());
     }
 
     virtual class ShaderResourceView* GetShaderResourceView() const
     {
-        return ShaderResourceView.Get();
+        return D3D12BaseTexture::ShaderResourceView.Get();
     }
 
     virtual Bool IsValid() const override
     {
-        return DxResource.GetResource() != nullptr;
+        return D3D12BaseTexture::Resource->GetResource() != nullptr;
     }
 };
 
@@ -219,7 +179,7 @@ using D3D12Texture3D        = TD3D12BaseTexture<D3D12BaseTexture3D>;
 
 inline D3D12BaseTexture* D3D12TextureCast(Texture* Texture)
 {
-    VALIDATE(Texture != nullptr);
+    Assert(Texture != nullptr);
 
     if (Texture->AsTexture2D() != nullptr)
     {

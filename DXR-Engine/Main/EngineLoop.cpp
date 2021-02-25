@@ -12,7 +12,7 @@
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
-#include "Rendering/TextureFactory.h"
+#include "Rendering/Resources/TextureFactory.h"
 
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/CommandList.h"
@@ -243,7 +243,7 @@ Bool EngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
-    SAFEDELETE(gGame);
+    SafeDelete(gGame);
 
     DebugUI::Release();
 
@@ -258,13 +258,13 @@ Bool EngineLoop::PostRelease()
 {
     TRACE_FUNCTION_SCOPE();
 
-    SAFEDELETE(gEventDispatcher);
+    SafeDelete(gEventDispatcher);
 
     gMainWindow->Release();
 
-    SAFEDELETE(gApplication);
+    SafeDelete(gApplication);
 
-    SAFEDELETE(gConsoleOutput);
+    SafeDelete(gConsoleOutput);
 
     return true;
 }

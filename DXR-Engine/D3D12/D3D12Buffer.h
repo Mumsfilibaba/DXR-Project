@@ -9,22 +9,18 @@ class D3D12BaseBuffer : public D3D12DeviceChild
 public:
     D3D12BaseBuffer(D3D12Device* InDevice)
         : D3D12DeviceChild(InDevice)
-        , DxResource(InDevice)
+        , Resource(nullptr)
     {
     }
 
-    virtual void SetResource(const D3D12Resource& InResource)
-    {
-        DxResource = InResource;
-    }
+    virtual void SetResource(D3D12Resource* InResource) { Resource = InResource; }
 
-    UInt64 GetSizeInBytes() const { return DxResource.GetDesc().Width; }
+    UInt64 GetSizeInBytes() const { return Resource->GetDesc().Width; }
     
-    D3D12Resource* GetResource() { return &DxResource; }
-    const D3D12Resource* GetResource() const { return &DxResource; }
+    D3D12Resource* GetResource() { return Resource.Get(); }
 
 protected:
-    D3D12Resource DxResource;
+    TRef<D3D12Resource> Resource;
 };
 
 class D3D12BaseVertexBuffer : public VertexBuffer, public D3D12BaseBuffer
@@ -37,20 +33,17 @@ public:
     {
     }
 
-    virtual void SetResource(const D3D12Resource& InResource) override
+    virtual void SetResource(D3D12Resource* InResource) override
     {
         D3D12BaseBuffer::SetResource(InResource);
 
         Memory::Memzero(&View);
         View.StrideInBytes  = GetStride();
         View.SizeInBytes    = GetNumVertices() * View.StrideInBytes;
-        View.BufferLocation = DxResource.GetGPUVirtualAddress();
+        View.BufferLocation = D3D12BaseBuffer::Resource->GetGPUVirtualAddress();
     }
 
-    const D3D12_VERTEX_BUFFER_VIEW& GetView() const
-    {
-        return View;
-    }
+    const D3D12_VERTEX_BUFFER_VIEW& GetView() const { return View; }
 
 private:
     D3D12_VERTEX_BUFFER_VIEW View;
@@ -66,7 +59,7 @@ public:
     {
     }
 
-    virtual void SetResource(const D3D12Resource& InResource) override
+    virtual void SetResource(D3D12Resource* InResource) override
     {
         D3D12BaseBuffer::SetResource(InResource);
 
@@ -77,14 +70,11 @@ public:
         {
             View.Format         = IndexFormat == EIndexFormat::UInt16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
             View.SizeInBytes    = GetNumIndicies() * GetStrideFromIndexFormat(IndexFormat);
-            View.BufferLocation = DxResource.GetGPUVirtualAddress();
+            View.BufferLocation = D3D12BaseBuffer::Resource->GetGPUVirtualAddress();
         }
     }
 
-    const D3D12_INDEX_BUFFER_VIEW& GetView() const
-    {
-        return View;
-    }
+    const D3D12_INDEX_BUFFER_VIEW& GetView() const { return View; }
 
 private:
     D3D12_INDEX_BUFFER_VIEW View;
@@ -100,14 +90,14 @@ public:
     {
     }
 
-    virtual void SetResource(const D3D12Resource& InResource) override
+    virtual void SetResource(D3D12Resource* InResource) override
     {
         D3D12BaseBuffer::SetResource(InResource);
 
         D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
         Memory::Memzero(&ViewDesc);
 
-        ViewDesc.BufferLocation = DxResource.GetGPUVirtualAddress();
+        ViewDesc.BufferLocation = D3D12BaseBuffer::Resource->GetGPUVirtualAddress();
         ViewDesc.SizeInBytes    = (UInt32)D3D12BaseBuffer::GetSizeInBytes();
 
         if (View.GetOfflineHandle() == 0)
@@ -118,7 +108,7 @@ public:
             }
         }
 
-        View.CreateView(&DxResource, ViewDesc);
+        View.CreateView(D3D12BaseBuffer::Resource.Get(), ViewDesc);
     }
 
     D3D12ConstantBufferView& GetView() { return View; }
@@ -148,32 +138,30 @@ public:
     {
     }
 
-    ~TD3D12BaseBuffer() = default;
-
-    virtual void* Map(UInt32 Offset, UInt32 Size) override
+    virtual void* Map(UInt32 Offset, UInt32 InSize) override
     {
-        return DxResource.Map(Offset, Size);
+        return D3D12BaseBuffer::Resource->Map(Offset, InSize);
     }
 
-    virtual void Unmap(UInt32 Offset, UInt32 Size) override
+    virtual void Unmap(UInt32 Offset, UInt32 InSize) override
     {
-        DxResource.Unmap(Offset, Size);
+        D3D12BaseBuffer::Resource->Unmap(Offset, InSize);
     }
 
     virtual void SetName(const std::string& InName) override final
     {
         Resource::SetName(InName);
-        DxResource.SetName(InName);
+        D3D12BaseBuffer::Resource->SetName(InName);
     }
 
     virtual void* GetNativeResource() const override final
     {
-        return reinterpret_cast<void*>(DxResource.GetResource());
+        return reinterpret_cast<void*>(D3D12BaseBuffer::Resource->GetResource());
     }
 
     virtual Bool IsValid() const override
     {
-        return DxResource.GetResource() != nullptr;
+        return D3D12BaseBuffer::Resource->GetResource() != nullptr;
     }
 };
 

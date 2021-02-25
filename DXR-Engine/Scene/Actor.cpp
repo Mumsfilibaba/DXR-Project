@@ -5,7 +5,7 @@ Component::Component(Actor* InOwningActor)
     : CoreObject()
     , OwningActor(InOwningActor)
 {
-    VALIDATE(InOwningActor != nullptr);
+    Assert(InOwningActor != nullptr);
     CORE_OBJECT_INIT();
 }
 
@@ -21,7 +21,7 @@ Actor::~Actor()
 {
     for (Component* CurrentComponent : Components)
     {
-        SAFEDELETE(CurrentComponent);
+        SafeDelete(CurrentComponent);
     }
 
     Components.Clear();
@@ -29,7 +29,7 @@ Actor::~Actor()
 
 void Actor::AddComponent(Component* InComponent)
 {
-    VALIDATE(InComponent != nullptr);
+    Assert(InComponent != nullptr);
     Components.EmplaceBack(InComponent);
 
     if (Scene)
@@ -96,7 +96,9 @@ void Transform::CalculateMatrix()
             XMMatrixMultiply(XMMatrixScalingFromVector(XmScale), 
             XMMatrixRotationRollPitchYawFromVector(XmRotation)),
             XMMatrixTranslationFromVector(XmTranslation));
-    XMStoreFloat4x4(&Matrix, XMMatrixTranspose(XmMatrix));
+    XMStoreFloat3x4(&TinyMatrix, XmMatrix);
+    XmMatrix = XMMatrixTranspose(XmMatrix);
+    XMStoreFloat4x4(&Matrix, XmMatrix);
 
     XMMATRIX XmMatrixInv = XMMatrixInverse(nullptr, XmMatrix);
     XMStoreFloat4x4(&MatrixInv, XMMatrixTranspose(XmMatrixInv));

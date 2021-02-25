@@ -4,8 +4,8 @@
 #include "RenderLayer/ShaderCompiler.h"
 
 #include "Rendering/MeshDrawCommand.h"
-#include "Rendering/Mesh.h"
-#include "Rendering/Material.h"
+#include "Rendering/Resources/Mesh.h"
+#include "Rendering/Resources/Material.h"
 
 #include "Debug/Profiler.h"
 #include "Debug/Console.h"
@@ -29,7 +29,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         CreateInfo.AddressW = ESamplerMode::Clamp;
         CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
 
-        FrameResources.GBufferSampler = RenderLayer::CreateSamplerState(CreateInfo);
+        FrameResources.GBufferSampler = CreateSamplerState(CreateInfo);
         if (!FrameResources.GBufferSampler)
         {
             return false;
@@ -50,15 +50,15 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
             return false;
         }
 
-        TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
-        if (!VShader)
+        BaseVertexShader = CreateVertexShader(ShaderCode);
+        if (!BaseVertexShader)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            VShader->SetName("GeometryPass VertexShader");
+            BaseVertexShader->SetName("GeometryPass VertexShader");
         }
 
         if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/GeometryPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
@@ -67,15 +67,15 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
             return false;
         }
 
-        TSharedRef<PixelShader> PShader = RenderLayer::CreatePixelShader(ShaderCode);
-        if (!PShader)
+        BasePixelShader = CreatePixelShader(ShaderCode);
+        if (!BasePixelShader)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            PShader->SetName("GeometryPass PixelShader");
+            BasePixelShader->SetName("GeometryPass PixelShader");
         }
 
         DepthStencilStateCreateInfo DepthStencilStateInfo;
@@ -83,7 +83,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         DepthStencilStateInfo.DepthEnable    = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<DepthStencilState> GeometryDepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+        TRef<DepthStencilState> GeometryDepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
         if (!GeometryDepthStencilState)
         {
             Debug::DebugBreak();
@@ -97,7 +97,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         RasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<RasterizerState> GeometryRasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+        TRef<RasterizerState> GeometryRasterizerState = CreateRasterizerState(RasterizerStateInfo);
         if (!GeometryRasterizerState)
         {
             Debug::DebugBreak();
@@ -112,7 +112,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         BlendStateInfo.IndependentBlendEnable      = false;
         BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-        TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+        TRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             Debug::DebugBreak();
@@ -128,8 +128,8 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         PipelineStateInfo.BlendState                             = BlendState.Get();
         PipelineStateInfo.DepthStencilState                      = GeometryDepthStencilState.Get();
         PipelineStateInfo.RasterizerState                        = GeometryRasterizerState.Get();
-        PipelineStateInfo.ShaderState.VertexShader               = VShader.Get();
-        PipelineStateInfo.ShaderState.PixelShader                = PShader.Get();
+        PipelineStateInfo.ShaderState.VertexShader               = BaseVertexShader.Get();
+        PipelineStateInfo.ShaderState.PixelShader                = BasePixelShader.Get();
         PipelineStateInfo.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[1] = FrameResources.NormalFormat;
@@ -137,7 +137,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[3] = FrameResources.ViewNormalFormat;
         PipelineStateInfo.PipelineFormats.NumRenderTargets       = 4;
 
-        PipelineState = RenderLayer::CreateGraphicsPipelineState(PipelineStateInfo);
+        PipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
         if (!PipelineState)
         {
             Debug::DebugBreak();
@@ -157,15 +157,15 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
             return false;
         }
 
-        TSharedRef<VertexShader> VShader = RenderLayer::CreateVertexShader(ShaderCode);
-        if (!VShader)
+        PrePassVertexShader = CreateVertexShader(ShaderCode);
+        if (!PrePassVertexShader)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            VShader->SetName("PrePass VertexShader");
+            PrePassVertexShader->SetName("PrePass VertexShader");
         }
 
         DepthStencilStateCreateInfo DepthStencilStateInfo;
@@ -173,7 +173,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         DepthStencilStateInfo.DepthEnable    = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<DepthStencilState> DepthStencilState = RenderLayer::CreateDepthStencilState(DepthStencilStateInfo);
+        TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
         if (!DepthStencilState)
         {
             Debug::DebugBreak();
@@ -187,7 +187,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         RasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<RasterizerState> RasterizerState = RenderLayer::CreateRasterizerState(RasterizerStateInfo);
+        TRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             Debug::DebugBreak();
@@ -202,7 +202,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         BlendStateInfo.IndependentBlendEnable      = false;
         BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-        TSharedRef<BlendState> BlendState = RenderLayer::CreateBlendState(BlendStateInfo);
+        TRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             Debug::DebugBreak();
@@ -218,10 +218,10 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         PipelineStateInfo.BlendState                         = BlendState.Get();
         PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
         PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
-        PipelineStateInfo.ShaderState.VertexShader           = VShader.Get();
+        PipelineStateInfo.ShaderState.VertexShader           = PrePassVertexShader.Get();
         PipelineStateInfo.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
 
-        PrePassPipelineState = RenderLayer::CreateGraphicsPipelineState(PipelineStateInfo);
+        PrePassPipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
         if (!PrePassPipelineState)
         {
             Debug::DebugBreak();
@@ -235,7 +235,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
 
     constexpr UInt32  LUTSize   = 512;
     constexpr EFormat LUTFormat = EFormat::R16G16_Float;
-    if (!RenderLayer::UAVSupportsFormat(LUTFormat))
+    if (!UAVSupportsFormat(LUTFormat))
     {
         LOG_ERROR("[Renderer]: R16G16_Float is not supported for UAVs");
 
@@ -243,7 +243,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<Texture2D> StagingTexture = RenderLayer::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceState::Common, nullptr);
+    TRef<Texture2D> StagingTexture = CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceState::Common, nullptr);
     if (!StagingTexture)
     {
         Debug::DebugBreak();
@@ -254,7 +254,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         StagingTexture->SetName("Staging IntegrationLUT");
     }
 
-    FrameResources.IntegrationLUT = RenderLayer::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_SRV, EResourceState::Common, nullptr);
+    FrameResources.IntegrationLUT = CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_SRV, EResourceState::Common, nullptr);
     if (!FrameResources.IntegrationLUT)
     {
         Debug::DebugBreak();
@@ -271,7 +271,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
     CreateInfo.AddressW = ESamplerMode::Clamp;
     CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
 
-    FrameResources.IntegrationLUTSampler = RenderLayer::CreateSamplerState(CreateInfo);
+    FrameResources.IntegrationLUTSampler = CreateSamplerState(CreateInfo);
     if (!FrameResources.IntegrationLUTSampler)
     {
         Debug::DebugBreak();
@@ -288,7 +288,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<ComputeShader> CShader = RenderLayer::CreateComputeShader(ShaderCode);
+    TRef<ComputeShader> CShader = CreateComputeShader(ShaderCode);
     if (!CShader)
     {
         Debug::DebugBreak();
@@ -302,7 +302,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
     ComputePipelineStateCreateInfo PipelineStateInfo;
     PipelineStateInfo.Shader = CShader.Get();
 
-    TSharedRef<ComputePipelineState> BRDF_PipelineState = RenderLayer::CreateComputePipelineState(PipelineStateInfo);
+    TRef<ComputePipelineState> BRDF_PipelineState = CreateComputePipelineState(PipelineStateInfo);
     if (!BRDF_PipelineState)
     {
         Debug::DebugBreak();
@@ -318,10 +318,10 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
 
     CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
-    CmdList.BindComputePipelineState(BRDF_PipelineState.Get());
+    CmdList.SetComputePipelineState(BRDF_PipelineState.Get());
 
     UnorderedAccessView* StagingUAV = StagingTexture->GetUnorderedAccessView();
-    CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &StagingUAV, 1, 0);
+    CmdList.SetUnorderedAccessView(CShader.Get(), StagingUAV, 0);
 
     constexpr UInt32 ThreadCount = 16;
     const UInt32 DispatchWidth  = Math::DivideByMultiple(LUTSize, ThreadCount);
@@ -347,21 +347,21 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
             return false;
         }
 
-        CShader = RenderLayer::CreateComputeShader(ShaderCode);
-        if (!CShader)
+        TiledLightShader = CreateComputeShader(ShaderCode);
+        if (!TiledLightShader)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            CShader->SetName("DeferredLightPass Shader");
+            TiledLightShader->SetName("DeferredLightPass Shader");
         }
 
         ComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
-        DeferredLightPassCreateInfo.Shader = CShader.Get();
+        DeferredLightPassCreateInfo.Shader = TiledLightShader.Get();
 
-        TiledLightPassPSO = RenderLayer::CreateComputePipelineState(DeferredLightPassCreateInfo);
+        TiledLightPassPSO = CreateComputePipelineState(DeferredLightPassCreateInfo);
         if (!TiledLightPassPSO)
         {
             Debug::DebugBreak();
@@ -385,21 +385,21 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
             return false;
         }
 
-        CShader = RenderLayer::CreateComputeShader(ShaderCode);
-        if (!CShader)
+        TiledLightDebugShader = CreateComputeShader(ShaderCode);
+        if (!TiledLightDebugShader)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            CShader->SetName("DeferredLightPass Shader");
+            TiledLightDebugShader->SetName("DeferredLightPass Debug Shader");
         }
 
         ComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
-        DeferredLightPassCreateInfo.Shader = CShader.Get();
+        DeferredLightPassCreateInfo.Shader = TiledLightDebugShader.Get();
 
-        TiledLightPassPSODebug = RenderLayer::CreateComputePipelineState(DeferredLightPassCreateInfo);
+        TiledLightPassPSODebug = CreateComputePipelineState(DeferredLightPassCreateInfo);
         if (!TiledLightPassPSODebug)
         {
             Debug::DebugBreak();
@@ -419,6 +419,12 @@ void DeferredRenderer::Release()
     PipelineState.Reset();
     PrePassPipelineState.Reset();
     TiledLightPassPSO.Reset();
+    BaseVertexShader.Reset();
+    BasePixelShader.Reset();
+    PrePassVertexShader.Reset();
+    TiledLightPassPSODebug.Reset();
+    TiledLightShader.Reset();
+    TiledLightDebugShader.Reset();
 }
 
 void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources)
@@ -430,32 +436,32 @@ void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources&
 
     TRACE_SCOPE("PrePass");
 
-    CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CmdList.BindScissorRect(RenderWidth, RenderHeight, 0, 0);
+    CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
     struct PerObject
     {
         XMFLOAT4X4 Matrix;
     } PerObjectBuffer;
 
-    CmdList.BindRenderTargets(nullptr, 0, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
+    CmdList.SetRenderTargets(nullptr, 0, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
-    CmdList.BindGraphicsPipelineState(PrePassPipelineState.Get());
+    CmdList.SetGraphicsPipelineState(PrePassPipelineState.Get());
 
-    CmdList.BindConstantBuffers(EShaderStage::Vertex, FrameResources.CameraBuffer.GetAddressOf(), 1, 0);
+    CmdList.SetConstantBuffer(PrePassVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
     for (const MeshDrawCommand& Command : FrameResources.DeferredVisibleCommands)
     {
         if (!Command.Material->HasHeightMap())
         {
-            CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-            CmdList.BindIndexBuffer(Command.IndexBuffer);
+            CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
+            CmdList.SetIndexBuffer(Command.IndexBuffer);
 
             PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
-            CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &PerObjectBuffer, 16);
+            CmdList.Set32BitShaderConstants(PrePassVertexShader.Get(), &PerObjectBuffer, 16);
 
-            CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+            CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
         }
     }
 
@@ -471,8 +477,8 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
     const Float RenderWidth  = Float(FrameResources.MainWindowViewport->GetWidth());
     const Float RenderHeight = Float(FrameResources.MainWindowViewport->GetHeight());
 
-    CmdList.BindViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CmdList.BindScissorRect(RenderWidth, RenderHeight, 0, 0);
+    CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
     RenderTargetView* RenderTargets[] =
     {
@@ -481,10 +487,10 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
         FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(),
         FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(),
     };
-    CmdList.BindRenderTargets(RenderTargets, 4, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
+    CmdList.SetRenderTargets(RenderTargets, 4, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
     // Setup Pipeline
-    CmdList.BindGraphicsPipelineState(PipelineState.Get());
+    CmdList.SetGraphicsPipelineState(PipelineState.Get());
 
     struct TransformBuffer
     {
@@ -494,31 +500,36 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
 
     for (const MeshDrawCommand& Command : FrameResources.DeferredVisibleCommands)
     {
-        CmdList.BindVertexBuffers(&Command.VertexBuffer, 1, 0);
-        CmdList.BindIndexBuffer(Command.IndexBuffer);
+        CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
+        CmdList.SetIndexBuffer(Command.IndexBuffer);
 
         if (Command.Material->IsBufferDirty())
         {
             Command.Material->BuildBuffer(CmdList);
         }
 
-        CmdList.BindConstantBuffers(EShaderStage::Vertex, &FrameResources.CameraBuffer, 1, 0);
+        CmdList.SetConstantBuffer(BaseVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
         ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
-        CmdList.BindConstantBuffers(EShaderStage::Pixel, &MaterialBuffer, 1, 1);
+        CmdList.SetConstantBuffer(BasePixelShader.Get(), MaterialBuffer, 0);
 
         TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
 
         ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-        CmdList.BindShaderResourceViews(EShaderStage::Pixel, ShaderResourceViews, 6, 0);
+        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[0], 0);
+        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[1], 1);
+        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[2], 2);
+        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[3], 3);
+        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[4], 4);
+        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[5], 5);
 
         SamplerState* Sampler = Command.Material->GetMaterialSampler();
-        CmdList.BindSamplerStates(EShaderStage::Pixel, &Sampler, 1, 0);
+        CmdList.SetSamplerState(BasePixelShader.Get(), Sampler, 0);
 
-        CmdList.Bind32BitShaderConstants(EShaderStage::Vertex, &TransformPerObject, 32);
+        CmdList.Set32BitShaderConstants(BaseVertexShader.Get(), &TransformPerObject, 32);
 
-        CmdList.DrawIndexedInstanced(Command.IndexCount, 1, 0, 0, 0);
+        CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
@@ -530,57 +541,44 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
 
     TRACE_SCOPE("LightPass");
 
+    ComputeShader* LightPassShader = nullptr;
     if (GlobalDrawTileDebug.GetBool())
     {
-        CmdList.BindComputePipelineState(TiledLightPassPSODebug.Get());
+        LightPassShader = TiledLightDebugShader.Get();
+        CmdList.SetComputePipelineState(TiledLightPassPSODebug.Get());
     }
     else
     {
-        CmdList.BindComputePipelineState(TiledLightPassPSO.Get());
+        LightPassShader = TiledLightShader.Get();
+        CmdList.SetComputePipelineState(TiledLightPassPSO.Get());
     }
 
-    ShaderResourceView* ShaderResourceViews[] =
-    {
-        FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView(),
-        FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(),
-        FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(),
-        FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(),
-        nullptr,//FrameResources.ReflectionTexture->GetShaderResourceView(),
-        LightSetup.IrradianceMap->GetShaderResourceView(),
-        LightSetup.SpecularIrradianceMap->GetShaderResourceView(),
-        FrameResources.IntegrationLUT->GetShaderResourceView(),
-        LightSetup.DirLightShadowMaps->GetShaderResourceView(),
-        LightSetup.PointLightShadowMaps->GetShaderResourceView(),
-        FrameResources.SSAOBuffer->GetShaderResourceView(),
-    };
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 1);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 2);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
+    //CmdList.SetShaderResourceView(LightPassShader, nullptr, 4); // Reflection
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.IrradianceMap->GetShaderResourceView(), 4);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 5);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 6);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirLightShadowMaps->GetShaderResourceView(), 7);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 8);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 9);
 
-    CmdList.BindShaderResourceViews(EShaderStage::Compute, ShaderResourceViews, 11, 0);
+    CmdList.SetConstantBuffer(LightPassShader, FrameResources.CameraBuffer.Get(), 0);
+    CmdList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsBuffer.Get(), 1);
+    CmdList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsPosRadBuffer.Get(), 2);
+    CmdList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsBuffer.Get(), 3);
+    CmdList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
+    CmdList.SetConstantBuffer(LightPassShader, LightSetup.DirectionalLightsBuffer.Get(), 5);
 
-    ConstantBuffer* ConstantBuffers[] =
-    {
-        FrameResources.CameraBuffer.Get(),
-        LightSetup.PointLightsBuffer.Get(),
-        LightSetup.PointLightsPosRadBuffer.Get(),
-        LightSetup.ShadowCastingPointLightsBuffer.Get(),
-        LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(),
-        LightSetup.DirectionalLightsBuffer.Get()
-    };
-
-    CmdList.BindConstantBuffers(EShaderStage::Compute, ConstantBuffers, 6, 0);
-
-    TStaticArray<SamplerState*, 5> SamplerStates =
-    {
-        FrameResources.GBufferSampler.Get(),
-        FrameResources.IntegrationLUTSampler.Get(),
-        FrameResources.IrradianceSampler.Get(),
-        FrameResources.PointShadowSampler.Get(),
-        FrameResources.DirectionalShadowSampler.Get()
-    };
-
-    CmdList.BindSamplerStates(EShaderStage::Compute, SamplerStates.Data(), SamplerStates.Size(), 0);
+    CmdList.SetSamplerState(LightPassShader, FrameResources.IntegrationLUTSampler.Get(), 0);
+    CmdList.SetSamplerState(LightPassShader, FrameResources.IrradianceSampler.Get(), 1);
+    CmdList.SetSamplerState(LightPassShader, FrameResources.PointShadowSampler.Get(), 2);
+    CmdList.SetSamplerState(LightPassShader, FrameResources.DirectionalShadowSampler.Get(), 3);
 
     UnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
-    CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &FinalTargetUAV, 1, 0);
+    CmdList.SetUnorderedAccessView(LightPassShader, FinalTargetUAV, 0);
 
     struct LightPassSettings
     {
@@ -597,7 +595,7 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
     Settings.ScreenWidth     = FrameResources.FinalTarget->GetWidth();
     Settings.ScreenHeight    = FrameResources.FinalTarget->GetHeight();
 
-    CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &Settings, 5);
+    CmdList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
 
     constexpr UInt32 ThreadCount = 16;
     const UInt32 WorkGroupWidth  = Math::DivideByMultiple<UInt32>(Settings.ScreenWidth, ThreadCount);
@@ -619,7 +617,7 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     const UInt32 Usage  = TextureFlags_RenderTarget;
 
     // Albedo
-    FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = RenderLayer::CreateTexture2D(
+    FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = CreateTexture2D(
         FrameResources.AlbedoFormat, 
         Width, Height, 1, 1, Usage, 
         EResourceState::Common, 
@@ -634,7 +632,7 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     }
 
     // Normal
-    FrameResources.GBuffer[GBUFFER_NORMAL_INDEX] = RenderLayer::CreateTexture2D(
+    FrameResources.GBuffer[GBUFFER_NORMAL_INDEX] = CreateTexture2D(
         FrameResources.NormalFormat, 
         Width, Height, 1, 1, Usage, 
         EResourceState::Common, 
@@ -649,7 +647,7 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     }
 
     // Material Properties
-    FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX] = RenderLayer::CreateTexture2D(
+    FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX] = CreateTexture2D(
         FrameResources.MaterialFormat, 
         Width, Height, 1, 1, Usage, 
         EResourceState::Common,
@@ -665,7 +663,7 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
 
     // DepthStencil
     const UInt32 UsageDS = TextureFlag_DSV | TextureFlag_SRV;
-    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RenderLayer::CreateTexture2D(
+    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = CreateTexture2D(
         FrameResources.DepthBufferFormat, 
         Width, Height, 1, 1, UsageDS, 
         EResourceState::Common, 
@@ -680,7 +678,7 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     }
 
     // View Normal
-    FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = RenderLayer::CreateTexture2D(
+    FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = CreateTexture2D(
         FrameResources.ViewNormalFormat, 
         Width, Height, 1, 1, Usage, 
         EResourceState::Common, 
@@ -695,7 +693,7 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     }
 
     // Final Image
-    FrameResources.FinalTarget = RenderLayer::CreateTexture2D(
+    FrameResources.FinalTarget = CreateTexture2D(
         FrameResources.FinalTargetFormat, 
         Width, Height, 1, 1, 
         Usage | TextureFlag_UAV, 

@@ -14,7 +14,7 @@ public:
         , OfflineHandle({ 0 })
         , Desc()
     {
-        VALIDATE(InOfflineHeap !=  nullptr);
+        Assert(InOfflineHeap !=  nullptr);
     }
 
     ~D3D12SamplerState()
@@ -28,7 +28,7 @@ public:
         if (OfflineHandle != 0)
         {
             Desc = InDesc;
-            Device->CreateSampler(&Desc, OfflineHandle);
+            GetDevice()->CreateSampler(&Desc, OfflineHandle);
             return true;
         }
         else
@@ -42,10 +42,7 @@ public:
         return reinterpret_cast<void*>(OfflineHandle.ptr);
     }
 
-    virtual Bool IsValid() const override
-    {
-        return OfflineHandle != 0;
-    }
+    virtual Bool IsValid() const override { return OfflineHandle != 0; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
 

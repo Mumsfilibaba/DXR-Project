@@ -1,14 +1,10 @@
-#define BLOCK_SIZE 16
+#include "Constants.hlsli"
 
-/*
-* TODO: Support rootsignatures that does not need to support our default rootsignature,
-* since this sort of removes the need for the custom rootsignature support
-*/
+#define BLOCK_SIZE 16
 
 #define RootSig \
     "RootFlags(0), " \
-    "RootConstants(b0, num32BitConstants = 1), " \
-    "DescriptorTable(CBV(b1, numDescriptors = 1))," \
+    "RootConstants(b0, space = 1, num32BitConstants = 1), " \
     "DescriptorTable(SRV(t0, numDescriptors = 1))," \
     "DescriptorTable(UAV(u0, numDescriptors = 1))," \
     "DescriptorTable(Sampler(s1, numDescriptors = 1))," \
@@ -18,19 +14,16 @@
         "addressW = TEXTURE_ADDRESS_WRAP," \
         "filter = FILTER_MIN_MAG_LINEAR_MIP_POINT)"
 
-// Properties
-cbuffer CB0 : register(b0, space0)
+cbuffer CB0 : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     uint CubeMapSize; // Size of one side of the TextureCube
 }
 
 SamplerState LinearSampler : register(s0, space0);
 
-// Textures
-Texture2D<float4>			Source : register(t0, space0);
-RWTexture2DArray<float4>	OutCube : register(u0, space0);
+Texture2D<float4>        Source  : register(t0, space0);
+RWTexture2DArray<float4> OutCube : register(u0, space0);
 
-// Constants
 static const float2 INV_ATAN = float2(0.1591f, 0.3183f);
 
 // Transform from dispatch ID to cubemap face direction
@@ -78,6 +71,5 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
     // Convert the world space direction into U,V texture coordinates in the panoramic texture.
     // Source: http://gl.ict.usc.edu/Data/HighResProbes/
     float2 PanoramaTexCoords = float2(atan2(Direction.x, Direction.z), acos(Direction.y)) * INV_ATAN;
-
     OutCube[TexCoord] = Source.SampleLevel(LinearSampler, PanoramaTexCoords, 0);
 }

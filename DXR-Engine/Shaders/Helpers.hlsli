@@ -46,8 +46,8 @@ uint DivideByMultiple(uint Value, uint Alignment)
 
 float Random(float3 Seed, int i)
 {
-    float4  Seed4   = float4(Seed, i);
-    float   Dot     = dot(Seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
+    float4 Seed4 = float4(Seed, i);
+    float  Dot   = dot(Seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
     return frac(sin(Dot) * 43758.5453f);
 }
 
@@ -83,8 +83,8 @@ float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInvers
     float x = TexCoord.x * 2.0f - 1.0f;
     float y = (1.0f - TexCoord.y) * 2.0f - 1.0f;
 
-    float4 ProjectedPos     = float4(x, y, z, 1.0f);
-    float4 FinalPosition    = mul(ProjectedPos, ProjectionInverse);
+    float4 ProjectedPos  = float4(x, y, z, 1.0f);
+    float4 FinalPosition = mul(ProjectedPos, ProjectionInverse);
     
     return FinalPosition.xyz / FinalPosition.w;
 }
@@ -152,6 +152,21 @@ float3 UnpackNormal(float3 SampledNormal)
 float3 PackNormal(float3 Normal)
 {
     return (normalize(Normal) + 1.0f) * 0.5f;
+}
+
+float RadicalInverse_VdC(uint Bits)
+{
+    Bits = (Bits << 16u) | (Bits >> 16u);
+    Bits = ((Bits & 0x55555555u) << 1u) | ((Bits & 0xAAAAAAAAu) >> 1u);
+    Bits = ((Bits & 0x33333333u) << 2u) | ((Bits & 0xCCCCCCCCu) >> 2u);
+    Bits = ((Bits & 0x0F0F0F0Fu) << 4u) | ((Bits & 0xF0F0F0F0u) >> 4u);
+    Bits = ((Bits & 0x00FF00FFu) << 8u) | ((Bits & 0xFF00FF00u) >> 8u);
+    return float(Bits) * 2.3283064365386963e-10; // 0x100000000
+}
+
+float2 Hammersley(uint I, uint N)
+{
+    return float2(float(I) / float(N), RadicalInverse_VdC(I));
 }
 
 #endif

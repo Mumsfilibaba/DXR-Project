@@ -33,21 +33,21 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<ComputeShader> CShader = RenderLayer::CreateComputeShader(ShaderCode);
-    if (!CShader)
+    SSAOShader = CreateComputeShader(ShaderCode);
+    if (!SSAOShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        CShader->SetName("SSAO Shader");
+        SSAOShader->SetName("SSAO Shader");
     }
 
     ComputePipelineStateCreateInfo PipelineStateInfo;
-    PipelineStateInfo.Shader = CShader.Get();
+    PipelineStateInfo.Shader = SSAOShader.Get();
 
-    PipelineState = RenderLayer::CreateComputePipelineState(PipelineStateInfo);
+    PipelineState = CreateComputePipelineState(PipelineStateInfo);
     if (!PipelineState)
     {
         Debug::DebugBreak();
@@ -100,7 +100,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         SSAONoise.EmplaceBack(0.0f);
     }
 
-    SSAONoiseTex = RenderLayer::CreateTexture2D(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, EResourceState::NonPixelShaderResource, nullptr);
+    SSAONoiseTex = CreateTexture2D(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, EResourceState::NonPixelShaderResource, nullptr);
     if (!SSAONoiseTex)
     {
         Debug::DebugBreak();
@@ -126,7 +126,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
 
     const UInt32 Stride = sizeof(XMFLOAT3);
     ResourceData SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
-    SSAOSamples = RenderLayer::CreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, EResourceState::Common, &SSAOSampleData);
+    SSAOSamples = CreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, EResourceState::Common, &SSAOSampleData);
     if (!SSAOSamples)
     {
         Debug::DebugBreak();
@@ -137,7 +137,7 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         SSAOSamples->SetName("SSAO Samples");
     }
 
-    SSAOSamplesSRV = RenderLayer::CreateShaderResourceView(SSAOSamples.Get(), 0, SSAOKernel.Size());
+    SSAOSamplesSRV = CreateShaderResourceView(SSAOSamples.Get(), 0, SSAOKernel.Size());
     if (!SSAOSamplesSRV)
     {
         Debug::DebugBreak();
@@ -158,21 +158,21 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    CShader = RenderLayer::CreateComputeShader(ShaderCode);
-    if (!CShader)
+    BlurHorizontalShader = CreateComputeShader(ShaderCode);
+    if (!BlurHorizontalShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        CShader->SetName("SSAO Horizontal Blur Shader");
+        BlurHorizontalShader->SetName("SSAO Horizontal Blur Shader");
     }
 
     ComputePipelineStateCreateInfo PSOProperties;
-    PSOProperties.Shader = CShader.Get();
+    PSOProperties.Shader = BlurHorizontalShader.Get();
 
-    BlurHorizontalPSO = RenderLayer::CreateComputePipelineState(PSOProperties);
+    BlurHorizontalPSO = CreateComputePipelineState(PSOProperties);
     if (!BlurHorizontalPSO)
     {
         Debug::DebugBreak();
@@ -192,20 +192,20 @@ Bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
         return false;
     }
 
-    CShader = RenderLayer::CreateComputeShader(ShaderCode);
-    if (!CShader)
+    BlurVerticalShader = CreateComputeShader(ShaderCode);
+    if (!BlurVerticalShader)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        CShader->SetName("SSAO Vertcial Blur Shader");
+        BlurVerticalShader->SetName("SSAO Vertcial Blur Shader");
     }
 
-    PSOProperties.Shader = CShader.Get();
+    PSOProperties.Shader = BlurVerticalShader.Get();
 
-    BlurVerticalPSO = RenderLayer::CreateComputePipelineState(PSOProperties);
+    BlurVerticalPSO = CreateComputePipelineState(PSOProperties);
     if (!BlurVerticalPSO)
     {
         Debug::DebugBreak();
@@ -227,7 +227,9 @@ void ScreenSpaceOcclusionRenderer::Release()
     SSAOSamples.Reset();
     SSAOSamplesSRV.Reset();
     SSAONoiseTex.Reset();
-    SSAONoiseSRV.Reset();
+    SSAOShader.Reset();
+    BlurHorizontalShader.Reset();
+    BlurVerticalShader.Reset();
 }
 
 Bool ScreenSpaceOcclusionRenderer::ResizeResources(FrameResources& FrameResources)
@@ -235,12 +237,14 @@ Bool ScreenSpaceOcclusionRenderer::ResizeResources(FrameResources& FrameResource
 	return CreateRenderTarget(FrameResources);
 }
 
-void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, const FrameResources& FrameResources)
+void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, FrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
 
     TRACE_SCOPE("SSAO");
 
+    CmdList.SetComputePipelineState(PipelineState.Get());
+    
     struct SSAOSettings
     {
         XMFLOAT2 ScreenSize;
@@ -258,23 +262,24 @@ void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, const FrameResou
     SSAOSettings.KernelSize = GlobalSSAOKernelSize.GetInt32();
     SSAOSettings.Bias       = GlobalSSAOBias.GetFloat();
 
-    ShaderResourceView* ShaderResourceViews[] =
-    {
-        FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(),
-        FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(),
-        SSAONoiseSRV.Get(),
-        SSAOSamplesSRV.Get()
-    };
+    CmdList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    CmdList.BindComputePipelineState(PipelineState.Get());
+    FrameResources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(SSAONoiseTex->GetShaderResourceView()),
+        SSAONoiseTex,
+        EResourceState::NonPixelShaderResource,
+        EResourceState::NonPixelShaderResource);
 
-    CmdList.BindShaderResourceViews(EShaderStage::Compute, ShaderResourceViews, 4, 0);
-    CmdList.BindSamplerStates(EShaderStage::Compute, &FrameResources.GBufferSampler, 1, 0);
-    CmdList.BindConstantBuffers(EShaderStage::Compute, &FrameResources.CameraBuffer, 1, 0);
+    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 1);
+    CmdList.SetShaderResourceView(SSAOShader.Get(), SSAONoiseTex->GetShaderResourceView(), 2);
+    CmdList.SetShaderResourceView(SSAOShader.Get(), SSAOSamplesSRV.Get(), 3);
+
+    CmdList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 0);
 
     UnorderedAccessView* SSAOBufferUAV = FrameResources.SSAOBuffer->GetUnorderedAccessView();
-    CmdList.BindUnorderedAccessViews(EShaderStage::Compute, &SSAOBufferUAV, 1, 0);
-    CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &SSAOSettings, 7);
+    CmdList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
+    CmdList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, 7);
 
     constexpr UInt32 ThreadCount = 16;
     const UInt32 DispatchWidth   = Math::DivideByMultiple<UInt32>(Width, ThreadCount);
@@ -283,17 +288,17 @@ void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, const FrameResou
 
     CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
 
-    CmdList.BindComputePipelineState(BlurHorizontalPSO.Get());
+    CmdList.SetComputePipelineState(BlurHorizontalPSO.Get());
 
-    CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &SSAOSettings.ScreenSize, 2);
+    CmdList.Set32BitShaderConstants(BlurHorizontalShader.Get(), &SSAOSettings.ScreenSize, 2);
 
     CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
     CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
 
-    CmdList.BindComputePipelineState(BlurVerticalPSO.Get());
+    CmdList.SetComputePipelineState(BlurVerticalPSO.Get());
 
-    CmdList.Bind32BitShaderConstants(EShaderStage::Compute, &SSAOSettings.ScreenSize, 2);
+    CmdList.Set32BitShaderConstants(BlurVerticalShader.Get(), &SSAOSettings.ScreenSize, 2);
 
     CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
@@ -308,7 +313,7 @@ Bool ScreenSpaceOcclusionRenderer::CreateRenderTarget(FrameResources& FrameResou
     const UInt32 Height = FrameResources.MainWindowViewport->GetHeight();
     const UInt32 Flags  = TextureFlags_RWTexture;
 
-    FrameResources.SSAOBuffer = RenderLayer::CreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceState::Common, nullptr);
+    FrameResources.SSAOBuffer = CreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceState::Common, nullptr);
     if (!FrameResources.SSAOBuffer)
     {
         Debug::DebugBreak();

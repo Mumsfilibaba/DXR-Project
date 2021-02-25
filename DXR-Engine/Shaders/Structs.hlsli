@@ -3,24 +3,25 @@
 
 struct ComputeShaderInput
 {
-    uint3   GroupID           : SV_GroupID;
-    uint3   GroupThreadID     : SV_GroupThreadID;
-    uint3   DispatchThreadID  : SV_DispatchThreadID;
-    uint    GroupIndex        : SV_GroupIndex;
+    uint3 GroupID          : SV_GroupID;
+    uint3 GroupThreadID    : SV_GroupThreadID;
+    uint3 DispatchThreadID : SV_DispatchThreadID;
+    uint  GroupIndex       : SV_GroupIndex;
 };
 
 struct Camera
 {
-    float4x4    ViewProjection;
-    float4x4    View;
-    float4x4    ViewInverse;
-    float4x4    Projection;
-    float4x4    ProjectionInverse;
-    float4x4    ViewProjectionInverse;
-    float3      Position;
-    float       NearPlane;
-    float       FarPlane;
-    float       AspectRatio;
+    float4x4 ViewProjection;
+    float4x4 View;
+    float4x4 ViewInverse;
+    float4x4 Projection;
+    float4x4 ProjectionInverse;
+    float4x4 ViewProjectionInverse;
+    float3   Position;
+    float    NearPlane;
+    float3   Forward;
+    float    FarPlane;
+    float    AspectRatio;
 };
 
 struct PositionRadius
@@ -47,11 +48,11 @@ struct ShadowPointLight
 
 struct DirectionalLight
 {
-    float3      Color;
-    float       ShadowBias;
-    float3      Direction;
-    float       MaxShadowBias;
-    float4x4    LightMatrix;
+    float3   Color;
+    float    ShadowBias;
+    float3   Direction;
+    float    MaxShadowBias;
+    float4x4 LightMatrix;
 };
 
 struct Vertex
@@ -70,11 +71,11 @@ struct Transform
 
 struct Material
 {
-    float3  Albedo;
-    float   Roughness;
-    float   Metallic;
-    float   AO;
-    int     EnableHeight;
+    float3 Albedo;
+    float  Roughness;
+    float  Metallic;
+    float  AO;
+    int    EnableHeight;
 };
 
 #endif

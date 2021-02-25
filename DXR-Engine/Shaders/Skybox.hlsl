@@ -1,21 +1,22 @@
 #include "Helpers.hlsli"
+#include "Constants.hlsli"
 
 // Resources
-cbuffer CameraBuffer : register(b0)
+cbuffer CameraBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     float4x4 ViewProjection;
 };
 
-TextureCube<float4> Skybox			: register(t0, space0);
-SamplerState		SkyboxSampler	: register(s0, space0);
+TextureCube<float4> Skybox        : register(t0, space0);
+SamplerState        SkyboxSampler : register(s0, space0);
 
 // VertexShader
 struct VSInput
 {
-    float3 Position	: POSITION0;
-    float3 Normal	: NORMAL0;
-    float3 Tangent	: TANGENT0;
-    float2 TexCoord	: TEXCOORD0;
+    float3 Position : POSITION0;
+    float3 Normal   : NORMAL0;
+    float3 Tangent  : TANGENT0;
+    float2 TexCoord : TEXCOORD0;
 };
 
 struct VSOutput

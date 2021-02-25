@@ -7,14 +7,16 @@
 class ForwardRenderer
 {
 public:
-	ForwardRenderer()  = default;
-	~ForwardRenderer() = default;
+    ForwardRenderer()  = default;
+    ~ForwardRenderer() = default;
 
-	Bool Init(FrameResources& FrameResources);
-	void Release();
+    Bool Init(FrameResources& FrameResources);
+    void Release();
 
-	void Render(CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup);
+    void Render(CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup);
 
 private:
-	TSharedRef<GraphicsPipelineState> PipelineState;
+    TRef<GraphicsPipelineState> PipelineState;
+    TRef<VertexShader>          VShader;
+    TRef<PixelShader>           PShader;
 };

@@ -29,13 +29,11 @@ public:
     {
     }
 
-    ~Texture() = default;
-
-    virtual class Texture2D* AsTexture2D() { return nullptr; }
-    virtual class Texture2DArray* AsTexture2DArray() { return nullptr; }
-    virtual class TextureCube* AsTextureCube() { return nullptr; }
+    virtual class Texture2D*        AsTexture2D()        { return nullptr; }
+    virtual class Texture2DArray*   AsTexture2DArray()   { return nullptr; }
+    virtual class TextureCube*      AsTextureCube()      { return nullptr; }
     virtual class TextureCubeArray* AsTextureCubeArray() { return nullptr; }
-    virtual class Texture3D* AsTexture3D() { return nullptr; }
+    virtual class Texture3D*        AsTexture3D()        { return nullptr; }
 
     // Returns a ShaderResourceView of the full resource if texture is created with TextureFlag_SRV
     virtual class ShaderResourceView* GetShaderResourceView() const { return nullptr; }
@@ -44,9 +42,9 @@ public:
 
     UInt32 GetNumMips() const { return NumMips; }
 
-    const ClearValue& GetOptimalClearValue() const { return OptimalClearValue; }
-
     UInt32 GetFlags() const { return Flags; }
+
+    const ClearValue& GetOptimalClearValue() const { return OptimalClearValue; }
 
     // Checks weather a default shaderrsourceview is created by the renderlayer
     Bool IsUAV() const { return (Flags & TextureFlag_UAV) && !(Flags & TextureFlag_NoDefaultUAV); }
@@ -71,8 +69,6 @@ public:
         , NumSamples(InNumSamples)
     {
     }
-
-    ~Texture2D() = default;
 
     virtual Texture2D* AsTexture2D() override { return this; }
 
@@ -115,9 +111,7 @@ public:
     {
     }
 
-    ~Texture2DArray() = default;
-
-    virtual Texture2D* AsTexture2D() override { return nullptr; }
+    virtual Texture2D*      AsTexture2D()      override { return nullptr; }
     virtual Texture2DArray* AsTexture2DArray() override { return this; }
 
     UInt32 GetNumArraySlices() const { return NumArraySlices; }
@@ -134,8 +128,6 @@ public:
         , Size(InSize)
     {
     }
-
-    ~TextureCube() = default;
 
     virtual TextureCube* AsTextureCube() override { return this; }
 
@@ -154,9 +146,7 @@ public:
     {
     }
 
-    ~TextureCubeArray() = default;
-
-    virtual TextureCube* AsTextureCube() override { return nullptr; }
+    virtual TextureCube*      AsTextureCube()      override { return nullptr; }
     virtual TextureCubeArray* AsTextureCubeArray() override { return this; }
 
     UInt32 GetNumArraySlices() const { return NumArraySlices; }
@@ -176,13 +166,11 @@ public:
     {
     }
 
-    ~Texture3D() = default;
-
     virtual Texture3D* AsTexture3D() override { return this; }
 
-    UInt32 GetWidth() const { return Width; }
+    UInt32 GetWidth()  const { return Width; }
     UInt32 GetHeight() const { return Height; }
-    UInt32 GetDepth() const { return Depth; }
+    UInt32 GetDepth()  const { return Depth; }
 
 private:
     UInt32 Width;
