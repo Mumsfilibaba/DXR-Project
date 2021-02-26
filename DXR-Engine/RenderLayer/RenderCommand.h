@@ -94,11 +94,10 @@ struct ClearDepthStencilViewRenderCommand : public RenderCommand
 // Clear UnorderedAccessView RenderCommand
 struct ClearUnorderedAccessViewFloatRenderCommand : public RenderCommand
 {
-    ClearUnorderedAccessViewFloatRenderCommand(UnorderedAccessView* InUnorderedAccessView, const Float InClearColor[4])
+    ClearUnorderedAccessViewFloatRenderCommand(UnorderedAccessView* InUnorderedAccessView, const ColorF& InClearColor)
         : UnorderedAccessView(InUnorderedAccessView)
-        , ClearColor()
+        , ClearColor(InClearColor)
     {
-        Memory::Memcpy(ClearColor, InClearColor, sizeof(InClearColor));
     }
 
     virtual void Execute(ICommandContext& CmdContext) override
@@ -107,7 +106,7 @@ struct ClearUnorderedAccessViewFloatRenderCommand : public RenderCommand
     }
 
     TRef<UnorderedAccessView> UnorderedAccessView;
-    Float ClearColor[4];
+    ColorF ClearColor;
 };
 
 // SetShadingRate RenderCommand

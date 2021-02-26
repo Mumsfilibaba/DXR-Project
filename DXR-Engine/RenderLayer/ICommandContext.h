@@ -13,7 +13,7 @@ public:
 
     virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor) = 0;
     virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilF& ClearValue) = 0;
-    virtual void ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4]) = 0;
+    virtual void ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const ColorF& ClearColor) = 0;
 
     virtual void SetShadingRate(EShadingRate ShadingRate) = 0;
     virtual void SetShadingRateImage(Texture2D* ShadingImage) = 0;
