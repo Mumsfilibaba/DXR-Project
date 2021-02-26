@@ -266,7 +266,7 @@ void Renderer::RenderDebugInterface()
         const UInt32 WindowWidth  = gMainWindow->GetWidth();
         const UInt32 WindowHeight = gMainWindow->GetHeight();
         const Float Width  = 300.0f;
-        const Float Height = WindowHeight * 0.1f;
+        const Float Height = WindowHeight * 0.15f;
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
@@ -311,6 +311,50 @@ void Renderer::RenderDebugInterface()
         ImGui::NextColumn();
 
         ImGui::Text("%d", LastFrameNumCommands);
+        ImGui::NextColumn();
+
+        UInt64 Frequency = Profiler->GetFrequency();
+        
+        TimeQuery Query;
+        Profiler->GetTimeQuery(Query, 0);
+
+        UInt64 Diff = Query.End - Query.Begin;
+
+        ImGui::Text("Base Pass GPU time: ");
+        ImGui::NextColumn();
+
+        Double MilliSeconds = (Double)Diff / (Double)(Frequency / 1000);
+        ImGui::Text("%.4f ms", MilliSeconds);
+        ImGui::NextColumn();
+
+        Profiler->GetTimeQuery(Query, 1);
+        Diff = Query.End - Query.Begin;
+
+        ImGui::Text("Light Pass GPU time: ");
+        ImGui::NextColumn();
+
+        MilliSeconds = (Double)Diff / (Double)(Frequency / 1000);
+        ImGui::Text("%.4f ms", MilliSeconds);
+        ImGui::NextColumn();
+
+        Profiler->GetTimeQuery(Query, 2);
+        Diff = Query.End - Query.Begin;
+
+        ImGui::Text("Forward Pass GPU time: ");
+        ImGui::NextColumn();
+
+        MilliSeconds = (Double)Diff / (Double)(Frequency / 1000);
+        ImGui::Text("%.4f ms", MilliSeconds);
+        ImGui::NextColumn();
+
+        Profiler->GetTimeQuery(Query, 3);
+        Diff = Query.End - Query.Begin;
+
+        ImGui::Text("RayTracing Pass GPU time: ");
+        ImGui::NextColumn();
+
+        MilliSeconds = (Double)Diff / (Double)(Frequency / 1000);
+        ImGui::Text("%.4f ms", MilliSeconds);
 
         ImGui::Columns(1);
 
@@ -384,7 +428,9 @@ void Renderer::Tick(const Scene& Scene)
 
     if (IsRayTracingSupported())
     {
+        CmdList.BeginTimeStamp(Profiler.Get(), 3);
         RayTracer.PreRender(CmdList, Resources, Scene);
+        CmdList.EndTimeStamp(Profiler.Get(), 3);
     }
 
     // Update camerabuffer
@@ -425,7 +471,9 @@ void Renderer::Tick(const Scene& Scene)
         DeferredRenderer.RenderPrePass(CmdList, Resources);
     }
 
+    CmdList.BeginTimeStamp(Profiler.Get(), 0);
     DeferredRenderer.RenderBasePass(CmdList, Resources);
+    CmdList.EndTimeStamp(Profiler.Get(), 0);
 
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
 
@@ -484,7 +532,9 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
 
+    CmdList.BeginTimeStamp(Profiler.Get(), 1);
     DeferredRenderer.RenderDeferredTiledLightPass(CmdList, Resources, LightSetup);
+    CmdList.EndTimeStamp(Profiler.Get(), 1);
 
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
     CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::UnorderedAccess, EResourceState::RenderTarget);
@@ -510,8 +560,10 @@ void Renderer::Tick(const Scene& Scene)
         EResourceState::PixelShaderResource,
         EResourceState::PixelShaderResource);
 
+    CmdList.BeginTimeStamp(Profiler.Get(), 2);
     ForwardRenderer.Render(CmdList, Resources, LightSetup);
-    
+    CmdList.EndTimeStamp(Profiler.Get(), 2);
+
     CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::RenderTarget, EResourceState::PixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
@@ -700,6 +752,12 @@ Bool Renderer::Init()
         }
     }
 
+    Profiler = CreateProfiler();
+    if (!Profiler)
+    {
+        return false;
+    }
+
     if (!InitAA())
     {
         return false;
@@ -817,6 +875,8 @@ void Renderer::Release()
     ShadingImage.Reset();
     ShadingRatePipeline.Reset();
     ShadingRateShader.Reset();
+
+    Profiler.Reset();
 
     LastFrameNumDrawCalls     = 0;
     LastFrameNumDispatchCalls = 0;

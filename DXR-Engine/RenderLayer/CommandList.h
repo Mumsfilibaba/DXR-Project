@@ -2,6 +2,7 @@
 #include "Resources.h"
 #include "RayTracing.h"
 #include "RenderCommand.h"
+#include "GPUProfiler.h"
 
 #include "Memory/LinearAllocator.h"
 
@@ -50,6 +51,18 @@ public:
 
         InsertCommand<EndRenderCommand>();
         IsRecording = false;
+    }
+
+    void BeginTimeStamp(GPUProfiler* Profiler, UInt32 Index)
+    {
+        SafeAddRef(Profiler);
+        InsertCommand<BeginTimeStampRenderCommand>(Profiler, Index);
+    }
+
+    void EndTimeStamp(GPUProfiler* Profiler, UInt32 Index)
+    {
+        SafeAddRef(Profiler);
+        InsertCommand<EndTimeStampRenderCommand>(Profiler, Index);
     }
 
     void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor)

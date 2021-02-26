@@ -84,6 +84,8 @@ private:
     TRef<GraphicsPipelineState> FXAADebugPSO;
     TRef<PixelShader>           FXAADebugShader;
 
+    TRef<GPUProfiler> Profiler;
+
     UInt32 LastFrameNumDrawCalls     = 0;
     UInt32 LastFrameNumDispatchCalls = 0;
     UInt32 LastFrameNumCommands      = 0;

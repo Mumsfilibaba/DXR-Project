@@ -15,8 +15,8 @@ public:
 
     Bool Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue);
 
-    void* Map(UInt32 Offset, UInt32 Size);
-    void  Unmap(UInt32 Offset, UInt32 Size);
+    void* Map(UInt32 SubResource, const D3D12_RANGE* Range);
+    void  Unmap(UInt32 SubResource, const D3D12_RANGE* Range);
 
     void SetName(const std::string& Name)
     {

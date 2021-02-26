@@ -15,6 +15,7 @@
 #include "D3D12SamplerState.h"
 #include "D3D12PipelineState.h"
 #include "D3D12DescriptorCache.h"
+#include "D3D12GPUProfiler.h"
 
 struct D3D12UploadAllocation
 {
@@ -195,6 +196,12 @@ public:
     D3D12CommandQueueHandle& GetQueue()      { return CmdQueue; }
     D3D12CommandListHandle& GetCommandList() { return CmdList; }
     
+    UInt32 GetCurrentEpochValue() const
+    {
+        UInt32 MaxValue = Math::Max<Int32>((Int32)CmdBatches.Size() - 1, 0);
+        return Math::Min<UInt32>(NextCmdBatch - 1, MaxValue);
+    }
+
     void UpdateBuffer(D3D12Resource* Resource, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData);
 
     void UnorderedAccessBarrier(D3D12Resource* Resource)
@@ -220,6 +227,9 @@ public:
 public:
     virtual void Begin() override final;
     virtual void End()   override final;
+
+    virtual void BeginTimeStamp(GPUProfiler* Profiler, UInt32 Index) override final;
+    virtual void EndTimeStamp(GPUProfiler* Profiler, UInt32 Index) override final;
 
     virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor) override final;
     virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilF& ClearValue) override final;
@@ -330,6 +340,8 @@ private:
 
     TArray<D3D12CommandBatch> CmdBatches;
     D3D12CommandBatch*        CmdBatch = nullptr;
+
+    TArray<TRef<D3D12GPUProfiler>> ResolveProfilers;
 
     TRef<D3D12ComputePipelineState> GenerateMipsTex2D_PSO;
     TRef<D3D12ComputePipelineState> GenerateMipsTexCube_PSO;
