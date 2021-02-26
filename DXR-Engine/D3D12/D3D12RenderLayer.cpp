@@ -17,6 +17,7 @@
 #include "D3D12Shader.h"
 #include "D3D12SamplerState.h"
 #include "D3D12Viewport.h"
+#include "D3D12GPUProfiler.h"
 
 #include <algorithm>
 
@@ -1433,6 +1434,11 @@ RayTracingPipelineState* D3D12RenderLayer::CreateRayTracingPipelineState(const R
     {
         return nullptr;
     }
+}
+
+GPUProfiler* D3D12RenderLayer::CreateProfiler()
+{
+    return D3D12GPUProfiler::Create(Device);
 }
 
 Viewport* D3D12RenderLayer::CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat)

@@ -249,6 +249,20 @@ public:
         CmdList->ResourceBarrier(NumBarriers, Barriers);
     }
 
+    FORCEINLINE void TransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, UINT Subresource)
+    {
+        D3D12_RESOURCE_BARRIER Barrier;
+        Memory::Memzero(&Barrier);
+
+        Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        Barrier.Transition.pResource   = Resource;
+        Barrier.Transition.StateAfter  = AfterState;
+        Barrier.Transition.StateBefore = BeforeState;
+        Barrier.Transition.Subresource = Subresource;
+
+        CmdList->ResourceBarrier(1, &Barrier);
+    }
+
     FORCEINLINE void UnorderedAccessBarrier(ID3D12Resource* Resource)
     {
         D3D12_RESOURCE_BARRIER Barrier;

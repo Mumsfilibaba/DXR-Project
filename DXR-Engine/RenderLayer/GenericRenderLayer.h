@@ -159,6 +159,8 @@ public:
     virtual class ComputePipelineState* CreateComputePipelineState(const ComputePipelineStateCreateInfo& CreateInfo) = 0;
     virtual class RayTracingPipelineState* CreateRayTracingPipelineState(const RayTracingPipelineStateCreateInfo& CreateInfo) = 0;
 
+    virtual class GPUProfiler* CreateProfiler() = 0;
+
     virtual class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
 
     virtual class ICommandContext* GetDefaultCommandContext() = 0;
@@ -705,6 +707,11 @@ FORCEINLINE GraphicsPipelineState* CreateGraphicsPipelineState(const GraphicsPip
 FORCEINLINE RayTracingPipelineState* CreateRayTracingPipelineState(const RayTracingPipelineStateCreateInfo& CreateInfo)
 {
     return gRenderLayer->CreateRayTracingPipelineState(CreateInfo);
+}
+
+FORCEINLINE class GPUProfiler* CreateProfiler()
+{
+    return gRenderLayer->CreateProfiler();
 }
 
 FORCEINLINE class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat)
