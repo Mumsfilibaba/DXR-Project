@@ -55,6 +55,43 @@ struct EndRenderCommand : public RenderCommand
     }
 };
 
+
+// BeginTimeStamp RenderCommand
+struct BeginTimeStampRenderCommand : public RenderCommand
+{
+    BeginTimeStampRenderCommand(GPUProfiler* InProfiler, UInt32 InIndex)
+        : Profiler(InProfiler)
+        , Index(InIndex)
+    {
+    }
+
+    virtual void Execute(ICommandContext& CmdContext) override
+    {
+        CmdContext.BeginTimeStamp(Profiler.Get(), Index);
+    }
+
+    TRef<GPUProfiler> Profiler;
+    UInt32 Index;
+};
+
+// EndTimeStamp RenderCommand
+struct EndTimeStampRenderCommand : public RenderCommand
+{
+    EndTimeStampRenderCommand(GPUProfiler* InProfiler, UInt32 InIndex)
+        : Profiler(InProfiler)
+        , Index(InIndex)
+    {
+    }
+
+    virtual void Execute(ICommandContext& CmdContext) override
+    {
+        CmdContext.EndTimeStamp(Profiler.Get(), Index);
+    }
+
+    TRef<GPUProfiler> Profiler;
+    UInt32 Index;
+};
+
 // Clear RenderTarget RenderCommand
 struct ClearRenderTargetViewRenderCommand : public RenderCommand
 {

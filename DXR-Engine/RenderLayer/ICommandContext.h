@@ -11,6 +11,9 @@ public:
     virtual void Begin() = 0;
     virtual void End()   = 0;
 
+    virtual void BeginTimeStamp(GPUProfiler* Profiler, UInt32 Index) = 0;
+    virtual void EndTimeStamp(GPUProfiler* Profiler, UInt32 Index) = 0;
+
     virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor) = 0;
     virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilF& ClearValue) = 0;
     virtual void ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4]) = 0;

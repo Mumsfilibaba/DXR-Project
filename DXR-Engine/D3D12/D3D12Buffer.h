@@ -140,12 +140,28 @@ public:
 
     virtual void* Map(UInt32 Offset, UInt32 InSize) override
     {
-        return D3D12BaseBuffer::Resource->Map(Offset, InSize);
+        if (Offset != 0 || InSize != 0)
+        {
+            D3D12_RANGE MapRange = { Offset, InSize };
+            return D3D12BaseBuffer::Resource->Map(0, &MapRange);
+        }
+        else
+        {
+            return D3D12BaseBuffer::Resource->Map(0, nullptr);
+        }
     }
 
     virtual void Unmap(UInt32 Offset, UInt32 InSize) override
     {
-        D3D12BaseBuffer::Resource->Unmap(Offset, InSize);
+        if (Offset != 0 || InSize != 0)
+        {
+            D3D12_RANGE MapRange = { Offset, InSize };
+            D3D12BaseBuffer::Resource->Unmap(0, &MapRange);
+        }
+        else
+        {
+            D3D12BaseBuffer::Resource->Unmap(0, nullptr);
+        }
     }
 
     virtual void SetName(const std::string& InName) override final

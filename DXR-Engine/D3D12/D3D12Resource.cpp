@@ -50,21 +50,11 @@ Bool D3D12Resource::Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_V
     }
 }
 
-void* D3D12Resource::Map(UInt32 Offset, UInt32 Size)
+void* D3D12Resource::Map(UInt32 SubResource, const D3D12_RANGE* Range)
 {
     void* MappedData = nullptr;
 
-    HRESULT Result = 0;
-    if (Offset != 0 && Size != 0)
-    {
-        D3D12_RANGE MapRange = { Offset,Offset + Size };
-        Result = DxResource->Map(0, &MapRange, &MappedData);
-    }
-    else
-    {
-        Result = DxResource->Map(0, nullptr, &MappedData);
-    }
-
+    HRESULT Result = DxResource->Map(SubResource, Range, &MappedData);
     if (FAILED(Result))
     {
         LOG_ERROR("[D3D12Resource::Map] Failed");
@@ -76,15 +66,7 @@ void* D3D12Resource::Map(UInt32 Offset, UInt32 Size)
     }
 }
 
-void D3D12Resource::Unmap(UInt32 Offset, UInt32 Size)
+void D3D12Resource::Unmap(UInt32 SubResource, const D3D12_RANGE* Range)
 {
-    if (Offset != 0 && Size != 0)
-    {
-        D3D12_RANGE WriteRange = { Offset,Offset + Size };
-        DxResource->Unmap(0, &WriteRange);
-    }
-    else
-    {
-        DxResource->Unmap(0, nullptr);
-    }
+    DxResource->Unmap(SubResource, Range);
 }

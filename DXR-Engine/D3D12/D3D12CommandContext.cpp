@@ -10,6 +10,7 @@
 #include "D3D12Shader.h"
 #include "D3D12RayTracing.h"
 #include "D3D12RenderLayer.h"
+#include "D3D12GPUProfiler.h"
 
 #include <pix.h>
 
@@ -361,11 +362,19 @@ void D3D12CommandContext::End()
 {
     Assert(IsReady == true);
 
-    // Reset state
     FlushResourceBarriers();
 
     CmdBatch = nullptr;
     IsReady  = false;
+
+    const UInt64 NewFenceValue = ++FenceValue;
+
+    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+    for (UInt32 i = 0; i < ResolveProfilers.Size(); i++)
+    {
+        ResolveProfilers[i]->ResolveQueries(*this);
+    }
+    ResolveProfilers.Clear();
 
     // Execute
     if (!CmdList.Close())
@@ -376,12 +385,35 @@ void D3D12CommandContext::End()
 
     CmdQueue.ExecuteCommandList(&CmdList);
 
-    const UInt64 CurrentFenceValue = ++FenceValue;
-    if (!CmdQueue.SignalFence(Fence, CurrentFenceValue))
+    if (!CmdQueue.SignalFence(Fence, NewFenceValue))
     {
         Debug::DebugBreak();
         return;
     }
+}
+
+void D3D12CommandContext::BeginTimeStamp(GPUProfiler* Profiler, UInt32 Index)
+{
+    ID3D12GraphicsCommandList* DxCmdList  = CmdList.GetGraphicsCommandList();
+    
+    D3D12GPUProfiler* DxProfiler = static_cast<D3D12GPUProfiler*>(Profiler);
+    Assert(Profiler);
+    
+    DxProfiler->BeginQuery(DxCmdList, Index);
+
+    ResolveProfilers.EmplaceBack(MakeSharedRef<D3D12GPUProfiler>(DxProfiler));
+}
+
+void D3D12CommandContext::EndTimeStamp(GPUProfiler* Profiler, UInt32 Index)
+{
+    Assert(Profiler);
+
+    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+
+    D3D12GPUProfiler* DxProfiler = static_cast<D3D12GPUProfiler*>(Profiler);
+    Assert(Profiler);
+
+    DxProfiler->EndQuery(DxCmdList, Index);
 }
 
 void D3D12CommandContext::ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor)

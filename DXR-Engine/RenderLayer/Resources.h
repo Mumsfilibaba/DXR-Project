@@ -6,3 +6,4 @@
 #include "PipelineState.h"
 #include "SamplerState.h"
 #include "RayTracing.h"
+#include "GPUProfiler.h"
