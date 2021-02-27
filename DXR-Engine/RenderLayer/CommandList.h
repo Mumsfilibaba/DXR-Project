@@ -81,7 +81,7 @@ public:
         InsertCommand<ClearDepthStencilViewRenderCommand>(DepthStencilView, ClearValue);
     }
 
-    void ClearUnorderedAccessView(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4])
+    void ClearUnorderedAccessView(UnorderedAccessView* UnorderedAccessView, const ColorF& ClearColor)
     {
         Assert(UnorderedAccessView != nullptr);
 

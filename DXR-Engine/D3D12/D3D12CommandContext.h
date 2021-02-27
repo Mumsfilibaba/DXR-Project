@@ -233,9 +233,7 @@ public:
 
     virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor) override final;
     virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilF& ClearValue) override final;
-
-    // TODO: Use ColorF
-    virtual void ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const Float ClearColor[4]) override final;
+    virtual void ClearUnorderedAccessViewFloat(UnorderedAccessView* UnorderedAccessView, const ColorF& ClearColor) override final;
 
     virtual void SetShadingRate(EShadingRate ShadingRate) override final;
     virtual void SetShadingRateImage(Texture2D* ShadingImage) override final;
