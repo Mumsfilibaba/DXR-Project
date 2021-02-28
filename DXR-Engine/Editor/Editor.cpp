@@ -117,7 +117,7 @@ static void DrawMenu()
 
                 if (ImGui::MenuItem("Quit"))
                 {
-                    gEngineLoop.Exit();
+                    EngineLoop::Exit();
                 }
 
                 ImGui::EndMenu();

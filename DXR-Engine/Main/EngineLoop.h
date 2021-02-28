@@ -8,29 +8,23 @@ Int32 EngineMain(const TArrayView<const Char*> Args);
 class EngineLoop
 {
 public:
-    EngineLoop()  = default;
-    ~EngineLoop() = default;
-
-    Bool PreInit();
-    Bool Init();
-    Bool PostInit();
+    static Bool PreInit();
+    static Bool Init();
+    static Bool PostInit();
     
-    void PreTick();
-    void Tick();
-    void PostTick();
+    static void PreTick();
+    static void Tick();
+    static void PostTick();
 
-    Bool PreRelease();
-    Bool Release();
-    Bool PostRelease();
+    static Bool PreRelease();
+    static Bool Release();
+    static Bool PostRelease();
 
-    void Exit();
+    static void Exit();
     
-    Bool IsRunning() const;
+    static Bool IsRunning();
+    static Bool IsExiting();
 
-    Timestamp GetDeltaTime()        const;
-    Timestamp GetTotalElapsedTime() const;
-
-private:
-    Bool  ShouldRun = false;
-    Clock Clock;
+    static Timestamp GetDeltaTime();
+    static Timestamp GetTotalElapsedTime();
 };
