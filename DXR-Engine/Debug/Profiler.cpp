@@ -262,7 +262,10 @@ static void DrawProfiler()
     {
         ImGui::Button("Start Profiler");
 
-        const Float ChildWidth = Width * 0.985f;
+        const Float ChildWidth  = Width * 0.985f;
+        const Float ChildHeight = Height * 0.13f;
+
+        ImGui::BeginChild("##Graph", ImVec2(ChildWidth, ChildHeight), true);
 
         const Float FtAvg = gProfilerData.FrameTime.GetAverage();
         ImGui::PlotHistogram(
@@ -275,6 +278,8 @@ static void DrawProfiler()
             ImGui_GetMaxLimit(FtAvg),
             ImVec2(ChildWidth, 80.0f));
 
+        ImGui::NewLine();
+
         ImGui::Text("FPS:");
         ImGui::SameLine();
         ImGui::Text("%d", gProfilerData.Fps);
@@ -284,9 +289,14 @@ static void DrawProfiler()
         ImGui::SameLine();
         ImGui::Text("Avg: %.4f ms", FtAvg);
 
+        ImGui::EndChild();
+
         static Bool Clicked = false;
 
-        ImGui::BeginChild("##Threads", ImVec2(ChildWidth, 60.0f), true);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5.0f, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.25f, 0.25f, 0.25f, 0.9f));
+
+        ImGui::BeginChild("##Threads", ImVec2(ChildWidth, 40.0f), true);
 
         ImGui::Columns(2, 0, false);
         ImGui::SetColumnWidth(0, 100.0f);
@@ -345,6 +355,8 @@ static void DrawProfiler()
         ImGui::Columns(1);
 
         ImGui::EndChild();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar();
 
         if (Clicked)
         {
