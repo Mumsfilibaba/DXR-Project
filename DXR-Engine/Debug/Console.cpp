@@ -43,8 +43,6 @@ void Console::Tick()
             const Float Width         = Float(WindowWidth);
             const Float Height        = Float(WindowHeight) * 0.125f;
 
-            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.8f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
             ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
             ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
             ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
@@ -98,7 +96,7 @@ void Console::Tick()
                 ImGuiInputTextFlags_CallbackAlways     |
                 ImGuiInputTextFlags_CallbackEdit;
 
-            auto Callback = [](ImGuiTextEditCallbackData* Data)->Int32
+            auto Callback = [](ImGuiInputTextCallbackData* Data)->Int32
             {
                 Console* This = reinterpret_cast<Console*>(Data->UserData);
                 return This->TextCallback(Data);
@@ -220,8 +218,6 @@ void Console::Tick()
 
             ImGui::PopItemWidth();
 
-            ImGui::PopStyleColor();
-            ImGui::PopStyleColor();
             ImGui::PopStyleColor();
             ImGui::PopStyleColor();
             ImGui::PopStyleColor();

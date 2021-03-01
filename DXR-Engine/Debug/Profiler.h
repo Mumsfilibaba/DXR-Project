@@ -1,107 +1,80 @@
 #pragma once
 #include "Time/Clock.h"
 
+#include "RenderLayer/CommandList.h"
+
 #include <unordered_map>
 
 #define ENABLE_PROFILER      1
-#define NUM_PROFILER_SAMPLES 75
+#define NUM_PROFILER_SAMPLES 200
 
 #if ENABLE_PROFILER
-    #define TRACE_SCOPE(Name)      ScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(&gProfiler, Name)
+    #define TRACE_SCOPE(Name)      ScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
     #define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(__FUNCTION_SIG__)
+
+    #define GPU_TRACE_SCOPE(CmdList, Name) GPUScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(CmdList, Name)
 #else
     #define TRACE_SCOPE(Name)
     #define TRACE_FUNCTION_SCOPE()
+
+    #define GPU_TRACE_SCOPE(CmdList, Name)
 #endif
 
 class Profiler
 {
-    struct Sample
-    {
-        Sample() = default;
-
-        Sample(Float FirstSample)
-            : CurrentSample(1)
-            , SampleCount(1)
-            , Samples()
-        {
-            Samples.Front() = FirstSample;
-        }
-
-        FORCEINLINE void AddSample(Float NewSample)
-        {
-            Samples[CurrentSample] = NewSample;
-            Min = Math::Min(NewSample, Min);
-            Max = Math::Max(NewSample, Max);
-
-            CurrentSample++;
-            SampleCount = Math::Min<Int32>(Samples.Size(), SampleCount + 1);
-
-            if (CurrentSample >= Int32(Samples.Size()))
-            {
-                CurrentSample = 0;
-            }
-        }
-
-        FORCEINLINE Float GetAverage() const
-        {
-            Float Average = 0.0f;
-            for (Int32 n = 0; n < SampleCount; n++)
-            {
-                Average += Samples[n];
-            }
-            
-            return Average / Float(SampleCount);
-        }
-
-        TStaticArray<Float, NUM_PROFILER_SAMPLES> Samples;
-        Float Max           = -FLT_MAX;
-        Float Min           = FLT_MAX;
-        Int32 SampleCount   = 0;
-        Int32 CurrentSample = 0;
-    };
-
 public:
-    Profiler();
-    ~Profiler() = default;
+    static void Init();
+    static void Tick();
 
-    void Init();
-    void Tick();
+    static void Enable();
+    static void Disable();
+    static void Reset();
 
-    void AddSample(const Char* Name, Float Sample);
+    static void BeginTraceScope(const Char* Name);
+    static void EndTraceScope(const Char* Name);
     
-private:
-    Clock  Clock;
-    Sample FrameTime;
-    Int32  Fps        = 0;
-    Int32  CurrentFps = 0;
-    std::unordered_map<std::string, Sample> Samples;
+    static void BeginGPUFrame(CommandList& CmdList);
+    static void BeginGPUTrace(CommandList& CmdList, const Char* Name);
+    static void EndGPUTrace(CommandList& CmdList, const Char* Name);
+    static void EndGPUFrame(CommandList& CmdList);
+
+    static void SetGPUProfiler(class GPUProfiler* Profiler);
 };
 
 struct ScopedTrace
 {
 public:
-    ScopedTrace(Profiler* InProfiler, const Char* InName)
-        : Profiler(InProfiler)
-        , Name(InName)
-        , Clock()
+    ScopedTrace(const Char* InName)
+        : Name(InName)
     {
-        Clock.Tick();
+        Profiler::BeginTraceScope(Name);
     }
 
     ~ScopedTrace()
     {
-        Clock.Tick();
-        
-        if (Profiler)
-        {
-            const Float Nanoseconds = Float(Clock.GetDeltaTime().AsNanoSeconds());
-            Profiler->AddSample(Name, Nanoseconds);
-        }
+        Profiler::EndTraceScope(Name);
     }
 
 private:
-    Profiler*   Profiler = nullptr;
-    const Char* Name     = nullptr;
-    Clock       Clock;
+    const Char* Name = nullptr;
+};
+
+struct GPUScopedTrace
+{
+public:
+    GPUScopedTrace(CommandList& InCmdList, const Char* InName)
+        : CmdList(InCmdList)
+        , Name(InName)
+    {
+        Profiler::BeginGPUTrace(CmdList, Name);
+    }
+
+    ~GPUScopedTrace()
+    {
+        Profiler::EndGPUTrace(CmdList, Name);
+    }
+
+private:
+    CommandList& CmdList;
+    const Char* Name = nullptr;
 };

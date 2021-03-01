@@ -116,10 +116,25 @@ Bool DebugUI::Init()
     Style.ScrollbarRounding = 0.0f;
     Style.ScrollbarSize     = 12.0f;
 
-    Style.Colors[ImGuiCol_WindowBg].x = 0.15f;
-    Style.Colors[ImGuiCol_WindowBg].y = 0.15f;
-    Style.Colors[ImGuiCol_WindowBg].z = 0.15f;
+    Style.Colors[ImGuiCol_WindowBg].x = 0.2f;
+    Style.Colors[ImGuiCol_WindowBg].y = 0.2f;
+    Style.Colors[ImGuiCol_WindowBg].z = 0.2f;
     Style.Colors[ImGuiCol_WindowBg].w = 0.9f;
+
+    Style.Colors[ImGuiCol_Text].x = 1.0f;
+    Style.Colors[ImGuiCol_Text].y = 1.0f;
+    Style.Colors[ImGuiCol_Text].z = 1.0f;
+    Style.Colors[ImGuiCol_Text].w = 1.0f;
+
+    Style.Colors[ImGuiCol_PlotHistogram].x = 0.9f;
+    Style.Colors[ImGuiCol_PlotHistogram].y = 0.9f;
+    Style.Colors[ImGuiCol_PlotHistogram].z = 0.9f;
+    Style.Colors[ImGuiCol_PlotHistogram].w = 1.0f;
+
+    Style.Colors[ImGuiCol_PlotHistogramHovered].x = 0.75f;
+    Style.Colors[ImGuiCol_PlotHistogramHovered].y = 0.75f;
+    Style.Colors[ImGuiCol_PlotHistogramHovered].z = 0.75f;
+    Style.Colors[ImGuiCol_PlotHistogramHovered].w = 1.0f;
 
     Style.Colors[ImGuiCol_TitleBg].x = 0.3f;
     Style.Colors[ImGuiCol_TitleBg].y = 0.3f;

@@ -26,6 +26,15 @@
 
 #include "Memory/Memory.h"
 
+struct EngineLoopData
+{
+    Bool  ShouldRun = false;
+    Bool  IsExiting = false;
+    Clock Clock;
+};
+
+static EngineLoopData gEngineLoopData;
+
 Int32 EngineMain(const TArrayView<const Char*> Args)
 {
     UNREFERENCED_VARIABLE(Args);
@@ -34,48 +43,48 @@ Int32 EngineMain(const TArrayView<const Char*> Args)
     Memory::SetDebugFlags(EMemoryDebugFlag::MemoryDebugFlag_LeakCheck);
 #endif
 
-    if (!gEngineLoop.PreInit())
+    if (!EngineLoop::PreInit())
     {
         PlatformDialogMisc::MessageBox("ERROR", "Pre-Initialize Failed");
         return -1;
     }
 
-    if (!gEngineLoop.Init())
+    if (!EngineLoop::Init())
     {
         PlatformDialogMisc::MessageBox("ERROR", "Initialize Failed");
         return -1;
     }
 
-    if (!gEngineLoop.PostInit())
+    if (!EngineLoop::PostInit())
     {
         PlatformDialogMisc::MessageBox("ERROR", "Post-Initialize Failed");
         return -1;
     }
 
-    while (gEngineLoop.IsRunning())
+    while (EngineLoop::IsRunning())
     {
         TRACE_SCOPE("Tick");
 
-        gEngineLoop.PreTick();
+        EngineLoop::PreTick();
 
-        gEngineLoop.Tick();
+        EngineLoop::Tick();
 
-        gEngineLoop.PostTick();
+        EngineLoop::PostTick();
     }
 
-    if (!gEngineLoop.PreRelease())
+    if (!EngineLoop::PreRelease())
     {
         PlatformDialogMisc::MessageBox("ERROR", "Pre-Release Failed");
         return -1;
     }
     
-    if (!gEngineLoop.Release())
+    if (!EngineLoop::Release())
     {
         PlatformDialogMisc::MessageBox("ERROR", "Release Failed");
         return -1;
     }
     
-    if (!gEngineLoop.PostRelease())
+    if (!EngineLoop::PostRelease())
     {
         PlatformDialogMisc::MessageBox("ERROR", "Post-Release Failed");
         return -1;
@@ -88,7 +97,7 @@ Bool EngineLoop::PreInit()
 {
     TRACE_FUNCTION_SCOPE();
 
-    gProfiler.Init();
+    Profiler::Init();
 
     gConsoleOutput = PlatformOutputDevice::Make();
     if (!gConsoleOutput)
@@ -145,7 +154,7 @@ Bool EngineLoop::Init()
 
         INIT_CONSOLE_COMMAND("a.Quit", []()
         {
-            gEngineLoop.Exit();
+            EngineLoop::Exit();
         });
     }
 
@@ -190,7 +199,7 @@ Bool EngineLoop::PostInit()
 
     Editor::Init();
 
-    ShouldRun = true;
+    gEngineLoopData.ShouldRun = true;
     return true;
 }
 
@@ -210,9 +219,9 @@ void EngineLoop::Tick()
 {
     TRACE_FUNCTION_SCOPE();
 
-    Clock.Tick();
+    gEngineLoopData.Clock.Tick();
 
-    gGame->Tick(Clock.GetDeltaTime());
+    gGame->Tick(gEngineLoopData.Clock.GetDeltaTime());
 
     gConsole.Tick();
 
@@ -223,7 +232,7 @@ void EngineLoop::PostTick()
 {
     TRACE_FUNCTION_SCOPE();
 
-    gProfiler.Tick();
+    Profiler::Tick();
 
     gRenderer.Tick(*gGame->GetCurrentScene());
 }
@@ -271,20 +280,26 @@ Bool EngineLoop::PostRelease()
 
 void EngineLoop::Exit()
 {
-    ShouldRun = false;
+    gEngineLoopData.ShouldRun = false;
+    gEngineLoopData.IsExiting = true;
 }
 
-Bool EngineLoop::IsRunning() const
+Bool EngineLoop::IsRunning()
 {
-    return ShouldRun;
+    return gEngineLoopData.ShouldRun;
 }
 
-Timestamp EngineLoop::GetDeltaTime() const
+Bool EngineLoop::IsExiting()
 {
-    return Clock.GetDeltaTime();
+    return gEngineLoopData.IsExiting;
 }
 
-Timestamp EngineLoop::GetTotalElapsedTime() const
+Timestamp EngineLoop::GetDeltaTime()
 {
-    return Clock.GetTotalTime();
+    return gEngineLoopData.Clock.GetDeltaTime();
+}
+
+Timestamp EngineLoop::GetTotalElapsedTime()
+{
+    return gEngineLoopData.Clock.GetTotalTime();
 }
