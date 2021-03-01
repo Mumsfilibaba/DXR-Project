@@ -188,9 +188,6 @@ void Renderer::RenderDebugInterface()
         const Float Width  = Math::Max(WindowWidth * 0.6f, 400.0f);
         const Float Height = WindowHeight * 0.75f;
 
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
-
         ImGui::SetNextWindowPos(ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
@@ -251,9 +248,6 @@ void Renderer::RenderDebugInterface()
             const Int32 ImageIndex  = SelectedImage < 0 ? 0 : SelectedImage;
             ImGuiImage* CurrImage   = &Resources.DebugTextures[ImageIndex];
             ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
-
-            ImGui::PopStyleColor();
-            ImGui::PopStyleColor();
         }
 
         ImGui::End();
@@ -266,10 +260,7 @@ void Renderer::RenderDebugInterface()
         const UInt32 WindowWidth  = gMainWindow->GetWidth();
         const UInt32 WindowHeight = gMainWindow->GetHeight();
         const Float Width  = 300.0f;
-        const Float Height = WindowHeight * 0.15f;
-
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
+        const Float Height = WindowHeight * 0.8f;
 
         ImGui::SetNextWindowPos(ImVec2(Float(WindowWidth), 10.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Always);
@@ -314,8 +305,6 @@ void Renderer::RenderDebugInterface()
 
         ImGui::Columns(1);
 
-        ImGui::PopStyleColor();
-        ImGui::PopStyleColor();
         ImGui::End();
     }
 }

@@ -567,10 +567,6 @@ static void DrawProfiler()
     const Float Width         = Math::Max(WindowWidth * 0.6f, 400.0f);
     const Float Height        = WindowHeight * 0.75f;
 
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 0.9f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_PlotHistogramHovered, ImVec4(0.75f, 0.75f, 0.75f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
@@ -625,10 +621,6 @@ static void DrawProfiler()
         ImGui::Separator();
     }
 
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();

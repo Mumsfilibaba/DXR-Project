@@ -147,9 +147,6 @@ static void DrawSideWindow()
         const Float Width         = Math::Max(WindowWidth * 0.3f, 400.0f);
         const Float Height        = WindowHeight * 0.7f;
 
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
@@ -178,9 +175,6 @@ static void DrawSideWindow()
             DrawSceneInfo();
         }
 
-        ImGui::PopStyleColor();
-        ImGui::PopStyleColor();
-        ImGui::PopStyleColor();
         ImGui::PopStyleColor();
         ImGui::PopStyleColor();
         ImGui::PopStyleColor();
