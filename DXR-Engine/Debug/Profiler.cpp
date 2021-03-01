@@ -388,7 +388,9 @@ static void DrawProfiler()
             ImGui::EndChild();
         }
 
-        ImGui::BeginChild("##Functions1", ImVec2(ChildWidth, 110.0f), true, ImGuiWindowFlags_AlwaysAutoResize);
+        Float NumSamples    = (Float)gProfilerData.Samples.size();
+        Float FuncWinHeight = (NumSamples + 2) * 20.0f;
+        ImGui::BeginChild("##Functions1", ImVec2(ChildWidth, FuncWinHeight), true, ImGuiWindowFlags_AlwaysAutoResize);
 
         ImGui::Columns(4);
 
@@ -403,15 +405,19 @@ static void DrawProfiler()
 
         ImGui::Separator();
 
-        for (UInt32 i = 0; i < 4; i++)
+        for (auto& Sample : gProfilerData.Samples)
         {
-            ImGui::Text("Thing %d", i + 1);
+            Float Avg = Sample.second.GetAverage();
+            Float Min = Sample.second.Min;
+            Float Max = Sample.second.Max;
+
+            ImGui::Text("%s", Sample.first.c_str());
             ImGui::NextColumn();
-            ImGui::Text("%.4f ms", 0.5f);
+            ImGui_PrintTime(Avg);
             ImGui::NextColumn();
-            ImGui::Text("%.4f ms", 0.5f);
+            ImGui_PrintTime(Min);
             ImGui::NextColumn();
-            ImGui::Text("%.4f ms", 0.5f);
+            ImGui_PrintTime(Max);
             ImGui::NextColumn();
         }
 
