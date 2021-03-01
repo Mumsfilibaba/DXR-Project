@@ -701,7 +701,7 @@ static void DrawSceneInfo()
 
                         XMFLOAT3 Direction = CurrentDirectionalLight->GetDirection();
                         Float* DirArr = reinterpret_cast<Float*>(&Direction);
-                        ImGui::InputFloat3("##Direction", DirArr, 2, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+                        ImGui::InputFloat3("##Direction", DirArr, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
 
                         ImGui::Columns(1);
                         ImGui::TreePop();
@@ -723,7 +723,7 @@ static void DrawSceneInfo()
 
                         XMFLOAT3 Position = CurrentDirectionalLight->GetShadowMapPosition();
                         Float* PosArr = reinterpret_cast<Float*>(&Position);
-                        ImGui::InputFloat3("##Translation", PosArr, 2, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+                        ImGui::InputFloat3("##Translation", PosArr, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
 
                         // Shadow Bias
                         ImGui::NextColumn();

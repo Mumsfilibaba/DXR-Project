@@ -98,7 +98,7 @@ void Console::Tick()
                 ImGuiInputTextFlags_CallbackAlways     |
                 ImGuiInputTextFlags_CallbackEdit;
 
-            auto Callback = [](ImGuiTextEditCallbackData* Data)->Int32
+            auto Callback = [](ImGuiInputTextCallbackData* Data)->Int32
             {
                 Console* This = reinterpret_cast<Console*>(Data->UserData);
                 return This->TextCallback(Data);

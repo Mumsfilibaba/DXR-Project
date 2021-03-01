@@ -31,6 +31,8 @@ struct ProfileSample
 
         Float Delta = Clock.GetDeltaTime().AsNanoSeconds();
         AddSample(Delta);
+
+        TotalCalls++;
     }
 
     FORCEINLINE void AddSample(Float NewSample)
@@ -50,6 +52,11 @@ struct ProfileSample
 
     FORCEINLINE Float GetAverage() const
     {
+        if (SampleCount < 1)
+        {
+            return 0.0f;
+        }
+
         Float Average = 0.0f;
         for (Int32 n = 0; n < SampleCount; n++)
         {
@@ -59,18 +66,85 @@ struct ProfileSample
         return Average / Float(SampleCount);
     }
 
+    FORCEINLINE void Reset()
+    {
+        Samples.Fill(0.0f);
+        SampleCount   = 0;
+        CurrentSample = 0;
+        TotalCalls    = 0;
+        Max           = -FLT_MAX;
+        Min           = FLT_MAX;
+        Clock.Reset();
+    }
+
     TStaticArray<Float, NUM_PROFILER_SAMPLES> Samples;
     Clock Clock;
-    Float Max = -FLT_MAX;
-    Float Min = FLT_MAX;
+    Float Max           = -FLT_MAX;
+    Float Min           = FLT_MAX;
     Int32 SampleCount   = 0;
     Int32 CurrentSample = 0;
+    Int32 TotalCalls    = 0;
+};
+
+struct GPUProfileSample
+{
+    FORCEINLINE void AddSample(Float NewSample)
+    {
+        Samples[CurrentSample] = NewSample;
+        Min = Math::Min(NewSample, Min);
+        Max = Math::Max(NewSample, Max);
+
+        CurrentSample++;
+        SampleCount = Math::Min<Int32>(Samples.Size(), SampleCount + 1);
+
+        if (CurrentSample >= Int32(Samples.Size()))
+        {
+            CurrentSample = 0;
+        }
+    }
+
+    FORCEINLINE Float GetAverage() const
+    {
+        if (SampleCount < 1)
+        {
+            return 0.0f;
+        }
+
+        Float Average = 0.0f;
+        for (Int32 n = 0; n < SampleCount; n++)
+        {
+            Average += Samples[n];
+        }
+
+        return Average / Float(SampleCount);
+    }
+
+    FORCEINLINE void Reset()
+    {
+        Samples.Fill(0.0f);
+        SampleCount   = 0;
+        CurrentSample = 0;
+        TotalCalls    = 0;
+        Max           = -FLT_MAX;
+        Min           = FLT_MAX;
+    }
+
+    TStaticArray<Float, NUM_PROFILER_SAMPLES> Samples;
+    Float  Max            = -FLT_MAX;
+    Float  Min            = FLT_MAX;
+    Int32  SampleCount    = 0;
+    Int32  CurrentSample  = 0;
+    Int32  TotalCalls     = 0;
+    UInt32 TimeQueryIndex = 0;
 };
 
 struct ProfilerData
 {
     TRef<GPUProfiler> GPUProfiler;
-    ProfileSample     FrameTime;
+    UInt32 CurrentTimeQueryIndex = 0;
+
+    ProfileSample    CPUFrameTime;
+    GPUProfileSample GPUFrameTime;
 
     Clock Clock;
     Int32 Fps        = 0;
@@ -78,14 +152,19 @@ struct ProfilerData
     
     Bool EnableProfiler = true;
     
-    std::unordered_map<std::string, ProfileSample> Samples;
+    std::unordered_map<std::string, ProfileSample> CPUSamples;
+    std::unordered_map<std::string, GPUProfileSample> GPUSamples;
 };
 
 static ProfilerData gProfilerData;
 
 static void ImGui_PrintTime(Float Num)
 {
-    if (Num < MICROSECONDS)
+    if (Num == FLT_MAX || Num == -FLT_MAX)
+    {
+        ImGui::Text("0.0 s");
+    }
+    else if (Num < MICROSECONDS)
     {
         ImGui::Text("%.4f ns", Num);
     }
@@ -208,27 +287,277 @@ static void DrawFPS()
     ImGui::PopStyleVar();
 }
 
-//static void ImGui_DrawTextRect(ImDrawList* DrawList, const Char* Text, Float Width, Float Height)
-//{
-//    const Float Padding = 5.0f;
-//
-//    const ImVec2 ScreenPos = ImGui::GetCursorScreenPos();
-//    ImVec2 UpperLeft  = ImVec2(ScreenPos.x, ScreenPos.y);
-//    ImVec2 LowerRight = ImVec2(UpperLeft.x + Width, UpperLeft.y + Height);
-//    ImGui::Dummy(ImVec2(Width, Height));
-//
-//    ImVec2 TextSize = ImGui::CalcTextSize(Text);
-//    ImVec2 TextPos;
-//    TextPos.x = UpperLeft.x + Padding;
-//    TextPos.y = UpperLeft.y + (Height / 2.0f) - (TextSize.y / 2.0f);
-//
-//    ImColor TitleColor = ImGui::GetStyleColorVec4(ImGuiCol_TitleBgActive);
-//    ImColor TextColor  = ImGui::GetStyleColorVec4(ImGuiCol_Text);
-//    DrawList->PushClipRect(UpperLeft, LowerRight, true);
-//    DrawList->AddRectFilled(UpperLeft, LowerRight, TitleColor);
-//    DrawList->AddText(ImGui::GetFont(), ImGui::GetFontSize(), TextPos, TextColor, Text);
-//    DrawList->PopClipRect();
-//}
+static void DrawCPUProfileData(Float Width)
+{
+    const ImGuiTableFlags TableFlags =
+        ImGuiTableFlags_Borders |
+        ImGuiTableFlags_RowBg;
+
+    if (ImGui::BeginTable("Frame Statistics", 1, TableFlags))
+    {
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+
+        Float Avg = gProfilerData.CPUFrameTime.GetAverage();
+        Float Min = gProfilerData.CPUFrameTime.Min;
+        if (Min == FLT_MAX)
+        {
+            Min = 0.0f;
+        }
+
+        Float Max = gProfilerData.CPUFrameTime.Max;
+        if (Max == -FLT_MAX)
+        {
+            Max = 0.0f;
+        }
+
+        ImGui::Text("FrameTime:");
+        ImGui::SameLine();
+        ImGui::Text("Avg: %.4f ms", Avg);
+        ImGui::SameLine();
+        ImGui::Text("Min: %.4f ms", Min);
+        ImGui::SameLine();
+        ImGui::Text("Max: %.4f ms", Max);
+
+        ImGui::NewLine();
+
+        ImGui::PlotHistogram(
+            "",
+            gProfilerData.CPUFrameTime.Samples.Data(),
+            gProfilerData.CPUFrameTime.SampleCount,
+            gProfilerData.CPUFrameTime.CurrentSample,
+            nullptr,
+            0.0f,
+            ImGui_GetMaxLimit(Avg),
+            ImVec2(Width * 0.9825f, 80.0f));
+
+        ImGui::EndTable();
+    }
+
+    // TODO: Fix timeline
+    //if (ImGui::BeginTable("Threads", 2, TableFlags))
+    //{
+    //    ImGui::TableSetupColumn("Thread", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+    //    ImGui::TableSetupColumn("Timeline");
+    //    ImGui::TableHeadersRow();
+
+    //    ImGui::TableNextRow();
+
+    //    ImGui::TableSetColumnIndex(0);
+    //    ImGui::Text("Main Thread");
+
+    //    ImGui::TableSetColumnIndex(1);
+
+    //    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
+    //    ImGui::Button("Thing 1", ImVec2(50.0f, 20.0f));
+    //    if (ImGui::IsItemHovered())
+    //    {
+    //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+    //    }
+
+    //    ImGui::SameLine();
+
+    //    ImGui::Button("Thing 2", ImVec2(30.0f, 20.0f));
+    //    if (ImGui::IsItemHovered())
+    //    {
+    //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+    //    }
+
+    //    ImGui::SameLine();
+    //    ImGui::Button("Thing 3", ImVec2(70.0f, 20.0f));
+    //    if (ImGui::IsItemHovered())
+    //    {
+    //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+    //    }
+
+    //    ImGui::SameLine();
+    //    ImGui::Button("Thing 4", ImVec2(20.0f, 20.0f));
+    //    if (ImGui::IsItemHovered())
+    //    {
+    //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+    //    }
+
+    //    ImGui::Dummy(ImVec2(40.0f, 20.0f));
+    //    ImGui::SameLine();
+
+    //    ImGui::Button("Thing 4", ImVec2(70.0f, 20.0f));
+    //    if (ImGui::IsItemHovered())
+    //    {
+    //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+    //    }
+
+    //    ImGui::PopStyleVar();
+
+    //    ImGui::EndTable();
+    //}
+
+    if (ImGui::BeginTable("Functions", 5, TableFlags))
+    {
+        ImGui::TableSetupColumn("Trace Name");
+        ImGui::TableSetupColumn("Total Calls");
+        ImGui::TableSetupColumn("Avg");
+        ImGui::TableSetupColumn("Min");
+        ImGui::TableSetupColumn("Max");
+        ImGui::TableHeadersRow();
+
+        for (auto& Sample : gProfilerData.CPUSamples)
+        {
+            ImGui::TableNextRow();
+
+            Float Avg = Sample.second.GetAverage();
+            Float Min = Sample.second.Min;
+            Float Max = Sample.second.Max;
+            Int32 Calls = Sample.second.TotalCalls;
+
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("%s", Sample.first.c_str());
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%d", Calls);
+            ImGui::TableSetColumnIndex(2);
+            ImGui_PrintTime(Avg);
+            ImGui::TableSetColumnIndex(3);
+            ImGui_PrintTime(Min);
+            ImGui::TableSetColumnIndex(4);
+            ImGui_PrintTime(Max);
+        }
+
+        ImGui::EndTable();
+    }
+}
+
+static void DrawGPUProfileData(Float Width)
+{
+    const ImGuiTableFlags TableFlags =
+        ImGuiTableFlags_Borders |
+        ImGuiTableFlags_RowBg;
+
+    if (ImGui::BeginTable("Frame Statistics", 1, TableFlags))
+    {
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+
+        Float Avg = gProfilerData.GPUFrameTime.GetAverage();
+        Float Min = gProfilerData.GPUFrameTime.Min;
+        if (Min == FLT_MAX)
+        {
+            Min = 0.0f;
+        }
+
+        Float Max = gProfilerData.GPUFrameTime.Max;
+        if (Max == -FLT_MAX)
+        {
+            Max = 0.0f;
+        }
+
+        ImGui::Text("FrameTime:");
+        ImGui::SameLine();
+        ImGui::Text("Avg: %.4f ms", Avg);
+        ImGui::SameLine();
+        ImGui::Text("Min: %.4f ms", Min);
+        ImGui::SameLine();
+        ImGui::Text("Max: %.4f ms", Max);
+
+        ImGui::NewLine();
+
+        ImGui::PlotHistogram(
+            "",
+            gProfilerData.GPUFrameTime.Samples.Data(),
+            gProfilerData.GPUFrameTime.SampleCount,
+            gProfilerData.GPUFrameTime.CurrentSample,
+            nullptr,
+            0.0f,
+            ImGui_GetMaxLimit(Avg),
+            ImVec2(Width * 0.9825f, 80.0f));
+
+        ImGui::EndTable();
+    }
+
+    // TODO: Fix timeline
+    //if (ImGui::BeginTable("Threads", 2, TableFlags))
+    //{
+    //    ImGui::TableSetupColumn("Thread", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+    //    ImGui::TableSetupColumn("Timeline");
+    //    ImGui::TableHeadersRow();
+
+    //    ImGui::TableNextRow();
+
+    //    ImGui::TableSetColumnIndex(0);
+    //    ImGui::Text("Main Thread");
+
+    //    ImGui::TableSetColumnIndex(1);
+
+    //    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
+    //    ImGui::Button("Thing 1", ImVec2(50.0f, 20.0f));
+    //    if (ImGui::IsItemHovered())
+    //    {
+    //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+    //    }
+
+    //    ImGui::SameLine();
+
+    //    ImGui::Button("Thing 2", ImVec2(30.0f, 20.0f));
+    //    if (ImGui::IsItemHovered())
+    //    {
+    //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+    //    }
+
+    //    ImGui::SameLine();
+    //    ImGui::Button("Thing 3", ImVec2(70.0f, 20.0f));
+    //    if (ImGui::IsItemHovered())
+    //    {
+    //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+    //    }
+
+    //    ImGui::SameLine();
+    //    ImGui::Button("Thing 4", ImVec2(20.0f, 20.0f));
+    //    if (ImGui::IsItemHovered())
+    //    {
+    //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+    //    }
+
+    //    ImGui::Dummy(ImVec2(40.0f, 20.0f));
+    //    ImGui::SameLine();
+
+    //    ImGui::Button("Thing 4", ImVec2(70.0f, 20.0f));
+    //    if (ImGui::IsItemHovered())
+    //    {
+    //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+    //    }
+
+    //    ImGui::PopStyleVar();
+
+    //    ImGui::EndTable();
+    //}
+
+    if (ImGui::BeginTable("Functions", 4, TableFlags))
+    {
+        ImGui::TableSetupColumn("Trace Name");
+        ImGui::TableSetupColumn("Avg");
+        ImGui::TableSetupColumn("Min");
+        ImGui::TableSetupColumn("Max");
+        ImGui::TableHeadersRow();
+
+        for (auto& Sample : gProfilerData.GPUSamples)
+        {
+            ImGui::TableNextRow();
+
+            Float Avg = Sample.second.GetAverage();
+            Float Min = Sample.second.Min;
+            Float Max = Sample.second.Max;
+
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("%s", Sample.first.c_str());
+            ImGui::TableSetColumnIndex(1);
+            ImGui_PrintTime(Avg);
+            ImGui::TableSetColumnIndex(2);
+            ImGui_PrintTime(Min);
+            ImGui::TableSetColumnIndex(3);
+            ImGui_PrintTime(Max);
+        }
+
+        ImGui::EndTable();
+    }
+}
 
 static void DrawProfiler()
 {
@@ -237,8 +566,6 @@ static void DrawProfiler()
     const UInt32 WindowHeight = gMainWindow->GetHeight();
     const Float Width         = Math::Max(WindowWidth * 0.6f, 400.0f);
     const Float Height        = WindowHeight * 0.75f;
-
-    ImGui::ShowDemoWindow();
 
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 0.9f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -260,325 +587,42 @@ static void DrawProfiler()
     Bool TempDrawProfiler = gDrawProfiler.GetBool();
     if (ImGui::Begin("Profiler", &TempDrawProfiler, Flags))
     {
-        ImGui::Button("Start Profiler");
-
-        const Float ChildWidth  = Width * 0.985f;
-        const Float ChildHeight = Height * 0.13f;
-
-        ImGui::BeginChild("##Graph", ImVec2(ChildWidth, ChildHeight), true);
-
-        const Float FtAvg = gProfilerData.FrameTime.GetAverage();
-        ImGui::PlotHistogram(
-            "",
-            gProfilerData.FrameTime.Samples.Data(),
-            gProfilerData.FrameTime.SampleCount,
-            gProfilerData.FrameTime.CurrentSample,
-            nullptr,
-            0.0f,
-            ImGui_GetMaxLimit(FtAvg),
-            ImVec2(ChildWidth, 80.0f));
-
-        ImGui::NewLine();
-
-        ImGui::Text("FPS:");
-        ImGui::SameLine();
-        ImGui::Text("%d", gProfilerData.Fps);
-        ImGui::SameLine();
-
-        ImGui::Text("FrameTime:");
-        ImGui::SameLine();
-        ImGui::Text("Avg: %.4f ms", FtAvg);
-
-        ImGui::EndChild();
-
-        static Bool Clicked = false;
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5.0f, 0.0f));
-        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.25f, 0.25f, 0.25f, 0.9f));
-
-        ImGui::BeginChild("##Threads", ImVec2(ChildWidth, 40.0f), true);
-
-        ImGui::Columns(2, 0, false);
-        ImGui::SetColumnWidth(0, 100.0f);
-
-        ImGui::Text("Main Thread");
-        ImGui::NextColumn();
-
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-        ImGui::Button("Thing 1", ImVec2(50.0f, 20.0f));
-        if (ImGui::IsItemClicked())
+        if (ImGui::Button("Start Profile"))
         {
-            Clicked = !Clicked;
-        }
-        else if (ImGui::IsMouseClicked(0))
-        {
-            Clicked = false;
-        }
-
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+            Profiler::Enable();
         }
 
         ImGui::SameLine();
 
-        ImGui::Button("Thing 2", ImVec2(30.0f, 20.0f));
-        if (ImGui::IsItemHovered())
+        if (ImGui::Button("Stop Profile"))
         {
-            ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+            Profiler::Disable();
         }
 
         ImGui::SameLine();
-        ImGui::Button("Thing 3", ImVec2(70.0f, 20.0f));
-        if (ImGui::IsItemHovered())
+
+        if (ImGui::Button("Reset"))
         {
-            ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
+            Profiler::Reset();
         }
 
-        ImGui::SameLine();
-        ImGui::Button("Thing 4", ImVec2(20.0f, 20.0f));
-        if (ImGui::IsItemHovered())
+        ImGuiTabBarFlags TabBarFlags = ImGuiTabBarFlags_None;
+        if (ImGui::BeginTabBar("ProfilerTabs", TabBarFlags))
         {
-            ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
-        }
-
-        ImGui::Dummy(ImVec2(40.0f, 20.0f));
-        ImGui::SameLine();
-
-        ImGui::Button("Thing 4", ImVec2(70.0f, 20.0f));
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
-        }
-
-        ImGui::PopStyleVar();
-        ImGui::Columns(1);
-
-        ImGui::EndChild();
-        ImGui::PopStyleColor();
-        ImGui::PopStyleVar();
-
-        if (Clicked)
-        {
-            ImGui::BeginChild("##Selection", ImVec2(ChildWidth, 45.0f), false);
-            if (ImGui::CollapsingHeader("Thing 1"))
+            if (ImGui::BeginTabItem("CPU"))
             {
-                ImGui::BeginChild("##Threads1", ImVec2(ChildWidth, 45.0f), true, ImGuiWindowFlags_AlwaysAutoResize);
-
-                ImGui::Text("FPS:");
-                ImGui::SameLine();
-                ImGui::Text("%d", gProfilerData.Fps);
-
-                ImGui::Text("FrameTime:");
-                ImGui::SameLine();
-                ImGui::Text("Avg: %.4f ms", FtAvg);
-
-                ImGui::PlotLines(
-                    "",
-                    gProfilerData.FrameTime.Samples.Data(),
-                    gProfilerData.FrameTime.SampleCount,
-                    gProfilerData.FrameTime.CurrentSample,
-                    nullptr,
-                    0.0f,
-                    ImGui_GetMaxLimit(FtAvg),
-                    ImVec2(ChildWidth - 2.0f, 60.0f));
-
-                ImGui::EndChild();
+                DrawCPUProfileData(Width);
+                ImGui::EndTabItem();
             }
-            ImGui::EndChild();
+            if (ImGui::BeginTabItem("GPU"))
+            {
+                DrawGPUProfileData(Width);
+                ImGui::EndTabItem();
+            }
+            // TODO: Memory?
+            ImGui::EndTabBar();
         }
-
-        Float NumSamples    = (Float)gProfilerData.Samples.size();
-        Float FuncWinHeight = (NumSamples + 2) * 20.0f;
-        ImGui::BeginChild("##Functions1", ImVec2(ChildWidth, FuncWinHeight), true, ImGuiWindowFlags_AlwaysAutoResize);
-
-        ImGui::Columns(4);
-
-        ImGui::Text("Name");
-        ImGui::NextColumn();
-        ImGui::Text("Avg");
-        ImGui::NextColumn();
-        ImGui::Text("Min");
-        ImGui::NextColumn();
-        ImGui::Text("Max");
-        ImGui::NextColumn();
-
         ImGui::Separator();
-
-        for (auto& Sample : gProfilerData.Samples)
-        {
-            Float Avg = Sample.second.GetAverage();
-            Float Min = Sample.second.Min;
-            Float Max = Sample.second.Max;
-
-            ImGui::Text("%s", Sample.first.c_str());
-            ImGui::NextColumn();
-            ImGui_PrintTime(Avg);
-            ImGui::NextColumn();
-            ImGui_PrintTime(Min);
-            ImGui::NextColumn();
-            ImGui_PrintTime(Max);
-            ImGui::NextColumn();
-        }
-
-        ImGui::Columns(1);
-
-        ImGui::EndChild();
-        
-        //ImGui::BeginChild("##MainThread", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-
-        //if (ImGui::CollapsingHeader("Main Thread"))
-        //{
-        //    ImGui::Button("Thing 1", ImVec2(50.0f, 20.0f));
-        //    if (ImGui::IsItemHovered())
-        //    {
-        //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
-        //    }
-
-        //    ImGui::SameLine();
-        //    ImGui::Button("Thing 2", ImVec2(30.0f, 20.0f));
-        //    if (ImGui::IsItemHovered())
-        //    {
-        //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
-        //    }
-
-        //    ImGui::SameLine();
-        //    ImGui::Button("Thing 3", ImVec2(70.0f, 20.0f));
-        //    if (ImGui::IsItemHovered())
-        //    {
-        //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
-        //    }
-
-        //    ImGui::SameLine();
-        //    ImGui::Button("Thing 4", ImVec2(20.0f, 20.0f));
-        //    if (ImGui::IsItemHovered())
-        //    {
-        //        ImGui::SetTooltip("Start: 0.0 ms\nEnd: 0.5 ms\nDuration: 0.5 ms\n");
-        //    }
-        //}
-
-        //ImGui::EndChild();
-
-        //ImGui::BeginChild("##Selected Sample", ImVec2(ChildWidth, ChildHeight), false, ImGuiWindowFlags_HorizontalScrollbar);
-
-        //ImGui::Text("FrameTime:");
-        //ImGui::SameLine();
-        //ImGui::Text("Avg: %.4f ms", FtAvg);
-
-        //ImGui::PlotLines(
-        //    "",
-        //    gProfilerData.FrameTime.Samples.Data(),
-        //    gProfilerData.FrameTime.SampleCount,
-        //    gProfilerData.FrameTime.CurrentSample,
-        //    nullptr,
-        //    0.0f,
-        //    ImGui_GetMaxLimit(FtAvg),
-        //    ImVec2(ChildWidth - 1.0f, 60.0f));
-
-        //ImGui::EndChild();
-
-
-        //ImGui::Text("CPU Timings:");
-        //ImGui::Separator();
-
-        //ImGui::Columns(2);
-
-        //ImGui::Text("FPS:");
-        //ImGui::NextColumn();
-
-        //ImGui::Text("%d", gProfilerData.Fps);
-        //ImGui::NextColumn();
-
-        //ImGui::Text("FrameTime:");
-        //ImGui::NextColumn();
-
-        //const Float FtAvg = gProfilerData.FrameTime.GetAverage();
-        //ImGui::Text("%.4f ms", FtAvg);
-        //ImGui::PlotLines(
-        //    "",
-        //    gProfilerData.FrameTime.Samples.Data(),
-        //    gProfilerData.FrameTime.SampleCount,
-        //    gProfilerData.FrameTime.CurrentSample,
-        //    nullptr,
-        //    0.0f,
-        //    ImGui_GetMaxLimit(FtAvg),
-        //    ImVec2(0, 30.0f));
-
-        //ImGui::Columns(1);
-
-        //ImGui::Separator();
-
-        //ImGui::Columns(2);
-
-        //TStaticArray<Float, NUM_PROFILER_SAMPLES> Floats;
-        //for (auto& Sample : gProfilerData.Samples)
-        //{
-        //    Memory::Memzero(Floats.Data(), Floats.SizeInBytes());
-
-        //    Float Average = Sample.second.GetAverage();
-        //    if (Average < MICROSECONDS)
-        //    {
-        //        for (Int32 n = 0; n < Sample.second.SampleCount; n++)
-        //        {
-        //            Floats[n] = Sample.second.Samples[n];
-        //        }
-        //    }
-        //    else if (Average < MICROSECONDS)
-        //    {
-        //        for (Int32 n = 0; n < Sample.second.SampleCount; n++)
-        //        {
-        //            Floats[n] = Sample.second.Samples[n] * INV_MICROSECONDS;
-        //        }
-        //    }
-        //    else if (Average < SECONDS)
-        //    {
-        //        for (Int32 n = 0; n < Sample.second.SampleCount; n++)
-        //        {
-        //            Floats[n] = Sample.second.Samples[n] * INV_MILLISECONDS;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        for (Int32 n = 0; n < Sample.second.SampleCount; n++)
-        //        {
-        //            Floats[n] = Sample.second.Samples[n] * INV_SECONDS;
-        //        }
-        //    }
-
-        //    const Char* Name = Sample.first.c_str();
-        //    ImGui_PrintTiming(Name, Average);
-
-        //    ImGui::SameLine();
-
-        //    ImGui_PrintTiming_SameLine("Min", Sample.second.Min);
-
-        //    ImGui::SameLine();
-
-        //    ImGui_PrintTiming_SameLine("Max", Sample.second.Max);
-
-        //    if (Sample.second.SampleCount > 1)
-        //    {
-        //        const Float Avg = ImGui_ConvertNumber(Average);
-        //        const Float Max = ImGui_GetMaxLimit(Avg);
-        //        ImGui::PlotLines(
-        //            "",
-        //            Floats.Data(),
-        //            Sample.second.SampleCount,
-        //            Sample.second.CurrentSample,
-        //            nullptr,
-        //            0.0f,
-        //            Max,
-        //            ImVec2(0, 30.0f));
-        //    }
-        //    else
-        //    {
-        //        ImGui::NewLine();
-        //    }
-
-        //    ImGui::NextColumn();
-        //}
-
-        //ImGui::Columns(1);
     }
 
     ImGui::PopStyleColor();
@@ -611,7 +655,7 @@ void Profiler::Tick()
     gProfilerData.CurrentFps++;
     if (Clock.GetTotalTime().AsSeconds() > 1.0f)
     {
-        gProfilerData.Fps = gProfilerData.CurrentFps;
+        gProfilerData.Fps        = gProfilerData.CurrentFps;
         gProfilerData.CurrentFps = 0;
 
         Clock.Reset();
@@ -624,10 +668,48 @@ void Profiler::Tick()
 
     if (gDrawProfiler.GetBool())
     {
-        const Double Delta = Clock.GetDeltaTime().AsMilliSeconds();
-        gProfilerData.FrameTime.AddSample(Float(Delta));
+        if (gProfilerData.EnableProfiler)
+        {
+            const Double Delta = Clock.GetDeltaTime().AsMilliSeconds();
+            gProfilerData.CPUFrameTime.AddSample(Float(Delta));
+
+            if (gProfilerData.GPUProfiler)
+            {
+                TimeQuery Query;
+                gProfilerData.GPUProfiler->GetTimeQuery(Query, gProfilerData.GPUFrameTime.TimeQueryIndex);
+
+                Float Duration = (Query.End - Query.Begin) * INV_MILLISECONDS;
+                gProfilerData.GPUFrameTime.AddSample(Duration);
+            }
+        }
 
         DebugUI::DrawUI(DrawProfiler);
+    }
+}
+
+void Profiler::Enable()
+{
+    gProfilerData.EnableProfiler = true;
+}
+
+void Profiler::Disable()
+{
+    gProfilerData.EnableProfiler = false;
+}
+
+void Profiler::Reset()
+{
+    gProfilerData.CPUFrameTime.Reset();
+    gProfilerData.GPUFrameTime.Reset();
+
+    for (auto& Sample : gProfilerData.CPUSamples)
+    {
+        Sample.second.Reset();
+    }
+
+    for (auto& Sample : gProfilerData.GPUSamples)
+    {
+        Sample.second.Reset();
     }
 }
 
@@ -637,10 +719,10 @@ void Profiler::BeginTraceScope(const Char* Name)
     {
         const std::string ScopeName = Name;
 
-        auto Entry = gProfilerData.Samples.find(ScopeName);
-        if (Entry == gProfilerData.Samples.end())
+        auto Entry = gProfilerData.CPUSamples.find(ScopeName);
+        if (Entry == gProfilerData.CPUSamples.end())
         {
-            auto NewSample = gProfilerData.Samples.insert(std::make_pair(ScopeName, ProfileSample()));
+            auto NewSample = gProfilerData.CPUSamples.insert(std::make_pair(ScopeName, ProfileSample()));
             NewSample.first->second.Begin();
         }
         else
@@ -656,8 +738,8 @@ void Profiler::EndTraceScope(const Char* Name)
     {
         const std::string ScopeName = Name;
 
-        auto Entry = gProfilerData.Samples.find(ScopeName);
-        if (Entry != gProfilerData.Samples.end())
+        auto Entry = gProfilerData.CPUSamples.find(ScopeName);
+        if (Entry != gProfilerData.CPUSamples.end())
         {
             Entry->second.End();
         }
@@ -668,7 +750,76 @@ void Profiler::EndTraceScope(const Char* Name)
     }
 }
 
+void Profiler::BeginGPUFrame(CommandList& CmdList)
+{
+    if (gProfilerData.GPUProfiler && gProfilerData.EnableProfiler)
+    {
+        CmdList.BeginTimeStamp(gProfilerData.GPUProfiler.Get(), gProfilerData.GPUFrameTime.TimeQueryIndex);
+    }
+}
+
+void Profiler::BeginGPUTrace(CommandList& CmdList, const Char* Name)
+{
+    if (gProfilerData.GPUProfiler && gProfilerData.EnableProfiler)
+    {
+        const std::string ScopeName = Name;
+
+        Int32 TimeQueryIndex = -1;
+
+        auto Entry = gProfilerData.GPUSamples.find(ScopeName);
+        if (Entry == gProfilerData.GPUSamples.end())
+        {
+            auto NewSample = gProfilerData.GPUSamples.insert(std::make_pair(ScopeName, GPUProfileSample()));
+            NewSample.first->second.TimeQueryIndex = ++gProfilerData.CurrentTimeQueryIndex;
+            TimeQueryIndex = NewSample.first->second.TimeQueryIndex;
+        }
+        else
+        {
+            TimeQueryIndex = Entry->second.TimeQueryIndex;
+        }
+
+        if (TimeQueryIndex >= 0)
+        {
+            CmdList.BeginTimeStamp(gProfilerData.GPUProfiler.Get(), TimeQueryIndex);
+        }
+    }
+}
+
+void Profiler::EndGPUTrace(CommandList& CmdList, const Char* Name)
+{
+    if (gProfilerData.GPUProfiler && gProfilerData.EnableProfiler)
+    {
+        const std::string ScopeName = Name;
+
+        Int32 TimeQueryIndex = -1;
+
+        auto Entry = gProfilerData.GPUSamples.find(ScopeName);
+        if (Entry != gProfilerData.GPUSamples.end())
+        {
+            TimeQueryIndex = Entry->second.TimeQueryIndex;
+            CmdList.EndTimeStamp(gProfilerData.GPUProfiler.Get(), TimeQueryIndex);
+
+            if (TimeQueryIndex >= 0)
+            {
+                TimeQuery Query;
+                gProfilerData.GPUProfiler->GetTimeQuery(Query, TimeQueryIndex);
+
+                Float Duration = (Query.End - Query.Begin);
+                Entry->second.AddSample(Duration);
+            }
+        }
+    }
+}
+
 void Profiler::SetGPUProfiler(GPUProfiler* Profiler)
 {
     gProfilerData.GPUProfiler = MakeSharedRef<GPUProfiler>(Profiler);
+}
+
+void Profiler::EndGPUFrame(CommandList& CmdList)
+{
+    if (gProfilerData.GPUProfiler && gProfilerData.EnableProfiler)
+    {
+        CmdList.EndTimeStamp(gProfilerData.GPUProfiler.Get(), gProfilerData.GPUFrameTime.TimeQueryIndex);
+    }
 }
