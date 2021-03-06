@@ -87,14 +87,14 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
         float3 H  = ImportanceSampleGGX(Xi, FinalRoughness, Normal);
         float3 L  = normalize(2.0 * dot(V, H) * H - V);
 
-        float NdotL = max(dot(Normal, L), 0.0f);
+        float NdotL = saturate(dot(Normal, L));
         if (NdotL > 0.0f)
         {
             // Sample from the environment's mip level based on roughness/pdf
             float D     = DistributionGGX(Normal, H, FinalRoughness);
-            float NdotH = max(dot(Normal, H), 0.0f);
-            float HdotV = max(dot(H, V), 0.0f);
-            float PDF   = D * NdotH / (4.0f * HdotV) + 0.0001f;
+            float NdotH = saturate(dot(Normal, H));
+            float HdotV = saturate(dot(H, V));
+            float PDF   = D * NdotH / (4.0f * HdotV);
 
             float Resolution = float(SourceWidth); // Resolution of source cubemap (per face)
             float SaTexel    = 4.0f * PI / (6.0f * Resolution * Resolution);

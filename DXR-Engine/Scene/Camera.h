@@ -7,7 +7,7 @@ public:
     Camera();
     ~Camera() = default;
 
-    void Move(Float X, Float Y, Float Z);
+    void Move(Float x, Float y, Float z);
 
     void Rotate(Float Pitch, Float Yaw, Float Roll);
 
@@ -22,6 +22,9 @@ public:
     const XMFLOAT4X4& GetViewProjectionMatrix() const { return ViewProjection; }
     const XMFLOAT4X4& GetViewProjectionInverseMatrix() const { return ViewProjectionInverse; }
     const XMFLOAT4X4& GetViewProjectionWitoutTranslateMatrix() const { return ViewProjectionNoTranslation; }
+
+    void SetPosition(Float x, Float y, Float z);
+    void SetPosition(const XMFLOAT3& InPosition);
 
     XMFLOAT3 GetPosition() const { return Position; }
     XMFLOAT3 GetForward() const { return Forward; }

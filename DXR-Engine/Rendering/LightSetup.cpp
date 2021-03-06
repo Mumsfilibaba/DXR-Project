@@ -77,6 +77,17 @@ Bool LightSetup::Init()
         ShadowCastingPointLightsPosRadBuffer->SetName("ShadowCastingPointLightsPosRadBuffer");
     }
 
+    LightInfoBuffer = CreateConstantBuffer<LightInfoData>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+    if (!LightInfoBuffer)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        LightInfoBuffer->SetName("LightInfo Buffer");
+    }
+
     return true;
 }
 
@@ -94,6 +105,8 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
     TRACE_SCOPE("Update LightBuffers");
 
+    UInt32 NumPointLights       = 0;
+    UInt32 NumShadowPointLights = 0;
     for (Light* Light : Scene.GetLights())
     {
         Float Intensity = Light->GetIntensity();
@@ -133,6 +146,8 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
                 }
 
                 PointLightShadowMapsGenerationData.EmplaceBack(ShadowMapData);
+
+                NumShadowPointLights++;
             }
             else
             {
@@ -141,6 +156,8 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
                 PointLightsData.EmplaceBack(Data);
                 PointLightsPosRad.EmplaceBack(PosRad);
+
+                NumPointLights++;
             }
         }
         else if (IsSubClassOf<DirectionalLight>(Light))
@@ -244,6 +261,7 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
     CmdList.TransitionBuffer(PointLightsPosRadBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
     CmdList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
     CmdList.TransitionBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
+    CmdList.TransitionBuffer(LightInfoBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
     if (!DirectionalLightsData.IsEmpty())
     {
@@ -262,6 +280,13 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
         CmdList.UpdateBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), 0, ShadowCastingPointLightsPosRad.SizeInBytes(), ShadowCastingPointLightsPosRad.Data());
     }
 
+    LightInfoData LightInfo;
+    LightInfo.NumPointLights              = NumPointLights;
+    LightInfo.NumShadowCastingPointLights = NumShadowPointLights;
+
+    CmdList.UpdateBuffer(LightInfoBuffer.Get(), 0, sizeof(LightInfoData), &LightInfo);
+
+    CmdList.TransitionBuffer(LightInfoBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
     CmdList.TransitionBuffer(DirectionalLightsBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
     CmdList.TransitionBuffer(PointLightsBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
     CmdList.TransitionBuffer(PointLightsPosRadBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
@@ -273,6 +298,8 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
 void LightSetup::Release()
 {
+    LightInfoBuffer.Reset();
+
     PointLightsPosRadBuffer.Reset();
     PointLightsBuffer.Reset();
     ShadowCastingPointLightsBuffer.Reset();

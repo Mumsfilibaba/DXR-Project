@@ -1,7 +1,5 @@
 #include "Camera.h"
 
-#include <algorithm>
-
 Camera::Camera()
     : View()
     , Projection()
@@ -19,15 +17,15 @@ Camera::Camera()
     UpdateMatrices();
 }
 
-void Camera::Move(Float X, Float Y, Float Z)
+void Camera::Move(Float x, Float y, Float z)
 {
     XMVECTOR XmPosition = XMLoadFloat3(&Position);
     XMVECTOR XmRight    = XMLoadFloat3(&Right);
     XMVECTOR XmUp       = XMLoadFloat3(&Up);
     XMVECTOR XmForward  = XMLoadFloat3(&Forward);
-    XmRight             = XMVectorScale(XmRight, X);
-    XmUp                = XMVectorScale(XmUp, Y);
-    XmForward           = XMVectorScale(XmForward, Z);
+    XmRight             = XMVectorScale(XmRight, x);
+    XmUp                = XMVectorScale(XmUp, y);
+    XmForward           = XMVectorScale(XmForward, z);
     XmPosition          = XMVectorAdd(XmPosition, XmRight);
     XmPosition          = XMVectorAdd(XmPosition, XmUp);
     XmPosition          = XMVectorAdd(XmPosition, XmForward);
@@ -38,7 +36,7 @@ void Camera::Move(Float X, Float Y, Float Z)
 void Camera::Rotate(Float Pitch, Float Yaw, Float Roll)
 {
     Rotation.x += Pitch;
-    Rotation.x = std::max<Float>(XMConvertToRadians(-89.0f), std::min<Float>(XMConvertToRadians(89.0f), Rotation.x));
+    Rotation.x = Math::Max<Float>(XMConvertToRadians(-89.0f), Math::Min<Float>(XMConvertToRadians(89.0f), Rotation.x));
     
     Rotation.y += Yaw;
     Rotation.z += Roll;
@@ -90,4 +88,14 @@ void Camera::UpdateMatrices()
     
     XMMATRIX XmViewProjectionNoTranslation    = XMMatrixMultiply(XmView3x3, XmProjection);
     XMStoreFloat4x4(&ViewProjectionNoTranslation, XMMatrixTranspose(XmViewProjectionNoTranslation));
+}
+
+void Camera::SetPosition(Float x, Float y, Float z)
+{
+    SetPosition(XMFLOAT3(x, y, z));
+}
+
+void Camera::SetPosition(const XMFLOAT3& InPosition)
+{
+    Position = InPosition;
 }

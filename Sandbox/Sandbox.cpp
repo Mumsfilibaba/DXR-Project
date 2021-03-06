@@ -67,30 +67,17 @@ Bool Sandbox::Init()
         BaseNormal->SetName("BaseNormal");
     }
 
-    Pixels[0] = 255;
-    Pixels[1] = 255;
-    Pixels[2] = 255;
-
-    TRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
-    if (!WhiteTexture)
-    {
-        return false;
-    }
-    else
-    {
-        WhiteTexture->SetName("WhiteTexture");
-    }
-
-    constexpr Float	 SphereOffset   = 1.25f;
+    constexpr Float  SphereOffset   = 1.25f;
     constexpr UInt32 SphereCountX   = 8;
-    constexpr Float	 StartPositionX = (-static_cast<Float>(SphereCountX) * SphereOffset) / 2.0f;
+    constexpr Float  StartPositionX = (-static_cast<Float>(SphereCountX) * SphereOffset) / 2.0f;
     constexpr UInt32 SphereCountY   = 8;
-    constexpr Float	 StartPositionY = (-static_cast<Float>(SphereCountY) * SphereOffset) / 2.0f;
-    constexpr Float	 MetallicDelta  = 1.0f / SphereCountY;
-    constexpr Float	 RoughnessDelta = 1.0f / SphereCountX;
+    constexpr Float  StartPositionY = (-static_cast<Float>(SphereCountY) * SphereOffset) / 2.0f;
+    constexpr Float  MetallicDelta  = 1.0f / SphereCountY;
+    constexpr Float  RoughnessDelta = 1.0f / SphereCountX;
 
     MaterialProperties MatProperties;
-    MatProperties.AO = 1.0f;
+    MatProperties.AO     = 1.0f;
+    MatProperties.Albedo = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
     UInt32 SphereIndex = 0;
     for (UInt32 y = 0; y < SphereCountY; y++)
@@ -98,7 +85,7 @@ Bool Sandbox::Init()
         for (UInt32 x = 0; x < SphereCountX; x++)
         {
             NewActor = DBG_NEW Actor();
-            NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 8.0f + StartPositionY + (y * SphereOffset), 40.0f);
+            NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 1.0f, 40.0f + StartPositionY + (y * SphereOffset));
 
             NewActor->SetName("Sphere[" + std::to_string(SphereIndex) + "]");
             SphereIndex++;
@@ -111,12 +98,11 @@ Bool Sandbox::Init()
 
             NewComponent->Material->AlbedoMap    = BaseTexture;
             NewComponent->Material->NormalMap    = BaseNormal;
-            NewComponent->Material->RoughnessMap = WhiteTexture;
-            NewComponent->Material->HeightMap    = WhiteTexture;
-            NewComponent->Material->AOMap        = WhiteTexture;
-            NewComponent->Material->MetallicMap  = WhiteTexture;
+            NewComponent->Material->RoughnessMap = BaseTexture;
+            NewComponent->Material->HeightMap    = BaseTexture;
+            NewComponent->Material->AOMap        = BaseTexture;
+            NewComponent->Material->MetallicMap  = BaseTexture;
             NewComponent->Material->Init();
-
             NewActor->AddComponent(NewComponent);
 
             MatProperties.Roughness += RoughnessDelta;
@@ -133,7 +119,7 @@ Bool Sandbox::Init()
     CurrentScene->AddActor(NewActor);
 
     NewActor->SetName("Cube");
-    NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 42.0f);
+    NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
 
     MatProperties.AO           = 1.0f;
     MatProperties.Metallic     = 1.0f;
@@ -222,8 +208,8 @@ Bool Sandbox::Init()
     NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
     MatProperties.AO           = 1.0f;
-    MatProperties.Metallic     = 0.0f;
-    MatProperties.Roughness    = 1.0f;
+    MatProperties.Metallic     = 1.0f;
+    MatProperties.Roughness    = 0.25f;
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo       = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
@@ -232,10 +218,10 @@ Bool Sandbox::Init()
     NewComponent->Material = MakeShared<Material>(MatProperties);
     NewComponent->Material->AlbedoMap    = BaseTexture;
     NewComponent->Material->NormalMap    = BaseNormal;
-    NewComponent->Material->RoughnessMap = WhiteTexture;
-    NewComponent->Material->HeightMap    = WhiteTexture;
-    NewComponent->Material->AOMap        = WhiteTexture;
-    NewComponent->Material->MetallicMap  = WhiteTexture;
+    NewComponent->Material->RoughnessMap = BaseTexture;
+    NewComponent->Material->HeightMap    = BaseTexture;
+    NewComponent->Material->AOMap        = BaseTexture;
+    NewComponent->Material->MetallicMap  = BaseTexture;
     NewComponent->Material->Init();
     NewActor->AddComponent(NewComponent);
 
@@ -314,6 +300,11 @@ Bool Sandbox::Init()
     Light4->SetColor(1.0f, 1.0f, 1.0f);
     Light4->SetIntensity(10.0f);
     CurrentScene->AddLight(Light4);
+
+    Camera* Camera = CurrentScene->GetCamera();
+    Camera->SetPosition(0.0f, 1.0f, 0.0f);
+    Camera->Rotate(0.0f, 90.0f, 0.0f);
+    Camera->UpdateMatrices();
 
     return true;
 }

@@ -93,7 +93,9 @@ struct FrameResources
 
     TRef<InputLayoutState> StdInputLayout;
 
-    TRef<Texture2D>       RTOutput;
+    TRef<Texture2D> RTReflections;
+    TRef<Texture2D> RTRayPDF;
+
     TRef<RayTracingScene> RTScene;
 
     RayTracingShaderResources   GlobalResources;

@@ -210,8 +210,8 @@ float4 PSMain(PSInput Input) : SV_Target0
 
     float3 SampledAlbedo = ApplyGamma(AlbedoTex.Sample(MaterialSampler, TexCoords).rgb) * MaterialBuffer.Albedo;
     
-    const float3 WorldPosition	= Input.WorldPosition;
-    const float3 V				= normalize(CameraBuffer.Position - WorldPosition);
+    const float3 WorldPosition = Input.WorldPosition;
+    const float3 V             = normalize(CameraBuffer.Position - WorldPosition);
     float3 N = normalize(Input.Normal);
     if (!Input.IsFrontFace)
     {
@@ -241,7 +241,7 @@ float4 PSMain(PSInput Input) : SV_Target0
     float3 F0 = Float3(0.04f);
     F0 = lerp(F0, SampledAlbedo, SampledMetallic);
 
-    float NDotV = max(dot(N, V), 0.0f);
+    float NDotV = saturate(dot(N, V));
     float3 L0 = Float3(0.0f);
     
     // Pointlights
@@ -300,7 +300,7 @@ float4 PSMain(PSInput Input) : SV_Target0
     // Image Based Lightning
     float3 FinalColor = L0;
     {
-        const float NDotV = max(dot(N, V), 0.0f);
+        const float NDotV = saturate(dot(N, V));
         
         float3 F  = FresnelSchlick_Roughness(F0, V, N, Roughness);
         float3 Ks = F;

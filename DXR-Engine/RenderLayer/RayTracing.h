@@ -66,7 +66,7 @@ struct RayTracingGeometryInstance
 struct RayPayload
 {
     XMFLOAT3 Color;
-    UInt32   CurrentDepth;
+    Float    T;
 };
 
 struct RayIntersectionAttributes

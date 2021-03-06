@@ -32,7 +32,8 @@ void FrameResources::Release()
     StdInputLayout.Reset();
 
     RTScene.Reset();
-    RTOutput.Reset();
+    RTReflections.Reset();
+    RTRayPDF.Reset();
     RTGeometryInstances.Clear();
     RTHitGroupResources.Clear();
     RTMeshToHitGroupIndex.clear();

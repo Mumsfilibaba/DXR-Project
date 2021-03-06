@@ -45,9 +45,9 @@ VSOutput VSMain(VSInput Input)
 {
     VSOutput Output = (VSOutput)0;
     
-    float4 WorldPosition	= mul(float4(Input.Position, 1.0f), Transform);
-    Output.WorldPosition	= WorldPosition.xyz;
-    Output.Position			= mul(WorldPosition, LightProjection);
+    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Transform);
+    Output.WorldPosition = WorldPosition.xyz;
+    Output.Position      = mul(WorldPosition, LightProjection);
     
     return Output;
 }

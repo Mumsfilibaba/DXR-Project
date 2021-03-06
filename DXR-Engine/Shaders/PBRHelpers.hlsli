@@ -17,7 +17,7 @@ float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
     H.y = SinTheta * sin(Phi);
     H.z = CosTheta;
 
-    float3 Up = abs(N.z) < 0.999f ? float3(0.0f, 0.0f, 1.0f) : float3(1.0f, 0.0f, 0.0f);
+    float3 Up       = abs(N.z) < 0.999f ? float3(0.0f, 0.0f, 1.0f) : float3(1.0f, 0.0f, 0.0f);
     float3 TangentX = normalize(cross(Up, N));
     float3 TangentY = cross(N, TangentX);
     float3 Sample   = TangentX * H.x + TangentY * H.y + N * H.z;
@@ -29,35 +29,22 @@ float DistributionGGX(float3 N, float3 H, float Roughness)
 {
     float Alpha  = Roughness * Roughness;
     float Alpha2 = Alpha * Alpha;
-    float NDotH  = max(dot(N, H), 0.0f);
-    float Denominator = NDotH * NDotH * (Alpha2 - 1.0f) + 1.0f;
-    return Alpha2 / max(PI * Denominator * Denominator, 0.0000001f);
+    float NdotH  = saturate(dot(N, H));
+    float Denom  = NdotH * NdotH * (Alpha2 - 1.0f) + 1.0f;
+    return Alpha2 / (PI * Denom * Denom);
 }
-
-//float3 FresnelSchlick(float CosTheta, float3 F0)
-//{
-//    return F0 + (1.0f - F0) * pow(1.0f - CosTheta, 5.0f);
-//}
-
-//float3 FresnelSchlickRoughness(float CosTheta, float3 F0, float Roughness)
-//{
-//    float R = 1.0f - Roughness;
-//    return F0 + (max(float3(R, R, R), F0) - F0) * pow(1.0f - CosTheta, 5.0f);
-//}
 
 // Fresnel Schlick
 float3 FresnelSchlick(float3 F0, float3 V, float3 H)
 {
-    float VDotH = max(dot(V, H), 0.0f);
-    float Exp   = (-5.55473f * VDotH - 6.98316f) * VDotH;
-    return F0 + (1.0f - F0) * exp2(Exp);
+    float VdotH = saturate(dot(V, H));
+    return F0 + (1.0f - F0) * pow(1.0f - VdotH, 5.0f);
 }
 
 float3 FresnelSchlick_Roughness(float3 F0, float3 V, float3 H, float Roughness)
 {
-    float VDotH = max(dot(V, H), 0.0f);
-    float Exp   = (-5.55473f * VDotH - 6.98316f) * VDotH;
-    return F0 + (max(Float3(1.0f - Roughness), F0) - F0) * exp2(Exp);
+    float VdotH = saturate(dot(V, H));
+    return F0 + (max(Float3(1.0f - Roughness), F0) - F0) * pow(1.0f - VdotH, 5.0f);
 }
 
 // Geometry Smitch
@@ -65,8 +52,8 @@ float GeometrySmithGGX1(float3 N, float3 V, float Roughness)
 {
     float Roughness1 = Roughness + 1;
     float K     = (Roughness1 * Roughness1) / 8.0f;
-    float NDotV = max(dot(N, V), 0.0f);
-    return NDotV / max(NDotV * (1.0f - K) + K, 0.0000001f);
+    float NdotV = saturate(dot(N, V));
+    return NdotV / max(NdotV * (1.0f - K) + K, 0.0000001f);
 }
 
 float GeometrySmithGGX(float3 N, float3 L, float3 V, float Roughness)
@@ -77,8 +64,8 @@ float GeometrySmithGGX(float3 N, float3 L, float3 V, float Roughness)
 float GeometrySmithGGX1_IBL(float3 N, float3 V, float Roughness)
 {
     float K     = (Roughness * Roughness) / 2.0f;
-    float NDotV = max(dot(N, V), 0.0f);
-    return NDotV / max(NDotV * (1.0f - K) + K, 0.0000001f);
+    float NdotV = saturate(dot(N, V));
+    return NdotV / max(NdotV * (1.0f - K) + K, 0.0000001f);
 }
 
 float GeometrySmithGGX_IBL(float3 N, float3 L, float3 V, float Roughness)
@@ -104,13 +91,13 @@ float3 DirectRadiance(
     const float3 H     = normalize(V + L);
     float3 F           = FresnelSchlick(F0, V, H);
     float3 Numerator   = DistributionGGX(N, H, Roughness) * F * GeometrySmithGGX(N, L, V, Roughness);
-    float3 Denominator = 4.0f * max(dot(N, L), 0.0f) * max(dot(N, V), 0.0f);
+    float3 Denominator = 4.0f * saturate(dot(N, L)) * saturate(dot(N, V));
     float3 SpecBRDF    = Numerator / max(Denominator, 0.0000001f);
     
     float3 Ks = F;
     float3 Kd = (Float3(1.0f) - Ks) * (1.0f - Metallic);
     
-    const float NDotL = max(dot(N, L), 0.0f);
+    const float NDotL = saturate(dot(N, L));
     return (Kd * DiffBRDF + Ks * SpecBRDF) * Radiance * NDotL;
 }
 

@@ -20,7 +20,7 @@ float4 Float4(float Single)
 
 float Luma(float3 Color)
 {
-    return sqrt(dot(Color, float3(0.2126f, 0.587f, 0.114f)));
+    return sqrt(dot(Color, float3(0.299f, 0.587f, 0.114f)));
 }
 
 float Luminance(float3 Color)

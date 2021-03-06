@@ -242,7 +242,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
                 }
                 else
                 {
-                    MaterialTextures[Mat.bump_texname] = WhiteTexture;
+                    MaterialTextures[Mat.bump_texname] = NormalMap;
                 }
             }
 

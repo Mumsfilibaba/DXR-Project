@@ -46,6 +46,14 @@ struct DirLightShadowMapGenerationData
     XMFLOAT3   Position;
 };
 
+struct LightInfoData
+{
+    Int32 NumPointLights;
+    Int32 NumShadowCastingPointLights;
+    Int32 NumSkyLightMips;
+    Int32 Padding0;
+};
+
 struct LightSetup
 {
     const EFormat ShadowMapFormat      = EFormat::D32_Float;
@@ -65,10 +73,12 @@ struct LightSetup
     void BeginFrame(CommandList& CmdList, const Scene& Scene);
     void Release();
 
-    TArray<XMFLOAT4>           PointLightsPosRad;
-    TArray<PointLightData>     PointLightsData;
-    TRef<ConstantBuffer> PointLightsBuffer;
-    TRef<ConstantBuffer> PointLightsPosRadBuffer;
+    TRef<ConstantBuffer> LightInfoBuffer;
+
+    TArray<XMFLOAT4>       PointLightsPosRad;
+    TArray<PointLightData> PointLightsData;
+    TRef<ConstantBuffer>   PointLightsBuffer;
+    TRef<ConstantBuffer>   PointLightsPosRadBuffer;
 
     TArray<PointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
     TArray<XMFLOAT4>                    ShadowCastingPointLightsPosRad;
@@ -76,7 +86,7 @@ struct LightSetup
     TRef<ConstantBuffer>          ShadowCastingPointLightsBuffer;
     TRef<ConstantBuffer>          ShadowCastingPointLightsPosRadBuffer;
     TRef<TextureCubeArray>        PointLightShadowMaps;
-    TArray<DepthStencilViewCube>        PointLightShadowMapDSVs;
+    TArray<DepthStencilViewCube>  PointLightShadowMapDSVs;
 
     TArray<DirLightShadowMapGenerationData> DirLightShadowMapsGenerationData;
     TArray<DirectionalLightData> DirectionalLightsData;
@@ -88,5 +98,5 @@ struct LightSetup
 
     TRef<TextureCube>                 SpecularIrradianceMap;
     TArray<TRef<UnorderedAccessView>> SpecularIrradianceMapUAVs;
-    TArray<UnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
+    TArray<UnorderedAccessView*>      WeakSpecularIrradianceMapUAVs;
 };

@@ -14,6 +14,8 @@
     #define DRAW_TILE_OCCUPANCY 0
 #endif
 
+#define RAY_TRACING
+
 Texture2D<float4>       AlbedoTex             : register(t0, space0);
 Texture2D<float4>       NormalTex             : register(t1, space0);
 Texture2D<float4>       MaterialTex           : register(t2, space0);
@@ -267,6 +269,15 @@ void Main(ComputeShaderInput Input)
     
     // Image Based Lightning
     float3 FinalColor = L0;
+#ifdef RAY_TRACING
+    {
+        float3 Reflection = DXRReflection.Load(int3(TexCoord, 0)).rgb;
+        L0 += Reflection;
+        
+        float3 Ambient = GBufferAlbedo * GBufferAO * 0.03f;
+        FinalColor = Ambient + L0;
+    }
+#else 
     {
         const float NDotV = max(dot(N, V), 0.0f);
         
@@ -279,11 +290,12 @@ void Main(ComputeShaderInput Input)
         float3 R = reflect(-V, N);
         float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, R, GBufferRoughness * (NumSkyLightMips - 1.0f)).rgb;
         float2 BRDFIntegration = IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, GBufferRoughness), 0.0f).rg;
-        float3 Specular        = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
+        float3 Specular        = PrefilteredMap * (Ks * BRDFIntegration.x + BRDFIntegration.y);
 
         float3 Ambient = (Diffuse + Specular) * GBufferAO;
         FinalColor     = Ambient + L0;
     }
+#endif
 
 #if DRAW_TILE_OCCUPANCY
     const uint TotalLightCount = GroupPointLightCounter + GroupShadowPointLightCounter;

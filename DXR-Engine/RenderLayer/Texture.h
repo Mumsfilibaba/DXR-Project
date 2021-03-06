@@ -81,7 +81,7 @@ public:
     // Returns a UnorderedAccessView if texture is created with TextureFlag_UAV
     virtual class UnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
-    UInt32 GetWidth() const { return Width; }
+    UInt32 GetWidth()  const { return Width; }
     UInt32 GetHeight() const { return Height; }
 
     UInt32 GetNumSamples() const { return NumSamples; }

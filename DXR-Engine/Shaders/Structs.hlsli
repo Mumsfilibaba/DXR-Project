@@ -78,4 +78,12 @@ struct Material
     int    EnableHeight;
 };
 
+struct LightInfoData
+{
+    int NumPointLights;
+    int NumShadowCastingPointLights;
+    int NumSkyLightMips;
+    int Padding0;
+};
+
 #endif

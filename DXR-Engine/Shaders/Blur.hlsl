@@ -1,7 +1,7 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 
-RWTexture2D<float> Texture : register(u0, space0);
+RWTexture2D<float4> Texture : register(u0, space0);
 
 cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
@@ -11,7 +11,7 @@ cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 #define THREAD_COUNT 16
 #define KERNEL_SIZE  5
 
-groupshared float gTextureCache[THREAD_COUNT][THREAD_COUNT];
+groupshared float3 gTextureCache[THREAD_COUNT][THREAD_COUNT];
 
 static const int2 MAX_SIZE = int2(THREAD_COUNT - 1, THREAD_COUNT - 1);
 
@@ -29,32 +29,49 @@ void Main(ComputeShaderInput Input)
         return;
     }
     
-    // Cache texture fetches
-    const int2 GroupThreadID = int2(Input.GroupThreadID.xy);
-    gTextureCache[GroupThreadID.x][GroupThreadID.y] = Texture[TexCoords];
+    //const int2 GroupThreadID = int2(Input.GroupThreadID.xy);
+    //gTextureCache[GroupThreadID.x][GroupThreadID.y] = Texture[TexCoords];
     
-    GroupMemoryBarrierWithGroupSync();
+    //GroupMemoryBarrierWithGroupSync();
     
-    // Perform blur
-    float	Result = 0.0f;
-    int		Offset = -2;
+    float3 Result = 0.0f;
+    float  Scale  = Texture[TexCoords].a;
     
-    [unroll]
-    for (int Index = 0; Index < KERNEL_SIZE; Index++)
+    int Offset = -((KERNEL_SIZE - 1) / 2);
+    
+    int KernelSize = int(ceil(clamp(1.0f + Scale * 12.0f, 1.0f, 13.0f)));
+    Offset = -((KernelSize - 1) / 2);
+    
+    for (int i = 0; i < KernelSize; i++)
     {
-        Offset++;
-        
-        const float Weight = KERNEL[Index];
-        
-        // TODO: Handle when we need to sample outside the tile
 #ifdef HORIZONTAL_PASS
-        const int CurrentTexCoord = max(0, min(MAX_SIZE.y, GroupThreadID.x + Offset));
-        Result += gTextureCache[CurrentTexCoord.x][GroupThreadID.y] * Weight;
+        const int2 CurrentTexCoord = int2(TexCoords.x + Offset, TexCoords.y);
+        Result += Texture[CurrentTexCoord].rgb;
 #else
-        const int CurrentTexCoord = max(0, min(MAX_SIZE.y, GroupThreadID.y + Offset));
-        Result += gTextureCache[GroupThreadID.x][CurrentTexCoord] * Weight;
+        const int2 CurrentTexCoord = int2(TexCoords.x, TexCoords.y + Offset);
+        Result += Texture[CurrentTexCoord].rgb;
 #endif
+        Offset++;
     }
     
-    Texture[TexCoords] = Result;
+    Result = Result / KernelSize;
+    
+//    [unroll]
+//    for (int Index = 0; Index < KERNEL_SIZE; Index++)
+//    {
+//        const float Weight = KERNEL[Index];
+
+//        // TODO: Handle when we need to sample outside the tile
+//#ifdef HORIZONTAL_PASS
+//        const int2 CurrentTexCoord = int2(TexCoords.x + Offset, TexCoords.y);
+//        Result += Texture[CurrentTexCoord] * Weight;
+//#else
+//        const int2 CurrentTexCoord = int2(TexCoords.x, TexCoords.y + Offset);
+//        Result += Texture[CurrentTexCoord] * Weight;
+//#endif
+        
+//        Offset++;
+//    }
+    
+    Texture[TexCoords] = float4(Result, Scale);
 }

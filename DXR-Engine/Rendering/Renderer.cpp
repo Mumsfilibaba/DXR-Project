@@ -20,20 +20,20 @@
 
 static const UInt32 ShadowMapSampleCount = 2;
 
-ConsoleVariable GlobalDrawTextureDebugger(EConsoleVariableType::Bool);
-ConsoleVariable GlobalDrawRendererInfo(EConsoleVariableType::Bool);
+ConsoleVariable gDrawTextureDebugger(EConsoleVariableType::Bool);
+ConsoleVariable gDrawRendererInfo(EConsoleVariableType::Bool);
 
-ConsoleVariable GlobalEnableSSAO(EConsoleVariableType::Bool);
-ConsoleVariable GlobalEnableFXAA(EConsoleVariableType::Bool);
-ConsoleVariable GlobalEnableVariableRateShading(EConsoleVariableType::Bool);
+ConsoleVariable gEnableSSAO(EConsoleVariableType::Bool);
+ConsoleVariable gEnableFXAA(EConsoleVariableType::Bool);
+ConsoleVariable gEnableVariableRateShading(EConsoleVariableType::Bool);
 
-ConsoleVariable GlobalPrePassEnabled(EConsoleVariableType::Bool);
-ConsoleVariable GlobalDrawAABBs(EConsoleVariableType::Bool);
-ConsoleVariable GlobalVSyncEnabled(EConsoleVariableType::Bool);
-ConsoleVariable GlobalFrustumCullEnabled(EConsoleVariableType::Bool);
-ConsoleVariable GlobalRayTracingEnabled(EConsoleVariableType::Bool);
+ConsoleVariable gPrePassEnabled(EConsoleVariableType::Bool);
+ConsoleVariable gDrawAABBs(EConsoleVariableType::Bool);
+ConsoleVariable gVSyncEnabled(EConsoleVariableType::Bool);
+ConsoleVariable gFrustumCullEnabled(EConsoleVariableType::Bool);
+ConsoleVariable gRayTracingEnabled(EConsoleVariableType::Bool);
 
-ConsoleVariable GlobalFXAADebug(EConsoleVariableType::Bool);
+ConsoleVariable gFXAADebug(EConsoleVariableType::Bool);
 
 struct CameraBufferDesc
 {
@@ -101,7 +101,7 @@ void Renderer::PerformFXAA(CommandList& InCmdList)
     InCmdList.SetRenderTargets(&BackBufferRTV, 1, nullptr);
 
     ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
-    if (GlobalFXAADebug.GetBool())
+    if (gFXAADebug.GetBool())
     {
         InCmdList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
         InCmdList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
@@ -178,7 +178,7 @@ void Renderer::PerformAABBDebugPass(CommandList& InCmdList)
 
 void Renderer::RenderDebugInterface()
 {
-    if (GlobalDrawTextureDebugger.GetBool())
+    if (gDrawTextureDebugger.GetBool())
     {
         constexpr Float InvAspectRatio = 16.0f / 9.0f;
         constexpr Float AspectRatio    = 9.0f / 16.0f;
@@ -198,7 +198,7 @@ void Renderer::RenderDebugInterface()
             ImGuiWindowFlags_NoFocusOnAppearing |
             ImGuiWindowFlags_NoSavedSettings;
 
-        Bool TempDrawTextureDebugger = GlobalDrawTextureDebugger.GetBool();
+        Bool TempDrawTextureDebugger = gDrawTextureDebugger.GetBool();
         if (ImGui::Begin("FrameBuffer Debugger", &TempDrawTextureDebugger, Flags))
         {
             ImGui::BeginChild("##ScrollBox", ImVec2(Width * 0.985f, Height * 0.125f), true, ImGuiWindowFlags_HorizontalScrollbar);
@@ -252,10 +252,10 @@ void Renderer::RenderDebugInterface()
 
         ImGui::End();
 
-        GlobalDrawTextureDebugger.SetBool(TempDrawTextureDebugger);
+        gDrawTextureDebugger.SetBool(TempDrawTextureDebugger);
     }
 
-    if (GlobalDrawRendererInfo.GetBool())
+    if (gDrawRendererInfo.GetBool())
     {
         const UInt32 WindowWidth  = gMainWindow->GetWidth();
         const UInt32 WindowHeight = gMainWindow->GetHeight();
@@ -316,7 +316,7 @@ void Renderer::Tick(const Scene& Scene)
     Resources.ForwardVisibleCommands.Clear();
     Resources.DebugTextures.Clear();
 
-    if (!GlobalFrustumCullEnabled.GetBool())
+    if (!gFrustumCullEnabled.GetBool())
     {
         for (const MeshDrawCommand& Command : Scene.GetMeshDrawCommands())
         {
@@ -344,7 +344,7 @@ void Renderer::Tick(const Scene& Scene)
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
 
-    if (ShadingImage && GlobalEnableVariableRateShading.GetBool())
+    if (ShadingImage && gEnableVariableRateShading.GetBool())
     {
         INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin VRS Image");
         CmdList.SetShadingRate(EShadingRate::VRS_1x1);
@@ -373,12 +373,6 @@ void Renderer::Tick(const Scene& Scene)
 
     ShadowMapRenderer.RenderPointLightShadows(CmdList, LightSetup, Scene);
     ShadowMapRenderer.RenderDirectionalLightShadows(CmdList, LightSetup, Scene);
-
-    if (IsRayTracingSupported())
-    {
-        GPU_TRACE_SCOPE(CmdList, "Ray Tracing");
-        RayTracer.PreRender(CmdList, Resources, Scene);
-    }
 
     // Update camerabuffer
     CameraBufferDesc CamBuff;
@@ -413,14 +407,21 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
     CmdList.ClearDepthStencilView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), DepthStencilF(1.0f, 0));
 
-    if (GlobalPrePassEnabled.GetBool())
+    if (gPrePassEnabled.GetBool())
     {
+        GPU_TRACE_SCOPE(CmdList, "Pre Pass");
         DeferredRenderer.RenderPrePass(CmdList, Resources);
     }
 
     {
         GPU_TRACE_SCOPE(CmdList, "Base Pass");
         DeferredRenderer.RenderBasePass(CmdList, Resources);
+    }
+
+    if (IsRayTracingSupported())
+    {
+        GPU_TRACE_SCOPE(CmdList, "Ray Tracing");
+        RayTracer.Render(CmdList, Resources, LightSetup, Scene);
     }
 
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
@@ -461,7 +462,7 @@ void Renderer::Tick(const Scene& Scene)
     const ColorF WhiteColor = { 1.0f, 1.0f, 1.0f, 1.0f };
     CmdList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), WhiteColor);
 
-    if (GlobalEnableSSAO.GetBool())
+    if (gEnableSSAO.GetBool())
     {
         SSAORenderer.Render(CmdList, Resources);
     }
@@ -530,7 +531,7 @@ void Renderer::Tick(const Scene& Scene)
         EResourceState::PixelShaderResource,
         EResourceState::PixelShaderResource);
 
-    if (GlobalEnableFXAA.GetBool())
+    if (gEnableFXAA.GetBool())
     {
         PerformFXAA(CmdList);
     }
@@ -539,7 +540,7 @@ void Renderer::Tick(const Scene& Scene)
         PerformBackBufferBlit(CmdList);
     }
 
-    if (GlobalDrawAABBs.GetBool())
+    if (gDrawAABBs.GetBool())
     {
         PerformAABBDebugPass(CmdList);
     }
@@ -582,44 +583,44 @@ void Renderer::Tick(const Scene& Scene)
 
     {
         TRACE_SCOPE("Present");
-        Resources.MainWindowViewport->Present(GlobalVSyncEnabled.GetBool());
+        Resources.MainWindowViewport->Present(gVSyncEnabled.GetBool());
     }
 }
 
 Bool Renderer::Init()
 {
-    INIT_CONSOLE_VARIABLE("r.DrawTextureDebugger", GlobalDrawTextureDebugger);
-    GlobalDrawTextureDebugger.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawTextureDebugger", gDrawTextureDebugger);
+    gDrawTextureDebugger.SetBool(true);
 
-    INIT_CONSOLE_VARIABLE("r.DrawRendererInfo", GlobalDrawRendererInfo);
-    GlobalDrawRendererInfo.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawRendererInfo", gDrawRendererInfo);
+    gDrawRendererInfo.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.EnableSSAO", GlobalEnableSSAO);
-    GlobalEnableSSAO.SetBool(true);
+    INIT_CONSOLE_VARIABLE("r.EnableSSAO", gEnableSSAO);
+    gEnableSSAO.SetBool(true);
 
-    INIT_CONSOLE_VARIABLE("r.EnableFXAA", GlobalEnableFXAA);
-    GlobalEnableFXAA.SetBool(true);
+    INIT_CONSOLE_VARIABLE("r.EnableFXAA", gEnableFXAA);
+    gEnableFXAA.SetBool(true);
 
-    INIT_CONSOLE_VARIABLE("r.EnableVariableRateShading", GlobalEnableVariableRateShading);
-    GlobalEnableVariableRateShading.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.EnableVariableRateShading", gEnableVariableRateShading);
+    gEnableVariableRateShading.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.EnablePrePass", GlobalPrePassEnabled);
-    GlobalPrePassEnabled.SetBool(true);
+    INIT_CONSOLE_VARIABLE("r.EnablePrePass", gPrePassEnabled);
+    gPrePassEnabled.SetBool(true);
 
-    INIT_CONSOLE_VARIABLE("r.EnableDrawAABBs", GlobalDrawAABBs);
-    GlobalDrawAABBs.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.EnableDrawAABBs", gDrawAABBs);
+    gDrawAABBs.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.EnableVerticalSync", GlobalVSyncEnabled);
-    GlobalVSyncEnabled.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.EnableVerticalSync", gVSyncEnabled);
+    gVSyncEnabled.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.EnableFrustumCulling", GlobalFrustumCullEnabled);
-    GlobalFrustumCullEnabled.SetBool(true);
+    INIT_CONSOLE_VARIABLE("r.EnableFrustumCulling", gFrustumCullEnabled);
+    gFrustumCullEnabled.SetBool(true);
 
-    INIT_CONSOLE_VARIABLE("r.EnableRayTracing", GlobalRayTracingEnabled);
-    GlobalRayTracingEnabled.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.EnableRayTracing", gRayTracingEnabled);
+    gRayTracingEnabled.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.FXAADebug", GlobalFXAADebug);
-    GlobalFXAADebug.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.FXAADebug", gFXAADebug);
+    gFXAADebug.SetBool(false);
 
     Resources.MainWindowViewport = CreateViewport(gMainWindow, 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
     if (!Resources.MainWindowViewport)
