@@ -27,7 +27,7 @@ void RayGen()
 {
     uint3 DispatchIndex      = DispatchRaysIndex();
     uint3 DispatchDimensions = DispatchRaysDimensions();
-
+    
     float2 TexCoord = float2(DispatchIndex.xy) / float2(DispatchDimensions.xy);
     float  Depth    = GBufferDepth.SampleLevel(GBufferSampler, TexCoord, 0).r;
     float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
@@ -40,9 +40,11 @@ void RayGen()
     float3 N = UnpackNormal(WorldNormal);
     float3 V = normalize(CameraBuffer.Position - WorldPosition);
     
-    float2 Xi = Hammersley(RandomBuffer.FrameIndex, 64);
-    float Rnd0 = Random(float3(DispatchIndex.xy, DispatchDimensions.x), RandomBuffer.FrameIndex);
-    float Rnd1 = Random(float3(DispatchIndex.xy, DispatchDimensions.y), RandomBuffer.FrameIndex);
+    float2 Xi = Hammersley(RandomBuffer.FrameIndex, 512);
+    
+    uint Seed  = RandomInit(DispatchIndex.xy, DispatchDimensions.x, RandomBuffer.FrameIndex);
+    float Rnd0 = RandomFloatNext(Seed);
+    float Rnd1 = RandomFloatNext(Seed);
     Xi.x = frac(Xi.x + Rnd0);
     Xi.y = frac(Xi.y + Rnd1);
         
@@ -69,10 +71,9 @@ void RayGen()
         float NdotH = saturate(dot(N, H));
         float HdotV = saturate(dot(H, V));
         
-        float D = DistributionGGX(N, H, Roughness);
-        float Spec_PDF = NdotH / (4.0f * HdotV);
+        float D        = DistributionGGX(N, H, Roughness);
+        float Spec_PDF = saturate(NdotH / (4.0f * HdotV));
         float3 Li = PayLoad.Color;
-
         FinalColor = Li;
         FinalRay   = L * PayLoad.T;
         FinalPDF   = Spec_PDF;

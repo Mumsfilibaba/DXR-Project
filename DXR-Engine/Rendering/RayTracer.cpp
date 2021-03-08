@@ -258,7 +258,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     static UInt32 FrameIndex = 0;
 
     FrameIndex++;
-    if (FrameIndex >= 64)
+    if (FrameIndex >= 2048)
     {
         FrameIndex = 0;
     }

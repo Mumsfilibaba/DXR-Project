@@ -5,6 +5,7 @@
 #include "RayTracingHelpers.hlsli"
 
 #define NUM_THREADS 16
+#define NUM_SAMPLES 16
 
 ConstantBuffer<Camera>     CameraBuffer : register(b0);
 ConstantBuffer<RandomData> RandomBuffer : register(b1);
@@ -18,7 +19,7 @@ Texture2D<float4> InGBufferMaterial : register(t4);
 RWTexture2D<float4> HistoryOutput : register(u0);
 RWTexture2D<float4> Output        : register(u1);
 
-static const float2 PoissonDisk[16] =
+static const float2 PoissonDisk[NUM_SAMPLES] =
 {
     float2(-0.94201624, -0.39906216),
     float2(0.94558609, -0.76890725),
@@ -70,10 +71,10 @@ void Main(ComputeShaderInput Input)
     float3 F0 = Float3(0.04f);
     F0 = lerp(F0, Albedo, Metallic);
     
-    float Kernel = clamp(trunc(Roughness * 4.0f), 1.0f, 4.0f);
-    for (int y = 0; y < 16; y++)
+    uint Seed = RandomInit(TexCoords, Width, 0);
+    for (int y = 0; y < NUM_SAMPLES; y++)
     {
-        float2 Rnd    = PoissonDisk[y] * Kernel;
+        float2 Rnd    = trunc(PoissonDisk[y] * 4.0f);
         int2 TexCoord = TexCoords + int2(Rnd);
 
         float3 Li     = InColorDepth[TexCoord].rgb;
@@ -90,13 +91,14 @@ void Main(ComputeShaderInput Input)
             float  G = GeometrySmithGGX_IBL(N, L, V, Roughness);
             float3 F = FresnelSchlick(F0, V, H);
             float3 Numer = F * G;
-            float3 Denom = Float3(4.0f * NdotL * NdotV);
+            float3 Denom = saturate(Float3(4.0f * NdotL * NdotV) + 0.0001f);
     
             float3 Spec_BRDF = Numer / Denom;
-            float  Spec_PDF  = OriginalPDF;
+            float  Spec_PDF  = RayPDF.a;
     
-            float3 Weight = NdotL * Spec_BRDF / Spec_PDF;
-            Result    += Li * Weight;
+            float3 Weight      = NdotL * Spec_BRDF / Spec_PDF;
+            float3 LocalResult = Li * Weight;
+            Result    += LocalResult;
             WeightSum += Weight;
         }
     }
@@ -105,8 +107,8 @@ void Main(ComputeShaderInput Input)
     
     float3 L = normalize(InRayPDF[TexCoords].xyz);
     float3 H = normalize(V + L);
-    float NdotL = saturate(dot(N, L));
-    float NdotV = saturate(dot(N, V));
+    float  NdotL = saturate(dot(N, L));
+    float  NdotV = saturate(dot(N, V));
     
     float  D = DistributionGGX(N, H, Roughness);
     float  G = GeometrySmithGGX_IBL(N, L, V, Roughness);
@@ -123,58 +125,31 @@ void Main(ComputeShaderInput Input)
     float3 Spec_BRDF = Numer / Denom;
     float  Spec_PDF  = OriginalPDF;
     
-    Result = Result * NdotL * (Spec_BRDF * Ks + Diff_BRDF * Kd) / ((Spec_PDF + Diff_PDF) * 0.5f);
+    Result = Result * NdotL * (Spec_BRDF) / (Spec_PDF);
+    //Result = Result * NdotL * (Spec_BRDF * Ks + Diff_BRDF * Kd) / ((Spec_PDF + Diff_PDF) * 0.5f);
+    float LocalLuma = Luma(Result);
     
-    float4 Min = Float4(0.0f);
-    float4 Max = Float4(1.0f);
+    float3 Min = Float3(0.0f);
+    float3 Max = Float3(1.0f);
     for (int y = -1; y <= 1; y++)
     {
         for (int x = -1; x <= 1; x++)
         {
-            float4 Value = HistoryOutput[TexCoords + int2(x, y)];
+            float3 Value = HistoryOutput[TexCoords + int2(x, y)].rgb;
             Min = min(Value, Min);
             Max = max(Value, Max);
         }
     }
-
-    int KernelSize = 7;
-    int Neighbours = (KernelSize - 1) / 2;
-    
-    float Mean = 0.0f;
-    for (int y = -Neighbours; y <= Neighbours; y++)
-    {
-        for (int x = -Neighbours; x <= Neighbours; x++)
-        {
-            float4 Value = HistoryOutput[TexCoords + int2(x, y)];
-            Mean += Luminance(Value.rgb);
-        }
-    }
-    
-    float NumSamples = float(KernelSize * KernelSize);
-    Mean = Mean / NumSamples;
-    
-    float Sum = 0.0f;
-    for (int y = -Neighbours; y <= Neighbours; y++)
-    {
-        for (int x = -Neighbours; x <= Neighbours; x++)
-        {
-            float4 Value = HistoryOutput[TexCoords + int2(x, y)];
-            float  Diff  = Luminance(Value.rgb) - Mean;
-            Sum += Diff * Diff;
-        }
-    }
-    float Variance = Sum / (NumSamples - 1.0f);
     
     GroupMemoryBarrierWithGroupSync();
     
     float  HistoryUsage  = 0.98f;
     float4 HistorySample = HistoryOutput[TexCoords];
-    float4 ClampedValue  = clamp(float4(Result, 1.0f), Min, Max);
+    float3 ClampedValue  = clamp(Result, Min, Max);
+
+    float3 Color = HistorySample.rgb * HistoryUsage + ClampedValue * (1.0f - HistoryUsage);
+    float  Scale = HistorySample.a * 0.5f + LocalLuma * 0.5f;
     
-    float HistoryScale = HistorySample.a;
-    
-    float3 Color = HistorySample.rgb * HistoryUsage + ClampedValue.rgb * (1.0f - HistoryUsage);
-    float  Scale = HistorySample.a * 0.5f + Variance * 0.5f;
     HistoryOutput[TexCoords] = float4(Color, Scale);
-    Output[TexCoords]        = float4(Color, Variance);
+    Output[TexCoords] = float4(Color, Scale);
 }

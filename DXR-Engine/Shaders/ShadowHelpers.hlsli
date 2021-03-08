@@ -40,8 +40,8 @@ float PointLightShadowFactor(
     [unroll]
     for (int i = 0; i < POINT_LIGHT_SAMPLES; i++)
     {
-        const int Index = int(float(OFFSET_SAMPLES) * Random(floor(WorldPosition.xyz * 1000.0f), i)) % OFFSET_SAMPLES;
-        Shadow += ShadowMap.SampleCmpLevelZero(Sampler, DirToLight + SampleOffsetDirections[Index] * DiskRadius, Depth);
+        const int OffsetIndex = int(float(OFFSET_SAMPLES) * Random(floor(WorldPosition.xyz * 1000.0f), i)) % OFFSET_SAMPLES;
+        Shadow += ShadowMap.SampleCmpLevelZero(Sampler, DirToLight + SampleOffsetDirections[OffsetIndex] * DiskRadius, Depth);
     }
     
     Shadow = Shadow / POINT_LIGHT_SAMPLES;
@@ -65,7 +65,7 @@ float PointLightShadowFactor(
     
     float Shadow = 0.0f;
     const float DiskRadius = (0.4f + (Depth)) / Light.FarPlane;
-    
+
     [unroll]
     for (int i = 0; i < POINT_LIGHT_SAMPLES; i++)
     {

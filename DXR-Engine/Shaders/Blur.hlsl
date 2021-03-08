@@ -1,5 +1,6 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
+#include "helpers.hlsli"
 
 RWTexture2D<float4> Texture : register(u0, space0);
 
@@ -32,14 +33,30 @@ void Main(ComputeShaderInput Input)
     //const int2 GroupThreadID = int2(Input.GroupThreadID.xy);
     //gTextureCache[GroupThreadID.x][GroupThreadID.y] = Texture[TexCoords];
     
-    //GroupMemoryBarrierWithGroupSync();
+    float M1 = 0.0f;
+    float M2 = 1.0f;
+    for (int y = -1; y <= 1; y++)
+    {
+        for (int x = -1; x <= 1; x++)
+        {
+            float3 Value    = Texture[TexCoords + int2(x, y)].rgb;
+            float LocalLuma = Luma(Value);
+            M1 += LocalLuma;
+            M2 += LocalLuma * LocalLuma;
+        }
+    }
     
-    float3 Result = 0.0f;
-    float  Scale  = Texture[TexCoords].a;
+    M1 = M1 / 9.0f;
+    M2 = M2 / 9.0f;
     
+    float Variance = M2 - M1 * M1;
+    
+    GroupMemoryBarrierWithGroupSync();
+    
+    float3 Result = 0.0f;    
     int Offset = -((KERNEL_SIZE - 1) / 2);
     
-    int KernelSize = int(ceil(clamp(1.0f + Scale * 12.0f, 1.0f, 13.0f)));
+    int KernelSize = int(ceil(clamp(1.0f + Variance * 12.0f, 1.0f, 13.0f)));
     Offset = -((KernelSize - 1) / 2);
     
     for (int i = 0; i < KernelSize; i++)
@@ -73,5 +90,5 @@ void Main(ComputeShaderInput Input)
 //        Offset++;
 //    }
     
-    Texture[TexCoords] = float4(Result, Scale);
+    Texture[TexCoords] = float4(Result, 1.0f);
 }

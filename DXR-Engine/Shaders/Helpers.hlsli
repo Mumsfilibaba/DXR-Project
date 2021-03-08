@@ -51,6 +51,44 @@ float Random(float3 Seed, int i)
     return frac(sin(Dot) * 43758.5453f);
 }
 
+uint WangHash(uint Seed)
+{
+    Seed = (Seed ^ 61) ^ (Seed >> 16);
+    Seed *= 9;
+    Seed = Seed ^ (Seed >> 4);
+    Seed *= 0x27d4eb2d;
+    Seed = Seed ^ (Seed >> 15);
+    return Seed;
+}
+
+uint RandomInit(uint2 Pixel, uint Width, uint FrameIndex)
+{
+    uint Seed = (Pixel.x + (Pixel.y * Width));
+    return WangHash(Seed) + WangHash(FrameIndex);
+}
+
+uint XORShift(uint Value)
+{
+    // Xorshift*32
+    // Based on George Marsaglia's work: http://www.jstatsoft.org/v08/i14/paper
+    Value ^= Value << 13;
+    Value ^= Value >> 17;
+    Value ^= Value << 5;
+    return Value;
+}
+
+float RandomFloatNext(inout uint Seed)
+{
+    Seed = XORShift(Seed);
+    return float(Seed) * (1.0 / 4294967296.0);
+}
+
+int RandomIntNext(inout uint Seed)
+{
+    Seed = XORShift(Seed);
+    return Seed;
+}
+
 float Linstep(float Low, float High, float P)
 {
     return saturate((P - Low) / (High - Low));
