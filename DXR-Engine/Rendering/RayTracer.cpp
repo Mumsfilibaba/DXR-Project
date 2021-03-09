@@ -93,26 +93,37 @@ Bool RayTracer::Init(FrameResources& Resources)
         Resources.RTReflections->SetName("RT Reflections");
     }
 
-    RT_History = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
-    if (!RT_History)
+    RTHistory = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!RTHistory)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        RT_History->SetName("RT History");
+        RTHistory->SetName("RT History");
     }
 
-    RT_Color_Depth = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
-    if (!RT_Color_Depth)
+    RTColorDepth = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!RTColorDepth)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        RT_Color_Depth->SetName("RayTracing Color Depth");
+        RTColorDepth->SetName("RayTracing Color Depth");
+    }
+
+    RTMomentBuffer = CreateTexture2D(EFormat::R16G16_Float, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!RTMomentBuffer)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RTMomentBuffer->SetName("RayTracing Moment Buffer");
     }
 
     Resources.RTRayPDF = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
@@ -172,7 +183,7 @@ Bool RayTracer::Init(FrameResources& Resources)
     Defines.EmplaceBack("HORIZONTAL_PASS", "1");
 
     // Load shader
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RTBilateralPass.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         Debug::DebugBreak();
         return false;
@@ -186,7 +197,7 @@ Bool RayTracer::Init(FrameResources& Resources)
     }
     else
     {
-        BlurHorizontalShader->SetName("SSAO Horizontal Blur Shader");
+        BlurHorizontalShader->SetName("RT Horizontal Blur Shader");
     }
 
     ComputePipelineStateCreateInfo PSOProperties;
@@ -200,13 +211,13 @@ Bool RayTracer::Init(FrameResources& Resources)
     }
     else
     {
-        BlurHorizontalPSO->SetName("SSAO Horizontal Blur PSO");
+        BlurHorizontalPSO->SetName("RT Horizontal Blur PSO");
     }
 
     Defines.Clear();
     Defines.EmplaceBack("VERTICAL_PASS", "1");
 
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RTBilateralPass.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         Debug::DebugBreak();
         return false;
@@ -220,7 +231,7 @@ Bool RayTracer::Init(FrameResources& Resources)
     }
     else
     {
-        BlurVerticalShader->SetName("SSAO Vertcial Blur Shader");
+        BlurVerticalShader->SetName("RT Vertical Blur Shader");
     }
 
     PSOProperties.Shader = BlurVerticalShader.Get();
@@ -233,7 +244,7 @@ Bool RayTracer::Init(FrameResources& Resources)
     }
     else
     {
-        BlurVerticalPSO->SetName("SSAO Vertical Blur PSO");
+        BlurVerticalPSO->SetName("RT Vertical Blur PSO");
     }
 
     return true;
@@ -245,8 +256,9 @@ void RayTracer::Release()
     RandomDataBuffer.Reset();
     RTSpatialPSO.Reset();
     RTSpatialShader.Reset();
-    RT_Color_Depth.Reset();
-    RT_History.Reset();
+    RTColorDepth.Reset();
+    RTMomentBuffer.Reset();
+    RTHistory.Reset();
     BlurHorizontalPSO.Reset();
     BlurHorizontalShader.Reset();
     BlurVerticalPSO.Reset();
@@ -258,7 +270,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     static UInt32 FrameIndex = 0;
 
     FrameIndex++;
-    if (FrameIndex >= 2048)
+    if (FrameIndex >= 512)
     {
         FrameIndex = 0;
     }
@@ -345,7 +357,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     }
 
     Resources.GlobalResources.Reset();
-    Resources.GlobalResources.AddUnorderedAccessView(RT_Color_Depth->GetUnorderedAccessView());
+    Resources.GlobalResources.AddUnorderedAccessView(RTColorDepth->GetUnorderedAccessView());
     Resources.GlobalResources.AddUnorderedAccessView(Resources.RTRayPDF->GetUnorderedAccessView());
     Resources.GlobalResources.AddConstantBuffer(Resources.CameraBuffer.Get());
     Resources.GlobalResources.AddConstantBuffer(LightSetup.LightInfoBuffer.Get());
@@ -389,36 +401,38 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     UInt32 Height = Resources.RTReflections->GetHeight();
     CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
 
-    CmdList.UnorderedAccessTextureBarrier(RT_Color_Depth.Get());
+    CmdList.UnorderedAccessTextureBarrier(RTColorDepth.Get());
     CmdList.UnorderedAccessTextureBarrier(Resources.RTRayPDF.Get());
 
-    CmdList.TransitionTexture(RT_Color_Depth.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(RTColorDepth.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(Resources.RTRayPDF.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
 
     CmdList.SetComputePipelineState(RTSpatialPSO.Get());
     
-    CmdList.SetShaderResourceView(RTSpatialShader.Get(), RT_Color_Depth->GetShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(RTSpatialShader.Get(), RTColorDepth->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.RTRayPDF->GetShaderResourceView(), 1);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView(), 2);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 4);
+    CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetShaderResourceView(), 5);
 
-    CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RT_History->GetUnorderedAccessView(), 0);
+    CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTHistory->GetUnorderedAccessView(), 0);
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), Resources.RTReflections->GetUnorderedAccessView(), 1);
+    CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTMomentBuffer->GetUnorderedAccessView(), 2);
     
     CmdList.SetConstantBuffer(RTSpatialShader.Get(), Resources.CameraBuffer.Get(), 0);
-    //CmdList.SetConstantBuffer(RTSpatialShader.Get(), RandomDataBuffer.Get(), 1);
 
     XMUINT3 ThreadGroup = RTSpatialShader->GetThreadGroupXYZ();
-    Width  = Math::DivideByMultiple(RT_History->GetWidth(), ThreadGroup.x);
-    Height = Math::DivideByMultiple(RT_History->GetHeight(), ThreadGroup.y);
+    Width  = Math::DivideByMultiple(RTHistory->GetWidth(), ThreadGroup.x);
+    Height = Math::DivideByMultiple(RTHistory->GetHeight(), ThreadGroup.y);
     CmdList.Dispatch(Width, Height, ThreadGroup.z);
 
-    CmdList.TransitionTexture(RT_Color_Depth.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
+    CmdList.TransitionTexture(RTColorDepth.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
     CmdList.TransitionTexture(Resources.RTRayPDF.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
 
-    CmdList.UnorderedAccessTextureBarrier(RT_History.Get());
+    CmdList.UnorderedAccessTextureBarrier(RTHistory.Get());
     CmdList.UnorderedAccessTextureBarrier(Resources.RTReflections.Get());
+    CmdList.UnorderedAccessTextureBarrier(RTMomentBuffer.Get());
 
     CmdList.SetComputePipelineState(BlurHorizontalPSO.Get());
 
@@ -439,8 +453,8 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.UnorderedAccessTextureBarrier(Resources.RTReflections.Get());
 
     Resources.DebugTextures.EmplaceBack(
-        MakeSharedRef<ShaderResourceView>(RT_Color_Depth->GetShaderResourceView()),
-        RT_Color_Depth,
+        MakeSharedRef<ShaderResourceView>(RTColorDepth->GetShaderResourceView()),
+        RTColorDepth,
         EResourceState::UnorderedAccess,
         EResourceState::UnorderedAccess);
 
@@ -451,8 +465,8 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
         EResourceState::UnorderedAccess);
 
     Resources.DebugTextures.EmplaceBack(
-        MakeSharedRef<ShaderResourceView>(RT_History->GetShaderResourceView()),
-        RT_History,
+        MakeSharedRef<ShaderResourceView>(RTHistory->GetShaderResourceView()),
+        RTHistory,
         EResourceState::UnorderedAccess,
         EResourceState::UnorderedAccess);
 

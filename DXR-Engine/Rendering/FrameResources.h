@@ -12,6 +12,7 @@
 #define GBUFFER_MATERIAL_INDEX    2
 #define GBUFFER_DEPTH_INDEX       3
 #define GBUFFER_VIEW_NORMAL_INDEX 4
+#define GBUFFER_VELOCITY_INDEX    5
 
 template<typename TResource>
 class PtrResourceCache
@@ -70,6 +71,7 @@ struct FrameResources
     const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
     const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
     const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
+    const EFormat VelocityFormat     = EFormat::R16G16_Float;
 
     Texture2D* BackBuffer = nullptr;
 
@@ -87,7 +89,7 @@ struct FrameResources
 
     TRef<Texture2D>    SSAOBuffer;
     TRef<Texture2D>    FinalTarget;
-    TRef<Texture2D>    GBuffer[5];
+    TRef<Texture2D>    GBuffer[6];
     TRef<SamplerState> GBufferSampler;
     TRef<SamplerState> FXAASampler;
 

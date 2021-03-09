@@ -35,21 +35,6 @@ ConsoleVariable gRayTracingEnabled(EConsoleVariableType::Bool);
 
 ConsoleVariable gFXAADebug(EConsoleVariableType::Bool);
 
-struct CameraBufferDesc
-{
-    XMFLOAT4X4 ViewProjection;
-    XMFLOAT4X4 View;
-    XMFLOAT4X4 ViewInv;
-    XMFLOAT4X4 Projection;
-    XMFLOAT4X4 ProjectionInv;
-    XMFLOAT4X4 ViewProjectionInv;
-    XMFLOAT3   Position;
-    Float      NearPlane;
-    XMFLOAT3   Forward;
-    Float      FarPlane;
-    Float      AspectRatio;
-};
-
 void Renderer::PerformFrustumCulling(const Scene& Scene)
 {
     TRACE_SCOPE("Frustum Culling");
@@ -375,22 +360,22 @@ void Renderer::Tick(const Scene& Scene)
     ShadowMapRenderer.RenderDirectionalLightShadows(CmdList, LightSetup, Scene);
 
     // Update camerabuffer
-    CameraBufferDesc CamBuff;
-    CamBuff.ViewProjection    = Scene.GetCamera()->GetViewProjectionMatrix();
-    CamBuff.View              = Scene.GetCamera()->GetViewMatrix();
-    CamBuff.ViewInv           = Scene.GetCamera()->GetViewInverseMatrix();
-    CamBuff.Projection        = Scene.GetCamera()->GetProjectionMatrix();
-    CamBuff.ProjectionInv     = Scene.GetCamera()->GetProjectionInverseMatrix();
-    CamBuff.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
-    CamBuff.Position          = Scene.GetCamera()->GetPosition();
-    CamBuff.Forward           = Scene.GetCamera()->GetForward();
-    CamBuff.NearPlane         = Scene.GetCamera()->GetNearPlane();
-    CamBuff.FarPlane          = Scene.GetCamera()->GetFarPlane();
-    CamBuff.AspectRatio       = Scene.GetCamera()->GetAspectRatio();
+    CameraBufferData.PrevViewProjection = CameraBufferData.ViewProjection;
+    CameraBufferData.ViewProjection     = Scene.GetCamera()->GetViewProjectionMatrix();
+    CameraBufferData.View               = Scene.GetCamera()->GetViewMatrix();
+    CameraBufferData.ViewInv            = Scene.GetCamera()->GetViewInverseMatrix();
+    CameraBufferData.Projection         = Scene.GetCamera()->GetProjectionMatrix();
+    CameraBufferData.ProjectionInv      = Scene.GetCamera()->GetProjectionInverseMatrix();
+    CameraBufferData.ViewProjectionInv  = Scene.GetCamera()->GetViewProjectionInverseMatrix();
+    CameraBufferData.Position           = Scene.GetCamera()->GetPosition();
+    CameraBufferData.Forward            = Scene.GetCamera()->GetForward();
+    CameraBufferData.NearPlane          = Scene.GetCamera()->GetNearPlane();
+    CameraBufferData.FarPlane           = Scene.GetCamera()->GetFarPlane();
+    CameraBufferData.AspectRatio        = Scene.GetCamera()->GetAspectRatio();
 
     CmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
-    CmdList.UpdateBuffer(Resources.CameraBuffer.Get(), 0, sizeof(CameraBufferDesc), &CamBuff);
+    CmdList.UpdateBuffer(Resources.CameraBuffer.Get(), 0, sizeof(CameraBufferDesc), &CameraBufferData);
     
     CmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
     
@@ -398,6 +383,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VELOCITY_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
 
     ColorF BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -405,6 +391,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(), BlackClearColor);
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
+    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetRenderTargetView(), BlackClearColor);
     CmdList.ClearDepthStencilView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), DepthStencilF(1.0f, 0));
 
     if (gPrePassEnabled.GetBool())
@@ -445,6 +432,14 @@ void Renderer::Tick(const Scene& Scene)
     Resources.DebugTextures.EmplaceBack(
         MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX],
+        EResourceState::NonPixelShaderResource,
+        EResourceState::NonPixelShaderResource);
+
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VELOCITY_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetShaderResourceView()),
+        Resources.GBuffer[GBUFFER_VELOCITY_INDEX],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource);
 

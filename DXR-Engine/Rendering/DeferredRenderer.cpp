@@ -135,7 +135,8 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[1] = FrameResources.NormalFormat;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[2] = EFormat::R8G8B8A8_Unorm;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[3] = FrameResources.ViewNormalFormat;
-        PipelineStateInfo.PipelineFormats.NumRenderTargets       = 4;
+        PipelineStateInfo.PipelineFormats.RenderTargetFormats[4] = FrameResources.VelocityFormat;
+        PipelineStateInfo.PipelineFormats.NumRenderTargets       = 5;
 
         PipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
         if (!PipelineState)
@@ -486,8 +487,9 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
         FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(),
         FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(),
         FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(),
+        FrameResources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetRenderTargetView(),
     };
-    CmdList.SetRenderTargets(RenderTargets, 4, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
+    CmdList.SetRenderTargets(RenderTargets, ArrayCount(RenderTargets), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
     // Setup Pipeline
     CmdList.SetGraphicsPipelineState(PipelineState.Get());
@@ -589,7 +591,6 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
     CmdList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsBuffer.Get(), 3);
     CmdList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
     CmdList.SetConstantBuffer(LightPassShader, LightSetup.DirectionalLightsBuffer.Get(), 5);
-
 
     UnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
     CmdList.SetUnorderedAccessView(LightPassShader, FinalTargetUAV, 0);
@@ -700,6 +701,21 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     if (FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->SetName("GBuffer ViewNormal");
+    }
+    else
+    {
+        return false;
+    }
+
+    // Velocity
+    FrameResources.GBuffer[GBUFFER_VELOCITY_INDEX] = CreateTexture2D(
+        FrameResources.VelocityFormat,
+        Width, Height, 1, 1, Usage,
+        EResourceState::Common,
+        nullptr);
+    if (FrameResources.GBuffer[GBUFFER_VELOCITY_INDEX])
+    {
+        FrameResources.GBuffer[GBUFFER_VELOCITY_INDEX]->SetName("GBuffer Velocity");
     }
     else
     {

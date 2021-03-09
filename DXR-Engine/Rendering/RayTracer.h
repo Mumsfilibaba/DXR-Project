@@ -38,6 +38,7 @@ private:
     TRef<ComputePipelineState> BlurVerticalPSO;
     TRef<ComputeShader>        BlurVerticalShader;
 
-    TRef<Texture2D> RT_Color_Depth;
-    TRef<Texture2D> RT_History;
+    TRef<Texture2D> RTColorDepth;
+    TRef<Texture2D> RTHistory;
+    TRef<Texture2D> RTMomentBuffer;
 };

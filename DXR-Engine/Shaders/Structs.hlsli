@@ -12,6 +12,7 @@ struct ComputeShaderInput
 struct Camera
 {
     float4x4 ViewProjection;
+    float4x4 PrevViewProjection;
     float4x4 View;
     float4x4 ViewInverse;
     float4x4 Projection;

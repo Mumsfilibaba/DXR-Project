@@ -15,9 +15,11 @@ Texture2D<float4> InRayPDF          : register(t1);
 Texture2D<float4> InGBufferAlbedo   : register(t2);
 Texture2D<float4> InGBufferNormals  : register(t3);
 Texture2D<float4> InGBufferMaterial : register(t4);
+Texture2D<float2> InGBuffervelocity : register(t5);
 
 RWTexture2D<float4> HistoryOutput : register(u0);
 RWTexture2D<float4> Output        : register(u1);
+RWTexture2D<float2> Moments       : register(u2);
 
 static const float2 PoissonDisk[NUM_SAMPLES] =
 {
@@ -38,6 +40,8 @@ static const float2 PoissonDisk[NUM_SAMPLES] =
     float2(0.19984126, 0.78641367),
     float2(0.14383161, -0.14100790)
 };
+
+groupshared float3 SharedResults[NUM_THREADS][NUM_THREADS];
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(ComputeShaderInput Input)
@@ -71,10 +75,9 @@ void Main(ComputeShaderInput Input)
     float3 F0 = Float3(0.04f);
     F0 = lerp(F0, Albedo, Metallic);
     
-    uint Seed = RandomInit(TexCoords, Width, 0);
     for (int y = 0; y < NUM_SAMPLES; y++)
     {
-        float2 Rnd    = trunc(PoissonDisk[y] * 4.0f);
+        float2 Rnd    = trunc(PoissonDisk[y] * 6.0f);
         int2 TexCoord = TexCoords + int2(Rnd);
 
         float3 Li     = InColorDepth[TexCoord].rgb;
@@ -103,6 +106,7 @@ void Main(ComputeShaderInput Input)
         }
     }
     
+    float LocalLuma = Luma(Result);
     Result = Result / WeightSum;
     
     float3 L = normalize(InRayPDF[TexCoords].xyz);
@@ -125,9 +129,8 @@ void Main(ComputeShaderInput Input)
     float3 Spec_BRDF = Numer / Denom;
     float  Spec_PDF  = OriginalPDF;
     
-    Result = Result * NdotL * (Spec_BRDF) / (Spec_PDF);
-    //Result = Result * NdotL * (Spec_BRDF * Ks + Diff_BRDF * Kd) / ((Spec_PDF + Diff_PDF) * 0.5f);
-    float LocalLuma = Luma(Result);
+    //Result = Result * NdotL * (Spec_BRDF) / (Spec_PDF);
+    Result = Result * NdotL * (Spec_BRDF * Ks + Diff_BRDF * Kd) / ((Spec_PDF + Diff_PDF) * 0.5f);
     
     float3 Min = Float3(0.0f);
     float3 Max = Float3(1.0f);
@@ -143,13 +146,24 @@ void Main(ComputeShaderInput Input)
     
     GroupMemoryBarrierWithGroupSync();
     
-    float  HistoryUsage  = 0.98f;
-    float4 HistorySample = HistoryOutput[TexCoords];
+    float HistoryUsage = 0.98f;
+    float MomentsUsage = 0.5f;
+    
+    float2 GBufferVelocity = InGBuffervelocity[TexCoords];
+    GBufferVelocity        = GBufferVelocity * float2(Width, Height);
+    uint2 HistoryTexCoords = max(int2(TexCoords) - int2(GBufferVelocity), int2(0, 0));
+    
+    float4 HistorySample = HistoryOutput[HistoryTexCoords];
     float3 ClampedValue  = clamp(Result, Min, Max);
 
-    float3 Color = HistorySample.rgb * HistoryUsage + ClampedValue * (1.0f - HistoryUsage);
-    float  Scale = HistorySample.a * 0.5f + LocalLuma * 0.5f;
+    float2 HistoryMoments = Moments[HistoryTexCoords];
+    float2 NewMoments     = float2(LocalLuma, LocalLuma * LocalLuma);
+    float2 ResultMoments  = HistoryMoments * MomentsUsage + NewMoments * (1.0f - MomentsUsage);
+    Moments[TexCoords] = ResultMoments;
     
-    HistoryOutput[TexCoords] = float4(Color, Scale);
-    Output[TexCoords] = float4(Color, Scale);
+    float3 Color   = HistorySample.rgb * HistoryUsage + ClampedValue * (1.0f - HistoryUsage);
+    float Variance = ResultMoments.y - ResultMoments.x * ResultMoments.x;
+    
+    HistoryOutput[TexCoords] = float4(Color, Variance);
+    Output[TexCoords]        = float4(Color, Variance);
 }
