@@ -636,7 +636,7 @@ void Profiler::Init()
     gDrawFps.SetBool(false);
 
     INIT_CONSOLE_VARIABLE("r.DrawProfiler", gDrawProfiler);
-    gDrawProfiler.SetBool(true);
+    gDrawProfiler.SetBool(false);
 }
 
 void Profiler::Tick()
