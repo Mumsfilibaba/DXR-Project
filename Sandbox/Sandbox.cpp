@@ -98,7 +98,7 @@ Bool Sandbox::Init()
         for (UInt32 x = 0; x < SphereCountX; x++)
         {
             NewActor = DBG_NEW Actor();
-            NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 8.0f + StartPositionY + (y * SphereOffset), 40.0f);
+            NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 1.0f, 40.0f + StartPositionY + (y * SphereOffset));
 
             NewActor->SetName("Sphere[" + std::to_string(SphereIndex) + "]");
             SphereIndex++;
@@ -133,7 +133,7 @@ Bool Sandbox::Init()
     CurrentScene->AddActor(NewActor);
 
     NewActor->SetName("Cube");
-    NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 42.0f);
+    NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
 
     MatProperties.AO           = 1.0f;
     MatProperties.Metallic     = 1.0f;
