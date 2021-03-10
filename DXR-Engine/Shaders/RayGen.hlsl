@@ -40,7 +40,7 @@ void RayGen()
     float3 N = UnpackNormal(WorldNormal);
     float3 V = normalize(CameraBuffer.Position - WorldPosition);
     
-    float2 Xi = Hammersley(RandomBuffer.FrameIndex, 512);
+    float2 Xi = Hammersley(RandomBuffer.FrameIndex, 64);
     
     uint Seed  = RandomInit(DispatchIndex.xy, DispatchDimensions.x, RandomBuffer.FrameIndex);
     float Rnd0 = RandomFloatNext(Seed);

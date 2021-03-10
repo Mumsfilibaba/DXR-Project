@@ -270,7 +270,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     static UInt32 FrameIndex = 0;
 
     FrameIndex++;
-    if (FrameIndex >= 512)
+    if (FrameIndex >= 64)
     {
         FrameIndex = 0;
     }
@@ -421,6 +421,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTMomentBuffer->GetUnorderedAccessView(), 2);
     
     CmdList.SetConstantBuffer(RTSpatialShader.Get(), Resources.CameraBuffer.Get(), 0);
+    CmdList.SetConstantBuffer(RTSpatialShader.Get(), RandomDataBuffer.Get(), 1);
 
     XMUINT3 ThreadGroup = RTSpatialShader->GetThreadGroupXYZ();
     Width  = Math::DivideByMultiple(RTHistory->GetWidth(), ThreadGroup.x);

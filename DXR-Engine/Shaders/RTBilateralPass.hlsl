@@ -218,7 +218,8 @@ void Main(ComputeShaderInput Input)
         return;
     }
 
-    float Variance = Texture[TexCoords].a;
+    float4 Sample = Texture[TexCoords];
+    float Variance = Sample.a;
     int KernelSize = int(trunc(clamp(3.0f + Variance * 10.0f, 3.0f, 13.0f)));
     if (KernelSize % 2 == 0)
     {
