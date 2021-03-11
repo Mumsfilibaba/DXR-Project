@@ -220,34 +220,51 @@ void Main(ComputeShaderInput Input)
 
     float4 Sample = Texture[TexCoords];
     float Variance = Sample.a;
-    int KernelSize = int(trunc(clamp(3.0f + Variance * 10.0f, 3.0f, 13.0f)));
-    if (KernelSize % 2 == 0)
-    {
-        KernelSize = clamp(KernelSize + 1, 3, 13);
-    }
+    int KernelSize = int(trunc(clamp(1.0f + Variance * 12.0f, 1.0f, 13.0f)));
+    
+//    int    Offset = -((KernelSize - 1) / 2);
+//    float3 Result = 0.0f;
+    
+//    for (int i = 0; i < KernelSize; i++)
+//    {
+//#ifdef HORIZONTAL_PASS
+//        const int2 CurrentTexCoord = int2(TexCoords.x + Offset, TexCoords.y);
+//        Result += Texture[CurrentTexCoord].rgb;
+//#else
+//        const int2 CurrentTexCoord = int2(TexCoords.x, TexCoords.y + Offset);
+//        Result += Texture[CurrentTexCoord].rgb;
+//#endif
+//        Offset++;
+//    }
+    
+//    Result = Result / float(KernelSize);
     
     float3 Result = 0.0f;
-    if (KernelSize == 3)
+    if (KernelSize < 3)
+    {
+        Result = Sample.rgb;
+    }
+    else if (KernelSize < 5)
     {
         Result = Kernel_3(TexCoords);
     }
-    else if (KernelSize == 5)
+    else if (KernelSize < 7)
     {
         Result = Kernel_5(TexCoords);
     }
-    else if (KernelSize == 7)
+    else if (KernelSize < 9)
     {
         Result = Kernel_7(TexCoords);
     }
-    else if (KernelSize == 9)
+    else if (KernelSize < 11)
     {
         Result = Kernel_9(TexCoords);
     }
-    else if (KernelSize == 11)
+    else if (KernelSize < 13)
     {
-        Result = Kernel_13(TexCoords);
+        Result = Kernel_11(TexCoords);
     }
-    else if (KernelSize == 13)
+    else
     {
         Result = Kernel_13(TexCoords);
     }

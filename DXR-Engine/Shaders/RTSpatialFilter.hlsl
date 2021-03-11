@@ -21,25 +21,25 @@ RWTexture2D<float4> HistoryOutput : register(u0);
 RWTexture2D<float4> Output        : register(u1);
 RWTexture2D<float2> Moments       : register(u2);
 
-static const float2 PoissonDisk[NUM_SAMPLES] =
-{
-    float2(-0.94201624, -0.39906216),
-    float2(0.94558609, -0.76890725),
-    float2(-0.094184101, -0.92938870),
-    float2(0.34495938, 0.29387760),
-    float2(-0.91588581, 0.45771432),
-    float2(-0.81544232, -0.87912464),
-    float2(-0.38277543, 0.27676845),
-    float2(0.97484398, 0.75648379),
-    float2(0.44323325, -0.97511554),
-    float2(0.53742981, -0.47373420),
-    float2(-0.26496911, -0.41893023),
-    float2(0.79197514, 0.19090188),
-    float2(-0.24188840, 0.99706507),
-    float2(-0.81409955, 0.91437590),
-    float2(0.19984126, 0.78641367),
-    float2(0.14383161, -0.14100790)
-};
+//static const float2 PoissonDisk[NUM_SAMPLES] =
+//{
+//    float2(-0.94201624, -0.39906216),
+//    float2(0.94558609, -0.76890725),
+//    float2(-0.094184101, -0.92938870),
+//    float2(0.34495938, 0.29387760),
+//    float2(-0.91588581, 0.45771432),
+//    float2(-0.81544232, -0.87912464),
+//    float2(-0.38277543, 0.27676845),
+//    float2(0.97484398, 0.75648379),
+//    float2(0.44323325, -0.97511554),
+//    float2(0.53742981, -0.47373420),
+//    float2(-0.26496911, -0.41893023),
+//    float2(0.79197514, 0.19090188),
+//    float2(-0.24188840, 0.99706507),
+//    float2(-0.81409955, 0.91437590),
+//    float2(0.19984126, 0.78641367),
+//    float2(0.14383161, -0.14100790)
+//};
 
 groupshared float3 SharedResults[NUM_THREADS][NUM_THREADS];
 
@@ -72,18 +72,13 @@ void Main(ComputeShaderInput Input)
     
     float3 AvgHitPoint = Float3(0.0f);
     float  AvgLength   = 0.0f;
-    float3 Result      = Float3(0.0f);
-    float3 ResultSqrd  = Float3(0.0f);
     float3 WeightSum   = Float3(0.01f);
+    float3 Moment1     = Float3(0.0f);
+    float3 Moment2     = Float3(0.0f);
     float2 NewMoments  = Float2(0.0f);
     
-    uint2 Pixel = uint2(TexCoords.x, TexCoords.y);
-    uint Seed = RandomInit(TexCoords.xy, 2, RandomBuffer.FrameIndex);
+    uint Seed = RandomInit(TexCoords, Width, RandomBuffer.FrameIndex);
     
-    float3 Min = Float3(FLT32_MAX);
-    float3 Max = Float3(-FLT32_MAX);
-    
-    const float NumSamples  = float(NUM_SAMPLES);
     const float KernelWidth = lerp(1.0f, 8.0f, min(Roughness, 0.35f) / 0.35f);
     for (int y = 0; y < NUM_SAMPLES; y++)
     {
@@ -96,9 +91,8 @@ void Main(ComputeShaderInput Input)
         
         float2 Rnd = trunc(Xi * KernelWidth);
         int2 LocalTexCoord = TexCoords + int2(Rnd);
-
-        float3 Li = InColorDepth[LocalTexCoord].rgb;
         
+        float3 Li     = InColorDepth[LocalTexCoord].rgb;
         float4 RayPDF = InRayPDF[LocalTexCoord];
         AvgLength += length(RayPDF.xyz);
         
@@ -122,35 +116,28 @@ void Main(ComputeShaderInput Input)
             float  Spec_PDF  = RayPDF.a;
     
             float3 Weight      = NdotL * Spec_BRDF / Spec_PDF;
-            float3 LocalResult = Li * Weight;
-            Result     += LocalResult;
-            ResultSqrd += LocalResult * LocalResult;
+            float3 LocalResult = saturate(Li * Weight);
+            Moment1    += LocalResult;
+            Moment2    += LocalResult * LocalResult;
             WeightSum  += Weight;
             
-            Min = min(LocalResult, Min);
-            Max = max(LocalResult, Max);
-            
-            float LocalLuma = Luma(LocalResult);
+            float LocalLuma = Luminance(LocalResult);
             NewMoments.x += LocalLuma;
             NewMoments.y += LocalLuma * LocalLuma;
         }
     }
     
-    float3 RGBMean = Result / NumSamples;
-    float3 M1 = Result * Result / ((NumSamples - 1.0f) * NumSamples * NumSamples);
-    float3 M2 = ResultSqrd / (NumSamples * (NumSamples - 1.0f));
-    
-    Result = Result / WeightSum;
+    const float Gamma = 4.0f;
+    const float NumSamples = float(NUM_SAMPLES);
+    float3 RGBMean      = Moment1 / NumSamples;
+    float3 RGBVariance  = Moment2 / NumSamples - RGBMean * RGBMean;
+    float3 RGBDeviation = sqrt(RGBVariance);
+    float3 Result = Moment1 / WeightSum;
+    float3 RGBMin = RGBMean - Gamma * RGBDeviation;
+    float3 RGBMax = RGBMean + Gamma * RGBDeviation;
     
     AvgLength   = AvgLength   / NumSamples;
     AvgHitPoint = AvgHitPoint / NumSamples;
-    
-    NewMoments.x = (NewMoments.x * NewMoments.x) / ((NumSamples - 1.0f) * NumSamples * NumSamples);
-    NewMoments.y = (NewMoments.y) / (NumSamples * (NumSamples - 1.0f));
-    
-    float3 RGBDeviation = sqrt(abs(M2 - M1));
-    float3 RGBMin = RGBMean - RGBDeviation;
-    float3 RGBMax = RGBMean + RGBDeviation;
     
     //float3 Min = Float3(FLT32_MAX);
     //float3 Max = Float3(-FLT32_MAX);
@@ -166,8 +153,8 @@ void Main(ComputeShaderInput Input)
     
     GroupMemoryBarrierWithGroupSync();
     
-    float HistoryUsage = 0.95f;
-    float MomentsUsage = 0.6f;
+    float HistoryUsage = 0.92f;
+    float MomentsUsage = 0.5f;
     
     float  PreviousAvgLength = HistoryOutput[TexCoords].w;
     float4 CurrentHit  = float4(AvgHitPoint * AvgLength, 1.0f);
@@ -191,24 +178,33 @@ void Main(ComputeShaderInput Input)
     uint2 HistoryTexCoords1 = max(int2(TexCoords) - int2(RayVelocity), int2(0, 0));
     
     float4 HistorySample0 = HistoryOutput[HistoryTexCoords0];
+    HistorySample0.rgb = clamp(HistorySample0.rgb, RGBMin, RGBMax);
+    
+    //float3 RGBDist = (HistorySample0.rgb - RGBMean) / RGBDeviation;
+    //float  Weight  = exp2(-10.0f * Luma(RGBDist));
+    //float3 ClampedSum = Float3(0.0f);
+    //ClampedSum += HistorySample0.rgb * Weight;
+    
     float4 HistorySample1 = HistoryOutput[HistoryTexCoords1];
-    float4 HistorySample  = (HistorySample0 + HistorySample1) * 0.5f;
-    float3 ClampedValue   = clamp(HistorySample.rgb, Min, Max);
-
+    HistorySample1.rgb = clamp(HistorySample1.rgb, RGBMin, RGBMax);
+    
+    //RGBDist = (HistorySample1.rgb - RGBMean) / RGBDeviation;
+    //Weight  = exp2(-10.0f * Luma(RGBDist));
+    float3 ClampedSum = (HistorySample0.rgb + HistorySample1.rgb) * 0.5f;
+    
     float2 HistoryMoments = Moments[TexCoords];
     float2 ResultMoments  = HistoryMoments * MomentsUsage + NewMoments * (1.0f - MomentsUsage);
     Moments[TexCoords] = ResultMoments;
     
-    float3 Color   = ClampedValue.rgb * HistoryUsage + Result * (1.0f - HistoryUsage);
-    float Variance = ResultMoments.y - ResultMoments.x * ResultMoments.x;
-    
+    float Variance = Luma(RGBVariance);
+    float3 Color   = ClampedSum * HistoryUsage + Result * (1.0f - HistoryUsage);
     HistoryOutput[TexCoords] = float4(Color, AvgLength);
     
     float4 RayPDF = InRayPDF[TexCoords];
     float3 L = normalize(RayPDF.xyz);
     float3 H = normalize(V + L);
-    float NdotL = saturate(dot(N, L));
-    float NdotV = saturate(dot(N, V));
+    float  NdotL = saturate(dot(N, L));
+    float  NdotV = saturate(dot(N, V));
     
     float  D = DistributionGGX(N, H, Roughness);
     float  G = GeometrySmithGGX_IBL(N, L, V, Roughness);
@@ -226,6 +222,6 @@ void Main(ComputeShaderInput Input)
     float  Spec_PDF  = RayPDF.a;
     
     //Color = Color * NdotL * Spec_BRDF / saturate(Spec_PDF + 0.0001f);
-    Color = Color * NdotL * (Spec_BRDF * Ks + Diff_BRDF * Kd) / saturate((Spec_PDF + Diff_PDF) * 0.5f + 0.0001f);
-    Output[TexCoords] = float4(Color, Variance);
+    //Color = Color * NdotL * (Spec_BRDF + Diff_BRDF * Kd) / saturate((Spec_PDF + Diff_PDF) * 0.5f + 0.0001f);
+    Output[TexCoords] = float4(Color, Roughness);
 }

@@ -40,17 +40,17 @@ void RayGen()
     float3 N = UnpackNormal(WorldNormal);
     float3 V = normalize(CameraBuffer.Position - WorldPosition);
     
-    float2 Xi = Hammersley(RandomBuffer.FrameIndex, 64);
+    float2 Xi = Hammersley(RandomBuffer.FrameIndex, 4096);
     
     uint Seed  = RandomInit(DispatchIndex.xy, DispatchDimensions.x, RandomBuffer.FrameIndex);
     float Rnd0 = RandomFloatNext(Seed);
     float Rnd1 = RandomFloatNext(Seed);
     Xi.x = frac(Xi.x + Rnd0);
     Xi.y = frac(Xi.y + Rnd1);
-        
+    
     float3 H = ImportanceSampleGGX(Xi, Roughness, N);
     float3 L = normalize(reflect(-V, H));
-
+    
     float3 FinalColor = Float3(0.0f);
     float3 FinalRay   = Float3(0.0f);
     float  FinalPDF   = 0.0f;

@@ -18,6 +18,12 @@ float4 Float4(float Single)
     return float4(Single, Single, Single, Single);
 }
 
+bool IsNan(float3 Num)
+{
+    bool3 Result = isnan(Num);
+    return Result.x || Result.y || Result.z;
+}
+
 float Luma(float3 Color)
 {
     return sqrt(dot(Color, float3(0.299f, 0.587f, 0.114f)));
@@ -63,8 +69,8 @@ uint WangHash(uint Seed)
 
 uint RandomInit(uint2 Pixel, uint Width, uint FrameIndex)
 {
-    uint Seed = (Pixel.x + (Pixel.y * Width));
-    return WangHash(Seed) + WangHash(FrameIndex);
+    uint Seed = 1 + (Pixel.x + (Pixel.y * Width));
+    return WangHash(Seed) + WangHash(FrameIndex + 1);
 }
 
 uint XORShift(uint Value)
