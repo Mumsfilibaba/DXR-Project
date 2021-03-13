@@ -41,6 +41,8 @@ struct CameraBufferDesc
     Float      NearPlane;
     XMFLOAT3   Forward;
     Float      FarPlane;
+    XMFLOAT2   Jitter;
+    XMFLOAT2   PrevJitter;
     Float      AspectRatio;
 };
 

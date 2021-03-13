@@ -21,12 +21,13 @@ Texture2D<float4>       NormalTex             : register(t1, space0);
 Texture2D<float4>       MaterialTex           : register(t2, space0);
 Texture2D<float>        DepthStencilTex       : register(t3, space0);
 Texture2D<float4>       DXRReflection         : register(t4, space0);
-TextureCube<float4>     IrradianceMap         : register(t5, space0);
-TextureCube<float4>     SpecularIrradianceMap : register(t6, space0);
-Texture2D<float4>       IntegrationLUT        : register(t7, space0);
-Texture2D<float>        DirLightShadowMaps    : register(t8, space0);
-TextureCubeArray<float> PointLightShadowMaps  : register(t9, space0);
-Texture2D<float3>       SSAO                  : register(t10, space0);
+Texture2D<float4>       DXRRayPDF             : register(t5, space0);
+TextureCube<float4>     IrradianceMap         : register(t6, space0);
+TextureCube<float4>     SpecularIrradianceMap : register(t7, space0);
+Texture2D<float4>       IntegrationLUT        : register(t8, space0);
+Texture2D<float>        DirLightShadowMaps    : register(t9, space0);
+TextureCubeArray<float> PointLightShadowMaps  : register(t10, space0);
+Texture2D<float3>       SSAO                  : register(t11, space0);
 
 SamplerState LUTSampler        : register(s0, space0);
 SamplerState IrradianceSampler : register(s1, space0);
@@ -271,8 +272,29 @@ void Main(ComputeShaderInput Input)
     float3 FinalColor = L0;
 #ifdef RAY_TRACING
     {
+        float4 RayPDF = DXRRayPDF[TexCoord];
+        float3 L    = reflect(-V, N);
+        float3 H    = normalize(V + L);
+        float NdotL = saturate(dot(N, L));
+        float NdotV = saturate(dot(N, V));
+    
+        float  D = DistributionGGX(N, H, GBufferRoughness);
+        float  G = GeometrySmithGGX_IBL(N, L, V, GBufferRoughness);
+        float3 F = FresnelSchlick(F0, V, H);
+        float3 Numer = F * G;
+        float3 Denom = max(Float3(4.0f * NdotL * NdotV), Float3(0.0001f));
+    
+        float3 Diff_BRDF = GBufferAlbedo * INV_PI;
+        float  Diff_PDF  = NdotL * INV_PI;
+
+        float3 Ks = F;
+        float3 Kd = (Float3(1.0f) - Ks) * (1.0f - GBufferMetallic);
+    
+        float3 Spec_BRDF = Numer / Denom;
+        float  Spec_PDF  = 1.0f;
+
         float3 Reflection = DXRReflection.Load(int3(TexCoord, 0)).rgb;
-        L0 += Reflection;
+        L0 += Reflection * NdotL * (Spec_BRDF * Ks + Diff_BRDF * Kd) / saturate((Spec_PDF + Diff_PDF) * 0.5f + 0.0001f);
         
         float3 Ambient = GBufferAlbedo * GBufferAO * 0.03f;
         FinalColor = Ambient + L0;

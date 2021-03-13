@@ -1,22 +1,35 @@
 #pragma once
 #include "Float.h"
 
-class Math
+struct Math
 {
-public:
     static constexpr Float PI      = 3.14159265359f;
     static constexpr Float TWO_PI  = PI * 2.0f;
     static constexpr Float HALF_PI = PI / 2.0f;
 
-public:
+    static FORCEINLINE Float RadicalInverse(UInt32 Bits)
+    {
+        Bits = (Bits << 16u) | (Bits >> 16u);
+        Bits = ((Bits & 0x55555555u) << 1u) | ((Bits & 0xAAAAAAAAu) >> 1u);
+        Bits = ((Bits & 0x33333333u) << 2u) | ((Bits & 0xCCCCCCCCu) >> 2u);
+        Bits = ((Bits & 0x0F0F0F0Fu) << 4u) | ((Bits & 0xF0F0F0F0u) >> 4u);
+        Bits = ((Bits & 0x00FF00FFu) << 8u) | ((Bits & 0xFF00FF00u) >> 8u);
+        return float(Bits) * 2.3283064365386963e-10;
+    }
+
+    static FORCEINLINE XMFLOAT2 Hammersley(UInt32 i, UInt32 n)
+    {
+        return XMFLOAT2(float(i) / float(n), RadicalInverse(i));
+    }
+
     template <typename T>
-    FORCEINLINE static T DivideByMultiple(T Value, UInt32 Alignment)
+    static FORCEINLINE T DivideByMultiple(T Value, UInt32 Alignment)
     {
         return static_cast<T>((Value + Alignment - 1) / Alignment);
     }
 
     template <typename T>
-    FORCEINLINE static T AlignUp(T Value, T Alignment)
+    static FORCEINLINE T AlignUp(T Value, T Alignment)
     {
         static_assert(std::is_integral<T>());
 
@@ -25,7 +38,7 @@ public:
     }
 
     template <typename T>
-    FORCEINLINE static T AlignDown(T Value, T Alignment)
+    static FORCEINLINE T AlignDown(T Value, T Alignment)
     {
         static_assert(std::is_integral<T>());
 
@@ -33,48 +46,58 @@ public:
         return ((Value) & (~mask));
     }
 
-    FORCEINLINE static Float Lerp(Float a, Float b, Float f)
+    static FORCEINLINE Float Lerp(Float a, Float b, Float f)
     {
         return (-f * b) + ((a * f) + b);
     }
 
     template <typename T>
-    FORCEINLINE static T Min(T a, T b)
+    static FORCEINLINE T Min(T a, T b)
     {
         return a <= b ? a : b;
     }
 
     template <typename T>
-    FORCEINLINE static T Max(T a, T b)
+    static FORCEINLINE T Max(T a, T b)
     {
         return a >= b ? a : b;
     }
 
     template <typename T>
-    FORCEINLINE static T Abs(T a)
+    static FORCEINLINE T Abs(T a)
     {
         return (a * a) / a;
     }
 };
 
-inline XMFLOAT2 operator*(XMFLOAT2 Left, Float Right)
+inline XMFLOAT2 operator*(XMFLOAT2 LHS, Float RHS)
 {
-    return XMFLOAT2(Left.x * Right, Left.y * Right);
+    return XMFLOAT2(LHS.x * RHS, LHS.y * RHS);
 }
 
-inline XMFLOAT2 operator*(XMFLOAT2 Left, XMFLOAT2 Right)
+inline XMFLOAT2 operator*(XMFLOAT2 LHS, XMFLOAT2 RHS)
 {
-    return XMFLOAT2(Left.x * Right.x, Left.y * Right.y);
+    return XMFLOAT2(LHS.x * RHS.x, LHS.y * RHS.y);
 }
 
-inline XMFLOAT2 operator+(XMFLOAT2 Left, XMFLOAT2 Right)
+inline XMFLOAT2 operator/(XMFLOAT2 LHS, XMFLOAT2 RHS)
 {
-    return XMFLOAT2(Left.x + Right.x, Left.y + Right.y);
+    return XMFLOAT2(LHS.x / RHS.x, LHS.y / RHS.y);
 }
 
-inline XMFLOAT2 operator-(XMFLOAT2 Left, XMFLOAT2 Right)
+inline XMFLOAT2 operator+(XMFLOAT2 LHS, XMFLOAT2 RHS)
 {
-    return XMFLOAT2(Left.x - Right.x, Left.y - Right.y);
+    return XMFLOAT2(LHS.x + RHS.x, LHS.y + RHS.y);
+}
+
+inline XMFLOAT2 operator-(XMFLOAT2 LHS, XMFLOAT2 RHS)
+{
+    return XMFLOAT2(LHS.x - RHS.x, LHS.y - RHS.y);
+}
+
+inline XMFLOAT2 operator-(XMFLOAT2 LHS, Float RHS)
+{
+    return XMFLOAT2(LHS.x - RHS, LHS.y - RHS);
 }
 
 inline XMFLOAT2 operator-(XMFLOAT2 Value)
@@ -82,24 +105,34 @@ inline XMFLOAT2 operator-(XMFLOAT2 Value)
     return XMFLOAT2(-Value.x, -Value.y);
 }
 
-inline XMFLOAT3 operator*(XMFLOAT3 Left, Float Right)
+inline XMFLOAT3 operator*(XMFLOAT3 LHS, Float RHS)
 {
-    return XMFLOAT3(Left.x * Right, Left.y * Right, Left.z * Right);
+    return XMFLOAT3(LHS.x * RHS, LHS.y * RHS, LHS.z * RHS);
 }
 
-inline XMFLOAT3 operator*(XMFLOAT3 Left, XMFLOAT3 Right)
+inline XMFLOAT3 operator*(XMFLOAT3 LHS, XMFLOAT3 RHS)
 {
-    return XMFLOAT3(Left.x * Right.x, Left.y * Right.y, Left.z * Right.z);
+    return XMFLOAT3(LHS.x * RHS.x, LHS.y * RHS.y, LHS.z * RHS.z);
 }
 
-inline XMFLOAT3 operator+(XMFLOAT3 Left, XMFLOAT3 Right)
+inline XMFLOAT3 operator/(XMFLOAT3 LHS, XMFLOAT3 RHS)
 {
-    return XMFLOAT3(Left.x + Right.x, Left.y + Right.y, Left.z + Right.z);
+    return XMFLOAT3(LHS.x / RHS.x, LHS.y / RHS.y, LHS.z / RHS.z);
 }
 
-inline XMFLOAT3 operator-(XMFLOAT3 Left, XMFLOAT3 Right)
+inline XMFLOAT3 operator+(XMFLOAT3 LHS, XMFLOAT3 RHS)
 {
-    return XMFLOAT3(Left.x - Right.x, Left.y - Right.y, Left.z - Right.z);
+    return XMFLOAT3(LHS.x + RHS.x, LHS.y + RHS.y, LHS.z + RHS.z);
+}
+
+inline XMFLOAT3 operator-(XMFLOAT3 LHS, XMFLOAT3 RHS)
+{
+    return XMFLOAT3(LHS.x - RHS.x, LHS.y - RHS.y, LHS.z - RHS.z);
+}
+
+inline XMFLOAT3 operator-(XMFLOAT3 LHS, Float RHS)
+{
+    return XMFLOAT3(LHS.x - RHS, LHS.y - RHS, LHS.z - RHS);
 }
 
 inline XMFLOAT3 operator-(XMFLOAT3 Value)
@@ -107,24 +140,34 @@ inline XMFLOAT3 operator-(XMFLOAT3 Value)
     return XMFLOAT3(-Value.x, -Value.y, -Value.z);
 }
 
-inline XMFLOAT4 operator*(XMFLOAT4 Left, Float Right)
+inline XMFLOAT4 operator*(XMFLOAT4 LHS, Float RHS)
 {
-    return XMFLOAT4(Left.x * Right, Left.y * Right, Left.z * Right, Left.w * Right);
+    return XMFLOAT4(LHS.x * RHS, LHS.y * RHS, LHS.z * RHS, LHS.w * RHS);
 }
 
-inline XMFLOAT4 operator*(XMFLOAT4 Left, XMFLOAT4 Right)
+inline XMFLOAT4 operator*(XMFLOAT4 LHS, XMFLOAT4 RHS)
 {
-    return XMFLOAT4(Left.x * Right.x, Left.y * Right.y, Left.z * Right.z, Left.w * Right.w);
+    return XMFLOAT4(LHS.x * RHS.x, LHS.y * RHS.y, LHS.z * RHS.z, LHS.w * RHS.w);
 }
 
-inline XMFLOAT4 operator+(XMFLOAT4 Left, XMFLOAT4 Right)
+inline XMFLOAT4 operator/(XMFLOAT4 LHS, XMFLOAT4 RHS)
 {
-    return XMFLOAT4(Left.x + Right.x, Left.y + Right.y, Left.z + Right.z, Left.w + Right.w);
+    return XMFLOAT4(LHS.x / RHS.x, LHS.y / RHS.y, LHS.z / RHS.z, LHS.w / RHS.w);
 }
 
-inline XMFLOAT4 operator-(XMFLOAT4 Left, XMFLOAT4 Right)
+inline XMFLOAT4 operator+(XMFLOAT4 LHS, XMFLOAT4 RHS)
 {
-    return XMFLOAT4(Left.x - Right.x, Left.y - Right.y, Left.z - Right.z, Left.w - Right.w);
+    return XMFLOAT4(LHS.x + RHS.x, LHS.y + RHS.y, LHS.z + RHS.z, LHS.w + RHS.w);
+}
+
+inline XMFLOAT4 operator-(XMFLOAT4 LHS, XMFLOAT4 RHS)
+{
+    return XMFLOAT4(LHS.x - RHS.x, LHS.y - RHS.y, LHS.z - RHS.z, LHS.w - RHS.w);
+}
+
+inline XMFLOAT4 operator-(XMFLOAT4 LHS, Float RHS)
+{
+    return XMFLOAT4(LHS.x - RHS, LHS.y - RHS, LHS.z - RHS, LHS.w - RHS);
 }
 
 inline XMFLOAT4 operator-(XMFLOAT4 Value)

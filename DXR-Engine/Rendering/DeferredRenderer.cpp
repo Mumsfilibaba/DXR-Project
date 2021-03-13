@@ -566,6 +566,7 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
         CmdList.SetSamplerState(LightPassShader, FrameResources.DirectionalShadowSampler.Get(), 1);
 
         CmdList.SetShaderResourceView(LightPassShader, FrameResources.RTReflections->GetShaderResourceView(), 4);
+        //CmdList.SetShaderResourceView(LightPassShader, FrameResources.RTRayPDF->GetShaderResourceView(), 5);
         CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirLightShadowMaps->GetShaderResourceView(), 5);
         CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 6);
         CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 7);

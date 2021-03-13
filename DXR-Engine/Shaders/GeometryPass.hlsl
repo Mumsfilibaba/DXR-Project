@@ -81,8 +81,10 @@ VSOutput VSMain(VSInput Input)
 
     float4 WorldPosition    = mul(float4(Input.Position, 1.0f), TransformBuffer.Transform);
     Output.ClipPosition     = mul(WorldPosition, CameraBuffer.ViewProjection);
-    Output.PrevClipPosition = mul(WorldPosition, CameraBuffer.PrevViewProjection);
+    Output.ClipPosition.xy += CameraBuffer.Jitter;
     Output.Position         = Output.ClipPosition;
+    Output.PrevClipPosition = mul(WorldPosition, CameraBuffer.PrevViewProjection);
+    Output.PrevClipPosition.xy += CameraBuffer.PrevJitter;
     
 #ifdef PARALLAX_MAPPING_ENABLED
     float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
@@ -206,11 +208,14 @@ PSOutput PSMain(PSInput Input)
     float2 PrevClipPosition = Input.PrevClipPosition.xy / Input.PrevClipPosition.w;
     PrevClipPosition = (PrevClipPosition * float2(0.5f, -0.5)) + 0.5f;
     
+    float2 Velocity = ClipPosition - PrevClipPosition;
+    Velocity = Velocity - CameraBuffer.Jitter;
+    
     PSOutput Output;
     Output.Albedo     = float4(SampledAlbedo, 1.0f);
     Output.Normal     = MappedNormal;
     Output.Material   = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
     Output.ViewNormal = PackNormal(Input.ViewNormal);
-    Output.Velocity   = ClipPosition - PrevClipPosition;
+    Output.Velocity   = Velocity;
     return Output;
 }

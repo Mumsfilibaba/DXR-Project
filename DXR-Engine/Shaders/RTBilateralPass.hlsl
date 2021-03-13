@@ -218,11 +218,12 @@ void Main(ComputeShaderInput Input)
         return;
     }
 
+    const float MaxKernelSize = 13.0f;
     float4 Sample = Texture[TexCoords];
     float Variance = Sample.a;
-    int KernelSize = int(trunc(clamp(1.0f + Variance * 12.0f, 1.0f, 13.0f)));
+    int KernelSize = int(trunc(clamp(1.0f + Variance * (MaxKernelSize - 1.0f), 1.0f, MaxKernelSize)));
     
-//    int    Offset = -((KernelSize - 1) / 2);
+//    int Offset = -((KernelSize - 1) / 2);
 //    float3 Result = 0.0f;
     
 //    for (int i = 0; i < KernelSize; i++)
