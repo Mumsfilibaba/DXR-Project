@@ -275,6 +275,8 @@ void Main(ComputeShaderInput Input)
         float3 H    = normalize(V + L);
         float NdotL = saturate(dot(N, L));
         float NdotV = saturate(dot(N, V));
+        float NdotH = saturate(dot(N, H));
+        float HdotV = saturate(dot(H, V));
     
         float  D = DistributionGGX(N, H, GBufferRoughness);
         float  G = GeometrySmithGGX_IBL(N, L, V, GBufferRoughness);

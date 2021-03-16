@@ -73,13 +73,13 @@ float3 Kernel_7(int2 TexCoords)
 {
     static const float KERNEL[7] =
     {
-        0.071303f,
-        0.131514f,
-        0.189879f,
-        0.214607f,
-        0.189879f,
-        0.131514f,
-        0.071303f,
+        0.106595f,
+        0.140367f,
+        0.165569f,
+        0.174938f,
+        0.165569f,
+        0.140367f,
+        0.106595f,
     };
     
     int    Offset = -3;
@@ -105,15 +105,15 @@ float3 Kernel_9(int2 TexCoords)
 {
     static const float KERNEL[9] =
     {
-        0.028532f,
-        0.067234f,
-        0.124009f,
-        0.179044f,
-        0.202360f,
-        0.179044f,
-        0.124009f,
-        0.067234f,
-        0.028532f,
+        0.063327f,
+        0.093095f,
+        0.122589f,
+        0.144599f,
+        0.152781f,
+        0.144599f,
+        0.122589f,
+        0.093095f,
+        0.063327f,
     };
     
     int    Offset = -4;
@@ -139,17 +139,17 @@ float3 Kernel_11(int2 TexCoords)
 {
     static const float KERNEL[11] =
     {
-        0.009300f,
-        0.028002f,
-        0.065984f,
-        0.121703f,
-        0.175713f,
-        0.198596f,
-        0.175713f,
-        0.121703f,
-        0.065984f,
-        0.028002f,
-        0.009300f,
+        0.035822f,
+        0.058790f,
+        0.086425f,
+        0.113806f,
+        0.134240f,
+        0.141836f,
+        0.134240f,
+        0.113806f,
+        0.086425f,
+        0.058790f,
+        0.035822f,
     };
     
     int    Offset = -5;
@@ -175,19 +175,19 @@ float3 Kernel_13(int2 TexCoords)
 {
     static const float KERNEL[13] =
     {
-        0.002406f,
-        0.009255f,
-        0.027867f,
-        0.065666f,
-        0.121117f,
-        0.174868f,
-        0.197641f,
-        0.174868f,
-        0.121117f,
-        0.065666f,
-        0.027867f,
-        0.009255f,
-        0.002406f,
+        0.018816f,
+        0.034474f,
+        0.056577f,
+        0.083173f,
+        0.109523f,
+        0.129188f,
+        0.136498f,
+        0.129188f,
+        0.109523f,
+        0.083173f,
+        0.056577f,
+        0.034474f,
+        0.018816f,
     };
     
     int    Offset = -6;
@@ -219,28 +219,11 @@ void Main(ComputeShaderInput Input)
     }
 
     const float MaxKernelSize = 13.0f;
-    float4 Sample = Texture[TexCoords];
-    float Variance = Sample.a;
+    float4 Sample   = Texture[TexCoords];
+    float  Variance = Sample.a;
+    
+    float3 Result  = 0.0f;
     int KernelSize = int(trunc(clamp(1.0f + Variance * (MaxKernelSize - 1.0f), 1.0f, MaxKernelSize)));
-    
-//    int Offset = -((KernelSize - 1) / 2);
-//    float3 Result = 0.0f;
-    
-//    for (int i = 0; i < KernelSize; i++)
-//    {
-//#ifdef HORIZONTAL_PASS
-//        const int2 CurrentTexCoord = int2(TexCoords.x + Offset, TexCoords.y);
-//        Result += Texture[CurrentTexCoord].rgb;
-//#else
-//        const int2 CurrentTexCoord = int2(TexCoords.x, TexCoords.y + Offset);
-//        Result += Texture[CurrentTexCoord].rgb;
-//#endif
-//        Offset++;
-//    }
-    
-//    Result = Result / float(KernelSize);
-    
-    float3 Result = 0.0f;
     if (KernelSize < 3)
     {
         Result = Sample.rgb;

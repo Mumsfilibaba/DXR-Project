@@ -4,5 +4,5 @@
 class Random
 {
 public:
-	static UInt32 Integer();
+    static UInt32 Integer();
 };

@@ -430,7 +430,7 @@ public:
     ClearValue()
         : Type(EType::Color)
         , Format(EFormat::Unknown)
-        , Color(0.0f, 0.0f, 0.0f, 1.0f)
+        , Color(0.0f, 0.0f, 0.0f, 0.0f)
     {
     }
 
@@ -480,7 +480,7 @@ public:
         return *this;
     }
 
-    EType GetType() const { return Type; }
+    EType   GetType()   const { return Type; }
     EFormat GetFormat() const { return Format; }
 
     ColorF& AsColor()
@@ -508,7 +508,7 @@ public:
     }
 
 private:
-    EType Type;
+    EType   Type;
     EFormat Format;
     union
     {
@@ -608,18 +608,20 @@ struct CopyTextureSubresourceInfo
 {
     CopyTextureSubresourceInfo() = default;
 
-    CopyTextureSubresourceInfo(UInt32 InX, UInt32 InY, UInt32 InZ, UInt32 InSubresourceIndex)
+    CopyTextureSubresourceInfo(UInt32 InX, UInt32 InY, UInt32 InZ, UInt32 InMip, UInt32 InArraySlice)
         : x(InX)
         , y(InY)
         , z(InZ)
-        , SubresourceIndex(InSubresourceIndex)
+        , Mip(InMip)
+        , ArraySlice(InArraySlice)
     {
     }
 
-    UInt32 x = 0;
-    UInt32 y = 0;
-    UInt32 z = 0;
-    UInt32 SubresourceIndex = 0;
+    UInt32 x   = 0;
+    UInt32 y   = 0;
+    UInt32 z   = 0;
+    UInt32 Mip = 0;
+    UInt32 ArraySlice = 0;
 };
 
 struct CopyTextureInfo

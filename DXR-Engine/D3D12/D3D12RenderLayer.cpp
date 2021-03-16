@@ -206,7 +206,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         }
         else if (OptimalClearValue.GetType() == ClearValue::EType::Color)
         {
-            Memory::Memcpy(ClearValue.Color, OptimalClearValue.AsColor().Elements);
+            Memory::Memcpy(ClearValue.Color, OptimalClearValue.AsColor().Elements, sizeof(ClearValue.Color));
             ClearValuePtr = &ClearValue;
         }
     }

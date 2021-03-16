@@ -72,6 +72,7 @@ private:
     Bool InitBoundingBoxDebugPass();
     Bool InitAA();
     Bool InitShadingImage();
+    Bool InitBlueNoise();
 
     void ResizeResources(UInt32 Width, UInt32 Height);
 

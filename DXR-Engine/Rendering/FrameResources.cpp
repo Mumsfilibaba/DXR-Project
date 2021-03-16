@@ -43,5 +43,7 @@ void FrameResources::Release()
 
     DebugTextures.Clear();
 
+    BlueNoise.Reset();
+
     MainWindowViewport.Reset();
 }

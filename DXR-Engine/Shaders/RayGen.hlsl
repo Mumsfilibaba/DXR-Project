@@ -11,6 +11,10 @@ Texture2D<float4>   GBufferNormal   : register(t3, space0);
 Texture2D<float4>   GBufferDepth    : register(t4, space0);
 Texture2D<float4>   GBufferMaterial : register(t5, space0);
 
+Texture2DArray<float4> BlueNoiseTex : register(t6, space0);
+
+Texture2D<float4> MaterialTextures[128] : register(t7, space0);
+
 ConstantBuffer<Camera>        CameraBuffer : register(b0, space0);
 ConstantBuffer<LightInfoData> LightInfo    : register(b1, space0);
 ConstantBuffer<RandomData>    RandomBuffer : register(b2, space0);
@@ -40,15 +44,22 @@ void RayGen()
     float3 N = UnpackNormal(WorldNormal);
     float3 V = normalize(CameraBuffer.Position - WorldPosition);
     
-    uint Seed  = RandomInit(DispatchIndex.xy, DispatchDimensions.x, RandomBuffer.FrameIndex);
+    uint Seed = RandomInit(DispatchIndex.xy, DispatchDimensions.x, RandomBuffer.FrameIndex);
+    int  Rnd0 = (DispatchIndex.x + RandomIntNext(Seed)) % 64;
+    int  Rnd1 = (DispatchIndex.y + RandomIntNext(Seed)) % 64;
+        
+    const int2 Pixel = int2(Rnd0, Rnd1);
+    const int  TextureIndex = RandomBuffer.FrameIndex % 64;
     
-    float2 Xi  = Hammersley(RandomBuffer.FrameIndex, 32);
-    float Rnd0 = RandomFloatNext(Seed);
-    float Rnd1 = RandomFloatNext(Seed);
-    Xi.x = frac(Xi.x + Rnd0);
-    Xi.y = frac(Xi.y + Rnd1);
+    float4 BlueNoise = BlueNoiseTex.Load(int4(Pixel, TextureIndex, 0));
     
-    float3 H = ImportanceSampleGGX(Xi, Roughness, N);
+    //float2 Xi  = Hammersley(RandomBuffer.FrameIndex, 32);
+    //float Rnd0 = RandomFloatNext(Seed);
+    //float Rnd1 = RandomFloatNext(Seed);
+    //Xi.x = frac(Xi.x + Rnd0);
+    //Xi.y = frac(Xi.y + Rnd1);
+    
+    float3 H = ImportanceSampleGGX(BlueNoise.xy, Roughness, N);
     float3 L = normalize(reflect(-V, H));
     
     float3 FinalColor = Float3(0.0f);
@@ -73,7 +84,7 @@ void RayGen()
         
         float D        = DistributionGGX(N, H, Roughness);
         float Spec_PDF = saturate(NdotH / (4.0f * HdotV));
-        float3 Li = PayLoad.Color;
+        float3 Li  = PayLoad.Color;
         FinalColor = Li;
         FinalRay   = L * PayLoad.T;
         FinalPDF   = Spec_PDF;

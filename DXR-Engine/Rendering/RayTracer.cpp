@@ -12,6 +12,11 @@
 
 Bool RayTracer::Init(FrameResources& Resources)
 {
+    if (!CreateRenderTargets(Resources))
+    {
+        return false;
+    }
+
     TArray<UInt8> Code;
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RayGen.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code))
     {
@@ -78,63 +83,6 @@ Bool RayTracer::Init(FrameResources& Resources)
     {
         Debug::DebugBreak();
         return false;
-    }
-
-    UInt32 Width  = Resources.MainWindowViewport->GetWidth();
-    UInt32 Height = Resources.MainWindowViewport->GetHeight();
-    Resources.RTReflections = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
-    if (!Resources.RTReflections)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        Resources.RTReflections->SetName("RT Reflections");
-    }
-
-    RTHistory = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
-    if (!RTHistory)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        RTHistory->SetName("RT History");
-    }
-
-    RTColorDepth = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
-    if (!RTColorDepth)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        RTColorDepth->SetName("RayTracing Color Depth");
-    }
-
-    RTMomentBuffer = CreateTexture2D(EFormat::R16G16_Float, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
-    if (!RTMomentBuffer)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        RTMomentBuffer->SetName("RayTracing Moment Buffer");
-    }
-
-    Resources.RTRayPDF = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
-    if (!Resources.RTRayPDF)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        Resources.RTRayPDF->SetName("RayTracing Ray PDF");
     }
 
     RandomDataBuffer = CreateConstantBuffer<RandomData>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
@@ -270,7 +218,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     static UInt32 FrameIndex = 0;
 
     FrameIndex++;
-    if (FrameIndex >= 32)
+    if (FrameIndex >= 64)
     {
         FrameIndex = 0;
     }
@@ -376,6 +324,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.BlueNoise->GetShaderResourceView());
 
     for (UInt32 i = 0; i < Resources.RTMaterialTextureCache.Size(); i++)
     {
@@ -420,6 +369,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 4);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetShaderResourceView(), 5);
+    CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.BlueNoise->GetShaderResourceView(), 6);
 
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTHistory->GetUnorderedAccessView(), 0);
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), Resources.RTReflections->GetUnorderedAccessView(), 1);
@@ -488,4 +438,71 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
         Resources.RTReflections,
         EResourceState::UnorderedAccess,
         EResourceState::UnorderedAccess);
+}
+
+Bool RayTracer::OnResize(FrameResources& Resources)
+{
+    return CreateRenderTargets(Resources);
+}
+
+Bool RayTracer::CreateRenderTargets(FrameResources& Resources)
+{
+    UInt32 Width  = Resources.MainWindowViewport->GetWidth();
+    UInt32 Height = Resources.MainWindowViewport->GetHeight();
+    Resources.RTReflections = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!Resources.RTReflections)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        Resources.RTReflections->SetName("RT Reflections");
+    }
+
+    RTHistory = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!RTHistory)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RTHistory->SetName("RT History");
+    }
+
+    RTColorDepth = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!RTColorDepth)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RTColorDepth->SetName("RayTracing Color Depth");
+    }
+
+    RTMomentBuffer = CreateTexture2D(EFormat::R16G16_Float, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!RTMomentBuffer)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RTMomentBuffer->SetName("RayTracing Moment Buffer");
+    }
+
+    Resources.RTRayPDF = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!Resources.RTRayPDF)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        Resources.RTRayPDF->SetName("RayTracing Ray PDF");
+    }
+
+    return true;
 }

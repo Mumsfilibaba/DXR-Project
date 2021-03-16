@@ -34,7 +34,7 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b6, space0)
 ConstantBuffer<DirectionalLight> DirLightBuffer : register(b7, space0);
 
 TextureCube<float4> Skybox                : register(t1, space0);
-Texture2D<float4>   MaterialTextures[128] : register(t6, space0);
+Texture2D<float4>   MaterialTextures[128] : register(t7, space0);
 
 SamplerState TextureSampler : register(s1, space0);
 

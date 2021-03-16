@@ -17,6 +17,8 @@ Texture2D<float4> InGBufferNormals  : register(t3);
 Texture2D<float4> InGBufferMaterial : register(t4);
 Texture2D<float2> InGBuffervelocity : register(t5);
 
+Texture2DArray<float4> BlueNoiseTex : register(t6);
+
 RWTexture2D<float4> HistoryOutput : register(u0);
 RWTexture2D<float4> Output        : register(u1);
 RWTexture2D<float2> Moments       : register(u2);
@@ -77,23 +79,23 @@ void Main(ComputeShaderInput Input)
     float3 Moment2     = Float3(0.0f);
     float2 NewMoments  = Float2(0.0f);
     
-    uint Seed = RandomInit(TexCoords, Width, RandomBuffer.FrameIndex);
-    
     float3 Min = Float3(FLT32_MAX);
     float3 Max = Float3(0.0f);
     
+    uint Seed = RandomInit(TexCoords.xy, Width, RandomBuffer.FrameIndex);
+    
     float ActualSamples = 0.0f;
-    const float KernelWidth = lerp(1.0f, 8.0f, min(Roughness, 0.35f) / 0.35f);
+    float KernelWidth   = lerp(1.0f, 4.0f, min(Roughness, 0.35f) / 0.35f);
     for (int y = 0; y < NUM_SAMPLES; y++)
     {
-        float2 Xi  = Hammersley(y, NUM_SAMPLES);
-        float Rnd0 = RandomFloatNext(Seed);
-        float Rnd1 = RandomFloatNext(Seed);
-        Xi.x = frac(Xi.x + Rnd0);
-        Xi.y = frac(Xi.y + Rnd1);
-        Xi = (Xi * 2.0f) - 1.0f;
+        int Rnd0 = (TexCoords.x + RandomIntNext(Seed)) % 64;
+        int Rnd1 = (TexCoords.y + RandomIntNext(Seed)) % 64;
         
-        float2 Rnd = trunc(Xi * KernelWidth);
+        const int2 Pixel = int2(Rnd0, Rnd1);
+        const int  TextureIndex = (RandomBuffer.FrameIndex + y) % 64;
+        
+        float4 BlueNoise = BlueNoiseTex.Load(int4(Pixel, TextureIndex, 0));
+        float2 Rnd = trunc(mad(BlueNoise.xy, 2.0f, -1.0f) * KernelWidth);
         int2 LocalTexCoord = TexCoords + int2(Rnd);
         
         float4 RayPDF    = InRayPDF[LocalTexCoord];
@@ -120,9 +122,16 @@ void Main(ComputeShaderInput Input)
             float3 Numer = F * G;
             float3 Denom = max(Float3(4.0f * NdotL * NdotV), Float3(0.0001f));
 
+            //float3 Diff_BRDF = GBufferAlbedo * INV_PI;
+            //float  Diff_PDF  = NdotL * INV_PI;
+
+            //float3 Ks = F;
+            //float3 Kd = (Float3(1.0f) - Ks) * (1.0f - Metallic);
+    
             float3 Spec_BRDF = Numer / Denom;
-            float  Spec_PDF  = saturate(NdotH / (4.0f * HdotV));
+            float  Spec_PDF  = RayPDF.a;
            
+            //float3 Weight    = NdotL * (Spec_BRDF * Ks + Diff_BRDF * Kd) / saturate((Spec_PDF + Diff_PDF) * 0.5f + 0.0001f);
             float3 Weight      = NdotL * Spec_BRDF / saturate(Spec_PDF + 0.0001f);
             float3 LocalResult = saturate(Li * Weight);
             Moment1   += LocalResult;
@@ -141,9 +150,10 @@ void Main(ComputeShaderInput Input)
     }
     
     const float Gamma = 1.0f;
-    float3 RGBMean     = Moment1 / ActualSamples;
-    float3 RGBVariance = (Moment2 / ActualSamples) - RGBMean * RGBMean;
-    float3 RGBDeviation = sqrt(RGBVariance);
+    ActualSamples = max(ActualSamples, 1.0f);
+    float3 RGBMean      = Moment1 / ActualSamples;
+    float3 RGBVariance  = (Moment2 / ActualSamples) - RGBMean * RGBMean;
+    float3 RGBDeviation = max(sqrt(abs(RGBVariance)), 0.0001f);
     float3 Result = Moment1 / WeightSum;
     float3 RGBMin = RGBMean - Gamma * RGBDeviation;
     float3 RGBMax = RGBMean + Gamma * RGBDeviation;
@@ -152,7 +162,7 @@ void Main(ComputeShaderInput Input)
     AvgLength   = AvgLength   / NumSamples;
     AvgHitPoint = AvgHitPoint / NumSamples;
     
-    float HistoryUsage = 0.9f;
+    float HistoryUsage = 0.93f;
     float MomentsUsage = 0.5f;
     
     float  PreviousAvgLength = HistoryOutput[TexCoords].w;
@@ -181,16 +191,16 @@ void Main(ComputeShaderInput Input)
     
     float3 ClampedSum = Float3(0.0f);
     //float3 RGBDist = (HistorySample0.rgb - RGBMean) / RGBDeviation;
-    //float Weight = Luma(RGBDist);
+    //float  Weight  = exp2(-10.0f * Luma(RGBDist));
     //ClampedSum += HistorySample0.rgb * Weight;
     
     float4 HistorySample1 = HistoryOutput[HistoryTexCoords1];
     HistorySample1.rgb = clamp(HistorySample1.rgb, RGBMin, RGBMax);
     
-    //RGBDist = (HistorySample1.rgb - RGBMean) / RGBDeviation;
-    //Weight = Luma(RGBDist);
+    //RGBDist = (HistorySample1.rgb - RGBMean);
+    //Weight  = exp2(-10.0f * Luma(RGBDist));
     //ClampedSum += HistorySample1.rgb * Weight;
-    ClampedSum = (HistorySample0.rgb + HistorySample1.rgb) * 0.5f;
+    ClampedSum = HistorySample0.rgb * 0.4f + HistorySample1.rgb * 0.6f;
     
     float2 HistoryMoments = Moments[TexCoords];
     float2 ResultMoments  = HistoryMoments * MomentsUsage + NewMoments * (1.0f - MomentsUsage);
@@ -198,6 +208,8 @@ void Main(ComputeShaderInput Input)
     
     ResultMoments.x = ResultMoments.x / ActualSamples;
     float Variance  = (ResultMoments.y / ActualSamples) - ResultMoments.x * ResultMoments.x;
+    
+    GroupMemoryBarrierWithGroupSync();
     
     float3 Color = ClampedSum * HistoryUsage + Result * (1.0f - HistoryUsage);
     HistoryOutput[TexCoords] = float4(Color, AvgLength);

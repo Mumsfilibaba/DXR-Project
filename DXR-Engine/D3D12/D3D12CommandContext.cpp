@@ -851,29 +851,37 @@ void D3D12CommandContext::CopyTextureRegion(Texture* Destination, Texture* Sourc
     D3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
     D3D12BaseTexture* DxSource      = D3D12TextureCast(Source);
 
-    // Source
     D3D12_TEXTURE_COPY_LOCATION SourceLocation;
     Memory::Memzero(&SourceLocation);
 
     SourceLocation.pResource        = DxSource->GetResource()->GetResource();
     SourceLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-    SourceLocation.SubresourceIndex = CopyInfo.Source.SubresourceIndex;
+    SourceLocation.SubresourceIndex = D3D12CalcSubresource(
+        CopyInfo.Source.Mip, 
+        CopyInfo.Source.ArraySlice, 
+        0, 
+        Source->GetNumMips(),
+        Source->GetArraySize());
 
     D3D12_BOX SourceBox;
     SourceBox.left   = CopyInfo.Source.x;
     SourceBox.right  = CopyInfo.Source.x + CopyInfo.Width;
-    SourceBox.bottom = CopyInfo.Source.y;
-    SourceBox.top    = CopyInfo.Source.y + CopyInfo.Height;
+    SourceBox.top    = CopyInfo.Source.y;
+    SourceBox.bottom = CopyInfo.Source.y + CopyInfo.Height;
     SourceBox.front  = CopyInfo.Source.z;
     SourceBox.back   = CopyInfo.Source.z + CopyInfo.Depth;
 
-    // Destination
     D3D12_TEXTURE_COPY_LOCATION DestinationLocation;
     Memory::Memzero(&DestinationLocation);
 
     DestinationLocation.pResource        = DxDestination->GetResource()->GetResource();
     DestinationLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-    DestinationLocation.SubresourceIndex = CopyInfo.Destination.SubresourceIndex;
+    DestinationLocation.SubresourceIndex = D3D12CalcSubresource(
+        CopyInfo.Destination.Mip,
+        CopyInfo.Destination.ArraySlice,
+        0,
+        Destination->GetNumMips(),
+        Destination->GetArraySize());
 
     FlushResourceBarriers();
 

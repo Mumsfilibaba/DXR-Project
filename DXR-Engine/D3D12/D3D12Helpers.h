@@ -16,6 +16,12 @@ template<typename T>
 using TComPtr = Microsoft::WRL::ComPtr<T>;
 
 // Returns upload heap properties
+inline UInt32 D3D12CalcSubresource(UInt32 Mip, UInt32 ArraySlice, UInt32 PlaneSlice, UInt32 NumMips, UInt32 NumArraySlices)
+{
+    return Mip + ArraySlice * NumMips + PlaneSlice * NumMips * NumArraySlices;
+}
+
+// Returns upload heap properties
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;

@@ -1005,7 +1005,7 @@ struct DrawIndexedInstancedRenderCommand : public RenderCommand
 
     virtual void Execute(ICommandContext& CmdContext) override
     {
-        TRACE_FUNCTION_SCOPE();
+        //TRACE_FUNCTION_SCOPE();
         CmdContext.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
     }
 

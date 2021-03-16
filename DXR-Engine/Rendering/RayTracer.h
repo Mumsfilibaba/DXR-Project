@@ -25,7 +25,11 @@ public:
 
     void Render(CommandList& CmdList, FrameResources& Resources, LightSetup& LightSetup, const Scene& Scene);
 
+    Bool OnResize(FrameResources& FrameResources);
+
 private:
+    Bool CreateRenderTargets(FrameResources& FrameResources);
+
     TRef<RayTracingPipelineState> Pipeline;
     TRef<ComputePipelineState>    RTSpatialPSO;
     TRef<ComputeShader>        RTSpatialShader;

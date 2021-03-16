@@ -92,6 +92,7 @@ struct FrameResources
     TRef<Texture2D>    GBuffer[6];
     TRef<SamplerState> GBufferSampler;
     TRef<SamplerState> FXAASampler;
+    TRef<Texture2DArray> BlueNoise;
 
     TRef<InputLayoutState> StdInputLayout;
 

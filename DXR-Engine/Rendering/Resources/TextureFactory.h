@@ -5,7 +5,7 @@
 
 enum ETextureFactoryFlags : UInt32
 {
-    TextureFactoryFlag_None			= 0,
+    TextureFactoryFlag_None         = 0,
     TextureFactoryFlag_GenerateMips = FLAG(1),
 };
 

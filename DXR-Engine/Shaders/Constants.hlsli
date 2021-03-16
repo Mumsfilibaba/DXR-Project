@@ -9,7 +9,7 @@
 #define MAX_ROUGHNESS (1.0f)
 #define MIN_VALUE     (0.0000001f)
 #define EPSILON       (0.0001f)
-#define RAY_OFFSET    (0.2f)
+#define RAY_OFFSET    (0.0002f)
 
 #define FLT32_MAX 3.402823466e+38F 
 

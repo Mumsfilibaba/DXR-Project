@@ -393,7 +393,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VELOCITY_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
 
-    ColorF BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    ColorF BlackClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(), BlackClearColor);
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(), BlackClearColor);
@@ -771,6 +771,11 @@ Bool Renderer::Init()
         {
             return false;
         }
+    }
+
+    if (!InitBlueNoise())
+    {
+        return false;
     }
 
     CmdList.Begin();
@@ -1261,6 +1266,69 @@ Bool Renderer::InitShadingImage()
     return true;
 }
 
+Bool Renderer::InitBlueNoise()
+{
+    TArray<TRef<Texture2D>> TextureSlices;
+    for (UInt32 i = 0; i < 64; i++)
+    {
+        std::string FileName = "../Assets/Textures/Blue Noise/LDR_RGBA_" + std::to_string(i) + ".png";
+        
+        TRef<Texture2D> Slice = TextureFactory::LoadFromFile(FileName, TextureFactoryFlag_None, EFormat::R8G8B8A8_Unorm);
+        if (!Slice)
+        {
+            return false;
+        }
+        else
+        {
+            TextureSlices.EmplaceBack(Slice);
+        }
+    }
+
+    Assert(TextureSlices[0] != nullptr);
+
+    UInt32 Width  = TextureSlices[0]->GetWidth();
+    UInt32 Height = TextureSlices[0]->GetHeight();
+    Resources.BlueNoise = CreateTexture2DArray(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, 64, ETextureFlags::TextureFlag_SRV, EResourceState::CopyDest, nullptr);
+    if (!Resources.BlueNoise)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        Resources.BlueNoise->SetName("Blue Noise Texture Array");
+    }
+
+    CmdList.Begin();
+    
+    CopyTextureInfo CopyInfo;
+    CopyInfo.Width  = Width;
+    CopyInfo.Height = Height;
+    CopyInfo.Depth  = 1;
+    CopyInfo.Source.x   = 0;
+    CopyInfo.Source.y   = 0;
+    CopyInfo.Source.z   = 0;
+    CopyInfo.Source.Mip = 0;
+    CopyInfo.Source.ArraySlice = 0;
+    CopyInfo.Destination.x   = 0;
+    CopyInfo.Destination.y   = 0;
+    CopyInfo.Destination.z   = 0;
+    CopyInfo.Destination.Mip = 0;
+
+    for (UInt32 i = 0; i < 64; i++)
+    {
+        CmdList.TransitionTexture(TextureSlices[i].Get(), EResourceState::PixelShaderResource, EResourceState::CopySource);
+
+        CopyInfo.Destination.ArraySlice = i;
+        CmdList.CopyTextureRegion(Resources.BlueNoise.Get(), TextureSlices[i].Get(), CopyInfo);
+    }
+
+    CmdList.End();
+    gCmdListExecutor.ExecuteCommandList(CmdList);
+
+    return true;
+}
+
 void Renderer::ResizeResources(UInt32 Width, UInt32 Height)
 {
     if (!Resources.MainWindowViewport->Resize(Width, Height))
@@ -1276,6 +1344,12 @@ void Renderer::ResizeResources(UInt32 Width, UInt32 Height)
     }
 
     if (!SSAORenderer.ResizeResources(Resources))
+    {
+        Debug::DebugBreak();
+        return;
+    }
+
+    if (!RayTracer.OnResize(Resources))
     {
         Debug::DebugBreak();
         return;

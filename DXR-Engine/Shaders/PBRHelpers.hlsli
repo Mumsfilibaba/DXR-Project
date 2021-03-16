@@ -7,10 +7,12 @@
 // ImportanceSample GGX
 float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
 {
-    float Alpha    = Roughness * Roughness;
-    float Phi      = 2 * PI * Xi.x;
-    float CosTheta = sqrt((1.0f - Xi.y) / (1.0f + (Alpha * Alpha - 1.0f) * Xi.y));
+    float Alpha        = Roughness * Roughness;
+    float CosThetaSqrd = min((1.0f - Xi.y) / max(1.0f + (Alpha * Alpha - 1.0f) * Xi.y, 0.0001f), 1.0f);
+    
+    float CosTheta = sqrt(CosThetaSqrd);
     float SinTheta = sqrt(1.0f - CosTheta * CosTheta);
+    float Phi      = 2 * PI * Xi.x;
     
     float3 H;
     H.x = SinTheta * cos(Phi);
@@ -29,7 +31,7 @@ float DistributionGGX(float3 N, float3 H, float Roughness)
 {
     float Alpha  = Roughness * Roughness;
     float Alpha2 = Alpha * Alpha;
-    float NdotH  = saturate(dot(N, H));
+    float NdotH  = saturate(dot(N, H) + 0.0001f);
     float Denom  = NdotH * NdotH * (Alpha2 - 1.0f) + 1.0f;
     return Alpha2 / (PI * Denom * Denom);
 }

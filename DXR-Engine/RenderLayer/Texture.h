@@ -38,6 +38,8 @@ public:
     // Returns a ShaderResourceView of the full resource if texture is created with TextureFlag_SRV
     virtual class ShaderResourceView* GetShaderResourceView() const { return nullptr; }
 
+    virtual UInt32 GetArraySize() const { return 1; }
+
     EFormat GetFormat() const { return Format; }
 
     UInt32 GetNumMips() const { return NumMips; }
@@ -114,7 +116,7 @@ public:
     virtual Texture2D*      AsTexture2D()      override { return nullptr; }
     virtual Texture2DArray* AsTexture2DArray() override { return this; }
 
-    UInt32 GetNumArraySlices() const { return NumArraySlices; }
+    virtual UInt32 GetArraySize() const override { return NumArraySlices; }
 
 private:
     UInt32 NumArraySlices;
@@ -149,7 +151,7 @@ public:
     virtual TextureCube*      AsTextureCube()      override { return nullptr; }
     virtual TextureCubeArray* AsTextureCubeArray() override { return this; }
 
-    UInt32 GetNumArraySlices() const { return NumArraySlices; }
+    virtual UInt32 GetArraySize() const override { return NumArraySlices; }
 
 private:
     UInt32 NumArraySlices;

@@ -683,7 +683,7 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
         FrameResources.DepthBufferFormat, 
         Width, Height, 1, 1, UsageDS, 
         EResourceState::Common, 
-        nullptr);
+        nullptr, ClearValue(FrameResources.DepthBufferFormat, 1.0f, 0));
     if (FrameResources.GBuffer[GBUFFER_DEPTH_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->SetName("GBuffer DepthStencil");
