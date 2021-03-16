@@ -1,8 +1,6 @@
 #pragma once
 #include "Time/Clock.h"
 
-#include "RenderLayer/CommandList.h"
-
 #include <unordered_map>
 
 #define ENABLE_PROFILER      1
@@ -19,6 +17,8 @@
 
     #define GPU_TRACE_SCOPE(CmdList, Name)
 #endif
+
+class CommandList;
 
 class Profiler
 {

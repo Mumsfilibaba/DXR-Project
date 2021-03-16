@@ -14,7 +14,7 @@ Camera::Camera()
     , FarPlane(1000.0f)
     , AspectRatio()
 {
-    UpdateMatrices();
+    Tick(1920.0f, 1080.0f);
 }
 
 void Camera::Move(Float x, Float y, Float z)
@@ -54,12 +54,21 @@ void Camera::Rotate(Float Pitch, Float Yaw, Float Roll)
     XMStoreFloat3(&Right, XmRight);
 }
 
-void Camera::UpdateMatrices()
+void Camera::Tick(Float Width, Float Height)
 {
-    Float Fov = XMConvertToRadians(90.0f);
-    AspectRatio = 1920.0f / 1080.0f;
+    Frame  = (++Frame) % 8;
+    Jitter = Math::Hammersley(Frame, 8);
+    Jitter = (Jitter * 2.0f) - 1.0f;
 
+    XMFLOAT2 ClipSpaceJitter = Jitter / XMFLOAT2(Width, Height);
+    ClipSpaceJitter.y = -ClipSpaceJitter.y;
+
+    Float Fov = XMConvertToRadians(90.0f);
+    AspectRatio = Width / Height;
+
+    XMMATRIX XmOffset     = XMMatrixIdentity();// XMMatrixTranslation(ClipSpaceJitter.x, ClipSpaceJitter.y, 0.0f);
     XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(Fov, AspectRatio, NearPlane, FarPlane);
+    XmProjection = XMMatrixMultiply(XmOffset, XmProjection);
     XMStoreFloat4x4(&Projection, XmProjection);
 
     XMVECTOR XmPosition = XMLoadFloat3(&Position);
@@ -86,7 +95,7 @@ void Camera::UpdateMatrices()
     XMMATRIX XmViewProjectionInverse = XMMatrixInverse(nullptr, XmViewProjection);
     XMStoreFloat4x4(&ViewProjectionInverse, XMMatrixTranspose(XmViewProjectionInverse));
     
-    XMMATRIX XmViewProjectionNoTranslation    = XMMatrixMultiply(XmView3x3, XmProjection);
+    XMMATRIX XmViewProjectionNoTranslation = XMMatrixMultiply(XmView3x3, XmProjection);
     XMStoreFloat4x4(&ViewProjectionNoTranslation, XMMatrixTranspose(XmViewProjectionNoTranslation));
 }
 

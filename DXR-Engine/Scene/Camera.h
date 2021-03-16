@@ -11,7 +11,7 @@ public:
 
     void Rotate(Float Pitch, Float Yaw, Float Roll);
 
-    void UpdateMatrices();
+    void Tick(Float Width, Float Height);
 
     const XMFLOAT4X4& GetViewMatrix() const { return View; }
     const XMFLOAT4X4& GetViewInverseMatrix() const { return ViewInverse; }
@@ -36,7 +36,11 @@ public:
 
     Float GetAspectRatio() const { return AspectRatio; }
 
+    XMFLOAT2 GetJitter() const { return Jitter; }
+
 private:
+    UInt64 Frame = 0;
+
     XMFLOAT4X4 View;
     XMFLOAT4X4 ViewInverse;
     XMFLOAT4X4 Projection;
@@ -44,12 +48,16 @@ private:
     XMFLOAT4X4 ViewProjection;
     XMFLOAT4X4 ViewProjectionInverse;
     XMFLOAT4X4 ViewProjectionNoTranslation;
+
     Float NearPlane;
     Float FarPlane;
     Float AspectRatio;
+    
     XMFLOAT3 Position;
     XMFLOAT3 Rotation;
     XMFLOAT3 Forward;
     XMFLOAT3 Right;
     XMFLOAT3 Up;
+
+    XMFLOAT2 Jitter;
 };

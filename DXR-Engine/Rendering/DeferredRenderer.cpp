@@ -131,9 +131,9 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         PipelineStateInfo.ShaderState.VertexShader               = BaseVertexShader.Get();
         PipelineStateInfo.ShaderState.PixelShader                = BasePixelShader.Get();
         PipelineStateInfo.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
+        PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = FrameResources.AlbedoFormat;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[1] = FrameResources.NormalFormat;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[2] = EFormat::R8G8B8A8_Unorm;
+        PipelineStateInfo.PipelineFormats.RenderTargetFormats[2] = FrameResources.MaterialFormat;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[3] = FrameResources.ViewNormalFormat;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[4] = FrameResources.VelocityFormat;
         PipelineStateInfo.PipelineFormats.NumRenderTargets       = 5;
@@ -500,6 +500,9 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
         XMFLOAT4X4 TransformInv;
     } TransformPerObject;
 
+    CmdList.SetConstantBuffer(BaseVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+    CmdList.SetConstantBuffer(BasePixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+    
     for (const MeshDrawCommand& Command : FrameResources.DeferredVisibleCommands)
     {
         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
@@ -510,10 +513,8 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
             Command.Material->BuildBuffer(CmdList);
         }
 
-        CmdList.SetConstantBuffer(BaseVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-
         ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
-        CmdList.SetConstantBuffer(BasePixelShader.Get(), MaterialBuffer, 0);
+        CmdList.SetConstantBuffer(BasePixelShader.Get(), MaterialBuffer, 1);
 
         TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
@@ -566,7 +567,6 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
         CmdList.SetSamplerState(LightPassShader, FrameResources.DirectionalShadowSampler.Get(), 1);
 
         CmdList.SetShaderResourceView(LightPassShader, FrameResources.RTReflections->GetShaderResourceView(), 4);
-        //CmdList.SetShaderResourceView(LightPassShader, FrameResources.RTRayPDF->GetShaderResourceView(), 5);
         CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirLightShadowMaps->GetShaderResourceView(), 5);
         CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 6);
         CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 7);

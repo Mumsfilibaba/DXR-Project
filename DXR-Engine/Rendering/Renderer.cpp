@@ -296,6 +296,11 @@ void Renderer::RenderDebugInterface()
 
 void Renderer::Tick(const Scene& Scene)
 {
+    Resources.BackBuffer = Resources.MainWindowViewport->GetBackBuffer();
+
+    Camera* CurrentCamera = Scene.GetCamera();
+    CurrentCamera->Tick(Resources.BackBuffer->GetWidth(), Resources.BackBuffer->GetHeight());
+
     // Perform frustum culling
     Resources.DeferredVisibleCommands.Clear();
     Resources.ForwardVisibleCommands.Clear();
@@ -319,8 +324,6 @@ void Renderer::Tick(const Scene& Scene)
     {
         PerformFrustumCulling(Scene);
     }
-
-    Resources.BackBuffer = Resources.MainWindowViewport->GetBackBuffer();
 
     CmdList.BeginExternalCapture();
     CmdList.Begin();
@@ -360,33 +363,22 @@ void Renderer::Tick(const Scene& Scene)
     ShadowMapRenderer.RenderDirectionalLightShadows(CmdList, LightSetup, Scene);
 
     // Update camerabuffer
-    constexpr UInt32 SAMPLES = 8;
-    static UInt64 Tick = 0;
-
-    Tick++;
-    const UInt64 SampleIndex = Tick % SAMPLES;
-
-    XMFLOAT2 Jitter = Math::Hammersley(SampleIndex, SAMPLES);
-    Jitter = (Jitter * 2.0f) - 1.0f;
-    Jitter = Jitter / XMFLOAT2(Resources.BackBuffer->GetWidth(), Resources.BackBuffer->GetHeight());
-
-    XMFLOAT4X4 Offset;
-    XMStoreFloat4x4(&Offset, XMMatrixTranslation(Jitter.x, Jitter.y, 0.0f));
-
     CameraBufferData.PrevViewProjection = CameraBufferData.ViewProjection;
-    CameraBufferData.ViewProjection     = Scene.GetCamera()->GetViewProjectionMatrix();
-    CameraBufferData.View               = Scene.GetCamera()->GetViewMatrix();
-    CameraBufferData.Projection         = Scene.GetCamera()->GetProjectionMatrix();
-    CameraBufferData.ViewInv            = Scene.GetCamera()->GetViewInverseMatrix();
-    CameraBufferData.ProjectionInv      = Scene.GetCamera()->GetProjectionInverseMatrix();
-    CameraBufferData.ViewProjectionInv  = Scene.GetCamera()->GetViewProjectionInverseMatrix();
-    CameraBufferData.Position           = Scene.GetCamera()->GetPosition();
-    CameraBufferData.Forward            = Scene.GetCamera()->GetForward();
-    CameraBufferData.NearPlane          = Scene.GetCamera()->GetNearPlane();
-    CameraBufferData.FarPlane           = Scene.GetCamera()->GetFarPlane();
-    CameraBufferData.AspectRatio        = Scene.GetCamera()->GetAspectRatio();
+    CameraBufferData.ViewProjection     = CurrentCamera->GetViewProjectionMatrix();
+    CameraBufferData.View               = CurrentCamera->GetViewMatrix();
+    CameraBufferData.Projection         = CurrentCamera->GetProjectionMatrix();
+    CameraBufferData.ViewInv            = CurrentCamera->GetViewInverseMatrix();
+    CameraBufferData.ProjectionInv      = CurrentCamera->GetProjectionInverseMatrix();
+    CameraBufferData.ViewProjectionInv  = CurrentCamera->GetViewProjectionInverseMatrix();
+    CameraBufferData.Position           = CurrentCamera->GetPosition();
+    CameraBufferData.Forward            = CurrentCamera->GetForward();
+    CameraBufferData.NearPlane          = CurrentCamera->GetNearPlane();
+    CameraBufferData.FarPlane           = CurrentCamera->GetFarPlane();
+    CameraBufferData.AspectRatio        = CurrentCamera->GetAspectRatio();
     CameraBufferData.PrevJitter         = CameraBufferData.Jitter;
-    CameraBufferData.Jitter             = Jitter;
+    CameraBufferData.Jitter             = CurrentCamera->GetJitter();
+    CameraBufferData.Width              = Resources.BackBuffer->GetWidth();
+    CameraBufferData.Height             = Resources.BackBuffer->GetHeight();
 
     CmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 

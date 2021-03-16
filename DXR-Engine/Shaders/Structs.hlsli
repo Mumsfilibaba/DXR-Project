@@ -24,7 +24,10 @@ struct Camera
     float  FarPlane;
     float2 Jitter;
     float2 PrevJitter;
-    float  AspectRatio;
+    float AspectRatio;
+    float Width;
+    float Height;
+    float Padding0;
 };
 
 struct PositionRadius

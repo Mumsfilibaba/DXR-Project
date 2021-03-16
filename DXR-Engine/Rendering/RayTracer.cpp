@@ -353,6 +353,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     }
     else
     {
+        GPU_TRACE_SCOPE(CmdList, "Build Scene");
         CmdList.BuildRayTracingScene(Resources.RTScene.Get(), Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size(), false);
     }
 
@@ -399,7 +400,11 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
 
     UInt32 Width  = Resources.RTReflections->GetWidth();
     UInt32 Height = Resources.RTReflections->GetHeight();
-    CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
+
+    {
+        GPU_TRACE_SCOPE(CmdList, "Dispatch Rays");
+        CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
+    }
 
     CmdList.UnorderedAccessTextureBarrier(RTColorDepth.Get());
     CmdList.UnorderedAccessTextureBarrier(Resources.RTRayPDF.Get());
@@ -426,7 +431,11 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     XMUINT3 ThreadGroup = RTSpatialShader->GetThreadGroupXYZ();
     Width  = Math::DivideByMultiple(RTHistory->GetWidth(), ThreadGroup.x);
     Height = Math::DivideByMultiple(RTHistory->GetHeight(), ThreadGroup.y);
-    CmdList.Dispatch(Width, Height, ThreadGroup.z);
+
+    {
+        GPU_TRACE_SCOPE(CmdList, "RT Spatio-Temporal Filter");
+        CmdList.Dispatch(Width, Height, ThreadGroup.z);
+    }
 
     CmdList.TransitionTexture(RTColorDepth.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
     CmdList.TransitionTexture(Resources.RTRayPDF.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
@@ -435,23 +444,26 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.UnorderedAccessTextureBarrier(Resources.RTReflections.Get());
     CmdList.UnorderedAccessTextureBarrier(RTMomentBuffer.Get());
 
-    CmdList.SetComputePipelineState(BlurHorizontalPSO.Get());
+    {
+        GPU_TRACE_SCOPE(CmdList, "RT Bilateral Filter");
+        CmdList.SetComputePipelineState(BlurHorizontalPSO.Get());
 
-    XMFLOAT2 ScreenSize = XMFLOAT2(Resources.RTReflections->GetWidth(), Resources.RTReflections->GetHeight());
-    CmdList.Set32BitShaderConstants(BlurHorizontalShader.Get(), &ScreenSize, 2);
+        XMFLOAT2 ScreenSize = XMFLOAT2(Resources.RTReflections->GetWidth(), Resources.RTReflections->GetHeight());
+        CmdList.Set32BitShaderConstants(BlurHorizontalShader.Get(), &ScreenSize, 2);
 
-    CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), Resources.RTReflections->GetUnorderedAccessView(), 0);
-    CmdList.Dispatch(Width, Height, 1);
+        CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), Resources.RTReflections->GetUnorderedAccessView(), 0);
+        CmdList.Dispatch(Width, Height, 1);
 
-    CmdList.UnorderedAccessTextureBarrier(Resources.RTReflections.Get());
+        CmdList.UnorderedAccessTextureBarrier(Resources.RTReflections.Get());
 
-    CmdList.SetComputePipelineState(BlurVerticalPSO.Get());
+        CmdList.SetComputePipelineState(BlurVerticalPSO.Get());
 
-    CmdList.Set32BitShaderConstants(BlurVerticalShader.Get(), &ScreenSize, 2);
+        CmdList.Set32BitShaderConstants(BlurVerticalShader.Get(), &ScreenSize, 2);
 
-    CmdList.Dispatch(Width, Height, 1);
+        CmdList.Dispatch(Width, Height, 1);
 
-    CmdList.UnorderedAccessTextureBarrier(Resources.RTReflections.Get());
+        CmdList.UnorderedAccessTextureBarrier(Resources.RTReflections.Get());
+    }
 
     Resources.DebugTextures.EmplaceBack(
         MakeSharedRef<ShaderResourceView>(RTColorDepth->GetShaderResourceView()),

@@ -14,12 +14,12 @@ struct Math
         Bits = ((Bits & 0x33333333u) << 2u) | ((Bits & 0xCCCCCCCCu) >> 2u);
         Bits = ((Bits & 0x0F0F0F0Fu) << 4u) | ((Bits & 0xF0F0F0F0u) >> 4u);
         Bits = ((Bits & 0x00FF00FFu) << 8u) | ((Bits & 0xFF00FF00u) >> 8u);
-        return float(Bits) * 2.3283064365386963e-10;
+        return Float(Bits) * 2.3283064365386963e-10;
     }
 
     static FORCEINLINE XMFLOAT2 Hammersley(UInt32 i, UInt32 n)
     {
-        return XMFLOAT2(float(i) / float(n), RadicalInverse(i));
+        return XMFLOAT2(Float(i) / Float(n), RadicalInverse(i));
     }
 
     template <typename T>
@@ -173,4 +173,20 @@ inline XMFLOAT4 operator-(XMFLOAT4 LHS, Float RHS)
 inline XMFLOAT4 operator-(XMFLOAT4 Value)
 {
     return XMFLOAT4(-Value.x, -Value.y, -Value.z, -Value.w);
+}
+
+inline std::string ToString(const XMFLOAT4X4& Matrix)
+{
+    std::string Result;
+    for (UInt32 y = 0; y < 4; y++)
+    {
+        for (UInt32 x = 0; x < 3; x++)
+        {
+            Result += std::to_string(Matrix.m[y][x]) + ", ";
+        }
+
+        Result += std::to_string(Matrix.m[y][3]) + "\n";
+    }
+
+    return Result;
 }

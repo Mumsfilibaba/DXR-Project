@@ -9,6 +9,7 @@ Frustum::Frustum(Float FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4& Proje
 void Frustum::Create(Float FarPlane, const XMFLOAT4X4& View, const XMFLOAT4X4& Projection)
 {
     XMFLOAT4X4 TempProjection = Projection;
+
     // Calculate the minimum Z distance in the frustum.
     Float MinimumZ = -TempProjection._43 / TempProjection._33;
     Float R = FarPlane / (FarPlane - MinimumZ);

@@ -21,13 +21,12 @@ Texture2D<float4>       NormalTex             : register(t1, space0);
 Texture2D<float4>       MaterialTex           : register(t2, space0);
 Texture2D<float>        DepthStencilTex       : register(t3, space0);
 Texture2D<float4>       DXRReflection         : register(t4, space0);
-Texture2D<float4>       DXRRayPDF             : register(t5, space0);
-TextureCube<float4>     IrradianceMap         : register(t6, space0);
-TextureCube<float4>     SpecularIrradianceMap : register(t7, space0);
-Texture2D<float4>       IntegrationLUT        : register(t8, space0);
-Texture2D<float>        DirLightShadowMaps    : register(t9, space0);
-TextureCubeArray<float> PointLightShadowMaps  : register(t10, space0);
-Texture2D<float3>       SSAO                  : register(t11, space0);
+TextureCube<float4>     IrradianceMap         : register(t5, space0);
+TextureCube<float4>     SpecularIrradianceMap : register(t6, space0);
+Texture2D<float4>       IntegrationLUT        : register(t7, space0);
+Texture2D<float>        DirLightShadowMaps    : register(t8, space0);
+TextureCubeArray<float> PointLightShadowMaps  : register(t9, space0);
+Texture2D<float3>       SSAO                  : register(t10, space0);
 
 SamplerState LUTSampler        : register(s0, space0);
 SamplerState IrradianceSampler : register(s1, space0);
@@ -272,7 +271,6 @@ void Main(ComputeShaderInput Input)
     float3 FinalColor = L0;
 #ifdef RAY_TRACING
     {
-        float4 RayPDF = DXRRayPDF[TexCoord];
         float3 L    = reflect(-V, N);
         float3 H    = normalize(V + L);
         float NdotL = saturate(dot(N, L));

@@ -21,25 +21,25 @@ RWTexture2D<float4> HistoryOutput : register(u0);
 RWTexture2D<float4> Output        : register(u1);
 RWTexture2D<float2> Moments       : register(u2);
 
-static const float2 PoissonDisk[NUM_SAMPLES] =
-{
-    float2(-0.94201624, -0.39906216),
-    float2(0.94558609, -0.76890725),
-    float2(-0.094184101, -0.92938870),
-    float2(0.34495938, 0.29387760),
-    float2(-0.91588581, 0.45771432),
-    float2(-0.81544232, -0.87912464),
-    float2(-0.38277543, 0.27676845),
-    float2(0.97484398, 0.75648379),
-    float2(0.44323325, -0.97511554),
-    float2(0.53742981, -0.47373420),
-    float2(-0.26496911, -0.41893023),
-    float2(0.79197514, 0.19090188),
-    float2(-0.24188840, 0.99706507),
-    float2(-0.81409955, 0.91437590),
-    float2(0.19984126, 0.78641367),
-    float2(0.14383161, -0.14100790)
-};
+//static const float2 PoissonDisk[NUM_SAMPLES] =
+//{
+//    float2(-0.94201624, -0.39906216),
+//    float2(0.94558609, -0.76890725),
+//    float2(-0.094184101, -0.92938870),
+//    float2(0.34495938, 0.29387760),
+//    float2(-0.91588581, 0.45771432),
+//    float2(-0.81544232, -0.87912464),
+//    float2(-0.38277543, 0.27676845),
+//    float2(0.97484398, 0.75648379),
+//    float2(0.44323325, -0.97511554),
+//    float2(0.53742981, -0.47373420),
+//    float2(-0.26496911, -0.41893023),
+//    float2(0.79197514, 0.19090188),
+//    float2(-0.24188840, 0.99706507),
+//    float2(-0.81409955, 0.91437590),
+//    float2(0.19984126, 0.78641367),
+//    float2(0.14383161, -0.14100790)
+//};
 
 groupshared float3 SharedResults[NUM_THREADS][NUM_THREADS];
 
@@ -106,11 +106,14 @@ void Main(ComputeShaderInput Input)
         float NdotL = saturate(dot(N, L));
         if (NdotL > 0.0f)
         {
+            float3 H = normalize(V + L);
+            
             float NdotV = saturate(dot(N, V));
+            float NdotH = saturate(dot(N, H));
+            float HdotV = saturate(dot(H, V));
             
             float3 Li = InColorDepth[LocalTexCoord].rgb;
             
-            float3 H = normalize(V + L);
             float  D = DistributionGGX(N, H, Roughness);
             float  G = GeometrySmithGGX_IBL(N, L, V, Roughness);
             float3 F = FresnelSchlick(F0, V, H);
@@ -118,7 +121,7 @@ void Main(ComputeShaderInput Input)
             float3 Denom = max(Float3(4.0f * NdotL * NdotV), Float3(0.0001f));
 
             float3 Spec_BRDF = Numer / Denom;
-            float  Spec_PDF  = RayPDF.a;
+            float  Spec_PDF  = saturate(NdotH / (4.0f * HdotV));
            
             float3 Weight      = NdotL * Spec_BRDF / saturate(Spec_PDF + 0.0001f);
             float3 LocalResult = saturate(Li * Weight);
@@ -149,7 +152,7 @@ void Main(ComputeShaderInput Input)
     AvgLength   = AvgLength   / NumSamples;
     AvgHitPoint = AvgHitPoint / NumSamples;
     
-    float HistoryUsage = 0.95f;
+    float HistoryUsage = 0.9f;
     float MomentsUsage = 0.5f;
     
     float  PreviousAvgLength = HistoryOutput[TexCoords].w;
@@ -194,7 +197,7 @@ void Main(ComputeShaderInput Input)
     Moments[TexCoords] = ResultMoments;
     
     ResultMoments.x = ResultMoments.x / ActualSamples;
-    float Variance = (ResultMoments.y / ActualSamples) - ResultMoments.x * ResultMoments.x;
+    float Variance  = (ResultMoments.y / ActualSamples) - ResultMoments.x * ResultMoments.x;
     
     float3 Color = ClampedSum * HistoryUsage + Result * (1.0f - HistoryUsage);
     HistoryOutput[TexCoords] = float4(Color, AvgLength);

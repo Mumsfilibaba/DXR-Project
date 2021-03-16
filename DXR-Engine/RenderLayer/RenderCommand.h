@@ -7,6 +7,7 @@
 #include "Memory/Memory.h"
 
 #include "Debug/Debug.h"
+#include "Debug/Profiler.h"
 
 #include "Application/Log.h"
 
@@ -1004,6 +1005,7 @@ struct DrawIndexedInstancedRenderCommand : public RenderCommand
 
     virtual void Execute(ICommandContext& CmdContext) override
     {
+        TRACE_FUNCTION_SCOPE();
         CmdContext.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
     }
 

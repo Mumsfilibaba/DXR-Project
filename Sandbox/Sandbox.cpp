@@ -304,7 +304,6 @@ Bool Sandbox::Init()
     Camera* Camera = CurrentScene->GetCamera();
     Camera->SetPosition(0.0f, 1.0f, 0.0f);
     Camera->Rotate(0.0f, 90.0f, 0.0f);
-    Camera->UpdateMatrices();
 
     return true;
 }
@@ -372,5 +371,4 @@ void Sandbox::Tick(Timestamp DeltaTime)
 
     XMFLOAT3 Speed = CameraSpeed * Delta;
     CurrentCamera->Move(Speed.x, Speed.y, Speed.z);
-    CurrentCamera->UpdateMatrices();
 }

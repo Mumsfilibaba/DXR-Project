@@ -43,7 +43,10 @@ struct CameraBufferDesc
     Float      FarPlane;
     XMFLOAT2   Jitter;
     XMFLOAT2   PrevJitter;
-    Float      AspectRatio;
+    Float AspectRatio;
+    Float Width;
+    Float Height;
+    Float Padding0;
 };
 
 class Renderer
