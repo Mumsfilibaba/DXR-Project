@@ -86,7 +86,7 @@ uint XORShift(uint Value)
 float RandomFloatNext(inout uint Seed)
 {
     Seed = XORShift(Seed);
-    return float(Seed) * (1.0 / 4294967296.0);
+    return float(Seed) * (1.0f / 4294967296.0f);
 }
 
 int RandomIntNext(inout uint Seed)

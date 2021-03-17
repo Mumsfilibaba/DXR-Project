@@ -7,6 +7,9 @@
 
 int WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, int CmdShow)
 {
+    // TODO: Remove later
+    //SetCurrentDirectoryA("E:/Dev/Github/DXR-Project/Sandbox");
+
     TArrayView<const Char*> Args;
     return EngineMain(Args);
 }

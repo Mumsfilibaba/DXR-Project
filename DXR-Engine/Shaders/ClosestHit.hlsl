@@ -36,7 +36,7 @@ ConstantBuffer<DirectionalLight> DirLightBuffer : register(b7, space0);
 TextureCube<float4> Skybox                : register(t1, space0);
 Texture2D<float4>   MaterialTextures[128] : register(t7, space0);
 
-SamplerState TextureSampler : register(s1, space0);
+SamplerState TextureSampler : register(s0, space0);
 
 // Local RootSignature
 StructuredBuffer<Vertex> Vertices  : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);

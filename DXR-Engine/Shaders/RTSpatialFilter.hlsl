@@ -3,6 +3,7 @@
 #include "Helpers.hlsli"
 #include "Constants.hlsli"
 #include "RayTracingHelpers.hlsli"
+#include "Kernels.hlsli"
 
 #define NUM_THREADS 16
 #define NUM_SAMPLES 16
@@ -23,32 +24,13 @@ RWTexture2D<float4> HistoryOutput : register(u0);
 RWTexture2D<float4> Output        : register(u1);
 RWTexture2D<float2> Moments       : register(u2);
 
-//static const float2 PoissonDisk[NUM_SAMPLES] =
-//{
-//    float2(-0.94201624, -0.39906216),
-//    float2(0.94558609, -0.76890725),
-//    float2(-0.094184101, -0.92938870),
-//    float2(0.34495938, 0.29387760),
-//    float2(-0.91588581, 0.45771432),
-//    float2(-0.81544232, -0.87912464),
-//    float2(-0.38277543, 0.27676845),
-//    float2(0.97484398, 0.75648379),
-//    float2(0.44323325, -0.97511554),
-//    float2(0.53742981, -0.47373420),
-//    float2(-0.26496911, -0.41893023),
-//    float2(0.79197514, 0.19090188),
-//    float2(-0.24188840, 0.99706507),
-//    float2(-0.81409955, 0.91437590),
-//    float2(0.19984126, 0.78641367),
-//    float2(0.14383161, -0.14100790)
-//};
-
 groupshared float3 SharedResults[NUM_THREADS][NUM_THREADS];
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(ComputeShaderInput Input)
 {
     uint2 TexCoords = Input.DispatchThreadID.xy;
+    uint2 HalfTexCoords = TexCoords / 2;
 
     float4 GBufferAlbedo   = InGBufferAlbedo[TexCoords];
     float4 GBufferNormals  = InGBufferNormals[TexCoords];
@@ -58,14 +40,18 @@ void Main(ComputeShaderInput Input)
     float  Roughness = clamp(GBufferMaterial.r, MIN_ROUGHNESS, MAX_ROUGHNESS);
     float  Metallic  = GBufferMaterial.g;
     
-    uint Width;
-    uint Height;
-    InColorDepth.GetDimensions(Width, Height);
+    uint HalfWidth;
+    uint HalfHeight;
+    InColorDepth.GetDimensions(HalfWidth, HalfHeight);
     
+    uint Width  = HalfWidth * 2;
+    uint Height = HalfHeight * 2;
+    
+    // UV in full resolution since backbuffer is
     float2 UV = float2(TexCoords) / float2(Width, Height);
-    float4 ColorDepth    = InColorDepth[TexCoords];
-    float3 WorldPosition = PositionFromDepth(ColorDepth.w, UV, CameraBuffer.ViewProjectionInverse);
+    float4 ColorDepth = InColorDepth[HalfTexCoords];
     
+    float3 WorldPosition = PositionFromDepth(ColorDepth.w, UV, CameraBuffer.ViewProjectionInverse);
     float3 V = normalize(CameraBuffer.Position - WorldPosition);
     float3 N = UnpackNormal(GBufferNormals.xyz);
     
@@ -85,18 +71,19 @@ void Main(ComputeShaderInput Input)
     uint Seed = RandomInit(TexCoords.xy, Width, RandomBuffer.FrameIndex);
     
     float ActualSamples = 0.0f;
-    float KernelWidth   = lerp(1.0f, 4.0f, min(Roughness, 0.35f) / 0.35f);
+    float KernelWidth   = lerp(1.0f, 8.0f, min(Roughness, 0.35f) / 0.35f);
     for (int y = 0; y < NUM_SAMPLES; y++)
     {
-        int Rnd0 = (TexCoords.x + RandomIntNext(Seed)) % 64;
-        int Rnd1 = (TexCoords.y + RandomIntNext(Seed)) % 64;
+        //int Rnd0 = (TexCoords.x + RandomIntNext(Seed)) % 64;
+        //int Rnd1 = (TexCoords.y + RandomIntNext(Seed)) % 64;
         
-        const int2 Pixel = int2(Rnd0, Rnd1);
-        const int  TextureIndex = (RandomBuffer.FrameIndex + y) % 64;
+        //const int2 Pixel = int2(Rnd0, Rnd1);
+        //const int  TextureIndex = (RandomBuffer.FrameIndex + y) % 64;
         
-        float4 BlueNoise = BlueNoiseTex.Load(int4(Pixel, TextureIndex, 0));
-        float2 Rnd = trunc(mad(BlueNoise.xy, 2.0f, -1.0f) * KernelWidth);
-        int2 LocalTexCoord = TexCoords + int2(Rnd);
+        //float4 BlueNoise = BlueNoiseTex.Load(int4(Pixel, TextureIndex, 0));
+        //float2 Rnd = trunc(mad(BlueNoise.xy, 2.0f, -1.0f) * KernelWidth);
+        float2 Rnd = trunc(PoissonSamples[y] * KernelWidth);
+        int2 LocalTexCoord = HalfTexCoords + int2(Rnd);
         
         float4 RayPDF    = InRayPDF[LocalTexCoord];
         float  RayLength = length(RayPDF.xyz);
@@ -162,7 +149,7 @@ void Main(ComputeShaderInput Input)
     AvgLength   = AvgLength   / NumSamples;
     AvgHitPoint = AvgHitPoint / NumSamples;
     
-    float HistoryUsage = 0.93f;
+    float HistoryUsage = 0.98f;
     float MomentsUsage = 0.5f;
     
     float  PreviousAvgLength = HistoryOutput[TexCoords].w;

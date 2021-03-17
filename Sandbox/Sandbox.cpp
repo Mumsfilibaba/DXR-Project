@@ -366,8 +366,8 @@ void Sandbox::Tick(Timestamp DeltaTime)
     }
 
     const Float Deacceleration = -5.0f;
-    CameraSpeed = CameraSpeed + (CameraSpeed * Deacceleration) * Delta;
-    CameraSpeed = CameraSpeed + (CameraAcceleration * Delta);
+    CameraSpeed = CameraSpeed + CameraSpeed * Deacceleration * Delta;
+    CameraSpeed = CameraSpeed + CameraAcceleration * Delta;
 
     XMFLOAT3 Speed = CameraSpeed * Delta;
     CurrentCamera->Move(Speed.x, Speed.y, Speed.z);

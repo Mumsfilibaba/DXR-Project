@@ -19,8 +19,6 @@ ConstantBuffer<Camera>        CameraBuffer : register(b0, space0);
 ConstantBuffer<LightInfoData> LightInfo    : register(b1, space0);
 ConstantBuffer<RandomData>    RandomBuffer : register(b2, space0);
 
-SamplerState GBufferSampler : register(s0, space0);
-
 RWTexture2D<float4> ColorDepth : register(u0, space0);
 RWTexture2D<float4> RayPDF     : register(u1, space0);
 
@@ -31,35 +29,44 @@ void RayGen()
 {
     uint3 DispatchIndex      = DispatchRaysIndex();
     uint3 DispatchDimensions = DispatchRaysDimensions();
+    uint2 TexCoord           = DispatchIndex.xy;
+    uint2 FullResolution     = DispatchDimensions.xy * 2;
     
-    float2 TexCoord = float2(DispatchIndex.xy) / float2(DispatchDimensions.xy);
-    float  Depth    = GBufferDepth.SampleLevel(GBufferSampler, TexCoord, 0).r;
-    float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInverse);
-    float3 WorldNormal   = GBufferNormal.SampleLevel(GBufferSampler, TexCoord, 0).rgb;
+    uint2 NoiseCoord = DispatchIndex.xy % 64;
+    uint  BlueNoise  = (uint)BlueNoiseTex.Load(int4(NoiseCoord, 0, 0)).r * 255.0f;
+    BlueNoise = BlueNoise + RandomBuffer.FrameIndex;
     
-    float3 Albedo          = GBufferAlbedo.SampleLevel(GBufferSampler, TexCoord, 0).rgb;
-    float3 SampledMaterial = GBufferMaterial.SampleLevel(GBufferSampler, TexCoord, 0).rgb;
+    uint2 GBufferCoord = TexCoord * 2 + uint2(BlueNoise & 1, (BlueNoise >> 1) & 1);
+    
+    // Discard rays not rasterized
+    float Depth = GBufferDepth.Load(int3(GBufferCoord, 0)).r;
+    if (Depth >= 1.0f)
+    {
+        ColorDepth[TexCoord] = float4(Float3(0.0f), Depth);
+        RayPDF[TexCoord]     = Float4(0.0f);
+        return;
+    }
+    
+    float2 UV = float2(GBufferCoord) / float2(FullResolution);
+    float3 WorldPosition = PositionFromDepth(Depth, UV, CameraBuffer.ViewProjectionInverse);
+    float3 WorldNormal   = GBufferNormal.Load(int3(GBufferCoord, 0)).rgb;
+    
+    float3 Albedo          = GBufferAlbedo.Load(int3(GBufferCoord, 0)).rgb;
+    float3 SampledMaterial = GBufferMaterial.Load(int3(GBufferCoord, 0)).rgb;
     float  Roughness       = clamp(SampledMaterial.r, MIN_ROUGHNESS, MAX_ROUGHNESS);
 
     float3 N = UnpackNormal(WorldNormal);
     float3 V = normalize(CameraBuffer.Position - WorldPosition);
     
-    uint Seed = RandomInit(DispatchIndex.xy, DispatchDimensions.x, RandomBuffer.FrameIndex);
-    int  Rnd0 = (DispatchIndex.x + RandomIntNext(Seed)) % 64;
-    int  Rnd1 = (DispatchIndex.y + RandomIntNext(Seed)) % 64;
-        
-    const int2 Pixel = int2(Rnd0, Rnd1);
-    const int  TextureIndex = RandomBuffer.FrameIndex % 64;
+    uint Seed = RandomInit(DispatchIndex.xy, DispatchDimensions.x, RandomBuffer.FrameIndex % 32);
     
-    float4 BlueNoise = BlueNoiseTex.Load(int4(Pixel, TextureIndex, 0));
+    float2 Xi  = Hammersley(RandomBuffer.FrameIndex % 32, 32);
+    float Rnd0 = RandomFloatNext(Seed);
+    float Rnd1 = RandomFloatNext(Seed);
+    Xi.x = frac(Xi.x + Rnd0);
+    Xi.y = frac(Xi.y + Rnd1);
     
-    //float2 Xi  = Hammersley(RandomBuffer.FrameIndex, 32);
-    //float Rnd0 = RandomFloatNext(Seed);
-    //float Rnd1 = RandomFloatNext(Seed);
-    //Xi.x = frac(Xi.x + Rnd0);
-    //Xi.y = frac(Xi.y + Rnd1);
-    
-    float3 H = ImportanceSampleGGX(BlueNoise.xy, Roughness, N);
+    float3 H = ImportanceSampleGGX(Xi, Roughness, N);
     float3 L = normalize(reflect(-V, H));
     
     float3 FinalColor = Float3(0.0f);
@@ -73,7 +80,7 @@ void RayGen()
         Ray.Origin    = WorldPosition + (N * RAY_OFFSET);
         Ray.Direction = L;
         Ray.TMin      = 0.0f;
-        Ray.TMax      = 10000.0f;
+        Ray.TMax      = 1000.0f;
 
         RayPayload PayLoad;
         PayLoad.T = Ray.TMax;
@@ -90,6 +97,6 @@ void RayGen()
         FinalPDF   = Spec_PDF;
     }
 
-    ColorDepth[DispatchIndex.xy] = float4(FinalColor, Depth);
-    RayPDF[DispatchIndex.xy]     = float4(FinalRay.xyz, FinalPDF);
+    ColorDepth[TexCoord] = float4(FinalColor, Depth);
+    RayPDF[TexCoord]     = float4(FinalRay, FinalPDF);
 }

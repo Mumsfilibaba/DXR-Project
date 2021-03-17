@@ -316,7 +316,6 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     Resources.GlobalResources.AddConstantBuffer(LightSetup.ShadowCastingPointLightsBuffer.Get());
     Resources.GlobalResources.AddConstantBuffer(LightSetup.ShadowCastingPointLightsPosRadBuffer.Get());
     Resources.GlobalResources.AddConstantBuffer(LightSetup.DirectionalLightsBuffer.Get());
-    Resources.GlobalResources.AddSamplerState(Resources.GBufferSampler.Get());
     Resources.GlobalResources.AddSamplerState(Sampler);
     Resources.GlobalResources.AddShaderResourceView(Resources.RTScene->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.Skybox->GetShaderResourceView());
@@ -351,8 +350,11 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     UInt32 Height = Resources.RTReflections->GetHeight();
 
     {
+        UInt32 HalfWidth  = Width / 2;
+        UInt32 HalfHeight = Height / 2;
+
         GPU_TRACE_SCOPE(CmdList, "Dispatch Rays");
-        CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
+        CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), HalfWidth, HalfHeight, 1);
     }
 
     CmdList.UnorderedAccessTextureBarrier(RTColorDepth.Get());
@@ -369,14 +371,14 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 4);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetShaderResourceView(), 5);
-    CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.BlueNoise->GetShaderResourceView(), 6);
+    //CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.BlueNoise->GetShaderResourceView(), 6);
 
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTHistory->GetUnorderedAccessView(), 0);
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), Resources.RTReflections->GetUnorderedAccessView(), 1);
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTMomentBuffer->GetUnorderedAccessView(), 2);
     
     CmdList.SetConstantBuffer(RTSpatialShader.Get(), Resources.CameraBuffer.Get(), 0);
-    CmdList.SetConstantBuffer(RTSpatialShader.Get(), RandomDataBuffer.Get(), 1);
+    //CmdList.SetConstantBuffer(RTSpatialShader.Get(), RandomDataBuffer.Get(), 1);
 
     XMUINT3 ThreadGroup = RTSpatialShader->GetThreadGroupXYZ();
     Width  = Math::DivideByMultiple(RTHistory->GetWidth(), ThreadGroup.x);
@@ -471,17 +473,6 @@ Bool RayTracer::CreateRenderTargets(FrameResources& Resources)
         RTHistory->SetName("RT History");
     }
 
-    RTColorDepth = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
-    if (!RTColorDepth)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        RTColorDepth->SetName("RayTracing Color Depth");
-    }
-
     RTMomentBuffer = CreateTexture2D(EFormat::R16G16_Float, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
     if (!RTMomentBuffer)
     {
@@ -491,6 +482,21 @@ Bool RayTracer::CreateRenderTargets(FrameResources& Resources)
     else
     {
         RTMomentBuffer->SetName("RayTracing Moment Buffer");
+    }
+
+    // Trace at half resolution
+    Width  = Width / 2;
+    Height = Height / 2;
+
+    RTColorDepth = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!RTColorDepth)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RTColorDepth->SetName("RayTracing Color Depth");
     }
 
     Resources.RTRayPDF = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
