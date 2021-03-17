@@ -13,7 +13,7 @@ public:
     {
     }
     
-    Bool Init(D3D12_COMMAND_LIST_TYPE Type)
+    bool Init(D3D12_COMMAND_LIST_TYPE Type)
     {
         D3D12_COMMAND_QUEUE_DESC QueueDesc;
         Memory::Memzero(&QueueDesc);
@@ -36,7 +36,7 @@ public:
         }
     }
 
-    Bool SignalFence(D3D12FenceHandle& Fence, UInt64 FenceValue)
+    bool SignalFence(D3D12FenceHandle& Fence, uint64 FenceValue)
     {
         HRESULT Result = Queue->Signal(Fence.GetFence(), FenceValue);
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
@@ -47,7 +47,7 @@ public:
         return SUCCEEDED(Result);
     }
 
-    Bool WaitForFence(D3D12FenceHandle& Fence, UInt64 FenceValue)
+    bool WaitForFence(D3D12FenceHandle& Fence, uint64 FenceValue)
     {
         HRESULT Result = Queue->Wait(Fence.GetFence(), FenceValue);
         if (Result == DXGI_ERROR_DEVICE_REMOVED)

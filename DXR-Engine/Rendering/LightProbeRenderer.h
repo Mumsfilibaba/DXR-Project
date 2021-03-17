@@ -10,14 +10,14 @@ public:
     LightProbeRenderer()  = default;
     ~LightProbeRenderer() = default;
 
-    Bool Init(LightSetup& LightSetup, FrameResources& FrameResources);
+    bool Init(LightSetup& LightSetup, FrameResources& FrameResources);
     
     void Release();
 
     void RenderSkyLightProbe(CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& Resources);
 
 private:
-    Bool CreateSkyLightResources(LightSetup& LightSetup);
+    bool CreateSkyLightResources(LightSetup& LightSetup);
 
     TRef<ComputePipelineState> IrradianceGenPSO;
     TRef<ComputeShader>        IrradianceGenShader;

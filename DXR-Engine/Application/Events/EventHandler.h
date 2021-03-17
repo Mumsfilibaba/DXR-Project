@@ -1,10 +1,10 @@
 #pragma once
 #include "Events.h"
 
-typedef Bool(*EventHandlerFunc)(const Event& Event);
+typedef bool(*EventHandlerFunc)(const Event& Event);
 
 class IEventHandler
 {
 public:
-    virtual Bool OnEvent(const Event& Event) = 0;
+    virtual bool OnEvent(const Event& Event) = 0;
 };

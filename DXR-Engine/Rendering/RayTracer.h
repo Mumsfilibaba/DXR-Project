@@ -11,7 +11,7 @@ public:
     RayTracer()  = default;
     ~RayTracer() = default;
 
-    Bool Init(FrameResources& Resources);
+    bool Init(FrameResources& Resources);
     void Release();
 
     void PreRender(CommandList& CmdList, FrameResources& Resources, const Scene& Scene);

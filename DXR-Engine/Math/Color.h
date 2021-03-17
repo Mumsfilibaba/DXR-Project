@@ -13,7 +13,7 @@ struct ColorF
     {
     }
 
-    ColorF(Float InR, Float InG, Float InB, Float InA)
+    ColorF(float InR, float InG, float InB, float InA)
         : r(InR)
         , g(InG)
         , b(InB)
@@ -26,7 +26,7 @@ struct ColorF
         Memory::Memcpy(Elements, Other.Elements, sizeof(Elements));
     }
 
-    void Set(Float InR, Float InG, Float InB, Float InA)
+    void Set(float InR, float InG, float InB, float InA)
     {
         r = InR;
         g = InG;
@@ -42,13 +42,13 @@ struct ColorF
 
     union
     {
-        Float Elements[4];
+        float Elements[4];
         struct
         {
-            Float r;
-            Float g;
-            Float b;
-            Float a;
+            float r;
+            float g;
+            float b;
+            float a;
         };
     };
 };

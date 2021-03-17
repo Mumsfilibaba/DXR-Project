@@ -13,7 +13,7 @@ void Console::Init()
         gConsole.ClearHistory();
     });
 
-    auto EventHandler = [](const Event& Event)->Bool
+    auto EventHandler = [](const Event& Event)->bool
     {
         if (!IsEventOfType<KeyPressedEvent>(Event))
         {
@@ -38,10 +38,10 @@ void Console::Tick()
     {
         DebugUI::DrawUI([]()
         {
-            const UInt32 WindowWidth  = gMainWindow->GetWidth();
-            const UInt32 WindowHeight = gMainWindow->GetHeight();
-            const Float Width         = Float(WindowWidth);
-            const Float Height        = Float(WindowHeight) * 0.125f;
+            const uint32 WindowWidth  = gMainWindow->GetWidth();
+            const uint32 WindowHeight = gMainWindow->GetHeight();
+            const float Width         = float(WindowWidth);
+            const float Height        = float(WindowHeight) * 0.125f;
 
             ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
             ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
@@ -65,8 +65,8 @@ void Console::Tick()
             ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
 
             const ImVec2 ParentSize      = ImGui::GetWindowSize();
-            const Float TextWindowWidth  = Width * 0.985f;
-            const Float TextWindowHeight = ParentSize.y - 40.0f;
+            const float TextWindowWidth  = Width * 0.985f;
+            const float TextWindowHeight = ParentSize.y - 40.0f;
             ImGui::BeginChild("##TextWindow", ImVec2(TextWindowWidth, TextWindowHeight), false, ImGuiWindowFlags_None);
 
             for (const Line& Text : gConsole.Lines)
@@ -96,13 +96,13 @@ void Console::Tick()
                 ImGuiInputTextFlags_CallbackAlways     |
                 ImGuiInputTextFlags_CallbackEdit;
 
-            auto Callback = [](ImGuiInputTextCallbackData* Data)->Int32
+            auto Callback = [](ImGuiInputTextCallbackData* Data)->int32
             {
                 Console* This = reinterpret_cast<Console*>(Data->UserData);
                 return This->TextCallback(Data);
             };
 
-            const Bool Result = ImGui::InputText("###Input", gConsole.TextBuffer.Data(), gConsole.TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(&gConsole));
+            const bool Result = ImGui::InputText("###Input", gConsole.TextBuffer.Data(), gConsole.TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(&gConsole));
             if (Result && gConsole.TextBuffer[0] != 0)
             {
                 if (gConsole.CandidatesIndex != -1)
@@ -131,8 +131,8 @@ void Console::Tick()
 
             if (!gConsole.Candidates.IsEmpty())
             {
-                Bool IsActiveIndex = false;
-                Bool PopupOpen     = true;
+                bool IsActiveIndex = false;
+                bool PopupOpen     = true;
                 const ImGuiWindowFlags PopupFlags =
                     ImGuiWindowFlags_NoTitleBar      |
                     ImGuiWindowFlags_NoResize        |
@@ -140,9 +140,9 @@ void Console::Tick()
                     ImGuiWindowFlags_NoSavedSettings |
                     ImGuiWindowFlags_NoFocusOnAppearing;
 
-                constexpr UInt8 MaxCandidates = 5;
+                constexpr uint8 MaxCandidates = 5;
 
-                Float SizeY = 0.0f;
+                float SizeY = 0.0f;
                 if (gConsole.Candidates.Size() < MaxCandidates)
                 {
                     SizeY = (ImGui::GetTextLineHeight() + 10.0f) * gConsole.Candidates.Size();
@@ -161,7 +161,7 @@ void Console::Tick()
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 2));
                 ImGui::PushAllowKeyboardFocus(false);
 
-                Float ColumnWidth = 0.0f;
+                float ColumnWidth = 0.0f;
                 for (const Candidate& Candidate : gConsole.Candidates)
                 {
                     if (Candidate.TextSize.x > ColumnWidth)
@@ -173,7 +173,7 @@ void Console::Tick()
                 ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
                 ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
 
-                for (Int32 i = 0; i < (Int32)gConsole.Candidates.Size(); i++)
+                for (int32 i = 0; i < (int32)gConsole.Candidates.Size(); i++)
                 {
                     const Candidate& Candidate = gConsole.Candidates[i];
                     IsActiveIndex = (gConsole.CandidatesIndex == i);
@@ -234,7 +234,7 @@ void Console::RegisterCommand(const std::string& CmdName, ConsoleCommand Command
     ConsoleCommand CurrCmd = FindCommand(CmdName);
     if (!CurrCmd)
     {
-        const UInt32 Index = Commands.Size();
+        const uint32 Index = Commands.Size();
         Commands.EmplaceBack(Command);
         CmdIndexMap[CmdName] = Index;
     }
@@ -249,7 +249,7 @@ void Console::RegisterVariable(const std::string& VarName, ConsoleVariable* Vari
     ConsoleVariable* Var = FindVariable(VarName);
     if (!Var)
     {
-        const UInt32 Index = Variables.Size();
+        const uint32 Index = Variables.Size();
         Variables.EmplaceBack(Variable);
         VarIndexMap[VarName] = Index;
     }
@@ -304,11 +304,11 @@ void Console::ClearHistory()
     HistoryIndex = -1;
 }
 
-Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
+int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 {
     if (UpdateCursorPosition)
     {
-        Data->CursorPos = Int32(PopupSelectedText.length());
+        Data->CursorPos = int32(PopupSelectedText.length());
         PopupSelectedText.clear();
         UpdateCursorPosition = false;
     }
@@ -317,11 +317,11 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
     {
         case ImGuiInputTextFlags_CallbackEdit:
         {
-            const Char* WordEnd   = Data->Buf + Data->CursorPos;
-            const Char* WordStart = WordEnd;
+            const char* WordEnd   = Data->Buf + Data->CursorPos;
+            const char* WordStart = WordEnd;
             while (WordStart > Data->Buf)
             {
-                const Char c = WordStart[-1];
+                const char c = WordStart[-1];
                 if (c == ' ' || c == '\t' || c == ',' || c == ';')
                 {
                     break;
@@ -334,22 +334,22 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
             CandidatesIndex           = -1;
             CandidateSelectionChanged = true;
 
-            const Int32 WordLength = static_cast<Int32>(WordEnd - WordStart);
+            const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
             if (WordLength <= 0)
             {
                 break;
             }
 
-            for (const std::pair<std::string, Int32>& Index : CmdIndexMap)
+            for (const std::pair<std::string, int32>& Index : CmdIndexMap)
             {
                 if (WordLength <= Index.first.size())
                 {
-                    const Char* Command = Index.first.c_str();
-                    Int32 d = -1;
-                    Int32 n = WordLength;
+                    const char* Command = Index.first.c_str();
+                    int32 d = -1;
+                    int32 n = WordLength;
                 
-                    const Char* CmdIt  = Command;
-                    const Char* WordIt = WordStart;
+                    const char* CmdIt  = Command;
+                    const char* WordIt = WordStart;
                     while (n > 0 && (d = toupper(*WordIt) - toupper(*CmdIt)) == 0)
                     {
                         CmdIt++;
@@ -364,16 +364,16 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
                 }
             }
 
-            for (const std::pair<std::string, Int32>& Index : VarIndexMap)
+            for (const std::pair<std::string, int32>& Index : VarIndexMap)
             {
                 if (WordLength <= Index.first.size())
                 {
-                    const Char* Var = Index.first.c_str();
-                    Int32 d = -1;
-                    Int32 n = WordLength;
+                    const char* Var = Index.first.c_str();
+                    int32 d = -1;
+                    int32 n = WordLength;
 
-                    const Char* VarIt  = Var;
-                    const Char* WordIt = WordStart;
+                    const char* VarIt  = Var;
+                    const char* WordIt = WordStart;
                     while (n > 0 && (d = toupper(*WordIt) - toupper(*VarIt)) == 0)
                     {
                         VarIt++;
@@ -394,7 +394,7 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
                         }
                         else if (Variable->IsFloat())
                         {
-                            Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable->GetFloat()) + " [Float]");
+                            Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable->GetFloat()) + " [float]");
                         }
                         else if (Variable->IsString())
                         {
@@ -408,13 +408,13 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
         }
         case ImGuiInputTextFlags_CallbackCompletion:
         {
-            const Char* WordEnd   = Data->Buf + Data->CursorPos;
-            const Char* WordStart = WordEnd;
+            const char* WordEnd   = Data->Buf + Data->CursorPos;
+            const char* WordStart = WordEnd;
             if (Data->BufTextLen > 0)
             {
                 while (WordStart > Data->Buf)
                 {
-                    const Char c = WordStart[-1];
+                    const char c = WordStart[-1];
                     if (c == ' ' || c == '\t' || c == ',' || c == ';')
                     {
                         break;
@@ -424,13 +424,13 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
                 }
             }
 
-            const Int32 WordLength = static_cast<Int32>(WordEnd - WordStart);
+            const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
             if (WordLength > 0)
             {
                 if (Candidates.Size() == 1)
                 {
-                    const Int32 Pos   = static_cast<Int32>(WordStart - Data->Buf);
-                    const Int32 Count = WordLength;
+                    const int32 Pos   = static_cast<int32>(WordStart - Data->Buf);
+                    const int32 Count = WordLength;
                     Data->DeleteChars(Pos, Count);
                     Data->InsertChars(Data->CursorPos, Candidates[0].Text.c_str());
 
@@ -440,8 +440,8 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
                 }
                 else if (!Candidates.IsEmpty() && CandidatesIndex != -1)
                 {
-                    const Int32 Pos        = static_cast<Int32>(WordStart - Data->Buf);
-                    const Int32 Count    = WordLength;
+                    const int32 Pos        = static_cast<int32>(WordStart - Data->Buf);
+                    const int32 Count    = WordLength;
                     Data->DeleteChars(Pos, Count);
                     Data->InsertChars(Data->CursorPos, PopupSelectedText.c_str());
 
@@ -458,7 +458,7 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
         {
             if (Candidates.IsEmpty())
             {
-                const Int32 PrevHistoryIndex = HistoryIndex;
+                const int32 PrevHistoryIndex = HistoryIndex;
                 if (Data->EventKey == ImGuiKey_UpArrow)
                 {
                     if (HistoryIndex == -1)
@@ -475,7 +475,7 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
                     if (HistoryIndex != -1)
                     {
                         HistoryIndex++;
-                        if (HistoryIndex >= static_cast<Int32>(History.Size()))
+                        if (HistoryIndex >= static_cast<int32>(History.Size()))
                         {
                             HistoryIndex = -1;
                         }
@@ -484,7 +484,7 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 
                 if (PrevHistoryIndex != HistoryIndex)
                 {
-                    const Char* HistoryStr = (HistoryIndex >= 0) ? History[HistoryIndex].c_str() : "";
+                    const char* HistoryStr = (HistoryIndex >= 0) ? History[HistoryIndex].c_str() : "";
                     Data->DeleteChars(0, Data->BufTextLen);
                     Data->InsertChars(0, HistoryStr);
                 }
@@ -506,7 +506,7 @@ Int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
                 else if (Data->EventKey == ImGuiKey_DownArrow)
                 {
                     CandidateSelectionChanged = true;
-                    if (CandidatesIndex >= Int32(Candidates.Size()) - 1)
+                    if (CandidatesIndex >= int32(Candidates.Size()) - 1)
                     {
                         CandidatesIndex = 0;
                     }
@@ -567,36 +567,36 @@ void Console::HandleCommand(const std::string& CmdString)
         std::string Value(CmdString.c_str() + Pos, CmdString.length() - Pos);
         if (std::regex_match(Value, std::regex("-[0-9]+")) && Var->CanBeInteger())
         {
-            const Int32 IntValue = std::stoi(Value);
+            const int32 IntValue = std::stoi(Value);
             Var->SetAndConvertInt(IntValue);
         }
         else if (std::regex_match(Value, std::regex("[0-9]+")) && Var->CanBeInteger())
         {
-            const Int32 IntValue = std::stoi(Value);
+            const int32 IntValue = std::stoi(Value);
             Var->SetAndConvertInt(IntValue);
         }
         else if (std::regex_match(Value, std::regex("(-[0-9]*\\.[0-9]+)|(-[0-9]+\\.[0-9]*)")) && Var->IsFloat())
         {
-            const Float FloatValue = std::stof(Value);
+            const float FloatValue = std::stof(Value);
             Var->SetFloat(FloatValue);
         }
         else if (std::regex_match(Value, std::regex("([0-9]*\\.[0-9]+)|([0-9]+\\.[0-9]*)")) && Var->IsFloat())
         {
-            const Float FloatValue = std::stof(Value);
+            const float FloatValue = std::stof(Value);
             Var->SetFloat(FloatValue);
         }
         else 
         {
             if (Var->IsBool())
             {
-                for (Char& c : Value)
+                for (char& c : Value)
                 {
-                    c = (Char)tolower(c);
+                    c = (char)tolower(c);
                 }
 
                 if (std::regex_match(Value, std::regex("(false)|(true)")))
                 {
-                    const Bool BoolValue = (Value == "false" ? false : true);
+                    const bool BoolValue = (Value == "false" ? false : true);
                     Var->SetBool(BoolValue);
                     return;
                 }

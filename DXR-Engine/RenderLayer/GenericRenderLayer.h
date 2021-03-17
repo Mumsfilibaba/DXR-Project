@@ -11,13 +11,13 @@ struct ClearValue;
 class RayTracingGeometry;
 class RayTracingScene;
 
-enum class ERenderLayerApi : UInt32
+enum class ERenderLayerApi : uint32
 {
     Unknown = 0,
     D3D12   = 1,
 };
 
-inline const Char* ToString(ERenderLayerApi RenderLayerApi)
+inline const char* ToString(ERenderLayerApi RenderLayerApi)
 {
     switch (RenderLayerApi)
     {
@@ -36,7 +36,7 @@ enum class EShadingRateTier
 struct ShadingRateSupport
 {
     EShadingRateTier Tier = EShadingRateTier::NotSupported;
-    UInt32           ShadingRateImageTileSize = 0;
+    uint32           ShadingRateImageTileSize = 0;
 };
 
 enum class ERayTracingTier
@@ -49,7 +49,7 @@ enum class ERayTracingTier
 struct RayTracingSupport
 {
     ERayTracingTier Tier;
-    UInt32          MaxRecursionDepth;
+    uint32          MaxRecursionDepth;
 };
 
 class GenericRenderLayer
@@ -62,90 +62,90 @@ public:
 
     virtual ~GenericRenderLayer() = default;
 
-    virtual Bool Init(Bool EnableDebug) = 0;
+    virtual bool Init(bool EnableDebug) = 0;
 
     virtual Texture2D* CreateTexture2D(
         EFormat Format,
-        UInt32 Width,
-        UInt32 Height,
-        UInt32 NumMips,
-        UInt32 NumSamples,
-        UInt32 Flags,
+        uint32 Width,
+        uint32 Height,
+        uint32 NumMips,
+        uint32 NumSamples,
+        uint32 Flags,
         EResourceState InitialState,
         const ResourceData* InitalData,
         const ClearValue& OptimizedClearValue) = 0;
 
     virtual Texture2DArray* CreateTexture2DArray(
         EFormat Format,
-        UInt32 Width,
-        UInt32 Height,
-        UInt32 NumMips,
-        UInt32 NumSamples,
-        UInt32 NumArraySlices,
-        UInt32 Flags,
+        uint32 Width,
+        uint32 Height,
+        uint32 NumMips,
+        uint32 NumSamples,
+        uint32 NumArraySlices,
+        uint32 Flags,
         EResourceState InitialState,
         const ResourceData* InitalData,
         const ClearValue& OptimizedClearValue) = 0;
 
     virtual TextureCube* CreateTextureCube(
         EFormat Format,
-        UInt32 Size,
-        UInt32 NumMips,
-        UInt32 Flags,
+        uint32 Size,
+        uint32 NumMips,
+        uint32 Flags,
         EResourceState InitialState,
         const ResourceData* InitalData,
         const ClearValue& OptimizedClearValue) = 0;
 
     virtual TextureCubeArray* CreateTextureCubeArray(
         EFormat Format,
-        UInt32 Size,
-        UInt32 NumMips,
-        UInt32 NumArraySlices,
-        UInt32 Flags,
+        uint32 Size,
+        uint32 NumMips,
+        uint32 NumArraySlices,
+        uint32 Flags,
         EResourceState InitialState,
         const ResourceData* InitalData,
         const ClearValue& OptimizedClearValue) = 0;
 
     virtual Texture3D* CreateTexture3D(
         EFormat Format,
-        UInt32 Width,
-        UInt32 Height,
-        UInt32 Depth,
-        UInt32 NumMips,
-        UInt32 Flags,
+        uint32 Width,
+        uint32 Height,
+        uint32 Depth,
+        uint32 NumMips,
+        uint32 Flags,
         EResourceState InitialState,
         const ResourceData* InitalData,
         const ClearValue& OptimizedClearValue) = 0;
 
     virtual class SamplerState* CreateSamplerState(const struct SamplerStateCreateInfo& CreateInfo) = 0;
 
-    virtual VertexBuffer* CreateVertexBuffer(UInt32 Stride, UInt32 NumVertices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
-    virtual IndexBuffer* CreateIndexBuffer(EIndexFormat Format, UInt32 NumIndices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
-    virtual ConstantBuffer* CreateConstantBuffer(UInt32 Size, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
-    virtual StructuredBuffer* CreateStructuredBuffer(UInt32 Stride, UInt32 NumElements, UInt32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
+    virtual VertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
+    virtual IndexBuffer* CreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, uint32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
+    virtual ConstantBuffer* CreateConstantBuffer(uint32 Size, uint32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
+    virtual StructuredBuffer* CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, EResourceState InitialState, const ResourceData* InitalData) = 0;
 
-    virtual RayTracingScene* CreateRayTracingScene(UInt32 Flags, RayTracingGeometryInstance* Instances, UInt32 NumInstances) = 0;
-    virtual RayTracingGeometry* CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer) = 0;
+    virtual RayTracingScene* CreateRayTracingScene(uint32 Flags, RayTracingGeometryInstance* Instances, uint32 NumInstances) = 0;
+    virtual RayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer) = 0;
 
     virtual ShaderResourceView* CreateShaderResourceView(const ShaderResourceViewCreateInfo& CreateInfo) = 0;
     virtual UnorderedAccessView* CreateUnorderedAccessView(const UnorderedAccessViewCreateInfo& CreateInfo) = 0;
     virtual RenderTargetView* CreateRenderTargetView(const RenderTargetViewCreateInfo& CreateInfo) = 0;
     virtual DepthStencilView* CreateDepthStencilView(const DepthStencilViewCreateInfo& CreateInfo) = 0;
 
-    virtual class ComputeShader* CreateComputeShader(const TArray<UInt8>& ShaderCode) = 0;
+    virtual class ComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) = 0;
 
-    virtual class VertexShader* CreateVertexShader(const TArray<UInt8>& ShaderCode) = 0;
-    virtual class HullShader* CreateHullShader(const TArray<UInt8>& ShaderCode) = 0;
-    virtual class DomainShader* CreateDomainShader(const TArray<UInt8>& ShaderCode) = 0;
-    virtual class GeometryShader* CreateGeometryShader(const TArray<UInt8>& ShaderCode) = 0;
-    virtual class MeshShader* CreateMeshShader(const TArray<UInt8>& ShaderCode) = 0;
-    virtual class AmplificationShader* CreateAmplificationShader(const TArray<UInt8>& ShaderCode) = 0;
-    virtual class PixelShader* CreatePixelShader(const TArray<UInt8>& ShaderCode) = 0;
+    virtual class VertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class HullShader* CreateHullShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class DomainShader* CreateDomainShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class GeometryShader* CreateGeometryShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class MeshShader* CreateMeshShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class AmplificationShader* CreateAmplificationShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class PixelShader* CreatePixelShader(const TArray<uint8>& ShaderCode) = 0;
     
-    virtual class RayGenShader* CreateRayGenShader(const TArray<UInt8>& ShaderCode) = 0;
-    virtual class RayAnyHitShader* CreateRayAnyHitShader(const TArray<UInt8>& ShaderCode) = 0;
-    virtual class RayClosestHitShader* CreateRayClosestHitShader(const TArray<UInt8>& ShaderCode) = 0;
-    virtual class RayMissShader* CreateRayMissShader(const TArray<UInt8>& ShaderCode) = 0;
+    virtual class RayGenShader* CreateRayGenShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class RayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class RayClosestHitShader* CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class RayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode) = 0;
 
     virtual class DepthStencilState* CreateDepthStencilState(const DepthStencilStateCreateInfo& CreateInfo) = 0;
 
@@ -161,7 +161,7 @@ public:
 
     virtual class GPUProfiler* CreateProfiler() = 0;
 
-    virtual class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
+    virtual class Viewport* CreateViewport(GenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
 
     virtual class ICommandContext* GetDefaultCommandContext() = 0;
 
@@ -170,7 +170,7 @@ public:
     virtual void CheckRayTracingSupport(RayTracingSupport& OutSupport)   = 0;
     virtual void CheckShadingRateSupport(ShadingRateSupport& OutSupport) = 0;
 
-    virtual Bool UAVSupportsFormat(EFormat Format)
+    virtual bool UAVSupportsFormat(EFormat Format)
     {
         UNREFERENCED_VARIABLE(Format);
         return false;
@@ -184,11 +184,11 @@ private:
 
 FORCEINLINE Texture2D* CreateTexture2D(
     EFormat Format,
-    UInt32 Width,
-    UInt32 Height,
-    UInt32 NumMips,
-    UInt32 NumSamples,
-    UInt32 Flags,
+    uint32 Width,
+    uint32 Height,
+    uint32 NumMips,
+    uint32 NumSamples,
+    uint32 Flags,
     EResourceState InitialState,
     const ResourceData* InitialData,
     const ClearValue& OptimizedClearValue = ClearValue())
@@ -198,12 +198,12 @@ FORCEINLINE Texture2D* CreateTexture2D(
 
 FORCEINLINE Texture2DArray* CreateTexture2DArray(
     EFormat Format,
-    UInt32 Width,
-    UInt32 Height,
-    UInt32 NumMips,
-    UInt32 NumSamples,
-    UInt32 NumArraySlices,
-    UInt32 Flags,
+    uint32 Width,
+    uint32 Height,
+    uint32 NumMips,
+    uint32 NumSamples,
+    uint32 NumArraySlices,
+    uint32 Flags,
     EResourceState InitialState,
     const ResourceData* InitialData,
     const ClearValue& OptimizedClearValue = ClearValue())
@@ -213,9 +213,9 @@ FORCEINLINE Texture2DArray* CreateTexture2DArray(
 
 FORCEINLINE TextureCube* CreateTextureCube(
     EFormat Format,
-    UInt32 Size,
-    UInt32 NumMips,
-    UInt32 Flags,
+    uint32 Size,
+    uint32 NumMips,
+    uint32 Flags,
     EResourceState InitialState,
     const ResourceData* InitialData,
     const ClearValue& OptimizedClearValue = ClearValue())
@@ -225,10 +225,10 @@ FORCEINLINE TextureCube* CreateTextureCube(
 
 FORCEINLINE TextureCubeArray* CreateTextureCubeArray(
     EFormat Format,
-    UInt32 Size,
-    UInt32 NumMips,
-    UInt32 NumArraySlices,
-    UInt32 Flags,
+    uint32 Size,
+    uint32 NumMips,
+    uint32 NumArraySlices,
+    uint32 Flags,
     EResourceState InitialState,
     const ResourceData* InitialData,
     const ClearValue& OptimizedClearValue = ClearValue())
@@ -238,11 +238,11 @@ FORCEINLINE TextureCubeArray* CreateTextureCubeArray(
 
 FORCEINLINE Texture3D* CreateTexture3D(
     EFormat Format,
-    UInt32 Width,
-    UInt32 Height,
-    UInt32 Depth,
-    UInt32 NumMips,
-    UInt32 Flags,
+    uint32 Width,
+    uint32 Height,
+    uint32 Depth,
+    uint32 NumMips,
+    uint32 Flags,
     EResourceState InitialState,
     const ResourceData* InitialData,
     const ClearValue& OptimizedClearValue = ClearValue())
@@ -256,9 +256,9 @@ FORCEINLINE class SamplerState* CreateSamplerState(const struct SamplerStateCrea
 }
 
 FORCEINLINE VertexBuffer* CreateVertexBuffer(
-    UInt32 Stride,
-    UInt32 NumVertices,
-    UInt32 Flags,
+    uint32 Stride,
+    uint32 NumVertices,
+    uint32 Flags,
     EResourceState InitialState,
     const ResourceData* InitialData)
 {
@@ -266,50 +266,50 @@ FORCEINLINE VertexBuffer* CreateVertexBuffer(
 }
 
 template<typename T>
-FORCEINLINE VertexBuffer* CreateVertexBuffer(UInt32 NumVertices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+FORCEINLINE VertexBuffer* CreateVertexBuffer(uint32 NumVertices, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
-    constexpr UInt32 STRIDE = sizeof(T);
+    constexpr uint32 STRIDE = sizeof(T);
     return CreateVertexBuffer(STRIDE, NumVertices, Flags, InitialState, InitialData);
 }
 
 FORCEINLINE IndexBuffer* CreateIndexBuffer(
     EIndexFormat Format,
-    UInt32 NumIndices,
-    UInt32 Flags,
+    uint32 NumIndices,
+    uint32 Flags,
     EResourceState InitialState,
     const ResourceData* InitialData)
 {
     return gRenderLayer->CreateIndexBuffer(Format, NumIndices, Flags, InitialState, InitialData);
 }
 
-FORCEINLINE ConstantBuffer* CreateConstantBuffer(UInt32 Size, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+FORCEINLINE ConstantBuffer* CreateConstantBuffer(uint32 Size, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
     return gRenderLayer->CreateConstantBuffer(Size, Flags, InitialState, InitialData);
 }
 
 template<typename T>
-FORCEINLINE ConstantBuffer* CreateConstantBuffer(UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+FORCEINLINE ConstantBuffer* CreateConstantBuffer(uint32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
-    constexpr UInt32 SIZE_IN_BYTES = sizeof(T);
+    constexpr uint32 SIZE_IN_BYTES = sizeof(T);
     return CreateConstantBuffer(SIZE_IN_BYTES, Flags, InitialState, InitialData);
 }
 
 FORCEINLINE StructuredBuffer* CreateStructuredBuffer(
-    UInt32 Stride,
-    UInt32 NumElements,
-    UInt32 Flags,
+    uint32 Stride,
+    uint32 NumElements,
+    uint32 Flags,
     EResourceState InitialState,
     const ResourceData* InitialData)
 {
     return gRenderLayer->CreateStructuredBuffer(Stride, NumElements, Flags, InitialState, InitialData);
 }
 
-FORCEINLINE RayTracingScene* CreateRayTracingScene(UInt32 Flags, RayTracingGeometryInstance* Instances, UInt32 NumInstances)
+FORCEINLINE RayTracingScene* CreateRayTracingScene(uint32 Flags, RayTracingGeometryInstance* Instances, uint32 NumInstances)
 {
     return gRenderLayer->CreateRayTracingScene(Flags, Instances, NumInstances);
 }
 
-FORCEINLINE RayTracingGeometry* CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer)
+FORCEINLINE RayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer)
 {
     return gRenderLayer->CreateRayTracingGeometry(Flags, VertexBuffer, IndexBuffer);
 }
@@ -319,7 +319,7 @@ FORCEINLINE ShaderResourceView* CreateShaderResourceView(const ShaderResourceVie
     return gRenderLayer->CreateShaderResourceView(CreateInfo);
 }
 
-FORCEINLINE ShaderResourceView* CreateShaderResourceView(Texture2D* Texture, EFormat Format, UInt32 Mip, UInt32 NumMips, Float MinMipBias)
+FORCEINLINE ShaderResourceView* CreateShaderResourceView(Texture2D* Texture, EFormat Format, uint32 Mip, uint32 NumMips, float MinMipBias)
 {
     ShaderResourceViewCreateInfo CreateInfo(ShaderResourceViewCreateInfo::EType::Texture2D);
     CreateInfo.Texture2D.Texture    = Texture;
@@ -333,11 +333,11 @@ FORCEINLINE ShaderResourceView* CreateShaderResourceView(Texture2D* Texture, EFo
 FORCEINLINE ShaderResourceView* CreateShaderResourceView(
     Texture2DArray* Texture,
     EFormat Format,
-    UInt32 Mip,
-    UInt32 NumMips,
-    UInt32 ArraySlice,
-    UInt32 NumArraySlices,
-    Float MinMipBias)
+    uint32 Mip,
+    uint32 NumMips,
+    uint32 ArraySlice,
+    uint32 NumArraySlices,
+    float MinMipBias)
 {
     ShaderResourceViewCreateInfo CreateInfo(ShaderResourceViewCreateInfo::EType::Texture2DArray);
     CreateInfo.Texture2DArray.Texture        = Texture;
@@ -350,7 +350,7 @@ FORCEINLINE ShaderResourceView* CreateShaderResourceView(
     return CreateShaderResourceView(CreateInfo);
 }
 
-FORCEINLINE ShaderResourceView* CreateShaderResourceView(TextureCube* Texture, EFormat Format, UInt32 Mip, UInt32 NumMips, Float MinMipBias)
+FORCEINLINE ShaderResourceView* CreateShaderResourceView(TextureCube* Texture, EFormat Format, uint32 Mip, uint32 NumMips, float MinMipBias)
 {
     ShaderResourceViewCreateInfo CreateInfo(ShaderResourceViewCreateInfo::EType::TextureCube);
     CreateInfo.TextureCube.Texture    = Texture;
@@ -364,11 +364,11 @@ FORCEINLINE ShaderResourceView* CreateShaderResourceView(TextureCube* Texture, E
 FORCEINLINE ShaderResourceView* CreateShaderResourceView(
     TextureCubeArray* Texture,
     EFormat Format,
-    UInt32 Mip,
-    UInt32 NumMips,
-    UInt32 ArraySlice,
-    UInt32 NumArraySlices,
-    Float MinMipBias)
+    uint32 Mip,
+    uint32 NumMips,
+    uint32 ArraySlice,
+    uint32 NumArraySlices,
+    float MinMipBias)
 {
     ShaderResourceViewCreateInfo CreateInfo(ShaderResourceViewCreateInfo::EType::TextureCubeArray);
     CreateInfo.TextureCubeArray.Texture        = Texture;
@@ -384,11 +384,11 @@ FORCEINLINE ShaderResourceView* CreateShaderResourceView(
 FORCEINLINE ShaderResourceView* CreateShaderResourceView(
     Texture3D* Texture,
     EFormat Format,
-    UInt32 Mip,
-    UInt32 NumMips,
-    UInt32 DepthSlice,
-    UInt32 NumDepthSlices,
-    Float MinMipBias)
+    uint32 Mip,
+    uint32 NumMips,
+    uint32 DepthSlice,
+    uint32 NumDepthSlices,
+    float MinMipBias)
 {
     ShaderResourceViewCreateInfo CreateInfo(ShaderResourceViewCreateInfo::EType::Texture3D);
     CreateInfo.Texture3D.Texture        = Texture;
@@ -401,7 +401,7 @@ FORCEINLINE ShaderResourceView* CreateShaderResourceView(
     return CreateShaderResourceView(CreateInfo);
 }
 
-FORCEINLINE ShaderResourceView* CreateShaderResourceView(VertexBuffer* Buffer, UInt32 FirstVertex, UInt32 NumVertices)
+FORCEINLINE ShaderResourceView* CreateShaderResourceView(VertexBuffer* Buffer, uint32 FirstVertex, uint32 NumVertices)
 {
     ShaderResourceViewCreateInfo CreateInfo(ShaderResourceViewCreateInfo::EType::VertexBuffer);
     CreateInfo.VertexBuffer.Buffer      = Buffer;
@@ -410,7 +410,7 @@ FORCEINLINE ShaderResourceView* CreateShaderResourceView(VertexBuffer* Buffer, U
     return CreateShaderResourceView(CreateInfo);
 }
 
-FORCEINLINE ShaderResourceView* CreateShaderResourceView(IndexBuffer* Buffer, UInt32 FirstIndex, UInt32 NumIndices)
+FORCEINLINE ShaderResourceView* CreateShaderResourceView(IndexBuffer* Buffer, uint32 FirstIndex, uint32 NumIndices)
 {
     ShaderResourceViewCreateInfo CreateInfo(ShaderResourceViewCreateInfo::EType::IndexBuffer);
     CreateInfo.IndexBuffer.Buffer     = Buffer;
@@ -419,7 +419,7 @@ FORCEINLINE ShaderResourceView* CreateShaderResourceView(IndexBuffer* Buffer, UI
     return CreateShaderResourceView(CreateInfo);
 }
 
-FORCEINLINE ShaderResourceView* CreateShaderResourceView(StructuredBuffer* Buffer, UInt32 FirstElement, UInt32 NumElements)
+FORCEINLINE ShaderResourceView* CreateShaderResourceView(StructuredBuffer* Buffer, uint32 FirstElement, uint32 NumElements)
 {
     ShaderResourceViewCreateInfo CreateInfo(ShaderResourceViewCreateInfo::EType::StructuredBuffer);
     CreateInfo.StructuredBuffer.Buffer       = Buffer;
@@ -433,7 +433,7 @@ FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(const UnorderedAccess
     return gRenderLayer->CreateUnorderedAccessView(CreateInfo);
 }
 
-FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(Texture2D* Texture, EFormat Format, UInt32 Mip)
+FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(Texture2D* Texture, EFormat Format, uint32 Mip)
 {
     UnorderedAccessViewCreateInfo CreateInfo(UnorderedAccessViewCreateInfo::EType::Texture2D);
     CreateInfo.Texture2D.Texture = Texture;
@@ -442,7 +442,7 @@ FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(Texture2D* Texture, E
     return CreateUnorderedAccessView(CreateInfo);
 }
 
-FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(Texture2DArray* Texture, EFormat Format, UInt32 Mip, UInt32 ArraySlice, UInt32 NumArraySlices)
+FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(Texture2DArray* Texture, EFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
 {
     UnorderedAccessViewCreateInfo CreateInfo(UnorderedAccessViewCreateInfo::EType::Texture2DArray);
     CreateInfo.Texture2DArray.Texture        = Texture;
@@ -453,7 +453,7 @@ FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(Texture2DArray* Textu
     return CreateUnorderedAccessView(CreateInfo);
 }
 
-FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(TextureCube* Texture, EFormat Format, UInt32 Mip)
+FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(TextureCube* Texture, EFormat Format, uint32 Mip)
 {
     UnorderedAccessViewCreateInfo CreateInfo(UnorderedAccessViewCreateInfo::EType::TextureCube);
     CreateInfo.TextureCube.Texture = Texture;
@@ -462,7 +462,7 @@ FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(TextureCube* Texture,
     return CreateUnorderedAccessView(CreateInfo);
 }
 
-FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(TextureCubeArray* Texture, EFormat Format, UInt32 Mip, UInt32 ArraySlice, UInt32 NumArraySlices)
+FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(TextureCubeArray* Texture, EFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
 {
     UnorderedAccessViewCreateInfo CreateInfo(UnorderedAccessViewCreateInfo::EType::TextureCubeArray);
     CreateInfo.TextureCubeArray.Texture        = Texture;
@@ -473,7 +473,7 @@ FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(TextureCubeArray* Tex
     return CreateUnorderedAccessView(CreateInfo);
 }
 
-FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(Texture3D* Texture, EFormat Format, UInt32 Mip, UInt32 DepthSlice, UInt32 NumDepthSlices)
+FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(Texture3D* Texture, EFormat Format, uint32 Mip, uint32 DepthSlice, uint32 NumDepthSlices)
 {
     UnorderedAccessViewCreateInfo CreateInfo(UnorderedAccessViewCreateInfo::EType::Texture3D);
     CreateInfo.Texture3D.Texture        = Texture;
@@ -484,7 +484,7 @@ FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(Texture3D* Texture, E
     return CreateUnorderedAccessView(CreateInfo);
 }
 
-FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(VertexBuffer* Buffer, UInt32 FirstVertex, UInt32 NumVertices)
+FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(VertexBuffer* Buffer, uint32 FirstVertex, uint32 NumVertices)
 {
     UnorderedAccessViewCreateInfo CreateInfo(UnorderedAccessViewCreateInfo::EType::VertexBuffer);
     CreateInfo.VertexBuffer.Buffer      = Buffer;
@@ -493,7 +493,7 @@ FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(VertexBuffer* Buffer,
     return CreateUnorderedAccessView(CreateInfo);
 }
 
-FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(IndexBuffer* Buffer, UInt32 FirstIndex, UInt32 NumIndices)
+FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(IndexBuffer* Buffer, uint32 FirstIndex, uint32 NumIndices)
 {
     UnorderedAccessViewCreateInfo CreateInfo(UnorderedAccessViewCreateInfo::EType::IndexBuffer);
     CreateInfo.IndexBuffer.Buffer     = Buffer;
@@ -502,7 +502,7 @@ FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(IndexBuffer* Buffer, 
     return CreateUnorderedAccessView(CreateInfo);
 }
 
-FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(StructuredBuffer* Buffer, UInt32 FirstElement, UInt32 NumElements)
+FORCEINLINE UnorderedAccessView* CreateUnorderedAccessView(StructuredBuffer* Buffer, uint32 FirstElement, uint32 NumElements)
 {
     UnorderedAccessViewCreateInfo CreateInfo(UnorderedAccessViewCreateInfo::EType::StructuredBuffer);
     CreateInfo.StructuredBuffer.Buffer       = Buffer;
@@ -516,7 +516,7 @@ FORCEINLINE RenderTargetView* CreateRenderTargetView(const RenderTargetViewCreat
     return gRenderLayer->CreateRenderTargetView(CreateInfo);
 }
 
-FORCEINLINE RenderTargetView* CreateRenderTargetView(Texture2D* Texture, EFormat Format, UInt32 Mip)
+FORCEINLINE RenderTargetView* CreateRenderTargetView(Texture2D* Texture, EFormat Format, uint32 Mip)
 {
     RenderTargetViewCreateInfo CreateInfo(RenderTargetViewCreateInfo::EType::Texture2D);
     CreateInfo.Format            = Format;
@@ -525,7 +525,7 @@ FORCEINLINE RenderTargetView* CreateRenderTargetView(Texture2D* Texture, EFormat
     return CreateRenderTargetView(CreateInfo);
 }
 
-FORCEINLINE RenderTargetView* CreateRenderTargetView(Texture2DArray* Texture, EFormat Format, UInt32 Mip, UInt32 ArraySlice, UInt32 NumArraySlices)
+FORCEINLINE RenderTargetView* CreateRenderTargetView(Texture2DArray* Texture, EFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
 {
     RenderTargetViewCreateInfo CreateInfo(RenderTargetViewCreateInfo::EType::Texture2DArray);
     CreateInfo.Format                        = Format;
@@ -536,7 +536,7 @@ FORCEINLINE RenderTargetView* CreateRenderTargetView(Texture2DArray* Texture, EF
     return CreateRenderTargetView(CreateInfo);
 }
 
-FORCEINLINE RenderTargetView* CreateRenderTargetView(TextureCube* Texture, EFormat Format, ECubeFace CubeFace, UInt32 Mip)
+FORCEINLINE RenderTargetView* CreateRenderTargetView(TextureCube* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip)
 {
     RenderTargetViewCreateInfo CreateInfo(RenderTargetViewCreateInfo::EType::TextureCube);
     CreateInfo.Format               = Format;
@@ -546,7 +546,7 @@ FORCEINLINE RenderTargetView* CreateRenderTargetView(TextureCube* Texture, EForm
     return CreateRenderTargetView(CreateInfo);
 }
 
-FORCEINLINE RenderTargetView* CreateRenderTargetView(TextureCubeArray* Texture, EFormat Format, ECubeFace CubeFace, UInt32 Mip, UInt32 ArraySlice)
+FORCEINLINE RenderTargetView* CreateRenderTargetView(TextureCubeArray* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
 {
     RenderTargetViewCreateInfo CreateInfo(RenderTargetViewCreateInfo::EType::TextureCubeArray);
     CreateInfo.Format                      = Format;
@@ -557,7 +557,7 @@ FORCEINLINE RenderTargetView* CreateRenderTargetView(TextureCubeArray* Texture, 
     return CreateRenderTargetView(CreateInfo);
 }
 
-FORCEINLINE RenderTargetView* CreateRenderTargetView(Texture3D* Texture, EFormat Format, UInt32 Mip, UInt32 DepthSlice, UInt32 NumDepthSlices)
+FORCEINLINE RenderTargetView* CreateRenderTargetView(Texture3D* Texture, EFormat Format, uint32 Mip, uint32 DepthSlice, uint32 NumDepthSlices)
 {
     RenderTargetViewCreateInfo CreateInfo(RenderTargetViewCreateInfo::EType::Texture3D);
     CreateInfo.Format                   = Format;
@@ -573,7 +573,7 @@ FORCEINLINE DepthStencilView* CreateDepthStencilView(const DepthStencilViewCreat
     return gRenderLayer->CreateDepthStencilView(CreateInfo);
 }
 
-FORCEINLINE DepthStencilView* CreateDepthStencilView(Texture2D* Texture, EFormat Format, UInt32 Mip)
+FORCEINLINE DepthStencilView* CreateDepthStencilView(Texture2D* Texture, EFormat Format, uint32 Mip)
 {
     DepthStencilViewCreateInfo CreateInfo(DepthStencilViewCreateInfo::EType::Texture2D);
     CreateInfo.Format            = Format;
@@ -582,7 +582,7 @@ FORCEINLINE DepthStencilView* CreateDepthStencilView(Texture2D* Texture, EFormat
     return CreateDepthStencilView(CreateInfo);
 }
 
-FORCEINLINE DepthStencilView* CreateDepthStencilView(Texture2DArray* Texture, EFormat Format, UInt32 Mip, UInt32 ArraySlice, UInt32 NumArraySlices)
+FORCEINLINE DepthStencilView* CreateDepthStencilView(Texture2DArray* Texture, EFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
 {
     DepthStencilViewCreateInfo CreateInfo(DepthStencilViewCreateInfo::EType::Texture2DArray);
     CreateInfo.Format                        = Format;
@@ -593,7 +593,7 @@ FORCEINLINE DepthStencilView* CreateDepthStencilView(Texture2DArray* Texture, EF
     return CreateDepthStencilView(CreateInfo);
 }
 
-FORCEINLINE DepthStencilView* CreateDepthStencilView(TextureCube* Texture, EFormat Format, ECubeFace CubeFace, UInt32 Mip)
+FORCEINLINE DepthStencilView* CreateDepthStencilView(TextureCube* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip)
 {
     DepthStencilViewCreateInfo CreateInfo(DepthStencilViewCreateInfo::EType::TextureCube);
     CreateInfo.Format               = Format;
@@ -603,7 +603,7 @@ FORCEINLINE DepthStencilView* CreateDepthStencilView(TextureCube* Texture, EForm
     return CreateDepthStencilView(CreateInfo);
 }
 
-FORCEINLINE DepthStencilView* CreateDepthStencilView(TextureCubeArray* Texture, EFormat Format, ECubeFace CubeFace, UInt32 Mip, UInt32 ArraySlice)
+FORCEINLINE DepthStencilView* CreateDepthStencilView(TextureCubeArray* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
 {
     DepthStencilViewCreateInfo CreateInfo(DepthStencilViewCreateInfo::EType::TextureCubeArray);
     CreateInfo.Format                      = Format;
@@ -614,62 +614,62 @@ FORCEINLINE DepthStencilView* CreateDepthStencilView(TextureCubeArray* Texture, 
     return CreateDepthStencilView(CreateInfo);
 }
 
-FORCEINLINE ComputeShader* CreateComputeShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE ComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreateComputeShader(ShaderCode);
 }
 
-FORCEINLINE VertexShader* CreateVertexShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE VertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreateVertexShader(ShaderCode);
 }
 
-FORCEINLINE HullShader* CreateHullShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE HullShader* CreateHullShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreateHullShader(ShaderCode);
 }
 
-FORCEINLINE DomainShader* CreateDomainShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE DomainShader* CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreateDomainShader(ShaderCode);
 }
 
-FORCEINLINE GeometryShader* CreateGeometryShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE GeometryShader* CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreateGeometryShader(ShaderCode);
 }
 
-FORCEINLINE MeshShader* CreateMeshShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE MeshShader* CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreateMeshShader(ShaderCode);
 }
 
-FORCEINLINE AmplificationShader* CreateAmplificationShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE AmplificationShader* CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreateAmplificationShader(ShaderCode);
 }
 
-FORCEINLINE PixelShader* CreatePixelShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE PixelShader* CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreatePixelShader(ShaderCode);
 }
 
-FORCEINLINE RayGenShader* CreateRayGenShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE RayGenShader* CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreateRayGenShader(ShaderCode);
 }
 
-FORCEINLINE RayAnyHitShader* CreateRayAnyHitShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE RayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreateRayAnyHitShader(ShaderCode);
 }
 
-FORCEINLINE RayClosestHitShader* CreateRayClosestHitShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE RayClosestHitShader* CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreateRayClosestHitShader(ShaderCode);
 }
 
-FORCEINLINE RayMissShader* CreateRayMissShader(const TArray<UInt8>& ShaderCode)
+FORCEINLINE RayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
     return gRenderLayer->CreateRayMissShader(ShaderCode);
 }
@@ -714,12 +714,12 @@ FORCEINLINE class GPUProfiler* CreateProfiler()
     return gRenderLayer->CreateProfiler();
 }
 
-FORCEINLINE class Viewport* CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat)
+FORCEINLINE class Viewport* CreateViewport(GenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
 {
     return gRenderLayer->CreateViewport(Window, Width, Height, ColorFormat, DepthFormat);
 }
 
-FORCEINLINE Bool UAVSupportsFormat(EFormat Format)
+FORCEINLINE bool UAVSupportsFormat(EFormat Format)
 {
     return gRenderLayer->UAVSupportsFormat(Format);
 }
@@ -744,7 +744,7 @@ FORCEINLINE void CheckRayTracingSupport(RayTracingSupport& OutSupport)
     gRenderLayer->CheckRayTracingSupport(OutSupport);
 }
 
-FORCEINLINE Bool IsRayTracingSupported()
+FORCEINLINE bool IsRayTracingSupported()
 {
     RayTracingSupport Support;
     CheckRayTracingSupport(Support);

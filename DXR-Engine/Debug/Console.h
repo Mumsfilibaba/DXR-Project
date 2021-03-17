@@ -9,7 +9,7 @@
 
 typedef void(*ConsoleCommand)();
 
-enum class EConsoleVariableType : UInt8
+enum class EConsoleVariableType : uint8
 {
     Unknown = 0,
     Bool    = 1,
@@ -41,25 +41,25 @@ struct ConsoleVariable
         }
     }
 
-    FORCEINLINE void SetBool(Bool Value)
+    FORCEINLINE void SetBool(bool Value)
     {
         Assert(Type == EConsoleVariableType::Bool);
         BoolValue = Value;
     }
 
-    FORCEINLINE void SetInt(Int32 Value)
+    FORCEINLINE void SetInt(int32 Value)
     {
         Assert(Type == EConsoleVariableType::Int);
         IntValue = Value;
     }
 
-    FORCEINLINE void SetFloat(Float Value)
+    FORCEINLINE void SetFloat(float Value)
     {
         Assert(Type == EConsoleVariableType::Float);
         FloatValue = Value;
     }
 
-    FORCEINLINE void SetAndConvertInt(Int32 Value)
+    FORCEINLINE void SetAndConvertInt(int32 Value)
     {
         if (Type == EConsoleVariableType::Int)
         {
@@ -67,11 +67,11 @@ struct ConsoleVariable
         }
         else if (Type == EConsoleVariableType::Bool)
         {
-            BoolValue = Bool(Value);
+            BoolValue = bool(Value);
         }
         else if (Type == EConsoleVariableType::Float)
         {
-            FloatValue = Float(Value);
+            FloatValue = float(Value);
         }
         else
         {
@@ -79,52 +79,52 @@ struct ConsoleVariable
         }
     }
 
-    FORCEINLINE void SetString(const Char* Value)
+    FORCEINLINE void SetString(const char* Value)
     {
         Assert(Type == EConsoleVariableType::String);
         
-        const Int32 Len = Int32(strlen(Value));
+        const int32 Len = int32(strlen(Value));
         if (Len < Length)
         {
             Memory::Free(StringValue);
             
-            StringValue = Memory::Malloc<Char>(Len);
+            StringValue = Memory::Malloc<char>(Len);
             Length      = Len;
         }
 
         Memory::Strcpy(StringValue, Value);
     }
 
-    FORCEINLINE Bool GetBool() const
+    FORCEINLINE bool GetBool() const
     {
         Assert(Type == EConsoleVariableType::Bool);
         return BoolValue;
     }
 
-    FORCEINLINE Int32 GetInt32() const
+    FORCEINLINE int32 GetInt32() const
     {
         Assert(Type == EConsoleVariableType::Int);
         return IntValue;
     }
 
-    FORCEINLINE Float GetFloat() const
+    FORCEINLINE float GetFloat() const
     {
         Assert(Type == EConsoleVariableType::Float);
         return FloatValue;
     }
 
-    FORCEINLINE const Char* GetString() const
+    FORCEINLINE const char* GetString() const
     {
         Assert(Type == EConsoleVariableType::String);
         return StringValue;
     }
 
-    Bool IsBool() const { return Type == EConsoleVariableType::Bool; }
-    Bool IsInt() const { return Type == EConsoleVariableType::Int; }
-    Bool IsFloat() const { return Type == EConsoleVariableType::Float; }
-    Bool IsString() const { return Type == EConsoleVariableType::String; }
+    bool IsBool() const { return Type == EConsoleVariableType::Bool; }
+    bool IsInt() const { return Type == EConsoleVariableType::Int; }
+    bool IsFloat() const { return Type == EConsoleVariableType::Float; }
+    bool IsString() const { return Type == EConsoleVariableType::String; }
 
-    Bool CanBeInteger() const
+    bool CanBeInteger() const
     {
         return IsBool() || IsInt() || IsFloat();
     }
@@ -132,13 +132,13 @@ struct ConsoleVariable
     EConsoleVariableType Type = EConsoleVariableType::Unknown;
     union
     {
-        Bool  BoolValue;
-        Int32 IntValue;
-        Float FloatValue;
+        bool  BoolValue;
+        int32 IntValue;
+        float FloatValue;
         struct
         {
-            Char* StringValue;
-            Int32 Length;
+            char* StringValue;
+            int32 Length;
         };
     };
 };
@@ -196,26 +196,26 @@ public:
     void ClearHistory();
 
 private:
-    Int32 TextCallback(ImGuiInputTextCallbackData* Data);
+    int32 TextCallback(ImGuiInputTextCallbackData* Data);
     void HandleCommand(const std::string& CmdString);
 
     std::string PopupSelectedText;
-    std::unordered_map<std::string, Int32> CmdIndexMap;
-    std::unordered_map<std::string, Int32> VarIndexMap;
+    std::unordered_map<std::string, int32> CmdIndexMap;
+    std::unordered_map<std::string, int32> VarIndexMap;
     TArray<ConsoleCommand>   Commands;
     TArray<ConsoleVariable*> Variables;
 
     TArray<Candidate>     Candidates;
-    Int32 CandidatesIndex = -1;
+    int32 CandidatesIndex = -1;
 
-    TStaticArray<Char, 256> TextBuffer;
+    TStaticArray<char, 256> TextBuffer;
     TArray<Line>        Lines;
     TArray<std::string> History;
-    UInt32 HistoryLength = 50;
-    Int32  HistoryIndex   = -1;
+    uint32 HistoryLength = 50;
+    int32  HistoryIndex   = -1;
 
-    Bool UpdateCursorPosition      = false;
-    Bool CandidateSelectionChanged = false;
-    Bool ScrollDown                = false;
-    Bool IsActive                  = false;
+    bool UpdateCursorPosition      = false;
+    bool CandidateSelectionChanged = false;
+    bool ScrollDown                = false;
+    bool IsActive                  = false;
 };

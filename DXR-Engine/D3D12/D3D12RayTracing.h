@@ -11,10 +11,10 @@ class Material;
 class D3D12RayTracingGeometry : public RayTracingGeometry, public D3D12DeviceChild
 {
 public:
-    D3D12RayTracingGeometry(D3D12Device* InDevice, UInt32 InFlags);
+    D3D12RayTracingGeometry(D3D12Device* InDevice, uint32 InFlags);
     ~D3D12RayTracingGeometry() = default;
 
-    Bool Build(class D3D12CommandContext& CmdContext, Bool Update);
+    bool Build(class D3D12CommandContext& CmdContext, bool Update);
 
     virtual void SetName(const std::string& InName) override
     {
@@ -22,7 +22,7 @@ public:
         ResultBuffer->SetName(InName);
     }
 
-    virtual Bool IsValid() const override { return ResultBuffer != nullptr; }
+    virtual bool IsValid() const override { return ResultBuffer != nullptr; }
 
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const 
     { 
@@ -38,7 +38,7 @@ public:
 
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) D3D12ShaderBindingTableEntry
 {
-    Char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
+    char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
     D3D12_GPU_DESCRIPTOR_HANDLE	RootDescriptorTables[4] = { 0, 0, 0, 0 };
 };
 
@@ -61,29 +61,29 @@ public:
     void Reset();
 
 private:
-    UInt32 CPUHandleSizes[1024];
+    uint32 CPUHandleSizes[1024];
     D3D12_CPU_DESCRIPTOR_HANDLE ResourceHandles[1024];
     D3D12_CPU_DESCRIPTOR_HANDLE SamplerHandles[1024];
     // Online resources
     D3D12_CPU_DESCRIPTOR_HANDLE GPUResourceHandles[1024];
     D3D12_CPU_DESCRIPTOR_HANDLE GPUSamplerHandles[1024];
-    UInt32 GPUResourceHandleSizes[1024];
-    UInt32 GPUSamplerHandleSizes[1024];
-    UInt32 CPUResourceIndex = 0;
-    UInt32 CPUSamplerIndex  = 0;
-    UInt32 GPUResourceIndex = 0;
-    UInt32 GPUSamplerIndex  = 0;
+    uint32 GPUResourceHandleSizes[1024];
+    uint32 GPUSamplerHandleSizes[1024];
+    uint32 CPUResourceIndex = 0;
+    uint32 CPUSamplerIndex  = 0;
+    uint32 GPUResourceIndex = 0;
+    uint32 GPUSamplerIndex  = 0;
 };
 
 class D3D12RayTracingScene : public RayTracingScene, public D3D12DeviceChild
 {
 public:
-    D3D12RayTracingScene(D3D12Device* InDevice, UInt32 InFlags);
+    D3D12RayTracingScene(D3D12Device* InDevice, uint32 InFlags);
     ~D3D12RayTracingScene() = default;
 
-    Bool Build(class D3D12CommandContext& CmdContext, const RayTracingGeometryInstance* Instances, UInt32 NumInstances, Bool Update);
+    bool Build(class D3D12CommandContext& CmdContext, const RayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update);
     
-    Bool BuildBindingTable(
+    bool BuildBindingTable(
         class D3D12CommandContext& CmdContext, 
         D3D12RayTracingPipelineState* PipelineState,
         D3D12OnlineDescriptorHeap* ResourceHeap,
@@ -91,11 +91,11 @@ public:
         const RayTracingShaderResources* RayGenLocalResources,
         const RayTracingShaderResources* MissLocalResources,
         const RayTracingShaderResources* HitGroupResources,
-        UInt32 NumHitGroupResources);
+        uint32 NumHitGroupResources);
 
     virtual void SetName(const std::string& InName) override;
 
-    virtual Bool IsValid() const override { return ResultBuffer != nullptr; }
+    virtual bool IsValid() const override { return ResultBuffer != nullptr; }
 
     virtual ShaderResourceView* GetShaderResourceView() const { return View.Get(); }
 
@@ -122,8 +122,8 @@ private:
     TRef<D3D12Resource> InstanceBuffer;
     TRef<D3D12Resource> BindingTable;
 
-    UInt32 BindingTableStride = 0;
-    UInt32 NumHitGroups       = 0;
+    uint32 BindingTableStride = 0;
+    uint32 NumHitGroups       = 0;
 
     // TODO: Maybe move these somewere else
     D3D12ShaderBindingTableBuilder ShaderBindingTableBuilder;

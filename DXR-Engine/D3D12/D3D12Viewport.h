@@ -1,5 +1,5 @@
 #pragma once
-#include <Containers/Array.h>
+#include "Core/Containers/ArrayView.h"
 
 #include "RenderLayer/Viewport.h"
 
@@ -13,14 +13,14 @@
 class D3D12Viewport : public Viewport, public D3D12DeviceChild
 {
 public:
-    D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, UInt32 InWidth, UInt32 InHeight);
+    D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight);
     ~D3D12Viewport();
 
-    Bool Init();
+    bool Init();
 
-    virtual Bool Resize(UInt32 Width, UInt32 Height) override final;
+    virtual bool Resize(uint32 Width, uint32 Height) override final;
 
-    virtual Bool Present(Bool VerticalSync) override final;
+    virtual bool Present(bool VerticalSync) override final;
 
     virtual void SetName(const std::string& Name) override final;
 
@@ -34,7 +34,7 @@ public:
         return BackBuffers[BackBufferIndex].Get();
     }
 
-    virtual Bool IsValid() const
+    virtual bool IsValid() const
     {
         return SwapChain != nullptr;
     }
@@ -45,14 +45,14 @@ public:
     }
 
 private:
-    Bool RetriveBackBuffers();
+    bool RetriveBackBuffers();
 
     TComPtr<IDXGISwapChain3> SwapChain;
     D3D12CommandContext*     CmdContext;
     HWND   Hwnd  = 0;
-    UInt32 Flags = 0;
-    UInt32 NumBackBuffers  = 0;
-    UInt32 BackBufferIndex = 0;
+    uint32 Flags = 0;
+    uint32 NumBackBuffers  = 0;
+    uint32 BackBufferIndex = 0;
 
     TArray<TRef<D3D12Texture2D>>        BackBuffers;
     TArray<TRef<D3D12RenderTargetView>> BackBufferViews;

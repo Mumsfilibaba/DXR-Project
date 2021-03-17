@@ -13,19 +13,19 @@ struct ModifierKeyState
 public:
     ModifierKeyState() = default;
 
-    ModifierKeyState(UInt32 InModifierMask)
+    ModifierKeyState(uint32 InModifierMask)
         : ModifierMask(InModifierMask)
     {
     }
 
-    Bool IsCtrlDown() const { return (ModifierMask & ModifierFlag_Ctrl); }
-    Bool IsAltDown() const { return (ModifierMask & ModifierFlag_Alt); }
-    Bool IsShiftDown() const { return (ModifierMask & ModifierFlag_Shift); }
-    Bool IsCapsLockDown() const { return (ModifierMask & ModifierFlag_CapsLock); }
-    Bool IsSuperKeyDown() const { return (ModifierMask & ModifierFlag_Super); }
-    Bool IsNumPadDown() const { return (ModifierMask & ModifierFlag_NumLock); }
+    bool IsCtrlDown() const { return (ModifierMask & ModifierFlag_Ctrl); }
+    bool IsAltDown() const { return (ModifierMask & ModifierFlag_Alt); }
+    bool IsShiftDown() const { return (ModifierMask & ModifierFlag_Shift); }
+    bool IsCapsLockDown() const { return (ModifierMask & ModifierFlag_CapsLock); }
+    bool IsSuperKeyDown() const { return (ModifierMask & ModifierFlag_Super); }
+    bool IsNumPadDown() const { return (ModifierMask & ModifierFlag_NumLock); }
 
-    UInt32 ModifierMask = 0;
+    uint32 ModifierMask = 0;
 };
 
 class GenericApplication
@@ -36,7 +36,7 @@ public:
     virtual GenericWindow* MakeWindow() = 0;
     virtual GenericCursor* MakeCursor() = 0;
 
-    virtual Bool Init() = 0;
+    virtual bool Init() = 0;
 
     /*
     * Events gets stored and is processed in this function. This is because events sometimes are sent
@@ -61,8 +61,8 @@ public:
     // Some platforms does not have the concept of mouse capture, therefor return nullptr as standard
     virtual GenericWindow* GetCapture() const { return nullptr; }
 
-    virtual void SetCursorPos(GenericWindow* RelativeWindow, Int32 x, Int32 y) = 0;
-    virtual void GetCursorPos(GenericWindow* RelativeWindow, Int32& OutX, Int32& OutY) const = 0;
+    virtual void SetCursorPos(GenericWindow* RelativeWindow, int32 x, int32 y) = 0;
+    virtual void GetCursorPos(GenericWindow* RelativeWindow, int32& OutX, int32& OutY) const = 0;
 
     void SetEventHandler(GenericApplicationEventHandler* InEventHandler)
     {
@@ -74,7 +74,7 @@ public:
         return EventHandler;
     }
 
-    static Bool PeekMessageUntilNoMessage()
+    static bool PeekMessageUntilNoMessage()
     {
         return false;
     }

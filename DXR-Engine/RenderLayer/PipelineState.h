@@ -16,7 +16,7 @@ enum class EDepthWriteMask
     All  = 1
 };
 
-inline const Char* ToString(EDepthWriteMask DepthWriteMask)
+inline const char* ToString(EDepthWriteMask DepthWriteMask)
 {
     switch (DepthWriteMask)
     {
@@ -38,7 +38,7 @@ enum class EStencilOp
     Decr    = 8
 };
 
-inline const Char* ToString(EStencilOp StencilOp)
+inline const char* ToString(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
@@ -66,10 +66,10 @@ struct DepthStencilStateCreateInfo
 {
     EDepthWriteMask DepthWriteMask   = EDepthWriteMask::All;
     EComparisonFunc DepthFunc        = EComparisonFunc::Less;
-    Bool            DepthEnable      = true;
-    UInt8           StencilReadMask  = 0xff;
-    UInt8           StencilWriteMask = 0xff;
-    Bool            StencilEnable    = false;
+    bool            DepthEnable      = true;
+    uint8           StencilReadMask  = 0xff;
+    uint8           StencilWriteMask = 0xff;
+    bool            StencilEnable    = false;
     DepthStencilOp  FrontFace        = DepthStencilOp();
     DepthStencilOp  BackFace         = DepthStencilOp();
 };
@@ -85,7 +85,7 @@ enum class ECullMode
     Back  = 3
 };
 
-inline const Char* ToString(ECullMode CullMode)
+inline const char* ToString(ECullMode CullMode)
 {
     switch (CullMode)
     {
@@ -102,7 +102,7 @@ enum class EFillMode
     Solid     = 2
 };
 
-inline const Char* ToString(EFillMode FillMode)
+inline const char* ToString(EFillMode FillMode)
 {
     switch (FillMode)
     {
@@ -116,15 +116,15 @@ struct RasterizerStateCreateInfo
 {
     EFillMode FillMode              = EFillMode::Solid;
     ECullMode CullMode              = ECullMode::Back;
-    Bool   FrontCounterClockwise    = false;
-    Int32  DepthBias                = 0;
-    Float  DepthBiasClamp           = 0.0f;
-    Float  SlopeScaledDepthBias     = 0.0f;
-    Bool   DepthClipEnable          = true;
-    Bool   MultisampleEnable        = false;
-    Bool   AntialiasedLineEnable    = false;
-    UInt32 ForcedSampleCount        = 0;
-    Bool   EnableConservativeRaster = false;
+    bool   FrontCounterClockwise    = false;
+    int32  DepthBias                = 0;
+    float  DepthBiasClamp           = 0.0f;
+    float  SlopeScaledDepthBias     = 0.0f;
+    bool   DepthClipEnable          = true;
+    bool   MultisampleEnable        = false;
+    bool   AntialiasedLineEnable    = false;
+    uint32 ForcedSampleCount        = 0;
+    bool   EnableConservativeRaster = false;
 };
 
 class RasterizerState : public Resource
@@ -152,7 +152,7 @@ enum class EBlend
     InvSrc1Alpha   = 17
 };
 
-inline const Char* ToString(EBlend Blend)
+inline const char* ToString(EBlend Blend)
 {
     switch (Blend)
     {
@@ -186,7 +186,7 @@ enum class EBlendOp
     Max         = 5
 };
 
-inline const Char* ToString(EBlendOp BlendOp)
+inline const char* ToString(EBlendOp BlendOp)
 {
     switch (BlendOp)
     {
@@ -219,7 +219,7 @@ enum class ELogicOp
     OrInverted   = 15
 };
 
-inline const Char* ToString(ELogicOp LogicOp)
+inline const char* ToString(ELogicOp LogicOp)
 {
     switch (LogicOp)
     {
@@ -243,7 +243,7 @@ inline const Char* ToString(ELogicOp LogicOp)
     }
 }
 
-enum EColorWriteFlag : UInt8
+enum EColorWriteFlag : uint8
 {
     ColorWriteFlag_None  = 0,
     ColorWriteFlag_Red   = 1,
@@ -257,19 +257,19 @@ struct RenderTargetWriteState
 {
     RenderTargetWriteState() = default;
 
-    RenderTargetWriteState(UInt8 InMask)
+    RenderTargetWriteState(uint8 InMask)
         : Mask(InMask)
     {
     }
 
-    Bool WriteNone() const  { return Mask == ColorWriteFlag_None; }
-    Bool WriteRed() const   { return (Mask & ColorWriteFlag_Red); }
-    Bool WriteGreen() const { return (Mask & ColorWriteFlag_Green); }
-    Bool WriteBlue() const  { return (Mask & ColorWriteFlag_Blue); }
-    Bool WriteAlpha() const { return (Mask & ColorWriteFlag_Alpha); }
-    Bool WriteAll() const   { return Mask == ColorWriteFlag_All; }
+    bool WriteNone() const  { return Mask == ColorWriteFlag_None; }
+    bool WriteRed() const   { return (Mask & ColorWriteFlag_Red); }
+    bool WriteGreen() const { return (Mask & ColorWriteFlag_Green); }
+    bool WriteBlue() const  { return (Mask & ColorWriteFlag_Blue); }
+    bool WriteAlpha() const { return (Mask & ColorWriteFlag_Alpha); }
+    bool WriteAll() const   { return Mask == ColorWriteFlag_All; }
 
-    UInt8 Mask = ColorWriteFlag_All;
+    uint8 Mask = ColorWriteFlag_All;
 };
 
 struct RenderTargetBlendState
@@ -281,15 +281,15 @@ struct RenderTargetBlendState
     EBlend   DestBlendAlpha = EBlend::Zero;
     EBlendOp BlendOpAlpha   = EBlendOp::Add;;
     ELogicOp LogicOp        = ELogicOp::Noop;
-    Bool     BlendEnable    = false;
-    Bool     LogicOpEnable  = false;
+    bool     BlendEnable    = false;
+    bool     LogicOpEnable  = false;
     RenderTargetWriteState RenderTargetWriteMask;
 };
 
 struct BlendStateCreateInfo
 {
-    Bool AlphaToCoverageEnable  = false;
-    Bool IndependentBlendEnable = false;
+    bool AlphaToCoverageEnable  = false;
+    bool IndependentBlendEnable = false;
     RenderTargetBlendState RenderTarget[8];
 };
 
@@ -303,7 +303,7 @@ enum class EInputClassification
     Instance = 1,
 };
 
-inline const Char* ToString(EInputClassification BlendOp)
+inline const char* ToString(EInputClassification BlendOp)
 {
     switch (BlendOp)
     {
@@ -316,12 +316,12 @@ inline const Char* ToString(EInputClassification BlendOp)
 struct InputElement
 {
     std::string          Semantic            = "";
-    UInt32               SemanticIndex       = 0;
+    uint32               SemanticIndex       = 0;
     EFormat              Format              = EFormat::Unknown;
-    UInt32               InputSlot           = 0;
-    UInt32               ByteOffset          = 0;
+    uint32               InputSlot           = 0;
+    uint32               ByteOffset          = 0;
     EInputClassification InputClassification = EInputClassification::Vertex;
-    UInt32               InstanceStepRate    = 0;
+    uint32               InstanceStepRate    = 0;
 };
 
 struct InputLayoutStateCreateInfo
@@ -352,7 +352,7 @@ enum class EIndexBufferStripCutValue
     _0xffffffff = 2
 };
 
-inline const Char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
+inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 {
     switch (IndexBufferStripCutValue)
     {
@@ -366,7 +366,7 @@ inline const Char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 struct PipelineRenderTargetFormats
 {
     EFormat RenderTargetFormats[8];
-    UInt32  NumRenderTargets   = 0;
+    uint32  NumRenderTargets   = 0;
     EFormat DepthStencilFormat = EFormat::Unknown;
 };
 
@@ -390,9 +390,9 @@ struct GraphicsPipelineStateCreateInfo
     DepthStencilState* DepthStencilState = nullptr;
     RasterizerState*   RasterizerState   = nullptr;
     BlendState*        BlendState        = nullptr;
-    UInt32                      SampleCount           = 1;
-    UInt32                      SampleQuality         = 0;
-    UInt32                      SampleMask            = 0xffffffff;
+    uint32                      SampleCount           = 1;
+    uint32                      SampleQuality         = 0;
+    uint32                      SampleMask            = 0xffffffff;
     EIndexBufferStripCutValue   IBStripCutValue       = EIndexBufferStripCutValue::Disabled;
     EPrimitiveTopologyType      PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
     GraphicsPipelineShaderState ShaderState;
@@ -446,9 +446,9 @@ struct RayTracingPipelineStateCreateInfo
     TArray<RayClosestHitShader*> ClosestHitShaders;
     TArray<RayMissShader*>       MissShaders;
     TArray<RayTracingHitGroup>   HitGroups;
-    UInt32 MaxAttributeSizeInBytes = 0;
-    UInt32 MaxPayloadSizeInBytes   = 0;
-    UInt32 MaxRecursionDepth       = 1;
+    uint32 MaxAttributeSizeInBytes = 0;
+    uint32 MaxPayloadSizeInBytes   = 0;
+    uint32 MaxRecursionDepth       = 1;
 };
 
 class RayTracingPipelineState : public PipelineState

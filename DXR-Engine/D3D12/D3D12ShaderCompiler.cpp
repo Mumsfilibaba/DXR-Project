@@ -281,13 +281,13 @@ D3D12ShaderCompiler::~D3D12ShaderCompiler()
     ::FreeLibrary(DxCompilerDLL);
 }
 
-Bool D3D12ShaderCompiler::CompileFromFile(
+bool D3D12ShaderCompiler::CompileFromFile(
     const std::string& FilePath, 
     const std::string& EntryPoint, 
     const TArray<ShaderDefine>* Defines,
     EShaderStage ShaderStage, 
     EShaderModel ShaderModel, 
-    TArray<UInt8>& Code)
+    TArray<uint8>& Code)
 {
     std::wstring WideFilePath   = ConvertToWide(FilePath);
     std::wstring WideEntrypoint = ConvertToWide(EntryPoint);
@@ -305,20 +305,20 @@ Bool D3D12ShaderCompiler::CompileFromFile(
     return InternalCompileFromSource(SourceBlob.Get(), WideFilePath.c_str(), WideEntrypoint.c_str(), ShaderStage, ShaderModel, Defines, Code);
 }
 
-Bool D3D12ShaderCompiler::CompileShader(
+bool D3D12ShaderCompiler::CompileShader(
     const std::string& ShaderSource, 
     const std::string& EntryPoint, 
     const TArray<ShaderDefine>* Defines,
     EShaderStage ShaderStage, 
     EShaderModel ShaderModel, 
-    TArray<UInt8>& Code)
+    TArray<uint8>& Code)
 {
     std::wstring WideEntrypoint = ConvertToWide(EntryPoint);
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
     HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(
         ShaderSource.c_str(), 
-        sizeof(Char) * static_cast<UInt32>(ShaderSource.size()), 
+        sizeof(char) * static_cast<uint32>(ShaderSource.size()), 
         CP_UTF8, 
         &SourceBlob);
     if (FAILED(Result))
@@ -332,19 +332,19 @@ Bool D3D12ShaderCompiler::CompileShader(
     return InternalCompileFromSource(SourceBlob.Get(), nullptr, WideEntrypoint.c_str(), ShaderStage, ShaderModel, Defines, Code);
 }
 
-Bool D3D12ShaderCompiler::GetReflection(D3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection)
+bool D3D12ShaderCompiler::GetReflection(D3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection)
 {
     TComPtr<IDxcBlob> ShaderBlob = DBG_NEW ExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     return InternalGetReflection(ShaderBlob, IID_PPV_ARGS(Reflection));
 }
 
-Bool D3D12ShaderCompiler::GetLibraryReflection(D3D12BaseShader* Shader, ID3D12LibraryReflection** Reflection)
+bool D3D12ShaderCompiler::GetLibraryReflection(D3D12BaseShader* Shader, ID3D12LibraryReflection** Reflection)
 {
     TComPtr<IDxcBlob> ShaderBlob = DBG_NEW ExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     return InternalGetReflection(ShaderBlob, IID_PPV_ARGS(Reflection));
 }
 
-Bool D3D12ShaderCompiler::HasRootSignature(D3D12BaseShader* Shader)
+bool D3D12ShaderCompiler::HasRootSignature(D3D12BaseShader* Shader)
 {
     TComPtr<IDxcContainerReflection> Reflection;
     HRESULT Result = DxcCreateInstanceFunc(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
@@ -362,7 +362,7 @@ Bool D3D12ShaderCompiler::HasRootSignature(D3D12BaseShader* Shader)
         return false;
     }
 
-    UInt32 PartIndex;
+    uint32 PartIndex;
     Result = Reflection->FindFirstPartKind(DFCC_RootSignature, &PartIndex);
     if (FAILED(Result))
     {
@@ -372,7 +372,7 @@ Bool D3D12ShaderCompiler::HasRootSignature(D3D12BaseShader* Shader)
     return true;
 }
 
-Bool D3D12ShaderCompiler::Init()
+bool D3D12ShaderCompiler::Init()
 {
     DxCompilerDLL = ::LoadLibrary("dxcompiler.dll");
     if (!DxCompilerDLL)
@@ -426,14 +426,14 @@ Bool D3D12ShaderCompiler::Init()
     return true;
 }
 
-Bool D3D12ShaderCompiler::InternalCompileFromSource(
+bool D3D12ShaderCompiler::InternalCompileFromSource(
     IDxcBlob* SourceBlob, 
     LPCWSTR FilePath, 
     LPCWSTR Entrypoint, 
     EShaderStage ShaderStage,
     EShaderModel ShaderModel,
     const TArray<ShaderDefine>* Defines,
-    TArray<UInt8>& Code)
+    TArray<uint8>& Code)
 {
     TArray<LPCWSTR> Args =
     {
@@ -527,7 +527,7 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
         return false;
     }
 
-    const UInt32 BlobSize = UInt32(CompiledBlob->GetBufferSize());
+    const uint32 BlobSize = uint32(CompiledBlob->GetBufferSize());
     Code.Resize(BlobSize);
 
     LOG_INFO("[D3D12ShaderCompiler]: Compiled Size: " + std::to_string(BlobSize) + " Bytes");
@@ -544,7 +544,7 @@ Bool D3D12ShaderCompiler::InternalCompileFromSource(
     }
 }
 
-Bool D3D12ShaderCompiler::InternalGetReflection(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject)
+bool D3D12ShaderCompiler::InternalGetReflection(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject)
 {
     HRESULT Result = DxReflection->Load(ShaderBlob.Get());
     if (FAILED(Result))
@@ -553,7 +553,7 @@ Bool D3D12ShaderCompiler::InternalGetReflection(const TComPtr<IDxcBlob>& ShaderB
         return false;
     }
 
-    UInt32 PartIndex;
+    uint32 PartIndex;
     Result = DxReflection->FindFirstPartKind(DFCC_DXIL, &PartIndex);
     if (FAILED(Result))
     {
@@ -571,7 +571,7 @@ Bool D3D12ShaderCompiler::InternalGetReflection(const TComPtr<IDxcBlob>& ShaderB
     return true;
 }
 
-Bool D3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& ShaderBlob, LPCWSTR Entrypoint)
+bool D3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& ShaderBlob, LPCWSTR Entrypoint)
 {
     TComPtr<ID3D12LibraryReflection> LibaryReflection;
     if (!InternalGetReflection(ShaderBlob, IID_PPV_ARGS(&LibaryReflection)))
@@ -604,7 +604,7 @@ Bool D3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Shad
         return false;
     }
 
-    Char Buffer[256];
+    char Buffer[256];
     Memory::Memzero(Buffer, sizeof(Buffer));
 
     size_t ConvertedChars;

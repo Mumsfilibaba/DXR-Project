@@ -22,7 +22,7 @@ public:
         OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
     }
 
-    Bool Init(const D3D12_SAMPLER_DESC& InDesc)
+    bool Init(const D3D12_SAMPLER_DESC& InDesc)
     {
         OfflineHandle = OfflineHeap->Allocate(OfflineHeapIndex);
         if (OfflineHandle != 0)
@@ -42,7 +42,7 @@ public:
         return reinterpret_cast<void*>(OfflineHandle.ptr);
     }
 
-    virtual Bool IsValid() const override { return OfflineHandle != 0; }
+    virtual bool IsValid() const override { return OfflineHandle != 0; }
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
 
@@ -50,7 +50,7 @@ public:
 
 private:
     D3D12OfflineDescriptorHeap* OfflineHeap      = nullptr;
-    UInt32                      OfflineHeapIndex = 0;
+    uint32                      OfflineHeapIndex = 0;
     D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle;
     D3D12_SAMPLER_DESC          Desc;
 };

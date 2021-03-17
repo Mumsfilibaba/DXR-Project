@@ -13,7 +13,7 @@ public:
     SkyboxRenderPass()  = default;
     ~SkyboxRenderPass() = default;
 
-    Bool Init(FrameResources& FrameResources);
+    bool Init(FrameResources& FrameResources);
 
     void Render(CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene);
 

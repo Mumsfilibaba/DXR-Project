@@ -10,7 +10,7 @@ public:
     ForwardRenderer()  = default;
     ~ForwardRenderer() = default;
 
-    Bool Init(FrameResources& FrameResources);
+    bool Init(FrameResources& FrameResources);
     void Release();
 
     void Render(CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup);

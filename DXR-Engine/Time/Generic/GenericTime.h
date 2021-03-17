@@ -4,12 +4,12 @@
 class GenericTime
 {
 public:
-    static FORCEINLINE UInt64 QueryPerformanceCounter()
+    static FORCEINLINE uint64 QueryPerformanceCounter()
     {
         return 0;
     }
 
-    static FORCEINLINE UInt64 QueryPerformanceFrequency()
+    static FORCEINLINE uint64 QueryPerformanceFrequency()
     {
         return 1;
     }

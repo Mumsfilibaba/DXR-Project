@@ -18,9 +18,9 @@
 
 #include <imgui_internal.h>
 
-static Float MainMenuBarHeight = 0.0f;
+static float MainMenuBarHeight = 0.0f;
 
-static Bool ShowRenderSettings = false;
+static bool ShowRenderSettings = false;
 
 ConsoleVariable GlobalShowSceneGraph(EConsoleVariableType::Bool);
 
@@ -29,7 +29,7 @@ static void DrawSideWindow();
 static void DrawRenderSettings();
 static void DrawSceneInfo();
 
-static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, Float ResetValue = 0.0f, Float ColumnWidth = 100.0f, Float Speed = 0.01f)
+static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f)
 {
     ImGui::PushID(Label.c_str());
     ImGui::Columns(2, nullptr, false);
@@ -44,7 +44,7 @@ static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, Float R
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
 
-    Float    LineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+    float    LineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
     ImVec2    ButtonSize = ImVec2(LineHeight + 3.0f, LineHeight);
     
     // X
@@ -142,17 +142,17 @@ static void DrawSideWindow()
 {
     DebugUI::DrawUI([]
     {
-        const UInt32 WindowWidth  = gMainWindow->GetWidth();
-        const UInt32 WindowHeight = gMainWindow->GetHeight();
-        const Float Width         = Math::Max(WindowWidth * 0.3f, 400.0f);
-        const Float Height        = WindowHeight * 0.7f;
+        const uint32 WindowWidth  = gMainWindow->GetWidth();
+        const uint32 WindowHeight = gMainWindow->GetHeight();
+        const float Width         = Math::Max(WindowWidth * 0.3f, 400.0f);
+        const float Height        = WindowHeight * 0.7f;
 
         ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
         ImGui::SetNextWindowPos(
-            ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f),
+            ImVec2(float(WindowWidth) * 0.5f, float(WindowHeight) * 0.175f),
             ImGuiCond_Appearing,
             ImVec2(0.5f, 0.0f));
 
@@ -166,7 +166,7 @@ static void DrawSideWindow()
             ImGuiWindowFlags_NoFocusOnAppearing |
             ImGuiWindowFlags_NoSavedSettings;
 
-        Bool TempDrawProfiler = GlobalShowSceneGraph.GetBool();
+        bool TempDrawProfiler = GlobalShowSceneGraph.GetBool();
         if (ImGui::Begin(
             "SceneGraph", 
             &TempDrawProfiler,
@@ -204,13 +204,13 @@ static void DrawRenderSettings()
     //ImGui::Checkbox("Enable Frustum Culling", &GlobalFrustumCullEnabled);
     //ImGui::Checkbox("Draw AABBs", &GlobalDrawAABBs);
 
-    static const Char* AAItems[] =
+    static const char* AAItems[] =
     {
         "OFF",
         "FXAA",
     };
 
-    static Int32 CurrentItem = 0;
+    static int32 CurrentItem = 0;
     //if (GlobalFXAAEnabled)
     //{
     //    CurrentItem = 1;
@@ -236,7 +236,7 @@ static void DrawRenderSettings()
     ImGui::Text("Shadow Settings:");
     ImGui::Separator();
 
-    static const Char* Items[] =
+    static const char* Items[] =
     {
         "8192x8192",
         "4096x4096",
@@ -336,7 +336,7 @@ static void DrawRenderSettings()
     ImGui::Text("Radius: ");
     ImGui::NextColumn();
 
-    //Float Radius = GlobalRenderer->GetSSAORadius();
+    //float Radius = GlobalRenderer->GetSSAORadius();
     //if (ImGui::SliderFloat("##Radius", &Radius, 0.05f, 5.0f, "%.3f"))
     //{
     //    GlobalRenderer->SetSSAORadius(Radius);
@@ -346,7 +346,7 @@ static void DrawRenderSettings()
     //ImGui::Text("Bias: ");
     //ImGui::NextColumn();
 
-    //Float Bias = GlobalRenderer->GetSSAOBias();
+    //float Bias = GlobalRenderer->GetSSAOBias();
     //if (ImGui::SliderFloat("##Bias", &Bias, 0.0f, 0.5f, "%.3f"))
     //{
     //    GlobalRenderer->SetSSAOBias(Bias);
@@ -356,7 +356,7 @@ static void DrawRenderSettings()
     //ImGui::Text("KernelSize: ");
     //ImGui::NextColumn();
 
-    //Int32 KernelSize = GlobalRenderer->GetSSAOKernelSize();
+    //int32 KernelSize = GlobalRenderer->GetSSAOKernelSize();
     //if (ImGui::SliderInt("##KernelSize", &KernelSize, 4, 64))
     //{
     //    GlobalRenderer->SetSSAOKernelSize(KernelSize);
@@ -368,7 +368,7 @@ static void DrawRenderSettings()
 
 static void DrawSceneInfo()
 {
-    constexpr Float Width = 450.0f;
+    constexpr float Width = 450.0f;
 
     ImGui::Spacing();
     ImGui::Text("Current Scene");
@@ -417,7 +417,7 @@ static void DrawSceneInfo()
 
                     ImGui::SameLine();
 
-                    static Bool Uniform = false;
+                    static bool Uniform = false;
                     ImGui::Checkbox("##Uniform", &Uniform);
                     if (ImGui::IsItemHovered())
                     {
@@ -462,7 +462,7 @@ static void DrawSceneInfo()
                         ImGui::NextColumn();
 
                         const XMFLOAT3& Color = MComponent->Material->GetMaterialProperties().Albedo;
-                        Float Arr[3] = { Color.x, Color.y, Color.z };
+                        float Arr[3] = { Color.x, Color.y, Color.z };
                         if (ImGui::ColorEdit3("##Albedo", Arr))
                         {
                             MComponent->Material->SetAlbedo(Arr[0], Arr[1], Arr[2]);
@@ -473,7 +473,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Roughness");
                         ImGui::NextColumn();
 
-                        Float Roughness = MComponent->Material->GetMaterialProperties().Roughness;
+                        float Roughness = MComponent->Material->GetMaterialProperties().Roughness;
                         if (ImGui::SliderFloat("##Roughness", &Roughness, 0.01f, 1.0f, "%.2f"))
                         {
                             MComponent->Material->SetRoughness(Roughness);
@@ -484,7 +484,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Metallic");
                         ImGui::NextColumn();
 
-                        Float Metallic = MComponent->Material->GetMaterialProperties().Metallic;
+                        float Metallic = MComponent->Material->GetMaterialProperties().Metallic;
                         if (ImGui::SliderFloat("##Metallic", &Metallic, 0.01f, 1.0f, "%.2f"))
                         {
                             MComponent->Material->SetMetallic(Metallic);
@@ -495,7 +495,7 @@ static void DrawSceneInfo()
                         ImGui::Text("AO");
                         ImGui::NextColumn();
 
-                        Float AO = MComponent->Material->GetMaterialProperties().AO;
+                        float AO = MComponent->Material->GetMaterialProperties().AO;
                         if (ImGui::SliderFloat("##AO", &AO, 0.01f, 1.0f, "%.2f"))
                         {
                             MComponent->Material->SetAmbientOcclusion(AO);
@@ -527,7 +527,7 @@ static void DrawSceneInfo()
                 PointLight* CurrentPointLight = Cast<PointLight>(CurrentLight);
                 if (ImGui::TreeNode("PointLight"))
                 {
-                    const Float ColumnWidth = 150.0f;
+                    const float ColumnWidth = 150.0f;
 
                     // Transform
                     if (ImGui::TreeNode("Transform"))
@@ -549,7 +549,7 @@ static void DrawSceneInfo()
                         ImGui::NextColumn();
 
                         const XMFLOAT3& Color = CurrentPointLight->GetColor();
-                        Float Arr[3] = { Color.x, Color.y, Color.z };
+                        float Arr[3] = { Color.x, Color.y, Color.z };
                         if (ImGui::ColorEdit3("##Color", Arr))
                         {
                             CurrentPointLight->SetColor(Arr[0], Arr[1], Arr[2]);
@@ -559,7 +559,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Intensity");
                         ImGui::NextColumn();
 
-                        Float Intensity = CurrentPointLight->GetIntensity();
+                        float Intensity = CurrentPointLight->GetIntensity();
                         if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
                         {
                             CurrentPointLight->SetIntensity(Intensity);
@@ -579,7 +579,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Shadow Bias");
                         ImGui::NextColumn();
 
-                        Float ShadowBias = CurrentPointLight->GetShadowBias();
+                        float ShadowBias = CurrentPointLight->GetShadowBias();
                         if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
                         {
                             CurrentPointLight->SetShadowBias(ShadowBias);
@@ -595,7 +595,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Max Shadow Bias");
                         ImGui::NextColumn();
 
-                        Float MaxShadowBias = CurrentPointLight->GetMaxShadowBias();
+                        float MaxShadowBias = CurrentPointLight->GetMaxShadowBias();
                         if (ImGui::SliderFloat("##MaxShadowBias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
                         {
                             CurrentPointLight->SetMaxShadowBias(MaxShadowBias);
@@ -606,7 +606,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Shadow Near Plane");
                         ImGui::NextColumn();
 
-                        Float ShadowNearPlane = CurrentPointLight->GetShadowNearPlane();
+                        float ShadowNearPlane = CurrentPointLight->GetShadowNearPlane();
                         if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.01f, 1.0f, "%0.2f"))
                         {
                             CurrentPointLight->SetShadowNearPlane(ShadowNearPlane);
@@ -617,7 +617,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Shadow Far Plane");
                         ImGui::NextColumn();
 
-                        Float ShadowFarPlane = CurrentPointLight->GetShadowFarPlane();
+                        float ShadowFarPlane = CurrentPointLight->GetShadowFarPlane();
                         if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
                         {
                             CurrentPointLight->SetShadowFarPlane(ShadowFarPlane);
@@ -635,7 +635,7 @@ static void DrawSceneInfo()
                 DirectionalLight* CurrentDirectionalLight = Cast<DirectionalLight>(CurrentLight);
                 if (ImGui::TreeNode("DirectionalLight"))
                 {
-                    const Float ColumnWidth = 150.0f;
+                    const float ColumnWidth = 150.0f;
 
                     // Color
                     if (ImGui::TreeNode("Light Settings"))
@@ -647,7 +647,7 @@ static void DrawSceneInfo()
                         ImGui::NextColumn();
 
                         const XMFLOAT3& Color = CurrentDirectionalLight->GetColor();
-                        Float Arr[3] = { Color.x, Color.y, Color.z };
+                        float Arr[3] = { Color.x, Color.y, Color.z };
                         if (ImGui::ColorEdit3("##Color", Arr))
                         {
                             CurrentDirectionalLight->SetColor(Arr[0], Arr[1], Arr[2]);
@@ -657,7 +657,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Intensity");
                         ImGui::NextColumn();
 
-                        Float Intensity = CurrentDirectionalLight->GetIntensity();
+                        float Intensity = CurrentDirectionalLight->GetIntensity();
                         if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
                         {
                             CurrentDirectionalLight->SetIntensity(Intensity);
@@ -694,7 +694,7 @@ static void DrawSceneInfo()
                         ImGui::NextColumn();
 
                         XMFLOAT3 Direction = CurrentDirectionalLight->GetDirection();
-                        Float* DirArr = reinterpret_cast<Float*>(&Direction);
+                        float* DirArr = reinterpret_cast<float*>(&Direction);
                         ImGui::InputFloat3("##Direction", DirArr, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
 
                         ImGui::Columns(1);
@@ -716,7 +716,7 @@ static void DrawSceneInfo()
                         ImGui::NextColumn();
 
                         XMFLOAT3 Position = CurrentDirectionalLight->GetShadowMapPosition();
-                        Float* PosArr = reinterpret_cast<Float*>(&Position);
+                        float* PosArr = reinterpret_cast<float*>(&Position);
                         ImGui::InputFloat3("##Translation", PosArr, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
 
                         // Shadow Bias
@@ -724,7 +724,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Shadow Bias");
                         ImGui::NextColumn();
 
-                        Float ShadowBias = CurrentDirectionalLight->GetShadowBias();
+                        float ShadowBias = CurrentDirectionalLight->GetShadowBias();
                         if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
                         {
                             CurrentDirectionalLight->SetShadowBias(ShadowBias);
@@ -740,7 +740,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Max Shadow Bias");
                         ImGui::NextColumn();
 
-                        Float MaxShadowBias = CurrentDirectionalLight->GetMaxShadowBias();
+                        float MaxShadowBias = CurrentDirectionalLight->GetMaxShadowBias();
                         if (ImGui::SliderFloat("##MaxShadowBias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
                         {
                             CurrentDirectionalLight->SetMaxShadowBias(MaxShadowBias);
@@ -751,7 +751,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Shadow Near Plane");
                         ImGui::NextColumn();
 
-                        Float ShadowNearPlane = CurrentDirectionalLight->GetShadowNearPlane();
+                        float ShadowNearPlane = CurrentDirectionalLight->GetShadowNearPlane();
                         if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.01f, 1.0f, "%.2f"))
                         {
                             CurrentDirectionalLight->SetShadowNearPlane(ShadowNearPlane);
@@ -762,7 +762,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Shadow Far Plane");
                         ImGui::NextColumn();
 
-                        Float ShadowFarPlane = CurrentLight->GetShadowFarPlane();
+                        float ShadowFarPlane = CurrentLight->GetShadowFarPlane();
                         if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 1000.0f, "%.1f"))
                         {
                             CurrentDirectionalLight->SetShadowFarPlane(ShadowFarPlane);

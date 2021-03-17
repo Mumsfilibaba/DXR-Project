@@ -1,29 +1,29 @@
 #pragma once
 #include "Time/Clock.h"
 
-#include <Containers/ArrayView.h>
+#include "Core/Containers/ArrayView.h"
 
-Int32 EngineMain(const TArrayView<const Char*> Args);
+int32 EngineMain();
 
 class EngineLoop
 {
 public:
-    static Bool PreInit();
-    static Bool Init();
-    static Bool PostInit();
+    static bool PreInit();
+    static bool Init();
+    static bool PostInit();
     
     static void PreTick();
     static void Tick();
     static void PostTick();
 
-    static Bool PreRelease();
-    static Bool Release();
-    static Bool PostRelease();
+    static bool PreRelease();
+    static bool Release();
+    static bool PostRelease();
 
     static void Exit();
     
-    static Bool IsRunning();
-    static Bool IsExiting();
+    static bool IsRunning();
+    static bool IsExiting();
 
     static Timestamp GetDeltaTime();
     static Timestamp GetTotalElapsedTime();

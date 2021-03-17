@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/CoreObject.h"
-
-#include <Containers/Array.h>
+#include "Core/Containers/Array.h"
 
 class Actor;
 
@@ -26,18 +25,18 @@ public:
     Transform();
     ~Transform() = default;
 
-    void SetTranslation(Float x, Float y, Float z);
+    void SetTranslation(float x, float y, float z);
     void SetTranslation(const XMFLOAT3& InPosition);
 
-    void SetScale(Float x, Float y, Float z);
+    void SetScale(float x, float y, float z);
     void SetScale(const XMFLOAT3& InScale);
 
-    void SetUniformScale(Float InScale)
+    void SetUniformScale(float InScale)
     {
         SetScale(InScale, InScale, InScale);
     }
 
-    void SetRotation(Float x, Float y, Float z);
+    void SetRotation(float x, float y, float z);
     void SetRotation(const XMFLOAT3& InRotation);
 
     const XMFLOAT3& GetTranslation() const { return Translation; }
@@ -75,7 +74,7 @@ public:
     void AddComponent(Component* InComponent);
 
     template<typename TComponent>
-    FORCEINLINE Bool HasComponentOfType() const noexcept
+    FORCEINLINE bool HasComponentOfType() const noexcept
     {
         TComponent* Result = nullptr;
         for (Component* Component : Components)

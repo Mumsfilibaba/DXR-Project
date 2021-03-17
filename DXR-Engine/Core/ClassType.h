@@ -6,27 +6,27 @@ class ClassType
 {
 public:
     ClassType(
-        const Char* InName, 
+        const char* InName, 
         const ClassType* InSuperClass,
-        UInt32 SizeInBytes);
+        uint32 SizeInBytes);
 
     ~ClassType() = default;
 
-    Bool IsSubClassOf(const ClassType* Class) const;
+    bool IsSubClassOf(const ClassType* Class) const;
 
     template<typename T>
-    FORCEINLINE Bool IsSubClassOf() const
+    FORCEINLINE bool IsSubClassOf() const
     {
         return IsSubClassOf(T::GetStaticClass());
     }
 
-    const Char* GetName() const { return Name; }
+    const char* GetName() const { return Name; }
     const ClassType* GetSuperClass() const { return SuperClass; }
 
-    UInt32 GetSizeInBytes() const { return SizeInBytes; }
+    uint32 GetSizeInBytes() const { return SizeInBytes; }
 
 private:
-    const Char*      Name;
+    const char*      Name;
     const ClassType* SuperClass;
-    const UInt32     SizeInBytes;
+    const uint32     SizeInBytes;
 };

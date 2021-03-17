@@ -1,7 +1,7 @@
 #pragma once
 #include "ResourceBase.h"
 
-enum class ESamplerMode : Byte
+enum class ESamplerMode : uint8
 {
     Unknown    = 0,
     Wrap       = 1,
@@ -11,7 +11,7 @@ enum class ESamplerMode : Byte
     MirrorOnce = 5,
 };
 
-inline const Char* ToString(ESamplerMode SamplerMode)
+inline const char* ToString(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
@@ -24,7 +24,7 @@ inline const Char* ToString(ESamplerMode SamplerMode)
     }
 }
 
-enum class ESamplerFilter : Byte
+enum class ESamplerFilter : uint8
 {
     Unknown                                 = 0,
     MinMagMipPoint                          = 1,
@@ -47,7 +47,7 @@ enum class ESamplerFilter : Byte
     Comparison_Anistrotopic                 = 18,
 };
 
-inline const Char* ToString(ESamplerFilter SamplerFilter)
+inline const char* ToString(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
@@ -80,11 +80,11 @@ struct SamplerStateCreateInfo
     ESamplerMode    AddressW        = ESamplerMode::Clamp;
     ESamplerFilter  Filter          = ESamplerFilter::MinMagMipLinear;
     EComparisonFunc ComparisonFunc  = EComparisonFunc::Never;
-    Float           MipLODBias      = 0.0f;
-    UInt32          MaxAnisotropy   = 1;
+    float           MipLODBias      = 0.0f;
+    uint32          MaxAnisotropy   = 1;
     ColorF          BorderColor;
-    Float           MinLOD          = -FLT_MAX;
-    Float           MaxLOD          = FLT_MAX;
+    float           MinLOD          = -FLT_MAX;
+    float           MaxLOD          = FLT_MAX;
 };
 
 class SamplerState : public Resource

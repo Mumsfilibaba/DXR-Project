@@ -13,10 +13,10 @@ public:
     D3D12Resource(D3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType);
     ~D3D12Resource() = default;
 
-    Bool Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue);
+    bool Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue);
 
-    void* Map(UInt32 SubResource, const D3D12_RANGE* Range);
-    void  Unmap(UInt32 SubResource, const D3D12_RANGE* Range);
+    void* Map(uint32 SubResource, const D3D12_RANGE* Range);
+    void  Unmap(uint32 SubResource, const D3D12_RANGE* Range);
 
     void SetName(const std::string& Name)
     {
@@ -34,7 +34,7 @@ public:
     
     const D3D12_RESOURCE_DESC& GetDesc() const { return Desc; }
 
-    UInt64 GetWidth() const { return Desc.Width; }
+    uint64 GetWidth() const { return Desc.Width; }
 
 private:
     TComPtr<ID3D12Resource>   DxResource;

@@ -12,7 +12,7 @@ public:
     ShadowMapRenderer()  = default;
     ~ShadowMapRenderer() = default;
 
-    Bool Init(LightSetup& LightSetup, FrameResources& Resources);
+    bool Init(LightSetup& LightSetup, FrameResources& Resources);
 
     void RenderPointLightShadows(CommandList& CmdList, const LightSetup& LightSetup, const Scene& Scene);
     void RenderDirectionalLightShadows(CommandList& CmdList, const LightSetup& LightSetup, const Scene& Scene);
@@ -20,7 +20,7 @@ public:
     void Release();
 
 private:
-    Bool CreateShadowMaps(LightSetup& FrameResources);
+    bool CreateShadowMaps(LightSetup& FrameResources);
 
     TRef<ConstantBuffer> PerShadowMapBuffer;
 
@@ -30,8 +30,8 @@ private:
     TRef<VertexShader>          PointLightVertexShader;
     TRef<PixelShader>           PointLightPixelShader;
 
-    Bool   UpdateDirLight   = true;
-    Bool   UpdatePointLight = true;
-    UInt64 DirLightFrame    = 0;
-    UInt64 PointLightFrame  = 0;
+    bool   UpdateDirLight   = true;
+    bool   UpdatePointLight = true;
+    uint64 DirLightFrame    = 0;
+    uint64 PointLightFrame  = 0;
 };

@@ -22,7 +22,7 @@ void FrameResources::Release()
     SSAOBuffer.Reset();
     FinalTarget.Reset();
 
-    for (UInt32 i = 0; i < 5; i++)
+    for (uint32 i = 0; i < 5; i++)
     {
         GBuffer[i].Reset();
     }

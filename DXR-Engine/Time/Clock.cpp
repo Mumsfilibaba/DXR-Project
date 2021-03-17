@@ -10,10 +10,10 @@ Clock::Clock()
 
 void Clock::Tick()
 {
-    const UInt64 Now = PlatformTime::QueryPerformanceCounter();	
-    constexpr UInt64 NANOSECONDS = 1000 * 1000 * 1000;
-    UInt64 Delta       = Now - LastTime;
-    UInt64 Nanoseconds = (Delta * NANOSECONDS) / Frequency;
+    const uint64 Now = PlatformTime::QueryPerformanceCounter();	
+    constexpr uint64 NANOSECONDS = 1000 * 1000 * 1000;
+    uint64 Delta       = Now - LastTime;
+    uint64 Nanoseconds = (Delta * NANOSECONDS) / Frequency;
 
     DeltaTime = Timestamp(Nanoseconds);
     LastTime  = Now;

@@ -18,15 +18,15 @@ public:
     {
     }
 
-    virtual void OnKeyPressed(EKey KeyCode, Bool IsRepeat, const ModifierKeyState& ModierKeyState)
+    virtual void OnKeyPressed(EKey KeyCode, bool IsRepeat, const ModifierKeyState& ModierKeyState)
     {
     }
 
-    virtual void OnCharacterInput(UInt32 Character)
+    virtual void OnCharacterInput(uint32 Character)
     {
     }
 
-    virtual void OnMouseMove(Int32 x, Int32 y)
+    virtual void OnMouseMove(int32 x, int32 y)
     {
     }
 
@@ -38,19 +38,19 @@ public:
     {
     }
 
-    virtual void OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta)
+    virtual void OnMouseScrolled(float HorizontalDelta, float VerticalDelta)
     {
     }
 
-    virtual void OnWindowResized(const TRef<GenericWindow>& Window, UInt16 Width, UInt16 Height)
+    virtual void OnWindowResized(const TRef<GenericWindow>& Window, uint16 Width, uint16 Height)
     {
     }
 
-    virtual void OnWindowMoved(const TRef<GenericWindow>& Window, Int16 x, Int16 y)
+    virtual void OnWindowMoved(const TRef<GenericWindow>& Window, int16 x, int16 y)
     {
     }
     
-    virtual void OnWindowFocusChanged(const TRef<GenericWindow>& Window, Bool HasFocus)
+    virtual void OnWindowFocusChanged(const TRef<GenericWindow>& Window, bool HasFocus)
     {
     }
     

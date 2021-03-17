@@ -5,7 +5,7 @@
 class Viewport : public Resource
 {
 public:
-    Viewport(EFormat InFormat, UInt32 InWidth, UInt32 InHeight)
+    Viewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
         : Resource()
         , Format(InFormat)
         , Width(InWidth)
@@ -15,19 +15,19 @@ public:
 
     ~Viewport() = default;
 
-    virtual Bool Resize(UInt32 Width, UInt32 Height) = 0;
-    virtual Bool Present(Bool VerticalSync) = 0;
+    virtual bool Resize(uint32 Width, uint32 Height) = 0;
+    virtual bool Present(bool VerticalSync) = 0;
 
     virtual RenderTargetView* GetRenderTargetView() const = 0;
     virtual Texture2D* GetBackBuffer() const = 0;
 
-    UInt32 GetWidth()  const { return Width; }
-    UInt32 GetHeight() const { return Height; }
+    uint32 GetWidth()  const { return Width; }
+    uint32 GetHeight() const { return Height; }
 
     EFormat GetColorFormat() const { return Format; }
 
 protected:
-    UInt32  Width;
-    UInt32  Height;
+    uint32  Width;
+    uint32  Height;
     EFormat Format;
 };

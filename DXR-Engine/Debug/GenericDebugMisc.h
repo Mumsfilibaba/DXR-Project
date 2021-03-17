@@ -15,15 +15,15 @@
 class GenericDebugMisc
 {
 public:
-    static FORCEINLINE void DebugBreak()
+    FORCEINLINE static void DebugBreak()
     {
     }
 
-    static FORCEINLINE void OutputDebugString(const std::string& Message)
+    FORCEINLINE static void OutputDebugString(const std::string& Message)
     {
     }
 
-    static FORCEINLINE Bool IsDebuggerPresent()
+    FORCEINLINE static bool IsDebuggerPresent()
     {
         return false;
     }

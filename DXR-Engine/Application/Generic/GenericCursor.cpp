@@ -11,7 +11,7 @@ TRef<GenericCursor> GlobalCursors::ResizeNWSE;
 TRef<GenericCursor> GlobalCursors::Hand;
 TRef<GenericCursor> GlobalCursors::NotAllowed;
 
-Bool GlobalCursors::Init()
+bool GlobalCursors::Init()
 {
     Arrow = gApplication->MakeCursor();
     if (!Arrow->Init(CursorCreateInfo(EPlatformCursor::Arrow)))

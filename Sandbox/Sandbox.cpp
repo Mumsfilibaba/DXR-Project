@@ -22,7 +22,7 @@ Game* MakeGameInstance()
     return DBG_NEW Sandbox();
 }
 
-Bool Sandbox::Init()
+bool Sandbox::Init()
 {
     // Initialize Scene
     Actor* NewActor             = nullptr;
@@ -35,7 +35,7 @@ Bool Sandbox::Init()
     SphereMesh->ShadowOffset = 0.05f;
 
     // Create standard textures
-    Byte Pixels[] =
+    uint8 Pixels[] =
     {
         255,
         255,
@@ -81,21 +81,21 @@ Bool Sandbox::Init()
         WhiteTexture->SetName("WhiteTexture");
     }
 
-    constexpr Float	 SphereOffset   = 1.25f;
-    constexpr UInt32 SphereCountX   = 8;
-    constexpr Float	 StartPositionX = (-static_cast<Float>(SphereCountX) * SphereOffset) / 2.0f;
-    constexpr UInt32 SphereCountY   = 8;
-    constexpr Float	 StartPositionY = (-static_cast<Float>(SphereCountY) * SphereOffset) / 2.0f;
-    constexpr Float	 MetallicDelta  = 1.0f / SphereCountY;
-    constexpr Float	 RoughnessDelta = 1.0f / SphereCountX;
+    constexpr float  SphereOffset   = 1.25f;
+    constexpr uint32 SphereCountX   = 8;
+    constexpr float  StartPositionX = (-static_cast<float>(SphereCountX) * SphereOffset) / 2.0f;
+    constexpr uint32 SphereCountY   = 8;
+    constexpr float  StartPositionY = (-static_cast<float>(SphereCountY) * SphereOffset) / 2.0f;
+    constexpr float  MetallicDelta  = 1.0f / SphereCountY;
+    constexpr float  RoughnessDelta = 1.0f / SphereCountX;
 
     MaterialProperties MatProperties;
     MatProperties.AO = 1.0f;
 
-    UInt32 SphereIndex = 0;
-    for (UInt32 y = 0; y < SphereCountY; y++)
+    uint32 SphereIndex = 0;
+    for (uint32 y = 0; y < SphereCountY; y++)
     {
-        for (UInt32 x = 0; x < SphereCountX; x++)
+        for (uint32 x = 0; x < SphereCountX; x++)
         {
             NewActor = DBG_NEW Actor();
             NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 1.0f, 40.0f + StartPositionY + (y * SphereOffset));
@@ -243,7 +243,7 @@ Bool Sandbox::Init()
     CurrentScene->AddCamera(CurrentCamera);
 
     // Add PointLight- Source
-    const Float Intensity = 50.0f;
+    const float Intensity = 50.0f;
 
     PointLight* Light0 = DBG_NEW PointLight();
     Light0->SetPosition(16.5f, 1.0f, 0.0f);
@@ -287,15 +287,15 @@ Bool Sandbox::Init()
 
 #if ENABLE_LIGHT_TEST
     // Add multiple lights
-    std::uniform_real_distribution<Float> RandomFloats(0.0f, 1.0f);
+    std::uniform_real_distribution<float> RandomFloats(0.0f, 1.0f);
     std::default_random_engine Generator;
 
-    for (UInt32 i = 0; i < 256; i++)
+    for (uint32 i = 0; i < 256; i++)
     {
-        Float x = RandomFloats(Generator) * 35.0f - 17.5f;
-        Float y = RandomFloats(Generator) * 22.0f;
-        Float z = RandomFloats(Generator) * 16.0f - 8.0f;
-        Float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
+        float x = RandomFloats(Generator) * 35.0f - 17.5f;
+        float y = RandomFloats(Generator) * 22.0f;
+        float z = RandomFloats(Generator) * 16.0f - 8.0f;
+        float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
 
         PointLight* Light = DBG_NEW PointLight();
         Light->SetPosition(x, y, z);
@@ -320,8 +320,8 @@ Bool Sandbox::Init()
 
 void Sandbox::Tick(Timestamp DeltaTime)
 {
-    const Float Delta = static_cast<Float>(DeltaTime.AsSeconds());
-    const Float RotationSpeed = 45.0f;
+    const float Delta = static_cast<float>(DeltaTime.AsSeconds());
+    const float RotationSpeed = 45.0f;
 
     if (Input::IsKeyDown(EKey::Key_Right))
     {
@@ -341,7 +341,7 @@ void Sandbox::Tick(Timestamp DeltaTime)
         CurrentCamera->Rotate(XMConvertToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
     }
 
-    Float Acceleration = 15.0f;
+    float Acceleration = 15.0f;
     if (Input::IsKeyDown(EKey::Key_LeftShift))
     {
         Acceleration = Acceleration * 3;
@@ -375,7 +375,7 @@ void Sandbox::Tick(Timestamp DeltaTime)
         CameraAcceleration.y = -Acceleration;
     }
 
-    const Float Deacceleration = -5.0f;
+    const float Deacceleration = -5.0f;
     CameraSpeed = CameraSpeed + (CameraSpeed * Deacceleration) * Delta;
     CameraSpeed = CameraSpeed + (CameraAcceleration * Delta);
 

@@ -46,7 +46,7 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 }
 
 // Converts EBufferFlag- flags to D3D12_RESOURCE_FLAGS
-inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(UInt32 Flag)
+inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(uint32 Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
     if (Flag & EBufferFlags::BufferFlag_UAV)
@@ -58,7 +58,7 @@ inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(UInt32 Flag)
 }
 
 // Converts ETextureFlag- flags to D3D12_RESOURCE_FLAGS
-inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(UInt32 Flag)
+inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(uint32 Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
     if (Flag & ETextureFlags::TextureFlag_UAV)
@@ -314,9 +314,9 @@ inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
 }
 
 // Converts RenderTargetWriteState to D3D12 RenderTargetWriteMask
-inline UInt8 ConvertRenderTargetWriteState(const RenderTargetWriteState& RenderTargetWriteState)
+inline uint8 ConvertRenderTargetWriteState(const RenderTargetWriteState& RenderTargetWriteState)
 {
-    UInt8 RenderTargetWriteMask = 0;
+    uint8 RenderTargetWriteMask = 0;
     if (RenderTargetWriteState.WriteAll())
     {
         RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
@@ -462,48 +462,48 @@ inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
 }
 
 // Operators for D3D12_GPU_DESCRIPTOR_HANDLE
-inline Bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
+inline bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
 {
     return DescriptorHandle.ptr == Value;
 }
 
-inline Bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
+inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
 {
     return !(DescriptorHandle == Value);
 }
 
-inline Bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
+inline bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
 {
     return Left.ptr == Right.ptr;
 }
 
-inline Bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
+inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
 {
     return !(Left == Right);
 }
 
 // Operators for D3D12_CPU_DESCRIPTOR_HANDLE
-inline Bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
+inline bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
 {
     return DescriptorHandle.ptr == Value;
 }
 
-inline Bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, UInt64 Value)
+inline bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
 {
     return !(DescriptorHandle == Value);
 }
 
-inline Bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right)
+inline bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right)
 {
     return Left.ptr == Right.ptr;
 }
 
-inline Bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right)
+inline bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right)
 {
     return !(Left == Right);
 }
 
-inline UInt32 GetFormatStride(DXGI_FORMAT Format)
+inline uint32 GetFormatStride(DXGI_FORMAT Format)
 {
     switch (Format)
     {
@@ -628,7 +628,7 @@ inline DXGI_FORMAT CastShaderResourceFormat(DXGI_FORMAT Format)
     }
 }
 
-inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(UInt32 InFlags)
+inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(uint32 InFlags)
 {
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
     if (InFlags & RayTracingStructureBuildFlag_AllowUpdate)
@@ -647,7 +647,7 @@ inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationSt
     return Flags;
 }
 
-inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(UInt32 InFlags)
+inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(uint32 InFlags)
 {
     D3D12_RAYTRACING_INSTANCE_FLAGS Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
     if (InFlags & RayTracingInstanceFlags_CullDisable)

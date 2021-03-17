@@ -1,16 +1,16 @@
 #include "ClassType.h"
 
 ClassType::ClassType(
-    const Char* InName,
+    const char* InName,
     const ClassType* InSuperClass,
-    UInt32 SizeInBytes)
+    uint32 SizeInBytes)
     : Name(InName)
     , SuperClass(InSuperClass)
     , SizeInBytes(SizeInBytes)
 {
 }
 
-Bool ClassType::IsSubClassOf(const ClassType* Class) const
+bool ClassType::IsSubClassOf(const ClassType* Class) const
 {
     for (const ClassType* Current = this; Current; Current = Current->GetSuperClass())
     {

@@ -9,7 +9,7 @@ public:
     Game();
     virtual ~Game();
 
-    virtual Bool Init()
+    virtual bool Init()
     {
         return true;
     }

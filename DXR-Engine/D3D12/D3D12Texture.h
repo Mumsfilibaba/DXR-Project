@@ -9,7 +9,7 @@
     #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
-constexpr UInt32 TEXTURE_CUBE_FACE_COUNT = 6;
+constexpr uint32 TEXTURE_CUBE_FACE_COUNT = 6;
 
 class D3D12BaseTexture : public D3D12DeviceChild
 {
@@ -38,10 +38,10 @@ public:
     D3D12BaseTexture2D(
         D3D12Device* InDevice,
         EFormat InFormat,
-        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
-        UInt32 InNumMips,
-        UInt32 InNumSamples,
-        UInt32 InFlags,
+        uint32 SizeX, uint32 SizeY, uint32 SizeZ,
+        uint32 InNumMips,
+        uint32 InNumSamples,
+        uint32 InFlags,
         const ClearValue& InOptimalClearValue)
         : Texture2D(InFormat, SizeX, SizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
         , D3D12BaseTexture(InDevice)
@@ -71,10 +71,10 @@ public:
     D3D12BaseTexture2DArray(
         D3D12Device* InDevice,
         EFormat InFormat,
-        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
-        UInt32 InNumMips,
-        UInt32 InNumSamples,
-        UInt32 InFlags,
+        uint32 SizeX, uint32 SizeY, uint32 SizeZ,
+        uint32 InNumMips,
+        uint32 InNumSamples,
+        uint32 InFlags,
         const ClearValue& InOptimalClearValue)
         : Texture2DArray(InFormat, SizeX, SizeY, InNumMips, InNumSamples, SizeZ, InFlags, InOptimalClearValue)
         , D3D12BaseTexture(InDevice)
@@ -88,10 +88,10 @@ public:
     D3D12BaseTextureCube(
         D3D12Device* InDevice,
         EFormat InFormat,
-        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
-        UInt32 InNumMips,
-        UInt32 InNumSamples,
-        UInt32 InFlags,
+        uint32 SizeX, uint32 SizeY, uint32 SizeZ,
+        uint32 InNumMips,
+        uint32 InNumSamples,
+        uint32 InFlags,
         const ClearValue& InOptimalClearValue)
         : TextureCube(InFormat, SizeX, InNumMips, InFlags, InOptimalClearValue)
         , D3D12BaseTexture(InDevice)
@@ -105,10 +105,10 @@ public:
     D3D12BaseTextureCubeArray(
         D3D12Device* InDevice,
         EFormat InFormat,
-        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
-        UInt32 InNumMips,
-        UInt32 InNumSamples,
-        UInt32 InFlags,
+        uint32 SizeX, uint32 SizeY, uint32 SizeZ,
+        uint32 InNumMips,
+        uint32 InNumSamples,
+        uint32 InFlags,
         const ClearValue& InOptimalClearValue)
         : TextureCubeArray(InFormat, SizeX, InNumMips, SizeZ, InFlags, InOptimalClearValue)
         , D3D12BaseTexture(InDevice)
@@ -122,10 +122,10 @@ public:
     D3D12BaseTexture3D(
         D3D12Device* InDevice,
         EFormat InFormat,
-        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
-        UInt32 InNumMips,
-        UInt32 InNumSamples,
-        UInt32 InFlags,
+        uint32 SizeX, uint32 SizeY, uint32 SizeZ,
+        uint32 InNumMips,
+        uint32 InNumSamples,
+        uint32 InFlags,
         const ClearValue& InOptimalClearValue)
         : Texture3D(InFormat, SizeX, SizeY, SizeZ, InNumMips, InFlags, InOptimalClearValue)
         , D3D12BaseTexture(InDevice)
@@ -140,10 +140,10 @@ public:
     TD3D12BaseTexture(
         D3D12Device* InDevice,
         EFormat InFormat,
-        UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
-        UInt32 InNumMips,
-        UInt32 InNumSamples,
-        UInt32 InFlags,
+        uint32 SizeX, uint32 SizeY, uint32 SizeZ,
+        uint32 InNumMips,
+        uint32 InNumSamples,
+        uint32 InFlags,
         const ClearValue& InOptimalClearValue)
         : TBaseTexture(InDevice, InFormat, SizeX, SizeY, SizeZ, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
     {
@@ -165,7 +165,7 @@ public:
         return D3D12BaseTexture::ShaderResourceView.Get();
     }
 
-    virtual Bool IsValid() const override
+    virtual bool IsValid() const override
     {
         return D3D12BaseTexture::Resource->GetResource() != nullptr;
     }

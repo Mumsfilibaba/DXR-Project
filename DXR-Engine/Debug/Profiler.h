@@ -30,12 +30,12 @@ public:
     static void Disable();
     static void Reset();
 
-    static void BeginTraceScope(const Char* Name);
-    static void EndTraceScope(const Char* Name);
+    static void BeginTraceScope(const char* Name);
+    static void EndTraceScope(const char* Name);
     
     static void BeginGPUFrame(CommandList& CmdList);
-    static void BeginGPUTrace(CommandList& CmdList, const Char* Name);
-    static void EndGPUTrace(CommandList& CmdList, const Char* Name);
+    static void BeginGPUTrace(CommandList& CmdList, const char* Name);
+    static void EndGPUTrace(CommandList& CmdList, const char* Name);
     static void EndGPUFrame(CommandList& CmdList);
 
     static void SetGPUProfiler(class GPUProfiler* Profiler);
@@ -44,7 +44,7 @@ public:
 struct ScopedTrace
 {
 public:
-    ScopedTrace(const Char* InName)
+    ScopedTrace(const char* InName)
         : Name(InName)
     {
         Profiler::BeginTraceScope(Name);
@@ -56,13 +56,13 @@ public:
     }
 
 private:
-    const Char* Name = nullptr;
+    const char* Name = nullptr;
 };
 
 struct GPUScopedTrace
 {
 public:
-    GPUScopedTrace(CommandList& InCmdList, const Char* InName)
+    GPUScopedTrace(CommandList& InCmdList, const char* InName)
         : CmdList(InCmdList)
         , Name(InName)
     {
@@ -76,5 +76,5 @@ public:
 
 private:
     CommandList& CmdList;
-    const Char* Name = nullptr;
+    const char* Name = nullptr;
 };

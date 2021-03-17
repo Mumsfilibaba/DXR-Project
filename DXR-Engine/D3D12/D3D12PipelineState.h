@@ -35,11 +35,11 @@ public:
         Desc.pInputElementDescs = GetElementData();
     }
 
-    virtual Bool IsValid() const override { return true; }
+    virtual bool IsValid() const override { return true; }
 
     const D3D12_INPUT_ELEMENT_DESC* GetElementData() const { return ElementDesc.Data(); }
 
-    UInt32 GetElementCount() const { return ElementDesc.Size(); }
+    uint32 GetElementCount() const { return ElementDesc.Size(); }
 
     const D3D12_INPUT_LAYOUT_DESC& GetDesc() const { return Desc; }
 
@@ -59,7 +59,7 @@ public:
     {
     }
 
-    virtual Bool IsValid() const override { return true; }
+    virtual bool IsValid() const override { return true; }
 
     const D3D12_DEPTH_STENCIL_DESC& GetDesc() const { return Desc; }
 
@@ -77,7 +77,7 @@ public:
     {
     }
 
-    virtual Bool IsValid() const override { return true; }
+    virtual bool IsValid() const override { return true; }
 
     const D3D12_RASTERIZER_DESC& GetDesc() const { return Desc; }
 
@@ -95,7 +95,7 @@ public:
     {
     }
 
-    virtual Bool IsValid() const override { return true; }
+    virtual bool IsValid() const override { return true; }
 
     const D3D12_BLEND_DESC& GetDesc() const { return Desc; }
 
@@ -109,7 +109,7 @@ public:
     D3D12GraphicsPipelineState(D3D12Device* InDevice);
     ~D3D12GraphicsPipelineState() = default;
 
-    Bool Init(const GraphicsPipelineStateCreateInfo& CreateInfo);
+    bool Init(const GraphicsPipelineStateCreateInfo& CreateInfo);
 
     virtual void SetName(const std::string& InName) override final
     {
@@ -121,7 +121,7 @@ public:
 
     virtual void* GetNativeResource() const override final { return reinterpret_cast<void*>(PipelineState.Get()); }
 
-    virtual Bool IsValid() const override { return PipelineState != nullptr && RootSignature != nullptr; }
+    virtual bool IsValid() const override { return PipelineState != nullptr && RootSignature != nullptr; }
 
     ID3D12PipelineState* GetPipeline()      const { return PipelineState.Get(); }
     D3D12RootSignature*  GetRootSignature() const { return RootSignature.Get(); }
@@ -137,7 +137,7 @@ public:
     D3D12ComputePipelineState(D3D12Device* InDevice, const TRef<D3D12ComputeShader>& InShader);
     ~D3D12ComputePipelineState() = default;
 
-    Bool Init();
+    bool Init();
 
     virtual void SetName(const std::string& InName) override final
     {
@@ -149,7 +149,7 @@ public:
 
     virtual void* GetNativeResource() const override final { return reinterpret_cast<void*>(PipelineState.Get()); }
 
-    virtual Bool IsValid() const override { return PipelineState != nullptr && RootSignature != nullptr; }
+    virtual bool IsValid() const override { return PipelineState != nullptr && RootSignature != nullptr; }
 
     ID3D12PipelineState* GetPipeline()      const { return PipelineState.Get(); }
     D3D12RootSignature*  GetRootSignature() const { return RootSignature.Get(); }
@@ -162,7 +162,7 @@ private:
 
 struct RayTracingShaderIdentifer
 {
-    Char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
+    char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
 };
 
 class D3D12RayTracingPipelineState : public RayTracingPipelineState, public D3D12DeviceChild
@@ -171,7 +171,7 @@ public:
     D3D12RayTracingPipelineState(D3D12Device* InDevice);
     ~D3D12RayTracingPipelineState() = default;
 
-    Bool Init(const RayTracingPipelineStateCreateInfo& CreateInfo);
+    bool Init(const RayTracingPipelineStateCreateInfo& CreateInfo);
 
     virtual void SetName(const std::string& InName) override
     {
@@ -183,7 +183,7 @@ public:
 
     virtual void* GetNativeResource() const override final { return reinterpret_cast<void*>(StateObject.Get()); }
 
-    virtual Bool IsValid() const { return StateObject != nullptr; }
+    virtual bool IsValid() const { return StateObject != nullptr; }
 
     void* GetShaderIdentifer(const std::string& ExportName);
 

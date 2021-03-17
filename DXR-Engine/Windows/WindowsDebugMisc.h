@@ -6,18 +6,18 @@
 class WindowsDebugMisc : public GenericDebugMisc
 {
 public:
-    static FORCEINLINE void DebugBreak()
+    FORCEINLINE static void DebugBreak()
     {
         __debugbreak();
     }
 
-    static FORCEINLINE void OutputDebugString(const std::string& Message)
+    FORCEINLINE static void OutputDebugString(const std::string& Message)
     {
-        ::OutputDebugStringA(Message.c_str());
+        OutputDebugStringA(Message.c_str());
     }
 
-    static FORCEINLINE Bool IsDebuggerPresent()
+    FORCEINLINE static bool IsDebuggerPresent()
     {
-        return ::IsDebuggerPresent();
+        return IsDebuggerPresent();
     }
 };

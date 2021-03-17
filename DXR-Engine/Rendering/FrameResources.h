@@ -17,7 +17,7 @@ template<typename TResource>
 class PtrResourceCache
 {
 public:
-    Int32 Add(TResource* Resource)
+    int32 Add(TResource* Resource)
     {
         if (Resource == nullptr)
         {
@@ -27,7 +27,7 @@ public:
         auto TextureIndexPair = ResourceIndices.find(Resource);
         if (TextureIndexPair == ResourceIndices.end())
         {
-            Int32 NewIndex = Resources.Size();
+            int32 NewIndex = Resources.Size();
             ResourceIndices[Resource] = NewIndex;
             Resources.EmplaceBack(Resource);
 
@@ -39,19 +39,19 @@ public:
         }
     }
 
-    TResource* Get(UInt32 Index) const
+    TResource* Get(uint32 Index) const
     {
         return Resources[Index];
     }
 
-    UInt32 Size() const
+    uint32 Size() const
     {
         return Resources.Size();
     }
 
 private:
     TArray<TResource*>                    Resources;
-    std::unordered_map<TResource*, Int32> ResourceIndices;
+    std::unordered_map<TResource*, int32> ResourceIndices;
 };
 
 struct FrameResources
@@ -102,7 +102,7 @@ struct FrameResources
     TArray<RayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<RayTracingShaderResources>       RTHitGroupResources;
-    std::unordered_map<class Mesh*, UInt32> RTMeshToHitGroupIndex;
+    std::unordered_map<class Mesh*, uint32> RTMeshToHitGroupIndex;
     PtrResourceCache<ShaderResourceView>    RTMaterialTextureCache;
 
     TArray<MeshDrawCommand> DeferredVisibleCommands;

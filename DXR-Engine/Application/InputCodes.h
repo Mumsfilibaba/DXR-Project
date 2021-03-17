@@ -1,7 +1,7 @@
 #pragma once
 #include "Core.h"
 
-enum EKey : UInt8
+enum EKey : uint8
 {
     Key_Unknown = 0,
 
@@ -141,7 +141,7 @@ enum EKey : UInt8
     Key_Count = Key_Last + 1
 };
 
-enum EMouseButton : UInt8
+enum EMouseButton : uint8
 {
     MouseButton_Unknown = 0,
     MouseButton_Left    = 1,
@@ -165,7 +165,7 @@ enum EModifierFlag
     ModifierFlag_NumLock  = FLAG(6),
 };
 
-inline const Char* ToString(EMouseButton Button)
+inline const char* ToString(EMouseButton Button)
 {
     switch (Button)
     {
@@ -178,7 +178,7 @@ inline const Char* ToString(EMouseButton Button)
     }
 }
 
-inline const Char* ToString(EKey key)
+inline const char* ToString(EKey key)
 {
     switch (key)
     {

@@ -14,7 +14,7 @@ public:
         PlatformDebugMisc::OutputDebugString(Message);
     }
 
-    static FORCEINLINE Bool IsDebuggerPresent()
+    static FORCEINLINE bool IsDebuggerPresent()
     {
         return PlatformDebugMisc::IsDebuggerPresent();
     }

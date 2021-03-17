@@ -1,7 +1,7 @@
 #pragma once
 #include "Core.h"
 
-enum class EConsoleColor : UInt8
+enum class EConsoleColor : uint8
 {
     Red    = 0,
     Green  = 1,

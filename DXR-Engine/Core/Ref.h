@@ -1,7 +1,7 @@
 #pragma once
-#include "Core/RefCountedObject.h"
+#include "RefCountedObject.h"
 
-#include <type_traits>
+#include "Containers/Utilities.h"
 
 // TRef - Helper class when using objects with RefCountedObject as a base
 
@@ -147,73 +147,73 @@ public:
         return Dereference();
     }
 
-    FORCEINLINE Bool operator==(T* InPtr) const noexcept
+    FORCEINLINE bool operator==(T* InPtr) const noexcept
     {
         return (RefPtr == InPtr);
     }
 
-    FORCEINLINE Bool operator==(const TRef& Other) const noexcept
+    FORCEINLINE bool operator==(const TRef& Other) const noexcept
     {
         return (RefPtr == Other.RefPtr);
     }
 
-    FORCEINLINE Bool operator!=(T* InPtr) const noexcept
+    FORCEINLINE bool operator!=(T* InPtr) const noexcept
     {
         return (RefPtr != InPtr);
     }
 
-    FORCEINLINE Bool operator!=(const TRef& Other) const noexcept
+    FORCEINLINE bool operator!=(const TRef& Other) const noexcept
     {
         return (RefPtr != Other.RefPtr);
     }
 
-    FORCEINLINE Bool operator==(std::nullptr_t) const noexcept
+    FORCEINLINE bool operator==(std::nullptr_t) const noexcept
     {
         return (RefPtr == nullptr);
     }
 
-    FORCEINLINE Bool operator!=(std::nullptr_t) const noexcept
+    FORCEINLINE bool operator!=(std::nullptr_t) const noexcept
     {
         return (RefPtr != nullptr);
     }
 
     template<typename TOther>
-    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator==(TOther* RHS) const noexcept
+    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator==(TOther* RHS) const noexcept
     {
         return (RefPtr == RHS);
     }
 
     template<typename TOther>
-    friend FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator==(TOther* LHS, const TRef& RHS) noexcept
+    friend FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator==(TOther* LHS, const TRef& RHS) noexcept
     {
         return (RHS == LHS);
     }
 
     template<typename TOther>
-    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator==(const TRef<TOther>& RHS) const noexcept
+    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator==(const TRef<TOther>& RHS) const noexcept
     {
         return (RefPtr == RHS.RefPtr);
     }
 
     template<typename TOther>
-    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator!=(TOther* RHS) const noexcept
+    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator!=(TOther* RHS) const noexcept
     {
         return (RefPtr != RHS);
     }
 
     template<typename TOther>
-    friend FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator!=(TOther* LHS, const TRef& RHS) noexcept
+    friend FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator!=(TOther* LHS, const TRef& RHS) noexcept
     {
         return (RHS != LHS);
     }
 
     template<typename TOther>
-    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, Bool> operator!=(const TRef<TOther>& RHS) const noexcept
+    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator!=(const TRef<TOther>& RHS) const noexcept
     {
         return (RefPtr != RHS.RefPtr);
     }
 
-    FORCEINLINE operator Bool() const noexcept
+    FORCEINLINE operator bool() const noexcept
     {
         return (RefPtr != nullptr);
     }

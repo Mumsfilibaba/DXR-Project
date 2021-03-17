@@ -23,7 +23,7 @@ void DirectionalLight::SetRotation(const XMFLOAT3& InRotation)
     CalculateMatrix();
 }
 
-void DirectionalLight::SetRotation(Float x, Float y, Float z)
+void DirectionalLight::SetRotation(float x, float y, float z)
 {
     SetRotation(XMFLOAT3(x, y, z));
 }
@@ -34,12 +34,12 @@ void DirectionalLight::SetLookAt(const XMFLOAT3& InLookAt)
     CalculateMatrix();
 }
 
-void DirectionalLight::SetLookAt(Float x, Float y, Float z)
+void DirectionalLight::SetLookAt(float x, float y, float z)
 {
     SetLookAt(XMFLOAT3(x, y, z));
 }
 
-void DirectionalLight::SetShadowNearPlane(Float InShadowNearPlane)
+void DirectionalLight::SetShadowNearPlane(float InShadowNearPlane)
 {
     if (InShadowNearPlane > 0.0f)
     {
@@ -51,7 +51,7 @@ void DirectionalLight::SetShadowNearPlane(Float InShadowNearPlane)
     }
 }
 
-void DirectionalLight::SetShadowFarPlane(Float InShadowFarPlane)
+void DirectionalLight::SetShadowFarPlane(float InShadowFarPlane)
 {
     if (InShadowFarPlane > 0.0f)
     {
@@ -71,7 +71,7 @@ void DirectionalLight::CalculateMatrix()
     XmDirection	= XMVector3Normalize(XmOffset);
     XMStoreFloat3(&Direction, XmDirection);
 
-    const Float Scale = (ShadowFarPlane - ShadowNearPlane) / 2.0f;
+    const float Scale = (ShadowFarPlane - ShadowNearPlane) / 2.0f;
     XmOffset = XMVectorScale(XmOffset, -Scale);
 
     XMVECTOR XmLookAt   = XMLoadFloat3(&LookAt);
@@ -81,7 +81,7 @@ void DirectionalLight::CalculateMatrix()
     XMVECTOR XmUp = XMVectorSet(0.0, 0.0f, 1.0f, 0.0f);
     XmUp = XMVector3Normalize(XMVector3Transform(XmUp, XmRotation));
 
-    const Float Offset    = 35.0f;
+    const float Offset    = 35.0f;
     XMMATRIX XmProjection = XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, ShadowNearPlane, ShadowFarPlane);
     XMMATRIX XmView       = XMMatrixLookAtLH(XmPosition, XmLookAt, XmUp);
 

@@ -28,7 +28,7 @@ WindowsApplication::~WindowsApplication()
     GlobalWindowsApplication = nullptr;
 }
 
-Bool WindowsApplication::Init()
+bool WindowsApplication::Init()
 {
     WNDCLASS WindowClass;
     Memory::Memzero(&WindowClass);
@@ -51,14 +51,14 @@ Bool WindowsApplication::Init()
 
 void WindowsApplication::Tick()
 {
-    constexpr UInt16 SCAN_CODE_MASK   = 0x01ff;
-    constexpr UInt32 KEY_REPEAT_MASK  = 0x40000000;
-    constexpr UInt16 BACK_BUTTON_MASK = 0x0001;
+    constexpr uint16 SCAN_CODE_MASK   = 0x01ff;
+    constexpr uint32 KEY_REPEAT_MASK  = 0x40000000;
+    constexpr uint16 BACK_BUTTON_MASK = 0x0001;
 
     for (const WindowsEvent& Event : Events)
     {
         HWND   Hwnd    = Event.Hwnd;
-        UInt32 Message = Event.Message;
+        uint32 Message = Event.Message;
         WPARAM wParam  = Event.wParam;
         WPARAM lParam  = Event.lParam;
 
@@ -81,7 +81,7 @@ void WindowsApplication::Tick()
             {
                 if (MessageWindow)
                 {
-                    const Bool HasFocus = (Message == WM_SETFOCUS);
+                    const bool HasFocus = (Message == WM_SETFOCUS);
                     EventHandler->OnWindowFocusChanged(MessageWindow, HasFocus);
                 }
 
@@ -103,8 +103,8 @@ void WindowsApplication::Tick()
             {
                 if (MessageWindow)
                 {
-                    const UInt16 Width  = LOWORD(lParam);
-                    const UInt16 Height = HIWORD(lParam);
+                    const uint16 Width  = LOWORD(lParam);
+                    const uint16 Height = HIWORD(lParam);
                     EventHandler->OnWindowResized(MessageWindow, Width, Height);
                 }
 
@@ -115,8 +115,8 @@ void WindowsApplication::Tick()
             {
                 if (MessageWindow)
                 {
-                    const Int16 x = (Int16)LOWORD(lParam);
-                    const Int16 y = (Int16)HIWORD(lParam);
+                    const int16 x = (int16)LOWORD(lParam);
+                    const int16 y = (int16)HIWORD(lParam);
                     EventHandler->OnWindowMoved(MessageWindow, x, y);
                 }
 
@@ -126,7 +126,7 @@ void WindowsApplication::Tick()
             case WM_SYSKEYUP:
             case WM_KEYUP:
             {
-                const UInt32 ScanCode = static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
+                const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & SCAN_CODE_MASK);
                 const EKey Key        = Input::ConvertFromScanCode(ScanCode);
                 EventHandler->OnKeyReleased(Key, GetModifierKeyState());
                 break;
@@ -135,8 +135,8 @@ void WindowsApplication::Tick()
             case WM_SYSKEYDOWN:
             case WM_KEYDOWN:
             {
-                const Bool IsRepeat   = !!(lParam & KEY_REPEAT_MASK);
-                const UInt32 ScanCode = static_cast<UInt32>(HIWORD(lParam) & SCAN_CODE_MASK);
+                const bool IsRepeat   = !!(lParam & KEY_REPEAT_MASK);
+                const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & SCAN_CODE_MASK);
                 const EKey Key        = Input::ConvertFromScanCode(ScanCode);
                 EventHandler->OnKeyPressed(Key, IsRepeat, GetModifierKeyState());
                 break;
@@ -145,15 +145,15 @@ void WindowsApplication::Tick()
             case WM_SYSCHAR:
             case WM_CHAR:
             {
-                const UInt32 Character = static_cast<UInt32>(wParam);
+                const uint32 Character = static_cast<uint32>(wParam);
                 EventHandler->OnCharacterInput(Character);
                 break;
             }
 
             case WM_MOUSEMOVE:
             {
-                const Int32 x = GET_X_LPARAM(lParam);
-                const Int32 y = GET_Y_LPARAM(lParam);
+                const int32 x = GET_X_LPARAM(lParam);
+                const int32 y = GET_Y_LPARAM(lParam);
 
                 if (!IsTrackingMouse)
                 {
@@ -242,14 +242,14 @@ void WindowsApplication::Tick()
 
             case WM_MOUSEWHEEL:
             {
-                const Float WheelDelta = static_cast<Float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float>(WHEEL_DELTA);
+                const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
                 EventHandler->OnMouseScrolled(0.0f, WheelDelta);
                 break;
             }
 
             case WM_MOUSEHWHEEL:
             {
-                const Float WheelDelta = static_cast<Float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<Float>(WHEEL_DELTA);
+                const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
                 EventHandler->OnMouseScrolled(WheelDelta, 0.0f);
                 break;
             }
@@ -297,7 +297,7 @@ GenericCursor* WindowsApplication::MakeCursor()
     }
 }
 
-Bool WindowsApplication::PeekMessageUntilNoMessage()
+bool WindowsApplication::PeekMessageUntilNoMessage()
 {
     MSG Message;
     while (::PeekMessage(&Message, 0, 0, 0, PM_REMOVE))
@@ -316,7 +316,7 @@ Bool WindowsApplication::PeekMessageUntilNoMessage()
 
 ModifierKeyState WindowsApplication::GetModifierKeyState()
 {
-    UInt32 ModifierMask = 0;
+    uint32 ModifierMask = 0;
     if (::GetKeyState(VK_CONTROL) & 0x8000)
     {
         ModifierMask |= EModifierFlag::ModifierFlag_Ctrl;
@@ -375,7 +375,7 @@ GenericCursor* WindowsApplication::GetCursor() const
     return CurrentCursor.Get();
 }
 
-void WindowsApplication::GetCursorPos(GenericWindow* RelativeWindow, Int32& OutX, Int32& OutY) const
+void WindowsApplication::GetCursorPos(GenericWindow* RelativeWindow, int32& OutX, int32& OutY) const
 {
     TRef<WindowsWindow> WinRelative = MakeSharedRef<WindowsWindow>(RelativeWindow);
     HWND hRelative = WinRelative->GetHandle();
@@ -434,7 +434,7 @@ void WindowsApplication::SetCapture(GenericWindow* CaptureWindow)
     }
 }
 
-void WindowsApplication::SetCursorPos(GenericWindow* RelativeWindow, Int32 x, Int32 y)
+void WindowsApplication::SetCursorPos(GenericWindow* RelativeWindow, int32 x, int32 y)
 {
     if (RelativeWindow)
     {

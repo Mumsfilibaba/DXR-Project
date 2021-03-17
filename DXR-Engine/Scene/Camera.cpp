@@ -19,7 +19,7 @@ Camera::Camera()
     UpdateMatrices();
 }
 
-void Camera::Move(Float X, Float Y, Float Z)
+void Camera::Move(float X, float Y, float Z)
 {
     XMVECTOR XmPosition = XMLoadFloat3(&Position);
     XMVECTOR XmRight    = XMLoadFloat3(&Right);
@@ -35,10 +35,10 @@ void Camera::Move(Float X, Float Y, Float Z)
     XMStoreFloat3(&Position, XmPosition);
 }
 
-void Camera::Rotate(Float Pitch, Float Yaw, Float Roll)
+void Camera::Rotate(float Pitch, float Yaw, float Roll)
 {
     Rotation.x += Pitch;
-    Rotation.x = std::max<Float>(XMConvertToRadians(-89.0f), std::min<Float>(XMConvertToRadians(89.0f), Rotation.x));
+    Rotation.x = std::max<float>(XMConvertToRadians(-89.0f), std::min<float>(XMConvertToRadians(89.0f), Rotation.x));
     
     Rotation.y += Yaw;
     Rotation.z += Roll;
@@ -58,7 +58,7 @@ void Camera::Rotate(Float Pitch, Float Yaw, Float Roll)
 
 void Camera::UpdateMatrices()
 {
-    Float Fov = XMConvertToRadians(90.0f);
+    float Fov = XMConvertToRadians(90.0f);
     AspectRatio = 1920.0f / 1080.0f;
 
     XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(Fov, AspectRatio, NearPlane, FarPlane);

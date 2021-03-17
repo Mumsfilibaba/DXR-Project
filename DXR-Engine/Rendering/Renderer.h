@@ -34,7 +34,7 @@ public:
     Renderer()  = default;
     ~Renderer() = default;
 
-    Bool Init();
+    bool Init();
     void Release();
 
     void PerformFrustumCulling(const Scene& Scene);
@@ -48,11 +48,11 @@ public:
     void Tick(const Scene& Scene);
 
 private:
-    Bool InitBoundingBoxDebugPass();
-    Bool InitAA();
-    Bool InitShadingImage();
+    bool InitBoundingBoxDebugPass();
+    bool InitAA();
+    bool InitShadingImage();
 
-    void ResizeResources(UInt32 Width, UInt32 Height);
+    void ResizeResources(uint32 Width, uint32 Height);
 
     CommandList CmdList;
 
@@ -86,7 +86,7 @@ private:
 
     TRef<GPUProfiler> GPUProfiler;
 
-    UInt32 LastFrameNumDrawCalls     = 0;
-    UInt32 LastFrameNumDispatchCalls = 0;
-    UInt32 LastFrameNumCommands      = 0;
+    uint32 LastFrameNumDrawCalls     = 0;
+    uint32 LastFrameNumDispatchCalls = 0;
+    uint32 LastFrameNumCommands      = 0;
 };

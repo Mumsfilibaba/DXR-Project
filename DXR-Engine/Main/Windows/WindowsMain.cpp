@@ -7,8 +7,7 @@
 
 int WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, int CmdShow)
 {
-    TArrayView<const Char*> Args;
-    return EngineMain(Args);
+    return EngineMain();
 }
 
 #pragma warning(pop)

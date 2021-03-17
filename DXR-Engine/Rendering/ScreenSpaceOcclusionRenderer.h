@@ -11,15 +11,15 @@ public:
     ScreenSpaceOcclusionRenderer()  = default;
     ~ScreenSpaceOcclusionRenderer() = default;
 
-    Bool Init(FrameResources& FrameResources);
+    bool Init(FrameResources& FrameResources);
     void Release();
 
     void Render(CommandList& CmdList, FrameResources& FrameResources);
 
-    Bool ResizeResources(FrameResources& FrameResources);
+    bool ResizeResources(FrameResources& FrameResources);
 
 private:
-    Bool CreateRenderTarget(FrameResources& FrameResources);
+    bool CreateRenderTarget(FrameResources& FrameResources);
 
     TRef<ComputePipelineState> PipelineState;
     TRef<ComputeShader>        SSAOShader;

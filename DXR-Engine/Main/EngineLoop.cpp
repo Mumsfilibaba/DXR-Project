@@ -28,17 +28,15 @@
 
 struct EngineLoopData
 {
-    Bool  ShouldRun = false;
-    Bool  IsExiting = false;
+    bool  ShouldRun = false;
+    bool  IsExiting = false;
     Clock Clock;
 };
 
 static EngineLoopData gEngineLoopData;
 
-Int32 EngineMain(const TArrayView<const Char*> Args)
+int32 EngineMain()
 {
-    UNREFERENCED_VARIABLE(Args);
-
 #ifdef _DEBUG
     Memory::SetDebugFlags(EMemoryDebugFlag::MemoryDebugFlag_LeakCheck);
 #endif
@@ -93,7 +91,7 @@ Int32 EngineMain(const TArrayView<const Char*> Args)
     return 0;
 }
 
-Bool EngineLoop::PreInit()
+bool EngineLoop::PreInit()
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -119,7 +117,7 @@ Bool EngineLoop::PreInit()
     return true;
 }
 
-Bool EngineLoop::Init()
+bool EngineLoop::Init()
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -128,7 +126,7 @@ Bool EngineLoop::Init()
 
     gConsole.Init();
 
-    const UInt32 Style =
+    const uint32 Style =
         WindowStyleFlag_Titled      |
         WindowStyleFlag_Closable    |
         WindowStyleFlag_Minimizable |
@@ -193,7 +191,7 @@ Bool EngineLoop::Init()
     return true;
 }
 
-Bool EngineLoop::PostInit()
+bool EngineLoop::PostInit()
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -237,7 +235,7 @@ void EngineLoop::PostTick()
     gRenderer.Tick(*gGame->GetCurrentScene());
 }
 
-Bool EngineLoop::PreRelease()
+bool EngineLoop::PreRelease()
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -248,7 +246,7 @@ Bool EngineLoop::PreRelease()
     return true;
 }
 
-Bool EngineLoop::Release()
+bool EngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -263,7 +261,7 @@ Bool EngineLoop::Release()
     return true;
 }
 
-Bool EngineLoop::PostRelease()
+bool EngineLoop::PostRelease()
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -284,12 +282,12 @@ void EngineLoop::Exit()
     gEngineLoopData.IsExiting = true;
 }
 
-Bool EngineLoop::IsRunning()
+bool EngineLoop::IsRunning()
 {
     return gEngineLoopData.ShouldRun;
 }
 
-Bool EngineLoop::IsExiting()
+bool EngineLoop::IsExiting()
 {
     return gEngineLoopData.IsExiting;
 }

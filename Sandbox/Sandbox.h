@@ -1,16 +1,12 @@
 #include <Game/Game.h>
 
-/*
-* Sandbox
-*/
-
 class Sandbox : public Game
 {
 public:
     Sandbox()   = default;
     ~Sandbox()  = default;
 
-    virtual Bool Init() override;
+    virtual bool Init() override;
 
     virtual void Tick(Timestamp DeltaTime) override;
 

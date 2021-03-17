@@ -10,34 +10,34 @@ public:
     ~PointLight() = default;
 
     void SetPosition(const XMFLOAT3& InPosition);
-    void SetPosition(Float x, Float y, Float z);
+    void SetPosition(float x, float y, float z);
 
-    void SetShadowNearPlane(Float InShadowNearPlane);
-    void SetShadowFarPlane(Float InShadowFarPlane);
+    void SetShadowNearPlane(float InShadowNearPlane);
+    void SetShadowFarPlane(float InShadowFarPlane);
 
-    void SetShadowCaster(Bool InShadowCaster) 
+    void SetShadowCaster(bool InShadowCaster) 
     { 
         ShadowCaster = InShadowCaster;
         CalculateMatrices();
     }
 
-    Bool IsShadowCaster() const { return ShadowCaster; }
+    bool IsShadowCaster() const { return ShadowCaster; }
 
     const XMFLOAT3& GetPosition() const { return Position; }
 
-    const XMFLOAT4X4& GetMatrix(UInt32 Index) const
+    const XMFLOAT4X4& GetMatrix(uint32 Index) const
     {
         Assert(Index < 6);
         return Matrices[Index];
     }
 
-    const XMFLOAT4X4& GetViewMatrix(UInt32 Index) const
+    const XMFLOAT4X4& GetViewMatrix(uint32 Index) const
     {
         Assert(Index < 6);
         return ViewMatrices[Index];
     }
 
-    const XMFLOAT4X4& GetProjectionMatrix(UInt32 Index) const
+    const XMFLOAT4X4& GetProjectionMatrix(uint32 Index) const
     {
         Assert(Index < 6);
         return ProjMatrices[Index];
@@ -50,5 +50,5 @@ private:
     XMFLOAT4X4 ViewMatrices[6];
     XMFLOAT4X4 ProjMatrices[6];
     XMFLOAT3   Position;
-    Bool       ShadowCaster = false;
+    bool       ShadowCaster = false;
 };

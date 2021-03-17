@@ -11,13 +11,13 @@ public:
 
     // Rotation in Radians
     void SetRotation(const XMFLOAT3& InRotation);
-    void SetRotation(Float x, Float y, Float z);
+    void SetRotation(float x, float y, float z);
 
     void SetLookAt(const XMFLOAT3& InInLookAt);
-    void SetLookAt(Float x, Float y, Float z);
+    void SetLookAt(float x, float y, float z);
 
-    void SetShadowNearPlane(Float InShadowNearPlane);
-    void SetShadowFarPlane(Float InShadowFarPlane);
+    void SetShadowNearPlane(float InShadowNearPlane);
+    void SetShadowFarPlane(float InShadowFarPlane);
 
     const XMFLOAT3& GetDirection() const { return Direction; }
 

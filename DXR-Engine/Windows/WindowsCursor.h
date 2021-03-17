@@ -11,11 +11,11 @@ public:
     WindowsCursor(WindowsApplication* InApplication);
     ~WindowsCursor();
 
-    virtual Bool Init(const CursorCreateInfo& InCreateInfo) override final;
+    virtual bool Init(const CursorCreateInfo& InCreateInfo) override final;
 
-    virtual Void* GetNativeHandle() const override final
+    virtual void* GetNativeHandle() const override final
     {
-        return reinterpret_cast<Void*>(hCursor);
+        return reinterpret_cast<void*>(hCursor);
     }
 
     HCURSOR GetCursor() const { return hCursor; }

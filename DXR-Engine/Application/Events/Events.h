@@ -3,7 +3,7 @@
 
 #include "Application/Generic/GenericApplication.h"
 
-enum class EEventType : UInt8
+enum class EEventType : uint8
 { 
     Unknown = 0,
     // Keys
@@ -24,7 +24,7 @@ enum class EEventType : UInt8
     WindowClosed       = 13,
 };
 
-inline const Char* ToString(EEventType EventType)
+inline const char* ToString(EEventType EventType)
 {
     switch (EventType)
     {
@@ -46,7 +46,7 @@ inline const Char* ToString(EEventType EventType)
     return "Unknown";
 }
 
-enum EEventCategory : UInt8
+enum EEventCategory : uint8
 {
     EventCategory_Unknown  = 0,
     EventCategory_Input    = BIT(1),
@@ -65,11 +65,11 @@ enum EEventCategory : UInt8
     { \
         return GetStaticType(); \
     } \
-    virtual const Char* GetTypeAsString() const \
+    virtual const char* GetTypeAsString() const \
     { \
         return #Type; \
     } \
-    virtual UInt8 GetCategoryFlags() const override \
+    virtual uint8 GetCategoryFlags() const override \
     { \
         return Category; \
     } \
@@ -89,10 +89,10 @@ public:
     virtual std::string ToString() const = 0;
 
     virtual EEventType GetType() const  = 0;
-    virtual const Char* GetTypeAsString() const = 0;
-    virtual UInt8 GetCategoryFlags() const = 0;
+    virtual const char* GetTypeAsString() const = 0;
+    virtual uint8 GetCategoryFlags() const = 0;
 
-    Bool IsHandled() const { return HasBeenHandled; }
+    bool IsHandled() const { return HasBeenHandled; }
 
     static EEventType GetStaticType()
     {
@@ -100,11 +100,11 @@ public:
     }
 
 private:
-    mutable Bool HasBeenHandled;
+    mutable bool HasBeenHandled;
 };
 
 template<typename T>
-TEnableIf<std::is_base_of_v<Event, T>, Bool> IsEventOfType(const Event& InEvent)
+TEnableIf<std::is_base_of_v<Event, T>, bool> IsEventOfType(const Event& InEvent)
 {
     return (InEvent.GetType() == T::GetStaticType());
 }
@@ -125,7 +125,7 @@ struct KeyPressedEvent : public Event
 {
     DECLARE_EVENT(KeyPressed, EventCategory_Input | EventCategory_Keyboard);
 
-    KeyPressedEvent(EKey InKey, Bool InIsRepeat, const ModifierKeyState& InModifiers)
+    KeyPressedEvent(EKey InKey, bool InIsRepeat, const ModifierKeyState& InModifiers)
         : Event()
         , Key(InKey)
         , IsRepeat(InIsRepeat)
@@ -139,7 +139,7 @@ struct KeyPressedEvent : public Event
     }
 
     EKey Key;
-    Bool IsRepeat;
+    bool IsRepeat;
     ModifierKeyState Modifiers;
 };
 
@@ -167,7 +167,7 @@ struct KeyTypedEvent : public Event
 {
     DECLARE_EVENT(KeyTyped, EventCategory_Input | EventCategory_Keyboard);
 
-    KeyTypedEvent(UInt32 InCharacter)
+    KeyTypedEvent(uint32 InCharacter)
         : Event()
         , Character(InCharacter)
     {
@@ -178,19 +178,19 @@ struct KeyTypedEvent : public Event
         return std::string(GetTypeAsString()) + " = " + GetPrintableCharacter();
     }
 
-    FORCEINLINE const Char GetPrintableCharacter() const
+    FORCEINLINE const char GetPrintableCharacter() const
     {
-        return static_cast<Char>(Character);
+        return static_cast<char>(Character);
     }
 
-    UInt32 Character;
+    uint32 Character;
 };
 
 struct MouseMovedEvent : public Event
 {
     DECLARE_EVENT(MouseMoved, EventCategory_Input | EventCategory_Mouse);
 
-    MouseMovedEvent(Int32 InX, Int32 InY)
+    MouseMovedEvent(int32 InX, int32 InY)
         : Event()
         , x(InX)
         , y(InY)
@@ -202,8 +202,8 @@ struct MouseMovedEvent : public Event
         return std::string(GetTypeAsString()) + " = (" + std::to_string(x) + ", " + std::to_string(y) + ")";
     }
 
-    Int32 x;
-    Int32 y;
+    int32 x;
+    int32 y;
 };
 
 struct MousePressedEvent : public Event
@@ -251,7 +251,7 @@ struct MouseScrolledEvent : public Event
 {
     DECLARE_EVENT(MouseScrolled, EventCategory_Input | EventCategory_Mouse);
 
-    MouseScrolledEvent(Float InHorizontalDelta, Float InVerticalDelta)
+    MouseScrolledEvent(float InHorizontalDelta, float InVerticalDelta)
         : Event()
         , HorizontalDelta(InHorizontalDelta)
         , VerticalDelta(InVerticalDelta)
@@ -263,15 +263,15 @@ struct MouseScrolledEvent : public Event
         return std::string(GetTypeAsString()) + " = (" + std::to_string(VerticalDelta) + ", " + std::to_string(HorizontalDelta) + ")";
     }
 
-    Float HorizontalDelta;
-    Float VerticalDelta;
+    float HorizontalDelta;
+    float VerticalDelta;
 };
 
 struct WindowResizeEvent : public Event
 {
     DECLARE_EVENT(WindowResized, EventCategory_Window);
 
-    WindowResizeEvent(const TRef<GenericWindow>& InWindow, UInt16 InWidth, UInt16 InHeight)
+    WindowResizeEvent(const TRef<GenericWindow>& InWindow, uint16 InWidth, uint16 InHeight)
         : Event()
         , Window(InWindow)
         , Width(InWidth)
@@ -285,15 +285,15 @@ struct WindowResizeEvent : public Event
     }
 
     TRef<GenericWindow> Window;
-    UInt16 Width;
-    UInt16 Height;
+    uint16 Width;
+    uint16 Height;
 };
 
 struct WindowFocusChangedEvent : public Event
 {
     DECLARE_EVENT(WindowFocusChanged, EventCategory_Window);
 
-    WindowFocusChangedEvent(const TRef<GenericWindow>& InWindow, Bool hasFocus)
+    WindowFocusChangedEvent(const TRef<GenericWindow>& InWindow, bool hasFocus)
         : Event()
         , Window(InWindow)
         , HasFocus(hasFocus)
@@ -306,14 +306,14 @@ struct WindowFocusChangedEvent : public Event
     }
 
     TRef<GenericWindow> Window;
-    Bool HasFocus;
+    bool HasFocus;
 };
 
 struct WindowMovedEvent : public Event
 {
     DECLARE_EVENT(WindowMoved, EventCategory_Window);
     
-    WindowMovedEvent(const TRef<GenericWindow>& InWindow, Int16 x, Int16 y)
+    WindowMovedEvent(const TRef<GenericWindow>& InWindow, int16 x, int16 y)
         : Event()
         , Window(InWindow)
         , Position({ x, y })
@@ -328,8 +328,8 @@ struct WindowMovedEvent : public Event
     TRef<GenericWindow> Window;
     struct
     {
-        Int16 x;
-        Int16 y;
+        int16 x;
+        int16 y;
     } Position;
 };
 

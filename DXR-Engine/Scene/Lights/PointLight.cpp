@@ -17,12 +17,12 @@ void PointLight::SetPosition(const XMFLOAT3& InPosition)
 	CalculateMatrices();
 }
 
-void PointLight::SetPosition(Float x, Float y, Float z)
+void PointLight::SetPosition(float x, float y, float z)
 {
 	SetPosition(XMFLOAT3(x, y, z));
 }
 
-void PointLight::SetShadowNearPlane(Float InShadowNearPlane)
+void PointLight::SetShadowNearPlane(float InShadowNearPlane)
 {
 	if (InShadowNearPlane > 0.0f)
 	{
@@ -34,7 +34,7 @@ void PointLight::SetShadowNearPlane(Float InShadowNearPlane)
 	}
 }
 
-void PointLight::SetShadowFarPlane(Float InShadowFarPlane)
+void PointLight::SetShadowFarPlane(float InShadowFarPlane)
 {
 	if (InShadowFarPlane > 0.0f)
 	{
@@ -74,7 +74,7 @@ void PointLight::CalculateMatrices()
 	};
 
 	XMVECTOR LightPosition = XMLoadFloat3(&Position);
-	for (UInt32 i = 0; i < 6; i++)
+	for (uint32 i = 0; i < 6; i++)
 	{
 		XMVECTOR LightDirection	= XMLoadFloat3(&Directions[i]);
 		XMVECTOR LightUp		= XMLoadFloat3(&UpVectors[i]);

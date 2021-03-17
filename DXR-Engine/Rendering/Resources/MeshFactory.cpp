@@ -4,7 +4,7 @@
 //#include <assimp/scene.h>
 //#include <assimp/postprocess.h>
 
-MeshData MeshFactory::CreateFromFile(const std::string& Filename, Bool MergeMeshes, Bool LeftHanded) noexcept
+MeshData MeshFactory::CreateFromFile(const std::string& Filename, bool MergeMeshes, bool LeftHanded) noexcept
 {
     UNREFERENCED_VARIABLE(Filename);
     UNREFERENCED_VARIABLE(MergeMeshes);
@@ -13,7 +13,7 @@ MeshData MeshFactory::CreateFromFile(const std::string& Filename, Bool MergeMesh
     /*using namespace std;
 
     // Set import flags
-    UInt32 flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ImproveCacheLocality | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
+    uint32 flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ImproveCacheLocality | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
     if (leftHanded)
     {
         flags |= aiProcess_ConvertToLeftHanded;
@@ -34,8 +34,8 @@ MeshData MeshFactory::CreateFromFile(const std::string& Filename, Bool MergeMesh
 
             size_t vertexOffset = 0;
             size_t indexOffset = 0;
-            UInt32 numMeshesToLoad = (mergeMeshes) ? pScene->mNumMeshes : 1;
-            for (UInt32 m = 0; m < numMeshesToLoad; m++)
+            uint32 numMeshesToLoad = (mergeMeshes) ? pScene->mNumMeshes : 1;
+            for (uint32 m = 0; m < numMeshesToLoad; m++)
             {
                 const aiMesh* pMesh = pScene->mMeshes[m];
                 if (!pMesh->HasNormals())
@@ -79,9 +79,9 @@ MeshData MeshFactory::CreateFromFile(const std::string& Filename, Bool MergeMesh
                         data.Indices.resize(indexOffset + (triCount * 3));
                         for (size_t i = 0; i < triCount; i++)
                         {
-                            data.Indices[indexOffset + (i * 3) + 0] = UInt32(vertexOffset + pMesh->mFaces[i].mIndices[0]);
-                            data.Indices[indexOffset + (i * 3) + 1] = UInt32(vertexOffset + pMesh->mFaces[i].mIndices[1]);
-                            data.Indices[indexOffset + (i * 3) + 2] = UInt32(vertexOffset + pMesh->mFaces[i].mIndices[2]);
+                            data.Indices[indexOffset + (i * 3) + 0] = uint32(vertexOffset + pMesh->mFaces[i].mIndices[0]);
+                            data.Indices[indexOffset + (i * 3) + 1] = uint32(vertexOffset + pMesh->mFaces[i].mIndices[1]);
+                            data.Indices[indexOffset + (i * 3) + 2] = uint32(vertexOffset + pMesh->mFaces[i].mIndices[2]);
                         }
 
                         // Increase offsets
@@ -102,7 +102,7 @@ MeshData MeshFactory::CreateFromFile(const std::string& Filename, Bool MergeMesh
     }
     else
     {
-        const Char* pErrorMessage = importer.GetErrorString();
+        const char* pErrorMessage = importer.GetErrorString();
         LOG_SYSTEM_PRINT("[LAMBDA ENGINE] Failed to load file '%s'. Message: %s\n", filename.c_str(), pErrorMessage);
         return data;
     }
@@ -112,11 +112,11 @@ MeshData MeshFactory::CreateFromFile(const std::string& Filename, Bool MergeMesh
     return MeshData();
 }
 
-MeshData MeshFactory::CreateCube(Float Width, Float Height, Float Depth) noexcept
+MeshData MeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
 {
-    const Float HalfWidth  = Width * 0.5f;
-    const Float HalfHeight = Height * 0.5f;
-    const Float HalfDepth  = Depth * 0.5f;
+    const float HalfWidth  = Width * 0.5f;
+    const float HalfHeight = Height * 0.5f;
+    const float HalfDepth  = Depth * 0.5f;
 
     MeshData Cube;
     Cube.Vertices =
@@ -188,7 +188,7 @@ MeshData MeshFactory::CreateCube(Float Width, Float Height, Float Depth) noexcep
     return Cube;
 }
 
-MeshData MeshFactory::CreatePlane(UInt32 Width, UInt32 Height) noexcept
+MeshData MeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
 {
     MeshData data;
     if (Width < 1)
@@ -204,14 +204,14 @@ MeshData MeshFactory::CreatePlane(UInt32 Width, UInt32 Height) noexcept
     data.Indices.Resize((Width * Height) * 6);
 
     // Size of each quad, size of the plane will always be between -0.5 and 0.5
-    XMFLOAT2 quadSize   = XMFLOAT2(1.0f / Float(Width), 1.0f / Float(Height));
-    XMFLOAT2 uvQuadSize = XMFLOAT2(1.0f / Float(Width), 1.0f / Float(Height));
+    XMFLOAT2 quadSize   = XMFLOAT2(1.0f / float(Width), 1.0f / float(Height));
+    XMFLOAT2 uvQuadSize = XMFLOAT2(1.0f / float(Width), 1.0f / float(Height));
 
-    for (UInt32 x = 0; x <= Width; x++)
+    for (uint32 x = 0; x <= Width; x++)
     {
-        for (UInt32 y = 0; y <= Height; y++)
+        for (uint32 y = 0; y <= Height; y++)
         {
-            Int32 v = ((1 + Height) * x) + y;
+            int32 v = ((1 + Height) * x) + y;
             data.Vertices[v].Position = XMFLOAT3(0.5f - (quadSize.x * x), 0.5f - (quadSize.y * y), 0.0f);
             data.Vertices[v].Normal   = XMFLOAT3(0.0f, 0.0f, 1.0f);
             data.Vertices[v].Tangent  = XMFLOAT3(1.0f, 0.0f, 0.0f);
@@ -219,11 +219,11 @@ MeshData MeshFactory::CreatePlane(UInt32 Width, UInt32 Height) noexcept
         }
     }
 
-    for (UInt8 x = 0; x < Width; x++)
+    for (uint8 x = 0; x < Width; x++)
     {
-        for (UInt8 y = 0; y < Height; y++)
+        for (uint8 y = 0; y < Height; y++)
         {
-            Int32 quad = (Height * x) + y;
+            int32 quad = (Height * x) + y;
             data.Indices[(quad * 6) + 0] = (x * (1 + Height)) + y + 1;
             data.Indices[(quad * 6) + 1] = (data.Indices[quad * 6] + 2 + (Height - 1));
             data.Indices[(quad * 6) + 2] = data.Indices[quad * 6] - 1;
@@ -239,12 +239,12 @@ MeshData MeshFactory::CreatePlane(UInt32 Width, UInt32 Height) noexcept
     return data;
 }
 
-MeshData MeshFactory::CreateSphere(UInt32 Subdivisions, Float Radius) noexcept
+MeshData MeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
 {
     MeshData Sphere;
     Sphere.Vertices.Resize(12);
 
-    Float T = (1.0f + sqrt(5.0f)) / 2.0f;
+    float T = (1.0f + sqrt(5.0f)) / 2.0f;
     Sphere.Vertices[0].Position  = XMFLOAT3(-1.0f,  T,     0.0f);
     Sphere.Vertices[1].Position  = XMFLOAT3( 1.0f,  T,     0.0f);
     Sphere.Vertices[2].Position  = XMFLOAT3(-1.0f, -T,     0.0f);
@@ -290,7 +290,7 @@ MeshData MeshFactory::CreateSphere(UInt32 Subdivisions, Float Radius) noexcept
         Subdivide(Sphere, Subdivisions);
     }
 
-    for (UInt32 i = 0; i < static_cast<UInt32>(Sphere.Vertices.Size()); i++)
+    for (uint32 i = 0; i < static_cast<uint32>(Sphere.Vertices.Size()); i++)
     {
         // Calculate the new position, normal and tangent
         XMVECTOR Position = XMLoadFloat3(&Sphere.Vertices[i].Position);
@@ -313,7 +313,7 @@ MeshData MeshFactory::CreateSphere(UInt32 Subdivisions, Float Radius) noexcept
     return Sphere;
 }
 
-MeshData MeshFactory::CreateCone(UInt32 Sides, Float Radius, Float Height) noexcept
+MeshData MeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noexcept
 {
     UNREFERENCED_VARIABLE(Sides);
     UNREFERENCED_VARIABLE(Radius);
@@ -332,8 +332,8 @@ MeshData MeshFactory::CreateCone(UInt32 Sides, Float Radius, Float Height) noexc
     data.Indices.resize(indexSize);
 
     // Angle between verts
-    Float angle = (pi<Float>() * 2.0f) / Float(sides);
-    Float uOffset = 1.0f / Float(sides - 1);
+    float angle = (pi<float>() * 2.0f) / float(sides);
+    float uOffset = 1.0f / float(sides - 1);
 
     // CREATE VERTICES
     data.Vertices[0].Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -345,8 +345,8 @@ MeshData MeshFactory::CreateCone(UInt32 Sides, Float Radius, Float Height) noexc
     for (size_t i = 0; i < sides; i++)
     {
         // BOTTOM CAP VERTICES
-        Float x = cosf((pi<Float>() / 2.0f) + (angle * i));
-        Float z = sinf((pi<Float>() / 2.0f) + (angle * i));
+        float x = cosf((pi<float>() / 2.0f) + (angle * i));
+        float z = sinf((pi<float>() / 2.0f) + (angle * i));
 
         XMFLOAT3 pos = normalize(XMFLOAT3(x, 0.0f, z));
         data.Vertices[i + 1].Position = (pos * radius);
@@ -367,7 +367,7 @@ MeshData MeshFactory::CreateCone(UInt32 Sides, Float Radius, Float Height) noexc
 
     // BOTTOM CAP INDICES
     size_t index = 0;
-    for (UInt32 i = 0; i < sides; i++)
+    for (uint32 i = 0; i < sides; i++)
     {
         data.Indices[index + 0] = ((i + 1) % sides) + 10;
         data.Indices[index + 1] = i + 1;
@@ -376,11 +376,11 @@ MeshData MeshFactory::CreateCone(UInt32 Sides, Float Radius, Float Height) noexc
     }
 
     // SIDES INDICES
-    for (UInt32 i = 0; i < sides; i++)
+    for (uint32 i = 0; i < sides; i++)
     {
-        data.Indices[index + 0] = UInt32(offset) + i;
-        data.Indices[index + 1] = UInt32(offset) + ((i + 1) % sides);
-        data.Indices[index + 2] = UInt32(topOffset) + i;
+        data.Indices[index + 0] = uint32(offset) + i;
+        data.Indices[index + 1] = uint32(offset) + ((i + 1) % sides);
+        data.Indices[index + 2] = uint32(topOffset) + i;
         index += 3;
     }
 
@@ -482,7 +482,7 @@ MeshData MeshFactory::CreatePyramid() noexcept
     return MeshData();
 }
 
-MeshData MeshFactory::CreateCylinder(UInt32 Sides, Float Radius, Float Height) noexcept
+MeshData MeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) noexcept
 {
     UNREFERENCED_VARIABLE(Sides);
     UNREFERENCED_VARIABLE(Radius);
@@ -509,9 +509,9 @@ MeshData MeshFactory::CreateCylinder(UInt32 Sides, Float Radius, Float Height) n
     data.Indices.resize(indexSize);
 
     // Angle between verts
-    Float angle = (pi<Float>() * 2.0f) / Float(sides);
-    Float uOffset = 1.0f / Float(sides - 1);
-    Float halfHeight = Height * 0.5f;
+    float angle = (pi<float>() * 2.0f) / float(sides);
+    float uOffset = 1.0f / float(sides - 1);
+    float halfHeight = Height * 0.5f;
 
     // CREATE VERTICES
     data.Vertices[0].Position = XMFLOAT3(0.0f, halfHeight, 0.0f);
@@ -528,8 +528,8 @@ MeshData MeshFactory::CreateCylinder(UInt32 Sides, Float Radius, Float Height) n
     for (size_t i = 0; i < sides; i++)
     {
         // TOP CAP VERTICES
-        Float x = cosf((pi<Float>() / 2.0f) + (angle * i));
-        Float z = sinf((pi<Float>() / 2.0f) + (angle * i));
+        float x = cosf((pi<float>() / 2.0f) + (angle * i));
+        float z = sinf((pi<float>() / 2.0f) + (angle * i));
         XMFLOAT3 pos = normalize(XMFLOAT3(x, 0.0f, z));
         data.Vertices[i + 1].Position = (pos * radius) + XMFLOAT3(0.0f, halfHeight, 0.0f);
         data.Vertices[i + 1].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
@@ -553,7 +553,7 @@ MeshData MeshFactory::CreateCylinder(UInt32 Sides, Float Radius, Float Height) n
 
     // TOP CAP INDICES
     size_t index = 0;
-    for (UInt32 i = 0; i < sides; i++)
+    for (uint32 i = 0; i < sides; i++)
     {
         data.Indices[index + 0] = i + 1;
         data.Indices[index + 1] = (i + 1) % (sides)+1;
@@ -562,9 +562,9 @@ MeshData MeshFactory::CreateCylinder(UInt32 Sides, Float Radius, Float Height) n
     }
 
     // BOTTOM CAP INDICES
-    for (UInt32 i = 0; i < sides; i++)
+    for (uint32 i = 0; i < sides; i++)
     {
-        UInt32 base = UInt32(sides) + 1;
+        uint32 base = uint32(sides) + 1;
         data.Indices[index + 0] = base + ((i + 1) % (sides)+1);
         data.Indices[index + 1] = base + i + 1;
         data.Indices[index + 2] = base;
@@ -572,9 +572,9 @@ MeshData MeshFactory::CreateCylinder(UInt32 Sides, Float Radius, Float Height) n
     }
 
     // SIDES
-    for (UInt32 i = 0; i < sides; i++)
+    for (uint32 i = 0; i < sides; i++)
     {
-        UInt32 base = (UInt32(sides) + 1) * 2;
+        uint32 base = (uint32(sides) + 1) * 2;
         data.Indices[index + 0] = base + i + 1;
         data.Indices[index + 1] = base + i;
         data.Indices[index + 2] = base + i + sides;
@@ -590,7 +590,7 @@ MeshData MeshFactory::CreateCylinder(UInt32 Sides, Float Radius, Float Height) n
     return MeshData();
 }
 
-void MeshFactory::Subdivide(MeshData& OutData, UInt32 Subdivisions) noexcept
+void MeshFactory::Subdivide(MeshData& OutData, uint32 Subdivisions) noexcept
 {    
     if (Subdivisions < 1)
     {
@@ -598,17 +598,17 @@ void MeshFactory::Subdivide(MeshData& OutData, UInt32 Subdivisions) noexcept
     }
 
     Vertex TempVertices[3];
-    UInt32 IndexCount     = 0;
-    UInt32 VertexCount    = 0;
-    UInt32 OldVertexCount = 0;
-    OutData.Vertices.Reserve((OutData.Vertices.Size() * static_cast<UInt32>(pow(2, Subdivisions))));
-    OutData.Indices.Reserve((OutData.Indices.Size() * static_cast<UInt32>(pow(4, Subdivisions))));
+    uint32 IndexCount     = 0;
+    uint32 VertexCount    = 0;
+    uint32 OldVertexCount = 0;
+    OutData.Vertices.Reserve((OutData.Vertices.Size() * static_cast<uint32>(pow(2, Subdivisions))));
+    OutData.Indices.Reserve((OutData.Indices.Size() * static_cast<uint32>(pow(4, Subdivisions))));
 
-    for (UInt32 i = 0; i < Subdivisions; i++)
+    for (uint32 i = 0; i < Subdivisions; i++)
     {
-        OldVertexCount = UInt32(OutData.Vertices.Size());
-        IndexCount     = UInt32(OutData.Indices.Size());
-        for (UInt32 j = 0; j < IndexCount; j += 3)
+        OldVertexCount = uint32(OutData.Vertices.Size());
+        IndexCount     = uint32(OutData.Indices.Size());
+        for (uint32 j = 0; j < IndexCount; j += 3)
         {
             // Calculate Position
             XMVECTOR Position0 = XMLoadFloat3(&OutData.Vertices[OutData.Indices[j]].Position);
@@ -690,7 +690,7 @@ void MeshFactory::Subdivide(MeshData& OutData, UInt32 Subdivisions) noexcept
             OutData.Vertices.EmplaceBack(TempVertices[2]);
 
             // Push index of the new triangles
-            VertexCount = UInt32(OutData.Vertices.Size());
+            VertexCount = uint32(OutData.Vertices.Size());
             OutData.Indices.EmplaceBack(VertexCount - 3);
             OutData.Indices.EmplaceBack(VertexCount - 1);
             OutData.Indices.EmplaceBack(VertexCount - 2);
@@ -715,14 +715,14 @@ void MeshFactory::Subdivide(MeshData& OutData, UInt32 Subdivisions) noexcept
     OutData.Indices.ShrinkToFit();
 }
 
-void MeshFactory::Optimize(MeshData& OutData, UInt32 StartVertex) noexcept
+void MeshFactory::Optimize(MeshData& OutData, uint32 StartVertex) noexcept
 {
-    UInt32 VertexCount = static_cast<UInt32>(OutData.Vertices.Size());
-    UInt32 IndexCount  = static_cast<UInt32>(OutData.Indices.Size());
+    uint32 VertexCount = static_cast<uint32>(OutData.Vertices.Size());
+    uint32 IndexCount  = static_cast<uint32>(OutData.Indices.Size());
         
-    UInt32 k = 0;
-    UInt32 j = 0;
-    for (UInt32 i = StartVertex; i < VertexCount; i++)
+    uint32 k = 0;
+    uint32 j = 0;
+    for (uint32 i = StartVertex; i < VertexCount; i++)
     {
         for (j = 0; j < VertexCount; j++)
         {
@@ -798,14 +798,14 @@ void MeshFactory::CalculateTangents(MeshData& OutData) noexcept
         UVEdge2.x = Vertex3.TexCoord.x - Vertex1.TexCoord.x;
         UVEdge2.y = Vertex3.TexCoord.y - Vertex1.TexCoord.y;
 
-        Float Denominator = 1.0f / (UVEdge1.x * UVEdge2.y - UVEdge2.x * UVEdge1.y);
+        float Denominator = 1.0f / (UVEdge1.x * UVEdge2.y - UVEdge2.x * UVEdge1.y);
 
         XMFLOAT3 Tangent;
         Tangent.x = Denominator * (UVEdge2.y * Edge1.x - UVEdge1.y * Edge2.x);
         Tangent.y = Denominator * (UVEdge2.y * Edge1.y - UVEdge1.y * Edge2.y);
         Tangent.z = Denominator * (UVEdge2.y * Edge1.z - UVEdge1.y * Edge2.z);
 
-        Float Length = std::sqrt((Tangent.x * Tangent.x) + (Tangent.y * Tangent.y) + (Tangent.z * Tangent.z));
+        float Length = std::sqrt((Tangent.x * Tangent.x) + (Tangent.y * Tangent.y) + (Tangent.z * Tangent.z));
         if (Length != 0.0f) 
         {        
             Tangent.x /= Length;
@@ -816,7 +816,7 @@ void MeshFactory::CalculateTangents(MeshData& OutData) noexcept
         Vertex1.Tangent = Tangent;
     };
 
-    for (UInt32 i = 0; i < OutData.Indices.Size(); i += 3)
+    for (uint32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
         Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
         Vertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];
@@ -832,7 +832,7 @@ void MeshFactory::CalculateTangents(MeshData& OutData) noexcept
 {
     using namespace Math;
 
-    for (UInt32 i = 0; i < indexBuffer->GetSize(); i += 3)
+    for (uint32 i = 0; i < indexBuffer->GetSize(); i += 3)
     {
         XMFLOAT3 edge1 = (*vertexBuffer)[(*indexBuffer)[i + 2]].Position - (*vertexBuffer)[(*indexBuffer)[i + 1]].Position;
         XMFLOAT3 edge2 = (*vertexBuffer)[(*indexBuffer)[i]].Position - (*vertexBuffer)[(*indexBuffer)[i + 2]].Position;

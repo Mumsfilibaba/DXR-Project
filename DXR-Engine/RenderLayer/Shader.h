@@ -19,10 +19,10 @@ enum class EShaderStage
 
 struct ShaderParameterInfo
 {
-    UInt32 NumConstantBuffers      = 0;
-    UInt32 NumShaderResourceViews  = 0;
-    UInt32 NumUnorderedAccessViews = 0;
-    UInt32 NumSamplerStates        = 0;
+    uint32 NumConstantBuffers      = 0;
+    uint32 NumShaderResourceViews  = 0;
+    uint32 NumUnorderedAccessViews = 0;
+    uint32 NumSamplerStates        = 0;
 };
 
 class Shader : public Resource
@@ -44,10 +44,10 @@ public:
     virtual void GetShaderParameterInfo(ShaderParameterInfo& OutShaderParameterInfo) const = 0;
 
     // Returns false if no parameter with the specified name exists
-    virtual Bool GetConstantBufferIndexByName(const std::string& InName, UInt32& OutIndex) const      = 0;
-    virtual Bool GetUnorderedAccessViewIndexByName(const std::string& InName, UInt32& OutIndex) const = 0;
-    virtual Bool GetShaderResourceViewIndexByName(const std::string& InName, UInt32& OutIndex) const  = 0;
-    virtual Bool GetSamplerIndexByName(const std::string& InName, UInt32& OutIndex) const             = 0;
+    virtual bool GetConstantBufferIndexByName(const std::string& InName, uint32& OutIndex) const      = 0;
+    virtual bool GetUnorderedAccessViewIndexByName(const std::string& InName, uint32& OutIndex) const = 0;
+    virtual bool GetShaderResourceViewIndexByName(const std::string& InName, uint32& OutIndex) const  = 0;
+    virtual bool GetSamplerIndexByName(const std::string& InName, uint32& OutIndex) const             = 0;
 };
 
 class ComputeShader : public Shader
@@ -121,7 +121,7 @@ public:
 };
 
 // Helpers
-inline Bool ShaderStageIsGraphics(EShaderStage ShaderStage)
+inline bool ShaderStageIsGraphics(EShaderStage ShaderStage)
 {
     switch (ShaderStage)
     {
@@ -143,7 +143,7 @@ inline Bool ShaderStageIsGraphics(EShaderStage ShaderStage)
     }
 }
 
-inline Bool ShaderStageIsCompute(EShaderStage ShaderStage)
+inline bool ShaderStageIsCompute(EShaderStage ShaderStage)
 {
     switch (ShaderStage)
     {
@@ -163,7 +163,7 @@ inline Bool ShaderStageIsCompute(EShaderStage ShaderStage)
     }
 }
 
-inline Bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
+inline bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
 {
     switch (ShaderStage)
     {

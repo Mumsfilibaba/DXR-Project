@@ -8,7 +8,7 @@ class Resource : public RefCountedObject
 public:
     virtual void* GetNativeResource() const { return nullptr; }
 
-    virtual Bool IsValid() const { return false; }
+    virtual bool IsValid() const { return false; }
 
     virtual void SetName(const std::string& InName)
     {

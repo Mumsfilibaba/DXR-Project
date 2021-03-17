@@ -8,9 +8,9 @@
 #include "Resources/Material.h"
 #include "Resources/Mesh.h"
 
-Bool RayTracer::Init(FrameResources& Resources)
+bool RayTracer::Init(FrameResources& Resources)
 {
-    TArray<UInt8> Code;
+    TArray<uint8> Code;
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RayGen.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code))
     {
         Debug::DebugBreak();
@@ -78,8 +78,8 @@ Bool RayTracer::Init(FrameResources& Resources)
         return false;
     }
 
-    UInt32 Width  = Resources.MainWindowViewport->GetWidth();
-    UInt32 Height = Resources.MainWindowViewport->GetHeight();
+    uint32 Width  = Resources.MainWindowViewport->GetWidth();
+    uint32 Height = Resources.MainWindowViewport->GetHeight();
     Resources.RTOutput = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
     if (!Resources.RTOutput)
     {
@@ -105,7 +105,7 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
 
     Resources.RTGeometryInstances.Clear();
 
-    UInt32 InstanceIndex  = 0;
+    uint32 InstanceIndex  = 0;
     SamplerState* Sampler = nullptr;
 
     for (const MeshDrawCommand& Cmd : Scene.GetMeshDrawCommands())
@@ -116,7 +116,7 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
             continue;
         }
 
-        UInt32 AlbedoIndex = Resources.RTMaterialTextureCache.Add(Mat->AlbedoMap->GetShaderResourceView());
+        uint32 AlbedoIndex = Resources.RTMaterialTextureCache.Add(Mat->AlbedoMap->GetShaderResourceView());
         Resources.RTMaterialTextureCache.Add(Mat->NormalMap->GetShaderResourceView());
         Resources.RTMaterialTextureCache.Add(Mat->RoughnessMap->GetShaderResourceView());
         Resources.RTMaterialTextureCache.Add(Mat->HeightMap->GetShaderResourceView());
@@ -125,7 +125,7 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
         Sampler = Mat->GetMaterialSampler();
 
         const XMFLOAT3X4 TinyTransform = Cmd.CurrentActor->GetTransform().GetTinyMatrix();
-        UInt32 HitGroupIndex = 0;
+        uint32 HitGroupIndex = 0;
 
         auto HitGroupIndexPair = Resources.RTMeshToHitGroupIndex.find(Cmd.Mesh);
         if (HitGroupIndexPair == Resources.RTMeshToHitGroupIndex.end())
@@ -184,7 +184,7 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView());
 
-    for (UInt32 i = 0; i < Resources.RTMaterialTextureCache.Size(); i++)
+    for (uint32 i = 0; i < Resources.RTMaterialTextureCache.Size(); i++)
     {
         Resources.GlobalResources.AddShaderResourceView(Resources.RTMaterialTextureCache.Get(i));
     }
@@ -205,8 +205,8 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
         Resources.RTHitGroupResources.Data(), 
         Resources.RTHitGroupResources.Size());
 
-    UInt32 Width  = Resources.RTOutput->GetWidth();
-    UInt32 Height = Resources.RTOutput->GetHeight();
+    uint32 Width  = Resources.RTOutput->GetWidth();
+    uint32 Height = Resources.RTOutput->GetHeight();
     CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
 
     CmdList.UnorderedAccessTextureBarrier(Resources.RTOutput.Get());

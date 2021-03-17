@@ -11,7 +11,7 @@ EventDispatcher::EventDispatcher(GenericApplication* InApplication)
 {
 }
 
-void EventDispatcher::RegisterEventHandler(EventHandlerFunc Func, UInt8 EventCategoryMask)
+void EventDispatcher::RegisterEventHandler(EventHandlerFunc Func, uint8 EventCategoryMask)
 {
     Assert(Func != nullptr);
 
@@ -30,7 +30,7 @@ void EventDispatcher::RegisterEventHandler(EventHandlerFunc Func, UInt8 EventCat
     EventHandlers.EmplaceBack(Func, EventCategoryMask);
 }
 
-void EventDispatcher::RegisterEventHandler(IEventHandler* EventHandler, UInt8 EventCategoryMask)
+void EventDispatcher::RegisterEventHandler(IEventHandler* EventHandler, uint8 EventCategoryMask)
 {
     Assert(EventHandler != nullptr);
 
@@ -87,7 +87,7 @@ void EventDispatcher::UnregisterEventHandler(EventHandlerFunc Func)
     LOG_WARNING("Handler is NOT registered as a EventHandler");
 }
 
-Bool EventDispatcher::SendEvent(const Event& Event)
+bool EventDispatcher::SendEvent(const Event& Event)
 {
     for (EventHandlerPair& Pair : EventHandlers)
     {
@@ -121,7 +121,7 @@ void EventDispatcher::OnKeyReleased(EKey KeyCode, const ModifierKeyState& Modier
     SendEvent(Event);
 }
 
-void EventDispatcher::OnKeyPressed(EKey KeyCode, Bool IsRepeat, const ModifierKeyState& ModierKeyState)
+void EventDispatcher::OnKeyPressed(EKey KeyCode, bool IsRepeat, const ModifierKeyState& ModierKeyState)
 {
     // TODO: Maybe a better solution that this?
     ImGuiIO& IO = ImGui::GetIO();
@@ -134,13 +134,13 @@ void EventDispatcher::OnKeyPressed(EKey KeyCode, Bool IsRepeat, const ModifierKe
     SendEvent(Event);
 }
 
-void EventDispatcher::OnCharacterInput(UInt32 Character)
+void EventDispatcher::OnCharacterInput(uint32 Character)
 {
     KeyTypedEvent Event(Character);
     SendEvent(Event);
 }
 
-void EventDispatcher::OnMouseMove(Int32 x, Int32 y)
+void EventDispatcher::OnMouseMove(int32 x, int32 y)
 {
     MouseMovedEvent Event(x, y);
     SendEvent(Event);
@@ -171,25 +171,25 @@ void EventDispatcher::OnMouseButtonPressed(EMouseButton Button, const ModifierKe
     SendEvent(Event);
 }
 
-void EventDispatcher::OnMouseScrolled(Float HorizontalDelta, Float VerticalDelta)
+void EventDispatcher::OnMouseScrolled(float HorizontalDelta, float VerticalDelta)
 {
     MouseScrolledEvent Event(HorizontalDelta, VerticalDelta);
     SendEvent(Event);
 }
 
-void EventDispatcher::OnWindowResized(const TRef<GenericWindow>& InWindow, UInt16 Width, UInt16 Height)
+void EventDispatcher::OnWindowResized(const TRef<GenericWindow>& InWindow, uint16 Width, uint16 Height)
 {
     WindowResizeEvent Event(InWindow, Width, Height);
     SendEvent(Event);
 }
 
-void EventDispatcher::OnWindowMoved(const TRef<GenericWindow>& Window, Int16 x, Int16 y)
+void EventDispatcher::OnWindowMoved(const TRef<GenericWindow>& Window, int16 x, int16 y)
 {
     WindowMovedEvent Event(Window, x, y);
     SendEvent(Event);
 }
 
-void EventDispatcher::OnWindowFocusChanged(const TRef<GenericWindow>& Window, Bool HasFocus)
+void EventDispatcher::OnWindowFocusChanged(const TRef<GenericWindow>& Window, bool HasFocus)
 {
     // TODO: What if other windows loose focus?
     if (!HasFocus)

@@ -4,29 +4,29 @@
 enum class EIndexFormat
 {
     Unknown = 0,
-    UInt16  = 1,
-    UInt32  = 2,
+    uint16  = 1,
+    uint32  = 2,
 };
 
-inline const Char* ToString(EIndexFormat IndexFormat)
+inline const char* ToString(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)
     {
-    case EIndexFormat::UInt16: return "UInt16";
-    case EIndexFormat::UInt32: return "UInt32";
+    case EIndexFormat::uint16: return "uint16";
+    case EIndexFormat::uint32: return "uint32";
     default: return "Unknown";
     }
 }
 
-inline EIndexFormat GetIndexFormatFromStride(UInt32 StrideInBytes)
+inline EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
 {
     if (StrideInBytes == 2)
     {
-        return EIndexFormat::UInt16;
+        return EIndexFormat::uint16;
     }
     else if (StrideInBytes == 4)
     {
-        return EIndexFormat::UInt32;
+        return EIndexFormat::uint32;
     }
     else
     {
@@ -34,13 +34,13 @@ inline EIndexFormat GetIndexFormatFromStride(UInt32 StrideInBytes)
     }
 }
 
-inline UInt32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
+inline uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
 {
-    if (IndexFormat == EIndexFormat::UInt16)
+    if (IndexFormat == EIndexFormat::uint16)
     {
         return 2;
     }
-    else if (IndexFormat == EIndexFormat::UInt32)
+    else if (IndexFormat == EIndexFormat::uint32)
     {
         return 4;
     }
@@ -50,7 +50,7 @@ inline UInt32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
     }
 }
 
-enum EBufferFlags : UInt32
+enum EBufferFlags : uint32
 {
     BufferFlag_None    = 0,
     BufferFlag_Default = FLAG(1), // Default Device Memory
@@ -62,7 +62,7 @@ enum EBufferFlags : UInt32
 class Buffer : public Resource
 {
 public:
-    Buffer(UInt32 InFlags)
+    Buffer(uint32 InFlags)
         : Resource()
         , Flags(InFlags)
     {
@@ -73,23 +73,23 @@ public:
     virtual class ConstantBuffer*   AsConstantBuffer()   { return nullptr; }
     virtual class StructuredBuffer* AsStructuredBuffer() { return nullptr; }
 
-    virtual void* Map(UInt32 Offset, UInt32 Size)   = 0;
-    virtual void  Unmap(UInt32 Offset, UInt32 Size) = 0;
+    virtual void* Map(uint32 Offset, uint32 Size)   = 0;
+    virtual void  Unmap(uint32 Offset, uint32 Size) = 0;
 
-    UInt32 GetFlags() const { return Flags; }
+    uint32 GetFlags() const { return Flags; }
 
-    Bool IsUpload() const { return (Flags & BufferFlag_Upload); }
-    Bool IsUAV() const    { return (Flags & BufferFlag_UAV); }
-    Bool IsSRV() const    { return (Flags & BufferFlag_SRV); }
+    bool IsUpload() const { return (Flags & BufferFlag_Upload); }
+    bool IsUAV() const    { return (Flags & BufferFlag_UAV); }
+    bool IsSRV() const    { return (Flags & BufferFlag_SRV); }
 
 private:
-    UInt32 Flags;
+    uint32 Flags;
 };
 
 class VertexBuffer : public Buffer
 {
 public:
-    VertexBuffer(UInt32 InNumVertices, UInt32 InStride, UInt32 InFlags)
+    VertexBuffer(uint32 InNumVertices, uint32 InStride, uint32 InFlags)
         : Buffer(InFlags)
         , Stride(InStride)
         , NumVertices(InNumVertices)
@@ -98,18 +98,18 @@ public:
 
     virtual VertexBuffer* AsVertexBuffer() override { return this; }
 
-    UInt32 GetStride() const      { return Stride; }
-    UInt32 GetNumVertices() const { return NumVertices; }
+    uint32 GetStride() const      { return Stride; }
+    uint32 GetNumVertices() const { return NumVertices; }
 
 private:
-    UInt32 NumVertices;
-    UInt32 Stride;
+    uint32 NumVertices;
+    uint32 Stride;
 };
 
 class IndexBuffer : public Buffer
 {
 public:
-    IndexBuffer(EIndexFormat InFormat, UInt32 InNumIndicies, UInt32 InFlags)
+    IndexBuffer(EIndexFormat InFormat, uint32 InNumIndicies, uint32 InFlags)
         : Buffer(InFlags)
         , Format(InFormat)
         , NumIndicies(InNumIndicies)
@@ -119,17 +119,17 @@ public:
     virtual IndexBuffer* AsIndexBuffer() override { return this; }
 
     EIndexFormat GetFormat() const      { return Format; }
-    UInt32       GetNumIndicies() const { return NumIndicies; }
+    uint32       GetNumIndicies() const { return NumIndicies; }
 
 private:
     EIndexFormat Format;
-    UInt32       NumIndicies;
+    uint32       NumIndicies;
 };
 
 class ConstantBuffer : public Buffer
 {
 public:
-    ConstantBuffer(UInt32 InSize, UInt32 InFlags)
+    ConstantBuffer(uint32 InSize, uint32 InFlags)
         : Buffer(InFlags)
         , Size(InSize)
     {
@@ -137,16 +137,16 @@ public:
 
     virtual ConstantBuffer* AsConstantBuffer() override { return this; }
 
-    UInt32 GetSize() const { return Size; }
+    uint32 GetSize() const { return Size; }
 
 private:
-    UInt32 Size;
+    uint32 Size;
 };
 
 class StructuredBuffer : public Buffer
 {
 public:
-    StructuredBuffer(UInt32 InNumElements, UInt32 InStride, UInt32 InFlags)
+    StructuredBuffer(uint32 InNumElements, uint32 InStride, uint32 InFlags)
         : Buffer(InFlags)
         , Stride(InStride)
         , NumElements(InNumElements)
@@ -155,10 +155,10 @@ public:
 
     virtual StructuredBuffer* AsStructuredBuffer() override { return this; }
 
-    UInt32 GetStride()      const { return Stride; }
-    UInt32 GetNumElements() const { return NumElements; }
+    uint32 GetStride()      const { return Stride; }
+    uint32 GetNumElements() const { return NumElements; }
 
 private:
-    UInt32 Stride;
-    UInt32 NumElements;
+    uint32 Stride;
+    uint32 NumElements;
 };

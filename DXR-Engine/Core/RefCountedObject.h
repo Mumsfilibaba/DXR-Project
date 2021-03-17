@@ -7,11 +7,11 @@ public:
     RefCountedObject();
     virtual ~RefCountedObject() = default;
 
-    UInt32 AddRef();
-    UInt32 Release();
+    uint32 AddRef();
+    uint32 Release();
 
-    UInt32 GetRefCount() const { return StrongReferences; }
+    uint32 GetRefCount() const { return StrongReferences; }
 
 private:
-    UInt32 StrongReferences;
+    uint32 StrongReferences;
 };

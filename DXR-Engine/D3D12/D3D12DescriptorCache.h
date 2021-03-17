@@ -23,7 +23,7 @@ struct TD3D12DescriptorViewCache
         Reset();
     }
 
-    void Set(TD3D12DescriptorViewType* DescriptorView, EShaderVisibility Visibility, UInt32 ShaderRegister)
+    void Set(TD3D12DescriptorViewType* DescriptorView, EShaderVisibility Visibility, uint32 ShaderRegister)
     {
         Assert(DescriptorView != nullptr);
 
@@ -33,8 +33,8 @@ struct TD3D12DescriptorViewCache
             DescriptorViews[Visibility][ShaderRegister] = DescriptorView;
             Dirty[Visibility] = true;
         
-            UInt32& RangeLength = DescriptorRangeLengths[Visibility];
-            RangeLength = Math::Max<UInt32>(RangeLength, ShaderRegister + 1);
+            uint32& RangeLength = DescriptorRangeLengths[Visibility];
+            RangeLength = Math::Max<uint32>(RangeLength, ShaderRegister + 1);
         }
     }
 
@@ -45,16 +45,16 @@ struct TD3D12DescriptorViewCache
         Memory::Memzero(CopyDescriptors, sizeof(CopyDescriptors));
         Memory::Memzero(DescriptorRangeLengths, sizeof(DescriptorRangeLengths));
 
-        for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
+        for (uint32 i = 0; i < ShaderVisibility_Count; i++)
         {
             Dirty[i] = true;
         }
     }
 
-    UInt32 CountNeededDescriptors() const
+    uint32 CountNeededDescriptors() const
     {
-        UInt32 NumDescriptors = 0;
-        for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
+        uint32 NumDescriptors = 0;
+        for (uint32 i = 0; i < ShaderVisibility_Count; i++)
         {
             if (Dirty[i])
             {
@@ -68,17 +68,17 @@ struct TD3D12DescriptorViewCache
     void PrepareForCopy(TD3D12DescriptorViewType* DefaultView)
     {
         TotalNumDescriptors = 0;
-        for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
+        for (uint32 i = 0; i < ShaderVisibility_Count; i++)
         {
             if (Dirty[i])
             {
-                UInt32 NumDescriptors = DescriptorRangeLengths[i];
-                UInt32 Offset         = TotalNumDescriptors;
+                uint32 NumDescriptors = DescriptorRangeLengths[i];
+                uint32 Offset         = TotalNumDescriptors;
             
                 TotalNumDescriptors += NumDescriptors;
                 Assert(TotalNumDescriptors <= NUM_DESCRIPTORS);
 
-                for (UInt32 d = 0; d < NumDescriptors; d++)
+                for (uint32 d = 0; d < NumDescriptors; d++)
                 {
                     TD3D12DescriptorViewType* View = DescriptorViews[i][d];
                     if (!View)
@@ -92,14 +92,14 @@ struct TD3D12DescriptorViewCache
         }
     }
 
-    void SetGPUHandles(D3D12_GPU_DESCRIPTOR_HANDLE StartHandle, UInt64 DescriptorSize)
+    void SetGPUHandles(D3D12_GPU_DESCRIPTOR_HANDLE StartHandle, uint64 DescriptorSize)
     {
-        for (UInt32 i = 0; i < ShaderVisibility_Count; i++)
+        for (uint32 i = 0; i < ShaderVisibility_Count; i++)
         {
             if (Dirty[i])
             {
                 Descriptors[i] = StartHandle;
-                StartHandle.ptr += (UInt64)DescriptorRangeLengths[i] * DescriptorSize;
+                StartHandle.ptr += (uint64)DescriptorRangeLengths[i] * DescriptorSize;
 
                 Dirty[i] = false;
             }
@@ -108,7 +108,7 @@ struct TD3D12DescriptorViewCache
 
     FORCEINLINE void InvalidateAll()
     {
-        for (UInt32 i = 0; i < NUM_VISIBILITIES; i++)
+        for (uint32 i = 0; i < NUM_VISIBILITIES; i++)
         {
             Dirty[i] = true;
         }
@@ -117,9 +117,9 @@ struct TD3D12DescriptorViewCache
     TD3D12DescriptorViewType*   DescriptorViews[NUM_VISIBILITIES][NUM_DESCRIPTORS];
     D3D12_GPU_DESCRIPTOR_HANDLE Descriptors[NUM_VISIBILITIES];
     D3D12_CPU_DESCRIPTOR_HANDLE CopyDescriptors[NUM_DESCRIPTORS];
-    Bool   Dirty[NUM_VISIBILITIES];
-    UInt32 DescriptorRangeLengths[NUM_VISIBILITIES];
-    UInt32 TotalNumDescriptors;
+    bool   Dirty[NUM_VISIBILITIES];
+    uint32 DescriptorRangeLengths[NUM_VISIBILITIES];
+    uint32 TotalNumDescriptors;
 };
 
 using D3D12ConstantBufferViewCache  = TD3D12DescriptorViewCache<D3D12ConstantBufferView>;
@@ -142,7 +142,7 @@ public:
         Reset();
     }
 
-    FORCEINLINE void SetVertexBuffer(D3D12VertexBuffer* VertexBuffer, UInt32 Slot)
+    FORCEINLINE void SetVertexBuffer(D3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
         Assert(Slot < D3D12_MAX_VERTEX_BUFFER_SLOTS);
 
@@ -169,7 +169,7 @@ public:
         ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
         if (VertexBuffersDirty)
         {
-            for (UInt32 i = 0; i < NumVertexBuffers; i++)
+            for (uint32 i = 0; i < NumVertexBuffers; i++)
             {
                 D3D12VertexBuffer* VertexBuffer = VertexBuffers[i];
                 if (!VertexBuffer)
@@ -221,12 +221,12 @@ public:
 private:
     D3D12VertexBuffer*       VertexBuffers[D3D12_MAX_VERTEX_BUFFER_SLOTS];
     D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[D3D12_MAX_VERTEX_BUFFER_SLOTS];
-    UInt32 NumVertexBuffers;
-    Bool   VertexBuffersDirty;
+    uint32 NumVertexBuffers;
+    bool   VertexBuffersDirty;
 
     D3D12IndexBuffer*       IndexBuffer;
     D3D12_INDEX_BUFFER_VIEW IndexBufferView;
-    Bool IndexBufferDirty;
+    bool IndexBufferDirty;
 };
 
 class D3D12RenderTargetState
@@ -242,7 +242,7 @@ public:
         Reset();
     }
 
-    FORCEINLINE void SetRenderTargetView(D3D12RenderTargetView* RenderTargetView, UInt32 Slot)
+    FORCEINLINE void SetRenderTargetView(D3D12RenderTargetView* RenderTargetView, uint32 Slot)
     {
         Assert(Slot < D3D12_MAX_RENDER_TARGET_COUNT);
 
@@ -294,10 +294,10 @@ public:
 
 private:
     D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetViewHandles[D3D12_MAX_RENDER_TARGET_COUNT];
-    UInt32 NumRenderTargets;
+    uint32 NumRenderTargets;
     D3D12_CPU_DESCRIPTOR_HANDLE  DepthStencilViewHandle;
     D3D12_CPU_DESCRIPTOR_HANDLE* DSVPtr;
-    Bool Dirty;
+    bool Dirty;
 };
 
 class D3D12DescriptorCache : public D3D12DeviceChild
@@ -306,14 +306,14 @@ public:
     D3D12DescriptorCache(D3D12Device* Device);
     ~D3D12DescriptorCache();
 
-    Bool Init();
+    bool Init();
 
     void CommitGraphicsDescriptors(D3D12CommandListHandle& CmdList, class D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature);
     void CommitComputeDescriptors(D3D12CommandListHandle& CmdList, class D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature);
 
     void Reset();
 
-    FORCEINLINE void SetVertexBuffer(D3D12VertexBuffer* VertexBuffer, UInt32 Slot)
+    FORCEINLINE void SetVertexBuffer(D3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
         VertexBufferCache.SetVertexBuffer(VertexBuffer, Slot);
     }
@@ -323,7 +323,7 @@ public:
         VertexBufferCache.SetIndexBuffer(IndexBuffer);
     }
 
-    FORCEINLINE void SetRenderTargetView(D3D12RenderTargetView* RenderTargetView, UInt32 Slot)
+    FORCEINLINE void SetRenderTargetView(D3D12RenderTargetView* RenderTargetView, uint32 Slot)
     {
         RenderTargetCache.SetRenderTargetView(RenderTargetView, Slot);
     }
@@ -333,7 +333,7 @@ public:
         RenderTargetCache.SetDepthStencilView(DepthStencilView);
     }
 
-    FORCEINLINE void SetConstantBufferView(D3D12ConstantBufferView* Descriptor, EShaderVisibility Visibility, UInt32 ShaderRegister)
+    FORCEINLINE void SetConstantBufferView(D3D12ConstantBufferView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
@@ -343,7 +343,7 @@ public:
         ConstantBufferViewCache.Set(Descriptor, Visibility, ShaderRegister);
     }
 
-    FORCEINLINE void SetShaderResourceView(D3D12ShaderResourceView* Descriptor, EShaderVisibility Visibility, UInt32 ShaderRegister)
+    FORCEINLINE void SetShaderResourceView(D3D12ShaderResourceView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
@@ -353,7 +353,7 @@ public:
         ShaderResourceViewCache.Set(Descriptor, Visibility, ShaderRegister);
     }
 
-    FORCEINLINE void SetUnorderedAccessView(D3D12UnorderedAccessView* Descriptor, EShaderVisibility Visibility, UInt32 ShaderRegister)
+    FORCEINLINE void SetUnorderedAccessView(D3D12UnorderedAccessView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
@@ -363,7 +363,7 @@ public:
         UnorderedAccessViewCache.Set(Descriptor, Visibility, ShaderRegister);
     }
 
-    FORCEINLINE void SetSamplerState(D3D12SamplerState* Descriptor, EShaderVisibility Visibility, UInt32 ShaderRegister)
+    FORCEINLINE void SetSamplerState(D3D12SamplerState* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister)
     {
         if (!Descriptor)
         {
@@ -401,18 +401,18 @@ public:
         Reset();
     }
 
-    void Set32BitShaderConstants(UInt32* InConstants, UInt32 InNumConstants)
+    void Set32BitShaderConstants(uint32* InConstants, uint32 InNumConstants)
     {
         Assert(InNumConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
 
-        Memory::Memcpy(Constants, InConstants, sizeof(UInt32) * InNumConstants);
+        Memory::Memcpy(Constants, InConstants, sizeof(uint32) * InNumConstants);
         NumConstants = InNumConstants;
     }
 
     void CommitGraphics(D3D12CommandListHandle& CmdList, D3D12RootSignature* RootSignature)
     {
         ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
-        Int32 RootIndex = RootSignature->Get32BitConstantsIndex();
+        int32 RootIndex = RootSignature->Get32BitConstantsIndex();
         if (RootIndex >= 0)
         {
             DxCmdList->SetGraphicsRoot32BitConstants(RootIndex, NumConstants, Constants, 0);
@@ -422,7 +422,7 @@ public:
     void CommitCompute(D3D12CommandListHandle& CmdList, D3D12RootSignature* RootSignature)
     {
         ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
-        Int32 RootIndex = RootSignature->Get32BitConstantsIndex();
+        int32 RootIndex = RootSignature->Get32BitConstantsIndex();
         if (RootIndex >= 0)
         {
             DxCmdList->SetComputeRoot32BitConstants(RootIndex, NumConstants, Constants, 0);
@@ -436,6 +436,6 @@ public:
     }
 
 private:
-    UInt32 Constants[D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT];
-    UInt32 NumConstants;
+    uint32 Constants[D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT];
+    uint32 NumConstants;
 };

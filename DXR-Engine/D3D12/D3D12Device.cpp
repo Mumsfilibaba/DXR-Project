@@ -24,7 +24,7 @@ PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVersionedRo
 PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc = nullptr;
 PFN_SetMarkerOnCommandList                             SetMarkerOnCommandListFunc                        = nullptr;
 
-const Char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
+const char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
     switch (BreadCrumbOp)
     {
@@ -75,7 +75,7 @@ const Char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
     }
 }
 
-static const Char* gDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
+static const char* gDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 
 void DeviceRemovedHandler(D3D12Device* Device)
 {
@@ -123,7 +123,7 @@ void DeviceRemovedHandler(D3D12Device* Device)
         }
 
         LOG_ERROR(Message);
-        for (UInt32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
+        for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
             Message = "    " + std::string(ToString(CurrentNode->pCommandHistory[i]));
             LOG_ERROR(Message);
@@ -146,7 +146,7 @@ void DeviceRemovedHandler(D3D12Device* Device)
     PlatformDialogMisc::MessageBox("Error", " [D3D12] Device Removed");
 }
 
-D3D12Device::D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation, Bool InEnableDRED)
+D3D12Device::D3D12Device(bool InEnableDebugLayer, bool InEnableGPUValidation, bool InEnableDRED)
     : Factory(nullptr)
     , Adapter(nullptr)
     , Device(nullptr)
@@ -188,7 +188,7 @@ D3D12Device::~D3D12Device()
     D3D12Lib = 0;
 }
 
-Bool D3D12Device::Init()
+bool D3D12Device::Init()
 {
     DXGILib = ::LoadLibrary("dxgi.dll");
     if (DXGILib == NULL)
@@ -485,7 +485,7 @@ Bool D3D12Device::Init()
     return true;
 }
 
-Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount)
+int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
 {
     D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data;
     Memory::Memzero(&Data);
@@ -501,7 +501,7 @@ Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount)
         return 0;
     }
 
-    return static_cast<UInt32>(Data.NumQualityLevels - 1);
+    return static_cast<uint32>(Data.NumQualityLevels - 1);
 }
 
 std::string D3D12Device::GetAdapterName() const

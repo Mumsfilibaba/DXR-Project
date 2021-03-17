@@ -11,7 +11,7 @@ class WindowsCursor;
 
 struct WindowsEvent
 {
-    WindowsEvent(HWND InHwnd, UInt32 InMessage, WPARAM InwParam, LPARAM InlParam)
+    WindowsEvent(HWND InHwnd, uint32 InMessage, WPARAM InwParam, LPARAM InlParam)
         : Hwnd(InHwnd)
         , Message(InMessage)
         , wParam(InwParam)
@@ -20,7 +20,7 @@ struct WindowsEvent
     }
 
     HWND   Hwnd;
-    UInt32 Message;
+    uint32 Message;
     WPARAM wParam; 
     LPARAM lParam;
 };
@@ -45,7 +45,7 @@ public:
     virtual GenericWindow* MakeWindow() override final;
     virtual GenericCursor* MakeCursor() override final;
 
-    virtual Bool Init() override final;
+    virtual bool Init() override final;
     virtual void Tick() override final;
 
     virtual void SetCursor(GenericCursor* Cursor)       override final;
@@ -56,10 +56,10 @@ public:
     virtual GenericWindow* GetCapture()      const override final;
     virtual GenericCursor* GetCursor()       const override final;
     
-    virtual void SetCursorPos(GenericWindow* RelativeWindow, Int32 x, Int32 y) override final;    
-    virtual void GetCursorPos(GenericWindow* RelativeWindow, Int32& OutX, Int32& OutY) const override final;
+    virtual void SetCursorPos(GenericWindow* RelativeWindow, int32 x, int32 y) override final;    
+    virtual void GetCursorPos(GenericWindow* RelativeWindow, int32& OutX, int32& OutY) const override final;
     
-    static Bool PeekMessageUntilNoMessage();
+    static bool PeekMessageUntilNoMessage();
     static ModifierKeyState GetModifierKeyState();
 
     static GenericApplication* Make();
@@ -71,7 +71,7 @@ private:
     TArray<TRef<WindowsWindow>> Windows;
     TArray<WindowsEvent> Events;
 
-    Bool IsTrackingMouse = false;
+    bool IsTrackingMouse = false;
 };
 
 extern WindowsApplication* GlobalWindowsApplication;

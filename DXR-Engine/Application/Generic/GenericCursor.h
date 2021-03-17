@@ -4,7 +4,7 @@
 #include "Core/RefCountedObject.h"
 #include "Core/Ref.h"
 
-enum class EPlatformCursor : UInt32
+enum class EPlatformCursor : uint32
 {
     None       = 0,
     TextInput  = 1,
@@ -33,7 +33,7 @@ struct CursorCreateInfo
     }
 
     EPlatformCursor PlatformCursor;
-    Bool IsPlatformCursor;
+    bool IsPlatformCursor;
 };
 
 class GenericCursor : public RefCountedObject
@@ -41,9 +41,9 @@ class GenericCursor : public RefCountedObject
 public:
     virtual ~GenericCursor() = default;
 
-    virtual Bool Init(const CursorCreateInfo& InCreateInfo) = 0;
+    virtual bool Init(const CursorCreateInfo& InCreateInfo) = 0;
 
-    virtual Void* GetNativeHandle() const { return nullptr; }
+    virtual void* GetNativeHandle() const { return nullptr; }
 
 protected:
     CursorCreateInfo CreateInfo;
@@ -61,6 +61,6 @@ struct GlobalCursors
     static TRef<GenericCursor> Hand;
     static TRef<GenericCursor> NotAllowed;
 
-    static Bool Init();
+    static bool Init();
     static void Release();
 };

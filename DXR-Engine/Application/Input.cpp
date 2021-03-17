@@ -2,10 +2,10 @@
 
 struct KeyTableState
 {
-    TStaticArray<Bool, EKey::Key_Count> KeyStates;
+    TStaticArray<bool, EKey::Key_Count> KeyStates;
     TStaticArray<EKey, 512>   ScanCodeTable;
-    TStaticArray<UInt16, 512> KeyTable;
-    Bool IsInitialized = false;
+    TStaticArray<uint16, 512> KeyTable;
+    bool IsInitialized = false;
 };
 
 static KeyTableState GlobalKeyState;
@@ -139,7 +139,7 @@ static void InitializeKeyState()
     GlobalKeyState.ScanCodeTable[0x137] = EKey::Key_PrintScreen;
     GlobalKeyState.ScanCodeTable[0x146] = EKey::Key_Pause;
 
-    for (UInt16 Index = 0; Index < 512; Index++)
+    for (uint16 Index = 0; Index < 512; Index++)
     {
         if (GlobalKeyState.ScanCodeTable[Index] != EKey::Key_Unknown)
         {
@@ -150,7 +150,7 @@ static void InitializeKeyState()
     GlobalKeyState.IsInitialized = true;
 }
 
-EKey Input::ConvertFromScanCode(UInt32 ScanCode)
+EKey Input::ConvertFromScanCode(uint32 ScanCode)
 {
     //[[unlikely]]
     if (!GlobalKeyState.IsInitialized)
@@ -161,7 +161,7 @@ EKey Input::ConvertFromScanCode(UInt32 ScanCode)
     return GlobalKeyState.ScanCodeTable[ScanCode];
 }
 
-UInt32 Input::ConvertToScanCode(EKey Key)
+uint32 Input::ConvertToScanCode(EKey Key)
 {
     //[[unlikely]]
     if (!GlobalKeyState.IsInitialized)
@@ -182,12 +182,12 @@ void Input::RegisterKeyDown(EKey Key)
     GlobalKeyState.KeyStates[Key] = true;
 }
 
-Bool Input::IsKeyUp(EKey Key)
+bool Input::IsKeyUp(EKey Key)
 {
     return !GlobalKeyState.KeyStates[Key];
 }
 
-Bool Input::IsKeyDown(EKey Key)
+bool Input::IsKeyDown(EKey Key)
 {
     return GlobalKeyState.KeyStates[Key];
 }

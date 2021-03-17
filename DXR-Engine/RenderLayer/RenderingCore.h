@@ -13,12 +13,12 @@ enum class ECubeFace
     NegZ = 5,
 };
 
-inline UInt32 GetCubeFaceIndex(ECubeFace CubeFace)
+inline uint32 GetCubeFaceIndex(ECubeFace CubeFace)
 {
-    return static_cast<UInt32>(CubeFace);
+    return static_cast<uint32>(CubeFace);
 }
 
-inline ECubeFace GetCubeFaceFromIndex(UInt32 Index)
+inline ECubeFace GetCubeFaceFromIndex(uint32 Index)
 {
     if (Index > GetCubeFaceIndex(ECubeFace::NegZ))
     {
@@ -95,7 +95,7 @@ enum class EFormat
     R8_Sint                  = 64,
 };
 
-inline const Char* ToString(EFormat Format)
+inline const char* ToString(EFormat Format)
 {
     switch (Format)
     {
@@ -163,7 +163,7 @@ inline const Char* ToString(EFormat Format)
     }
 }
 
-inline UInt32 GetByteStrideFromFormat(EFormat Format)
+inline uint32 GetByteStrideFromFormat(EFormat Format)
 {
     switch (Format)
         {
@@ -270,7 +270,7 @@ enum class EComparisonFunc
     Always       = 8
 };
 
-inline const Char* ToString(EComparisonFunc ComparisonFunc)
+inline const char* ToString(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -295,7 +295,7 @@ enum class EPrimitiveTopologyType
     Patch     = 4
 };
 
-inline const Char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
+inline const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 {
     switch (PrimitveTopologyType)
     {
@@ -329,7 +329,7 @@ enum class EResourceState
     GenericRead                     = 16,
 };
 
-inline const Char* ToString(EResourceState ResourceState)
+inline const char* ToString(EResourceState ResourceState)
 {
     switch (ResourceState)
     {
@@ -363,7 +363,7 @@ enum class EPrimitiveTopology
     TriangleStrip = 5,
 };
 
-inline const Char* ToString(EPrimitiveTopology ResourceState)
+inline const char* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
@@ -388,7 +388,7 @@ enum class EShadingRate
     VRS_4x4 = 0xa,
 };
 
-inline const Char* ToString(EShadingRate ShadingRate)
+inline const char* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
@@ -407,14 +407,14 @@ struct DepthStencilF
 {
     DepthStencilF() = default;
 
-    DepthStencilF(Float InDepth, UInt8 InStencil)
+    DepthStencilF(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     {
     }
 
-    Float Depth   = 1.0f;
-    UInt8 Stencil = 0;
+    float Depth   = 1.0f;
+    uint8 Stencil = 0;
 };
 
 struct ClearValue
@@ -434,14 +434,14 @@ public:
     {
     }
 
-    ClearValue(EFormat InFormat, Float Depth, UInt8 Stencil)
+    ClearValue(EFormat InFormat, float Depth, uint8 Stencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencil(Depth, Stencil)
     {
     }
 
-    ClearValue(EFormat InFormat, Float r, Float g, Float b, Float a)
+    ClearValue(EFormat InFormat, float r, float g, float b, float a)
         : Type(EType::Color)
         , Format(InFormat)
         , Color(r, g, b, a)
@@ -524,13 +524,13 @@ struct ResourceData
     {
     }
 
-    ResourceData(const Void* InData, UInt32 InSizeInBytes)
+    ResourceData(const void* InData, uint32 InSizeInBytes)
         : Data(InData)
         , SizeInBytes(InSizeInBytes)
     {
     }
 
-    ResourceData(const Void* InData, EFormat InFormat, UInt32 InWidth)
+    ResourceData(const void* InData, EFormat InFormat, uint32 InWidth)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
@@ -538,7 +538,7 @@ struct ResourceData
     {
     }
 
-    ResourceData(const Void* InData, EFormat InFormat, UInt32 InWidth, UInt32 InHeight)
+    ResourceData(const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
@@ -546,44 +546,44 @@ struct ResourceData
     {
     }
 
-    void Set(const Void* InData, UInt32 InSizeInBytes)
+    void Set(const void* InData, uint32 InSizeInBytes)
     {
         Data        = InData;
         SizeInBytes = InSizeInBytes;
     }
 
-    void Set(const Void* InData, EFormat InFormat, UInt32 InWidth)
+    void Set(const void* InData, EFormat InFormat, uint32 InWidth)
     {
         Data   = InData;
         Format = InFormat;
         Width  = InWidth;
     }
 
-    void Set(const Void* InData, EFormat InFormat, UInt32 InWidth, UInt32 InHeight)
+    void Set(const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight)
     {
         Set(InData, InFormat, InWidth, InHeight);
         Height = InHeight;
     }
 
-    const Void* GetData() const { return Data; }
+    const void* GetData() const { return Data; }
 
-    UInt32 GetSizeInBytes() const { return SizeInBytes; }
-    UInt32 GetPitch() const { return GetByteStrideFromFormat(Format) * Width; }
-    UInt32 GetSlicePitch() const { return GetByteStrideFromFormat(Format) * Width * Height; }
+    uint32 GetSizeInBytes() const { return SizeInBytes; }
+    uint32 GetPitch() const { return GetByteStrideFromFormat(Format) * Width; }
+    uint32 GetSlicePitch() const { return GetByteStrideFromFormat(Format) * Width * Height; }
 
 private:
-    const Void* Data;
+    const void* Data;
     union
     {
         struct
         {
-            UInt32 SizeInBytes;
+            uint32 SizeInBytes;
         };
         struct
         {
             EFormat Format;
-            UInt32  Width;
-            UInt32  Height;
+            uint32  Width;
+            uint32  Height;
         };
     };
 };
@@ -592,23 +592,23 @@ struct CopyBufferInfo
 {
     CopyBufferInfo() = default;
 
-    CopyBufferInfo(UInt64 InSourceOffset, UInt32 InDestinationOffset, UInt32 InSizeInBytes)
+    CopyBufferInfo(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes)
         : SourceOffset(InSourceOffset)
         , DestinationOffset(InDestinationOffset)
         , SizeInBytes(InSizeInBytes)
     {
     }
 
-    UInt64 SourceOffset      = 0;
-    UInt32 DestinationOffset = 0;
-    UInt32 SizeInBytes       = 0;
+    uint64 SourceOffset      = 0;
+    uint32 DestinationOffset = 0;
+    uint32 SizeInBytes       = 0;
 };
 
 struct CopyTextureSubresourceInfo
 {
     CopyTextureSubresourceInfo() = default;
 
-    CopyTextureSubresourceInfo(UInt32 InX, UInt32 InY, UInt32 InZ, UInt32 InSubresourceIndex)
+    CopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
         : x(InX)
         , y(InY)
         , z(InZ)
@@ -616,17 +616,17 @@ struct CopyTextureSubresourceInfo
     {
     }
 
-    UInt32 x = 0;
-    UInt32 y = 0;
-    UInt32 z = 0;
-    UInt32 SubresourceIndex = 0;
+    uint32 x = 0;
+    uint32 y = 0;
+    uint32 z = 0;
+    uint32 SubresourceIndex = 0;
 };
 
 struct CopyTextureInfo
 {
     CopyTextureSubresourceInfo Source;
     CopyTextureSubresourceInfo Destination;
-    UInt32 Width  = 0;
-    UInt32 Height = 0;
-    UInt32 Depth  = 0;
+    uint32 Width  = 0;
+    uint32 Height = 0;
+    uint32 Depth  = 0;
 };

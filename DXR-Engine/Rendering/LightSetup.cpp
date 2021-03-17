@@ -7,7 +7,7 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
-Bool LightSetup::Init()
+bool LightSetup::Init()
 {
     DirectionalLightsData.Reserve(1);
     DirectionalLightsBuffer = CreateConstantBuffer(DirectionalLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
@@ -96,7 +96,7 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
     for (Light* Light : Scene.GetLights())
     {
-        Float Intensity = Light->GetIntensity();
+        float Intensity = Light->GetIntensity();
         XMFLOAT3 Color  = Light->GetColor();
         Color = Color * Intensity;
         if (IsSubClassOf<PointLight>(Light))
@@ -104,9 +104,9 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
             PointLight* CurrentLight = Cast<PointLight>(Light);
             Assert(CurrentLight != nullptr);
 
-            constexpr Float MinLuma = 0.005f;
-            Float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
-            Float Radius = sqrt(Dot / MinLuma);
+            constexpr float MinLuma = 0.005f;
+            float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
+            float Radius = sqrt(Dot / MinLuma);
             
             XMFLOAT3 Position = CurrentLight->GetPosition();
             XMFLOAT4 PosRad   = XMFLOAT4(Position.x, Position.y, Position.z, Radius);
@@ -125,7 +125,7 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
                 ShadowMapData.FarPlane = CurrentLight->GetShadowFarPlane();
                 ShadowMapData.Position = CurrentLight->GetPosition();
                 
-                for (UInt32 Face = 0; Face < 6; Face++)
+                for (uint32 Face = 0; Face < 6; Face++)
                 {
                     ShadowMapData.Matrix[Face]     = CurrentLight->GetMatrix(Face);
                     ShadowMapData.ViewMatrix[Face] = CurrentLight->GetViewMatrix(Face);
@@ -157,8 +157,8 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
             XMFLOAT3 CameraPosition = Scene.GetCamera()->GetPosition();
             XMFLOAT3 CameraForward  = Scene.GetCamera()->GetForward();
 
-            Float Near       = Scene.GetCamera()->GetNearPlane();
-            Float DirFrustum = 35.0f;
+            float Near       = Scene.GetCamera()->GetNearPlane();
+            float DirFrustum = 35.0f;
             XMFLOAT3 LookAt  = CameraPosition + (CameraForward * (DirFrustum + Near));
             CurrentLight->SetLookAt(LookAt);
 
@@ -283,7 +283,7 @@ void LightSetup::Release()
 
     for (auto& DSVCube : PointLightShadowMapDSVs)
     {
-        for (UInt32 i = 0; i < 6; i++)
+        for (uint32 i = 0; i < 6; i++)
         {
             DSVCube[i].Reset();
         }

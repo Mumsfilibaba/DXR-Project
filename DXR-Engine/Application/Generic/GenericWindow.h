@@ -5,7 +5,7 @@
 
 #include <string>
 
-enum EWindowStyleFlag : UInt32
+enum EWindowStyleFlag : uint32
 {
     WindowStyleFlag_None        = 0x0,
     WindowStyleFlag_Titled      = FLAG(1),
@@ -20,7 +20,7 @@ struct WindowCreateInfo
 public:
     WindowCreateInfo() = default;
 
-    WindowCreateInfo(const std::string& InTitle, UInt32 InWidth, UInt32 InHeight, UInt32 InStyle)
+    WindowCreateInfo(const std::string& InTitle, uint32 InWidth, uint32 InHeight, uint32 InStyle)
         : Title(InTitle)
         , Width(InWidth)
         , Height(InHeight)
@@ -28,62 +28,62 @@ public:
     {
     }
 
-    Bool IsTitled() const { return Style & WindowStyleFlag_Titled; }
-    Bool IsClosable() const { return Style & WindowStyleFlag_Closable; }
-    Bool IsMinimizable() const { return Style & WindowStyleFlag_Minimizable; }
-    Bool IsMaximizable() const { return Style & WindowStyleFlag_Maximizable; }
-    Bool IsResizeable() const { return Style & WindowStyleFlag_Resizeable; }
+    bool IsTitled() const { return Style & WindowStyleFlag_Titled; }
+    bool IsClosable() const { return Style & WindowStyleFlag_Closable; }
+    bool IsMinimizable() const { return Style & WindowStyleFlag_Minimizable; }
+    bool IsMaximizable() const { return Style & WindowStyleFlag_Maximizable; }
+    bool IsResizeable() const { return Style & WindowStyleFlag_Resizeable; }
 
     std::string Title;
-    UInt32 Width  = 0;
-    UInt32 Height = 0;
-    UInt32 Style  = 0;
+    uint32 Width  = 0;
+    uint32 Height = 0;
+    uint32 Style  = 0;
 };
 
 struct WindowShape
 {
     WindowShape() = default;
 
-    WindowShape(UInt32 InWidth, UInt32 InHeight, Int32 x, Int32 y)
+    WindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
         : Width(InWidth)
         , Height(InHeight)
         , Position({ x, y })
     {
     }
 
-    UInt32 Width  = 0;
-    UInt32 Height = 0;
+    uint32 Width  = 0;
+    uint32 Height = 0;
     struct
     {
-        Int32 x = 0;
-        Int32 y = 0;
+        int32 x = 0;
+        int32 y = 0;
     } Position;
 };
 
 class GenericWindow : public RefCountedObject
 {
 public:
-    virtual Bool Init(const WindowCreateInfo& InCreateInfo) = 0;
+    virtual bool Init(const WindowCreateInfo& InCreateInfo) = 0;
 
-    virtual void Show(Bool Maximized) = 0;
+    virtual void Show(bool Maximized) = 0;
     virtual void Minimize() = 0;
     virtual void Maximize() = 0;
     virtual void Close()    = 0;
     virtual void Restore()  = 0;
     virtual void ToggleFullscreen() = 0;
 
-    virtual Bool IsValid() const = 0;
-    virtual Bool IsActiveWindow() const = 0;
+    virtual bool IsValid() const = 0;
+    virtual bool IsActiveWindow() const = 0;
 
     virtual void SetTitle(const std::string& Title) = 0;
 
-    virtual void SetWindowShape(const WindowShape& Shape, Bool Move) = 0;
+    virtual void SetWindowShape(const WindowShape& Shape, bool Move) = 0;
     virtual void GetWindowShape(WindowShape& OutWindowShape) const   = 0;
 
-    virtual UInt32 GetWidth()  const = 0;
-    virtual UInt32 GetHeight() const = 0;
+    virtual uint32 GetWidth()  const = 0;
+    virtual uint32 GetHeight() const = 0;
 
-    virtual Void* GetNativeHandle() const { return nullptr; }
+    virtual void* GetNativeHandle() const { return nullptr; }
 
     const WindowCreateInfo& GetCreateInfo() const { return CreateInfo; }
 
