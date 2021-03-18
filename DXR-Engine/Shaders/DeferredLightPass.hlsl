@@ -195,6 +195,12 @@ void Main(ComputeShaderInput Input)
     
     GroupMemoryBarrierWithGroupSync();
     
+    if (Depth >= 1.0f)
+    {
+        Output[TexCoord] = Float4(0.0f);
+        return;
+    }
+    
     const float2 TexCoordFloat   = float2(TexCoord) / float2(ScreenWidth, ScreenHeight);
     const float3 WorldPosition   = PositionFromDepth(Depth, TexCoordFloat, CameraBuffer.ViewProjectionInverse);
     const float3 GBufferAlbedo   = AlbedoTex.Load(int3(TexCoord, 0)).rgb;
@@ -296,7 +302,7 @@ void Main(ComputeShaderInput Input)
         float3 Reflection = DXRReflection.Load(int3(TexCoord, 0)).rgb;
         L0 += Reflection * NdotL * (Spec_BRDF * Ks + Diff_BRDF * Kd) / saturate((Spec_PDF + Diff_PDF) * 0.5f + 0.0001f);
         
-        float3 Ambient = GBufferAlbedo * GBufferAO * 0.03f;
+        float3 Ambient = GBufferAlbedo * GBufferAO * 0.1f;
         FinalColor = Ambient + L0;
     }
 #else 

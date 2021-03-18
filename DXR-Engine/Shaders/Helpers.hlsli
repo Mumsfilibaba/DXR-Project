@@ -50,64 +50,9 @@ uint DivideByMultiple(uint Value, uint Alignment)
     return ((Value + Alignment - 1) / Alignment);
 }
 
-float Random(float3 Seed, int i)
-{
-    float4 Seed4 = float4(Seed, i);
-    float  Dot   = dot(Seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
-    return frac(sin(Dot) * 43758.5453f);
-}
-
-uint WangHash(uint Seed)
-{
-    Seed = (Seed ^ 61) ^ (Seed >> 16);
-    Seed *= 9;
-    Seed = Seed ^ (Seed >> 4);
-    Seed *= 0x27d4eb2d;
-    Seed = Seed ^ (Seed >> 15);
-    return Seed;
-}
-
-uint RandomInit(uint2 Pixel, uint Width, uint FrameIndex)
-{
-    uint Seed = 1 + (Pixel.x + (Pixel.y * Width));
-    return WangHash(Seed) + WangHash(FrameIndex + 1);
-}
-
-uint XORShift(uint Value)
-{
-    // Xorshift*32
-    // Based on George Marsaglia's work: http://www.jstatsoft.org/v08/i14/paper
-    Value ^= Value << 13;
-    Value ^= Value >> 17;
-    Value ^= Value << 5;
-    return Value;
-}
-
-float RandomFloatNext(inout uint Seed)
-{
-    Seed = XORShift(Seed);
-    return float(Seed) * (1.0f / 4294967296.0f);
-}
-
-int RandomIntNext(inout uint Seed)
-{
-    Seed = XORShift(Seed);
-    return Seed;
-}
-
 float Linstep(float Low, float High, float P)
 {
     return saturate((P - Low) / (High - Low));
-}
-
-float Lerp(float A, float B, float P)
-{
-    return (-P * B) + ((A * P) + B);
-}
-
-float3 Lerp(float3 A, float3 B, float P)
-{
-    return (Float3(-P) * B) + ((A * Float3(P)) + B);
 }
 
 float Depth_ProjToView(float Depth, float4x4 ProjectionInverse)

@@ -1,6 +1,7 @@
 #include "PBRHelpers.hlsli"
 #include "Structs.hlsli"
 #include "RayTracingHelpers.hlsli"
+#include "Random.hlsli"
 
 // Global RootSignature
 RaytracingAccelerationStructure Scene : register(t0, space0);
@@ -32,21 +33,13 @@ void RayGen()
     uint2 TexCoord           = DispatchIndex.xy;
     uint2 FullResolution     = DispatchDimensions.xy * 2;
     
-    uint2 NoiseCoord = DispatchIndex.xy % 64;
-    uint  BlueNoise  = (uint)BlueNoiseTex.Load(int4(NoiseCoord, 0, 0)).r * 255.0f;
-    BlueNoise = BlueNoise + RandomBuffer.FrameIndex;
+    uint2 NoiseCoord = ((TexCoord / 2) + (RandomBuffer.FrameIndex / 2) * uint2(3, 7)) & 63;
+    uint PixelIndex = (uint)BlueNoiseTex.Load(int4(NoiseCoord, 0, 0)).r * 255.0f;
+    PixelIndex = PixelIndex + RandomBuffer.FrameIndex;
     
-    uint2 GBufferCoord = TexCoord * 2 + uint2(BlueNoise & 1, (BlueNoise >> 1) & 1);
+    uint2 GBufferCoord = TexCoord * 2 + uint2(PixelIndex & 1, (PixelIndex >> 1) & 1);
     
-    // Discard rays not rasterized
     float Depth = GBufferDepth.Load(int3(GBufferCoord, 0)).r;
-    if (Depth >= 1.0f)
-    {
-        ColorDepth[TexCoord] = float4(Float3(0.0f), Depth);
-        RayPDF[TexCoord]     = Float4(0.0f);
-        return;
-    }
-    
     float2 UV = float2(GBufferCoord) / float2(FullResolution);
     float3 WorldPosition = PositionFromDepth(Depth, UV, CameraBuffer.ViewProjectionInverse);
     float3 WorldNormal   = GBufferNormal.Load(int3(GBufferCoord, 0)).rgb;
@@ -57,23 +50,41 @@ void RayGen()
 
     float3 N = UnpackNormal(WorldNormal);
     float3 V = normalize(CameraBuffer.Position - WorldPosition);
+    if (length(WorldNormal) == 0.0f)
+    {
+        ColorDepth[TexCoord] = Float4(0.0f);
+        RayPDF[TexCoord]     = Float4(0.0f);
+        return;
+    }
     
-    uint Seed = RandomInit(DispatchIndex.xy, DispatchDimensions.x, RandomBuffer.FrameIndex % 32);
+    uint Seed = InitRandom(DispatchIndex.xy, DispatchDimensions.x, RandomBuffer.FrameIndex);
     
-    float2 Xi  = Hammersley(RandomBuffer.FrameIndex % 32, 32);
-    float Rnd0 = RandomFloatNext(Seed);
-    float Rnd1 = RandomFloatNext(Seed);
+    float2 Xi  = Hammersley(NextRandomInt(Seed) % 8192, 8192);
+    float Rnd0 = NextRandom(Seed);
+    float Rnd1 = NextRandom(Seed);
     Xi.x = frac(Xi.x + Rnd0);
     Xi.y = frac(Xi.y + Rnd1);
     
     float3 H = ImportanceSampleGGX(Xi, Roughness, N);
     float3 L = normalize(reflect(-V, H));
     
+    float NdotL = saturate(dot(N, L));
+    if (NdotL <= 0.0f)
+    {
+        Xi   = Hammersley(NextRandomInt(Seed) % 8192, 8192);
+        Rnd0 = NextRandom(Seed);
+        Rnd1 = NextRandom(Seed);
+        Xi.x = frac(Xi.x + Rnd0);
+        Xi.y = frac(Xi.y + Rnd1);
+    
+        H = ImportanceSampleGGX(Xi, Roughness, N);
+        L = normalize(reflect(-V, H));
+    }
+    
     float3 FinalColor = Float3(0.0f);
     float3 FinalRay   = Float3(0.0f);
     float  FinalPDF   = 0.0f;
     
-    float NdotL = saturate(dot(N, L));
     if (NdotL > 0.0f)
     {
         RayDesc Ray;
@@ -82,19 +93,23 @@ void RayGen()
         Ray.TMin      = 0.0f;
         Ray.TMax      = 1000.0f;
 
-        RayPayload PayLoad;
-        PayLoad.T = Ray.TMax;
-        TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, PayLoad);
+        bool Nan = IsNan(Ray.Origin) || IsNan(Ray.Direction);
+        if (!Nan)
+        {
+            RayPayload PayLoad;
+            PayLoad.T = Ray.TMax;
+            TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, PayLoad);
         
-        float NdotH = saturate(dot(N, H));
-        float HdotV = saturate(dot(H, V));
+            float NdotH = saturate(dot(N, H));
+            float HdotV = saturate(dot(H, V));
         
-        float D        = DistributionGGX(N, H, Roughness);
-        float Spec_PDF = saturate(NdotH / (4.0f * HdotV));
-        float3 Li  = PayLoad.Color;
-        FinalColor = Li;
-        FinalRay   = L * PayLoad.T;
-        FinalPDF   = Spec_PDF;
+            float D        = DistributionGGX(N, H, Roughness);
+            float Spec_PDF = saturate(NdotH / (4.0f * HdotV));
+            float3 Li  = PayLoad.Color;
+            FinalColor = Li;
+            FinalRay   = L * PayLoad.T;
+            FinalPDF   = Spec_PDF;
+        }
     }
 
     ColorDepth[TexCoord] = float4(FinalColor, Depth);

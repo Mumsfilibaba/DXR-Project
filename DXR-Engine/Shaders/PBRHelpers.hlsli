@@ -5,12 +5,12 @@
 #include "Helpers.hlsli"
 
 // ImportanceSample GGX
+// https://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+
 float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
 {
-    float Alpha        = Roughness * Roughness;
-    float CosThetaSqrd = min((1.0f - Xi.y) / max(1.0f + (Alpha * Alpha - 1.0f) * Xi.y, 0.0001f), 1.0f);
-    
-    float CosTheta = sqrt(CosThetaSqrd);
+    float Alpha    = Roughness * Roughness;
+    float CosTheta = sqrt((1.0f - Xi.y) / (1.0f + (Alpha * Alpha - 1.0f) * Xi.y));
     float SinTheta = sqrt(1.0f - CosTheta * CosTheta);
     float Phi      = 2 * PI * Xi.x;
     
@@ -24,6 +24,16 @@ float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
     float3 TangentY = cross(N, TangentX);
     float3 Sample   = TangentX * H.x + TangentY * H.y + N * H.z;
     return normalize(Sample);
+}
+
+// Source: "Efficient Construction of Perpendicular Vectors Without Branching"
+float3 GetPerpendicularVector(float3 U)
+{
+    float3 A = abs(U);
+    uint xm = ((A.x - A.y) < 0 && (A.x - A.z) < 0) ? 1 : 0;
+    uint ym = (A.y - A.z) < 0 ? (1 ^ xm) : 0;
+    uint zm = 1 ^ (xm | ym);
+    return cross(U, float3(xm, ym, zm));
 }
 
 // GGX Distribution

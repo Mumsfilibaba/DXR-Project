@@ -1,5 +1,6 @@
 #include "PBRHelpers.hlsli"
 #include "Structs.hlsli"
+#include "Random.hlsli"
 
 Texture2D<float3> GBufferNormals : register(t0, space0);
 Texture2D<float>  GBufferDepth   : register(t1, space0);
@@ -58,10 +59,12 @@ void Main(ComputeShaderInput Input)
     const float FinalBias       = max(Bias, 0.0f);
     const int   FinalKernelSize = max(KernelSize, 4);
     
+    uint Seed = InitRandom(OutputTexCoords, ScreenSize.x, 1);
+    
     float Occlusion = 0.0f;
     for (int i = 0; i < FinalKernelSize; i++)
     {
-        const int Index = int(float(MAX_SAMPLES) * Random(floor(ViewPosition.xyz * 1000.0f), i));
+        const int Index = NextRandomInt(Seed) % MAX_SAMPLES;
         
         const float3 Sample = Samples[Index];
         float3 SamplePos = mul(Sample, TBN);

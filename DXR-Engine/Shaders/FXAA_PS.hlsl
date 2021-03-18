@@ -242,6 +242,6 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
     float  SubPixelOffset = (0.5f + (Distance0 * (-1.0f / SpanLength))) * StepLength;
     float2 FinalTexCoord  = TexCoord + float2(IsHorizontal ? 0.0f : SubPixelOffset, IsHorizontal ? SubPixelOffset : 0.0f);
     float3 ColorF         = FXAASample(FinalImage, Sampler, FinalTexCoord).rgb;
-    float3 FinalColor     = Lerp(ColorL, ColorF, BlendL);
+    float3 FinalColor     = lerp(ColorL, ColorF, BlendL);
     return float4(FinalColor, 1.0f);
 }

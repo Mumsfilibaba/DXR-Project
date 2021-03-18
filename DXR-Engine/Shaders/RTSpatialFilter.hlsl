@@ -4,6 +4,7 @@
 #include "Constants.hlsli"
 #include "RayTracingHelpers.hlsli"
 #include "Kernels.hlsli"
+#include "Random.hlsli"
 
 #define NUM_THREADS 16
 #define NUM_SAMPLES 16
@@ -24,12 +25,44 @@ RWTexture2D<float4> HistoryOutput : register(u0);
 RWTexture2D<float4> Output        : register(u1);
 RWTexture2D<float2> Moments       : register(u2);
 
-groupshared float3 SharedResults[NUM_THREADS][NUM_THREADS];
+static const float2 RaySamples[4][16] =
+{
+    {
+        float2(0.f, 0.f), float2(-1.f, -1.f), float2(1.f, 0.f), float2(-2.f, -1.f),
+        float2(-2.f, 1.f), float2(0.f, -3.f), float2(2.f, -2.f), float2(1.f, 2.f),
+        float2(0.f, 3.f), float2(-4.f, -1.f), float2(0.f, -4.f), float2(-2.f, 3.f),
+        float2(-4.f, 1.f), float2(3.f, 1.f), float2(3.f, -3.f), float2(4.f, 0.f)
+    },
+    {
+        float2(0.f, 0.f), float2(1.f, -1.f), float2(0.f, -2.f), float2(-1.f, -2.f),
+        float2(-1.f, 2.f), float2(0.f, 2.f), float2(2.f, 0.f), float2(-3.f, 1.f),
+        float2(-3.f, -2.f), float2(1.f, -3.f), float2(-3.f, 2.f), float2(3.f, 0.f),
+        float2(-2.f, -4.f), float2(1.f, 3.f), float2(-4.f, -2.f), float2(2.f, 3.f)
+    },
+    {
+        float2(0.f, 0.f), float2(-1.f, 0.f), float2(0.f, 1.f), float2(-2.f, 0.f),
+        float2(2.f, -1.f), float2(-1.f, -3.f), float2(-3.f, -1.f), float2(2.f, 2.f),
+        float2(2.f, -3.f), float2(3.f, -1.f), float2(-3.f, -3.f), float2(-4.f, 0.f),
+        float2(-1.f, -4.f), float2(-4.f, 2.f), float2(-3.f, 3.f), float2(4.f, -1.f)
+    },
+    {
+        float2(0.f, 0.f), float2(0.f, -1.f), float2(-1.f, 1.f), float2(-2.f, -2.f),
+        float2(1.f, 1.f), float2(1.f, -2.f), float2(-3.f, 0.f), float2(2.f, 1.f),
+        float2(-2.f, -3.f), float2(-2.f, 2.f), float2(-1.f, 3.f), float2(1.f, -4.f),
+        float2(3.f, -2.f), float2(3.f, 2.f), float2(-4.f, -3.f), float2(0.f, 4.f)
+    }
+};
+
+float ValidateSample(float3 N, float3 NeighbourN, float Depth, float NeightbourDepth)
+{
+    float Diff = abs(Depth - NeightbourDepth);
+    return (Diff < 0.0005f && Depth < 1.0f && NeightbourDepth < 1.0f) ? 1.0f : 0.0f;
+}
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(ComputeShaderInput Input)
 {
-    uint2 TexCoords = Input.DispatchThreadID.xy;
+    uint2 TexCoords     = Input.DispatchThreadID.xy;
     uint2 HalfTexCoords = TexCoords / 2;
 
     float4 GBufferAlbedo   = InGBufferAlbedo[TexCoords];
@@ -68,22 +101,30 @@ void Main(ComputeShaderInput Input)
     float3 Min = Float3(FLT32_MAX);
     float3 Max = Float3(0.0f);
     
-    uint Seed = RandomInit(TexCoords.xy, Width, RandomBuffer.FrameIndex);
+    uint Seed  = InitRandom(TexCoords.xy, Width, RandomBuffer.FrameIndex);
+    uint PxIdx = TexCoords.x % 2 + (TexCoords.y % 2) * 2;
     
     float ActualSamples = 0.0f;
     float KernelWidth   = lerp(1.0f, 8.0f, min(Roughness, 0.35f) / 0.35f);
     for (int y = 0; y < NUM_SAMPLES; y++)
     {
-        //int Rnd0 = (TexCoords.x + RandomIntNext(Seed)) % 64;
-        //int Rnd1 = (TexCoords.y + RandomIntNext(Seed)) % 64;
+        int Rnd0 = (TexCoords.x + NextRandomInt(Seed)) % 64;
+        int Rnd1 = (TexCoords.y + NextRandomInt(Seed)) % 64;
         
-        //const int2 Pixel = int2(Rnd0, Rnd1);
-        //const int  TextureIndex = (RandomBuffer.FrameIndex + y) % 64;
+        const int2 Pixel = int2(Rnd0, Rnd1);
+        const int TextureIndex = y & 63;
         
-        //float4 BlueNoise = BlueNoiseTex.Load(int4(Pixel, TextureIndex, 0));
-        //float2 Rnd = trunc(mad(BlueNoise.xy, 2.0f, -1.0f) * KernelWidth);
-        float2 Rnd = trunc(PoissonSamples[y] * KernelWidth);
+        float4 BlueNoise = BlueNoiseTex.Load(int4(Pixel, TextureIndex, 0));
+        float2 Rnd = trunc(mad(BlueNoise.xy, 2.0f, -1.0f) * KernelWidth);
+        //float2 Rnd = trunc(PoissonSamples[y] * KernelWidth);
         int2 LocalTexCoord = HalfTexCoords + int2(Rnd);
+        
+        //float2 Random = float2(NextRandom(Seed), NextRandom(Seed));
+        //float2x2 Mat  = float2x2(Random.x, Random.y, -Random.y, Random.x);
+        //float2 Offset = RaySamples[PxIdx][y];
+        //Offset = mul(Mat, Offset);
+        
+        //int2 LocalTexCoord = HalfTexCoords + int2(Offset);
         
         float4 RayPDF    = InRayPDF[LocalTexCoord];
         float  RayLength = length(RayPDF.xyz);
@@ -92,34 +133,30 @@ void Main(ComputeShaderInput Input)
         float3 L = RayPDF.xyz / RayLength;
         AvgHitPoint += L;
         
-        float NdotL = saturate(dot(N, L));
-        if (NdotL > 0.0f)
+        if (RayPDF.a > 0.0f)
         {
             float3 H = normalize(V + L);
-            
+            float NdotL = saturate(dot(N, L));
             float NdotV = saturate(dot(N, V));
             float NdotH = saturate(dot(N, H));
             float HdotV = saturate(dot(H, V));
             
-            float3 Li = InColorDepth[LocalTexCoord].rgb;
+            float4 SampleColorDepth = InColorDepth[LocalTexCoord];
+            float3 Li = SampleColorDepth.rgb;
+            
+            float3 SampleN = UnpackNormal(InGBufferNormals[LocalTexCoord * 2].xyz);
             
             float  D = DistributionGGX(N, H, Roughness);
             float  G = GeometrySmithGGX_IBL(N, L, V, Roughness);
             float3 F = FresnelSchlick(F0, V, H);
             float3 Numer = F * G;
             float3 Denom = max(Float3(4.0f * NdotL * NdotV), Float3(0.0001f));
-
-            //float3 Diff_BRDF = GBufferAlbedo * INV_PI;
-            //float  Diff_PDF  = NdotL * INV_PI;
-
-            //float3 Ks = F;
-            //float3 Kd = (Float3(1.0f) - Ks) * (1.0f - Metallic);
     
             float3 Spec_BRDF = Numer / Denom;
             float  Spec_PDF  = RayPDF.a;
-           
-            //float3 Weight    = NdotL * (Spec_BRDF * Ks + Diff_BRDF * Kd) / saturate((Spec_PDF + Diff_PDF) * 0.5f + 0.0001f);
-            float3 Weight      = NdotL * Spec_BRDF / saturate(Spec_PDF + 0.0001f);
+            
+            float  Valid  = ValidateSample(N, SampleN, ColorDepth.w, SampleColorDepth.w);
+            float3 Weight = Valid * NdotL * Spec_BRDF / saturate(Spec_PDF + 0.0001f);
             float3 LocalResult = saturate(Li * Weight);
             Moment1   += LocalResult;
             Moment2   += LocalResult * LocalResult;
@@ -141,15 +178,16 @@ void Main(ComputeShaderInput Input)
     float3 RGBMean      = Moment1 / ActualSamples;
     float3 RGBVariance  = (Moment2 / ActualSamples) - RGBMean * RGBMean;
     float3 RGBDeviation = max(sqrt(abs(RGBVariance)), 0.0001f);
-    float3 Result = Moment1 / WeightSum;
     float3 RGBMin = RGBMean - Gamma * RGBDeviation;
     float3 RGBMax = RGBMean + Gamma * RGBDeviation;
+    
+    float3 Result = Moment1 / WeightSum;
     
     const float NumSamples = float(NUM_SAMPLES);
     AvgLength   = AvgLength   / NumSamples;
     AvgHitPoint = AvgHitPoint / NumSamples;
     
-    float HistoryUsage = 0.98f;
+    float HistoryUsage = 0.9f;
     float MomentsUsage = 0.5f;
     
     float  PreviousAvgLength = HistoryOutput[TexCoords].w;

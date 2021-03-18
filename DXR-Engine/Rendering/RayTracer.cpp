@@ -216,12 +216,8 @@ void RayTracer::Release()
 void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSetup& LightSetup, const Scene& Scene)
 {
     static UInt32 FrameIndex = 0;
-
     FrameIndex++;
-    if (FrameIndex >= 64)
-    {
-        FrameIndex = 0;
-    }
+    FrameIndex = FrameIndex & 63;
 
     RandomData RndData;
     RndData.FrameIndex = FrameIndex;
@@ -371,14 +367,14 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 4);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetShaderResourceView(), 5);
-    //CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.BlueNoise->GetShaderResourceView(), 6);
+    CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.BlueNoise->GetShaderResourceView(), 6);
 
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTHistory->GetUnorderedAccessView(), 0);
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), Resources.RTReflections->GetUnorderedAccessView(), 1);
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTMomentBuffer->GetUnorderedAccessView(), 2);
     
     CmdList.SetConstantBuffer(RTSpatialShader.Get(), Resources.CameraBuffer.Get(), 0);
-    //CmdList.SetConstantBuffer(RTSpatialShader.Get(), RandomDataBuffer.Get(), 1);
+    CmdList.SetConstantBuffer(RTSpatialShader.Get(), RandomDataBuffer.Get(), 1);
 
     XMUINT3 ThreadGroup = RTSpatialShader->GetThreadGroupXYZ();
     Width  = Math::DivideByMultiple(RTHistory->GetWidth(), ThreadGroup.x);
