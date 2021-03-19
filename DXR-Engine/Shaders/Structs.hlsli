@@ -16,14 +16,19 @@ struct Camera
     float4x4 View;
     float4x4 ViewInverse;
     float4x4 Projection;
+    float4x4 PrevProjection;
     float4x4 ProjectionInverse;
     float4x4 ViewProjectionInverse;
+    
     float3 Position;
     float  NearPlane;
+    
     float3 Forward;
     float  FarPlane;
+    
     float2 Jitter;
     float2 PrevJitter;
+    
     float AspectRatio;
     float Width;
     float Height;

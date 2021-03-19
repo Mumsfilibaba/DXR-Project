@@ -43,6 +43,7 @@ private:
     TRef<ComputeShader>        BlurVerticalShader;
 
     TRef<Texture2D> RTColorDepth;
+    TRef<Texture2D> RTReconstructed;
     TRef<Texture2D> RTHistory;
     TRef<Texture2D> RTMomentBuffer;
 };

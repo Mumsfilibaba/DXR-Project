@@ -45,14 +45,14 @@ VSOutput VSMain(VSInput Input)
 {
     VSOutput Output;
     
-    const float4x4 TransformInv = transpose(TransformBuffer.TransformInv);
+    const float4x4 TransformInv = TransformBuffer.TransformInv;
     float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
     Output.Normal = Normal;
     
     float3 ViewNormal = mul(float4(Normal, 0.0f), CameraBuffer.View).xyz;
     Output.ViewNormal = ViewNormal;
     
-    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), TransformBuffer.Transform).xyz);
+    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), TransformInv).xyz);
     Tangent        = normalize(Tangent - dot(Tangent, Normal) * Normal);
     Output.Tangent = Tangent;
     

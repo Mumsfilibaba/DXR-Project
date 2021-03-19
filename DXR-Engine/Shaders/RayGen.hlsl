@@ -6,11 +6,11 @@
 // Global RootSignature
 RaytracingAccelerationStructure Scene : register(t0, space0);
 
-TextureCube<float4> Skybox          : register(t1, space0);
-Texture2D<float4>   GBufferAlbedo   : register(t2, space0);
-Texture2D<float4>   GBufferNormal   : register(t3, space0);
-Texture2D<float4>   GBufferDepth    : register(t4, space0);
-Texture2D<float4>   GBufferMaterial : register(t5, space0);
+TextureCube<float4> Skybox           : register(t1, space0);
+Texture2D<float4> GBufferAlbedoTex   : register(t2, space0);
+Texture2D<float4> GBufferNormalTex   : register(t3, space0);
+Texture2D<float4> GBufferDepthTex    : register(t4, space0);
+Texture2D<float4> GBufferMaterialTex : register(t5, space0);
 
 Texture2DArray<float4> BlueNoiseTex : register(t6, space0);
 
@@ -34,22 +34,23 @@ void RayGen()
     uint2 FullResolution     = DispatchDimensions.xy * 2;
     
     uint2 NoiseCoord = ((TexCoord / 2) + (RandomBuffer.FrameIndex / 2) * uint2(3, 7)) & 63;
-    uint PixelIndex = (uint)BlueNoiseTex.Load(int4(NoiseCoord, 0, 0)).r * 255.0f;
+    uint  PixelIndex = (uint)(BlueNoiseTex.Load(int4(NoiseCoord, 0, 0)).r * 255.0f);
     PixelIndex = PixelIndex + RandomBuffer.FrameIndex;
     
     uint2 GBufferCoord = TexCoord * 2 + uint2(PixelIndex & 1, (PixelIndex >> 1) & 1);
     
-    float Depth = GBufferDepth.Load(int3(GBufferCoord, 0)).r;
-    float2 UV = float2(GBufferCoord) / float2(FullResolution);
+    float  Depth = GBufferDepthTex.Load(int3(GBufferCoord, 0)).r;
+    float2 UV    = float2(GBufferCoord) / float2(FullResolution);
     float3 WorldPosition = PositionFromDepth(Depth, UV, CameraBuffer.ViewProjectionInverse);
-    float3 WorldNormal   = GBufferNormal.Load(int3(GBufferCoord, 0)).rgb;
+    float3 WorldNormal   = GBufferNormalTex.Load(int3(GBufferCoord, 0)).rgb;
     
-    float3 Albedo          = GBufferAlbedo.Load(int3(GBufferCoord, 0)).rgb;
-    float3 SampledMaterial = GBufferMaterial.Load(int3(GBufferCoord, 0)).rgb;
-    float  Roughness       = clamp(SampledMaterial.r, MIN_ROUGHNESS, MAX_ROUGHNESS);
+    float3 GBufferAlbedo   = GBufferAlbedoTex.Load(int3(GBufferCoord, 0)).rgb;
+    float3 GBufferMaterial = GBufferMaterialTex.Load(int3(GBufferCoord, 0)).rgb;
+    float  Roughness       = GBufferMaterial.r;
 
     float3 N = UnpackNormal(WorldNormal);
     float3 V = normalize(CameraBuffer.Position - WorldPosition);
+    
     if (length(WorldNormal) == 0.0f)
     {
         ColorDepth[TexCoord] = Float4(0.0f);
@@ -59,7 +60,7 @@ void RayGen()
     
     uint Seed = InitRandom(DispatchIndex.xy, DispatchDimensions.x, RandomBuffer.FrameIndex);
     
-    float2 Xi  = Hammersley(NextRandomInt(Seed) % 8192, 8192);
+    float2 Xi = Hammersley(NextRandomInt(Seed) % 8192, 8192);
     float Rnd0 = NextRandom(Seed);
     float Rnd1 = NextRandom(Seed);
     Xi.x = frac(Xi.x + Rnd0);
@@ -71,7 +72,7 @@ void RayGen()
     float NdotL = saturate(dot(N, L));
     if (NdotL <= 0.0f)
     {
-        Xi   = Hammersley(NextRandomInt(Seed) % 8192, 8192);
+        Xi = Hammersley(NextRandomInt(Seed) % 8192, 8192);
         Rnd0 = NextRandom(Seed);
         Rnd1 = NextRandom(Seed);
         Xi.x = frac(Xi.x + Rnd0);
@@ -85,33 +86,31 @@ void RayGen()
     float3 FinalRay   = Float3(0.0f);
     float  FinalPDF   = 0.0f;
     
-    if (NdotL > 0.0f)
+    RayDesc Ray;
+    Ray.Origin    = WorldPosition + (N * RAY_OFFSET);
+    Ray.Direction = L;
+    Ray.TMin      = 0.0f;
+    Ray.TMax      = 1000.0f;
+
+    bool Nan = IsNan(Ray.Origin) || IsNan(Ray.Direction);
+    if (!Nan)
     {
-        RayDesc Ray;
-        Ray.Origin    = WorldPosition + (N * RAY_OFFSET);
-        Ray.Direction = L;
-        Ray.TMin      = 0.0f;
-        Ray.TMax      = 1000.0f;
-
-        bool Nan = IsNan(Ray.Origin) || IsNan(Ray.Direction);
-        if (!Nan)
-        {
-            RayPayload PayLoad;
-            PayLoad.T = Ray.TMax;
-            TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, PayLoad);
+        RayPayload PayLoad;
+        PayLoad.T = Ray.TMax;
+        TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, PayLoad);
         
-            float NdotH = saturate(dot(N, H));
-            float HdotV = saturate(dot(H, V));
+        float NdotH = saturate(dot(N, H));
+        float HdotV = saturate(dot(H, V));
         
-            float D        = DistributionGGX(N, H, Roughness);
-            float Spec_PDF = saturate(NdotH / (4.0f * HdotV));
-            float3 Li  = PayLoad.Color;
-            FinalColor = Li;
-            FinalRay   = L * PayLoad.T;
-            FinalPDF   = Spec_PDF;
-        }
+        float D = DistributionGGX(N, H, Roughness);
+        float Spec_PDF = D * NdotH / (4.0f * HdotV);
+        
+        float3 Li  = PayLoad.Color;
+        FinalColor = Li;
+        FinalRay = L * PayLoad.T;
+        FinalPDF = 1.0f / Spec_PDF;
     }
-
+    
     ColorDepth[TexCoord] = float4(FinalColor, Depth);
-    RayPDF[TexCoord]     = float4(FinalRay, FinalPDF);
+    RayPDF[TexCoord] = float4(FinalRay, FinalPDF);
 }

@@ -366,6 +366,7 @@ void Renderer::Tick(const Scene& Scene)
     CameraBufferData.PrevViewProjection = CameraBufferData.ViewProjection;
     CameraBufferData.ViewProjection     = CurrentCamera->GetViewProjectionMatrix();
     CameraBufferData.View               = CurrentCamera->GetViewMatrix();
+    CameraBufferData.PrevProjection     = CameraBufferData.Projection;
     CameraBufferData.Projection         = CurrentCamera->GetProjectionMatrix();
     CameraBufferData.ViewInv            = CurrentCamera->GetViewInverseMatrix();
     CameraBufferData.ProjectionInv      = CurrentCamera->GetProjectionInverseMatrix();

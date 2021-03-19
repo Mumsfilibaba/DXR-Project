@@ -18,10 +18,58 @@ float4 Float4(float Single)
     return float4(Single, Single, Single, Single);
 }
 
+bool IsNan(float2 Num)
+{
+    bool2 Result = isnan(Num);
+    return Result.x || Result.y;
+}
+
 bool IsNan(float3 Num)
 {
     bool3 Result = isnan(Num);
     return Result.x || Result.y || Result.z;
+}
+
+bool IsNan(float4 Num)
+{
+    bool4 Result = isnan(Num);
+    return Result.x || Result.y || Result.z || Result.w;
+}
+
+bool IsInf(float2 Num)
+{
+    bool2 Result = isinf(Num);
+    return Result.x || Result.y;
+}
+
+bool IsInf(float3 Num)
+{
+    bool3 Result = isinf(Num);
+    return Result.x || Result.y || Result.z;
+}
+
+bool IsInf(float4 Num)
+{
+    bool4 Result = isinf(Num);
+    return Result.x || Result.y || Result.z || Result.w;
+}
+
+bool IsEqual(float2 LHS, float2 RHS)
+{
+    bool2 Result = LHS == RHS;
+    return Result.x || Result.y;
+}
+
+bool IsEqual(float3 LHS, float3 RHS)
+{
+    bool3 Result = LHS == RHS;
+    return Result.x || Result.y || Result.z;
+}
+
+bool IsEqual(float4 LHS, float4 RHS)
+{
+    bool4 Result = LHS == RHS;
+    return Result.x || Result.y || Result.z || Result.w;
 }
 
 float Luma(float3 Color)

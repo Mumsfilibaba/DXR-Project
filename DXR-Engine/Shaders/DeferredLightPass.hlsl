@@ -14,11 +14,13 @@
     #define DRAW_TILE_OCCUPANCY 0
 #endif
 
-#define RAY_TRACING
+#if 1// ENABLE_RAY_TRACING
+    #define RAY_TRACING
+#endif
 
-Texture2D<float4>       AlbedoTex             : register(t0, space0);
-Texture2D<float4>       NormalTex             : register(t1, space0);
-Texture2D<float4>       MaterialTex           : register(t2, space0);
+Texture2D<float4>       GBufferAlbedoTex             : register(t0, space0);
+Texture2D<float4>       GBufferNormalTex             : register(t1, space0);
+Texture2D<float4>       GBufferMaterialTex           : register(t2, space0);
 Texture2D<float>        DepthStencilTex       : register(t3, space0);
 Texture2D<float4>       DXRReflection         : register(t4, space0);
 TextureCube<float4>     IrradianceMap         : register(t5, space0);
@@ -203,9 +205,9 @@ void Main(ComputeShaderInput Input)
     
     const float2 TexCoordFloat   = float2(TexCoord) / float2(ScreenWidth, ScreenHeight);
     const float3 WorldPosition   = PositionFromDepth(Depth, TexCoordFloat, CameraBuffer.ViewProjectionInverse);
-    const float3 GBufferAlbedo   = AlbedoTex.Load(int3(TexCoord, 0)).rgb;
-    const float3 GBufferMaterial = MaterialTex.Load(int3(TexCoord, 0)).rgb;
-    const float3 GBufferNormal   = NormalTex.Load(int3(TexCoord, 0)).rgb;
+    const float3 GBufferAlbedo   = GBufferAlbedoTex.Load(int3(TexCoord, 0)).rgb;
+    const float3 GBufferMaterial = GBufferMaterialTex.Load(int3(TexCoord, 0)).rgb;
+    const float3 GBufferNormal   = GBufferNormalTex.Load(int3(TexCoord, 0)).rgb;
     const float  ScreenSpaceAO   = SSAO.Load(int3(TexCoord, 0)).r;
     
     const float3 N = UnpackNormal(GBufferNormal);
@@ -285,10 +287,10 @@ void Main(ComputeShaderInput Input)
         float HdotV = saturate(dot(H, V));
     
         float  D = DistributionGGX(N, H, GBufferRoughness);
-        float  G = GeometrySmithGGX_IBL(N, L, V, GBufferRoughness);
-        float3 F = FresnelSchlick(F0, V, H);
-        float3 Numer = F * G;
-        float3 Denom = max(Float3(4.0f * NdotL * NdotV), Float3(0.0001f));
+        float  G = GeometrySmithGGX(N, L, V, GBufferRoughness);
+        float3 F = FresnelSchlick_Roughness(F0, V, N, GBufferRoughness);
+        float3 Numer = D * F * G;
+        float3 Denom = Float3(max(4.0f * NdotL * NdotV, 0.0001f));
     
         float3 Diff_BRDF = GBufferAlbedo * INV_PI;
         float  Diff_PDF  = NdotL * INV_PI;
@@ -297,10 +299,10 @@ void Main(ComputeShaderInput Input)
         float3 Kd = (Float3(1.0f) - Ks) * (1.0f - GBufferMetallic);
     
         float3 Spec_BRDF = Numer / Denom;
-        float  Spec_PDF  = 1.0f;
+        float  Spec_PDF  = D * NdotH / (4.0f * HdotV);
 
         float3 Reflection = DXRReflection.Load(int3(TexCoord, 0)).rgb;
-        L0 += Reflection * NdotL * (Spec_BRDF * Ks + Diff_BRDF * Kd) / saturate((Spec_PDF + Diff_PDF) * 0.5f + 0.0001f);
+        L0 += Reflection * NdotL * (Spec_BRDF + Diff_BRDF * Kd) / ((Spec_PDF + Diff_PDF) * 0.5f);
         
         float3 Ambient = GBufferAlbedo * GBufferAO * 0.1f;
         FinalColor = Ambient + L0;

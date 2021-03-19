@@ -35,14 +35,19 @@ struct CameraBufferDesc
     XMFLOAT4X4 View;
     XMFLOAT4X4 ViewInv;
     XMFLOAT4X4 Projection;
+    XMFLOAT4X4 PrevProjection;
     XMFLOAT4X4 ProjectionInv;
     XMFLOAT4X4 ViewProjectionInv;
-    XMFLOAT3   Position;
-    Float      NearPlane;
-    XMFLOAT3   Forward;
-    Float      FarPlane;
-    XMFLOAT2   Jitter;
-    XMFLOAT2   PrevJitter;
+
+    XMFLOAT3 Position;
+    Float    NearPlane;
+    
+    XMFLOAT3 Forward;
+    Float    FarPlane;
+    
+    XMFLOAT2 Jitter;
+    XMFLOAT2 PrevJitter;
+    
     Float AspectRatio;
     Float Width;
     Float Height;

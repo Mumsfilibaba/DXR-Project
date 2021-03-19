@@ -152,6 +152,7 @@ workspace "DXR-Project"
         {	
             "**.hlsl",
 			"**.hlsli",
+			"%{prj.name}/Main/Windows/WindowsMain.cpp",	
         }
 
 		sysincludedirs

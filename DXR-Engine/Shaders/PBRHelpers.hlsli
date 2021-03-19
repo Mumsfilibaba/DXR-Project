@@ -9,10 +9,10 @@
 
 float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
 {
-    float Alpha    = Roughness * Roughness;
+    float Alpha = Roughness * Roughness;
+    float Phi   = 2 * PI * Xi.x;
     float CosTheta = sqrt((1.0f - Xi.y) / (1.0f + (Alpha * Alpha - 1.0f) * Xi.y));
     float SinTheta = sqrt(1.0f - CosTheta * CosTheta);
-    float Phi      = 2 * PI * Xi.x;
     
     float3 H;
     H.x = SinTheta * cos(Phi);
@@ -22,28 +22,40 @@ float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
     float3 Up       = abs(N.z) < 0.999f ? float3(0.0f, 0.0f, 1.0f) : float3(1.0f, 0.0f, 0.0f);
     float3 TangentX = normalize(cross(Up, N));
     float3 TangentY = cross(N, TangentX);
-    float3 Sample   = TangentX * H.x + TangentY * H.y + N * H.z;
-    return normalize(Sample);
+    return normalize(TangentX * H.x + TangentY * H.y + N * H.z);
 }
 
-// Source: "Efficient Construction of Perpendicular Vectors Without Branching"
-float3 GetPerpendicularVector(float3 U)
+float3 ImportanceSampleGGX_PDF(float2 Xi, float Roughness, float3 N, inout float PDF)
 {
-    float3 A = abs(U);
-    uint xm = ((A.x - A.y) < 0 && (A.x - A.z) < 0) ? 1 : 0;
-    uint ym = (A.y - A.z) < 0 ? (1 ^ xm) : 0;
-    uint zm = 1 ^ (xm | ym);
-    return cross(U, float3(xm, ym, zm));
+    float Alpha  = Roughness * Roughness;
+    float Alpha2 = Alpha * Alpha;
+    float Phi    = 2 * PI * Xi.x;
+    float CosTheta = sqrt((1.0f - Xi.y) / (1.0f + (Alpha2 - 1.0f) * Xi.y));
+    float SinTheta = sqrt(1.0f - CosTheta * CosTheta);
+    
+    float3 H;
+    H.x = SinTheta * cos(Phi);
+    H.y = SinTheta * sin(Phi);
+    H.z = CosTheta;
+
+    float Denom = CosTheta * CosTheta * (Alpha2 - 1.0f) + 1.0f;
+    float D = Alpha2 / (PI * Denom * Denom);
+    PDF = D * CosTheta;
+    
+    float3 Up       = abs(N.z) < 0.999f ? float3(0.0f, 0.0f, 1.0f) : float3(1.0f, 0.0f, 0.0f);
+    float3 TangentX = normalize(cross(Up, N));
+    float3 TangentY = cross(N, TangentX);
+    return normalize(TangentX * H.x + TangentY * H.y + N * H.z);
 }
 
-// GGX Distribution
+// GGX Normal Distribution
 float DistributionGGX(float3 N, float3 H, float Roughness)
 {
     float Alpha  = Roughness * Roughness;
     float Alpha2 = Alpha * Alpha;
-    float NdotH  = saturate(dot(N, H) + 0.0001f);
+    float NdotH  = saturate(dot(N, H));
     float Denom  = NdotH * NdotH * (Alpha2 - 1.0f) + 1.0f;
-    return Alpha2 / (PI * Denom * Denom);
+    return Alpha2 / max(PI * Denom * Denom, 0.0001f);
 }
 
 // Fresnel Schlick
@@ -59,30 +71,26 @@ float3 FresnelSchlick_Roughness(float3 F0, float3 V, float3 H, float Roughness)
     return F0 + (max(Float3(1.0f - Roughness), F0) - F0) * pow(1.0f - VdotH, 5.0f);
 }
 
-// Geometry Smitch
-float GeometrySmithGGX1(float3 N, float3 V, float Roughness)
-{
-    float Roughness1 = Roughness + 1;
-    float K     = (Roughness1 * Roughness1) / 8.0f;
-    float NdotV = saturate(dot(N, V));
-    return NdotV / max(NdotV * (1.0f - K) + K, 0.0000001f);
-}
-
+// Geometry Smith
 float GeometrySmithGGX(float3 N, float3 L, float3 V, float Roughness)
 {
-    return GeometrySmithGGX1(N, L, Roughness) * GeometrySmithGGX1(N, V, Roughness);
-}
-
-float GeometrySmithGGX1_IBL(float3 N, float3 V, float Roughness)
-{
-    float K     = (Roughness * Roughness) / 2.0f;
+    float r = Roughness + 1;
+    float k = (r * r) / 8.0f;
     float NdotV = saturate(dot(N, V));
-    return NdotV / max(NdotV * (1.0f - K) + K, 0.0000001f);
+    float NdotL = saturate(dot(N, L));
+    float GL = NdotL / (NdotL * (1.0f - k) + k);
+    float GV = NdotV / (NdotV * (1.0f - k) + k);
+    return GL * GV;
 }
 
 float GeometrySmithGGX_IBL(float3 N, float3 L, float3 V, float Roughness)
 {
-    return GeometrySmithGGX1_IBL(N, L, Roughness) * GeometrySmithGGX1_IBL(N, V, Roughness);
+    float k = (Roughness * Roughness) / 2.0f;
+    float NdotV = saturate(dot(N, V));
+    float NdotL = saturate(dot(N, L));
+    float GL = NdotL / (NdotL * (1.0f - k) + k);
+    float GV = NdotV / (NdotV * (1.0f - k) + k);
+    return GL * GV;
 }
 
 // Radiance
@@ -99,18 +107,20 @@ float3 DirectRadiance(
     // Lambert Diffuse BRDF
     float3 DiffBRDF = Albedo / PI;
     
+    const float NdotL = saturate(dot(N, L));
+    const float NdotV = saturate(dot(N, V));
+    
     // Cook-Torrance Specular BRDF
-    const float3 H     = normalize(V + L);
-    float3 F           = FresnelSchlick(F0, V, H);
-    float3 Numerator   = DistributionGGX(N, H, Roughness) * F * GeometrySmithGGX(N, L, V, Roughness);
-    float3 Denominator = 4.0f * saturate(dot(N, L)) * saturate(dot(N, V));
-    float3 SpecBRDF    = Numerator / max(Denominator, 0.0000001f);
+    float3 H = normalize(V + L);
+    float3 F = FresnelSchlick(F0, V, H);
+    float3 Num = DistributionGGX(N, H, Roughness) * F * GeometrySmithGGX(N, L, V, Roughness);
+    float3 Den = 4.0f * NdotL * NdotV;
+    float3 SpecBRDF = Num / max(Den, 0.001f);
     
     float3 Ks = F;
     float3 Kd = (Float3(1.0f) - Ks) * (1.0f - Metallic);
     
-    const float NDotL = saturate(dot(N, L));
-    return (Kd * DiffBRDF + Ks * SpecBRDF) * Radiance * NDotL;
+    return (Kd * DiffBRDF + SpecBRDF) * Radiance * NdotL;
 }
 
 #endif

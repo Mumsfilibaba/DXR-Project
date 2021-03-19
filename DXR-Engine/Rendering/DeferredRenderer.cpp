@@ -341,8 +341,14 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
     CmdList.End();
     gCmdListExecutor.ExecuteCommandList(CmdList);
 
+    TArray<ShaderDefine> Defines;
+    if (IsRayTracingSupported())
     {
-        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        Defines.EmplaceBack("ENABLE_RAY_TRACING", "1");
+    }
+
+    {
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
         {
             Debug::DebugBreak();
             return false;
@@ -375,10 +381,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
     }
 
     {
-        TArray<ShaderDefine> Defines =
-        {
-            ShaderDefine("DRAW_TILE_DEBUG", "1")
-        };
+        Defines.EmplaceBack("DRAW_TILE_DEBUG", "1");
 
         if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
         {
