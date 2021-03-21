@@ -78,6 +78,12 @@ public:
         return InternalAddNewDelegate(new LambdaDelegate<F>(Forward<F>(Functor)));
     }
 
+    DelegateHandle AddDelegate(const TDelegate<void(TArgs...)>& Delegate)
+    {
+        IDelegate* NewDelegate = Delegate.Delegate;
+        return InternalAddNewDelegate(NewDelegate->Clone());
+    }
+
     void Unbind(DelegateHandle Handle)
     {
         IDelegate* DelegateHandle = reinterpret_cast<IDelegate*>(Handle.Handle);

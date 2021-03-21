@@ -24,6 +24,9 @@ class TDelegate<TReturn(TArgs...)> : private TDelegateBase<TReturn(TArgs...)>
     template<typename F>
     using LambdaDelegate = typename Base::LambdaDelegate<F>;
 
+    template<typename... TArgs>
+    friend class TMulticastBase;
+
 public:
     TDelegate()
         : Base()

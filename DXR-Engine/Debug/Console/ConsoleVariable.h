@@ -21,9 +21,21 @@ public:
 
     virtual EConsoleVariableType GetType() const = 0;
 
-    virtual void SetInt(int32 InVariable) = 0;
-    virtual void SetBool(bool InVariable) = 0;
-    virtual void SetFloat(float InVariable) = 0;
+    virtual void SetInt(int32 InVariable)
+    {
+        Assert(false);
+    }
+
+    virtual void SetBool(bool InVariable)
+    {
+        Assert(false);
+    }
+
+    virtual void SetFloat(float InVariable)
+    {
+
+    }
+
     virtual void SetString(const String& InVariable) = 0;
 
     virtual int32 GetInt() const = 0;
