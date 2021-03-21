@@ -338,7 +338,7 @@ bool DeferredRenderer::Init(FrameResources& FrameResources)
     CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
 
     CmdList.End();
-    gCmdListExecutor.ExecuteCommandList(CmdList);
+    GCmdListExecutor.ExecuteCommandList(CmdList);
 
     {
         if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))

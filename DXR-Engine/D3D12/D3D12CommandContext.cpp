@@ -368,8 +368,6 @@ void D3D12CommandContext::End()
     IsReady  = false;
 
     const uint64 NewFenceValue = ++FenceValue;
-
-    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
     for (uint32 i = 0; i < ResolveProfilers.Size(); i++)
     {
         ResolveProfilers[i]->ResolveQueries(*this);

@@ -11,23 +11,28 @@
 #include "Scene/Lights/DirectionalLight.h"
 #include "Scene/Components/MeshComponent.h"
 
-#include "Application/Input.h"
+#include "Core/Application/InputManager.h"
 
 #include <random>
 
 #define ENABLE_LIGHT_TEST 0
 
-Game* MakeGameInstance()
+Application* CreateApplication()
 {
     return DBG_NEW Sandbox();
 }
 
 bool Sandbox::Init()
 {
+    if (!Application::Init())
+    {
+        return false;
+    }
+
     // Initialize Scene
     Actor* NewActor             = nullptr;
     MeshComponent* NewComponent = nullptr;
-    CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
+    Scene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
 
     // Create Spheres
     MeshData SphereMeshData     = MeshFactory::CreateSphere(3);
@@ -103,7 +108,7 @@ bool Sandbox::Init()
             NewActor->SetName("Sphere[" + std::to_string(SphereIndex) + "]");
             SphereIndex++;
 
-            CurrentScene->AddActor(NewActor);
+            Scene->AddActor(NewActor);
 
             NewComponent = DBG_NEW MeshComponent(NewActor);
             NewComponent->Mesh     = SphereMesh;
@@ -130,7 +135,7 @@ bool Sandbox::Init()
     MeshData CubeMeshData = MeshFactory::CreateCube();
 
     NewActor = DBG_NEW Actor();
-    CurrentScene->AddActor(NewActor);
+    Scene->AddActor(NewActor);
 
     NewActor->SetName("Cube");
     NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
@@ -214,7 +219,7 @@ bool Sandbox::Init()
     NewActor->AddComponent(NewComponent);
 
     NewActor = DBG_NEW Actor();
-    CurrentScene->AddActor(NewActor);
+    Scene->AddActor(NewActor);
 
     NewActor->SetName("Plane");
     NewActor->GetTransform().SetRotation(0.0f, 0.0f, Math::HALF_PI);
@@ -222,8 +227,8 @@ bool Sandbox::Init()
     NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
     MatProperties.AO           = 1.0f;
-    MatProperties.Metallic     = 0.0f;
-    MatProperties.Roughness    = 1.0f;
+    MatProperties.Metallic     = 1.0f;
+    MatProperties.Roughness    = 0.1f;
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo       = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
@@ -240,7 +245,7 @@ bool Sandbox::Init()
     NewActor->AddComponent(NewComponent);
 
     CurrentCamera = DBG_NEW Camera();
-    CurrentScene->AddCamera(CurrentCamera);
+    Scene->AddCamera(CurrentCamera);
 
     // Add PointLight- Source
     const float Intensity = 50.0f;
@@ -253,7 +258,7 @@ bool Sandbox::Init()
     Light0->SetShadowFarPlane(50.0f);
     Light0->SetIntensity(Intensity);
     Light0->SetShadowCaster(true);
-    CurrentScene->AddLight(Light0);
+    Scene->AddLight(Light0);
 
     PointLight* Light1 = DBG_NEW PointLight();
     Light1->SetPosition(-17.5f, 1.0f, 0.0f);
@@ -263,7 +268,7 @@ bool Sandbox::Init()
     Light1->SetShadowFarPlane(50.0f);
     Light1->SetIntensity(Intensity);
     Light1->SetShadowCaster(true);
-    CurrentScene->AddLight(Light1);
+    Scene->AddLight(Light1);
 
     PointLight* Light2 = DBG_NEW PointLight();
     Light2->SetPosition(16.5f, 11.0f, 0.0f);
@@ -273,7 +278,7 @@ bool Sandbox::Init()
     Light2->SetShadowFarPlane(50.0f);
     Light2->SetIntensity(Intensity);
     Light2->SetShadowCaster(true);
-    CurrentScene->AddLight(Light2);
+    Scene->AddLight(Light2);
 
     PointLight* Light3 = DBG_NEW PointLight();
     Light3->SetPosition(-17.5f, 11.0f, 0.0f);
@@ -283,7 +288,7 @@ bool Sandbox::Init()
     Light3->SetShadowFarPlane(50.0f);
     Light3->SetIntensity(Intensity);
     Light3->SetShadowCaster(true);
-    CurrentScene->AddLight(Light3);
+    Scene->AddLight(Light3);
 
 #if ENABLE_LIGHT_TEST
     // Add multiple lights
@@ -301,7 +306,7 @@ bool Sandbox::Init()
         Light->SetPosition(x, y, z);
         Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
         Light->SetIntensity(Intentsity);
-        CurrentScene->AddLight(Light);
+        Scene->AddLight(Light);
     }
 #endif
 
@@ -313,64 +318,66 @@ bool Sandbox::Init()
     Light4->SetShadowFarPlane(140.0f);
     Light4->SetColor(1.0f, 1.0f, 1.0f);
     Light4->SetIntensity(10.0f);
-    CurrentScene->AddLight(Light4);
+    Scene->AddLight(Light4);
 
     return true;
 }
 
 void Sandbox::Tick(Timestamp DeltaTime)
 {
+    Application::Tick(DeltaTime);
+
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
 
-    if (Input::IsKeyDown(EKey::Key_Right))
+    if (InputManager::Get().IsKeyDown(EKey::Key_Right))
     {
         CurrentCamera->Rotate(0.0f, XMConvertToRadians(RotationSpeed * Delta), 0.0f);
     }
-    else if (Input::IsKeyDown(EKey::Key_Left))
+    else if (InputManager::Get().IsKeyDown(EKey::Key_Left))
     {
         CurrentCamera->Rotate(0.0f, XMConvertToRadians(-RotationSpeed * Delta), 0.0f);
     }
 
-    if (Input::IsKeyDown(EKey::Key_Up))
+    if (InputManager::Get().IsKeyDown(EKey::Key_Up))
     {
         CurrentCamera->Rotate(XMConvertToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
     }
-    else if (Input::IsKeyDown(EKey::Key_Down))
+    else if (InputManager::Get().IsKeyDown(EKey::Key_Down))
     {
         CurrentCamera->Rotate(XMConvertToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
     }
 
     float Acceleration = 15.0f;
-    if (Input::IsKeyDown(EKey::Key_LeftShift))
+    if (InputManager::Get().IsKeyDown(EKey::Key_LeftShift))
     {
         Acceleration = Acceleration * 3;
     }
 
     XMFLOAT3 CameraAcceleration = XMFLOAT3(0.0f, 0.0f, 0.0f);
-    if (Input::IsKeyDown(EKey::Key_W))
+    if (InputManager::Get().IsKeyDown(EKey::Key_W))
     {
         CameraAcceleration.z = Acceleration;
     }
-    else if (Input::IsKeyDown(EKey::Key_S))
+    else if (InputManager::Get().IsKeyDown(EKey::Key_S))
     {
         CameraAcceleration.z = -Acceleration;
     }
 
-    if (Input::IsKeyDown(EKey::Key_A))
+    if (InputManager::Get().IsKeyDown(EKey::Key_A))
     {
         CameraAcceleration.x = Acceleration;
     }
-    else if (Input::IsKeyDown(EKey::Key_D))
+    else if (InputManager::Get().IsKeyDown(EKey::Key_D))
     {
         CameraAcceleration.x = -Acceleration;
     }
 
-    if (Input::IsKeyDown(EKey::Key_Q))
+    if (InputManager::Get().IsKeyDown(EKey::Key_Q))
     {
         CameraAcceleration.y = Acceleration;
     }
-    else if (Input::IsKeyDown(EKey::Key_E))
+    else if (InputManager::Get().IsKeyDown(EKey::Key_E))
     {
         CameraAcceleration.y = -Acceleration;
     }

@@ -15,64 +15,64 @@ public:
     typedef uint32                    SizeType;
 
     TArrayView() noexcept
-        : mView(nullptr)
-        , mSize(0)
+        : View(nullptr)
+        , ViewSize(0)
     {
     }
 
     template<typename TArrayType>
     explicit TArrayView(TArrayType& Array) noexcept
-        : mView(Array.Data())
-        , mSize(Array.Size())
+        : View(Array.Data())
+        , ViewSize(Array.Size())
     {
     }
     
     template<const SizeType N>
     explicit TArrayView(T(&Array)[N]) noexcept
-        : mView(Array)
-        , mSize(N)
+        : View(Array)
+        , ViewSize(N)
     {
     }
 
     template<typename TInputIterator>
     explicit TArrayView(TInputIterator Begin, TInputIterator End) noexcept
-        : mView(Begin)
-        , mSize(SizeType(End - Begin))
+        : View(Begin)
+        , ViewSize(SizeType(End - Begin))
     {
     }
 
     TArrayView(const TArrayView& Other) noexcept
-        : mView(Other.mView)
-        , mSize(Other.mSize)
+        : View(Other.View)
+        , ViewSize(Other.ViewSize)
     {
     }
 
     TArrayView(TArrayView&& Other) noexcept
-        : mView(Other.mView)
-        , mSize(Other.mSize)
+        : View(Other.View)
+        , ViewSize(Other.ViewSize)
     {
-        Other.mView = nullptr;
-        Other.mSize = 0;
+        Other.View = nullptr;
+        Other.ViewSize = 0;
     }
 
-    bool IsEmpty() const noexcept { return (mSize == 0); }
+    bool IsEmpty() const noexcept { return (ViewSize == 0); }
 
-    T& Front() noexcept { return mView[0]; }
-    const T& Front() const noexcept { return mView[0]; }
+    T& Front() noexcept { return View[0]; }
+    const T& Front() const noexcept { return View[0]; }
 
-    T& Back() noexcept { return mView[mSize - 1]; }
-    const T& Back() const noexcept { return mView[mSize - 1]; }
+    T& Back() noexcept { return View[ViewSize - 1]; }
+    const T& Back() const noexcept { return View[ViewSize - 1]; }
 
     T& At(SizeType Index) noexcept
     {
-        Assert(Index < mSize);
-        return mView[Index];
+        Assert(Index < ViewSize);
+        return View[Index];
     }
 
     const T& At(SizeType Index) const noexcept
     {
-        Assert(Index < mSize);
-        return mView[Index];
+        Assert(Index < ViewSize);
+        return View[Index];
     }
 
     void Swap(TArrayView& Other) noexcept
@@ -82,26 +82,26 @@ public:
         Other = ::Move(TempView);
     }
     
-    Iterator Begin() noexcept { return Iterator(mView); }
-    Iterator End() noexcept { return Iterator(mView + mSize); }
+    Iterator Begin() noexcept { return Iterator(View); }
+    Iterator End() noexcept { return Iterator(View + ViewSize); }
 
-    ConstIterator Begin() const noexcept { return Iterator(mView); }
-    ConstIterator End() const noexcept { return Iterator(mView + mSize); }
+    ConstIterator Begin() const noexcept { return Iterator(View); }
+    ConstIterator End() const noexcept { return Iterator(View + ViewSize); }
 
-    SizeType LastIndex() const noexcept { return mSize > 0 ? mSize - 1 : 0; }
-    SizeType Size() const noexcept { return mSize; }
-    SizeType SizeInBytes() const noexcept { return mSize * sizeof(T); }
+    SizeType LastIndex() const noexcept { return ViewSize > 0 ? ViewSize - 1 : 0; }
+    SizeType Size() const noexcept { return ViewSize; }
+    SizeType SizeInBytes() const noexcept { return ViewSize * sizeof(T); }
 
-    T* Data() noexcept { return mView; }
-    const T* Data() const noexcept { return mView; }
+    T* Data() noexcept { return View; }
+    const T* Data() const noexcept { return View; }
 
     T& operator[](SizeType Index) noexcept { return At(Index); }
     const T& operator[](SizeType Index) const noexcept { return At(Index); }
 
     TArrayView& operator=(const TArrayView& Other) noexcept
     {
-        mView = Other.mView;
-        mSize = Other.mSize;
+        View = Other.View;
+        ViewSize = Other.ViewSize;
         return *this;
     }
 
@@ -109,10 +109,10 @@ public:
     {
         if (this != &Other)
         {
-            mView = Other.mView;
-            mSize = Other.mSize;
-            Other.mView = nullptr;
-            Other.mSize = 0;
+            View = Other.View;
+            ViewSize = Other.ViewSize;
+            Other.View = nullptr;
+            Other.ViewSize = 0;
         }
 
         return *this;
@@ -120,14 +120,14 @@ public:
 
     // STL iterator functions - Enables Range-based for-loops
 public:
-    Iterator begin() noexcept { return mView; }
-    Iterator end() noexcept { return mView + mSize; }
+    Iterator begin() noexcept { return View; }
+    Iterator end() noexcept { return View + ViewSize; }
 
-    ConstIterator begin() const noexcept { return mView; }
-    ConstIterator end() const noexcept { return mView + mSize; }
+    ConstIterator begin() const noexcept { return View; }
+    ConstIterator end() const noexcept { return View + ViewSize; }
 
-    ConstIterator cbegin() const noexcept { return mView; }
-    ConstIterator cend() const noexcept { return mView + mSize; }
+    ConstIterator cbegin() const noexcept { return View; }
+    ConstIterator cend() const noexcept { return View + ViewSize; }
 
     ReverseIterator rbegin() noexcept { return ReverseIterator(end()); }
     ReverseIterator rend() noexcept { return ReverseIterator(begin()); }
@@ -139,6 +139,6 @@ public:
     ConstReverseIterator crend() const noexcept { return ConstReverseIterator(begin()); }
 
 private:
-    T*       mView;
-    SizeType mSize;
+    T*       View;
+    SizeType ViewSize;
 };

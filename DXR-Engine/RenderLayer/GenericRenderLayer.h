@@ -1,5 +1,5 @@
 #pragma once
-#include "Application/Generic/GenericWindow.h"
+#include "Core/Application/Generic/GenericWindow.h"
 
 #include "RenderingCore.h"
 #include "Resources.h"

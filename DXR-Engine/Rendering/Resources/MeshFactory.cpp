@@ -213,7 +213,8 @@ MeshData MeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
         {
             int32 v = ((1 + Height) * x) + y;
             data.Vertices[v].Position = XMFLOAT3(0.5f - (quadSize.x * x), 0.5f - (quadSize.y * y), 0.0f);
-            data.Vertices[v].Normal   = XMFLOAT3(0.0f, 0.0f, 1.0f);
+            // TODO: Fix vertices so normal is positive
+            data.Vertices[v].Normal   = XMFLOAT3(0.0f, 0.0f, -1.0f);
             data.Vertices[v].Tangent  = XMFLOAT3(1.0f, 0.0f, 0.0f);
             data.Vertices[v].TexCoord = XMFLOAT2(0.0f + (uvQuadSize.x * x), 0.0f + (uvQuadSize.y * y));
         }

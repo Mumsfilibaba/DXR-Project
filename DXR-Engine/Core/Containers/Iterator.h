@@ -6,56 +6,56 @@ class TReverseIterator
 {
 public:
     TReverseIterator() noexcept
-        : mIterator(nullptr)
+        : Iterator(nullptr)
     {
     }
 
-    TReverseIterator(TIteratorType* Itertor) noexcept
-        : mIterator(Itertor)
+    TReverseIterator(TIteratorType* InIterator) noexcept
+        : Iterator(InIterator)
     {
     }
 
     TReverseIterator(const TReverseIterator& Other) noexcept
-        : mIterator(Other.Raw())
+        : Iterator(Other.Raw())
     {
     }
 
     template<typename U>
     TReverseIterator(const TReverseIterator<U>& Other) noexcept
-        : mIterator(Other.Raw())
+        : Iterator(Other.Raw())
     {
     }
 
     ~TReverseIterator() = default;
 
-    TIteratorType* Raw() const { return mIterator; }
+    TIteratorType* Raw() const { return Iterator; }
 
-    TIteratorType* operator->() const noexcept { return (mIterator - 1); }
-    TIteratorType& operator*() const noexcept { return *(mIterator - 1); }
+    TIteratorType* operator->() const noexcept { return (Iterator - 1); }
+    TIteratorType& operator*()  const noexcept { return *(Iterator - 1); }
     
     TReverseIterator operator++() noexcept 
     {
-        mIterator--;
+        Iterator--;
         return *this;
     }
 
     TReverseIterator operator++(int32) noexcept
     {
         TReverseIterator Temp = *this;
-        mIterator--;
+        Iterator--;
         return Temp;
     }
 
     TReverseIterator operator--() noexcept
     {
-        mIterator++;
+        Iterator++;
         return *this;
     }
 
     TReverseIterator operator--(int32) noexcept
     {
         TReverseIterator Temp = *this;
-        mIterator++;
+        Iterator++;
         return Temp;
     }
 
@@ -73,21 +73,21 @@ public:
 
     TReverseIterator& operator+=(int32 Offset) noexcept
     {
-        mIterator -= Offset;
+        Iterator -= Offset;
         return *this;
     }
 
     TReverseIterator& operator-=(int32 Offset) noexcept
     {
-        mIterator += Offset;
+        Iterator += Offset;
         return *this;
     }
 
-    bool operator==(const TReverseIterator& Other) const noexcept { return (mIterator == Other.mIterator); }
-    bool operator!=(const TReverseIterator& Other) const noexcept { return (mIterator != Other.mIterator); }
+    bool operator==(const TReverseIterator& Other) const noexcept { return (Iterator == Other.Iterator); }
+    bool operator!=(const TReverseIterator& Other) const noexcept { return (Iterator != Other.Iterator); }
 
-    operator TReverseIterator<const TIteratorType>() const noexcept { return TReverseIterator<const TIteratorType>(mIterator); }
+    operator TReverseIterator<const TIteratorType>() const noexcept { return TReverseIterator<const TIteratorType>(Iterator); }
 
 private:
-    TIteratorType* mIterator;
+    TIteratorType* Iterator;
 };

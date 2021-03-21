@@ -1,6 +1,6 @@
 #pragma once
-#include "Application/InputCodes.h"
-#include "Application/Events/Events.h"
+#include "Core/Application/InputCodes.h"
+#include "Core/Application/Events.h"
 
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/ResourceViews.h"
@@ -39,9 +39,15 @@ public:
 
     static void DrawUI(UIDrawFunc DrawFunc);
     static void DrawDebugString(const std::string& DebugString);
-
-    static bool OnEvent(const Event& Event);
     
+    static void OnKeyPressed(const KeyPressedEvent& Event);
+    static void OnKeyReleased(const KeyReleasedEvent& Event);
+    static void OnKeyTyped(const KeyTypedEvent& Event);
+
+    static void OnMousePressed(const MousePressedEvent& Event);
+    static void OnMouseReleased(const MouseReleasedEvent& Event);
+    static void OnMouseScrolled(const MouseScrolledEvent& Event);
+
     // Should only be called by the renderer
     static void Render(class CommandList& CmdList);
 

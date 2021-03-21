@@ -1,4 +1,4 @@
-#include "Application/Platform/PlatformDialogMisc.h"
+#include "Core/Application/Platform/PlatformMisc.h"
 
 #include "D3D12Device.h"
 #include "D3D12ShaderCompiler.h"
@@ -143,7 +143,7 @@ void DeviceRemovedHandler(D3D12Device* Device)
         fclose(File);
     }
 
-    PlatformDialogMisc::MessageBox("Error", " [D3D12] Device Removed");
+    PlatformMisc::MessageBox("Error", " [D3D12] Device Removed");
 }
 
 D3D12Device::D3D12Device(bool InEnableDebugLayer, bool InEnableGPUValidation, bool InEnableDRED)
@@ -193,7 +193,7 @@ bool D3D12Device::Init()
     DXGILib = ::LoadLibrary("dxgi.dll");
     if (DXGILib == NULL)
     {
-        PlatformDialogMisc::MessageBox("ERROR", "FAILED to load dxgi.dll");
+        PlatformMisc::MessageBox("ERROR", "FAILED to load dxgi.dll");
         return false;
     }
     else
@@ -204,7 +204,7 @@ bool D3D12Device::Init()
     D3D12Lib = ::LoadLibrary("d3d12.dll");
     if (D3D12Lib == NULL)
     {
-        PlatformDialogMisc::MessageBox("ERROR", "FAILED to load d3d12.dll");
+        PlatformMisc::MessageBox("ERROR", "FAILED to load d3d12.dll");
         return false;
     }
     else
@@ -381,7 +381,7 @@ bool D3D12Device::Init()
     // Create Device
     if (FAILED(D3D12CreateDeviceFunc(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
     {
-        PlatformDialogMisc::MessageBox("ERROR", "FAILED to create device");
+        PlatformMisc::MessageBox("ERROR", "FAILED to create device");
         return false;
     }
     else

@@ -8,7 +8,7 @@
 
 #include "Debug/Debug.h"
 
-#include "Application/Log.h"
+#include "Core/Application/Log.h"
 
 #include "Core/Containers/ArrayView.h"
 

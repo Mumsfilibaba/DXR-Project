@@ -537,9 +537,6 @@ private:
 class CommandListExecutor
 {
 public:
-    CommandListExecutor()  = default;
-    ~CommandListExecutor() = default;
-
     void ExecuteCommandList(CommandList& CmdList);
     void WaitForGPU();
 
@@ -558,3 +555,5 @@ public:
 private:
     ICommandContext* CmdContext = nullptr;
 };
+
+extern CommandListExecutor GCmdListExecutor;

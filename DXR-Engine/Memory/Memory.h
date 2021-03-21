@@ -1,14 +1,6 @@
 #pragma once
 #include "Core.h"
 
-typedef uint32 MemoryDebugFlags;
-
-enum EMemoryDebugFlag : MemoryDebugFlags
-{
-    MemoryDebugFlag_None      = 0,
-    MemoryDebugFlag_LeakCheck = FLAG(1),
-};
-
 class Memory
 {
 public:
@@ -41,6 +33,4 @@ public:
     static void* Memmove(void* Destination, const void* Source, uint64 Size);
     
     static char* Strcpy(char* Destination, const char* Source);
-
-    static void SetDebugFlags(MemoryDebugFlags Flags);
 };

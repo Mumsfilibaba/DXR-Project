@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CoreObject.h"
+#include "Core/CoreObject/CoreObject.h"
 
 class Light : public CoreObject
 {

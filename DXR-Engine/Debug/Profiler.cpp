@@ -6,6 +6,8 @@
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/GPUProfiler.h"
 
+#include "Core/Application/Application.h"
+
 constexpr float MICROSECONDS     = 1000.0f;
 constexpr float MILLISECONDS     = 1000.0f * 1000.0f;
 constexpr float SECONDS          = 1000.0f * 1000.0f * 1000.0f;
@@ -29,7 +31,7 @@ struct ProfileSample
     {
         Clock.Tick();
 
-        float Delta = Clock.GetDeltaTime().AsNanoSeconds();
+        float Delta = (float)Clock.GetDeltaTime().AsNanoSeconds();
         AddSample(Delta);
 
         TotalCalls++;
@@ -259,7 +261,7 @@ static float ImGui_GetMaxLimit(float Num)
 
 static void DrawFPS()
 {
-    const uint32 WindowWidth = gMainWindow->GetWidth();
+    const uint32 WindowWidth = GApplication->Window->GetWidth();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(5.0f, 5.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
@@ -562,8 +564,8 @@ static void DrawGPUProfileData(float Width)
 static void DrawProfiler()
 {
     // Draw DebugWindow with DebugStrings
-    const uint32 WindowWidth  = gMainWindow->GetWidth();
-    const uint32 WindowHeight = gMainWindow->GetHeight();
+    const uint32 WindowWidth  = GApplication->Window->GetWidth();
+    const uint32 WindowHeight = GApplication->Window->GetHeight();
     const float Width         = Math::Max(WindowWidth * 0.6f, 400.0f);
     const float Height        = WindowHeight * 0.75f;
 
@@ -796,7 +798,7 @@ void Profiler::EndGPUTrace(CommandList& CmdList, const char* Name)
                 TimeQuery Query;
                 gProfilerData.GPUProfiler->GetTimeQuery(Query, TimeQueryIndex);
 
-                float Duration = (Query.End - Query.Begin);
+                float Duration = (float)(Query.End - Query.Begin);
                 Entry->second.AddSample(Duration);
             }
         }

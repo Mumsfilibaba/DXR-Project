@@ -8,80 +8,107 @@ template<typename TReturn, typename... TArgs>
 class TDelegateBase<TReturn(TArgs...)>
 {
 protected:
+    typedef TReturn(*FunctionType)(TArgs...);
+    
+    template<typename T>
+    using MemberFunctionType = TReturn (T::*)(TArgs...);
+    template<typename T>
+    using ConstMemberFunctionType = TReturn (T::*)(TArgs...) const;
+
     struct IDelegate
     {
         virtual ~IDelegate() = default;
 
-        virtual TReturn Invoke(TArgs... Args) = 0;
-        virtual IDelegate* Clone() = 0;
+        virtual TReturn Execute(TArgs... Args) const = 0;
+        virtual IDelegate* Clone() const = 0;
     };
 
     struct FunctionDelegate : public IDelegate
     {
-        typedef TReturn(*Function)(TArgs...);
-
-        FunctionDelegate(Function InFn)
+        FunctionDelegate(FunctionType InFn)
             : IDelegate()
             , Fn(InFn)
         {
         }
 
-        virtual TReturn Invoke(TArgs... Args) override
+        virtual TReturn Execute(TArgs... Args) const override
         {
             return Fn(Forward<TArgs>(Args)...);
         }
 
-        virtual IDelegate* Clone() override
+        virtual IDelegate* Clone() const override
         {
             return new FunctionDelegate(Fn);
         }
 
-        Function Fn;
+        FunctionType Fn;
     };
 
     template<typename T>
-    struct TObjectDelegate : public IDelegate
+    struct ObjectDelegate : public IDelegate
     {
-        typedef TReturn(T::* Function)(TArgs...);
-
-        TObjectDelegate(T* InThis, Function InFn)
+        ObjectDelegate(T* InThis, MemberFunctionType<T> InFn)
             : IDelegate()
             , This(InThis)
             , Fn(InFn)
         {
         }
 
-        virtual TReturn Invoke(TArgs... Args) override
+        virtual TReturn Execute(TArgs... Args) const override
         {
             return ((*This).*Fn)(Forward<TArgs>(Args)...);
         }
 
-        virtual IDelegate* Clone() override
+        virtual IDelegate* Clone() const override
         {
-            return new TObjectDelegate(This, Fn);
+            return new ObjectDelegate(This, Fn);
         }
 
         T* This;
-        Function Fn;
+        MemberFunctionType<T> Fn;
+    };
+
+    template<typename T>
+    struct ConstObjectDelegate : public IDelegate
+    {
+        ConstObjectDelegate(const T* InThis, ConstMemberFunctionType<T> InFn)
+            : IDelegate()
+            , This(InThis)
+            , Fn(InFn)
+        {
+        }
+
+        virtual TReturn Execute(TArgs... Args) const override
+        {
+            return ((*This).*Fn)(Forward<TArgs>(Args)...);
+        }
+
+        virtual IDelegate* Clone() const override
+        {
+            return new ConstObjectDelegate(This, Fn);
+        }
+
+        const T* This;
+        ConstMemberFunctionType<T> Fn;
     };
 
     template<typename F>
-    struct TLambdaDelegate : public IDelegate
+    struct LambdaDelegate : public IDelegate
     {
-        TLambdaDelegate(F InInvokable)
+        LambdaDelegate(F InInvokable)
             : IDelegate()
             , Invokable(InInvokable)
         {
         }
 
-        virtual TReturn Invoke(TArgs... Args) override
+        virtual TReturn Execute(TArgs... Args) const override
         {
             return Invokable(Forward<TArgs>(Args)...);
         }
 
-        virtual IDelegate* Clone() override
+        virtual IDelegate* Clone() const override
         {
-            return new TLambdaDelegate(Invokable);
+            return new LambdaDelegate(Invokable);
         }
 
         F Invokable;

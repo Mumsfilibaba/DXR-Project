@@ -5,7 +5,7 @@
 #include "Windows/Windows.h"
 #include "Windows/Windows.inl"
 
-#include "Application/Platform/PlatformDialogMisc.h"
+#include "Core/Application/Platform/PlatformMisc.h"
 
 DxcCreateInstanceProc DxcCreateInstanceFunc = nullptr;
 
@@ -377,7 +377,7 @@ bool D3D12ShaderCompiler::Init()
     DxCompilerDLL = ::LoadLibrary("dxcompiler.dll");
     if (!DxCompilerDLL)
     {
-        PlatformDialogMisc::MessageBox("ERROR", "FAILED to load dxcompiler.dll");
+        PlatformMisc::MessageBox("ERROR", "FAILED to load dxcompiler.dll");
         return false;
     }
 

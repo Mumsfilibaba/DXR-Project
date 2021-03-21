@@ -24,8 +24,8 @@
 // Core
 #include "Core.h"
 #include "Core/Types.h"
-#include "Core/ClassType.h"
-#include "Core/CoreObject.h"
+#include "Core/CoreObject/ClassType.h"
+#include "Core/CoreObject/CoreObject.h"
 #include "Core/RefCountedObject.h"
 #include "Core/Ref.h"
 
@@ -39,7 +39,7 @@
 #include "Core/Containers/Utilities.h"
 
 // Application
-#include "Application/Log.h"
+#include "Core/Application/Log.h"
 
 // Utilities
 #include "Utilities/HashUtilities.h"

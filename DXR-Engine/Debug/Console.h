@@ -1,11 +1,11 @@
 #pragma once
-#include "Application/Events/EventDispatcher.h"
+#include "Core/Application/Events.h"
 
 #include <unordered_map>
 #include <cstring>
 
-#define INIT_CONSOLE_VARIABLE(VarName, Var)    gConsole.RegisterVariable(VarName, &Var)
-#define INIT_CONSOLE_COMMAND(CmdName, CmdFunc) gConsole.RegisterCommand(CmdName, CmdFunc)
+#define INIT_CONSOLE_VARIABLE(VarName, Var)    GConsole.RegisterVariable(VarName, &Var)
+#define INIT_CONSOLE_COMMAND(CmdName, CmdFunc) GConsole.RegisterCommand(CmdName, CmdFunc)
 
 typedef void(*ConsoleCommand)();
 
@@ -177,9 +177,6 @@ class Console
     };
 
 public:
-    Console()  = default;
-    ~Console() = default;
-
     void Init();
     void Tick();
 
@@ -196,6 +193,8 @@ public:
     void ClearHistory();
 
 private:
+    void OnKeyPressedEvent(const KeyPressedEvent& Event);
+
     int32 TextCallback(ImGuiInputTextCallbackData* Data);
     void HandleCommand(const std::string& CmdString);
 
@@ -219,3 +218,5 @@ private:
     bool ScrollDown                = false;
     bool IsActive                  = false;
 };
+
+extern Console GConsole;

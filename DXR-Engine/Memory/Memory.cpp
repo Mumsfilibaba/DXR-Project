@@ -21,19 +21,6 @@ char* Memory::Strcpy(char* Destination, const char* Source)
     return ::strcpy(Destination, Source);
 }
 
-void Memory::SetDebugFlags(MemoryDebugFlags Flags)
-{
-#ifdef _WIN32
-    uint32 DebugFlags = 0;
-    if (Flags & EMemoryDebugFlag::MemoryDebugFlag_LeakCheck)
-    {
-        DebugFlags |= _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF;
-    }
-
-    _CrtSetDbgFlag(DebugFlags);
-#endif
-}
-
 void* Memory::Memset(void* Destination, uint8 Value, uint64 Size)
 {
     return ::memset(Destination, static_cast<int>(Value), Size);

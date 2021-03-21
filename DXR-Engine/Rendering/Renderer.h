@@ -1,10 +1,9 @@
 #pragma once
-#include "Windows/WindowsWindow.h"
+#include "Core/Application/Windows/WindowsWindow.h"
 
 #include "Time/Clock.h"
 
-#include "Application/InputCodes.h"
-#include "Application/Events/EventHandler.h"
+#include "Core/Application/InputCodes.h"
 
 #include "Scene/Actor.h"
 #include "Scene/Scene.h"
@@ -31,9 +30,6 @@
 class Renderer
 {
 public:
-    Renderer()  = default;
-    ~Renderer() = default;
-
     bool Init();
     void Release();
 
@@ -48,6 +44,8 @@ public:
     void Tick(const Scene& Scene);
 
 private:
+    void OnWindowResize(const WindowResizeEvent& Event);
+
     bool InitBoundingBoxDebugPass();
     bool InitAA();
     bool InitShadingImage();
@@ -90,3 +88,5 @@ private:
     uint32 LastFrameNumDispatchCalls = 0;
     uint32 LastFrameNumCommands      = 0;
 };
+
+extern Renderer GRenderer;

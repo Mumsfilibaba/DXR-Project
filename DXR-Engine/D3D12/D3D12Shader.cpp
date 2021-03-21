@@ -54,10 +54,6 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
     return false;
 }
 
-static void AddResouce(ShaderResourceCount& OutResourceCount, const D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc)
-{
-}
-
 template<typename TD3D12ReflectionInterface>
 bool D3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, D3D12BaseShader* Shader, uint32 NumBoundResources)
 {

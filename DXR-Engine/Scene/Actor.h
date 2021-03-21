@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CoreObject.h"
+#include "Core/CoreObject/CoreObject.h"
 #include "Core/Containers/Array.h"
 
 class Actor;

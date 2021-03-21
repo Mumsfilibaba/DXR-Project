@@ -14,32 +14,32 @@ public:
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
     TUniquePtr() noexcept
-        : mPtr(nullptr)
+        : Ptr(nullptr)
     {
     }
 
     TUniquePtr(std::nullptr_t) noexcept
-        : mPtr(nullptr)
+        : Ptr(nullptr)
     {
     }
 
     explicit TUniquePtr(T* InPtr) noexcept
-        : mPtr(InPtr)
+        : Ptr(InPtr)
     {
     }
 
     TUniquePtr(TUniquePtr&& Other) noexcept
-        : mPtr(Other.mPtr)
+        : Ptr(Other.Ptr)
     {
-        Other.mPtr = nullptr;
+        Other.Ptr = nullptr;
     }
 
     template<typename TOther>
     TUniquePtr(TUniquePtr<TOther>&& Other) noexcept
-        : mPtr(Other.mPtr)
+        : Ptr(Other.Ptr)
     {
         static_assert(std::is_convertible<TOther*, T*>());
-        Other.mPtr = nullptr;
+        Other.Ptr = nullptr;
     }
 
     ~TUniquePtr()
@@ -49,37 +49,37 @@ public:
 
     T* Release() noexcept
     {
-        T* WeakPtr = mPtr;
-        mPtr = nullptr;
+        T* WeakPtr = Ptr;
+        Ptr = nullptr;
         return WeakPtr;
     }
 
     void Reset() noexcept
     {
         InternalRelease();
-        mPtr = nullptr;
+        Ptr = nullptr;
     }
 
     void Swap(TUniquePtr& Other) noexcept
     {
-        T* TempPtr = mPtr;
-        mPtr       = Other.mPtr;
-        Other.mPtr = TempPtr;
+        T* TempPtr = Ptr;
+        Ptr       = Other.Ptr;
+        Other.Ptr = TempPtr;
     }
 
-    T* Get() const noexcept { return mPtr; }
-    T* const* GetAddressOf() const noexcept { return &mPtr; }
+    T* Get() const noexcept { return Ptr; }
+    T* const* GetAddressOf() const noexcept { return &Ptr; }
 
     T* operator->() const noexcept { return Get(); }
-    T& operator*() const noexcept { return (*mPtr); }
+    T& operator*() const noexcept { return (*Ptr); }
     T* const* operator&() const noexcept { return GetAddressOf(); }
 
     TUniquePtr& operator=(T* InPtr) noexcept
     {
-        if (mPtr != InPtr)
+        if (Ptr != InPtr)
         {
             Reset();
-            mPtr = InPtr;
+            Ptr = InPtr;
         }
 
         return *this;
@@ -90,8 +90,8 @@ public:
         if (this != std::addressof(Other))
         {
             Reset();
-            mPtr       = Other.mPtr;
-            Other.mPtr = nullptr;
+            Ptr       = Other.Ptr;
+            Other.Ptr = nullptr;
         }
 
         return *this;
@@ -105,8 +105,8 @@ public:
         if (this != std::addressof(Other))
         {
             Reset();
-            mPtr       = Other.mPtr;
-            Other.mPtr = nullptr;
+            Ptr       = Other.Ptr;
+            Other.Ptr = nullptr;
         }
 
         return *this;
@@ -118,25 +118,25 @@ public:
         return *this;
     }
 
-    bool operator==(const TUniquePtr& Other) const noexcept { return (mPtr == Other.mPtr); }
+    bool operator==(const TUniquePtr& Other) const noexcept { return (Ptr == Other.Ptr); }
     bool operator!=(const TUniquePtr& Other) const noexcept { return !(*this == Other); }
 
-    bool operator==(T* InPtr) const noexcept { return (mPtr == InPtr); }
+    bool operator==(T* InPtr) const noexcept { return (Ptr == InPtr); }
     bool operator!=(T* InPtr) const noexcept { return !(*this == Other); }
 
-    operator bool() const noexcept { return (mPtr != nullptr); }
+    operator bool() const noexcept { return (Ptr != nullptr); }
 
 private:
     void InternalRelease() noexcept
     {
-        if (mPtr)
+        if (Ptr)
         {
-            delete mPtr;
-            mPtr = nullptr;
+            delete Ptr;
+            Ptr = nullptr;
         }
     }
 
-    T* mPtr;
+    T* Ptr;
 };
 
 // TUniquePtr - Array values. Similar to std::unique_ptr
@@ -152,32 +152,32 @@ public:
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
     TUniquePtr() noexcept
-        : mPtr(nullptr)
+        : Ptr(nullptr)
     {
     }
 
     TUniquePtr(std::nullptr_t) noexcept
-        : mPtr(nullptr)
+        : Ptr(nullptr)
     {
     }
 
     explicit TUniquePtr(T* InPtr) noexcept
-        : mPtr(InPtr)
+        : Ptr(InPtr)
     {
     }
 
     TUniquePtr(TUniquePtr&& Other) noexcept
-        : mPtr(Other.mPtr)
+        : Ptr(Other.Ptr)
     {
-        Other.mPtr = nullptr;
+        Other.Ptr = nullptr;
     }
 
     template<typename TOther>
     TUniquePtr(TUniquePtr<TOther>&& Other) noexcept
-        : mPtr(Other.mPtr)
+        : Ptr(Other.Ptr)
     {
         static_assert(std::is_convertible<TOther*, T*>());
-        Other.mPtr = nullptr;
+        Other.Ptr = nullptr;
     }
 
     ~TUniquePtr()
@@ -187,41 +187,41 @@ public:
 
     T* Release() noexcept
     {
-        T* WeakPtr = mPtr;
-        mPtr        = nullptr;
+        T* WeakPtr = Ptr;
+        Ptr        = nullptr;
         return WeakPtr;
     }
 
     void Reset() noexcept
     {
         InternalRelease();
-        mPtr = nullptr;
+        Ptr = nullptr;
     }
 
     void Swap(TUniquePtr& Other) noexcept
     {
-        T* TempPtr = mPtr;
-        mPtr        = Other.mPtr;
-        Other.mPtr  = TempPtr;
+        T* TempPtr = Ptr;
+        Ptr        = Other.Ptr;
+        Other.Ptr  = TempPtr;
     }
 
-    T* Get() const noexcept { return mPtr; }
-    T* const* GetAddressOf() const noexcept { return &mPtr; }
+    T* Get() const noexcept { return Ptr; }
+    T* const* GetAddressOf() const noexcept { return &Ptr; }
 
     T* const* operator&() const noexcept { return GetAddressOf(); }
 
     T& operator[](uint32 Index) noexcept
     {
-        Assert(mPtr != nullptr);
-        return mPtr[Index];
+        Assert(Ptr != nullptr);
+        return Ptr[Index];
     }
 
     TUniquePtr& operator=(T* InPtr) noexcept
     {
-        if (mPtr != InPtr)
+        if (Ptr != InPtr)
         {
             Reset();
-            mPtr = InPtr;
+            Ptr = InPtr;
         }
 
         return *this;
@@ -232,8 +232,8 @@ public:
         if (this != std::addressof(Other))
         {
             Reset();
-            mPtr = Other.mPtr;
-            Other.mPtr = nullptr;
+            Ptr = Other.Ptr;
+            Other.Ptr = nullptr;
         }
 
         return *this;
@@ -247,8 +247,8 @@ public:
         if (this != std::addressof(Other))
         {
             Reset();
-            mPtr = Other.mPtr;
-            Other.mPtr = nullptr;
+            Ptr = Other.Ptr;
+            Other.Ptr = nullptr;
         }
 
         return *this;
@@ -260,25 +260,25 @@ public:
         return *this;
     }
 
-    bool operator==(const TUniquePtr& Other) const noexcept { return (mPtr == Other.mPtr); }
+    bool operator==(const TUniquePtr& Other) const noexcept { return (Ptr == Other.Ptr); }
     bool operator!=(const TUniquePtr& Other) const noexcept { return !(*this == Other); }
 
-    bool operator==(T* InPtr) const noexcept { return (mPtr == InPtr); }
+    bool operator==(T* InPtr) const noexcept { return (Ptr == InPtr); }
     bool operator!=(T* InPtr) const noexcept { return !(*this == Other); }
 
-    operator bool() const noexcept { return (mPtr != nullptr); }
+    operator bool() const noexcept { return (Ptr != nullptr); }
 
 private:
     void InternalRelease() noexcept
     {
-        if (mPtr)
+        if (Ptr)
         {
-            delete mPtr;
-            mPtr = nullptr;
+            delete Ptr;
+            Ptr = nullptr;
         }
     }
 
-    T* mPtr;
+    T* Ptr;
 };
 
 // MakeUnique - Creates a new object together with a UniquePtr
@@ -286,8 +286,8 @@ private:
 template<typename T, typename... TArgs>
 TEnableIf<!TIsArray<T>, TUniquePtr<T>> MakeUnique(TArgs&&... Args) noexcept
 {
-    T* UniquePtr = new T(::Forward<TArgs>(Args)...);
-    return ::Move(TUniquePtr<T>(UniquePtr));
+    T* UniquePtr = new T(Forward<TArgs>(Args)...);
+    return Move(TUniquePtr<T>(UniquePtr));
 }
 
 template<typename T>
@@ -296,5 +296,5 @@ TEnableIf<TIsArray<T>, TUniquePtr<T>>MakeUnique(uint32 Size) noexcept
     using TType = TRemoveExtent<T>;
 
     TType* UniquePtr = new TType[Size];
-    return ::Move(TUniquePtr<T>(UniquePtr));
+    return Move(TUniquePtr<T>(UniquePtr));
 }

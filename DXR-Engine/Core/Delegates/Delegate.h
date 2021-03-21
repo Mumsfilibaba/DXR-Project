@@ -5,17 +5,34 @@ template<typename TInvokable>
 class TDelegate;
 
 template<typename TReturn, typename... TArgs>
-class TDelegate<TReturn(TArgs...)> : TDelegateBase<TReturn(TArgs...)>
+class TDelegate<TReturn(TArgs...)> : private TDelegateBase<TReturn(TArgs...)>
 {
+    typedef TDelegateBase<TReturn(TArgs...)> Base;
+
+    typedef typename Base::IDelegate        IDelegate;
+    typedef typename Base::FunctionType     FunctionType;
+    typedef typename Base::FunctionDelegate FunctionDelegate;
+
+    template<typename T>
+    using MemberFunctionType = typename Base::MemberFunctionType<T>;
+    template<typename T>
+    using ConstMemberFunctionType = typename Base::ConstMemberFunctionType<T>;
+    template<typename T>
+    using ObjectDelegate = typename Base::ObjectDelegate<T>;
+    template<typename T>
+    using ConstObjectDelegate = typename Base::ConstObjectDelegate<T>;
+    template<typename F>
+    using LambdaDelegate = typename Base::LambdaDelegate<F>;
+
 public:
     TDelegate()
-        : TDelegateBase()
+        : Base()
         , Delegate(nullptr)
     {
     }
 
     TDelegate(const TDelegate& Other)
-        : TDelegateBase()
+        : Base()
         , Delegate(nullptr)
     {
         if (Other.IsValid())
@@ -25,7 +42,7 @@ public:
     }
 
     TDelegate(TDelegate&& Other)
-        : TDelegateBase()
+        : Base()
         , Delegate(Other.Delegate)
     {
         Other.Delegate = nullptr;
@@ -36,24 +53,31 @@ public:
         Unbind();
     }
 
-    void BindFunction(TReturn(*Fn)(TArgs...))
+    void BindFunction(FunctionType Fn)
     {
         Unbind();
         Delegate = new FunctionDelegate(Fn);
     }
 
     template<typename T>
-    void BindObject(T* This, TReturn(T::* MemberFn)(TArgs...))
+    void BindObject(T* This, MemberFunctionType<T> Fn)
     {
         Unbind();
-        Delegate = new TObjectDelegate<T>(This, MemberFn);
+        Delegate = new ObjectDelegate<T>(This, Fn);
+    }
+
+    template<typename T>
+    void BindObject(const T* This, ConstMemberFunctionType<T> Fn)
+    {
+        Unbind();
+        Delegate = new ConstObjectDelegate<T>(This, Fn);
     }
 
     template<typename F>
     void BindLambda(F Functor)
     {
         Unbind();
-        Delegate = new TLambdaDelegate<F>(Forward<F>(Functor));
+        Delegate = new LambdaDelegate<F>(Forward<F>(Functor));
     }
 
     void Unbind()
@@ -65,27 +89,40 @@ public:
         }
     }
 
-    TReturn Broadcast(TArgs... Args)
+    TReturn Execute(TArgs... Args)
     {
         Assert(Delegate != nullptr);
-        return Delegate->Invoke(Forward<TArgs>(Args)...);
+        return Delegate->Execute(Forward<TArgs>(Args)...);
+    }
+
+    bool ExecuteIfBound(TArgs... Args)
+    {
+        if (IsBound())
+        {
+            Delegate->Execute(Forward<TArgs>(Args)...);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     void Swap(TDelegate& Other)
     {
         TDelegate Temp(Move(*this));
-        *this = Move(Other);
-        Other = Move(Temp);
+        Delegate = Other.Delegate;
+        Other.Delegate = Temp.Delegate;
     }
 
-    bool IsValid() const
+    bool IsBound() const
     {
         return Delegate != nullptr;
     }
 
     TReturn operator()(TArgs... Args)
     {
-        return Broadcast(Forward<TArgs>(Args)...);
+        return Execute(Forward<TArgs>(Args)...);
     }
 
     TDelegate& operator=(TDelegate&& RHS)
@@ -100,9 +137,9 @@ public:
         return *this;
     }
 
-    operator bool()
+    operator bool() const
     {
-        return IsValid();
+        return IsBound();
     }
 
 private:

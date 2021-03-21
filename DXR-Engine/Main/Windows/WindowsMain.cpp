@@ -1,32 +1,30 @@
 #include "Windows/Windows.h"
 
-#include "Main/EngineLoop.h"
+#include "Main/EngineMain.h"
 
-#include "Core/Delegates/Delegate.h"
-#include "Core/Delegates/MulticastDelegate.h"
+#include "Core/Application/Windows/WindowsApplication.h"
+
+#include "Debug/Debug.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
 
-int Function(int i)
+static void InitCRunTime()
 {
-    return i + 1;
-}
+    uint32 DebugFlags = 0;
+#ifdef DEBUG_BUILD
+    DebugFlags |= _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF;
+#endif
 
-struct A
-{
-    int Func(int i)
-    {
-        return i + 3;
-    }
-};
+    _CrtSetDbgFlag(DebugFlags);
+}
 
 int WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, int CmdShow)
 {
-    TDelegate<void(int)> Delegate;
-    Delegate.Unbind();
+    InitCRunTime();
 
-    TMulticastDelegate<void(int)> Delegates;
+    WindowsApplication::PreMainInit(Instance);
+
     return EngineMain();
 }
 

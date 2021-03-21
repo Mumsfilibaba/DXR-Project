@@ -18,64 +18,64 @@ public:
     typedef uint32                    SizeType;
 
     TArray() noexcept
-        : mArray(nullptr)
-        , mSize(0)
-        , mCapacity(0)
-        , mAllocator()
+        : Array(nullptr)
+        , ArraySize(0)
+        , ArrayCapacity(0)
+        , Allocator()
     {
     }
 
     explicit TArray(SizeType Size) noexcept
-        : mArray(nullptr)
-        , mSize(0)
-        , mCapacity(0)
-        , mAllocator()
+        : Array(nullptr)
+        , ArraySize(0)
+        , ArrayCapacity(0)
+        , Allocator()
     {
         InternalConstruct(Size);
     }
 
     explicit TArray(SizeType Size, const T& Value) noexcept
-        : mArray(nullptr)
-        , mSize(0)
-        , mCapacity(0)
-        , mAllocator()
+        : Array(nullptr)
+        , ArraySize(0)
+        , ArrayCapacity(0)
+        , Allocator()
     {
         InternalConstruct(Size, Value);
     }
 
     template<typename TInput>
     explicit TArray(TInput Begin, TInput End) noexcept
-        : mArray(nullptr)
-        , mSize(0)
-        , mCapacity(0)
-        , mAllocator()
+        : Array(nullptr)
+        , ArraySize(0)
+        , ArrayCapacity(0)
+        , Allocator()
     {
         InternalConstruct(Begin, End);
     }
 
     TArray(std::initializer_list<T> List) noexcept
-        : mArray(nullptr)
-        , mSize(0)
-        , mCapacity(0)
-        , mAllocator()
+        : Array(nullptr)
+        , ArraySize(0)
+        , ArrayCapacity(0)
+        , Allocator()
     {
         InternalConstruct(List.begin(), List.end());
     }
 
     TArray(const TArray& Other) noexcept
-        : mArray(nullptr)
-        , mSize(0)
-        , mCapacity(0)
-        , mAllocator()
+        : Array(nullptr)
+        , ArraySize(0)
+        , ArrayCapacity(0)
+        , Allocator()
     {
         InternalConstruct(Other.Begin(), Other.End());
     }
 
     TArray(TArray&& Other) noexcept
-        : mArray(nullptr)
-        , mSize(0)
-        , mCapacity(0)
-        , mAllocator()
+        : Array(nullptr)
+        , ArraySize(0)
+        , ArrayCapacity(0)
+        , Allocator()
     {
         InternalMove(::Forward<TArray>(Other));
     }
@@ -84,13 +84,13 @@ public:
     {
         Clear();
         InternalReleaseData();
-        mCapacity = 0;
+        ArrayCapacity = 0;
     }
 
     void Clear() noexcept
     {
-        InternalDestructRange(mArray, mArray + mSize);
-        mSize = 0;
+        InternalDestructRange(Array, Array + ArraySize);
+        ArraySize = 0;
     }
 
     void Assign(SizeType Size) noexcept
@@ -120,8 +120,8 @@ public:
 
     void Fill(const T& Value) noexcept
     {
-        T* ArrayBegin = mArray;
-        T* ArrayEnd   = ArrayBegin + mSize;
+        T* ArrayBegin = Array;
+        T* ArrayEnd   = ArrayBegin + ArraySize;
 
         while (ArrayBegin != ArrayEnd)
         {
@@ -132,8 +132,8 @@ public:
 
     void Fill(T&& Value) noexcept
     {
-        T* ArrayBegin = mArray;
-        T* ArrayEnd   = ArrayBegin + mSize;
+        T* ArrayBegin = Array;
+        T* ArrayEnd   = ArrayBegin + ArraySize;
 
         while (ArrayBegin != ArrayEnd)
         {
@@ -144,74 +144,74 @@ public:
 
     void Resize(SizeType InSize) noexcept
     {
-        if (InSize > mSize)
+        if (InSize > ArraySize)
         {
-            if (InSize > mCapacity)
+            if (InSize > ArrayCapacity)
             {
                 InternalRealloc(InSize);
             }
 
-            InternalDefaultConstructRange(mArray + mSize, mArray + InSize);
+            InternalDefaultConstructRange(Array + ArraySize, Array + InSize);
         }
-        else if (InSize < mSize)
+        else if (InSize < ArraySize)
         {
-            InternalDestructRange(mArray + InSize, mArray + mSize);
+            InternalDestructRange(Array + InSize, Array + ArraySize);
         }
 
-        mSize = InSize;
+        ArraySize = InSize;
     }
 
     void Resize(SizeType InSize, const T& Value) noexcept
     {
-        if (InSize > mSize)
+        if (InSize > ArraySize)
         {
-            if (InSize > mCapacity)
+            if (InSize > ArrayCapacity)
             {
                 InternalRealloc(InSize);
             }
 
-            InternalCopyEmplace(InSize - mSize, Value, mArray + mSize);
+            InternalCopyEmplace(InSize - ArraySize, Value, Array + ArraySize);
         }
-        else if (InSize < mSize)
+        else if (InSize < ArraySize)
         {
-            InternalDestructRange(mArray + InSize, mArray + mSize);
+            InternalDestructRange(Array + InSize, Array + ArraySize);
         }
 
-        mSize = InSize;
+        ArraySize = InSize;
     }
 
     void Reserve(SizeType Capacity) noexcept
     {
-        if (Capacity != mCapacity)
+        if (Capacity != ArrayCapacity)
         {
-            SizeType OldSize = mSize;
-            if (Capacity < mSize)
+            SizeType OldSize = ArraySize;
+            if (Capacity < ArraySize)
             {
-                mSize = Capacity;
+                ArraySize = Capacity;
             }
 
             T* TempData = InternalAllocateElements(Capacity);
-            InternalMoveEmplace(mArray, mArray + mSize, TempData);
-            InternalDestructRange(mArray, mArray + OldSize);
+            InternalMoveEmplace(Array, Array + ArraySize, TempData);
+            InternalDestructRange(Array, Array + OldSize);
 
             InternalReleaseData();
-            mArray      = TempData;
-            mCapacity = Capacity;
+            Array      = TempData;
+            ArrayCapacity = Capacity;
         }
     }
 
     template<typename... TArgs>
     T& EmplaceBack(TArgs&&... Args) noexcept
     {
-        if (mSize >= mCapacity)
+        if (ArraySize >= ArrayCapacity)
         {
             const SizeType NewCapacity = InternalGetResizeFactor();
             InternalRealloc(NewCapacity);
         }
 
-        T* DataEnd = mArray + mSize;
+        T* DataEnd = Array + ArraySize;
         new(reinterpret_cast<void*>(DataEnd)) T(::Forward<TArgs>(Args)...);
-        mSize++;
+        ArraySize++;
         return (*DataEnd);
     }
 
@@ -232,30 +232,30 @@ public:
 
         if (Pos == End())
         {
-            const SizeType OldSize = mSize;
+            const SizeType OldSize = ArraySize;
             EmplaceBack(::Forward<TArgs>(Args)...);
             return End() - 1;
         }
 
         const SizeType Index = InternalIndex(Pos);
-        T* DataBegin = mArray + Index;
-        if (mSize >= mCapacity)
+        T* DataBegin = Array + Index;
+        if (ArraySize >= ArrayCapacity)
         {
             const SizeType NewCapacity = InternalGetResizeFactor();
             InternalEmplaceRealloc(NewCapacity, DataBegin, 1);
-            DataBegin = mArray + Index;
+            DataBegin = Array + Index;
         }
         else
         {
             // Construct the range so that we can move to It
-            T* DataEnd = mArray + mSize;
+            T* DataEnd = Array + ArraySize;
             InternalDefaultConstructRange(DataEnd, DataEnd + 1);
             InternalMemmoveForward(DataBegin, DataEnd, DataEnd);
             InternalDestruct(DataBegin);
         }
 
         new (reinterpret_cast<void*>(DataBegin)) T(::Forward<TArgs>(Args)...);
-        mSize++;
+        ArraySize++;
         return Iterator(DataBegin);
     }
 
@@ -299,21 +299,21 @@ public:
         }
 
         const SizeType ListSize = static_cast<SizeType>(List.size());
-        const SizeType NewSize  = mSize + ListSize;
+        const SizeType NewSize  = ArraySize + ListSize;
         const SizeType Index    = InternalIndex(Pos);
 
-        T* RangeBegin = mArray + Index;
-        if (NewSize >= mCapacity)
+        T* RangeBegin = Array + Index;
+        if (NewSize >= ArrayCapacity)
         {
             const SizeType NewCapacity = InternalGetResizeFactor(NewSize);
             InternalEmplaceRealloc(NewCapacity, RangeBegin, ListSize);
-            RangeBegin = mArray + Index;
+            RangeBegin = Array + Index;
         }
         else
         {
             // Construct the range so that we can move to It
-            T* DataEnd    = mArray + mSize;
-            T* NewDataEnd = mArray + mSize + ListSize;
+            T* DataEnd    = Array + ArraySize;
+            T* NewDataEnd = Array + ArraySize + ListSize;
             T* RangeEnd   = RangeBegin + ListSize;
             InternalDefaultConstructRange(DataEnd, NewDataEnd);
             InternalMemmoveForward(RangeBegin, DataEnd, NewDataEnd - 1);
@@ -322,7 +322,7 @@ public:
 
         // TODO: Get rid of const_cast
         InternalMoveEmplace(const_cast<T*>(List.begin()), const_cast<T*>(List.end()), RangeBegin);
-        mSize = NewSize;
+        ArraySize = NewSize;
         return Iterator(RangeBegin);
     }
 
@@ -348,21 +348,21 @@ public:
         }
 
         const SizeType RangeSize = InternalDistance(InBegin, InEnd);
-        const SizeType NewSize   = mSize + RangeSize;
+        const SizeType NewSize   = ArraySize + RangeSize;
         const SizeType Index     = InternalIndex(Pos);
 
-        T* RangeBegin = mArray + Index;
-        if (NewSize >= mCapacity)
+        T* RangeBegin = Array + Index;
+        if (NewSize >= ArrayCapacity)
         {
             const SizeType NewCapacity = InternalGetResizeFactor(NewSize);
             InternalEmplaceRealloc(NewCapacity, RangeBegin, RangeSize);
-            RangeBegin = mArray + Index;
+            RangeBegin = Array + Index;
         }
         else
         {
             // Construct the range so that we can move to it
-            T* DataEnd    = mArray + mSize;
-            T* NewDataEnd = mArray + mSize + RangeSize;
+            T* DataEnd    = Array + ArraySize;
+            T* NewDataEnd = Array + ArraySize + RangeSize;
             T* RangeEnd   = RangeBegin + RangeSize;
             InternalDefaultConstructRange(DataEnd, NewDataEnd);
             InternalMemmoveForward(RangeBegin, DataEnd, NewDataEnd - 1);
@@ -370,7 +370,7 @@ public:
         }
 
         InternalCopyEmplace(Begin, End, RangeBegin);
-        mSize = NewSize;
+        ArraySize = NewSize;
         return Iterator(RangeBegin);
     }
 
@@ -383,7 +383,7 @@ public:
     {
         if (!IsEmpty())
         {
-            InternalDestruct(mArray + (--mSize));
+            InternalDestruct(Array + (--ArraySize));
         }
     }
 
@@ -404,12 +404,12 @@ public:
         }
 
         const SizeType Index = InternalIndex(Pos);
-        T* DataBegin = mArray + Index;
-        T* DataEnd   = mArray + mSize;
+        T* DataBegin = Array + Index;
+        T* DataEnd   = Array + ArraySize;
         InternalMemmoveBackwards(DataBegin + 1, DataEnd, DataBegin);
         InternalDestruct(DataEnd - 1);
 
-        mSize--;
+        ArraySize--;
         return Iterator(DataBegin);
     }
 
@@ -423,8 +423,8 @@ public:
         Assert(InBegin < InEnd);
         Assert(InternalIsRangeOwner(InBegin, InEnd));
 
-        T* DataBegin = mArray + InternalIndex(InBegin);
-        T* DataEnd   = mArray + InternalIndex(InEnd);
+        T* DataBegin = Array + InternalIndex(InBegin);
+        T* DataEnd   = Array + InternalIndex(InEnd);
 
         const SizeType elementCount = InternalDistance(DataBegin, DataEnd);
         if (InEnd == End())
@@ -433,12 +433,12 @@ public:
         }
         else
         {
-            T* RealEnd = mArray + mSize;
+            T* RealEnd = Array + ArraySize;
             InternalMemmoveBackwards(DataEnd, RealEnd, DataBegin);
             InternalDestructRange(RealEnd - elementCount, RealEnd);
         }
 
-        mSize -= elementCount;
+        ArraySize -= elementCount;
         return Iterator(DataBegin);
     }
 
@@ -451,64 +451,64 @@ public:
 
     void ShrinkToFit() noexcept
     {
-        if (mCapacity > mSize)
+        if (ArrayCapacity > ArraySize)
         {
-            InternalRealloc(mSize);
+            InternalRealloc(ArraySize);
         }
     }
 
-    bool IsEmpty() const noexcept { return (mSize == 0); }
+    bool IsEmpty() const noexcept { return (ArraySize == 0); }
 
     T& Front() noexcept
     {
         Assert(!IsEmpty());
-        return mArray[0];
+        return Array[0];
     }
 
-    Iterator Begin() noexcept { return Iterator(mArray); }
-    Iterator End() noexcept { return Iterator(mArray + mSize); }
+    Iterator Begin() noexcept { return Iterator(Array); }
+    Iterator End() noexcept { return Iterator(Array + ArraySize); }
 
-    ConstIterator Begin() const noexcept { return Iterator(mArray); }
-    ConstIterator End() const noexcept { return Iterator(mArray + mSize); }
+    ConstIterator Begin() const noexcept { return Iterator(Array); }
+    ConstIterator End() const noexcept { return Iterator(Array + ArraySize); }
 
     const T& Front() const noexcept
     {
-        Assert(mSize > 0);
-        return mArray[0];
+        Assert(ArraySize > 0);
+        return Array[0];
     }
 
     T& Back() noexcept
     {
-        Assert(mSize > 0);
-        return mArray[mSize - 1];
+        Assert(ArraySize > 0);
+        return Array[ArraySize - 1];
     }
 
     const T& Back() const noexcept
     {
-        Assert(mSize > 0);
-        return mArray[mSize - 1];
+        Assert(ArraySize > 0);
+        return Array[ArraySize - 1];
     }
 
-    T* Data() noexcept { return mArray; }
-    const T* Data() const noexcept { return mArray; }
+    T* Data() noexcept { return Array; }
+    const T* Data() const noexcept { return Array; }
 
-    SizeType LastIndex() const noexcept { return mSize > 0 ? mSize - 1 : 0; }
-    SizeType Size() const noexcept { return mSize; }
-    SizeType SizeInBytes() const noexcept { return mSize * sizeof(T); }
+    SizeType LastIndex() const noexcept { return ArraySize > 0 ? ArraySize - 1 : 0; }
+    SizeType Size() const noexcept { return ArraySize; }
+    SizeType SizeInBytes() const noexcept { return ArraySize * sizeof(T); }
 
-    SizeType Capacity() const noexcept { return mCapacity; }
-    SizeType CapacityInBytes() const noexcept { return mCapacity * sizeof(T); }
+    SizeType Capacity() const noexcept { return ArrayCapacity; }
+    SizeType CapacityInBytes() const noexcept { return ArrayCapacity * sizeof(T); }
 
     T& At(SizeType Index) noexcept
     {
-        Assert(Index < mSize);
-        return mArray[Index];
+        Assert(Index < ArraySize);
+        return Array[Index];
     }
 
     const T& At(SizeType Index) const noexcept
     {
-        Assert(Index < mSize);
-        return mArray[Index];
+        Assert(Index < ArraySize);
+        return Array[Index];
     }
 
     TArray& operator=(const TArray& Other) noexcept
@@ -544,14 +544,14 @@ public:
 
     // STL iterator functions - Enables Range-based for-loops
 public:
-    Iterator begin() noexcept { return mArray; }
-    Iterator end() noexcept { return mArray + mSize; }
+    Iterator begin() noexcept { return Array; }
+    Iterator end() noexcept { return Array + ArraySize; }
 
-    ConstIterator begin() const noexcept { return mArray; }
-    ConstIterator end() const noexcept { return mArray + mSize; }
+    ConstIterator begin() const noexcept { return Array; }
+    ConstIterator end() const noexcept { return Array + ArraySize; }
 
-    ConstIterator cbegin() const noexcept { return mArray; }
-    ConstIterator cend() const noexcept { return mArray + mSize; }
+    ConstIterator cbegin() const noexcept { return Array; }
+    ConstIterator cend() const noexcept { return Array + ArraySize; }
 
     ReverseIterator rbegin() noexcept { return ReverseIterator(end()); }
     ReverseIterator rend() noexcept { return ReverseIterator(begin()); }
@@ -613,67 +613,67 @@ private:
 
     SizeType InternalGetResizeFactor() const noexcept
     {
-        return InternalGetResizeFactor(mSize);
+        return InternalGetResizeFactor(ArraySize);
     }
 
     SizeType InternalGetResizeFactor(SizeType BaseSize) const noexcept
     {
-        return BaseSize + (mCapacity / 2) + 1;
+        return BaseSize + (ArrayCapacity / 2) + 1;
     }
 
     T* InternalAllocateElements(SizeType Capacity) noexcept
     {
         const SizeType SizeInBytes = sizeof(T) * Capacity;
-        return reinterpret_cast<T*>(mAllocator.Allocate(SizeInBytes));
+        return reinterpret_cast<T*>(Allocator.Allocate(SizeInBytes));
     }
 
     void InternalReleaseData() noexcept
     {
-        if (mArray)
+        if (Array)
         {
-            mAllocator.Free(mArray);
-            mArray = nullptr;
+            Allocator.Free(Array);
+            Array = nullptr;
         }
     }
 
     void InternalAllocData(SizeType Capacity) noexcept
     {
-        if (Capacity > mCapacity)
+        if (Capacity > ArrayCapacity)
         {
             InternalReleaseData();
-            mArray    = InternalAllocateElements(Capacity);
-            mCapacity = Capacity;
+            Array    = InternalAllocateElements(Capacity);
+            ArrayCapacity = Capacity;
         }
     }
 
     void InternalRealloc(SizeType Capacity) noexcept
     {
         T* TempData = InternalAllocateElements(Capacity);
-        InternalMoveEmplace(mArray, mArray + mSize, TempData);
-        InternalDestructRange(mArray, mArray + mSize);
+        InternalMoveEmplace(Array, Array + ArraySize, TempData);
+        InternalDestructRange(Array, Array + ArraySize);
 
         InternalReleaseData();
-        mArray    = TempData;
-        mCapacity = Capacity;
+        Array    = TempData;
+        ArrayCapacity = Capacity;
     }
 
     void InternalEmplaceRealloc(SizeType Capacity, T* EmplacePos, SizeType Count) noexcept
     {
-        Assert(Capacity >= mSize + Count);
+        Assert(Capacity >= ArraySize + Count);
 
         const SizeType Index = InternalIndex(EmplacePos);
         T* TempData = InternalAllocateElements(Capacity);
-        InternalMoveEmplace(mArray, EmplacePos, TempData);
-        if (EmplacePos != mArray + mSize)
+        InternalMoveEmplace(Array, EmplacePos, TempData);
+        if (EmplacePos != Array + ArraySize)
         {
-            InternalMoveEmplace(EmplacePos, mArray + mSize, TempData + Index + Count);
+            InternalMoveEmplace(EmplacePos, Array + ArraySize, TempData + Index + Count);
         }
 
-        InternalDestructRange(mArray, mArray + mSize);
+        InternalDestructRange(Array, Array + ArraySize);
 
         InternalReleaseData();
-        mArray    = TempData;
-        mCapacity = Capacity;
+        Array    = TempData;
+        ArrayCapacity = Capacity;
     }
 
     // Construct
@@ -682,8 +682,8 @@ private:
         if (InSize > 0)
         {
             InternalAllocData(InSize);
-            mSize = InSize;
-            InternalDefaultConstructRange(mArray, mArray + InSize);
+            ArraySize = InSize;
+            InternalDefaultConstructRange(Array, Array + InSize);
         }
     }
 
@@ -692,8 +692,8 @@ private:
         if (InSize > 0)
         {
             InternalAllocData(InSize);
-            InternalCopyEmplace(InSize, Value, mArray);
-            mSize = InSize;
+            InternalCopyEmplace(InSize, Value, Array);
+            ArraySize = InSize;
         }
     }
 
@@ -704,8 +704,8 @@ private:
         if (Distance > 0)
         {
             InternalAllocData(Distance);
-            InternalCopyEmplace(InBegin, InEnd, mArray);
-            mSize = Distance;
+            InternalCopyEmplace(InBegin, InEnd, Array);
+            ArraySize = Distance;
         }
     }
 
@@ -713,13 +713,13 @@ private:
     {
         InternalReleaseData();
 
-        mArray    = Other.mArray;
-        mSize     = Other.mSize;
-        mCapacity = Other.mCapacity;
+        Array    = Other.Array;
+        ArraySize     = Other.ArraySize;
+        ArrayCapacity = Other.ArrayCapacity;
 
-        Other.mArray    = nullptr;
-        Other.mSize     = 0;
-        Other.mCapacity = 0;
+        Other.Array    = nullptr;
+        Other.ArraySize     = 0;
+        Other.ArrayCapacity = 0;
     }
 
     // Emplace
@@ -786,7 +786,7 @@ private:
             return;
         }
 
-        Assert(InEnd <= mArray + mCapacity);
+        Assert(InEnd <= Array + ArrayCapacity);
 
         // ::Move each object in the range to the destination
         const SizeType Count = InternalDistance(InBegin, InEnd);
@@ -857,7 +857,7 @@ private:
     void InternalDestructRange(const T* InBegin, const T* InEnd) noexcept
     {
         Assert(InBegin <= InEnd);
-        Assert(InEnd - InBegin <= mCapacity);
+        Assert(InEnd - InBegin <= ArrayCapacity);
 
         if constexpr (std::is_trivially_destructible<T>() == false)
         {
@@ -884,8 +884,8 @@ private:
     }
 
 private:
-    T*         mArray;
-    SizeType   mSize;
-    SizeType   mCapacity;
-    TAllocator mAllocator;
+    T*         Array;
+    SizeType   ArraySize;
+    SizeType   ArrayCapacity;
+    TAllocator Allocator;
 };

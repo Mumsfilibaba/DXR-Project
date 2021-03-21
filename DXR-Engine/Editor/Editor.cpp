@@ -12,7 +12,7 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Components/MeshComponent.h"
 
-#include "Game/Game.h"
+#include "Core/Application/Application.h"
 
 #include "Debug/Console.h"
 
@@ -22,7 +22,7 @@ static float MainMenuBarHeight = 0.0f;
 
 static bool ShowRenderSettings = false;
 
-ConsoleVariable GlobalShowSceneGraph(EConsoleVariableType::Bool);
+ConsoleVariable GShowSceneGraph(EConsoleVariableType::Bool);
 
 static void DrawMenu();
 static void DrawSideWindow();
@@ -112,12 +112,12 @@ static void DrawMenu()
             {
                 if (ImGui::MenuItem("Toggle Fullscreen"))
                 {
-                    gMainWindow->ToggleFullscreen();
+                    GApplication->Window->ToggleFullscreen();
                 }
 
                 if (ImGui::MenuItem("Quit"))
                 {
-                    EngineLoop::Exit();
+                    GApplication->Exit();
                 }
 
                 ImGui::EndMenu();
@@ -142,8 +142,8 @@ static void DrawSideWindow()
 {
     DebugUI::DrawUI([]
     {
-        const uint32 WindowWidth  = gMainWindow->GetWidth();
-        const uint32 WindowHeight = gMainWindow->GetHeight();
+        const uint32 WindowWidth  = GApplication->Window->GetWidth();
+        const uint32 WindowHeight = GApplication->Window->GetHeight();
         const float Width         = Math::Max(WindowWidth * 0.3f, 400.0f);
         const float Height        = WindowHeight * 0.7f;
 
@@ -166,7 +166,7 @@ static void DrawSideWindow()
             ImGuiWindowFlags_NoFocusOnAppearing |
             ImGuiWindowFlags_NoSavedSettings;
 
-        bool TempDrawProfiler = GlobalShowSceneGraph.GetBool();
+        bool TempDrawProfiler = GShowSceneGraph.GetBool();
         if (ImGui::Begin(
             "SceneGraph", 
             &TempDrawProfiler,
@@ -181,7 +181,7 @@ static void DrawSideWindow()
         
         ImGui::End();
 
-        GlobalShowSceneGraph.SetBool(TempDrawProfiler);
+        GShowSceneGraph.SetBool(TempDrawProfiler);
     });
 }
 
@@ -190,7 +190,7 @@ static void DrawRenderSettings()
     ImGui::BeginChild("RendererInfo");
 
     WindowShape WindowShape;
-    gMainWindow->GetWindowShape(WindowShape);
+    GApplication->Window->GetWindowShape(WindowShape);
 
     ImGui::Spacing();
     ImGui::Text("Renderer Info");
@@ -375,12 +375,12 @@ static void DrawSceneInfo()
     ImGui::Separator();
 
     WindowShape WindowShape;
-    gMainWindow->GetWindowShape(WindowShape);
+    GApplication->Window->GetWindowShape(WindowShape);
 
     // Actors
     if (ImGui::TreeNode("Actors"))
     {
-        for (Actor* Actor : gGame->GetCurrentScene()->GetActors())
+        for (Actor* Actor : GApplication->Scene->GetActors())
         {
             ImGui::PushID(Actor);
 
@@ -518,7 +518,7 @@ static void DrawSceneInfo()
     // Lights
     if (ImGui::TreeNode("Lights"))
     {
-        for (Light* CurrentLight : gGame->GetCurrentScene()->GetLights())
+        for (Light* CurrentLight : GApplication->Scene->GetLights())
         {
             ImGui::PushID(CurrentLight);
 
@@ -785,8 +785,8 @@ static void DrawSceneInfo()
 
 void Editor::Init()
 {
-    INIT_CONSOLE_VARIABLE("ShowSceneGraph", GlobalShowSceneGraph);
-    GlobalShowSceneGraph.SetBool(false);
+    INIT_CONSOLE_VARIABLE("ShowSceneGraph", GShowSceneGraph);
+    GShowSceneGraph.SetBool(false);
 }
 
 void Editor::Tick()
@@ -795,7 +795,7 @@ void Editor::Tick()
     DrawMenu();
 #endif
 
-    if (GlobalShowSceneGraph.GetBool())
+    if (GShowSceneGraph.GetBool())
     {
         DrawSideWindow();
     }
