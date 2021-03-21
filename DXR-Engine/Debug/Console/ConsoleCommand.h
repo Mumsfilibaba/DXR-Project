@@ -1,7 +1,7 @@
 #pragma once
 #include "ConsoleObject.h"
 
-#include "Core/Delegates/Event.h"
+#include "Core/Delegates/MulticastDelegate.h"
 
 class ConsoleCommand : public ConsoleObject
 {
@@ -13,6 +13,5 @@ public:
         OnExecute.Broadcast();
     }
 
-    DECLARE_EVENT(OnExecuteEvent, ConsoleCommand);
-    OnExecuteEvent OnExecute;
+    TMulticastDelegate<void> OnExecute;
 };

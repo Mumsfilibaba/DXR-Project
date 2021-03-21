@@ -10,12 +10,12 @@
 
 Console GConsole;
 
+ConsoleCommand GClearHistory;
+
 void Console::Init()
 {
-    INIT_CONSOLE_COMMAND("ClearHistory", []() 
-    {
-        GConsole.ClearHistory();
-    });
+    GClearHistory.OnExecute.AddObject(this, &Console::ClearHistory);
+    INIT_CONSOLE_COMMAND("ClearHistory", &GClearHistory);
     
     GApplication->OnKeyPressedEvent.AddObject(this, &Console::OnKeyPressedEvent);
 }
@@ -217,9 +217,9 @@ void Console::Tick()
     }
 }
 
-void Console::RegisterCommand(const std::string& CmdName, ConsoleCommand Command)
+void Console::RegisterCommand(const std::string& CmdName, ConsoleCommand* Command)
 {
-    ConsoleCommand CurrCmd = FindCommand(CmdName);
+    ConsoleCommand* CurrCmd = FindCommand(CmdName);
     if (!CurrCmd)
     {
         const uint32 Index = Commands.Size();
@@ -247,7 +247,7 @@ void Console::RegisterVariable(const std::string& VarName, ConsoleVariable* Vari
     }
 }
 
-ConsoleCommand Console::FindCommand(const std::string& CmdName)
+ConsoleCommand* Console::FindCommand(const std::string& CmdName)
 {
     auto CmdIndex = CmdIndexMap.find(CmdName.c_str());
     if (CmdIndex != CmdIndexMap.end())

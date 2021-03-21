@@ -4,7 +4,7 @@
 #include "RenderLayer/ShaderCompiler.h"
 
 #include "Debug/Profiler.h"
-#include "Debug/Console.h"
+#include "Debug/Console/Console.h"
 
 #include "Rendering/Resources/Mesh.h"
 

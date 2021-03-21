@@ -2,139 +2,17 @@
 #include "Core/Application/Events.h"
 
 #include "ConsoleVariable.h"
+#include "ConsoleCommand.h"
 
 #include <unordered_map>
-#include <cstring>
 
-#define INIT_CONSOLE_VARIABLE(VarName, Var)    GConsole.RegisterVariable(VarName, &Var)
-#define INIT_CONSOLE_COMMAND(CmdName, CmdFunc) GConsole.RegisterCommand(CmdName, CmdFunc)
+#ifdef COMPILER_VISUAL_STUDIO
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
+#endif
 
-typedef void(*ConsoleCommand)();
-
-struct ConsoleVariable
-{
-    ConsoleVariable() = default;
-
-    ConsoleVariable(EConsoleVariableType InType)
-        : Type(InType)
-    {
-    }
-
-    ~ConsoleVariable()
-    {
-        Free();
-    }
-    
-    FORCEINLINE void Free()
-    {
-        if (Type == EConsoleVariableType::String)
-        {
-            Memory::Free(StringValue);
-            StringValue = nullptr;
-        }
-    }
-
-    FORCEINLINE void SetBool(bool Value)
-    {
-        Assert(Type == EConsoleVariableType::Bool);
-        BoolValue = Value;
-    }
-
-    FORCEINLINE void SetInt(int32 Value)
-    {
-        Assert(Type == EConsoleVariableType::Int);
-        IntValue = Value;
-    }
-
-    FORCEINLINE void SetFloat(float Value)
-    {
-        Assert(Type == EConsoleVariableType::Float);
-        FloatValue = Value;
-    }
-
-    FORCEINLINE void SetAndConvertInt(int32 Value)
-    {
-        if (Type == EConsoleVariableType::Int)
-        {
-            IntValue = Value;
-        }
-        else if (Type == EConsoleVariableType::Bool)
-        {
-            BoolValue = bool(Value);
-        }
-        else if (Type == EConsoleVariableType::Float)
-        {
-            FloatValue = float(Value);
-        }
-        else
-        {
-            Assert(false);
-        }
-    }
-
-    FORCEINLINE void SetString(const char* Value)
-    {
-        Assert(Type == EConsoleVariableType::String);
-        
-        const int32 Len = int32(strlen(Value));
-        if (Len < Length)
-        {
-            Memory::Free(StringValue);
-            
-            StringValue = Memory::Malloc<char>(Len);
-            Length      = Len;
-        }
-
-        Memory::Strcpy(StringValue, Value);
-    }
-
-    FORCEINLINE bool GetBool() const
-    {
-        Assert(Type == EConsoleVariableType::Bool);
-        return BoolValue;
-    }
-
-    FORCEINLINE int32 GetInt32() const
-    {
-        Assert(Type == EConsoleVariableType::Int);
-        return IntValue;
-    }
-
-    FORCEINLINE float GetFloat() const
-    {
-        Assert(Type == EConsoleVariableType::Float);
-        return FloatValue;
-    }
-
-    FORCEINLINE const char* GetString() const
-    {
-        Assert(Type == EConsoleVariableType::String);
-        return StringValue;
-    }
-
-    bool IsBool() const { return Type == EConsoleVariableType::Bool; }
-    bool IsInt() const { return Type == EConsoleVariableType::Int; }
-    bool IsFloat() const { return Type == EConsoleVariableType::Float; }
-    bool IsString() const { return Type == EConsoleVariableType::String; }
-
-    bool CanBeInteger() const
-    {
-        return IsBool() || IsInt() || IsFloat();
-    }
-
-    EConsoleVariableType Type = EConsoleVariableType::Unknown;
-    union
-    {
-        bool  BoolValue;
-        int32 IntValue;
-        float FloatValue;
-        struct
-        {
-            char* StringValue;
-            int32 Length;
-        };
-    };
-};
+#define INIT_CONSOLE_VARIABLE(Name, Variable) GConsole.RegisterVariable(Name, Variable)
+#define INIT_CONSOLE_COMMAND(Name, Command)   GConsole.RegisterCommand(Name, Command)
 
 class Console
 {
@@ -173,11 +51,11 @@ public:
     void Init();
     void Tick();
 
-    void RegisterCommand(const std::string& CmdName, ConsoleCommand Command);
-    void RegisterVariable(const std::string& VarName, ConsoleVariable* Variable);
+    void RegisterCommand(const std::string& Name, ConsoleCommand* Object);
+    void RegisterVariable(const std::string& Name, ConsoleVariable* Variable);
 
-    ConsoleCommand FindCommand(const std::string& CmdName);
-    ConsoleVariable* FindVariable(const std::string& VarName);
+    ConsoleCommand* FindCommand(const std::string& Name);
+    ConsoleVariable* FindVariable(const std::string& Name);
 
     void PrintMessage(const std::string& Message);
     void PrintWarning(const std::string& Message);
@@ -213,3 +91,7 @@ private:
 };
 
 extern Console GConsole;
+
+#ifdef COMPILER_VISUAL_STUDIO
+    #pragma warning(pop)
+#endif

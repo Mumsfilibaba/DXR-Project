@@ -1,5 +1,5 @@
 #include "Profiler.h"
-#include "Console.h"
+#include "Console/Console.h"
 
 #include "Rendering/DebugUI.h"
 
@@ -17,8 +17,8 @@ constexpr float INV_SECONDS      = 1.0f / SECONDS;
 
 constexpr float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
-ConsoleVariable gDrawProfiler(EConsoleVariableType::Bool);
-ConsoleVariable gDrawFps(EConsoleVariableType::Bool);
+TConsoleVariable<bool> GDrawProfiler;
+TConsoleVariable<bool> GDrawFps;
 
 struct ProfileSample
 {
@@ -582,7 +582,7 @@ static void DrawProfiler()
         ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoSavedSettings;
 
-    bool TempDrawProfiler = gDrawProfiler.GetBool();
+    bool TempDrawProfiler = GDrawProfiler.GetBool();
     if (ImGui::Begin("Profiler", &TempDrawProfiler, Flags))
     {
         if (ImGui::Button("Start Profile"))
@@ -629,16 +629,16 @@ static void DrawProfiler()
 
     ImGui::End();
 
-    gDrawProfiler.SetBool(TempDrawProfiler);
+    GDrawProfiler.SetBool(TempDrawProfiler);
 }
 
 void Profiler::Init()
 {
-    INIT_CONSOLE_VARIABLE("r.DrawFps", gDrawFps);
-    gDrawFps.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawFps", GDrawFps);
+    GDrawFps.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.DrawProfiler", gDrawProfiler);
-    gDrawProfiler.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawProfiler", GDrawProfiler);
+    GDrawProfiler.SetBool(false);
 }
 
 void Profiler::Tick()
@@ -655,12 +655,12 @@ void Profiler::Tick()
         Clock.Reset();
     }
 
-    if (gDrawFps.GetBool())
+    if (GDrawFps.GetBool())
     {
         DebugUI::DrawUI(DrawFPS);
     }
 
-    if (gDrawProfiler.GetBool())
+    if (GDrawProfiler.GetBool())
     {
         if (gProfilerData.EnableProfiler)
         {

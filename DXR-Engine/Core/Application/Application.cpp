@@ -3,11 +3,14 @@
 #include "Platform/PlatformApplication.h"
 #include "Platform/PlatformMisc.h"
 
-#include "Debug/Console.h"
+#include "Debug/Console/Console.h"
 
 #include "Scene/Scene.h"
 
 Application* GApplication;
+
+ConsoleCommand GToggleFullscreen;
+ConsoleCommand GExit;
 
 Application::Application()
     : Window(nullptr)
@@ -35,10 +38,8 @@ bool Application::Init()
     {
         Window->Show(false);
 
-        INIT_CONSOLE_COMMAND("a.ToggleFullscreen", []()
-            {
-                GApplication->Window->ToggleFullscreen();
-            });
+        GToggleFullscreen.OnExecute.AddObject(Window.Get(), &GenericWindow::ToggleFullscreen);
+        INIT_CONSOLE_COMMAND("a.ToggleFullscreen", &GToggleFullscreen);
     }
     else
     {
@@ -46,10 +47,8 @@ bool Application::Init()
         return false;
     }
 
-    INIT_CONSOLE_COMMAND("a.Quit", []()
-        {
-            GApplication->Exit();
-        });
+    GExit.OnExecute.AddObject(this, &Application::Exit);
+    INIT_CONSOLE_COMMAND("a.Exit", &GExit);
     
     IsRunning = true;
     return true;
