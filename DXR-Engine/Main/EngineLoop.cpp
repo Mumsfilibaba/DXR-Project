@@ -2,8 +2,6 @@
 
 #include "Engine/EngineGlobals.h"
 
-#include "Time/Clock.h"
-
 #include "Core/Application/Application.h"
 #include "Core/Application/Generic/GenericOutputDevice.h"
 #include "Core/Application/Generic/GenericCursor.h"
@@ -21,7 +19,7 @@
 #include "Editor/Editor.h"
 
 #include "Debug/Profiler.h"
-#include "Debug/Console.h"
+#include "Debug/Console/Console.h"
 
 #include "Memory/Memory.h"
 
@@ -157,12 +155,15 @@ bool EngineLoop::Release()
         return false;
     }
 
-    if (!GApplication->Release())
+    if (GApplication->Release())
+    {
+        SafeDelete(GApplication);
+        PlatformApplication::Get().SetEventHandler(nullptr);
+    }
+    else
     {
         return false;
     }
-
-    SafeDelete(GApplication);
 
     DebugUI::Release();
 

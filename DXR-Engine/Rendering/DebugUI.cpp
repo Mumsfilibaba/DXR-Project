@@ -6,7 +6,7 @@
 #include "Core/Application/Platform/PlatformCursor.h"
 #include "Core/Application/Platform/PlatformApplication.h"
 
-#include "Time/Clock.h"
+#include "Time/Timer.h"
 
 #include "Rendering/Resources/TextureFactory.h"
 #include "Rendering/Renderer.h"
@@ -30,7 +30,7 @@ struct ImGuiState
         PShader.Reset();
     }
 
-    Clock FrameClock;
+    Timer FrameClock;
 
     TRef<Texture2D>             FontTexture;
     TRef<GraphicsPipelineState> PipelineState;

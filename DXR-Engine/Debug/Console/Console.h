@@ -1,6 +1,8 @@
 #pragma once
 #include "Core/Application/Events.h"
 
+#include "ConsoleVariable.h"
+
 #include <unordered_map>
 #include <cstring>
 
@@ -8,15 +10,6 @@
 #define INIT_CONSOLE_COMMAND(CmdName, CmdFunc) GConsole.RegisterCommand(CmdName, CmdFunc)
 
 typedef void(*ConsoleCommand)();
-
-enum class EConsoleVariableType : uint8
-{
-    Unknown = 0,
-    Bool    = 1,
-    Int     = 2,
-    Float   = 3,
-    String  = 4,
-};
 
 struct ConsoleVariable
 {

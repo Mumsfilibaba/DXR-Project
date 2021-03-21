@@ -1,10 +1,10 @@
 #pragma once
 #include "Timestamp.h"
 
-class Clock
+class Timer
 {
 public:
-    Clock();
+    Timer();
 
     /*
     * Measures the deltatime between this and the latest call to Clock::Tick. It also updates the totalTime that the clock

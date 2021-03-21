@@ -1,14 +1,14 @@
-#include "Clock.h"
+#include "Timer.h"
 
 #include "Platform/PlatformTime.h"
 
-Clock::Clock()
+Timer::Timer()
 {
     Frequency = PlatformTime::QueryPerformanceFrequency();
     Tick();
 }
 
-void Clock::Tick()
+void Timer::Tick()
 {
     const uint64 Now = PlatformTime::QueryPerformanceCounter();	
     constexpr uint64 NANOSECONDS = 1000 * 1000 * 1000;

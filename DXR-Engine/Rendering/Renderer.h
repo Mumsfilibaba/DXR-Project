@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Application/Windows/WindowsWindow.h"
 
-#include "Time/Clock.h"
+#include "Time/Timer.h"
 
 #include "Core/Application/InputCodes.h"
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "Time/Clock.h"
+#include "Time/Timer.h"
 
 class EngineLoop
 {
@@ -18,7 +18,7 @@ private:
     bool PreRelease();
     bool PostRelease();
     
-    Clock Clock;
+    Timer Clock;
 };
 
 extern EngineLoop GEngineLoop;
