@@ -30,8 +30,8 @@ struct WindowsEvent
 class WindowsApplication : public GenericApplication
 {
 public:
-    WindowsApplication()  = default;
-    ~WindowsApplication() = default;
+    WindowsApplication();
+    ~WindowsApplication();
 
     WindowsWindow* GetWindowFromHWND(HWND Window) const;
 
@@ -68,11 +68,10 @@ private:
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
 private:
-    TRef<WindowsCursor> CurrentCursor;
     TArray<TRef<WindowsWindow>> Windows;
     TArray<WindowsEvent> Messages;
 
-    bool IsTrackingMouse = false;
+    bool IsTrackingMouse;
 
     static HINSTANCE Instance;
 };

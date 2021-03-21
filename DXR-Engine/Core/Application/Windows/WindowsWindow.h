@@ -8,16 +8,16 @@ class WindowsApplication;
 class WindowsWindow : public GenericWindow
 {
 public:
-    WindowsWindow(WindowsApplication* Application);
+    WindowsWindow();
     ~WindowsWindow();
 
     bool Init(const std::string& Title, uint32 Width, uint32 Height, WindowStyle Style);
 
     virtual void Show(bool Maximized) override final;
-    virtual void Close()    override final;
+    virtual void Close() override final;
     virtual void Minimize() override final;
     virtual void Maximize() override final;
-    virtual void Restore()  override final;
+    virtual void Restore() override final;
     virtual void ToggleFullscreen() override final;
 
     virtual bool IsValid() const override final;
@@ -40,7 +40,6 @@ public:
     HWND GetHandle() const { return Window; }
 
 private:
-    WindowsApplication* Application;
     HWND  Window;
     DWORD Style;
     DWORD StyleEx;

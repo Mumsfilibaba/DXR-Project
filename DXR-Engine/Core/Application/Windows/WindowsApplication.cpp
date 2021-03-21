@@ -10,6 +10,20 @@ WindowsApplication GWindowsApplication;
 
 HINSTANCE WindowsApplication::Instance = 0;
 
+WindowsApplication::WindowsApplication()
+    : GenericApplication()
+    , Windows()
+    , Messages()
+    , IsTrackingMouse(false)
+{
+    // Empty for now
+}
+
+WindowsApplication::~WindowsApplication()
+{
+    // Empty for now
+}
+
 WindowsWindow* WindowsApplication::GetWindowFromHWND(HWND Window) const
 {
     for (const TRef<WindowsWindow>& CurrentWindow : Windows)
@@ -25,7 +39,7 @@ WindowsWindow* WindowsApplication::GetWindowFromHWND(HWND Window) const
 
 GenericWindow* WindowsApplication::CreateWindow(const std::string& Title, uint32 Width, uint32 Height, WindowStyle Style)
 {
-    TRef<WindowsWindow> Window = DBG_NEW WindowsWindow(this);
+    TRef<WindowsWindow> Window = DBG_NEW WindowsWindow();
     if (Window->Init(Title, Width, Height, Style))
     {
         AddWindow(Window.Get());

@@ -1,9 +1,8 @@
 #include "WindowsWindow.h"
 #include "WindowsApplication.h"
 
-WindowsWindow::WindowsWindow(WindowsApplication* InApplication)
+WindowsWindow::WindowsWindow()
     : GenericWindow()
-    , Application(InApplication)
     , Window(0)
     , Style(0)
     , StyleEx(0)

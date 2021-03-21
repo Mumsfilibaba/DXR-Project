@@ -17,7 +17,8 @@ static GenericCursor* CreateCursor(LPCSTR CursorName)
 TRef<WindowsCursor> WindowsCursor::CurrentCursor;
 
 WindowsCursor::WindowsCursor()
-    : Cursor(0)
+    : GenericCursor()
+    , Cursor(0)
     , CursorName(nullptr)
 {
 }
