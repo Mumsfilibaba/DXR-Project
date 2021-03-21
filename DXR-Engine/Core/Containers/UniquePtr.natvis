@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="TUniquePtr&lt;*&gt;">
+    <DisplayString>{{ Ptr={mPtr} }}</DisplayString>
+    <Expand>
+      <Item Name="[Ptr]">mPtr</Item>
+    </Expand>
+  </Type>
+</AutoVisualizer>

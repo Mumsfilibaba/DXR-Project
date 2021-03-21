@@ -9,15 +9,15 @@ public:
     D3D12GPUProfiler(D3D12Device* InDevice);
     ~D3D12GPUProfiler() = default;
 
-    virtual void GetTimeQuery(TimeQuery& OutQuery, UInt32 Index) const override final;
+    virtual void GetTimeQuery(TimeQuery& OutQuery, uint32 Index) const override final;
 
-    virtual UInt64 GetFrequency() const override final
+    virtual uint64 GetFrequency() const override final
     {
-        return (UInt64)Frequency;
+        return (uint64)Frequency;
     }
 
-    void BeginQuery(ID3D12GraphicsCommandList* CmdList, UInt32 Index);
-    void EndQuery(ID3D12GraphicsCommandList* CmdList, UInt32 Index);
+    void BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
+    void EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
 
     void ResolveQueries(class D3D12CommandContext& CmdContext);
 
@@ -26,7 +26,7 @@ public:
     static D3D12GPUProfiler* Create(D3D12Device* InDevice);
 
 private:
-    Bool AllocateReadResource();
+    bool AllocateReadResource();
 
     TComPtr<ID3D12QueryHeap> QueryHeap;
     TRef<D3D12Resource>      WriteResource;

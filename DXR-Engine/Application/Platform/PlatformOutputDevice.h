@@ -1,8 +1,0 @@
-#pragma once
-#ifdef PLATFORM_WINDOWS
-    #include "Windows/WindowsConsoleOutput.h"
-    typedef WindowsConsoleOutput PlatformOutputDevice;
-#else
-    #include "Application/Generic/GenericOutputDevice.h"
-    typedef GenericOutputDevice PlatformOutputDevice;
-#endif

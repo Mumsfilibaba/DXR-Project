@@ -59,7 +59,7 @@ VSOutput VSMain(VSInput Input)
 {
     VSOutput Output;
     
-    const float4x4 TransformInv = transpose(TransformBuffer.TransformInv);
+    const float4x4 TransformInv = TransformBuffer.TransformInv;
     float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
     Output.Normal = Normal;
     
@@ -67,7 +67,7 @@ VSOutput VSMain(VSInput Input)
     Output.ViewNormal = ViewNormal;
     
 #if defined(NORMAL_MAPPING_ENABLED) || defined(PARALLAX_MAPPING_ENABLED)
-    float3 Tangent	= normalize(mul(float4(Input.Tangent, 0.0f), TransformBuffer.Transform).xyz);
+    float3 Tangent	= normalize(mul(float4(Input.Tangent, 0.0f), TransformInv).xyz);
     Tangent			= normalize(Tangent - dot(Tangent, Normal) * Normal);
     Output.Tangent	= Tangent;
     

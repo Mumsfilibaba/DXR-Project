@@ -11,7 +11,7 @@ SpotLight::~SpotLight()
 {
 }
 
-void SpotLight::SetConeAngle(Float InConeAngle)
+void SpotLight::SetConeAngle(float InConeAngle)
 {
     ConeAngle = InConeAngle;
 }

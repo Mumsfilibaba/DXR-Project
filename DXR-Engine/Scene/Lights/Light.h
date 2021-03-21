@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CoreObject.h"
+#include "Core/CoreObject/CoreObject.h"
 
 class Light : public CoreObject
 {
@@ -10,35 +10,35 @@ public:
     virtual ~Light() = default;
 
     void SetColor(const XMFLOAT3& InColor);
-    void SetColor(Float R, Float G, Float B);
+    void SetColor(float R, float G, float B);
     
-    void SetIntensity(Float InIntensity);
+    void SetIntensity(float InIntensity);
 
-    void SetShadowBias(Float InShadowBias)
+    void SetShadowBias(float InShadowBias)
     {
         ShadowBias = InShadowBias;
     }
 
-    void SetMaxShadowBias(Float InShadowBias)
+    void SetMaxShadowBias(float InShadowBias)
     {
         MaxShadowBias = InShadowBias;
     }
 
-    Float GetIntensity() const { return Intensity; }
+    float GetIntensity() const { return Intensity; }
 
     const XMFLOAT3& GetColor() const { return Color; }
 
-    Float GetShadowNearPlane() const { return ShadowNearPlane; }
-    Float GetShadowFarPlane() const { return ShadowFarPlane; }
+    float GetShadowNearPlane() const { return ShadowNearPlane; }
+    float GetShadowFarPlane() const { return ShadowFarPlane; }
 
-    Float GetShadowBias() const { return ShadowBias; }
-    Float GetMaxShadowBias() const { return MaxShadowBias; }
+    float GetShadowBias() const { return ShadowBias; }
+    float GetMaxShadowBias() const { return MaxShadowBias; }
 
 protected:
     XMFLOAT3 Color;
-    Float Intensity = 1.0f;
-    Float ShadowNearPlane;
-    Float ShadowFarPlane;
-    Float ShadowBias;
-    Float MaxShadowBias;
+    float Intensity = 1.0f;
+    float ShadowNearPlane;
+    float ShadowFarPlane;
+    float ShadowBias;
+    float MaxShadowBias;
 };

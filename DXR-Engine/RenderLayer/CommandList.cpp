@@ -1,5 +1,7 @@
 #include "CommandList.h"
 
+CommandListExecutor GCmdListExecutor;
+
 void CommandListExecutor::ExecuteCommandList(CommandList& CmdList)
 {
     Assert(CmdList.IsRecording == false);

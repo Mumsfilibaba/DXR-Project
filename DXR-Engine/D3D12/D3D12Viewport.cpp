@@ -2,7 +2,7 @@
 #include "D3D12CommandQueue.h"
 #include "D3D12RenderLayer.h"
 
-D3D12Viewport::D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, UInt32 InWidth, UInt32 InHeight)
+D3D12Viewport::D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight)
     : D3D12DeviceChild(InDevice)
     , Viewport(InFormat, InWidth, InHeight)
     , Hwnd(InHwnd)
@@ -16,6 +16,7 @@ D3D12Viewport::D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdCo
 D3D12Viewport::~D3D12Viewport()
 {
     BOOL FullscreenState;
+
     HRESULT Result = SwapChain->GetFullscreenState(&FullscreenState, nullptr);
     if (SUCCEEDED(Result))
     {
@@ -26,13 +27,13 @@ D3D12Viewport::~D3D12Viewport()
     }
 }
 
-Bool D3D12Viewport::Init()
+bool D3D12Viewport::Init()
 {
     // Save the flags
     Flags = GetDevice()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
-    const UInt32 NumSwapChainBuffers = 3;
+    const uint32 NumSwapChainBuffers = 3;
     const DXGI_FORMAT NativeFormat   = ConvertFormat(Format);
 
     Assert(Width > 0 && Height > 0);
@@ -93,7 +94,7 @@ Bool D3D12Viewport::Init()
     return true;
 }
 
-Bool D3D12Viewport::Resize(UInt32 InWidth, UInt32 InHeight)
+bool D3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     // TODO: Make sure that we release the old surfaces
 
@@ -127,11 +128,11 @@ Bool D3D12Viewport::Resize(UInt32 InWidth, UInt32 InHeight)
     return true;
 }
 
-Bool D3D12Viewport::Present(Bool VerticalSync)
+bool D3D12Viewport::Present(bool VerticalSync)
 {
-    const UInt32 SyncInterval = !!VerticalSync;
+    const uint32 SyncInterval = !!VerticalSync;
     
-    UInt32 PresentFlags = 0;
+    uint32 PresentFlags = 0;
     if (SyncInterval == 0 && Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
     {
         PresentFlags = DXGI_PRESENT_ALLOW_TEARING;
@@ -158,7 +159,7 @@ void D3D12Viewport::SetName(const std::string& InName)
 {
     SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(InName.size()), InName.data());
     
-    UInt32 Index = 0;
+    uint32 Index = 0;
     for (TRef<D3D12Texture2D>& Buffer : BackBuffers)
     {
         Buffer->SetName(InName + "Buffer [" + std::to_string(Index) + "]");
@@ -166,7 +167,7 @@ void D3D12Viewport::SetName(const std::string& InName)
     }
 }
 
-Bool D3D12Viewport::RetriveBackBuffers()
+bool D3D12Viewport::RetriveBackBuffers()
 {
     if (BackBuffers.Size() < NumBackBuffers)
     {
@@ -190,7 +191,7 @@ Bool D3D12Viewport::RetriveBackBuffers()
         }
     }
 
-    for (UInt32 i = 0; i < NumBackBuffers; i++)
+    for (uint32 i = 0; i < NumBackBuffers; i++)
     {
         TComPtr<ID3D12Resource> BackBufferResource;
         HRESULT Result = SwapChain->GetBuffer(i, IID_PPV_ARGS(&BackBufferResource));

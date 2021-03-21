@@ -6,7 +6,7 @@
 
 #include "Debug/Profiler.h"
 
-Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
+bool SkyboxRenderPass::Init(FrameResources& FrameResources)
 {
     SkyboxMesh = MeshFactory::CreateSphere(1);
 
@@ -22,7 +22,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     }
 
     ResourceData IndexData = ResourceData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
-    SkyboxIndexBuffer = CreateIndexBuffer(EIndexFormat::UInt32, SkyboxMesh.Indices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &IndexData);
+    SkyboxIndexBuffer = CreateIndexBuffer(EIndexFormat::uint32, SkyboxMesh.Indices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &IndexData);
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -68,7 +68,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
         return false;
     }
 
-    TArray<UInt8> ShaderCode;
+    TArray<uint8> ShaderCode;
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Skybox.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
@@ -179,8 +179,8 @@ void SkyboxRenderPass::Render(CommandList& CmdList, const FrameResources& FrameR
 
     TRACE_SCOPE("Render Skybox");
 
-    const Float RenderWidth  = Float(FrameResources.FinalTarget->GetWidth());
-    const Float RenderHeight = Float(FrameResources.FinalTarget->GetHeight());
+    const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
+    const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
 
     RenderTargetView* RenderTarget[] = { FrameResources.FinalTarget->GetRenderTargetView() };
     CmdList.SetRenderTargets(RenderTarget, 1, nullptr);
@@ -208,7 +208,7 @@ void SkyboxRenderPass::Render(CommandList& CmdList, const FrameResources& FrameR
 
     CmdList.SetSamplerState(SkyboxPixelShader.Get(), SkyboxSampler.Get(), 0);
 
-    CmdList.DrawIndexedInstanced(static_cast<UInt32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
+    CmdList.DrawIndexedInstanced(static_cast<uint32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
 }

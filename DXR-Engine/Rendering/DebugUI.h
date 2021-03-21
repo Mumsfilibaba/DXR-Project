@@ -1,6 +1,6 @@
 #pragma once
-#include "Application/InputCodes.h"
-#include "Application/Events/Events.h"
+#include "Core/Application/InputCodes.h"
+#include "Core/Application/Events.h"
 
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/ResourceViews.h"
@@ -26,7 +26,7 @@ struct ImGuiImage
     TRef<Texture>  Image;
     EResourceState BeforeState;
     EResourceState AfterState;
-    Bool AllowBlending = false;
+    bool AllowBlending = false;
 };
 
 class DebugUI
@@ -34,14 +34,20 @@ class DebugUI
 public:
     typedef void(*UIDrawFunc)();
 
-    static Bool Init();
+    static bool Init();
     static void Release();
 
     static void DrawUI(UIDrawFunc DrawFunc);
     static void DrawDebugString(const std::string& DebugString);
-
-    static Bool OnEvent(const Event& Event);
     
+    static void OnKeyPressed(const KeyPressedEvent& Event);
+    static void OnKeyReleased(const KeyReleasedEvent& Event);
+    static void OnKeyTyped(const KeyTypedEvent& Event);
+
+    static void OnMousePressed(const MousePressedEvent& Event);
+    static void OnMouseReleased(const MouseReleasedEvent& Event);
+    static void OnMouseScrolled(const MouseScrolledEvent& Event);
+
     // Should only be called by the renderer
     static void Render(class CommandList& CmdList);
 

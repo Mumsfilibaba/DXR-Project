@@ -30,26 +30,26 @@ enum EResourceType
 
 struct ShaderResourceRange
 {
-    UInt32 NumCBVs     = 0;
-    UInt32 NumSRVs     = 0;
-    UInt32 NumUAVs     = 0;
-    UInt32 NumSamplers = 0;
+    uint32 NumCBVs     = 0;
+    uint32 NumSRVs     = 0;
+    uint32 NumUAVs     = 0;
+    uint32 NumSamplers = 0;
 };
 
 struct ShaderResourceCount
 {
     void Combine(const ShaderResourceCount& Other);
-    Bool IsCompatible(const ShaderResourceCount& Other) const;
+    bool IsCompatible(const ShaderResourceCount& Other) const;
 
     ShaderResourceRange Ranges;
-    UInt32              Num32BitConstants = 0;
+    uint32              Num32BitConstants = 0;
 };
 
 struct D3D12ShaderParameter
 {
     D3D12ShaderParameter() = default;
 
-    D3D12ShaderParameter(const std::string& InName, UInt32 InRegister, UInt32 InSpace, UInt32 InNumDescriptors, UInt32 InSizeInBytes)
+    D3D12ShaderParameter(const std::string& InName, uint32 InRegister, uint32 InSpace, uint32 InNumDescriptors, uint32 InSizeInBytes)
         : Name(InName)
         , Register(InRegister)
         , Space(InSpace)
@@ -59,47 +59,47 @@ struct D3D12ShaderParameter
     }
 
     std::string Name;
-    UInt32 Register       = 0;
-    UInt32 Space          = 0;
-    UInt32 NumDescriptors = 0;
-    UInt32 SizeInBytes    = 0;
+    uint32 Register       = 0;
+    uint32 Space          = 0;
+    uint32 NumDescriptors = 0;
+    uint32 SizeInBytes    = 0;
 };
 
 class D3D12BaseShader : public D3D12DeviceChild
 {
 public:
-    D3D12BaseShader(D3D12Device* InDevice, const TArray<UInt8>& InCode, EShaderVisibility ShaderVisibility);
+    D3D12BaseShader(D3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility ShaderVisibility);
     ~D3D12BaseShader();
 
     D3D12_SHADER_BYTECODE GetByteCode() const { return ByteCode; }
 
     const void* GetCode() const { return ByteCode.pShaderBytecode; }
-    UInt64 GetCodeSize()  const { return static_cast<UInt64>(ByteCode.BytecodeLength); }
+    uint64 GetCodeSize()  const { return static_cast<uint64>(ByteCode.BytecodeLength); }
 
-    D3D12ShaderParameter GetConstantBufferParameter(UInt32 ParameterIndex)  { return ConstantBufferParameters[ParameterIndex]; }
-    UInt32 GetNumConstantBufferParameters() { return ConstantBufferParameters.Size(); }
+    D3D12ShaderParameter GetConstantBufferParameter(uint32 ParameterIndex)  { return ConstantBufferParameters[ParameterIndex]; }
+    uint32 GetNumConstantBufferParameters() { return ConstantBufferParameters.Size(); }
 
-    D3D12ShaderParameter GetShaderResourceParameter(UInt32 ParameterIndex)  { return ShaderResourceParameters[ParameterIndex]; }
-    UInt32 GetNumShaderResourceParameters() { return ShaderResourceParameters.Size(); }
+    D3D12ShaderParameter GetShaderResourceParameter(uint32 ParameterIndex)  { return ShaderResourceParameters[ParameterIndex]; }
+    uint32 GetNumShaderResourceParameters() { return ShaderResourceParameters.Size(); }
 
-    D3D12ShaderParameter GetUnorderedAccessParameter(UInt32 ParameterIndex) { return UnorderedAccessParameters[ParameterIndex]; }
-    UInt32 GetNumUnorderedAccessParameters() { return UnorderedAccessParameters.Size(); }
+    D3D12ShaderParameter GetUnorderedAccessParameter(uint32 ParameterIndex) { return UnorderedAccessParameters[ParameterIndex]; }
+    uint32 GetNumUnorderedAccessParameters() { return UnorderedAccessParameters.Size(); }
 
-    D3D12ShaderParameter GetSamplerStateParameter(UInt32 ParameterIndex) { return SamplerParameters[ParameterIndex]; }
-    UInt32 GetNumSamplerStateParameters() { return SamplerParameters.Size(); }
+    D3D12ShaderParameter GetSamplerStateParameter(uint32 ParameterIndex) { return SamplerParameters[ParameterIndex]; }
+    uint32 GetNumSamplerStateParameters() { return SamplerParameters.Size(); }
 
-    Bool HasRootSignature() const { return ContainsRootSignature; }
+    bool HasRootSignature() const { return ContainsRootSignature; }
 
     EShaderVisibility GetShaderVisibility() const { return Visibility; };
 
     const ShaderResourceCount& GetResourceCount() const        { return ResourceCount; }
     const ShaderResourceCount& GetRTLocalResourceCount() const { return RTLocalResourceCount; }
 
-    static Bool GetShaderReflection(class D3D12BaseShader* Shader);
+    static bool GetShaderReflection(class D3D12BaseShader* Shader);
 
 protected:
     template<typename TD3D12ReflectionInterface>
-    static Bool GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, D3D12BaseShader* Shader, UInt32 NumBoundResources);
+    static bool GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, D3D12BaseShader* Shader, uint32 NumBoundResources);
 
     D3D12_SHADER_BYTECODE        ByteCode;
     TArray<D3D12ShaderParameter> ConstantBufferParameters;
@@ -110,13 +110,13 @@ protected:
     ShaderResourceCount          ResourceCount;
     ShaderResourceCount          RTLocalResourceCount;
 
-    Bool ContainsRootSignature = false;
+    bool ContainsRootSignature = false;
 };
 
 class D3D12BaseVertexShader : public VertexShader, public D3D12BaseShader
 {
 public:
-    D3D12BaseVertexShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BaseVertexShader(D3D12Device* InDevice, const TArray<uint8>& InCode)
         : VertexShader()
         , D3D12BaseShader(InDevice, InCode, ShaderVisibility_Vertex)
     {
@@ -126,7 +126,7 @@ public:
 class D3D12BasePixelShader : public PixelShader, public D3D12BaseShader
 {
 public:
-    D3D12BasePixelShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BasePixelShader(D3D12Device* InDevice, const TArray<uint8>& InCode)
         : PixelShader()
         , D3D12BaseShader(InDevice, InCode, ShaderVisibility_Pixel)
     {
@@ -136,14 +136,14 @@ public:
 class D3D12BaseRayTracingShader : public D3D12BaseShader
 {
 public:
-    D3D12BaseRayTracingShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BaseRayTracingShader(D3D12Device* InDevice, const TArray<uint8>& InCode)
         : D3D12BaseShader(InDevice, InCode, ShaderVisibility_All)
     {
     }
 
     const std::string& GetIdentifier() const { return Identifier; }
 
-    static Bool GetRayTracingShaderReflection(class D3D12BaseRayTracingShader* Shader);
+    static bool GetRayTracingShaderReflection(class D3D12BaseRayTracingShader* Shader);
 
 protected:
     std::string Identifier;
@@ -152,7 +152,7 @@ protected:
 class D3D12BaseRayGenShader : public RayGenShader, public D3D12BaseRayTracingShader
 {
 public:
-    D3D12BaseRayGenShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BaseRayGenShader(D3D12Device* InDevice, const TArray<uint8>& InCode)
         : RayGenShader()
         , D3D12BaseRayTracingShader(InDevice, InCode)
     {
@@ -162,7 +162,7 @@ public:
 class D3D12BaseRayAnyhitShader : public RayAnyHitShader, public D3D12BaseRayTracingShader
 {
 public:
-    D3D12BaseRayAnyhitShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BaseRayAnyhitShader(D3D12Device* InDevice, const TArray<uint8>& InCode)
         : RayAnyHitShader()
         , D3D12BaseRayTracingShader(InDevice, InCode)
     {
@@ -172,7 +172,7 @@ public:
 class D3D12BaseRayClosestHitShader : public RayClosestHitShader, public D3D12BaseRayTracingShader
 {
 public:
-    D3D12BaseRayClosestHitShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BaseRayClosestHitShader(D3D12Device* InDevice, const TArray<uint8>& InCode)
         : RayClosestHitShader()
         , D3D12BaseRayTracingShader(InDevice, InCode)
     {
@@ -182,7 +182,7 @@ public:
 class D3D12BaseRayMissShader : public RayMissShader, public D3D12BaseRayTracingShader
 {
 public:
-    D3D12BaseRayMissShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BaseRayMissShader(D3D12Device* InDevice, const TArray<uint8>& InCode)
         : RayMissShader()
         , D3D12BaseRayTracingShader(InDevice, InCode)
     {
@@ -192,14 +192,14 @@ public:
 class D3D12BaseComputeShader : public ComputeShader, public D3D12BaseShader
 {
 public:
-    D3D12BaseComputeShader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    D3D12BaseComputeShader(D3D12Device* InDevice, const TArray<uint8>& InCode)
         : ComputeShader()
         , D3D12BaseShader(InDevice, InCode, ShaderVisibility_All)
         , ThreadGroupXYZ(0, 0, 0)
     {
     }
 
-    Bool Init();
+    bool Init();
 
     virtual XMUINT3 GetThreadGroupXYZ() const override { return ThreadGroupXYZ; }
 
@@ -211,7 +211,7 @@ template<typename TBaseShader>
 class TD3D12Shader : public TBaseShader
 {
 public:
-    TD3D12Shader(D3D12Device* InDevice, const TArray<UInt8>& InCode)
+    TD3D12Shader(D3D12Device* InDevice, const TArray<uint8>& InCode)
         : TBaseShader(InDevice, InCode)
     {
     }
@@ -224,35 +224,35 @@ public:
         OutShaderParameterInfo.NumSamplerStates        = SamplerParameters.Size();
     }
 
-    virtual Bool GetShaderResourceViewIndexByName(const std::string& InName, UInt32& OutIndex) const override
+    virtual bool GetShaderResourceViewIndexByName(const std::string& InName, uint32& OutIndex) const override
     {
         return InternalFindParameterIndexByName(ShaderResourceParameters, InName, OutIndex);
     }
 
-    virtual Bool GetSamplerIndexByName(const std::string& InName, UInt32& OutIndex) const override
+    virtual bool GetSamplerIndexByName(const std::string& InName, uint32& OutIndex) const override
     {
         return InternalFindParameterIndexByName(SamplerParameters, InName, OutIndex);
     }
 
-    virtual Bool GetUnorderedAccessViewIndexByName(const std::string& InName, UInt32& OutIndex) const override
+    virtual bool GetUnorderedAccessViewIndexByName(const std::string& InName, uint32& OutIndex) const override
     {
         return InternalFindParameterIndexByName(UnorderedAccessParameters, InName, OutIndex);
     }
 
-    virtual Bool GetConstantBufferIndexByName(const std::string& InName, UInt32& OutIndex) const override
+    virtual bool GetConstantBufferIndexByName(const std::string& InName, uint32& OutIndex) const override
     {
         return InternalFindParameterIndexByName(ConstantBufferParameters, InName, OutIndex);
     }
 
-    virtual Bool IsValid() const override 
+    virtual bool IsValid() const override 
     { 
         return ByteCode.pShaderBytecode != nullptr && ByteCode.BytecodeLength > 0;
     }
 
 private:
-    Bool InternalFindParameterIndexByName(const TArray<D3D12ShaderParameter>& Parameters, const std::string& InName, UInt32& OutIndex) const
+    bool InternalFindParameterIndexByName(const TArray<D3D12ShaderParameter>& Parameters, const std::string& InName, uint32& OutIndex) const
     {
-        for (UInt32 i = 0; i < Parameters.Size(); i++)
+        for (uint32 i = 0; i < Parameters.Size(); i++)
         {
             if (Parameters[i].Name == InName)
             {

@@ -1,16 +1,16 @@
 #pragma once
 #include "Memory.h"
 
-#include <Containers/Array.h>
+#include "Core/Containers/Array.h"
 
 struct MemoryArena
 {
-    MemoryArena(UInt64 InSizeInBytes)
+    MemoryArena(uint64 InSizeInBytes)
         : Mem(nullptr)
         , Offset(0)
         , SizeInBytes(InSizeInBytes)
     {
-        Mem = reinterpret_cast<Byte*>(Memory::Malloc(SizeInBytes));
+        Mem = reinterpret_cast<uint8*>(Memory::Malloc(SizeInBytes));
         Reset();
     }
 
@@ -31,16 +31,16 @@ struct MemoryArena
         Memory::Free(Mem);
     }
 
-    Void* MemoryArena::Allocate(UInt64 InSizeInBytes)
+    void* MemoryArena::Allocate(uint64 InSizeInBytes)
     {
         Assert(ReservedSize() >= InSizeInBytes);
 
-        Void* Allocated = reinterpret_cast<Void*>(Mem + Offset);
+        void* Allocated = reinterpret_cast<void*>(Mem + Offset);
         Offset += InSizeInBytes;
         return Allocated;
     }
 
-    UInt64 ReservedSize()
+    uint64 ReservedSize()
     {
         return SizeInBytes - Offset;
     }
@@ -50,7 +50,7 @@ struct MemoryArena
         Offset = 0;
     }
 
-    UInt64 GetSizeInBytes() const { return SizeInBytes; }
+    uint64 GetSizeInBytes() const { return SizeInBytes; }
 
     MemoryArena& operator=(const MemoryArena& Other) = delete;
 
@@ -72,18 +72,18 @@ struct MemoryArena
         return *this;
     }
 
-    Byte*  Mem;
-    UInt64 Offset;
-    UInt64 SizeInBytes;
+    uint8*  Mem;
+    uint64 Offset;
+    uint64 SizeInBytes;
 };
 
 class LinearAllocator
 {
 public:
-    LinearAllocator(UInt32 StartSize = 4096);
+    LinearAllocator(uint32 StartSize = 4096);
     ~LinearAllocator() = default;
 
-    void* Allocate(UInt64 SizeInBytes, UInt64 Alignment);
+    void* Allocate(uint64 SizeInBytes, uint64 Alignment);
     
     void Reset();
 
@@ -93,9 +93,9 @@ public:
         return Allocate(sizeof(T), alignof(T));
     }
 
-    Byte* AllocateBytes(UInt64 SizeInBytes, UInt64 Alignment)
+    uint8* AllocateBytes(uint64 SizeInBytes, uint64 Alignment)
     {
-        return reinterpret_cast<Byte*>(Allocate(SizeInBytes, Alignment));
+        return reinterpret_cast<uint8*>(Allocate(SizeInBytes, Alignment));
     }
 
 private:

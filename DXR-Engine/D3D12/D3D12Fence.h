@@ -16,7 +16,7 @@ public:
         ::CloseHandle(Event);
     }
 
-    Bool Init(UInt64 InitalValue)
+    bool Init(uint64 InitalValue)
     {
         HRESULT Result = GetDevice()->GetDevice()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
         if (FAILED(Result))
@@ -35,7 +35,7 @@ public:
         return true;
     }
 
-    Bool WaitForValue(UInt64 Value)
+    bool WaitForValue(uint64 Value)
     {
         HRESULT Result = Fence->SetEventOnCompletion(Value, Event);
         if (SUCCEEDED(Result))
@@ -49,7 +49,7 @@ public:
         }
     }
 
-    Bool Signal(UInt64 Value)
+    bool Signal(uint64 Value)
     {
         HRESULT Result = Fence->Signal(Value);
         return SUCCEEDED(Result);

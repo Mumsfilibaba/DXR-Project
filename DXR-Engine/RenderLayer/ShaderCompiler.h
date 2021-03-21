@@ -37,44 +37,44 @@ class IShaderCompiler
 public:
     virtual ~IShaderCompiler() = default;
 
-    virtual Bool CompileFromFile(
+    virtual bool CompileFromFile(
         const std::string& FilePath,
         const std::string& EntryPoint,
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<UInt8>& Code) = 0;
+        TArray<uint8>& Code) = 0;
 
-    virtual Bool CompileShader(
+    virtual bool CompileShader(
         const std::string& ShaderSource,
         const std::string& EntryPoint,
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<UInt8>& Code) = 0;
+        TArray<uint8>& Code) = 0;
 };
 
 class ShaderCompiler
 {
 public:
-    FORCEINLINE static Bool CompileFromFile(
+    FORCEINLINE static bool CompileFromFile(
         const std::string& FilePath,
         const std::string& EntryPoint,
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<UInt8>& Code)
+        TArray<uint8>& Code)
     {
         return gShaderCompiler->CompileFromFile(FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
 
-    FORCEINLINE static Bool CompileShader(
+    FORCEINLINE static bool CompileShader(
         const std::string& ShaderSource,
         const std::string& EntryPoint,
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<UInt8>& Code)
+        TArray<uint8>& Code)
     {
         return gShaderCompiler->CompileShader(ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }

@@ -9,12 +9,7 @@
 
 #include "RenderLayer/CommandList.h"
 
-EngineLoop gEngineLoop;
-Renderer   gRenderer;
-
-class GenericWindow*       gMainWindow          = nullptr;
-class GenericApplication*  gApplication = nullptr;
-class GenericOutputDevice* gConsoleOutput       = nullptr;
+class GenericWindow* gMainWindow  = nullptr;
 
 class EventDispatcher* gEventDispatcher = nullptr;
 
@@ -22,8 +17,3 @@ class Game* gGame = nullptr;
 
 class GenericRenderLayer* gRenderLayer    = nullptr;
 class IShaderCompiler*    gShaderCompiler = nullptr;
-
-CommandListExecutor gCmdListExecutor;
-
-Profiler gProfiler;
-Console  gConsole;

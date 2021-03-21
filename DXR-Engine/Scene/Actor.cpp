@@ -52,7 +52,7 @@ Transform::Transform()
     CalculateMatrix();
 }
 
-void Transform::SetTranslation(Float x, Float y, Float z)
+void Transform::SetTranslation(float x, float y, float z)
 {
     SetTranslation(XMFLOAT3(x, y, z));
 }
@@ -63,7 +63,7 @@ void Transform::SetTranslation(const XMFLOAT3& InPosition)
     CalculateMatrix();
 }
 
-void Transform::SetScale(Float x, Float y, Float z)
+void Transform::SetScale(float x, float y, float z)
 {
     SetScale(XMFLOAT3(x, y, z));
 }
@@ -74,7 +74,7 @@ void Transform::SetScale(const XMFLOAT3& InScale)
     CalculateMatrix();
 }
 
-void Transform::SetRotation(Float x, Float y, Float z)
+void Transform::SetRotation(float x, float y, float z)
 {
     SetRotation(XMFLOAT3(x, y, z));
 }

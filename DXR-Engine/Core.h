@@ -64,7 +64,7 @@ using namespace DirectX;
 #define BIT(Bit)  (1 << Bit)
 #define FLAG(Bit) BIT(Bit)
 
-inline Bool HasFlag(UInt32 Mask, UInt32 Flag)
+inline bool HasFlag(uint32 Mask, uint32 Flag)
 {
     return Mask & Flag;
 }
@@ -86,7 +86,7 @@ inline Bool HasFlag(UInt32 Mask, UInt32 Flag)
 // Makes multiline strings
 #define MULTILINE_STRING(...) #__VA_ARGS__
 
-// Function signature as a const Char* string
+// Function signature as a const char* string
 #ifdef COMPILER_VISUAL_STUDIO
     #define __FUNCTION_SIG__ __FUNCTION__
 #else
@@ -107,5 +107,5 @@ inline Bool HasFlag(UInt32 Mask, UInt32 Flag)
     #pragma warning(error : 4456) // variable hides a already existing variable
     #pragma warning(error : 4458) // variable hides class member
     #pragma warning(error : 4715) // not all paths return a value
-    #pragma warning(error : 4840) // using string in variadic template (When it should be const Char)
+    #pragma warning(error : 4840) // using string in variadic template (When it should be const char)
 #endif

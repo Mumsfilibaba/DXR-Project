@@ -4,11 +4,12 @@
 
 #include "Time/Clock.h"
 
-#include "Application/Generic/GenericOutputDevice.h"
-#include "Application/Generic/GenericCursor.h"
-#include "Application/Events/EventDispatcher.h"
-#include "Application/Platform/PlatformApplication.h"
-#include "Application/Platform/PlatformDialogMisc.h"
+#include "Core/Application/Application.h"
+#include "Core/Application/Generic/GenericOutputDevice.h"
+#include "Core/Application/Generic/GenericCursor.h"
+#include "Core/Application/Platform/PlatformApplication.h"
+#include "Core/Application/Platform/PlatformMisc.h"
+#include "Core/Application/InputManager.h"
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
@@ -19,146 +20,46 @@
 
 #include "Editor/Editor.h"
 
-#include "Game/Game.h"
-
 #include "Debug/Profiler.h"
 #include "Debug/Console.h"
 
 #include "Memory/Memory.h"
 
-struct EngineLoopData
-{
-    Bool  ShouldRun = false;
-    Bool  IsExiting = false;
-    Clock Clock;
-};
+EngineLoop GEngineLoop;
 
-static EngineLoopData gEngineLoopData;
-
-Int32 EngineMain(const TArrayView<const Char*> Args)
-{
-    UNREFERENCED_VARIABLE(Args);
-
-#ifdef _DEBUG
-    Memory::SetDebugFlags(EMemoryDebugFlag::MemoryDebugFlag_LeakCheck);
-#endif
-
-    if (!EngineLoop::PreInit())
-    {
-        PlatformDialogMisc::MessageBox("ERROR", "Pre-Initialize Failed");
-        return -1;
-    }
-
-    if (!EngineLoop::Init())
-    {
-        PlatformDialogMisc::MessageBox("ERROR", "Initialize Failed");
-        return -1;
-    }
-
-    if (!EngineLoop::PostInit())
-    {
-        PlatformDialogMisc::MessageBox("ERROR", "Post-Initialize Failed");
-        return -1;
-    }
-
-    while (EngineLoop::IsRunning())
-    {
-        TRACE_SCOPE("Tick");
-
-        EngineLoop::PreTick();
-
-        EngineLoop::Tick();
-
-        EngineLoop::PostTick();
-    }
-
-    if (!EngineLoop::PreRelease())
-    {
-        PlatformDialogMisc::MessageBox("ERROR", "Pre-Release Failed");
-        return -1;
-    }
-    
-    if (!EngineLoop::Release())
-    {
-        PlatformDialogMisc::MessageBox("ERROR", "Release Failed");
-        return -1;
-    }
-    
-    if (!EngineLoop::PostRelease())
-    {
-        PlatformDialogMisc::MessageBox("ERROR", "Post-Release Failed");
-        return -1;
-    }
-
-    return 0;
-}
-
-Bool EngineLoop::PreInit()
+bool EngineLoop::PreInit()
 {
     TRACE_FUNCTION_SCOPE();
 
     Profiler::Init();
 
-    gConsoleOutput = PlatformOutputDevice::Make();
-    if (!gConsoleOutput)
+    GConsoleOutput = PlatformOutputDevice::Create();
+    if (!GConsoleOutput)
     {
         return false;
     }
     else
     {
-        gConsoleOutput->SetTitle("DXR-Engine Error Output");
+        GConsoleOutput->SetTitle("DXR-Engine Error Output");
     }
 
-    gApplication = PlatformApplication::Make();
-    if (!gApplication->Init())
+    if (!PlatformApplication::Get().Init())
     {
-        PlatformDialogMisc::MessageBox("ERROR", "Failed to create Platform Application");
+        PlatformMisc::MessageBox("ERROR", "Failed to create Platform Application");
         return false;
     }
 
     return true;
 }
 
-Bool EngineLoop::Init()
+bool EngineLoop::Init()
 {
     TRACE_FUNCTION_SCOPE();
 
-    gEventDispatcher = DBG_NEW EventDispatcher(gApplication);
-    gApplication->SetEventHandler(gEventDispatcher);
-
-    gConsole.Init();
-
-    const UInt32 Style =
-        WindowStyleFlag_Titled      |
-        WindowStyleFlag_Closable    |
-        WindowStyleFlag_Minimizable |
-        WindowStyleFlag_Maximizable |
-        WindowStyleFlag_Resizeable;
-
-    WindowCreateInfo WinCreateInfo("DXR Engine", 1920, 1080, Style);
-    gMainWindow = gApplication->MakeWindow();
-    
-    if (!gMainWindow->Init(WinCreateInfo))
+    if (!PreInit())
     {
-        PlatformDialogMisc::MessageBox("ERROR", "Failed to create Application");
         return false;
     }
-    else
-    {
-        gMainWindow->Show(false);
-
-        INIT_CONSOLE_COMMAND("a.ToggleFullscreen", []() 
-        {
-            gMainWindow->ToggleFullscreen();
-        });
-
-        INIT_CONSOLE_COMMAND("a.Quit", []()
-        {
-            EngineLoop::Exit();
-        });
-    }
-
-    GlobalCursors::Init();
 
     // RenderAPI
     if (!RenderLayer::Init(ERenderLayerApi::D3D12))
@@ -171,135 +72,129 @@ Bool EngineLoop::Init()
         return false;
     }
 
-    if (!gRenderer.Init())
+    // Init Application
+    GApplication = CreateApplication();
+    Assert(GApplication != nullptr);
+
+    PlatformApplication::Get().SetEventHandler(GApplication);
+
+    if (!GApplication->Init())
     {
-        PlatformDialogMisc::MessageBox("ERROR", "FAILED to create Renderer");
         return false;
     }
+
+    if (!InputManager::Get().Init())
+    {
+        return false;
+    }
+
+    if (!GRenderer.Init())
+    {
+        PlatformMisc::MessageBox("ERROR", "FAILED to create Renderer");
+        return false;
+    }
+
+    GConsole.Init();
 
     if (!DebugUI::Init())
     {
-        PlatformDialogMisc::MessageBox("ERROR", "FAILED to create ImGuiContext");
+        PlatformMisc::MessageBox("ERROR", "FAILED to create ImGuiContext");
         return false;
     }
 
-    gGame = MakeGameInstance();
-    if (!gGame->Init())
+    if (!PostInit())
     {
-        PlatformDialogMisc::MessageBox("ERROR", "FAILED initialize Game");
         return false;
     }
 
     return true;
 }
 
-Bool EngineLoop::PostInit()
+bool EngineLoop::PostInit()
 {
     TRACE_FUNCTION_SCOPE();
 
     Editor::Init();
-
-    gEngineLoopData.ShouldRun = true;
     return true;
-}
-
-void EngineLoop::PreTick()
-{
-    TRACE_FUNCTION_SCOPE();
-
-    if (!PlatformApplication::PeekMessageUntilNoMessage())
-    {
-        Exit();
-    }
-
-    gApplication->Tick();
 }
 
 void EngineLoop::Tick()
 {
     TRACE_FUNCTION_SCOPE();
 
-    gEngineLoopData.Clock.Tick();
+    PlatformApplication::Get().Tick();
 
-    gGame->Tick(gEngineLoopData.Clock.GetDeltaTime());
+    Clock.Tick();
 
-    gConsole.Tick();
+    GApplication->Tick(Clock.GetDeltaTime());
+
+    GConsole.Tick();
 
     Editor::Tick();
-}
-
-void EngineLoop::PostTick()
-{
-    TRACE_FUNCTION_SCOPE();
 
     Profiler::Tick();
 
-    gRenderer.Tick(*gGame->GetCurrentScene());
+    GRenderer.Tick(*GApplication->Scene);
 }
 
-Bool EngineLoop::PreRelease()
+bool EngineLoop::PreRelease()
 {
     TRACE_FUNCTION_SCOPE();
 
-    gCmdListExecutor.WaitForGPU();
+    GCmdListExecutor.WaitForGPU();
     
     TextureFactory::Release();
 
     return true;
 }
 
-Bool EngineLoop::Release()
+bool EngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
-    SafeDelete(gGame);
+    if (!PreRelease())
+    {
+        return false;
+    }
+
+    if (!GApplication->Release())
+    {
+        return false;
+    }
+
+    SafeDelete(GApplication);
 
     DebugUI::Release();
 
-    gRenderer.Release();
+    GRenderer.Release();
 
     RenderLayer::Release();
 
+    if (!PostRelease())
+    {
+        return false;
+    }
+
     return true;
 }
 
-Bool EngineLoop::PostRelease()
+bool EngineLoop::PostRelease()
 {
     TRACE_FUNCTION_SCOPE();
 
-    SafeDelete(gEventDispatcher);
+    PlatformApplication::Get().Release();
 
-    gMainWindow->Release();
-
-    SafeDelete(gApplication);
-
-    SafeDelete(gConsoleOutput);
+    SafeDelete(GConsoleOutput);
 
     return true;
-}
-
-void EngineLoop::Exit()
-{
-    gEngineLoopData.ShouldRun = false;
-    gEngineLoopData.IsExiting = true;
-}
-
-Bool EngineLoop::IsRunning()
-{
-    return gEngineLoopData.ShouldRun;
-}
-
-Bool EngineLoop::IsExiting()
-{
-    return gEngineLoopData.IsExiting;
 }
 
 Timestamp EngineLoop::GetDeltaTime()
 {
-    return gEngineLoopData.Clock.GetDeltaTime();
+    return Clock.GetDeltaTime();
 }
 
-Timestamp EngineLoop::GetTotalElapsedTime()
+Timestamp EngineLoop::GetRunningTime()
 {
-    return gEngineLoopData.Clock.GetTotalTime();
+    return Clock.GetTotalTime();
 }

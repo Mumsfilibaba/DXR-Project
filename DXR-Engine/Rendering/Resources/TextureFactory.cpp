@@ -23,10 +23,10 @@ struct TextureFactoryData
 
 static TextureFactoryData GlobalFactoryData;
 
-Bool TextureFactory::Init()
+bool TextureFactory::Init()
 {
     // Compile and create shader
-    TArray<UInt8> Code;
+    TArray<uint8> Code;
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/CubeMapGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         return false;
@@ -57,25 +57,25 @@ void TextureFactory::Release()
     GlobalFactoryData.ComputeShader.Reset();
 }
 
-Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 CreateFlags, EFormat Format)
+Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, uint32 CreateFlags, EFormat Format)
 {
-    Int32 Width        = 0;
-    Int32 Height       = 0;
-    Int32 ChannelCount = 0;
+    int32 Width        = 0;
+    int32 Height       = 0;
+    int32 ChannelCount = 0;
 
     // Load based on format
-    TUniquePtr<Byte> Pixels;
+    TUniquePtr<uint8> Pixels;
     if (Format == EFormat::R8G8B8A8_Unorm)
     {
-        Pixels = TUniquePtr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 4));
+        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 4));
     }
     else if (Format == EFormat::R8_Unorm)
     {
-        Pixels = TUniquePtr<Byte>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 1));
+        Pixels = TUniquePtr<uint8>(stbi_load(Filepath.c_str(), &Width, &Height, &ChannelCount, 1));
     }
     else if (Format == EFormat::R32G32B32A32_Float)
     {
-        Pixels = TUniquePtr<Byte>(reinterpret_cast<Byte*>(stbi_loadf(Filepath.c_str(), &Width, &Height, &ChannelCount, 4)));
+        Pixels = TUniquePtr<uint8>(reinterpret_cast<uint8*>(stbi_loadf(Filepath.c_str(), &Width, &Height, &ChannelCount, 4)));
     }
     else
     {
@@ -97,7 +97,7 @@ Texture2D* TextureFactory::LoadFromFile(const std::string& Filepath, UInt32 Crea
     return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);
 }
 
-Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt32 Height, UInt32 CreateFlags, EFormat Format)
+Texture2D* TextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format)
 {
     if (Format != EFormat::R8_Unorm && Format != EFormat::R8G8B8A8_Unorm && Format != EFormat::R32G32B32A32_Float)
     {
@@ -105,13 +105,13 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
         return nullptr;
     }
 
-    const Bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const UInt32 NumMips    = GenerateMips ? UInt32(std::min(std::log2(Width), std::log2(Height))) : 1;
+    const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
+    const uint32 NumMips    = GenerateMips ? uint32(std::min(std::log2(Width), std::log2(Height))) : 1;
 
     Assert(NumMips != 0);
 
-    const UInt32 Stride   = GetByteStrideFromFormat(Format);
-    const UInt32 RowPitch = Width * Stride;
+    const uint32 Stride   = GetByteStrideFromFormat(Format);
+    const uint32 RowPitch = Width * Stride;
     
     Assert(RowPitch > 0);
     
@@ -131,18 +131,18 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
         CmdList.GenerateMips(Texture.Get());
         CmdList.TransitionTexture(Texture.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
         CmdList.End();
-        gCmdListExecutor.ExecuteCommandList(CmdList);
+        GCmdListExecutor.ExecuteCommandList(CmdList);
     }
 
     return Texture.ReleaseOwnership();
 }
 
-TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, UInt32 CubeMapSize, UInt32 CreateFlags, EFormat Format)
+TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format)
 {
     Assert(PanoramaSource->IsSRV());
 
-    const Bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const UInt16 NumMips = (GenerateNumMips) ? static_cast<UInt16>(std::log2(CubeMapSize)) : 1U;
+    const bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
+    const uint16 NumMips = (GenerateNumMips) ? static_cast<uint16>(std::log2(CubeMapSize)) : 1U;
 
     TRef<TextureCube> StagingTexture = CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr);
     if (!StagingTexture)
@@ -180,7 +180,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 
     struct ConstantBuffer
     {
-        UInt32 CubeMapSize;
+        uint32 CubeMapSize;
     } CB0;
     CB0.CubeMapSize = CubeMapSize;
 
@@ -190,9 +190,9 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
     ShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
     CmdList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
 
-    constexpr UInt32 LocalWorkGroupCount = 16;
-    const UInt32 ThreadsX = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
-    const UInt32 ThreadsY = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
+    constexpr uint32 LocalWorkGroupCount = 16;
+    const uint32 ThreadsX = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
+    const uint32 ThreadsY = Math::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
     CmdList.Dispatch(ThreadsX, ThreadsY, 6);
 
     CmdList.TransitionTexture(PanoramaSource, EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
@@ -208,7 +208,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
 
     CmdList.TransitionTexture(Texture.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
     CmdList.End();
-    gCmdListExecutor.ExecuteCommandList(CmdList);
+    GCmdListExecutor.ExecuteCommandList(CmdList);
 
     return Texture.ReleaseOwnership();
 }

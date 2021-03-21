@@ -12,7 +12,7 @@
 
 ConsoleVariable GlobalDrawTileDebug(EConsoleVariableType::Bool);
 
-Bool DeferredRenderer::Init(FrameResources& FrameResources)
+bool DeferredRenderer::Init(FrameResources& FrameResources)
 {
     INIT_CONSOLE_VARIABLE("r.DrawTileDebug", GlobalDrawTileDebug);
     GlobalDrawTileDebug.SetBool(false);
@@ -36,7 +36,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         }
     }
 
-    TArray<UInt8> ShaderCode;
+    TArray<uint8> ShaderCode;
     {
         TArray<ShaderDefine> Defines =
         {
@@ -233,7 +233,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         }
     }
 
-    constexpr UInt32  LUTSize   = 512;
+    constexpr uint32  LUTSize   = 512;
     constexpr EFormat LUTFormat = EFormat::R16G16_Float;
     if (!UAVSupportsFormat(LUTFormat))
     {
@@ -323,9 +323,9 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
     UnorderedAccessView* StagingUAV = StagingTexture->GetUnorderedAccessView();
     CmdList.SetUnorderedAccessView(CShader.Get(), StagingUAV, 0);
 
-    constexpr UInt32 ThreadCount = 16;
-    const UInt32 DispatchWidth  = Math::DivideByMultiple(LUTSize, ThreadCount);
-    const UInt32 DispatchHeight = Math::DivideByMultiple(LUTSize, ThreadCount);
+    constexpr uint32 ThreadCount = 16;
+    const uint32 DispatchWidth  = Math::DivideByMultiple(LUTSize, ThreadCount);
+    const uint32 DispatchHeight = Math::DivideByMultiple(LUTSize, ThreadCount);
     CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
     CmdList.UnorderedAccessTextureBarrier(StagingTexture.Get());
@@ -338,7 +338,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
     CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
 
     CmdList.End();
-    gCmdListExecutor.ExecuteCommandList(CmdList);
+    GCmdListExecutor.ExecuteCommandList(CmdList);
 
     {
         if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
@@ -429,8 +429,8 @@ void DeferredRenderer::Release()
 
 void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources)
 {
-    const Float RenderWidth  = Float(FrameResources.MainWindowViewport->GetWidth());
-    const Float RenderHeight = Float(FrameResources.MainWindowViewport->GetHeight());
+    const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
+    const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin PrePass");
 
@@ -474,8 +474,8 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
 
     TRACE_SCOPE("GeometryPass");
 
-    const Float RenderWidth  = Float(FrameResources.MainWindowViewport->GetWidth());
-    const Float RenderHeight = Float(FrameResources.MainWindowViewport->GetHeight());
+    const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
+    const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
 
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
@@ -582,11 +582,11 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
 
     struct LightPassSettings
     {
-        Int32 NumPointLights;
-        Int32 NumShadowCastingPointLights;
-        Int32 NumSkyLightMips;
-        Int32 ScreenWidth;
-        Int32 ScreenHeight;
+        int32 NumPointLights;
+        int32 NumShadowCastingPointLights;
+        int32 NumSkyLightMips;
+        int32 ScreenWidth;
+        int32 ScreenHeight;
     } Settings;
 
     Settings.NumShadowCastingPointLights = LightSetup.ShadowCastingPointLightsData.Size();
@@ -597,24 +597,24 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
 
     CmdList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
 
-    constexpr UInt32 ThreadCount = 16;
-    const UInt32 WorkGroupWidth  = Math::DivideByMultiple<UInt32>(Settings.ScreenWidth, ThreadCount);
-    const UInt32 WorkGroupHeight = Math::DivideByMultiple<UInt32>(Settings.ScreenHeight, ThreadCount);
+    constexpr uint32 ThreadCount = 16;
+    const uint32 WorkGroupWidth  = Math::DivideByMultiple<uint32>(Settings.ScreenWidth, ThreadCount);
+    const uint32 WorkGroupHeight = Math::DivideByMultiple<uint32>(Settings.ScreenHeight, ThreadCount);
     CmdList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");
 }
 
-Bool DeferredRenderer::ResizeResources(FrameResources& FrameResources)
+bool DeferredRenderer::ResizeResources(FrameResources& FrameResources)
 {
     return CreateGBuffer(FrameResources);
 }
 
-Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
+bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
 {
-    const UInt32 Width  = FrameResources.MainWindowViewport->GetWidth();
-    const UInt32 Height = FrameResources.MainWindowViewport->GetHeight();
-    const UInt32 Usage  = TextureFlags_RenderTarget;
+    const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
+    const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
+    const uint32 Usage  = TextureFlags_RenderTarget;
 
     // Albedo
     FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = CreateTexture2D(
@@ -662,7 +662,7 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     }
 
     // DepthStencil
-    const UInt32 UsageDS = TextureFlag_DSV | TextureFlag_SRV;
+    const uint32 UsageDS = TextureFlag_DSV | TextureFlag_SRV;
     FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = CreateTexture2D(
         FrameResources.DepthBufferFormat, 
         Width, Height, 1, 1, UsageDS, 

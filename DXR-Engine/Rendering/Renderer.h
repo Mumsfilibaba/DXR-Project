@@ -1,10 +1,9 @@
 #pragma once
-#include "Windows/WindowsWindow.h"
+#include "Core/Application/Windows/WindowsWindow.h"
 
 #include "Time/Clock.h"
 
-#include "Application/InputCodes.h"
-#include "Application/Events/EventHandler.h"
+#include "Core/Application/InputCodes.h"
 
 #include "Scene/Actor.h"
 #include "Scene/Scene.h"
@@ -31,10 +30,7 @@
 class Renderer
 {
 public:
-    Renderer()  = default;
-    ~Renderer() = default;
-
-    Bool Init();
+    bool Init();
     void Release();
 
     void PerformFrustumCulling(const Scene& Scene);
@@ -48,11 +44,13 @@ public:
     void Tick(const Scene& Scene);
 
 private:
-    Bool InitBoundingBoxDebugPass();
-    Bool InitAA();
-    Bool InitShadingImage();
+    void OnWindowResize(const WindowResizeEvent& Event);
 
-    void ResizeResources(UInt32 Width, UInt32 Height);
+    bool InitBoundingBoxDebugPass();
+    bool InitAA();
+    bool InitShadingImage();
+
+    void ResizeResources(uint32 Width, uint32 Height);
 
     CommandList CmdList;
 
@@ -86,7 +84,9 @@ private:
 
     TRef<GPUProfiler> GPUProfiler;
 
-    UInt32 LastFrameNumDrawCalls     = 0;
-    UInt32 LastFrameNumDispatchCalls = 0;
-    UInt32 LastFrameNumCommands      = 0;
+    uint32 LastFrameNumDrawCalls     = 0;
+    uint32 LastFrameNumDispatchCalls = 0;
+    uint32 LastFrameNumCommands      = 0;
 };
+
+extern Renderer GRenderer;

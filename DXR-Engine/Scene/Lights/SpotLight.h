@@ -9,13 +9,13 @@ public:
     SpotLight();
     ~SpotLight();
 
-    void SetConeAngle(Float InConeAngle);
+    void SetConeAngle(float InConeAngle);
 
-    FORCEINLINE Float GetConeAngle() const
+    FORCEINLINE float GetConeAngle() const
     {
         return ConeAngle;
     }
 
 private:
-    Float ConeAngle;
+    float ConeAngle;
 };

@@ -1,20 +1,20 @@
 #pragma once
-#include "Application/Platform/PlatformDebugMisc.h"
+#include "Core/Application/Platform/PlatformDebugMisc.h"
 
 class Debug
 {
 public:
-    static FORCEINLINE void DebugBreak()
+    FORCEINLINE static void DebugBreak()
     {
         PlatformDebugMisc::DebugBreak();
     }
 
-    static FORCEINLINE void OutputDebugString(const std::string& Message)
+    FORCEINLINE static void OutputDebugString(const std::string& Message)
     {
         PlatformDebugMisc::OutputDebugString(Message);
     }
 
-    static FORCEINLINE Bool IsDebuggerPresent()
+    FORCEINLINE static bool IsDebuggerPresent()
     {
         return PlatformDebugMisc::IsDebuggerPresent();
     }

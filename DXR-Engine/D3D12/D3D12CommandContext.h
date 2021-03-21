@@ -19,8 +19,8 @@
 
 struct D3D12UploadAllocation
 {
-    Byte*  MappedPtr      = nullptr;
-    UInt64 ResourceOffset = 0;
+    uint8*  MappedPtr      = nullptr;
+    uint64 ResourceOffset = 0;
 };
 
 class D3D12GPUResourceUploader : public D3D12DeviceChild
@@ -29,25 +29,25 @@ public:
     D3D12GPUResourceUploader(D3D12Device* InDevice);
     ~D3D12GPUResourceUploader() = default;
 
-    Bool Reserve(UInt32 InSizeInBytes);
+    bool Reserve(uint32 InSizeInBytes);
     void Reset();
 
-    D3D12UploadAllocation LinearAllocate(UInt32 SizeInBytes);
+    D3D12UploadAllocation LinearAllocate(uint32 SizeInBytes);
 
     FORCEINLINE ID3D12Resource* GetGpuResource() const
     {
         return Resource.Get();
     }
 
-    FORCEINLINE UInt32 GetSizeInBytes() const
+    FORCEINLINE uint32 GetSizeInBytes() const
     {
         return SizeInBytes;
     }
 
 private:
-    Byte*  MappedMemory  = nullptr;
-    UInt32 SizeInBytes   = 0;
-    UInt32 OffsetInBytes = 0;
+    uint8*  MappedMemory  = nullptr;
+    uint32 SizeInBytes   = 0;
+    uint32 OffsetInBytes = 0;
     TComPtr<ID3D12Resource> Resource;
     TArray<TComPtr<ID3D12Resource>> GarbageResources;
 };
@@ -58,9 +58,9 @@ public:
     D3D12CommandBatch(D3D12Device* InDevice);
     ~D3D12CommandBatch() = default;
 
-    Bool Init();
+    bool Init();
 
-    Bool Reset()
+    bool Reset()
     {
         if (CmdAllocator.Reset())
         {
@@ -176,7 +176,7 @@ public:
         return Barriers.Data();
     }
 
-    FORCEINLINE UInt32 GetNumBarriers() const
+    FORCEINLINE uint32 GetNumBarriers() const
     {
         return Barriers.Size();
     }
@@ -191,18 +191,18 @@ public:
     D3D12CommandContext(D3D12Device* InDevice);
     ~D3D12CommandContext();
 
-    Bool Init();
+    bool Init();
 
     D3D12CommandQueueHandle& GetQueue()      { return CmdQueue; }
     D3D12CommandListHandle& GetCommandList() { return CmdList; }
     
-    UInt32 GetCurrentEpochValue() const
+    uint32 GetCurrentEpochValue() const
     {
-        UInt32 MaxValue = Math::Max<Int32>((Int32)CmdBatches.Size() - 1, 0);
-        return Math::Min<UInt32>(NextCmdBatch - 1, MaxValue);
+        uint32 MaxValue = Math::Max<int32>((int32)CmdBatches.Size() - 1, 0);
+        return Math::Min<uint32>(NextCmdBatch - 1, MaxValue);
     }
 
-    void UpdateBuffer(D3D12Resource* Resource, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData);
+    void UpdateBuffer(D3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
 
     void UnorderedAccessBarrier(D3D12Resource* Resource)
     {
@@ -228,8 +228,8 @@ public:
     virtual void Begin() override final;
     virtual void End()   override final;
 
-    virtual void BeginTimeStamp(GPUProfiler* Profiler, UInt32 Index) override final;
-    virtual void EndTimeStamp(GPUProfiler* Profiler, UInt32 Index) override final;
+    virtual void BeginTimeStamp(GPUProfiler* Profiler, uint32 Index) override final;
+    virtual void EndTimeStamp(GPUProfiler* Profiler, uint32 Index) override final;
 
     virtual void ClearRenderTargetView(RenderTargetView* RenderTargetView, const ColorF& ClearColor) override final;
     virtual void ClearDepthStencilView(DepthStencilView* DepthStencilView, const DepthStencilF& ClearValue) override final;
@@ -241,14 +241,14 @@ public:
     virtual void BeginRenderPass() override final;
     virtual void EndRenderPass()   override final;
 
-    virtual void SetViewport(Float Width, Float Height, Float MinDepth, Float MaxDepth, Float x, Float y) override final;
-    virtual void SetScissorRect(Float Width, Float Height, Float x, Float y) override final;
+    virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final;
+    virtual void SetScissorRect(float Width, float Height, float x, float y) override final;
 
     virtual void SetBlendFactor(const ColorF& Color) override final;
 
-    virtual void SetRenderTargets(RenderTargetView* const * RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView) override final;
+    virtual void SetRenderTargets(RenderTargetView* const * RenderTargetViews, uint32 RenderTargetCount, DepthStencilView* DepthStencilView) override final;
 
-    virtual void SetVertexBuffers(VertexBuffer* const * VertexBuffers, UInt32 BufferCount, UInt32 BufferSlot) override final;
+    virtual void SetVertexBuffers(VertexBuffer* const * VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
     virtual void SetIndexBuffer(IndexBuffer* IndexBuffer) override final;
 
     virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
@@ -256,22 +256,22 @@ public:
     virtual void SetGraphicsPipelineState(class GraphicsPipelineState* PipelineState) override final;
     virtual void SetComputePipelineState(class ComputePipelineState* PipelineState) override final;
 
-    virtual void Set32BitShaderConstants(Shader* Shader, const Void* Shader32BitConstants, UInt32 Num32BitConstants) override final;
+    virtual void Set32BitShaderConstants(Shader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final;
 
-    virtual void SetShaderResourceView(Shader* Shader, ShaderResourceView* ShaderResourceView, UInt32 ParameterIndex) override final;
-    virtual void SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceView, UInt32 NumShaderResourceViews, UInt32 ParameterIndex) override final;
+    virtual void SetShaderResourceView(Shader* Shader, ShaderResourceView* ShaderResourceView, uint32 ParameterIndex) override final;
+    virtual void SetShaderResourceViews(Shader* Shader, ShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex) override final;
 
-    virtual void SetUnorderedAccessView(Shader* Shader, UnorderedAccessView* UnorderedAccessView, UInt32 ParameterIndex) override final;
-    virtual void SetUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, UInt32 NumUnorderedAccessViews, UInt32 ParameterIndex) override final;
+    virtual void SetUnorderedAccessView(Shader* Shader, UnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) override final;
+    virtual void SetUnorderedAccessViews(Shader* Shader, UnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex) override final;
 
-    virtual void SetConstantBuffer(Shader* Shader, ConstantBuffer* ConstantBuffer, UInt32 ParameterIndex) override final;
-    virtual void SetConstantBuffers(Shader* Shader, ConstantBuffer* const* ConstantBuffers, UInt32 NumConstantBuffers, UInt32 ParameterIndex) override final;
+    virtual void SetConstantBuffer(Shader* Shader, ConstantBuffer* ConstantBuffer, uint32 ParameterIndex) override final;
+    virtual void SetConstantBuffers(Shader* Shader, ConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) override final;
 
-    virtual void SetSamplerState(Shader* Shader, SamplerState* SamplerState, UInt32 ParameterIndex) override final;
-    virtual void SetSamplerStates(Shader* Shader, SamplerState* const* SamplerStates, UInt32 NumSamplerStates, UInt32 ParameterIndex) override final;
+    virtual void SetSamplerState(Shader* Shader, SamplerState* SamplerState, uint32 ParameterIndex) override final;
+    virtual void SetSamplerStates(Shader* Shader, SamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) override final;
 
-    virtual void UpdateBuffer(Buffer* Destination, UInt64 OffsetInBytes, UInt64 SizeInBytes, const Void* SourceData) override final;
-    virtual void UpdateTexture2D(Texture2D* Destination, UInt32 Width, UInt32 Height, UInt32 MipLevel, const Void* SourceData) override final;
+    virtual void UpdateBuffer(Buffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) override final;
+    virtual void UpdateTexture2D(Texture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) override final;
 
     virtual void ResolveTexture(Texture* Destination, Texture* Source) override final;
     
@@ -281,8 +281,8 @@ public:
 
     virtual void DiscardResource(class Resource* Resource) override final;
 
-    virtual void BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, Bool Update) override final;
-    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene, const RayTracingGeometryInstance* Instances, UInt32 NumInstances, Bool Update) override final;
+    virtual void BuildRayTracingGeometry(RayTracingGeometry* Geometry, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer, bool Update) override final;
+    virtual void BuildRayTracingScene(RayTracingScene* RayTracingScene, const RayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update) override final;
 
     virtual void SetRayTracingBindings(
         RayTracingScene* RayTracingScene,
@@ -290,7 +290,7 @@ public:
         const RayTracingShaderResources* GlobalResource,
         const RayTracingShaderResources* RayGenLocalResources,
         const RayTracingShaderResources* MissLocalResources,
-        const RayTracingShaderResources* HitGroupResources, UInt32 NumHitGroupResources) override final;
+        const RayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) override final;
 
     virtual void GenerateMips(Texture* Texture) override final;
 
@@ -300,25 +300,25 @@ public:
     virtual void UnorderedAccessTextureBarrier(Texture* Texture) override final;
     virtual void UnorderedAccessBufferBarrier(Buffer* Buffer) override final;
 
-    virtual void Draw(UInt32 VertexCount, UInt32 StartVertexLocation) override final;
-    virtual void DrawIndexed(UInt32 IndexCount, UInt32 StartIndexLocation, UInt32 BaseVertexLocation) override final;
-    virtual void DrawInstanced(UInt32 VertexCountPerInstance, UInt32 InstanceCount, UInt32 StartVertexLocation, UInt32 StartInstanceLocation) override final;
+    virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final;
+    virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
+    virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) override final;
     
     virtual void DrawIndexedInstanced(
-        UInt32 IndexCountPerInstance, 
-        UInt32 InstanceCount, 
-        UInt32 StartIndexLocation, 
-        UInt32 BaseVertexLocation, 
-        UInt32 StartInstanceLocation) override final;
+        uint32 IndexCountPerInstance, 
+        uint32 InstanceCount, 
+        uint32 StartIndexLocation, 
+        uint32 BaseVertexLocation, 
+        uint32 StartInstanceLocation) override final;
 
-    virtual void Dispatch(UInt32 WorkGroupsX, UInt32 WorkGroupsY, UInt32 WorkGroupsZ) override final;
+    virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
     
     virtual void DispatchRays(
         RayTracingScene* InScene,
         RayTracingPipelineState* InPipelineState,
-        UInt32 InWidth,
-        UInt32 InHeight,
-        UInt32 InDepth) override final;
+        uint32 InWidth,
+        uint32 InHeight,
+        uint32 InDepth) override final;
 
     virtual void ClearState() override final;
     virtual void Flush() override final;
@@ -335,8 +335,8 @@ private:
     D3D12FenceHandle        Fence;
     D3D12CommandQueueHandle CmdQueue;
 
-    UInt64 FenceValue   = 0;
-    UInt32 NextCmdBatch = 0;
+    uint64 FenceValue   = 0;
+    uint32 NextCmdBatch = 0;
 
     TArray<D3D12CommandBatch> CmdBatches;
     D3D12CommandBatch*        CmdBatch = nullptr;
@@ -354,6 +354,6 @@ private:
     D3D12DescriptorCache        DescriptorCache;
     D3D12ResourceBarrierBatcher BarrierBatcher;
 
-    Bool IsReady     = false;
-    Bool IsCapturing = false;
+    bool IsReady     = false;
+    bool IsCapturing = false;
 };

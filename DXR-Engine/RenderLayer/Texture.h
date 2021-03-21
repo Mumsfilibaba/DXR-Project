@@ -20,7 +20,7 @@ enum ETextureFlags
 class Texture : public Resource
 {
 public:
-    Texture(EFormat InFormat, UInt32 InNumMips, UInt32 InFlags, const ClearValue& InOptimalClearValue)
+    Texture(EFormat InFormat, uint32 InNumMips, uint32 InFlags, const ClearValue& InOptimalClearValue)
         : Resource()
         , Format(InFormat)
         , NumMips(InNumMips)
@@ -40,29 +40,29 @@ public:
 
     EFormat GetFormat() const { return Format; }
 
-    UInt32 GetNumMips() const { return NumMips; }
+    uint32 GetNumMips() const { return NumMips; }
 
-    UInt32 GetFlags() const { return Flags; }
+    uint32 GetFlags() const { return Flags; }
 
     const ClearValue& GetOptimalClearValue() const { return OptimalClearValue; }
 
     // Checks weather a default shaderrsourceview is created by the renderlayer
-    Bool IsUAV() const { return (Flags & TextureFlag_UAV) && !(Flags & TextureFlag_NoDefaultUAV); }
-    Bool IsSRV() const { return (Flags & TextureFlag_SRV) && !(Flags & TextureFlag_NoDefaultSRV); }
-    Bool IsRTV() const { return (Flags & TextureFlag_RTV) && !(Flags & TextureFlag_NoDefaultRTV); }
-    Bool IsDSV() const { return (Flags & TextureFlag_SRV) && !(Flags & TextureFlag_NoDefaultSRV); }
+    bool IsUAV() const { return (Flags & TextureFlag_UAV) && !(Flags & TextureFlag_NoDefaultUAV); }
+    bool IsSRV() const { return (Flags & TextureFlag_SRV) && !(Flags & TextureFlag_NoDefaultSRV); }
+    bool IsRTV() const { return (Flags & TextureFlag_RTV) && !(Flags & TextureFlag_NoDefaultRTV); }
+    bool IsDSV() const { return (Flags & TextureFlag_SRV) && !(Flags & TextureFlag_NoDefaultSRV); }
 
 private:
     EFormat Format;
-    UInt32  NumMips;
-    UInt32  Flags;
+    uint32  NumMips;
+    uint32  Flags;
     ClearValue OptimalClearValue;
 };
 
 class Texture2D : public Texture
 {
 public:
-    Texture2D(EFormat InFormat, UInt32 InWidth, UInt32 InHeight, UInt32 InNumMips, UInt32 InNumSamples, UInt32 InFlags, const ClearValue& InOptimizedClearValue)
+    Texture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const ClearValue& InOptimizedClearValue)
         : Texture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
         , Width(InWidth)
         , Height(InHeight)
@@ -81,17 +81,17 @@ public:
     // Returns a UnorderedAccessView if texture is created with TextureFlag_UAV
     virtual class UnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
-    UInt32 GetWidth() const { return Width; }
-    UInt32 GetHeight() const { return Height; }
+    uint32 GetWidth() const { return Width; }
+    uint32 GetHeight() const { return Height; }
 
-    UInt32 GetNumSamples() const { return NumSamples; }
+    uint32 GetNumSamples() const { return NumSamples; }
 
-    Bool IsMultiSampled() const { return NumSamples > 1; }
+    bool IsMultiSampled() const { return NumSamples > 1; }
 
 private:
-    UInt32 Width;
-    UInt32 Height;
-    UInt32 NumSamples;
+    uint32 Width;
+    uint32 Height;
+    uint32 NumSamples;
 };
 
 class Texture2DArray : public Texture2D
@@ -99,12 +99,12 @@ class Texture2DArray : public Texture2D
 public:
     Texture2DArray(
         EFormat InFormat, 
-        UInt32 InWidth, 
-        UInt32 InHeight, 
-        UInt32 InNumMips, 
-        UInt32 InNumSamples, 
-        UInt32 InNumArraySlices, 
-        UInt32 InFlags, 
+        uint32 InWidth, 
+        uint32 InHeight, 
+        uint32 InNumMips, 
+        uint32 InNumSamples, 
+        uint32 InNumArraySlices, 
+        uint32 InFlags, 
         const ClearValue& InOptimizedClearValue)
         : Texture2D(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InFlags, InOptimizedClearValue)
         , NumArraySlices(InNumArraySlices)
@@ -114,16 +114,16 @@ public:
     virtual Texture2D*      AsTexture2D()      override { return nullptr; }
     virtual Texture2DArray* AsTexture2DArray() override { return this; }
 
-    UInt32 GetNumArraySlices() const { return NumArraySlices; }
+    uint32 GetNumArraySlices() const { return NumArraySlices; }
 
 private:
-    UInt32 NumArraySlices;
+    uint32 NumArraySlices;
 };
 
 class TextureCube : public Texture
 {
 public:
-    TextureCube(EFormat InFormat, UInt32 InSize, UInt32 InNumMips, UInt32 InFlags, const ClearValue& InOptimizedClearValue)
+    TextureCube(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const ClearValue& InOptimizedClearValue)
         : Texture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
         , Size(InSize)
     {
@@ -131,16 +131,16 @@ public:
 
     virtual TextureCube* AsTextureCube() override { return this; }
 
-    UInt32 GetSize() const { return Size; }
+    uint32 GetSize() const { return Size; }
 
 private:
-    UInt32 Size;
+    uint32 Size;
 };
 
 class TextureCubeArray : public TextureCube
 {
 public:
-    TextureCubeArray(EFormat InFormat, UInt32 InSize, UInt32 InNumMips, UInt32 InNumArraySlices, UInt32 InFlags, const ClearValue& InOptimizedClearValue)
+    TextureCubeArray(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InNumArraySlices, uint32 InFlags, const ClearValue& InOptimizedClearValue)
         : TextureCube(InFormat, InSize, InNumMips, InFlags, InOptimizedClearValue)
         , NumArraySlices(InNumArraySlices)
     {
@@ -149,16 +149,16 @@ public:
     virtual TextureCube*      AsTextureCube()      override { return nullptr; }
     virtual TextureCubeArray* AsTextureCubeArray() override { return this; }
 
-    UInt32 GetNumArraySlices() const { return NumArraySlices; }
+    uint32 GetNumArraySlices() const { return NumArraySlices; }
 
 private:
-    UInt32 NumArraySlices;
+    uint32 NumArraySlices;
 };
 
 class Texture3D : public Texture
 {
 public:
-    Texture3D(EFormat InFormat, UInt32 InWidth, UInt32 InHeight, UInt32 InDepth, UInt32 InNumMips, UInt32 InFlags, const ClearValue& InOptimizedClearValue)
+    Texture3D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMips, uint32 InFlags, const ClearValue& InOptimizedClearValue)
         : Texture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
         , Width(InWidth)
         , Height(InHeight)
@@ -168,12 +168,12 @@ public:
 
     virtual Texture3D* AsTexture3D() override { return this; }
 
-    UInt32 GetWidth()  const { return Width; }
-    UInt32 GetHeight() const { return Height; }
-    UInt32 GetDepth()  const { return Depth; }
+    uint32 GetWidth()  const { return Width; }
+    uint32 GetHeight() const { return Height; }
+    uint32 GetDepth()  const { return Depth; }
 
 private:
-    UInt32 Width;
-    UInt32 Height;
-    UInt32 Depth;
+    uint32 Width;
+    uint32 Height;
+    uint32 Depth;
 };

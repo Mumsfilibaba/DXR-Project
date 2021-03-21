@@ -11,7 +11,7 @@
 
 #include "Debug/Profiler.h"
 
-Bool ForwardRenderer::Init(FrameResources& FrameResources)
+bool ForwardRenderer::Init(FrameResources& FrameResources)
 {
     TArray<ShaderDefine> Defines =
     {
@@ -19,7 +19,7 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
         { "ENABLE_NORMAL_MAPPING",   "1" },
     };
 
-    TArray<UInt8> ShaderCode;
+    TArray<uint8> ShaderCode;
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ForwardPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
@@ -139,8 +139,8 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
 
     TRACE_SCOPE("ForwardPass");
 
-    const Float RenderWidth  = Float(FrameResources.FinalTarget->GetWidth());
-    const Float RenderHeight = Float(FrameResources.FinalTarget->GetHeight());
+    const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
+    const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
 
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);

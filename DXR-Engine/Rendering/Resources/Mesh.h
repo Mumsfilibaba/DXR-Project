@@ -1,7 +1,7 @@
 #pragma once
 #include "MeshFactory.h"
 
-#include <Containers/SharedPtr.h>
+#include "Core/Containers/Array.h"
 
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/CommandList.h"
@@ -14,9 +14,9 @@ public:
     Mesh()  = default;
     ~Mesh() = default;
 
-    Bool Init(const MeshData& Data);
+    bool Init(const MeshData& Data);
     
-    Bool BuildAccelerationStructure(CommandList& CmdList);
+    bool BuildAccelerationStructure(CommandList& CmdList);
 
     static TSharedPtr<Mesh> Make(const MeshData& Data);
 
@@ -29,10 +29,10 @@ public:
     TRef<ShaderResourceView> IndexBufferSRV;
     TRef<RayTracingGeometry> RTGeometry;
     
-    UInt32 VertexCount = 0;
-    UInt32 IndexCount  = 0;
+    uint32 VertexCount = 0;
+    uint32 IndexCount  = 0;
 
-    Float ShadowOffset = 0.0f;
+    float ShadowOffset = 0.0f;
 
     AABB BoundingBox;
 };

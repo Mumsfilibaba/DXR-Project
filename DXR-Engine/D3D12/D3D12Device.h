@@ -35,12 +35,12 @@ void DeviceRemovedHandler(class D3D12Device* Device);
 class D3D12Device
 {
 public:
-    D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation, Bool InEnableDRED);
+    D3D12Device(bool InEnableDebugLayer, bool InEnableGPUValidation, bool InEnableDRED);
     ~D3D12Device();
 
-    Bool Init();
+    bool Init();
 
-    Int32 GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount);
+    int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
     std::string GetAdapterName() const;
 
@@ -101,12 +101,12 @@ public:
     }
 
     FORCEINLINE void CopyDescriptors(
-        UInt32 NumDestDescriptorRanges,
+        uint32 NumDestDescriptorRanges,
         const D3D12_CPU_DESCRIPTOR_HANDLE* DestDescriptorRangeStarts,
-        const UInt32* DestDescriptorRangeSizes,
-        UInt32 NumSrcDescriptorRanges,
+        const uint32* DestDescriptorRangeSizes,
+        uint32 NumSrcDescriptorRanges,
         const D3D12_CPU_DESCRIPTOR_HANDLE* SrcDescriptorRangeStarts,
-        const UInt32* SrcDescriptorRangeSizes,
+        const uint32* SrcDescriptorRangeSizes,
         D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType)
     {
         Device->CopyDescriptors(
@@ -120,7 +120,7 @@ public:
     }
 
     FORCEINLINE void CopyDescriptorsSimple(
-        UInt32 NumDescriptors,
+        uint32 NumDescriptors,
         D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptorRangeStart,
         D3D12_CPU_DESCRIPTOR_HANDLE SrcDescriptorRangeStart,
         D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType)
@@ -135,7 +135,7 @@ public:
         DXRDevice->GetRaytracingAccelerationStructurePrebuildInfo(Desc, Info);
     }
 
-    FORCEINLINE UInt32 GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType)
+    FORCEINLINE uint32 GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType)
     {
         return Device->GetDescriptorHandleIncrementSize(DescriptorHeapType);
     }
@@ -149,14 +149,14 @@ public:
 
     FORCEINLINE IDXGIAdapter1* GetAdapter() const { return Adapter.Get(); }
 
-    FORCEINLINE Bool IsTearingSupported() const { return AllowTearing; }
+    FORCEINLINE bool IsTearingSupported() const { return AllowTearing; }
 
     FORCEINLINE D3D12_RAYTRACING_TIER GetRayTracingTier()                     const { return RayTracingTier; }
     FORCEINLINE D3D12_SAMPLER_FEEDBACK_TIER GetSamplerFeedbackTier()          const { return SamplerFeedBackTier; }
     FORCEINLINE D3D12_VARIABLE_SHADING_RATE_TIER GetVariableRateShadingTier() const { return VariableShadingRateTier; }
     FORCEINLINE D3D12_MESH_SHADER_TIER GetMeshShaderTier()                    const { return MeshShaderTier; }
 
-    FORCEINLINE UInt32 GetVariableRateShadingTileSize() const { return VariableShadingRateTileSize; }
+    FORCEINLINE uint32 GetVariableRateShadingTileSize() const { return VariableShadingRateTileSize; }
 
 private:
     TComPtr<IDXGIFactory2> Factory;
@@ -173,16 +173,16 @@ private:
     D3D12_SAMPLER_FEEDBACK_TIER      SamplerFeedBackTier     = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
     D3D12_MESH_SHADER_TIER           MeshShaderTier          = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
     D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
-    UInt32 VariableShadingRateTileSize = 0;
+    uint32 VariableShadingRateTileSize = 0;
 
     HMODULE DXGILib  = 0;
     HMODULE D3D12Lib = 0;
     HMODULE PIXLib   = 0;
 
-    UInt32 AdapterID = 0;
+    uint32 AdapterID = 0;
 
-    Bool AllowTearing        = false;
-    Bool EnableDebugLayer    = false;
-    Bool EnableGPUValidation = false;
-    Bool EnableDRED          = false;
+    bool AllowTearing        = false;
+    bool EnableDebugLayer    = false;
+    bool EnableGPUValidation = false;
+    bool EnableDRED          = false;
 };

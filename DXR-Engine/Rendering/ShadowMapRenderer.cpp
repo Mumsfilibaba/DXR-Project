@@ -18,10 +18,10 @@ struct PerShadowMap
 {
     XMFLOAT4X4 Matrix;
     XMFLOAT3   Position;
-    Float      FarPlane;
+    float      FarPlane;
 };
 
-Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResources)
+bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResources)
 {
     if (!CreateShadowMaps(LightSetup))
     {
@@ -40,7 +40,7 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
     }
 
     // Linear Shadow Maps
-    TArray<UInt8> ShaderCode;
+    TArray<uint8> ShaderCode;
     {
         if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadowMap.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
@@ -255,9 +255,9 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
     {
         TRACE_SCOPE("Render PointLight ShadowMaps");
 
-        const UInt32 PointLightShadowSize = LightSetup.PointLightShadowSize;
-        CmdList.SetViewport(static_cast<Float>(PointLightShadowSize), static_cast<Float>(PointLightShadowSize), 0.0f, 1.0f, 0.0f, 0.0f);
-        CmdList.SetScissorRect(static_cast<Float>(PointLightShadowSize), static_cast<Float>(PointLightShadowSize), 0, 0);
+        const uint32 PointLightShadowSize = LightSetup.PointLightShadowSize;
+        CmdList.SetViewport(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0.0f, 1.0f, 0.0f, 0.0f);
+        CmdList.SetScissorRect(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
 
         CmdList.SetGraphicsPipelineState(PointLightPipelineState.Get());
 
@@ -265,13 +265,13 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
         struct ShadowPerObject
         {
             XMFLOAT4X4 Matrix;
-            Float      ShadowOffset;
+            float      ShadowOffset;
         } ShadowPerObjectBuffer;
 
         PerShadowMap PerShadowMapData;
-        for (UInt32 i = 0; i < LightSetup.PointLightShadowMapsGenerationData.Size(); i++)
+        for (uint32 i = 0; i < LightSetup.PointLightShadowMapsGenerationData.Size(); i++)
         {
-            for (UInt32 Face = 0; Face < 6; Face++)
+            for (uint32 Face = 0; Face < 6; Face++)
             {
                 auto& Cube = LightSetup.PointLightShadowMapDSVs[i];
                 CmdList.ClearDepthStencilView(Cube[Face].Get(), DepthStencilF(1.0f, 0));
@@ -292,7 +292,7 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
                 CmdList.SetConstantBuffer(PointLightPixelShader.Get(), PerShadowMapBuffer.Get(), 0);
 
                 // Draw all objects to depthbuffer
-                ConsoleVariable* GlobalFrustumCullEnabled = gConsole.FindVariable("r.EnableFrustumCulling");
+                ConsoleVariable* GlobalFrustumCullEnabled = GConsole.FindVariable("r.EnableFrustumCulling");
                 if (GlobalFrustumCullEnabled->GetBool())
                 {
                     Frustum CameraFrustum = Frustum(Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face]);
@@ -375,7 +375,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
         CmdList.SetRenderTargets(nullptr, 0, DirLightDSV);
         CmdList.SetGraphicsPipelineState(DirLightPipelineState.Get());
 
-        CmdList.SetViewport(static_cast<Float>(LightSetup.ShadowMapWidth), static_cast<Float>(LightSetup.ShadowMapHeight), 0.0f, 1.0f, 0.0f, 0.0f);
+        CmdList.SetViewport(static_cast<float>(LightSetup.ShadowMapWidth), static_cast<float>(LightSetup.ShadowMapHeight), 0.0f, 1.0f, 0.0f, 0.0f);
         CmdList.SetScissorRect(LightSetup.ShadowMapWidth, LightSetup.ShadowMapHeight, 0, 0);
 
         CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
@@ -384,11 +384,11 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
         struct ShadowPerObject
         {
             XMFLOAT4X4 Matrix;
-            Float      ShadowOffset;
+            float      ShadowOffset;
         } ShadowPerObjectBuffer;
 
         PerShadowMap PerShadowMapData;
-        for (UInt32 i = 0; i < LightSetup.DirLightShadowMapsGenerationData.Size(); i++)
+        for (uint32 i = 0; i < LightSetup.DirLightShadowMapsGenerationData.Size(); i++)
         {
             auto& Data = LightSetup.DirLightShadowMapsGenerationData[i];
             PerShadowMapData.Matrix   = Data.Matrix;
@@ -440,7 +440,7 @@ void ShadowMapRenderer::Release()
     PointLightPixelShader.Reset();
 }
 
-Bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
+bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
 {
     LightSetup.PointLightShadowMaps = CreateTextureCubeArray(
         LightSetup.ShadowMapFormat, 
@@ -454,9 +454,9 @@ Bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
         LightSetup.PointLightShadowMaps->SetName("PointLight ShadowMaps");
 
         LightSetup.PointLightShadowMapDSVs.Resize(LightSetup.MaxPointLightShadows);
-        for (UInt32 i = 0; i < LightSetup.MaxPointLightShadows; i++)
+        for (uint32 i = 0; i < LightSetup.MaxPointLightShadows; i++)
         {
-            for (UInt32 Face = 0; Face < 6; Face++)
+            for (uint32 Face = 0; Face < 6; Face++)
             {
                 TStaticArray<TRef<DepthStencilView>, 6>& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
                 DepthCube[Face] = CreateDepthStencilView(

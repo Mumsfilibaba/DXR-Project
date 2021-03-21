@@ -2,7 +2,7 @@
 #include "ResourceBase.h"
 #include "ResourceViews.h"
 
-#include <Containers/SharedPtr.h>
+#include "Core/Containers/SharedPtr.h"
 
 enum ERayTracingStructureBuildFlag
 {
@@ -25,54 +25,54 @@ enum ERayTracingInstanceFlags
 class RayTracingGeometry : public Resource
 {
 public:
-    RayTracingGeometry(UInt32 InFlags)
+    RayTracingGeometry(uint32 InFlags)
         : Flags(InFlags)
     {
     }
 
-    UInt32 GetFlags() const { return Flags; }
+    uint32 GetFlags() const { return Flags; }
 
 private:
-    UInt32 Flags;
+    uint32 Flags;
 };
 
 // RayTracing Scene (Top Level Acceleration Structure)
 class RayTracingScene : public Resource
 {
 public:
-    RayTracingScene(UInt32 InFlags)
+    RayTracingScene(uint32 InFlags)
         : Flags(InFlags)
     {
     }
 
     virtual ShaderResourceView* GetShaderResourceView() const = 0;
 
-    UInt32 GetFlags() const { return Flags; }
+    uint32 GetFlags() const { return Flags; }
 
 private:
-    UInt32 Flags;
+    uint32 Flags;
 };
 
 struct RayTracingGeometryInstance
 {
     TRef<RayTracingGeometry> Instance;
-    UInt32     InstanceIndex = 0;
-    UInt32     HitGroupIndex = 0;
-    UInt32     Flags         = RayTracingInstanceFlags_None;
-    UInt32     Mask          = 0xff;
+    uint32     InstanceIndex = 0;
+    uint32     HitGroupIndex = 0;
+    uint32     Flags         = RayTracingInstanceFlags_None;
+    uint32     Mask          = 0xff;
     XMFLOAT3X4 Transform;
 };
 
 struct RayPayload
 {
     XMFLOAT3 Color;
-    UInt32   CurrentDepth;
+    uint32   CurrentDepth;
 };
 
 struct RayIntersectionAttributes
 {
-    Float Attrib0;
-    Float Attrib1;
+    float Attrib0;
+    float Attrib1;
 };
 
 struct RayTracingShaderResources
@@ -97,12 +97,12 @@ struct RayTracingShaderResources
         SamplerStates.EmplaceBack(State);
     }
 
-    UInt32 NumResources() const
+    uint32 NumResources() const
     {
         return ConstantBuffers.Size() + ShaderResourceViews.Size() + UnorderedAccessViews.Size();
     }
 
-    UInt32 NumSamplers() const
+    uint32 NumSamplers() const
     {
         return SamplerStates.Size();
     }

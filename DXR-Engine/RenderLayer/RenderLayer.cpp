@@ -4,7 +4,7 @@
 #include "D3D12/D3D12RenderLayer.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 
-Bool RenderLayer::Init(ERenderLayerApi InRenderApi)
+bool RenderLayer::Init(ERenderLayerApi InRenderApi)
 {
     // Select RenderLayer
     if (InRenderApi == ERenderLayerApi::D3D12)
@@ -28,7 +28,7 @@ Bool RenderLayer::Init(ERenderLayerApi InRenderApi)
     }
 
     // TODO: This should be in EngineConfig
-    const Bool EnableDebug =
+    const bool EnableDebug =
 #if ENABLE_API_DEBUGGING
         true;
 #else
@@ -39,7 +39,7 @@ Bool RenderLayer::Init(ERenderLayerApi InRenderApi)
     if (gRenderLayer->Init(EnableDebug))
     {
         ICommandContext* CmdContext = gRenderLayer->GetDefaultCommandContext();
-        gCmdListExecutor.SetContext(CmdContext);
+        GCmdListExecutor.SetContext(CmdContext);
 
         return true;
     }

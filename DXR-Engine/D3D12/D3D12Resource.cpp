@@ -23,7 +23,7 @@ D3D12Resource::D3D12Resource(D3D12Device* InDevice, const D3D12_RESOURCE_DESC& I
 {
 }
 
-Bool D3D12Resource::Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue)
+bool D3D12Resource::Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue)
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
     Memory::Memzero(&HeapProperties);
@@ -50,7 +50,7 @@ Bool D3D12Resource::Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_V
     }
 }
 
-void* D3D12Resource::Map(UInt32 SubResource, const D3D12_RANGE* Range)
+void* D3D12Resource::Map(uint32 SubResource, const D3D12_RANGE* Range)
 {
     void* MappedData = nullptr;
 
@@ -66,7 +66,7 @@ void* D3D12Resource::Map(UInt32 SubResource, const D3D12_RANGE* Range)
     }
 }
 
-void D3D12Resource::Unmap(UInt32 SubResource, const D3D12_RANGE* Range)
+void D3D12Resource::Unmap(uint32 SubResource, const D3D12_RANGE* Range)
 {
     DxResource->Unmap(SubResource, Range);
 }

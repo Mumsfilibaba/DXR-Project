@@ -22,26 +22,26 @@ void operator delete[](void*, LinearAllocator&)
 {
 }
 
-LinearAllocator::LinearAllocator(UInt32 StartSize)
+LinearAllocator::LinearAllocator(uint32 StartSize)
     : CurrentArena(nullptr)
     , Arenas()
 {
     CurrentArena = &Arenas.EmplaceBack(StartSize);
 }
 
-Void* LinearAllocator::Allocate(UInt64 SizeInBytes, UInt64 Alignment)
+void* LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
 {
     Assert(CurrentArena != nullptr);
 
-    const UInt64 AlignedSize = Math::AlignUp(SizeInBytes, Alignment);
+    const uint64 AlignedSize = Math::AlignUp(SizeInBytes, Alignment);
     if (CurrentArena->ReservedSize() > AlignedSize)
     {
         return CurrentArena->Allocate(AlignedSize);
     }
 
     // Size for new arena
-    const UInt64 CurrentSize = CurrentArena->GetSizeInBytes();
-    UInt64 NewArenaSize = CurrentSize + CurrentSize;
+    const uint64 CurrentSize = CurrentArena->GetSizeInBytes();
+    uint64 NewArenaSize = CurrentSize + CurrentSize;
     if (NewArenaSize <= AlignedSize)
     {
         NewArenaSize = NewArenaSize + SizeInBytes;

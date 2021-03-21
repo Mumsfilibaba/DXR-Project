@@ -15,12 +15,12 @@ void Light::SetColor(const XMFLOAT3& InColor)
     Color = InColor;
 }
 
-void Light::SetColor(Float R, Float G, Float B)
+void Light::SetColor(float R, float G, float B)
 {
     Color = XMFLOAT3(R, G, B);
 }
 
-void Light::SetIntensity(Float InIntensity)
+void Light::SetIntensity(float InIntensity)
 {
     Intensity = InIntensity;
 }

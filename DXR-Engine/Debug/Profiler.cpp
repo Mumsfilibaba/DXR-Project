@@ -6,14 +6,16 @@
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/GPUProfiler.h"
 
-constexpr Float MICROSECONDS     = 1000.0f;
-constexpr Float MILLISECONDS     = 1000.0f * 1000.0f;
-constexpr Float SECONDS          = 1000.0f * 1000.0f * 1000.0f;
-constexpr Float INV_MICROSECONDS = 1.0f / MICROSECONDS;
-constexpr Float INV_MILLISECONDS = 1.0f / MILLISECONDS;
-constexpr Float INV_SECONDS      = 1.0f / SECONDS;
+#include "Core/Application/Application.h"
 
-constexpr Float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
+constexpr float MICROSECONDS     = 1000.0f;
+constexpr float MILLISECONDS     = 1000.0f * 1000.0f;
+constexpr float SECONDS          = 1000.0f * 1000.0f * 1000.0f;
+constexpr float INV_MICROSECONDS = 1.0f / MICROSECONDS;
+constexpr float INV_MILLISECONDS = 1.0f / MILLISECONDS;
+constexpr float INV_SECONDS      = 1.0f / SECONDS;
+
+constexpr float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
 ConsoleVariable gDrawProfiler(EConsoleVariableType::Bool);
 ConsoleVariable gDrawFps(EConsoleVariableType::Bool);
@@ -29,41 +31,41 @@ struct ProfileSample
     {
         Clock.Tick();
 
-        Float Delta = Clock.GetDeltaTime().AsNanoSeconds();
+        float Delta = (float)Clock.GetDeltaTime().AsNanoSeconds();
         AddSample(Delta);
 
         TotalCalls++;
     }
 
-    FORCEINLINE void AddSample(Float NewSample)
+    FORCEINLINE void AddSample(float NewSample)
     {
         Samples[CurrentSample] = NewSample;
         Min = Math::Min(NewSample, Min);
         Max = Math::Max(NewSample, Max);
 
         CurrentSample++;
-        SampleCount = Math::Min<Int32>(Samples.Size(), SampleCount + 1);
+        SampleCount = Math::Min<int32>(Samples.Size(), SampleCount + 1);
 
-        if (CurrentSample >= Int32(Samples.Size()))
+        if (CurrentSample >= int32(Samples.Size()))
         {
             CurrentSample = 0;
         }
     }
 
-    FORCEINLINE Float GetAverage() const
+    FORCEINLINE float GetAverage() const
     {
         if (SampleCount < 1)
         {
             return 0.0f;
         }
 
-        Float Average = 0.0f;
-        for (Int32 n = 0; n < SampleCount; n++)
+        float Average = 0.0f;
+        for (int32 n = 0; n < SampleCount; n++)
         {
             Average += Samples[n];
         }
 
-        return Average / Float(SampleCount);
+        return Average / float(SampleCount);
     }
 
     FORCEINLINE void Reset()
@@ -77,46 +79,46 @@ struct ProfileSample
         Clock.Reset();
     }
 
-    TStaticArray<Float, NUM_PROFILER_SAMPLES> Samples;
+    TStaticArray<float, NUM_PROFILER_SAMPLES> Samples;
     Clock Clock;
-    Float Max           = -FLT_MAX;
-    Float Min           = FLT_MAX;
-    Int32 SampleCount   = 0;
-    Int32 CurrentSample = 0;
-    Int32 TotalCalls    = 0;
+    float Max           = -FLT_MAX;
+    float Min           = FLT_MAX;
+    int32 SampleCount   = 0;
+    int32 CurrentSample = 0;
+    int32 TotalCalls    = 0;
 };
 
 struct GPUProfileSample
 {
-    FORCEINLINE void AddSample(Float NewSample)
+    FORCEINLINE void AddSample(float NewSample)
     {
         Samples[CurrentSample] = NewSample;
         Min = Math::Min(NewSample, Min);
         Max = Math::Max(NewSample, Max);
 
         CurrentSample++;
-        SampleCount = Math::Min<Int32>(Samples.Size(), SampleCount + 1);
+        SampleCount = Math::Min<int32>(Samples.Size(), SampleCount + 1);
 
-        if (CurrentSample >= Int32(Samples.Size()))
+        if (CurrentSample >= int32(Samples.Size()))
         {
             CurrentSample = 0;
         }
     }
 
-    FORCEINLINE Float GetAverage() const
+    FORCEINLINE float GetAverage() const
     {
         if (SampleCount < 1)
         {
             return 0.0f;
         }
 
-        Float Average = 0.0f;
-        for (Int32 n = 0; n < SampleCount; n++)
+        float Average = 0.0f;
+        for (int32 n = 0; n < SampleCount; n++)
         {
             Average += Samples[n];
         }
 
-        return Average / Float(SampleCount);
+        return Average / float(SampleCount);
     }
 
     FORCEINLINE void Reset()
@@ -129,28 +131,28 @@ struct GPUProfileSample
         Min           = FLT_MAX;
     }
 
-    TStaticArray<Float, NUM_PROFILER_SAMPLES> Samples;
-    Float  Max            = -FLT_MAX;
-    Float  Min            = FLT_MAX;
-    Int32  SampleCount    = 0;
-    Int32  CurrentSample  = 0;
-    Int32  TotalCalls     = 0;
-    UInt32 TimeQueryIndex = 0;
+    TStaticArray<float, NUM_PROFILER_SAMPLES> Samples;
+    float  Max            = -FLT_MAX;
+    float  Min            = FLT_MAX;
+    int32  SampleCount    = 0;
+    int32  CurrentSample  = 0;
+    int32  TotalCalls     = 0;
+    uint32 TimeQueryIndex = 0;
 };
 
 struct ProfilerData
 {
     TRef<GPUProfiler> GPUProfiler;
-    UInt32 CurrentTimeQueryIndex = 0;
+    uint32 CurrentTimeQueryIndex = 0;
 
     ProfileSample    CPUFrameTime;
     GPUProfileSample GPUFrameTime;
 
     Clock Clock;
-    Int32 Fps        = 0;
-    Int32 CurrentFps = 0;
+    int32 Fps        = 0;
+    int32 CurrentFps = 0;
     
-    Bool EnableProfiler = true;
+    bool EnableProfiler = true;
     
     std::unordered_map<std::string, ProfileSample> CPUSamples;
     std::unordered_map<std::string, GPUProfileSample> GPUSamples;
@@ -158,7 +160,7 @@ struct ProfilerData
 
 static ProfilerData gProfilerData;
 
-static void ImGui_PrintTime(Float Num)
+static void ImGui_PrintTime(float Num)
 {
     if (Num == FLT_MAX || Num == -FLT_MAX)
     {
@@ -170,22 +172,22 @@ static void ImGui_PrintTime(Float Num)
     }
     else if (Num < MICROSECONDS)
     {
-        const Float Time = Num * INV_MICROSECONDS;
+        const float Time = Num * INV_MICROSECONDS;
         ImGui::Text("%.4f qs", Time);
     }
     else if (Num < SECONDS)
     {
-        const Float Time = Num * INV_MILLISECONDS;
+        const float Time = Num * INV_MILLISECONDS;
         ImGui::Text("%.4f ms", Time);
     }
     else
     {
-        const Float Time = Num * INV_SECONDS;
+        const float Time = Num * INV_SECONDS;
         ImGui::Text("%.4f s", Time);
     }
 }
 
-static void ImGui_PrintTiming(const Char* Text, Float Num)
+static void ImGui_PrintTiming(const char* Text, float Num)
 {
     ImGui::Text("%s: ", Text);
 
@@ -194,14 +196,14 @@ static void ImGui_PrintTiming(const Char* Text, Float Num)
     ImGui_PrintTime(Num);
 }
 
-static void ImGui_PrintTiming_SameLine(const Char* Text, Float Num)
+static void ImGui_PrintTiming_SameLine(const char* Text, float Num)
 {
     ImGui::Text("%s: ", Text);
     ImGui::SameLine();
     ImGui_PrintTime(Num);
 }
 
-static Float ImGui_ConvertNumber(Float Num)
+static float ImGui_ConvertNumber(float Num)
 {
     if (Num < MICROSECONDS)
     {
@@ -221,7 +223,7 @@ static Float ImGui_ConvertNumber(Float Num)
     }
 }
 
-static Float ImGui_GetMaxLimit(Float Num)
+static float ImGui_GetMaxLimit(float Num)
 {
     if (Num < 0.01f)
     {
@@ -259,13 +261,13 @@ static Float ImGui_GetMaxLimit(Float Num)
 
 static void DrawFPS()
 {
-    const UInt32 WindowWidth = gMainWindow->GetWidth();
+    const uint32 WindowWidth = GApplication->Window->GetWidth();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(5.0f, 5.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
 
-    ImGui::SetNextWindowPos(ImVec2(Float(WindowWidth), 0.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+    ImGui::SetNextWindowPos(ImVec2(float(WindowWidth), 0.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
 
     ImGuiWindowFlags Flags =
         ImGuiWindowFlags_NoDecoration |
@@ -287,7 +289,7 @@ static void DrawFPS()
     ImGui::PopStyleVar();
 }
 
-static void DrawCPUProfileData(Float Width)
+static void DrawCPUProfileData(float Width)
 {
     const ImGuiTableFlags TableFlags =
         ImGuiTableFlags_Borders |
@@ -298,14 +300,14 @@ static void DrawCPUProfileData(Float Width)
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
 
-        Float Avg = gProfilerData.CPUFrameTime.GetAverage();
-        Float Min = gProfilerData.CPUFrameTime.Min;
+        float Avg = gProfilerData.CPUFrameTime.GetAverage();
+        float Min = gProfilerData.CPUFrameTime.Min;
         if (Min == FLT_MAX)
         {
             Min = 0.0f;
         }
 
-        Float Max = gProfilerData.CPUFrameTime.Max;
+        float Max = gProfilerData.CPUFrameTime.Max;
         if (Max == -FLT_MAX)
         {
             Max = 0.0f;
@@ -404,10 +406,10 @@ static void DrawCPUProfileData(Float Width)
         {
             ImGui::TableNextRow();
 
-            Float Avg = Sample.second.GetAverage();
-            Float Min = Sample.second.Min;
-            Float Max = Sample.second.Max;
-            Int32 Calls = Sample.second.TotalCalls;
+            float Avg = Sample.second.GetAverage();
+            float Min = Sample.second.Min;
+            float Max = Sample.second.Max;
+            int32 Calls = Sample.second.TotalCalls;
 
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("%s", Sample.first.c_str());
@@ -425,7 +427,7 @@ static void DrawCPUProfileData(Float Width)
     }
 }
 
-static void DrawGPUProfileData(Float Width)
+static void DrawGPUProfileData(float Width)
 {
     const ImGuiTableFlags TableFlags =
         ImGuiTableFlags_Borders |
@@ -436,14 +438,14 @@ static void DrawGPUProfileData(Float Width)
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
 
-        Float Avg = gProfilerData.GPUFrameTime.GetAverage();
-        Float Min = gProfilerData.GPUFrameTime.Min;
+        float Avg = gProfilerData.GPUFrameTime.GetAverage();
+        float Min = gProfilerData.GPUFrameTime.Min;
         if (Min == FLT_MAX)
         {
             Min = 0.0f;
         }
 
-        Float Max = gProfilerData.GPUFrameTime.Max;
+        float Max = gProfilerData.GPUFrameTime.Max;
         if (Max == -FLT_MAX)
         {
             Max = 0.0f;
@@ -541,9 +543,9 @@ static void DrawGPUProfileData(Float Width)
         {
             ImGui::TableNextRow();
 
-            Float Avg = Sample.second.GetAverage();
-            Float Min = Sample.second.Min;
-            Float Max = Sample.second.Max;
+            float Avg = Sample.second.GetAverage();
+            float Min = Sample.second.Min;
+            float Max = Sample.second.Max;
 
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("%s", Sample.first.c_str());
@@ -562,16 +564,16 @@ static void DrawGPUProfileData(Float Width)
 static void DrawProfiler()
 {
     // Draw DebugWindow with DebugStrings
-    const UInt32 WindowWidth  = gMainWindow->GetWidth();
-    const UInt32 WindowHeight = gMainWindow->GetHeight();
-    const Float Width         = Math::Max(WindowWidth * 0.6f, 400.0f);
-    const Float Height        = WindowHeight * 0.75f;
+    const uint32 WindowWidth  = GApplication->Window->GetWidth();
+    const uint32 WindowHeight = GApplication->Window->GetHeight();
+    const float Width         = Math::Max(WindowWidth * 0.6f, 400.0f);
+    const float Height        = WindowHeight * 0.75f;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-    ImGui::SetNextWindowPos(ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+    ImGui::SetNextWindowPos(ImVec2(float(WindowWidth) * 0.5f, float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
     const ImGuiWindowFlags Flags =
@@ -580,7 +582,7 @@ static void DrawProfiler()
         ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoSavedSettings;
 
-    Bool TempDrawProfiler = gDrawProfiler.GetBool();
+    bool TempDrawProfiler = gDrawProfiler.GetBool();
     if (ImGui::Begin("Profiler", &TempDrawProfiler, Flags))
     {
         if (ImGui::Button("Start Profile"))
@@ -662,15 +664,15 @@ void Profiler::Tick()
     {
         if (gProfilerData.EnableProfiler)
         {
-            const Double Delta = Clock.GetDeltaTime().AsMilliSeconds();
-            gProfilerData.CPUFrameTime.AddSample(Float(Delta));
+            const double Delta = Clock.GetDeltaTime().AsMilliSeconds();
+            gProfilerData.CPUFrameTime.AddSample(float(Delta));
 
             if (gProfilerData.GPUProfiler)
             {
                 TimeQuery Query;
                 gProfilerData.GPUProfiler->GetTimeQuery(Query, gProfilerData.GPUFrameTime.TimeQueryIndex);
 
-                Float Duration = (Query.End - Query.Begin) * INV_MILLISECONDS;
+                float Duration = (Query.End - Query.Begin) * INV_MILLISECONDS;
                 gProfilerData.GPUFrameTime.AddSample(Duration);
             }
         }
@@ -705,7 +707,7 @@ void Profiler::Reset()
     }
 }
 
-void Profiler::BeginTraceScope(const Char* Name)
+void Profiler::BeginTraceScope(const char* Name)
 {
     if (gProfilerData.EnableProfiler)
     {
@@ -724,7 +726,7 @@ void Profiler::BeginTraceScope(const Char* Name)
     }
 }
 
-void Profiler::EndTraceScope(const Char* Name)
+void Profiler::EndTraceScope(const char* Name)
 {
     if (gProfilerData.EnableProfiler)
     {
@@ -750,13 +752,13 @@ void Profiler::BeginGPUFrame(CommandList& CmdList)
     }
 }
 
-void Profiler::BeginGPUTrace(CommandList& CmdList, const Char* Name)
+void Profiler::BeginGPUTrace(CommandList& CmdList, const char* Name)
 {
     if (gProfilerData.GPUProfiler && gProfilerData.EnableProfiler)
     {
         const std::string ScopeName = Name;
 
-        Int32 TimeQueryIndex = -1;
+        int32 TimeQueryIndex = -1;
 
         auto Entry = gProfilerData.GPUSamples.find(ScopeName);
         if (Entry == gProfilerData.GPUSamples.end())
@@ -777,13 +779,13 @@ void Profiler::BeginGPUTrace(CommandList& CmdList, const Char* Name)
     }
 }
 
-void Profiler::EndGPUTrace(CommandList& CmdList, const Char* Name)
+void Profiler::EndGPUTrace(CommandList& CmdList, const char* Name)
 {
     if (gProfilerData.GPUProfiler && gProfilerData.EnableProfiler)
     {
         const std::string ScopeName = Name;
 
-        Int32 TimeQueryIndex = -1;
+        int32 TimeQueryIndex = -1;
 
         auto Entry = gProfilerData.GPUSamples.find(ScopeName);
         if (Entry != gProfilerData.GPUSamples.end())
@@ -796,7 +798,7 @@ void Profiler::EndGPUTrace(CommandList& CmdList, const Char* Name)
                 TimeQuery Query;
                 gProfilerData.GPUProfiler->GetTimeQuery(Query, TimeQueryIndex);
 
-                Float Duration = (Query.End - Query.Begin);
+                float Duration = (float)(Query.End - Query.Begin);
                 Entry->second.AddSample(Duration);
             }
         }

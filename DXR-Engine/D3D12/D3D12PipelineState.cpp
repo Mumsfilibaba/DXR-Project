@@ -8,7 +8,7 @@ D3D12GraphicsPipelineState::D3D12GraphicsPipelineState(D3D12Device* InDevice)
 {
 }
 
-Bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& CreateInfo)
+bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& CreateInfo)
 {
     struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) GraphicsPipelineStream
     {
@@ -130,11 +130,11 @@ Bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
     }
 
     // RenderTarget
-    const UInt32 NumRenderTargets = CreateInfo.PipelineFormats.NumRenderTargets;
+    const uint32 NumRenderTargets = CreateInfo.PipelineFormats.NumRenderTargets;
 
     D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = PipelineStream.RenderTargetInfo;
     RenderTargetInfo.NumRenderTargets = NumRenderTargets;
-    for (UInt32 Index = 0; Index < NumRenderTargets; Index++)
+    for (uint32 Index = 0; Index < NumRenderTargets; Index++)
     {
         RenderTargetInfo.RTFormats[Index] = ConvertFormat(CreateInfo.PipelineFormats.RenderTargetFormats[Index]);
     }
@@ -180,12 +180,12 @@ Bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
         ResourceCounts.AllowInputAssembler = true;
 
         // NOTE: For now all constants are put in visibility_all
-        UInt32 Num32BitConstants = 0;
+        uint32 Num32BitConstants = 0;
         for (D3D12BaseShader* DxShader : BaseShaders)
         {
-            UInt32 Index = DxShader->GetShaderVisibility();
+            uint32 Index = DxShader->GetShaderVisibility();
             ResourceCounts.ResourceCounts[Index] = DxShader->GetResourceCount();
-            Num32BitConstants = Math::Max<UInt32>(Num32BitConstants, ResourceCounts.ResourceCounts[Index].Num32BitConstants);
+            Num32BitConstants = Math::Max<uint32>(Num32BitConstants, ResourceCounts.ResourceCounts[Index].Num32BitConstants);
             ResourceCounts.ResourceCounts[Index].Num32BitConstants = 0;
         }
 
@@ -241,7 +241,7 @@ D3D12ComputePipelineState::D3D12ComputePipelineState(D3D12Device* InDevice, cons
 {
 }
 
-Bool D3D12ComputePipelineState::Init()
+bool D3D12ComputePipelineState::Init()
 {
     struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) ComputePipelineStream
     {
@@ -313,7 +313,7 @@ struct D3D12RootSignatureAssociation
         , ShaderExportNames(InShaderExportNames)
         , ShaderExportNamesRef(InShaderExportNames.Size())
     {
-        for (UInt32 i = 0; i < ShaderExportNames.Size(); i++)
+        for (uint32 i = 0; i < ShaderExportNames.Size(); i++)
         {
             ShaderExportNamesRef[i] = ShaderExportNames[i].c_str();
         }
@@ -365,7 +365,7 @@ struct D3D12Library
         , ExportDescs(InExportNames.Size())
         , Desc()
     {
-        for (UInt32 i = 0; i < ExportDescs.Size(); i++)
+        for (uint32 i = 0; i < ExportDescs.Size(); i++)
         {
             D3D12_EXPORT_DESC& TempDesc = ExportDescs[i];
             TempDesc.Flags          = D3D12_EXPORT_FLAG_NONE;
@@ -402,10 +402,10 @@ struct D3D12RayTracingPipelineStateStream
 
     void Generate()
     {
-        UInt32 NumSubObjects = Libraries.Size() + HitGroups.Size() + (RootSignatureAssociations.Size() * 2) + 4;
+        uint32 NumSubObjects = Libraries.Size() + HitGroups.Size() + (RootSignatureAssociations.Size() * 2) + 4;
         SubObjects.Resize(NumSubObjects);
 
-        UInt32 SubObjectIndex = 0;
+        uint32 SubObjectIndex = 0;
         for (D3D12Library& Lib : Libraries)
         {
             D3D12_STATE_SUBOBJECT& SubObject = SubObjects[SubObjectIndex++];
@@ -448,7 +448,7 @@ struct D3D12RayTracingPipelineStateStream
         ShaderConfigObject.pDesc = &ShaderConfig;
 
         PayLoadExportNamesRef.Resize(PayLoadExportNames.Size());
-        for (UInt32 i = 0; i < PayLoadExportNames.Size(); i++)
+        for (uint32 i = 0; i < PayLoadExportNames.Size(); i++)
         {
             PayLoadExportNamesRef[i] = PayLoadExportNames[i].c_str();
         }
@@ -483,7 +483,7 @@ D3D12RayTracingPipelineState::D3D12RayTracingPipelineState(D3D12Device* InDevice
 {
 }
 
-Bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo& CreateInfo)
+bool D3D12RayTracingPipelineState::Init(const RayTracingPipelineStateCreateInfo& CreateInfo)
 {
     D3D12RayTracingPipelineStateStream PipelineStream;
 
@@ -662,8 +662,8 @@ void* D3D12RayTracingPipelineState::GetShaderIdentifer(const std::string& Export
         RayTracingShaderIdentifer Identifier;
         Memory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
-        ShaderIdentifers.insert(std::make_pair(ExportName, Identifier));
-        return Identifier.ShaderIdentifier;
+        auto NewIdentifier = ShaderIdentifers.insert(std::make_pair(ExportName, Identifier));
+        return NewIdentifier.first->second.ShaderIdentifier;
     }
     else
     {

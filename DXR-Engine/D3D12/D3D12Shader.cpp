@@ -2,7 +2,7 @@
 #include "D3D12ShaderCompiler.h"
 #include "D3D12RootSignature.h"
 
-D3D12BaseShader::D3D12BaseShader(D3D12Device* InDevice, const TArray<UInt8>& InCode, EShaderVisibility InVisibility)
+D3D12BaseShader::D3D12BaseShader(D3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility)
     : D3D12DeviceChild(InDevice)
     , ByteCode()
     , Visibility(InVisibility)
@@ -21,22 +21,22 @@ D3D12BaseShader::~D3D12BaseShader()
     ByteCode.BytecodeLength  = 0;
 }
 
-static Bool IsShaderResourceView(D3D_SHADER_INPUT_TYPE Type)
+static bool IsShaderResourceView(D3D_SHADER_INPUT_TYPE Type)
 {
     return Type == D3D_SIT_TEXTURE || Type == D3D_SIT_BYTEADDRESS || Type == D3D_SIT_STRUCTURED || Type == D3D_SIT_RTACCELERATIONSTRUCTURE;
 }
 
-static Bool IsUnorderedAccessView(D3D_SHADER_INPUT_TYPE Type)
+static bool IsUnorderedAccessView(D3D_SHADER_INPUT_TYPE Type)
 {
     return Type == D3D_SIT_UAV_RWTYPED || Type == D3D_SIT_UAV_RWBYTEADDRESS || Type == D3D_SIT_UAV_RWSTRUCTURED;
 }
 
-static Bool IsRayTracingLocalSpace(UInt32 RegisterSpace)
+static bool IsRayTracingLocalSpace(uint32 RegisterSpace)
 {
     return RegisterSpace == D3D12_SHADER_REGISTER_SPACE_RT_LOCAL;
 }
 
-static Bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindDesc)
+static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindDesc)
 {
     if (ShaderBindDesc.Space == D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS && ShaderBindDesc.Type == D3D_SIT_CBUFFER)
     {
@@ -54,12 +54,8 @@ static Bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
     return false;
 }
 
-static void AddResouce(ShaderResourceCount& OutResourceCount, const D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc)
-{
-}
-
 template<typename TD3D12ReflectionInterface>
-Bool D3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, D3D12BaseShader* Shader, UInt32 NumBoundResources)
+bool D3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, D3D12BaseShader* Shader, uint32 NumBoundResources)
 {
     ShaderResourceCount          ResourceCount;
     ShaderResourceCount          RTLocalResourceCount;
@@ -69,7 +65,7 @@ Bool D3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Refle
     TArray<D3D12ShaderParameter> UnorderedAccessParameters;
 
     D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc;
-    for (UInt32 i = 0; i < NumBoundResources; i++)
+    for (uint32 i = 0; i < NumBoundResources; i++)
     {
         Memory::Memzero(&ShaderBindDesc);
 
@@ -86,7 +82,7 @@ Bool D3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Refle
 
         if (ShaderBindDesc.Type == D3D_SIT_CBUFFER)
         {
-            UInt32 SizeInBytes = 0;
+            uint32 SizeInBytes = 0;
 
             ID3D12ShaderReflectionConstantBuffer* BufferVar = Reflection->GetConstantBufferByName(ShaderBindDesc.Name);
             if (BufferVar)
@@ -98,7 +94,7 @@ Bool D3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Refle
                 }
             }
 
-            UInt32 Num32BitConstants = SizeInBytes / 4;
+            uint32 Num32BitConstants = SizeInBytes / 4;
             
             if (ShaderBindDesc.Space == D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
             {
@@ -138,7 +134,7 @@ Bool D3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Refle
         }
         else if (IsShaderResourceView(ShaderBindDesc.Type))
         {
-            const UInt32 NumDescriptors = ShaderBindDesc.BindCount != 0 ? ShaderBindDesc.BindCount : UINT_MAX;
+            const uint32 NumDescriptors = ShaderBindDesc.BindCount != 0 ? ShaderBindDesc.BindCount : UINT_MAX;
 
             ShaderResourceParameters.EmplaceBack(ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, NumDescriptors, 0);
 
@@ -176,7 +172,7 @@ Bool D3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Refle
     return true;
 }
 
-Bool D3D12BaseShader::GetShaderReflection(D3D12BaseShader* Shader)
+bool D3D12BaseShader::GetShaderReflection(D3D12BaseShader* Shader)
 {
     Assert(Shader != nullptr);
 
@@ -206,7 +202,7 @@ Bool D3D12BaseShader::GetShaderReflection(D3D12BaseShader* Shader)
     return true;
 }
 
-Bool D3D12BaseRayTracingShader::GetRayTracingShaderReflection(D3D12BaseRayTracingShader* Shader)
+bool D3D12BaseRayTracingShader::GetRayTracingShaderReflection(D3D12BaseRayTracingShader* Shader)
 {
     Assert(Shader != nullptr);
 
@@ -260,7 +256,7 @@ Bool D3D12BaseRayTracingShader::GetRayTracingShaderReflection(D3D12BaseRayTracin
     return true;
 }
 
-Bool D3D12BaseComputeShader::Init()
+bool D3D12BaseComputeShader::Init()
 {
     TComPtr<ID3D12ShaderReflection> Reflection;
     if (!gD3D12ShaderCompiler->GetReflection(this, &Reflection))
@@ -299,7 +295,7 @@ void ShaderResourceCount::Combine(const ShaderResourceCount& Other)
     Num32BitConstants  = Math::Max(Num32BitConstants, Other.Num32BitConstants);
 }
 
-Bool ShaderResourceCount::IsCompatible(const ShaderResourceCount& Other) const
+bool ShaderResourceCount::IsCompatible(const ShaderResourceCount& Other) const
 {
     if (Num32BitConstants > Other.Num32BitConstants)
     {

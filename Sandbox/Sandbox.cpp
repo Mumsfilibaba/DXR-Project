@@ -11,23 +11,28 @@
 #include "Scene/Lights/DirectionalLight.h"
 #include "Scene/Components/MeshComponent.h"
 
-#include "Application/Input.h"
+#include "Core/Application/InputManager.h"
 
 #include <random>
 
 #define ENABLE_LIGHT_TEST 0
 
-Game* MakeGameInstance()
+Application* CreateApplication()
 {
     return DBG_NEW Sandbox();
 }
 
-Bool Sandbox::Init()
+bool Sandbox::Init()
 {
+    if (!Application::Init())
+    {
+        return false;
+    }
+
     // Initialize Scene
     Actor* NewActor             = nullptr;
     MeshComponent* NewComponent = nullptr;
-    CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
+    Scene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
 
     // Create Spheres
     MeshData SphereMeshData     = MeshFactory::CreateSphere(3);
@@ -35,7 +40,7 @@ Bool Sandbox::Init()
     SphereMesh->ShadowOffset = 0.05f;
 
     // Create standard textures
-    Byte Pixels[] =
+    uint8 Pixels[] =
     {
         255,
         255,
@@ -81,21 +86,21 @@ Bool Sandbox::Init()
         WhiteTexture->SetName("WhiteTexture");
     }
 
-    constexpr Float	 SphereOffset   = 1.25f;
-    constexpr UInt32 SphereCountX   = 8;
-    constexpr Float	 StartPositionX = (-static_cast<Float>(SphereCountX) * SphereOffset) / 2.0f;
-    constexpr UInt32 SphereCountY   = 8;
-    constexpr Float	 StartPositionY = (-static_cast<Float>(SphereCountY) * SphereOffset) / 2.0f;
-    constexpr Float	 MetallicDelta  = 1.0f / SphereCountY;
-    constexpr Float	 RoughnessDelta = 1.0f / SphereCountX;
+    constexpr float  SphereOffset   = 1.25f;
+    constexpr uint32 SphereCountX   = 8;
+    constexpr float  StartPositionX = (-static_cast<float>(SphereCountX) * SphereOffset) / 2.0f;
+    constexpr uint32 SphereCountY   = 8;
+    constexpr float  StartPositionY = (-static_cast<float>(SphereCountY) * SphereOffset) / 2.0f;
+    constexpr float  MetallicDelta  = 1.0f / SphereCountY;
+    constexpr float  RoughnessDelta = 1.0f / SphereCountX;
 
     MaterialProperties MatProperties;
     MatProperties.AO = 1.0f;
 
-    UInt32 SphereIndex = 0;
-    for (UInt32 y = 0; y < SphereCountY; y++)
+    uint32 SphereIndex = 0;
+    for (uint32 y = 0; y < SphereCountY; y++)
     {
-        for (UInt32 x = 0; x < SphereCountX; x++)
+        for (uint32 x = 0; x < SphereCountX; x++)
         {
             NewActor = DBG_NEW Actor();
             NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 1.0f, 40.0f + StartPositionY + (y * SphereOffset));
@@ -103,7 +108,7 @@ Bool Sandbox::Init()
             NewActor->SetName("Sphere[" + std::to_string(SphereIndex) + "]");
             SphereIndex++;
 
-            CurrentScene->AddActor(NewActor);
+            Scene->AddActor(NewActor);
 
             NewComponent = DBG_NEW MeshComponent(NewActor);
             NewComponent->Mesh     = SphereMesh;
@@ -130,7 +135,7 @@ Bool Sandbox::Init()
     MeshData CubeMeshData = MeshFactory::CreateCube();
 
     NewActor = DBG_NEW Actor();
-    CurrentScene->AddActor(NewActor);
+    Scene->AddActor(NewActor);
 
     NewActor->SetName("Cube");
     NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
@@ -214,7 +219,7 @@ Bool Sandbox::Init()
     NewActor->AddComponent(NewComponent);
 
     NewActor = DBG_NEW Actor();
-    CurrentScene->AddActor(NewActor);
+    Scene->AddActor(NewActor);
 
     NewActor->SetName("Plane");
     NewActor->GetTransform().SetRotation(0.0f, 0.0f, Math::HALF_PI);
@@ -222,8 +227,8 @@ Bool Sandbox::Init()
     NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
     MatProperties.AO           = 1.0f;
-    MatProperties.Metallic     = 0.0f;
-    MatProperties.Roughness    = 1.0f;
+    MatProperties.Metallic     = 1.0f;
+    MatProperties.Roughness    = 0.1f;
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo       = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
@@ -240,10 +245,10 @@ Bool Sandbox::Init()
     NewActor->AddComponent(NewComponent);
 
     CurrentCamera = DBG_NEW Camera();
-    CurrentScene->AddCamera(CurrentCamera);
+    Scene->AddCamera(CurrentCamera);
 
     // Add PointLight- Source
-    const Float Intensity = 50.0f;
+    const float Intensity = 50.0f;
 
     PointLight* Light0 = DBG_NEW PointLight();
     Light0->SetPosition(16.5f, 1.0f, 0.0f);
@@ -253,7 +258,7 @@ Bool Sandbox::Init()
     Light0->SetShadowFarPlane(50.0f);
     Light0->SetIntensity(Intensity);
     Light0->SetShadowCaster(true);
-    CurrentScene->AddLight(Light0);
+    Scene->AddLight(Light0);
 
     PointLight* Light1 = DBG_NEW PointLight();
     Light1->SetPosition(-17.5f, 1.0f, 0.0f);
@@ -263,7 +268,7 @@ Bool Sandbox::Init()
     Light1->SetShadowFarPlane(50.0f);
     Light1->SetIntensity(Intensity);
     Light1->SetShadowCaster(true);
-    CurrentScene->AddLight(Light1);
+    Scene->AddLight(Light1);
 
     PointLight* Light2 = DBG_NEW PointLight();
     Light2->SetPosition(16.5f, 11.0f, 0.0f);
@@ -273,7 +278,7 @@ Bool Sandbox::Init()
     Light2->SetShadowFarPlane(50.0f);
     Light2->SetIntensity(Intensity);
     Light2->SetShadowCaster(true);
-    CurrentScene->AddLight(Light2);
+    Scene->AddLight(Light2);
 
     PointLight* Light3 = DBG_NEW PointLight();
     Light3->SetPosition(-17.5f, 11.0f, 0.0f);
@@ -283,25 +288,25 @@ Bool Sandbox::Init()
     Light3->SetShadowFarPlane(50.0f);
     Light3->SetIntensity(Intensity);
     Light3->SetShadowCaster(true);
-    CurrentScene->AddLight(Light3);
+    Scene->AddLight(Light3);
 
 #if ENABLE_LIGHT_TEST
     // Add multiple lights
-    std::uniform_real_distribution<Float> RandomFloats(0.0f, 1.0f);
+    std::uniform_real_distribution<float> RandomFloats(0.0f, 1.0f);
     std::default_random_engine Generator;
 
-    for (UInt32 i = 0; i < 256; i++)
+    for (uint32 i = 0; i < 256; i++)
     {
-        Float x = RandomFloats(Generator) * 35.0f - 17.5f;
-        Float y = RandomFloats(Generator) * 22.0f;
-        Float z = RandomFloats(Generator) * 16.0f - 8.0f;
-        Float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
+        float x = RandomFloats(Generator) * 35.0f - 17.5f;
+        float y = RandomFloats(Generator) * 22.0f;
+        float z = RandomFloats(Generator) * 16.0f - 8.0f;
+        float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
 
         PointLight* Light = DBG_NEW PointLight();
         Light->SetPosition(x, y, z);
         Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
         Light->SetIntensity(Intentsity);
-        CurrentScene->AddLight(Light);
+        Scene->AddLight(Light);
     }
 #endif
 
@@ -313,69 +318,71 @@ Bool Sandbox::Init()
     Light4->SetShadowFarPlane(140.0f);
     Light4->SetColor(1.0f, 1.0f, 1.0f);
     Light4->SetIntensity(10.0f);
-    CurrentScene->AddLight(Light4);
+    Scene->AddLight(Light4);
 
     return true;
 }
 
 void Sandbox::Tick(Timestamp DeltaTime)
 {
-    const Float Delta = static_cast<Float>(DeltaTime.AsSeconds());
-    const Float RotationSpeed = 45.0f;
+    Application::Tick(DeltaTime);
 
-    if (Input::IsKeyDown(EKey::Key_Right))
+    const float Delta = static_cast<float>(DeltaTime.AsSeconds());
+    const float RotationSpeed = 45.0f;
+
+    if (InputManager::Get().IsKeyDown(EKey::Key_Right))
     {
         CurrentCamera->Rotate(0.0f, XMConvertToRadians(RotationSpeed * Delta), 0.0f);
     }
-    else if (Input::IsKeyDown(EKey::Key_Left))
+    else if (InputManager::Get().IsKeyDown(EKey::Key_Left))
     {
         CurrentCamera->Rotate(0.0f, XMConvertToRadians(-RotationSpeed * Delta), 0.0f);
     }
 
-    if (Input::IsKeyDown(EKey::Key_Up))
+    if (InputManager::Get().IsKeyDown(EKey::Key_Up))
     {
         CurrentCamera->Rotate(XMConvertToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
     }
-    else if (Input::IsKeyDown(EKey::Key_Down))
+    else if (InputManager::Get().IsKeyDown(EKey::Key_Down))
     {
         CurrentCamera->Rotate(XMConvertToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
     }
 
-    Float Acceleration = 15.0f;
-    if (Input::IsKeyDown(EKey::Key_LeftShift))
+    float Acceleration = 15.0f;
+    if (InputManager::Get().IsKeyDown(EKey::Key_LeftShift))
     {
         Acceleration = Acceleration * 3;
     }
 
     XMFLOAT3 CameraAcceleration = XMFLOAT3(0.0f, 0.0f, 0.0f);
-    if (Input::IsKeyDown(EKey::Key_W))
+    if (InputManager::Get().IsKeyDown(EKey::Key_W))
     {
         CameraAcceleration.z = Acceleration;
     }
-    else if (Input::IsKeyDown(EKey::Key_S))
+    else if (InputManager::Get().IsKeyDown(EKey::Key_S))
     {
         CameraAcceleration.z = -Acceleration;
     }
 
-    if (Input::IsKeyDown(EKey::Key_A))
+    if (InputManager::Get().IsKeyDown(EKey::Key_A))
     {
         CameraAcceleration.x = Acceleration;
     }
-    else if (Input::IsKeyDown(EKey::Key_D))
+    else if (InputManager::Get().IsKeyDown(EKey::Key_D))
     {
         CameraAcceleration.x = -Acceleration;
     }
 
-    if (Input::IsKeyDown(EKey::Key_Q))
+    if (InputManager::Get().IsKeyDown(EKey::Key_Q))
     {
         CameraAcceleration.y = Acceleration;
     }
-    else if (Input::IsKeyDown(EKey::Key_E))
+    else if (InputManager::Get().IsKeyDown(EKey::Key_E))
     {
         CameraAcceleration.y = -Acceleration;
     }
 
-    const Float Deacceleration = -5.0f;
+    const float Deacceleration = -5.0f;
     CameraSpeed = CameraSpeed + (CameraSpeed * Deacceleration) * Delta;
     CameraSpeed = CameraSpeed + (CameraAcceleration * Delta);
 

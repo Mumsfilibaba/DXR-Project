@@ -1,4 +1,4 @@
-#include "Windows/WindowsWindow.h"
+#include "Core/Application/Windows/WindowsWindow.h"
 
 #include "D3D12RenderLayer.h"
 #include "D3D12Texture.h"
@@ -54,19 +54,19 @@ inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture3D>
 }
 
 template<typename TD3D12Texture>
-inline Bool IsTextureCube()
+inline bool IsTextureCube()
 {
     return false;
 }
 
 template<>
-inline Bool IsTextureCube<D3D12TextureCube>()
+inline bool IsTextureCube<D3D12TextureCube>()
 {
     return true;
 }
 
 template<>
-inline Bool IsTextureCube<D3D12TextureCubeArray>()
+inline bool IsTextureCube<D3D12TextureCubeArray>()
 {
     return true;
 }
@@ -95,16 +95,16 @@ D3D12RenderLayer::~D3D12RenderLayer()
     gD3D12RenderLayer = nullptr;
 }
 
-Bool D3D12RenderLayer::Init(Bool EnableDebug)
+bool D3D12RenderLayer::Init(bool EnableDebug)
 {
     // NOTE: GPUBasedValidation does not work with ray tracing since it causes Device Removed (2021-02-25)
-    Bool GPUBasedValidationOn =
+    bool GPUBasedValidationOn =
 #if ENABLE_API_GPU_DEBUGGING
         EnableDebug;
 #else
         false;
 #endif
-    Bool DREDOn =
+    bool DREDOn =
 #if ENABLE_API_GPU_BREADCRUMBS
         EnableDebug;
 #else
@@ -159,10 +159,10 @@ Bool D3D12RenderLayer::Init(Bool EnableDebug)
 template<typename TD3D12Texture>
 TD3D12Texture* D3D12RenderLayer::CreateTexture(
     EFormat Format,
-    UInt32 SizeX, UInt32 SizeY, UInt32 SizeZ,
-    UInt32 NumMips,
-    UInt32 NumSamples, 
-    UInt32 Flags,
+    uint32 SizeX, uint32 SizeY, uint32 SizeZ,
+    uint32 NumMips,
+    uint32 NumSamples, 
+    uint32 Flags,
     EResourceState InitialState,
     const ResourceData* InitialData,
     const ClearValue& OptimalClearValue)
@@ -185,7 +185,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
 
     if (NumSamples > 1)
     {
-        const Int32 Quality = Device->GetMultisampleQuality(Desc.Format, NumSamples);
+        const int32 Quality = Device->GetMultisampleQuality(Desc.Format, NumSamples);
         Desc.SampleDesc.Quality = Quality - 1;
     }
     else
@@ -295,7 +295,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
     }
 
     // TODO: Fix for other resources that Texture2D?
-    const Bool IsTexture2D = (Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D) && (SizeZ == 1);
+    const bool IsTexture2D = (Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D) && (SizeZ == 1);
     if (Flags & TextureFlag_RTV && !(Flags & TextureFlag_NoDefaultRTV) && IsTexture2D)
     {
         D3D12Texture2D* NewTexture2D = static_cast<D3D12Texture2D*>(NewTexture->AsTexture2D());
@@ -411,11 +411,11 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
 
 Texture2D* D3D12RenderLayer::CreateTexture2D(
     EFormat Format, 
-    UInt32 Width, 
-    UInt32 Height, 
-    UInt32 NumMips, 
-    UInt32 NumSamples, 
-    UInt32 Flags, 
+    uint32 Width, 
+    uint32 Height, 
+    uint32 NumMips, 
+    uint32 NumSamples, 
+    uint32 Flags, 
     EResourceState InitialState, 
     const ResourceData* InitialData, 
     const ClearValue& OptimalClearValue)
@@ -425,12 +425,12 @@ Texture2D* D3D12RenderLayer::CreateTexture2D(
 
 Texture2DArray* D3D12RenderLayer::CreateTexture2DArray(
     EFormat Format, 
-    UInt32 Width, 
-    UInt32 Height, 
-    UInt32 NumMips, 
-    UInt32 NumSamples, 
-    UInt32 NumArraySlices, 
-    UInt32 Flags, 
+    uint32 Width, 
+    uint32 Height, 
+    uint32 NumMips, 
+    uint32 NumSamples, 
+    uint32 NumArraySlices, 
+    uint32 Flags, 
     EResourceState InitialState, 
     const ResourceData* InitialData, 
     const ClearValue& OptimalClearValue)
@@ -440,9 +440,9 @@ Texture2DArray* D3D12RenderLayer::CreateTexture2DArray(
 
 TextureCube* D3D12RenderLayer::CreateTextureCube(
     EFormat Format, 
-    UInt32 Size, 
-    UInt32 NumMips, 
-    UInt32 Flags, 
+    uint32 Size, 
+    uint32 NumMips, 
+    uint32 Flags, 
     EResourceState InitialState, 
     const ResourceData* InitialData, 
     const ClearValue& OptimalClearValue)
@@ -452,25 +452,25 @@ TextureCube* D3D12RenderLayer::CreateTextureCube(
 
 TextureCubeArray* D3D12RenderLayer::CreateTextureCubeArray(
     EFormat Format, 
-    UInt32 Size, 
-    UInt32 NumMips, 
-    UInt32 NumArraySlices, 
-    UInt32 Flags,
+    uint32 Size, 
+    uint32 NumMips, 
+    uint32 NumArraySlices, 
+    uint32 Flags,
     EResourceState InitialState, 
     const ResourceData* InitialData, 
     const ClearValue& OptimalClearValue)
 {
-    const UInt32 ArraySlices = NumArraySlices * TEXTURE_CUBE_FACE_COUNT;
+    const uint32 ArraySlices = NumArraySlices * TEXTURE_CUBE_FACE_COUNT;
     return CreateTexture<D3D12TextureCubeArray>(Format, Size, Size, ArraySlices, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
 Texture3D* D3D12RenderLayer::CreateTexture3D(
     EFormat Format, 
-    UInt32 Width, 
-    UInt32 Height, 
-    UInt32 Depth, 
-    UInt32 NumMips, 
-    UInt32 Flags, 
+    uint32 Width, 
+    uint32 Height, 
+    uint32 Depth, 
+    uint32 NumMips, 
+    uint32 Flags, 
     EResourceState InitialState, 
     const ResourceData* InitialData, 
     const ClearValue& OptimalClearValue)
@@ -507,7 +507,7 @@ SamplerState* D3D12RenderLayer::CreateSamplerState(const SamplerStateCreateInfo&
 }
 
 template<typename TD3D12Buffer>
-Bool D3D12RenderLayer::FinalizeBufferResource(TD3D12Buffer* Buffer, UInt32 SizeInBytes, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+bool D3D12RenderLayer::FinalizeBufferResource(TD3D12Buffer* Buffer, uint32 SizeInBytes, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
     D3D12_RESOURCE_DESC Desc;
     Memory::Memzero(&Desc);
@@ -548,7 +548,7 @@ Bool D3D12RenderLayer::FinalizeBufferResource(TD3D12Buffer* Buffer, UInt32 SizeI
         {
             Assert(Buffer->GetSizeInBytes() <= SizeInBytes);
 
-            Void* HostData = Buffer->Map(0, 0);
+            void* HostData = Buffer->Map(0, 0);
             if (!HostData)
             {
                 return false;
@@ -583,9 +583,9 @@ Bool D3D12RenderLayer::FinalizeBufferResource(TD3D12Buffer* Buffer, UInt32 SizeI
     return true;
 }
 
-VertexBuffer* D3D12RenderLayer::CreateVertexBuffer(UInt32 Stride, UInt32 NumVertices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+VertexBuffer* D3D12RenderLayer::CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
-    const UInt32 SizeInBytes = NumVertices * Stride;
+    const uint32 SizeInBytes = NumVertices * Stride;
 
     TRef<D3D12VertexBuffer> NewBuffer = DBG_NEW D3D12VertexBuffer(Device, NumVertices, Stride, Flags);
     if (!FinalizeBufferResource<D3D12VertexBuffer>(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
@@ -599,10 +599,10 @@ VertexBuffer* D3D12RenderLayer::CreateVertexBuffer(UInt32 Stride, UInt32 NumVert
     }
 }
 
-IndexBuffer* D3D12RenderLayer::CreateIndexBuffer(EIndexFormat Format, UInt32 NumIndices, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+IndexBuffer* D3D12RenderLayer::CreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
-    const UInt32 SizeInBytes        = NumIndices * GetStrideFromIndexFormat(Format);
-    const UInt32 AlignedSizeInBytes = Math::AlignUp<UInt32>(SizeInBytes, sizeof(UInt32));
+    const uint32 SizeInBytes        = NumIndices * GetStrideFromIndexFormat(Format);
+    const uint32 AlignedSizeInBytes = Math::AlignUp<uint32>(SizeInBytes, sizeof(uint32));
 
     TRef<D3D12IndexBuffer> NewBuffer = DBG_NEW D3D12IndexBuffer(Device, Format, NumIndices, Flags);
     if (!FinalizeBufferResource<D3D12IndexBuffer>(NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData))
@@ -616,11 +616,11 @@ IndexBuffer* D3D12RenderLayer::CreateIndexBuffer(EIndexFormat Format, UInt32 Num
     }
 }
 
-ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer(UInt32 Size, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer(uint32 Size, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
     Assert(!(Flags & BufferFlag_UAV) && !(Flags & BufferFlag_SRV));
 
-    const UInt32 AlignedSizeInBytes = Math::AlignUp<UInt32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+    const uint32 AlignedSizeInBytes = Math::AlignUp<uint32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
     TRef<D3D12ConstantBuffer> NewBuffer = DBG_NEW D3D12ConstantBuffer(Device, ResourceOfflineDescriptorHeap, Size, Flags);
     if (!FinalizeBufferResource<D3D12ConstantBuffer>(NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData))
@@ -634,9 +634,9 @@ ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer(UInt32 Size, UInt32 Flags
     }
 }
 
-StructuredBuffer* D3D12RenderLayer::CreateStructuredBuffer(UInt32 Stride, UInt32 NumElements, UInt32 Flags, EResourceState InitialState, const ResourceData* InitialData)
+StructuredBuffer* D3D12RenderLayer::CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
-    const UInt32 SizeInBytes = NumElements * Stride;
+    const uint32 SizeInBytes = NumElements * Stride;
 
     TRef<D3D12StructuredBuffer> NewBuffer = DBG_NEW D3D12StructuredBuffer(Device, NumElements, Stride, Flags);
     if (!FinalizeBufferResource<D3D12StructuredBuffer>(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
@@ -650,7 +650,7 @@ StructuredBuffer* D3D12RenderLayer::CreateStructuredBuffer(UInt32 Stride, UInt32
     }
 }
 
-RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry(UInt32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer)
+RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry(uint32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer)
 {
     D3D12VertexBuffer* DxVertexBuffer = static_cast<D3D12VertexBuffer*>(VertexBuffer);
     D3D12IndexBuffer*  DxIndexBuffer  = static_cast<D3D12IndexBuffer*>(IndexBuffer);
@@ -672,7 +672,7 @@ RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry(UInt32 Flags, Ver
     return Geometry.ReleaseOwnership();
 }
 
-RayTracingScene* D3D12RenderLayer::CreateRayTracingScene(UInt32 Flags, RayTracingGeometryInstance* Instances, UInt32 NumInstances)
+RayTracingScene* D3D12RenderLayer::CreateRayTracingScene(uint32 Flags, RayTracingGeometryInstance* Instances, uint32 NumInstances)
 {
     TRef<D3D12RayTracingScene> Scene = DBG_NEW D3D12RayTracingScene(Device, Flags);
 
@@ -813,7 +813,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView(const ShaderResou
         Resource = DxBuffer->GetResource();
 
         Assert(Buffer->IsSRV());
-        Assert(Buffer->GetFormat() != EIndexFormat::UInt16);
+        Assert(Buffer->GetFormat() != EIndexFormat::uint16);
 
         Desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = CreateInfo.IndexBuffer.FirstIndex;
@@ -962,7 +962,7 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView(const Unordered
         Desc.Buffer.NumElements  = CreateInfo.IndexBuffer.NumIndices;
 
         // TODO: What if the index type is 16-bit?
-        Assert(Buffer->GetFormat() != EIndexFormat::UInt16);
+        Assert(Buffer->GetFormat() != EIndexFormat::uint16);
 
         Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
         Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_RAW;
@@ -1208,7 +1208,7 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView(const DepthStencilVie
     }
 }
 
-ComputeShader* D3D12RenderLayer::CreateComputeShader(const TArray<UInt8>& ShaderCode)
+ComputeShader* D3D12RenderLayer::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
     TRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader(Device, ShaderCode);
     if (!Shader->Init())
@@ -1219,7 +1219,7 @@ ComputeShader* D3D12RenderLayer::CreateComputeShader(const TArray<UInt8>& Shader
     return Shader.ReleaseOwnership();
 }
 
-VertexShader* D3D12RenderLayer::CreateVertexShader(const TArray<UInt8>& ShaderCode)
+VertexShader* D3D12RenderLayer::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
     TRef<D3D12VertexShader> Shader = DBG_NEW D3D12VertexShader(Device, ShaderCode);
     if (!D3D12BaseShader::GetShaderReflection(Shader.Get()))
@@ -1230,42 +1230,42 @@ VertexShader* D3D12RenderLayer::CreateVertexShader(const TArray<UInt8>& ShaderCo
     return Shader.ReleaseOwnership();
 }
 
-HullShader* D3D12RenderLayer::CreateHullShader(const TArray<UInt8>& ShaderCode)
+HullShader* D3D12RenderLayer::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-DomainShader* D3D12RenderLayer::CreateDomainShader(const TArray<UInt8>& ShaderCode)
+DomainShader* D3D12RenderLayer::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-GeometryShader* D3D12RenderLayer::CreateGeometryShader(const TArray<UInt8>& ShaderCode)
+GeometryShader* D3D12RenderLayer::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-MeshShader* D3D12RenderLayer::CreateMeshShader(const TArray<UInt8>& ShaderCode)
+MeshShader* D3D12RenderLayer::CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-AmplificationShader* D3D12RenderLayer::CreateAmplificationShader(const TArray<UInt8>& ShaderCode)
+AmplificationShader* D3D12RenderLayer::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-PixelShader* D3D12RenderLayer::CreatePixelShader(const TArray<UInt8>& ShaderCode)
+PixelShader* D3D12RenderLayer::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
     TRef<D3D12PixelShader> Shader = DBG_NEW D3D12PixelShader(Device, ShaderCode);
     if (!D3D12BaseShader::GetShaderReflection(Shader.Get()))
@@ -1276,7 +1276,7 @@ PixelShader* D3D12RenderLayer::CreatePixelShader(const TArray<UInt8>& ShaderCode
     return Shader.ReleaseOwnership();
 }
 
-RayGenShader* D3D12RenderLayer::CreateRayGenShader(const TArray<UInt8>& ShaderCode)
+RayGenShader* D3D12RenderLayer::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
     TRef<D3D12RayGenShader> Shader = DBG_NEW D3D12RayGenShader(Device, ShaderCode);
     if (!D3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
@@ -1290,7 +1290,7 @@ RayGenShader* D3D12RenderLayer::CreateRayGenShader(const TArray<UInt8>& ShaderCo
     }
 }
 
-RayAnyHitShader* D3D12RenderLayer::CreateRayAnyHitShader(const TArray<UInt8>& ShaderCode)
+RayAnyHitShader* D3D12RenderLayer::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
     TRef<D3D12RayAnyHitShader> Shader = DBG_NEW D3D12RayAnyHitShader(Device, ShaderCode);
     if (!D3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
@@ -1304,7 +1304,7 @@ RayAnyHitShader* D3D12RenderLayer::CreateRayAnyHitShader(const TArray<UInt8>& Sh
     }
 }
 
-RayClosestHitShader* D3D12RenderLayer::CreateRayClosestHitShader(const TArray<UInt8>& ShaderCode)
+RayClosestHitShader* D3D12RenderLayer::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
     TRef<D3D12RayClosestHitShader> Shader = DBG_NEW D3D12RayClosestHitShader(Device, ShaderCode);
     if (!D3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
@@ -1318,7 +1318,7 @@ RayClosestHitShader* D3D12RenderLayer::CreateRayClosestHitShader(const TArray<UI
     }
 }
 
-RayMissShader* D3D12RenderLayer::CreateRayMissShader(const TArray<UInt8>& ShaderCode)
+RayMissShader* D3D12RenderLayer::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
     TRef<D3D12RayMissShader> Shader = DBG_NEW D3D12RayMissShader(Device, ShaderCode);
     if (!D3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
@@ -1376,7 +1376,7 @@ BlendState* D3D12RenderLayer::CreateBlendState(const BlendStateCreateInfo& Creat
 
     Desc.AlphaToCoverageEnable  = CreateInfo.AlphaToCoverageEnable;
     Desc.IndependentBlendEnable = CreateInfo.IndependentBlendEnable;    
-    for (UInt32 i = 0; i < 8; i++)
+    for (uint32 i = 0; i < 8; i++)
     {
         Desc.RenderTarget[i].BlendEnable           = CreateInfo.RenderTarget[i].BlendEnable;
         Desc.RenderTarget[i].BlendOp               = ConvertBlendOp(CreateInfo.RenderTarget[i].BlendOp);
@@ -1441,7 +1441,7 @@ GPUProfiler* D3D12RenderLayer::CreateProfiler()
     return D3D12GPUProfiler::Create(Device);
 }
 
-Viewport* D3D12RenderLayer::CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat)
+Viewport* D3D12RenderLayer::CreateViewport(GenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
 {
     UNREFERENCED_VARIABLE(DepthFormat);
 
@@ -1469,7 +1469,7 @@ Viewport* D3D12RenderLayer::CreateViewport(GenericWindow* Window, UInt32 Width, 
     }
 }
 
-Bool D3D12RenderLayer::UAVSupportsFormat(EFormat Format)
+bool D3D12RenderLayer::UAVSupportsFormat(EFormat Format)
 {
     D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
     Memory::Memzero(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));

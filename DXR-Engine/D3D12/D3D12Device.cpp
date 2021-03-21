@@ -1,4 +1,4 @@
-#include "Application/Platform/PlatformDialogMisc.h"
+#include "Core/Application/Platform/PlatformMisc.h"
 
 #include "D3D12Device.h"
 #include "D3D12ShaderCompiler.h"
@@ -24,7 +24,7 @@ PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVersionedRo
 PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc = nullptr;
 PFN_SetMarkerOnCommandList                             SetMarkerOnCommandListFunc                        = nullptr;
 
-const Char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
+const char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
     switch (BreadCrumbOp)
     {
@@ -75,7 +75,7 @@ const Char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
     }
 }
 
-static const Char* gDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
+static const char* gDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 
 void DeviceRemovedHandler(D3D12Device* Device)
 {
@@ -123,7 +123,7 @@ void DeviceRemovedHandler(D3D12Device* Device)
         }
 
         LOG_ERROR(Message);
-        for (UInt32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
+        for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
             Message = "    " + std::string(ToString(CurrentNode->pCommandHistory[i]));
             LOG_ERROR(Message);
@@ -143,10 +143,10 @@ void DeviceRemovedHandler(D3D12Device* Device)
         fclose(File);
     }
 
-    PlatformDialogMisc::MessageBox("Error", " [D3D12] Device Removed");
+    PlatformMisc::MessageBox("Error", " [D3D12] Device Removed");
 }
 
-D3D12Device::D3D12Device(Bool InEnableDebugLayer, Bool InEnableGPUValidation, Bool InEnableDRED)
+D3D12Device::D3D12Device(bool InEnableDebugLayer, bool InEnableGPUValidation, bool InEnableDRED)
     : Factory(nullptr)
     , Adapter(nullptr)
     , Device(nullptr)
@@ -188,12 +188,12 @@ D3D12Device::~D3D12Device()
     D3D12Lib = 0;
 }
 
-Bool D3D12Device::Init()
+bool D3D12Device::Init()
 {
     DXGILib = ::LoadLibrary("dxgi.dll");
     if (DXGILib == NULL)
     {
-        PlatformDialogMisc::MessageBox("ERROR", "FAILED to load dxgi.dll");
+        PlatformMisc::MessageBox("ERROR", "FAILED to load dxgi.dll");
         return false;
     }
     else
@@ -204,7 +204,7 @@ Bool D3D12Device::Init()
     D3D12Lib = ::LoadLibrary("d3d12.dll");
     if (D3D12Lib == NULL)
     {
-        PlatformDialogMisc::MessageBox("ERROR", "FAILED to load d3d12.dll");
+        PlatformMisc::MessageBox("ERROR", "FAILED to load d3d12.dll");
         return false;
     }
     else
@@ -381,7 +381,7 @@ Bool D3D12Device::Init()
     // Create Device
     if (FAILED(D3D12CreateDeviceFunc(Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
     {
-        PlatformDialogMisc::MessageBox("ERROR", "FAILED to create device");
+        PlatformMisc::MessageBox("ERROR", "FAILED to create device");
         return false;
     }
     else
@@ -485,7 +485,7 @@ Bool D3D12Device::Init()
     return true;
 }
 
-Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount)
+int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
 {
     D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data;
     Memory::Memzero(&Data);
@@ -501,7 +501,7 @@ Int32 D3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, UInt32 SampleCount)
         return 0;
     }
 
-    return static_cast<UInt32>(Data.NumQualityLevels - 1);
+    return static_cast<uint32>(Data.NumQualityLevels - 1);
 }
 
 std::string D3D12Device::GetAdapterName() const

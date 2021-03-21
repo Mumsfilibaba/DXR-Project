@@ -13,7 +13,7 @@ D3D12GPUProfiler::D3D12GPUProfiler(D3D12Device* InDevice)
 {
 }
 
-void D3D12GPUProfiler::GetTimeQuery(TimeQuery& OutQuery, UInt32 Index) const
+void D3D12GPUProfiler::GetTimeQuery(TimeQuery& OutQuery, uint32 Index) const
 {
     if (Index >= TimeQueries.Size())
     {
@@ -26,21 +26,21 @@ void D3D12GPUProfiler::GetTimeQuery(TimeQuery& OutQuery, UInt32 Index) const
     }
 }
 
-void D3D12GPUProfiler::BeginQuery(ID3D12GraphicsCommandList* CmdList, UInt32 Index)
+void D3D12GPUProfiler::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
     Assert(Index < D3D12_DEFAULT_QUERY_COUNT);
     Assert(CmdList != nullptr);
 
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2));
 
-    UInt32 QueryCount = Index + 1;
+    uint32 QueryCount = Index + 1;
     if (QueryCount >= TimeQueries.Size())
     {
         TimeQueries.Resize(QueryCount);
     }
 }
 
-void D3D12GPUProfiler::EndQuery(ID3D12GraphicsCommandList* CmdList, UInt32 Index)
+void D3D12GPUProfiler::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
     Assert(CmdList != nullptr);
     Assert(Index < TimeQueries.Size());
@@ -57,7 +57,7 @@ void D3D12GPUProfiler::ResolveQueries(class D3D12CommandContext& CmdContext)
     Assert(CmdQueue != nullptr);
     Assert(GfxCmdList != nullptr);
 
-    UInt32 ReadIndex = CmdContext.GetCurrentEpochValue();
+    uint32 ReadIndex = CmdContext.GetCurrentEpochValue();
     if (ReadIndex >= ReadResources.Size())
     {
         if (!AllocateReadResource())
@@ -72,7 +72,7 @@ void D3D12GPUProfiler::ResolveQueries(class D3D12CommandContext& CmdContext)
     void* Data = CurrentReadResource->Map(0, nullptr);
     if (Data)
     {
-        const UInt32 SizeInBytes = TimeQueries.SizeInBytes();
+        const uint32 SizeInBytes = TimeQueries.SizeInBytes();
 
         Memory::Memcpy(TimeQueries.Data(), Data, SizeInBytes);
         CurrentReadResource->Unmap(0, nullptr);
@@ -139,7 +139,7 @@ D3D12GPUProfiler* D3D12GPUProfiler::Create(D3D12Device* InDevice)
     }
 
     // Start with three
-    for (UInt32 i = 0; i < 3; i++)
+    for (uint32 i = 0; i < 3; i++)
     {
         if (!NewProfiler->AllocateReadResource())
         {
@@ -152,7 +152,7 @@ D3D12GPUProfiler* D3D12GPUProfiler::Create(D3D12Device* InDevice)
     return NewProfiler.ReleaseOwnership();
 }
 
-Bool D3D12GPUProfiler::AllocateReadResource()
+bool D3D12GPUProfiler::AllocateReadResource()
 {
     D3D12_RESOURCE_DESC Desc;
     Memory::Memzero(&Desc);

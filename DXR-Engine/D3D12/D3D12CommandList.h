@@ -18,7 +18,7 @@ public:
     {
     }
 
-    FORCEINLINE Bool Init(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocatorHandle& Allocator,ID3D12PipelineState* InitalPipeline)
+    FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocatorHandle& Allocator,ID3D12PipelineState* InitalPipeline)
     {
         HRESULT Result = GetDevice()->GetDevice()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
         if (SUCCEEDED(Result))
@@ -44,7 +44,7 @@ public:
         }
     }
 
-    FORCEINLINE Bool Reset(D3D12CommandAllocatorHandle& Allocator)
+    FORCEINLINE bool Reset(D3D12CommandAllocatorHandle& Allocator)
     {
         IsReady = true;
 
@@ -57,7 +57,7 @@ public:
         return SUCCEEDED(Result);
     }
 
-    FORCEINLINE Bool Close()
+    FORCEINLINE bool Close()
     {
         IsReady = false;
 
@@ -70,35 +70,35 @@ public:
         return SUCCEEDED(Result);
     }
 
-    FORCEINLINE void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView, const Float Color[4], UInt32 NumRects, const D3D12_RECT* Rects)
+    FORCEINLINE void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView, const float Color[4], uint32 NumRects, const D3D12_RECT* Rects)
     {
         CmdList->ClearRenderTargetView(RenderTargetView, Color, NumRects, Rects);
     }
 
-    FORCEINLINE void ClearDepthStencilView(D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView, D3D12_CLEAR_FLAGS Flags, Float Depth, const UInt8 Stencil)
+    FORCEINLINE void ClearDepthStencilView(D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView, D3D12_CLEAR_FLAGS Flags, float Depth, const uint8 Stencil)
     {
         CmdList->ClearDepthStencilView(DepthStencilView, Flags, Depth, Stencil, 0, nullptr);
     }
 
-    FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const D3D12UnorderedAccessView* View, const Float ClearColor[4])
+    FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const D3D12UnorderedAccessView* View, const float ClearColor[4])
     {
         const D3D12Resource* Resource = View->GetResource();
         CmdList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), Resource->GetResource(), ClearColor, 0, nullptr);
     }
 
-    FORCEINLINE void CopyBufferRegion(D3D12Resource* Destination, UInt64 DestinationOffset, D3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
+    FORCEINLINE void CopyBufferRegion(D3D12Resource* Destination, uint64 DestinationOffset, D3D12Resource* Source, uint64 SourceOffset, uint64 SizeInBytes)
     {
         CopyBufferRegion(Destination->GetResource(), DestinationOffset, Source->GetResource(), SourceOffset, SizeInBytes);
     }
 
-    FORCEINLINE void CopyBufferRegion(ID3D12Resource* Destination, UInt64 DestinationOffset, ID3D12Resource* Source, UInt64 SourceOffset, UInt64 SizeInBytes)
+    FORCEINLINE void CopyBufferRegion(ID3D12Resource* Destination, uint64 DestinationOffset, ID3D12Resource* Source, uint64 SourceOffset, uint64 SizeInBytes)
     {
         CmdList->CopyBufferRegion(Destination, DestinationOffset, Source, SourceOffset, SizeInBytes);
     }
 
     FORCEINLINE void CopyTextureRegion(
         const D3D12_TEXTURE_COPY_LOCATION* Destination, 
-        UInt32 x, UInt32 y, UInt32 z, 
+        uint32 x, uint32 y, uint32 z, 
         const D3D12_TEXTURE_COPY_LOCATION* Source, 
         const D3D12_BOX* SourceBox)
     {
@@ -130,27 +130,27 @@ public:
         CmdList5->DispatchRays(Desc);
     }
 
-    FORCEINLINE void Dispatch(UInt32 ThreadGroupCountX, UInt32 ThreadGroupCountY, UInt32 ThreadGroupCountZ)
+    FORCEINLINE void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
     {
         CmdList->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
     }
 
-    FORCEINLINE void DrawInstanced(UInt32 VertexCountPerInstance, UInt32 InstanceCount, UInt32 StartVertexLocation, UInt32 StartInstanceLocation)
+    FORCEINLINE void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
     {
         CmdList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
     }
 
     FORCEINLINE void DrawIndexedInstanced(
-        UInt32 IndexCountPerInstance, 
-        UInt32 InstanceCount, 
-        UInt32 StartIndexLocation, 
-        UInt32 BaseVertexLocation, 
-        UInt32 StartInstanceLocation)
+        uint32 IndexCountPerInstance, 
+        uint32 InstanceCount, 
+        uint32 StartIndexLocation, 
+        uint32 BaseVertexLocation, 
+        uint32 StartInstanceLocation)
     {
         CmdList->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
     }
 
-    FORCEINLINE void SetDescriptorHeaps(ID3D12DescriptorHeap* const* DescriptorHeaps, UInt32 DescriptorHeapCount)
+    FORCEINLINE void SetDescriptorHeaps(ID3D12DescriptorHeap* const* DescriptorHeaps, uint32 DescriptorHeapCount)
     {
         CmdList->SetDescriptorHeaps(DescriptorHeapCount, DescriptorHeaps);
     }
@@ -175,27 +175,27 @@ public:
         CmdList->SetGraphicsRootSignature(RootSignature->GetRootSignature());
     }
 
-    FORCEINLINE void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, UInt32 RootParameterIndex)
+    FORCEINLINE void SetComputeRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, uint32 RootParameterIndex)
     {
         CmdList->SetComputeRootDescriptorTable(RootParameterIndex, BaseDescriptor);
     }
 
-    FORCEINLINE void SetGraphicsRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, UInt32 RootParameterIndex)
+    FORCEINLINE void SetGraphicsRootDescriptorTable(D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor, uint32 RootParameterIndex)
     {
         CmdList->SetGraphicsRootDescriptorTable(RootParameterIndex, BaseDescriptor);
     }
 
-    FORCEINLINE void SetGraphicsRoot32BitConstants(const Void* SourceData, UInt32 Num32BitValues, UInt32 DestOffsetIn32BitValues, UInt32 RootParameterIndex)
+    FORCEINLINE void SetGraphicsRoot32BitConstants(const void* SourceData, uint32 Num32BitValues, uint32 DestOffsetIn32BitValues, uint32 RootParameterIndex)
     {
         CmdList->SetGraphicsRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
     }
 
-    FORCEINLINE void SetComputeRoot32BitConstants(const Void* SourceData, UInt32 Num32BitValues, UInt32 DestOffsetIn32BitValues, UInt32 RootParameterIndex)
+    FORCEINLINE void SetComputeRoot32BitConstants(const void* SourceData, uint32 Num32BitValues, uint32 DestOffsetIn32BitValues, uint32 RootParameterIndex)
     {
         CmdList->SetComputeRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
     }
 
-    FORCEINLINE void IASetVertexBuffers(UInt32 StartSlot, const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, UInt32 VertexBufferViewCount)
+    FORCEINLINE void IASetVertexBuffers(uint32 StartSlot, const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, uint32 VertexBufferViewCount)
     {
         CmdList->IASetVertexBuffers(StartSlot, VertexBufferViewCount, VertexBufferViews);
     }
@@ -210,12 +210,12 @@ public:
         CmdList->IASetPrimitiveTopology(PrimitiveTopology);
     }
 
-    FORCEINLINE void RSSetViewports(const D3D12_VIEWPORT* Viewports, UInt32 ViewportCount)
+    FORCEINLINE void RSSetViewports(const D3D12_VIEWPORT* Viewports, uint32 ViewportCount)
     {
         CmdList->RSSetViewports(ViewportCount, Viewports);
     }
 
-    FORCEINLINE void RSSetScissorRects(const D3D12_RECT* ScissorRects, UInt32 ScissorRectCount)
+    FORCEINLINE void RSSetScissorRects(const D3D12_RECT* ScissorRects, uint32 ScissorRectCount)
     {
         CmdList->RSSetScissorRects(ScissorRectCount, ScissorRects);
     }
@@ -230,21 +230,21 @@ public:
         CmdList5->RSSetShadingRateImage(ShadingRateImage);
     }
 
-    FORCEINLINE void OMSetBlendFactor(const Float BlendFactor[4])
+    FORCEINLINE void OMSetBlendFactor(const float BlendFactor[4])
     {
         CmdList->OMSetBlendFactor(BlendFactor);
     }
 
     FORCEINLINE void OMSetRenderTargets(
         const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors,
-        UInt32 NumRenderTargetDescriptors,
-        BOOL RTsSingleHandleToDescriptorRange,
+        uint32 NumRenderTargetDescriptors,
+        bool RTsSingleHandleToDescriptorRange,
         const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor)
     {
         CmdList->OMSetRenderTargets(NumRenderTargetDescriptors, RenderTargetDescriptors, RTsSingleHandleToDescriptorRange, DepthStencilDescriptor);
     }
 
-    FORCEINLINE void ResourceBarrier(const D3D12_RESOURCE_BARRIER* Barriers, UInt32 NumBarriers)
+    FORCEINLINE void ResourceBarrier(const D3D12_RESOURCE_BARRIER* Barriers, uint32 NumBarriers)
     {
         CmdList->ResourceBarrier(NumBarriers, Barriers);
     }
@@ -274,7 +274,7 @@ public:
         CmdList->ResourceBarrier(1, &Barrier);
     }
 
-    FORCEINLINE Bool IsRecordning() const
+    FORCEINLINE bool IsRecordning() const
     {
         return IsReady;
     }
@@ -292,5 +292,5 @@ public:
 private:
     TComPtr<ID3D12GraphicsCommandList>  CmdList;
     TComPtr<ID3D12GraphicsCommandList5> CmdList5;
-    Bool IsReady = false;
+    bool IsReady = false;
 };

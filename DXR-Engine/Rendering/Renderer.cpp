@@ -8,7 +8,7 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
-#include "Application/Events/EventDispatcher.h"
+#include "Core/Application/Application.h"
 
 #include "RenderLayer/ShaderCompiler.h"
 
@@ -18,22 +18,24 @@
 #include <algorithm>
 #include <imgui_internal.h>
 
-static const UInt32 ShadowMapSampleCount = 2;
+static const uint32 ShadowMapSampleCount = 2;
 
-ConsoleVariable GlobalDrawTextureDebugger(EConsoleVariableType::Bool);
-ConsoleVariable GlobalDrawRendererInfo(EConsoleVariableType::Bool);
+Renderer GRenderer;
 
-ConsoleVariable GlobalEnableSSAO(EConsoleVariableType::Bool);
-ConsoleVariable GlobalEnableFXAA(EConsoleVariableType::Bool);
-ConsoleVariable GlobalEnableVariableRateShading(EConsoleVariableType::Bool);
+ConsoleVariable GDrawTextureDebugger(EConsoleVariableType::Bool);
+ConsoleVariable GDrawRendererInfo(EConsoleVariableType::Bool);
 
-ConsoleVariable GlobalPrePassEnabled(EConsoleVariableType::Bool);
-ConsoleVariable GlobalDrawAABBs(EConsoleVariableType::Bool);
-ConsoleVariable GlobalVSyncEnabled(EConsoleVariableType::Bool);
-ConsoleVariable GlobalFrustumCullEnabled(EConsoleVariableType::Bool);
-ConsoleVariable GlobalRayTracingEnabled(EConsoleVariableType::Bool);
+ConsoleVariable GEnableSSAO(EConsoleVariableType::Bool);
+ConsoleVariable GEnableFXAA(EConsoleVariableType::Bool);
+ConsoleVariable GEnableVariableRateShading(EConsoleVariableType::Bool);
 
-ConsoleVariable GlobalFXAADebug(EConsoleVariableType::Bool);
+ConsoleVariable GPrePassEnabled(EConsoleVariableType::Bool);
+ConsoleVariable GDrawAABBs(EConsoleVariableType::Bool);
+ConsoleVariable GVSyncEnabled(EConsoleVariableType::Bool);
+ConsoleVariable GFrustumCullEnabled(EConsoleVariableType::Bool);
+ConsoleVariable GRayTracingEnabled(EConsoleVariableType::Bool);
+
+ConsoleVariable GFXAADebug(EConsoleVariableType::Bool);
 
 struct CameraBufferDesc
 {
@@ -44,10 +46,10 @@ struct CameraBufferDesc
     XMFLOAT4X4 ProjectionInv;
     XMFLOAT4X4 ViewProjectionInv;
     XMFLOAT3   Position;
-    Float      NearPlane;
+    float      NearPlane;
     XMFLOAT3   Forward;
-    Float      FarPlane;
-    Float      AspectRatio;
+    float      FarPlane;
+    float      AspectRatio;
 };
 
 void Renderer::PerformFrustumCulling(const Scene& Scene)
@@ -90,18 +92,18 @@ void Renderer::PerformFXAA(CommandList& InCmdList)
     
     struct FXAASettings
     {
-        Float Width;
-        Float Height;
+        float Width;
+        float Height;
     } Settings;
 
-    Settings.Width  = static_cast<Float>(Resources.BackBuffer->GetWidth());
-    Settings.Height = static_cast<Float>(Resources.BackBuffer->GetHeight());
+    Settings.Width  = static_cast<float>(Resources.BackBuffer->GetWidth());
+    Settings.Height = static_cast<float>(Resources.BackBuffer->GetHeight());
 
     RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
     InCmdList.SetRenderTargets(&BackBufferRTV, 1, nullptr);
 
     ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
-    if (GlobalFXAADebug.GetBool())
+    if (GFXAADebug.GetBool())
     {
         InCmdList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
         InCmdList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
@@ -178,17 +180,17 @@ void Renderer::PerformAABBDebugPass(CommandList& InCmdList)
 
 void Renderer::RenderDebugInterface()
 {
-    if (GlobalDrawTextureDebugger.GetBool())
+    if (GDrawTextureDebugger.GetBool())
     {
-        constexpr Float InvAspectRatio = 16.0f / 9.0f;
-        constexpr Float AspectRatio    = 9.0f / 16.0f;
+        constexpr float InvAspectRatio = 16.0f / 9.0f;
+        constexpr float AspectRatio    = 9.0f / 16.0f;
 
-        const UInt32 WindowWidth  = gMainWindow->GetWidth();
-        const UInt32 WindowHeight = gMainWindow->GetHeight();
-        const Float Width  = Math::Max(WindowWidth * 0.6f, 400.0f);
-        const Float Height = WindowHeight * 0.75f;
+        const uint32 WindowWidth  = GApplication->Window->GetWidth();
+        const uint32 WindowHeight = GApplication->Window->GetHeight();
+        const float Width  = Math::Max(WindowWidth * 0.6f, 400.0f);
+        const float Height = WindowHeight * 0.75f;
 
-        ImGui::SetNextWindowPos(ImVec2(Float(WindowWidth) * 0.5f, Float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+        ImGui::SetNextWindowPos(ImVec2(float(WindowWidth) * 0.5f, float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
         const ImGuiWindowFlags Flags =
@@ -198,24 +200,24 @@ void Renderer::RenderDebugInterface()
             ImGuiWindowFlags_NoFocusOnAppearing |
             ImGuiWindowFlags_NoSavedSettings;
 
-        Bool TempDrawTextureDebugger = GlobalDrawTextureDebugger.GetBool();
+        bool TempDrawTextureDebugger = GDrawTextureDebugger.GetBool();
         if (ImGui::Begin("FrameBuffer Debugger", &TempDrawTextureDebugger, Flags))
         {
             ImGui::BeginChild("##ScrollBox", ImVec2(Width * 0.985f, Height * 0.125f), true, ImGuiWindowFlags_HorizontalScrollbar);
 
-            const Int32 Count = Resources.DebugTextures.Size();
-            static Int32 SelectedImage = -1;
+            const int32 Count = Resources.DebugTextures.Size();
+            static int32 SelectedImage = -1;
             if (SelectedImage >= Count)
             {
                 SelectedImage = -1;
             }
 
-            for (Int32 i = 0; i < Count; i++)
+            for (int32 i = 0; i < Count; i++)
             {
                 ImGui::PushID(i);
 
-                constexpr Float MenuImageSize = 96.0f;
-                Int32  FramePadding = 2;
+                constexpr float MenuImageSize = 96.0f;
+                int32  FramePadding = 2;
                 ImVec2 Size    = ImVec2(MenuImageSize * InvAspectRatio, MenuImageSize);
                 ImVec2 Uv0     = ImVec2(0.0f, 0.0f);
                 ImVec2 Uv1     = ImVec2(1.0f, 1.0f);
@@ -243,26 +245,26 @@ void Renderer::RenderDebugInterface()
 
             ImGui::EndChild();
 
-            const Float ImageWidth  = Width * 0.985f;
-            const Float ImageHeight = ImageWidth * AspectRatio;
-            const Int32 ImageIndex  = SelectedImage < 0 ? 0 : SelectedImage;
+            const float ImageWidth  = Width * 0.985f;
+            const float ImageHeight = ImageWidth * AspectRatio;
+            const int32 ImageIndex  = SelectedImage < 0 ? 0 : SelectedImage;
             ImGuiImage* CurrImage   = &Resources.DebugTextures[ImageIndex];
             ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
         }
 
         ImGui::End();
 
-        GlobalDrawTextureDebugger.SetBool(TempDrawTextureDebugger);
+        GDrawTextureDebugger.SetBool(TempDrawTextureDebugger);
     }
 
-    if (GlobalDrawRendererInfo.GetBool())
+    if (GDrawRendererInfo.GetBool())
     {
-        const UInt32 WindowWidth  = gMainWindow->GetWidth();
-        const UInt32 WindowHeight = gMainWindow->GetHeight();
-        const Float Width  = 300.0f;
-        const Float Height = WindowHeight * 0.8f;
+        const uint32 WindowWidth  = GApplication->Window->GetWidth();
+        const uint32 WindowHeight = GApplication->Window->GetHeight();
+        const float Width  = 300.0f;
+        const float Height = WindowHeight * 0.8f;
 
-        ImGui::SetNextWindowPos(ImVec2(Float(WindowWidth), 10.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+        ImGui::SetNextWindowPos(ImVec2(float(WindowWidth), 10.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Always);
 
         const ImGuiWindowFlags Flags = 
@@ -316,7 +318,7 @@ void Renderer::Tick(const Scene& Scene)
     Resources.ForwardVisibleCommands.Clear();
     Resources.DebugTextures.Clear();
 
-    if (!GlobalFrustumCullEnabled.GetBool())
+    if (!GFrustumCullEnabled.GetBool())
     {
         for (const MeshDrawCommand& Command : Scene.GetMeshDrawCommands())
         {
@@ -344,7 +346,7 @@ void Renderer::Tick(const Scene& Scene)
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
 
-    if (ShadingImage && GlobalEnableVariableRateShading.GetBool())
+    if (ShadingImage && GEnableVariableRateShading.GetBool())
     {
         INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin VRS Image");
         CmdList.SetShadingRate(EShadingRate::VRS_1x1);
@@ -413,7 +415,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
     CmdList.ClearDepthStencilView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), DepthStencilF(1.0f, 0));
 
-    if (GlobalPrePassEnabled.GetBool())
+    if (GPrePassEnabled.GetBool())
     {
         DeferredRenderer.RenderPrePass(CmdList, Resources);
     }
@@ -461,7 +463,7 @@ void Renderer::Tick(const Scene& Scene)
     const ColorF WhiteColor = { 1.0f, 1.0f, 1.0f, 1.0f };
     CmdList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), WhiteColor);
 
-    if (GlobalEnableSSAO.GetBool())
+    if (GEnableSSAO.GetBool())
     {
         SSAORenderer.Render(CmdList, Resources);
     }
@@ -530,7 +532,7 @@ void Renderer::Tick(const Scene& Scene)
         EResourceState::PixelShaderResource,
         EResourceState::PixelShaderResource);
 
-    if (GlobalEnableFXAA.GetBool())
+    if (GEnableFXAA.GetBool())
     {
         PerformFXAA(CmdList);
     }
@@ -539,7 +541,7 @@ void Renderer::Tick(const Scene& Scene)
         PerformBackBufferBlit(CmdList);
     }
 
-    if (GlobalDrawAABBs.GetBool())
+    if (GDrawAABBs.GetBool())
     {
         PerformAABBDebugPass(CmdList);
     }
@@ -551,7 +553,7 @@ void Renderer::Tick(const Scene& Scene)
 
         DebugUI::DrawUI([]()
         {
-            gRenderer.RenderDebugInterface();
+            GRenderer.RenderDebugInterface();
         });
 
         CmdList.SetShadingRate(EShadingRate::VRS_1x1);
@@ -577,51 +579,51 @@ void Renderer::Tick(const Scene& Scene)
 
     {
         TRACE_SCOPE("ExecuteCommandList");
-        gCmdListExecutor.ExecuteCommandList(CmdList);
+        GCmdListExecutor.ExecuteCommandList(CmdList);
     }
 
     {
         TRACE_SCOPE("Present");
-        Resources.MainWindowViewport->Present(GlobalVSyncEnabled.GetBool());
+        Resources.MainWindowViewport->Present(GVSyncEnabled.GetBool());
     }
 }
 
-Bool Renderer::Init()
+bool Renderer::Init()
 {
-    INIT_CONSOLE_VARIABLE("r.DrawTextureDebugger", GlobalDrawTextureDebugger);
-    GlobalDrawTextureDebugger.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawTextureDebugger", GDrawTextureDebugger);
+    GDrawTextureDebugger.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.DrawRendererInfo", GlobalDrawRendererInfo);
-    GlobalDrawRendererInfo.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawRendererInfo", GDrawRendererInfo);
+    GDrawRendererInfo.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.EnableSSAO", GlobalEnableSSAO);
-    GlobalEnableSSAO.SetBool(true);
+    INIT_CONSOLE_VARIABLE("r.EnableSSAO", GEnableSSAO);
+    GEnableSSAO.SetBool(true);
 
-    INIT_CONSOLE_VARIABLE("r.EnableFXAA", GlobalEnableFXAA);
-    GlobalEnableFXAA.SetBool(true);
+    INIT_CONSOLE_VARIABLE("r.EnableFXAA", GEnableFXAA);
+    GEnableFXAA.SetBool(true);
 
-    INIT_CONSOLE_VARIABLE("r.EnableVariableRateShading", GlobalEnableVariableRateShading);
-    GlobalEnableVariableRateShading.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.EnableVariableRateShading", GEnableVariableRateShading);
+    GEnableVariableRateShading.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.EnablePrePass", GlobalPrePassEnabled);
-    GlobalPrePassEnabled.SetBool(true);
+    INIT_CONSOLE_VARIABLE("r.EnablePrePass", GPrePassEnabled);
+    GPrePassEnabled.SetBool(true);
 
-    INIT_CONSOLE_VARIABLE("r.EnableDrawAABBs", GlobalDrawAABBs);
-    GlobalDrawAABBs.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.EnableDrawAABBs", GDrawAABBs);
+    GDrawAABBs.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.EnableVerticalSync", GlobalVSyncEnabled);
-    GlobalVSyncEnabled.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.EnableVerticalSync", GVSyncEnabled);
+    GVSyncEnabled.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.EnableFrustumCulling", GlobalFrustumCullEnabled);
-    GlobalFrustumCullEnabled.SetBool(true);
+    INIT_CONSOLE_VARIABLE("r.EnableFrustumCulling", GFrustumCullEnabled);
+    GFrustumCullEnabled.SetBool(true);
 
-    INIT_CONSOLE_VARIABLE("r.EnableRayTracing", GlobalRayTracingEnabled);
-    GlobalRayTracingEnabled.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.EnableRayTracing", GRayTracingEnabled);
+    GRayTracingEnabled.SetBool(false);
 
-    INIT_CONSOLE_VARIABLE("r.FXAADebug", GlobalFXAADebug);
-    GlobalFXAADebug.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.FXAADebug", GFXAADebug);
+    GFXAADebug.SetBool(false);
 
-    Resources.MainWindowViewport = CreateViewport(gMainWindow, 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
+    Resources.MainWindowViewport = CreateViewport(GApplication->Window.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
     if (!Resources.MainWindowViewport)
     {
         Debug::DebugBreak();
@@ -775,30 +777,16 @@ Bool Renderer::Init()
     LightProbeRenderer.RenderSkyLightProbe(CmdList, LightSetup, Resources);
 
     CmdList.End();
-    gCmdListExecutor.ExecuteCommandList(CmdList);
-
-    auto Callback = [](const Event& Event)->Bool
-    {
-        if (!IsEventOfType<WindowResizeEvent>(Event))
-        {
-            return false;
-        }
-
-        const WindowResizeEvent& ResizeEvent = CastEvent<WindowResizeEvent>(Event);
-        gRenderer.ResizeResources(ResizeEvent.Width, ResizeEvent.Height);
-
-        return true;
-    };
+    GCmdListExecutor.ExecuteCommandList(CmdList);
 
     // Register EventFunc
-    gEventDispatcher->RegisterEventHandler(Callback, EEventCategory::EventCategory_Window);
-
+    GApplication->OnWindowResizedEvent.AddObject(this, &Renderer::OnWindowResize);
     return true;
 }
 
 void Renderer::Release()
 {
-    gCmdListExecutor.WaitForGPU();
+    GCmdListExecutor.WaitForGPU();
 
     CmdList.Reset();
 
@@ -838,9 +826,14 @@ void Renderer::Release()
     LastFrameNumCommands      = 0;
 }
 
-Bool Renderer::InitBoundingBoxDebugPass()
+void Renderer::OnWindowResize(const WindowResizeEvent& Event)
 {
-    TArray<UInt8> ShaderCode;
+    ResizeResources(Event.Width, Event.Height);
+}
+
+bool Renderer::InitBoundingBoxDebugPass()
+{
+    TArray<uint8> ShaderCode;
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Debug.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
@@ -984,7 +977,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
     }
 
     // Create IndexBuffer
-    TStaticArray<UInt16, 24> Indices =
+    TStaticArray<uint16, 24> Indices =
     {
         0, 1,
         1, 3,
@@ -1002,7 +995,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
 
     ResourceData IndexData(Indices.Data(), Indices.SizeInBytes());
 
-    AABBIndexBuffer = CreateIndexBuffer(EIndexFormat::UInt16, Indices.Size(), BufferFlag_Default, EResourceState::Common, &IndexData);
+    AABBIndexBuffer = CreateIndexBuffer(EIndexFormat::uint16, Indices.Size(), BufferFlag_Default, EResourceState::Common, &IndexData);
     if (!AABBIndexBuffer)
     {
         Debug::DebugBreak();
@@ -1016,9 +1009,9 @@ Bool Renderer::InitBoundingBoxDebugPass()
     return true;
 }
 
-Bool Renderer::InitAA()
+bool Renderer::InitAA()
 {
-    TArray<UInt8> ShaderCode;
+    TArray<uint8> ShaderCode;
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/FullscreenVS.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
@@ -1202,7 +1195,7 @@ Bool Renderer::InitAA()
     return true;
 }
 
-Bool Renderer::InitShadingImage()
+bool Renderer::InitShadingImage()
 {
     ShadingRateSupport Support;
     CheckShadingRateSupport(Support);
@@ -1212,8 +1205,8 @@ Bool Renderer::InitShadingImage()
         return true;
     }
 
-    UInt32 Width  = Resources.MainWindowViewport->GetWidth()  / Support.ShadingRateImageTileSize;
-    UInt32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
+    uint32 Width  = Resources.MainWindowViewport->GetWidth()  / Support.ShadingRateImageTileSize;
+    uint32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
     ShadingImage = CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::ShadingRateSource, nullptr);
     if (!ShadingImage)
     {
@@ -1225,7 +1218,7 @@ Bool Renderer::InitShadingImage()
         ShadingImage->SetName("Shading Rate Image");
     }
 
-    TArray<UInt8> ShaderCode;
+    TArray<uint8> ShaderCode;
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadingImage.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
@@ -1258,7 +1251,7 @@ Bool Renderer::InitShadingImage()
     return true;
 }
 
-void Renderer::ResizeResources(UInt32 Width, UInt32 Height)
+void Renderer::ResizeResources(uint32 Width, uint32 Height)
 {
     if (!Resources.MainWindowViewport->Resize(Width, Height))
     {

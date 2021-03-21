@@ -18,24 +18,28 @@
 
 #include <imgui.h>
 
-// Common
-#include "Core.h"
-
 // Debug
 #include "Debug/Debug.h"
 
+// Core
+#include "Core.h"
+#include "Core/Types.h"
+#include "Core/CoreObject/ClassType.h"
+#include "Core/CoreObject/CoreObject.h"
+#include "Core/RefCountedObject.h"
+#include "Core/Ref.h"
+
 // Containers
-#include <Containers/Types.h>
-#include <Containers/Array.h>
-#include <Containers/ArrayView.h>
-#include <Containers/StaticArray.h>
-#include <Containers/Function.h>
-#include <Containers/SharedPtr.h>
-#include <Containers/UniquePtr.h>
-#include <Containers/Utilities.h>
+#include "Core/Containers/Array.h"
+#include "Core/Containers/ArrayView.h"
+#include "Core/Containers/StaticArray.h"
+#include "Core/Containers/Function.h"
+#include "Core/Containers/SharedPtr.h"
+#include "Core/Containers/UniquePtr.h"
+#include "Core/Containers/Utilities.h"
 
 // Application
-#include "Application/Log.h"
+#include "Core/Application/Log.h"
 
 // Utilities
 #include "Utilities/HashUtilities.h"
@@ -43,12 +47,6 @@
 
 // Math
 #include "Math/Math.h"
-
-// Core
-#include "Core/ClassType.h"
-#include "Core/CoreObject.h"
-#include "Core/RefCountedObject.h"
-#include "Core/Ref.h"
 
 // Memory
 #include "Memory/Memory.h"

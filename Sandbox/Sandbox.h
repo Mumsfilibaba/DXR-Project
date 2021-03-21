@@ -1,19 +1,15 @@
-#include <Game/Game.h>
+#include <Core/Application/Application.h>
 
-/*
-* Sandbox
-*/
+#include <Scene/Camera.h>
 
-class Sandbox : public Game
+class Sandbox : public Application
 {
 public:
-    Sandbox()   = default;
-    ~Sandbox()  = default;
-
-    virtual Bool Init() override;
+    virtual bool Init() override;
 
     virtual void Tick(Timestamp DeltaTime) override;
 
 private:
+    Camera* CurrentCamera = nullptr;
     XMFLOAT3 CameraSpeed = XMFLOAT3(0.0f, 0.0f, 0.0f);
 };

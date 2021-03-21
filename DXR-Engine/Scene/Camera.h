@@ -7,9 +7,9 @@ public:
     Camera();
     ~Camera() = default;
 
-    void Move(Float X, Float Y, Float Z);
+    void Move(float X, float Y, float Z);
 
-    void Rotate(Float Pitch, Float Yaw, Float Roll);
+    void Rotate(float Pitch, float Yaw, float Roll);
 
     void UpdateMatrices();
 
@@ -28,10 +28,10 @@ public:
     XMFLOAT3 GetUp() const { return Up; }
     XMFLOAT3 GetRight() const { return Right; }
 
-    Float GetNearPlane() const { return NearPlane; }
-    Float GetFarPlane() const { return FarPlane; }
+    float GetNearPlane() const { return NearPlane; }
+    float GetFarPlane() const { return FarPlane; }
 
-    Float GetAspectRatio() const { return AspectRatio; }
+    float GetAspectRatio() const { return AspectRatio; }
 
 private:
     XMFLOAT4X4 View;
@@ -41,9 +41,9 @@ private:
     XMFLOAT4X4 ViewProjection;
     XMFLOAT4X4 ViewProjectionInverse;
     XMFLOAT4X4 ViewProjectionNoTranslation;
-    Float NearPlane;
-    Float FarPlane;
-    Float AspectRatio;
+    float NearPlane;
+    float FarPlane;
+    float AspectRatio;
     XMFLOAT3 Position;
     XMFLOAT3 Rotation;
     XMFLOAT3 Forward;
