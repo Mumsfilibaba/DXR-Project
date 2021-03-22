@@ -26,264 +26,82 @@ void Console::Tick()
     {
         DebugUI::DrawUI([]()
         {
-            const uint32 WindowWidth  = GApplication->Window->GetWidth();
-            const uint32 WindowHeight = GApplication->Window->GetHeight();
-            const float Width         = float(WindowWidth);
-            const float Height        = float(WindowHeight) * 0.125f;
-
-            ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
-            ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
-            ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
-
-            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always, ImVec2(0.0f, 0.0f));
-            ImGui::SetNextWindowSize(ImVec2(Width, 0.0f), ImGuiCond_FirstUseEver);
-
-            ImGui::SetNextWindowSizeConstraints(ImVec2(Width, 100), ImVec2(Width, WindowHeight * 0.5f));
-
-            ImGui::Begin(
-                "Console Window",
-                nullptr,
-                ImGuiWindowFlags_NoMove            |
-                ImGuiWindowFlags_NoTitleBar        |
-                ImGuiWindowFlags_NoScrollbar       |
-                ImGuiWindowFlags_NoCollapse        |
-                ImGuiWindowFlags_NoScrollWithMouse |
-                ImGuiWindowFlags_NoSavedSettings);
-
-            ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
-
-            const ImVec2 ParentSize      = ImGui::GetWindowSize();
-            const float TextWindowWidth  = Width * 0.985f;
-            const float TextWindowHeight = ParentSize.y - 40.0f;
-            ImGui::BeginChild("##TextWindow", ImVec2(TextWindowWidth, TextWindowHeight), false, ImGuiWindowFlags_None);
-
-            for (const Line& Text : GConsole.Lines)
-            {
-                ImGui::TextColored(Text.Color, "%s", Text.String.c_str());
-            }
-
-            if (GConsole.ScrollDown)
-            {
-                ImGui::SetScrollHereY();
-                GConsole.ScrollDown = false;
-            }
-
-            ImGui::EndChild();
-
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-
-            ImGui::Text(">");
-            ImGui::SameLine();
-            
-            ImGui::PushItemWidth(TextWindowWidth - 25.0f);
-
-            const ImGuiInputTextFlags InputFlags =
-                ImGuiInputTextFlags_EnterReturnsTrue   |
-                ImGuiInputTextFlags_CallbackCompletion |
-                ImGuiInputTextFlags_CallbackHistory    |
-                ImGuiInputTextFlags_CallbackAlways     |
-                ImGuiInputTextFlags_CallbackEdit;
-
-            auto Callback = [](ImGuiInputTextCallbackData* Data)->int32
-            {
-                Console* This = reinterpret_cast<Console*>(Data->UserData);
-                return This->TextCallback(Data);
-            };
-
-            const bool Result = ImGui::InputText("###Input", GConsole.TextBuffer.Data(), GConsole.TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(&GConsole));
-            if (Result && GConsole.TextBuffer[0] != 0)
-            {
-                if (GConsole.CandidatesIndex != -1)
-                {
-                    strcpy(GConsole.TextBuffer.Data(), GConsole.PopupSelectedText.c_str());
-                    GConsole.Candidates.Clear();
-                    GConsole.CandidatesIndex      = -1;
-                    GConsole.UpdateCursorPosition = true;
-                }
-                else
-                {
-                    const std::string Text = std::string(GConsole.TextBuffer.Data());
-                    GConsole.HandleCommand(Text);
-                    GConsole.TextBuffer[0] = 0;
-                    GConsole.ScrollDown    = true;
-
-                    ImGui::SetItemDefaultFocus();
-                    ImGui::SetKeyboardFocusHere(-1);
-                }
-            }
-
-            if (ImGui::IsWindowFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
-            {
-                ImGui::SetKeyboardFocusHere(-1);
-            }
-
-            if (!GConsole.Candidates.IsEmpty())
-            {
-                bool IsActiveIndex = false;
-                bool PopupOpen     = true;
-                const ImGuiWindowFlags PopupFlags =
-                    ImGuiWindowFlags_NoTitleBar      |
-                    ImGuiWindowFlags_NoResize        |
-                    ImGuiWindowFlags_NoMove          |
-                    ImGuiWindowFlags_NoSavedSettings |
-                    ImGuiWindowFlags_NoFocusOnAppearing;
-
-                constexpr uint8 MaxCandidates = 5;
-
-                float SizeY = 0.0f;
-                if (GConsole.Candidates.Size() < MaxCandidates)
-                {
-                    SizeY = (ImGui::GetTextLineHeight() + 10.0f) * GConsole.Candidates.Size();
-                }
-                else
-                {
-                    SizeY = ImGui::GetTextLineHeight() * MaxCandidates + 10.0f;
-                }
-
-                ImGui::SetNextWindowPos(ImVec2(0.0f, ParentSize.y));
-
-                ImGui::SetNextWindowSize(ImVec2(ParentSize.x, 0.0f));
-
-                ImGui::Begin("CandidatesWindow", &PopupOpen, PopupFlags);
-
-                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 2));
-                ImGui::PushAllowKeyboardFocus(false);
-
-                float ColumnWidth = 0.0f;
-                for (const Candidate& Candidate : GConsole.Candidates)
-                {
-                    if (Candidate.TextSize.x > ColumnWidth)
-                    {
-                        ColumnWidth = Candidate.TextSize.x;
-                    }
-                }
-
-                ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
-
-                for (int32 i = 0; i < (int32)GConsole.Candidates.Size(); i++)
-                {
-                    const Candidate& Candidate = GConsole.Candidates[i];
-                    IsActiveIndex = (GConsole.CandidatesIndex == i);
-                    
-                    ImGui::PushID(i);
-                    if (ImGui::Selectable(Candidate.Text.c_str(), &IsActiveIndex))
-                    {
-                        strcpy(GConsole.TextBuffer.Data(), Candidate.Text.c_str());
-                        GConsole.PopupSelectedText = Candidate.Text;
-                        
-                        GConsole.Candidates.Clear();
-                        GConsole.CandidatesIndex      = -1;
-                        GConsole.UpdateCursorPosition = true;
-                        
-                        ImGui::PopID();
-                        break;
-                    }
-
-                    ImGui::SameLine(ColumnWidth);
-
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
-                    ImGui::Text(Candidate.PostFix.c_str());
-                    ImGui::PopStyleColor();
-
-                    ImGui::PopID();
-
-                    if (IsActiveIndex && GConsole.CandidateSelectionChanged)
-                    {
-                        ImGui::SetScrollHere();
-                        GConsole.PopupSelectedText         = Candidate.Text;
-                        GConsole.CandidateSelectionChanged = false;
-                    }
-                }
-
-                ImGui::PopStyleColor();
-                ImGui::PopStyleColor();
-
-                ImGui::PopAllowKeyboardFocus();
-                ImGui::PopStyleVar();
-                ImGui::End();
-            }
-
-            ImGui::PopItemWidth();
-
-            ImGui::PopStyleColor();
-            ImGui::PopStyleColor();
-            ImGui::PopStyleColor();
-            ImGui::PopStyleColor();
-            ImGui::PopStyleColor();
-
-            ImGui::End();
+            GConsole.DrawInterface();
         });
     }
 }
 
-void Console::RegisterCommand(const std::string& CmdName, ConsoleCommand* Command)
+void Console::RegisterCommand(const std::string& Name, ConsoleCommand* Command)
 {
-    ConsoleCommand* CurrCmd = FindCommand(CmdName);
-    if (!CurrCmd)
+    if (!RegisterObject(Name, Command))
     {
-        const uint32 Index = Commands.Size();
-        Commands.EmplaceBack(Command);
-        CmdIndexMap[CmdName] = Index;
+        LOG_WARNING("ConsoleCommand '" + Name + "' is already registered");
+    }
+}
+
+void Console::RegisterVariable(const std::string& Name, ConsoleVariable* Variable)
+{
+    if (!RegisterObject(Name, Variable))
+    {
+        LOG_WARNING("ConsoleVariable '" + Name + "' is already registered");
+    }
+}
+
+ConsoleCommand* Console::FindCommand(const std::string& Name)
+{
+    ConsoleObject* Object = FindConsoleObject(Name);
+    if (!Object)
+    {
+        LOG_ERROR("Could not find ConsoleCommand '" + Name + '\'');
+        return nullptr;
+    }
+
+    ConsoleCommand* Command = Object->AsCommand();
+    if (!Command)
+    {
+        LOG_ERROR('\'' + Name + "'Is not a ConsoleCommand'");
+        return nullptr;
     }
     else
     {
-        LOG_WARNING("ConsoleCommand '" + CmdName + "' is already registered");
+        return Command;
     }
 }
 
-void Console::RegisterVariable(const std::string& VarName, ConsoleVariable* Variable)
+ConsoleVariable* Console::FindVariable(const std::string& Name)
 {
-    ConsoleVariable* Var = FindVariable(VarName);
-    if (!Var)
+    ConsoleObject* Object = FindConsoleObject(Name);
+    if (!Object)
     {
-        const uint32 Index = Variables.Size();
-        Variables.EmplaceBack(Variable);
-        VarIndexMap[VarName] = Index;
+        LOG_ERROR("Could not find ConsoleVariable '" + Name + '\'');
+        return nullptr;
+    }
+
+    ConsoleVariable* Variable = Object->AsVariable();
+    if (!Variable)
+    {
+        LOG_ERROR('\'' + Name + "'Is not a ConsoleVariable'");
+        return nullptr;
     }
     else
     {
-        LOG_WARNING("ConsoleVariable '" + VarName + "' is already registered");
+        return Variable;
     }
-}
-
-ConsoleCommand* Console::FindCommand(const std::string& CmdName)
-{
-    auto CmdIndex = CmdIndexMap.find(CmdName.c_str());
-    if (CmdIndex != CmdIndexMap.end())
-    {
-        Assert(CmdIndex->second >= 0);
-        return Commands[CmdIndex->second];
-    }
-
-    return nullptr;
-}
-
-ConsoleVariable* Console::FindVariable(const std::string& VarName)
-{
-    auto VarIndex = VarIndexMap.find(VarName.c_str());
-    if (VarIndex != VarIndexMap.end())
-    {
-        Assert(VarIndex->second >= 0);
-        return Variables[VarIndex->second];
-    }
-
-    return nullptr;
 }
 
 void Console::PrintMessage(const std::string& Message)
 {
-    GConsole.Lines.EmplaceBack(Message, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    Lines.EmplaceBack(Message, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 }
 
 void Console::PrintWarning(const std::string& Message)
 {
-    GConsole.Lines.EmplaceBack(Message, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
+    Lines.EmplaceBack(Message, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
 }
 
 void Console::PrintError(const std::string& Message)
 {
-    GConsole.Lines.EmplaceBack(Message, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+    Lines.EmplaceBack(Message, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
 }
 
 void Console::ClearHistory()
@@ -300,12 +118,208 @@ void Console::OnKeyPressedEvent(const KeyPressedEvent& Event)
     }
 }
 
+void Console::DrawInterface()
+{
+    const uint32 WindowWidth  = GApplication->Window->GetWidth();
+    const uint32 WindowHeight = GApplication->Window->GetHeight();
+    const float Width  = float(WindowWidth);
+    const float Height = float(WindowHeight) * 0.125f;
+
+    ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
+    ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
+    ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
+
+    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always, ImVec2(0.0f, 0.0f));
+    ImGui::SetNextWindowSize(ImVec2(Width, 0.0f), ImGuiCond_FirstUseEver);
+
+    ImGui::SetNextWindowSizeConstraints(ImVec2(Width, 100), ImVec2(Width, WindowHeight * 0.5f));
+
+    const ImGuiWindowFlags StyleFlags =
+        ImGuiWindowFlags_NoMove            |
+        ImGuiWindowFlags_NoTitleBar        |
+        ImGuiWindowFlags_NoScrollbar       |
+        ImGuiWindowFlags_NoCollapse        |
+        ImGuiWindowFlags_NoScrollWithMouse |
+        ImGuiWindowFlags_NoSavedSettings;
+
+    ImGui::Begin("Console Window", nullptr, StyleFlags);
+
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
+
+    const ImVec2 ParentSize = ImGui::GetWindowSize();
+    const float TextWindowWidth  = Width * 0.985f;
+    const float TextWindowHeight = ParentSize.y - 40.0f;
+    ImGui::BeginChild("##TextWindow", ImVec2(TextWindowWidth, TextWindowHeight), false, ImGuiWindowFlags_None);
+
+    for (const Line& Text : Lines)
+    {
+        ImGui::TextColored(Text.Color, "%s", Text.String.c_str());
+    }
+
+    if (ScrollDown)
+    {
+        ImGui::SetScrollHereY();
+        ScrollDown = false;
+    }
+
+    ImGui::EndChild();
+
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+
+    ImGui::Text(">");
+    ImGui::SameLine();
+
+    ImGui::PushItemWidth(TextWindowWidth - 25.0f);
+
+    const ImGuiInputTextFlags InputFlags =
+        ImGuiInputTextFlags_EnterReturnsTrue |
+        ImGuiInputTextFlags_CallbackCompletion |
+        ImGuiInputTextFlags_CallbackHistory |
+        ImGuiInputTextFlags_CallbackAlways |
+        ImGuiInputTextFlags_CallbackEdit;
+
+    auto Callback = [](ImGuiInputTextCallbackData* Data)->int32
+    {
+        Console* This = reinterpret_cast<Console*>(Data->UserData);
+        return This->TextCallback(Data);
+    };
+
+    const bool Result = ImGui::InputText("###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(&GConsole));
+    if (Result && TextBuffer[0] != 0)
+    {
+        if (CandidatesIndex != -1)
+        {
+            strcpy(TextBuffer.Data(), PopupSelectedText.c_str());
+            
+            Candidates.Clear();
+            CandidatesIndex = -1;
+
+            UpdateCursorPosition = true;
+        }
+        else
+        {
+            const std::string Text = std::string(TextBuffer.Data());
+            HandleCommand(Text);
+
+            TextBuffer[0] = 0;
+            ScrollDown = true;
+
+            ImGui::SetItemDefaultFocus();
+            ImGui::SetKeyboardFocusHere(-1);
+        }
+    }
+
+    if (ImGui::IsWindowFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+    {
+        ImGui::SetKeyboardFocusHere(-1);
+    }
+
+    if (!Candidates.IsEmpty())
+    {
+        bool IsActiveIndex = false;
+        bool PopupOpen = true;
+        const ImGuiWindowFlags PopupFlags =
+            ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoSavedSettings |
+            ImGuiWindowFlags_NoFocusOnAppearing;
+
+        constexpr uint8 MaxCandidates = 5;
+
+        float SizeY = 0.0f;
+        if (Candidates.Size() < MaxCandidates)
+        {
+            SizeY = (ImGui::GetTextLineHeight() + 10.0f) * Candidates.Size();
+        }
+        else
+        {
+            SizeY = ImGui::GetTextLineHeight() * MaxCandidates + 10.0f;
+        }
+
+        ImGui::SetNextWindowPos(ImVec2(0.0f, ParentSize.y));
+
+        ImGui::SetNextWindowSize(ImVec2(ParentSize.x, 0.0f));
+
+        ImGui::Begin("CandidatesWindow", &PopupOpen, PopupFlags);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 2));
+        ImGui::PushAllowKeyboardFocus(false);
+
+        float ColumnWidth = 0.0f;
+        for (const Candidate& Candidate : Candidates)
+        {
+            if (Candidate.TextSize.x > ColumnWidth)
+            {
+                ColumnWidth = Candidate.TextSize.x;
+            }
+        }
+
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
+
+        for (int32 i = 0; i < (int32)Candidates.Size(); i++)
+        {
+            const Candidate& Candidate = Candidates[i];
+            IsActiveIndex = (CandidatesIndex == i);
+
+            ImGui::PushID(i);
+            if (ImGui::Selectable(Candidate.Text.c_str(), &IsActiveIndex))
+            {
+                strcpy(TextBuffer.Data(), Candidate.Text.c_str());
+                PopupSelectedText = Candidate.Text;
+
+                Candidates.Clear();
+                CandidatesIndex = -1;
+
+                UpdateCursorPosition = true;
+
+                ImGui::PopID();
+                break;
+            }
+
+            ImGui::SameLine(ColumnWidth);
+
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
+            ImGui::Text(Candidate.PostFix.c_str());
+            ImGui::PopStyleColor();
+
+            ImGui::PopID();
+
+            if (IsActiveIndex && GConsole.CandidateSelectionChanged)
+            {
+                ImGui::SetScrollHere();
+                GConsole.PopupSelectedText = Candidate.Text;
+                GConsole.CandidateSelectionChanged = false;
+            }
+        }
+
+        ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
+
+        ImGui::PopAllowKeyboardFocus();
+        ImGui::PopStyleVar();
+        ImGui::End();
+    }
+
+    ImGui::PopItemWidth();
+
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+
+    ImGui::End();
+}
+
 int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 {
     if (UpdateCursorPosition)
     {
         Data->CursorPos = int32(PopupSelectedText.length());
         PopupSelectedText.clear();
+        
         UpdateCursorPosition = false;
     }
 
@@ -336,11 +350,11 @@ int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
                 break;
             }
 
-            for (const std::pair<std::string, int32>& Index : CmdIndexMap)
+            for (const std::pair<std::string, ConsoleObject*>& Object : ConsoleObjects)
             {
-                if (WordLength <= Index.first.size())
+                if (WordLength <= Object.first.size())
                 {
-                    const char* Command = Index.first.c_str();
+                    const char* Command = Object.first.c_str();
                     int32 d = -1;
                     int32 n = WordLength;
                 
@@ -355,7 +369,25 @@ int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
 
                     if (d == 0)
                     {
-                        Candidates.EmplaceBack(Index.first, "[Cmd]");
+                        ConsoleObject* ConsoleObject = Object.second;
+                        Candidates.EmplaceBack(Object.first, "[Cmd]");
+
+                        if (Variable->IsBool())
+                        {
+                            Candidates.EmplaceBack(Index.first, "= " + std::string(Variable->GetBool() ? "true" : "false") + " [Boolean]");
+                        }
+                        else if (Variable->IsInt())
+                        {
+                            Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable->GetInt32()) + " [Integer]");
+                        }
+                        else if (Variable->IsFloat())
+                        {
+                            Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable->GetFloat()) + " [float]");
+                        }
+                        else if (Variable->IsString())
+                        {
+                            Candidates.EmplaceBack(Index.first, "= " + std::string(Variable->GetString()) + " [String]");
+                        }
                     }
                 }
             }
@@ -380,22 +412,7 @@ int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
                     if (d == 0)
                     {
                         ConsoleVariable* Variable = Variables[Index.second];
-                        if (Variable->IsBool())
-                        {
-                            Candidates.EmplaceBack(Index.first, "= " + std::string(Variable->GetBool() ? "true" : "false") + " [Boolean]");
-                        }
-                        else if (Variable->IsInt())
-                        {
-                            Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable->GetInt32()) + " [Integer]");
-                        }
-                        else if (Variable->IsFloat())
-                        {
-                            Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable->GetFloat()) + " [float]");
-                        }
-                        else if (Variable->IsString())
-                        {
-                            Candidates.EmplaceBack(Index.first, "= " + std::string(Variable->GetString()) + " [String]");
-                        }
+
                     }
                 }
             }
@@ -606,5 +623,32 @@ void Console::HandleCommand(const std::string& CmdString)
             const std::string Message = "'" + Value + "' Is an invalid value for '" + Variable + "'";
             PrintError(Message);
         }
+    }
+}
+
+bool Console::RegisterObject(const std::string& Name, ConsoleObject* Object)
+{
+    auto ExistingObject = ConsoleObjects.find(Name);
+    if (ExistingObject != ConsoleObjects.end())
+    {
+        ConsoleObjects.insert(std::make_pair(Name, Object));
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+ConsoleObject* Console::FindConsoleObject(const std::string& Name)
+{
+    auto ExisitingObject = ConsoleObjects.find(Name);
+    if (ExisitingObject != ConsoleObjects.end())
+    {
+        return ExisitingObject->second;
+    }
+    else
+    {
+        return nullptr;
     }
 }

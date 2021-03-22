@@ -32,6 +32,8 @@ class Console
 
     struct Candidate
     {
+        static constexpr float TextPadding = 20.0f;
+
         Candidate() = default;
 
         Candidate(const std::string& InText, const std::string& InPostFix)
@@ -39,7 +41,7 @@ class Console
             , PostFix(InPostFix)
         {
             TextSize = ImGui::CalcTextSize(Text.c_str());
-            TextSize.x += 20.0f;
+            TextSize.x += TextPadding;
         }
 
         std::string Text;
@@ -66,20 +68,28 @@ public:
 private:
     void OnKeyPressedEvent(const KeyPressedEvent& Event);
 
+    void DrawInterface();
+
+    bool RegisterObject(const std::string& Name, ConsoleObject* Variable);
+
+    ConsoleObject* FindConsoleObject(const std::string& Name);
+
     int32 TextCallback(ImGuiInputTextCallbackData* Data);
+
     void HandleCommand(const std::string& CmdString);
 
-    std::string PopupSelectedText;
-    std::unordered_map<std::string, int32> CmdIndexMap;
-    std::unordered_map<std::string, int32> VarIndexMap;
-    TArray<ConsoleCommand>   Commands;
-    TArray<ConsoleVariable*> Variables;
+private:
+    std::unordered_map<std::string, ConsoleObject*> ConsoleObjects;
 
-    TArray<Candidate>     Candidates;
+    std::string PopupSelectedText;
+
+    TArray<Candidate> Candidates;
     int32 CandidatesIndex = -1;
 
     TStaticArray<char, 256> TextBuffer;
-    TArray<Line>        Lines;
+
+    TArray<Line> Lines;
+
     TArray<std::string> History;
     uint32 HistoryLength = 50;
     int32  HistoryIndex   = -1;
