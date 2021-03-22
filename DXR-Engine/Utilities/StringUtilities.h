@@ -3,24 +3,69 @@
 #include <codecvt>
 #include <locale>
 
-inline std::wstring ConvertToWide(const std::string& AsciiString)
+using String  = std::string;
+using WString = std::wstring;
+
+inline WString ConvertToWide(const String& AsciiString)
 {
-    std::wstring WideString = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(AsciiString.c_str());
+    WString WideString = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(AsciiString.c_str());
     return WideString;
 }
 
-inline std::string ConvertToAscii(const std::wstring& WideString)
+inline String ConvertToAscii(const WString& WideString)
 {
-    std::string AsciiString = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(WideString.c_str());
+    String AsciiString = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(WideString.c_str());
     return AsciiString;
 }
 
-inline void ConvertBackslashes(std::string& OutString)
+inline void ConvertBackslashes(String& OutString)
 {
     size_t pos = OutString.find_first_of('\\');
-    while (pos != std::string::npos)
+    while (pos != String::npos)
     {
         OutString.replace(pos, 1, 1, '/');
         pos = OutString.find_first_of('\\', pos + 1);
     }
+}
+
+inline String& ToLower(String& InString)
+{
+    for (char& c : InString)
+    {
+        c = (char)tolower;
+    }
+
+    return InString;
+}
+
+inline String ToLower(const String& InString)
+{
+    String Result = InString;
+    for (char& c : Result)
+    {
+        c = (char)tolower;
+    }
+
+    return Result;
+}
+
+inline WString& ToLower(WString& InString)
+{
+    for (wchar_t& c : InString)
+    {
+        c = (wchar_t)towlower;
+    }
+
+    return InString;
+}
+
+inline WString ToLower(const WString& InString)
+{
+    WString Result = InString;
+    for (wchar_t& c : Result)
+    {
+        c = (wchar_t)towlower;
+    }
+
+    return Result;
 }

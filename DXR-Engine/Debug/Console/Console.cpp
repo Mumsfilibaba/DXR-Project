@@ -199,7 +199,7 @@ void Console::DrawInterface()
         else
         {
             const std::string Text = std::string(TextBuffer.Data());
-            HandleCommand(Text);
+            Execute(Text);
 
             TextBuffer[0] = 0;
             ScrollDown = true;
@@ -341,8 +341,8 @@ int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
             }
 
             Candidates.Clear();
-            CandidatesIndex           = -1;
             CandidateSelectionChanged = true;
+            CandidatesIndex           = -1;
 
             const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
             if (WordLength <= 0)
@@ -370,49 +370,32 @@ int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
                     if (d == 0)
                     {
                         ConsoleObject* ConsoleObject = Object.second;
-                        Candidates.EmplaceBack(Object.first, "[Cmd]");
+                        Assert(ConsoleObject != nullptr);
 
-                        if (Variable->IsBool())
+                        if (ConsoleObject->AsCommand())
                         {
-                            Candidates.EmplaceBack(Index.first, "= " + std::string(Variable->GetBool() ? "true" : "false") + " [Boolean]");
+                            Candidates.EmplaceBack(Object.first, "[Cmd]");
                         }
-                        else if (Variable->IsInt())
+                        else
                         {
-                            Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable->GetInt32()) + " [Integer]");
+                            ConsoleVariable* Variable = ConsoleObject->AsVariable();
+                            if (Variable->IsBool())
+                            {
+                                Candidates.EmplaceBack(Object.first, "= " + Variable->GetString() + " [Boolean]");
+                            }
+                            else if (Variable->IsInt())
+                            {
+                                Candidates.EmplaceBack(Object.first, "= " + Variable->GetString() + " [Integer]");
+                            }
+                            else if (Variable->IsFloat())
+                            {
+                                Candidates.EmplaceBack(Object.first, "= " + Variable->GetString() + " [float]");
+                            }
+                            else if (Variable->IsString())
+                            {
+                                Candidates.EmplaceBack(Object.first, "= " + Variable->GetString() + " [String]");
+                            }
                         }
-                        else if (Variable->IsFloat())
-                        {
-                            Candidates.EmplaceBack(Index.first, "= " + std::to_string(Variable->GetFloat()) + " [float]");
-                        }
-                        else if (Variable->IsString())
-                        {
-                            Candidates.EmplaceBack(Index.first, "= " + std::string(Variable->GetString()) + " [String]");
-                        }
-                    }
-                }
-            }
-
-            for (const std::pair<std::string, int32>& Index : VarIndexMap)
-            {
-                if (WordLength <= Index.first.size())
-                {
-                    const char* Var = Index.first.c_str();
-                    int32 d = -1;
-                    int32 n = WordLength;
-
-                    const char* VarIt  = Var;
-                    const char* WordIt = WordStart;
-                    while (n > 0 && (d = toupper(*WordIt) - toupper(*VarIt)) == 0)
-                    {
-                        VarIt++;
-                        WordIt++;
-                        n--;
-                    }
-
-                    if (d == 0)
-                    {
-                        ConsoleVariable* Variable = Variables[Index.second];
-
                     }
                 }
             }
@@ -453,15 +436,16 @@ int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
                 }
                 else if (!Candidates.IsEmpty() && CandidatesIndex != -1)
                 {
-                    const int32 Pos        = static_cast<int32>(WordStart - Data->Buf);
-                    const int32 Count    = WordLength;
+                    const int32 Pos   = static_cast<int32>(WordStart - Data->Buf);
+                    const int32 Count = WordLength;
                     Data->DeleteChars(Pos, Count);
                     Data->InsertChars(Data->CursorPos, PopupSelectedText.c_str());
 
-                    PopupSelectedText         = "";
+                    PopupSelectedText = "";
+
+                    Candidates.Clear();
                     CandidatesIndex           = -1;
                     CandidateSelectionChanged = true;
-                    Candidates.Clear();
                 }
             }
 
@@ -537,14 +521,49 @@ int32 Console::TextCallback(ImGuiInputTextCallbackData* Data)
     return 0;
 }
 
-void Console::HandleCommand(const std::string& CmdString)
+void Console::Execute(const std::string& CmdString)
 {
     PrintMessage(CmdString);
 
+    // Erase history
     History.EmplaceBack(CmdString);
     if (History.Size() > HistoryLength)
     {
         History.Erase(History.Begin());
+    }
+
+    const auto IsValid = [](std::string::const_iterator It) -> bool
+    {
+        char Lower = tolower(*It);
+        if (Lower >= 'a' && Lower <= 'z')
+        {
+            return true;
+        }
+        else if (Lower == '.')
+        {
+            return true;
+        }
+        else if (Lower >= '0' && Lower <= '9')
+        {
+            return true;
+        }
+
+        return false;
+    };
+
+    // Parse cmd string
+    Token NewToken;
+    for (std::string::const_iterator It = CmdString.begin(); It != CmdString.end(); It++)
+    {
+        if (IsValid(It))
+        {
+            NewToken.Name.push_back(*It);
+        }
+        else
+        {
+            Tokens.EmplaceBack(NewToken);
+            NewToken.Name.clear();
+        }
     }
 
     size_t Pos = CmdString.find_first_of(" ");
@@ -602,10 +621,7 @@ void Console::HandleCommand(const std::string& CmdString)
         {
             if (Var->IsBool())
             {
-                for (char& c : Value)
-                {
-                    c = (char)tolower(c);
-                }
+                ToLower(Value);
 
                 if (std::regex_match(Value, std::regex("(false)|(true)")))
                 {

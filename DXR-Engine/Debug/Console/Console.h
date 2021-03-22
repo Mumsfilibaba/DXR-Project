@@ -16,6 +16,11 @@
 
 class Console
 {
+    struct Token
+    {
+        std::string Name;
+    };
+
     struct Line
     {
         Line() = default;
@@ -76,7 +81,7 @@ private:
 
     int32 TextCallback(ImGuiInputTextCallbackData* Data);
 
-    void HandleCommand(const std::string& CmdString);
+    void Execute(const std::string& CmdString);
 
 private:
     std::unordered_map<std::string, ConsoleObject*> ConsoleObjects;
@@ -88,7 +93,8 @@ private:
 
     TStaticArray<char, 256> TextBuffer;
 
-    TArray<Line> Lines;
+    TArray<Line>  Lines;
+    TArray<Token> Tokens;
 
     TArray<std::string> History;
     uint32 HistoryLength = 50;

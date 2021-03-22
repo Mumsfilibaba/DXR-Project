@@ -80,7 +80,10 @@ public:
         return (T)Value;
     }
 
-    virtual String GetString() const override;
+    virtual String GetString() const override
+    {
+        return std::to_string(Value);
+    }
 
     virtual bool IsInt() const override { return false; }
     virtual bool IsFloat() const override { return false; }
@@ -104,11 +107,6 @@ template<> void TConsoleVariable<int32>::SetString(const String& InValue)
 {
     Value = atoi(InValue.c_str());
     OnChanged();
-}
-
-template<> String TConsoleVariable<int32>::GetString() const
-{
-    return std::to_string(Value);
 }
 
 template<> bool TConsoleVariable<int32>::IsInt() const 
@@ -150,6 +148,11 @@ template<> void TConsoleVariable<bool>::SetString(const String& InValue)
     {
         OnChanged();
     }
+}
+
+template<> String TConsoleVariable<bool>::GetString() const
+{
+    return Value ? "true" : "false";
 }
 
 template<> bool TConsoleVariable<bool>::IsBool() const
