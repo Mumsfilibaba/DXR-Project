@@ -47,7 +47,7 @@ void Main(ComputeShaderInput Input)
     float3 ViewPosition = PositionFromDepth(Depth, TexCoords, CameraBuffer.ProjectionInverse);
     
     float3 ViewNormal = GBufferNormals.SampleLevel(GBufferSampler, TexCoords, 0).rgb;
-    ViewNormal = UnpackNormal(ViewNormal);
+    ViewNormal = mul(float4(UnpackNormal(ViewNormal), 0.0f), CameraBuffer.View);
     
     const float2 NoiseScale = ScreenSize / NoiseSize;
     const float3 NoiseVec   = normalize(Noise.SampleLevel(NoiseSampler, TexCoords * NoiseScale, 0));

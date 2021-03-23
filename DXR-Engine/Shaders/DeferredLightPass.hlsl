@@ -287,11 +287,12 @@ void Main(ComputeShaderInput Input)
         float HdotV = saturate(dot(H, V));
     
         float  D = DistributionGGX(N, H, GBufferRoughness);
-        float  G = GeometrySmithGGX(N, L, V, GBufferRoughness);
+        float  G = GeometrySmithGGX_IBL(N, L, V, GBufferRoughness);
         float3 F = FresnelSchlick_Roughness(F0, V, N, GBufferRoughness);
         float3 Numer = D * F * G;
         float3 Denom = Float3(max(4.0f * NdotL * NdotV, 0.0001f));
     
+        // TODO: Take diffuse into account aswell
         float3 Diff_BRDF = GBufferAlbedo * INV_PI;
         float  Diff_PDF  = NdotL * INV_PI;
 
@@ -302,7 +303,7 @@ void Main(ComputeShaderInput Input)
         float  Spec_PDF  = D * NdotH / (4.0f * HdotV);
 
         float3 Reflection = DXRReflection.Load(int3(TexCoord, 0)).rgb;
-        L0 += Reflection * NdotL * (Spec_BRDF + Diff_BRDF * Kd) / ((Spec_PDF + Diff_PDF) * 0.5f);
+        L0 += Reflection * NdotL * Spec_BRDF / Spec_PDF;
         
         float3 Ambient = GBufferAlbedo * GBufferAO * 0.1f;
         FinalColor = Ambient + L0;

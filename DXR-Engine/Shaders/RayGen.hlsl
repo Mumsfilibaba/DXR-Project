@@ -66,7 +66,16 @@ void RayGen()
     Xi.x = frac(Xi.x + Rnd0);
     Xi.y = frac(Xi.y + Rnd1);
     
-    float3 H = ImportanceSampleGGX(Xi, Roughness, N);
+    float3 H = Float3(0.0f);
+    if (Roughness > 0.075f)
+    {
+        H = ImportanceSampleGGX(Xi, Roughness, N);
+    }
+    else
+    {
+        H = N;
+    }
+    
     float3 L = normalize(reflect(-V, H));
     
     float NdotL = saturate(dot(N, L));

@@ -270,7 +270,7 @@ void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, FrameResources& 
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource);
 
-    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 1);
     CmdList.SetShaderResourceView(SSAOShader.Get(), SSAONoiseTex->GetShaderResourceView(), 2);
     CmdList.SetShaderResourceView(SSAOShader.Get(), SSAOSamplesSRV.Get(), 3);

@@ -205,8 +205,8 @@ void RayTracer::Release()
     RTSpatialPSO.Reset();
     RTSpatialShader.Reset();
     RTColorDepth.Reset();
-    RTMomentBuffer.Reset();
-    RTHistory.Reset();
+    RTHistory0.Reset();
+    RTHistory1.Reset();
     RTReconstructed.Reset();
     BlurHorizontalPSO.Reset();
     BlurHorizontalShader.Reset();
@@ -317,7 +317,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     Resources.GlobalResources.AddShaderResourceView(Resources.RTScene->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.Skybox->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView());
-    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.BlueNoise->GetShaderResourceView());
@@ -365,17 +365,26 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), RTColorDepth->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.RTRayPDF->GetShaderResourceView(), 1);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView(), 2);
-    CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 3);
+    CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 4);
-    //CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetShaderResourceView(), 5);
-    //CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.BlueNoise->GetShaderResourceView(), 5);
+    CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetShaderResourceView(), 5);
 
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTReconstructed->GetUnorderedAccessView(), 0);
-    //CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), Resources.RTReflections->GetUnorderedAccessView(), 1);
-    //CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTMomentBuffer->GetUnorderedAccessView(), 2);
+
+    if (FrameIndex & 1)
+    {
+        CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTHistory0->GetUnorderedAccessView(), 1);
+        CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTHistory1->GetUnorderedAccessView(), 2);
+    }
+    else
+    {
+        CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTHistory1->GetUnorderedAccessView(), 1);
+        CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTHistory0->GetUnorderedAccessView(), 2);
+    }
+    
+    CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), Resources.RTReflections->GetUnorderedAccessView(), 3);
     
     CmdList.SetConstantBuffer(RTSpatialShader.Get(), Resources.CameraBuffer.Get(), 0);
-    //CmdList.SetConstantBuffer(RTSpatialShader.Get(), RandomDataBuffer.Get(), 1);
 
     XMUINT3 ThreadGroup = RTSpatialShader->GetThreadGroupXYZ();
     Width  = Math::DivideByMultiple(RTReconstructed->GetWidth(), ThreadGroup.x);
@@ -389,10 +398,10 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.TransitionTexture(RTColorDepth.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
     CmdList.TransitionTexture(Resources.RTRayPDF.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
 
-    CmdList.UnorderedAccessTextureBarrier(RTHistory.Get());
-    CmdList.UnorderedAccessTextureBarrier(Resources.RTReflections.Get());
-    CmdList.UnorderedAccessTextureBarrier(RTMomentBuffer.Get());
     CmdList.UnorderedAccessTextureBarrier(RTReconstructed.Get());
+    CmdList.UnorderedAccessTextureBarrier(RTHistory0.Get());
+    CmdList.UnorderedAccessTextureBarrier(RTHistory1.Get());
+    CmdList.UnorderedAccessTextureBarrier(Resources.RTReflections.Get());
 
     {
         GPU_TRACE_SCOPE(CmdList, "RT Bilateral Filter");
@@ -434,8 +443,14 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
         EResourceState::UnorderedAccess);
 
     Resources.DebugTextures.EmplaceBack(
-        MakeSharedRef<ShaderResourceView>(RTHistory->GetShaderResourceView()),
-        RTHistory,
+        MakeSharedRef<ShaderResourceView>(RTHistory0->GetShaderResourceView()),
+        RTHistory0,
+        EResourceState::UnorderedAccess,
+        EResourceState::UnorderedAccess);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(RTHistory1->GetShaderResourceView()),
+        RTHistory1,
         EResourceState::UnorderedAccess,
         EResourceState::UnorderedAccess);
 
@@ -466,15 +481,26 @@ Bool RayTracer::CreateRenderTargets(FrameResources& Resources)
         Resources.RTReflections->SetName("RT Reflections");
     }
 
-    RTHistory = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
-    if (!RTHistory)
+    RTHistory0 = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!RTHistory0)
     {
         Debug::DebugBreak();
         return false;
     }
     else
     {
-        RTHistory->SetName("RT History");
+        RTHistory0->SetName("RT History0");
+    }
+
+    RTHistory1 = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    if (!RTHistory1)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RTHistory1->SetName("RT History1");
     }
 
     RTReconstructed = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
@@ -486,17 +512,6 @@ Bool RayTracer::CreateRenderTargets(FrameResources& Resources)
     else
     {
         RTReconstructed->SetName("RT Reconstructed");
-    }
-
-    RTMomentBuffer = CreateTexture2D(EFormat::R16G16_Float, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
-    if (!RTMomentBuffer)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        RTMomentBuffer->SetName("RayTracing Moment Buffer");
     }
 
     // Trace at half resolution

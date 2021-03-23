@@ -30,7 +30,6 @@ struct VSInput
 struct VSOutput
 {
     float3 Normal           : NORMAL0;
-    float3 ViewNormal       : NORMAL1;
     float3 Tangent          : TANGENT0;
     float3 Bitangent        : BITANGENT0;
     float2 TexCoord         : TEXCOORD0;
@@ -48,9 +47,6 @@ VSOutput VSMain(VSInput Input)
     const float4x4 TransformInv = TransformBuffer.TransformInv;
     float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
     Output.Normal = Normal;
-    
-    float3 ViewNormal = mul(float4(Normal, 0.0f), CameraBuffer.View).xyz;
-    Output.ViewNormal = ViewNormal;
     
     float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), TransformInv).xyz);
     Tangent        = normalize(Tangent - dot(Tangent, Normal) * Normal);
@@ -75,7 +71,6 @@ VSOutput VSMain(VSInput Input)
 struct PSInput
 {
     float3 Normal           : NORMAL0;
-    float3 ViewNormal       : NORMAL1;
     float3 Tangent          : TANGENT0;
     float3 Bitangent        : BITANGENT0;
     float2 TexCoord         : TEXCOORD0;
@@ -90,8 +85,8 @@ struct PSOutput
     float4 Albedo     : SV_Target0;
     float4 Normal     : SV_Target1;
     float4 Material   : SV_Target2;
-    float4 ViewNormal : SV_Target3;
-    float2 Velocity   : SV_Target4;
+    float4 GeomNormal : SV_Target3;
+    float4 Velocity   : SV_Target4;
 };
 
 static const float HEIGHT_SCALE = 0.03f;
@@ -159,7 +154,6 @@ PSOutput PSMain(PSInput Input)
     float3 Bitangent    = normalize(Input.Bitangent);
     float3 Normal       = normalize(Input.Normal);
     float3 MappedNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
-
     MappedNormal = PackNormal(MappedNormal);
 
     float SampledAO        = AOMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.AO;
@@ -185,7 +179,7 @@ PSOutput PSMain(PSInput Input)
     Output.Albedo     = float4(SampledAlbedo, 1.0f);
     Output.Normal     = float4(MappedNormal, 0.0f);
     Output.Material   = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
-    Output.ViewNormal = float4(PackNormal(Input.ViewNormal), 0.0f);
-    Output.Velocity   = Velocity;
+    Output.GeomNormal = float4(PackNormal(Normal), 0.0f);
+    Output.Velocity   = float4(Velocity, length(fwidth(Normal)), 0.0f);
     return Output;
 }

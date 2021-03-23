@@ -9,21 +9,23 @@
 #define NUM_THREADS 16
 #define NUM_SAMPLES 16
 
-ConstantBuffer<Camera>     CameraBuffer : register(b0);
-ConstantBuffer<RandomData> RandomBuffer : register(b1);
+#define MAX_TEMPORAL_FRAMES 64
+
+ConstantBuffer<Camera> CameraBuffer : register(b0);
 
 Texture2D<float4> ColorDepthTex      : register(t0);
 Texture2D<float4> RayPDFTex          : register(t1);
 Texture2D<float4> GBufferAlbedoTex   : register(t2);
 Texture2D<float4> GBufferNormalsTex  : register(t3);
 Texture2D<float4> GBufferMaterialTex : register(t4);
-Texture2D<float2> GBuffervelocityTex : register(t5);
+Texture2D<float4> GBufferVelocityTex : register(t5);
 
-Texture2DArray<float4> BlueNoiseTex : register(t6);
+RWTexture2D<float4> Reconstructed  : register(u0);
+RWTexture2D<float4> PrevHistory    : register(u1);
+RWTexture2D<float4> History        : register(u2);
+RWTexture2D<float4> Reflections    : register(u3);
 
-RWTexture2D<float4> Reconstructed : register(u0);
-RWTexture2D<float4> History       : register(u1);
-
+// Blue noise classified 
 static const float2 RaySamples[4][16] =
 {
     {
@@ -52,10 +54,45 @@ static const float2 RaySamples[4][16] =
     }
 };
 
-float ValidateSample(float3 N, float3 NeighbourN, float Depth, float NeightbourDepth)
+float ValidateSample(float3 N, float FwidthN, float3 NeighbourN, float Depth, float NeightbourDepth)
 {
-    float Diff = abs(Depth - NeightbourDepth);
-    return (Diff < 0.0005f && Depth < 1.0f && NeightbourDepth < 1.0f) ? 1.0f : 0.0f;
+    bool Result = (distance(N, NeighbourN) / (FwidthN + 1e-2f)) < 16.0f;
+    return (Result && Depth < 1.0f && NeightbourDepth < 1.0f) ? 1.0f : 0.0f;
+}
+
+float ValidateReprojection(uint2 TexCoords, float3 N, float FwidthN, float3 NeighbourN)
+{
+    uint Width;
+    uint Height;
+    PrevHistory.GetDimensions(Width, Height);
+    
+    bool Result = TexCoords.x >= 0 && TexCoords.x <= Width && TexCoords.y >= 0 && TexCoords.y <= Height;
+    return (Result && ((distance(N, NeighbourN) / (FwidthN + 1e-2f)) < 16.0f)) ? 1.0f : 0.0f;
+}
+
+float4 LoadHistory(int2 TexCoords, float3 N, float3 Min, float3 Max, out float Valid)
+{
+    uint Width;
+    uint Height;
+    PrevHistory.GetDimensions(Width, Height);
+    float2 Size = float2(Width, Height);
+    
+    // Sample motion vectors
+    float2 GBufferVelocity = GBufferVelocityTex[TexCoords].xy;
+    int2 Velocity      = int2(GBufferVelocity * Size);
+    int2 HistoryCoords = TexCoords - Velocity;
+    
+    float4 HistorySample0 = PrevHistory[HistoryCoords];
+    HistorySample0.rgb = clamp(HistorySample0.rgb, Min, Max);
+    
+    float3 HistoryN = UnpackNormal(GBufferNormalsTex[HistoryCoords].xyz);
+    float  HistoryFWidthN = GBufferVelocityTex[HistoryCoords].z;
+    
+    Valid = ValidateReprojection(HistoryCoords, N, HistoryFWidthN, HistoryN);
+    
+    float History = lerp(0.0f, HistorySample0.a, Valid);
+    History = min((float) MAX_TEMPORAL_FRAMES, History + 1.0f);
+    return float4(HistorySample0.rgb, History);
 }
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
@@ -89,71 +126,71 @@ void Main(ComputeShaderInput Input)
     if (length(GBufferNormals.xyz) == 0.0f)
     {
         Reconstructed[TexCoords] = Float4(0.0f);
+        History[TexCoords]       = Float4(0.0f);
+        Reflections[TexCoords]   = Float4(0.0f);
         return;
     }
     
     float3 F0 = Float3(0.04f);
     F0 = lerp(F0, Albedo, Metallic);
 
-    float3 WeightSum = Float3(0.01f);
-    uint Seed  = InitRandom(TexCoords.xy, Width, RandomBuffer.FrameIndex);
     uint PxIdx = TexCoords.x % 2 + (TexCoords.y % 2) * 2;
     
-    int KernelWidth = int(floor(lerp(1.0f, 16.0f, min(Roughness, 0.35f) / 0.35f)));
+    int KernelWidth = int(floor(lerp(1.0f, (float)NUM_SAMPLES, min(Roughness, 0.35f) / 0.35f)));
     
-    float3 Result = Float3(0.0f);
+    float3 WeightSum = Float3(0.0f);
+    float3 Result    = Float3(0.0f);
+    float3 Moment1   = Float3(0.0f);
+    float3 Moment2   = Float3(0.0f);
+    float3 BoxMin = Float3(FLT32_MAX);
+    float3 BoxMax = Float3(0.0f);
     for (int i = 0; i < KernelWidth; i++)
     {
-        //int Rnd0 = (TexCoords.x + NextRandomInt(Seed)) % 64;
-        //int Rnd1 = (TexCoords.y + NextRandomInt(Seed)) % 64;
-        
-        //const int2 Pixel = int2(Rnd0, Rnd1);
-        //const int  TextureIndex = y & 63;
-        
-        //float4 BlueNoise = BlueNoiseTex.Load(int4(Pixel, TextureIndex, 0));
-        //float2 Rnd = trunc(mad(BlueNoise.xy, 2.0f, -1.0f) * KernelWidth);
-        //float2 Rnd = i == 0 ? Float2(0.0f) : trunc(PoissonSamples[i] * KernelWidth);
-        //int2 LocalTexCoord = HalfTexCoords + int2(Rnd);
-        
-        //float2 Random = float2(NextRandom(Seed), NextRandom(Seed));
-        //float2x2 Mat  = float2x2(Random.x, Random.y, -Random.y, Random.x);
         float2 Offset = RaySamples[PxIdx][i];
-        //Offset = mul(Mat, Offset);
-        int2 LocalTexCoord = HalfTexCoords + int2(Offset);
+        int2   LocalTexCoord = HalfTexCoords + int2(Offset);
             
         float4 RayPDF = RayPDFTex[LocalTexCoord];
-        float3 L = normalize(RayPDF.xyz);
+        float  RayLength = length(RayPDF.xyz);
+        float3 L = RayPDF.xyz / RayLength;
 
         if (RayPDF.a > 0.0f)
         {
             float3 H = normalize(V + L);
-            
+
             float NdotL = saturate(dot(N, L));
             float NdotV = saturate(dot(N, V));
             float NdotH = saturate(dot(N, H));
             float HdotV = saturate(dot(H, V));
             
             float4 SampleColorDepth = ColorDepthTex[LocalTexCoord];
-            float3 Li = SampleColorDepth.rgb;
+            float3 Li = saturate(SampleColorDepth.rgb);
             
-            float3 SampleN = UnpackNormal(GBufferNormalsTex[LocalTexCoord * 2].xyz);
+            uint2  FullLocalTexCoord = LocalTexCoord * 2;
+            float3 SampleN = UnpackNormal(GBufferNormalsTex[FullLocalTexCoord].xyz);
+            float  FWidthN = GBufferVelocityTex[FullLocalTexCoord].z;
             
-            float D = DistributionGGX(N, H, Roughness);
-            float G = GeometrySmithGGX(N, L, V, Roughness);
-            float3 F = FresnelSchlick(F0, N, H);
+            float  D = DistributionGGX(N, H, Roughness);
+            float  G = GeometrySmithGGX(N, L, V, Roughness);
+            float3 F = FresnelSchlick(F0, V, H);
             float3 Numer = D * F * G;
-            float3 Denom = Float3(4.0f * NdotL * NdotV);
+            float  Denom = 4.0f * NdotL * NdotV;
     
             float3 Spec_BRDF = Numer / Denom;
             float  Spec_PDF  = RayPDF.a;
             
-            float  Valid  = ValidateSample(N, SampleN, ColorDepth.w, SampleColorDepth.w);
+            float  Valid  = ValidateSample(N, FWidthN, SampleN, ColorDepth.w, SampleColorDepth.w);
             float3 Weight = Valid * NdotL * Spec_BRDF * Spec_PDF;
             Weight = IsNan(Weight) || IsInf(Weight) ? Float3(0.0f) : Weight;
-                
+            
             float3 LocalResult = Li * Weight;
-            Result += LocalResult;
+            Result    += LocalResult;
             WeightSum += Weight;
+            
+            Moment1 += Li;
+            Moment2 += Li * Li;
+            
+            BoxMin = min(BoxMin, Li);
+            BoxMax = max(BoxMax, Li);
         }
     }
     
@@ -163,11 +200,19 @@ void Main(ComputeShaderInput Input)
     }
     else
     {
-        Result = ColorDepth.rgb;
+        Result = saturate(ColorDepth.rgb);
     }
     
-    
-    
-    
     Reconstructed[TexCoords] = float4(Result, 0.0f);
+    
+    float  Valid = 0.0f;
+    float4 HistorySample = LoadHistory(TexCoords, N, BoxMin, BoxMax, Valid);
+    float  NumHistorySamples = HistorySample.a;
+    float3 Sample            = HistorySample.rgb;
+    
+    const float HistoryUsage = lerp(1.0f, min(0.98f, 1.0f / NumHistorySamples), Valid);
+    float3 Color = Sample * (1.0f - HistoryUsage) + Result * HistoryUsage;
+    
+    History[TexCoords]     = float4(Color, NumHistorySamples);
+    Reflections[TexCoords] = float4(Color, Roughness);
 }

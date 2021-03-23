@@ -134,7 +134,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = FrameResources.AlbedoFormat;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[1] = FrameResources.NormalFormat;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[2] = FrameResources.MaterialFormat;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[3] = FrameResources.ViewNormalFormat;
+        PipelineStateInfo.PipelineFormats.RenderTargetFormats[3] = FrameResources.GeomNormalFormat;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[4] = FrameResources.VelocityFormat;
         PipelineStateInfo.PipelineFormats.NumRenderTargets       = 5;
 
@@ -489,7 +489,7 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
         FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(),
         FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(),
         FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(),
-        FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(),
+        FrameResources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetRenderTargetView(),
         FrameResources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetRenderTargetView(),
     };
     CmdList.SetRenderTargets(RenderTargets, ArrayCount(RenderTargets), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
@@ -696,15 +696,15 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
         return false;
     }
 
-    // View Normal
-    FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = CreateTexture2D(
-        FrameResources.ViewNormalFormat, 
+    // Geometric Normal
+    FrameResources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX] = CreateTexture2D(
+        FrameResources.GeomNormalFormat, 
         Width, Height, 1, 1, Usage, 
         EResourceState::Common, 
         nullptr);
-    if (FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX])
+    if (FrameResources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX])
     {
-        FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->SetName("GBuffer ViewNormal");
+        FrameResources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->SetName("GBuffer Geometric Normal");
     }
     else
     {

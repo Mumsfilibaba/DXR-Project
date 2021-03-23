@@ -153,7 +153,7 @@ void Main(ComputeShaderInput Input)
             float  G = GeometrySmithGGX(N, L, V, Roughness);
             float3 F = FresnelSchlick(F0, N, H);
             float3 Numer = D * F * G;
-            float3 Denom = Float3(4.0f * NdotL * NdotV);
+            float  Denom = 4.0f * NdotL * NdotV;
     
             float3 Spec_BRDF = Numer / Denom;
             float  Spec_PDF  = RayPDF.a;

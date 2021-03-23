@@ -11,7 +11,7 @@
 #define GBUFFER_NORMAL_INDEX      1
 #define GBUFFER_MATERIAL_INDEX    2
 #define GBUFFER_DEPTH_INDEX       3
-#define GBUFFER_VIEW_NORMAL_INDEX 4
+#define GBUFFER_GEOM_NORMAL_INDEX 4
 #define GBUFFER_VELOCITY_INDEX    5
 
 template<typename TResource>
@@ -70,8 +70,8 @@ struct FrameResources
     const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
     const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
     const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
-    const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
-    const EFormat VelocityFormat     = EFormat::R16G16_Float;
+    const EFormat GeomNormalFormat   = EFormat::R10G10B10A2_Unorm;
+    const EFormat VelocityFormat     = EFormat::R16G16B16A16_Float;
 
     Texture2D* BackBuffer = nullptr;
 

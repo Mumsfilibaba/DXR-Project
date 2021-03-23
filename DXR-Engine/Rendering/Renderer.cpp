@@ -390,7 +390,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
-    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VELOCITY_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
 
@@ -398,7 +398,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(), BlackClearColor);
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(), BlackClearColor);
-    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
+    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
     CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetRenderTargetView(), BlackClearColor);
     CmdList.ClearDepthStencilView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), DepthStencilF(1.0f, 0));
 
@@ -435,11 +435,11 @@ void Renderer::Tick(const Scene& Scene)
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource);
 
-    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
-        MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView()),
-        Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX],
+        MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView()),
+        Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource);
 

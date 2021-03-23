@@ -676,7 +676,6 @@ void DebugUI::Render(CommandList& CmdList)
                 if (Image->BeforeState != EResourceState::PixelShaderResource)
                 {
                     CmdList.TransitionTexture(Image->Image.Get(), Image->BeforeState, EResourceState::PixelShaderResource);
-
                     // TODO: Another way to do this? May break somewhere?
                     Image->BeforeState = EResourceState::PixelShaderResource;
                 }

@@ -44,6 +44,6 @@ private:
 
     TRef<Texture2D> RTColorDepth;
     TRef<Texture2D> RTReconstructed;
-    TRef<Texture2D> RTHistory;
-    TRef<Texture2D> RTMomentBuffer;
+    TRef<Texture2D> RTHistory0;
+    TRef<Texture2D> RTHistory1;
 };

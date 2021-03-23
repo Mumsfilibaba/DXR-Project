@@ -55,7 +55,7 @@ float DistributionGGX(float3 N, float3 H, float Roughness)
     float Alpha2 = Alpha * Alpha;
     float NdotH  = saturate(dot(N, H));
     float Denom  = NdotH * NdotH * (Alpha2 - 1.0f) + 1.0f;
-    return Alpha2 / max(PI * Denom * Denom, 0.0001f);
+    return Alpha2 / max(PI * Denom * Denom, 1e-6);
 }
 
 // Fresnel Schlick
