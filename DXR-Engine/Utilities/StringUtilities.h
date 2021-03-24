@@ -32,7 +32,7 @@ inline String& ToLower(String& InString)
 {
     for (char& c : InString)
     {
-        c = (char)tolower;
+        c = (char)tolower(c);
     }
 
     return InString;
@@ -43,7 +43,7 @@ inline String ToLower(const String& InString)
     String Result = InString;
     for (char& c : Result)
     {
-        c = (char)tolower;
+        c = (char)tolower(c);
     }
 
     return Result;
@@ -53,7 +53,7 @@ inline WString& ToLower(WString& InString)
 {
     for (wchar_t& c : InString)
     {
-        c = (wchar_t)towlower;
+        c = (wchar_t)towlower(c);
     }
 
     return InString;
@@ -64,7 +64,7 @@ inline WString ToLower(const WString& InString)
     WString Result = InString;
     for (wchar_t& c : Result)
     {
-        c = (wchar_t)towlower;
+        c = (wchar_t)towlower(c);
     }
 
     return Result;

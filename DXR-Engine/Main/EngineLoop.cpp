@@ -29,8 +29,6 @@ bool EngineLoop::PreInit()
 {
     TRACE_FUNCTION_SCOPE();
 
-    Profiler::Init();
-
     GConsoleOutput = PlatformOutputDevice::Create();
     if (!GConsoleOutput)
     {
@@ -40,6 +38,8 @@ bool EngineLoop::PreInit()
     {
         GConsoleOutput->SetTitle("DXR-Engine Error Output");
     }
+
+    Profiler::Init();
 
     if (!PlatformApplication::Get().Init())
     {

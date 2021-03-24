@@ -17,8 +17,8 @@ constexpr float INV_SECONDS      = 1.0f / SECONDS;
 
 constexpr float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
-TConsoleVariable<bool> GDrawProfiler;
-TConsoleVariable<bool> GDrawFps;
+TConsoleVariable<bool> GDrawProfiler(false);
+TConsoleVariable<bool> GDrawFps(false);
 
 struct ProfileSample
 {
@@ -269,7 +269,7 @@ static void DrawFPS()
 
     ImGui::SetNextWindowPos(ImVec2(float(WindowWidth), 0.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
 
-    ImGuiWindowFlags Flags =
+    const ImGuiWindowFlags Flags =
         ImGuiWindowFlags_NoDecoration |
         ImGuiWindowFlags_NoInputs |
         ImGuiWindowFlags_AlwaysAutoResize |
@@ -634,11 +634,8 @@ static void DrawProfiler()
 
 void Profiler::Init()
 {
-    INIT_CONSOLE_VARIABLE("r.DrawFps", GDrawFps);
-    GDrawFps.SetBool(false);
-
-    INIT_CONSOLE_VARIABLE("r.DrawProfiler", GDrawProfiler);
-    GDrawProfiler.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawFps", &GDrawFps);
+    INIT_CONSOLE_VARIABLE("r.DrawProfiler", &GDrawProfiler);
 }
 
 void Profiler::Tick()

@@ -14,7 +14,7 @@
 
 #include "Core/Application/Application.h"
 
-#include "Debug/Console.h"
+#include "Debug/Console/Console.h"
 
 #include <imgui_internal.h>
 
@@ -22,7 +22,7 @@ static float MainMenuBarHeight = 0.0f;
 
 static bool ShowRenderSettings = false;
 
-ConsoleVariable GShowSceneGraph(EConsoleVariableType::Bool);
+TConsoleVariable<bool> GShowSceneGraph(false);
 
 static void DrawMenu();
 static void DrawSideWindow();
@@ -785,8 +785,7 @@ static void DrawSceneInfo()
 
 void Editor::Init()
 {
-    INIT_CONSOLE_VARIABLE("ShowSceneGraph", GShowSceneGraph);
-    GShowSceneGraph.SetBool(false);
+    INIT_CONSOLE_VARIABLE("ShowSceneGraph", &GShowSceneGraph);
 }
 
 void Editor::Tick()

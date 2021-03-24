@@ -67,17 +67,17 @@ public:
 
     virtual int32 GetInt() const override
     {
-        return (T)Value;
+        return (int32)Value;
     }
 
     virtual float GetFloat() const override
     {
-        return (T)Value;
+        return (float)Value;
     }
 
     virtual bool GetBool() const override
     {
-        return (T)Value;
+        return (bool)Value;
     }
 
     virtual String GetString() const override
@@ -103,31 +103,31 @@ private:
 };
 
 // int32
-template<> void TConsoleVariable<int32>::SetString(const String& InValue)
+template<> inline void TConsoleVariable<int32>::SetString(const String& InValue)
 {
     Value = atoi(InValue.c_str());
     OnChanged();
 }
 
-template<> bool TConsoleVariable<int32>::IsInt() const 
+template<> inline bool TConsoleVariable<int32>::IsInt() const
 { 
     return true; 
 }
 
 // float
-template<> void TConsoleVariable<float>::SetString(const String& InValue)
+template<> inline void TConsoleVariable<float>::SetString(const String& InValue)
 {
     Value = (float)atof(InValue.c_str());
     OnChanged();
 }
 
-template<> bool TConsoleVariable<float>::IsFloat() const
+template<> inline bool TConsoleVariable<float>::IsFloat() const
 {
     return true;
 }
 
 // bool
-template<> void TConsoleVariable<bool>::SetString(const String& InValue)
+template<> inline void TConsoleVariable<bool>::SetString(const String& InValue)
 {
     String Lower = InValue;
     for (char& c : Lower)
@@ -135,13 +135,18 @@ template<> void TConsoleVariable<bool>::SetString(const String& InValue)
         c = (char)tolower(c);
     }
 
+    int32 Number = 0;
     std::istringstream Stream(Lower);
-    Stream >> std::boolalpha >> Value;
+    Stream >> Number;
 
     if (Stream.fail())
     {
         Stream.clear();
-        Stream >> Value;
+        Stream >> std::boolalpha >> Value;
+    }
+    else
+    {
+        Value = (bool)Number;
     }
 
     if (!Stream.fail())
@@ -150,40 +155,60 @@ template<> void TConsoleVariable<bool>::SetString(const String& InValue)
     }
 }
 
-template<> String TConsoleVariable<bool>::GetString() const
+template<> inline String TConsoleVariable<bool>::GetString() const
 {
     return Value ? "true" : "false";
 }
 
-template<> bool TConsoleVariable<bool>::IsBool() const
+template<> inline bool TConsoleVariable<bool>::IsBool() const
 {
     return true;
 }
 
 // String
-template<> void TConsoleVariable<String>::SetInt(int32 InValue)
+template<> inline void TConsoleVariable<String>::SetInt(int32 InValue)
 {
     Value = std::to_string(InValue);
 }
 
-template<> void TConsoleVariable<String>::SetFloat(float InValue)
+template<> inline void TConsoleVariable<String>::SetFloat(float InValue)
 {
     Value = std::to_string(InValue);
 }
 
-template<> void TConsoleVariable<String>::SetBool(bool InValue)
+template<> inline void TConsoleVariable<String>::SetBool(bool InValue)
 {
     std::stringstream Stream;
     Stream << std::boolalpha << InValue;
     Value = Stream.str();
 }
 
-template<> void TConsoleVariable<String>::SetString(const String& InValue)
+template<> inline void TConsoleVariable<String>::SetString(const String& InValue)
 {
     Value = InValue;
 }
 
-template<> bool TConsoleVariable<String>::IsString() const
+template<> inline bool TConsoleVariable<String>::IsString() const
 {
     return true;
+}
+
+template<> inline int32 TConsoleVariable<String>::GetInt() const
+{
+    return 0;
+}
+
+template<> inline float TConsoleVariable<String>::GetFloat() const
+{
+    return 0.0f;
+}
+
+template<> inline bool TConsoleVariable<String>::GetBool() const
+{
+    return false;
+}
+
+template<> inline String TConsoleVariable<String>::GetString() const
+{
+    return Value;
 }

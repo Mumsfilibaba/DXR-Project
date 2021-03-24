@@ -16,23 +16,18 @@
 
 class Console
 {
-    struct Token
-    {
-        std::string Name;
-    };
-
     struct Line
     {
         Line() = default;
 
-        Line(const std::string& InString, ImVec4 InColor)
+        Line(const String& InString, ImVec4 InColor)
             : String(InString)
             , Color(InColor)
         {
         }
 
-        std::string String;
-        ImVec4      Color;
+        String String;
+        ImVec4 Color;
     };
 
     struct Candidate
@@ -41,7 +36,7 @@ class Console
 
         Candidate() = default;
 
-        Candidate(const std::string& InText, const std::string& InPostFix)
+        Candidate(const String& InText, const String& InPostFix)
             : Text(InText)
             , PostFix(InPostFix)
         {
@@ -49,8 +44,8 @@ class Console
             TextSize.x += TextPadding;
         }
 
-        std::string Text;
-        std::string PostFix;
+        String Text;
+        String PostFix;
         ImVec2 TextSize;
     };
 
@@ -58,15 +53,15 @@ public:
     void Init();
     void Tick();
 
-    void RegisterCommand(const std::string& Name, ConsoleCommand* Object);
-    void RegisterVariable(const std::string& Name, ConsoleVariable* Variable);
+    void RegisterCommand(const String& Name, ConsoleCommand* Object);
+    void RegisterVariable(const String& Name, ConsoleVariable* Variable);
 
-    ConsoleCommand* FindCommand(const std::string& Name);
-    ConsoleVariable* FindVariable(const std::string& Name);
+    ConsoleCommand* FindCommand(const String& Name);
+    ConsoleVariable* FindVariable(const String& Name);
 
-    void PrintMessage(const std::string& Message);
-    void PrintWarning(const std::string& Message);
-    void PrintError(const std::string& Message);
+    void PrintMessage(const String& Message);
+    void PrintWarning(const String& Message);
+    void PrintError(const String& Message);
 
     void ClearHistory();
 
@@ -75,28 +70,27 @@ private:
 
     void DrawInterface();
 
-    bool RegisterObject(const std::string& Name, ConsoleObject* Variable);
+    bool RegisterObject(const String& Name, ConsoleObject* Variable);
 
-    ConsoleObject* FindConsoleObject(const std::string& Name);
+    ConsoleObject* FindConsoleObject(const String& Name);
 
     int32 TextCallback(ImGuiInputTextCallbackData* Data);
 
-    void Execute(const std::string& CmdString);
+    void Execute(const String& CmdString);
 
 private:
-    std::unordered_map<std::string, ConsoleObject*> ConsoleObjects;
+    std::unordered_map<String, ConsoleObject*> ConsoleObjects;
 
-    std::string PopupSelectedText;
+    String PopupSelectedText;
 
     TArray<Candidate> Candidates;
     int32 CandidatesIndex = -1;
 
     TStaticArray<char, 256> TextBuffer;
 
-    TArray<Line>  Lines;
-    TArray<Token> Tokens;
+    TArray<Line> Lines;
 
-    TArray<std::string> History;
+    TArray<String> History;
     uint32 HistoryLength = 50;
     int32  HistoryIndex   = -1;
 
