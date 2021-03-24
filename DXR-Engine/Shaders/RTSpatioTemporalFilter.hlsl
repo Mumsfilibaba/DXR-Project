@@ -198,10 +198,13 @@ void Main(ComputeShaderInput Input)
             float  G = GeometrySmithGGX(N, L, V, Roughness);
             float3 F = FresnelSchlick(F0, V, H);
             float3 Numer = D * F * G;
-            float  Denom = 4.0f * NdotL * NdotV;
-    
+            float  Denom = max(4.0f * NdotL * NdotV, 1e-6);
+            
             float3 Spec_BRDF = Numer / Denom;
             float  Spec_PDF  = RayPDF.a;
+            
+            float3 Ks = F;
+            float3 Kd = (Float3(1.0f) - Ks) * (1.0f - Metallic);
             
             float  Valid  = IsValidSample(FullLocalTexCoord, N, FWidthN, SampleN, Depth, SampleColorDepth.w);
             float3 Weight = Valid * NdotL * Spec_BRDF * Spec_PDF;

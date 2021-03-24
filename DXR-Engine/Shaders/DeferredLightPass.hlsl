@@ -290,14 +290,7 @@ void Main(ComputeShaderInput Input)
         float  G = GeometrySmithGGX_IBL(N, L, V, GBufferRoughness);
         float3 F = FresnelSchlick_Roughness(F0, V, N, GBufferRoughness);
         float3 Numer = D * F * G;
-        float3 Denom = Float3(max(4.0f * NdotL * NdotV, 0.0001f));
-    
-        // TODO: Take diffuse into account aswell
-        float3 Diff_BRDF = GBufferAlbedo * INV_PI;
-        float  Diff_PDF  = NdotL * INV_PI;
-
-        float3 Ks = F;
-        float3 Kd = (Float3(1.0f) - Ks) * (1.0f - GBufferMetallic);
+        float  Denom = max(4.0f * NdotL * NdotV, 1e-6);
     
         float3 Spec_BRDF = Numer / Denom;
         float  Spec_PDF  = D * NdotH / (4.0f * HdotV);
