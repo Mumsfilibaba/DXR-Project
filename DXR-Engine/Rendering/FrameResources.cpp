@@ -27,6 +27,9 @@ void FrameResources::Release()
         GBuffer[i].Reset();
     }
     
+    PrevDepth.Reset();
+    PrevGeomNormals.Reset();
+
     GBufferSampler.Reset();
 
     StdInputLayout.Reset();

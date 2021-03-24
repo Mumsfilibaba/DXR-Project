@@ -387,6 +387,14 @@ void Renderer::Tick(const Scene& Scene)
     
     CmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
     
+    TRef<Texture2D> Temp = Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX];
+    Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX] = Resources.PrevGeomNormals;
+    Resources.PrevGeomNormals = Temp;
+
+    Temp = Resources.GBuffer[GBUFFER_DEPTH_INDEX];
+    Resources.GBuffer[GBUFFER_DEPTH_INDEX] = Resources.PrevDepth;
+    Resources.PrevDepth = Temp;
+
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
@@ -415,8 +423,12 @@ void Renderer::Tick(const Scene& Scene)
 
     if (IsRayTracingSupported())
     {
-        GPU_TRACE_SCOPE(CmdList, "Ray Tracing");
-        RayTracer.Render(CmdList, Resources, LightSetup, Scene);
+        {
+            GPU_TRACE_SCOPE(CmdList, "Ray Tracing");
+            RayTracer.Render(CmdList, Resources, LightSetup, Scene);
+        }
+
+
     }
 
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
@@ -440,6 +452,12 @@ void Renderer::Tick(const Scene& Scene)
     Resources.DebugTextures.EmplaceBack(
         MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX],
+        EResourceState::NonPixelShaderResource,
+        EResourceState::NonPixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(Resources.PrevGeomNormals->GetShaderResourceView()),
+        Resources.PrevGeomNormals,
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource);
 
@@ -531,6 +549,12 @@ void Renderer::Tick(const Scene& Scene)
     Resources.DebugTextures.EmplaceBack(
         MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_DEPTH_INDEX],
+        EResourceState::PixelShaderResource,
+        EResourceState::PixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(Resources.PrevDepth->GetShaderResourceView()),
+        Resources.PrevDepth,
         EResourceState::PixelShaderResource,
         EResourceState::PixelShaderResource);
 

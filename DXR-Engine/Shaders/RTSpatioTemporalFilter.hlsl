@@ -9,16 +9,20 @@
 #define NUM_THREADS 16
 #define NUM_SAMPLES 16
 
+#define MIN_TEMPORAL_FRAMES 1
 #define MAX_TEMPORAL_FRAMES 64
 
 ConstantBuffer<Camera> CameraBuffer : register(b0);
 
-Texture2D<float4> ColorDepthTex      : register(t0);
-Texture2D<float4> RayPDFTex          : register(t1);
-Texture2D<float4> GBufferAlbedoTex   : register(t2);
-Texture2D<float4> GBufferNormalsTex  : register(t3);
-Texture2D<float4> GBufferMaterialTex : register(t4);
-Texture2D<float4> GBufferVelocityTex : register(t5);
+Texture2D<float4> ColorDepthTex       : register(t0);
+Texture2D<float4> RayPDFTex           : register(t1);
+Texture2D<float4> GBufferAlbedoTex    : register(t2);
+Texture2D<float4> GBufferNormalsTex   : register(t3);
+Texture2D<float4> GBufferMaterialTex  : register(t4);
+Texture2D<float4> GBufferVelocityTex  : register(t5);
+Texture2D<float>  GBufferDepthTex     : register(t6);
+Texture2D<float4> GBufferPrevNormTex  : register(t7);
+Texture2D<float4> GBufferPrevDepthTex : register(t8);
 
 RWTexture2D<float4> Reconstructed  : register(u0);
 RWTexture2D<float4> PrevHistory    : register(u1);
@@ -54,23 +58,47 @@ static const float2 RaySamples[4][16] =
     }
 };
 
-float ValidateSample(float3 N, float FwidthN, float3 NeighbourN, float Depth, float NeightbourDepth)
+float IsValidSample(uint2 TexCoords, float3 N, float FwidthN, float3 NeighbourN, float Depth, float NeightbourDepth)
 {
+    uint Width;
+    uint Height;
+    PrevHistory.GetDimensions(Width, Height);
+    
     bool Result = (distance(N, NeighbourN) / (FwidthN + 1e-2f)) < 16.0f;
+    Result = Result && (TexCoords.x >= 0 && TexCoords.x <= Width && TexCoords.y >= 0 && TexCoords.y <= Height);
     return (Result && Depth < 1.0f && NeightbourDepth < 1.0f) ? 1.0f : 0.0f;
 }
 
-float ValidateReprojection(uint2 TexCoords, float3 N, float FwidthN, float3 NeighbourN)
+float IsValidReprojection(uint2 TexCoords, float3 N, float FwidthN, float3 PreviousN)
 {
     uint Width;
     uint Height;
     PrevHistory.GetDimensions(Width, Height);
     
     bool Result = TexCoords.x >= 0 && TexCoords.x <= Width && TexCoords.y >= 0 && TexCoords.y <= Height;
-    return (Result && ((distance(N, NeighbourN) / (FwidthN + 1e-2f)) < 16.0f)) ? 1.0f : 0.0f;
+    return (Result && ((distance(N, PreviousN) / (FwidthN + 1e-2f)) < 16.0f)) ? 1.0f : 0.0f;
 }
 
-float4 LoadHistory(int2 TexCoords, float3 N, float3 Min, float3 Max, out float Valid)
+float3 ClipAABB(float3 Min, float3 Max, float3 History)
+{
+    float3 ClipP  = 0.5f * (Max + Min);
+    float3 ClipE  = 0.5f * (Max - Min);
+    float3 ClipV  = History - ClipP;
+    float3 UnitV  = ClipV.xyz / ClipE;
+    float3 UnitA  = abs(UnitV);
+    float  UnitMA = max(UnitA.x, max(UnitA.y, UnitA.z));
+
+    if (UnitMA > 1.0f)
+    {
+        return ClipP + ClipV / UnitMA;
+    }
+    else
+    {
+        return History;
+    }
+}
+
+float4 LoadHistory(int2 TexCoords, float3 N, out float Valid)
 {
     uint Width;
     uint Height;
@@ -78,21 +106,20 @@ float4 LoadHistory(int2 TexCoords, float3 N, float3 Min, float3 Max, out float V
     float2 Size = float2(Width, Height);
     
     // Sample motion vectors
-    float2 GBufferVelocity = GBufferVelocityTex[TexCoords].xy;
-    int2 Velocity      = int2(GBufferVelocity * Size);
+    float3 GBufferVelocity = GBufferVelocityTex[TexCoords].xyz;
+    float  FWidthN = GBufferVelocity.z;
+    
+    int2 Velocity      = int2(GBufferVelocity.xy * Size);
     int2 HistoryCoords = TexCoords - Velocity;
     
     float4 HistorySample0 = PrevHistory[HistoryCoords];
-    HistorySample0.rgb = clamp(HistorySample0.rgb, Min, Max);
+    float3 PreviousNormal = UnpackNormal(GBufferPrevNormTex[HistoryCoords].xyz);
     
-    float3 HistoryN = UnpackNormal(GBufferNormalsTex[HistoryCoords].xyz);
-    float  HistoryFWidthN = GBufferVelocityTex[HistoryCoords].z;
+    Valid = IsValidReprojection(HistoryCoords, N, FWidthN, PreviousNormal);
     
-    Valid = ValidateReprojection(HistoryCoords, N, HistoryFWidthN, HistoryN);
+    // TODO: Reflection reprojection
     
-    float History = lerp(0.0f, HistorySample0.a, Valid);
-    History = min((float) MAX_TEMPORAL_FRAMES, History + 1.0f);
-    return float4(HistorySample0.rgb, History);
+    return float4(HistorySample0.rgb, lerp(0.0f, HistorySample0.a, Valid));
 }
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
@@ -118,9 +145,9 @@ void Main(ComputeShaderInput Input)
     
     // UV in full resolution since backbuffer is
     float2 UV = float2(TexCoords) / float2(Width, Height);
-    float4 ColorDepth = ColorDepthTex[HalfTexCoords];
+    float  Depth = GBufferDepthTex[TexCoords];
     
-    float3 WorldPosition = PositionFromDepth(ColorDepth.w, UV, CameraBuffer.ViewProjectionInverse);
+    float3 WorldPosition = PositionFromDepth(Depth, UV, CameraBuffer.ViewProjectionInverse);
     float3 V = normalize(CameraBuffer.Position - WorldPosition);
     float3 N = UnpackNormal(GBufferNormals.xyz);
     if (length(GBufferNormals.xyz) == 0.0f)
@@ -139,11 +166,9 @@ void Main(ComputeShaderInput Input)
     int KernelWidth = int(floor(lerp(1.0f, (float)NUM_SAMPLES, min(Roughness, 0.35f) / 0.35f)));
     
     float3 WeightSum = Float3(0.0f);
-    float3 Result    = Float3(0.0f);
-    float3 Moment1   = Float3(0.0f);
-    float3 Moment2   = Float3(0.0f);
-    float3 BoxMin = Float3(FLT32_MAX);
-    float3 BoxMax = Float3(0.0f);
+    float3 Result  = Float3(0.0f);
+    float3 Moment1 = Float3(0.0f);
+    float3 Moment2 = Float3(0.0f);
     for (int i = 0; i < KernelWidth; i++)
     {
         float2 Offset = RaySamples[PxIdx][i];
@@ -178,7 +203,7 @@ void Main(ComputeShaderInput Input)
             float3 Spec_BRDF = Numer / Denom;
             float  Spec_PDF  = RayPDF.a;
             
-            float  Valid  = ValidateSample(N, FWidthN, SampleN, ColorDepth.w, SampleColorDepth.w);
+            float  Valid  = IsValidSample(FullLocalTexCoord, N, FWidthN, SampleN, Depth, SampleColorDepth.w);
             float3 Weight = Valid * NdotL * Spec_BRDF * Spec_PDF;
             Weight = IsNan(Weight) || IsInf(Weight) ? Float3(0.0f) : Weight;
             
@@ -188,12 +213,17 @@ void Main(ComputeShaderInput Input)
             
             Moment1 += Li;
             Moment2 += Li * Li;
-            
-            BoxMin = min(BoxMin, Li);
-            BoxMax = max(BoxMax, Li);
         }
     }
     
+    // Statistics of used pixels
+    const float VarianceClipSigma = 0.5f;
+    float3 Mean   = Moment1 / float(KernelWidth);
+    float3 Dev    = sqrt(Moment2 / float(KernelWidth) * Mean * Mean);
+    float3 BoxMin = Mean - VarianceClipSigma * Dev;
+    float3 BoxMax = Mean + VarianceClipSigma * Dev;
+    
+    float4 ColorDepth = ColorDepthTex[HalfTexCoords];
     if (!IsEqual(WeightSum, Float3(0.0f)))
     {
         Result = Result / WeightSum;
@@ -206,13 +236,16 @@ void Main(ComputeShaderInput Input)
     Reconstructed[TexCoords] = float4(Result, 0.0f);
     
     float  Valid = 0.0f;
-    float4 HistorySample = LoadHistory(TexCoords, N, BoxMin, BoxMax, Valid);
-    float  NumHistorySamples = HistorySample.a;
-    float3 Sample            = HistorySample.rgb;
+    float4 HistorySample = LoadHistory(TexCoords, N, Valid);
+    float3 Clipped       = ClipAABB(BoxMin, BoxMax, HistorySample.rgb);
     
-    const float HistoryUsage = lerp(1.0f, min(0.98f, 1.0f / NumHistorySamples), Valid);
-    float3 Color = Sample * (1.0f - HistoryUsage) + Result * HistoryUsage;
+    float NumTemporalFrames = floor(lerp((float) MIN_TEMPORAL_FRAMES, (float) MAX_TEMPORAL_FRAMES, clamp(Roughness, 0.0f, 0.35f) / 0.35f));
+    float HistoryLength     = HistorySample.a;
+    HistoryLength = min(NumTemporalFrames, HistoryLength + 1.0f);
     
-    History[TexCoords]     = float4(Color, NumHistorySamples);
+    const float Alpha = lerp(1.0f, max(0.04f, 1.0f / HistoryLength), Valid);
+    float3 Color = HistorySample.rgb * (1.0f - Alpha) + Result * Alpha;
+    
+    History[TexCoords]     = float4(Color, HistoryLength);
     Reflections[TexCoords] = float4(Color, Roughness);
 }

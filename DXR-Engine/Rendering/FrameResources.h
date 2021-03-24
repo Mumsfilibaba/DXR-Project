@@ -87,11 +87,14 @@ struct FrameResources
     TRef<Texture2D>    IntegrationLUT;
     TRef<SamplerState> IntegrationLUTSampler;
 
-    TRef<Texture2D>    SSAOBuffer;
-    TRef<Texture2D>    FinalTarget;
-    TRef<Texture2D>    GBuffer[6];
-    TRef<SamplerState> GBufferSampler;
-    TRef<SamplerState> FXAASampler;
+    TRef<Texture2D> SSAOBuffer;
+    TRef<Texture2D> FinalTarget;
+    TRef<Texture2D> GBuffer[6];
+    TRef<Texture2D> PrevDepth;
+    TRef<Texture2D> PrevGeomNormals;
+
+    TRef<SamplerState>   GBufferSampler;
+    TRef<SamplerState>   FXAASampler;
     TRef<Texture2DArray> BlueNoise;
 
     TRef<InputLayoutState> StdInputLayout;

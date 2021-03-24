@@ -96,7 +96,7 @@ Bool RayTracer::Init(FrameResources& Resources)
         RandomDataBuffer->SetName("RandomDataBuffer");
     }
 
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RTSpatialFilter.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RTSpatioTemporalFilter.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         Debug::DebugBreak();
         return false;
@@ -110,7 +110,7 @@ Bool RayTracer::Init(FrameResources& Resources)
     }
     else
     {
-        RTSpatialShader->SetName("RT Spatial Shader");
+        RTSpatialShader->SetName("RT Spatio-Temporal Shader");
     }
 
     ComputePipelineStateCreateInfo RTSpatialCreateInfo;
@@ -368,6 +368,8 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 4);
     CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetShaderResourceView(), 5);
+    CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 6);
+    CmdList.SetShaderResourceView(RTSpatialShader.Get(), Resources.PrevGeomNormals->GetShaderResourceView(), 7);
 
     CmdList.SetUnorderedAccessView(RTSpatialShader.Get(), RTReconstructed->GetUnorderedAccessView(), 0);
 

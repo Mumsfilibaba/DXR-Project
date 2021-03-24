@@ -689,7 +689,21 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
         nullptr, ClearValue(FrameResources.DepthBufferFormat, 1.0f, 0));
     if (FrameResources.GBuffer[GBUFFER_DEPTH_INDEX])
     {
-        FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->SetName("GBuffer DepthStencil");
+        FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->SetName("GBuffer DepthStencil 0");
+    }
+    else
+    {
+        return false;
+    }
+
+    FrameResources.PrevDepth = CreateTexture2D(
+        FrameResources.DepthBufferFormat,
+        Width, Height, 1, 1, UsageDS,
+        EResourceState::Common,
+        nullptr, ClearValue(FrameResources.DepthBufferFormat, 1.0f, 0));
+    if (FrameResources.PrevDepth)
+    {
+        FrameResources.PrevDepth->SetName("GBuffer DepthStencil 1");
     }
     else
     {
@@ -704,7 +718,21 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
         nullptr);
     if (FrameResources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX])
     {
-        FrameResources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->SetName("GBuffer Geometric Normal");
+        FrameResources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->SetName("GBuffer Geometric Normal 0");
+    }
+    else
+    {
+        return false;
+    }
+
+    FrameResources.PrevGeomNormals = CreateTexture2D(
+        FrameResources.GeomNormalFormat,
+        Width, Height, 1, 1, Usage,
+        EResourceState::Common,
+        nullptr);
+    if (FrameResources.PrevGeomNormals)
+    {
+        FrameResources.PrevGeomNormals->SetName("GBuffer Geometric Normal 1");
     }
     else
     {
