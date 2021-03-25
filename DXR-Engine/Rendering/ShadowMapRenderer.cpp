@@ -120,19 +120,19 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         }
 
         GraphicsPipelineStateCreateInfo PipelineStateInfo;
-        PipelineStateInfo.BlendState                         = BlendState.Get();
-        PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
-        PipelineStateInfo.IBStripCutValue                    = EIndexBufferStripCutValue::Disabled;
-        PipelineStateInfo.InputLayoutState                   = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
-        PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
-        PipelineStateInfo.SampleCount                        = 1;
-        PipelineStateInfo.SampleQuality                      = 0;
-        PipelineStateInfo.SampleMask                         = 0xffffffff;
-        PipelineStateInfo.ShaderState.VertexShader           = PointLightVertexShader.Get();
-        PipelineStateInfo.ShaderState.PixelShader            = PointLightPixelShader.Get();
-        PipelineStateInfo.PipelineFormats.NumRenderTargets   = 0;
-        PipelineStateInfo.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
+        PipelineStateInfo.BlendState            = BlendState.Get();
+        PipelineStateInfo.DepthStencilState     = DepthStencilState.Get();
+        PipelineStateInfo.IBStripCutValue       = EIndexBufferStripCutValue::Disabled;
+        PipelineStateInfo.InputLayoutState      = FrameResources.StdInputLayout.Get();
+        PipelineStateInfo.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+        PipelineStateInfo.RasterizerState       = RasterizerState.Get();
+        PipelineStateInfo.SampleCount           = 1;
+        PipelineStateInfo.SampleQuality         = 0;
+        PipelineStateInfo.SampleMask            = 0xffffffff;
+        PipelineStateInfo.VertexShader          = PointLightVertexShader.Get();
+        PipelineStateInfo.PixelShader           = PointLightPixelShader.Get();
+        PipelineStateInfo.NumRenderTargets      = 0;
+        PipelineStateInfo.DepthStencilFormat    = LightSetup.ShadowMapFormat;
 
         PointLightPipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
         if (!PointLightPipelineState)
@@ -207,19 +207,19 @@ Bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         }
 
         GraphicsPipelineStateCreateInfo PipelineStateInfo;
-        PipelineStateInfo.BlendState                         = BlendState.Get();
-        PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
-        PipelineStateInfo.IBStripCutValue                    = EIndexBufferStripCutValue::Disabled;
-        PipelineStateInfo.InputLayoutState                   = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
-        PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
-        PipelineStateInfo.SampleCount                        = 1;
-        PipelineStateInfo.SampleQuality                      = 0;
-        PipelineStateInfo.SampleMask                         = 0xffffffff;
-        PipelineStateInfo.ShaderState.VertexShader           = DirLightShader.Get();
-        PipelineStateInfo.ShaderState.PixelShader            = nullptr;
-        PipelineStateInfo.PipelineFormats.NumRenderTargets   = 0;
-        PipelineStateInfo.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
+        PipelineStateInfo.BlendState            = BlendState.Get();
+        PipelineStateInfo.DepthStencilState     = DepthStencilState.Get();
+        PipelineStateInfo.IBStripCutValue       = EIndexBufferStripCutValue::Disabled;
+        PipelineStateInfo.InputLayoutState      = FrameResources.StdInputLayout.Get();
+        PipelineStateInfo.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+        PipelineStateInfo.RasterizerState       = RasterizerState.Get();
+        PipelineStateInfo.SampleCount           = 1;
+        PipelineStateInfo.SampleQuality         = 0;
+        PipelineStateInfo.SampleMask            = 0xffffffff;
+        PipelineStateInfo.VertexShader          = DirLightShader.Get();
+        PipelineStateInfo.PixelShader           = nullptr;
+        PipelineStateInfo.NumRenderTargets      = 0;
+        PipelineStateInfo.DepthStencilFormat    = LightSetup.ShadowMapFormat;
 
         DirLightPipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
         if (!DirLightPipelineState)

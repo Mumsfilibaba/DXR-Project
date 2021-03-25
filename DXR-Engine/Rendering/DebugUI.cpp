@@ -385,15 +385,15 @@ Bool DebugUI::Init()
     }
 
     GraphicsPipelineStateCreateInfo PSOProperties;
-    PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = GlobalImGuiState.PShader.Get();
-    PSOProperties.InputLayoutState                       = InputLayout.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.BlendState                             = BlendStateBlending.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
+    PSOProperties.VertexShader           = VShader.Get();
+    PSOProperties.PixelShader            = GlobalImGuiState.PShader.Get();
+    PSOProperties.InputLayoutState       = InputLayout.Get();
+    PSOProperties.DepthStencilState      = DepthStencilState.Get();
+    PSOProperties.BlendState             = BlendStateBlending.Get();
+    PSOProperties.RasterizerState        = RasterizerState.Get();
+    PSOProperties.PrimitiveTopologyType  = EPrimitiveTopologyType::Triangle;
+    PSOProperties.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
+    PSOProperties.NumRenderTargets       = 1;
 
     GlobalImGuiState.PipelineState = CreateGraphicsPipelineState(PSOProperties);
     if (!GlobalImGuiState.PipelineState)

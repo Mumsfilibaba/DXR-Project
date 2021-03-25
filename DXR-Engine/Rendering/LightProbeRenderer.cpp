@@ -28,7 +28,10 @@ Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResou
         IrradianceGenShader->SetName("IrradianceGen Shader");
     }
 
-    IrradianceGenPSO = CreateComputePipelineState(ComputePipelineStateCreateInfo(IrradianceGenShader.Get()));
+    ComputePipelineStateCreateInfo IrradianceGenPSODesc;
+    IrradianceGenPSODesc.Shader = IrradianceGenShader.Get();
+
+    IrradianceGenPSO = CreateComputePipelineState(IrradianceGenPSODesc);
     if (!IrradianceGenPSO)
     {
         LOG_ERROR("Failed to create IrradianceGen PipelineState");
@@ -56,7 +59,10 @@ Bool LightProbeRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResou
         SpecularIrradianceGenShader->SetName("Specular IrradianceGen Shader");
     }
 
-    SpecularIrradianceGenPSO = CreateComputePipelineState(ComputePipelineStateCreateInfo(SpecularIrradianceGenShader.Get()));
+    ComputePipelineStateCreateInfo SpecularIrradianceGenPSODesc;
+    SpecularIrradianceGenPSODesc.Shader = SpecularIrradianceGenShader.Get();
+
+    SpecularIrradianceGenPSO = CreateComputePipelineState(SpecularIrradianceGenPSODesc);
     if (!SpecularIrradianceGenPSO)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen PipelineState");

@@ -57,8 +57,9 @@ private:
     TComPtr<IDxcLinker>         DxLinker;
     TComPtr<IDxcIncludeHandler> DxIncludeHandler;
     TComPtr<IDxcContainerReflection> DxReflection;
+
     HMODULE DxCompilerDLL;
 };
 
-extern D3D12ShaderCompiler*  gD3D12ShaderCompiler;
+extern D3D12ShaderCompiler*  GShaderCompiler;
 extern DxcCreateInstanceProc DxcCreateInstanceFunc;

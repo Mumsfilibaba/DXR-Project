@@ -124,19 +124,19 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         }
 
         GraphicsPipelineStateCreateInfo PipelineStateInfo;
-        PipelineStateInfo.InputLayoutState                       = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.BlendState                             = BlendState.Get();
-        PipelineStateInfo.DepthStencilState                      = GeometryDepthStencilState.Get();
-        PipelineStateInfo.RasterizerState                        = GeometryRasterizerState.Get();
-        PipelineStateInfo.ShaderState.VertexShader               = BaseVertexShader.Get();
-        PipelineStateInfo.ShaderState.PixelShader                = BasePixelShader.Get();
-        PipelineStateInfo.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = FrameResources.AlbedoFormat;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[1] = FrameResources.NormalFormat;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[2] = FrameResources.MaterialFormat;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[3] = FrameResources.GeomNormalFormat;
-        PipelineStateInfo.PipelineFormats.RenderTargetFormats[4] = FrameResources.VelocityFormat;
-        PipelineStateInfo.PipelineFormats.NumRenderTargets       = 5;
+        PipelineStateInfo.InputLayoutState       = FrameResources.StdInputLayout.Get();
+        PipelineStateInfo.BlendState             = BlendState.Get();
+        PipelineStateInfo.DepthStencilState      = GeometryDepthStencilState.Get();
+        PipelineStateInfo.RasterizerState        = GeometryRasterizerState.Get();
+        PipelineStateInfo.VertexShader           = BaseVertexShader.Get();
+        PipelineStateInfo.PixelShader            = BasePixelShader.Get();
+        PipelineStateInfo.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+        PipelineStateInfo.RenderTargetFormats[0] = FrameResources.AlbedoFormat;
+        PipelineStateInfo.RenderTargetFormats[1] = FrameResources.NormalFormat;
+        PipelineStateInfo.RenderTargetFormats[2] = FrameResources.MaterialFormat;
+        PipelineStateInfo.RenderTargetFormats[3] = FrameResources.GeomNormalFormat;
+        PipelineStateInfo.RenderTargetFormats[4] = FrameResources.VelocityFormat;
+        PipelineStateInfo.NumRenderTargets       = 5;
 
         PipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
         if (!PipelineState)
@@ -215,12 +215,12 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         }
 
         GraphicsPipelineStateCreateInfo PipelineStateInfo;
-        PipelineStateInfo.InputLayoutState                   = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.BlendState                         = BlendState.Get();
-        PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
-        PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
-        PipelineStateInfo.ShaderState.VertexShader           = PrePassVertexShader.Get();
-        PipelineStateInfo.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
+        PipelineStateInfo.InputLayoutState   = FrameResources.StdInputLayout.Get();
+        PipelineStateInfo.BlendState         = BlendState.Get();
+        PipelineStateInfo.DepthStencilState  = DepthStencilState.Get();
+        PipelineStateInfo.RasterizerState    = RasterizerState.Get();
+        PipelineStateInfo.VertexShader       = PrePassVertexShader.Get();
+        PipelineStateInfo.DepthStencilFormat = FrameResources.DepthBufferFormat;
 
         PrePassPipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
         if (!PrePassPipelineState)

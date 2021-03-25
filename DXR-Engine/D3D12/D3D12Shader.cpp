@@ -2,6 +2,8 @@
 #include "D3D12ShaderCompiler.h"
 #include "D3D12RootSignature.h"
 
+#include <regex>
+
 D3D12BaseShader::D3D12BaseShader(D3D12Device* InDevice, const TArray<UInt8>& InCode, EShaderVisibility InVisibility)
     : D3D12DeviceChild(InDevice)
     , ByteCode()
@@ -52,10 +54,6 @@ static Bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
     }
 
     return false;
-}
-
-static void AddResouce(ShaderResourceCount& OutResourceCount, const D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc)
-{
 }
 
 template<typename TD3D12ReflectionInterface>
@@ -181,7 +179,7 @@ Bool D3D12BaseShader::GetShaderReflection(D3D12BaseShader* Shader)
     Assert(Shader != nullptr);
 
     TComPtr<ID3D12ShaderReflection> Reflection;
-    if (!gD3D12ShaderCompiler->GetReflection(Shader, &Reflection))
+    if (!GShaderCompiler->GetReflection(Shader, &Reflection))
     {
         return false;
     }
@@ -198,7 +196,7 @@ Bool D3D12BaseShader::GetShaderReflection(D3D12BaseShader* Shader)
         return false;
     }
 
-    if (gD3D12ShaderCompiler->HasRootSignature(Shader))
+    if (GShaderCompiler->HasRootSignature(Shader))
     {
         Shader->ContainsRootSignature = true;
     }
@@ -211,7 +209,7 @@ Bool D3D12BaseRayTracingShader::GetRayTracingShaderReflection(D3D12BaseRayTracin
     Assert(Shader != nullptr);
 
     TComPtr<ID3D12LibraryReflection> Reflection;
-    if (!gD3D12ShaderCompiler->GetLibraryReflection(Shader, &Reflection))
+    if (!GShaderCompiler->GetLibraryReflection(Shader, &Reflection))
     {
         return false;
     }
@@ -247,23 +245,24 @@ Bool D3D12BaseRayTracingShader::GetRayTracingShaderReflection(D3D12BaseRayTracin
 
     // NOTE: Since the Nvidia driver can't handle these names, we have to change the names :(
     std::string Identifier = FuncDesc.Name;
-
-    auto NameStart = Identifier.find_last_of("\x1?");
-    if (NameStart != std::string::npos)
+    std::regex  ShaderName = std::regex("[a-zA-Z]+");
+    
+    std::smatch Match;
+    if (std::regex_search(Identifier, Match, ShaderName))
     {
-        NameStart++;
+        Shader->Identifier = Match.str(0);
+        return true;
     }
-
-    auto NameEnd = Identifier.find_first_of("@");
-
-    Shader->Identifier = Identifier.substr(NameStart, NameEnd - NameStart);
-    return true;
+    else
+    {
+        return false;
+    }
 }
 
 Bool D3D12BaseComputeShader::Init()
 {
     TComPtr<ID3D12ShaderReflection> Reflection;
-    if (!gD3D12ShaderCompiler->GetReflection(this, &Reflection))
+    if (!GShaderCompiler->GetReflection(this, &Reflection))
     {
         return false;
     }
@@ -280,7 +279,7 @@ Bool D3D12BaseComputeShader::Init()
         return false;
     }
 
-    if (gD3D12ShaderCompiler->HasRootSignature(this))
+    if (GShaderCompiler->HasRootSignature(this))
     {
         ContainsRootSignature = true;
     }

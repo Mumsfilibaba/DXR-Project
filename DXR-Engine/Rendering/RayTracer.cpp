@@ -74,7 +74,7 @@ Bool RayTracer::Init(FrameResources& Resources)
     CreateInfo.ClosestHitShaders       = { RayClosestHitShader.Get() };
     CreateInfo.MissShaders             = { RayMissShader.Get() };
     CreateInfo.HitGroups               = { RayTracingHitGroup("HitGroup", nullptr, RayClosestHitShader.Get()) };
-    CreateInfo.MaxRecursionDepth       = 4;
+    CreateInfo.MaxRecursionDepth       = 1;
     CreateInfo.MaxAttributeSizeInBytes = sizeof(RayIntersectionAttributes);
     CreateInfo.MaxPayloadSizeInBytes   = sizeof(RayPayload);
 
@@ -83,6 +83,62 @@ Bool RayTracer::Init(FrameResources& Resources)
     {
         Debug::DebugBreak();
         return false;
+    }
+
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/FullscreenVS.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_5, Code))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    FullscreenShader = CreateVertexShader(Code);
+    if (!FullscreenShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        FullscreenShader->SetName("FullscreenShader");
+    }
+
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/InlineRayGen.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_5, Code))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    InlineRayGen = CreatePixelShader(Code);
+    if (!InlineRayGen)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        InlineRayGen->SetName("Inline RayGen");
+    }
+
+    GraphicsPipelineStateCreateInfo InlinePSODesc;
+    InlinePSODesc.InputLayoutState       = nullptr;
+    InlinePSODesc.BlendState             = nullptr;
+    InlinePSODesc.DepthStencilState      = nullptr;
+    InlinePSODesc.RasterizerState        = nullptr;
+    InlinePSODesc.VertexShader           = FullscreenShader.Get();
+    InlinePSODesc.PixelShader            = InlineRayGen.Get();
+    InlinePSODesc.PrimitiveTopologyType  = EPrimitiveTopologyType::Triangle;
+    InlinePSODesc.NumRenderTargets       = 0;
+    InlinePSODesc.DepthStencilFormat     = EFormat::Unknown;
+
+    InlineRTPipeline = CreateGraphicsPipelineState(InlinePSODesc);
+    if (!InlineRTPipeline)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        InlineRTPipeline->SetName("InlineRT PipelineState");
     }
 
     RandomDataBuffer = CreateConstantBuffer<RandomData>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
@@ -201,13 +257,23 @@ Bool RayTracer::Init(FrameResources& Resources)
 void RayTracer::Release()
 {
     Pipeline.Reset();
+    
+    InlineRTPipeline.Reset();
+    FullscreenShader.Reset();
+    InlineRayGen.Reset();
+
     RandomDataBuffer.Reset();
+    
     RTSpatialPSO.Reset();
     RTSpatialShader.Reset();
+    
     RTColorDepth.Reset();
+
     RTHistory0.Reset();
     RTHistory1.Reset();
+    
     RTReconstructed.Reset();
+    
     BlurHorizontalPSO.Reset();
     BlurHorizontalShader.Reset();
     BlurVerticalPSO.Reset();
@@ -264,11 +330,17 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
             HitGroupResources.Identifier = "HitGroup";
             if (Cmd.Mesh->VertexBufferSRV)
             {
-                HitGroupResources.AddShaderResourceView(Cmd.Mesh->VertexBufferSRV.Get());
+                ShaderResourceView* SRV = Cmd.Mesh->VertexBufferSRV.Get();
+                Resources.RTVertexBuffer.EmplaceBack(SRV);
+
+                HitGroupResources.AddShaderResourceView(SRV);
             }
             if (Cmd.Mesh->IndexBufferSRV)
             {
-                HitGroupResources.AddShaderResourceView(Cmd.Mesh->IndexBufferSRV.Get());
+                ShaderResourceView* SRV = Cmd.Mesh->IndexBufferSRV.Get();
+                Resources.RTIndexBuffers.EmplaceBack(SRV);
+
+                HitGroupResources.AddShaderResourceView(SRV);
             }
 
             Resources.RTHitGroupResources.EmplaceBack(HitGroupResources);
@@ -288,6 +360,10 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
         Resources.RTGeometryInstances.EmplaceBack(Instance);
     }
 
+    Resources.RTVertexBuffer.ShrinkToFit();
+    Resources.RTIndexBuffers.ShrinkToFit();
+    Resources.RTGeometryInstances.ShrinkToFit();
+
     if (!Resources.RTScene)
     {
         Resources.RTScene = CreateRayTracingScene(RayTracingStructureBuildFlag_None, Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size());
@@ -302,6 +378,40 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
         CmdList.BuildRayTracingScene(Resources.RTScene.Get(), Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size(), false);
     }
 
+    UInt32 Width  = Resources.RTReflections->GetWidth();
+    UInt32 Height = Resources.RTReflections->GetHeight();
+    const UInt32 HalfWidth  = Width / 2;
+    const UInt32 HalfHeight = Height / 2;
+
+#if ENABLE_INLINE_RAY_GEN
+    CmdList.SetConstantBuffer(InlineRayGen.Get(), Resources.CameraBuffer.Get(), 0);
+    
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.RTScene->GetShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.Skybox->GetShaderResourceView(), 1);
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView(), 2);
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
+    
+    CmdList.SetSamplerState(InlineRayGen.Get(), Resources.IrradianceSampler.Get(), 0);
+
+    CmdList.SetUnorderedAccessView(InlineRayGen.Get(), RTColorDepth->GetUnorderedAccessView(), 0);
+    CmdList.SetUnorderedAccessView(InlineRayGen.Get(), Resources.RTRayPDF->GetUnorderedAccessView(), 1);
+    
+    CmdList.SetGraphicsPipelineState(InlineRTPipeline.Get());
+
+    CmdList.SetViewport((Float)HalfWidth, (Float)HalfHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.SetScissorRect((Float)HalfWidth, (Float)HalfHeight, 0.0f, 0.0f);
+
+    CmdList.SetRenderTargets(nullptr, 0, nullptr);
+
+    VertexBuffer* VBuffer = nullptr;
+    CmdList.SetVertexBuffers(&VBuffer, 1, 0);
+    CmdList.SetIndexBuffer(nullptr);
+
+    {
+        GPU_TRACE_SCOPE(CmdList, "Inline RayGen");
+        CmdList.Draw(3, 0);
+    }
+#else
     Resources.GlobalResources.Reset();
     Resources.GlobalResources.AddUnorderedAccessView(RTColorDepth->GetUnorderedAccessView());
     Resources.GlobalResources.AddUnorderedAccessView(Resources.RTRayPDF->GetUnorderedAccessView());
@@ -343,16 +453,11 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
         Resources.RTHitGroupResources.Data(), 
         Resources.RTHitGroupResources.Size());
 
-    UInt32 Width  = Resources.RTReflections->GetWidth();
-    UInt32 Height = Resources.RTReflections->GetHeight();
-
     {
-        UInt32 HalfWidth  = Width / 2;
-        UInt32 HalfHeight = Height / 2;
-
         GPU_TRACE_SCOPE(CmdList, "Dispatch Rays");
         CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), HalfWidth, HalfHeight, 1);
     }
+#endif
 
     CmdList.UnorderedAccessTextureBarrier(RTColorDepth.Get());
     CmdList.UnorderedAccessTextureBarrier(Resources.RTRayPDF.Get());
@@ -520,7 +625,9 @@ Bool RayTracer::CreateRenderTargets(FrameResources& Resources)
     Width  = Width / 2;
     Height = Height / 2;
 
-    RTColorDepth = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    const UInt32 TextureFlags = TextureFlags_RWTexture | TextureFlag_RTV;
+
+    RTColorDepth = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags, EResourceState::UnorderedAccess, nullptr);
     if (!RTColorDepth)
     {
         Debug::DebugBreak();

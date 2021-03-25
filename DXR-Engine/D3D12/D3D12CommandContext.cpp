@@ -256,7 +256,7 @@ Bool D3D12CommandContext::Init()
     }
 
     TArray<UInt8> Code;
-    if (!gD3D12ShaderCompiler->CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!GShaderCompiler->CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
         
@@ -282,7 +282,7 @@ Bool D3D12CommandContext::Init()
         GenerateMipsTex2D_PSO->SetName("GenerateMipsTex2D Gen PSO");
     }
 
-    if (!gD3D12ShaderCompiler->CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!GShaderCompiler->CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
         Debug::DebugBreak();
@@ -369,7 +369,6 @@ void D3D12CommandContext::End()
 
     const UInt64 NewFenceValue = ++FenceValue;
 
-    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
     for (UInt32 i = 0; i < ResolveProfilers.Size(); i++)
     {
         ResolveProfilers[i]->ResolveQueries(*this);
@@ -539,6 +538,7 @@ void D3D12CommandContext::SetVertexBuffers(VertexBuffer* const * VertexBuffers, 
     for (UInt32 i = 0; i < BufferCount; i++)
     {
         UInt32 Slot = BufferSlot + i;
+
         D3D12VertexBuffer* DxVertexBuffer = static_cast<D3D12VertexBuffer*>(VertexBuffers[i]);
         DescriptorCache.SetVertexBuffer(DxVertexBuffer, Slot);
         

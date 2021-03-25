@@ -203,12 +203,12 @@ public:
         Memory::Free(Data);
     }
 
-    virtual LPVOID GetBufferPointer(void) override
+    virtual LPVOID GetBufferPointer() override
     {
         return Data;
     }
 
-    virtual SIZE_T GetBufferSize(void) override
+    virtual SIZE_T GetBufferSize() override
     {
         return SizeInBytes;
     }
@@ -255,7 +255,7 @@ private:
     ULONG  References;
 };
 
-D3D12ShaderCompiler* gD3D12ShaderCompiler = nullptr;
+D3D12ShaderCompiler* GShaderCompiler = nullptr;
 
 D3D12ShaderCompiler::D3D12ShaderCompiler()
     : IShaderCompiler()
@@ -265,12 +265,12 @@ D3D12ShaderCompiler::D3D12ShaderCompiler()
     , DxIncludeHandler(nullptr)
     , DxCompilerDLL()
 {
-    gD3D12ShaderCompiler = this;
+    GShaderCompiler = this;
 }
 
 D3D12ShaderCompiler::~D3D12ShaderCompiler()
 {
-    gD3D12ShaderCompiler = nullptr;
+    GShaderCompiler = nullptr;
 
     DxCompiler.Reset();
     DxLibrary.Reset();
@@ -278,7 +278,7 @@ D3D12ShaderCompiler::~D3D12ShaderCompiler()
     DxIncludeHandler.Reset();
     DxReflection.Reset();
 
-    ::FreeLibrary(DxCompilerDLL);
+    FreeLibrary(DxCompilerDLL);
 }
 
 Bool D3D12ShaderCompiler::CompileFromFile(

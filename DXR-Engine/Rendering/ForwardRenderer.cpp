@@ -100,16 +100,16 @@ Bool ForwardRenderer::Init(FrameResources& FrameResources)
     }
 
     GraphicsPipelineStateCreateInfo PSOProperties;
-    PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PShader.Get();
-    PSOProperties.InputLayoutState                       = FrameResources.StdInputLayout.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.BlendState                             = BlendState.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
+    PSOProperties.VertexShader           = VShader.Get();
+    PSOProperties.PixelShader            = PShader.Get();
+    PSOProperties.InputLayoutState       = FrameResources.StdInputLayout.Get();
+    PSOProperties.DepthStencilState      = DepthStencilState.Get();
+    PSOProperties.BlendState             = BlendState.Get();
+    PSOProperties.RasterizerState        = RasterizerState.Get();
+    PSOProperties.PrimitiveTopologyType  = EPrimitiveTopologyType::Triangle;
+    PSOProperties.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
+    PSOProperties.NumRenderTargets       = 1;
+    PSOProperties.DepthStencilFormat     = FrameResources.DepthBufferFormat;
 
     PipelineState = CreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)

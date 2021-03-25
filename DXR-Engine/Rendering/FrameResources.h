@@ -109,9 +109,13 @@ struct FrameResources
     RayTracingShaderResources   MissLocalResources;
     TArray<RayTracingGeometryInstance> RTGeometryInstances;
 
-    TArray<RayTracingShaderResources>       RTHitGroupResources;
+    TArray<RayTracingShaderResources> RTHitGroupResources;
+    TArray<ShaderResourceView*> RTVertexBuffer;
+    TArray<ShaderResourceView*> RTIndexBuffers;
+
     std::unordered_map<class Mesh*, UInt32> RTMeshToHitGroupIndex;
-    PtrResourceCache<ShaderResourceView>    RTMaterialTextureCache;
+
+    PtrResourceCache<ShaderResourceView> RTMaterialTextureCache;
 
     TArray<MeshDrawCommand> DeferredVisibleCommands;
     TArray<MeshDrawCommand> ForwardVisibleCommands;

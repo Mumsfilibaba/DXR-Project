@@ -39,7 +39,10 @@ Bool TextureFactory::Init()
     }
 
     // Create pipeline
-    GlobalFactoryData.PanoramaPSO = CreateComputePipelineState(ComputePipelineStateCreateInfo(GlobalFactoryData.ComputeShader.Get()));
+    ComputePipelineStateCreateInfo PanoramaPSODesc;
+    PanoramaPSODesc.Shader = GlobalFactoryData.ComputeShader.Get();
+
+    GlobalFactoryData.PanoramaPSO = CreateComputePipelineState(PanoramaPSODesc);
     if (GlobalFactoryData.PanoramaPSO)
     {
         GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");

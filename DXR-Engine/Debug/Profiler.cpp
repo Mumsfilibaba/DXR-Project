@@ -29,7 +29,7 @@ struct ProfileSample
     {
         Clock.Tick();
 
-        Float Delta = Clock.GetDeltaTime().AsNanoSeconds();
+        Float Delta = (Float)Clock.GetDeltaTime().AsNanoSeconds();
         AddSample(Delta);
 
         TotalCalls++;
@@ -796,7 +796,7 @@ void Profiler::EndGPUTrace(CommandList& CmdList, const Char* Name)
                 TimeQuery Query;
                 gProfilerData.GPUProfiler->GetTimeQuery(Query, TimeQueryIndex);
 
-                Float Duration = (Query.End - Query.Begin);
+                Float Duration = Float(Query.End - Query.Begin);
                 Entry->second.AddSample(Duration);
             }
         }

@@ -341,9 +341,6 @@ Bool D3D12RayTracingScene::BuildBindingTable(
     Assert(ResourceHeap != nullptr);
     Assert(SamplerHeap != nullptr);
     Assert(PipelineState != nullptr);
-
-    ID3D12StateObjectProperties* StateObjectProperties = PipelineState->GetStateObjectProperties();
-
     Assert(RayGenLocalResources != nullptr);
 
     D3D12ShaderBindingTableEntry RayGenEntry;

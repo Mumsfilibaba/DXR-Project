@@ -119,12 +119,18 @@ public:
         PipelineState->SetName(WideName.c_str());
     }
 
-    virtual void* GetNativeResource() const override final { return reinterpret_cast<void*>(PipelineState.Get()); }
+    virtual void* GetNativeResource() const override final 
+    { 
+        return reinterpret_cast<void*>(PipelineState.Get());
+    }
 
-    virtual Bool IsValid() const override { return PipelineState != nullptr && RootSignature != nullptr; }
+    virtual Bool IsValid() const override 
+    { 
+        return PipelineState != nullptr && RootSignature != nullptr; }
 
-    ID3D12PipelineState* GetPipeline()      const { return PipelineState.Get(); }
-    D3D12RootSignature*  GetRootSignature() const { return RootSignature.Get(); }
+    ID3D12PipelineState* GetPipeline()     const { return PipelineState.Get(); }
+    
+    D3D12RootSignature* GetRootSignature() const { return RootSignature.Get(); }
 
 private:
     TComPtr<ID3D12PipelineState> PipelineState;
@@ -147,9 +153,15 @@ public:
         PipelineState->SetName(WideName.c_str());
     }
 
-    virtual void* GetNativeResource() const override final { return reinterpret_cast<void*>(PipelineState.Get()); }
+    virtual void* GetNativeResource() const override final 
+    { 
+        return reinterpret_cast<void*>(PipelineState.Get());
+    }
 
-    virtual Bool IsValid() const override { return PipelineState != nullptr && RootSignature != nullptr; }
+    virtual Bool IsValid() const override 
+    { 
+        return PipelineState != nullptr && RootSignature != nullptr; 
+    }
 
     ID3D12PipelineState* GetPipeline()      const { return PipelineState.Get(); }
     D3D12RootSignature*  GetRootSignature() const { return RootSignature.Get(); }
@@ -181,7 +193,10 @@ public:
         StateObject->SetName(WideName.c_str());
     }
 
-    virtual void* GetNativeResource() const override final { return reinterpret_cast<void*>(StateObject.Get()); }
+    virtual void* GetNativeResource() const override final 
+    { 
+        return reinterpret_cast<void*>(StateObject.Get());
+    }
 
     virtual Bool IsValid() const { return StateObject != nullptr; }
 

@@ -6,6 +6,8 @@
 
 #include "Scene/Scene.h"
 
+#define ENABLE_INLINE_RAY_GEN 0
+
 struct RandomData
 {
     UInt32 FrameIndex;
@@ -30,13 +32,21 @@ public:
 private:
     Bool CreateRenderTargets(FrameResources& FrameResources);
 
-    TRef<RayTracingPipelineState> Pipeline;
-    TRef<ComputePipelineState>    RTSpatialPSO;
+    TRef<ComputePipelineState> RTSpatialPSO;
     TRef<ComputeShader>        RTSpatialShader;
-    TRef<RayGenShader>         RayGenShader;
-    TRef<RayMissShader>        RayMissShader;
-    TRef<RayClosestHitShader>  RayClosestHitShader;
-    TRef<ConstantBuffer>       RandomDataBuffer;
+    
+    TRef<GraphicsPipelineState> InlineRTPipeline;
+    TRef<VertexShader>          FullscreenShader;
+    TRef<PixelShader>           InlineRayGen;
+
+    TRef<RayTracingPipelineState> Pipeline;
+
+    TRef<RayGenShader>        RayGenShader;
+    TRef<RayMissShader>       RayMissShader;
+    TRef<RayClosestHitShader> RayClosestHitShader;
+    
+    TRef<ConstantBuffer> RandomDataBuffer;
+
     TRef<ComputePipelineState> BlurHorizontalPSO;
     TRef<ComputeShader>        BlurHorizontalShader;
     TRef<ComputePipelineState> BlurVerticalPSO;

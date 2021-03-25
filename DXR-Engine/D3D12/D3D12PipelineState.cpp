@@ -80,93 +80,138 @@ Bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
     } PipelineStream;
 
     // InputLayout
+    D3D12InputLayoutState* InputLayoutState  = static_cast<D3D12InputLayoutState*>(CreateInfo.InputLayoutState);
     D3D12_INPUT_LAYOUT_DESC& InputLayoutDesc = PipelineStream.InputLayout;
-
-    D3D12InputLayoutState* DxInputLayoutState = static_cast<D3D12InputLayoutState*>(CreateInfo.InputLayoutState);
-    if (!DxInputLayoutState)
+    if (!InputLayoutState)
     {
         InputLayoutDesc.pInputElementDescs = nullptr;
         InputLayoutDesc.NumElements = 0;
     }
     else
     {
-        InputLayoutDesc = DxInputLayoutState->GetDesc();
+        InputLayoutDesc = InputLayoutState->GetDesc();
     }
 
     TArray<D3D12BaseShader*> ShadersWithRootSignature;
     TArray<D3D12BaseShader*> BaseShaders;
 
     // VertexShader
-    D3D12VertexShader* DxVertexShader = static_cast<D3D12VertexShader*>(CreateInfo.ShaderState.VertexShader);
-    Assert(DxVertexShader != nullptr);
+    D3D12VertexShader* VertexShader = static_cast<D3D12VertexShader*>(CreateInfo.VertexShader);
+    Assert(VertexShader != nullptr);
 
-    if (DxVertexShader->HasRootSignature())
+    if (VertexShader->HasRootSignature())
     {
-        ShadersWithRootSignature.EmplaceBack(DxVertexShader);
+        ShadersWithRootSignature.EmplaceBack(VertexShader);
     }
 
-    D3D12_SHADER_BYTECODE& VertexShader = PipelineStream.VertexShader;
-    VertexShader = DxVertexShader->GetByteCode();
-    BaseShaders.EmplaceBack(DxVertexShader);
+    D3D12_SHADER_BYTECODE& VertexShaderCode = PipelineStream.VertexShader;
+    VertexShaderCode = VertexShader->GetByteCode();
+    BaseShaders.EmplaceBack(VertexShader);
 
     // PixelShader
-    D3D12PixelShader* DxPixelShader = static_cast<D3D12PixelShader*>(CreateInfo.ShaderState.PixelShader);
-
-    D3D12_SHADER_BYTECODE& PixelShader = PipelineStream.PixelShader;
-    if (DxPixelShader)
+    D3D12PixelShader* PixelShader = static_cast<D3D12PixelShader*>(CreateInfo.PixelShader);
+    D3D12_SHADER_BYTECODE& PixelShaderCode = PipelineStream.PixelShader;
+    if (PixelShader)
     {
-        PixelShader = DxPixelShader->GetByteCode();
-        BaseShaders.EmplaceBack(DxPixelShader);
+        PixelShaderCode = PixelShader->GetByteCode();
+        BaseShaders.EmplaceBack(PixelShader);
 
-        if (DxPixelShader->HasRootSignature())
+        if (PixelShader->HasRootSignature())
         {
-            ShadersWithRootSignature.EmplaceBack(DxPixelShader);
+            ShadersWithRootSignature.EmplaceBack(PixelShader);
         }
     }
     else
     {
-        PixelShader.pShaderBytecode = nullptr;
-        PixelShader.BytecodeLength  = 0;
+        PixelShaderCode.pShaderBytecode = nullptr;
+        PixelShaderCode.BytecodeLength  = 0;
     }
 
     // RenderTarget
-    const UInt32 NumRenderTargets = CreateInfo.PipelineFormats.NumRenderTargets;
+    const UInt32 NumRenderTargets = CreateInfo.NumRenderTargets;
 
     D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = PipelineStream.RenderTargetInfo;
-    RenderTargetInfo.NumRenderTargets = NumRenderTargets;
+    RenderTargetInfo.NumRenderTargets       = NumRenderTargets;
     for (UInt32 Index = 0; Index < NumRenderTargets; Index++)
     {
-        RenderTargetInfo.RTFormats[Index] = ConvertFormat(CreateInfo.PipelineFormats.RenderTargetFormats[Index]);
+        RenderTargetInfo.RTFormats[Index] = ConvertFormat(CreateInfo.RenderTargetFormats[Index]);
     }
 
     // DepthStencil
-    PipelineStream.DepthBufferFormat = ConvertFormat(CreateInfo.PipelineFormats.DepthStencilFormat);
+    PipelineStream.DepthBufferFormat = ConvertFormat(CreateInfo.DepthStencilFormat);
 
     // RasterizerState
-    D3D12RasterizerState* DxRasterizerState = static_cast<D3D12RasterizerState*>(CreateInfo.RasterizerState);
-    Assert(DxRasterizerState != nullptr);
-
+    D3D12RasterizerState* RasterizerState = static_cast<D3D12RasterizerState*>(CreateInfo.RasterizerState);
     D3D12_RASTERIZER_DESC& RasterizerDesc = PipelineStream.RasterizerDesc;
-    RasterizerDesc = DxRasterizerState->GetDesc();
+    if (!RasterizerState)
+    {
+        RasterizerDesc.FillMode              = D3D12_FILL_MODE_SOLID;
+        RasterizerDesc.CullMode              = D3D12_CULL_MODE_BACK;
+        RasterizerDesc.FrontCounterClockwise = false;
+        RasterizerDesc.DepthBias             = 0;
+        RasterizerDesc.DepthBiasClamp        = 0.0f;
+        RasterizerDesc.SlopeScaledDepthBias  = 0.0f;
+        RasterizerDesc.DepthClipEnable       = true;
+        RasterizerDesc.MultisampleEnable     = false;
+        RasterizerDesc.AntialiasedLineEnable = false;
+        RasterizerDesc.ForcedSampleCount     = 0;
+        RasterizerDesc.ConservativeRaster    = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+    }
+    else
+    {
+        RasterizerDesc = RasterizerState->GetDesc();
+    }
 
     // DepthStencilState
-    D3D12DepthStencilState* DxDepthStencilState = static_cast<D3D12DepthStencilState*>(CreateInfo.DepthStencilState);
-    Assert(DxDepthStencilState != nullptr);
-
+    D3D12DepthStencilState* DepthStencilState  = static_cast<D3D12DepthStencilState*>(CreateInfo.DepthStencilState);
     D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc = PipelineStream.DepthStencilDesc;
-    DepthStencilDesc = DxDepthStencilState->GetDesc();
+    if (!DepthStencilState)
+    {
+        DepthStencilDesc.DepthEnable      = true;
+        DepthStencilDesc.DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ALL;
+        DepthStencilDesc.DepthFunc        = D3D12_COMPARISON_FUNC_LESS;
+        DepthStencilDesc.StencilEnable    = false;
+        DepthStencilDesc.StencilReadMask  = D3D12_DEFAULT_STENCIL_READ_MASK;
+        DepthStencilDesc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+
+        DepthStencilDesc.FrontFace.StencilFunc        = DepthStencilDesc.BackFace.StencilFunc        = D3D12_COMPARISON_FUNC_ALWAYS;
+        DepthStencilDesc.FrontFace.StencilDepthFailOp = DepthStencilDesc.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+        DepthStencilDesc.FrontFace.StencilPassOp      = DepthStencilDesc.BackFace.StencilPassOp      = D3D12_STENCIL_OP_KEEP;
+        DepthStencilDesc.FrontFace.StencilFailOp      = DepthStencilDesc.BackFace.StencilFailOp      = D3D12_STENCIL_OP_KEEP;
+    }
+    else
+    {
+        DepthStencilDesc = DepthStencilState->GetDesc();
+    }
 
     // BlendState
-    D3D12BlendState* DxBlendState = static_cast<D3D12BlendState*>(CreateInfo.BlendState);
-    Assert(DxBlendState != nullptr);
-
+    D3D12BlendState* BlendState      = static_cast<D3D12BlendState*>(CreateInfo.BlendState);
     D3D12_BLEND_DESC& BlendStateDesc = PipelineStream.BlendStateDesc;
-    BlendStateDesc = DxBlendState->GetDesc();
+    if (!BlendState)
+    {
+        BlendStateDesc.AlphaToCoverageEnable  = false;
+        BlendStateDesc.IndependentBlendEnable = false;
+
+        BlendStateDesc.RenderTarget[0].BlendEnable    = false;
+        BlendStateDesc.RenderTarget[0].LogicOpEnable  = false;
+        BlendStateDesc.RenderTarget[0].SrcBlend       = D3D12_BLEND_ONE;
+        BlendStateDesc.RenderTarget[0].DestBlend      = D3D12_BLEND_ZERO;
+        BlendStateDesc.RenderTarget[0].BlendOp        = D3D12_BLEND_OP_ADD;
+        BlendStateDesc.RenderTarget[0].SrcBlendAlpha  = D3D12_BLEND_ONE;
+        BlendStateDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+        BlendStateDesc.RenderTarget[0].BlendOpAlpha   = D3D12_BLEND_OP_ADD;
+        BlendStateDesc.RenderTarget[0].LogicOp        = D3D12_LOGIC_OP_NOOP;
+        BlendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+    }
+    else
+    {
+        BlendStateDesc = BlendState->GetDesc();
+    }
 
     // Topology
     PipelineStream.PrimitiveTopologyType = ConvertPrimitiveTopologyType(CreateInfo.PrimitiveTopologyType);
 
-    // MSAA
+    // Multisampling
     DXGI_SAMPLE_DESC& SamplerDesc = PipelineStream.SampleDesc;
     SamplerDesc.Count   = CreateInfo.SampleCount;
     SamplerDesc.Quality = CreateInfo.SampleQuality;
@@ -175,7 +220,8 @@ Bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
     if (ShadersWithRootSignature.IsEmpty())
     {
         D3D12RootSignatureResourceCount ResourceCounts;
-        ResourceCounts.Type                = ERootSignatureType::Graphics;
+        ResourceCounts.Type = ERootSignatureType::Graphics;
+
         // TODO: Check if any shader actually uses the input assembler
         ResourceCounts.AllowInputAssembler = true;
 

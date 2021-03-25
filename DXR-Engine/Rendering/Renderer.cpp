@@ -299,7 +299,7 @@ void Renderer::Tick(const Scene& Scene)
     Resources.BackBuffer = Resources.MainWindowViewport->GetBackBuffer();
 
     Camera* CurrentCamera = Scene.GetCamera();
-    CurrentCamera->Tick(Resources.BackBuffer->GetWidth(), Resources.BackBuffer->GetHeight());
+    CurrentCamera->Tick((Float)Resources.BackBuffer->GetWidth(), (Float)Resources.BackBuffer->GetHeight());
 
     // Perform frustum culling
     Resources.DeferredVisibleCommands.Clear();
@@ -968,16 +968,16 @@ Bool Renderer::InitBoundingBoxDebugPass()
     }
 
     GraphicsPipelineStateCreateInfo PSOProperties;
-    PSOProperties.BlendState                             = BlendState.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.InputLayoutState                       = InputLayoutState.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.ShaderState.VertexShader               = AABBVertexShader.Get();
-    PSOProperties.ShaderState.PixelShader                = AABBPixelShader.Get();
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Line;
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = Resources.RenderTargetFormat;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
+    PSOProperties.BlendState             = BlendState.Get();
+    PSOProperties.DepthStencilState      = DepthStencilState.Get();
+    PSOProperties.InputLayoutState       = InputLayoutState.Get();
+    PSOProperties.RasterizerState        = RasterizerState.Get();
+    PSOProperties.VertexShader           = AABBVertexShader.Get();
+    PSOProperties.PixelShader            = AABBPixelShader.Get();
+    PSOProperties.PrimitiveTopologyType  = EPrimitiveTopologyType::Line;
+    PSOProperties.RenderTargetFormats[0] = Resources.RenderTargetFormat;
+    PSOProperties.NumRenderTargets       = 1;
+    PSOProperties.DepthStencilFormat     = Resources.DepthBufferFormat;
 
     AABBDebugPipelineState = CreateGraphicsPipelineState(PSOProperties);
     if (!AABBDebugPipelineState)
@@ -1132,16 +1132,16 @@ Bool Renderer::InitAA()
     }
 
     GraphicsPipelineStateCreateInfo PSOProperties;
-    PSOProperties.InputLayoutState                       = nullptr;
-    PSOProperties.BlendState                             = BlendState.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PostShader.Get();
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
+    PSOProperties.InputLayoutState       = nullptr;
+    PSOProperties.BlendState             = BlendState.Get();
+    PSOProperties.DepthStencilState      = DepthStencilState.Get();
+    PSOProperties.RasterizerState        = RasterizerState.Get();
+    PSOProperties.VertexShader           = VShader.Get();
+    PSOProperties.PixelShader            = PostShader.Get();
+    PSOProperties.PrimitiveTopologyType  = EPrimitiveTopologyType::Triangle;
+    PSOProperties.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
+    PSOProperties.NumRenderTargets       = 1;
+    PSOProperties.DepthStencilFormat     = EFormat::Unknown;
 
     PostPSO = CreateGraphicsPipelineState(PSOProperties);
     if (!PostPSO)
@@ -1184,7 +1184,7 @@ Bool Renderer::InitAA()
         FXAAShader->SetName("FXAA PixelShader");
     }
 
-    PSOProperties.ShaderState.PixelShader = FXAAShader.Get();
+    PSOProperties.PixelShader = FXAAShader.Get();
 
     FXAAPSO = CreateGraphicsPipelineState(PSOProperties);
     if (!FXAAPSO)
@@ -1219,7 +1219,7 @@ Bool Renderer::InitAA()
         FXAADebugShader->SetName("FXAA PixelShader");
     }
 
-    PSOProperties.ShaderState.PixelShader = FXAADebugShader.Get();
+    PSOProperties.PixelShader = FXAADebugShader.Get();
 
     FXAADebugPSO = CreateGraphicsPipelineState(PSOProperties);
     if (!FXAADebugPSO)
@@ -1276,7 +1276,9 @@ Bool Renderer::InitShadingImage()
         ShadingRateShader->SetName("ShadingRate Image Shader");
     }
 
-    ComputePipelineStateCreateInfo CreateInfo(ShadingRateShader.Get());
+    ComputePipelineStateCreateInfo CreateInfo;
+    CreateInfo.Shader = ShadingRateShader.Get();
+
     ShadingRatePipeline = CreateComputePipelineState(CreateInfo);
     if (!ShadingRatePipeline)
     {

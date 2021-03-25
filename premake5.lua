@@ -160,7 +160,8 @@ workspace "DXR-Project"
 			"Dependencies/imgui",
 			"Dependencies/stb_image",
             "Dependencies/tinyobjloader",
-            "Dependencies/Template-Library"
+            "Dependencies/Template-Library",
+			"Dependencies/DirectXShaderCompiler/inc"
 		}
         
 		links 

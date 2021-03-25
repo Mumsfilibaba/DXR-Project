@@ -6,7 +6,8 @@
 // Global RootSignature
 RaytracingAccelerationStructure Scene : register(t0, space0);
 
-TextureCube<float4> Skybox           : register(t1, space0);
+TextureCube<float4> Skybox : register(t1, space0);
+
 Texture2D<float4> GBufferAlbedoTex   : register(t2, space0);
 Texture2D<float4> GBufferNormalTex   : register(t3, space0);
 Texture2D<float4> GBufferDepthTex    : register(t4, space0);
@@ -22,6 +23,8 @@ ConstantBuffer<RandomData>    RandomBuffer : register(b2, space0);
 
 RWTexture2D<float4> ColorDepth : register(u0, space0);
 RWTexture2D<float4> RayPDF     : register(u1, space0);
+
+SamplerState SkyboxSampler : register(s0, space0);
 
 #define NUM_SAMPLES 1
 
@@ -39,19 +42,19 @@ void RayGen()
     
     uint2 GBufferCoord = TexCoord * 2 + uint2(PixelIndex & 1, (PixelIndex >> 1) & 1);
     
-    float  Depth = GBufferDepthTex.Load(int3(GBufferCoord, 0)).r;
-    float2 UV    = float2(GBufferCoord) / float2(FullResolution);
-    float3 WorldPosition = PositionFromDepth(Depth, UV, CameraBuffer.ViewProjectionInverse);
-    float3 WorldNormal   = GBufferNormalTex.Load(int3(GBufferCoord, 0)).rgb;
-    
-    float3 GBufferAlbedo   = GBufferAlbedoTex.Load(int3(GBufferCoord, 0)).rgb;
+    float  GBufferDepth    = GBufferDepthTex.Load(int3(GBufferCoord, 0)).r;
+    float3 GBufferNormal   = GBufferNormalTex.Load(int3(GBufferCoord, 0)).rgb;
     float3 GBufferMaterial = GBufferMaterialTex.Load(int3(GBufferCoord, 0)).rgb;
-    float  Roughness       = GBufferMaterial.r;
+    
+    float2 UV = float2(GBufferCoord) / float2(FullResolution);
+    
+    float3 WorldPosition = PositionFromDepth(GBufferDepth, UV, CameraBuffer.ViewProjectionInverse);
+    float  Roughness     = GBufferMaterial.r;
 
-    float3 N = UnpackNormal(WorldNormal);
+    float3 N = UnpackNormal(GBufferNormal);
     float3 V = normalize(CameraBuffer.Position - WorldPosition);
     
-    if (length(WorldNormal) == 0.0f)
+    if (length(GBufferNormal) == 0.0f)
     {
         ColorDepth[TexCoord] = Float4(0.0f);
         RayPDF[TexCoord]     = Float4(0.0f);
@@ -120,6 +123,6 @@ void RayGen()
         FinalPDF = 1.0f / Spec_PDF;
     }
     
-    ColorDepth[TexCoord] = float4(FinalColor, Depth);
-    RayPDF[TexCoord] = float4(FinalRay, FinalPDF);
+    ColorDepth[TexCoord] = float4(FinalColor, GBufferDepth);
+    RayPDF[TexCoord]     = float4(FinalRay, FinalPDF);
 }

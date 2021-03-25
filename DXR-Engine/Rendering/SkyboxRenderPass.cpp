@@ -149,15 +149,15 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     }
 
     GraphicsPipelineStateCreateInfo PipelineStateInfo;
-    PipelineStateInfo.InputLayoutState                       = FrameResources.StdInputLayout.Get();
-    PipelineStateInfo.BlendState                             = BlendState.Get();
-    PipelineStateInfo.DepthStencilState                      = DepthStencilState.Get();
-    PipelineStateInfo.RasterizerState                        = RasterizerState.Get();
-    PipelineStateInfo.ShaderState.VertexShader               = SkyboxVertexShader.Get();
-    PipelineStateInfo.ShaderState.PixelShader                = SkyboxPixelShader.Get();
-    PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
-    PipelineStateInfo.PipelineFormats.NumRenderTargets       = 1;
-    PipelineStateInfo.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+    PipelineStateInfo.InputLayoutState       = FrameResources.StdInputLayout.Get();
+    PipelineStateInfo.BlendState             = BlendState.Get();
+    PipelineStateInfo.DepthStencilState      = DepthStencilState.Get();
+    PipelineStateInfo.RasterizerState        = RasterizerState.Get();
+    PipelineStateInfo.VertexShader           = SkyboxVertexShader.Get();
+    PipelineStateInfo.PixelShader            = SkyboxPixelShader.Get();
+    PipelineStateInfo.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
+    PipelineStateInfo.NumRenderTargets       = 1;
+    PipelineStateInfo.DepthStencilFormat     = FrameResources.DepthBufferFormat;
 
     PipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
     if (!PipelineState)

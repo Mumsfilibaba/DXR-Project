@@ -363,40 +363,26 @@ inline const Char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
     }
 }
 
-struct PipelineRenderTargetFormats
-{
-    EFormat RenderTargetFormats[8];
-    UInt32  NumRenderTargets   = 0;
-    EFormat DepthStencilFormat = EFormat::Unknown;
-};
-
-struct GraphicsPipelineShaderState
-{
-    GraphicsPipelineShaderState() = default;
-
-    GraphicsPipelineShaderState(VertexShader* InVertexShader, PixelShader* InPixelShader)
-        : VertexShader(InVertexShader)
-        , PixelShader(InPixelShader)
-    {
-    }
-
-    VertexShader* VertexShader = nullptr;
-    PixelShader*  PixelShader  = nullptr;
-};
-
 struct GraphicsPipelineStateCreateInfo
 {
     InputLayoutState*  InputLayoutState  = nullptr;
     DepthStencilState* DepthStencilState = nullptr;
     RasterizerState*   RasterizerState   = nullptr;
     BlendState*        BlendState        = nullptr;
-    UInt32                      SampleCount           = 1;
-    UInt32                      SampleQuality         = 0;
-    UInt32                      SampleMask            = 0xffffffff;
-    EIndexBufferStripCutValue   IBStripCutValue       = EIndexBufferStripCutValue::Disabled;
-    EPrimitiveTopologyType      PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
-    GraphicsPipelineShaderState ShaderState;
-    PipelineRenderTargetFormats PipelineFormats;
+    
+    VertexShader* VertexShader = nullptr;
+    PixelShader*  PixelShader  = nullptr;
+
+    EIndexBufferStripCutValue IBStripCutValue       = EIndexBufferStripCutValue::Disabled;
+    EPrimitiveTopologyType    PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+
+    EFormat RenderTargetFormats[8];
+    UInt32  NumRenderTargets   = 0;
+    EFormat DepthStencilFormat = EFormat::Unknown;
+
+    UInt32 SampleCount   = 1;
+    UInt32 SampleQuality = 0;
+    UInt32 SampleMask    = 0xffffffff;
 };
 
 class GraphicsPipelineState : public PipelineState
@@ -407,13 +393,6 @@ public:
 
 struct ComputePipelineStateCreateInfo
 {
-    ComputePipelineStateCreateInfo() = default;
-
-    ComputePipelineStateCreateInfo(ComputeShader* InShader)
-        : Shader(InShader)
-    {
-    }
-
     ComputeShader* Shader = nullptr;
 };
 
