@@ -6,7 +6,8 @@
 
 #include "Scene/Scene.h"
 
-#define ENABLE_INLINE_RAY_GEN 0
+#define ENABLE_INLINE_RAY_GEN 1
+#define MAX_RT_MATERIALS      128
 
 struct RandomData
 {
@@ -35,6 +36,9 @@ private:
     TRef<ComputePipelineState> RTSpatialPSO;
     TRef<ComputeShader>        RTSpatialShader;
     
+    TRef<StructuredBuffer>   RTMaterialBuffer;
+    TRef<ShaderResourceView> RTMaterialBufferSRV;
+
     TRef<GraphicsPipelineState> InlineRTPipeline;
     TRef<VertexShader>          FullscreenShader;
     TRef<PixelShader>           InlineRayGen;

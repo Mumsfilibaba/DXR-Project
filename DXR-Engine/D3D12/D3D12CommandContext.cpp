@@ -347,8 +347,6 @@ void D3D12CommandContext::Begin()
         return;
     }
 
-    InternalClearState();
-
     if (!CmdList.Reset(CmdBatch->GetCommandAllocator()))
     {
         Debug::DebugBreak();
@@ -389,6 +387,8 @@ void D3D12CommandContext::End()
         Debug::DebugBreak();
         return;
     }
+
+    InternalClearState();
 }
 
 void D3D12CommandContext::BeginTimeStamp(GPUProfiler* Profiler, UInt32 Index)
@@ -638,12 +638,18 @@ void D3D12CommandContext::SetShaderResourceViews(Shader* Shader, ShaderResourceV
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetShaderResourceParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
-    Assert(ParameterInfo.NumDescriptors == NumShaderResourceViews);
+    Assert(NumShaderResourceViews <= ParameterInfo.NumDescriptors);
 
     for (UInt32 i = 0; i < NumShaderResourceViews; i++)
     {
         D3D12ShaderResourceView* DxShaderResourceView = static_cast<D3D12ShaderResourceView*>(ShaderResourceView[i]);
         DescriptorCache.SetShaderResourceView(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
+    }
+
+    // NOTE: We may not need to do this, but now the shader should have valid descriptors in all slots
+    for (UInt32 i = NumShaderResourceViews; i < ParameterInfo.NumDescriptors; i++)
+    {
+        DescriptorCache.SetShaderResourceView(nullptr, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
     }
 }
 
@@ -667,12 +673,18 @@ void D3D12CommandContext::SetUnorderedAccessViews(Shader* Shader, UnorderedAcces
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetUnorderedAccessParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
-    Assert(ParameterInfo.NumDescriptors == NumUnorderedAccessViews);
+    Assert(NumUnorderedAccessViews <= ParameterInfo.NumDescriptors);
 
     for (UInt32 i = 0; i < NumUnorderedAccessViews; i++)
     {
         D3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<D3D12UnorderedAccessView*>(UnorderedAccessViews[i]);
         DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
+    }
+
+    // NOTE: We may not need to do this, but now the shader should have valid descriptors in all slots
+    for (UInt32 i = NumUnorderedAccessViews; i < ParameterInfo.NumDescriptors; i++)
+    {
+        DescriptorCache.SetUnorderedAccessView(nullptr, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
     }
 }
 
@@ -703,19 +715,25 @@ void D3D12CommandContext::SetConstantBuffers(Shader* Shader, ConstantBuffer* con
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetConstantBufferParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
-    Assert(ParameterInfo.NumDescriptors == NumConstantBuffers);
+    Assert(NumConstantBuffers <= ParameterInfo.NumDescriptors);
 
     for (UInt32 i = 0; i < NumConstantBuffers; i++)
     {
         if (ConstantBuffers[i])
         {
             D3D12ConstantBufferView& DxConstantBufferView = static_cast<D3D12ConstantBuffer*>(ConstantBuffers[i])->GetView();
-            DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
+            DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
         }
         else
         {
-            DescriptorCache.SetConstantBufferView(nullptr, DxShader->GetShaderVisibility(), ParameterInfo.Register);
+            DescriptorCache.SetConstantBufferView(nullptr, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
         }
+    }
+
+    // NOTE: We may not need to do this, but now the shader should have valid descriptors in all slots
+    for (UInt32 i = NumConstantBuffers; i < ParameterInfo.NumDescriptors; i++)
+    {
+        DescriptorCache.SetConstantBufferView(nullptr, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
     }
 }
 
@@ -739,12 +757,18 @@ void D3D12CommandContext::SetSamplerStates(Shader* Shader, SamplerState* const* 
 
     D3D12ShaderParameter ParameterInfo = DxShader->GetSamplerStateParameter(ParameterIndex);
     Assert(ParameterInfo.Space == 0);
-    Assert(ParameterInfo.NumDescriptors == NumSamplerStates);
+    Assert(NumSamplerStates <= ParameterInfo.NumDescriptors);
 
     for (UInt32 i = 0; i < NumSamplerStates; i++)
     {
         D3D12SamplerState* DxSamplerState = static_cast<D3D12SamplerState*>(SamplerStates[i]);
-        DescriptorCache.SetSamplerState(DxSamplerState, DxShader->GetShaderVisibility(), ParameterInfo.Register);
+        DescriptorCache.SetSamplerState(DxSamplerState, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
+    }
+
+    // NOTE: We may not need to do this, but now the shader should have valid descriptors in all slots
+    for (UInt32 i = NumSamplerStates; i < ParameterInfo.NumDescriptors; i++)
+    {
+        DescriptorCache.SetSamplerState(nullptr, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
     }
 }
 

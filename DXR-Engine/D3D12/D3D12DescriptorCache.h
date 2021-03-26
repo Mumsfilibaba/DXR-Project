@@ -7,7 +7,7 @@
 #include "D3D12CommandList.h"
 
 #define NUM_VISIBILITIES (ShaderVisibility_Count)
-#define NUM_DESCRIPTORS  (D3D12_MAX_ONLINE_DESCRIPTOR_COUNT / 4)
+#define NUM_DESCRIPTORS  (D3D12_MAX_ONLINE_DESCRIPTOR_COUNT / 2)
 
 template <typename TD3D12DescriptorViewType>
 struct TD3D12DescriptorViewCache
@@ -26,6 +26,8 @@ struct TD3D12DescriptorViewCache
     void Set(TD3D12DescriptorViewType* DescriptorView, EShaderVisibility Visibility, UInt32 ShaderRegister)
     {
         Assert(DescriptorView != nullptr);
+        Assert(Visibility < NUM_VISIBILITIES);
+        Assert(ShaderRegister < NUM_DESCRIPTORS);
 
         TD3D12DescriptorViewType* CurrentDescriptorView = DescriptorViews[Visibility][ShaderRegister];
         if (DescriptorView != CurrentDescriptorView)

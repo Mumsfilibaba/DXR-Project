@@ -251,6 +251,28 @@ Bool RayTracer::Init(FrameResources& Resources)
         BlurVerticalPSO->SetName("RT Vertical Blur PSO");
     }
 
+    RTMaterialBuffer = CreateStructuredBuffer(sizeof(RayTracingMaterial), MAX_RT_MATERIALS, BufferFlag_SRV, EResourceState::PixelShaderResource, nullptr);
+    if (!RTMaterialBuffer)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RTMaterialBuffer->SetName("RT MaterialBuffer");
+    }
+
+    RTMaterialBufferSRV = CreateShaderResourceView(RTMaterialBuffer.Get(), 0, MAX_RT_MATERIALS);
+    if (!RTMaterialBufferSRV)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RTMaterialBufferSRV->SetName("RT MaterialBuffer SRV");
+    }
+
     return true;
 }
 
@@ -258,6 +280,9 @@ void RayTracer::Release()
 {
     Pipeline.Reset();
     
+    RTMaterialBuffer.Reset();
+    RTMaterialBufferSRV.Reset();
+
     InlineRTPipeline.Reset();
     FullscreenShader.Reset();
     InlineRayGen.Reset();
@@ -309,13 +334,31 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
             continue;
         }
 
-        UInt32 AlbedoIndex = Resources.RTMaterialTextureCache.Add(Mat->AlbedoMap->GetShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->NormalMap->GetShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->RoughnessMap->GetShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->HeightMap->GetShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->MetallicMap->GetShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->AOMap->GetShaderResourceView());
+        RayTracingMaterial MaterialData;
+        MaterialData.AlbedoTexID    = Resources.RTMaterialTextureCache.Add(Mat->AlbedoMap->GetShaderResourceView());
+        MaterialData.NormalTexID    = Resources.RTMaterialTextureCache.Add(Mat->NormalMap->GetShaderResourceView());
+        MaterialData.RoughnessTexID = Resources.RTMaterialTextureCache.Add(Mat->RoughnessMap->GetShaderResourceView());
+        MaterialData.MetallicTexID  = Resources.RTMaterialTextureCache.Add(Mat->MetallicMap->GetShaderResourceView());
+        MaterialData.AOTexID        = Resources.RTMaterialTextureCache.Add(Mat->AOMap->GetShaderResourceView());
+        MaterialData.Albedo         = Mat->GetMaterialProperties().Albedo;
+        MaterialData.Roughness      = Mat->GetMaterialProperties().Roughness;
+        MaterialData.AO             = Mat->GetMaterialProperties().AO;
+        MaterialData.Metallic       = Mat->GetMaterialProperties().Metallic;
         Sampler = Mat->GetMaterialSampler();
+
+        UInt32 MaterialIndex = 0;
+        auto MaterialIndexPair = Resources.RTMaterialMap.find(Mat);
+        if (MaterialIndexPair == Resources.RTMaterialMap.end())
+        {
+            MaterialIndex = Resources.RTMaterials.Size();
+            Resources.RTMaterials.EmplaceBack(MaterialData);
+            Resources.RTMaterialMap[Mat] = MaterialIndex;
+        }
+        else
+        {
+            MaterialIndex = MaterialIndexPair->second;
+            Resources.RTMaterials[MaterialIndex] = MaterialData;
+        }
 
         const XMFLOAT3X4 TinyTransform = Cmd.CurrentActor->GetTransform().GetTinyMatrix();
         UInt32 HitGroupIndex = 0;
@@ -331,7 +374,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
             if (Cmd.Mesh->VertexBufferSRV)
             {
                 ShaderResourceView* SRV = Cmd.Mesh->VertexBufferSRV.Get();
-                Resources.RTVertexBuffer.EmplaceBack(SRV);
+                Resources.RTVertexBuffers.EmplaceBack(SRV);
 
                 HitGroupResources.AddShaderResourceView(SRV);
             }
@@ -354,13 +397,19 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
         Instance.Instance      = MakeSharedRef<RayTracingGeometry>(Cmd.Geometry);
         Instance.Flags         = RayTracingInstanceFlags_None;
         Instance.HitGroupIndex = HitGroupIndex;
-        Instance.InstanceIndex = AlbedoIndex;
+        Instance.InstanceIndex = MaterialIndex;
         Instance.Mask          = 0xff;
         Instance.Transform     = TinyTransform;
         Resources.RTGeometryInstances.EmplaceBack(Instance);
     }
 
-    Resources.RTVertexBuffer.ShrinkToFit();
+    Assert(Resources.RTMaterials.Size() <= MAX_RT_MATERIALS);
+
+    CmdList.TransitionBuffer(RTMaterialBuffer.Get(), EResourceState::PixelShaderResource, EResourceState::CopyDest);
+    CmdList.UpdateBuffer(RTMaterialBuffer.Get(), 0, Resources.RTMaterials.SizeInBytes(), Resources.RTMaterials.Data());
+    CmdList.TransitionBuffer(RTMaterialBuffer.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
+
+    Resources.RTVertexBuffers.ShrinkToFit();
     Resources.RTIndexBuffers.ShrinkToFit();
     Resources.RTGeometryInstances.ShrinkToFit();
 
@@ -385,11 +434,23 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
 
 #if ENABLE_INLINE_RAY_GEN
     CmdList.SetConstantBuffer(InlineRayGen.Get(), Resources.CameraBuffer.Get(), 0);
-    
+    CmdList.SetConstantBuffer(InlineRayGen.Get(), RandomDataBuffer.Get(), 1);
+    CmdList.SetConstantBuffer(InlineRayGen.Get(), LightSetup.LightInfoBuffer.Get(), 2);
+    CmdList.SetConstantBuffer(InlineRayGen.Get(), LightSetup.PointLightsBuffer.Get(), 3);
+    CmdList.SetConstantBuffer(InlineRayGen.Get(), LightSetup.PointLightsPosRadBuffer.Get(), 4);
+    CmdList.SetConstantBuffer(InlineRayGen.Get(), LightSetup.ShadowCastingPointLightsBuffer.Get(), 5);
+    CmdList.SetConstantBuffer(InlineRayGen.Get(), LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 6);
+    CmdList.SetConstantBuffer(InlineRayGen.Get(), LightSetup.DirectionalLightsBuffer.Get(), 7);
+
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.RTScene->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.Skybox->GetShaderResourceView(), 1);
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView(), 2);
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 4);
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), RTMaterialBufferSRV.Get(), 5);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTVertexBuffers.Data(), Resources.RTVertexBuffers.Size(), 6);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTIndexBuffers.Data(), Resources.RTIndexBuffers.Size(), 7);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTMaterialTextureCache.Data(), Resources.RTMaterialTextureCache.Size(), 8);
     
     CmdList.SetSamplerState(InlineRayGen.Get(), Resources.IrradianceSampler.Get(), 0);
 

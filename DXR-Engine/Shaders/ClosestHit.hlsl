@@ -3,22 +3,23 @@
 #include "RayTracingHelpers.hlsli"
 #include "Constants.hlsli"
 
-#define MAX_LIGHTS_PER_TILE 8
+#define MAX_LIGHTS 8
 
 // Global RootSignature
 RaytracingAccelerationStructure Scene : register(t0, space0);
 
-ConstantBuffer<Camera>        CameraBuffer : register(b0, space0);
-ConstantBuffer<LightInfoData> LightInfo    : register(b1, space0);
+ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
+
+ConstantBuffer<LightInfoData> LightInfo : register(b1, space0);
 
 cbuffer PointLightsBuffer : register(b3, space0)
 {
-    PointLight PointLights[MAX_LIGHTS_PER_TILE];
+    PointLight PointLights[MAX_LIGHTS];
 }
 
 cbuffer PointLightsPosRadBuffer : register(b4, space0)
 {
-    PositionRadius PointLightsPosRad[MAX_LIGHTS_PER_TILE];
+    PositionRadius PointLightsPosRad[MAX_LIGHTS];
 }
 
 cbuffer ShadowCastingPointLightsBuffer : register(b5, space0)
@@ -33,25 +34,15 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b6, space0)
 
 ConstantBuffer<DirectionalLight> DirLightBuffer : register(b7, space0);
 
-TextureCube<float4> Skybox                : register(t1, space0);
-Texture2D<float4>   MaterialTextures[128] : register(t7, space0);
+TextureCube<float4> Skybox : register(t1, space0);
+
+Texture2D<float4> MaterialTextures[128] : register(t7, space0);
 
 SamplerState TextureSampler : register(s0, space0);
 
 // Local RootSignature
-StructuredBuffer<Vertex> Vertices  : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-ByteAddressBuffer        InIndices : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-
-//ConstantBuffer<Material> MaterialBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-
-//Texture2D<float4> AlbedoMap    : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-//Texture2D<float4> NormalMap    : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-//Texture2D<float4> RoughnessMap : register(t2, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-//Texture2D<float4> HeightMap    : register(t3, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-//Texture2D<float4> MetallicMap  : register(t4, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-//Texture2D<float4> AOMap        : register(t5, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-
-//SamplerState TextureSampler : register(s0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+StructuredBuffer<Vertex> Vertices : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+ByteAddressBuffer        Indices  : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
 
 [shader("closesthit")]
 void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttributes IntersectionAttributes)
@@ -63,7 +54,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     const uint BaseIndex           = PrimitiveIndex() * TriangleIndexStride;
 
     // Load up three indices for the triangle.
-    uint3 Indices = InIndices.Load3(BaseIndex);
+    uint3 TriangleIndices = Indices.Load3(BaseIndex);
 
     float3 BarycentricCoords = float3(
         1.0f - IntersectionAttributes.barycentrics.x - IntersectionAttributes.barycentrics.y,
@@ -73,9 +64,9 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     // Retrieve corresponding vertex normals for the triangle vertices.
     float3 TriangleNormals[3] =
     {
-        Vertices[Indices[0]].Normal,
-        Vertices[Indices[1]].Normal,
-        Vertices[Indices[2]].Normal
+        Vertices[TriangleIndices[0]].Normal,
+        Vertices[TriangleIndices[1]].Normal,
+        Vertices[TriangleIndices[2]].Normal
     };
   
     float3 N = (TriangleNormals[0] * BarycentricCoords.x) + (TriangleNormals[1] * BarycentricCoords.y) + (TriangleNormals[2] * BarycentricCoords.z);
@@ -83,16 +74,16 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     
     //float3 TriangleTangent[3] =
     //{
-    //    Vertices[Indices[0]].Tangent,
-    //    Vertices[Indices[1]].Tangent,
-    //    Vertices[Indices[2]].Tangent
+    //    Vertices[TriangleIndices[0]].Tangent,
+    //    Vertices[TriangleIndices[1]].Tangent,
+    //    Vertices[TriangleIndices[2]].Tangent
     //};
 
     float2 TriangleTexCoords[3] =
     {
-        Vertices[Indices[0]].TexCoord,
-        Vertices[Indices[1]].TexCoord,
-        Vertices[Indices[2]].TexCoord
+        Vertices[TriangleIndices[0]].TexCoord,
+        Vertices[TriangleIndices[1]].TexCoord,
+        Vertices[TriangleIndices[2]].TexCoord
     };
 
     float2 TexCoords =

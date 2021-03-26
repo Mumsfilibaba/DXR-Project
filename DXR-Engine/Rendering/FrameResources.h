@@ -15,7 +15,7 @@
 #define GBUFFER_VELOCITY_INDEX    5
 
 template<typename TResource>
-class PtrResourceCache
+class ResourceCache
 {
 public:
     Int32 Add(TResource* Resource)
@@ -45,14 +45,35 @@ public:
         return Resources[Index];
     }
 
+    TResource* const* Data() const
+    {
+        return Resources.Data();
+    }
+
     UInt32 Size() const
     {
         return Resources.Size();
     }
 
 private:
-    TArray<TResource*>                    Resources;
+    TArray<TResource*> Resources;
     std::unordered_map<TResource*, Int32> ResourceIndices;
+};
+
+struct RayTracingMaterial
+{
+    Int32 AlbedoTexID    = -1;
+    Int32 NormalTexID    = -1;
+    Int32 RoughnessTexID = -1;
+    Int32 MetallicTexID  = -1;
+
+    Int32 AOTexID   = -1;
+    Float Roughness = 0.0f;
+    Float Metallic  = 0.0f;
+    Float AO        = 0.5f;
+
+    XMFLOAT3 Albedo = XMFLOAT3(1.0f, 1.0f, 1.0f);
+    Int32 Padding0  = 0;
 };
 
 struct FrameResources
@@ -110,12 +131,14 @@ struct FrameResources
     TArray<RayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<RayTracingShaderResources> RTHitGroupResources;
-    TArray<ShaderResourceView*> RTVertexBuffer;
+    TArray<ShaderResourceView*> RTVertexBuffers;
     TArray<ShaderResourceView*> RTIndexBuffers;
 
-    std::unordered_map<class Mesh*, UInt32> RTMeshToHitGroupIndex;
+    std::unordered_map<class Mesh*, UInt32>     RTMeshToHitGroupIndex;
+    std::unordered_map<class Material*, UInt32> RTMaterialMap;
 
-    PtrResourceCache<ShaderResourceView> RTMaterialTextureCache;
+    ResourceCache<ShaderResourceView> RTMaterialTextureCache;
+    TArray<RayTracingMaterial> RTMaterials;
 
     TArray<MeshDrawCommand> DeferredVisibleCommands;
     TArray<MeshDrawCommand> ForwardVisibleCommands;

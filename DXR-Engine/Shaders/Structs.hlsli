@@ -83,10 +83,28 @@ struct Transform
 struct Material
 {
     float3 Albedo;
+    
+    float Roughness;
+    float Metallic;
+    float AO;
+    
+    int EnableHeight;
+};
+
+struct RayTracingMaterial
+{
+    int AlbedoTexID;
+    int NormalTexID;
+    int RoughnessTexID;
+    int MetallicTexID;
+    int AOTexID;
+    
     float  Roughness;
     float  Metallic;
     float  AO;
-    int    EnableHeight;
+    float3 Albedo;
+    
+    int Padding0;
 };
 
 struct LightInfoData

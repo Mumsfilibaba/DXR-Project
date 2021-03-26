@@ -69,7 +69,7 @@ class D3D12RootSignature : public D3D12DeviceChild, public RefCountedObject
 {
 public:
     D3D12RootSignature(D3D12Device* InDevice);
-    ~D3D12RootSignature() = default;
+    ~D3D12RootSignature();
 
     Bool Init(const D3D12RootSignatureResourceCount& RootSignatureInfo);
     Bool Init(const D3D12_ROOT_SIGNATURE_DESC& Desc);

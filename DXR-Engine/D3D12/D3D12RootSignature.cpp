@@ -227,6 +227,10 @@ D3D12RootSignature::D3D12RootSignature(D3D12Device* InDevice)
     }
 }
 
+D3D12RootSignature::~D3D12RootSignature()
+{
+}
+
 Bool D3D12RootSignature::Init(const D3D12RootSignatureResourceCount& RootSignatureInfo)
 {
     D3D12RootSignatureDescHelper Desc(RootSignatureInfo);
@@ -505,8 +509,6 @@ D3D12RootSignature* D3D12RootSignatureCache::CreateRootSignature(const D3D12Root
     {
         return nullptr;
     }
-
-    LOG_INFO("Created new root signature");
 
     RootSignatures.EmplaceBack(NewRootSignature);
     ResourceCounts.EmplaceBack(ResourceCount);
