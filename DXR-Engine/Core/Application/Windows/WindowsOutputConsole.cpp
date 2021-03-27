@@ -1,6 +1,11 @@
-#include "WindowsConsoleOutput.h"
+#include "WindowsOutputConsole.h"
 
-WindowsConsoleOutput::WindowsConsoleOutput()
+OutputConsole* OutputConsole::Create()
+{
+    return DBG_NEW WindowsOutputConsole();
+}
+
+WindowsOutputConsole::WindowsOutputConsole()
     : ConsoleHandle(0)
 {
     if (AllocConsole())
@@ -10,7 +15,7 @@ WindowsConsoleOutput::WindowsConsoleOutput()
     }
 }
 
-WindowsConsoleOutput::~WindowsConsoleOutput()
+WindowsOutputConsole::~WindowsOutputConsole()
 {
     if (ConsoleHandle)
     {
@@ -19,7 +24,7 @@ WindowsConsoleOutput::~WindowsConsoleOutput()
     }
 }
 
-void WindowsConsoleOutput::Print(const std::string& Message)
+void WindowsOutputConsole::Print(const std::string& Message)
 {
     if (ConsoleHandle)
     {
@@ -27,7 +32,7 @@ void WindowsConsoleOutput::Print(const std::string& Message)
     }
 }
 
-void WindowsConsoleOutput::Clear()
+void WindowsOutputConsole::Clear()
 {
     if (ConsoleHandle)
     {
@@ -46,7 +51,7 @@ void WindowsConsoleOutput::Clear()
     }
 }
 
-void WindowsConsoleOutput::SetTitle(const std::string& Title)
+void WindowsOutputConsole::SetTitle(const std::string& Title)
 {
     if (ConsoleHandle)
     {
@@ -54,7 +59,7 @@ void WindowsConsoleOutput::SetTitle(const std::string& Title)
     }
 }
 
-void WindowsConsoleOutput::SetColor(EConsoleColor Color)
+void WindowsOutputConsole::SetColor(EConsoleColor Color)
 {
     if (ConsoleHandle)
     {
@@ -79,9 +84,4 @@ void WindowsConsoleOutput::SetColor(EConsoleColor Color)
 
         SetConsoleTextAttribute(ConsoleHandle, wColor);
     }
-}
-
-GenericOutputDevice* WindowsConsoleOutput::Create()
-{
-    return DBG_NEW WindowsConsoleOutput();
 }

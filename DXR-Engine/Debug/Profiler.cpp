@@ -6,7 +6,7 @@
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/GPUProfiler.h"
 
-#include "Core/Application/Application.h"
+#include "Core/Engine/Engine.h"
 
 constexpr float MICROSECONDS     = 1000.0f;
 constexpr float MILLISECONDS     = 1000.0f * 1000.0f;
@@ -261,7 +261,7 @@ static float ImGui_GetMaxLimit(float Num)
 
 static void DrawFPS()
 {
-    const uint32 WindowWidth = GApplication->Window->GetWidth();
+    const uint32 WindowWidth = GEngine.MainWindow->GetWidth();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(5.0f, 5.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
@@ -564,8 +564,8 @@ static void DrawGPUProfileData(float Width)
 static void DrawProfiler()
 {
     // Draw DebugWindow with DebugStrings
-    const uint32 WindowWidth  = GApplication->Window->GetWidth();
-    const uint32 WindowHeight = GApplication->Window->GetHeight();
+    const uint32 WindowWidth  = GEngine.MainWindow->GetWidth();
+    const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
     const float Width         = Math::Max(WindowWidth * 0.6f, 400.0f);
     const float Height        = WindowHeight * 0.75f;
 

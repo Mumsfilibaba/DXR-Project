@@ -3,9 +3,9 @@
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
 
-#include "Main/EngineLoop.h"
-
-#include "Engine/EngineGlobals.h"
+#include "Core/Engine/Engine.h"
+#include "Core/Engine/EngineLoop.h"
+#include "Core/Engine/EngineGlobals.h"
 
 #include "Scene/Scene.h"
 #include "Scene/Lights/DirectionalLight.h"
@@ -112,12 +112,12 @@ static void DrawMenu()
             {
                 if (ImGui::MenuItem("Toggle Fullscreen"))
                 {
-                    GApplication->Window->ToggleFullscreen();
+                    GEngine.MainWindow->ToggleFullscreen();
                 }
 
                 if (ImGui::MenuItem("Quit"))
                 {
-                    GApplication->Exit();
+                    GEngine.Exit();
                 }
 
                 ImGui::EndMenu();
@@ -142,8 +142,8 @@ static void DrawSideWindow()
 {
     DebugUI::DrawUI([]
     {
-        const uint32 WindowWidth  = GApplication->Window->GetWidth();
-        const uint32 WindowHeight = GApplication->Window->GetHeight();
+        const uint32 WindowWidth  = GEngine.MainWindow->GetWidth();
+        const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
         const float Width         = Math::Max(WindowWidth * 0.3f, 400.0f);
         const float Height        = WindowHeight * 0.7f;
 
@@ -190,7 +190,7 @@ static void DrawRenderSettings()
     ImGui::BeginChild("RendererInfo");
 
     WindowShape WindowShape;
-    GApplication->Window->GetWindowShape(WindowShape);
+    GEngine.MainWindow->GetWindowShape(WindowShape);
 
     ImGui::Spacing();
     ImGui::Text("Renderer Info");
@@ -375,7 +375,7 @@ static void DrawSceneInfo()
     ImGui::Separator();
 
     WindowShape WindowShape;
-    GApplication->Window->GetWindowShape(WindowShape);
+    GEngine.MainWindow->GetWindowShape(WindowShape);
 
     // Actors
     if (ImGui::TreeNode("Actors"))

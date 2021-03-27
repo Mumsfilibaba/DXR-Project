@@ -51,7 +51,7 @@ struct WindowShape
     } Position;
 };
 
-class GenericWindow : public RefCountedObject
+class Window : public RefCountedObject
 {
 public:
     virtual void Show(bool Maximized) = 0;
@@ -76,6 +76,8 @@ public:
     virtual void* GetNativeHandle() const { return nullptr; }
 
     WindowStyle GetStyle() const { return WndStyle; }
+
+    static Window* Create(const std::string& Title, uint32 Width, uint32 Height, WindowStyle Style);
 
 protected:
     WindowStyle WndStyle;

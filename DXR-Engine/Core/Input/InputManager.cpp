@@ -1,6 +1,6 @@
 #include "InputManager.h"
 
-#include "Core/Application/Application.h"
+#include "Core/Engine/Engine.h"
 
 InputManager GInputManager;
 
@@ -8,9 +8,9 @@ bool InputManager::Init()
 {
     InitKeyTable();
 
-    GApplication->OnKeyPressedEvent.AddObject(this, &InputManager::OnKeyPressed);
-    GApplication->OnKeyReleasedEvent.AddObject(this, &InputManager::OnKeyReleased);
-    GApplication->OnWindowFocusChangedEvent.AddObject(this, &InputManager::OnWindowFocusChanged);
+    GEngine.OnKeyPressedEvent.AddObject(this, &InputManager::OnKeyPressed);
+    GEngine.OnKeyReleasedEvent.AddObject(this, &InputManager::OnKeyReleased);
+    GEngine.OnWindowFocusChangedEvent.AddObject(this, &InputManager::OnWindowFocusChanged);
 
     return true;
 }

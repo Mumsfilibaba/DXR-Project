@@ -8,7 +8,7 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
-#include "Core/Application/Application.h"
+#include "Core/Engine/Engine.h"
 
 #include "RenderLayer/ShaderCompiler.h"
 
@@ -187,8 +187,8 @@ void Renderer::RenderDebugInterface()
         constexpr float InvAspectRatio = 16.0f / 9.0f;
         constexpr float AspectRatio    = 9.0f / 16.0f;
 
-        const uint32 WindowWidth  = GApplication->Window->GetWidth();
-        const uint32 WindowHeight = GApplication->Window->GetHeight();
+        const uint32 WindowWidth  = GEngine.MainWindow->GetWidth();
+        const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
         const float Width  = Math::Max(WindowWidth * 0.6f, 400.0f);
         const float Height = WindowHeight * 0.75f;
 
@@ -261,8 +261,8 @@ void Renderer::RenderDebugInterface()
 
     if (GDrawRendererInfo.GetBool())
     {
-        const uint32 WindowWidth  = GApplication->Window->GetWidth();
-        const uint32 WindowHeight = GApplication->Window->GetHeight();
+        const uint32 WindowWidth  = GEngine.MainWindow->GetWidth();
+        const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
         const float Width  = 300.0f;
         const float Height = WindowHeight * 0.8f;
 
@@ -604,7 +604,7 @@ bool Renderer::Init()
     INIT_CONSOLE_VARIABLE("r.EnableRayTracing", &GRayTracingEnabled);
     INIT_CONSOLE_VARIABLE("r.FXAADebug", &GFXAADebug);
 
-    Resources.MainWindowViewport = CreateViewport(GApplication->Window.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
+    Resources.MainWindowViewport = CreateViewport(GEngine.MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
     if (!Resources.MainWindowViewport)
     {
         Debug::DebugBreak();
@@ -761,7 +761,7 @@ bool Renderer::Init()
     GCmdListExecutor.ExecuteCommandList(CmdList);
 
     // Register EventFunc
-    GApplication->OnWindowResizedEvent.AddObject(this, &Renderer::OnWindowResize);
+    GEngine.OnWindowResizedEvent.AddObject(this, &Renderer::OnWindowResize);
     return true;
 }
 

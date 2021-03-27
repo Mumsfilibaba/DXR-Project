@@ -1,5 +1,5 @@
 #pragma once
-#include "Platform/PlatformOutputDevice.h"
+#include "Generic/OutputConsole.h"
 
 #define LOG_ERROR(Message) \
     { \

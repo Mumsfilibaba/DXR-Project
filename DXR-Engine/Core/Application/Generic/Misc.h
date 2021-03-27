@@ -1,10 +1,8 @@
 #pragma once
 #include "Core.h"
 
-#include <string>
-
-#ifdef OutputDebugString
-    #undef OutputDebugString
+#ifdef MessageBox
+    #undef MessageBox
 #endif
 
 #ifdef COMPILER_VISUAL_STUDIO
@@ -12,9 +10,17 @@
     #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
-class GenericDebugMisc
+class Misc
 {
 public:
+    FORCEINLINE static void MessageBox(const std::string& Title, const std::string& Message)
+    {
+    }
+
+    FORCEINLINE static void RequestExit(int32 ExitCode)
+    {
+    }
+
     FORCEINLINE static void DebugBreak()
     {
     }

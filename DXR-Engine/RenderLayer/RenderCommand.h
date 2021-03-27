@@ -9,7 +9,6 @@
 #include "Debug/Debug.h"
 
 #include "Core/Application/Log.h"
-
 #include "Core/Containers/ArrayView.h"
 
 // Base rendercommand

@@ -1,18 +1,18 @@
 #pragma once
-#include "Core/Application/InputCodes.h"
+#include "Core/Input/InputCodes.h"
 
 #ifdef COMPILER_VISUAL_STUDIO
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
-class GenericWindow;
+class Window;
 struct ModifierKeyState;
 
-class GenericApplicationEventHandler
+class PlatformCallbacks
 {
 public:
-    virtual ~GenericApplicationEventHandler() = default;
+    virtual ~PlatformCallbacks() = default;
 
     virtual void OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModierKeyState)
     {
@@ -42,27 +42,27 @@ public:
     {
     }
 
-    virtual void OnWindowResized(const TRef<GenericWindow>& Window, uint16 Width, uint16 Height)
+    virtual void OnWindowResized(const TRef<Window>& Window, uint16 Width, uint16 Height)
     {
     }
 
-    virtual void OnWindowMoved(const TRef<GenericWindow>& Window, int16 x, int16 y)
+    virtual void OnWindowMoved(const TRef<Window>& Window, int16 x, int16 y)
     {
     }
     
-    virtual void OnWindowFocusChanged(const TRef<GenericWindow>& Window, bool HasFocus)
+    virtual void OnWindowFocusChanged(const TRef<Window>& Window, bool HasFocus)
     {
     }
     
-    virtual void OnWindowMouseLeft(const TRef<GenericWindow>& Window)
+    virtual void OnWindowMouseLeft(const TRef<Window>& Window)
     {
     }
     
-    virtual void OnWindowMouseEntered(const TRef<GenericWindow>& Window)
+    virtual void OnWindowMouseEntered(const TRef<Window>& Window)
     {
     }
     
-    virtual void OnWindowClosed(const TRef<GenericWindow>& Window)
+    virtual void OnWindowClosed(const TRef<Window>& Window)
     {
     }
 

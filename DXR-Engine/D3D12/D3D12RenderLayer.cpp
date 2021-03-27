@@ -1441,7 +1441,7 @@ GPUProfiler* D3D12RenderLayer::CreateProfiler()
     return D3D12GPUProfiler::Create(Device);
 }
 
-Viewport* D3D12RenderLayer::CreateViewport(GenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
+Viewport* D3D12RenderLayer::CreateViewport(Window* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
 {
     UNREFERENCED_VARIABLE(DepthFormat);
 

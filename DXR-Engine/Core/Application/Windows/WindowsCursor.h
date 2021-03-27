@@ -1,12 +1,11 @@
 #pragma once
-#include "Core/Application/Generic/GenericCursor.h"
+#include "Core/Application/Generic/Cursor.h"
 
 #include "Windows.h"
 
-class GenericWindow;
-class WindowsApplication;
+class Window;
 
-class WindowsCursor : public GenericCursor
+class WindowsCursor : public Cursor
 {
 public:
     WindowsCursor();
@@ -16,22 +15,14 @@ public:
 
     virtual void* GetNativeHandle() const override final
     {
-        return reinterpret_cast<void*>(Cursor);
+        return reinterpret_cast<void*>(hCursor);
     }
 
-    static bool InitSystemCursors();
+    HCURSOR GetHandle() const { return hCursor; }
 
-    static void SetCursor(GenericCursor* Cursor);
-    static GenericCursor* GetCursor();
-
-    static void SetCursorPos(GenericWindow* RelativeWindow, int32 x, int32 y);
-    static void GetCursorPos(GenericWindow* RelativeWindow, int32& OutX, int32& OutY);
-
-    HCURSOR GetHandle() const { return Cursor; }
+    static Cursor* Create(LPCSTR CursorName);
 
 private:
-    HCURSOR Cursor;
+    HCURSOR hCursor;
     LPCSTR  CursorName;
-
-    static TRef<WindowsCursor> CurrentCursor;
 };

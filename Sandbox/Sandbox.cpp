@@ -11,7 +11,7 @@
 #include "Scene/Lights/DirectionalLight.h"
 #include "Scene/Components/MeshComponent.h"
 
-#include "Core/Application/InputManager.h"
+#include "Core/Input/InputManager.h"
 
 #include <random>
 
@@ -228,7 +228,7 @@ bool Sandbox::Init()
 
     MatProperties.AO           = 1.0f;
     MatProperties.Metallic     = 1.0f;
-    MatProperties.Roughness    = 0.1f;
+    MatProperties.Roughness    = 0.25f;
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo       = XMFLOAT3(1.0f, 1.0f, 1.0f);
 

@@ -105,7 +105,6 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
 
     Resources.RTGeometryInstances.Clear();
 
-    uint32 InstanceIndex  = 0;
     SamplerState* Sampler = nullptr;
 
     for (const MeshDrawCommand& Cmd : Scene.GetMeshDrawCommands())

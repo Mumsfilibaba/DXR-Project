@@ -1,8 +1,9 @@
 #pragma once
 #include "Core.h"
 
-#include "Core/Application/InputCodes.h"
-#include "Core/Application/Generic/GenericApplication.h"
+#include "Core/Input/InputCodes.h"
+#include "Core/Application/Generic/GenericPlatform.h"
+#include "Core/Application/Generic/Window.h"
 
 struct KeyPressedEvent
 {
@@ -96,39 +97,39 @@ struct MouseScrolledEvent
 
 struct WindowResizeEvent
 {
-    WindowResizeEvent(const TRef<GenericWindow>& InWindow, uint16 InWidth, uint16 InHeight)
+    WindowResizeEvent(const TRef<Window>& InWindow, uint16 InWidth, uint16 InHeight)
         : Window(InWindow)
         , Width(InWidth)
         , Height(InHeight)
     {
     }
 
-    TRef<GenericWindow> Window;
+    TRef<Window> Window;
     uint16 Width;
     uint16 Height;
 };
 
 struct WindowFocusChangedEvent
 {
-    WindowFocusChangedEvent(const TRef<GenericWindow>& InWindow, bool hasFocus)
+    WindowFocusChangedEvent(const TRef<Window>& InWindow, bool hasFocus)
         : Window(InWindow)
         , HasFocus(hasFocus)
     {
     }
 
-    TRef<GenericWindow> Window;
+    TRef<Window> Window;
     bool HasFocus;
 };
 
 struct WindowMovedEvent
 {
-    WindowMovedEvent(const TRef<GenericWindow>& InWindow, int16 x, int16 y)
+    WindowMovedEvent(const TRef<Window>& InWindow, int16 x, int16 y)
         : Window(InWindow)
         , Position({ x, y })
     {
     }
 
-    TRef<GenericWindow> Window;
+    TRef<Window> Window;
     struct
     {
         int16 x;
@@ -138,30 +139,30 @@ struct WindowMovedEvent
 
 struct WindowMouseLeftEvent
 {
-    WindowMouseLeftEvent(const TRef<GenericWindow>& InWindow)
+    WindowMouseLeftEvent(const TRef<Window>& InWindow)
         : Window(InWindow)
     {
     }
 
-    TRef<GenericWindow> Window;
+    TRef<Window> Window;
 };
 
 struct WindowMouseEnteredEvent
 {
-    WindowMouseEnteredEvent(const TRef<GenericWindow>& InWindow)
+    WindowMouseEnteredEvent(const TRef<Window>& InWindow)
         : Window(InWindow)
     {
     }
 
-    TRef<GenericWindow> Window;
+    TRef<Window> Window;
 };
 
 struct WindowClosedEvent
 {
-    WindowClosedEvent(const TRef<GenericWindow>& InWindow)
+    WindowClosedEvent(const TRef<Window>& InWindow)
         : Window(InWindow)
     {
     }
 
-    TRef<GenericWindow> Window;
+    TRef<Window> Window;
 };

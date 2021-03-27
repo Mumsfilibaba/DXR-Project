@@ -3,6 +3,7 @@
 
 #include "Memory/Memory.h"
 
+#include "Core/Ref.h"
 #include "Core/Containers/StaticArray.h"
 
 class ShaderResourceView : public Resource

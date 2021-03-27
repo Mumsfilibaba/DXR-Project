@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Application/InputCodes.h"
+#include "Core/Input/InputCodes.h"
 #include "Core/Application/Events.h"
 
 #include "RenderLayer/Resources.h"

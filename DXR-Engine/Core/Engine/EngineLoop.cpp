@@ -1,20 +1,17 @@
+#include "Engine.h"
 #include "EngineLoop.h"
 
-#include "Engine/EngineGlobals.h"
-
+#include "Core/Engine/EngineGlobals.h"
 #include "Core/Application/Application.h"
-#include "Core/Application/Generic/GenericOutputDevice.h"
-#include "Core/Application/Generic/GenericCursor.h"
-#include "Core/Application/Platform/PlatformApplication.h"
+#include "Core/Application/Generic/OutputConsole.h"
+#include "Core/Application/Platform/Platform.h"
 #include "Core/Application/Platform/PlatformMisc.h"
-#include "Core/Application/InputManager.h"
+#include "Core/Input/InputManager.h"
+#include "Core/Threading/Generic/Thread.h"
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Resources/TextureFactory.h"
-
-#include "RenderLayer/Resources.h"
-#include "RenderLayer/CommandList.h"
 
 #include "Editor/Editor.h"
 
@@ -23,13 +20,11 @@
 
 #include "Memory/Memory.h"
 
-EngineLoop GEngineLoop;
-
-bool EngineLoop::PreInit()
+bool EngineLoop::Init()
 {
     TRACE_FUNCTION_SCOPE();
 
-    GConsoleOutput = PlatformOutputDevice::Create();
+    GConsoleOutput = OutputConsole::Create();
     if (!GConsoleOutput)
     {
         return false;
@@ -39,22 +34,17 @@ bool EngineLoop::PreInit()
         GConsoleOutput->SetTitle("DXR-Engine Error Output");
     }
 
+    TRef<Thread> Thread = Thread::Create();
+
     Profiler::Init();
 
-    if (!PlatformApplication::Get().Init())
+    if (!Platform::Init())
     {
         PlatformMisc::MessageBox("ERROR", "Failed to create Platform Application");
         return false;
     }
 
-    return true;
-}
-
-bool EngineLoop::Init()
-{
-    TRACE_FUNCTION_SCOPE();
-
-    if (!PreInit())
+    if (!GEngine.Init())
     {
         return false;
     }
@@ -74,7 +64,7 @@ bool EngineLoop::Init()
     GApplication = CreateApplication();
     Assert(GApplication != nullptr);
 
-    PlatformApplication::Get().SetEventHandler(GApplication);
+    Platform::SetCallbacks(&GEngine);
 
     if (!GApplication->Init())
     {
@@ -100,31 +90,18 @@ bool EngineLoop::Init()
         return false;
     }
 
-    if (!PostInit())
-    {
-        return false;
-    }
-
-    return true;
-}
-
-bool EngineLoop::PostInit()
-{
-    TRACE_FUNCTION_SCOPE();
-
     Editor::Init();
+
     return true;
 }
 
-void EngineLoop::Tick()
+void EngineLoop::Tick(Timestamp Deltatime)
 {
     TRACE_FUNCTION_SCOPE();
 
-    PlatformApplication::Get().Tick();
+    Platform::Tick();
 
-    Clock.Tick();
-
-    GApplication->Tick(Clock.GetDeltaTime());
+    GApplication->Tick(Deltatime);
 
     GConsole.Tick();
 
@@ -135,30 +112,29 @@ void EngineLoop::Tick()
     GRenderer.Tick(*GApplication->Scene);
 }
 
-bool EngineLoop::PreRelease()
+void EngineLoop::Run()
 {
-    TRACE_FUNCTION_SCOPE();
+    Timer Timer;
 
-    GCmdListExecutor.WaitForGPU();
-    
-    TextureFactory::Release();
-
-    return true;
+    while (GEngine.IsRunning)
+    {
+        Timer.Tick();
+        EngineLoop::Tick(Timer.GetDeltaTime());
+    }
 }
 
 bool EngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
-    if (!PreRelease())
-    {
-        return false;
-    }
+    GCmdListExecutor.WaitForGPU();
+
+    TextureFactory::Release();
 
     if (GApplication->Release())
     {
         SafeDelete(GApplication);
-        PlatformApplication::Get().SetEventHandler(nullptr);
+        Platform::SetCallbacks(nullptr);
     }
     else
     {
@@ -171,31 +147,9 @@ bool EngineLoop::Release()
 
     RenderLayer::Release();
 
-    if (!PostRelease())
-    {
-        return false;
-    }
-
-    return true;
-}
-
-bool EngineLoop::PostRelease()
-{
-    TRACE_FUNCTION_SCOPE();
-
-    PlatformApplication::Get().Release();
+    Platform::Release();
 
     SafeDelete(GConsoleOutput);
 
     return true;
-}
-
-Timestamp EngineLoop::GetDeltaTime()
-{
-    return Clock.GetDeltaTime();
-}
-
-Timestamp EngineLoop::GetRunningTime()
-{
-    return Clock.GetTotalTime();
 }

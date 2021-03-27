@@ -1,9 +1,13 @@
 #pragma once
-#include "Core/Application/Generic/GenericMisc.h"
+#include "Core/Application/Generic/Misc.h"
 
 #include "Windows.h"
 
-class WindowsMisc : public GenericMisc
+#ifdef MessageBox
+    #undef MessageBox
+#endif
+
+class WindowsMisc : public Misc
 {
 public:
     FORCEINLINE static void MessageBox(const std::string& Title, const std::string& Message)
@@ -14,5 +18,20 @@ public:
     FORCEINLINE static void RequestExit(int32 ExitCode)
     {
         PostQuitMessage(ExitCode);
+    }
+
+    FORCEINLINE static void DebugBreak()
+    {
+        __debugbreak();
+    }
+
+    FORCEINLINE static void OutputDebugString(const std::string& Message)
+    {
+        OutputDebugStringA(Message.c_str());
+    }
+
+    FORCEINLINE static bool IsDebuggerPresent()
+    {
+        return IsDebuggerPresent();
     }
 };

@@ -1,13 +1,13 @@
 #pragma once
-#include "Core/Application/Generic/GenericOutputDevice.h"
+#include "Core/Application/Generic/OutputConsole.h"
 
 #include "Windows/Windows.h"
 
-class WindowsConsoleOutput : public GenericOutputDevice
+class WindowsOutputConsole : public OutputConsole
 {
 public:
-    WindowsConsoleOutput();
-    ~WindowsConsoleOutput();
+    WindowsOutputConsole();
+    ~WindowsOutputConsole();
 
     virtual void Print(const std::string& Message) override final;
     
@@ -15,8 +15,6 @@ public:
 
     virtual void SetTitle(const std::string& Title) override final;
     virtual void SetColor(EConsoleColor Color)      override final;
-
-    static GenericOutputDevice* Create();
 
 private:
     HANDLE ConsoleHandle;

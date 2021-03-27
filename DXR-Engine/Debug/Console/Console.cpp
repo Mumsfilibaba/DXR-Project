@@ -2,7 +2,8 @@
 
 #include "Rendering/DebugUI.h"
 
-#include "Main/EngineLoop.h"
+#include "Core/Engine/EngineLoop.h"
+#include "Core/Engine/Engine.h"
 
 #include "Core/Application/Application.h"
 
@@ -17,7 +18,7 @@ void Console::Init()
     GClearHistory.OnExecute.AddObject(this, &Console::ClearHistory);
     INIT_CONSOLE_COMMAND("ClearHistory", &GClearHistory);
     
-    GApplication->OnKeyPressedEvent.AddObject(this, &Console::OnKeyPressedEvent);
+    GEngine.OnKeyPressedEvent.AddObject(this, &Console::OnKeyPressedEvent);
 }
 
 void Console::Tick()
@@ -120,8 +121,8 @@ void Console::OnKeyPressedEvent(const KeyPressedEvent& Event)
 
 void Console::DrawInterface()
 {
-    const uint32 WindowWidth  = GApplication->Window->GetWidth();
-    const uint32 WindowHeight = GApplication->Window->GetHeight();
+    const uint32 WindowWidth  = GEngine.MainWindow->GetWidth();
+    const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
     const float Width  = 640;
     const float Height = 160;
     const ImVec2 Offset(8.0f, 8.0f);
