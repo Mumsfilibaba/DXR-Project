@@ -34,8 +34,6 @@ bool EngineLoop::Init()
         GConsoleOutput->SetTitle("DXR-Engine Error Output");
     }
 
-    TRef<Thread> Thread = Thread::Create();
-
     Profiler::Init();
 
     if (!Platform::Init())
