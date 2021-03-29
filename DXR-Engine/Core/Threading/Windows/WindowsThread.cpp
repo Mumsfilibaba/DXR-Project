@@ -1,14 +1,16 @@
 #include "WindowsThread.h"
 
-Thread* Thread::Create()
+Thread* Thread::Create(ThreadFunction Func)
 {
     TRef<WindowsThread> NewThread = DBG_NEW WindowsThread();
-    if (NewThread->Init())
+    if (!NewThread->Init(Func))
     {
         return nullptr;
     }
-
-    return NewThread.ReleaseOwnership();
+    else
+    {
+        return NewThread.ReleaseOwnership();
+    }
 }
 
 WindowsThread::WindowsThread()
@@ -26,7 +28,7 @@ WindowsThread::~WindowsThread()
     }
 }
 
-bool WindowsThread::Init()
+bool WindowsThread::Init(ThreadFunction InFunc)
 {
     hThread = CreateThread(NULL, 0, WindowsThread::ThreadRoutine, (LPVOID)this, 0, &hThreadID);
     if (!hThread)
@@ -34,12 +36,17 @@ bool WindowsThread::Init()
         LOG_ERROR("[WindowsThread] Failed to create thread");
         return false;
     }
+    else
+    {
+        Func = InFunc;
+    }
 
     return true;
 }
 
-void WindowsThread::Sleep(Timestamp Time)
+void WindowsThread::Wait()
 {
+    WaitForSingleObject(hThread, INFINITE);
 }
 
 DWORD WINAPI WindowsThread::ThreadRoutine(LPVOID ThreadParameter)
@@ -47,7 +54,11 @@ DWORD WINAPI WindowsThread::ThreadRoutine(LPVOID ThreadParameter)
     WindowsThread* CurrentThread = (WindowsThread*)ThreadParameter;
     if (CurrentThread)
     {
+        CurrentThread->Func();
+        return 0;
     }
-
-    return 0;
+    else
+    {
+        return -1;
+    }
 }

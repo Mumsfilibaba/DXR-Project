@@ -5,12 +5,15 @@
 
 #include "Time/Timestamp.h"
 
+typedef void(*ThreadFunction)();
+
 class Thread : public RefCountedObject
 {
 public:
     virtual ~Thread() = default;
 
-    virtual void Sleep(Timestamp Time) = 0;
+    virtual void Wait() = 0;
 
-    static Thread* Create();
+    // TODO: Enable memberfunctions and lambdas
+    static Thread* Create(ThreadFunction Func);
 };

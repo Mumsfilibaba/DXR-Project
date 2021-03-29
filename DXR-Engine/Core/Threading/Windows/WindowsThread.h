@@ -7,13 +7,14 @@ public:
     WindowsThread();
     ~WindowsThread();
 
-    bool Init();
+    bool Init(ThreadFunction InFunc);
 
-    virtual void Sleep(Timestamp Time) override final;
+    virtual void Wait() override final;
 
 private:
     static DWORD WINAPI ThreadRoutine(LPVOID ThreadParameter);
 
     HANDLE hThread;
     DWORD  hThreadID;
+    ThreadFunction Func;
 };

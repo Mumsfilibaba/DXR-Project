@@ -368,7 +368,7 @@ void Renderer::Tick(const Scene& Scene)
 
         INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End VRS Image");
     }
-    else
+    else if (IsShadingRateSupported())
     {
         CmdList.SetShadingRate(EShadingRate::VRS_1x1);
     }
@@ -558,8 +558,11 @@ void Renderer::Tick(const Scene& Scene)
             GRenderer.RenderDebugInterface();
         });
 
-        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
-        CmdList.SetShadingRateImage(nullptr);
+        if (IsShadingRateSupported())
+        {
+            CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+            CmdList.SetShadingRateImage(nullptr);
+        }
 
         DebugUI::Render(CmdList);
     }

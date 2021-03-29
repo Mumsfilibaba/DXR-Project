@@ -751,3 +751,11 @@ FORCEINLINE bool IsRayTracingSupported()
 
     return Support.Tier != ERayTracingTier::NotSupported;
 }
+
+FORCEINLINE bool IsShadingRateSupported()
+{
+    ShadingRateSupport Support;
+    CheckShadingRateSupport(Support);
+
+    return Support.Tier != EShadingRateTier::NotSupported;
+}

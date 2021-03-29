@@ -401,6 +401,11 @@ bool D3D12RootSignatureCache::Init()
         ComputeRootSignature->SetName("Default Compute RootSignature");
     }
 
+    if (GetDevice()->GetRayTracingTier() == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+    {
+        return true;
+    }
+
     D3D12RootSignatureResourceCount RTGlobalKey;
     RTGlobalKey.Type                = ERootSignatureType::RayTracingGlobal;
     RTGlobalKey.AllowInputAssembler = false;
@@ -428,7 +433,7 @@ bool D3D12RootSignatureCache::Init()
     RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_LOCAL_SHADER_RESOURCE_VIEW_COUNT;
     RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_LOCAL_UNORDERED_ACCESS_VIEW_COUNT;
     RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers = D3D12_DEFAULT_LOCAL_SAMPLER_STATE_COUNT;
-
+    
     D3D12RootSignature* RTLocalRootSignature = CreateRootSignature(RTLocalKey);
     if (!RTLocalRootSignature)
     {

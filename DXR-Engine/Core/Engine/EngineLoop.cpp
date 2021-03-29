@@ -31,14 +31,14 @@ bool EngineLoop::Init()
     }
     else
     {
-        GConsoleOutput->SetTitle("DXR-Engine Error Output");
+        GConsoleOutput->SetTitle("DXR-Engine Error Console");
     }
 
     Profiler::Init();
 
     if (!Platform::Init())
     {
-        PlatformMisc::MessageBox("ERROR", "Failed to create Platform Application");
+        PlatformMisc::MessageBox("ERROR", "Failed to init Platform");
         return false;
     }
 
