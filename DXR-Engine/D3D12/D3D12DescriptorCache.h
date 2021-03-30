@@ -253,6 +253,12 @@ public:
             RenderTargetViewHandles[i] = RenderTargetViews[i]->GetOfflineHandle();
         }
 
+        // NOTE: Clearing this buffer is to make sure Nsight works properly
+        for (UInt32 i = Count; i < NumRenderTargets; i++)
+        {
+            RenderTargetViewHandles[i] = { 0 };
+        }
+
         NumRenderTargets = Count;
         Dirty = true; 
     }

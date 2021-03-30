@@ -140,7 +140,7 @@ PSOutput PSMain(VSOutput Input)
     uint  PixelIndex = (uint) (BlueNoiseTex.Load(int4(NoiseCoord, 0, 0)).r * 255.0f);
     PixelIndex = PixelIndex + RandomBuffer.FrameIndex;
     
-    uint2 GBufferCoord = TexCoord * 2 + uint2(PixelIndex & 1, (PixelIndex >> 1) & 1);
+    uint2 GBufferCoord = FullTexCoord + uint2(PixelIndex & 1, (PixelIndex >> 1) & 1);
     
     float  GBufferDepth    = GBufferDepthTex[GBufferCoord];
     float3 GBufferNormal   = GBufferNormalTex[GBufferCoord].rgb;
@@ -275,6 +275,6 @@ PSOutput PSMain(VSOutput Input)
 
     PSOutput Output;
     Output.ColorDepth = float4(FinalColor, GBufferDepth);
-    Output.RayPDF     = float4(FinalRay, FinalPDF);
+    Output.RayPDF     = float4(WorldPosition, FinalPDF);
     return Output;
 }

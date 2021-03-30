@@ -85,6 +85,12 @@ void Renderer::PerformFXAA(CommandList& InCmdList)
     RenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
     InCmdList.SetRenderTargets(&BackBufferRTV, 1, nullptr);
 
+    InCmdList.SetViewport(Settings.Width, Settings.Height, 0.0f, 1.0f, 0.0f, 0.0f);
+    InCmdList.SetScissorRect(Settings.Width, Settings.Height, 0.0f, 0.0f);
+
+    InCmdList.SetVertexBuffers(nullptr, 0, 0);
+    InCmdList.SetIndexBuffer(nullptr);
+
     ShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     if (gFXAADebug.GetBool())
     {

@@ -61,10 +61,13 @@ public:
     ~Renderer() = default;
 
     Bool Init();
+
     void Release();
 
     void PerformFrustumCulling(const Scene& Scene);
+    
     void PerformFXAA(CommandList& InCmdList);
+    
     void PerformBackBufferBlit(CommandList& InCmdList);
 
     void PerformAABBDebugPass(CommandList& InCmdList);

@@ -573,6 +573,9 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
 
     CmdList.TransitionTexture(RTColorDepth.Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(Resources.RTRayPDF.Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
+
+    CmdList.SetViewport((Float)Width, (Float)Height, 0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.SetScissorRect((Float)Width, (Float)Height, 0.0f, 0.0f);
 #else
     Resources.GlobalResources.Reset();
     Resources.GlobalResources.AddUnorderedAccessView(RTColorDepth->GetUnorderedAccessView());
