@@ -17,6 +17,22 @@ TaskManager::~TaskManager()
     // Empty for now
 }
 
+bool TaskManager::PopTask(Task& OutTask)
+{
+    TScopedLock<Mutex> Lock(Instance.TaskMutex);
+
+    if (!Tasks.IsEmpty())
+    {
+        OutTask = Tasks.Front();
+        Tasks.Erase(Tasks.Begin());
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 void TaskManager::WorkThread()
 {
     LOG_INFO("Starting Workthread: " + std::to_string(PlatformProcess::GetThreadID()));
@@ -24,18 +40,11 @@ void TaskManager::WorkThread()
     while (Instance.IsRunning)
     {
         Task CurrentTask;
-        
+        if (Instance.PopTask(CurrentTask))
         {
-            TScopedLock<Mutex> Lock(Instance.TaskMutex);
-            
-            if (!Instance.Tasks.IsEmpty())
-            {
-                CurrentTask = Instance.Tasks.Front();
-                Instance.Tasks.Erase(Instance.Tasks.Begin());
-            }
+            CurrentTask.Delegate();
+            LOG_INFO("Popped Task");
         }
-
-        CurrentTask.Delegate.ExecuteIfBound();
     }
 }
 

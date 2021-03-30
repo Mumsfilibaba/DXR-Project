@@ -25,6 +25,8 @@ private:
     TaskManager();
     ~TaskManager();
 
+    bool PopTask(Task& OutTask);
+
     static void WorkThread();
 
 private:

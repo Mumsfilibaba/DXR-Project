@@ -114,8 +114,9 @@ public:
     void Swap(TDelegate& Other)
     {
         TDelegate Temp(Move(*this));
-        Delegate = Other.Delegate;
+        Delegate       = Other.Delegate;
         Other.Delegate = Temp.Delegate;
+        Temp.Delegate  = nullptr;
     }
 
     bool IsBound() const

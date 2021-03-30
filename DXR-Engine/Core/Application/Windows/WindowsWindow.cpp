@@ -94,6 +94,7 @@ bool WindowsWindow::Init(const std::string& InTitle, uint32 InWidth, uint32 InHe
 
         // Set this to userdata
         SetLastError(0);
+
         LONG_PTR Result = SetWindowLongPtrA(Window, GWLP_USERDATA, (LONG_PTR)this);
         DWORD LastError = GetLastError();
         if (Result == 0 && LastError != 0)
