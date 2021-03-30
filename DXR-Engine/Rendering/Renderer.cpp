@@ -332,31 +332,6 @@ void Renderer::Tick(const Scene& Scene)
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
 
-    if (ShadingImage && gEnableVariableRateShading.GetBool())
-    {
-        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin VRS Image");
-        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
-
-        CmdList.TransitionTexture(ShadingImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
-        
-        CmdList.SetComputePipelineState(ShadingRatePipeline.Get());
-
-        UnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
-        CmdList.SetUnorderedAccessView(ShadingRateShader.Get(), ShadingImageUAV, 0);
-        
-        CmdList.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
-        
-        CmdList.TransitionTexture(ShadingImage.Get(), EResourceState::UnorderedAccess, EResourceState::ShadingRateSource);
-
-        CmdList.SetShadingRateImage(ShadingImage.Get());
-
-        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End VRS Image");
-    }
-    else
-    {
-        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
-    }
-
     LightSetup.BeginFrame(CmdList, Scene);
 
     ShadowMapRenderer.RenderPointLightShadows(CmdList, LightSetup, Scene);
@@ -402,13 +377,17 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VELOCITY_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
 
-    ColorF BlackClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(), BlackClearColor);
-    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
-    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(), BlackClearColor);
-    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
-    CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetRenderTargetView(), BlackClearColor);
-    CmdList.ClearDepthStencilView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), DepthStencilF(1.0f, 0));
+    {
+        GPU_TRACE_SCOPE(CmdList, "Clear GBuffer");
+
+        ColorF BlackClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(), BlackClearColor);
+        CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
+        CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(), BlackClearColor);
+        CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
+        CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetRenderTargetView(), BlackClearColor);
+        CmdList.ClearDepthStencilView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), DepthStencilF(1.0f, 0));
+    }
 
     if (gPrePassEnabled.GetBool())
     {
@@ -427,8 +406,6 @@ void Renderer::Tick(const Scene& Scene)
             GPU_TRACE_SCOPE(CmdList, "Ray Tracing");
             RayTracer.Render(CmdList, Resources, LightSetup, Scene);
         }
-
-
     }
 
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
@@ -581,9 +558,6 @@ void Renderer::Tick(const Scene& Scene)
         {
             gRenderer.RenderDebugInterface();
         });
-
-        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
-        CmdList.SetShadingRateImage(nullptr);
 
         DebugUI::Render(CmdList);
     }
@@ -750,11 +724,6 @@ Bool Renderer::Init()
         return false;
     }
 
-    if (!InitShadingImage())
-    {
-        return false;
-    }
-
     if (!LightSetup.Init())
     {
         return false;
@@ -858,10 +827,6 @@ void Renderer::Release()
     FXAAShader.Reset();
     FXAADebugPSO.Reset();
     FXAADebugShader.Reset();
-
-    ShadingImage.Reset();
-    ShadingRatePipeline.Reset();
-    ShadingRateShader.Reset();
 
     GPUProfiler.Reset();
     Profiler::SetGPUProfiler(nullptr);
@@ -1230,64 +1195,6 @@ Bool Renderer::InitAA()
     else
     {
         FXAADebugPSO->SetName("FXAA Debug PipelineState");
-    }
-
-    return true;
-}
-
-Bool Renderer::InitShadingImage()
-{
-    ShadingRateSupport Support;
-    CheckShadingRateSupport(Support);
-
-    if (Support.Tier != EShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)
-    {
-        return true;
-    }
-
-    UInt32 Width  = Resources.MainWindowViewport->GetWidth()  / Support.ShadingRateImageTileSize;
-    UInt32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
-    ShadingImage = CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::ShadingRateSource, nullptr);
-    if (!ShadingImage)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        ShadingImage->SetName("Shading Rate Image");
-    }
-
-    TArray<UInt8> ShaderCode;
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadingImage.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-
-    ShadingRateShader = CreateComputeShader(ShaderCode);
-    if (!ShadingRateShader)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        ShadingRateShader->SetName("ShadingRate Image Shader");
-    }
-
-    ComputePipelineStateCreateInfo CreateInfo;
-    CreateInfo.Shader = ShadingRateShader.Get();
-
-    ShadingRatePipeline = CreateComputePipelineState(CreateInfo);
-    if (!ShadingRatePipeline)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        ShadingRatePipeline->SetName("ShadingRate Image Pipeline");
     }
 
     return true;

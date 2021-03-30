@@ -24,6 +24,7 @@ public:
     ~RayTracer() = default;
 
     Bool Init(FrameResources& Resources);
+
     void Release();
 
     void Render(CommandList& CmdList, FrameResources& Resources, LightSetup& LightSetup, const Scene& Scene);
@@ -32,6 +33,12 @@ public:
 
 private:
     Bool CreateRenderTargets(FrameResources& FrameResources);
+
+    Bool InitShadingImage(FrameResources& Resources);
+
+    TRef<ComputePipelineState> ShadingRateGenPSO;
+    TRef<ComputeShader>        ShadingRateGenShader;
+    TRef<Texture2D>            ShadingRateImage;
 
     TRef<ComputePipelineState> RTSpatialPSO;
     TRef<ComputeShader>        RTSpatialShader;

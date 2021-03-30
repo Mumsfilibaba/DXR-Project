@@ -244,20 +244,16 @@ public:
         Reset();
     }
 
-    FORCEINLINE void SetRenderTargetView(D3D12RenderTargetView* RenderTargetView, UInt32 Slot)
+    FORCEINLINE void SetRenderTargetViews(D3D12RenderTargetView* const * RenderTargetViews, UInt32 Count)
     {
-        Assert(Slot < D3D12_MAX_RENDER_TARGET_COUNT);
+        Assert(Count < D3D12_MAX_RENDER_TARGET_COUNT);
 
-        if (RenderTargetView)
+        for (UInt32 i = 0; i < Count; i++)
         {
-            RenderTargetViewHandles[Slot] = RenderTargetView->GetOfflineHandle();
-        }
-        else
-        {
-            RenderTargetViewHandles[Slot] = { 0 };
+            RenderTargetViewHandles[i] = RenderTargetViews[i]->GetOfflineHandle();
         }
 
-        NumRenderTargets = Math::Max(NumRenderTargets, Slot + 1);
+        NumRenderTargets = Count;
         Dirty = true; 
     }
 
@@ -325,9 +321,9 @@ public:
         VertexBufferCache.SetIndexBuffer(IndexBuffer);
     }
 
-    FORCEINLINE void SetRenderTargetView(D3D12RenderTargetView* RenderTargetView, UInt32 Slot)
+    FORCEINLINE void SetRenderTargetViews(D3D12RenderTargetView* const* RenderTargetViews, UInt32 Count)
     {
-        RenderTargetCache.SetRenderTargetView(RenderTargetView, Slot);
+        RenderTargetCache.SetRenderTargetViews(RenderTargetViews, Count);
     }
 
     FORCEINLINE void SetDepthStencilView(D3D12DepthStencilView* DepthStencilView)

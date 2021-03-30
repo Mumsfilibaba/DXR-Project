@@ -120,7 +120,13 @@ float3 ShadePoint(float3 WorldPosition, float3 N, float3 V, float3 Albedo, float
     return Ambient + L0;
 }
 
-void PSMain(VSOutput Input)
+struct PSOutput
+{
+    float4 ColorDepth : SV_Target0;
+    float4 RayPDF     : SV_Target1;
+};
+
+PSOutput PSMain(VSOutput Input)
 {
     uint Width;
     uint Height;
@@ -149,9 +155,10 @@ void PSMain(VSOutput Input)
     
     if (length(GBufferNormal) == 0.0f)
     {
-        ColorDepth[TexCoord] = Float4(0.0f);
-        RayPDF[TexCoord]     = Float4(0.0f);
-        return;
+        PSOutput Output;
+        Output.ColorDepth = Float4(0.0f);
+        Output.RayPDF     = Float4(0.0f);
+        return Output;
     }
     
     uint Seed = InitRandom(TexCoord.xy, Width, RandomBuffer.FrameIndex);
@@ -266,6 +273,8 @@ void PSMain(VSOutput Input)
         FinalPDF = isnan(FinalPDF) || isinf(FinalPDF) ? 0.0f : FinalPDF;
     }
 
-    ColorDepth[TexCoord] = float4(FinalColor, GBufferDepth);
-    RayPDF[TexCoord]     = float4(FinalRay, FinalPDF);
+    PSOutput Output;
+    Output.ColorDepth = float4(FinalColor, GBufferDepth);
+    Output.RayPDF     = float4(FinalRay, FinalPDF);
+    return Output;
 }

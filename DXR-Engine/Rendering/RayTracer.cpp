@@ -17,6 +17,11 @@ Bool RayTracer::Init(FrameResources& Resources)
         return false;
     }
 
+    if (!InitShadingImage(Resources))
+    {
+        return false;
+    }
+
     TArray<UInt8> Code;
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/RayGen.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code))
     {
@@ -127,7 +132,9 @@ Bool RayTracer::Init(FrameResources& Resources)
     InlinePSODesc.VertexShader           = FullscreenShader.Get();
     InlinePSODesc.PixelShader            = InlineRayGen.Get();
     InlinePSODesc.PrimitiveTopologyType  = EPrimitiveTopologyType::Triangle;
-    InlinePSODesc.NumRenderTargets       = 0;
+    InlinePSODesc.NumRenderTargets       = 2;
+    InlinePSODesc.RenderTargetFormats[0] = EFormat::R16G16B16A16_Float;
+    InlinePSODesc.RenderTargetFormats[1] = EFormat::R16G16B16A16_Float;
     InlinePSODesc.DepthStencilFormat     = EFormat::Unknown;
 
     InlineRTPipeline = CreateGraphicsPipelineState(InlinePSODesc);
@@ -276,6 +283,64 @@ Bool RayTracer::Init(FrameResources& Resources)
     return true;
 }
 
+Bool RayTracer::InitShadingImage(FrameResources& Resources)
+{
+    ShadingRateSupport Support;
+    CheckShadingRateSupport(Support);
+
+    if (Support.Tier != EShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)
+    {
+        return true;
+    }
+
+    UInt32 Width  = Resources.MainWindowViewport->GetWidth() / Support.ShadingRateImageTileSize;
+    UInt32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
+    ShadingRateImage = CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::ShadingRateSource, nullptr);
+    if (!ShadingRateImage)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        ShadingRateImage->SetName("Shading Rate Image");
+    }
+
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadingImage.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    ShadingRateGenShader = CreateComputeShader(ShaderCode);
+    if (!ShadingRateGenShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        ShadingRateGenShader->SetName("ShadingRate Image Shader");
+    }
+
+    ComputePipelineStateCreateInfo CreateInfo;
+    CreateInfo.Shader = ShadingRateGenShader.Get();
+
+    ShadingRateGenPSO = CreateComputePipelineState(CreateInfo);
+    if (!ShadingRateGenPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        ShadingRateGenPSO->SetName("ShadingRate Image Pipeline");
+    }
+
+    return true;
+}
+
 void RayTracer::Release()
 {
     Pipeline.Reset();
@@ -299,6 +364,10 @@ void RayTracer::Release()
     
     RTReconstructed.Reset();
     
+    ShadingRateImage.Reset();
+    ShadingRateGenPSO.Reset();
+    ShadingRateGenShader.Reset();
+
     BlurHorizontalPSO.Reset();
     BlurHorizontalShader.Reset();
     BlurVerticalPSO.Reset();
@@ -433,6 +502,29 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     const UInt32 HalfHeight = Height / 2;
 
 #if ENABLE_INLINE_RAY_GEN
+    CmdList.TransitionTexture(RTColorDepth.Get(), EResourceState::UnorderedAccess, EResourceState::RenderTarget);
+    CmdList.TransitionTexture(Resources.RTRayPDF.Get(), EResourceState::UnorderedAccess, EResourceState::RenderTarget);
+
+    {
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin VRS Image");
+
+        GPU_TRACE_SCOPE(CmdList, "Generate VRS Image");
+
+        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+        CmdList.TransitionTexture(ShadingRateImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
+
+        CmdList.SetComputePipelineState(ShadingRateGenPSO.Get());
+        CmdList.SetUnorderedAccessView(ShadingRateGenShader.Get(), ShadingRateImage->GetUnorderedAccessView(), 0);
+
+        CmdList.Dispatch(ShadingRateImage->GetWidth(), ShadingRateImage->GetHeight(), 1);
+
+        CmdList.TransitionTexture(ShadingRateImage.Get(), EResourceState::UnorderedAccess, EResourceState::ShadingRateSource);
+
+        CmdList.SetShadingRateImage(ShadingRateImage.Get());
+
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End VRS Image");
+    }
+
     CmdList.SetConstantBuffer(InlineRayGen.Get(), Resources.CameraBuffer.Get(), 0);
     CmdList.SetConstantBuffer(InlineRayGen.Get(), RandomDataBuffer.Get(), 1);
     CmdList.SetConstantBuffer(InlineRayGen.Get(), LightSetup.LightInfoBuffer.Get(), 2);
@@ -455,15 +547,17 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     
     CmdList.SetSamplerState(InlineRayGen.Get(), Resources.IrradianceSampler.Get(), 0);
 
-    CmdList.SetUnorderedAccessView(InlineRayGen.Get(), RTColorDepth->GetUnorderedAccessView(), 0);
-    CmdList.SetUnorderedAccessView(InlineRayGen.Get(), Resources.RTRayPDF->GetUnorderedAccessView(), 1);
-    
     CmdList.SetGraphicsPipelineState(InlineRTPipeline.Get());
 
     CmdList.SetViewport((Float)HalfWidth, (Float)HalfHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect((Float)HalfWidth, (Float)HalfHeight, 0.0f, 0.0f);
 
-    CmdList.SetRenderTargets(nullptr, 0, nullptr);
+    RenderTargetView* RTVs[2] =
+    {
+        RTColorDepth->GetRenderTargetView(),
+        Resources.RTRayPDF->GetRenderTargetView()
+    };
+    CmdList.SetRenderTargets(RTVs, 2, nullptr);
 
     VertexBuffer* VBuffer = nullptr;
     CmdList.SetVertexBuffers(&VBuffer, 1, 0);
@@ -472,7 +566,13 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     {
         GPU_TRACE_SCOPE(CmdList, "Inline RayGen");
         CmdList.Draw(3, 0);
+
+        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+        CmdList.SetShadingRateImage(nullptr);
     }
+
+    CmdList.TransitionTexture(RTColorDepth.Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(Resources.RTRayPDF.Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
 #else
     Resources.GlobalResources.Reset();
     Resources.GlobalResources.AddUnorderedAccessView(RTColorDepth->GetUnorderedAccessView());
@@ -520,13 +620,13 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
         GPU_TRACE_SCOPE(CmdList, "Dispatch Rays");
         CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), HalfWidth, HalfHeight, 1);
     }
-#endif
 
     CmdList.UnorderedAccessTextureBarrier(RTColorDepth.Get());
     CmdList.UnorderedAccessTextureBarrier(Resources.RTRayPDF.Get());
 
     CmdList.TransitionTexture(RTColorDepth.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(Resources.RTRayPDF.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
+#endif
 
     CmdList.SetComputePipelineState(RTSpatialPSO.Get());
     
@@ -605,6 +705,12 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
         Resources.RTRayPDF,
         EResourceState::UnorderedAccess,
         EResourceState::UnorderedAccess);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(ShadingRateImage->GetShaderResourceView()),
+        ShadingRateImage,
+        EResourceState::ShadingRateSource,
+        EResourceState::ShadingRateSource);
 
     Resources.DebugTextures.EmplaceBack(
         MakeSharedRef<ShaderResourceView>(RTReconstructed->GetShaderResourceView()),
@@ -701,7 +807,7 @@ Bool RayTracer::CreateRenderTargets(FrameResources& Resources)
         RTColorDepth->SetName("RayTracing Color Depth");
     }
 
-    Resources.RTRayPDF = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr);
+    Resources.RTRayPDF = CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags, EResourceState::UnorderedAccess, nullptr);
     if (!Resources.RTRayPDF)
     {
         Debug::DebugBreak();

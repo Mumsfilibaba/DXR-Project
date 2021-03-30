@@ -76,7 +76,6 @@ public:
 private:
     Bool InitBoundingBoxDebugPass();
     Bool InitAA();
-    Bool InitShadingImage();
     Bool InitBlueNoise();
 
     void ResizeResources(UInt32 Width, UInt32 Height);
@@ -94,10 +93,6 @@ private:
     CameraBufferDesc CameraBufferData;
     FrameResources Resources;
     LightSetup     LightSetup;
-
-    TRef<Texture2D>            ShadingImage;
-    TRef<ComputePipelineState> ShadingRatePipeline;
-    TRef<ComputeShader>        ShadingRateShader;
 
     TRef<VertexBuffer> AABBVertexBuffer;
     TRef<IndexBuffer>  AABBIndexBuffer;

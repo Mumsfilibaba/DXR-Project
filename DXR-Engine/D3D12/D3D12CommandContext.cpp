@@ -558,14 +558,17 @@ void D3D12CommandContext::SetIndexBuffer(IndexBuffer* IndexBuffer)
 
 void D3D12CommandContext::SetRenderTargets(RenderTargetView* const* RenderTargetViews, UInt32 RenderTargetCount, DepthStencilView* DepthStencilView)
 {
+    D3D12RenderTargetView* DxRenderTargetViews[D3D12_MAX_RENDER_TARGET_COUNT];
     for (UInt32 i = 0; i < RenderTargetCount; i++)
     {
         D3D12RenderTargetView* DxRenderTargetView = static_cast<D3D12RenderTargetView*>(RenderTargetViews[i]);
-        DescriptorCache.SetRenderTargetView(DxRenderTargetView, i);
+        DxRenderTargetViews[i] = DxRenderTargetView;
 
         // TODO: Maybe this should be handled by the descriptorcache
         CmdBatch->AddInUseResource(DxRenderTargetView);
     }
+
+    DescriptorCache.SetRenderTargetViews(DxRenderTargetViews, RenderTargetCount);
 
     D3D12DepthStencilView* DxDepthStencilView = static_cast<D3D12DepthStencilView*>(DepthStencilView);
     DescriptorCache.SetDepthStencilView(DxDepthStencilView);

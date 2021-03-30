@@ -13,10 +13,13 @@ public:
     ~DeferredRenderer() = default;
 
     Bool Init(FrameResources& FrameResources);
+    
     void Release();
 
     void RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources);
+    
     void RenderBasePass(CommandList& CmdList, const FrameResources& FrameResources);
+
     void RenderDeferredTiledLightPass(CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup);
 
     Bool ResizeResources(FrameResources& FrameResources);
