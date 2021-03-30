@@ -1,5 +1,6 @@
 #pragma once
 #include "Platform/Mutex.h"
+#include "Platform/ConditionVariable.h"
 
 #include "Generic/GenericThread.h"
 
@@ -34,6 +35,9 @@ private:
 
     TArray<Task> Tasks;
     Mutex TaskMutex;
+
+    Mutex WakeMutex;
+    ConditionVariable WakeCondition;
 
     volatile bool IsRunning;
 

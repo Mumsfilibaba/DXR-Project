@@ -19,8 +19,7 @@ TaskManager::~TaskManager()
 
 bool TaskManager::PopTask(Task& OutTask)
 {
-    TScopedLock<Mutex> Lock(Instance.TaskMutex);
-
+    TScopedLock<Mutex> Lock(TaskMutex);
     if (!Tasks.IsEmpty())
     {
         OutTask = Tasks.Front();
@@ -43,9 +42,14 @@ void TaskManager::WorkThread()
         if (Instance.PopTask(CurrentTask))
         {
             CurrentTask.Delegate();
-            LOG_INFO("Popped Task");
+        }
+        else
+        {
+            Instance.WakeCondition.Wait(Instance.WakeMutex);
         }
     }
+
+    LOG_INFO("End Workthread: " + std::to_string(PlatformProcess::GetThreadID()));
 }
 
 bool TaskManager::Init()
@@ -77,11 +81,15 @@ void TaskManager::AddTask(const Task& NewTask)
 {
     TScopedLock<Mutex> Lock(TaskMutex);
     Tasks.EmplaceBack(NewTask);
+
+    WakeCondition.NotifyOne();
 }
 
 void TaskManager::Release()
 {
     IsRunning = false;
+
+    WakeCondition.NotifyAll();
 
     for (TRef<GenericThread> Thread : WorkThreads)
     {

@@ -3,6 +3,8 @@
 
 class WindowsMutex
 {
+    friend class WindowsConditionVariable;
+
 public:
     WindowsMutex()
         : Section()

@@ -29,9 +29,9 @@ Mutex GSumMutex;
 void Func()
 {
     int64 Sum = 0;
-    for (int64 i = 0; i < 1000000000; i++)
+    for (int64 i = 0; i < 100000000000; i++)
     {
-        Sum++;
+        Sum = Sum + i;
     }
 
     {

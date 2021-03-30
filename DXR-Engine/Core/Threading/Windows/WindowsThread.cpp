@@ -2,8 +2,12 @@
 
 #include "Utilities/StringUtilities.h"
 
+#include <condition_variable>
+
 GenericThread* GenericThread::Create(ThreadFunction Func)
 {
+    std::condition_variable var;
+
     TRef<WindowsThread> NewThread = DBG_NEW WindowsThread();
     if (!NewThread->Init(Func))
     {
