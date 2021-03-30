@@ -1,7 +1,7 @@
 #pragma once
-#include "Core/Threading/Generic/Thread.h"
+#include "Core/Threading/Generic/GenericThread.h"
 
-class WindowsThread : public Thread
+class WindowsThread : public GenericThread
 {
 public:
     WindowsThread();
@@ -11,10 +11,15 @@ public:
 
     virtual void Wait() override final;
 
+    virtual void SetName(const std::string& Name) override final;
+
+    virtual ThreadID GetID() override final;
+
 private:
     static DWORD WINAPI ThreadRoutine(LPVOID ThreadParameter);
 
-    HANDLE hThread;
+    HANDLE Thread;
     DWORD  hThreadID;
+
     ThreadFunction Func;
 };

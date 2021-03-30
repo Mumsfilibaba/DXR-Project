@@ -1,7 +1,7 @@
 #include "WindowsWindow.h"
 #include "WindowsPlatform.h"
 
-Window* Window::Create(const std::string& InTitle, uint32 InWidth, uint32 InHeight, WindowStyle InStyle)
+GenericWindow* GenericWindow::Create(const std::string& InTitle, uint32 InWidth, uint32 InHeight, WindowStyle InStyle)
 {
     TRef<WindowsWindow> NewWindow = DBG_NEW WindowsWindow();
     if (!NewWindow->Init(InTitle, InWidth, InHeight, InStyle))
@@ -13,8 +13,8 @@ Window* Window::Create(const std::string& InTitle, uint32 InWidth, uint32 InHeig
 }
 
 WindowsWindow::WindowsWindow()
-    : Window()
-    , hWindow(0)
+    : GenericWindow()
+    , Window(0)
     , Style(0)
     , StyleEx(0)
     , IsFullscreen(false)
@@ -25,7 +25,7 @@ WindowsWindow::~WindowsWindow()
 {
     if (IsValid())
     {
-        DestroyWindow(hWindow);
+        DestroyWindow(Window);
     }
 }
 
@@ -71,8 +71,8 @@ bool WindowsWindow::Init(const std::string& InTitle, uint32 InWidth, uint32 InHe
 
     HINSTANCE Instance     = WindowsPlatform::GetInstance();
     LPCSTR WindowClassName = WindowsPlatform::GetWindowClassName();
-    hWindow = CreateWindowEx(0, WindowClassName, InTitle.c_str(), dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, Instance, NULL);
-    if (hWindow == NULL)
+    Window = CreateWindowEx(0, WindowClassName, InTitle.c_str(), dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, Instance, NULL);
+    if (Window == NULL)
     {
         LOG_ERROR("[WindowsWindow]: FAILED to create window\n");
         return false;
@@ -84,7 +84,7 @@ bool WindowsWindow::Init(const std::string& InTitle, uint32 InWidth, uint32 InHe
         {
             if (!(InStyle.IsClosable()))
             {
-                EnableMenuItem(GetSystemMenu(hWindow, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+                EnableMenuItem(GetSystemMenu(Window, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
             }
         }
 
@@ -94,7 +94,7 @@ bool WindowsWindow::Init(const std::string& InTitle, uint32 InWidth, uint32 InHe
 
         // Set this to userdata
         SetLastError(0);
-        LONG_PTR Result = SetWindowLongPtrA(hWindow, GWLP_USERDATA, (LONG_PTR)this);
+        LONG_PTR Result = SetWindowLongPtrA(Window, GWLP_USERDATA, (LONG_PTR)this);
         DWORD LastError = GetLastError();
         if (Result == 0 && LastError != 0)
         {
@@ -102,50 +102,50 @@ bool WindowsWindow::Init(const std::string& InTitle, uint32 InWidth, uint32 InHe
             return false;
         }
 
-        UpdateWindow(hWindow);
+        UpdateWindow(Window);
         return true;
     }
 }
 
 void WindowsWindow::Show(bool Maximized)
 {
-    Assert(hWindow != 0);
+    Assert(Window != 0);
 
     if (IsValid())
     {
         if (Maximized)
         {
-            ShowWindow(hWindow, SW_NORMAL);
+            ShowWindow(Window, SW_NORMAL);
         }
         else
         {
-            ShowWindow(hWindow, SW_SHOWMAXIMIZED);
+            ShowWindow(Window, SW_SHOWMAXIMIZED);
         }
     }
 }
 
 void WindowsWindow::Close()
 {
-    Assert(hWindow != 0);
+    Assert(Window != 0);
 
     if (IsValid())
     {
         if (WndStyle.IsClosable())
         {
-            CloseWindow(hWindow);
+            CloseWindow(Window);
         }
     }
 }
 
 void WindowsWindow::Minimize()
 {
-    Assert(hWindow != 0);
+    Assert(Window != 0);
     
     if (WndStyle.IsMinimizable())
     {
         if (IsValid())
         {
-            ShowWindow(hWindow, SW_MINIMIZE);
+            ShowWindow(Window, SW_MINIMIZE);
         }
     }
 }
@@ -156,28 +156,28 @@ void WindowsWindow::Maximize()
     {
         if (IsValid())
         {
-            ShowWindow(hWindow, SW_MAXIMIZE);
+            ShowWindow(Window, SW_MAXIMIZE);
         }
     }
 }
 
 void WindowsWindow::Restore()
 {
-    Assert(hWindow != 0);
+    Assert(Window != 0);
 
     if (IsValid())
     {
-        bool result = ::IsIconic(hWindow);
+        bool result = ::IsIconic(Window);
         if (result)
         {
-            ::ShowWindow(hWindow, SW_RESTORE);
+            ::ShowWindow(Window, SW_RESTORE);
         }
     }
 }
 
 void WindowsWindow::ToggleFullscreen()
 {
-    Assert(hWindow != 0);
+    Assert(Window != 0);
 
     if (IsValid())
     {
@@ -185,14 +185,14 @@ void WindowsWindow::ToggleFullscreen()
         {
             IsFullscreen = true;
 
-            ::GetWindowPlacement(hWindow, &StoredPlacement);
+            ::GetWindowPlacement(Window, &StoredPlacement);
             if (Style == 0)
             {
-                Style = ::GetWindowLong(hWindow, GWL_STYLE);
+                Style = ::GetWindowLong(Window, GWL_STYLE);
             }
             if (StyleEx == 0)
             {
-                StyleEx = ::GetWindowLong(hWindow, GWL_EXSTYLE);
+                StyleEx = ::GetWindowLong(Window, GWL_EXSTYLE);
             }
 
             LONG newStyle = Style;
@@ -203,42 +203,42 @@ void WindowsWindow::ToggleFullscreen()
             LONG newStyleEx = StyleEx;
             newStyleEx &= ~WS_EX_WINDOWEDGE;
 
-            SetWindowLong(hWindow, GWL_STYLE, newStyle | WS_POPUP);
-            SetWindowLong(hWindow, GWL_EXSTYLE, newStyleEx | WS_EX_TOPMOST);
-            ShowWindow(hWindow, SW_SHOWMAXIMIZED);
+            SetWindowLong(Window, GWL_STYLE, newStyle | WS_POPUP);
+            SetWindowLong(Window, GWL_EXSTYLE, newStyleEx | WS_EX_TOPMOST);
+            ShowWindow(Window, SW_SHOWMAXIMIZED);
         }
         else
         {
             IsFullscreen = false;
 
-            SetWindowLong(hWindow, GWL_STYLE, Style);
-            SetWindowLong(hWindow, GWL_EXSTYLE, StyleEx);
-            ShowWindow(hWindow, SW_SHOWNORMAL);
-            SetWindowPlacement(hWindow, &StoredPlacement);
+            SetWindowLong(Window, GWL_STYLE, Style);
+            SetWindowLong(Window, GWL_EXSTYLE, StyleEx);
+            ShowWindow(Window, SW_SHOWNORMAL);
+            SetWindowPlacement(Window, &StoredPlacement);
         }
     }
 }
 
 bool WindowsWindow::IsValid() const
 {
-    return IsWindow(hWindow) == TRUE;
+    return IsWindow(Window) == TRUE;
 }
 
 bool WindowsWindow::IsActiveWindow() const
 {
     HWND hActive = GetForegroundWindow();
-    return (hActive == hWindow);
+    return (hActive == Window);
 }
 
 void WindowsWindow::SetTitle(const std::string& Title)
 {
-    Assert(hWindow != 0);
+    Assert(Window != 0);
 
     if (WndStyle.IsTitled())
     {
         if (IsValid())
         {
-            SetWindowTextA(hWindow, Title.c_str());
+            SetWindowTextA(Window, Title.c_str());
         }
     }
 }
@@ -247,16 +247,16 @@ void WindowsWindow::GetTitle(std::string& OutTitle)
 {
     if (IsValid())
     {
-        int32 Size = GetWindowTextLengthA(hWindow);
+        int32 Size = GetWindowTextLengthA(Window);
         OutTitle.resize(Size);
 
-        GetWindowTextA(hWindow, OutTitle.data(), Size);
+        GetWindowTextA(Window, OutTitle.data(), Size);
     }
 }
 
 void WindowsWindow::SetWindowShape(const WindowShape& Shape, bool Move)
 {
-    Assert(hWindow != 0);
+    Assert(Window != 0);
 
     if (IsValid())
     {
@@ -266,13 +266,13 @@ void WindowsWindow::SetWindowShape(const WindowShape& Shape, bool Move)
             Flags |= SWP_NOMOVE;
         }
 
-        SetWindowPos(hWindow, NULL, Shape.Position.x, Shape.Position.y, Shape.Width, Shape.Height, Flags);
+        SetWindowPos(Window, NULL, Shape.Position.x, Shape.Position.y, Shape.Width, Shape.Height, Flags);
     }
 }
 
 void WindowsWindow::GetWindowShape(WindowShape& OutWindowShape) const
 {
-    Assert(hWindow != 0);
+    Assert(Window != 0);
 
     if (IsValid())
     {
@@ -282,13 +282,13 @@ void WindowsWindow::GetWindowShape(WindowShape& OutWindowShape) const
         uint32 Height = 0;
 
         RECT Rect = { };
-        if (GetWindowRect(hWindow, &Rect) != 0)
+        if (GetWindowRect(Window, &Rect) != 0)
         {
             x = static_cast<int32>(Rect.left);
             y = static_cast<int32>(Rect.top);
         }
 
-        if (GetClientRect(hWindow, &Rect) != 0)
+        if (GetClientRect(Window, &Rect) != 0)
         {
             Width  = static_cast<uint32>(Rect.right  - Rect.left);
             Height = static_cast<uint32>(Rect.bottom - Rect.top);
@@ -303,7 +303,7 @@ uint32 WindowsWindow::GetWidth() const
     if (IsValid())
     {
         RECT Rect = { };
-        if (GetClientRect(hWindow, &Rect) != 0)
+        if (GetClientRect(Window, &Rect) != 0)
         {
             const uint32 Width = static_cast<uint32>(Rect.right - Rect.left);
             return Width;
@@ -318,7 +318,7 @@ uint32 WindowsWindow::GetHeight() const
     if (IsValid())
     {
         RECT Rect = { };
-        if (GetClientRect(hWindow, &Rect) != 0)
+        if (GetClientRect(Window, &Rect) != 0)
         {
             const uint32 Height = static_cast<uint32>(Rect.bottom - Rect.top);
             return Height;

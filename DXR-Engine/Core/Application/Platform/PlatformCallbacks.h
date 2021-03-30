@@ -6,7 +6,7 @@
     #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
-class Window;
+class GenericWindow;
 struct ModifierKeyState;
 
 class PlatformCallbacks
@@ -42,27 +42,27 @@ public:
     {
     }
 
-    virtual void OnWindowResized(const TRef<Window>& Window, uint16 Width, uint16 Height)
+    virtual void OnWindowResized(const TRef<GenericWindow>& Window, uint16 Width, uint16 Height)
     {
     }
 
-    virtual void OnWindowMoved(const TRef<Window>& Window, int16 x, int16 y)
+    virtual void OnWindowMoved(const TRef<GenericWindow>& Window, int16 x, int16 y)
     {
     }
     
-    virtual void OnWindowFocusChanged(const TRef<Window>& Window, bool HasFocus)
+    virtual void OnWindowFocusChanged(const TRef<GenericWindow>& Window, bool HasFocus)
     {
     }
     
-    virtual void OnWindowMouseLeft(const TRef<Window>& Window)
+    virtual void OnWindowMouseLeft(const TRef<GenericWindow>& Window)
     {
     }
     
-    virtual void OnWindowMouseEntered(const TRef<Window>& Window)
+    virtual void OnWindowMouseEntered(const TRef<GenericWindow>& Window)
     {
     }
     
-    virtual void OnWindowClosed(const TRef<Window>& Window)
+    virtual void OnWindowClosed(const TRef<GenericWindow>& Window)
     {
     }
 

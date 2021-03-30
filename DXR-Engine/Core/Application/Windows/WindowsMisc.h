@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Application/Generic/Misc.h"
+#include "Core/Application/Generic/GenericMisc.h"
 
 #include "Windows.h"
 
@@ -7,7 +7,7 @@
     #undef MessageBox
 #endif
 
-class WindowsMisc : public Misc
+class WindowsMisc : public GenericMisc
 {
 public:
     FORCEINLINE static void MessageBox(const std::string& Title, const std::string& Message)

@@ -9,10 +9,10 @@ enum class EConsoleColor : uint8
     White  = 3
 };
 
-class OutputConsole
+class GenericOutputConsole
 {
 public:
-    virtual ~OutputConsole() = default;
+    virtual ~GenericOutputConsole() = default;
 
     virtual void Print(const std::string& Message) = 0;
     
@@ -21,7 +21,7 @@ public:
     virtual void SetTitle(const std::string& Title) = 0;
     virtual void SetColor(EConsoleColor Color)      = 0;
 
-    static OutputConsole* Create();
+    static GenericOutputConsole* Create();
 };
 
-extern OutputConsole* GConsoleOutput;
+extern GenericOutputConsole* GConsoleOutput;

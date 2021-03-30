@@ -291,7 +291,7 @@ void WindowsPlatform::HandleStoredMessage(HWND Window, UINT Message, WPARAM wPar
     }
 }
 
-void WindowsPlatform::SetActiveWindow(Window* Window)
+void WindowsPlatform::SetActiveWindow(GenericWindow* Window)
 {
     TRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>(Window);
     HWND hActiveWindow = WinWindow->GetHandle();
@@ -301,7 +301,7 @@ void WindowsPlatform::SetActiveWindow(Window* Window)
     }
 }
 
-void WindowsPlatform::SetCapture(Window* CaptureWindow)
+void WindowsPlatform::SetCapture(GenericWindow* CaptureWindow)
 {
     if (CaptureWindow)
     {
@@ -318,13 +318,13 @@ void WindowsPlatform::SetCapture(Window* CaptureWindow)
     }
 }
 
-Window* WindowsPlatform::GetActiveWindow()
+GenericWindow* WindowsPlatform::GetActiveWindow()
 {
     HWND hActiveWindow = GetForegroundWindow();
     return WindowHandle(hActiveWindow).GetWindow();
 }
 
-Window* WindowsPlatform::GetCapture()
+GenericWindow* WindowsPlatform::GetCapture()
 {
     HWND hCapture = ::GetCapture();
     return WindowHandle(hCapture).GetWindow();
@@ -332,39 +332,39 @@ Window* WindowsPlatform::GetCapture()
 
 bool WindowsPlatform::InitCursors()
 {
-    if (!(Cursor::Arrow = WindowsCursor::Create(IDC_ARROW)))
+    if (!(GenericCursor::Arrow = WindowsCursor::Create(IDC_ARROW)))
     {
         return false;
     }
-    if (!(Cursor::TextInput = WindowsCursor::Create(IDC_IBEAM)))
+    if (!(GenericCursor::TextInput = WindowsCursor::Create(IDC_IBEAM)))
     {
         return false;
     }
-    if (!(Cursor::ResizeAll = WindowsCursor::Create(IDC_SIZEALL)))
+    if (!(GenericCursor::ResizeAll = WindowsCursor::Create(IDC_SIZEALL)))
     {
         return false;
     }
-    if (!(Cursor::ResizeEW = WindowsCursor::Create(IDC_SIZEWE)))
+    if (!(GenericCursor::ResizeEW = WindowsCursor::Create(IDC_SIZEWE)))
     {
         return false;
     }
-    if (!(Cursor::ResizeNS = WindowsCursor::Create(IDC_SIZENS)))
+    if (!(GenericCursor::ResizeNS = WindowsCursor::Create(IDC_SIZENS)))
     {
         return false;
     }
-    if (!(Cursor::ResizeNESW = WindowsCursor::Create(IDC_SIZENESW)))
+    if (!(GenericCursor::ResizeNESW = WindowsCursor::Create(IDC_SIZENESW)))
     {
         return false;
     }
-    if (!(Cursor::ResizeNWSE = WindowsCursor::Create(IDC_SIZENWSE)))
+    if (!(GenericCursor::ResizeNWSE = WindowsCursor::Create(IDC_SIZENWSE)))
     {
         return false;
     }
-    if (!(Cursor::Hand = WindowsCursor::Create(IDC_HAND)))
+    if (!(GenericCursor::Hand = WindowsCursor::Create(IDC_HAND)))
     {
         return false;
     }
-    if (!(Cursor::NotAllowed = WindowsCursor::Create(IDC_NO)))
+    if (!(GenericCursor::NotAllowed = WindowsCursor::Create(IDC_NO)))
     {
         return false;
     }
@@ -372,7 +372,7 @@ bool WindowsPlatform::InitCursors()
     return true;
 }
 
-void WindowsPlatform::SetCursor(Cursor* Cursor)
+void WindowsPlatform::SetCursor(GenericCursor* Cursor)
 {
     if (Cursor)
     {
@@ -388,7 +388,7 @@ void WindowsPlatform::SetCursor(Cursor* Cursor)
     }
 }
 
-Cursor* WindowsPlatform::GetCursor()
+GenericCursor* WindowsPlatform::GetCursor()
 {
     HCURSOR Cursor = ::GetCursor();
     if (CurrentCursor)
@@ -408,7 +408,7 @@ Cursor* WindowsPlatform::GetCursor()
     return nullptr;
 }
 
-void WindowsPlatform::SetCursorPos(Window* RelativeWindow, int32 x, int32 y)
+void WindowsPlatform::SetCursorPos(GenericWindow* RelativeWindow, int32 x, int32 y)
 {
     if (RelativeWindow)
     {
@@ -423,7 +423,7 @@ void WindowsPlatform::SetCursorPos(Window* RelativeWindow, int32 x, int32 y)
     }
 }
 
-void WindowsPlatform::GetCursorPos(Window* RelativeWindow, int32& OutX, int32& OutY)
+void WindowsPlatform::GetCursorPos(GenericWindow* RelativeWindow, int32& OutX, int32& OutY)
 {
     POINT CursorPos = { };
     if (!::GetCursorPos(&CursorPos))

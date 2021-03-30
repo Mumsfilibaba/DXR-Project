@@ -3,11 +3,11 @@
 
 #include "Core/Engine/EngineGlobals.h"
 #include "Core/Application/Application.h"
-#include "Core/Application/Generic/OutputConsole.h"
+#include "Core/Application/Generic/GenericOutputConsole.h"
 #include "Core/Application/Platform/Platform.h"
 #include "Core/Application/Platform/PlatformMisc.h"
 #include "Core/Input/InputManager.h"
-#include "Core/Threading/Generic/Thread.h"
+#include "Core/Threading/TaskManager.h"
 
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
@@ -20,11 +20,16 @@
 
 #include "Memory/Memory.h"
 
+void Func()
+{
+    LOG_INFO("My Work");
+}
+
 bool EngineLoop::Init()
 {
     TRACE_FUNCTION_SCOPE();
 
-    GConsoleOutput = OutputConsole::Create();
+    GConsoleOutput = GenericOutputConsole::Create();
     if (!GConsoleOutput)
     {
         return false;
@@ -39,6 +44,11 @@ bool EngineLoop::Init()
     if (!Platform::Init())
     {
         PlatformMisc::MessageBox("ERROR", "Failed to init Platform");
+        return false;
+    }
+
+    if (!TaskManager::Get().Init())
+    {
         return false;
     }
 
@@ -89,6 +99,12 @@ bool EngineLoop::Init()
     }
 
     Editor::Init();
+
+    // Tasks
+    Task MyTask;
+    MyTask.Delegate.BindFunction(Func);
+
+    TaskManager::Get().AddTask(MyTask);
 
     return true;
 }
@@ -145,7 +161,12 @@ bool EngineLoop::Release()
 
     RenderLayer::Release();
 
-    Platform::Release();
+    TaskManager::Get().Release();
+
+    if (!Platform::Release())
+    {
+        return false;
+    }
 
     SafeDelete(GConsoleOutput);
 

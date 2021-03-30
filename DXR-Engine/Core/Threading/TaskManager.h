@@ -1,12 +1,21 @@
 #pragma once
 #include "Platform/Mutex.h"
 
-#include "Generic/Thread.h"
+#include "Generic/GenericThread.h"
+
+#include "Core/Delegates/Delegate.h"
+
+struct Task
+{
+    TDelegate<void()> Delegate;
+};
 
 class TaskManager
 {
 public:
     bool Init();
+
+    void AddTask(const Task& NewTask);
 
     void Release();
 
@@ -16,5 +25,15 @@ private:
     TaskManager();
     ~TaskManager();
 
-    Mutex JobMutex;
+    static void WorkThread();
+
+private:
+    TArray<TRef<GenericThread>> WorkThreads;
+
+    TArray<Task> Tasks;
+    Mutex TaskMutex;
+
+    volatile bool IsRunning;
+
+    static TaskManager Instance;
 };

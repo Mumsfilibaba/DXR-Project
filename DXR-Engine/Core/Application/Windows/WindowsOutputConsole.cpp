@@ -1,6 +1,8 @@
 #include "WindowsOutputConsole.h"
 
-OutputConsole* OutputConsole::Create()
+#include "Core/Threading/TScopedLock.h"
+
+GenericOutputConsole* GenericOutputConsole::Create()
 {
     return DBG_NEW WindowsOutputConsole();
 }
@@ -28,6 +30,8 @@ void WindowsOutputConsole::Print(const std::string& Message)
 {
     if (ConsoleHandle)
     {
+        TScopedLock<Mutex> Lock(ConsoleMutex);
+
         WriteConsoleA(ConsoleHandle, Message.c_str(), static_cast<DWORD>(Message.size()), 0, NULL);
     }
 }
@@ -36,6 +40,8 @@ void WindowsOutputConsole::Clear()
 {
     if (ConsoleHandle)
     {
+        TScopedLock<Mutex> Lock(ConsoleMutex);
+
         CONSOLE_SCREEN_BUFFER_INFO CSBI;
         Memory::Memzero(&CSBI);
 
@@ -55,6 +61,8 @@ void WindowsOutputConsole::SetTitle(const std::string& Title)
 {
     if (ConsoleHandle)
     {
+        TScopedLock<Mutex> Lock(ConsoleMutex);
+
         SetConsoleTitleA(Title.c_str());
     }
 }
@@ -63,6 +71,8 @@ void WindowsOutputConsole::SetColor(EConsoleColor Color)
 {
     if (ConsoleHandle)
     {
+        TScopedLock<Mutex> Lock(ConsoleMutex);
+
         WORD wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
         switch (Color)
         {

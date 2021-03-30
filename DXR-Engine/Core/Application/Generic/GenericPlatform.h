@@ -8,8 +8,8 @@
 #endif
 
 class PlatformCallbacks;
-class Window;
-class Cursor;
+class GenericWindow;
+class GenericCursor;
 
 struct ModifierKeyState
 {
@@ -42,17 +42,17 @@ public:
 
     static ModifierKeyState GetModifierKeyState() { return ModifierKeyState(); }
 
-    static void SetCapture(Window* Window) {}
-    static void SetActiveWindow(Window* Window) {}
+    static void SetCapture(GenericWindow* Window) {}
+    static void SetActiveWindow(GenericWindow* Window) {}
 
-    static Window* GetCapture() { return nullptr; }
-    static Window* GetActiveWindow() { return nullptr; }
+    static GenericWindow* GetCapture() { return nullptr; }
+    static GenericWindow* GetActiveWindow() { return nullptr; }
 
-    static void SetCursor(Cursor* Cursor) {}
-    static Cursor* GetCursor() { return nullptr; }
+    static void SetCursor(GenericCursor* Cursor) {}
+    static GenericCursor* GetCursor() { return nullptr; }
 
-    static void SetCursorPos(Window* RelativeWindow, int32 x, int32 y) {}
-    static void GetCursorPos(Window* RelativeWindow, int32& OutX, int32& OutY) {}
+    static void SetCursorPos(GenericWindow* RelativeWindow, int32 x, int32 y) {}
+    static void GetCursorPos(GenericWindow* RelativeWindow, int32& OutX, int32& OutY) {}
 
     static void SetCallbacks(PlatformCallbacks* InCallbacks);
     static PlatformCallbacks* GetCallbacks();

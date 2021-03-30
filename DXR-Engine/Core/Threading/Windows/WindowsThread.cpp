@@ -1,6 +1,8 @@
 #include "WindowsThread.h"
 
-Thread* Thread::Create(ThreadFunction Func)
+#include "Utilities/StringUtilities.h"
+
+GenericThread* GenericThread::Create(ThreadFunction Func)
 {
     TRef<WindowsThread> NewThread = DBG_NEW WindowsThread();
     if (!NewThread->Init(Func))
@@ -14,51 +16,62 @@ Thread* Thread::Create(ThreadFunction Func)
 }
 
 WindowsThread::WindowsThread()
-    : Thread()
-    , hThread(0)
+    : GenericThread()
+    , Thread(0)
     , hThreadID(0)
 {
 }
 
 WindowsThread::~WindowsThread()
 {
-    if (hThread)
+    if (Thread)
     {
-        CloseHandle(hThread);
+        CloseHandle(Thread);
     }
 }
 
 bool WindowsThread::Init(ThreadFunction InFunc)
 {
-    hThread = CreateThread(NULL, 0, WindowsThread::ThreadRoutine, (LPVOID)this, 0, &hThreadID);
-    if (!hThread)
+    Func = InFunc;
+    
+    Thread = CreateThread(NULL, 0, WindowsThread::ThreadRoutine, (LPVOID)this, 0, &hThreadID);
+    if (!Thread)
     {
         LOG_ERROR("[WindowsThread] Failed to create thread");
         return false;
     }
     else
     {
-        Func = InFunc;
+        return true;
     }
-
-    return true;
 }
 
 void WindowsThread::Wait()
 {
-    WaitForSingleObject(hThread, INFINITE);
+    WaitForSingleObject(Thread, INFINITE);
+}
+
+void WindowsThread::SetName(const std::string& Name)
+{
+    std::wstring WideString = ConvertToWide(Name);
+    SetThreadDescription(Thread, WideString.c_str());
+}
+
+ThreadID WindowsThread::GetID()
+{
+    return hThreadID;
 }
 
 DWORD WINAPI WindowsThread::ThreadRoutine(LPVOID ThreadParameter)
 {
-    WindowsThread* CurrentThread = (WindowsThread*)ThreadParameter;
+    volatile WindowsThread* CurrentThread = (WindowsThread*)ThreadParameter;
     if (CurrentThread)
     {
+        Assert(CurrentThread->Func != nullptr);
+
         CurrentThread->Func();
         return 0;
     }
-    else
-    {
-        return -1;
-    }
+    
+    return -1;
 }

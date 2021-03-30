@@ -1,9 +1,10 @@
 #pragma once
-#include "Core/Application/Generic/OutputConsole.h"
+#include "Core/Application/Generic/GenericOutputConsole.h"
+#include "Core/Threading/Platform/Mutex.h"
 
 #include "Windows/Windows.h"
 
-class WindowsOutputConsole : public OutputConsole
+class WindowsOutputConsole : public GenericOutputConsole
 {
 public:
     WindowsOutputConsole();
@@ -18,4 +19,6 @@ public:
 
 private:
     HANDLE ConsoleHandle;
+
+    Mutex ConsoleMutex;
 };

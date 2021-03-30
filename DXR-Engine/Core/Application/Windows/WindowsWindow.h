@@ -1,9 +1,9 @@
 #pragma once
 #include "Windows.h"
 
-#include "Core/Application/Generic/Window.h"
+#include "Core/Application/Generic/GenericWindow.h"
 
-class WindowsWindow : public Window
+class WindowsWindow : public GenericWindow
 {
 public:
     WindowsWindow();
@@ -32,15 +32,18 @@ public:
 
     virtual void* GetNativeHandle() const override final
     {
-        return reinterpret_cast<void*>(hWindow);
+        return reinterpret_cast<void*>(Window);
     }
     
-    HWND GetHandle() const { return hWindow; }
+    HWND GetHandle() const { return Window; }
 
 private:
-    HWND  hWindow;
+    HWND  Window;
+    
     DWORD Style;
     DWORD StyleEx;
+    
     bool  IsFullscreen;
+
     WINDOWPLACEMENT StoredPlacement;
 };

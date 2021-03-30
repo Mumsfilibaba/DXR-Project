@@ -3,7 +3,7 @@
 #include "Debug/Profiler.h"
 
 #include "Core/Engine/Engine.h"
-#include "Core/Application/Generic/Cursor.h"
+#include "Core/Application/Generic/GenericCursor.h"
 #include "Core/Application/Platform/Platform.h"
 
 #include "Time/Timer.h"
@@ -521,7 +521,7 @@ void DebugUI::Render(CommandList& CmdList)
 
     ImGuiIO& IO = ImGui::GetIO();
 
-    Window* Window = GEngine.MainWindow.Get();
+    GenericWindow* Window = GEngine.MainWindow.Get();
     if (IO.WantSetMousePos)
     {
         Platform::SetCursorPos(Window, static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y));
@@ -556,18 +556,18 @@ void DebugUI::Render(CommandList& CmdList)
         }
         else
         {
-            TRef<Cursor> Cursor = Platform::GetCursor();
+            TRef<GenericCursor> Cursor = Platform::GetCursor();
             switch (ImguiCursor)
             {
-            case ImGuiMouseCursor_Arrow:      Cursor = Cursor::Arrow;      break;
-            case ImGuiMouseCursor_TextInput:  Cursor = Cursor::TextInput;  break;
-            case ImGuiMouseCursor_ResizeAll:  Cursor = Cursor::ResizeAll;  break;
-            case ImGuiMouseCursor_ResizeEW:   Cursor = Cursor::ResizeEW;   break;
-            case ImGuiMouseCursor_ResizeNS:   Cursor = Cursor::ResizeNS;   break;
-            case ImGuiMouseCursor_ResizeNESW: Cursor = Cursor::ResizeNESW; break;
-            case ImGuiMouseCursor_ResizeNWSE: Cursor = Cursor::ResizeNWSE; break;
-            case ImGuiMouseCursor_Hand:       Cursor = Cursor::Hand;       break;
-            case ImGuiMouseCursor_NotAllowed: Cursor = Cursor::NotAllowed; break;
+            case ImGuiMouseCursor_Arrow:      Cursor = GenericCursor::Arrow;      break;
+            case ImGuiMouseCursor_TextInput:  Cursor = GenericCursor::TextInput;  break;
+            case ImGuiMouseCursor_ResizeAll:  Cursor = GenericCursor::ResizeAll;  break;
+            case ImGuiMouseCursor_ResizeEW:   Cursor = GenericCursor::ResizeEW;   break;
+            case ImGuiMouseCursor_ResizeNS:   Cursor = GenericCursor::ResizeNS;   break;
+            case ImGuiMouseCursor_ResizeNESW: Cursor = GenericCursor::ResizeNESW; break;
+            case ImGuiMouseCursor_ResizeNWSE: Cursor = GenericCursor::ResizeNWSE; break;
+            case ImGuiMouseCursor_Hand:       Cursor = GenericCursor::Hand;       break;
+            case ImGuiMouseCursor_NotAllowed: Cursor = GenericCursor::NotAllowed; break;
             }
             
             Platform::SetCursor(Cursor.Get());

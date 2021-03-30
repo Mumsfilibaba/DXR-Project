@@ -38,7 +38,7 @@ public:
         : Base()
         , Delegate(nullptr)
     {
-        if (Other.IsValid())
+        if (Other.IsBound())
         {
             Delegate = Other.Delegate->Clone();
         }

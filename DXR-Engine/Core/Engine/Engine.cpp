@@ -19,12 +19,12 @@ bool Engine::Init()
         WindowStyleFlag_Maximizable |
         WindowStyleFlag_Resizeable;
 
-    MainWindow = Window::Create("DXR Engine", 1920, 1080, Style);
+    MainWindow = GenericWindow::Create("DXR Engine", 1920, 1080, Style);
     if (MainWindow)
     {
         MainWindow->Show(false);
 
-        GToggleFullscreen.OnExecute.AddObject(MainWindow.Get(), &Window::ToggleFullscreen);
+        GToggleFullscreen.OnExecute.AddObject(MainWindow.Get(), &GenericWindow::ToggleFullscreen);
         INIT_CONSOLE_COMMAND("a.ToggleFullscreen", &GToggleFullscreen);
     }
     else
@@ -77,7 +77,7 @@ void Engine::OnMouseMove(int32 x, int32 y)
 
 void Engine::OnMouseReleased(EMouseButton Button, const ModifierKeyState& ModfierKeyState)
 {
-    Window* CaptureWindow = Platform::GetCapture();
+    GenericWindow* CaptureWindow = Platform::GetCapture();
     if (CaptureWindow)
     {
         Platform::SetCapture(nullptr);
@@ -89,10 +89,10 @@ void Engine::OnMouseReleased(EMouseButton Button, const ModifierKeyState& Modfie
 
 void Engine::OnMousePressed(EMouseButton Button, const ModifierKeyState& ModfierKeyState)
 {
-    Window* CaptureWindow = Platform::GetCapture();
+    GenericWindow* CaptureWindow = Platform::GetCapture();
     if (!CaptureWindow)
     {
-        Window* ActiveWindow = Platform::GetActiveWindow();
+        GenericWindow* ActiveWindow = Platform::GetActiveWindow();
         Platform::SetCapture(ActiveWindow);
     }
 
@@ -106,37 +106,37 @@ void Engine::OnMouseScrolled(float HorizontalDelta, float VerticalDelta)
     OnMouseScrolledEvent.Broadcast(Event);
 }
 
-void Engine::OnWindowResized(const TRef<Window>& InWindow, uint16 Width, uint16 Height)
+void Engine::OnWindowResized(const TRef<GenericWindow>& InWindow, uint16 Width, uint16 Height)
 {
     WindowResizeEvent Event(InWindow, Width, Height);
     OnWindowResizedEvent.Broadcast(Event);
 }
 
-void Engine::OnWindowMoved(const TRef<Window>& InWindow, int16 x, int16 y)
+void Engine::OnWindowMoved(const TRef<GenericWindow>& InWindow, int16 x, int16 y)
 {
     WindowMovedEvent Event(InWindow, x, y);
     OnWindowMovedEvent.Broadcast(Event);
 }
 
-void Engine::OnWindowFocusChanged(const TRef<Window>& InWindow, bool HasFocus)
+void Engine::OnWindowFocusChanged(const TRef<GenericWindow>& InWindow, bool HasFocus)
 {
     WindowFocusChangedEvent Event(InWindow, HasFocus);
     OnWindowFocusChangedEvent.Broadcast(Event);
 }
 
-void Engine::OnWindowMouseLeft(const TRef<Window>& InWindow)
+void Engine::OnWindowMouseLeft(const TRef<GenericWindow>& InWindow)
 {
     WindowMouseLeftEvent Event(InWindow);
     OnWindowMouseLeftEvent.Broadcast(Event);
 }
 
-void Engine::OnWindowMouseEntered(const TRef<Window>& InWindow)
+void Engine::OnWindowMouseEntered(const TRef<GenericWindow>& InWindow)
 {
     WindowMouseEnteredEvent Event(InWindow);
     OnWindowMouseEnteredEvent.Broadcast(Event);
 }
 
-void Engine::OnWindowClosed(const TRef<Window>& InWindow)
+void Engine::OnWindowClosed(const TRef<GenericWindow>& InWindow)
 {
     WindowClosedEvent Event(InWindow);
     OnWindowClosedEvent.Broadcast(Event);

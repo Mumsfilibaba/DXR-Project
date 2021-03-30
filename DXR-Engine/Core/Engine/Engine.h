@@ -27,12 +27,12 @@ public:
     virtual void OnMousePressed(EMouseButton Button, const ModifierKeyState& ModierKeyState) override final;
     virtual void OnMouseScrolled(float HorizontalDelta, float VerticalDelta) override final;
 
-    virtual void OnWindowResized(const TRef<Window>& Window, uint16 Width, uint16 Height) override final;
-    virtual void OnWindowMoved(const TRef<Window>& Window, int16 x, int16 y) override final;
-    virtual void OnWindowFocusChanged(const TRef<Window>& Window, bool HasFocus) override final;
-    virtual void OnWindowMouseLeft(const TRef<Window>& Window) override final;
-    virtual void OnWindowMouseEntered(const TRef<Window>& Window) override final;
-    virtual void OnWindowClosed(const TRef<Window>& Window) override final;
+    virtual void OnWindowResized(const TRef<GenericWindow>& Window, uint16 Width, uint16 Height) override final;
+    virtual void OnWindowMoved(const TRef<GenericWindow>& Window, int16 x, int16 y) override final;
+    virtual void OnWindowFocusChanged(const TRef<GenericWindow>& Window, bool HasFocus) override final;
+    virtual void OnWindowMouseLeft(const TRef<GenericWindow>& Window) override final;
+    virtual void OnWindowMouseEntered(const TRef<GenericWindow>& Window) override final;
+    virtual void OnWindowClosed(const TRef<GenericWindow>& Window) override final;
 
     virtual void OnApplicationExit(int32 ExitCode) override final;
 
@@ -74,7 +74,7 @@ public:
     OnApplicationExitEvent OnApplicationExitEvent;
 
 public:
-    TRef<Window>   MainWindow;
+    TRef<GenericWindow>   MainWindow;
     TRef<Viewport> MainViewport;
 
     bool IsRunning = false;
