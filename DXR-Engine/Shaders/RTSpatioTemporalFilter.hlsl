@@ -178,7 +178,7 @@ void Main(ComputeShaderInput Input)
         float  RayLength = length(RayPDF.xyz);
         float3 L = RayPDF.xyz / RayLength;
 
-        if (RayPDF.a > 0.0f)
+        //if (RayPDF.a > 0.0f)
         {
             float3 H = normalize(V + L);
 
@@ -236,17 +236,17 @@ void Main(ComputeShaderInput Input)
         Result = saturate(ColorDepth.rgb);
     }
     
-    Reconstructed[TexCoords] = float4(Result, 0.0f);
+    Reconstructed[TexCoords] = float4(Result, KernelWidth);
     
-    float  Valid = 0.0f;
+    float Valid = 0.0f;
     float4 HistorySample = LoadHistory(TexCoords, N, Valid);
     float3 Clipped       = ClipAABB(BoxMin, BoxMax, HistorySample.rgb);
     
-    float NumTemporalFrames = floor(lerp((float) MIN_TEMPORAL_FRAMES, (float) MAX_TEMPORAL_FRAMES, clamp(Roughness, 0.0f, 0.35f) / 0.35f));
+    float NumTemporalFrames = floor(lerp((float) MIN_TEMPORAL_FRAMES, (float) MAX_TEMPORAL_FRAMES, clamp(Roughness, 0.0f, 0.45f) / 0.45f));
     float HistoryLength     = HistorySample.a;
     HistoryLength = min(NumTemporalFrames, HistoryLength + 1.0f);
     
-    const float Alpha = lerp(1.0f, max(0.04f, 1.0f / HistoryLength), Valid);
+    const float Alpha = lerp(1.0f, max(0.05f, 1.0f / HistoryLength), Valid);
     float3 Color = HistorySample.rgb * (1.0f - Alpha) + Result * Alpha;
     
     History[TexCoords]     = float4(Color, HistoryLength);

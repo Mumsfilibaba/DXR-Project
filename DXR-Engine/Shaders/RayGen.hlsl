@@ -15,7 +15,12 @@ Texture2D<float4> GBufferMaterialTex : register(t5, space0);
 
 Texture2DArray<float4> BlueNoiseTex : register(t6, space0);
 
-Texture2D<float4> MaterialTextures[128] : register(t7, space0);
+StructuredBuffer<RayTracingMaterial> Materials : register(t7);
+
+StructuredBuffer<Vertex> Vertices[400] : register(t8);
+ByteAddressBuffer Indices[400] : register(t408);
+
+Texture2D<float4> MaterialTextures[128] : register(t808);
 
 ConstantBuffer<Camera>        CameraBuffer : register(b0, space0);
 ConstantBuffer<LightInfoData> LightInfo    : register(b1, space0);
@@ -119,8 +124,8 @@ void RayGen()
         
         float3 Li  = PayLoad.Color;
         FinalColor = Li;
-        FinalRay = L * PayLoad.T;
-        FinalPDF = 1.0f / Spec_PDF;
+        FinalRay   = L * PayLoad.T;
+        FinalPDF   = 1.0f / Spec_PDF;
     }
     
     ColorDepth[TexCoord] = float4(FinalColor, GBufferDepth);

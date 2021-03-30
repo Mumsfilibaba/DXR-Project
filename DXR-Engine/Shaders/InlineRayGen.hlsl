@@ -20,12 +20,14 @@ Texture2D<float4> GBufferNormalTex   : register(t3);
 Texture2D<float>  GBufferDepthTex    : register(t4);
 Texture2D<float4> GBufferMaterialTex : register(t5);
 
-StructuredBuffer<RayTracingMaterial> Materials : register(t6);
+Texture2DArray<float4> BlueNoiseTex : register(t6);
 
-StructuredBuffer<Vertex> Vertices[400] : register(t7);
-ByteAddressBuffer        Indices[400]  : register(t407);
+StructuredBuffer<RayTracingMaterial> Materials : register(t7);
 
-Texture2D<float4> MaterialTextures[128] : register(t807);
+StructuredBuffer<Vertex> VertexBuffers[400] : register(t8);
+ByteAddressBuffer        IndexBuffers[400]  : register(t408);
+
+Texture2D<float4> MaterialTextures[128] : register(t808);
 
 ConstantBuffer<Camera>        CameraBuffer : register(b0);
 ConstantBuffer<RandomData>    RandomBuffer : register(b1);
@@ -57,73 +59,6 @@ SamplerState SkyboxSampler : register(s0);
 
 RWTexture2D<float4> ColorDepth : register(u0);
 RWTexture2D<float4> RayPDF     : register(u1);
-
-struct TriangleHit
-{
-    uint InstanceID;
-    uint HitGroupIndex;
-    uint PrimitiveIndex;
-    float2 Barycentrics;
-};
-
-struct VertexData
-{
-    float3 Position;
-    float3 Normal;
-    float3 Tangent;
-    float2 TexCoord;
-};
-
-void LoadModelData(in TriangleHit HitData, out VertexData Vertex)
-{
-    const uint IndexSizeInBytes    = 4;
-    const uint IndicesPerTriangle  = 3;
-    const uint TriangleIndexStride = IndicesPerTriangle * IndexSizeInBytes;
-    const uint BaseIndex           = HitData.PrimitiveIndex * TriangleIndexStride;
-    
-    float3 BarycentricCoords = float3(1.0f - HitData.Barycentrics.x - HitData.Barycentrics.y, HitData.Barycentrics.x, HitData.Barycentrics.y);
-    
-    uint3 TriangleIndices = Indices[HitData.HitGroupIndex].Load3(BaseIndex);
-    
-    float3 TrianglePosition[3] =
-    {
-        Vertices[HitData.HitGroupIndex][TriangleIndices[0]].Position,
-        Vertices[HitData.HitGroupIndex][TriangleIndices[1]].Position,
-        Vertices[HitData.HitGroupIndex][TriangleIndices[2]].Position
-    };
-    
-    float3 TriangleNormals[3] =
-    {
-        Vertices[HitData.HitGroupIndex][TriangleIndices[0]].Normal,
-        Vertices[HitData.HitGroupIndex][TriangleIndices[1]].Normal,
-        Vertices[HitData.HitGroupIndex][TriangleIndices[2]].Normal
-    };
-    
-    float3 TriangleTangents[3] =
-    {
-        Vertices[HitData.HitGroupIndex][TriangleIndices[0]].Tangent,
-        Vertices[HitData.HitGroupIndex][TriangleIndices[1]].Tangent,
-        Vertices[HitData.HitGroupIndex][TriangleIndices[2]].Tangent
-    };
-    
-    float2 TriangleTexCoords[3] =
-    {
-        Vertices[HitData.HitGroupIndex][TriangleIndices[0]].TexCoord,
-        Vertices[HitData.HitGroupIndex][TriangleIndices[1]].TexCoord,
-        Vertices[HitData.HitGroupIndex][TriangleIndices[2]].TexCoord
-    };
-    
-    float3 Position = (TrianglePosition[0] * BarycentricCoords.x) + (TrianglePosition[1] * BarycentricCoords.y) + (TrianglePosition[2] * BarycentricCoords.z);
-    float3 Normal   = (TriangleNormals[0] * BarycentricCoords.x) + (TriangleNormals[1] * BarycentricCoords.y) + (TriangleNormals[2] * BarycentricCoords.z);
-    float3 Tangent  = (TriangleTangents[0] * BarycentricCoords.x) + (TriangleTangents[1] * BarycentricCoords.y) + (TriangleTangents[2] * BarycentricCoords.z);
-    float2 TexCoord = (TriangleTexCoords[0] * BarycentricCoords.x) + (TriangleTexCoords[1] * BarycentricCoords.y) + (TriangleTexCoords[2] * BarycentricCoords.z);
-    TexCoord.y = -TexCoord.y;
-    
-    Vertex.Position = Position;
-    Vertex.Normal   = normalize(Normal);
-    Vertex.Tangent  = normalize(Tangent);
-    Vertex.TexCoord = TexCoord;
-}
 
 float3 ShadePoint(float3 WorldPosition, float3 N, float3 V, float3 Albedo, float AO, float Metallic, float Roughness)
 {
@@ -195,9 +130,15 @@ void PSMain(VSOutput Input)
     uint2 TexCoord     = (uint2)floor(Input.Position.xy);
     uint2 FullTexCoord = TexCoord * 2;
     
-    float  GBufferDepth    = GBufferDepthTex[FullTexCoord];
-    float3 GBufferNormal   = GBufferNormalTex[FullTexCoord].rgb;
-    float3 GBufferMaterial = GBufferMaterialTex.Load(int3(FullTexCoord, 0)).rgb;
+    uint2 NoiseCoord = ((TexCoord / 2) + (RandomBuffer.FrameIndex / 2) * uint2(3, 7)) & 63;
+    uint  PixelIndex = (uint) (BlueNoiseTex.Load(int4(NoiseCoord, 0, 0)).r * 255.0f);
+    PixelIndex = PixelIndex + RandomBuffer.FrameIndex;
+    
+    uint2 GBufferCoord = TexCoord * 2 + uint2(PixelIndex & 1, (PixelIndex >> 1) & 1);
+    
+    float  GBufferDepth    = GBufferDepthTex[GBufferCoord];
+    float3 GBufferNormal   = GBufferNormalTex[GBufferCoord].rgb;
+    float3 GBufferMaterial = GBufferMaterialTex.Load(int3(GBufferCoord, 0)).rgb;
     
     float Roughness = GBufferMaterial.r;
     
@@ -256,45 +197,63 @@ void PSMain(VSOutput Input)
     Ray.TMin      = 0.0f;
     Ray.TMax      = 1000.0f;
     
-    RayQuery<RAY_FLAG_CULL_BACK_FACING_TRIANGLES> Query;
-    Query.TraceRayInline(Scene, 0, 0xff, Ray);
-    Query.Proceed();
-
-    float3 Result = Float3(0.0f);
-    if (Query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
+    bool Nan = IsNan(Ray.Origin) || IsNan(Ray.Direction);
+    if (!Nan)
     {
-        TriangleHit HitData;
-        HitData.InstanceID     = Query.CommittedInstanceID();
-        HitData.HitGroupIndex  = Query.CommittedInstanceContributionToHitGroupIndex();
-        HitData.PrimitiveIndex = Query.CommittedPrimitiveIndex();
-        HitData.Barycentrics   = Query.CommittedTriangleBarycentrics();
+        RayQuery < RAY_FLAG_CULL_BACK_FACING_TRIANGLES > Query;
+        Query.TraceRayInline(Scene, 0, 0xff, Ray);
+        Query.Proceed();
 
-        const float3 HitV = normalize(-Query.WorldRayDirection());
+        float3 Result = Float3(0.0f);
+        if (Query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
+        {
+            TriangleHit HitData;
+            HitData.InstanceID     = Query.CommittedInstanceID();
+            HitData.HitGroupIndex  = Query.CommittedInstanceContributionToHitGroupIndex();
+            HitData.PrimitiveIndex = Query.CommittedPrimitiveIndex();
+            HitData.Barycentrics   = Query.CommittedTriangleBarycentrics();
+
+            const float3 HitV = normalize(-Query.WorldRayDirection());
         
-        VertexData Vertex;
-        LoadModelData(HitData, Vertex);
+            const uint BaseIndex  = CalculateBaseIndex(HitData);
+            uint3 TriangleIndices = IndexBuffers[HitData.HitGroupIndex].Load3(BaseIndex);
         
-        RayTracingMaterial Material = Materials[HitData.InstanceID];
-        float4 AlbedoTex = MaterialTextures[Material.AlbedoTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
-        float3 HitAlbedo = AlbedoTex.rgb * Material.Albedo;
+            Vertex Vertices[3] =
+            {
+                VertexBuffers[HitData.HitGroupIndex][TriangleIndices[0]],
+                VertexBuffers[HitData.HitGroupIndex][TriangleIndices[1]],
+                VertexBuffers[HitData.HitGroupIndex][TriangleIndices[2]],
+            };
         
-        float4 NormalTex    = MaterialTextures[Material.NormalTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
-        float3 MappedNormal = UnpackNormal(NormalTex.rgb);
-        float3 Bitangent    = normalize(cross(Vertex.Tangent, Vertex.Normal));
-        float3 HitN = ApplyNormalMapping(MappedNormal, Vertex.Normal, Vertex.Tangent, Bitangent);
+            VertexData Vertex;
+            LoadVertexData(HitData, Vertices, Vertex);
         
-        float4 MetallicTex = MaterialTextures[Material.MetallicTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
-        float  HitMetallic = MetallicTex.r * Material.Metallic;
+            RayTracingMaterial Material = Materials[HitData.InstanceID];
+            float4 AlbedoTex = MaterialTextures[Material.AlbedoTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
+            float3 HitAlbedo = ApplyGamma(AlbedoTex.rgb) * Material.Albedo;
         
-        float4 RoughnessTex = MaterialTextures[Material.RoughnessTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
-        float  HitRoughness = RoughnessTex.r * Material.Roughness;
+            float4 NormalTex    = MaterialTextures[Material.NormalTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
+            float3 MappedNormal = UnpackNormal(NormalTex.rgb);
+            MappedNormal.y = -MappedNormal.y;
         
-        float4 AOTex = MaterialTextures[Material.AOTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
-        float  HitAO = AOTex.r * Material.AO;
+            float3 HitN = ApplyNormalMapping(MappedNormal, Vertex.Normal, Vertex.Tangent, Vertex.Bitangent);
         
-        float3 WorldHitPosition = Query.WorldRayOrigin() + Query.WorldRayDirection() * Query.CommittedRayT();
-        FinalRay   = Query.WorldRayDirection() * Query.CommittedRayT();
-        FinalColor = ShadePoint(WorldHitPosition, HitN, HitV, HitAlbedo, HitAO, HitMetallic, HitRoughness);
+            float4 MetallicTex = MaterialTextures[Material.MetallicTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
+            float  HitMetallic = MetallicTex.r * Material.Metallic;
+        
+            float4 RoughnessTex = MaterialTextures[Material.RoughnessTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
+            float  HitRoughness = clamp(RoughnessTex.r * Material.Roughness, MIN_ROUGHNESS, MAX_ROUGHNESS);
+        
+            float4 AOTex = MaterialTextures[Material.AOTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
+            float  HitAO = AOTex.r * Material.AO;
+        
+            float3 WorldHitPosition = Query.WorldRayOrigin() + Query.WorldRayDirection() * Query.CommittedRayT();
+            FinalColor = ShadePoint(WorldHitPosition, HitN, HitV, HitAlbedo, HitAO, HitMetallic, HitRoughness);
+        }
+        else
+        {
+            FinalColor = Skybox.SampleLevel(SkyboxSampler, L, 0).rgb;
+        }
         
         float NdotH = saturate(dot(N, H));
         float HdotV = saturate(dot(H, V));
@@ -302,12 +261,9 @@ void PSMain(VSOutput Input)
         float D = DistributionGGX(N, H, Roughness);
         float Spec_PDF = D * NdotH / (4.0f * HdotV);
        
+        FinalRay = L * Query.CommittedRayT();
         FinalPDF = 1.0f / Spec_PDF;
-    }
-    else
-    {
-        FinalRay   = Query.WorldRayDirection() * Query.CommittedRayT();
-        FinalColor = Skybox.SampleLevel(SkyboxSampler, FinalRay, 0).rgb;
+        FinalPDF = isnan(FinalPDF) || isinf(FinalPDF) ? 0.0f : FinalPDF;
     }
 
     ColorDepth[TexCoord] = float4(FinalColor, GBufferDepth);

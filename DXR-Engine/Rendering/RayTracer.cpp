@@ -447,10 +447,11 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView(), 2);
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 4);
-    CmdList.SetShaderResourceView(InlineRayGen.Get(), RTMaterialBufferSRV.Get(), 5);
-    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTVertexBuffers.Data(), Resources.RTVertexBuffers.Size(), 6);
-    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTIndexBuffers.Data(), Resources.RTIndexBuffers.Size(), 7);
-    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTMaterialTextureCache.Data(), Resources.RTMaterialTextureCache.Size(), 8);
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.BlueNoise->GetShaderResourceView(), 5);
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), RTMaterialBufferSRV.Get(), 6);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTVertexBuffers.Data(), Resources.RTVertexBuffers.Size(), 7);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTIndexBuffers.Data(), Resources.RTIndexBuffers.Size(), 8);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTMaterialTextureCache.Data(), Resources.RTMaterialTextureCache.Size(), 9);
     
     CmdList.SetSamplerState(InlineRayGen.Get(), Resources.IrradianceSampler.Get(), 0);
 
@@ -492,6 +493,7 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.BlueNoise->GetShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(RTMaterialBufferSRV.Get());
 
     for (UInt32 i = 0; i < Resources.RTMaterialTextureCache.Size(); i++)
     {

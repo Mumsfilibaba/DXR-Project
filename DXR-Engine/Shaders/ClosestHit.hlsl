@@ -8,123 +8,95 @@
 // Global RootSignature
 RaytracingAccelerationStructure Scene : register(t0, space0);
 
-ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
+TextureCube<float4> Skybox : register(t1, space0);
 
-ConstantBuffer<LightInfoData> LightInfo : register(b1, space0);
+StructuredBuffer<RayTracingMaterial> Materials : register(t7);
 
-cbuffer PointLightsBuffer : register(b3, space0)
+Texture2D<float4> MaterialTextures[128] : register(t8);
+
+ConstantBuffer<Camera> CameraBuffer : register(b0);
+
+ConstantBuffer<LightInfoData> LightInfo : register(b1);
+
+cbuffer PointLightsBuffer : register(b3)
 {
     PointLight PointLights[MAX_LIGHTS];
 }
 
-cbuffer PointLightsPosRadBuffer : register(b4, space0)
+cbuffer PointLightsPosRadBuffer : register(b4)
 {
     PositionRadius PointLightsPosRad[MAX_LIGHTS];
 }
 
-cbuffer ShadowCastingPointLightsBuffer : register(b5, space0)
+cbuffer ShadowCastingPointLightsBuffer : register(b5)
 {
     ShadowPointLight ShadowCastingPointLights[8];
 }
 
-cbuffer ShadowCastingPointLightsPosRadBuffer : register(b6, space0)
+cbuffer ShadowCastingPointLightsPosRadBuffer : register(b6)
 {
     PositionRadius ShadowCastingPointLightsPosRad[8];
 }
 
-ConstantBuffer<DirectionalLight> DirLightBuffer : register(b7, space0);
+ConstantBuffer<DirectionalLight> DirLightBuffer : register(b7);
 
-TextureCube<float4> Skybox : register(t1, space0);
-
-Texture2D<float4> MaterialTextures[128] : register(t7, space0);
-
-SamplerState TextureSampler : register(s0, space0);
+SamplerState TextureSampler : register(s0);
 
 // Local RootSignature
-StructuredBuffer<Vertex> Vertices : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-ByteAddressBuffer        Indices  : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+StructuredBuffer<Vertex> VertexBuffer : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+ByteAddressBuffer        IndexBuffer  : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
 
 [shader("closesthit")]
 void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttributes IntersectionAttributes)
 {
-    // Get the base index of the triangle's first 16 bit index.
-    const uint IndexSizeInBytes    = 4;
-    const uint IndicesPerTriangle  = 3;
-    const uint TriangleIndexStride = IndicesPerTriangle * IndexSizeInBytes;
-    const uint BaseIndex           = PrimitiveIndex() * TriangleIndexStride;
-
-    // Load up three indices for the triangle.
-    uint3 TriangleIndices = Indices.Load3(BaseIndex);
-
-    float3 BarycentricCoords = float3(
-        1.0f - IntersectionAttributes.barycentrics.x - IntersectionAttributes.barycentrics.y,
-        IntersectionAttributes.barycentrics.x,
-        IntersectionAttributes.barycentrics.y);
+    TriangleHit HitData;
+    HitData.HitGroupIndex  = 0;
+    HitData.Barycentrics   = IntersectionAttributes.barycentrics;
+    HitData.InstanceID     = InstanceID();
+    HitData.PrimitiveIndex = PrimitiveIndex();
     
-    // Retrieve corresponding vertex normals for the triangle vertices.
-    float3 TriangleNormals[3] =
+    const uint BaseIndex  = CalculateBaseIndex(HitData);
+    uint3 TriangleIndices = IndexBuffer.Load3(BaseIndex);
+
+    Vertex Vertices[3] = 
     {
-        Vertices[TriangleIndices[0]].Normal,
-        Vertices[TriangleIndices[1]].Normal,
-        Vertices[TriangleIndices[2]].Normal
+        VertexBuffer[TriangleIndices[0]],
+        VertexBuffer[TriangleIndices[1]],
+        VertexBuffer[TriangleIndices[2]],
     };
-  
-    float3 N = (TriangleNormals[0] * BarycentricCoords.x) + (TriangleNormals[1] * BarycentricCoords.y) + (TriangleNormals[2] * BarycentricCoords.z);
-    N = normalize(N);
     
-    //float3 TriangleTangent[3] =
-    //{
-    //    Vertices[TriangleIndices[0]].Tangent,
-    //    Vertices[TriangleIndices[1]].Tangent,
-    //    Vertices[TriangleIndices[2]].Tangent
-    //};
+    VertexData Vertex;
+    LoadVertexData(HitData, Vertices, Vertex);
 
-    float2 TriangleTexCoords[3] =
-    {
-        Vertices[TriangleIndices[0]].TexCoord,
-        Vertices[TriangleIndices[1]].TexCoord,
-        Vertices[TriangleIndices[2]].TexCoord
-    };
-
-    float2 TexCoords =
-        (TriangleTexCoords[0] * BarycentricCoords.x) +
-        (TriangleTexCoords[1] * BarycentricCoords.y) +
-        (TriangleTexCoords[2] * BarycentricCoords.z);
-    TexCoords.y = 1.0f - TexCoords.y;
-    
-    //float3 Tangent =
-    //    (TriangleTangent[0] * BarycentricCoords.x) +
-    //    (TriangleTangent[1] * BarycentricCoords.y) +
-    //    (TriangleTangent[2] * BarycentricCoords.z);
-    //Tangent = normalize(Tangent);
-
-    uint TextureIndex = InstanceID();
-    uint AlbedoIndex  = TextureIndex;
-    
-    //float3 MappedNormal = MaterialTextures[NormalIndex].SampleLevel(TextureSampler, TexCoords, 0).rgb;
-    //MappedNormal = UnpackNormal(MappedNormal);
-    
-    //float3 Bitangent = normalize(cross(N, Tangent));
-    //N = ApplyNormalMapping(MappedNormal, N, Tangent, Bitangent);
-    
     // TODO: Better LOD for textures
     float LOD = 0.0f;
-    
-    float3 AlbedoColor = ApplyGamma(MaterialTextures[AlbedoIndex].SampleLevel(TextureSampler, TexCoords, LOD).rgb);
 
     const float3 HitPosition = WorldHitPosition();
     const float3 V = normalize(-WorldRayDirection());
     
     // MaterialProperties
-    const float AO        = 1.0f; //AOMap.SampleLevel(TextureSampler, TexCoords, 0).r * MaterialBuffer.AO;
-    const float Metallic  = 0.0f; //MetallicMap.SampleLevel(TextureSampler, TexCoords, 0).r * MaterialBuffer.Metallic;
-    const float Roughness = 1.0f; //RoughnessMap.SampleLevel(TextureSampler, TexCoords, 0).r * MaterialBuffer.Roughness;
-    const float FinalRoughness = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    RayTracingMaterial Material = Materials[HitData.InstanceID];
+    float4 AlbedoTex = MaterialTextures[Material.AlbedoTexID].SampleLevel(TextureSampler, Vertex.TexCoord, LOD);
+    float3 Albedo = ApplyGamma(AlbedoTex.rgb) * Material.Albedo;
+        
+    float4 NormalTex    = MaterialTextures[Material.NormalTexID].SampleLevel(TextureSampler, Vertex.TexCoord, LOD);
+    float3 MappedNormal = UnpackNormal(NormalTex.rgb);
+    MappedNormal.y = -MappedNormal.y;
+        
+    float3 N = ApplyNormalMapping(MappedNormal, Vertex.Normal, Vertex.Tangent, Vertex.Bitangent);
+        
+    float4 MetallicTex = MaterialTextures[Material.MetallicTexID].SampleLevel(TextureSampler, Vertex.TexCoord, LOD);
+    float  Metallic = MetallicTex.r * Material.Metallic;
+        
+    float4 RoughnessTex = MaterialTextures[Material.RoughnessTexID].SampleLevel(TextureSampler, Vertex.TexCoord, LOD);
+    float  Roughness = clamp(RoughnessTex.r * Material.Roughness, MIN_ROUGHNESS, MAX_ROUGHNESS);
+        
+    float4 AOTex = MaterialTextures[Material.AOTexID].SampleLevel(TextureSampler, Vertex.TexCoord, LOD);
+    float  AO = AOTex.r * Material.AO;
 
-    float3 L0 = (float3)0;
-    
+    float3 L0 = Float3(0.0f);
     float3 F0 = Float3(0.04f);
-    F0 = lerp(F0, AlbedoColor, Metallic);
+    F0 = lerp(F0, Albedo, Metallic);
     
     // Pointlights
     for (uint i = 0; i < LightInfo.NumPointLights; i++)
@@ -138,7 +110,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
         L = normalize(L);
 
         float3 IncidentRadiance = Light.Color * Attenuation;
-        IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, AlbedoColor, FinalRoughness, Metallic);
+        IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, Albedo, Roughness, Metallic);
             
         L0 += IncidentRadiance;
     }
@@ -154,7 +126,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
         L = normalize(L);
         
         float3 IncidentRadiance = Light.Color * Attenuation;
-        IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, AlbedoColor, FinalRoughness, Metallic);
+        IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, Albedo, Roughness, Metallic);
         
         L0 += IncidentRadiance;
     }
@@ -165,12 +137,12 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
         float3 L = normalize(-Light.Direction);
             
         float3 IncidentRadiance = Light.Color;
-        IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, AlbedoColor, FinalRoughness, Metallic);
+        IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, Albedo, Roughness, Metallic);
             
         L0 += IncidentRadiance;
     }
 
-    float3 Ambient = Float3(1.0f) * AlbedoColor * AO;
+    float3 Ambient = Float3(1.0f) * Albedo * AO;
     float3 Color   = Ambient + L0;
     
     PayLoad.Color = Color;
