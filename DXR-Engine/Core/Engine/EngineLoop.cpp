@@ -22,6 +22,7 @@
 
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Platform/PlatformProcess.h"
+#include "Core/Threading/Platform/ThreadSafeInt.h"
 
 bool EngineLoop::Init()
 {
