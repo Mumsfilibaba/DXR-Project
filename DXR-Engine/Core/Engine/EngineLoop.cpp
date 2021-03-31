@@ -20,27 +20,8 @@
 
 #include "Memory/Memory.h"
 
-#include "Core/Threading/TScopedLock.h"
+#include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Platform/PlatformProcess.h"
-
-int64 GSum = 0;
-Mutex GSumMutex;
-
-void Func()
-{
-    int64 Sum = 0;
-    for (int64 i = 0; i < 100000000000; i++)
-    {
-        Sum = Sum + i;
-    }
-
-    {
-        TScopedLock<Mutex> Lock(GSumMutex);
-        GSum += Sum;
-
-        LOG_INFO("Sum=" + std::to_string(GSum) + ", Thread=" + std::to_string(PlatformProcess::GetThreadID()));
-    }
-}
 
 bool EngineLoop::Init()
 {
@@ -116,28 +97,6 @@ bool EngineLoop::Init()
     }
 
     Editor::Init();
-
-    // Tasks
-    Task MyTask;
-    MyTask.Delegate.BindFunction(Func);
-
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
-    TaskManager::Get().AddTask(MyTask);
 
     return true;
 }

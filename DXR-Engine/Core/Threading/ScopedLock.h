@@ -22,6 +22,10 @@ public:
         Lock.Unlock();
     }
 
+    TLock& GetLock() { return Lock; }
+
+    const TLock& GetLock() const { return Lock; }
+
 private:
     TLock& Lock;
 };

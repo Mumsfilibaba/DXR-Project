@@ -28,6 +28,8 @@ private:
 
     bool PopTask(Task& OutTask);
 
+    void KillWorkers();
+
     static void WorkThread();
 
 private:

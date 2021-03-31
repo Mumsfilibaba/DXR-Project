@@ -2,7 +2,9 @@
 
 #include "Platform/PlatformProcess.h"
 
-#include "TScopedLock.h"
+#include "ScopedLock.h"
+
+#include <condition_variable>
 
 TaskManager TaskManager::Instance;
 
@@ -20,16 +22,25 @@ TaskManager::~TaskManager()
 bool TaskManager::PopTask(Task& OutTask)
 {
     TScopedLock<Mutex> Lock(TaskMutex);
+
     if (!Tasks.IsEmpty())
     {
         OutTask = Tasks.Front();
         Tasks.Erase(Tasks.Begin());
+
         return true;
     }
     else
     {
         return false;
     }
+}
+
+void TaskManager::KillWorkers()
+{
+    IsRunning = false;
+
+    WakeCondition.NotifyAll();
 }
 
 void TaskManager::WorkThread()
@@ -39,13 +50,15 @@ void TaskManager::WorkThread()
     while (Instance.IsRunning)
     {
         Task CurrentTask;
-        if (Instance.PopTask(CurrentTask))
+
+        if (!Instance.PopTask(CurrentTask))
         {
-            CurrentTask.Delegate();
+            TScopedLock<Mutex> Lock(Instance.WakeMutex);
+            Instance.WakeCondition.Wait(Lock);
         }
         else
         {
-            Instance.WakeCondition.Wait(Instance.WakeMutex);
+            CurrentTask.Delegate();
         }
     }
 
@@ -55,9 +68,14 @@ void TaskManager::WorkThread()
 bool TaskManager::Init()
 {
     // NOTE: Maybe change to NumProcessors - 1 -> Test performance
-    uint32 ThreadCount = Math::Max<uint32>(PlatformProcess::GetNumProcessors(), 1);
+    uint32 ThreadCount = Math::Max<int32>(PlatformProcess::GetNumProcessors() - 1, 1);
     WorkThreads.Resize(ThreadCount);
 
+    LOG_INFO("[TaskManager]: Starting '" + std::to_string(ThreadCount) + "' Workers");
+
+    // Start so that workers now that they should be running
+    IsRunning = true;
+    
     for (uint32 i = 0; i < ThreadCount; i++)
     {
         TRef<GenericThread> NewThread = GenericThread::Create(TaskManager::WorkThread);
@@ -68,11 +86,10 @@ bool TaskManager::Init()
         }
         else
         {
+            KillWorkers();
             return false;
         }
     }
-
-    IsRunning = true;
 
     return true;
 }
@@ -87,9 +104,7 @@ void TaskManager::AddTask(const Task& NewTask)
 
 void TaskManager::Release()
 {
-    IsRunning = false;
-
-    WakeCondition.NotifyAll();
+    KillWorkers();
 
     for (TRef<GenericThread> Thread : WorkThreads)
     {

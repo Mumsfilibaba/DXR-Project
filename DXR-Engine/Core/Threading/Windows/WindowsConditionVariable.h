@@ -1,6 +1,8 @@
 #pragma once
 #include "WindowsMutex.h"
 
+#include "Core/Threading/ScopedLock.h"
+
 class WindowsConditionVariable
 {
 public:
@@ -20,13 +22,20 @@ public:
         WakeAllConditionVariable(&ConditionVariable);
     }
 
-    void Wait(Mutex& Lock)
+    bool Wait(TScopedLock<Mutex>& Lock)
     {
-        Lock.Lock();
+        SetLastError(0);
 
-        SleepConditionVariableCS(&ConditionVariable, &Lock.Section, INFINITE);
-
-        Lock.Unlock();
+        BOOL Result = SleepConditionVariableCS(&ConditionVariable, &Lock.GetLock().Section, INFINITE);
+        if (!Result)
+        {
+            // TODO: Check Error
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
 
 private:
