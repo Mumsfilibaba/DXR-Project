@@ -5,6 +5,10 @@
 
 #define MAX_LIGHTS 8
 
+#ifndef TRACE_HALF_RES
+    #define TRACE_HALF_RES 0
+#endif
+
 struct VSOutput
 {
     float2 TexCoord : TEXCOORD0;
@@ -55,10 +59,8 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b6, space0)
 
 ConstantBuffer<DirectionalLight> DirLightBuffer : register(b7, space0);
 
-SamplerState SkyboxSampler : register(s0);
-
-RWTexture2D<float4> ColorDepth : register(u0);
-RWTexture2D<float4> RayPDF     : register(u1);
+SamplerState SkyboxSampler   : register(s0);
+SamplerState MaterialSampler : register(s1);
 
 float3 ShadePoint(float3 WorldPosition, float3 N, float3 V, float3 Albedo, float AO, float Metallic, float Roughness)
 {
@@ -130,14 +132,24 @@ PSOutput PSMain(VSOutput Input)
 {
     uint Width;
     uint Height;
-    ColorDepth.GetDimensions(Width, Height);
+    GBufferDepthTex.GetDimensions(Width, Height);
     
     // Half Resolution
-    uint2 TexCoord     = (uint2)floor(Input.Position.xy);
+    uint2 TexCoord = (uint2)floor(Input.Position.xy);
+#if TRACE_HALF_RES
     uint2 FullTexCoord = TexCoord * 2;
+    uint  HalfWidth  = Width / 2;
+    uint  HalfHeight = Height / 2;
+    uint2 NoiseCoord = TexCoord / 2;
+#else
+    uint2 FullTexCoord = TexCoord;
+    uint  HalfWidth  = Width;
+    uint  HalfHeight = Height;
+    uint2 NoiseCoord = TexCoord;
+#endif
     
-    uint2 NoiseCoord = ((TexCoord / 2) + (RandomBuffer.FrameIndex / 2) * uint2(3, 7)) & 63;
-    uint  PixelIndex = (uint) (BlueNoiseTex.Load(int4(NoiseCoord, 0, 0)).r * 255.0f);
+    NoiseCoord = (NoiseCoord + (RandomBuffer.FrameIndex / 2) * uint2(3, 7)) & 63;
+    uint PixelIndex = (uint)(BlueNoiseTex.Load(int4(NoiseCoord, 0, 0)).r * 255.0f);
     PixelIndex = PixelIndex + RandomBuffer.FrameIndex;
     
     uint2 GBufferCoord = FullTexCoord + uint2(PixelIndex & 1, (PixelIndex >> 1) & 1);
@@ -161,7 +173,7 @@ PSOutput PSMain(VSOutput Input)
         return Output;
     }
     
-    uint Seed = InitRandom(TexCoord.xy, Width, RandomBuffer.FrameIndex);
+    uint Seed = InitRandom(TexCoord.xy, HalfWidth, RandomBuffer.FrameIndex);
     
     float2 Xi  = Hammersley(NextRandomInt(Seed) % 8192, 8192);
     float Rnd0 = NextRandom(Seed);
@@ -236,22 +248,22 @@ PSOutput PSMain(VSOutput Input)
             LoadVertexData(HitData, Vertices, Vertex);
         
             RayTracingMaterial Material = Materials[HitData.InstanceID];
-            float4 AlbedoTex = MaterialTextures[Material.AlbedoTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
+            float4 AlbedoTex = MaterialTextures[Material.AlbedoTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
             float3 HitAlbedo = ApplyGamma(AlbedoTex.rgb) * Material.Albedo;
         
-            float4 NormalTex    = MaterialTextures[Material.NormalTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
+            float4 NormalTex    = MaterialTextures[Material.NormalTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
             float3 MappedNormal = UnpackNormal(NormalTex.rgb);
             MappedNormal.y = -MappedNormal.y;
         
             float3 HitN = ApplyNormalMapping(MappedNormal, Vertex.Normal, Vertex.Tangent, Vertex.Bitangent);
         
-            float4 MetallicTex = MaterialTextures[Material.MetallicTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
+            float4 MetallicTex = MaterialTextures[Material.MetallicTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
             float  HitMetallic = MetallicTex.r * Material.Metallic;
         
-            float4 RoughnessTex = MaterialTextures[Material.RoughnessTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
+            float4 RoughnessTex = MaterialTextures[Material.RoughnessTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
             float  HitRoughness = clamp(RoughnessTex.r * Material.Roughness, MIN_ROUGHNESS, MAX_ROUGHNESS);
         
-            float4 AOTex = MaterialTextures[Material.AOTexID].SampleLevel(SkyboxSampler, Vertex.TexCoord, 0);
+            float4 AOTex = MaterialTextures[Material.AOTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
             float  HitAO = AOTex.r * Material.AO;
         
             float3 WorldHitPosition = Query.WorldRayOrigin() + Query.WorldRayDirection() * Query.CommittedRayT();
@@ -275,6 +287,6 @@ PSOutput PSMain(VSOutput Input)
 
     PSOutput Output;
     Output.ColorDepth = float4(FinalColor, GBufferDepth);
-    Output.RayPDF     = float4(WorldPosition, FinalPDF);
+    Output.RayPDF     = float4(FinalRay, FinalPDF);
     return Output;
 }

@@ -12,6 +12,10 @@
 #define MIN_TEMPORAL_FRAMES 1
 #define MAX_TEMPORAL_FRAMES 64
 
+#ifndef TRACE_HALF_RES
+    #define TRACE_HALF_RES 0
+#endif
+
 ConstantBuffer<Camera> CameraBuffer : register(b0);
 
 Texture2D<float4> ColorDepthTex       : register(t0);
@@ -125,8 +129,12 @@ float4 LoadHistory(int2 TexCoords, float3 N, out float Valid)
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(ComputeShaderInput Input)
 {
-    uint2 TexCoords     = Input.DispatchThreadID.xy;
+    uint2 TexCoords = Input.DispatchThreadID.xy;
+#if TRACE_HALF_RES
     uint2 HalfTexCoords = TexCoords / 2;
+#else
+    uint2 HalfTexCoords = TexCoords;
+#endif
 
     float4 GBufferAlbedo   = GBufferAlbedoTex[TexCoords];
     float4 GBufferNormals  = GBufferNormalsTex[TexCoords];
@@ -140,8 +148,13 @@ void Main(ComputeShaderInput Input)
     uint HalfHeight;
     ColorDepthTex.GetDimensions(HalfWidth, HalfHeight);
     
+#if TRACE_HALF_RES
     uint Width  = HalfWidth * 2;
     uint Height = HalfHeight * 2;
+#else
+    uint Width  = HalfWidth;
+    uint Height = HalfHeight;
+#endif
     
     // UV in full resolution since backbuffer is
     float2 UV = float2(TexCoords) / float2(Width, Height);
@@ -190,7 +203,11 @@ void Main(ComputeShaderInput Input)
             float4 SampleColorDepth = ColorDepthTex[LocalTexCoord];
             float3 Li = saturate(SampleColorDepth.rgb);
             
-            uint2  FullLocalTexCoord = LocalTexCoord * 2;
+#if TRACE_HALF_RES
+            uint2 FullLocalTexCoord = LocalTexCoord * 2;;
+#else
+            uint2 FullLocalTexCoord = LocalTexCoord;
+#endif
             float3 SampleN = UnpackNormal(GBufferNormalsTex[FullLocalTexCoord].xyz);
             float  FWidthN = GBufferVelocityTex[FullLocalTexCoord].z;
             
@@ -246,7 +263,7 @@ void Main(ComputeShaderInput Input)
     float HistoryLength     = HistorySample.a;
     HistoryLength = min(NumTemporalFrames, HistoryLength + 1.0f);
     
-    const float Alpha = lerp(1.0f, max(0.05f, 1.0f / HistoryLength), Valid);
+    const float Alpha = lerp(1.0f, max(0.03f, 1.0f / HistoryLength), Valid);
     float3 Color = HistorySample.rgb * (1.0f - Alpha) + Result * Alpha;
     
     History[TexCoords]     = float4(Color, HistoryLength);

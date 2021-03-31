@@ -2,6 +2,8 @@
 #define RAY_TRACING_HELPERS
 #include "Structs.hlsli"
 
+#define TRACE_HALF_RES 0
+
 struct RayPayload
 {
     float3 Color;

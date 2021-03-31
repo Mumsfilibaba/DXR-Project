@@ -32,7 +32,7 @@ Bool D3D12Viewport::Init()
     Flags = GetDevice()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
-    const UInt32 NumSwapChainBuffers = 3;
+    const UInt32 NumSwapChainBuffers = 4;
     const DXGI_FORMAT NativeFormat   = ConvertFormat(Format);
 
     Assert(Width > 0 && Height > 0);

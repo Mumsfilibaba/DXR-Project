@@ -285,6 +285,8 @@ Bool RayTracer::Init(FrameResources& Resources)
 
 Bool RayTracer::InitShadingImage(FrameResources& Resources)
 {
+    UNREFERENCED_VARIABLE(Resources);
+
     ShadingRateSupport Support;
     CheckShadingRateSupport(Support);
 
@@ -293,8 +295,8 @@ Bool RayTracer::InitShadingImage(FrameResources& Resources)
         return true;
     }
 
-    UInt32 Width  = Resources.MainWindowViewport->GetWidth() / Support.ShadingRateImageTileSize;
-    UInt32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
+    UInt32 Width  = RTColorDepth->GetWidth() / Support.ShadingRateImageTileSize;
+    UInt32 Height = RTColorDepth->GetHeight() / Support.ShadingRateImageTileSize;
     ShadingRateImage = CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::ShadingRateSource, nullptr);
     if (!ShadingRateImage)
     {
@@ -500,6 +502,8 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     UInt32 Height = Resources.RTReflections->GetHeight();
     const UInt32 HalfWidth  = Width / 2;
     const UInt32 HalfHeight = Height / 2;
+    const Float ViewPortWidth  = (Float)Width;
+    const Float ViewPortHeight = (Float)Height;
 
 #if ENABLE_INLINE_RAY_GEN
     CmdList.TransitionTexture(RTColorDepth.Get(), EResourceState::UnorderedAccess, EResourceState::RenderTarget);
@@ -514,9 +518,14 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
         CmdList.TransitionTexture(ShadingRateImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
 
         CmdList.SetComputePipelineState(ShadingRateGenPSO.Get());
+        
+        CmdList.SetShaderResourceView(ShadingRateGenShader.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 0);
         CmdList.SetUnorderedAccessView(ShadingRateGenShader.Get(), ShadingRateImage->GetUnorderedAccessView(), 0);
 
-        CmdList.Dispatch(ShadingRateImage->GetWidth(), ShadingRateImage->GetHeight(), 1);
+        XMUINT3 Threads = ShadingRateGenShader->GetThreadGroupXYZ();
+        UInt32 ThreadsX = Math::DivideByMultiple(ShadingRateImage->GetWidth(), Threads.x);
+        UInt32 ThreadsY = Math::DivideByMultiple(ShadingRateImage->GetHeight(), Threads.y);
+        CmdList.Dispatch(ThreadsX, ThreadsY, 1);
 
         CmdList.TransitionTexture(ShadingRateImage.Get(), EResourceState::UnorderedAccess, EResourceState::ShadingRateSource);
 
@@ -546,11 +555,12 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTMaterialTextureCache.Data(), Resources.RTMaterialTextureCache.Size(), 9);
     
     CmdList.SetSamplerState(InlineRayGen.Get(), Resources.IrradianceSampler.Get(), 0);
+    CmdList.SetSamplerState(InlineRayGen.Get(), Sampler, 1);
 
     CmdList.SetGraphicsPipelineState(InlineRTPipeline.Get());
 
-    CmdList.SetViewport((Float)HalfWidth, (Float)HalfHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CmdList.SetScissorRect((Float)HalfWidth, (Float)HalfHeight, 0.0f, 0.0f);
+    CmdList.SetViewport(ViewPortWidth, ViewPortHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.SetScissorRect(ViewPortWidth, ViewPortHeight, 0.0f, 0.0f);
 
     RenderTargetView* RTVs[2] =
     {
@@ -794,8 +804,8 @@ Bool RayTracer::CreateRenderTargets(FrameResources& Resources)
     }
 
     // Trace at half resolution
-    Width  = Width / 2;
-    Height = Height / 2;
+    Width  = Width;
+    Height = Height;
 
     const UInt32 TextureFlags = TextureFlags_RWTexture | TextureFlag_RTV;
 

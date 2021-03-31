@@ -57,7 +57,7 @@ void Camera::Rotate(Float Pitch, Float Yaw, Float Roll)
 void Camera::Tick(Float Width, Float Height)
 {
     Frame  = (++Frame) % 8;
-    Jitter = Math::Hammersley(Frame, 8);
+    Jitter = Math::Hammersley((UInt32)Frame, 8);
     Jitter = (Jitter * 2.0f) - 1.0f;
 
     XMFLOAT2 ClipSpaceJitter = Jitter / XMFLOAT2(Width, Height);
