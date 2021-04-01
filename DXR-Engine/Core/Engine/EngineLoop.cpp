@@ -21,8 +21,8 @@
 #include "Memory/Memory.h"
 
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Threading/ThreadSafeInt.h"
 #include "Core/Threading/Platform/PlatformProcess.h"
-#include "Core/Threading/Platform/ThreadSafeInt.h"
 
 bool EngineLoop::Init()
 {

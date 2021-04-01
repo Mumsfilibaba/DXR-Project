@@ -22,7 +22,7 @@ public:
         WakeAllConditionVariable(&ConditionVariable);
     }
 
-    bool Wait(TScopedLock<Mutex>& Lock)
+    bool Wait(TScopedLock<Mutex>& Lock) noexcept
     {
         SetLastError(0);
 

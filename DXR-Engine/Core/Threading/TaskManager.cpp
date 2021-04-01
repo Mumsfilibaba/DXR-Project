@@ -59,6 +59,7 @@ void TaskManager::WorkThread()
         else
         {
             CurrentTask.Delegate();
+            Instance.TaskCompleted++;
         }
     }
 
@@ -94,12 +95,36 @@ bool TaskManager::Init()
     return true;
 }
 
-void TaskManager::AddTask(const Task& NewTask)
+TaskID TaskManager::AddTask(const Task& NewTask)
 {
-    TScopedLock<Mutex> Lock(TaskMutex);
-    Tasks.EmplaceBack(NewTask);
+    {
+        TScopedLock<Mutex> Lock(TaskMutex);
+        Tasks.EmplaceBack(NewTask);
+    }
+
+    ThreadID NewTaskID = TaskAdded.Increment();
 
     WakeCondition.NotifyOne();
+
+    return NewTaskID;
+}
+
+void TaskManager::WaitForTask(TaskID Task)
+{
+    while (TaskCompleted.Load() < Task)
+    {
+        // Look into proper yeild
+        PlatformProcess::Sleep(0);
+    }
+}
+
+void TaskManager::WaitForAllTasks()
+{
+    while (TaskCompleted.Load() < TaskAdded.Load())
+    {
+        // Look into proper yeild
+        PlatformProcess::Sleep(0);
+    }
 }
 
 void TaskManager::Release()

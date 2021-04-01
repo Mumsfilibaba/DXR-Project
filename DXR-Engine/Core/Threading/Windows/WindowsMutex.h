@@ -6,7 +6,7 @@ class WindowsMutex
     friend class WindowsConditionVariable;
 
 public:
-    WindowsMutex()
+    WindowsMutex() noexcept
         : Section()
     {
         InitializeCriticalSection(&Section);
@@ -17,17 +17,17 @@ public:
         DeleteCriticalSection(&Section);
     }
 
-    void Lock()
+    void Lock() noexcept
     {
         EnterCriticalSection(&Section);
     }
 
-    bool TryLock()
+    bool TryLock() noexcept
     {
         return TryEnterCriticalSection(&Section);
     }
 
-    void Unlock()
+    void Unlock() noexcept
     {
         LeaveCriticalSection(&Section);
     }
