@@ -13,7 +13,10 @@ public:
 
     ~D3D12FenceHandle()
     {
-        ::CloseHandle(Event);
+        if (Event)
+        {
+            CloseHandle(Event);
+        }
     }
 
     bool Init(uint64 InitalValue)
@@ -25,7 +28,7 @@ public:
             return false;
         }
 
-        Event = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        Event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
         if (Event == NULL)
         {
             LOG_ERROR("[D3D12FenceHandle]: FAILED to create Event for Fence");
@@ -40,7 +43,7 @@ public:
         HRESULT Result = Fence->SetEventOnCompletion(Value, Event);
         if (SUCCEEDED(Result))
         {
-            ::WaitForSingleObjectEx(Event, INFINITE, FALSE);
+            WaitForSingleObject(Event, INFINITE);
             return true;
         }
         else

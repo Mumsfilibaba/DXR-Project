@@ -1,3 +1,5 @@
+#include "Debug/Profiler.h"
+
 #include "D3D12CommandContext.h"
 #include "D3D12Device.h"
 #include "D3D12CommandQueue.h"
@@ -330,9 +332,10 @@ void D3D12CommandContext::Begin()
 {
     Assert(IsReady == false);
 
+    TRACE_FUNCTION_SCOPE();
+
     CmdBatch     = &CmdBatches[NextCmdBatch];
     NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
-
 
     // TODO: Investigate better ways of doing this 
     if (FenceValue >= CmdBatches.Size())
