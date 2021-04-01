@@ -1,3 +1,5 @@
+#include "Debug/Profiler.h"
+
 #include "D3D12Viewport.h"
 #include "D3D12CommandQueue.h"
 #include "D3D12RenderLayer.h"
@@ -33,7 +35,7 @@ bool D3D12Viewport::Init()
     Flags = GetDevice()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
-    const uint32 NumSwapChainBuffers = 3;
+    const uint32 NumSwapChainBuffers = 6;
     const DXGI_FORMAT NativeFormat   = ConvertFormat(Format);
 
     Assert(Width > 0 && Height > 0);
@@ -130,6 +132,8 @@ bool D3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 
 bool D3D12Viewport::Present(bool VerticalSync)
 {
+    TRACE_FUNCTION_SCOPE();
+    
     const uint32 SyncInterval = !!VerticalSync;
     
     uint32 PresentFlags = 0;

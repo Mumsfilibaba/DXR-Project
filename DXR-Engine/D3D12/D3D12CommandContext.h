@@ -30,6 +30,7 @@ public:
     ~D3D12GPUResourceUploader() = default;
 
     bool Reserve(uint32 InSizeInBytes);
+
     void Reset();
 
     D3D12UploadAllocation LinearAllocate(uint32 SizeInBytes);
@@ -193,7 +194,8 @@ public:
 
     bool Init();
 
-    D3D12CommandQueueHandle& GetQueue()      { return CmdQueue; }
+    D3D12CommandQueueHandle& GetQueue() { return CmdQueue; }
+
     D3D12CommandListHandle& GetCommandList() { return CmdList; }
     
     uint32 GetCurrentEpochValue() const

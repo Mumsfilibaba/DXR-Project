@@ -232,7 +232,7 @@ bool D3D12CommandContext::Init()
     }
 
     // TODO: Have support for more than 3 commandbatches?
-    for (uint32 i = 0; i < 3; i++)
+    for (uint32 i = 0; i < 6; i++)
     {
         D3D12CommandBatch& Batch = CmdBatches.EmplaceBack(GetDevice());
         if (!Batch.Init())
@@ -364,6 +364,8 @@ void D3D12CommandContext::Begin()
 void D3D12CommandContext::End()
 {
     Assert(IsReady == true);
+
+    TRACE_FUNCTION_SCOPE();
 
     FlushResourceBarriers();
 
