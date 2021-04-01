@@ -45,8 +45,8 @@ private:
     TArray<Task> Tasks;
     Mutex TaskMutex;
 
-    Mutex WakeMutex;
     ConditionVariable WakeCondition;
+    Mutex WakeMutex;
 
     ThreadSafeInt32 TaskAdded;
     ThreadSafeInt32 TaskCompleted;

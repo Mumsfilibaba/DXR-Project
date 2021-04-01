@@ -107,7 +107,6 @@ bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
     }
 
     CommandList CmdList;
-    CmdList.Begin();
 
     CmdList.TransitionTexture(FrameResources.SSAOBuffer.Get(), EResourceState::Common, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceState::NonPixelShaderResource, EResourceState::CopyDest);
@@ -116,7 +115,6 @@ bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
 
     CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceState::CopyDest, EResourceState::NonPixelShaderResource);
 
-    CmdList.End();
     GCmdListExecutor.ExecuteCommandList(CmdList);
 
     const uint32 Stride = sizeof(XMFLOAT3);

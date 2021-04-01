@@ -7,6 +7,8 @@
 #include "RenderLayer/GPUProfiler.h"
 
 #include "Core/Engine/Engine.h"
+#include "Core/Threading/ScopedLock.h"
+#include "Core/Threading/Platform/Mutex.h"
 
 constexpr float MICROSECONDS     = 1000.0f;
 constexpr float MILLISECONDS     = 1000.0f * 1000.0f;
@@ -143,22 +145,27 @@ struct GPUProfileSample
 struct ProfilerData
 {
     TRef<GPUProfiler> GPUProfiler;
+
     uint32 CurrentTimeQueryIndex = 0;
 
     ProfileSample    CPUFrameTime;
     GPUProfileSample GPUFrameTime;
 
     Timer Clock;
-    int32 Fps        = 0;
+
     int32 CurrentFps = 0;
+    int32 Fps        = 0;
     
     bool EnableProfiler = true;
     
     std::unordered_map<std::string, ProfileSample> CPUSamples;
+    Mutex CPUSamplesMutex;
+
     std::unordered_map<std::string, GPUProfileSample> GPUSamples;
+    Mutex GPUSamplesMutex;
 };
 
-static ProfilerData gProfilerData;
+static ProfilerData GProfilerData;
 
 static void ImGui_PrintTime(float Num)
 {
@@ -279,7 +286,7 @@ static void DrawFPS()
 
     ImGui::Begin("FPS Window", nullptr, Flags);
 
-    const std::string FpsStr = std::to_string(gProfilerData.Fps);
+    const std::string FpsStr = std::to_string(GProfilerData.Fps);
     ImGui::Text("%s", FpsStr.c_str());
 
     ImGui::End();
@@ -300,14 +307,14 @@ static void DrawCPUProfileData(float Width)
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
 
-        float Avg = gProfilerData.CPUFrameTime.GetAverage();
-        float Min = gProfilerData.CPUFrameTime.Min;
+        float Avg = GProfilerData.CPUFrameTime.GetAverage();
+        float Min = GProfilerData.CPUFrameTime.Min;
         if (Min == FLT_MAX)
         {
             Min = 0.0f;
         }
 
-        float Max = gProfilerData.CPUFrameTime.Max;
+        float Max = GProfilerData.CPUFrameTime.Max;
         if (Max == -FLT_MAX)
         {
             Max = 0.0f;
@@ -325,9 +332,9 @@ static void DrawCPUProfileData(float Width)
 
         ImGui::PlotHistogram(
             "",
-            gProfilerData.CPUFrameTime.Samples.Data(),
-            gProfilerData.CPUFrameTime.SampleCount,
-            gProfilerData.CPUFrameTime.CurrentSample,
+            GProfilerData.CPUFrameTime.Samples.Data(),
+            GProfilerData.CPUFrameTime.SampleCount,
+            GProfilerData.CPUFrameTime.CurrentSample,
             nullptr,
             0.0f,
             ImGui_GetMaxLimit(Avg),
@@ -402,7 +409,7 @@ static void DrawCPUProfileData(float Width)
         ImGui::TableSetupColumn("Max");
         ImGui::TableHeadersRow();
 
-        for (auto& Sample : gProfilerData.CPUSamples)
+        for (auto& Sample : GProfilerData.CPUSamples)
         {
             ImGui::TableNextRow();
 
@@ -438,14 +445,14 @@ static void DrawGPUProfileData(float Width)
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
 
-        float Avg = gProfilerData.GPUFrameTime.GetAverage();
-        float Min = gProfilerData.GPUFrameTime.Min;
+        float Avg = GProfilerData.GPUFrameTime.GetAverage();
+        float Min = GProfilerData.GPUFrameTime.Min;
         if (Min == FLT_MAX)
         {
             Min = 0.0f;
         }
 
-        float Max = gProfilerData.GPUFrameTime.Max;
+        float Max = GProfilerData.GPUFrameTime.Max;
         if (Max == -FLT_MAX)
         {
             Max = 0.0f;
@@ -463,9 +470,9 @@ static void DrawGPUProfileData(float Width)
 
         ImGui::PlotHistogram(
             "",
-            gProfilerData.GPUFrameTime.Samples.Data(),
-            gProfilerData.GPUFrameTime.SampleCount,
-            gProfilerData.GPUFrameTime.CurrentSample,
+            GProfilerData.GPUFrameTime.Samples.Data(),
+            GProfilerData.GPUFrameTime.SampleCount,
+            GProfilerData.GPUFrameTime.CurrentSample,
             nullptr,
             0.0f,
             ImGui_GetMaxLimit(Avg),
@@ -539,7 +546,7 @@ static void DrawGPUProfileData(float Width)
         ImGui::TableSetupColumn("Max");
         ImGui::TableHeadersRow();
 
-        for (auto& Sample : gProfilerData.GPUSamples)
+        for (auto& Sample : GProfilerData.GPUSamples)
         {
             ImGui::TableNextRow();
 
@@ -640,14 +647,14 @@ void Profiler::Init()
 
 void Profiler::Tick()
 {
-    Timer& Clock = gProfilerData.Clock;
+    Timer& Clock = GProfilerData.Clock;
     Clock.Tick();
 
-    gProfilerData.CurrentFps++;
+    GProfilerData.CurrentFps++;
     if (Clock.GetTotalTime().AsSeconds() > 1.0f)
     {
-        gProfilerData.Fps        = gProfilerData.CurrentFps;
-        gProfilerData.CurrentFps = 0;
+        GProfilerData.Fps        = GProfilerData.CurrentFps;
+        GProfilerData.CurrentFps = 0;
 
         Clock.Reset();
     }
@@ -659,18 +666,18 @@ void Profiler::Tick()
 
     if (GDrawProfiler.GetBool())
     {
-        if (gProfilerData.EnableProfiler)
+        if (GProfilerData.EnableProfiler)
         {
             const double Delta = Clock.GetDeltaTime().AsMilliSeconds();
-            gProfilerData.CPUFrameTime.AddSample(float(Delta));
+            GProfilerData.CPUFrameTime.AddSample(float(Delta));
 
-            if (gProfilerData.GPUProfiler)
+            if (GProfilerData.GPUProfiler)
             {
                 TimeQuery Query;
-                gProfilerData.GPUProfiler->GetTimeQuery(Query, gProfilerData.GPUFrameTime.TimeQueryIndex);
+                GProfilerData.GPUProfiler->GetTimeQuery(Query, GProfilerData.GPUFrameTime.TimeQueryIndex);
 
                 float Duration = (Query.End - Query.Begin) * INV_MILLISECONDS;
-                gProfilerData.GPUFrameTime.AddSample(Duration);
+                GProfilerData.GPUFrameTime.AddSample(Duration);
             }
         }
 
@@ -680,40 +687,48 @@ void Profiler::Tick()
 
 void Profiler::Enable()
 {
-    gProfilerData.EnableProfiler = true;
+    GProfilerData.EnableProfiler = true;
 }
 
 void Profiler::Disable()
 {
-    gProfilerData.EnableProfiler = false;
+    GProfilerData.EnableProfiler = false;
 }
 
 void Profiler::Reset()
 {
-    gProfilerData.CPUFrameTime.Reset();
-    gProfilerData.GPUFrameTime.Reset();
+    GProfilerData.CPUFrameTime.Reset();
+    GProfilerData.GPUFrameTime.Reset();
 
-    for (auto& Sample : gProfilerData.CPUSamples)
     {
-        Sample.second.Reset();
+        TScopedLock<Mutex> Lock(GProfilerData.CPUSamplesMutex);
+        for (auto& Sample : GProfilerData.CPUSamples)
+        {
+            Sample.second.Reset();
+        }
     }
 
-    for (auto& Sample : gProfilerData.GPUSamples)
     {
-        Sample.second.Reset();
+        TScopedLock<Mutex> Lock(GProfilerData.GPUSamplesMutex);
+        for (auto& Sample : GProfilerData.GPUSamples)
+        {
+            Sample.second.Reset();
+        }
     }
 }
 
 void Profiler::BeginTraceScope(const char* Name)
 {
-    if (gProfilerData.EnableProfiler)
+    if (GProfilerData.EnableProfiler)
     {
         const std::string ScopeName = Name;
 
-        auto Entry = gProfilerData.CPUSamples.find(ScopeName);
-        if (Entry == gProfilerData.CPUSamples.end())
+        TScopedLock<Mutex> Lock(GProfilerData.CPUSamplesMutex);
+
+        auto Entry = GProfilerData.CPUSamples.find(ScopeName);
+        if (Entry == GProfilerData.CPUSamples.end())
         {
-            auto NewSample = gProfilerData.CPUSamples.insert(std::make_pair(ScopeName, ProfileSample()));
+            auto NewSample = GProfilerData.CPUSamples.insert(std::make_pair(ScopeName, ProfileSample()));
             NewSample.first->second.Begin();
         }
         else
@@ -725,12 +740,14 @@ void Profiler::BeginTraceScope(const char* Name)
 
 void Profiler::EndTraceScope(const char* Name)
 {
-    if (gProfilerData.EnableProfiler)
+    if (GProfilerData.EnableProfiler)
     {
         const std::string ScopeName = Name;
 
-        auto Entry = gProfilerData.CPUSamples.find(ScopeName);
-        if (Entry != gProfilerData.CPUSamples.end())
+        TScopedLock<Mutex> Lock(GProfilerData.CPUSamplesMutex);
+
+        auto Entry = GProfilerData.CPUSamples.find(ScopeName);
+        if (Entry != GProfilerData.CPUSamples.end())
         {
             Entry->second.End();
         }
@@ -743,57 +760,63 @@ void Profiler::EndTraceScope(const char* Name)
 
 void Profiler::BeginGPUFrame(CommandList& CmdList)
 {
-    if (gProfilerData.GPUProfiler && gProfilerData.EnableProfiler)
+    if (GProfilerData.GPUProfiler && GProfilerData.EnableProfiler)
     {
-        CmdList.BeginTimeStamp(gProfilerData.GPUProfiler.Get(), gProfilerData.GPUFrameTime.TimeQueryIndex);
+        CmdList.BeginTimeStamp(GProfilerData.GPUProfiler.Get(), GProfilerData.GPUFrameTime.TimeQueryIndex);
     }
 }
 
 void Profiler::BeginGPUTrace(CommandList& CmdList, const char* Name)
 {
-    if (gProfilerData.GPUProfiler && gProfilerData.EnableProfiler)
+    if (GProfilerData.GPUProfiler && GProfilerData.EnableProfiler)
     {
         const std::string ScopeName = Name;
 
         int32 TimeQueryIndex = -1;
 
-        auto Entry = gProfilerData.GPUSamples.find(ScopeName);
-        if (Entry == gProfilerData.GPUSamples.end())
         {
-            auto NewSample = gProfilerData.GPUSamples.insert(std::make_pair(ScopeName, GPUProfileSample()));
-            NewSample.first->second.TimeQueryIndex = ++gProfilerData.CurrentTimeQueryIndex;
-            TimeQueryIndex = NewSample.first->second.TimeQueryIndex;
-        }
-        else
-        {
-            TimeQueryIndex = Entry->second.TimeQueryIndex;
+            TScopedLock<Mutex> Lock(GProfilerData.GPUSamplesMutex);
+
+            auto Entry = GProfilerData.GPUSamples.find(ScopeName);
+            if (Entry == GProfilerData.GPUSamples.end())
+            {
+                auto NewSample = GProfilerData.GPUSamples.insert(std::make_pair(ScopeName, GPUProfileSample()));
+                NewSample.first->second.TimeQueryIndex = ++GProfilerData.CurrentTimeQueryIndex;
+                TimeQueryIndex = NewSample.first->second.TimeQueryIndex;
+            }
+            else
+            {
+                TimeQueryIndex = Entry->second.TimeQueryIndex;
+            }
         }
 
         if (TimeQueryIndex >= 0)
         {
-            CmdList.BeginTimeStamp(gProfilerData.GPUProfiler.Get(), TimeQueryIndex);
+            CmdList.BeginTimeStamp(GProfilerData.GPUProfiler.Get(), TimeQueryIndex);
         }
     }
 }
 
 void Profiler::EndGPUTrace(CommandList& CmdList, const char* Name)
 {
-    if (gProfilerData.GPUProfiler && gProfilerData.EnableProfiler)
+    if (GProfilerData.GPUProfiler && GProfilerData.EnableProfiler)
     {
         const std::string ScopeName = Name;
 
         int32 TimeQueryIndex = -1;
 
-        auto Entry = gProfilerData.GPUSamples.find(ScopeName);
-        if (Entry != gProfilerData.GPUSamples.end())
+        TScopedLock<Mutex> Lock(GProfilerData.GPUSamplesMutex);
+
+        auto Entry = GProfilerData.GPUSamples.find(ScopeName);
+        if (Entry != GProfilerData.GPUSamples.end())
         {
             TimeQueryIndex = Entry->second.TimeQueryIndex;
-            CmdList.EndTimeStamp(gProfilerData.GPUProfiler.Get(), TimeQueryIndex);
+            CmdList.EndTimeStamp(GProfilerData.GPUProfiler.Get(), TimeQueryIndex);
 
             if (TimeQueryIndex >= 0)
             {
                 TimeQuery Query;
-                gProfilerData.GPUProfiler->GetTimeQuery(Query, TimeQueryIndex);
+                GProfilerData.GPUProfiler->GetTimeQuery(Query, TimeQueryIndex);
 
                 float Duration = (float)(Query.End - Query.Begin);
                 Entry->second.AddSample(Duration);
@@ -804,13 +827,13 @@ void Profiler::EndGPUTrace(CommandList& CmdList, const char* Name)
 
 void Profiler::SetGPUProfiler(GPUProfiler* Profiler)
 {
-    gProfilerData.GPUProfiler = MakeSharedRef<GPUProfiler>(Profiler);
+    GProfilerData.GPUProfiler = MakeSharedRef<GPUProfiler>(Profiler);
 }
 
 void Profiler::EndGPUFrame(CommandList& CmdList)
 {
-    if (gProfilerData.GPUProfiler && gProfilerData.EnableProfiler)
+    if (GProfilerData.GPUProfiler && GProfilerData.EnableProfiler)
     {
-        CmdList.EndTimeStamp(gProfilerData.GPUProfiler.Get(), gProfilerData.GPUFrameTime.TimeQueryIndex);
+        CmdList.EndTimeStamp(GProfilerData.GPUProfiler.Get(), GProfilerData.GPUFrameTime.TimeQueryIndex);
     }
 }

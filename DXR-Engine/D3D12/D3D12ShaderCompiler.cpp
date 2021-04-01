@@ -234,13 +234,13 @@ public:
 
     virtual ULONG AddRef()
     {
-        InterlockedIncrement(&References);
+        _InterlockedIncrement(&References);
         return References;
     }
 
     virtual ULONG Release()
     {
-        ULONG NumRefs = InterlockedDecrement(&References);
+        ULONG NumRefs = _InterlockedDecrement(&References);
         if (NumRefs == 0)
         {
             delete this;

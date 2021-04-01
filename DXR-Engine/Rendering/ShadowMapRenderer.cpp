@@ -275,6 +275,7 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
             {
                 auto& Cube = LightSetup.PointLightShadowMapDSVs[i];
                 CmdList.ClearDepthStencilView(Cube[Face].Get(), DepthStencilF(1.0f, 0));
+
                 CmdList.SetRenderTargets(nullptr, 0, Cube[Face].Get());
 
                 auto& Data = LightSetup.PointLightShadowMapsGenerationData[i];

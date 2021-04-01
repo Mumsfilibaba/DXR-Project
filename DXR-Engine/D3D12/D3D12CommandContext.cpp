@@ -1329,11 +1329,6 @@ void D3D12CommandContext::ClearState()
 {
     Flush();
 
-    for (D3D12CommandBatch& Batch : CmdBatches)
-    {
-        Batch.Reset();
-    }
-
     InternalClearState();
 }
 
@@ -1346,6 +1341,11 @@ void D3D12CommandContext::Flush()
     }
 
     Fence.WaitForValue(FenceValue);
+
+    for (D3D12CommandBatch& Batch : CmdBatches)
+    {
+        Batch.Reset();
+    }
 }
 
 void D3D12CommandContext::InsertMarker(const std::string& Message)

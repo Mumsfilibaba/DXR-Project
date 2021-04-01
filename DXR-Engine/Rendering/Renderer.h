@@ -23,10 +23,15 @@
 
 #include "DebugUI.h"
 
+#include "Core/Threading/TaskManager.h"
+
 class Renderer
 {
 public:
     bool Init();
+    
+    void Tick(const Scene& Scene);
+    
     void Release();
 
     void PerformFrustumCulling(const Scene& Scene);
@@ -36,8 +41,6 @@ public:
     void PerformAABBDebugPass(CommandList& InCmdList);
 
     void RenderDebugInterface();
-
-    void Tick(const Scene& Scene);
 
 private:
     void OnWindowResize(const WindowResizeEvent& Event);
@@ -49,6 +52,10 @@ private:
     void ResizeResources(uint32 Width, uint32 Height);
 
     CommandList CmdList;
+    CommandList CmdList2;
+    CommandList PointShadowCmdList;
+
+    Task PointShadowTask;
 
     DeferredRenderer             DeferredRenderer;
     ShadowMapRenderer            ShadowMapRenderer;

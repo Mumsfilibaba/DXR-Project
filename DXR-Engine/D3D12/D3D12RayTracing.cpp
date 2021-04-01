@@ -209,7 +209,7 @@ bool D3D12RayTracingScene::Build(D3D12CommandContext& CmdContext, const RayTraci
         SrvDesc.Shader4ComponentMapping                  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
 
-        View = DBG_NEW D3D12ShaderResourceView(GetDevice(), gD3D12RenderLayer->GetResourceOfflineDescriptorHeap());
+        View = DBG_NEW D3D12ShaderResourceView(GetDevice(), GD3D12RenderLayer->GetResourceOfflineDescriptorHeap());
         if (!View->Init())
         {
             return false;

@@ -313,7 +313,6 @@ bool DeferredRenderer::Init(FrameResources& FrameResources)
     }
 
     CommandList CmdList;
-    CmdList.Begin();
 
     CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
@@ -336,7 +335,6 @@ bool DeferredRenderer::Init(FrameResources& FrameResources)
 
     CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
 
-    CmdList.End();
     GCmdListExecutor.ExecuteCommandList(CmdList);
 
     {

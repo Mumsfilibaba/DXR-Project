@@ -205,4 +205,4 @@ private:
     D3D12OfflineDescriptorHeap* SamplerOfflineDescriptorHeap      = nullptr;
 };
 
-extern D3D12RenderLayer* gD3D12RenderLayer;
+extern D3D12RenderLayer* GD3D12RenderLayer;

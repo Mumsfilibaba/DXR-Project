@@ -176,7 +176,7 @@ bool D3D12Viewport::RetriveBackBuffers()
 
     if (BackBufferViews.Size() < NumBackBuffers)
     {
-        D3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = gD3D12RenderLayer->GetRenderTargetOfflineDescriptorHeap();
+        D3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RenderLayer->GetRenderTargetOfflineDescriptorHeap();
         BackBufferViews.Resize(NumBackBuffers);
         for (TRef<D3D12RenderTargetView>& View : BackBufferViews)
         {
@@ -217,6 +217,7 @@ bool D3D12Viewport::RetriveBackBuffers()
             return false;
         }
 
+        BackBufferViews[i].AddRef();
         BackBuffers[i]->SetRenderTargetView(BackBufferViews[i].Get());
     }
 

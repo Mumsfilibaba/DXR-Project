@@ -32,25 +32,9 @@ public:
     {
     }
 
-     ~CommandList()
+    ~CommandList()
     {
         Reset();
-    }
-
-    void Begin()
-    {
-        Assert(IsRecording == false);
-
-        InsertCommand<BeginRenderCommand>();
-        IsRecording = true;
-    }
-
-    void End()
-    {
-        Assert(IsRecording == true);
-
-        InsertCommand<EndRenderCommand>();
-        IsRecording = false;
     }
 
     void BeginTimeStamp(GPUProfiler* Profiler, uint32 Index)
@@ -530,14 +514,14 @@ private:
     uint32 NumDrawCalls     = 0;
     uint32 NumDispatchCalls = 0;
     uint32 NumCommands      = 0;
-
-    bool IsRecording = false;
 };
 
 class CommandListExecutor
 {
 public:
     void ExecuteCommandList(CommandList& CmdList);
+    void ExecuteCommandLists(CommandList* const * CmdLists, uint32 NumCmdLists);
+    
     void WaitForGPU();
 
     void SetContext(ICommandContext* InCmdContext)
@@ -553,6 +537,8 @@ public:
     }
 
 private:
+    void InternalExecuteCommandList(CommandList& CmdList);
+
     ICommandContext* CmdContext = nullptr;
 };
 

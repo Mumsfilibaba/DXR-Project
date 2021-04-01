@@ -33,7 +33,7 @@ bool D3D12DescriptorCache::Init()
     CBVDesc.BufferLocation = 0;
     CBVDesc.SizeInBytes    = 0;
 
-    NullCBV = DBG_NEW D3D12ConstantBufferView(GetDevice(), gD3D12RenderLayer->GetResourceOfflineDescriptorHeap());
+    NullCBV = DBG_NEW D3D12ConstantBufferView(GetDevice(), GD3D12RenderLayer->GetResourceOfflineDescriptorHeap());
     if (!NullCBV->Init())
     {
         return false;
@@ -52,7 +52,7 @@ bool D3D12DescriptorCache::Init()
     UAVDesc.Texture2D.MipSlice   = 0;
     UAVDesc.Texture2D.PlaneSlice = 0;
 
-    NullUAV = DBG_NEW D3D12UnorderedAccessView(GetDevice(), gD3D12RenderLayer->GetResourceOfflineDescriptorHeap());
+    NullUAV = DBG_NEW D3D12UnorderedAccessView(GetDevice(), GD3D12RenderLayer->GetResourceOfflineDescriptorHeap());
     if (!NullUAV->Init())
     {
         return false;
@@ -74,7 +74,7 @@ bool D3D12DescriptorCache::Init()
     SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     SRVDesc.Texture2D.PlaneSlice          = 0;
 
-    NullSRV = DBG_NEW D3D12ShaderResourceView(GetDevice(), gD3D12RenderLayer->GetResourceOfflineDescriptorHeap());
+    NullSRV = DBG_NEW D3D12ShaderResourceView(GetDevice(), GD3D12RenderLayer->GetResourceOfflineDescriptorHeap());
     if (!NullSRV->Init())
     {
         return false;
@@ -102,7 +102,7 @@ bool D3D12DescriptorCache::Init()
     SamplerDesc.MinLOD         = -FLT_MAX;
     SamplerDesc.MipLODBias     = 0.0f;
 
-    NullSampler = DBG_NEW D3D12SamplerState(GetDevice(), gD3D12RenderLayer->GetSamplerOfflineDescriptorHeap());
+    NullSampler = DBG_NEW D3D12SamplerState(GetDevice(), GD3D12RenderLayer->GetSamplerOfflineDescriptorHeap());
     if (!NullSampler->Init(SamplerDesc))
     {
         return false;

@@ -26,35 +26,6 @@ struct RenderCommand
     RenderCommand* NextCmd = nullptr;
 };
 
-// Begin RenderCommand
-struct BeginRenderCommand : public RenderCommand
-{
-    BeginRenderCommand()
-    {
-        // Empty for now
-    }
-
-    virtual void Execute(ICommandContext& CmdContext) override
-    {
-        CmdContext.Begin();
-    }
-};
-
-// End RenderCommand
-struct EndRenderCommand : public RenderCommand
-{
-    EndRenderCommand()
-    {
-        // Empty for now
-    }
-
-    virtual void Execute(ICommandContext& CmdContext) override
-    {
-        CmdContext.End();
-    }
-};
-
-
 // BeginTimeStamp RenderCommand
 struct BeginTimeStampRenderCommand : public RenderCommand
 {

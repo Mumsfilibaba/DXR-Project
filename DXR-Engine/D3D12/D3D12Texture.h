@@ -59,6 +59,13 @@ public:
     void SetDepthStencilView(D3D12DepthStencilView* InDepthStencilView)          { DepthStencilView = InDepthStencilView; }
     void SetUnorderedAccessView(D3D12UnorderedAccessView* InUnorderedAccessView) { UnorderedAccessView = InUnorderedAccessView; }
 
+    D3D12RenderTargetView* GetD3D12RenderTargetView() const { return RenderTargetView.Get(); }
+
+    void SetSize(uint32 InWidth, uint32 InHeight)
+    {
+        Texture2D::SetSize(InWidth, InHeight);
+    }
+
 private:
     TRef<D3D12RenderTargetView> RenderTargetView;
     TRef<D3D12DepthStencilView> DepthStencilView;

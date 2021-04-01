@@ -1,4 +1,6 @@
 #pragma once
+#include "Windows/Windows.h"
+
 #include "Core/Threading/Generic/GenericAtomic.h"
 
 class WindowsAtomic : public GenericAtomic

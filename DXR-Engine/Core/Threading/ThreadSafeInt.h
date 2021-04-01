@@ -41,10 +41,24 @@ public:
 
     T operator++(int32) noexcept
     {
+        T OldValue = Value;
+        Increment();
+        return OldValue;
+    }
+
+    T operator++() noexcept
+    {
         return Increment();
     }
 
     T operator--(int32) noexcept
+    {
+        T OldValue = Value;
+        Decrement();
+        return OldValue;
+    }
+
+    T operator--() noexcept
     {
         return Decrement();
     }

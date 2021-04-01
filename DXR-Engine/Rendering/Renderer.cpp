@@ -341,41 +341,48 @@ void Renderer::Tick(const Scene& Scene)
 
     Resources.BackBuffer = Resources.MainWindowViewport->GetBackBuffer();
 
-    CmdList.BeginExternalCapture();
-    CmdList.Begin();
+    CmdList2.BeginExternalCapture();
 
-    Profiler::BeginGPUFrame(CmdList);
+    Profiler::BeginGPUFrame(CmdList2);
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--BEGIN FRAME--");
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList2, "--BEGIN FRAME--");
 
     if (ShadingImage && GEnableVariableRateShading.GetBool())
     {
-        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin VRS Image");
-        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList2, "Begin VRS Image");
+        CmdList2.SetShadingRate(EShadingRate::VRS_1x1);
 
-        CmdList.TransitionTexture(ShadingImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
+        CmdList2.TransitionTexture(ShadingImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
         
-        CmdList.SetComputePipelineState(ShadingRatePipeline.Get());
+        CmdList2.SetComputePipelineState(ShadingRatePipeline.Get());
 
         UnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
-        CmdList.SetUnorderedAccessView(ShadingRateShader.Get(), ShadingImageUAV, 0);
+        CmdList2.SetUnorderedAccessView(ShadingRateShader.Get(), ShadingImageUAV, 0);
         
-        CmdList.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
+        CmdList2.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
         
-        CmdList.TransitionTexture(ShadingImage.Get(), EResourceState::UnorderedAccess, EResourceState::ShadingRateSource);
+        CmdList2.TransitionTexture(ShadingImage.Get(), EResourceState::UnorderedAccess, EResourceState::ShadingRateSource);
 
-        CmdList.SetShadingRateImage(ShadingImage.Get());
+        CmdList2.SetShadingRateImage(ShadingImage.Get());
 
-        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End VRS Image");
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList2, "End VRS Image");
     }
     else if (IsShadingRateSupported())
     {
-        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+        CmdList2.SetShadingRate(EShadingRate::VRS_1x1);
     }
 
-    LightSetup.BeginFrame(CmdList, Scene);
+    LightSetup.BeginFrame(CmdList2, Scene);
 
-    ShadowMapRenderer.RenderPointLightShadows(CmdList, LightSetup, Scene);
+    // Init pointlight task
+    const auto RenderPointShadows = [&]()
+    {
+        this->ShadowMapRenderer.RenderPointLightShadows(PointShadowCmdList, LightSetup, Scene);
+    };
+
+    PointShadowTask.Delegate.BindLambda(RenderPointShadows);
+    TaskManager::Get().AddTask(PointShadowTask);
+
     ShadowMapRenderer.RenderDirectionalLightShadows(CmdList, LightSetup, Scene);
 
     if (IsRayTracingSupported())
@@ -575,16 +582,26 @@ void Renderer::Tick(const Scene& Scene)
 
     Profiler::EndGPUFrame(CmdList);
 
-    CmdList.End();
     CmdList.EndExternalCapture();
 
+    // NOTE: These are no longer accurate
     LastFrameNumDrawCalls     = CmdList.GetNumDrawCalls();
     LastFrameNumDispatchCalls = CmdList.GetNumDispatchCalls();
     LastFrameNumCommands      = CmdList.GetNumCommands();
 
+    TaskManager::Get().WaitForAllTasks();
+
     {
         TRACE_SCOPE("ExecuteCommandList");
-        GCmdListExecutor.ExecuteCommandList(CmdList);
+
+        CommandList* CmdLists[3] =
+        {
+            &CmdList2,
+            &PointShadowCmdList,
+            &CmdList,
+        };
+
+        GCmdListExecutor.ExecuteCommandLists(CmdLists, 3);
     }
 
     {
@@ -756,15 +773,13 @@ bool Renderer::Init()
         }
     }
 
-    CmdList.Begin();
-
     LightProbeRenderer.RenderSkyLightProbe(CmdList, LightSetup, Resources);
 
-    CmdList.End();
     GCmdListExecutor.ExecuteCommandList(CmdList);
 
     // Register EventFunc
     GEngine.OnWindowResizedEvent.AddObject(this, &Renderer::OnWindowResize);
+
     return true;
 }
 
@@ -773,6 +788,8 @@ void Renderer::Release()
     GCmdListExecutor.WaitForGPU();
 
     CmdList.Reset();
+    PointShadowCmdList.Reset();
+    CmdList2.Reset();
 
     DeferredRenderer.Release();
     ShadowMapRenderer.Release();

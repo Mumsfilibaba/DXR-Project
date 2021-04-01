@@ -85,9 +85,10 @@ struct FrameResources
     TRef<Texture2D>    IntegrationLUT;
     TRef<SamplerState> IntegrationLUTSampler;
 
-    TRef<Texture2D>    SSAOBuffer;
-    TRef<Texture2D>    FinalTarget;
-    TRef<Texture2D>    GBuffer[5];
+    TRef<Texture2D> SSAOBuffer;
+    TRef<Texture2D> FinalTarget;
+    TRef<Texture2D> GBuffer[5];
+
     TRef<SamplerState> GBufferSampler;
     TRef<SamplerState> FXAASampler;
 
@@ -96,9 +97,9 @@ struct FrameResources
     TRef<Texture2D>       RTOutput;
     TRef<RayTracingScene> RTScene;
 
-    RayTracingShaderResources   GlobalResources;
-    RayTracingShaderResources   RayGenLocalResources;
-    RayTracingShaderResources   MissLocalResources;
+    RayTracingShaderResources GlobalResources;
+    RayTracingShaderResources RayGenLocalResources;
+    RayTracingShaderResources MissLocalResources;
     TArray<RayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<RayTracingShaderResources>       RTHitGroupResources;

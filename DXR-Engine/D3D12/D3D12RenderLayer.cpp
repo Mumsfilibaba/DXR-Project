@@ -21,7 +21,7 @@
 
 #include <algorithm>
 
-D3D12RenderLayer* gD3D12RenderLayer = nullptr;
+D3D12RenderLayer* GD3D12RenderLayer = nullptr;
 
 template<>
 inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2D>()
@@ -76,7 +76,7 @@ D3D12RenderLayer::D3D12RenderLayer()
     , Device(nullptr)
     , DirectCmdContext(nullptr)
 {
-    gD3D12RenderLayer = this;
+    GD3D12RenderLayer = this;
 }
 
 D3D12RenderLayer::~D3D12RenderLayer()
@@ -92,7 +92,7 @@ D3D12RenderLayer::~D3D12RenderLayer()
     
     SafeDelete(Device);
 
-    gD3D12RenderLayer = nullptr;
+    GD3D12RenderLayer = nullptr;
 }
 
 bool D3D12RenderLayer::Init(bool EnableDebug)

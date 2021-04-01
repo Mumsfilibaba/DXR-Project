@@ -6,18 +6,23 @@ RefCountedObject::RefCountedObject()
     AddRef();
 }
 
-uint32 RefCountedObject::AddRef()
+int32 RefCountedObject::AddRef()
 {
     return ++StrongReferences;
 }
 
-uint32 RefCountedObject::Release()
+int32 RefCountedObject::Release()
 {
-    uint32 NewRefCount = --StrongReferences;
-    if (StrongReferences <= 0)
+    int32 NewRefCount = --StrongReferences;
+    if (StrongReferences.Load() <= 0)
     {
         delete this;
     }
 
     return NewRefCount;
+}
+
+int32 RefCountedObject::GetRefCount() const
+{
+    return StrongReferences.Load();
 }

@@ -1,4 +1,4 @@
 #include "EngineGlobals.h"
 
-class GenericRenderLayer* gRenderLayer    = nullptr;
-class IShaderCompiler*    gShaderCompiler = nullptr;
+class GenericRenderLayer* GRenderLayer    = nullptr;
+class IShaderCompiler*    GShaderCompiler = nullptr;

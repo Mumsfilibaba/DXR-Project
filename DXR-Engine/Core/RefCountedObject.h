@@ -1,17 +1,19 @@
 #pragma once
 #include "Core.h"
 
+#include "Core/Threading/ThreadSafeInt.h"
+
 class RefCountedObject
 {
 public:
     RefCountedObject();
     virtual ~RefCountedObject() = default;
 
-    uint32 AddRef();
-    uint32 Release();
+    int32 AddRef();
+    int32 Release();
 
-    uint32 GetRefCount() const { return StrongReferences; }
+    int32 GetRefCount() const;
 
 private:
-    uint32 StrongReferences;
+    mutable ThreadSafeInt32 StrongReferences;
 };

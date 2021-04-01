@@ -191,7 +191,7 @@ bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
 
         ResourceCounts.ResourceCounts[ShaderVisibility_All].Num32BitConstants = Num32BitConstants;
 
-        RootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts);
+        RootSignature = MakeSharedRef<D3D12RootSignature>(D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts));
     }
     else
     {
@@ -267,7 +267,7 @@ bool D3D12ComputePipelineState::Init()
         ResourceCounts.AllowInputAssembler = false;
         ResourceCounts.ResourceCounts[ShaderVisibility_All] = Shader->GetResourceCount();
 
-        RootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts);
+        RootSignature = MakeSharedRef<D3D12RootSignature>(D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts));
     }
     else
     {

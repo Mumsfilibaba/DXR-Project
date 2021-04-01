@@ -88,6 +88,13 @@ public:
 
     bool IsMultiSampled() const { return NumSamples > 1; }
 
+protected:
+    void SetSize(uint32 InWidth, uint32 InHeight)
+    {
+        Width  = InWidth;
+        Height = InHeight;
+    }
+
 private:
     uint32 Width;
     uint32 Height;

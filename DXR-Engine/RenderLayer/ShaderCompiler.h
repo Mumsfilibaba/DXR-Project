@@ -65,7 +65,7 @@ public:
         EShaderModel ShaderModel,
         TArray<uint8>& Code)
     {
-        return gShaderCompiler->CompileFromFile(FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
+        return GShaderCompiler->CompileFromFile(FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
 
     FORCEINLINE static bool CompileShader(
@@ -76,6 +76,6 @@ public:
         EShaderModel ShaderModel,
         TArray<uint8>& Code)
     {
-        return gShaderCompiler->CompileShader(ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
+        return GShaderCompiler->CompileShader(ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
 };
