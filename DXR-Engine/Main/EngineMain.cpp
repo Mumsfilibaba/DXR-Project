@@ -1,23 +1,20 @@
 #include "EngineMain.h"
-#include "EngineLoop.h"
 
+#include "Core/Engine/EngineLoop.h"
 #include "Core/Application/Application.h"
 #include "Core/Application/Platform/PlatformMisc.h"
 
 int32 EngineMain()
 {
-    if (!GEngineLoop.Init())
+    if (!EngineLoop::Init())
     {
         PlatformMisc::MessageBox("ERROR", "EngineLoop::Init Failed");
         return -1;
     }
 
-    while (GApplication->IsRunning)
-    {
-        GEngineLoop.Tick();
-    }
+    EngineLoop::Run();
 
-    if (!GEngineLoop.Release())
+    if (!EngineLoop::Release())
     {
         PlatformMisc::MessageBox("ERROR", "EngineLoop::Release Failed");
         return -1;

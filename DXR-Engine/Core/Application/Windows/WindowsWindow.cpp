@@ -1,9 +1,19 @@
 #include "WindowsWindow.h"
-#include "WindowsApplication.h"
+#include "WindowsPlatform.h"
 
-WindowsWindow::WindowsWindow(WindowsApplication* InApplication)
+GenericWindow* GenericWindow::Create(const std::string& InTitle, uint32 InWidth, uint32 InHeight, WindowStyle InStyle)
+{
+    TRef<WindowsWindow> NewWindow = DBG_NEW WindowsWindow();
+    if (!NewWindow->Init(InTitle, InWidth, InHeight, InStyle))
+    {
+        return false;
+    }
+
+    return NewWindow.ReleaseOwnership();
+}
+
+WindowsWindow::WindowsWindow()
     : GenericWindow()
-    , Application(InApplication)
     , Window(0)
     , Style(0)
     , StyleEx(0)
@@ -59,8 +69,8 @@ bool WindowsWindow::Init(const std::string& InTitle, uint32 InWidth, uint32 InHe
     INT nWidth	= ClientRect.right	- ClientRect.left;
     INT nHeight = ClientRect.bottom - ClientRect.top;
 
-    HINSTANCE Instance     = WindowsApplication::GetInstance();
-    LPCSTR WindowClassName = WindowsApplication::GetWindowClassName();
+    HINSTANCE Instance     = WindowsPlatform::GetInstance();
+    LPCSTR WindowClassName = WindowsPlatform::GetWindowClassName();
     Window = CreateWindowEx(0, WindowClassName, InTitle.c_str(), dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, Instance, NULL);
     if (Window == NULL)
     {
@@ -81,6 +91,17 @@ bool WindowsWindow::Init(const std::string& InTitle, uint32 InWidth, uint32 InHe
         // Save style for later
         Style = dwStyle;
         WndStyle = InStyle;
+
+        // Set this to userdata
+        SetLastError(0);
+
+        LONG_PTR Result = SetWindowLongPtrA(Window, GWLP_USERDATA, (LONG_PTR)this);
+        DWORD LastError = GetLastError();
+        if (Result == 0 && LastError != 0)
+        {
+            LOG_ERROR("[WindowsWindow]: FAILED to Setup window-data\n");
+            return false;
+        }
 
         UpdateWindow(Window);
         return true;

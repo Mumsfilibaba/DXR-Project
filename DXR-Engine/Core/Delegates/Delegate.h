@@ -24,6 +24,9 @@ class TDelegate<TReturn(TArgs...)> : private TDelegateBase<TReturn(TArgs...)>
     template<typename F>
     using LambdaDelegate = typename Base::LambdaDelegate<F>;
 
+    template<typename... TArgs>
+    friend class TMulticastBase;
+
 public:
     TDelegate()
         : Base()
@@ -35,7 +38,7 @@ public:
         : Base()
         , Delegate(nullptr)
     {
-        if (Other.IsValid())
+        if (Other.IsBound())
         {
             Delegate = Other.Delegate->Clone();
         }
@@ -111,8 +114,9 @@ public:
     void Swap(TDelegate& Other)
     {
         TDelegate Temp(Move(*this));
-        Delegate = Other.Delegate;
+        Delegate       = Other.Delegate;
         Other.Delegate = Temp.Delegate;
+        Temp.Delegate  = nullptr;
     }
 
     bool IsBound() const

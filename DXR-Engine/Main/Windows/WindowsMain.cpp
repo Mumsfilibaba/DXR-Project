@@ -2,7 +2,7 @@
 
 #include "Main/EngineMain.h"
 
-#include "Core/Application/Windows/WindowsApplication.h"
+#include "Core/Application/Windows/WindowsPlatform.h"
 
 #include "Debug/Debug.h"
 
@@ -23,7 +23,7 @@ int WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, in
 {
     InitCRunTime();
 
-    WindowsApplication::PreMainInit(Instance);
+    WindowsPlatform::PreMainInit(Instance);
 
     return EngineMain();
 }

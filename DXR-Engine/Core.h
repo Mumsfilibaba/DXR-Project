@@ -1,5 +1,5 @@
 #pragma once
-#include "Engine/EngineGlobals.h"
+#include "Core/Engine/EngineGlobals.h"
 
 #include "Memory/New.h"
 

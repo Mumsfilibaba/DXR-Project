@@ -8,14 +8,13 @@
 #include "Rendering/Resources/Material.h"
 
 #include "Debug/Profiler.h"
-#include "Debug/Console.h"
+#include "Debug/Console/Console.h"
 
-ConsoleVariable GlobalDrawTileDebug(EConsoleVariableType::Bool);
+TConsoleVariable<bool> GDrawTileDebug(false);
 
 bool DeferredRenderer::Init(FrameResources& FrameResources)
 {
-    INIT_CONSOLE_VARIABLE("r.DrawTileDebug", GlobalDrawTileDebug);
-    GlobalDrawTileDebug.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawTileDebug", &GDrawTileDebug);
 
     if (!CreateGBuffer(FrameResources))
     {
@@ -542,7 +541,7 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
     TRACE_SCOPE("LightPass");
 
     ComputeShader* LightPassShader = nullptr;
-    if (GlobalDrawTileDebug.GetBool())
+    if (GDrawTileDebug.GetBool())
     {
         LightPassShader = TiledLightDebugShader.Get();
         CmdList.SetComputePipelineState(TiledLightPassPSODebug.Get());

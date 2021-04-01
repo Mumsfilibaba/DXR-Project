@@ -4,22 +4,17 @@
 #include "RenderLayer/ShaderCompiler.h"
 
 #include "Debug/Profiler.h"
-#include "Debug/Console.h"
+#include "Debug/Console/Console.h"
 
-ConsoleVariable GlobalSSAORadius(EConsoleVariableType::Float);
-ConsoleVariable GlobalSSAOBias(EConsoleVariableType::Float);
-ConsoleVariable GlobalSSAOKernelSize(EConsoleVariableType::Int);
+TConsoleVariable<float> GSSAORadius(0.3f);
+TConsoleVariable<float> GSSAOBias(0.03f);
+TConsoleVariable<int32> GSSAOKernelSize(32);
 
 bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
 {
-    INIT_CONSOLE_VARIABLE("r.SSAOKernelSize", GlobalSSAOKernelSize);
-    GlobalSSAOKernelSize.SetInt(16);
-
-    INIT_CONSOLE_VARIABLE("r.SSAOBias", GlobalSSAOBias);
-    GlobalSSAOBias.SetFloat(0.03f);
-
-    INIT_CONSOLE_VARIABLE("r.SSAORadius", GlobalSSAORadius);
-    GlobalSSAORadius.SetFloat(0.3f);
+    INIT_CONSOLE_VARIABLE("r.SSAOKernelSize", &GSSAOKernelSize);
+    INIT_CONSOLE_VARIABLE("r.SSAOBias", &GSSAOBias);
+    INIT_CONSOLE_VARIABLE("r.SSAORadius", &GSSAORadius);
 
     if (!CreateRenderTarget(FrameResources))
     {
@@ -258,9 +253,9 @@ void ScreenSpaceOcclusionRenderer::Render(CommandList& CmdList, FrameResources& 
     const uint32 Height     = FrameResources.SSAOBuffer->GetHeight();
     SSAOSettings.ScreenSize = XMFLOAT2(float(Width), float(Height));
     SSAOSettings.NoiseSize  = XMFLOAT2(4.0f, 4.0f);
-    SSAOSettings.Radius     = GlobalSSAORadius.GetFloat();
-    SSAOSettings.KernelSize = GlobalSSAOKernelSize.GetInt32();
-    SSAOSettings.Bias       = GlobalSSAOBias.GetFloat();
+    SSAOSettings.Radius     = GSSAORadius.GetFloat();
+    SSAOSettings.KernelSize = GSSAOKernelSize.GetInt();
+    SSAOSettings.Bias       = GSSAOBias.GetFloat();
 
     CmdList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 

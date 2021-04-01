@@ -8,12 +8,12 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
-#include "Core/Application/Application.h"
+#include "Core/Engine/Engine.h"
 
 #include "RenderLayer/ShaderCompiler.h"
 
 #include "Debug/Profiler.h"
-#include "Debug/Console.h"
+#include "Debug/Console/Console.h"
 
 #include <algorithm>
 #include <imgui_internal.h>
@@ -22,20 +22,22 @@ static const uint32 ShadowMapSampleCount = 2;
 
 Renderer GRenderer;
 
-ConsoleVariable GDrawTextureDebugger(EConsoleVariableType::Bool);
-ConsoleVariable GDrawRendererInfo(EConsoleVariableType::Bool);
+TConsoleVariable<bool> GDrawTextureDebugger(false);
+TConsoleVariable<bool> GDrawRendererInfo(false);
 
-ConsoleVariable GEnableSSAO(EConsoleVariableType::Bool);
-ConsoleVariable GEnableFXAA(EConsoleVariableType::Bool);
-ConsoleVariable GEnableVariableRateShading(EConsoleVariableType::Bool);
+TConsoleVariable<bool> GEnableSSAO(true);
 
-ConsoleVariable GPrePassEnabled(EConsoleVariableType::Bool);
-ConsoleVariable GDrawAABBs(EConsoleVariableType::Bool);
-ConsoleVariable GVSyncEnabled(EConsoleVariableType::Bool);
-ConsoleVariable GFrustumCullEnabled(EConsoleVariableType::Bool);
-ConsoleVariable GRayTracingEnabled(EConsoleVariableType::Bool);
+TConsoleVariable<bool> GEnableFXAA(true);
+TConsoleVariable<bool> GFXAADebug(false);
 
-ConsoleVariable GFXAADebug(EConsoleVariableType::Bool);
+TConsoleVariable<bool> GEnableVariableRateShading(false);
+
+TConsoleVariable<bool> GPrePassEnabled(true);
+TConsoleVariable<bool> GDrawAABBs(false);
+TConsoleVariable<bool> GVSyncEnabled(false);
+TConsoleVariable<bool> GFrustumCullEnabled(true);
+TConsoleVariable<bool> GRayTracingEnabled(true);
+
 
 struct CameraBufferDesc
 {
@@ -185,8 +187,8 @@ void Renderer::RenderDebugInterface()
         constexpr float InvAspectRatio = 16.0f / 9.0f;
         constexpr float AspectRatio    = 9.0f / 16.0f;
 
-        const uint32 WindowWidth  = GApplication->Window->GetWidth();
-        const uint32 WindowHeight = GApplication->Window->GetHeight();
+        const uint32 WindowWidth  = GEngine.MainWindow->GetWidth();
+        const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
         const float Width  = Math::Max(WindowWidth * 0.6f, 400.0f);
         const float Height = WindowHeight * 0.75f;
 
@@ -259,8 +261,8 @@ void Renderer::RenderDebugInterface()
 
     if (GDrawRendererInfo.GetBool())
     {
-        const uint32 WindowWidth  = GApplication->Window->GetWidth();
-        const uint32 WindowHeight = GApplication->Window->GetHeight();
+        const uint32 WindowWidth  = GEngine.MainWindow->GetWidth();
+        const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
         const float Width  = 300.0f;
         const float Height = WindowHeight * 0.8f;
 
@@ -366,7 +368,7 @@ void Renderer::Tick(const Scene& Scene)
 
         INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End VRS Image");
     }
-    else
+    else if (IsShadingRateSupported())
     {
         CmdList.SetShadingRate(EShadingRate::VRS_1x1);
     }
@@ -556,8 +558,11 @@ void Renderer::Tick(const Scene& Scene)
             GRenderer.RenderDebugInterface();
         });
 
-        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
-        CmdList.SetShadingRateImage(nullptr);
+        if (IsShadingRateSupported())
+        {
+            CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+            CmdList.SetShadingRateImage(nullptr);
+        }
 
         DebugUI::Render(CmdList);
     }
@@ -590,40 +595,19 @@ void Renderer::Tick(const Scene& Scene)
 
 bool Renderer::Init()
 {
-    INIT_CONSOLE_VARIABLE("r.DrawTextureDebugger", GDrawTextureDebugger);
-    GDrawTextureDebugger.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawTextureDebugger", &GDrawTextureDebugger);
+    INIT_CONSOLE_VARIABLE("r.DrawRendererInfo", &GDrawRendererInfo);
+    INIT_CONSOLE_VARIABLE("r.EnableSSAO", &GEnableSSAO);
+    INIT_CONSOLE_VARIABLE("r.EnableFXAA", &GEnableFXAA);
+    INIT_CONSOLE_VARIABLE("r.EnableVariableRateShading", &GEnableVariableRateShading);
+    INIT_CONSOLE_VARIABLE("r.EnablePrePass", &GPrePassEnabled);
+    INIT_CONSOLE_VARIABLE("r.EnableDrawAABBs", &GDrawAABBs);
+    INIT_CONSOLE_VARIABLE("r.EnableVerticalSync", &GVSyncEnabled);
+    INIT_CONSOLE_VARIABLE("r.EnableFrustumCulling", &GFrustumCullEnabled);
+    INIT_CONSOLE_VARIABLE("r.EnableRayTracing", &GRayTracingEnabled);
+    INIT_CONSOLE_VARIABLE("r.FXAADebug", &GFXAADebug);
 
-    INIT_CONSOLE_VARIABLE("r.DrawRendererInfo", GDrawRendererInfo);
-    GDrawRendererInfo.SetBool(false);
-
-    INIT_CONSOLE_VARIABLE("r.EnableSSAO", GEnableSSAO);
-    GEnableSSAO.SetBool(true);
-
-    INIT_CONSOLE_VARIABLE("r.EnableFXAA", GEnableFXAA);
-    GEnableFXAA.SetBool(true);
-
-    INIT_CONSOLE_VARIABLE("r.EnableVariableRateShading", GEnableVariableRateShading);
-    GEnableVariableRateShading.SetBool(false);
-
-    INIT_CONSOLE_VARIABLE("r.EnablePrePass", GPrePassEnabled);
-    GPrePassEnabled.SetBool(true);
-
-    INIT_CONSOLE_VARIABLE("r.EnableDrawAABBs", GDrawAABBs);
-    GDrawAABBs.SetBool(false);
-
-    INIT_CONSOLE_VARIABLE("r.EnableVerticalSync", GVSyncEnabled);
-    GVSyncEnabled.SetBool(false);
-
-    INIT_CONSOLE_VARIABLE("r.EnableFrustumCulling", GFrustumCullEnabled);
-    GFrustumCullEnabled.SetBool(true);
-
-    INIT_CONSOLE_VARIABLE("r.EnableRayTracing", GRayTracingEnabled);
-    GRayTracingEnabled.SetBool(false);
-
-    INIT_CONSOLE_VARIABLE("r.FXAADebug", GFXAADebug);
-    GFXAADebug.SetBool(false);
-
-    Resources.MainWindowViewport = CreateViewport(GApplication->Window.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
+    Resources.MainWindowViewport = CreateViewport(GEngine.MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
     if (!Resources.MainWindowViewport)
     {
         Debug::DebugBreak();
@@ -780,7 +764,7 @@ bool Renderer::Init()
     GCmdListExecutor.ExecuteCommandList(CmdList);
 
     // Register EventFunc
-    GApplication->OnWindowResizedEvent.AddObject(this, &Renderer::OnWindowResize);
+    GEngine.OnWindowResizedEvent.AddObject(this, &Renderer::OnWindowResize);
     return true;
 }
 

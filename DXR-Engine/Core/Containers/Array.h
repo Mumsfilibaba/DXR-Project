@@ -137,7 +137,7 @@ public:
 
         while (ArrayBegin != ArrayEnd)
         {
-            *ArrayBegin = ::Move(Value);
+            *ArrayBegin = Move(Value);
             ArrayBegin++;
         }
     }
@@ -222,7 +222,7 @@ public:
 
     T& PushBack(T&& Element) noexcept
     {
-        return EmplaceBack(::Move(Element));
+        return EmplaceBack(Move(Element));
     }
 
     template<typename... TArgs>
@@ -266,7 +266,7 @@ public:
 
     Iterator Insert(Iterator Pos, T&& Value) noexcept
     {
-        return Emplace(Pos, ::Move(Value));
+        return Emplace(Pos, Move(Value));
     }
 
     Iterator Insert(ConstIterator Pos, const T& Value) noexcept
@@ -276,7 +276,7 @@ public:
 
     Iterator Insert(ConstIterator Pos, T&& Value) noexcept
     {
-        return Emplace(Pos, ::Move(Value));
+        return Emplace(Pos, Move(Value));
     }
 
     Iterator Insert(Iterator Pos, std::initializer_list<T> List) noexcept
@@ -292,7 +292,7 @@ public:
         {
             for (const T& Value : List)
             {
-                EmplaceBack(::Move(Value));
+                EmplaceBack(Move(Value));
             }
 
             return End() - 1;
@@ -444,9 +444,9 @@ public:
 
     void Swap(TArray& Other) noexcept
     {
-        TArray TempArray(::Move(*this));
-        *this = ::Move(Other);
-        Other = ::Move(TempArray);
+        TArray TempArray(Move(*this));
+        *this = Move(Other);
+        Other = Move(TempArray);
     }
 
     void ShrinkToFit() noexcept
@@ -771,7 +771,7 @@ private:
         {
             while (InBegin != InEnd)
             {
-                new(reinterpret_cast<void*>(Dest)) T(::Move(*InBegin));
+                new(reinterpret_cast<void*>(Dest)) T(Move(*InBegin));
                 InBegin++;
                 Dest++;
             }
@@ -788,7 +788,7 @@ private:
 
         Assert(InEnd <= Array + ArrayCapacity);
 
-        // ::Move each object in the range to the destination
+        // Move each object in the range to the destination
         const SizeType Count = InternalDistance(InBegin, InEnd);
         if constexpr (std::is_trivially_move_assignable<T>())
         {
@@ -801,7 +801,7 @@ private:
             {
                 if constexpr (std::is_move_assignable<T>())
                 {
-                    (*Dest) = ::Move(*InBegin);
+                    (*Dest) = Move(*InBegin);
                 }
                 else if constexpr (std::is_copy_assignable<T>())
                 {
@@ -835,7 +835,7 @@ private:
                 InEnd--;
                 if constexpr (std::is_move_assignable<T>())
                 {
-                    (*Dest) = ::Move(*InEnd);
+                    (*Dest) = Move(*InEnd);
                 }
                 else if constexpr (std::is_copy_assignable<T>())
                 {

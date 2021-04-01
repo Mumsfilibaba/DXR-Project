@@ -3,9 +3,9 @@
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
 
-#include "Main/EngineLoop.h"
-
-#include "Engine/EngineGlobals.h"
+#include "Core/Engine/Engine.h"
+#include "Core/Engine/EngineLoop.h"
+#include "Core/Engine/EngineGlobals.h"
 
 #include "Scene/Scene.h"
 #include "Scene/Lights/DirectionalLight.h"
@@ -14,7 +14,7 @@
 
 #include "Core/Application/Application.h"
 
-#include "Debug/Console.h"
+#include "Debug/Console/Console.h"
 
 #include <imgui_internal.h>
 
@@ -22,7 +22,7 @@ static float MainMenuBarHeight = 0.0f;
 
 static bool ShowRenderSettings = false;
 
-ConsoleVariable GShowSceneGraph(EConsoleVariableType::Bool);
+TConsoleVariable<bool> GShowSceneGraph(false);
 
 static void DrawMenu();
 static void DrawSideWindow();
@@ -112,12 +112,12 @@ static void DrawMenu()
             {
                 if (ImGui::MenuItem("Toggle Fullscreen"))
                 {
-                    GApplication->Window->ToggleFullscreen();
+                    GEngine.MainWindow->ToggleFullscreen();
                 }
 
                 if (ImGui::MenuItem("Quit"))
                 {
-                    GApplication->Exit();
+                    GEngine.Exit();
                 }
 
                 ImGui::EndMenu();
@@ -142,8 +142,8 @@ static void DrawSideWindow()
 {
     DebugUI::DrawUI([]
     {
-        const uint32 WindowWidth  = GApplication->Window->GetWidth();
-        const uint32 WindowHeight = GApplication->Window->GetHeight();
+        const uint32 WindowWidth  = GEngine.MainWindow->GetWidth();
+        const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
         const float Width         = Math::Max(WindowWidth * 0.3f, 400.0f);
         const float Height        = WindowHeight * 0.7f;
 
@@ -190,7 +190,7 @@ static void DrawRenderSettings()
     ImGui::BeginChild("RendererInfo");
 
     WindowShape WindowShape;
-    GApplication->Window->GetWindowShape(WindowShape);
+    GEngine.MainWindow->GetWindowShape(WindowShape);
 
     ImGui::Spacing();
     ImGui::Text("Renderer Info");
@@ -375,7 +375,7 @@ static void DrawSceneInfo()
     ImGui::Separator();
 
     WindowShape WindowShape;
-    GApplication->Window->GetWindowShape(WindowShape);
+    GEngine.MainWindow->GetWindowShape(WindowShape);
 
     // Actors
     if (ImGui::TreeNode("Actors"))
@@ -785,8 +785,7 @@ static void DrawSceneInfo()
 
 void Editor::Init()
 {
-    INIT_CONSOLE_VARIABLE("ShowSceneGraph", GShowSceneGraph);
-    GShowSceneGraph.SetBool(false);
+    INIT_CONSOLE_VARIABLE("ShowSceneGraph", &GShowSceneGraph);
 }
 
 void Editor::Tick()

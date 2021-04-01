@@ -1,8 +1,9 @@
 #pragma once
 #include "Core.h"
 
-#include "Core/Application/InputCodes.h"
-#include "Core/Application/Generic/GenericApplication.h"
+#include "Core/Input/InputCodes.h"
+#include "Core/Application/Generic/GenericPlatform.h"
+#include "Core/Application/Generic/GenericWindow.h"
 
 struct KeyPressedEvent
 {

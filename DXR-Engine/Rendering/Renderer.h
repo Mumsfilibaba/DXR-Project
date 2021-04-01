@@ -1,9 +1,5 @@
 #pragma once
-#include "Core/Application/Windows/WindowsWindow.h"
-
-#include "Time/Clock.h"
-
-#include "Core/Application/InputCodes.h"
+#include "Time/Timer.h"
 
 #include "Scene/Actor.h"
 #include "Scene/Scene.h"

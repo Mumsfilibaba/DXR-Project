@@ -3,6 +3,10 @@
 
 #include "Windows.h"
 
+#ifdef MessageBox
+    #undef MessageBox
+#endif
+
 class WindowsMisc : public GenericMisc
 {
 public:
@@ -14,5 +18,20 @@ public:
     FORCEINLINE static void RequestExit(int32 ExitCode)
     {
         PostQuitMessage(ExitCode);
+    }
+
+    FORCEINLINE static void DebugBreak()
+    {
+        __debugbreak();
+    }
+
+    FORCEINLINE static void OutputDebugString(const std::string& Message)
+    {
+        OutputDebugStringA(Message.c_str());
+    }
+
+    FORCEINLINE static bool IsDebuggerPresent()
+    {
+        return IsDebuggerPresent();
     }
 };

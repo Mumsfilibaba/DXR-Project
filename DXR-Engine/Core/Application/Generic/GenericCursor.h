@@ -18,15 +18,6 @@ public:
 
     virtual void* GetNativeHandle() const { return nullptr; }
 
-    static bool InitSystemCursors() { return false; }
-    static void ReleaseSystemCursors();
-
-    static void SetCursor(GenericCursor* Cursor) { }
-    static GenericCursor* GetCursor() { return nullptr; }
-
-    static void SetCursorPos(GenericWindow* RelativeWindow, int32 x, int32 y) {}
-    static void GetCursorPos(GenericWindow* RelativeWindow, int32& OutX, int32& OutY) {}
-
 public:
     static TRef<GenericCursor> Arrow;
     static TRef<GenericCursor> TextInput;

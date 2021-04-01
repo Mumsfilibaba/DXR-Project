@@ -1,12 +1,12 @@
 #include "Profiler.h"
-#include "Console.h"
+#include "Console/Console.h"
 
 #include "Rendering/DebugUI.h"
 
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/GPUProfiler.h"
 
-#include "Core/Application/Application.h"
+#include "Core/Engine/Engine.h"
 
 constexpr float MICROSECONDS     = 1000.0f;
 constexpr float MILLISECONDS     = 1000.0f * 1000.0f;
@@ -17,8 +17,8 @@ constexpr float INV_SECONDS      = 1.0f / SECONDS;
 
 constexpr float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
-ConsoleVariable gDrawProfiler(EConsoleVariableType::Bool);
-ConsoleVariable gDrawFps(EConsoleVariableType::Bool);
+TConsoleVariable<bool> GDrawProfiler(false);
+TConsoleVariable<bool> GDrawFps(false);
 
 struct ProfileSample
 {
@@ -80,7 +80,7 @@ struct ProfileSample
     }
 
     TStaticArray<float, NUM_PROFILER_SAMPLES> Samples;
-    Clock Clock;
+    Timer Clock;
     float Max           = -FLT_MAX;
     float Min           = FLT_MAX;
     int32 SampleCount   = 0;
@@ -148,7 +148,7 @@ struct ProfilerData
     ProfileSample    CPUFrameTime;
     GPUProfileSample GPUFrameTime;
 
-    Clock Clock;
+    Timer Clock;
     int32 Fps        = 0;
     int32 CurrentFps = 0;
     
@@ -261,7 +261,7 @@ static float ImGui_GetMaxLimit(float Num)
 
 static void DrawFPS()
 {
-    const uint32 WindowWidth = GApplication->Window->GetWidth();
+    const uint32 WindowWidth = GEngine.MainWindow->GetWidth();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(5.0f, 5.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
@@ -269,7 +269,7 @@ static void DrawFPS()
 
     ImGui::SetNextWindowPos(ImVec2(float(WindowWidth), 0.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
 
-    ImGuiWindowFlags Flags =
+    const ImGuiWindowFlags Flags =
         ImGuiWindowFlags_NoDecoration |
         ImGuiWindowFlags_NoInputs |
         ImGuiWindowFlags_AlwaysAutoResize |
@@ -564,8 +564,8 @@ static void DrawGPUProfileData(float Width)
 static void DrawProfiler()
 {
     // Draw DebugWindow with DebugStrings
-    const uint32 WindowWidth  = GApplication->Window->GetWidth();
-    const uint32 WindowHeight = GApplication->Window->GetHeight();
+    const uint32 WindowWidth  = GEngine.MainWindow->GetWidth();
+    const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
     const float Width         = Math::Max(WindowWidth * 0.6f, 400.0f);
     const float Height        = WindowHeight * 0.75f;
 
@@ -582,7 +582,7 @@ static void DrawProfiler()
         ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoSavedSettings;
 
-    bool TempDrawProfiler = gDrawProfiler.GetBool();
+    bool TempDrawProfiler = GDrawProfiler.GetBool();
     if (ImGui::Begin("Profiler", &TempDrawProfiler, Flags))
     {
         if (ImGui::Button("Start Profile"))
@@ -629,21 +629,18 @@ static void DrawProfiler()
 
     ImGui::End();
 
-    gDrawProfiler.SetBool(TempDrawProfiler);
+    GDrawProfiler.SetBool(TempDrawProfiler);
 }
 
 void Profiler::Init()
 {
-    INIT_CONSOLE_VARIABLE("r.DrawFps", gDrawFps);
-    gDrawFps.SetBool(false);
-
-    INIT_CONSOLE_VARIABLE("r.DrawProfiler", gDrawProfiler);
-    gDrawProfiler.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawFps", &GDrawFps);
+    INIT_CONSOLE_VARIABLE("r.DrawProfiler", &GDrawProfiler);
 }
 
 void Profiler::Tick()
 {
-    Clock& Clock = gProfilerData.Clock;
+    Timer& Clock = gProfilerData.Clock;
     Clock.Tick();
 
     gProfilerData.CurrentFps++;
@@ -655,12 +652,12 @@ void Profiler::Tick()
         Clock.Reset();
     }
 
-    if (gDrawFps.GetBool())
+    if (GDrawFps.GetBool())
     {
         DebugUI::DrawUI(DrawFPS);
     }
 
-    if (gDrawProfiler.GetBool())
+    if (GDrawProfiler.GetBool())
     {
         if (gProfilerData.EnableProfiler)
         {
