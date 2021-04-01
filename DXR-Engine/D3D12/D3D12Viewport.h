@@ -48,11 +48,16 @@ private:
     bool RetriveBackBuffers();
 
     TComPtr<IDXGISwapChain3> SwapChain;
-    D3D12CommandContext*     CmdContext;
-    HWND   Hwnd  = 0;
+
+    D3D12CommandContext* CmdContext;
+    
+    HWND Hwnd  = 0;
+
     uint32 Flags = 0;
     uint32 NumBackBuffers  = 0;
     uint32 BackBufferIndex = 0;
+
+    HANDLE SwapChainWaitableObject = 0;
 
     TArray<TRef<D3D12Texture2D>>        BackBuffers;
     TArray<TRef<D3D12RenderTargetView>> BackBufferViews;

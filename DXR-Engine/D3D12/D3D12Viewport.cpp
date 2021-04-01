@@ -27,6 +27,11 @@ D3D12Viewport::~D3D12Viewport()
             SwapChain->SetFullscreenState(FALSE, nullptr);
         }
     }
+
+    if (SwapChainWaitableObject)
+    {
+        CloseHandle(SwapChainWaitableObject);
+    }
 }
 
 bool D3D12Viewport::Init()
@@ -77,7 +82,12 @@ bool D3D12Viewport::Init()
 
         NumBackBuffers = NumSwapChainBuffers;
 
-        SwapChain->SetMaximumFrameLatency(1);
+        if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
+        {
+            SwapChainWaitableObject = SwapChain->GetFrameLatencyWaitableObject();
+        }
+
+        SwapChain->SetMaximumFrameLatency(5);
     }
     else
     {
@@ -151,6 +161,12 @@ bool D3D12Viewport::Present(bool VerticalSync)
     if (SUCCEEDED(Result))
     {
         BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
+
+        if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
+        {
+            WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, true);
+        }
+
         return true;
     }
     else
