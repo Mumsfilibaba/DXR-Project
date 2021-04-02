@@ -594,9 +594,9 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
 
     CmdList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
 
-    constexpr uint32 ThreadCount = 16;
-    const uint32 WorkGroupWidth  = Math::DivideByMultiple<uint32>(Settings.ScreenWidth, ThreadCount);
-    const uint32 WorkGroupHeight = Math::DivideByMultiple<uint32>(Settings.ScreenHeight, ThreadCount);
+    const XMUINT3 ThreadsXYZ = LightPassShader->GetThreadGroupXYZ();
+    const uint32 WorkGroupWidth  = Math::DivideByMultiple<uint32>(Settings.ScreenWidth, ThreadsXYZ.x);
+    const uint32 WorkGroupHeight = Math::DivideByMultiple<uint32>(Settings.ScreenHeight, ThreadsXYZ.y);
     CmdList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");

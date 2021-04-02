@@ -474,6 +474,7 @@ void Renderer::Tick(const Scene& Scene)
 
     if (GEnableSSAO.GetBool())
     {
+        GPU_TRACE_SCOPE(CmdList, "SSAO");
         SSAORenderer.Render(CmdList, Resources);
     }
 
@@ -485,14 +486,15 @@ void Renderer::Tick(const Scene& Scene)
         EResourceState::NonPixelShaderResource, 
         EResourceState::NonPixelShaderResource);
 
-    CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::PixelShaderResource, EResourceState::UnorderedAccess);
-    CmdList.TransitionTexture(Resources.BackBuffer, EResourceState::Present, EResourceState::RenderTarget);
-    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
-    CmdList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
-
     {
         GPU_TRACE_SCOPE(CmdList, "Light Pass");
+        
+        CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::PixelShaderResource, EResourceState::UnorderedAccess);
+        CmdList.TransitionTexture(Resources.BackBuffer, EResourceState::Present, EResourceState::RenderTarget);
+        CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
+        CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
+        CmdList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
+
         DeferredRenderer.RenderDeferredTiledLightPass(CmdList, Resources, LightSetup);
     }
 
