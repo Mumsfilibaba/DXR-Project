@@ -159,7 +159,7 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
     CmdList.SetShaderResourceView(PShader.Get(), LightSetup.IrradianceMap->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(PShader.Get(), LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 1);
     CmdList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.DirLightShadowMaps->GetShaderResourceView(), 3);
+    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.DirLightShadowMap->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 4);
 
     CmdList.SetSamplerState(PShader.Get(), FrameResources.IntegrationLUTSampler.Get(), 1);

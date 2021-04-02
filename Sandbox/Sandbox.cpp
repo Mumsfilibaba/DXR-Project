@@ -223,7 +223,7 @@ bool Sandbox::Init()
 
     NewActor->SetName("Plane");
     NewActor->GetTransform().SetRotation(0.0f, 0.0f, Math::HALF_PI);
-    NewActor->GetTransform().SetUniformScale(40.0f);
+    NewActor->GetTransform().SetUniformScale(50.0f);
     NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
     MatProperties.AO           = 1.0f;
@@ -243,6 +243,81 @@ bool Sandbox::Init()
     NewComponent->Material->MetallicMap  = WhiteTexture;
     NewComponent->Material->Init();
     NewActor->AddComponent(NewComponent);
+
+    AlbedoMap = TextureFactory::LoadFromFile("../Assets/Textures/StreetLight/BaseColor.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    if (!AlbedoMap)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        AlbedoMap->SetName("AlbedoMap");
+    }
+
+    NormalMap = TextureFactory::LoadFromFile("../Assets/Textures/StreetLight/Normal.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+    if (!NormalMap)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        NormalMap->SetName("NormalMap");
+    }
+
+    RoughnessMap = TextureFactory::LoadFromFile("../Assets/Textures/StreetLight/Roughness.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
+    if (!RoughnessMap)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RoughnessMap->SetName("RoughnessMap");
+    }
+
+    MetallicMap = TextureFactory::LoadFromFile("../Assets/Textures/StreetLight/Metallic.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
+    if (!MetallicMap)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        MetallicMap->SetName("MetallicMap");
+    }
+
+    TSharedPtr<Mesh>     StreetLight    = Mesh::Make(MeshFactory::CreateFromFile("../Assets/Models/Street_Light.obj"));
+    TSharedPtr<Material> StreetLightMat = MakeShared<Material>(MatProperties);
+
+    for (uint32 i = 0; i < 4; i++)
+    {
+        NewActor = DBG_NEW Actor();
+        Scene->AddActor(NewActor);
+
+        NewActor->SetName("Street Light " + std::to_string(i));
+        NewActor->GetTransform().SetUniformScale(0.25f);
+        NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - ((float)i * 3.0f));
+
+        MatProperties.AO           = 1.0f;
+        MatProperties.Metallic     = 1.0f;
+        MatProperties.Roughness    = 1.0f;
+        MatProperties.EnableHeight = 0;
+        MatProperties.Albedo       = XMFLOAT3(1.0f, 1.0f, 1.0f);
+
+        NewComponent = DBG_NEW MeshComponent(NewActor);
+        NewComponent->Mesh                   = StreetLight;
+        NewComponent->Material               = StreetLightMat;
+        NewComponent->Material->AlbedoMap    = AlbedoMap;
+        NewComponent->Material->NormalMap    = NormalMap;
+        NewComponent->Material->RoughnessMap = RoughnessMap;
+        NewComponent->Material->HeightMap    = WhiteTexture;
+        NewComponent->Material->AOMap        = WhiteTexture;
+        NewComponent->Material->MetallicMap  = MetallicMap;
+        NewComponent->Material->Init();
+        NewActor->AddComponent(NewComponent);
+    }
 
     CurrentCamera = DBG_NEW Camera();
     Scene->AddCamera(CurrentCamera);

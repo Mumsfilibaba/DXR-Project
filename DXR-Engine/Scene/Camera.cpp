@@ -13,7 +13,7 @@ Camera::Camera()
     , Forward(0.0f, 0.0f, 1.0f)
     , Rotation(0.0f, 0.0f, 0.0f)
     , NearPlane(0.01f)
-    , FarPlane(1000.0f)
+    , FarPlane(100.0f)
     , AspectRatio()
 {
     UpdateMatrices();
@@ -58,10 +58,13 @@ void Camera::Rotate(float Pitch, float Yaw, float Roll)
 
 void Camera::UpdateMatrices()
 {
-    float Fov = XMConvertToRadians(90.0f);
-    AspectRatio = 1920.0f / 1080.0f;
+    FOV = XMConvertToRadians(90.0f);
+    
+    Width  = 1920.0f;
+    Height = 1080.0f;
+    AspectRatio = Width / Height;
 
-    XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(Fov, AspectRatio, NearPlane, FarPlane);
+    XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(FOV, AspectRatio, NearPlane, FarPlane);
     XMStoreFloat4x4(&Projection, XmProjection);
 
     XMVECTOR XmPosition = XMLoadFloat3(&Position);

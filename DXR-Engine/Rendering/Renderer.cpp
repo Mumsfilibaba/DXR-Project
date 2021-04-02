@@ -383,9 +383,16 @@ void Renderer::Tick(const Scene& Scene)
     PointShadowTask.Delegate.BindLambda(RenderPointShadows);
     TaskManager::Get().AddTask(PointShadowTask);
 
-    ShadowMapRenderer.RenderDirectionalLightShadows(CmdList, LightSetup, Scene);
+    // Init dirlight task
+    const auto RenderDirShadows = [&]()
+    {
+        this->ShadowMapRenderer.RenderDirectionalLightShadows(DirShadowCmdList, LightSetup, Scene);
+    };
 
-    if (IsRayTracingSupported())
+    DirShadowTask.Delegate.BindLambda(RenderDirShadows);
+    TaskManager::Get().AddTask(DirShadowTask);
+
+    if (false/*IsRayTracingSupported())*/)
     {
         GPU_TRACE_SCOPE(CmdList, "Ray Tracing");
         RayTracer.PreRender(CmdList, Resources, Scene);
@@ -504,11 +511,11 @@ void Renderer::Tick(const Scene& Scene)
     SkyboxRenderPass.Render(CmdList, Resources, Scene);
 
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.DirLightShadowMap.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
-        MakeSharedRef<ShaderResourceView>(LightSetup.DirLightShadowMaps->GetShaderResourceView()),
-        LightSetup.DirLightShadowMaps,
+        MakeSharedRef<ShaderResourceView>(LightSetup.DirLightShadowMap->GetShaderResourceView()),
+        LightSetup.DirLightShadowMap,
         EResourceState::PixelShaderResource,
         EResourceState::PixelShaderResource);
 
@@ -596,14 +603,15 @@ void Renderer::Tick(const Scene& Scene)
     {
         TRACE_SCOPE("ExecuteCommandList");
 
-        CommandList* CmdLists[3] =
+        CommandList* CmdLists[4] =
         {
             &CmdList2,
             &PointShadowCmdList,
+            &DirShadowCmdList,
             &CmdList,
         };
 
-        GCmdListExecutor.ExecuteCommandLists(CmdLists, 3);
+        GCmdListExecutor.ExecuteCommandLists(CmdLists, 4);
     }
 
     {

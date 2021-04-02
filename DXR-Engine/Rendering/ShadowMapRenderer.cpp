@@ -251,8 +251,10 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render PointLight ShadowMaps");
 
-    if (UpdatePointLight)
+    //if (UpdatePointLight)
     {
+        GPU_TRACE_SCOPE(CmdList, "PointLight ShadowMaps");
+
         TRACE_SCOPE("Render PointLight ShadowMaps");
 
         const uint32 PointLightShadowSize = LightSetup.PointLightShadowSize;
@@ -351,47 +353,82 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
 
 void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, const LightSetup& LightSetup, const Scene& Scene)
 {
-    //DirLightFrame++;
-    //if (DirLightFrame > 6)
-    //{
-    //    UpdateDirLight = true;
-    //    DirLightFrame = 0;
-    //}
-
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Update DirectionalLightBuffer");
-
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render DirectionalLight ShadowMaps");
 
-    //if (UpdateDirLight)
-    //{
-        TRACE_SCOPE("Render DirectionalLight ShadowMaps");
+    TRACE_SCOPE("Render DirectionalLight ShadowMaps");
 
-        CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
+    GPU_TRACE_SCOPE(CmdList, "DirectionalLight ShadowMaps");
 
-        DepthStencilView* DirLightDSV = LightSetup.DirLightShadowMaps->GetDepthStencilView();
+    CmdList.TransitionTexture(LightSetup.DirLightShadowMap.Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
+
+    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    CmdList.SetGraphicsPipelineState(DirLightPipelineState.Get());
+
+    // PerObject Structs
+    struct ShadowPerObject
+    {
+        XMFLOAT4X4 Matrix;
+        float      ShadowOffset;
+    } ShadowPerObjectBuffer;
+
+    PerShadowMap PerShadowMapData;
+
+    DepthStencilView* DirLightDSV = LightSetup.DirLightShadowMap->GetDepthStencilView();
+    CmdList.ClearDepthStencilView(DirLightDSV, DepthStencilF(1.0f, 0));
+
+    CmdList.SetRenderTargets(nullptr, 0, DirLightDSV);
+
+    CmdList.SetViewport(static_cast<float>(LightSetup.ShadowMapWidth), static_cast<float>(LightSetup.ShadowMapHeight), 0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.SetScissorRect(LightSetup.ShadowMapWidth, LightSetup.ShadowMapHeight, 0, 0);
+
+    for (uint32 i = 0; i < LightSetup.DirLightShadowMapsGenerationData.Size(); i++)
+    {
+        auto& Data = LightSetup.DirLightShadowMapsGenerationData[i];
+        PerShadowMapData.Matrix   = Data.Matrix;
+        PerShadowMapData.Position = Data.Position;
+        PerShadowMapData.FarPlane = Data.FarPlane;
+
+        CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
+
+        CmdList.UpdateBuffer(PerShadowMapBuffer.Get(), 0, sizeof(PerShadowMap), &PerShadowMapData);
+
+        CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
+
+        CmdList.SetConstantBuffers(DirLightShader.Get(), &PerShadowMapBuffer, 1, 0);
+
+        // Draw all objects to depthbuffer
+        for (const MeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+        {
+            CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
+            CmdList.SetIndexBuffer(Command.IndexBuffer);
+
+            ShadowPerObjectBuffer.Matrix       = Command.CurrentActor->GetTransform().GetMatrix();
+            ShadowPerObjectBuffer.ShadowOffset = Command.Mesh->ShadowOffset;
+
+            CmdList.Set32BitShaderConstants(DirLightShader.Get(), &ShadowPerObjectBuffer, 17);
+
+            CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+        }
+    }
+
+    // CASCADED
+    for (uint32 i = 0; i < 4; i++)
+    {
+        DirLightDSV = LightSetup.ShadowMapCascades[i]->GetDepthStencilView();
         CmdList.ClearDepthStencilView(DirLightDSV, DepthStencilF(1.0f, 0));
 
         CmdList.SetRenderTargets(nullptr, 0, DirLightDSV);
-        CmdList.SetGraphicsPipelineState(DirLightPipelineState.Get());
 
-        CmdList.SetViewport(static_cast<float>(LightSetup.ShadowMapWidth), static_cast<float>(LightSetup.ShadowMapHeight), 0.0f, 1.0f, 0.0f, 0.0f);
-        CmdList.SetScissorRect(LightSetup.ShadowMapWidth, LightSetup.ShadowMapHeight, 0, 0);
+        CmdList.SetViewport(static_cast<float>(LightSetup.CascadeWidth), static_cast<float>(LightSetup.CascadeHeight), 0.0f, 1.0f, 0.0f, 0.0f);
+        CmdList.SetScissorRect(LightSetup.CascadeWidth, LightSetup.CascadeHeight, 0, 0);
 
-        CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-
-        // PerObject Structs
-        struct ShadowPerObject
+        for (uint32 j = 0; j < LightSetup.DirLightShadowMapsGenerationData.Size(); j++)
         {
-            XMFLOAT4X4 Matrix;
-            float      ShadowOffset;
-        } ShadowPerObjectBuffer;
-
-        PerShadowMap PerShadowMapData;
-        for (uint32 i = 0; i < LightSetup.DirLightShadowMapsGenerationData.Size(); i++)
-        {
-            auto& Data = LightSetup.DirLightShadowMapsGenerationData[i];
+            auto& Data = LightSetup.DirLightShadowMapsGenerationData[j];
             PerShadowMapData.Matrix   = Data.Matrix;
             PerShadowMapData.Position = Data.Position;
             PerShadowMapData.FarPlane = Data.FarPlane;
@@ -410,7 +447,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
                 CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
                 CmdList.SetIndexBuffer(Command.IndexBuffer);
 
-                ShadowPerObjectBuffer.Matrix       = Command.CurrentActor->GetTransform().GetMatrix();
+                ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
                 ShadowPerObjectBuffer.ShadowOffset = Command.Mesh->ShadowOffset;
 
                 CmdList.Set32BitShaderConstants(DirLightShader.Get(), &ShadowPerObjectBuffer, 17);
@@ -418,17 +455,15 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
                 CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
             }
         }
+    }
 
-    //    UpdateDirLight = false;
-    //}
-    //else
-    //{
-    //    CmdList.BindPrimitiveTopology(EPrimitiveTopology::TriangleList);
-    //}
-
+    CmdList.TransitionTexture(LightSetup.DirLightShadowMap.Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+    
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
-
-    CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
 }
 
 void ShadowMapRenderer::Release()
@@ -477,20 +512,39 @@ bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
         return false;
     }
 
-    LightSetup.DirLightShadowMaps = CreateTexture2D(
+    LightSetup.DirLightShadowMap = CreateTexture2D(
         LightSetup.ShadowMapFormat,
         LightSetup.ShadowMapWidth,
         LightSetup.ShadowMapHeight,
         1, 1, TextureFlags_ShadowMap,
         EResourceState::PixelShaderResource,
         nullptr);
-    if (LightSetup.DirLightShadowMaps)
+    if (LightSetup.DirLightShadowMap)
     {
-        LightSetup.DirLightShadowMaps->SetName("Directional Light ShadowMaps");
+        LightSetup.DirLightShadowMap->SetName("Directional Light ShadowMaps");
     }
     else
     {
         return false;
+    }
+
+    for (uint32 i = 0; i < 4; i++)
+    {
+        LightSetup.ShadowMapCascades[i] = CreateTexture2D(
+            LightSetup.ShadowMapFormat,
+            LightSetup.CascadeWidth,
+            LightSetup.CascadeHeight,
+            1, 1, TextureFlags_ShadowMap,
+            EResourceState::PixelShaderResource,
+            nullptr);
+        if (LightSetup.ShadowMapCascades[i])
+        {
+            LightSetup.ShadowMapCascades[i]->SetName("Shadow Map Cascade[" + std::to_string(i) + "]");
+        }
+        else
+        {
+            return false;
+        }
     }
 
     return true;

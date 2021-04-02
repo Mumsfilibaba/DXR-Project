@@ -85,5 +85,7 @@ void DirectionalLight::CalculateMatrix()
     XMMATRIX XmProjection = XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, ShadowNearPlane, ShadowFarPlane);
     XMMATRIX XmView       = XMMatrixLookAtLH(XmPosition, XmLookAt, XmUp);
 
+    XMStoreFloat4x4(&ViewMatrix, XMMatrixTranspose(XmView));
+    XMStoreFloat4x4(&ProjectionMatrix, XMMatrixTranspose(XmProjection));
     XMStoreFloat4x4(&Matrix, XMMatrixMultiplyTranspose(XmView, XmProjection));
 }

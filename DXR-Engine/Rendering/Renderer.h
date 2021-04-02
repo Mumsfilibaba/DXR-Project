@@ -53,9 +53,12 @@ private:
 
     CommandList CmdList;
     CommandList CmdList2;
+
     CommandList PointShadowCmdList;
+    CommandList DirShadowCmdList;
 
     Task PointShadowTask;
+    Task DirShadowTask;
 
     DeferredRenderer             DeferredRenderer;
     ShadowMapRenderer            ShadowMapRenderer;

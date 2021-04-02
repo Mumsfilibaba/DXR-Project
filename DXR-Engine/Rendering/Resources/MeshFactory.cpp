@@ -1,115 +1,89 @@
 #include "Rendering/Resources/MeshFactory.h"
 
-//#include <assimp/Importer.hpp>
-//#include <assimp/scene.h>
-//#include <assimp/postprocess.h>
+#include <tiny_obj_loader.h>
 
-MeshData MeshFactory::CreateFromFile(const std::string& Filename, bool MergeMeshes, bool LeftHanded) noexcept
+MeshData MeshFactory::CreateFromFile(const std::string& Filename, bool LeftHanded) noexcept
 {
-    UNREFERENCED_VARIABLE(Filename);
-    UNREFERENCED_VARIABLE(MergeMeshes);
-    UNREFERENCED_VARIABLE(LeftHanded);
+    std::string Error;
+    std::string Warning;
+    std::vector<tinyobj::shape_t> Shapes;
+    tinyobj::attrib_t Attributes;
 
-    /*using namespace std;
-
-    // Set import flags
-    uint32 flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ImproveCacheLocality | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
-    if (leftHanded)
+    MeshData Result;
+    
+    if (!tinyobj::LoadObj(&Attributes, &Shapes, nullptr, &Warning, &Error, Filename.c_str(), nullptr, true, false))
     {
-        flags |= aiProcess_ConvertToLeftHanded;
-    }
-    flags = flags & ~aiProcess_FlipWindingOrder;
-
-    // Load scene
-    Assimp::Importer importer;
-    const aiScene* pScene = importer.ReadFile(filename, flags);
-
-    // Extract scene-data
-    MeshData data;
-    if (pScene)
-    {
-        if (pScene->HasMeshes())
-        {
-            LOG_DEBUG_INFO("[LAMBDA ENGINE] Loading Scene with '%u' meshes\n", pScene->mNumMeshes);
-
-            size_t vertexOffset = 0;
-            size_t indexOffset = 0;
-            uint32 numMeshesToLoad = (mergeMeshes) ? pScene->mNumMeshes : 1;
-            for (uint32 m = 0; m < numMeshesToLoad; m++)
-            {
-                const aiMesh* pMesh = pScene->mMeshes[m];
-                if (!pMesh->HasNormals())
-                {
-                    LOG_DEBUG_WARNING("[LAMBDA ENGINE] Mesh does not have normals\n");
-                }
-                if (!pMesh->HasTextureCoords(0))
-                {
-                    LOG_DEBUG_WARNING("[LAMBDA ENGINE] Mesh does not have texcoords\n");
-                }
-
-                if (pMesh)
-                {
-                    if (pMesh->HasFaces())
-                    {
-                        // Get number of vertices and resize buffer
-                        size_t vertCount = pMesh->mNumVertices;
-                        // Vertexoffset is used when there are more than one mesh in the scene and we want to merge all the meshes
-                        data.Vertices.resize(vertexOffset + vertCount);
-                        for (size_t i = 0; i < vertCount; i++)
-                        {
-                            data.Vertices[vertexOffset + i].Position = XMFLOAT3(pMesh->mVertices[i].x, pMesh->mVertices[i].y, pMesh->mVertices[i].z);
-                            if (pMesh->HasNormals())
-                            {
-                                data.Vertices[vertexOffset + i].Normal = XMFLOAT3(pMesh->mNormals[i].x, pMesh->mNormals[i].y, pMesh->mNormals[i].z);
-                            }
-                            if (pMesh->HasTangentsAndBitangents())
-                            {
-                                data.Vertices[vertexOffset + i].Tangent = XMFLOAT3(pMesh->mTangents[i].x, pMesh->mTangents[i].y, pMesh->mTangents[i].z);
-                            }
-                            if (pMesh->HasTextureCoords(0))
-                            {
-                                data.Vertices[vertexOffset + i].TexCoord = XMFLOAT2(pMesh->mTextureCoords[0][i].x, pMesh->mTextureCoords[0][i].y);
-                            }
-                        }
-
-                        // Get number of indices and resize indexbuffer
-                        size_t triCount = pMesh->mNumFaces;
-                            
-                        // Indexoffset is used when there are more than one mesh in the scene and we want to merge all the meshes
-                        data.Indices.resize(indexOffset + (triCount * 3));
-                        for (size_t i = 0; i < triCount; i++)
-                        {
-                            data.Indices[indexOffset + (i * 3) + 0] = uint32(vertexOffset + pMesh->mFaces[i].mIndices[0]);
-                            data.Indices[indexOffset + (i * 3) + 1] = uint32(vertexOffset + pMesh->mFaces[i].mIndices[1]);
-                            data.Indices[indexOffset + (i * 3) + 2] = uint32(vertexOffset + pMesh->mFaces[i].mIndices[2]);
-                        }
-
-                        // Increase offsets
-                        if (mergeMeshes)
-                        {
-                            vertexOffset += vertCount;
-                            indexOffset += triCount * 3;
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            LOG_DEBUG_ERROR("[LAMBDA ENGINE] File '%s' does not have any meshes\n", filename.c_str());
-            return data;
-        }
+        LOG_WARNING("[MeshFactory]: Failed to load mesh '" + Filename + "'." + " Warning: " + Warning + " Error: " + Error);
+        return Result;
     }
     else
     {
-        const char* pErrorMessage = importer.GetErrorString();
-        LOG_SYSTEM_PRINT("[LAMBDA ENGINE] Failed to load file '%s'. Message: %s\n", filename.c_str(), pErrorMessage);
-        return data;
+        LOG_INFO("[MeshFactory]: Loaded mesh'" + Filename + "'");
     }
 
-    LOG_SYSTEM_PRINT("[LAMBDA ENGINE] Loaded mesh with %d vertices and %d indices. Triangles: %d\n", data.Vertices.GetSize(), data.Indices.GetSize(), data.Indices.GetSize() / 3);
-    return data;*/
-    return MeshData();
+    std::unordered_map<Vertex, uint32, VertexHasher> UniqueVertices;
+    for (const tinyobj::shape_t& Shape : Shapes)
+    {
+        for (uint32 i = 0; i < Shape.mesh.indices.size(); i++)
+        {
+            const tinyobj::index_t& Index = Shape.mesh.indices[i];
+            Vertex TempVertex;
+
+            // Normals and texcoords are optional, Positions are required
+            Assert(Index.vertex_index >= 0);
+
+            size_t PositionIndex = 3 * static_cast<size_t>(Index.vertex_index);
+            TempVertex.Position =
+            {
+                Attributes.vertices[PositionIndex + 0],
+                Attributes.vertices[PositionIndex + 1],
+                Attributes.vertices[PositionIndex + 2],
+            };
+
+            if (Index.normal_index >= 0)
+            {
+                size_t NormalIndex = 3 * static_cast<size_t>(Index.normal_index);
+                TempVertex.Normal =
+                {
+                    Attributes.normals[NormalIndex + 0],
+                    Attributes.normals[NormalIndex + 1],
+                    Attributes.normals[NormalIndex + 2],
+                };
+            }
+
+            if (Index.texcoord_index >= 0)
+            {
+                size_t TexCoordIndex = 2 * static_cast<size_t>(Index.texcoord_index);
+                TempVertex.TexCoord =
+                {
+                    Attributes.texcoords[TexCoordIndex + 0],
+                    Attributes.texcoords[TexCoordIndex + 1],
+                };
+            }
+
+            if (UniqueVertices.count(TempVertex) == 0)
+            {
+                UniqueVertices[TempVertex] = static_cast<uint32>(Result.Vertices.Size());
+                Result.Vertices.PushBack(TempVertex);
+            }
+
+            Result.Indices.EmplaceBack(UniqueVertices[TempVertex]);
+        }
+    }
+
+    if (LeftHanded)
+    {
+        for (Vertex& Vertex : Result.Vertices)
+        {
+            Vertex.Position.z = -Vertex.Position.z;
+            Vertex.Normal.z   = -Vertex.Normal.z;
+            Vertex.TexCoord.y = 1.0f - Vertex.TexCoord.y;
+        }
+    }
+
+    MeshFactory::CalculateTangents(Result);
+
+    return Result;
 }
 
 MeshData MeshFactory::CreateCube(float Width, float Height, float Depth) noexcept

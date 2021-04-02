@@ -24,14 +24,20 @@ public:
     const XMFLOAT4X4& GetViewProjectionWitoutTranslateMatrix() const { return ViewProjectionNoTranslation; }
 
     XMFLOAT3 GetPosition() const { return Position; }
+    
     XMFLOAT3 GetForward() const { return Forward; }
     XMFLOAT3 GetUp() const { return Up; }
     XMFLOAT3 GetRight() const { return Right; }
 
     float GetNearPlane() const { return NearPlane; }
-    float GetFarPlane() const { return FarPlane; }
+    float GetFarPlane()  const { return FarPlane; }
 
     float GetAspectRatio() const { return AspectRatio; }
+    
+    float GetWidth() const { return Width; }
+    float GetHeight() const { return Height; }
+
+    float GetFOV() const { return FOV; }
 
 private:
     XMFLOAT4X4 View;
@@ -41,9 +47,14 @@ private:
     XMFLOAT4X4 ViewProjection;
     XMFLOAT4X4 ViewProjectionInverse;
     XMFLOAT4X4 ViewProjectionNoTranslation;
+    
     float NearPlane;
     float FarPlane;
     float AspectRatio;
+    float Width;
+    float Height;
+    float FOV;
+
     XMFLOAT3 Position;
     XMFLOAT3 Rotation;
     XMFLOAT3 Forward;

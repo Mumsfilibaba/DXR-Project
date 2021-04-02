@@ -55,6 +55,18 @@ public:
     {
         return (a * a) / a;
     }
+
+    template <typename T>
+    FORCEINLINE static T ToRadians(T Degrees)
+    {
+        return (T)XMConvertToRadians((T)Degrees);
+    }
+
+    template <typename T>
+    FORCEINLINE static T ToDegrees(T Radians)
+    {
+        return (T)XMConvertToDegrees((T)Radians);
+    }
 };
 
 inline XMFLOAT2 operator*(XMFLOAT2 Left, float Right)

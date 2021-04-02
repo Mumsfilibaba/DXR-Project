@@ -277,8 +277,8 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
     // Construct Scene
     MeshData Data;
     TUniquePtr<Scene> LoadedScene = MakeUnique<Scene>();
-    std::unordered_map<Vertex, uint32, VertexHasher> UniqueVertices;
 
+    std::unordered_map<Vertex, uint32, VertexHasher> UniqueVertices;
     for (const tinyobj::shape_t& Shape : Shapes)
     {
         // Start at index zero for eaxh mesh and loop until all indices are processed

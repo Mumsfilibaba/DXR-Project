@@ -94,6 +94,8 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
     TRACE_SCOPE("Update LightBuffers");
 
+    Camera* Camera = Scene.GetCamera();
+
     for (Light* Light : Scene.GetLights())
     {
         float Intensity = Light->GetIntensity();
@@ -154,13 +156,88 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
             Data.Direction  = CurrentLight->GetDirection();
 
             // TODO: Should not be the done in the renderer
-            XMFLOAT3 CameraPosition = Scene.GetCamera()->GetPosition();
-            XMFLOAT3 CameraForward  = Scene.GetCamera()->GetForward();
+            XMFLOAT3 CameraPosition = Camera->GetPosition();
+            XMFLOAT3 CameraForward  = Camera->GetForward();
 
-            float Near       = Scene.GetCamera()->GetNearPlane();
-            float DirFrustum = 35.0f;
-            XMFLOAT3 LookAt  = CameraPosition + (CameraForward * (DirFrustum + Near));
+            float NearPlane  = Camera->GetNearPlane();
+            float FarPlane   = Camera->GetFarPlane();
+            float FrustumLength = FarPlane - NearPlane;
+            float DirFrustum    = 35.0f;
+            
+            XMFLOAT3 LookAt = CameraPosition + (CameraForward * (DirFrustum + NearPlane));
             CurrentLight->SetLookAt(LookAt);
+            
+
+            float AspectRatio = Camera->GetAspectRatio();
+            float TanHalfHFOV = tanf(Math::ToRadians(Camera->GetFOV() / 2.0f));
+            float TanHalfVFOV = tanf(Math::ToRadians((Camera->GetFOV() * AspectRatio) / 2.0f));
+
+            float CascadeEnd[5];
+            CascadeEnd[0] = NearPlane;
+            CascadeEnd[1] = 25.0f;
+            CascadeEnd[2] = 50.0f;
+            CascadeEnd[3] = 75.0f;
+            CascadeEnd[4] = FarPlane;
+
+            XMFLOAT4X4 InvViewMatrix = Camera->GetViewInverseMatrix();
+            XMFLOAT4X4 LightView     = CurrentLight->GetViewMatrix();
+
+            XMFLOAT4X4 CascadeMatrices[4];
+            for (uint32 i = 0; i < 4; i++)
+            {
+                float NearX = CascadeEnd[i] * TanHalfHFOV;
+                float FarX  = CascadeEnd[i + 1] * TanHalfHFOV;
+                float NearY = CascadeEnd[i] * TanHalfVFOV;
+                float FarY  = CascadeEnd[i + 1] * TanHalfVFOV;
+
+                XMFLOAT4 FrustumCorners[8] =
+                {
+                    // Near face
+                    XMFLOAT4( NearX,  NearY, CascadeEnd[i], 1.0f),
+                    XMFLOAT4(-NearX,  NearY, CascadeEnd[i], 1.0f),
+                    XMFLOAT4( NearX, -NearY, CascadeEnd[i], 1.0f),
+                    XMFLOAT4(-NearX, -NearY, CascadeEnd[i], 1.0f),
+
+                    // Far face
+                    XMFLOAT4( FarX,  FarY, CascadeEnd[i + 1], 1.0f),
+                    XMFLOAT4(-FarX,  FarY, CascadeEnd[i + 1], 1.0f),
+                    XMFLOAT4( FarX, -FarY, CascadeEnd[i + 1], 1.0f),
+                    XMFLOAT4(-FarX, -FarY, CascadeEnd[i + 1], 1.0f)
+                };
+
+                float MinX = FLT_MAX;
+                float MaxX = FLT_MIN;
+                float MinY = FLT_MAX;
+                float MaxY = FLT_MIN;
+                float MinZ = FLT_MAX;
+                float MaxZ = FLT_MIN;
+
+                XMFLOAT4 FrustumCornersL[8];
+                for (uint32 j = 0; j < 8; j++)
+                {
+                    // Transform the frustum coordinate from view to world space
+                    XMMATRIX XmInvViewMatrix = XMLoadFloat4x4(&InvViewMatrix);
+                    XMVECTOR XmCorner        = XMLoadFloat4(&FrustumCorners[j]);
+
+                    XMVECTOR vW = XMVector4Transform(XmCorner, XmInvViewMatrix);
+
+                    XMMATRIX XmLightView = XMLoadFloat4x4(&LightView);
+                    XMVECTOR LightCorner = XMVector4Transform(vW, XmLightView);
+
+                    // Transform the frustum coordinate from world to light space
+                    XMStoreFloat4(&FrustumCornersL[j], LightCorner);
+
+                    MinX = Math::Min(MinX, FrustumCornersL[j].x);
+                    MaxX = Math::Max(MaxX, FrustumCornersL[j].x);
+                    MinY = Math::Min(MinY, FrustumCornersL[j].y);
+                    MaxY = Math::Max(MaxY, FrustumCornersL[j].y);
+                    MinZ = Math::Min(MinZ, FrustumCornersL[j].z);
+                    MaxZ = Math::Max(MaxZ, FrustumCornersL[j].z);
+                }
+
+                XMMATRIX XmCascadeMatrix = XMMatrixOrthographicOffCenterLH(MinX, MaxX, MinY, MaxY, MinZ, MaxZ);
+                XMStoreFloat4x4(&CascadeMatrices[i], XmCascadeMatrix);
+            }
 
             Data.LightMatrix   = CurrentLight->GetMatrix();
             Data.MaxShadowBias = CurrentLight->GetMaxShadowBias();
@@ -289,7 +366,12 @@ void LightSetup::Release()
         }
     }
 
-    DirLightShadowMaps.Reset();
+    DirLightShadowMap.Reset();
+
+    for (uint32 i = 0; i < 4; i++)
+    {
+        ShadowMapCascades[i].Reset();
+    }
 
     IrradianceMap.Reset();
     IrradianceMapUAV.Reset();

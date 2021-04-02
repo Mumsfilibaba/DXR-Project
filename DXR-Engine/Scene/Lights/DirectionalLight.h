@@ -29,12 +29,19 @@ public:
 
     const XMFLOAT4X4& GetMatrix() const { return Matrix; }
 
+    const XMFLOAT4X4& GetViewMatrix() const { return ViewMatrix; }
+
+    const XMFLOAT4X4& GetProjectionMatrix() const { return ProjectionMatrix; }
+
 private:
     void CalculateMatrix();
 
-    XMFLOAT3   Direction;
-    XMFLOAT3   Rotation;
-    XMFLOAT3   LookAt;
-    XMFLOAT3   ShadowMapPosition;
+    XMFLOAT3 Direction;
+    XMFLOAT3 Rotation;
+    XMFLOAT3 LookAt;
+    XMFLOAT3 ShadowMapPosition;
+
+    XMFLOAT4X4 ViewMatrix;
+    XMFLOAT4X4 ProjectionMatrix;
     XMFLOAT4X4 Matrix;
 };
