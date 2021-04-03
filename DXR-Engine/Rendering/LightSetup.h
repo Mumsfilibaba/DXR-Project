@@ -5,6 +5,8 @@
 
 #include "Scene/Scene.h"
 
+#define NUM_SHADOW_CASCADES (4)
+
 struct PointLightData
 {
     XMFLOAT3 Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
@@ -42,8 +44,12 @@ struct DirectionalLightData
 struct DirLightShadowMapGenerationData
 {
     XMFLOAT4X4 Matrix;
-    float      FarPlane;
-    XMFLOAT3   Position;
+    float    FarPlane;
+
+    float ShadowCascadesFarPlanes[NUM_SHADOW_CASCADES + 1];
+    XMFLOAT4X4 CascadeMatrices[NUM_SHADOW_CASCADES];
+
+    XMFLOAT3 Position;
 };
 
 struct LightSetup

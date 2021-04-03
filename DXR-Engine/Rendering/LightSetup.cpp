@@ -167,42 +167,44 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
             XMFLOAT3 LookAt = CameraPosition + (CameraForward * (DirFrustum + NearPlane));
             CurrentLight->SetLookAt(LookAt);
             
-
             float AspectRatio = Camera->GetAspectRatio();
             float TanHalfHFOV = tanf(Math::ToRadians(Camera->GetFOV() / 2.0f));
             float TanHalfVFOV = tanf(Math::ToRadians((Camera->GetFOV() * AspectRatio) / 2.0f));
 
-            float CascadeEnd[5];
-            CascadeEnd[0] = NearPlane;
-            CascadeEnd[1] = 25.0f;
-            CascadeEnd[2] = 50.0f;
-            CascadeEnd[3] = 75.0f;
-            CascadeEnd[4] = FarPlane;
-
             XMFLOAT4X4 InvViewMatrix = Camera->GetViewInverseMatrix();
             XMFLOAT4X4 LightView     = CurrentLight->GetViewMatrix();
 
-            XMFLOAT4X4 CascadeMatrices[4];
+            DirLightShadowMapGenerationData ShadowData;
+            ShadowData.Matrix   = CurrentLight->GetMatrix();
+            ShadowData.FarPlane = CurrentLight->GetShadowFarPlane();
+            ShadowData.Position = CurrentLight->GetShadowMapPosition();
+
+            ShadowData.ShadowCascadesFarPlanes[0] = NearPlane;
+            ShadowData.ShadowCascadesFarPlanes[1] = 25.0f;
+            ShadowData.ShadowCascadesFarPlanes[2] = 50.0f;
+            ShadowData.ShadowCascadesFarPlanes[3] = 75.0f;
+            ShadowData.ShadowCascadesFarPlanes[4] = FarPlane;
+
             for (uint32 i = 0; i < 4; i++)
             {
-                float NearX = CascadeEnd[i] * TanHalfHFOV;
-                float FarX  = CascadeEnd[i + 1] * TanHalfHFOV;
-                float NearY = CascadeEnd[i] * TanHalfVFOV;
-                float FarY  = CascadeEnd[i + 1] * TanHalfVFOV;
+                float NearX = ShadowData.ShadowCascadesFarPlanes[i] * TanHalfHFOV;
+                float FarX  = ShadowData.ShadowCascadesFarPlanes[i + 1] * TanHalfHFOV;
+                float NearY = ShadowData.ShadowCascadesFarPlanes[i] * TanHalfVFOV;
+                float FarY  = ShadowData.ShadowCascadesFarPlanes[i + 1] * TanHalfVFOV;
 
                 XMFLOAT4 FrustumCorners[8] =
                 {
-                    // Near face
-                    XMFLOAT4( NearX,  NearY, CascadeEnd[i], 1.0f),
-                    XMFLOAT4(-NearX,  NearY, CascadeEnd[i], 1.0f),
-                    XMFLOAT4( NearX, -NearY, CascadeEnd[i], 1.0f),
-                    XMFLOAT4(-NearX, -NearY, CascadeEnd[i], 1.0f),
+                    // Near Plane
+                    XMFLOAT4( NearX,  NearY, ShadowData.ShadowCascadesFarPlanes[i], 1.0f),
+                    XMFLOAT4(-NearX,  NearY, ShadowData.ShadowCascadesFarPlanes[i], 1.0f),
+                    XMFLOAT4( NearX, -NearY, ShadowData.ShadowCascadesFarPlanes[i], 1.0f),
+                    XMFLOAT4(-NearX, -NearY, ShadowData.ShadowCascadesFarPlanes[i], 1.0f),
 
-                    // Far face
-                    XMFLOAT4( FarX,  FarY, CascadeEnd[i + 1], 1.0f),
-                    XMFLOAT4(-FarX,  FarY, CascadeEnd[i + 1], 1.0f),
-                    XMFLOAT4( FarX, -FarY, CascadeEnd[i + 1], 1.0f),
-                    XMFLOAT4(-FarX, -FarY, CascadeEnd[i + 1], 1.0f)
+                    // Far Plane
+                    XMFLOAT4( FarX,  FarY, ShadowData.ShadowCascadesFarPlanes[i + 1], 1.0f),
+                    XMFLOAT4(-FarX,  FarY, ShadowData.ShadowCascadesFarPlanes[i + 1], 1.0f),
+                    XMFLOAT4( FarX, -FarY, ShadowData.ShadowCascadesFarPlanes[i + 1], 1.0f),
+                    XMFLOAT4(-FarX, -FarY, ShadowData.ShadowCascadesFarPlanes[i + 1], 1.0f)
                 };
 
                 float MinX = FLT_MAX;
@@ -236,19 +238,13 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
                 }
 
                 XMMATRIX XmCascadeMatrix = XMMatrixOrthographicOffCenterLH(MinX, MaxX, MinY, MaxY, MinZ, MaxZ);
-                XMStoreFloat4x4(&CascadeMatrices[i], XmCascadeMatrix);
+                XMStoreFloat4x4(&ShadowData.CascadeMatrices[i], XmCascadeMatrix);
             }
 
             Data.LightMatrix   = CurrentLight->GetMatrix();
             Data.MaxShadowBias = CurrentLight->GetMaxShadowBias();
 
             DirectionalLightsData.EmplaceBack(Data);
-
-            DirLightShadowMapGenerationData ShadowData;
-            ShadowData.Matrix   = CurrentLight->GetMatrix();
-            ShadowData.FarPlane = CurrentLight->GetShadowFarPlane();
-            ShadowData.Position = CurrentLight->GetShadowMapPosition();
-
             DirLightShadowMapsGenerationData.EmplaceBack(ShadowData);
         }
     }

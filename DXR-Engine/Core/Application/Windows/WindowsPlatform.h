@@ -74,13 +74,13 @@ public:
 
     static LPCSTR GetWindowClassName() { return "WindowClass"; }
     static HINSTANCE GetInstance()     { return Instance; }
-    
-    static void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
 private:
     static bool InitCursors();
 
     static bool RegisterWindowClass();
+    
+    static void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
     
     static LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
     static void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
