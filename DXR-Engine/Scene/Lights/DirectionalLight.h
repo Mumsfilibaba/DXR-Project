@@ -21,6 +21,8 @@ public:
 
     const XMFLOAT3& GetDirection() const { return Direction; }
 
+    const XMFLOAT3& GetUp() const { return Up; }
+
     const XMFLOAT3& GetRotation() const { return Rotation; }
 
     const XMFLOAT3& GetShadowMapPosition() const { return ShadowMapPosition; }
@@ -37,6 +39,7 @@ private:
     void CalculateMatrix();
 
     XMFLOAT3 Direction;
+    XMFLOAT3 Up;
     XMFLOAT3 Rotation;
     XMFLOAT3 LookAt;
     XMFLOAT3 ShadowMapPosition;

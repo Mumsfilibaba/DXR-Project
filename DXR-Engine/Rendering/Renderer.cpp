@@ -353,14 +353,14 @@ void Renderer::Tick(const Scene& Scene)
         CmdList2.SetShadingRate(EShadingRate::VRS_1x1);
 
         CmdList2.TransitionTexture(ShadingImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
-        
+
         CmdList2.SetComputePipelineState(ShadingRatePipeline.Get());
 
         UnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
         CmdList2.SetUnorderedAccessView(ShadingRateShader.Get(), ShadingImageUAV, 0);
-        
+
         CmdList2.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
-        
+
         CmdList2.TransitionTexture(ShadingImage.Get(), EResourceState::UnorderedAccess, EResourceState::ShadingRateSource);
 
         CmdList2.SetShadingRateImage(ShadingImage.Get());
@@ -400,24 +400,24 @@ void Renderer::Tick(const Scene& Scene)
 
     // Update camerabuffer
     CameraBufferDesc CamBuff;
-    CamBuff.ViewProjection    = Scene.GetCamera()->GetViewProjectionMatrix();
-    CamBuff.View              = Scene.GetCamera()->GetViewMatrix();
-    CamBuff.ViewInv           = Scene.GetCamera()->GetViewInverseMatrix();
-    CamBuff.Projection        = Scene.GetCamera()->GetProjectionMatrix();
-    CamBuff.ProjectionInv     = Scene.GetCamera()->GetProjectionInverseMatrix();
+    CamBuff.ViewProjection = Scene.GetCamera()->GetViewProjectionMatrix();
+    CamBuff.View = Scene.GetCamera()->GetViewMatrix();
+    CamBuff.ViewInv = Scene.GetCamera()->GetViewInverseMatrix();
+    CamBuff.Projection = Scene.GetCamera()->GetProjectionMatrix();
+    CamBuff.ProjectionInv = Scene.GetCamera()->GetProjectionInverseMatrix();
     CamBuff.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
-    CamBuff.Position          = Scene.GetCamera()->GetPosition();
-    CamBuff.Forward           = Scene.GetCamera()->GetForward();
-    CamBuff.NearPlane         = Scene.GetCamera()->GetNearPlane();
-    CamBuff.FarPlane          = Scene.GetCamera()->GetFarPlane();
-    CamBuff.AspectRatio       = Scene.GetCamera()->GetAspectRatio();
+    CamBuff.Position = Scene.GetCamera()->GetPosition();
+    CamBuff.Forward = Scene.GetCamera()->GetForward();
+    CamBuff.NearPlane = Scene.GetCamera()->GetNearPlane();
+    CamBuff.FarPlane = Scene.GetCamera()->GetFarPlane();
+    CamBuff.AspectRatio = Scene.GetCamera()->GetAspectRatio();
 
     CmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
     CmdList.UpdateBuffer(Resources.CameraBuffer.Get(), 0, sizeof(CameraBufferDesc), &CamBuff);
-    
+
     CmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
-    
+
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
@@ -489,13 +489,13 @@ void Renderer::Tick(const Scene& Scene)
 
     Resources.DebugTextures.EmplaceBack(
         MakeSharedRef<ShaderResourceView>(Resources.SSAOBuffer->GetShaderResourceView()),
-        Resources.SSAOBuffer, 
-        EResourceState::NonPixelShaderResource, 
+        Resources.SSAOBuffer,
+        EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource);
 
     {
         GPU_TRACE_SCOPE(CmdList, "Light Pass");
-        
+
         CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::PixelShaderResource, EResourceState::UnorderedAccess);
         CmdList.TransitionTexture(Resources.BackBuffer, EResourceState::Present, EResourceState::RenderTarget);
         CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
@@ -518,6 +518,30 @@ void Renderer::Tick(const Scene& Scene)
         LightSetup.DirLightShadowMap,
         EResourceState::PixelShaderResource,
         EResourceState::PixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(LightSetup.ShadowMapCascades[0]->GetShaderResourceView()),
+        LightSetup.ShadowMapCascades[0],
+        EResourceState::NonPixelShaderResource,
+        EResourceState::NonPixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(LightSetup.ShadowMapCascades[1]->GetShaderResourceView()),
+        LightSetup.ShadowMapCascades[1],
+        EResourceState::NonPixelShaderResource,
+        EResourceState::NonPixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(LightSetup.ShadowMapCascades[2]->GetShaderResourceView()),
+        LightSetup.ShadowMapCascades[2],
+        EResourceState::NonPixelShaderResource,
+        EResourceState::NonPixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(LightSetup.ShadowMapCascades[3]->GetShaderResourceView()),
+        LightSetup.ShadowMapCascades[3],
+        EResourceState::NonPixelShaderResource,
+        EResourceState::NonPixelShaderResource);
 
     CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
     CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);

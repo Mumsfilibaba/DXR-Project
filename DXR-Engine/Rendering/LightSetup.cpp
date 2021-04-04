@@ -9,8 +9,7 @@
 
 bool LightSetup::Init()
 {
-    DirectionalLightsData.Reserve(1);
-    DirectionalLightsBuffer = CreateConstantBuffer(DirectionalLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+    DirectionalLightsBuffer = CreateConstantBuffer(sizeof(DirectionalLightData), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
     if (!DirectionalLightsBuffer)
     {
         Debug::DebugBreak();
@@ -87,8 +86,6 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
     ShadowCastingPointLightsPosRad.Clear();
     ShadowCastingPointLightsData.Clear();
     PointLightShadowMapsGenerationData.Clear();
-    DirLightShadowMapsGenerationData.Clear();
-    DirectionalLightsData.Clear();
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Update Lights");
 
@@ -150,113 +147,116 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
             DirectionalLight* CurrentLight = Cast<DirectionalLight>(Light);
             Assert(CurrentLight != nullptr);
 
-            DirectionalLightData Data;
-            Data.Color      = Color;
-            Data.ShadowBias = CurrentLight->GetShadowBias();
-            Data.Direction  = CurrentLight->GetDirection();
+            DirLightData.Color      = Color;
+            DirLightData.ShadowBias = CurrentLight->GetShadowBias();
+            DirLightData.Direction  = CurrentLight->GetDirection();
 
             // TODO: Should not be the done in the renderer
             XMFLOAT3 CameraPosition = Camera->GetPosition();
             XMFLOAT3 CameraForward  = Camera->GetForward();
 
-            float NearPlane  = Camera->GetNearPlane();
-            float FarPlane   = Camera->GetFarPlane();
-            float FrustumLength = FarPlane - NearPlane;
-            float DirFrustum    = 35.0f;
-            
-            XMFLOAT3 LookAt = CameraPosition + (CameraForward * (DirFrustum + NearPlane));
-            CurrentLight->SetLookAt(LookAt);
-            
-            float AspectRatio = Camera->GetAspectRatio();
-            float TanHalfHFOV = tanf(Math::ToRadians(Camera->GetFOV() / 2.0f));
-            float TanHalfVFOV = tanf(Math::ToRadians((Camera->GetFOV() * AspectRatio) / 2.0f));
+            XMFLOAT4X4 InvCamera = Camera->GetViewProjectionInverseMatrix();
+            XMFLOAT4X4 LightView = CurrentLight->GetViewMatrix();
 
-            XMFLOAT4X4 InvViewMatrix = Camera->GetViewInverseMatrix();
-            XMFLOAT4X4 LightView     = CurrentLight->GetViewMatrix();
+            DirLightShadowMapsGenerationData.Matrix   = CurrentLight->GetMatrix();
+            DirLightShadowMapsGenerationData.FarPlane = CurrentLight->GetShadowFarPlane();
+            DirLightShadowMapsGenerationData.Position = CurrentLight->GetShadowMapPosition();
 
-            DirLightShadowMapGenerationData ShadowData;
-            ShadowData.Matrix   = CurrentLight->GetMatrix();
-            ShadowData.FarPlane = CurrentLight->GetShadowFarPlane();
-            ShadowData.Position = CurrentLight->GetShadowMapPosition();
+            float NearPlane = Camera->GetNearPlane();
+            float FarPlane  = Camera->GetFarPlane();
+            float ClipRange = FarPlane - NearPlane;
 
-            ShadowData.ShadowCascadesFarPlanes[0] = NearPlane;
-            ShadowData.ShadowCascadesFarPlanes[1] = 25.0f;
-            ShadowData.ShadowCascadesFarPlanes[2] = 50.0f;
-            ShadowData.ShadowCascadesFarPlanes[3] = 75.0f;
-            ShadowData.ShadowCascadesFarPlanes[4] = FarPlane;
+            float MinZ = NearPlane;
+            float MaxZ = FarPlane;
 
-            for (uint32 i = 0; i < 4; i++)
+            float Range = ClipRange;
+            float Ratio = MaxZ / MinZ;
+
+            // Calculate split depths based on view camera frustum
+            // Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
+            for (uint32 i = 0; i < 4; i++) 
             {
-                float NearX = ShadowData.ShadowCascadesFarPlanes[i] * TanHalfHFOV;
-                float FarX  = ShadowData.ShadowCascadesFarPlanes[i + 1] * TanHalfHFOV;
-                float NearY = ShadowData.ShadowCascadesFarPlanes[i] * TanHalfVFOV;
-                float FarY  = ShadowData.ShadowCascadesFarPlanes[i + 1] * TanHalfVFOV;
-
-                XMFLOAT4 FrustumCorners[8] =
-                {
-                    // Near Plane
-                    XMFLOAT4( NearX,  NearY, ShadowData.ShadowCascadesFarPlanes[i], 1.0f),
-                    XMFLOAT4(-NearX,  NearY, ShadowData.ShadowCascadesFarPlanes[i], 1.0f),
-                    XMFLOAT4( NearX, -NearY, ShadowData.ShadowCascadesFarPlanes[i], 1.0f),
-                    XMFLOAT4(-NearX, -NearY, ShadowData.ShadowCascadesFarPlanes[i], 1.0f),
-
-                    // Far Plane
-                    XMFLOAT4( FarX,  FarY, ShadowData.ShadowCascadesFarPlanes[i + 1], 1.0f),
-                    XMFLOAT4(-FarX,  FarY, ShadowData.ShadowCascadesFarPlanes[i + 1], 1.0f),
-                    XMFLOAT4( FarX, -FarY, ShadowData.ShadowCascadesFarPlanes[i + 1], 1.0f),
-                    XMFLOAT4(-FarX, -FarY, ShadowData.ShadowCascadesFarPlanes[i + 1], 1.0f)
-                };
-
-                float MinX = FLT_MAX;
-                float MaxX = FLT_MIN;
-                float MinY = FLT_MAX;
-                float MaxY = FLT_MIN;
-                float MinZ = FLT_MAX;
-                float MaxZ = FLT_MIN;
-
-                XMFLOAT4 FrustumCornersL[8];
-                for (uint32 j = 0; j < 8; j++)
-                {
-                    // Transform the frustum coordinate from view to world space
-                    XMMATRIX XmInvViewMatrix = XMLoadFloat4x4(&InvViewMatrix);
-                    XMVECTOR XmCorner        = XMLoadFloat4(&FrustumCorners[j]);
-
-                    XMVECTOR vW = XMVector4Transform(XmCorner, XmInvViewMatrix);
-
-                    XMMATRIX XmLightView = XMLoadFloat4x4(&LightView);
-                    XMVECTOR LightCorner = XMVector4Transform(vW, XmLightView);
-
-                    // Transform the frustum coordinate from world to light space
-                    XMStoreFloat4(&FrustumCornersL[j], LightCorner);
-
-                    MinX = Math::Min(MinX, FrustumCornersL[j].x);
-                    MaxX = Math::Max(MaxX, FrustumCornersL[j].x);
-                    MinY = Math::Min(MinY, FrustumCornersL[j].y);
-                    MaxY = Math::Max(MaxY, FrustumCornersL[j].y);
-                    MinZ = Math::Min(MinZ, FrustumCornersL[j].z);
-                    MaxZ = Math::Max(MaxZ, FrustumCornersL[j].z);
-                }
-
-                XMMATRIX XmCascadeMatrix = XMMatrixOrthographicOffCenterLH(MinX, MaxX, MinY, MaxY, MinZ, MaxZ);
-                XMStoreFloat4x4(&ShadowData.CascadeMatrices[i], XmCascadeMatrix);
+                float p = (i + 1) / static_cast<float>(4);
+                float Log = MinZ * std::pow(Ratio, p);
+                float Uniform = MinZ + Range * p;
+                float d = CascadeSplitLambda * (Log - Uniform) + Uniform;
+                DirLightShadowMapsGenerationData.ShadowCascadesFarPlanes[i] = (d - NearPlane) / ClipRange;
             }
 
-            Data.LightMatrix   = CurrentLight->GetMatrix();
-            Data.MaxShadowBias = CurrentLight->GetMaxShadowBias();
+            float LastSplitDist = 0.0f;
+            for (uint32 i = 0; i < 4; i++)
+            {
+                float SplitDist = DirLightShadowMapsGenerationData.ShadowCascadesFarPlanes[i];
 
-            DirectionalLightsData.EmplaceBack(Data);
-            DirLightShadowMapsGenerationData.EmplaceBack(ShadowData);
-        }
-    }
+                XMFLOAT4 FrustumCorners[8] = 
+                {
+                    XMFLOAT4(-1.0f,  1.0f, -1.0f, 1.0f),
+                    XMFLOAT4( 1.0f,  1.0f, -1.0f, 1.0f),
+                    XMFLOAT4( 1.0f, -1.0f, -1.0f, 1.0f),
+                    XMFLOAT4(-1.0f, -1.0f, -1.0f, 1.0f),
+                    XMFLOAT4(-1.0f,  1.0f,  1.0f, 1.0f),
+                    XMFLOAT4( 1.0f,  1.0f,  1.0f, 1.0f),
+                    XMFLOAT4( 1.0f, -1.0f,  1.0f, 1.0f),
+                    XMFLOAT4(-1.0f, -1.0f,  1.0f, 1.0f),
+                };
 
-    if (DirectionalLightsData.SizeInBytes() > DirectionalLightsBuffer->GetSize())
-    {
-        CmdList.DiscardResource(DirectionalLightsBuffer.Get());
+                // Calculate position of light frustum
+                XMMATRIX XmLightView = XMMatrixTranspose(XMLoadFloat4x4(&LightView));
+                XMMATRIX XmInvCamera = XMMatrixTranspose(XMLoadFloat4x4(&InvCamera));
+                for (uint32 j = 0; j < 8; j++)
+                {
+                    XMVECTOR XmCorner = XMLoadFloat4(&FrustumCorners[j]);
+                    XmCorner = XMVector4Transform(XmCorner, XmInvCamera);
+                    XMStoreFloat4(&FrustumCorners[j], XmCorner);
 
-        DirectionalLightsBuffer = CreateConstantBuffer(DirectionalLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
-        if (!DirectionalLightsBuffer)
-        {
-            Debug::DebugBreak();
+                    FrustumCorners[j] = FrustumCorners[j] / FrustumCorners[j].w;
+                }
+
+                for (uint32 j = 0; j < 4; j++)
+                {
+                    const XMFLOAT4 Distance = FrustumCorners[j + 4] - FrustumCorners[j];
+                    FrustumCorners[j + 4] = FrustumCorners[j] + (Distance * SplitDist);
+                    FrustumCorners[j]     = FrustumCorners[j] + (Distance * LastSplitDist);
+                }
+
+                // Calc frustum center
+                XMFLOAT4 Center = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+                for (uint32 j = 0; j < 8; j++) 
+                {
+                    Center = Center + FrustumCorners[j];
+                }
+                Center = Center / 8.0f;
+
+                float Radius = 0.0f;
+                for (uint32 j = 0; j < 8; j++)
+                {
+                    float Distance = Length(FrustumCorners[j] - Center);
+                    Radius = Math::Max(Radius, Distance);
+                }
+                Radius = std::ceil(Radius * 16.0f) / 16.0f;
+
+                XMFLOAT3 MaxExtents = XMFLOAT3(Radius, Radius, Radius);
+                XMFLOAT3 MinExtents = -MaxExtents;
+
+                XMFLOAT3 LightUp   = CurrentLight->GetUp();
+                XMFLOAT3 Direction = CurrentLight->GetDirection();
+                XMFLOAT3 Position  = XMFLOAT3(Center.x, Center.y, Center.z) - Direction * -MinExtents.z;
+
+                XMVECTOR EyePosition  = XMVectorSet(Position.x, Position.y, Position.z, 1.0f);
+                XMVECTOR LookPosition = XMVectorSet(Center.x, Center.y, Center.z, 0.0f);
+                XMVECTOR Up           = XMVectorSet(LightUp.x, LightUp.y, LightUp.z, 0.0f);
+
+                XMMATRIX XmViewMatrix = XMMatrixLookAtLH(EyePosition, LookPosition, Up);
+                XMMATRIX XmOrtoMatrix = XMMatrixOrthographicOffCenterLH(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, 0.0f, MaxExtents.z - MinExtents.z);
+                XMStoreFloat4x4(&DirLightShadowMapsGenerationData.CascadeMatrices[i], XMMatrixMultiplyTranspose(XmViewMatrix, XmOrtoMatrix));
+
+                LastSplitDist = SplitDist;
+            }
+
+            DirLightData.LightMatrix   = CurrentLight->GetMatrix();
+            DirLightData.MaxShadowBias = CurrentLight->GetMaxShadowBias();
+
+            DirectionalLightDataDirty = true;
         }
     }
 
@@ -318,9 +318,11 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
     CmdList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
     CmdList.TransitionBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
-    if (!DirectionalLightsData.IsEmpty())
+    if (DirectionalLightDataDirty)
     {
-        CmdList.UpdateBuffer(DirectionalLightsBuffer.Get(), 0, DirectionalLightsData.SizeInBytes(), DirectionalLightsData.Data());
+        CmdList.UpdateBuffer(DirectionalLightsBuffer.Get(), 0, sizeof(DirectionalLightData), &DirLightData);
+        
+        DirectionalLightDataDirty = false;
     }
 
     if (!PointLightsData.IsEmpty())

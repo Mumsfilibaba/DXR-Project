@@ -15,6 +15,7 @@ DirectionalLight::DirectionalLight()
 
 DirectionalLight::~DirectionalLight()
 {
+    // Empty for now
 }
 
 void DirectionalLight::SetRotation(const XMFLOAT3& InRotation)
@@ -80,6 +81,7 @@ void DirectionalLight::CalculateMatrix()
 
     XMVECTOR XmUp = XMVectorSet(0.0, 0.0f, 1.0f, 0.0f);
     XmUp = XMVector3Normalize(XMVector3Transform(XmUp, XmRotation));
+    XMStoreFloat3(&Up, XmUp);
 
     const float Offset    = 35.0f;
     XMMATRIX XmProjection = XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, ShadowNearPlane, ShadowFarPlane);
