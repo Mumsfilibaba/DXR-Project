@@ -56,11 +56,10 @@ struct LightSetup
     const uint32 MaxDirectionalLights = 256;
     const uint32 MaxPointLightShadows = 8;
     
-    const uint16 ShadowMapWidth  = 4096;
-    const uint16 ShadowMapHeight = 4096;
-
-    const uint16 CascadeWidth  = 2048;
-    const uint16 CascadeHeight = 2048;
+    const uint16 CascadeSizes[NUM_SHADOW_CASCADES] =
+    {
+        2048, 2048, 4096, 4096
+    };
     
     const uint16 PointLightShadowSize = 1024;
 

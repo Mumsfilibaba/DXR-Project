@@ -267,7 +267,6 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
         struct ShadowPerObject
         {
             XMFLOAT4X4 Matrix;
-            float      ShadowOffset;
         } ShadowPerObjectBuffer;
 
         PerShadowMap PerShadowMapData;
@@ -316,10 +315,9 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
                             CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
                             CmdList.SetIndexBuffer(Command.IndexBuffer);
 
-                            ShadowPerObjectBuffer.Matrix       = Command.CurrentActor->GetTransform().GetMatrix();
-                            ShadowPerObjectBuffer.ShadowOffset = Command.Mesh->ShadowOffset;
+                            ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
-                            CmdList.Set32BitShaderConstants(PointLightVertexShader.Get(), &ShadowPerObjectBuffer, 17);
+                            CmdList.Set32BitShaderConstants(PointLightVertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
                             CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
                         }
@@ -332,10 +330,9 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
                         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
                         CmdList.SetIndexBuffer(Command.IndexBuffer);
 
-                        ShadowPerObjectBuffer.Matrix       = Command.CurrentActor->GetTransform().GetMatrix();
-                        ShadowPerObjectBuffer.ShadowOffset = Command.Mesh->ShadowOffset;
+                        ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
-                        CmdList.Set32BitShaderConstants(PointLightVertexShader.Get(), &ShadowPerObjectBuffer, 17);
+                        CmdList.Set32BitShaderConstants(PointLightVertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
                         CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
                     }
@@ -371,19 +368,19 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
     struct ShadowPerObject
     {
         XMFLOAT4X4 Matrix;
-        float      ShadowOffset;
     } ShadowPerObjectBuffer;
 
     PerShadowMap PerShadowMapData;
-    for (uint32 i = 0; i < 4; i++)
+    for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
     {
         DepthStencilView* CascadeDSV = LightSetup.ShadowMapCascades[i]->GetDepthStencilView();
         CmdList.ClearDepthStencilView(CascadeDSV, DepthStencilF(1.0f, 0));
 
         CmdList.SetRenderTargets(nullptr, 0, CascadeDSV);
 
-        CmdList.SetViewport(static_cast<float>(LightSetup.CascadeWidth), static_cast<float>(LightSetup.CascadeHeight), 0.0f, 1.0f, 0.0f, 0.0f);
-        CmdList.SetScissorRect(LightSetup.CascadeWidth, LightSetup.CascadeHeight, 0, 0);
+        const uint16 CascadeSize = LightSetup.CascadeSizes[i];
+        CmdList.SetViewport(static_cast<float>(CascadeSize), static_cast<float>(CascadeSize), 0.0f, 1.0f, 0.0f, 0.0f);
+        CmdList.SetScissorRect(CascadeSize, CascadeSize, 0, 0);
 
         PerShadowMapData.Matrix   = LightSetup.DirectionalLightData.CascadeMatrices[i];
         PerShadowMapData.Position = LightSetup.DirectionalLightData.Position;
@@ -403,10 +400,9 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
             CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
             CmdList.SetIndexBuffer(Command.IndexBuffer);
 
-            ShadowPerObjectBuffer.Matrix       = Command.CurrentActor->GetTransform().GetMatrix();
-            ShadowPerObjectBuffer.ShadowOffset = Command.Mesh->ShadowOffset;
+            ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
-            CmdList.Set32BitShaderConstants(DirLightShader.Get(), &ShadowPerObjectBuffer, 17);
+            CmdList.Set32BitShaderConstants(DirLightShader.Get(), &ShadowPerObjectBuffer, 16);
 
             CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
         }
@@ -466,12 +462,13 @@ bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
         return false;
     }
 
-    for (uint32 i = 0; i < 4; i++)
+    for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
     {
+        const uint16 CascadeSize = LightSetup.CascadeSizes[i];
+
         LightSetup.ShadowMapCascades[i] = CreateTexture2D(
-            LightSetup.ShadowMapFormat,
-            LightSetup.CascadeWidth,
-            LightSetup.CascadeHeight,
+            LightSetup.ShadowMapFormat, 
+            CascadeSize, CascadeSize,
             1, 1, TextureFlags_ShadowMap,
             EResourceState::PixelShaderResource,
             nullptr);

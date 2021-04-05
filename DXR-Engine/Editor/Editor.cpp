@@ -746,28 +746,6 @@ static void DrawSceneInfo()
                             CurrentDirectionalLight->SetMaxShadowBias(MaxShadowBias);
                         }
 
-                        // Shadow Near Plane
-                        ImGui::NextColumn();
-                        ImGui::Text("Shadow Near Plane");
-                        ImGui::NextColumn();
-
-                        float ShadowNearPlane = CurrentDirectionalLight->GetShadowNearPlane();
-                        if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.01f, 1.0f, "%.2f"))
-                        {
-                            CurrentDirectionalLight->SetShadowNearPlane(ShadowNearPlane);
-                        }
-
-                        // Shadow Far Plane 
-                        ImGui::NextColumn();
-                        ImGui::Text("Shadow Far Plane");
-                        ImGui::NextColumn();
-
-                        float ShadowFarPlane = CurrentLight->GetShadowFarPlane();
-                        if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 1000.0f, "%.1f"))
-                        {
-                            CurrentDirectionalLight->SetShadowFarPlane(ShadowFarPlane);
-                        }
-
                         // Cascade Split Lambda
                         ImGui::NextColumn();
                         ImGui::Text("Cascade Split Lambda");
@@ -783,6 +761,33 @@ static void DrawSceneInfo()
                         {
                             ImGui::SetTooltip("Value modifying the splits for the shadow map cascades");
                         }
+
+                        // Read only splits
+                        ImGui::NextColumn();
+                        ImGui::Text("Cascade Splits");
+                        ImGui::NextColumn();
+
+                        ImGui::PushItemWidth(75.0f);
+
+                        float CascadeSplit = CurrentDirectionalLight->GetCascadeSplit(0);
+                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+
+                        ImGui::SameLine();
+
+                        CascadeSplit = CurrentDirectionalLight->GetCascadeSplit(1);
+                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+
+                        ImGui::SameLine();
+
+                        CascadeSplit = CurrentDirectionalLight->GetCascadeSplit(2);
+                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+
+                        ImGui::SameLine();
+                        
+                        CascadeSplit = CurrentDirectionalLight->GetCascadeSplit(3);
+                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+
+                        ImGui::PopItemWidth();
 
                         ImGui::Columns(1);
                         ImGui::TreePop();

@@ -37,7 +37,7 @@ bool Sandbox::Init()
     // Create Spheres
     MeshData SphereMeshData     = MeshFactory::CreateSphere(3);
     TSharedPtr<Mesh> SphereMesh = Mesh::Make(SphereMeshData);
-    SphereMesh->ShadowOffset = 0.05f;
+    SphereMesh->ShadowOffset = 0.05f; // TODO: Remove
 
     // Create standard textures
     uint8 Pixels[] =
@@ -227,8 +227,8 @@ bool Sandbox::Init()
     NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
     MatProperties.AO           = 1.0f;
-    MatProperties.Metallic     = 1.0f;
-    MatProperties.Roughness    = 0.25f;
+    MatProperties.Metallic     = 0.0f;
+    MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo       = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
@@ -387,12 +387,11 @@ bool Sandbox::Init()
 
     // Add DirectionalLight- Source
     DirectionalLight* Light4 = DBG_NEW DirectionalLight();
-    Light4->SetShadowBias(0.0008f);
-    Light4->SetMaxShadowBias(0.008f);
-    Light4->SetShadowNearPlane(0.01f);
-    Light4->SetShadowFarPlane(140.0f);
+    Light4->SetShadowBias(0.0001f);
+    Light4->SetMaxShadowBias(0.001f);
     Light4->SetColor(1.0f, 1.0f, 1.0f);
     Light4->SetIntensity(10.0f);
+    Light4->SetRotation(Math::ToRadians(45.0f), Math::ToRadians(145.0f), 0.0f);
     Scene->AddLight(Light4);
 
     return true;

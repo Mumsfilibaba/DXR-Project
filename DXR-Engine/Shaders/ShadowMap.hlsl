@@ -4,7 +4,6 @@
 cbuffer TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     float4x4 Transform;
-    float ShadowOffset;
 };
 
 // PerFrame DescriptorTable
@@ -27,10 +26,7 @@ struct VSInput
 // Normal ShadowMap Generation
 float4 Main(VSInput Input) : SV_POSITION
 {
-    float3 Normal	= normalize(Input.Normal);
-    float3 Position = Input.Position + (Normal * ShadowOffset);
-    
-    float4 WorldPosition = mul(float4(Position, 1.0f), Transform);
+    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Transform);
     return mul(WorldPosition, LightProjection);
 }
 

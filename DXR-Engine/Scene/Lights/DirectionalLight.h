@@ -20,9 +20,6 @@ public:
     void SetLookAt(const XMFLOAT3& InInLookAt);
     void SetLookAt(float x, float y, float z);
 
-    void SetShadowNearPlane(float InShadowNearPlane);
-    void SetShadowFarPlane(float InShadowFarPlane);
-
     void SetCascadeSplitLambda(float InCascadeSplitLambda) { CascadeSplitLambda = InCascadeSplitLambda; }
 
     const XMFLOAT3& GetDirection() const { return Direction; }
@@ -70,5 +67,5 @@ private:
 
     float CascadeSplits[NUM_SHADOW_CASCADES];
 
-    float CascadeSplitLambda = 0.95f;
+    float CascadeSplitLambda = 0.825f;
 };

@@ -83,7 +83,7 @@ float PointLightShadowFactor(
 * Calculate DirectionalLight Shadows
 */
 
-#define PCF_RANGE 1
+#define PCF_RANGE 2
 #define PCF_WIDTH float((PCF_RANGE * 2) + 1)
 
 #define ENABLE_POISSON_FILTERING 0
