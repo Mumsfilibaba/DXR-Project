@@ -359,7 +359,6 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
 
     GPU_TRACE_SCOPE(CmdList, "DirectionalLight ShadowMaps");
 
-    CmdList.TransitionTexture(LightSetup.DirLightShadowMap.Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
     CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
     CmdList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
     CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
@@ -413,7 +412,6 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
         }
     }
 
-    CmdList.TransitionTexture(LightSetup.DirLightShadowMap.Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
@@ -462,22 +460,6 @@ bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
                 }
             }
         }
-    }
-    else
-    {
-        return false;
-    }
-
-    LightSetup.DirLightShadowMap = CreateTexture2D(
-        LightSetup.ShadowMapFormat,
-        LightSetup.ShadowMapWidth,
-        LightSetup.ShadowMapHeight,
-        1, 1, TextureFlags_ShadowMap,
-        EResourceState::PixelShaderResource,
-        nullptr);
-    if (LightSetup.DirLightShadowMap)
-    {
-        LightSetup.DirLightShadowMap->SetName("Directional Light ShadowMaps");
     }
     else
     {

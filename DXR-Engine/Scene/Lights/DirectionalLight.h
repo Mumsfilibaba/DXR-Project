@@ -1,7 +1,7 @@
 #pragma once
 #include "Light.h"
 
-#define NUM_CASCADES 4
+#define NUM_SHADOW_CASCADES (4)
 
 class DirectionalLight : public Light
 {
@@ -37,19 +37,19 @@ public:
 
     const XMFLOAT4X4& GetMatrix(uint32 CascadeIndex) const 
     {
-        Assert(CascadeIndex < NUM_CASCADES);
+        Assert(CascadeIndex < NUM_SHADOW_CASCADES);
         return Matrices[CascadeIndex];
     }
 
     const XMFLOAT4X4& GetViewMatrix(uint32 CascadeIndex) const
     {
-        Assert(CascadeIndex < NUM_CASCADES);
+        Assert(CascadeIndex < NUM_SHADOW_CASCADES);
         return ViewMatrices[CascadeIndex];
     }
 
     const XMFLOAT4X4& GetProjectionMatrix(uint32 CascadeIndex) const 
     {
-        Assert(CascadeIndex < NUM_CASCADES);
+        Assert(CascadeIndex < NUM_SHADOW_CASCADES);
         return ProjectionMatrices[CascadeIndex];
     }
 
@@ -64,11 +64,11 @@ private:
     XMFLOAT3 LookAt;
     XMFLOAT3 Position;
 
-    XMFLOAT4X4 ViewMatrices[NUM_CASCADES];
-    XMFLOAT4X4 ProjectionMatrices[NUM_CASCADES];
-    XMFLOAT4X4 Matrices[NUM_CASCADES];
+    XMFLOAT4X4 ViewMatrices[NUM_SHADOW_CASCADES];
+    XMFLOAT4X4 ProjectionMatrices[NUM_SHADOW_CASCADES];
+    XMFLOAT4X4 Matrices[NUM_SHADOW_CASCADES];
 
-    float CascadeSplits[NUM_CASCADES];
+    float CascadeSplits[NUM_SHADOW_CASCADES];
 
     float CascadeSplitLambda = 0.95f;
 };

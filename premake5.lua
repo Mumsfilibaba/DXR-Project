@@ -1,3 +1,8 @@
+function findProjectDir()
+	local projectName = "/%{prj.name}"
+	return os.getcwd() .. projectName 
+end
+
 workspace "DXR-Project"
     startproject 	"Sandbox"
     architecture 	"x64"
@@ -206,6 +211,11 @@ workspace "DXR-Project"
 			"%{prj.name}/**.cpp",
 			"%{prj.name}/**.hlsl",	
         }
+		
+		defines
+		{
+			"PROJECT_LOCATION=" .. "\"" .. findProjectDir().. "\""
+		}
 		
 		-- Include Windows Main
 		filter "system:windows"

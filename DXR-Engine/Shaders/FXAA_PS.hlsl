@@ -15,21 +15,22 @@
 #endif
 
 // FXAA Settings
-#define FXAA_EDGE_THRESHOLD		(1.0f / 8.0f)
-#define FXAA_EDGE_THRESHOLD_MIN	(1.0f / 24.0f)
-#define FXAA_SUBPIX_TRIM		(1.0f / 4.0f)
-#define FXAA_SUBPIX_CAP			(3.0f / 4.0f)
-#define FXAA_SUBPIX_TRIM_SCALE	(1.0f / (1.0f - FXAA_SUBPIX_TRIM))
-#define FXAA_SEARCH_THRESHOLD	(1.0f / 4.0f)
-#define FXAA_SEARCH_STEPS		24
+#define FXAA_EDGE_THRESHOLD     (1.0f / 8.0f)
+#define FXAA_EDGE_THRESHOLD_MIN (1.0f / 24.0f)
+#define FXAA_SUBPIX_TRIM        (1.0f / 4.0f)
+#define FXAA_SUBPIX_CAP         (3.0f / 4.0f)
+#define FXAA_SUBPIX_TRIM_SCALE  (1.0f / (1.0f - FXAA_SUBPIX_TRIM))
+#define FXAA_SEARCH_THRESHOLD   (1.0f / 4.0f)
+#define FXAA_SEARCH_STEPS       24
 
 cbuffer CB0 : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
     float2 TextureSize;
 }
 
-Texture2D    FinalImage : register(t0, space0);
-SamplerState Sampler    : register(s0, space0);
+Texture2D FinalImage : register(t0, space0);
+
+SamplerState Sampler : register(s0, space0);
 
 float4 FXAASample(in Texture2D Texture, in SamplerState InSampler, float2 TexCoord)
 {

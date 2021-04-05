@@ -155,8 +155,8 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
             DirectionalLightData.Direction     = CurrentLight->GetDirection();
             DirectionalLightData.MaxShadowBias = CurrentLight->GetMaxShadowBias();
             DirectionalLightData.Position      = CurrentLight->GetPosition();
-            
-            for (uint32 i = 0; i < NUM_CASCADES; i++)
+
+            for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
             {
                 DirectionalLightData.CascadeDepths[i]   = CurrentLight->GetCascadeSplit(i);
                 DirectionalLightData.CascadeMatrices[i] = CurrentLight->GetMatrix(i);
@@ -269,8 +269,6 @@ void LightSetup::Release()
             DSVCube[i].Reset();
         }
     }
-
-    DirLightShadowMap.Reset();
 
     for (uint32 i = 0; i < 4; i++)
     {

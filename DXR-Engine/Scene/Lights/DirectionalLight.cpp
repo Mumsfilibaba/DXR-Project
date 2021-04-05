@@ -14,7 +14,7 @@ DirectionalLight::DirectionalLight()
 {
     CORE_OBJECT_INIT();
 
-    for (uint32 i = 0; i < NUM_CASCADES; i++)
+    for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
     {
         XMStoreFloat4x4(&Matrices[i], XMMatrixIdentity());
         XMStoreFloat4x4(&ViewMatrices[i], XMMatrixIdentity());
@@ -39,26 +39,17 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
     XmUp = XMVector3Normalize(XMVector3Transform(XmUp, XmRotation));
     XMStoreFloat3(&Up, XmUp);
 
-    //const float Offset = 35.0f;
-    //XMMATRIX XmProjection = XMMatrixOrthographicOffCenterLH(-Offset, Offset, -Offset, Offset, ShadowNearPlane, ShadowFarPlane);
-    //XMMATRIX XmView = XMMatrixLookAtLH(XmPosition, XmLookAt, XmUp);
-
     const float Scale = (ShadowFarPlane - ShadowNearPlane) / 2.0f;
     XmOffset = XMVectorScale(XmOffset, -Scale);
 
-    XMVECTOR XmLookAt = XMLoadFloat3(&LookAt);
+    XMVECTOR XmLookAt   = XMLoadFloat3(&LookAt);
     XMVECTOR XmPosition = XMVectorAdd(XmLookAt, XmOffset);
     XMStoreFloat3(&Position, XmPosition);
 
-    // TODO: Should not be the done in the renderer
-    //XMFLOAT3 CameraPosition = Camera->GetPosition();
-    //XMFLOAT3 CameraForward  = Camera->GetForward();
-    //XMFLOAT4X4 LightView = CurrentLight->GetViewMatrix();
-
     XMFLOAT4X4 InvCamera = Camera.GetViewProjectionInverseMatrix();
 
-    float NearPlane = GetShadowNearPlane();
-    float FarPlane  = GetShadowFarPlane();
+    float NearPlane = Camera.GetNearPlane();
+    float FarPlane  = Camera.GetFarPlane();
     float ClipRange = FarPlane - NearPlane;
 
     float MinZ = NearPlane;
@@ -67,21 +58,23 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
     float Range = ClipRange;
     float Ratio = MaxZ / MinZ;
 
+    float LocalCascadeSplits[NUM_SHADOW_CASCADES];
+
     // Calculate split depths based on view camera frustum
     // Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
     for (uint32 i = 0; i < 4; i++)
     {
-        float p = (i + 1) / static_cast<float>(NUM_CASCADES);
+        float p = (i + 1) / static_cast<float>(NUM_SHADOW_CASCADES);
         float Log = MinZ * std::pow(Ratio, p);
         float Uniform = MinZ + Range * p;
         float d = CascadeSplitLambda * (Log - Uniform) + Uniform;
-        CascadeSplits[i] = (d - NearPlane) / ClipRange;
+        LocalCascadeSplits[i] = (d - NearPlane) / ClipRange;
     }
 
     float LastSplitDist = 0.0f;
     for (uint32 i = 0; i < 4; i++)
     {
-        float SplitDist = CascadeSplits[i];
+        float SplitDist = LocalCascadeSplits[i];
 
         XMFLOAT4 FrustumCorners[8] =
         {
@@ -139,13 +132,15 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
         XMVECTOR LookPosition = XMVectorSet(Center.x, Center.y, Center.z, 0.0f);
 
         XMMATRIX XmViewMatrix = XMMatrixLookAtLH(EyePosition, LookPosition, XmUp);
-        XMMATRIX XmOrtoMatrix = XMMatrixOrthographicOffCenterLH(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, 0.0f, MaxExtents.z - MinExtents.z);
+        XMMATRIX XmOrtoMatrix = XMMatrixOrthographicOffCenterLH(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, -(MaxExtents.z - MinExtents.z), MaxExtents.z - MinExtents.z);
 
         XMStoreFloat4x4(&ViewMatrices[i], XMMatrixTranspose(XmViewMatrix));
         XMStoreFloat4x4(&ProjectionMatrices[i], XMMatrixTranspose(XmOrtoMatrix));
         XMStoreFloat4x4(&Matrices[i], XMMatrixMultiplyTranspose(XmViewMatrix, XmOrtoMatrix));
 
         LastSplitDist = SplitDist;
+
+        CascadeSplits[i] = (NearPlane + SplitDist * ClipRange);
     }
 }
 

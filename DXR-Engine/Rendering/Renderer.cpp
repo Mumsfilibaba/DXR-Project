@@ -511,13 +511,6 @@ void Renderer::Tick(const Scene& Scene)
     SkyboxRenderPass.Render(CmdList, Resources, Scene);
 
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.DirLightShadowMap.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
-
-    Resources.DebugTextures.EmplaceBack(
-        MakeSharedRef<ShaderResourceView>(LightSetup.DirLightShadowMap->GetShaderResourceView()),
-        LightSetup.DirLightShadowMap,
-        EResourceState::PixelShaderResource,
-        EResourceState::PixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
         MakeSharedRef<ShaderResourceView>(LightSetup.ShadowMapCascades[0]->GetShaderResourceView()),

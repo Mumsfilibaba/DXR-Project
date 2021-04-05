@@ -83,15 +83,15 @@ float PointLightShadowFactor(
 * Calculate DirectionalLight Shadows
 */
 
-#define PCF_RANGE	2
-#define PCF_WIDTH	float((PCF_RANGE * 2) + 1)
+#define PCF_RANGE 1
+#define PCF_WIDTH float((PCF_RANGE * 2) + 1)
 
-#define ENABLE_POISSON_FILTERING	0
-#define ENABLE_VSM					0
+#define ENABLE_POISSON_FILTERING 0
+#define ENABLE_VSM               0
 
 #if ENABLE_POISSON_FILTERING
-#define POISSON_SAMPLES			2
-#define TOTAL_POISSON_SAMPLES   16
+#define POISSON_SAMPLES       2
+#define TOTAL_POISSON_SAMPLES 16
 
 static const float2 PoissonDisk[16] =
 {
@@ -182,14 +182,15 @@ float DirectionalLightShadowFactor(
     in SamplerComparisonState Sampler,
     float3 WorldPosition, 
     float3 N,
-    DirectionalLight Light)
+    DirectionalLight Light, 
+    uint CascadeIndex)
 {
-    float4 LightSpacePosition = mul(float4(WorldPosition, 1.0f), Light.CascadeMatrices[0]);
+    float4 LightSpacePosition = mul(float4(WorldPosition, 1.0f), Light.CascadeMatrices[CascadeIndex]);
     float3 L = normalize(-Light.Direction);
     
     float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;
-    ProjCoords.xy     = (ProjCoords.xy * 0.5f) + 0.5f;
-    ProjCoords.y      = 1.0f - ProjCoords.y;
+    ProjCoords.xy = (ProjCoords.xy * 0.5f) + 0.5f;
+    ProjCoords.y  = 1.0f - ProjCoords.y;
     
     float Depth = ProjCoords.z;
     if (Depth >= 1.0f)

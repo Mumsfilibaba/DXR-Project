@@ -1,6 +1,8 @@
 #ifndef STRUCTS_HLSLI
 #define STRUCTS_HLSLI
 
+#define NUM_SHADOW_CASCADES 4
+
 struct ComputeShaderInput
 {
     uint3 GroupID          : SV_GroupID;
@@ -48,9 +50,7 @@ struct ShadowPointLight
 
 struct DirectionalLight
 {
-    float4x4 CascadeMatrices[4];
-
-    float CascadeDepths[4];
+    float4x4 CascadeMatrices[NUM_SHADOW_CASCADES];
 
     float3 Color;
     float  ShadowBias;
@@ -60,6 +60,8 @@ struct DirectionalLight
 
     float3 Position;
     float  FarPlane;
+    
+    float4 CascadeDepths;
 };
 
 struct Vertex

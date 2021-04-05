@@ -4,8 +4,7 @@
 #include "RenderLayer/CommandList.h"
 
 #include "Scene/Scene.h"
-
-#define NUM_SHADOW_CASCADES (4)
+#include "Scene/Lights/DirectionalLight.h"
 
 struct PointLightData
 {
@@ -36,8 +35,6 @@ struct DirectionalLightData
 {
     XMFLOAT4X4 CascadeMatrices[NUM_SHADOW_CASCADES];
 
-    float CascadeDepths[NUM_SHADOW_CASCADES];
-
     XMFLOAT3 Color      = XMFLOAT3(1.0f, 1.0f, 1.0f);
     float    ShadowBias = 0.005f;
 
@@ -46,6 +43,8 @@ struct DirectionalLightData
 
     XMFLOAT3 Position;
     float    FarPlane;
+
+    float CascadeDepths[NUM_SHADOW_CASCADES];
 };
 
 struct LightSetup
@@ -95,8 +94,7 @@ struct LightSetup
     bool DirectionalLightDataDirty = true;
     
     TRef<ConstantBuffer> DirectionalLightsBuffer;
-    
-    TRef<Texture2D> DirLightShadowMap;
+
     TRef<Texture2D> ShadowMapCascades[4];
 
     TRef<TextureCube>         IrradianceMap;

@@ -558,9 +558,12 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
     CmdList.SetShaderResourceView(LightPassShader, LightSetup.IrradianceMap->GetShaderResourceView(), 4);
     CmdList.SetShaderResourceView(LightPassShader, LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 5);
     CmdList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 6);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirLightShadowMap->GetShaderResourceView(), 7);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 8);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 9);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 7);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.ShadowMapCascades[1]->GetShaderResourceView(), 8);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.ShadowMapCascades[2]->GetShaderResourceView(), 9);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.ShadowMapCascades[3]->GetShaderResourceView(), 10);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 11);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 12);
 
     CmdList.SetConstantBuffer(LightPassShader, FrameResources.CameraBuffer.Get(), 0);
     CmdList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsBuffer.Get(), 1);

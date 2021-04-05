@@ -284,7 +284,7 @@ float4 PSMain(PSInput Input) : SV_Target0
     // DirectionalLights
     {
         const DirectionalLight Light = DirLightBuffer;
-        const float ShadowFactor = DirectionalLightShadowFactor(DirLightShadowMaps, ShadowMapSampler1, WorldPosition, N, Light);
+        const float ShadowFactor = DirectionalLightShadowFactor(DirLightShadowMaps, ShadowMapSampler1, WorldPosition, N, Light, 0);
         if (ShadowFactor > 0.001f)
         {
             float3 L = normalize(-Light.Direction);

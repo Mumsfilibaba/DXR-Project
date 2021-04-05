@@ -14,6 +14,13 @@
     #define DRAW_TILE_OCCUPANCY 0
 #endif
 
+//#define DRAW_CASCADE_DEBUG
+#ifdef DRAW_CASCADE_DEBUG
+    #define DRAW_SHADOW_CASCADE 1
+#else
+    #define DRAW_SHADOW_CASCADE 0
+#endif
+
 Texture2D<float4>       AlbedoTex             : register(t0, space0);
 Texture2D<float4>       NormalTex             : register(t1, space0);
 Texture2D<float4>       MaterialTex           : register(t2, space0);
@@ -22,9 +29,12 @@ Texture2D<float4>       DXRReflection         : register(t4, space0);
 TextureCube<float4>     IrradianceMap         : register(t5, space0);
 TextureCube<float4>     SpecularIrradianceMap : register(t6, space0);
 Texture2D<float4>       IntegrationLUT        : register(t7, space0);
-Texture2D<float>        DirLightShadowMaps    : register(t8, space0);
-TextureCubeArray<float> PointLightShadowMaps  : register(t9, space0);
-Texture2D<float3>       SSAO                  : register(t10, space0);
+Texture2D<float>        ShadowCascade0        : register(t8, space0);
+Texture2D<float>        ShadowCascade1        : register(t9, space0);
+Texture2D<float>        ShadowCascade2        : register(t10, space0);
+Texture2D<float>        ShadowCascade3        : register(t11, space0);
+TextureCubeArray<float> PointLightShadowMaps  : register(t12, space0);
+Texture2D<float3>       SSAO                  : register(t13, space0);
 
 SamplerState LUTSampler        : register(s0, space0);
 SamplerState IrradianceSampler : register(s1, space0);
@@ -195,6 +205,7 @@ void Main(ComputeShaderInput Input)
     
     const float2 TexCoordFloat   = float2(TexCoord) / float2(ScreenWidth, ScreenHeight);
     const float3 WorldPosition   = PositionFromDepth(Depth, TexCoordFloat, CameraBuffer.ViewProjectionInverse);
+    const float3 ViewPosition    = PositionFromDepth(Depth, TexCoordFloat, CameraBuffer.ProjectionInverse);
     const float3 GBufferAlbedo   = AlbedoTex.Load(int3(TexCoord, 0)).rgb;
     const float3 GBufferMaterial = MaterialTex.Load(int3(TexCoord, 0)).rgb;
     const float3 GBufferNormal   = NormalTex.Load(int3(TexCoord, 0)).rgb;
@@ -251,10 +262,38 @@ void Main(ComputeShaderInput Input)
     }
     
     // DirectionalLights
+    uint CascadeIndex = 0;
     {
         const DirectionalLight Light = DirLightBuffer;
-        const float ShadowFactor = DirectionalLightShadowFactor(DirLightShadowMaps, ShadowMapSampler1, WorldPosition, N, Light);
-        if (ShadowFactor > 0.001f)
+        
+        for (uint i = 0; i < NUM_SHADOW_CASCADES; i++)
+        {
+            if (ViewPosition.z < Light.CascadeDepths[i])
+            {
+                CascadeIndex = i;
+                break;
+            }
+        }
+        
+        float ShadowFactor = 0.0f;
+        if (CascadeIndex == 0)
+        {
+            ShadowFactor = DirectionalLightShadowFactor(ShadowCascade0, ShadowMapSampler1, WorldPosition, N, Light, 0);
+        }
+        else if (CascadeIndex == 1)
+        {
+            ShadowFactor = DirectionalLightShadowFactor(ShadowCascade1, ShadowMapSampler1, WorldPosition, N, Light, 1);
+        }
+        else if (CascadeIndex == 2)
+        {
+            ShadowFactor = DirectionalLightShadowFactor(ShadowCascade2, ShadowMapSampler1, WorldPosition, N, Light, 2);
+        }
+        else if (CascadeIndex == 3)
+        {
+            ShadowFactor = DirectionalLightShadowFactor(ShadowCascade3, ShadowMapSampler1, WorldPosition, N, Light, 3);
+        }
+        
+        if (ShadowFactor > 0.0f)
         {
             float3 L = normalize(-Light.Direction);
             
@@ -313,6 +352,26 @@ void Main(ComputeShaderInput Input)
     {
         float Col = float(TotalLightCount) / float(NumPointLights + NumShadowCastingPointLights);
         Tint = float4(Col, 0.0f, 0.0f, 1.0f);
+    }
+    
+    FinalColor = FinalColor * Tint.rgb;
+#elif DRAW_SHADOW_CASCADE
+    float4 Tint = Float4(1.0f);
+    if (CascadeIndex == 0)
+    {
+        Tint = float4(1.0f, 0.0f, 0.0f, 1.0f);
+    }
+    else if (CascadeIndex == 1)
+    {
+        Tint = float4(0.0f, 1.0f, 0.0f, 1.0f);
+    }
+    else if (CascadeIndex == 2)
+    {
+        Tint = float4(0.0f, 0.0f, 1.0f, 1.0f);
+    }
+    else if (CascadeIndex == 3)
+    {
+        Tint = float4(1.0f, 1.0f, 0.0f, 1.0f);
     }
     
     FinalColor = FinalColor * Tint.rgb;

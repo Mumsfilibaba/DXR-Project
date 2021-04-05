@@ -768,6 +768,22 @@ static void DrawSceneInfo()
                             CurrentDirectionalLight->SetShadowFarPlane(ShadowFarPlane);
                         }
 
+                        // Cascade Split Lambda
+                        ImGui::NextColumn();
+                        ImGui::Text("Cascade Split Lambda");
+                        ImGui::NextColumn();
+
+                        float CascadeSplitLambda = CurrentDirectionalLight->GetCascadeSplitLambda();
+                        if (ImGui::SliderFloat("##CascadeSplitLambda", &CascadeSplitLambda, 0.0f, 1.0f, "%.2f"))
+                        {
+                            CurrentDirectionalLight->SetCascadeSplitLambda(CascadeSplitLambda);
+                        }
+
+                        if (ImGui::IsItemHovered())
+                        {
+                            ImGui::SetTooltip("Value modifying the splits for the shadow map cascades");
+                        }
+
                         ImGui::Columns(1);
                         ImGui::TreePop();
                     }
