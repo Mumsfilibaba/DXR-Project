@@ -715,7 +715,7 @@ static void DrawSceneInfo()
                         ImGui::Text("Translation");
                         ImGui::NextColumn();
 
-                        XMFLOAT3 Position = CurrentDirectionalLight->GetShadowMapPosition();
+                        XMFLOAT3 Position = CurrentDirectionalLight->GetPosition();
                         float* PosArr = reinterpret_cast<float*>(&Position);
                         ImGui::InputFloat3("##Translation", PosArr, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
 

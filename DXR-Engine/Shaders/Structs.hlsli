@@ -48,11 +48,18 @@ struct ShadowPointLight
 
 struct DirectionalLight
 {
-    float3   Color;
-    float    ShadowBias;
-    float3   Direction;
-    float    MaxShadowBias;
-    float4x4 LightMatrix;
+    float4x4 CascadeMatrices[4];
+
+    float CascadeDepths[4];
+
+    float3 Color;
+    float  ShadowBias;
+
+    float3 Direction;
+    float  MaxShadowBias;
+
+    float3 Position;
+    float  FarPlane;
 };
 
 struct Vertex

@@ -147,10 +147,10 @@ float CalculateVSM(float2 TexCoords, float CompareDepth)
 
   //  Moments = DirLightShadowMaps.Sample(ShadowMapSampler1, TexCoords).rg;
     
-    float Variance	= max(Moments.y - Moments.x * Moments.x, MIN_VALUE);
-    float P			= Moments.x - CompareDepth;
-    float Md_2		= P * P;
-    float PMax		= Linstep(0.2f, 1.0f, Variance / (Variance + Md_2));
+    float Variance  = max(Moments.y - Moments.x * Moments.x, MIN_VALUE);
+    float P         = Moments.x - CompareDepth;
+    float Md_2      = P * P;
+    float PMax      = Linstep(0.2f, 1.0f, Variance / (Variance + Md_2));
     return min(max(P, PMax), 1.0f);
 }
 #else
@@ -184,7 +184,7 @@ float DirectionalLightShadowFactor(
     float3 N,
     DirectionalLight Light)
 {
-    float4 LightSpacePosition = mul(float4(WorldPosition, 1.0f), Light.LightMatrix);
+    float4 LightSpacePosition = mul(float4(WorldPosition, 1.0f), Light.CascadeMatrices[0]);
     float3 L = normalize(-Light.Direction);
     
     float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;

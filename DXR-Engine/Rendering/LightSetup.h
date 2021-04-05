@@ -34,22 +34,18 @@ struct PointLightShadowMapGenerationData
 
 struct DirectionalLightData
 {
-    XMFLOAT3   Color         = XMFLOAT3(1.0f, 1.0f, 1.0f);
-    float      ShadowBias    = 0.005f;
-    XMFLOAT3   Direction     = XMFLOAT3(0.0f, -1.0f, 0.0f);
-    float      MaxShadowBias = 0.05f;
-    XMFLOAT4X4 LightMatrix;
-};
-
-struct DirLightShadowMapGenerationData
-{
-    XMFLOAT4X4 Matrix;
-    float    FarPlane;
-
-    float ShadowCascadesFarPlanes[NUM_SHADOW_CASCADES];
     XMFLOAT4X4 CascadeMatrices[NUM_SHADOW_CASCADES];
 
+    float CascadeDepths[NUM_SHADOW_CASCADES];
+
+    XMFLOAT3 Color      = XMFLOAT3(1.0f, 1.0f, 1.0f);
+    float    ShadowBias = 0.005f;
+
+    XMFLOAT3 Direction     = XMFLOAT3(0.0f, -1.0f, 0.0f);
+    float    MaxShadowBias = 0.05f;
+
     XMFLOAT3 Position;
+    float    FarPlane;
 };
 
 struct LightSetup
@@ -95,10 +91,8 @@ struct LightSetup
     TArray<DepthStencilViewCube> PointLightShadowMapDSVs;
 
     // NOTE: Only one directional light
-    DirLightShadowMapGenerationData DirLightShadowMapsGenerationData;
-    DirectionalLightData            DirLightData;
+    DirectionalLightData DirectionalLightData;
     bool DirectionalLightDataDirty = true;
-    float CascadeSplitLambda = 0.95f;
     
     TRef<ConstantBuffer> DirectionalLightsBuffer;
     

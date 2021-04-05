@@ -375,42 +375,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
         float      ShadowOffset;
     } ShadowPerObjectBuffer;
 
-    DepthStencilView* DirLightDSV = LightSetup.DirLightShadowMap->GetDepthStencilView();
-    CmdList.ClearDepthStencilView(DirLightDSV, DepthStencilF(1.0f, 0));
-
-    CmdList.SetRenderTargets(nullptr, 0, DirLightDSV);
-
-    CmdList.SetViewport(static_cast<float>(LightSetup.ShadowMapWidth), static_cast<float>(LightSetup.ShadowMapHeight), 0.0f, 1.0f, 0.0f, 0.0f);
-    CmdList.SetScissorRect(LightSetup.ShadowMapWidth, LightSetup.ShadowMapHeight, 0, 0);
-
     PerShadowMap PerShadowMapData;
-    PerShadowMapData.Matrix   = LightSetup.DirLightShadowMapsGenerationData.Matrix;
-    PerShadowMapData.Position = LightSetup.DirLightShadowMapsGenerationData.Position;
-    PerShadowMapData.FarPlane = LightSetup.DirLightShadowMapsGenerationData.FarPlane;
-
-    CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
-
-    CmdList.UpdateBuffer(PerShadowMapBuffer.Get(), 0, sizeof(PerShadowMap), &PerShadowMapData);
-
-    CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
-
-    CmdList.SetConstantBuffers(DirLightShader.Get(), &PerShadowMapBuffer, 1, 0);
-
-    // Draw all objects to depthbuffer
-    for (const MeshDrawCommand& Command : Scene.GetMeshDrawCommands())
-    {
-        CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-        CmdList.SetIndexBuffer(Command.IndexBuffer);
-
-        ShadowPerObjectBuffer.Matrix       = Command.CurrentActor->GetTransform().GetMatrix();
-        ShadowPerObjectBuffer.ShadowOffset = Command.Mesh->ShadowOffset;
-
-        CmdList.Set32BitShaderConstants(DirLightShader.Get(), &ShadowPerObjectBuffer, 17);
-
-        CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
-    }
-
-    // CASCADED
     for (uint32 i = 0; i < 4; i++)
     {
         DepthStencilView* CascadeDSV = LightSetup.ShadowMapCascades[i]->GetDepthStencilView();
@@ -421,9 +386,9 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
         CmdList.SetViewport(static_cast<float>(LightSetup.CascadeWidth), static_cast<float>(LightSetup.CascadeHeight), 0.0f, 1.0f, 0.0f, 0.0f);
         CmdList.SetScissorRect(LightSetup.CascadeWidth, LightSetup.CascadeHeight, 0, 0);
 
-        PerShadowMapData.Matrix   = LightSetup.DirLightShadowMapsGenerationData.CascadeMatrices[i];
-        PerShadowMapData.Position = LightSetup.DirLightShadowMapsGenerationData.Position;
-        PerShadowMapData.FarPlane = LightSetup.DirLightShadowMapsGenerationData.FarPlane;
+        PerShadowMapData.Matrix   = LightSetup.DirectionalLightData.CascadeMatrices[i];
+        PerShadowMapData.Position = LightSetup.DirectionalLightData.Position;
+        PerShadowMapData.FarPlane = LightSetup.DirectionalLightData.FarPlane;
 
         CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 

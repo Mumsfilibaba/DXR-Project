@@ -92,6 +92,7 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
     TRACE_SCOPE("Update LightBuffers");
 
     Camera* Camera = Scene.GetCamera();
+    Assert(Camera != nullptr);
 
     for (Light* Light : Scene.GetLights())
     {
@@ -147,114 +148,19 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
             DirectionalLight* CurrentLight = Cast<DirectionalLight>(Light);
             Assert(CurrentLight != nullptr);
 
-            DirLightData.Color      = Color;
-            DirLightData.ShadowBias = CurrentLight->GetShadowBias();
-            DirLightData.Direction  = CurrentLight->GetDirection();
+            CurrentLight->UpdateCascades(*Camera);
 
-            // TODO: Should not be the done in the renderer
-            XMFLOAT3 CameraPosition = Camera->GetPosition();
-            XMFLOAT3 CameraForward  = Camera->GetForward();
-
-            XMFLOAT4X4 InvCamera = Camera->GetViewProjectionInverseMatrix();
-            XMFLOAT4X4 LightView = CurrentLight->GetViewMatrix();
-
-            DirLightShadowMapsGenerationData.Matrix   = CurrentLight->GetMatrix();
-            DirLightShadowMapsGenerationData.FarPlane = CurrentLight->GetShadowFarPlane();
-            DirLightShadowMapsGenerationData.Position = CurrentLight->GetShadowMapPosition();
-
-            float NearPlane = Camera->GetNearPlane();
-            float FarPlane  = Camera->GetFarPlane();
-            float ClipRange = FarPlane - NearPlane;
-
-            float MinZ = NearPlane;
-            float MaxZ = FarPlane;
-
-            float Range = ClipRange;
-            float Ratio = MaxZ / MinZ;
-
-            // Calculate split depths based on view camera frustum
-            // Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
-            for (uint32 i = 0; i < 4; i++) 
+            DirectionalLightData.Color         = Color;
+            DirectionalLightData.ShadowBias    = CurrentLight->GetShadowBias();
+            DirectionalLightData.Direction     = CurrentLight->GetDirection();
+            DirectionalLightData.MaxShadowBias = CurrentLight->GetMaxShadowBias();
+            DirectionalLightData.Position      = CurrentLight->GetPosition();
+            
+            for (uint32 i = 0; i < NUM_CASCADES; i++)
             {
-                float p = (i + 1) / static_cast<float>(4);
-                float Log = MinZ * std::pow(Ratio, p);
-                float Uniform = MinZ + Range * p;
-                float d = CascadeSplitLambda * (Log - Uniform) + Uniform;
-                DirLightShadowMapsGenerationData.ShadowCascadesFarPlanes[i] = (d - NearPlane) / ClipRange;
+                DirectionalLightData.CascadeDepths[i]   = CurrentLight->GetCascadeSplit(i);
+                DirectionalLightData.CascadeMatrices[i] = CurrentLight->GetMatrix(i);
             }
-
-            float LastSplitDist = 0.0f;
-            for (uint32 i = 0; i < 4; i++)
-            {
-                float SplitDist = DirLightShadowMapsGenerationData.ShadowCascadesFarPlanes[i];
-
-                XMFLOAT4 FrustumCorners[8] = 
-                {
-                    XMFLOAT4(-1.0f,  1.0f, -1.0f, 1.0f),
-                    XMFLOAT4( 1.0f,  1.0f, -1.0f, 1.0f),
-                    XMFLOAT4( 1.0f, -1.0f, -1.0f, 1.0f),
-                    XMFLOAT4(-1.0f, -1.0f, -1.0f, 1.0f),
-                    XMFLOAT4(-1.0f,  1.0f,  1.0f, 1.0f),
-                    XMFLOAT4( 1.0f,  1.0f,  1.0f, 1.0f),
-                    XMFLOAT4( 1.0f, -1.0f,  1.0f, 1.0f),
-                    XMFLOAT4(-1.0f, -1.0f,  1.0f, 1.0f),
-                };
-
-                // Calculate position of light frustum
-                XMMATRIX XmLightView = XMMatrixTranspose(XMLoadFloat4x4(&LightView));
-                XMMATRIX XmInvCamera = XMMatrixTranspose(XMLoadFloat4x4(&InvCamera));
-                for (uint32 j = 0; j < 8; j++)
-                {
-                    XMVECTOR XmCorner = XMLoadFloat4(&FrustumCorners[j]);
-                    XmCorner = XMVector4Transform(XmCorner, XmInvCamera);
-                    XMStoreFloat4(&FrustumCorners[j], XmCorner);
-
-                    FrustumCorners[j] = FrustumCorners[j] / FrustumCorners[j].w;
-                }
-
-                for (uint32 j = 0; j < 4; j++)
-                {
-                    const XMFLOAT4 Distance = FrustumCorners[j + 4] - FrustumCorners[j];
-                    FrustumCorners[j + 4] = FrustumCorners[j] + (Distance * SplitDist);
-                    FrustumCorners[j]     = FrustumCorners[j] + (Distance * LastSplitDist);
-                }
-
-                // Calc frustum center
-                XMFLOAT4 Center = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-                for (uint32 j = 0; j < 8; j++) 
-                {
-                    Center = Center + FrustumCorners[j];
-                }
-                Center = Center / 8.0f;
-
-                float Radius = 0.0f;
-                for (uint32 j = 0; j < 8; j++)
-                {
-                    float Distance = Length(FrustumCorners[j] - Center);
-                    Radius = Math::Max(Radius, Distance);
-                }
-                Radius = std::ceil(Radius * 16.0f) / 16.0f;
-
-                XMFLOAT3 MaxExtents = XMFLOAT3(Radius, Radius, Radius);
-                XMFLOAT3 MinExtents = -MaxExtents;
-
-                XMFLOAT3 LightUp   = CurrentLight->GetUp();
-                XMFLOAT3 Direction = CurrentLight->GetDirection();
-                XMFLOAT3 Position  = XMFLOAT3(Center.x, Center.y, Center.z) - Direction * -MinExtents.z;
-
-                XMVECTOR EyePosition  = XMVectorSet(Position.x, Position.y, Position.z, 1.0f);
-                XMVECTOR LookPosition = XMVectorSet(Center.x, Center.y, Center.z, 0.0f);
-                XMVECTOR Up           = XMVectorSet(LightUp.x, LightUp.y, LightUp.z, 0.0f);
-
-                XMMATRIX XmViewMatrix = XMMatrixLookAtLH(EyePosition, LookPosition, Up);
-                XMMATRIX XmOrtoMatrix = XMMatrixOrthographicOffCenterLH(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, 0.0f, MaxExtents.z - MinExtents.z);
-                XMStoreFloat4x4(&DirLightShadowMapsGenerationData.CascadeMatrices[i], XMMatrixMultiplyTranspose(XmViewMatrix, XmOrtoMatrix));
-
-                LastSplitDist = SplitDist;
-            }
-
-            DirLightData.LightMatrix   = CurrentLight->GetMatrix();
-            DirLightData.MaxShadowBias = CurrentLight->GetMaxShadowBias();
 
             DirectionalLightDataDirty = true;
         }
@@ -320,7 +226,7 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
     if (DirectionalLightDataDirty)
     {
-        CmdList.UpdateBuffer(DirectionalLightsBuffer.Get(), 0, sizeof(DirectionalLightData), &DirLightData);
+        CmdList.UpdateBuffer(DirectionalLightsBuffer.Get(), 0, sizeof(DirectionalLightData), &DirectionalLightData);
         
         DirectionalLightDataDirty = false;
     }
