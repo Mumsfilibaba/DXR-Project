@@ -147,8 +147,7 @@ workspace "DXR-Project"
 			
 			files 
 			{
-				"%{prj.name}/**.natvis",	
-				"Dependencies/Template-Library/Containers/*.natvis"
+				"%{prj.name}/**.natvis",
 			}
 		filter {}
 			
@@ -231,8 +230,7 @@ workspace "DXR-Project"
 			
 			files 
 			{
-				"%{prj.name}/**.natvis",	
-				"Dependencies/Template-Library/Containers/*.natvis"
+				"%{prj.name}/**.natvis",
 			}
 		filter {}
 			

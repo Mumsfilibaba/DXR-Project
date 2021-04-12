@@ -288,6 +288,12 @@ bool Sandbox::Init()
         MetallicMap->SetName("MetallicMap");
     }
 
+    MatProperties.AO           = 1.0f;
+    MatProperties.Metallic     = 1.0f;
+    MatProperties.Roughness    = 1.0f;
+    MatProperties.EnableHeight = 0;
+    MatProperties.Albedo       = XMFLOAT3(1.0f, 1.0f, 1.0f);
+
     TSharedPtr<Mesh>     StreetLight    = Mesh::Make(MeshFactory::CreateFromFile("../Assets/Models/Street_Light.obj"));
     TSharedPtr<Material> StreetLightMat = MakeShared<Material>(MatProperties);
 
@@ -300,11 +306,6 @@ bool Sandbox::Init()
         NewActor->GetTransform().SetUniformScale(0.25f);
         NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - ((float)i * 3.0f));
 
-        MatProperties.AO           = 1.0f;
-        MatProperties.Metallic     = 1.0f;
-        MatProperties.Roughness    = 1.0f;
-        MatProperties.EnableHeight = 0;
-        MatProperties.Albedo       = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
         NewComponent = DBG_NEW MeshComponent(NewActor);
         NewComponent->Mesh                   = StreetLight;
@@ -312,6 +313,37 @@ bool Sandbox::Init()
         NewComponent->Material->AlbedoMap    = AlbedoMap;
         NewComponent->Material->NormalMap    = NormalMap;
         NewComponent->Material->RoughnessMap = RoughnessMap;
+        NewComponent->Material->HeightMap    = WhiteTexture;
+        NewComponent->Material->AOMap        = WhiteTexture;
+        NewComponent->Material->MetallicMap  = MetallicMap;
+        NewComponent->Material->Init();
+        NewActor->AddComponent(NewComponent);
+    }
+
+    MatProperties.AO           = 1.0f;
+    MatProperties.Metallic     = 0.0f;
+    MatProperties.Roughness    = 1.0f;
+    MatProperties.EnableHeight = 0;
+    MatProperties.Albedo       = XMFLOAT3(0.4f, 0.4f, 0.4f);
+
+    TSharedPtr<Mesh>     Pillar = Mesh::Make(MeshFactory::CreateFromFile("../Assets/Models/Pillar.obj"));
+    TSharedPtr<Material> PillarMat = MakeShared<Material>(MatProperties);
+
+    for (uint32 i = 0; i < 8; i++)
+    {
+        NewActor = DBG_NEW Actor();
+        Scene->AddActor(NewActor);
+
+        NewActor->SetName("Pillar " + std::to_string(i));
+        NewActor->GetTransform().SetUniformScale(0.25f);
+        NewActor->GetTransform().SetTranslation(-15.0f + ((float)i * 1.75f), 0.0f, 60.0f);
+
+        NewComponent = DBG_NEW MeshComponent(NewActor);
+        NewComponent->Mesh     = Pillar;
+        NewComponent->Material = PillarMat;
+        NewComponent->Material->AlbedoMap    = BaseTexture;
+        NewComponent->Material->NormalMap    = BaseNormal;
+        NewComponent->Material->RoughnessMap = WhiteTexture;
         NewComponent->Material->HeightMap    = WhiteTexture;
         NewComponent->Material->AOMap        = WhiteTexture;
         NewComponent->Material->MetallicMap  = MetallicMap;
@@ -387,11 +419,11 @@ bool Sandbox::Init()
 
     // Add DirectionalLight- Source
     DirectionalLight* Light4 = DBG_NEW DirectionalLight();
-    Light4->SetShadowBias(0.0001f);
-    Light4->SetMaxShadowBias(0.001f);
+    Light4->SetShadowBias(0.0002f);
+    Light4->SetMaxShadowBias(0.0015f);
     Light4->SetColor(1.0f, 1.0f, 1.0f);
     Light4->SetIntensity(10.0f);
-    Light4->SetRotation(Math::ToRadians(45.0f), Math::ToRadians(145.0f), 0.0f);
+    Light4->SetRotation(Math::ToRadians(35.0f), Math::ToRadians(135.0f), 0.0f);
     Scene->AddLight(Light4);
 
     return true;

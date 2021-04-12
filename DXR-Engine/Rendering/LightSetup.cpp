@@ -158,9 +158,15 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
             for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
             {
-                DirectionalLightData.CascadeDepths[i]   = CurrentLight->GetCascadeSplit(i);
-                DirectionalLightData.CascadeMatrices[i] = CurrentLight->GetMatrix(i);
+                DirectionalLightData.CascadeSplits[i]   = CurrentLight->GetCascadeSplit(i);
+                DirectionalLightData.CascadeRadius[i]   = CurrentLight->GetCascadeRadius(i);
+                DirectionalLightData.CascadeViewProj[i] = CurrentLight->GetMatrix(i);
+                DirectionalLightData.CascadeView[i]     = CurrentLight->GetViewMatrix(i);
             }
+
+            DirectionalLightData.NearPlane = CurrentLight->GetShadowNearPlane();
+            DirectionalLightData.FarPlane  = CurrentLight->GetShadowFarPlane();
+            DirectionalLightData.LightSize = CurrentLight->GetSize();
 
             DirectionalLightDataDirty = true;
         }

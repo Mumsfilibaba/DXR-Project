@@ -177,6 +177,8 @@ void SkyboxRenderPass::Render(CommandList& CmdList, const FrameResources& FrameR
 {
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
 
+    GPU_TRACE_SCOPE(CmdList, "Skybox");
+
     TRACE_SCOPE("Render Skybox");
 
     const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
@@ -199,6 +201,7 @@ void SkyboxRenderPass::Render(CommandList& CmdList, const FrameResources& FrameR
     {
         XMFLOAT4X4 Matrix;
     } SimpleCamera;
+
     SimpleCamera.Matrix = Scene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
 
     CmdList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, 16);

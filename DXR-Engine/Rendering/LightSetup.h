@@ -33,7 +33,8 @@ struct PointLightShadowMapGenerationData
 
 struct DirectionalLightData
 {
-    XMFLOAT4X4 CascadeMatrices[NUM_SHADOW_CASCADES];
+    XMFLOAT4X4 CascadeViewProj[NUM_SHADOW_CASCADES];
+    XMFLOAT4X4 CascadeView[NUM_SHADOW_CASCADES];
 
     XMFLOAT3 Color      = XMFLOAT3(1.0f, 1.0f, 1.0f);
     float    ShadowBias = 0.005f;
@@ -42,14 +43,18 @@ struct DirectionalLightData
     float    MaxShadowBias = 0.05f;
 
     XMFLOAT3 Position;
-    float    FarPlane;
+    float    LightSize;
 
-    float CascadeDepths[NUM_SHADOW_CASCADES];
+    float CascadeSplits[NUM_SHADOW_CASCADES];
+    float CascadeRadius[NUM_SHADOW_CASCADES];
+
+    float NearPlane;
+    float FarPlane;
 };
 
 struct LightSetup
 {
-    const EFormat ShadowMapFormat  = EFormat::D32_Float;
+    const EFormat ShadowMapFormat  = EFormat::D16_Unorm;
     const EFormat LightProbeFormat = EFormat::R16G16B16A16_Float;
     
     const uint32 MaxPointLights       = 256;
@@ -58,7 +63,7 @@ struct LightSetup
     
     const uint16 CascadeSizes[NUM_SHADOW_CASCADES] =
     {
-        2048, 2048, 4096, 4096
+        4096, 4096, 4096, 4096
     };
     
     const uint16 PointLightShadowSize = 1024;

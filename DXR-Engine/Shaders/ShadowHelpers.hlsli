@@ -3,6 +3,8 @@
 
 #include "Structs.hlsli"
 #include "Helpers.hlsli"
+#include "Random.hlsli"
+#include "Poisson.hlsli"
 
 /*
 * Calculate PointLight Shadow
@@ -185,7 +187,7 @@ float DirectionalLightShadowFactor(
     DirectionalLight Light, 
     uint CascadeIndex)
 {
-    float4 LightSpacePosition = mul(float4(WorldPosition, 1.0f), Light.CascadeMatrices[CascadeIndex]);
+    float4 LightSpacePosition = mul(float4(WorldPosition, 1.0f), Light.CascadeViewProj[CascadeIndex]);
     float3 L = normalize(-Light.Direction);
     
     float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;

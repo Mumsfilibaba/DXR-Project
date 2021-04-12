@@ -382,7 +382,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
         CmdList.SetViewport(static_cast<float>(CascadeSize), static_cast<float>(CascadeSize), 0.0f, 1.0f, 0.0f, 0.0f);
         CmdList.SetScissorRect(CascadeSize, CascadeSize, 0, 0);
 
-        PerShadowMapData.Matrix   = LightSetup.DirectionalLightData.CascadeMatrices[i];
+        PerShadowMapData.Matrix   = LightSetup.DirectionalLightData.CascadeViewProj[i];
         PerShadowMapData.Position = LightSetup.DirectionalLightData.Position;
         PerShadowMapData.FarPlane = LightSetup.DirectionalLightData.FarPlane;
 

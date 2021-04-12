@@ -18,6 +18,36 @@ float4 Float4(float Single)
     return float4(Single, Single, Single, Single);
 }
 
+float MinusOneToOne(float v)
+{
+    return v * 0.5f + 0.5f;
+}
+
+float2 MinusOneToOne(float2 v)
+{
+    return v * 0.5f + 0.5f;
+}
+
+float3 MinusOneToOne(float3 v)
+{
+    return v * 0.5f + 0.5f;
+}
+
+float OneToMinusOne(float v)
+{
+    return v * 2.0f - 1.0f;
+}
+
+float2 OneToMinusOne(float2 v)
+{
+    return v * 2.0f - 1.0f;
+}
+
+float3 OneToMinusOne(float3 v)
+{
+    return v * 2.0f - 1.0f;
+}
+
 float Luma(float3 Color)
 {
     return sqrt(dot(Color, float3(0.2126f, 0.587f, 0.114f)));
@@ -89,6 +119,11 @@ float3 PositionFromDepth(float Depth, float2 TexCoord, float4x4 ProjectionInvers
     return FinalPosition.xyz / FinalPosition.w;
 }
 
+float DepthClipToEye(float Near, float Far, float z)
+{
+    return Near + (Far - Near) * z;
+}
+
 float3 ApplyGamma(float3 Color)
 {
     return pow(Color, Float3(GAMMA));
@@ -152,21 +187,6 @@ float3 UnpackNormal(float3 SampledNormal)
 float3 PackNormal(float3 Normal)
 {
     return (normalize(Normal) + 1.0f) * 0.5f;
-}
-
-float RadicalInverse_VdC(uint Bits)
-{
-    Bits = (Bits << 16u) | (Bits >> 16u);
-    Bits = ((Bits & 0x55555555u) << 1u) | ((Bits & 0xAAAAAAAAu) >> 1u);
-    Bits = ((Bits & 0x33333333u) << 2u) | ((Bits & 0xCCCCCCCCu) >> 2u);
-    Bits = ((Bits & 0x0F0F0F0Fu) << 4u) | ((Bits & 0xF0F0F0F0u) >> 4u);
-    Bits = ((Bits & 0x00FF00FFu) << 8u) | ((Bits & 0xFF00FF00u) >> 8u);
-    return float(Bits) * 2.3283064365386963e-10; // 0x100000000
-}
-
-float2 Hammersley(uint I, uint N)
-{
-    return float2(float(I) / float(N), RadicalInverse_VdC(I));
 }
 
 #endif

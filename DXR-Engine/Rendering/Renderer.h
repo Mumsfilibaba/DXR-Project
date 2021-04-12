@@ -51,14 +51,21 @@ private:
 
     void ResizeResources(uint32 Width, uint32 Height);
 
-    CommandList CmdList;
-    CommandList CmdList2;
-
+    CommandList PreShadowsCmdList;
     CommandList PointShadowCmdList;
     CommandList DirShadowCmdList;
+    CommandList PrepareGBufferCmdList;
+    CommandList PrePassCmdList;
+    CommandList ShadingRateCmdList;
+    CommandList RayTracingCmdList;
+    CommandList BasePassCmdList;
+    CommandList MainCmdList;
 
     Task PointShadowTask;
     Task DirShadowTask;
+    Task PrePassTask;
+    Task BasePassTask;
+    Task RayTracingTask;
 
     DeferredRenderer             DeferredRenderer;
     ShadowMapRenderer            ShadowMapRenderer;

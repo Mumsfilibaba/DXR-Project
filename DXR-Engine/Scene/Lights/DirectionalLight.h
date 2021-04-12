@@ -22,6 +22,8 @@ public:
 
     void SetCascadeSplitLambda(float InCascadeSplitLambda) { CascadeSplitLambda = InCascadeSplitLambda; }
 
+    void SetSize(float InSize) { Size = InSize; }
+
     const XMFLOAT3& GetDirection() const { return Direction; }
 
     const XMFLOAT3& GetUp() const { return Up; }
@@ -53,6 +55,9 @@ public:
     float GetCascadeSplitLambda() const { return CascadeSplitLambda; }
 
     float GetCascadeSplit(uint32 CascadeIndex) const { return CascadeSplits[CascadeIndex]; }
+    float GetCascadeRadius(uint32 CascadeIndex) const { return CascadeRadius[CascadeIndex]; }
+
+    float GetSize() const { return Size; }
 
 private:
     XMFLOAT3 Direction;
@@ -66,6 +71,9 @@ private:
     XMFLOAT4X4 Matrices[NUM_SHADOW_CASCADES];
 
     float CascadeSplits[NUM_SHADOW_CASCADES];
+    float CascadeRadius[NUM_SHADOW_CASCADES];
 
-    float CascadeSplitLambda = 0.825f;
+    float CascadeSplitLambda = 0.65f;
+
+    float Size = 0.07f;
 };

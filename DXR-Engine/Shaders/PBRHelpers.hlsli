@@ -3,6 +3,7 @@
 
 #include "Constants.hlsli"
 #include "Helpers.hlsli"
+#include "Halton.hlsli"
 
 // ImportanceSample GGX
 float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)

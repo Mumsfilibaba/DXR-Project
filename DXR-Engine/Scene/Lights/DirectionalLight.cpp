@@ -42,8 +42,11 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
     XMFLOAT4X4 InvCamera = Camera.GetViewProjectionInverseMatrix();
 
     float NearPlane = Camera.GetNearPlane();
-    float FarPlane  = Math::Min<float>(Camera.GetFarPlane(), 70.0f); // TODO: Should be a setting
+    float FarPlane  = Math::Min<float>(Camera.GetFarPlane(), 100.0f); // TODO: Should be a setting
     float ClipRange = FarPlane - NearPlane;
+
+    ShadowNearPlane = NearPlane;
+    ShadowFarPlane  = FarPlane;
 
     float MinZ = NearPlane;
     float MaxZ = FarPlane;
@@ -67,7 +70,7 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
     // TODO: This has to be moved so we do not duplicate it
     const float CascadeSizes[NUM_SHADOW_CASCADES] =
     {
-        2048.0f, 2048.0f, 4096.0f, 4096.0f
+        4096.0f, 4096.0f, 4096.0f, 4096.0f
     };
 
     float LastSplitDist = 0.0f;
@@ -118,7 +121,7 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
         for (uint32 j = 0; j < 8; j++)
         {
             float Distance = ceil(Length(FrustumCorners[j] - Center));
-            Radius = Math::Min(Math::Max(Radius, Distance), 50.0f); // This should be dynamic
+            Radius = Math::Min(Math::Max(Radius, Distance), 80.0f); // This should be dynamic
         }
 
         // Make sure we only move cascades with whole pixels
@@ -137,21 +140,21 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
         XMVector3Transform(XmCenter, LookAtMat);
         XMStoreFloat4(&Center, XmCenter);
 
-        Center.x = (float)floor(Center.x);
-        Center.y = (float)floor(Center.y);
-        Center.z = (float)floor(Center.z);
+        Center.x = floor(Center.x);
+        Center.y = floor(Center.y);
+        Center.z = floor(Center.z);
 
         XmCenter = XMLoadFloat4(&Center);
         XMVector3Transform(XmCenter, LookAtMatInverse);
         XMStoreFloat4(&Center, XmCenter);
 
-        XMFLOAT3 CascadePosition = XMFLOAT3(Center.x, Center.y, Center.z) - (Direction * Radius * 2.0f);
+        XMFLOAT3 CascadePosition = XMFLOAT3(Center.x, Center.y, Center.z) - (Direction * Radius * 6.0f);
         
         EyePosition  = XMLoadFloat3(&CascadePosition);
         LookPosition = XMLoadFloat4(&Center);
 
         XMMATRIX XmViewMatrix = XMMatrixLookAtLH(EyePosition, LookPosition, XmUp);
-        XMMATRIX XmOrtoMatrix = XMMatrixOrthographicOffCenterLH(-Radius, Radius, -Radius, Radius, -Radius * 6.0f, Radius * 6.0f);
+        XMMATRIX XmOrtoMatrix = XMMatrixOrthographicOffCenterLH(-Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f);
 
         XMStoreFloat4x4(&ViewMatrices[i], XMMatrixTranspose(XmViewMatrix));
         XMStoreFloat4x4(&ProjectionMatrices[i], XMMatrixTranspose(XmOrtoMatrix));
@@ -160,6 +163,7 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
         LastSplitDist = SplitDist;
 
         CascadeSplits[i] = (NearPlane + SplitDist * ClipRange);
+        CascadeRadius[i] = Radius;
 
         if (i == 0)
         {

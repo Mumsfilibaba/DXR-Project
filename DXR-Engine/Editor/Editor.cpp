@@ -380,6 +380,8 @@ static void DrawSceneInfo()
     // Actors
     if (ImGui::TreeNode("Actors"))
     {
+        ImGui::Text("Total Actor Count: %d", GApplication->Scene->GetActors().Size());
+
         for (Actor* Actor : GApplication->Scene->GetActors())
         {
             ImGui::PushID(Actor);
@@ -695,7 +697,7 @@ static void DrawSceneInfo()
 
                         XMFLOAT3 Direction = CurrentDirectionalLight->GetDirection();
                         float* DirArr = reinterpret_cast<float*>(&Direction);
-                        ImGui::InputFloat3("##Direction", DirArr, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+                        ImGui::InputFloat3("##Direction", DirArr, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
                         ImGui::Columns(1);
                         ImGui::TreePop();
@@ -717,7 +719,7 @@ static void DrawSceneInfo()
 
                         XMFLOAT3 Position = CurrentDirectionalLight->GetPosition();
                         float* PosArr = reinterpret_cast<float*>(&Position);
-                        ImGui::InputFloat3("##Translation", PosArr, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+                        ImGui::InputFloat3("##Translation", PosArr, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
                         // Shadow Bias
                         ImGui::NextColumn();
@@ -767,27 +769,43 @@ static void DrawSceneInfo()
                         ImGui::Text("Cascade Splits");
                         ImGui::NextColumn();
 
-                        ImGui::PushItemWidth(75.0f);
+                        ImGui::PushItemWidth(83.75f);
 
                         float CascadeSplit = CurrentDirectionalLight->GetCascadeSplit(0);
-                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
                         ImGui::SameLine();
 
                         CascadeSplit = CurrentDirectionalLight->GetCascadeSplit(1);
-                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
                         ImGui::SameLine();
 
                         CascadeSplit = CurrentDirectionalLight->GetCascadeSplit(2);
-                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
                         ImGui::SameLine();
                         
                         CascadeSplit = CurrentDirectionalLight->GetCascadeSplit(3);
-                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+                        ImGui::InputFloat("##CascadeSplits", &CascadeSplit, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
                         ImGui::PopItemWidth();
+
+                        // Size
+                        ImGui::NextColumn();
+                        ImGui::Text("Light Size");
+                        ImGui::NextColumn();
+
+                        float LightSize = CurrentDirectionalLight->GetSize();
+                        if (ImGui::SliderFloat("##LightSize", &LightSize, 0.0f, 1.0f, "%.2f"))
+                        {
+                            CurrentDirectionalLight->SetSize(LightSize);
+                        }
+
+                        if (ImGui::IsItemHovered())
+                        {
+                            ImGui::SetTooltip("Value modifying the size when calculating soft shadows");
+                        }
 
                         ImGui::Columns(1);
                         ImGui::TreePop();

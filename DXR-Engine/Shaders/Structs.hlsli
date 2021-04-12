@@ -50,7 +50,8 @@ struct ShadowPointLight
 
 struct DirectionalLight
 {
-    float4x4 CascadeMatrices[NUM_SHADOW_CASCADES];
+    float4x4 CascadeViewProj[NUM_SHADOW_CASCADES];
+    float4x4 CascadeView[NUM_SHADOW_CASCADES];
 
     float3 Color;
     float  ShadowBias;
@@ -59,9 +60,13 @@ struct DirectionalLight
     float  MaxShadowBias;
 
     float3 Position;
-    float  FarPlane;
+    float  LightSize;
     
-    float4 CascadeDepths;
+    float4 CascadeSplits; // NOTE: Cannot be more than four cascades
+    float4 CascadeRadius;
+    
+    float NearPlane;
+    float FarPlane;
 };
 
 struct Vertex
