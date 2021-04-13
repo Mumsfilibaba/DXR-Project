@@ -99,7 +99,7 @@ inline XMFLOAT2 operator-(XMFLOAT2 Value)
 
 inline float Length(const XMFLOAT2& Vector)
 {
-    return sqrt(Vector.x * Vector.x + Vector.y * Vector.y);
+    return (float)sqrt(Vector.x * Vector.x + Vector.y * Vector.y);
 }
 
 // XMFLOAT3
@@ -140,7 +140,7 @@ inline XMFLOAT3 operator-(XMFLOAT3 Value)
 
 inline float Length(const XMFLOAT3& Vector)
 {
-    return sqrt(Vector.x * Vector.x + Vector.y * Vector.y + Vector.z * Vector.z);
+    return (float)sqrt(Vector.x * Vector.x + Vector.y * Vector.y + Vector.z * Vector.z);
 }
 
 // XMFLOAT4
@@ -181,5 +181,5 @@ inline XMFLOAT4 operator-(XMFLOAT4 Value)
 
 inline float Length(const XMFLOAT4& Vector)
 {
-    return sqrt(Vector.x * Vector.x + Vector.y * Vector.y + Vector.z * Vector.z + Vector.w * Vector.w);
+    return (float)sqrt(Vector.x * Vector.x + Vector.y * Vector.y + Vector.z * Vector.z + Vector.w * Vector.w);
 }

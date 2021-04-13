@@ -77,5 +77,5 @@ DWORD WINAPI WindowsThread::ThreadRoutine(LPVOID ThreadParameter)
         return 0;
     }
     
-    return -1;
+    return (DWORD)-1;
 }

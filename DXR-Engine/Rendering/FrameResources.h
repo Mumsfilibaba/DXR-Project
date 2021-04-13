@@ -76,8 +76,8 @@ struct FrameResources
     TRef<ConstantBuffer> CameraBuffer;
     TRef<ConstantBuffer> TransformBuffer;
 
-    TRef<SamplerState> DirectionalShadowSampler;
-    TRef<SamplerState> PointShadowSampler;
+    TRef<SamplerState> PointLightShadowSampler;
+    TRef<SamplerState> DirectionalLightShadowSampler;
     TRef<SamplerState> IrradianceSampler;
 
     TRef<TextureCube> Skybox;

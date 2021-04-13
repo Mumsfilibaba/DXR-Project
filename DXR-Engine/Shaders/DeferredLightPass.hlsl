@@ -22,8 +22,8 @@
     #define DRAW_SHADOW_CASCADE 0
 #endif
 
-#define BLEND_CASCADES  1
-#define BAND_PERCENTAGE (0.25f)
+#define BLEND_CASCADES  (1)
+#define BAND_PERCENTAGE (0.2f)
 
 Texture2D<float4>       AlbedoTex             : register(t0, space0);
 Texture2D<float4>       NormalTex             : register(t1, space0);
@@ -44,7 +44,8 @@ SamplerState LUTSampler        : register(s0, space0);
 SamplerState IrradianceSampler : register(s1, space0);
 
 SamplerComparisonState ShadowMapSampler0 : register(s2, space0); // Point-Lights
-SamplerComparisonState ShadowMapSampler1 : register(s3, space0); // Directional-Lights
+
+SamplerState DirectionalLightSampler : register(s3, space0); // Directional-Lights
 
 cbuffer Constants : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
 {
@@ -82,8 +83,7 @@ ConstantBuffer<DirectionalLight> DirLightBuffer : register(b5, space0);
 RWTexture2D<float4> Output : register(u0, space0);
 
 // Cascaded Shadow Mapping
-
-#define NUM_BLOCKER_SAMPLES (32)
+#define NUM_BLOCKER_SAMPLES (16)
 #define NUM_PCF_SAMPLES     (64)
 
 #define NEAR (0.5f)
@@ -119,9 +119,9 @@ float FindBlockerDistance(in Texture2D<float> ShadowMap, float2 TexCoords, float
             RandomDirection = PoissonDisk128[i];
         }
         
-        RandomDirection = RandomDirection * SearchRadius;
+        RandomDirection = OneToMinusOne(CranleyPatterssonRotation(MinusOneToOne(RandomDirection), RandomSeed)) * SearchRadius;
         
-        float Depth = ShadowMap.SampleLevel(LUTSampler, TexCoords.xy + RandomDirection, 0.0f);
+        float Depth = ShadowMap.SampleLevel(DirectionalLightSampler, TexCoords.xy + RandomDirection, 0.0f);
         if (Depth < CompareDepth)
         {
             NumBlockers++;
@@ -162,9 +162,9 @@ float PCFDirectionalLight(in Texture2D<float> ShadowMap, float2 TexCoords, float
             RandomDirection = PoissonDisk128[i];
         }
 
-        RandomDirection = RandomDirection * SearchRadius;
+        RandomDirection = OneToMinusOne(CranleyPatterssonRotation(MinusOneToOne(RandomDirection), RandomSeed)) * SearchRadius;
         
-        float Depth = ShadowMap.SampleLevel(LUTSampler, TexCoords.xy + RandomDirection, 0.0f);
+        float Depth = ShadowMap.SampleLevel(DirectionalLightSampler, TexCoords.xy + RandomDirection, 0.0f);
         if (Depth < CompareDepth)
         {
             Shadow += 1.0f;

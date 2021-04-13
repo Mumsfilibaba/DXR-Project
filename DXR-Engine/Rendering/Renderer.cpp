@@ -721,22 +721,21 @@ bool Renderer::Init()
 
     {
         SamplerStateCreateInfo CreateInfo;
-        CreateInfo.AddressU       = ESamplerMode::Border;
-        CreateInfo.AddressV       = ESamplerMode::Border;
-        CreateInfo.AddressW       = ESamplerMode::Border;
-        CreateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
-        CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
-        CreateInfo.BorderColor    = ColorF(1.0f, 1.0f, 1.0f, 1.0f);
+        CreateInfo.AddressU    = ESamplerMode::Border;
+        CreateInfo.AddressV    = ESamplerMode::Border;
+        CreateInfo.AddressW    = ESamplerMode::Border;
+        CreateInfo.Filter      = ESamplerFilter::Comparison_MinMagMipPoint;
+        CreateInfo.BorderColor = ColorF(1.0f, 1.0f, 1.0f, 1.0f);
 
-        Resources.DirectionalShadowSampler = CreateSamplerState(CreateInfo);
-        if (!Resources.DirectionalShadowSampler)
+        Resources.DirectionalLightShadowSampler = CreateSamplerState(CreateInfo);
+        if (!Resources.DirectionalLightShadowSampler)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            Resources.DirectionalShadowSampler->SetName("ShadowMap Sampler");
+            Resources.DirectionalLightShadowSampler->SetName("ShadowMap Sampler");
         }
     }
 
@@ -748,15 +747,15 @@ bool Renderer::Init()
         CreateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
         CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
 
-        Resources.PointShadowSampler = CreateSamplerState(CreateInfo);
-        if (!Resources.PointShadowSampler)
+        Resources.PointLightShadowSampler = CreateSamplerState(CreateInfo);
+        if (!Resources.PointLightShadowSampler)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            Resources.PointShadowSampler->SetName("ShadowMap Comparison Sampler");
+            Resources.PointLightShadowSampler->SetName("ShadowMap Comparison Sampler");
         }
     }
 

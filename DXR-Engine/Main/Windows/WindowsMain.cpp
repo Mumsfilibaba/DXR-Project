@@ -11,12 +11,12 @@
 
 static void InitCRunTime()
 {
-    uint32 DebugFlags = 0;
 #ifdef DEBUG_BUILD
+    uint32 DebugFlags = 0;
     DebugFlags |= _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF;
-#endif
 
     _CrtSetDbgFlag(DebugFlags);
+#endif
 }
 
 int WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, int CmdShow)

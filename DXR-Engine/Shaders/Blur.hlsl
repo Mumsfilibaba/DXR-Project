@@ -8,8 +8,8 @@ cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
     int2 ScreenSize;
 };
 
-#define THREAD_COUNT 16
-#define KERNEL_SIZE  5
+#define THREAD_COUNT (16)
+#define KERNEL_SIZE  (5)
 
 groupshared float gTextureCache[THREAD_COUNT][THREAD_COUNT];
 
@@ -36,8 +36,8 @@ void Main(ComputeShaderInput Input)
     GroupMemoryBarrierWithGroupSync();
     
     // Perform blur
-    float	Result = 0.0f;
-    int		Offset = -2;
+    float Result = 0.0f;
+    int   Offset = -((KERNEL_SIZE - 1) / 2);
     
     [unroll]
     for (int Index = 0; Index < KERNEL_SIZE; Index++)
@@ -48,8 +48,8 @@ void Main(ComputeShaderInput Input)
         
         // TODO: Handle when we need to sample outside the tile
 #ifdef HORIZONTAL_PASS
-        const int CurrentTexCoord = max(0, min(MAX_SIZE.y, GroupThreadID.x + Offset));
-        Result += gTextureCache[CurrentTexCoord.x][GroupThreadID.y] * Weight;
+        const int CurrentTexCoord = max(0, min(MAX_SIZE.x, GroupThreadID.x + Offset));
+        Result += gTextureCache[CurrentTexCoord][GroupThreadID.y] * Weight;
 #else
         const int CurrentTexCoord = max(0, min(MAX_SIZE.y, GroupThreadID.y + Offset));
         Result += gTextureCache[GroupThreadID.x][CurrentTexCoord] * Weight;

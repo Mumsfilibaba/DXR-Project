@@ -164,8 +164,8 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
 
     CmdList.SetSamplerState(PShader.Get(), FrameResources.IntegrationLUTSampler.Get(), 1);
     CmdList.SetSamplerState(PShader.Get(), FrameResources.IrradianceSampler.Get(), 2);
-    CmdList.SetSamplerState(PShader.Get(), FrameResources.PointShadowSampler.Get(), 3);
-    CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalShadowSampler.Get(), 4);
+    CmdList.SetSamplerState(PShader.Get(), FrameResources.PointLightShadowSampler.Get(), 3);
+    CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 4);
 
     struct TransformBuffer
     {

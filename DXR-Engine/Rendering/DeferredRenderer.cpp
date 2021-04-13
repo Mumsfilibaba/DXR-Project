@@ -265,11 +265,10 @@ bool DeferredRenderer::Init(FrameResources& FrameResources)
     }
 
     SamplerStateCreateInfo CreateInfo;
-    CreateInfo.AddressU    = ESamplerMode::Border;
-    CreateInfo.AddressV    = ESamplerMode::Border;
-    CreateInfo.AddressW    = ESamplerMode::Border;
-    CreateInfo.Filter      = ESamplerFilter::MinMagMipPoint;
-    CreateInfo.BorderColor = ColorF(1.0f, 1.0f, 1.0f, 1.0f);
+    CreateInfo.AddressU = ESamplerMode::Clamp;
+    CreateInfo.AddressV = ESamplerMode::Clamp;
+    CreateInfo.AddressW = ESamplerMode::Clamp;
+    CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
 
     FrameResources.IntegrationLUTSampler = CreateSamplerState(CreateInfo);
     if (!FrameResources.IntegrationLUTSampler)
@@ -577,8 +576,8 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
 
     CmdList.SetSamplerState(LightPassShader, FrameResources.IntegrationLUTSampler.Get(), 0);
     CmdList.SetSamplerState(LightPassShader, FrameResources.IrradianceSampler.Get(), 1);
-    CmdList.SetSamplerState(LightPassShader, FrameResources.PointShadowSampler.Get(), 2);
-    //CmdList.SetSamplerState(LightPassShader, FrameResources.DirectionalShadowSampler.Get(), 3);
+    CmdList.SetSamplerState(LightPassShader, FrameResources.PointLightShadowSampler.Get(), 2);
+    CmdList.SetSamplerState(LightPassShader, FrameResources.DirectionalLightShadowSampler.Get(), 3);
 
     UnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
     CmdList.SetUnorderedAccessView(LightPassShader, FinalTargetUAV, 0);
