@@ -66,7 +66,7 @@ struct LightSetup
         2048, 2048, 2048, 4096
     };
     
-    const uint16 IrradianceSize         = 64;
+    const uint16 IrradianceSize         = 32;
     const uint16 SpecularIrradianceSize = 256;
     const uint16 PointLightShadowSize   = 512;
 

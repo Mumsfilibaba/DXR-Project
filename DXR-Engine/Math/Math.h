@@ -69,6 +69,12 @@ public:
     {
         return (T)XMConvertToDegrees((T)Radians);
     }
+
+    template <typename T>
+    FORCEINLINE static T Log2(T x)
+    {
+        return (T)std::log2((double)x);
+    }
 };
 
 // XMFLOAT2

@@ -356,10 +356,10 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
 
     GPU_TRACE_SCOPE(CmdList, "DirectionalLight ShadowMaps");
 
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
 
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     CmdList.SetGraphicsPipelineState(DirLightPipelineState.Get());
@@ -470,7 +470,7 @@ bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
             LightSetup.ShadowMapFormat, 
             CascadeSize, CascadeSize,
             1, 1, TextureFlags_ShadowMap,
-            EResourceState::PixelShaderResource,
+            EResourceState::NonPixelShaderResource,
             nullptr);
         if (LightSetup.ShadowMapCascades[i])
         {

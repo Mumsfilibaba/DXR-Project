@@ -23,6 +23,7 @@
 #endif
 
 #define BLEND_CASCADES  (1)
+#define ROTATE_SAMPLES  (0)
 #define BAND_PERCENTAGE (0.2f)
 
 Texture2D<float4>       AlbedoTex             : register(t0, space0);
@@ -83,7 +84,7 @@ ConstantBuffer<DirectionalLight> DirLightBuffer : register(b5, space0);
 RWTexture2D<float4> Output : register(u0, space0);
 
 // Cascaded Shadow Mapping
-#define NUM_BLOCKER_SAMPLES (16)
+#define NUM_BLOCKER_SAMPLES (64)
 #define NUM_PCF_SAMPLES     (64)
 
 #define NEAR (0.5f)
@@ -119,7 +120,7 @@ float FindBlockerDistance(in Texture2D<float> ShadowMap, float2 TexCoords, float
             RandomDirection = PoissonDisk128[i];
         }
         
-        RandomDirection = OneToMinusOne(CranleyPatterssonRotation(MinusOneToOne(RandomDirection), RandomSeed)) * SearchRadius;
+        RandomDirection = RandomDirection * SearchRadius;
         
         float Depth = ShadowMap.SampleLevel(DirectionalLightSampler, TexCoords.xy + RandomDirection, 0.0f);
         if (Depth < CompareDepth)
@@ -162,8 +163,11 @@ float PCFDirectionalLight(in Texture2D<float> ShadowMap, float2 TexCoords, float
             RandomDirection = PoissonDisk128[i];
         }
 
+#if ROTATE_SAMPLES
         RandomDirection = OneToMinusOne(CranleyPatterssonRotation(MinusOneToOne(RandomDirection), RandomSeed)) * SearchRadius;
-        
+#else
+        RandomDirection = RandomDirection * SearchRadius;
+#endif
         float Depth = ShadowMap.SampleLevel(DirectionalLightSampler, TexCoords.xy + RandomDirection, 0.0f);
         if (Depth < CompareDepth)
         {
@@ -176,7 +180,7 @@ float PCFDirectionalLight(in Texture2D<float> ShadowMap, float2 TexCoords, float
 
 float CalcPenumbraWidth(float ZReciver, float ZBlocker)
 {
-    return abs(ZReciver - ZBlocker) / ZBlocker;
+    return (ZReciver - ZBlocker) / ZBlocker;
 }
 
 float CalcFilterRadius(float PenumbraWidth, float LightSize, float LightNear, float z)

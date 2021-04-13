@@ -139,6 +139,8 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
 
     TRACE_SCOPE("ForwardPass");
 
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
+
     const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
 
@@ -206,6 +208,8 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
 
         CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
     }
+
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End ForwardPass");
 }

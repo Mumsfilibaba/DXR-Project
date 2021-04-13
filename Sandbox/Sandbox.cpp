@@ -117,7 +117,6 @@ bool Sandbox::Init()
             NewComponent->Material->AlbedoMap    = BaseTexture;
             NewComponent->Material->NormalMap    = BaseNormal;
             NewComponent->Material->RoughnessMap = WhiteTexture;
-            NewComponent->Material->HeightMap    = WhiteTexture;
             NewComponent->Material->AOMap        = WhiteTexture;
             NewComponent->Material->MetallicMap  = WhiteTexture;
             NewComponent->Material->Init();
@@ -238,7 +237,6 @@ bool Sandbox::Init()
     NewComponent->Material->AlbedoMap    = BaseTexture;
     NewComponent->Material->NormalMap    = BaseNormal;
     NewComponent->Material->RoughnessMap = WhiteTexture;
-    NewComponent->Material->HeightMap    = WhiteTexture;
     NewComponent->Material->AOMap        = WhiteTexture;
     NewComponent->Material->MetallicMap  = WhiteTexture;
     NewComponent->Material->Init();
@@ -313,7 +311,6 @@ bool Sandbox::Init()
         NewComponent->Material->AlbedoMap    = AlbedoMap;
         NewComponent->Material->NormalMap    = NormalMap;
         NewComponent->Material->RoughnessMap = RoughnessMap;
-        NewComponent->Material->HeightMap    = WhiteTexture;
         NewComponent->Material->AOMap        = WhiteTexture;
         NewComponent->Material->MetallicMap  = MetallicMap;
         NewComponent->Material->Init();
@@ -344,7 +341,6 @@ bool Sandbox::Init()
         NewComponent->Material->AlbedoMap    = BaseTexture;
         NewComponent->Material->NormalMap    = BaseNormal;
         NewComponent->Material->RoughnessMap = WhiteTexture;
-        NewComponent->Material->HeightMap    = WhiteTexture;
         NewComponent->Material->AOMap        = WhiteTexture;
         NewComponent->Material->MetallicMap  = MetallicMap;
         NewComponent->Material->Init();

@@ -167,7 +167,7 @@ bool LightProbeRenderer::CreateSkyLightResources(LightSetup& LightSetup)
         return false;
     }
 
-    const uint16 SpecularIrradianceMiplevels = uint16(std::max(std::log2(LightSetup.SpecularIrradianceSize), 1.0));
+    const uint16 SpecularIrradianceMiplevels = Math::Max<uint16>(Math::Log2(LightSetup.SpecularIrradianceSize), 1u);
     LightSetup.SpecularIrradianceMap = CreateTextureCube(
         LightSetup.LightProbeFormat,
         LightSetup.SpecularIrradianceSize,

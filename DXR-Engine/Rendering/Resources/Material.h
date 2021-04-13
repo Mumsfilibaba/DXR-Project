@@ -64,7 +64,7 @@ private:
     std::string	DebugName;
     bool MaterialBufferIsDirty = true;
     
-    MaterialProperties         Properties;
+    MaterialProperties   Properties;
     TRef<ConstantBuffer> MaterialBuffer;
     TRef<SamplerState>   Sampler;
 

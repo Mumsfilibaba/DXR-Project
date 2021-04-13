@@ -298,44 +298,46 @@ bool DeferredRenderer::Init(FrameResources& FrameResources)
         CShader->SetName("BRDFIntegationGen ComputeShader");
     }
 
-    ComputePipelineStateCreateInfo PipelineStateInfo;
-    PipelineStateInfo.Shader = CShader.Get();
-
-    TRef<ComputePipelineState> BRDF_PipelineState = CreateComputePipelineState(PipelineStateInfo);
-    if (!BRDF_PipelineState)
     {
-        Debug::DebugBreak();
-        return false;
+        ComputePipelineStateCreateInfo PipelineStateInfo;
+        PipelineStateInfo.Shader = CShader.Get();
+
+        TRef<ComputePipelineState> BRDF_PipelineState = CreateComputePipelineState(PipelineStateInfo);
+        if (!BRDF_PipelineState)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            BRDF_PipelineState->SetName("BRDFIntegationGen PipelineState");
+        }
+
+        CommandList CmdList;
+
+        CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
+
+        CmdList.SetComputePipelineState(BRDF_PipelineState.Get());
+
+        UnorderedAccessView* StagingUAV = StagingTexture->GetUnorderedAccessView();
+        CmdList.SetUnorderedAccessView(CShader.Get(), StagingUAV, 0);
+
+        constexpr uint32 ThreadCount = 16;
+        const uint32 DispatchWidth  = Math::DivideByMultiple(LUTSize, ThreadCount);
+        const uint32 DispatchHeight = Math::DivideByMultiple(LUTSize, ThreadCount);
+        CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+
+        CmdList.UnorderedAccessTextureBarrier(StagingTexture.Get());
+
+        CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::UnorderedAccess, EResourceState::CopySource);
+        CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceState::Common, EResourceState::CopyDest);
+
+        CmdList.CopyTexture(FrameResources.IntegrationLUT.Get(), StagingTexture.Get());
+
+        CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
+
+        GCmdListExecutor.ExecuteCommandList(CmdList);
     }
-    else
-    {
-        BRDF_PipelineState->SetName("BRDFIntegationGen PipelineState");
-    }
-
-    CommandList CmdList;
-
-    CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
-
-    CmdList.SetComputePipelineState(BRDF_PipelineState.Get());
-
-    UnorderedAccessView* StagingUAV = StagingTexture->GetUnorderedAccessView();
-    CmdList.SetUnorderedAccessView(CShader.Get(), StagingUAV, 0);
-
-    constexpr uint32 ThreadCount = 16;
-    const uint32 DispatchWidth  = Math::DivideByMultiple(LUTSize, ThreadCount);
-    const uint32 DispatchHeight = Math::DivideByMultiple(LUTSize, ThreadCount);
-    CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
-
-    CmdList.UnorderedAccessTextureBarrier(StagingTexture.Get());
-
-    CmdList.TransitionTexture(StagingTexture.Get(), EResourceState::UnorderedAccess, EResourceState::CopySource);
-    CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceState::Common, EResourceState::CopyDest);
-
-    CmdList.CopyTexture(FrameResources.IntegrationLUT.Get(), StagingTexture.Get());
-
-    CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource);
-
-    GCmdListExecutor.ExecuteCommandList(CmdList);
 
     {
         if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
@@ -408,20 +410,58 @@ bool DeferredRenderer::Init(FrameResources& FrameResources)
         }
     }
 
+    {
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DepthReduction.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+
+        ReduceDepthShader = CreateComputeShader(ShaderCode);
+        if (!ReduceDepthShader)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            ReduceDepthShader->SetName("DepthReduction ComputeShader");
+        }
+
+        ComputePipelineStateCreateInfo PipelineStateInfo;
+        PipelineStateInfo.Shader = ReduceDepthShader.Get();
+
+        ReduceDepthPSO = CreateComputePipelineState(PipelineStateInfo);
+        if (!ReduceDepthPSO)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            ReduceDepthPSO->SetName("DepthReduction PipelineState");
+        }
+    }
+
     return true;
 }
 
 void DeferredRenderer::Release()
 {
-    PipelineState.Reset();
     PrePassPipelineState.Reset();
-    TiledLightPassPSO.Reset();
+    PrePassVertexShader.Reset();
+    
+    PipelineState.Reset();
     BaseVertexShader.Reset();
     BasePixelShader.Reset();
-    PrePassVertexShader.Reset();
+
+    TiledLightPassPSO.Reset();
     TiledLightPassPSODebug.Reset();
     TiledLightShader.Reset();
     TiledLightDebugShader.Reset();
+
+    ReduceDepthPSO.Reset();
+    ReduceDepthShader.Reset();
 }
 
 void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources)
@@ -431,40 +471,67 @@ void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources&
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin PrePass");
 
-    TRACE_SCOPE("PrePass");
-
-    GPU_TRACE_SCOPE(CmdList, "Pre Pass");
-
-    CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
-
-    struct PerObject
     {
-        XMFLOAT4X4 Matrix;
-    } PerObjectBuffer;
+        TRACE_SCOPE("PrePass");
+        
+        GPU_TRACE_SCOPE(CmdList, "Pre Pass");
 
-    CmdList.SetRenderTargets(nullptr, 0, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
+        CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+        CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
-    CmdList.SetGraphicsPipelineState(PrePassPipelineState.Get());
-
-    CmdList.SetConstantBuffer(PrePassVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-
-    for (const MeshDrawCommand& Command : FrameResources.DeferredVisibleCommands)
-    {
-        if (!Command.Material->HasHeightMap())
+        struct PerObject
         {
-            CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-            CmdList.SetIndexBuffer(Command.IndexBuffer);
+            XMFLOAT4X4 Matrix;
+        } PerObjectBuffer;
 
-            PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+        CmdList.SetRenderTargets(nullptr, 0, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
-            CmdList.Set32BitShaderConstants(PrePassVertexShader.Get(), &PerObjectBuffer, 16);
+        CmdList.SetGraphicsPipelineState(PrePassPipelineState.Get());
 
-            CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+        CmdList.SetConstantBuffer(PrePassVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+
+        for (const MeshDrawCommand& Command : FrameResources.DeferredVisibleCommands)
+        {
+            if (!Command.Material->HasHeightMap())
+            {
+                CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
+                CmdList.SetIndexBuffer(Command.IndexBuffer);
+
+                PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+
+                CmdList.Set32BitShaderConstants(PrePassVertexShader.Get(), &PerObjectBuffer, 16);
+
+                CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+            }
         }
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End PrePass");
+
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Depth Reduction");
+
+    {
+        TRACE_SCOPE("Depth Reduction");
+
+        GPU_TRACE_SCOPE(CmdList, "Depth Reduction");
+
+        CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+
+        CmdList.SetComputePipelineState(ReduceDepthPSO.Get());
+
+        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 0);
+        CmdList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer->GetUnorderedAccessView(), 0);
+        
+        const uint32 ThreadsX = FrameResources.ReducedDepthBuffer->GetWidth();
+        const uint32 ThreadsY = FrameResources.ReducedDepthBuffer->GetHeight();
+        CmdList.Dispatch(ThreadsX, ThreadsY, 1);
+
+        CmdList.UnorderedAccessTextureBarrier(FrameResources.ReducedDepthBuffer.Get());
+
+        CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Depth Reduction");
 }
 
 void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources& FrameResources)
@@ -673,6 +740,23 @@ bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     if (FrameResources.GBuffer[GBUFFER_DEPTH_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->SetName("GBuffer DepthStencil");
+    }
+    else
+    {
+        return false;
+    }
+
+    constexpr uint32 Alignment = 16;
+    const uint32 ReducedWidth  = Math::DivideByMultiple(Width, Alignment);
+    const uint32 ReducedHeight = Math::DivideByMultiple(Height, Alignment);
+    FrameResources.ReducedDepthBuffer = CreateTexture2D(
+        EFormat::R32G32_Float,
+        ReducedWidth, ReducedHeight, 1, 1, TextureFlags_RWTexture,
+        EResourceState::UnorderedAccess,
+        nullptr);
+    if (FrameResources.ReducedDepthBuffer)
+    {
+        FrameResources.ReducedDepthBuffer->SetName("Reduced DepthStencil");
     }
     else
     {

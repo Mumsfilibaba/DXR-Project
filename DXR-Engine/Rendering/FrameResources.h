@@ -89,6 +89,8 @@ struct FrameResources
     TRef<Texture2D> FinalTarget;
     TRef<Texture2D> GBuffer[5];
 
+    TRef<Texture2D> ReducedDepthBuffer;
+
     TRef<SamplerState> GBufferSampler;
     TRef<SamplerState> FXAASampler;
 

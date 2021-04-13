@@ -416,7 +416,7 @@ void Renderer::Tick(const Scene& Scene)
 
     if (ShadingImage && GEnableVariableRateShading.GetBool())
     {
-        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin VRS Image");
+        INSERT_DEBUG_CMDLIST_MARKER(ShadingRateCmdList, "Begin VRS Image");
         ShadingRateCmdList.SetShadingRate(EShadingRate::VRS_1x1);
 
         ShadingRateCmdList.TransitionTexture(ShadingImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
@@ -432,7 +432,7 @@ void Renderer::Tick(const Scene& Scene)
 
         ShadingRateCmdList.SetShadingRateImage(ShadingImage.Get());
 
-        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End VRS Image");
+        INSERT_DEBUG_CMDLIST_MARKER(ShadingRateCmdList, "End VRS Image");
     }
     else if (IsShadingRateSupported())
     {
@@ -602,7 +602,7 @@ void Renderer::Tick(const Scene& Scene)
         PerformAABBDebugPass(MainCmdList);
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin UI Render");
+    INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "Begin UI Render");
 
     {
         TRACE_SCOPE("Render UI");
@@ -621,11 +621,11 @@ void Renderer::Tick(const Scene& Scene)
         DebugUI::Render(MainCmdList);
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End UI Render");
+    INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "End UI Render");
 
     MainCmdList.TransitionTexture(Resources.BackBuffer, EResourceState::RenderTarget, EResourceState::Present);
     
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "--END FRAME--");
+    INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "--END FRAME--");
 
     Profiler::EndGPUFrame(MainCmdList);
 
@@ -839,15 +839,15 @@ void Renderer::Release()
 {
     GCmdListExecutor.WaitForGPU();
 
-   PreShadowsCmdList.Reset();
-   PointShadowCmdList.Reset();
-   DirShadowCmdList.Reset();
-   PrepareGBufferCmdList.Reset();
-   PrePassCmdList.Reset();
-   ShadingRateCmdList.Reset();
-   RayTracingCmdList.Reset();
-   BasePassCmdList.Reset();
-   MainCmdList.Reset();
+    PreShadowsCmdList.Reset();
+    PointShadowCmdList.Reset();
+    DirShadowCmdList.Reset();
+    PrepareGBufferCmdList.Reset();
+    PrePassCmdList.Reset();
+    ShadingRateCmdList.Reset();
+    RayTracingCmdList.Reset();
+    BasePassCmdList.Reset();
+    MainCmdList.Reset();
 
     DeferredRenderer.Release();
     ShadowMapRenderer.Release();

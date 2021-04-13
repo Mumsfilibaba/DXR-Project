@@ -106,7 +106,7 @@ Texture2D* TextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uin
     }
 
     const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const uint32 NumMips    = GenerateMips ? uint32(std::min(std::log2(Width), std::log2(Height))) : 1;
+    const uint32 NumMips    = GenerateMips ? Math::Max<uint32>(Math::Log2(Math::Max(Width, Height)), 1u) : 1;
 
     Assert(NumMips != 0);
 
@@ -140,7 +140,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma(Texture2D* PanoramaSou
     Assert(PanoramaSource->IsSRV());
 
     const bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const uint16 NumMips = (GenerateNumMips) ? static_cast<uint16>(std::log2(CubeMapSize)) : 1U;
+    const uint32 NumMips = (GenerateNumMips) ? Math::Max<uint32>(Math::Log2(CubeMapSize), 1u) : 1u;
 
     TRef<TextureCube> StagingTexture = CreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr);
     if (!StagingTexture)

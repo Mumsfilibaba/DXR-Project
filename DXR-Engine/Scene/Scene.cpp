@@ -156,7 +156,6 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
         NewMaterial->AlbedoMap    = WhiteTexture;
         NewMaterial->AOMap        = WhiteTexture;
-        NewMaterial->HeightMap    = WhiteTexture;
         NewMaterial->MetallicMap  = WhiteTexture;
         NewMaterial->RoughnessMap = WhiteTexture;
         NewMaterial->NormalMap    = NormalMap;
