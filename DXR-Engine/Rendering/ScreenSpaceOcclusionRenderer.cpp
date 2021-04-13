@@ -6,8 +6,8 @@
 #include "Debug/Profiler.h"
 #include "Debug/Console/Console.h"
 
-TConsoleVariable<float> GSSAORadius(0.5f);
-TConsoleVariable<float> GSSAOBias(0.04f);
+TConsoleVariable<float> GSSAORadius(0.4f);
+TConsoleVariable<float> GSSAOBias(0.025f);
 TConsoleVariable<int32> GSSAOKernelSize(32);
 
 bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
@@ -60,21 +60,20 @@ bool ScreenSpaceOcclusionRenderer::Init(FrameResources& FrameResources)
     XMVECTOR Normal = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 
     TArray<XMFLOAT3> SSAOKernel;
-    for (uint32 i = 0; i < 256 && SSAOKernel.Size() < 64; ++i)
+    for (uint32 i = 0; i < 512 && SSAOKernel.Size() < 64; i++)
     {
         XMVECTOR XmSample = XMVectorSet(RandomFloats(Generator) * 2.0f - 1.0f, RandomFloats(Generator) * 2.0f - 1.0f, RandomFloats(Generator), 0.0f);
-
-        float Scale = RandomFloats(Generator);
         XmSample = XMVector3Normalize(XmSample);
-        XmSample = XMVectorScale(XmSample, Scale);
 
         float Dot = XMVectorGetX(XMVector3Dot(XmSample, Normal));
-        if (Math::Abs(Dot) > 0.85f)
+        if (Math::Abs(Dot) > 0.95f)
         {
             continue;
         }
 
-        Scale = float(i) / 64.0f;
+        XmSample = XMVectorScale(XmSample, RandomFloats(Generator));
+
+        float Scale = float(i) / 64.0f;
         Scale = Math::Lerp(0.1f, 1.0f, Scale * Scale);
         XmSample = XMVectorScale(XmSample, Scale);
 

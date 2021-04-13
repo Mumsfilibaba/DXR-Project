@@ -149,8 +149,7 @@ void LightProbeRenderer::RenderSkyLightProbe(CommandList& CmdList, const LightSe
 bool LightProbeRenderer::CreateSkyLightResources(LightSetup& LightSetup)
 {
     // Generate global irradiance (From Skybox)
-    const uint16 IrradianceSize = 32;
-    LightSetup.IrradianceMap = CreateTextureCube(EFormat::R16G16B16A16_Float, IrradianceSize, 1, TextureFlags_RWTexture, EResourceState::Common, nullptr);
+    LightSetup.IrradianceMap = CreateTextureCube(LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, TextureFlags_RWTexture, EResourceState::Common, nullptr);
     if (!LightSetup.IrradianceMap)
     {
         Debug::DebugBreak();
@@ -161,18 +160,17 @@ bool LightProbeRenderer::CreateSkyLightResources(LightSetup& LightSetup)
         LightSetup.IrradianceMap->SetName("Irradiance Map");
     }
 
-    LightSetup.IrradianceMapUAV = CreateUnorderedAccessView(LightSetup.IrradianceMap.Get(), EFormat::R16G16B16A16_Float, 0);
+    LightSetup.IrradianceMapUAV = CreateUnorderedAccessView(LightSetup.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0);
     if (!LightSetup.IrradianceMapUAV)
     {
         Debug::DebugBreak();
         return false;
     }
 
-    const uint16 SpecularIrradianceSize      = 128;
-    const uint16 SpecularIrradianceMiplevels = uint16(std::max(std::log2(SpecularIrradianceSize), 1.0));
+    const uint16 SpecularIrradianceMiplevels = uint16(std::max(std::log2(LightSetup.SpecularIrradianceSize), 1.0));
     LightSetup.SpecularIrradianceMap = CreateTextureCube(
-        EFormat::R16G16B16A16_Float, 
-        SpecularIrradianceSize, 
+        LightSetup.LightProbeFormat,
+        LightSetup.SpecularIrradianceSize,
         SpecularIrradianceMiplevels, 
         TextureFlags_RWTexture,
         EResourceState::Common, 
@@ -189,7 +187,7 @@ bool LightProbeRenderer::CreateSkyLightResources(LightSetup& LightSetup)
 
     for (uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        TRef<UnorderedAccessView> Uav = CreateUnorderedAccessView(LightSetup.SpecularIrradianceMap.Get(), EFormat::R16G16B16A16_Float, MipLevel);
+        TRef<UnorderedAccessView> Uav = CreateUnorderedAccessView(LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel);
         if (Uav)
         {
             LightSetup.SpecularIrradianceMapUAVs.EmplaceBack(Uav);

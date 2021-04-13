@@ -73,7 +73,7 @@ private:
     float CascadeSplits[NUM_SHADOW_CASCADES];
     float CascadeRadius[NUM_SHADOW_CASCADES];
 
-    float CascadeSplitLambda = 0.65f;
+    float CascadeSplitLambda = 0.8f;
 
-    float Size = 0.07f;
+    float Size = 0.05f;
 };

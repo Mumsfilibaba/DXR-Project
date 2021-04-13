@@ -70,7 +70,7 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
     // TODO: This has to be moved so we do not duplicate it
     const float CascadeSizes[NUM_SHADOW_CASCADES] =
     {
-        4096.0f, 4096.0f, 4096.0f, 4096.0f
+        2048.0f, 2048.0f, 4096.0f, 4096.0f
     };
 
     float LastSplitDist = 0.0f;

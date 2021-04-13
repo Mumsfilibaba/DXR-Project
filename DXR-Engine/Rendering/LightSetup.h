@@ -55,7 +55,7 @@ struct DirectionalLightData
 struct LightSetup
 {
     const EFormat ShadowMapFormat  = EFormat::D16_Unorm;
-    const EFormat LightProbeFormat = EFormat::R16G16B16A16_Float;
+    const EFormat LightProbeFormat = EFormat::R11G11B10_Float;
     
     const uint32 MaxPointLights       = 256;
     const uint32 MaxDirectionalLights = 256;
@@ -63,10 +63,12 @@ struct LightSetup
     
     const uint16 CascadeSizes[NUM_SHADOW_CASCADES] =
     {
-        4096, 4096, 4096, 4096
+        2048, 2048, 2048, 4096
     };
     
-    const uint16 PointLightShadowSize = 1024;
+    const uint16 IrradianceSize         = 64;
+    const uint16 SpecularIrradianceSize = 256;
+    const uint16 PointLightShadowSize   = 512;
 
     LightSetup()  = default;
     ~LightSetup() = default;

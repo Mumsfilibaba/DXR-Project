@@ -139,7 +139,7 @@ D3D12GPUProfiler* D3D12GPUProfiler::Create(D3D12Device* InDevice)
     }
 
     // Start with three
-    for (uint32 i = 0; i < 6; i++)
+    for (uint32 i = 0; i < D3D12_NUM_BACK_BUFFERS; i++)
     {
         if (!NewProfiler->AllocateReadResource())
         {
