@@ -233,7 +233,7 @@ float4 PSMain(PSInput Input) : SV_Target0
     const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Roughness;
     const float	SampledAlpha     = AlphaTex.Sample(MaterialSampler, TexCoords);
     const float Roughness        = SampledRoughness;
-    if (SampledAlpha < 0.1f)
+    if (SampledAlpha < 0.5f)
     {
         discard;
     }

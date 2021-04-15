@@ -147,18 +147,13 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
     {
         // Create new material with default properties
         MaterialProperties MatProps;
-        MatProps.Metallic  = Mat.ambient[0];
+        MatProps.Albedo    = XMFLOAT3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
+        MatProps.Metallic  = 1.0f;
         MatProps.AO        = 1.0f;
         MatProps.Roughness = 1.0f;
 
         TSharedPtr<Material>& NewMaterial = LoadedMaterials.EmplaceBack(MakeShared<Material>(MatProps));
         LOG_INFO("Loaded materialID=" + std::to_string(LoadedMaterials.Size() - 1));
-
-        NewMaterial->AlbedoMap    = WhiteTexture;
-        NewMaterial->AOMap        = WhiteTexture;
-        NewMaterial->MetallicMap  = WhiteTexture;
-        NewMaterial->RoughnessMap = WhiteTexture;
-        NewMaterial->NormalMap    = NormalMap;
 
         // Metallic
         if (!Mat.ambient_texname.empty())
@@ -180,6 +175,10 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
             }
 
             NewMaterial->MetallicMap = MaterialTextures[Mat.ambient_texname];
+        }
+        else
+        {
+            NewMaterial->MetallicMap  = WhiteTexture;
         }
 
         // Albedo
@@ -203,6 +202,10 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
             NewMaterial->AlbedoMap = MaterialTextures[Mat.diffuse_texname];
         }
+        else
+        {
+            NewMaterial->AlbedoMap = WhiteTexture;
+        }
 
         // Roughness
         if (!Mat.specular_highlight_texname.empty())
@@ -224,6 +227,10 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
             }
 
             NewMaterial->RoughnessMap = MaterialTextures[Mat.specular_highlight_texname];
+        }
+        else
+        {
+            NewMaterial->RoughnessMap = WhiteTexture;
         }
 
         // Normal
@@ -247,6 +254,10 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
             NewMaterial->NormalMap = MaterialTextures[Mat.bump_texname];
         }
+        else
+        {
+            NewMaterial->NormalMap = NormalMap;
+        }
 
         // Alpha
         if (!Mat.alpha_texname.empty())
@@ -269,6 +280,9 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
             NewMaterial->AlphaMask = MaterialTextures[Mat.alpha_texname];
         }
+        
+        // AO
+        NewMaterial->AOMap = WhiteTexture;
 
         NewMaterial->Init();
     }
@@ -282,6 +296,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
     {
         // Start at index zero for eaxh mesh and loop until all indices are processed
         uint32 i = 0;
+        uint32 SubMeshIndex = 0;
         while (i < Shape.mesh.indices.size())
         {
             // Start a new mesh
@@ -351,7 +366,17 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
             // Setup new actor for this shape
             Actor* NewActor = DBG_NEW Actor();
-            NewActor->SetName(Shape.name);
+
+            if (SubMeshIndex < 1)
+            {
+                NewActor->SetName(Shape.name);
+                SubMeshIndex++;
+            }
+            else
+            {
+                NewActor->SetName(Shape.name + "_" + std::to_string(SubMeshIndex));
+            }
+
             NewActor->GetTransform().SetScale(0.015f, 0.015f, 0.015f);
 
             // Add a MeshComponent

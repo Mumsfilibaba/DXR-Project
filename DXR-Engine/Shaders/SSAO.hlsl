@@ -80,8 +80,8 @@ void Main(ComputeShaderInput Input)
         float3 DepthPos   = PositionFromDepth(SampleDepth, Offset.xy, CameraBuffer.ProjectionInverse);
         SampleDepth = DepthPos.z;
         
-        const float RangeCheck = smoothstep(0.0f, 1.0f, FinalRadius / abs(SampleDepth - ViewPosition.z));
-        Occlusion += (SampleDepth > (SamplePos.z - FinalBias) ? 0.0f : 1.0f) * RangeCheck;
+        const float RangeCheck = smoothstep(0.0f, 1.0f, FinalRadius / abs(ViewPosition.z - SampleDepth));
+        Occlusion += (SampleDepth >= (SamplePos.z - Bias) ? 0.0f : 1.0f) * RangeCheck;
     }
     
     Occlusion = 1.0f - (Occlusion / float(FinalKernelSize));
