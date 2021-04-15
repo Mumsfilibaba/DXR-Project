@@ -384,7 +384,6 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
             NewComponent->Mesh = NewMesh;
             if (MaterialID >= 0)
             {
-                LOG_INFO(Shape.name + " got materialID=" + std::to_string(MaterialID));
                 NewComponent->Material = LoadedMaterials[MaterialID];
             }
             else
