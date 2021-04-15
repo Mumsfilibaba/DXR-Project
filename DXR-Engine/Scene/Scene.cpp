@@ -149,7 +149,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
         MaterialProperties MatProps;
         MatProps.Albedo    = XMFLOAT3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
         MatProps.Metallic  = 1.0f;
-        MatProps.AO        = 1.0f;
+        MatProps.AO        = Mat.ambient[0];
         MatProps.Roughness = 1.0f;
 
         TSharedPtr<Material>& NewMaterial = LoadedMaterials.EmplaceBack(MakeShared<Material>(MatProps));
