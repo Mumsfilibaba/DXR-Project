@@ -411,7 +411,40 @@ bool DeferredRenderer::Init(FrameResources& FrameResources)
     }
 
     {
-        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DepthReduction.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DepthReduction.hlsl", "ReductionMainInital", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+
+        ReduceDepthInitalShader= CreateComputeShader(ShaderCode);
+        if (!ReduceDepthInitalShader)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            ReduceDepthInitalShader->SetName("DepthReduction Inital ComputeShader");
+        }
+
+        ComputePipelineStateCreateInfo PipelineStateInfo;
+        PipelineStateInfo.Shader = ReduceDepthInitalShader.Get();
+
+        ReduceDepthInitalPSO = CreateComputePipelineState(PipelineStateInfo);
+        if (!ReduceDepthInitalPSO)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            ReduceDepthInitalPSO->SetName("DepthReduction Initial PipelineState");
+        }
+    }
+
+    {
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DepthReduction.hlsl", "ReductionMain", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
         {
             Debug::DebugBreak();
             return false;
@@ -460,11 +493,14 @@ void DeferredRenderer::Release()
     TiledLightShader.Reset();
     TiledLightDebugShader.Reset();
 
+    ReduceDepthInitalPSO.Reset();
+    ReduceDepthInitalShader.Reset();
+
     ReduceDepthPSO.Reset();
     ReduceDepthShader.Reset();
 }
 
-void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources)
+void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene)
 {
     const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
@@ -515,20 +551,55 @@ void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources&
 
         GPU_TRACE_SCOPE(CmdList, "Depth Reduction");
 
+        struct ReductionConstants
+        {
+            XMFLOAT4X4 CamProjection;
+            float NearPlane;
+            float FarPlane;
+        } ReductionConstants;
+
+        ReductionConstants.CamProjection = Scene.GetCamera()->GetProjectionMatrix();
+        ReductionConstants.NearPlane     = Scene.GetCamera()->GetNearPlane();
+        ReductionConstants.FarPlane      = Scene.GetCamera()->GetFarPlane();
+
+        // Perform the first reduction
         CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
 
-        CmdList.SetComputePipelineState(ReduceDepthPSO.Get());
+        CmdList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
 
-        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 0);
-        CmdList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer->GetUnorderedAccessView(), 0);
+        CmdList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 0);
+        CmdList.SetUnorderedAccessView(ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
         
-        const uint32 ThreadsX = FrameResources.ReducedDepthBuffer->GetWidth();
-        const uint32 ThreadsY = FrameResources.ReducedDepthBuffer->GetHeight();
+        CmdList.Set32BitShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, Math::BytesToNum32BitConstants(sizeof(ReductionConstants)));
+
+        uint32 ThreadsX = FrameResources.ReducedDepthBuffer[0]->GetWidth();
+        uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();
         CmdList.Dispatch(ThreadsX, ThreadsY, 1);
 
-        CmdList.UnorderedAccessTextureBarrier(FrameResources.ReducedDepthBuffer.Get());
-
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
         CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
+
+        // Perform the other reductions
+        CmdList.SetComputePipelineState(ReduceDepthPSO.Get());
+
+        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
+        CmdList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetUnorderedAccessView(), 0);
+
+        ThreadsX = Math::DivideByMultiple(ThreadsX, 16);
+        ThreadsY = Math::DivideByMultiple(ThreadsY, 16);
+        CmdList.Dispatch(ThreadsX, ThreadsY, 1);
+
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
+
+        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetShaderResourceView(), 0);
+        CmdList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
+
+        ThreadsX = Math::DivideByMultiple(ThreadsX, 16);
+        ThreadsY = Math::DivideByMultiple(ThreadsY, 16);
+        CmdList.Dispatch(ThreadsX, ThreadsY, 1);
+
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Depth Reduction");
@@ -749,18 +820,22 @@ bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     constexpr uint32 Alignment = 16;
     const uint32 ReducedWidth  = Math::DivideByMultiple(Width, Alignment);
     const uint32 ReducedHeight = Math::DivideByMultiple(Height, Alignment);
-    FrameResources.ReducedDepthBuffer = CreateTexture2D(
-        EFormat::R32G32_Float,
-        ReducedWidth, ReducedHeight, 1, 1, TextureFlags_RWTexture,
-        EResourceState::UnorderedAccess,
-        nullptr);
-    if (FrameResources.ReducedDepthBuffer)
+    
+    for (uint32 i = 0; i < 2; i++)
     {
-        FrameResources.ReducedDepthBuffer->SetName("Reduced DepthStencil");
-    }
-    else
-    {
-        return false;
+        FrameResources.ReducedDepthBuffer[i] = CreateTexture2D(
+            EFormat::R32G32_Float,
+            ReducedWidth, ReducedHeight, 1, 1, TextureFlags_RWTexture,
+            EResourceState::UnorderedAccess,
+            nullptr);
+        if (FrameResources.ReducedDepthBuffer[i])
+        {
+            FrameResources.ReducedDepthBuffer[i]->SetName("Reduced DepthStencil[" + std::to_string(i) + "]");
+        }
+        else
+        {
+            return false;
+        }
     }
 
     // View Normal

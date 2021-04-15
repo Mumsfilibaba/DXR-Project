@@ -75,6 +75,11 @@ public:
     {
         return (T)std::log2((double)x);
     }
+
+    FORCEINLINE static uint32 BytesToNum32BitConstants(uint32 Bytes)
+    {
+        return Bytes / 4;
+    }
 };
 
 // XMFLOAT2

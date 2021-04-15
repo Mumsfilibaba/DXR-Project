@@ -14,7 +14,7 @@
 #define GBUFFER_VIEW_NORMAL_INDEX 4
 
 template<typename TResource>
-class PtrResourceCache
+class ResourceCache
 {
 public:
     int32 Add(TResource* Resource)
@@ -62,7 +62,7 @@ struct FrameResources
     void Release();
 
     const EFormat DepthBufferFormat  = EFormat::D32_Float;
-    const EFormat SSAOBufferFormat   = EFormat::R16_Float;
+    const EFormat SSAOBufferFormat   = EFormat::R16_Unorm;
     const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
     const EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
     const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
@@ -89,7 +89,8 @@ struct FrameResources
     TRef<Texture2D> FinalTarget;
     TRef<Texture2D> GBuffer[5];
 
-    TRef<Texture2D> ReducedDepthBuffer;
+    // Two resources that can be ping ponged inbetween
+    TRef<Texture2D> ReducedDepthBuffer[2];
 
     TRef<SamplerState> GBufferSampler;
     TRef<SamplerState> FXAASampler;
@@ -106,7 +107,7 @@ struct FrameResources
 
     TArray<RayTracingShaderResources>       RTHitGroupResources;
     std::unordered_map<class Mesh*, uint32> RTMeshToHitGroupIndex;
-    PtrResourceCache<ShaderResourceView>    RTMaterialTextureCache;
+    ResourceCache<ShaderResourceView>       RTMaterialTextureCache;
 
     TArray<MeshDrawCommand> DeferredVisibleCommands;
     TArray<MeshDrawCommand> ForwardVisibleCommands;

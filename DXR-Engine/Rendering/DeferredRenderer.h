@@ -16,7 +16,7 @@ public:
 
     void Release();
 
-    void RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources);
+    void RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene);
     void RenderBasePass(CommandList& CmdList, const FrameResources& FrameResources);
     void RenderDeferredTiledLightPass(CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup);
 
@@ -36,6 +36,9 @@ private:
     TRef<ComputeShader>         TiledLightShader;
     TRef<ComputePipelineState>  TiledLightPassPSODebug;
     TRef<ComputeShader>         TiledLightDebugShader;
+
+    TRef<ComputePipelineState> ReduceDepthInitalPSO;
+    TRef<ComputeShader>        ReduceDepthInitalShader;
 
     TRef<ComputePipelineState> ReduceDepthPSO;
     TRef<ComputeShader>        ReduceDepthShader;

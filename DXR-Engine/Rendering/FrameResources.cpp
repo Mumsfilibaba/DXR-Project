@@ -27,7 +27,8 @@ void FrameResources::Release()
         GBuffer[i].Reset();
     }
     
-    ReducedDepthBuffer.Reset();
+    ReducedDepthBuffer[0].Reset();
+    ReducedDepthBuffer[1].Reset();
 
     GBufferSampler.Reset();
 

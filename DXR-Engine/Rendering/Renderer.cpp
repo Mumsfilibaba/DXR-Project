@@ -331,7 +331,7 @@ void Renderer::Tick(const Scene& Scene)
     // Init pointlight task
     const auto RenderPointShadows = [&]()
     {
-        this->ShadowMapRenderer.RenderPointLightShadows(PointShadowCmdList, LightSetup, Scene);
+        Renderer::ShadowMapRenderer.RenderPointLightShadows(PointShadowCmdList, LightSetup, Scene);
     };
 
     PointShadowTask.Delegate.BindLambda(RenderPointShadows);
@@ -340,7 +340,7 @@ void Renderer::Tick(const Scene& Scene)
     // Init dirlight task
     const auto RenderDirShadows = [&]()
     {
-        this->ShadowMapRenderer.RenderDirectionalLightShadows(DirShadowCmdList, LightSetup, Scene);
+        Renderer::ShadowMapRenderer.RenderDirectionalLightShadows(DirShadowCmdList, LightSetup, Scene);
     };
 
     DirShadowTask.Delegate.BindLambda(RenderDirShadows);
@@ -407,7 +407,7 @@ void Renderer::Tick(const Scene& Scene)
     {
         const auto RenderPrePass = [&]()
         {
-            this->DeferredRenderer.RenderPrePass(PrePassCmdList, Resources);
+            Renderer::DeferredRenderer.RenderPrePass(PrePassCmdList, Resources, Scene);
         };
 
         PrePassTask.Delegate.BindLambda(RenderPrePass);
@@ -444,7 +444,7 @@ void Renderer::Tick(const Scene& Scene)
         const auto RenderRayTracing= [&]()
         {
             GPU_TRACE_SCOPE(RayTracingCmdList, "Ray Tracing");
-            this->RayTracer.PreRender(RayTracingCmdList, Resources, Scene);
+            Renderer::RayTracer.PreRender(RayTracingCmdList, Resources, Scene);
         };
 
         RayTracingTask.Delegate.BindLambda(RenderRayTracing);
@@ -455,7 +455,7 @@ void Renderer::Tick(const Scene& Scene)
         const auto RenderBasePass = [&]()
         {
             GPU_TRACE_SCOPE(BasePassCmdList, "Base Pass");
-            this->DeferredRenderer.RenderBasePass(BasePassCmdList, Resources);
+            Renderer::DeferredRenderer.RenderBasePass(BasePassCmdList, Resources);
         };
 
         BasePassTask.Delegate.BindLambda(RenderBasePass);
