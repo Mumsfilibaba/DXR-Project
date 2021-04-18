@@ -7,3 +7,6 @@
 [submodule "Dependencies/Template-Library"]
 	path = Dependencies/Template-Library
 	url = https://github.com/Mumsfilibaba/Template-Library
+[submodule "Dependencies/OpenFBX"]
+	path = Dependencies/OpenFBX
+	url = https://github.com/Mumsfilibaba/OpenFBX

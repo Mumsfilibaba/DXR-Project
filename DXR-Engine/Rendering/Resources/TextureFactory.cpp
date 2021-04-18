@@ -109,7 +109,7 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
     }
 
     const Bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const UInt32 NumMips    = GenerateMips ? UInt32(std::min(std::log2(Width), std::log2(Height))) : 1;
+    const UInt32 NumMips    = GenerateMips ? std::max(UInt32(std::min(std::log2(Width), std::log2(Height))), 1u) : 1;
 
     Assert(NumMips != 0);
 
@@ -126,7 +126,7 @@ Texture2D* TextureFactory::LoadFromMemory(const Byte* Pixels, UInt32 Width, UInt
         return nullptr;
     }
 
-    if (GenerateMips)
+    if (GenerateMips && NumMips > 1)
     {
         CommandList& CmdList = GlobalFactoryData.CmdList;
         CmdList.Begin();

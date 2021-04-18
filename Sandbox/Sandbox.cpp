@@ -15,7 +15,10 @@
 
 #include <random>
 
-#define ENABLE_LIGHT_TEST 0
+// Scene 0 - Sponza
+// Scene 1 - SunTemple
+// Scene 2 - Bistro
+#define SCENE 2
 
 Game* MakeGameInstance()
 {
@@ -24,10 +27,26 @@ Game* MakeGameInstance()
 
 Bool Sandbox::Init()
 {
+    SceneData SceneBuildData;
+#if SCENE == 1
+    MeshFactory::LoadSceneFromFile(SceneData, "../Assets/Scenes/SunTemple/SunTemple.fbx");
+#elif SCENE == 2
+    SceneData Exterior;
+    MeshFactory::LoadSceneFromFile(Exterior, "../Assets/Scenes/Bistro/BistroExterior.fbx");
+    MeshFactory::CombineScenes(SceneBuildData, Exterior);
+
+    SceneData Interior;
+    MeshFactory::LoadSceneFromFile(Interior, "../Assets/Scenes/Bistro/BistroInterior.fbx");
+    MeshFactory::CombineScenes(SceneBuildData, Interior);
+#endif
+
+    // In order to create fewer meshes and in turn fewer descriptors we bind together all these models
+    MeshFactory::MergeSimilarMaterials(SceneBuildData);
+
     // Initialize Scene
     Actor* NewActor             = nullptr;
     MeshComponent* NewComponent = nullptr;
-    CurrentScene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
+    CurrentScene = DBG_NEW Scene();// Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
 
     // Create Spheres
     MeshData SphereMeshData     = MeshFactory::CreateSphere(3);
@@ -67,6 +86,186 @@ Bool Sandbox::Init()
         BaseNormal->SetName("BaseNormal");
     }
 
+    MaterialProperties MatProperties;
+    MatProperties.Albedo = XMFLOAT3(1.0f, 1.0f, 1.0f);
+    MatProperties.AO           = 1.0f;
+    MatProperties.Metallic     = 1.0f;
+    MatProperties.Roughness    = 1.0f;
+    MatProperties.EnableHeight = 0;
+
+    TSharedPtr<class Material> BaseMaterial = MakeShared<Material>(MatProperties);
+    BaseMaterial->AlbedoMap    = BaseTexture;
+    BaseMaterial->NormalMap    = BaseNormal;
+    BaseMaterial->RoughnessMap = BaseTexture;
+    BaseMaterial->HeightMap    = BaseTexture;
+    BaseMaterial->AOMap        = BaseTexture;
+    BaseMaterial->MetallicMap  = BaseTexture;
+    BaseMaterial->Init();
+
+    TArray<TSharedPtr<Material>> LoadedMaterials;
+    std::unordered_map<std::string, TRef<Texture2D>> MaterialTextures;
+
+    for (const MaterialData& MaterialData : SceneBuildData.Materials)
+    {
+        MaterialProperties MaterialProperties;
+        MaterialProperties.Metallic  = MaterialData.Metallic;
+        MaterialProperties.AO        = MaterialData.AO;
+        MaterialProperties.Roughness = MaterialData.Roughness;
+
+        TSharedPtr<Material>& NewMaterial = LoadedMaterials.EmplaceBack(MakeShared<Material>(MaterialProperties));
+        LOG_INFO("Loaded materialID=" + std::to_string(LoadedMaterials.Size() - 1));
+
+        NewMaterial->AOMap     = BaseTexture;
+        NewMaterial->HeightMap = BaseTexture;
+
+        // Metallic
+        if (!MaterialData.MetallicTexname.empty())
+        {
+            if (MaterialTextures.count(MaterialData.MetallicTexname) == 0)
+            {
+                std::string TexName = MaterialData.TexPath + '/' + MaterialData.MetallicTexname;
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
+                if (Texture)
+                {
+                    Texture->SetName(MaterialData.MetallicTexname);
+                    MaterialTextures[MaterialData.MetallicTexname] = Texture;
+                }
+                else
+                {
+                    MaterialTextures[MaterialData.MetallicTexname] = BaseTexture;
+                }
+            }
+
+            NewMaterial->MetallicMap = MaterialTextures[MaterialData.MetallicTexname];
+        }
+        else
+        {
+            NewMaterial->MetallicMap = BaseTexture;
+        }
+
+        // Diffuse
+        if (!MaterialData.DiffTexName.empty())
+        {
+            if (MaterialTextures.count(MaterialData.DiffTexName) == 0)
+            {
+                std::string TexName = MaterialData.TexPath + '/' + MaterialData.DiffTexName;
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+                if (Texture)
+                {
+                    Texture->SetName(MaterialData.DiffTexName);
+                    MaterialTextures[MaterialData.DiffTexName] = Texture;
+                }
+                else
+                {
+                    MaterialTextures[MaterialData.DiffTexName] = BaseTexture;
+                }
+            }
+
+            NewMaterial->AlbedoMap = MaterialTextures[MaterialData.DiffTexName];
+        }
+        else
+        {
+            NewMaterial->AlbedoMap = BaseTexture;
+        }
+
+        // Roughness
+        if (!MaterialData.RoughnessTexname.empty())
+        {
+            if (MaterialTextures.count(MaterialData.RoughnessTexname) == 0)
+            {
+                std::string TexName = MaterialData.TexPath + '/' + MaterialData.RoughnessTexname;
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
+                if (Texture)
+                {
+                    Texture->SetName(MaterialData.RoughnessTexname);
+                    MaterialTextures[MaterialData.RoughnessTexname] = Texture;
+                }
+                else
+                {
+                    MaterialTextures[MaterialData.RoughnessTexname] = BaseTexture;
+                }
+            }
+
+            NewMaterial->RoughnessMap = MaterialTextures[MaterialData.RoughnessTexname];
+        }
+        else
+        {
+            NewMaterial->RoughnessMap = BaseTexture;
+        }
+
+        // Normal
+        if (!MaterialData.NormalTexname.empty())
+        {
+            if (MaterialTextures.count(MaterialData.NormalTexname) == 0)
+            {
+                std::string TexName = MaterialData.TexPath + '/' + MaterialData.NormalTexname;
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+                if (Texture)
+                {
+                    Texture->SetName(MaterialData.NormalTexname);
+                    MaterialTextures[MaterialData.NormalTexname] = Texture;
+                }
+                else
+                {
+                    MaterialTextures[MaterialData.NormalTexname] = BaseNormal;
+                }
+            }
+
+            NewMaterial->NormalMap = MaterialTextures[MaterialData.NormalTexname];
+        }
+        else
+        {
+            NewMaterial->NormalMap = BaseNormal;
+        }
+
+        // Alpha
+        if (!MaterialData.AlphaTexname.empty())
+        {
+            if (MaterialTextures.count(MaterialData.AlphaTexname) == 0)
+            {
+                std::string TexName = MaterialData.TexPath + '/' + MaterialData.AlphaTexname;
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
+                if (Texture)
+                {
+                    Texture->SetName(MaterialData.AlphaTexname);
+                    MaterialTextures[MaterialData.AlphaTexname] = Texture;
+                }
+                else
+                {
+                    MaterialTextures[MaterialData.AlphaTexname] = BaseTexture;
+                }
+            }
+
+            NewMaterial->AlphaMask = MaterialTextures[MaterialData.AlphaTexname];
+        }
+
+        NewMaterial->Init();
+    }
+
+    for (const ModelData& Model : SceneBuildData.Models)
+    {
+        NewActor = DBG_NEW Actor();
+        CurrentScene->AddActor(NewActor);
+
+        NewActor->SetName(Model.Name);
+        NewActor->GetTransform().SetUniformScale(0.015f);
+        NewActor->GetTransform().SetRotation(0.0f, 0.0f, XMConvertToRadians(-90.0f));
+
+        NewComponent = DBG_NEW MeshComponent(NewActor);
+        NewComponent->Mesh = Mesh::Make(Model.Mesh);
+        
+        if (Model.MaterialIndex != -1)
+        {
+            NewComponent->Material = LoadedMaterials[Model.MaterialIndex];
+        }
+        else
+        {
+            NewComponent->Material = BaseMaterial;
+        }
+
+        NewActor->AddComponent(NewComponent);
+    }
+
     constexpr Float  SphereOffset   = 1.25f;
     constexpr UInt32 SphereCountX   = 8;
     constexpr Float  StartPositionX = (-static_cast<Float>(SphereCountX) * SphereOffset) / 2.0f;
@@ -75,7 +274,6 @@ Bool Sandbox::Init()
     constexpr Float  MetallicDelta  = 1.0f / SphereCountY;
     constexpr Float  RoughnessDelta = 1.0f / SphereCountX;
 
-    MaterialProperties MatProperties;
     MatProperties.AO     = 1.0f;
     MatProperties.Albedo = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
@@ -270,26 +468,6 @@ Bool Sandbox::Init()
     Light3->SetIntensity(Intensity);
     Light3->SetShadowCaster(true);
     CurrentScene->AddLight(Light3);
-
-#if ENABLE_LIGHT_TEST
-    // Add multiple lights
-    std::uniform_real_distribution<Float> RandomFloats(0.0f, 1.0f);
-    std::default_random_engine Generator;
-
-    for (UInt32 i = 0; i < 256; i++)
-    {
-        Float x = RandomFloats(Generator) * 35.0f - 17.5f;
-        Float y = RandomFloats(Generator) * 22.0f;
-        Float z = RandomFloats(Generator) * 16.0f - 8.0f;
-        Float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
-
-        PointLight* Light = DBG_NEW PointLight();
-        Light->SetPosition(x, y, z);
-        Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
-        Light->SetIntensity(Intentsity);
-        CurrentScene->AddLight(Light);
-    }
-#endif
 
     // Add DirectionalLight- Source
     DirectionalLight* Light4 = DBG_NEW DirectionalLight();

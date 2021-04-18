@@ -7,7 +7,7 @@
 #include "D3D12CommandList.h"
 
 #define NUM_VISIBILITIES (ShaderVisibility_Count)
-#define NUM_DESCRIPTORS  (D3D12_MAX_ONLINE_DESCRIPTOR_COUNT / 2)
+#define NUM_DESCRIPTORS  (D3D12_MAX_ONLINE_DESCRIPTOR_COUNT)
 
 template <typename TD3D12DescriptorViewType>
 struct TD3D12DescriptorViewCache

@@ -144,11 +144,16 @@ PSOutput PSMain(PSInput Input)
         }
     }
 
-    float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords).rgb) * MaterialBuffer.Albedo;
+    float4 AlbedoAlpha = AlbedoMap.Sample(MaterialSampler, TexCoords);
+    if (AlbedoAlpha.a < 0.5f)
+    {
+        discard;
+    }
+        
+    float3 SampledAlbedo = ApplyGamma(AlbedoAlpha.rgb) * MaterialBuffer.Albedo;
     
     float3 SampledNormal = NormalMap.Sample(MaterialSampler, TexCoords).rgb;
     SampledNormal        = UnpackNormal(SampledNormal);
-    SampledNormal.y      = -SampledNormal.y;
     
     float3 Tangent      = normalize(Input.Tangent);
     float3 Bitangent    = normalize(Input.Bitangent);

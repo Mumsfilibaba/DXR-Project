@@ -26,9 +26,9 @@ void Material::Init()
     }
 
     SamplerStateCreateInfo CreateInfo;
-    CreateInfo.AddressU       = ESamplerMode::Wrap;
-    CreateInfo.AddressV       = ESamplerMode::Wrap;
-    CreateInfo.AddressW       = ESamplerMode::Wrap;
+    CreateInfo.AddressU       = ESamplerMode::Mirror;
+    CreateInfo.AddressV       = ESamplerMode::Mirror;
+    CreateInfo.AddressW       = ESamplerMode::Mirror;
     CreateInfo.ComparisonFunc = EComparisonFunc::Never;
     CreateInfo.Filter         = ESamplerFilter::Anistrotopic;
     CreateInfo.MaxAnisotropy  = 16;

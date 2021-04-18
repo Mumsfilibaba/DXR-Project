@@ -17,10 +17,10 @@ inline std::string ConvertToAscii(const std::wstring& WideString)
 
 inline void ConvertBackslashes(std::string& OutString)
 {
-    size_t pos = OutString.find_first_of('\\');
-    while (pos != std::string::npos)
+    size_t Pos = OutString.find_first_of('\\');
+    while (Pos != std::string::npos)
     {
-        OutString.replace(pos, 1, 1, '/');
-        pos = OutString.find_first_of('\\', pos + 1);
+        OutString.replace(Pos, 1, 1, '/');
+        Pos = OutString.find_first_of('\\', Pos + 1);
     }
 }

@@ -10,7 +10,7 @@ struct Vertex
     XMFLOAT3 Tangent;
     XMFLOAT2 TexCoord;
 
-    FORCEINLINE Bool operator==(const Vertex& Other) const
+    FORCEINLINE bool operator==(const Vertex& Other) const
     {
         return
             ((Position.x == Other.Position.x) && (Position.y == Other.Position.y) && (Position.z == Other.Position.z)) &&
@@ -39,12 +39,51 @@ struct MeshData
 {
     TArray<Vertex> Vertices;
     TArray<UInt32> Indices;
+
+    inline void Clear()
+    {
+        Vertices.Clear();
+        Indices.Clear();
+    }
+};
+
+struct MaterialData
+{
+    std::string TexPath;          // Path to textures (MTL etc.)
+    std::string DiffTexName;      // Diffuse texture
+    std::string SpecTexName;      // Stores AO, Roughness and Metallic in a single texture
+    std::string AOTexname;        // Stores a single AO texture
+    std::string RoughnessTexname; // Stores a single roughness texture
+    std::string MetallicTexname;  // Stores a single Metallic texture
+    std::string AlphaTexname;     // Stores a single Alpha texture
+    std::string NormalTexname;    // Stores a single normal texture
+
+    XMFLOAT3 Diffuse;
+    Float AO        = 1.0f;
+    Float Roughness = 1.0f;
+    Float Metallic  = 1.0f;
+};
+
+struct ModelData
+{
+    std::string Name;
+    MeshData Mesh;
+    Int32    MaterialIndex = -1;
+};
+
+struct SceneData
+{
+    TArray<ModelData>    Models;
+    TArray<MaterialData> Materials;
 };
 
 class MeshFactory
 {
 public:
-    static MeshData CreateFromFile(const std::string& Filename, Bool MergeMeshes = true, Bool LeftHanded = true) noexcept;
+    // Loads a full scene from a single file 
+    static bool LoadSceneFromFile(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion = false) noexcept;
+    
+    // Creates meshes
     static MeshData CreateCube(Float Width = 1.0f, Float Height = 1.0f, Float Depth = 1.0f) noexcept;
     static MeshData CreatePlane(UInt32 Width = 1, UInt32 Height = 1) noexcept;
     static MeshData CreateSphere(UInt32 Subdivisions = 0, Float Radius = 0.5f) noexcept;
@@ -55,7 +94,17 @@ public:
     static MeshData CreateCylinder(UInt32 Sides = 5, Float Radius = 0.5f, Float Height = 1.0f) noexcept;
 
     static void Subdivide(MeshData& OutData, UInt32 Subdivisions = 1) noexcept;
+    
     static void Optimize(MeshData& OutData, UInt32 StartVertex = 0) noexcept;
+
     static void CalculateHardNormals(MeshData& OutData) noexcept;
     static void CalculateTangents(MeshData& OutData) noexcept;
+
+    static void MergeSimilarMaterials(SceneData& OutScene) noexcept;
+
+    static void CombineScenes(SceneData& OutScene, const SceneData& Other) noexcept;
+
+private:
+    static bool LoadSceneFromOBJ(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion) noexcept;
+    static bool LoadSceneFromFBX(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion) noexcept;
 };

@@ -28,10 +28,10 @@ Texture2DArray<float4> BlueNoiseTex : register(t6);
 
 StructuredBuffer<RayTracingMaterial> Materials : register(t7);
 
-StructuredBuffer<Vertex> VertexBuffers[400] : register(t8);
-ByteAddressBuffer        IndexBuffers[400]  : register(t408);
+StructuredBuffer<Vertex> VertexBuffers[500] : register(t8);
+ByteAddressBuffer        IndexBuffers[500] : register(t508);
 
-Texture2D<float4> MaterialTextures[128] : register(t808);
+Texture2D<float4> MaterialTextures[256] : register(t1008);
 
 ConstantBuffer<Camera>        CameraBuffer : register(b0);
 ConstantBuffer<RandomData>    RandomBuffer : register(b1);

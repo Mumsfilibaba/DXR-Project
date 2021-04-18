@@ -1,115 +1,28 @@
 #include "Rendering/Resources/MeshFactory.h"
 
-//#include <assimp/Importer.hpp>
-//#include <assimp/scene.h>
-//#include <assimp/postprocess.h>
+#include <tiny_obj_loader.h>
+#include <ofbx.h>
 
-MeshData MeshFactory::CreateFromFile(const std::string& Filename, Bool MergeMeshes, Bool LeftHanded) noexcept
+#include <regex>
+
+bool MeshFactory::LoadSceneFromFile(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion) noexcept
 {
-    UNREFERENCED_VARIABLE(Filename);
-    UNREFERENCED_VARIABLE(MergeMeshes);
-    UNREFERENCED_VARIABLE(LeftHanded);
+    std::regex OBJFile("\.obj|\.OBJ");
+    std::regex FBXFile("\.fbx|\.FBX");
 
-    /*using namespace std;
-
-    // Set import flags
-    UInt32 flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ImproveCacheLocality | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
-    if (leftHanded)
+    if (std::regex_search(Filename, OBJFile))
     {
-        flags |= aiProcess_ConvertToLeftHanded;
+        return LoadSceneFromOBJ(OutScene, Filename, LeftHandedConversion);
     }
-    flags = flags & ~aiProcess_FlipWindingOrder;
-
-    // Load scene
-    Assimp::Importer importer;
-    const aiScene* pScene = importer.ReadFile(filename, flags);
-
-    // Extract scene-data
-    MeshData data;
-    if (pScene)
+    else if (std::regex_search(Filename, FBXFile))
     {
-        if (pScene->HasMeshes())
-        {
-            LOG_DEBUG_INFO("[LAMBDA ENGINE] Loading Scene with '%u' meshes\n", pScene->mNumMeshes);
-
-            size_t vertexOffset = 0;
-            size_t indexOffset = 0;
-            UInt32 numMeshesToLoad = (mergeMeshes) ? pScene->mNumMeshes : 1;
-            for (UInt32 m = 0; m < numMeshesToLoad; m++)
-            {
-                const aiMesh* pMesh = pScene->mMeshes[m];
-                if (!pMesh->HasNormals())
-                {
-                    LOG_DEBUG_WARNING("[LAMBDA ENGINE] Mesh does not have normals\n");
-                }
-                if (!pMesh->HasTextureCoords(0))
-                {
-                    LOG_DEBUG_WARNING("[LAMBDA ENGINE] Mesh does not have texcoords\n");
-                }
-
-                if (pMesh)
-                {
-                    if (pMesh->HasFaces())
-                    {
-                        // Get number of vertices and resize buffer
-                        size_t vertCount = pMesh->mNumVertices;
-                        // Vertexoffset is used when there are more than one mesh in the scene and we want to merge all the meshes
-                        data.Vertices.resize(vertexOffset + vertCount);
-                        for (size_t i = 0; i < vertCount; i++)
-                        {
-                            data.Vertices[vertexOffset + i].Position = XMFLOAT3(pMesh->mVertices[i].x, pMesh->mVertices[i].y, pMesh->mVertices[i].z);
-                            if (pMesh->HasNormals())
-                            {
-                                data.Vertices[vertexOffset + i].Normal = XMFLOAT3(pMesh->mNormals[i].x, pMesh->mNormals[i].y, pMesh->mNormals[i].z);
-                            }
-                            if (pMesh->HasTangentsAndBitangents())
-                            {
-                                data.Vertices[vertexOffset + i].Tangent = XMFLOAT3(pMesh->mTangents[i].x, pMesh->mTangents[i].y, pMesh->mTangents[i].z);
-                            }
-                            if (pMesh->HasTextureCoords(0))
-                            {
-                                data.Vertices[vertexOffset + i].TexCoord = XMFLOAT2(pMesh->mTextureCoords[0][i].x, pMesh->mTextureCoords[0][i].y);
-                            }
-                        }
-
-                        // Get number of indices and resize indexbuffer
-                        size_t triCount = pMesh->mNumFaces;
-                            
-                        // Indexoffset is used when there are more than one mesh in the scene and we want to merge all the meshes
-                        data.Indices.resize(indexOffset + (triCount * 3));
-                        for (size_t i = 0; i < triCount; i++)
-                        {
-                            data.Indices[indexOffset + (i * 3) + 0] = UInt32(vertexOffset + pMesh->mFaces[i].mIndices[0]);
-                            data.Indices[indexOffset + (i * 3) + 1] = UInt32(vertexOffset + pMesh->mFaces[i].mIndices[1]);
-                            data.Indices[indexOffset + (i * 3) + 2] = UInt32(vertexOffset + pMesh->mFaces[i].mIndices[2]);
-                        }
-
-                        // Increase offsets
-                        if (mergeMeshes)
-                        {
-                            vertexOffset += vertCount;
-                            indexOffset += triCount * 3;
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            LOG_DEBUG_ERROR("[LAMBDA ENGINE] File '%s' does not have any meshes\n", filename.c_str());
-            return data;
-        }
+        return LoadSceneFromFBX(OutScene, Filename, LeftHandedConversion);
     }
     else
     {
-        const Char* pErrorMessage = importer.GetErrorString();
-        LOG_SYSTEM_PRINT("[LAMBDA ENGINE] Failed to load file '%s'. Message: %s\n", filename.c_str(), pErrorMessage);
-        return data;
+        LOG_ERROR("Unrecognized fileformat");
+        return false;
     }
-
-    LOG_SYSTEM_PRINT("[LAMBDA ENGINE] Loaded mesh with %d vertices and %d indices. Triangles: %d\n", data.Vertices.GetSize(), data.Indices.GetSize(), data.Indices.GetSize() / 3);
-    return data;*/
-    return MeshData();
 }
 
 MeshData MeshFactory::CreateCube(Float Width, Float Height, Float Depth) noexcept
@@ -826,6 +739,552 @@ void MeshFactory::CalculateTangents(MeshData& OutData) noexcept
         CalculateTangentFromVectors(Vertex2, Vertex3, Vertex1);
         CalculateTangentFromVectors(Vertex3, Vertex1, Vertex2);
     }
+}
+
+void MeshFactory::MergeSimilarMaterials(SceneData& OutScene) noexcept
+{
+    TArray<ModelData> NewModels;
+    for (UInt32 i = 0; i < OutScene.Materials.Size(); i++)
+    {
+        ModelData& NewModel = NewModels.EmplaceBack();
+        NewModel.MaterialIndex = i;
+        NewModel.Mesh.Clear();
+        NewModel.Name.clear();
+
+        UInt32 IndexOffset = 0;
+        bool IsFirst = true;
+        for (UInt32 j = 0; j < OutScene.Models.Size(); j++)
+        {
+            ModelData& Model = OutScene.Models[j];
+            if (Model.MaterialIndex != i)
+            {
+                continue;
+            }
+
+            if (IsFirst)
+            {
+                NewModel.Name = Model.Name;
+                IsFirst = false;
+            }
+
+            for (Vertex& Vertex : Model.Mesh.Vertices)
+            {
+                NewModel.Mesh.Vertices.EmplaceBack(Vertex);
+            }
+
+            for (UInt32& Index : Model.Mesh.Indices)
+            {
+                NewModel.Mesh.Indices.EmplaceBack(Index + IndexOffset);
+            }
+
+            IndexOffset += Model.Mesh.Vertices.Size();
+        }
+
+        if (NewModel.Mesh.Vertices.IsEmpty() || NewModel.Mesh.Indices.IsEmpty())
+        {
+            NewModels.PopBack();
+            LOG_INFO("No meshes with material index " + std::to_string(i));
+        }
+    }
+
+    NewModels.ShrinkToFit();
+    OutScene.Models = Move(NewModels);
+}
+
+void MeshFactory::CombineScenes(SceneData& OutScene, const SceneData& Other) noexcept
+{
+    UInt32 MaterialIndexOffset = OutScene.Materials.Size();
+    for (const MaterialData& Material : Other.Materials)
+    {
+        OutScene.Materials.EmplaceBack(Material);
+    }
+
+    for (const ModelData& Model : Other.Models)
+    {
+        ModelData& NewModel = OutScene.Models.EmplaceBack(Model);
+        NewModel.MaterialIndex += MaterialIndexOffset;
+    }
+
+    OutScene.Models.ShrinkToFit();
+    OutScene.Materials.ShrinkToFit();
+}
+
+bool MeshFactory::LoadSceneFromOBJ(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion) noexcept
+{
+    // Make sure to clear everything
+    OutScene.Models.Clear();
+    OutScene.Materials.Clear();
+
+    // Load Scene File
+    std::string Warning;
+    std::string Error;
+    std::vector<tinyobj::shape_t>    Shapes;
+    std::vector<tinyobj::material_t> Materials;
+    tinyobj::attrib_t Attributes;
+
+    std::string MTLFiledir = std::string(Filename.begin(), Filename.begin() + Filename.find_last_of('/'));
+    if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.c_str(), MTLFiledir.c_str(), true, false))
+    {
+        LOG_WARNING("[MeshFactory]: Failed to load '" + Filename + "'." + " Warning: " + Warning + " Error: " + Error);
+        return false;
+    }
+    else
+    {
+        LOG_INFO("[MeshFactory]: Loaded '" + Filename + "'");
+    }
+
+    
+    // Create All Materials in scene
+    for (tinyobj::material_t& Mat : Materials)
+    {
+        // Create new material with default properties
+        MaterialData MaterialData;
+        MaterialData.Metallic  = Mat.ambient[0];
+        MaterialData.Diffuse   = XMFLOAT3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
+        MaterialData.AO        = 1.0f;
+        MaterialData.Roughness = 1.0f;
+        MaterialData.TexPath   = MTLFiledir + '/';
+
+        // Metallic
+        if (!Mat.ambient_texname.empty())
+        {
+            ConvertBackslashes(Mat.ambient_texname);
+            MaterialData.MetallicTexname = Mat.ambient_texname;
+        }
+
+        // Albedo
+        if (!Mat.diffuse_texname.empty())
+        {
+            ConvertBackslashes(Mat.diffuse_texname);
+            MaterialData.DiffTexName = Mat.diffuse_texname;
+        }
+
+        // Roughness
+        if (!Mat.specular_highlight_texname.empty())
+        {
+            ConvertBackslashes(Mat.specular_highlight_texname);
+            MaterialData.RoughnessTexname = Mat.specular_highlight_texname;
+        }
+
+        // Normal
+        if (!Mat.bump_texname.empty())
+        {
+            ConvertBackslashes(Mat.bump_texname);
+            MaterialData.NormalTexname = Mat.bump_texname;
+        }
+
+        // Alpha
+        if (!Mat.alpha_texname.empty())
+        {
+            ConvertBackslashes(Mat.alpha_texname);
+            MaterialData.AlphaTexname = Mat.alpha_texname;
+        }
+
+        OutScene.Materials.EmplaceBack(MaterialData);
+    }
+
+    // Construct Scene
+    ModelData Data;
+    std::unordered_map<Vertex, UInt32, VertexHasher> UniqueVertices;
+
+    for (const tinyobj::shape_t& Shape : Shapes)
+    {
+        // Start at index zero for eaxh mesh and loop until all indices are processed
+        UInt32 i = 0;
+        UInt32 IndexCount = Shape.mesh.indices.size();
+        while (i < IndexCount)
+        {
+            // Start a new mesh
+            Data.Mesh.Clear();
+
+            UniqueVertices.clear();
+
+            Data.Mesh.Indices.Reserve(IndexCount);
+
+            UInt32 Face = i / 3;
+            const Int32 MaterialID = Shape.mesh.material_ids[Face];
+            for (; i < IndexCount; i++)
+            {
+                // Break if material is not the same
+                Face = i / 3;
+                if (Shape.mesh.material_ids[Face] != MaterialID)
+                {
+                    break;
+                }
+
+                const tinyobj::index_t& Index = Shape.mesh.indices[i];
+                Vertex TempVertex;
+
+                // Normals and texcoords are optional, Positions are required
+                Assert(Index.vertex_index >= 0);
+
+                size_t PositionIndex = 3 * static_cast<size_t>(Index.vertex_index);
+                TempVertex.Position =
+                {
+                    Attributes.vertices[PositionIndex + 0],
+                    Attributes.vertices[PositionIndex + 1],
+                    Attributes.vertices[PositionIndex + 2],
+                };
+
+                if (Index.normal_index >= 0)
+                {
+                    size_t NormalIndex = 3 * static_cast<size_t>(Index.normal_index);
+                    TempVertex.Normal =
+                    {
+                        Attributes.normals[NormalIndex + 0],
+                        Attributes.normals[NormalIndex + 1],
+                        Attributes.normals[NormalIndex + 2],
+                    };
+                }
+
+                if (Index.texcoord_index >= 0)
+                {
+                    size_t TexCoordIndex = 2 * static_cast<size_t>(Index.texcoord_index);
+                    TempVertex.TexCoord =
+                    {
+                        Attributes.texcoords[TexCoordIndex + 0],
+                        Attributes.texcoords[TexCoordIndex + 1],
+                    };
+                }
+
+                if (UniqueVertices.count(TempVertex) == 0)
+                {
+                    UniqueVertices[TempVertex] = static_cast<UInt32>(Data.Mesh.Vertices.Size());
+                    Data.Mesh.Vertices.PushBack(TempVertex);
+                }
+
+                Data.Mesh.Indices.EmplaceBack(UniqueVertices[TempVertex]);
+            }
+
+            // Calculate tangents and create mesh
+            MeshFactory::CalculateTangents(Data.Mesh);
+
+            // Add materialID
+            if (MaterialID >= 0)
+            {
+                Data.MaterialIndex = MaterialID;
+            }
+
+            Data.Name = Shape.name;
+            OutScene.Models.EmplaceBack(Data);
+        }
+    }
+
+    OutScene.Models.ShrinkToFit();
+    OutScene.Materials.ShrinkToFit();
+    return true;
+}
+
+// Temporary string converter from .dds to .png
+// TODO: Maybe support .dds loading :)
+static void FileStringWithDDSToPNG(std::string& OutString)
+{
+    for (char& Char : OutString)
+    {
+        Char = tolower(Char);
+    }
+
+    const char*  SearchString = ".dds";
+    const UInt32 Length = strlen(SearchString);
+
+    size_t Pos = OutString.find(SearchString);
+    while (Pos != std::string::npos)
+    {
+        OutString.replace(Pos, std::string::npos, ".PNG");
+        Pos = OutString.find(SearchString, Pos + Length);
+    }
+}
+
+static std::string ExtractPath(const std::string& FullFilePath)
+{
+    size_t Pos = FullFilePath.find_last_of('/');
+    if (Pos != std::string::npos)
+    {
+        return FullFilePath.substr(0, Pos);
+    }
+    else
+    {
+        return FullFilePath;
+    }
+}
+
+bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion) noexcept
+{
+    using namespace ofbx;
+
+    OutScene.Models.Clear();
+    OutScene.Materials.Clear();
+
+    FILE* File = fopen(Filename.c_str(), "rb");
+    if (!File)
+    {
+        LOG_ERROR("[MeshFactory]: Failed to open '" +  Filename + "'");
+        return false;
+    }
+
+    fseek(File, 0, SEEK_END);
+    UInt32 FileSize = ftell(File);
+    rewind(File);
+
+    TArray<u8> FileContent(FileSize);
+    UInt32 SizeInBytes = FileContent.SizeInBytes();
+    
+    u8* Bytes = FileContent.Data();
+
+    const UInt32 ChunkSize = 1024;
+
+    UInt32 NumBytesRead = 0;
+    while (NumBytesRead < FileSize)
+    {
+        NumBytesRead += fread(Bytes, 1, ChunkSize, File);
+        Bytes += ChunkSize;
+    }
+
+    if (NumBytesRead != FileSize)
+    {
+        LOG_ERROR("[MeshFactory]: Failed to load '" + Filename + "'");
+        return false;
+    }
+
+    Bytes = FileContent.Data();
+
+    IScene* FBXScene = load(Bytes, FileSize, (u64)LoadFlags::TRIANGULATE);
+    if (!FBXScene)
+    {
+        LOG_ERROR("[MeshFactory]: Failed to load content '" + Filename + "'");
+        return false;
+    }
+
+    const Object* const* Objects = FBXScene->getAllObjects();
+    UInt32 NumObjects = FBXScene->getAllObjectCount();
+
+    ModelData Data;
+
+    std::unordered_map<Vertex, UInt32, VertexHasher>  UniqueVertices;
+    std::unordered_map<const ofbx::Material*, UInt32> UniqueMaterials;
+
+    static char StrBuffer[256];
+
+    std::string Path = ExtractPath(Filename);
+
+    UInt32 MeshCount = FBXScene->getMeshCount();
+    for (UInt32 i = 0; i < MeshCount; i++)
+    {
+        const Mesh*     CurrentMesh = FBXScene->getMesh(i);
+        const Geometry* CurrentGeom = CurrentMesh->getGeometry();
+
+        UInt32 MaterialCount = CurrentMesh->getMaterialCount();
+        for (UInt32 j = 0; j < MaterialCount; j++)
+        {
+            const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(j);
+            if (UniqueMaterials.count(CurrentMaterial) != 0)
+            {
+                continue;
+            }
+
+            MaterialData MaterialData;
+            MaterialData.Diffuse   = XMFLOAT3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
+            MaterialData.TexPath   = Path;
+            MaterialData.AO        = CurrentMaterial->getSpecularColor().r;
+            MaterialData.Roughness = CurrentMaterial->getSpecularColor().g;
+            MaterialData.Metallic  = CurrentMaterial->getSpecularColor().b;
+
+            //TODO: Other material properties
+
+            const ofbx::Texture* AmbientTex = CurrentMaterial->getTexture(Texture::TextureType::AMBIENT);
+            if (AmbientTex)
+            {
+                AmbientTex->getRelativeFileName().toString(StrBuffer);
+                MaterialData.AOTexname = StrBuffer;
+
+                ConvertBackslashes(MaterialData.AOTexname);
+                // TODO: We should support .dds in the future
+                FileStringWithDDSToPNG(MaterialData.AOTexname);
+            }
+
+            const ofbx::Texture* DiffuseTex = CurrentMaterial->getTexture(Texture::TextureType::DIFFUSE);
+            if (DiffuseTex)
+            {
+                DiffuseTex->getRelativeFileName().toString(StrBuffer);
+                MaterialData.DiffTexName = StrBuffer;
+
+                ConvertBackslashes(MaterialData.DiffTexName);
+                // TODO: We should support .dds in the future
+                FileStringWithDDSToPNG(MaterialData.DiffTexName);
+            }
+
+            const ofbx::Texture* NormalTex = CurrentMaterial->getTexture(Texture::TextureType::NORMAL);
+            if (NormalTex)
+            {
+                NormalTex->getRelativeFileName().toString(StrBuffer);
+                MaterialData.NormalTexname = StrBuffer;
+
+                ConvertBackslashes(MaterialData.NormalTexname);
+                // TODO: We should support .dds in the future
+                FileStringWithDDSToPNG(MaterialData.NormalTexname);
+            }
+
+            const ofbx::Texture* SpecularTex = CurrentMaterial->getTexture(Texture::TextureType::SPECULAR);
+            if (SpecularTex)
+            {
+                SpecularTex->getRelativeFileName().toString(StrBuffer);
+                MaterialData.SpecTexName = StrBuffer;
+
+                ConvertBackslashes(MaterialData.SpecTexName);
+                // TODO: We should support .dds in the future
+                FileStringWithDDSToPNG(MaterialData.SpecTexName);
+            }
+
+            const ofbx::Texture* ReflectionTex = CurrentMaterial->getTexture(Texture::TextureType::REFLECTION);
+            if (ReflectionTex)
+            {
+                // TODO: Load this properly
+            }
+
+            const ofbx::Texture* ShininessTex = CurrentMaterial->getTexture(Texture::TextureType::SHININESS);
+            if (ShininessTex)
+            {
+                // TODO: Load this properly
+            }
+
+            const ofbx::Texture* EmissiveTex = CurrentMaterial->getTexture(Texture::TextureType::EMISSIVE);
+            if (EmissiveTex)
+            {
+                // TODO: Load this properly
+            }
+
+            UniqueMaterials[CurrentMaterial] = OutScene.Materials.Size();
+            OutScene.Materials.EmplaceBack(MaterialData);
+        }
+
+        UInt32 VertexCount = CurrentGeom->getVertexCount();
+        UInt32 IndexCount  = CurrentGeom->getIndexCount();
+        Data.Mesh.Indices.Reserve(IndexCount);
+        Data.Mesh.Vertices.Reserve(VertexCount);
+        UniqueVertices.reserve(VertexCount);
+
+        const int* Materials = CurrentGeom->getMaterials();
+        const int* Indices   = CurrentGeom->getFaceIndices();
+        Assert(Indices != nullptr);
+
+        const Vec3* Vertices = CurrentGeom->getVertices();
+        Assert(Vertices != nullptr);
+
+        const Vec3* Normals = CurrentGeom->getNormals();
+        Assert(Normals != nullptr);
+
+        const Vec2* TexCoords = CurrentGeom->getUVs(0);
+        Assert(TexCoords != nullptr);
+
+        const Vec3* Tangents = CurrentGeom->getTangents();
+
+        UInt32 CurrentIndex      = 0;
+        UInt32 LastMaterialIndex = 0;
+        while (CurrentIndex < IndexCount)
+        {
+            Data.Mesh.Clear();
+
+            UniqueVertices.clear();
+
+            for (; CurrentIndex < IndexCount; CurrentIndex++)
+            {
+                if (Materials)
+                {
+                    UInt32 TriangleIndex = CurrentIndex / 3;
+                    UInt32 MaterialIndex = Materials[TriangleIndex];
+                    if (MaterialIndex != LastMaterialIndex)
+                    {
+                        LastMaterialIndex = MaterialIndex;
+                        break;
+                    }
+                }
+
+                Vertex TempVertex;
+                if (LeftHandedConversion)
+                {
+                    TempVertex.Position =
+                    {
+                        (float)Vertices[CurrentIndex].x,
+                        (float)Vertices[CurrentIndex].y,
+                        -(float)Vertices[CurrentIndex].z,
+                    };
+
+                    TempVertex.Normal =
+                    {
+                        (float)Normals[CurrentIndex].x,
+                        (float)Normals[CurrentIndex].y,
+                        -(float)Normals[CurrentIndex].z,
+                    };
+
+                    TempVertex.TexCoord =
+                    {
+                        (float)TexCoords[CurrentIndex].x,
+                        1.0f - (float)TexCoords[CurrentIndex].y,
+                    };
+                }
+                else
+                {
+                    TempVertex.Position =
+                    {
+                        (float)Vertices[CurrentIndex].x,
+                        (float)Vertices[CurrentIndex].y,
+                        (float)Vertices[CurrentIndex].z,
+                    };
+
+                    TempVertex.Normal =
+                    {
+                        (float)Normals[CurrentIndex].x,
+                        (float)Normals[CurrentIndex].y,
+                        (float)Normals[CurrentIndex].z,
+                    };
+
+                    TempVertex.TexCoord =
+                    {
+                        (float)TexCoords[CurrentIndex].x,
+                        (float)TexCoords[CurrentIndex].y,
+                    };
+                }
+
+                if (Tangents)
+                {
+                    TempVertex.Tangent =
+                    {
+                        (float)Tangents[CurrentIndex].x,
+                        (float)Tangents[CurrentIndex].y,
+                        (float)Tangents[CurrentIndex].z,
+                    };
+                }
+
+                if (UniqueVertices.count(TempVertex) == 0)
+                {
+                    UniqueVertices[TempVertex] = static_cast<UInt32>(Data.Mesh.Vertices.Size());
+                    Data.Mesh.Vertices.PushBack(TempVertex);
+                }
+
+                Data.Mesh.Indices.EmplaceBack(UniqueVertices[TempVertex]);
+            }
+
+            if (!Tangents)
+            {
+                MeshFactory::CalculateTangents(Data.Mesh);
+            }
+
+            Data.Name = CurrentMesh->name;
+            
+            const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(LastMaterialIndex);
+            Data.MaterialIndex = UniqueMaterials[CurrentMaterial];
+
+            LOG_INFO("Mesh '" + Data.Name + "' got assigned material " + std::to_string(Data.MaterialIndex));
+
+            OutScene.Models.EmplaceBack(Data);
+        }
+    }
+
+    OutScene.Models.ShrinkToFit();
+    OutScene.Materials.ShrinkToFit();
+
+    FBXScene->destroy();
+    return true;
 }
 
 /*void Mesh::calcNormal()

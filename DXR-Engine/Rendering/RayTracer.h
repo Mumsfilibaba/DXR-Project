@@ -7,7 +7,7 @@
 #include "Scene/Scene.h"
 
 #define ENABLE_INLINE_RAY_GEN 1
-#define MAX_RT_MATERIALS      128
+#define MAX_RT_MATERIALS      256
 
 struct RandomData
 {

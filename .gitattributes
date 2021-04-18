@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+Assets/Scenes/Bistro/BistroExterior.fbx filter=lfs diff=lfs merge=lfs -text
+Assets/Scenes/SunTemple/SunTemple.fbx filter=lfs diff=lfs merge=lfs -text
