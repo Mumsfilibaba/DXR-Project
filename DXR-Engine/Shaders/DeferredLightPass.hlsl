@@ -23,7 +23,8 @@
 #endif
 
 #define BLEND_CASCADES  (1)
-#define ROTATE_SAMPLES  (0)
+#define ROTATE_SAMPLES  (1)
+#define ENABLE_PCSS     (0)
 #define BAND_PERCENTAGE (0.2f)
 
 Texture2D<float4>       AlbedoTex             : register(t0, space0);
@@ -168,6 +169,11 @@ float PCFDirectionalLight(in Texture2D<float> ShadowMap, float2 TexCoords, float
 #else
         RandomDirection = RandomDirection * SearchRadius;
 #endif
+        
+#if ENABLE_PCSS == 0
+        RandomDirection = RandomDirection * Scale;
+#endif
+        
         float Depth = ShadowMap.SampleLevel(DirectionalLightSampler, TexCoords.xy + RandomDirection, 0.0f);
         if (Depth < CompareDepth)
         {
@@ -206,6 +212,7 @@ float PCSSDirectionalLight(
     
     float CompareDepth = (ShadowCoords.z - Bias);
     
+#if ENABLE_PCSS
     float BlockerSearchRadius = SearchWidth(LightSize, LightNear, ShadowCoords.z);
     float BlockerDistance = FindBlockerDistance(ShadowMap, ShadowCoords.xy, CompareDepth, BlockerSearchRadius, Scale, RandomSeed);
     if (BlockerDistance < 0.0f)
@@ -217,6 +224,9 @@ float PCSSDirectionalLight(
     float FilterRadius  = CalcFilterRadius(PenumbraWidth, LightSize, LightNear, ShadowCoords.z);
     
     return PCFDirectionalLight(ShadowMap, ShadowCoords.xy, CompareDepth, FilterRadius, Scale, RandomSeed);
+#else
+    return PCFDirectionalLight(ShadowMap, ShadowCoords.xy, CompareDepth, 0.002f, Scale, RandomSeed);
+#endif
 }
 
 float3 GetShadowCoords(uint CascadeIndex, float3 World)
