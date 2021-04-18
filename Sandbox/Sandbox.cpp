@@ -18,7 +18,7 @@
 // Scene 0 - Sponza
 // Scene 1 - SunTemple
 // Scene 2 - Bistro
-#define SCENE 2
+#define SCENE 0
 
 Game* MakeGameInstance()
 {
@@ -28,8 +28,10 @@ Game* MakeGameInstance()
 Bool Sandbox::Init()
 {
     SceneData SceneBuildData;
-#if SCENE == 1
-    MeshFactory::LoadSceneFromFile(SceneData, "../Assets/Scenes/SunTemple/SunTemple.fbx");
+#if SCENE == 0
+    MeshFactory::LoadSceneFromFile(SceneBuildData, "../Assets/Scenes/Sponza/Sponza.obj");
+#elif SCENE == 1
+    MeshFactory::LoadSceneFromFile(SceneBuildData, "../Assets/Scenes/SunTemple/SunTemple.fbx");
 #elif SCENE == 2
     SceneData Exterior;
     MeshFactory::LoadSceneFromFile(Exterior, "../Assets/Scenes/Bistro/BistroExterior.fbx");
@@ -46,7 +48,7 @@ Bool Sandbox::Init()
     // Initialize Scene
     Actor* NewActor             = nullptr;
     MeshComponent* NewComponent = nullptr;
-    CurrentScene = DBG_NEW Scene();// Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
+    CurrentScene = DBG_NEW Scene();
 
     // Create Spheres
     MeshData SphereMeshData     = MeshFactory::CreateSphere(3);
@@ -249,7 +251,10 @@ Bool Sandbox::Init()
 
         NewActor->SetName(Model.Name);
         NewActor->GetTransform().SetUniformScale(0.015f);
+
+#if SCENE == 2
         NewActor->GetTransform().SetRotation(0.0f, 0.0f, XMConvertToRadians(-90.0f));
+#endif
 
         NewComponent = DBG_NEW MeshComponent(NewActor);
         NewComponent->Mesh = Mesh::Make(Model.Mesh);
@@ -274,12 +279,15 @@ Bool Sandbox::Init()
     constexpr Float  MetallicDelta  = 1.0f / SphereCountY;
     constexpr Float  RoughnessDelta = 1.0f / SphereCountX;
 
-    MatProperties.AO     = 1.0f;
-    MatProperties.Albedo = XMFLOAT3(1.0f, 1.0f, 1.0f);
+    MatProperties.Albedo    = XMFLOAT3(1.0f, 1.0f, 1.0f);
+    MatProperties.AO        = 1.0f;
+    MatProperties.Metallic  = 0.0f;
 
     UInt32 SphereIndex = 0;
     for (UInt32 y = 0; y < SphereCountY; y++)
     {
+        MatProperties.Roughness = 0.05f;
+
         for (UInt32 x = 0; x < SphereCountX; x++)
         {
             NewActor = DBG_NEW Actor();
@@ -306,7 +314,6 @@ Bool Sandbox::Init()
             MatProperties.Roughness += RoughnessDelta;
         }
 
-        MatProperties.Roughness = 0.05f;
         MatProperties.Metallic += MetallicDelta;
     }
 
