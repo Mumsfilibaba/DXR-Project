@@ -26,12 +26,15 @@ ConsoleVariable gDrawRendererInfo(EConsoleVariableType::Bool);
 ConsoleVariable gEnableSSAO(EConsoleVariableType::Bool);
 ConsoleVariable gEnableFXAA(EConsoleVariableType::Bool);
 ConsoleVariable gEnableVariableRateShading(EConsoleVariableType::Bool);
+ConsoleVariable gEnableSkyboxPass(EConsoleVariableType::Bool);
 
 ConsoleVariable gPrePassEnabled(EConsoleVariableType::Bool);
-ConsoleVariable gDrawAABBs(EConsoleVariableType::Bool);
 ConsoleVariable gVSyncEnabled(EConsoleVariableType::Bool);
 ConsoleVariable gFrustumCullEnabled(EConsoleVariableType::Bool);
 ConsoleVariable gRayTracingEnabled(EConsoleVariableType::Bool);
+
+ConsoleVariable gDrawDebugAABBs(EConsoleVariableType::Bool);
+ConsoleVariable gDrawDebugLights(EConsoleVariableType::Bool);
 
 ConsoleVariable gFXAADebug(EConsoleVariableType::Bool);
 
@@ -133,9 +136,13 @@ void Renderer::PerformBackBufferBlit(CommandList& InCmdList)
 
 void Renderer::PerformAABBDebugPass(CommandList& InCmdList)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin DebugPass");
+    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin AABB DebugPass");
 
-    TRACE_SCOPE("DebugPass");
+    TRACE_SCOPE("AABB DebugPass");
+
+    RenderTargetView* RenderTarget = Resources.FinalTarget->GetRenderTargetView();
+    DepthStencilView* DepthStencil = Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView();
+    InCmdList.SetRenderTargets(&RenderTarget, 1, DepthStencil);
 
     InCmdList.SetGraphicsPipelineState(AABBDebugPipelineState.Get());
 
@@ -164,7 +171,50 @@ void Renderer::PerformAABBDebugPass(CommandList& InCmdList)
         InCmdList.DrawIndexedInstanced(24, 1, 0, 0, 0);
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End DebugPass");
+    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End AABB DebugPass");
+}
+
+void Renderer::PerformLightDebugPass(CommandList& InCmdList, const Scene& Scene)
+{
+    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin Light DebugPass");
+
+    TRACE_SCOPE("Light DebugPass");
+
+    RenderTargetView* RenderTarget = Resources.FinalTarget->GetRenderTargetView();
+    DepthStencilView* DepthStencil = Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView();
+    InCmdList.SetRenderTargets(&RenderTarget, 1, DepthStencil);
+
+    InCmdList.SetGraphicsPipelineState(LightDebugPSO.Get());
+
+    InCmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+
+    InCmdList.SetConstantBuffer(LightDebugVS.Get(), Resources.CameraBuffer.Get(), 0);
+
+    InCmdList.SetVertexBuffers(&DbgSphereVertexBuffer, 1, 0);
+    InCmdList.SetIndexBuffer(DbgSphereIndexBuffer.Get());
+
+    struct PointlightDebugData
+    {
+        XMFLOAT4 Color;
+        XMFLOAT3 WorldPosition;
+    } PointLightData;
+
+    for (Light* Light : Scene.GetLights())
+    {
+        PointLight* CurrentPointLight = Cast<PointLight>(Light);
+        if (CurrentPointLight)
+        {
+            XMFLOAT3 Color = CurrentPointLight->GetColor();
+            PointLightData.Color         = XMFLOAT4(Color.x, Color.y, Color.z, 1.0f);
+            PointLightData.WorldPosition = CurrentPointLight->GetPosition();
+
+            InCmdList.Set32BitShaderConstants(LightDebugVS.Get(), &PointLightData, 7);
+
+            InCmdList.DrawIndexedInstanced(SphereMesh.Indices.Size(), 1, 0, 0, 0);
+        }
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End Light DebugPass");
 }
 
 void Renderer::RenderDebugInterface()
@@ -381,6 +431,7 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VELOCITY_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_EMISSIVE_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
 
     {
@@ -392,6 +443,7 @@ void Renderer::Tick(const Scene& Scene)
         CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(), BlackClearColor);
         CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
         CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetRenderTargetView(), BlackClearColor);
+        CmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_EMISSIVE_INDEX]->GetRenderTargetView(), BlackClearColor);
         CmdList.ClearDepthStencilView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), DepthStencilF(1.0f, 0));
     }
 
@@ -419,6 +471,14 @@ void Renderer::Tick(const Scene& Scene)
     Resources.DebugTextures.EmplaceBack(
         MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_ALBEDO_INDEX],
+        EResourceState::NonPixelShaderResource,
+        EResourceState::NonPixelShaderResource);
+
+    CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_EMISSIVE_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(Resources.GBuffer[GBUFFER_EMISSIVE_INDEX]->GetShaderResourceView()),
+        Resources.GBuffer[GBUFFER_EMISSIVE_INDEX],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource);
 
@@ -493,7 +553,10 @@ void Renderer::Tick(const Scene& Scene)
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
     CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::UnorderedAccess, EResourceState::RenderTarget);
 
-    SkyboxRenderPass.Render(CmdList, Resources, Scene);
+    if (gEnableSkyboxPass.GetBool())
+    {
+        SkyboxRenderPass.Render(CmdList, Resources, Scene);
+    }
 
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
     CmdList.TransitionTexture(LightSetup.DirLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
@@ -517,6 +580,16 @@ void Renderer::Tick(const Scene& Scene)
     {
         GPU_TRACE_SCOPE(CmdList, "Forward Pass");
         ForwardRenderer.Render(CmdList, Resources, LightSetup);
+    }
+
+    if (gDrawDebugAABBs.GetBool())
+    {
+        PerformAABBDebugPass(CmdList);
+    }
+
+    if (gDrawDebugLights.GetBool())
+    {
+        PerformLightDebugPass(CmdList, Scene);
     }
     
     CmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::RenderTarget, EResourceState::PixelShaderResource);
@@ -548,11 +621,6 @@ void Renderer::Tick(const Scene& Scene)
     else
     {
         PerformBackBufferBlit(CmdList);
-    }
-
-    if (gDrawAABBs.GetBool())
-    {
-        PerformAABBDebugPass(CmdList);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin UI Render");
@@ -611,11 +679,17 @@ Bool Renderer::Init()
     INIT_CONSOLE_VARIABLE("r.EnableVariableRateShading", gEnableVariableRateShading);
     gEnableVariableRateShading.SetBool(false);
 
+    INIT_CONSOLE_VARIABLE("r.EnableSkyBoxPass", gEnableSkyboxPass);
+    gEnableSkyboxPass.SetBool(true);
+
     INIT_CONSOLE_VARIABLE("r.EnablePrePass", gPrePassEnabled);
     gPrePassEnabled.SetBool(true);
 
-    INIT_CONSOLE_VARIABLE("r.EnableDrawAABBs", gDrawAABBs);
-    gDrawAABBs.SetBool(false);
+    INIT_CONSOLE_VARIABLE("r.DrawDebugAABBs", gDrawDebugAABBs);
+    gDrawDebugAABBs.SetBool(false);
+
+    INIT_CONSOLE_VARIABLE("r.DrawDebugLights", gDrawDebugLights);
+    gDrawDebugLights.SetBool(true);
 
     INIT_CONSOLE_VARIABLE("r.EnableVerticalSync", gVSyncEnabled);
     gVSyncEnabled.SetBool(false);
@@ -730,6 +804,11 @@ Bool Renderer::Init()
         return false;
     }
 
+    if (!InitLightDebugPass())
+    {
+        return false;
+    }
+
     if (!LightSetup.Init())
     {
         return false;
@@ -827,6 +906,12 @@ void Renderer::Release()
     AABBVertexShader.Reset();
     AABBPixelShader.Reset();
 
+    LightDebugPSO.Reset();
+    LightDebugVS.Reset();
+    LightDebugPS.Reset();
+    DbgSphereVertexBuffer.Reset();
+    DbgSphereIndexBuffer.Reset();
+
     PostPSO.Reset();
     PostShader.Reset();
     FXAAPSO.Reset();
@@ -845,7 +930,7 @@ void Renderer::Release()
 Bool Renderer::InitBoundingBoxDebugPass()
 {
     TArray<UInt8> ShaderCode;
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Debug.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Debug.hlsl", "AABB_VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;
@@ -862,7 +947,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
         AABBVertexShader->SetName("Debug VertexShader");
     }
 
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Debug.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Debug.hlsl", "AABB_PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         Debug::DebugBreak();
         return false;
@@ -946,7 +1031,7 @@ Bool Renderer::InitBoundingBoxDebugPass()
     PSOProperties.VertexShader           = AABBVertexShader.Get();
     PSOProperties.PixelShader            = AABBPixelShader.Get();
     PSOProperties.PrimitiveTopologyType  = EPrimitiveTopologyType::Line;
-    PSOProperties.RenderTargetFormats[0] = Resources.RenderTargetFormat;
+    PSOProperties.RenderTargetFormats[0] = Resources.FinalTargetFormat;
     PSOProperties.NumRenderTargets       = 1;
     PSOProperties.DepthStencilFormat     = Resources.DepthBufferFormat;
 
@@ -1015,6 +1100,142 @@ Bool Renderer::InitBoundingBoxDebugPass()
     else
     {
         AABBIndexBuffer->SetName("AABB IndexBuffer");
+    }
+
+    return true;
+}
+
+Bool Renderer::InitLightDebugPass()
+{
+    TArray<UInt8> ShaderCode;
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Debug.hlsl", "Light_VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    LightDebugVS = CreateVertexShader(ShaderCode);
+    if (!LightDebugVS)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        LightDebugVS->SetName("Light Debug VertexShader");
+    }
+
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Debug.hlsl", "Light_PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    LightDebugPS = CreatePixelShader(ShaderCode);
+    if (!LightDebugPS)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        LightDebugPS->SetName("Light Debug PixelShader");
+    }
+
+    DepthStencilStateCreateInfo DepthStencilStateInfo;
+    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
+    DepthStencilStateInfo.DepthEnable    = true;
+    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
+
+    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState(DepthStencilStateInfo);
+    if (!DepthStencilState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        DepthStencilState->SetName("Light Debug DepthStencilState");
+    }
+
+    RasterizerStateCreateInfo RasterizerStateInfo;
+    RasterizerStateInfo.CullMode = ECullMode::None;
+
+    TRef<RasterizerState> RasterizerState = CreateRasterizerState(RasterizerStateInfo);
+    if (!RasterizerState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        RasterizerState->SetName("Light Debug RasterizerState");
+    }
+
+    BlendStateCreateInfo BlendStateInfo;
+
+    TRef<BlendState> BlendState = CreateBlendState(BlendStateInfo);
+    if (!BlendState)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        BlendState->SetName("Light Debug BlendState");
+    }
+
+    GraphicsPipelineStateCreateInfo PSOProperties;
+    PSOProperties.BlendState             = BlendState.Get();
+    PSOProperties.DepthStencilState      = DepthStencilState.Get();
+    PSOProperties.InputLayoutState       = Resources.StdInputLayout.Get();
+    PSOProperties.RasterizerState        = RasterizerState.Get();
+    PSOProperties.VertexShader           = LightDebugVS.Get();
+    PSOProperties.PixelShader            = LightDebugPS.Get();
+    PSOProperties.PrimitiveTopologyType  = EPrimitiveTopologyType::Triangle;
+    PSOProperties.RenderTargetFormats[0] = Resources.FinalTargetFormat;
+    PSOProperties.NumRenderTargets       = 1;
+    PSOProperties.DepthStencilFormat     = Resources.DepthBufferFormat;
+
+    LightDebugPSO = CreateGraphicsPipelineState(PSOProperties);
+    if (!LightDebugPSO)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        LightDebugPSO->SetName("Light Debug PipelineState");
+    }
+
+    SphereMesh = MeshFactory::CreateSphere(1, 0.25f);
+
+    // VertexBuffer
+    ResourceData VertexData(SphereMesh.Vertices.Data(), SphereMesh.Vertices.SizeInBytes());
+
+    DbgSphereVertexBuffer = CreateVertexBuffer<Vertex>(SphereMesh.Vertices.Size(), BufferFlag_Default, EResourceState::Common, &VertexData);
+    if (!DbgSphereVertexBuffer)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        DbgSphereVertexBuffer->SetName("Light Debug VertexBuffer");
+    }
+
+    // Create IndexBuffer
+    ResourceData IndexData(SphereMesh.Indices.Data(), SphereMesh.Indices.SizeInBytes());
+
+    DbgSphereIndexBuffer = CreateIndexBuffer(EIndexFormat::UInt32, SphereMesh.Indices.Size(), BufferFlag_Default, EResourceState::Common, &IndexData);
+    if (!DbgSphereIndexBuffer)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        DbgSphereIndexBuffer->SetName("Light Debug IndexBuffer");
     }
 
     return true;

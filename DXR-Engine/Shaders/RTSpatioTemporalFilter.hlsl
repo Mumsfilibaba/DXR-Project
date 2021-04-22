@@ -6,11 +6,13 @@
 #include "Kernels.hlsli"
 #include "Random.hlsli"
 
-#define NUM_THREADS 16
-#define NUM_SAMPLES 16
+#define NUM_THREADS (16)
+#define NUM_SAMPLES (16)
 
-#define MIN_TEMPORAL_FRAMES 1
-#define MAX_TEMPORAL_FRAMES 64
+#define MIN_TEMPORAL_FRAMES (1)
+#define MAX_TEMPORAL_FRAMES (64)
+
+#define MAX_ROUGHNESS (0.25f)
 
 #ifndef TRACE_HALF_RES
     #define TRACE_HALF_RES 0
@@ -176,9 +178,10 @@ void Main(ComputeShaderInput Input)
 
     uint PxIdx = TexCoords.x % 2 + (TexCoords.y % 2) * 2;
     
-    int KernelWidth = int(floor(lerp(1.0f, (float)NUM_SAMPLES, min(Roughness, 0.35f) / 0.35f)));
+    int KernelWidth = int(floor(lerp(1.0f, (float)NUM_SAMPLES, min(Roughness, MAX_ROUGHNESS) / MAX_ROUGHNESS)));
     
-    float3 WeightSum = Float3(0.0f);
+    float2 LumaMoments = Float2(0.0f);
+    float3 WeightSum   = Float3(0.0f);
     float3 Result  = Float3(0.0f);
     float3 Moment1 = Float3(0.0f);
     float3 Moment2 = Float3(0.0f);
@@ -191,49 +194,49 @@ void Main(ComputeShaderInput Input)
         float  RayLength = length(RayPDF.xyz);
         float3 L = RayPDF.xyz / RayLength;
 
-        //if (RayPDF.a > 0.0f)
-        {
-            float3 H = normalize(V + L);
+        float3 H = normalize(V + L);
 
-            float NdotL = saturate(dot(N, L));
-            float NdotV = saturate(dot(N, V));
-            float NdotH = saturate(dot(N, H));
-            float HdotV = saturate(dot(H, V));
+        float NdotL = saturate(dot(N, L));
+        float NdotV = saturate(dot(N, V));
+        float NdotH = saturate(dot(N, H));
+        float HdotV = saturate(dot(H, V));
             
-            float4 SampleColorDepth = ColorDepthTex[LocalTexCoord];
-            float3 Li = saturate(SampleColorDepth.rgb);
+        float4 SampleColorDepth = ColorDepthTex[LocalTexCoord];
+        float3 Li = saturate(SampleColorDepth.rgb);
             
 #if TRACE_HALF_RES
-            uint2 FullLocalTexCoord = LocalTexCoord * 2;;
+        uint2 FullLocalTexCoord = LocalTexCoord * 2;;
 #else
-            uint2 FullLocalTexCoord = LocalTexCoord;
+        uint2 FullLocalTexCoord = LocalTexCoord;
 #endif
-            float3 SampleN = UnpackNormal(GBufferNormalsTex[FullLocalTexCoord].xyz);
-            float  FWidthN = GBufferVelocityTex[FullLocalTexCoord].z;
+        float3 SampleN = UnpackNormal(GBufferNormalsTex[FullLocalTexCoord].xyz);
+        float  FWidthN = GBufferVelocityTex[FullLocalTexCoord].z;
             
-            float  D = DistributionGGX(N, H, Roughness);
-            float  G = GeometrySmithGGX(N, L, V, Roughness);
-            float3 F = FresnelSchlick(F0, V, H);
-            float3 Numer = D * F * G;
-            float  Denom = max(4.0f * NdotL * NdotV, 1e-6);
+        float  D = DistributionGGX(N, H, Roughness);
+        float  G = GeometrySmithGGX(N, L, V, Roughness);
+        float3 F = FresnelSchlick(F0, V, H);
+        float3 Numer = D * F * G;
+        float  Denom = max(4.0f * NdotL * NdotV, 1e-6);
             
-            float3 Spec_BRDF = Numer / Denom;
-            float  Spec_PDF  = RayPDF.a;
+        float3 Spec_BRDF = Numer / Denom;
+        float  Spec_PDF  = RayPDF.a;
             
-            float3 Ks = F;
-            float3 Kd = (Float3(1.0f) - Ks) * (1.0f - Metallic);
+        float3 Ks = F;
+        float3 Kd = (Float3(1.0f) - Ks) * (1.0f - Metallic);
             
-            float  Valid  = IsValidSample(FullLocalTexCoord, N, FWidthN, SampleN, Depth, SampleColorDepth.w);
-            float3 Weight = Valid * NdotL * Spec_BRDF * Spec_PDF;
-            Weight = IsNan(Weight) || IsInf(Weight) ? Float3(0.0f) : Weight;
+        float  Valid  = IsValidSample(FullLocalTexCoord, N, FWidthN, SampleN, Depth, SampleColorDepth.w);
+        float3 Weight = Valid * NdotL * Spec_BRDF * Spec_PDF;
+        Weight = IsNan(Weight) || IsInf(Weight) ? Float3(0.0f) : Weight;
             
-            float3 LocalResult = Li * Weight;
-            Result    += LocalResult;
-            WeightSum += Weight;
+        float3 LocalResult = Li * Weight;
+        Result    += LocalResult;
+        WeightSum += Weight;
             
-            Moment1 += Li;
-            Moment2 += Li * Li;
-        }
+        Moment1 += Li;
+        Moment2 += Li * Li;
+
+        LumaMoments.x += Luminance(LocalResult);
+        LumaMoments.y += LumaMoments.x * LumaMoments.x;
     }
     
     // Statistics of used pixels
@@ -242,6 +245,8 @@ void Main(ComputeShaderInput Input)
     float3 Dev    = sqrt(Moment2 / float(KernelWidth) * Mean * Mean);
     float3 BoxMin = Mean - VarianceClipSigma * Dev;
     float3 BoxMax = Mean + VarianceClipSigma * Dev;
+    
+    LumaMoments = LumaMoments / float(NUM_SAMPLES);
     
     float4 ColorDepth = ColorDepthTex[HalfTexCoords];
     if (!IsEqual(WeightSum, Float3(0.0f)))
@@ -259,13 +264,15 @@ void Main(ComputeShaderInput Input)
     float4 HistorySample = LoadHistory(TexCoords, N, Valid);
     float3 Clipped       = ClipAABB(BoxMin, BoxMax, HistorySample.rgb);
     
-    float NumTemporalFrames = floor(lerp((float) MIN_TEMPORAL_FRAMES, (float) MAX_TEMPORAL_FRAMES, clamp(Roughness, 0.0f, 0.45f) / 0.45f));
+    float NumTemporalFrames = floor(lerp((float)MIN_TEMPORAL_FRAMES,(float) MAX_TEMPORAL_FRAMES, clamp(Roughness, 0.0f, 0.45f) / 0.45f));
     float HistoryLength     = HistorySample.a;
     HistoryLength = min(NumTemporalFrames, HistoryLength + 1.0f);
     
     const float Alpha = lerp(1.0f, max(0.03f, 1.0f / HistoryLength), Valid);
     float3 Color = HistorySample.rgb * (1.0f - Alpha) + Result * Alpha;
     
-    History[TexCoords]     = float4(Color, HistoryLength);
-    Reflections[TexCoords] = float4(Color, Roughness);
+    History[TexCoords] = float4(Color, HistoryLength);
+
+    float Variance = LumaMoments.y - LumaMoments.x * LumaMoments.x;
+    Reflections[TexCoords] = float4(Color, Variance);
 }

@@ -33,7 +33,7 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     }
 
     // Create Texture Cube
-    const std::string PanoramaSourceFilename = "../Assets/Textures/arches.hdr";
+    const std::string PanoramaSourceFilename = "../Assets/Scenes/Bistro/san_giuseppe_bridge_4k.hdr";
     TRef<Texture2D> Panorama = TextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
     if (!Panorama)
     {

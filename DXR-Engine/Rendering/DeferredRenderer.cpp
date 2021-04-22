@@ -136,7 +136,8 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         PipelineStateInfo.RenderTargetFormats[2] = FrameResources.MaterialFormat;
         PipelineStateInfo.RenderTargetFormats[3] = FrameResources.GeomNormalFormat;
         PipelineStateInfo.RenderTargetFormats[4] = FrameResources.VelocityFormat;
-        PipelineStateInfo.NumRenderTargets       = 5;
+        PipelineStateInfo.RenderTargetFormats[5] = FrameResources.EmissiveFormat;
+        PipelineStateInfo.NumRenderTargets       = 6;
 
         PipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
         if (!PipelineState)
@@ -491,6 +492,7 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
         FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(),
         FrameResources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetRenderTargetView(),
         FrameResources.GBuffer[GBUFFER_VELOCITY_INDEX]->GetRenderTargetView(),
+        FrameResources.GBuffer[GBUFFER_EMISSIVE_INDEX]->GetRenderTargetView(),
     };
     CmdList.SetRenderTargets(RenderTargets, ArrayCount(RenderTargets), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
@@ -527,8 +529,10 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
         CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[1], 1);
         CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[2], 2);
         CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[3], 3);
-        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[4], 4);
-        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[5], 5);
+        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[7], 4);
+
+        //CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[4], 4);
+        //CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[5], 5);
 
         SamplerState* Sampler = Command.Material->GetMaterialSampler();
         CmdList.SetSamplerState(BasePixelShader.Get(), Sampler, 0);
@@ -562,17 +566,18 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
     CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 1);
     CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 2);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_EMISSIVE_INDEX]->GetShaderResourceView(), 3);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 4);
 
     if (IsRayTracingSupported())
     {
         CmdList.SetSamplerState(LightPassShader, FrameResources.PointShadowSampler.Get(), 0);
         CmdList.SetSamplerState(LightPassShader, FrameResources.DirectionalShadowSampler.Get(), 1);
 
-        CmdList.SetShaderResourceView(LightPassShader, FrameResources.RTReflections->GetShaderResourceView(), 4);
-        CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirLightShadowMaps->GetShaderResourceView(), 5);
-        CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 6);
-        CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 7);
+        CmdList.SetShaderResourceView(LightPassShader, FrameResources.RTReflections->GetShaderResourceView(), 5);
+        CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirLightShadowMaps->GetShaderResourceView(), 6);
+        CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 7);
+        CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 8);
     }
     else
     {
@@ -581,12 +586,12 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
         CmdList.SetSamplerState(LightPassShader, FrameResources.PointShadowSampler.Get(), 2);
         CmdList.SetSamplerState(LightPassShader, FrameResources.DirectionalShadowSampler.Get(), 3);
 
-        CmdList.SetShaderResourceView(LightPassShader, LightSetup.IrradianceMap->GetShaderResourceView(), 4);
-        CmdList.SetShaderResourceView(LightPassShader, LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 5);
-        CmdList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 6);
-        CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirLightShadowMaps->GetShaderResourceView(), 7);
-        CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 8);
-        CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 9);
+        CmdList.SetShaderResourceView(LightPassShader, LightSetup.IrradianceMap->GetShaderResourceView(), 5);
+        CmdList.SetShaderResourceView(LightPassShader, LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 6);
+        CmdList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 7);
+        CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirLightShadowMaps->GetShaderResourceView(), 8);
+        CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 9);
+        CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 10);
     }
 
     CmdList.SetConstantBuffer(LightPassShader, FrameResources.CameraBuffer.Get(), 0);
@@ -748,6 +753,21 @@ Bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
     if (FrameResources.GBuffer[GBUFFER_VELOCITY_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_VELOCITY_INDEX]->SetName("GBuffer Velocity");
+    }
+    else
+    {
+        return false;
+    }
+
+    // Emissive
+    FrameResources.GBuffer[GBUFFER_EMISSIVE_INDEX] = CreateTexture2D(
+        FrameResources.EmissiveFormat,
+        Width, Height, 1, 1, Usage,
+        EResourceState::Common,
+        nullptr);
+    if (FrameResources.GBuffer[GBUFFER_EMISSIVE_INDEX])
+    {
+        FrameResources.GBuffer[GBUFFER_EMISSIVE_INDEX]->SetName("GBuffer Emissive");
     }
     else
     {

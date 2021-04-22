@@ -1085,9 +1085,9 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
             MaterialData MaterialData;
             MaterialData.Diffuse   = XMFLOAT3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
             MaterialData.TexPath   = Path;
-            MaterialData.AO        = CurrentMaterial->getSpecularColor().r;
+            MaterialData.AO        = 1.0f;//  CurrentMaterial->getSpecularColor().r;
             MaterialData.Roughness = CurrentMaterial->getSpecularColor().g;
-            MaterialData.Metallic  = CurrentMaterial->getSpecularColor().b;
+            MaterialData.Metallic  = 1.0f;// CurrentMaterial->getSpecularColor().b;
 
             //TODO: Other material properties
 
@@ -1150,7 +1150,12 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
             const ofbx::Texture* EmissiveTex = CurrentMaterial->getTexture(Texture::TextureType::EMISSIVE);
             if (EmissiveTex)
             {
-                // TODO: Load this properly
+                EmissiveTex->getRelativeFileName().toString(StrBuffer);
+                MaterialData.EmissiveTexName = StrBuffer;
+
+                ConvertBackslashes(MaterialData.EmissiveTexName);
+                // TODO: We should support .dds in the future
+                FileStringWithDDSToPNG(MaterialData.EmissiveTexName);
             }
 
             UniqueMaterials[CurrentMaterial] = OutScene.Materials.Size();
@@ -1178,10 +1183,12 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
 
         const Vec3* Tangents = CurrentGeom->getTangents();
 
-        UInt32 CurrentIndex      = 0;
+        UInt32 CurrentIndex  = 0;
+        UInt32 MaterialIndex = 0;
         UInt32 LastMaterialIndex = 0;
         while (CurrentIndex < IndexCount)
         {
+            Data.MaterialIndex = -1;
             Data.Mesh.Clear();
 
             UniqueVertices.clear();
@@ -1191,10 +1198,10 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
                 if (Materials)
                 {
                     UInt32 TriangleIndex = CurrentIndex / 3;
-                    UInt32 MaterialIndex = Materials[TriangleIndex];
+                    LastMaterialIndex = MaterialIndex;
+                    MaterialIndex     = Materials[TriangleIndex];
                     if (MaterialIndex != LastMaterialIndex)
                     {
-                        LastMaterialIndex = MaterialIndex;
                         break;
                     }
                 }
@@ -1273,8 +1280,6 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
             
             const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(LastMaterialIndex);
             Data.MaterialIndex = UniqueMaterials[CurrentMaterial];
-
-            LOG_INFO("Mesh '" + Data.Name + "' got assigned material " + std::to_string(Data.MaterialIndex));
 
             OutScene.Models.EmplaceBack(Data);
         }

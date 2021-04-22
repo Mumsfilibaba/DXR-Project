@@ -548,14 +548,16 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView(), 2);
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 4);
-    CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.BlueNoise->GetShaderResourceView(), 5);
-    CmdList.SetShaderResourceView(InlineRayGen.Get(), RTMaterialBufferSRV.Get(), 6);
-    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTVertexBuffers.Data(), Resources.RTVertexBuffers.Size(), 7);
-    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTIndexBuffers.Data(), Resources.RTIndexBuffers.Size(), 8);
-    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTMaterialTextureCache.Data(), Resources.RTMaterialTextureCache.Size(), 9);
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), LightSetup.DirLightShadowMaps->GetShaderResourceView(), 5);
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.BlueNoise->GetShaderResourceView(), 6);
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), RTMaterialBufferSRV.Get(), 7);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTVertexBuffers.Data(), Resources.RTVertexBuffers.Size(), 8);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTIndexBuffers.Data(), Resources.RTIndexBuffers.Size(), 9);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTMaterialTextureCache.Data(), Resources.RTMaterialTextureCache.Size(), 10);
     
     CmdList.SetSamplerState(InlineRayGen.Get(), Resources.IrradianceSampler.Get(), 0);
     CmdList.SetSamplerState(InlineRayGen.Get(), Sampler, 1);
+    CmdList.SetSamplerState(InlineRayGen.Get(), Resources.DirectionalShadowSampler.Get(), 2);
 
     CmdList.SetGraphicsPipelineState(InlineRTPipeline.Get());
 

@@ -89,6 +89,7 @@ struct Material
     float AO;
     
     int EnableHeight;
+    int EnableEmissive;
 };
 
 struct RayTracingMaterial

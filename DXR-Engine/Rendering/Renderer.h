@@ -72,12 +72,15 @@ public:
 
     void PerformAABBDebugPass(CommandList& InCmdList);
 
+    void PerformLightDebugPass(CommandList& InCmdList, const Scene& scene);
+
     void RenderDebugInterface();
 
     void Tick(const Scene& Scene);
 
 private:
     Bool InitBoundingBoxDebugPass();
+    Bool InitLightDebugPass();
     Bool InitAA();
     Bool InitBlueNoise();
 
@@ -102,6 +105,14 @@ private:
     TRef<GraphicsPipelineState> AABBDebugPipelineState;
     TRef<VertexShader>          AABBVertexShader;
     TRef<PixelShader>           AABBPixelShader;
+
+    TRef<GraphicsPipelineState> LightDebugPSO;
+    TRef<VertexShader>          LightDebugVS;
+    TRef<PixelShader>           LightDebugPS;
+    TRef<VertexBuffer> DbgSphereVertexBuffer;
+    TRef<IndexBuffer>  DbgSphereIndexBuffer;
+
+    MeshData SphereMesh;
 
     TRef<GraphicsPipelineState> PostPSO;
     TRef<PixelShader>           PostShader;

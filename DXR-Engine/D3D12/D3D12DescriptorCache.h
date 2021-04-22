@@ -7,9 +7,8 @@
 #include "D3D12CommandList.h"
 
 #define NUM_VISIBILITIES (ShaderVisibility_Count)
-#define NUM_DESCRIPTORS  (D3D12_MAX_ONLINE_DESCRIPTOR_COUNT)
 
-template <typename TD3D12DescriptorViewType>
+template <typename TD3D12DescriptorViewType, UInt32 NUM_DESCRIPTORS = D3D12_MAX_ONLINE_RESOURCE_DESCRIPTOR_COUNT>
 struct TD3D12DescriptorViewCache
 {
     TD3D12DescriptorViewCache()
@@ -127,7 +126,7 @@ struct TD3D12DescriptorViewCache
 using D3D12ConstantBufferViewCache  = TD3D12DescriptorViewCache<D3D12ConstantBufferView>;
 using D3D12ShaderResourceViewCache  = TD3D12DescriptorViewCache<D3D12ShaderResourceView>;
 using D3D12UnorderedAccessViewCache = TD3D12DescriptorViewCache<D3D12UnorderedAccessView>;
-using D3D12SamplerStateCache        = TD3D12DescriptorViewCache<D3D12SamplerState>;
+using D3D12SamplerStateCache        = TD3D12DescriptorViewCache<D3D12SamplerState, D3D12_MAX_ONLINE_SAMPLER_DESCRIPTOR_COUNT>;
 
 class D3D12VertexBufferCache
 {
@@ -394,7 +393,7 @@ private:
 
     ID3D12DescriptorHeap* PreviousDescriptorHeaps[2] = { nullptr, nullptr };
 
-    UINT RangeSizes[NUM_DESCRIPTORS];
+    UINT RangeSizes[D3D12_MAX_ONLINE_RESOURCE_DESCRIPTOR_COUNT];
 };
 
 class D3D12ShaderConstantsCache

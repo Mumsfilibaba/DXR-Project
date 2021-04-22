@@ -18,17 +18,19 @@
     #define RAY_TRACING
 #endif
 
-Texture2D<float4>       GBufferAlbedoTex             : register(t0, space0);
-Texture2D<float4>       GBufferNormalTex             : register(t1, space0);
-Texture2D<float4>       GBufferMaterialTex           : register(t2, space0);
-Texture2D<float>        DepthStencilTex       : register(t3, space0);
-Texture2D<float4>       DXRReflection         : register(t4, space0);
-TextureCube<float4>     IrradianceMap         : register(t5, space0);
-TextureCube<float4>     SpecularIrradianceMap : register(t6, space0);
-Texture2D<float4>       IntegrationLUT        : register(t7, space0);
-Texture2D<float>        DirLightShadowMaps    : register(t8, space0);
-TextureCubeArray<float> PointLightShadowMaps  : register(t9, space0);
-Texture2D<float3>       SSAO                  : register(t10, space0);
+Texture2D<float4> GBufferAlbedoTex   : register(t0, space0);
+Texture2D<float4> GBufferNormalTex   : register(t1, space0);
+Texture2D<float4> GBufferMaterialTex : register(t2, space0);
+Texture2D<float4> GBufferEmissiveTex : register(t3, space0);
+
+Texture2D<float>        DepthStencilTex       : register(t4, space0);
+Texture2D<float4>       DXRReflection         : register(t5, space0);
+TextureCube<float4>     IrradianceMap         : register(t6, space0);
+TextureCube<float4>     SpecularIrradianceMap : register(t7, space0);
+Texture2D<float4>       IntegrationLUT        : register(t8, space0);
+Texture2D<float>        DirLightShadowMaps    : register(t9, space0);
+TextureCubeArray<float> PointLightShadowMaps  : register(t10, space0);
+Texture2D<float3>       SSAO                  : register(t11, space0);
 
 SamplerState LUTSampler        : register(s0, space0);
 SamplerState IrradianceSampler : register(s1, space0);
@@ -206,6 +208,7 @@ void Main(ComputeShaderInput Input)
     const float2 TexCoordFloat   = float2(TexCoord) / float2(ScreenWidth, ScreenHeight);
     const float3 WorldPosition   = PositionFromDepth(Depth, TexCoordFloat, CameraBuffer.ViewProjectionInverse);
     const float3 GBufferAlbedo   = GBufferAlbedoTex.Load(int3(TexCoord, 0)).rgb;
+    const float3 GBufferEmissive = GBufferEmissiveTex.Load(int3(TexCoord, 0)).rgb;
     const float3 GBufferMaterial = GBufferMaterialTex.Load(int3(TexCoord, 0)).rgb;
     const float3 GBufferNormal   = GBufferNormalTex.Load(int3(TexCoord, 0)).rgb;
     const float  ScreenSpaceAO   = SSAO.Load(int3(TexCoord, 0)).r;
@@ -275,6 +278,11 @@ void Main(ComputeShaderInput Input)
         }
     }
     
+    // Emissive surfaces
+    {
+        L0 += GBufferEmissive;
+    }
+    
     // Image Based Lightning
     float3 FinalColor = L0;
 #ifdef RAY_TRACING
@@ -298,7 +306,7 @@ void Main(ComputeShaderInput Input)
         float3 Reflection = DXRReflection.Load(int3(TexCoord, 0)).rgb;
         L0 += Reflection * NdotL * Spec_BRDF / Spec_PDF;
         
-        float3 Ambient = GBufferAlbedo * GBufferAO * 0.1f;
+        float3 Ambient = GBufferAlbedo * GBufferAO * 0.15f;
         FinalColor = Ambient + L0;
     }
 #else 

@@ -27,6 +27,7 @@ public:
     void SetPosition(const XMFLOAT3& InPosition);
 
     XMFLOAT3 GetPosition() const { return Position; }
+    XMFLOAT3 GetRotation() const { return Rotation; }
     XMFLOAT3 GetForward() const { return Forward; }
     XMFLOAT3 GetUp() const { return Up; }
     XMFLOAT3 GetRight() const { return Right; }

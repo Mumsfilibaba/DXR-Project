@@ -108,7 +108,7 @@ Bool D3D12DescriptorCache::Init()
         return false;
     }
 
-    for (UInt32 i = 0; i < NUM_DESCRIPTORS; i++)
+    for (UInt32 i = 0; i < D3D12_MAX_ONLINE_RESOURCE_DESCRIPTOR_COUNT; i++)
     {
         RangeSizes[i] = 1;
     }
@@ -260,10 +260,10 @@ void D3D12DescriptorCache::CopyDescriptorsAndSetHeaps(
     
     SamplerStateCache.PrepareForCopy(NullSampler);
 
-    Assert(NumResourceDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
+    Assert(NumResourceDescriptors < D3D12_MAX_ONLINE_RESOURCE_DESCRIPTOR_COUNT);
     UInt32 ResourceDescriptorHandle = ResourceHeap->AllocateHandles(NumResourceDescriptors);
 
-    Assert(NumSamplerDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
+    Assert(NumSamplerDescriptors < D3D12_MAX_ONLINE_SAMPLER_DESCRIPTOR_COUNT);
     UInt32 SamplerDescriptorHandle = SamplerHeap->AllocateHandles(NumSamplerDescriptors);
 
     ID3D12DescriptorHeap* DescriptorHeaps[] =

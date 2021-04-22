@@ -13,6 +13,7 @@
 #define GBUFFER_DEPTH_INDEX       3
 #define GBUFFER_GEOM_NORMAL_INDEX 4
 #define GBUFFER_VELOCITY_INDEX    5
+#define GBUFFER_EMISSIVE_INDEX    6
 
 template<typename TResource>
 class ResourceCache
@@ -90,6 +91,7 @@ struct FrameResources
     const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
     const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
     const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
+    const EFormat EmissiveFormat     = EFormat::R8G8B8A8_Unorm;
     const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
     const EFormat GeomNormalFormat   = EFormat::R10G10B10A2_Unorm;
     const EFormat VelocityFormat     = EFormat::R16G16B16A16_Float;
@@ -110,7 +112,7 @@ struct FrameResources
 
     TRef<Texture2D> SSAOBuffer;
     TRef<Texture2D> FinalTarget;
-    TRef<Texture2D> GBuffer[6];
+    TRef<Texture2D> GBuffer[7];
     TRef<Texture2D> PrevDepth;
     TRef<Texture2D> PrevGeomNormals;
 

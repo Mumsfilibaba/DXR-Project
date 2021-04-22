@@ -377,6 +377,35 @@ static void DrawSceneInfo()
     WindowShape WindowShape;
     gMainWindow->GetWindowShape(WindowShape);
 
+    // Camera
+    if (ImGui::TreeNode("Camera"))
+    {
+        ImGui::Columns(2, nullptr, false);
+        ImGui::SetColumnWidth(0, 100.0f);
+
+        Camera* CurrentCamera = gGame->GetCurrentScene()->GetCamera();
+        Assert(CurrentCamera != nullptr);
+
+        ImGui::Text("Position");
+        ImGui::NextColumn();
+
+        XMFLOAT3 Position = CurrentCamera->GetPosition();
+        Float* PosArr = reinterpret_cast<Float*>(&Position);
+        ImGui::InputFloat3("##Position", PosArr, "%.3f", ImGuiInputTextFlags_ReadOnly);
+
+        ImGui::NextColumn();
+        ImGui::Text("Rotation");
+        ImGui::NextColumn();
+
+        XMFLOAT3 Rotation = CurrentCamera->GetRotation();
+        Float* RotArr = reinterpret_cast<Float*>(&Rotation);
+        ImGui::InputFloat3("##Rotation", RotArr, "%.3f", ImGuiInputTextFlags_ReadOnly);
+
+        ImGui::Columns(1);
+
+        ImGui::TreePop();
+    }
+
     // Actors
     if (ImGui::TreeNode("Actors"))
     {
@@ -525,7 +554,7 @@ static void DrawSceneInfo()
             if (IsSubClassOf<PointLight>(CurrentLight))
             {
                 PointLight* CurrentPointLight = Cast<PointLight>(CurrentLight);
-                if (ImGui::TreeNode("PointLight"))
+                if (ImGui::TreeNode(CurrentPointLight->GetName().c_str()))
                 {
                     const Float ColumnWidth = 150.0f;
 
@@ -570,61 +599,64 @@ static void DrawSceneInfo()
                     }
 
                     // Shadow Settings
-                    if (ImGui::TreeNode("Shadows"))
+                    if (CurrentPointLight->IsShadowCaster())
                     {
-                        ImGui::Columns(2, nullptr, false);
-                        ImGui::SetColumnWidth(0, ColumnWidth);
-
-                        // Bias
-                        ImGui::Text("Shadow Bias");
-                        ImGui::NextColumn();
-
-                        Float ShadowBias = CurrentPointLight->GetShadowBias();
-                        if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
+                        if (ImGui::TreeNode("Shadows"))
                         {
-                            CurrentPointLight->SetShadowBias(ShadowBias);
+                            ImGui::Columns(2, nullptr, false);
+                            ImGui::SetColumnWidth(0, ColumnWidth);
+
+                            // Bias
+                            ImGui::Text("Shadow Bias");
+                            ImGui::NextColumn();
+
+                            Float ShadowBias = CurrentPointLight->GetShadowBias();
+                            if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
+                            {
+                                CurrentPointLight->SetShadowBias(ShadowBias);
+                            }
+
+                            if (ImGui::IsItemHovered())
+                            {
+                                ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
+                            }
+
+                            // Max Shadow Bias
+                            ImGui::NextColumn();
+                            ImGui::Text("Max Shadow Bias");
+                            ImGui::NextColumn();
+
+                            Float MaxShadowBias = CurrentPointLight->GetMaxShadowBias();
+                            if (ImGui::SliderFloat("##MaxShadowBias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
+                            {
+                                CurrentPointLight->SetMaxShadowBias(MaxShadowBias);
+                            }
+
+                            // Shadow Near Plane
+                            ImGui::NextColumn();
+                            ImGui::Text("Shadow Near Plane");
+                            ImGui::NextColumn();
+
+                            Float ShadowNearPlane = CurrentPointLight->GetShadowNearPlane();
+                            if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.01f, 1.0f, "%0.2f"))
+                            {
+                                CurrentPointLight->SetShadowNearPlane(ShadowNearPlane);
+                            }
+
+                            // Shadow Far Plane
+                            ImGui::NextColumn();
+                            ImGui::Text("Shadow Far Plane");
+                            ImGui::NextColumn();
+
+                            Float ShadowFarPlane = CurrentPointLight->GetShadowFarPlane();
+                            if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
+                            {
+                                CurrentPointLight->SetShadowFarPlane(ShadowFarPlane);
+                            }
+
+                            ImGui::Columns(1);
+                            ImGui::TreePop();
                         }
-
-                        if (ImGui::IsItemHovered())
-                        {
-                            ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
-                        }
-
-                        // Max Shadow Bias
-                        ImGui::NextColumn();
-                        ImGui::Text("Max Shadow Bias");
-                        ImGui::NextColumn();
-
-                        Float MaxShadowBias = CurrentPointLight->GetMaxShadowBias();
-                        if (ImGui::SliderFloat("##MaxShadowBias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
-                        {
-                            CurrentPointLight->SetMaxShadowBias(MaxShadowBias);
-                        }
-
-                        // Shadow Near Plane
-                        ImGui::NextColumn();
-                        ImGui::Text("Shadow Near Plane");
-                        ImGui::NextColumn();
-
-                        Float ShadowNearPlane = CurrentPointLight->GetShadowNearPlane();
-                        if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.01f, 1.0f, "%0.2f"))
-                        {
-                            CurrentPointLight->SetShadowNearPlane(ShadowNearPlane);
-                        }
-
-                        // Shadow Far Plane
-                        ImGui::NextColumn();
-                        ImGui::Text("Shadow Far Plane");
-                        ImGui::NextColumn();
-
-                        Float ShadowFarPlane = CurrentPointLight->GetShadowFarPlane();
-                        if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
-                        {
-                            CurrentPointLight->SetShadowFarPlane(ShadowFarPlane);
-                        }
-
-                        ImGui::Columns(1);
-                        ImGui::TreePop();
                     }
 
                     ImGui::TreePop();
@@ -633,7 +665,7 @@ static void DrawSceneInfo()
             else if (IsSubClassOf<DirectionalLight>(CurrentLight))
             {
                 DirectionalLight* CurrentDirectionalLight = Cast<DirectionalLight>(CurrentLight);
-                if (ImGui::TreeNode("DirectionalLight"))
+                if (ImGui::TreeNode(CurrentDirectionalLight->GetName().c_str()))
                 {
                     const Float ColumnWidth = 150.0f;
 
@@ -695,7 +727,7 @@ static void DrawSceneInfo()
 
                         XMFLOAT3 Direction = CurrentDirectionalLight->GetDirection();
                         Float* DirArr = reinterpret_cast<Float*>(&Direction);
-                        ImGui::InputFloat3("##Direction", DirArr, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+                        ImGui::InputFloat3("##Direction", DirArr, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
                         ImGui::Columns(1);
                         ImGui::TreePop();
@@ -717,7 +749,7 @@ static void DrawSceneInfo()
 
                         XMFLOAT3 Position = CurrentDirectionalLight->GetShadowMapPosition();
                         Float* PosArr = reinterpret_cast<Float*>(&Position);
-                        ImGui::InputFloat3("##Translation", PosArr, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+                        ImGui::InputFloat3("##Translation", PosArr, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
                         // Shadow Bias
                         ImGui::NextColumn();

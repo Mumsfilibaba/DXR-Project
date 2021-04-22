@@ -5,11 +5,14 @@
 
 struct MaterialProperties
 {
-    XMFLOAT3 Albedo    = XMFLOAT3(1.0f, 1.0f, 1.0f);
-    Float Roughness    = 0.0f;
-    Float Metallic     = 0.0f;
-    Float AO           = 0.5f;
-    Int32 EnableHeight = 0;
+    XMFLOAT3 Albedo = XMFLOAT3(1.0f, 1.0f, 1.0f);
+
+    Float Roughness = 0.0f;
+    Float Metallic  = 0.0f;
+    Float AO        = 0.5f;
+
+    Int32 EnableHeight   = 0;
+    Int32 EnableEmissive = 0;
 };
 
 class Material
@@ -35,6 +38,7 @@ public:
     void SetAmbientOcclusion(Float AO);
 
     void EnableHeightMap(Bool EnableHeightMap);
+    void EnableEmissiveMap(Bool EnableEmissiveMap);
 
     void SetDebugName(const std::string& InDebugName);
 
@@ -54,6 +58,7 @@ public:
 public:
     TRef<Texture2D> AlbedoMap;
     TRef<Texture2D> NormalMap;
+    TRef<Texture2D> EmissiveMap;
     TRef<Texture2D> RoughnessMap;
     TRef<Texture2D> HeightMap;
     TRef<Texture2D> AOMap;
@@ -68,5 +73,5 @@ private:
     TRef<ConstantBuffer> MaterialBuffer;
     TRef<SamplerState>   Sampler;
 
-    mutable TStaticArray<ShaderResourceView*, 7> ShaderResourceViews;
+    mutable TStaticArray<ShaderResourceView*, 8> ShaderResourceViews;
 };

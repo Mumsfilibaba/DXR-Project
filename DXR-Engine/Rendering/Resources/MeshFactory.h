@@ -52,6 +52,7 @@ struct MaterialData
     std::string TexPath;          // Path to textures (MTL etc.)
     std::string DiffTexName;      // Diffuse texture
     std::string SpecTexName;      // Stores AO, Roughness and Metallic in a single texture
+    std::string EmissiveTexName;  // Stores AO, Roughness and Metallic in a single texture
     std::string AOTexname;        // Stores a single AO texture
     std::string RoughnessTexname; // Stores a single roughness texture
     std::string MetallicTexname;  // Stores a single Metallic texture

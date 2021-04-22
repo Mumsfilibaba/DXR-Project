@@ -10,6 +10,7 @@ DirectionalLight::DirectionalLight()
 {
     CORE_OBJECT_INIT();
 
+    Name = "DirectionalLight";
     XMStoreFloat4x4(&Matrix, XMMatrixIdentity());
 }
 

@@ -46,7 +46,7 @@ void Main(ComputeShaderInput Input)
     }
     else if (Avg > 0.33f)
     {
-        Result = SHADING_RATE_4x4;
+        Result = SHADING_RATE_2x2;
     }
     
     Output[OutputTexCoord] = Result;

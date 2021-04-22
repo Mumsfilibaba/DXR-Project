@@ -219,8 +219,8 @@ void Main(ComputeShaderInput Input)
     }
 
     const float MaxKernelSize = 13.0f;
-    float4 Sample   = Texture[TexCoords];
-    float  Variance = Sample.a;
+    float4 Sample  = Texture[TexCoords];
+    float Variance = Sample.a;
     
     float3 Result = 0.0f;
     

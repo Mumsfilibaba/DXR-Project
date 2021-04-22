@@ -11,12 +11,11 @@ SamplerState MaterialSampler : register(s0, space0);
 ConstantBuffer<Transform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
 ConstantBuffer<Material>  MaterialBuffer  : register(b1, space0);
 
-Texture2D<float4> AlbedoMap    : register(t0, space0);
-Texture2D<float4> NormalMap    : register(t1, space0);
-Texture2D<float4> RoughnessMap : register(t2, space0);
-Texture2D<float4> HeightMap    : register(t3, space0);
-Texture2D<float4> MetallicMap  : register(t4, space0);
-Texture2D<float4> AOMap        : register(t5, space0);
+Texture2D<float4> AlbedoMap   : register(t0, space0);
+Texture2D<float4> NormalMap   : register(t1, space0);
+Texture2D<float4> SpecularMap : register(t2, space0);
+Texture2D<float4> HeightMap   : register(t3, space0);
+Texture2D<float4> EmissiveMap : register(t4, space0);
 
 // VertexShader
 struct VSInput
@@ -87,6 +86,7 @@ struct PSOutput
     float4 Material   : SV_Target2;
     float4 GeomNormal : SV_Target3;
     float4 Velocity   : SV_Target4;
+    float4 Emissive   : SV_Target5;
 };
 
 static const float HEIGHT_SCALE = 0.03f;
@@ -149,7 +149,13 @@ PSOutput PSMain(PSInput Input)
     {
         discard;
     }
-        
+    
+    float4 Emissive = Float4(0.0f);
+    if (MaterialBuffer.EnableEmissive != 0)
+    {
+        Emissive = EmissiveMap.Sample(MaterialSampler, TexCoords);
+    }
+    
     float3 SampledAlbedo = ApplyGamma(AlbedoAlpha.rgb) * MaterialBuffer.Albedo;
     
     float3 SampledNormal = NormalMap.Sample(MaterialSampler, TexCoords).rgb;
@@ -161,9 +167,10 @@ PSOutput PSMain(PSInput Input)
     float3 MappedNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
     MappedNormal = PackNormal(MappedNormal);
 
-    float SampledAO        = AOMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.AO;
-    float SampledMetallic  = MetallicMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Metallic;
-    float SampledRoughness = RoughnessMap.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Roughness;
+    float4 Specular = SpecularMap.Sample(MaterialSampler, TexCoords);
+    float SampledAO        = Specular.r * MaterialBuffer.AO;
+    float SampledRoughness = Specular.g * MaterialBuffer.Roughness;
+    float SampledMetallic  = Specular.b * MaterialBuffer.Metallic;
     float FinalRoughness   = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
 
     float2 ScreenSize   = float2(CameraBuffer.Width, CameraBuffer.Height);
@@ -186,5 +193,6 @@ PSOutput PSMain(PSInput Input)
     Output.Material   = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
     Output.GeomNormal = float4(PackNormal(Normal), 0.0f);
     Output.Velocity   = float4(Velocity, length(fwidth(Normal)), 0.0f);
+    Output.Emissive   = float4(Emissive.rgb, 1.0f);
     return Output;
 }

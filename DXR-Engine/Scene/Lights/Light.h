@@ -34,7 +34,16 @@ public:
     Float GetShadowBias() const { return ShadowBias; }
     Float GetMaxShadowBias() const { return MaxShadowBias; }
 
+    void SetName(const std::string& InName)
+    {
+        Name = InName;
+    }
+
+    const std::string& GetName() const { return Name; }
+
 protected:
+    std::string Name;
+
     XMFLOAT3 Color;
     Float Intensity = 1.0f;
     Float ShadowNearPlane;

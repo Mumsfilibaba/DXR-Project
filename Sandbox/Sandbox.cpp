@@ -18,7 +18,7 @@
 // Scene 0 - Sponza
 // Scene 1 - SunTemple
 // Scene 2 - Bistro
-#define SCENE 0
+#define SCENE 2
 
 Game* MakeGameInstance()
 {
@@ -33,13 +33,7 @@ Bool Sandbox::Init()
 #elif SCENE == 1
     MeshFactory::LoadSceneFromFile(SceneBuildData, "../Assets/Scenes/SunTemple/SunTemple.fbx");
 #elif SCENE == 2
-    SceneData Exterior;
-    MeshFactory::LoadSceneFromFile(Exterior, "../Assets/Scenes/Bistro/BistroExterior.fbx");
-    MeshFactory::CombineScenes(SceneBuildData, Exterior);
-
-    SceneData Interior;
-    MeshFactory::LoadSceneFromFile(Interior, "../Assets/Scenes/Bistro/BistroInterior.fbx");
-    MeshFactory::CombineScenes(SceneBuildData, Interior);
+    MeshFactory::LoadSceneFromFile(SceneBuildData, "../Assets/Scenes/Bistro/BistroExterior.fbx");
 #endif
 
     // In order to create fewer meshes and in turn fewer descriptors we bind together all these models
@@ -49,6 +43,9 @@ Bool Sandbox::Init()
     Actor* NewActor             = nullptr;
     MeshComponent* NewComponent = nullptr;
     CurrentScene = DBG_NEW Scene();
+
+    CurrentCamera = DBG_NEW Camera();
+    CurrentScene->AddCamera(CurrentCamera);
 
     // Create Spheres
     MeshData SphereMeshData     = MeshFactory::CreateSphere(3);
@@ -120,25 +117,25 @@ Bool Sandbox::Init()
         NewMaterial->AOMap     = BaseTexture;
         NewMaterial->HeightMap = BaseTexture;
 
-        // Metallic
-        if (!MaterialData.MetallicTexname.empty())
+        // Specular
+        if (!MaterialData.SpecTexName.empty())
         {
-            if (MaterialTextures.count(MaterialData.MetallicTexname) == 0)
+            if (MaterialTextures.count(MaterialData.SpecTexName) == 0)
             {
-                std::string TexName = MaterialData.TexPath + '/' + MaterialData.MetallicTexname;
-                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
+                std::string TexName = MaterialData.TexPath + '/' + MaterialData.SpecTexName;
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
                 if (Texture)
                 {
-                    Texture->SetName(MaterialData.MetallicTexname);
-                    MaterialTextures[MaterialData.MetallicTexname] = Texture;
+                    Texture->SetName(MaterialData.SpecTexName);
+                    MaterialTextures[MaterialData.SpecTexName] = Texture;
                 }
                 else
                 {
-                    MaterialTextures[MaterialData.MetallicTexname] = BaseTexture;
+                    MaterialTextures[MaterialData.SpecTexName] = BaseTexture;
                 }
             }
 
-            NewMaterial->MetallicMap = MaterialTextures[MaterialData.MetallicTexname];
+            NewMaterial->MetallicMap = MaterialTextures[MaterialData.SpecTexName];
         }
         else
         {
@@ -241,6 +238,33 @@ Bool Sandbox::Init()
             NewMaterial->AlphaMask = MaterialTextures[MaterialData.AlphaTexname];
         }
 
+        // Emissive
+        if (!MaterialData.EmissiveTexName.empty())
+        {
+            bool EnableEmissive = false;
+            if (MaterialTextures.count(MaterialData.EmissiveTexName) == 0)
+            {
+                std::string TexName = MaterialData.TexPath + '/' + MaterialData.EmissiveTexName;
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
+                if (Texture)
+                {
+                    Texture->SetName(MaterialData.EmissiveTexName);
+                    MaterialTextures[MaterialData.EmissiveTexName] = Texture;
+                    EnableEmissive = true;
+                }
+                else
+                {
+                    MaterialTextures[MaterialData.EmissiveTexName] = BaseTexture;
+                }
+            }
+
+            NewMaterial->EmissiveMap = MaterialTextures[MaterialData.EmissiveTexName];
+            if (EnableEmissive)
+            {
+                NewMaterial->EnableEmissiveMap(true);
+            }
+        }
+
         NewMaterial->Init();
     }
 
@@ -271,6 +295,7 @@ Bool Sandbox::Init()
         NewActor->AddComponent(NewComponent);
     }
 
+#if SCENE == 0
     constexpr Float  SphereOffset   = 1.25f;
     constexpr UInt32 SphereCountX   = 8;
     constexpr Float  StartPositionX = (-static_cast<Float>(SphereCountX) * SphereOffset) / 2.0f;
@@ -430,9 +455,6 @@ Bool Sandbox::Init()
     NewComponent->Material->Init();
     NewActor->AddComponent(NewComponent);
 
-    CurrentCamera = DBG_NEW Camera();
-    CurrentScene->AddCamera(CurrentCamera);
-
     // Add PointLight- Source
     const Float Intensity = 50.0f;
 
@@ -489,6 +511,531 @@ Bool Sandbox::Init()
     Camera* Camera = CurrentScene->GetCamera();
     Camera->SetPosition(0.0f, 1.0f, 0.0f);
     Camera->Rotate(0.0f, 90.0f, 0.0f);
+#elif SCENE == 1
+    Camera* Camera = CurrentScene->GetCamera();
+    Camera->SetPosition(5.0f, 11.8f, -11.0f);
+    Camera->Rotate(0.0f, 44.0f, 0.0f);
+
+    const Float Intensity = 15.0f;
+
+    // Add DirectionalLight- Source
+    DirectionalLight* DirLight = DBG_NEW DirectionalLight();
+    DirLight->SetShadowBias(0.0008f);
+    DirLight->SetMaxShadowBias(0.008f);
+    DirLight->SetShadowNearPlane(0.01f);
+    DirLight->SetShadowFarPlane(140.0f);
+    DirLight->SetColor(1.0f, 1.0f, 1.0f);
+    DirLight->SetIntensity(10.0f);
+    CurrentScene->AddLight(DirLight);
+
+    PointLight* Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(0));
+    Light->SetPosition(-3.0f, 7.0f, -11.8f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(1));
+    Light->SetPosition(3.0f, 7.0f, -11.6f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(2));
+    Light->SetPosition(8.5f, 7.0f, -8.6f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(3));
+    Light->SetPosition(11.8f, 7.0f, -3.2f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(4));
+    Light->SetPosition(-8.5f, 7.0f, -8.6f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(5));
+    Light->SetPosition(-12.0f, 7.0f, -3.1f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(6));
+    Light->SetPosition(-4.65f, 7.0f, 11.8f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(7));
+    Light->SetPosition(11.1f, 7.0f, 27.1f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(8));
+    Light->SetPosition(3.6f, 4.0f, 42.8f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(9));
+    Light->SetPosition(0.0f, 1.8f, 47.4f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(10));
+    Light->SetPosition(10.8f, 4.0f, 64.9f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(11));
+    Light->SetPosition(-10.7f, 4.0f, 64.8f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(12));
+    Light->SetPosition(-3.1f, 4.0f, 76.2f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(13));
+    Light->SetPosition(0.0f, 1.8f, 87.0f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(14));
+    Light->SetPosition(2.5f, 4.0f, 106.3f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(15));
+    Light->SetPosition(-2.5f, 4.0f, 106.3f);
+    Light->SetColor(0.94f, 0.46f, 0.32f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+#elif SCENE == 2
+    Camera* Camera = CurrentScene->GetCamera();
+    Camera->SetPosition(19.0f, 6.0f, -59.6f);
+    Camera->Rotate(0.0f, 45.0f, 0.0f);
+
+    const Float Intensity  = 30.0f;
+    const Float Intensity2 = 20.0f;
+
+    // Add DirectionalLight- Source
+    DirectionalLight* DirLight = DBG_NEW DirectionalLight();
+    DirLight->SetShadowBias(0.0008f);
+    DirLight->SetMaxShadowBias(0.008f);
+    DirLight->SetShadowNearPlane(0.01f);
+    DirLight->SetShadowFarPlane(140.0f);
+    DirLight->SetColor(1.0f, 1.0f, 1.0f);
+    DirLight->SetIntensity(0.5f);
+    CurrentScene->AddLight(DirLight);
+
+    // PointLights
+    PointLight* Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(0));
+    Light->SetPosition(27.0f, 6.5f, -62.3f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(1));
+    Light->SetPosition(26.5f, 6.5f, -51.7f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    // Green Sign
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(2));
+    Light->SetPosition(16.4f, 6.3f, -50.6f);
+    Light->SetColor(0.44f, 0.94f, 0.32f);
+    Light->SetIntensity(5.0f);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    // Red Sign
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(3));
+    Light->SetPosition(19.0f, 4.7f, -38.4f);
+    Light->SetColor(0.94f, 0.32f, 0.32f);
+    Light->SetIntensity(5.0f);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(4));
+    Light->SetPosition(13.5f, 6.5f, -30.2f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(5));
+    Light->SetPosition(5.6f, 6.5f, -31.9f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(6));
+    Light->SetPosition(-3.2f, 6.2f, -27.4f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(7));
+    Light->SetPosition(-12.6f, 6.0f, -17.1f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(8));
+    Light->SetPosition(-6.5f, 6.5f, -6.3f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(9));
+    Light->SetPosition(-14.5f, 6.5f, 3.1f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(10));
+    Light->SetPosition(-3.1f, 6.5f, 7.0f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(11));
+    Light->SetPosition(-20.1f, 6.0f, 1.8f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(12));
+    Light->SetPosition(-17.9f, 6.0f, -14.4f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(14));
+    Light->SetPosition(-25.9f, 6.0f, -5.7f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(13));
+    Light->SetPosition(-30.2f, 6.0f, -10.8f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(15));
+    Light->SetPosition(-26.6f, 6.0f, -22.4f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(16));
+    Light->SetPosition(-36.9f, 6.0f, -17.7f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(17));
+    Light->SetPosition(-31.2f, 6.5f, -27.3f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(18));
+    Light->SetPosition(-40.3f, 4.9f, -31.6f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(19));
+    Light->SetPosition(-42.7f, 4.9f, -25.8f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(20));
+    Light->SetPosition(-2.6f, 6.5f, 15.0f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(21));
+    Light->SetPosition(-19.0f, 14.5f, 3.8f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity2);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(22));
+    Light->SetPosition(-24.5f, 14.5f, -2.8f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity2);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(23));
+    Light->SetPosition(-28.0f, 14.5f, -8.5f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity2);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(24));
+    Light->SetPosition(-33.2f, 14.5f, -12.8f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity2);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(25));
+    Light->SetPosition(-38.8f, 14.5f, -19.3f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity2);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(26));
+    Light->SetPosition(3.0f, 5.7f, -15.5f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity2);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(27));
+    Light->SetPosition(1.2f, 5.7f, -12.5f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity2);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(28));
+    Light->SetPosition(-0.4f, 5.7f, -9.7f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity2);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(29));
+    Light->SetPosition(-2.1f, 5.7f, -6.7f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity2);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(30));
+    Light->SetPosition(-2.9f, 3.5f, -3.2f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity2);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(31));
+    Light->SetPosition(-0.8f, 3.5f, 1.1f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity2);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(32));
+    Light->SetPosition(1.2f, 5.7f, 3.2f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(33));
+    Light->SetPosition(5.2f, 5.7f, 4.6f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(34));
+    Light->SetPosition(8.2f, 5.7f, 5.7f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(35));
+    Light->SetPosition(11.5f, 5.7f, 7.0f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(36));
+    Light->SetPosition(11.7f, 6.5f, 13.0f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(37));
+    Light->SetPosition(32.4f, 6.5f, 28.2f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(38));
+    Light->SetPosition(31.2f, 6.0f, 19.1f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(39));
+    Light->SetPosition(45.0f, 6.0f, 20.3f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(40));
+    Light->SetPosition(52.6f, 6.5f, 27.5f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(41));
+    Light->SetPosition(36.6f, 6.5f, 34.7f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(42));
+    Light->SetPosition(50.0f, 6.5f, 36.1f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(43));
+    Light->SetPosition(58.2f, 6.5f, 50.9f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+
+    Light = DBG_NEW PointLight();
+    Light->SetName("PointLight " + std::to_string(44));
+    Light->SetPosition(74.0f, 6.5f, 51.5f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetIntensity(Intensity);
+    Light->SetShadowCaster(false);
+    CurrentScene->AddLight(Light);
+#endif
 
     return true;
 }

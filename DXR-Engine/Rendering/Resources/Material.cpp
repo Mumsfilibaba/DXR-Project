@@ -26,9 +26,9 @@ void Material::Init()
     }
 
     SamplerStateCreateInfo CreateInfo;
-    CreateInfo.AddressU       = ESamplerMode::Mirror;
-    CreateInfo.AddressV       = ESamplerMode::Mirror;
-    CreateInfo.AddressW       = ESamplerMode::Mirror;
+    CreateInfo.AddressU       = ESamplerMode::Wrap;
+    CreateInfo.AddressV       = ESamplerMode::Wrap;
+    CreateInfo.AddressW       = ESamplerMode::Wrap;
     CreateInfo.ComparisonFunc = EComparisonFunc::Never;
     CreateInfo.Filter         = ESamplerFilter::Anistrotopic;
     CreateInfo.MaxAnisotropy  = 16;
@@ -90,6 +90,18 @@ void Material::EnableHeightMap(Bool EnableHeightMap)
     }
 }
 
+void Material::EnableEmissiveMap(Bool EnableEmissiveMap)
+{
+    if (EnableEmissiveMap)
+    {
+        Properties.EnableEmissive = 1;
+    }
+    else
+    {
+        Properties.EnableEmissive = 0;
+    }
+}
+
 void Material::SetDebugName(const std::string& InDebugName)
 {
     DebugName = InDebugName;
@@ -99,11 +111,12 @@ ShaderResourceView* const* Material::GetShaderResourceViews() const
 {
     ShaderResourceViews[0] = GET_SAFE_SRV(AlbedoMap);
     ShaderResourceViews[1] = GET_SAFE_SRV(NormalMap);
-    ShaderResourceViews[2] = GET_SAFE_SRV(RoughnessMap);
+    ShaderResourceViews[2] = GET_SAFE_SRV(MetallicMap);
     ShaderResourceViews[3] = GET_SAFE_SRV(HeightMap);
-    ShaderResourceViews[4] = GET_SAFE_SRV(MetallicMap);
+    ShaderResourceViews[4] = GET_SAFE_SRV(RoughnessMap);
     ShaderResourceViews[5] = GET_SAFE_SRV(AOMap);
     ShaderResourceViews[6] = GET_SAFE_SRV(AlphaMask);
+    ShaderResourceViews[7] = GET_SAFE_SRV(EmissiveMap);
 
     return ShaderResourceViews.Data();
 }

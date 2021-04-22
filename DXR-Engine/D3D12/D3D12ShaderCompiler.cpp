@@ -296,7 +296,7 @@ Bool D3D12ShaderCompiler::CompileFromFile(
     HRESULT Result = DxLibrary->CreateBlobFromFile(WideFilePath.c_str(), nullptr, &SourceBlob);
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12ShaderCompiler]: FAILED to create Source Data");
+        LOG_ERROR("[D3D12ShaderCompiler]: FAILED to load file '" + FilePath + "'");
 
         Debug::DebugBreak();
         return false;

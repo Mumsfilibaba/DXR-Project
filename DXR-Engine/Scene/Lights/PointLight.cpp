@@ -8,6 +8,8 @@ PointLight::PointLight()
     , Matrices()
 {
     CORE_OBJECT_INIT();
+
+    Name = "PointLight";
     CalculateMatrices();
 }
 

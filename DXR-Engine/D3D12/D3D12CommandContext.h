@@ -133,9 +133,6 @@ public:
     TRef<D3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
     TRef<D3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
     
-    TRef<D3D12OnlineDescriptorHeap> OnlineRayTracingResourceDescriptorHeap;
-    TRef<D3D12OnlineDescriptorHeap> OnlineRayTracingSamplerDescriptorHeap;
-    
     TArray<TRef<D3D12Resource>>     DxResources;
     TArray<TRef<Resource>>          Resources;
     TArray<TComPtr<ID3D12Resource>> NativeResources;

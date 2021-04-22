@@ -169,7 +169,7 @@ Bool D3D12CommandBatch::Init()
 
     OnlineResourceDescriptorHeap = DBG_NEW D3D12OnlineDescriptorHeap(
         Device,
-        D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
+        D3D12_MAX_ONLINE_RESOURCE_DESCRIPTOR_COUNT,
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     if (!OnlineResourceDescriptorHeap->Init())
     {
@@ -177,26 +177,9 @@ Bool D3D12CommandBatch::Init()
     }
 
     OnlineSamplerDescriptorHeap = DBG_NEW D3D12OnlineDescriptorHeap(Device,
-        D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
+        D3D12_MAX_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
         D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
     if (!OnlineSamplerDescriptorHeap->Init())
-    {
-        return false;
-    }
-
-    OnlineRayTracingResourceDescriptorHeap = DBG_NEW D3D12OnlineDescriptorHeap(
-        Device,
-        D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    if (!OnlineRayTracingResourceDescriptorHeap->Init())
-    {
-        return false;
-    }
-
-    OnlineRayTracingSamplerDescriptorHeap = DBG_NEW D3D12OnlineDescriptorHeap(Device,
-        D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
-        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-    if (!OnlineRayTracingSamplerDescriptorHeap->Init())
     {
         return false;
     }
@@ -987,14 +970,14 @@ void D3D12CommandContext::SetRayTracingBindings(
         NumSamplersNeeded    += HitGroupResources[i].NumSamplers();
     }
 
-    Assert(NumDescriptorsNeeded < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
+    Assert(NumDescriptorsNeeded < D3D12_MAX_ONLINE_RESOURCE_DESCRIPTOR_COUNT);
     D3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     if (!ResourceHeap->HasSpace(NumDescriptorsNeeded))
     {
         ResourceHeap->AllocateFreshHeap();
     }
 
-    Assert(NumSamplersNeeded < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT);
+    Assert(NumSamplersNeeded < D3D12_MAX_ONLINE_SAMPLER_DESCRIPTOR_COUNT);
     D3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
     if (!SamplerHeap->HasSpace(NumSamplersNeeded))
     {
