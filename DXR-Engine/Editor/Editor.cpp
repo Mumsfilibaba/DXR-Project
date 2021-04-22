@@ -24,6 +24,19 @@ static Bool ShowRenderSettings = false;
 
 ConsoleVariable GlobalShowSceneGraph(EConsoleVariableType::Bool);
 
+static Float DisplayableDegrees(Float Radians)
+{
+    Radians = fmod(Radians, Math::TWO_PI);
+
+    Float Degrees = XMConvertToDegrees(Radians);
+    if (Degrees < 0)
+    {
+        Degrees = 360.0f + Degrees;
+    }
+
+    return Degrees;
+}
+
 static void DrawMenu();
 static void DrawSideWindow();
 static void DrawRenderSettings();
@@ -44,8 +57,8 @@ static void DrawFloat3Control(const std::string& Label, XMFLOAT3& Value, Float R
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
 
-    Float    LineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-    ImVec2    ButtonSize = ImVec2(LineHeight + 3.0f, LineHeight);
+    Float  LineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+    ImVec2 ButtonSize = ImVec2(LineHeight + 3.0f, LineHeight);
     
     // X
     ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
@@ -398,6 +411,8 @@ static void DrawSceneInfo()
         ImGui::NextColumn();
 
         XMFLOAT3 Rotation = CurrentCamera->GetRotation();
+        Rotation = XMFLOAT3(DisplayableDegrees(Rotation.x), DisplayableDegrees(Rotation.y), DisplayableDegrees(Rotation.z));
+
         Float* RotArr = reinterpret_cast<Float*>(&Rotation);
         ImGui::InputFloat3("##Rotation", RotArr, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
