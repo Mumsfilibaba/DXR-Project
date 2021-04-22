@@ -76,13 +76,15 @@ struct SceneData
 {
     TArray<ModelData>    Models;
     TArray<MaterialData> Materials;
+
+    Float ScaleFactor;
 };
 
 class MeshFactory
 {
 public:
     // Loads a full scene from a single file 
-    static bool LoadSceneFromFile(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion = false) noexcept;
+    static bool LoadSceneFromFile(SceneData& OutScene, const std::string& Filename) noexcept;
     
     // Creates meshes
     static MeshData CreateCube(Float Width = 1.0f, Float Height = 1.0f, Float Depth = 1.0f) noexcept;
@@ -105,7 +107,9 @@ public:
 
     static void CombineScenes(SceneData& OutScene, const SceneData& Other) noexcept;
 
+    static void LeftHandedConversion(MeshData& OutData) noexcept;
+
 private:
-    static bool LoadSceneFromOBJ(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion) noexcept;
-    static bool LoadSceneFromFBX(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion) noexcept;
+    static bool LoadSceneFromOBJ(SceneData& OutScene, const std::string& Filename) noexcept;
+    static bool LoadSceneFromFBX(SceneData& OutScene, const std::string& Filename) noexcept;
 };

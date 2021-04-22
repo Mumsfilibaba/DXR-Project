@@ -5,18 +5,18 @@
 
 #include <regex>
 
-bool MeshFactory::LoadSceneFromFile(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion) noexcept
+bool MeshFactory::LoadSceneFromFile(SceneData& OutScene, const std::string& Filename) noexcept
 {
     std::regex OBJFile("\.obj|\.OBJ");
     std::regex FBXFile("\.fbx|\.FBX");
 
     if (std::regex_search(Filename, OBJFile))
     {
-        return LoadSceneFromOBJ(OutScene, Filename, LeftHandedConversion);
+        return LoadSceneFromOBJ(OutScene, Filename);
     }
     else if (std::regex_search(Filename, FBXFile))
     {
-        return LoadSceneFromFBX(OutScene, Filename, LeftHandedConversion);
+        return LoadSceneFromFBX(OutScene, Filename);
     }
     else
     {
@@ -667,26 +667,28 @@ void MeshFactory::Optimize(MeshData& OutData, UInt32 StartVertex) noexcept
     }
 }
 
-void MeshFactory::CalculateHardNormals(MeshData& Data) noexcept
+void MeshFactory::CalculateHardNormals(MeshData& OutData) noexcept
 {
-    UNREFERENCED_VARIABLE(Data);
+    XMFLOAT3 Edge1;
+    XMFLOAT3 Edge2;
+    XMFLOAT3 Normal;
 
-    /*
-    XMFLOAT3 e1;
-    XMFLOAT3 e2;
-    XMFLOAT3 n;
-
-    for (size_t i = 0; i < data.Indices.GetSize(); i += 3)
+    for (size_t i = 0; i < OutData.Indices.Size(); i += 3)
     {
-        e1 = data.Vertices[data.Indices[i + 2]].Position - data.Vertices[data.Indices[i]].Position;
-        e2 = data.Vertices[data.Indices[i + 1]].Position - data.Vertices[data.Indices[i]].Position;
-        n = cross(e1, e2);
+        Edge1 = OutData.Vertices[OutData.Indices[i + 2]].Position - OutData.Vertices[OutData.Indices[i]].Position;
+        Edge2 = OutData.Vertices[OutData.Indices[i + 1]].Position - OutData.Vertices[OutData.Indices[i]].Position;
+        
+        XMVECTOR XmEdge1 = XMLoadFloat3(&Edge1);
+        XMVECTOR XmEdge2 = XMLoadFloat3(&Edge2);
+        
+        XMVECTOR XmNormal = XMVector3Cross(XmEdge1, XmEdge2);
+        XmNormal = XMVector3Normalize(XmNormal);
+        XMStoreFloat3(&Normal, XmNormal);
 
-        data.Vertices[data.Indices[i]].Normal = n;
-        data.Vertices[data.Indices[i + 1]].Normal = n;
-        data.Vertices[data.Indices[i + 2]].Normal = n;
+        OutData.Vertices[OutData.Indices[i + 0]].Normal = Normal;
+        OutData.Vertices[OutData.Indices[i + 1]].Normal = Normal;
+        OutData.Vertices[OutData.Indices[i + 2]].Normal = Normal;
     }
-    */
 }
 
 void MeshFactory::CalculateTangents(MeshData& OutData) noexcept
@@ -809,7 +811,25 @@ void MeshFactory::CombineScenes(SceneData& OutScene, const SceneData& Other) noe
     OutScene.Materials.ShrinkToFit();
 }
 
-bool MeshFactory::LoadSceneFromOBJ(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion) noexcept
+void MeshFactory::LeftHandedConversion(MeshData& OutData) noexcept
+{
+    Assert(OutData.Indices.Size() % 3 == 0);
+
+    for (UInt32 i = 0; i < OutData.Indices.Size(); i += 3)
+    {
+        UInt32 TempIndex = OutData.Indices[i + 1];
+        OutData.Indices[i + 1] = OutData.Indices[i + 2];
+        OutData.Indices[i + 2] = TempIndex;
+    }
+
+    for (UInt32 i = 0; i < OutData.Vertices.Size(); i++)
+    {
+        OutData.Vertices[i].Position.z = OutData.Vertices[i].Position.z * -1.0f;
+        OutData.Vertices[i].Normal.z   = OutData.Vertices[i].Normal.z * -1.0f;
+    }
+}
+
+bool MeshFactory::LoadSceneFromOBJ(SceneData& OutScene, const std::string& Filename) noexcept
 {
     // Make sure to clear everything
     OutScene.Models.Clear();
@@ -1008,10 +1028,46 @@ static std::string ExtractPath(const std::string& FullFilePath)
     }
 }
 
-bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filename, bool LeftHandedConversion) noexcept
+static XMFLOAT4X4 ToFloat4x4(const ofbx::Matrix& Matrix)
 {
-    using namespace ofbx;
+    XMFLOAT4X4 Result;
+    for (UInt32 y = 0; y < 4; y++)
+    {
+        for (UInt32 x = 0; x < 4; x++)
+        {
+            UInt32 Index = y * 4 + x;
+            Result.m[y][x] = Matrix.m[Index];
+        }
+    }
 
+    return Result;
+}
+
+static void GetMatrix(const ofbx::Object* Mesh, XMFLOAT4X4& OutMatrix)
+{
+    if (Mesh)
+    {
+        XMFLOAT4X4 Matrix;
+        GetMatrix(Mesh->getParent(), Matrix);
+
+        ofbx::Vec3 Scaling     = Mesh->getLocalScaling();
+        ofbx::Vec3 Rotation    = Mesh->getLocalRotation();
+        ofbx::Vec3 Translation = Mesh->getLocalTranslation();
+
+        XMFLOAT4X4 LocalMatrix = ToFloat4x4(Mesh->evalLocal(Translation, Rotation, Scaling));
+
+        XMMATRIX Matrix0 = XMLoadFloat4x4(&Matrix);
+        XMMATRIX Matrix1 = XMLoadFloat4x4(&LocalMatrix);
+        XMStoreFloat4x4(&OutMatrix, XMMatrixMultiply(Matrix0, Matrix1));
+    }
+    else
+    {
+        XMStoreFloat4x4(&OutMatrix, XMMatrixIdentity());
+    }
+}
+
+bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filename) noexcept
+{
     OutScene.Models.Clear();
     OutScene.Materials.Clear();
 
@@ -1026,10 +1082,10 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
     UInt32 FileSize = ftell(File);
     rewind(File);
 
-    TArray<u8> FileContent(FileSize);
+    TArray<ofbx::u8> FileContent(FileSize);
     UInt32 SizeInBytes = FileContent.SizeInBytes();
     
-    u8* Bytes = FileContent.Data();
+    ofbx::u8* Bytes = FileContent.Data();
 
     const UInt32 ChunkSize = 1024;
 
@@ -1048,17 +1104,15 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
 
     Bytes = FileContent.Data();
 
-    IScene* FBXScene = load(Bytes, FileSize, (u64)LoadFlags::TRIANGULATE);
+    ofbx::IScene* FBXScene = ofbx::load(Bytes, FileSize, (ofbx::u64)ofbx::LoadFlags::TRIANGULATE);
     if (!FBXScene)
     {
         LOG_ERROR("[MeshFactory]: Failed to load content '" + Filename + "'");
         return false;
     }
-
-    const Object* const* Objects = FBXScene->getAllObjects();
-    UInt32 NumObjects = FBXScene->getAllObjectCount();
-
-    ModelData Data;
+    
+    const ofbx::GlobalSettings* Settings = FBXScene->getGlobalSettings();
+    OutScene.ScaleFactor = 1.0f / Settings->UnitScaleFactor;
 
     std::unordered_map<Vertex, UInt32, VertexHasher>  UniqueVertices;
     std::unordered_map<const ofbx::Material*, UInt32> UniqueMaterials;
@@ -1067,11 +1121,13 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
 
     std::string Path = ExtractPath(Filename);
 
+    ModelData Data;
+
     UInt32 MeshCount = FBXScene->getMeshCount();
     for (UInt32 i = 0; i < MeshCount; i++)
     {
-        const Mesh*     CurrentMesh = FBXScene->getMesh(i);
-        const Geometry* CurrentGeom = CurrentMesh->getGeometry();
+        const ofbx::Mesh*     CurrentMesh = FBXScene->getMesh(i);
+        const ofbx::Geometry* CurrentGeom = CurrentMesh->getGeometry();
 
         UInt32 MaterialCount = CurrentMesh->getMaterialCount();
         for (UInt32 j = 0; j < MaterialCount; j++)
@@ -1091,7 +1147,7 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
 
             //TODO: Other material properties
 
-            const ofbx::Texture* AmbientTex = CurrentMaterial->getTexture(Texture::TextureType::AMBIENT);
+            const ofbx::Texture* AmbientTex = CurrentMaterial->getTexture(ofbx::Texture::TextureType::AMBIENT);
             if (AmbientTex)
             {
                 AmbientTex->getRelativeFileName().toString(StrBuffer);
@@ -1102,7 +1158,7 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
                 FileStringWithDDSToPNG(MaterialData.AOTexname);
             }
 
-            const ofbx::Texture* DiffuseTex = CurrentMaterial->getTexture(Texture::TextureType::DIFFUSE);
+            const ofbx::Texture* DiffuseTex = CurrentMaterial->getTexture(ofbx::Texture::TextureType::DIFFUSE);
             if (DiffuseTex)
             {
                 DiffuseTex->getRelativeFileName().toString(StrBuffer);
@@ -1113,7 +1169,7 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
                 FileStringWithDDSToPNG(MaterialData.DiffTexName);
             }
 
-            const ofbx::Texture* NormalTex = CurrentMaterial->getTexture(Texture::TextureType::NORMAL);
+            const ofbx::Texture* NormalTex = CurrentMaterial->getTexture(ofbx::Texture::TextureType::NORMAL);
             if (NormalTex)
             {
                 NormalTex->getRelativeFileName().toString(StrBuffer);
@@ -1124,7 +1180,7 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
                 FileStringWithDDSToPNG(MaterialData.NormalTexname);
             }
 
-            const ofbx::Texture* SpecularTex = CurrentMaterial->getTexture(Texture::TextureType::SPECULAR);
+            const ofbx::Texture* SpecularTex = CurrentMaterial->getTexture(ofbx::Texture::TextureType::SPECULAR);
             if (SpecularTex)
             {
                 SpecularTex->getRelativeFileName().toString(StrBuffer);
@@ -1135,19 +1191,19 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
                 FileStringWithDDSToPNG(MaterialData.SpecTexName);
             }
 
-            const ofbx::Texture* ReflectionTex = CurrentMaterial->getTexture(Texture::TextureType::REFLECTION);
+            const ofbx::Texture* ReflectionTex = CurrentMaterial->getTexture(ofbx::Texture::TextureType::REFLECTION);
             if (ReflectionTex)
             {
                 // TODO: Load this properly
             }
 
-            const ofbx::Texture* ShininessTex = CurrentMaterial->getTexture(Texture::TextureType::SHININESS);
+            const ofbx::Texture* ShininessTex = CurrentMaterial->getTexture(ofbx::Texture::TextureType::SHININESS);
             if (ShininessTex)
             {
                 // TODO: Load this properly
             }
 
-            const ofbx::Texture* EmissiveTex = CurrentMaterial->getTexture(Texture::TextureType::EMISSIVE);
+            const ofbx::Texture* EmissiveTex = CurrentMaterial->getTexture(ofbx::Texture::TextureType::EMISSIVE);
             if (EmissiveTex)
             {
                 EmissiveTex->getRelativeFileName().toString(StrBuffer);
@@ -1172,16 +1228,20 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
         const int* Indices   = CurrentGeom->getFaceIndices();
         Assert(Indices != nullptr);
 
-        const Vec3* Vertices = CurrentGeom->getVertices();
+        const ofbx::Vec3* Vertices = CurrentGeom->getVertices();
         Assert(Vertices != nullptr);
 
-        const Vec3* Normals = CurrentGeom->getNormals();
+        const ofbx::Vec3* Normals = CurrentGeom->getNormals();
         Assert(Normals != nullptr);
 
-        const Vec2* TexCoords = CurrentGeom->getUVs(0);
+        const ofbx::Vec2* TexCoords = CurrentGeom->getUVs(0);
         Assert(TexCoords != nullptr);
 
-        const Vec3* Tangents = CurrentGeom->getTangents();
+        const ofbx::Vec3* Tangents = CurrentGeom->getTangents();
+
+        XMFLOAT4X4 Matrix = ToFloat4x4(CurrentMesh->getGlobalTransform());
+        XMFLOAT4X4 GeometricMatrix = ToFloat4x4(CurrentMesh->getGeometricMatrix());
+        XMMATRIX XMTransform = XMMatrixMultiply(XMLoadFloat4x4(&Matrix), XMLoadFloat4x4(&GeometricMatrix));
 
         UInt32 CurrentIndex  = 0;
         UInt32 MaterialIndex = 0;
@@ -1207,59 +1267,26 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
                 }
 
                 Vertex TempVertex;
-                if (LeftHandedConversion)
+
+                XMVECTOR XmPosition = XMVectorSet(Vertices[CurrentIndex].x, Vertices[CurrentIndex].y, Vertices[CurrentIndex].z, 1.0f);
+                XmPosition = XMVector3Transform(XmPosition, XMTransform);
+                XMStoreFloat3(&TempVertex.Position, XmPosition);
+
+                XMVECTOR XmNormal = XMVectorSet(Normals[CurrentIndex].x, Normals[CurrentIndex].y, Normals[CurrentIndex].z, 0.0f);
+                XmNormal = XMVector3TransformNormal(XmNormal, XMTransform);
+                XMStoreFloat3(&TempVertex.Normal, XmNormal);
+
+                TempVertex.TexCoord =
                 {
-                    TempVertex.Position =
-                    {
-                        (float)Vertices[CurrentIndex].x,
-                        (float)Vertices[CurrentIndex].y,
-                        -(float)Vertices[CurrentIndex].z,
-                    };
-
-                    TempVertex.Normal =
-                    {
-                        (float)Normals[CurrentIndex].x,
-                        (float)Normals[CurrentIndex].y,
-                        -(float)Normals[CurrentIndex].z,
-                    };
-
-                    TempVertex.TexCoord =
-                    {
-                        (float)TexCoords[CurrentIndex].x,
-                        1.0f - (float)TexCoords[CurrentIndex].y,
-                    };
-                }
-                else
-                {
-                    TempVertex.Position =
-                    {
-                        (float)Vertices[CurrentIndex].x,
-                        (float)Vertices[CurrentIndex].y,
-                        (float)Vertices[CurrentIndex].z,
-                    };
-
-                    TempVertex.Normal =
-                    {
-                        (float)Normals[CurrentIndex].x,
-                        (float)Normals[CurrentIndex].y,
-                        (float)Normals[CurrentIndex].z,
-                    };
-
-                    TempVertex.TexCoord =
-                    {
-                        (float)TexCoords[CurrentIndex].x,
-                        (float)TexCoords[CurrentIndex].y,
-                    };
-                }
+                    (float)TexCoords[CurrentIndex].x,
+                    (float)TexCoords[CurrentIndex].y,
+                };
 
                 if (Tangents)
                 {
-                    TempVertex.Tangent =
-                    {
-                        (float)Tangents[CurrentIndex].x,
-                        (float)Tangents[CurrentIndex].y,
-                        (float)Tangents[CurrentIndex].z,
-                    };
+                    XMVECTOR XmTangent = XMVectorSet(Tangents[CurrentIndex].x, Tangents[CurrentIndex].y, Tangents[CurrentIndex].z, 0.0f);
+                    XmTangent = XMVector3TransformNormal(XmTangent, XMTransform);
+                    XMStoreFloat3(&TempVertex.Tangent, XmTangent);
                 }
 
                 if (UniqueVertices.count(TempVertex) == 0)
@@ -1274,6 +1301,12 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
             if (!Tangents)
             {
                 MeshFactory::CalculateTangents(Data.Mesh);
+            }
+
+            // Convert to lefthanded
+            if (Settings->CoordAxis == ofbx::CoordSystem_RightHanded)
+            {
+                MeshFactory::LeftHandedConversion(Data.Mesh);
             }
 
             Data.Name = CurrentMesh->name;
@@ -1291,23 +1324,3 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
     FBXScene->destroy();
     return true;
 }
-
-/*void Mesh::calcNormal()
-{
-    using namespace Math;
-
-    for (UInt32 i = 0; i < indexBuffer->GetSize(); i += 3)
-    {
-        XMFLOAT3 edge1 = (*vertexBuffer)[(*indexBuffer)[i + 2]].Position - (*vertexBuffer)[(*indexBuffer)[i + 1]].Position;
-        XMFLOAT3 edge2 = (*vertexBuffer)[(*indexBuffer)[i]].Position - (*vertexBuffer)[(*indexBuffer)[i + 2]].Position;
-        XMFLOAT3 edge3 = (*vertexBuffer)[(*indexBuffer)[i + 1]].Position - (*vertexBuffer)[(*indexBuffer)[i + 0]].Position;
-
-        XMFLOAT3 Normal = edge1.Cross(edge2);
-        Normal.Normalize();
-
-        (*vertexBuffer)[(*indexBuffer)[i]].Normal = Normal;
-        (*vertexBuffer)[(*indexBuffer)[i + 1]].Normal = Normal;
-        (*vertexBuffer)[(*indexBuffer)[i + 2]].Normal = Normal;
-    }
-}*/
-

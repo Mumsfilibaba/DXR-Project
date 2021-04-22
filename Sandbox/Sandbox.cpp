@@ -274,11 +274,7 @@ Bool Sandbox::Init()
         CurrentScene->AddActor(NewActor);
 
         NewActor->SetName(Model.Name);
-        NewActor->GetTransform().SetUniformScale(0.015f);
-
-#if SCENE == 2
-        NewActor->GetTransform().SetRotation(0.0f, 0.0f, XMConvertToRadians(-90.0f));
-#endif
+        NewActor->GetTransform().SetUniformScale(1.0f);
 
         NewComponent = DBG_NEW MeshComponent(NewActor);
         NewComponent->Mesh = Mesh::Make(Model.Mesh);
@@ -513,10 +509,10 @@ Bool Sandbox::Init()
     Camera->Rotate(0.0f, 90.0f, 0.0f);
 #elif SCENE == 1
     Camera* Camera = CurrentScene->GetCamera();
-    Camera->SetPosition(5.0f, 11.8f, -11.0f);
-    Camera->Rotate(0.0f, 44.0f, 0.0f);
+    Camera->SetPosition(-4.5f, 9.3f, 5.8f);
+    Camera->Rotate(0.0f, 47.0f, 0.0f);
 
-    const Float Intensity = 15.0f;
+    const Float Intensity = 7.5f;
 
     // Add DirectionalLight- Source
     DirectionalLight* DirLight = DBG_NEW DirectionalLight();
@@ -530,7 +526,7 @@ Bool Sandbox::Init()
 
     PointLight* Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(0));
-    Light->SetPosition(-3.0f, 7.0f, -11.8f);
+    Light->SetPosition(-2.0f, 4.5f, 7.9f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -538,7 +534,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(1));
-    Light->SetPosition(3.0f, 7.0f, -11.6f);
+    Light->SetPosition(2.0f, 4.5f, 7.8f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -546,7 +542,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(2));
-    Light->SetPosition(8.5f, 7.0f, -8.6f);
+    Light->SetPosition(5.7f, 4.5f, 5.7f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -554,7 +550,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(3));
-    Light->SetPosition(11.8f, 7.0f, -3.2f);
+    Light->SetPosition(7.9f, 4.5f, 2.2f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -562,7 +558,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(4));
-    Light->SetPosition(-8.5f, 7.0f, -8.6f);
+    Light->SetPosition(-5.7f, 4.5f, 5.8f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -570,7 +566,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(5));
-    Light->SetPosition(-12.0f, 7.0f, -3.1f);
+    Light->SetPosition(-8.0f, 4.5f, 2.1f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -578,7 +574,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(6));
-    Light->SetPosition(-4.65f, 7.0f, 11.8f);
+    Light->SetPosition(-3.1f, 4.5f, -7.8f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -586,7 +582,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(7));
-    Light->SetPosition(11.1f, 7.0f, 27.1f);
+    Light->SetPosition(7.5f, 4.5f, -18.0f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -594,7 +590,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(8));
-    Light->SetPosition(3.6f, 4.0f, 42.8f);
+    Light->SetPosition(2.4f, 2.5f, -28.6f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -602,7 +598,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(9));
-    Light->SetPosition(0.0f, 1.8f, 47.4f);
+    Light->SetPosition(0.0f, 1.5f, -31.6f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -610,7 +606,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(10));
-    Light->SetPosition(10.8f, 4.0f, 64.9f);
+    Light->SetPosition(7.2f, 2.5f, -43.2f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -618,7 +614,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(11));
-    Light->SetPosition(-10.7f, 4.0f, 64.8f);
+    Light->SetPosition(-7.2f, 2.5f, -43.2f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -626,7 +622,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(12));
-    Light->SetPosition(-3.1f, 4.0f, 76.2f);
+    Light->SetPosition(-2.1f, 2.5f, -50.8f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -634,7 +630,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(13));
-    Light->SetPosition(0.0f, 1.8f, 87.0f);
+    Light->SetPosition(0.0f, 1.5f, -58.0f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -642,7 +638,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(14));
-    Light->SetPosition(2.5f, 4.0f, 106.3f);
+    Light->SetPosition(1.7f, 2.5f, -70.8f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -650,18 +646,19 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(15));
-    Light->SetPosition(-2.5f, 4.0f, 106.3f);
+    Light->SetPosition(-1.4f, 2.5f, -70.8f);
     Light->SetColor(0.94f, 0.46f, 0.32f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
     CurrentScene->AddLight(Light);
+
 #elif SCENE == 2
     Camera* Camera = CurrentScene->GetCamera();
-    Camera->SetPosition(19.0f, 6.0f, -59.6f);
-    Camera->Rotate(0.0f, 45.0f, 0.0f);
+    Camera->SetPosition(15.5f, 7.0f, 68.0f);
+    Camera->Rotate(0.0f, 46.1f, 0.0f);
 
-    const Float Intensity  = 30.0f;
-    const Float Intensity2 = 20.0f;
+    const Float Intensity  = 20.0f;
+    const Float Intensity2 = 10.0f;
 
     // Add DirectionalLight- Source
     DirectionalLight* DirLight = DBG_NEW DirectionalLight();
@@ -670,13 +667,13 @@ Bool Sandbox::Init()
     DirLight->SetShadowNearPlane(0.01f);
     DirLight->SetShadowFarPlane(140.0f);
     DirLight->SetColor(1.0f, 1.0f, 1.0f);
-    DirLight->SetIntensity(0.5f);
+    DirLight->SetIntensity(2.0f);
     CurrentScene->AddLight(DirLight);
 
     // PointLights
     PointLight* Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(0));
-    Light->SetPosition(27.0f, 6.5f, -62.3f);
+    Light->SetPosition(28.8f, 7.0f, 66.5f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -684,7 +681,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(1));
-    Light->SetPosition(26.5f, 6.5f, -51.7f);
+    Light->SetPosition(28.3f, 7.0f, 55.1f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -693,7 +690,7 @@ Bool Sandbox::Init()
     // Green Sign
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(2));
-    Light->SetPosition(16.4f, 6.3f, -50.6f);
+    Light->SetPosition(17.4f, 6.7f, 54.1f);
     Light->SetColor(0.44f, 0.94f, 0.32f);
     Light->SetIntensity(5.0f);
     Light->SetShadowCaster(false);
@@ -702,7 +699,7 @@ Bool Sandbox::Init()
     // Red Sign
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(3));
-    Light->SetPosition(19.0f, 4.7f, -38.4f);
+    Light->SetPosition(20.3f, 5.0f, 40.9f);
     Light->SetColor(0.94f, 0.32f, 0.32f);
     Light->SetIntensity(5.0f);
     Light->SetShadowCaster(false);
@@ -710,7 +707,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(4));
-    Light->SetPosition(13.5f, 6.5f, -30.2f);
+    Light->SetPosition(14.4f, 7.2f, 32.1f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -718,7 +715,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(5));
-    Light->SetPosition(5.6f, 6.5f, -31.9f);
+    Light->SetPosition(6.0f, 7.0f, 34.0f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -726,7 +723,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(6));
-    Light->SetPosition(-3.2f, 6.2f, -27.4f);
+    Light->SetPosition(-3.4f, 6.6f, 29.3f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -734,7 +731,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(7));
-    Light->SetPosition(-12.6f, 6.0f, -17.1f);
+    Light->SetPosition(-13.5f, 6.3f, 18.3f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -742,7 +739,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(8));
-    Light->SetPosition(-6.5f, 6.5f, -6.3f);
+    Light->SetPosition(-6.9f, 7.0f, 6.7f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -750,7 +747,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(9));
-    Light->SetPosition(-14.5f, 6.5f, 3.1f);
+    Light->SetPosition(-15.4f, 7.0f, -3.3f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -758,7 +755,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(10));
-    Light->SetPosition(-3.1f, 6.5f, 7.0f);
+    Light->SetPosition(-21.4f, 6.3f, -1.9f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -766,7 +763,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(11));
-    Light->SetPosition(-20.1f, 6.0f, 1.8f);
+    Light->SetPosition(-27.6f, 6.3f, 6.0f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -774,7 +771,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(12));
-    Light->SetPosition(-17.9f, 6.0f, -14.4f);
+    Light->SetPosition(-28.4f, 6.3f, 23.9f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -782,7 +779,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(14));
-    Light->SetPosition(-25.9f, 6.0f, -5.7f);
+    Light->SetPosition(-39.3f, 6.3f, 18.9f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -790,7 +787,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(13));
-    Light->SetPosition(-30.2f, 6.0f, -10.8f);
+    Light->SetPosition(-33.3f, 7.0f, 29.2f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -798,7 +795,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(15));
-    Light->SetPosition(-26.6f, 6.0f, -22.4f);
+    Light->SetPosition(-45.6f, 5.2f, 27.5f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -806,7 +803,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(16));
-    Light->SetPosition(-36.9f, 6.0f, -17.7f);
+    Light->SetPosition(-2.8f, 7.0f, -16.0f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -814,39 +811,39 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(17));
-    Light->SetPosition(-31.2f, 6.5f, -27.3f);
-    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetPosition(-20.1f, 15.2f, -4.0f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
     CurrentScene->AddLight(Light);
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(18));
-    Light->SetPosition(-40.3f, 4.9f, -31.6f);
-    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetPosition(-26.5f, 15.1f, 3.2f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
     CurrentScene->AddLight(Light);
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(19));
-    Light->SetPosition(-42.7f, 4.9f, -25.8f);
-    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetPosition(-29.8f, 15.1f, 9.1f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
     CurrentScene->AddLight(Light);
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(20));
-    Light->SetPosition(-2.6f, 6.5f, 15.0f);
-    Light->SetColor(0.88f, 0.64f, 0.36f);
+    Light->SetPosition(-35.6f, 15.1f, 13.6f);
+    Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
     CurrentScene->AddLight(Light);
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(21));
-    Light->SetPosition(-19.0f, 14.5f, 3.8f);
+    Light->SetPosition(-41.4f, 15.1f, 20.5f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity2);
     Light->SetShadowCaster(false);
@@ -854,7 +851,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(22));
-    Light->SetPosition(-24.5f, 14.5f, -2.8f);
+    Light->SetPosition(1.0f, 5.8f, 13.3f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity2);
     Light->SetShadowCaster(false);
@@ -862,7 +859,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(23));
-    Light->SetPosition(-28.0f, 14.5f, -8.5f);
+    Light->SetPosition(-0.2f, 5.8f, 10.3f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity2);
     Light->SetShadowCaster(false);
@@ -870,7 +867,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(24));
-    Light->SetPosition(-33.2f, 14.5f, -12.8f);
+    Light->SetPosition(-2.1f, 5.8f, 6.9f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity2);
     Light->SetShadowCaster(false);
@@ -878,7 +875,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(25));
-    Light->SetPosition(-38.8f, 14.5f, -19.3f);
+    Light->SetPosition(-3.1f, 3.5f, 3.4f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity2);
     Light->SetShadowCaster(false);
@@ -886,7 +883,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(26));
-    Light->SetPosition(3.0f, 5.7f, -15.5f);
+    Light->SetPosition(-1.0f, 3.5f, -1.3f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity2);
     Light->SetShadowCaster(false);
@@ -894,7 +891,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(27));
-    Light->SetPosition(1.2f, 5.7f, -12.5f);
+    Light->SetPosition(2.0f, 5.7f, -3.4f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity2);
     Light->SetShadowCaster(false);
@@ -902,7 +899,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(28));
-    Light->SetPosition(-0.4f, 5.7f, -9.7f);
+    Light->SetPosition(5.6f, 5.7f, -4.9f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity2);
     Light->SetShadowCaster(false);
@@ -910,7 +907,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(29));
-    Light->SetPosition(-2.1f, 5.7f, -6.7f);
+    Light->SetPosition(2.9f, 5.7f, 16.9f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity2);
     Light->SetShadowCaster(false);
@@ -918,7 +915,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(30));
-    Light->SetPosition(-2.9f, 3.5f, -3.2f);
+    Light->SetPosition(12.2f, 5.7f, -7.6f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity2);
     Light->SetShadowCaster(false);
@@ -926,7 +923,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(31));
-    Light->SetPosition(-0.8f, 3.5f, 1.1f);
+    Light->SetPosition(8.7f, 5.7f, -6.5f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity2);
     Light->SetShadowCaster(false);
@@ -934,7 +931,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(32));
-    Light->SetPosition(1.2f, 5.7f, 3.2f);
+    Light->SetPosition(33.3f, 6.3f, -20.5f);
     Light->SetColor(1.0f, 1.0f, 1.0f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -942,31 +939,31 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(33));
-    Light->SetPosition(5.2f, 5.7f, 4.6f);
-    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetPosition(56.2f, 7.0f, -29.3f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
     CurrentScene->AddLight(Light);
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(34));
-    Light->SetPosition(8.2f, 5.7f, 5.7f);
-    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetPosition(39.1f, 7.2f, -37.1f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
     CurrentScene->AddLight(Light);
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(35));
-    Light->SetPosition(11.5f, 5.7f, 7.0f);
-    Light->SetColor(1.0f, 1.0f, 1.0f);
+    Light->SetPosition(53.3f, 7.0f, -38.5f);
+    Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
     CurrentScene->AddLight(Light);
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(36));
-    Light->SetPosition(11.7f, 6.5f, 13.0f);
+    Light->SetPosition(62.1f, 7.0f, -54.3f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -974,7 +971,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(37));
-    Light->SetPosition(32.4f, 6.5f, 28.2f);
+    Light->SetPosition(78.9f, 7.0f, -55.0f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -982,7 +979,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(38));
-    Light->SetPosition(31.2f, 6.0f, 19.1f);
+    Light->SetPosition(34.5f, 7.0f, -30.1f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -990,7 +987,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(39));
-    Light->SetPosition(45.0f, 6.0f, 20.3f);
+    Light->SetPosition(-32.3f, 6.3f, 11.5f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -998,7 +995,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(40));
-    Light->SetPosition(52.6f, 6.5f, 27.5f);
+    Light->SetPosition(-43.0f, 5.2f, 33.6f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -1006,7 +1003,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(41));
-    Light->SetPosition(36.6f, 6.5f, 34.7f);
+    Light->SetPosition(-19.1f, 6.3f, 15.4f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -1014,7 +1011,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(42));
-    Light->SetPosition(50.0f, 6.5f, 36.1f);
+    Light->SetPosition(-3.3f, 7.0f, -7.9f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -1022,7 +1019,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(43));
-    Light->SetPosition(58.2f, 6.5f, 50.9f);
+    Light->SetPosition(12.5f, 7.0f, -13.9f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
@@ -1030,7 +1027,7 @@ Bool Sandbox::Init()
 
     Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(44));
-    Light->SetPosition(74.0f, 6.5f, 51.5f);
+    Light->SetPosition(48.0f, 6.3f, -21.6f);
     Light->SetColor(0.88f, 0.64f, 0.36f);
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
