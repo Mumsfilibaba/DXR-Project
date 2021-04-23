@@ -6,12 +6,10 @@
 #define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetShaderResourceView() : nullptr
 
 Material::Material(const MaterialProperties& InProperties)
-    : AlbedoMap()
+    : DiffuseMap()
     , NormalMap()
-    , RoughnessMap()
-    , MetallicMap()
-    , AOMap()
-    , HeightMap()
+    , EmissiveMap()
+    , SpecularMap()
     , MaterialBuffer()
     , Properties(InProperties)
 {
@@ -48,15 +46,15 @@ void Material::BuildBuffer(CommandList& CmdList)
     MaterialBufferIsDirty = false;
 }
 
-void Material::SetAlbedo(const XMFLOAT3& Albedo)
+void Material::SetDiffuse(const XMFLOAT3& Albedo)
 {
-    Properties.Albedo = Albedo;
+    Properties.Diffuse = Albedo;
     MaterialBufferIsDirty = true;
 }
 
-void Material::SetAlbedo(Float R, Float G, Float B)
+void Material::SetDiffuse(Float r, Float g, Float b)
 {
-    Properties.Albedo = XMFLOAT3(R, G, B);
+    Properties.Diffuse = XMFLOAT3(r, g, b);
     MaterialBufferIsDirty = true;
 }
 
@@ -102,6 +100,11 @@ void Material::EnableEmissiveMap(Bool EnableEmissiveMap)
     }
 }
 
+void Material::EnableTransparency(Bool InEnableTransparency)
+{
+    TransparencyEnabled = InEnableTransparency;
+}
+
 void Material::SetDebugName(const std::string& InDebugName)
 {
     DebugName = InDebugName;
@@ -109,14 +112,10 @@ void Material::SetDebugName(const std::string& InDebugName)
 
 ShaderResourceView* const* Material::GetShaderResourceViews() const
 {
-    ShaderResourceViews[0] = GET_SAFE_SRV(AlbedoMap);
+    ShaderResourceViews[0] = GET_SAFE_SRV(DiffuseMap);
     ShaderResourceViews[1] = GET_SAFE_SRV(NormalMap);
-    ShaderResourceViews[2] = GET_SAFE_SRV(MetallicMap);
-    ShaderResourceViews[3] = GET_SAFE_SRV(HeightMap);
-    ShaderResourceViews[4] = GET_SAFE_SRV(RoughnessMap);
-    ShaderResourceViews[5] = GET_SAFE_SRV(AOMap);
-    ShaderResourceViews[6] = GET_SAFE_SRV(AlphaMask);
-    ShaderResourceViews[7] = GET_SAFE_SRV(EmissiveMap);
-
+    ShaderResourceViews[2] = GET_SAFE_SRV(SpecularMap);
+    ShaderResourceViews[3] = GET_SAFE_SRV(EmissiveMap);
+    ShaderResourceViews[4] = GET_SAFE_SRV(HeightMap);
     return ShaderResourceViews.Data();
 }

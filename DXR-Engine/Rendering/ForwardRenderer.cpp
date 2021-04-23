@@ -149,9 +149,11 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
     CmdList.SetRenderTargets(&FinalTargetRTV, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
     CmdList.SetConstantBuffer(PShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+    
     // TODO: Fix pointlight count in shader
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsBuffer.Get(), 1);
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsPosRadBuffer.Get(), 2);
+    
     CmdList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsBuffer.Get(), 1);
     CmdList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 2);
     CmdList.SetConstantBuffer(PShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 3);

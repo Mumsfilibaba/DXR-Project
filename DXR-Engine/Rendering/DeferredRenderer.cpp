@@ -153,7 +153,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
 
     // PrePass
     {
-        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/PrePass.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/PrePass.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
             Debug::DebugBreak();
             return false;
@@ -168,6 +168,23 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         else
         {
             PrePassVertexShader->SetName("PrePass VertexShader");
+        }
+
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/PrePass.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+
+        PrePassPixelShader = CreatePixelShader(ShaderCode);
+        if (!PrePassPixelShader)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            PrePassPixelShader->SetName("PrePass PixelShader");
         }
 
         DepthStencilStateCreateInfo DepthStencilStateInfo;
@@ -221,6 +238,7 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
         PipelineStateInfo.DepthStencilState  = DepthStencilState.Get();
         PipelineStateInfo.RasterizerState    = RasterizerState.Get();
         PipelineStateInfo.VertexShader       = PrePassVertexShader.Get();
+        PipelineStateInfo.PixelShader        = PrePassPixelShader.Get();
         PipelineStateInfo.DepthStencilFormat = FrameResources.DepthBufferFormat;
 
         PrePassPipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
@@ -421,12 +439,15 @@ Bool DeferredRenderer::Init(FrameResources& FrameResources)
 
 void DeferredRenderer::Release()
 {
-    PipelineState.Reset();
     PrePassPipelineState.Reset();
-    TiledLightPassPSO.Reset();
+    PrePassPixelShader.Reset();
+    PrePassVertexShader.Reset();
+
+    PipelineState.Reset();
     BaseVertexShader.Reset();
     BasePixelShader.Reset();
-    PrePassVertexShader.Reset();
+    
+    TiledLightPassPSO.Reset();
     TiledLightPassPSODebug.Reset();
     TiledLightShader.Reset();
     TiledLightDebugShader.Reset();
@@ -465,6 +486,12 @@ void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources&
             PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
             CmdList.Set32BitShaderConstants(PrePassVertexShader.Get(), &PerObjectBuffer, 16);
+
+            ShaderResourceView* DiffuseSRV = Command.Material->DiffuseMap->GetShaderResourceView();
+            CmdList.SetShaderResourceView(PrePassPixelShader.Get(), DiffuseSRV, 0);
+
+            SamplerState* Sampler = Command.Material->GetMaterialSampler();
+            CmdList.SetSamplerState(PrePassPixelShader.Get(), Sampler, 0);
 
             CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
         }
@@ -529,10 +556,7 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
         CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[1], 1);
         CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[2], 2);
         CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[3], 3);
-        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[7], 4);
-
-        //CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[4], 4);
-        //CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[5], 5);
+        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[4], 4);
 
         SamplerState* Sampler = Command.Material->GetMaterialSampler();
         CmdList.SetSamplerState(BasePixelShader.Get(), Sampler, 0);

@@ -505,11 +505,11 @@ static void DrawSceneInfo()
                         ImGui::Text("Albedo");
                         ImGui::NextColumn();
 
-                        const XMFLOAT3& Color = MComponent->Material->GetMaterialProperties().Albedo;
+                        const XMFLOAT3& Color = MComponent->Material->GetMaterialProperties().Diffuse;
                         Float Arr[3] = { Color.x, Color.y, Color.z };
                         if (ImGui::ColorEdit3("##Albedo", Arr))
                         {
-                            MComponent->Material->SetAlbedo(Arr[0], Arr[1], Arr[2]);
+                            MComponent->Material->SetDiffuse(Arr[0], Arr[1], Arr[2]);
                         }
 
                         // Roughness

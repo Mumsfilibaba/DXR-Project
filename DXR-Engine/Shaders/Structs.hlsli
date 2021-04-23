@@ -96,16 +96,16 @@ struct RayTracingMaterial
 {
     int AlbedoTexID;
     int NormalTexID;
-    int RoughnessTexID;
-    int MetallicTexID;
-    int AOTexID;
-    
-    float  Roughness;
-    float  Metallic;
-    float  AO;
+    int SpecularTexID;
+    int EmissiveTexID;
+
+    float AO;
+    float Roughness;
+    float Metallic;
+    float Padding0;
+
     float3 Albedo;
-    
-    int Padding0;
+    float Padding1;
 };
 
 struct LightInfoData

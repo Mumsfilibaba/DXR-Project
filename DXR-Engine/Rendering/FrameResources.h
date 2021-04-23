@@ -63,18 +63,19 @@ private:
 
 struct RayTracingMaterial
 {
-    Int32 AlbedoTexID    = -1;
-    Int32 NormalTexID    = -1;
-    Int32 RoughnessTexID = -1;
-    Int32 MetallicTexID  = -1;
+    Int32 AlbedoTexID   = -1;
+    Int32 NormalTexID   = -1;
+    Int32 SpecularTexID = -1;
+    Int32 EmissiveTexID = -1;
 
-    Int32 AOTexID   = -1;
-    Float Roughness = 0.0f;
-    Float Metallic  = 0.0f;
-    Float AO        = 0.5f;
+    Float AO;
+    Float Roughness;
+    Float Metallic;
+
+    Float Padding0;
 
     XMFLOAT3 Albedo = XMFLOAT3(1.0f, 1.0f, 1.0f);
-    Int32 Padding0  = 0;
+    Float Padding1 = 0;
 };
 
 struct FrameResources
@@ -149,4 +150,3 @@ struct FrameResources
 
     TRef<Viewport> MainWindowViewport;
 };
-

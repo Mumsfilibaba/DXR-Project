@@ -49,8 +49,6 @@ public:
      
     Camera* GetCamera() const { return CurrentCamera; }
 
-    static Scene* LoadFromFile(const std::string& Filepath);
-
 private:
     void AddMeshComponent(class MeshComponent* Component);
 

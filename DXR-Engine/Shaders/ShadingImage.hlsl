@@ -40,13 +40,21 @@ void Main(ComputeShaderInput Input)
     Avg = Avg / float(TileSize * TileSize);
     
     uint Result = SHADING_RATE_1x1;
-    if (Avg > 0.66f)
+    if (Avg > 0.7f)
     {
         Result = SHADING_RATE_4x4;
     }
-    else if (Avg > 0.33f)
+    else if (Avg > 0.35f)
+    {
+        Result = SHADING_RATE_2x4;
+    }
+    else if (Avg > 0.15f)
     {
         Result = SHADING_RATE_2x2;
+    }
+    else if (Avg > 0.075f)
+    {
+        Result = SHADING_RATE_2x1;
     }
     
     Output[OutputTexCoord] = Result;

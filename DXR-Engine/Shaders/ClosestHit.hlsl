@@ -3,7 +3,7 @@
 #include "RayTracingHelpers.hlsli"
 #include "Constants.hlsli"
 
-#define MAX_LIGHTS 8
+#define MAX_LIGHTS 64
 
 // Global RootSignature
 RaytracingAccelerationStructure Scene : register(t0, space0);
@@ -12,11 +12,11 @@ TextureCube<float4> Skybox : register(t1, space0);
 
 StructuredBuffer<RayTracingMaterial> Materials : register(t7);
 
-Texture2D<float4> MaterialTextures[128] : register(t8);
+Texture2D<float4> MaterialTextures[1024] : register(t8);
 
-ConstantBuffer<Camera> CameraBuffer : register(b0);
-
-ConstantBuffer<LightInfoData> LightInfo : register(b1);
+ConstantBuffer<Camera>        CameraBuffer : register(b0);
+ConstantBuffer<LightInfoData> LightInfo    : register(b1);
+ConstantBuffer<RandomData>    RandomBuffer : register(b2);
 
 cbuffer PointLightsBuffer : register(b3)
 {
@@ -28,15 +28,15 @@ cbuffer PointLightsPosRadBuffer : register(b4)
     PositionRadius PointLightsPosRad[MAX_LIGHTS];
 }
 
-cbuffer ShadowCastingPointLightsBuffer : register(b5)
-{
-    ShadowPointLight ShadowCastingPointLights[8];
-}
+//cbuffer ShadowCastingPointLightsBuffer : register(b5)
+//{
+//    ShadowPointLight ShadowCastingPointLights[8];
+//}
 
-cbuffer ShadowCastingPointLightsPosRadBuffer : register(b6)
-{
-    PositionRadius ShadowCastingPointLightsPosRad[8];
-}
+//cbuffer ShadowCastingPointLightsPosRadBuffer : register(b6)
+//{
+//    PositionRadius ShadowCastingPointLightsPosRad[8];
+//}
 
 ConstantBuffer<DirectionalLight> DirLightBuffer : register(b7);
 
@@ -78,21 +78,16 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     RayTracingMaterial Material = Materials[HitData.InstanceID];
     float4 AlbedoTex = MaterialTextures[Material.AlbedoTexID].SampleLevel(TextureSampler, Vertex.TexCoord, LOD);
     float3 Albedo = ApplyGamma(AlbedoTex.rgb) * Material.Albedo;
-        
+    
     float4 NormalTex    = MaterialTextures[Material.NormalTexID].SampleLevel(TextureSampler, Vertex.TexCoord, LOD);
     float3 MappedNormal = UnpackNormal(NormalTex.rgb);
-    MappedNormal.y = -MappedNormal.y;
-        
+    
     float3 N = ApplyNormalMapping(MappedNormal, Vertex.Normal, Vertex.Tangent, Vertex.Bitangent);
-        
-    float4 MetallicTex = MaterialTextures[Material.MetallicTexID].SampleLevel(TextureSampler, Vertex.TexCoord, LOD);
-    float  Metallic = MetallicTex.r * Material.Metallic;
-        
-    float4 RoughnessTex = MaterialTextures[Material.RoughnessTexID].SampleLevel(TextureSampler, Vertex.TexCoord, LOD);
-    float  Roughness = clamp(RoughnessTex.r * Material.Roughness, MIN_ROUGHNESS, MAX_ROUGHNESS);
-        
-    float4 AOTex = MaterialTextures[Material.AOTexID].SampleLevel(TextureSampler, Vertex.TexCoord, LOD);
-    float  AO = AOTex.r * Material.AO;
+    
+    const float4 SpecularTex = MaterialTextures[Material.SpecularTexID].SampleLevel(TextureSampler, Vertex.TexCoord, LOD);
+    float AO        = SpecularTex.r * Material.AO;
+    float Roughness = clamp(SpecularTex.g * Material.Roughness, MIN_ROUGHNESS, MAX_ROUGHNESS);
+    float Metallic  = SpecularTex.b * Material.Metallic;
 
     float3 L0 = Float3(0.0f);
     float3 F0 = Float3(0.04f);
@@ -115,21 +110,21 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
         L0 += IncidentRadiance;
     }
     
-    for (uint i = 0; i < LightInfo.NumShadowCastingPointLights; i++)
-    {
-        const ShadowPointLight Light       = ShadowCastingPointLights[i];
-        const PositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[i];
+    //for (uint i = 0; i < LightInfo.NumShadowCastingPointLights; i++)
+    //{
+    //    const ShadowPointLight Light       = ShadowCastingPointLights[i];
+    //    const PositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[i];
      
-        float3 L = LightPosRad.Position - HitPosition;
-        float DistanceSqrd = dot(L, L);
-        float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
-        L = normalize(L);
+    //    float3 L = LightPosRad.Position - HitPosition;
+    //    float DistanceSqrd = dot(L, L);
+    //    float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
+    //    L = normalize(L);
         
-        float3 IncidentRadiance = Light.Color * Attenuation;
-        IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, Albedo, Roughness, Metallic);
+    //    float3 IncidentRadiance = Light.Color * Attenuation;
+    //    IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, Albedo, Roughness, Metallic);
         
-        L0 += IncidentRadiance;
-    }
+    //    L0 += IncidentRadiance;
+    //}
     
     // DirectionalLights
     {
@@ -142,6 +137,18 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
         L0 += IncidentRadiance;
     }
 
+    float3 Emissive = Float3(0.0f);
+    if (Material.EmissiveTexID >= 0)
+    {
+        float3 EmissiveTex = MaterialTextures[Material.EmissiveTexID].SampleLevel(TextureSampler, Vertex.TexCoord, 0);
+        Emissive = EmissiveTex.rgb * 2.0f;
+    }
+    
+    // Emissive
+    {
+        L0 += Emissive * 2.0f;
+    }
+    
     float3 Ambient = Float3(1.0f) * Albedo * AO;
     float3 Color   = Ambient + L0;
     

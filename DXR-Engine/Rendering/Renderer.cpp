@@ -18,8 +18,6 @@
 #include <algorithm>
 #include <imgui_internal.h>
 
-static const UInt32 ShadowMapSampleCount = 2;
-
 ConsoleVariable gDrawTextureDebugger(EConsoleVariableType::Bool);
 ConsoleVariable gDrawRendererInfo(EConsoleVariableType::Bool);
 
@@ -58,7 +56,7 @@ void Renderer::PerformFrustumCulling(const Scene& Scene)
         XMStoreFloat3(&Box.Bottom, XmBottom);
         if (CameraFrustum.CheckAABB(Box))
         {
-            if (Command.Material->HasAlphaMask())
+            if (Command.Material->HasTransparency())
             {
                 Resources.ForwardVisibleCommands.EmplaceBack(Command);
             }
@@ -366,7 +364,7 @@ void Renderer::Tick(const Scene& Scene)
     {
         for (const MeshDrawCommand& Command : Scene.GetMeshDrawCommands())
         {
-            if (Command.Material->HasAlphaMask())
+            if (Command.Material->HasTransparency())
             {
                 Resources.ForwardVisibleCommands.EmplaceBack(Command);
             }
@@ -689,7 +687,7 @@ Bool Renderer::Init()
     gDrawDebugAABBs.SetBool(false);
 
     INIT_CONSOLE_VARIABLE("r.DrawDebugLights", gDrawDebugLights);
-    gDrawDebugLights.SetBool(true);
+    gDrawDebugLights.SetBool(false);
 
     INIT_CONSOLE_VARIABLE("r.EnableVerticalSync", gVSyncEnabled);
     gVSyncEnabled.SetBool(false);

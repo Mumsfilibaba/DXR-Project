@@ -14,8 +14,8 @@
 
 #define MAX_ROUGHNESS (0.25f)
 
-#ifndef TRACE_HALF_RES
-    #define TRACE_HALF_RES 0
+#ifndef ENABLE_HALF_RES
+    #define ENABLE_HALF_RES 1
 #endif
 
 ConstantBuffer<Camera> CameraBuffer : register(b0);
@@ -132,7 +132,7 @@ float4 LoadHistory(int2 TexCoords, float3 N, out float Valid)
 void Main(ComputeShaderInput Input)
 {
     uint2 TexCoords = Input.DispatchThreadID.xy;
-#if TRACE_HALF_RES
+#if ENABLE_HALF_RES
     uint2 HalfTexCoords = TexCoords / 2;
 #else
     uint2 HalfTexCoords = TexCoords;
@@ -150,7 +150,7 @@ void Main(ComputeShaderInput Input)
     uint HalfHeight;
     ColorDepthTex.GetDimensions(HalfWidth, HalfHeight);
     
-#if TRACE_HALF_RES
+#if ENABLE_HALF_RES
     uint Width  = HalfWidth * 2;
     uint Height = HalfHeight * 2;
 #else
@@ -204,8 +204,8 @@ void Main(ComputeShaderInput Input)
         float4 SampleColorDepth = ColorDepthTex[LocalTexCoord];
         float3 Li = saturate(SampleColorDepth.rgb);
             
-#if TRACE_HALF_RES
-        uint2 FullLocalTexCoord = LocalTexCoord * 2;;
+#if ENABLE_HALF_RES
+        uint2 FullLocalTexCoord = LocalTexCoord * 2;
 #else
         uint2 FullLocalTexCoord = LocalTexCoord;
 #endif
@@ -262,7 +262,8 @@ void Main(ComputeShaderInput Input)
     
     float Valid = 0.0f;
     float4 HistorySample = LoadHistory(TexCoords, N, Valid);
-    float3 Clipped       = ClipAABB(BoxMin, BoxMax, HistorySample.rgb);
+    
+    float3 Clipped = ClipAABB(BoxMin, BoxMax, HistorySample.rgb);
     
     float NumTemporalFrames = floor(lerp((float)MIN_TEMPORAL_FRAMES,(float) MAX_TEMPORAL_FRAMES, clamp(Roughness, 0.0f, 0.45f) / 0.45f));
     float HistoryLength     = HistorySample.a;

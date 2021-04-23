@@ -18,7 +18,10 @@
 // Scene 0 - Sponza
 // Scene 1 - SunTemple
 // Scene 2 - Bistro
-#define SCENE 0
+#define SCENE 1
+
+#define ENABLE_TRACK        0
+#define ENABLE_POINT_LIGHTS 1
 
 Sandbox* gSandBox = nullptr;
 
@@ -98,19 +101,16 @@ Bool Sandbox::Init()
     }
 
     MaterialProperties MatProperties;
-    MatProperties.Albedo = XMFLOAT3(1.0f, 1.0f, 1.0f);
+    MatProperties.Diffuse = XMFLOAT3(1.0f, 1.0f, 1.0f);
     MatProperties.AO           = 1.0f;
     MatProperties.Metallic     = 1.0f;
     MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 0;
 
     TSharedPtr<class Material> BaseMaterial = MakeShared<Material>(MatProperties);
-    BaseMaterial->AlbedoMap    = BaseTexture;
-    BaseMaterial->NormalMap    = BaseNormal;
-    BaseMaterial->RoughnessMap = BaseTexture;
-    BaseMaterial->HeightMap    = BaseTexture;
-    BaseMaterial->AOMap        = BaseTexture;
-    BaseMaterial->MetallicMap  = BaseTexture;
+    BaseMaterial->DiffuseMap  = BaseTexture;
+    BaseMaterial->NormalMap   = BaseNormal;
+    BaseMaterial->SpecularMap = BaseTexture;
     BaseMaterial->Init();
 
     TArray<TSharedPtr<Material>> LoadedMaterials;
@@ -126,9 +126,6 @@ Bool Sandbox::Init()
         TSharedPtr<Material>& NewMaterial = LoadedMaterials.EmplaceBack(MakeShared<Material>(MaterialProperties));
         LOG_INFO("Loaded materialID=" + std::to_string(LoadedMaterials.Size() - 1));
 
-        NewMaterial->AOMap     = BaseTexture;
-        NewMaterial->HeightMap = BaseTexture;
-
         // Diffuse
         TRef<Texture2D> Diffuse;
         if (!MaterialData.DiffTexName.empty())
@@ -142,6 +139,10 @@ Bool Sandbox::Init()
                     Diffuse->SetName(MaterialData.DiffTexName);
                     MaterialTextures[MaterialData.DiffTexName] = Diffuse;
                 }
+            }
+            else
+            {
+                Diffuse = MaterialTextures[MaterialData.DiffTexName];
             }
         }
 
@@ -159,6 +160,10 @@ Bool Sandbox::Init()
                     MaterialTextures[MaterialData.MetallicTexname] = Metallic;
                 }
             }
+            else
+            {
+                Metallic = MaterialTextures[MaterialData.MetallicTexname];
+            }
         }
 
         // Roughness
@@ -174,6 +179,10 @@ Bool Sandbox::Init()
                     Roughness->SetName(MaterialData.RoughnessTexname);
                     MaterialTextures[MaterialData.RoughnessTexname] = Roughness;
                 }
+            }
+            else
+            {
+                Roughness = MaterialTextures[MaterialData.RoughnessTexname];
             }
         }
 
@@ -191,6 +200,10 @@ Bool Sandbox::Init()
                     MaterialTextures[MaterialData.AlphaTexname] = Alpha;
                 }
             }
+            else
+            {
+                Alpha = MaterialTextures[MaterialData.AlphaTexname];
+            }
         }
 
         // Specular
@@ -206,6 +219,10 @@ Bool Sandbox::Init()
                     Specular->SetName(MaterialData.SpecTexName);
                     MaterialTextures[MaterialData.SpecTexName] = Specular;
                 }
+            }
+            else
+            {
+                Specular = MaterialTextures[MaterialData.SpecTexName];
             }
         }
 
@@ -226,14 +243,13 @@ Bool Sandbox::Init()
                     MaterialTextures[MaterialData.NormalTexname] = BaseNormal;
                 }
             }
-
+            
             NewMaterial->NormalMap = MaterialTextures[MaterialData.NormalTexname];
         }
         else
         {
             NewMaterial->NormalMap = BaseNormal;
         }
-
 
         // Emissive
         if (!MaterialData.EmissiveTexName.empty())
@@ -273,7 +289,7 @@ Bool Sandbox::Init()
             Diffuse = BaseTexture;
         }
 
-        NewMaterial->AlbedoMap = Diffuse;
+        NewMaterial->DiffuseMap = Diffuse;
 
         // Generate Specular
         if (!Specular)
@@ -291,12 +307,11 @@ Bool Sandbox::Init()
             Specular = TextureFactory::CombineTextureChannels(BaseTexture.Get(), Roughness.Get(), Metallic.Get(), nullptr);
             if (Specular)
             {
-                Specular->SetName(Roughness->GetName() + "Combined");
+                Specular->SetName(Roughness->GetName() + "_Combined");
             }
         }
 
-        NewMaterial->MetallicMap = Specular;
-        NewMaterial->RoughnessMap = BaseTexture;
+        NewMaterial->SpecularMap = Specular;
 
         NewMaterial->Init();
     }
@@ -393,6 +408,7 @@ Bool Sandbox::Init()
     DirLight->SetIntensity(10.0f);
     CurrentScene->AddLight(DirLight);
 
+#if ENABLE_POINT_LIGHTS
     PointLight* Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(0));
     Light->SetPosition(-2.0f, 4.5f, 7.9f);
@@ -520,7 +536,7 @@ Bool Sandbox::Init()
     Light->SetIntensity(Intensity);
     Light->SetShadowCaster(false);
     CurrentScene->AddLight(Light);
-
+#endif
 #elif SCENE == 2
     Camera* Camera = CurrentScene->GetCamera();
     if (TryLoadTrackFile("BistroTrack.pdata"))
@@ -556,6 +572,7 @@ Bool Sandbox::Init()
     DirLight->SetIntensity(2.0f);
     CurrentScene->AddLight(DirLight);
 
+#if ENABLE_POINT_LIGHTS
     // PointLights
     PointLight* Light = DBG_NEW PointLight();
     Light->SetName("PointLight " + std::to_string(0));
@@ -919,6 +936,7 @@ Bool Sandbox::Init()
     Light->SetShadowCaster(false);
     CurrentScene->AddLight(Light);
 #endif
+#endif
 
     // Calculate total length of path
     UInt32 NumPoints = Math::Max(ControlPoints.Size(), 1u) - 1;
@@ -955,6 +973,7 @@ void Sandbox::Tick(Timestamp DeltaTime)
     }
     else
     {
+#if ENABLE_TRACK
         bool HasReachedGoal = !(CurrentPoint < (Math::Max(ControlPoints.Size(), 1u) - 1));
         if (!HasReachedGoal)
         {
@@ -964,6 +983,9 @@ void Sandbox::Tick(Timestamp DeltaTime)
         {
             FreeCamMode(DeltaTime);
         }
+#else
+        FreeCamMode(DeltaTime);
+#endif
     }
 }
 
@@ -1136,7 +1158,12 @@ void Sandbox::TrackMode()
 
     const UInt32 NumPaths = ControlPoints.Size() - 1;
 
-    const Float NumFrames    = 10000.0f;
+#if SCENE == 1
+    const Float NumFrames = 5000.0f;
+#else
+    const Float NumFrames = 10000.0f;
+#endif
+
     const Float FramePerPath = NumFrames / Float(NumPaths);
     const Float Delta        = 1.0f / FramePerPath;
 

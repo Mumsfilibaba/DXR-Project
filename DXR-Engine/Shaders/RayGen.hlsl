@@ -3,35 +3,34 @@
 #include "RayTracingHelpers.hlsli"
 #include "Random.hlsli"
 
+#ifndef ENABLE_HALF_RES
+    #define ENABLE_HALF_RES 0
+#endif
+
 // Global RootSignature
-RaytracingAccelerationStructure Scene : register(t0, space0);
+RaytracingAccelerationStructure Scene : register(t0);
 
-TextureCube<float4> Skybox : register(t1, space0);
+TextureCube<float4> Skybox : register(t1);
 
-Texture2D<float4> GBufferAlbedoTex   : register(t2, space0);
-Texture2D<float4> GBufferNormalTex   : register(t3, space0);
-Texture2D<float4> GBufferDepthTex    : register(t4, space0);
-Texture2D<float4> GBufferMaterialTex : register(t5, space0);
+Texture2D<float4> GBufferAlbedoTex   : register(t2);
+Texture2D<float4> GBufferNormalTex   : register(t3);
+Texture2D<float4> GBufferDepthTex    : register(t4);
+Texture2D<float4> GBufferMaterialTex : register(t5);
 
-Texture2DArray<float4> BlueNoiseTex : register(t6, space0);
+Texture2DArray<float4> BlueNoiseTex : register(t6);
 
 StructuredBuffer<RayTracingMaterial> Materials : register(t7);
 
-StructuredBuffer<Vertex> Vertices[400] : register(t8);
-ByteAddressBuffer Indices[400] : register(t408);
+Texture2D<float4> MaterialTextures[1024] : register(t8);
 
-Texture2D<float4> MaterialTextures[128] : register(t808);
+ConstantBuffer<Camera>        CameraBuffer : register(b0);
+ConstantBuffer<LightInfoData> LightInfo    : register(b1);
+ConstantBuffer<RandomData>    RandomBuffer : register(b2);
 
-ConstantBuffer<Camera>        CameraBuffer : register(b0, space0);
-ConstantBuffer<LightInfoData> LightInfo    : register(b1, space0);
-ConstantBuffer<RandomData>    RandomBuffer : register(b2, space0);
+RWTexture2D<float4> ColorDepth : register(u0);
+RWTexture2D<float4> RayPDF     : register(u1);
 
-RWTexture2D<float4> ColorDepth : register(u0, space0);
-RWTexture2D<float4> RayPDF     : register(u1, space0);
-
-SamplerState SkyboxSampler : register(s0, space0);
-
-#define NUM_SAMPLES 1
+SamplerState SkyboxSampler : register(s0);
 
 [shader("raygeneration")]
 void RayGen()
@@ -39,13 +38,25 @@ void RayGen()
     uint3 DispatchIndex      = DispatchRaysIndex();
     uint3 DispatchDimensions = DispatchRaysDimensions();
     uint2 TexCoord           = DispatchIndex.xy;
-    uint2 FullResolution     = DispatchDimensions.xy * 2;
     
-    uint2 NoiseCoord = ((TexCoord / 2) + (RandomBuffer.FrameIndex / 2) * uint2(3, 7)) & 63;
-    uint  PixelIndex = (uint)(BlueNoiseTex.Load(int4(NoiseCoord, 0, 0)).r * 255.0f);
-    PixelIndex = PixelIndex + RandomBuffer.FrameIndex;
+#if ENABLE_HALF_RES
+    uint2 FullResolution = DispatchDimensions.xy * 2;
+#else
+    uint2 FullResolution = DispatchDimensions.xy;
+#endif
     
-    uint2 GBufferCoord = TexCoord * 2 + uint2(PixelIndex & 1, (PixelIndex >> 1) & 1);
+    uint  FrameIndex = RandomBuffer.FrameIndex;
+    uint2 NoiseCoord = TexCoord & 63;
+    float BlueNoise  = BlueNoiseTex.Load(int4(NoiseCoord, FrameIndex, 0)).r;
+    uint  PixelIndex = (uint) (BlueNoise * 255.0f) % 4;
+    
+#if ENABLE_HALF_RES
+    uint2 BaseTexCoord = TexCoord * 2;
+#else
+    uint2 BaseTexCoord = TexCoord;
+#endif
+    
+    uint2 GBufferCoord = BaseTexCoord + uint2(PixelIndex & 1, (PixelIndex >> 1) & 1);
     
     float  GBufferDepth    = GBufferDepthTex.Load(int3(GBufferCoord, 0)).r;
     float3 GBufferNormal   = GBufferNormalTex.Load(int3(GBufferCoord, 0)).rgb;

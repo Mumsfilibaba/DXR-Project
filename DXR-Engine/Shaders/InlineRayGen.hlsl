@@ -4,10 +4,10 @@
 #include "Random.hlsli"
 #include "ShadowHelpers.hlsli"
 
-#define MAX_LIGHTS 8
+#define MAX_LIGHTS 64
 
-#ifndef TRACE_HALF_RES
-    #define TRACE_HALF_RES 0
+#ifndef ENABLE_HALF_RES
+    #define ENABLE_HALF_RES 1
 #endif
 
 struct VSOutput
@@ -49,15 +49,15 @@ cbuffer PointLightsPosRadBuffer : register(b4, space0)
     PositionRadius PointLightsPosRad[MAX_LIGHTS];
 }
 
-cbuffer ShadowCastingPointLightsBuffer : register(b5, space0)
-{
-    ShadowPointLight ShadowCastingPointLights[8];
-}
+//cbuffer ShadowCastingPointLightsBuffer : register(b5, space0)
+//{
+//    ShadowPointLight ShadowCastingPointLights[8];
+//}
 
-cbuffer ShadowCastingPointLightsPosRadBuffer : register(b6, space0)
-{
-    PositionRadius ShadowCastingPointLightsPosRad[8];
-}
+//cbuffer ShadowCastingPointLightsPosRadBuffer : register(b6, space0)
+//{
+//    PositionRadius ShadowCastingPointLightsPosRad[8];
+//}
 
 ConstantBuffer<DirectionalLight> DirLightBuffer : register(b7, space0);
 
@@ -93,23 +93,23 @@ float3 ShadePoint(float3 WorldPosition, float3 N, float3 V, float3 Albedo, float
         }
     }
     
-    {
-        for (uint i = 0; i < LightInfo.NumShadowCastingPointLights; i++)
-        {
-            const ShadowPointLight Light     = ShadowCastingPointLights[i];
-            const PositionRadius LightPosRad = ShadowCastingPointLightsPosRad[i];
+    //{
+    //    for (uint i = 0; i < LightInfo.NumShadowCastingPointLights; i++)
+    //    {
+    //        const ShadowPointLight Light     = ShadowCastingPointLights[i];
+    //        const PositionRadius LightPosRad = ShadowCastingPointLightsPosRad[i];
      
-            float3 L = LightPosRad.Position - WorldPosition;
-            float DistanceSqrd = dot(L, L);
-            float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
-            L = normalize(L);
+    //        float3 L = LightPosRad.Position - WorldPosition;
+    //        float DistanceSqrd = dot(L, L);
+    //        float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
+    //        L = normalize(L);
         
-            float3 IncidentRadiance = Light.Color * Attenuation;
-            IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, Albedo, FinalRoughness, Metallic);
+    //        float3 IncidentRadiance = Light.Color * Attenuation;
+    //        IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, Albedo, FinalRoughness, Metallic);
         
-            L0 += IncidentRadiance;
-        }
-    }
+    //        L0 += IncidentRadiance;
+    //    }
+    //}
     
     // DirectionalLights
     {
@@ -144,7 +144,7 @@ PSOutput PSMain(VSOutput Input)
     
     // Half Resolution
     uint2 TexCoord = (uint2)floor(Input.Position.xy);
-#if TRACE_HALF_RES
+#if ENABLE_HALF_RES
     uint2 FullTexCoord = TexCoord * 2;
     uint  HalfWidth  = Width / 2;
     uint  HalfHeight = Height / 2;
@@ -154,11 +154,10 @@ PSOutput PSMain(VSOutput Input)
     uint  HalfHeight = Height;
 #endif
     
-    uint FrameIndex = RandomBuffer.FrameIndex;
-    
+    uint  FrameIndex = RandomBuffer.FrameIndex;
     uint2 NoiseCoord = TexCoord & 63;
-    float BlueNoise = BlueNoiseTex.Load(int4(NoiseCoord, FrameIndex, 0)).r;
-    uint PixelIndex = (uint)(BlueNoise * 255.0f) % 4;
+    float BlueNoise  = BlueNoiseTex.Load(int4(NoiseCoord, FrameIndex, 0)).r;
+    uint  PixelIndex = (uint)(BlueNoise * 255.0f) % 4;
     
     uint2 GBufferCoord = FullTexCoord + uint2(PixelIndex & 1, (PixelIndex >> 1) & 1);
     
@@ -256,6 +255,7 @@ PSOutput PSMain(VSOutput Input)
             LoadVertexData(HitData, Vertices, Vertex);
         
             RayTracingMaterial Material = Materials[HitData.InstanceID];
+            
             float4 AlbedoTex = MaterialTextures[Material.AlbedoTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
             float3 HitAlbedo = ApplyGamma(AlbedoTex.rgb) * Material.Albedo;
         
@@ -264,13 +264,20 @@ PSOutput PSMain(VSOutput Input)
         
             float3 HitN = ApplyNormalMapping(MappedNormal, Vertex.Normal, Vertex.Tangent, Vertex.Bitangent);
         
-            float4 SpecularTex = MaterialTextures[Material.MetallicTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
+            float4 SpecularTex = MaterialTextures[Material.SpecularTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
             float HitAO        = SpecularTex.r * Material.AO;
             float HitRoughness = clamp(SpecularTex.g * Material.Roughness, MIN_ROUGHNESS, MAX_ROUGHNESS);
             float HitMetallic  = SpecularTex.b * Material.Metallic;
         
+            float3 Emissive = Float3(0.0f);
+            if (Material.EmissiveTexID >= 0)
+            {
+                float3 EmissiveTex = MaterialTextures[Material.EmissiveTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
+                Emissive = EmissiveTex.rgb * 2.0f;
+            }
+            
             float3 WorldHitPosition = Query.WorldRayOrigin() + Query.WorldRayDirection() * Query.CommittedRayT();
-            FinalColor = ShadePoint(WorldHitPosition, HitN, HitV, HitAlbedo, HitAO, HitMetallic, HitRoughness);
+            FinalColor = Emissive + ShadePoint(WorldHitPosition, HitN, HitV, HitAlbedo, HitAO, HitMetallic, HitRoughness);
         }
         else
         {

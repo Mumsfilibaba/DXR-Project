@@ -5,7 +5,7 @@
 
 struct MaterialProperties
 {
-    XMFLOAT3 Albedo = XMFLOAT3(1.0f, 1.0f, 1.0f);
+    XMFLOAT3 Diffuse = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
     Float Roughness = 0.0f;
     Float Metallic  = 0.0f;
@@ -30,8 +30,8 @@ public:
         return MaterialBufferIsDirty;
     }
 
-    void SetAlbedo(const XMFLOAT3& Albedo);
-    void SetAlbedo(Float R, Float G, Float B);
+    void SetDiffuse(const XMFLOAT3& Albedo);
+    void SetDiffuse(Float r, Float g, Float b);
 
     void SetMetallic(Float Metallic);
     void SetRoughness(Float Roughness);
@@ -39,6 +39,8 @@ public:
 
     void EnableHeightMap(Bool EnableHeightMap);
     void EnableEmissiveMap(Bool EnableEmissiveMap);
+
+    void EnableTransparency(Bool EnableTransparency);
 
     void SetDebugName(const std::string& InDebugName);
 
@@ -49,29 +51,30 @@ public:
     SamplerState* GetMaterialSampler() const { return Sampler.Get(); }
     ConstantBuffer* GetMaterialBuffer() const { return MaterialBuffer.Get(); }
 
-    Bool HasAlphaMask() const { return AlphaMask; }
-
-    Bool HasHeightMap() const { return HeightMap; }
+    Bool HasHeightMap() const { return Properties.EnableHeight == 1; }
+    Bool HasEmissiveMap() const { return Properties.EnableEmissive == 1; }
+    Bool HasTransparency() const { return TransparencyEnabled; }
 
     const MaterialProperties& GetMaterialProperties() const { return Properties; }
 
 public:
-    TRef<Texture2D> AlbedoMap;
-    TRef<Texture2D> NormalMap;
-    TRef<Texture2D> EmissiveMap;
-    TRef<Texture2D> RoughnessMap;
-    TRef<Texture2D> HeightMap;
-    TRef<Texture2D> AOMap;
-    TRef<Texture2D> MetallicMap;
-    TRef<Texture2D> AlphaMask;
+    TRef<Texture2D> DiffuseMap;  // Diffuse, Alpha
+    TRef<Texture2D> NormalMap;   // Normal map
+    TRef<Texture2D> EmissiveMap; // Emissive
+    TRef<Texture2D> SpecularMap; // AO, Roughness, Metallic
+    TRef<Texture2D> HeightMap;   // Height
 
 private:
     std::string	DebugName;
+    
     Bool MaterialBufferIsDirty = true;
     
-    MaterialProperties   Properties;
+    Bool TransparencyEnabled = false;
+
+    MaterialProperties Properties;
+
     TRef<ConstantBuffer> MaterialBuffer;
     TRef<SamplerState>   Sampler;
 
-    mutable TStaticArray<ShaderResourceView*, 8> ShaderResourceViews;
+    mutable TStaticArray<ShaderResourceView*, 5> ShaderResourceViews;
 };

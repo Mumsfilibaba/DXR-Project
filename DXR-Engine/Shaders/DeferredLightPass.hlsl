@@ -280,7 +280,7 @@ void Main(ComputeShaderInput Input)
     
     // Emissive surfaces
     {
-        L0 += GBufferEmissive;
+        L0 += GBufferEmissive * 2.0f;
     }
     
     // Image Based Lightning

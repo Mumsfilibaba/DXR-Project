@@ -6,8 +6,34 @@
 
 #include "Scene/Scene.h"
 
-#define ENABLE_INLINE_RAY_GEN 1
-#define MAX_RT_MATERIALS      320
+// Tests
+// 0 - Reference
+// 1 - RayGen HalfRes
+// 2 - Inline FullRes
+// 3 - Inline HalfRes
+// 4 - Inline VRS Roughness
+// 5 - Inline VRS Grazing Angles
+#define TEST 0
+
+#if TEST == 2 || TEST == 3 || TEST == 4 || TEST == 5
+    #define ENABLE_INLINE_RAY_GEN 1
+#else
+    #define ENABLE_INLINE_RAY_GEN 0
+#endif
+
+#if TEST == 1 || TEST == 3
+    #define ENABLE_HALF_RES 1
+#else
+    #define ENABLE_HALF_RES 0
+#endif
+
+#if TEST == 4 || TEST == 5
+    #define ENABLE_VRS 1
+#else
+    #define ENABLE_VRS 0
+#endif
+
+#define MAX_RT_MATERIALS 320
 
 struct RandomData
 {

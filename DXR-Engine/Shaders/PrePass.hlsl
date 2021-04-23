@@ -8,7 +8,11 @@ cbuffer TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTAN
 };
 
 // PerFrame
-ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
+ConstantBuffer<Camera> CameraBuffer : register(b0);
+
+Texture2D<float4> DiffuseAlphaTex : register(t0);
+
+SamplerState Sampler : register(s0);
 
 // VertexShader
 struct VSInput
@@ -19,8 +23,31 @@ struct VSInput
     float2 TexCoord : TEXCOORD0;
 };
 
-float4 Main(VSInput Input) : SV_POSITION
+struct PSInput
+{
+    float2 TexCoord : TEXCOORD0;
+    float4 Position : SV_POSITION;
+};
+
+PSInput VSMain(VSInput Input)
 {
     float4 WorldPosition = mul(float4(Input.Position, 1.0f), TransformMat);
-    return mul(WorldPosition, CameraBuffer.ViewProjection);
+
+    PSInput Output;
+    Output.Position = mul(WorldPosition, CameraBuffer.ViewProjection);
+    Output.TexCoord = Input.TexCoord;
+
+    return Output;
+}
+
+void PSMain(PSInput Input)
+{
+    float2 TexCoord = Input.TexCoord;
+    TexCoord.y = 1.0f - TexCoord.y;
+    
+    float4 DiffuseAlpha = DiffuseAlphaTex.Sample(Sampler, TexCoord);
+    if (DiffuseAlpha.a < 0.5f)
+    {
+        discard;
+    }
 }

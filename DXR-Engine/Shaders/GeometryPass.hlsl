@@ -3,19 +3,19 @@
 #include "Constants.hlsli"
 
 // PerFrame
-ConstantBuffer<Camera> CameraBuffer : register(b0, space0);
+ConstantBuffer<Camera> CameraBuffer : register(b0);
 
 // PerObject Samplers
-SamplerState MaterialSampler : register(s0, space0);
+SamplerState MaterialSampler : register(s0);
 
 ConstantBuffer<Transform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
-ConstantBuffer<Material>  MaterialBuffer  : register(b1, space0);
+ConstantBuffer<Material>  MaterialBuffer  : register(b1);
 
-Texture2D<float4> AlbedoMap   : register(t0, space0);
-Texture2D<float4> NormalMap   : register(t1, space0);
-Texture2D<float4> SpecularMap : register(t2, space0);
-Texture2D<float4> HeightMap   : register(t3, space0);
-Texture2D<float4> EmissiveMap : register(t4, space0);
+Texture2D<float4> DiffuseMap  : register(t0);
+Texture2D<float4> NormalMap   : register(t1);
+Texture2D<float4> SpecularMap : register(t2);
+Texture2D<float4> EmissiveMap : register(t3);
+Texture2D<float4> HeightMap   : register(t4);
 
 // VertexShader
 struct VSInput
@@ -104,7 +104,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float NumLayers  = lerp(MaxLayers, MinLayers, abs(dot(float3(0.0f, 0.0f, 1.0f), ViewDir)));
     float LayerDepth = 1.0f / NumLayers;
     
-    float2 P              = ViewDir.xy / ViewDir.z * HEIGHT_SCALE;
+    float2 P = ViewDir.xy / ViewDir.z * HEIGHT_SCALE;
     float2 DeltaTexCoords = P / NumLayers;
 
     float2 CurrentTexCoords     = TexCoords;
@@ -113,9 +113,11 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float CurrentLayerDepth = 0.0f;
     while (CurrentLayerDepth < CurrentDepthMapValue)
     {
-        CurrentTexCoords     -= DeltaTexCoords;
+        CurrentTexCoords  -= DeltaTexCoords;
+        
         CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
-        CurrentLayerDepth    += LayerDepth;
+        
+        CurrentLayerDepth += LayerDepth;
     }
 
     float2 PrevTexCoords = CurrentTexCoords + DeltaTexCoords;
@@ -123,7 +125,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float AfterDepth  = CurrentDepthMapValue - CurrentLayerDepth;
     float BeforeDepth = SampleHeightMap(PrevTexCoords) - CurrentLayerDepth + LayerDepth;
 
-    float  Weight         = AfterDepth / (AfterDepth - BeforeDepth);
+    float  Weight = AfterDepth / (AfterDepth - BeforeDepth);
     float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0f - Weight);
 
     return FinalTexCoords;
@@ -144,7 +146,7 @@ PSOutput PSMain(PSInput Input)
         }
     }
 
-    float4 AlbedoAlpha = AlbedoMap.Sample(MaterialSampler, TexCoords);
+    float4 AlbedoAlpha = DiffuseMap.Sample(MaterialSampler, TexCoords);
     if (AlbedoAlpha.a < 0.5f)
     {
         discard;
