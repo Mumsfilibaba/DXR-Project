@@ -20,13 +20,25 @@
 // Scene 2 - Bistro
 #define SCENE 0
 
+Sandbox* gSandBox = nullptr;
+
+struct TrackHeader
+{
+    UInt32 NumPoints;
+    UInt32 NumRotations;
+};
+
 Game* MakeGameInstance()
 {
-    return DBG_NEW Sandbox();
+    gSandBox = DBG_NEW Sandbox();
+    return gSandBox;
 }
 
 Bool Sandbox::Init()
 {
+    Memory::Memzero(Filename, sizeof(Filename));
+    strcpy(Filename, "TrackPoints.pdata");
+
     SceneData SceneBuildData;
 #if SCENE == 0
     MeshFactory::LoadSceneFromFile(SceneBuildData, "../Assets/Scenes/Sponza/Sponza.obj");
@@ -317,8 +329,25 @@ Bool Sandbox::Init()
 
 #if SCENE == 0
     Camera* Camera = CurrentScene->GetCamera();
-    Camera->SetPosition(11.5f, 6.6f, 0.6f);
-    Camera->Rotate(0.0f, XMConvertToRadians(270.0f), 0.0f);
+    if (TryLoadTrackFile("SponzaTrack.pdata"))
+    {
+        ControlPoints.Resize(SavedPoints.Size());
+        ControlRotations.Resize(SavedRotations.Size());
+
+        Assert(ControlPoints.SizeInBytes() == SavedPoints.SizeInBytes());
+        Assert(ControlRotations.SizeInBytes() == SavedRotations.SizeInBytes());
+
+        Memory::Memcpy(ControlPoints.Data(), SavedPoints.Data(), SavedPoints.SizeInBytes());
+        Memory::Memcpy(ControlRotations.Data(), SavedRotations.Data(), SavedRotations.SizeInBytes());
+
+        Camera->SetPosition(ControlPoints[0]);
+        Camera->SetRotation(ControlRotations[0]);
+    }
+    else
+    {
+        Camera->SetPosition(11.5f, 6.6f, 0.6f);
+        Camera->Rotate(0.0f, XMConvertToRadians(270.0f), 0.0f);
+    }
 
     // Add DirectionalLight- Source
     DirectionalLight* Light4 = DBG_NEW DirectionalLight();
@@ -332,8 +361,25 @@ Bool Sandbox::Init()
 
 #elif SCENE == 1
     Camera* Camera = CurrentScene->GetCamera();
-    Camera->SetPosition(-4.5f, 9.3f, 5.8f);
-    Camera->Rotate(0.0f, XMConvertToRadians(180.0f), 0.0f);
+    if (TryLoadTrackFile("SunTempleTrack.pdata"))
+    {
+        ControlPoints.Resize(SavedPoints.Size());
+        ControlRotations.Resize(SavedRotations.Size());
+
+        Assert(ControlPoints.SizeInBytes() == SavedPoints.SizeInBytes());
+        Assert(ControlRotations.SizeInBytes() == SavedRotations.SizeInBytes());
+
+        Memory::Memcpy(ControlPoints.Data(), SavedPoints.Data(), SavedPoints.SizeInBytes());
+        Memory::Memcpy(ControlRotations.Data(), SavedRotations.Data(), SavedRotations.SizeInBytes());
+
+        Camera->SetPosition(ControlPoints[0]);
+        Camera->SetRotation(ControlRotations[0]);
+    }
+    else
+    {
+        Camera->SetPosition(-4.5f, 9.3f, 5.8f);
+        Camera->Rotate(0.0f, XMConvertToRadians(180.0f), 0.0f);
+    }
 
     const Float Intensity = 7.5f;
 
@@ -477,8 +523,25 @@ Bool Sandbox::Init()
 
 #elif SCENE == 2
     Camera* Camera = CurrentScene->GetCamera();
-    Camera->SetPosition(15.5f, 7.0f, 68.0f);
-    Camera->Rotate(0.0f, XMConvertToRadians(140.0f), 0.0f);
+    if (TryLoadTrackFile("BistroTrack.pdata"))
+    {
+        ControlPoints.Resize(SavedPoints.Size());
+        ControlRotations.Resize(SavedRotations.Size());
+
+        Assert(ControlPoints.SizeInBytes() == SavedPoints.SizeInBytes());
+        Assert(ControlRotations.SizeInBytes() == SavedRotations.SizeInBytes());
+
+        Memory::Memcpy(ControlPoints.Data(), SavedPoints.Data(), SavedPoints.SizeInBytes());
+        Memory::Memcpy(ControlRotations.Data(), SavedRotations.Data(), SavedRotations.SizeInBytes());
+
+        Camera->SetPosition(ControlPoints[0]);
+        Camera->SetRotation(ControlRotations[0]);
+    }
+    else
+    {
+        Camera->SetPosition(15.5f, 7.0f, 68.0f);
+        Camera->Rotate(0.0f, XMConvertToRadians(140.0f), 0.0f);
+    }
 
     const Float Intensity  = 20.0f;
     const Float Intensity2 = 10.0f;
@@ -857,10 +920,54 @@ Bool Sandbox::Init()
     CurrentScene->AddLight(Light);
 #endif
 
+    // Calculate total length of path
+    UInt32 NumPoints = Math::Max(ControlPoints.Size(), 1u) - 1;
+    for (UInt32 i = 0; i < NumPoints; i++)
+    {
+        XMVECTOR Point0 = XMLoadFloat3(&ControlPoints[i]);
+        XMVECTOR Point1 = XMLoadFloat3(&ControlPoints[i + 1]);
+        XMVECTOR Distance = XMVectorSubtract(Point1, Point0);
+        TotalLength += XMVectorGetX(XMVector3Length(Distance));
+    }
+
     return true;
 }
 
 void Sandbox::Tick(Timestamp DeltaTime)
+{
+    if (Input::IsKeyDown(EKey::Key_1))
+    {
+        if (!EnablePressed)
+        {
+            CaptureModeEnabled = !CaptureModeEnabled;
+            EnablePressed = true;
+        }
+    }
+    else
+    {
+        EnablePressed = false;
+    }
+
+    if (CaptureModeEnabled)
+    {
+        FreeCamMode(DeltaTime);
+        CurrentPoint = 0;
+    }
+    else
+    {
+        bool HasReachedGoal = !(CurrentPoint < (Math::Max(ControlPoints.Size(), 1u) - 1));
+        if (!HasReachedGoal)
+        {
+            TrackMode();
+        }
+        else
+        {
+            FreeCamMode(DeltaTime);
+        }
+    }
+}
+
+void Sandbox::FreeCamMode(Timestamp DeltaTime)
 {
     const Float Delta = static_cast<Float>(DeltaTime.AsSeconds());
     const Float RotationSpeed = 45.0f;
@@ -923,4 +1030,173 @@ void Sandbox::Tick(Timestamp DeltaTime)
 
     XMFLOAT3 Speed = CameraSpeed * Delta;
     CurrentCamera->Move(Speed.x, Speed.y, Speed.z);
+
+    // Capture camera position
+    if (CaptureModeEnabled)
+    {
+        if (Input::IsKeyDown(EKey::Key_2))
+        {
+            SavedPoints.Clear();
+            SavedRotations.Clear();
+        }
+
+        if (Input::IsKeyDown(EKey::Key_3))
+        {
+            if (!Saved)
+            {
+                FILE* File = fopen(Filename, "wb");
+                if (File)
+                {
+                    TrackHeader Header;
+                    Header.NumPoints    = SavedPoints.Size();
+                    Header.NumRotations = SavedRotations.Size();
+
+                    fwrite(&Header, sizeof(TrackHeader), 1, File);
+                    fwrite(SavedPoints.Data(), sizeof(XMFLOAT3), Header.NumPoints, File);
+                    fwrite(SavedRotations.Data(), sizeof(XMFLOAT4), Header.NumRotations, File);
+
+                    fclose(File);
+
+                    LOG_INFO("Saved trackfile '" + std::string(Filename) + "' NumPoins=" + std::to_string(Header.NumPoints) + "' NumRotations=" + std::to_string(Header.NumRotations));
+                }
+                else
+                {
+                    LOG_ERROR("Failed to open file '" + std::string(Filename) + "'");
+                }
+
+                Saved = true;
+            }
+        }
+        else
+        {
+            Saved = false;
+        }
+
+        if (Input::IsKeyDown(EKey::Key_4))
+        {
+            if (!Loaded)
+            {
+                TryLoadTrackFile(Filename);
+            }
+        }
+        else
+        {
+            Loaded = false;
+        }
+
+        if (Input::IsKeyDown(EKey::Key_Space))
+        {
+            if (!Captured)
+            {
+                // Position
+                SavedPoints.EmplaceBack(CurrentCamera->GetPosition());
+                
+                // Rotation
+                XMFLOAT4 Rotation = CurrentCamera->GetRotation();
+                XMFLOAT4 Quaternion;
+                XMStoreFloat4(&Quaternion, XMQuaternionNormalize(XMLoadFloat4(&Rotation)));
+                SavedRotations.EmplaceBack(Quaternion);
+
+                Captured = true;
+            }
+        }
+        else
+        {
+            Captured = false;
+        }
+
+        DebugUI::DrawUI([]() 
+            {
+                if (ImGui::Begin("Captured Points"))
+                {
+                    ImGui::Text("Output Filename");
+                    
+                    ImGui::SameLine();
+
+                    ImGui::InputText("###Input", gSandBox->Filename, sizeof(gSandBox->Filename));
+
+                    UInt32 NumCaptures = gSandBox->SavedPoints.Size();
+                    for (UInt32 i = 0; i < NumCaptures; i++)
+                    {
+                        const XMFLOAT3& Point = gSandBox->SavedPoints[i];
+                        const XMFLOAT4& Quaternion = gSandBox->SavedRotations[i];
+                        ImGui::Text("%d Position: %.2f, %.2f, %.2f Rotation: %.2f, %.2f, %.2f , %.2f", 
+                            i+1, Point.x, Point.y, Point.z, Quaternion.x, Quaternion.y, Quaternion.z, Quaternion.w);
+                    }
+
+                    ImGui::End();
+                }
+            });
+    }
+}
+
+void Sandbox::TrackMode()
+{
+    constexpr Float Radius = 0.25f;
+
+    const UInt32 NumPaths = ControlPoints.Size() - 1;
+
+    const Float NumFrames    = 10000.0f;
+    const Float FramePerPath = NumFrames / Float(NumPaths);
+    const Float Delta        = 1.0f / FramePerPath;
+
+    XMVECTOR Point0 = XMLoadFloat3(&ControlPoints[CurrentPoint + 0]);
+    XMVECTOR Point1 = XMLoadFloat3(&ControlPoints[CurrentPoint + 1]);
+    XMVECTOR CurrentPosition = XMVectorLerp(Point0, Point1, SlerpT);
+
+    XMFLOAT3 Position;
+    XMStoreFloat3(&Position, CurrentPosition);
+
+    CurrentCamera->SetPosition(Position);
+
+    XMVECTOR Rotation0 = XMQuaternionNormalize(XMLoadFloat4(&ControlRotations[CurrentPoint + 0]));
+    XMVECTOR Rotation1 = XMQuaternionNormalize(XMLoadFloat4(&ControlRotations[CurrentPoint + 1]));
+    XMVECTOR Rotation  = XMQuaternionSlerp(Rotation0, Rotation1, SlerpT);
+
+    XMFLOAT4 Quaternion;
+    XMStoreFloat4(&Quaternion, Rotation);
+    
+    SlerpT += Delta;
+
+    LOG_INFO("t=" + std::to_string(SlerpT) + ", Rotation: " + std::to_string(Quaternion.x) + " " + std::to_string(Quaternion.y) + " " + std::to_string(Quaternion.z) + " " + std::to_string(Quaternion.w));
+
+    CurrentCamera->SetRotation(Quaternion);
+
+    if (SlerpT >= 1.0f)
+    {
+        CurrentPoint++;
+        SlerpT = 0.0f;
+    }
+}
+
+bool Sandbox::TryLoadTrackFile(const char* InFilename)
+{
+    SavedPoints.Clear();
+    SavedRotations.Clear();
+
+    TrackHeader Header;
+    FILE* File = fopen(InFilename, "rb");
+    if (File)
+    {
+        fread(&Header, sizeof(TrackHeader), 1, File);
+
+        // TODO: Check errors
+
+        SavedPoints.Resize(Header.NumPoints);
+        SavedRotations.Resize(Header.NumRotations);
+
+        fread(SavedPoints.Data(), sizeof(XMFLOAT3), SavedPoints.Size(), File);
+        fread(SavedRotations.Data(), sizeof(XMFLOAT4), SavedRotations.Size(), File);
+
+        fclose(File);
+
+        LOG_INFO("Load trackfile '" + std::string(InFilename) + "' NumPoins=" + std::to_string(Header.NumPoints) + "' NumRotations=" + std::to_string(Header.NumRotations));
+
+        return true;
+    }
+    else
+    {
+        LOG_INFO("Failed to load trackfile '" + std::string(InFilename) + "'");
+        return false;
+    }
 }

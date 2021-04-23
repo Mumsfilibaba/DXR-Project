@@ -313,7 +313,7 @@ Bool D3D12ComputePipelineState::Init()
         ResourceCounts.AllowInputAssembler = false;
         ResourceCounts.ResourceCounts[ShaderVisibility_All] = Shader->GetResourceCount();
 
-        RootSignature = D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts);
+        RootSignature = MakeSharedRef<D3D12RootSignature>(D3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts));
     }
     else
     {
@@ -708,8 +708,8 @@ void* D3D12RayTracingPipelineState::GetShaderIdentifer(const std::string& Export
         RayTracingShaderIdentifer Identifier;
         Memory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
-        ShaderIdentifers.insert(std::make_pair(ExportName, Identifier));
-        return Identifier.ShaderIdentifier;
+        auto NewIdentifier = ShaderIdentifers.insert(std::make_pair(ExportName, Identifier));
+        return NewIdentifier.first->second.ShaderIdentifier;
     }
     else
     {

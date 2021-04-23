@@ -7,7 +7,13 @@ public:
     Camera();
     ~Camera() = default;
 
+    // Move the camera in the direction
     void Move(Float x, Float y, Float z);
+    // Add position with new vector
+    void Translate(Float x, Float y, Float z);
+
+    // Moves the forward vector
+    void TranslateForward(Float x, Float y, Float z);
 
     void Rotate(Float Pitch, Float Yaw, Float Roll);
 
@@ -26,8 +32,13 @@ public:
     void SetPosition(Float x, Float y, Float z);
     void SetPosition(const XMFLOAT3& InPosition);
 
+    // Sets rotation from quaternion
+    void SetRotation(const XMFLOAT4& InRotation);
+
+    XMFLOAT3 GetRotationInEulerAngles() const;
+
     XMFLOAT3 GetPosition() const { return Position; }
-    XMFLOAT3 GetRotation() const { return Rotation; }
+    XMFLOAT4 GetRotation() const { return Rotation; }
     XMFLOAT3 GetForward() const { return Forward; }
     XMFLOAT3 GetUp() const { return Up; }
     XMFLOAT3 GetRight() const { return Right; }
@@ -55,7 +66,7 @@ private:
     Float AspectRatio;
     
     XMFLOAT3 Position;
-    XMFLOAT3 Rotation;
+    XMFLOAT4 Rotation;
     XMFLOAT3 Forward;
     XMFLOAT3 Right;
     XMFLOAT3 Up;

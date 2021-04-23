@@ -9,11 +9,12 @@ Camera::Camera()
     , Right(-1.0f, 0.0f, 0.0f)
     , Up(0.0f, 1.0f, 0.0f)
     , Forward(0.0f, 0.0f, 1.0f)
-    , Rotation(0.0f, 0.0f, 0.0f)
+    , Rotation(0.0f, 0.0f, 0.0f, 0.0f)
     , NearPlane(0.01f)
     , FarPlane(1000.0f)
     , AspectRatio()
 {
+    XMStoreFloat4(&Rotation, XMQuaternionIdentity());
     Tick(1920.0f, 1080.0f);
 }
 
@@ -33,15 +34,37 @@ void Camera::Move(Float x, Float y, Float z)
     XMStoreFloat3(&Position, XmPosition);
 }
 
+void Camera::Translate(Float x, Float y, Float z)
+{
+    Position = Position + XMFLOAT3(x, y, z);
+}
+
+void Camera::TranslateForward(Float x, Float y, Float z)
+{
+    XMVECTOR XMTranslation = XMVectorSet(x, y, z, 0.0f);
+    XMVECTOR XMForward     = XMLoadFloat3(&Forward);
+    XMForward = XMVectorAdd(XMForward, XMTranslation);
+
+    XMVECTOR XMUp    = XMLoadFloat3(&Up);
+    XMVECTOR XMRight = XMLoadFloat3(&Right);
+
+    // Re-orthogonalize the vectors
+    XMUp    = XMVector3Normalize(XMVectorSubtract(XMUp, XMVectorMultiply(XMForward, XMVector3Dot(XMUp, XMForward))));
+    XMRight = XMVector3Normalize(XMVectorSubtract(XMRight, XMVectorMultiply(XMForward, XMVector3Dot(XMRight, XMForward))));
+
+    XMStoreFloat3(&Forward, XMForward);
+    XMStoreFloat3(&Up, XMUp);
+    XMStoreFloat3(&Right, XMRight);
+}
+
 void Camera::Rotate(Float Pitch, Float Yaw, Float Roll)
 {
-    Rotation.x += Pitch;
-    Rotation.x = Math::Max<Float>(XMConvertToRadians(-89.0f), Math::Min<Float>(XMConvertToRadians(89.0f), Rotation.x));
+    XMVECTOR CurrentRotation = XMLoadFloat4(&Rotation);
+    XMVECTOR NewRotation = XMQuaternionRotationRollPitchYaw(Pitch, Yaw, Roll);
     
-    Rotation.y += Yaw;
-    Rotation.z += Roll;
+    CurrentRotation = XMQuaternionMultiply(NewRotation, CurrentRotation);
 
-    XMMATRIX RotationMatrix = XMMatrixRotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
+    XMMATRIX RotationMatrix = XMMatrixRotationQuaternion(CurrentRotation);
     XMVECTOR XmForward      = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
     XmForward               = XMVector3Normalize(XMVector3Transform(XmForward, RotationMatrix));
 
@@ -52,6 +75,7 @@ void Camera::Rotate(Float Pitch, Float Yaw, Float Roll)
     XMStoreFloat3(&Forward, XmForward);
     XMStoreFloat3(&Up, XmUp);
     XMStoreFloat3(&Right, XmRight);
+    XMStoreFloat4(&Rotation, CurrentRotation);
 }
 
 void Camera::Tick(Float Width, Float Height)
@@ -107,4 +131,40 @@ void Camera::SetPosition(Float x, Float y, Float z)
 void Camera::SetPosition(const XMFLOAT3& InPosition)
 {
     Position = InPosition;
+}
+
+void Camera::SetRotation(const XMFLOAT4& InRotation)
+{
+    XMVECTOR XmQuaternion = XMLoadFloat4(&InRotation);
+
+    XMMATRIX XmRotationMatrix = XMMatrixRotationQuaternion(XmQuaternion);
+
+    XMVECTOR XmForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+    XmForward = XMVector3Normalize(XMVector3Transform(XmForward, XmRotationMatrix));
+
+    XMVECTOR XmUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    XMVECTOR XmRight = XMVector3Normalize(XMVector3Cross(XmForward, XmUp));
+    XmUp = XMVector3Normalize(XMVector3Cross(XmRight, XmForward));
+
+    Rotation = InRotation;
+
+    XMStoreFloat3(&Forward, XmForward);
+    XMStoreFloat3(&Up, XmUp);
+    XMStoreFloat3(&Right, XmRight);
+}
+
+// https://stackoverflow.com/questions/60350349/directx-get-pitch-yaw-roll-from-xmmatrix
+XMFLOAT3 Camera::GetRotationInEulerAngles() const
+{
+    XMVECTOR Quaternion = XMLoadFloat4(&Rotation);
+
+    XMFLOAT4X4 Matrix;
+    XMStoreFloat4x4(&Matrix, XMMatrixTranspose(XMMatrixRotationQuaternion(Quaternion)));
+
+    XMFLOAT3 Euler;
+    Euler.x = (float)asin(-Matrix._23);
+    Euler.y = (float)atan2(Matrix._13, Matrix._33);
+    Euler.z = (float)atan2(Matrix._21, Matrix._22);
+
+    return Euler;
 }

@@ -410,7 +410,7 @@ static void DrawSceneInfo()
         ImGui::Text("Rotation");
         ImGui::NextColumn();
 
-        XMFLOAT3 Rotation = CurrentCamera->GetRotation();
+        XMFLOAT3 Rotation = CurrentCamera->GetRotationInEulerAngles();
         Rotation = XMFLOAT3(DisplayableDegrees(Rotation.x), DisplayableDegrees(Rotation.y), DisplayableDegrees(Rotation.z));
 
         Float* RotArr = reinterpret_cast<Float*>(&Rotation);

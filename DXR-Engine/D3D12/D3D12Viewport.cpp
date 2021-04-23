@@ -216,6 +216,7 @@ Bool D3D12Viewport::RetriveBackBuffers()
             return false;
         }
 
+        BackBufferViews[i]->AddRef();
         BackBuffers[i]->SetRenderTargetView(BackBufferViews[i].Get());
     }
 
