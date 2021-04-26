@@ -288,7 +288,7 @@ void Main(ComputeShaderInput Input)
 #ifdef RAY_TRACING
     {
         float3 L    = reflect(-V, N);
-        float3 H    = normalize(V + L);
+        float3 H    = N; //normalize(V + L);
         float NdotL = saturate(dot(N, L));
         float NdotV = saturate(dot(N, V));
         float NdotH = saturate(dot(N, H));
@@ -301,12 +301,20 @@ void Main(ComputeShaderInput Input)
         float  Denom = max(4.0f * NdotL * NdotV, 1e-6);
         
         float3 Spec_BRDF = Numer / Denom;
-        float  Spec_PDF  = D * NdotH / max(4.0f * HdotV, 1e-6);
+        float  Spec_PDF  = D * NdotH / (4.0f * HdotV);
+        
+        float3 DiffBRDF = GBufferAlbedo / PI;
+        
+        float3 Ks = F;
+        float3 Kd = (Float3(1.0f) - Ks) * (1.0f - GBufferMetallic);
         
         float3 Reflection = DXRReflection.Load(int3(TexCoord, 0)).rgb;
-        L0 += Reflection * NdotL * Spec_BRDF / Spec_PDF;
+        Reflection = Reflection * NdotL;
         
-        float3 Ambient = GBufferAlbedo * GBufferAO * 0.15f;
+        float3 Specular = Reflection * Ks * Spec_BRDF / Spec_PDF;
+        float3 Diffuse  = GBufferAlbedo * Kd * DiffBRDF * Reflection;
+        
+        float3 Ambient = (Specular + Diffuse) * GBufferAO;
         FinalColor = Ambient + L0;
     }
 #else 

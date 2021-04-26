@@ -271,7 +271,7 @@ PSOutput PSMain(VSOutput Input)
         
             float4 NormalTex    = MaterialTextures[Material.NormalTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, LOD);
             float3 MappedNormal = UnpackNormal(NormalTex.rgb);
-        
+            
             float3 HitN = ApplyNormalMapping(MappedNormal, Vertex.Normal, Vertex.Tangent, Vertex.Bitangent);
         
             float4 SpecularTex = MaterialTextures[Material.SpecularTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, LOD);

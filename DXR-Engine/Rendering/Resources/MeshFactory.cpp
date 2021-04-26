@@ -1142,7 +1142,7 @@ bool MeshFactory::LoadSceneFromFBX(SceneData& OutScene, const std::string& Filen
             MaterialData.Diffuse   = XMFLOAT3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
             MaterialData.TexPath   = Path;
             MaterialData.AO        = 1.0f;//  CurrentMaterial->getSpecularColor().r;
-            MaterialData.Roughness = CurrentMaterial->getSpecularColor().g;
+            MaterialData.Roughness = 1.0f;// CurrentMaterial->getSpecularColor().g;
             MaterialData.Metallic  = 1.0f;// CurrentMaterial->getSpecularColor().b;
 
             //TODO: Other material properties
