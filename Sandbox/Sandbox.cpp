@@ -962,11 +962,11 @@ Bool Sandbox::Init()
 
     std::string SceneName;
 #if SCENE == 0
-    SceneName = "Sponza";
+    SceneName = "Sponza/Sponza";
 #elif SCENE == 1
-    SceneName = "SunTemple";
+    SceneName = "SunTemple/SunTemple";
 #elif SCENE == 2
-    SceneName = "Bistro";
+    SceneName = "Bistro/Bistro";
 #else
     #error No scene defined
 #endif

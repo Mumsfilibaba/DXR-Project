@@ -538,23 +538,23 @@ void Profiler::Tick()
         DebugUI::DrawUI(DrawFPS);
     }
 
+    if (gProfilerData.EnableProfiler)
+    {
+        const Double Delta = Clock.GetDeltaTime().AsMilliSeconds();
+        gProfilerData.CPUFrameTime.AddSample(Float(Delta));
+
+        if (gProfilerData.GPUProfiler)
+        {
+            TimeQuery Query;
+            gProfilerData.GPUProfiler->GetTimeQuery(Query, gProfilerData.GPUFrameTime.TimeQueryIndex);
+
+            Float Duration = (Query.End - Query.Begin) * INV_MILLISECONDS;
+            gProfilerData.GPUFrameTime.AddSample(Duration);
+        }
+    }
+
     if (gDrawProfiler.GetBool())
     {
-        if (gProfilerData.EnableProfiler)
-        {
-            const Double Delta = Clock.GetDeltaTime().AsMilliSeconds();
-            gProfilerData.CPUFrameTime.AddSample(Float(Delta));
-
-            if (gProfilerData.GPUProfiler)
-            {
-                TimeQuery Query;
-                gProfilerData.GPUProfiler->GetTimeQuery(Query, gProfilerData.GPUFrameTime.TimeQueryIndex);
-
-                Float Duration = (Query.End - Query.Begin) * INV_MILLISECONDS;
-                gProfilerData.GPUFrameTime.AddSample(Duration);
-            }
-        }
-
         DebugUI::DrawUI(DrawProfiler);
     }
 }

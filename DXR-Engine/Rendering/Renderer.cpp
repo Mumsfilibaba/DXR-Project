@@ -663,7 +663,7 @@ void Renderer::Tick(const Scene& Scene)
 Bool Renderer::Init()
 {
     INIT_CONSOLE_VARIABLE("r.DrawTextureDebugger", gDrawTextureDebugger);
-    gDrawTextureDebugger.SetBool(true);
+    gDrawTextureDebugger.SetBool(false);
 
     INIT_CONSOLE_VARIABLE("r.DrawRendererInfo", gDrawRendererInfo);
     gDrawRendererInfo.SetBool(false);

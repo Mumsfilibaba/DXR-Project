@@ -219,7 +219,7 @@ void Main(ComputeShaderInput Input)
     const float GBufferMetallic  = GBufferMaterial.g;
     const float GBufferAO        = GBufferMaterial.b * ScreenSpaceAO;
     
-    float3 F0 = Float3(0.04f);
+    float3 F0 = Float3(0.03f);
     F0 = lerp(F0, GBufferAlbedo, GBufferMetallic);
     
     float3 L0 = Float3(0.0f);
@@ -233,7 +233,7 @@ void Main(ComputeShaderInput Input)
 
         float3 L = LightPosRad.Position - WorldPosition;
         float DistanceSqrd = dot(L, L);
-        float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
+        float Attenuation  = 1.0f / max(DistanceSqrd, 0.001f * 0.001f);
         L = normalize(L);
 
         float3 IncidentRadiance = Light.Color * Attenuation;
@@ -253,7 +253,7 @@ void Main(ComputeShaderInput Input)
         {
             float3 L = LightPosRad.Position - WorldPosition;
             float DistanceSqrd = dot(L, L);
-            float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
+            float Attenuation = 1.0f / max(DistanceSqrd, 0.001f * 0.001f);
             L = normalize(L);
             
             float3 IncidentRadiance = Light.Color * Attenuation;
@@ -299,10 +299,10 @@ void Main(ComputeShaderInput Input)
         float3 F = FresnelSchlick_Roughness(F0, V, N, GBufferRoughness);
         float3 Numer = D * F * G;
         float  Denom = max(4.0f * NdotL * NdotV, 1e-6);
-    
+        
         float3 Spec_BRDF = Numer / Denom;
-        float  Spec_PDF  = D * NdotH / (4.0f * HdotV);
-
+        float  Spec_PDF  = D * NdotH / max(4.0f * HdotV, 1e-6);
+        
         float3 Reflection = DXRReflection.Load(int3(TexCoord, 0)).rgb;
         L0 += Reflection * NdotL * Spec_BRDF / Spec_PDF;
         
