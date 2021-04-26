@@ -1252,24 +1252,26 @@ void Sandbox::TrackMode()
 
             const GPUProfileSample* FrameTime = Profiler::GetGPUFrameTimeSamples();
 
-            const auto PrintGPUSample = [](FILE* File, const Char* SampleName, const GPUProfileSample* Sample)
+            const auto PrintGPUSample = [](FILE* File, const Char* SampleName, const GPUProfileSample* Sample, bool Convert = true)
             {
+                const Float NanoToMilli = Convert ? 1.0f / (1000.0f * 1000.0f) : 1.0f;
+
                 Float Avg = 0.0f;
                 Float Min = 0.0f;
                 Float Max = 0.0f;
                 Float Median = 0.0f;
                 if (Sample)
                 {
-                    Avg = Sample->GetAverage();
-                    Min = Sample->GetMin();
-                    Max = Sample->GetMax();
-                    Median = Sample->GetMedian();
+                    Avg = Sample->GetAverage() * NanoToMilli;
+                    Min = Sample->GetMin() * NanoToMilli;
+                    Max = Sample->GetMax() * NanoToMilli;
+                    Median = Sample->GetMedian() * NanoToMilli;
                 }
 
                 fprintf(File, "%s: Avg=%.8f, Median=%.8f, Min=%.8f, Max=%.8f\n", SampleName, Avg, Median, Min, Max);
             };
 
-            PrintGPUSample(File, "FrameTime", FrameTime);
+            PrintGPUSample(File, "FrameTime", FrameTime, false);
             PrintGPUSample(File, "Ray Tracing", RayTracingSample);
             PrintGPUSample(File, "RT Build Scene", RTBuildSample);
             PrintGPUSample(File, "Inline RayGen", InlineRayGenSample);

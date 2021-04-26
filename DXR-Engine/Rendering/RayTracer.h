@@ -13,7 +13,7 @@
 // 3 - Inline HalfRes
 // 4 - Inline VRS Roughness
 // 5 - Inline VRS Grazing Angles
-#define TEST 0
+#define TEST 1
 
 #ifndef TEST
     #error No test defined

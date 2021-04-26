@@ -548,8 +548,10 @@ void Profiler::Tick()
             TimeQuery Query;
             gProfilerData.GPUProfiler->GetTimeQuery(Query, gProfilerData.GPUFrameTime.TimeQueryIndex);
 
-            Float Duration = (Query.End - Query.Begin) * INV_MILLISECONDS;
-            gProfilerData.GPUFrameTime.AddSample(Duration);
+            Double Frequency = (Double)gProfilerData.GPUProfiler->GetFrequency();
+            Double DeltaTime = (Double)(Query.End - Query.Begin);
+            Double Duration  = (DeltaTime / Frequency) * 1000.0;
+            gProfilerData.GPUFrameTime.AddSample((Float)Duration);
         }
     }
 
@@ -676,7 +678,8 @@ void Profiler::EndGPUTrace(CommandList& CmdList, const Char* Name)
                 TimeQuery Query;
                 gProfilerData.GPUProfiler->GetTimeQuery(Query, TimeQueryIndex);
 
-                Float Duration = Float(Query.End - Query.Begin);
+                Double Frequency = (Double)gProfilerData.GPUProfiler->GetFrequency();
+                Double Duration  = (Double)((Query.End - Query.Begin) / Frequency) * SECONDS;
                 Entry->second.AddSample(Duration);
             }
         }

@@ -9,7 +9,7 @@ D3D12GPUProfiler::D3D12GPUProfiler(D3D12Device* InDevice)
     , WriteResource(nullptr)
     , ReadResources()
     , TimeQueries()
-    , Frequency(0)
+    , Frequency(1)
 {
 }
 
@@ -88,15 +88,23 @@ void D3D12GPUProfiler::ResolveQueries(class D3D12CommandContext& CmdContext)
     HRESULT Result = CmdQueue->GetTimestampFrequency(&Frequency);
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12GPUProfiler] FAILED to query ClockCalibration");
+        LOG_ERROR("[D3D12GPUProfiler] FAILED to query GetTimestampFrequency");
     }
 }
 
-D3D12GPUProfiler* D3D12GPUProfiler::Create(D3D12Device* InDevice)
+D3D12GPUProfiler* D3D12GPUProfiler::Create(D3D12Device* InDevice, class D3D12CommandContext& CmdContext)
 {
     TRef<D3D12GPUProfiler> NewProfiler = DBG_NEW D3D12GPUProfiler(InDevice);
 
-    ID3D12Device* DxDevice = InDevice->GetDevice();
+    ID3D12Device*       DxDevice = InDevice->GetDevice();
+    ID3D12CommandQueue* DxQueue  = CmdContext.GetQueue().GetQueue();
+
+    HRESULT Result = DxQueue->GetTimestampFrequency(&NewProfiler->Frequency);
+    if (FAILED(Result))
+    {
+        LOG_ERROR("[D3D12GPUProfiler] FAILED to query GetTimestampFrequency");
+        return nullptr;
+    }
 
     D3D12_QUERY_HEAP_DESC QueryHeap;
     Memory::Memzero(&QueryHeap);
@@ -106,7 +114,7 @@ D3D12GPUProfiler* D3D12GPUProfiler::Create(D3D12Device* InDevice)
     QueryHeap.NodeMask = 0;
 
     TComPtr<ID3D12QueryHeap> Heap;
-    HRESULT Result = DxDevice->CreateQueryHeap(&QueryHeap, IID_PPV_ARGS(&Heap));
+    Result = DxDevice->CreateQueryHeap(&QueryHeap, IID_PPV_ARGS(&Heap));
     if (FAILED(Result))
     {
         LOG_ERROR("[D3D12GPUProfiler]: FAILED to create Query Heap");

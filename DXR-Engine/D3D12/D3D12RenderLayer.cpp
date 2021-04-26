@@ -1438,7 +1438,7 @@ RayTracingPipelineState* D3D12RenderLayer::CreateRayTracingPipelineState(const R
 
 GPUProfiler* D3D12RenderLayer::CreateProfiler()
 {
-    return D3D12GPUProfiler::Create(Device);
+    return D3D12GPUProfiler::Create(Device, *DirectCmdContext);
 }
 
 Viewport* D3D12RenderLayer::CreateViewport(GenericWindow* Window, UInt32 Width, UInt32 Height, EFormat ColorFormat, EFormat DepthFormat)

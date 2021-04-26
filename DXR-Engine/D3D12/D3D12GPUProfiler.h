@@ -23,7 +23,7 @@ public:
 
     ID3D12QueryHeap* GetQueryHeap() const { return QueryHeap.Get(); }
 
-    static D3D12GPUProfiler* Create(D3D12Device* InDevice);
+    static D3D12GPUProfiler* Create(D3D12Device* InDevice, class D3D12CommandContext& CmdContext);
 
 private:
     Bool AllocateReadResource();
