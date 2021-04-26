@@ -18,126 +18,6 @@ constexpr Float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 ConsoleVariable gDrawProfiler(EConsoleVariableType::Bool);
 ConsoleVariable gDrawFps(EConsoleVariableType::Bool);
 
-struct ProfileSample
-{
-    FORCEINLINE void Begin()
-    {
-        Clock.Tick();
-    }
-
-    FORCEINLINE void End()
-    {
-        Clock.Tick();
-
-        Float Delta = (Float)Clock.GetDeltaTime().AsNanoSeconds();
-        AddSample(Delta);
-
-        TotalCalls++;
-    }
-
-    FORCEINLINE void AddSample(Float NewSample)
-    {
-        Samples[CurrentSample] = NewSample;
-        Min = Math::Min(NewSample, Min);
-        Max = Math::Max(NewSample, Max);
-
-        CurrentSample++;
-        SampleCount = Math::Min<Int32>(Samples.Size(), SampleCount + 1);
-
-        if (CurrentSample >= Int32(Samples.Size()))
-        {
-            CurrentSample = 0;
-        }
-    }
-
-    FORCEINLINE Float GetAverage() const
-    {
-        if (SampleCount < 1)
-        {
-            return 0.0f;
-        }
-
-        Float Average = 0.0f;
-        for (Int32 n = 0; n < SampleCount; n++)
-        {
-            Average += Samples[n];
-        }
-
-        return Average / Float(SampleCount);
-    }
-
-    FORCEINLINE void Reset()
-    {
-        Samples.Fill(0.0f);
-        SampleCount   = 0;
-        CurrentSample = 0;
-        TotalCalls    = 0;
-        Max           = -FLT_MAX;
-        Min           = FLT_MAX;
-        Clock.Reset();
-    }
-
-    TStaticArray<Float, NUM_PROFILER_SAMPLES> Samples;
-    Clock Clock;
-    Float Max           = -FLT_MAX;
-    Float Min           = FLT_MAX;
-    Int32 SampleCount   = 0;
-    Int32 CurrentSample = 0;
-    Int32 TotalCalls    = 0;
-};
-
-struct GPUProfileSample
-{
-    FORCEINLINE void AddSample(Float NewSample)
-    {
-        Samples[CurrentSample] = NewSample;
-        Min = Math::Min(NewSample, Min);
-        Max = Math::Max(NewSample, Max);
-
-        CurrentSample++;
-        SampleCount = Math::Min<Int32>(Samples.Size(), SampleCount + 1);
-
-        if (CurrentSample >= Int32(Samples.Size()))
-        {
-            CurrentSample = 0;
-        }
-    }
-
-    FORCEINLINE Float GetAverage() const
-    {
-        if (SampleCount < 1)
-        {
-            return 0.0f;
-        }
-
-        Float Average = 0.0f;
-        for (Int32 n = 0; n < SampleCount; n++)
-        {
-            Average += Samples[n];
-        }
-
-        return Average / Float(SampleCount);
-    }
-
-    FORCEINLINE void Reset()
-    {
-        Samples.Fill(0.0f);
-        SampleCount   = 0;
-        CurrentSample = 0;
-        TotalCalls    = 0;
-        Max           = -FLT_MAX;
-        Min           = FLT_MAX;
-    }
-
-    TStaticArray<Float, NUM_PROFILER_SAMPLES> Samples;
-    Float  Max            = -FLT_MAX;
-    Float  Min            = FLT_MAX;
-    Int32  SampleCount    = 0;
-    Int32  CurrentSample  = 0;
-    Int32  TotalCalls     = 0;
-    UInt32 TimeQueryIndex = 0;
-};
-
 struct ProfilerData
 {
     TRef<GPUProfiler> GPUProfiler;
@@ -806,6 +686,44 @@ void Profiler::EndGPUTrace(CommandList& CmdList, const Char* Name)
 void Profiler::SetGPUProfiler(GPUProfiler* Profiler)
 {
     gProfilerData.GPUProfiler = MakeSharedRef<GPUProfiler>(Profiler);
+}
+
+const ProfileSample* Profiler::GetSample(const Char* Name)
+{
+    std::string SampleName = std::string(Name);
+
+    auto Sample = gProfilerData.CPUSamples.find(SampleName);
+    if (Sample == gProfilerData.CPUSamples.end())
+    {
+        LOG_WARNING("No sample found with name '" + SampleName + "'");
+        return nullptr;
+    }
+
+    return &Sample->second;
+}
+
+const GPUProfileSample* Profiler::GetGPUSample(const Char* Name)
+{
+    std::string SampleName = std::string(Name);
+
+    auto Sample = gProfilerData.GPUSamples.find(SampleName);
+    if (Sample == gProfilerData.GPUSamples.end())
+    {
+        LOG_WARNING("No GPU sample found with name '" + SampleName + "'");
+        return nullptr;
+    }
+
+    return &Sample->second;
+}
+
+const ProfileSample* Profiler::GetFrameTimeSamples()
+{
+    return &gProfilerData.CPUFrameTime;
+}
+
+const GPUProfileSample* Profiler::GetGPUFrameTimeSamples()
+{
+    return &gProfilerData.GPUFrameTime;
 }
 
 void Profiler::EndGPUFrame(CommandList& CmdList)

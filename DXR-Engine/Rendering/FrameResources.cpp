@@ -15,8 +15,9 @@ void FrameResources::Release()
     IntegrationLUT.Reset();
     IntegrationLUTSampler.Reset();
 
-    Skybox.Reset();
-    
+    Skybox.Reset();    
+    SkyboxSampler.Reset();
+
     FXAASampler.Reset();
 
     SSAOBuffer.Reset();

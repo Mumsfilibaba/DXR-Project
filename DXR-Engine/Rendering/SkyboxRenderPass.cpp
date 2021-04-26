@@ -62,8 +62,8 @@ Bool SkyboxRenderPass::Init(FrameResources& FrameResources)
     CreateInfo.MinLOD   = 0.0f;
     CreateInfo.MaxLOD   = 0.0f;
 
-    SkyboxSampler = CreateSamplerState(CreateInfo);
-    if (!SkyboxSampler)
+    FrameResources.SkyboxSampler = CreateSamplerState(CreateInfo);
+    if (!FrameResources.SkyboxSampler)
     {
         return false;
     }
@@ -206,7 +206,7 @@ void SkyboxRenderPass::Render(CommandList& CmdList, const FrameResources& FrameR
     ShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
     CmdList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);
 
-    CmdList.SetSamplerState(SkyboxPixelShader.Get(), SkyboxSampler.Get(), 0);
+    CmdList.SetSamplerState(SkyboxPixelShader.Get(), FrameResources.SkyboxSampler.Get(), 0);
 
     CmdList.DrawIndexedInstanced(static_cast<UInt32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
 
@@ -218,7 +218,6 @@ void SkyboxRenderPass::Release()
     PipelineState.Reset();
     SkyboxVertexBuffer.Reset();
     SkyboxIndexBuffer.Reset();
-    SkyboxSampler.Reset();
     SkyboxVertexShader.Reset();
     SkyboxPixelShader.Reset();
 }

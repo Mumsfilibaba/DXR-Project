@@ -456,14 +456,6 @@ void Renderer::Tick(const Scene& Scene)
         DeferredRenderer.RenderBasePass(CmdList, Resources);
     }
 
-    if (IsRayTracingSupported())
-    {
-        {
-            GPU_TRACE_SCOPE(CmdList, "Ray Tracing");
-            RayTracer.Render(CmdList, Resources, LightSetup, Scene);
-        }
-    }
-
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
@@ -520,6 +512,14 @@ void Renderer::Tick(const Scene& Scene)
 
     CmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
+
+    if (IsRayTracingSupported())
+    {
+        {
+            GPU_TRACE_SCOPE(CmdList, "Ray Tracing");
+            RayTracer.Render(CmdList, Resources, LightSetup, Scene);
+        }
+    }
 
     const ColorF WhiteColor = { 1.0f, 1.0f, 1.0f, 1.0f };
     CmdList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), WhiteColor);

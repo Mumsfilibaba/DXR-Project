@@ -1,4 +1,5 @@
 #include "PBRHelpers.hlsli"
+#include "Halton.hlsli"
 
 #define RootSig \
     "RootFlags(0), " \
@@ -21,7 +22,7 @@ float2 IntegrateBRDF(float NdotV, float Roughness)
     const uint SAMPLE_COUNT = 1024u;
     for (uint Sample = 0u; Sample < SAMPLE_COUNT; Sample++)
     {
-        float2 Xi = Hammersley(Sample, SAMPLE_COUNT);
+        float2 Xi = Hammersley2(Sample, SAMPLE_COUNT);
         float3 H  = ImportanceSampleGGX(Xi, Roughness, N);
         float3 L  = normalize(2.0f * dot(V, H) * H - V);
 

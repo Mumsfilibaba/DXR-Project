@@ -26,7 +26,6 @@ private:
     TRef<PixelShader>  SkyboxPixelShader;
     TRef<VertexBuffer> SkyboxVertexBuffer;
     TRef<IndexBuffer>  SkyboxIndexBuffer;
-    TRef<SamplerState> SkyboxSampler;
 
     MeshData SkyboxMesh;
 };

@@ -84,7 +84,7 @@ float PointLightShadowFactor(
 * Calculate DirectionalLight Shadows
 */
 
-#define PCF_RANGE 2
+#define PCF_RANGE 1
 #define PCF_WIDTH float((PCF_RANGE * 2) + 1)
 
 #define ENABLE_POISSON_FILTERING    0
@@ -174,7 +174,7 @@ float StandardShadow(
     }
 
     Shadow = Shadow / (PCF_WIDTH * PCF_WIDTH);
-    return min(Shadow, 1.0f);
+    return saturate(Shadow);
 }
 #endif
 
@@ -189,8 +189,8 @@ float DirectionalLightShadowFactor(
     float3 L = normalize(-Light.Direction);
     
     float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;
-    ProjCoords.xy     = (ProjCoords.xy * 0.5f) + 0.5f;
-    ProjCoords.y      = 1.0f - ProjCoords.y;
+    ProjCoords.xy = (ProjCoords.xy * 0.5f) + 0.5f;
+    ProjCoords.y  = 1.0f - ProjCoords.y;
     
     float Depth = ProjCoords.z;
     if (Depth >= 1.0f)

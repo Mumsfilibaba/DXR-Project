@@ -33,6 +33,7 @@ public:
     void SetPosition(const XMFLOAT3& InPosition);
 
     // Sets rotation from quaternion
+    void SetRotation(Float Pitch, Float Yaw, Float Roll);
     void SetRotation(const XMFLOAT4& InRotation);
 
     XMFLOAT3 GetRotationInEulerAngles() const;
@@ -51,6 +52,8 @@ public:
     XMFLOAT2 GetJitter() const { return Jitter; }
 
 private:
+    void InternalSetRotation(XMVECTOR Quaternion);
+
     UInt64 Frame = 0;
 
     XMFLOAT4X4 View;

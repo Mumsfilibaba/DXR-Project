@@ -24,7 +24,8 @@ Bool RayTracer::Init(FrameResources& Resources)
 
     TArray<ShaderDefine> Defines =
     {
-        { "ENABLE_HALF_RES", std::to_string(ENABLE_HALF_RES) }
+        { "ENABLE_HALF_RES", std::to_string(ENABLE_HALF_RES) },
+        { "ENABLE_VRS", std::to_string(VRS_IMAGE_ROUGHNESS) }
     };
 
     TArray<UInt8> Code;
@@ -45,7 +46,7 @@ Bool RayTracer::Init(FrameResources& Resources)
         RayGenShader->SetName("RayGenShader");
     }
 
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ClosestHit.hlsl", "ClosestHit", &Defines, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code))
     {
         Debug::DebugBreak();
         return false;
@@ -62,7 +63,7 @@ Bool RayTracer::Init(FrameResources& Resources)
         RayClosestHitShader->SetName("RayClosestHitShader");
     }
 
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Miss.hlsl", "Miss", nullptr, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code))
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/Miss.hlsl", "Miss", &Defines, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code))
     {
         Debug::DebugBreak();
         return false;
@@ -79,20 +80,22 @@ Bool RayTracer::Init(FrameResources& Resources)
         RayMissShader->SetName("RayMissShader");
     }
 
-    RayTracingPipelineStateCreateInfo CreateInfo;
-    CreateInfo.RayGen                  = RayGenShader.Get();
-    CreateInfo.ClosestHitShaders       = { RayClosestHitShader.Get() };
-    CreateInfo.MissShaders             = { RayMissShader.Get() };
-    CreateInfo.HitGroups               = { RayTracingHitGroup("HitGroup", nullptr, RayClosestHitShader.Get()) };
-    CreateInfo.MaxRecursionDepth       = 1;
-    CreateInfo.MaxAttributeSizeInBytes = sizeof(RayIntersectionAttributes);
-    CreateInfo.MaxPayloadSizeInBytes   = sizeof(RayPayload);
-
-    Pipeline = CreateRayTracingPipelineState(CreateInfo);
-    if (!Pipeline)
     {
-        Debug::DebugBreak();
-        return false;
+        RayTracingPipelineStateCreateInfo CreateInfo;
+        CreateInfo.RayGen                  = RayGenShader.Get();
+        CreateInfo.ClosestHitShaders       = { RayClosestHitShader.Get() };
+        CreateInfo.MissShaders             = { RayMissShader.Get() };
+        CreateInfo.HitGroups               = { RayTracingHitGroup("HitGroup", nullptr, RayClosestHitShader.Get()) };
+        CreateInfo.MaxRecursionDepth       = 1;
+        CreateInfo.MaxAttributeSizeInBytes = sizeof(RayIntersectionAttributes);
+        CreateInfo.MaxPayloadSizeInBytes   = sizeof(RayPayload);
+
+        Pipeline = CreateRayTracingPipelineState(CreateInfo);
+        if (!Pipeline)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
     }
 
     if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/FullscreenVS.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_5, Code))
@@ -193,6 +196,39 @@ Bool RayTracer::Init(FrameResources& Resources)
     else
     {
         RTSpatialPSO->SetName("RT Spatial Pipeline");
+    }
+
+    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadingImage.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+
+    ShadingRateGenShader = CreateComputeShader(Code);
+    if (!ShadingRateGenShader)
+    {
+        Debug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        ShadingRateGenShader->SetName("ShadingRate Image Shader");
+    }
+
+    {
+        ComputePipelineStateCreateInfo CreateInfo;
+        CreateInfo.Shader = ShadingRateGenShader.Get();
+
+        ShadingRateGenPSO = CreateComputePipelineState(CreateInfo);
+        if (!ShadingRateGenPSO)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            ShadingRateGenPSO->SetName("ShadingRate Image Pipeline");
+        }
     }
 
     Defines.Clear();
@@ -311,38 +347,6 @@ Bool RayTracer::InitShadingImage(FrameResources& Resources)
     else
     {
         ShadingRateImage->SetName("Shading Rate Image");
-    }
-
-    TArray<UInt8> ShaderCode;
-    if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadingImage.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-
-    ShadingRateGenShader = CreateComputeShader(ShaderCode);
-    if (!ShadingRateGenShader)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        ShadingRateGenShader->SetName("ShadingRate Image Shader");
-    }
-
-    ComputePipelineStateCreateInfo CreateInfo;
-    CreateInfo.Shader = ShadingRateGenShader.Get();
-
-    ShadingRateGenPSO = CreateComputePipelineState(CreateInfo);
-    if (!ShadingRateGenPSO)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        ShadingRateGenPSO->SetName("ShadingRate Image Pipeline");
     }
 
     return true;
@@ -503,9 +507,11 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     }
     else
     {
-        GPU_TRACE_SCOPE(CmdList, "Build Scene");
+        GPU_TRACE_SCOPE(CmdList, "RT Build Scene");
         CmdList.BuildRayTracingScene(Resources.RTScene.Get(), Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size(), false);
     }
+
+    constexpr float episolon = 0x1.fffffep-1;
 
     UInt32 Width  = Resources.RTReflections->GetWidth();
     UInt32 Height = Resources.RTReflections->GetHeight();
@@ -532,7 +538,14 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
 
         CmdList.SetComputePipelineState(ShadingRateGenPSO.Get());
         
+#if VRS_IMAGE_ROUGHNESS
         CmdList.SetShaderResourceView(ShadingRateGenShader.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 0);
+#else
+        CmdList.SetShaderResourceView(ShadingRateGenShader.Get(), Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView(), 0);
+        CmdList.SetShaderResourceView(ShadingRateGenShader.Get(), Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 1);
+
+        CmdList.SetConstantBuffer(ShadingRateGenShader.Get(), Resources.CameraBuffer.Get(), 0);
+#endif
         CmdList.SetUnorderedAccessView(ShadingRateGenShader.Get(), ShadingRateImage->GetUnorderedAccessView(), 0);
 
         XMUINT3 Threads = ShadingRateGenShader->GetThreadGroupXYZ();
@@ -563,12 +576,20 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 4);
     CmdList.SetShaderResourceView(InlineRayGen.Get(), LightSetup.DirLightShadowMaps->GetShaderResourceView(), 5);
+
+#if ENABLE_HALF_RES
     CmdList.SetShaderResourceView(InlineRayGen.Get(), Resources.BlueNoise->GetShaderResourceView(), 6);
     CmdList.SetShaderResourceView(InlineRayGen.Get(), RTMaterialBufferSRV.Get(), 7);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTMaterialTextureCache.Data(), Resources.RTMaterialTextureCache.Size(), 8);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTVertexBuffers.Data(), Resources.RTVertexBuffers.Size(), 9);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTIndexBuffers.Data(), Resources.RTIndexBuffers.Size(), 10);
+#else
+    CmdList.SetShaderResourceView(InlineRayGen.Get(), RTMaterialBufferSRV.Get(), 6);
+    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTMaterialTextureCache.Data(), Resources.RTMaterialTextureCache.Size(), 7);
     CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTVertexBuffers.Data(), Resources.RTVertexBuffers.Size(), 8);
     CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTIndexBuffers.Data(), Resources.RTIndexBuffers.Size(), 9);
-    CmdList.SetShaderResourceViews(InlineRayGen.Get(), Resources.RTMaterialTextureCache.Data(), Resources.RTMaterialTextureCache.Size(), 10);
-    
+#endif
+
     CmdList.SetSamplerState(InlineRayGen.Get(), Resources.IrradianceSampler.Get(), 0);
     CmdList.SetSamplerState(InlineRayGen.Get(), Sampler, 1);
     CmdList.SetSamplerState(InlineRayGen.Get(), Resources.DirectionalShadowSampler.Get(), 2);
@@ -592,12 +613,12 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     {
         GPU_TRACE_SCOPE(CmdList, "Inline RayGen");
         CmdList.Draw(3, 0);
-
-        CmdList.SetShadingRate(EShadingRate::VRS_1x1);
-#if ENABLE_VRS
-        CmdList.SetShadingRateImage(nullptr);
-#endif
     }
+
+    CmdList.SetShadingRate(EShadingRate::VRS_1x1);
+#if ENABLE_VRS
+    CmdList.SetShadingRateImage(nullptr);
+#endif
 
     CmdList.TransitionTexture(RTColorDepth.Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(Resources.RTRayPDF.Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
@@ -616,15 +637,19 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
     //Resources.GlobalResources.AddConstantBuffer(LightSetup.ShadowCastingPointLightsBuffer.Get());
     //Resources.GlobalResources.AddConstantBuffer(LightSetup.ShadowCastingPointLightsPosRadBuffer.Get());
     Resources.GlobalResources.AddConstantBuffer(LightSetup.DirectionalLightsBuffer.Get());
+    Resources.GlobalResources.AddSamplerState(Resources.SkyboxSampler.Get());
     Resources.GlobalResources.AddSamplerState(Sampler);
+    Resources.GlobalResources.AddSamplerState(Resources.DirectionalShadowSampler.Get());
     Resources.GlobalResources.AddShaderResourceView(Resources.RTScene->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.Skybox->GetShaderResourceView());
-    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_GEOM_NORMAL_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView());
+#if ENABLE_HALF_RES
     Resources.GlobalResources.AddShaderResourceView(Resources.BlueNoise->GetShaderResourceView());
+#endif
     Resources.GlobalResources.AddShaderResourceView(RTMaterialBufferSRV.Get());
+    Resources.GlobalResources.AddShaderResourceView(LightSetup.DirLightShadowMaps->GetShaderResourceView());
 
     for (UInt32 i = 0; i < Resources.RTMaterialTextureCache.Size(); i++)
     {

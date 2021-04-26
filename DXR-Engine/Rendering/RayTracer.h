@@ -15,6 +15,10 @@
 // 5 - Inline VRS Grazing Angles
 #define TEST 0
 
+#ifndef TEST
+    #error No test defined
+#endif
+
 #if TEST == 2 || TEST == 3 || TEST == 4 || TEST == 5
     #define ENABLE_INLINE_RAY_GEN 1
 #else
@@ -31,6 +35,12 @@
     #define ENABLE_VRS 1
 #else
     #define ENABLE_VRS 0
+#endif
+
+#if TEST == 5
+    #define VRS_IMAGE_ROUGHNESS 0
+#else
+    #define VRS_IMAGE_ROUGHNESS 1
 #endif
 
 #define MAX_RT_MATERIALS 320

@@ -5,6 +5,7 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/DebugUI.h"
 #include "Rendering/Resources/TextureFactory.h"
+#include "Rendering/RayTracer.h"
 
 #include "Scene/Scene.h"
 #include "Scene/Lights/PointLight.h"
@@ -13,14 +14,19 @@
 
 #include "Application/Input.h"
 
+#include "Debug/Profiler.h"
+
 #include <random>
+#include <fstream>
 
 // Scene 0 - Sponza
 // Scene 1 - SunTemple
 // Scene 2 - Bistro
-#define SCENE 1
+#define SCENE 0
 
-#define ENABLE_TRACK        0
+#define NUM_FRAMES 5000
+
+#define ENABLE_TRACK        1
 #define ENABLE_POINT_LIGHTS 1
 
 Sandbox* gSandBox = nullptr;
@@ -371,6 +377,7 @@ Bool Sandbox::Init()
     Light4->SetShadowNearPlane(0.01f);
     Light4->SetShadowFarPlane(140.0f);
     Light4->SetColor(1.0f, 1.0f, 1.0f);
+    Light4->SetRotation(XMConvertToRadians(-19.0f), XMConvertToRadians(75.0f), XMConvertToRadians(-4.0f));
     Light4->SetIntensity(10.0f);
     CurrentScene->AddLight(Light4);
 
@@ -405,6 +412,7 @@ Bool Sandbox::Init()
     DirLight->SetShadowNearPlane(0.01f);
     DirLight->SetShadowFarPlane(140.0f);
     DirLight->SetColor(1.0f, 1.0f, 1.0f);
+    DirLight->SetRotation(XMConvertToRadians(85.0f), XMConvertToRadians(-60.0f), 0.0f);
     DirLight->SetIntensity(10.0f);
     CurrentScene->AddLight(DirLight);
 
@@ -569,7 +577,8 @@ Bool Sandbox::Init()
     DirLight->SetShadowNearPlane(0.01f);
     DirLight->SetShadowFarPlane(140.0f);
     DirLight->SetColor(1.0f, 1.0f, 1.0f);
-    DirLight->SetIntensity(2.0f);
+    DirLight->SetRotation(XMConvertToRadians(-25.0f), XMConvertToRadians(23.0f), XMConvertToRadians(0.0f));
+    DirLight->SetIntensity(20.0f);
     CurrentScene->AddLight(DirLight);
 
 #if ENABLE_POINT_LIGHTS
@@ -948,6 +957,41 @@ Bool Sandbox::Init()
         TotalLength += XMVectorGetX(XMVector3Length(Distance));
     }
 
+#if ENABLE_TRACK
+    Profiler::Reset();
+
+    std::string SceneName;
+#if SCENE == 0
+    SceneName = "Sponza";
+#elif SCENE == 1
+    SceneName = "SunTemple";
+#elif SCENE == 2
+    SceneName = "Bistro";
+#else
+    #error No scene defined
+#endif
+
+    std::string NameOnTest;
+#if TEST == 0
+    NameOnTest = "Reference";
+#elif TEST == 1
+    NameOnTest = "Half_RayGen";
+#elif TEST == 2
+    NameOnTest = "Inline_RayGen_Full";
+#elif TEST == 3
+    NameOnTest = "Inline_RayGen_Half";
+#elif TEST == 4
+    NameOnTest = "Inline_RayGen_VRS_Rough";
+#elif TEST == 5
+    NameOnTest = "Inline_RayGen_Grazing_Angles";
+#else
+#error No test defined
+#endif
+
+    TestName = SceneName + '_' + NameOnTest + ".txt";
+
+#endif
+
     return true;
 }
 
@@ -974,8 +1018,7 @@ void Sandbox::Tick(Timestamp DeltaTime)
     else
     {
 #if ENABLE_TRACK
-        bool HasReachedGoal = !(CurrentPoint < (Math::Max(ControlPoints.Size(), 1u) - 1));
-        if (!HasReachedGoal)
+        if (!TestFinished)
         {
             TrackMode();
         }
@@ -1158,11 +1201,7 @@ void Sandbox::TrackMode()
 
     const UInt32 NumPaths = ControlPoints.Size() - 1;
 
-#if SCENE == 1
-    const Float NumFrames = 5000.0f;
-#else
-    const Float NumFrames = 10000.0f;
-#endif
+    const Float NumFrames = Float(NUM_FRAMES);
 
     const Float FramePerPath = NumFrames / Float(NumPaths);
     const Float Delta        = 1.0f / FramePerPath;
@@ -1185,14 +1224,80 @@ void Sandbox::TrackMode()
     
     SlerpT += Delta;
 
-    LOG_INFO("t=" + std::to_string(SlerpT) + ", Rotation: " + std::to_string(Quaternion.x) + " " + std::to_string(Quaternion.y) + " " + std::to_string(Quaternion.z) + " " + std::to_string(Quaternion.w));
-
     CurrentCamera->SetRotation(Quaternion);
 
     if (SlerpT >= 1.0f)
     {
         CurrentPoint++;
         SlerpT = 0.0f;
+    }
+
+    FrameCount++;
+    if (FrameCount > NUM_FRAMES)
+    {
+        TestFinished = true;
+
+        Profiler::Disable();
+
+        FILE* File = fopen(TestName.c_str(), "w");
+        if (File)
+        {
+            const GPUProfileSample* RayTracingSample   = Profiler::GetGPUSample("Ray Tracing");
+            const GPUProfileSample* RTBuildSample      = Profiler::GetGPUSample("RT Build Scene");
+            const GPUProfileSample* InlineRayGenSample = Profiler::GetGPUSample("Inline RayGen");
+            const GPUProfileSample* VRSSample          = Profiler::GetGPUSample("Generate VRS Image");
+            const GPUProfileSample* DispatchRaysSample = Profiler::GetGPUSample("Dispatch Rays");
+            const GPUProfileSample* ReconstructSample  = Profiler::GetGPUSample("RT Reconstruction Filter");
+            const GPUProfileSample* BilateralSample    = Profiler::GetGPUSample("RT Bilateral Filter");
+
+            const GPUProfileSample* FrameTime = Profiler::GetGPUFrameTimeSamples();
+
+            const auto PrintGPUSample = [](FILE* File, const Char* SampleName, const GPUProfileSample* Sample)
+            {
+                Float Avg = 0.0f;
+                Float Min = 0.0f;
+                Float Max = 0.0f;
+                Float Median = 0.0f;
+                if (Sample)
+                {
+                    Avg = Sample->GetAverage();
+                    Min = Sample->GetMin();
+                    Max = Sample->GetMax();
+                    Median = Sample->GetMedian();
+                }
+
+                fprintf(File, "%s: Avg=%.8f, Median=%.8f, Min=%.8f, Max=%.8f\n", SampleName, Avg, Median, Min, Max);
+            };
+
+            PrintGPUSample(File, "FrameTime", FrameTime);
+            PrintGPUSample(File, "Ray Tracing", RayTracingSample);
+            PrintGPUSample(File, "RT Build Scene", RTBuildSample);
+            PrintGPUSample(File, "Inline RayGen", InlineRayGenSample);
+            PrintGPUSample(File, "Generate VRS Image", VRSSample);
+            PrintGPUSample(File, "Dispatch Rays", DispatchRaysSample);
+            PrintGPUSample(File, "RT Reconstruction Filter", ReconstructSample);
+            PrintGPUSample(File, "RT Bilateral Filter", BilateralSample);
+
+            fclose(File);
+        }
+        else
+        {
+            LOG_ERROR("Failed to open file '" + TestName + "'");
+        }
+
+#if SCENE == 0
+        // Set camera for taking screenshots
+        CurrentCamera->SetPosition(-1.7f, 6.8f, -2.3f);
+        CurrentCamera->SetRotation(XMConvertToRadians(30.5f), XMConvertToRadians(14.2f), XMConvertToRadians(299.3f));
+#elif SCENE == 1
+        // Set camera for taking screenshots
+        CurrentCamera->SetPosition(-4.0f, 10.1f, 5.4f);
+        CurrentCamera->SetRotation(XMConvertToRadians(18.5f), XMConvertToRadians(166.7f), XMConvertToRadians(353.5f));
+#elif SCENE == 2
+        // Set camera for taking screenshots
+        CurrentCamera->SetPosition(-11.6f, 4.3f, 0.8f);
+        CurrentCamera->SetRotation(XMConvertToRadians(41.8f), XMConvertToRadians(95.4f), XMConvertToRadians(357.0f));
+#endif
     }
 }
 
@@ -1201,10 +1306,10 @@ bool Sandbox::TryLoadTrackFile(const char* InFilename)
     SavedPoints.Clear();
     SavedRotations.Clear();
 
-    TrackHeader Header;
     FILE* File = fopen(InFilename, "rb");
     if (File)
     {
+        TrackHeader Header;
         fread(&Header, sizeof(TrackHeader), 1, File);
 
         // TODO: Check errors

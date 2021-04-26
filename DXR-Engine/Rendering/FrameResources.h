@@ -106,7 +106,8 @@ struct FrameResources
     TRef<SamplerState> PointShadowSampler;
     TRef<SamplerState> IrradianceSampler;
 
-    TRef<TextureCube> Skybox;
+    TRef<TextureCube>  Skybox;
+    TRef<SamplerState> SkyboxSampler;
 
     TRef<Texture2D>    IntegrationLUT;
     TRef<SamplerState> IntegrationLUTSampler;

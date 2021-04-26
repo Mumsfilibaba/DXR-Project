@@ -2,6 +2,7 @@
 #include "Structs.hlsli"
 #include "RayTracingHelpers.hlsli"
 #include "Random.hlsli"
+#include "Halton.hlsli"
 
 #ifndef ENABLE_HALF_RES
     #define ENABLE_HALF_RES 0
@@ -10,27 +11,31 @@
 // Global RootSignature
 RaytracingAccelerationStructure Scene : register(t0);
 
-TextureCube<float4> Skybox : register(t1);
+Texture2D<float4> GBufferNormalTex   : register(t2);
+Texture2D<float4> GBufferDepthTex    : register(t3);
+Texture2D<float4> GBufferMaterialTex : register(t4);
 
-Texture2D<float4> GBufferAlbedoTex   : register(t2);
-Texture2D<float4> GBufferNormalTex   : register(t3);
-Texture2D<float4> GBufferDepthTex    : register(t4);
-Texture2D<float4> GBufferMaterialTex : register(t5);
+#if ENABLE_HALF_RES
+Texture2DArray<float4> BlueNoiseTex : register(t5);
 
-Texture2DArray<float4> BlueNoiseTex : register(t6);
+StructuredBuffer<RayTracingMaterial> Materials : register(t6);
 
-StructuredBuffer<RayTracingMaterial> Materials : register(t7);
+Texture2D<float> DirectionalShadow : register(t7);
 
 Texture2D<float4> MaterialTextures[1024] : register(t8);
+#else
+StructuredBuffer<RayTracingMaterial> Materials : register(t5);
 
-ConstantBuffer<Camera>        CameraBuffer : register(b0);
-ConstantBuffer<LightInfoData> LightInfo    : register(b1);
-ConstantBuffer<RandomData>    RandomBuffer : register(b2);
+Texture2D<float> DirectionalShadow : register(t6);
+
+Texture2D<float4> MaterialTextures[1024] : register(t7);
+#endif
+
+ConstantBuffer<Camera>     CameraBuffer : register(b0);
+ConstantBuffer<RandomData> RandomBuffer : register(b2);
 
 RWTexture2D<float4> ColorDepth : register(u0);
 RWTexture2D<float4> RayPDF     : register(u1);
-
-SamplerState SkyboxSampler : register(s0);
 
 [shader("raygeneration")]
 void RayGen()
@@ -45,11 +50,15 @@ void RayGen()
     uint2 FullResolution = DispatchDimensions.xy;
 #endif
     
+#if ENABLE_HALF_RES
     uint  FrameIndex = RandomBuffer.FrameIndex;
     uint2 NoiseCoord = TexCoord & 63;
     float BlueNoise  = BlueNoiseTex.Load(int4(NoiseCoord, FrameIndex, 0)).r;
-    uint  PixelIndex = (uint) (BlueNoise * 255.0f) % 4;
-    
+    uint  PixelIndex = (uint)(BlueNoise * 255.0f) % 4;
+#else
+    uint PixelIndex = 0;
+#endif
+
 #if ENABLE_HALF_RES
     uint2 BaseTexCoord = TexCoord * 2;
 #else
@@ -77,9 +86,9 @@ void RayGen()
         return;
     }
     
-    uint Seed = InitRandom(DispatchIndex.xy, DispatchDimensions.x, RandomBuffer.FrameIndex);
+    uint Seed = InitRandom(DispatchIndex.xy, 2560, RandomBuffer.FrameIndex);
     
-    float2 Xi = Hammersley(NextRandomInt(Seed) % 8192, 8192);
+    float2 Xi = Halton23(RandomBuffer.FrameIndex);
     float Rnd0 = NextRandom(Seed);
     float Rnd1 = NextRandom(Seed);
     Xi.x = frac(Xi.x + Rnd0);
@@ -100,7 +109,7 @@ void RayGen()
     float NdotL = saturate(dot(N, L));
     if (NdotL <= 0.0f)
     {
-        Xi = Hammersley(NextRandomInt(Seed) % 8192, 8192);
+        Xi = Halton23(RandomBuffer.FrameIndex);
         Rnd0 = NextRandom(Seed);
         Rnd1 = NextRandom(Seed);
         Xi.x = frac(Xi.x + Rnd0);
@@ -137,6 +146,7 @@ void RayGen()
         FinalColor = Li;
         FinalRay   = L * PayLoad.T;
         FinalPDF   = 1.0f / Spec_PDF;
+        FinalPDF   = isnan(FinalPDF) || isinf(FinalPDF) ? 0.0f : FinalPDF;
     }
     
     ColorDepth[TexCoord] = float4(FinalColor, GBufferDepth);

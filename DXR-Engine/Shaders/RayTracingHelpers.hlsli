@@ -85,7 +85,7 @@ void LoadVertexData(in TriangleHit HitData, in Vertex Vertices[3], out VertexDat
     float3 Normal   = (TriangleNormals[0]   * BarycentricCoords.x) + (TriangleNormals[1]   * BarycentricCoords.y) + (TriangleNormals[2]   * BarycentricCoords.z);
     float3 Tangent  = (TriangleTangents[0]  * BarycentricCoords.x) + (TriangleTangents[1]  * BarycentricCoords.y) + (TriangleTangents[2]  * BarycentricCoords.z);
     float2 TexCoord = (TriangleTexCoords[0] * BarycentricCoords.x) + (TriangleTexCoords[1] * BarycentricCoords.y) + (TriangleTexCoords[2] * BarycentricCoords.z);
-    TexCoord.y = -TexCoord.y;
+    TexCoord.y = 1.0f - TexCoord.y;
     
     Vertex.Position  = Position;
     Vertex.Normal    = normalize(Normal);

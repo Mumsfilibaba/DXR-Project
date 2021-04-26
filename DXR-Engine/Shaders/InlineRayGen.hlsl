@@ -3,6 +3,7 @@
 #include "RayTracingHelpers.hlsli"
 #include "Random.hlsli"
 #include "ShadowHelpers.hlsli"
+#include "Halton.hlsli"
 
 #define MAX_LIGHTS 64
 
@@ -30,10 +31,10 @@ Texture2DArray<float4> BlueNoiseTex : register(t6);
 
 StructuredBuffer<RayTracingMaterial> Materials : register(t7);
 
-StructuredBuffer<Vertex> VertexBuffers[1024] : register(t8);
-ByteAddressBuffer        IndexBuffers[1024]  : register(t1032);
+Texture2D<float4> MaterialTextures[1024] : register(t8);
 
-Texture2D<float4> MaterialTextures[1024] : register(t2056);
+StructuredBuffer<Vertex> VertexBuffers[1024] : register(t1032);
+ByteAddressBuffer        IndexBuffers[1024]  : register(t2056);
 
 ConstantBuffer<Camera>        CameraBuffer : register(b0);
 ConstantBuffer<RandomData>    RandomBuffer : register(b1);
@@ -66,28 +67,31 @@ SamplerState MaterialSampler : register(s1);
 
 SamplerComparisonState ShadowMapSampler : register(s2);
 
-float3 ShadePoint(float3 WorldPosition, float3 N, float3 V, float3 Albedo, float AO, float Metallic, float Roughness)
+float3 ShadePoint(float3 WorldPosition, float3 N, float3 V, float3 Albedo, float Metallic, float Roughness)
 {
-    const float FinalRoughness = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
-
     float3 L0 = Float3(0.0f);
     float3 F0 = Float3(0.04f);
     F0 = lerp(F0, Albedo, Metallic);
     
     // Pointlights
     {
-        for (uint i = 0; i < LightInfo.NumPointLights; i++)
+        for (uint i = 0; i < MAX_LIGHTS; i++)
         {
-            const PointLight Light           = PointLights[i];
+            if (i >= LightInfo.NumPointLights)
+            {
+                break;
+            }
+        
+            const PointLight Light = PointLights[i];
             const PositionRadius LightPosRad = PointLightsPosRad[i];
 
             float3 L = LightPosRad.Position - WorldPosition;
             float DistanceSqrd = dot(L, L);
-            float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
+            float Attenuation = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
             L = normalize(L);
 
             float3 IncidentRadiance = Light.Color * Attenuation;
-            IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, Albedo, FinalRoughness, Metallic);
+            IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, Albedo, Roughness, Metallic);
             
             L0 += IncidentRadiance;
         }
@@ -120,14 +124,13 @@ float3 ShadePoint(float3 WorldPosition, float3 N, float3 V, float3 Albedo, float
             float3 L = normalize(-Light.Direction);
             
             float3 IncidentRadiance = Light.Color;
-            IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, Albedo, FinalRoughness, Metallic);
+            IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, Albedo, Roughness, Metallic);
             
             L0 += IncidentRadiance * ShadowFactor;
         }
     }
 
-    float3 Ambient = Float3(1.0f) * Albedo * AO;
-    return Ambient + L0;
+    return L0;
 }
 
 struct PSOutput
@@ -138,9 +141,9 @@ struct PSOutput
 
 PSOutput PSMain(VSOutput Input)
 {
-    uint Width;
-    uint Height;
-    GBufferDepthTex.GetDimensions(Width, Height);
+    uint Width  = 2560;
+    uint Height = 1377;
+    //GBufferDepthTex.GetDimensions(Width, Height);
     
     // Half Resolution
     uint2 TexCoord = (uint2)floor(Input.Position.xy);
@@ -154,20 +157,26 @@ PSOutput PSMain(VSOutput Input)
     uint  HalfHeight = Height;
 #endif
     
+#if ENABLE_HALF_RES
     uint  FrameIndex = RandomBuffer.FrameIndex;
     uint2 NoiseCoord = TexCoord & 63;
     float BlueNoise  = BlueNoiseTex.Load(int4(NoiseCoord, FrameIndex, 0)).r;
     uint  PixelIndex = (uint)(BlueNoise * 255.0f) % 4;
+#else
+    uint PixelIndex = 0;
+#endif
     
     uint2 GBufferCoord = FullTexCoord + uint2(PixelIndex & 1, (PixelIndex >> 1) & 1);
     
-    float  GBufferDepth    = GBufferDepthTex[GBufferCoord];
-    float3 GBufferNormal   = GBufferNormalTex[GBufferCoord].rgb;
+    float  GBufferDepth    = GBufferDepthTex.Load(int3(GBufferCoord, 0));
+    float3 GBufferNormal   = GBufferNormalTex.Load(int3(GBufferCoord, 0)).rgb;
     float3 GBufferMaterial = GBufferMaterialTex.Load(int3(GBufferCoord, 0)).rgb;
     
-    float Roughness = GBufferMaterial.r;
+    float2 UV = Input.TexCoord;
     
-    float3 WorldPosition = PositionFromDepth(GBufferDepth, Input.TexCoord, CameraBuffer.ViewProjectionInverse);
+    float3 WorldPosition = PositionFromDepth(GBufferDepth, UV, CameraBuffer.ViewProjectionInverse);
+    
+    float Roughness = GBufferMaterial.r;
     
     float3 N = UnpackNormal(GBufferNormal);
     float3 V = normalize(CameraBuffer.Position - WorldPosition);
@@ -180,9 +189,9 @@ PSOutput PSMain(VSOutput Input)
         return Output;
     }
     
-    uint Seed = InitRandom(TexCoord.xy, HalfWidth, RandomBuffer.FrameIndex * max(PixelIndex, 1));
+    uint Seed = InitRandom(TexCoord.xy, 2560, RandomBuffer.FrameIndex);
     
-    float2 Xi  = Hammersley(NextRandomInt(Seed) % 8192, 8192);
+    float2 Xi  = Halton23(RandomBuffer.FrameIndex);
     float Rnd0 = NextRandom(Seed);
     float Rnd1 = NextRandom(Seed);
     Xi.x = frac(Xi.x + Rnd0);
@@ -203,7 +212,7 @@ PSOutput PSMain(VSOutput Input)
     float NdotL = saturate(dot(N, L));
     if (NdotL <= 0.0f)
     {
-        Xi   = Hammersley(NextRandomInt(Seed) % 8192, 8192);
+        Xi   = Halton23(RandomBuffer.FrameIndex);
         Rnd0 = NextRandom(Seed);
         Rnd1 = NextRandom(Seed);
         Xi.x = frac(Xi.x + Rnd0);
@@ -239,8 +248,6 @@ PSOutput PSMain(VSOutput Input)
             HitData.PrimitiveIndex = Query.CommittedPrimitiveIndex();
             HitData.Barycentrics   = Query.CommittedTriangleBarycentrics();
 
-            const float3 HitV = normalize(-Query.WorldRayDirection());
-        
             const uint BaseIndex  = CalculateBaseIndex(HitData);
             uint3 TriangleIndices = IndexBuffers[HitData.HitGroupIndex].Load3(BaseIndex);
         
@@ -253,31 +260,39 @@ PSOutput PSMain(VSOutput Input)
         
             VertexData Vertex;
             LoadVertexData(HitData, Vertices, Vertex);
-        
+            
+            const float3 HitV = normalize(-Query.WorldRayDirection());
+            float LOD = 2.0f;
+            
             RayTracingMaterial Material = Materials[HitData.InstanceID];
             
-            float4 AlbedoTex = MaterialTextures[Material.AlbedoTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
+            float4 AlbedoTex = MaterialTextures[Material.AlbedoTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, LOD);
             float3 HitAlbedo = ApplyGamma(AlbedoTex.rgb) * Material.Albedo;
         
-            float4 NormalTex    = MaterialTextures[Material.NormalTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
+            float4 NormalTex    = MaterialTextures[Material.NormalTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, LOD);
             float3 MappedNormal = UnpackNormal(NormalTex.rgb);
         
             float3 HitN = ApplyNormalMapping(MappedNormal, Vertex.Normal, Vertex.Tangent, Vertex.Bitangent);
         
-            float4 SpecularTex = MaterialTextures[Material.SpecularTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
+            float4 SpecularTex = MaterialTextures[Material.SpecularTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, LOD);
             float HitAO        = SpecularTex.r * Material.AO;
             float HitRoughness = clamp(SpecularTex.g * Material.Roughness, MIN_ROUGHNESS, MAX_ROUGHNESS);
             float HitMetallic  = SpecularTex.b * Material.Metallic;
         
-            float3 Emissive = Float3(0.0f);
-            if (Material.EmissiveTexID >= 0)
-            {
-                float3 EmissiveTex = MaterialTextures[Material.EmissiveTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, 0);
-                Emissive = EmissiveTex.rgb * 2.0f;
-            }
+            float3 WorldHitPosition = Ray.Origin + L * Query.CommittedRayT();
+            float3 L0 = ShadePoint(WorldHitPosition, HitN, HitV, HitAlbedo, HitMetallic, HitRoughness);
             
-            float3 WorldHitPosition = Query.WorldRayOrigin() + Query.WorldRayDirection() * Query.CommittedRayT();
-            FinalColor = Emissive + ShadePoint(WorldHitPosition, HitN, HitV, HitAlbedo, HitAO, HitMetallic, HitRoughness);
+            //float3 Emissive = Float3(0.0f);
+            //if (Material.EmissiveTexID >= 0)
+            //{
+            //    float3 EmissiveTex = MaterialTextures[Material.EmissiveTexID].SampleLevel(MaterialSampler, Vertex.TexCoord, LOD);
+            //    Emissive = EmissiveTex.rgb;
+            //}
+            
+            //L0 += Emissive * 2.0f;
+            
+            float3 Ambient = Float3(1.0f) * HitAlbedo * HitAO;
+            FinalColor = Ambient + L0;
         }
         else
         {

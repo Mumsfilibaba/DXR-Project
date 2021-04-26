@@ -133,27 +133,19 @@ void Camera::SetPosition(const XMFLOAT3& InPosition)
     Position = InPosition;
 }
 
-void Camera::SetRotation(const XMFLOAT4& InRotation)
+void Camera::SetRotation(Float Pitch, Float Yaw, Float Roll)
 {
-    XMVECTOR XmQuaternion = XMLoadFloat4(&InRotation);
-
-    XMMATRIX XmRotationMatrix = XMMatrixRotationQuaternion(XmQuaternion);
-
-    XMVECTOR XmForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-    XmForward = XMVector3Normalize(XMVector3Transform(XmForward, XmRotationMatrix));
-
-    XMVECTOR XmUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMVECTOR XmRight = XMVector3Normalize(XMVector3Cross(XmForward, XmUp));
-    XmUp = XMVector3Normalize(XMVector3Cross(XmRight, XmForward));
-
-    Rotation = InRotation;
-
-    XMStoreFloat3(&Forward, XmForward);
-    XMStoreFloat3(&Up, XmUp);
-    XMStoreFloat3(&Right, XmRight);
+    XMVECTOR Quaternion = XMQuaternionRotationRollPitchYaw(Pitch, Yaw, Roll);
+    InternalSetRotation(Quaternion);
 }
 
-// https://stackoverflow.com/questions/60350349/directx-get-pitch-yaw-roll-from-xmmatrix
+void Camera::SetRotation(const XMFLOAT4& InRotation)
+{
+    XMVECTOR Quaternion = XMLoadFloat4(&InRotation);
+    InternalSetRotation(Quaternion);
+}
+
+// Source: https://stackoverflow.com/questions/60350349/directx-get-pitch-yaw-roll-from-xmmatrix
 XMFLOAT3 Camera::GetRotationInEulerAngles() const
 {
     XMVECTOR Quaternion = XMLoadFloat4(&Rotation);
@@ -167,4 +159,22 @@ XMFLOAT3 Camera::GetRotationInEulerAngles() const
     Euler.z = (float)atan2(Matrix._21, Matrix._22);
 
     return Euler;
+}
+
+void Camera::InternalSetRotation(XMVECTOR Quaternion)
+{
+    XMMATRIX XmRotationMatrix = XMMatrixRotationQuaternion(Quaternion);
+
+    XMVECTOR XmForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+    XmForward = XMVector3Normalize(XMVector3Transform(XmForward, XmRotationMatrix));
+
+    XMVECTOR XmUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    XMVECTOR XmRight = XMVector3Normalize(XMVector3Cross(XmForward, XmUp));
+    XmUp = XMVector3Normalize(XMVector3Cross(XmRight, XmForward));
+
+    XMStoreFloat4(&Rotation, Quaternion);
+
+    XMStoreFloat3(&Forward, XmForward);
+    XMStoreFloat3(&Up, XmUp);
+    XMStoreFloat3(&Right, XmRight);
 }

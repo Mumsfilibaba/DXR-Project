@@ -37,8 +37,14 @@ private:
     bool Saved = false;
     bool Loaded = false;
 
+    bool TestFinished = false;
+
     char Filename[256];
 
     TArray<XMFLOAT3> SavedPoints;
     TArray<XMFLOAT4> SavedRotations;
+
+    std::string TestName;
+
+    UInt32 FrameCount = 0;
 };
