@@ -22,10 +22,11 @@
 // Scene 0 - Sponza
 // Scene 1 - SunTemple
 // Scene 2 - Bistro
-#define SCENE 0
+#define SCENE 2
 
 #define NUM_FRAMES 5000
 
+#define ENABLE_SCREEN_TEST  1
 #define ENABLE_TRACK        1
 #define ENABLE_POINT_LIGHTS 1
 
@@ -992,6 +993,21 @@ Bool Sandbox::Init()
 
 #endif
 
+    UInt32 TriangleCount = 0;
+    for (ModelData Model : SceneBuildData.Models)
+    {
+        TriangleCount += Model.Mesh.Indices.Size() / 3;
+    }
+
+    UInt32 LightCount = CurrentScene->GetLights().Size() - 1;
+    UInt32 MaterialCount = SceneBuildData.Materials.Size();
+
+    LOG_INFO("Scene Complexity: Num triangles=" + std::to_string(TriangleCount) + ", Num Point lights=" + std::to_string(LightCount) + ", Num Materials=" + std::to_string(MaterialCount));
+
+#if ENABLE_SCREEN_TEST
+    FrameCount = NUM_FRAMES;
+#endif
+
     return true;
 }
 
@@ -1268,8 +1284,10 @@ void Sandbox::TrackMode()
                     Median = Sample->GetMedian() * NanoToMilli;
                 }
 
-                fprintf(File, "%s: Avg=%.8f, Median=%.8f, Min=%.8f, Max=%.8f\n", SampleName, Avg, Median, Min, Max);
+                fprintf(File, "%s: %.3f & %.3f & %.3f & %.3f\n", SampleName, Avg, Median, Min, Max);
             };
+
+            fprintf(File, "Stage | Avg | Median | Min | Max\n");
 
             PrintGPUSample(File, "FrameTime", FrameTime, false);
             PrintGPUSample(File, "Ray Tracing", RayTracingSample);

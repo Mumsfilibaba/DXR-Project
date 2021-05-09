@@ -13,7 +13,7 @@
 // 3 - Inline HalfRes
 // 4 - Inline VRS Roughness
 // 5 - Inline VRS Grazing Angles
-#define TEST 1
+#define TEST 5
 
 #ifndef TEST
     #error No test defined
@@ -25,7 +25,7 @@
     #define ENABLE_INLINE_RAY_GEN 0
 #endif
 
-#if TEST == 1 || TEST == 3
+#if TEST == 1 || TEST == 3 || TEST == 4 || TEST == 5
     #define ENABLE_HALF_RES 1
 #else
     #define ENABLE_HALF_RES 0

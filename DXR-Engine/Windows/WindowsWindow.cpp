@@ -97,11 +97,11 @@ void WindowsWindow::Show(Bool Maximized)
     {
         if (Maximized)
         {
-            ::ShowWindow(hWindow, SW_NORMAL);
+            ::ShowWindow(hWindow, SW_SHOWMAXIMIZED);
         }
         else
         {
-            ::ShowWindow(hWindow, SW_SHOWMAXIMIZED);
+            ::ShowWindow(hWindow, SW_NORMAL);
         }
     }
 }

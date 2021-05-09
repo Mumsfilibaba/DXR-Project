@@ -25,7 +25,8 @@ Bool RayTracer::Init(FrameResources& Resources)
     TArray<ShaderDefine> Defines =
     {
         { "ENABLE_HALF_RES", std::to_string(ENABLE_HALF_RES) },
-        { "ENABLE_VRS", std::to_string(VRS_IMAGE_ROUGHNESS) }
+        { "ENABLE_VRS", std::to_string(ENABLE_VRS) },
+        { "VRS_IMAGE_ROUGHNESS", std::to_string(VRS_IMAGE_ROUGHNESS) }
     };
 
     TArray<UInt8> Code;
@@ -548,9 +549,9 @@ void RayTracer::Render(CommandList& CmdList, FrameResources& Resources, LightSet
 #endif
         CmdList.SetUnorderedAccessView(ShadingRateGenShader.Get(), ShadingRateImage->GetUnorderedAccessView(), 0);
 
-        XMUINT3 Threads = ShadingRateGenShader->GetThreadGroupXYZ();
-        UInt32 ThreadsX = Math::DivideByMultiple(ShadingRateImage->GetWidth(), Threads.x);
-        UInt32 ThreadsY = Math::DivideByMultiple(ShadingRateImage->GetHeight(), Threads.y);
+        //XMUINT3 Threads = ShadingRateGenShader->GetThreadGroupXYZ();
+        UInt32 ThreadsX = ShadingRateImage->GetWidth();// Math::DivideByMultiple(ShadingRateImage->GetWidth(), Threads.x);
+        UInt32 ThreadsY = ShadingRateImage->GetHeight();// Math::DivideByMultiple(ShadingRateImage->GetHeight(), Threads.y);
         CmdList.Dispatch(ThreadsX, ThreadsY, 1);
 
         CmdList.TransitionTexture(ShadingRateImage.Get(), EResourceState::UnorderedAccess, EResourceState::ShadingRateSource);

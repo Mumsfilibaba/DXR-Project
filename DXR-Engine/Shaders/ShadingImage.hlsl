@@ -3,14 +3,15 @@
 #include "Helpers.hlsli"
 
 // NOTE: Needs to change based on VRS image tile size
-#define NUM_THREADS 4
+#define NUM_THREADS       (16)
+#define NUM_TOTAL_THREADS (NUM_THREADS * NUM_THREADS)
 
-#ifndef TRACE_HALF_RES 
-    #define TRACE_HALF_RES 0
+#ifndef ENABLE_HALF_RES 
+    #define ENABLE_HALF_RES 1
 #endif
 
 #ifndef VRS_IMAGE_ROUGHNESS 
-    #define VRS_IMAGE_ROUGHNESS 0
+    #define VRS_IMAGE_ROUGHNESS 1
 #endif
 
 Texture2D<float4> GBufferMaterialTex : register(t0);
@@ -21,6 +22,8 @@ RWTexture2D<uint> Output : register(u0);
 
 ConstantBuffer<Camera> CameraBuffer : register(b0);
 
+groupshared float Averages[NUM_TOTAL_THREADS];
+
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(ComputeShaderInput Input)
 {
@@ -28,53 +31,74 @@ void Main(ComputeShaderInput Input)
     uint Height;
     Output.GetDimensions(Width, Height);
     
-    const uint2 Resolution = uint2(CameraBuffer.Width, CameraBuffer.Height);
-    
-#if TRACE_HALF_RES
-    const int TileSize = 16 * 2;
+    const int2 Resolution = int2(CameraBuffer.Width, CameraBuffer.Height);
+    const int2 Group = int2(Input.GroupID.xy);
+    const uint GroupThreadIndex = Input.GroupThreadID.y * NUM_THREADS + Input.GroupThreadID.x;
+
+#if ENABLE_HALF_RES
+    const int TileSize = 2;
 #else
-    const int TileSize = 16;
+    const int TileSize = 1;
 #endif
     
-    int2 OutputTexCoord = int2(Input.DispatchThreadID.xy);
-    int2 TexCoord = OutputTexCoord * TileSize;
+    const int2 Pixel = int2(Input.DispatchThreadID.xy) * TileSize;
     
 #if VRS_IMAGE_ROUGHNESS
-    float Avg = 0.0f;
+    float LocalAvg = 0.0f;
+    
+    [unroll]
     for (int y = 0; y < TileSize; y++)
     {
+        [unroll]
         for (int x = 0; x < TileSize; x++)
         {
-            Avg += GBufferMaterialTex[TexCoord + int2(x, y)].r;
+            LocalAvg += GBufferMaterialTex[Pixel + int2(x, y)].r;
         }
     }
     
-    Avg = Avg / float(TileSize * TileSize);
+    LocalAvg = LocalAvg / float(TileSize * TileSize);
+    Averages[GroupThreadIndex] = LocalAvg;
     
-    uint Result = SHADING_RATE_1x1;
-    if (Avg > 0.7f)
+    GroupMemoryBarrierWithGroupSync();
+    
+	[unroll(NUM_TOTAL_THREADS)]
+    for (uint i = NUM_TOTAL_THREADS / 2; i > 0; i >>= 1)
     {
-        Result = SHADING_RATE_4x4;
+        if (GroupThreadIndex < i)
+        {
+            Averages[GroupThreadIndex] += Averages[GroupThreadIndex + i];
+        }
+
+        GroupMemoryBarrierWithGroupSync();
     }
-    else if (Avg > 0.35f)
+    
+    if (GroupThreadIndex == 0)
     {
-        Result = SHADING_RATE_2x4;
+        float Avg = Averages[0] / (float)NUM_TOTAL_THREADS;
+    
+        uint ShadingRate = SHADING_RATE_1x1;
+        if (Avg > 0.75f)
+        {
+            ShadingRate = SHADING_RATE_2x2;
+        }
+        else if (Avg > 0.5f)
+        {
+            ShadingRate = SHADING_RATE_2x1;
+        }
+    
+        Output[Group] = ShadingRate;
     }
-    else if (Avg > 0.15f)
-    {
-        Result = SHADING_RATE_2x2;
-    }
-    else if (Avg > 0.075f)
-    {
-        Result = SHADING_RATE_2x1;
-    }
+    
 #else
-    float Avg = 0.0f;
+    float LocalAvg = 0.0f;
+    
+    [unroll]
     for (int y = 0; y < TileSize; y++)
     {
+        [unroll]
         for (int x = 0; x < TileSize; x++)
         {
-            int2 CurrentTexCoord = TexCoord + int2(x, y);
+            int2 CurrentTexCoord = Pixel + int2(x, y);
             float2 UV = float2(CurrentTexCoord) / float2(Resolution);
             
             float  Depth = GBufferDepthTex[CurrentTexCoord];
@@ -86,22 +110,41 @@ void Main(ComputeShaderInput Input)
             float3 V = normalize(CameraBuffer.Position - Position);
             
             float VdotN = 1.0 - saturate(dot(V, N));
-            Avg += VdotN;
+            LocalAvg += VdotN;
         }
     }
     
-    Avg = Avg / float(TileSize * TileSize);
+    LocalAvg = LocalAvg / float(TileSize * TileSize);
+    Averages[GroupThreadIndex] = LocalAvg;
     
-    uint Result = SHADING_RATE_2x2;
-    if (Avg > 0.7f)
+    GroupMemoryBarrierWithGroupSync();
+    
+    [unroll(NUM_TOTAL_THREADS)]
+    for (uint i = NUM_TOTAL_THREADS / 2; i > 0; i >>= 1)
     {
-        Result = SHADING_RATE_1x1;
+        if (GroupThreadIndex < i)
+        {
+            Averages[GroupThreadIndex] += Averages[GroupThreadIndex + i];
+        }
+
+        GroupMemoryBarrierWithGroupSync();
     }
-    else if (Avg > 0.4f)
+    
+    if (GroupThreadIndex == 0)
     {
-        Result = SHADING_RATE_2x1;
+        float Avg = Averages[0] / (float)NUM_TOTAL_THREADS;
+        
+        uint ShadingRate = SHADING_RATE_2x2;
+        if (Avg > 0.5f)
+        {
+            ShadingRate = SHADING_RATE_1x1;
+        }
+        else if (Avg > 0.25f)
+        {
+            ShadingRate = SHADING_RATE_2x1;
+        }
+    
+        Output[Group] = ShadingRate;
     }
 #endif
-    
-    Output[OutputTexCoord] = Result;
 }
