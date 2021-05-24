@@ -98,6 +98,8 @@ struct LightSetup
     // NOTE: Only one directional light
     DirectionalLightData DirectionalLightData;
     bool DirectionalLightDataDirty = true;
+
+    float CascadeSplitLambda;
     
     TRef<ConstantBuffer> DirectionalLightsBuffer;
 

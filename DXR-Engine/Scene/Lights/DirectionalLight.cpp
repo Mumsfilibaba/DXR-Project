@@ -29,7 +29,7 @@ DirectionalLight::~DirectionalLight()
 
 void DirectionalLight::UpdateCascades(Camera& Camera)
 {
-    XMVECTOR XmDirection = XMVectorSet(0.0, -1.0f, 0.0f, 0.0f);;
+    XMVECTOR XmDirection = XMVectorSet(0.0, -1.0f, 0.0f, 0.0f);
     XMMATRIX XmRotation  = XMMatrixRotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
     XMVECTOR XmOffset    = XMVector3Transform(XmDirection, XmRotation);
     XmDirection = XMVector3Normalize(XmOffset);

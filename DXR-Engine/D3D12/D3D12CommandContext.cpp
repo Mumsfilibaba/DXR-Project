@@ -258,7 +258,7 @@ bool D3D12CommandContext::Init()
     }
 
     TArray<uint8> Code;
-    if (!gD3D12ShaderCompiler->CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!GD3D12ShaderCompiler->CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
         
@@ -284,7 +284,7 @@ bool D3D12CommandContext::Init()
         GenerateMipsTex2D_PSO->SetName("GenerateMipsTex2D Gen PSO");
     }
 
-    if (!gD3D12ShaderCompiler->CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!GD3D12ShaderCompiler->CompileFromFile("../DXR-Engine/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
         Debug::DebugBreak();

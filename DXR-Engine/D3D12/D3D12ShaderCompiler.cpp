@@ -255,7 +255,7 @@ private:
     ULONG  References;
 };
 
-D3D12ShaderCompiler* gD3D12ShaderCompiler = nullptr;
+D3D12ShaderCompiler* GD3D12ShaderCompiler = nullptr;
 
 D3D12ShaderCompiler::D3D12ShaderCompiler()
     : IShaderCompiler()
@@ -265,12 +265,12 @@ D3D12ShaderCompiler::D3D12ShaderCompiler()
     , DxIncludeHandler(nullptr)
     , DxCompilerDLL()
 {
-    gD3D12ShaderCompiler = this;
+    GD3D12ShaderCompiler = this;
 }
 
 D3D12ShaderCompiler::~D3D12ShaderCompiler()
 {
-    gD3D12ShaderCompiler = nullptr;
+    GD3D12ShaderCompiler = nullptr;
 
     DxCompiler.Reset();
     DxLibrary.Reset();
@@ -289,6 +289,8 @@ bool D3D12ShaderCompiler::CompileFromFile(
     EShaderModel ShaderModel, 
     TArray<uint8>& Code)
 {
+    Code.Clear();
+
     std::wstring WideFilePath   = ConvertToWide(FilePath);
     std::wstring WideEntrypoint = ConvertToWide(EntryPoint);
 

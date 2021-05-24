@@ -177,7 +177,7 @@ bool D3D12BaseShader::GetShaderReflection(D3D12BaseShader* Shader)
     Assert(Shader != nullptr);
 
     TComPtr<ID3D12ShaderReflection> Reflection;
-    if (!gD3D12ShaderCompiler->GetReflection(Shader, &Reflection))
+    if (!GD3D12ShaderCompiler->GetReflection(Shader, &Reflection))
     {
         return false;
     }
@@ -194,7 +194,7 @@ bool D3D12BaseShader::GetShaderReflection(D3D12BaseShader* Shader)
         return false;
     }
 
-    if (gD3D12ShaderCompiler->HasRootSignature(Shader))
+    if (GD3D12ShaderCompiler->HasRootSignature(Shader))
     {
         Shader->ContainsRootSignature = true;
     }
@@ -207,7 +207,7 @@ bool D3D12BaseRayTracingShader::GetRayTracingShaderReflection(D3D12BaseRayTracin
     Assert(Shader != nullptr);
 
     TComPtr<ID3D12LibraryReflection> Reflection;
-    if (!gD3D12ShaderCompiler->GetLibraryReflection(Shader, &Reflection))
+    if (!GD3D12ShaderCompiler->GetLibraryReflection(Shader, &Reflection))
     {
         return false;
     }
@@ -259,7 +259,7 @@ bool D3D12BaseRayTracingShader::GetRayTracingShaderReflection(D3D12BaseRayTracin
 bool D3D12BaseComputeShader::Init()
 {
     TComPtr<ID3D12ShaderReflection> Reflection;
-    if (!gD3D12ShaderCompiler->GetReflection(this, &Reflection))
+    if (!GD3D12ShaderCompiler->GetReflection(this, &Reflection))
     {
         return false;
     }
@@ -276,7 +276,7 @@ bool D3D12BaseComputeShader::Init()
         return false;
     }
 
-    if (gD3D12ShaderCompiler->HasRootSignature(this))
+    if (GD3D12ShaderCompiler->HasRootSignature(this))
     {
         ContainsRootSignature = true;
     }

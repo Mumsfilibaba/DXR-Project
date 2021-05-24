@@ -287,10 +287,10 @@ FORCEINLINE ConstantBuffer* CreateConstantBuffer(uint32 Size, uint32 Flags, ERes
     return GRenderLayer->CreateConstantBuffer(Size, Flags, InitialState, InitialData);
 }
 
-template<typename T>
+template<typename TSize>
 FORCEINLINE ConstantBuffer* CreateConstantBuffer(uint32 Flags, EResourceState InitialState, const ResourceData* InitialData)
 {
-    constexpr uint32 SIZE_IN_BYTES = sizeof(T);
+    constexpr uint32 SIZE_IN_BYTES = sizeof(TSize);
     return CreateConstantBuffer(SIZE_IN_BYTES, Flags, InitialState, InitialData);
 }
 
@@ -302,6 +302,17 @@ FORCEINLINE StructuredBuffer* CreateStructuredBuffer(
     const ResourceData* InitialData)
 {
     return GRenderLayer->CreateStructuredBuffer(Stride, NumElements, Flags, InitialState, InitialData);
+}
+
+template<typename TStride>
+FORCEINLINE StructuredBuffer* CreateStructuredBuffer(
+    uint32 NumElements,
+    uint32 Flags,
+    EResourceState InitialState,
+    const ResourceData* InitialData)
+{
+    constexpr uint32 STRIDE_IN_BYTES = sizeof(TStride);
+    return CreateStructuredBuffer(STRIDE_IN_BYTES, NumElements, Flags, InitialState, InitialData);
 }
 
 FORCEINLINE RayTracingScene* CreateRayTracingScene(uint32 Flags, RayTracingGeometryInstance* Instances, uint32 NumInstances)

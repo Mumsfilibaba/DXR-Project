@@ -116,11 +116,11 @@ void WindowsWindow::Show(bool Maximized)
     {
         if (Maximized)
         {
-            ShowWindow(Window, SW_NORMAL);
+            ShowWindow(Window, SW_SHOWMAXIMIZED);
         }
         else
         {
-            ShowWindow(Window, SW_SHOWMAXIMIZED);
+            ShowWindow(Window, SW_NORMAL);
         }
     }
 }

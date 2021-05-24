@@ -168,6 +168,8 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
             DirectionalLightData.FarPlane  = CurrentLight->GetShadowFarPlane();
             DirectionalLightData.LightSize = CurrentLight->GetSize();
 
+            CascadeSplitLambda = CurrentLight->GetCascadeSplitLambda();
+
             DirectionalLightDataDirty = true;
         }
     }

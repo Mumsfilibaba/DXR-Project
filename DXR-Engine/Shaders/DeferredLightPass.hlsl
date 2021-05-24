@@ -24,7 +24,7 @@
 
 #define BLEND_CASCADES  (1)
 #define ROTATE_SAMPLES  (1)
-#define ENABLE_PCSS     (0)
+#define ENABLE_PCSS     (1)
 #define BAND_PERCENTAGE (0.2f)
 
 Texture2D<float4>       AlbedoTex             : register(t0, space0);

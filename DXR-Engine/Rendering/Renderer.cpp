@@ -38,7 +38,6 @@ TConsoleVariable<bool> GVSyncEnabled(false);
 TConsoleVariable<bool> GFrustumCullEnabled(true);
 TConsoleVariable<bool> GRayTracingEnabled(true);
 
-
 struct CameraBufferDesc
 {
     XMFLOAT4X4 ViewProjection;
@@ -340,7 +339,7 @@ void Renderer::Tick(const Scene& Scene)
     // Init dirlight task
     const auto RenderDirShadows = [&]()
     {
-        Renderer::ShadowMapRenderer.RenderDirectionalLightShadows(DirShadowCmdList, LightSetup, Scene);
+        Renderer::ShadowMapRenderer.RenderDirectionalLightShadows(DirShadowCmdList, LightSetup, Resources, Scene);
     };
 
     DirShadowTask.Delegate.BindLambda(RenderDirShadows);

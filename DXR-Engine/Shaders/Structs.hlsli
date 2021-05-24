@@ -1,7 +1,7 @@
 #ifndef STRUCTS_HLSLI
 #define STRUCTS_HLSLI
 
-#define NUM_SHADOW_CASCADES 4
+#define NUM_SHADOW_CASCADES (4)
 
 struct ComputeShaderInput
 {
@@ -46,6 +46,18 @@ struct ShadowPointLight
     float  MaxShadowBias;
     float  Padding0;
     float  Padding1;
+};
+
+struct SCascadeMatrices
+{
+    float4x4 ViewProj;
+    float4x4 View;
+};
+
+struct SCascadeGenerationInfo
+{
+    float3 LightDirection;
+    float CascadeSplitLambda;
 };
 
 struct DirectionalLight

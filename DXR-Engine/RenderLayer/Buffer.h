@@ -57,6 +57,7 @@ enum EBufferFlags : uint32
     BufferFlag_Upload  = FLAG(2), // Upload Memory
     BufferFlag_UAV     = FLAG(3), // Can be used in UseUnorderedAccessViews
     BufferFlag_SRV     = FLAG(4), // Can be used in UseShaderResourceViews
+    BufferFlags_RWBuffer = BufferFlag_UAV | BufferFlag_SRV
 };
 
 class Buffer : public Resource

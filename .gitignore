@@ -22,3 +22,4 @@ packages/
 
 # macos files
 *.DS_Store
+*.txt

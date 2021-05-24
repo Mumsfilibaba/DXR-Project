@@ -500,7 +500,7 @@ void DeferredRenderer::Release()
     ReduceDepthShader.Reset();
 }
 
-void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene)
+void DeferredRenderer::RenderPrePass(CommandList& CmdList, FrameResources& FrameResources, const Scene& Scene)
 {
     const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
@@ -564,6 +564,7 @@ void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources&
 
         // Perform the first reduction
         CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
 
         CmdList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
 
@@ -600,6 +601,7 @@ void DeferredRenderer::RenderPrePass(CommandList& CmdList, const FrameResources&
         CmdList.Dispatch(ThreadsX, ThreadsY, 1);
 
         CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Depth Reduction");
