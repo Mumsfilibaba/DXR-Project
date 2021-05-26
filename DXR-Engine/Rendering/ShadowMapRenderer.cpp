@@ -14,13 +14,6 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
-struct PerShadowMap
-{
-    XMFLOAT4X4 Matrix;
-    XMFLOAT3   Position;
-    float      FarPlane;
-};
-
 bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResources)
 {
     if (!CreateShadowMaps(LightSetup))
@@ -28,20 +21,22 @@ bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         return false;
     }
 
-    PerShadowMapBuffer = CreateConstantBuffer<PerShadowMap>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
-    if (!PerShadowMapBuffer)
-    {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        PerShadowMapBuffer->SetName("PerShadowMap Buffer");
-    }
 
-    // Linear Shadow Maps
     TArray<uint8> ShaderCode;
+    
+    // Point Shadow Maps
     {
+        PerShadowMapBuffer = CreateConstantBuffer<SPerShadowMap>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+        if (!PerShadowMapBuffer)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            PerShadowMapBuffer->SetName("Per ShadowMap Buffer");
+        }
+
         if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadowMap.hlsl", "Point_VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
             Debug::DebugBreak();
@@ -56,7 +51,7 @@ bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         }
         else
         {
-            PointLightVertexShader->SetName("Linear ShadowMap VertexShader");
+            PointLightVertexShader->SetName("Point ShadowMap VertexShader");
         }
 
         if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadowMap.hlsl", "Point_PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
@@ -73,7 +68,7 @@ bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         }
         else
         {
-            PointLightPixelShader->SetName("Linear ShadowMap PixelShader");
+            PointLightPixelShader->SetName("Point ShadowMap PixelShader");
         }
 
         DepthStencilStateCreateInfo DepthStencilStateInfo;
@@ -142,11 +137,23 @@ bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         }
         else
         {
-            PointLightPipelineState->SetName("Linear ShadowMap PipelineState");
+            PointLightPipelineState->SetName("Point ShadowMap PipelineState");
         }
     }
 
+    // Cascaded shadowmap
     {
+        PerCascadeBuffer = CreateConstantBuffer<SPerCascade>(EBufferFlags::BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+        if (!PerCascadeBuffer)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            PerCascadeBuffer->SetName("Per Cascade Buffer");
+        }
+
         if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/ShadowMap.hlsl", "Cascade_VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
             Debug::DebugBreak();
@@ -350,7 +357,7 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
             XMFLOAT4X4 Matrix;
         } ShadowPerObjectBuffer;
 
-        PerShadowMap PerShadowMapData;
+        SPerShadowMap PerShadowMapData;
         for (uint32 i = 0; i < LightSetup.PointLightShadowMapsGenerationData.Size(); i++)
         {
             for (uint32 Face = 0; Face < 6; Face++)
@@ -367,7 +374,7 @@ void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const Ligh
 
                 CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
-                CmdList.UpdateBuffer(PerShadowMapBuffer.Get(), 0, sizeof(PerShadowMap), &PerShadowMapData);
+                CmdList.UpdateBuffer(PerShadowMapBuffer.Get(), 0, sizeof(SPerShadowMap), &PerShadowMapData);
 
                 CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
 
@@ -475,12 +482,12 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
     CmdList.SetGraphicsPipelineState(DirLightPipelineState.Get());
 
     // PerObject Structs
-    struct ShadowPerObject
+    struct SShadowPerObject
     {
         XMFLOAT4X4 Matrix;
     } ShadowPerObjectBuffer;
 
-    PerShadowMap PerShadowMapData;
+    SPerCascade PerCascadeData;
     for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
     {
         DepthStencilView* CascadeDSV = LightSetup.ShadowMapCascades[i]->GetDepthStencilView();
@@ -492,17 +499,17 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
         CmdList.SetViewport(static_cast<float>(CascadeSize), static_cast<float>(CascadeSize), 0.0f, 1.0f, 0.0f, 0.0f);
         CmdList.SetScissorRect(CascadeSize, CascadeSize, 0, 0);
 
-        PerShadowMapData.Matrix   = LightSetup.DirectionalLightData.CascadeViewProj[i];
-        PerShadowMapData.Position = LightSetup.DirectionalLightData.Position;
-        PerShadowMapData.FarPlane = LightSetup.DirectionalLightData.FarPlane;
+        PerCascadeData.CascadeIndex = i;
 
-        CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
+        CmdList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
-        CmdList.UpdateBuffer(PerShadowMapBuffer.Get(), 0, sizeof(PerShadowMap), &PerShadowMapData);
+        CmdList.UpdateBuffer(PerCascadeBuffer.Get(), 0, sizeof(SPerCascade), &PerCascadeData);
 
-        CmdList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
+        CmdList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
 
-        CmdList.SetConstantBuffers(DirLightShader.Get(), &PerShadowMapBuffer, 1, 0);
+        CmdList.SetConstantBuffer(DirLightShader.Get(), PerCascadeBuffer.Get(), 0);
+
+        CmdList.SetShaderResourceView(DirLightShader.Get(), CascadeMatrixBufferSRV.Get(), 0);
 
         // Draw all objects to depthbuffer
         for (const MeshDrawCommand& Command : Scene.GetMeshDrawCommands())
@@ -538,6 +545,8 @@ void ShadowMapRenderer::Release()
     PointLightPipelineState.Reset();
     PointLightVertexShader.Reset();
     PointLightPixelShader.Reset();
+
+    PerCascadeBuffer.Reset();
 
     CascadeGen.Reset();
     CascadeGenShader.Reset();

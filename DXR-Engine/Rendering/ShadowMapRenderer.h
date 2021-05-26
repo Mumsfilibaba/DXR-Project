@@ -18,6 +18,18 @@ struct SCascadeMatrices
     XMFLOAT4X4 View;
 };
 
+struct SPerShadowMap
+{
+    XMFLOAT4X4 Matrix;
+    XMFLOAT3   Position;
+    float      FarPlane;
+};
+
+struct SPerCascade
+{
+    int32 CascadeIndex;
+};
+
 class ShadowMapRenderer
 {
 public:
@@ -40,6 +52,7 @@ private:
     TRef<VertexShader>          PointLightVertexShader;
     TRef<PixelShader>           PointLightPixelShader;
 
+    TRef<ConstantBuffer>   PerCascadeBuffer;
     TRef<ConstantBuffer>   CascadeGenerationData;
     TRef<StructuredBuffer> CascadeMatrixBuffer;
     TRef<ShaderResourceView>  CascadeMatrixBufferSRV;

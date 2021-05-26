@@ -1,13 +1,14 @@
 #ifndef MATRICES_HLSLI
 #define MATRICES_HLSLI
 
+// Left handed
 float4x4 CreateOrtographicProjection(float Left, float Right, float Bottom, float Top, float Near, float Far)
 {
     return float4x4(
         float4(2.0f / (Right - Left),           0.0f,                            0.0f,                0.0f),
         float4(0.0f,                            2.0f / (Top - Bottom),           0.0f,                0.0f),
         float4(0.0f,                            0.0f,                            1.0f / (Far - Near), 0.0f),
-        float4((Left + Right) / (Left - Right), (Bottom + Top) / (Bottom - Top), Near / (Near - Far), 1.0f));
+        float4(-(Left + Right) / (Right - Left), -(Top + Bottom) / (Top - Bottom), -Near / (Far - Near), 1.0f));
 }
 
 // TODO: Projection Matrix
@@ -54,11 +55,9 @@ float4x4 CreateLookToMatrix(float3 Eye, float3 Direction, float3 Up)
     float3 e0 = normalize(cross(Up, e2));
     float3 e1 = cross(e2, e0);
     
-    float3 NegEye = -Eye;
-    
-    float m30 = dot(NegEye, e0);
-    float m31 = dot(NegEye, e1);
-    float m32 = dot(NegEye, e2);
+    float m30 = -dot(Eye, e0);
+    float m31 = -dot(Eye, e1);
+    float m32 = -dot(Eye, e2);
     
     return float4x4(
         float4(e0, 0.0f),

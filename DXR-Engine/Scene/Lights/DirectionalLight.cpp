@@ -36,7 +36,7 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
     XMStoreFloat3(&Direction, XmDirection);
 
     XMVECTOR XmUp = XMVectorSet(0.0, 0.0f, 1.0f, 0.0f);
-    XmUp = XMVector3Normalize(XMVector3Transform(XmUp, XmRotation));
+    //XmUp = XMVector3Normalize(XMVector3Transform(XmUp, XmRotation));
     XMStoreFloat3(&Up, XmUp);
 
     XMFLOAT4X4 InvCamera = Camera.GetViewProjectionInverseMatrix();
@@ -125,33 +125,33 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
         }
 
         // Make sure we only move cascades with whole pixels
-        float TexelsPerUnit = CascadeSizes[i] / (Radius * 2.0f);
-        XMMATRIX Scale = XMMatrixScaling(TexelsPerUnit, TexelsPerUnit, TexelsPerUnit);
+        //float TexelsPerUnit = CascadeSizes[i] / (Radius * 2.0f);
+        //XMMATRIX Scale = XMMatrixScaling(TexelsPerUnit, TexelsPerUnit, TexelsPerUnit);
 
-        XMVECTOR EyePosition  = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-        XMVECTOR LookPosition = XMVectorSet(-Direction.x, -Direction.y, -Direction.z, 0.0f);
-        
-        XMMATRIX LookAtMat = XMMatrixLookAtLH(EyePosition, LookPosition, XmUp);
-        LookAtMat = XMMatrixMultiply(Scale, LookAtMat);
+        //XMVECTOR EyePosition  = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+        //XMVECTOR LookPosition = XMVectorSet(-Direction.x, -Direction.y, -Direction.z, 0.0f);
+        //
+        //XMMATRIX LookAtMat = XMMatrixLookAtLH(EyePosition, LookPosition, XmUp);
+        //LookAtMat = XMMatrixMultiply(Scale, LookAtMat);
 
-        XMMATRIX LookAtMatInverse = XMMatrixInverse(nullptr, LookAtMat);
+        //XMMATRIX LookAtMatInverse = XMMatrixInverse(nullptr, LookAtMat);
 
-        XMVECTOR XmCenter = XMLoadFloat4(&Center);
-        XMVector3Transform(XmCenter, LookAtMat);
-        XMStoreFloat4(&Center, XmCenter);
+        //XMVECTOR XmCenter = XMLoadFloat4(&Center);
+        //XMVector3Transform(XmCenter, LookAtMat);
+        //XMStoreFloat4(&Center, XmCenter);
 
-        Center.x = floor(Center.x);
-        Center.y = floor(Center.y);
-        Center.z = floor(Center.z);
+        //Center.x = floor(Center.x);
+        //Center.y = floor(Center.y);
+        //Center.z = floor(Center.z);
 
-        XmCenter = XMLoadFloat4(&Center);
-        XMVector3Transform(XmCenter, LookAtMatInverse);
-        XMStoreFloat4(&Center, XmCenter);
+        //XmCenter = XMLoadFloat4(&Center);
+        //XMVector3Transform(XmCenter, LookAtMatInverse);
+        //XMStoreFloat4(&Center, XmCenter);
 
         XMFLOAT3 CascadePosition = XMFLOAT3(Center.x, Center.y, Center.z) - (Direction * Radius * 6.0f);
         
-        EyePosition  = XMLoadFloat3(&CascadePosition);
-        LookPosition = XMLoadFloat4(&Center);
+        XMVECTOR EyePosition  = XMLoadFloat3(&CascadePosition);
+        XMVECTOR LookPosition = XMLoadFloat4(&Center);
 
         XMMATRIX XmViewMatrix = XMMatrixLookAtLH(EyePosition, LookPosition, XmUp);
         XMMATRIX XmOrtoMatrix = XMMatrixOrthographicOffCenterLH(-Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f);

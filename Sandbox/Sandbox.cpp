@@ -419,7 +419,8 @@ bool Sandbox::Init()
     Light4->SetMaxShadowBias(0.0015f);
     Light4->SetColor(1.0f, 1.0f, 1.0f);
     Light4->SetIntensity(10.0f);
-    Light4->SetRotation(Math::ToRadians(35.0f), Math::ToRadians(135.0f), 0.0f);
+    //Light4->SetRotation(Math::ToRadians(35.0f), Math::ToRadians(135.0f), 0.0f);
+    Light4->SetRotation(0.0f, 0.0f, 0.0f);
     Scene->AddLight(Light4);
 
     return true;

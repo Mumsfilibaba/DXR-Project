@@ -15,7 +15,7 @@ Texture2D<float2> MinMaxDepthTex : register(t0);
 [numthreads(NUM_THREADS, 1, 1)]
 void Main(ComputeShaderInput Input)
 {
-    const uint CascadeIndex = Input.DispatchThreadID.x;
+    const int CascadeIndex = int(Input.DispatchThreadID.x);
     
     // Get the min and max depth of the scene
     float2 MinMaxDepth = MinMaxDepthTex[uint2(0, 0)];
@@ -76,7 +76,7 @@ void Main(ComputeShaderInput Input)
     {
         const float3 Distance = FrustumCorners[j + 4] - FrustumCorners[j];
         FrustumCorners[j + 4] = FrustumCorners[j] + (Distance * SplitDist);
-        FrustumCorners[j] = FrustumCorners[j] + (Distance * LastSplitDist);
+        FrustumCorners[j]     = FrustumCorners[j] + (Distance * LastSplitDist);
     }
 
     // Calc frustum center
@@ -90,33 +90,28 @@ void Main(ComputeShaderInput Input)
     float Radius = 0.0f;
     for (int j = 0; j < 8; j++)
     {
-        const float Distance = ceil(length(FrustumCorners[j].xyz - FrustumCenter));
+        const float Distance = length(FrustumCorners[j].xyz - FrustumCenter);
         Radius = max(Radius, Distance);
     }
-
-    Radius = ceil(Radius * 16.0f) / 16.0f;
     
-    float3 MaxExtents = Float3(Radius);
-    float3 MinExtents = -MaxExtents;
-
     float3 LightDirection = normalize(Settings.LightDirection);
-    float3 CascadeExtents = MaxExtents - MinExtents;
-    float3 ShadowEyePos = FrustumCenter + LightDirection * -MinExtents.z;
+    float3 ShadowEyePos = FrustumCenter - (LightDirection * Radius * 6.0f);
     
-    const float3 WORLD_UP = float3(0.0, 1.0f, 0.0f);
-    float4x4 ViewMat = CreateLookToMatrix(ShadowEyePos, LightDirection, WORLD_UP);
-    float4x4 OrtoMat = CreateOrtographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, 0.0f, CascadeExtents.z);
+    const float3 WORLD_UP = float3(0.0, 0.0f, -1.0f); // Que?
+    float4x4 ViewMat = CreateLookAtMatrix(ShadowEyePos, FrustumCenter, WORLD_UP);
+    float4x4 OrtoMat = CreateOrtographicProjection(-Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f);
     
-    float4x4 ShadowMatrix = mul(ViewMat, OrtoMat);
-    float3   ShadowOrigin = mul(float4(Float3(0.0f), 1.0f), ShadowMatrix);
-    ShadowOrigin = ShadowOrigin * (CascadeSizes[CascadeIndex] / 2.0f);
+    // Stabilize cascades
+    //float4x4 ShadowMatrix = mul(ViewMat, OrtoMat);
+    //float3 ShadowOrigin = mul(float4(Float3(0.0f), 1.0f), ShadowMatrix);
+    //ShadowOrigin *= (CascadeSizes[CascadeIndex] / 2.0f);
     
-    float3 RoundedOrigin = round(ShadowOrigin);
-    float3 RoundedOffset = RoundedOrigin - ShadowOrigin;
-    RoundedOffset = RoundedOffset * (2.0f / CascadeSizes[CascadeIndex]);
+    //float3 RoundedOrigin = round(ShadowOrigin);
+    //float3 RoundedOffset = RoundedOrigin - ShadowOrigin;
+    //RoundedOffset = RoundedOffset * (2.0f / CascadeSizes[CascadeIndex]);
 
-    OrtoMat[3][0] += RoundedOffset.x;
-    OrtoMat[3][1] += RoundedOffset.y;
+    //OrtoMat[3][0] += RoundedOffset.x;
+    //OrtoMat[3][1] += RoundedOffset.y;
     
     // Create final matrices
     SCascadeMatrices Matrices;

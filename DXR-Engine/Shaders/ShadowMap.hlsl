@@ -1,18 +1,22 @@
 #include "Constants.hlsli"
+#include "Structs.hlsli"
 
-// PerObject
-cbuffer TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
+struct SPerCascade
 {
-    float4x4 Transform;
+    int CascadeIndex;
 };
 
-// PerFrame DescriptorTable
-cbuffer LightBuffer : register(b0, space0)
+struct SPerObject
 {
-    float4x4 LightProjection;
-    float3   LightPosition;
-    float    LightFarPlane;
-}
+    float4x4 ModelMatrix;
+};
+
+// PerObject
+ConstantBuffer<SPerObject> PerObjectBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
+
+ConstantBuffer<SPerCascade> PerCascadeBuffer : register(b0);
+
+StructuredBuffer<SCascadeMatrices> CascadeMatrixBuffer : register(t0);
 
 // VS
 struct VSInput
@@ -37,8 +41,10 @@ struct GSOutput
 
 float4 Cascade_VSMain(VSInput Input) : SV_POSITION
 {
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Transform);
-    return mul(WorldPosition, LightProjection);
+    float4x4 LightViewProjection = CascadeMatrixBuffer[PerCascadeBuffer.CascadeIndex].ViewProj;
+    
+    float4 WorldPosition = mul(float4(Input.Position, 1.0f), PerObjectBuffer.ModelMatrix);
+    return mul(WorldPosition, LightViewProjection);
 }
 
 void Cascade_GSMain(triangle float4 InPosition[3], inout TriangleStream<GSOutput> OutStream)
@@ -48,6 +54,13 @@ void Cascade_GSMain(triangle float4 InPosition[3], inout TriangleStream<GSOutput
 ///////////////////////////////////
 // Point Light Shadow Generation //
 ///////////////////////////////////
+
+cbuffer LightBuffer : register(b0, space0)
+{
+    float4x4 LightProjection;
+    float3 LightPosition;
+    float  LightFarPlane;
+}
 
 struct VSOutput
 {
@@ -59,7 +72,7 @@ VSOutput Point_VSMain(VSInput Input)
 {
     VSOutput Output = (VSOutput)0;
     
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Transform);
+    float4 WorldPosition = mul(float4(Input.Position, 1.0f), PerObjectBuffer.ModelMatrix);
     Output.WorldPosition = WorldPosition.xyz;
     Output.Position      = mul(WorldPosition, LightProjection);
     
@@ -79,7 +92,7 @@ float Point_PSMain(float3 WorldPosition : POSITION0) : SV_Depth
 
 float4 VSM_VSMain(VSInput Input) : SV_Position
 {
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Transform);
+    float4 WorldPosition = mul(float4(Input.Position, 1.0f), PerObjectBuffer.ModelMatrix);
     return mul(WorldPosition, LightProjection);
 }
 
