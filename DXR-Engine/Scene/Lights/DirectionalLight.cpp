@@ -36,7 +36,7 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
     XMStoreFloat3(&Direction, XmDirection);
 
     XMVECTOR XmUp = XMVectorSet(0.0, 0.0f, 1.0f, 0.0f);
-    //XmUp = XMVector3Normalize(XMVector3Transform(XmUp, XmRotation));
+    XmUp = XMVector3Normalize(XMVector3Transform(XmUp, XmRotation));
     XMStoreFloat3(&Up, XmUp);
 
     XMFLOAT4X4 InvCamera = Camera.GetViewProjectionInverseMatrix();

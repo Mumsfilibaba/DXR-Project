@@ -10,12 +10,19 @@ struct SCascadeGenerationInfo
 {
     XMFLOAT3 LightDirection;
     float CascadeSplitLambda;
+    XMFLOAT3 LightUp;
+    float Padding0;
 };
 
 struct SCascadeMatrices
 {
     XMFLOAT4X4 ViewProjection;
     XMFLOAT4X4 View;
+};
+
+struct SCascadeSplits
+{
+    float Split;
 };
 
 struct SPerShadowMap
@@ -52,11 +59,8 @@ private:
     TRef<VertexShader>          PointLightVertexShader;
     TRef<PixelShader>           PointLightPixelShader;
 
-    TRef<ConstantBuffer>   PerCascadeBuffer;
-    TRef<ConstantBuffer>   CascadeGenerationData;
-    TRef<StructuredBuffer> CascadeMatrixBuffer;
-    TRef<ShaderResourceView>  CascadeMatrixBufferSRV;
-    TRef<UnorderedAccessView> CascadeMatrixBufferUAV;
+    TRef<ConstantBuffer> PerCascadeBuffer;
+    TRef<ConstantBuffer> CascadeGenerationData;
 
     TRef<ComputePipelineState> CascadeGen;
     TRef<ComputeShader>        CascadeGenShader;

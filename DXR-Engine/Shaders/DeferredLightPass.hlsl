@@ -22,25 +22,40 @@
     #define DRAW_SHADOW_CASCADE 0
 #endif
 
-#define BLEND_CASCADES  (1)
+#define BLEND_CASCADES  (0)
 #define ROTATE_SAMPLES  (1)
-#define ENABLE_PCSS     (1)
+#define ENABLE_PCSS     (0)
 #define BAND_PERCENTAGE (0.2f)
 
-Texture2D<float4>       AlbedoTex             : register(t0, space0);
-Texture2D<float4>       NormalTex             : register(t1, space0);
-Texture2D<float4>       MaterialTex           : register(t2, space0);
-Texture2D<float>        DepthStencilTex       : register(t3, space0);
-Texture2D<float4>       DXRReflection         : register(t4, space0);
-TextureCube<float4>     IrradianceMap         : register(t5, space0);
-TextureCube<float4>     SpecularIrradianceMap : register(t6, space0);
-Texture2D<float4>       IntegrationLUT        : register(t7, space0);
-Texture2D<float>        ShadowCascade0        : register(t8, space0);
-Texture2D<float>        ShadowCascade1        : register(t9, space0);
-Texture2D<float>        ShadowCascade2        : register(t10, space0);
-Texture2D<float>        ShadowCascade3        : register(t11, space0);
-TextureCubeArray<float> PointLightShadowMaps  : register(t12, space0);
-Texture2D<float3>       SSAO                  : register(t13, space0);
+// G-Buffer
+Texture2D<float4> AlbedoTex       : register(t0);
+Texture2D<float4> NormalTex       : register(t1);
+Texture2D<float4> MaterialTex     : register(t2);
+Texture2D<float>  DepthStencilTex : register(t3);
+
+// Reflections
+Texture2D<float4> DXRReflection : register(t4);
+
+// Reflection probe
+TextureCube<float4> IrradianceMap         : register(t5);
+TextureCube<float4> SpecularIrradianceMap : register(t6);
+Texture2D<float4>   IntegrationLUT        : register(t7);
+
+// Shadow Cascade
+Texture2D<float> ShadowCascade0 : register(t8);
+Texture2D<float> ShadowCascade1 : register(t9);
+Texture2D<float> ShadowCascade2 : register(t10);
+Texture2D<float> ShadowCascade3 : register(t11);
+
+// Point Shadows
+TextureCubeArray<float> PointLightShadowMaps  : register(t12);
+
+// SSAO
+Texture2D<float3> SSAO : register(t13);
+
+// Shadow Cascade Data
+StructuredBuffer<SCascadeMatrices> CascadeMatrixBuffer : register(t14);
+StructuredBuffer<SCascadeSplit>    CascadeSplitsBuffer : register(t15);
 
 SamplerState LUTSampler        : register(s0, space0);
 SamplerState IrradianceSampler : register(s1, space0);
@@ -231,7 +246,7 @@ float PCSSDirectionalLight(
 
 float3 GetShadowCoords(uint CascadeIndex, float3 World)
 {
-    float4 LightClipSpacePos = mul(float4(World, 1.0f), DirLightBuffer.CascadeViewProj[CascadeIndex]);
+    float4 LightClipSpacePos = mul(float4(World, 1.0f), CascadeMatrixBuffer[CascadeIndex].ViewProj);
     
     float3 ProjCoords = LightClipSpacePos.xyz / LightClipSpacePos.w;
     ProjCoords.xy = (ProjCoords.xy * 0.5f) + 0.5f;
@@ -242,7 +257,7 @@ float3 GetShadowCoords(uint CascadeIndex, float3 World)
 
 float3 GetLightViewPos(uint CascadeIndex, float3 World)
 {
-    float4 LightViewPosition = mul(float4(World, 1.0f), DirLightBuffer.CascadeView[CascadeIndex]);
+    float4 LightViewPosition = mul(float4(World, 1.0f), CascadeMatrixBuffer[CascadeIndex].View);
     return LightViewPosition.xyz / LightViewPosition.w;
 }
 
@@ -259,11 +274,12 @@ float CascadedShadowFactor(float3 World, float3 View, float3 N, float3 L, inout 
     float CurrentNearPlane = DirLightBuffer.NearPlane;
     for (i = 0; i < NUM_SHADOW_CASCADES; i++)
     {
-        if (View.z < DirLightBuffer.CascadeSplits[i])
+        float CurrentSplit = CascadeSplitsBuffer[i].Split;
+        if (View.z < CurrentSplit)
         {
 #if BLEND_CASCADES
             float Range = View.z - CurrentNearPlane;
-            float SplitRange = DirLightBuffer.CascadeSplits[i] - CurrentNearPlane;
+            float SplitRange = CurrentSplit - CurrentNearPlane;
         
             float Percentage = Range / SplitRange;
             if (Percentage >= (1.0f - BAND_PERCENTAGE))
@@ -286,7 +302,7 @@ float CascadedShadowFactor(float3 World, float3 View, float3 N, float3 L, inout 
             break;
         }
         
-        CurrentNearPlane = DirLightBuffer.CascadeSplits[i];
+        CurrentNearPlane = CurrentSplit;
     }
     
     float LightSize = DirLightBuffer.LightSize;
@@ -519,11 +535,12 @@ void Main(ComputeShaderInput Input)
         float CurrentNearPlane = Light.NearPlane;
         for (int i = 0; i < NUM_SHADOW_CASCADES; i++)
         {
-            if (ViewPosition.z < Light.CascadeSplits[i])
+            float CurrentSplit = CascadeSplitsBuffer[i].Split;
+            if (ViewPosition.z < CurrentSplit)
             {
 #if BLEND_CASCADES
                 float Range = ViewPosition.z - CurrentNearPlane;
-                float SplitRange = Light.CascadeSplits[i] - CurrentNearPlane;
+                float SplitRange = CurrentSplit - CurrentNearPlane;
         
                 float Percentage = Range / SplitRange;
                 if (Percentage >= (1.0f - BAND_PERCENTAGE))
@@ -546,7 +563,7 @@ void Main(ComputeShaderInput Input)
                 break;
             }
         
-            CurrentNearPlane = Light.CascadeSplits[i];
+            CurrentNearPlane = CurrentSplit;
         }
         
         uint RandomSeed = InitRandom(TexCoord, ScreenWidth, 0);

@@ -45,7 +45,7 @@ void ReductionMainInital(ComputeShaderInput Input)
         DepthSample = Projection._43 / (DepthSample - Projection._33);
         DepthSample = saturate((DepthSample - NearPlane) / (FarPlane - NearPlane));
         MinDepth = min(MinDepth, DepthSample);
-        MaxDepth = min(MaxDepth, DepthSample);
+        MaxDepth = max(MaxDepth, DepthSample);
     }
     
     GroupMinZ[GroupThreadIndex] = MinDepth;

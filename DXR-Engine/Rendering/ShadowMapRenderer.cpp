@@ -287,37 +287,70 @@ bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
             CascadeGenerationData->SetName("Cascade GenerationData");
         }
 
-        CascadeMatrixBuffer = CreateStructuredBuffer<SCascadeMatrices>(NUM_SHADOW_CASCADES, BufferFlags_RWBuffer, EResourceState::UnorderedAccess, nullptr);
-        if (!CascadeMatrixBuffer)
+        LightSetup.CascadeMatrixBuffer = CreateStructuredBuffer<SCascadeMatrices>(NUM_SHADOW_CASCADES, BufferFlags_RWBuffer, EResourceState::UnorderedAccess, nullptr);
+        if (!LightSetup.CascadeMatrixBuffer)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            CascadeMatrixBuffer->SetName("Cascade MatrixBuffer");
+            LightSetup.CascadeMatrixBuffer->SetName("Cascade MatrixBuffer");
         }
 
-        CascadeMatrixBufferSRV = CreateShaderResourceView(CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-        if (!CascadeMatrixBufferSRV)
+        LightSetup.CascadeMatrixBufferSRV = CreateShaderResourceView(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        if (!LightSetup.CascadeMatrixBufferSRV)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            CascadeMatrixBufferSRV->SetName("Cascade MatrixBuffer SRV");
+            LightSetup.CascadeMatrixBufferSRV->SetName("Cascade MatrixBuffer SRV");
         }
 
-        CascadeMatrixBufferUAV = CreateUnorderedAccessView(CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-        if (!CascadeMatrixBufferUAV)
+        LightSetup.CascadeMatrixBufferUAV = CreateUnorderedAccessView(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        if (!LightSetup.CascadeMatrixBufferUAV)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            CascadeMatrixBufferUAV->SetName("Cascade MatrixBuffer UAV");
+            LightSetup.CascadeMatrixBufferUAV->SetName("Cascade MatrixBuffer UAV");
+        }
+
+        LightSetup.CascadeSplitsBuffer = CreateStructuredBuffer<SCascadeSplits>(NUM_SHADOW_CASCADES, BufferFlags_RWBuffer, EResourceState::UnorderedAccess, nullptr);
+        if (!LightSetup.CascadeSplitsBuffer)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            LightSetup.CascadeSplitsBuffer->SetName("Cascade SplitBuffer");
+        }
+
+        LightSetup.CascadeSplitsBufferSRV = CreateShaderResourceView(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        if (!LightSetup.CascadeSplitsBufferSRV)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            LightSetup.CascadeSplitsBufferSRV->SetName("Cascade SplitBuffer SRV");
+        }
+
+        LightSetup.CascadeSplitsBufferUAV = CreateUnorderedAccessView(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        if (!LightSetup.CascadeSplitsBufferUAV)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            LightSetup.CascadeSplitsBufferUAV->SetName("Cascade SplitBuffer UAV");
         }
     }
 
@@ -442,11 +475,13 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
     {
         GPU_TRACE_SCOPE(CmdList, "Generate Cascade Matrices");
 
-        CmdList.TransitionBuffer(CascadeMatrixBuffer.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
+        CmdList.TransitionBuffer(LightSetup.CascadeMatrixBuffer.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
+        CmdList.TransitionBuffer(LightSetup.CascadeSplitsBuffer.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
 
         SCascadeGenerationInfo GenerationInfo;
         GenerationInfo.CascadeSplitLambda = LightSetup.CascadeSplitLambda;
-        GenerationInfo.LightDirection     = LightSetup.DirectionalLightData.Direction;
+        GenerationInfo.LightUp        = LightSetup.DirectionalLightData.Up;
+        GenerationInfo.LightDirection = LightSetup.DirectionalLightData.Direction;
 
         CmdList.TransitionBuffer(CascadeGenerationData.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
         CmdList.UpdateBuffer(CascadeGenerationData.Get(), 0, sizeof(SCascadeGenerationInfo), &GenerationInfo);
@@ -457,13 +492,15 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
         CmdList.SetConstantBuffer(CascadeGenShader.Get(), FrameResources.CameraBuffer.Get(), 0);
         CmdList.SetConstantBuffer(CascadeGenShader.Get(), CascadeGenerationData.Get(), 1);
 
-        CmdList.SetUnorderedAccessView(CascadeGenShader.Get(), CascadeMatrixBufferUAV.Get(), 0);
+        CmdList.SetUnorderedAccessView(CascadeGenShader.Get(), LightSetup.CascadeMatrixBufferUAV.Get(), 0);
+        CmdList.SetUnorderedAccessView(CascadeGenShader.Get(), LightSetup.CascadeSplitsBufferUAV.Get(), 1);
 
         CmdList.SetShaderResourceView(CascadeGenShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
 
         CmdList.Dispatch(NUM_SHADOW_CASCADES, 1, 1);
 
-        CmdList.TransitionBuffer(CascadeMatrixBuffer.Get(), EResourceState::UnorderedAccess, EResourceState::PixelShaderResource);
+        CmdList.TransitionBuffer(LightSetup.CascadeMatrixBuffer.Get(), EResourceState::UnorderedAccess, EResourceState::PixelShaderResource);
+        CmdList.TransitionBuffer(LightSetup.CascadeSplitsBuffer.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
     }
 
     // Render directional shadows
@@ -509,7 +546,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
 
         CmdList.SetConstantBuffer(DirLightShader.Get(), PerCascadeBuffer.Get(), 0);
 
-        CmdList.SetShaderResourceView(DirLightShader.Get(), CascadeMatrixBufferSRV.Get(), 0);
+        CmdList.SetShaderResourceView(DirLightShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
 
         // Draw all objects to depthbuffer
         for (const MeshDrawCommand& Command : Scene.GetMeshDrawCommands())
@@ -530,7 +567,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
     CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
     CmdList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
 
-    CmdList.TransitionBuffer(CascadeMatrixBuffer.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionBuffer(LightSetup.CascadeMatrixBuffer.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
     
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
 }
@@ -552,9 +589,6 @@ void ShadowMapRenderer::Release()
     CascadeGenShader.Reset();
 
     CascadeGenerationData.Reset();
-    CascadeMatrixBuffer.Reset();
-    CascadeMatrixBufferSRV.Reset();
-    CascadeMatrixBufferUAV.Reset();
 }
 
 bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)

@@ -9,6 +9,7 @@ ConstantBuffer<Camera>             CameraBuffer : register(b0);
 ConstantBuffer<SCascadeGenerationInfo> Settings : register(b1);
 
 RWStructuredBuffer<SCascadeMatrices> MatrixBuffer : register(u0);
+RWStructuredBuffer<SCascadeSplit>    SplitBuffer  : register(u1);
 
 Texture2D<float2> MinMaxDepthTex : register(t0);
 
@@ -47,7 +48,7 @@ void Main(ComputeShaderInput Input)
     // TODO: This should be moved to the settings
     const float CascadeSizes[NUM_SHADOW_CASCADES] =
     {
-        2048.0f, 2048.0f, 2048.0f, 4096.0f
+        2048.0f, 2048.0f, 2048.0f, 2048.0f
     };
 
     float LastSplitDist = (CascadeIndex == 0) ? MinMaxDepth.x : CascadeSplits[CascadeIndex - 1];
@@ -94,24 +95,31 @@ void Main(ComputeShaderInput Input)
         Radius = max(Radius, Distance);
     }
     
-    float3 LightDirection = normalize(Settings.LightDirection);
-    float3 ShadowEyePos = FrustumCenter - (LightDirection * Radius * 6.0f);
+    Radius = ceil(Radius * 16.0f) / 16.0f;
     
-    const float3 WORLD_UP = float3(0.0, 0.0f, -1.0f); // Que?
-    float4x4 ViewMat = CreateLookAtMatrix(ShadowEyePos, FrustumCenter, WORLD_UP);
-    float4x4 OrtoMat = CreateOrtographicProjection(-Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f);
+    float3 MaxExtents = Float3(Radius);
+    MaxExtents.z = MaxExtents.z * 6.0f;
+    
+    float3 MinExtents = -MaxExtents;
+    float3 CascadeExtents = MaxExtents - MinExtents;
+    
+    float3 LightDirection = normalize(Settings.LightDirection);
+    float3 ShadowEyePos = FrustumCenter - (LightDirection * MinExtents.z);
+    
+    float4x4 ViewMat = CreateLookAtMatrix(ShadowEyePos, FrustumCenter, Settings.LightUp);
+    float4x4 OrtoMat = CreateOrtographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, 0.01f, CascadeExtents.z);
     
     // Stabilize cascades
-    //float4x4 ShadowMatrix = mul(ViewMat, OrtoMat);
-    //float3 ShadowOrigin = mul(float4(Float3(0.0f), 1.0f), ShadowMatrix);
-    //ShadowOrigin *= (CascadeSizes[CascadeIndex] / 2.0f);
+    float4x4 ShadowMatrix = mul(ViewMat, OrtoMat);
+    float3 ShadowOrigin = mul(float4(Float3(0.0f), 1.0f), ShadowMatrix);
+    ShadowOrigin *= (CascadeSizes[CascadeIndex] / 2.0f);
     
-    //float3 RoundedOrigin = round(ShadowOrigin);
-    //float3 RoundedOffset = RoundedOrigin - ShadowOrigin;
-    //RoundedOffset = RoundedOffset * (2.0f / CascadeSizes[CascadeIndex]);
+    float3 RoundedOrigin = round(ShadowOrigin);
+    float3 RoundedOffset = RoundedOrigin - ShadowOrigin;
+    RoundedOffset = RoundedOffset * (2.0f / CascadeSizes[CascadeIndex]);
 
-    //OrtoMat[3][0] += RoundedOffset.x;
-    //OrtoMat[3][1] += RoundedOffset.y;
+    OrtoMat[3][0] += RoundedOffset.x;
+    OrtoMat[3][1] += RoundedOffset.y;
     
     // Create final matrices
     SCascadeMatrices Matrices;
@@ -119,4 +127,10 @@ void Main(ComputeShaderInput Input)
     Matrices.ViewProj = mul(ViewMat, OrtoMat);
     
     MatrixBuffer[CascadeIndex] = Matrices;
+    
+    // Write splits
+    SCascadeSplit Split;
+    Split.Split = NearPlane + SplitDist * ClipRange;
+    
+    SplitBuffer[CascadeIndex] = Split;
 }

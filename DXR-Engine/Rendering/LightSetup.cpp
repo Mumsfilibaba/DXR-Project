@@ -153,15 +153,13 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
             DirectionalLightData.Color         = Color;
             DirectionalLightData.ShadowBias    = CurrentLight->GetShadowBias();
             DirectionalLightData.Direction     = CurrentLight->GetDirection();
+            DirectionalLightData.Up            = CurrentLight->GetUp();
             DirectionalLightData.MaxShadowBias = CurrentLight->GetMaxShadowBias();
             DirectionalLightData.Position      = CurrentLight->GetPosition();
 
             for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
             {
-                DirectionalLightData.CascadeSplits[i]   = CurrentLight->GetCascadeSplit(i);
                 DirectionalLightData.CascadeRadius[i]   = CurrentLight->GetCascadeRadius(i);
-                DirectionalLightData.CascadeViewProj[i] = CurrentLight->GetMatrix(i);
-                DirectionalLightData.CascadeView[i]     = CurrentLight->GetViewMatrix(i);
             }
 
             DirectionalLightData.NearPlane = CurrentLight->GetShadowNearPlane();
@@ -292,4 +290,12 @@ void LightSetup::Release()
     {
         UAV.Reset();
     }
+
+    CascadeMatrixBuffer.Reset();
+    CascadeMatrixBufferSRV.Reset();
+    CascadeMatrixBufferUAV.Reset();
+
+    CascadeSplitsBuffer.Reset();
+    CascadeSplitsBufferSRV.Reset();
+    CascadeSplitsBufferUAV.Reset();
 }

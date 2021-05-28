@@ -161,13 +161,14 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
     CmdList.SetShaderResourceView(PShader.Get(), LightSetup.IrradianceMap->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(PShader.Get(), LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 1);
     CmdList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 4);
+    //TODO: Fix Dirlight shadows
+    //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
+    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 3);
 
     CmdList.SetSamplerState(PShader.Get(), FrameResources.IntegrationLUTSampler.Get(), 1);
     CmdList.SetSamplerState(PShader.Get(), FrameResources.IrradianceSampler.Get(), 2);
     CmdList.SetSamplerState(PShader.Get(), FrameResources.PointLightShadowSampler.Get(), 3);
-    CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 4);
+    //CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 4);
 
     struct TransformBuffer
     {
@@ -190,13 +191,13 @@ void ForwardRenderer::Render(CommandList& CmdList, const FrameResources& FrameRe
         CmdList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 4);
 
         ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[0], 5);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[1], 6);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[2], 7);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[3], 8);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[4], 9);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[5], 10);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[6], 11);
+        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[0], 4);
+        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[1], 5);
+        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[2], 6);
+        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[3], 7);
+        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[4], 8);
+        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[5], 9);
+        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[6], 10);
 
         SamplerState* SamplerState = Command.Material->GetMaterialSampler();
         CmdList.SetSamplerState(PShader.Get(), SamplerState, 0);

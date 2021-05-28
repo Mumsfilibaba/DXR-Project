@@ -284,8 +284,11 @@ float4 PSMain(PSInput Input) : SV_Target0
     // DirectionalLights
     {
         const DirectionalLight Light = DirLightBuffer;
-        const float ShadowFactor = DirectionalLightShadowFactor(DirLightShadowMaps, ShadowMapSampler1, WorldPosition, N, Light, 0);
-        if (ShadowFactor > 0.001f)
+        
+        // TODO: FIX Shadows in forward
+        
+        //const float ShadowFactor = DirectionalLightShadowFactor(DirLightShadowMaps, ShadowMapSampler1, WorldPosition, N, Light, 0);
+        //if (ShadowFactor > 0.001f)
         {
             float3 L = normalize(-Light.Direction);
             float3 H = normalize(L + V);
@@ -293,7 +296,7 @@ float4 PSMain(PSInput Input) : SV_Target0
             float3 IncidentRadiance = Light.Color;
             IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, SampledAlbedo, Roughness, SampledMetallic);
             
-            L0 += IncidentRadiance * ShadowFactor;
+            L0 += IncidentRadiance;
         }
     }
     

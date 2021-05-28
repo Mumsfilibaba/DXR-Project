@@ -54,17 +54,21 @@ struct SCascadeMatrices
     float4x4 View;
 };
 
+struct SCascadeSplit
+{
+    float Split;
+};
+
 struct SCascadeGenerationInfo
 {
     float3 LightDirection;
-    float CascadeSplitLambda;
+    float  CascadeSplitLambda;
+    float3 LightUp;
+    float  Padding0;
 };
 
 struct DirectionalLight
 {
-    float4x4 CascadeViewProj[NUM_SHADOW_CASCADES];
-    float4x4 CascadeView[NUM_SHADOW_CASCADES];
-
     float3 Color;
     float  ShadowBias;
 
@@ -74,10 +78,11 @@ struct DirectionalLight
     float3 Position;
     float  LightSize;
     
-    float4 CascadeSplits; // NOTE: Cannot be more than four cascades
+    float3 Up;
+    float NearPlane;
+    
     float4 CascadeRadius;
     
-    float NearPlane;
     float FarPlane;
 };
 

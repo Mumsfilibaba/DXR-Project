@@ -179,30 +179,30 @@ float StandardShadow(
 }
 #endif
 
-float DirectionalLightShadowFactor(
-    in Texture2D<float> ShadowMap,
-    in SamplerComparisonState Sampler,
-    float3 WorldPosition, 
-    float3 N,
-    DirectionalLight Light, 
-    uint CascadeIndex)
-{
-    float4 LightSpacePosition = mul(float4(WorldPosition, 1.0f), Light.CascadeViewProj[CascadeIndex]);
-    float3 L = normalize(-Light.Direction);
+//float DirectionalLightShadowFactor(
+//    in Texture2D<float> ShadowMap,
+//    in SamplerComparisonState Sampler,
+//    float3 WorldPosition, 
+//    float3 N,
+//    DirectionalLight Light, 
+//    uint CascadeIndex)
+//{
+//    float4 LightSpacePosition = mul(float4(WorldPosition, 1.0f), Light.CascadeViewProj[CascadeIndex]);
+//    float3 L = normalize(-Light.Direction);
     
-    float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;
-    ProjCoords.xy = (ProjCoords.xy * 0.5f) + 0.5f;
-    ProjCoords.y  = 1.0f - ProjCoords.y;
+//    float3 ProjCoords = LightSpacePosition.xyz / LightSpacePosition.w;
+//    ProjCoords.xy = (ProjCoords.xy * 0.5f) + 0.5f;
+//    ProjCoords.y  = 1.0f - ProjCoords.y;
     
-    float Depth = ProjCoords.z;
-    if (Depth >= 1.0f)
-    {
-        return 1.0f;
-    }
+//    float Depth = ProjCoords.z;
+//    if (Depth >= 1.0f)
+//    {
+//        return 1.0f;
+//    }
     
-    float ShadowBias  = max(Light.MaxShadowBias * (1.0f - (max(dot(N, L), 0.0f))), Light.ShadowBias);
-    float BiasedDepth = (Depth - ShadowBias);
-    return StandardShadow(ShadowMap, Sampler, ProjCoords.xy, BiasedDepth);
-}
+//    float ShadowBias  = max(Light.MaxShadowBias * (1.0f - (max(dot(N, L), 0.0f))), Light.ShadowBias);
+//    float BiasedDepth = (Depth - ShadowBias);
+//    return StandardShadow(ShadowMap, Sampler, ProjCoords.xy, BiasedDepth);
+//}
 
 #endif

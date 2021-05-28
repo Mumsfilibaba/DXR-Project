@@ -33,9 +33,6 @@ struct PointLightShadowMapGenerationData
 
 struct DirectionalLightData
 {
-    XMFLOAT4X4 CascadeViewProj[NUM_SHADOW_CASCADES];
-    XMFLOAT4X4 CascadeView[NUM_SHADOW_CASCADES];
-
     XMFLOAT3 Color      = XMFLOAT3(1.0f, 1.0f, 1.0f);
     float    ShadowBias = 0.005f;
 
@@ -45,10 +42,11 @@ struct DirectionalLightData
     XMFLOAT3 Position;
     float    LightSize;
 
-    float CascadeSplits[NUM_SHADOW_CASCADES];
+    XMFLOAT3 Up = XMFLOAT3(0.0f, 0.0f, -1.0f);
+    float NearPlane;
+
     float CascadeRadius[NUM_SHADOW_CASCADES];
 
-    float NearPlane;
     float FarPlane;
 };
 
@@ -63,7 +61,7 @@ struct LightSetup
     
     const uint16 CascadeSizes[NUM_SHADOW_CASCADES] =
     {
-        2048, 2048, 2048, 4096
+        2048, 2048, 2048, 2048
     };
     
     const uint16 IrradianceSize         = 32;
@@ -104,6 +102,14 @@ struct LightSetup
     TRef<ConstantBuffer> DirectionalLightsBuffer;
 
     TRef<Texture2D> ShadowMapCascades[4];
+
+    TRef<StructuredBuffer>    CascadeMatrixBuffer;
+    TRef<ShaderResourceView>  CascadeMatrixBufferSRV;
+    TRef<UnorderedAccessView> CascadeMatrixBufferUAV;
+
+    TRef<StructuredBuffer>    CascadeSplitsBuffer;
+    TRef<ShaderResourceView>  CascadeSplitsBufferSRV;
+    TRef<UnorderedAccessView> CascadeSplitsBufferUAV;
 
     TRef<TextureCube>         IrradianceMap;
     TRef<UnorderedAccessView> IrradianceMapUAV;
