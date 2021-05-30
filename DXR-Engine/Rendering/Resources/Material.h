@@ -3,29 +3,28 @@
 
 #include "Core/Containers/StaticArray.h"
 
-struct MaterialProperties
+struct SMaterialDesc
 {
     XMFLOAT3 Albedo    = XMFLOAT3(1.0f, 1.0f, 1.0f);
     float Roughness    = 0.0f;
+
     float Metallic     = 0.0f;
     float AO           = 0.5f;
     int32 EnableHeight = 0;
+    int32 EnableMask   = 0;
 };
 
-class Material
+class CMaterial
 {
 public:
-    Material(const MaterialProperties& InProperties);
-    ~Material() = default;
+    CMaterial(const SMaterialDesc& InProperties);
+    ~CMaterial() = default;
 
     void Init();
 
     void BuildBuffer(class CommandList& CmdList);
 
-    FORCEINLINE bool IsBufferDirty() const
-    {
-        return MaterialBufferIsDirty;
-    }
+    FORCEINLINE bool IsBufferDirty() const { return m_MaterialBufferIsDirty; }
 
     void SetAlbedo(const XMFLOAT3& Albedo);
     void SetAlbedo(float R, float G, float B);
@@ -34,7 +33,10 @@ public:
     void SetRoughness(float Roughness);
     void SetAmbientOcclusion(float AO);
 
-    void EnableHeightMap(bool EnableHeightMap);
+    void ForceForwardPass(bool ForceForwardRender);
+
+    void EnableHeightMap(bool InEnableHeightMap);
+    void EnableAlphaMask(bool InEnableAlphaMask);
 
     void SetDebugName(const std::string& InDebugName);
 
@@ -42,14 +44,16 @@ public:
     // This means that one can call BindShaderResourceViews directly with this function
     ShaderResourceView* const* GetShaderResourceViews() const;
 
-    SamplerState* GetMaterialSampler() const { return Sampler.Get(); }
-    ConstantBuffer* GetMaterialBuffer() const { return MaterialBuffer.Get(); }
+    SamplerState* GetMaterialSampler() const { return m_Sampler.Get(); }
+    ConstantBuffer* GetMaterialBuffer() const { return m_MaterialBuffer.Get(); }
 
-    bool HasAlphaMask() const { return AlphaMask; }
+    FORCEINLINE bool ShouldRenderInPrePass() { return !HasAlphaMask() && !HasHeightMap() && !m_RenderInForwardPass; }
+    FORCEINLINE bool ShouldRenderInForwardPass() { return m_RenderInForwardPass; }
 
-    bool HasHeightMap() const { return HeightMap; }
+    FORCEINLINE bool HasAlphaMask() const { return AlphaMask; }
+    FORCEINLINE bool HasHeightMap() const { return HeightMap; }
 
-    const MaterialProperties& GetMaterialProperties() const { return Properties; }
+    const SMaterialDesc& GetMaterialProperties() const { return m_Properties; }
 
 public:
     TRef<Texture2D> AlbedoMap;
@@ -61,12 +65,15 @@ public:
     TRef<Texture2D> AlphaMask;
 
 private:
-    std::string	DebugName;
-    bool MaterialBufferIsDirty = true;
-    
-    MaterialProperties   Properties;
-    TRef<ConstantBuffer> MaterialBuffer;
-    TRef<SamplerState>   Sampler;
+    std::string m_DebugName;
 
-    mutable TStaticArray<ShaderResourceView*, 7> ShaderResourceViews;
+    bool m_MaterialBufferIsDirty = true;
+    
+    bool m_RenderInForwardPass = false;
+
+    SMaterialDesc        m_Properties;
+    TRef<ConstantBuffer> m_MaterialBuffer;
+    TRef<SamplerState>   m_Sampler;
+
+    mutable TStaticArray<ShaderResourceView*, 7> m_ShaderResourceViews;
 };

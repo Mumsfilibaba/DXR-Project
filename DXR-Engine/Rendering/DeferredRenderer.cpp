@@ -528,7 +528,7 @@ void DeferredRenderer::RenderPrePass(CommandList& CmdList, FrameResources& Frame
 
         for (const MeshDrawCommand& Command : FrameResources.DeferredVisibleCommands)
         {
-            if (!Command.Material->HasHeightMap())
+            if (Command.Material->ShouldRenderInPrePass())
             {
                 CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
                 CmdList.SetIndexBuffer(Command.IndexBuffer);
@@ -662,6 +662,7 @@ void DeferredRenderer::RenderBasePass(CommandList& CmdList, const FrameResources
         CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[3], 3);
         CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[4], 4);
         CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[5], 5);
+        CmdList.SetShaderResourceView(BasePixelShader.Get(), ShaderResourceViews[6], 6);
 
         SamplerState* Sampler = Command.Material->GetMaterialSampler();
         CmdList.SetSamplerState(BasePixelShader.Get(), Sampler, 0);

@@ -3,14 +3,6 @@
 #include "Structs.hlsli"
 #include "ShadowHelpers.hlsli"
 
-#if ENABLE_PARALLAX_MAPPING
-#define PARALLAX_MAPPING_ENABLED
-#endif
-
-#if ENABLE_NORMAL_MAPPING
-#define NORMAL_MAPPING_ENABLED
-#endif
-
 // Per Frame Buffers
 
 // TODO: Fix this
@@ -46,58 +38,50 @@ ConstantBuffer<DirectionalLight> DirLightBuffer : register(b5, space0);
 
 // Per Object Buffers
 ConstantBuffer<Transform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
-ConstantBuffer<Material>  MaterialBuffer  : register(b6, space0);
+ConstantBuffer<SMaterial> MaterialBuffer : register(b6);
 
 // Per Frame Samplers
-SamplerState MaterialSampler   : register(s0, space0);
-SamplerState LUTSampler        : register(s1, space0);
-SamplerState IrradianceSampler : register(s2, space0);
+SamplerState MaterialSampler   : register(s0);
+SamplerState LUTSampler        : register(s1);
+SamplerState IrradianceSampler : register(s2);
 
-SamplerComparisonState ShadowMapSampler0 : register(s3, space0);
-SamplerComparisonState ShadowMapSampler1 : register(s4, space0);
+SamplerComparisonState ShadowMapSampler0 : register(s3);
+SamplerComparisonState ShadowMapSampler1 : register(s4);
 
 // Per Frame Textures
-TextureCube<float4>     IrradianceMap         : register(t0, space0);
-TextureCube<float4>     SpecularIrradianceMap : register(t1, space0);
-Texture2D<float4>       IntegrationLUT        : register(t2, space0);
-Texture2D<float>        DirLightShadowMaps    : register(t3, space0);
-TextureCubeArray<float> PointLightShadowMaps  : register(t4, space0);
+TextureCube<float4>     IrradianceMap         : register(t0);
+TextureCube<float4>     SpecularIrradianceMap : register(t1);
+Texture2D<float4>       IntegrationLUT        : register(t2);
+Texture2D<float>        DirLightShadowMaps    : register(t3);
+TextureCubeArray<float> PointLightShadowMaps  : register(t4);
 
 // Per Object Textures
-Texture2D<float4> AlbedoTex : register(t5, space0);
-#ifdef NORMAL_MAPPING_ENABLED
-Texture2D<float4> NormalTex : register(t6, space0);
-#endif
-Texture2D<float> RoughnessTex : register(t7, space0);
-#ifdef PARALLAX_MAPPING_ENABLED
-Texture2D<float> HeightMap : register(t8, space0);
-#endif
-Texture2D<float> MetallicTex : register(t9, space0);
-Texture2D<float> AOTex       : register(t10, space0);
-Texture2D<float> AlphaTex    : register(t11, space0);
+Texture2D<float4> AlbedoTex   : register(t5);
+Texture2D<float4> NormalTex   : register(t6);
+Texture2D<float> RoughnessTex : register(t7);
+Texture2D<float> HeightMap    : register(t8);
+Texture2D<float> MetallicTex  : register(t9);
+Texture2D<float> AOTex        : register(t10);
+Texture2D<float> AlphaTex     : register(t11);
 
 struct VSInput
 {
-    float3 Position	: POSITION0;
-    float3 Normal	: NORMAL0;
-    float3 Tangent	: TANGENT0;
-    float2 TexCoord	: TEXCOORD0;
+    float3 Position : POSITION0;
+    float3 Normal   : NORMAL0;
+    float3 Tangent  : TANGENT0;
+    float2 TexCoord : TEXCOORD0;
 };
 
 struct VSOutput
 {
-    float3 WorldPosition : POSITION0;
-    float3 Normal        : NORMAL0;
-#ifdef NORMAL_MAPPING_ENABLED
-    float3 Tangent   : TANGENT0;
-    float3 Bitangent : BITANGENT0;
-#endif
-    float2 TexCoord : TEXCOORD0;
-#ifdef PARALLAX_MAPPING_ENABLED
+    float3 WorldPosition   : POSITION0;
+    float3 Normal          : NORMAL0;
+    float3 Tangent         : TANGENT0;
+    float3 Bitangent       : BITANGENT0;
+    float2 TexCoord        : TEXCOORD0;
     float3 TangentViewPos  : TANGENTVIEWPOS0;
     float3 TangentPosition : TANGENTPOSITION0;
-#endif
-    float4 Position : SV_Position;
+    float4 Position        : SV_Position;
 };
 
 VSOutput VSMain(VSInput Input)
@@ -107,14 +91,12 @@ VSOutput VSMain(VSInput Input)
     float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformBuffer.Transform).xyz);
     Output.Normal = Normal;
     
-#ifdef NORMAL_MAPPING_ENABLED
     float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), TransformBuffer.Transform).xyz);
     Tangent        = normalize(Tangent - dot(Tangent, Normal) * Normal);
     Output.Tangent = Tangent;
     
     float3 Bitangent = normalize(cross(Output.Tangent, Output.Normal));
     Output.Bitangent = Bitangent;
-#endif
 
     Output.TexCoord = Input.TexCoord;
 
@@ -122,34 +104,27 @@ VSOutput VSMain(VSInput Input)
     Output.Position      = mul(WorldPosition, CameraBuffer.ViewProjection);
     Output.WorldPosition = WorldPosition.xyz;
 
-#ifdef PARALLAX_MAPPING_ENABLED
     float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
     TBN          = transpose(TBN);
     
     Output.TangentViewPos  = mul(CameraBuffer.Position, TBN);
     Output.TangentPosition = mul(WorldPosition.xyz, TBN);
-#endif	
 
     return Output;
 }
 
 struct PSInput
 {
-    float3 WorldPosition : POSITION0;
-    float3 Normal        : NORMAL0;
-#ifdef NORMAL_MAPPING_ENABLED
-    float3 Tangent   : TANGENT0;
-    float3 Bitangent : BITANGENT0;
-#endif
-    float2 TexCoord : TEXCOORD0;
-#ifdef PARALLAX_MAPPING_ENABLED
+    float3 WorldPosition   : POSITION0;
+    float3 Normal          : NORMAL0;
+    float3 Tangent         : TANGENT0;
+    float3 Bitangent       : BITANGENT0;
+    float2 TexCoord        : TEXCOORD0;
     float3 TangentViewPos  : TANGENTVIEWPOS0;
     float3 TangentPosition : TANGENTPOSITION0;
-#endif
-    bool IsFrontFace : SV_IsFrontFace;
+    bool   IsFrontFace     : SV_IsFrontFace;
 };
 
-#ifdef PARALLAX_MAPPING_ENABLED
 static const float HEIGHT_SCALE = 0.03f;
 
 float SampleHeightMap(float2 TexCoords)
@@ -159,44 +134,42 @@ float SampleHeightMap(float2 TexCoords)
 
 float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 {
-    const float MinLayers	= 32;
-    const float MaxLayers	= 64;
+    const float MinLayers = 32;
+    const float MaxLayers = 64;
 
-    float NumLayers		= lerp(MaxLayers, MinLayers, abs(dot(float3(0.0f, 0.0f, 1.0f), ViewDir)));
-    float LayerDepth	= 1.0f / NumLayers;
+    float NumLayers  = lerp(MaxLayers, MinLayers, abs(dot(float3(0.0f, 0.0f, 1.0f), ViewDir)));
+    float LayerDepth = 1.0f / NumLayers;
     
-    float2 P				= ViewDir.xy / ViewDir.z * HEIGHT_SCALE;
-    float2 DeltaTexCoords	= P / NumLayers;
+    float2 P = ViewDir.xy / ViewDir.z * HEIGHT_SCALE;
+    float2 DeltaTexCoords = P / NumLayers;
 
-    float2	CurrentTexCoords		= TexCoords;
-    float	CurrentDepthMapValue	= SampleHeightMap(CurrentTexCoords);
+    float2 CurrentTexCoords     = TexCoords;
+    float  CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
     
-    float CurrentLayerDepth	= 0.0f;
+    float CurrentLayerDepth = 0.0f;
     while (CurrentLayerDepth < CurrentDepthMapValue)
     {
-        CurrentTexCoords		-=	DeltaTexCoords;
-        CurrentDepthMapValue	=	SampleHeightMap(CurrentTexCoords);
-        CurrentLayerDepth		+=	LayerDepth;
+        CurrentTexCoords     -= DeltaTexCoords;
+        CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
+        CurrentLayerDepth    += LayerDepth;
     }
 
     float2 PrevTexCoords = CurrentTexCoords + DeltaTexCoords;
 
-    float AfterDepth	= CurrentDepthMapValue - CurrentLayerDepth;
-    float BeforeDepth	= SampleHeightMap(PrevTexCoords) - CurrentLayerDepth + LayerDepth;
+    float AfterDepth  = CurrentDepthMapValue - CurrentLayerDepth;
+    float BeforeDepth = SampleHeightMap(PrevTexCoords) - CurrentLayerDepth + LayerDepth;
 
-    float	Weight			= AfterDepth / (AfterDepth - BeforeDepth);
-    float2	FinalTexCoords	= PrevTexCoords * Weight + CurrentTexCoords * (1.0f - Weight);
+    float  Weight         = AfterDepth / (AfterDepth - BeforeDepth);
+    float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0f - Weight);
 
     return FinalTexCoords;
 }
-#endif
 
 float4 PSMain(PSInput Input) : SV_Target0
 {
     float2 TexCoords = Input.TexCoord;
     TexCoords.y = 1.0f - TexCoords.y;
     
-#ifdef PARALLAX_MAPPING_ENABLED
     if (MaterialBuffer.EnableHeight != 0)
     {
         float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
@@ -206,19 +179,17 @@ float4 PSMain(PSInput Input) : SV_Target0
             discard;
         }
     }
-#endif
 
     float3 SampledAlbedo = ApplyGamma(AlbedoTex.Sample(MaterialSampler, TexCoords).rgb) * MaterialBuffer.Albedo;
     
-    const float3 WorldPosition	= Input.WorldPosition;
-    const float3 V				= normalize(CameraBuffer.Position - WorldPosition);
+    const float3 WorldPosition = Input.WorldPosition;
+    const float3 V             = normalize(CameraBuffer.Position - WorldPosition);
     float3 N = normalize(Input.Normal);
     if (!Input.IsFrontFace)
     {
         N = -N;
     }
     
-#ifdef NORMAL_MAPPING_ENABLED
     float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords).rgb;
     SampledNormal        = UnpackNormal(SampledNormal);
     
@@ -226,7 +197,6 @@ float4 PSMain(PSInput Input) : SV_Target0
     float3 Bitangent = normalize(Input.Bitangent);
     float3 Normal    = normalize(N);
     N = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
-#endif	
 
     const float SampledAO        = AOTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.AO;
     const float SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Metallic;

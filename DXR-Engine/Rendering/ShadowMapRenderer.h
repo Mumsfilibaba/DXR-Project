@@ -23,6 +23,7 @@ struct SCascadeMatrices
 struct SCascadeSplits
 {
     float Split;
+    float FarPlane;
 };
 
 struct SPerShadowMap
@@ -35,6 +36,9 @@ struct SPerShadowMap
 struct SPerCascade
 {
     int32 CascadeIndex;
+    int32 Padding0;
+    int32 Padding1;
+    int32 Padding2;
 };
 
 class ShadowMapRenderer

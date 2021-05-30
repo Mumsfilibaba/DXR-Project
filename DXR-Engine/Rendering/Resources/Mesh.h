@@ -32,7 +32,5 @@ public:
     uint32 VertexCount = 0;
     uint32 IndexCount  = 0;
 
-    float ShadowOffset = 0.0f;
-
     AABB BoundingBox;
 };

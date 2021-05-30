@@ -19,11 +19,12 @@ struct Camera
     float4x4 Projection;
     float4x4 ProjectionInverse;
     float4x4 ViewProjectionInverse;
-    float3   Position;
-    float    NearPlane;
-    float3   Forward;
-    float    FarPlane;
-    float    AspectRatio;
+    float3 Position;
+    float  NearPlane;
+    float3 Forward;
+    float  FarPlane;
+    float3 Right;
+    float  AspectRatio;
 };
 
 struct PositionRadius
@@ -57,6 +58,7 @@ struct SCascadeMatrices
 struct SCascadeSplit
 {
     float Split;
+    float FarPlane;
 };
 
 struct SCascadeGenerationInfo
@@ -71,19 +73,10 @@ struct DirectionalLight
 {
     float3 Color;
     float  ShadowBias;
-
     float3 Direction;
     float  MaxShadowBias;
-
-    float3 Position;
-    float  LightSize;
-    
     float3 Up;
-    float NearPlane;
-    
-    float4 CascadeRadius;
-    
-    float FarPlane;
+    float LightSize;
 };
 
 struct Vertex
@@ -100,13 +93,14 @@ struct Transform
     float4x4 TransformInv;
 };
 
-struct Material
+struct SMaterial
 {
     float3 Albedo;
-    float  Roughness;
-    float  Metallic;
-    float  AO;
-    int    EnableHeight;
+    float Roughness;
+    float Metallic;
+    float AO;
+    int EnableHeight;
+    int EnableMask;
 };
 
 #endif

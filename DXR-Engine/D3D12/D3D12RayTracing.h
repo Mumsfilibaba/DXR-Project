@@ -6,7 +6,7 @@
 #include "D3D12Views.h"
 
 class D3D12CommandListHandle;
-class Material;
+class CMaterial;
 
 class D3D12RayTracingGeometry : public RayTracingGeometry, public D3D12DeviceChild
 {

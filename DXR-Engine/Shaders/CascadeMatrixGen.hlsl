@@ -29,7 +29,7 @@ void Main(ComputeShaderInput Input)
     float MinDepth = NearPlane + ClipRange * MinMaxDepth.x;
     float MaxDepth = NearPlane + ClipRange * MinMaxDepth.y;
 
-    float RealRange = MaxDepth - MinDepth;
+    float Range = MaxDepth - MinDepth;
     float Ratio = MaxDepth / MinDepth;
 
     float CascadeSplits[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -40,7 +40,7 @@ void Main(ComputeShaderInput Input)
     {
         float p = (i + 1) / float(NUM_SHADOW_CASCADES);
         float Log = MinDepth * pow(Ratio, p);
-        float Uniform = MinDepth + RealRange * p;
+        float Uniform = MinDepth + Range * p;
         float d = Settings.CascadeSplitLambda * (Log - Uniform) + Uniform;
         CascadeSplits[i] = (d - NearPlane) / ClipRange;
     }
@@ -67,46 +67,57 @@ void Main(ComputeShaderInput Input)
     };
 
     // Calculate position of light frustum
-    for (int j = 0; j < 8; j++)
     {
-        float4 Corner = mul(float4(FrustumCorners[j], 1.0f), InvCamera);
-        FrustumCorners[j] = Corner.xyz / Corner.w;
+        for (int j = 0; j < 8; j++)
+        {
+            float4 Corner = mul(float4(FrustumCorners[j], 1.0f), InvCamera);
+            FrustumCorners[j] = Corner.xyz / Corner.w;
+        }
     }
 
-    for (int j = 0; j < 4; j++)
     {
-        const float3 Distance = FrustumCorners[j + 4] - FrustumCorners[j];
-        FrustumCorners[j + 4] = FrustumCorners[j] + (Distance * SplitDist);
-        FrustumCorners[j]     = FrustumCorners[j] + (Distance * LastSplitDist);
+        for (int j = 0; j < 4; j++)
+        {
+            const float3 Distance = FrustumCorners[j + 4] - FrustumCorners[j];
+            FrustumCorners[j + 4] = FrustumCorners[j] + (Distance * SplitDist);
+            FrustumCorners[j]     = FrustumCorners[j] + (Distance * LastSplitDist);
+        }
     }
 
     // Calc frustum center
     float3 FrustumCenter = Float3(0.0f);
-    for (int j = 0; j < 8; j++)
     {
-        FrustumCenter += FrustumCorners[j];
+        for (int j = 0; j < 8; j++)
+        {
+            FrustumCenter += FrustumCorners[j];
+        }
     }
-    FrustumCenter = FrustumCenter * (1.0f / 8.0f);
+    FrustumCenter /= 8.0f;
 
     float Radius = 0.0f;
-    for (int j = 0; j < 8; j++)
     {
-        const float Distance = length(FrustumCorners[j].xyz - FrustumCenter);
-        Radius = max(Radius, Distance);
+        for (int j = 0; j < 8; j++)
+        {
+            const float Distance = length(FrustumCorners[j] - FrustumCenter);
+            Radius = max(Radius, Distance);
+        }
     }
-    
     Radius = ceil(Radius * 16.0f) / 16.0f;
     
     float3 MaxExtents = Float3(Radius);
-    MaxExtents.z = MaxExtents.z * 6.0f;
+    MaxExtents.z = max(MaxExtents.z * 6.0f, 5.0f);
     
     float3 MinExtents = -MaxExtents;
     float3 CascadeExtents = MaxExtents - MinExtents;
     
     float3 LightDirection = normalize(Settings.LightDirection);
-    float3 ShadowEyePos = FrustumCenter - (LightDirection * MinExtents.z);
+    float3 ShadowEyePos = FrustumCenter - (LightDirection * MaxExtents.z);
     
-    float4x4 ViewMat = CreateLookAtMatrix(ShadowEyePos, FrustumCenter, Settings.LightUp);
+    const float3 LIGHT_UP = float3(0.0f, 0.0f, 1.0f);
+    float3 LightRight = normalize(cross(LIGHT_UP, LightDirection));
+    float3 LightUp    = normalize(cross(LightDirection, LightRight));
+    
+    float4x4 ViewMat = CreateLookToMatrix(ShadowEyePos, LightDirection, LightUp);
     float4x4 OrtoMat = CreateOrtographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, 0.01f, CascadeExtents.z);
     
     // Stabilize cascades
@@ -130,7 +141,8 @@ void Main(ComputeShaderInput Input)
     
     // Write splits
     SCascadeSplit Split;
-    Split.Split = NearPlane + SplitDist * ClipRange;
+    Split.Split    = NearPlane + SplitDist * ClipRange;
+    Split.FarPlane = CascadeExtents.z;
     
     SplitBuffer[CascadeIndex] = Split;
 }

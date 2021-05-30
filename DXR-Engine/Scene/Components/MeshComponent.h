@@ -14,6 +14,6 @@ public:
         CORE_OBJECT_INIT();
     }
 
-    TSharedPtr<class Material> Material;
+    TSharedPtr<class CMaterial> Material;
     TSharedPtr<class Mesh>     Mesh;
 };

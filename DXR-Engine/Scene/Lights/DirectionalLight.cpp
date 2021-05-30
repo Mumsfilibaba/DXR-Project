@@ -171,6 +171,8 @@ void DirectionalLight::UpdateCascades(Camera& Camera)
             Position = CascadePosition;
         }
     }
+
+    return;
 }
 
 void DirectionalLight::SetRotation(const XMFLOAT3& InRotation)

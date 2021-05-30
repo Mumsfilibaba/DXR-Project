@@ -5,24 +5,24 @@
 
 #define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetShaderResourceView() : nullptr
 
-Material::Material(const MaterialProperties& InProperties)
+CMaterial::CMaterial(const SMaterialDesc& InProperties)
     : AlbedoMap()
     , NormalMap()
     , RoughnessMap()
     , MetallicMap()
     , AOMap()
     , HeightMap()
-    , MaterialBuffer()
-    , Properties(InProperties)
+    , m_MaterialBuffer()
+    , m_Properties(InProperties)
 {
 }
 
-void Material::Init()
+void CMaterial::Init()
 {
-    MaterialBuffer = CreateConstantBuffer<MaterialProperties>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
-    if (MaterialBuffer)
+    m_MaterialBuffer = CreateConstantBuffer<SMaterialDesc>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+    if (m_MaterialBuffer)
     {
-        MaterialBuffer->SetName("MaterialBuffer");
+        m_MaterialBuffer->SetName("m_MaterialBuffer");
     }
 
     SamplerStateCreateInfo CreateInfo;
@@ -36,74 +36,77 @@ void Material::Init()
     CreateInfo.MinLOD         = -FLT_MAX;
     CreateInfo.MipLODBias     = 0.0f;
 
-    Sampler = CreateSamplerState(CreateInfo);
+    m_Sampler = CreateSamplerState(CreateInfo);
 }
 
-void Material::BuildBuffer(CommandList& CmdList)
+void CMaterial::BuildBuffer(CommandList& CmdList)
 {
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
-    CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(MaterialProperties), &Properties);
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(m_MaterialBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
+    CmdList.UpdateBuffer(m_MaterialBuffer.Get(), 0, sizeof(SMaterialDesc), &m_Properties);
+    CmdList.TransitionBuffer(m_MaterialBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
 
-    MaterialBufferIsDirty = false;
+    m_MaterialBufferIsDirty = false;
 }
 
-void Material::SetAlbedo(const XMFLOAT3& Albedo)
+void CMaterial::SetAlbedo(const XMFLOAT3& Albedo)
 {
-    Properties.Albedo = Albedo;
-    MaterialBufferIsDirty = true;
+    m_Properties.Albedo = Albedo;
+    m_MaterialBufferIsDirty = true;
 }
 
-void Material::SetAlbedo(float R, float G, float B)
+void CMaterial::SetAlbedo(float R, float G, float B)
 {
-    Properties.Albedo = XMFLOAT3(R, G, B);
-    MaterialBufferIsDirty = true;
+    m_Properties.Albedo = XMFLOAT3(R, G, B);
+    m_MaterialBufferIsDirty = true;
 }
 
-void Material::SetMetallic(float Metallic)
+void CMaterial::SetMetallic(float Metallic)
 {
-    Properties.Metallic = Metallic;
-    MaterialBufferIsDirty = true;
+    m_Properties.Metallic = Metallic;
+    m_MaterialBufferIsDirty = true;
 }
 
-void Material::SetRoughness(float Roughness)
+void CMaterial::SetRoughness(float Roughness)
 {
-    Properties.Roughness = Roughness;
-    MaterialBufferIsDirty = true;
+    m_Properties.Roughness = Roughness;
+    m_MaterialBufferIsDirty = true;
 }
 
-void Material::SetAmbientOcclusion(float AO)
+void CMaterial::SetAmbientOcclusion(float AO)
 {
-    Properties.AO = AO;
-    MaterialBufferIsDirty = true;
+    m_Properties.AO = AO;
+    m_MaterialBufferIsDirty = true;
 }
 
-void Material::EnableHeightMap(bool EnableHeightMap)
+void CMaterial::ForceForwardPass(bool ForceForwardRender)
 {
-    if (EnableHeightMap)
-    {
-        Properties.EnableHeight = 1;
-    }
-    else
-    {
-        Properties.EnableHeight = 0;
-    }
+    m_RenderInForwardPass = ForceForwardRender;
 }
 
-void Material::SetDebugName(const std::string& InDebugName)
+void CMaterial::EnableHeightMap(bool InEnableHeightMap)
 {
-    DebugName = InDebugName;
+    m_Properties.EnableHeight = (int32)InEnableHeightMap;
 }
 
-ShaderResourceView* const* Material::GetShaderResourceViews() const
+void CMaterial::EnableAlphaMask(bool InEnableAlphaMask)
 {
-    ShaderResourceViews[0] = GET_SAFE_SRV(AlbedoMap);
-    ShaderResourceViews[1] = GET_SAFE_SRV(NormalMap);
-    ShaderResourceViews[2] = GET_SAFE_SRV(RoughnessMap);
-    ShaderResourceViews[3] = GET_SAFE_SRV(HeightMap);
-    ShaderResourceViews[4] = GET_SAFE_SRV(MetallicMap);
-    ShaderResourceViews[5] = GET_SAFE_SRV(AOMap);
-    ShaderResourceViews[6] = GET_SAFE_SRV(AlphaMask);
+    m_Properties.EnableMask = (int32)InEnableAlphaMask;
+}
 
-    return ShaderResourceViews.Data();
+void CMaterial::SetDebugName(const std::string& DebugName)
+{
+    m_DebugName = DebugName;
+}
+
+ShaderResourceView* const* CMaterial::GetShaderResourceViews() const
+{
+    m_ShaderResourceViews[0] = GET_SAFE_SRV(AlbedoMap);
+    m_ShaderResourceViews[1] = GET_SAFE_SRV(NormalMap);
+    m_ShaderResourceViews[2] = GET_SAFE_SRV(RoughnessMap);
+    m_ShaderResourceViews[3] = GET_SAFE_SRV(HeightMap);
+    m_ShaderResourceViews[4] = GET_SAFE_SRV(MetallicMap);
+    m_ShaderResourceViews[5] = GET_SAFE_SRV(AOMap);
+    m_ShaderResourceViews[6] = GET_SAFE_SRV(AlphaMask);
+
+    return m_ShaderResourceViews.Data();
 }

@@ -3,7 +3,7 @@
 
 struct MeshDrawCommand
 {
-    class Material* Material     = nullptr;
+    class CMaterial* Material     = nullptr;
     class Mesh*     Mesh         = nullptr;
     class Actor*    CurrentActor = nullptr;
 

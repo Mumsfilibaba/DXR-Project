@@ -126,12 +126,12 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
     }
 
     // Create BaseMaterial
-    MaterialProperties Properties;
+    SMaterialDesc Properties;
     Properties.AO        = 1.0f;
     Properties.Metallic  = 0.0f;
     Properties.Roughness = 1.0f;
 
-    TSharedPtr<Material> BaseMaterial = MakeShared<Material>(Properties);
+    TSharedPtr<CMaterial> BaseMaterial = MakeShared<CMaterial>(Properties);
     BaseMaterial->AlbedoMap    = WhiteTexture;
     BaseMaterial->AOMap        = WhiteTexture;
     BaseMaterial->HeightMap    = WhiteTexture;
@@ -141,18 +141,18 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
     BaseMaterial->Init();
 
     // Create All Materials in scene
-    TArray<TSharedPtr<Material>> LoadedMaterials;
+    TArray<TSharedPtr<CMaterial>> LoadedMaterials;
     std::unordered_map<std::string, TRef<Texture2D>> MaterialTextures;
     for (tinyobj::material_t& Mat : Materials)
     {
         // Create new material with default properties
-        MaterialProperties MatProps;
+        SMaterialDesc MatProps;
         MatProps.Albedo    = XMFLOAT3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
         MatProps.Metallic  = 1.0f;
         MatProps.AO        = Mat.ambient[0];
         MatProps.Roughness = 1.0f;
 
-        TSharedPtr<Material>& NewMaterial = LoadedMaterials.EmplaceBack(MakeShared<Material>(MatProps));
+        TSharedPtr<CMaterial>& NewMaterial = LoadedMaterials.EmplaceBack(MakeShared<CMaterial>(MatProps));
         LOG_INFO("Loaded materialID=" + std::to_string(LoadedMaterials.Size() - 1));
 
         // Metallic
@@ -276,6 +276,8 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
                 {
                     MaterialTextures[Mat.alpha_texname] = WhiteTexture;
                 }
+
+                NewMaterial->EnableAlphaMask(true);
             }
 
             NewMaterial->AlphaMask = MaterialTextures[Mat.alpha_texname];
@@ -283,7 +285,6 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
         
         // AO
         NewMaterial->AOMap = WhiteTexture;
-
         NewMaterial->Init();
     }
 

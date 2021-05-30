@@ -4,6 +4,9 @@
 struct SPerCascade
 {
     int CascadeIndex;
+    int Padding0;
+    int Padding1;
+    int Padding2;
 };
 
 struct SPerObject

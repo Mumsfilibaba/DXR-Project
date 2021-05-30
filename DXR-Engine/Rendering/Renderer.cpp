@@ -38,7 +38,7 @@ TConsoleVariable<bool> GVSyncEnabled(false);
 TConsoleVariable<bool> GFrustumCullEnabled(true);
 TConsoleVariable<bool> GRayTracingEnabled(true);
 
-struct CameraBufferDesc
+struct SCameraBufferDesc
 {
     XMFLOAT4X4 ViewProjection;
     XMFLOAT4X4 View;
@@ -46,11 +46,12 @@ struct CameraBufferDesc
     XMFLOAT4X4 Projection;
     XMFLOAT4X4 ProjectionInv;
     XMFLOAT4X4 ViewProjectionInv;
-    XMFLOAT3   Position;
-    float      NearPlane;
-    XMFLOAT3   Forward;
-    float      FarPlane;
-    float      AspectRatio;
+    XMFLOAT3 Position;
+    float    NearPlane;
+    XMFLOAT3 Forward;
+    float    FarPlane;
+    XMFLOAT3 Right;
+    float    AspectRatio;
 };
 
 void Renderer::PerformFrustumCulling(const Scene& Scene)
@@ -73,7 +74,7 @@ void Renderer::PerformFrustumCulling(const Scene& Scene)
         XMStoreFloat3(&Box.Bottom, XmBottom);
         if (CameraFrustum.CheckAABB(Box))
         {
-            if (Command.Material->HasAlphaMask())
+            if (Command.Material->ShouldRenderInForwardPass())
             {
                 Resources.ForwardVisibleCommands.EmplaceBack(Command);
             }
@@ -370,7 +371,7 @@ void Renderer::Tick(const Scene& Scene)
     }
 
     // Update camerabuffer
-    CameraBufferDesc CamBuff;
+    SCameraBufferDesc CamBuff;
     CamBuff.ViewProjection    = Scene.GetCamera()->GetViewProjectionMatrix();
     CamBuff.View              = Scene.GetCamera()->GetViewMatrix();
     CamBuff.ViewInv           = Scene.GetCamera()->GetViewInverseMatrix();
@@ -379,13 +380,14 @@ void Renderer::Tick(const Scene& Scene)
     CamBuff.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
     CamBuff.Position          = Scene.GetCamera()->GetPosition();
     CamBuff.Forward           = Scene.GetCamera()->GetForward();
+    CamBuff.Right             = Scene.GetCamera()->GetRight();
     CamBuff.NearPlane         = Scene.GetCamera()->GetNearPlane();
     CamBuff.FarPlane          = Scene.GetCamera()->GetFarPlane();
     CamBuff.AspectRatio       = Scene.GetCamera()->GetAspectRatio();
 
     PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
 
-    PrepareGBufferCmdList.UpdateBuffer(Resources.CameraBuffer.Get(), 0, sizeof(CameraBufferDesc), &CamBuff);
+    PrepareGBufferCmdList.UpdateBuffer(Resources.CameraBuffer.Get(), 0, sizeof(SCameraBufferDesc), &CamBuff);
 
     PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
 
@@ -566,6 +568,7 @@ void Renderer::Tick(const Scene& Scene)
         EResourceState::PixelShaderResource,
         EResourceState::PixelShaderResource);
 
+    if (!Resources.ForwardVisibleCommands.IsEmpty())
     {
         GPU_TRACE_SCOPE(MainCmdList, "Forward Pass");
         ForwardRenderer.Render(MainCmdList, Resources, LightSetup);
@@ -687,7 +690,7 @@ bool Renderer::Init()
         Resources.MainWindowViewport->SetName("Main Window Viewport");
     }
 
-    Resources.CameraBuffer = CreateConstantBuffer<CameraBufferDesc>(BufferFlag_Default, EResourceState::Common, nullptr);
+    Resources.CameraBuffer = CreateConstantBuffer<SCameraBufferDesc>(BufferFlag_Default, EResourceState::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create camerabuffer");
@@ -723,7 +726,7 @@ bool Renderer::Init()
         CreateInfo.AddressU    = ESamplerMode::Border;
         CreateInfo.AddressV    = ESamplerMode::Border;
         CreateInfo.AddressW    = ESamplerMode::Border;
-        CreateInfo.Filter      = ESamplerFilter::Comparison_MinMagMipPoint;
+        CreateInfo.Filter      = ESamplerFilter::MinMagMipPoint;
         CreateInfo.BorderColor = ColorF(1.0f, 1.0f, 1.0f, 1.0f);
 
         Resources.DirectionalLightShadowSampler = CreateSamplerState(CreateInfo);

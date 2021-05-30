@@ -35,9 +35,8 @@ bool Sandbox::Init()
     Scene = Scene::LoadFromFile("../Assets/Scenes/Sponza/Sponza.obj");
 
     // Create Spheres
-    MeshData SphereMeshData     = MeshFactory::CreateSphere(3);
+    MeshData SphereMeshData = MeshFactory::CreateSphere(3);
     TSharedPtr<Mesh> SphereMesh = Mesh::Make(SphereMeshData);
-    SphereMesh->ShadowOffset = 0.05f; // TODO: Remove
 
     // Create standard textures
     uint8 Pixels[] =
@@ -94,7 +93,7 @@ bool Sandbox::Init()
     constexpr float  MetallicDelta  = 1.0f / SphereCountY;
     constexpr float  RoughnessDelta = 1.0f / SphereCountX;
 
-    MaterialProperties MatProperties;
+    SMaterialDesc MatProperties;
     MatProperties.AO = 1.0f;
 
     uint32 SphereIndex = 0;
@@ -112,7 +111,7 @@ bool Sandbox::Init()
 
             NewComponent = DBG_NEW MeshComponent(NewActor);
             NewComponent->Mesh     = SphereMesh;
-            NewComponent->Material = MakeShared<Material>(MatProperties);
+            NewComponent->Material = MakeShared<CMaterial>(MatProperties);
 
             NewComponent->Material->AlbedoMap    = BaseTexture;
             NewComponent->Material->NormalMap    = BaseNormal;
@@ -146,7 +145,7 @@ bool Sandbox::Init()
 
     NewComponent = DBG_NEW MeshComponent(NewActor);
     NewComponent->Mesh     = Mesh::Make(CubeMeshData);
-    NewComponent->Material = MakeShared<Material>(MatProperties);
+    NewComponent->Material = MakeShared<CMaterial>(MatProperties);
 
     TRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile("../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
     if (!AlbedoMap)
@@ -233,7 +232,7 @@ bool Sandbox::Init()
 
     NewComponent = DBG_NEW MeshComponent(NewActor);
     NewComponent->Mesh     = Mesh::Make(MeshFactory::CreatePlane(10, 10));
-    NewComponent->Material = MakeShared<Material>(MatProperties);
+    NewComponent->Material = MakeShared<CMaterial>(MatProperties);
     NewComponent->Material->AlbedoMap    = BaseTexture;
     NewComponent->Material->NormalMap    = BaseNormal;
     NewComponent->Material->RoughnessMap = WhiteTexture;
@@ -293,7 +292,7 @@ bool Sandbox::Init()
     MatProperties.Albedo       = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
     TSharedPtr<Mesh>     StreetLight    = Mesh::Make(MeshFactory::CreateFromFile("../Assets/Models/Street_Light.obj"));
-    TSharedPtr<Material> StreetLightMat = MakeShared<Material>(MatProperties);
+    TSharedPtr<CMaterial> StreetLightMat = MakeShared<CMaterial>(MatProperties);
 
     for (uint32 i = 0; i < 4; i++)
     {
@@ -324,7 +323,7 @@ bool Sandbox::Init()
     MatProperties.Albedo       = XMFLOAT3(0.4f, 0.4f, 0.4f);
 
     TSharedPtr<Mesh>     Pillar = Mesh::Make(MeshFactory::CreateFromFile("../Assets/Models/Pillar.obj"));
-    TSharedPtr<Material> PillarMat = MakeShared<Material>(MatProperties);
+    TSharedPtr<CMaterial> PillarMat = MakeShared<CMaterial>(MatProperties);
 
     for (uint32 i = 0; i < 8; i++)
     {
@@ -419,8 +418,8 @@ bool Sandbox::Init()
     Light4->SetMaxShadowBias(0.0015f);
     Light4->SetColor(1.0f, 1.0f, 1.0f);
     Light4->SetIntensity(10.0f);
-    //Light4->SetRotation(Math::ToRadians(35.0f), Math::ToRadians(135.0f), 0.0f);
-    Light4->SetRotation(0.0f, 0.0f, 0.0f);
+    Light4->SetRotation(Math::ToRadians(35.0f), Math::ToRadians(135.0f), 0.0f);
+    //Light4->SetRotation(0.0f, 0.0f, 0.0f);
     Scene->AddLight(Light4);
 
     return true;

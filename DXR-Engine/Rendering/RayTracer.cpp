@@ -109,7 +109,7 @@ void RayTracer::PreRender(CommandList& CmdList, FrameResources& Resources, const
 
     for (const MeshDrawCommand& Cmd : Scene.GetMeshDrawCommands())
     {
-        Material* Mat = Cmd.Material;
+        CMaterial* Mat = Cmd.Material;
         if (Cmd.Material->HasAlphaMask())
         {
             continue;

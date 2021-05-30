@@ -155,15 +155,15 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
             DirectionalLightData.Direction     = CurrentLight->GetDirection();
             DirectionalLightData.Up            = CurrentLight->GetUp();
             DirectionalLightData.MaxShadowBias = CurrentLight->GetMaxShadowBias();
-            DirectionalLightData.Position      = CurrentLight->GetPosition();
+            //DirectionalLightData.Position      = CurrentLight->GetPosition();
 
-            for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
-            {
-                DirectionalLightData.CascadeRadius[i]   = CurrentLight->GetCascadeRadius(i);
-            }
+            //for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
+            //{
+            //    DirectionalLightData.CascadeRadius[i]   = CurrentLight->GetCascadeRadius(i);
+            //}
 
-            DirectionalLightData.NearPlane = CurrentLight->GetShadowNearPlane();
-            DirectionalLightData.FarPlane  = CurrentLight->GetShadowFarPlane();
+            //DirectionalLightData.NearPlane = CurrentLight->GetShadowNearPlane();
+            //DirectionalLightData.FarPlane  = CurrentLight->GetShadowFarPlane();
             DirectionalLightData.LightSize = CurrentLight->GetSize();
 
             CascadeSplitLambda = CurrentLight->GetCascadeSplitLambda();

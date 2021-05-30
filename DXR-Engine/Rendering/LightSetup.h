@@ -39,15 +39,16 @@ struct DirectionalLightData
     XMFLOAT3 Direction     = XMFLOAT3(0.0f, -1.0f, 0.0f);
     float    MaxShadowBias = 0.05f;
 
-    XMFLOAT3 Position;
-    float    LightSize;
+    //XMFLOAT3 Position;
 
     XMFLOAT3 Up = XMFLOAT3(0.0f, 0.0f, -1.0f);
-    float NearPlane;
+    float LightSize;
+    
+    //float NearPlane;
+    //float FarPlane;
 
-    float CascadeRadius[NUM_SHADOW_CASCADES];
+    //float CascadeRadius[NUM_SHADOW_CASCADES];
 
-    float FarPlane;
 };
 
 struct LightSetup
