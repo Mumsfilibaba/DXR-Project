@@ -57,7 +57,9 @@ struct SCascadeMatrices
 
 struct SCascadeSplit
 {
+    float3 MinExtent;
     float Split;
+    float3 MaxExtent;
     float FarPlane;
 };
 

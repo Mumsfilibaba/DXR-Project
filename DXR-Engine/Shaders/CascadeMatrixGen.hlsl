@@ -46,10 +46,7 @@ void Main(ComputeShaderInput Input)
     }
 
     // TODO: This should be moved to the settings
-    const float CascadeSizes[NUM_SHADOW_CASCADES] =
-    {
-        2048.0f, 2048.0f, 2048.0f, 2048.0f
-    };
+    const float CascadeSize = 1024.0f;
 
     float LastSplitDist = (CascadeIndex == 0) ? MinMaxDepth.x : CascadeSplits[CascadeIndex - 1];
     float SplitDist = CascadeSplits[CascadeIndex];
@@ -94,6 +91,7 @@ void Main(ComputeShaderInput Input)
     }
     FrustumCenter /= 8.0f;
 
+    float ViewSplit = SplitDist * Range;
     float Radius = 0.0f;
     {
         for (int j = 0; j < 8; j++)
@@ -102,7 +100,7 @@ void Main(ComputeShaderInput Input)
             Radius = max(Radius, Distance);
         }
     }
-    Radius = ceil(Radius * 16.0f) / 16.0f;
+    Radius = ceil(Radius);
     
     float3 MaxExtents = Float3(Radius);
     MaxExtents.z = max(MaxExtents.z * 6.0f, 5.0f);
@@ -123,11 +121,11 @@ void Main(ComputeShaderInput Input)
     // Stabilize cascades
     float4x4 ShadowMatrix = mul(ViewMat, OrtoMat);
     float3 ShadowOrigin = mul(float4(Float3(0.0f), 1.0f), ShadowMatrix);
-    ShadowOrigin *= (CascadeSizes[CascadeIndex] / 2.0f);
+    ShadowOrigin *= (CascadeSize / 2.0f);
     
     float3 RoundedOrigin = round(ShadowOrigin);
     float3 RoundedOffset = RoundedOrigin - ShadowOrigin;
-    RoundedOffset = RoundedOffset * (2.0f / CascadeSizes[CascadeIndex]);
+    RoundedOffset = RoundedOffset * (2.0f / CascadeSize);
 
     OrtoMat[3][0] += RoundedOffset.x;
     OrtoMat[3][1] += RoundedOffset.y;
@@ -141,8 +139,10 @@ void Main(ComputeShaderInput Input)
     
     // Write splits
     SCascadeSplit Split;
-    Split.Split    = NearPlane + SplitDist * ClipRange;
-    Split.FarPlane = CascadeExtents.z;
+    Split.Split     = NearPlane + SplitDist * ClipRange;
+    Split.FarPlane  = CascadeExtents.z;
+    Split.MinExtent = MinExtents;
+    Split.MaxExtent = MaxExtents;
     
     SplitBuffer[CascadeIndex] = Split;
 }

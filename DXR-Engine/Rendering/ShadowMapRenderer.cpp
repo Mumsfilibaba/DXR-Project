@@ -532,7 +532,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
 
         CmdList.SetRenderTargets(nullptr, 0, CascadeDSV);
 
-        const uint16 CascadeSize = LightSetup.CascadeSizes[i];
+        const uint16 CascadeSize = LightSetup.CascadeSize;
         CmdList.SetViewport(static_cast<float>(CascadeSize), static_cast<float>(CascadeSize), 0.0f, 1.0f, 0.0f, 0.0f);
         CmdList.SetScissorRect(CascadeSize, CascadeSize, 0, 0);
 
@@ -629,7 +629,7 @@ bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
 
     for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
     {
-        const uint16 CascadeSize = LightSetup.CascadeSizes[i];
+        const uint16 CascadeSize = LightSetup.CascadeSize;
 
         LightSetup.ShadowMapCascades[i] = CreateTexture2D(
             LightSetup.ShadowMapFormat, 

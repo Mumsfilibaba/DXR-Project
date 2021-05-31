@@ -15,16 +15,16 @@
     #define DRAW_TILE_OCCUPANCY 0
 #endif
 
-//#define DRAW_CASCADE_DEBUG
+#define DRAW_CASCADE_DEBUG
 #ifdef DRAW_CASCADE_DEBUG
     #define DRAW_SHADOW_CASCADE 1
 #else
     #define DRAW_SHADOW_CASCADE 0
 #endif
 
-#define BLEND_CASCADES  (1)
+#define BLEND_CASCADES  (0)
 #define ROTATE_SAMPLES  (1)
-#define ENABLE_PCSS     (0)
+#define ENABLE_PCSS     (1)
 #define BAND_PERCENTAGE (0.15f)
 
 // G-Buffer
@@ -100,13 +100,13 @@ ConstantBuffer<DirectionalLight> DirLightBuffer : register(b5, space0);
 RWTexture2D<float4> Output : register(u0, space0);
 
 // Cascaded Shadow Mapping
-#define NUM_BLOCKER_SAMPLES (128)
+#define NUM_BLOCKER_SAMPLES (16)
 #define NUM_PCF_SAMPLES     (128)
 
 // From: http://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf
-float SearchWidth(float LightSize, float LightNear, float z)
+float SearchWidth(float LightSize, float LightNear, float ReciverZ)
 {
-    return LightSize * 0.5f * (z - LightNear) / z;
+    return LightSize * (ReciverZ - LightNear) / ReciverZ;
 }
 
 float FindBlockerDistance(in Texture2D<float> ShadowMap, float2 TexCoords, float CompareDepth, float SearchRadius, float Scale, inout uint RandomSeed)
@@ -183,9 +183,7 @@ float PCFDirectionalLight(in Texture2D<float> ShadowMap, float2 TexCoords, float
         RandomDirection = RandomDirection * SearchRadius;
 #endif
         
-#if ENABLE_PCSS == 0
         RandomDirection = RandomDirection * Scale;
-#endif
         
         float Depth = ShadowMap.SampleLevel(DirectionalLightSampler, TexCoords.xy + RandomDirection, 0.0f);
         if (Depth < CompareDepth)
@@ -197,9 +195,9 @@ float PCFDirectionalLight(in Texture2D<float> ShadowMap, float2 TexCoords, float
     return 1.0f - saturate(Shadow / float(NUM_PCF_SAMPLES));
 }
 
-float CalcPenumbraWidth(float LightSize, float ZReciver, float ZBlocker)
+float CalcPenumbraWidth(float LightSize, float ReciverZ, float BlockerZ)
 {
-    return abs(LightSize * (ZReciver - ZBlocker) / ZBlocker);
+    return abs(LightSize * (ReciverZ - BlockerZ) / BlockerZ);
 }
 
 float CalcFilterRadius(float PenumbraWidth, float LightSize, float LightNear, float z)
@@ -234,8 +232,8 @@ float PCSSDirectionalLight(
         return 1.0f;
     }
 
-    float DepthRange = LightFar - LightNear;
-    float AvgBlockerZ   = BlockerDistance * DepthRange;
+    float DepthRange    = LightFar - LightNear;
+    float AvgBlockerZ   = LightNear + BlockerDistance * DepthRange;
     float PenumbraWidth = CalcPenumbraWidth(LightSize, LightViewPos.z, AvgBlockerZ);
     
     return PCFDirectionalLight(ShadowMap, ShadowCoords.xy, CompareDepth, PenumbraWidth, Scale, RandomSeed);
@@ -312,28 +310,28 @@ float CascadedShadowFactor(float3 World, float3 View, float3 N, float3 L, inout 
         float3 ProjCoords   = GetShadowCoords(0, World);
         float3 LightViewPos = GetLightViewPos(0, World);
         float LightFar = CascadeSplitsBuffer[0].FarPlane;
-        Shadow += PCSSDirectionalLight(ShadowCascade0, ProjCoords, LightViewPos, LightSize, 0.01f, LightFar, 1.0f / 8.0f, ShadowBias, RandomSeed) * CascadeWeights[0];
+        Shadow += PCSSDirectionalLight(ShadowCascade0, ProjCoords, LightViewPos, LightSize, 0.01f, LightFar, 1.0f, ShadowBias, RandomSeed) * CascadeWeights[0];
     }
     if (CascadeWeights[1] > 0.0f)
     {
         float3 ProjCoords   = GetShadowCoords(1, World);
         float3 LightViewPos = GetLightViewPos(1, World);
         float LightFar = CascadeSplitsBuffer[1].FarPlane;
-        Shadow += PCSSDirectionalLight(ShadowCascade1, ProjCoords, LightViewPos, LightSize, 0.01f, LightFar, 1.0f / 4.0f, ShadowBias, RandomSeed) * CascadeWeights[1];
+        Shadow += PCSSDirectionalLight(ShadowCascade1, ProjCoords, LightViewPos, LightSize, 0.01f, LightFar, 1.0f / 2.0f, ShadowBias, RandomSeed) * CascadeWeights[1];
     }
     if (CascadeWeights[2] > 0.0f)
     {
         float3 ProjCoords   = GetShadowCoords(2, World);
         float3 LightViewPos = GetLightViewPos(2, World);
         float LightFar = CascadeSplitsBuffer[2].FarPlane;
-        Shadow += PCSSDirectionalLight(ShadowCascade2, ProjCoords, LightViewPos, LightSize, 0.01f, LightFar, 1.0f / 2.0f, ShadowBias, RandomSeed) * CascadeWeights[2];
+        Shadow += PCSSDirectionalLight(ShadowCascade2, ProjCoords, LightViewPos, LightSize, 0.01f, LightFar, 1.0f / 4.0f, ShadowBias, RandomSeed) * CascadeWeights[2];
     }
     if (CascadeWeights[3] > 0.0f)
     {
         float3 ProjCoords   = GetShadowCoords(3, World);
         float3 LightViewPos = GetLightViewPos(3, World);
         float LightFar = CascadeSplitsBuffer[3].FarPlane;
-        Shadow += PCSSDirectionalLight(ShadowCascade3, ProjCoords, LightViewPos, LightSize, 0.01f, LightFar, 1.0f, ShadowBias, RandomSeed) * CascadeWeights[3];
+        Shadow += PCSSDirectionalLight(ShadowCascade3, ProjCoords, LightViewPos, LightSize, 0.01f, LightFar, 1.0f / 8.0f, ShadowBias, RandomSeed) * CascadeWeights[3];
     }
     
     return Shadow;

@@ -102,7 +102,7 @@ bool Sandbox::Init()
         for (uint32 x = 0; x < SphereCountX; x++)
         {
             NewActor = DBG_NEW Actor();
-            NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 1.0f, 40.0f + StartPositionY + (y * SphereOffset));
+            NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
 
             NewActor->SetName("Sphere[" + std::to_string(SphereIndex) + "]");
             SphereIndex++;
@@ -302,7 +302,6 @@ bool Sandbox::Init()
         NewActor->SetName("Street Light " + std::to_string(i));
         NewActor->GetTransform().SetUniformScale(0.25f);
         NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - ((float)i * 3.0f));
-
 
         NewComponent = DBG_NEW MeshComponent(NewActor);
         NewComponent->Mesh                   = StreetLight;

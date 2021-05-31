@@ -22,7 +22,9 @@ struct SCascadeMatrices
 
 struct SCascadeSplits
 {
+    XMFLOAT3 MinExtent;
     float Split;
+    XMFLOAT3 MaxExtent;
     float FarPlane;
 };
 
