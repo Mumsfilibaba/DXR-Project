@@ -29,27 +29,27 @@ class Renderer
 {
 public:
     bool Init();
-    
-    void Tick(const Scene& Scene);
-    
+
+    void Tick( const Scene& Scene );
+
     void Release();
 
-    void PerformFrustumCulling(const Scene& Scene);
-    void PerformFXAA(CommandList& InCmdList);
-    void PerformBackBufferBlit(CommandList& InCmdList);
+    void PerformFrustumCulling( const Scene& Scene );
+    void PerformFXAA( CommandList& InCmdList );
+    void PerformBackBufferBlit( CommandList& InCmdList );
 
-    void PerformAABBDebugPass(CommandList& InCmdList);
+    void PerformAABBDebugPass( CommandList& InCmdList );
 
     void RenderDebugInterface();
 
 private:
-    void OnWindowResize(const WindowResizeEvent& Event);
+    void OnWindowResize( const WindowResizeEvent& Event );
 
     bool InitBoundingBoxDebugPass();
     bool InitAA();
     bool InitShadingImage();
 
-    void ResizeResources(uint32 Width, uint32 Height);
+    void ResizeResources( uint32 Width, uint32 Height );
 
     CommandList PreShadowsCmdList;
     CommandList PointShadowCmdList;
@@ -97,9 +97,9 @@ private:
 
     TRef<GPUProfiler> GPUProfiler;
 
-    uint32 LastFrameNumDrawCalls     = 0;
+    uint32 LastFrameNumDrawCalls = 0;
     uint32 LastFrameNumDispatchCalls = 0;
-    uint32 LastFrameNumCommands      = 0;
+    uint32 LastFrameNumCommands = 0;
 };
 
 extern Renderer GRenderer;

@@ -29,71 +29,71 @@ bool EngineLoop::Init()
     TRACE_FUNCTION_SCOPE();
 
     GConsoleOutput = GenericOutputConsole::Create();
-    if (!GConsoleOutput)
+    if ( !GConsoleOutput )
     {
         return false;
     }
     else
     {
-        GConsoleOutput->SetTitle("DXR-Engine Error Console");
+        GConsoleOutput->SetTitle( "DXR-Engine Error Console" );
     }
 
     Profiler::Init();
 
-    if (!Platform::Init())
+    if ( !Platform::Init() )
     {
-        PlatformMisc::MessageBox("ERROR", "Failed to init Platform");
+        PlatformMisc::MessageBox( "ERROR", "Failed to init Platform" );
         return false;
     }
 
-    if (!TaskManager::Get().Init())
+    if ( !TaskManager::Get().Init() )
     {
         return false;
     }
 
-    if (!GEngine.Init())
+    if ( !GEngine.Init() )
     {
         return false;
     }
 
     // RenderAPI
-    if (!RenderLayer::Init(ERenderLayerApi::D3D12))
+    if ( !RenderLayer::Init( ERenderLayerApi::D3D12 ) )
     {
         return false;
     }
 
-    if (!TextureFactory::Init())
+    if ( !TextureFactory::Init() )
     {
         return false;
     }
 
     // Init Application
     GApplication = CreateApplication();
-    Assert(GApplication != nullptr);
+    Assert( GApplication != nullptr );
 
-    Platform::SetCallbacks(&GEngine);
+    Platform::SetCallbacks( &GEngine );
 
-    if (!GApplication->Init())
+    if ( !GApplication->Init() )
     {
         return false;
     }
 
-    if (!InputManager::Get().Init())
+    if ( !InputManager::Get().Init() )
     {
         return false;
     }
 
-    if (!GRenderer.Init())
+    if ( !GRenderer.Init() )
     {
-        PlatformMisc::MessageBox("ERROR", "FAILED to create Renderer");
+        PlatformMisc::MessageBox( "ERROR", "FAILED to create Renderer" );
         return false;
     }
 
     GConsole.Init();
 
-    if (!DebugUI::Init())
+    if ( !DebugUI::Init() )
     {
-        PlatformMisc::MessageBox("ERROR", "FAILED to create ImGuiContext");
+        PlatformMisc::MessageBox( "ERROR", "FAILED to create ImGuiContext" );
         return false;
     }
 
@@ -102,13 +102,13 @@ bool EngineLoop::Init()
     return true;
 }
 
-void EngineLoop::Tick(Timestamp Deltatime)
+void EngineLoop::Tick( Timestamp Deltatime )
 {
     TRACE_FUNCTION_SCOPE();
 
     Platform::Tick();
 
-    GApplication->Tick(Deltatime);
+    GApplication->Tick( Deltatime );
 
     GConsole.Tick();
 
@@ -116,17 +116,17 @@ void EngineLoop::Tick(Timestamp Deltatime)
 
     Profiler::Tick();
 
-    GRenderer.Tick(*GApplication->Scene);
+    GRenderer.Tick( *GApplication->Scene );
 }
 
 void EngineLoop::Run()
 {
     Timer Timer;
 
-    while (GEngine.IsRunning)
+    while ( GEngine.IsRunning )
     {
         Timer.Tick();
-        EngineLoop::Tick(Timer.GetDeltaTime());
+        EngineLoop::Tick( Timer.GetDeltaTime() );
     }
 }
 
@@ -138,18 +138,18 @@ bool EngineLoop::Release()
 
     TextureFactory::Release();
 
-    if (GApplication->Release())
+    if ( GApplication->Release() )
     {
-        SafeDelete(GApplication);
+        SafeDelete( GApplication );
     }
     else
     {
         return false;
     }
 
-    if (GEngine.Release())
+    if ( GEngine.Release() )
     {
-        Platform::SetCallbacks(nullptr);
+        Platform::SetCallbacks( nullptr );
     }
     else
     {
@@ -164,12 +164,12 @@ bool EngineLoop::Release()
 
     TaskManager::Get().Release();
 
-    if (!Platform::Release())
+    if ( !Platform::Release() )
     {
         return false;
     }
 
-    SafeDelete(GConsoleOutput);
+    SafeDelete( GConsoleOutput );
 
     return true;
 }

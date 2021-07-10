@@ -15,20 +15,20 @@ public:
     {
     }
 
-    TMulticastDelegateBase(const TMulticastDelegateBase& Other)
+    TMulticastDelegateBase( const TMulticastDelegateBase& Other )
         : Base()
     {
-        for (IDelegate* Delegate : Other.Delegates)
+        for ( IDelegate* Delegate : Other.Delegates )
         {
-            Assert(Delegate != nullptr);
-            Base::Delegates.EmplaceBack(Delegate->Clone());
+            Assert( Delegate != nullptr );
+            Base::Delegates.EmplaceBack( Delegate->Clone() );
         }
     }
 
-    TMulticastDelegateBase(TMulticastDelegateBase&& Other)
+    TMulticastDelegateBase( TMulticastDelegateBase&& Other )
         : Base()
     {
-        Base::Delegates = Move(Other.Delegates);
+        Base::Delegates = Move( Other.Delegates );
     }
 
     ~TMulticastDelegateBase()
@@ -38,31 +38,31 @@ public:
 
     void UnbindAll()
     {
-        for (IDelegate* Delegate : Base::Delegates)
+        for ( IDelegate* Delegate : Base::Delegates )
         {
-            Assert(Delegate != nullptr);
+            Assert( Delegate != nullptr );
             delete Delegate;
         }
 
         Base::Delegates.Clear();
     }
 
-    void Swap(TMulticastDelegateBase& Other)
+    void Swap( TMulticastDelegateBase& Other )
     {
-        TMulticastDelegateBase Temp(Move(*this));
-        Base::Delegates = Move(Other.Delegates);
-        Other.Delegates  = Move(Temp.Delegates);
+        TMulticastDelegateBase Temp( Move( *this ) );
+        Base::Delegates = Move( Other.Delegates );
+        Other.Delegates = Move( Temp.Delegates );
     }
 
-    TMulticastDelegateBase& operator=(const TMulticastDelegateBase& RHS)
+    TMulticastDelegateBase& operator=( const TMulticastDelegateBase& RHS )
     {
-        TMulticastDelegateBase(RHS).Swap(*this);
+        TMulticastDelegateBase( RHS ).Swap( *this );
         return *this;
     }
 
-    TMulticastDelegateBase& operator=(TMulticastDelegateBase&& RHS)
+    TMulticastDelegateBase& operator=( TMulticastDelegateBase&& RHS )
     {
-        TMulticastDelegateBase(Move(RHS)).Swap(*this);
+        TMulticastDelegateBase( Move( RHS ) ).Swap( *this );
         return *this;
     }
 };
@@ -75,18 +75,18 @@ class TMulticastDelegate : public TMulticastDelegateBase<TArgs...>
     typedef typename Base::IDelegate IDelegate;
 
 public:
-    void Broadcast(TArgs... Args)
+    void Broadcast( TArgs... Args )
     {
-        for (IDelegate* Delegate : Base::Delegates)
+        for ( IDelegate* Delegate : Base::Delegates )
         {
-            Assert(Delegate != nullptr);
-            Delegate->Execute(Forward<TArgs>(Args)...);
+            Assert( Delegate != nullptr );
+            Delegate->Execute( Forward<TArgs>( Args )... );
         }
     }
 
-    void operator()(TArgs... Args)
+    void operator()( TArgs... Args )
     {
-        return Broadcast(Forward<TArgs>(Args)...);
+        return Broadcast( Forward<TArgs>( Args )... );
     }
 };
 
@@ -100,9 +100,9 @@ class TMulticastDelegate<void> : public TMulticastDelegateBase<void>
 public:
     void Broadcast()
     {
-        for (IDelegate* Delegate : Base::Delegates)
+        for ( IDelegate* Delegate : Base::Delegates )
         {
-            Assert(Delegate != nullptr);
+            Assert( Delegate != nullptr );
             Delegate->Execute();
         }
     }

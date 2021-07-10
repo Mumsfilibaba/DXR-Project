@@ -14,20 +14,20 @@ protected:
     {
     }
 
-    TEventBase(const TEventBase& Other)
+    TEventBase( const TEventBase& Other )
         : Base()
     {
-        for (IDelegate* Delegate : Other.Delegates)
+        for ( IDelegate* Delegate : Other.Delegates )
         {
-            Assert(Delegate != nullptr);
-            Base::Delegates.EmplaceBack(Delegate->Clone());
+            Assert( Delegate != nullptr );
+            Base::Delegates.EmplaceBack( Delegate->Clone() );
         }
     }
 
-    TEventBase(TEventBase&& Other)
+    TEventBase( TEventBase&& Other )
         : Base()
     {
-        Base::Delegates = Move(Other.Delegates);
+        Base::Delegates = Move( Other.Delegates );
     }
 
     ~TEventBase()
@@ -37,31 +37,31 @@ protected:
 
     void UnbindAll()
     {
-        for (IDelegate* Delegate : Base::Delegates)
+        for ( IDelegate* Delegate : Base::Delegates )
         {
-            Assert(Delegate != nullptr);
+            Assert( Delegate != nullptr );
             delete Delegate;
         }
 
         Base::Delegates.Clear();
     }
 
-    void Swap(TEventBase& Other)
+    void Swap( TEventBase& Other )
     {
-        TEventBase Temp(Move(*this));
-        Base::Delegates = Move(Other.Delegates);
-        Other.Delegates  = Move(Temp.Delegates);
+        TEventBase Temp( Move( *this ) );
+        Base::Delegates = Move( Other.Delegates );
+        Other.Delegates = Move( Temp.Delegates );
     }
 
-    TEventBase& operator=(const TEventBase& RHS)
+    TEventBase& operator=( const TEventBase& RHS )
     {
-        TEventBase(RHS).Swap(*this);
+        TEventBase( RHS ).Swap( *this );
         return *this;
     }
 
-    TEventBase& operator=(TEventBase&& RHS)
+    TEventBase& operator=( TEventBase&& RHS )
     {
-        TEventBase(Move(RHS)).Swap(*this);
+        TEventBase( Move( RHS ) ).Swap( *this );
         return *this;
     }
 };
@@ -74,18 +74,18 @@ protected:
 
     typedef typename Base::IDelegate IDelegate;
 
-    void Broadcast(TArgs... Args)
+    void Broadcast( TArgs... Args )
     {
-        for (IDelegate* Delegate : Base::Delegates)
+        for ( IDelegate* Delegate : Base::Delegates )
         {
-            Assert(Delegate != nullptr);
-            Delegate->Execute(Forward<TArgs>(Args)...);
+            Assert( Delegate != nullptr );
+            Delegate->Execute( Forward<TArgs>( Args )... );
         }
     }
 
-    void operator()(TArgs... Args)
+    void operator()( TArgs... Args )
     {
-        return Broadcast(Forward<TArgs>(Args)...);
+        return Broadcast( Forward<TArgs>( Args )... );
     }
 };
 
@@ -99,9 +99,9 @@ protected:
 
     void Broadcast()
     {
-        for (IDelegate* Delegate : Base::Delegates)
+        for ( IDelegate* Delegate : Base::Delegates )
         {
-            Assert(Delegate != nullptr);
+            Assert( Delegate != nullptr );
             Delegate->Execute();
         }
     }

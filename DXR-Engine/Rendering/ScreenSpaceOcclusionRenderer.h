@@ -8,18 +8,18 @@
 class ScreenSpaceOcclusionRenderer
 {
 public:
-    ScreenSpaceOcclusionRenderer()  = default;
+    ScreenSpaceOcclusionRenderer() = default;
     ~ScreenSpaceOcclusionRenderer() = default;
 
-    bool Init(FrameResources& FrameResources);
+    bool Init( FrameResources& FrameResources );
     void Release();
 
-    void Render(CommandList& CmdList, FrameResources& FrameResources);
+    void Render( CommandList& CmdList, FrameResources& FrameResources );
 
-    bool ResizeResources(FrameResources& FrameResources);
+    bool ResizeResources( FrameResources& FrameResources );
 
 private:
-    bool CreateRenderTarget(FrameResources& FrameResources);
+    bool CreateRenderTarget( FrameResources& FrameResources );
 
     TRef<ComputePipelineState> PipelineState;
     TRef<ComputeShader>        SSAOShader;

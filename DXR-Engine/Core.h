@@ -10,14 +10,14 @@ using namespace DirectX;
 
 // Assert
 #ifdef DEBUG_BUILD
-    #define ENABLE_ASSERTS 1
+#define ENABLE_ASSERTS 1
 #endif
 
 #ifndef Assert
 #if ENABLE_ASSERTS
-    #define Assert(Condition) assert(Condition)
+#define Assert(Condition) assert(Condition)
 #else
-    #define Assert(Condition) (void)(0)
+#define Assert(Condition) (void)(0)
 #endif
 #endif
 
@@ -50,12 +50,12 @@ using namespace DirectX;
 
 #ifndef DEBUG_BUILD
 #ifdef COMPILER_VISUAL_STUDIO
-    #define FORCEINLINE __forceinline
+#define FORCEINLINE __forceinline
 #else
-    #define FORCEINLINE __attribute__((always_inline)) inline
+#define FORCEINLINE __attribute__((always_inline)) inline
 #endif // ifdef COMPILER_VISUAL_STUDIO
 #else
-    #define FORCEINLINE inline
+#define FORCEINLINE inline
 #endif // ifdef DEBUG_BUILD
 
 #endif // ifndef FORCEINLINE
@@ -64,14 +64,14 @@ using namespace DirectX;
 #define BIT(Bit)  (1 << Bit)
 #define FLAG(Bit) BIT(Bit)
 
-inline bool HasFlag(uint32 Mask, uint32 Flag)
+inline bool HasFlag( uint32 Mask, uint32 Flag )
 {
     return Mask & Flag;
 }
 
 // Unused params
 #ifndef UNREFERENCED_VARIABLE
-    #define UNREFERENCED_VARIABLE(Variable) (void)(Variable)
+#define UNREFERENCED_VARIABLE(Variable) (void)(Variable)
 #endif
 
 /*
@@ -88,24 +88,24 @@ inline bool HasFlag(uint32 Mask, uint32 Flag)
 
 // Function signature as a const char* string
 #ifdef COMPILER_VISUAL_STUDIO
-    #define __FUNCTION_SIG__ __FUNCTION__
+#define __FUNCTION_SIG__ __FUNCTION__
 #else
-    #define __FUNCTION_SIG__ __PRETTY_FUNCTION__
+#define __FUNCTION_SIG__ __PRETTY_FUNCTION__
 #endif
 
 // Disable some warnings
 #ifdef COMPILER_VISUAL_STUDIO
-    #pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
-    #pragma warning(disable : 4324) // structure was padded due to alignment specifier
+#pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
+#pragma warning(disable : 4324) // structure was padded due to alignment specifier
 #endif
 
 // Declare warnings as errors
 #ifdef COMPILER_VISUAL_STUDIO
-    #pragma warning(error : 4099) // wrong forward declaration
-    #pragma warning(error : 4150) // cannot call destructor on incomplete type
-    #pragma warning(error : 4239) // setting references to rvalues
-    #pragma warning(error : 4456) // variable hides a already existing variable
-    #pragma warning(error : 4458) // variable hides class member
-    #pragma warning(error : 4715) // not all paths return a value
-    #pragma warning(error : 4840) // using string in variadic template (When it should be const char)
+#pragma warning(error : 4099) // wrong forward declaration
+#pragma warning(error : 4150) // cannot call destructor on incomplete type
+#pragma warning(error : 4239) // setting references to rvalues
+#pragma warning(error : 4456) // variable hides a already existing variable
+#pragma warning(error : 4458) // variable hides class member
+#pragma warning(error : 4715) // not all paths return a value
+#pragma warning(error : 4840) // using string in variadic template (When it should be const char)
 #endif

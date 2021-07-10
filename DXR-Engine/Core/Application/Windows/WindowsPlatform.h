@@ -10,17 +10,17 @@ class WindowsCursor;
 
 struct WindowsEvent
 {
-    WindowsEvent(HWND InWindow, uint32 InMessage, WPARAM InwParam, LPARAM InlParam)
-        : Window(InWindow)
-        , Message(InMessage)
-        , wParam(InwParam)
-        , lParam(InlParam)
+    WindowsEvent( HWND InWindow, uint32 InMessage, WPARAM InwParam, LPARAM InlParam )
+        : Window( InWindow )
+        , Message( InMessage )
+        , wParam( InwParam )
+        , lParam( InlParam )
     {
     }
 
     HWND   Window;
     uint32 Message;
-    WPARAM wParam; 
+    WPARAM wParam;
     LPARAM lParam;
 };
 
@@ -28,15 +28,15 @@ struct WindowHandle
 {
     WindowHandle() = default;
 
-    WindowHandle(HWND InHandle)
-        : Handle(InHandle)
+    WindowHandle( HWND InHandle )
+        : Handle( InHandle )
     {
     }
 
     WindowsWindow* GetWindow() const
     {
-        WindowsWindow* Window = (WindowsWindow*)GetWindowLongPtrA(Handle, GWLP_USERDATA);
-        if (Window)
+        WindowsWindow* Window = (WindowsWindow*)GetWindowLongPtrA( Handle, GWLP_USERDATA );
+        if ( Window )
         {
             Window->AddRef();
         }
@@ -50,7 +50,7 @@ struct WindowHandle
 class WindowsPlatform : public GenericPlatform
 {
 public:
-    static void PreMainInit(HINSTANCE InInstance);
+    static void PreMainInit( HINSTANCE InInstance );
 
     static bool Init();
 
@@ -60,34 +60,40 @@ public:
 
     static ModifierKeyState GetModifierKeyState();
 
-    static void SetCapture(GenericWindow* Window);
-    static void SetActiveWindow(GenericWindow* Window);
+    static void SetCapture( GenericWindow* Window );
+    static void SetActiveWindow( GenericWindow* Window );
 
     static GenericWindow* GetCapture();
     static GenericWindow* GetActiveWindow();
 
-    static void SetCursor(GenericCursor* Cursor);
+    static void SetCursor( GenericCursor* Cursor );
     static GenericCursor* GetCursor();
 
-    static void SetCursorPos(GenericWindow* RelativeWindow, int32 x, int32 y);
-    static void GetCursorPos(GenericWindow* RelativeWindow, int32& OutX, int32& OutY);
+    static void SetCursorPos( GenericWindow* RelativeWindow, int32 x, int32 y );
+    static void GetCursorPos( GenericWindow* RelativeWindow, int32& OutX, int32& OutY );
 
-    static LPCSTR GetWindowClassName() { return "WindowClass"; }
-    static HINSTANCE GetInstance()     { return Instance; }
+    static LPCSTR GetWindowClassName()
+    {
+        return "WindowClass";
+    }
+    static HINSTANCE GetInstance()
+    {
+        return Instance;
+    }
 
 private:
     static bool InitCursors();
 
     static bool RegisterWindowClass();
-    
-    static void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
-    
-    static LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
-    static void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
+
+    static void StoreMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
+
+    static LRESULT MessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
+    static void HandleStoredMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
 
 private:
     static TArray<WindowsEvent> Messages;
-    
+
     static TRef<WindowsCursor> CurrentCursor;
 
     static bool IsTrackingMouse;

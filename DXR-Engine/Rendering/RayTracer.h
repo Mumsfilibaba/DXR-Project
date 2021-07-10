@@ -8,13 +8,13 @@
 class RayTracer
 {
 public:
-    RayTracer()  = default;
+    RayTracer() = default;
     ~RayTracer() = default;
 
-    bool Init(FrameResources& Resources);
+    bool Init( FrameResources& Resources );
     void Release();
 
-    void PreRender(CommandList& CmdList, FrameResources& Resources, const Scene& Scene);
+    void PreRender( CommandList& CmdList, FrameResources& Resources, const Scene& Scene );
 
 private:
     TRef<RayTracingPipelineState> Pipeline;

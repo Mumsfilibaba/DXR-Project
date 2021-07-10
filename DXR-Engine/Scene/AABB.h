@@ -4,7 +4,7 @@ struct AABB
 {
     XMFLOAT3 GetCenter() const
     {
-        return XMFLOAT3((Bottom.x + Top.x) * 0.5f, (Bottom.y + Top.y) * 0.5f, (Bottom.z + Top.z) * 0.5f);
+        return XMFLOAT3( (Bottom.x + Top.x) * 0.5f, (Bottom.y + Top.y) * 0.5f, (Bottom.z + Top.z) * 0.5f );
     }
 
     float GetWidth() const

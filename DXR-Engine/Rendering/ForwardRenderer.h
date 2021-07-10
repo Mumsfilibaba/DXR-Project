@@ -7,13 +7,13 @@
 class ForwardRenderer
 {
 public:
-    ForwardRenderer()  = default;
+    ForwardRenderer() = default;
     ~ForwardRenderer() = default;
 
-    bool Init(FrameResources& FrameResources);
+    bool Init( FrameResources& FrameResources );
     void Release();
 
-    void Render(CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup);
+    void Render( CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup );
 
 private:
     TRef<GraphicsPipelineState> PipelineState;

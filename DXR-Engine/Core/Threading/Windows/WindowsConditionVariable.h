@@ -9,25 +9,25 @@ public:
     WindowsConditionVariable()
         : ConditionVariable()
     {
-        InitializeConditionVariable(&ConditionVariable);
+        InitializeConditionVariable( &ConditionVariable );
     }
 
     void NotifyOne() noexcept
     {
-        WakeConditionVariable(&ConditionVariable);
+        WakeConditionVariable( &ConditionVariable );
     }
 
     void NotifyAll() noexcept
     {
-        WakeAllConditionVariable(&ConditionVariable);
+        WakeAllConditionVariable( &ConditionVariable );
     }
 
-    bool Wait(TScopedLock<Mutex>& Lock) noexcept
+    bool Wait( TScopedLock<Mutex>& Lock ) noexcept
     {
-        SetLastError(0);
+        SetLastError( 0 );
 
-        BOOL Result = SleepConditionVariableCS(&ConditionVariable, &Lock.GetLock().Section, INFINITE);
-        if (!Result)
+        BOOL Result = SleepConditionVariableCS( &ConditionVariable, &Lock.GetLock().Section, INFINITE );
+        if ( !Result )
         {
             // TODO: Check Error
             return false;

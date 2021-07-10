@@ -6,27 +6,27 @@
 struct ColorF
 {
     ColorF()
-        : r(0.0f)
-        , g(0.0f)
-        , b(0.0f)
-        , a(0.0f)
+        : r( 0.0f )
+        , g( 0.0f )
+        , b( 0.0f )
+        , a( 0.0f )
     {
     }
 
-    ColorF(float InR, float InG, float InB, float InA)
-        : r(InR)
-        , g(InG)
-        , b(InB)
-        , a(InA)
+    ColorF( float InR, float InG, float InB, float InA )
+        : r( InR )
+        , g( InG )
+        , b( InB )
+        , a( InA )
     {
     }
 
-    ColorF(const ColorF& Other)
+    ColorF( const ColorF& Other )
     {
-        Memory::Memcpy(Elements, Other.Elements, sizeof(Elements));
+        Memory::Memcpy( Elements, Other.Elements, sizeof( Elements ) );
     }
 
-    void Set(float InR, float InG, float InB, float InA)
+    void Set( float InR, float InG, float InB, float InA )
     {
         r = InR;
         g = InG;
@@ -34,9 +34,9 @@ struct ColorF
         a = InA;
     }
 
-    ColorF& operator=(const ColorF& Other)
+    ColorF& operator=( const ColorF& Other )
     {
-        Memory::Memcpy(Elements, Other.Elements, sizeof(Elements));
+        Memory::Memcpy( Elements, Other.Elements, sizeof( Elements ) );
         return *this;
     }
 

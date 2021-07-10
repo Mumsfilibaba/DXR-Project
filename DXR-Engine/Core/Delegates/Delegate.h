@@ -5,9 +5,9 @@ template<typename TInvokable>
 class TDelegate;
 
 template<typename TReturn, typename... TArgs>
-class TDelegate<TReturn(TArgs...)> : private TDelegateBase<TReturn(TArgs...)>
+class TDelegate<TReturn( TArgs... )> : private TDelegateBase<TReturn( TArgs... )>
 {
-    typedef TDelegateBase<TReturn(TArgs...)> Base;
+    typedef TDelegateBase<TReturn( TArgs... )> Base;
 
     typedef typename Base::IDelegate        IDelegate;
     typedef typename Base::FunctionType     FunctionType;
@@ -30,23 +30,23 @@ class TDelegate<TReturn(TArgs...)> : private TDelegateBase<TReturn(TArgs...)>
 public:
     TDelegate()
         : Base()
-        , Delegate(nullptr)
+        , Delegate( nullptr )
     {
     }
 
-    TDelegate(const TDelegate& Other)
+    TDelegate( const TDelegate& Other )
         : Base()
-        , Delegate(nullptr)
+        , Delegate( nullptr )
     {
-        if (Other.IsBound())
+        if ( Other.IsBound() )
         {
             Delegate = Other.Delegate->Clone();
         }
     }
 
-    TDelegate(TDelegate&& Other)
+    TDelegate( TDelegate&& Other )
         : Base()
-        , Delegate(Other.Delegate)
+        , Delegate( Other.Delegate )
     {
         Other.Delegate = nullptr;
     }
@@ -56,53 +56,53 @@ public:
         Unbind();
     }
 
-    void BindFunction(FunctionType Fn)
+    void BindFunction( FunctionType Fn )
     {
         Unbind();
-        Delegate = new FunctionDelegate(Fn);
+        Delegate = new FunctionDelegate( Fn );
     }
 
     template<typename T>
-    void BindObject(T* This, MemberFunctionType<T> Fn)
+    void BindObject( T* This, MemberFunctionType<T> Fn )
     {
         Unbind();
-        Delegate = new ObjectDelegate<T>(This, Fn);
+        Delegate = new ObjectDelegate<T>( This, Fn );
     }
 
     template<typename T>
-    void BindObject(const T* This, ConstMemberFunctionType<T> Fn)
+    void BindObject( const T* This, ConstMemberFunctionType<T> Fn )
     {
         Unbind();
-        Delegate = new ConstObjectDelegate<T>(This, Fn);
+        Delegate = new ConstObjectDelegate<T>( This, Fn );
     }
 
     template<typename F>
-    void BindLambda(F Functor)
+    void BindLambda( F Functor )
     {
         Unbind();
-        Delegate = new LambdaDelegate<F>(Forward<F>(Functor));
+        Delegate = new LambdaDelegate<F>( Forward<F>( Functor ) );
     }
 
     void Unbind()
     {
-        if (Delegate)
+        if ( Delegate )
         {
             delete Delegate;
             Delegate = nullptr;
         }
     }
 
-    TReturn Execute(TArgs... Args)
+    TReturn Execute( TArgs... Args )
     {
-        Assert(Delegate != nullptr);
-        return Delegate->Execute(Forward<TArgs>(Args)...);
+        Assert( Delegate != nullptr );
+        return Delegate->Execute( Forward<TArgs>( Args )... );
     }
 
-    bool ExecuteIfBound(TArgs... Args)
+    bool ExecuteIfBound( TArgs... Args )
     {
-        if (IsBound())
+        if ( IsBound() )
         {
-            Delegate->Execute(Forward<TArgs>(Args)...);
+            Delegate->Execute( Forward<TArgs>( Args )... );
             return true;
         }
         else
@@ -111,12 +111,12 @@ public:
         }
     }
 
-    void Swap(TDelegate& Other)
+    void Swap( TDelegate& Other )
     {
-        TDelegate Temp(Move(*this));
-        Delegate       = Other.Delegate;
+        TDelegate Temp( Move( *this ) );
+        Delegate = Other.Delegate;
         Other.Delegate = Temp.Delegate;
-        Temp.Delegate  = nullptr;
+        Temp.Delegate = nullptr;
     }
 
     bool IsBound() const
@@ -124,20 +124,20 @@ public:
         return Delegate != nullptr;
     }
 
-    TReturn operator()(TArgs... Args)
+    TReturn operator()( TArgs... Args )
     {
-        return Execute(Forward<TArgs>(Args)...);
+        return Execute( Forward<TArgs>( Args )... );
     }
 
-    TDelegate& operator=(TDelegate&& RHS)
+    TDelegate& operator=( TDelegate&& RHS )
     {
-        TDelegate(Move(RHS)).Swap(*this);
+        TDelegate( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
-    TDelegate& operator=(const TDelegate& RHS)
+    TDelegate& operator=( const TDelegate& RHS )
     {
-        TDelegate(RHS).Swap(*this);
+        TDelegate( RHS ).Swap( *this );
         return *this;
     }
 

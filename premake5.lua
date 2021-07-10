@@ -105,6 +105,7 @@ workspace "DXR-Project"
 				"Dependencies/tinyobjloader/tiny_obj_loader.h",
 				"Dependencies/tinyobjloader/tiny_obj_loader.cc",
 			}
+			
 	group ""
 
     -- Engine Project
@@ -140,6 +141,12 @@ workspace "DXR-Project"
 			"%{prj.name}/**.hlsl",
 			"%{prj.name}/**.hlsli",	
         }
+		
+		excludes 
+		{
+			"DXR-Engine/Main/**",
+			"DXR-Engine/Math/Tests/**",
+		}
 		
 		-- In visual studio show natvis files
 		filter "action:vs*"
@@ -178,6 +185,7 @@ workspace "DXR-Project"
 			"%{prj.name}",
 			"%{prj.name}/Include",
         }
+		
     project "*"
 	
 	-- Sandbox Project
@@ -245,5 +253,6 @@ workspace "DXR-Project"
 		{ 
 			"DXR-Engine",
 		}
+		
 	project "*"
 	

@@ -1,9 +1,9 @@
 #include "WindowsCursor.h"
 
-GenericCursor* WindowsCursor::Create(LPCSTR CursorName)
+GenericCursor* WindowsCursor::Create( LPCSTR CursorName )
 {
     TRef<WindowsCursor> NewCursor = DBG_NEW WindowsCursor();
-    if (!NewCursor->Init(CursorName))
+    if ( !NewCursor->Init( CursorName ) )
     {
         return nullptr;
     }
@@ -15,25 +15,25 @@ GenericCursor* WindowsCursor::Create(LPCSTR CursorName)
 
 WindowsCursor::WindowsCursor()
     : GenericCursor()
-    , Cursor(0)
-    , CursorName(nullptr)
+    , Cursor( 0 )
+    , CursorName( nullptr )
 {
 }
 
 WindowsCursor::~WindowsCursor()
 {
-    if (!CursorName)
+    if ( !CursorName )
     {
-        DestroyCursor(Cursor);
+        DestroyCursor( Cursor );
     }
 }
 
-bool WindowsCursor::Init(LPCSTR InCursorName)
+bool WindowsCursor::Init( LPCSTR InCursorName )
 {
     CursorName = InCursorName;
-    if (CursorName)
+    if ( CursorName )
     {
-        Cursor = LoadCursor(0, CursorName);
+        Cursor = LoadCursor( 0, CursorName );
         return true;
     }
     else

@@ -6,7 +6,7 @@ Application* GApplication;
 
 Application::~Application()
 {
-    SafeDelete(Scene);
+    SafeDelete( Scene );
 }
 
 bool Application::Init()
@@ -14,9 +14,9 @@ bool Application::Init()
     return true;
 }
 
-void Application::Tick(Timestamp Deltatime)
+void Application::Tick( Timestamp Deltatime )
 {
-    UNREFERENCED_VARIABLE(Deltatime);
+    UNREFERENCED_VARIABLE( Deltatime );
 }
 
 bool Application::Release()

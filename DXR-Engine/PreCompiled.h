@@ -7,13 +7,13 @@
 // Libs
 #ifdef PLATFORM_WINDOWS
     // Windows
-    #define NOMINMAX
-    #include "Windows/Windows.h"
+#define NOMINMAX
+#include "Windows/Windows.h"
 
-    #include <dxgi1_6.h>
-    #include <d3d12.h>
+#include <dxgi1_6.h>
+#include <d3d12.h>
 
-    #include <wrl/client.h>
+#include <wrl/client.h>
 #endif
 
 #include <imgui.h>

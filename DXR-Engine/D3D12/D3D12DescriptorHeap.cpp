@@ -2,69 +2,69 @@
 #include "D3D12Device.h"
 #include "D3D12Views.h"
 
-D3D12DescriptorHeap::D3D12DescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
-    : D3D12DeviceChild(InDevice)
-    , Heap(nullptr)
-    , CPUStart({ 0 })
-    , GPUStart({ 0 })
-    , DescriptorHandleIncrementSize(0)
-    , Type(InType)
-    , NumDescriptors(InNumDescriptors)
-    , Flags(InFlags)
+D3D12DescriptorHeap::D3D12DescriptorHeap( D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags )
+    : D3D12DeviceChild( InDevice )
+    , Heap( nullptr )
+    , CPUStart( { 0 } )
+    , GPUStart( { 0 } )
+    , DescriptorHandleIncrementSize( 0 )
+    , Type( InType )
+    , NumDescriptors( InNumDescriptors )
+    , Flags( InFlags )
 {
 }
 
 bool D3D12DescriptorHeap::Init()
 {
     D3D12_DESCRIPTOR_HEAP_DESC Desc;
-    Memory::Memzero(&Desc);
+    Memory::Memzero( &Desc );
 
-    Desc.Type           = Type;
-    Desc.Flags          = Flags;
+    Desc.Type = Type;
+    Desc.Flags = Flags;
     Desc.NumDescriptors = NumDescriptors;
 
-    HRESULT Result = GetDevice()->GetDevice()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));
-    if (FAILED(Result))
+    HRESULT Result = GetDevice()->GetDevice()->CreateDescriptorHeap( &Desc, IID_PPV_ARGS( &Heap ) );
+    if ( FAILED( Result ) )
     {
-        LOG_ERROR("[D3D12DescriptorHeap]: FAILED to Create DescriptorHeap");
+        LOG_ERROR( "[D3D12DescriptorHeap]: FAILED to Create DescriptorHeap" );
         Debug::DebugBreak();
-        
+
         return false;
     }
     else
     {
-        LOG_INFO("[D3D12DescriptorHeap]: Created DescriptorHeap");
+        LOG_INFO( "[D3D12DescriptorHeap]: Created DescriptorHeap" );
     }
 
     CPUStart = Heap->GetCPUDescriptorHandleForHeapStart();
     GPUStart = Heap->GetGPUDescriptorHandleForHeapStart();
-    DescriptorHandleIncrementSize = GetDevice()->GetDescriptorHandleIncrementSize(Desc.Type);
+    DescriptorHandleIncrementSize = GetDevice()->GetDescriptorHandleIncrementSize( Desc.Type );
 
     return true;
 }
 
-D3D12OfflineDescriptorHeap::D3D12OfflineDescriptorHeap(D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType)
-    : D3D12DeviceChild(InDevice)
+D3D12OfflineDescriptorHeap::D3D12OfflineDescriptorHeap( D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType )
+    : D3D12DeviceChild( InDevice )
     , Heaps()
     , Name()
-    , Type(InType)
+    , Type( InType )
 {
 }
 
 bool D3D12OfflineDescriptorHeap::Init()
 {
-    DescriptorSize = GetDevice()->GetDescriptorHandleIncrementSize(Type);
+    DescriptorSize = GetDevice()->GetDescriptorHandleIncrementSize( Type );
     return AllocateHeap();
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(uint32& OutHeapIndex)
+D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate( uint32& OutHeapIndex )
 {
     // Find a heap that is not empty
     uint32 HeapIndex = 0;
     bool FoundHeap = false;
-    for (DescriptorHeap& Heap : Heaps)
+    for ( DescriptorHeap& Heap : Heaps )
     {
-        if (!Heap.FreeList.IsEmpty())
+        if ( !Heap.FreeList.IsEmpty() )
         {
             FoundHeap = true;
             break;
@@ -75,9 +75,9 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(uint32& OutHeap
         }
     }
 
-    if (!FoundHeap)
+    if ( !FoundHeap )
     {
-        if (!AllocateHeap())
+        if ( !AllocateHeap() )
         {
             return { 0 };
         }
@@ -86,40 +86,40 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate(uint32& OutHeap
     }
 
     // Get the heap and the first free range
-    DescriptorHeap& Heap   = Heaps[HeapIndex];
+    DescriptorHeap& Heap = Heaps[HeapIndex];
     DescriptorRange& Range = Heap.FreeList.Front();
 
     D3D12_CPU_DESCRIPTOR_HANDLE Handle = Range.Begin;
     Range.Begin.ptr += DescriptorSize;
 
-    if (!Range.IsValid())
+    if ( !Range.IsValid() )
     {
-        Heap.FreeList.Erase(Heap.FreeList.Begin());
+        Heap.FreeList.Erase( Heap.FreeList.Begin() );
     }
 
     OutHeapIndex = HeapIndex;
     return Handle;
 }
 
-void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex)
+void D3D12OfflineDescriptorHeap::Free( D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex )
 {
-    Assert(HeapIndex < Heaps.Size());
+    Assert( HeapIndex < Heaps.Size() );
     DescriptorHeap& Heap = Heaps[HeapIndex];
 
     // Find a suitable range
-    bool FoundRange    = false;
-    for (DescriptorRange& Range : Heap.FreeList)
+    bool FoundRange = false;
+    for ( DescriptorRange& Range : Heap.FreeList )
     {
-        Assert(Range.IsValid());
+        Assert( Range.IsValid() );
 
-        if (Handle.ptr + DescriptorSize == Range.Begin.ptr)
+        if ( Handle.ptr + DescriptorSize == Range.Begin.ptr )
         {
             Range.Begin = Handle;
             FoundRange = true;
 
             break;
         }
-        else if (Handle.ptr == Range.End.ptr)
+        else if ( Handle.ptr == Range.End.ptr )
         {
             Range.End.ptr += DescriptorSize;
             FoundRange = true;
@@ -128,22 +128,22 @@ void D3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32
         }
     }
 
-    if (!FoundRange)
+    if ( !FoundRange )
     {
         D3D12_CPU_DESCRIPTOR_HANDLE End = { Handle.ptr + DescriptorSize };
-        Heap.FreeList.EmplaceBack(Handle, End);
+        Heap.FreeList.EmplaceBack( Handle, End );
     }
 }
 
-void D3D12OfflineDescriptorHeap::SetName(const std::string& InName)
+void D3D12OfflineDescriptorHeap::SetName( const std::string& InName )
 {
     Name = InName;
 
     uint32 HeapIndex = 0;
-    for (DescriptorHeap& Heap : Heaps)
+    for ( DescriptorHeap& Heap : Heaps )
     {
-        std::string DbgName = Name + "[" + std::to_string(HeapIndex) + "]";
-        Heap.Heap->SetName(DbgName.c_str());
+        std::string DbgName = Name + "[" + std::to_string( HeapIndex ) + "]";
+        Heap.Heap->SetName( DbgName.c_str() );
     }
 }
 
@@ -151,16 +151,16 @@ bool D3D12OfflineDescriptorHeap::AllocateHeap()
 {
     constexpr uint32 DescriptorCount = D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT;
 
-    TRef<D3D12DescriptorHeap> Heap = DBG_NEW D3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-    if (Heap->Init())
+    TRef<D3D12DescriptorHeap> Heap = DBG_NEW D3D12DescriptorHeap( GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE );
+    if ( Heap->Init() )
     {
-        if (!Name.empty())
+        if ( !Name.empty() )
         {
-            std::string DbgName = Name + std::to_string(Heaps.Size());
-            Heap->SetName(DbgName.c_str());
+            std::string DbgName = Name + std::to_string( Heaps.Size() );
+            Heap->SetName( DbgName.c_str() );
         }
 
-        Heaps.EmplaceBack(Heap);
+        Heaps.EmplaceBack( Heap );
         return true;
     }
     else
@@ -169,18 +169,18 @@ bool D3D12OfflineDescriptorHeap::AllocateHeap()
     }
 }
 
-D3D12OnlineDescriptorHeap::D3D12OnlineDescriptorHeap(D3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType)
-    : D3D12DeviceChild(InDevice)
-    , Heap(nullptr)
-    , DescriptorCount(InDescriptorCount)
-    , Type(InType)
+D3D12OnlineDescriptorHeap::D3D12OnlineDescriptorHeap( D3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType )
+    : D3D12DeviceChild( InDevice )
+    , Heap( nullptr )
+    , DescriptorCount( InDescriptorCount )
+    , Type( InType )
 {
 }
 
 bool D3D12OnlineDescriptorHeap::Init()
 {
-    Heap = DBG_NEW D3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-    if (Heap->Init())
+    Heap = DBG_NEW D3D12DescriptorHeap( GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE );
+    if ( Heap->Init() )
     {
         return true;
     }
@@ -192,30 +192,30 @@ bool D3D12OnlineDescriptorHeap::Init()
 
 void D3D12OnlineDescriptorHeap::Reset()
 {
-    if (!HeapPool.IsEmpty())
+    if ( !HeapPool.IsEmpty() )
     {
-        for (TRef<D3D12DescriptorHeap>& CurrentHeap : DiscardedHeaps)
+        for ( TRef<D3D12DescriptorHeap>& CurrentHeap : DiscardedHeaps )
         {
-            HeapPool.EmplaceBack(CurrentHeap);
+            HeapPool.EmplaceBack( CurrentHeap );
         }
 
         DiscardedHeaps.Clear();
     }
     else
     {
-        HeapPool.Swap(DiscardedHeaps);
+        HeapPool.Swap( DiscardedHeaps );
     }
 
     CurrentHandle = 0;
 }
 
-uint32 D3D12OnlineDescriptorHeap::AllocateHandles(uint32 NumHandles)
+uint32 D3D12OnlineDescriptorHeap::AllocateHandles( uint32 NumHandles )
 {
-    Assert(NumHandles <= DescriptorCount);
+    Assert( NumHandles <= DescriptorCount );
 
-    if (!HasSpace(NumHandles))
+    if ( !HasSpace( NumHandles ) )
     {
-        if (!AllocateFreshHeap())
+        if ( !AllocateFreshHeap() )
         {
             return (uint32)-1;
         }
@@ -228,12 +228,12 @@ uint32 D3D12OnlineDescriptorHeap::AllocateHandles(uint32 NumHandles)
 
 bool D3D12OnlineDescriptorHeap::AllocateFreshHeap()
 {
-    DiscardedHeaps.EmplaceBack(Heap);
+    DiscardedHeaps.EmplaceBack( Heap );
 
-    if (HeapPool.IsEmpty())
+    if ( HeapPool.IsEmpty() )
     {
-        Heap = DBG_NEW D3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-        if (!Heap->Init())
+        Heap = DBG_NEW D3D12DescriptorHeap( GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE );
+        if ( !Heap->Init() )
         {
             Debug::DebugBreak();
             return false;
@@ -249,7 +249,7 @@ bool D3D12OnlineDescriptorHeap::AllocateFreshHeap()
     return true;
 }
 
-bool D3D12OnlineDescriptorHeap::HasSpace(uint32 NumHandles) const
+bool D3D12OnlineDescriptorHeap::HasSpace( uint32 NumHandles ) const
 {
     const uint32 NewCurrentHandle = CurrentHandle + NumHandles;
     return NewCurrentHandle < DescriptorCount;

@@ -9,14 +9,14 @@ public:
     FORCEINLINE static uint64 QueryPerformanceCounter()
     {
         LARGE_INTEGER Counter;
-        ::QueryPerformanceCounter(&Counter);
+        ::QueryPerformanceCounter( &Counter );
         return Counter.QuadPart;
     }
 
     FORCEINLINE static uint64 QueryPerformanceFrequency()
     {
         LARGE_INTEGER Counter;
-        ::QueryPerformanceFrequency(&Counter);
+        ::QueryPerformanceFrequency( &Counter );
         return Counter.QuadPart;
     }
 };

@@ -5,8 +5,8 @@
 #include "Core/Ref.h"
 
 #ifdef COMPILER_VISUAL_STUDIO
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
+#pragma warning(push)
+#pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
 class GenericWindow;
@@ -16,7 +16,10 @@ class GenericCursor : public RefCountedObject
 public:
     virtual ~GenericCursor() = default;
 
-    virtual void* GetNativeHandle() const { return nullptr; }
+    virtual void* GetNativeHandle() const
+    {
+        return nullptr;
+    }
 
 public:
     static TRef<GenericCursor> Arrow;
@@ -31,5 +34,5 @@ public:
 };
 
 #ifdef COMPILER_VISUAL_STUDIO
-    #pragma warning(pop)
+#pragma warning(pop)
 #endif

@@ -7,8 +7,8 @@
 #include <unordered_map>
 
 #ifdef COMPILER_VISUAL_STUDIO
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
+#pragma warning(push)
+#pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
 #define INIT_CONSOLE_VARIABLE(Name, Variable) GConsole.RegisterVariable(Name, Variable)
@@ -20,9 +20,9 @@ class Console
     {
         Line() = default;
 
-        Line(const String& InString, ImVec4 InColor)
-            : String(InString)
-            , Color(InColor)
+        Line( const String& InString, ImVec4 InColor )
+            : String( InString )
+            , Color( InColor )
         {
         }
 
@@ -36,11 +36,11 @@ class Console
 
         Candidate() = default;
 
-        Candidate(const String& InText, const String& InPostFix)
-            : Text(InText)
-            , PostFix(InPostFix)
+        Candidate( const String& InText, const String& InPostFix )
+            : Text( InText )
+            , PostFix( InPostFix )
         {
-            TextSize = ImGui::CalcTextSize(Text.c_str());
+            TextSize = ImGui::CalcTextSize( Text.c_str() );
             TextSize.x += TextPadding;
         }
 
@@ -53,30 +53,30 @@ public:
     void Init();
     void Tick();
 
-    void RegisterCommand(const String& Name, ConsoleCommand* Object);
-    void RegisterVariable(const String& Name, ConsoleVariable* Variable);
+    void RegisterCommand( const String& Name, ConsoleCommand* Object );
+    void RegisterVariable( const String& Name, ConsoleVariable* Variable );
 
-    ConsoleCommand* FindCommand(const String& Name);
-    ConsoleVariable* FindVariable(const String& Name);
+    ConsoleCommand* FindCommand( const String& Name );
+    ConsoleVariable* FindVariable( const String& Name );
 
-    void PrintMessage(const String& Message);
-    void PrintWarning(const String& Message);
-    void PrintError(const String& Message);
+    void PrintMessage( const String& Message );
+    void PrintWarning( const String& Message );
+    void PrintError( const String& Message );
 
     void ClearHistory();
 
 private:
-    void OnKeyPressedEvent(const KeyPressedEvent& Event);
+    void OnKeyPressedEvent( const KeyPressedEvent& Event );
 
     void DrawInterface();
 
-    bool RegisterObject(const String& Name, ConsoleObject* Variable);
+    bool RegisterObject( const String& Name, ConsoleObject* Variable );
 
-    ConsoleObject* FindConsoleObject(const String& Name);
+    ConsoleObject* FindConsoleObject( const String& Name );
 
-    int32 TextCallback(ImGuiInputTextCallbackData* Data);
+    int32 TextCallback( ImGuiInputTextCallbackData* Data );
 
-    void Execute(const String& CmdString);
+    void Execute( const String& CmdString );
 
 private:
     std::unordered_map<String, ConsoleObject*> ConsoleObjects;
@@ -92,16 +92,16 @@ private:
 
     TArray<String> History;
     uint32 HistoryLength = 50;
-    int32  HistoryIndex   = -1;
+    int32  HistoryIndex = -1;
 
-    bool UpdateCursorPosition      = false;
+    bool UpdateCursorPosition = false;
     bool CandidateSelectionChanged = false;
-    bool ScrollDown                = false;
-    bool IsActive                  = false;
+    bool ScrollDown = false;
+    bool IsActive = false;
 };
 
 extern Console GConsole;
 
 #ifdef COMPILER_VISUAL_STUDIO
-    #pragma warning(pop)
+#pragma warning(pop)
 #endif

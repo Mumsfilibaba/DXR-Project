@@ -46,28 +46,28 @@ struct SPerCascade
 class ShadowMapRenderer
 {
 public:
-    ShadowMapRenderer()  = default;
+    ShadowMapRenderer() = default;
     ~ShadowMapRenderer() = default;
 
-    bool Init(LightSetup& LightSetup, FrameResources& Resources);
+    bool Init( LightSetup& LightSetup, FrameResources& Resources );
 
     void Release();
-    
-    void RenderPointLightShadows(CommandList& CmdList, const LightSetup& LightSetup, const Scene& Scene);
-    void RenderDirectionalLightShadows(CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources, const Scene& Scene);
 
-    bool ResizeResources(uint32 Width, uint32 Height, LightSetup& LightSetup);
+    void RenderPointLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const Scene& Scene );
+    void RenderDirectionalLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources, const Scene& Scene );
+
+    bool ResizeResources( uint32 Width, uint32 Height, LightSetup& LightSetup );
 
 private:
-    bool CreateShadowMask(uint32 Width, uint32 Height, LightSetup& LightSetup);
+    bool CreateShadowMask( uint32 Width, uint32 Height, LightSetup& LightSetup );
 
-    bool CreateShadowMaps(LightSetup& LightSetup, FrameResources& FrameResources);
+    bool CreateShadowMaps( LightSetup& LightSetup, FrameResources& FrameResources );
 
     TRef<ConstantBuffer> PerShadowMapBuffer;
 
     TRef<GraphicsPipelineState> DirectionalLightPSO;
     TRef<VertexShader>          DirectionalLightShader;
-    
+
     TRef<ComputePipelineState> DirectionalShadowMaskPSO;
     TRef<ComputeShader>        DirectionalShadowMaskShader;
 
@@ -81,9 +81,9 @@ private:
     TRef<ComputePipelineState> CascadeGen;
     TRef<ComputeShader>        CascadeGenShader;
 
-    bool UpdateDirLight   = true;
+    bool UpdateDirLight = true;
     bool UpdatePointLight = true;
-    
-    uint64 DirLightFrame    = 0;
-    uint64 PointLightFrame  = 0;
+
+    uint64 DirLightFrame = 0;
+    uint64 PointLightFrame = 0;
 };

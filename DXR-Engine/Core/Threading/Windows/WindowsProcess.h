@@ -4,25 +4,25 @@
 class WindowsProcess : public GenericProcess
 {
 public:
-    FORCEINLINE static uint32 GetNumProcessors() 
+    FORCEINLINE static uint32 GetNumProcessors()
     {
         SYSTEM_INFO SystemInfo;
-        Memory::Memzero(&SystemInfo);
+        Memory::Memzero( &SystemInfo );
 
-        GetSystemInfo(&SystemInfo);
+        GetSystemInfo( &SystemInfo );
 
         return SystemInfo.dwNumberOfProcessors;
     }
 
-    FORCEINLINE static ThreadID GetThreadID() 
-    { 
+    FORCEINLINE static ThreadID GetThreadID()
+    {
         DWORD CurrentID = GetCurrentThreadId();
         return (ThreadID)CurrentID;
     }
 
-    FORCEINLINE static void Sleep(Timestamp Time) 
+    FORCEINLINE static void Sleep( Timestamp Time )
     {
         DWORD Milliseconds = (DWORD)Time.AsMilliSeconds();
-        ::Sleep(Milliseconds);
+        ::Sleep( Milliseconds );
     }
 };

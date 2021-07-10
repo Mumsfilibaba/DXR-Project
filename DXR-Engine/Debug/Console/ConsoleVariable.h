@@ -9,12 +9,15 @@
 class ConsoleVariable : public ConsoleObject
 {
 public:
-    virtual ConsoleVariable* AsVariable() override { return this; }
+    virtual ConsoleVariable* AsVariable() override
+    {
+        return this;
+    }
 
-    virtual void SetInt(int32 InValue) = 0;
-    virtual void SetFloat(float InValue) = 0;
-    virtual void SetBool(bool InValue) = 0;
-    virtual void SetString(const String& InValue) = 0;
+    virtual void SetInt( int32 InValue ) = 0;
+    virtual void SetFloat( float InValue ) = 0;
+    virtual void SetBool( bool InValue ) = 0;
+    virtual void SetString( const String& InValue ) = 0;
 
     virtual int32 GetInt() const = 0;
     virtual float GetFloat() const = 0;
@@ -25,7 +28,7 @@ public:
     virtual bool IsFloat() const = 0;
     virtual bool IsBool() const = 0;
     virtual bool IsString() const = 0;
-    
+
     TMulticastDelegate<ConsoleVariable*> OnChangedDelegate;
 };
 
@@ -39,31 +42,31 @@ public:
     {
     }
 
-    TConsoleVariable(T StartValue)
+    TConsoleVariable( T StartValue )
         : ConsoleVariable()
-        , Value(StartValue)
+        , Value( StartValue )
     {
     }
 
-    virtual void SetInt(int32 InValue) override 
-    { 
-        Value = (T)InValue;
-        OnChanged();
-    }
-
-    virtual void SetFloat(float InValue) override
+    virtual void SetInt( int32 InValue ) override
     {
         Value = (T)InValue;
         OnChanged();
     }
 
-    virtual void SetBool(bool InValue) override
+    virtual void SetFloat( float InValue ) override
     {
         Value = (T)InValue;
         OnChanged();
     }
 
-    virtual void SetString(const String& InValue) override;
+    virtual void SetBool( bool InValue ) override
+    {
+        Value = (T)InValue;
+        OnChanged();
+    }
+
+    virtual void SetString( const String& InValue ) override;
 
     virtual int32 GetInt() const override
     {
@@ -82,20 +85,32 @@ public:
 
     virtual String GetString() const override
     {
-        return std::to_string(Value);
+        return std::to_string( Value );
     }
 
-    virtual bool IsInt() const override { return false; }
-    virtual bool IsFloat() const override { return false; }
-    virtual bool IsBool() const override { return false; }
-    virtual bool IsString() const override { return false; }
+    virtual bool IsInt() const override
+    {
+        return false;
+    }
+    virtual bool IsFloat() const override
+    {
+        return false;
+    }
+    virtual bool IsBool() const override
+    {
+        return false;
+    }
+    virtual bool IsString() const override
+    {
+        return false;
+    }
 
 private:
     void OnChanged()
     {
-        if (OnChangedDelegate.IsBound())
+        if ( OnChangedDelegate.IsBound() )
         {
-            OnChangedDelegate.Broadcast(this);
+            OnChangedDelegate.Broadcast( this );
         }
     }
 
@@ -103,21 +118,21 @@ private:
 };
 
 // int32
-template<> inline void TConsoleVariable<int32>::SetString(const String& InValue)
+template<> inline void TConsoleVariable<int32>::SetString( const String& InValue )
 {
-    Value = atoi(InValue.c_str());
+    Value = atoi( InValue.c_str() );
     OnChanged();
 }
 
 template<> inline bool TConsoleVariable<int32>::IsInt() const
-{ 
-    return true; 
+{
+    return true;
 }
 
 // float
-template<> inline void TConsoleVariable<float>::SetString(const String& InValue)
+template<> inline void TConsoleVariable<float>::SetString( const String& InValue )
 {
-    Value = (float)atof(InValue.c_str());
+    Value = (float)atof( InValue.c_str() );
     OnChanged();
 }
 
@@ -127,19 +142,19 @@ template<> inline bool TConsoleVariable<float>::IsFloat() const
 }
 
 // bool
-template<> inline void TConsoleVariable<bool>::SetString(const String& InValue)
+template<> inline void TConsoleVariable<bool>::SetString( const String& InValue )
 {
     String Lower = InValue;
-    for (char& c : Lower)
+    for ( char& c : Lower )
     {
-        c = (char)tolower(c);
+        c = (char)tolower( c );
     }
 
     int32 Number = 0;
-    std::istringstream Stream(Lower);
+    std::istringstream Stream( Lower );
     Stream >> Number;
 
-    if (Stream.fail())
+    if ( Stream.fail() )
     {
         Stream.clear();
         Stream >> std::boolalpha >> Value;
@@ -149,7 +164,7 @@ template<> inline void TConsoleVariable<bool>::SetString(const String& InValue)
         Value = (bool)Number;
     }
 
-    if (!Stream.fail())
+    if ( !Stream.fail() )
     {
         OnChanged();
     }
@@ -166,24 +181,24 @@ template<> inline bool TConsoleVariable<bool>::IsBool() const
 }
 
 // String
-template<> inline void TConsoleVariable<String>::SetInt(int32 InValue)
+template<> inline void TConsoleVariable<String>::SetInt( int32 InValue )
 {
-    Value = std::to_string(InValue);
+    Value = std::to_string( InValue );
 }
 
-template<> inline void TConsoleVariable<String>::SetFloat(float InValue)
+template<> inline void TConsoleVariable<String>::SetFloat( float InValue )
 {
-    Value = std::to_string(InValue);
+    Value = std::to_string( InValue );
 }
 
-template<> inline void TConsoleVariable<String>::SetBool(bool InValue)
+template<> inline void TConsoleVariable<String>::SetBool( bool InValue )
 {
     std::stringstream Stream;
     Stream << std::boolalpha << InValue;
     Value = Stream.str();
 }
 
-template<> inline void TConsoleVariable<String>::SetString(const String& InValue)
+template<> inline void TConsoleVariable<String>::SetString( const String& InValue )
 {
     Value = InValue;
 }

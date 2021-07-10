@@ -2,4 +2,4 @@
 #include "Core/Types.h"
 
 extern class GenericRenderLayer* GRenderLayer;
-extern class IShaderCompiler*    GShaderCompiler;
+extern class IShaderCompiler* GShaderCompiler;

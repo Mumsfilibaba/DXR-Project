@@ -15,14 +15,14 @@ public:
     ~D3D12ShaderCompiler();
 
     bool Init();
-    
+
     virtual bool CompileFromFile(
         const std::string& FilePath,
         const std::string& EntryPoint,
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code) override final;
+        TArray<uint8>& Code ) override final;
 
     virtual bool CompileShader(
         const std::string& ShaderSource,
@@ -30,26 +30,26 @@ public:
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code) override final;
+        TArray<uint8>& Code ) override final;
 
-    bool GetReflection(D3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection);
-    bool GetLibraryReflection(D3D12BaseShader* Shader, ID3D12LibraryReflection** Reflection);
+    bool GetReflection( D3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection );
+    bool GetLibraryReflection( D3D12BaseShader* Shader, ID3D12LibraryReflection** Reflection );
 
-    bool HasRootSignature(D3D12BaseShader* Shader);
+    bool HasRootSignature( D3D12BaseShader* Shader );
 
 private:
     bool InternalCompileFromSource(
-        IDxcBlob* SourceBlob, 
-        LPCWSTR FilePath, 
-        LPCWSTR Entrypoint, 
+        IDxcBlob* SourceBlob,
+        LPCWSTR FilePath,
+        LPCWSTR Entrypoint,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         const TArray<ShaderDefine>* Defines,
-        TArray<uint8>& Code);
+        TArray<uint8>& Code );
 
-    bool InternalGetReflection(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject);
+    bool InternalGetReflection( const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject );
 
-    bool ValidateRayTracingShader(const TComPtr<IDxcBlob>& ShaderBlob, LPCWSTR Entrypoint);
+    bool ValidateRayTracingShader( const TComPtr<IDxcBlob>& ShaderBlob, LPCWSTR Entrypoint );
 
 private:
     TComPtr<IDxcCompiler>       DxCompiler;
@@ -60,5 +60,5 @@ private:
     HMODULE DxCompilerDLL;
 };
 
-extern D3D12ShaderCompiler*  GD3D12ShaderCompiler;
+extern D3D12ShaderCompiler* GD3D12ShaderCompiler;
 extern DxcCreateInstanceProc DxcCreateInstanceFunc;

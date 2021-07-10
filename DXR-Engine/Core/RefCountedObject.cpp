@@ -1,7 +1,7 @@
 #include "RefCountedObject.h"
 
 RefCountedObject::RefCountedObject()
-    : StrongReferences(0)
+    : StrongReferences( 0 )
 {
     AddRef();
 }
@@ -14,7 +14,7 @@ int32 RefCountedObject::AddRef()
 int32 RefCountedObject::Release()
 {
     int32 NewRefCount = --StrongReferences;
-    if (StrongReferences.Load() <= 0)
+    if ( StrongReferences.Load() <= 0 )
     {
         delete this;
     }

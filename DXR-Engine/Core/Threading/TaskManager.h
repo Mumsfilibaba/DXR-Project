@@ -20,9 +20,9 @@ class TaskManager
 public:
     bool Init();
 
-    TaskID AddTask(const Task& NewTask);
+    TaskID AddTask( const Task& NewTask );
 
-    void WaitForTask(TaskID Task);
+    void WaitForTask( TaskID Task );
     void WaitForAllTasks();
 
     void Release();
@@ -33,7 +33,7 @@ private:
     TaskManager();
     ~TaskManager();
 
-    bool PopTask(Task& OutTask);
+    bool PopTask( Task& OutTask );
 
     void KillWorkers();
 

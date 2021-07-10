@@ -7,10 +7,10 @@ class Application
 {
 public:
     virtual ~Application();
-    
+
     virtual bool Init();
 
-    virtual void Tick(Timestamp Deltatime);
+    virtual void Tick( Timestamp Deltatime );
 
     virtual bool Release();
 

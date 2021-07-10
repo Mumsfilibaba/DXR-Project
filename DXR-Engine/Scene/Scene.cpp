@@ -20,66 +20,66 @@ Scene::Scene()
 
 Scene::~Scene()
 {
-    for (Actor* CurrentActor : Actors)
+    for ( Actor* CurrentActor : Actors )
     {
-        SafeDelete(CurrentActor);
+        SafeDelete( CurrentActor );
     }
     Actors.Clear();
 
-    for (Light* CurrentLight : Lights)
+    for ( Light* CurrentLight : Lights )
     {
-        SafeDelete(CurrentLight);
+        SafeDelete( CurrentLight );
     }
     Lights.Clear();
 
-    SafeDelete(CurrentCamera);
+    SafeDelete( CurrentCamera );
 }
 
-void Scene::Tick(Timestamp DeltaTime)
+void Scene::Tick( Timestamp DeltaTime )
 {
-    UNREFERENCED_VARIABLE(DeltaTime);
+    UNREFERENCED_VARIABLE( DeltaTime );
 }
 
-void Scene::AddCamera(Camera* InCamera)
+void Scene::AddCamera( Camera* InCamera )
 {
-    if (CurrentCamera)
+    if ( CurrentCamera )
     {
-        SafeDelete(CurrentCamera);
+        SafeDelete( CurrentCamera );
     }
 
     CurrentCamera = InCamera;
 }
 
-void Scene::AddActor(Actor* InActor)
+void Scene::AddActor( Actor* InActor )
 {
-    Assert(InActor != nullptr);
-    Actors.EmplaceBack(InActor);
+    Assert( InActor != nullptr );
+    Actors.EmplaceBack( InActor );
 
-    InActor->OnAddedToScene(this);
+    InActor->OnAddedToScene( this );
 
     MeshComponent* Component = InActor->GetComponentOfType<MeshComponent>();
-    if (Component)
+    if ( Component )
     {
-        AddMeshComponent(Component);
+        AddMeshComponent( Component );
     }
 }
 
-void Scene::AddLight(Light* InLight)
+void Scene::AddLight( Light* InLight )
 {
-    Assert(InLight != nullptr);
-    Lights.EmplaceBack(InLight);
+    Assert( InLight != nullptr );
+    Lights.EmplaceBack( InLight );
 }
 
-void Scene::OnAddedComponent(Component* NewComponent)
+void Scene::OnAddedComponent( Component* NewComponent )
 {
-    MeshComponent* Component = Cast<MeshComponent>(NewComponent);
-    if (Component)
+    MeshComponent* Component = Cast<MeshComponent>( NewComponent );
+    if ( Component )
     {
-        AddMeshComponent(Component);
+        AddMeshComponent( Component );
     }
 }
 
-Scene* Scene::LoadFromFile(const std::string& Filepath)
+Scene* Scene::LoadFromFile( const std::string& Filepath )
 {
     // Load Scene File
     std::string Warning;
@@ -88,84 +88,84 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
     std::vector<tinyobj::material_t> Materials;
     tinyobj::attrib_t Attributes;
 
-    std::string MTLFiledir = std::string(Filepath.begin(), Filepath.begin() + Filepath.find_last_of('/'));
-    if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filepath.c_str(), MTLFiledir.c_str(), true, false))
+    std::string MTLFiledir = std::string( Filepath.begin(), Filepath.begin() + Filepath.find_last_of( '/' ) );
+    if ( !tinyobj::LoadObj( &Attributes, &Shapes, &Materials, &Warning, &Error, Filepath.c_str(), MTLFiledir.c_str(), true, false ) )
     {
-        LOG_WARNING("[Scene]: Failed to load Scene '" + Filepath + "'." + " Warning: " + Warning + " Error: " + Error);
+        LOG_WARNING( "[Scene]: Failed to load Scene '" + Filepath + "'." + " Warning: " + Warning + " Error: " + Error );
         return nullptr;
     }
     else
     {
-        LOG_INFO("[Scene]: Loaded Scene'" + Filepath + "'");
+        LOG_INFO( "[Scene]: Loaded Scene'" + Filepath + "'" );
     }
 
     // Create standard textures
     uint8 Pixels[] = { 255, 255, 255, 255 };
-    TRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
-    if (!WhiteTexture)
+    TRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
+    if ( !WhiteTexture )
     {
         return nullptr;
     }
     else
     {
-        WhiteTexture->SetName("[Scene] WhiteTexture");
+        WhiteTexture->SetName( "[Scene] WhiteTexture" );
     }
 
     Pixels[0] = 127;
     Pixels[1] = 127;
     Pixels[2] = 255;
 
-    TRef<Texture2D> NormalMap = TextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
-    if (!NormalMap)
+    TRef<Texture2D> NormalMap = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
+    if ( !NormalMap )
     {
         return nullptr;
     }
     else
     {
-        NormalMap->SetName("[Scene] NormalMap");
+        NormalMap->SetName( "[Scene] NormalMap" );
     }
 
     // Create BaseMaterial
     SMaterialDesc Properties;
-    Properties.AO        = 1.0f;
-    Properties.Metallic  = 0.0f;
+    Properties.AO = 1.0f;
+    Properties.Metallic = 0.0f;
     Properties.Roughness = 1.0f;
 
-    TSharedPtr<CMaterial> BaseMaterial = MakeShared<CMaterial>(Properties);
-    BaseMaterial->AlbedoMap    = WhiteTexture;
-    BaseMaterial->AOMap        = WhiteTexture;
-    BaseMaterial->HeightMap    = WhiteTexture;
-    BaseMaterial->MetallicMap  = WhiteTexture;
+    TSharedPtr<CMaterial> BaseMaterial = MakeShared<CMaterial>( Properties );
+    BaseMaterial->AlbedoMap = WhiteTexture;
+    BaseMaterial->AOMap = WhiteTexture;
+    BaseMaterial->HeightMap = WhiteTexture;
+    BaseMaterial->MetallicMap = WhiteTexture;
     BaseMaterial->RoughnessMap = WhiteTexture;
-    BaseMaterial->NormalMap    = NormalMap;
+    BaseMaterial->NormalMap = NormalMap;
     BaseMaterial->Init();
 
     // Create All Materials in scene
     TArray<TSharedPtr<CMaterial>> LoadedMaterials;
     std::unordered_map<std::string, TRef<Texture2D>> MaterialTextures;
-    for (tinyobj::material_t& Mat : Materials)
+    for ( tinyobj::material_t& Mat : Materials )
     {
         // Create new material with default properties
         SMaterialDesc MatProps;
-        MatProps.Albedo    = XMFLOAT3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
-        MatProps.Metallic  = 1.0f;
-        MatProps.AO        = Mat.ambient[0];
+        MatProps.Albedo = XMFLOAT3( Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2] );
+        MatProps.Metallic = 1.0f;
+        MatProps.AO = Mat.ambient[0];
         MatProps.Roughness = 1.0f;
 
-        TSharedPtr<CMaterial>& NewMaterial = LoadedMaterials.EmplaceBack(MakeShared<CMaterial>(MatProps));
-        LOG_INFO("Loaded materialID=" + std::to_string(LoadedMaterials.Size() - 1));
+        TSharedPtr<CMaterial>& NewMaterial = LoadedMaterials.EmplaceBack( MakeShared<CMaterial>( MatProps ) );
+        LOG_INFO( "Loaded materialID=" + std::to_string( LoadedMaterials.Size() - 1 ) );
 
         // Metallic
-        if (!Mat.ambient_texname.empty())
+        if ( !Mat.ambient_texname.empty() )
         {
-            ConvertBackslashes(Mat.ambient_texname);
-            if (MaterialTextures.count(Mat.ambient_texname) == 0)
+            ConvertBackslashes( Mat.ambient_texname );
+            if ( MaterialTextures.count( Mat.ambient_texname ) == 0 )
             {
                 std::string TexName = MTLFiledir + '/' + Mat.ambient_texname;
-                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-                if (Texture)
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile( TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+                if ( Texture )
                 {
-                    Texture->SetName(Mat.ambient_texname);
+                    Texture->SetName( Mat.ambient_texname );
                     MaterialTextures[Mat.ambient_texname] = Texture;
                 }
                 else
@@ -178,20 +178,20 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
         }
         else
         {
-            NewMaterial->MetallicMap  = WhiteTexture;
+            NewMaterial->MetallicMap = WhiteTexture;
         }
 
         // Albedo
-        if (!Mat.diffuse_texname.empty())
+        if ( !Mat.diffuse_texname.empty() )
         {
-            ConvertBackslashes(Mat.diffuse_texname);
-            if (MaterialTextures.count(Mat.diffuse_texname) == 0)
+            ConvertBackslashes( Mat.diffuse_texname );
+            if ( MaterialTextures.count( Mat.diffuse_texname ) == 0 )
             {
                 std::string TexName = MTLFiledir + '/' + Mat.diffuse_texname;
-                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm); 
-                if (Texture)
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile( TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+                if ( Texture )
                 {
-                    Texture->SetName(Mat.diffuse_texname);
+                    Texture->SetName( Mat.diffuse_texname );
                     MaterialTextures[Mat.diffuse_texname] = Texture;
                 }
                 else
@@ -208,16 +208,16 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
         }
 
         // Roughness
-        if (!Mat.specular_highlight_texname.empty())
+        if ( !Mat.specular_highlight_texname.empty() )
         {
-            ConvertBackslashes(Mat.specular_highlight_texname);
-            if (MaterialTextures.count(Mat.specular_highlight_texname) == 0)
+            ConvertBackslashes( Mat.specular_highlight_texname );
+            if ( MaterialTextures.count( Mat.specular_highlight_texname ) == 0 )
             {
                 std::string TexName = MTLFiledir + '/' + Mat.specular_highlight_texname;
-                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-                if (Texture)
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile( TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+                if ( Texture )
                 {
-                    Texture->SetName(Mat.specular_highlight_texname);
+                    Texture->SetName( Mat.specular_highlight_texname );
                     MaterialTextures[Mat.specular_highlight_texname] = Texture;
                 }
                 else
@@ -234,16 +234,16 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
         }
 
         // Normal
-        if (!Mat.bump_texname.empty())
+        if ( !Mat.bump_texname.empty() )
         {
-            ConvertBackslashes(Mat.bump_texname);
-            if (MaterialTextures.count(Mat.bump_texname) == 0)
+            ConvertBackslashes( Mat.bump_texname );
+            if ( MaterialTextures.count( Mat.bump_texname ) == 0 )
             {
                 std::string TexName = MTLFiledir + '/' + Mat.bump_texname;
-                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
-                if (Texture)
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile( TexName, TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+                if ( Texture )
                 {
-                    Texture->SetName(Mat.bump_texname);
+                    Texture->SetName( Mat.bump_texname );
                     MaterialTextures[Mat.bump_texname] = Texture;
                 }
                 else
@@ -260,16 +260,16 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
         }
 
         // Alpha
-        if (!Mat.alpha_texname.empty())
+        if ( !Mat.alpha_texname.empty() )
         {
-            ConvertBackslashes(Mat.alpha_texname);
-            if (MaterialTextures.count(Mat.alpha_texname) == 0)
+            ConvertBackslashes( Mat.alpha_texname );
+            if ( MaterialTextures.count( Mat.alpha_texname ) == 0 )
             {
                 std::string TexName = MTLFiledir + '/' + Mat.alpha_texname;
-                TRef<Texture2D> Texture = TextureFactory::LoadFromFile(TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-                if (Texture)
+                TRef<Texture2D> Texture = TextureFactory::LoadFromFile( TexName, TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+                if ( Texture )
                 {
-                    Texture->SetName(Mat.alpha_texname);
+                    Texture->SetName( Mat.alpha_texname );
                     MaterialTextures[Mat.alpha_texname] = Texture;
                 }
                 else
@@ -277,12 +277,12 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
                     MaterialTextures[Mat.alpha_texname] = WhiteTexture;
                 }
 
-                NewMaterial->EnableAlphaMask(true);
+                NewMaterial->EnableAlphaMask( true );
             }
 
             NewMaterial->AlphaMask = MaterialTextures[Mat.alpha_texname];
         }
-        
+
         // AO
         NewMaterial->AOMap = WhiteTexture;
         NewMaterial->Init();
@@ -293,12 +293,12 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
     TUniquePtr<Scene> LoadedScene = MakeUnique<Scene>();
 
     std::unordered_map<Vertex, uint32, VertexHasher> UniqueVertices;
-    for (const tinyobj::shape_t& Shape : Shapes)
+    for ( const tinyobj::shape_t& Shape : Shapes )
     {
         // Start at index zero for eaxh mesh and loop until all indices are processed
         uint32 i = 0;
         uint32 SubMeshIndex = 0;
-        while (i < Shape.mesh.indices.size())
+        while ( i < Shape.mesh.indices.size() )
         {
             // Start a new mesh
             Data.Indices.Clear();
@@ -308,11 +308,11 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
 
             uint32 Face = i / 3;
             const int32 MaterialID = Shape.mesh.material_ids[Face];
-            for (; i < Shape.mesh.indices.size(); i++)
+            for ( ; i < Shape.mesh.indices.size(); i++ )
             {
                 // Break if material is not the same
                 Face = i / 3;
-                if (Shape.mesh.material_ids[Face] != MaterialID)
+                if ( Shape.mesh.material_ids[Face] != MaterialID )
                 {
                     break;
                 }
@@ -321,7 +321,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
                 Vertex TempVertex;
 
                 // Normals and texcoords are optional, Positions are required
-                Assert(Index.vertex_index >= 0);
+                Assert( Index.vertex_index >= 0 );
 
                 size_t PositionIndex = 3 * static_cast<size_t>(Index.vertex_index);
                 TempVertex.Position =
@@ -331,7 +331,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
                     Attributes.vertices[PositionIndex + 2],
                 };
 
-                if (Index.normal_index >= 0)
+                if ( Index.normal_index >= 0 )
                 {
                     size_t NormalIndex = 3 * static_cast<size_t>(Index.normal_index);
                     TempVertex.Normal =
@@ -342,7 +342,7 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
                     };
                 }
 
-                if (Index.texcoord_index >= 0)
+                if ( Index.texcoord_index >= 0 )
                 {
                     size_t TexCoordIndex = 2 * static_cast<size_t>(Index.texcoord_index);
                     TempVertex.TexCoord =
@@ -352,38 +352,38 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
                     };
                 }
 
-                if (UniqueVertices.count(TempVertex) == 0)
+                if ( UniqueVertices.count( TempVertex ) == 0 )
                 {
                     UniqueVertices[TempVertex] = static_cast<uint32>(Data.Vertices.Size());
-                    Data.Vertices.PushBack(TempVertex);
+                    Data.Vertices.PushBack( TempVertex );
                 }
 
-                Data.Indices.EmplaceBack(UniqueVertices[TempVertex]);
+                Data.Indices.EmplaceBack( UniqueVertices[TempVertex] );
             }
 
             // Calculate tangents and create mesh
-            MeshFactory::CalculateTangents(Data);
-            TSharedPtr<Mesh> NewMesh = Mesh::Make(Data);
+            MeshFactory::CalculateTangents( Data );
+            TSharedPtr<Mesh> NewMesh = Mesh::Make( Data );
 
             // Setup new actor for this shape
             Actor* NewActor = DBG_NEW Actor();
 
-            if (SubMeshIndex < 1)
+            if ( SubMeshIndex < 1 )
             {
-                NewActor->SetName(Shape.name);
+                NewActor->SetName( Shape.name );
                 SubMeshIndex++;
             }
             else
             {
-                NewActor->SetName(Shape.name + "_" + std::to_string(SubMeshIndex));
+                NewActor->SetName( Shape.name + "_" + std::to_string( SubMeshIndex ) );
             }
 
-            NewActor->GetTransform().SetScale(0.015f, 0.015f, 0.015f);
+            NewActor->GetTransform().SetScale( 0.015f, 0.015f, 0.015f );
 
             // Add a MeshComponent
-            MeshComponent* NewComponent = DBG_NEW MeshComponent(NewActor);
+            MeshComponent* NewComponent = DBG_NEW MeshComponent( NewActor );
             NewComponent->Mesh = NewMesh;
-            if (MaterialID >= 0)
+            if ( MaterialID >= 0 )
             {
                 NewComponent->Material = LoadedMaterials[MaterialID];
             }
@@ -392,22 +392,22 @@ Scene* Scene::LoadFromFile(const std::string& Filepath)
                 NewComponent->Material = BaseMaterial;
             }
 
-            NewActor->AddComponent(NewComponent);
-            LoadedScene->AddActor(NewActor);
+            NewActor->AddComponent( NewComponent );
+            LoadedScene->AddActor( NewActor );
         }
     }
 
     return LoadedScene.Release();
 }
 
-void Scene::AddMeshComponent(MeshComponent* Component)
+void Scene::AddMeshComponent( MeshComponent* Component )
 {
     MeshDrawCommand Command;
     Command.CurrentActor = Component->GetOwningActor();
-    Command.Geometry     = Component->Mesh->RTGeometry.Get();
+    Command.Geometry = Component->Mesh->RTGeometry.Get();
     Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();
-    Command.IndexBuffer  = Component->Mesh->IndexBuffer.Get();
-    Command.Material     = Component->Material.Get();
-    Command.Mesh         = Component->Mesh.Get();
-    MeshDrawCommands.PushBack(Command);
+    Command.IndexBuffer = Component->Mesh->IndexBuffer.Get();
+    Command.Material = Component->Material.Get();
+    Command.Mesh = Component->Mesh.Get();
+    MeshDrawCommands.PushBack( Command );
 }

@@ -16,13 +16,13 @@ public:
     Scene();
     ~Scene();
 
-    void Tick(Timestamp DeltaTime);
+    void Tick( Timestamp DeltaTime );
 
-    void AddCamera(Camera* InCamera);
-    void AddActor(Actor* InActor);
-    void AddLight(Light* InLight);
+    void AddCamera( Camera* InCamera );
+    void AddActor( Actor* InActor );
+    void AddLight( Light* InLight );
 
-    void OnAddedComponent(Component* NewComponent);
+    void OnAddedComponent( Component* NewComponent );
 
     template<typename TComponent>
     FORCEINLINE const TArray<TComponent> GetAllComponentsOfType() const
@@ -30,29 +30,41 @@ public:
         // TODO: Cache this result
 
         TArray<TComponent> Components;
-        for (Actor* Actor : Actors)
+        for ( Actor* Actor : Actors )
         {
             TComponent* Component = Actor->GetComponentOfType<TComponent>();
-            if (Component)
+            if ( Component )
             {
-                Components.EmplaceBack(*Component);
+                Components.EmplaceBack( *Component );
             }
         }
 
-        return Move(Components);
+        return Move( Components );
     }
 
-    const TArray<Actor*>& GetActors() const { return Actors; }
-    const TArray<Light*>& GetLights() const { return Lights; }
+    const TArray<Actor*>& GetActors() const
+    {
+        return Actors;
+    }
+    const TArray<Light*>& GetLights() const
+    {
+        return Lights;
+    }
 
-    const TArray<MeshDrawCommand>& GetMeshDrawCommands() const { return MeshDrawCommands; }
-     
-    Camera* GetCamera() const { return CurrentCamera; }
+    const TArray<MeshDrawCommand>& GetMeshDrawCommands() const
+    {
+        return MeshDrawCommands;
+    }
 
-    static Scene* LoadFromFile(const std::string& Filepath);
+    Camera* GetCamera() const
+    {
+        return CurrentCamera;
+    }
+
+    static Scene* LoadFromFile( const std::string& Filepath );
 
 private:
-    void AddMeshComponent(class MeshComponent* Component);
+    void AddMeshComponent( class MeshComponent* Component );
 
     TArray<Actor*> Actors;
     TArray<Light*> Lights;

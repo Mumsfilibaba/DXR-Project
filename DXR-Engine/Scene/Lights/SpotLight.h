@@ -3,13 +3,13 @@
 
 class SpotLight : public Light
 {
-    CORE_OBJECT(SpotLight, Light);
+    CORE_OBJECT( SpotLight, Light );
 
 public:
     SpotLight();
     ~SpotLight();
 
-    void SetConeAngle(float InConeAngle);
+    void SetConeAngle( float InConeAngle );
 
     FORCEINLINE float GetConeAngle() const
     {

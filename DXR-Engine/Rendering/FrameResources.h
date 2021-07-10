@@ -17,19 +17,19 @@ template<typename TResource>
 class ResourceCache
 {
 public:
-    int32 Add(TResource* Resource)
+    int32 Add( TResource* Resource )
     {
-        if (Resource == nullptr)
+        if ( Resource == nullptr )
         {
             return -1;
         }
 
-        auto TextureIndexPair = ResourceIndices.find(Resource);
-        if (TextureIndexPair == ResourceIndices.end())
+        auto TextureIndexPair = ResourceIndices.find( Resource );
+        if ( TextureIndexPair == ResourceIndices.end() )
         {
             int32 NewIndex = Resources.Size();
             ResourceIndices[Resource] = NewIndex;
-            Resources.EmplaceBack(Resource);
+            Resources.EmplaceBack( Resource );
 
             return NewIndex;
         }
@@ -39,7 +39,7 @@ public:
         }
     }
 
-    TResource* Get(uint32 Index) const
+    TResource* Get( uint32 Index ) const
     {
         return Resources[Index];
     }
@@ -56,20 +56,20 @@ private:
 
 struct FrameResources
 {
-    FrameResources()  = default;
+    FrameResources() = default;
     ~FrameResources() = default;
 
     void Release();
 
-    const EFormat DepthBufferFormat  = EFormat::D32_Float;
-    const EFormat SSAOBufferFormat   = EFormat::R16_Unorm;
-    const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
-    const EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
+    const EFormat DepthBufferFormat = EFormat::D32_Float;
+    const EFormat SSAOBufferFormat = EFormat::R16_Unorm;
+    const EFormat FinalTargetFormat = EFormat::R16G16B16A16_Float;
+    const EFormat RTOutputFormat = EFormat::R16G16B16A16_Float;
     const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
-    const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
-    const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
-    const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
-    const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
+    const EFormat AlbedoFormat = EFormat::R8G8B8A8_Unorm;
+    const EFormat MaterialFormat = EFormat::R8G8B8A8_Unorm;
+    const EFormat NormalFormat = EFormat::R10G10B10A2_Unorm;
+    const EFormat ViewNormalFormat = EFormat::R10G10B10A2_Unorm;
 
     Texture2D* BackBuffer = nullptr;
 

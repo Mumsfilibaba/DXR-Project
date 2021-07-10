@@ -6,16 +6,25 @@
 class Resource : public RefCountedObject
 {
 public:
-    virtual void* GetNativeResource() const { return nullptr; }
+    virtual void* GetNativeResource() const
+    {
+        return nullptr;
+    }
 
-    virtual bool IsValid() const { return false; }
+    virtual bool IsValid() const
+    {
+        return false;
+    }
 
-    virtual void SetName(const std::string& InName)
+    virtual void SetName( const std::string& InName )
     {
         Name = InName;
     }
 
-    const std::string& GetName() const { return Name; }
+    const std::string& GetName() const
+    {
+        return Name;
+    }
 
 private:
     std::string Name;

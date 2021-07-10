@@ -9,27 +9,27 @@ public:
     WindowsMutex() noexcept
         : Section()
     {
-        InitializeCriticalSection(&Section);
+        InitializeCriticalSection( &Section );
     }
 
     ~WindowsMutex()
     {
-        DeleteCriticalSection(&Section);
+        DeleteCriticalSection( &Section );
     }
 
     void Lock() noexcept
     {
-        EnterCriticalSection(&Section);
+        EnterCriticalSection( &Section );
     }
 
     bool TryLock() noexcept
     {
-        return TryEnterCriticalSection(&Section);
+        return TryEnterCriticalSection( &Section );
     }
 
     void Unlock() noexcept
     {
-        LeaveCriticalSection(&Section);
+        LeaveCriticalSection( &Section );
     }
 
 private:

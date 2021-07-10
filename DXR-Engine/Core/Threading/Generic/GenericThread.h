@@ -18,10 +18,10 @@ public:
 
     virtual void Wait() = 0;
 
-    virtual void SetName(const std::string& Name) = 0;
+    virtual void SetName( const std::string& Name ) = 0;
 
     virtual ThreadID GetID() = 0;
 
     // TODO: Enable memberfunctions and lambdas
-    static GenericThread* Create(ThreadFunction Func);
+    static GenericThread* Create( ThreadFunction Func );
 };

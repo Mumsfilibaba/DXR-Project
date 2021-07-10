@@ -28,18 +28,18 @@ struct ShaderResourceViewCreateInfo
 {
     enum class EType
     {
-        Texture2D        = 1,
-        Texture2DArray   = 2,
-        TextureCube      = 3,
+        Texture2D = 1,
+        Texture2DArray = 2,
+        TextureCube = 3,
         TextureCubeArray = 4,
-        Texture3D        = 5,
-        VertexBuffer     = 6,
-        IndexBuffer      = 7,
+        Texture3D = 5,
+        VertexBuffer = 6,
+        IndexBuffer = 7,
         StructuredBuffer = 8,
     };
 
-    ShaderResourceViewCreateInfo(EType InType)
-        : Type(InType)
+    ShaderResourceViewCreateInfo( EType InType )
+        : Type( InType )
     {
     }
 
@@ -49,66 +49,66 @@ struct ShaderResourceViewCreateInfo
         struct
         {
             Texture2D* Texture = nullptr;
-            EFormat Format     = EFormat::Unknown;
-            uint32  Mip        = 0;
-            uint32  NumMips    = 0;
+            EFormat Format = EFormat::Unknown;
+            uint32  Mip = 0;
+            uint32  NumMips = 0;
             float   MinMipBias = 0.0f;
         } Texture2D;
         struct
         {
             Texture2DArray* Texture = nullptr;
-            EFormat Format          = EFormat::Unknown;
-            uint32  Mip             = 0;
-            uint32  NumMips         = 0;
-            uint32  ArraySlice      = 0;
-            uint32  NumArraySlices  = 0;
-            float   MinMipBias      = 0.0f;
+            EFormat Format = EFormat::Unknown;
+            uint32  Mip = 0;
+            uint32  NumMips = 0;
+            uint32  ArraySlice = 0;
+            uint32  NumArraySlices = 0;
+            float   MinMipBias = 0.0f;
         } Texture2DArray;
         struct
         {
             TextureCube* Texture = nullptr;
-            EFormat Format       = EFormat::Unknown;
-            uint32  Mip          = 0;
-            uint32  NumMips      = 0;
-            float   MinMipBias   = 0.0f;
+            EFormat Format = EFormat::Unknown;
+            uint32  Mip = 0;
+            uint32  NumMips = 0;
+            float   MinMipBias = 0.0f;
         } TextureCube;
         struct
         {
             TextureCubeArray* Texture = nullptr;
-            EFormat Format            = EFormat::Unknown;
-            uint32  Mip               = 0;
-            uint32  NumMips           = 0;
-            uint32  ArraySlice        = 0;
-            uint32  NumArraySlices    = 0;
-            float   MinMipBias        = 0.0f;
+            EFormat Format = EFormat::Unknown;
+            uint32  Mip = 0;
+            uint32  NumMips = 0;
+            uint32  ArraySlice = 0;
+            uint32  NumArraySlices = 0;
+            float   MinMipBias = 0.0f;
         } TextureCubeArray;
         struct
         {
-            Texture3D* Texture     = nullptr;
-            EFormat Format         = EFormat::Unknown;
-            uint32  Mip            = 0;
-            uint32  NumMips        = 0;
-            uint32  DepthSlice     = 0;
+            Texture3D* Texture = nullptr;
+            EFormat Format = EFormat::Unknown;
+            uint32  Mip = 0;
+            uint32  NumMips = 0;
+            uint32  DepthSlice = 0;
             uint32  NumDepthSlices = 0;
-            float   MinMipBias     = 0.0f;
+            float   MinMipBias = 0.0f;
         } Texture3D;
         struct
         {
             VertexBuffer* Buffer = nullptr;
-            uint32 FirstVertex   = 0;
-            uint32 NumVertices   = 0;
+            uint32 FirstVertex = 0;
+            uint32 NumVertices = 0;
         } VertexBuffer;
         struct
         {
             IndexBuffer* Buffer = nullptr;
-            uint32 FirstIndex   = 0;
-            uint32 NumIndices   = 0;
+            uint32 FirstIndex = 0;
+            uint32 NumIndices = 0;
         } IndexBuffer;
         struct
         {
             StructuredBuffer* Buffer = nullptr;
-            uint32 FirstElement      = 0;
-            uint32 NumElements       = 0;
+            uint32 FirstElement = 0;
+            uint32 NumElements = 0;
         } StructuredBuffer;
     };
 };
@@ -117,77 +117,77 @@ struct UnorderedAccessViewCreateInfo
 {
     enum class EType
     {
-        Texture2D        = 1,
-        Texture2DArray   = 2,
-        TextureCube      = 3,
+        Texture2D = 1,
+        Texture2DArray = 2,
+        TextureCube = 3,
         TextureCubeArray = 4,
-        Texture3D        = 5,
-        VertexBuffer     = 6,
-        IndexBuffer      = 7,
+        Texture3D = 5,
+        VertexBuffer = 6,
+        IndexBuffer = 7,
         StructuredBuffer = 8,
     };
 
-    UnorderedAccessViewCreateInfo(EType InType)
-        : Type(InType)
+    UnorderedAccessViewCreateInfo( EType InType )
+        : Type( InType )
     {
     }
 
     EType Type;
     union
     {
-        struct 
+        struct
         {
             Texture2D* Texture = nullptr;
-            EFormat Format     = EFormat::Unknown;
-            uint32  Mip        = 0;
+            EFormat Format = EFormat::Unknown;
+            uint32  Mip = 0;
         } Texture2D;
-        struct 
+        struct
         {
             Texture2DArray* Texture = nullptr;
-            EFormat Format          = EFormat::Unknown;
-            uint32  Mip             = 0;
-            uint32  ArraySlice      = 0;
-            uint32  NumArraySlices  = 0;
+            EFormat Format = EFormat::Unknown;
+            uint32  Mip = 0;
+            uint32  ArraySlice = 0;
+            uint32  NumArraySlices = 0;
         } Texture2DArray;
-        struct 
+        struct
         {
             TextureCube* Texture = nullptr;
-            EFormat Format       = EFormat::Unknown;
-            uint32  Mip          = 0;
+            EFormat Format = EFormat::Unknown;
+            uint32  Mip = 0;
         } TextureCube;
         struct
         {
             TextureCubeArray* Texture = nullptr;
-            EFormat Format            = EFormat::Unknown;
-            uint32  Mip               = 0;
-            uint32  ArraySlice        = 0;
-            uint32  NumArraySlices    = 0;
+            EFormat Format = EFormat::Unknown;
+            uint32  Mip = 0;
+            uint32  ArraySlice = 0;
+            uint32  NumArraySlices = 0;
         } TextureCubeArray;
-        struct 
+        struct
         {
-            Texture3D* Texture     = nullptr;
-            EFormat Format         = EFormat::Unknown;
-            uint32  Mip            = 0;
-            uint32  DepthSlice     = 0;
+            Texture3D* Texture = nullptr;
+            EFormat Format = EFormat::Unknown;
+            uint32  Mip = 0;
+            uint32  DepthSlice = 0;
             uint32  NumDepthSlices = 0;
         } Texture3D;
-        struct 
+        struct
         {
             VertexBuffer* Buffer = nullptr;
-            uint32 FirstVertex   = 0;
-            uint32 NumVertices   = 0;
+            uint32 FirstVertex = 0;
+            uint32 NumVertices = 0;
         } VertexBuffer;
-        struct 
+        struct
         {
             IndexBuffer* Buffer = nullptr;
-            uint32 FirstIndex   = 0;
-            uint32 NumIndices   = 0;
+            uint32 FirstIndex = 0;
+            uint32 NumIndices = 0;
         } IndexBuffer;
-        struct 
+        struct
         {
             StructuredBuffer* Buffer = nullptr;
-            uint32 FirstElement      = 0;
-            uint32 NumElements       = 0;
+            uint32 FirstElement = 0;
+            uint32 NumElements = 0;
         } StructuredBuffer;
     };
 };
@@ -197,15 +197,15 @@ struct RenderTargetViewCreateInfo
     // TODO: Add support for texelbuffers?
     enum class EType
     {
-        Texture2D        = 1,
-        Texture2DArray   = 2,
-        TextureCube      = 3,
+        Texture2D = 1,
+        Texture2DArray = 2,
+        TextureCube = 3,
         TextureCubeArray = 4,
-        Texture3D        = 5,
+        Texture3D = 5,
     };
 
-    RenderTargetViewCreateInfo(EType InType)
-        : Type(InType)
+    RenderTargetViewCreateInfo( EType InType )
+        : Type( InType )
     {
     }
 
@@ -213,36 +213,36 @@ struct RenderTargetViewCreateInfo
     EFormat Format = EFormat::Unknown;
     union
     {
-        struct 
+        struct
         {
             Texture2D* Texture = nullptr;
-            uint32 Mip         = 0;
+            uint32 Mip = 0;
         } Texture2D;
-        struct 
+        struct
         {
             Texture2DArray* Texture = nullptr;
-            uint32 Mip              = 0;
-            uint32 ArraySlice       = 0;
-            uint32 NumArraySlices   = 0;
+            uint32 Mip = 0;
+            uint32 ArraySlice = 0;
+            uint32 NumArraySlices = 0;
         } Texture2DArray;
-        struct 
+        struct
         {
             TextureCube* Texture = nullptr;
-            ECubeFace CubeFace   = ECubeFace::PosX;
-            uint32    Mip        = 0;
+            ECubeFace CubeFace = ECubeFace::PosX;
+            uint32    Mip = 0;
         } TextureCube;
-        struct 
+        struct
         {
             TextureCubeArray* Texture = nullptr;
-            ECubeFace CubeFace        = ECubeFace::PosX;
-            uint32    Mip             = 0;
-            uint32    ArraySlice      = 0;
+            ECubeFace CubeFace = ECubeFace::PosX;
+            uint32    Mip = 0;
+            uint32    ArraySlice = 0;
         } TextureCubeArray;
-        struct 
+        struct
         {
-            Texture3D* Texture    = nullptr;
-            uint32 Mip            = 0;
-            uint32 DepthSlice     = 0;
+            Texture3D* Texture = nullptr;
+            uint32 Mip = 0;
+            uint32 DepthSlice = 0;
             uint32 NumDepthSlices = 0;
         } Texture3D;
     };
@@ -252,14 +252,14 @@ struct DepthStencilViewCreateInfo
 {
     enum class EType
     {
-        Texture2D        = 1,
-        Texture2DArray   = 2,
-        TextureCube      = 3,
+        Texture2D = 1,
+        Texture2DArray = 2,
+        TextureCube = 3,
         TextureCubeArray = 4,
     };
 
-    DepthStencilViewCreateInfo(EType InType)
-        : Type(InType)
+    DepthStencilViewCreateInfo( EType InType )
+        : Type( InType )
     {
     }
 
@@ -270,28 +270,28 @@ struct DepthStencilViewCreateInfo
         struct
         {
             Texture2D* Texture = nullptr;
-            uint32 Mip         = 0;
+            uint32 Mip = 0;
         } Texture2D;
         struct
         {
             Texture2DArray* Texture = nullptr;
-            uint32 Mip              = 0;
-            uint32 ArraySlice       = 0;
-            uint32 NumArraySlices   = 0;
+            uint32 Mip = 0;
+            uint32 ArraySlice = 0;
+            uint32 NumArraySlices = 0;
         } Texture2DArray;
         struct
         {
             TextureCube* Texture = nullptr;
-            ECubeFace CubeFace   = ECubeFace::PosX;
-            uint32    Mip        = 0;
+            ECubeFace CubeFace = ECubeFace::PosX;
+            uint32    Mip = 0;
         } TextureCube;
 
         struct
         {
             TextureCubeArray* Texture = nullptr;
-            ECubeFace CubeFace        = ECubeFace::PosX;
-            uint32    Mip             = 0;
-            uint32    ArraySlice      = 0;
+            ECubeFace CubeFace = ECubeFace::PosX;
+            uint32    Mip = 0;
+            uint32    ArraySlice = 0;
         } TextureCubeArray;
     };
 };

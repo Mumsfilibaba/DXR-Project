@@ -16,17 +16,17 @@ void FrameResources::Release()
     IntegrationLUTSampler.Reset();
 
     Skybox.Reset();
-    
+
     FXAASampler.Reset();
 
     SSAOBuffer.Reset();
     FinalTarget.Reset();
 
-    for (uint32 i = 0; i < 5; i++)
+    for ( uint32 i = 0; i < 5; i++ )
     {
         GBuffer[i].Reset();
     }
-    
+
     ReducedDepthBuffer[0].Reset();
     ReducedDepthBuffer[1].Reset();
 

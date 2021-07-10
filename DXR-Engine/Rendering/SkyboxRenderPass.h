@@ -10,12 +10,12 @@
 class SkyboxRenderPass final
 {
 public:
-    SkyboxRenderPass()  = default;
+    SkyboxRenderPass() = default;
     ~SkyboxRenderPass() = default;
 
-    bool Init(FrameResources& FrameResources);
+    bool Init( FrameResources& FrameResources );
 
-    void Render(CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene);
+    void Render( CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene );
 
     void Release();
 

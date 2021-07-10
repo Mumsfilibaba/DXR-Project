@@ -8,19 +8,19 @@ bool InputManager::Init()
 {
     InitKeyTable();
 
-    GEngine.OnKeyPressedEvent.AddObject(this, &InputManager::OnKeyPressed);
-    GEngine.OnKeyReleasedEvent.AddObject(this, &InputManager::OnKeyReleased);
-    GEngine.OnWindowFocusChangedEvent.AddObject(this, &InputManager::OnWindowFocusChanged);
+    GEngine.OnKeyPressedEvent.AddObject( this, &InputManager::OnKeyPressed );
+    GEngine.OnKeyReleasedEvent.AddObject( this, &InputManager::OnKeyReleased );
+    GEngine.OnWindowFocusChangedEvent.AddObject( this, &InputManager::OnWindowFocusChanged );
 
     return true;
 }
 
-bool InputManager::IsKeyUp(EKey KeyCode)
+bool InputManager::IsKeyUp( EKey KeyCode )
 {
     return !KeyStates[KeyCode];
 }
 
-bool InputManager::IsKeyDown(EKey KeyCode)
+bool InputManager::IsKeyDown( EKey KeyCode )
 {
     return KeyStates[KeyCode];
 }
@@ -30,21 +30,21 @@ InputManager& InputManager::Get()
     return GInputManager;
 }
 
-EKey InputManager::ConvertFromScanCode(uint32 ScanCode)
+EKey InputManager::ConvertFromScanCode( uint32 ScanCode )
 {
     return ScanCodeTable[ScanCode];
 }
 
-uint32 InputManager::ConvertToScanCode(EKey KeyCode)
+uint32 InputManager::ConvertToScanCode( EKey KeyCode )
 {
     return KeyTable[KeyCode];
 }
 
 void InputManager::InitKeyTable()
 {
-    Memory::Memzero(KeyStates.Data(), KeyStates.SizeInBytes());
-    Memory::Memzero(ScanCodeTable.Data(), ScanCodeTable.SizeInBytes());
-    Memory::Memzero(KeyTable.Data(), KeyTable.SizeInBytes());
+    Memory::Memzero( KeyStates.Data(), KeyStates.SizeInBytes() );
+    Memory::Memzero( ScanCodeTable.Data(), ScanCodeTable.SizeInBytes() );
+    Memory::Memzero( KeyTable.Data(), KeyTable.SizeInBytes() );
 
     ScanCodeTable[0x00B] = EKey::Key_0;
     ScanCodeTable[0x002] = EKey::Key_1;
@@ -169,34 +169,34 @@ void InputManager::InitKeyTable()
     ScanCodeTable[0x137] = EKey::Key_PrintScreen;
     ScanCodeTable[0x146] = EKey::Key_Pause;
 
-    for (uint16 Index = 0; Index < 512; Index++)
+    for ( uint16 Index = 0; Index < 512; Index++ )
     {
-        if (ScanCodeTable[Index] != EKey::Key_Unknown)
+        if ( ScanCodeTable[Index] != EKey::Key_Unknown )
         {
             KeyTable[ScanCodeTable[Index]] = Index;
         }
     }
 }
 
-void InputManager::OnKeyPressed(const KeyPressedEvent& Event)
+void InputManager::OnKeyPressed( const KeyPressedEvent& Event )
 {
     // TODO: Maybe a better solution that this?
     ImGuiIO& IO = ImGui::GetIO();
-    if (!IO.WantCaptureKeyboard)
+    if ( !IO.WantCaptureKeyboard )
     {
         KeyStates[Event.Key] = true;
     }
 }
 
-void InputManager::OnKeyReleased(const KeyReleasedEvent& Event)
+void InputManager::OnKeyReleased( const KeyReleasedEvent& Event )
 {
     KeyStates[Event.Key] = false;
 }
 
-void InputManager::OnWindowFocusChanged(const WindowFocusChangedEvent& Event)
+void InputManager::OnWindowFocusChanged( const WindowFocusChangedEvent& Event )
 {
-    if (!Event.HasFocus)
+    if ( !Event.HasFocus )
     {
-        KeyStates.Fill(false);
+        KeyStates.Fill( false );
     }
 }
