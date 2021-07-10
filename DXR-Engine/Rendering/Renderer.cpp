@@ -535,6 +535,12 @@ void Renderer::Tick(const Scene& Scene)
     MainCmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
 
     Resources.DebugTextures.EmplaceBack(
+        MakeSharedRef<ShaderResourceView>(LightSetup.DirectionalShadowMask->GetShaderResourceView()),
+        LightSetup.DirectionalShadowMask,
+        EResourceState::NonPixelShaderResource,
+        EResourceState::NonPixelShaderResource);
+
+    Resources.DebugTextures.EmplaceBack(
         MakeSharedRef<ShaderResourceView>(LightSetup.ShadowMapCascades[0]->GetShaderResourceView()),
         LightSetup.ShadowMapCascades[0],
         EResourceState::NonPixelShaderResource,
@@ -889,7 +895,32 @@ void Renderer::Release()
 
 void Renderer::OnWindowResize(const WindowResizeEvent& Event)
 {
-    ResizeResources(Event.Width, Event.Height);
+    const uint32 Width  = Event.Width;
+    const uint32 Height = Event.Height;
+
+    if (!Resources.MainWindowViewport->Resize(Width, Height))
+    {
+        Debug::DebugBreak();
+        return;
+    }
+
+    if (!DeferredRenderer.ResizeResources(Resources))
+    {
+        Debug::DebugBreak();
+        return;
+    }
+
+    if (!SSAORenderer.ResizeResources(Resources))
+    {
+        Debug::DebugBreak();
+        return;
+    }
+
+    if (!ShadowMapRenderer.ResizeResources(Width, Height, LightSetup))
+    {
+        Debug::DebugBreak();
+        return;
+    }
 }
 
 bool Renderer::InitBoundingBoxDebugPass()
@@ -1310,25 +1341,4 @@ bool Renderer::InitShadingImage()
     }
 
     return true;
-}
-
-void Renderer::ResizeResources(uint32 Width, uint32 Height)
-{
-    if (!Resources.MainWindowViewport->Resize(Width, Height))
-    {
-        Debug::DebugBreak();
-        return;
-    }
-
-    if (!DeferredRenderer.ResizeResources(Resources))
-    {
-        Debug::DebugBreak();
-        return;
-    }
-
-    if (!SSAORenderer.ResizeResources(Resources))
-    {
-        Debug::DebugBreak();
-        return;
-    }
 }

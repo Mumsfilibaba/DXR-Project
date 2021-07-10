@@ -79,7 +79,6 @@ bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
         };
     } PipelineStream;
 
-    // InputLayout
     D3D12_INPUT_LAYOUT_DESC& InputLayoutDesc = PipelineStream.InputLayout;
 
     D3D12InputLayoutState* DxInputLayoutState = static_cast<D3D12InputLayoutState*>(CreateInfo.InputLayoutState);
@@ -213,7 +212,6 @@ bool D3D12GraphicsPipelineState::Init(const GraphicsPipelineStateCreateInfo& Cre
 
     PipelineStream.RootSignature = RootSignature->GetRootSignature();
     
-    // Create PipelineState
     D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
     Memory::Memzero(&PipelineStreamDesc);
 

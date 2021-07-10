@@ -260,10 +260,14 @@ void LightSetup::BeginFrame(CommandList& CmdList, const Scene& Scene)
 
 void LightSetup::Release()
 {
+    DirectionalShadowMask.Reset();
+
     PointLightsPosRadBuffer.Reset();
     PointLightsBuffer.Reset();
+
     ShadowCastingPointLightsBuffer.Reset();
     ShadowCastingPointLightsPosRadBuffer.Reset();
+    
     DirectionalLightsBuffer.Reset();
 
     PointLightShadowMaps.Reset();

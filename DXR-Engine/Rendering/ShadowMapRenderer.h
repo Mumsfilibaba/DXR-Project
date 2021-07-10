@@ -46,6 +46,9 @@ struct SPerCascade
 class ShadowMapRenderer
 {
 public:
+    ShadowMapRenderer()  = default;
+    ~ShadowMapRenderer() = default;
+
     bool Init(LightSetup& LightSetup, FrameResources& Resources);
 
     void Release();
@@ -53,14 +56,21 @@ public:
     void RenderPointLightShadows(CommandList& CmdList, const LightSetup& LightSetup, const Scene& Scene);
     void RenderDirectionalLightShadows(CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources, const Scene& Scene);
 
+    bool ResizeResources(uint32 Width, uint32 Height, LightSetup& LightSetup);
+
 private:
-    bool CreateShadowMaps(LightSetup& FrameResources);
+    bool CreateShadowMask(uint32 Width, uint32 Height, LightSetup& LightSetup);
+
+    bool CreateShadowMaps(LightSetup& LightSetup, FrameResources& FrameResources);
 
     TRef<ConstantBuffer> PerShadowMapBuffer;
 
-    TRef<GraphicsPipelineState> DirLightPipelineState;
-    TRef<VertexShader>          DirLightShader;
+    TRef<GraphicsPipelineState> DirectionalLightPSO;
+    TRef<VertexShader>          DirectionalLightShader;
     
+    TRef<ComputePipelineState> DirectionalShadowMaskPSO;
+    TRef<ComputeShader>        DirectionalShadowMaskShader;
+
     TRef<GraphicsPipelineState> PointLightPipelineState;
     TRef<VertexShader>          PointLightVertexShader;
     TRef<PixelShader>           PointLightPixelShader;

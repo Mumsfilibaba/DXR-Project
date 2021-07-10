@@ -83,7 +83,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
     for (uint i = 0U; i < SAMPLE_COUNT; i++)
     {
         // Generates a sample vector that's biased towards the preferred alignment direction (importance sampling).
-        float2 Xi = Hammersley(i, SAMPLE_COUNT);
+        float2 Xi = Hammersley2(i, SAMPLE_COUNT);
         float3 H  = ImportanceSampleGGX(Xi, FinalRoughness, Normal);
         float3 L  = normalize(2.0 * dot(V, H) * H - V);
 

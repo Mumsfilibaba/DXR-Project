@@ -16,11 +16,10 @@
 
 bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResources)
 {
-    if (!CreateShadowMaps(LightSetup))
+    if (!CreateShadowMaps(LightSetup, FrameResources))
     {
         return false;
     }
-
 
     TArray<uint8> ShaderCode;
     
@@ -160,15 +159,15 @@ bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
             return false;
         }
 
-        DirLightShader = CreateVertexShader(ShaderCode);
-        if (!DirLightShader)
+        DirectionalLightShader = CreateVertexShader(ShaderCode);
+        if (!DirectionalLightShader)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            DirLightShader->SetName("ShadowMap VertexShader");
+            DirectionalLightShader->SetName("ShadowMap VertexShader");
         }
 
         DepthStencilStateCreateInfo DepthStencilStateInfo;
@@ -223,20 +222,20 @@ bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         PipelineStateInfo.SampleCount                        = 1;
         PipelineStateInfo.SampleQuality                      = 0;
         PipelineStateInfo.SampleMask                         = 0xffffffff;
-        PipelineStateInfo.ShaderState.VertexShader           = DirLightShader.Get();
+        PipelineStateInfo.ShaderState.VertexShader           = DirectionalLightShader.Get();
         PipelineStateInfo.ShaderState.PixelShader            = nullptr;
         PipelineStateInfo.PipelineFormats.NumRenderTargets   = 0;
         PipelineStateInfo.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
 
-        DirLightPipelineState = CreateGraphicsPipelineState(PipelineStateInfo);
-        if (!DirLightPipelineState)
+        DirectionalLightPSO = CreateGraphicsPipelineState(PipelineStateInfo);
+        if (!DirectionalLightPSO)
         {
             Debug::DebugBreak();
             return false;
         }
         else
         {
-            DirLightPipelineState->SetName("ShadowMap PipelineState");
+            DirectionalLightPSO->SetName("ShadowMap PipelineState");
         }
     }
 
@@ -354,17 +353,51 @@ bool ShadowMapRenderer::Init(LightSetup& LightSetup, FrameResources& FrameResour
         }
     }
 
+    // Directional Light ShadowMask
+    {
+        if (!ShaderCompiler::CompileFromFile("../DXR-Engine/Shaders/DirectionalShadowMaskGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+
+        DirectionalShadowMaskShader = CreateComputeShader(ShaderCode);
+        if (!DirectionalShadowMaskShader)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            DirectionalShadowMaskShader->SetName("Directional ShadowMask ComputeShader");
+        }
+
+        ComputePipelineStateCreateInfo MaskPSO;
+        MaskPSO.Shader = DirectionalShadowMaskShader.Get();
+
+        DirectionalShadowMaskPSO = CreateComputePipelineState(MaskPSO);
+        if (!DirectionalShadowMaskPSO)
+        {
+            Debug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            DirectionalShadowMaskPSO->SetName("Directional ShadowMask PSO");
+        }
+    }
+
     return true;
 }
 
 void ShadowMapRenderer::RenderPointLightShadows(CommandList& CmdList, const LightSetup& LightSetup, const Scene& Scene)
 {
-    PointLightFrame++;
-    if (PointLightFrame > 6)
-    {
-        UpdatePointLight = true;
-        PointLightFrame = 0;
-    }
+    //PointLightFrame++;
+    //if (PointLightFrame > 6)
+    //{
+    //    UpdatePointLight = true;
+    //    PointLightFrame = 0;
+    //}
 
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
@@ -504,80 +537,124 @@ void ShadowMapRenderer::RenderDirectionalLightShadows(CommandList& CmdList, cons
     }
 
     // Render directional shadows
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render DirectionalLight ShadowMaps");
-
-    TRACE_SCOPE("Render DirectionalLight ShadowMaps");
-
-    GPU_TRACE_SCOPE(CmdList, "DirectionalLight ShadowMaps");
-
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
-
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-    CmdList.SetGraphicsPipelineState(DirLightPipelineState.Get());
-
-    // PerObject Structs
-    struct SShadowPerObject
     {
-        XMFLOAT4X4 Matrix;
-    } ShadowPerObjectBuffer;
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Render DirectionalLight ShadowMaps");
 
-    SPerCascade PerCascadeData;
-    for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
-    {
-        DepthStencilView* CascadeDSV = LightSetup.ShadowMapCascades[i]->GetDepthStencilView();
-        CmdList.ClearDepthStencilView(CascadeDSV, DepthStencilF(1.0f, 0));
+        TRACE_SCOPE("Render DirectionalLight ShadowMaps");
 
-        CmdList.SetRenderTargets(nullptr, 0, CascadeDSV);
+        GPU_TRACE_SCOPE(CmdList, "DirectionalLight ShadowMaps");
 
-        const uint16 CascadeSize = LightSetup.CascadeSize;
-        CmdList.SetViewport(static_cast<float>(CascadeSize), static_cast<float>(CascadeSize), 0.0f, 1.0f, 0.0f, 0.0f);
-        CmdList.SetScissorRect(CascadeSize, CascadeSize, 0, 0);
+        CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
+        CmdList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
+        CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
+        CmdList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
 
-        PerCascadeData.CascadeIndex = i;
+        CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+        CmdList.SetGraphicsPipelineState(DirectionalLightPSO.Get());
 
-        CmdList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
-
-        CmdList.UpdateBuffer(PerCascadeBuffer.Get(), 0, sizeof(SPerCascade), &PerCascadeData);
-
-        CmdList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
-
-        CmdList.SetConstantBuffer(DirLightShader.Get(), PerCascadeBuffer.Get(), 0);
-
-        CmdList.SetShaderResourceView(DirLightShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
-
-        // Draw all objects to depthbuffer
-        for (const MeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+        // PerObject Structs
+        struct SShadowPerObject
         {
-            CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-            CmdList.SetIndexBuffer(Command.IndexBuffer);
+            XMFLOAT4X4 Matrix;
+        } ShadowPerObjectBuffer;
 
-            ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+        SPerCascade PerCascadeData;
+        for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
+        {
+            DepthStencilView* CascadeDSV = LightSetup.ShadowMapCascades[i]->GetDepthStencilView();
+            CmdList.ClearDepthStencilView(CascadeDSV, DepthStencilF(1.0f, 0));
 
-            CmdList.Set32BitShaderConstants(DirLightShader.Get(), &ShadowPerObjectBuffer, 16);
+            CmdList.SetRenderTargets(nullptr, 0, CascadeDSV);
 
-            CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+            const uint16 CascadeSize = LightSetup.CascadeSize;
+            CmdList.SetViewport(static_cast<float>(CascadeSize), static_cast<float>(CascadeSize), 0.0f, 1.0f, 0.0f, 0.0f);
+            CmdList.SetScissorRect(CascadeSize, CascadeSize, 0, 0);
+
+            PerCascadeData.CascadeIndex = i;
+
+            CmdList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
+
+            CmdList.UpdateBuffer(PerCascadeBuffer.Get(), 0, sizeof(SPerCascade), &PerCascadeData);
+
+            CmdList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
+
+            CmdList.SetConstantBuffer(DirectionalLightShader.Get(), PerCascadeBuffer.Get(), 0);
+
+            CmdList.SetShaderResourceView(DirectionalLightShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
+
+            // Draw all objects to depthbuffer
+            for (const MeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+            {
+                CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
+                CmdList.SetIndexBuffer(Command.IndexBuffer);
+
+                ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+
+                CmdList.Set32BitShaderConstants(DirectionalLightShader.Get(), &ShadowPerObjectBuffer, 16);
+
+                CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+            }
         }
+
+        CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+        CmdList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+        CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+        CmdList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+
+        CmdList.TransitionBuffer(LightSetup.CascadeMatrixBuffer.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
+    
+        INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
     }
 
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
+    // Generate Directional Shadow Mask
+    {
+        GPU_TRACE_SCOPE(CmdList, "DirectionalLight Shadow Mask");
 
-    CmdList.TransitionBuffer(LightSetup.CascadeMatrixBuffer.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
-    
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Render DirectionalLight ShadowMaps");
+        CmdList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
+
+        CmdList.SetComputePipelineState(DirectionalShadowMaskPSO.Get());
+
+        CmdList.SetConstantBuffer(DirectionalShadowMaskShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+        CmdList.SetConstantBuffer(DirectionalShadowMaskShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 1);
+
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.CascadeSplitsBufferSRV.Get(), 1);
+
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 2);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
+
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 4);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[1]->GetShaderResourceView(), 5);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[2]->GetShaderResourceView(), 6);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[3]->GetShaderResourceView(), 7);
+
+        CmdList.SetUnorderedAccessView(DirectionalShadowMaskShader.Get(), LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), 0);
+
+        CmdList.SetSamplerState(DirectionalShadowMaskShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 0);
+
+        const XMUINT3 ThreadGroupXYZ = DirectionalShadowMaskShader->GetThreadGroupXYZ();
+        const uint32 ThreadsX = Math::DivideByMultiple(LightSetup.DirectionalShadowMask->GetWidth(), ThreadGroupXYZ.x);
+        const uint32 ThreadsY = Math::DivideByMultiple(LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y);
+        CmdList.Dispatch(ThreadsX, ThreadsY, 1);
+
+        CmdList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
+    }
+}
+
+bool ShadowMapRenderer::ResizeResources(uint32 Width, uint32 Height, LightSetup& LightSetup)
+{
+    return CreateShadowMask(Width, Height, LightSetup);
 }
 
 void ShadowMapRenderer::Release()
 {
     PerShadowMapBuffer.Reset();
     
-    DirLightPipelineState.Reset();
-    DirLightShader.Reset();
+    DirectionalShadowMaskPSO.Reset();
+    DirectionalShadowMaskShader.Reset();
+
+    DirectionalLightPSO.Reset();
+    DirectionalLightShader.Reset();
 
     PointLightPipelineState.Reset();
     PointLightVertexShader.Reset();
@@ -591,8 +668,35 @@ void ShadowMapRenderer::Release()
     CascadeGenerationData.Reset();
 }
 
-bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup)
+bool ShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, LightSetup& LightSetup)
 {
+    LightSetup.DirectionalShadowMask = CreateTexture2D(
+        EFormat::R16_Float,
+        Width, Height, 1, 1, ETextureFlags::TextureFlags_RWTexture,
+        EResourceState::Common,
+        nullptr);
+    if (LightSetup.DirectionalShadowMask)
+    {
+        LightSetup.DirectionalShadowMask->SetName("Directional Shadow Mask");
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool ShadowMapRenderer::CreateShadowMaps(LightSetup& LightSetup, FrameResources& FrameResources)
+{
+    const uint16 Width  = FrameResources.MainWindowViewport->GetWidth();
+    const uint16 Height = FrameResources.MainWindowViewport->GetHeight();
+
+    if (!CreateShadowMask(Width, Height, LightSetup))
+    {
+        return false;
+    }
+
     LightSetup.PointLightShadowMaps = CreateTextureCubeArray(
         LightSetup.ShadowMapFormat, 
         LightSetup.PointLightShadowSize, 

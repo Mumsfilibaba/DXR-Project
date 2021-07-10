@@ -565,6 +565,7 @@ void DeferredRenderer::RenderPrePass(CommandList& CmdList, FrameResources& Frame
         // Perform the first reduction
         CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
         CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
 
         CmdList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
 
@@ -600,7 +601,6 @@ void DeferredRenderer::RenderPrePass(CommandList& CmdList, FrameResources& Frame
         ThreadsY = Math::DivideByMultiple(ThreadsY, 16);
         CmdList.Dispatch(ThreadsX, ThreadsY, 1);
 
-        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
         CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
     }
 
@@ -701,15 +701,12 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
     CmdList.SetShaderResourceView(LightPassShader, LightSetup.IrradianceMap->GetShaderResourceView(), 4);
     CmdList.SetShaderResourceView(LightPassShader, LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 5);
     CmdList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 6);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 7);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.ShadowMapCascades[1]->GetShaderResourceView(), 8);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.ShadowMapCascades[2]->GetShaderResourceView(), 9);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.ShadowMapCascades[3]->GetShaderResourceView(), 10);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 11);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 12);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirectionalShadowMask->GetShaderResourceView(), 7);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 8);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 9);
 
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeMatrixBufferSRV.Get(), 13);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeSplitsBufferSRV.Get(), 14);
+    //CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeMatrixBufferSRV.Get(), 13);
+    //CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeSplitsBufferSRV.Get(), 14);
 
     CmdList.SetConstantBuffer(LightPassShader, FrameResources.CameraBuffer.Get(), 0);
     CmdList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsBuffer.Get(), 1);
@@ -721,7 +718,7 @@ void DeferredRenderer::RenderDeferredTiledLightPass(CommandList& CmdList, const 
     CmdList.SetSamplerState(LightPassShader, FrameResources.IntegrationLUTSampler.Get(), 0);
     CmdList.SetSamplerState(LightPassShader, FrameResources.IrradianceSampler.Get(), 1);
     CmdList.SetSamplerState(LightPassShader, FrameResources.PointLightShadowSampler.Get(), 2);
-    CmdList.SetSamplerState(LightPassShader, FrameResources.DirectionalLightShadowSampler.Get(), 3);
+    //CmdList.SetSamplerState(LightPassShader, FrameResources.DirectionalLightShadowSampler.Get(), 3);
 
     UnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
     CmdList.SetUnorderedAccessView(LightPassShader, FinalTargetUAV, 0);
@@ -832,7 +829,7 @@ bool DeferredRenderer::CreateGBuffer(FrameResources& FrameResources)
         FrameResources.ReducedDepthBuffer[i] = CreateTexture2D(
             EFormat::R32G32_Float,
             ReducedWidth, ReducedHeight, 1, 1, TextureFlags_RWTexture,
-            EResourceState::UnorderedAccess,
+            EResourceState::NonPixelShaderResource,
             nullptr);
         if (FrameResources.ReducedDepthBuffer[i])
         {
