@@ -357,13 +357,13 @@ FORCEINLINE CIntPoint3& CIntPoint3::operator/=( int RHS ) noexcept
 
 FORCEINLINE int& CIntPoint3::operator[]( int Index ) noexcept
 {
-    ASSERT( Index < 3 );
+    Assert( Index < 3 );
     return reinterpret_cast<int*>(this)[Index];
 }
 
 FORCEINLINE int CIntPoint3::operator[]( int Index ) const noexcept
 {
-    ASSERT( Index < 3 );
+    Assert( Index < 3 );
     return reinterpret_cast<const int*>(this)[Index];
 }
 

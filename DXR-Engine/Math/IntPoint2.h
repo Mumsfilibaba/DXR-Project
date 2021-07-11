@@ -359,13 +359,13 @@ FORCEINLINE bool CIntPoint2::operator!=( const CIntPoint2& Other ) const noexcep
 
 FORCEINLINE int& CIntPoint2::operator[]( int Index ) noexcept
 {
-    ASSERT( Index < 2 );
+    Assert( Index < 2 );
     return reinterpret_cast<int*>(this)[Index];
 }
 
 FORCEINLINE int CIntPoint2::operator[]( int Index ) const noexcept
 {
-    ASSERT( Index < 2 );
+    Assert( Index < 2 );
     return reinterpret_cast<const int*>(this)[Index];
 }
 

@@ -281,8 +281,14 @@ bool D3D12BaseComputeShader::Init()
         ContainsRootSignature = true;
     }
 
-    Reflection->GetThreadGroupSize( &ThreadGroupXYZ.x, &ThreadGroupXYZ.y, &ThreadGroupXYZ.z );
-
+    UINT x;
+    UINT y;
+    UINT z;
+    Reflection->GetThreadGroupSize( &x, &y, &z );
+    
+    ThreadGroupXYZ.x = x;
+    ThreadGroupXYZ.y = y;
+    ThreadGroupXYZ.z = z;
     return true;
 }
 

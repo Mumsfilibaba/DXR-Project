@@ -433,20 +433,20 @@ void Sandbox::Tick( Timestamp DeltaTime )
 
     if ( InputManager::Get().IsKeyDown( EKey::Key_Right ) )
     {
-        CurrentCamera->Rotate( 0.0f, XMConvertToRadians( RotationSpeed * Delta ), 0.0f );
+        CurrentCamera->Rotate( 0.0f, NMath::ToRadians( RotationSpeed * Delta ), 0.0f );
     }
     else if ( InputManager::Get().IsKeyDown( EKey::Key_Left ) )
     {
-        CurrentCamera->Rotate( 0.0f, XMConvertToRadians( -RotationSpeed * Delta ), 0.0f );
+        CurrentCamera->Rotate( 0.0f, NMath::ToRadians( -RotationSpeed * Delta ), 0.0f );
     }
 
     if ( InputManager::Get().IsKeyDown( EKey::Key_Up ) )
     {
-        CurrentCamera->Rotate( XMConvertToRadians( -RotationSpeed * Delta ), 0.0f, 0.0f );
+        CurrentCamera->Rotate( NMath::ToRadians( -RotationSpeed * Delta ), 0.0f, 0.0f );
     }
     else if ( InputManager::Get().IsKeyDown( EKey::Key_Down ) )
     {
-        CurrentCamera->Rotate( XMConvertToRadians( RotationSpeed * Delta ), 0.0f, 0.0f );
+        CurrentCamera->Rotate( NMath::ToRadians( RotationSpeed * Delta ), 0.0f, 0.0f );
     }
 
     float Acceleration = 15.0f;
@@ -455,7 +455,7 @@ void Sandbox::Tick( Timestamp DeltaTime )
         Acceleration = Acceleration * 3;
     }
 
-    XMFLOAT3 CameraAcceleration = XMFLOAT3( 0.0f, 0.0f, 0.0f );
+    CVector3 CameraAcceleration;
     if ( InputManager::Get().IsKeyDown( EKey::Key_W ) )
     {
         CameraAcceleration.z = Acceleration;
@@ -487,7 +487,7 @@ void Sandbox::Tick( Timestamp DeltaTime )
     CameraSpeed = CameraSpeed + (CameraSpeed * Deacceleration) * Delta;
     CameraSpeed = CameraSpeed + (CameraAcceleration * Delta);
 
-    XMFLOAT3 Speed = CameraSpeed * Delta;
+    CVector3 Speed = CameraSpeed * Delta;
     CurrentCamera->Move( Speed.x, Speed.y, Speed.z );
     CurrentCamera->UpdateMatrices();
 }

@@ -531,13 +531,13 @@ FORCEINLINE void CMatrix2::SetIdentity() noexcept
 
 FORCEINLINE CVector2 CMatrix2::GetRow( int Row ) const noexcept
 {
-    ASSERT( Row < 2 );
+    Assert( Row < 2 );
     return CVector2( f[Row] );
 }
 
 FORCEINLINE CVector2 CMatrix2::GetColumn( int Column ) const noexcept
 {
-    ASSERT( Column < 2 );
+    Assert( Column < 2 );
     return CVector2( f[0][Column], f[1][Column] );
 }
 

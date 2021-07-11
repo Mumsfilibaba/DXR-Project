@@ -16,23 +16,23 @@ struct SCascadeGenerationInfo
 
 struct SCascadeMatrices
 {
-    XMFLOAT4X4 ViewProjection;
-    XMFLOAT4X4 View;
+    CMatrix4 ViewProjection;
+    CMatrix4 View;
 };
 
 struct SCascadeSplits
 {
-    XMFLOAT3 MinExtent;
+    CVector3 MinExtent;
     float Split;
-    XMFLOAT3 MaxExtent;
+    CVector3 MaxExtent;
     float FarPlane;
 };
 
 struct SPerShadowMap
 {
-    XMFLOAT4X4 Matrix;
-    XMFLOAT3   Position;
-    float      FarPlane;
+    CMatrix4 Matrix;
+    CVector3 Position;
+    float    FarPlane;
 };
 
 struct SPerCascade

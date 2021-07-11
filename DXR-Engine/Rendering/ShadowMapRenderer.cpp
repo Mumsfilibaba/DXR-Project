@@ -434,8 +434,8 @@ void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const Lig
                 CmdList.SetRenderTargets( nullptr, 0, Cube[Face].Get() );
 
                 auto& Data = LightSetup.PointLightShadowMapsGenerationData[i];
-                PerShadowMapData.Matrix   = XMFLOAT4X4(&Data.Matrix[Face].m00);
-                PerShadowMapData.Position = XMFLOAT3(&Data.Position.x);
+                PerShadowMapData.Matrix   = Data.Matrix[Face];
+                PerShadowMapData.Position = Data.Position;
                 PerShadowMapData.FarPlane = Data.FarPlane;
 
                 CmdList.TransitionBuffer( PerShadowMapBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest );
@@ -633,7 +633,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows( CommandList& CmdList, con
 
         CmdList.SetSamplerState( DirectionalShadowMaskShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 0 );
 
-        const XMUINT3 ThreadGroupXYZ = DirectionalShadowMaskShader->GetThreadGroupXYZ();
+        const CIntPoint3 ThreadGroupXYZ = DirectionalShadowMaskShader->GetThreadGroupXYZ();
         const uint32 ThreadsX = NMath::DivideByMultiple( LightSetup.DirectionalShadowMask->GetWidth(), ThreadGroupXYZ.x );
         const uint32 ThreadsY = NMath::DivideByMultiple( LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y );
         CmdList.Dispatch( ThreadsX, ThreadsY, 1 );

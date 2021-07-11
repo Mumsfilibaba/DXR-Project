@@ -82,7 +82,7 @@ bool Frustum::CheckAABB( const AABB& Box )
     for ( int32 Index = 0; Index < 6; Index++ )
     {
         const CPlane& Plane = Planes[Index];
-        if ( Plane.PlaneDotCoord(Coords[0]) >= 0.0f )
+        if ( Plane.PlaneDotCoord( Coords[0] ) >= 0.0f )
         {
             continue;
         }

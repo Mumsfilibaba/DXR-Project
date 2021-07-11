@@ -36,7 +36,7 @@ TConsoleVariable<bool> GEnableVariableRateShading( false );
 TConsoleVariable<bool> GPrePassEnabled( true );
 TConsoleVariable<bool> GDrawAABBs( false );
 TConsoleVariable<bool> GVSyncEnabled( false );
-TConsoleVariable<bool> GFrustumCullEnabled( false );
+TConsoleVariable<bool> GFrustumCullEnabled( true );
 TConsoleVariable<bool> GRayTracingEnabled( true );
 
 struct SCameraBufferDesc

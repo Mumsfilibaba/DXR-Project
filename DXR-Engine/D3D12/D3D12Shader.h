@@ -249,13 +249,13 @@ public:
 
     bool Init();
 
-    virtual XMUINT3 GetThreadGroupXYZ() const override
+    virtual CIntPoint3 GetThreadGroupXYZ() const override
     {
         return ThreadGroupXYZ;
     }
 
 protected:
-    XMUINT3 ThreadGroupXYZ;
+    CIntPoint3 ThreadGroupXYZ;
 };
 
 template<typename TBaseShader>

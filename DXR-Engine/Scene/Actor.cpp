@@ -93,7 +93,7 @@ void Transform::CalculateMatrix()
     Matrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
     Matrix = Matrix.Transpose();
 
-    TinyMatrix = XMFLOAT3X4(
+    TinyMatrix = DirectX::XMFLOAT3X4(
         Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03,
         Matrix.m10, Matrix.m11, Matrix.m12, Matrix.m13,
         Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23);

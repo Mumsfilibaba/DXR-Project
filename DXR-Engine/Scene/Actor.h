@@ -5,6 +5,8 @@
 #include "Math/Vector3.h"
 #include "Math/Matrix4.h"
 
+#include <DirectXMath.h>
+
 class Actor;
 
 // Component BaseClass
@@ -69,7 +71,7 @@ public:
         return MatrixInv;
     }
 
-    const XMFLOAT3X4& GetTinyMatrix() const
+    const DirectX::XMFLOAT3X4& GetTinyMatrix() const
     {
         return TinyMatrix;
     }
@@ -79,10 +81,12 @@ private:
 
     CMatrix4 Matrix;
     CMatrix4 MatrixInv;
-    XMFLOAT3X4 TinyMatrix;
-    CVector3   Translation;
-    CVector3   Scale;
-    CVector3   Rotation;
+    
+    DirectX::XMFLOAT3X4 TinyMatrix;
+    
+    CVector3 Translation;
+    CVector3 Scale;
+    CVector3 Rotation;
 };
 
 class Scene;

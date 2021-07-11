@@ -62,16 +62,16 @@ private:
 struct RayTracingGeometryInstance
 {
     TRef<RayTracingGeometry> Instance;
-    uint32     InstanceIndex = 0;
-    uint32     HitGroupIndex = 0;
-    uint32     Flags = RayTracingInstanceFlags_None;
-    uint32     Mask = 0xff;
-    XMFLOAT3X4 Transform;
+    uint32 InstanceIndex = 0;
+    uint32 HitGroupIndex = 0;
+    uint32 Flags = RayTracingInstanceFlags_None;
+    uint32 Mask = 0xff;
+    DirectX::XMFLOAT3X4 Transform;
 };
 
 struct RayPayload
 {
-    XMFLOAT3 Color;
+    CVector3 Color;
     uint32   CurrentDepth;
 };
 
