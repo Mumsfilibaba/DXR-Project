@@ -6,7 +6,7 @@ Application* GApplication;
 
 Application::~Application()
 {
-    SafeDelete( Scene );
+    SafeDelete( CurrentScene );
 }
 
 bool Application::Init()

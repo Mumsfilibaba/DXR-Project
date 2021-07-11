@@ -32,7 +32,7 @@ bool Sandbox::Init()
     // Initialize Scene
     Actor* NewActor = nullptr;
     MeshComponent* NewComponent = nullptr;
-    Scene = Scene::LoadFromFile( "../Assets/Scenes/Sponza/Sponza.obj" );
+    CurrentScene = Scene::LoadFromFile( "../Assets/Scenes/Sponza/Sponza.obj" );
 
     // Create Spheres
     MeshData SphereMeshData = MeshFactory::CreateSphere( 3 );
@@ -107,7 +107,7 @@ bool Sandbox::Init()
             NewActor->SetName( "Sphere[" + std::to_string( SphereIndex ) + "]" );
             SphereIndex++;
 
-            Scene->AddActor( NewActor );
+            CurrentScene->AddActor( NewActor );
 
             NewComponent = DBG_NEW MeshComponent( NewActor );
             NewComponent->Mesh = SphereMesh;
@@ -133,7 +133,7 @@ bool Sandbox::Init()
     MeshData CubeMeshData = MeshFactory::CreateCube();
 
     NewActor = DBG_NEW Actor();
-    Scene->AddActor( NewActor );
+    CurrentScene->AddActor( NewActor );
 
     NewActor->SetName( "Cube" );
     NewActor->GetTransform().SetTranslation( 0.0f, 2.0f, 50.0f );
@@ -217,10 +217,10 @@ bool Sandbox::Init()
     NewActor->AddComponent( NewComponent );
 
     NewActor = DBG_NEW Actor();
-    Scene->AddActor( NewActor );
+    CurrentScene->AddActor( NewActor );
 
     NewActor->SetName( "Plane" );
-    NewActor->GetTransform().SetRotation( 0.0f, 0.0f, NMath::HALF_PI );
+    NewActor->GetTransform().SetRotation( NMath::HALF_PI_F, 0.0f, 0.0f );
     NewActor->GetTransform().SetUniformScale( 50.0f );
     NewActor->GetTransform().SetTranslation( 0.0f, 0.0f, 42.0f );
 
@@ -228,7 +228,7 @@ bool Sandbox::Init()
     MatProperties.Metallic = 0.0f;
     MatProperties.Roughness = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo = XMFLOAT3( 1.0f, 1.0f, 1.0f );
+    MatProperties.Albedo = CVector3( 1.0f );
 
     NewComponent = DBG_NEW MeshComponent( NewActor );
     NewComponent->Mesh = Mesh::Make( MeshFactory::CreatePlane( 10, 10 ) );
@@ -289,7 +289,7 @@ bool Sandbox::Init()
     MatProperties.Metallic = 1.0f;
     MatProperties.Roughness = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo = XMFLOAT3( 1.0f, 1.0f, 1.0f );
+    MatProperties.Albedo = CVector3( 1.0f, 1.0f, 1.0f );
 
     TSharedPtr<Mesh>     StreetLight = Mesh::Make( MeshFactory::CreateFromFile( "../Assets/Models/Street_Light.obj" ) );
     TSharedPtr<CMaterial> StreetLightMat = MakeShared<CMaterial>( MatProperties );
@@ -297,7 +297,7 @@ bool Sandbox::Init()
     for ( uint32 i = 0; i < 4; i++ )
     {
         NewActor = DBG_NEW Actor();
-        Scene->AddActor( NewActor );
+        CurrentScene->AddActor( NewActor );
 
         NewActor->SetName( "Street Light " + std::to_string( i ) );
         NewActor->GetTransform().SetUniformScale( 0.25f );
@@ -319,7 +319,7 @@ bool Sandbox::Init()
     MatProperties.Metallic = 0.0f;
     MatProperties.Roughness = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo = XMFLOAT3( 0.4f, 0.4f, 0.4f );
+    MatProperties.Albedo = CVector3( 0.4f );
 
     TSharedPtr<Mesh>     Pillar = Mesh::Make( MeshFactory::CreateFromFile( "../Assets/Models/Pillar.obj" ) );
     TSharedPtr<CMaterial> PillarMat = MakeShared<CMaterial>( MatProperties );
@@ -327,7 +327,7 @@ bool Sandbox::Init()
     for ( uint32 i = 0; i < 8; i++ )
     {
         NewActor = DBG_NEW Actor();
-        Scene->AddActor( NewActor );
+        CurrentScene->AddActor( NewActor );
 
         NewActor->SetName( "Pillar " + std::to_string( i ) );
         NewActor->GetTransform().SetUniformScale( 0.25f );
@@ -346,7 +346,7 @@ bool Sandbox::Init()
     }
 
     CurrentCamera = DBG_NEW Camera();
-    Scene->AddCamera( CurrentCamera );
+    CurrentScene->AddCamera( CurrentCamera );
 
     // Add PointLight- Source
     const float Intensity = 50.0f;
@@ -359,7 +359,7 @@ bool Sandbox::Init()
     Light0->SetShadowFarPlane( 50.0f );
     Light0->SetIntensity( Intensity );
     Light0->SetShadowCaster( true );
-    Scene->AddLight( Light0 );
+    CurrentScene->AddLight( Light0 );
 
     PointLight* Light1 = DBG_NEW PointLight();
     Light1->SetPosition( -17.5f, 1.0f, 0.0f );
@@ -369,7 +369,7 @@ bool Sandbox::Init()
     Light1->SetShadowFarPlane( 50.0f );
     Light1->SetIntensity( Intensity );
     Light1->SetShadowCaster( true );
-    Scene->AddLight( Light1 );
+    CurrentScene->AddLight( Light1 );
 
     PointLight* Light2 = DBG_NEW PointLight();
     Light2->SetPosition( 16.5f, 11.0f, 0.0f );
@@ -379,7 +379,7 @@ bool Sandbox::Init()
     Light2->SetShadowFarPlane( 50.0f );
     Light2->SetIntensity( Intensity );
     Light2->SetShadowCaster( true );
-    Scene->AddLight( Light2 );
+    CurrentScene->AddLight( Light2 );
 
     PointLight* Light3 = DBG_NEW PointLight();
     Light3->SetPosition( -17.5f, 11.0f, 0.0f );
@@ -389,7 +389,7 @@ bool Sandbox::Init()
     Light3->SetShadowFarPlane( 50.0f );
     Light3->SetIntensity( Intensity );
     Light3->SetShadowCaster( true );
-    Scene->AddLight( Light3 );
+    CurrentScene->AddLight( Light3 );
 
 #if ENABLE_LIGHT_TEST
     // Add multiple lights
@@ -419,7 +419,7 @@ bool Sandbox::Init()
     Light4->SetIntensity( 10.0f );
     Light4->SetRotation( NMath::ToRadians( 35.0f ), NMath::ToRadians( 135.0f ), 0.0f );
     //Light4->SetRotation(0.0f, 0.0f, 0.0f);
-    Scene->AddLight( Light4 );
+    CurrentScene->AddLight( Light4 );
 
     return true;
 }

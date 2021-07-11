@@ -553,7 +553,7 @@ void DeferredRenderer::RenderPrePass( CommandList& CmdList, FrameResources& Fram
 
         struct ReductionConstants
         {
-            XMFLOAT4X4 CamProjection;
+            CMatrix4 CamProjection;
             float NearPlane;
             float FarPlane;
         } ReductionConstants;

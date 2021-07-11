@@ -116,7 +116,7 @@ void EngineLoop::Tick( Timestamp Deltatime )
 
     Profiler::Tick();
 
-    GRenderer.Tick( *GApplication->Scene );
+    GRenderer.Tick( *GApplication->CurrentScene );
 }
 
 void EngineLoop::Run()

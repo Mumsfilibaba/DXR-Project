@@ -6,7 +6,7 @@
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/CommandList.h"
 
-#include "Scene/AABB.h"
+#include "Math/AABB.h"
 
 class Mesh
 {

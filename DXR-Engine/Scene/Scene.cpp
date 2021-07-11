@@ -147,7 +147,7 @@ Scene* Scene::LoadFromFile( const std::string& Filepath )
     {
         // Create new material with default properties
         SMaterialDesc MatProps;
-        MatProps.Albedo = XMFLOAT3( Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2] );
+        MatProps.Albedo = CVector3( Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2] );
         MatProps.Metallic = 1.0f;
         MatProps.AO = Mat.ambient[0];
         MatProps.Roughness = 1.0f;
@@ -325,31 +325,28 @@ Scene* Scene::LoadFromFile( const std::string& Filepath )
 
                 size_t PositionIndex = 3 * static_cast<size_t>(Index.vertex_index);
                 TempVertex.Position =
-                {
+                    CVector3(
                     Attributes.vertices[PositionIndex + 0],
                     Attributes.vertices[PositionIndex + 1],
-                    Attributes.vertices[PositionIndex + 2],
-                };
+                    Attributes.vertices[PositionIndex + 2] );
 
                 if ( Index.normal_index >= 0 )
                 {
                     size_t NormalIndex = 3 * static_cast<size_t>(Index.normal_index);
                     TempVertex.Normal =
-                    {
+                        CVector3(
                         Attributes.normals[NormalIndex + 0],
                         Attributes.normals[NormalIndex + 1],
-                        Attributes.normals[NormalIndex + 2],
-                    };
+                        Attributes.normals[NormalIndex + 2] );
                 }
 
                 if ( Index.texcoord_index >= 0 )
                 {
                     size_t TexCoordIndex = 2 * static_cast<size_t>(Index.texcoord_index);
                     TempVertex.TexCoord =
-                    {
+                        CVector2(
                         Attributes.texcoords[TexCoordIndex + 0],
-                        Attributes.texcoords[TexCoordIndex + 1],
-                    };
+                        Attributes.texcoords[TexCoordIndex + 1] );
                 }
 
                 if ( UniqueVertices.count( TempVertex ) == 0 )

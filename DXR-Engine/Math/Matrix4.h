@@ -137,6 +137,20 @@ public:
     FORCEINLINE void SetIdentity() noexcept;
 
     /**
+     * Sets the upper 3x3 matrix
+     *
+     * @param RotationAndScale: 3x3 to set the upper quadrant to
+     */
+    FORCEINLINE void SetRotationAndScale(const CMatrix3& RotationAndScale) noexcept;
+
+    /**
+     * Sets the translation part of a matrix
+     *
+     * @param Translation: The translation part
+     */
+    FORCEINLINE void SetTranslation(const CVector3& Translation) noexcept;
+
+    /**
      * Returns a row of this matrix
      *
      * @param Row: The row to retrive
@@ -1039,6 +1053,28 @@ FORCEINLINE void CMatrix4::SetIdentity() noexcept
     NSIMD::StoreAligned( NSIMD::Load( 0.0f, 0.0f, 0.0f, 1.0f ), f[3] );
 
 #endif
+}
+
+FORCEINLINE void CMatrix4::SetRotationAndScale( const CMatrix3& RotationAndScale ) noexcept
+{
+    m00 = RotationAndScale.m00;
+    m01 = RotationAndScale.m01;
+    m02 = RotationAndScale.m02;
+
+    m10 = RotationAndScale.m10;
+    m11 = RotationAndScale.m11;
+    m12 = RotationAndScale.m12;
+
+    m20 = RotationAndScale.m20;
+    m21 = RotationAndScale.m21;
+    m22 = RotationAndScale.m22;
+}
+
+FORCEINLINE void CMatrix4::SetTranslation( const CVector3& Translation ) noexcept
+{
+    m30 = Translation.x;
+    m31 = Translation.y;
+    m32 = Translation.z;
 }
 
 FORCEINLINE CVector4 CMatrix4::GetRow( int Row ) const noexcept

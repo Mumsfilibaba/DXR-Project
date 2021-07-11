@@ -3,9 +3,11 @@
 
 #include "Core/Containers/StaticArray.h"
 
+#include "Math/Vector3.h"
+
 struct SMaterialDesc
 {
-    XMFLOAT3 Albedo = XMFLOAT3( 1.0f, 1.0f, 1.0f );
+    CVector3 Albedo = CVector3( 1.0f);
     float Roughness = 0.0f;
 
     float Metallic = 0.0f;
@@ -26,10 +28,10 @@ public:
 
     FORCEINLINE bool IsBufferDirty() const
     {
-        return m_MaterialBufferIsDirty;
+        return MaterialBufferIsDirty;
     }
 
-    void SetAlbedo( const XMFLOAT3& Albedo );
+    void SetAlbedo( const CVector3& Albedo );
     void SetAlbedo( float R, float G, float B );
 
     void SetMetallic( float Metallic );
@@ -49,20 +51,20 @@ public:
 
     SamplerState* GetMaterialSampler() const
     {
-        return m_Sampler.Get();
+        return Sampler.Get();
     }
     ConstantBuffer* GetMaterialBuffer() const
     {
-        return m_MaterialBuffer.Get();
+        return MaterialBuffer.Get();
     }
 
     FORCEINLINE bool ShouldRenderInPrePass()
     {
-        return !HasAlphaMask() && !HasHeightMap() && !m_RenderInForwardPass;
+        return !HasAlphaMask() && !HasHeightMap() && !RenderInForwardPass;
     }
     FORCEINLINE bool ShouldRenderInForwardPass()
     {
-        return m_RenderInForwardPass;
+        return RenderInForwardPass;
     }
 
     FORCEINLINE bool HasAlphaMask() const
@@ -76,7 +78,7 @@ public:
 
     const SMaterialDesc& GetMaterialProperties() const
     {
-        return m_Properties;
+        return Properties;
     }
 
 public:
@@ -89,15 +91,15 @@ public:
     TRef<Texture2D> AlphaMask;
 
 private:
-    std::string m_DebugName;
+    std::string DebugName;
 
-    bool m_MaterialBufferIsDirty = true;
+    bool MaterialBufferIsDirty = true;
 
-    bool m_RenderInForwardPass = false;
+    bool RenderInForwardPass = false;
 
-    SMaterialDesc        m_Properties;
-    TRef<ConstantBuffer> m_MaterialBuffer;
-    TRef<SamplerState>   m_Sampler;
+    SMaterialDesc        Properties;
+    TRef<ConstantBuffer> MaterialBuffer;
+    TRef<SamplerState>   Sampler;
 
-    mutable TStaticArray<ShaderResourceView*, 7> m_ShaderResourceViews;
+    mutable TStaticArray<ShaderResourceView*, 7> ShaderResourceViews;
 };

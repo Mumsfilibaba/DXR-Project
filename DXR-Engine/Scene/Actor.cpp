@@ -91,7 +91,7 @@ void Transform::CalculateMatrix()
     CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw(Rotation);
     CMatrix4 TranslationMatrix = CMatrix4::Translation(Translation);
     Matrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
-    Matrix.Transpose();
+    Matrix = Matrix.Transpose();
 
     TinyMatrix = XMFLOAT3X4(
         Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03,
@@ -100,15 +100,4 @@ void Transform::CalculateMatrix()
 
     MatrixInv = Matrix.Invert();
     MatrixInv = MatrixInv.Transpose();
-
-    //XMMATRIX XmMatrix = XMMatrixMultiply(
-    //    XMMatrixMultiply( XMMatrixScalingFromVector( XmScale ),
-    //    XMMatrixRotationRollPitchYawFromVector( XmRotation ) ),
-    //    XMMatrixTranslationFromVector( XmTranslation ) );
-    //XMStoreFloat3x4( &TinyMatrix, XmMatrix );
-    //XmMatrix = XMMatrixTranspose( XmMatrix );
-    //XMStoreFloat4x4( &Matrix, XmMatrix );
-
-    //XMMATRIX XmMatrixInv = XMMatrixInverse( nullptr, XmMatrix );
-    //XMStoreFloat4x4( &MatrixInv, XMMatrixTranspose( XmMatrixInv ) );
 }

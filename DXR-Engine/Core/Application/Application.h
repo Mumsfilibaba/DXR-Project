@@ -14,7 +14,7 @@ public:
 
     virtual bool Release();
 
-    class Scene* Scene = nullptr;
+    class Scene* CurrentScene = nullptr;
 };
 
 extern Application* GApplication;

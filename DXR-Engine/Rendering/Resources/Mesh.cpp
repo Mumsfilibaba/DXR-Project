@@ -85,22 +85,15 @@ TSharedPtr<Mesh> Mesh::Make( const MeshData& Data )
 void Mesh::CreateBoundingBox( const MeshData& Data )
 {
     constexpr float Inf = std::numeric_limits<float>::infinity();
-    XMFLOAT3 Min = XMFLOAT3( Inf, Inf, Inf );
-    XMFLOAT3 Max = XMFLOAT3( -Inf, -Inf, -Inf );
+    CVector3 MinBounds = CVector3( Inf, Inf, Inf );
+    CVector3 MaxBounds = CVector3( -Inf, -Inf, -Inf );
 
     for ( const Vertex& Vertex : Data.Vertices )
     {
-        // X
-        Min.x = NMath::Min<float>( Min.x, Vertex.Position.x );
-        Max.x = NMath::Max<float>( Max.x, Vertex.Position.x );
-        // Y
-        Min.y = NMath::Min<float>( Min.y, Vertex.Position.y );
-        Max.y = NMath::Max<float>( Max.y, Vertex.Position.y );
-        // Z
-        Min.z = NMath::Min<float>( Min.z, Vertex.Position.z );
-        Max.z = NMath::Max<float>( Max.z, Vertex.Position.z );
+        MinBounds = Min( MinBounds, Vertex.Position );
+        MaxBounds = Max( MaxBounds, Vertex.Position );
     }
 
-    BoundingBox.Top = Max;
-    BoundingBox.Bottom = Min;
+    BoundingBox.Top = MaxBounds;
+    BoundingBox.Bottom = MinBounds;
 }

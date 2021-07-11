@@ -7,10 +7,10 @@
 #include "Debug/Console/Console.h"
 
 #include "Rendering/Resources/Mesh.h"
-
 #include "Rendering/MeshDrawCommand.h"
 
-#include "Scene/Frustum.h"
+#include "Math/Frustum.h"
+
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
@@ -451,7 +451,7 @@ void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const Lig
                 ConsoleVariable* GlobalFrustumCullEnabled = GConsole.FindVariable( "r.EnableFrustumCulling" );
                 if ( GlobalFrustumCullEnabled->GetBool() )
                 {
-                    Frustum CameraFrustum = Frustum( Data.FarPlane, XMFLOAT4X4(&Data.ViewMatrix[Face].m00), XMFLOAT4X4( &Data.ProjMatrix[Face].m00) );
+                    Frustum CameraFrustum = Frustum( Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face]);
                     for ( const MeshDrawCommand& Command : Scene.GetMeshDrawCommands() )
                     {
                         CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
@@ -463,8 +463,8 @@ void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const Lig
                         Bottom = TransformMatrix.TransformPosition( Bottom );
 
                         AABB Box;
-                        Box.Top = XMFLOAT3( &Top.x );
-                        Box.Bottom = XMFLOAT3( &Bottom.x );
+                        Box.Top = Top;
+                        Box.Bottom = Bottom;
                         if ( CameraFrustum.CheckAABB( Box ) )
                         {
                             CmdList.SetVertexBuffers( &Command.VertexBuffer, 1, 0 );
@@ -690,8 +690,8 @@ bool ShadowMapRenderer::CreateShadowMask( uint32 Width, uint32 Height, LightSetu
 
 bool ShadowMapRenderer::CreateShadowMaps( LightSetup& LightSetup, FrameResources& FrameResources )
 {
-    const uint16 Width = FrameResources.MainWindowViewport->GetWidth();
-    const uint16 Height = FrameResources.MainWindowViewport->GetHeight();
+    const uint32 Width = FrameResources.MainWindowViewport->GetWidth();
+    const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
 
     if ( !CreateShadowMask( Width, Height, LightSetup ) )
     {

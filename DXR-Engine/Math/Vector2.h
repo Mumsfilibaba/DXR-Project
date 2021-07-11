@@ -379,8 +379,7 @@ FORCEINLINE CVector2::CVector2( float Scalar ) noexcept
 inline void CVector2::Normalize() noexcept
 {
     float fLength = Length();
-
-    ASSERT( fLength != 0 );
+    Assert( fLength != 0 );
 
     float fRecipLength = 1.0f / fLength;
     x = x * fRecipLength;
@@ -452,7 +451,7 @@ FORCEINLINE bool CVector2::IsValid() const noexcept
 FORCEINLINE float CVector2::Length() const noexcept
 {
     float fLengthSquared = LengthSquared();
-    return sqrtf( fLengthSquared );
+    return NMath::Sqrt( fLengthSquared );
 }
 
 FORCEINLINE float CVector2::LengthSquared() const noexcept
@@ -605,13 +604,13 @@ FORCEINLINE CVector2& CVector2::operator/=( float RHS ) noexcept
 
 FORCEINLINE float& CVector2::operator[]( int Index ) noexcept
 {
-    ASSERT( Index < 2 );
+    Assert( Index < 2 );
     return reinterpret_cast<float*>(this)[Index];
 }
 
 FORCEINLINE float CVector2::operator[]( int Index ) const noexcept
 {
-    ASSERT( Index < 2 );
+    Assert( Index < 2 );
     return reinterpret_cast<const float*>(this)[Index];
 }
 

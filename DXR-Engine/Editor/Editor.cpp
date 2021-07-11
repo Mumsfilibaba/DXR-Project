@@ -380,9 +380,9 @@ static void DrawSceneInfo()
     // Actors
     if ( ImGui::TreeNode( "Actors" ) )
     {
-        ImGui::Text( "Total Actor Count: %d", GApplication->Scene->GetActors().Size() );
+        ImGui::Text( "Total Actor Count: %d", GApplication->CurrentScene->GetActors().Size() );
 
-        for ( Actor* Actor : GApplication->Scene->GetActors() )
+        for ( Actor* Actor : GApplication->CurrentScene->GetActors() )
         {
             ImGui::PushID( Actor );
 
@@ -463,7 +463,7 @@ static void DrawSceneInfo()
                         ImGui::Text( "Albedo" );
                         ImGui::NextColumn();
 
-                        const XMFLOAT3& Color = MComponent->Material->GetMaterialProperties().Albedo;
+                        const CVector3& Color = MComponent->Material->GetMaterialProperties().Albedo;
                         float Arr[3] = { Color.x, Color.y, Color.z };
                         if ( ImGui::ColorEdit3( "##Albedo", Arr ) )
                         {
@@ -520,7 +520,7 @@ static void DrawSceneInfo()
     // Lights
     if ( ImGui::TreeNode( "Lights" ) )
     {
-        for ( Light* CurrentLight : GApplication->Scene->GetLights() )
+        for ( Light* CurrentLight : GApplication->CurrentScene->GetLights() )
         {
             ImGui::PushID( CurrentLight );
 

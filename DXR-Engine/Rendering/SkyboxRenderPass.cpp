@@ -199,7 +199,7 @@ void SkyboxRenderPass::Render( CommandList& CmdList, const FrameResources& Frame
 
     struct SimpleCameraBuffer
     {
-        XMFLOAT4X4 Matrix;
+        CMatrix4 Matrix;
     } SimpleCamera;
 
     SimpleCamera.Matrix = Scene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();

@@ -476,7 +476,7 @@ FORCEINLINE bool CVector3::IsValid() const noexcept
 FORCEINLINE float CVector3::Length() const noexcept
 {
     float fLengthSquared = LengthSquared();
-    return sqrtf( fLengthSquared );
+    return NMath::Sqrt( fLengthSquared );
 }
 
 FORCEINLINE float CVector3::LengthSquared() const noexcept

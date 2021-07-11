@@ -1,5 +1,7 @@
 #include "Rendering/Resources/MeshFactory.h"
 
+#include "Math/MathCommon.h"
+
 #include <tiny_obj_loader.h>
 
 MeshData MeshFactory::CreateFromFile( const std::string& Filename, bool LeftHanded ) noexcept
@@ -34,31 +36,28 @@ MeshData MeshFactory::CreateFromFile( const std::string& Filename, bool LeftHand
 
             size_t PositionIndex = 3 * static_cast<size_t>(Index.vertex_index);
             TempVertex.Position =
-            {
+            CVector3(
                 Attributes.vertices[PositionIndex + 0],
                 Attributes.vertices[PositionIndex + 1],
-                Attributes.vertices[PositionIndex + 2],
-            };
+                Attributes.vertices[PositionIndex + 2]);
 
             if ( Index.normal_index >= 0 )
             {
                 size_t NormalIndex = 3 * static_cast<size_t>(Index.normal_index);
                 TempVertex.Normal =
-                {
+                    CVector3(
                     Attributes.normals[NormalIndex + 0],
                     Attributes.normals[NormalIndex + 1],
-                    Attributes.normals[NormalIndex + 2],
-                };
+                    Attributes.normals[NormalIndex + 2] );
             }
 
             if ( Index.texcoord_index >= 0 )
             {
                 size_t TexCoordIndex = 2 * static_cast<size_t>(Index.texcoord_index);
                 TempVertex.TexCoord =
-                {
+                CVector2(
                     Attributes.texcoords[TexCoordIndex + 0],
-                    Attributes.texcoords[TexCoordIndex + 1],
-                };
+                    Attributes.texcoords[TexCoordIndex + 1]);
             }
 
             if ( UniqueVertices.count( TempVertex ) == 0 )
@@ -96,40 +95,40 @@ MeshData MeshFactory::CreateCube( float Width, float Height, float Depth ) noexc
     Cube.Vertices =
     {
         // FRONT FACE
-        { XMFLOAT3( -HalfWidth,  HalfHeight, -HalfDepth ), XMFLOAT3( 0.0f,  0.0f, -1.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 0.0f, 0.0f ) },
-        { XMFLOAT3( HalfWidth,  HalfHeight, -HalfDepth ), XMFLOAT3( 0.0f,  0.0f, -1.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 1.0f, 0.0f ) },
-        { XMFLOAT3( -HalfWidth, -HalfHeight, -HalfDepth ), XMFLOAT3( 0.0f,  0.0f, -1.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 0.0f, 1.0f ) },
-        { XMFLOAT3( HalfWidth, -HalfHeight, -HalfDepth ), XMFLOAT3( 0.0f,  0.0f, -1.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 1.0f, 1.0f ) },
+        { CVector3( -HalfWidth,  HalfHeight, -HalfDepth ), CVector3( 0.0f,  0.0f, -1.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 0.0f ) },
+        { CVector3( HalfWidth,  HalfHeight, -HalfDepth ), CVector3( 0.0f,  0.0f, -1.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 0.0f ) },
+        { CVector3( -HalfWidth, -HalfHeight, -HalfDepth ), CVector3( 0.0f,  0.0f, -1.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 1.0f ) },
+        { CVector3( HalfWidth, -HalfHeight, -HalfDepth ), CVector3( 0.0f,  0.0f, -1.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 1.0f ) },
 
         // BACK FACE
-        { XMFLOAT3( HalfWidth,  HalfHeight,  HalfDepth ), XMFLOAT3( 0.0f,  0.0f,  1.0f ), XMFLOAT3( -1.0f,  0.0f, 0.0f ), XMFLOAT2( 0.0f, 0.0f ) },
-        { XMFLOAT3( -HalfWidth,  HalfHeight,  HalfDepth ), XMFLOAT3( 0.0f,  0.0f,  1.0f ), XMFLOAT3( -1.0f,  0.0f, 0.0f ), XMFLOAT2( 1.0f, 0.0f ) },
-        { XMFLOAT3( HalfWidth, -HalfHeight,  HalfDepth ), XMFLOAT3( 0.0f,  0.0f,  1.0f ), XMFLOAT3( -1.0f,  0.0f, 0.0f ), XMFLOAT2( 0.0f, 1.0f ) },
-        { XMFLOAT3( -HalfWidth, -HalfHeight,  HalfDepth ), XMFLOAT3( 0.0f,  0.0f,  1.0f ), XMFLOAT3( -1.0f,  0.0f, 0.0f ), XMFLOAT2( 1.0f, 1.0f ) },
+        { CVector3( HalfWidth,  HalfHeight,  HalfDepth ), CVector3( 0.0f,  0.0f,  1.0f ), CVector3( -1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 0.0f ) },
+        { CVector3( -HalfWidth,  HalfHeight,  HalfDepth ), CVector3( 0.0f,  0.0f,  1.0f ), CVector3( -1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 0.0f ) },
+        { CVector3( HalfWidth, -HalfHeight,  HalfDepth ), CVector3( 0.0f,  0.0f,  1.0f ), CVector3( -1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 1.0f ) },
+        { CVector3( -HalfWidth, -HalfHeight,  HalfDepth ), CVector3( 0.0f,  0.0f,  1.0f ), CVector3( -1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 1.0f ) },
 
         // RIGHT FACE
-        { XMFLOAT3( HalfWidth,  HalfHeight, -HalfDepth ), XMFLOAT3( 1.0f,  0.0f,  0.0f ), XMFLOAT3( 0.0f,  0.0f, 1.0f ), XMFLOAT2( 0.0f, 0.0f ) },
-        { XMFLOAT3( HalfWidth,  HalfHeight,  HalfDepth ), XMFLOAT3( 1.0f,  0.0f,  0.0f ), XMFLOAT3( 0.0f,  0.0f, 1.0f ), XMFLOAT2( 1.0f, 0.0f ) },
-        { XMFLOAT3( HalfWidth, -HalfHeight, -HalfDepth ), XMFLOAT3( 1.0f,  0.0f,  0.0f ), XMFLOAT3( 0.0f,  0.0f, 1.0f ), XMFLOAT2( 0.0f, 1.0f ) },
-        { XMFLOAT3( HalfWidth, -HalfHeight,  HalfDepth ), XMFLOAT3( 1.0f,  0.0f,  0.0f ), XMFLOAT3( 0.0f,  0.0f, 1.0f ), XMFLOAT2( 1.0f, 1.0f ) },
+        { CVector3( HalfWidth,  HalfHeight, -HalfDepth ), CVector3( 1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 0.0f, 0.0f ) },
+        { CVector3( HalfWidth,  HalfHeight,  HalfDepth ), CVector3( 1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 1.0f, 0.0f ) },
+        { CVector3( HalfWidth, -HalfHeight, -HalfDepth ), CVector3( 1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 0.0f, 1.0f ) },
+        { CVector3( HalfWidth, -HalfHeight,  HalfDepth ), CVector3( 1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 1.0f, 1.0f ) },
 
         // LEFT FACE
-        { XMFLOAT3( -HalfWidth,  HalfHeight, -HalfDepth ), XMFLOAT3( -1.0f,  0.0f,  0.0f ), XMFLOAT3( 0.0f,  0.0f, 1.0f ), XMFLOAT2( 0.0f, 1.0f ) },
-        { XMFLOAT3( -HalfWidth,  HalfHeight,  HalfDepth ), XMFLOAT3( -1.0f,  0.0f,  0.0f ), XMFLOAT3( 0.0f,  0.0f, 1.0f ), XMFLOAT2( 1.0f, 1.0f ) },
-        { XMFLOAT3( -HalfWidth, -HalfHeight, -HalfDepth ), XMFLOAT3( -1.0f,  0.0f,  0.0f ), XMFLOAT3( 0.0f,  0.0f, 1.0f ), XMFLOAT2( 0.0f, 0.0f ) },
-        { XMFLOAT3( -HalfWidth, -HalfHeight,  HalfDepth ), XMFLOAT3( -1.0f,  0.0f,  0.0f ), XMFLOAT3( 0.0f,  0.0f, 1.0f ), XMFLOAT2( 1.0f, 0.0f ) },
+        { CVector3( -HalfWidth,  HalfHeight, -HalfDepth ), CVector3( -1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 0.0f, 1.0f ) },
+        { CVector3( -HalfWidth,  HalfHeight,  HalfDepth ), CVector3( -1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 1.0f, 1.0f ) },
+        { CVector3( -HalfWidth, -HalfHeight, -HalfDepth ), CVector3( -1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 0.0f, 0.0f ) },
+        { CVector3( -HalfWidth, -HalfHeight,  HalfDepth ), CVector3( -1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 1.0f, 0.0f ) },
 
         // TOP FACE
-        { XMFLOAT3( -HalfWidth,  HalfHeight,  HalfDepth ), XMFLOAT3( 0.0f,  1.0f,  0.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 0.0f, 0.0f ) },
-        { XMFLOAT3( HalfWidth,  HalfHeight,  HalfDepth ), XMFLOAT3( 0.0f,  1.0f,  0.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 1.0f, 0.0f ) },
-        { XMFLOAT3( -HalfWidth,  HalfHeight, -HalfDepth ), XMFLOAT3( 0.0f,  1.0f,  0.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 0.0f, 1.0f ) },
-        { XMFLOAT3( HalfWidth,  HalfHeight, -HalfDepth ), XMFLOAT3( 0.0f,  1.0f,  0.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 1.0f, 1.0f ) },
+        { CVector3( -HalfWidth,  HalfHeight,  HalfDepth ), CVector3( 0.0f,  1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 0.0f ) },
+        { CVector3( HalfWidth,  HalfHeight,  HalfDepth ), CVector3( 0.0f,  1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 0.0f ) },
+        { CVector3( -HalfWidth,  HalfHeight, -HalfDepth ), CVector3( 0.0f,  1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 1.0f ) },
+        { CVector3( HalfWidth,  HalfHeight, -HalfDepth ), CVector3( 0.0f,  1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 1.0f ) },
 
         // BOTTOM FACE
-        { XMFLOAT3( -HalfWidth, -HalfHeight, -HalfDepth ), XMFLOAT3( 0.0f, -1.0f,  0.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 0.0f, 0.0f ) },
-        { XMFLOAT3( HalfWidth, -HalfHeight, -HalfDepth ), XMFLOAT3( 0.0f, -1.0f,  0.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 1.0f, 0.0f ) },
-        { XMFLOAT3( -HalfWidth, -HalfHeight,  HalfDepth ), XMFLOAT3( 0.0f, -1.0f,  0.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 0.0f, 1.0f ) },
-        { XMFLOAT3( HalfWidth, -HalfHeight,  HalfDepth ), XMFLOAT3( 0.0f, -1.0f,  0.0f ), XMFLOAT3( 1.0f,  0.0f, 0.0f ), XMFLOAT2( 1.0f, 1.0f ) },
+        { CVector3( -HalfWidth, -HalfHeight, -HalfDepth ), CVector3( 0.0f, -1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 0.0f ) },
+        { CVector3( HalfWidth, -HalfHeight, -HalfDepth ), CVector3( 0.0f, -1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 0.0f ) },
+        { CVector3( -HalfWidth, -HalfHeight,  HalfDepth ), CVector3( 0.0f, -1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 1.0f ) },
+        { CVector3( HalfWidth, -HalfHeight,  HalfDepth ), CVector3( 0.0f, -1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 1.0f ) },
     };
 
     Cube.Indices =
@@ -164,7 +163,7 @@ MeshData MeshFactory::CreateCube( float Width, float Height, float Depth ) noexc
 
 MeshData MeshFactory::CreatePlane( uint32 Width, uint32 Height ) noexcept
 {
-    MeshData data;
+    MeshData Data;
     if ( Width < 1 )
     {
         Width = 1;
@@ -174,23 +173,23 @@ MeshData MeshFactory::CreatePlane( uint32 Width, uint32 Height ) noexcept
         Height = 1;
     }
 
-    data.Vertices.Resize( (Width + 1) * (Height + 1) );
-    data.Indices.Resize( (Width * Height) * 6 );
+    Data.Vertices.Resize( (Width + 1) * (Height + 1) );
+    Data.Indices.Resize( (Width * Height) * 6 );
 
     // Size of each quad, size of the plane will always be between -0.5 and 0.5
-    XMFLOAT2 quadSize = XMFLOAT2( 1.0f / float( Width ), 1.0f / float( Height ) );
-    XMFLOAT2 uvQuadSize = XMFLOAT2( 1.0f / float( Width ), 1.0f / float( Height ) );
+    CVector2 QuadSize = CVector2( 1.0f / float( Width ), 1.0f / float( Height ) );
+    CVector2 UvQuadSize = CVector2( 1.0f / float( Width ), 1.0f / float( Height ) );
 
     for ( uint32 x = 0; x <= Width; x++ )
     {
         for ( uint32 y = 0; y <= Height; y++ )
         {
             int32 v = ((1 + Height) * x) + y;
-            data.Vertices[v].Position = XMFLOAT3( 0.5f - (quadSize.x * x), 0.5f - (quadSize.y * y), 0.0f );
+            Data.Vertices[v].Position = CVector3( 0.5f - (QuadSize.x * x), 0.5f - (QuadSize.y * y), 0.0f );
             // TODO: Fix vertices so normal is positive
-            data.Vertices[v].Normal = XMFLOAT3( 0.0f, 0.0f, -1.0f );
-            data.Vertices[v].Tangent = XMFLOAT3( 1.0f, 0.0f, 0.0f );
-            data.Vertices[v].TexCoord = XMFLOAT2( 0.0f + (uvQuadSize.x * x), 0.0f + (uvQuadSize.y * y) );
+            Data.Vertices[v].Normal = CVector3( 0.0f, 0.0f, -1.0f );
+            Data.Vertices[v].Tangent = CVector3( 1.0f, 0.0f, 0.0f );
+            Data.Vertices[v].TexCoord = CVector2( 0.0f + (UvQuadSize.x * x), 0.0f + (UvQuadSize.y * y) );
         }
     }
 
@@ -199,19 +198,19 @@ MeshData MeshFactory::CreatePlane( uint32 Width, uint32 Height ) noexcept
         for ( uint8 y = 0; y < Height; y++ )
         {
             int32 quad = (Height * x) + y;
-            data.Indices[(quad * 6) + 0] = (x * (1 + Height)) + y + 1;
-            data.Indices[(quad * 6) + 1] = (data.Indices[quad * 6] + 2 + (Height - 1));
-            data.Indices[(quad * 6) + 2] = data.Indices[quad * 6] - 1;
-            data.Indices[(quad * 6) + 3] = data.Indices[(quad * 6) + 1];
-            data.Indices[(quad * 6) + 4] = data.Indices[(quad * 6) + 1] - 1;
-            data.Indices[(quad * 6) + 5] = data.Indices[(quad * 6) + 2];
+            Data.Indices[(quad * 6) + 0] = (x * (1 + Height)) + y + 1;
+            Data.Indices[(quad * 6) + 1] = (Data.Indices[quad * 6] + 2 + (Height - 1));
+            Data.Indices[(quad * 6) + 2] = Data.Indices[quad * 6] - 1;
+            Data.Indices[(quad * 6) + 3] = Data.Indices[(quad * 6) + 1];
+            Data.Indices[(quad * 6) + 4] = Data.Indices[(quad * 6) + 1] - 1;
+            Data.Indices[(quad * 6) + 5] = Data.Indices[(quad * 6) + 2];
         }
     }
 
-    data.Vertices.ShrinkToFit();
-    data.Indices.ShrinkToFit();
+    Data.Vertices.ShrinkToFit();
+    Data.Indices.ShrinkToFit();
 
-    return data;
+    return Data;
 }
 
 MeshData MeshFactory::CreateSphere( uint32 Subdivisions, float Radius ) noexcept
@@ -219,19 +218,19 @@ MeshData MeshFactory::CreateSphere( uint32 Subdivisions, float Radius ) noexcept
     MeshData Sphere;
     Sphere.Vertices.Resize( 12 );
 
-    float T = (1.0f + sqrt( 5.0f )) / 2.0f;
-    Sphere.Vertices[0].Position = XMFLOAT3( -1.0f, T, 0.0f );
-    Sphere.Vertices[1].Position = XMFLOAT3( 1.0f, T, 0.0f );
-    Sphere.Vertices[2].Position = XMFLOAT3( -1.0f, -T, 0.0f );
-    Sphere.Vertices[3].Position = XMFLOAT3( 1.0f, -T, 0.0f );
-    Sphere.Vertices[4].Position = XMFLOAT3( 0.0f, -1.0f, T );
-    Sphere.Vertices[5].Position = XMFLOAT3( 0.0f, 1.0f, T );
-    Sphere.Vertices[6].Position = XMFLOAT3( 0.0f, -1.0f, -T );
-    Sphere.Vertices[7].Position = XMFLOAT3( 0.0f, 1.0f, -T );
-    Sphere.Vertices[8].Position = XMFLOAT3( T, 0.0f, -1.0f );
-    Sphere.Vertices[9].Position = XMFLOAT3( T, 0.0f, 1.0f );
-    Sphere.Vertices[10].Position = XMFLOAT3( -T, 0.0f, -1.0f );
-    Sphere.Vertices[11].Position = XMFLOAT3( -T, 0.0f, 1.0f );
+    const float t = (1.0f + NMath::Sqrt( 5.0f )) / 2.0f;
+    Sphere.Vertices[0].Position = CVector3( -1.0f, t, 0.0f );
+    Sphere.Vertices[1].Position = CVector3( 1.0f, t, 0.0f );
+    Sphere.Vertices[2].Position = CVector3( -1.0f, -t, 0.0f );
+    Sphere.Vertices[3].Position = CVector3( 1.0f, -t, 0.0f );
+    Sphere.Vertices[4].Position = CVector3( 0.0f, -1.0f, t );
+    Sphere.Vertices[5].Position = CVector3( 0.0f, 1.0f, t );
+    Sphere.Vertices[6].Position = CVector3( 0.0f, -1.0f, -t );
+    Sphere.Vertices[7].Position = CVector3( 0.0f, 1.0f, -t );
+    Sphere.Vertices[8].Position = CVector3( t, 0.0f, -1.0f );
+    Sphere.Vertices[9].Position = CVector3( t, 0.0f, 1.0f );
+    Sphere.Vertices[10].Position = CVector3( -t, 0.0f, -1.0f );
+    Sphere.Vertices[11].Position = CVector3( -t, 0.0f, 1.0f );
 
     Sphere.Indices =
     {
@@ -268,16 +267,15 @@ MeshData MeshFactory::CreateSphere( uint32 Subdivisions, float Radius ) noexcept
     for ( uint32 i = 0; i < static_cast<uint32>(Sphere.Vertices.Size()); i++ )
     {
         // Calculate the new position, normal and tangent
-        XMVECTOR Position = XMLoadFloat3( &Sphere.Vertices[i].Position );
-        Position = XMVector3Normalize( Position );
-        XMStoreFloat3( &Sphere.Vertices[i].Normal, Position );
+        CVector3 Position = Sphere.Vertices[i].Position;
+        Position.Normalize();
 
-        Position = XMVectorScale( Position, Radius );
-        XMStoreFloat3( &Sphere.Vertices[i].Position, Position );
+        Sphere.Vertices[i].Normal = Position;
+        Sphere.Vertices[i].Position = Position * Radius;
 
         // Calculate uvs
-        Sphere.Vertices[i].TexCoord.y = (asin( Sphere.Vertices[i].Position.y ) / XM_PI) + 0.5f;
-        Sphere.Vertices[i].TexCoord.x = (atan2f( Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x ) + XM_PI) / (2.0f * XM_PI);
+        Sphere.Vertices[i].TexCoord.y = (NMath::Asin( Sphere.Vertices[i].Position.y ) / NMath::PI_F) + 0.5f;
+        Sphere.Vertices[i].TexCoord.x = (NMath::Atan2( Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x ) + NMath::PI_F) / (2.0f * NMath::PI_F);
     }
 
     Sphere.Indices.ShrinkToFit();
@@ -586,78 +584,66 @@ void MeshFactory::Subdivide( MeshData& OutData, uint32 Subdivisions ) noexcept
         for ( uint32 j = 0; j < IndexCount; j += 3 )
         {
             // Calculate Position
-            XMVECTOR Position0 = XMLoadFloat3( &OutData.Vertices[OutData.Indices[j]].Position );
-            XMVECTOR Position1 = XMLoadFloat3( &OutData.Vertices[OutData.Indices[j + 1]].Position );
-            XMVECTOR Position2 = XMLoadFloat3( &OutData.Vertices[OutData.Indices[j + 2]].Position );
+            CVector3 Position0 = OutData.Vertices[OutData.Indices[j]].Position;
+            CVector3 Position1 = OutData.Vertices[OutData.Indices[j + 1]].Position;
+            CVector3 Position2 = OutData.Vertices[OutData.Indices[j + 2]].Position;
 
-            XMVECTOR Position = XMVectorAdd( Position0, Position1 );
-            Position = XMVectorScale( Position, 0.5f );
-            XMStoreFloat3( &TempVertices[0].Position, Position );
+            CVector3 Position = Position0 + Position1;
+            TempVertices[0].Position = Position * 0.5f;
 
-            Position = XMVectorAdd( Position0, Position2 );
-            Position = XMVectorScale( Position, 0.5f );
-            XMStoreFloat3( &TempVertices[1].Position, Position );
+            Position = Position0 + Position2;
+            TempVertices[1].Position = Position * 0.5f;
 
-            Position = XMVectorAdd( Position1, Position2 );
-            Position = XMVectorScale( Position, 0.5f );
-            XMStoreFloat3( &TempVertices[2].Position, Position );
+            Position = Position1 + Position2;
+            TempVertices[2].Position = Position * 0.5f;
 
             // Calculate TexCoord
-            XMVECTOR TexCoord0 = XMLoadFloat2( &OutData.Vertices[OutData.Indices[j]].TexCoord );
-            XMVECTOR TexCoord1 = XMLoadFloat2( &OutData.Vertices[OutData.Indices[j + 1]].TexCoord );
-            XMVECTOR TexCoord2 = XMLoadFloat2( &OutData.Vertices[OutData.Indices[j + 2]].TexCoord );
+            CVector2 TexCoord0 = OutData.Vertices[OutData.Indices[j]].TexCoord;
+            CVector2 TexCoord1 = OutData.Vertices[OutData.Indices[j + 1]].TexCoord;
+            CVector2 TexCoord2 = OutData.Vertices[OutData.Indices[j + 2]].TexCoord;
 
-            XMVECTOR TexCoord = XMVectorAdd( TexCoord0, TexCoord1 );
-            TexCoord = XMVectorScale( TexCoord, 0.5f );
-            XMStoreFloat2( &TempVertices[0].TexCoord, TexCoord );
+            CVector2 TexCoord = TexCoord0 + TexCoord1;
+            TempVertices[0].TexCoord = TexCoord * 0.5f;
 
-            TexCoord = XMVectorAdd( TexCoord0, TexCoord2 );
-            TexCoord = XMVectorScale( TexCoord, 0.5f );
-            XMStoreFloat2( &TempVertices[1].TexCoord, TexCoord );
+            TexCoord = TexCoord0 + TexCoord2;
+            TempVertices[1].TexCoord = TexCoord * 0.5f;
 
-            TexCoord = XMVectorAdd( TexCoord1, TexCoord2 );
-            TexCoord = XMVectorScale( TexCoord, 0.5f );
-            XMStoreFloat2( &TempVertices[2].TexCoord, TexCoord );
+            TexCoord = TexCoord1 + TexCoord2;
+            TempVertices[2].TexCoord = TexCoord * 0.5f;
 
             // Calculate Normal
-            XMVECTOR Normal0 = XMLoadFloat3( &OutData.Vertices[OutData.Indices[j]].Normal );
-            XMVECTOR Normal1 = XMLoadFloat3( &OutData.Vertices[OutData.Indices[j + 1]].Normal );
-            XMVECTOR Normal2 = XMLoadFloat3( &OutData.Vertices[OutData.Indices[j + 2]].Normal );
+            CVector3 Normal0 = OutData.Vertices[OutData.Indices[j]].Normal;
+            CVector3 Normal1 = OutData.Vertices[OutData.Indices[j + 1]].Normal;
+            CVector3 Normal2 = OutData.Vertices[OutData.Indices[j + 2]].Normal;
 
-            XMVECTOR Normal = XMVectorAdd( Normal0, Normal1 );
-            Normal = XMVectorScale( Normal, 0.5f );
-            Normal = XMVector3Normalize( Normal );
-            XMStoreFloat3( &TempVertices[0].Normal, Normal );
+            CVector3 Normal = Normal0 + Normal1;
+            Normal = Normal * 0.5f;
+            TempVertices[0].Normal = Normal.GetNormalized();
 
-            Normal = XMVectorAdd( Normal0, Normal2 );
-            Normal = XMVectorScale( Normal, 0.5f );
-            Normal = XMVector3Normalize( Normal );
-            XMStoreFloat3( &TempVertices[1].Normal, Normal );
+            Normal = Normal0 + Normal2;
+            Normal = Normal * 0.5f;
+            TempVertices[1].Normal = Normal.GetNormalized();
 
-            Normal = XMVectorAdd( Normal1, Normal2 );
-            Normal = XMVectorScale( Normal, 0.5f );
-            Normal = XMVector3Normalize( Normal );
-            XMStoreFloat3( &TempVertices[2].Normal, Normal );
+            Normal = Normal1 + Normal2;
+            Normal = Normal * 0.5f;
+            TempVertices[2].Normal = Normal.GetNormalized();
 
             // Calculate Tangent
-            XMVECTOR Tangent0 = XMLoadFloat3( &OutData.Vertices[OutData.Indices[j]].Tangent );
-            XMVECTOR Tangent1 = XMLoadFloat3( &OutData.Vertices[OutData.Indices[j + 1]].Tangent );
-            XMVECTOR Tangent2 = XMLoadFloat3( &OutData.Vertices[OutData.Indices[j + 2]].Tangent );
+            CVector3 Tangent0 = OutData.Vertices[OutData.Indices[j]].Tangent;
+            CVector3 Tangent1 = OutData.Vertices[OutData.Indices[j + 1]].Tangent;
+            CVector3 Tangent2 = OutData.Vertices[OutData.Indices[j + 2]].Tangent;
 
-            XMVECTOR Tangent = XMVectorAdd( Tangent0, Tangent1 );
-            Tangent = XMVectorScale( Tangent, 0.5f );
-            Tangent = XMVector3Normalize( Tangent );
-            XMStoreFloat3( &TempVertices[0].Tangent, Tangent );
+            CVector3 Tangent = Tangent0 + Tangent1;
+            Tangent = Tangent * 0.5f;
+            TempVertices[0].Tangent = Tangent.GetNormalized();
 
-            Tangent = XMVectorAdd( Tangent0, Tangent2 );
-            Tangent = XMVectorScale( Tangent, 0.5f );
-            Tangent = XMVector3Normalize( Tangent );
-            XMStoreFloat3( &TempVertices[1].Tangent, Tangent );
+            Tangent = Tangent0 + Tangent2;
+            Tangent = Tangent * 0.5f;
+            TempVertices[1].Tangent = Tangent.GetNormalized();
 
-            Tangent = XMVectorAdd( Tangent1, Tangent2 );
-            Tangent = XMVectorScale( Tangent, 0.5f );
-            Tangent = XMVector3Normalize( Tangent );
-            XMStoreFloat3( &TempVertices[2].Tangent, Tangent );
+            Tangent = Tangent1 + Tangent2;
+            Tangent = Tangent * 0.5f;
+            TempVertices[2].Tangent = Tangent.GetNormalized();
 
             // Push the new Vertices
             OutData.Vertices.EmplaceBack( TempVertices[0] );
@@ -755,38 +741,16 @@ void MeshFactory::CalculateTangents( MeshData& OutData ) noexcept
 {
     auto CalculateTangentFromVectors = []( Vertex& Vertex1, const Vertex& Vertex2, const Vertex& Vertex3 )
     {
-        XMFLOAT3 Edge1;
-        Edge1.x = Vertex2.Position.x - Vertex1.Position.x;
-        Edge1.y = Vertex2.Position.y - Vertex1.Position.y;
-        Edge1.z = Vertex2.Position.z - Vertex1.Position.z;
+        CVector3 Edge1 = Vertex2.Position - Vertex1.Position;
+        CVector3 Edge2 = Vertex3.Position - Vertex1.Position;
 
-        XMFLOAT3 Edge2;
-        Edge2.x = Vertex3.Position.x - Vertex1.Position.x;
-        Edge2.y = Vertex3.Position.y - Vertex1.Position.y;
-        Edge2.z = Vertex3.Position.z - Vertex1.Position.z;
+        CVector2 UVEdge1 = Vertex2.TexCoord - Vertex1.TexCoord;
+        CVector2 UVEdge2 = Vertex3.TexCoord - Vertex1.TexCoord;
 
-        XMFLOAT2 UVEdge1;
-        UVEdge1.x = Vertex2.TexCoord.x - Vertex1.TexCoord.x;
-        UVEdge1.y = Vertex2.TexCoord.y - Vertex1.TexCoord.y;
+        const float RecipDenominator = 1.0f / (UVEdge1.x * UVEdge2.y - UVEdge2.x * UVEdge1.y);
 
-        XMFLOAT3 UVEdge2;
-        UVEdge2.x = Vertex3.TexCoord.x - Vertex1.TexCoord.x;
-        UVEdge2.y = Vertex3.TexCoord.y - Vertex1.TexCoord.y;
-
-        float Denominator = 1.0f / (UVEdge1.x * UVEdge2.y - UVEdge2.x * UVEdge1.y);
-
-        XMFLOAT3 Tangent;
-        Tangent.x = Denominator * (UVEdge2.y * Edge1.x - UVEdge1.y * Edge2.x);
-        Tangent.y = Denominator * (UVEdge2.y * Edge1.y - UVEdge1.y * Edge2.y);
-        Tangent.z = Denominator * (UVEdge2.y * Edge1.z - UVEdge1.y * Edge2.z);
-
-        float Length = std::sqrt( (Tangent.x * Tangent.x) + (Tangent.y * Tangent.y) + (Tangent.z * Tangent.z) );
-        if ( Length != 0.0f )
-        {
-            Tangent.x /= Length;
-            Tangent.y /= Length;
-            Tangent.z /= Length;
-        }
+        CVector3 Tangent = RecipDenominator * ((UVEdge2.y * Edge1) - (UVEdge1.y * Edge2));
+        Tangent.Normalize();
 
         Vertex1.Tangent = Tangent;
     };

@@ -47,7 +47,8 @@ void DirectionalLight::UpdateCascades( Camera& Camera )
     StartUp.Normalize();
     Up = StartUp;
 
-    XMFLOAT4X4 InvCamera = Camera.GetViewProjectionInverseMatrix();
+    CMatrix4 InvCamera = Camera.GetViewProjectionInverseMatrix();
+    InvCamera = InvCamera.Transpose();
 
     float NearPlane = Camera.GetNearPlane();
     float FarPlane = NMath::Min<float>( Camera.GetFarPlane(), 100.0f ); // TODO: Should be a setting
@@ -86,39 +87,34 @@ void DirectionalLight::UpdateCascades( Camera& Camera )
     {
         float SplitDist = LocalCascadeSplits[i];
 
-        XMFLOAT4 FrustumCorners[8] =
+        CVector4 FrustumCorners[8] =
         {
-            XMFLOAT4( -1.0f,  1.0f, 0.0f, 1.0f ),
-            XMFLOAT4( 1.0f,  1.0f, 0.0f, 1.0f ),
-            XMFLOAT4( 1.0f, -1.0f, 0.0f, 1.0f ),
-            XMFLOAT4( -1.0f, -1.0f, 0.0f, 1.0f ),
-            XMFLOAT4( -1.0f,  1.0f, 1.0f, 1.0f ),
-            XMFLOAT4( 1.0f,  1.0f, 1.0f, 1.0f ),
-            XMFLOAT4( 1.0f, -1.0f, 1.0f, 1.0f ),
-            XMFLOAT4( -1.0f, -1.0f, 1.0f, 1.0f ),
+            CVector4( -1.0f,  1.0f, 0.0f, 1.0f ),
+            CVector4( 1.0f,  1.0f, 0.0f, 1.0f ),
+            CVector4( 1.0f, -1.0f, 0.0f, 1.0f ),
+            CVector4( -1.0f, -1.0f, 0.0f, 1.0f ),
+            CVector4( -1.0f,  1.0f, 1.0f, 1.0f ),
+            CVector4( 1.0f,  1.0f, 1.0f, 1.0f ),
+            CVector4( 1.0f, -1.0f, 1.0f, 1.0f ),
+            CVector4( -1.0f, -1.0f, 1.0f, 1.0f ),
         };
 
         // Calculate position of light frustum
-        XMMATRIX XmInvCamera = XMMatrixTranspose( XMLoadFloat4x4( &InvCamera ) );
-
         for ( uint32 j = 0; j < 8; j++ )
         {
-            XMVECTOR XmCorner = XMLoadFloat4( &FrustumCorners[j] );
-            XmCorner = XMVector4Transform( XmCorner, XmInvCamera );
-            XMStoreFloat4( &FrustumCorners[j], XmCorner );
-
+            CVector4 Corner = InvCamera * FrustumCorners[j];
             FrustumCorners[j] = FrustumCorners[j] / FrustumCorners[j].w;
         }
 
         for ( uint32 j = 0; j < 4; j++ )
         {
-            const XMFLOAT4 Distance = FrustumCorners[j + 4] - FrustumCorners[j];
+            const CVector4 Distance = FrustumCorners[j + 4] - FrustumCorners[j];
             FrustumCorners[j + 4] = FrustumCorners[j] + (Distance * SplitDist);
             FrustumCorners[j] = FrustumCorners[j] + (Distance * LastSplitDist);
         }
 
         // Calc frustum center
-        XMFLOAT4 Center = XMFLOAT4( 0.0f, 0.0f, 0.0f, 0.0f );
+        CVector4 Center = CVector4( 0.0f );
         for ( uint32 j = 0; j < 8; j++ )
         {
             Center = Center + FrustumCorners[j];
@@ -128,7 +124,7 @@ void DirectionalLight::UpdateCascades( Camera& Camera )
         float Radius = 0.0f;
         for ( uint32 j = 0; j < 8; j++ )
         {
-            float Distance = ceil( Length( FrustumCorners[j] - Center ) );
+            float Distance = ceil( (FrustumCorners[j] - Center).Length() );
             Radius = NMath::Min( NMath::Max( Radius, Distance ), 80.0f ); // This should be dynamic
         }
 

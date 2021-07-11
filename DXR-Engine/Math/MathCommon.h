@@ -38,7 +38,7 @@ namespace NMath
     }
 
     template <typename T>
-    FORCEINLINE static T DivideByMultiple( T v, uint32 Alignment )
+    FORCEINLINE T DivideByMultiple( T v, uint32 Alignment )
     {
         static_assert(std::is_integral<T>());
 
@@ -46,7 +46,7 @@ namespace NMath
     }
 
     template <typename T>
-    FORCEINLINE static T AlignUp( T v, T Alignment )
+    FORCEINLINE T AlignUp( T v, T Alignment )
     {
         static_assert(std::is_integral<T>());
 
@@ -55,7 +55,7 @@ namespace NMath
     }
 
     template <typename T>
-    FORCEINLINE static T AlignDown( T v, T Alignment )
+    FORCEINLINE T AlignDown( T v, T Alignment )
     {
         static_assert(std::is_integral<T>());
 
@@ -63,48 +63,60 @@ namespace NMath
         return ((v) & (~Mask));
     }
 
-    FORCEINLINE static float Lerp( float a, float b, float f )
+    FORCEINLINE float Lerp( float a, float b, float f )
     {
         return (-f * b) + ((a * f) + b);
     }
 
     template <typename T>
-    FORCEINLINE static T Min( T a, T b )
+    FORCEINLINE T Min( T a, T b )
     {
         return a <= b ? a : b;
     }
 
     template <typename T>
-    FORCEINLINE static T Max( T a, T b )
+    FORCEINLINE T Max( T a, T b )
     {
         return a >= b ? a : b;
     }
 
     template <typename T>
-    FORCEINLINE static T Abs( T a )
+    FORCEINLINE T Abs( T a )
     {
         return (a * a) / a;
     }
 
     template <typename T>
-    FORCEINLINE static T ToRadians( T Degrees )
+    FORCEINLINE T ToRadians( T Degrees )
     {
         return static_cast<T>(static_cast<float>(Degrees) * (PI_F / 180.0f));
     }
 
     template <typename T>
-    FORCEINLINE static T ToDegrees( T Radians )
+    FORCEINLINE T ToDegrees( T Radians )
     {
         return static_cast<T>(static_cast<float>(Radians) * (180.0f / PI_F));
     }
 
     template <typename T>
-    FORCEINLINE static T Log2( T x )
+    FORCEINLINE T Log2( T x )
     {
         return static_cast<T>(std::log2( (double)x ));
     }
 
-    FORCEINLINE static uint32 BytesToNum32BitConstants( uint32 Bytes )
+    template <typename T>
+    FORCEINLINE T Asin( T v )
+    {
+        return static_cast<T>(std::asinf( static_cast<float>(v) ));
+    }
+
+    template <typename T>
+    FORCEINLINE T Atan2( T y, T x )
+    {
+        return static_cast<T>(std::atan2f( static_cast<float>(y), static_cast<float>(x) ));
+    }
+
+    FORCEINLINE uint32 BytesToNum32BitConstants( uint32 Bytes )
     {
         return Bytes / 4;
     }

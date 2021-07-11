@@ -4,7 +4,8 @@
 #include "Resources/TextureFactory.h"
 #include "Resources/Mesh.h"
 
-#include "Scene/Frustum.h"
+#include "Math/Frustum.h"
+
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
@@ -35,22 +36,22 @@ TConsoleVariable<bool> GEnableVariableRateShading( false );
 TConsoleVariable<bool> GPrePassEnabled( true );
 TConsoleVariable<bool> GDrawAABBs( false );
 TConsoleVariable<bool> GVSyncEnabled( false );
-TConsoleVariable<bool> GFrustumCullEnabled( true );
+TConsoleVariable<bool> GFrustumCullEnabled( false );
 TConsoleVariable<bool> GRayTracingEnabled( true );
 
 struct SCameraBufferDesc
 {
-    XMFLOAT4X4 ViewProjection;
-    XMFLOAT4X4 View;
-    XMFLOAT4X4 ViewInv;
-    XMFLOAT4X4 Projection;
-    XMFLOAT4X4 ProjectionInv;
-    XMFLOAT4X4 ViewProjectionInv;
-    XMFLOAT3 Position;
+    CMatrix4 ViewProjection;
+    CMatrix4 View;
+    CMatrix4 ViewInv;
+    CMatrix4 Projection;
+    CMatrix4 ProjectionInv;
+    CMatrix4 ViewProjectionInv;
+    CVector3 Position;
     float    NearPlane;
-    XMFLOAT3 Forward;
+    CVector3 Forward;
     float    FarPlane;
-    XMFLOAT3 Right;
+    CVector3 Right;
     float    AspectRatio;
 };
 
@@ -71,8 +72,8 @@ void Renderer::PerformFrustumCulling( const Scene& Scene )
         Bottom = TransformMatrix.TransformPosition( Bottom );
 
         AABB Box;
-        Box.Top = XMFLOAT3( &Top.x );
-        Box.Bottom = XMFLOAT3(&Bottom.x);
+        Box.Top = Top;
+        Box.Bottom = Bottom;
         if ( CameraFrustum.CheckAABB( Box ) )
         {
             if ( Command.Material->ShouldRenderInForwardPass() )
@@ -165,8 +166,8 @@ void Renderer::PerformAABBDebugPass( CommandList& InCmdList )
     for ( const MeshDrawCommand& Command : Resources.DeferredVisibleCommands )
     {
         AABB& Box = Command.Mesh->BoundingBox;
-        XMFLOAT3 Scale = XMFLOAT3( Box.GetWidth(), Box.GetHeight(), Box.GetDepth() );
-        XMFLOAT3 Position = Box.GetCenter();
+        CVector3 Scale = CVector3( Box.GetWidth(), Box.GetHeight(), Box.GetDepth() );
+        CVector3 Position = Box.GetCenter();
 
         CMatrix4 TranslationMatrix = CMatrix4::Translation( Position.x, Position.y, Position.z );
         CMatrix4 ScaleMatrix       = CMatrix4::Scale( Scale.x, Scale.y, Scale.z );

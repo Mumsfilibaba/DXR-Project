@@ -1,35 +1,38 @@
 #pragma once
 #include "Core.h"
 
-#include "Utilities/HashUtilities.h"
+#include "Math/Vector2.h"
+#include "Math/Vector3.h"
+#include "Math/MathHash.h"
 
 struct Vertex
 {
-    XMFLOAT3 Position;
-    XMFLOAT3 Normal;
-    XMFLOAT3 Tangent;
-    XMFLOAT2 TexCoord;
+    CVector3 Position;
+    CVector3 Normal;
+    CVector3 Tangent;
+    CVector2 TexCoord;
 
     FORCEINLINE bool operator==( const Vertex& Other ) const
     {
-        return
-            ((Position.x == Other.Position.x) && (Position.y == Other.Position.y) && (Position.z == Other.Position.z)) &&
-            ((Normal.x == Other.Normal.x) && (Normal.y == Other.Normal.y) && (Normal.z == Other.Normal.z)) &&
-            ((Tangent.x == Other.Tangent.x) && (Tangent.y == Other.Tangent.y) && (Tangent.z == Other.Tangent.z)) &&
-            ((TexCoord.x == Other.TexCoord.x) && (TexCoord.y == Other.TexCoord.y));
+        return Position == (Other.Position) && (Normal == Other.Normal) && (Tangent == Other.Tangent) && (TexCoord == Other.TexCoord);
+    }
+
+    FORCEINLINE bool operator!=( const Vertex& Other ) const
+    {
+        return !(*this == Other);
     }
 };
 
 struct VertexHasher
 {
-    inline size_t operator()( const Vertex& V ) const
+    inline size_t operator()( const Vertex& v ) const
     {
-        std::hash<XMFLOAT3> Hasher;
+        std::hash<CVector3> Hasher;
 
-        size_t Hash = Hasher( V.Position );
-        HashCombine<XMFLOAT3>( Hash, V.Normal );
-        HashCombine<XMFLOAT3>( Hash, V.Tangent );
-        HashCombine<XMFLOAT2>( Hash, V.TexCoord );
+        size_t Hash = Hasher( v.Position );
+        HashCombine<CVector3>( Hash, v.Normal );
+        HashCombine<CVector3>( Hash, v.Tangent );
+        HashCombine<CVector2>( Hash, v.TexCoord );
 
         return Hash;
     }
