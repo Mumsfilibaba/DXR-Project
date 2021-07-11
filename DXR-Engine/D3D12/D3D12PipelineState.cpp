@@ -184,7 +184,7 @@ bool D3D12GraphicsPipelineState::Init( const GraphicsPipelineStateCreateInfo& Cr
         {
             uint32 Index = DxShader->GetShaderVisibility();
             ResourceCounts.ResourceCounts[Index] = DxShader->GetResourceCount();
-            Num32BitConstants = Math::Max<uint32>( Num32BitConstants, ResourceCounts.ResourceCounts[Index].Num32BitConstants );
+            Num32BitConstants = NMath::Max<uint32>( Num32BitConstants, ResourceCounts.ResourceCounts[Index].Num32BitConstants );
             ResourceCounts.ResourceCounts[Index].Num32BitConstants = 0;
         }
 

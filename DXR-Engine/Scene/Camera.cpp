@@ -58,7 +58,7 @@ void Camera::Rotate( float Pitch, float Yaw, float Roll )
 
 void Camera::UpdateMatrices()
 {
-    FOV = Math::ToRadians( 80.0f );
+    FOV = NMath::ToRadians( 80.0f );
 
     Width = 1920.0f;
     Height = 1080.0f;

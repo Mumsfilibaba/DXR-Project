@@ -420,7 +420,7 @@ void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const Lig
         // PerObject Structs
         struct ShadowPerObject
         {
-            XMFLOAT4X4 Matrix;
+            CMatrix4 Matrix;
         } ShadowPerObjectBuffer;
 
         SPerShadowMap PerShadowMapData;
@@ -434,8 +434,8 @@ void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const Lig
                 CmdList.SetRenderTargets( nullptr, 0, Cube[Face].Get() );
 
                 auto& Data = LightSetup.PointLightShadowMapsGenerationData[i];
-                PerShadowMapData.Matrix = Data.Matrix[Face];
-                PerShadowMapData.Position = Data.Position;
+                PerShadowMapData.Matrix   = XMFLOAT4X4(&Data.Matrix[Face].m00);
+                PerShadowMapData.Position = XMFLOAT3(&Data.Position.x);
                 PerShadowMapData.FarPlane = Data.FarPlane;
 
                 CmdList.TransitionBuffer( PerShadowMapBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest );
@@ -451,19 +451,20 @@ void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const Lig
                 ConsoleVariable* GlobalFrustumCullEnabled = GConsole.FindVariable( "r.EnableFrustumCulling" );
                 if ( GlobalFrustumCullEnabled->GetBool() )
                 {
-                    Frustum CameraFrustum = Frustum( Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face] );
+                    Frustum CameraFrustum = Frustum( Data.FarPlane, XMFLOAT4X4(&Data.ViewMatrix[Face].m00), XMFLOAT4X4( &Data.ProjMatrix[Face].m00) );
                     for ( const MeshDrawCommand& Command : Scene.GetMeshDrawCommands() )
                     {
-                        const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
-                        XMMATRIX XmTransform = XMMatrixTranspose( XMLoadFloat4x4( &Transform ) );
-                        XMVECTOR XmTop = XMVectorSetW( XMLoadFloat3( &Command.Mesh->BoundingBox.Top ), 1.0f );
-                        XMVECTOR XmBottom = XMVectorSetW( XMLoadFloat3( &Command.Mesh->BoundingBox.Bottom ), 1.0f );
-                        XmTop = XMVector4Transform( XmTop, XmTransform );
-                        XmBottom = XMVector4Transform( XmBottom, XmTransform );
+                        CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
+                        TransformMatrix = TransformMatrix.Transpose();
+
+                        CVector3 Top = CVector3( &Command.Mesh->BoundingBox.Top.x );
+                        Top = TransformMatrix.TransformPosition( Top );
+                        CVector3 Bottom = CVector3( &Command.Mesh->BoundingBox.Bottom.x );
+                        Bottom = TransformMatrix.TransformPosition( Bottom );
 
                         AABB Box;
-                        XMStoreFloat3( &Box.Top, XmTop );
-                        XMStoreFloat3( &Box.Bottom, XmBottom );
+                        Box.Top = XMFLOAT3( &Top.x );
+                        Box.Bottom = XMFLOAT3( &Bottom.x );
                         if ( CameraFrustum.CheckAABB( Box ) )
                         {
                             CmdList.SetVertexBuffers( &Command.VertexBuffer, 1, 0 );
@@ -555,7 +556,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows( CommandList& CmdList, con
         // PerObject Structs
         struct SShadowPerObject
         {
-            XMFLOAT4X4 Matrix;
+            CMatrix4 Matrix;
         } ShadowPerObjectBuffer;
 
         SPerCascade PerCascadeData;
@@ -633,8 +634,8 @@ void ShadowMapRenderer::RenderDirectionalLightShadows( CommandList& CmdList, con
         CmdList.SetSamplerState( DirectionalShadowMaskShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 0 );
 
         const XMUINT3 ThreadGroupXYZ = DirectionalShadowMaskShader->GetThreadGroupXYZ();
-        const uint32 ThreadsX = Math::DivideByMultiple( LightSetup.DirectionalShadowMask->GetWidth(), ThreadGroupXYZ.x );
-        const uint32 ThreadsY = Math::DivideByMultiple( LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y );
+        const uint32 ThreadsX = NMath::DivideByMultiple( LightSetup.DirectionalShadowMask->GetWidth(), ThreadGroupXYZ.x );
+        const uint32 ThreadsY = NMath::DivideByMultiple( LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y );
         CmdList.Dispatch( ThreadsX, ThreadsY, 1 );
 
         CmdList.TransitionTexture( LightSetup.DirectionalShadowMask.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource );

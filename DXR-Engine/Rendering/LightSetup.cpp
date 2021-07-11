@@ -97,8 +97,9 @@ void LightSetup::BeginFrame( CommandList& CmdList, const Scene& Scene )
     for ( Light* Light : Scene.GetLights() )
     {
         float Intensity = Light->GetIntensity();
-        XMFLOAT3 Color = Light->GetColor();
+        CVector3 Color = Light->GetColor();
         Color = Color * Intensity;
+        
         if ( IsSubClassOf<PointLight>( Light ) )
         {
             PointLight* CurrentLight = Cast<PointLight>( Light );
@@ -108,8 +109,8 @@ void LightSetup::BeginFrame( CommandList& CmdList, const Scene& Scene )
             float Dot = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
             float Radius = sqrt( Dot / MinLuma );
 
-            XMFLOAT3 Position = CurrentLight->GetPosition();
-            XMFLOAT4 PosRad = XMFLOAT4( Position.x, Position.y, Position.z, Radius );
+            CVector3 Position = CurrentLight->GetPosition();
+            CVector4 PosRad = CVector4( Position, Radius );
             if ( CurrentLight->IsShadowCaster() )
             {
                 ShadowCastingPointLightData Data;
@@ -150,7 +151,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const Scene& Scene )
 
             CurrentLight->UpdateCascades( *Camera );
 
-            DirectionalLightData.Color = Color;
+            DirectionalLightData.Color = CVector3(Color.x, Color.y, Color.z);
             DirectionalLightData.ShadowBias = CurrentLight->GetShadowBias();
             DirectionalLightData.Direction = CurrentLight->GetDirection();
             DirectionalLightData.Up = CurrentLight->GetUp();

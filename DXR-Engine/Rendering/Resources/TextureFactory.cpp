@@ -106,7 +106,7 @@ Texture2D* TextureFactory::LoadFromMemory( const uint8* Pixels, uint32 Width, ui
     }
 
     const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const uint32 NumMips = GenerateMips ? Math::Max<uint32>( Math::Log2( Math::Max( Width, Height ) ), 1u ) : 1;
+    const uint32 NumMips = GenerateMips ? NMath::Max<uint32>( NMath::Log2( NMath::Max( Width, Height ) ), 1u ) : 1;
 
     Assert( NumMips != 0 );
 
@@ -140,7 +140,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma( Texture2D* PanoramaSo
     Assert( PanoramaSource->IsSRV() );
 
     const bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    const uint32 NumMips = (GenerateNumMips) ? Math::Max<uint32>( Math::Log2( CubeMapSize ), 1u ) : 1u;
+    const uint32 NumMips = (GenerateNumMips) ? NMath::Max<uint32>( NMath::Log2( CubeMapSize ), 1u ) : 1u;
 
     TRef<TextureCube> StagingTexture = CreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr );
     if ( !StagingTexture )
@@ -188,8 +188,8 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma( Texture2D* PanoramaSo
     CmdList.SetShaderResourceView( GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0 );
 
     constexpr uint32 LocalWorkGroupCount = 16;
-    const uint32 ThreadsX = Math::DivideByMultiple( CubeMapSize, LocalWorkGroupCount );
-    const uint32 ThreadsY = Math::DivideByMultiple( CubeMapSize, LocalWorkGroupCount );
+    const uint32 ThreadsX = NMath::DivideByMultiple( CubeMapSize, LocalWorkGroupCount );
+    const uint32 ThreadsY = NMath::DivideByMultiple( CubeMapSize, LocalWorkGroupCount );
     CmdList.Dispatch( ThreadsX, ThreadsY, 6 );
 
     CmdList.TransitionTexture( PanoramaSource, EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource );

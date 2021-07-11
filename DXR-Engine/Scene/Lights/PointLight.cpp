@@ -12,7 +12,7 @@ PointLight::PointLight()
     CalculateMatrices();
 }
 
-void PointLight::SetPosition( const XMFLOAT3& InPosition )
+void PointLight::SetPosition( const CVector3& InPosition )
 {
     Position = InPosition;
     CalculateMatrices();
@@ -20,7 +20,7 @@ void PointLight::SetPosition( const XMFLOAT3& InPosition )
 
 void PointLight::SetPosition( float x, float y, float z )
 {
-    SetPosition( XMFLOAT3( x, y, z ) );
+    SetPosition( CVector3( x, y, z ) );
 }
 
 void PointLight::SetShadowNearPlane( float InShadowNearPlane )
@@ -54,37 +54,31 @@ void PointLight::CalculateMatrices()
         return;
     }
 
-    XMFLOAT3 Directions[6] =
+    CVector3 Directions[6] =
     {
-        {  1.0f,  0.0f,  0.0f },
-        { -1.0f,  0.0f,  0.0f },
-        {  0.0f,  1.0f,  0.0f },
-        {  0.0f, -1.0f,  0.0f },
-        {  0.0f,  0.0f,  1.0f },
-        {  0.0f,  0.0f, -1.0f },
+        { CVector3( 1.0f,  0.0f,  0.0f) },
+        { CVector3(-1.0f,  0.0f,  0.0f) },
+        { CVector3( 0.0f,  1.0f,  0.0f) },
+        { CVector3( 0.0f, -1.0f,  0.0f) },
+        { CVector3( 0.0f,  0.0f,  1.0f) },
+        { CVector3( 0.0f,  0.0f, -1.0f) },
     };
 
-    XMFLOAT3 UpVectors[6] =
+    CVector3 UpVectors[6] =
     {
-        { 0.0f, 1.0f,  0.0f },
-        { 0.0f, 1.0f,  0.0f },
-        { 0.0f, 0.0f, -1.0f },
-        { 0.0f, 0.0f,  1.0f },
-        { 0.0f, 1.0f,  0.0f },
-        { 0.0f, 1.0f,  0.0f },
+        { CVector3(0.0f, 1.0f,  0.0f) },
+        { CVector3(0.0f, 1.0f,  0.0f) },
+        { CVector3(0.0f, 0.0f, -1.0f) },
+        { CVector3(0.0f, 0.0f,  1.0f) },
+        { CVector3(0.0f, 1.0f,  0.0f) },
+        { CVector3(0.0f, 1.0f,  0.0f) },
     };
 
-    XMVECTOR LightPosition = XMLoadFloat3( &Position );
     for ( uint32 i = 0; i < 6; i++ )
     {
-        XMVECTOR LightDirection = XMLoadFloat3( &Directions[i] );
-        XMVECTOR LightUp = XMLoadFloat3( &UpVectors[i] );
-
-        XMMATRIX LightProjection = XMMatrixPerspectiveFovLH( XM_PI / 2.0f, 1.0f, ShadowNearPlane, ShadowFarPlane );
-        XMStoreFloat4x4( &ProjMatrices[i], LightProjection );
-
-        XMMATRIX LightView = XMMatrixLookToLH( LightPosition, LightDirection, LightUp );
-        XMStoreFloat4x4( &ViewMatrices[i], XMMatrixTranspose( LightView ) );
-        XMStoreFloat4x4( &Matrices[i], XMMatrixMultiplyTranspose( LightView, LightProjection ) );
+        CMatrix4 LightProjection = CMatrix4::PerspectiveProjection( NMath::PI_F / 2.0f, 1.0f, ShadowNearPlane, ShadowFarPlane );
+        CMatrix4 LightView = CMatrix4::LookTo( Position, Directions[i], UpVectors[i] );
+        ViewMatrices[i] = LightView.Transpose();
+        Matrices[i] = (LightView * LightProjection).Transpose();
     }
 }

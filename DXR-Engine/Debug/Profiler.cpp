@@ -42,11 +42,11 @@ struct ProfileSample
     FORCEINLINE void AddSample( float NewSample )
     {
         Samples[CurrentSample] = NewSample;
-        Min = Math::Min( NewSample, Min );
-        Max = Math::Max( NewSample, Max );
+        Min = NMath::Min( NewSample, Min );
+        Max = NMath::Max( NewSample, Max );
 
         CurrentSample++;
-        SampleCount = Math::Min<int32>( Samples.Size(), SampleCount + 1 );
+        SampleCount = NMath::Min<int32>( Samples.Size(), SampleCount + 1 );
 
         if ( CurrentSample >= int32( Samples.Size() ) )
         {
@@ -95,11 +95,11 @@ struct GPUProfileSample
     FORCEINLINE void AddSample( float NewSample )
     {
         Samples[CurrentSample] = NewSample;
-        Min = Math::Min( NewSample, Min );
-        Max = Math::Max( NewSample, Max );
+        Min = NMath::Min( NewSample, Min );
+        Max = NMath::Max( NewSample, Max );
 
         CurrentSample++;
-        SampleCount = Math::Min<int32>( Samples.Size(), SampleCount + 1 );
+        SampleCount = NMath::Min<int32>( Samples.Size(), SampleCount + 1 );
 
         if ( CurrentSample >= int32( Samples.Size() ) )
         {
@@ -573,7 +573,7 @@ static void DrawProfiler()
     // Draw DebugWindow with DebugStrings
     const uint32 WindowWidth = GEngine.MainWindow->GetWidth();
     const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
-    const float Width = Math::Max( WindowWidth * 0.6f, 400.0f );
+    const float Width = NMath::Max( WindowWidth * 0.6f, 400.0f );
     const float Height = WindowHeight * 0.75f;
 
     ImGui::PushStyleColor( ImGuiCol_ResizeGrip, 0 );

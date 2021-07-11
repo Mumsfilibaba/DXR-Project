@@ -4,7 +4,7 @@
 #include "Core/RefCountedObject.h"
 #include "Core/Ref.h"
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
@@ -33,6 +33,6 @@ public:
     static TRef<GenericCursor> NotAllowed;
 };
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(pop)
 #endif

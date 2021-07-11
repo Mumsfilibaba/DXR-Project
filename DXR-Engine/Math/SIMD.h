@@ -1,27 +1,22 @@
 #pragma once
 #ifndef DISABLE_SIMD
-#include "Types.h"
-#include "MathDefines.h"
+#include "MathCommon.h"
 
 /* Windows Specific */
-#if defined(_WIN32)
-
-#define ENABLE_SEE_INTRIN
+#if defined(PLATFORM_WINDOWS)
 #include <xmmintrin.h>
 #include <immintrin.h>
-
-#define USE_SSE3 0
-
 #else
-
 #error No valid platform
-
 #endif
+
+#define ALIGN_16 ALIGN(16)
 
 namespace NSIMD
 {
-    /* TODO: Add what we do when we have no SSE intrinsics */
-#ifdef ENABLE_SEE_INTRIN
+    /* TODO: Add fallback when we have no SSE intrinsics */
+
+#if ENABLE_SEE_INTRIN
 
     /* Type */
 
@@ -99,7 +94,7 @@ namespace NSIMD
     /*
     * Returns (A[x], A[y], A[z], A[w])
     */
-    template<UInt8 x, UInt8 y, UInt8 z, UInt8 w>
+    template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle( Float128 A ) noexcept
     {
         return _mm_shuffle_ps( A, A, _MM_SHUFFLE( w, z, y, x ) );
@@ -132,7 +127,7 @@ namespace NSIMD
     /*
     * Returns (A[x], A[y], B[z], B[w])
     */
-    template<UInt8 x, UInt8 y, UInt8 z, UInt8 w>
+    template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle0011( Float128 A, Float128 B ) noexcept
     {
         return _mm_shuffle_ps( A, B, _MM_SHUFFLE( w, z, y, x ) );
@@ -153,7 +148,7 @@ namespace NSIMD
     /*
     * Returns (A[x], B[y], A[z], B[w])
     */
-    template<UInt8 x, UInt8 y, UInt8 z, UInt8 w>
+    template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle0101( Float128 A, Float128 B ) noexcept
     {
         Float128 TempA = Shuffle0011<x, z, y, w>( A, B );
@@ -179,7 +174,7 @@ namespace NSIMD
         return _mm_cvtss_f32( Register );
     }
 
-    /* Math operations */
+    /* NMath operations */
 
     FORCEINLINE Float128 VECTORCALL Mul( Float128 A, Float128 B ) noexcept
     {
@@ -304,7 +299,7 @@ namespace NSIMD
     /*
     * Sets all the components of a register to the value of index 'i' taken from the register A
     */
-    template<UInt8 i>
+    template<uint8 i>
     FORCEINLINE Float128 VECTORCALL Broadcast( Float128 Register ) noexcept
     {
         return Shuffle<i, i, i, i>( Register );
@@ -486,7 +481,7 @@ namespace NSIMD
         return GetX( Temp );
     }
 
-    /* Abstracted Math operations */
+    /* Abstracted NMath operations */
 
     FORCEINLINE Float128 VECTORCALL Abs( Float128 A ) noexcept
     {

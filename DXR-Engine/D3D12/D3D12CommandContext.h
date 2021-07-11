@@ -206,8 +206,8 @@ public:
 
     uint32 GetCurrentEpochValue() const
     {
-        uint32 MaxValue = Math::Max<int32>( (int32)CmdBatches.Size() - 1, 0 );
-        return Math::Min<uint32>( NextCmdBatch - 1, MaxValue );
+        uint32 MaxValue = NMath::Max<int32>( (int32)CmdBatches.Size() - 1, 0 );
+        return NMath::Min<uint32>( NextCmdBatch - 1, MaxValue );
     }
 
     void UpdateBuffer( D3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData );

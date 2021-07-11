@@ -478,19 +478,19 @@ D3D12RootSignature* D3D12RootSignatureCache::GetOrCreateRootSignature( const D3D
         ShaderResourceCount& Count = NewResourceCount.ResourceCounts[i];
         if ( Count.Ranges.NumCBVs > 0 )
         {
-            Count.Ranges.NumCBVs = Math::Max<uint32>( Count.Ranges.NumCBVs, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT );
+            Count.Ranges.NumCBVs = NMath::Max<uint32>( Count.Ranges.NumCBVs, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT );
         }
         if ( Count.Ranges.NumSRVs > 0 )
         {
-            Count.Ranges.NumSRVs = Math::Max<uint32>( Count.Ranges.NumSRVs, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT );
+            Count.Ranges.NumSRVs = NMath::Max<uint32>( Count.Ranges.NumSRVs, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT );
         }
         if ( Count.Ranges.NumUAVs > 0 )
         {
-            Count.Ranges.NumUAVs = Math::Max<uint32>( Count.Ranges.NumUAVs, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT );
+            Count.Ranges.NumUAVs = NMath::Max<uint32>( Count.Ranges.NumUAVs, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT );
         }
         if ( Count.Ranges.NumSamplers > 0 )
         {
-            Count.Ranges.NumSamplers = Math::Max<uint32>( Count.Ranges.NumSamplers, D3D12_DEFAULT_SAMPLER_STATE_COUNT );
+            Count.Ranges.NumSamplers = NMath::Max<uint32>( Count.Ranges.NumSamplers, D3D12_DEFAULT_SAMPLER_STATE_COUNT );
         }
     }
 

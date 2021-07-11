@@ -805,7 +805,7 @@ void MeshFactory::CalculateTangents( MeshData& OutData ) noexcept
 
 /*void Mesh::calcNormal()
 {
-    using namespace Math;
+    using namespace NMath;
 
     for (uint32 i = 0; i < indexBuffer->GetSize(); i += 3)
     {

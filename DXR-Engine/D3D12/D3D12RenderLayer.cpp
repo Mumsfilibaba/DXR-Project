@@ -602,7 +602,7 @@ VertexBuffer* D3D12RenderLayer::CreateVertexBuffer( uint32 Stride, uint32 NumVer
 IndexBuffer* D3D12RenderLayer::CreateIndexBuffer( EIndexFormat Format, uint32 NumIndices, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData )
 {
     const uint32 SizeInBytes = NumIndices * GetStrideFromIndexFormat( Format );
-    const uint32 AlignedSizeInBytes = Math::AlignUp<uint32>( SizeInBytes, sizeof( uint32 ) );
+    const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>( SizeInBytes, sizeof( uint32 ) );
 
     TRef<D3D12IndexBuffer> NewBuffer = DBG_NEW D3D12IndexBuffer( Device, Format, NumIndices, Flags );
     if ( !FinalizeBufferResource<D3D12IndexBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )
@@ -620,7 +620,7 @@ ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer( uint32 Size, uint32 Flag
 {
     Assert( !(Flags & BufferFlag_UAV) && !(Flags & BufferFlag_SRV) );
 
-    const uint32 AlignedSizeInBytes = Math::AlignUp<uint32>( Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT );
+    const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>( Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT );
 
     TRef<D3D12ConstantBuffer> NewBuffer = DBG_NEW D3D12ConstantBuffer( Device, ResourceOfflineDescriptorHeap, Size, Flags );
     if ( !FinalizeBufferResource<D3D12ConstantBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )

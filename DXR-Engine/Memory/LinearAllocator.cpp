@@ -33,7 +33,7 @@ void* LinearAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
 {
     Assert( CurrentArena != nullptr );
 
-    const uint64 AlignedSize = Math::AlignUp( SizeInBytes, Alignment );
+    const uint64 AlignedSize = NMath::AlignUp( SizeInBytes, Alignment );
     if ( CurrentArena->ReservedSize() > AlignedSize )
     {
         return CurrentArena->Allocate( AlignedSize );

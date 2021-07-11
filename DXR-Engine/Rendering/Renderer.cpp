@@ -62,16 +62,17 @@ void Renderer::PerformFrustumCulling( const Scene& Scene )
     Frustum CameraFrustum = Frustum( Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix() );
     for ( const MeshDrawCommand& Command : Scene.GetMeshDrawCommands() )
     {
-        const XMFLOAT4X4& Transform = Command.CurrentActor->GetTransform().GetMatrix();
-        XMMATRIX XmTransform = XMMatrixTranspose( XMLoadFloat4x4( &Transform ) );
-        XMVECTOR XmTop = XMVectorSetW( XMLoadFloat3( &Command.Mesh->BoundingBox.Top ), 1.0f );
-        XMVECTOR XmBottom = XMVectorSetW( XMLoadFloat3( &Command.Mesh->BoundingBox.Bottom ), 1.0f );
-        XmTop = XMVector4Transform( XmTop, XmTransform );
-        XmBottom = XMVector4Transform( XmBottom, XmTransform );
+        CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
+        TransformMatrix = TransformMatrix.Transpose();
+        
+        CVector3 Top = CVector3( &Command.Mesh->BoundingBox.Top.x );
+        Top = TransformMatrix.TransformPosition( Top );
+        CVector3 Bottom = CVector3( &Command.Mesh->BoundingBox.Bottom.x );
+        Bottom = TransformMatrix.TransformPosition( Bottom );
 
         AABB Box;
-        XMStoreFloat3( &Box.Top, XmTop );
-        XMStoreFloat3( &Box.Bottom, XmBottom );
+        Box.Top = XMFLOAT3( &Top.x );
+        Box.Bottom = XMFLOAT3(&Bottom.x);
         if ( CameraFrustum.CheckAABB( Box ) )
         {
             if ( Command.Material->ShouldRenderInForwardPass() )
@@ -167,14 +168,14 @@ void Renderer::PerformAABBDebugPass( CommandList& InCmdList )
         XMFLOAT3 Scale = XMFLOAT3( Box.GetWidth(), Box.GetHeight(), Box.GetDepth() );
         XMFLOAT3 Position = Box.GetCenter();
 
-        XMMATRIX XmTranslation = XMMatrixTranslation( Position.x, Position.y, Position.z );
-        XMMATRIX XmScale = XMMatrixScaling( Scale.x, Scale.y, Scale.z );
+        CMatrix4 TranslationMatrix = CMatrix4::Translation( Position.x, Position.y, Position.z );
+        CMatrix4 ScaleMatrix       = CMatrix4::Scale( Scale.x, Scale.y, Scale.z );
+        CMatrix4 TransformMatrix   = Command.CurrentActor->GetTransform().GetMatrix();
+        TransformMatrix = TransformMatrix.Transpose();
+        TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
+        TransformMatrix.Transpose();
 
-        XMFLOAT4X4 Transform = Command.CurrentActor->GetTransform().GetMatrix();
-        XMMATRIX   XmTransform = XMMatrixTranspose( XMLoadFloat4x4( &Transform ) );
-        XMStoreFloat4x4( &Transform, XMMatrixMultiplyTranspose( XMMatrixMultiply( XmScale, XmTranslation ), XmTransform ) );
-
-        InCmdList.Set32BitShaderConstants( AABBVertexShader.Get(), &Transform, 16 );
+        InCmdList.Set32BitShaderConstants( AABBVertexShader.Get(), &TranslationMatrix, 16 ); 
 
         InCmdList.DrawIndexedInstanced( 24, 1, 0, 0, 0 );
     }
@@ -191,7 +192,7 @@ void Renderer::RenderDebugInterface()
 
         const uint32 WindowWidth = GEngine.MainWindow->GetWidth();
         const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
-        const float Width = Math::Max( WindowWidth * 0.6f, 400.0f );
+        const float Width = NMath::Max( WindowWidth * 0.6f, 400.0f );
         const float Height = WindowHeight * 0.75f;
 
         ImGui::SetNextWindowPos( ImVec2( float( WindowWidth ) * 0.5f, float( WindowHeight ) * 0.175f ), ImGuiCond_Appearing, ImVec2( 0.5f, 0.0f ) );

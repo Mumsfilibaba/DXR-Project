@@ -8,9 +8,9 @@
 
 struct SCascadeGenerationInfo
 {
-    XMFLOAT3 LightDirection;
+    CVector3 LightDirection;
     float CascadeSplitLambda;
-    XMFLOAT3 LightUp;
+    CVector3 LightUp;
     float Padding0;
 };
 

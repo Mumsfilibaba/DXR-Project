@@ -10,7 +10,7 @@
 
 #if ENABLE_PROFILER
 #define TRACE_SCOPE(Name)      ScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
-#define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(__FUNCTION_SIG__)
+#define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(FUNCTION_SIGNATURE)
 
 #define GPU_TRACE_SCOPE(CmdList, Name) GPUScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(CmdList, Name)
 #else

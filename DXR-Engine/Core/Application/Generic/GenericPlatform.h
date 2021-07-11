@@ -2,7 +2,7 @@
 #include "Core/Ref.h"
 #include "Core/Input/InputCodes.h"
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
@@ -109,6 +109,6 @@ protected:
     static PlatformCallbacks* Callbacks;
 };
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(pop)
 #endif

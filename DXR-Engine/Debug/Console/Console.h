@@ -6,7 +6,7 @@
 
 #include <unordered_map>
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
@@ -102,6 +102,6 @@ private:
 
 extern Console GConsole;
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(pop)
 #endif

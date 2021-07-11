@@ -91,14 +91,14 @@ void Mesh::CreateBoundingBox( const MeshData& Data )
     for ( const Vertex& Vertex : Data.Vertices )
     {
         // X
-        Min.x = Math::Min<float>( Min.x, Vertex.Position.x );
-        Max.x = Math::Max<float>( Max.x, Vertex.Position.x );
+        Min.x = NMath::Min<float>( Min.x, Vertex.Position.x );
+        Max.x = NMath::Max<float>( Max.x, Vertex.Position.x );
         // Y
-        Min.y = Math::Min<float>( Min.y, Vertex.Position.y );
-        Max.y = Math::Max<float>( Max.y, Vertex.Position.y );
+        Min.y = NMath::Min<float>( Min.y, Vertex.Position.y );
+        Max.y = NMath::Max<float>( Max.y, Vertex.Position.y );
         // Z
-        Min.z = Math::Min<float>( Min.z, Vertex.Position.z );
-        Max.z = Math::Max<float>( Max.z, Vertex.Position.z );
+        Min.z = NMath::Min<float>( Min.z, Vertex.Position.z );
+        Max.z = NMath::Max<float>( Max.z, Vertex.Position.z );
     }
 
     BoundingBox.Top = Max;

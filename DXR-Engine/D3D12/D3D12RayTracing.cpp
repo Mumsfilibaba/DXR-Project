@@ -87,7 +87,7 @@ bool D3D12RayTracingGeometry::Build( D3D12CommandContext& CmdContext, bool Updat
         }
     }
 
-    uint64 RequiredSize = Math::Max( PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes );
+    uint64 RequiredSize = NMath::Max( PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes );
     CurrentSize = ScratchBuffer ? ScratchBuffer->GetWidth() : 0;
     if ( CurrentSize < RequiredSize )
     {
@@ -221,7 +221,7 @@ bool D3D12RayTracingScene::Build( D3D12CommandContext& CmdContext, const RayTrac
         }
     }
 
-    uint64 RequiredSize = Math::Max( PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes );
+    uint64 RequiredSize = NMath::Max( PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes );
     CurrentSize = ScratchBuffer ? ScratchBuffer->GetWidth() : 0;
     if ( CurrentSize < RequiredSize )
     {

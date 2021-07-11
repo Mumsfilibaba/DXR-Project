@@ -340,7 +340,7 @@ void D3D12CommandContext::Begin()
     // TODO: Investigate better ways of doing this 
     if ( FenceValue >= CmdBatches.Size() )
     {
-        const uint64 WaitValue = Math::Max<uint64>( FenceValue - (CmdBatches.Size() - 1), 0 );
+        const uint64 WaitValue = NMath::Max<uint64>( FenceValue - (CmdBatches.Size() - 1), 0 );
         Fence.WaitForValue( WaitValue );
     }
 
@@ -1080,7 +1080,7 @@ void D3D12CommandContext::GenerateMips( Texture* Texture )
     }
 
     const uint32 MipLevelsPerDispatch = 4;
-    const uint32 UavDescriptorHandleCount = Math::AlignUp<uint32>( Desc.MipLevels, MipLevelsPerDispatch );
+    const uint32 UavDescriptorHandleCount = NMath::AlignUp<uint32>( Desc.MipLevels, MipLevelsPerDispatch );
     const uint32 NumDispatches = UavDescriptorHandleCount / MipLevelsPerDispatch;
 
     D3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
@@ -1163,7 +1163,7 @@ void D3D12CommandContext::GenerateMips( Texture* Texture )
     for ( uint32 i = 0; i < NumDispatches; i++ )
     {
         ConstantData.TexelSize = XMFLOAT2( 1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight) );
-        ConstantData.NumMipLevels = Math::Min<uint32>( 4, RemainingMiplevels );
+        ConstantData.NumMipLevels = NMath::Min<uint32>( 4, RemainingMiplevels );
 
         CmdList.SetComputeRoot32BitConstants( &ConstantData, 4, 0, 0 );
 
@@ -1175,8 +1175,8 @@ void D3D12CommandContext::GenerateMips( Texture* Texture )
         CmdList.SetComputeRootDescriptorTable( UavHandle_GPU, 2 );
 
         constexpr uint32 ThreadCount = 8;
-        const uint32 ThreadsX = Math::DivideByMultiple( DstWidth, ThreadCount );
-        const uint32 ThreadsY = Math::DivideByMultiple( DstHeight, ThreadCount );
+        const uint32 ThreadsX = NMath::DivideByMultiple( DstWidth, ThreadCount );
+        const uint32 ThreadsY = NMath::DivideByMultiple( DstHeight, ThreadCount );
         CmdList.Dispatch( ThreadsX, ThreadsY, ThreadsZ );
 
         UnorderedAccessBarrier( StagingTexture.Get() );

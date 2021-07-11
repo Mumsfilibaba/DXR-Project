@@ -54,11 +54,11 @@ workspace "DXR-Project"
         }
     filter {}
 
-    -- Compiler option
+    -- IDE options
 	filter "action:vs*"
         defines
         {
-            "COMPILER_VISUAL_STUDIO",
+            "IDE_VISUAL_STUDIO",
             "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING",
             "_CRT_SECURE_NO_WARNINGS",
         }

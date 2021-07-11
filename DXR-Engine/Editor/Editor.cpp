@@ -29,7 +29,7 @@ static void DrawSideWindow();
 static void DrawRenderSettings();
 static void DrawSceneInfo();
 
-static void DrawFloat3Control( const std::string& Label, XMFLOAT3& Value, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f )
+static void DrawFloat3Control( const std::string& Label, CVector3& Value, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f )
 {
     ImGui::PushID( Label.c_str() );
     ImGui::Columns( 2, nullptr, false );
@@ -144,7 +144,7 @@ static void DrawSideWindow()
     {
         const uint32 WindowWidth = GEngine.MainWindow->GetWidth();
         const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
-        const float Width = Math::Max( WindowWidth * 0.3f, 400.0f );
+        const float Width = NMath::Max( WindowWidth * 0.3f, 400.0f );
         const float Height = WindowHeight * 0.7f;
 
         ImGui::PushStyleColor( ImGuiCol_ResizeGrip, 0 );
@@ -392,20 +392,20 @@ static void DrawSceneInfo()
                 if ( ImGui::TreeNode( "Transform" ) )
                 {
                     // Transform
-                    XMFLOAT3 Translation = Actor->GetTransform().GetTranslation();
+                    CVector3 Translation = Actor->GetTransform().GetTranslation();
                     DrawFloat3Control( "Translation", Translation );
                     Actor->GetTransform().SetTranslation( Translation );
 
                     // Rotation
-                    XMFLOAT3 Rotation = Actor->GetTransform().GetRotation();
-                    Rotation = XMFLOAT3(
+                    CVector3 Rotation = Actor->GetTransform().GetRotation();
+                    Rotation = CVector3(
                         XMConvertToDegrees( Rotation.x ),
                         XMConvertToDegrees( Rotation.y ),
                         XMConvertToDegrees( Rotation.z ) );
 
                     DrawFloat3Control( "Rotation", Rotation, 0.0f, 100.0f, 1.0f );
 
-                    Rotation = XMFLOAT3(
+                    Rotation = CVector3(
                         XMConvertToRadians( Rotation.x ),
                         XMConvertToRadians( Rotation.y ),
                         XMConvertToRadians( Rotation.z ) );
@@ -413,8 +413,8 @@ static void DrawSceneInfo()
                     Actor->GetTransform().SetRotation( Rotation );
 
                     // Scale
-                    XMFLOAT3 Scale0 = Actor->GetTransform().GetScale();
-                    XMFLOAT3 Scale1 = Scale0;
+                    CVector3 Scale0 = Actor->GetTransform().GetScale();
+                    CVector3 Scale1 = Scale0;
                     DrawFloat3Control( "Scale", Scale0, 1.0f );
 
                     ImGui::SameLine();
@@ -534,7 +534,7 @@ static void DrawSceneInfo()
                     // Transform
                     if ( ImGui::TreeNode( "Transform" ) )
                     {
-                        XMFLOAT3 Translation = CurrentPointLight->GetPosition();
+                        CVector3 Translation = CurrentPointLight->GetPosition();
                         DrawFloat3Control( "Translation", Translation, 0.0f, ColumnWidth );
                         CurrentPointLight->SetPosition( Translation );
 
@@ -550,7 +550,7 @@ static void DrawSceneInfo()
                         ImGui::Text( "Color" );
                         ImGui::NextColumn();
 
-                        const XMFLOAT3& Color = CurrentPointLight->GetColor();
+                        const CVector3& Color = CurrentPointLight->GetColor();
                         float Arr[3] = { Color.x, Color.y, Color.z };
                         if ( ImGui::ColorEdit3( "##Color", Arr ) )
                         {
@@ -648,7 +648,7 @@ static void DrawSceneInfo()
                         ImGui::Text( "Color" );
                         ImGui::NextColumn();
 
-                        const XMFLOAT3& Color = CurrentDirectionalLight->GetColor();
+                        const CVector3& Color = CurrentDirectionalLight->GetColor();
                         float Arr[3] = { Color.x, Color.y, Color.z };
                         if ( ImGui::ColorEdit3( "##Color", Arr ) )
                         {
@@ -672,8 +672,8 @@ static void DrawSceneInfo()
                     // Transform
                     if ( ImGui::TreeNode( "Transform" ) )
                     {
-                        XMFLOAT3 Rotation = CurrentDirectionalLight->GetRotation();
-                        Rotation = XMFLOAT3(
+                        CVector3 Rotation = CurrentDirectionalLight->GetRotation();
+                        Rotation = CVector3(
                             XMConvertToDegrees( Rotation.x ),
                             XMConvertToDegrees( Rotation.y ),
                             XMConvertToDegrees( Rotation.z )
@@ -681,7 +681,7 @@ static void DrawSceneInfo()
 
                         DrawFloat3Control( "Rotation", Rotation, 0.0f, ColumnWidth, 1.0f );
 
-                        Rotation = XMFLOAT3(
+                        Rotation = CVector3(
                             XMConvertToRadians( Rotation.x ),
                             XMConvertToRadians( Rotation.y ),
                             XMConvertToRadians( Rotation.z )
@@ -695,7 +695,7 @@ static void DrawSceneInfo()
                         ImGui::Text( "Direction" );
                         ImGui::NextColumn();
 
-                        XMFLOAT3 Direction = CurrentDirectionalLight->GetDirection();
+                        CVector3 Direction = CurrentDirectionalLight->GetDirection();
                         float* DirArr = reinterpret_cast<float*>(&Direction);
                         ImGui::InputFloat3( "##Direction", DirArr, "%.3f", ImGuiInputTextFlags_ReadOnly );
 
@@ -706,7 +706,7 @@ static void DrawSceneInfo()
                     // Shadow Settings
                     if ( ImGui::TreeNode( "Shadow Settings" ) )
                     {
-                        XMFLOAT3 LookAt = CurrentDirectionalLight->GetLookAt();
+                        CVector3 LookAt = CurrentDirectionalLight->GetLookAt();
                         DrawFloat3Control( "LookAt", LookAt, 0.0f, ColumnWidth );
                         CurrentDirectionalLight->SetLookAt( LookAt );
 
@@ -717,7 +717,7 @@ static void DrawSceneInfo()
                         ImGui::Text( "Translation" );
                         ImGui::NextColumn();
 
-                        XMFLOAT3 Position = CurrentDirectionalLight->GetPosition();
+                        CVector3 Position = CurrentDirectionalLight->GetPosition();
                         float* PosArr = reinterpret_cast<float*>(&Position);
                         ImGui::InputFloat3( "##Translation", PosArr, "%.3f", ImGuiInputTextFlags_ReadOnly );
 

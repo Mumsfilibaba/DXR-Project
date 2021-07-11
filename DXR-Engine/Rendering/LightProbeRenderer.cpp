@@ -105,8 +105,8 @@ void LightProbeRenderer::RenderSkyLightProbe( CommandList& CmdList, const LightS
 
     {
         const XMUINT3 ThreadCount = IrradianceGenShader->GetThreadGroupXYZ();
-        const uint32 ThreadWidth = Math::DivideByMultiple( IrradianceMapSize, ThreadCount.x );
-        const uint32 ThreadHeight = Math::DivideByMultiple( IrradianceMapSize, ThreadCount.y );
+        const uint32 ThreadWidth = NMath::DivideByMultiple( IrradianceMapSize, ThreadCount.x );
+        const uint32 ThreadHeight = NMath::DivideByMultiple( IrradianceMapSize, ThreadCount.y );
         CmdList.Dispatch( ThreadWidth, ThreadHeight, 6 );
     }
 
@@ -131,8 +131,8 @@ void LightProbeRenderer::RenderSkyLightProbe( CommandList& CmdList, const LightS
 
         {
             const XMUINT3 ThreadCount = SpecularIrradianceGenShader->GetThreadGroupXYZ();
-            const uint32 ThreadWidth = Math::DivideByMultiple( Width, ThreadCount.x );
-            const uint32 ThreadHeight = Math::DivideByMultiple( Width, ThreadCount.y );
+            const uint32 ThreadWidth = NMath::DivideByMultiple( Width, ThreadCount.x );
+            const uint32 ThreadHeight = NMath::DivideByMultiple( Width, ThreadCount.y );
             CmdList.Dispatch( ThreadWidth, ThreadHeight, 6 );
         }
 
@@ -167,7 +167,7 @@ bool LightProbeRenderer::CreateSkyLightResources( LightSetup& LightSetup )
         return false;
     }
 
-    const uint16 SpecularIrradianceMiplevels = Math::Max<uint16>( Math::Log2( LightSetup.SpecularIrradianceSize ), 1u );
+    const uint16 SpecularIrradianceMiplevels = NMath::Max<uint16>( NMath::Log2( LightSetup.SpecularIrradianceSize ), 1u );
     LightSetup.SpecularIrradianceMap = CreateTextureCube(
         LightSetup.LightProbeFormat,
         LightSetup.SpecularIrradianceSize,

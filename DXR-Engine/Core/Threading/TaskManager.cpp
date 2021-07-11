@@ -69,7 +69,7 @@ void TaskManager::WorkThread()
 bool TaskManager::Init()
 {
     // NOTE: Maybe change to NumProcessors - 1 -> Test performance
-    uint32 ThreadCount = Math::Max<int32>( PlatformProcess::GetNumProcessors() - 1, 1 );
+    uint32 ThreadCount = NMath::Max<int32>( PlatformProcess::GetNumProcessors() - 1, 1 );
     WorkThreads.Resize( ThreadCount );
 
     LOG_INFO( "[TaskManager]: Starting '" + std::to_string( ThreadCount ) + "' Workers" );

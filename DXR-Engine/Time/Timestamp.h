@@ -1,7 +1,7 @@
 #pragma once
 #include "Core.h"
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4251)
 #endif
@@ -139,6 +139,6 @@ private:
     uint64 TimestampInNS = 0;
 };
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(pop)
 #endif

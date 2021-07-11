@@ -111,11 +111,11 @@ bool D3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Refl
                 ConstantBufferParameters.EmplaceBack( ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, SizeInBytes );
                 if ( ShaderBindDesc.Space == 0 )
                 {
-                    ResourceCount.Ranges.NumCBVs = Math::Max( ResourceCount.Ranges.NumCBVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
+                    ResourceCount.Ranges.NumCBVs = NMath::Max( ResourceCount.Ranges.NumCBVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
                 }
                 else
                 {
-                    RTLocalResourceCount.Ranges.NumCBVs = Math::Max( RTLocalResourceCount.Ranges.NumCBVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
+                    RTLocalResourceCount.Ranges.NumCBVs = NMath::Max( RTLocalResourceCount.Ranges.NumCBVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
                 }
             }
         }
@@ -125,11 +125,11 @@ bool D3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Refl
 
             if ( ShaderBindDesc.Space == 0 )
             {
-                ResourceCount.Ranges.NumSamplers = Math::Max( ResourceCount.Ranges.NumSamplers, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
+                ResourceCount.Ranges.NumSamplers = NMath::Max( ResourceCount.Ranges.NumSamplers, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
             }
             else
             {
-                RTLocalResourceCount.Ranges.NumSamplers = Math::Max( RTLocalResourceCount.Ranges.NumSamplers, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
+                RTLocalResourceCount.Ranges.NumSamplers = NMath::Max( RTLocalResourceCount.Ranges.NumSamplers, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
             }
         }
         else if ( IsShaderResourceView( ShaderBindDesc.Type ) )
@@ -140,11 +140,11 @@ bool D3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Refl
 
             if ( ShaderBindDesc.Space == 0 )
             {
-                ResourceCount.Ranges.NumSRVs = Math::Max( ResourceCount.Ranges.NumSRVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
+                ResourceCount.Ranges.NumSRVs = NMath::Max( ResourceCount.Ranges.NumSRVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
             }
             else
             {
-                RTLocalResourceCount.Ranges.NumSRVs = Math::Max( RTLocalResourceCount.Ranges.NumSRVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
+                RTLocalResourceCount.Ranges.NumSRVs = NMath::Max( RTLocalResourceCount.Ranges.NumSRVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
             }
         }
         else if ( IsUnorderedAccessView( ShaderBindDesc.Type ) )
@@ -153,11 +153,11 @@ bool D3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Refl
 
             if ( ShaderBindDesc.Space == 0 )
             {
-                ResourceCount.Ranges.NumUAVs = Math::Max( ResourceCount.Ranges.NumUAVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
+                ResourceCount.Ranges.NumUAVs = NMath::Max( ResourceCount.Ranges.NumUAVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
             }
             else
             {
-                RTLocalResourceCount.Ranges.NumUAVs = Math::Max( RTLocalResourceCount.Ranges.NumUAVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
+                RTLocalResourceCount.Ranges.NumUAVs = NMath::Max( RTLocalResourceCount.Ranges.NumUAVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
             }
         }
     }
@@ -288,11 +288,11 @@ bool D3D12BaseComputeShader::Init()
 
 void ShaderResourceCount::Combine( const ShaderResourceCount& Other )
 {
-    Ranges.NumCBVs = Math::Max( Ranges.NumCBVs, Other.Ranges.NumCBVs );
-    Ranges.NumSRVs = Math::Max( Ranges.NumSRVs, Other.Ranges.NumSRVs );
-    Ranges.NumUAVs = Math::Max( Ranges.NumUAVs, Other.Ranges.NumUAVs );
-    Ranges.NumSamplers = Math::Max( Ranges.NumSamplers, Other.Ranges.NumSamplers );
-    Num32BitConstants = Math::Max( Num32BitConstants, Other.Num32BitConstants );
+    Ranges.NumCBVs = NMath::Max( Ranges.NumCBVs, Other.Ranges.NumCBVs );
+    Ranges.NumSRVs = NMath::Max( Ranges.NumSRVs, Other.Ranges.NumSRVs );
+    Ranges.NumUAVs = NMath::Max( Ranges.NumUAVs, Other.Ranges.NumUAVs );
+    Ranges.NumSamplers = NMath::Max( Ranges.NumSamplers, Other.Ranges.NumSamplers );
+    Num32BitConstants = NMath::Max( Num32BitConstants, Other.Num32BitConstants );
 }
 
 bool ShaderResourceCount::IsCompatible( const ShaderResourceCount& Other ) const

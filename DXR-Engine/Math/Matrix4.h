@@ -381,6 +381,14 @@ public:
     inline static CMatrix4 RotationRollPitchYaw( float Pitch, float Yaw, float Roll ) noexcept;
 
     /**
+     * Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
+     *
+     * @param PitchYawRoll: A vector containing the PitchYawRoll (x = Pitch, y = Yaw, z = Roll)
+     * @return A rotation matrix
+     */
+    inline static CMatrix4 RotationRollPitchYaw( const CVector3& PitchYawRoll ) noexcept;
+
+    /**
      * Creates and returns a rotation matrix around the x-axis
      *
      * @param x: Rotation around the x-axis in radians
@@ -1035,13 +1043,13 @@ FORCEINLINE void CMatrix4::SetIdentity() noexcept
 
 FORCEINLINE CVector4 CMatrix4::GetRow( int Row ) const noexcept
 {
-    ASSERT( Row < 4 );
+    Assert( Row < 4 );
     return CVector4( f[Row] );
 }
 
 FORCEINLINE CVector4 CMatrix4::GetColumn( int Column ) const noexcept
 {
-    ASSERT( Column < 4 );
+    Assert( Column < 4 );
     return CVector4( f[0][Column], f[1][Column], f[2][Column], f[3][Column] );
 }
 
@@ -1506,6 +1514,11 @@ inline CMatrix4 CMatrix4::RotationRollPitchYaw( float Pitch, float Yaw, float Ro
         (CosRSinP * SinY) - (SinR * CosY), (CosR * CosP), (SinR * SinY) + (CosRSinP * CosY), 0.0f,
         (CosP * SinY), -SinP, (CosP * CosY), 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f );
+}
+
+inline CMatrix4 CMatrix4::RotationRollPitchYaw( const CVector3& PitchYawRoll ) noexcept
+{
+    return RotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
 }
 
 inline CMatrix4 CMatrix4::RotationX( float x ) noexcept

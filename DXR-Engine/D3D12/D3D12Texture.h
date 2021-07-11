@@ -4,7 +4,7 @@
 #include "D3D12Resource.h"
 #include "D3D12Views.h"
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
@@ -247,6 +247,6 @@ inline D3D12BaseTexture* D3D12TextureCast( Texture* Texture )
     }
 }
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(pop)
 #endif

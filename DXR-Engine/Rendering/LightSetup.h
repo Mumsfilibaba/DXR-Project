@@ -6,15 +6,17 @@
 #include "Scene/Scene.h"
 #include "Scene/Lights/DirectionalLight.h"
 
+#include "Math/Vector4.h"
+
 struct PointLightData
 {
-    XMFLOAT3 Color = XMFLOAT3( 1.0f, 1.0f, 1.0f );
+    CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
     float Padding0;
 };
 
 struct ShadowCastingPointLightData
 {
-    XMFLOAT3 Color = XMFLOAT3( 1.0f, 1.0f, 1.0f );
+    CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
     float ShadowBias = 0.005f;
     float FarPlane = 10.0f;
     float MaxShadowBias = 0.05f;
@@ -24,20 +26,20 @@ struct ShadowCastingPointLightData
 
 struct PointLightShadowMapGenerationData
 {
-    TStaticArray<XMFLOAT4X4, 6> Matrix;
-    TStaticArray<XMFLOAT4X4, 6> ViewMatrix;
-    TStaticArray<XMFLOAT4X4, 6> ProjMatrix;
+    TStaticArray<CMatrix4, 6> Matrix;
+    TStaticArray<CMatrix4, 6> ViewMatrix;
+    TStaticArray<CMatrix4, 6> ProjMatrix;
     float    FarPlane;
-    XMFLOAT3 Position;
+    CVector3 Position;
 };
 
 struct DirectionalLightData
 {
-    XMFLOAT3 Color = XMFLOAT3( 1.0f, 1.0f, 1.0f );
+    CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
     float ShadowBias = 0.005f;
-    XMFLOAT3 Direction = XMFLOAT3( 0.0f, -1.0f, 0.0f );
+    CVector3 Direction = CVector3( 0.0f, -1.0f, 0.0f );
     float MaxShadowBias = 0.05f;
-    XMFLOAT3 Up = XMFLOAT3( 0.0f, 0.0f, -1.0f );
+    CVector3 Up = CVector3( 0.0f, 0.0f, -1.0f );
     float LightSize;
 };
 
@@ -64,7 +66,7 @@ struct LightSetup
     void BeginFrame( CommandList& CmdList, const Scene& Scene );
     void Release();
 
-    TArray<XMFLOAT4>       PointLightsPosRad;
+    TArray<CVector4>       PointLightsPosRad;
     TArray<PointLightData> PointLightsData;
 
     TRef<ConstantBuffer> PointLightsBuffer;
@@ -72,7 +74,7 @@ struct LightSetup
 
     TArray<PointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
 
-    TArray<XMFLOAT4>                    ShadowCastingPointLightsPosRad;
+    TArray<CVector4>                    ShadowCastingPointLightsPosRad;
     TArray<ShadowCastingPointLightData> ShadowCastingPointLightsData;
 
     TRef<ConstantBuffer> ShadowCastingPointLightsBuffer;

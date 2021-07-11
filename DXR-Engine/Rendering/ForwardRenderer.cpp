@@ -170,10 +170,10 @@ void ForwardRenderer::Render( CommandList& CmdList, const FrameResources& FrameR
     CmdList.SetSamplerState( PShader.Get(), FrameResources.PointLightShadowSampler.Get(), 3 );
     //CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 4);
 
-    struct TransformBuffer
+    struct STransformBuffer
     {
-        XMFLOAT4X4 Transform;
-        XMFLOAT4X4 TransformInv;
+        CMatrix4 Transform;
+        CMatrix4 TransformInv;
     } TransformPerObject;
 
     CmdList.SetGraphicsPipelineState( PipelineState.Get() );
@@ -202,7 +202,7 @@ void ForwardRenderer::Render( CommandList& CmdList, const FrameResources& FrameR
         SamplerState* SamplerState = Command.Material->GetMaterialSampler();
         CmdList.SetSamplerState( PShader.Get(), SamplerState, 0 );
 
-        TransformPerObject.Transform = Command.CurrentActor->GetTransform().GetMatrix();
+        TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
 
         CmdList.Set32BitShaderConstants( VShader.Get(), &TransformPerObject, 32 );

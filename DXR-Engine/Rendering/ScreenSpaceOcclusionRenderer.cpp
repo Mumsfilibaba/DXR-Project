@@ -66,7 +66,7 @@ bool ScreenSpaceOcclusionRenderer::Init( FrameResources& FrameResources )
         XmSample = XMVector3Normalize( XmSample );
 
         float Dot = XMVectorGetX( XMVector3Dot( XmSample, Normal ) );
-        if ( Math::Abs( Dot ) > 0.95f )
+        if ( NMath::Abs( Dot ) > 0.95f )
         {
             continue;
         }
@@ -74,7 +74,7 @@ bool ScreenSpaceOcclusionRenderer::Init( FrameResources& FrameResources )
         XmSample = XMVectorScale( XmSample, RandomFloats( Generator ) );
 
         float Scale = float( i ) / 64.0f;
-        Scale = Math::Lerp( 0.1f, 1.0f, Scale * Scale );
+        Scale = NMath::Lerp( 0.1f, 1.0f, Scale * Scale );
         XmSample = XMVectorScale( XmSample, Scale );
 
         XMFLOAT3 Sample;
@@ -274,8 +274,8 @@ void ScreenSpaceOcclusionRenderer::Render( CommandList& CmdList, FrameResources&
     CmdList.Set32BitShaderConstants( SSAOShader.Get(), &SSAOSettings, 7 );
 
     constexpr uint32 ThreadCount = 16;
-    const uint32 DispatchWidth = Math::DivideByMultiple<uint32>( Width, ThreadCount );
-    const uint32 DispatchHeight = Math::DivideByMultiple<uint32>( Height, ThreadCount );
+    const uint32 DispatchWidth = NMath::DivideByMultiple<uint32>( Width, ThreadCount );
+    const uint32 DispatchHeight = NMath::DivideByMultiple<uint32>( Height, ThreadCount );
     CmdList.Dispatch( DispatchWidth, DispatchHeight, 1 );
 
     CmdList.UnorderedAccessTextureBarrier( FrameResources.SSAOBuffer.Get() );

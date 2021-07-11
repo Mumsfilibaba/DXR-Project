@@ -2,6 +2,9 @@
 #include "Core/CoreObject/CoreObject.h"
 #include "Core/Containers/Array.h"
 
+#include "Math/Vector3.h"
+#include "Math/Matrix4.h"
+
 class Actor;
 
 // Component BaseClass
@@ -29,10 +32,10 @@ public:
     ~Transform() = default;
 
     void SetTranslation( float x, float y, float z );
-    void SetTranslation( const XMFLOAT3& InPosition );
+    void SetTranslation( const CVector3& InPosition );
 
     void SetScale( float x, float y, float z );
-    void SetScale( const XMFLOAT3& InScale );
+    void SetScale( const CVector3& InScale );
 
     void SetUniformScale( float InScale )
     {
@@ -40,28 +43,28 @@ public:
     }
 
     void SetRotation( float x, float y, float z );
-    void SetRotation( const XMFLOAT3& InRotation );
+    void SetRotation( const CVector3& InRotation );
 
-    const XMFLOAT3& GetTranslation() const
+    const CVector3& GetTranslation() const
     {
         return Translation;
     }
 
-    const XMFLOAT3& GetScale() const
+    const CVector3& GetScale() const
     {
         return Scale;
     }
 
-    const XMFLOAT3& GetRotation() const
+    const CVector3& GetRotation() const
     {
         return Rotation;
     }
 
-    const XMFLOAT4X4& GetMatrix() const
+    const CMatrix4& GetMatrix() const
     {
         return Matrix;
     }
-    const XMFLOAT4X4& GetMatrixInverse() const
+    const CMatrix4& GetMatrixInverse() const
     {
         return MatrixInv;
     }
@@ -74,12 +77,12 @@ public:
 private:
     void CalculateMatrix();
 
-    XMFLOAT4X4 Matrix;
-    XMFLOAT4X4 MatrixInv;
+    CMatrix4 Matrix;
+    CMatrix4 MatrixInv;
     XMFLOAT3X4 TinyMatrix;
-    XMFLOAT3   Translation;
-    XMFLOAT3   Scale;
-    XMFLOAT3   Rotation;
+    CVector3   Translation;
+    CVector3   Scale;
+    CVector3   Rotation;
 };
 
 class Scene;

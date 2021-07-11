@@ -1,6 +1,8 @@
 #pragma once
 #include "Core/CoreObject/CoreObject.h"
 
+#include "Math/Vector3.h"
+
 class Light : public CoreObject
 {
     CORE_OBJECT( Light, CoreObject );
@@ -9,7 +11,7 @@ public:
     Light();
     virtual ~Light() = default;
 
-    void SetColor( const XMFLOAT3& InColor );
+    void SetColor( const CVector3& InColor );
     void SetColor( float R, float G, float B );
 
     void SetIntensity( float InIntensity );
@@ -29,7 +31,7 @@ public:
         return Intensity;
     }
 
-    const XMFLOAT3& GetColor() const
+    const CVector3& GetColor() const
     {
         return Color;
     }
@@ -53,7 +55,7 @@ public:
     }
 
 protected:
-    XMFLOAT3 Color;
+    CVector3 Color;
     float Intensity = 1.0f;
     float ShadowNearPlane;
     float ShadowFarPlane;

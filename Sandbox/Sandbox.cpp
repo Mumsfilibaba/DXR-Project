@@ -220,7 +220,7 @@ bool Sandbox::Init()
     Scene->AddActor( NewActor );
 
     NewActor->SetName( "Plane" );
-    NewActor->GetTransform().SetRotation( 0.0f, 0.0f, Math::HALF_PI );
+    NewActor->GetTransform().SetRotation( 0.0f, 0.0f, NMath::HALF_PI );
     NewActor->GetTransform().SetUniformScale( 50.0f );
     NewActor->GetTransform().SetTranslation( 0.0f, 0.0f, 42.0f );
 
@@ -417,7 +417,7 @@ bool Sandbox::Init()
     Light4->SetMaxShadowBias( 0.0015f );
     Light4->SetColor( 1.0f, 1.0f, 1.0f );
     Light4->SetIntensity( 10.0f );
-    Light4->SetRotation( Math::ToRadians( 35.0f ), Math::ToRadians( 135.0f ), 0.0f );
+    Light4->SetRotation( NMath::ToRadians( 35.0f ), NMath::ToRadians( 135.0f ), 0.0f );
     //Light4->SetRotation(0.0f, 0.0f, 0.0f);
     Scene->AddLight( Light4 );
 

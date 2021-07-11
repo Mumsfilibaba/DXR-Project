@@ -34,7 +34,7 @@ struct TD3D12DescriptorViewCache
             Dirty[Visibility] = true;
 
             uint32& RangeLength = DescriptorRangeLengths[Visibility];
-            RangeLength = Math::Max<uint32>( RangeLength, ShaderRegister + 1 );
+            RangeLength = NMath::Max<uint32>( RangeLength, ShaderRegister + 1 );
         }
     }
 
@@ -149,7 +149,7 @@ public:
         if ( VertexBuffers[Slot] != VertexBuffer )
         {
             VertexBuffers[Slot] = VertexBuffer;
-            NumVertexBuffers = Math::Max( NumVertexBuffers, Slot + 1 );
+            NumVertexBuffers = NMath::Max( NumVertexBuffers, Slot + 1 );
 
             VertexBuffersDirty = true;
         }
@@ -255,7 +255,7 @@ public:
             RenderTargetViewHandles[Slot] = { 0 };
         }
 
-        NumRenderTargets = Math::Max( NumRenderTargets, Slot + 1 );
+        NumRenderTargets = NMath::Max( NumRenderTargets, Slot + 1 );
         Dirty = true;
     }
 

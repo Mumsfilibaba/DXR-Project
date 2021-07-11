@@ -403,8 +403,7 @@ FORCEINLINE CVector3::CVector3( float Scalar ) noexcept
 inline void CVector3::Normalize() noexcept
 {
     float fLength = Length();
-
-    ASSERT( fLength != 0 );
+    Assert( fLength != 0 );
 
     float fRecipLength = 1.0f / fLength;
     x = x * fRecipLength;
@@ -648,13 +647,13 @@ FORCEINLINE CVector3& CVector3::operator/=( float RHS ) noexcept
 
 FORCEINLINE float& CVector3::operator[]( int Index ) noexcept
 {
-    ASSERT( Index < 4 );
+    Assert( Index < 4 );
     return reinterpret_cast<float*>(this)[Index];
 }
 
 FORCEINLINE float CVector3::operator[]( int Index ) const noexcept
 {
-    ASSERT( Index < 4 );
+    Assert( Index < 4 );
     return reinterpret_cast<const float*>(this)[Index];
 }
 

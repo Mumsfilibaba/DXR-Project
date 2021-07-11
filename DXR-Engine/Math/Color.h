@@ -1,8 +1,6 @@
 #pragma once
 #include "Core.h"
 
-#include "Memory/Memory.h"
-
 struct ColorF
 {
     ColorF()
@@ -21,23 +19,12 @@ struct ColorF
     {
     }
 
-    ColorF( const ColorF& Other )
-    {
-        Memory::Memcpy( Elements, Other.Elements, sizeof( Elements ) );
-    }
-
     void Set( float InR, float InG, float InB, float InA )
     {
         r = InR;
         g = InG;
         b = InB;
         a = InA;
-    }
-
-    ColorF& operator=( const ColorF& Other )
-    {
-        Memory::Memcpy( Elements, Other.Elements, sizeof( Elements ) );
-        return *this;
     }
 
     union

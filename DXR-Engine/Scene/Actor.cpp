@@ -54,10 +54,10 @@ Transform::Transform()
 
 void Transform::SetTranslation( float x, float y, float z )
 {
-    SetTranslation( XMFLOAT3( x, y, z ) );
+    SetTranslation( CVector3( x, y, z ) );
 }
 
-void Transform::SetTranslation( const XMFLOAT3& InPosition )
+void Transform::SetTranslation( const CVector3& InPosition )
 {
     Translation = InPosition;
     CalculateMatrix();
@@ -65,10 +65,10 @@ void Transform::SetTranslation( const XMFLOAT3& InPosition )
 
 void Transform::SetScale( float x, float y, float z )
 {
-    SetScale( XMFLOAT3( x, y, z ) );
+    SetScale( CVector3( x, y, z ) );
 }
 
-void Transform::SetScale( const XMFLOAT3& InScale )
+void Transform::SetScale( const CVector3& InScale )
 {
     Scale = InScale;
     CalculateMatrix();
@@ -76,10 +76,10 @@ void Transform::SetScale( const XMFLOAT3& InScale )
 
 void Transform::SetRotation( float x, float y, float z )
 {
-    SetRotation( XMFLOAT3( x, y, z ) );
+    SetRotation( CVector3( x, y, z ) );
 }
 
-void Transform::SetRotation( const XMFLOAT3& InRotation )
+void Transform::SetRotation( const CVector3& InRotation )
 {
     Rotation = InRotation;
     CalculateMatrix();
@@ -87,19 +87,28 @@ void Transform::SetRotation( const XMFLOAT3& InRotation )
 
 void Transform::CalculateMatrix()
 {
-    XMVECTOR XmTranslation = XMLoadFloat3( &Translation );
-    XMVECTOR XmScale = XMLoadFloat3( &Scale );
-    // Convert into Roll, Pitch, Yaw
-    XMVECTOR XmRotation = XMVectorSet( Rotation.z, Rotation.y, Rotation.x, 0.0f );
+    CMatrix4 ScaleMatrix = CMatrix4::Scale(Scale);
+    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw(Rotation);
+    CMatrix4 TranslationMatrix = CMatrix4::Translation(Translation);
+    Matrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
+    Matrix.Transpose();
 
-    XMMATRIX XmMatrix = XMMatrixMultiply(
-        XMMatrixMultiply( XMMatrixScalingFromVector( XmScale ),
-        XMMatrixRotationRollPitchYawFromVector( XmRotation ) ),
-        XMMatrixTranslationFromVector( XmTranslation ) );
-    XMStoreFloat3x4( &TinyMatrix, XmMatrix );
-    XmMatrix = XMMatrixTranspose( XmMatrix );
-    XMStoreFloat4x4( &Matrix, XmMatrix );
+    TinyMatrix = XMFLOAT3X4(
+        Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03,
+        Matrix.m10, Matrix.m11, Matrix.m12, Matrix.m13,
+        Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23);
 
-    XMMATRIX XmMatrixInv = XMMatrixInverse( nullptr, XmMatrix );
-    XMStoreFloat4x4( &MatrixInv, XMMatrixTranspose( XmMatrixInv ) );
+    MatrixInv = Matrix.Invert();
+    MatrixInv = MatrixInv.Transpose();
+
+    //XMMATRIX XmMatrix = XMMatrixMultiply(
+    //    XMMatrixMultiply( XMMatrixScalingFromVector( XmScale ),
+    //    XMMatrixRotationRollPitchYawFromVector( XmRotation ) ),
+    //    XMMatrixTranslationFromVector( XmTranslation ) );
+    //XMStoreFloat3x4( &TinyMatrix, XmMatrix );
+    //XmMatrix = XMMatrixTranspose( XmMatrix );
+    //XMStoreFloat4x4( &Matrix, XmMatrix );
+
+    //XMMATRIX XmMatrixInv = XMMatrixInverse( nullptr, XmMatrix );
+    //XMStoreFloat4x4( &MatrixInv, XMMatrixTranspose( XmMatrixInv ) );
 }

@@ -323,8 +323,8 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         CmdList.SetUnorderedAccessView( CShader.Get(), StagingUAV, 0 );
 
         constexpr uint32 ThreadCount = 16;
-        const uint32 DispatchWidth = Math::DivideByMultiple( LUTSize, ThreadCount );
-        const uint32 DispatchHeight = Math::DivideByMultiple( LUTSize, ThreadCount );
+        const uint32 DispatchWidth = NMath::DivideByMultiple( LUTSize, ThreadCount );
+        const uint32 DispatchHeight = NMath::DivideByMultiple( LUTSize, ThreadCount );
         CmdList.Dispatch( DispatchWidth, DispatchHeight, 1 );
 
         CmdList.UnorderedAccessTextureBarrier( StagingTexture.Get() );
@@ -515,9 +515,9 @@ void DeferredRenderer::RenderPrePass( CommandList& CmdList, FrameResources& Fram
         CmdList.SetViewport( RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f );
         CmdList.SetScissorRect( RenderWidth, RenderHeight, 0, 0 );
 
-        struct PerObject
+        struct SPerObject
         {
-            XMFLOAT4X4 Matrix;
+            CMatrix4 Matrix;
         } PerObjectBuffer;
 
         CmdList.SetRenderTargets( nullptr, 0, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView() );
@@ -572,7 +572,7 @@ void DeferredRenderer::RenderPrePass( CommandList& CmdList, FrameResources& Fram
         CmdList.SetShaderResourceView( ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 0 );
         CmdList.SetUnorderedAccessView( ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0 );
 
-        CmdList.Set32BitShaderConstants( ReduceDepthInitalShader.Get(), &ReductionConstants, Math::BytesToNum32BitConstants( sizeof( ReductionConstants ) ) );
+        CmdList.Set32BitShaderConstants( ReduceDepthInitalShader.Get(), &ReductionConstants, NMath::BytesToNum32BitConstants( sizeof( ReductionConstants ) ) );
 
         uint32 ThreadsX = FrameResources.ReducedDepthBuffer[0]->GetWidth();
         uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();
@@ -587,8 +587,8 @@ void DeferredRenderer::RenderPrePass( CommandList& CmdList, FrameResources& Fram
         CmdList.SetShaderResourceView( ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0 );
         CmdList.SetUnorderedAccessView( ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetUnorderedAccessView(), 0 );
 
-        ThreadsX = Math::DivideByMultiple( ThreadsX, 16 );
-        ThreadsY = Math::DivideByMultiple( ThreadsY, 16 );
+        ThreadsX = NMath::DivideByMultiple( ThreadsX, 16 );
+        ThreadsY = NMath::DivideByMultiple( ThreadsY, 16 );
         CmdList.Dispatch( ThreadsX, ThreadsY, 1 );
 
         CmdList.TransitionTexture( FrameResources.ReducedDepthBuffer[0].Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess );
@@ -597,8 +597,8 @@ void DeferredRenderer::RenderPrePass( CommandList& CmdList, FrameResources& Fram
         CmdList.SetShaderResourceView( ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetShaderResourceView(), 0 );
         CmdList.SetUnorderedAccessView( ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0 );
 
-        ThreadsX = Math::DivideByMultiple( ThreadsX, 16 );
-        ThreadsY = Math::DivideByMultiple( ThreadsY, 16 );
+        ThreadsX = NMath::DivideByMultiple( ThreadsX, 16 );
+        ThreadsY = NMath::DivideByMultiple( ThreadsY, 16 );
         CmdList.Dispatch( ThreadsX, ThreadsY, 1 );
 
         CmdList.TransitionTexture( FrameResources.ReducedDepthBuffer[0].Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource );
@@ -631,10 +631,10 @@ void DeferredRenderer::RenderBasePass( CommandList& CmdList, const FrameResource
     // Setup Pipeline
     CmdList.SetGraphicsPipelineState( PipelineState.Get() );
 
-    struct TransformBuffer
+    struct STransformBuffer
     {
-        XMFLOAT4X4 Transform;
-        XMFLOAT4X4 TransformInv;
+        CMatrix4 Transform;
+        CMatrix4 TransformInv;
     } TransformPerObject;
 
     for ( const MeshDrawCommand& Command : FrameResources.DeferredVisibleCommands )
@@ -652,7 +652,7 @@ void DeferredRenderer::RenderBasePass( CommandList& CmdList, const FrameResource
         ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
         CmdList.SetConstantBuffer( BasePixelShader.Get(), MaterialBuffer, 0 );
 
-        TransformPerObject.Transform = Command.CurrentActor->GetTransform().GetMatrix();
+        TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
 
         ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
@@ -741,8 +741,8 @@ void DeferredRenderer::RenderDeferredTiledLightPass( CommandList& CmdList, const
     CmdList.Set32BitShaderConstants( LightPassShader, &Settings, 5 );
 
     const XMUINT3 ThreadsXYZ = LightPassShader->GetThreadGroupXYZ();
-    const uint32 WorkGroupWidth = Math::DivideByMultiple<uint32>( Settings.ScreenWidth, ThreadsXYZ.x );
-    const uint32 WorkGroupHeight = Math::DivideByMultiple<uint32>( Settings.ScreenHeight, ThreadsXYZ.y );
+    const uint32 WorkGroupWidth = NMath::DivideByMultiple<uint32>( Settings.ScreenWidth, ThreadsXYZ.x );
+    const uint32 WorkGroupHeight = NMath::DivideByMultiple<uint32>( Settings.ScreenHeight, ThreadsXYZ.y );
     CmdList.Dispatch( WorkGroupWidth, WorkGroupHeight, 1 );
 
     INSERT_DEBUG_CMDLIST_MARKER( CmdList, "End LightPass" );
@@ -821,8 +821,8 @@ bool DeferredRenderer::CreateGBuffer( FrameResources& FrameResources )
     }
 
     constexpr uint32 Alignment = 16;
-    const uint32 ReducedWidth = Math::DivideByMultiple( Width, Alignment );
-    const uint32 ReducedHeight = Math::DivideByMultiple( Height, Alignment );
+    const uint32 ReducedWidth = NMath::DivideByMultiple( Width, Alignment );
+    const uint32 ReducedHeight = NMath::DivideByMultiple( Height, Alignment );
 
     for ( uint32 i = 0; i < 2; i++ )
     {

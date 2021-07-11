@@ -16,9 +16,9 @@ DirectionalLight::DirectionalLight()
 
     for ( uint32 i = 0; i < NUM_SHADOW_CASCADES; i++ )
     {
-        XMStoreFloat4x4( &Matrices[i], XMMatrixIdentity() );
-        XMStoreFloat4x4( &ViewMatrices[i], XMMatrixIdentity() );
-        XMStoreFloat4x4( &ProjectionMatrices[i], XMMatrixIdentity() );
+        Matrices[i].SetIdentity();
+        ViewMatrices[i].SetIdentity();
+        ProjectionMatrices[i].SetIdentity();
     }
 }
 
@@ -29,20 +29,28 @@ DirectionalLight::~DirectionalLight()
 
 void DirectionalLight::UpdateCascades( Camera& Camera )
 {
-    XMVECTOR XmDirection = XMVectorSet( 0.0, -1.0f, 0.0f, 0.0f );
-    XMMATRIX XmRotation = XMMatrixRotationRollPitchYaw( Rotation.x, Rotation.y, Rotation.z );
-    XMVECTOR XmOffset = XMVector3Transform( XmDirection, XmRotation );
-    XmDirection = XMVector3Normalize( XmOffset );
-    XMStoreFloat3( &Direction, XmDirection );
+    //XMVECTOR XmDirection = XMVectorSet( 0.0, -1.0f, 0.0f, 0.0f );
+    //XMMATRIX XmRotation = XMMatrixRotationRollPitchYaw( Rotation.x, Rotation.y, Rotation.z );
+    //XMVECTOR XmOffset = XMVector3Transform( XmDirection, XmRotation );
+    //XmDirection = XMVector3Normalize( XmOffset );
+    //XMStoreFloat3( &Direction, XmDirection );
 
-    XMVECTOR XmUp = XMVectorSet( 0.0, 0.0f, 1.0f, 0.0f );
-    XmUp = XMVector3Normalize( XMVector3Transform( XmUp, XmRotation ) );
-    XMStoreFloat3( &Up, XmUp );
+    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw( Rotation.x, Rotation.y, Rotation.z );
+    
+    CVector3 StartDirection(0.0f, -1.0f, 0.0f);
+    StartDirection = RotationMatrix.TransformDirection(StartDirection);
+    StartDirection.Normalize();
+    Direction = StartDirection;
+
+    CVector3 StartUp( 0.0, 0.0f, 1.0f );
+    StartUp = RotationMatrix.TransformDirection(StartUp);
+    StartUp.Normalize();
+    Up = StartUp;
 
     XMFLOAT4X4 InvCamera = Camera.GetViewProjectionInverseMatrix();
 
     float NearPlane = Camera.GetNearPlane();
-    float FarPlane = Math::Min<float>( Camera.GetFarPlane(), 100.0f ); // TODO: Should be a setting
+    float FarPlane = NMath::Min<float>( Camera.GetFarPlane(), 100.0f ); // TODO: Should be a setting
     float ClipRange = FarPlane - NearPlane;
 
     ShadowNearPlane = NearPlane;
@@ -121,7 +129,7 @@ void DirectionalLight::UpdateCascades( Camera& Camera )
         for ( uint32 j = 0; j < 8; j++ )
         {
             float Distance = ceil( Length( FrustumCorners[j] - Center ) );
-            Radius = Math::Min( Math::Max( Radius, Distance ), 80.0f ); // This should be dynamic
+            Radius = NMath::Min( NMath::Max( Radius, Distance ), 80.0f ); // This should be dynamic
         }
 
         // Make sure we only move cascades with whole pixels
@@ -148,17 +156,15 @@ void DirectionalLight::UpdateCascades( Camera& Camera )
         //XMVector3Transform(XmCenter, LookAtMatInverse);
         //XMStoreFloat4(&Center, XmCenter);
 
-        XMFLOAT3 CascadePosition = XMFLOAT3( Center.x, Center.y, Center.z ) - (Direction * Radius * 6.0f);
+        CVector3 CascadePosition = CVector3( Center.x, Center.y, Center.z ) - (Direction * Radius * 6.0f);
+        CVector3 EyePosition = CascadePosition;
+        CVector3 LookPosition = CVector3( Center.x, Center.y, Center.z );
 
-        XMVECTOR EyePosition = XMLoadFloat3( &CascadePosition );
-        XMVECTOR LookPosition = XMLoadFloat4( &Center );
-
-        XMMATRIX XmViewMatrix = XMMatrixLookAtLH( EyePosition, LookPosition, XmUp );
-        XMMATRIX XmOrtoMatrix = XMMatrixOrthographicOffCenterLH( -Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f );
-
-        XMStoreFloat4x4( &ViewMatrices[i], XMMatrixTranspose( XmViewMatrix ) );
-        XMStoreFloat4x4( &ProjectionMatrices[i], XMMatrixTranspose( XmOrtoMatrix ) );
-        XMStoreFloat4x4( &Matrices[i], XMMatrixMultiplyTranspose( XmViewMatrix, XmOrtoMatrix ) );
+        CMatrix4 View = CMatrix4::LookAt( EyePosition, LookPosition, Up );
+        CMatrix4 Projection = CMatrix4::OrtographicProjection( -Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f );
+        ViewMatrices[i] = View.Transpose();
+        ProjectionMatrices[i] = Projection.Transpose();
+        Matrices[i] = (View * Projection).Transpose();
 
         LastSplitDist = SplitDist;
 
@@ -167,7 +173,7 @@ void DirectionalLight::UpdateCascades( Camera& Camera )
 
         if ( i == 0 )
         {
-            LookAt = XMFLOAT3( Center.x, Center.y, Center.z );
+            LookAt = CVector3( Center.x, Center.y, Center.z );
             Position = CascadePosition;
         }
     }
@@ -175,22 +181,22 @@ void DirectionalLight::UpdateCascades( Camera& Camera )
     return;
 }
 
-void DirectionalLight::SetRotation( const XMFLOAT3& InRotation )
+void DirectionalLight::SetRotation( const CVector3& InRotation )
 {
     Rotation = InRotation;
 }
 
 void DirectionalLight::SetRotation( float x, float y, float z )
 {
-    SetRotation( XMFLOAT3( x, y, z ) );
+    SetRotation( CVector3( x, y, z ) );
 }
 
-void DirectionalLight::SetLookAt( const XMFLOAT3& InLookAt )
+void DirectionalLight::SetLookAt( const CVector3& InLookAt )
 {
     LookAt = InLookAt;
 }
 
 void DirectionalLight::SetLookAt( float x, float y, float z )
 {
-    SetLookAt( XMFLOAT3( x, y, z ) );
+    SetLookAt( CVector3( x, y, z ) );
 }
