@@ -4,68 +4,6 @@
 #include <type_traits>
 
 /*
- * TRemoveReference - Removes reference and retrives the types
- */
-
-template<typename T>
-struct _TRemoveReference
-{
-    using TType = T;
-};
-
-template<typename T>
-struct _TRemoveReference<T&>
-{
-    using TType = T;
-};
-
-template<typename T>
-struct _TRemoveReference<T&&>
-{
-    using TType = T;
-};
-
-template<typename T>
-using TRemoveReference = typename _TRemoveReference<T>::TType;
-
-/*
- * TRemovePointer - Removes pointer and retrives the type
- */
-
-template<typename T>
-struct _TRemovePointer
-{
-    using TType = T;
-};
-
-template<typename T>
-struct _TRemovePointer<T*>
-{
-    using TType = T;
-};
-
-template<typename T>
-struct _TRemovePointer<T* const>
-{
-    using TType = T;
-};
-
-template<typename T>
-struct _TRemovePointer<T* volatile>
-{
-    using TType = T;
-};
-
-template<typename T>
-struct _TRemovePointer<T* const volatile>
-{
-    using TType = T;
-};
-
-template<typename T>
-using TRemovePointer = typename _TRemovePointer<T>::TType;
-
-/*
  * TRemoveExtent - Removes array type
  */
 
@@ -123,7 +61,7 @@ constexpr T&& Forward( TRemoveReference<T>&& Arg ) noexcept
  * TEnableIf
  */
 
-template<bool B, typename T = void>
+template<bool TCondition, typename T = void>
 struct _TEnableIf
 {
 };
@@ -131,11 +69,11 @@ struct _TEnableIf
 template<typename T>
 struct _TEnableIf<true, T>
 {
-    using TType = T;
+    using Type = T;
 };
 
-template<bool B, typename T = void>
-using TEnableIf = typename _TEnableIf<B, T>::TType;
+template<bool TCondition, typename T = void>
+using TEnableIf = typename _TEnableIf<TCondition, T>::Type;
 
 /*
  * TIsArray - Check for array type
