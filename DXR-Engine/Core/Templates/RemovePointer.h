@@ -3,31 +3,31 @@
 template<typename T>
 struct _TRemovePointer
 {
-    using Type = T;
+    typedef T Type;
 };
 
 template<typename T>
 struct _TRemovePointer<T*>
 {
-    using Type = T;
+    typedef T Type;
 };
 
 template<typename T>
 struct _TRemovePointer<T* const>
 {
-    using Type = T;
+    typedef T Type;
 };
 
 template<typename T>
 struct _TRemovePointer<T* volatile>
 {
-    using Type = T;
+    typedef T Type;
 };
 
 template<typename T>
 struct _TRemovePointer<T* const volatile>
 {
-    using Type = T;
+    typedef T Type;
 };
 
 /* Removes pointer and retrives the type */

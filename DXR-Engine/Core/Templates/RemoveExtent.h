@@ -4,19 +4,19 @@
 template<typename T>
 struct _TRemoveExtent
 {
-    using Type = T;
+    typedef T Type;
 };
 
 template<typename T>
 struct _TRemoveExtent<T[]>
 {
-    using Type = T;
+    typedef T Type;
 };
 
 template<typename T, uint32 SIZE>
 struct _TRemoveExtent<T[SIZE]>
 {
-    using Type = T;
+    typedef T Type;
 };
 
 /* Removes array type */

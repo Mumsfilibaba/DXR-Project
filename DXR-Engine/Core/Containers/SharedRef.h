@@ -99,7 +99,6 @@ public:
     FORCEINLINE void Swap( TOther* InPtr ) noexcept
     {
         static_assert(std::is_convertible<TOther*, T*>());
-
         Reset( InPtr )
     }
 

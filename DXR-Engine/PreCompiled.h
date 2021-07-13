@@ -35,7 +35,14 @@
 #include "Core/Containers/Function.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/UniquePtr.h"
-#include "Core/Containers/Utilities.h"
+
+/* Templates */
+#include "Core/Templates/EnableIf.h"
+#include "Core/Templates/IsArray.h"
+#include "Core/Templates/Move.h"
+#include "Core/Templates/RemoveExtent.h"
+#include "Core/Templates/RemovePointer.h"
+#include "Core/Templates/RemoveReference.h"
 
 /* Application */
 #include "Core/Application/Log.h"

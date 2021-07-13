@@ -1,18 +1,20 @@
 #pragma once
-#include "Utilities.h"
 #include "Iterator.h"
 #include "Allocator.h"
 
+#include "Core/Templates/Move.h"
+#include "Core/Templates/IsPointer.h"
+#include "Core/Templates/IsSame.h"
+
 #include <initializer_list>
 
-// TArray - Dynamic Array similar to std::vector
-
+/* Dynamic Array similar to std::vector */
 template<typename T, typename TAllocator = Mallocator>
 class TArray
 {
 public:
-    typedef T* Iterator;
-    typedef const T* ConstIterator;
+    typedef T*                        Iterator;
+    typedef const T*                  ConstIterator;
     typedef TReverseIterator<T>       ReverseIterator;
     typedef TReverseIterator<const T> ConstReverseIterator;
     typedef uint32                    SizeType;
@@ -669,8 +671,8 @@ private:
     template<typename TInput>
     SizeType InternalDistance( TInput InBegin, TInput InEnd ) noexcept
     {
-        constexpr bool IsPointer = std::is_pointer<TInput>();
-        constexpr bool IsCustomIterator = std::is_same<TInput, Iterator>() || std::is_same<TInput, ConstIterator>();
+        constexpr bool IsPointer = IsPointer<TInput>;
+        constexpr bool IsCustomIterator = IsSame<TInput, Iterator> || IsSame<TInput, ConstIterator>;
 
         // Handle outside pointers
         if constexpr ( IsPointer || IsCustomIterator )
@@ -679,6 +681,7 @@ private:
         }
         else
         {
+            // TODO: Custom std::distance?
             return static_cast<SizeType>(std::distance( InBegin, InEnd ));
         }
     }
@@ -805,9 +808,9 @@ private:
     void InternalCopyEmplace( TInput Begin, TInput End, T* Dest ) noexcept
     {
         // This function assumes that there is no overlap
-        constexpr bool IsTrivial = std::is_trivially_copy_constructible<T>();
-        constexpr bool IsPointer = std::is_pointer<TInput>();
-        constexpr bool IsCustomIterator = std::is_same<TInput, Iterator>() || std::is_same<TInput, ConstIterator>();
+        constexpr bool IsTrivial = std::is_trivially_copy_constructible<T>(); // TODO: Make custom version?
+        constexpr bool IsPointer = IsPointer<TInput>;
+        constexpr bool IsCustomIterator = IsSame<TInput, Iterator> || IsSame<TInput, ConstIterator>;
 
         if constexpr ( IsTrivial && (IsPointer || IsCustomIterator) )
         {
