@@ -38,7 +38,7 @@ struct _EnumIntegerSize<8>
 template<typename T>
 struct _EnumIntegerType
 {
-    typedef typename _EnumIntegerSize<sizeof(T)>::Type Type;
+    typedef typename _EnumIntegerSize<sizeof( T )>::Type Type;
 };
 
 template<typename T>

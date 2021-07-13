@@ -20,7 +20,7 @@ public:
     {
         return WeakRefs++;
     }
-    
+
     FORCEINLINE RefType AddStrongRef() noexcept
     {
         return StrongRefs++;
@@ -30,7 +30,7 @@ public:
     {
         return WeakRefs--;
     }
-    
+
     FORCEINLINE RefType ReleaseStrongRef() noexcept
     {
         return StrongRefs--;
@@ -485,7 +485,7 @@ public:
 
     FORCEINLINE TSharedPtr& operator=( T* InPtr ) noexcept
     {
-        Reset(InPtr);
+        Reset( InPtr );
         return *this;
     }
 
@@ -732,7 +732,7 @@ public:
         if ( Base::Get() != NewPtr )
         {
             Base::InternalDestructWeak();
-            Base::InternalContructWeak(NewPtr);
+            Base::InternalContructWeak( NewPtr );
         }
     }
 
@@ -877,7 +877,7 @@ public:
         if ( Base::Get() != NewPtr )
         {
             Base::InternalDestructWeak();
-            Base::InternalConstructWeak(NewPtr);
+            Base::InternalConstructWeak( NewPtr );
         }
     }
 

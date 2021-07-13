@@ -36,10 +36,10 @@ MeshData MeshFactory::CreateFromFile( const std::string& Filename, bool LeftHand
 
             size_t PositionIndex = 3 * static_cast<size_t>(Index.vertex_index);
             TempVertex.Position =
-            CVector3(
+                CVector3(
                 Attributes.vertices[PositionIndex + 0],
                 Attributes.vertices[PositionIndex + 1],
-                Attributes.vertices[PositionIndex + 2]);
+                Attributes.vertices[PositionIndex + 2] );
 
             if ( Index.normal_index >= 0 )
             {
@@ -55,9 +55,9 @@ MeshData MeshFactory::CreateFromFile( const std::string& Filename, bool LeftHand
             {
                 size_t TexCoordIndex = 2 * static_cast<size_t>(Index.texcoord_index);
                 TempVertex.TexCoord =
-                CVector2(
+                    CVector2(
                     Attributes.texcoords[TexCoordIndex + 0],
-                    Attributes.texcoords[TexCoordIndex + 1]);
+                    Attributes.texcoords[TexCoordIndex + 1] );
             }
 
             if ( UniqueVertices.count( TempVertex ) == 0 )

@@ -405,7 +405,7 @@ inline void CVector3::Normalize() noexcept
     float fLengthSquared = LengthSquared();
     if ( fLengthSquared != 0.0f )
     {
-        float fRecipLength = 1.0f / NMath::Sqrt(fLengthSquared);
+        float fRecipLength = 1.0f / NMath::Sqrt( fLengthSquared );
         x = x * fRecipLength;
         y = y * fRecipLength;
         z = z * fRecipLength;

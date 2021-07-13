@@ -36,14 +36,14 @@ void DirectionalLight::UpdateCascades( Camera& Camera )
     //XMStoreFloat3( &Direction, XmDirection );
 
     CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw( Rotation.x, Rotation.y, Rotation.z );
-    
-    CVector3 StartDirection(0.0f, -1.0f, 0.0f);
-    StartDirection = RotationMatrix.TransformDirection(StartDirection);
+
+    CVector3 StartDirection( 0.0f, -1.0f, 0.0f );
+    StartDirection = RotationMatrix.TransformDirection( StartDirection );
     StartDirection.Normalize();
     Direction = StartDirection;
 
     CVector3 StartUp( 0.0, 0.0f, 1.0f );
-    StartUp = RotationMatrix.TransformDirection(StartUp);
+    StartUp = RotationMatrix.TransformDirection( StartUp );
     StartUp.Normalize();
     Up = StartUp;
 

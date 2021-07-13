@@ -434,7 +434,7 @@ void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const Lig
                 CmdList.SetRenderTargets( nullptr, 0, Cube[Face].Get() );
 
                 auto& Data = LightSetup.PointLightShadowMapsGenerationData[i];
-                PerShadowMapData.Matrix   = Data.Matrix[Face];
+                PerShadowMapData.Matrix = Data.Matrix[Face];
                 PerShadowMapData.Position = Data.Position;
                 PerShadowMapData.FarPlane = Data.FarPlane;
 
@@ -451,7 +451,7 @@ void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const Lig
                 ConsoleVariable* GlobalFrustumCullEnabled = GConsole.FindVariable( "r.EnableFrustumCulling" );
                 if ( GlobalFrustumCullEnabled->GetBool() )
                 {
-                    Frustum CameraFrustum = Frustum( Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face]);
+                    Frustum CameraFrustum = Frustum( Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face] );
                     for ( const MeshDrawCommand& Command : Scene.GetMeshDrawCommands() )
                     {
                         CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();

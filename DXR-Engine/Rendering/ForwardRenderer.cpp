@@ -202,7 +202,7 @@ void ForwardRenderer::Render( CommandList& CmdList, const FrameResources& FrameR
         SamplerState* SamplerState = Command.Material->GetMaterialSampler();
         CmdList.SetSamplerState( PShader.Get(), SamplerState, 0 );
 
-        TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
+        TransformPerObject.Transform = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
 
         CmdList.Set32BitShaderConstants( VShader.Get(), &TransformPerObject, 32 );

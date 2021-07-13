@@ -141,14 +141,14 @@ public:
      *
      * @param RotationAndScale: 3x3 to set the upper quadrant to
      */
-    FORCEINLINE void SetRotationAndScale(const CMatrix3& RotationAndScale) noexcept;
+    FORCEINLINE void SetRotationAndScale( const CMatrix3& RotationAndScale ) noexcept;
 
     /**
      * Sets the translation part of a matrix
      *
      * @param Translation: The translation part
      */
-    FORCEINLINE void SetTranslation(const CVector3& Translation) noexcept;
+    FORCEINLINE void SetTranslation( const CVector3& Translation ) noexcept;
 
     /**
      * Returns a row of this matrix
@@ -1554,7 +1554,7 @@ inline CMatrix4 CMatrix4::RotationRollPitchYaw( float Pitch, float Yaw, float Ro
 
 inline CMatrix4 CMatrix4::RotationRollPitchYaw( const CVector3& PitchYawRoll ) noexcept
 {
-    return RotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
+    return RotationRollPitchYaw( PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z );
 }
 
 inline CMatrix4 CMatrix4::RotationX( float x ) noexcept

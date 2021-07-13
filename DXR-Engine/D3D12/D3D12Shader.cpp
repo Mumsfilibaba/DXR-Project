@@ -285,7 +285,7 @@ bool D3D12BaseComputeShader::Init()
     UINT y;
     UINT z;
     Reflection->GetThreadGroupSize( &x, &y, &z );
-    
+
     ThreadGroupXYZ.x = x;
     ThreadGroupXYZ.y = y;
     ThreadGroupXYZ.z = z;

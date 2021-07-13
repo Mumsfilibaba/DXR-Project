@@ -65,7 +65,7 @@ void Renderer::PerformFrustumCulling( const Scene& Scene )
     {
         CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
-        
+
         CVector3 Top = CVector3( &Command.Mesh->BoundingBox.Top.x );
         Top = TransformMatrix.TransformPosition( Top );
         CVector3 Bottom = CVector3( &Command.Mesh->BoundingBox.Bottom.x );
@@ -170,13 +170,13 @@ void Renderer::PerformAABBDebugPass( CommandList& InCmdList )
         CVector3 Position = Box.GetCenter();
 
         CMatrix4 TranslationMatrix = CMatrix4::Translation( Position.x, Position.y, Position.z );
-        CMatrix4 ScaleMatrix       = CMatrix4::Scale( Scale.x, Scale.y, Scale.z );
-        CMatrix4 TransformMatrix   = Command.CurrentActor->GetTransform().GetMatrix();
+        CMatrix4 ScaleMatrix = CMatrix4::Scale( Scale.x, Scale.y, Scale.z );
+        CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
         TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
         TransformMatrix.Transpose();
 
-        InCmdList.Set32BitShaderConstants( AABBVertexShader.Get(), &TranslationMatrix, 16 ); 
+        InCmdList.Set32BitShaderConstants( AABBVertexShader.Get(), &TranslationMatrix, 16 );
 
         InCmdList.DrawIndexedInstanced( 24, 1, 0, 0, 0 );
     }

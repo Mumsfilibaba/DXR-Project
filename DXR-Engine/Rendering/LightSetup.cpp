@@ -99,7 +99,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const Scene& Scene )
         float Intensity = Light->GetIntensity();
         CVector3 Color = Light->GetColor();
         Color = Color * Intensity;
-        
+
         if ( IsSubClassOf<PointLight>( Light ) )
         {
             PointLight* CurrentLight = Cast<PointLight>( Light );
@@ -151,7 +151,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const Scene& Scene )
 
             CurrentLight->UpdateCascades( *Camera );
 
-            DirectionalLightData.Color = CVector3(Color.x, Color.y, Color.z);
+            DirectionalLightData.Color = CVector3( Color.x, Color.y, Color.z );
             DirectionalLightData.ShadowBias = CurrentLight->GetShadowBias();
             DirectionalLightData.Direction = CurrentLight->GetDirection();
             DirectionalLightData.Up = CurrentLight->GetUp();

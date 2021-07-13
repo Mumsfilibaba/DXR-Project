@@ -87,16 +87,16 @@ void Transform::SetRotation( const CVector3& InRotation )
 
 void Transform::CalculateMatrix()
 {
-    CMatrix4 ScaleMatrix = CMatrix4::Scale(Scale);
-    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw(Rotation);
-    CMatrix4 TranslationMatrix = CMatrix4::Translation(Translation);
+    CMatrix4 ScaleMatrix = CMatrix4::Scale( Scale );
+    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw( Rotation );
+    CMatrix4 TranslationMatrix = CMatrix4::Translation( Translation );
     Matrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
     Matrix = Matrix.Transpose();
 
     TinyMatrix = DirectX::XMFLOAT3X4(
         Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03,
         Matrix.m10, Matrix.m11, Matrix.m12, Matrix.m13,
-        Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23);
+        Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23 );
 
     MatrixInv = Matrix.Invert();
     MatrixInv = MatrixInv.Transpose();

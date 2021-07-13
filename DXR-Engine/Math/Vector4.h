@@ -459,7 +459,7 @@ inline void CVector4::Normalize() noexcept
 
     NSIMD::Float128 Reg0 = NSIMD::LoadAligned( this );
     NSIMD::Float128 Reg1 = NSIMD::Dot( Reg0, Reg0 );
-    
+
     float fLengthSquared = NSIMD::GetX( Reg1 );
     if ( fLengthSquared != 0.0f )
     {

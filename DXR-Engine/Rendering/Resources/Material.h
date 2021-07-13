@@ -7,7 +7,7 @@
 
 struct SMaterialDesc
 {
-    CVector3 Albedo = CVector3( 1.0f);
+    CVector3 Albedo = CVector3( 1.0f );
     float Roughness = 0.0f;
 
     float Metallic = 0.0f;

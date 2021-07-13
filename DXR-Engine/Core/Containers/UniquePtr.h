@@ -74,7 +74,7 @@ public:
     {
         return Ptr;
     }
-    
+
     FORCEINLINE T* const* GetAddressOf() const noexcept
     {
         return &Ptr;
@@ -84,7 +84,7 @@ public:
     {
         return Get();
     }
-    
+
     FORCEINLINE T& operator*() const noexcept
     {
         return (*Ptr);
@@ -223,7 +223,7 @@ public:
         return WeakPtr;
     }
 
-    FORCEINLINE void Reset( T* NewPtr = nullptr) noexcept
+    FORCEINLINE void Reset( T* NewPtr = nullptr ) noexcept
     {
         if ( Ptr != NewPtr )
         {
@@ -311,7 +311,7 @@ public:
     {
         return (Ptr == InPtr);
     }
-    
+
     FORCEINLINE bool operator!=( T* InPtr ) const noexcept
     {
         return !(*this == Other);

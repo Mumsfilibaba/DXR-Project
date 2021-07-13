@@ -56,22 +56,22 @@ void PointLight::CalculateMatrices()
 
     CVector3 Directions[6] =
     {
-        { CVector3( 1.0f,  0.0f,  0.0f) },
-        { CVector3(-1.0f,  0.0f,  0.0f) },
-        { CVector3( 0.0f,  1.0f,  0.0f) },
-        { CVector3( 0.0f, -1.0f,  0.0f) },
-        { CVector3( 0.0f,  0.0f,  1.0f) },
-        { CVector3( 0.0f,  0.0f, -1.0f) },
+        { CVector3( 1.0f,  0.0f,  0.0f ) },
+        { CVector3( -1.0f,  0.0f,  0.0f ) },
+        { CVector3( 0.0f,  1.0f,  0.0f ) },
+        { CVector3( 0.0f, -1.0f,  0.0f ) },
+        { CVector3( 0.0f,  0.0f,  1.0f ) },
+        { CVector3( 0.0f,  0.0f, -1.0f ) },
     };
 
     CVector3 UpVectors[6] =
     {
-        { CVector3(0.0f, 1.0f,  0.0f) },
-        { CVector3(0.0f, 1.0f,  0.0f) },
-        { CVector3(0.0f, 0.0f, -1.0f) },
-        { CVector3(0.0f, 0.0f,  1.0f) },
-        { CVector3(0.0f, 1.0f,  0.0f) },
-        { CVector3(0.0f, 1.0f,  0.0f) },
+        { CVector3( 0.0f, 1.0f,  0.0f ) },
+        { CVector3( 0.0f, 1.0f,  0.0f ) },
+        { CVector3( 0.0f, 0.0f, -1.0f ) },
+        { CVector3( 0.0f, 0.0f,  1.0f ) },
+        { CVector3( 0.0f, 1.0f,  0.0f ) },
+        { CVector3( 0.0f, 1.0f,  0.0f ) },
     };
 
     for ( uint32 i = 0; i < 6; i++ )

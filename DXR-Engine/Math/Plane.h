@@ -7,12 +7,12 @@
 class ALIGN_16 CPlane
 {
 public:
-    
+
     FORCEINLINE CPlane() noexcept;
 
-    FORCEINLINE explicit CPlane(const CVector4& Plane) noexcept;
+    FORCEINLINE explicit CPlane( const CVector4& Plane ) noexcept;
 
-    FORCEINLINE explicit CPlane(const CVector3& Normal, float InW) noexcept;
+    FORCEINLINE explicit CPlane( const CVector3& Normal, float InW ) noexcept;
 
     FORCEINLINE explicit CPlane( float InX, float InY, float InZ, float InW ) noexcept;
 
@@ -26,7 +26,7 @@ public:
 
     FORCEINLINE void Normalize() noexcept;
 
-    FORCEINLINE float PlaneDotCoord(const CVector3& Point) const noexcept;
+    FORCEINLINE float PlaneDotCoord( const CVector3& Point ) const noexcept;
 
     FORCEINLINE CVector3 GetNormal() const noexcept;
 
@@ -144,14 +144,14 @@ FORCEINLINE void CPlane::Normalize() noexcept
 FORCEINLINE float CPlane::PlaneDotCoord( const CVector3& Point ) const noexcept
 {
     CVector3 Normal = GetNormal();
-    return Normal.DotProduct(Point) + w;
+    return Normal.DotProduct( Point ) + w;
 
     // TODO: Implement SIMD
 }
 
 FORCEINLINE CVector3 CPlane::GetNormal() const noexcept
 {
-    return CVector3(x, y, z);
+    return CVector3( x, y, z );
 }
 
 FORCEINLINE float* CPlane::GetData() noexcept
@@ -166,7 +166,7 @@ FORCEINLINE const float* CPlane::GetData() const noexcept
 
 FORCEINLINE bool CPlane::operator==( const CPlane& Other ) const noexcept
 {
-    return IsEqual(Other);
+    return IsEqual( Other );
 }
 
 FORCEINLINE bool CPlane::operator!=( const CPlane& Other ) const noexcept

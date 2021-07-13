@@ -652,7 +652,7 @@ void DeferredRenderer::RenderBasePass( CommandList& CmdList, const FrameResource
         ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
         CmdList.SetConstantBuffer( BasePixelShader.Get(), MaterialBuffer, 0 );
 
-        TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
+        TransformPerObject.Transform = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
 
         ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();

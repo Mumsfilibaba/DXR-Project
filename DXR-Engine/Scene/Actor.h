@@ -81,9 +81,9 @@ private:
 
     CMatrix4 Matrix;
     CMatrix4 MatrixInv;
-    
+
     DirectX::XMFLOAT3X4 TinyMatrix;
-    
+
     CVector3 Translation;
     CVector3 Scale;
     CVector3 Rotation;

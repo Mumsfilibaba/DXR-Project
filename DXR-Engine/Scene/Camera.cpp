@@ -35,7 +35,7 @@ void Camera::Rotate( float Pitch, float Yaw, float Roll )
     Rotation.y += Yaw;
     Rotation.z += Roll;
 
-    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw(Rotation);
+    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw( Rotation );
     CVector3 TempForward( 0.0f, 0.0f, 1.0f );
     Forward = RotationMatrix.TransformDirection( TempForward );
     Forward.Normalize();
@@ -53,8 +53,8 @@ void Camera::UpdateMatrices()
     Width = 1920.0f;
     Height = 1080.0f;
 
-    Projection = CMatrix4::PerspectiveProjection( FOV, Width, Height, NearPlane, FarPlane );    
-    View = CMatrix4::LookTo(Position, Forward, Up);
+    Projection = CMatrix4::PerspectiveProjection( FOV, Width, Height, NearPlane, FarPlane );
+    View = CMatrix4::LookTo( Position, Forward, Up );
     ViewInverse = View.Invert();
 
     CMatrix3 View3x3 = View.GetRotationAndScale();
@@ -65,7 +65,7 @@ void Camera::UpdateMatrices()
     ViewProjectionNoTranslation.SetIdentity();
     ViewProjectionNoTranslation.SetRotationAndScale( View3x3 );
     ViewProjectionNoTranslation = ViewProjectionNoTranslation * Projection;
-    
+
     View = View.Transpose();
     ViewInverse = ViewInverse.Transpose();
     ProjectionInverse = ProjectionInverse.Transpose();

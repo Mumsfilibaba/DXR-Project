@@ -70,14 +70,14 @@ bool Frustum::CheckAABB( const AABB& Box )
     const float Depth = Box.GetDepth() / 2.0f;
 
     CVector3 Coords[8];
-    Coords[0] = CVector3(Center.x - Width, Center.y - Height, Center.z - Depth);
-    Coords[1] = CVector3(Center.x + Width, Center.y - Height, Center.z - Depth);
-    Coords[2] = CVector3(Center.x - Width, Center.y + Height, Center.z - Depth);
-    Coords[3] = CVector3(Center.x + Width, Center.y + Height, Center.z - Depth);
-    Coords[4] = CVector3(Center.x - Width, Center.y - Height, Center.z + Depth);
-    Coords[5] = CVector3(Center.x + Width, Center.y - Height, Center.z + Depth);
-    Coords[6] = CVector3(Center.x - Width, Center.y + Height, Center.z + Depth);
-    Coords[7] = CVector3(Center.x + Width, Center.y + Height, Center.z + Depth);
+    Coords[0] = CVector3( Center.x - Width, Center.y - Height, Center.z - Depth );
+    Coords[1] = CVector3( Center.x + Width, Center.y - Height, Center.z - Depth );
+    Coords[2] = CVector3( Center.x - Width, Center.y + Height, Center.z - Depth );
+    Coords[3] = CVector3( Center.x + Width, Center.y + Height, Center.z - Depth );
+    Coords[4] = CVector3( Center.x - Width, Center.y - Height, Center.z + Depth );
+    Coords[5] = CVector3( Center.x + Width, Center.y - Height, Center.z + Depth );
+    Coords[6] = CVector3( Center.x - Width, Center.y + Height, Center.z + Depth );
+    Coords[7] = CVector3( Center.x + Width, Center.y + Height, Center.z + Depth );
 
     for ( int32 Index = 0; Index < 6; Index++ )
     {
