@@ -15,7 +15,7 @@ This engine is a small hobby rendering/game engine created for testing different
 **Planed:**
 * Vulkan backend
 * Screen Space Reflections
-* Cascade Shadow-maps
+* Cascaded Shadow-maps
 * Ray-Traced reflections
 * TAA
 * Spotlights
@@ -26,7 +26,7 @@ This engine is a small hobby rendering/game engine created for testing different
 ![Screen2](Screenshots/screen2.png? "Screen2")
 **(Master - Branch)** **RT Off**
 ![Screen1](Screenshots/screen1.png? "Screen1")
-**(Cascaded Shadow Maps - Branch)** Cascaded Shadoe Maps **RT Off**
+**(Cascaded Shadow Maps - Branch)** Cascaded Shadow Maps **RT Off**
 ![Screen0](Screenshots/screen0.png? "Screen0")
 **(Ray Traced Reflections - Branch)** Ray Traced Reflections **RT On**
 ![ReflectionsScreen](Screenshots/ReflectionsScreen.png? "ReflectionsScreen") 
