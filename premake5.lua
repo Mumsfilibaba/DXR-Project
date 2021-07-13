@@ -105,7 +105,39 @@ workspace "DXR-Project"
 				"Dependencies/tinyobjloader/tiny_obj_loader.h",
 				"Dependencies/tinyobjloader/tiny_obj_loader.cc",
 			}
+		
+		-- OpenFBX Project
+		project "OpenFBX"
+			kind 			"StaticLib"
+			language 		"C++"
+			cppdialect 		"C++17"
+			systemversion 	"latest"
+			location 		"Dependencies/projectfiles/OpenFBX"
 			
+			filter "configurations:Debug or Release"
+				symbols 	"on"
+				runtime 	"Release"
+				optimize 	"Full"
+			filter{}
+			
+			filter "configurations:Production"
+				symbols 	"off"
+				runtime 	"Release"
+				optimize 	"Full"
+			filter{}
+			
+			-- Targets
+			targetdir ("Dependencies/bin/OpenFBX/" .. outputdir)
+			objdir ("Dependencies/bin-int/OpenFBX/" .. outputdir)
+					
+			-- Files
+			files 
+			{
+				"Dependencies/OpenFBX/src/ofbx.h",
+				"Dependencies/OpenFBX/src/ofbx.cpp",
+				"Dependencies/OpenFBX/src/miniz.h",
+				"Dependencies/OpenFBX/src/miniz.c",
+			}
 	group ""
 
     -- Engine Project
@@ -170,13 +202,14 @@ workspace "DXR-Project"
 			"Dependencies/imgui",
 			"Dependencies/stb_image",
             "Dependencies/tinyobjloader",
-            "Dependencies/Template-Library"
+            "Dependencies/OpenFBX/src",
 		}
         
 		links 
 		{ 
 			"ImGui",
-			"tinyobjloader"
+			"tinyobjloader",
+			"OpenFBX"
 		}
 
         -- Includes

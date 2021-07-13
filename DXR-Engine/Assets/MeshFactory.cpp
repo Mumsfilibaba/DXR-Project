@@ -1,29 +1,31 @@
-#include "Rendering/Resources/MeshFactory.h"
+#include "MeshFactory.h"
+#include "MeshUtilities.h"
 
 #include "Math/MathCommon.h"
 
+#include "Core/Containers/HashTable.h"
+
 #include <tiny_obj_loader.h>
 
-MeshData MeshFactory::CreateFromFile( const std::string& Filename, bool LeftHanded ) noexcept
+MeshData MeshFactory::CreateFromFile( const String& Filename, bool LeftHanded ) noexcept
 {
-    std::string Error;
-    std::string Warning;
+    String Error;
+    String Warning;
     std::vector<tinyobj::shape_t> Shapes;
     tinyobj::attrib_t Attributes;
-
-    MeshData Result;
 
     if ( !tinyobj::LoadObj( &Attributes, &Shapes, nullptr, &Warning, &Error, Filename.c_str(), nullptr, true, false ) )
     {
         LOG_WARNING( "[MeshFactory]: Failed to load mesh '" + Filename + "'." + " Warning: " + Warning + " Error: " + Error );
-        return Result;
+        return MeshData();
     }
     else
     {
         LOG_INFO( "[MeshFactory]: Loaded mesh'" + Filename + "'" );
     }
 
-    std::unordered_map<Vertex, uint32, VertexHasher> UniqueVertices;
+    MeshData Result;
+    THashTable<Vertex, uint32, VertexHasher> UniqueVertices;
     for ( const tinyobj::shape_t& Shape : Shapes )
     {
         for ( uint32 i = 0; i < Shape.mesh.indices.size(); i++ )
@@ -80,7 +82,7 @@ MeshData MeshFactory::CreateFromFile( const std::string& Filename, bool LeftHand
         }
     }
 
-    MeshFactory::CalculateTangents( Result );
+    CMeshUtilities::CalculateTangents( Result );
 
     return Result;
 }

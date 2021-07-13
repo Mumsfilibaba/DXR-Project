@@ -1,8 +1,11 @@
 #include "FBXLoader.h"
+#include "VertexFormat.h"
 
 #include "Math/Matrix4.h"
 
 #include "Core/Containers/HashTable.h"
+
+#include <ofbx.h>
 
 // Temporary string converter from .dds to .png
 // TODO: Maybe support .dds loading :)
@@ -80,7 +83,7 @@ bool CFBXLoader::LoadFBXFile( const String& Filename )
     FILE* File = fopen( Filename.c_str(), "rb" );
     if ( !File )
     {
-        LOG_ERROR( "[MeshFactory]: Failed to open '" + Filename + "'" );
+        LOG_ERROR( "[CFBXLoader]: Failed to open '" + Filename + "'" );
         return false;
     }
 
@@ -104,7 +107,7 @@ bool CFBXLoader::LoadFBXFile( const String& Filename )
 
     if ( NumBytesRead != FileSize )
     {
-        LOG_ERROR( "[MeshFactory]: Failed to load '" + Filename + "'" );
+        LOG_ERROR( "[CFBXLoader]: Failed to load '" + Filename + "'" );
         return false;
     }
 
