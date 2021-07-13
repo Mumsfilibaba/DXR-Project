@@ -1,8 +1,12 @@
 #include "FBXLoader.h"
 
+#include "Math/Matrix4.h"
+
+#include "Core/Containers/HashTable.h"
+
 // Temporary string converter from .dds to .png
 // TODO: Maybe support .dds loading :)
-static void FileStringWithDDSToPNG( std::string& OutString )
+static void FileStringWithDDSToPNG( String& OutString )
 {
     for ( char& Char : OutString )
     {
@@ -10,9 +14,9 @@ static void FileStringWithDDSToPNG( std::string& OutString )
     }
 
     const char* SearchString = ".dds";
-    const UInt32 Length = strlen( SearchString );
+    const uint32 Length = strlen( SearchString );
 
-    size_t Pos = OutString.find( SearchString );
+    auto Pos = OutString.find( SearchString );
     while ( Pos != std::string::npos )
     {
         OutString.replace( Pos, std::string::npos, ".PNG" );
@@ -20,10 +24,10 @@ static void FileStringWithDDSToPNG( std::string& OutString )
     }
 }
 
-static std::string ExtractPath( const std::string& FullFilePath )
+static String ExtractPath( const String& FullFilePath )
 {
-    size_t Pos = FullFilePath.find_last_of( '/' );
-    if ( Pos != std::string::npos )
+    auto Pos = FullFilePath.find_last_of( '/' );
+    if ( Pos != String::npos )
     {
         return FullFilePath.substr( 0, Pos );
     }
@@ -33,45 +37,42 @@ static std::string ExtractPath( const std::string& FullFilePath )
     }
 }
 
-static XMFLOAT4X4 ToFloat4x4( const ofbx::Matrix& Matrix )
+static CMatrix4 ToFloat4x4( const ofbx::Matrix& Matrix )
 {
-    XMFLOAT4X4 Result;
-    for ( UInt32 y = 0; y < 4; y++ )
+    CMatrix4 Result;
+    for ( uint32 y = 0; y < 4; y++ )
     {
-        for ( UInt32 x = 0; x < 4; x++ )
+        for ( uint32 x = 0; x < 4; x++ )
         {
-            UInt32 Index = y * 4 + x;
-            Result.m[y][x] = Matrix.m[Index];
+            uint32 Index = y * 4 + x;
+            Result.f[y][x] = Matrix.m[Index];
         }
     }
 
     return Result;
 }
 
-static void GetMatrix( const ofbx::Object* Mesh, XMFLOAT4X4& OutMatrix )
+static void GetMatrix( const ofbx::Object* Mesh, CMatrix4& OutMatrix )
 {
     if ( Mesh )
     {
-        XMFLOAT4X4 Matrix;
+        CMatrix4 Matrix;
         GetMatrix( Mesh->getParent(), Matrix );
 
         ofbx::Vec3 Scaling = Mesh->getLocalScaling();
         ofbx::Vec3 Rotation = Mesh->getLocalRotation();
         ofbx::Vec3 Translation = Mesh->getLocalTranslation();
 
-        XMFLOAT4X4 LocalMatrix = ToFloat4x4( Mesh->evalLocal( Translation, Rotation, Scaling ) );
-
-        XMMATRIX Matrix0 = XMLoadFloat4x4( &Matrix );
-        XMMATRIX Matrix1 = XMLoadFloat4x4( &LocalMatrix );
-        XMStoreFloat4x4( &OutMatrix, XMMatrixMultiply( Matrix0, Matrix1 ) );
+        CMatrix4 LocalMatrix = ToFloat4x4( Mesh->evalLocal( Translation, Rotation, Scaling ) );
+        OutMatrix = Matrix * LocalMatrix;
     }
     else
     {
-        XMStoreFloat4x4( &OutMatrix, XMMatrixIdentity() );
+        OutMatrix = CMatrix4::Identity();
     }
 }
 
-bool CFFBXLoader::LoadFBXFile( const String& Filename )
+bool CFBXLoader::LoadFBXFile( const String& Filename )
 {
     OutScene.Models.Clear();
     OutScene.Materials.Clear();
@@ -84,17 +85,17 @@ bool CFFBXLoader::LoadFBXFile( const String& Filename )
     }
 
     fseek( File, 0, SEEK_END );
-    UInt32 FileSize = ftell( File );
+    uint32 FileSize = ftell( File );
     rewind( File );
 
     TArray<ofbx::u8> FileContent( FileSize );
-    UInt32 SizeInBytes = FileContent.SizeInBytes();
+    uint32 SizeInBytes = FileContent.SizeInBytes();
 
     ofbx::u8* Bytes = FileContent.Data();
 
-    const UInt32 ChunkSize = 1024;
+    const uint32 ChunkSize = 1024;
 
-    UInt32 NumBytesRead = 0;
+    uint32 NumBytesRead = 0;
     while ( NumBytesRead < FileSize )
     {
         NumBytesRead += fread( Bytes, 1, ChunkSize, File );
@@ -119,23 +120,24 @@ bool CFFBXLoader::LoadFBXFile( const String& Filename )
     const ofbx::GlobalSettings* Settings = FBXScene->getGlobalSettings();
     OutScene.ScaleFactor = 1.0f / Settings->UnitScaleFactor;
 
-    std::unordered_map<Vertex, UInt32, VertexHasher>  UniqueVertices;
-    std::unordered_map<const ofbx::Material*, UInt32> UniqueMaterials;
+    THashTable<Vertex, uint32, VertexHasher>  UniqueVertices;
+    THashTable<const ofbx::Material*, uint32> UniqueMaterials;
 
-    static char StrBuffer[256];
+    // Non-static buffer to support multithreading
+    char StrBuffer[256];
 
-    std::string Path = ExtractPath( Filename );
+    String Path = ExtractPath( Filename );
 
     ModelData Data;
 
-    UInt32 MeshCount = FBXScene->getMeshCount();
-    for ( UInt32 i = 0; i < MeshCount; i++ )
+    uint32 MeshCount = FBXScene->getMeshCount();
+    for ( uint32 i = 0; i < MeshCount; i++ )
     {
         const ofbx::Mesh* CurrentMesh = FBXScene->getMesh( i );
         const ofbx::Geometry* CurrentGeom = CurrentMesh->getGeometry();
 
-        UInt32 MaterialCount = CurrentMesh->getMaterialCount();
-        for ( UInt32 j = 0; j < MaterialCount; j++ )
+        uint32 MaterialCount = CurrentMesh->getMaterialCount();
+        for ( uint32 j = 0; j < MaterialCount; j++ )
         {
             const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial( j );
             if ( UniqueMaterials.count( CurrentMaterial ) != 0 )
@@ -144,7 +146,7 @@ bool CFFBXLoader::LoadFBXFile( const String& Filename )
             }
 
             MaterialData MaterialData;
-            MaterialData.Diffuse = XMFLOAT3( CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b );
+            MaterialData.Diffuse = CVector3( CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b );
             MaterialData.TexPath = Path;
             MaterialData.AO = 1.0f;//  CurrentMaterial->getSpecularColor().r;
             MaterialData.Roughness = 1.0f;// CurrentMaterial->getSpecularColor().g;
@@ -223,8 +225,8 @@ bool CFFBXLoader::LoadFBXFile( const String& Filename )
             OutScene.Materials.EmplaceBack( MaterialData );
         }
 
-        UInt32 VertexCount = CurrentGeom->getVertexCount();
-        UInt32 IndexCount = CurrentGeom->getIndexCount();
+        uint32 VertexCount = CurrentGeom->getVertexCount();
+        uint32 IndexCount = CurrentGeom->getIndexCount();
         Data.Mesh.Indices.Reserve( IndexCount );
         Data.Mesh.Vertices.Reserve( VertexCount );
         UniqueVertices.reserve( VertexCount );
@@ -244,13 +246,13 @@ bool CFFBXLoader::LoadFBXFile( const String& Filename )
 
         const ofbx::Vec3* Tangents = CurrentGeom->getTangents();
 
-        XMFLOAT4X4 Matrix = ToFloat4x4( CurrentMesh->getGlobalTransform() );
-        XMFLOAT4X4 GeometricMatrix = ToFloat4x4( CurrentMesh->getGeometricMatrix() );
-        XMMATRIX XMTransform = XMMatrixMultiply( XMLoadFloat4x4( &Matrix ), XMLoadFloat4x4( &GeometricMatrix ) );
+        CMatrix4 Matrix = ToFloat4x4( CurrentMesh->getGlobalTransform() );
+        CMatrix4 GeometricMatrix = ToFloat4x4( CurrentMesh->getGeometricMatrix() );
+        CMatrix4 Transform = Matrix * GeometricMatrix;
 
-        UInt32 CurrentIndex = 0;
-        UInt32 MaterialIndex = 0;
-        UInt32 LastMaterialIndex = 0;
+        uint32 CurrentIndex = 0;
+        uint32 MaterialIndex = 0;
+        uint32 LastMaterialIndex = 0;
         while ( CurrentIndex < IndexCount )
         {
             Data.MaterialIndex = -1;
@@ -262,7 +264,7 @@ bool CFFBXLoader::LoadFBXFile( const String& Filename )
             {
                 if ( Materials )
                 {
-                    UInt32 TriangleIndex = CurrentIndex / 3;
+                    uint32 TriangleIndex = CurrentIndex / 3;
                     LastMaterialIndex = MaterialIndex;
                     MaterialIndex = Materials[TriangleIndex];
                     if ( MaterialIndex != LastMaterialIndex )
@@ -273,13 +275,11 @@ bool CFFBXLoader::LoadFBXFile( const String& Filename )
 
                 Vertex TempVertex;
 
-                XMVECTOR XmPosition = XMVectorSet( Vertices[CurrentIndex].x, Vertices[CurrentIndex].y, Vertices[CurrentIndex].z, 1.0f );
-                XmPosition = XMVector3Transform( XmPosition, XMTransform );
-                XMStoreFloat3( &TempVertex.Position, XmPosition );
+                CVector3 Position = CVector3( Vertices[CurrentIndex].x, Vertices[CurrentIndex].y, Vertices[CurrentIndex].z );
+                TempVertex.Position = Transform.TransformPosition( Position );
 
-                XMVECTOR XmNormal = XMVectorSet( Normals[CurrentIndex].x, Normals[CurrentIndex].y, Normals[CurrentIndex].z, 0.0f );
-                XmNormal = XMVector3TransformNormal( XmNormal, XMTransform );
-                XMStoreFloat3( &TempVertex.Normal, XmNormal );
+                CVector3 Normal = CVector3( Normals[CurrentIndex].x, Normals[CurrentIndex].y, Normals[CurrentIndex].z );
+                TempVertex.Normal = Transform.TransformDirection( Normal );
 
                 TempVertex.TexCoord =
                 {
@@ -289,14 +289,13 @@ bool CFFBXLoader::LoadFBXFile( const String& Filename )
 
                 if ( Tangents )
                 {
-                    XMVECTOR XmTangent = XMVectorSet( Tangents[CurrentIndex].x, Tangents[CurrentIndex].y, Tangents[CurrentIndex].z, 0.0f );
-                    XmTangent = XMVector3TransformNormal( XmTangent, XMTransform );
-                    XMStoreFloat3( &TempVertex.Tangent, XmTangent );
+                    CVector3 Tangent = CVector3( Tangents[CurrentIndex].x, Tangents[CurrentIndex].y, Tangents[CurrentIndex].z );
+                    TempVertex.Tangent = Transform.TransformDirection( Tangent );
                 }
 
                 if ( UniqueVertices.count( TempVertex ) == 0 )
                 {
-                    UniqueVertices[TempVertex] = static_cast<UInt32>(Data.Mesh.Vertices.Size());
+                    UniqueVertices[TempVertex] = static_cast<uint32>(Data.Mesh.Vertices.Size());
                     Data.Mesh.Vertices.PushBack( TempVertex );
                 }
 
