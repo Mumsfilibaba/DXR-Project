@@ -29,27 +29,27 @@ class Renderer
 {
 public:
     bool Init();
-    
-    void Tick(const Scene& Scene);
-    
+
+    void Tick( const Scene& Scene );
+
     void Release();
 
-    void PerformFrustumCulling(const Scene& Scene);
-    void PerformFXAA(CommandList& InCmdList);
-    void PerformBackBufferBlit(CommandList& InCmdList);
+    void PerformFrustumCulling( const Scene& Scene );
+    void PerformFXAA( CommandList& InCmdList );
+    void PerformBackBufferBlit( CommandList& InCmdList );
 
-    void PerformAABBDebugPass(CommandList& InCmdList);
+    void PerformAABBDebugPass( CommandList& InCmdList );
 
     void RenderDebugInterface();
 
 private:
-    void OnWindowResize(const WindowResizeEvent& Event);
+    void OnWindowResize( const WindowResizeEvent& Event );
 
     bool InitBoundingBoxDebugPass();
     bool InitAA();
     bool InitShadingImage();
 
-    void ResizeResources(uint32 Width, uint32 Height);
+    void ResizeResources( uint32 Width, uint32 Height );
 
     CommandList PreShadowsCmdList;
     CommandList PointShadowCmdList;
@@ -78,28 +78,28 @@ private:
     FrameResources Resources;
     LightSetup     LightSetup;
 
-    TRef<Texture2D>            ShadingImage;
-    TRef<ComputePipelineState> ShadingRatePipeline;
-    TRef<ComputeShader>        ShadingRateShader;
+    TSharedRef<Texture2D>            ShadingImage;
+    TSharedRef<ComputePipelineState> ShadingRatePipeline;
+    TSharedRef<ComputeShader>        ShadingRateShader;
 
-    TRef<VertexBuffer> AABBVertexBuffer;
-    TRef<IndexBuffer>  AABBIndexBuffer;
-    TRef<GraphicsPipelineState> AABBDebugPipelineState;
-    TRef<VertexShader>          AABBVertexShader;
-    TRef<PixelShader>           AABBPixelShader;
+    TSharedRef<VertexBuffer> AABBVertexBuffer;
+    TSharedRef<IndexBuffer>  AABBIndexBuffer;
+    TSharedRef<GraphicsPipelineState> AABBDebugPipelineState;
+    TSharedRef<VertexShader>          AABBVertexShader;
+    TSharedRef<PixelShader>           AABBPixelShader;
 
-    TRef<GraphicsPipelineState> PostPSO;
-    TRef<PixelShader>           PostShader;
-    TRef<GraphicsPipelineState> FXAAPSO;
-    TRef<PixelShader>           FXAAShader;
-    TRef<GraphicsPipelineState> FXAADebugPSO;
-    TRef<PixelShader>           FXAADebugShader;
+    TSharedRef<GraphicsPipelineState> PostPSO;
+    TSharedRef<PixelShader>           PostShader;
+    TSharedRef<GraphicsPipelineState> FXAAPSO;
+    TSharedRef<PixelShader>           FXAAShader;
+    TSharedRef<GraphicsPipelineState> FXAADebugPSO;
+    TSharedRef<PixelShader>           FXAADebugShader;
 
-    TRef<GPUProfiler> GPUProfiler;
+    TSharedRef<GPUProfiler> GPUProfiler;
 
-    uint32 LastFrameNumDrawCalls     = 0;
+    uint32 LastFrameNumDrawCalls = 0;
     uint32 LastFrameNumDispatchCalls = 0;
-    uint32 LastFrameNumCommands      = 0;
+    uint32 LastFrameNumCommands = 0;
 };
 
 extern Renderer GRenderer;

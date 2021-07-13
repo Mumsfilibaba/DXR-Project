@@ -19,13 +19,13 @@ using TComPtr = Microsoft::WRL::ComPtr<T>;
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    Memory::Memzero(&HeapProperties);
+    Memory::Memzero( &HeapProperties );
 
-    HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
-    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    HeapProperties.VisibleNodeMask      = 1;
-    HeapProperties.CreationNodeMask     = 1;
+    HeapProperties.VisibleNodeMask = 1;
+    HeapProperties.CreationNodeMask = 1;
 
     return HeapProperties;
 }
@@ -34,22 +34,22 @@ inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    Memory::Memzero(&HeapProperties);
+    Memory::Memzero( &HeapProperties );
 
-    HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
-    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    HeapProperties.VisibleNodeMask      = 1;
-    HeapProperties.CreationNodeMask     = 1;
+    HeapProperties.VisibleNodeMask = 1;
+    HeapProperties.CreationNodeMask = 1;
 
     return HeapProperties;
 }
 
 // Converts EBufferFlag- flags to D3D12_RESOURCE_FLAGS
-inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(uint32 Flag)
+inline D3D12_RESOURCE_FLAGS ConvertBufferFlags( uint32 Flag )
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if (Flag & EBufferFlags::BufferFlag_UAV)
+    if ( Flag & EBufferFlags::BufferFlag_UAV )
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
@@ -58,21 +58,21 @@ inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(uint32 Flag)
 }
 
 // Converts ETextureFlag- flags to D3D12_RESOURCE_FLAGS
-inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(uint32 Flag)
+inline D3D12_RESOURCE_FLAGS ConvertTextureFlags( uint32 Flag )
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if (Flag & ETextureFlags::TextureFlag_UAV)
+    if ( Flag & ETextureFlags::TextureFlag_UAV )
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
-    if (Flag & ETextureFlags::TextureFlag_RTV)
+    if ( Flag & ETextureFlags::TextureFlag_RTV )
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     }
-    if (Flag & ETextureFlags::TextureFlag_DSV)
+    if ( Flag & ETextureFlags::TextureFlag_DSV )
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-        if (!(Flag & ETextureFlags::TextureFlag_SRV))
+        if ( !(Flag & ETextureFlags::TextureFlag_SRV) )
         {
             Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
         }
@@ -82,9 +82,9 @@ inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(uint32 Flag)
 }
 
 // Converts EFormat to DXGI_FORMAT
-inline DXGI_FORMAT ConvertFormat(EFormat Format)
+inline DXGI_FORMAT ConvertFormat( EFormat Format )
 {
-    switch (Format)
+    switch ( Format )
     {
     case EFormat::R32G32B32A32_Typeless: return DXGI_FORMAT_R32G32B32A32_TYPELESS;
     case EFormat::R32G32B32A32_Float:    return DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -151,9 +151,9 @@ inline DXGI_FORMAT ConvertFormat(EFormat Format)
 }
 
 // Converts EInputClassification to D3D12_INPUT_CLASSIFICATION
-inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification(EInputClassification InputClassification)
+inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification( EInputClassification InputClassification )
 {
-    switch (InputClassification)
+    switch ( InputClassification )
     {
     case EInputClassification::Instance: return D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
     case EInputClassification::Vertex:   return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
@@ -163,9 +163,9 @@ inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification(EInputClassificatio
 }
 
 // Converts EDepthWriteMask to DXGI_FORMAT
-inline D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMask)
+inline D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask( EDepthWriteMask DepthWriteMask )
 {
-    switch (DepthWriteMask)
+    switch ( DepthWriteMask )
     {
     case EDepthWriteMask::Zero: return D3D12_DEPTH_WRITE_MASK_ZERO;
     case EDepthWriteMask::All:  return D3D12_DEPTH_WRITE_MASK_ALL;
@@ -175,9 +175,9 @@ inline D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMa
 }
 
 // Converts EComparisonFunc to D3D12_COMPARISON_FUNC
-inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
+inline D3D12_COMPARISON_FUNC ConvertComparisonFunc( EComparisonFunc ComparisonFunc )
 {
-    switch (ComparisonFunc)
+    switch ( ComparisonFunc )
     {
     case EComparisonFunc::Never:        return D3D12_COMPARISON_FUNC_NEVER;
     case EComparisonFunc::Less:         return D3D12_COMPARISON_FUNC_LESS;
@@ -193,9 +193,9 @@ inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFun
 }
 
 // Converts EStencilOp to D3D12_STENCIL_OP
-inline D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
+inline D3D12_STENCIL_OP ConvertStencilOp( EStencilOp StencilOp )
 {
-    switch (StencilOp)
+    switch ( StencilOp )
     {
     case EStencilOp::Keep:    return D3D12_STENCIL_OP_KEEP;
     case EStencilOp::Zero:    return D3D12_STENCIL_OP_ZERO;
@@ -211,21 +211,21 @@ inline D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
 }
 
 // Converts DepthStencilOp to D3D12_DEPTH_STENCILOP_DESC
-inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const DepthStencilOp& DepthStencilOp)
+inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp( const DepthStencilOp& DepthStencilOp )
 {
     return
     {
-        ConvertStencilOp(DepthStencilOp.StencilFailOp),
-        ConvertStencilOp(DepthStencilOp.StencilDepthFailOp),
-        ConvertStencilOp(DepthStencilOp.StencilPassOp),
-        ConvertComparisonFunc(DepthStencilOp.StencilFunc)
+        ConvertStencilOp( DepthStencilOp.StencilFailOp ),
+        ConvertStencilOp( DepthStencilOp.StencilDepthFailOp ),
+        ConvertStencilOp( DepthStencilOp.StencilPassOp ),
+        ConvertComparisonFunc( DepthStencilOp.StencilFunc )
     };
 }
 
 // Converts ECullMode to D3D12_CULL_MODE
-inline D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
+inline D3D12_CULL_MODE ConvertCullMode( ECullMode CullMode )
 {
-    switch (CullMode)
+    switch ( CullMode )
     {
     case ECullMode::Back:  return D3D12_CULL_MODE_BACK;
     case ECullMode::Front: return D3D12_CULL_MODE_FRONT;
@@ -234,9 +234,9 @@ inline D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
 }
 
 // Converts EFillMode to D3D12_FILL_MODE
-inline D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
+inline D3D12_FILL_MODE ConvertFillMode( EFillMode FillMode )
 {
-    switch (FillMode)
+    switch ( FillMode )
     {
     case EFillMode::Solid:     return D3D12_FILL_MODE_SOLID;
     case EFillMode::WireFrame: return D3D12_FILL_MODE_WIREFRAME;
@@ -246,9 +246,9 @@ inline D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
 }
 
 // Converts EBlendOp to D3D12_FILL_MODE
-inline D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
+inline D3D12_BLEND_OP ConvertBlendOp( EBlendOp BlendOp )
 {
-    switch (BlendOp)
+    switch ( BlendOp )
     {
     case EBlendOp::Add:         return D3D12_BLEND_OP_ADD;
     case EBlendOp::Max:         return D3D12_BLEND_OP_MAX;
@@ -261,9 +261,9 @@ inline D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
 }
 
 // Converts EBlend to D3D12_BLEND
-inline D3D12_BLEND ConvertBlend(EBlend Blend)
+inline D3D12_BLEND ConvertBlend( EBlend Blend )
 {
-    switch (Blend)
+    switch ( Blend )
     {
     case EBlend::Zero:           return D3D12_BLEND_ZERO;
     case EBlend::One:            return D3D12_BLEND_ONE;
@@ -288,9 +288,9 @@ inline D3D12_BLEND ConvertBlend(EBlend Blend)
 }
 
 // Converts ELogicOp to D3D12_LOGIC_OP
-inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
+inline D3D12_LOGIC_OP ConvertLogicOp( ELogicOp LogicOp )
 {
-    switch (LogicOp)
+    switch ( LogicOp )
     {
     case ELogicOp::Clear:        return D3D12_LOGIC_OP_CLEAR;
     case ELogicOp::Set:          return D3D12_LOGIC_OP_SET;
@@ -314,28 +314,28 @@ inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
 }
 
 // Converts RenderTargetWriteState to D3D12 RenderTargetWriteMask
-inline uint8 ConvertRenderTargetWriteState(const RenderTargetWriteState& RenderTargetWriteState)
+inline uint8 ConvertRenderTargetWriteState( const RenderTargetWriteState& RenderTargetWriteState )
 {
     uint8 RenderTargetWriteMask = 0;
-    if (RenderTargetWriteState.WriteAll())
+    if ( RenderTargetWriteState.WriteAll() )
     {
         RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
     }
     else
     {
-        if (RenderTargetWriteState.WriteRed())
+        if ( RenderTargetWriteState.WriteRed() )
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_RED;
         }
-        if (RenderTargetWriteState.WriteGreen())
+        if ( RenderTargetWriteState.WriteGreen() )
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_GREEN;
         }
-        if (RenderTargetWriteState.WriteBlue())
+        if ( RenderTargetWriteState.WriteBlue() )
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_BLUE;
         }
-        if (RenderTargetWriteState.WriteAlpha())
+        if ( RenderTargetWriteState.WriteAlpha() )
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_ALPHA;
         }
@@ -345,9 +345,9 @@ inline uint8 ConvertRenderTargetWriteState(const RenderTargetWriteState& RenderT
 }
 
 // Converts EPrimitiveTopologyType to D3D12_PRIMITIVE_TOPOLOGY_TYPE
-inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopologyType PrimitiveTopologyType)
+inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType( EPrimitiveTopologyType PrimitiveTopologyType )
 {
-    switch (PrimitiveTopologyType)
+    switch ( PrimitiveTopologyType )
     {
     case EPrimitiveTopologyType::Line:      return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
     case EPrimitiveTopologyType::Patch:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
@@ -360,9 +360,9 @@ inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopo
 }
 
 // Converts EPrimitiveTopology to D3D12_PRIMITIVE_TOPOLOGY
-inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
+inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology( EPrimitiveTopology PrimitiveTopology )
 {
-    switch (PrimitiveTopology)
+    switch ( PrimitiveTopology )
     {
     case EPrimitiveTopology::LineList:      return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
     case EPrimitiveTopology::LineStrip:     return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
@@ -376,9 +376,9 @@ inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology Prim
 }
 
 // Converts EResourceState to D3D12_RESOURCE_STATES
-inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState ResourceState)
+inline D3D12_RESOURCE_STATES ConvertResourceState( EResourceState ResourceState )
 {
-    switch (ResourceState)
+    switch ( ResourceState )
     {
     case EResourceState::Common:                  return D3D12_RESOURCE_STATE_COMMON;
     case EResourceState::CopyDest:                return D3D12_RESOURCE_STATE_COPY_DEST;
@@ -402,9 +402,9 @@ inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState ResourceState)
 }
 
 // Converts ESamplerMode to D3D12_TEXTURE_ADDRESS_MODE
-inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
+inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode( ESamplerMode SamplerMode )
 {
-    switch (SamplerMode)
+    switch ( SamplerMode )
     {
     case ESamplerMode::Wrap:       return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
     case ESamplerMode::Clamp:      return D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -417,9 +417,9 @@ inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
 }
 
 // Converts ESamplerFilter to D3D12_FILTER
-inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
+inline D3D12_FILTER ConvertSamplerFilter( ESamplerFilter SamplerFilter )
 {
-    switch (SamplerFilter)
+    switch ( SamplerFilter )
     {
     case ESamplerFilter::MinMagMipPoint:                          return D3D12_FILTER_MIN_MAG_MIP_POINT;
     case ESamplerFilter::MinMagPoint_MipLinear:                   return D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
@@ -445,9 +445,9 @@ inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
 }
 
 // Converts EShadingRate to D3D12_SHADING_RATE
-inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
+inline D3D12_SHADING_RATE ConvertShadingRate( EShadingRate ShadingRate )
 {
-    switch (ShadingRate)
+    switch ( ShadingRate )
     {
     case EShadingRate::VRS_1x1: return D3D12_SHADING_RATE_1X1;
     case EShadingRate::VRS_1x2: return D3D12_SHADING_RATE_1X2;
@@ -462,184 +462,184 @@ inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
 }
 
 // Operators for D3D12_GPU_DESCRIPTOR_HANDLE
-inline bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
+inline bool operator==( D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value )
 {
     return DescriptorHandle.ptr == Value;
 }
 
-inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
+inline bool operator!=( D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value )
 {
     return !(DescriptorHandle == Value);
 }
 
-inline bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
+inline bool operator==( D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right )
 {
     return Left.ptr == Right.ptr;
 }
 
-inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
+inline bool operator!=( D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right )
 {
     return !(Left == Right);
 }
 
 // Operators for D3D12_CPU_DESCRIPTOR_HANDLE
-inline bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
+inline bool operator==( D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value )
 {
     return DescriptorHandle.ptr == Value;
 }
 
-inline bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
+inline bool operator!=( D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value )
 {
     return !(DescriptorHandle == Value);
 }
 
-inline bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right)
+inline bool operator==( D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right )
 {
     return Left.ptr == Right.ptr;
 }
 
-inline bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right)
+inline bool operator!=( D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right )
 {
     return !(Left == Right);
 }
 
-inline uint32 GetFormatStride(DXGI_FORMAT Format)
+inline uint32 GetFormatStride( DXGI_FORMAT Format )
 {
-    switch (Format)
+    switch ( Format )
     {
-        case DXGI_FORMAT_R32G32B32A32_TYPELESS:
-        case DXGI_FORMAT_R32G32B32A32_FLOAT:
-        case DXGI_FORMAT_R32G32B32A32_UINT:
-        case DXGI_FORMAT_R32G32B32A32_SINT:
-        {
-            return 16;
-        }
+    case DXGI_FORMAT_R32G32B32A32_TYPELESS:
+    case DXGI_FORMAT_R32G32B32A32_FLOAT:
+    case DXGI_FORMAT_R32G32B32A32_UINT:
+    case DXGI_FORMAT_R32G32B32A32_SINT:
+    {
+        return 16;
+    }
 
-        case DXGI_FORMAT_R32G32B32_TYPELESS:
-        case DXGI_FORMAT_R32G32B32_FLOAT:
-        case DXGI_FORMAT_R32G32B32_UINT:
-        case DXGI_FORMAT_R32G32B32_SINT:
-        {
-            return 12;
-        }
+    case DXGI_FORMAT_R32G32B32_TYPELESS:
+    case DXGI_FORMAT_R32G32B32_FLOAT:
+    case DXGI_FORMAT_R32G32B32_UINT:
+    case DXGI_FORMAT_R32G32B32_SINT:
+    {
+        return 12;
+    }
 
-        case DXGI_FORMAT_R16G16B16A16_TYPELESS:
-        case DXGI_FORMAT_R16G16B16A16_FLOAT:
-        case DXGI_FORMAT_R16G16B16A16_UNORM:
-        case DXGI_FORMAT_R16G16B16A16_UINT:
-        case DXGI_FORMAT_R16G16B16A16_SNORM:
-        case DXGI_FORMAT_R16G16B16A16_SINT:
-        case DXGI_FORMAT_R32G32_TYPELESS:
-        case DXGI_FORMAT_R32G32_FLOAT:
-        case DXGI_FORMAT_R32G32_UINT:
-        case DXGI_FORMAT_R32G32_SINT:
-        case DXGI_FORMAT_R32G8X24_TYPELESS:
-        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
-        case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
-        case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
-        {
-            return 8;
-        }
+    case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+    case DXGI_FORMAT_R16G16B16A16_FLOAT:
+    case DXGI_FORMAT_R16G16B16A16_UNORM:
+    case DXGI_FORMAT_R16G16B16A16_UINT:
+    case DXGI_FORMAT_R16G16B16A16_SNORM:
+    case DXGI_FORMAT_R16G16B16A16_SINT:
+    case DXGI_FORMAT_R32G32_TYPELESS:
+    case DXGI_FORMAT_R32G32_FLOAT:
+    case DXGI_FORMAT_R32G32_UINT:
+    case DXGI_FORMAT_R32G32_SINT:
+    case DXGI_FORMAT_R32G8X24_TYPELESS:
+    case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+    case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+    case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+    {
+        return 8;
+    }
 
-        case DXGI_FORMAT_R10G10B10A2_TYPELESS:
-        case DXGI_FORMAT_R10G10B10A2_UNORM:
-        case DXGI_FORMAT_R10G10B10A2_UINT:
-        case DXGI_FORMAT_R11G11B10_FLOAT:
-        case DXGI_FORMAT_R8G8B8A8_TYPELESS:
-        case DXGI_FORMAT_R8G8B8A8_UNORM:
-        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-        case DXGI_FORMAT_R8G8B8A8_UINT:
-        case DXGI_FORMAT_R8G8B8A8_SNORM:
-        case DXGI_FORMAT_R8G8B8A8_SINT:
-        case DXGI_FORMAT_R16G16_TYPELESS:
-        case DXGI_FORMAT_R16G16_FLOAT:
-        case DXGI_FORMAT_R16G16_UNORM:
-        case DXGI_FORMAT_R16G16_UINT:
-        case DXGI_FORMAT_R16G16_SNORM:
-        case DXGI_FORMAT_R16G16_SINT:
-        case DXGI_FORMAT_R32_TYPELESS:
-        case DXGI_FORMAT_D32_FLOAT:
-        case DXGI_FORMAT_R32_FLOAT:
-        case DXGI_FORMAT_R32_UINT:
-        case DXGI_FORMAT_R32_SINT:
-        case DXGI_FORMAT_R24G8_TYPELESS:
-        case DXGI_FORMAT_D24_UNORM_S8_UINT:
-        case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
-        case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
-        {
-            return 4;
-        }
+    case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+    case DXGI_FORMAT_R10G10B10A2_UNORM:
+    case DXGI_FORMAT_R10G10B10A2_UINT:
+    case DXGI_FORMAT_R11G11B10_FLOAT:
+    case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+    case DXGI_FORMAT_R8G8B8A8_UNORM:
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+    case DXGI_FORMAT_R8G8B8A8_UINT:
+    case DXGI_FORMAT_R8G8B8A8_SNORM:
+    case DXGI_FORMAT_R8G8B8A8_SINT:
+    case DXGI_FORMAT_R16G16_TYPELESS:
+    case DXGI_FORMAT_R16G16_FLOAT:
+    case DXGI_FORMAT_R16G16_UNORM:
+    case DXGI_FORMAT_R16G16_UINT:
+    case DXGI_FORMAT_R16G16_SNORM:
+    case DXGI_FORMAT_R16G16_SINT:
+    case DXGI_FORMAT_R32_TYPELESS:
+    case DXGI_FORMAT_D32_FLOAT:
+    case DXGI_FORMAT_R32_FLOAT:
+    case DXGI_FORMAT_R32_UINT:
+    case DXGI_FORMAT_R32_SINT:
+    case DXGI_FORMAT_R24G8_TYPELESS:
+    case DXGI_FORMAT_D24_UNORM_S8_UINT:
+    case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+    {
+        return 4;
+    }
 
-        case DXGI_FORMAT_R8G8_TYPELESS:
-        case DXGI_FORMAT_R8G8_UNORM:
-        case DXGI_FORMAT_R8G8_UINT:
-        case DXGI_FORMAT_R8G8_SNORM:
-        case DXGI_FORMAT_R8G8_SINT:
-        case DXGI_FORMAT_R16_TYPELESS:
-        case DXGI_FORMAT_R16_FLOAT:
-        case DXGI_FORMAT_D16_UNORM:
-        case DXGI_FORMAT_R16_UNORM:
-        case DXGI_FORMAT_R16_UINT:
-        case DXGI_FORMAT_R16_SNORM:
-        case DXGI_FORMAT_R16_SINT:
-        {
-            return 2;
-        }
+    case DXGI_FORMAT_R8G8_TYPELESS:
+    case DXGI_FORMAT_R8G8_UNORM:
+    case DXGI_FORMAT_R8G8_UINT:
+    case DXGI_FORMAT_R8G8_SNORM:
+    case DXGI_FORMAT_R8G8_SINT:
+    case DXGI_FORMAT_R16_TYPELESS:
+    case DXGI_FORMAT_R16_FLOAT:
+    case DXGI_FORMAT_D16_UNORM:
+    case DXGI_FORMAT_R16_UNORM:
+    case DXGI_FORMAT_R16_UINT:
+    case DXGI_FORMAT_R16_SNORM:
+    case DXGI_FORMAT_R16_SINT:
+    {
+        return 2;
+    }
 
-        case DXGI_FORMAT_R8_TYPELESS:
-        case DXGI_FORMAT_R8_UNORM:
-        case DXGI_FORMAT_R8_UINT:
-        case DXGI_FORMAT_R8_SNORM:
-        case DXGI_FORMAT_R8_SINT:
-        case DXGI_FORMAT_A8_UNORM:
-        {
-            return 1;
-        }
+    case DXGI_FORMAT_R8_TYPELESS:
+    case DXGI_FORMAT_R8_UNORM:
+    case DXGI_FORMAT_R8_UINT:
+    case DXGI_FORMAT_R8_SNORM:
+    case DXGI_FORMAT_R8_SINT:
+    case DXGI_FORMAT_A8_UNORM:
+    {
+        return 1;
+    }
 
-        default:
-        {
-            return 0;
-        }
+    default:
+    {
+        return 0;
+    }
     }
 }
 
-inline DXGI_FORMAT CastShaderResourceFormat(DXGI_FORMAT Format)
+inline DXGI_FORMAT CastShaderResourceFormat( DXGI_FORMAT Format )
 {
-    switch (Format)
+    switch ( Format )
     {
         // TODO: Fix formats better
-        case DXGI_FORMAT_R32G32B32A32_TYPELESS: return DXGI_FORMAT_R32G32B32A32_FLOAT;
-        case DXGI_FORMAT_R32G32B32_TYPELESS:    return DXGI_FORMAT_R32G32B32_FLOAT;
-        case DXGI_FORMAT_R16G16B16A16_TYPELESS: return DXGI_FORMAT_R16G16B16A16_FLOAT;
-        case DXGI_FORMAT_R32G32_TYPELESS:       return DXGI_FORMAT_R32G32_FLOAT;
-        case DXGI_FORMAT_R32G8X24_TYPELESS:
-        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:  return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
-        case DXGI_FORMAT_R10G10B10A2_TYPELESS:  return DXGI_FORMAT_R10G10B10A2_UNORM;
-        case DXGI_FORMAT_R8G8B8A8_TYPELESS:     return DXGI_FORMAT_R8G8B8A8_UNORM;
-        case DXGI_FORMAT_R16G16_TYPELESS:       return DXGI_FORMAT_R16G16_FLOAT;
-        case DXGI_FORMAT_R32_TYPELESS:
-        case DXGI_FORMAT_D32_FLOAT:             return DXGI_FORMAT_R32_FLOAT;
-        case DXGI_FORMAT_R24G8_TYPELESS:        return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-        case DXGI_FORMAT_R8G8_TYPELESS:         return DXGI_FORMAT_R8G8_UNORM;
-        case DXGI_FORMAT_R16_TYPELESS:          return DXGI_FORMAT_R16_FLOAT;
-        case DXGI_FORMAT_D16_UNORM:             return DXGI_FORMAT_R16_UNORM;
-        case DXGI_FORMAT_R8_TYPELESS:           return DXGI_FORMAT_R8_UNORM;
-        default: return Format;
+    case DXGI_FORMAT_R32G32B32A32_TYPELESS: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+    case DXGI_FORMAT_R32G32B32_TYPELESS:    return DXGI_FORMAT_R32G32B32_FLOAT;
+    case DXGI_FORMAT_R16G16B16A16_TYPELESS: return DXGI_FORMAT_R16G16B16A16_FLOAT;
+    case DXGI_FORMAT_R32G32_TYPELESS:       return DXGI_FORMAT_R32G32_FLOAT;
+    case DXGI_FORMAT_R32G8X24_TYPELESS:
+    case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:  return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+    case DXGI_FORMAT_R10G10B10A2_TYPELESS:  return DXGI_FORMAT_R10G10B10A2_UNORM;
+    case DXGI_FORMAT_R8G8B8A8_TYPELESS:     return DXGI_FORMAT_R8G8B8A8_UNORM;
+    case DXGI_FORMAT_R16G16_TYPELESS:       return DXGI_FORMAT_R16G16_FLOAT;
+    case DXGI_FORMAT_R32_TYPELESS:
+    case DXGI_FORMAT_D32_FLOAT:             return DXGI_FORMAT_R32_FLOAT;
+    case DXGI_FORMAT_R24G8_TYPELESS:        return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+    case DXGI_FORMAT_R8G8_TYPELESS:         return DXGI_FORMAT_R8G8_UNORM;
+    case DXGI_FORMAT_R16_TYPELESS:          return DXGI_FORMAT_R16_FLOAT;
+    case DXGI_FORMAT_D16_UNORM:             return DXGI_FORMAT_R16_UNORM;
+    case DXGI_FORMAT_R8_TYPELESS:           return DXGI_FORMAT_R8_UNORM;
+    default: return Format;
     }
 }
 
-inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(uint32 InFlags)
+inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags( uint32 InFlags )
 {
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-    if (InFlags & RayTracingStructureBuildFlag_AllowUpdate)
+    if ( InFlags & RayTracingStructureBuildFlag_AllowUpdate )
     {
         Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
     }
-    if (InFlags & RayTracingStructureBuildFlag_PreferFastTrace)
+    if ( InFlags & RayTracingStructureBuildFlag_PreferFastTrace )
     {
         Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
     }
-    if (InFlags & RayTracingStructureBuildFlag_PreferFastBuild)
+    if ( InFlags & RayTracingStructureBuildFlag_PreferFastBuild )
     {
         Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
     }
@@ -647,22 +647,22 @@ inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationSt
     return Flags;
 }
 
-inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(uint32 InFlags)
+inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags( uint32 InFlags )
 {
     D3D12_RAYTRACING_INSTANCE_FLAGS Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-    if (InFlags & RayTracingInstanceFlags_CullDisable)
+    if ( InFlags & RayTracingInstanceFlags_CullDisable )
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
     }
-    if (InFlags & RayTracingInstanceFlags_FrontCounterClockwise)
+    if ( InFlags & RayTracingInstanceFlags_FrontCounterClockwise )
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
     }
-    if (InFlags & RayTracingInstanceFlags_ForceOpaque)
+    if ( InFlags & RayTracingInstanceFlags_ForceOpaque )
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
     }
-    if (InFlags & RayTracingInstanceFlags_ForceNonOpaque)
+    if ( InFlags & RayTracingInstanceFlags_ForceNonOpaque )
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
     }

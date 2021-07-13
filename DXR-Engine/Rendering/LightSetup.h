@@ -6,17 +6,19 @@
 #include "Scene/Scene.h"
 #include "Scene/Lights/DirectionalLight.h"
 
+#include "Math/Vector4.h"
+
 struct PointLightData
 {
-    XMFLOAT3 Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+    CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
     float Padding0;
 };
 
 struct ShadowCastingPointLightData
 {
-    XMFLOAT3 Color      = XMFLOAT3(1.0f, 1.0f, 1.0f);
-    float ShadowBias    = 0.005f;
-    float FarPlane      = 10.0f;
+    CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
+    float ShadowBias = 0.005f;
+    float FarPlane = 10.0f;
     float MaxShadowBias = 0.05f;
     float Padding0;
     float Padding1;
@@ -24,61 +26,61 @@ struct ShadowCastingPointLightData
 
 struct PointLightShadowMapGenerationData
 {
-    TStaticArray<XMFLOAT4X4, 6> Matrix;
-    TStaticArray<XMFLOAT4X4, 6> ViewMatrix;
-    TStaticArray<XMFLOAT4X4, 6> ProjMatrix;
+    TStaticArray<CMatrix4, 6> Matrix;
+    TStaticArray<CMatrix4, 6> ViewMatrix;
+    TStaticArray<CMatrix4, 6> ProjMatrix;
     float    FarPlane;
-    XMFLOAT3 Position;
+    CVector3 Position;
 };
 
 struct DirectionalLightData
 {
-    XMFLOAT3 Color      = XMFLOAT3(1.0f, 1.0f, 1.0f);
-    float ShadowBias    = 0.005f;
-    XMFLOAT3 Direction  = XMFLOAT3(0.0f, -1.0f, 0.0f);
+    CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
+    float ShadowBias = 0.005f;
+    CVector3 Direction = CVector3( 0.0f, -1.0f, 0.0f );
     float MaxShadowBias = 0.05f;
-    XMFLOAT3 Up         = XMFLOAT3(0.0f, 0.0f, -1.0f);
+    CVector3 Up = CVector3( 0.0f, 0.0f, -1.0f );
     float LightSize;
 };
 
 struct LightSetup
 {
-    const EFormat ShadowMapFormat  = EFormat::D32_Float;
+    const EFormat ShadowMapFormat = EFormat::D32_Float;
     const EFormat LightProbeFormat = EFormat::R11G11B10_Float;
-    
-    const uint32 MaxPointLights       = 256;
+
+    const uint32 MaxPointLights = 256;
     const uint32 MaxDirectionalLights = 256;
     const uint32 MaxPointLightShadows = 8;
-    
-    const uint16 CascadeSize = 4096;
-    
-    const uint16 IrradianceSize         = 32;
-    const uint16 SpecularIrradianceSize = 256;
-    const uint16 PointLightShadowSize   = 512;
 
-    LightSetup()  = default;
+    const uint16 CascadeSize = 4096;
+
+    const uint16 IrradianceSize = 32;
+    const uint16 SpecularIrradianceSize = 256;
+    const uint16 PointLightShadowSize = 512;
+
+    LightSetup() = default;
     ~LightSetup() = default;
 
     bool Init();
 
-    void BeginFrame(CommandList& CmdList, const Scene& Scene);
+    void BeginFrame( CommandList& CmdList, const Scene& Scene );
     void Release();
 
-    TArray<XMFLOAT4>       PointLightsPosRad;
+    TArray<CVector4>       PointLightsPosRad;
     TArray<PointLightData> PointLightsData;
-    
-    TRef<ConstantBuffer> PointLightsBuffer;
-    TRef<ConstantBuffer> PointLightsPosRadBuffer;
+
+    TSharedRef<ConstantBuffer> PointLightsBuffer;
+    TSharedRef<ConstantBuffer> PointLightsPosRadBuffer;
 
     TArray<PointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
-    
-    TArray<XMFLOAT4>                    ShadowCastingPointLightsPosRad;
+
+    TArray<CVector4>                    ShadowCastingPointLightsPosRad;
     TArray<ShadowCastingPointLightData> ShadowCastingPointLightsData;
-    
-    TRef<ConstantBuffer> ShadowCastingPointLightsBuffer;
-    TRef<ConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
-    
-    TRef<TextureCubeArray>       PointLightShadowMaps;
+
+    TSharedRef<ConstantBuffer> ShadowCastingPointLightsBuffer;
+    TSharedRef<ConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
+
+    TSharedRef<TextureCubeArray>       PointLightShadowMaps;
     TArray<DepthStencilViewCube> PointLightShadowMapDSVs;
 
     // NOTE: Only one directional light
@@ -86,24 +88,24 @@ struct LightSetup
     bool DirectionalLightDataDirty = true;
 
     float CascadeSplitLambda;
-    
-    TRef<ConstantBuffer> DirectionalLightsBuffer;
 
-    TRef<Texture2D> ShadowMapCascades[4];
-    TRef<Texture2D> DirectionalShadowMask;
+    TSharedRef<ConstantBuffer> DirectionalLightsBuffer;
 
-    TRef<StructuredBuffer>    CascadeMatrixBuffer;
-    TRef<ShaderResourceView>  CascadeMatrixBufferSRV;
-    TRef<UnorderedAccessView> CascadeMatrixBufferUAV;
+    TSharedRef<Texture2D> ShadowMapCascades[4];
+    TSharedRef<Texture2D> DirectionalShadowMask;
 
-    TRef<StructuredBuffer>    CascadeSplitsBuffer;
-    TRef<ShaderResourceView>  CascadeSplitsBufferSRV;
-    TRef<UnorderedAccessView> CascadeSplitsBufferUAV;
+    TSharedRef<StructuredBuffer>    CascadeMatrixBuffer;
+    TSharedRef<ShaderResourceView>  CascadeMatrixBufferSRV;
+    TSharedRef<UnorderedAccessView> CascadeMatrixBufferUAV;
 
-    TRef<TextureCube>         IrradianceMap;
-    TRef<UnorderedAccessView> IrradianceMapUAV;
+    TSharedRef<StructuredBuffer>    CascadeSplitsBuffer;
+    TSharedRef<ShaderResourceView>  CascadeSplitsBufferSRV;
+    TSharedRef<UnorderedAccessView> CascadeSplitsBufferUAV;
 
-    TRef<TextureCube>                 SpecularIrradianceMap;
-    TArray<TRef<UnorderedAccessView>> SpecularIrradianceMapUAVs;
+    TSharedRef<TextureCube>         IrradianceMap;
+    TSharedRef<UnorderedAccessView> IrradianceMapUAV;
+
+    TSharedRef<TextureCube>                 SpecularIrradianceMap;
+    TArray<TSharedRef<UnorderedAccessView>> SpecularIrradianceMapUAVs;
     TArray<UnorderedAccessView*>      WeakSpecularIrradianceMapUAVs;
 };

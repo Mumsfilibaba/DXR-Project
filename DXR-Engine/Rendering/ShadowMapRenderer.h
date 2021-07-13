@@ -8,31 +8,31 @@
 
 struct SCascadeGenerationInfo
 {
-    XMFLOAT3 LightDirection;
+    CVector3 LightDirection;
     float CascadeSplitLambda;
-    XMFLOAT3 LightUp;
+    CVector3 LightUp;
     float Padding0;
 };
 
 struct SCascadeMatrices
 {
-    XMFLOAT4X4 ViewProjection;
-    XMFLOAT4X4 View;
+    CMatrix4 ViewProjection;
+    CMatrix4 View;
 };
 
 struct SCascadeSplits
 {
-    XMFLOAT3 MinExtent;
+    CVector3 MinExtent;
     float Split;
-    XMFLOAT3 MaxExtent;
+    CVector3 MaxExtent;
     float FarPlane;
 };
 
 struct SPerShadowMap
 {
-    XMFLOAT4X4 Matrix;
-    XMFLOAT3   Position;
-    float      FarPlane;
+    CMatrix4 Matrix;
+    CVector3 Position;
+    float    FarPlane;
 };
 
 struct SPerCascade
@@ -46,44 +46,44 @@ struct SPerCascade
 class ShadowMapRenderer
 {
 public:
-    ShadowMapRenderer()  = default;
+    ShadowMapRenderer() = default;
     ~ShadowMapRenderer() = default;
 
-    bool Init(LightSetup& LightSetup, FrameResources& Resources);
+    bool Init( LightSetup& LightSetup, FrameResources& Resources );
 
     void Release();
-    
-    void RenderPointLightShadows(CommandList& CmdList, const LightSetup& LightSetup, const Scene& Scene);
-    void RenderDirectionalLightShadows(CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources, const Scene& Scene);
 
-    bool ResizeResources(uint32 Width, uint32 Height, LightSetup& LightSetup);
+    void RenderPointLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const Scene& Scene );
+    void RenderDirectionalLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources, const Scene& Scene );
+
+    bool ResizeResources( uint32 Width, uint32 Height, LightSetup& LightSetup );
 
 private:
-    bool CreateShadowMask(uint32 Width, uint32 Height, LightSetup& LightSetup);
+    bool CreateShadowMask( uint32 Width, uint32 Height, LightSetup& LightSetup );
 
-    bool CreateShadowMaps(LightSetup& LightSetup, FrameResources& FrameResources);
+    bool CreateShadowMaps( LightSetup& LightSetup, FrameResources& FrameResources );
 
-    TRef<ConstantBuffer> PerShadowMapBuffer;
+    TSharedRef<ConstantBuffer> PerShadowMapBuffer;
 
-    TRef<GraphicsPipelineState> DirectionalLightPSO;
-    TRef<VertexShader>          DirectionalLightShader;
-    
-    TRef<ComputePipelineState> DirectionalShadowMaskPSO;
-    TRef<ComputeShader>        DirectionalShadowMaskShader;
+    TSharedRef<GraphicsPipelineState> DirectionalLightPSO;
+    TSharedRef<VertexShader>          DirectionalLightShader;
 
-    TRef<GraphicsPipelineState> PointLightPipelineState;
-    TRef<VertexShader>          PointLightVertexShader;
-    TRef<PixelShader>           PointLightPixelShader;
+    TSharedRef<ComputePipelineState> DirectionalShadowMaskPSO;
+    TSharedRef<ComputeShader>        DirectionalShadowMaskShader;
 
-    TRef<ConstantBuffer> PerCascadeBuffer;
-    TRef<ConstantBuffer> CascadeGenerationData;
+    TSharedRef<GraphicsPipelineState> PointLightPipelineState;
+    TSharedRef<VertexShader>          PointLightVertexShader;
+    TSharedRef<PixelShader>           PointLightPixelShader;
 
-    TRef<ComputePipelineState> CascadeGen;
-    TRef<ComputeShader>        CascadeGenShader;
+    TSharedRef<ConstantBuffer> PerCascadeBuffer;
+    TSharedRef<ConstantBuffer> CascadeGenerationData;
 
-    bool UpdateDirLight   = true;
+    TSharedRef<ComputePipelineState> CascadeGen;
+    TSharedRef<ComputeShader>        CascadeGenShader;
+
+    bool UpdateDirLight = true;
     bool UpdatePointLight = true;
-    
-    uint64 DirLightFrame    = 0;
-    uint64 PointLightFrame  = 0;
+
+    uint64 DirLightFrame = 0;
+    uint64 PointLightFrame = 0;
 };

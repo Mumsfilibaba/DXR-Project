@@ -13,16 +13,16 @@
 class D3D12Viewport : public Viewport, public D3D12DeviceChild
 {
 public:
-    D3D12Viewport(D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+    D3D12Viewport( D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight );
     ~D3D12Viewport();
 
     bool Init();
 
-    virtual bool Resize(uint32 Width, uint32 Height) override final;
+    virtual bool Resize( uint32 Width, uint32 Height ) override final;
 
-    virtual bool Present(bool VerticalSync) override final;
+    virtual bool Present( bool VerticalSync ) override final;
 
-    virtual void SetName(const std::string& Name) override final;
+    virtual void SetName( const std::string& Name ) override final;
 
     virtual RenderTargetView* GetRenderTargetView() const override final
     {
@@ -50,15 +50,15 @@ private:
     TComPtr<IDXGISwapChain3> SwapChain;
 
     D3D12CommandContext* CmdContext;
-    
-    HWND Hwnd  = 0;
+
+    HWND Hwnd = 0;
 
     uint32 Flags = 0;
-    uint32 NumBackBuffers  = 0;
+    uint32 NumBackBuffers = 0;
     uint32 BackBufferIndex = 0;
 
     HANDLE SwapChainWaitableObject = 0;
 
-    TArray<TRef<D3D12Texture2D>>        BackBuffers;
-    TArray<TRef<D3D12RenderTargetView>> BackBufferViews;
+    TArray<TSharedRef<D3D12Texture2D>>        BackBuffers;
+    TArray<TSharedRef<D3D12RenderTargetView>> BackBufferViews;
 };

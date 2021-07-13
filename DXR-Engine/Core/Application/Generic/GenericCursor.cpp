@@ -1,11 +1,11 @@
 #include "GenericCursor.h"
 
-TRef<GenericCursor> GenericCursor::Arrow;
-TRef<GenericCursor> GenericCursor::TextInput;
-TRef<GenericCursor> GenericCursor::ResizeAll;
-TRef<GenericCursor> GenericCursor::ResizeEW;
-TRef<GenericCursor> GenericCursor::ResizeNS;
-TRef<GenericCursor> GenericCursor::ResizeNESW;
-TRef<GenericCursor> GenericCursor::ResizeNWSE;
-TRef<GenericCursor> GenericCursor::Hand;
-TRef<GenericCursor> GenericCursor::NotAllowed;
+TSharedRef<GenericCursor> GenericCursor::Arrow;
+TSharedRef<GenericCursor> GenericCursor::TextInput;
+TSharedRef<GenericCursor> GenericCursor::ResizeAll;
+TSharedRef<GenericCursor> GenericCursor::ResizeEW;
+TSharedRef<GenericCursor> GenericCursor::ResizeNS;
+TSharedRef<GenericCursor> GenericCursor::ResizeNESW;
+TSharedRef<GenericCursor> GenericCursor::ResizeNWSE;
+TSharedRef<GenericCursor> GenericCursor::Hand;
+TSharedRef<GenericCursor> GenericCursor::NotAllowed;

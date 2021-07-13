@@ -46,15 +46,15 @@ enum EKey : uint8
     Key_Z = 44,
 
     // Function Keys
-    Key_F1  = 70,
-    Key_F2  = 71,
-    Key_F3  = 72,
-    Key_F4  = 73,
-    Key_F5  = 74,
-    Key_F6  = 75,
-    Key_F7  = 76,
-    Key_F8  = 77,
-    Key_F9  = 78,
+    Key_F1 = 70,
+    Key_F2 = 71,
+    Key_F3 = 72,
+    Key_F4 = 73,
+    Key_F5 = 74,
+    Key_F6 = 75,
+    Key_F7 = 76,
+    Key_F8 = 77,
+    Key_F9 = 78,
     Key_F10 = 79,
     Key_F11 = 80,
     Key_F12 = 81,
@@ -73,101 +73,101 @@ enum EKey : uint8
     Key_F25 = 94,
 
     // Keypad
-    Key_Keypad0        = 95,
-    Key_Keypad1        = 96,
-    Key_Keypad2        = 97,
-    Key_Keypad3        = 98,
-    Key_Keypad4        = 99,
-    Key_Keypad5        = 100,
-    Key_Keypad6        = 101,
-    Key_Keypad7        = 102,
-    Key_Keypad8        = 103,
-    Key_Keypad9        = 104,
-    Key_KeypadDecimal  = 105,
-    Key_KeypadDivide   = 106,
+    Key_Keypad0 = 95,
+    Key_Keypad1 = 96,
+    Key_Keypad2 = 97,
+    Key_Keypad3 = 98,
+    Key_Keypad4 = 99,
+    Key_Keypad5 = 100,
+    Key_Keypad6 = 101,
+    Key_Keypad7 = 102,
+    Key_Keypad8 = 103,
+    Key_Keypad9 = 104,
+    Key_KeypadDecimal = 105,
+    Key_KeypadDivide = 106,
     Key_KeypadMultiply = 107,
     Key_KeypadSubtract = 108,
-    Key_KeypadAdd      = 109,
-    Key_KeypadEnter    = 110,
-    Key_KeypadEqual    = 111,
+    Key_KeypadAdd = 109,
+    Key_KeypadEnter = 110,
+    Key_KeypadEqual = 111,
 
     // Ctrl, Shift, Alt, Etc.
-    Key_LeftShift    = 112,
-    Key_LeftControl  = 113,
-    Key_LeftAlt      = 114,
-    Key_LeftSuper    = 115,
-    Key_RightShift   = 116,
+    Key_LeftShift = 112,
+    Key_LeftControl = 113,
+    Key_LeftAlt = 114,
+    Key_LeftSuper = 115,
+    Key_RightShift = 116,
     Key_RightControl = 117,
-    Key_RightAlt     = 118,
-    Key_RightSuper   = 119,
-    Key_Menu         = 120,
+    Key_RightAlt = 118,
+    Key_RightSuper = 119,
+    Key_Menu = 120,
 
     // Other
-    Key_Space        = 1,
-    Key_Apostrophe   = 2,  /* ' */
-    Key_Comma        = 3,  /* , */
-    Key_Minus        = 4,  /* - */
-    Key_Period       = 5,  /* . */
-    Key_Slash        = 6,  /* / */
-    Key_Semicolon    = 17, /* ; */
-    Key_Equal        = 18, /* = */
-    Key_LeftBracket  = 45, /* [ */
-    Key_Backslash    = 46, /* \ */
+    Key_Space = 1,
+    Key_Apostrophe = 2,  /* ' */
+    Key_Comma = 3,  /* , */
+    Key_Minus = 4,  /* - */
+    Key_Period = 5,  /* . */
+    Key_Slash = 6,  /* / */
+    Key_Semicolon = 17, /* ; */
+    Key_Equal = 18, /* = */
+    Key_LeftBracket = 45, /* [ */
+    Key_Backslash = 46, /* \ */
     Key_RightBracket = 47, /* ] */
-    Key_GraveAccent  = 48, /* ` */
-    Key_World1       = 49, /* Other */
-    Key_World2       = 50, /* Other */
-    Key_Escape       = 51,
-    Key_Enter        = 52,
-    Key_Tab          = 53,
-    Key_Backspace    = 54,
-    Key_Insert       = 55,
-    Key_Delete       = 56,
-    Key_Right        = 57,
-    Key_Left         = 58,
-    Key_Down         = 59,
-    Key_Up           = 60,
-    Key_PageUp       = 61,
-    Key_PageDown     = 62,
-    Key_Home         = 63,
-    Key_End          = 64,
-    Key_CapsLock     = 65,
-    Key_ScrollLock   = 66,
-    Key_NumLock      = 67,
-    Key_PrintScreen  = 68,
-    Key_Pause        = 69,
+    Key_GraveAccent = 48, /* ` */
+    Key_World1 = 49, /* Other */
+    Key_World2 = 50, /* Other */
+    Key_Escape = 51,
+    Key_Enter = 52,
+    Key_Tab = 53,
+    Key_Backspace = 54,
+    Key_Insert = 55,
+    Key_Delete = 56,
+    Key_Right = 57,
+    Key_Left = 58,
+    Key_Down = 59,
+    Key_Up = 60,
+    Key_PageUp = 61,
+    Key_PageDown = 62,
+    Key_Home = 63,
+    Key_End = 64,
+    Key_CapsLock = 65,
+    Key_ScrollLock = 66,
+    Key_NumLock = 67,
+    Key_PrintScreen = 68,
+    Key_Pause = 69,
 
-    Key_Last  = Key_Menu,
+    Key_Last = Key_Menu,
     Key_Count = Key_Last + 1
 };
 
 enum EMouseButton : uint8
 {
     MouseButton_Unknown = 0,
-    MouseButton_Left    = 1,
-    MouseButton_Right   = 2,
-    MouseButton_Middle  = 3,
-    MouseButton_Back    = 4,
+    MouseButton_Left = 1,
+    MouseButton_Right = 2,
+    MouseButton_Middle = 3,
+    MouseButton_Back = 4,
     MouseButton_Forward = 5,
 
-    MouseButton_Last  = MouseButton_Back,
+    MouseButton_Last = MouseButton_Back,
     MouseButton_Count = MouseButton_Last + 1
 };
 
 enum EModifierFlag
 {
-    ModifierFlag_None     = 0,
-    ModifierFlag_Ctrl     = FLAG(1),
-    ModifierFlag_Alt      = FLAG(2),
-    ModifierFlag_Shift    = FLAG(3),
-    ModifierFlag_CapsLock = FLAG(4),
-    ModifierFlag_Super    = FLAG(5),
-    ModifierFlag_NumLock  = FLAG(6),
+    ModifierFlag_None = 0,
+    ModifierFlag_Ctrl = FLAG( 1 ),
+    ModifierFlag_Alt = FLAG( 2 ),
+    ModifierFlag_Shift = FLAG( 3 ),
+    ModifierFlag_CapsLock = FLAG( 4 ),
+    ModifierFlag_Super = FLAG( 5 ),
+    ModifierFlag_NumLock = FLAG( 6 ),
 };
 
-inline const char* ToString(EMouseButton Button)
+inline const char* ToString( EMouseButton Button )
 {
-    switch (Button)
+    switch ( Button )
     {
     case MouseButton_Left:    return "LeftMouse";
     case MouseButton_Right:   return "RightMouse";
@@ -178,9 +178,9 @@ inline const char* ToString(EMouseButton Button)
     }
 }
 
-inline const char* ToString(EKey key)
+inline const char* ToString( EKey key )
 {
-    switch (key)
+    switch ( key )
     {
     case Key_0:              return "0";
     case Key_1:              return "1";

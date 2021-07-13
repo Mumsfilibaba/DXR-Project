@@ -14,16 +14,22 @@ public:
 
     void Reset()
     {
-        DeltaTime = Timestamp(0);
-        TotalTime = Timestamp(0);
+        DeltaTime = Timestamp( 0 );
+        TotalTime = Timestamp( 0 );
     }
 
-    const Timestamp& GetDeltaTime() const { return DeltaTime; }
-    const Timestamp& GetTotalTime() const { return TotalTime; }
+    const Timestamp& GetDeltaTime() const
+    {
+        return DeltaTime;
+    }
+    const Timestamp& GetTotalTime() const
+    {
+        return TotalTime;
+    }
 
 private:
-    Timestamp TotalTime = Timestamp(0);
-    Timestamp DeltaTime = Timestamp(0);
-    uint64 LastTime  = 0;
+    Timestamp TotalTime = Timestamp( 0 );
+    Timestamp DeltaTime = Timestamp( 0 );
+    uint64 LastTime = 0;
     uint64 Frequency = 0;
 };

@@ -1,53 +1,107 @@
 #pragma once
 #include "Core.h"
 
+#include "Math/Vector3.h"
+#include "Math/Matrix4.h"
+
 class Camera
 {
 public:
     Camera();
     ~Camera() = default;
 
-    void Move(float X, float Y, float Z);
+    void Move( float x, float y, float z );
 
-    void Rotate(float Pitch, float Yaw, float Roll);
+    void Rotate( float Pitch, float Yaw, float Roll );
 
     void UpdateMatrices();
 
-    const XMFLOAT4X4& GetViewMatrix() const { return View; }
-    const XMFLOAT4X4& GetViewInverseMatrix() const { return ViewInverse; }
+    const CMatrix4& GetViewMatrix() const
+    {
+        return View;
+    }
+    const CMatrix4& GetViewInverseMatrix() const
+    {
+        return ViewInverse;
+    }
 
-    const XMFLOAT4X4& GetProjectionMatrix() const { return Projection; }
-    const XMFLOAT4X4& GetProjectionInverseMatrix() const { return ProjectionInverse; }
+    const CMatrix4& GetProjectionMatrix() const
+    {
+        return Projection;
+    }
+    const CMatrix4& GetProjectionInverseMatrix() const
+    {
+        return ProjectionInverse;
+    }
 
-    const XMFLOAT4X4& GetViewProjectionMatrix() const { return ViewProjection; }
-    const XMFLOAT4X4& GetViewProjectionInverseMatrix() const { return ViewProjectionInverse; }
-    const XMFLOAT4X4& GetViewProjectionWitoutTranslateMatrix() const { return ViewProjectionNoTranslation; }
+    const CMatrix4& GetViewProjectionMatrix() const
+    {
+        return ViewProjection;
+    }
+    const CMatrix4& GetViewProjectionInverseMatrix() const
+    {
+        return ViewProjectionInverse;
+    }
+    const CMatrix4& GetViewProjectionWitoutTranslateMatrix() const
+    {
+        return ViewProjectionNoTranslation;
+    }
 
-    XMFLOAT3 GetPosition() const { return Position; }
-    
-    XMFLOAT3 GetForward() const { return Forward; }
-    XMFLOAT3 GetUp() const { return Up; }
-    XMFLOAT3 GetRight() const { return Right; }
+    CVector3 GetPosition() const
+    {
+        return Position;
+    }
 
-    float GetNearPlane() const { return NearPlane; }
-    float GetFarPlane()  const { return FarPlane; }
+    CVector3 GetForward() const
+    {
+        return Forward;
+    }
+    CVector3 GetUp() const
+    {
+        return Up;
+    }
+    CVector3 GetRight() const
+    {
+        return Right;
+    }
 
-    float GetAspectRatio() const { return AspectRatio; }
-    
-    float GetWidth() const { return Width; }
-    float GetHeight() const { return Height; }
+    float GetNearPlane() const
+    {
+        return NearPlane;
+    }
+    float GetFarPlane()  const
+    {
+        return FarPlane;
+    }
 
-    float GetFOV() const { return FOV; }
+    float GetAspectRatio() const
+    {
+        return AspectRatio;
+    }
+
+    float GetWidth() const
+    {
+        return Width;
+    }
+    float GetHeight() const
+    {
+        return Height;
+    }
+
+    float GetFOV() const
+    {
+        return FOV;
+    }
 
 private:
-    XMFLOAT4X4 View;
-    XMFLOAT4X4 ViewInverse;
-    XMFLOAT4X4 Projection;
-    XMFLOAT4X4 ProjectionInverse;
-    XMFLOAT4X4 ViewProjection;
-    XMFLOAT4X4 ViewProjectionInverse;
-    XMFLOAT4X4 ViewProjectionNoTranslation;
-    
+    CMatrix4 View;
+    CMatrix4 ViewInverse;
+    CMatrix4 Projection;
+    CMatrix4 ProjectionInverse;
+    CMatrix4 ViewProjection;
+    CMatrix4 ViewProjectionInverse;
+    CMatrix4 ViewProjectionNoTranslation;
+
     float NearPlane;
     float FarPlane;
     float AspectRatio;
@@ -55,9 +109,9 @@ private:
     float Height;
     float FOV;
 
-    XMFLOAT3 Position;
-    XMFLOAT3 Rotation;
-    XMFLOAT3 Forward;
-    XMFLOAT3 Right;
-    XMFLOAT3 Up;
+    CVector3 Position;
+    CVector3 Rotation;
+    CVector3 Forward;
+    CVector3 Right;
+    CVector3 Up;
 };

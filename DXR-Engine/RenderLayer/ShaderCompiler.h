@@ -4,27 +4,27 @@
 enum class EShaderModel
 {
     Unknown = 0,
-    SM_5_0  = 1,
-    SM_5_1  = 2,
-    SM_6_0  = 3,
-    SM_6_1  = 4,
-    SM_6_2  = 5,
-    SM_6_3  = 6,
-    SM_6_4  = 7,
-    SM_6_5  = 8,
+    SM_5_0 = 1,
+    SM_5_1 = 2,
+    SM_6_0 = 3,
+    SM_6_1 = 4,
+    SM_6_2 = 5,
+    SM_6_3 = 6,
+    SM_6_4 = 7,
+    SM_6_5 = 8,
 };
 
 struct ShaderDefine
 {
-    ShaderDefine(const std::string& InDefine)
-        : Define(InDefine)
+    ShaderDefine( const std::string& InDefine )
+        : Define( InDefine )
         , Value()
     {
     }
 
-    ShaderDefine(const std::string& InDefine, const std::string& InValue)
-        : Define(InDefine)
-        , Value(InValue)
+    ShaderDefine( const std::string& InDefine, const std::string& InValue )
+        : Define( InDefine )
+        , Value( InValue )
     {
     }
 
@@ -43,7 +43,7 @@ public:
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code) = 0;
+        TArray<uint8>& Code ) = 0;
 
     virtual bool CompileShader(
         const std::string& ShaderSource,
@@ -51,7 +51,7 @@ public:
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code) = 0;
+        TArray<uint8>& Code ) = 0;
 };
 
 class ShaderCompiler
@@ -63,9 +63,9 @@ public:
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code)
+        TArray<uint8>& Code )
     {
-        return GShaderCompiler->CompileFromFile(FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
+        return GShaderCompiler->CompileFromFile( FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code );
     }
 
     FORCEINLINE static bool CompileShader(
@@ -74,8 +74,8 @@ public:
         const TArray<ShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code)
+        TArray<uint8>& Code )
     {
-        return GShaderCompiler->CompileShader(ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
+        return GShaderCompiler->CompileShader( ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code );
     }
 };

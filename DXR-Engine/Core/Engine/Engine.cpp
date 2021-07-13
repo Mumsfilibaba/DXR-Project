@@ -13,28 +13,28 @@ Engine GEngine;
 bool Engine::Init()
 {
     const uint32 Style =
-        WindowStyleFlag_Titled      |
-        WindowStyleFlag_Closable    |
+        WindowStyleFlag_Titled |
+        WindowStyleFlag_Closable |
         WindowStyleFlag_Minimizable |
         WindowStyleFlag_Maximizable |
         WindowStyleFlag_Resizeable;
 
-    MainWindow = GenericWindow::Create("DXR Engine", 1920, 1080, Style);
-    if (MainWindow)
+    MainWindow = GenericWindow::Create( "DXR Engine", 1920, 1080, Style );
+    if ( MainWindow )
     {
-        MainWindow->Show(false);
+        MainWindow->Show( false );
 
-        GToggleFullscreen.OnExecute.AddObject(MainWindow.Get(), &GenericWindow::ToggleFullscreen);
-        INIT_CONSOLE_COMMAND("a.ToggleFullscreen", &GToggleFullscreen);
+        GToggleFullscreen.OnExecute.AddObject( MainWindow.Get(), &GenericWindow::ToggleFullscreen );
+        INIT_CONSOLE_COMMAND( "a.ToggleFullscreen", &GToggleFullscreen );
     }
     else
     {
-        PlatformMisc::MessageBox("ERROR", "Failed to create Engine");
+        PlatformMisc::MessageBox( "ERROR", "Failed to create Engine" );
         return false;
     }
 
-    GExit.OnExecute.AddObject(this, &Engine::Exit);
-    INIT_CONSOLE_COMMAND("a.Exit", &GExit);
+    GExit.OnExecute.AddObject( this, &Engine::Exit );
+    INIT_CONSOLE_COMMAND( "a.Exit", &GExit );
 
     IsRunning = true;
     return true;
@@ -51,104 +51,104 @@ void Engine::Exit()
     IsRunning = false;
 }
 
-void Engine::OnKeyReleased(EKey KeyCode, const ModifierKeyState& ModfierKeyState)
+void Engine::OnKeyReleased( EKey KeyCode, const ModifierKeyState& ModfierKeyState )
 {
-    KeyReleasedEvent Event(KeyCode, ModfierKeyState);
-    OnKeyReleasedEvent.Broadcast(Event);
+    KeyReleasedEvent Event( KeyCode, ModfierKeyState );
+    OnKeyReleasedEvent.Broadcast( Event );
 }
 
-void Engine::OnKeyPressed(EKey KeyCode, bool IsRepeat, const ModifierKeyState& ModfierKeyState)
+void Engine::OnKeyPressed( EKey KeyCode, bool IsRepeat, const ModifierKeyState& ModfierKeyState )
 {
-    KeyPressedEvent Event(KeyCode, IsRepeat, ModfierKeyState);
-    OnKeyPressedEvent.Broadcast(Event);
+    KeyPressedEvent Event( KeyCode, IsRepeat, ModfierKeyState );
+    OnKeyPressedEvent.Broadcast( Event );
 }
 
-void Engine::OnKeyTyped(uint32 Character)
+void Engine::OnKeyTyped( uint32 Character )
 {
-    KeyTypedEvent Event(Character);
-    OnKeyTypedEvent.Broadcast(Event);
+    KeyTypedEvent Event( Character );
+    OnKeyTypedEvent.Broadcast( Event );
 }
 
-void Engine::OnMouseMove(int32 x, int32 y)
+void Engine::OnMouseMove( int32 x, int32 y )
 {
-    MouseMovedEvent Event(x, y);
-    OnMouseMoveEvent.Broadcast(Event);
+    MouseMovedEvent Event( x, y );
+    OnMouseMoveEvent.Broadcast( Event );
 }
 
-void Engine::OnMouseReleased(EMouseButton Button, const ModifierKeyState& ModfierKeyState)
+void Engine::OnMouseReleased( EMouseButton Button, const ModifierKeyState& ModfierKeyState )
 {
     GenericWindow* CaptureWindow = Platform::GetCapture();
-    if (CaptureWindow)
+    if ( CaptureWindow )
     {
-        Platform::SetCapture(nullptr);
+        Platform::SetCapture( nullptr );
     }
 
-    MouseReleasedEvent Event(Button, ModfierKeyState);
-    OnMouseReleasedEvent.Broadcast(Event);
+    MouseReleasedEvent Event( Button, ModfierKeyState );
+    OnMouseReleasedEvent.Broadcast( Event );
 }
 
-void Engine::OnMousePressed(EMouseButton Button, const ModifierKeyState& ModfierKeyState)
+void Engine::OnMousePressed( EMouseButton Button, const ModifierKeyState& ModfierKeyState )
 {
     GenericWindow* CaptureWindow = Platform::GetCapture();
-    if (!CaptureWindow)
+    if ( !CaptureWindow )
     {
         GenericWindow* ActiveWindow = Platform::GetActiveWindow();
-        Platform::SetCapture(ActiveWindow);
+        Platform::SetCapture( ActiveWindow );
     }
 
-    MousePressedEvent Event(Button, ModfierKeyState);
-    OnMousePressedEvent.Broadcast(Event);
+    MousePressedEvent Event( Button, ModfierKeyState );
+    OnMousePressedEvent.Broadcast( Event );
 }
 
-void Engine::OnMouseScrolled(float HorizontalDelta, float VerticalDelta)
+void Engine::OnMouseScrolled( float HorizontalDelta, float VerticalDelta )
 {
-    MouseScrolledEvent Event(HorizontalDelta, VerticalDelta);
-    OnMouseScrolledEvent.Broadcast(Event);
+    MouseScrolledEvent Event( HorizontalDelta, VerticalDelta );
+    OnMouseScrolledEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowResized(const TRef<GenericWindow>& InWindow, uint16 Width, uint16 Height)
+void Engine::OnWindowResized( const TSharedRef<GenericWindow>& InWindow, uint16 Width, uint16 Height )
 {
-    WindowResizeEvent Event(InWindow, Width, Height);
-    OnWindowResizedEvent.Broadcast(Event);
+    WindowResizeEvent Event( InWindow, Width, Height );
+    OnWindowResizedEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowMoved(const TRef<GenericWindow>& InWindow, int16 x, int16 y)
+void Engine::OnWindowMoved( const TSharedRef<GenericWindow>& InWindow, int16 x, int16 y )
 {
-    WindowMovedEvent Event(InWindow, x, y);
-    OnWindowMovedEvent.Broadcast(Event);
+    WindowMovedEvent Event( InWindow, x, y );
+    OnWindowMovedEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowFocusChanged(const TRef<GenericWindow>& InWindow, bool HasFocus)
+void Engine::OnWindowFocusChanged( const TSharedRef<GenericWindow>& InWindow, bool HasFocus )
 {
-    WindowFocusChangedEvent Event(InWindow, HasFocus);
-    OnWindowFocusChangedEvent.Broadcast(Event);
+    WindowFocusChangedEvent Event( InWindow, HasFocus );
+    OnWindowFocusChangedEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowMouseLeft(const TRef<GenericWindow>& InWindow)
+void Engine::OnWindowMouseLeft( const TSharedRef<GenericWindow>& InWindow )
 {
-    WindowMouseLeftEvent Event(InWindow);
-    OnWindowMouseLeftEvent.Broadcast(Event);
+    WindowMouseLeftEvent Event( InWindow );
+    OnWindowMouseLeftEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowMouseEntered(const TRef<GenericWindow>& InWindow)
+void Engine::OnWindowMouseEntered( const TSharedRef<GenericWindow>& InWindow )
 {
-    WindowMouseEnteredEvent Event(InWindow);
-    OnWindowMouseEnteredEvent.Broadcast(Event);
+    WindowMouseEnteredEvent Event( InWindow );
+    OnWindowMouseEnteredEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowClosed(const TRef<GenericWindow>& InWindow)
+void Engine::OnWindowClosed( const TSharedRef<GenericWindow>& InWindow )
 {
-    WindowClosedEvent Event(InWindow);
-    OnWindowClosedEvent.Broadcast(Event);
+    WindowClosedEvent Event( InWindow );
+    OnWindowClosedEvent.Broadcast( Event );
 
-    if (InWindow == MainWindow)
+    if ( InWindow == MainWindow )
     {
-        PlatformMisc::RequestExit(0);
+        PlatformMisc::RequestExit( 0 );
     }
 }
 
-void Engine::OnApplicationExit(int32 ExitCode)
+void Engine::OnApplicationExit( int32 ExitCode )
 {
     IsRunning = false;
-    OnApplicationExitEvent.Broadcast(ExitCode);
+    OnApplicationExitEvent.Broadcast( ExitCode );
 }

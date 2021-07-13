@@ -2,11 +2,11 @@
 #include "Core.h"
 
 #include "Core/RefCountedObject.h"
-#include "Core/Ref.h"
+#include "Core/Containers/SharedRef.h"
 
-#ifdef COMPILER_VISUAL_STUDIO
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
+#ifdef COMPILER_MSVC
+#pragma warning(push)
+#pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
 class GenericWindow;
@@ -16,20 +16,23 @@ class GenericCursor : public RefCountedObject
 public:
     virtual ~GenericCursor() = default;
 
-    virtual void* GetNativeHandle() const { return nullptr; }
+    virtual void* GetNativeHandle() const
+    {
+        return nullptr;
+    }
 
 public:
-    static TRef<GenericCursor> Arrow;
-    static TRef<GenericCursor> TextInput;
-    static TRef<GenericCursor> ResizeAll;
-    static TRef<GenericCursor> ResizeEW;
-    static TRef<GenericCursor> ResizeNS;
-    static TRef<GenericCursor> ResizeNESW;
-    static TRef<GenericCursor> ResizeNWSE;
-    static TRef<GenericCursor> Hand;
-    static TRef<GenericCursor> NotAllowed;
+    static TSharedRef<GenericCursor> Arrow;
+    static TSharedRef<GenericCursor> TextInput;
+    static TSharedRef<GenericCursor> ResizeAll;
+    static TSharedRef<GenericCursor> ResizeEW;
+    static TSharedRef<GenericCursor> ResizeNS;
+    static TSharedRef<GenericCursor> ResizeNESW;
+    static TSharedRef<GenericCursor> ResizeNWSE;
+    static TSharedRef<GenericCursor> Hand;
+    static TSharedRef<GenericCursor> NotAllowed;
 };
 
-#ifdef COMPILER_VISUAL_STUDIO
-    #pragma warning(pop)
+#ifdef COMPILER_MSVC
+#pragma warning(pop)
 #endif

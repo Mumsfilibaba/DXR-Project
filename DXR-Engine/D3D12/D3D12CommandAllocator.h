@@ -4,23 +4,23 @@
 class D3D12CommandAllocatorHandle : public D3D12DeviceChild
 {
 public:
-    D3D12CommandAllocatorHandle(D3D12Device* InDevice)
-        : D3D12DeviceChild(InDevice)
-        , Allocator(nullptr)
+    D3D12CommandAllocatorHandle( D3D12Device* InDevice )
+        : D3D12DeviceChild( InDevice )
+        , Allocator( nullptr )
     {
     }
 
-    FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type)
+    FORCEINLINE bool Init( D3D12_COMMAND_LIST_TYPE Type )
     {
-        HRESULT Result = GetDevice()->GetDevice()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
-        if (SUCCEEDED(Result))
+        HRESULT Result = GetDevice()->GetDevice()->CreateCommandAllocator( Type, IID_PPV_ARGS( &Allocator ) );
+        if ( SUCCEEDED( Result ) )
         {
-            LOG_INFO("[D3D12Device]: Created CommandAllocator");
+            LOG_INFO( "[D3D12Device]: Created CommandAllocator" );
             return true;
         }
         else
         {
-            LOG_ERROR("[D3D12Device]: FAILED to create CommandAllocator");
+            LOG_ERROR( "[D3D12Device]: FAILED to create CommandAllocator" );
             return false;
         }
     }
@@ -28,18 +28,18 @@ public:
     FORCEINLINE bool Reset()
     {
         HRESULT Result = Allocator->Reset();
-        if (Result == DXGI_ERROR_DEVICE_REMOVED)
+        if ( Result == DXGI_ERROR_DEVICE_REMOVED )
         {
-            DeviceRemovedHandler(GetDevice());
+            DeviceRemovedHandler( GetDevice() );
         }
 
-        return SUCCEEDED(Result);
+        return SUCCEEDED( Result );
     }
 
-    FORCEINLINE void SetName(const std::string& Name)
+    FORCEINLINE void SetName( const std::string& Name )
     {
-        std::wstring WideName = ConvertToWide(Name);
-        Allocator->SetName(WideName.c_str());
+        std::wstring WideName = ConvertToWide( Name );
+        Allocator->SetName( WideName.c_str() );
     }
 
     FORCEINLINE ID3D12CommandAllocator* GetAllocator() const

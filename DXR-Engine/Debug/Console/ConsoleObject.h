@@ -13,6 +13,12 @@ class ConsoleObject
 public:
     virtual ~ConsoleObject() = default;
 
-    virtual ConsoleCommand*  AsCommand()  { return nullptr; }
-    virtual ConsoleVariable* AsVariable() { return nullptr; }
+    virtual ConsoleCommand* AsCommand()
+    {
+        return nullptr;
+    }
+    virtual ConsoleVariable* AsVariable()
+    {
+        return nullptr;
+    }
 };

@@ -6,7 +6,10 @@
 class ConsoleCommand : public ConsoleObject
 {
 public:
-    virtual ConsoleCommand* AsCommand() override { return this; }
+    virtual ConsoleCommand* AsCommand() override
+    {
+        return this;
+    }
 
     void Execute()
     {

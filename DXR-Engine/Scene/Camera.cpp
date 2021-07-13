@@ -7,90 +7,69 @@ Camera::Camera()
     , Projection()
     , ViewProjection()
     , ViewProjectionInverse()
-    , Position(0.0f, 0.0f, -2.0f)
-    , Right(-1.0f, 0.0f, 0.0f)
-    , Up(0.0f, 1.0f, 0.0f)
-    , Forward(0.0f, 0.0f, 1.0f)
-    , Rotation(0.0f, 0.0f, 0.0f)
-    , NearPlane(0.01f)
-    , FarPlane(100.0f)
+    , Position( 0.0f, 0.0f, -2.0f )
+    , Right( -1.0f, 0.0f, 0.0f )
+    , Up( 0.0f, 1.0f, 0.0f )
+    , Forward( 0.0f, 0.0f, 1.0f )
+    , Rotation( 0.0f, 0.0f, 0.0f )
+    , NearPlane( 0.01f )
+    , FarPlane( 100.0f )
     , AspectRatio()
 {
     UpdateMatrices();
 }
 
-void Camera::Move(float X, float Y, float Z)
+void Camera::Move( float x, float y, float z )
 {
-    XMVECTOR XmPosition = XMLoadFloat3(&Position);
-    XMVECTOR XmRight    = XMLoadFloat3(&Right);
-    XMVECTOR XmUp       = XMLoadFloat3(&Up);
-    XMVECTOR XmForward  = XMLoadFloat3(&Forward);
-    XmRight             = XMVectorScale(XmRight, X);
-    XmUp                = XMVectorScale(XmUp, Y);
-    XmForward           = XMVectorScale(XmForward, Z);
-    XmPosition          = XMVectorAdd(XmPosition, XmRight);
-    XmPosition          = XMVectorAdd(XmPosition, XmUp);
-    XmPosition          = XMVectorAdd(XmPosition, XmForward);
-
-    XMStoreFloat3(&Position, XmPosition);
+    const CVector3 TempRight = Right * x;
+    const CVector3 TempUp = Up * y;
+    const CVector3 TempForward = Forward * z;
+    Position = Position + TempRight + TempUp + TempForward;
 }
 
-void Camera::Rotate(float Pitch, float Yaw, float Roll)
+void Camera::Rotate( float Pitch, float Yaw, float Roll )
 {
     Rotation.x += Pitch;
-    Rotation.x = std::max<float>(XMConvertToRadians(-89.0f), std::min<float>(XMConvertToRadians(89.0f), Rotation.x));
-    
+    Rotation.x = NMath::Max<float>( NMath::ToRadians( -89.0f ), NMath::Min<float>( NMath::ToRadians( 89.0f ), Rotation.x ) );
+
     Rotation.y += Yaw;
     Rotation.z += Roll;
 
-    XMMATRIX RotationMatrix = XMMatrixRotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
-    XMVECTOR XmForward      = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-    XmForward               = XMVector3Normalize(XMVector3Transform(XmForward, RotationMatrix));
+    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw( Rotation );
+    CVector3 TempForward( 0.0f, 0.0f, 1.0f );
+    Forward = RotationMatrix.TransformDirection( TempForward );
+    Forward.Normalize();
 
-    XMVECTOR XmUp    = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMVECTOR XmRight = XMVector3Normalize(XMVector3Cross(XmForward, XmUp));
-    XmUp             = XMVector3Normalize(XMVector3Cross(XmRight, XmForward));
-
-    XMStoreFloat3(&Forward, XmForward);
-    XMStoreFloat3(&Up, XmUp);
-    XMStoreFloat3(&Right, XmRight);
+    CVector3 TempUp( 0.0f, 1.0f, 0.0f );
+    Right = Forward.CrossProduct( TempUp );
+    Right.Normalize();
+    Up = Right.CrossProduct( Forward );
+    Up.Normalize();
 }
 
 void Camera::UpdateMatrices()
 {
-    FOV = Math::ToRadians(80.0f);
-    
-    Width  = 1920.0f;
+    FOV = NMath::ToRadians( 80.0f );
+    Width = 1920.0f;
     Height = 1080.0f;
-    AspectRatio = Width / Height;
 
-    XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(FOV, AspectRatio, NearPlane, FarPlane);
-    XMStoreFloat4x4(&Projection, XmProjection);
+    Projection = CMatrix4::PerspectiveProjection( FOV, Width, Height, NearPlane, FarPlane );
+    View = CMatrix4::LookTo( Position, Forward, Up );
+    ViewInverse = View.Invert();
 
-    XMVECTOR XmPosition = XMLoadFloat3(&Position);
-    XMVECTOR XmForward  = XMLoadFloat3(&Forward);
-    XMVECTOR XmUp       = XMLoadFloat3(&Up);
-    XMVECTOR XmAt       = XMVectorAdd(XmPosition, XmForward);
+    CMatrix3 View3x3 = View.GetRotationAndScale();
+    ProjectionInverse = Projection.Invert();
+    ViewProjection = View * Projection;
+    ViewProjectionInverse = ViewProjection.Invert();
 
-    XMMATRIX XmView = XMMatrixLookAtLH(XmPosition, XmAt, XmUp);
-    XMStoreFloat4x4(&View, XMMatrixTranspose(XmView));
+    ViewProjectionNoTranslation.SetIdentity();
+    ViewProjectionNoTranslation.SetRotationAndScale( View3x3 );
+    ViewProjectionNoTranslation = ViewProjectionNoTranslation * Projection;
 
-    XMMATRIX XmViewInv = XMMatrixInverse(nullptr, XmView);
-    XMStoreFloat4x4(&ViewInverse, XMMatrixTranspose(XmViewInv));
-
-    XMFLOAT3X3 TempView3x3;
-    XMStoreFloat3x3(&TempView3x3, XmView);
-    XMMATRIX XmView3x3 = XMLoadFloat3x3(&TempView3x3);
-
-    XMMATRIX XmProjectionInverse = XMMatrixInverse(nullptr, XmProjection);
-    XMStoreFloat4x4(&ProjectionInverse, XMMatrixTranspose(XmProjectionInverse));
-
-    XMMATRIX XmViewProjection = XMMatrixMultiply(XmView, XmProjection);
-    XMStoreFloat4x4(&ViewProjection, XMMatrixTranspose(XmViewProjection));
-
-    XMMATRIX XmViewProjectionInverse = XMMatrixInverse(nullptr, XmViewProjection);
-    XMStoreFloat4x4(&ViewProjectionInverse, XMMatrixTranspose(XmViewProjectionInverse));
-    
-    XMMATRIX XmViewProjectionNoTranslation    = XMMatrixMultiply(XmView3x3, XmProjection);
-    XMStoreFloat4x4(&ViewProjectionNoTranslation, XMMatrixTranspose(XmViewProjectionNoTranslation));
+    View = View.Transpose();
+    ViewInverse = ViewInverse.Transpose();
+    ProjectionInverse = ProjectionInverse.Transpose();
+    ViewProjection = ViewProjection.Transpose();
+    ViewProjectionInverse = ViewProjectionInverse.Transpose();
+    ViewProjectionNoTranslation = ViewProjectionNoTranslation.Transpose();
 }

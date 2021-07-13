@@ -3,18 +3,18 @@
 ClassType::ClassType(
     const char* InName,
     const ClassType* InSuperClass,
-    uint32 SizeInBytes)
-    : Name(InName)
-    , SuperClass(InSuperClass)
-    , SizeInBytes(SizeInBytes)
+    uint32 SizeInBytes )
+    : Name( InName )
+    , SuperClass( InSuperClass )
+    , SizeInBytes( SizeInBytes )
 {
 }
 
-bool ClassType::IsSubClassOf(const ClassType* Class) const
+bool ClassType::IsSubClassOf( const ClassType* Class ) const
 {
-    for (const ClassType* Current = this; Current; Current = Current->GetSuperClass())
+    for ( const ClassType* Current = this; Current; Current = Current->GetSuperClass() )
     {
-        if (Current == Class)
+        if ( Current == Class )
         {
             return true;
         }

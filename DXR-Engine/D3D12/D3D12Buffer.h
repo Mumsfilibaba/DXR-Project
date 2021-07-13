@@ -7,43 +7,55 @@
 class D3D12BaseBuffer : public D3D12DeviceChild
 {
 public:
-    D3D12BaseBuffer(D3D12Device* InDevice)
-        : D3D12DeviceChild(InDevice)
-        , Resource(nullptr)
+    D3D12BaseBuffer( D3D12Device* InDevice )
+        : D3D12DeviceChild( InDevice )
+        , Resource( nullptr )
     {
     }
 
-    virtual void SetResource(D3D12Resource* InResource) { Resource = InResource; }
+    virtual void SetResource( D3D12Resource* InResource )
+    {
+        Resource = InResource;
+    }
 
-    uint64 GetSizeInBytes() const { return Resource->GetDesc().Width; }
-    
-    D3D12Resource* GetResource() { return Resource.Get(); }
+    uint64 GetSizeInBytes() const
+    {
+        return Resource->GetDesc().Width;
+    }
+
+    D3D12Resource* GetResource()
+    {
+        return Resource.Get();
+    }
 
 protected:
-    TRef<D3D12Resource> Resource;
+    TSharedRef<D3D12Resource> Resource;
 };
 
 class D3D12BaseVertexBuffer : public VertexBuffer, public D3D12BaseBuffer
 {
 public:
-    D3D12BaseVertexBuffer(D3D12Device* InDevice, uint32 InNumVertices, uint32 InStride, uint32 InFlags)
-        : VertexBuffer(InNumVertices, InStride, InFlags)
-        , D3D12BaseBuffer(InDevice)
+    D3D12BaseVertexBuffer( D3D12Device* InDevice, uint32 InNumVertices, uint32 InStride, uint32 InFlags )
+        : VertexBuffer( InNumVertices, InStride, InFlags )
+        , D3D12BaseBuffer( InDevice )
         , View()
     {
     }
 
-    virtual void SetResource(D3D12Resource* InResource) override
+    virtual void SetResource( D3D12Resource* InResource ) override
     {
-        D3D12BaseBuffer::SetResource(InResource);
+        D3D12BaseBuffer::SetResource( InResource );
 
-        Memory::Memzero(&View);
-        View.StrideInBytes  = GetStride();
-        View.SizeInBytes    = GetNumVertices() * View.StrideInBytes;
+        Memory::Memzero( &View );
+        View.StrideInBytes = GetStride();
+        View.SizeInBytes = GetNumVertices() * View.StrideInBytes;
         View.BufferLocation = D3D12BaseBuffer::Resource->GetGPUVirtualAddress();
     }
 
-    const D3D12_VERTEX_BUFFER_VIEW& GetView() const { return View; }
+    const D3D12_VERTEX_BUFFER_VIEW& GetView() const
+    {
+        return View;
+    }
 
 private:
     D3D12_VERTEX_BUFFER_VIEW View;
@@ -52,29 +64,32 @@ private:
 class D3D12BaseIndexBuffer : public IndexBuffer, public D3D12BaseBuffer
 {
 public:
-    D3D12BaseIndexBuffer(D3D12Device* InDevice, EIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
-        : IndexBuffer(InIndexFormat, InNumIndices, InFlags)
-        , D3D12BaseBuffer(InDevice)
+    D3D12BaseIndexBuffer( D3D12Device* InDevice, EIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags )
+        : IndexBuffer( InIndexFormat, InNumIndices, InFlags )
+        , D3D12BaseBuffer( InDevice )
         , View()
     {
     }
 
-    virtual void SetResource(D3D12Resource* InResource) override
+    virtual void SetResource( D3D12Resource* InResource ) override
     {
-        D3D12BaseBuffer::SetResource(InResource);
+        D3D12BaseBuffer::SetResource( InResource );
 
-        Memory::Memzero(&View);
+        Memory::Memzero( &View );
 
         EIndexFormat IndexFormat = GetFormat();
-        if (IndexFormat != EIndexFormat::Unknown)
+        if ( IndexFormat != EIndexFormat::Unknown )
         {
-            View.Format         = IndexFormat == EIndexFormat::uint16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
-            View.SizeInBytes    = GetNumIndicies() * GetStrideFromIndexFormat(IndexFormat);
+            View.Format = IndexFormat == EIndexFormat::uint16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+            View.SizeInBytes = GetNumIndicies() * GetStrideFromIndexFormat( IndexFormat );
             View.BufferLocation = D3D12BaseBuffer::Resource->GetGPUVirtualAddress();
         }
     }
 
-    const D3D12_INDEX_BUFFER_VIEW& GetView() const { return View; }
+    const D3D12_INDEX_BUFFER_VIEW& GetView() const
+    {
+        return View;
+    }
 
 private:
     D3D12_INDEX_BUFFER_VIEW View;
@@ -83,36 +98,42 @@ private:
 class D3D12BaseConstantBuffer : public ConstantBuffer, public D3D12BaseBuffer
 {
 public:
-    D3D12BaseConstantBuffer(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap, uint32 InSizeInBytes, uint32 InFlags)
-        : ConstantBuffer(InSizeInBytes, InFlags)
-        , D3D12BaseBuffer(InDevice)
-        , View(InDevice, InHeap)
+    D3D12BaseConstantBuffer( D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap, uint32 InSizeInBytes, uint32 InFlags )
+        : ConstantBuffer( InSizeInBytes, InFlags )
+        , D3D12BaseBuffer( InDevice )
+        , View( InDevice, InHeap )
     {
     }
 
-    virtual void SetResource(D3D12Resource* InResource) override
+    virtual void SetResource( D3D12Resource* InResource ) override
     {
-        D3D12BaseBuffer::SetResource(InResource);
+        D3D12BaseBuffer::SetResource( InResource );
 
         D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
-        Memory::Memzero(&ViewDesc);
+        Memory::Memzero( &ViewDesc );
 
         ViewDesc.BufferLocation = D3D12BaseBuffer::Resource->GetGPUVirtualAddress();
-        ViewDesc.SizeInBytes    = (uint32)D3D12BaseBuffer::GetSizeInBytes();
+        ViewDesc.SizeInBytes = (uint32)D3D12BaseBuffer::GetSizeInBytes();
 
-        if (View.GetOfflineHandle() == 0)
+        if ( View.GetOfflineHandle() == 0 )
         {
-            if (!View.Init())
+            if ( !View.Init() )
             {
                 return;
             }
         }
 
-        View.CreateView(D3D12BaseBuffer::Resource.Get(), ViewDesc);
+        View.CreateView( D3D12BaseBuffer::Resource.Get(), ViewDesc );
     }
 
-    D3D12ConstantBufferView& GetView() { return View; }
-    const D3D12ConstantBufferView& GetView() const { return View; }
+    D3D12ConstantBufferView& GetView()
+    {
+        return View;
+    }
+    const D3D12ConstantBufferView& GetView() const
+    {
+        return View;
+    }
 
 private:
     D3D12ConstantBufferView View;
@@ -121,9 +142,9 @@ private:
 class D3D12BaseStructuredBuffer : public StructuredBuffer, public D3D12BaseBuffer
 {
 public:
-    D3D12BaseStructuredBuffer(D3D12Device* InDevice, uint32 InSizeInBytes, uint32 InStride, uint32 InFlags)
-        : StructuredBuffer(InSizeInBytes, InStride, InFlags)
-        , D3D12BaseBuffer(InDevice)
+    D3D12BaseStructuredBuffer( D3D12Device* InDevice, uint32 InSizeInBytes, uint32 InStride, uint32 InFlags )
+        : StructuredBuffer( InSizeInBytes, InStride, InFlags )
+        , D3D12BaseBuffer( InDevice )
     {
     }
 };
@@ -133,41 +154,41 @@ class TD3D12BaseBuffer : public TBaseBuffer
 {
 public:
     template<typename... TBufferArgs>
-    TD3D12BaseBuffer(D3D12Device* InDevice, TBufferArgs&&... BufferArgs)
-        : TBaseBuffer(InDevice, ::Forward<TBufferArgs>(BufferArgs)...)
+    TD3D12BaseBuffer( D3D12Device* InDevice, TBufferArgs&&... BufferArgs )
+        : TBaseBuffer( InDevice, ::Forward<TBufferArgs>( BufferArgs )... )
     {
     }
 
-    virtual void* Map(uint32 Offset, uint32 InSize) override
+    virtual void* Map( uint32 Offset, uint32 InSize ) override
     {
-        if (Offset != 0 || InSize != 0)
+        if ( Offset != 0 || InSize != 0 )
         {
             D3D12_RANGE MapRange = { Offset, InSize };
-            return D3D12BaseBuffer::Resource->Map(0, &MapRange);
+            return D3D12BaseBuffer::Resource->Map( 0, &MapRange );
         }
         else
         {
-            return D3D12BaseBuffer::Resource->Map(0, nullptr);
+            return D3D12BaseBuffer::Resource->Map( 0, nullptr );
         }
     }
 
-    virtual void Unmap(uint32 Offset, uint32 InSize) override
+    virtual void Unmap( uint32 Offset, uint32 InSize ) override
     {
-        if (Offset != 0 || InSize != 0)
+        if ( Offset != 0 || InSize != 0 )
         {
             D3D12_RANGE MapRange = { Offset, InSize };
-            D3D12BaseBuffer::Resource->Unmap(0, &MapRange);
+            D3D12BaseBuffer::Resource->Unmap( 0, &MapRange );
         }
         else
         {
-            D3D12BaseBuffer::Resource->Unmap(0, nullptr);
+            D3D12BaseBuffer::Resource->Unmap( 0, nullptr );
         }
     }
 
-    virtual void SetName(const std::string& InName) override final
+    virtual void SetName( const std::string& InName ) override final
     {
-        Resource::SetName(InName);
-        D3D12BaseBuffer::Resource->SetName(InName);
+        Resource::SetName( InName );
+        D3D12BaseBuffer::Resource->SetName( InName );
     }
 
     virtual void* GetNativeResource() const override final
@@ -184,8 +205,8 @@ public:
 class D3D12VertexBuffer : public TD3D12BaseBuffer<D3D12BaseVertexBuffer>
 {
 public:
-    D3D12VertexBuffer(D3D12Device* InDevice, uint32 InNumVertices, uint32 InStride, uint32 InFlags)
-        : TD3D12BaseBuffer<D3D12BaseVertexBuffer>(InDevice, InNumVertices, InStride, InFlags)
+    D3D12VertexBuffer( D3D12Device* InDevice, uint32 InNumVertices, uint32 InStride, uint32 InFlags )
+        : TD3D12BaseBuffer<D3D12BaseVertexBuffer>( InDevice, InNumVertices, InStride, InFlags )
     {
     }
 };
@@ -193,8 +214,8 @@ public:
 class D3D12IndexBuffer : public TD3D12BaseBuffer<D3D12BaseIndexBuffer>
 {
 public:
-    D3D12IndexBuffer(D3D12Device* InDevice, EIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
-        : TD3D12BaseBuffer<D3D12BaseIndexBuffer>(InDevice, InIndexFormat, InNumIndices, InFlags)
+    D3D12IndexBuffer( D3D12Device* InDevice, EIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags )
+        : TD3D12BaseBuffer<D3D12BaseIndexBuffer>( InDevice, InIndexFormat, InNumIndices, InFlags )
     {
     }
 };
@@ -202,8 +223,8 @@ public:
 class D3D12ConstantBuffer : public TD3D12BaseBuffer<D3D12BaseConstantBuffer>
 {
 public:
-    D3D12ConstantBuffer(D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap, uint32 InSizeInBytes, uint32 InFlags)
-        : TD3D12BaseBuffer<D3D12BaseConstantBuffer>(InDevice, InHeap, InSizeInBytes, InFlags)
+    D3D12ConstantBuffer( D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InHeap, uint32 InSizeInBytes, uint32 InFlags )
+        : TD3D12BaseBuffer<D3D12BaseConstantBuffer>( InDevice, InHeap, InSizeInBytes, InFlags )
     {
     }
 };
@@ -211,27 +232,27 @@ public:
 class D3D12StructuredBuffer : public TD3D12BaseBuffer<D3D12BaseStructuredBuffer>
 {
 public:
-    D3D12StructuredBuffer(D3D12Device* InDevice, uint32 InNumElements, uint32 InStride, uint32 InFlags)
-        : TD3D12BaseBuffer<D3D12BaseStructuredBuffer>(InDevice, InNumElements, InStride, InFlags)
+    D3D12StructuredBuffer( D3D12Device* InDevice, uint32 InNumElements, uint32 InStride, uint32 InFlags )
+        : TD3D12BaseBuffer<D3D12BaseStructuredBuffer>( InDevice, InNumElements, InStride, InFlags )
     {
     }
 };
 
-inline D3D12BaseBuffer* D3D12BufferCast(Buffer* Buffer)
+inline D3D12BaseBuffer* D3D12BufferCast( Buffer* Buffer )
 {
-    if (Buffer->AsVertexBuffer())
+    if ( Buffer->AsVertexBuffer() )
     {
         return static_cast<D3D12VertexBuffer*>(Buffer);
     }
-    else if (Buffer->AsIndexBuffer())
+    else if ( Buffer->AsIndexBuffer() )
     {
         return static_cast<D3D12IndexBuffer*>(Buffer);
     }
-    else if (Buffer->AsConstantBuffer())
+    else if ( Buffer->AsConstantBuffer() )
     {
         return static_cast<D3D12ConstantBuffer*>(Buffer);
     }
-    else if (Buffer->AsStructuredBuffer())
+    else if ( Buffer->AsStructuredBuffer() )
     {
         return static_cast<D3D12StructuredBuffer*>(Buffer);
     }

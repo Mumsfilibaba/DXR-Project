@@ -3,17 +3,17 @@
 
 enum class ESamplerMode : uint8
 {
-    Unknown    = 0,
-    Wrap       = 1,
-    Mirror     = 2,
-    Clamp      = 3,
-    Border     = 4,
+    Unknown = 0,
+    Wrap = 1,
+    Mirror = 2,
+    Clamp = 3,
+    Border = 4,
     MirrorOnce = 5,
 };
 
-inline const char* ToString(ESamplerMode SamplerMode)
+inline const char* ToString( ESamplerMode SamplerMode )
 {
-    switch (SamplerMode)
+    switch ( SamplerMode )
     {
     case ESamplerMode::Wrap:       return "Wrap";
     case ESamplerMode::Mirror:     return "Mirror";
@@ -26,30 +26,30 @@ inline const char* ToString(ESamplerMode SamplerMode)
 
 enum class ESamplerFilter : uint8
 {
-    Unknown                                 = 0,
-    MinMagMipPoint                          = 1,
-    MinMagPoint_MipLinear                   = 2,
-    MinPoint_MagLinear_MipPoint             = 3,
-    MinPoint_MagMipLinear                   = 4,
-    MinLinear_MagMipPoint                   = 5,
-    MinLinear_MagPoint_MipLinear            = 6,
-    MinMagLinear_MipPoint                   = 7,
-    MinMagMipLinear                         = 8,
-    Anistrotopic                            = 9,
-    Comparison_MinMagMipPoint               = 10,
-    Comparison_MinMagPoint_MipLinear        = 11,
-    Comparison_MinPoint_MagLinear_MipPoint  = 12,
-    Comparison_MinPoint_MagMipLinear        = 13,
-    Comparison_MinLinear_MagMipPoint        = 14,
+    Unknown = 0,
+    MinMagMipPoint = 1,
+    MinMagPoint_MipLinear = 2,
+    MinPoint_MagLinear_MipPoint = 3,
+    MinPoint_MagMipLinear = 4,
+    MinLinear_MagMipPoint = 5,
+    MinLinear_MagPoint_MipLinear = 6,
+    MinMagLinear_MipPoint = 7,
+    MinMagMipLinear = 8,
+    Anistrotopic = 9,
+    Comparison_MinMagMipPoint = 10,
+    Comparison_MinMagPoint_MipLinear = 11,
+    Comparison_MinPoint_MagLinear_MipPoint = 12,
+    Comparison_MinPoint_MagMipLinear = 13,
+    Comparison_MinLinear_MagMipPoint = 14,
     Comparison_MinLinear_MagPoint_MipLinear = 15,
-    Comparison_MinMagLinear_MipPoint        = 16,
-    Comparison_MinMagMipLinear              = 17,
-    Comparison_Anistrotopic                 = 18,
+    Comparison_MinMagLinear_MipPoint = 16,
+    Comparison_MinMagMipLinear = 17,
+    Comparison_Anistrotopic = 18,
 };
 
-inline const char* ToString(ESamplerFilter SamplerFilter)
+inline const char* ToString( ESamplerFilter SamplerFilter )
 {
-    switch (SamplerFilter)
+    switch ( SamplerFilter )
     {
     case ESamplerFilter::MinMagMipPoint:                          return "MinMagMipPoint";
     case ESamplerFilter::MinMagPoint_MipLinear:                   return "MinMagPoint_MipLinear";
@@ -75,16 +75,16 @@ inline const char* ToString(ESamplerFilter SamplerFilter)
 
 struct SamplerStateCreateInfo
 {
-    ESamplerMode    AddressU        = ESamplerMode::Clamp;
-    ESamplerMode    AddressV        = ESamplerMode::Clamp;
-    ESamplerMode    AddressW        = ESamplerMode::Clamp;
-    ESamplerFilter  Filter          = ESamplerFilter::MinMagMipLinear;
-    EComparisonFunc ComparisonFunc  = EComparisonFunc::Never;
-    float           MipLODBias      = 0.0f;
-    uint32          MaxAnisotropy   = 1;
+    ESamplerMode    AddressU = ESamplerMode::Clamp;
+    ESamplerMode    AddressV = ESamplerMode::Clamp;
+    ESamplerMode    AddressW = ESamplerMode::Clamp;
+    ESamplerFilter  Filter = ESamplerFilter::MinMagMipLinear;
+    EComparisonFunc ComparisonFunc = EComparisonFunc::Never;
+    float           MipLODBias = 0.0f;
+    uint32          MaxAnisotropy = 1;
     ColorF          BorderColor;
-    float           MinLOD          = -FLT_MAX;
-    float           MaxLOD          = FLT_MAX;
+    float           MinLOD = -FLT_MAX;
+    float           MaxLOD = FLT_MAX;
 };
 
 class SamplerState : public Resource

@@ -2,7 +2,7 @@
 
 PlatformCallbacks* GenericPlatform::Callbacks = nullptr;
 
-void GenericPlatform::SetCallbacks(PlatformCallbacks* InCallbacks)
+void GenericPlatform::SetCallbacks( PlatformCallbacks* InCallbacks )
 {
     Callbacks = InCallbacks;
 }

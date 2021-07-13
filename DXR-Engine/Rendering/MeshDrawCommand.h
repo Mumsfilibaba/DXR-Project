@@ -3,12 +3,12 @@
 
 struct MeshDrawCommand
 {
-    class CMaterial* Material     = nullptr;
-    class Mesh*     Mesh         = nullptr;
-    class Actor*    CurrentActor = nullptr;
+    class CMaterial* Material = nullptr;
+    class Mesh* Mesh = nullptr;
+    class Actor* CurrentActor = nullptr;
 
     class VertexBuffer* VertexBuffer = nullptr;
-    class IndexBuffer*  IndexBuffer  = nullptr;
+    class IndexBuffer* IndexBuffer = nullptr;
 
     class RayTracingGeometry* Geometry = nullptr;
 };

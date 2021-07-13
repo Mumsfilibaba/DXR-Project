@@ -17,19 +17,19 @@ template<typename TResource>
 class ResourceCache
 {
 public:
-    int32 Add(TResource* Resource)
+    int32 Add( TResource* Resource )
     {
-        if (Resource == nullptr)
+        if ( Resource == nullptr )
         {
             return -1;
         }
 
-        auto TextureIndexPair = ResourceIndices.find(Resource);
-        if (TextureIndexPair == ResourceIndices.end())
+        auto TextureIndexPair = ResourceIndices.find( Resource );
+        if ( TextureIndexPair == ResourceIndices.end() )
         {
             int32 NewIndex = Resources.Size();
             ResourceIndices[Resource] = NewIndex;
-            Resources.EmplaceBack(Resource);
+            Resources.EmplaceBack( Resource );
 
             return NewIndex;
         }
@@ -39,7 +39,7 @@ public:
         }
     }
 
-    TResource* Get(uint32 Index) const
+    TResource* Get( uint32 Index ) const
     {
         return Resources[Index];
     }
@@ -56,49 +56,49 @@ private:
 
 struct FrameResources
 {
-    FrameResources()  = default;
+    FrameResources() = default;
     ~FrameResources() = default;
 
     void Release();
 
-    const EFormat DepthBufferFormat  = EFormat::D32_Float;
-    const EFormat SSAOBufferFormat   = EFormat::R16_Unorm;
-    const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
-    const EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
+    const EFormat DepthBufferFormat = EFormat::D32_Float;
+    const EFormat SSAOBufferFormat = EFormat::R16_Unorm;
+    const EFormat FinalTargetFormat = EFormat::R16G16B16A16_Float;
+    const EFormat RTOutputFormat = EFormat::R16G16B16A16_Float;
     const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
-    const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
-    const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
-    const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
-    const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
+    const EFormat AlbedoFormat = EFormat::R8G8B8A8_Unorm;
+    const EFormat MaterialFormat = EFormat::R8G8B8A8_Unorm;
+    const EFormat NormalFormat = EFormat::R10G10B10A2_Unorm;
+    const EFormat ViewNormalFormat = EFormat::R10G10B10A2_Unorm;
 
     Texture2D* BackBuffer = nullptr;
 
-    TRef<ConstantBuffer> CameraBuffer;
-    TRef<ConstantBuffer> TransformBuffer;
+    TSharedRef<ConstantBuffer> CameraBuffer;
+    TSharedRef<ConstantBuffer> TransformBuffer;
 
-    TRef<SamplerState> PointLightShadowSampler;
-    TRef<SamplerState> DirectionalLightShadowSampler;
-    TRef<SamplerState> IrradianceSampler;
+    TSharedRef<SamplerState> PointLightShadowSampler;
+    TSharedRef<SamplerState> DirectionalLightShadowSampler;
+    TSharedRef<SamplerState> IrradianceSampler;
 
-    TRef<TextureCube> Skybox;
+    TSharedRef<TextureCube> Skybox;
 
-    TRef<Texture2D>    IntegrationLUT;
-    TRef<SamplerState> IntegrationLUTSampler;
+    TSharedRef<Texture2D>    IntegrationLUT;
+    TSharedRef<SamplerState> IntegrationLUTSampler;
 
-    TRef<Texture2D> SSAOBuffer;
-    TRef<Texture2D> FinalTarget;
-    TRef<Texture2D> GBuffer[5];
+    TSharedRef<Texture2D> SSAOBuffer;
+    TSharedRef<Texture2D> FinalTarget;
+    TSharedRef<Texture2D> GBuffer[5];
 
     // Two resources that can be ping ponged inbetween
-    TRef<Texture2D> ReducedDepthBuffer[2];
+    TSharedRef<Texture2D> ReducedDepthBuffer[2];
 
-    TRef<SamplerState> GBufferSampler;
-    TRef<SamplerState> FXAASampler;
+    TSharedRef<SamplerState> GBufferSampler;
+    TSharedRef<SamplerState> FXAASampler;
 
-    TRef<InputLayoutState> StdInputLayout;
+    TSharedRef<InputLayoutState> StdInputLayout;
 
-    TRef<Texture2D>       RTOutput;
-    TRef<RayTracingScene> RTScene;
+    TSharedRef<Texture2D>       RTOutput;
+    TSharedRef<RayTracingScene> RTScene;
 
     RayTracingShaderResources GlobalResources;
     RayTracingShaderResources RayGenLocalResources;
@@ -114,6 +114,6 @@ struct FrameResources
 
     TArray<ImGuiImage> DebugTextures;
 
-    TRef<Viewport> MainWindowViewport;
+    TSharedRef<Viewport> MainWindowViewport;
 };
 

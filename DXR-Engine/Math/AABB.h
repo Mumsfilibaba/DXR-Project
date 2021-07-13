@@ -1,10 +1,11 @@
 #pragma once
+#include "Vector3.h"
 
 struct AABB
 {
-    XMFLOAT3 GetCenter() const
+    CVector3 GetCenter() const
     {
-        return XMFLOAT3((Bottom.x + Top.x) * 0.5f, (Bottom.y + Top.y) * 0.5f, (Bottom.z + Top.z) * 0.5f);
+        return (Bottom + Top) * 0.5f;
     }
 
     float GetWidth() const
@@ -22,6 +23,6 @@ struct AABB
         return Top.z - Bottom.z;
     }
 
-    XMFLOAT3 Top;
-    XMFLOAT3 Bottom;
+    CVector3 Top;
+    CVector3 Bottom;
 };

@@ -10,7 +10,7 @@ class DelegateHandle
 
 public:
     DelegateHandle()
-        : Handle(nullptr)
+        : Handle( nullptr )
     {
     }
 
@@ -25,8 +25,8 @@ public:
     }
 
 private:
-    DelegateHandle(void* InHandle)
-        : Handle(InHandle)
+    DelegateHandle( void* InHandle )
+        : Handle( InHandle )
     {
     }
 
@@ -34,10 +34,10 @@ private:
 };
 
 template<typename... TArgs>
-class TMulticastBase : public TDelegateBase<void(TArgs...)>
+class TMulticastBase : public TDelegateBase<void( TArgs... )>
 {
 protected:
-    typedef TDelegateBase<void(TArgs...)> Base;
+    typedef TDelegateBase<void( TArgs... )> Base;
 
     typedef typename Base::FunctionType     FunctionType;
     typedef typename Base::IDelegate        IDelegate;
@@ -55,43 +55,43 @@ protected:
     using LambdaDelegate = typename Base::template LambdaDelegate<F>;
 
 public:
-    DelegateHandle AddFunction(FunctionType Fn)
+    DelegateHandle AddFunction( FunctionType Fn )
     {
-        return InternalAddNewDelegate(new FunctionDelegate(Fn));
+        return InternalAddNewDelegate( new FunctionDelegate( Fn ) );
     }
 
     template<typename T>
-    DelegateHandle AddObject(T* This, MemberFunctionType<T> Fn)
+    DelegateHandle AddObject( T* This, MemberFunctionType<T> Fn )
     {
-        return InternalAddNewDelegate(new ObjectDelegate<T>(This, Fn));
+        return InternalAddNewDelegate( new ObjectDelegate<T>( This, Fn ) );
     }
 
     template<typename T>
-    DelegateHandle AddObject(const T* This, ConstMemberFunctionType<T> Fn)
+    DelegateHandle AddObject( const T* This, ConstMemberFunctionType<T> Fn )
     {
-        return InternalAddNewDelegate(new ConstObjectDelegate<T>(This, Fn));
+        return InternalAddNewDelegate( new ConstObjectDelegate<T>( This, Fn ) );
     }
 
     template<typename F>
-    DelegateHandle AddLambda(F Functor)
+    DelegateHandle AddLambda( F Functor )
     {
-        return InternalAddNewDelegate(new LambdaDelegate<F>(Forward<F>(Functor)));
+        return InternalAddNewDelegate( new LambdaDelegate<F>( Forward<F>( Functor ) ) );
     }
 
-    DelegateHandle AddDelegate(const TDelegate<void(TArgs...)>& Delegate)
+    DelegateHandle AddDelegate( const TDelegate<void( TArgs... )>& Delegate )
     {
         IDelegate* NewDelegate = Delegate.Delegate;
-        return InternalAddNewDelegate(NewDelegate->Clone());
+        return InternalAddNewDelegate( NewDelegate->Clone() );
     }
 
-    void Unbind(DelegateHandle Handle)
+    void Unbind( DelegateHandle Handle )
     {
         IDelegate* DelegateHandle = reinterpret_cast<IDelegate*>(Handle.Handle);
-        for (TArray<IDelegate*>::Iterator It = Delegates.Begin(); It != Delegates.End(); It++)
+        for ( TArray<IDelegate*>::Iterator It = Delegates.Begin(); It != Delegates.End(); It++ )
         {
-            if (DelegateHandle == *It)
+            if ( DelegateHandle == *It )
             {
-                Delegates.Erase(It);
+                Delegates.Erase( It );
                 return;
             }
         }
@@ -112,9 +112,9 @@ protected:
     TArray<IDelegate*> Delegates;
 
 private:
-    DelegateHandle InternalAddNewDelegate(IDelegate* NewDelegate)
+    DelegateHandle InternalAddNewDelegate( IDelegate* NewDelegate )
     {
-        Delegates.EmplaceBack(NewDelegate);
-        return DelegateHandle(NewDelegate);
+        Delegates.EmplaceBack( NewDelegate );
+        return DelegateHandle( NewDelegate );
     }
 };

@@ -10,6 +10,6 @@ struct TimeQuery
 class GPUProfiler : public Resource
 {
 public:
-    virtual void   GetTimeQuery(TimeQuery& OutQuery, uint32 Index) const = 0;
+    virtual void   GetTimeQuery( TimeQuery& OutQuery, uint32 Index ) const = 0;
     virtual uint64 GetFrequency() const = 0;
 };

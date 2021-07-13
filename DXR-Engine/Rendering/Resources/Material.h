@@ -3,77 +3,103 @@
 
 #include "Core/Containers/StaticArray.h"
 
+#include "Math/Vector3.h"
+
 struct SMaterialDesc
 {
-    XMFLOAT3 Albedo    = XMFLOAT3(1.0f, 1.0f, 1.0f);
-    float Roughness    = 0.0f;
+    CVector3 Albedo = CVector3( 1.0f );
+    float Roughness = 0.0f;
 
-    float Metallic     = 0.0f;
-    float AO           = 0.5f;
+    float Metallic = 0.0f;
+    float AO = 0.5f;
     int32 EnableHeight = 0;
-    int32 EnableMask   = 0;
+    int32 EnableMask = 0;
 };
 
 class CMaterial
 {
 public:
-    CMaterial(const SMaterialDesc& InProperties);
+    CMaterial( const SMaterialDesc& InProperties );
     ~CMaterial() = default;
 
     void Init();
 
-    void BuildBuffer(class CommandList& CmdList);
+    void BuildBuffer( class CommandList& CmdList );
 
-    FORCEINLINE bool IsBufferDirty() const { return m_MaterialBufferIsDirty; }
+    FORCEINLINE bool IsBufferDirty() const
+    {
+        return MaterialBufferIsDirty;
+    }
 
-    void SetAlbedo(const XMFLOAT3& Albedo);
-    void SetAlbedo(float R, float G, float B);
+    void SetAlbedo( const CVector3& Albedo );
+    void SetAlbedo( float R, float G, float B );
 
-    void SetMetallic(float Metallic);
-    void SetRoughness(float Roughness);
-    void SetAmbientOcclusion(float AO);
+    void SetMetallic( float Metallic );
+    void SetRoughness( float Roughness );
+    void SetAmbientOcclusion( float AO );
 
-    void ForceForwardPass(bool ForceForwardRender);
+    void ForceForwardPass( bool ForceForwardRender );
 
-    void EnableHeightMap(bool InEnableHeightMap);
-    void EnableAlphaMask(bool InEnableAlphaMask);
+    void EnableHeightMap( bool InEnableHeightMap );
+    void EnableAlphaMask( bool InEnableAlphaMask );
 
-    void SetDebugName(const std::string& InDebugName);
+    void SetDebugName( const std::string& InDebugName );
 
     // ShaderResourceView are sorted in the way that the deferred rendering pass wants them
     // This means that one can call BindShaderResourceViews directly with this function
     ShaderResourceView* const* GetShaderResourceViews() const;
 
-    SamplerState* GetMaterialSampler() const { return m_Sampler.Get(); }
-    ConstantBuffer* GetMaterialBuffer() const { return m_MaterialBuffer.Get(); }
+    SamplerState* GetMaterialSampler() const
+    {
+        return Sampler.Get();
+    }
+    ConstantBuffer* GetMaterialBuffer() const
+    {
+        return MaterialBuffer.Get();
+    }
 
-    FORCEINLINE bool ShouldRenderInPrePass() { return !HasAlphaMask() && !HasHeightMap() && !m_RenderInForwardPass; }
-    FORCEINLINE bool ShouldRenderInForwardPass() { return m_RenderInForwardPass; }
+    FORCEINLINE bool ShouldRenderInPrePass()
+    {
+        return !HasAlphaMask() && !HasHeightMap() && !RenderInForwardPass;
+    }
+    FORCEINLINE bool ShouldRenderInForwardPass()
+    {
+        return RenderInForwardPass;
+    }
 
-    FORCEINLINE bool HasAlphaMask() const { return AlphaMask; }
-    FORCEINLINE bool HasHeightMap() const { return HeightMap; }
+    FORCEINLINE bool HasAlphaMask() const
+    {
+        return AlphaMask;
+    }
+    FORCEINLINE bool HasHeightMap() const
+    {
+        return HeightMap;
+    }
 
-    const SMaterialDesc& GetMaterialProperties() const { return m_Properties; }
+    const SMaterialDesc& GetMaterialProperties() const
+    {
+        return Properties;
+    }
 
 public:
-    TRef<Texture2D> AlbedoMap;
-    TRef<Texture2D> NormalMap;
-    TRef<Texture2D> RoughnessMap;
-    TRef<Texture2D> HeightMap;
-    TRef<Texture2D> AOMap;
-    TRef<Texture2D> MetallicMap;
-    TRef<Texture2D> AlphaMask;
+    TSharedRef<Texture2D> AlbedoMap;
+    TSharedRef<Texture2D> NormalMap;
+    TSharedRef<Texture2D> RoughnessMap;
+    TSharedRef<Texture2D> HeightMap;
+    TSharedRef<Texture2D> AOMap;
+    TSharedRef<Texture2D> MetallicMap;
+    TSharedRef<Texture2D> AlphaMask;
 
 private:
-    std::string m_DebugName;
+    std::string DebugName;
 
-    bool m_MaterialBufferIsDirty = true;
-    
-    bool m_RenderInForwardPass = false;
+    bool MaterialBufferIsDirty = true;
 
-    SMaterialDesc        m_Properties;
-    TRef<ConstantBuffer> m_MaterialBuffer;
-    TRef<SamplerState>   m_Sampler;
+    bool RenderInForwardPass = false;
 
-    mutable TStaticArray<ShaderResourceView*, 7> m_ShaderResourceViews;
+    SMaterialDesc        Properties;
+    TSharedRef<ConstantBuffer> MaterialBuffer;
+    TSharedRef<SamplerState>   Sampler;
+
+    mutable TStaticArray<ShaderResourceView*, 7> ShaderResourceViews;
 };

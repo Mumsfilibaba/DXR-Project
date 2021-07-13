@@ -7,10 +7,10 @@
 
 struct KeyPressedEvent
 {
-    KeyPressedEvent(EKey InKey, bool InIsRepeat, const ModifierKeyState& InModifiers)
-        : Key(InKey)
-        , IsRepeat(InIsRepeat)
-        , Modifiers(InModifiers)
+    KeyPressedEvent( EKey InKey, bool InIsRepeat, const ModifierKeyState& InModifiers )
+        : Key( InKey )
+        , IsRepeat( InIsRepeat )
+        , Modifiers( InModifiers )
     {
     }
 
@@ -21,9 +21,9 @@ struct KeyPressedEvent
 
 struct KeyReleasedEvent
 {
-    KeyReleasedEvent(EKey InKey, const ModifierKeyState& InModifiers)
-        : Key(InKey)
-        , Modifiers(InModifiers)
+    KeyReleasedEvent( EKey InKey, const ModifierKeyState& InModifiers )
+        : Key( InKey )
+        , Modifiers( InModifiers )
     {
     }
 
@@ -33,8 +33,8 @@ struct KeyReleasedEvent
 
 struct KeyTypedEvent
 {
-    KeyTypedEvent(uint32 InCharacter)
-        : Character(InCharacter)
+    KeyTypedEvent( uint32 InCharacter )
+        : Character( InCharacter )
     {
     }
 
@@ -48,9 +48,9 @@ struct KeyTypedEvent
 
 struct MouseMovedEvent
 {
-    MouseMovedEvent(int32 InX, int32 InY)
-        : x(InX)
-        , y(InY)
+    MouseMovedEvent( int32 InX, int32 InY )
+        : x( InX )
+        , y( InY )
     {
     }
 
@@ -60,9 +60,9 @@ struct MouseMovedEvent
 
 struct MousePressedEvent
 {
-    MousePressedEvent(EMouseButton InButton, const ModifierKeyState& InModifiers)
-        : Button(InButton)
-        , Modifiers(InModifiers)
+    MousePressedEvent( EMouseButton InButton, const ModifierKeyState& InModifiers )
+        : Button( InButton )
+        , Modifiers( InModifiers )
     {
     }
 
@@ -72,9 +72,9 @@ struct MousePressedEvent
 
 struct MouseReleasedEvent
 {
-    MouseReleasedEvent(EMouseButton InButton, const ModifierKeyState& InModifiers)
-        : Button(InButton)
-        , Modifiers(InModifiers)
+    MouseReleasedEvent( EMouseButton InButton, const ModifierKeyState& InModifiers )
+        : Button( InButton )
+        , Modifiers( InModifiers )
     {
     }
 
@@ -85,9 +85,9 @@ struct MouseReleasedEvent
 
 struct MouseScrolledEvent
 {
-    MouseScrolledEvent(float InHorizontalDelta, float InVerticalDelta)
-        : HorizontalDelta(InHorizontalDelta)
-        , VerticalDelta(InVerticalDelta)
+    MouseScrolledEvent( float InHorizontalDelta, float InVerticalDelta )
+        : HorizontalDelta( InHorizontalDelta )
+        , VerticalDelta( InVerticalDelta )
     {
     }
 
@@ -97,39 +97,39 @@ struct MouseScrolledEvent
 
 struct WindowResizeEvent
 {
-    WindowResizeEvent(const TRef<GenericWindow>& InWindow, uint16 InWidth, uint16 InHeight)
-        : Window(InWindow)
-        , Width(InWidth)
-        , Height(InHeight)
+    WindowResizeEvent( const TSharedRef<GenericWindow>& InWindow, uint16 InWidth, uint16 InHeight )
+        : Window( InWindow )
+        , Width( InWidth )
+        , Height( InHeight )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
     uint16 Width;
     uint16 Height;
 };
 
 struct WindowFocusChangedEvent
 {
-    WindowFocusChangedEvent(const TRef<GenericWindow>& InWindow, bool hasFocus)
-        : Window(InWindow)
-        , HasFocus(hasFocus)
+    WindowFocusChangedEvent( const TSharedRef<GenericWindow>& InWindow, bool hasFocus )
+        : Window( InWindow )
+        , HasFocus( hasFocus )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
     bool HasFocus;
 };
 
 struct WindowMovedEvent
 {
-    WindowMovedEvent(const TRef<GenericWindow>& InWindow, int16 x, int16 y)
-        : Window(InWindow)
-        , Position({ x, y })
+    WindowMovedEvent( const TSharedRef<GenericWindow>& InWindow, int16 x, int16 y )
+        : Window( InWindow )
+        , Position( { x, y } )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
     struct
     {
         int16 x;
@@ -139,30 +139,30 @@ struct WindowMovedEvent
 
 struct WindowMouseLeftEvent
 {
-    WindowMouseLeftEvent(const TRef<GenericWindow>& InWindow)
-        : Window(InWindow)
+    WindowMouseLeftEvent( const TSharedRef<GenericWindow>& InWindow )
+        : Window( InWindow )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
 };
 
 struct WindowMouseEnteredEvent
 {
-    WindowMouseEnteredEvent(const TRef<GenericWindow>& InWindow)
-        : Window(InWindow)
+    WindowMouseEnteredEvent( const TSharedRef<GenericWindow>& InWindow )
+        : Window( InWindow )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
 };
 
 struct WindowClosedEvent
 {
-    WindowClosedEvent(const TRef<GenericWindow>& InWindow)
-        : Window(InWindow)
+    WindowClosedEvent( const TSharedRef<GenericWindow>& InWindow )
+        : Window( InWindow )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
 };

@@ -28,12 +28,12 @@ public:
 
     static const ClassType* GetStaticClass()
     {
-        static ClassType ClassInfo("CoreObject", nullptr, sizeof(CoreObject));
+        static ClassType ClassInfo( "CoreObject", nullptr, sizeof( CoreObject ) );
         return &ClassInfo;
     }
 
 protected:
-    FORCEINLINE void SetClass(const ClassType* InClass)
+    FORCEINLINE void SetClass( const ClassType* InClass )
     {
         Class = InClass;
     }
@@ -43,15 +43,15 @@ private:
 };
 
 template<typename T>
-bool IsSubClassOf(CoreObject* Object)
+bool IsSubClassOf( CoreObject* Object )
 {
-    Assert(Object != nullptr);
-    Assert(Object->GetClass() != nullptr);
+    Assert( Object != nullptr );
+    Assert( Object->GetClass() != nullptr );
     return Object->GetClass()->IsSubClassOf<T>();
 }
 
 template<typename T>
-T* Cast(CoreObject* Object)
+T* Cast( CoreObject* Object )
 {
-    return IsSubClassOf<T>(Object) ? static_cast<T*>(Object) : nullptr; 
+    return IsSubClassOf<T>( Object ) ? static_cast<T*>(Object) : nullptr;
 }

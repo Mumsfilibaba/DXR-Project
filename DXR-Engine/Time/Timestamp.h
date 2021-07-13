@@ -1,35 +1,35 @@
 #pragma once
 #include "Core.h"
 
-#ifdef COMPILER_VISUAL_STUDIO
-    #pragma warning(push)
-    #pragma warning(disable : 4251)
+#ifdef COMPILER_MSVC
+#pragma warning(push)
+#pragma warning(disable : 4251)
 #endif
 
 class Timestamp
 {
 public:
-    FORCEINLINE Timestamp(uint64 Nanoseconds = 0)
-        : TimestampInNS(Nanoseconds)
+    FORCEINLINE Timestamp( uint64 Nanoseconds = 0 )
+        : TimestampInNS( Nanoseconds )
     {
     }
 
     FORCEINLINE double AsSeconds() const
     {
         constexpr double SECONDS = 1000.0 * 1000.0 * 1000.0;
-        return double(TimestampInNS) / SECONDS;
+        return double( TimestampInNS ) / SECONDS;
     }
 
     FORCEINLINE double AsMilliSeconds() const
     {
         constexpr double MILLISECONDS = 1000.0 * 1000.0;
-        return double(TimestampInNS) / MILLISECONDS;
+        return double( TimestampInNS ) / MILLISECONDS;
     }
 
     FORCEINLINE double AsMicroSeconds() const
     {
         constexpr double MICROSECONDS = 1000.0;
-        return double(TimestampInNS) / MICROSECONDS;
+        return double( TimestampInNS ) / MICROSECONDS;
     }
 
     FORCEINLINE uint64 AsNanoSeconds() const
@@ -37,100 +37,100 @@ public:
         return TimestampInNS;
     }
 
-    FORCEINLINE bool operator==(const Timestamp& Other) const
+    FORCEINLINE bool operator==( const Timestamp& Other ) const
     {
         return TimestampInNS == Other.TimestampInNS;
     }
 
-    FORCEINLINE bool operator!=(const Timestamp& Other) const
+    FORCEINLINE bool operator!=( const Timestamp& Other ) const
     {
         return TimestampInNS != Other.TimestampInNS;
     }
 
-    FORCEINLINE Timestamp& operator+=(const Timestamp& Right)
+    FORCEINLINE Timestamp& operator+=( const Timestamp& Right )
     {
         TimestampInNS += Right.TimestampInNS;
         return *this;
     }
 
-    FORCEINLINE Timestamp& operator-=(const Timestamp& Right)
+    FORCEINLINE Timestamp& operator-=( const Timestamp& Right )
     {
         TimestampInNS -= Right.TimestampInNS;
         return *this;
     }
 
-    FORCEINLINE Timestamp& operator*=(const Timestamp& Right)
+    FORCEINLINE Timestamp& operator*=( const Timestamp& Right )
     {
         TimestampInNS *= Right.TimestampInNS;
         return *this;
     }
 
-    FORCEINLINE Timestamp& operator/=(const Timestamp& Right)
+    FORCEINLINE Timestamp& operator/=( const Timestamp& Right )
     {
         TimestampInNS /= Right.TimestampInNS;
         return *this;
     }
 
-    FORCEINLINE static Timestamp Seconds(double Seconds)
+    FORCEINLINE static Timestamp Seconds( double Seconds )
     {
         constexpr double SECOND = 1000.0 * 1000.0 * 1000.0;
-        return Timestamp(static_cast<uint64>(Seconds * SECOND));
+        return Timestamp( static_cast<uint64>(Seconds * SECOND) );
     }
 
-    FORCEINLINE static Timestamp MilliSeconds(double Milliseconds)
+    FORCEINLINE static Timestamp MilliSeconds( double Milliseconds )
     {
         constexpr double MILLISECOND = 1000.0 * 1000.0;
-        return Timestamp(static_cast<uint64>(Milliseconds * MILLISECOND));
+        return Timestamp( static_cast<uint64>(Milliseconds * MILLISECOND) );
     }
 
-    FORCEINLINE static Timestamp MicroSeconds(double Microseconds)
+    FORCEINLINE static Timestamp MicroSeconds( double Microseconds )
     {
         constexpr double MICROSECOND = 1000.0;
-        return Timestamp(static_cast<uint64>(Microseconds * MICROSECOND));
+        return Timestamp( static_cast<uint64>(Microseconds * MICROSECOND) );
     }
 
-    FORCEINLINE static Timestamp NanoSeconds(uint64 Nanoseconds)
+    FORCEINLINE static Timestamp NanoSeconds( uint64 Nanoseconds )
     {
-        return Timestamp(Nanoseconds);
+        return Timestamp( Nanoseconds );
     }
 
 public:
-    FORCEINLINE friend Timestamp operator+(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend Timestamp operator+( const Timestamp& Left, const Timestamp& Right )
     {
-        return Timestamp(Left.TimestampInNS + Right.TimestampInNS);
+        return Timestamp( Left.TimestampInNS + Right.TimestampInNS );
     }
 
-    FORCEINLINE friend Timestamp operator-(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend Timestamp operator-( const Timestamp& Left, const Timestamp& Right )
     {
-        return Timestamp(Left.TimestampInNS - Right.TimestampInNS);
+        return Timestamp( Left.TimestampInNS - Right.TimestampInNS );
     }
 
-    FORCEINLINE friend Timestamp operator*(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend Timestamp operator*( const Timestamp& Left, const Timestamp& Right )
     {
-        return Timestamp(Left.TimestampInNS * Right.TimestampInNS);
+        return Timestamp( Left.TimestampInNS * Right.TimestampInNS );
     }
 
-    FORCEINLINE friend Timestamp operator/(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend Timestamp operator/( const Timestamp& Left, const Timestamp& Right )
     {
-        return Timestamp(Left.TimestampInNS / Right.TimestampInNS);
+        return Timestamp( Left.TimestampInNS / Right.TimestampInNS );
     }
 
-    FORCEINLINE friend bool operator>(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend bool operator>( const Timestamp& Left, const Timestamp& Right )
     {
         return Left.TimestampInNS > Right.TimestampInNS;
     }
 
-    FORCEINLINE friend bool operator<(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend bool operator<( const Timestamp& Left, const Timestamp& Right )
     {
         return Left.TimestampInNS < Right.TimestampInNS;
     }
 
-    FORCEINLINE friend bool operator>=(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend bool operator>=( const Timestamp& Left, const Timestamp& Right )
     {
         return (Left.TimestampInNS >= Right.TimestampInNS);
     }
 
-    FORCEINLINE friend bool operator<=(const Timestamp& Left, const Timestamp& Right)
+    FORCEINLINE friend bool operator<=( const Timestamp& Left, const Timestamp& Right )
     {
         return (Left.TimestampInNS <= Right.TimestampInNS);
     }
@@ -139,6 +139,6 @@ private:
     uint64 TimestampInNS = 0;
 };
 
-#ifdef COMPILER_VISUAL_STUDIO
-    #pragma warning(pop)
+#ifdef COMPILER_MSVC
+#pragma warning(pop)
 #endif

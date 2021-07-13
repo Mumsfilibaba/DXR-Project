@@ -10,22 +10,22 @@
 class SkyboxRenderPass final
 {
 public:
-    SkyboxRenderPass()  = default;
+    SkyboxRenderPass() = default;
     ~SkyboxRenderPass() = default;
 
-    bool Init(FrameResources& FrameResources);
+    bool Init( FrameResources& FrameResources );
 
-    void Render(CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene);
+    void Render( CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene );
 
     void Release();
 
 private:
-    TRef<GraphicsPipelineState> PipelineState;
-    TRef<VertexShader> SkyboxVertexShader;
-    TRef<PixelShader>  SkyboxPixelShader;
-    TRef<VertexBuffer> SkyboxVertexBuffer;
-    TRef<IndexBuffer>  SkyboxIndexBuffer;
-    TRef<SamplerState> SkyboxSampler;
+    TSharedRef<GraphicsPipelineState> PipelineState;
+    TSharedRef<VertexShader> SkyboxVertexShader;
+    TSharedRef<PixelShader>  SkyboxPixelShader;
+    TSharedRef<VertexBuffer> SkyboxVertexBuffer;
+    TSharedRef<IndexBuffer>  SkyboxIndexBuffer;
+    TSharedRef<SamplerState> SkyboxSampler;
 
     MeshData SkyboxMesh;
 };

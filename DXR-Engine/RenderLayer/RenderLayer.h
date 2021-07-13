@@ -9,6 +9,6 @@
 class RenderLayer
 {
 public:
-    static bool Init(ERenderLayerApi InRenderApi);
+    static bool Init( ERenderLayerApi InRenderApi );
     static void Release();
 };

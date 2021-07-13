@@ -4,32 +4,31 @@
 #include <algorithm>
 #include <random>
 
-// Libs
+/* Windows Specific */
 #ifdef PLATFORM_WINDOWS
-    // Windows
-    #define NOMINMAX
-    #include "Windows/Windows.h"
+#define NOMINMAX
+#include "Windows/Windows.h"
 
-    #include <dxgi1_6.h>
-    #include <d3d12.h>
+#include <dxgi1_6.h>
+#include <d3d12.h>
 
-    #include <wrl/client.h>
+#include <wrl/client.h>
 #endif
 
 #include <imgui.h>
 
-// Debug
+/* Debug */
 #include "Debug/Debug.h"
 
-// Core
+/* Core */
 #include "Core.h"
 #include "Core/Types.h"
 #include "Core/CoreObject/ClassType.h"
 #include "Core/CoreObject/CoreObject.h"
 #include "Core/RefCountedObject.h"
-#include "Core/Ref.h"
 
-// Containers
+/* Containers */
+#include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
 #include "Core/Containers/StaticArray.h"
@@ -38,16 +37,31 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Containers/Utilities.h"
 
-// Application
+/* Application */
 #include "Core/Application/Log.h"
 
-// Utilities
+/* Utilities */
 #include "Utilities/HashUtilities.h"
 #include "Utilities/StringUtilities.h"
 
-// Math
+/* Math */
 #include "Math/Math.h"
+#include "Math/AABB.h"
+#include "Math/Frustum.h"
+#include "Math/Color.h"
+#include "Math/Float.h"
+#include "Math/IntPoint2.h"
+#include "Math/IntPoint3.h"
+#include "Math/MathHash.h"
+#include "Math/Matrix2.h"
+#include "Math/Matrix3.h"
+#include "Math/Matrix4.h"
+#include "Math/Vector2.h"
+#include "Math/Vector3.h"
+#include "Math/Vector4.h"
+#include "Math/Plane.h"
+#include "Math/SIMD.h"
 
-// Memory
+/* Memory */
 #include "Memory/Memory.h"
 #include "Memory/New.h"
