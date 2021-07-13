@@ -69,18 +69,18 @@ struct LightSetup
     TArray<CVector4>       PointLightsPosRad;
     TArray<PointLightData> PointLightsData;
 
-    TRef<ConstantBuffer> PointLightsBuffer;
-    TRef<ConstantBuffer> PointLightsPosRadBuffer;
+    TSharedRef<ConstantBuffer> PointLightsBuffer;
+    TSharedRef<ConstantBuffer> PointLightsPosRadBuffer;
 
     TArray<PointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
 
     TArray<CVector4>                    ShadowCastingPointLightsPosRad;
     TArray<ShadowCastingPointLightData> ShadowCastingPointLightsData;
 
-    TRef<ConstantBuffer> ShadowCastingPointLightsBuffer;
-    TRef<ConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
+    TSharedRef<ConstantBuffer> ShadowCastingPointLightsBuffer;
+    TSharedRef<ConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
 
-    TRef<TextureCubeArray>       PointLightShadowMaps;
+    TSharedRef<TextureCubeArray>       PointLightShadowMaps;
     TArray<DepthStencilViewCube> PointLightShadowMapDSVs;
 
     // NOTE: Only one directional light
@@ -89,23 +89,23 @@ struct LightSetup
 
     float CascadeSplitLambda;
 
-    TRef<ConstantBuffer> DirectionalLightsBuffer;
+    TSharedRef<ConstantBuffer> DirectionalLightsBuffer;
 
-    TRef<Texture2D> ShadowMapCascades[4];
-    TRef<Texture2D> DirectionalShadowMask;
+    TSharedRef<Texture2D> ShadowMapCascades[4];
+    TSharedRef<Texture2D> DirectionalShadowMask;
 
-    TRef<StructuredBuffer>    CascadeMatrixBuffer;
-    TRef<ShaderResourceView>  CascadeMatrixBufferSRV;
-    TRef<UnorderedAccessView> CascadeMatrixBufferUAV;
+    TSharedRef<StructuredBuffer>    CascadeMatrixBuffer;
+    TSharedRef<ShaderResourceView>  CascadeMatrixBufferSRV;
+    TSharedRef<UnorderedAccessView> CascadeMatrixBufferUAV;
 
-    TRef<StructuredBuffer>    CascadeSplitsBuffer;
-    TRef<ShaderResourceView>  CascadeSplitsBufferSRV;
-    TRef<UnorderedAccessView> CascadeSplitsBufferUAV;
+    TSharedRef<StructuredBuffer>    CascadeSplitsBuffer;
+    TSharedRef<ShaderResourceView>  CascadeSplitsBufferSRV;
+    TSharedRef<UnorderedAccessView> CascadeSplitsBufferUAV;
 
-    TRef<TextureCube>         IrradianceMap;
-    TRef<UnorderedAccessView> IrradianceMapUAV;
+    TSharedRef<TextureCube>         IrradianceMap;
+    TSharedRef<UnorderedAccessView> IrradianceMapUAV;
 
-    TRef<TextureCube>                 SpecularIrradianceMap;
-    TArray<TRef<UnorderedAccessView>> SpecularIrradianceMapUAVs;
+    TSharedRef<TextureCube>                 SpecularIrradianceMap;
+    TArray<TSharedRef<UnorderedAccessView>> SpecularIrradianceMapUAVs;
     TArray<UnorderedAccessView*>      WeakSpecularIrradianceMapUAVs;
 };

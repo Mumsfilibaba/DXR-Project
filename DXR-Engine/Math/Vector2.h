@@ -378,12 +378,13 @@ FORCEINLINE CVector2::CVector2( float Scalar ) noexcept
 
 inline void CVector2::Normalize() noexcept
 {
-    float fLength = Length();
-    Assert( fLength != 0 );
-
-    float fRecipLength = 1.0f / fLength;
-    x = x * fRecipLength;
-    y = y * fRecipLength;
+    float fLengthSquared = LengthSquared();
+    if ( fLengthSquared != 0.0f )
+    {
+        float fRecipLength = 1.0f / NMath::Sqrt( fLengthSquared );
+        x = x * fRecipLength;
+        y = y * fRecipLength;
+    }
 }
 
 FORCEINLINE CVector2 CVector2::GetNormalized() const noexcept

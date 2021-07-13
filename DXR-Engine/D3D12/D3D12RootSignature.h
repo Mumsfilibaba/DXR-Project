@@ -133,7 +133,7 @@ private:
     D3D12RootSignature* CreateRootSignature( const D3D12RootSignatureResourceCount& ResourceCount );
 
     // TODO: Use a hash instead, this is beacuse == operator does not make sense, use it anyway?
-    TArray<TRef<D3D12RootSignature>>        RootSignatures;
+    TArray<TSharedRef<D3D12RootSignature>>        RootSignatures;
     TArray<D3D12RootSignatureResourceCount> ResourceCounts;
 
     static D3D12RootSignatureCache* Instance;

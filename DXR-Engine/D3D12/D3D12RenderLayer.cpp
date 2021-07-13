@@ -167,7 +167,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
     const ResourceData* InitialData,
     const ClearValue& OptimalClearValue )
 {
-    TRef<TD3D12Texture> NewTexture = DBG_NEW TD3D12Texture( Device, Format, SizeX, SizeY, SizeZ, NumMips, NumSamples, Flags, OptimalClearValue );
+    TSharedRef<TD3D12Texture> NewTexture = DBG_NEW TD3D12Texture( Device, Format, SizeX, SizeY, SizeZ, NumMips, NumSamples, Flags, OptimalClearValue );
 
     D3D12_RESOURCE_DESC Desc;
     Memory::Memzero( &Desc );
@@ -211,7 +211,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         }
     }
 
-    TRef<D3D12Resource> Resource = DBG_NEW D3D12Resource( Device, Desc, D3D12_HEAP_TYPE_DEFAULT );
+    TSharedRef<D3D12Resource> Resource = DBG_NEW D3D12Resource( Device, Desc, D3D12_HEAP_TYPE_DEFAULT );
     if ( !Resource->Init( D3D12_RESOURCE_STATE_COMMON, ClearValuePtr ) )
     {
         return nullptr;
@@ -280,7 +280,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
             return nullptr;
         }
 
-        TRef<D3D12ShaderResourceView> SRV = DBG_NEW D3D12ShaderResourceView( Device, ResourceOfflineDescriptorHeap );
+        TSharedRef<D3D12ShaderResourceView> SRV = DBG_NEW D3D12ShaderResourceView( Device, ResourceOfflineDescriptorHeap );
         if ( !SRV->Init() )
         {
             return nullptr;
@@ -309,7 +309,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         ViewDesc.Texture2D.MipSlice = 0;
         ViewDesc.Texture2D.PlaneSlice = 0;
 
-        TRef<D3D12RenderTargetView> RTV = DBG_NEW D3D12RenderTargetView( Device, RenderTargetOfflineDescriptorHeap );
+        TSharedRef<D3D12RenderTargetView> RTV = DBG_NEW D3D12RenderTargetView( Device, RenderTargetOfflineDescriptorHeap );
         if ( !RTV->Init() )
         {
             return nullptr;
@@ -335,7 +335,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         ViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
         ViewDesc.Texture2D.MipSlice = 0;
 
-        TRef<D3D12DepthStencilView> DSV = DBG_NEW D3D12DepthStencilView( Device, DepthStencilOfflineDescriptorHeap );
+        TSharedRef<D3D12DepthStencilView> DSV = DBG_NEW D3D12DepthStencilView( Device, DepthStencilOfflineDescriptorHeap );
         if ( !DSV->Init() )
         {
             return nullptr;
@@ -362,7 +362,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         ViewDesc.Texture2D.MipSlice = 0;
         ViewDesc.Texture2D.PlaneSlice = 0;
 
-        TRef<D3D12UnorderedAccessView> UAV = DBG_NEW D3D12UnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
+        TSharedRef<D3D12UnorderedAccessView> UAV = DBG_NEW D3D12UnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
         if ( !UAV->Init() )
         {
             return nullptr;
@@ -495,7 +495,7 @@ SamplerState* D3D12RenderLayer::CreateSamplerState( const SamplerStateCreateInfo
 
     Memory::Memcpy( Desc.BorderColor, CreateInfo.BorderColor.Elements, sizeof( Desc.BorderColor ) );
 
-    TRef<D3D12SamplerState> Sampler = DBG_NEW D3D12SamplerState( Device, SamplerOfflineDescriptorHeap );
+    TSharedRef<D3D12SamplerState> Sampler = DBG_NEW D3D12SamplerState( Device, SamplerOfflineDescriptorHeap );
     if ( !Sampler->Init( Desc ) )
     {
         return nullptr;
@@ -532,7 +532,7 @@ bool D3D12RenderLayer::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 Size
         DxInitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
-    TRef<D3D12Resource> Resource = DBG_NEW D3D12Resource( Device, Desc, DxHeapType );
+    TSharedRef<D3D12Resource> Resource = DBG_NEW D3D12Resource( Device, Desc, DxHeapType );
     if ( !Resource->Init( DxInitialState, nullptr ) )
     {
         return false;
@@ -587,7 +587,7 @@ VertexBuffer* D3D12RenderLayer::CreateVertexBuffer( uint32 Stride, uint32 NumVer
 {
     const uint32 SizeInBytes = NumVertices * Stride;
 
-    TRef<D3D12VertexBuffer> NewBuffer = DBG_NEW D3D12VertexBuffer( Device, NumVertices, Stride, Flags );
+    TSharedRef<D3D12VertexBuffer> NewBuffer = DBG_NEW D3D12VertexBuffer( Device, NumVertices, Stride, Flags );
     if ( !FinalizeBufferResource<D3D12VertexBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to create VertexBuffer" );
@@ -604,7 +604,7 @@ IndexBuffer* D3D12RenderLayer::CreateIndexBuffer( EIndexFormat Format, uint32 Nu
     const uint32 SizeInBytes = NumIndices * GetStrideFromIndexFormat( Format );
     const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>( SizeInBytes, sizeof( uint32 ) );
 
-    TRef<D3D12IndexBuffer> NewBuffer = DBG_NEW D3D12IndexBuffer( Device, Format, NumIndices, Flags );
+    TSharedRef<D3D12IndexBuffer> NewBuffer = DBG_NEW D3D12IndexBuffer( Device, Format, NumIndices, Flags );
     if ( !FinalizeBufferResource<D3D12IndexBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to create IndexBuffer" );
@@ -622,7 +622,7 @@ ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer( uint32 Size, uint32 Flag
 
     const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>( Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT );
 
-    TRef<D3D12ConstantBuffer> NewBuffer = DBG_NEW D3D12ConstantBuffer( Device, ResourceOfflineDescriptorHeap, Size, Flags );
+    TSharedRef<D3D12ConstantBuffer> NewBuffer = DBG_NEW D3D12ConstantBuffer( Device, ResourceOfflineDescriptorHeap, Size, Flags );
     if ( !FinalizeBufferResource<D3D12ConstantBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to create ConstantBuffer" );
@@ -638,7 +638,7 @@ StructuredBuffer* D3D12RenderLayer::CreateStructuredBuffer( uint32 Stride, uint3
 {
     const uint32 SizeInBytes = NumElements * Stride;
 
-    TRef<D3D12StructuredBuffer> NewBuffer = DBG_NEW D3D12StructuredBuffer( Device, NumElements, Stride, Flags );
+    TSharedRef<D3D12StructuredBuffer> NewBuffer = DBG_NEW D3D12StructuredBuffer( Device, NumElements, Stride, Flags );
     if ( !FinalizeBufferResource<D3D12StructuredBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to create StructuredBuffer" );
@@ -655,7 +655,7 @@ RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry( uint32 Flags, Ve
     D3D12VertexBuffer* DxVertexBuffer = static_cast<D3D12VertexBuffer*>(VertexBuffer);
     D3D12IndexBuffer* DxIndexBuffer = static_cast<D3D12IndexBuffer*>(IndexBuffer);
 
-    TRef<D3D12RayTracingGeometry> Geometry = DBG_NEW D3D12RayTracingGeometry( Device, Flags );
+    TSharedRef<D3D12RayTracingGeometry> Geometry = DBG_NEW D3D12RayTracingGeometry( Device, Flags );
     Geometry->VertexBuffer = MakeSharedRef<D3D12VertexBuffer>( DxVertexBuffer );
     Geometry->IndexBuffer = MakeSharedRef<D3D12IndexBuffer>( DxIndexBuffer );
 
@@ -674,7 +674,7 @@ RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry( uint32 Flags, Ve
 
 RayTracingScene* D3D12RenderLayer::CreateRayTracingScene( uint32 Flags, RayTracingGeometryInstance* Instances, uint32 NumInstances )
 {
-    TRef<D3D12RayTracingScene> Scene = DBG_NEW D3D12RayTracingScene( Device, Flags );
+    TSharedRef<D3D12RayTracingScene> Scene = DBG_NEW D3D12RayTracingScene( Device, Flags );
 
     DirectCmdContext->Begin();
 
@@ -840,7 +840,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView( const ShaderReso
 
     Assert( Resource != nullptr );
 
-    TRef<D3D12ShaderResourceView> DxView = DBG_NEW D3D12ShaderResourceView( Device, ResourceOfflineDescriptorHeap );
+    TSharedRef<D3D12ShaderResourceView> DxView = DBG_NEW D3D12ShaderResourceView( Device, ResourceOfflineDescriptorHeap );
     if ( !DxView->Init() )
     {
         return nullptr;
@@ -984,7 +984,7 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView( const Unordere
         Desc.Buffer.StructureByteStride = Buffer->GetStride();
     }
 
-    TRef<D3D12UnorderedAccessView> DxView = DBG_NEW D3D12UnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
+    TSharedRef<D3D12UnorderedAccessView> DxView = DBG_NEW D3D12UnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
     if ( !DxView->Init() )
     {
         return nullptr;
@@ -1097,7 +1097,7 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView( const RenderTargetVi
         Desc.Texture3D.WSize = CreateInfo.Texture3D.NumDepthSlices;
     }
 
-    TRef<D3D12RenderTargetView> DxView = DBG_NEW D3D12RenderTargetView( Device, RenderTargetOfflineDescriptorHeap );
+    TSharedRef<D3D12RenderTargetView> DxView = DBG_NEW D3D12RenderTargetView( Device, RenderTargetOfflineDescriptorHeap );
     if ( !DxView->Init() )
     {
         return nullptr;
@@ -1192,7 +1192,7 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView( const DepthStencilVi
         Desc.Texture2DArray.FirstArraySlice = CreateInfo.TextureCubeArray.ArraySlice * TEXTURE_CUBE_FACE_COUNT + GetCubeFaceIndex( CreateInfo.TextureCube.CubeFace );
     }
 
-    TRef<D3D12DepthStencilView> DxView = DBG_NEW D3D12DepthStencilView( Device, DepthStencilOfflineDescriptorHeap );
+    TSharedRef<D3D12DepthStencilView> DxView = DBG_NEW D3D12DepthStencilView( Device, DepthStencilOfflineDescriptorHeap );
     if ( !DxView->Init() )
     {
         return nullptr;
@@ -1210,7 +1210,7 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView( const DepthStencilVi
 
 ComputeShader* D3D12RenderLayer::CreateComputeShader( const TArray<uint8>& ShaderCode )
 {
-    TRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader( Device, ShaderCode );
+    TSharedRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader( Device, ShaderCode );
     if ( !Shader->Init() )
     {
         return nullptr;
@@ -1221,7 +1221,7 @@ ComputeShader* D3D12RenderLayer::CreateComputeShader( const TArray<uint8>& Shade
 
 VertexShader* D3D12RenderLayer::CreateVertexShader( const TArray<uint8>& ShaderCode )
 {
-    TRef<D3D12VertexShader> Shader = DBG_NEW D3D12VertexShader( Device, ShaderCode );
+    TSharedRef<D3D12VertexShader> Shader = DBG_NEW D3D12VertexShader( Device, ShaderCode );
     if ( !D3D12BaseShader::GetShaderReflection( Shader.Get() ) )
     {
         return nullptr;
@@ -1267,7 +1267,7 @@ AmplificationShader* D3D12RenderLayer::CreateAmplificationShader( const TArray<u
 
 PixelShader* D3D12RenderLayer::CreatePixelShader( const TArray<uint8>& ShaderCode )
 {
-    TRef<D3D12PixelShader> Shader = DBG_NEW D3D12PixelShader( Device, ShaderCode );
+    TSharedRef<D3D12PixelShader> Shader = DBG_NEW D3D12PixelShader( Device, ShaderCode );
     if ( !D3D12BaseShader::GetShaderReflection( Shader.Get() ) )
     {
         return nullptr;
@@ -1278,7 +1278,7 @@ PixelShader* D3D12RenderLayer::CreatePixelShader( const TArray<uint8>& ShaderCod
 
 RayGenShader* D3D12RenderLayer::CreateRayGenShader( const TArray<uint8>& ShaderCode )
 {
-    TRef<D3D12RayGenShader> Shader = DBG_NEW D3D12RayGenShader( Device, ShaderCode );
+    TSharedRef<D3D12RayGenShader> Shader = DBG_NEW D3D12RayGenShader( Device, ShaderCode );
     if ( !D3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
@@ -1292,7 +1292,7 @@ RayGenShader* D3D12RenderLayer::CreateRayGenShader( const TArray<uint8>& ShaderC
 
 RayAnyHitShader* D3D12RenderLayer::CreateRayAnyHitShader( const TArray<uint8>& ShaderCode )
 {
-    TRef<D3D12RayAnyHitShader> Shader = DBG_NEW D3D12RayAnyHitShader( Device, ShaderCode );
+    TSharedRef<D3D12RayAnyHitShader> Shader = DBG_NEW D3D12RayAnyHitShader( Device, ShaderCode );
     if ( !D3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
@@ -1306,7 +1306,7 @@ RayAnyHitShader* D3D12RenderLayer::CreateRayAnyHitShader( const TArray<uint8>& S
 
 RayClosestHitShader* D3D12RenderLayer::CreateRayClosestHitShader( const TArray<uint8>& ShaderCode )
 {
-    TRef<D3D12RayClosestHitShader> Shader = DBG_NEW D3D12RayClosestHitShader( Device, ShaderCode );
+    TSharedRef<D3D12RayClosestHitShader> Shader = DBG_NEW D3D12RayClosestHitShader( Device, ShaderCode );
     if ( !D3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
@@ -1320,7 +1320,7 @@ RayClosestHitShader* D3D12RenderLayer::CreateRayClosestHitShader( const TArray<u
 
 RayMissShader* D3D12RenderLayer::CreateRayMissShader( const TArray<uint8>& ShaderCode )
 {
-    TRef<D3D12RayMissShader> Shader = DBG_NEW D3D12RayMissShader( Device, ShaderCode );
+    TSharedRef<D3D12RayMissShader> Shader = DBG_NEW D3D12RayMissShader( Device, ShaderCode );
     if ( !D3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
@@ -1400,7 +1400,7 @@ InputLayoutState* D3D12RenderLayer::CreateInputLayout( const InputLayoutStateCre
 
 GraphicsPipelineState* D3D12RenderLayer::CreateGraphicsPipelineState( const GraphicsPipelineStateCreateInfo& CreateInfo )
 {
-    TRef<D3D12GraphicsPipelineState> NewPipelineState = DBG_NEW D3D12GraphicsPipelineState( Device );
+    TSharedRef<D3D12GraphicsPipelineState> NewPipelineState = DBG_NEW D3D12GraphicsPipelineState( Device );
     if ( !NewPipelineState->Init( CreateInfo ) )
     {
         return nullptr;
@@ -1413,8 +1413,8 @@ ComputePipelineState* D3D12RenderLayer::CreateComputePipelineState( const Comput
 {
     Assert( Info.Shader != nullptr );
 
-    TRef<D3D12ComputeShader> Shader = MakeSharedRef<D3D12ComputeShader>( Info.Shader );
-    TRef<D3D12ComputePipelineState> NewPipelineState = DBG_NEW D3D12ComputePipelineState( Device, Shader );
+    TSharedRef<D3D12ComputeShader> Shader = MakeSharedRef<D3D12ComputeShader>( Info.Shader );
+    TSharedRef<D3D12ComputePipelineState> NewPipelineState = DBG_NEW D3D12ComputePipelineState( Device, Shader );
     if ( !NewPipelineState->Init() )
     {
         return nullptr;
@@ -1425,7 +1425,7 @@ ComputePipelineState* D3D12RenderLayer::CreateComputePipelineState( const Comput
 
 RayTracingPipelineState* D3D12RenderLayer::CreateRayTracingPipelineState( const RayTracingPipelineStateCreateInfo& CreateInfo )
 {
-    TRef<D3D12RayTracingPipelineState> NewPipelineState = DBG_NEW D3D12RayTracingPipelineState( Device );
+    TSharedRef<D3D12RayTracingPipelineState> NewPipelineState = DBG_NEW D3D12RayTracingPipelineState( Device );
     if ( NewPipelineState->Init( CreateInfo ) )
     {
         return NewPipelineState.ReleaseOwnership();
@@ -1447,7 +1447,7 @@ Viewport* D3D12RenderLayer::CreateViewport( GenericWindow* Window, uint32 Width,
 
     // TODO: Take DepthFormat into account
 
-    TRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>( Window );
+    TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>( Window );
     if ( Width == 0 )
     {
         Width = WinWindow->GetWidth();
@@ -1458,7 +1458,7 @@ Viewport* D3D12RenderLayer::CreateViewport( GenericWindow* Window, uint32 Width,
         Height = WinWindow->GetHeight();
     }
 
-    TRef<D3D12Viewport> Viewport = DBG_NEW D3D12Viewport( Device, DirectCmdContext.Get(), WinWindow->GetHandle(), ColorFormat, Width, Height );
+    TSharedRef<D3D12Viewport> Viewport = DBG_NEW D3D12Viewport( Device, DirectCmdContext.Get(), WinWindow->GetHandle(), ColorFormat, Width, Height );
     if ( Viewport->Init() )
     {
         return Viewport.ReleaseOwnership();

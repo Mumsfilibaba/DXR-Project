@@ -20,12 +20,12 @@ public:
     void Release();
 
 private:
-    TRef<GraphicsPipelineState> PipelineState;
-    TRef<VertexShader> SkyboxVertexShader;
-    TRef<PixelShader>  SkyboxPixelShader;
-    TRef<VertexBuffer> SkyboxVertexBuffer;
-    TRef<IndexBuffer>  SkyboxIndexBuffer;
-    TRef<SamplerState> SkyboxSampler;
+    TSharedRef<GraphicsPipelineState> PipelineState;
+    TSharedRef<VertexShader> SkyboxVertexShader;
+    TSharedRef<PixelShader>  SkyboxPixelShader;
+    TSharedRef<VertexBuffer> SkyboxVertexBuffer;
+    TSharedRef<IndexBuffer>  SkyboxIndexBuffer;
+    TSharedRef<SamplerState> SkyboxSampler;
 
     MeshData SkyboxMesh;
 };

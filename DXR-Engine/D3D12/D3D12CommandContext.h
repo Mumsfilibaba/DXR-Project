@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderLayer/ICommandContext.h"
 
-#include "Core/Ref.h"
+#include "Core/Containers/SharedRef.h"
 
 #include "D3D12DeviceChild.h"
 #include "D3D12RootSignature.h"
@@ -131,14 +131,14 @@ public:
     D3D12CommandAllocatorHandle CmdAllocator;
     D3D12GPUResourceUploader    GpuResourceUploader;
 
-    TRef<D3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
-    TRef<D3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
+    TSharedRef<D3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
+    TSharedRef<D3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
 
-    TRef<D3D12OnlineDescriptorHeap> OnlineRayTracingResourceDescriptorHeap;
-    TRef<D3D12OnlineDescriptorHeap> OnlineRayTracingSamplerDescriptorHeap;
+    TSharedRef<D3D12OnlineDescriptorHeap> OnlineRayTracingResourceDescriptorHeap;
+    TSharedRef<D3D12OnlineDescriptorHeap> OnlineRayTracingSamplerDescriptorHeap;
 
-    TArray<TRef<D3D12Resource>>     DxResources;
-    TArray<TRef<Resource>>          Resources;
+    TArray<TSharedRef<D3D12Resource>>     DxResources;
+    TArray<TSharedRef<Resource>>          Resources;
     TArray<TComPtr<ID3D12Resource>> NativeResources;
 };
 
@@ -349,14 +349,14 @@ private:
     TArray<D3D12CommandBatch> CmdBatches;
     D3D12CommandBatch* CmdBatch = nullptr;
 
-    TArray<TRef<D3D12GPUProfiler>> ResolveProfilers;
+    TArray<TSharedRef<D3D12GPUProfiler>> ResolveProfilers;
 
-    TRef<D3D12ComputePipelineState> GenerateMipsTex2D_PSO;
-    TRef<D3D12ComputePipelineState> GenerateMipsTexCube_PSO;
+    TSharedRef<D3D12ComputePipelineState> GenerateMipsTex2D_PSO;
+    TSharedRef<D3D12ComputePipelineState> GenerateMipsTexCube_PSO;
 
-    TRef<D3D12GraphicsPipelineState> CurrentGraphicsPipelineState;
-    TRef<D3D12ComputePipelineState>  CurrentComputePipelineState;
-    TRef<D3D12RootSignature>         CurrentRootSignature;
+    TSharedRef<D3D12GraphicsPipelineState> CurrentGraphicsPipelineState;
+    TSharedRef<D3D12ComputePipelineState>  CurrentComputePipelineState;
+    TSharedRef<D3D12RootSignature>         CurrentRootSignature;
 
     D3D12ShaderConstantsCache   ShaderConstantsCache;
     D3D12DescriptorCache        DescriptorCache;

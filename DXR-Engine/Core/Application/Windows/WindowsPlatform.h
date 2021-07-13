@@ -94,7 +94,7 @@ private:
 private:
     static TArray<WindowsEvent> Messages;
 
-    static TRef<WindowsCursor> CurrentCursor;
+    static TSharedRef<WindowsCursor> CurrentCursor;
 
     static bool IsTrackingMouse;
 

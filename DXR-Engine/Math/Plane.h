@@ -131,11 +131,12 @@ FORCEINLINE bool CPlane::IsEqual( const CPlane& Other, float Epsilon ) const noe
 FORCEINLINE void CPlane::Normalize() noexcept
 {
     CVector3 Normal = GetNormal();
-    float RecipLength = 1.0f / Normal.Length();
-    x *= RecipLength;
-    x *= RecipLength;
-    x *= RecipLength;
-    x *= RecipLength;
+
+    float ReciprocalLength = 1.0f / Normal.Length();
+    x = x * ReciprocalLength;
+    y = y * ReciprocalLength;
+    z = z * ReciprocalLength;
+    w = w * ReciprocalLength;
 
     // TODO: Implement SIMD
 }

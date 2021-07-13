@@ -3,7 +3,7 @@
 
 GenericWindow* GenericWindow::Create( const std::string& InTitle, uint32 InWidth, uint32 InHeight, WindowStyle InStyle )
 {
-    TRef<WindowsWindow> NewWindow = DBG_NEW WindowsWindow();
+    TSharedRef<WindowsWindow> NewWindow = DBG_NEW WindowsWindow();
     if ( !NewWindow->Init( InTitle, InWidth, InHeight, InStyle ) )
     {
         return false;

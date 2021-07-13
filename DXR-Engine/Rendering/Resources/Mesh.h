@@ -23,11 +23,11 @@ public:
 public:
     void CreateBoundingBox( const MeshData& Data );
 
-    TRef<VertexBuffer>       VertexBuffer;
-    TRef<ShaderResourceView> VertexBufferSRV;
-    TRef<IndexBuffer>        IndexBuffer;
-    TRef<ShaderResourceView> IndexBufferSRV;
-    TRef<RayTracingGeometry> RTGeometry;
+    TSharedRef<VertexBuffer>       VertexBuffer;
+    TSharedRef<ShaderResourceView> VertexBufferSRV;
+    TSharedRef<IndexBuffer>        IndexBuffer;
+    TSharedRef<ShaderResourceView> IndexBufferSRV;
+    TSharedRef<RayTracingGeometry> RTGeometry;
 
     uint32 VertexCount = 0;
     uint32 IndexCount = 0;

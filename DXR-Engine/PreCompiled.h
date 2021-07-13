@@ -26,9 +26,9 @@
 #include "Core/CoreObject/ClassType.h"
 #include "Core/CoreObject/CoreObject.h"
 #include "Core/RefCountedObject.h"
-#include "Core/Ref.h"
 
 /* Containers */
+#include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
 #include "Core/Containers/StaticArray.h"

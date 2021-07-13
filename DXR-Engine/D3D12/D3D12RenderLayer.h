@@ -196,7 +196,7 @@ private:
 
 private:
     D3D12Device* Device;
-    TRef<D3D12CommandContext> DirectCmdContext;
+    TSharedRef<D3D12CommandContext> DirectCmdContext;
     D3D12RootSignatureCache* RootSignatureCache;
 
     D3D12OfflineDescriptorHeap* ResourceOfflineDescriptorHeap = nullptr;

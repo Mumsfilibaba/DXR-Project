@@ -15,5 +15,5 @@ public:
     }
 
     TSharedPtr<class CMaterial> Material;
-    TSharedPtr<class Mesh>     Mesh;
+    TSharedPtr<class Mesh>      Mesh;
 };

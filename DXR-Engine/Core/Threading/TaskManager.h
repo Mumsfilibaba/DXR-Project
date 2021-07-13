@@ -40,7 +40,7 @@ private:
     static void WorkThread();
 
 private:
-    TArray<TRef<GenericThread>> WorkThreads;
+    TArray<TSharedRef<GenericThread>> WorkThreads;
 
     TArray<Task> Tasks;
     Mutex TaskMutex;

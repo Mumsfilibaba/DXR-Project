@@ -97,39 +97,39 @@ struct MouseScrolledEvent
 
 struct WindowResizeEvent
 {
-    WindowResizeEvent( const TRef<GenericWindow>& InWindow, uint16 InWidth, uint16 InHeight )
+    WindowResizeEvent( const TSharedRef<GenericWindow>& InWindow, uint16 InWidth, uint16 InHeight )
         : Window( InWindow )
         , Width( InWidth )
         , Height( InHeight )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
     uint16 Width;
     uint16 Height;
 };
 
 struct WindowFocusChangedEvent
 {
-    WindowFocusChangedEvent( const TRef<GenericWindow>& InWindow, bool hasFocus )
+    WindowFocusChangedEvent( const TSharedRef<GenericWindow>& InWindow, bool hasFocus )
         : Window( InWindow )
         , HasFocus( hasFocus )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
     bool HasFocus;
 };
 
 struct WindowMovedEvent
 {
-    WindowMovedEvent( const TRef<GenericWindow>& InWindow, int16 x, int16 y )
+    WindowMovedEvent( const TSharedRef<GenericWindow>& InWindow, int16 x, int16 y )
         : Window( InWindow )
         , Position( { x, y } )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
     struct
     {
         int16 x;
@@ -139,30 +139,30 @@ struct WindowMovedEvent
 
 struct WindowMouseLeftEvent
 {
-    WindowMouseLeftEvent( const TRef<GenericWindow>& InWindow )
+    WindowMouseLeftEvent( const TSharedRef<GenericWindow>& InWindow )
         : Window( InWindow )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
 };
 
 struct WindowMouseEnteredEvent
 {
-    WindowMouseEnteredEvent( const TRef<GenericWindow>& InWindow )
+    WindowMouseEnteredEvent( const TSharedRef<GenericWindow>& InWindow )
         : Window( InWindow )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
 };
 
 struct WindowClosedEvent
 {
-    WindowClosedEvent( const TRef<GenericWindow>& InWindow )
+    WindowClosedEvent( const TSharedRef<GenericWindow>& InWindow )
         : Window( InWindow )
     {
     }
 
-    TRef<GenericWindow> Window;
+    TSharedRef<GenericWindow> Window;
 };

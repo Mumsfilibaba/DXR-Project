@@ -25,21 +25,21 @@ public:
 private:
     bool CreateGBuffer( FrameResources& FrameResources );
 
-    TRef<GraphicsPipelineState> PipelineState;
-    TRef<VertexShader>          BaseVertexShader;
-    TRef<PixelShader>           BasePixelShader;
+    TSharedRef<GraphicsPipelineState> PipelineState;
+    TSharedRef<VertexShader>          BaseVertexShader;
+    TSharedRef<PixelShader>           BasePixelShader;
 
-    TRef<GraphicsPipelineState> PrePassPipelineState;
-    TRef<VertexShader>          PrePassVertexShader;
+    TSharedRef<GraphicsPipelineState> PrePassPipelineState;
+    TSharedRef<VertexShader>          PrePassVertexShader;
 
-    TRef<ComputePipelineState>  TiledLightPassPSO;
-    TRef<ComputeShader>         TiledLightShader;
-    TRef<ComputePipelineState>  TiledLightPassPSODebug;
-    TRef<ComputeShader>         TiledLightDebugShader;
+    TSharedRef<ComputePipelineState>  TiledLightPassPSO;
+    TSharedRef<ComputeShader>         TiledLightShader;
+    TSharedRef<ComputePipelineState>  TiledLightPassPSODebug;
+    TSharedRef<ComputeShader>         TiledLightDebugShader;
 
-    TRef<ComputePipelineState> ReduceDepthInitalPSO;
-    TRef<ComputeShader>        ReduceDepthInitalShader;
+    TSharedRef<ComputePipelineState> ReduceDepthInitalPSO;
+    TSharedRef<ComputeShader>        ReduceDepthInitalShader;
 
-    TRef<ComputePipelineState> ReduceDepthPSO;
-    TRef<ComputeShader>        ReduceDepthShader;
+    TSharedRef<ComputePipelineState> ReduceDepthPSO;
+    TSharedRef<ComputeShader>        ReduceDepthShader;
 };

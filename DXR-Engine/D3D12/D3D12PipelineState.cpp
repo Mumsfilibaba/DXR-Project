@@ -230,7 +230,7 @@ bool D3D12GraphicsPipelineState::Init( const GraphicsPipelineStateCreateInfo& Cr
     return true;
 }
 
-D3D12ComputePipelineState::D3D12ComputePipelineState( D3D12Device* InDevice, const TRef<D3D12ComputeShader>& InShader )
+D3D12ComputePipelineState::D3D12ComputePipelineState( D3D12Device* InDevice, const TSharedRef<D3D12ComputeShader>& InShader )
     : ComputePipelineState()
     , D3D12DeviceChild( InDevice )
     , PipelineState( nullptr )

@@ -27,12 +27,12 @@ public:
     virtual void OnMousePressed( EMouseButton Button, const ModifierKeyState& ModierKeyState ) override final;
     virtual void OnMouseScrolled( float HorizontalDelta, float VerticalDelta ) override final;
 
-    virtual void OnWindowResized( const TRef<GenericWindow>& Window, uint16 Width, uint16 Height ) override final;
-    virtual void OnWindowMoved( const TRef<GenericWindow>& Window, int16 x, int16 y ) override final;
-    virtual void OnWindowFocusChanged( const TRef<GenericWindow>& Window, bool HasFocus ) override final;
-    virtual void OnWindowMouseLeft( const TRef<GenericWindow>& Window ) override final;
-    virtual void OnWindowMouseEntered( const TRef<GenericWindow>& Window ) override final;
-    virtual void OnWindowClosed( const TRef<GenericWindow>& Window ) override final;
+    virtual void OnWindowResized( const TSharedRef<GenericWindow>& Window, uint16 Width, uint16 Height ) override final;
+    virtual void OnWindowMoved( const TSharedRef<GenericWindow>& Window, int16 x, int16 y ) override final;
+    virtual void OnWindowFocusChanged( const TSharedRef<GenericWindow>& Window, bool HasFocus ) override final;
+    virtual void OnWindowMouseLeft( const TSharedRef<GenericWindow>& Window ) override final;
+    virtual void OnWindowMouseEntered( const TSharedRef<GenericWindow>& Window ) override final;
+    virtual void OnWindowClosed( const TSharedRef<GenericWindow>& Window ) override final;
 
     virtual void OnApplicationExit( int32 ExitCode ) override final;
 
@@ -74,8 +74,8 @@ public:
     OnApplicationExitEvent OnApplicationExitEvent;
 
 public:
-    TRef<GenericWindow>   MainWindow;
-    TRef<Viewport> MainViewport;
+    TSharedRef<GenericWindow>   MainWindow;
+    TSharedRef<Viewport> MainViewport;
 
     bool IsRunning = false;
 };

@@ -170,13 +170,13 @@ public:
 
 private:
     TComPtr<ID3D12PipelineState> PipelineState;
-    TRef<D3D12RootSignature>     RootSignature;
+    TSharedRef<D3D12RootSignature>     RootSignature;
 };
 
 class D3D12ComputePipelineState : public ComputePipelineState, public D3D12DeviceChild
 {
 public:
-    D3D12ComputePipelineState( D3D12Device* InDevice, const TRef<D3D12ComputeShader>& InShader );
+    D3D12ComputePipelineState( D3D12Device* InDevice, const TSharedRef<D3D12ComputeShader>& InShader );
     ~D3D12ComputePipelineState() = default;
 
     bool Init();
@@ -210,8 +210,8 @@ public:
 
 private:
     TComPtr<ID3D12PipelineState> PipelineState;
-    TRef<D3D12ComputeShader>     Shader;
-    TRef<D3D12RootSignature>     RootSignature;
+    TSharedRef<D3D12ComputeShader>     Shader;
+    TSharedRef<D3D12RootSignature>     RootSignature;
 };
 
 struct RayTracingShaderIdentifer
@@ -277,10 +277,10 @@ private:
     TComPtr<ID3D12StateObject>           StateObject;
     TComPtr<ID3D12StateObjectProperties> StateObjectProperties;
     // TODO: There could be more than one rootdignature for locals
-    TRef<D3D12RootSignature> GlobalRootSignature;
-    TRef<D3D12RootSignature> RayGenLocalRootSignature;
-    TRef<D3D12RootSignature> MissLocalRootSignature;
-    TRef<D3D12RootSignature> HitLocalRootSignature;
+    TSharedRef<D3D12RootSignature> GlobalRootSignature;
+    TSharedRef<D3D12RootSignature> RayGenLocalRootSignature;
+    TSharedRef<D3D12RootSignature> MissLocalRootSignature;
+    TSharedRef<D3D12RootSignature> HitLocalRootSignature;
 
     std::unordered_map<std::string, RayTracingShaderIdentifer> ShaderIdentifers;
 };

@@ -3,7 +3,7 @@
 
 #include "Memory/Memory.h"
 
-#include "Core/Ref.h"
+#include "Core/Containers/SharedRef.h"
 #include "Core/Containers/StaticArray.h"
 
 class ShaderResourceView : public Resource
@@ -22,7 +22,7 @@ class RenderTargetView : public Resource
 {
 };
 
-using DepthStencilViewCube = TStaticArray<TRef<DepthStencilView>, 6>;
+using DepthStencilViewCube = TStaticArray<TSharedRef<DepthStencilView>, 6>;
 
 struct ShaderResourceViewCreateInfo
 {

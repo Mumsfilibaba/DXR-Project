@@ -144,7 +144,7 @@ struct GPUProfileSample
 
 struct ProfilerData
 {
-    TRef<GPUProfiler> GPUProfiler;
+    TSharedRef<GPUProfiler> GPUProfiler;
 
     uint32 CurrentTimeQueryIndex = 0;
 

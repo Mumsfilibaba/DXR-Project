@@ -967,7 +967,7 @@ bool Renderer::InitBoundingBoxDebugPass()
         { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0, EInputClassification::Vertex, 0 },
     };
 
-    TRef<InputLayoutState> InputLayoutState = CreateInputLayout( InputLayout );
+    TSharedRef<InputLayoutState> InputLayoutState = CreateInputLayout( InputLayout );
     if ( !InputLayoutState )
     {
         Debug::DebugBreak();
@@ -983,7 +983,7 @@ bool Renderer::InitBoundingBoxDebugPass()
     DepthStencilStateInfo.DepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
     if ( !DepthStencilState )
     {
         Debug::DebugBreak();
@@ -997,7 +997,7 @@ bool Renderer::InitBoundingBoxDebugPass()
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
     if ( !RasterizerState )
     {
         Debug::DebugBreak();
@@ -1010,7 +1010,7 @@ bool Renderer::InitBoundingBoxDebugPass()
 
     BlendStateCreateInfo BlendStateInfo;
 
-    TRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
+    TSharedRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
     if ( !BlendState )
     {
         Debug::DebugBreak();
@@ -1112,7 +1112,7 @@ bool Renderer::InitAA()
         return false;
     }
 
-    TRef<VertexShader> VShader = CreateVertexShader( ShaderCode );
+    TSharedRef<VertexShader> VShader = CreateVertexShader( ShaderCode );
     if ( !VShader )
     {
         Debug::DebugBreak();
@@ -1145,7 +1145,7 @@ bool Renderer::InitAA()
     DepthStencilStateInfo.DepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
     if ( !DepthStencilState )
     {
         Debug::DebugBreak();
@@ -1159,7 +1159,7 @@ bool Renderer::InitAA()
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
     if ( !RasterizerState )
     {
         Debug::DebugBreak();
@@ -1174,7 +1174,7 @@ bool Renderer::InitAA()
     BlendStateInfo.IndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-    TRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
+    TSharedRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
     if ( !BlendState )
     {
         Debug::DebugBreak();

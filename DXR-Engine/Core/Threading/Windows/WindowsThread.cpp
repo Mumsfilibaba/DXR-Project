@@ -8,7 +8,7 @@ GenericThread* GenericThread::Create( ThreadFunction Func )
 {
     std::condition_variable var;
 
-    TRef<WindowsThread> NewThread = DBG_NEW WindowsThread();
+    TSharedRef<WindowsThread> NewThread = DBG_NEW WindowsThread();
     if ( !NewThread->Init( Func ) )
     {
         return nullptr;

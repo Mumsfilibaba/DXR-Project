@@ -40,8 +40,8 @@ public:
     }
 
 protected:
-    TRef<D3D12Resource>           Resource;
-    TRef<D3D12ShaderResourceView> ShaderResourceView;
+    TSharedRef<D3D12Resource>           Resource;
+    TSharedRef<D3D12ShaderResourceView> ShaderResourceView;
 };
 
 class D3D12BaseTexture2D : public Texture2D, public D3D12BaseTexture
@@ -100,9 +100,9 @@ public:
     }
 
 private:
-    TRef<D3D12RenderTargetView> RenderTargetView;
-    TRef<D3D12DepthStencilView> DepthStencilView;
-    TRef<D3D12UnorderedAccessView> UnorderedAccessView;
+    TSharedRef<D3D12RenderTargetView> RenderTargetView;
+    TSharedRef<D3D12DepthStencilView> DepthStencilView;
+    TSharedRef<D3D12UnorderedAccessView> UnorderedAccessView;
 };
 
 class D3D12BaseTexture2DArray : public Texture2DArray, public D3D12BaseTexture

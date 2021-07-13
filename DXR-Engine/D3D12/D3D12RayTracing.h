@@ -33,10 +33,10 @@ public:
         return ResultBuffer->GetGPUVirtualAddress();
     }
 
-    TRef<D3D12VertexBuffer> VertexBuffer;
-    TRef<D3D12IndexBuffer>  IndexBuffer;
-    TRef<D3D12Resource>     ResultBuffer;
-    TRef<D3D12Resource>     ScratchBuffer;
+    TSharedRef<D3D12VertexBuffer> VertexBuffer;
+    TSharedRef<D3D12IndexBuffer>  IndexBuffer;
+    TSharedRef<D3D12Resource>     ResultBuffer;
+    TSharedRef<D3D12Resource>     ScratchBuffer;
 };
 
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) D3D12ShaderBindingTableEntry
@@ -133,12 +133,12 @@ public:
 
 private:
     TArray<RayTracingGeometryInstance> Instances;
-    TRef<D3D12ShaderResourceView>      View;
+    TSharedRef<D3D12ShaderResourceView>      View;
 
-    TRef<D3D12Resource> ResultBuffer;
-    TRef<D3D12Resource> ScratchBuffer;
-    TRef<D3D12Resource> InstanceBuffer;
-    TRef<D3D12Resource> BindingTable;
+    TSharedRef<D3D12Resource> ResultBuffer;
+    TSharedRef<D3D12Resource> ScratchBuffer;
+    TSharedRef<D3D12Resource> InstanceBuffer;
+    TSharedRef<D3D12Resource> BindingTable;
 
     uint32 BindingTableStride = 0;
     uint32 NumHitGroups = 0;

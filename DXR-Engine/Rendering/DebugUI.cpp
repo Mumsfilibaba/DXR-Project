@@ -32,13 +32,13 @@ struct ImGuiState
 
     Timer FrameClock;
 
-    TRef<Texture2D>             FontTexture;
-    TRef<GraphicsPipelineState> PipelineState;
-    TRef<GraphicsPipelineState> PipelineStateNoBlending;
-    TRef<PixelShader>           PShader;
-    TRef<VertexBuffer>          VertexBuffer;
-    TRef<IndexBuffer>           IndexBuffer;
-    TRef<SamplerState>          PointSampler;
+    TSharedRef<Texture2D>             FontTexture;
+    TSharedRef<GraphicsPipelineState> PipelineState;
+    TSharedRef<GraphicsPipelineState> PipelineStateNoBlending;
+    TSharedRef<PixelShader>           PShader;
+    TSharedRef<VertexBuffer>          VertexBuffer;
+    TSharedRef<IndexBuffer>           IndexBuffer;
+    TSharedRef<SamplerState>          PointSampler;
     TArray<ImGuiImage*>         Images;
 
     ImGuiContext* Context = nullptr;
@@ -267,7 +267,7 @@ bool DebugUI::Init()
         return false;
     }
 
-    TRef<VertexShader> VShader = CreateVertexShader( ShaderCode );
+    TSharedRef<VertexShader> VShader = CreateVertexShader( ShaderCode );
     if ( !VShader )
     {
         Debug::DebugBreak();
@@ -310,7 +310,7 @@ bool DebugUI::Init()
         { "COLOR",    0, EFormat::R8G8B8A8_Unorm, 0, static_cast<UINT>(IM_OFFSETOF( ImDrawVert, col )), EInputClassification::Vertex, 0 },
     };
 
-    TRef<InputLayoutState> InputLayout = CreateInputLayout( InputLayoutInfo );
+    TSharedRef<InputLayoutState> InputLayout = CreateInputLayout( InputLayoutInfo );
     if ( !InputLayout )
     {
         Debug::DebugBreak();
@@ -325,7 +325,7 @@ bool DebugUI::Init()
     DepthStencilStateInfo.DepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
     if ( !DepthStencilState )
     {
         Debug::DebugBreak();
@@ -339,7 +339,7 @@ bool DebugUI::Init()
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
     if ( !RasterizerState )
     {
         Debug::DebugBreak();
@@ -360,7 +360,7 @@ bool DebugUI::Init()
     BlendStateInfo.RenderTarget[0].BlendOpAlpha = EBlendOp::Add;
     BlendStateInfo.RenderTarget[0].BlendOp = EBlendOp::Add;
 
-    TRef<BlendState> BlendStateBlending = CreateBlendState( BlendStateInfo );
+    TSharedRef<BlendState> BlendStateBlending = CreateBlendState( BlendStateInfo );
     if ( !BlendStateBlending )
     {
         Debug::DebugBreak();
@@ -373,7 +373,7 @@ bool DebugUI::Init()
 
     BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-    TRef<BlendState> BlendStateNoBlending = CreateBlendState( BlendStateInfo );
+    TSharedRef<BlendState> BlendStateNoBlending = CreateBlendState( BlendStateInfo );
     if ( !BlendStateBlending )
     {
         Debug::DebugBreak();
@@ -556,7 +556,7 @@ void DebugUI::Render( CommandList& CmdList )
         }
         else
         {
-            TRef<GenericCursor> Cursor = Platform::GetCursor();
+            TSharedRef<GenericCursor> Cursor = Platform::GetCursor();
             switch ( ImguiCursor )
             {
             case ImGuiMouseCursor_Arrow:      Cursor = GenericCursor::Arrow;      break;

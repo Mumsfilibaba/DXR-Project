@@ -94,7 +94,7 @@ void D3D12GPUProfiler::ResolveQueries( class D3D12CommandContext& CmdContext )
 
 D3D12GPUProfiler* D3D12GPUProfiler::Create( D3D12Device* InDevice )
 {
-    TRef<D3D12GPUProfiler> NewProfiler = DBG_NEW D3D12GPUProfiler( InDevice );
+    TSharedRef<D3D12GPUProfiler> NewProfiler = DBG_NEW D3D12GPUProfiler( InDevice );
 
     ID3D12Device* DxDevice = InDevice->GetDevice();
 
@@ -128,7 +128,7 @@ D3D12GPUProfiler* D3D12GPUProfiler::Create( D3D12Device* InDevice )
     Desc.SampleDesc.Count = 1;
     Desc.SampleDesc.Quality = 0;
 
-    TRef<D3D12Resource> WriteResource = DBG_NEW D3D12Resource( InDevice, Desc, D3D12_HEAP_TYPE_DEFAULT );
+    TSharedRef<D3D12Resource> WriteResource = DBG_NEW D3D12Resource( InDevice, Desc, D3D12_HEAP_TYPE_DEFAULT );
     if ( !WriteResource->Init( D3D12_RESOURCE_STATE_COMMON, nullptr ) )
     {
         return nullptr;
@@ -169,7 +169,7 @@ bool D3D12GPUProfiler::AllocateReadResource()
     Desc.SampleDesc.Count = 1;
     Desc.SampleDesc.Quality = 0;
 
-    TRef<D3D12Resource> ReadResource = DBG_NEW D3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK );
+    TSharedRef<D3D12Resource> ReadResource = DBG_NEW D3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK );
     if ( ReadResource->Init( D3D12_RESOURCE_STATE_COPY_DEST, nullptr ) )
     {
         ReadResource->SetName( "Query Readback Resource" );

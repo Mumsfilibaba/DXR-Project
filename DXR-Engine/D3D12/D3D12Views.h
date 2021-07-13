@@ -26,7 +26,7 @@ public:
     }
 
 protected:
-    TRef<D3D12Resource> Resource;
+    TSharedRef<D3D12Resource> Resource;
     D3D12OfflineDescriptorHeap* Heap = nullptr;
     uint32                      OfflineHeapIndex = 0;
     D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle;
@@ -85,7 +85,7 @@ public:
     }
 
 private:
-    TRef<D3D12Resource> CounterResource;
+    TSharedRef<D3D12Resource> CounterResource;
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
 };
 

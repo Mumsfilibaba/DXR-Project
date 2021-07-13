@@ -61,7 +61,7 @@ private:
 
 struct RayTracingGeometryInstance
 {
-    TRef<RayTracingGeometry> Instance;
+    TSharedRef<RayTracingGeometry> Instance;
     uint32 InstanceIndex = 0;
     uint32 HitGroupIndex = 0;
     uint32 Flags = RayTracingInstanceFlags_None;

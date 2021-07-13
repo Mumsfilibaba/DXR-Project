@@ -8,6 +8,8 @@ template<typename T>
 class TThreadSafeInt
 {
 public:
+    typedef T Type;
+
     TThreadSafeInt() noexcept
         : Value( 0 )
     {
@@ -28,7 +30,7 @@ public:
 
     T Sub( T RHS ) noexcept;
 
-    T Load() noexcept;
+    T Load() const noexcept;
 
     void Store( T InValue ) noexcept;
 
@@ -84,7 +86,7 @@ public:
     }
 
 private:
-    volatile T Value;
+    mutable volatile T Value;
 };
 
 typedef TThreadSafeInt<int32> ThreadSafeInt32;
@@ -116,7 +118,7 @@ inline int32 TThreadSafeInt<int32>::Sub( int32 RHS ) noexcept
 }
 
 template<>
-inline int32 TThreadSafeInt<int32>::Load() noexcept
+inline int32 TThreadSafeInt<int32>::Load() const noexcept
 {
     // Makes sure that all prior accesses has completed
     PlatformAtomic::InterlockedCompareExchange( &Value, 0, 0 );
@@ -155,7 +157,7 @@ inline int64 TThreadSafeInt<int64>::Sub( int64 RHS ) noexcept
 }
 
 template<>
-inline int64 TThreadSafeInt<int64>::Load() noexcept
+inline int64 TThreadSafeInt<int64>::Load() const noexcept
 {
     // Makes sure that all prior accesses has completed
     PlatformAtomic::InterlockedCompareExchange( &Value, 0, 0 );

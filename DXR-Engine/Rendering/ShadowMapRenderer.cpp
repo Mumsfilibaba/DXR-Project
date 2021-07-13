@@ -75,7 +75,7 @@ bool ShadowMapRenderer::Init( LightSetup& LightSetup, FrameResources& FrameResou
         DepthStencilStateInfo.DepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+        TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
         if ( !DepthStencilState )
         {
             Debug::DebugBreak();
@@ -89,7 +89,7 @@ bool ShadowMapRenderer::Init( LightSetup& LightSetup, FrameResources& FrameResou
         RasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+        TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
         if ( !RasterizerState )
         {
             Debug::DebugBreak();
@@ -102,7 +102,7 @@ bool ShadowMapRenderer::Init( LightSetup& LightSetup, FrameResources& FrameResou
 
         BlendStateCreateInfo BlendStateInfo;
 
-        TRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
+        TSharedRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
         if ( !BlendState )
         {
             Debug::DebugBreak();
@@ -175,7 +175,7 @@ bool ShadowMapRenderer::Init( LightSetup& LightSetup, FrameResources& FrameResou
         DepthStencilStateInfo.DepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+        TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
         if ( !DepthStencilState )
         {
             Debug::DebugBreak();
@@ -189,7 +189,7 @@ bool ShadowMapRenderer::Init( LightSetup& LightSetup, FrameResources& FrameResou
         RasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+        TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
         if ( !RasterizerState )
         {
             Debug::DebugBreak();
@@ -201,7 +201,7 @@ bool ShadowMapRenderer::Init( LightSetup& LightSetup, FrameResources& FrameResou
         }
 
         BlendStateCreateInfo BlendStateInfo;
-        TRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
+        TSharedRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
         if ( !BlendState )
         {
             Debug::DebugBreak();
@@ -714,7 +714,7 @@ bool ShadowMapRenderer::CreateShadowMaps( LightSetup& LightSetup, FrameResources
         {
             for ( uint32 Face = 0; Face < 6; Face++ )
             {
-                TStaticArray<TRef<DepthStencilView>, 6>& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
+                TStaticArray<TSharedRef<DepthStencilView>, 6>& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
                 DepthCube[Face] = CreateDepthStencilView(
                     LightSetup.PointLightShadowMaps.Get(),
                     LightSetup.ShadowMapFormat,

@@ -2,7 +2,7 @@
 #include "Core.h"
 
 #include "Core/RefCountedObject.h"
-#include "Core/Ref.h"
+#include "Core/Containers/SharedRef.h"
 
 #ifdef COMPILER_MSVC
 #pragma warning(push)
@@ -22,15 +22,15 @@ public:
     }
 
 public:
-    static TRef<GenericCursor> Arrow;
-    static TRef<GenericCursor> TextInput;
-    static TRef<GenericCursor> ResizeAll;
-    static TRef<GenericCursor> ResizeEW;
-    static TRef<GenericCursor> ResizeNS;
-    static TRef<GenericCursor> ResizeNESW;
-    static TRef<GenericCursor> ResizeNWSE;
-    static TRef<GenericCursor> Hand;
-    static TRef<GenericCursor> NotAllowed;
+    static TSharedRef<GenericCursor> Arrow;
+    static TSharedRef<GenericCursor> TextInput;
+    static TSharedRef<GenericCursor> ResizeAll;
+    static TSharedRef<GenericCursor> ResizeEW;
+    static TSharedRef<GenericCursor> ResizeNS;
+    static TSharedRef<GenericCursor> ResizeNESW;
+    static TSharedRef<GenericCursor> ResizeNWSE;
+    static TSharedRef<GenericCursor> Hand;
+    static TSharedRef<GenericCursor> NotAllowed;
 };
 
 #ifdef COMPILER_MSVC

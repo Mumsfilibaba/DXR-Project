@@ -34,7 +34,7 @@ bool SkyboxRenderPass::Init( FrameResources& FrameResources )
 
     // Create Texture Cube
     const std::string PanoramaSourceFilename = "../Assets/Textures/arches.hdr";
-    TRef<Texture2D> Panorama = TextureFactory::LoadFromFile( PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float );
+    TSharedRef<Texture2D> Panorama = TextureFactory::LoadFromFile( PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float );
     if ( !Panorama )
     {
         return false;
@@ -106,7 +106,7 @@ bool SkyboxRenderPass::Init( FrameResources& FrameResources )
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
     if ( !RasterizerState )
     {
         Debug::DebugBreak();
@@ -121,7 +121,7 @@ bool SkyboxRenderPass::Init( FrameResources& FrameResources )
     BlendStateInfo.IndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-    TRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
+    TSharedRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
     if ( !BlendState )
     {
         Debug::DebugBreak();
@@ -137,7 +137,7 @@ bool SkyboxRenderPass::Init( FrameResources& FrameResources )
     DepthStencilStateInfo.DepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
     if ( !DepthStencilState )
     {
         Debug::DebugBreak();

@@ -266,7 +266,7 @@ bool D3D12CommandContext::Init()
         return false;
     }
 
-    TRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader( GetDevice(), Code );
+    TSharedRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader( GetDevice(), Code );
     if ( !Shader->Init() )
     {
         Debug::DebugBreak();
@@ -1029,7 +1029,7 @@ void D3D12CommandContext::GenerateMips( Texture* Texture )
     Assert( Desc.MipLevels > 1 );
 
     // TODO: Create this placed from a Heap? See what performance is 
-    TRef<D3D12Resource> StagingTexture = DBG_NEW D3D12Resource( GetDevice(), Desc, DxTexture->GetResource()->GetHeapType() );
+    TSharedRef<D3D12Resource> StagingTexture = DBG_NEW D3D12Resource( GetDevice(), Desc, DxTexture->GetResource()->GetHeapType() );
     if ( !StagingTexture->Init( D3D12_RESOURCE_STATE_COMMON, nullptr ) )
     {
         LOG_ERROR( "[D3D12CommandContext] Failed to create StagingTexture for GenerateMips" );

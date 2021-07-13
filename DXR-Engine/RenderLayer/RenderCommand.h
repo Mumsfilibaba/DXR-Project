@@ -40,7 +40,7 @@ struct BeginTimeStampRenderCommand : public RenderCommand
         CmdContext.BeginTimeStamp( Profiler.Get(), Index );
     }
 
-    TRef<GPUProfiler> Profiler;
+    TSharedRef<GPUProfiler> Profiler;
     uint32 Index;
 };
 
@@ -58,7 +58,7 @@ struct EndTimeStampRenderCommand : public RenderCommand
         CmdContext.EndTimeStamp( Profiler.Get(), Index );
     }
 
-    TRef<GPUProfiler> Profiler;
+    TSharedRef<GPUProfiler> Profiler;
     uint32 Index;
 };
 
@@ -76,7 +76,7 @@ struct ClearRenderTargetViewRenderCommand : public RenderCommand
         CmdContext.ClearRenderTargetView( RenderTargetView.Get(), ClearColor );
     }
 
-    TRef<RenderTargetView> RenderTargetView;
+    TSharedRef<RenderTargetView> RenderTargetView;
     ColorF ClearColor;
 };
 
@@ -94,7 +94,7 @@ struct ClearDepthStencilViewRenderCommand : public RenderCommand
         CmdContext.ClearDepthStencilView( DepthStencilView.Get(), ClearValue );
     }
 
-    TRef<DepthStencilView> DepthStencilView;
+    TSharedRef<DepthStencilView> DepthStencilView;
     DepthStencilF ClearValue;
 };
 
@@ -112,7 +112,7 @@ struct ClearUnorderedAccessViewFloatRenderCommand : public RenderCommand
         CmdContext.ClearUnorderedAccessViewFloat( UnorderedAccessView.Get(), ClearColor );
     }
 
-    TRef<UnorderedAccessView> UnorderedAccessView;
+    TSharedRef<UnorderedAccessView> UnorderedAccessView;
     ColorF ClearColor;
 };
 
@@ -145,7 +145,7 @@ struct SetShadingRateImageRenderCommand : public RenderCommand
         CmdContext.SetShadingRateImage( ShadingImage.Get() );
     }
 
-    TRef<Texture2D> ShadingImage;
+    TSharedRef<Texture2D> ShadingImage;
 };
 
 // Set Viewport RenderCommand
@@ -299,7 +299,7 @@ struct SetIndexBufferRenderCommand : public RenderCommand
         CmdContext.SetIndexBuffer( IndexBuffer.Get() );
     }
 
-    TRef<IndexBuffer> IndexBuffer;
+    TSharedRef<IndexBuffer> IndexBuffer;
 };
 
 // Set RenderTargets RenderCommand
@@ -329,7 +329,7 @@ struct SetRenderTargetsRenderCommand : public RenderCommand
 
     RenderTargetView** RenderTargetViews;
     uint32 RenderTargetViewCount;
-    TRef<DepthStencilView> DepthStencilView;
+    TSharedRef<DepthStencilView> DepthStencilView;
 };
 
 // SetRayTracingBindings RenderCommand
@@ -358,8 +358,8 @@ struct SetRayTracingBindingsRenderCommand : public RenderCommand
         CmdContext.SetRayTracingBindings( Scene.Get(), PipelineState.Get(), GlobalResources, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources );
     }
 
-    TRef<RayTracingScene>            Scene;
-    TRef<RayTracingPipelineState>    PipelineState;
+    TSharedRef<RayTracingScene>            Scene;
+    TSharedRef<RayTracingPipelineState>    PipelineState;
     const RayTracingShaderResources* GlobalResources;
     const RayTracingShaderResources* RayGenLocalResources;
     const RayTracingShaderResources* MissLocalResources;
@@ -380,7 +380,7 @@ struct SetGraphicsPipelineStateRenderCommand : public RenderCommand
         CmdContext.SetGraphicsPipelineState( PipelineState.Get() );
     }
 
-    TRef<GraphicsPipelineState> PipelineState;
+    TSharedRef<GraphicsPipelineState> PipelineState;
 };
 
 // Bind ComputePipelineState RenderCommand
@@ -396,7 +396,7 @@ struct SetComputePipelineStateRenderCommand : public RenderCommand
         CmdContext.SetComputePipelineState( PipelineState.Get() );
     }
 
-    TRef<ComputePipelineState> PipelineState;
+    TSharedRef<ComputePipelineState> PipelineState;
 };
 
 // Set UseShaderResourceViews RenderCommand
@@ -414,7 +414,7 @@ struct Set32BitShaderConstantsRenderCommand : public RenderCommand
         CmdContext.Set32BitShaderConstants( Shader.Get(), Shader32BitConstants, Num32BitConstants );
     }
 
-    TRef<Shader> Shader;
+    TSharedRef<Shader> Shader;
     const void* Shader32BitConstants;
     uint32       Num32BitConstants;
 };
@@ -434,8 +434,8 @@ struct SetShaderResourceViewRenderCommand : public RenderCommand
         CmdContext.SetShaderResourceView( Shader.Get(), ShaderResourceView.Get(), ParameterIndex );
     }
 
-    TRef<Shader>             Shader;
-    TRef<ShaderResourceView> ShaderResourceView;
+    TSharedRef<Shader>             Shader;
+    TSharedRef<ShaderResourceView> ShaderResourceView;
     uint32                   ParameterIndex;
 };
 
@@ -465,7 +465,7 @@ struct SetShaderResourceViewsRenderCommand : public RenderCommand
         CmdContext.SetShaderResourceViews( Shader.Get(), ShaderResourceViews, NumShaderResourceViews, ParameterIndex );
     }
 
-    TRef<Shader>         Shader;
+    TSharedRef<Shader>         Shader;
     ShaderResourceView** ShaderResourceViews;
     uint32 NumShaderResourceViews;
     uint32 ParameterIndex;
@@ -486,8 +486,8 @@ struct SetUnorderedAccessViewRenderCommand : public RenderCommand
         CmdContext.SetUnorderedAccessView( Shader.Get(), UnorderedAccessView.Get(), ParameterIndex );
     }
 
-    TRef<Shader>              Shader;
-    TRef<UnorderedAccessView> UnorderedAccessView;
+    TSharedRef<Shader>              Shader;
+    TSharedRef<UnorderedAccessView> UnorderedAccessView;
     uint32                    ParameterIndex;
 };
 
@@ -517,7 +517,7 @@ struct SetUnorderedAccessViewsRenderCommand : public RenderCommand
         CmdContext.SetUnorderedAccessViews( Shader.Get(), UnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex );
     }
 
-    TRef<Shader>          Shader;
+    TSharedRef<Shader>          Shader;
     UnorderedAccessView** UnorderedAccessViews;
     uint32 NumUnorderedAccessViews;
     uint32 ParameterIndex;
@@ -538,8 +538,8 @@ struct SetConstantBufferRenderCommand : public RenderCommand
         CmdContext.SetConstantBuffer( Shader.Get(), ConstantBuffer.Get(), ParameterIndex );
     }
 
-    TRef<Shader>         Shader;
-    TRef<ConstantBuffer> ConstantBuffer;
+    TSharedRef<Shader>         Shader;
+    TSharedRef<ConstantBuffer> ConstantBuffer;
     uint32               ParameterIndex;
 };
 
@@ -569,7 +569,7 @@ struct SetConstantBuffersRenderCommand : public RenderCommand
         CmdContext.SetConstantBuffers( Shader.Get(), ConstantBuffers, NumConstantBuffers, ParameterIndex );
     }
 
-    TRef<Shader>     Shader;
+    TSharedRef<Shader>     Shader;
     ConstantBuffer** ConstantBuffers;
     uint32 NumConstantBuffers;
     uint32 ParameterIndex;
@@ -590,8 +590,8 @@ struct SetSamplerStateRenderCommand : public RenderCommand
         CmdContext.SetSamplerState( Shader.Get(), SamplerState.Get(), ParameterIndex );
     }
 
-    TRef<Shader>       Shader;
-    TRef<SamplerState> SamplerState;
+    TSharedRef<Shader>       Shader;
+    TSharedRef<SamplerState> SamplerState;
     uint32             ParameterIndex;
 };
 
@@ -621,7 +621,7 @@ struct SetSamplerStatesRenderCommand : public RenderCommand
         CmdContext.SetSamplerStates( Shader.Get(), SamplerStates, NumSamplerStates, ParameterIndex );
     }
 
-    TRef<Shader>   Shader;
+    TSharedRef<Shader>   Shader;
     SamplerState** SamplerStates;
     uint32 NumSamplerStates;
     uint32 ParameterIndex;
@@ -641,8 +641,8 @@ struct ResolveTextureRenderCommand : public RenderCommand
         CmdContext.ResolveTexture( Destination.Get(), Source.Get() );
     }
 
-    TRef<Texture> Destination;
-    TRef<Texture> Source;
+    TSharedRef<Texture> Destination;
+    TSharedRef<Texture> Source;
 };
 
 // Update Buffer RenderCommand
@@ -663,7 +663,7 @@ struct UpdateBufferRenderCommand : public RenderCommand
         CmdContext.UpdateBuffer( Destination.Get(), DestinationOffsetInBytes, SizeInBytes, SourceData );
     }
 
-    TRef<Buffer> Destination;
+    TSharedRef<Buffer> Destination;
     uint64 DestinationOffsetInBytes;
     uint64 SizeInBytes;
     const void* SourceData;
@@ -687,7 +687,7 @@ struct UpdateTexture2DRenderCommand : public RenderCommand
         CmdContext.UpdateTexture2D( Destination.Get(), Width, Height, MipLevel, SourceData );
     }
 
-    TRef<Texture2D> Destination;
+    TSharedRef<Texture2D> Destination;
     uint32 Width;
     uint32 Height;
     uint32 MipLevel;
@@ -709,8 +709,8 @@ struct CopyBufferRenderCommand : public RenderCommand
         CmdContext.CopyBuffer( Destination.Get(), Source.Get(), CopyBufferInfo );
     }
 
-    TRef<Buffer> Destination;
-    TRef<Buffer> Source;
+    TSharedRef<Buffer> Destination;
+    TSharedRef<Buffer> Source;
     CopyBufferInfo CopyBufferInfo;
 };
 
@@ -728,8 +728,8 @@ struct CopyTextureRenderCommand : public RenderCommand
         CmdContext.CopyTexture( Destination.Get(), Source.Get() );
     }
 
-    TRef<Texture> Destination;
-    TRef<Texture> Source;
+    TSharedRef<Texture> Destination;
+    TSharedRef<Texture> Source;
 };
 
 // Copy Texture RenderCommand
@@ -747,8 +747,8 @@ struct CopyTextureRegionRenderCommand : public RenderCommand
         CmdContext.CopyTextureRegion( Destination.Get(), Source.Get(), CopyTextureInfo );
     }
 
-    TRef<Texture> Destination;
-    TRef<Texture> Source;
+    TSharedRef<Texture> Destination;
+    TSharedRef<Texture> Source;
     CopyTextureInfo CopyTextureInfo;
 };
 
@@ -765,7 +765,7 @@ struct DiscardResourceRenderCommand : public RenderCommand
         CmdContext.DiscardResource( Resource.Get() );
     }
 
-    TRef<Resource> Resource;
+    TSharedRef<Resource> Resource;
 };
 
 // Build RayTracing Geoemtry RenderCommand
@@ -784,9 +784,9 @@ struct BuildRayTracingGeometryRenderCommand : public RenderCommand
         CmdContext.BuildRayTracingGeometry( RayTracingGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), Update );
     }
 
-    TRef<RayTracingGeometry> RayTracingGeometry;
-    TRef<VertexBuffer> VertexBuffer;
-    TRef<IndexBuffer>  IndexBuffer;
+    TSharedRef<RayTracingGeometry> RayTracingGeometry;
+    TSharedRef<VertexBuffer> VertexBuffer;
+    TSharedRef<IndexBuffer>  IndexBuffer;
     bool Update;
 };
 
@@ -806,7 +806,7 @@ struct BuildRayTracingSceneRenderCommand : public RenderCommand
         CmdContext.BuildRayTracingScene( RayTracingScene.Get(), Instances, NumInstances, Update );
     }
 
-    TRef<RayTracingScene> RayTracingScene;
+    TSharedRef<RayTracingScene> RayTracingScene;
     const RayTracingGeometryInstance* Instances;
     uint32 NumInstances;
     bool Update;
@@ -825,7 +825,7 @@ struct GenerateMipsRenderCommand : public RenderCommand
         CmdContext.GenerateMips( Texture.Get() );
     }
 
-    TRef<Texture> Texture;
+    TSharedRef<Texture> Texture;
 };
 
 // TransitionTexture RenderCommand
@@ -843,7 +843,7 @@ struct TransitionTextureRenderCommand : public RenderCommand
         CmdContext.TransitionTexture( Texture.Get(), BeforeState, AfterState );
     }
 
-    TRef<Texture> Texture;
+    TSharedRef<Texture> Texture;
     EResourceState BeforeState;
     EResourceState AfterState;
 };
@@ -863,7 +863,7 @@ struct TransitionBufferRenderCommand : public RenderCommand
         CmdContext.TransitionBuffer( Buffer.Get(), BeforeState, AfterState );
     }
 
-    TRef<Buffer> Buffer;
+    TSharedRef<Buffer> Buffer;
     EResourceState BeforeState;
     EResourceState AfterState;
 };
@@ -881,7 +881,7 @@ struct UnorderedAccessTextureBarrierRenderCommand : public RenderCommand
         CmdContext.UnorderedAccessTextureBarrier( Texture.Get() );
     }
 
-    TRef<Texture> Texture;
+    TSharedRef<Texture> Texture;
 };
 
 // UnorderedAccessBufferBarrier RenderCommand
@@ -897,7 +897,7 @@ struct UnorderedAccessBufferBarrierRenderCommand : public RenderCommand
         CmdContext.UnorderedAccessBufferBarrier( Buffer.Get() );
     }
 
-    TRef<Buffer> Buffer;
+    TSharedRef<Buffer> Buffer;
 };
 
 // Draw RenderCommand
@@ -1026,8 +1026,8 @@ struct DispatchRaysRenderCommand : public RenderCommand
         CmdContext.DispatchRays( Scene.Get(), PipelineState.Get(), Width, Height, Depth );
     }
 
-    TRef<RayTracingScene>         Scene;
-    TRef<RayTracingPipelineState> PipelineState;
+    TSharedRef<RayTracingScene>         Scene;
+    TSharedRef<RayTracingPipelineState> PipelineState;
     uint32 Width;
     uint32 Height;
     uint32 Depth;

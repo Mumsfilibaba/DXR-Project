@@ -59,7 +59,7 @@ bool ForwardRenderer::Init( FrameResources& FrameResources )
     DepthStencilStateInfo.DepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-    TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+    TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
     if ( !DepthStencilState )
     {
         Debug::DebugBreak();
@@ -73,7 +73,7 @@ bool ForwardRenderer::Init( FrameResources& FrameResources )
     RasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+    TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
     if ( !RasterizerState )
     {
         Debug::DebugBreak();
@@ -88,7 +88,7 @@ bool ForwardRenderer::Init( FrameResources& FrameResources )
     BlendStateInfo.IndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].BlendEnable = true;
 
-    TRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
+    TSharedRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
     if ( !BlendState )
     {
         Debug::DebugBreak();

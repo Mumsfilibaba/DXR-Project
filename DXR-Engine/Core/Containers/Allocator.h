@@ -5,12 +5,12 @@
 
 struct Mallocator
 {
-    void* Allocate( uint32 Size )
+    FORCEINLINE void* Allocate( uint32 Size )
     {
         return malloc( Size );
     }
 
-    void Free( void* Ptr )
+    FORCEINLINE void Free( void* Ptr )
     {
         free( Ptr );
     }

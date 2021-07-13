@@ -29,7 +29,7 @@ public:
     }
 
 protected:
-    TRef<D3D12Resource> Resource;
+    TSharedRef<D3D12Resource> Resource;
 };
 
 class D3D12BaseVertexBuffer : public VertexBuffer, public D3D12BaseBuffer

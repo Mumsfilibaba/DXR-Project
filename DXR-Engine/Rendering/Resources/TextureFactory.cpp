@@ -16,8 +16,8 @@
 
 struct TextureFactoryData
 {
-    TRef<ComputePipelineState> PanoramaPSO;
-    TRef<ComputeShader>        ComputeShader;
+    TSharedRef<ComputePipelineState> PanoramaPSO;
+    TSharedRef<ComputeShader>        ComputeShader;
     CommandList CmdList;
 };
 
@@ -116,7 +116,7 @@ Texture2D* TextureFactory::LoadFromMemory( const uint8* Pixels, uint32 Width, ui
     Assert( RowPitch > 0 );
 
     ResourceData InitalData = ResourceData( Pixels, Format, Width );
-    TRef<Texture2D> Texture = CreateTexture2D( Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceState::PixelShaderResource, &InitalData );
+    TSharedRef<Texture2D> Texture = CreateTexture2D( Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceState::PixelShaderResource, &InitalData );
     if ( !Texture )
     {
         Debug::DebugBreak();
@@ -142,7 +142,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma( Texture2D* PanoramaSo
     const bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const uint32 NumMips = (GenerateNumMips) ? NMath::Max<uint32>( NMath::Log2( CubeMapSize ), 1u ) : 1u;
 
-    TRef<TextureCube> StagingTexture = CreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr );
+    TSharedRef<TextureCube> StagingTexture = CreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr );
     if ( !StagingTexture )
     {
         return nullptr;
@@ -152,7 +152,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma( Texture2D* PanoramaSo
         StagingTexture->SetName( "TextureCube From Panorama StagingTexture" );
     }
 
-    TRef<UnorderedAccessView> StagingTextureUAV = CreateUnorderedAccessView( StagingTexture.Get(), Format, 0 );
+    TSharedRef<UnorderedAccessView> StagingTextureUAV = CreateUnorderedAccessView( StagingTexture.Get(), Format, 0 );
     if ( !StagingTextureUAV )
     {
         return nullptr;
@@ -162,7 +162,7 @@ TextureCube* TextureFactory::CreateTextureCubeFromPanorma( Texture2D* PanoramaSo
         StagingTexture->SetName( "TextureCube From Panorama StagingTexture UAV" );
     }
 
-    TRef<TextureCube> Texture = CreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceState::Common, nullptr );
+    TSharedRef<TextureCube> Texture = CreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceState::Common, nullptr );
     if ( !Texture )
     {
         return nullptr;

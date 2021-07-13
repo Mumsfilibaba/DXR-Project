@@ -21,13 +21,13 @@ public:
 private:
     bool CreateRenderTarget( FrameResources& FrameResources );
 
-    TRef<ComputePipelineState> PipelineState;
-    TRef<ComputeShader>        SSAOShader;
-    TRef<ComputePipelineState> BlurHorizontalPSO;
-    TRef<ComputeShader>        BlurHorizontalShader;
-    TRef<ComputePipelineState> BlurVerticalPSO;
-    TRef<ComputeShader>        BlurVerticalShader;
-    TRef<StructuredBuffer>     SSAOSamples;
-    TRef<ShaderResourceView>   SSAOSamplesSRV;
-    TRef<Texture2D>            SSAONoiseTex;
+    TSharedRef<ComputePipelineState> PipelineState;
+    TSharedRef<ComputeShader>        SSAOShader;
+    TSharedRef<ComputePipelineState> BlurHorizontalPSO;
+    TSharedRef<ComputeShader>        BlurHorizontalShader;
+    TSharedRef<ComputePipelineState> BlurVerticalPSO;
+    TSharedRef<ComputeShader>        BlurVerticalShader;
+    TSharedRef<StructuredBuffer>     SSAOSamples;
+    TSharedRef<ShaderResourceView>   SSAOSamplesSRV;
+    TSharedRef<Texture2D>            SSAONoiseTex;
 };

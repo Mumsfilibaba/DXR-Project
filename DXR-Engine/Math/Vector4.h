@@ -445,24 +445,29 @@ inline void CVector4::Normalize() noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    float fLength = Length();
-
-    ASSERT( fLength != 0 );
-
-    float fReprLength = 1.0f / fLength;
-    x = x * fReprLength;
-    y = y * fReprLength;
-    z = z * fReprLength;
-    w = w * fReprLength;
+    float fLengthSquared = LengthSquared();
+    if ( fLengthSquared != 0.0f )
+    {
+        float fRecipLength = 1.0f / NMath::Sqrt( fLengthSquared );
+        x = x * fRecipLength;
+        y = y * fRecipLength;
+        z = z * fRecipLength;
+        w = w * fRecipLength;
+    }
 
 #else
 
     NSIMD::Float128 Reg0 = NSIMD::LoadAligned( this );
     NSIMD::Float128 Reg1 = NSIMD::Dot( Reg0, Reg0 );
-    Reg1 = NSIMD::Shuffle<0, 1, 0, 1>( Reg1 );
-    Reg1 = NSIMD::RecipSqrt( Reg1 );
-    Reg0 = NSIMD::Mul( Reg0, Reg1 );
-    NSIMD::StoreAligned( Reg0, this );
+    
+    float fLengthSquared = NSIMD::GetX( Reg1 );
+    if ( fLengthSquared != 0.0f )
+    {
+        Reg1 = NSIMD::Shuffle<0, 1, 0, 1>( Reg1 );
+        Reg1 = NSIMD::RecipSqrt( Reg1 );
+        Reg0 = NSIMD::Mul( Reg0, Reg1 );
+        NSIMD::StoreAligned( Reg0, this );
+    }
 
 #endif
 }

@@ -106,37 +106,37 @@ void Engine::OnMouseScrolled( float HorizontalDelta, float VerticalDelta )
     OnMouseScrolledEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowResized( const TRef<GenericWindow>& InWindow, uint16 Width, uint16 Height )
+void Engine::OnWindowResized( const TSharedRef<GenericWindow>& InWindow, uint16 Width, uint16 Height )
 {
     WindowResizeEvent Event( InWindow, Width, Height );
     OnWindowResizedEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowMoved( const TRef<GenericWindow>& InWindow, int16 x, int16 y )
+void Engine::OnWindowMoved( const TSharedRef<GenericWindow>& InWindow, int16 x, int16 y )
 {
     WindowMovedEvent Event( InWindow, x, y );
     OnWindowMovedEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowFocusChanged( const TRef<GenericWindow>& InWindow, bool HasFocus )
+void Engine::OnWindowFocusChanged( const TSharedRef<GenericWindow>& InWindow, bool HasFocus )
 {
     WindowFocusChangedEvent Event( InWindow, HasFocus );
     OnWindowFocusChangedEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowMouseLeft( const TRef<GenericWindow>& InWindow )
+void Engine::OnWindowMouseLeft( const TSharedRef<GenericWindow>& InWindow )
 {
     WindowMouseLeftEvent Event( InWindow );
     OnWindowMouseLeftEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowMouseEntered( const TRef<GenericWindow>& InWindow )
+void Engine::OnWindowMouseEntered( const TSharedRef<GenericWindow>& InWindow )
 {
     WindowMouseEnteredEvent Event( InWindow );
     OnWindowMouseEnteredEvent.Broadcast( Event );
 }
 
-void Engine::OnWindowClosed( const TRef<GenericWindow>& InWindow )
+void Engine::OnWindowClosed( const TSharedRef<GenericWindow>& InWindow )
 {
     WindowClosedEvent Event( InWindow );
     OnWindowClosedEvent.Broadcast( Event );

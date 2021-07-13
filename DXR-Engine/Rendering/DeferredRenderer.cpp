@@ -82,7 +82,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         DepthStencilStateInfo.DepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TRef<DepthStencilState> GeometryDepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+        TSharedRef<DepthStencilState> GeometryDepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
         if ( !GeometryDepthStencilState )
         {
             Debug::DebugBreak();
@@ -96,7 +96,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         RasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TRef<RasterizerState> GeometryRasterizerState = CreateRasterizerState( RasterizerStateInfo );
+        TSharedRef<RasterizerState> GeometryRasterizerState = CreateRasterizerState( RasterizerStateInfo );
         if ( !GeometryRasterizerState )
         {
             Debug::DebugBreak();
@@ -111,7 +111,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         BlendStateInfo.IndependentBlendEnable = false;
         BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-        TRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
+        TSharedRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
         if ( !BlendState )
         {
             Debug::DebugBreak();
@@ -172,7 +172,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         DepthStencilStateInfo.DepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+        TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
         if ( !DepthStencilState )
         {
             Debug::DebugBreak();
@@ -186,7 +186,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         RasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+        TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
         if ( !RasterizerState )
         {
             Debug::DebugBreak();
@@ -201,7 +201,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         BlendStateInfo.IndependentBlendEnable = false;
         BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-        TRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
+        TSharedRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
         if ( !BlendState )
         {
             Debug::DebugBreak();
@@ -242,7 +242,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         return false;
     }
 
-    TRef<Texture2D> StagingTexture = CreateTexture2D( LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceState::Common, nullptr );
+    TSharedRef<Texture2D> StagingTexture = CreateTexture2D( LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceState::Common, nullptr );
     if ( !StagingTexture )
     {
         Debug::DebugBreak();
@@ -287,7 +287,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         return false;
     }
 
-    TRef<ComputeShader> CShader = CreateComputeShader( ShaderCode );
+    TSharedRef<ComputeShader> CShader = CreateComputeShader( ShaderCode );
     if ( !CShader )
     {
         Debug::DebugBreak();
@@ -302,7 +302,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         ComputePipelineStateCreateInfo PipelineStateInfo;
         PipelineStateInfo.Shader = CShader.Get();
 
-        TRef<ComputePipelineState> BRDF_PipelineState = CreateComputePipelineState( PipelineStateInfo );
+        TSharedRef<ComputePipelineState> BRDF_PipelineState = CreateComputePipelineState( PipelineStateInfo );
         if ( !BRDF_PipelineState )
         {
             Debug::DebugBreak();

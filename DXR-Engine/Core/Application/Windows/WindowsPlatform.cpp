@@ -5,7 +5,7 @@
 
 TArray<WindowsEvent> WindowsPlatform::Messages;
 
-TRef<WindowsCursor> WindowsPlatform::CurrentCursor;
+TSharedRef<WindowsCursor> WindowsPlatform::CurrentCursor;
 
 bool WindowsPlatform::IsTrackingMouse = false;
 
@@ -85,7 +85,7 @@ void WindowsPlatform::HandleStoredMessage( HWND Window, UINT Message, WPARAM wPa
     constexpr uint32 KEY_REPEAT_MASK = 0x40000000;
     constexpr uint16 BACK_BUTTON_MASK = 0x0001;
 
-    TRef<WindowsWindow> MessageWindow = WindowHandle( Window ).GetWindow();
+    TSharedRef<WindowsWindow> MessageWindow = WindowHandle( Window ).GetWindow();
     switch ( Message )
     {
     case WM_CLOSE:
@@ -293,7 +293,7 @@ void WindowsPlatform::HandleStoredMessage( HWND Window, UINT Message, WPARAM wPa
 
 void WindowsPlatform::SetActiveWindow( GenericWindow* Window )
 {
-    TRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>( Window );
+    TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>( Window );
     HWND hActiveWindow = WinWindow->GetHandle();
     if ( WinWindow->IsValid() )
     {
@@ -305,7 +305,7 @@ void WindowsPlatform::SetCapture( GenericWindow* CaptureWindow )
 {
     if ( CaptureWindow )
     {
-        TRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>( CaptureWindow );
+        TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>( CaptureWindow );
         HWND hCapture = WinWindow->GetHandle();
         if ( WinWindow->IsValid() )
         {
@@ -376,7 +376,7 @@ void WindowsPlatform::SetCursor( GenericCursor* Cursor )
 {
     if ( Cursor )
     {
-        TRef<WindowsCursor> WinCursor = MakeSharedRef<WindowsCursor>( Cursor );
+        TSharedRef<WindowsCursor> WinCursor = MakeSharedRef<WindowsCursor>( Cursor );
         CurrentCursor = WinCursor;
 
         HCURSOR Cursorhandle = WinCursor->GetHandle();
@@ -412,7 +412,7 @@ void WindowsPlatform::SetCursorPos( GenericWindow* RelativeWindow, int32 x, int3
 {
     if ( RelativeWindow )
     {
-        TRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>( RelativeWindow );
+        TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>( RelativeWindow );
         HWND hRelative = WinWindow->GetHandle();
 
         POINT CursorPos = { x, y };
@@ -431,7 +431,7 @@ void WindowsPlatform::GetCursorPos( GenericWindow* RelativeWindow, int32& OutX, 
         return;
     }
 
-    TRef<WindowsWindow> WinRelative = MakeSharedRef<WindowsWindow>( RelativeWindow );
+    TSharedRef<WindowsWindow> WinRelative = MakeSharedRef<WindowsWindow>( RelativeWindow );
     if ( WinRelative )
     {
         HWND Relative = WinRelative->GetHandle();

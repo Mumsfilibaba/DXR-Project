@@ -68,7 +68,6 @@ void TaskManager::WorkThread()
 
 bool TaskManager::Init()
 {
-    // NOTE: Maybe change to NumProcessors - 1 -> Test performance
     uint32 ThreadCount = NMath::Max<int32>( PlatformProcess::GetNumProcessors() - 1, 1 );
     WorkThreads.Resize( ThreadCount );
 
@@ -79,7 +78,7 @@ bool TaskManager::Init()
 
     for ( uint32 i = 0; i < ThreadCount; i++ )
     {
-        TRef<GenericThread> NewThread = GenericThread::Create( TaskManager::WorkThread );
+        TSharedRef<GenericThread> NewThread = GenericThread::Create( TaskManager::WorkThread );
         if ( NewThread )
         {
             WorkThreads[i] = NewThread;
@@ -103,9 +102,7 @@ TaskID TaskManager::AddTask( const Task& NewTask )
     }
 
     ThreadID NewTaskID = TaskAdded.Increment();
-
     WakeCondition.NotifyOne();
-
     return NewTaskID;
 }
 
@@ -131,7 +128,7 @@ void TaskManager::Release()
 {
     KillWorkers();
 
-    for ( TRef<GenericThread> Thread : WorkThreads )
+    for ( TSharedRef<GenericThread> Thread : WorkThreads )
     {
         Thread->Wait();
     }

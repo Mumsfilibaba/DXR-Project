@@ -2,7 +2,7 @@
 
 GenericCursor* WindowsCursor::Create( LPCSTR CursorName )
 {
-    TRef<WindowsCursor> NewCursor = DBG_NEW WindowsCursor();
+    TSharedRef<WindowsCursor> NewCursor = DBG_NEW WindowsCursor();
     if ( !NewCursor->Init( CursorName ) )
     {
         return nullptr;

@@ -24,6 +24,8 @@
 #endif
 
 #ifndef Assert
+#include <cassert>
+
 #if ENABLE_ASSERTS
 #define Assert(Condition) assert(Condition)
 #else

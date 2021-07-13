@@ -73,32 +73,32 @@ struct FrameResources
 
     Texture2D* BackBuffer = nullptr;
 
-    TRef<ConstantBuffer> CameraBuffer;
-    TRef<ConstantBuffer> TransformBuffer;
+    TSharedRef<ConstantBuffer> CameraBuffer;
+    TSharedRef<ConstantBuffer> TransformBuffer;
 
-    TRef<SamplerState> PointLightShadowSampler;
-    TRef<SamplerState> DirectionalLightShadowSampler;
-    TRef<SamplerState> IrradianceSampler;
+    TSharedRef<SamplerState> PointLightShadowSampler;
+    TSharedRef<SamplerState> DirectionalLightShadowSampler;
+    TSharedRef<SamplerState> IrradianceSampler;
 
-    TRef<TextureCube> Skybox;
+    TSharedRef<TextureCube> Skybox;
 
-    TRef<Texture2D>    IntegrationLUT;
-    TRef<SamplerState> IntegrationLUTSampler;
+    TSharedRef<Texture2D>    IntegrationLUT;
+    TSharedRef<SamplerState> IntegrationLUTSampler;
 
-    TRef<Texture2D> SSAOBuffer;
-    TRef<Texture2D> FinalTarget;
-    TRef<Texture2D> GBuffer[5];
+    TSharedRef<Texture2D> SSAOBuffer;
+    TSharedRef<Texture2D> FinalTarget;
+    TSharedRef<Texture2D> GBuffer[5];
 
     // Two resources that can be ping ponged inbetween
-    TRef<Texture2D> ReducedDepthBuffer[2];
+    TSharedRef<Texture2D> ReducedDepthBuffer[2];
 
-    TRef<SamplerState> GBufferSampler;
-    TRef<SamplerState> FXAASampler;
+    TSharedRef<SamplerState> GBufferSampler;
+    TSharedRef<SamplerState> FXAASampler;
 
-    TRef<InputLayoutState> StdInputLayout;
+    TSharedRef<InputLayoutState> StdInputLayout;
 
-    TRef<Texture2D>       RTOutput;
-    TRef<RayTracingScene> RTScene;
+    TSharedRef<Texture2D>       RTOutput;
+    TSharedRef<RayTracingScene> RTScene;
 
     RayTracingShaderResources GlobalResources;
     RayTracingShaderResources RayGenLocalResources;
@@ -114,6 +114,6 @@ struct FrameResources
 
     TArray<ImGuiImage> DebugTextures;
 
-    TRef<Viewport> MainWindowViewport;
+    TSharedRef<Viewport> MainWindowViewport;
 };
 

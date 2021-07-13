@@ -47,7 +47,7 @@ bool Sandbox::Init()
         255
     };
 
-    TRef<Texture2D> BaseTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
+    TSharedRef<Texture2D> BaseTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !BaseTexture )
     {
         return false;
@@ -61,7 +61,7 @@ bool Sandbox::Init()
     Pixels[1] = 127;
     Pixels[2] = 255;
 
-    TRef<Texture2D> BaseNormal = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
+    TSharedRef<Texture2D> BaseNormal = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !BaseNormal )
     {
         return false;
@@ -75,7 +75,7 @@ bool Sandbox::Init()
     Pixels[1] = 255;
     Pixels[2] = 255;
 
-    TRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
+    TSharedRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !WhiteTexture )
     {
         return false;
@@ -147,7 +147,7 @@ bool Sandbox::Init()
     NewComponent->Mesh = Mesh::Make( CubeMeshData );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
 
-    TRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    TSharedRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( !AlbedoMap )
     {
         return false;
@@ -157,7 +157,7 @@ bool Sandbox::Init()
         AlbedoMap->SetName( "AlbedoMap" );
     }
 
-    TRef<Texture2D> NormalMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    TSharedRef<Texture2D> NormalMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( !NormalMap )
     {
         return false;
@@ -167,7 +167,7 @@ bool Sandbox::Init()
         NormalMap->SetName( "NormalMap" );
     }
 
-    TRef<Texture2D> AOMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<Texture2D> AOMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( !AOMap )
     {
         return false;
@@ -177,7 +177,7 @@ bool Sandbox::Init()
         AOMap->SetName( "AOMap" );
     }
 
-    TRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( !RoughnessMap )
     {
         return false;
@@ -187,7 +187,7 @@ bool Sandbox::Init()
         RoughnessMap->SetName( "RoughnessMap" );
     }
 
-    TRef<Texture2D> HeightMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<Texture2D> HeightMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( !HeightMap )
     {
         return false;
@@ -197,7 +197,7 @@ bool Sandbox::Init()
         HeightMap->SetName( "HeightMap" );
     }
 
-    TRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Metallic.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Metallic.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( !MetallicMap )
     {
         return false;

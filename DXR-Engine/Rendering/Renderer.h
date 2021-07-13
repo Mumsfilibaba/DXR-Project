@@ -78,24 +78,24 @@ private:
     FrameResources Resources;
     LightSetup     LightSetup;
 
-    TRef<Texture2D>            ShadingImage;
-    TRef<ComputePipelineState> ShadingRatePipeline;
-    TRef<ComputeShader>        ShadingRateShader;
+    TSharedRef<Texture2D>            ShadingImage;
+    TSharedRef<ComputePipelineState> ShadingRatePipeline;
+    TSharedRef<ComputeShader>        ShadingRateShader;
 
-    TRef<VertexBuffer> AABBVertexBuffer;
-    TRef<IndexBuffer>  AABBIndexBuffer;
-    TRef<GraphicsPipelineState> AABBDebugPipelineState;
-    TRef<VertexShader>          AABBVertexShader;
-    TRef<PixelShader>           AABBPixelShader;
+    TSharedRef<VertexBuffer> AABBVertexBuffer;
+    TSharedRef<IndexBuffer>  AABBIndexBuffer;
+    TSharedRef<GraphicsPipelineState> AABBDebugPipelineState;
+    TSharedRef<VertexShader>          AABBVertexShader;
+    TSharedRef<PixelShader>           AABBPixelShader;
 
-    TRef<GraphicsPipelineState> PostPSO;
-    TRef<PixelShader>           PostShader;
-    TRef<GraphicsPipelineState> FXAAPSO;
-    TRef<PixelShader>           FXAAShader;
-    TRef<GraphicsPipelineState> FXAADebugPSO;
-    TRef<PixelShader>           FXAADebugShader;
+    TSharedRef<GraphicsPipelineState> PostPSO;
+    TSharedRef<PixelShader>           PostShader;
+    TSharedRef<GraphicsPipelineState> FXAAPSO;
+    TSharedRef<PixelShader>           FXAAShader;
+    TSharedRef<GraphicsPipelineState> FXAADebugPSO;
+    TSharedRef<PixelShader>           FXAADebugShader;
 
-    TRef<GPUProfiler> GPUProfiler;
+    TSharedRef<GPUProfiler> GPUProfiler;
 
     uint32 LastFrameNumDrawCalls = 0;
     uint32 LastFrameNumDispatchCalls = 0;

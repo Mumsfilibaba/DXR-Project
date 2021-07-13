@@ -59,6 +59,6 @@ private:
 
     HANDLE SwapChainWaitableObject = 0;
 
-    TArray<TRef<D3D12Texture2D>>        BackBuffers;
-    TArray<TRef<D3D12RenderTargetView>> BackBufferViews;
+    TArray<TSharedRef<D3D12Texture2D>>        BackBuffers;
+    TArray<TSharedRef<D3D12RenderTargetView>> BackBufferViews;
 };
