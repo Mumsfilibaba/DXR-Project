@@ -13,8 +13,8 @@ template<typename T, typename TAllocator = Mallocator>
 class TArray
 {
 public:
-    typedef T*                        Iterator;
-    typedef const T*                  ConstIterator;
+    typedef T* Iterator;
+    typedef const T* ConstIterator;
     typedef TReverseIterator<T>       ReverseIterator;
     typedef TReverseIterator<const T> ConstReverseIterator;
     typedef uint32                    SizeType;

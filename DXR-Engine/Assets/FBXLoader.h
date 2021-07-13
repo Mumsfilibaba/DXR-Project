@@ -4,5 +4,5 @@
 class CFBXLoader
 {
 public:
-    static bool LoadFBXFile(const String& Filename);
+    static bool LoadFBXFile( const String& Filename );
 };
