@@ -1,11 +1,10 @@
 #pragma once
-#include "Core/Engine/EngineGlobals.h"
+#include "CoreDefines.h"
 
 #include "Memory/New.h"
 
-#include "CoreDefines.h"
-
-#include <string>
+#include "Core/Engine/EngineGlobals.h"
+#include "Core/Containers/String.h"
 
 // Preparation for enum class usage
 template <int64 SIZE>
