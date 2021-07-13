@@ -1,5 +1,76 @@
 #include "FBXLoader.h"
 
+// Temporary string converter from .dds to .png
+// TODO: Maybe support .dds loading :)
+static void FileStringWithDDSToPNG(std::string& OutString)
+{
+    for (char& Char : OutString)
+    {
+        Char = tolower(Char);
+    }
+
+    const char*  SearchString = ".dds";
+    const UInt32 Length = strlen(SearchString);
+
+    size_t Pos = OutString.find(SearchString);
+    while (Pos != std::string::npos)
+    {
+        OutString.replace(Pos, std::string::npos, ".PNG");
+        Pos = OutString.find(SearchString, Pos + Length);
+    }
+}
+
+static std::string ExtractPath(const std::string& FullFilePath)
+{
+    size_t Pos = FullFilePath.find_last_of('/');
+    if (Pos != std::string::npos)
+    {
+        return FullFilePath.substr(0, Pos);
+    }
+    else
+    {
+        return FullFilePath;
+    }
+}
+
+static XMFLOAT4X4 ToFloat4x4(const ofbx::Matrix& Matrix)
+{
+    XMFLOAT4X4 Result;
+    for (UInt32 y = 0; y < 4; y++)
+    {
+        for (UInt32 x = 0; x < 4; x++)
+        {
+            UInt32 Index = y * 4 + x;
+            Result.m[y][x] = Matrix.m[Index];
+        }
+    }
+
+    return Result;
+}
+
+static void GetMatrix(const ofbx::Object* Mesh, XMFLOAT4X4& OutMatrix)
+{
+    if (Mesh)
+    {
+        XMFLOAT4X4 Matrix;
+        GetMatrix(Mesh->getParent(), Matrix);
+
+        ofbx::Vec3 Scaling     = Mesh->getLocalScaling();
+        ofbx::Vec3 Rotation    = Mesh->getLocalRotation();
+        ofbx::Vec3 Translation = Mesh->getLocalTranslation();
+
+        XMFLOAT4X4 LocalMatrix = ToFloat4x4(Mesh->evalLocal(Translation, Rotation, Scaling));
+
+        XMMATRIX Matrix0 = XMLoadFloat4x4(&Matrix);
+        XMMATRIX Matrix1 = XMLoadFloat4x4(&LocalMatrix);
+        XMStoreFloat4x4(&OutMatrix, XMMatrixMultiply(Matrix0, Matrix1));
+    }
+    else
+    {
+        XMStoreFloat4x4(&OutMatrix, XMMatrixIdentity());
+    }
+}
+
 bool CFFBXLoader::LoadFBXFile(const String& Filename)
 {
     OutScene.Models.Clear();
