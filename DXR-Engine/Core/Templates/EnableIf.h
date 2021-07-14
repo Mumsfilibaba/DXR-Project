@@ -1,6 +1,6 @@
 #pragma once
 
-template<bool TCondition, typename T = void>
+template<bool Condition, typename T = void>
 struct _TEnableIf
 {
 };
@@ -12,6 +12,6 @@ struct _TEnableIf<true, T>
 };
 
 /* Enables return value if condition is met */
-template<bool TCondition, typename T = void>
-using TEnableIf = typename _TEnableIf<TCondition, T>::Type;
+template<bool Condition, typename T = void>
+using TEnableIf = typename _TEnableIf<Condition, T>::Type;
 

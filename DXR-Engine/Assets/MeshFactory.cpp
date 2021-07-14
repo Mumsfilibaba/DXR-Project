@@ -3,97 +3,13 @@
 
 #include "Math/MathCommon.h"
 
-#include "Core/Containers/HashTable.h"
-
-#include <tiny_obj_loader.h>
-
-MeshData MeshFactory::CreateFromFile( const String& Filename, bool LeftHanded ) noexcept
-{
-    String Error;
-    String Warning;
-    std::vector<tinyobj::shape_t> Shapes;
-    tinyobj::attrib_t Attributes;
-
-    if ( !tinyobj::LoadObj( &Attributes, &Shapes, nullptr, &Warning, &Error, Filename.c_str(), nullptr, true, false ) )
-    {
-        LOG_WARNING( "[MeshFactory]: Failed to load mesh '" + Filename + "'." + " Warning: " + Warning + " Error: " + Error );
-        return MeshData();
-    }
-    else
-    {
-        LOG_INFO( "[MeshFactory]: Loaded mesh'" + Filename + "'" );
-    }
-
-    MeshData Result;
-    THashTable<Vertex, uint32, VertexHasher> UniqueVertices;
-    for ( const tinyobj::shape_t& Shape : Shapes )
-    {
-        for ( uint32 i = 0; i < Shape.mesh.indices.size(); i++ )
-        {
-            const tinyobj::index_t& Index = Shape.mesh.indices[i];
-            Vertex TempVertex;
-
-            // Normals and texcoords are optional, Positions are required
-            Assert( Index.vertex_index >= 0 );
-
-            size_t PositionIndex = 3 * static_cast<size_t>(Index.vertex_index);
-            TempVertex.Position =
-                CVector3(
-                Attributes.vertices[PositionIndex + 0],
-                Attributes.vertices[PositionIndex + 1],
-                Attributes.vertices[PositionIndex + 2] );
-
-            if ( Index.normal_index >= 0 )
-            {
-                size_t NormalIndex = 3 * static_cast<size_t>(Index.normal_index);
-                TempVertex.Normal =
-                    CVector3(
-                    Attributes.normals[NormalIndex + 0],
-                    Attributes.normals[NormalIndex + 1],
-                    Attributes.normals[NormalIndex + 2] );
-            }
-
-            if ( Index.texcoord_index >= 0 )
-            {
-                size_t TexCoordIndex = 2 * static_cast<size_t>(Index.texcoord_index);
-                TempVertex.TexCoord =
-                    CVector2(
-                    Attributes.texcoords[TexCoordIndex + 0],
-                    Attributes.texcoords[TexCoordIndex + 1] );
-            }
-
-            if ( UniqueVertices.count( TempVertex ) == 0 )
-            {
-                UniqueVertices[TempVertex] = static_cast<uint32>(Result.Vertices.Size());
-                Result.Vertices.PushBack( TempVertex );
-            }
-
-            Result.Indices.EmplaceBack( UniqueVertices[TempVertex] );
-        }
-    }
-
-    if ( LeftHanded )
-    {
-        for ( Vertex& Vertex : Result.Vertices )
-        {
-            Vertex.Position.z = -Vertex.Position.z;
-            Vertex.Normal.z = -Vertex.Normal.z;
-            Vertex.TexCoord.y = 1.0f - Vertex.TexCoord.y;
-        }
-    }
-
-    CMeshUtilities::CalculateTangents( Result );
-
-    return Result;
-}
-
-MeshData MeshFactory::CreateCube( float Width, float Height, float Depth ) noexcept
+SMeshData CMeshFactory::CreateCube( float Width, float Height, float Depth ) noexcept
 {
     const float HalfWidth = Width * 0.5f;
     const float HalfHeight = Height * 0.5f;
     const float HalfDepth = Depth * 0.5f;
 
-    MeshData Cube;
+    SMeshData Cube;
     Cube.Vertices =
     {
         // FRONT FACE
@@ -163,9 +79,9 @@ MeshData MeshFactory::CreateCube( float Width, float Height, float Depth ) noexc
     return Cube;
 }
 
-MeshData MeshFactory::CreatePlane( uint32 Width, uint32 Height ) noexcept
+SMeshData CMeshFactory::CreatePlane( uint32 Width, uint32 Height ) noexcept
 {
-    MeshData Data;
+    SMeshData Data;
     if ( Width < 1 )
     {
         Width = 1;
@@ -215,9 +131,9 @@ MeshData MeshFactory::CreatePlane( uint32 Width, uint32 Height ) noexcept
     return Data;
 }
 
-MeshData MeshFactory::CreateSphere( uint32 Subdivisions, float Radius ) noexcept
+SMeshData CMeshFactory::CreateSphere( uint32 Subdivisions, float Radius ) noexcept
 {
-    MeshData Sphere;
+    SMeshData Sphere;
     Sphere.Vertices.Resize( 12 );
 
     const float t = (1.0f + NMath::Sqrt( 5.0f )) / 2.0f;
@@ -263,7 +179,7 @@ MeshData MeshFactory::CreateSphere( uint32 Subdivisions, float Radius ) noexcept
 
     if ( Subdivisions > 0 )
     {
-        Subdivide( Sphere, Subdivisions );
+        CMeshUtilities::Subdivide( Sphere, Subdivisions );
     }
 
     for ( uint32 i = 0; i < static_cast<uint32>(Sphere.Vertices.Size()); i++ )
@@ -283,19 +199,20 @@ MeshData MeshFactory::CreateSphere( uint32 Subdivisions, float Radius ) noexcept
     Sphere.Indices.ShrinkToFit();
     Sphere.Vertices.ShrinkToFit();
 
-    CalculateTangents( Sphere );
+    CMeshUtilities::CalculateTangents( Sphere );
 
     return Sphere;
 }
 
-MeshData MeshFactory::CreateCone( uint32 Sides, float Radius, float Height ) noexcept
+// TODO: Finish
+SMeshData CMeshFactory::CreateCone( uint32 Sides, float Radius, float Height ) noexcept
 {
     UNREFERENCED_VARIABLE( Sides );
     UNREFERENCED_VARIABLE( Radius );
     UNREFERENCED_VARIABLE( Height );
 
     /*
-    MeshData data;
+    SMeshData data;
     // Num verts = (Sides*2)    (Bottom, since we need unique normals)
     //            +  Sides    (1 MiddlePoint per side)
     //            +  1        (One middlepoint on the underside)
@@ -364,13 +281,14 @@ MeshData MeshFactory::CreateCone( uint32 Sides, float Radius, float Height ) noe
 
     return data;
     */
-    return MeshData();
+    return SMeshData();
 }
 
-MeshData MeshFactory::CreatePyramid() noexcept
+// TODO: Finish
+SMeshData CMeshFactory::CreatePyramid() noexcept
 {
     /*
-    MeshData data;
+    SMeshData data;
     data.Vertices.resize(16);
     data.Indices.resize(18);
 
@@ -454,17 +372,18 @@ MeshData MeshFactory::CreatePyramid() noexcept
 
     return data;
     */
-    return MeshData();
+    return SMeshData();
 }
 
-MeshData MeshFactory::CreateCylinder( uint32 Sides, float Radius, float Height ) noexcept
+// TODO: Finish
+SMeshData CMeshFactory::CreateCylinder( uint32 Sides, float Radius, float Height ) noexcept
 {
     UNREFERENCED_VARIABLE( Sides );
     UNREFERENCED_VARIABLE( Radius );
     UNREFERENCED_VARIABLE( Height );
 
     /*
-    MeshData data;
+    SMeshData data;
     if (sides < 5)
         sides = 5;
     if (Height < 0.1f)
@@ -562,229 +481,5 @@ MeshData MeshFactory::CreateCylinder( uint32 Sides, float Radius, float Height )
     CalculateTangents(data);
     return data;
     */
-    return MeshData();
+    return SMeshData();
 }
-
-void MeshFactory::Subdivide( MeshData& OutData, uint32 Subdivisions ) noexcept
-{
-    if ( Subdivisions < 1 )
-    {
-        return;
-    }
-
-    Vertex TempVertices[3];
-    uint32 IndexCount = 0;
-    uint32 VertexCount = 0;
-    uint32 OldVertexCount = 0;
-    OutData.Vertices.Reserve( (OutData.Vertices.Size() * static_cast<uint32>(pow( 2, Subdivisions ))) );
-    OutData.Indices.Reserve( (OutData.Indices.Size() * static_cast<uint32>(pow( 4, Subdivisions ))) );
-
-    for ( uint32 i = 0; i < Subdivisions; i++ )
-    {
-        OldVertexCount = uint32( OutData.Vertices.Size() );
-        IndexCount = uint32( OutData.Indices.Size() );
-        for ( uint32 j = 0; j < IndexCount; j += 3 )
-        {
-            // Calculate Position
-            CVector3 Position0 = OutData.Vertices[OutData.Indices[j]].Position;
-            CVector3 Position1 = OutData.Vertices[OutData.Indices[j + 1]].Position;
-            CVector3 Position2 = OutData.Vertices[OutData.Indices[j + 2]].Position;
-
-            CVector3 Position = Position0 + Position1;
-            TempVertices[0].Position = Position * 0.5f;
-
-            Position = Position0 + Position2;
-            TempVertices[1].Position = Position * 0.5f;
-
-            Position = Position1 + Position2;
-            TempVertices[2].Position = Position * 0.5f;
-
-            // Calculate TexCoord
-            CVector2 TexCoord0 = OutData.Vertices[OutData.Indices[j]].TexCoord;
-            CVector2 TexCoord1 = OutData.Vertices[OutData.Indices[j + 1]].TexCoord;
-            CVector2 TexCoord2 = OutData.Vertices[OutData.Indices[j + 2]].TexCoord;
-
-            CVector2 TexCoord = TexCoord0 + TexCoord1;
-            TempVertices[0].TexCoord = TexCoord * 0.5f;
-
-            TexCoord = TexCoord0 + TexCoord2;
-            TempVertices[1].TexCoord = TexCoord * 0.5f;
-
-            TexCoord = TexCoord1 + TexCoord2;
-            TempVertices[2].TexCoord = TexCoord * 0.5f;
-
-            // Calculate Normal
-            CVector3 Normal0 = OutData.Vertices[OutData.Indices[j]].Normal;
-            CVector3 Normal1 = OutData.Vertices[OutData.Indices[j + 1]].Normal;
-            CVector3 Normal2 = OutData.Vertices[OutData.Indices[j + 2]].Normal;
-
-            CVector3 Normal = Normal0 + Normal1;
-            Normal = Normal * 0.5f;
-            TempVertices[0].Normal = Normal.GetNormalized();
-
-            Normal = Normal0 + Normal2;
-            Normal = Normal * 0.5f;
-            TempVertices[1].Normal = Normal.GetNormalized();
-
-            Normal = Normal1 + Normal2;
-            Normal = Normal * 0.5f;
-            TempVertices[2].Normal = Normal.GetNormalized();
-
-            // Calculate Tangent
-            CVector3 Tangent0 = OutData.Vertices[OutData.Indices[j]].Tangent;
-            CVector3 Tangent1 = OutData.Vertices[OutData.Indices[j + 1]].Tangent;
-            CVector3 Tangent2 = OutData.Vertices[OutData.Indices[j + 2]].Tangent;
-
-            CVector3 Tangent = Tangent0 + Tangent1;
-            Tangent = Tangent * 0.5f;
-            TempVertices[0].Tangent = Tangent.GetNormalized();
-
-            Tangent = Tangent0 + Tangent2;
-            Tangent = Tangent * 0.5f;
-            TempVertices[1].Tangent = Tangent.GetNormalized();
-
-            Tangent = Tangent1 + Tangent2;
-            Tangent = Tangent * 0.5f;
-            TempVertices[2].Tangent = Tangent.GetNormalized();
-
-            // Push the new Vertices
-            OutData.Vertices.EmplaceBack( TempVertices[0] );
-            OutData.Vertices.EmplaceBack( TempVertices[1] );
-            OutData.Vertices.EmplaceBack( TempVertices[2] );
-
-            // Push index of the new triangles
-            VertexCount = uint32( OutData.Vertices.Size() );
-            OutData.Indices.EmplaceBack( VertexCount - 3 );
-            OutData.Indices.EmplaceBack( VertexCount - 1 );
-            OutData.Indices.EmplaceBack( VertexCount - 2 );
-
-            OutData.Indices.EmplaceBack( VertexCount - 3 );
-            OutData.Indices.EmplaceBack( OutData.Indices[j + 1] );
-            OutData.Indices.EmplaceBack( VertexCount - 1 );
-
-            OutData.Indices.EmplaceBack( VertexCount - 2 );
-            OutData.Indices.EmplaceBack( VertexCount - 1 );
-            OutData.Indices.EmplaceBack( OutData.Indices[j + 2] );
-
-            // Reassign the old indexes
-            OutData.Indices[j + 1] = VertexCount - 3;
-            OutData.Indices[j + 2] = VertexCount - 2;
-        }
-
-        Optimize( OutData, OldVertexCount );
-    }
-
-    OutData.Vertices.ShrinkToFit();
-    OutData.Indices.ShrinkToFit();
-}
-
-void MeshFactory::Optimize( MeshData& OutData, uint32 StartVertex ) noexcept
-{
-    uint32 VertexCount = static_cast<uint32>(OutData.Vertices.Size());
-    uint32 IndexCount = static_cast<uint32>(OutData.Indices.Size());
-
-    uint32 k = 0;
-    uint32 j = 0;
-    for ( uint32 i = StartVertex; i < VertexCount; i++ )
-    {
-        for ( j = 0; j < VertexCount; j++ )
-        {
-            if ( OutData.Vertices[i] == OutData.Vertices[j] )
-            {
-                if ( i != j )
-                {
-                    OutData.Vertices.Erase( OutData.Vertices.Begin() + i );
-                    VertexCount--;
-                    j--;
-
-                    for ( k = 0; k < IndexCount; k++ )
-                    {
-                        if ( OutData.Indices[k] == i )
-                        {
-                            OutData.Indices[k] = j;
-                        }
-                        else if ( OutData.Indices[k] > i )
-                        {
-                            OutData.Indices[k]--;
-                        }
-                    }
-
-                    i--;
-                    break;
-                }
-            }
-        }
-    }
-}
-
-void MeshFactory::CalculateHardNormals( MeshData& Data ) noexcept
-{
-    UNREFERENCED_VARIABLE( Data );
-
-    /*
-    XMFLOAT3 e1;
-    XMFLOAT3 e2;
-    XMFLOAT3 n;
-
-    for (size_t i = 0; i < data.Indices.GetSize(); i += 3)
-    {
-        e1 = data.Vertices[data.Indices[i + 2]].Position - data.Vertices[data.Indices[i]].Position;
-        e2 = data.Vertices[data.Indices[i + 1]].Position - data.Vertices[data.Indices[i]].Position;
-        n = cross(e1, e2);
-
-        data.Vertices[data.Indices[i]].Normal = n;
-        data.Vertices[data.Indices[i + 1]].Normal = n;
-        data.Vertices[data.Indices[i + 2]].Normal = n;
-    }
-    */
-}
-
-void MeshFactory::CalculateTangents( MeshData& OutData ) noexcept
-{
-    auto CalculateTangentFromVectors = []( Vertex& Vertex1, const Vertex& Vertex2, const Vertex& Vertex3 )
-    {
-        CVector3 Edge1 = Vertex2.Position - Vertex1.Position;
-        CVector3 Edge2 = Vertex3.Position - Vertex1.Position;
-
-        CVector2 UVEdge1 = Vertex2.TexCoord - Vertex1.TexCoord;
-        CVector2 UVEdge2 = Vertex3.TexCoord - Vertex1.TexCoord;
-
-        const float RecipDenominator = 1.0f / (UVEdge1.x * UVEdge2.y - UVEdge2.x * UVEdge1.y);
-
-        CVector3 Tangent = RecipDenominator * ((UVEdge2.y * Edge1) - (UVEdge1.y * Edge2));
-        Tangent.Normalize();
-
-        Vertex1.Tangent = Tangent;
-    };
-
-    for ( uint32 i = 0; i < OutData.Indices.Size(); i += 3 )
-    {
-        Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
-        Vertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];
-        Vertex& Vertex3 = OutData.Vertices[OutData.Indices[i + 2]];
-
-        CalculateTangentFromVectors( Vertex1, Vertex2, Vertex3 );
-        CalculateTangentFromVectors( Vertex2, Vertex3, Vertex1 );
-        CalculateTangentFromVectors( Vertex3, Vertex1, Vertex2 );
-    }
-}
-
-/*void Mesh::calcNormal()
-{
-    using namespace NMath;
-
-    for (uint32 i = 0; i < indexBuffer->GetSize(); i += 3)
-    {
-        XMFLOAT3 edge1 = (*vertexBuffer)[(*indexBuffer)[i + 2]].Position - (*vertexBuffer)[(*indexBuffer)[i + 1]].Position;
-        XMFLOAT3 edge2 = (*vertexBuffer)[(*indexBuffer)[i]].Position - (*vertexBuffer)[(*indexBuffer)[i + 2]].Position;
-        XMFLOAT3 edge3 = (*vertexBuffer)[(*indexBuffer)[i + 1]].Position - (*vertexBuffer)[(*indexBuffer)[i + 0]].Position;
-
-        XMFLOAT3 Normal = edge1.Cross(edge2);
-        Normal.Normalize();
-
-        (*vertexBuffer)[(*indexBuffer)[i]].Normal = Normal;
-        (*vertexBuffer)[(*indexBuffer)[i + 1]].Normal = Normal;
-        (*vertexBuffer)[(*indexBuffer)[i + 2]].Normal = Normal;
-    }
-}*/
-

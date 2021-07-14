@@ -1,5 +1,5 @@
 #pragma once
-#include "MeshFactory.h"
+#include "Assets/MeshFactory.h"
 
 #include "Core/Containers/Array.h"
 
@@ -14,14 +14,14 @@ public:
     Mesh() = default;
     ~Mesh() = default;
 
-    bool Init( const MeshData& Data );
+    bool Init( const SMeshData& Data );
 
     bool BuildAccelerationStructure( CommandList& CmdList );
 
-    static TSharedPtr<Mesh> Make( const MeshData& Data );
+    static TSharedPtr<Mesh> Make( const SMeshData& Data );
 
 public:
-    void CreateBoundingBox( const MeshData& Data );
+    void CreateBoundingBox( const SMeshData& Data );
 
     TSharedRef<VertexBuffer>       VertexBuffer;
     TSharedRef<ShaderResourceView> VertexBufferSRV;

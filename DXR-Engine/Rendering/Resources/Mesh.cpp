@@ -3,7 +3,7 @@
 #include "RenderLayer/CommandList.h"
 #include "RenderLayer/RenderLayer.h"
 
-bool Mesh::Init( const MeshData& Data )
+bool Mesh::Init( const SMeshData& Data )
 {
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
     IndexCount = static_cast<uint32>(Data.Indices.Size());
@@ -69,7 +69,7 @@ bool Mesh::BuildAccelerationStructure( CommandList& CmdList )
     return true;
 }
 
-TSharedPtr<Mesh> Mesh::Make( const MeshData& Data )
+TSharedPtr<Mesh> Mesh::Make( const SMeshData& Data )
 {
     TSharedPtr<Mesh> Result = MakeShared<Mesh>();
     if ( Result->Init( Data ) )
@@ -82,7 +82,7 @@ TSharedPtr<Mesh> Mesh::Make( const MeshData& Data )
     }
 }
 
-void Mesh::CreateBoundingBox( const MeshData& Data )
+void Mesh::CreateBoundingBox( const SMeshData& Data )
 {
     constexpr float Inf = std::numeric_limits<float>::infinity();
     CVector3 MinBounds = CVector3( Inf, Inf, Inf );

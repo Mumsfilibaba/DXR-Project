@@ -1,5 +1,7 @@
 #pragma once
-#include "Utilities.h"
+#include "Core/Templates/EnableIf.h"
+#include "Core/Templates/IsArray.h"
+#include "Core/Templates/RemoveExtent.h"
 
 // TUniquePtr - Scalar values. Similar to std::unique_ptr
 
@@ -338,14 +340,14 @@ private:
 // MakeUnique - Creates a new object together with a UniquePtr
 
 template<typename T, typename... TArgs>
-FORCEINLINE TEnableIf<!TIsArray<T>, TUniquePtr<T>> MakeUnique( TArgs&&... Args ) noexcept
+FORCEINLINE TEnableIf<!IsArray<T>, TUniquePtr<T>> MakeUnique( TArgs&&... Args ) noexcept
 {
     T* UniquePtr = new T( Forward<TArgs>( Args )... );
     return Move( TUniquePtr<T>( UniquePtr ) );
 }
 
 template<typename T>
-FORCEINLINE TEnableIf<TIsArray<T>, TUniquePtr<T>>MakeUnique( uint32 Size ) noexcept
+FORCEINLINE TEnableIf<IsArray<T>, TUniquePtr<T>>MakeUnique( uint32 Size ) noexcept
 {
     using TType = TRemoveExtent<T>;
 

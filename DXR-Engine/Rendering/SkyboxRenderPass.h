@@ -1,7 +1,7 @@
 #pragma once
 #include "FrameResources.h"
 
-#include "Rendering/Resources/MeshFactory.h"
+#include "Assets/MeshFactory.h"
 
 #include "RenderLayer/CommandList.h"
 
@@ -27,5 +27,5 @@ private:
     TSharedRef<IndexBuffer>  SkyboxIndexBuffer;
     TSharedRef<SamplerState> SkyboxSampler;
 
-    MeshData SkyboxMesh;
+    SMeshData SkyboxMesh;
 };

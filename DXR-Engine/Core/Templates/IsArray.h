@@ -21,4 +21,4 @@ struct _TIsArray<T[N]>
 
 /* Check if type is an array type */
 template<typename T>
-inline constexpr bool TIsArray = _TIsArray<T>::Value;
+inline constexpr bool IsArray = _TIsArray<T>::Value;

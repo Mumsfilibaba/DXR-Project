@@ -955,14 +955,14 @@ public:
 // MakeShared - Creates a new object together with a SharedPtr
 
 template<typename T, typename... TArgs>
-FORCEINLINE TEnableIf<!TIsArray<T>, TSharedPtr<T>> MakeShared( TArgs&&... Args ) noexcept
+FORCEINLINE TEnableIf<!IsArray<T>, TSharedPtr<T>> MakeShared( TArgs&&... Args ) noexcept
 {
     T* RefCountedPtr = new T( Forward<TArgs>( Args )... );
     return Move( TSharedPtr<T>( RefCountedPtr ) );
 }
 
 template<typename T>
-FORCEINLINE TEnableIf<TIsArray<T>, TSharedPtr<T>> MakeShared( uint32 Size ) noexcept
+FORCEINLINE TEnableIf<IsArray<T>, TSharedPtr<T>> MakeShared( uint32 Size ) noexcept
 {
     using TType = TRemoveExtent<T>;
 
@@ -974,7 +974,7 @@ FORCEINLINE TEnableIf<TIsArray<T>, TSharedPtr<T>> MakeShared( uint32 Size ) noex
 
 // static_cast
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> StaticCast( const TSharedPtr<T1>& Pointer ) noexcept
+FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> StaticCast( const TSharedPtr<T1>& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -983,7 +983,7 @@ FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> StaticCast( 
 }
 
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> StaticCast( TSharedPtr<T1>&& Pointer ) noexcept
+FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> StaticCast( TSharedPtr<T1>&& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -993,7 +993,7 @@ FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> StaticCast( 
 
 // const_cast
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> ConstCast( const TSharedPtr<T1>& Pointer ) noexcept
+FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ConstCast( const TSharedPtr<T1>& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -1002,7 +1002,7 @@ FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> ConstCast( c
 }
 
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> ConstCast( TSharedPtr<T1>&& Pointer ) noexcept
+FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ConstCast( TSharedPtr<T1>&& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -1012,7 +1012,7 @@ FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> ConstCast( T
 
 // reinterpret_cast
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> ReinterpretCast( const TSharedPtr<T1>& Pointer ) noexcept
+FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ReinterpretCast( const TSharedPtr<T1>& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -1021,7 +1021,7 @@ FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> ReinterpretC
 }
 
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> ReinterpretCast( TSharedPtr<T1>&& Pointer ) noexcept
+FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ReinterpretCast( TSharedPtr<T1>&& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -1031,7 +1031,7 @@ FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> ReinterpretC
 
 // dynamic_cast
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> DynamicCast( const TSharedPtr<T1>& Pointer ) noexcept
+FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> DynamicCast( const TSharedPtr<T1>& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -1040,7 +1040,7 @@ FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> DynamicCast(
 }
 
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<TIsArray<T0> == TIsArray<T1>, TSharedPtr<T0>> DynamicCast( TSharedPtr<T1>&& Pointer ) noexcept
+FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> DynamicCast( TSharedPtr<T1>&& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 

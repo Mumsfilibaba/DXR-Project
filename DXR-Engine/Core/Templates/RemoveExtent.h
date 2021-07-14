@@ -1,5 +1,5 @@
 #pragma once
-"Core/Types.h"
+#include "Core/Types.h"
 
 template<typename T>
 struct _TRemoveExtent
@@ -22,3 +22,5 @@ struct _TRemoveExtent<T[SIZE]>
 /* Removes array type */
 template<typename T>
 using TRemoveExtent = typename _TRemoveExtent<T>::Type;
+
+// TODO: TRemoveAllExtents

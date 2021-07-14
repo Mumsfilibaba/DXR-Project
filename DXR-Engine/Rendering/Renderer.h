@@ -5,9 +5,10 @@
 #include "Scene/Scene.h"
 #include "Scene/Camera.h"
 
+#include "Assets/MeshFactory.h"
+
 #include "Resources/Mesh.h"
 #include "Resources/Material.h"
-#include "Resources/MeshFactory.h"
 
 #include "DeferredRenderer.h"
 #include "ShadowMapRenderer.h"

@@ -1,6 +1,8 @@
 #pragma once
-#include "Utilities.h"
 #include "Allocator.h"
+
+#include "Core/Templates/Move.h"
+#include "Core/Templates/IsPointer.h"
 
 // TMemberFunction - Encapsulates a member function
 
@@ -21,12 +23,12 @@ public:
 
     TReturn Invoke( TArgs&&... Args ) noexcept
     {
-        return ((*This).*Func)(Forward<TArgs>( Args )...);
+        return ((*This).*Func)(::Forward<TArgs>( Args )...);
     }
 
     FORCEINLINE TReturn operator()( TArgs&&... Args ) noexcept
     {
-        return Invoke( Forward<TArgs>( Args )... );
+        return Invoke( ::Forward<TArgs>( Args )... );
     }
 
 private:
@@ -120,7 +122,7 @@ private:
             : IFunctor()
             , mFunctor( ::Move( Other.mFunctor ) )
         {
-            if constexpr ( std::is_pointer<F>() )
+            if constexpr ( IsPointer<F>() )
             {
                 Other.mFunctor = nullptr;
             }

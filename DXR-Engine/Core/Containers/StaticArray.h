@@ -1,6 +1,7 @@
 #pragma once
-#include "Utilities.h"
 #include "Iterator.h"
+
+#include "Core/Templates/Move.h"
 
 // TStaticArray - Static Array similar to std::array
 
@@ -14,37 +15,39 @@ public:
     typedef TReverseIterator<const T> ConstReverseIterator;
     typedef uint32                    SizeType;
 
-    T& Front() noexcept
+    FORCEINLINE T& Front() noexcept
     {
         return Elements[0];
     }
-    const T& Front() const noexcept
+    
+    FORCEINLINE const T& Front() const noexcept
     {
         return Elements[0];
     }
 
-    T& Back() noexcept
-    {
-        return Elements[N - 1];
-    }
-    const T& Back() const noexcept
+    FORCEINLINE T& Back() noexcept
     {
         return Elements[N - 1];
     }
 
-    T& At( SizeType Index ) noexcept
+    FORCEINLINE const T& Back() const noexcept
+    {
+        return Elements[N - 1];
+    }
+
+    FORCEINLINE T& At( SizeType Index ) noexcept
     {
         Assert( Index < N );
         return Elements[Index];
     }
 
-    const T& At( SizeType Index ) const noexcept
+    FORCEINLINE const T& At( SizeType Index ) const noexcept
     {
         Assert( Index < N );
         return Elements[Index];
     }
 
-    void Fill( const T& Value ) noexcept
+    FORCEINLINE void Fill( const T& Value ) noexcept
     {
         for ( uint32 i = 0; i < N; i++ )
         {
@@ -52,7 +55,7 @@ public:
         }
     }
 
-    void Swap( TStaticArray& Other ) noexcept
+    FORCEINLINE void Swap( TStaticArray& Other ) noexcept
     {
         TStaticArray TempArray( ::Move( *this ) );
         *this = ::Move( Other );
@@ -63,85 +66,95 @@ public:
     {
         return N > 0 ? N - 1 : 0;
     }
+
     constexpr SizeType Size() const noexcept
     {
         return N;
     }
+
     constexpr SizeType SizeInBytes() const noexcept
     {
         return N * sizeof( T );
     }
 
-    T* Data() noexcept
-    {
-        return Elements;
-    }
-    const T* Data() const noexcept
+    FORCEINLINE T* Data() noexcept
     {
         return Elements;
     }
 
-    T& operator[]( SizeType Index ) noexcept
+    FORCEINLINE const T* Data() const noexcept
+    {
+        return Elements;
+    }
+
+    FORCEINLINE T& operator[]( SizeType Index ) noexcept
     {
         return At( Index );
     }
-    const T& operator[]( SizeType Index ) const noexcept
+
+    FORCEINLINE const T& operator[]( SizeType Index ) const noexcept
     {
         return At( Index );
     }
 
     // STL iterator functions - Enables Range-based for-loops
 public:
-    Iterator begin() noexcept
+    FORCEINLINE Iterator begin() noexcept
     {
         return Elements;
     }
-    Iterator end() noexcept
+
+    FORCEINLINE Iterator end() noexcept
     {
         return Elements + N;
     }
 
-    ConstIterator begin() const noexcept
+    FORCEINLINE ConstIterator begin() const noexcept
     {
         return Elements;
     }
-    ConstIterator end() const noexcept
+
+    FORCEINLINE ConstIterator end() const noexcept
     {
         return Elements + N;
     }
 
-    ConstIterator cbegin() const noexcept
+    FORCEINLINE ConstIterator cbegin() const noexcept
     {
         return Elements;
     }
-    ConstIterator cend() const noexcept
+
+    FORCEINLINE ConstIterator cend() const noexcept
     {
         return Elements + N;
     }
 
-    ReverseIterator rbegin() noexcept
+    FORCEINLINE ReverseIterator rbegin() noexcept
     {
         return ReverseIterator( end() );
     }
-    ReverseIterator rend() noexcept
+
+    FORCEINLINE ReverseIterator rend() noexcept
     {
         return ReverseIterator( begin() );
     }
 
-    ConstReverseIterator rbegin() const noexcept
+    FORCEINLINE ConstReverseIterator rbegin() const noexcept
     {
         return ConstReverseIterator( end() );
     }
-    ConstReverseIterator rend() const noexcept
+
+    FORCEINLINE ConstReverseIterator rend() const noexcept
     {
         return ConstReverseIterator( begin() );
     }
 
-    ConstReverseIterator crbegin() const noexcept
+    FORCEINLINE ConstReverseIterator crbegin() const noexcept
     {
         return ConstReverseIterator( end() );
     }
-    ConstReverseIterator crend() const noexcept
+
+    FORCEINLINE ConstReverseIterator crend() const noexcept
     {
         return ConstReverseIterator( begin() );
     }

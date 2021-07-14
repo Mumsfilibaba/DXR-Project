@@ -592,6 +592,7 @@ public:
     {
         return Array;
     }
+
     Iterator end() noexcept
     {
         return Array + ArraySize;
@@ -601,6 +602,7 @@ public:
     {
         return Array;
     }
+
     ConstIterator end() const noexcept
     {
         return Array + ArraySize;
@@ -610,6 +612,7 @@ public:
     {
         return Array;
     }
+
     ConstIterator cend() const noexcept
     {
         return Array + ArraySize;
@@ -619,6 +622,7 @@ public:
     {
         return ReverseIterator( end() );
     }
+
     ReverseIterator rend() noexcept
     {
         return ReverseIterator( begin() );
@@ -628,6 +632,7 @@ public:
     {
         return ConstReverseIterator( end() );
     }
+
     ConstReverseIterator rend() const noexcept
     {
         return ConstReverseIterator( begin() );
@@ -637,6 +642,7 @@ public:
     {
         return ConstReverseIterator( end() );
     }
+
     ConstReverseIterator crend() const noexcept
     {
         return ConstReverseIterator( begin() );
@@ -671,11 +677,11 @@ private:
     template<typename TInput>
     SizeType InternalDistance( TInput InBegin, TInput InEnd ) noexcept
     {
-        constexpr bool IsPointer = IsPointer<TInput>;
-        constexpr bool IsCustomIterator = IsSame<TInput, Iterator> || IsSame<TInput, ConstIterator>;
+        constexpr bool TypeIsPointer = IsPointer<TInput>;
+        constexpr bool TypeIsCustomIterator = IsSame<TInput, Iterator> || IsSame<TInput, ConstIterator>;
 
         // Handle outside pointers
-        if constexpr ( IsPointer || IsCustomIterator )
+        if constexpr ( TypeIsPointer || TypeIsCustomIterator )
         {
             return static_cast<SizeType>(InternalUnwrapConst( InEnd ) - InternalUnwrapConst( InBegin ));
         }
@@ -808,11 +814,11 @@ private:
     void InternalCopyEmplace( TInput Begin, TInput End, T* Dest ) noexcept
     {
         // This function assumes that there is no overlap
-        constexpr bool IsTrivial = std::is_trivially_copy_constructible<T>(); // TODO: Make custom version?
-        constexpr bool IsPointer = IsPointer<TInput>;
-        constexpr bool IsCustomIterator = IsSame<TInput, Iterator> || IsSame<TInput, ConstIterator>;
+        constexpr bool TypeIsTrivial = std::is_trivially_copy_constructible<T>(); // TODO: Make custom version?
+        constexpr bool TypeIsPointer = IsPointer<TInput>;
+        constexpr bool TypeIsCustomIterator = IsSame<TInput, Iterator> || IsSame<TInput, ConstIterator>;
 
-        if constexpr ( IsTrivial && (IsPointer || IsCustomIterator) )
+        if constexpr ( TypeIsTrivial && (TypeIsPointer || TypeIsCustomIterator) )
         {
             const SizeType Count = InternalDistance( Begin, End );
             const SizeType CpySize = Count * sizeof( T );
@@ -852,7 +858,7 @@ private:
         {
             while ( InBegin != InEnd )
             {
-                new(reinterpret_cast<void*>(Dest)) T( Move( *InBegin ) );
+                new(reinterpret_cast<void*>(Dest)) T( ::Move( *InBegin ) );
                 InBegin++;
                 Dest++;
             }

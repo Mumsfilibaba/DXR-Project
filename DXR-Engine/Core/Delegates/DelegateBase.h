@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Containers/Utilities.h"
+#include "Core/Templates/Move.h"
 
 template<typename TInvokable>
 class TDelegateBase;
@@ -33,7 +33,7 @@ protected:
 
         virtual TReturn Execute( TArgs... Args ) const override
         {
-            return Fn( Forward<TArgs>( Args )... );
+            return Fn( ::Forward<TArgs>( Args )... );
         }
 
         virtual IDelegate* Clone() const override
@@ -56,7 +56,7 @@ protected:
 
         virtual TReturn Execute( TArgs... Args ) const override
         {
-            return ((*This).*Fn)(Forward<TArgs>( Args )...);
+            return ((*This).*Fn)(::Forward<TArgs>( Args )...);
         }
 
         virtual IDelegate* Clone() const override
@@ -80,7 +80,7 @@ protected:
 
         virtual TReturn Execute( TArgs... Args ) const override
         {
-            return ((*This).*Fn)(Forward<TArgs>( Args )...);
+            return ((*This).*Fn)(::Forward<TArgs>( Args )...);
         }
 
         virtual IDelegate* Clone() const override
@@ -103,7 +103,7 @@ protected:
 
         virtual TReturn Execute( TArgs... Args ) const override
         {
-            return Invokable( Forward<TArgs>( Args )... );
+            return Invokable( ::Forward<TArgs>( Args )... );
         }
 
         virtual IDelegate* Clone() const override

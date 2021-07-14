@@ -1,6 +1,6 @@
 #include "RenderLayer/RenderLayer.h"
 
-#include "Rendering/Resources/MeshFactory.h"
+#include "Assets/MeshFactory.h"
 
 #include "D3D12RenderLayer.h"
 #include "D3D12RayTracing.h"

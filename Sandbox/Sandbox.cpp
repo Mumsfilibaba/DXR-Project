@@ -6,6 +6,8 @@
 #include "Rendering/DebugUI.h"
 #include "Rendering/Resources/TextureFactory.h"
 
+#include "Assets/OBJLoader.h"
+
 #include "Scene/Scene.h"
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
@@ -32,10 +34,14 @@ bool Sandbox::Init()
     // Initialize Scene
     Actor* NewActor = nullptr;
     MeshComponent* NewComponent = nullptr;
-    CurrentScene = Scene::LoadFromFile( "../Assets/Scenes/Sponza/Sponza.obj" );
+    CurrentScene = DBG_NEW Scene();
+
+    // Load Scene
+    SSceneData SceneData;
+    COBJLoader::LoadFile( "../Assets/Scenes/Sponza/Sponza.obj", SceneData );
 
     // Create Spheres
-    MeshData SphereMeshData = MeshFactory::CreateSphere( 3 );
+    SMeshData SphereMeshData = CMeshFactory::CreateSphere( 3 );
     TSharedPtr<Mesh> SphereMesh = Mesh::Make( SphereMeshData );
 
     // Create standard textures
@@ -47,6 +53,7 @@ bool Sandbox::Init()
         255
     };
 
+    // TODO: Base texture should be stored and created in the engine and not in the application module
     TSharedRef<Texture2D> BaseTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !BaseTexture )
     {
@@ -130,7 +137,7 @@ bool Sandbox::Init()
     }
 
     // Create Other Meshes
-    MeshData CubeMeshData = MeshFactory::CreateCube();
+    SMeshData CubeMeshData = CMeshFactory::CreateCube();
 
     NewActor = DBG_NEW Actor();
     CurrentScene->AddActor( NewActor );
@@ -231,7 +238,7 @@ bool Sandbox::Init()
     MatProperties.Albedo = CVector3( 1.0f );
 
     NewComponent = DBG_NEW MeshComponent( NewActor );
-    NewComponent->Mesh = Mesh::Make( MeshFactory::CreatePlane( 10, 10 ) );
+    NewComponent->Mesh = Mesh::Make( CMeshFactory::CreatePlane( 10, 10 ) );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
     NewComponent->Material->AlbedoMap = BaseTexture;
     NewComponent->Material->NormalMap = BaseNormal;
@@ -291,7 +298,10 @@ bool Sandbox::Init()
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo = CVector3( 1.0f, 1.0f, 1.0f );
 
-    TSharedPtr<Mesh>     StreetLight = Mesh::Make( MeshFactory::CreateFromFile( "../Assets/Models/Street_Light.obj" ) );
+    SSceneData StreetLightData;
+    COBJLoader::LoadFile( "../Assets/Models/Street_Light.obj", StreetLightData );
+
+    TSharedPtr<Mesh>     StreetLight = Mesh::Make( StreetLightData.Models.Front().Mesh );
     TSharedPtr<CMaterial> StreetLightMat = MakeShared<CMaterial>( MatProperties );
 
     for ( uint32 i = 0; i < 4; i++ )
@@ -321,7 +331,10 @@ bool Sandbox::Init()
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo = CVector3( 0.4f );
 
-    TSharedPtr<Mesh>     Pillar = Mesh::Make( MeshFactory::CreateFromFile( "../Assets/Models/Pillar.obj" ) );
+    SSceneData PillarData;
+    COBJLoader::LoadFile( "../Assets/Models/Pillar.obj", StreetLightData );
+
+    TSharedPtr<Mesh>     Pillar = Mesh::Make( PillarData.Models.Front().Mesh );
     TSharedPtr<CMaterial> PillarMat = MakeShared<CMaterial>( MatProperties );
 
     for ( uint32 i = 0; i < 8; i++ )

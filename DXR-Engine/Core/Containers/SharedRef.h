@@ -1,7 +1,8 @@
 #pragma once
-#include "Utilities.h"
-
+#include "Core/Templates/EnableIf.h"
 #include "Core/RefCountedObject.h"
+
+#include <type_traits>
 
 // TSharedRef - Helper class when using objects with RefCountedObject as a base
 
@@ -27,6 +28,7 @@ public:
     FORCEINLINE TSharedRef( const TSharedRef<TOther>& Other ) noexcept
         : RefPtr( Other.RefPtr )
     {
+        // TODO: Custom is_convertible
         static_assert(std::is_convertible<TOther*, T*>());
         AddRef();
     }

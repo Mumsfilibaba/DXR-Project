@@ -72,11 +72,6 @@
 #define BIT(Bit)  (1 << Bit)
 #define FLAG(Bit) BIT(Bit)
 
-inline bool HasFlag( uint32 Mask, uint32 Flag )
-{
-    return Mask & Flag;
-}
-
 /* Unused params */
 
 #ifndef UNREFERENCED_VARIABLE

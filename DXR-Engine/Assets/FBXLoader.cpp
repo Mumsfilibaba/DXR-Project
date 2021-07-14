@@ -1,5 +1,6 @@
 #include "FBXLoader.h"
 #include "VertexFormat.h"
+#include "MeshUtilities.h"
 
 #include "Math/Matrix4.h"
 
@@ -9,15 +10,15 @@
 
 // Temporary string converter from .dds to .png
 // TODO: Maybe support .dds loading :)
-static void FileStringWithDDSToPNG( String& OutString )
+static void FileStringWithDDSToPNG( String& OutString ) 
 {
     for ( char& Char : OutString )
     {
-        Char = tolower( Char );
+        Char = static_cast<char>(tolower( Char ));
     }
 
     const char* SearchString = ".dds";
-    const uint32 Length = strlen( SearchString );
+    const auto Length = strlen( SearchString );
 
     auto Pos = OutString.find( SearchString );
     while ( Pos != std::string::npos )
@@ -47,8 +48,8 @@ static CMatrix4 ToFloat4x4( const ofbx::Matrix& Matrix )
     {
         for ( uint32 x = 0; x < 4; x++ )
         {
-            uint32 Index = y * 4 + x;
-            Result.f[y][x] = Matrix.m[Index];
+            const uint32 Index = y * 4 + x;
+            Result.f[y][x] = static_cast<float>(Matrix.m[Index]);
         }
     }
 
@@ -75,7 +76,7 @@ static void GetMatrix( const ofbx::Object* Mesh, CMatrix4& OutMatrix )
     }
 }
 
-bool CFBXLoader::LoadFBXFile( const String& Filename )
+bool CFBXLoader::LoadFile( const String& Filename, SSceneData& OutScene, uint32 Flags ) noexcept
 {
     OutScene.Models.Clear();
     OutScene.Materials.Clear();
@@ -87,6 +88,7 @@ bool CFBXLoader::LoadFBXFile( const String& Filename )
         return false;
     }
 
+    // TODO: Utility to read in full file?
     fseek( File, 0, SEEK_END );
     uint32 FileSize = ftell( File );
     rewind( File );
@@ -101,7 +103,7 @@ bool CFBXLoader::LoadFBXFile( const String& Filename )
     uint32 NumBytesRead = 0;
     while ( NumBytesRead < FileSize )
     {
-        NumBytesRead += fread( Bytes, 1, ChunkSize, File );
+        NumBytesRead += (uint32)fread( Bytes, 1, ChunkSize, File );
         Bytes += ChunkSize;
     }
 
@@ -116,13 +118,13 @@ bool CFBXLoader::LoadFBXFile( const String& Filename )
     ofbx::IScene* FBXScene = ofbx::load( Bytes, FileSize, (ofbx::u64)ofbx::LoadFlags::TRIANGULATE );
     if ( !FBXScene )
     {
-        LOG_ERROR( "[MeshFactory]: Failed to load content '" + Filename + "'" );
+        LOG_ERROR( "[CMeshFactory]: Failed to load content '" + Filename + "'" );
         return false;
     }
 
     const ofbx::GlobalSettings* Settings = FBXScene->getGlobalSettings();
-    OutScene.ScaleFactor = 1.0f / Settings->UnitScaleFactor;
 
+    // Unique tables
     THashTable<Vertex, uint32, VertexHasher>  UniqueVertices;
     THashTable<const ofbx::Material*, uint32> UniqueMaterials;
 
@@ -131,7 +133,7 @@ bool CFBXLoader::LoadFBXFile( const String& Filename )
 
     String Path = ExtractPath( Filename );
 
-    ModelData Data;
+    SModelData Data;
 
     uint32 MeshCount = FBXScene->getMeshCount();
     for ( uint32 i = 0; i < MeshCount; i++ )
@@ -148,12 +150,12 @@ bool CFBXLoader::LoadFBXFile( const String& Filename )
                 continue;
             }
 
-            MaterialData MaterialData;
-            MaterialData.Diffuse = CVector3( CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b );
-            MaterialData.TexPath = Path;
-            MaterialData.AO = 1.0f;//  CurrentMaterial->getSpecularColor().r;
-            MaterialData.Roughness = 1.0f;// CurrentMaterial->getSpecularColor().g;
-            MaterialData.Metallic = 1.0f;// CurrentMaterial->getSpecularColor().b;
+            SMaterialData MaterialData;
+            //MaterialData.Diffuse = CVector3( CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b );
+            //MaterialData.TexPath = Path;
+            //MaterialData.AO = 1.0f;//  CurrentMaterial->getSpecularColor().r;
+            //MaterialData.Roughness = 1.0f;// CurrentMaterial->getSpecularColor().g;
+            //MaterialData.Metallic = 1.0f;// CurrentMaterial->getSpecularColor().b;
 
             //TODO: Other material properties
 
@@ -161,44 +163,44 @@ bool CFBXLoader::LoadFBXFile( const String& Filename )
             if ( AmbientTex )
             {
                 AmbientTex->getRelativeFileName().toString( StrBuffer );
-                MaterialData.AOTexname = StrBuffer;
+                //MaterialData.AOTexname = StrBuffer;
 
-                ConvertBackslashes( MaterialData.AOTexname );
-                // TODO: We should support .dds in the future
-                FileStringWithDDSToPNG( MaterialData.AOTexname );
+                //ConvertBackslashes( MaterialData.AOTexname );
+                //// TODO: We should support .dds in the future
+                //FileStringWithDDSToPNG( MaterialData.AOTexname );
             }
 
             const ofbx::Texture* DiffuseTex = CurrentMaterial->getTexture( ofbx::Texture::TextureType::DIFFUSE );
             if ( DiffuseTex )
             {
                 DiffuseTex->getRelativeFileName().toString( StrBuffer );
-                MaterialData.DiffTexName = StrBuffer;
+                //MaterialData.DiffTexName = StrBuffer;
 
-                ConvertBackslashes( MaterialData.DiffTexName );
-                // TODO: We should support .dds in the future
-                FileStringWithDDSToPNG( MaterialData.DiffTexName );
+                //ConvertBackslashes( MaterialData.DiffTexName );
+                //// TODO: We should support .dds in the future
+                //FileStringWithDDSToPNG( MaterialData.DiffTexName );
             }
 
             const ofbx::Texture* NormalTex = CurrentMaterial->getTexture( ofbx::Texture::TextureType::NORMAL );
             if ( NormalTex )
             {
                 NormalTex->getRelativeFileName().toString( StrBuffer );
-                MaterialData.NormalTexname = StrBuffer;
+                //MaterialData.NormalTexname = StrBuffer;
 
-                ConvertBackslashes( MaterialData.NormalTexname );
-                // TODO: We should support .dds in the future
-                FileStringWithDDSToPNG( MaterialData.NormalTexname );
+                //ConvertBackslashes( MaterialData.NormalTexname );
+                //// TODO: We should support .dds in the future
+                //FileStringWithDDSToPNG( MaterialData.NormalTexname );
             }
 
             const ofbx::Texture* SpecularTex = CurrentMaterial->getTexture( ofbx::Texture::TextureType::SPECULAR );
             if ( SpecularTex )
             {
                 SpecularTex->getRelativeFileName().toString( StrBuffer );
-                MaterialData.SpecTexName = StrBuffer;
+                //MaterialData.SpecTexName = StrBuffer;
 
-                ConvertBackslashes( MaterialData.SpecTexName );
-                // TODO: We should support .dds in the future
-                FileStringWithDDSToPNG( MaterialData.SpecTexName );
+                //ConvertBackslashes( MaterialData.SpecTexName );
+                //// TODO: We should support .dds in the future
+                //FileStringWithDDSToPNG( MaterialData.SpecTexName );
             }
 
             const ofbx::Texture* ReflectionTex = CurrentMaterial->getTexture( ofbx::Texture::TextureType::REFLECTION );
@@ -217,11 +219,11 @@ bool CFBXLoader::LoadFBXFile( const String& Filename )
             if ( EmissiveTex )
             {
                 EmissiveTex->getRelativeFileName().toString( StrBuffer );
-                MaterialData.EmissiveTexName = StrBuffer;
+                //MaterialData.EmissiveTexName = StrBuffer;
 
-                ConvertBackslashes( MaterialData.EmissiveTexName );
-                // TODO: We should support .dds in the future
-                FileStringWithDDSToPNG( MaterialData.EmissiveTexName );
+                //ConvertBackslashes( MaterialData.EmissiveTexName );
+                //// TODO: We should support .dds in the future
+                //FileStringWithDDSToPNG( MaterialData.EmissiveTexName );
             }
 
             UniqueMaterials[CurrentMaterial] = OutScene.Materials.Size();
@@ -278,42 +280,58 @@ bool CFBXLoader::LoadFBXFile( const String& Filename )
 
                 Vertex TempVertex;
 
-                CVector3 Position = CVector3( Vertices[CurrentIndex].x, Vertices[CurrentIndex].y, Vertices[CurrentIndex].z );
+                // Position
+                CVector3 Position = CVector3( (float)Vertices[CurrentIndex].x, (float)Vertices[CurrentIndex].y, (float)Vertices[CurrentIndex].z );
                 TempVertex.Position = Transform.TransformPosition( Position );
-
-                CVector3 Normal = CVector3( Normals[CurrentIndex].x, Normals[CurrentIndex].y, Normals[CurrentIndex].z );
-                TempVertex.Normal = Transform.TransformDirection( Normal );
-
-                TempVertex.TexCoord =
+                
+                // Apply the scene scale
+                if ( Flags & EFBXFlags::FBXFlags_ApplyScaleFactor )
                 {
-                    (float)TexCoords[CurrentIndex].x,
-                    (float)TexCoords[CurrentIndex].y,
-                };
+                    TempVertex.Position /= Settings->UnitScaleFactor;
+                }
 
+                // Normal
+                CVector3 Normal = CVector3( (float)Normals[CurrentIndex].x, (float)Normals[CurrentIndex].y, (float)Normals[CurrentIndex].z );
+                TempVertex.Normal = Transform.TransformDirection( Normal );
+                
+                // TexCoords
+                TempVertex.TexCoord = CVector2((float)TexCoords[CurrentIndex].x, (float)TexCoords[CurrentIndex].y);
+
+                // Tangents
                 if ( Tangents )
                 {
-                    CVector3 Tangent = CVector3( Tangents[CurrentIndex].x, Tangents[CurrentIndex].y, Tangents[CurrentIndex].z );
+                    CVector3 Tangent = CVector3( (float)Tangents[CurrentIndex].x, (float)Tangents[CurrentIndex].y, (float)Tangents[CurrentIndex].z );
                     TempVertex.Tangent = Transform.TransformDirection( Tangent );
                 }
 
+                // Only pushback unique vertices
+                uint32 UniqueIndex = 0;
                 if ( UniqueVertices.count( TempVertex ) == 0 )
                 {
-                    UniqueVertices[TempVertex] = static_cast<uint32>(Data.Mesh.Vertices.Size());
+                    UniqueIndex = static_cast<uint32>(Data.Mesh.Vertices.Size());
+                    UniqueVertices[TempVertex] = UniqueIndex;
                     Data.Mesh.Vertices.PushBack( TempVertex );
                 }
+                else
+                {
+                    UniqueIndex = UniqueVertices[TempVertex];
+                }
 
-                Data.Mesh.Indices.EmplaceBack( UniqueVertices[TempVertex] );
+                Data.Mesh.Indices.EmplaceBack( UniqueIndex );
             }
 
             if ( !Tangents )
             {
-                MeshFactory::CalculateTangents( Data.Mesh );
+                CMeshUtilities::CalculateTangents( Data.Mesh );
             }
 
             // Convert to lefthanded
-            if ( Settings->CoordAxis == ofbx::CoordSystem_RightHanded )
+            if ( Flags & EFBXFlags::FBXFlags_EnsureLeftHanded )
             {
-                MeshFactory::LeftHandedConversion( Data.Mesh );
+                if ( Settings->CoordAxis == ofbx::CoordSystem_RightHanded )
+                {
+                    CMeshUtilities::ReverseHandedness( Data.Mesh );
+                }
             }
 
             Data.Name = CurrentMesh->name;

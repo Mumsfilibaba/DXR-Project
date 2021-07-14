@@ -2,5 +2,5 @@
 #include <string>
 
 // TODO: Custom string implementation
-using CString = std::string;
-using CWString = std::wstring;
+using String = std::string;
+using WString = std::wstring;

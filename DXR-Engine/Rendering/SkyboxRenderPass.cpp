@@ -8,7 +8,7 @@
 
 bool SkyboxRenderPass::Init( FrameResources& FrameResources )
 {
-    SkyboxMesh = MeshFactory::CreateSphere( 1 );
+    SkyboxMesh = CMeshFactory::CreateSphere( 1 );
 
     ResourceData VertexData = ResourceData( SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes() );
     SkyboxVertexBuffer = CreateVertexBuffer<Vertex>( SkyboxMesh.Vertices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &VertexData );

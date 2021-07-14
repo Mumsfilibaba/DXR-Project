@@ -42,26 +42,25 @@ public:
         return Move( Components );
     }
 
-    const TArray<Actor*>& GetActors() const
+    FORCEINLINE const TArray<Actor*>& GetActors() const
     {
         return Actors;
     }
-    const TArray<Light*>& GetLights() const
+
+    FORCEINLINE const TArray<Light*>& GetLights() const
     {
         return Lights;
     }
 
-    const TArray<MeshDrawCommand>& GetMeshDrawCommands() const
+    FORCEINLINE const TArray<MeshDrawCommand>& GetMeshDrawCommands() const
     {
         return MeshDrawCommands;
     }
 
-    Camera* GetCamera() const
+    FORCEINLINE Camera* GetCamera() const
     {
         return CurrentCamera;
     }
-
-    static Scene* LoadFromFile( const std::string& Filepath );
 
 private:
     void AddMeshComponent( class MeshComponent* Component );
