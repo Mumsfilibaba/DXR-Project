@@ -3,8 +3,7 @@
 #include <codecvt>
 #include <locale>
 
-using String = std::string;
-using WString = std::wstring;
+#include "Core/Containers/String.h"
 
 inline WString ConvertToWide( const String& AsciiString )
 {
@@ -20,7 +19,7 @@ inline String ConvertToAscii( const WString& WideString )
 
 inline void ConvertBackslashes( String& OutString )
 {
-    size_t pos = OutString.find_first_of( '\\' );
+    auto pos = OutString.find_first_of( '\\' );
     while ( pos != String::npos )
     {
         OutString.replace( pos, 1, 1, '/' );
@@ -30,9 +29,9 @@ inline void ConvertBackslashes( String& OutString )
 
 inline String& ToLower( String& InString )
 {
-    for ( char& c : InString )
+    for ( char& Char : InString )
     {
-        c = (char)tolower( c );
+        Char = (char)tolower( Char );
     }
 
     return InString;
@@ -41,9 +40,9 @@ inline String& ToLower( String& InString )
 inline String ToLower( const String& InString )
 {
     String Result = InString;
-    for ( char& c : Result )
+    for ( char& Char : Result )
     {
-        c = (char)tolower( c );
+        Char = (char)tolower( Char );
     }
 
     return Result;
@@ -51,9 +50,9 @@ inline String ToLower( const String& InString )
 
 inline WString& ToLower( WString& InString )
 {
-    for ( wchar_t& c : InString )
+    for ( wchar_t& Char : InString )
     {
-        c = (wchar_t)towlower( c );
+        Char = (wchar_t)towlower( Char );
     }
 
     return InString;
@@ -62,9 +61,9 @@ inline WString& ToLower( WString& InString )
 inline WString ToLower( const WString& InString )
 {
     WString Result = InString;
-    for ( wchar_t& c : Result )
+    for ( wchar_t& Char : Result )
     {
-        c = (wchar_t)towlower( c );
+        Char = (wchar_t)towlower( Char );
     }
 
     return Result;

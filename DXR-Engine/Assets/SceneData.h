@@ -1,6 +1,7 @@
 #pragma once
 #include "Core.h"
 #include "VertexFormat.h"
+#include "TextureFormat.h"
 
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedPtr.h"
@@ -30,33 +31,32 @@ struct SModelData
     int32 MaterialIndex = -1;
 };
 
-enum class EImageFormat : uint8
-{
-    /* Unknown */
-    None = 0,
-    
-    /* RGBA - Uint8 */
-    R8G8B8A8_Unorm = 1,
-
-    /* RGBA - Float32 */
-    R32G32B32A32_Float = 2
-};
-
 /* 2-D image for when loading materials */
 struct SImage2D
 {
-    /* Path to the image specified in the model-file */
+    SImage2D() = default;
+
+    SImage2D( const String& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat )
+        : Path( InPath )
+        , Image()
+        , Width( InWidth )
+        , Height( InHeight )
+        , Format( InFormat )
+    {
+    }
+
+    /* Relative path to the image specified in the model-file */
     String Path;
 
     /* Pointer to image data */
     TSharedPtr<uint8[]> Image;
 
     /* Size of the image */
-    uint16 Width;
-    uint16 Height;
+    uint16 Width = 0;
+    uint16 Height = 0;
 
     /* The format that the image was loaded as */
-    EImageFormat Format = EImageFormat::None;
+    EFormat Format = EFormat::Unknown;
 };
 
 /* Contains loaded data from a material */
@@ -64,22 +64,28 @@ struct SMaterialData
 {
     /* Diffuse texture */
     TSharedPtr<SImage2D> DiffuseTexture;
-    
+
+    /* Normal texture */
+    TSharedPtr<SImage2D> NormalTexture;
+
     /* Specular texture - Stores AO, Metallic, and Roughness in the same textures */
     TSharedPtr<SImage2D> SpecularTexture;
-    
+
     /* Emissive texture */
     TSharedPtr<SImage2D> EmissiveTexture;
-    
+
     /* AO texture - Ambient Occlusion */
     TSharedPtr<SImage2D> AOTexture;
-    
+
     /* Roughness texture*/
     TSharedPtr<SImage2D> RoughnessTexture;
-    
+
     /* Metallic Texture*/
     TSharedPtr<SImage2D> MetallicTexture;
-    
+
+    /* Metallic Texture*/
+    TSharedPtr<SImage2D> AlphaMaskTexture;
+
     /* Diffuse Parameter */
     CVector3 Diffuse;
 

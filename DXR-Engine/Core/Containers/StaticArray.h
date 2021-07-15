@@ -19,7 +19,7 @@ public:
     {
         return Elements[0];
     }
-    
+
     FORCEINLINE const T& Front() const noexcept
     {
         return Elements[0];

@@ -1,32 +1,15 @@
 #include "FBXLoader.h"
-#include "VertexFormat.h"
-#include "MeshUtilities.h"
+
+#include "Assets/VertexFormat.h"
+#include "Assets/MeshUtilities.h"
 
 #include "Math/Matrix4.h"
 
 #include "Core/Containers/HashTable.h"
 
+#include "Utilities/StringUtilities.h"
+
 #include <ofbx.h>
-
-// Temporary string converter from .dds to .png
-// TODO: Maybe support .dds loading :)
-static void FileStringWithDDSToPNG( String& OutString ) 
-{
-    for ( char& Char : OutString )
-    {
-        Char = static_cast<char>(tolower( Char ));
-    }
-
-    const char* SearchString = ".dds";
-    const auto Length = strlen( SearchString );
-
-    auto Pos = OutString.find( SearchString );
-    while ( Pos != std::string::npos )
-    {
-        OutString.replace( Pos, std::string::npos, ".PNG" );
-        Pos = OutString.find( SearchString, Pos + Length );
-    }
-}
 
 static String ExtractPath( const String& FullFilePath )
 {
@@ -73,6 +56,28 @@ static void GetMatrix( const ofbx::Object* Mesh, CMatrix4& OutMatrix )
     else
     {
         OutMatrix = CMatrix4::Identity();
+    }
+}
+
+static TSharedPtr<SImage2D> LoadMaterialTexture( const String& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type )
+{
+    const ofbx::Texture* MaterialTexture = Material->getTexture( Type );
+    if ( MaterialTexture )
+    {
+        // Non-static buffer to support multithreading
+        char StringBuffer[256];
+        MaterialTexture->getRelativeFileName().toString( StringBuffer );
+
+        // Make sure that correct slashes are used
+        String Filename = StringBuffer;
+        ConvertBackslashes( Filename );
+
+        TSharedPtr<SImage2D> Texture = MakeShared<SImage2D>();
+        return Texture;
+    }
+    else
+    {
+        return TSharedPtr<SImage2D>();
     }
 }
 
@@ -128,9 +133,6 @@ bool CFBXLoader::LoadFile( const String& Filename, SSceneData& OutScene, uint32 
     THashTable<Vertex, uint32, VertexHasher>  UniqueVertices;
     THashTable<const ofbx::Material*, uint32> UniqueMaterials;
 
-    // Non-static buffer to support multithreading
-    char StrBuffer[256];
-
     String Path = ExtractPath( Filename );
 
     SModelData Data;
@@ -151,80 +153,18 @@ bool CFBXLoader::LoadFile( const String& Filename, SSceneData& OutScene, uint32 
             }
 
             SMaterialData MaterialData;
-            //MaterialData.Diffuse = CVector3( CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b );
-            //MaterialData.TexPath = Path;
-            //MaterialData.AO = 1.0f;//  CurrentMaterial->getSpecularColor().r;
-            //MaterialData.Roughness = 1.0f;// CurrentMaterial->getSpecularColor().g;
-            //MaterialData.Metallic = 1.0f;// CurrentMaterial->getSpecularColor().b;
+            MaterialData.DiffuseTexture = LoadMaterialTexture( Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE );
+            MaterialData.NormalTexture = LoadMaterialTexture( Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL );
+            MaterialData.SpecularTexture = LoadMaterialTexture( Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR );
+            MaterialData.EmissiveTexture = LoadMaterialTexture( Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE );
+            MaterialData.AOTexture = LoadMaterialTexture( Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT );
+
+            MaterialData.Diffuse = CVector3( CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b );
+            MaterialData.AO = 1.0f;//  CurrentMaterial->getSpecularColor().r;
+            MaterialData.Roughness = 1.0f;// CurrentMaterial->getSpecularColor().g;
+            MaterialData.Metallic = 1.0f;// CurrentMaterial->getSpecularColor().b;
 
             //TODO: Other material properties
-
-            const ofbx::Texture* AmbientTex = CurrentMaterial->getTexture( ofbx::Texture::TextureType::AMBIENT );
-            if ( AmbientTex )
-            {
-                AmbientTex->getRelativeFileName().toString( StrBuffer );
-                //MaterialData.AOTexname = StrBuffer;
-
-                //ConvertBackslashes( MaterialData.AOTexname );
-                //// TODO: We should support .dds in the future
-                //FileStringWithDDSToPNG( MaterialData.AOTexname );
-            }
-
-            const ofbx::Texture* DiffuseTex = CurrentMaterial->getTexture( ofbx::Texture::TextureType::DIFFUSE );
-            if ( DiffuseTex )
-            {
-                DiffuseTex->getRelativeFileName().toString( StrBuffer );
-                //MaterialData.DiffTexName = StrBuffer;
-
-                //ConvertBackslashes( MaterialData.DiffTexName );
-                //// TODO: We should support .dds in the future
-                //FileStringWithDDSToPNG( MaterialData.DiffTexName );
-            }
-
-            const ofbx::Texture* NormalTex = CurrentMaterial->getTexture( ofbx::Texture::TextureType::NORMAL );
-            if ( NormalTex )
-            {
-                NormalTex->getRelativeFileName().toString( StrBuffer );
-                //MaterialData.NormalTexname = StrBuffer;
-
-                //ConvertBackslashes( MaterialData.NormalTexname );
-                //// TODO: We should support .dds in the future
-                //FileStringWithDDSToPNG( MaterialData.NormalTexname );
-            }
-
-            const ofbx::Texture* SpecularTex = CurrentMaterial->getTexture( ofbx::Texture::TextureType::SPECULAR );
-            if ( SpecularTex )
-            {
-                SpecularTex->getRelativeFileName().toString( StrBuffer );
-                //MaterialData.SpecTexName = StrBuffer;
-
-                //ConvertBackslashes( MaterialData.SpecTexName );
-                //// TODO: We should support .dds in the future
-                //FileStringWithDDSToPNG( MaterialData.SpecTexName );
-            }
-
-            const ofbx::Texture* ReflectionTex = CurrentMaterial->getTexture( ofbx::Texture::TextureType::REFLECTION );
-            if ( ReflectionTex )
-            {
-                // TODO: Load this properly
-            }
-
-            const ofbx::Texture* ShininessTex = CurrentMaterial->getTexture( ofbx::Texture::TextureType::SHININESS );
-            if ( ShininessTex )
-            {
-                // TODO: Load this properly
-            }
-
-            const ofbx::Texture* EmissiveTex = CurrentMaterial->getTexture( ofbx::Texture::TextureType::EMISSIVE );
-            if ( EmissiveTex )
-            {
-                EmissiveTex->getRelativeFileName().toString( StrBuffer );
-                //MaterialData.EmissiveTexName = StrBuffer;
-
-                //ConvertBackslashes( MaterialData.EmissiveTexName );
-                //// TODO: We should support .dds in the future
-                //FileStringWithDDSToPNG( MaterialData.EmissiveTexName );
-            }
 
             UniqueMaterials[CurrentMaterial] = OutScene.Materials.Size();
             OutScene.Materials.EmplaceBack( MaterialData );
@@ -283,7 +223,7 @@ bool CFBXLoader::LoadFile( const String& Filename, SSceneData& OutScene, uint32 
                 // Position
                 CVector3 Position = CVector3( (float)Vertices[CurrentIndex].x, (float)Vertices[CurrentIndex].y, (float)Vertices[CurrentIndex].z );
                 TempVertex.Position = Transform.TransformPosition( Position );
-                
+
                 // Apply the scene scale
                 if ( Flags & EFBXFlags::FBXFlags_ApplyScaleFactor )
                 {
@@ -293,9 +233,9 @@ bool CFBXLoader::LoadFile( const String& Filename, SSceneData& OutScene, uint32 
                 // Normal
                 CVector3 Normal = CVector3( (float)Normals[CurrentIndex].x, (float)Normals[CurrentIndex].y, (float)Normals[CurrentIndex].z );
                 TempVertex.Normal = Transform.TransformDirection( Normal );
-                
+
                 // TexCoords
-                TempVertex.TexCoord = CVector2((float)TexCoords[CurrentIndex].x, (float)TexCoords[CurrentIndex].y);
+                TempVertex.TexCoord = CVector2( (float)TexCoords[CurrentIndex].x, (float)TexCoords[CurrentIndex].y );
 
                 // Tangents
                 if ( Tangents )

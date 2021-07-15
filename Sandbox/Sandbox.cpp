@@ -6,7 +6,8 @@
 #include "Rendering/DebugUI.h"
 #include "Rendering/Resources/TextureFactory.h"
 
-#include "Assets/OBJLoader.h"
+#include "Assets/Loaders/OBJLoader.h"
+#include "Assets/Loaders/FBXLoader.h"
 
 #include "Scene/Scene.h"
 #include "Scene/Lights/PointLight.h"
@@ -34,11 +35,13 @@ bool Sandbox::Init()
     // Initialize Scene
     Actor* NewActor = nullptr;
     MeshComponent* NewComponent = nullptr;
-    CurrentScene = DBG_NEW Scene();
+    CurrentScene = DBG_NEW Scene(); // TODO: Scene should be the renderer side only, and should reside in the engine
 
     // Load Scene
     SSceneData SceneData;
     COBJLoader::LoadFile( "../Assets/Scenes/Sponza/Sponza.obj", SceneData );
+
+    CFBXLoader::LoadFile( "../Assets/Scenes/Bistro/BistroExterior.fbx", SceneData );
 
     // Create Spheres
     SMeshData SphereMeshData = CMeshFactory::CreateSphere( 3 );

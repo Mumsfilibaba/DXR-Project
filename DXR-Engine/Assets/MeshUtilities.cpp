@@ -159,7 +159,7 @@ void CMeshUtilities::CalculateHardNormals( SMeshData& OutData ) noexcept
 {
     Assert( OutData.Indices.Size() % 3 == 0 );
 
-    for (uint32 i = 0; i < OutData.Indices.Size(); i += 3)
+    for ( uint32 i = 0; i < OutData.Indices.Size(); i += 3 )
     {
         Vertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
         Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
@@ -167,7 +167,7 @@ void CMeshUtilities::CalculateHardNormals( SMeshData& OutData ) noexcept
 
         CVector3 Edge0 = Vertex2.Position - Vertex0.Position;
         CVector3 Edge1 = Vertex1.Position - Vertex0.Position;
-        CVector3 Normal = Edge0.CrossProduct(Edge1);
+        CVector3 Normal = Edge0.CrossProduct( Edge1 );
         Normal.Normalize();
 
         Vertex0.Normal = Normal;
@@ -181,7 +181,7 @@ void CMeshUtilities::CalculateSoftNormals( SMeshData& OutData ) noexcept
     Assert( OutData.Indices.Size() % 3 == 0 );
 
     // TODO: Write better version. For now calculate the hard normals and then average all of them
-    CalculateHardNormals(OutData);
+    CalculateHardNormals( OutData );
 
     for ( uint32 i = 0; i < OutData.Indices.Size(); i += 3 )
     {
