@@ -1,7 +1,7 @@
 #pragma once
 #include "Core.h"
 
-#include "SceneData.h"
+#include "Assets/SceneData.h"
 
 /* Flags for loading */
 enum EFBXFlags : uint8

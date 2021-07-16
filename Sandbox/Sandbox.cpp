@@ -41,7 +41,7 @@ bool Sandbox::Init()
     SSceneData SceneData;
     COBJLoader::LoadFile( "../Assets/Scenes/Sponza/Sponza.obj", SceneData );
 
-    CFBXLoader::LoadFile( "../Assets/Scenes/Bistro/BistroExterior.fbx", SceneData );
+    //CFBXLoader::LoadFile( "../Assets/Scenes/Bistro/BistroExterior.fbx", SceneData );
 
     // Create Spheres
     SMeshData SphereMeshData = CMeshFactory::CreateSphere( 3 );

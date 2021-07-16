@@ -2,8 +2,68 @@
 
 #include <stb_image.h>
 
-static EFormat GetFormat( int32 Width, int32 Height, int32 Channels )
+static EFormat GetByteFormat( int32 Channels )
 {
+    if ( Channels == 4)
+    {
+        return EFormat::R8G8B8A8_Unorm;
+    }
+    else if ( Channels == 2 )
+    {
+        return EFormat::R8G8_Unorm;
+    }
+    else if ( Channels == 1 )
+    {
+        return EFormat::R8_Unorm;
+    }
+    else
+    {
+        return EFormat::Unknown;
+    }
+}
+
+static EFormat GetExtendedFormat( int32 Channels )
+{
+    if ( Channels == 4)
+    {
+        return EFormat::R16G16B16A16_Unorm;
+    }
+    else if (Channels == 2)
+    {
+        return EFormat::R16G16_Unorm;
+    }
+    else if ( Channels == 1 )
+    {
+        return EFormat::R16_Unorm;
+    }
+    else
+    {
+        return EFormat::Unknown;
+    }
+}
+
+static EFormat GetFloatFormat( int32 Channels )
+{
+    if ( Channels == 4 )
+    {
+        return EFormat::R32G32B32A32_Float;
+    }
+    else if ( Channels == 3 )
+    {
+        return EFormat::R32G32B32_Float;
+    }
+    else if ( Channels == 2 )
+    {
+        return EFormat::R32G32_Float;
+    }
+    else if ( Channels == 1 )
+    {
+        return EFormat::R32_Float;
+    }
+    else
+    {
+        return EFormat::Unknown;
+    }
 }
 
 TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const String& Filename )
@@ -21,27 +81,43 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const String& Filename )
     int32 ChannelCount = 0;
     stbi_info_from_file( File, &Width, &Height, &ChannelCount );
 
-    const bool Is16Bit = stbi_is_16_bit_from_file( File );
     const bool IsFloat = stbi_is_hdr_from_file( File );
+    const bool IsExtented = stbi_is_16_bit_from_file( File );
 
+    EFormat Format = EFormat::Unknown;
+    
     // Load based on format
     TUniquePtr<uint8[]> Pixels;
-    if ( !Is16Bit && !IsFloat )
+    if ( IsExtented )
     {
-        Pixels = TUniquePtr<uint8[]>( stbi_load_from_file( File, &Width, &Height, &ChannelCount, 0 ) );
-    }
-    else if ( Is16Bit )
-    {
-        Pixels = TUniquePtr<uint8[]>( reinterpret_cast<uint8*>(stbi_load_from_file_16( File, &Width, &Height, &ChannelCount, 0 )) );
+        if ( ChannelCount == 3 )
+        {
+            Pixels = TUniquePtr<uint8[]>( reinterpret_cast<uint8*>(stbi_load_from_file_16( File, &Width, &Height, &ChannelCount, 4 )) );
+        }
+        else
+        {
+            Pixels = TUniquePtr<uint8[]>( reinterpret_cast<uint8*>(stbi_load_from_file_16( File, &Width, &Height, &ChannelCount, 0 )) );
+        }
+
+        Format = GetExtendedFormat( ChannelCount );
     }
     else if ( IsFloat )
     {
         Pixels = TUniquePtr<uint8[]>( reinterpret_cast<uint8*>(stbi_loadf_from_file( File, &Width, &Height, &ChannelCount, 0 )) );
+        Format = GetFloatFormat( ChannelCount );
     }
     else
     {
-        LOG_ERROR( "[CStbImageLoader]: Format not supported" );
-        return nullptr;
+        if ( ChannelCount == 3 )
+        {
+            Pixels = TUniquePtr<uint8[]>( stbi_load_from_file( File, &Width, &Height, &ChannelCount, 4 ) );
+        }
+        else
+        {
+            Pixels = TUniquePtr<uint8[]>( stbi_load_from_file( File, &Width, &Height, &ChannelCount, 0 ) );
+        }
+
+        Format = GetByteFormat( ChannelCount );
     }
 
     // Check if succeeded
@@ -54,8 +130,6 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const String& Filename )
     {
         LOG_INFO( "[CStbImageLoader]: Loaded image '" + Filename + "'" );
     }
-
-    const EFormat Format = GetFormat( Width, Height, ChannelCount );
 
     TSharedPtr<SImage2D> Image = MakeShared<SImage2D>( Filename, Width, Height, Format );
     Image->Image = TSharedPtr<uint8[]>( ::Move( Pixels ) );

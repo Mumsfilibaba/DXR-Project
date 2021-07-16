@@ -103,4 +103,6 @@ struct SSceneData
 {
     TArray<SModelData> Models;
     TArray<SMaterialData> Materials;
+
+    void AddToScene( class Scene* Scene );
 };

@@ -13,7 +13,13 @@
 
 static TSharedPtr<SImage2D> LoadMaterialTexture( const String& Path, const String& Filename )
 {
-    String Fullpath = Path + Filename;
+    // If filename is empty there is no texture to load
+    if ( Filename.empty() )
+    {
+        return nullptr;
+    }
+
+    String Fullpath = Path + '/' + Filename;
 
     // Make sure that correct slashes are used
     ConvertBackslashes( Fullpath );
@@ -75,7 +81,6 @@ bool COBJLoader::LoadFile( const String& Filename, SSceneData& OutScene, bool Re
         {
             // Start a new mesh
             Data.Mesh.Clear();
-
             UniqueVertices.clear();
 
             Data.Mesh.Indices.Reserve( IndexCount );

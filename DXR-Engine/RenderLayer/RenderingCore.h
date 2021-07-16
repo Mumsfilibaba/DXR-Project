@@ -1,6 +1,9 @@
 #pragma once
 #include "Core.h"
 
+// TODO: Move to rendering
+#include "Assets/TextureFormat.h"
+
 #include "Math/Color.h"
 
 enum class ECubeFace

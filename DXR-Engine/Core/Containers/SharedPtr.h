@@ -232,7 +232,7 @@ protected:
         InternalAddStrongRef();
     }
 
-    template<typename TOther, typename DOther>
+    template<typename TOther>
     FORCEINLINE void InternalConstructStrong( TOther* InPtr ) noexcept
     {
         static_assert(std::is_convertible<TOther*, T*>());
