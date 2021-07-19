@@ -3,10 +3,9 @@
 
 #include "Core/Templates/Move.h"
 
-// TStaticArray - Static Array similar to std::array
-
+/* A fixed size array similar to std::array */
 template<typename T, int32 N>
-struct TStaticArray
+struct TFixedArray
 {
 public:
     typedef T* Iterator;

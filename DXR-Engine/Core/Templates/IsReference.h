@@ -1,33 +1,34 @@
 #pragma once
 
-template<typename T>
-struct TIsLValueReference
-{
-    static constexpr bool Value = false;
-};
-
-template<typename T>
-struct TIsLValueReference<T&>
-{
-    static constexpr bool Value = true;
-};
-
 /* Check if type is lvalue reference type */
 template<typename T>
-inline constexpr bool IsLValueReference = TIsLValueReference<T>::Value;
-
-template<typename T>
-struct TIsRValueReference
+struct TIsLeftValueReference
 {
     static constexpr bool Value = false;
 };
 
 template<typename T>
-struct TIsRValueReference<T&&>
+struct TIsLeftValueReference<T&>
 {
     static constexpr bool Value = true;
 };
 
 /* Check if type is rvalue reference type */
 template<typename T>
-inline constexpr bool IsRValueReference = TIsRValueReference<T>::Value;
+struct TIsRightValueReference
+{
+    static constexpr bool Value = false;
+};
+
+template<typename T>
+struct TIsRightValueReference<T&&>
+{
+    static constexpr bool Value = true;
+};
+
+/* Check if type is either lvalue- or rvalue reference */
+template<typename T>
+struct TIsReference
+{
+    static constexpr bool Value = typename TIsLeftValueReference<T>::Value || typename TIsRightValueReference<T>::Value;
+};

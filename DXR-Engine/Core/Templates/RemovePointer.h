@@ -1,35 +1,32 @@
 #pragma once
 
+/* Removes the pointer of the type */
 template<typename T>
-struct _TRemovePointer
+struct TRemovePointer
 {
     typedef T Type;
 };
 
 template<typename T>
-struct _TRemovePointer<T*>
+struct TRemovePointer<T*>
 {
     typedef T Type;
 };
 
 template<typename T>
-struct _TRemovePointer<T* const>
+struct TRemovePointer<T* const>
 {
     typedef T Type;
 };
 
 template<typename T>
-struct _TRemovePointer<T* volatile>
+struct TRemovePointer<T* volatile>
 {
     typedef T Type;
 };
 
 template<typename T>
-struct _TRemovePointer<T* const volatile>
+struct TRemovePointer<T* const volatile>
 {
     typedef T Type;
 };
-
-/* Removes pointer and retrives the type */
-template<typename T>
-using TRemovePointer = typename _TRemovePointer<T>::Type;

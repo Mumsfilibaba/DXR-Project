@@ -1,14 +1,14 @@
 #pragma once
 
-/* Checks if two types are the same */
-template<typename T, typename U>
-struct TIsSame
+/* Determines if the type is const or not */
+template<typename T>
+struct TIsConst
 {
     static constexpr bool Value = false;
 };
 
 template<typename T>
-struct TIsSame<T, T>
+struct TIsConst<const T>
 {
     static constexpr bool Value = true;
 };

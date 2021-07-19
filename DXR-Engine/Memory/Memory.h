@@ -5,12 +5,19 @@ class Memory
 {
 public:
     static void* Malloc( uint64 Size );
+    static void* Realloc( void* Pointer, uint64 Size);
     static void  Free( void* Ptr );
 
     template<typename T>
     static T* Malloc( uint32 Count )
     {
         return reinterpret_cast<T*>(Malloc( sizeof( T ) * Count ));
+    }
+
+    template<typename T>
+    static T* Realloc( T* Pointer, uint64 Count )
+    {
+        return reinterpret_cast<T*>(Realloc( Pointer, sizeof( T ) * Count ));
     }
 
     static void* Memset( void* Destination, uint8 Value, uint64 Size );
