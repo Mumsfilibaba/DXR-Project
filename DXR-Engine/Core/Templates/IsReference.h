@@ -1,4 +1,5 @@
 #pragma once
+#include "Or.h"
 
 /* Check if type is lvalue reference type */
 template<typename T>
@@ -30,5 +31,5 @@ struct TIsRightValueReference<T&&>
 template<typename T>
 struct TIsReference
 {
-    static constexpr bool Value = typename TIsLeftValueReference<T>::Value || typename TIsRightValueReference<T>::Value;
+    static constexpr bool Value = TOR<typename TIsLeftValueReference<T>, typename TIsRightValueReference<T>>::Value;
 };
