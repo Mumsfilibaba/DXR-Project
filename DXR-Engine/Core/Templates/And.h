@@ -7,7 +7,7 @@ struct TAnd;
 template<typename T, typename... ArgsType>
 struct TAnd<T, ArgsType...>
 {
-    static constexpr bool Value = typename T::Value && typename TAnd<ArgsType...>::Value;
+    static constexpr bool Value = T::Value && TAnd<ArgsType...>::Value;
 };
 
 template<typename T>

@@ -8,16 +8,16 @@ class TDefaultAllocator
 {
 public:
     /* Since we do not store the size of the allocation we cannot copy. TODO: See if this is a better approcach */
-    TDefaultAllocator(const TDefaultAllocator&) = delete;
-    TDefaultAllocator& operator=(const TDefaultAllocator&) = delete;
-    
+    TDefaultAllocator( const TDefaultAllocator& ) = delete;
+    TDefaultAllocator& operator=( const TDefaultAllocator& ) = delete;
+
     FORCEINLINE TDefaultAllocator() noexcept
-        : Allocation(nullptr)
+        : Allocation( nullptr )
     {
     }
 
-    FORCEINLINE TDefaultAllocator(TDefaultAllocator&& Other ) noexcept
-        : Allocation(Other.Allocation)
+    FORCEINLINE TDefaultAllocator( TDefaultAllocator&& Other ) noexcept
+        : Allocation( Other.Allocation )
     {
         Other.Allocation = nullptr;
     }
@@ -29,18 +29,18 @@ public:
 
     FORCEINLINE T* AllocateOrRealloc( uint32 Count ) noexcept
     {
-        return Memory::Realloc<T>(Count);
+        return Memory::Realloc<T>( Count );
     }
 
     FORCEINLINE void Free() noexcept
-    {   
+    {
         Memory::Free( Allocation );
         Allocation = nullptr;
     }
 
-    FORCEINLINE void MoveFrom(TDefaultAllocator&& Other)
+    FORCEINLINE void MoveFrom( TDefaultAllocator&& Other )
     {
-        if (this != &Other)
+        if ( this != &Other )
         {
             Allocation = Other.Allocation;
             Other.Allocation = nullptr;
@@ -57,11 +57,11 @@ public:
         return Allocation;
     }
 
-    TDefaultAllocator& operator=(TDefaultAllocator&& Other)
+    TDefaultAllocator& operator=( TDefaultAllocator&& Other )
     {
-        MoveFrom(::Forward<TDefaultAllocator>(Other));
+        MoveFrom( ::Forward<TDefaultAllocator>( Other ) );
         return *this;
-    }    
+    }
 
 private:
     T* Allocation;

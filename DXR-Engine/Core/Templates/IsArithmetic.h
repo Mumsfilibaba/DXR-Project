@@ -8,5 +8,5 @@
 template<typename T>
 struct TIsArithmetic
 {
-    static constexpr bool Value = TOr<typename TIsInteger<T>, typename TIsFloatingPoint<T>>>::Value;
+    static constexpr bool Value = TOr<TIsInteger<T>, TIsFloatingPoint<T>> > ::Value;
 };

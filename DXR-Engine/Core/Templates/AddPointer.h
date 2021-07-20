@@ -6,5 +6,5 @@
 template<typename T>
 struct TAddPointer
 {
-    typedef TIdentity<typename TRemoveReference<T>::Type*> Type;
+    typedef typename TIdentity<typename TRemoveReference<T>::Type*>::Type Type;
 };

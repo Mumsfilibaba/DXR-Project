@@ -9,5 +9,5 @@ typedef decltype(nullptr) Nullptr;
 template<typename T>
 struct TIsNullptr
 {
-    static constexpr bool Value = TIsSame<Nullptr, typename TRemoveCV<T>::Type>>::Value; 
+    static constexpr bool Value = TIsSame<Nullptr, typename TRemoveCV<T>::Type >> ::Value;
 };

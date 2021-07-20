@@ -4,5 +4,5 @@
 template<typename T>
 struct TIsPlainOldData
 {
-    static constexpr bool Value = __is_pod(T);
+    static constexpr bool Value = __is_pod( T );
 };

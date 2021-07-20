@@ -9,9 +9,5 @@
 template<typename T>
 struct TIsObject
 {
-    static constexpr bool Value = TOr<
-        typename TIsScalar<T>, 
-        typename TIsArray<T>, 
-        typename TIsUnion<T>, 
-        typename TIsClass<T>>::Value;
+    static constexpr bool Value = TOr<TIsScalar<T>, TIsArray<T>, TIsUnion<T>, TIsClass<T>>::Value;
 };

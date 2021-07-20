@@ -4,11 +4,11 @@
 template<bool Condition, typename TrueType, typename FalseType>
 struct TConditional
 {
-    typename TrueType Type;
+    typedef TrueType Type;
 };
 
 template<typename TrueType, typename FalseType>
 struct TConditional<false, TrueType, FalseType>
 {
-    typename FalseType Type;
+    typedef FalseType Type;
 };

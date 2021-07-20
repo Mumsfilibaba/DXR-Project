@@ -7,7 +7,7 @@ struct TOr;
 template<typename T, typename... ArgsType>
 struct TOr<T, ArgsType...>
 {
-    static constexpr bool Value = typename T::Value || typename TOr<ArgsType...>::Value;
+    static constexpr bool Value = T::Value || TOr<ArgsType...>::Value;
 };
 
 template<typename T>

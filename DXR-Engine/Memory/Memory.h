@@ -5,7 +5,7 @@ class Memory
 {
 public:
     static void* Malloc( uint64 Size );
-    static void* Realloc( void* Pointer, uint64 Size);
+    static void* Realloc( void* Pointer, uint64 Size );
     static void  Free( void* Ptr );
 
     template<typename T>

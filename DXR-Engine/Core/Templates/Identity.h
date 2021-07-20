@@ -1,6 +1,6 @@
 #pragma once
 
-/* Returns the type (C++20) */
+/* Returns the type */
 template<typename T>
 struct TIdentity
 {

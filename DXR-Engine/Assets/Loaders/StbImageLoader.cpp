@@ -4,7 +4,7 @@
 
 static EFormat GetByteFormat( int32 Channels )
 {
-    if ( Channels == 4)
+    if ( Channels == 4 )
     {
         return EFormat::R8G8B8A8_Unorm;
     }
@@ -24,11 +24,11 @@ static EFormat GetByteFormat( int32 Channels )
 
 static EFormat GetExtendedFormat( int32 Channels )
 {
-    if ( Channels == 4)
+    if ( Channels == 4 )
     {
         return EFormat::R16G16B16A16_Unorm;
     }
-    else if (Channels == 2)
+    else if ( Channels == 2 )
     {
         return EFormat::R16G16_Unorm;
     }
@@ -85,7 +85,7 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const String& Filename )
     const bool IsExtented = stbi_is_16_bit_from_file( File );
 
     EFormat Format = EFormat::Unknown;
-    
+
     // Load based on format
     TUniquePtr<uint8[]> Pixels;
     if ( IsExtented )

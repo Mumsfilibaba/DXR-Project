@@ -11,7 +11,7 @@ class CString
 {
 public:
     typedef TArray<char> ContainerType;
-    typedef typename ContainerType::Iterator Iterator; 
+    typedef typename ContainerType::Iterator Iterator;
     typedef typename ContainerType::ConstIterator ConstIterator;
     typedef uint32 SizeType;
     typedef char CharType;
@@ -47,5 +47,5 @@ public:
     }
 
 private:
-    ContainerType Container; 
+    ContainerType Container;
 }

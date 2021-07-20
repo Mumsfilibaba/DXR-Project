@@ -11,8 +11,8 @@ void* Memory::Malloc( uint64 Size )
     /*
     * Since malloc is not guarateed to return nullptr, we check for it here
     * Source: https://www.cplusplus.com/reference/cstdlib/malloc/
-    */ 
-    if (Size)
+    */
+    if ( Size )
     {
         return ::malloc( Size );
     }
@@ -22,9 +22,9 @@ void* Memory::Malloc( uint64 Size )
     }
 }
 
-void* Memory::Realloc( void* Pointer, uint64 Size)
+void* Memory::Realloc( void* Pointer, uint64 Size )
 {
-    return ::realloc(Pointer, Size);
+    return ::realloc( Pointer, Size );
 }
 
 void Memory::Free( void* Ptr )

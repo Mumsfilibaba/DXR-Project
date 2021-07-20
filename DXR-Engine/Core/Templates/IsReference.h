@@ -31,5 +31,5 @@ struct TIsRightValueReference<T&&>
 template<typename T>
 struct TIsReference
 {
-    static constexpr bool Value = TOR<typename TIsLeftValueReference<T>, typename TIsRightValueReference<T>>::Value;
+    static constexpr bool Value = TOr<TIsLeftValueReference<T>, TIsRightValueReference<T>>::Value;
 };

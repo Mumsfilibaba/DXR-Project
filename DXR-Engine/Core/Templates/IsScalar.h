@@ -10,10 +10,5 @@
 template<typename T>
 struct TIsScalar
 {
-    static constexpr bool Value = TOr<
-        typename TIsArithmetic<T>, 
-        typename TIsEnum<T>, 
-        typename TIsPointer<T>, 
-        typename TIsMemberPointer<T>, 
-        typename TIsNullptr<T>>::Value;
+    static constexpr bool Value = TOr<TIsArithmetic<T>, TIsEnum<T>, TIsPointer<T>, TIsMemberPointer<T>, TIsNullptr<T>>::Value;
 };

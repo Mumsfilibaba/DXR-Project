@@ -7,12 +7,12 @@
 template<typename T>
 struct TIsFundamental
 {
-    static constexpr bool Value = TOr<typename TIsArithmetic<T>, typename TIsVoid<T>, typename TIsNullptr<T>>::Value;
+    static constexpr bool Value = TOr<TIsArithmetic<T>, TIsVoid<T>, TIsNullptr<T>>::Value;
 };
 
-/* Determines if the type is compond or not */
+/* Determines if the type is compound or not */
 template<typename T>
-struct TIsCompond
+struct TIsCompound
 {
     static constexpr bool Value = !TIsFundamental<T>::Value;
 };

@@ -4,5 +4,5 @@
 template<typename T>
 struct TIsEnum
 {
-    static constexpr bool Value = __is_enum(T);
+    static constexpr bool Value = __is_enum( T );
 };
