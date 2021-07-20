@@ -19,3 +19,29 @@ struct TIsArray<T[N]>
 {
     static constexpr bool Value = true;
 };
+
+/* Check if the array is bounded */
+template<typename T>
+struct TIsBoundedArray
+{
+    static constexpr bool Value = false;
+};
+
+template<typename T, int32 N>
+struct TIsBoundedArray<T[N]>
+{
+    static constexpr bool Value = true;
+};
+
+/* Check if the array is unbounded */
+template<typename T>
+struct TIsUnboundedArray
+{
+    static constexpr bool Value = false;
+};
+
+template<typename T>
+struct TIsUnboundedArray<T[]>
+{
+    static constexpr bool Value = true;
+};
