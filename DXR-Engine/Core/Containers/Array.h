@@ -1,21 +1,22 @@
 #pragma once
 #include "Iterator.h"
-#include "Allocator.h"
+#include "Allocators.h"
 
 #include "Core/Templates/Move.h"
 #include "Core/Templates/IsPointer.h"
 #include "Core/Templates/IsSame.h"
+#include "Core/Templates/ObjectHandling.h"
 
 #include <initializer_list>
 
 /* Dynamic Array similar to std::vector */
-template<typename T, typename TAllocator = TDefaultAllocator<T>>
+template<typename T, typename AllocatorType = TDefaultAllocator<T>>
 class TArray
 {
 public:
     typedef T                                   ElementType;
-    typedef ElementType* Iterator;
-    typedef const ElementType* ConstIterator;
+    typedef ElementType*                        Iterator;
+    typedef const ElementType*                  ConstIterator;
     typedef TReverseIterator<ElementType>       ReverseIterator;
     typedef TReverseIterator<const ElementType> ConstReverseIterator;
     typedef uint32                              SizeType;
@@ -182,24 +183,9 @@ public:
         ArraySize = InSize;
     }
 
-    FORCEINLINE void Reserve( SizeType Capacity ) noexcept
+    FORCEINLINE void Reserve( SizeType NewCapacity ) noexcept
     {
-        if ( Capacity != ArrayCapacity )
-        {
-            SizeType OldSize = ArraySize;
-            if ( Capacity < ArraySize )
-            {
-                ArraySize = Capacity;
-            }
-
-            T* TempData = InternalAllocateElements( Capacity );
-            InternalMoveEmplace( Array, Array + ArraySize, TempData );
-            InternalDestructRange( Array, Array + OldSize );
-
-            InternalReleaseData();
-            Array = TempData;
-            ArrayCapacity = Capacity;
-        }
+        InternalReserve(NewCapacity);
     }
 
     template<typename... TArgs>
@@ -530,7 +516,7 @@ public:
 
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return ArraySize * Allocator.StrideInBytes();
+        return Size() * sizeof( ElementType );
     }
 
     FORCEINLINE SizeType Capacity() const noexcept
@@ -540,7 +526,7 @@ public:
 
     FORCEINLINE SizeType CapacityInBytes() const noexcept
     {
-        return ArrayCapacity * Allocator.StrideInBytes();
+        return Capacity() * sizeof( ElementType );
     }
 
     FORCEINLINE T& At( SizeType Index ) noexcept
@@ -557,7 +543,7 @@ public:
 
     FORCEINLINE TArray& operator=( const TArray& Other ) noexcept
     {
-        if ( this != std::addressof( Other ) )
+        if ( this != &Other )
         {
             Clear();
             InternalConstruct( Other.Begin(), Other.End() );
@@ -568,7 +554,7 @@ public:
 
     FORCEINLINE TArray& operator=( TArray&& Other ) noexcept
     {
-        if ( this != std::addressof( Other ) )
+        if ( this != &Other )
         {
             Clear();
             InternalMove( ::Forward<TArray>( Other ) );
@@ -577,10 +563,33 @@ public:
         return *this;
     }
 
-    FORCEINLINE TArray& operator=( std::initializer_list<T> List ) noexcept
+    FORCEINLINE TArray& operator=( std::initializer_list<T> InitList ) noexcept
     {
-        Assign( List );
+        Assign( InitList );
         return *this;
+    }
+
+    FORCEINLINE bool operator==(const TArray& Other) const noexcept
+    {
+        if (Size() != Other.Size())
+        {
+            return false;
+        }
+
+        for (SizeType i = 0; i < Size(); i++)
+        {
+            if (At(i) != Other[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    FORCEINLINE bool operator!=(const TArray& Other) const noexcept
+    {
+        return !(*this == Other);
     }
 
     FORCEINLINE T& operator[]( SizeType Index ) noexcept
@@ -593,8 +602,9 @@ public:
         return At( Index );
     }
 
-    // STL iterator functions - Enables Range-based for-loops
 public:
+
+    /* STL iterator functions - Enables Range-based for-loops */
     FORCEINLINE Iterator begin() noexcept
     {
         return Array;
@@ -656,23 +666,36 @@ public:
     }
 
 private:
-
-    // Check that the iterator belongs to this TArray
-    FORCEINLINE bool InternalIsRangeOwner( ConstIterator InBegin, ConstIterator InEnd ) const noexcept
+    FORCEINLINE void InternalGrow( SizeType NewCapacity ) noexcept
     {
-        return (InBegin < InEnd) && (InBegin >= Begin()) && (InEnd <= End());
+
     }
 
-    FORCEINLINE bool InternalIsIteratorOwner( ConstIterator It ) const noexcept
+    inline void InternalReserve( SizeType NewCapacity ) noexcept
     {
-        return (It >= Begin()) && (It <= End());
+        if (NewCapacity != ArrayCapacity)
+        {
+            if ( NewCapacity < ArraySize)
+            {
+                const SizeType Diff = ArraySize - NewCapacity;
+                ArraySize = NewCapacity;
+                DestructRange<T>(Allocator.Raw() + ArraySize, Diff);
+            }
+
+            AllocatorType NewAllocator;
+            NewAllocator.AllocateOrRealloc( NewCapacity );
+            RelocateRange<T>(NewAllocator.Raw(), Allocator.Raw(), ArraySize);
+            Allocator.MoveFrom(NewAllocator);
+
+            ArrayCapacity = NewCapacity;
+        }
     }
 
     // Helpers
     template<typename TInput>
     FORCEINLINE const T* InternalUnwrapConst( TInput It ) noexcept
     {
-        if constexpr ( IsPointer<TInput> )
+        if constexpr ( IsPointer<TInput>::Value)
         {
             return It;
         }
@@ -685,8 +708,8 @@ private:
     template<typename TInput>
     FORCEINLINE SizeType InternalDistance( TInput InBegin, TInput InEnd ) noexcept
     {
-        constexpr bool TypeIsPointer = IsPointer<TInput>;
-        constexpr bool TypeIsCustomIterator = IsSame<TInput, Iterator> || IsSame<TInput, ConstIterator>;
+        constexpr bool TypeIsPointer = IsPointer<TInput>::Value;
+        constexpr bool TypeIsCustomIterator = TOr<IsSame<TInput, Iterator>, IsSame<TInput, ConstIterator>>::Value;
 
         // Handle outside pointers
         if constexpr ( TypeIsPointer || TypeIsCustomIterator )
@@ -716,12 +739,6 @@ private:
         return BaseSize + (ArrayCapacity / 2) + 1;
     }
 
-    FORCEINLINE T* InternalAllocateElements( SizeType Capacity ) noexcept
-    {
-        // TODO: Why have this in a function
-        return Allocator.Allocate( Capacity );
-    }
-
     FORCEINLINE void InternalReleaseData() noexcept
     {
         if ( Array )
@@ -735,8 +752,7 @@ private:
     {
         if ( Capacity > ArrayCapacity )
         {
-            InternalReleaseData();
-            Array = InternalAllocateElements( Capacity );
+            Array = Allocator.AllocateOrRealloc( Capacity );
             ArrayCapacity = Capacity;
         }
     }
@@ -979,8 +995,8 @@ private:
     }
 
 private:
-    T* Array;
-    SizeType   ArraySize;
-    SizeType   ArrayCapacity;
-    TAllocator Allocator;
+    /* Allocator contains the pointer */
+    AllocatorType Allocator;
+    SizeType ArraySize;
+    SizeType ArrayCapacity;
 };

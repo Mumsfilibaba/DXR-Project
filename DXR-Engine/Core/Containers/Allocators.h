@@ -42,6 +42,8 @@ public:
     {
         if ( this != &Other )
         {
+            Free();
+
             Allocation = Other.Allocation;
             Other.Allocation = nullptr;
         }
