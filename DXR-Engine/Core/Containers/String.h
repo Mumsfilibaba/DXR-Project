@@ -10,11 +10,11 @@ using WString = std::wstring;
 class CString
 {
 public:
-    typedef TArray<char> ContainerType;
-    typedef typename ContainerType::Iterator Iterator;
+    typedef char                                  CharType;
+    typedef TArray<CharType>                      ContainerType;
+    typedef typename ContainerType::Iterator      Iterator;
     typedef typename ContainerType::ConstIterator ConstIterator;
-    typedef uint32 SizeType;
-    typedef char CharType;
+    typedef uint32                                SizeType;
 
     FORCEINLINE CString() noexcept
         : Container()
@@ -48,4 +48,4 @@ public:
 
 private:
     ContainerType Container;
-}
+};

@@ -2,15 +2,18 @@
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/IsArray.h"
 #include "Core/Templates/RemoveExtent.h"
+#include "Core/Templates/IsNullptr.h"
+#include "Core/Templates/IsConvertible.h"
 
-// TUniquePtr - Scalar values. Similar to std::unique_ptr
-
+/* TUniquePtr - Scalar values. Similar to std::unique_ptr */
 template<typename T>
 class TUniquePtr
 {
 public:
-    template<typename TOther>
+    template<typename OtherType>
     friend class TUniquePtr;
+
+    typedef T ElementType;
 
     TUniquePtr( const TUniquePtr& Other ) = delete;
     TUniquePtr& operator=( const TUniquePtr& Other ) noexcept = delete;
@@ -20,12 +23,12 @@ public:
     {
     }
 
-    FORCEINLINE TUniquePtr( std::nullptr_t ) noexcept
+    FORCEINLINE TUniquePtr( NullptrType ) noexcept
         : Ptr( nullptr )
     {
     }
 
-    FORCEINLINE explicit TUniquePtr( T* InPtr ) noexcept
+    FORCEINLINE explicit TUniquePtr( ElementType* InPtr ) noexcept
         : Ptr( InPtr )
     {
     }
@@ -36,11 +39,11 @@ public:
         Other.Ptr = nullptr;
     }
 
-    template<typename TOther>
-    FORCEINLINE TUniquePtr( TUniquePtr<TOther>&& Other ) noexcept
+    template<typename OtherType>
+    FORCEINLINE TUniquePtr( TUniquePtr<OtherType>&& Other ) noexcept
         : Ptr( Other.Ptr )
     {
-        static_assert(std::is_convertible<TOther*, T*>());
+        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
         Other.Ptr = nullptr;
     }
 
@@ -49,14 +52,14 @@ public:
         Reset();
     }
 
-    FORCEINLINE T* Release() noexcept
+    FORCEINLINE ElementType* Release() noexcept
     {
-        T* WeakPtr = Ptr;
+        ElementType* WeakPtr = Ptr;
         Ptr = nullptr;
         return WeakPtr;
     }
 
-    FORCEINLINE void Reset( T* NewPtr = nullptr ) noexcept
+    FORCEINLINE void Reset( ElementType* NewPtr = nullptr ) noexcept
     {
         if ( Ptr != NewPtr )
         {
@@ -67,37 +70,37 @@ public:
 
     FORCEINLINE void Swap( TUniquePtr& Other ) noexcept
     {
-        T* TempPtr = Ptr;
+        ElementType* TempPtr = Ptr;
         Ptr = Other.Ptr;
         Other.Ptr = TempPtr;
     }
 
-    FORCEINLINE T* Get() const noexcept
+    FORCEINLINE ElementType* Get() const noexcept
     {
         return Ptr;
     }
 
-    FORCEINLINE T* const* GetAddressOf() const noexcept
+    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return &Ptr;
     }
 
-    FORCEINLINE T* operator->() const noexcept
+    FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
 
-    FORCEINLINE T& operator*() const noexcept
+    FORCEINLINE ElementType& operator*() const noexcept
     {
         return (*Ptr);
     }
 
-    FORCEINLINE T* const* operator&() const noexcept
+    FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
 
-    FORCEINLINE TUniquePtr& operator=( T* NewPtr ) noexcept
+    FORCEINLINE TUniquePtr& operator=( ElementType* NewPtr ) noexcept
     {
         Reset( NewPtr );
         return *this;
@@ -114,10 +117,10 @@ public:
         return *this;
     }
 
-    template<typename TOther>
-    FORCEINLINE TUniquePtr& operator=( TUniquePtr<TOther>&& Other ) noexcept
+    template<typename OtherType>
+    FORCEINLINE TUniquePtr& operator=( TUniquePtr<OtherType>&& Other ) noexcept
     {
-        static_assert(std::is_convertible<TOther*, T*>());
+        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
 
         if ( this != std::addressof( Other ) )
         {
@@ -128,7 +131,7 @@ public:
         return *this;
     }
 
-    FORCEINLINE TUniquePtr& operator=( std::nullptr_t ) noexcept
+    FORCEINLINE TUniquePtr& operator=( NullptrType ) noexcept
     {
         Reset();
         return *this;
@@ -144,12 +147,12 @@ public:
         return !(*this == Other);
     }
 
-    FORCEINLINE bool operator==( T* InPtr ) const noexcept
+    FORCEINLINE bool operator==( ElementType* InPtr ) const noexcept
     {
         return (Ptr == InPtr);
     }
 
-    FORCEINLINE bool operator!=( T* InPtr ) const noexcept
+    FORCEINLINE bool operator!=( ElementType* InPtr ) const noexcept
     {
         return !(*this == Other);
     }
@@ -169,17 +172,18 @@ private:
         }
     }
 
-    T* Ptr;
+    ElementType* Ptr;
 };
 
-// TUniquePtr - Array values. Similar to std::unique_ptr
-
+/* TUniquePtr - Array values. Similar to std::unique_ptr */
 template<typename T>
 class TUniquePtr<T[]>
 {
 public:
-    template<typename TOther>
+    template<typename OtherType>
     friend class TUniquePtr;
+
+    typedef T ElementType;
 
     TUniquePtr( const TUniquePtr& Other ) = delete;
     TUniquePtr& operator=( const TUniquePtr& Other ) noexcept = delete;
@@ -189,12 +193,12 @@ public:
     {
     }
 
-    FORCEINLINE TUniquePtr( std::nullptr_t ) noexcept
+    FORCEINLINE TUniquePtr( NullptrType ) noexcept
         : Ptr( nullptr )
     {
     }
 
-    FORCEINLINE explicit TUniquePtr( T* InPtr ) noexcept
+    FORCEINLINE explicit TUniquePtr( ElementType* InPtr ) noexcept
         : Ptr( InPtr )
     {
     }
@@ -205,11 +209,11 @@ public:
         Other.Ptr = nullptr;
     }
 
-    template<typename TOther>
-    FORCEINLINE TUniquePtr( TUniquePtr<TOther>&& Other ) noexcept
+    template<typename OtherType>
+    FORCEINLINE TUniquePtr( TUniquePtr<OtherType>&& Other ) noexcept
         : Ptr( Other.Ptr )
     {
-        static_assert(std::is_convertible<TOther*, T*>());
+        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
         Other.Ptr = nullptr;
     }
 
@@ -218,14 +222,14 @@ public:
         Reset();
     }
 
-    FORCEINLINE T* Release() noexcept
+    FORCEINLINE ElementType* Release() noexcept
     {
-        T* WeakPtr = Ptr;
+        ElementType* WeakPtr = Ptr;
         Ptr = nullptr;
         return WeakPtr;
     }
 
-    FORCEINLINE void Reset( T* NewPtr = nullptr ) noexcept
+    FORCEINLINE void Reset( ElementType* NewPtr = nullptr ) noexcept
     {
         if ( Ptr != NewPtr )
         {
@@ -236,33 +240,33 @@ public:
 
     FORCEINLINE void Swap( TUniquePtr& Other ) noexcept
     {
-        T* TempPtr = Ptr;
+        ElementType* TempPtr = Ptr;
         Ptr = Other.Ptr;
         Other.Ptr = TempPtr;
     }
 
-    FORCEINLINE T* Get() const noexcept
+    FORCEINLINE ElementType* Get() const noexcept
     {
         return Ptr;
     }
 
-    FORCEINLINE T* const* GetAddressOf() const noexcept
+    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return &Ptr;
     }
 
-    FORCEINLINE T* const* operator&() const noexcept
+    FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
 
-    FORCEINLINE T& operator[]( uint32 Index ) noexcept
+    FORCEINLINE ElementType& operator[]( uint32 Index ) noexcept
     {
         Assert( Ptr != nullptr );
         return Ptr[Index];
     }
 
-    FORCEINLINE TUniquePtr& operator=( T* InPtr ) noexcept
+    FORCEINLINE TUniquePtr& operator=( ElementType* InPtr ) noexcept
     {
         Reset( InPtr );
         return *this;
@@ -279,10 +283,10 @@ public:
         return *this;
     }
 
-    template<typename TOther>
-    FORCEINLINE  TUniquePtr& operator=( TUniquePtr<TOther>&& Other ) noexcept
+    template<typename OtherType>
+    FORCEINLINE TUniquePtr& operator=( TUniquePtr<OtherType>&& Other ) noexcept
     {
-        static_assert(std::is_convertible<TOther*, T*>());
+        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
 
         if ( this != std::addressof( Other ) )
         {
@@ -293,7 +297,7 @@ public:
         return *this;
     }
 
-    FORCEINLINE TUniquePtr& operator=( std::nullptr_t ) noexcept
+    FORCEINLINE TUniquePtr& operator=( NullptrType ) noexcept
     {
         Reset();
         return *this;
@@ -309,12 +313,12 @@ public:
         return !(*this == Other);
     }
 
-    FORCEINLINE bool operator==( T* InPtr ) const noexcept
+    FORCEINLINE bool operator==( ElementType* InPtr ) const noexcept
     {
         return (Ptr == InPtr);
     }
 
-    FORCEINLINE bool operator!=( T* InPtr ) const noexcept
+    FORCEINLINE bool operator!=( ElementType* InPtr ) const noexcept
     {
         return !(*this == Other);
     }
@@ -334,23 +338,22 @@ private:
         }
     }
 
-    T* Ptr;
+    ElementType* Ptr;
 };
 
-// MakeUnique - Creates a new object together with a UniquePtr
-
-template<typename T, typename... TArgs>
-FORCEINLINE TEnableIf<!IsArray<T>, TUniquePtr<T>> MakeUnique( TArgs&&... Args ) noexcept
+/* MakeUnique - Creates a new object together with a UniquePtr */
+template<typename T, typename... ArgTypes>
+FORCEINLINE TEnableIf<!TIsArray<T>::Value, TUniquePtr<T>> MakeUnique( ArgTypes&&... Args ) noexcept
 {
-    T* UniquePtr = new T( Forward<TArgs>( Args )... );
-    return Move( TUniquePtr<T>( UniquePtr ) );
+    T* UniquePtr = new T( ::Forward<ArgTypes>( Args )... );
+    return ::Move( TUniquePtr<T>( UniquePtr ) );
 }
 
 template<typename T>
-FORCEINLINE TEnableIf<IsArray<T>, TUniquePtr<T>>MakeUnique( uint32 Size ) noexcept
+FORCEINLINE TEnableIf<TIsArray<T>::Value, TUniquePtr<T>>MakeUnique( uint32 Size ) noexcept
 {
-    using TType = TRemoveExtent<T>;
+    typedef typename TRemoveExtent<T>::Type Type;
 
-    TType* UniquePtr = new TType[Size];
-    return Move( TUniquePtr<T>( UniquePtr ) );
+    Type* UniquePtr = new Type[Size];
+    return ::Move( TUniquePtr<T>( UniquePtr ) );
 }

@@ -3,8 +3,7 @@
 /* Add */
 #include "AddCV.h"
 #include "AddPointer.h"
-
-// TODO: Add reference?
+#include "AddReference.h"
 
 /* Remove */
 #include "RemoveCV.h"
@@ -15,6 +14,7 @@
 /* Arithmetic */
 #include "And.h"
 #include "Or.h"
+#include "Not.h"
 
 /* Helpers */
 #include "Conditional.h"
@@ -22,6 +22,10 @@
 #include "Identity.h"
 
 /* Is... */
+#include "IsAssignable.h"
+#include "IsConstructable.h"
+#include "IsCopyable.h"
+#include "IsMovable.h"
 #include "IsArithmetic.h"
 #include "IsArray.h"
 #include "IsClass.h"

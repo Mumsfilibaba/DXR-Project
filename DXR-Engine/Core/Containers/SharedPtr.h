@@ -1,13 +1,10 @@
 #pragma once
 #include "UniquePtr.h"
 
-#include "Templates/IsConvertible.h"
-
+#include "Core/Templates/IsConvertible.h"
 #include "Core/Threading/ThreadSafeInt.h"
 
-
-// PtrControlBlock - Counting references in TWeak- and TSharedPtr
-
+/* PtrControlBlock - Counting references in TWeak- and TSharedPtr */
 struct PtrControlBlock
 {
 public:
@@ -59,9 +56,9 @@ private:
 template<typename T>
 struct TDelete
 {
-    using TType = T;
+    using Type = T;
 
-    FORCEINLINE void operator()( TType* InPtr ) noexcept
+    FORCEINLINE void operator()( Type* InPtr ) noexcept
     {
         delete InPtr;
     }
@@ -70,9 +67,9 @@ struct TDelete
 template<typename T>
 struct TDelete<T[]>
 {
-    using TType = typename TRemoveExtent<T>;
+    using Type = typename TRemoveExtent<T>;
 
-    FORCEINLINE void operator()( TType* InPtr ) noexcept
+    FORCEINLINE void operator()( Type* InPtr ) noexcept
     {
         delete[] InPtr;
     }
@@ -955,17 +952,17 @@ public:
     }
 };
 
-// MakeShared - Creates a new object together with a SharedPtr
 
-template<typename T, typename... TArgs>
-FORCEINLINE TEnableIf<!IsArray<T>, TSharedPtr<T>> MakeShared( TArgs&&... Args ) noexcept
+/* MakeShared - Creates a new object together with a SharedPtr */
+template<typename T, typename... ArgTypes>
+FORCEINLINE TEnableIf<!TIsArray<T>::Value, TSharedPtr<T>> MakeShared( ArgTypes&&... Args ) noexcept
 {
     T* RefCountedPtr = new T( ::Forward<TArgs>( Args )... );
     return Move( TSharedPtr<T>( RefCountedPtr ) );
 }
 
 template<typename T>
-FORCEINLINE TEnableIf<IsArray<T>, TSharedPtr<T>> MakeShared( uint32 Size ) noexcept
+FORCEINLINE TEnableIf<TIsArray<T>::Value, TSharedPtr<T>> MakeShared( uint32 Size ) noexcept
 {
     using TType = TRemoveExtent<T>;
 
@@ -973,11 +970,11 @@ FORCEINLINE TEnableIf<IsArray<T>, TSharedPtr<T>> MakeShared( uint32 Size ) noexc
     return Move( TSharedPtr<T>( RefCountedPtr ) );
 }
 
-// Casting functions
+/* Casting functions */
 
-// static_cast
+/* static_cast*/
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> StaticCast( const TSharedPtr<T1>& Pointer ) noexcept
+FORCEINLINE TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>> StaticCast( const TSharedPtr<T1>& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -986,7 +983,7 @@ FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> StaticCast( co
 }
 
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> StaticCast( TSharedPtr<T1>&& Pointer ) noexcept
+FORCEINLINE TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>> StaticCast( TSharedPtr<T1>&& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -994,9 +991,9 @@ FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> StaticCast( TS
     return Move( TSharedPtr<T0>( Move( Pointer ), RawPointer ) );
 }
 
-// const_cast
+/* const_cast */
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ConstCast( const TSharedPtr<T1>& Pointer ) noexcept
+FORCEINLINE TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>> ConstCast( const TSharedPtr<T1>& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -1005,7 +1002,7 @@ FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ConstCast( con
 }
 
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ConstCast( TSharedPtr<T1>&& Pointer ) noexcept
+FORCEINLINE TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>> ConstCast( TSharedPtr<T1>&& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -1013,9 +1010,9 @@ FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ConstCast( TSh
     return Move( TSharedPtr<T0>( Move( Pointer ), RawPointer ) );
 }
 
-// reinterpret_cast
+/* reinterpret_cast */
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ReinterpretCast( const TSharedPtr<T1>& Pointer ) noexcept
+FORCEINLINE TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>> ReinterpretCast( const TSharedPtr<T1>& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -1024,7 +1021,7 @@ FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ReinterpretCas
 }
 
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ReinterpretCast( TSharedPtr<T1>&& Pointer ) noexcept
+FORCEINLINE TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>> ReinterpretCast( TSharedPtr<T1>&& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -1032,9 +1029,9 @@ FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> ReinterpretCas
     return Move( TSharedPtr<T0>( Move( Pointer ), RawPointer ) );
 }
 
-// dynamic_cast
+/* dynamic_cast */
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> DynamicCast( const TSharedPtr<T1>& Pointer ) noexcept
+FORCEINLINE TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>> DynamicCast( const TSharedPtr<T1>& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 
@@ -1043,7 +1040,7 @@ FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> DynamicCast( c
 }
 
 template<typename T0, typename T1>
-FORCEINLINE TEnableIf<IsArray<T0> == IsArray<T1>, TSharedPtr<T0>> DynamicCast( TSharedPtr<T1>&& Pointer ) noexcept
+FORCEINLINE TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>> DynamicCast( TSharedPtr<T1>&& Pointer ) noexcept
 {
     using TType = TRemoveExtent<T0>;
 

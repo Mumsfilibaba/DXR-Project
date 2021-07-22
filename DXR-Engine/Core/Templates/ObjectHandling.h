@@ -1,12 +1,15 @@
 #pragma once
+#include "CoreTypes.h"
 #include "CoreDefines.h"
 #include "Move.h"
 #include "IsTrivial.h"
 #include "EnableIf.h"
+#include "Not.h"
+#include "And.h"
+#include "IsMovable.h"
+#include "IsCopyable.h"
 
-#include "Core/Types.h"
-
-#include "Memory/Memory.h"
+#include "Core/Memory/Memory.h"
 
 /* Construct the objects in the range by calling the default contructor */
 template<typename T>
@@ -36,6 +39,35 @@ template<typename T>
 FORCEINLINE void DefaultConstruct( void* const Address ) noexcept
 {
     DefaultConstructRange<T>( Address, 1 );
+}
+
+/* Construct range and initialize all values to a certain default value */
+template<typename T>
+FORCEINLINE void ConstructRangeFrom( void* const StartAddress, uint32 Count, const T& Value) noexcept
+{
+    Assert( StartAddress != nullptr );
+
+    T* Cursor = reinterpret_cast<T*>(StartAddress);
+    T* EndCursor = reinterpret_cast<T*>(StartAddress) + Count;
+    while ( Cursor != EndCursor )
+    {
+        new(Cursor) T( Value );
+        Cursor++;
+    }
+}
+
+template<typename T>
+FORCEINLINE void ConstructRangeFrom( void* const StartAddress, uint32 Count, T&& Value ) noexcept
+{
+    Assert( StartAddress != nullptr );
+
+    T* Cursor = reinterpret_cast<T*>(StartAddress);
+    T* EndCursor = reinterpret_cast<T*>(StartAddress) + Count;
+    while ( Cursor != EndCursor )
+    {
+        new(Cursor) T( ::Forward<T>(Value) );
+        Cursor++;
+    }
 }
 
 /* Construct the objects in the range by calling the copy contructor */
@@ -201,7 +233,23 @@ FORCEINLINE void Destruct( const T* const Object ) noexcept
 }
 
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type RelocateRange( T* Destination, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsMoveConstructable<T>>::Value>::Type RelocateRange( T* Destination, const T* Source, uint32 Count ) noexcept
+{
+    Assert( Source != nullptr );
+    Assert( Destination != nullptr );
+
+    const T* const EndCursor = Destination + Count;
+    while ( Destination != EndCursor )
+    {
+        new(Destination) T( ::Move(*Source) );
+        Source->~T();
+        Destination++;
+        Source++
+    }
+}
+
+template<typename T>
+FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsCopyConstructable<T>>::Value>::Type RelocateRange( T* Destination, const T* Source, uint32 Count ) noexcept
 {
     Assert( Source != nullptr );
     Assert( Destination != nullptr );

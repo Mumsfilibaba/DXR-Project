@@ -1,12 +1,15 @@
 #pragma once
-#include "Core/Types.h"
+#include "CoreTypes.h"
 
-#include "Memory/Memory.h"
+#include "Core/Memory/Memory.h"
 
+/* Default allocator that allocates from malloc */
 template<typename T>
 class TDefaultAllocator
 {
 public:
+    typedef T ElementType;
+
     /* Since we do not store the size of the allocation we cannot copy. TODO: See if this is a better approcach */
     TDefaultAllocator( const TDefaultAllocator& ) = delete;
     TDefaultAllocator& operator=( const TDefaultAllocator& ) = delete;
@@ -27,9 +30,10 @@ public:
         Free();
     }
 
-    FORCEINLINE T* AllocateOrRealloc( uint32 Count ) noexcept
+    FORCEINLINE ElementType* AllocateOrRealloc( uint32 Count ) noexcept
     {
-        return Memory::Realloc<T>( Count );
+        /* This function handles the same size and does not realloc */
+        return Memory::Realloc<ElementType>( Count );
     }
 
     FORCEINLINE void Free() noexcept
@@ -49,12 +53,12 @@ public:
         }
     }
 
-    FORCEINLINE T* Raw() noexcept
+    FORCEINLINE ElementType* Raw() noexcept
     {
         return Allocation;
     }
 
-    FORCEINLINE const T* Raw() const noexcept
+    FORCEINLINE const ElementType* Raw() const noexcept
     {
         return Allocation;
     }
@@ -66,5 +70,5 @@ public:
     }
 
 private:
-    T* Allocation;
+    ElementType* Allocation;
 };

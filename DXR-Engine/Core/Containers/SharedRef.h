@@ -1,17 +1,18 @@
 #pragma once
-#include "Core/Templates/EnableIf.h"
 #include "Core/RefCountedObject.h"
+#include "Core/Templates/EnableIf.h"
+#include "Core/Templates/IsConvertible.h"
+#include "Core/Templates/IsNullptr.h"
 
-#include <type_traits>
-
-// TSharedRef - Helper class when using objects with RefCountedObject as a base
-
+/* TSharedRef - Helper class when using objects with RefCountedObject as a base */
 template<typename T>
 class TSharedRef
 {
 public:
-    template<typename TOther>
+    template<typename OtherType>
     friend class TSharedRef;
+
+    typedef T ElementType;
 
     FORCEINLINE TSharedRef() noexcept
         : RefPtr( nullptr )
@@ -24,12 +25,11 @@ public:
         AddRef();
     }
 
-    template<typename TOther>
-    FORCEINLINE TSharedRef( const TSharedRef<TOther>& Other ) noexcept
+    template<typename OtherType>
+    FORCEINLINE TSharedRef( const TSharedRef<OtherType>& Other ) noexcept
         : RefPtr( Other.RefPtr )
     {
-        // TODO: Custom is_convertible
-        static_assert(std::is_convertible<TOther*, T*>());
+        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
         AddRef();
     }
 
@@ -39,24 +39,24 @@ public:
         Other.RefPtr = nullptr;
     }
 
-    template<typename TOther>
-    FORCEINLINE TSharedRef( TSharedRef<TOther>&& Other ) noexcept
+    template<typename OtherType>
+    FORCEINLINE TSharedRef( TSharedRef<OtherType>&& Other ) noexcept
         : RefPtr( Other.RefPtr )
     {
-        static_assert(std::is_convertible<TOther*, T*>());
+        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
         Other.RefPtr = nullptr;
     }
 
-    FORCEINLINE TSharedRef( T* InPtr ) noexcept
+    FORCEINLINE TSharedRef( ElementType* InPtr ) noexcept
         : RefPtr( InPtr )
     {
     }
 
-    template<typename TOther>
-    FORCEINLINE TSharedRef( TOther* InPtr ) noexcept
+    template<typename OtherType>
+    FORCEINLINE TSharedRef( OtherType* InPtr ) noexcept
         : RefPtr( InPtr )
     {
-        static_assert(std::is_convertible<TOther*, T*>());
+        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
     }
 
     FORCEINLINE ~TSharedRef()
@@ -64,9 +64,9 @@ public:
         Release();
     }
 
-    FORCEINLINE T* Reset( T* NewPtr = nullptr ) noexcept
+    FORCEINLINE ElementType* Reset( ElementType* NewPtr = nullptr ) noexcept
     {
-        T* WeakPtr = RefPtr;
+        ElementType* WeakPtr = RefPtr;
 
         if ( RefPtr != NewPtr )
         {
@@ -77,9 +77,9 @@ public:
         return WeakPtr;
     }
 
-    FORCEINLINE T* ReleaseOwnership() noexcept
+    FORCEINLINE ElementType* ReleaseOwnership() noexcept
     {
-        T* WeakPtr = RefPtr;
+        ElementType* WeakPtr = RefPtr;
         RefPtr = nullptr;
         return WeakPtr;
     }
@@ -92,66 +92,66 @@ public:
         }
     }
 
-    FORCEINLINE void Swap( T* InPtr ) noexcept
+    FORCEINLINE void Swap( ElementType* InPtr ) noexcept
     {
         Reset( InPtr )
     }
 
-    template<typename TOther>
-    FORCEINLINE void Swap( TOther* InPtr ) noexcept
+    template<typename OtherType>
+    FORCEINLINE void Swap( OtherType* InPtr ) noexcept
     {
-        static_assert(std::is_convertible<TOther*, T*>());
+        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
         Reset( InPtr )
     }
 
-    FORCEINLINE T* Get() const noexcept
+    FORCEINLINE ElementType* Get() const noexcept
     {
         return RefPtr;
     }
 
-    FORCEINLINE T* GetRefCount() const noexcept
+    FORCEINLINE ElementType* GetRefCount() const noexcept
     {
         return RefPtr->GetRefCount();
     }
 
-    FORCEINLINE T* GetAndAddRef() noexcept
+    FORCEINLINE ElementType* GetAndAddRef() noexcept
     {
         AddRef();
         return RefPtr;
     }
 
-    template<typename TCastType>
-    FORCEINLINE TEnableIf<std::is_convertible_v<TCastType*, T*>, TCastType*> GetAs() const noexcept
+    template<typename CastType>
+    FORCEINLINE TEnableIf<TIsConvertible<CastType*, ElementType*>::Value, CastType*> GetAs() const noexcept
     {
-        return static_cast<TCastType*>(RefPtr);
+        return static_cast<CastType*>(RefPtr);
     }
 
-    FORCEINLINE T* const* GetAddressOf() const noexcept
+    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return &RefPtr;
     }
 
-    FORCEINLINE T& Dereference() const noexcept
+    FORCEINLINE ElementType& Dereference() const noexcept
     {
         return *RefPtr;
     }
 
-    FORCEINLINE T* operator->() const noexcept
+    FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
 
-    FORCEINLINE T* const* operator&() const noexcept
+    FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
 
-    FORCEINLINE T& operator*() const noexcept
+    FORCEINLINE ElementType& operator*() const noexcept
     {
         return Dereference();
     }
 
-    FORCEINLINE bool operator==( T* InPtr ) const noexcept
+    FORCEINLINE bool operator==( ElementType* InPtr ) const noexcept
     {
         return (RefPtr == InPtr);
     }
@@ -161,7 +161,7 @@ public:
         return (RefPtr == Other.RefPtr);
     }
 
-    FORCEINLINE bool operator!=( T* InPtr ) const noexcept
+    FORCEINLINE bool operator!=( ElementType* InPtr ) const noexcept
     {
         return (RefPtr != InPtr);
     }
@@ -171,48 +171,48 @@ public:
         return (RefPtr != Other.RefPtr);
     }
 
-    FORCEINLINE bool operator==( std::nullptr_t ) const noexcept
+    FORCEINLINE bool operator==( NullptrType ) const noexcept
     {
         return (RefPtr == nullptr);
     }
 
-    FORCEINLINE bool operator!=( std::nullptr_t ) const noexcept
+    FORCEINLINE bool operator!=( NullptrType ) const noexcept
     {
         return (RefPtr != nullptr);
     }
 
-    template<typename TOther>
-    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator==( TOther* RHS ) const noexcept
+    template<typename OtherType>
+    FORCEINLINE TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, bool> operator==( OtherType* RHS ) const noexcept
     {
         return (RefPtr == RHS);
     }
 
-    template<typename TOther>
-    friend FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator==( TOther* LHS, const TSharedRef& RHS ) noexcept
+    template<typename OtherType>
+    friend FORCEINLINE TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, bool> operator==( OtherType* LHS, const TSharedRef& RHS ) noexcept
     {
         return (RHS == LHS);
     }
 
-    template<typename TOther>
-    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator==( const TSharedRef<TOther>& RHS ) const noexcept
+    template<typename OtherType>
+    FORCEINLINE TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, bool> operator==( const TSharedRef<OtherType>& RHS ) const noexcept
     {
         return (RefPtr == RHS.RefPtr);
     }
 
-    template<typename TOther>
-    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator!=( TOther* RHS ) const noexcept
+    template<typename OtherType>
+    FORCEINLINE TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, bool> operator!=( OtherType* RHS ) const noexcept
     {
         return (RefPtr != RHS);
     }
 
-    template<typename TOther>
-    friend FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator!=( TOther* LHS, const TSharedRef& RHS ) noexcept
+    template<typename OtherType>
+    friend FORCEINLINE TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, bool> operator!=( OtherType* LHS, const TSharedRef& RHS ) noexcept
     {
         return (RHS != LHS);
     }
 
-    template<typename TOther>
-    FORCEINLINE TEnableIf<std::is_convertible_v<TOther*, T*>, bool> operator!=( const TSharedRef<TOther>& RHS ) const noexcept
+    template<typename OtherType>
+    FORCEINLINE TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, bool> operator!=( const TSharedRef<OtherType>& RHS ) const noexcept
     {
         return (RefPtr != RHS.RefPtr);
     }
@@ -235,10 +235,10 @@ public:
         return *this;
     }
 
-    template<typename TOther>
-    FORCEINLINE TSharedRef& operator=( const TSharedRef<TOther>& Other ) noexcept
+    template<typename OtherType>
+    FORCEINLINE TSharedRef& operator=( const TSharedRef<OtherType>& Other ) noexcept
     {
-        static_assert(std::is_convertible<TOther*, T*>());
+        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
 
         if ( this != std::addressof( Other ) )
         {
@@ -264,10 +264,10 @@ public:
         return *this;
     }
 
-    template<typename TOther>
-    FORCEINLINE TSharedRef& operator=( TSharedRef<TOther>&& Other ) noexcept
+    template<typename OtherType>
+    FORCEINLINE TSharedRef& operator=( TSharedRef<OtherType>&& Other ) noexcept
     {
-        static_assert(std::is_convertible<TOther*, T*>());
+        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
 
         if ( this != std::addressof( Other ) )
         {
@@ -280,7 +280,7 @@ public:
         return *this;
     }
 
-    FORCEINLINE TSharedRef& operator=( T* InPtr ) noexcept
+    FORCEINLINE TSharedRef& operator=( ElementType* InPtr ) noexcept
     {
         if ( RefPtr != InPtr )
         {
@@ -291,10 +291,10 @@ public:
         return *this;
     }
 
-    template<typename TOther>
-    FORCEINLINE TSharedRef& operator=( TOther* InPtr ) noexcept
+    template<typename OtherType>
+    FORCEINLINE TSharedRef& operator=( OtherType* InPtr ) noexcept
     {
-        static_assert(std::is_convertible<TOther*, T*>());
+        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
 
         if ( RefPtr != InPtr )
         {
@@ -305,7 +305,7 @@ public:
         return *this;
     }
 
-    FORCEINLINE TSharedRef& operator=( std::nullptr_t ) noexcept
+    FORCEINLINE TSharedRef& operator=( NullptrType ) noexcept
     {
         Release();
         return *this;
@@ -321,10 +321,10 @@ private:
         }
     }
 
-    T* RefPtr;
+    ElementType* RefPtr;
 };
 
-// static_cast
+/* static_cast */
 template<typename T, typename U>
 FORCEINLINE TSharedRef<T> StaticCast( const TSharedRef<U>& Pointer )
 {
@@ -340,7 +340,7 @@ FORCEINLINE TSharedRef<T> StaticCast( TSharedRef<U>&& Pointer )
     return TSharedRef<T>( RawPointer );
 }
 
-// const_cast
+/* const_cast */
 template<typename T, typename U>
 FORCEINLINE TSharedRef<T> ConstCast( const TSharedRef<U>& Pointer )
 {
@@ -356,7 +356,7 @@ FORCEINLINE TSharedRef<T> ConstCast( TSharedRef<U>&& Pointer )
     return TSharedRef<T>( RawPointer );
 }
 
-// reinterpret_cast
+/* reinterpret_cast */
 template<typename T, typename U>
 FORCEINLINE TSharedRef<T> ReinterpretCast( const TSharedRef<U>& Pointer )
 {
@@ -372,7 +372,7 @@ FORCEINLINE TSharedRef<T> ReinterpretCast( TSharedRef<U>&& Pointer )
     return TSharedRef<T>( RawPointer );
 }
 
-// dynamic_cast
+/* dynamic_cast */
 template<typename T, typename U>
 FORCEINLINE TSharedRef<T> DynamicCast( const TSharedRef<U>& Pointer )
 {
@@ -388,7 +388,7 @@ FORCEINLINE TSharedRef<T> DynamicCast( TSharedRef<U>&& Pointer )
     return TSharedRef<T>( RawPointer );
 }
 
-// Converts a raw pointer into a TSharedRef
+/* Converts a raw pointer into a TSharedRef */
 template<typename T, typename U>
 FORCEINLINE TSharedRef<T> MakeSharedRef( U* InRefCountedObject )
 {

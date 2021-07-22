@@ -8,45 +8,46 @@ template<typename T, int32 N>
 struct TFixedArray
 {
 public:
-    typedef T* Iterator;
-    typedef const T* ConstIterator;
-    typedef TReverseIterator<T>       ReverseIterator;
-    typedef TReverseIterator<const T> ConstReverseIterator;
-    typedef uint32                    SizeType;
+    typedef T                                   ElementType;
+    typedef ElementType*                        Iterator;
+    typedef const ElementType*                  ConstIterator;
+    typedef TReverseIterator<ElementType>       ReverseIterator;
+    typedef TReverseIterator<const ElementType> ConstReverseIterator;
+    typedef uint32                              SizeType;
 
-    FORCEINLINE T& Front() noexcept
+    FORCEINLINE ElementType& Front() noexcept
     {
         return Elements[0];
     }
 
-    FORCEINLINE const T& Front() const noexcept
+    FORCEINLINE const ElementType& Front() const noexcept
     {
         return Elements[0];
     }
 
-    FORCEINLINE T& Back() noexcept
+    FORCEINLINE ElementType& Back() noexcept
     {
         return Elements[N - 1];
     }
 
-    FORCEINLINE const T& Back() const noexcept
+    FORCEINLINE const ElementType& Back() const noexcept
     {
         return Elements[N - 1];
     }
 
-    FORCEINLINE T& At( SizeType Index ) noexcept
+    FORCEINLINE ElementType& At( SizeType Index ) noexcept
     {
         Assert( Index < N );
         return Elements[Index];
     }
 
-    FORCEINLINE const T& At( SizeType Index ) const noexcept
+    FORCEINLINE const ElementType& At( SizeType Index ) const noexcept
     {
         Assert( Index < N );
         return Elements[Index];
     }
 
-    FORCEINLINE void Fill( const T& Value ) noexcept
+    FORCEINLINE void Fill( const ElementType& Value ) noexcept
     {
         for ( uint32 i = 0; i < N; i++ )
         {
@@ -54,9 +55,17 @@ public:
         }
     }
 
-    FORCEINLINE void Swap( TStaticArray& Other ) noexcept
+    FORCEINLINE void Fill( ElementType&& Value ) noexcept
     {
-        TStaticArray TempArray( ::Move( *this ) );
+        for ( uint32 i = 0; i < N; i++ )
+        {
+            Elements[i] = ::Move(Value);
+        }
+    }
+
+    FORCEINLINE void Swap( TFixedArray& Other ) noexcept
+    {
+        TFixedArray TempArray( ::Move( *this ) );
         *this = ::Move( Other );
         Other = ::Move( TempArray );
     }
@@ -73,31 +82,31 @@ public:
 
     constexpr SizeType SizeInBytes() const noexcept
     {
-        return N * sizeof( T );
+        return N * sizeof( ElementType );
     }
 
-    FORCEINLINE T* Data() noexcept
+    FORCEINLINE ElementType* Data() noexcept
     {
         return Elements;
     }
 
-    FORCEINLINE const T* Data() const noexcept
+    FORCEINLINE const ElementType* Data() const noexcept
     {
         return Elements;
     }
 
-    FORCEINLINE T& operator[]( SizeType Index ) noexcept
+    FORCEINLINE ElementType& operator[]( SizeType Index ) noexcept
     {
         return At( Index );
     }
 
-    FORCEINLINE const T& operator[]( SizeType Index ) const noexcept
+    FORCEINLINE const ElementType& operator[]( SizeType Index ) const noexcept
     {
         return At( Index );
     }
 
-    // STL iterator functions - Enables Range-based for-loops
 public:
+    /* STL iterator functions - Enables Range-based for-loops */
     FORCEINLINE Iterator begin() noexcept
     {
         return Elements;
@@ -159,5 +168,5 @@ public:
     }
 
 public:
-    T Elements[N];
+    ElementType Elements[N];
 };

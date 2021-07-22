@@ -9,11 +9,12 @@ template<typename T>
 class TArrayView
 {
 public:
-    typedef T* Iterator;
-    typedef const T* ConstIterator;
-    typedef TReverseIterator<T>       ReverseIterator;
-    typedef TReverseIterator<const T> ConstReverseIterator;
-    typedef uint32                    SizeType;
+    typedef T                                   ElementType;
+    typedef ElementType*                        Iterator;
+    typedef const ElementType*                  ConstIterator;
+    typedef TReverseIterator<ElementType>       ReverseIterator;
+    typedef TReverseIterator<const ElementType> ConstReverseIterator;
+    typedef uint32                              SizeType;
 
     TArrayView() noexcept
         : View( nullptr )
@@ -21,24 +22,17 @@ public:
     {
     }
 
-    template<typename TArrayType>
-    explicit TArrayView( TArrayType& Array ) noexcept
+    template<typename ArrayType>
+    explicit TArrayView( ArrayType& Array ) noexcept
         : View( Array.Data() )
         , ViewSize( Array.Size() )
     {
     }
 
     template<const SizeType N>
-    explicit TArrayView( T( &Array )[N] ) noexcept
+    explicit TArrayView( ElementType( &Array )[N] ) noexcept
         : View( Array )
         , ViewSize( N )
-    {
-    }
-
-    template<typename TInputIterator>
-    explicit TArrayView( TInputIterator Begin, TInputIterator End ) noexcept
-        : View( Begin )
-        , ViewSize( SizeType( End - Begin ) )
     {
     }
 
@@ -61,31 +55,33 @@ public:
         return (ViewSize == 0);
     }
 
-    T& Front() noexcept
-    {
-        return View[0];
-    }
-    const T& Front() const noexcept
+    ElementType& Front() noexcept
     {
         return View[0];
     }
 
-    T& Back() noexcept
+    const ElementType& Front() const noexcept
     {
-        return View[ViewSize - 1];
+        return View[0];
     }
-    const T& Back() const noexcept
+
+    ElementType& Back() noexcept
     {
         return View[ViewSize - 1];
     }
 
-    T& At( SizeType Index ) noexcept
+    const ElementType& Back() const noexcept
+    {
+        return View[ViewSize - 1];
+    }
+
+    ElementType& At( SizeType Index ) noexcept
     {
         Assert( Index < ViewSize );
         return View[Index];
     }
 
-    const T& At( SizeType Index ) const noexcept
+    const ElementType& At( SizeType Index ) const noexcept
     {
         Assert( Index < ViewSize );
         return View[Index];
@@ -102,6 +98,7 @@ public:
     {
         return Iterator( View );
     }
+
     Iterator End() noexcept
     {
         return Iterator( View + ViewSize );
@@ -111,6 +108,7 @@ public:
     {
         return Iterator( View );
     }
+
     ConstIterator End() const noexcept
     {
         return Iterator( View + ViewSize );
@@ -120,29 +118,33 @@ public:
     {
         return ViewSize > 0 ? ViewSize - 1 : 0;
     }
+
     SizeType Size() const noexcept
     {
         return ViewSize;
     }
+
     SizeType SizeInBytes() const noexcept
     {
-        return ViewSize * sizeof( T );
+        return ViewSize * sizeof( ElementType );
     }
 
-    T* Data() noexcept
-    {
-        return View;
-    }
-    const T* Data() const noexcept
+    ElementType* Data() noexcept
     {
         return View;
     }
 
-    T& operator[]( SizeType Index ) noexcept
+    const ElementType* Data() const noexcept
+    {
+        return View;
+    }
+
+    ElementType& operator[]( SizeType Index ) noexcept
     {
         return At( Index );
     }
-    const T& operator[]( SizeType Index ) const noexcept
+
+    const ElementType& operator[]( SizeType Index ) const noexcept
     {
         return At( Index );
     }
@@ -167,12 +169,13 @@ public:
         return *this;
     }
 
-    // STL iterator functions - Enables Range-based for-loops
 public:
+    /* STL iterator functions - Enables Range-based for-loops */
     Iterator begin() noexcept
     {
         return View;
     }
+
     Iterator end() noexcept
     {
         return View + ViewSize;
@@ -182,6 +185,7 @@ public:
     {
         return View;
     }
+
     ConstIterator end() const noexcept
     {
         return View + ViewSize;
@@ -191,6 +195,7 @@ public:
     {
         return View;
     }
+
     ConstIterator cend() const noexcept
     {
         return View + ViewSize;
@@ -200,6 +205,7 @@ public:
     {
         return ReverseIterator( end() );
     }
+
     ReverseIterator rend() noexcept
     {
         return ReverseIterator( begin() );
@@ -209,6 +215,7 @@ public:
     {
         return ConstReverseIterator( end() );
     }
+
     ConstReverseIterator rend() const noexcept
     {
         return ConstReverseIterator( begin() );
@@ -218,12 +225,13 @@ public:
     {
         return ConstReverseIterator( end() );
     }
+
     ConstReverseIterator crend() const noexcept
     {
         return ConstReverseIterator( begin() );
     }
 
 private:
-    T* View;
+    ElementType* View;
     SizeType ViewSize;
 };

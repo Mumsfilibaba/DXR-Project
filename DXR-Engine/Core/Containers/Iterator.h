@@ -1,111 +1,112 @@
 #pragma once
-#include "Core/Types.h"
+#include "CoreTypes.h"
+#include "CoreDefines.h"
 
-template<typename TIteratorType>
+template<typename IteratorType>
 class TReverseIterator
 {
 public:
-    TReverseIterator() noexcept
+    FORCEINLINE TReverseIterator() noexcept
         : Iterator( nullptr )
     {
     }
 
-    TReverseIterator( TIteratorType* InIterator ) noexcept
+    FORCEINLINE TReverseIterator( IteratorType* InIterator ) noexcept
         : Iterator( InIterator )
     {
     }
 
-    TReverseIterator( const TReverseIterator& Other ) noexcept
+    FORCEINLINE TReverseIterator( const TReverseIterator& Other ) noexcept
         : Iterator( Other.Raw() )
     {
     }
 
     template<typename U>
-    TReverseIterator( const TReverseIterator<U>& Other ) noexcept
+    FORCEINLINE TReverseIterator( const TReverseIterator<U>& Other ) noexcept
         : Iterator( Other.Raw() )
     {
     }
 
-    ~TReverseIterator() = default;
-
-    TIteratorType* Raw() const
+    FORCEINLINE IteratorType* Raw() const
     {
         return Iterator;
     }
 
-    TIteratorType* operator->() const noexcept
+    FORCEINLINE IteratorType* operator->() const noexcept
     {
         return (Iterator - 1);
     }
-    TIteratorType& operator*()  const noexcept
+
+    FORCEINLINE IteratorType& operator*()  const noexcept
     {
         return *(Iterator - 1);
     }
 
-    TReverseIterator operator++() noexcept
+    FORCEINLINE TReverseIterator operator++() noexcept
     {
         Iterator--;
         return *this;
     }
 
-    TReverseIterator operator++( int32 ) noexcept
+    FORCEINLINE TReverseIterator operator++( int32 ) noexcept
     {
         TReverseIterator Temp = *this;
         Iterator--;
         return Temp;
     }
 
-    TReverseIterator operator--() noexcept
+    FORCEINLINE TReverseIterator operator--() noexcept
     {
         Iterator++;
         return *this;
     }
 
-    TReverseIterator operator--( int32 ) noexcept
+    FORCEINLINE TReverseIterator operator--( int32 ) noexcept
     {
         TReverseIterator Temp = *this;
         Iterator++;
         return Temp;
     }
 
-    TReverseIterator operator+( int32 Offset ) const noexcept
+    FORCEINLINE TReverseIterator operator+( int32 Offset ) const noexcept
     {
         TReverseIterator Temp = *this;
         return Temp += Offset;
     }
 
-    TReverseIterator operator-( int32 Offset ) const noexcept
+    FORCEINLINE TReverseIterator operator-( int32 Offset ) const noexcept
     {
         TReverseIterator Temp = *this;
         return Temp -= Offset;
     }
 
-    TReverseIterator& operator+=( int32 Offset ) noexcept
+    FORCEINLINE TReverseIterator& operator+=( int32 Offset ) noexcept
     {
         Iterator -= Offset;
         return *this;
     }
 
-    TReverseIterator& operator-=( int32 Offset ) noexcept
+    FORCEINLINE TReverseIterator& operator-=( int32 Offset ) noexcept
     {
         Iterator += Offset;
         return *this;
     }
 
-    bool operator==( const TReverseIterator& Other ) const noexcept
+    FORCEINLINE bool operator==( const TReverseIterator& Other ) const noexcept
     {
         return (Iterator == Other.Iterator);
     }
-    bool operator!=( const TReverseIterator& Other ) const noexcept
+
+    FORCEINLINE bool operator!=( const TReverseIterator& Other ) const noexcept
     {
         return (Iterator != Other.Iterator);
     }
 
-    operator TReverseIterator<const TIteratorType>() const noexcept
+    FORCEINLINE operator TReverseIterator<const IteratorType>() const noexcept
     {
-        return TReverseIterator<const TIteratorType>( Iterator );
+        return TReverseIterator<const IteratorType>( Iterator );
     }
 
 private:
-    TIteratorType* Iterator;
+    IteratorType* Iterator;
 };
