@@ -85,7 +85,7 @@ public:
 
     FORCEINLINE ~TArray()
     {
-        InternalReset();
+        Reset();
         ArrayCapacity = 0;
     }
 
@@ -317,16 +317,6 @@ public:
         Append( InitList.begin(), InitList.size() );
     }
 
-    /* Removes the last element */
-    FORCEINLINE void PopBack() noexcept
-    {
-        if ( !IsEmpty() )
-        {
-            ArraySize--;
-            Destruct<ElementType>( Data() + ArraySize );
-        }
-    }
-
     /* Removes a number of elments from the back */
     FORCEINLINE void PopBackNum( SizeType Count ) noexcept
     {
@@ -334,6 +324,16 @@ public:
         {
             ArraySize = ArraySize - Count;
             DestructRange<ElementType>( Data() + ArraySize, Count );
+        }
+    }
+
+    /* Removes the last element */
+    FORCEINLINE void PopBack() noexcept
+    {
+        if ( !IsEmpty() )
+        {
+            ArraySize--;
+            Destruct<ElementType>( Data() + ArraySize );
         }
     }
 
@@ -380,7 +380,10 @@ public:
     /* Shrinks the allocation to be the same as the size */
     FORCEINLINE void ShrinkToFit() noexcept
     {
-        Reserve( ArraySize );
+        if ( ArraySize < ArrayCapacity )
+        {
+            InternalReserve( ArraySize );
+        }
     }
 
     /* Checks if there are any elements */
