@@ -4,5 +4,5 @@
 template<typename T, typename FromType>
 struct TIsAssignable
 {
-    static constexpr bool Value = __is_assignable(T, FromType);
+    static constexpr bool Value = __is_assignable( T, FromType );
 };

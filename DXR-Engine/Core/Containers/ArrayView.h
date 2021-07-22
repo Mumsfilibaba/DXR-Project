@@ -10,8 +10,8 @@ class TArrayView
 {
 public:
     typedef T                                   ElementType;
-    typedef ElementType*                        Iterator;
-    typedef const ElementType*                  ConstIterator;
+    typedef ElementType* Iterator;
+    typedef const ElementType* ConstIterator;
     typedef TReverseIterator<ElementType>       ReverseIterator;
     typedef TReverseIterator<const ElementType> ConstReverseIterator;
     typedef uint32                              SizeType;

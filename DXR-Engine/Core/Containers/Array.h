@@ -15,8 +15,8 @@ class TArray
 {
 public:
     typedef T                                   ElementType;
-    typedef ElementType*                        Iterator;
-    typedef const ElementType*                  ConstIterator;
+    typedef ElementType* Iterator;
+    typedef const ElementType* ConstIterator;
     typedef TReverseIterator<ElementType>       ReverseIterator;
     typedef TReverseIterator<const ElementType> ConstReverseIterator;
     typedef uint32                              SizeType;
@@ -33,7 +33,7 @@ public:
     FORCEINLINE explicit TArray( SizeType InSize ) noexcept
         : Allocator()
         , ArraySize( 0 )
-        , ArrayCapacity( 0)
+        , ArrayCapacity( 0 )
     {
         InternalConstruct( InSize );
     }
@@ -90,7 +90,7 @@ public:
     }
 
     /* Resets the container, but does not deallocate the memory */
-    FORCEINLINE void Reset( SizeType NewSize = 0) noexcept
+    FORCEINLINE void Reset( SizeType NewSize = 0 ) noexcept
     {
         DestructRange<ElementType>( Data(), ArraySize );
         InternalConstruct( NewSize );
@@ -168,7 +168,7 @@ public:
             DefaultConstructRange<ElementType>( Data() + ArraySize, Data() + NewSize );
             ArraySize = NewSize;
         }
-        else if (NewSize < ArraySize)
+        else if ( NewSize < ArraySize )
         {
             PopBackNum( ArraySize - NewSize );
         }
@@ -196,7 +196,7 @@ public:
         {
             if ( NewCapacity < ArraySize )
             {
-                DestructRange<ElementType>( Data() + NewCapacity, ArraySize - NewCapacity);
+                DestructRange<ElementType>( Data() + NewCapacity, ArraySize - NewCapacity );
             }
 
             InternalReserve( NewCapacity );
@@ -267,7 +267,7 @@ public:
     }
 
     /* Insert an array into the container at the position */
-    inline void InsertAt( SizeType Position, const ElementType* InputArray, SizeType Count) noexcept
+    inline void InsertAt( SizeType Position, const ElementType* InputArray, SizeType Count ) noexcept
     {
         Assert( Position <= ArraySize );
 
@@ -323,7 +323,7 @@ public:
         if ( !IsEmpty() )
         {
             ArraySize--;
-            Destruct<ElementType>(Data() + ArraySize);
+            Destruct<ElementType>( Data() + ArraySize );
         }
     }
 
@@ -333,7 +333,7 @@ public:
         if ( !IsEmpty() )
         {
             ArraySize = ArraySize - Count;
-            DestructRange<ElementType>( Data() + ArraySize, Count);
+            DestructRange<ElementType>( Data() + ArraySize, Count );
         }
     }
 
@@ -364,7 +364,7 @@ public:
             return;
         }
 
-        DestructRange<ElementType>( Data() + Position, Count);
+        DestructRange<ElementType>( Data() + Position, Count );
         RelocateRange<ElementType>( Data() + Position, Data() + Position + Count, ArraySize - Position );
         ArraySize = ArraySize - Count;
     }
@@ -543,16 +543,16 @@ public:
     }
 
     /* Compares two containers by comparing each element, returns true if all is equal */
-    FORCEINLINE bool operator==(const TArray& Other) const noexcept
+    FORCEINLINE bool operator==( const TArray& Other ) const noexcept
     {
-        if (Size() != Other.Size())
+        if ( Size() != Other.Size() )
         {
             return false;
         }
 
-        for (SizeType i = 0; i < Size(); i++)
+        for ( SizeType i = 0; i < Size(); i++ )
         {
-            if (At(i) != Other.At(i))
+            if ( At( i ) != Other.At( i ) )
             {
                 return false;
             }
@@ -562,7 +562,7 @@ public:
     }
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */
-    FORCEINLINE bool operator!=(const TArray& Other) const noexcept
+    FORCEINLINE bool operator!=( const TArray& Other ) const noexcept
     {
         return !(*this == Other);
     }
@@ -618,7 +618,7 @@ private:
         ArraySize = Count;
         ArrayCapacity = Count;
     }
-    
+
     FORCEINLINE void InternalCopyFrom( const ElementType* From, SizeType Count )
     {
         ElementType* Pointer = Allocator.AllocateOrRealloc( Count );
@@ -631,9 +631,9 @@ private:
     {
         // Since the memory remains the same we should not need to use move-assignment or constructor
         Allocator.MoveFrom( FromArray.Allocator );
-        ArraySize     = FromArray.ArraySize;
+        ArraySize = FromArray.ArraySize;
         ArrayCapacity = FromArray.ArrayCapacity;
-        FromArray.ArraySize     = 0;
+        FromArray.ArraySize = 0;
         FromArray.ArrayCapacity = 0;
     }
 
@@ -651,8 +651,8 @@ private:
 
             AllocatorType NewAllocator;
             NewAllocator.AllocateOrRealloc( NewCapacity );
-            RelocateRange<ElementType>(NewAllocator.Raw(), Data(), ArraySize);
-            Allocator.MoveFrom(NewAllocator);
+            RelocateRange<ElementType>( NewAllocator.Raw(), Data(), ArraySize );
+            Allocator.MoveFrom( NewAllocator );
         }
         else
         {
