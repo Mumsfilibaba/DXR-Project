@@ -15,10 +15,10 @@ class TArray
 {
 public:
     typedef T                                   ElementType;
-    typedef ElementType* Iterator;
-    typedef const ElementType* ConstIterator;
-    typedef TReverseIterator<ElementType>       ReverseIterator;
-    typedef TReverseIterator<const ElementType> ConstReverseIterator;
+    typedef ElementType*                        IteratorType;
+    typedef const ElementType*                  ConstIteratorType;
+    typedef TReverseIterator<ElementType>       ReverseIteratorType;
+    typedef TReverseIterator<const ElementType> ConstReverseIteratorType;
     typedef uint32                              SizeType;
 
     /* Empty default constructor */
@@ -85,35 +85,61 @@ public:
 
     FORCEINLINE ~TArray()
     {
-        Reset();
+        Empty();
+    }
+
+    /* Empties the array and deallocates the memory */
+    FORCEINLINE void Empty() noexcept
+    {
+        DestructRange<ElementType>( Data(), ArraySize );
+        ArraySize = 0;
         ArrayCapacity = 0;
+        Allocator.Free();
     }
 
     /* Resets the container, but does not deallocate the memory */
     FORCEINLINE void Reset( SizeType NewSize = 0 ) noexcept
     {
         DestructRange<ElementType>( Data(), ArraySize );
-        InternalConstruct( NewSize );
 
-        ArraySize = NewSize;
+        if ( NewSize )
+        {
+            InternalConstruct( NewSize );
+        }
+        else
+        {
+            ArraySize = 0;
+        }
     }
 
     /* Resets the container, but does not deallocate the memory */
     FORCEINLINE void Reset( SizeType NewSize, const ElementType& Element ) noexcept
     {
         DestructRange<ElementType>( Data(), ArraySize );
-        InternalConstructFrom( NewSize, Element );
 
-        ArraySize = NewSize;
+        if ( NewSize )
+        {
+            InternalConstructFrom( NewSize, Element );
+        }
+        else
+        {
+            ArraySize = 0;
+        }
     }
 
     /* Resets the container, but does not deallocate the memory */
     FORCEINLINE void Reset( const ElementType* InputArray, SizeType Count ) noexcept
     {
         DestructRange<ElementType>( Data(), ArraySize );
-        InternalCopyFrom( InputArray, Count );
-
-        ArraySize = Count;
+        
+        if ( Count )
+        {
+            InternalCopyFrom( InputArray, Count );
+        }
+        else
+        {
+            ArraySize = 0;
+        }
     }
 
     /* Resets the container, but does not deallocate the memory */
@@ -170,7 +196,7 @@ public:
         }
         else if ( NewSize < ArraySize )
         {
-            PopBackNum( ArraySize - NewSize );
+            InternalRemoveBack( ArraySize - NewSize );
         }
     }
 
@@ -185,7 +211,7 @@ public:
         }
         else if ( NewSize < ArraySize )
         {
-            PopBackNum( ArraySize - NewSize );
+            InternalRemoveBack( ArraySize - NewSize );
         }
     }
 
@@ -197,6 +223,7 @@ public:
             if ( NewCapacity < ArraySize )
             {
                 DestructRange<ElementType>( Data() + NewCapacity, ArraySize - NewCapacity );
+                ArraySize = NewCapacity;
             }
 
             InternalReserve( NewCapacity );
@@ -215,7 +242,7 @@ public:
 
         ElementType* DataEnd = Data() + (ArraySize++);
         new(reinterpret_cast<void*>(DataEnd)) ElementType( ::Forward<ArgTypes>( Args )... );
-        return (*DataEnd);
+        return LastElement();
     }
 
     /* Inserts a new element at the end */
@@ -232,7 +259,7 @@ public:
 
     /* Constructs a new element at specified position */
     template<typename... ArgTypes>
-    inline void EmplaceAt( SizeType Position, ArgTypes&&... Args ) noexcept
+    FORCEINLINE void EmplaceAt( SizeType Position, ArgTypes&&... Args ) noexcept
     {
         Assert( Position <= ArraySize );
 
@@ -243,15 +270,11 @@ public:
             return;
         }
 
-        if ( ArraySize >= ArrayCapacity )
-        {
-            const SizeType NewCapacity = InternalGrowCapacity( ArraySize + 1, ArrayCapacity );
-            InternalReserveForInsertion( NewCapacity, Position, 1 );
-        }
+        /* Make room within array and allocate if necessary */
+        InternalReserveForInsertion( Position, 1 );
 
         ElementType* DataEnd = Data() + (ArraySize++);
         new(reinterpret_cast<void*>(DataEnd)) ElementType( ::Forward<ArgTypes>( Args )... );
-        return Position;
     }
 
     /* Inserts the Value at the specified position */
@@ -267,7 +290,7 @@ public:
     }
 
     /* Insert an array into the container at the position */
-    inline void InsertAt( SizeType Position, const ElementType* InputArray, SizeType Count ) noexcept
+    FORCEINLINE void InsertAt( SizeType Position, const ElementType* InputArray, SizeType Count ) noexcept
     {
         Assert( Position <= ArraySize );
 
@@ -278,8 +301,10 @@ public:
             return;
         }
 
-        const SizeType NewCapacity = InternalGrowCapacity( ArraySize + Count, ArrayCapacity );
-        InternalReserveForInsertion( NewCapacity, Position, Count );
+        Assert( InputArray != nullptr );
+
+        /* Make room within array and allocate if necessary */
+        InternalReserveForInsertion( Position, Count );
         CopyConstructRange<ElementType>( Data() + Position, InputArray, Count );
     }
 
@@ -322,45 +347,24 @@ public:
     {
         if ( !IsEmpty() )
         {
-            ArraySize = ArraySize - Count;
-            DestructRange<ElementType>( Data() + ArraySize, Count );
+            InternalRemoveBack( Count );
         }
     }
 
     /* Removes the last element */
     FORCEINLINE void PopBack() noexcept
     {
-        if ( !IsEmpty() )
-        {
-            ArraySize--;
-            Destruct<ElementType>( Data() + ArraySize );
-        }
-    }
-
-    /* Removes the element at the position */
-    FORCEINLINE void RemoveAt( SizeType Position ) noexcept
-    {
-        Assert( Position < ArraySize );
-
-        if ( Position == ArraySize - 1 )
-        {
-            PopBack();
-            return;
-        }
-
-        Destruct<ElementType>( Data() + Position );
-        RelocateRange<ElementType>( Data() + Position, Data() + Position + 1, ArraySize - Position );
-        ArraySize--;
+        PopBackNum(1);
     }
 
     /* Remove a range starting at position and containg count number of elements */
     FORCEINLINE void RemoveRange( SizeType Position, SizeType Count ) noexcept
     {
-        Assert( Position + Count < ArraySize );
+        Assert( Position + Count <= ArraySize );
 
-        if ( Position + Count == ArraySize - 1 )
+        if ( Position + Count == ArraySize )
         {
-            PopBackNum( Count );
+            InternalRemoveBack( Count );
             return;
         }
 
@@ -369,12 +373,18 @@ public:
         ArraySize = ArraySize - Count;
     }
 
+    /* Removes the element at the position */
+    FORCEINLINE void RemoveAt( SizeType Position ) noexcept
+    {
+        RemoveRange( Position, 1 );
+    }
+
     /* Swaps container with another */
     FORCEINLINE void Swap( TArray& Other ) noexcept
     {
-        TArray TempArray( ::Move( *this ) );
+        TArray Temp( ::Move( *this ) );
         *this = ::Move( Other );
-        Other = ::Move( TempArray );
+        Other = ::Move( Temp );
     }
 
     /* Shrinks the allocation to be the same as the size */
@@ -393,51 +403,51 @@ public:
     }
 
     /* Returns an iterator to the beginning of the container */
-    FORCEINLINE Iterator StartIterator() noexcept
+    FORCEINLINE IteratorType StartIterator() noexcept
     {
-        return Iterator( Array );
+        return IteratorType( Array );
     }
 
     /* Returns an iterator to the end of the container */
-    FORCEINLINE Iterator EndIterator() noexcept
+    FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return Iterator( Array + ArraySize );
+        return IteratorType( Array + ArraySize );
     }
 
     /* Returns an iterator to the beginning of the container */
-    FORCEINLINE ConstIterator StartIterator() const noexcept
+    FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
-        return ConstIterator( Array );
+        return ConstIteratorType( Array );
     }
 
     /* Returns an iterator to the end of the container */
-    FORCEINLINE ConstIterator EndIterator() const noexcept
+    FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIterator( Array + ArraySize );
+        return ConstIteratorType( Array + ArraySize );
     }
 
     /* Returns an reverse iterator to the end of the container */
-    FORCEINLINE ReverseIterator ReverseStartIterator() noexcept
+    FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIterator( Array + ArraySize );
+        return ReverseIteratorType( Array + ArraySize );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
-    FORCEINLINE ReverseIterator ReverseEndIterator() noexcept
+    FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
-        return ReverseIterator( Array );
+        return ReverseIteratorType( Array );
     }
 
     /* Returns an reverse iterator to the end of the container */
-    FORCEINLINE ConstReverseIterator ReverseStartIterator() const noexcept
+    FORCEINLINE ConstReverseIteratorType ReverseStartIterator() const noexcept
     {
-        return ConstReverseIterator( Array + ArraySize );
+        return ConstReverseIteratorType( Array + ArraySize );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
-    FORCEINLINE ConstReverseIterator ReverseEndIterator() const noexcept
+    FORCEINLINE ConstReverseIteratorType ReverseEndIterator() const noexcept
     {
-        return ConstReverseIterator( Array );
+        return ConstReverseIteratorType( Array );
     }
 
     /* Returns the first element of the container */
@@ -583,29 +593,31 @@ public:
     }
 
 public:
-
     /* STL iterator functions - Enables Range-based for-loops */
-    FORCEINLINE Iterator begin() noexcept
+
+    FORCEINLINE IteratorType begin() noexcept
     {
         return Array;
     }
 
-    FORCEINLINE Iterator end() noexcept
+    FORCEINLINE IteratorType end() noexcept
     {
         return Array + ArraySize;
     }
 
-    FORCEINLINE ConstIterator begin() const noexcept
+    FORCEINLINE ConstIteratorType begin() const noexcept
     {
         return Array;
     }
 
-    FORCEINLINE ConstIterator end() const noexcept
+    FORCEINLINE ConstIteratorType end() const noexcept
     {
         return Array + ArraySize;
     }
 
 private:
+    /* Internal functions */
+
     FORCEINLINE void InternalConstruct( SizeType Count )
     {
         ElementType* Pointer = Allocator.AllocateOrRealloc( Count );
@@ -665,12 +677,15 @@ private:
         ArrayCapacity = NewCapacity;
     }
 
-    FORCEINLINE void InternalReserveForInsertion( const SizeType NewCapacity, const SizeType InsertAt, const SizeType ElementCount ) noexcept
+    FORCEINLINE void InternalReserveForInsertion( const SizeType InsertAt, const SizeType ElementCount ) noexcept
     {
         Assert( NewCapacity >= ArrayCapacity );
 
-        if ( NewCapacity > ArrayCapacity )
+        const SizeType NewSize = ArraySize + ElementCount;
+        if ( NewSize >= ArrayCapacity )
         {
+            const SizeType NewCapacity = InternalGrowCapacity( NewSize, ArrayCapacity );
+
             /* Simpler path for trivial elements */
             if constexpr ( !TIsTrivial<ElementType>::Value )
             {
@@ -703,6 +718,12 @@ private:
             /* Elements after new area */
             RelocateRange<ElementType>( Data() + InsertAt, Data() + InsertAt + ElementCount, ArraySize - InsertAt );
         }
+    }
+
+    FORCEINLINE void InternalRemoveBack( SizeType Count ) noexcept
+    {
+        ArraySize = ArraySize - Count;
+        DestructRange<ElementType>( Data() + ArraySize, Count );
     }
 
     FORCEINLINE static SizeType InternalGrowCapacity( SizeType NewSize, SizeType CurrentCapacity ) noexcept
