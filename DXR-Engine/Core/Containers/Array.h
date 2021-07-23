@@ -66,7 +66,8 @@ public:
     }
 
     /* Copy-constructs an array from another array */
-    FORCEINLINE TArray( const TArray& Other ) noexcept
+    template<typename ArrayType>
+    FORCEINLINE TArray( const ArrayType& Other ) noexcept
         : Allocator()
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
@@ -91,10 +92,14 @@ public:
     /* Empties the array and deallocates the memory */
     FORCEINLINE void Empty() noexcept
     {
-        DestructRange<ElementType>( Data(), ArraySize );
-        ArraySize = 0;
-        ArrayCapacity = 0;
+        if ( ArraySize )
+        {
+            DestructRange<ElementType>( Data(), ArraySize );
+            ArraySize = 0;
+        }
+
         Allocator.Free();
+        ArrayCapacity = 0;
     }
 
     /* Resets the container, but does not deallocate the memory */
@@ -130,6 +135,8 @@ public:
     /* Resets the container, but does not deallocate the memory */
     FORCEINLINE void Reset( const ElementType* InputArray, SizeType Count ) noexcept
     {
+        Assert( (InputArray != nullptr) && Count );
+
         DestructRange<ElementType>( Data(), ArraySize );
         
         if ( Count )
@@ -143,7 +150,8 @@ public:
     }
 
     /* Resets the container, but does not deallocate the memory */
-    FORCEINLINE void Reset( const TArray& InputArray ) noexcept
+    template<typename ArrayType>
+    FORCEINLINE void Reset( const ArrayType& InputArray ) noexcept
     {
         if ( this != &InputArray )
         {
@@ -203,13 +211,12 @@ public:
     }
 
     /* Resizes the container with a new size, and constructs them with value */
-    template<typename FillType>
-    FORCEINLINE typename TEnableIf<TIsConstrictible<T, typename TAddLeftReference<const FillType>::Type>::Value>::Type Resize( SizeType NewSize, const FillType& Element ) noexcept
+    FORCEINLINE void Resize( SizeType NewSize, const FillType& Element ) noexcept
     {
         if ( NewSize > ArraySize )
         {
             InternalReserve( NewSize );
-            ConstructRangeFrom<ElementType, FillType>( Data() + ArraySize, Data() + NewSize, Element );
+            ConstructRangeFrom<ElementType>( Data() + ArraySize, Data() + NewSize, Element );
             ArraySize = NewSize;
         }
         else if ( NewSize < ArraySize )
@@ -243,8 +250,7 @@ public:
             InternalReserve( NewCapacity );
         }
 
-        ElementType* DataEnd = Data() + (ArraySize++);
-        new(DataEnd) ElementType( ::Forward<ArgTypes>( Args )... );
+        new(Data() + (ArraySize++)) ElementType( ::Forward<ArgTypes>( Args )... );
         return LastElement();
     }
 
@@ -277,7 +283,7 @@ public:
         InternalReserveForInsertion( Position, 1 );
 
         ElementType* DataEnd = Data() + (ArraySize++);
-        new(DataEnd)  ElementType( ::Forward<ArgTypes>( Args )... );
+        new(DataEnd) ElementType( ::Forward<ArgTypes>( Args )... );
     }
 
     /* Inserts an element at the specified position */
@@ -317,6 +323,13 @@ public:
         InsertAt( Position, InitList.begin(), InitList.size() );
     }
 
+    /* Insert an array into the container at the position */
+    template<typename ArrayType>
+    FORCEINLINE void InsertAt( SizeType Position, const ArrayType& InArray ) noexcept
+    {
+        InsertAt( Position, InArray.Data(), InArray.Size() );
+    }
+
     /* Inserts an array at the end */
     FORCEINLINE void Append( const ElementType* InputArray, SizeType Count ) noexcept
     {
@@ -334,7 +347,8 @@ public:
     }
 
     /* Inserts an array at the end */
-    FORCEINLINE void Append( const TArray& Other ) noexcept
+    template<typename ArrayType>
+    FORCEINLINE void Append( const ArrayType& Other ) noexcept
     {
         Append( Other.Data(), Other.Size() );
     }
@@ -402,55 +416,55 @@ public:
     /* Checks if there are any elements */
     FORCEINLINE bool IsEmpty() const noexcept
     {
-        return (ArraySize == 0);
+        return (ArraySize == 0) && (Data() != nullptr);
     }
 
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
-        return IteratorType( Array );
+        return IteratorType( Data() );
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType( Array + ArraySize );
+        return IteratorType( Data() + Size() );
     }
 
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
-        return ConstIteratorType( Array );
+        return ConstIteratorType( Data() );
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType( Array + ArraySize );
+        return ConstIteratorType( Data() + Size() );
     }
 
     /* Returns an reverse iterator to the end of the container */
     FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType( Array + ArraySize );
+        return ReverseIteratorType( Data() + Size() );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
     FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
-        return ReverseIteratorType( Array );
+        return ReverseIteratorType( Data() );
     }
 
     /* Returns an reverse iterator to the end of the container */
     FORCEINLINE ConstReverseIteratorType ReverseStartIterator() const noexcept
     {
-        return ConstReverseIteratorType( Array + ArraySize );
+        return ConstReverseIteratorType( Data() + Size() );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
     FORCEINLINE ConstReverseIteratorType ReverseEndIterator() const noexcept
     {
-        return ConstReverseIteratorType( Array );
+        return ConstReverseIteratorType( Data() );
     }
 
     /* Returns the first element of the container */
@@ -559,16 +573,17 @@ public:
     }
 
     /* Compares two containers by comparing each element, returns true if all is equal */
-    FORCEINLINE bool operator==( const TArray& Other ) const noexcept
+    template<typename ArrayType>
+    FORCEINLINE bool operator==( const ArrayType& Other ) const noexcept
     {
         if ( Size() != Other.Size() )
         {
             return false;
         }
 
-        for ( SizeType i = 0; i < Size(); i++ )
+        for ( SizeType Index = 0; i < Size(); Index++ )
         {
-            if ( At( i ) != Other.At( i ) )
+            if ( At( Index ) != Other.At( Index ) )
             {
                 return false;
             }
@@ -578,7 +593,8 @@ public:
     }
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */
-    FORCEINLINE bool operator!=( const TArray& Other ) const noexcept
+    template<typename ArrayType>
+    FORCEINLINE bool operator!=( const ArrayType& Other ) const noexcept
     {
         return !(*this == Other);
     }
@@ -625,9 +641,13 @@ private:
 
     FORCEINLINE void InternalInitUnitialized( SizeType Count )
     {
-        Allocator.AllocateOrRealloc( Count );
+        if (ArrayCapacity < Count)
+        {
+            Allocator.AllocateOrRealloc( Count );
+            ArrayCapacity = Count;
+        }
+
         ArraySize = Count;
-        ArrayCapacity = Count;
     }
 
     FORCEINLINE void InternalConstruct( SizeType Count )

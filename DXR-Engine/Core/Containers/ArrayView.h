@@ -3,46 +3,57 @@
 
 #include "Core/Templates/Move.h"
 
-// TArrayView - View of an array similar to std::span
-
+/* TArrayView - View of an array similar to std::span */
 template<typename T>
 class TArrayView
 {
 public:
     typedef T                                   ElementType;
-    typedef ElementType* Iterator;
-    typedef const ElementType* ConstIterator;
-    typedef TReverseIterator<ElementType>       ReverseIterator;
-    typedef TReverseIterator<const ElementType> ConstReverseIterator;
+    typedef ElementType*                        IteratorType;
+    typedef const ElementType*                  ConstIteratorType;
+    typedef TReverseIterator<ElementType>       ReverseIteratorType;
+    typedef TReverseIterator<const ElementType> ConstReverseIteratorType;
     typedef uint32                              SizeType;
 
-    TArrayView() noexcept
+    /* Default construct an empty view */
+    FORCEINLINE TArrayView() noexcept
         : View( nullptr )
         , ViewSize( 0 )
     {
     }
 
+    /* Create a view from a templated array type */
     template<typename ArrayType>
-    explicit TArrayView( ArrayType& Array ) noexcept
-        : View( Array.Data() )
-        , ViewSize( Array.Size() )
+    FORCEINLINE explicit TArrayView( ArrayType& InArray ) noexcept
+        : View( InArray.Data() )
+        , ViewSize( InArray.Size() )
     {
     }
 
+    /* Create a view from a bounded array */
     template<const SizeType N>
-    explicit TArrayView( ElementType( &Array )[N] ) noexcept
-        : View( Array )
+    FORCEINLINE explicit TArrayView( ElementType( &InArray )[N] ) noexcept
+        : View( InArray )
         , ViewSize( N )
     {
     }
 
-    TArrayView( const TArrayView& Other ) noexcept
+    /* Create a view from a pointer and count */
+    FORCEINLINE explicit TArrayView(const ElementType* InArray, SizeType Count ) noexcept
+        : View( InArray )
+        , ViewSize( Count )
+    {
+    }
+
+    /* Create a view from another view */
+    FORCEINLINE TArrayView( const TArrayView& Other ) noexcept
         : View( Other.View )
         , ViewSize( Other.ViewSize )
     {
     }
 
-    TArrayView( TArrayView&& Other ) noexcept
+    /* Move anther view into this one */
+    FORCEINLINE TArrayView( TArrayView&& Other ) noexcept
         : View( Other.View )
         , ViewSize( Other.ViewSize )
     {
@@ -50,113 +61,182 @@ public:
         Other.ViewSize = 0;
     }
 
-    bool IsEmpty() const noexcept
+    /* Check if the size is zero or not */
+    FORCEINLINE bool IsEmpty() const noexcept
     {
-        return (ViewSize == 0);
+        return (ViewSize == 0) && (Data() != nullptr);
     }
 
-    ElementType& Front() noexcept
+    /* Retrive the first element */
+    FORCEINLINE ElementType& FirstElement() noexcept
     {
-        return View[0];
+        Assert( IsEmpty() );
+        return Data()[0];
     }
 
-    const ElementType& Front() const noexcept
+    /* Retrive the first element */
+    FORCEINLINE const ElementType& FirstElement() const noexcept
     {
-        return View[0];
+        Assert( IsEmpty() );
+        return Data()[0];
     }
 
-    ElementType& Back() noexcept
+    /* Retrive the last element */
+    FORCEINLINE ElementType& LastElement() noexcept
     {
-        return View[ViewSize - 1];
+        Assert( IsEmpty() );
+        return Data()[ViewSize - 1];
     }
 
-    const ElementType& Back() const noexcept
+    /* Retrive the last element */
+    FORCEINLINE const ElementType& LastElement() const noexcept
     {
-        return View[ViewSize - 1];
+        Assert( IsEmpty() );
+        return Data()[ViewSize - 1];
     }
 
-    ElementType& At( SizeType Index ) noexcept
+    /* Retrive an element at a certain position */
+    FORCEINLINE ElementType& At( SizeType Index ) noexcept
     {
         Assert( Index < ViewSize );
-        return View[Index];
+        return Data()[Index];
     }
 
-    const ElementType& At( SizeType Index ) const noexcept
+    /* Retrive an element at a certain position */
+    FORCEINLINE const ElementType& At( SizeType Index ) const noexcept
     {
         Assert( Index < ViewSize );
-        return View[Index];
+        return Data()[Index];
     }
 
-    void Swap( TArrayView& Other ) noexcept
+    /* Swap two views */
+    FORCEINLINE void Swap( TArrayView& Other ) noexcept
     {
-        TArrayView TempView( ::Move( *this ) );
+        TArrayView Temp( ::Move( *this ) );
         *this = ::Move( Other );
-        Other = ::Move( TempView );
+        Other = ::Move( Temp );
     }
 
-    Iterator Begin() noexcept
+    /* Returns an iterator to the beginning of the container */
+    FORCEINLINE IteratorType StartIterator() noexcept
     {
-        return Iterator( View );
+        return IteratorType( Array );
     }
 
-    Iterator End() noexcept
+    /* Returns an iterator to the end of the container */
+    FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return Iterator( View + ViewSize );
+        return IteratorType( Array + ArraySize );
     }
 
-    ConstIterator Begin() const noexcept
+    /* Returns an iterator to the beginning of the container */
+    FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
-        return Iterator( View );
+        return ConstIteratorType( Array );
     }
 
-    ConstIterator End() const noexcept
+    /* Returns an iterator to the end of the container */
+    FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return Iterator( View + ViewSize );
+        return ConstIteratorType( Array + ArraySize );
     }
 
-    SizeType LastIndex() const noexcept
+    /* Returns an reverse iterator to the end of the container */
+    FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
+    {
+        return ReverseIteratorType( Array + ArraySize );
+    }
+
+    /* Returns an reverse iterator to the beginning of the container */
+    FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
+    {
+        return ReverseIteratorType( Array );
+    }
+
+    /* Returns an reverse iterator to the end of the container */
+    FORCEINLINE ConstReverseIteratorType ReverseStartIterator() const noexcept
+    {
+        return ConstReverseIteratorType( Array + ArraySize );
+    }
+
+    /* Returns an reverse iterator to the beginning of the container */
+    FORCEINLINE ConstReverseIteratorType ReverseEndIterator() const noexcept
+    {
+        return ConstReverseIteratorType( Array );
+    }
+
+    /* Fills the container with the specified value */
+    template<typename FillType>
+    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddLeftReference<const FillType>::Type>::Value>::Type Fill( const FillType& InputElement ) noexcept
+    {
+        for ( ElementType& Element : *this )
+        {
+            Element = InputElement;
+        }
+    }
+
+    /* Fills the container with the specified value */
+    template<typename FillType>
+    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddRightReference<FillType>::Type>::Value>::Type Fill( FillType&& InputElement ) noexcept
+    {
+        for ( ElementType& Element : *this )
+        {
+            Element = ::Move( InputElement );
+        }
+    }
+
+    /* Retrive the last valid index for the view */
+    FORCEINLINE SizeType LastIndex() const noexcept
     {
         return ViewSize > 0 ? ViewSize - 1 : 0;
     }
 
-    SizeType Size() const noexcept
+    /* Retrive the size of the view */ 
+    FORCEINLINE SizeType Size() const noexcept
     {
         return ViewSize;
     }
 
-    SizeType SizeInBytes() const noexcept
+    /* Retrive the size of the view in bytes */ 
+    FORCEINLINE SizeType SizeInBytes() const noexcept
     {
         return ViewSize * sizeof( ElementType );
     }
 
-    ElementType* Data() noexcept
+    /* Retrive the data of the view */ 
+    FORCEINLINE lementType* Data() noexcept
     {
         return View;
     }
 
-    const ElementType* Data() const noexcept
+    /* Retrive the data of the view */ 
+    FORCEINLINE const ElementType* Data() const noexcept
     {
         return View;
     }
 
-    ElementType& operator[]( SizeType Index ) noexcept
+    /* Retrive an element at a certain position */
+    FORCEINLINE ElementType& operator[]( SizeType Index ) noexcept
     {
         return At( Index );
     }
 
-    const ElementType& operator[]( SizeType Index ) const noexcept
+    /* Retrive an element at a certain position */
+    FORCEINLINE const ElementType& operator[]( SizeType Index ) const noexcept
     {
         return At( Index );
     }
 
-    TArrayView& operator=( const TArrayView& Other ) noexcept
+    /* Assign from another view */
+    FORCEINLINE TArrayView& operator=( const TArrayView& Other ) noexcept
     {
         View = Other.View;
         ViewSize = Other.ViewSize;
         return *this;
     }
 
-    TArrayView& operator=( TArrayView&& Other ) noexcept
+    /* Move-assign from another view */
+    FORCEINLINE TArrayView& operator=( TArrayView&& Other ) noexcept
     {
         if ( this != &Other )
         {
@@ -170,65 +250,26 @@ public:
     }
 
 public:
+
     /* STL iterator functions - Enables Range-based for-loops */
-    Iterator begin() noexcept
+    FORCEINLINE IteratorType begin() noexcept
     {
         return View;
     }
 
-    Iterator end() noexcept
+    FORCEINLINE IteratorType end() noexcept
     {
         return View + ViewSize;
     }
 
-    ConstIterator begin() const noexcept
+    FORCEINLINE ConstIteratorType begin() const noexcept
     {
         return View;
     }
 
-    ConstIterator end() const noexcept
+    FORCEINLINE ConstIteratorType end() const noexcept
     {
         return View + ViewSize;
-    }
-
-    ConstIterator cbegin() const noexcept
-    {
-        return View;
-    }
-
-    ConstIterator cend() const noexcept
-    {
-        return View + ViewSize;
-    }
-
-    ReverseIterator rbegin() noexcept
-    {
-        return ReverseIterator( end() );
-    }
-
-    ReverseIterator rend() noexcept
-    {
-        return ReverseIterator( begin() );
-    }
-
-    ConstReverseIterator rbegin() const noexcept
-    {
-        return ConstReverseIterator( end() );
-    }
-
-    ConstReverseIterator rend() const noexcept
-    {
-        return ConstReverseIterator( begin() );
-    }
-
-    ConstReverseIterator crbegin() const noexcept
-    {
-        return ConstReverseIterator( end() );
-    }
-
-    ConstReverseIterator crend() const noexcept
-    {
-        return ConstReverseIterator( begin() );
     }
 
 private:

@@ -30,9 +30,9 @@ public:
         Free();
     }
 
-    FORCEINLINE ElementType* AllocateOrRealloc( uint32 Count ) noexcept
+    /* Allocates memory if needed, uses Memory::Realloc */
+    FORCEINLINE ElementType* Allocate( uint32 Count ) noexcept
     {
-        /* This function handles the same size and does not realloc */
         return Memory::Realloc<ElementType>( Count );
     }
 
