@@ -48,7 +48,7 @@ public:
     }
 
     /* Creates an array from a raw pointer array */
-    FORCEINLINE TArray( const ElementType* InputArray, SizeType Count ) noexcept
+    FORCEINLINE explicit TArray( const ElementType* InputArray, SizeType Count ) noexcept
         : Allocator()
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
@@ -168,20 +168,22 @@ public:
     }
 
     /* Fills the container with the specified value */
-    FORCEINLINE void Fill( const ElementType& Element ) noexcept
+    template<typename FillType>
+    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddLeftReference<const FillType>::Type>::Value>::Type Fill( const FillType& InputElement ) noexcept
     {
         for ( ElementType& Element : *this )
         {
-            Element = Element;
+            Element = InputElement;
         }
     }
 
     /* Fills the container with the specified value */
-    FORCEINLINE void Fill( ElementType&& Element ) noexcept
+    template<typename FillType>
+    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddRightReference<FillType>::Type>::Value>::Type Fill( FillType&& InputElement ) noexcept
     {
         for ( ElementType& Element : *this )
         {
-            Element = ::Move( Element );
+            Element = ::Move( InputElement );
         }
     }
 
@@ -201,12 +203,13 @@ public:
     }
 
     /* Resizes the container with a new size, and constructs them with value */
-    FORCEINLINE void Resize( SizeType NewSize, const ElementType& Element ) noexcept
+    template<typename FillType>
+    FORCEINLINE typename TEnableIf<TIsConstrictible<T, typename TAddLeftReference<const FillType>::Type>::Value>::Type Resize( SizeType NewSize, const FillType& Element ) noexcept
     {
         if ( NewSize > ArraySize )
         {
             InternalReserve( NewSize );
-            ConstructRangeFrom<ElementType>( Data() + ArraySize, Data() + NewSize, Element );
+            ConstructRangeFrom<ElementType, FillType>( Data() + ArraySize, Data() + NewSize, Element );
             ArraySize = NewSize;
         }
         else if ( NewSize < ArraySize )
@@ -241,7 +244,7 @@ public:
         }
 
         ElementType* DataEnd = Data() + (ArraySize++);
-        new(reinterpret_cast<void*>(DataEnd)) ElementType( ::Forward<ArgTypes>( Args )... );
+        new(DataEnd) ElementType( ::Forward<ArgTypes>( Args )... );
         return LastElement();
     }
 
@@ -274,16 +277,16 @@ public:
         InternalReserveForInsertion( Position, 1 );
 
         ElementType* DataEnd = Data() + (ArraySize++);
-        new(reinterpret_cast<void*>(DataEnd)) ElementType( ::Forward<ArgTypes>( Args )... );
+        new(DataEnd)  ElementType( ::Forward<ArgTypes>( Args )... );
     }
 
-    /* Inserts the Value at the specified position */
+    /* Inserts an element at the specified position */
     FORCEINLINE void InsertAt( SizeType Position, const ElementType& Element ) noexcept
     {
         EmplaceAt( Position, Element );
     }
 
-    /* Inserts the Value at the specified position */
+    /* Inserts an element at the specified position */
     FORCEINLINE void InsertAt( SizeType Position, ElementType&& Element ) noexcept
     {
         EmplaceAt( Position, ::Forward<ElementType>( Element ) );
@@ -347,7 +350,7 @@ public:
     {
         if ( !IsEmpty() )
         {
-            InternalRemoveBack( Count );
+            InternalRemoveFromLast( Count );
         }
     }
 
@@ -364,12 +367,12 @@ public:
 
         if ( Position + Count == ArraySize )
         {
-            InternalRemoveBack( Count );
+            InternalRemoveFromLast( Count );
             return;
         }
 
         DestructRange<ElementType>( Data() + Position, Count );
-        RelocateRange<ElementType>( Data() + Position, Data() + Position + Count, ArraySize - Position );
+        RelocateRange<ElementType>( Data() + Position, Data() + Position + Count, ArraySize - (Position + Count) );
         ArraySize = ArraySize - Count;
     }
 
@@ -593,6 +596,7 @@ public:
     }
 
 public:
+
     /* STL iterator functions - Enables Range-based for-loops */
 
     FORCEINLINE IteratorType begin() noexcept
@@ -616,30 +620,32 @@ public:
     }
 
 private:
+
     /* Internal functions */
 
-    FORCEINLINE void InternalConstruct( SizeType Count )
+    FORCEINLINE void InternalInitUnitialized( SizeType Count )
     {
-        ElementType* Pointer = Allocator.AllocateOrRealloc( Count );
-        DefaultConstructRange<ElementType>( Pointer, Count );
+        Allocator.AllocateOrRealloc( Count );
         ArraySize = Count;
         ArrayCapacity = Count;
     }
 
-    FORCEINLINE void InternalConstructFrom( SizeType Count, const ElementType& Element )
+    FORCEINLINE void InternalConstruct( SizeType Count )
     {
-        ElementType* Pointer = Allocator.AllocateOrRealloc( Count );
+        InternalInitUnitialized( Count );
+        DefaultConstructRange<ElementType>( Data(), Count );
+    }
+
+    FORCEINLINE void InternalConstructFromElement( SizeType Count, const ElementType& Element )
+    {
+        InternalInitUnitialized( Count );
         ConstructRangeFrom<ElementType>( Pointer, Element, Count );
-        ArraySize = Count;
-        ArrayCapacity = Count;
     }
 
     FORCEINLINE void InternalCopyFrom( const ElementType* From, SizeType Count )
     {
-        ElementType* Pointer = Allocator.AllocateOrRealloc( Count );
+        InternalInitUnitialized( Count );
         CopyConstructRange<ElementType>( Pointer, From, Count );
-        ArraySize = Count;
-        ArrayCapacity = Count;
     }
 
     FORCEINLINE void InternalMoveFrom( TArray&& FromArray )
@@ -657,13 +663,8 @@ private:
         /* Simple Memory::Realloc for trivial elements */
         if constexpr ( !TIsTrivial<ElementType>::Value )
         {
-            /*
-            * For non-trivial objects a temporary allocator has to be created since the old memory needs to be saved so
-            * that the objects can properly be relocated. Example is when objects has pointers/references to themselves,
-            * or contains childobjects that needs to be updated etc. The allocator itself cannot do this, since it does
-            * not know if objects has been created for a certain location or not.
-            */
-
+            /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case 
+               objects has references to themselves or childobjects that references these objects. */
             AllocatorType NewAllocator;
             NewAllocator.AllocateOrRealloc( NewCapacity );
             RelocateRange<ElementType>( NewAllocator.Raw(), Data(), ArraySize );
@@ -677,6 +678,7 @@ private:
         ArrayCapacity = NewCapacity;
     }
 
+    /* Reserves room and not necessarily new memory */
     FORCEINLINE void InternalReserveForInsertion( const SizeType InsertAt, const SizeType ElementCount ) noexcept
     {
         Assert( NewCapacity >= ArrayCapacity );
@@ -689,26 +691,21 @@ private:
             /* Simpler path for trivial elements */
             if constexpr ( !TIsTrivial<ElementType>::Value )
             {
-                /*
-                * For non-trivial objects a temporary allocator has to be created since the old memory needs to be saved so
-                * that the objects can properly be relocated. Example is when objects has pointers/references to themselves,
-                * or contains childobjects that needs to be updated etc. The allocator itself cannot do this, since it does
-                * not know if objects has been created for a certain location or not.
-                */
-
+                /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case 
+                   objects has references to themselves or childobjects that references these objects. */
                 AllocatorType NewAllocator;
                 NewAllocator.AllocateOrRealloc( NewCapacity );
                 /* Elements before new area */
                 RelocateRange<ElementType>( NewAllocator.Raw(), Data(), InsertAt );
                 /* Elements after new area */
-                RelocateRange<ElementType>( NewAllocator.Raw() + InsertAt, Data() + InsertAt + ElementCount, ArraySize - InsertAt );
+                RelocateRange<ElementType>( NewAllocator.Raw() + InsertAt + ElementCount, Data() + InsertAt, ArraySize - InsertAt );
                 Allocator.MoveFrom( NewAllocator );
             }
             else
             {
                 Allocator.AllocateOrRealloc( NewCapacity );
                 /* Elements after new area */
-                RelocateRange<ElementType>( Data() + InsertAt, Data() + InsertAt + ElementCount, ArraySize - InsertAt );
+                RelocateRange<ElementType>( Data() + InsertAt + ElementCount, Data() + InsertAt, ArraySize - InsertAt );
             }
 
             ArrayCapacity = NewCapacity;
@@ -716,11 +713,11 @@ private:
         else
         {
             /* Elements after new area */
-            RelocateRange<ElementType>( Data() + InsertAt, Data() + InsertAt + ElementCount, ArraySize - InsertAt );
+            RelocateRange<ElementType>( Data() + InsertAt + ElementCount, Data() + InsertAt, ArraySize - InsertAt );
         }
     }
 
-    FORCEINLINE void InternalRemoveBack( SizeType Count ) noexcept
+    FORCEINLINE void InternalRemoveFromLast( SizeType Count ) noexcept
     {
         ArraySize = ArraySize - Count;
         DestructRange<ElementType>( Data() + ArraySize, Count );

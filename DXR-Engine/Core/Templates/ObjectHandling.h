@@ -15,14 +15,11 @@
 template<typename T>
 FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type DefaultConstructRange( void* const StartAddress, uint32 Count ) noexcept
 {
-    Assert( StartAddress != nullptr );
-
-    T* Cursor = reinterpret_cast<T*>(StartAddress);
-    T* EndCursor = reinterpret_cast<T*>(StartAddress) + Count;
-    while ( Cursor != EndCursor )
+    while ( Count )
     {
-        new(Cursor) T();
-        Cursor++;
+        new(StartAddress) T();
+        StartAddress = reinterpret_cast<T*>(StartAddress)++;
+        Count--;
     }
 }
 
@@ -30,7 +27,6 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type DefaultConstructRang
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type DefaultConstructRange( void* const StartAddress, uint32 Count ) noexcept
 {
-    Assert( StartAddress != nullptr );
     Memory::Memzero( StartAddress, sizeof( T ) * Count );
 }
 
@@ -42,31 +38,26 @@ FORCEINLINE void DefaultConstruct( void* const Address ) noexcept
 }
 
 /* Construct range and initialize all values to a certain default value */
-template<typename T>
-FORCEINLINE void ConstructRangeFrom( void* const StartAddress, uint32 Count, const T& Value ) noexcept
+template<typename T, typename FromType = T>
+FORCEINLINE typename TEnableIf<TIsConstructible<T, typename TAddLeftReference<const FillType>::Type>::Value>::Type ConstructRangeFrom( void* const StartAddress, uint32 Count, const FillType& Element ) noexcept
 {
-    Assert( StartAddress != nullptr );
-
-    T* Cursor = reinterpret_cast<T*>(StartAddress);
-    T* EndCursor = reinterpret_cast<T*>(StartAddress) + Count;
-    while ( Cursor != EndCursor )
+    while ( Count )
     {
-        new(Cursor) T( Value );
-        Cursor++;
+        new(StartAddress) T( Element );
+        StartAddress = reinterpret_cast<T*>(StartAddress)++;
+        Count--;
     }
 }
 
-template<typename T>
-FORCEINLINE void ConstructRangeFrom( void* const StartAddress, uint32 Count, T&& Value ) noexcept
+/* Construct range and initialize all values to a certain default value */
+template<typename T, typename FromType = T>
+FORCEINLINE typename TEnableIf<TIsConstructible<T, typename TAddLeftReference<const FillType>::Type>::Value>::Type  ConstructRangeFrom( void* const StartAddress, uint32 Count, FromType&& Element ) noexcept
 {
-    Assert( StartAddress != nullptr );
-
-    T* Cursor = reinterpret_cast<T*>(StartAddress);
-    T* EndCursor = reinterpret_cast<T*>(StartAddress) + Count;
-    while ( Cursor != EndCursor )
+    while ( Count )
     {
-        new(Cursor) T( ::Forward<T>( Value ) );
-        Cursor++;
+        new(StartAddress) T( ::Forward<FromType>( Element ) );
+        StartAddress = reinterpret_cast<T*>(StartAddress)++;
+        Count--;
     }
 }
 
@@ -74,16 +65,12 @@ FORCEINLINE void ConstructRangeFrom( void* const StartAddress, uint32 Count, T&&
 template<typename T>
 FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type CopyConstructRange( void* const StartAddress, const T* Source, uint32 Count ) noexcept
 {
-    Assert( Source != nullptr );
-    Assert( StartAddress != nullptr );
-
-    T* Cursor = reinterpret_cast<T*>(StartAddress);
-    T* EndCursor = reinterpret_cast<T*>(StartAddress) + Count;
-    while ( Cursor != EndCursor )
+    while ( Count )
     {
-        new(Cursor) T( *Source );
-        Cursor++;
+        new(StartAddress) T( *Source );
+        StartAddress = reinterpret_cast<T*>(StartAddress)++;
         Source++;
+        Count--;
     }
 }
 
@@ -91,8 +78,6 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type CopyConstructRange( 
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type CopyConstructRange( void* const StartAddress, const T* Source, uint32 Count ) noexcept
 {
-    Assert( Source != nullptr );
-    Assert( StartAddress != nullptr );
     Memory::Memcpy( StartAddress, Source, sizeof( T ) * Count );
 }
 
@@ -107,16 +92,12 @@ FORCEINLINE void CopyConstruct( void* const Address, const T* Source ) noexcept
 template<typename T>
 FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type CopyAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
 {
-    Assert( Source !0 nullptr );
-    Assert( Destination != nullptr );
-
-    T* Cursor = reinterpret_cast<T*>(StartAddress);
-    T* EndCursor = Destination + Count;
-    while ( Cursor != EndCursor )
+    while ( Count )
     {
-        *Cursor = *Source;
-        Cursor++;
+        *StartAddress = *Source;
+        StartAddress++;
         Source++;
+        Count--;
     }
 }
 
@@ -124,8 +105,6 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type CopyAssignRange( T* 
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type CopyAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
 {
-    Assert( Source != nullptr );
-    Assert( Destination != nullptr );
     Memory::Memcpy( Destination, Source, sizeof( T ) * Count );
 }
 
@@ -140,16 +119,12 @@ FORCEINLINE void CopyConstruct( T* Destination, const T* Source ) noexcept
 template<typename T>
 FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type MoveConstructRange( void* const StartAddress, T* Source, uint32 Count ) noexcept
 {
-    Assert( Source != nullptr );
-    Assert( StartAddress != nullptr );
-
-    T* Cursor = reinterpret_cast<T*>(StartAddress);
-    T* EndCursor = reinterpret_cast<T*>(StartAddress) + Count;
-    while ( Cursor != EndCursor )
+    while ( Count )
     {
-        new(Cursor) T( ::Move( *Source ) );
-        Cursor++;
+        new(StartAddress) T( ::Move( *Source ) );
+        StartAddress = reinterpret_cast<T*>(StartAddress)++;
         Source++;
+        Count--;
     }
 }
 
@@ -157,9 +132,6 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type MoveConstructRange( 
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type MoveConstructRange( void* const Address, T* Source, uint32 Count ) noexcept
 {
-    Assert( Address != nullptr );
-    Assert( Source != nullptr );
-
     Memory::Memcpy( Address, Source, sizeof( T ) * Count );
     Memory::Memzero( Source, sizeof( T ) * Count );
 }
@@ -175,15 +147,12 @@ FORCEINLINE void MoveConstruct( void* const Address, const T* Source ) noexcept
 template<typename T>
 FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type MoveAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
 {
-    Assert( Source !0 nullptr );
-    Assert( Destination != nullptr );
-
-    T* EndCursor = Destination + Count;
-    while ( Destination != EndCursor )
+    while ( Count )
     {
         *Destination = ::Move( *Source );
         Destination++;
         Source++;
+        Count--;
     }
 }
 
@@ -191,9 +160,6 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type MoveAssignRange( T* 
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type MoveAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
 {
-    Assert( Source !0 nullptr );
-    Assert( Destination != nullptr );
-
     Memory::Memcpy( Destination, Source, sizeof( T ) * Count );
     Memory::Memzero( Source, sizeof( T ) * Count )
 }
@@ -209,13 +175,10 @@ FORCEINLINE void MoveAssign( T* Destination, const T* Source ) noexcept
 template<typename T>
 FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type DestructRange( const T* const StartObject, uint32 Count ) noexcept
 {
-    Assert( StartObject != nullptr );
-
-    const T* EndCursor = StartObject + Count;
-    while ( StartObject != EndCursor )
+    while ( Count )
     {
-        StartObject->~T();
-        StartObject++;
+        (StartObject++)->~T();
+        Count--;
     }
 }
 
@@ -232,42 +195,67 @@ FORCEINLINE void Destruct( const T* const Object ) noexcept
     DestructRange<T>( Object, 1 );
 }
 
+/* Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty */
 template<typename T>
-FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsMoveConstructable<T>>::Value>::Type RelocateRange( T* Destination, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsMoveConstructable<T>>::Value>::Type RelocateRange( void* Destination, const T* Source, uint32 Count ) noexcept
 {
-    Assert( Source != nullptr );
-    Assert( Destination != nullptr );
-
-    const T* const EndCursor = Destination + Count;
-    while ( Destination != EndCursor )
+    // Ensures that the function works for overlapping ranges
+    if((Source < Destination) && (Destination < Source + Count))
     {
-        new(Destination) T( ::Move( *Source ) );
-        Source->~T();
-        Destination++;
-        Source++
+        Destination = reinterpret_cast<T*>(Destination) + Count;
+        Source = Source + Count;
+
+        while ( Count )
+        {
+            new(Destination) T( ::Move( *Source ) );
+            Destination = reinterpret_cast<T*>(Destination)--;
+            (Source--)->~T();
+            Count--;
+        }
+    }
+    else
+    {
+        while ( Count )
+        {
+            new(Destination) T( ::Move( *Source ) );
+            Destination = reinterpret_cast<T*>(Destination)++;
+            (Source++)->~T();
+            Count--;
+        }
     }
 }
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsCopyConstructable<T>>::Value>::Type RelocateRange( T* Destination, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsCopyConstructable<T>>::Value>::Type RelocateRange( void* Destination, const T* Source, uint32 Count ) noexcept
 {
-    Assert( Source != nullptr );
-    Assert( Destination != nullptr );
-
-    const T* const EndCursor = Destination + Count;
-    while ( Destination != EndCursor )
+    // Ensures that the function works for overlapping ranges
+    if((Source < Destination) && (Destination < Source + Count))
     {
-        new(Destination) T( *Source );
-        Source->~T();
-        Destination++;
-        Source++
+        Destination = reinterpret_cast<T*>(Destination) + Count;
+        Source = Source + Count;
+
+        while ( Count )
+        {
+            new(Destination) T( *Source );
+            Destination = reinterpret_cast<T*>(Destination)--;
+            (Source--)->~T();
+            Count--;
+        }
+    }
+    else
+    {
+        while ( Count )
+        {
+            new(Destination) T( *Source );
+            Destination = reinterpret_cast<T*>(Destination)++;
+            (Source++)->~T();
+            Count--;
+        }
     }
 }
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type RelocateRange( T* Destination, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type RelocateRange( void* Destination, const T* Source, uint32 Count ) noexcept
 {
-    Assert( Source != nullptr );
-    Assert( Destination != nullptr );
-    Memory::Memmove( Destination, Source, sizeof( T ) * Count );
+    Memory::Memmove( Destination, reinterpret_cast<void*>(Source), sizeof( T ) * Count );
 }
