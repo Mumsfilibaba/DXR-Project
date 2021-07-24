@@ -225,6 +225,7 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsMoveConstructable<T>
     }
 }
 
+/* Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty */
 template<typename T>
 FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsCopyConstructable<T>>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
@@ -254,8 +255,33 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsCopyConstructable<T>
     }
 }
 
+/* Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty */
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
     Memory::Memmove( StartAddress, reinterpret_cast<void*>(Source), sizeof( T ) * Count );
+}
+
+/* Compares elements in the range if they are equal or not */
+template<typename T>
+FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value, bool>::Type CompareRange( const T* LHS, const T* RHS, uint32 Count ) noexcept
+{
+    while ( Count )
+    {
+        if (*(LHS++) != *(RHS++))
+        {
+            return false;
+        }
+
+        Count--;
+    }
+
+    return true;
+}
+
+/* Compares elements in the range if they are equal or not */
+template<typename T>
+FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value, bool>::Type RelocateRange( const T* LHS, const T* RHS, uint32 Count ) noexcept
+{
+    return Memory::Memcmp<T>( LHS, RHS, Count );
 }

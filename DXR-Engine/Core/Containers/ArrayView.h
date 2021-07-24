@@ -120,49 +120,49 @@ public:
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
-        return IteratorType( Array );
+        return IteratorType( Data() );
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType( Array + ArraySize );
+        return IteratorType( Data() + Size() );
     }
 
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
-        return ConstIteratorType( Array );
+        return ConstIteratorType( Data() );
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType( Array + ArraySize );
+        return ConstIteratorType( Data() + Size() );
     }
 
     /* Returns an reverse iterator to the end of the container */
     FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType( Array + ArraySize );
+        return ReverseIteratorType( Data() + Size() );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
     FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
-        return ReverseIteratorType( Array );
+        return ReverseIteratorType( Data() );
     }
 
     /* Returns an reverse iterator to the end of the container */
     FORCEINLINE ConstReverseIteratorType ReverseStartIterator() const noexcept
     {
-        return ConstReverseIteratorType( Array + ArraySize );
+        return ConstReverseIteratorType( Data() + Size() );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
     FORCEINLINE ConstReverseIteratorType ReverseEndIterator() const noexcept
     {
-        return ConstReverseIteratorType( Array );
+        return ConstReverseIteratorType( Data() );
     }
 
     /* Fills the container with the specified value */
@@ -215,6 +215,25 @@ public:
         return View;
     }
 
+    /* Compares two containers by comparing each element, returns true if all is equal */
+    template<typename ArrayType>
+    FORCEINLINE bool operator==( const ArrayType& Other ) const noexcept
+    {
+        if ( Size() != Other.Size() )
+        {
+            return false;
+        }
+
+        return CompareRange<ElementType>(Data(), Other.Data(), Size());
+    }
+
+    /* Compares two containers by comparing each element, returns false if all elements are equal */
+    template<typename ArrayType>
+    FORCEINLINE bool operator!=( const ArrayType& Other ) const noexcept
+    {
+        return !(*this == Other);
+    }
+
     /* Retrive an element at a certain position */
     FORCEINLINE ElementType& operator[]( SizeType Index ) noexcept
     {
@@ -252,6 +271,7 @@ public:
 public:
 
     /* STL iterator functions - Enables Range-based for-loops */
+
     FORCEINLINE IteratorType begin() noexcept
     {
         return View;

@@ -581,15 +581,7 @@ public:
             return false;
         }
 
-        for ( SizeType Index = 0; i < Size(); Index++ )
-        {
-            if ( At( Index ) != Other.At( Index ) )
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return CompareRange<ElementType>(Data(), Other.Data(), Size());
     }
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */

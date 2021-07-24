@@ -1,49 +1,62 @@
 #pragma once
+#include "Delete.h"
+
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/IsArray.h"
 #include "Core/Templates/RemoveExtent.h"
 #include "Core/Templates/IsNullptr.h"
 #include "Core/Templates/IsConvertible.h"
+#include "Core/Templates/AddressOf.h"
 
 /* TUniquePtr - Scalar values. Similar to std::unique_ptr */
-template<typename T>
-class TUniquePtr
+template<typename T, typename DeleterType = TDefaultDelete<T>>
+class TUniquePtr : private DeleterType // Using inheritance instead of composition to avoid extra memory usage
 {
 public:
-    template<typename OtherType>
+    template<typename OtherType, typename OtherDeleterType>
     friend class TUniquePtr;
 
     typedef T ElementType;
 
+    /* Cannot be copied */
     TUniquePtr( const TUniquePtr& Other ) = delete;
     TUniquePtr& operator=( const TUniquePtr& Other ) noexcept = delete;
 
+    /* Default construct with nullptr */
     FORCEINLINE TUniquePtr() noexcept
-        : Ptr( nullptr )
+        : DeleterType()
+        , Ptr( nullptr )
     {
     }
 
+    /* Set to nullptr */
     FORCEINLINE TUniquePtr( NullptrType ) noexcept
-        : Ptr( nullptr )
+        : DeleterType()
+        , Ptr( nullptr )
     {
     }
 
+    /* Create from a raw pointer */
     FORCEINLINE explicit TUniquePtr( ElementType* InPtr ) noexcept
-        : Ptr( InPtr )
+        : DeleterType()
+        , Ptr( InPtr )
     {
     }
 
+    /* Move from another */
     FORCEINLINE TUniquePtr( TUniquePtr&& Other ) noexcept
-        : Ptr( Other.Ptr )
+        : DeleterType(::Move(Other))
+        , Ptr( Other.Ptr )
     {
         Other.Ptr = nullptr;
     }
 
-    template<typename OtherType>
-    FORCEINLINE TUniquePtr( TUniquePtr<OtherType>&& Other ) noexcept
-        : Ptr( Other.Ptr )
+    /* Move from another with another type */
+    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    FORCEINLINE TUniquePtr( TUniquePtr<OtherType, OtherDeleterType>&& Other ) noexcept
+        : DeleterType(::Move(Other))
+        , Ptr( Other.Ptr )
     {
-        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
         Other.Ptr = nullptr;
     }
 
@@ -52,13 +65,15 @@ public:
         Reset();
     }
 
+    /* Releases the ownership from the container and returns the pointer */
     FORCEINLINE ElementType* Release() noexcept
     {
-        ElementType* WeakPtr = Ptr;
+        ElementType* OldPtr = Ptr;
         Ptr = nullptr;
-        return WeakPtr;
+        return OldPtr;
     }
 
+    /* Resets the container by setting the pointer to a new value and releases the old one */
     FORCEINLINE void Reset( ElementType* NewPtr = nullptr ) noexcept
     {
         if ( Ptr != NewPtr )
@@ -68,98 +83,122 @@ public:
         }
     }
 
+    /* Swaps two unique pointers */
     FORCEINLINE void Swap( TUniquePtr& Other ) noexcept
     {
-        ElementType* TempPtr = Ptr;
+        ElementType* Temp = Ptr;
         Ptr = Other.Ptr;
-        Other.Ptr = TempPtr;
+        Other.Ptr = Temp;
     }
 
+    /* Return the raw pointer */
     FORCEINLINE ElementType* Get() const noexcept
     {
         return Ptr;
     }
 
+    /* Return the address of the raw pointer */
     FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return &Ptr;
     }
 
+    /* Ensures that the state of the container is valid */
+    FORCEINLINE bool IsValid() const noexcept
+    {
+        return (Ptr != nullptr);
+    } 
+
+    /* Return the raw pointer */
     FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
 
+    /* Dereference the raw pointer */
     FORCEINLINE ElementType& operator*() const noexcept
     {
+        Assert(IsValid());
         return (*Ptr);
     }
 
+    /* Return the address of the raw pointer */
     FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
 
+    /* Assign from a raw pointer */
     FORCEINLINE TUniquePtr& operator=( ElementType* NewPtr ) noexcept
     {
         Reset( NewPtr );
         return *this;
     }
 
+    /* Move-assign from another */
     FORCEINLINE TUniquePtr& operator=( TUniquePtr&& Other ) noexcept
     {
-        if ( this != std::addressof( Other ) )
+        if ( this != ::AddressOf( Other ) )
         {
             Reset( Other.Ptr );
             Other.Ptr = nullptr;
         }
 
+        DeleterType::operator=(::Move(Other));
         return *this;
     }
 
-    template<typename OtherType>
-    FORCEINLINE TUniquePtr& operator=( TUniquePtr<OtherType>&& Other ) noexcept
+    /* Move-assign from another, with another type */
+    template<typename OtherType, typename OtherDeleterType, typename = TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>>
+    FORCEINLINE TUniquePtr& operator=( TUniquePtr<OtherType, OtherDeleterType>&& Other ) noexcept
     {
-        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
-
-        if ( this != std::addressof( Other ) )
+        if ( this != ::AddressOf( Other ) )
         {
             Reset( Other.Ptr );
             Other.Ptr = nullptr;
         }
 
+        DeleterType::operator=(::Move(Other));
         return *this;
     }
 
+    /* Reset the container by assigning nullptr */
     FORCEINLINE TUniquePtr& operator=( NullptrType ) noexcept
     {
         Reset();
         return *this;
     }
 
-    FORCEINLINE bool operator==( const TUniquePtr& Other ) const noexcept
+    /* Compare against another type */
+    template<typename OtherType, typename OtherDeleterType>
+    FORCEINLINE bool operator==( const TUniquePtr<OtherType, OtherDeleterType>& Other ) const noexcept
     {
         return (Ptr == Other.Ptr);
     }
 
-    FORCEINLINE bool operator!=( const TUniquePtr& Other ) const noexcept
+    /* Compare against another type */
+    template<typename OtherType, typename OtherDeleterType>
+    FORCEINLINE bool operator!=( const TUniquePtr<OtherType, OtherDeleterType>& Other ) const noexcept
     {
         return !(*this == Other);
     }
 
+    /* Compare against raw pointer */
     FORCEINLINE bool operator==( ElementType* InPtr ) const noexcept
     {
         return (Ptr == InPtr);
     }
 
+    /* Compare against raw pointer */
     FORCEINLINE bool operator!=( ElementType* InPtr ) const noexcept
     {
         return !(*this == Other);
     }
 
+    /* Convert to bool */
     FORCEINLINE operator bool() const noexcept
     {
-        return (Ptr != nullptr);
+        return IsValid();
     }
 
 private:
@@ -167,7 +206,7 @@ private:
     {
         if ( Ptr )
         {
-            delete Ptr;
+            DeleterType::DeleteElement(Ptr);
             Ptr = nullptr;
         }
     }
@@ -176,44 +215,55 @@ private:
 };
 
 /* TUniquePtr - Array values. Similar to std::unique_ptr */
-template<typename T>
-class TUniquePtr<T[]>
+template<typename T, typename DeleterType = TDefaultDelete<T[]>>
+class TUniquePtr<T[]> : private DeleterType
 {
 public:
-    template<typename OtherType>
+    template<typename OtherType, typename OtherDeleterType>
     friend class TUniquePtr;
 
-    typedef T ElementType;
+    typedef T      ElementType;
+    typedef uint32 SizeType;
 
+    /* Cannot be copied */
     TUniquePtr( const TUniquePtr& Other ) = delete;
     TUniquePtr& operator=( const TUniquePtr& Other ) noexcept = delete;
 
+    /* Default construct with nullptr */
     FORCEINLINE TUniquePtr() noexcept
-        : Ptr( nullptr )
+        : DeleterType()
+        , Ptr( nullptr )
     {
     }
 
+    /* Set to nullptr */
     FORCEINLINE TUniquePtr( NullptrType ) noexcept
-        : Ptr( nullptr )
+        : DeleterType()
+        , Ptr( nullptr )
     {
     }
 
+    /* Create from a raw pointer */
     FORCEINLINE explicit TUniquePtr( ElementType* InPtr ) noexcept
-        : Ptr( InPtr )
+        : DeleterType()
+        , Ptr( InPtr )
     {
     }
 
+    /* Move from another */
     FORCEINLINE TUniquePtr( TUniquePtr&& Other ) noexcept
-        : Ptr( Other.Ptr )
+        : DeleterType(::Move(Other))
+        , Ptr( Other.Ptr )
     {
         Other.Ptr = nullptr;
     }
 
-    template<typename OtherType>
-    FORCEINLINE TUniquePtr( TUniquePtr<OtherType>&& Other ) noexcept
-        : Ptr( Other.Ptr )
+    /* Move from another with another type */
+    template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
+    FORCEINLINE TUniquePtr( TUniquePtr<OtherType[], OtherDeleterType>&& Other ) noexcept
+        : DeleterType(::Move(Other))
+        , Ptr( Other.Ptr )
     {
-        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
         Other.Ptr = nullptr;
     }
 
@@ -222,13 +272,15 @@ public:
         Reset();
     }
 
+    /* Releases the ownership from the container and returns the pointer */
     FORCEINLINE ElementType* Release() noexcept
     {
-        ElementType* WeakPtr = Ptr;
+        ElementType* OldPtr = Ptr;
         Ptr = nullptr;
-        return WeakPtr;
+        return OldPtr;
     }
 
+    /* Resets the container by setting the pointer to a new value and releases the old one */
     FORCEINLINE void Reset( ElementType* NewPtr = nullptr ) noexcept
     {
         if ( Ptr != NewPtr )
@@ -238,94 +290,121 @@ public:
         }
     }
 
+    /* Swaps two unique pointers */
     FORCEINLINE void Swap( TUniquePtr& Other ) noexcept
     {
-        ElementType* TempPtr = Ptr;
+        ElementType* Temp = Ptr;
         Ptr = Other.Ptr;
-        Other.Ptr = TempPtr;
+        Other.Ptr = Temp;
     }
 
+    /* Return the raw pointer */
     FORCEINLINE ElementType* Get() const noexcept
     {
         return Ptr;
     }
 
+    /* Return the address of the raw pointer */
     FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return &Ptr;
     }
 
+    /* Ensures that the state of the container is valid */
+    FORCEINLINE bool IsValid() const noexcept
+    {
+        return (Ptr != nullptr);
+    }
+
+    FORCEINLINE ElementType& At(SizeType Index) const noexcept
+    {
+        Assert(IsValid());
+        return Get()[Index];
+    }
+
+    /* Dereference the raw pointer */
+    FORCEINLINE ElementType& operator[](SizeType Index) const noexcept
+    {
+        return At(Index);
+    }
+
+    /* Return the address of the raw pointer */
     FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
 
-    FORCEINLINE ElementType& operator[]( uint32 Index ) noexcept
+    /* Assign from a raw pointer */
+    FORCEINLINE TUniquePtr& operator=( ElementType* NewPtr ) noexcept
     {
-        Assert( Ptr != nullptr );
-        return Ptr[Index];
-    }
-
-    FORCEINLINE TUniquePtr& operator=( ElementType* InPtr ) noexcept
-    {
-        Reset( InPtr );
+        Reset( NewPtr );
         return *this;
     }
 
+    /* Move-assign from another */
     FORCEINLINE TUniquePtr& operator=( TUniquePtr&& Other ) noexcept
     {
-        if ( this != std::addressof( Other ) )
+        if ( this != ::AddressOf( Other ) )
         {
             Reset( Other.Ptr );
             Other.Ptr = nullptr;
         }
 
+        DeleterType::operator=(::Move(Other));
         return *this;
     }
 
-    template<typename OtherType>
-    FORCEINLINE TUniquePtr& operator=( TUniquePtr<OtherType>&& Other ) noexcept
+    /* Move-assign from another, with another type */
+    template<typename OtherType, typename OtherDeleterType, typename = TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>>
+    FORCEINLINE TUniquePtr& operator=( TUniquePtr<OtherType[], OtherDeleterType>&& Other ) noexcept
     {
-        static_assert(TIsConvertible<OtherType*, ElementType*>::Value);
-
-        if ( this != std::addressof( Other ) )
+        if ( this != ::AddressOf( Other ) )
         {
             Reset( Other.Ptr );
             Other.Ptr = nullptr;
         }
 
+        DeleterType::operator=(::Move(Other));
         return *this;
     }
 
+    /* Reset the container by assigning nullptr */
     FORCEINLINE TUniquePtr& operator=( NullptrType ) noexcept
     {
         Reset();
         return *this;
     }
 
-    FORCEINLINE bool operator==( const TUniquePtr& Other ) const noexcept
+    /* Compare against another type */
+    template<typename OtherType, typename OtherDeleterType>
+    FORCEINLINE bool operator==( const TUniquePtr<OtherType, OtherDeleterType>& Other ) const noexcept
     {
         return (Ptr == Other.Ptr);
     }
 
-    FORCEINLINE bool operator!=( const TUniquePtr& Other ) const noexcept
+    /* Compare against another type */
+    template<typename OtherType, typename OtherDeleterType>
+    FORCEINLINE bool operator!=( const TUniquePtr<OtherType, OtherDeleterType>& Other ) const noexcept
     {
         return !(*this == Other);
     }
 
+    /* Compare against raw pointer */
     FORCEINLINE bool operator==( ElementType* InPtr ) const noexcept
     {
         return (Ptr == InPtr);
     }
 
+    /* Compare against raw pointer */
     FORCEINLINE bool operator!=( ElementType* InPtr ) const noexcept
     {
         return !(*this == Other);
     }
 
+    /* Convert to bool */
     FORCEINLINE operator bool() const noexcept
     {
-        return (Ptr != nullptr);
+        return IsValid();
     }
 
 private:
@@ -333,7 +412,7 @@ private:
     {
         if ( Ptr )
         {
-            delete Ptr;
+            DeleterType::DeleteElement(Ptr);
             Ptr = nullptr;
         }
     }

@@ -13,7 +13,7 @@ public:
     typedef const ElementType*                  ConstIterator;
     typedef TReverseIterator<ElementType>       ReverseIterator;
     typedef TReverseIterator<const ElementType> ConstReverseIterator;
-    typedef uint32                               SizeType;
+    typedef uint32                              SizeType;
 
     static_assert(N > 0, "The number of elements has to be more than zero");
 
@@ -83,6 +83,54 @@ public:
         Other = ::Move( Temp );
     }
 
+    /* Returns an iterator to the beginning of the container */
+    FORCEINLINE IteratorType StartIterator() noexcept
+    {
+        return IteratorType( Data() );
+    }
+
+    /* Returns an iterator to the end of the container */
+    FORCEINLINE IteratorType EndIterator() noexcept
+    {
+        return IteratorType( Data() + Size() );
+    }
+
+    /* Returns an iterator to the beginning of the container */
+    FORCEINLINE ConstIteratorType StartIterator() const noexcept
+    {
+        return ConstIteratorType( Data() );
+    }
+
+    /* Returns an iterator to the end of the container */
+    FORCEINLINE ConstIteratorType EndIterator() const noexcept
+    {
+        return ConstIteratorType( Data() + Size() );
+    }
+
+    /* Returns an reverse iterator to the end of the container */
+    FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
+    {
+        return ReverseIteratorType( Data() + Size() );
+    }
+
+    /* Returns an reverse iterator to the beginning of the container */
+    FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
+    {
+        return ReverseIteratorType( Data() );
+    }
+
+    /* Returns an reverse iterator to the end of the container */
+    FORCEINLINE ConstReverseIteratorType ReverseStartIterator() const noexcept
+    {
+        return ConstReverseIteratorType( Data() + Size() );
+    }
+
+    /* Returns an reverse iterator to the beginning of the container */
+    FORCEINLINE ConstReverseIteratorType ReverseEndIterator() const noexcept
+    {
+        return ConstReverseIteratorType( Data() );
+    }
+
     /* Retrive the last valid index */
     constexpr SizeType LastIndex() const noexcept
     {
@@ -123,6 +171,25 @@ public:
     FORCEINLINE const ElementType& operator[]( SizeType Index ) const noexcept
     {
         return At( Index );
+    }
+
+        /* Compares two containers by comparing each element, returns true if all is equal */
+    template<typename ArrayType>
+    FORCEINLINE bool operator==( const ArrayType& Other ) const noexcept
+    {
+        if ( Size() != Other.Size() )
+        {
+            return false;
+        }
+
+        return CompareRange<ElementType>(Data(), Other.Data(), Size());
+    }
+
+    /* Compares two containers by comparing each element, returns false if all elements are equal */
+    template<typename ArrayType>
+    FORCEINLINE bool operator!=( const ArrayType& Other ) const noexcept
+    {
+        return !(*this == Other);
     }
 
 public:
