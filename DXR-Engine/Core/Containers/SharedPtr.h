@@ -51,30 +51,6 @@ private:
     ThreadSafeInt32 StrongRefs;
 };
 
-// TDelete
-
-template<typename T>
-struct TDelete
-{
-    using Type = T;
-
-    FORCEINLINE void operator()( Type* InPtr ) noexcept
-    {
-        delete InPtr;
-    }
-};
-
-template<typename T>
-struct TDelete<T[]>
-{
-    using Type = typename TRemoveExtent<T>;
-
-    FORCEINLINE void operator()( Type* InPtr ) noexcept
-    {
-        delete[] InPtr;
-    }
-};
-
 // TPtrBase - Base class for TWeak- and TSharedPtr
 
 template<typename T, typename D>
