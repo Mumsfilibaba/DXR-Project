@@ -9,3 +9,9 @@ FORCEINLINE TEnableIf<TIsObject<T>::Value, T*>::Type  AddressOf( T& Object ) noe
 { 
     return reinterpret_cast<T*>(&const_cast<char&>(reinterpret_cast<const volatile char&>(Object)));
 }
+
+template<typename T>
+FORCEINLINE TEnableIf<!TIsObject<T>::Value, T*>::Type  AddressOf( T& Object ) noexcept
+{ 
+    return &Object;
+}

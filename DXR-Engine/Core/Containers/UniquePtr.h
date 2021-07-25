@@ -103,6 +103,13 @@ public:
         return &Ptr;
     }
 
+    /* Return the dereferenced object */
+    FORCEINLINE ElementType& Dereference() const noexcept
+    {
+        Assert(IsValid());
+        return *Ptr;
+    }
+
     /* Ensures that the state of the container is valid */
     FORCEINLINE bool IsValid() const noexcept
     {
@@ -118,8 +125,7 @@ public:
     /* Dereference the raw pointer */
     FORCEINLINE ElementType& operator*() const noexcept
     {
-        Assert(IsValid());
-        return (*Ptr);
+        return Dereference();
     }
 
     /* Return the address of the raw pointer */
@@ -167,32 +173,6 @@ public:
     {
         Reset();
         return *this;
-    }
-
-    /* Compare against another type */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE bool operator==( const TUniquePtr<OtherType, OtherDeleterType>& Other ) const noexcept
-    {
-        return (Ptr == Other.Ptr);
-    }
-
-    /* Compare against another type */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE bool operator!=( const TUniquePtr<OtherType, OtherDeleterType>& Other ) const noexcept
-    {
-        return !(*this == Other);
-    }
-
-    /* Compare against raw pointer */
-    FORCEINLINE bool operator==( ElementType* InPtr ) const noexcept
-    {
-        return (Ptr == InPtr);
-    }
-
-    /* Compare against raw pointer */
-    FORCEINLINE bool operator!=( ElementType* InPtr ) const noexcept
-    {
-        return !(*this == Other);
     }
 
     /* Convert to bool */
@@ -375,32 +355,6 @@ public:
         return *this;
     }
 
-    /* Compare against another type */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE bool operator==( const TUniquePtr<OtherType, OtherDeleterType>& Other ) const noexcept
-    {
-        return (Ptr == Other.Ptr);
-    }
-
-    /* Compare against another type */
-    template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE bool operator!=( const TUniquePtr<OtherType, OtherDeleterType>& Other ) const noexcept
-    {
-        return !(*this == Other);
-    }
-
-    /* Compare against raw pointer */
-    FORCEINLINE bool operator==( ElementType* InPtr ) const noexcept
-    {
-        return (Ptr == InPtr);
-    }
-
-    /* Compare against raw pointer */
-    FORCEINLINE bool operator!=( ElementType* InPtr ) const noexcept
-    {
-        return !(*this == Other);
-    }
-
     /* Convert to bool */
     FORCEINLINE operator bool() const noexcept
     {
@@ -419,6 +373,76 @@ private:
 
     ElementType* Ptr;
 };
+
+/* Check the equallity between the pointer and a raw pointer */
+template<typename T, typename U>
+FORCEINLINE bool operator==( const TUniquePtr<T>& LHS, U* RHS ) noexcept
+{
+    return (LHS.Get() == RHS);
+}
+
+/* Check the equallity between the pointer and a raw pointer */
+template<typename T, typename U>
+FORCEINLINE bool operator==( T* LHS, const TUniquePtr<U>& RHS ) noexcept
+{
+    return (LHS == RHS.Get());
+}
+
+/* Check the equallity between the pointer and a raw pointer */
+template<typename T, typename U>
+FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, U* RHS ) noexcept
+{
+    return (LHS.Get() != RHS);
+}
+
+/* Check the equallity between the pointer and a raw pointer */
+template<typename T, typename U>
+FORCEINLINE bool operator!=( T* LHS, const TUniquePtr<U>& RHS ) noexcept
+{
+    return (LHS != RHS.Get());
+}
+
+/* Check the equallity between the pointer and a raw pointer */
+template<typename T, typename U>
+FORCEINLINE bool operator==( const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS ) noexcept
+{
+    return (LHS.Get() == RHS.Get());
+}
+
+/* Check the equallity between the pointer and a raw pointer */
+template<typename T, typename U>
+FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS ) noexcept
+{
+    return (LHS.Get() != RHS.Get());
+}
+
+/* Check the equallity between the pointer and a raw pointer */
+template<typename T>
+FORCEINLINE bool operator==( const TUniquePtr<T>& LHS, NullptrType ) noexcept
+{
+    return (LHS.Get() == nullptr);
+}
+
+/* Check the equallity between the pointer and a raw pointer */
+template<typename T>
+FORCEINLINE bool operator==( NullptrType, const TUniquePtr<T>& RHS ) noexcept
+{
+    return (nullptr == RHS.Get());
+}
+
+/* Check the equallity between the pointer and a raw pointer */
+template<typename T>
+FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, NullptrType ) noexcept
+{
+    return (LHS.Get() != nullptr);
+}
+
+/* Check the equallity between the pointer and a raw pointer */
+template<typename T>
+FORCEINLINE bool operator!=( NullptrType, const TUniquePtr<T>& RHS ) noexcept
+{
+    return (nullptr != RHS.Get());
+}
 
 /* MakeUnique - Creates a new object together with a UniquePtr */
 template<typename T, typename... ArgTypes>
