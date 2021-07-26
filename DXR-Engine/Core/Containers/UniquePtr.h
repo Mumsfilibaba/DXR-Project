@@ -62,7 +62,7 @@ public:
 
     FORCEINLINE ~TUniquePtr()
     {
-        Reset();
+        InternalRelease();
     }
 
     /* Releases the ownership from the container and returns the pointer */
@@ -76,11 +76,14 @@ public:
     /* Resets the container by setting the pointer to a new value and releases the old one */
     FORCEINLINE void Reset( ElementType* NewPtr = nullptr ) noexcept
     {
-        if ( Ptr != NewPtr )
-        {
-            InternalRelease();
-            Ptr = NewPtr;
-        }
+        TUniquePtr(NewPtr).Swap(*this);
+    }
+
+    /* Resets the container by setting the pointer to a new value and releases the old one */
+    template<typename OtherType>
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset( OtherType* NewPtr ) noexcept
+    {
+        Reset(static_cast<ElementType*>(NewPtr))
     }
 
     /* Swaps two unique pointers */
@@ -135,43 +138,31 @@ public:
     }
 
     /* Assign from a raw pointer */
-    FORCEINLINE TUniquePtr& operator=( ElementType* NewPtr ) noexcept
+    FORCEINLINE TUniquePtr& operator=( ElementType* RHS ) noexcept
     {
-        Reset( NewPtr );
+        TUniquePtr( RHS ).Swap(*this);
         return *this;
     }
 
     /* Move-assign from another */
-    FORCEINLINE TUniquePtr& operator=( TUniquePtr&& Other ) noexcept
+    FORCEINLINE TUniquePtr& operator=( TUniquePtr&& RHS ) noexcept
     {
-        if ( this != ::AddressOf( Other ) )
-        {
-            Reset( Other.Ptr );
-            Other.Ptr = nullptr;
-        }
-
-        DeleterType::operator=(::Move(Other));
+        TUniquePtr( ::Move(RHS) ).Swap(*this);
         return *this;
     }
 
     /* Move-assign from another, with another type */
-    template<typename OtherType, typename OtherDeleterType, typename = TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>>
-    FORCEINLINE TUniquePtr& operator=( TUniquePtr<OtherType, OtherDeleterType>&& Other ) noexcept
+    template<typename OtherType, typename OtherDeleterType>
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TUniquePtr>::Type>::Type operator=( TUniquePtr<OtherType, OtherDeleterType>&& RHS ) noexcept
     {
-        if ( this != ::AddressOf( Other ) )
-        {
-            Reset( Other.Ptr );
-            Other.Ptr = nullptr;
-        }
-
-        DeleterType::operator=(::Move(Other));
+        TUniquePtr( ::Move( RHS ) ).Swap( *this );
         return *this;
     }
 
     /* Reset the container by assigning nullptr */
     FORCEINLINE TUniquePtr& operator=( NullptrType ) noexcept
     {
-        Reset();
+        TUniquePtr().Swap(*this);
         return *this;
     }
 
@@ -196,7 +187,7 @@ private:
 
 /* TUniquePtr - Array values. Similar to std::unique_ptr */
 template<typename T, typename DeleterType = TDefaultDelete<T[]>>
-class TUniquePtr<T[]> : private DeleterType
+class TUniquePtr<T[], DeleterType> : private DeleterType
 {
 public:
     template<typename OtherType, typename OtherDeleterType>
@@ -249,7 +240,7 @@ public:
 
     FORCEINLINE ~TUniquePtr()
     {
-        Reset();
+        InternalRelease();
     }
 
     /* Releases the ownership from the container and returns the pointer */
@@ -263,11 +254,14 @@ public:
     /* Resets the container by setting the pointer to a new value and releases the old one */
     FORCEINLINE void Reset( ElementType* NewPtr = nullptr ) noexcept
     {
-        if ( Ptr != NewPtr )
-        {
-            InternalRelease();
-            Ptr = NewPtr;
-        }
+        TUniquePtr(NewPtr).Swap(*this);
+    }
+
+    /* Resets the container by setting the pointer to a new value and releases the old one */
+    template<typename OtherType>
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset( OtherType* NewPtr ) noexcept
+    {
+        Reset(static_cast<ElementType*>(NewPtr))
     }
 
     /* Swaps two unique pointers */
@@ -315,43 +309,30 @@ public:
     }
 
     /* Assign from a raw pointer */
-    FORCEINLINE TUniquePtr& operator=( ElementType* NewPtr ) noexcept
+    FORCEINLINE TUniquePtr& operator=( ElementType* RHS ) noexcept
     {
-        Reset( NewPtr );
+        TUniquePtr( RHS ).Swap(*this);
         return *this;
     }
 
     /* Move-assign from another */
-    FORCEINLINE TUniquePtr& operator=( TUniquePtr&& Other ) noexcept
+    FORCEINLINE TUniquePtr& operator=( TUniquePtr&& RHS ) noexcept
     {
-        if ( this != ::AddressOf( Other ) )
-        {
-            Reset( Other.Ptr );
-            Other.Ptr = nullptr;
-        }
-
-        DeleterType::operator=(::Move(Other));
-        return *this;
+        TUniquePtr( ::Move(RHS) ).Swap(*this);
     }
 
     /* Move-assign from another, with another type */
-    template<typename OtherType, typename OtherDeleterType, typename = TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>>
-    FORCEINLINE TUniquePtr& operator=( TUniquePtr<OtherType[], OtherDeleterType>&& Other ) noexcept
+    template<typename OtherType, typename OtherDeleterType>
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TUniquePtr>::Type>::Type operator=( TUniquePtr<OtherType[], OtherDeleterType>&& RHS ) noexcept
     {
-        if ( this != ::AddressOf( Other ) )
-        {
-            Reset( Other.Ptr );
-            Other.Ptr = nullptr;
-        }
-
-        DeleterType::operator=(::Move(Other));
+        TUniquePtr( ::Move( RHS ) ).Swap( *this );
         return *this;
     }
 
     /* Reset the container by assigning nullptr */
     FORCEINLINE TUniquePtr& operator=( NullptrType ) noexcept
     {
-        Reset();
+        TUniquePtr().Swap(*this);
         return *this;
     }
 
@@ -374,70 +355,70 @@ private:
     ElementType* Ptr;
 };
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the equallity between uniqueptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TUniquePtr<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the equallity between uniqueptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( T* LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the inequallity between uniqueptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the inequallity between uniqueptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( T* LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the equallity between uniqueptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the inequallity between uniqueptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the equallity between uniqueptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator==( const TUniquePtr<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the equallity between uniqueptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator==( NullptrType, const TUniquePtr<T>& RHS ) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the inequallity between uniqueptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the inequallity between uniqueptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( NullptrType, const TUniquePtr<T>& RHS ) noexcept
 {
@@ -449,7 +430,7 @@ template<typename T, typename... ArgTypes>
 FORCEINLINE TEnableIf<!TIsArray<T>::Value, TUniquePtr<T>> MakeUnique( ArgTypes&&... Args ) noexcept
 {
     T* UniquePtr = new T( ::Forward<ArgTypes>( Args )... );
-    return ::Move( TUniquePtr<T>( UniquePtr ) );
+    return TUniquePtr<T>( UniquePtr );
 }
 
 template<typename T>
@@ -458,5 +439,5 @@ FORCEINLINE TEnableIf<TIsArray<T>::Value, TUniquePtr<T>>MakeUnique( uint32 Size 
     typedef typename TRemoveExtent<T>::Type Type;
 
     Type* UniquePtr = new Type[Size];
-    return ::Move( TUniquePtr<T>( UniquePtr ) );
+    return TUniquePtr<T>( UniquePtr );
 }

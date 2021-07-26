@@ -69,16 +69,9 @@ public:
     }
 
     /* Resets the container and sets to a potential new raw pointer */ 
-    FORCEINLINE ElementType* Reset( ElementType* NewPtr = nullptr ) noexcept
+    FORCEINLINE void Reset( ElementType* NewPtr = nullptr ) noexcept
     {
-        ElementType* OldPtr = Ptr;
-        if ( Ptr != NewPtr )
-        {
-            Release();
-            Ptr = NewPtr;
-        }
-
-        return OldPtr;
+        TSharedRef(NewPtr).Swap(*this);
     }
 
     /* Resets the container and sets to a potential new raw pointer of another type */ 
@@ -86,6 +79,14 @@ public:
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddPointer<ElementType>::Type>::Type Reset( OtherType* NewPtr ) noexcept
     {
         return Reset(static_cast<ElementType*>(NewPtr));
+    }
+
+    /* Swaps the pointers in the two containers */ 
+    FORCEINLINE void Swap(TSharedRef& Other)
+    {
+        ElementType* Temp = Ptr;
+        Ptr = Other.Ptr;
+        Other.Ptr = Temp;
     }
 
     /* Releases the ownership of the pointer and returns the pointer */
@@ -173,92 +174,54 @@ public:
     }
 
     /* Copy another sharedref into this */
-    FORCEINLINE TSharedRef& operator=( const TSharedRef& Other ) noexcept
+    FORCEINLINE TSharedRef& operator=( const TSharedRef& RHS ) noexcept
     {
-        if ( this != ::AddressOf( Other ) )
-        {
-            Release();
-
-            Ptr = Other.Ptr;
-            AddRef();
-        }
-
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
     /* Copy another sharedref into this of another type */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( const TSharedRef<OtherType>& Other ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( const TSharedRef<OtherType>& RHS ) noexcept
     {
-        if ( this != ::AddressOf( Other ) )
-        {
-            Release();
-
-            Ptr = Other.Ptr;
-            AddRef();
-        }
-
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
     /* Move another sharedref into this */
-    FORCEINLINE TSharedRef& operator=( TSharedRef&& Other ) noexcept
+    FORCEINLINE TSharedRef& operator=( TSharedRef&& RHS ) noexcept
     {
-        if ( this != ::AddressOf( Other ) )
-        {
-            Release();
-
-            Ptr = Other.Ptr;
-            Other.Ptr = nullptr;
-        }
-
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
     /* Move another sharedref into this of another type */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( TSharedRef<OtherType>&& Other ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( TSharedRef<OtherType>&& RHS ) noexcept
     {
-        if ( this != ::AddressOf( Other ) )
-        {
-            Release();
-
-            Ptr = Other.Ptr;
-            Other.Ptr = nullptr;
-        }
-
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
     /* Assign from a raw pointer */
-    FORCEINLINE TSharedRef& operator=( ElementType* NewPtr ) noexcept
+    FORCEINLINE TSharedRef& operator=( ElementType* RHS ) noexcept
     {
-        if ( Ptr != NewPtr )
-        {
-            Release();
-            Ptr = static_cast<ElementType*>(NewPtr);
-        }
-
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
     /* Assign from a pointer of another type */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( OtherType* NewPtr ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( OtherType* RHS ) noexcept
     {
-        if ( Ptr != NewPtr )
-        {
-            Release();
-            Ptr = static_cast<ElementType*>(NewPtr);
-        }
-        
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
     /* Set the pointer to nullptr */
     FORCEINLINE TSharedRef& operator=( NullptrType ) noexcept
     {
-        Release();
+        TSharedRef().Swap(*this);
         return *this;
     }
 
@@ -275,70 +238,70 @@ private:
     ElementType* Ptr;
 };
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the equallity between sharedref and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TSharedRef<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the equallity between sharedref and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( T* LHS, const TSharedRef<U>& RHS ) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the inequallity between sharedref and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TSharedRef<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the inequallity between sharedref and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( T* LHS, const TSharedRef<U>& RHS ) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the equallity between sharedrefs */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TSharedRef<T>& LHS, const TSharedRef<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the equallity between sharedrefs */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TSharedRef<T>& LHS, const TSharedRef<U>& RHS ) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the equallity between sharedref and nullptr */
 template<typename T>
 FORCEINLINE bool operator==( const TSharedRef<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the equallity between sharedref and nullptr */
 template<typename T>
 FORCEINLINE bool operator==( NullptrType, const TSharedRef<T>& RHS ) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the inequallity between sharedref and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( const TSharedRef<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
-/* Check the equallity between the pointer and a raw pointer */
+/* Check the inequallity between sharedref and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( NullptrType, const TSharedRef<T>& RHS ) noexcept
 {
