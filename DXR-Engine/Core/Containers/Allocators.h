@@ -8,7 +8,8 @@ template<typename T>
 class TDefaultAllocator
 {
 public:
-    typedef T ElementType;
+    typedef T     ElementType;
+    typedef int32 SizeType;
 
     /* Since we do not store the size of the allocation we cannot copy. TODO: See if this is a better approcach */
     TDefaultAllocator( const TDefaultAllocator& ) = delete;
@@ -31,7 +32,7 @@ public:
     }
 
     /* Allocates memory if needed, uses Memory::Realloc */
-    FORCEINLINE ElementType* Allocate( uint32 Count ) noexcept
+    FORCEINLINE ElementType* Allocate( SizeType Count ) noexcept
     {
         return Memory::Realloc<ElementType>( Count );
     }

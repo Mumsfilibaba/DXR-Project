@@ -94,7 +94,7 @@ public:
     /* Move constructor */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TPointerReferencedStorage( TPointerReferencedStorage<OtherType, OtherDeleterType>&& Other) noexcept
-        : DeleterType( ::Move(Other) )
+        : DeleterType( Move(Other) )
         , Ptr(nullptr)
         , Counter(nullptr)
     {
@@ -248,7 +248,7 @@ public:
     /* Assign another to this */
     TPointerReferencedStorage& operator=( TPointerReferencedStorage&& RHS) noexcept
     {
-        TPointerReferencedStorage( ::Move(RHS) ).Swap(*this);
+        TPointerReferencedStorage( Move(RHS) ).Swap(*this);
         return *this;
     }
 
@@ -256,7 +256,7 @@ public:
     template<typename OtherType, typename OtherDeleterType>
     typename TEnableIf<TIsConvertible<OtherType*, ElementType*, TAddLeftReference<TPointerReferencedStorage>::Type>::Value>::Type operator=( TPointerReferencedStorage<OtherType, OtherDeleterType>&& RHS) noexcept
     {
-        TPointerReferencedStorage( ::Move(RHS) ).Swap(*this);
+        TPointerReferencedStorage( Move(RHS) ).Swap(*this);
         return *this;
     }
 
@@ -327,14 +327,14 @@ public:
 
     /* Move constructor */
     FORCEINLINE TSharedPtr( TSharedPtr&& Other ) noexcept
-        : Storage( ::Move(Other.Storage) )
+        : Storage( Move(Other.Storage) )
     {
     }
 
     /* Move constructor from with another type */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>>
     FORCEINLINE TSharedPtr( TSharedPtr<TOther, OtherDeleterType>&& Other ) noexcept
-        : Storage( ::Move(Other.Storage) )
+        : Storage( Move(Other.Storage) )
     {
     }
 
@@ -397,9 +397,9 @@ public:
     /* Swaps the contents of this and another container */
     FORCEINLINE void Swap( TSharedPtr& Other ) noexcept
     {
-        PointerStorage Temp = ::Move( Storage );
-        Storage       = ::Move(Other.Storage);
-        Other.Storage = ::Move(Temp);
+        PointerStorage Temp = Move( Storage );
+        Storage       = Move(Other.Storage);
+        Other.Storage = Move(Temp);
     }
 
     /* Checks weather the strong reference count is one */
@@ -486,7 +486,7 @@ public:
     /* Move assignment */
     FORCEINLINE TSharedPtr& operator=( TSharedPtr&& RHS ) noexcept
     {
-        TSharedPtr( ::Move( RHS ) ).Swap( *this );
+        TSharedPtr( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
@@ -502,7 +502,7 @@ public:
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedPtr>::Type>::Type operator=( TSharedPtr<OtherType, OtherDeleterType>&& RHS ) noexcept
     {
-        TSharedPtr( ::Move( RHS ) ).Swap( *this );
+        TSharedPtr( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
@@ -655,7 +655,7 @@ public:
 
     /* Move constructor */
     FORCEINLINE TWeakPtr( TWeakPtr&& Other ) noexcept
-        : Storage( ::Move(Other.Storage) )
+        : Storage( Move(Other.Storage) )
     {
     }
 
@@ -670,7 +670,7 @@ public:
     /* Move construct from convertible type */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>>
     FORCEINLINE TWeakPtr( TWeakPtr<OtherType, OtherDeleterType>&& Other ) noexcept
-        : Storage( ::Move(Other.Storage) )
+        : Storage( Move(Other.Storage) )
     {
     }
 
@@ -715,9 +715,9 @@ public:
     /* Swaps the contents of this and another container */
     FORCEINLINE void Swap( TWeakPtr& Other ) noexcept
     {
-        PointerStorage Temp = ::Move( Storage );
-        Storage       = ::Move(Other.Storage);
-        Other.Storage = ::Move(Temp);
+        PointerStorage Temp = Move( Storage );
+        Storage       = Move(Other.Storage);
+        Other.Storage = Move(Temp);
     }
 
     /* Checks weather there are any strong references left */
@@ -816,7 +816,7 @@ public:
     /* Move assignment */
     FORCEINLINE TWeakPtr& operator=( TWeakPtr&& RHS ) noexcept
     {
-        TWeakPtr( ::Move( RHS ) ).Swap( *this );
+        TWeakPtr( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
@@ -832,7 +832,7 @@ public:
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TWeakPtr>::Type>::Type  operator=( TWeakPtr<OtherType, OtherDeleterType>&& RHS ) noexcept
     {
-        TWeakPtr( ::Move( RHS ) ).Swap( *this );
+        TWeakPtr( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
@@ -989,7 +989,7 @@ FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS ) 
 template<typename T, typename... ArgTypes>
 FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShared( ArgTypes&&... Args ) noexcept
 {
-    T* RefCountedPtr = new T( ::Forward<TArgs>( Args )... );
+    T* RefCountedPtr = new T( Forward<TArgs>( Args )... );
     return TSharedPtr<T>( RefCountedPtr );
 }
 

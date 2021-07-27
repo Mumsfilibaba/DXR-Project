@@ -8,12 +8,14 @@ template<typename T>
 class TArrayView
 {
 public:
-    typedef T                                   ElementType;
-    typedef ElementType*                        IteratorType;
-    typedef const ElementType*                  ConstIteratorType;
-    typedef TReverseIterator<ElementType>       ReverseIteratorType;
-    typedef TReverseIterator<const ElementType> ConstReverseIteratorType;
-    typedef uint32                              SizeType;
+    typedef T     ElementType;
+    typedef int32 SizeType;
+
+    /* Iterators */
+    typedef TArrayIterator<TArrayView, ElementType>                    IteratorType;
+    typedef TArrayIterator<const TArrayView, const ElementType>        ConstIteratorType;
+    typedef TReverseArrayIterator<TArrayView, ElementType>             ReverseIteratorType;
+    typedef TReverseArrayIterator<const TArrayView, const ElementType> ReverseConstIteratorType;
 
     /* Default construct an empty view */
     FORCEINLINE TArrayView() noexcept
@@ -112,9 +114,9 @@ public:
     /* Swap two views */
     FORCEINLINE void Swap( TArrayView& Other ) noexcept
     {
-        TArrayView Temp( ::Move( *this ) );
-        *this = ::Move( Other );
-        Other = ::Move( Temp );
+        TArrayView Temp( Move( *this ) );
+        *this = Move( Other );
+        Other = Move( Temp );
     }
 
     /* Returns an iterator to the beginning of the container */
@@ -123,46 +125,52 @@ public:
         return IteratorType( Data() );
     }
 
+    /* Returns an iterator to the beginning of the container */
+    FORCEINLINE IteratorType StartIterator() noexcept
+    {
+        return IteratorType( *this, 0 );
+    }
+
     /* Returns an iterator to the end of the container */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType( Data() + Size() );
+        return IteratorType( *this, Size() );
     }
 
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
-        return ConstIteratorType( Data() );
+        return ConstIteratorType( *this, 0 );
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType( Data() + Size() );
+        return ConstIteratorType( *this, Size() );
     }
 
     /* Returns an reverse iterator to the end of the container */
     FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType( Data() + Size() );
+        return ReverseIteratorType( *this, Size() );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
     FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
-        return ReverseIteratorType( Data() );
+        return ReverseIteratorType( *this, 0 );
     }
 
     /* Returns an reverse iterator to the end of the container */
-    FORCEINLINE ConstReverseIteratorType ReverseStartIterator() const noexcept
+    FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ConstReverseIteratorType( Data() + Size() );
+        return ReverseConstIteratorType( *this, Size() );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
-    FORCEINLINE ConstReverseIteratorType ReverseEndIterator() const noexcept
+    FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
-        return ConstReverseIteratorType( Data() );
+        return ReverseConstIteratorType( *this, 0 );
     }
 
     /* Fills the container with the specified value */
@@ -181,7 +189,7 @@ public:
     {
         for ( ElementType& Element : *this )
         {
-            Element = ::Move( InputElement );
+            Element = Move( InputElement );
         }
     }
 
@@ -274,22 +282,22 @@ public:
 
     FORCEINLINE IteratorType begin() noexcept
     {
-        return View;
+        return StartIterator();
     }
 
     FORCEINLINE IteratorType end() noexcept
     {
-        return View + ViewSize;
+        return EndIterator();
     }
 
     FORCEINLINE ConstIteratorType begin() const noexcept
     {
-        return View;
+        return StartIterator();
     }
 
     FORCEINLINE ConstIteratorType end() const noexcept
     {
-        return View + ViewSize;
+        return EndIterator();
     }
 
 private:

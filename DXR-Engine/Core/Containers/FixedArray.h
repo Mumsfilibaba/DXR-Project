@@ -4,16 +4,18 @@
 #include "Core/Templates/Move.h"
 
 /* A fixed size array similar to std::array */
-template<typename T, const uint32 N>
+template<typename T, const int32 N>
 struct TFixedArray
 {
 public:
-    typedef T                                   ElementType;
-    typedef ElementType*                        Iterator;
-    typedef const ElementType*                  ConstIterator;
-    typedef TReverseIterator<ElementType>       ReverseIterator;
-    typedef TReverseIterator<const ElementType> ConstReverseIterator;
-    typedef uint32                              SizeType;
+    typedef T     ElementType;
+    typedef int32 SizeType;
+
+    /* Iterators */
+    typedef TArrayIterator<TFixedArray, ElementType>                    IteratorType;
+    typedef TArrayIterator<const TFixedArray, const ElementType>        ConstIteratorType;
+    typedef TReverseArrayIterator<TFixedArray, ElementType>             ReverseIteratorType;
+    typedef TReverseArrayIterator<const TFixedArray, const ElementType> ReverseConstIteratorType;
 
     static_assert(N > 0, "The number of elements has to be more than zero");
 
@@ -71,64 +73,64 @@ public:
     {
         for ( ElementType& Element : *this )
         {
-            Element = ::Move( InputElement );
+            Element = Move( InputElement );
         }
     }
 
     /* Swaps this array with another */
     FORCEINLINE void Swap( TFixedArray& Other ) noexcept
     {
-        TFixedArray Temp( ::Move( *this ) );
-        *this = ::Move( Other );
-        Other = ::Move( Temp );
+        TFixedArray Temp( Move( *this ) );
+        *this = Move( Other );
+        Other = Move( Temp );
     }
 
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
-        return IteratorType( Data() );
+        return IteratorType( *this, 0 );
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType( Data() + Size() );
+        return IteratorType( *this, Size() );
     }
 
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
-        return ConstIteratorType( Data() );
+        return ConstIteratorType( *this, 0 );
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType( Data() + Size() );
+        return ConstIteratorType( *this, Size() );
     }
 
     /* Returns an reverse iterator to the end of the container */
     FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType( Data() + Size() );
+        return ReverseIteratorType( *this, Size() );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
     FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
-        return ReverseIteratorType( Data() );
+        return ReverseIteratorType( *this, 0 );
     }
 
     /* Returns an reverse iterator to the end of the container */
-    FORCEINLINE ConstReverseIteratorType ReverseStartIterator() const noexcept
+    FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ConstReverseIteratorType( Data() + Size() );
+        return ReverseConstIteratorType( *this, Size() );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
-    FORCEINLINE ConstReverseIteratorType ReverseEndIterator() const noexcept
+    FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
-        return ConstReverseIteratorType( Data() );
+        return ReverseConstIteratorType( *this, 0 );
     }
 
     /* Retrive the last valid index */
@@ -195,24 +197,25 @@ public:
 public:
 
     /* STL iterator functions - Enables Range-based for-loops */
-    FORCEINLINE Iterator begin() noexcept
+
+    FORCEINLINE IteratorType begin() noexcept
     {
-        return Elements;
+        return StartIterator();
     }
 
-    FORCEINLINE Iterator end() noexcept
+    FORCEINLINE IteratorType end() noexcept
     {
-        return Elements + N;
+        return EndIterator();
     }
 
-    FORCEINLINE ConstIterator begin() const noexcept
+    FORCEINLINE ConstIteratorType begin() const noexcept
     {
-        return Elements;
+        return StartIterator();
     }
 
-    FORCEINLINE ConstIterator end() const noexcept
+    FORCEINLINE ConstIteratorType end() const noexcept
     {
-        return Elements + N;
+        return EndIterator();
     }
 
 public:

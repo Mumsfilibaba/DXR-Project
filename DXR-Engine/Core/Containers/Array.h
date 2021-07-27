@@ -1,6 +1,7 @@
 #pragma once
 #include "Iterator.h"
 #include "Allocators.h"
+#include "UniquePtr.h"
 
 #include "Core/Templates/Move.h"
 #include "Core/Templates/IsPointer.h"
@@ -14,12 +15,14 @@ template<typename T, typename AllocatorType = TDefaultAllocator<T>>
 class TArray
 {
 public:
-    typedef T                                   ElementType;
-    typedef ElementType*                        IteratorType;
-    typedef const ElementType*                  ConstIteratorType;
-    typedef TReverseIterator<ElementType>       ReverseIteratorType;
-    typedef TReverseIterator<const ElementType> ConstReverseIteratorType;
-    typedef uint32                              SizeType;
+    typedef T     ElementType;
+    typedef int32 SizeType;
+
+    /* Iterators */
+    typedef TArrayIterator<TArray, ElementType>                    IteratorType;
+    typedef TArrayIterator<const TArray, const ElementType>        ConstIteratorType;
+    typedef TReverseArrayIterator<TArray, ElementType>             ReverseIteratorType;
+    typedef TReverseArrayIterator<const TArray, const ElementType> ReverseConstIteratorType;
 
     /* Empty default constructor */
     FORCEINLINE TArray() noexcept
@@ -81,7 +84,7 @@ public:
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        InternalMoveFrom( ::Forward<TArray>( Other ) );
+        InternalMoveFrom( Forward<TArray>( Other ) );
     }
 
     FORCEINLINE ~TArray()
@@ -191,7 +194,7 @@ public:
     {
         for ( ElementType& Element : *this )
         {
-            Element = ::Move( InputElement );
+            Element = Move( InputElement );
         }
     }
 
@@ -250,7 +253,7 @@ public:
             InternalReserve( NewCapacity );
         }
 
-        new(Data() + (ArraySize++)) ElementType( ::Forward<ArgTypes>( Args )... );
+        new(Data() + (ArraySize++)) ElementType( Forward<ArgTypes>( Args )... );
         return LastElement();
     }
 
@@ -263,7 +266,7 @@ public:
     /* Inserts a new element at the end */
     FORCEINLINE ElementType& PushBack( ElementType&& Element ) noexcept
     {
-        return EmplaceBack( ::Forward<ElementType>( Element ) );
+        return EmplaceBack( Forward<ElementType>( Element ) );
     }
 
     /* Constructs a new element at specified position */
@@ -275,7 +278,7 @@ public:
         /* Simple path if position is last */
         if ( Position == ArraySize )
         {
-            EmplaceBack( ::Forward<ArgTypes>( Args )... );
+            EmplaceBack( Forward<ArgTypes>( Args )... );
             return;
         }
 
@@ -283,7 +286,7 @@ public:
         InternalReserveForInsertion( Position, 1 );
 
         ElementType* DataEnd = Data() + (ArraySize++);
-        new(DataEnd) ElementType( ::Forward<ArgTypes>( Args )... );
+        new(DataEnd) ElementType( Forward<ArgTypes>( Args )... );
     }
 
     /* Inserts an element at the specified position */
@@ -295,7 +298,7 @@ public:
     /* Inserts an element at the specified position */
     FORCEINLINE void InsertAt( SizeType Position, ElementType&& Element ) noexcept
     {
-        EmplaceAt( Position, ::Forward<ElementType>( Element ) );
+        EmplaceAt( Position, Forward<ElementType>( Element ) );
     }
 
     /* Insert an array into the container at the position */
@@ -399,9 +402,9 @@ public:
     /* Swaps container with another */
     FORCEINLINE void Swap( TArray& Other ) noexcept
     {
-        TArray Temp( ::Move( *this ) );
-        *this = ::Move( Other );
-        Other = ::Move( Temp );
+        TArray Temp( Move( *this ) );
+        *this = Move( Other );
+        Other = Move( Temp );
     }
 
     /* Shrinks the allocation to be the same as the size */
@@ -422,49 +425,49 @@ public:
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
-        return IteratorType( Data() );
+        return IteratorType( *this, 0 );
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType( Data() + Size() );
+        return IteratorType( *this, Size() );
     }
 
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
-        return ConstIteratorType( Data() );
+        return ConstIteratorType( *this, 0 );
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType( Data() + Size() );
+        return ConstIteratorType( *this, Size() );
     }
 
     /* Returns an reverse iterator to the end of the container */
     FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType( Data() + Size() );
+        return ReverseIteratorType( *this, Size() );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
     FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
-        return ReverseIteratorType( Data() );
+        return ReverseIteratorType( *this, 0 );
     }
 
     /* Returns an reverse iterator to the end of the container */
-    FORCEINLINE ConstReverseIteratorType ReverseStartIterator() const noexcept
+    FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ConstReverseIteratorType( Data() + Size() );
+        return ReverseConstIteratorType( *this, Size() );
     }
 
     /* Returns an reverse iterator to the beginning of the container */
-    FORCEINLINE ConstReverseIteratorType ReverseEndIterator() const noexcept
+    FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
-        return ConstReverseIteratorType( Data() );
+        return ReverseConstIteratorType( *this, 0 );
     }
 
     /* Returns the first element of the container */
@@ -551,6 +554,14 @@ public:
         return Data()[Index];
     }
 
+    /* Allocate and copy the contents into a uniqueptr */
+    FORCEINLINE TUniquePtr<ElementType[]> GetUniquePtr() const noexcept
+    {
+        ElementType* Memory = Memory::Malloc<ElementType>(Size());
+        CopyConstructRange<ElementType>(Memory, Data(), Size());
+        return TUniquePtr<ElementType[]>(Memory);
+    }
+
     /* Sets the container to another array by copying it */
     FORCEINLINE TArray& operator=( const TArray& Other ) noexcept
     {
@@ -574,21 +585,21 @@ public:
 
     /* Compares two containers by comparing each element, returns true if all is equal */
     template<typename ArrayType>
-    FORCEINLINE bool operator==( const ArrayType& Other ) const noexcept
+    FORCEINLINE bool operator==( const ArrayType& RHS ) const noexcept
     {
-        if ( Size() != Other.Size() )
+        if ( Size() != RHS.Size() )
         {
             return false;
         }
 
-        return CompareRange<ElementType>(Data(), Other.Data(), Size());
+        return CompareRange<ElementType>(Data(), RHS.Data(), Size());
     }
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */
     template<typename ArrayType>
-    FORCEINLINE bool operator!=( const ArrayType& Other ) const noexcept
+    FORCEINLINE bool operator!=( const ArrayType& RHS ) const noexcept
     {
-        return !(*this == Other);
+        return !(*this == RHS);
     }
 
     /* Returns the elment at a certain index */
@@ -609,22 +620,22 @@ public:
 
     FORCEINLINE IteratorType begin() noexcept
     {
-        return Array;
+        return StartIterator();
     }
 
     FORCEINLINE IteratorType end() noexcept
     {
-        return Array + ArraySize;
+        return EndIterator();
     }
 
     FORCEINLINE ConstIteratorType begin() const noexcept
     {
-        return Array;
+        return StartIterator();
     }
 
     FORCEINLINE ConstIteratorType end() const noexcept
     {
-        return Array + ArraySize;
+        return EndIterator();
     }
 
 private:

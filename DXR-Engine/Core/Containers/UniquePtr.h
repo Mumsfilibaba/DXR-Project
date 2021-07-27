@@ -429,7 +429,7 @@ FORCEINLINE bool operator!=( NullptrType, const TUniquePtr<T>& RHS ) noexcept
 template<typename T, typename... ArgTypes>
 FORCEINLINE TEnableIf<!TIsArray<T>::Value, TUniquePtr<T>> MakeUnique( ArgTypes&&... Args ) noexcept
 {
-    T* UniquePtr = new T( ::Forward<ArgTypes>( Args )... );
+    T* UniquePtr = new T( Forward<ArgTypes>( Args )... );
     return TUniquePtr<T>( UniquePtr );
 }
 

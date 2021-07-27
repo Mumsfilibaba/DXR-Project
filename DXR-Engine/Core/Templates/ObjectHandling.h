@@ -55,7 +55,7 @@ FORCEINLINE void ConstructRangeFrom( void* const StartAddress, uint32 Count, T&&
 {
     while ( Count )
     {
-        new(StartAddress) T( ::Forward<T>( Element ) );
+        new(StartAddress) T( Forward<T>( Element ) );
         StartAddress = reinterpret_cast<T*>(StartAddress)++;
         Count--;
     }
@@ -121,7 +121,7 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type MoveConstructRange( 
 {
     while ( Count )
     {
-        new(StartAddress) T( ::Move( *Source ) );
+        new(StartAddress) T( Move( *Source ) );
         StartAddress = reinterpret_cast<T*>(StartAddress)++;
         Source++;
         Count--;
@@ -149,7 +149,7 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type MoveAssignRange( T* 
 {
     while ( Count )
     {
-        *Destination = ::Move( *Source );
+        *Destination = Move( *Source );
         Destination++;
         Source++;
         Count--;
@@ -207,7 +207,7 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsMoveConstructable<T>
 
         while ( Count )
         {
-            new(StartAddress) T( ::Move( *Source ) );
+            new(StartAddress) T( Move( *Source ) );
             StartAddress = reinterpret_cast<T*>(StartAddress)--;
             (Source--)->~T();
             Count--;
@@ -217,7 +217,7 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsMoveConstructable<T>
     {
         while ( Count )
         {
-            new(StartAddress) T( ::Move( *Source ) );
+            new(StartAddress) T( Move( *Source ) );
             StartAddress = reinterpret_cast<T*>(StartAddress)++;
             (Source++)->~T();
             Count--;
