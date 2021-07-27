@@ -68,24 +68,24 @@ public:
     typedef CPointerReferenceCounter::CounterType CounterType;
 
     /* Cannot copy the storage */
-    TPointerReferencedStorage(const TPointerReferencedStorage&) = delete;
-    TPointerReferencedStorage& operator=(const TPointerReferencedStorage&) = delete;
+    TPointerReferencedStorage( const TPointerReferencedStorage& ) = delete;
+    TPointerReferencedStorage& operator=( const TPointerReferencedStorage& ) = delete;
 
     /* Default constructor that init both counter and pointer to nullptr */
     FORCEINLINE TPointerReferencedStorage() noexcept
         : DeleterType()
-        , Ptr(nullptr)
-        , Counter(nullptr)
+        , Ptr( nullptr )
+        , Counter( nullptr )
     {
     }
 
     /* Move constructor */
-    FORCEINLINE TPointerReferencedStorage( TPointerReferencedStorage&& Other) noexcept
+    FORCEINLINE TPointerReferencedStorage( TPointerReferencedStorage&& Other ) noexcept
         : DeleterType()
-        , Ptr(nullptr)
-        , Counter(nullptr)
+        , Ptr( nullptr )
+        , Counter( nullptr )
     {
-        InitMove(Other.Ptr, Other.Counter);
+        InitMove( Other.Ptr, Other.Counter );
 
         Other.Ptr = nullptr;
         Other.Counter = nullptr;
@@ -93,12 +93,12 @@ public:
 
     /* Move constructor */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
-    FORCEINLINE TPointerReferencedStorage( TPointerReferencedStorage<OtherType, OtherDeleterType>&& Other) noexcept
-        : DeleterType( Move(Other) )
-        , Ptr(nullptr)
-        , Counter(nullptr)
+    FORCEINLINE TPointerReferencedStorage( TPointerReferencedStorage<OtherType, OtherDeleterType>&& Other ) noexcept
+        : DeleterType( Move( Other ) )
+        , Ptr( nullptr )
+        , Counter( nullptr )
     {
-        InitMove(static_cast<ElmentType*>(Other.Ptr), Other.Counter);
+        InitMove( static_cast<ElmentType*>(Other.Ptr), Other.Counter );
 
         Other.Ptr = nullptr;
         Other.Counter = nullptr;
@@ -108,22 +108,22 @@ public:
     ~TPointerReferencedStorage() = default;
 
     /* Initialized a new counter if needed and adds a strong reference */
-    FORCEINLINE void InitStrong(ElementType* NewPtr, CPointerReferenceCounter* NewCounter) noexcept
+    FORCEINLINE void InitStrong( ElementType* NewPtr, CPointerReferenceCounter* NewCounter ) noexcept
     {
         // If the pointer is nullptr, we do not care about the counter
         Ptr = NewPtr;
-        if (Ptr)
+        if ( Ptr )
         {
-            if (Counter)
+            if ( Counter )
             {
-                Counter = NewCounter; 
+                Counter = NewCounter;
             }
             else
             {
                 Counter = new CPointerReferenceCounter();
             }
-            
-            Assert(Counter != nullptr);
+
+            Assert( Counter != nullptr );
             Counter->AddStrongRef();
         }
         else
@@ -133,15 +133,15 @@ public:
     }
 
     /* Adds a weak ref */
-    FORCEINLINE void InitWeak(ElementType* NewPtr, CPointerReferenceCounter* NewCounter) noexcept
+    FORCEINLINE void InitWeak( ElementType* NewPtr, CPointerReferenceCounter* NewCounter ) noexcept
     {
         // If the pointer is nullptr, we do not care about the counter...
         Ptr = NewPtr;
-        if (Ptr)
+        if ( Ptr )
         {
             // ...however, if we init a weak reference then there has to be a counter aswell, since weakrefs require a strong
             Counter = NewCounter;
-            Assert(Counter != nullptr);
+            Assert( Counter != nullptr );
             Counter->AddWeakRef();
         }
         else
@@ -151,14 +151,14 @@ public:
     }
 
     /* Initialize the storage by a "move", does not add or remove any weak or strong references */
-    FORCEINLINE void InitMove(ElementType* NewPtr, CPointerReferenceCounter* NewCounter) noexcept
+    FORCEINLINE void InitMove( ElementType* NewPtr, CPointerReferenceCounter* NewCounter ) noexcept
     {
         // If the pointer is nullptr, we do not care about the counter...
         Ptr = NewPtr;
-        if (Ptr)
+        if ( Ptr )
         {
             // ...However if the Ptr is valid then the counter also has to be, otherwise it is not a valid move
-            Assert(Counter != nullptr);
+            Assert( Counter != nullptr );
             Counter = NewCounter;
         }
         else
@@ -170,14 +170,14 @@ public:
     /* Releases a strong ref and deletes the pointer if the strong refcount is zero, if the weak refcount is also zero the counter is deleted */
     FORCEINLINE void ReleaseStrong() noexcept
     {
-        Assert(Counter != nullptr);
+        Assert( Counter != nullptr );
         Counter->ReleaseStrongRef();
-        
-        if (Counter->GetStrongRefCount() < 1)
-        {
-            DeleteElement(Ptr);
 
-            if (Counter->GetWeakRefCount() < 1)
+        if ( Counter->GetStrongRefCount() < 1 )
+        {
+            DeleteElement( Ptr );
+
+            if ( Counter->GetWeakRefCount() < 1 )
             {
                 delete Counter;
                 Counter = nullptr;
@@ -188,12 +188,12 @@ public:
     /* Relases a weak reference and if all references are gone, then delete the counter */
     FORCEINLINE void ReleaseWeak() noexcept
     {
-        Assert(Counter != nullptr);
+        Assert( Counter != nullptr );
         Counter->ReleaseWeakRef();
-        
+
         CounterType NumStrongRefs = Counter->GetStrongRefCount();
-        CounterType NumWeakRefs   = Counter->GetWeakRefCount();
-        if (NumStrongRefs < 1 && NumWeakRefs < 1)
+        CounterType NumWeakRefs = Counter->GetWeakRefCount();
+        if ( NumStrongRefs < 1 && NumWeakRefs < 1 )
         {
             delete Counter;
             Counter = nullptr;
@@ -201,7 +201,7 @@ public:
     }
 
     /* Swaps to storages */
-    FORCEINLINE void Swap(TPointerReferencedStorage& Other) noexcept
+    FORCEINLINE void Swap( TPointerReferencedStorage& Other ) noexcept
     {
         ElementType* TempPtr = Ptr;
         CPointerReferenceCounter* TempCounter = Counter;
@@ -246,17 +246,17 @@ public:
     }
 
     /* Assign another to this */
-    TPointerReferencedStorage& operator=( TPointerReferencedStorage&& RHS) noexcept
+    TPointerReferencedStorage& operator=( TPointerReferencedStorage&& RHS ) noexcept
     {
-        TPointerReferencedStorage( Move(RHS) ).Swap(*this);
+        TPointerReferencedStorage( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
     /* Assign another to this */
     template<typename OtherType, typename OtherDeleterType>
-    typename TEnableIf<TIsConvertible<OtherType*, ElementType*, TAddLeftReference<TPointerReferencedStorage>::Type>::Value>::Type operator=( TPointerReferencedStorage<OtherType, OtherDeleterType>&& RHS) noexcept
+    typename TEnableIf<TIsConvertible<OtherType*, ElementType*, TAddLeftReference<TPointerReferencedStorage>::Type>::Value>::Type operator=( TPointerReferencedStorage<OtherType, OtherDeleterType>&& RHS ) noexcept
     {
-        TPointerReferencedStorage( Move(RHS) ).Swap(*this);
+        TPointerReferencedStorage( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
@@ -299,7 +299,7 @@ public:
     FORCEINLINE explicit TSharedPtr( ElementType* InPtr ) noexcept
         : Storage()
     {
-        Storage.InitStrong(InPtr, nullptr);
+        Storage.InitStrong( InPtr, nullptr );
     }
 
     /* Constructor creating from a raw pointer from a convertible type, and the container takes ownership at this point */
@@ -307,7 +307,7 @@ public:
     FORCEINLINE explicit TSharedPtr( OtherType* InPtr ) noexcept
         : Storage()
     {
-        Storage.InitStrong(static_cast<ElementType*>(InPtr), nullptr);
+        Storage.InitStrong( static_cast<ElementType*>(InPtr), nullptr );
     }
 
     /* Copy-constructor */
@@ -327,14 +327,14 @@ public:
 
     /* Move constructor */
     FORCEINLINE TSharedPtr( TSharedPtr&& Other ) noexcept
-        : Storage( Move(Other.Storage) )
+        : Storage( Move( Other.Storage ) )
     {
     }
 
     /* Move constructor from with another type */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>>
     FORCEINLINE TSharedPtr( TSharedPtr<TOther, OtherDeleterType>&& Other ) noexcept
-        : Storage( Move(Other.Storage) )
+        : Storage( Move( Other.Storage ) )
     {
     }
 
@@ -391,15 +391,15 @@ public:
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset( OtherType* NewPtr = nullptr ) noexcept
     {
-        Reset( static_cast<ElementType*>(NewPtr));
+        Reset( static_cast<ElementType*>(NewPtr) );
     }
 
     /* Swaps the contents of this and another container */
     FORCEINLINE void Swap( TSharedPtr& Other ) noexcept
     {
         PointerStorage Temp = Move( Storage );
-        Storage       = Move(Other.Storage);
-        Other.Storage = Move(Temp);
+        Storage = Move( Other.Storage );
+        Other.Storage = Move( Temp );
     }
 
     /* Checks weather the strong reference count is one */
@@ -464,9 +464,9 @@ public:
     }
 
     template<typename U>
-    FORCEINLINE typename TEnableIf<TAnd<TIsUnboundedArray<U>, TIsSame<U, ElementType>>::Value, typename TAddLeftReference<U>::Type>::Type operator[](SizeType Index) const noexcept
+    FORCEINLINE typename TEnableIf<TAnd<TIsUnboundedArray<U>, TIsSame<U, ElementType>>::Value, typename TAddLeftReference<U>::Type>::Type operator[]( SizeType Index ) const noexcept
     {
-        Assert(IsValid());
+        Assert( IsValid() );
         return Get()[Index];
     }
 
@@ -509,14 +509,14 @@ public:
     /* Assignment from raw */
     FORCEINLINE TSharedPtr& operator=( ElementType* RHS ) noexcept
     {
-        TSharedPtr( RHS ).Swap(*this);
+        TSharedPtr( RHS ).Swap( *this );
         return *this;
     }
 
     /* Assignment from nullptr */
     FORCEINLINE TSharedPtr& operator=( NullptrType ) noexcept
     {
-        TSharedPtr().Swap(*this);
+        TSharedPtr().Swap( *this );
         return *this;
     }
 
@@ -655,7 +655,7 @@ public:
 
     /* Move constructor */
     FORCEINLINE TWeakPtr( TWeakPtr&& Other ) noexcept
-        : Storage( Move(Other.Storage) )
+        : Storage( Move( Other.Storage ) )
     {
     }
 
@@ -670,7 +670,7 @@ public:
     /* Move construct from convertible type */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>>
     FORCEINLINE TWeakPtr( TWeakPtr<OtherType, OtherDeleterType>&& Other ) noexcept
-        : Storage( Move(Other.Storage) )
+        : Storage( Move( Other.Storage ) )
     {
     }
 
@@ -678,7 +678,7 @@ public:
     FORCEINLINE TWeakPtr( const TSharedPtr<T>& Other ) noexcept
         : Storage()
     {
-        Storage.InitWeak(Other.Get(), Other.GetCounter());
+        Storage.InitWeak( Other.Get(), Other.GetCounter() );
     }
 
     /* Construct from shared */
@@ -687,7 +687,7 @@ public:
         : Base()
         : Storage()
     {
-        Storage.InitWeak( static_cast<ElementType*>(Other.Get()), Other.GetCounter());
+        Storage.InitWeak( static_cast<ElementType*>(Other.Get()), Other.GetCounter() );
     }
 
     FORCEINLINE ~TWeakPtr()
@@ -709,15 +709,15 @@ public:
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset( OtherType* NewPtr = nullptr ) noexcept
     {
-        Reset( static_cast<ElementType*>(NewPtr));
+        Reset( static_cast<ElementType*>(NewPtr) );
     }
 
     /* Swaps the contents of this and another container */
     FORCEINLINE void Swap( TWeakPtr& Other ) noexcept
     {
         PointerStorage Temp = Move( Storage );
-        Storage       = Move(Other.Storage);
-        Other.Storage = Move(Temp);
+        Storage = Move( Other.Storage );
+        Other.Storage = Move( Temp );
     }
 
     /* Checks weather there are any strong references left */
@@ -794,9 +794,9 @@ public:
     }
 
     template<typename U>
-    FORCEINLINE typename TEnableIf<TAnd<TIsUnboundedArray<U>, TIsSame<U, ElementType>>::Value, typename TAddLeftReference<U>::Type>::Type operator[](SizeType Index) const noexcept
+    FORCEINLINE typename TEnableIf<TAnd<TIsUnboundedArray<U>, TIsSame<U, ElementType>>::Value, typename TAddLeftReference<U>::Type>::Type operator[]( SizeType Index ) const noexcept
     {
-        Assert(IsValid());
+        Assert( IsValid() );
         return Get()[Index];
     }
 
@@ -839,17 +839,17 @@ public:
     /* Assign from pointer */
     FORCEINLINE TWeakPtr& operator=( ElementType* RHS ) noexcept
     {
-        TWeakPtr( RHS ).Swap(*this);
+        TWeakPtr( RHS ).Swap( *this );
         return *this;
     }
 
     /* Assign from nullptr */
     FORCEINLINE TWeakPtr& operator=( NullptrType ) noexcept
     {
-        TWeakPtr().Swap(*this);
+        TWeakPtr().Swap( *this );
         return *this;
     }
-    
+
 private:
     FORCEINLINE CPointerReferenceCounter* GetCounter() const noexcept
     {

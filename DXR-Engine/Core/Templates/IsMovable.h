@@ -7,12 +7,18 @@
 template<typename T>
 struct TIsMoveConstructable
 {
-    enum { Value = TIsConstructable<T, typename TAddRightReference<T>::Type>::Value };
+    enum
+    {
+        Value = TIsConstructable<T, typename TAddRightReference<T>::Type>::Value
+    };
 };
 
 /* Checks weather the type can be constructed with a move assignment operator */
 template<typename T>
 struct TIsMoveAssignable
 {
-    enum { Value = TIsAssignable<T, typename TAddRightReference<T>::Type>::Value };
+    enum
+    {
+        Value = TIsAssignable<T, typename TAddRightReference<T>::Type>::Value
+    };
 };

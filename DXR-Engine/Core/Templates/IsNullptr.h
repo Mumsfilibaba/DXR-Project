@@ -9,5 +9,8 @@ typedef decltype(nullptr) NullptrType;
 template<typename T>
 struct TIsNullptr
 {
-    enum { Value = TIsSame<NullptrType, typename TRemoveCV<T>::Type >> ::Value };
+    enum
+    {
+        Value = TIsSame<NullptrType, typename TRemoveCV<T>::Type >> ::Value
+    };
 };

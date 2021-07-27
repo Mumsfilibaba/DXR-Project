@@ -4,5 +4,8 @@
 template<typename T>
 struct TIsPlainOldData
 {
-    enum { Value = __is_pod( T ) };
+    enum
+    {
+        Value = __is_pod( T )
+    };
 };

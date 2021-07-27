@@ -4,5 +4,8 @@
 template<typename T>
 struct TIsFinal
 {
-    enum { Value = __is_final( T ) };
+    enum
+    {
+        Value = __is_final( T )
+    };
 };

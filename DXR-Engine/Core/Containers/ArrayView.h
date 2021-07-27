@@ -41,7 +41,7 @@ public:
     }
 
     /* Create a view from a pointer and count */
-    FORCEINLINE explicit TArrayView(const ElementType* InArray, SizeType Count ) noexcept
+    FORCEINLINE explicit TArrayView( const ElementType* InArray, SizeType Count ) noexcept
         : View( InArray )
         , ViewSize( Count )
     {
@@ -199,25 +199,25 @@ public:
         return ViewSize > 0 ? ViewSize - 1 : 0;
     }
 
-    /* Retrive the size of the view */ 
+    /* Retrive the size of the view */
     FORCEINLINE SizeType Size() const noexcept
     {
         return ViewSize;
     }
 
-    /* Retrive the size of the view in bytes */ 
+    /* Retrive the size of the view in bytes */
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
         return ViewSize * sizeof( ElementType );
     }
 
-    /* Retrive the data of the view */ 
+    /* Retrive the data of the view */
     FORCEINLINE lementType* Data() noexcept
     {
         return View;
     }
 
-    /* Retrive the data of the view */ 
+    /* Retrive the data of the view */
     FORCEINLINE const ElementType* Data() const noexcept
     {
         return View;
@@ -232,7 +232,7 @@ public:
             return false;
         }
 
-        return CompareRange<ElementType>(Data(), Other.Data(), Size());
+        return CompareRange<ElementType>( Data(), Other.Data(), Size() );
     }
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */

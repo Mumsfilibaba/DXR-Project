@@ -8,7 +8,10 @@
 template<typename T>
 struct TIsTriviallyCopyable
 {
-    enum { Value = __has_trivial_copy( T ) };
+    enum
+    {
+        Value = __has_trivial_copy( T )
+    };
 };
 
 /*
@@ -18,7 +21,10 @@ struct TIsTriviallyCopyable
 template<typename T>
 struct TIsTriviallyConstructable
 {
-    enum { Value = __has_trivial_constructor( T ) };
+    enum
+    {
+        Value = __has_trivial_constructor( T )
+    };
 };
 
 /*
@@ -28,12 +34,18 @@ struct TIsTriviallyConstructable
 template<typename T>
 struct TIsTriviallyDestructable
 {
-    enum { Value = __has_trivial_destructor( T ) };
+    enum
+    {
+        Value = __has_trivial_destructor( T )
+    };
 };
 
 /* Determines if the type is trivially copyable and default constructable */
 template<typename T>
 struct TIsTrivial
 {
-    enum { Value = TAnd<TIsTriviallyConstructable<T>, TIsTriviallyCopyable<T>, TIsTriviallyDestructable<T>>::Value };
+    enum
+    {
+        Value = TAnd<TIsTriviallyConstructable<T>, TIsTriviallyCopyable<T>, TIsTriviallyDestructable<T>>::Value
+    };
 };

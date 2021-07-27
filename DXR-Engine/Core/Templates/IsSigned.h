@@ -5,12 +5,18 @@
 template<typename T>
 struct TIsSigned
 {
-    enum { Value = (TIsArithmetic<T>::Value && (T( -1 ) < T( 0 ))) };
+    enum
+    {
+        Value = (TIsArithmetic<T>::Value && (T( -1 ) < T( 0 )))
+    };
 };
 
 /* Checks if the type is unsigned */
 template<typename T>
 struct TIsUnsigned
 {
-    enum { Value = (TIsArithmetic<T>::Value && (T( 0 ) < T( -1 ))) };
+    enum
+    {
+        Value = (TIsArithmetic<T>::Value && (T( 0 ) < T( -1 )))
+    };
 };

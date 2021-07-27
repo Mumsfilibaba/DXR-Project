@@ -7,7 +7,7 @@
 /* Windows Specific */
 #ifdef PLATFORM_WINDOWS
 #define NOMINMAX
-#include "Windows/Windows.h"
+#include "Core/Windows/Windows.h"
 
 #include <dxgi1_6.h>
 #include <d3d12.h>
@@ -18,11 +18,10 @@
 #include <imgui.h>
 
 /* Debug */
-#include "Debug/Debug.h"
+#include "Core/Debug/Debug.h"
 
 /* Core */
 #include "Core.h"
-#include "Core/Types.h"
 #include "Core/CoreObject/ClassType.h"
 #include "Core/CoreObject/CoreObject.h"
 #include "Core/RefCountedObject.h"
@@ -31,44 +30,42 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
-#include "Core/Containers/StaticArray.h"
+#include "Core/Containers/FixedArray.h"
 #include "Core/Containers/Function.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/UniquePtr.h"
 
 /* Templates */
-#include "Core/Templates/EnableIf.h"
-#include "Core/Templates/IsArray.h"
+#include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Move.h"
-#include "Core/Templates/RemoveExtent.h"
-#include "Core/Templates/RemovePointer.h"
-#include "Core/Templates/RemoveReference.h"
+#include "Core/Templates/AddressOf.h"
+#include "Core/Templates/ObjectHandling.h"
 
 /* Application */
 #include "Core/Application/Log.h"
 
 /* Utilities */
-#include "Utilities/HashUtilities.h"
-#include "Utilities/StringUtilities.h"
+#include "Core/Utilities/HashUtilities.h"
+#include "Core/Utilities/StringUtilities.h"
 
 /* Math */
-#include "Math/Math.h"
-#include "Math/AABB.h"
-#include "Math/Frustum.h"
-#include "Math/Color.h"
-#include "Math/Float.h"
-#include "Math/IntPoint2.h"
-#include "Math/IntPoint3.h"
-#include "Math/MathHash.h"
-#include "Math/Matrix2.h"
-#include "Math/Matrix3.h"
-#include "Math/Matrix4.h"
-#include "Math/Vector2.h"
-#include "Math/Vector3.h"
-#include "Math/Vector4.h"
-#include "Math/Plane.h"
-#include "Math/SIMD.h"
+#include "Core/Math/Math.h"
+#include "Core/Math/AABB.h"
+#include "Core/Math/Frustum.h"
+#include "Core/Math/Color.h"
+#include "Core/Math/Float.h"
+#include "Core/Math/IntPoint2.h"
+#include "Core/Math/IntPoint3.h"
+#include "Core/Math/MathHash.h"
+#include "Core/Math/Matrix2.h"
+#include "Core/Math/Matrix3.h"
+#include "Core/Math/Matrix4.h"
+#include "Core/Math/Vector2.h"
+#include "Core/Math/Vector3.h"
+#include "Core/Math/Vector4.h"
+#include "Core/Math/Plane.h"
+#include "Core/Math/SIMD.h"
 
 /* Memory */
-#include "Memory/Memory.h"
-#include "Memory/New.h"
+#include "Core/Memory/Memory.h"
+#include "Core/Memory/New.h"

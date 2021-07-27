@@ -4,5 +4,8 @@
 template<typename T>
 struct TIsUnion
 {
-    enum { Value = __is_union( T ) };
+    enum
+    {
+        Value = __is_union( T )
+    };
 };

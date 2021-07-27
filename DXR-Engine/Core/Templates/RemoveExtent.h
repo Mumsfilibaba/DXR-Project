@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Types.h"
+#include "CoreTypes.h"
 
 /* Removes array type */
 template<typename T>
@@ -14,8 +14,8 @@ struct TRemoveExtent<T[]>
     typedef T Type;
 };
 
-template<typename T, uint32 SIZE>
-struct TRemoveExtent<T[SIZE]>
+template<typename T, const int32 N>
+struct TRemoveExtent<T[N]>
 {
     typedef T Type;
 };

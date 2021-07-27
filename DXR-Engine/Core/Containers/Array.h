@@ -141,7 +141,7 @@ public:
         Assert( (InputArray != nullptr) && Count );
 
         DestructRange<ElementType>( Data(), ArraySize );
-        
+
         if ( Count )
         {
             InternalCopyFrom( InputArray, Count );
@@ -374,7 +374,7 @@ public:
     /* Removes the last element */
     FORCEINLINE void PopBack() noexcept
     {
-        PopBackNum(1);
+        PopBackNum( 1 );
     }
 
     /* Remove a range starting at position and containg count number of elements */
@@ -557,9 +557,9 @@ public:
     /* Allocate and copy the contents into a uniqueptr */
     FORCEINLINE TUniquePtr<ElementType[]> GetUniquePtr() const noexcept
     {
-        ElementType* Memory = Memory::Malloc<ElementType>(Size());
-        CopyConstructRange<ElementType>(Memory, Data(), Size());
-        return TUniquePtr<ElementType[]>(Memory);
+        ElementType* Memory = Memory::Malloc<ElementType>( Size() );
+        CopyConstructRange<ElementType>( Memory, Data(), Size() );
+        return TUniquePtr<ElementType[]>( Memory );
     }
 
     /* Sets the container to another array by copying it */
@@ -592,7 +592,7 @@ public:
             return false;
         }
 
-        return CompareRange<ElementType>(Data(), RHS.Data(), Size());
+        return CompareRange<ElementType>( Data(), RHS.Data(), Size() );
     }
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */
@@ -644,7 +644,7 @@ private:
 
     FORCEINLINE void InternalInitUnitialized( SizeType Count )
     {
-        if (ArrayCapacity < Count)
+        if ( ArrayCapacity < Count )
         {
             Allocator.AllocateOrRealloc( Count );
             ArrayCapacity = Count;
@@ -686,7 +686,7 @@ private:
         /* Simple Memory::Realloc for trivial elements */
         if constexpr ( !TIsTrivial<ElementType>::Value )
         {
-            /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case 
+            /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
                objects has references to themselves or childobjects that references these objects. */
             AllocatorType NewAllocator;
             NewAllocator.AllocateOrRealloc( NewCapacity );
@@ -714,7 +714,7 @@ private:
             /* Simpler path for trivial elements */
             if constexpr ( !TIsTrivial<ElementType>::Value )
             {
-                /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case 
+                /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
                    objects has references to themselves or childobjects that references these objects. */
                 AllocatorType NewAllocator;
                 NewAllocator.AllocateOrRealloc( NewCapacity );

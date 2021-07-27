@@ -2,11 +2,13 @@
 #include "CoreDefines.h"
 #include "CoreTypes.h"
 
-#include "Memory/New.h"
+#include "Core/Memory/New.h"
 
 #include "Core/Engine/EngineGlobals.h"
 #include "Core/Containers/String.h"
 
+//<--
+// TODO: Move to templates
 // Preparation for enum class usage
 template <int64 SIZE>
 struct _EnumIntegerSize;
@@ -54,3 +56,4 @@ using EnumIntegerType = typename _EnumIntegerType<T>::Type;
     inline Type& operator|=(Type& LHS, Type RHS) noexcept { return (Type&)(((EnumIntegerType<Type>&)LHS) |= ((EnumIntegerType<Type>)RHS)); } \
     inline Type& operator&=(Type& LHS, Type RHS) noexcept { return (Type&)(((EnumIntegerType<Type>&)LHS) &= ((EnumIntegerType<Type>)RHS)); } \
     inline Type& operator^=(Type& LHS, Type RHS) noexcept { return (Type&)(((EnumIntegerType<Type>&)LHS) ^= ((EnumIntegerType<Type>)RHS)); } \
+//-->

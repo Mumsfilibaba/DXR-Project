@@ -68,21 +68,21 @@ public:
         Release();
     }
 
-    /* Resets the container and sets to a potential new raw pointer */ 
+    /* Resets the container and sets to a potential new raw pointer */
     FORCEINLINE void Reset( ElementType* NewPtr = nullptr ) noexcept
     {
-        TSharedRef(NewPtr).Swap(*this);
+        TSharedRef( NewPtr ).Swap( *this );
     }
 
-    /* Resets the container and sets to a potential new raw pointer of another type */ 
+    /* Resets the container and sets to a potential new raw pointer of another type */
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddPointer<ElementType>::Type>::Type Reset( OtherType* NewPtr ) noexcept
     {
-        return Reset(static_cast<ElementType*>(NewPtr));
+        return Reset( static_cast<ElementType*>(NewPtr) );
     }
 
-    /* Swaps the pointers in the two containers */ 
-    FORCEINLINE void Swap(TSharedRef& Other)
+    /* Swaps the pointers in the two containers */
+    FORCEINLINE void Swap( TSharedRef& Other )
     {
         ElementType* Temp = Ptr;
         Ptr = Other.Ptr;
@@ -100,7 +100,7 @@ public:
     /* Adds a reference to the stored pointer */
     FORCEINLINE void AddRef() noexcept
     {
-        Assert(IsValid());
+        Assert( IsValid() );
         Ptr->AddRef();
     }
 
@@ -113,7 +113,7 @@ public:
     /* Retrive the current reference count of the object */
     FORCEINLINE ElementType* GetRefCount() const noexcept
     {
-        Assert(IsValid());
+        Assert( IsValid() );
         return Ptr->GetRefCount();
     }
 
@@ -149,7 +149,7 @@ public:
         return (Ptr != nullptr);
     }
 
-    /* Retrive the raw pointer */ 
+    /* Retrive the raw pointer */
     FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
@@ -176,7 +176,7 @@ public:
     /* Copy another sharedref into this */
     FORCEINLINE TSharedRef& operator=( const TSharedRef& RHS ) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef( RHS ).Swap( *this );
         return *this;
     }
 
@@ -184,14 +184,14 @@ public:
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( const TSharedRef<OtherType>& RHS ) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef( RHS ).Swap( *this );
         return *this;
     }
 
     /* Move another sharedref into this */
     FORCEINLINE TSharedRef& operator=( TSharedRef&& RHS ) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef( RHS ).Swap( *this );
         return *this;
     }
 
@@ -199,14 +199,14 @@ public:
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( TSharedRef<OtherType>&& RHS ) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef( RHS ).Swap( *this );
         return *this;
     }
 
     /* Assign from a raw pointer */
     FORCEINLINE TSharedRef& operator=( ElementType* RHS ) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef( RHS ).Swap( *this );
         return *this;
     }
 
@@ -214,14 +214,14 @@ public:
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( OtherType* RHS ) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef( RHS ).Swap( *this );
         return *this;
     }
 
     /* Set the pointer to nullptr */
     FORCEINLINE TSharedRef& operator=( NullptrType ) noexcept
     {
-        TSharedRef().Swap(*this);
+        TSharedRef().Swap( *this );
         return *this;
     }
 

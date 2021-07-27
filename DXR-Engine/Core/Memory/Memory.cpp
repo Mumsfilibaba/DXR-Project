@@ -57,7 +57,7 @@ void* Memory::Memmove( void* Destination, const void* Source, uint64 Size ) noex
     return ::memmove( Destination, Source, Size );
 }
 
- bool Memcmp( const void* LHS, const void* RHS, uint64 Size)  noexcept
- {
-     return (::memcmp(LHS, RHS, Size) == 0);
- }
+bool Memcmp( const void* LHS, const void* RHS, uint64 Size )  noexcept
+{
+    return (::memcmp( LHS, RHS, Size ) == 0);
+}

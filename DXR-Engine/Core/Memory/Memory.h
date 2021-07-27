@@ -42,11 +42,11 @@ public:
     static char* Strcpy( char* Destination, const char* Source ) noexcept;
 
     // TODO: Check if we need all the information form memcmp and refactor in that case
-    static bool Memcmp( const void* LHS, const void* RHS, uint64 Size) noexcept;
+    static bool Memcmp( const void* LHS, const void* RHS, uint64 Size ) noexcept;
 
     template<typename T>
     static bool Memcmp( const T* LHS, const T* RHS, uint64 Count ) noexcept
     {
-        return Memcmp( LHS, RHS, sizeof(T) * Count);
+        return Memcmp( LHS, RHS, sizeof( T ) * Count );
     }
 };

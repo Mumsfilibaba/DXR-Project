@@ -45,7 +45,7 @@ public:
 
     /* Move from another */
     FORCEINLINE TUniquePtr( TUniquePtr&& Other ) noexcept
-        : DeleterType(::Move(Other))
+        : DeleterType( Move( Other ) )
         , Ptr( Other.Ptr )
     {
         Other.Ptr = nullptr;
@@ -54,7 +54,7 @@ public:
     /* Move from another with another type */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TUniquePtr( TUniquePtr<OtherType, OtherDeleterType>&& Other ) noexcept
-        : DeleterType(::Move(Other))
+        : DeleterType( Move( Other ) )
         , Ptr( Other.Ptr )
     {
         Other.Ptr = nullptr;
@@ -76,14 +76,14 @@ public:
     /* Resets the container by setting the pointer to a new value and releases the old one */
     FORCEINLINE void Reset( ElementType* NewPtr = nullptr ) noexcept
     {
-        TUniquePtr(NewPtr).Swap(*this);
+        TUniquePtr( NewPtr ).Swap( *this );
     }
 
     /* Resets the container by setting the pointer to a new value and releases the old one */
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset( OtherType* NewPtr ) noexcept
     {
-        Reset(static_cast<ElementType*>(NewPtr))
+        Reset( static_cast<ElementType*>(NewPtr) )
     }
 
     /* Swaps two unique pointers */
@@ -109,7 +109,7 @@ public:
     /* Return the dereferenced object */
     FORCEINLINE ElementType& Dereference() const noexcept
     {
-        Assert(IsValid());
+        Assert( IsValid() );
         return *Ptr;
     }
 
@@ -117,7 +117,7 @@ public:
     FORCEINLINE bool IsValid() const noexcept
     {
         return (Ptr != nullptr);
-    } 
+    }
 
     /* Return the raw pointer */
     FORCEINLINE ElementType* operator->() const noexcept
@@ -140,14 +140,14 @@ public:
     /* Assign from a raw pointer */
     FORCEINLINE TUniquePtr& operator=( ElementType* RHS ) noexcept
     {
-        TUniquePtr( RHS ).Swap(*this);
+        TUniquePtr( RHS ).Swap( *this );
         return *this;
     }
 
     /* Move-assign from another */
     FORCEINLINE TUniquePtr& operator=( TUniquePtr&& RHS ) noexcept
     {
-        TUniquePtr( ::Move(RHS) ).Swap(*this);
+        TUniquePtr( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
@@ -155,14 +155,14 @@ public:
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TUniquePtr>::Type>::Type operator=( TUniquePtr<OtherType, OtherDeleterType>&& RHS ) noexcept
     {
-        TUniquePtr( ::Move( RHS ) ).Swap( *this );
+        TUniquePtr( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
     /* Reset the container by assigning nullptr */
     FORCEINLINE TUniquePtr& operator=( NullptrType ) noexcept
     {
-        TUniquePtr().Swap(*this);
+        TUniquePtr().Swap( *this );
         return *this;
     }
 
@@ -177,7 +177,7 @@ private:
     {
         if ( Ptr )
         {
-            DeleterType::DeleteElement(Ptr);
+            DeleterType::DeleteElement( Ptr );
             Ptr = nullptr;
         }
     }
@@ -223,7 +223,7 @@ public:
 
     /* Move from another */
     FORCEINLINE TUniquePtr( TUniquePtr&& Other ) noexcept
-        : DeleterType(::Move(Other))
+        : DeleterType( Move( Other ) )
         , Ptr( Other.Ptr )
     {
         Other.Ptr = nullptr;
@@ -232,7 +232,7 @@ public:
     /* Move from another with another type */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TUniquePtr( TUniquePtr<OtherType[], OtherDeleterType>&& Other ) noexcept
-        : DeleterType(::Move(Other))
+        : DeleterType( Move( Other ) )
         , Ptr( Other.Ptr )
     {
         Other.Ptr = nullptr;
@@ -254,14 +254,14 @@ public:
     /* Resets the container by setting the pointer to a new value and releases the old one */
     FORCEINLINE void Reset( ElementType* NewPtr = nullptr ) noexcept
     {
-        TUniquePtr(NewPtr).Swap(*this);
+        TUniquePtr( NewPtr ).Swap( *this );
     }
 
     /* Resets the container by setting the pointer to a new value and releases the old one */
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset( OtherType* NewPtr ) noexcept
     {
-        Reset(static_cast<ElementType*>(NewPtr))
+        Reset( static_cast<ElementType*>(NewPtr) )
     }
 
     /* Swaps two unique pointers */
@@ -290,16 +290,16 @@ public:
         return (Ptr != nullptr);
     }
 
-    FORCEINLINE ElementType& At(SizeType Index) const noexcept
+    FORCEINLINE ElementType& At( SizeType Index ) const noexcept
     {
-        Assert(IsValid());
+        Assert( IsValid() );
         return Get()[Index];
     }
 
     /* Dereference the raw pointer */
-    FORCEINLINE ElementType& operator[](SizeType Index) const noexcept
+    FORCEINLINE ElementType& operator[]( SizeType Index ) const noexcept
     {
-        return At(Index);
+        return At( Index );
     }
 
     /* Return the address of the raw pointer */
@@ -311,28 +311,28 @@ public:
     /* Assign from a raw pointer */
     FORCEINLINE TUniquePtr& operator=( ElementType* RHS ) noexcept
     {
-        TUniquePtr( RHS ).Swap(*this);
+        TUniquePtr( RHS ).Swap( *this );
         return *this;
     }
 
     /* Move-assign from another */
     FORCEINLINE TUniquePtr& operator=( TUniquePtr&& RHS ) noexcept
     {
-        TUniquePtr( ::Move(RHS) ).Swap(*this);
+        TUniquePtr( Move( RHS ) ).Swap( *this );
     }
 
     /* Move-assign from another, with another type */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TUniquePtr>::Type>::Type operator=( TUniquePtr<OtherType[], OtherDeleterType>&& RHS ) noexcept
     {
-        TUniquePtr( ::Move( RHS ) ).Swap( *this );
+        TUniquePtr( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
     /* Reset the container by assigning nullptr */
     FORCEINLINE TUniquePtr& operator=( NullptrType ) noexcept
     {
-        TUniquePtr().Swap(*this);
+        TUniquePtr().Swap( *this );
         return *this;
     }
 
@@ -347,7 +347,7 @@ private:
     {
         if ( Ptr )
         {
-            DeleterType::DeleteElement(Ptr);
+            DeleterType::DeleteElement( Ptr );
             Ptr = nullptr;
         }
     }

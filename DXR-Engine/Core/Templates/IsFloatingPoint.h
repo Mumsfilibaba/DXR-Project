@@ -7,26 +7,38 @@
 template<typename T>
 struct TIsFloatingPoint
 {
-    enum { Value = (TOr<
+    enum
+    {
+        Value = (TOr<
         TIsSame<float, typename TRemoveCV<T>>::Type,
-        TIsSame<double, typename TRemoveCV<T>>::Type,
-        TIsSame<long double, typename TRemoveCV<T>>::Type >> ::Value) };
+                  TIsSame<double, typename TRemoveCV<T>>::Type,
+                  TIsSame<long double, typename TRemoveCV<T>>::Type >> ::Value)
+    };
 };
 
 template <typename T>
 struct TIsFloatingPoint<const T>
 {
-    enum { Value = TIsFloatingPoint<T>::Value };
+    enum
+    {
+        Value = TIsFloatingPoint<T>::Value
+    };
 };
 
 template <typename T>
 struct TIsFloatingPoint<volatile T>
 {
-    enum { Value = TIsFloatingPoint<T>::Value };
+    enum
+    {
+        Value = TIsFloatingPoint<T>::Value
+    };
 };
 
 template <typename T>
 struct TIsFloatingPoint<const volatile T>
 {
-    enum { Value = TIsFloatingPoint<T>::Value };
+    enum
+    {
+        Value = TIsFloatingPoint<T>::Value
+    };
 };

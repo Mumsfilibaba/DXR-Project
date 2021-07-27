@@ -175,7 +175,7 @@ public:
         return At( Index );
     }
 
-        /* Compares two containers by comparing each element, returns true if all is equal */
+    /* Compares two containers by comparing each element, returns true if all is equal */
     template<typename ArrayType>
     FORCEINLINE bool operator==( const ArrayType& Other ) const noexcept
     {
@@ -184,7 +184,7 @@ public:
             return false;
         }
 
-        return CompareRange<ElementType>(Data(), Other.Data(), Size());
+        return CompareRange<ElementType>( Data(), Other.Data(), Size() );
     }
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */

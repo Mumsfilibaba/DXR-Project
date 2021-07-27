@@ -10,5 +10,8 @@
 template<typename T>
 struct TIsScalar
 {
-    enum { Value = TOr<TIsArithmetic<T>, TIsEnum<T>, TIsPointer<T>, TIsMemberPointer<T>, TIsNullptr<T>>::Value };
+    enum
+    {
+        Value = TOr<TIsArithmetic<T>, TIsEnum<T>, TIsPointer<T>, TIsMemberPointer<T>, TIsNullptr<T>>::Value
+    };
 };

@@ -200,7 +200,7 @@ template<typename T>
 FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsMoveConstructable<T>>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
     // Ensures that the function works for overlapping ranges
-    if((Source < StartAddress) && (StartAddress < Source + Count))
+    if ( (Source < StartAddress) && (StartAddress < Source + Count) )
     {
         StartAddress = reinterpret_cast<T*>(StartAddress) + Count;
         Source = Source + Count;
@@ -230,7 +230,7 @@ template<typename T>
 FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsCopyConstructable<T>>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
     // Ensures that the function works for overlapping ranges
-    if((Source < StartAddress) && (StartAddress < Source + Count))
+    if ( (Source < StartAddress) && (StartAddress < Source + Count) )
     {
         StartAddress = reinterpret_cast<T*>(StartAddress) + Count;
         Source = Source + Count;
@@ -268,7 +268,7 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value, bool>::Type CompareRange( 
 {
     while ( Count )
     {
-        if (*(LHS++) != *(RHS++))
+        if ( *(LHS++) != *(RHS++) )
         {
             return false;
         }

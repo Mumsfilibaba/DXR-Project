@@ -4,11 +4,17 @@
 template<typename T>
 struct TIsPointer
 {
-    enum { Value = false };
+    enum
+    {
+        Value = false
+    };
 };
 
 template<typename T>
 struct TIsPointer<T*>
 {
-    enum { Value = true };
+    enum
+    {
+        Value = true
+    };
 };
