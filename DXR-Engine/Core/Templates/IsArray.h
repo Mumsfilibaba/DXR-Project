@@ -1,47 +1,47 @@
 #pragma once
-#include "Core/Types.h"
+#include "CoreTypes.h"
 
 /* Check if type is an array type */
 template<typename T>
 struct TIsArray
 {
-    static constexpr bool Value = false;
+    enum { Value = false };
 };
 
 template<typename T>
 struct TIsArray<T[]>
 {
-    static constexpr bool Value = true;
+    enum { Value = true };
 };
 
-template<typename T, int32 N>
+template<typename T, const int32 N>
 struct TIsArray<T[N]>
 {
-    static constexpr bool Value = true;
+    enum { Value = true };
 };
 
 /* Check if the array is bounded */
 template<typename T>
 struct TIsBoundedArray
 {
-    static constexpr bool Value = false;
+    enum { Value = false };
 };
 
-template<typename T, int32 N>
+template<typename T, const int32 N>
 struct TIsBoundedArray<T[N]>
 {
-    static constexpr bool Value = true;
+    enum { Value = true };
 };
 
 /* Check if the array is unbounded */
 template<typename T>
 struct TIsUnboundedArray
 {
-    static constexpr bool Value = false;
+    enum { Value = false };
 };
 
 template<typename T>
 struct TIsUnboundedArray<T[]>
 {
-    static constexpr bool Value = true;
+    enum { Value = true };
 };

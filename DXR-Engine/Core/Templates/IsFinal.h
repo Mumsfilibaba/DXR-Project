@@ -4,5 +4,5 @@
 template<typename T>
 struct TIsFinal
 {
-    static constexpr bool Value = __is_final( T );
+    enum { Value = __is_final( T ) };
 };

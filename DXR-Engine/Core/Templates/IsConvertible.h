@@ -4,5 +4,5 @@
 template<typename FromType, typename ToType>
 struct TIsConvertible
 {
-    static constexpr bool Value = __is_convertible( FromType, ToType );
+    enum { Value = __is_convertible( FromType, ToType ) };
 };

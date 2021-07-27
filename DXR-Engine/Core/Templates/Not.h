@@ -4,5 +4,5 @@
 template<typename T>
 struct TNot
 {
-    static constexpr bool Value = !T::Value;
+    enum { Value = !T::Value };
 };

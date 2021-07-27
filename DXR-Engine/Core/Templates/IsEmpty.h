@@ -4,5 +4,5 @@
 template<typename T>
 struct TIsEmpty
 {
-    static constexpr bool Value = __is_empty( T );
+    enum { Value = __is_empty( T ) };
 };

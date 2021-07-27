@@ -4,11 +4,11 @@
 template<typename T>
 struct TIsConst
 {
-    static constexpr bool Value = false;
+    enum { Value = false };
 };
 
 template<typename T>
 struct TIsConst<const T>
 {
-    static constexpr bool Value = true;
+    enum { Value = true };
 };

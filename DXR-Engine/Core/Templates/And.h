@@ -7,11 +7,11 @@ struct TAnd;
 template<typename T, typename... ArgsType>
 struct TAnd<T, ArgsType...>
 {
-    static constexpr bool Value = T::Value && TAnd<ArgsType...>::Value;
+    enum { Value = (T::Value && TAnd<ArgsType...>::Value) };
 };
 
 template<typename T>
 struct TAnd<T>
 {
-    static constexpr bool Value = T::Value;
+    enum { Value = T::Value };
 };

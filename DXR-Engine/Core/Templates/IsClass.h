@@ -8,7 +8,7 @@ template<typename T>
 struct TIsClass
 {
 public:
-    static constexpr bool Value = !TIsUnion<T>::Value && sizeof( Test<T>( nullptr ) ) == 1;
+    enum { Value = (!TIsUnion<T>::Value && sizeof( Test<T>( nullptr ) ) == 1) };
 
 private:
     template<typename U>

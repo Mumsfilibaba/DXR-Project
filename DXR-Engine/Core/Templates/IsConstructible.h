@@ -4,5 +4,5 @@
 template<typename T, typename ArgTypes>
 struct TIsConstructible
 {
-    static constexpr bool Value = __is_constructible( T, ArgTypes... );
+    enum { Value = __is_constructible( T, ArgTypes... ) };
 };

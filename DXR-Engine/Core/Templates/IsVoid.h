@@ -6,5 +6,5 @@
 template<typename T>
 struct TIsVoid
 {
-    static constexpr bool Value = TIsSame<void, typename TRemoveCV<T>::Type >> ::Value;
+    enum { Value = TIsSame<void, typename TRemoveCV<T>::Type>::Value };
 };

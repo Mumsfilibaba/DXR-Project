@@ -4,5 +4,5 @@
 template<typename T>
 struct TIsUnion
 {
-    static constexpr bool Value = __is_union( T );
+    enum { Value = __is_union( T ) };
 };

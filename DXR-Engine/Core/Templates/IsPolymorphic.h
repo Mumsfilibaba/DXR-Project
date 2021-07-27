@@ -4,5 +4,5 @@
 template<typename T>
 struct TIsPolymorphic
 {
-    static constexpr bool Value = __is_polymorphic( T );
+    enum { Value = __is_polymorphic( T ) };
 };
