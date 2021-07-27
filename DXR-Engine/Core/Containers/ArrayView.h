@@ -125,12 +125,6 @@ public:
         return IteratorType( Data() );
     }
 
-    /* Returns an iterator to the beginning of the container */
-    FORCEINLINE IteratorType StartIterator() noexcept
-    {
-        return IteratorType( *this, 0 );
-    }
-
     /* Returns an iterator to the end of the container */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
@@ -208,11 +202,11 @@ public:
     /* Retrive the size of the view in bytes */
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return ViewSize * sizeof( ElementType );
+        return Size() * sizeof( ElementType );
     }
 
     /* Retrive the data of the view */
-    FORCEINLINE lementType* Data() noexcept
+    FORCEINLINE ElementType* Data() noexcept
     {
         return View;
     }

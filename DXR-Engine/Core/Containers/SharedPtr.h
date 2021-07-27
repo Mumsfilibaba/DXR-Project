@@ -45,7 +45,7 @@ public:
     /* Retrive the weak reference count */
     FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
-        return WeakRefs.Load();
+        return NumWeakRefs.Load();
     }
 
     /* Retrive the strong reference count */
@@ -254,7 +254,7 @@ public:
 
     /* Assign another to this */
     template<typename OtherType, typename OtherDeleterType>
-    typename TEnableIf<TIsConvertible<OtherType*, ElementType*, TAddLeftReference<TPointerReferencedStorage>::Type>::Value>::Type operator=( TPointerReferencedStorage<OtherType, OtherDeleterType>&& RHS ) noexcept
+    typename typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TPointerReferencedStorage&>::Type operator=( TPointerReferencedStorage<OtherType, OtherDeleterType>&& RHS ) noexcept
     {
         TPointerReferencedStorage( Move( RHS ) ).Swap( *this );
         return *this;
@@ -266,7 +266,7 @@ private:
 };
 
 /* Forward declaration of TWeakPtr */
-template<typename T, typename DeleterType = TDefaultDelete<T>>
+template<typename T, typename DeleterType>
 class TWeakPtr;
 
 /* TSharedPtr - RefCounted pointer, similar to std::shared_ptr */
@@ -276,8 +276,8 @@ class TSharedPtr
 public:
     typedef T                                                   ElementType;
     typedef TPointerReferencedStorage<ElementType, DeleterType> PointerStorage;
-    typedef PointerStorage::CounterType                         CounterType;
-    typedef uint32                                              SizeType;
+    typedef typename PointerStorage::CounterType                CounterType;
+    typedef int32                                               SizeType;
 
     /* Enables conversion betweem the two classes */
     template<typename OtherType, typename OtherDeleterType>
@@ -333,7 +333,7 @@ public:
 
     /* Move constructor from with another type */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>>
-    FORCEINLINE TSharedPtr( TSharedPtr<TOther, OtherDeleterType>&& Other ) noexcept
+    FORCEINLINE TSharedPtr( TSharedPtr<OtherType, OtherDeleterType>&& Other ) noexcept
         : Storage( Move( Other.Storage ) )
     {
     }
@@ -634,7 +634,8 @@ class TWeakPtr
 public:
     typedef T                                                   ElementType;
     typedef TPointerReferencedStorage<ElementType, DeleterType> PointerStorage;
-    typedef PointerStorage::CounterType                         CounterType;
+    typedef typename PointerStorage::CounterType                CounterType;
+    typedef int32                                               SizeType;
 
     /* Enables conversion betweem the two classes */
     template<typename OtherType, typename OtherDeleterType>
@@ -924,7 +925,7 @@ FORCEINLINE bool operator!=( const TWeakPtr<T>& LHS, NullptrType ) noexcept
 
 /* Check the inequallity between weakptr and nullptr */
 template<typename T>
-FORCEINLINE bool operator!=( NullptrType, const TSharedPtr<T>& RHS ) noexcept
+FORCEINLINE bool operator!=( NullptrType, const TWeakPtr<T>& RHS ) noexcept
 {
     return (nullptr != RHS.Get());
 }

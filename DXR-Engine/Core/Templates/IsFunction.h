@@ -1,5 +1,7 @@
 #pragma once
 
+// Based on: https://en.cppreference.com/w/cpp/types/is_function
+
 /* Determine if the type is a function */
 template<typename T>
 struct TIsFunction

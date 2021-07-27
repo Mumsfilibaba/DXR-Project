@@ -2,8 +2,8 @@
 #include "Delete.h"
 
 #include "Core/Templates/EnableIf.h"
-#include "Core/Templates/IsArray.h"
 #include "Core/Templates/RemoveExtent.h"
+#include "Core/Templates/IsArray.h"
 #include "Core/Templates/IsNullptr.h"
 #include "Core/Templates/IsConvertible.h"
 #include "Core/Templates/AddressOf.h"
@@ -153,7 +153,7 @@ public:
 
     /* Move-assign from another, with another type */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TUniquePtr>::Type>::Type operator=( TUniquePtr<OtherType, OtherDeleterType>&& RHS ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type operator=( TUniquePtr<OtherType, OtherDeleterType>&& RHS ) noexcept
     {
         TUniquePtr( Move( RHS ) ).Swap( *this );
         return *this;
@@ -186,7 +186,7 @@ private:
 };
 
 /* TUniquePtr - Array values. Similar to std::unique_ptr */
-template<typename T, typename DeleterType = TDefaultDelete<T[]>>
+template<typename T, typename DeleterType>
 class TUniquePtr<T[], DeleterType> : private DeleterType
 {
 public:
@@ -323,7 +323,7 @@ public:
 
     /* Move-assign from another, with another type */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TUniquePtr>::Type>::Type operator=( TUniquePtr<OtherType[], OtherDeleterType>&& RHS ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type operator=( TUniquePtr<OtherType[], OtherDeleterType>&& RHS ) noexcept
     {
         TUniquePtr( Move( RHS ) ).Swap( *this );
         return *this;

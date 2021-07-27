@@ -1,6 +1,6 @@
 #pragma once
 #include "AddReference.h"
-#include "IsConstructable.h"
+#include "IsConstructible.h"
 #include "IsAssignable.h"
 
 /* Checks weather the type can be constructed with a copy constructor */
@@ -9,7 +9,7 @@ struct TIsCopyConstructable
 {
     enum
     {
-        Value = TIsConstructable<T, typename TAddLeftReference<const T>::Type>::Value
+        Value = TIsConstructible<T, typename TAddLeftReference<const T>::Type>::Value
     };
 };
 

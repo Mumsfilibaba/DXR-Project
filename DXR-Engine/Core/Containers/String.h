@@ -10,11 +10,11 @@ using WString = std::wstring;
 class CString
 {
 public:
-    typedef char                                  CharType;
-    typedef TArray<CharType>                      ContainerType;
-    typedef typename ContainerType::Iterator      Iterator;
-    typedef typename ContainerType::ConstIterator ConstIterator;
-    typedef uint32                                SizeType;
+    typedef char                                      CharType;
+    typedef TArray<CharType>                          ContainerType;
+    typedef typename ContainerType::SizeType          SizeType;
+    typedef typename ContainerType::IteratorType      Iterator;
+    typedef typename ContainerType::ConstIteratorType ConstIterator;
 
     FORCEINLINE CString() noexcept
         : Container()
@@ -22,12 +22,7 @@ public:
     }
 
     FORCEINLINE explicit CString( SizeType Size )
-        : Container( Capacity + 1 ) // Reserve extra space for nullterminator
-    {
-    }
-
-    FORCEINLINE explicit CString( SizeType Size )
-        : Container( Capacity + 1 ) // Reserve extra space for nullterminator
+        : Container( Size + 1 ) // Reserve extra space for nullterminator
     {
     }
 
@@ -36,12 +31,12 @@ public:
         return Container.Size();
     }
 
-    FORCEINLINE CharType* Raw() noexcept;
+    FORCEINLINE CharType* Raw() noexcept
     {
         return Container.Data();
     }
 
-    FORCEINLINE const CharType* Raw() const noexcept;
+    FORCEINLINE const CharType* Raw() const noexcept
     {
         return Container.Data();
     }

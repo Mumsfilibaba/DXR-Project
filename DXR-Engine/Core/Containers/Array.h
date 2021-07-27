@@ -214,7 +214,7 @@ public:
     }
 
     /* Resizes the container with a new size, and constructs them with value */
-    FORCEINLINE void Resize( SizeType NewSize, const FillType& Element ) noexcept
+    FORCEINLINE void Resize( SizeType NewSize, const ElementType& Element ) noexcept
     {
         if ( NewSize > ArraySize )
         {

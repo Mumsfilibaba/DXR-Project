@@ -76,9 +76,9 @@ public:
 
     /* Resets the container and sets to a potential new raw pointer of another type */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddPointer<ElementType>::Type>::Type Reset( OtherType* NewPtr ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset( OtherType* NewPtr ) noexcept
     {
-        return Reset( static_cast<ElementType*>(NewPtr) );
+        Reset( static_cast<ElementType*>(NewPtr) );
     }
 
     /* Swaps the pointers in the two containers */
@@ -126,7 +126,7 @@ public:
 
     /* Retrive the pointer as another type that is convertible */
     template<typename CastType>
-    FORCEINLINE TEnableIf<TIsConvertible<CastType*, ElementType*>::Value, typename TAddPointer<CastType>::Type> GetAs() const noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<CastType*, ElementType*>::Value, CastType*>::Type GetAs() const noexcept
     {
         return static_cast<CastType*>(Ptr);
     }
@@ -182,7 +182,7 @@ public:
 
     /* Copy another sharedref into this of another type */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( const TSharedRef<OtherType>& RHS ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=( const TSharedRef<OtherType>& RHS ) noexcept
     {
         TSharedRef( RHS ).Swap( *this );
         return *this;
@@ -197,7 +197,7 @@ public:
 
     /* Move another sharedref into this of another type */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( TSharedRef<OtherType>&& RHS ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=( TSharedRef<OtherType>&& RHS ) noexcept
     {
         TSharedRef( RHS ).Swap( *this );
         return *this;
@@ -212,7 +212,7 @@ public:
 
     /* Assign from a pointer of another type */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddLeftReference<TSharedRef>::Type>::Type operator=( OtherType* RHS ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=( OtherType* RHS ) noexcept
     {
         TSharedRef( RHS ).Swap( *this );
         return *this;

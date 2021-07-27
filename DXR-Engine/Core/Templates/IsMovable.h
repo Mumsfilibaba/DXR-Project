@@ -1,6 +1,6 @@
 #pragma once
 #include "AddReference.h"
-#include "IsConstructable.h"
+#include "IsConstructible.h"
 #include "IsAssignable.h"
 
 /* Checks weather the type can be constructed with a move constructor */
@@ -9,7 +9,7 @@ struct TIsMoveConstructable
 {
     enum
     {
-        Value = TIsConstructable<T, typename TAddRightReference<T>::Type>::Value
+        Value = TIsConstructible<T, typename TAddRightReference<T>::Type>::Value
     };
 };
 
