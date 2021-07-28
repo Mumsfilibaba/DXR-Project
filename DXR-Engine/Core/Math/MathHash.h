@@ -3,7 +3,7 @@
 #include "Vector3.h"
 #include "Vector4.h"
 
-#include "Utilities/HashUtilities.h"
+#include "Core/Utilities/HashUtilities.h"
 
 namespace std
 {

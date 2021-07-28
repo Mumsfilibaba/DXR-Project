@@ -1,6 +1,5 @@
 #pragma once
-#include "CoreTypes.h"
-#include "CoreDefines.h"
+#include "Core.h"
 #include "Move.h"
 #include "IsTrivial.h"
 #include "EnableIf.h"
@@ -182,11 +181,20 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type DestructRange( const
     }
 }
 
+#ifdef COMPILER_MSVC
+#pragma warning(push)
+#pragma warning( disable : 4100 ) // Disable unreferenced variable
+#endif
+
 /* For trivial objects, do nothing */
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type DestructRange( const T* const StartObject, uint32 Count ) noexcept
 {
 }
+
+#ifdef COMPILER_MSVC
+#pragma warning(pop)
+#endif
 
 /* Destruct a single object */
 template<typename T>

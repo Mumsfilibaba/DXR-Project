@@ -646,7 +646,7 @@ private:
     {
         if ( ArrayCapacity < Count )
         {
-            Allocator.AllocateOrRealloc( Count );
+            Allocator.Allocate( Count );
             ArrayCapacity = Count;
         }
 

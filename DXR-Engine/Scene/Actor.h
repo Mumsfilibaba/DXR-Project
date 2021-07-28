@@ -1,9 +1,8 @@
 #pragma once
 #include "Core/CoreObject/CoreObject.h"
 #include "Core/Containers/Array.h"
-
-#include "Math/Vector3.h"
-#include "Math/Matrix4.h"
+#include "Core/Math/Vector3.h"
+#include "Core/Math/Matrix4.h"
 
 #include <DirectXMath.h>
 

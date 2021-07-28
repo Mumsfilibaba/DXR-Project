@@ -34,7 +34,7 @@ public:
     /* Allocates memory if needed, uses Memory::Realloc */
     FORCEINLINE ElementType* Allocate( SizeType Count ) noexcept
     {
-        return Memory::Realloc<ElementType>( Count );
+        return Memory::Realloc<ElementType>( Allocation, Count );
     }
 
     FORCEINLINE void Free() noexcept

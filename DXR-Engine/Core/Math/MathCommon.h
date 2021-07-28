@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Types.h"
+#include "CoreTypes.h"
 
 #include <algorithm>
 #include <cmath>

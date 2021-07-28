@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Input/InputCodes.h"
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
@@ -71,6 +71,6 @@ public:
     }
 };
 
-#ifdef COMPILER_VISUAL_STUDIO
+#ifdef COMPILER_MSVC
 #pragma warning(pop)
 #endif

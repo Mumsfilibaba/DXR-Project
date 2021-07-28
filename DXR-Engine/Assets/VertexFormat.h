@@ -1,7 +1,7 @@
 #pragma once
 #include "Core.h"
 
-#include "Math/MathHash.h"
+#include "Core/Math/MathHash.h"
 
 struct Vertex
 {
