@@ -14,7 +14,7 @@ void* Memory::Malloc( uint64 Size ) noexcept
     */
     if ( Size )
     {
-        return ::malloc( Size );
+        return malloc( Size );
     }
     else
     {
@@ -24,40 +24,40 @@ void* Memory::Malloc( uint64 Size ) noexcept
 
 void* Memory::Realloc( void* Pointer, uint64 Size ) noexcept
 {
-    return ::realloc( Pointer, Size );
+    return realloc( Pointer, Size );
 }
 
 void Memory::Free( void* Ptr ) noexcept
 {
-    ::free( Ptr );
+    free( Ptr );
 }
 
 char* Memory::Strcpy( char* Destination, const char* Source ) noexcept
 {
-    return ::strcpy( Destination, Source );
+    return strcpy( Destination, Source );
 }
 
 void* Memory::Memset( void* Destination, uint8 Value, uint64 Size ) noexcept
 {
-    return ::memset( Destination, static_cast<int>(Value), Size );
+    return memset( Destination, static_cast<int>(Value), Size );
 }
 
 void* Memory::Memzero( void* Destination, uint64 Size ) noexcept
 {
-    return ::memset( Destination, 0, Size );
+    return memset( Destination, 0, Size );
 }
 
 void* Memory::Memcpy( void* Destination, const void* Source, uint64 Size ) noexcept
 {
-    return ::memcpy( Destination, Source, Size );
+    return memcpy( Destination, Source, Size );
 }
 
 void* Memory::Memmove( void* Destination, const void* Source, uint64 Size ) noexcept
 {
-    return ::memmove( Destination, Source, Size );
+    return memmove( Destination, Source, Size );
 }
 
-bool Memcmp( const void* LHS, const void* RHS, uint64 Size )  noexcept
+bool Memory::Memcmp( const void* LHS, const void* RHS, uint64 Size )  noexcept
 {
-    return (::memcmp( LHS, RHS, Size ) == 0);
+    return (memcmp( LHS, RHS, Size ) == 0);
 }

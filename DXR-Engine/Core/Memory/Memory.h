@@ -9,13 +9,13 @@ public:
     static void  Free( void* Ptr ) noexcept;
 
     template<typename T>
-    static T* Malloc( uint32 Count ) noexcept
+    FORCEINLINE static T* Malloc( uint32 Count ) noexcept
     {
         return reinterpret_cast<T*>(Malloc( sizeof( T ) * Count ));
     }
 
     template<typename T>
-    static T* Realloc( T* Pointer, uint64 Count ) noexcept
+    FORCEINLINE static T* Realloc( T* Pointer, uint64 Count ) noexcept
     {
         return reinterpret_cast<T*>(Realloc( Pointer, sizeof( T ) * Count ));
     }
@@ -24,7 +24,7 @@ public:
     static void* Memzero( void* Destination, uint64 Size ) noexcept;
 
     template<typename T>
-    static T* Memzero( T* Destination ) noexcept
+    FORCEINLINE static T* Memzero( T* Destination ) noexcept
     {
         return reinterpret_cast<T*>(Memzero( Destination, sizeof( T ) ));
     }
@@ -32,7 +32,7 @@ public:
     static void* Memcpy( void* Destination, const void* Source, uint64 Size ) noexcept;
 
     template<typename T>
-    static T* Memcpy( T* Destination, const T* Source ) noexcept
+    FORCEINLINE static T* Memcpy( T* Destination, const T* Source ) noexcept
     {
         return reinterpret_cast<T*>(Memcpy( Destination, Source, sizeof( T ) ));
     }
@@ -45,8 +45,23 @@ public:
     static bool Memcmp( const void* LHS, const void* RHS, uint64 Size ) noexcept;
 
     template<typename T>
-    static bool Memcmp( const T* LHS, const T* RHS, uint64 Count ) noexcept
+    FORCEINLINE static bool Memcmp( const T* LHS, const T* RHS, uint64 Count ) noexcept
     {
         return Memcmp( LHS, RHS, sizeof( T ) * Count );
+    }
+
+    FORCEINLINE void Memexchange(void* Destination, void* Source, uint64 Size ) noexcept
+    {
+        if (Destination != Source)
+        {
+            Memcpy(Destination, Source, Size);
+            Memzero(Source, Size);
+        }
+    }
+
+    template<typename T>
+    FORCEINLINE static T* Memexchange( void* Destination, void* Source ) noexcept
+    {
+        return Memexchange( Destination, Source, sizeof( T ) );
     }
 };
