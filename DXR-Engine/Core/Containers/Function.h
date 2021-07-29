@@ -1,6 +1,6 @@
 #pragma once
 #include "CoreTypes.h"
-#include "Allocator.h"
+#include "Allocators.h"
 
 #include "Core/Templates/Move.h"
 #include "Core/Templates/IsPointer.h"
@@ -272,7 +272,7 @@ private:
 
     /* Construct a new functor */
     template<typename FunctorType>
-    typename TEnableIf<std::is_invocable_v<F, TArgs...>>::Type ConstructFrom( FunctorType&& Functor ) noexcept
+    FORCEINLINE typename TEnableIf<std::is_invocable_v<F, TArgs...>>::Type ConstructFrom( FunctorType&& Functor ) noexcept
     {
         Storage.Allocate(sizeof(FunctorType));
         new(Storage.Raw()) TGenericFunctor<FunctorType>( Forward<FunctorType>( Functor ) );
