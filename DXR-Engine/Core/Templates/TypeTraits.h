@@ -37,6 +37,7 @@
 #include "IsFunction.h"
 #include "IsFundamental.h"
 #include "IsInteger.h"
+#include "IsInvokable.h"
 #include "IsMemberPointer.h"
 #include "IsMovable.h"
 #include "IsNullptr.h"
