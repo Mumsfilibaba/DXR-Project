@@ -4,6 +4,7 @@
 
 #include "Core/Templates/IsSigned.h"
 #include "Core/Templates/AddressOf.h"
+#include "Core/Templates/ReferenceWrapper.h"
 
 /* Iterator for array types */
 template<typename ArrayType, typename ElementType>
@@ -26,6 +27,12 @@ public:
         , Index( StartIndex )
     {
         Assert( IsValid() );
+    }
+
+    /* Checks if the iterator comes from the specified array */
+    FORCEINLINE bool IsFrom( const ArrayType& FromArray ) const noexcept
+    {
+        return Array.AddressOf() == AddressOf( FromArray );
     }
 
     /* Ensure that the pointer is in the range of the array */
@@ -132,7 +139,7 @@ public:
     /* Compare equality two iterators */
     FORCEINLINE bool operator==( const TArrayIterator& RHS ) const noexcept
     {
-        return (Index == RHS.Index) && (AddressOf( Array ) == AddressOf( RHS.Array ));
+        return (Index == RHS.Index) && RHS.IsFrom( Array );
     }
 
     /* Compare equality two iterators */
@@ -149,7 +156,7 @@ public:
     }
 
 private:
-    ArrayType& Array;
+    TReferenceWrapper<ArrayType> Array;
     SizeType Index;
 };
 
@@ -182,6 +189,12 @@ public:
         , Index( StartIndex )
     {
         Assert( IsValid() );
+    }
+
+    /* Checks if the iterator comes from the specified array */
+    FORCEINLINE bool IsFrom( const ArrayType& FromArray ) const noexcept
+    {
+        return Array.AddressOf() == AddressOf( FromArray );
     }
 
     /* Ensure that the pointer is in the range of the array */
@@ -288,7 +301,7 @@ public:
     /* Compare equality two iterators */
     FORCEINLINE bool operator==( const TReverseArrayIterator& RHS ) const noexcept
     {
-        return (Index == RHS.Index) && (::AddressOf( Array ) == ::AddressOf( RHS.Array ));
+        return (Index == RHS.Index) && RHS.IsFrom( Array );
     }
 
     /* Compare equality two iterators */
@@ -305,7 +318,7 @@ public:
     }
 
 private:
-    ArrayType& Array;
+    TReferenceWrapper<ArrayType> Array;
     SizeType Index;
 };
 

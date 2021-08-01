@@ -3,9 +3,9 @@
 
 /* Move an object by converting it into a rvalue */
 template<typename T>
-constexpr TRemoveReference<T>&& Move( T&& Arg ) noexcept
+constexpr typename TRemoveReference<T>::Type&& Move( T&& Arg ) noexcept
 {
-    return static_cast<TRemoveReference<T>&&>(Arg);
+    return static_cast<typename TRemoveReference<T>::Type&&>(Arg);
 }
 
 /* Forward an object by converting it into a rvalue from an lvalue */

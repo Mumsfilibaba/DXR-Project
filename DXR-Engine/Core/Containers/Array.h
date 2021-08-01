@@ -69,6 +69,15 @@ public:
     }
 
     /* Copy-constructs an array from another array */
+    FORCEINLINE TArray( const TArray& Other ) noexcept
+        : Allocator()
+        , ArraySize( 0 )
+        , ArrayCapacity( 0 )
+    {
+        InternalCopyFrom( Other.Data(), Other.Size() );
+    }
+
+    /* Copy-constructs an array from another array */
     template<typename ArrayType>
     FORCEINLINE TArray( const ArrayType& Other ) noexcept
         : Allocator()
@@ -180,7 +189,7 @@ public:
 
     /* Fills the container with the specified value */
     template<typename FillType>
-    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddLeftReference<const FillType>::Type>::Value>::Type Fill( const FillType& InputElement ) noexcept
+    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddReference<const FillType>::LValue>::Value>::Type Fill( const FillType& InputElement ) noexcept
     {
         for ( ElementType& Element : *this )
         {
@@ -190,7 +199,7 @@ public:
 
     /* Fills the container with the specified value */
     template<typename FillType>
-    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddRightReference<FillType>::Type>::Value>::Type Fill( FillType&& InputElement ) noexcept
+    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddReference<FillType>::RValue>::Value>::Type Fill( FillType&& InputElement ) noexcept
     {
         for ( ElementType& Element : *this )
         {
@@ -378,7 +387,7 @@ public:
     }
 
     /* Remove a range starting at position and containg count number of elements */
-    FORCEINLINE void RemoveRange( SizeType Position, SizeType Count ) noexcept
+    FORCEINLINE void RemoveRangeAt( SizeType Position, SizeType Count ) noexcept
     {
         Assert( Position + Count <= ArraySize );
 
@@ -397,6 +406,22 @@ public:
     FORCEINLINE void RemoveAt( SizeType Position ) noexcept
     {
         RemoveRange( Position, 1 );
+    }
+
+    /* Removes the element pointed to by a iterator at the position */
+    FORCEINLINE IteratorType Remove( IteratorType Iterator ) noexcept
+    {
+        Assert(Iterator.IsFrom(*this));
+        RemoveAt(Iterator.GetIndex());
+        return Iterator;
+    }
+
+    /* Removes the element pointed to by a iterator at the position */
+    FORCEINLINE ConstIteratorType Remove( ConstIteratorType Iterator ) noexcept
+    {
+        Assert( Iterator.IsFrom( *this ) );
+        RemoveAt( Iterator.GetIndex() );
+        return Iterator;
     }
 
     /* Swaps container with another */

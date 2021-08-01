@@ -92,7 +92,7 @@ class TFunction<ReturnType( ArgTypes... )>
 private:
     enum 
     {
-        InlineBytes = 32;
+        InlineBytes = 32
     };
 
     /* Generic functor interface */

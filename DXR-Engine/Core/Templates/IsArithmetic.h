@@ -10,6 +10,6 @@ struct TIsArithmetic
 {
     enum
     {
-        Value = TOr<TIsInteger<T>, TIsFloatingPoint<T>> > ::Value
+        Value = TOr<TIsInteger<T>, TIsFloatingPoint<T>>::Value
     };
 };

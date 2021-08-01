@@ -73,6 +73,7 @@ workspace "DXR-Project"
 
 	-- Dependencies
 	group "Dependencies"
+		-- Imgui
 		include "Dependencies/imgui"
 		
 		-- tinyobjloader Project
@@ -238,7 +239,6 @@ workspace "DXR-Project"
 		{
 			"DXR-Engine",	
 			"Dependencies/imgui",
-            "Dependencies/Template-Library"
 		}
 		
 		-- Files to include
