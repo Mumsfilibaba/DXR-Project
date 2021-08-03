@@ -84,7 +84,7 @@ public:
     typedef T     ElementType;
     typedef int32 SizeType;
 
-    static_assert(InlineBytes > sizeof(void*), "InlineBytes has to be larger that the size of a void*");
+    static_assert(InlineBytes > sizeof( void* ), "InlineBytes has to be larger that the size of a void*");
 
     /* Since we do not store the size of the allocation we cannot copy. TODO: See if this is a better approcach */
     TInlineAllocator( const TInlineAllocator& ) = delete;
@@ -100,7 +100,7 @@ public:
     FORCEINLINE TInlineAllocator( TInlineAllocator&& Other ) noexcept
         : Pointer( nullptr )
     {
-        Memory::Memexchange(InlineAllocation, Other.InlineAllocation, InlineBytes);
+        Memory::Memexchange( InlineAllocation, Other.InlineAllocation, InlineBytes );
     }
 
     FORCEINLINE ~TInlineAllocator()
@@ -111,10 +111,10 @@ public:
     /* Allocates memory if needed, uses Memory::Realloc */
     FORCEINLINE ElementType* Allocate( SizeType Count ) noexcept
     {
-        Size = Count * sizeof(ElementType);
-        if (Size > InlineBytes)
+        Size = Count * sizeof( ElementType );
+        if ( Size > InlineBytes )
         {
-            Pointer = Memory::Realloc(Pointer, Size);
+            Pointer = Memory::Realloc( Pointer, Size );
             return Pointer;
         }
         else
@@ -126,14 +126,14 @@ public:
     /* Make sure that the allocation is freed */
     FORCEINLINE void Free() noexcept
     {
-        if (Size > InlineBytes)
+        if ( Size > InlineBytes )
         {
             Memory::Free( Pointer );
             Pointer = nullptr;
         }
         else
         {
-            Memory::Memzero(InlineAllocation, InlineBytes);
+            Memory::Memzero( InlineAllocation, InlineBytes );
         }
     }
 
@@ -143,7 +143,7 @@ public:
         if ( this != &Other )
         {
             Free();
-            Memory::Memexchange(InlineAllocation, Other.InlineAllocation, InlineBytes);
+            Memory::Memexchange( InlineAllocation, Other.InlineAllocation, InlineBytes );
         }
     }
 
@@ -180,7 +180,7 @@ public:
     /* Move assignment */
     FORCEINLINE TInlineAllocator& operator=( TInlineAllocator&& Other )
     {
-        MoveFrom( Forward<TInlineAllocator>(Other) );
+        MoveFrom( Forward<TInlineAllocator>( Other ) );
         return *this;
     }
 

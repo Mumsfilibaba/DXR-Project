@@ -20,11 +20,14 @@
 #include "Conditional.h"
 #include "EnableIf.h"
 #include "Identity.h"
+#include "Decay.h"
+#include "MemberPointerTraits.h"
 
 /* Is... */
 #include "IsArithmetic.h"
 #include "IsArray.h"
 #include "IsAssignable.h"
+#include "IsBaseOf.h"
 #include "IsClass.h"
 #include "IsConst.h"
 #include "IsConstructible.h"

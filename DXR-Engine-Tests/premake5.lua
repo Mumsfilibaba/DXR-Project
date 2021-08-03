@@ -155,3 +155,50 @@ workspace "DXR-Engine-Tests"
 		
     project "*"
 	
+	-- Templates Tests
+    project "Templates-Tests"
+        language 		"C++"
+        cppdialect 		"C++17"
+        systemversion 	"latest"
+        location 		"Templates-Tests"
+        kind 			"ConsoleApp"
+		characterset 	"Ascii"
+
+        -- Targets
+		targetdir 	("Build/bin/" .. outputdir .. "/%{prj.name}")
+		objdir 		("Build/bin-int/" .. outputdir .. "/%{prj.name}")	
+    
+        -- Files to include
+		files 
+		{ 
+			"%{prj.name}/**.h",
+			"%{prj.name}/**.hpp",
+			"%{prj.name}/**.inl",
+			"%{prj.name}/**.c",
+			"%{prj.name}/**.cpp",
+        }
+			
+		-- In visual studio show natvis files
+		filter "action:vs*"
+			vpaths { ["Natvis"] = "**.natvis" }
+			
+			files 
+			{
+				"%{prj.name}/**.natvis",
+			}
+		filter {}
+
+        -- Includes
+		includedirs
+		{
+			"%{prj.name}",
+        }
+		
+		-- System includes
+		sysincludedirs
+		{
+			"../DXR-Engine/",
+		}
+		
+    project "*"
+	

@@ -6,6 +6,16 @@ struct TIsConvertible
 {
     enum
     {
-        Value = __is_convertible( FromType, ToType )
+        Value = __is_convertible_to( FromType, ToType )
+    };
+};
+
+/* Determine if two pointers can be converted */
+template<typename FromType, typename ToType>
+struct TIsPointerConvertible
+{
+    enum
+    {
+        Value = TIsConvertible<FromType*, ToType*>::Value;
     };
 };

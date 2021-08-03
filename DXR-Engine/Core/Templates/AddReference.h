@@ -1,19 +1,38 @@
 #pragma once
 #include "Identity.h"
-#include "RemoveReference.h"
 
 /* Adds a lvalue reference to the type */
 template<typename T>
 struct TAddLValueReference
 {
-    typedef typename TIdentity<typename TRemoveReference<T>::Type&>::Type Type;
+private:
+    template <class U>
+    static TIdentity<U&> TryAdd( int );
+
+    template <class U>
+    static TIdentity<U> TryAdd( ... );
+
+    typedef decltype(TryAdd<T>( 0 )) IdentityType;
+
+public:
+    typedef typename IdentityType::Type Type;
 };
 
 /* Adds a rvalue reference to the type */
 template<typename T>
 struct TAddRValueReference
 {
-    typedef typename TIdentity<typename TRemoveReference<T>::Type&&>::Type Type;
+private:
+    template <class U>
+    static TIdentity<U&&> TryAdd( int );
+
+    template <class U>
+    static TIdentity<U> TryAdd( ... );
+
+    typedef decltype(TryAdd<T>( 0 )) IdentityType;
+
+public:
+    typedef typename IdentityType::Type Type;
 };
 
 /* Adds a reference of choice */

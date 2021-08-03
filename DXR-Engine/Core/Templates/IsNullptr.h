@@ -11,6 +11,6 @@ struct TIsNullptr
 {
     enum
     {
-        Value = TIsSame<NullptrType, typename TRemoveCV<T>::Type >> ::Value
+        Value = TIsSame<NullptrType, typename TRemoveCV<T>::Type>::Value
     };
 };

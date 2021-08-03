@@ -50,12 +50,12 @@ public:
         return Memcmp( LHS, RHS, sizeof( T ) * Count );
     }
 
-    FORCEINLINE void Memexchange(void* Destination, void* Source, uint64 Size ) noexcept
+    FORCEINLINE void Memexchange( void* Destination, void* Source, uint64 Size ) noexcept
     {
-        if (Destination != Source)
+        if ( Destination != Source )
         {
-            Memcpy(Destination, Source, Size);
-            Memzero(Source, Size);
+            Memcpy( Destination, Source, Size );
+            Memzero( Source, Size );
         }
     }
 

@@ -9,7 +9,7 @@ struct TIsCopyConstructable
 {
     enum
     {
-        Value = TIsConstructible<T, typename TAddLeftReference<const T>::Type>::Value
+        Value = TIsConstructible<T, typename TAddLValueReference<const T>::Type>::Value
     };
 };
 
@@ -19,6 +19,6 @@ struct TIsCopyAssignable
 {
     enum
     {
-        Value = TIsAssignable<T, typename TAddLeftReference<const T>::Type>::Value
+        Value = TIsAssignable<T, typename TAddLValueReference<const T>::Type>::Value
     };
 };

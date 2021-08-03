@@ -90,7 +90,7 @@ template<typename ReturnType, typename... ArgTypes>
 class TFunction<ReturnType( ArgTypes... )>
 {
 private:
-    enum 
+    enum
     {
         InlineBytes = 32
     };
@@ -130,7 +130,7 @@ private:
             : IFunctor()
             , Functor( Move( Other.Functor ) )
         {
-            Memory::Memzero<TGenericFunctor>(&Other);
+            Memory::Memzero<TGenericFunctor>( &Other );
         }
 
         /* Invoke the functor */
@@ -180,7 +180,7 @@ public:
 
     /* Move constructor */
     FORCEINLINE TFunction( TFunction&& Other ) noexcept
-        : Storage(Move(Other.Storage))
+        : Storage( Move( Other.Storage ) )
     {
     }
 
@@ -198,9 +198,9 @@ public:
     /* Swap this and another function */
     FORCEINLINE void Swap( TFunction& Other ) noexcept
     {
-        TFunction Temp( Move(*this) );
-        *this = Move(Other);
-        Other = Move(Temp);
+        TFunction Temp( Move( *this ) );
+        *this = Move( Other );
+        Other = Move( Temp );
     }
 
     /* Assign a new functor */
@@ -247,7 +247,7 @@ public:
         if ( this != &Other )
         {
             Release();
-            Storage = Move(Other.Storage);
+            Storage = Move( Other.Storage );
         }
 
         return *this;
@@ -263,7 +263,7 @@ public:
 private:
     FORCEINLINE void Release() noexcept
     {
-        if (IsValid())
+        if ( IsValid() )
         {
             GetFunctor()->~IFunctor();
             Storage.Free();
@@ -274,14 +274,14 @@ private:
     template<typename FunctorType>
     FORCEINLINE typename TEnableIf<std::is_invocable_v<F, TArgs...>>::Type ConstructFrom( FunctorType&& Functor ) noexcept
     {
-        Storage.Allocate(sizeof(FunctorType));
+        Storage.Allocate( sizeof( FunctorType ) );
         new(Storage.Raw()) TGenericFunctor<FunctorType>( Forward<FunctorType>( Functor ) );
     }
 
     /* Copy from another function */
     FORCEINLINE void CopyFrom( const TFunction& Other ) noexcept
     {
-        Storage.Allocate(Other.Storage.GetSize());
+        Storage.Allocate( Other.Storage.GetSize() );
         Other.Func->Clone( Storage.Raw() ) );
     }
 

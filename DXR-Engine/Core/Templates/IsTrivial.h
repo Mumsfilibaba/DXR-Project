@@ -10,7 +10,7 @@ struct TIsTriviallyCopyable
 {
     enum
     {
-        Value = __has_trivial_copy( T )
+        Value = __is_trivially_copyable( T )
     };
 };
 
@@ -18,12 +18,12 @@ struct TIsTriviallyCopyable
 * Detmine if the object is trivially constructable, that is that it has a compiler generated
 * constructor.
 */
-template<typename T>
+template<typename T, typename... ArgTypes>
 struct TIsTriviallyConstructable
 {
     enum
     {
-        Value = __has_trivial_constructor( T )
+        Value = __is_trivially_constructible( T, ArgTypes... )
     };
 };
 
@@ -36,7 +36,7 @@ struct TIsTriviallyDestructable
 {
     enum
     {
-        Value = __has_trivial_destructor( T )
+        Value = __is_trivially_destructible( T )
     };
 };
 

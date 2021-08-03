@@ -1,7 +1,5 @@
 #include <cstdio>
 
-#include "../SIMD.h"
-
 bool TestIntPoint2();
 bool TestIntPoint3();
 

@@ -3,7 +3,7 @@
 
 /* Check if type is lvalue reference type */
 template<typename T>
-struct TIsLeftValueReference
+struct TIsLValueReference
 {
     enum
     {
@@ -12,7 +12,7 @@ struct TIsLeftValueReference
 };
 
 template<typename T>
-struct TIsLeftValueReference<T&>
+struct TIsLValueReference<T&>
 {
     enum
     {
@@ -22,7 +22,7 @@ struct TIsLeftValueReference<T&>
 
 /* Check if type is rvalue reference type */
 template<typename T>
-struct TIsRightValueReference
+struct TIsRValueReference
 {
     enum
     {
@@ -31,7 +31,7 @@ struct TIsRightValueReference
 };
 
 template<typename T>
-struct TIsRightValueReference<T&&>
+struct TIsRValueReference<T&&>
 {
     enum
     {
@@ -45,6 +45,6 @@ struct TIsReference
 {
     enum
     {
-        Value = TOr<TIsLeftValueReference<T>, TIsRightValueReference<T>>::Value
+        Value = TOr<TIsLValueReference<T>, TIsRValueReference<T>>::Value
     };
 };

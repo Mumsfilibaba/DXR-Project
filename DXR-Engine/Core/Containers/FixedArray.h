@@ -2,6 +2,7 @@
 #include "Iterator.h"
 
 #include "Core/Templates/Move.h"
+#include "Core/Templates/IsAssignable.h"
 
 /* A fixed size array similar to std::array */
 template<typename T, const int32 N>
@@ -59,7 +60,8 @@ public:
 
     /* Fills the container with the specified value */
     template<typename FillType>
-    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddLeftReference<const FillType>::Type>::Value>::Type Fill( const FillType& InputElement ) noexcept
+    //TIsAssignable<ElementType, typename TAddLValueReference<const FillType>::Type>::Value
+    FORCEINLINE typename TEnableIf<true>::Type Fill( const FillType& InputElement ) noexcept
     {
         for ( ElementType& Element : *this )
         {
@@ -69,7 +71,7 @@ public:
 
     /* Fills the container with the specified value */
     template<typename FillType>
-    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddRightReference<FillType>::Type>::Value>::Type Fill( FillType&& InputElement ) noexcept
+    FORCEINLINE typename TEnableIf<true>::Type Fill( FillType&& InputElement ) noexcept
     {
         for ( ElementType& Element : *this )
         {

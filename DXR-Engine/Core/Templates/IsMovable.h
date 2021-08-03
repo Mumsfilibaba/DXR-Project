@@ -9,7 +9,7 @@ struct TIsMoveConstructable
 {
     enum
     {
-        Value = TIsConstructible<T, typename TAddRightReference<T>::Type>::Value
+        Value = TIsConstructible<T, typename TAddRValueReference<T>::Type>::Value
     };
 };
 
@@ -19,6 +19,6 @@ struct TIsMoveAssignable
 {
     enum
     {
-        Value = TIsAssignable<T, typename TAddRightReference<T>::Type>::Value
+        Value = TIsAssignable<T, typename TAddRValueReference<T>::Type>::Value
     };
 };

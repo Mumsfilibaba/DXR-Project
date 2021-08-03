@@ -1,4 +1,4 @@
-#include "../Matrix3.h"
+#include <Core/Math/Matrix3.h>
 
 #include <cstdio>
 

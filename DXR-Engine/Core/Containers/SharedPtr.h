@@ -390,7 +390,7 @@ public:
 
     /* Reset the pointer and set it to a optional new pointer */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type 
+    FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type
         Reset( typename TRemoveExtent<OtherType>::Type* NewPtr = nullptr ) noexcept
     {
         Reset( static_cast<ElementType*>(NewPtr) );
@@ -467,7 +467,7 @@ public:
 
     /* Retrive element at a certain index */
     template<typename U>
-    FORCEINLINE typename TEnableIf<TAnd<TIsUnboundedArray<U>, TIsSame<U, ElementType>>::Value, typename TAddReference<typename TRemoveExtent<U>::Type>::LValue>::Type 
+    FORCEINLINE typename TEnableIf<TAnd<TIsUnboundedArray<U>, TIsSame<U, ElementType>>::Value, typename TAddReference<typename TRemoveExtent<U>::Type>::LValue>::Type
         operator[]( SizeType Index ) const noexcept
     {
         Assert( IsValid() );

@@ -6,21 +6,23 @@
 #include "TFixedArray_Test.h"
 #include "TArrayView_Test.h"
 
-// Defines
+/* Defines */
 #define RUN_TESTS     1
-#define RUN_BENCHMARK 0
-// Test Specific defines
-#define RUN_TARRAY_TEST       0
-#define RUN_TSHAREDPTR_TEST   0
-#define RUN_TFUNCTION_TEST    0
-#define RUN_TSTATICARRAY_TEST 1
-#define RUN_TARRAYVIEW_TEST   0
-// Benchmark Specific defines
+#define RUN_BENCHMARK 1
+
+/* Test Specific defines */
+#define RUN_TARRAY_TEST      1
+#define RUN_TSHAREDPTR_TEST  1
+#define RUN_TFUNCTION_TEST   1
+#define RUN_TFIXEDARRAY_TEST 1
+#define RUN_TARRAYVIEW_TEST  1
+
+/* Benchmark Specific defines */
 #define RUN_TARRAY_BENCHMARKS 1
 
-// Check for memory leaks
+/* Check for memory leaks */
 #ifdef PLATFORM_WINDOWS
-    #include <crtdbg.h>
+#include <crtdbg.h>
 #endif
 
 /*
@@ -38,10 +40,10 @@ void BenchMarks()
 * Tests
 */
 
-void Tests(int32 Argc, const char* Argv[])
+void Tests( int32 Argc, const char* Argv[] )
 {
 #if RUN_TARRAY_TEST
-    TArray_Test(Argc, Argv);
+    TArray_Test( Argc, Argv );
 #endif
 
 #if RUN_TSHAREDPTR_TEST
@@ -52,7 +54,7 @@ void Tests(int32 Argc, const char* Argv[])
     TFunction_Test();
 #endif
 
-#if RUN_TSTATICARRAY_TEST
+#if RUN_TFIXEDARRAY_TEST
     TStaticArray_Test();
 #endif
 
@@ -65,14 +67,14 @@ void Tests(int32 Argc, const char* Argv[])
 * Main
 */
 
-int main(int Argc, const char* Argv[])
+int main( int Argc, const char* Argv[] )
 {
 #ifdef _WIN32
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
 
 #if RUN_TESTS
-    Tests(Argc, Argv);
+    Tests( Argc, Argv );
 #endif
 
 #if RUN_BENCHMARK

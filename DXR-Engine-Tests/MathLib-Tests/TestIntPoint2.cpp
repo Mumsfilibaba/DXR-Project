@@ -1,4 +1,4 @@
-#include "../IntPoint2.h"
+#include <Core/Math/IntPoint2.h>
 
 #include <cstdio>
 

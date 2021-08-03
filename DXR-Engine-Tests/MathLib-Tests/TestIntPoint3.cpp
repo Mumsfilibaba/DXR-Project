@@ -1,4 +1,4 @@
-#include "../IntPoint3.h"
+#include <Core/Math/IntPoint3.h>
 
 #include <cstdio>
 

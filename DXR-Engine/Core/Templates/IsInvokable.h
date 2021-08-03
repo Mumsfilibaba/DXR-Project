@@ -4,53 +4,64 @@
 #include "DeclVal.h"
 #include "IsConvertible.h"
 
-namespace Internal
-{
-    template<typename T, typename = void, typename... ArgTypes>
-    struct _TIsInvokable
-    {
-        enum
-        {
-            Value = false;
-        };
-    };
-
-    template<typename T, typename... ArgTypes>
-    struct _TIsInvokable<T, typename TVoid<decltype(Invoke( DeclVal<T>(), DeclVal<ArgTypes>()... )) >::Type, ArgTypes...>
-    {
-        enum
-        {
-            Value = true;
-        };
-    };
-
-    template<typename T, typename ReturnType, typename = void, typename... ArgTypes>
-    struct _TIsInvokableR
-    {
-        enum
-        {
-            Value = false;
-        };
-    };
-
-    template<typename T, typename ReturnType, typename... ArgTypes>
-    struct _TIsInvokableR<T, ReturnType, typename TVoid<decltype(Invoke( DeclVal<T>(), DeclVal<ArgTypes>()... )) >::Type, ArgTypes...>
-    {
-        enum
-        {
-            Value = TIsConvertible<decltype(Invoke( DeclVal<T>(), DeclVal<ArgTypes>()... )), ReturnType>::Value;
-        };
-    };
-}
+// TODO: This may need another check
 
 /* Determines if the type is invokable or not */
-template<typename T, typename... ArgTypes>
-struct TIsInvokable : private Internal::_TIsInvokable<T, void, ArgTypes...>
+template<typename FuncType, typename... ArgTypes>
+struct TIsInvokable
 {
+private:
+    template<typename Fn, typename = void, typename... Args>
+    struct TIsInvokableImpl
+    {
+        enum
+        {
+            Value = false
+        };
+    };
+
+    template<typename Fn, typename... Args>
+    struct TIsInvokableImpl<Fn, typename TVoid<decltype(Internal::Invoke( DeclVal<Fn>(), DeclVal<Args>()... )) >::Type, Args...>
+    {
+        enum
+        {
+            Value = true
+        };
+    };
+
+public:
+    enum
+    {
+        Value = TIsInvokableImpl<FuncType, void, ArgTypes...>::Value
+    };
 };
 
-/* Determines if the type is invokable or no, with returntype */
-template<typename T, typename ReturnType, typename... ArgTypes>
-struct TIsInvokableR : private Internal::_TIsInvokableR<T, ReturnType, void, ArgTypes...>
+/* Determines if the type is invokable or not, with returntype */
+template<typename FuncType, typename ReturnType, typename... ArgTypes>
+struct TIsInvokableR
 {
+private:
+    template<typename Fn, typename ReturnType, typename = void, typename... Args>
+    struct TIsInvokableRImpl
+    {
+        enum
+        {
+            Value = false
+        };
+    };
+
+    template<typename Fn, typename Ret, typename... Args>
+    struct TIsInvokableRImpl<Fn, Ret, typename TVoid<decltype(Internal::Invoke( DeclVal<Fn>(), DeclVal<Args>()... )) >::Type, Args...>
+    {
+        enum
+        {
+            Value = TIsConvertible<decltype(Internal::Invoke( DeclVal<Fn>(), DeclVal<Args>()... )), Ret>::Value
+        };
+    };
+
+public:
+    enum
+    {
+        Value = TIsInvokableRImpl<FuncType, ReturnType, void, ArgTypes...>::Value
+    };
 };

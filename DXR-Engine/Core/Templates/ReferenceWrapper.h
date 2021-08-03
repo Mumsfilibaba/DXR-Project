@@ -2,6 +2,7 @@
 #include "IsObject.h"
 #include "IsFunction.h"
 #include "Invoke.h"
+#include "AddressOf.h"
 
 /* Wrapper for a reference making them copyable */
 template<typename T>
@@ -18,17 +19,11 @@ public:
     static_assert(TIsObject<T>::Value || TIsFunction<T>::Value, "TReferenceWrapper requires T to be of object or function type");
 
     /* Constructor */
-    template<typename OtherType, typename = 
+    template<typename OtherType, typename =
         typename TEnableIf<TIsSame<typename TRemoveCV<Type>::Type, typename TRemoveCV<typename TRemoveReference<OtherType>::Type>::Type>::Value>::Type>
-    FORCEINLINE TReferenceWrapper( OtherType&& In )
-        : Pointer(AddressOf(In))
+        FORCEINLINE TReferenceWrapper( OtherType&& In )
+        : Pointer( ::AddressOf( In ) )
     {
-    }
-
-    /* Retrive reference */
-    FORCEINLINE operator Type&() const noexcept
-    {
-        return Get();
     }
 
     /* Retrive reference */
@@ -41,6 +36,12 @@ public:
     FORCEINLINE Type* AddressOf() const noexcept
     {
         return Pointer;
+    }
+
+    /* Retrive reference */
+    FORCEINLINE operator Type&() const noexcept
+    {
+        return Get();
     }
 
     /* Invoke if type is invokable */

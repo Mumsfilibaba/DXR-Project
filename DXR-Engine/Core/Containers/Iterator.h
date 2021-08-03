@@ -38,20 +38,20 @@ public:
     /* Ensure that the pointer is in the range of the array */
     FORCEINLINE bool IsValid() const noexcept
     {
-        return (Index >= 0) && (Index <= Array.Size());
+        return (Index >= 0) && (Index <= Array.Get().Size());
     }
 
     /* Ensure that the pointer is not the endpointer */
     FORCEINLINE bool IsEnd() const noexcept
     {
-        return (Index == Array.Size());
+        return (Index == Array.Get().Size());
     }
 
     /* Retrive the raw pointer */
     FORCEINLINE ElementType* Raw() const noexcept
     {
         Assert( IsValid() );
-        return Array.Data() + GetIndex();
+        return Array.Get().Data() + GetIndex();
     }
 
     /* Retrive the useable index */
@@ -200,7 +200,7 @@ public:
     /* Ensure that the pointer is in the range of the array */
     FORCEINLINE bool IsValid() const noexcept
     {
-        return (Index >= 0) && (Index <= Array.Size());
+        return (Index >= 0) && (Index <= Array.Get().Size());
     }
 
     /* Ensure that the pointer is not the endpointer */
@@ -213,7 +213,7 @@ public:
     FORCEINLINE ElementType* Raw() const noexcept
     {
         Assert( IsValid() );
-        return Array.Data() + GetIndex();
+        return Array.Get().Data() + GetIndex();
     }
 
     /* Retrive the useable index */

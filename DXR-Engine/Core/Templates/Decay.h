@@ -7,8 +7,8 @@
 #include "RemoveReference.h"
 #include "RemoveExtent.h"
 
-/* 
-* Decays T into the value that can be passed to a function by non-const/volatile value 
+/*
+* Decays T into the value that can be passed to a function by non-const/volatile value
 *  - T[N] -> T*
 *  - const T& -> T
 *  - etc.
@@ -19,7 +19,7 @@ struct TDecay
 {
 private:
     typedef typename TRemoveReference<T>::Type U;
-    typedef typename TRemoveExtent<U>::Type*   TrueType;
+    typedef typename TRemoveExtent<U>::Type* TrueType;
     typedef typename TConditional<TIsFunction<U>::Value, typename TAddPointer<U>::Type, typename TRemoveCV<U>::Type>::Type FalseType;
 
 public:

@@ -411,8 +411,8 @@ public:
     /* Removes the element pointed to by a iterator at the position */
     FORCEINLINE IteratorType Remove( IteratorType Iterator ) noexcept
     {
-        Assert(Iterator.IsFrom(*this));
-        RemoveAt(Iterator.GetIndex());
+        Assert( Iterator.IsFrom( *this ) );
+        RemoveAt( Iterator.GetIndex() );
         return Iterator;
     }
 

@@ -1,7 +1,4 @@
 #pragma once
-#include "IsSame.h"
-#include "RemoveCV.h"
-#include "Or.h"
 
 /* Determine if type is a integer point type */
 template<typename T>
