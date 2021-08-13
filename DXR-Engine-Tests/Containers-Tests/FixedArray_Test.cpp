@@ -1,11 +1,12 @@
-#include "TFixedArray_Test.h"
+#include "FixedArray_Test.h"
 
+#if RUN_TFIXEDARRAY_TEST
 #include <Core/Containers/FixedArray.h>
 
 #include <iostream>
 #include <array>
 
-void TStaticArray_Test()
+void TFixedArray_Test()
 {
     std::cout << std::endl << "----------TFixedArray----------" << std::endl << std::endl;
 
@@ -58,9 +59,28 @@ void TStaticArray_Test()
 
     constexpr uint32 Num2 = 6;
     TFixedArray<uint32, Num2> Numbers1 = { 5, 6, 7 };
+    TFixedArray<uint32, Num2> Numbers2 = { 15, 16, 17 };
 
     for ( const uint32 Number : Numbers1 )
     {
         std::cout << Number << std::endl;
     }
+
+    std::cout << "Testing Swap" << std::endl;
+
+    for ( const uint32 Number : Numbers2 )
+    {
+        std::cout << Number << std::endl;
+    }
+
+    Numbers1.Swap( Numbers2 );
+
+    std::cout << "LastIndex=" << Numbers1.LastIndex();
+    std::cout << "Size=" << Numbers1.Size();
+    std::cout << "SizeInBytes=" << Numbers1.SizeInBytes();
+
+    std::cout << "operator== : " << std::boolalpha << (Numbers1 == Numbers2) << std::endl;
+    std::cout << "operator!= : " << std::boolalpha << (Numbers1 != Numbers2) << std::endl;
 }
+
+#endif

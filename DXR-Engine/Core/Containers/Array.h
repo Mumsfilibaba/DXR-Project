@@ -7,6 +7,7 @@
 #include "Core/Templates/IsPointer.h"
 #include "Core/Templates/IsSame.h"
 #include "Core/Templates/ObjectHandling.h"
+#include "Core/Templates/IsArray.h"
 
 #include <initializer_list>
 
@@ -38,7 +39,7 @@ public:
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        InternalConstruct( InSize );
+        EmptyConstruct( InSize );
     }
 
     /* Allocates the specified amount of elements, and initializes them to the same value */
@@ -47,7 +48,7 @@ public:
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        InternalConstructFrom( InSize, Element );
+        EmptyConstructFrom( InSize, Element );
     }
 
     /* Creates an array from a raw pointer array */
@@ -56,7 +57,7 @@ public:
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        InternalCopyFrom( InputArray, Count );
+        EmptyCopyFrom( InputArray, Count );
     }
 
     /* Creates an array from an std::initializer_list */
@@ -65,7 +66,7 @@ public:
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        InternalCopyFrom( InitList.begin(), InitList.size() );
+        EmptyCopyFrom( InitList.begin(), static_cast<SizeType>(InitList.size()) );
     }
 
     /* Copy-constructs an array from another array */
@@ -74,7 +75,7 @@ public:
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        InternalCopyFrom( Other.Data(), Other.Size() );
+        EmptyCopyFrom( Other.Data(), Other.Size() );
     }
 
     /* Copy-constructs an array from another array */
@@ -84,7 +85,7 @@ public:
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        InternalCopyFrom( Other.Data(), Other.Size() );
+        EmptyCopyFrom( Other.Data(), Other.Size() );
     }
 
     /* Move-constructs an array from another array */
@@ -93,7 +94,7 @@ public:
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        InternalMoveFrom( Forward<TArray>( Other ) );
+        MoveFrom( Forward<TArray>( Other ) );
     }
 
     FORCEINLINE ~TArray()
@@ -114,6 +115,13 @@ public:
         ArrayCapacity = 0;
     }
 
+    /* Clears the container, but does not deallocate the memory */
+    FORCEINLINE void Clear() noexcept
+    {
+        DestructRange<ElementType>( Data(), ArraySize );
+        ArraySize = 0;
+    }
+
     /* Resets the container, but does not deallocate the memory */
     FORCEINLINE void Reset( SizeType NewSize = 0 ) noexcept
     {
@@ -121,7 +129,7 @@ public:
 
         if ( NewSize )
         {
-            InternalConstruct( NewSize );
+            Construct( NewSize );
         }
         else
         {
@@ -136,7 +144,7 @@ public:
 
         if ( NewSize )
         {
-            InternalConstructFrom( NewSize, Element );
+            EmptyConstructFrom( NewSize, Element );
         }
         else
         {
@@ -153,7 +161,7 @@ public:
 
         if ( Count )
         {
-            InternalCopyFrom( InputArray, Count );
+            EmptyCopyFrom( InputArray, Count );
         }
         else
         {
@@ -177,19 +185,18 @@ public:
         if ( this != &InputArray )
         {
             DestructRange<ElementType>( Data(), ArraySize );
-            InternalMoveFrom( InputArray );
+            MoveFrom( InputArray );
         }
     }
 
     /* Resets the container, but does not deallocate the memory */
     FORCEINLINE void Reset( std::initializer_list<ElementType> InitList ) noexcept
     {
-        Reset( InitList.begin(), InitList.size() );
+        Reset( InitList.begin(), static_cast<SizeType>(InitList.size()) );
     }
 
     /* Fills the container with the specified value */
-    template<typename FillType>
-    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddReference<const FillType>::LValue>::Value>::Type Fill( const FillType& InputElement ) noexcept
+    FORCEINLINE void Fill( const ElementType& InputElement ) noexcept
     {
         for ( ElementType& Element : *this )
         {
@@ -197,48 +204,46 @@ public:
         }
     }
 
-    /* Fills the container with the specified value */
-    template<typename FillType>
-    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddReference<FillType>::RValue>::Value>::Type Fill( FillType&& InputElement ) noexcept
-    {
-        for ( ElementType& Element : *this )
-        {
-            Element = Move( InputElement );
-        }
-    }
-
     /* Resizes the container with a new size, and default constructs them*/
-    FORCEINLINE void Resize( SizeType NewSize ) noexcept
+    inline void Resize( SizeType NewSize ) noexcept
     {
         if ( NewSize > ArraySize )
         {
-            InternalReserve( NewSize );
-            DefaultConstructRange<ElementType>( Data() + ArraySize, Data() + NewSize );
+            if ( NewSize >= ArrayCapacity )
+            {
+                ReserveStorage( NewSize );
+            }
+
+            DefaultConstructRange<ElementType>( Data() + ArraySize, ArraySize - NewSize );
             ArraySize = NewSize;
         }
         else if ( NewSize < ArraySize )
         {
-            InternalRemoveBack( ArraySize - NewSize );
+            RemoveFromEnd( ArraySize - NewSize );
         }
     }
 
     /* Resizes the container with a new size, and constructs them with value */
-    FORCEINLINE void Resize( SizeType NewSize, const ElementType& Element ) noexcept
+    inline void Resize( SizeType NewSize, const ElementType& Element ) noexcept
     {
         if ( NewSize > ArraySize )
         {
-            InternalReserve( NewSize );
-            ConstructRangeFrom<ElementType>( Data() + ArraySize, Data() + NewSize, Element );
+            if ( NewSize >= ArrayCapacity )
+            {
+                ReserveStorage( NewSize );
+            }
+
+            ConstructRangeFrom<ElementType>( Data() + ArraySize, NewSize - ArraySize, Element );
             ArraySize = NewSize;
         }
         else if ( NewSize < ArraySize )
         {
-            InternalRemoveBack( ArraySize - NewSize );
+            RemoveFromEnd( ArraySize - NewSize );
         }
     }
 
     /* Resizes the allocation */
-    FORCEINLINE void Reserve( SizeType NewCapacity ) noexcept
+    inline void Reserve( SizeType NewCapacity ) noexcept
     {
         if ( NewCapacity != ArrayCapacity )
         {
@@ -248,18 +253,18 @@ public:
                 ArraySize = NewCapacity;
             }
 
-            InternalReserve( NewCapacity );
+            ReserveStorage( NewCapacity );
         }
     }
 
     /* Constructs a new element at the end */
     template<typename... ArgTypes>
-    FORCEINLINE ElementType& EmplaceBack( ArgTypes&&... Args ) noexcept
+    inline ElementType& EmplaceBack( ArgTypes&&... Args ) noexcept
     {
         if ( ArraySize == ArrayCapacity )
         {
-            const SizeType NewCapacity = InternalGrowCapacity( ArraySize + 1, ArrayCapacity );
-            InternalReserve( NewCapacity );
+            const SizeType NewCapacity = GetGrowCapacity( ArraySize + 1, ArrayCapacity );
+            ReserveStorage( NewCapacity );
         }
 
         new(Data() + (ArraySize++)) ElementType( Forward<ArgTypes>( Args )... );
@@ -280,7 +285,7 @@ public:
 
     /* Constructs a new element at specified position */
     template<typename... ArgTypes>
-    FORCEINLINE void EmplaceAt( SizeType Position, ArgTypes&&... Args ) noexcept
+    inline void EmplaceAt( SizeType Position, ArgTypes&&... Args ) noexcept
     {
         Assert( Position <= ArraySize );
 
@@ -288,14 +293,16 @@ public:
         if ( Position == ArraySize )
         {
             EmplaceBack( Forward<ArgTypes>( Args )... );
-            return;
         }
+        else
+        {
+            /* Make room within array and allocate if necessary */
+            ReserveForInsertion( Position, 1 );
+            new(Data() + Position) ElementType( Forward<ArgTypes>( Args )... );
 
-        /* Make room within array and allocate if necessary */
-        InternalReserveForInsertion( Position, 1 );
-
-        ElementType* DataEnd = Data() + (ArraySize++);
-        new(DataEnd) ElementType( Forward<ArgTypes>( Args )... );
+            /* Update size */
+            ArraySize++;
+        }
     }
 
     /* Inserts an element at the specified position */
@@ -311,7 +318,7 @@ public:
     }
 
     /* Insert an array into the container at the position */
-    FORCEINLINE void InsertAt( SizeType Position, const ElementType* InputArray, SizeType Count ) noexcept
+    inline void InsertAt( SizeType Position, const ElementType* InputArray, SizeType Count ) noexcept
     {
         Assert( Position <= ArraySize );
 
@@ -319,39 +326,43 @@ public:
         if ( Position == ArraySize )
         {
             Append( InputArray, Count );
-            return;
         }
+        else
+        {
+            Assert( InputArray != nullptr );
 
-        Assert( InputArray != nullptr );
+            /* Make room within array and allocate if necessary */
+            ReserveForInsertion( Position, Count );
+            CopyConstructRange<ElementType>( Data() + Position, InputArray, Count );
 
-        /* Make room within array and allocate if necessary */
-        InternalReserveForInsertion( Position, Count );
-        CopyConstructRange<ElementType>( Data() + Position, InputArray, Count );
+            /* Update size */
+            ArraySize += Count;
+        }
     }
 
     /* Insert an std::initializer_list into the container at the position */
     FORCEINLINE void InsertAt( SizeType Position, std::initializer_list<ElementType> InitList ) noexcept
     {
-        InsertAt( Position, InitList.begin(), InitList.size() );
+        InsertAt( Position, InitList.begin(), static_cast<SizeType>(InitList.size()) );
     }
 
     /* Insert an array into the container at the position */
     template<typename ArrayType>
-    FORCEINLINE void InsertAt( SizeType Position, const ArrayType& InArray ) noexcept
+    FORCEINLINE typename TEnableIf<TNot<TIsArray<ArrayType>>::Value>::Type InsertAt( SizeType Position, const ArrayType& InArray ) noexcept
     {
         InsertAt( Position, InArray.Data(), InArray.Size() );
     }
 
     /* Inserts an array at the end */
-    FORCEINLINE void Append( const ElementType* InputArray, SizeType Count ) noexcept
+    inline void Append( const ElementType* InputArray, SizeType Count ) noexcept
     {
         Assert( InputArray != nullptr );
 
         const SizeType NewSize = ArraySize + Count;
         if ( NewSize >= ArrayCapacity )
         {
-            const SizeType NewCapacity = InternalGrowCapacity( ArraySize + Count, ArrayCapacity );
-            InternalReserve( NewCapacity );
+            const SizeType NewCapacity = GetGrowCapacity( ArraySize + Count, ArrayCapacity );
+            ReserveStorage( NewCapacity );
         }
 
         CopyConstructRange<ElementType>( Data() + ArraySize, InputArray, Count );
@@ -368,44 +379,45 @@ public:
     /* Inserts an array at the end */
     FORCEINLINE void Append( std::initializer_list<ElementType> InitList ) noexcept
     {
-        Append( InitList.begin(), InitList.size() );
+        Append( InitList.begin(), static_cast<SizeType>(InitList.size()) );
     }
 
     /* Removes a number of elments from the back */
-    FORCEINLINE void PopBackNum( SizeType Count ) noexcept
+    FORCEINLINE void PopBackRange( SizeType Count ) noexcept
     {
         if ( !IsEmpty() )
         {
-            InternalRemoveFromLast( Count );
+            RemoveFromEnd( Count );
         }
     }
 
     /* Removes the last element */
     FORCEINLINE void PopBack() noexcept
     {
-        PopBackNum( 1 );
+        PopBackRange( 1 );
     }
 
     /* Remove a range starting at position and containg count number of elements */
-    FORCEINLINE void RemoveRangeAt( SizeType Position, SizeType Count ) noexcept
+    inline void RemoveRangeAt( SizeType Position, SizeType Count ) noexcept
     {
         Assert( Position + Count <= ArraySize );
 
         if ( Position + Count == ArraySize )
         {
-            InternalRemoveFromLast( Count );
-            return;
+            RemoveFromEnd( Count );
         }
-
-        DestructRange<ElementType>( Data() + Position, Count );
-        RelocateRange<ElementType>( Data() + Position, Data() + Position + Count, ArraySize - (Position + Count) );
-        ArraySize = ArraySize - Count;
+        else
+        {
+            DestructRange<ElementType>( Data() + Position, Count );
+            RelocateRange<ElementType>( Data() + Position, Data() + Position + Count, ArraySize - (Position + Count) );
+            ArraySize = ArraySize - Count;
+        }
     }
 
     /* Removes the element at the position */
     FORCEINLINE void RemoveAt( SizeType Position ) noexcept
     {
-        RemoveRange( Position, 1 );
+        RemoveRangeAt( Position, 1 );
     }
 
     /* Removes the element pointed to by a iterator at the position */
@@ -435,10 +447,7 @@ public:
     /* Shrinks the allocation to be the same as the size */
     FORCEINLINE void ShrinkToFit() noexcept
     {
-        if ( ArraySize < ArrayCapacity )
-        {
-            InternalReserve( ArraySize );
-        }
+        Reserve( ArraySize );
     }
 
     /* Checks if there are any elements */
@@ -587,6 +596,118 @@ public:
         return TUniquePtr<ElementType[]>( Memory );
     }
 
+    /* Create a min-heap of the array */
+    inline void MinHeapify() noexcept
+    {
+        const SizeType StartIndex = (ArraySize / 2) - 1;
+        for ( SizeType i = StartIndex; i >= 0; i-- )
+        {
+            MinHeapify( ArraySize, i );
+        }
+    }
+
+    /* Create a max-heap of the array */
+    inline void MaxHeapify() noexcept
+    {
+        const SizeType StartIndex = (ArraySize / 2) - 1;
+        for ( SizeType i = StartIndex; i >= 0; i-- )
+        {
+            MaxHeapify( ArraySize, i );
+        }
+    }
+
+    /* Get the top of the heap */
+    FORCEINLINE ElementType& HeapTop() noexcept
+    {
+        return Data()[0];
+    }
+
+    /* Get the top of the heap */
+    FORCEINLINE const ElementType& HeapTop() const noexcept
+    {
+        return Data()[0];
+    }
+
+    /* Inserts a new element at the top of the min-heap */
+    FORCEINLINE void MinHeapPush( const ElementType& Element ) noexcept
+    {
+        InsertAt( 0, Element );
+        MinHeapify( ArraySize, 0 );
+    }
+
+    /* Inserts a new element at the top of the min-heap */
+    FORCEINLINE void MinHeapPush( ElementType&& Element ) noexcept
+    {
+        InsertAt( 0, Forward<ElementType>( Element ) );
+        MinHeapify( ArraySize, 0 );
+    }
+
+    /* Removes the top of the min-heap */
+    FORCEINLINE void MinHeapPop( ElementType& OutElement ) noexcept
+    {
+        OutElement = HeapTop();
+        MinHeapPop();
+    }
+
+    /* Removes the top of the min-heap */
+    FORCEINLINE void MinHeapPop() noexcept
+    {
+        RemoveAt( 0 );
+        MinHeapify();
+    }
+
+    /* Performs heap sort on the array ( assuming < operator )*/
+    FORCEINLINE void MinHeapSort()
+    {
+        MinHeapify();
+
+        for ( SizeType Index = ArraySize - 1; Index > 0; Index-- )
+        {
+            SwapElements( 0, Index );
+            MinHeapify( Index, 0 );
+        }
+    }
+
+    /* Inserts a new element at the top of the max-heap */
+    FORCEINLINE void MaxHeapPush( const ElementType& Element ) noexcept
+    {
+        InsertAt( 0, Element );
+        MaxHeapify( ArraySize, 0 );
+    }
+
+    /* Inserts a new element at the top of the max-heap */
+    FORCEINLINE void MaxHeapPush( ElementType&& Element ) noexcept
+    {
+        InsertAt( 0, Forward<ElementType>( Element ) );
+        MaxHeapify( ArraySize, 0 );
+    }
+
+    /* Removes the top of the max-heap */
+    FORCEINLINE void MaxHeapPop( ElementType& OutElement ) noexcept
+    {
+        OutElement = HeapTop();
+        MaxHeapPop();
+    }
+
+    /* Removes the top of the max-heap */
+    FORCEINLINE void MaxHeapPop() noexcept
+    {
+        RemoveAt( 0 );
+        MaxHeapify();
+    }
+
+    /* Performs heap sort on the array ( assuming > operator )*/
+    FORCEINLINE void MaxHeapSort()
+    {
+        MaxHeapify();
+        
+        for ( SizeType Index = ArraySize - 1; Index > 0; Index-- )
+        {
+            SwapElements( 0, Index );
+            MaxHeapify( Index, 0 );
+        }
+    }
+
     /* Sets the container to another array by copying it */
     FORCEINLINE TArray& operator=( const TArray& Other ) noexcept
     {
@@ -597,7 +718,7 @@ public:
     /* Sets the container to another array by moving it */
     FORCEINLINE TArray& operator=( TArray&& Other ) noexcept
     {
-        Reset( Other );
+        MoveFrom( Forward<TArray>(Other) );
         return *this;
     }
 
@@ -667,7 +788,7 @@ private:
 
     /* Internal functions */
 
-    FORCEINLINE void InternalInitUnitialized( SizeType Count )
+    FORCEINLINE void InitUnitialized( SizeType Count )
     {
         if ( ArrayCapacity < Count )
         {
@@ -678,63 +799,80 @@ private:
         ArraySize = Count;
     }
 
-    FORCEINLINE void InternalConstruct( SizeType Count )
+    /* Default-construct array, assumes that the container is currently empty */
+    FORCEINLINE void EmptyConstruct( SizeType Count )
     {
-        InternalInitUnitialized( Count );
+        InitUnitialized( Count );
         DefaultConstructRange<ElementType>( Data(), Count );
     }
 
-    FORCEINLINE void InternalConstructFromElement( SizeType Count, const ElementType& Element )
+    /* Construct array from Element, assumes that the container is currently empty */
+    FORCEINLINE void EmptyConstructFrom( SizeType Count, const ElementType& Element )
     {
-        InternalInitUnitialized( Count );
-        ConstructRangeFrom<ElementType>( Pointer, Element, Count );
+        InitUnitialized( Count );
+        ConstructRangeFrom<ElementType>( Data(), Count, Element );
     }
 
-    FORCEINLINE void InternalCopyFrom( const ElementType* From, SizeType Count )
+    /* Copy from array, assumes that the container is currently empty */
+    FORCEINLINE void EmptyCopyFrom( const ElementType* From, SizeType Count )
     {
-        InternalInitUnitialized( Count );
-        CopyConstructRange<ElementType>( Pointer, From, Count );
+        InitUnitialized( Count );
+        CopyConstructRange<ElementType>( Data(), From, Count );
     }
 
-    FORCEINLINE void InternalMoveFrom( TArray&& FromArray )
+    FORCEINLINE void MoveFrom( TArray&& FromArray )
     {
-        // Since the memory remains the same we should not need to use move-assignment or constructor
-        Allocator.MoveFrom( FromArray.Allocator );
-        ArraySize = FromArray.ArraySize;
-        ArrayCapacity = FromArray.ArrayCapacity;
-        FromArray.ArraySize = 0;
+        /* Since the memory remains the same we should not need to use move-assignment or constructor.
+           However, still need to call our destructors */
+        DestructRange<ElementType>(Data(), Size());
+        Allocator.MoveFrom( Move(FromArray.Allocator) );
+
+        ArraySize               = FromArray.ArraySize;
+        ArrayCapacity           = FromArray.ArrayCapacity;
+        FromArray.ArraySize     = 0;
         FromArray.ArrayCapacity = 0;
     }
 
-    FORCEINLINE void InternalReserve( const SizeType NewCapacity ) noexcept
+    FORCEINLINE void ReserveStorage( const SizeType NewCapacity ) noexcept
     {
         /* Simple Memory::Realloc for trivial elements */
         if constexpr ( !TIsTrivial<ElementType>::Value )
         {
-            /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
-               objects has references to themselves or childobjects that references these objects. */
-            AllocatorType NewAllocator;
-            NewAllocator.AllocateOrRealloc( NewCapacity );
-            RelocateRange<ElementType>( NewAllocator.Raw(), Data(), ArraySize );
-            Allocator.MoveFrom( NewAllocator );
+            if ( ArrayCapacity )
+            {
+                /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
+                    objects has references to themselves or childobjects that references these objects. */
+                AllocatorType NewAllocator;
+                NewAllocator.Allocate( NewCapacity );
+
+                /* Relocate existing elements */
+                RelocateRange<ElementType>( NewAllocator.Raw(), Data(), ArraySize );
+            
+                /* Move allocator */
+                Allocator.MoveFrom( Move(NewAllocator) );
+            }
+            else
+            {
+                /* Allocate new memory */
+                Allocator.Allocate( NewCapacity );
+            }
         }
         else
         {
-            Allocator.AllocateOrRealloc( NewCapacity );
+            Allocator.Allocate( NewCapacity );
         }
 
         ArrayCapacity = NewCapacity;
     }
 
     /* Reserves room and not necessarily new memory */
-    FORCEINLINE void InternalReserveForInsertion( const SizeType InsertAt, const SizeType ElementCount ) noexcept
+    FORCEINLINE void ReserveForInsertion( const SizeType InsertAt, const SizeType ElementCount ) noexcept
     {
-        Assert( NewCapacity >= ArrayCapacity );
-
         const SizeType NewSize = ArraySize + ElementCount;
         if ( NewSize >= ArrayCapacity )
         {
-            const SizeType NewCapacity = InternalGrowCapacity( NewSize, ArrayCapacity );
+            const SizeType NewCapacity = GetGrowCapacity( NewSize, ArrayCapacity );
+            Assert( NewCapacity >= ArrayCapacity );
 
             /* Simpler path for trivial elements */
             if constexpr ( !TIsTrivial<ElementType>::Value )
@@ -742,20 +880,24 @@ private:
                 /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
                    objects has references to themselves or childobjects that references these objects. */
                 AllocatorType NewAllocator;
-                NewAllocator.AllocateOrRealloc( NewCapacity );
+                NewAllocator.Allocate( NewCapacity );
+                
                 /* Elements before new area */
                 RelocateRange<ElementType>( NewAllocator.Raw(), Data(), InsertAt );
+
                 /* Elements after new area */
                 RelocateRange<ElementType>( NewAllocator.Raw() + InsertAt + ElementCount, Data() + InsertAt, ArraySize - InsertAt );
-                Allocator.MoveFrom( NewAllocator );
+                Allocator.MoveFrom( Move(NewAllocator) );
             }
             else
             {
-                Allocator.AllocateOrRealloc( NewCapacity );
+                Allocator.Allocate( NewCapacity );
+
                 /* Elements after new area */
                 RelocateRange<ElementType>( Data() + InsertAt + ElementCount, Data() + InsertAt, ArraySize - InsertAt );
             }
 
+            /* Update capacity */
             ArrayCapacity = NewCapacity;
         }
         else
@@ -765,20 +907,106 @@ private:
         }
     }
 
-    FORCEINLINE void InternalRemoveFromLast( SizeType Count ) noexcept
+    FORCEINLINE void RemoveFromEnd( SizeType Count ) noexcept
     {
         ArraySize = ArraySize - Count;
         DestructRange<ElementType>( Data() + ArraySize, Count );
     }
 
-    FORCEINLINE static SizeType InternalGrowCapacity( SizeType NewSize, SizeType CurrentCapacity ) noexcept
+    // Get index of left child of node at index
+    static FORCEINLINE SizeType LeftIndex( SizeType Index )
     {
-        return NewSize + (CurrentCapacity / 2);
+        return (2 * Index + 1);
     }
 
-private:
+    // Get index of right child of node at index
+    static FORCEINLINE SizeType RightIndex( SizeType Index )
+    {
+        return (2 * Index + 2);
+    }
+
+    FORCEINLINE void SwapElements( SizeType FirstIndex, SizeType SecondIndex )
+    {
+        ElementType Temp( Move( At(FirstIndex) ) );
+        At( FirstIndex )  = Move( At(SecondIndex) );
+        At( SecondIndex ) = Move( Temp );
+    }
+
+    // TODO: Better to have top in back? Better to do recursive?
+
+    /* Internal create a min-heap of the array */
+    FORCEINLINE void MinHeapify( SizeType Size, SizeType Index ) noexcept
+    {
+        SizeType StartIndex = Index;
+        SizeType Smallest   = Index;
+
+        while ( true )
+        {
+            const SizeType Left  = LeftIndex( StartIndex );
+            const SizeType Right = RightIndex( StartIndex );
+
+            if ( Left < Size && At( Left ) < At( Smallest ) )
+            {
+                Smallest = Left;
+            }
+
+            if ( Right < Size && At( Right ) < At( Smallest ) )
+            {
+                Smallest = Right;
+            }
+
+            if ( Smallest != StartIndex )
+            {
+                SwapElements( StartIndex, Smallest );
+                StartIndex = Smallest;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    /* Internal create a max-heap of the array */
+    FORCEINLINE void MaxHeapify( SizeType Size, SizeType Index ) noexcept
+    {
+        SizeType StartIndex = Index;
+        SizeType Largest    = Index;
+
+        while ( true )
+        {
+            const SizeType Left  = LeftIndex( StartIndex );
+            const SizeType Right = RightIndex( StartIndex );
+
+            if ( Left < Size && At( Left ) > At( Largest ) )
+            {
+                Largest = Left;
+            }
+
+            if ( Right < Size && At( Right ) > At( Largest ) )
+            {
+                Largest = Right;
+            }
+
+            if ( Largest != StartIndex )
+            {
+                SwapElements( StartIndex, Largest );
+                StartIndex = Largest;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    static FORCEINLINE SizeType GetGrowCapacity( SizeType NewSize, SizeType CurrentCapacity ) noexcept
+    {
+        return NewSize + (CurrentCapacity);
+    }
+
     /* Allocator contains the pointer */
     AllocatorType Allocator;
-    SizeType ArraySize;
-    SizeType ArrayCapacity;
+    SizeType      ArraySize;
+    SizeType      ArrayCapacity;
 };

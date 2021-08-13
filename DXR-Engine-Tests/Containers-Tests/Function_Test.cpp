@@ -1,5 +1,6 @@
-#include "TFunction_Test.h"
+#include "Function_Test.h"
 
+#if RUN_TFUNCTION_TEST
 #include <Core/Containers/Function.h>
 
 #include <iostream>
@@ -126,3 +127,5 @@ void TFunction_Test()
     NormalFunc( 90 );
     MemberFunc( 100 );
 }
+
+#endif

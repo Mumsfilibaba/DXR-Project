@@ -6,6 +6,8 @@
 #include "Core/Templates/AddressOf.h"
 #include "Core/Templates/ReferenceWrapper.h"
 
+#include <functional>
+
 /* Iterator for array types */
 template<typename ArrayType, typename ElementType>
 class TArrayIterator
@@ -20,9 +22,10 @@ public:
     TArrayIterator& operator=( TArrayIterator&& ) = default;
 
     static_assert(TIsSigned<SizeType>::Value, "TArrayIterator wants a signed SizeType");
+    static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TArrayIterator require ArrayType and ElementType to have the same constness");
 
     /* Constructor creating a new iterator by taking in the array and pointer */
-    FORCEINLINE TArrayIterator( const ArrayType& InArray, SizeType StartIndex ) noexcept
+    FORCEINLINE TArrayIterator( ArrayType& InArray, SizeType StartIndex ) noexcept
         : Array( InArray )
         , Index( StartIndex )
     {
@@ -32,7 +35,8 @@ public:
     /* Checks if the iterator comes from the specified array */
     FORCEINLINE bool IsFrom( const ArrayType& FromArray ) const noexcept
     {
-        return Array.AddressOf() == AddressOf( FromArray );
+        const ArrayType* FromPointer = AddressOf( FromArray );
+        return Array.AddressOf() == FromPointer;
     }
 
     /* Ensure that the pointer is in the range of the array */
@@ -145,7 +149,7 @@ public:
     /* Compare equality two iterators */
     FORCEINLINE bool operator!=( const TArrayIterator& RHS ) const noexcept
     {
-        return (*this == RHS);
+        return !(*this == RHS);
     }
 
     /* Convert into a const iterator */
@@ -182,9 +186,10 @@ public:
     TReverseArrayIterator& operator=( TReverseArrayIterator&& ) = default;
 
     static_assert(TIsSigned<SizeType>::Value, "TReverseArrayIterator wants a signed SizeType");
+    static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TReverseArrayIterator require ArrayType and ElementType to have the same constness");
 
     /* Constructor creating a new iterator by taking in the array and pointer */
-    FORCEINLINE TReverseArrayIterator( const ArrayType& InArray, SizeType StartIndex ) noexcept
+    FORCEINLINE TReverseArrayIterator( ArrayType& InArray, SizeType StartIndex ) noexcept
         : Array( InArray )
         , Index( StartIndex )
     {
@@ -194,7 +199,8 @@ public:
     /* Checks if the iterator comes from the specified array */
     FORCEINLINE bool IsFrom( const ArrayType& FromArray ) const noexcept
     {
-        return Array.AddressOf() == AddressOf( FromArray );
+        const ArrayType* FromPointer = AddressOf( FromArray );
+        return Array.AddressOf() == FromPointer;
     }
 
     /* Ensure that the pointer is in the range of the array */
@@ -307,7 +313,7 @@ public:
     /* Compare equality two iterators */
     FORCEINLINE bool operator!=( const TReverseArrayIterator& RHS ) const noexcept
     {
-        return (*this == RHS);
+        return !(*this == RHS);
     }
 
     /* Convert into a const iterator */

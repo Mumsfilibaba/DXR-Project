@@ -1,4 +1,6 @@
-#include "TArrayView_Test.h"
+#include "ArrayView_Test.h"
+
+#if RUN_TARRAYVIEW_TEST
 
 #include <Core/Containers/Array.h>
 #include <Core/Containers/FixedArray.h>
@@ -11,7 +13,7 @@ template<typename T>
 static void PrintArrayView( const TArrayView<T>& View )
 {
     std::cout << "------------------------------" << std::endl;
-    for ( uint32 i = 0; i < View.Size(); i++ )
+    for ( TArrayView<T>::SizeType i = 0; i < View.Size(); i++ )
     {
         std::cout << View[i] << std::endl;
     }
@@ -34,6 +36,8 @@ void TArrayView_Test()
     std::cout << std::endl << "----------TArrayView----------" << std::endl << std::endl;
     std::cout << "Testing Constructors" << std::endl;
 
+    TArrayView<uint32> EmptyView;
+
     TArray<uint32> Arr0 = { 1, 2, 3, 4 };
     TArrayView<uint32> ArrView0 = TArrayView<uint32>( Arr0 );
 
@@ -47,12 +51,14 @@ void TArrayView_Test()
     TArrayView<uint32> ArrView3 = TArrayView<uint32>( DynamicPtr, 5 );
 
     std::cout << "Testing At and operator[]" << std::endl;
+    PrintArrayView( EmptyView );
     PrintArrayView( ArrView0 );
     PrintArrayView( ArrView1 );
     PrintArrayView( ArrView2 );
     PrintArrayView( ArrView3 );
 
     std::cout << "Testing range-based for-loops" << std::endl;
+    PrintArrayViewRangeBased( EmptyView );
     PrintArrayViewRangeBased( ArrView0 );
     PrintArrayViewRangeBased( ArrView1 );
     PrintArrayViewRangeBased( ArrView2 );
@@ -64,6 +70,10 @@ void TArrayView_Test()
 
     PrintArrayViewRangeBased( ArrView4 );
     PrintArrayViewRangeBased( ArrView5 );
+
+    std::cout << "Testing IsEmpty" << std::endl;
+    std::cout << "EmptyView=" << std::boolalpha << EmptyView.IsEmpty() << std::endl;
+    std::cout << "ArrView0="  << std::boolalpha << ArrView5.IsEmpty() << std::endl;
 
     std::cout << "Testing Size/SizeInBytes" << std::endl;
     std::cout << "Size: " << ArrView4.Size() << std::endl;
@@ -80,5 +90,16 @@ void TArrayView_Test()
     PrintArrayViewRangeBased( ArrView4 );
     PrintArrayViewRangeBased( ArrView5 );
 
+    std::cout << "Testing Fill" << std::endl;
+    std::cout << "-----------Before----------" << std::endl;
+    PrintArrayViewRangeBased( ArrView4 );
+
+    ArrView4.Fill( 99 );
+
+    std::cout << "-----------After-----------" << std::endl;
+    PrintArrayViewRangeBased( ArrView4 );
+
     delete DynamicPtr;
 }
+
+#endif

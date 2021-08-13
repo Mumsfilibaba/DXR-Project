@@ -2,10 +2,13 @@
 #include "Iterator.h"
 
 #include "Core/Templates/Move.h"
-#include "Core/Templates/IsAssignable.h"
+#include "Core/Templates/IsCopyable.h"
+#include "Core/Templates/IsMovable.h"
+#include "Core/Templates/AddReference.h"
+#include "Core/Templates/ObjectHandling.h"
 
 /* A fixed size array similar to std::array */
-template<typename T, const int32 N>
+template<typename T, const int32 ArraySize>
 struct TFixedArray
 {
 public:
@@ -18,7 +21,7 @@ public:
     typedef TReverseArrayIterator<TFixedArray, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TFixedArray, const ElementType> ReverseConstIteratorType;
 
-    static_assert(N > 0, "The number of elements has to be more than zero");
+    static_assert(ArraySize > 0, "The number of elements has to be more than zero");
 
     /* Retrive the first element */
     FORCEINLINE ElementType& FirstElement() noexcept
@@ -35,47 +38,35 @@ public:
     /* Retrive the last element */
     FORCEINLINE ElementType& LastElement() noexcept
     {
-        return Elements[N - 1];
+        return Elements[ArraySize - 1];
     }
 
     /* Retrive the last element */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
-        return Elements[N - 1];
+        return Elements[ArraySize - 1];
     }
 
     /* Retrive the element at a certain position */
     FORCEINLINE ElementType& At( SizeType Index ) noexcept
     {
-        Assert( Index < N );
+        Assert( Index < ArraySize );
         return Elements[Index];
     }
 
     /* Retrive the element at a certain position */
     FORCEINLINE const ElementType& At( SizeType Index ) const noexcept
     {
-        Assert( Index < N );
+        Assert( Index < ArraySize );
         return Elements[Index];
     }
 
     /* Fills the container with the specified value */
-    template<typename FillType>
-    //TIsAssignable<ElementType, typename TAddLValueReference<const FillType>::Type>::Value
-    FORCEINLINE typename TEnableIf<true>::Type Fill( const FillType& InputElement ) noexcept
+    FORCEINLINE void Fill( const ElementType& InputElement ) noexcept
     {
         for ( ElementType& Element : *this )
         {
             Element = InputElement;
-        }
-    }
-
-    /* Fills the container with the specified value */
-    template<typename FillType>
-    FORCEINLINE typename TEnableIf<true>::Type Fill( FillType&& InputElement ) noexcept
-    {
-        for ( ElementType& Element : *this )
-        {
-            Element = Move( InputElement );
         }
     }
 
@@ -138,19 +129,19 @@ public:
     /* Retrive the last valid index */
     constexpr SizeType LastIndex() const noexcept
     {
-        return N - 1;
+        return ArraySize - 1;
     }
 
     /* Retrive the size of the array */
     constexpr SizeType Size() const noexcept
     {
-        return N;
+        return ArraySize;
     }
 
     /* Retrive the size of the array in bytes */
     constexpr SizeType SizeInBytes() const noexcept
     {
-        return N * sizeof( ElementType );
+        return ArraySize * sizeof( ElementType );
     }
 
     /* Retrive the data of the array */
@@ -221,5 +212,5 @@ public:
     }
 
 public:
-    ElementType Elements[N];
+    ElementType Elements[ArraySize];
 };

@@ -1,5 +1,6 @@
-#include "TArray_Test.h"
+#include "Array_Test.h"
 
+#if RUN_TARRAY_TEST || RUN_TARRAY_BENCHMARKS
 #include <Core/Containers/Array.h>
 
 #include <iostream>
@@ -8,15 +9,15 @@
 #include <chrono>
 
 /*
-* A very OO clock
+* A clock
 */
 
-struct Clock
+struct SClock
 {
-    friend struct ScopedClock;
+    friend struct SScopedClock;
 
 public:
-    Clock()
+    SClock()
         : Duration( 0 )
         , TotalDuration( 0 )
     {
@@ -49,9 +50,9 @@ private:
     int64 TotalDuration = 0;
 };
 
-struct ScopedClock
+struct SScopedClock
 {
-    ScopedClock( Clock& InParent )
+    SScopedClock( SClock& InParent )
         : Parent( InParent )
         , t0( std::chrono::high_resolution_clock::now() )
         , t1()
@@ -59,13 +60,13 @@ struct ScopedClock
         t0 = std::chrono::high_resolution_clock::now();
     }
 
-    ~ScopedClock()
+    ~SScopedClock()
     {
         t1 = std::chrono::high_resolution_clock::now();
         Parent.AddDuration( std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() );
     }
 
-    Clock& Parent;
+    SClock& Parent;
     std::chrono::steady_clock::time_point t0;
     std::chrono::steady_clock::time_point t1;
 };
@@ -76,12 +77,7 @@ struct ScopedClock
 
 struct Vec3
 {
-    Vec3()
-        : x( 0.0 )
-        , y( 0.0 )
-        , z( 0.0 )
-    {
-    }
+    Vec3() = default;
 
     Vec3( double InX, double InY, double InZ )
         : x( InX )
@@ -98,6 +94,11 @@ struct Vec3
     {
         return std::to_string( x ) + ", " + std::to_string( y ) + ", " + std::to_string( z );
     }
+
+    bool operator==( const Vec3& Other ) const
+    {
+        return (x == Other.x) && (y == Other.y) && (z == Other.z);
+    }
 };
 
 /*
@@ -113,6 +114,23 @@ void PrintArr( const TArray<T>& Arr, const std::string& Name = "" )
     for ( auto i : Arr )
     {
         std::cout << (std::string)i << std::endl;
+    }
+
+    std::cout << "Size: " << Arr.Size() << std::endl;
+    std::cout << "Capacity: " << Arr.Capacity() << std::endl;
+
+    std::cout << "--------------------------------" << std::endl << std::endl;
+}
+
+template<>
+void PrintArr<int32>( const TArray<int32>& Arr, const std::string& Name )
+{
+    std::cout << Name << std::endl;
+    std::cout << "--------------------------------" << std::endl;
+
+    for ( auto i : Arr )
+    {
+        std::cout << i << std::endl;
     }
 
     std::cout << "Size: " << Arr.Size() << std::endl;
@@ -147,20 +165,28 @@ void TArray_Benchmark()
 {
     // Performance
     std::cout << std::endl << "Benchmark (std::string)" << std::endl;
+#ifdef DEBUG_BUILD
+    const uint32 TestCount = 10;
+#else
     const uint32 TestCount = 100;
+#endif
 
     // Insert
 #if 1
     {
+    #ifdef DEBUG_BUILD
+        const uint32 Iterations = 1000;
+    #else
         const uint32 Iterations = 10000;
+    #endif
         std::cout << std::endl << "Insert (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 std::vector<std::string> Strings0;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Strings0.insert( Strings0.begin(), "My name is jeff" );
@@ -171,12 +197,12 @@ void TArray_Benchmark()
         }
 
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 TArray<std::string> Strings1;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Strings1.InsertAt( 0, "My name is jeff" );
@@ -191,15 +217,19 @@ void TArray_Benchmark()
 #if 1
     // Emplace
     {
+    #ifdef DEBUG_BUILD
+        const uint32 Iterations = 1000;
+    #else
         const uint32 Iterations = 10000;
+    #endif
         std::cout << std::endl << "Emplace (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 std::vector<std::string> Strings0;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Strings0.emplace( Strings0.begin(), "My name is jeff" );
@@ -210,18 +240,18 @@ void TArray_Benchmark()
         }
 
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 TArray<std::string> Strings1;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Strings1.EmplaceAt( 0, "My name is jeff" );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / Iterations << "ns" << std::endl;
+            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
         }
     }
 #endif
@@ -232,12 +262,12 @@ void TArray_Benchmark()
         const uint32 Iterations = 10000;
         std::cout << std::endl << "PushBack (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 std::vector<std::string> Strings0;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Strings0.push_back( "My name is jeff" );
@@ -248,18 +278,18 @@ void TArray_Benchmark()
         }
 
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 TArray<std::string> Strings1;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Strings1.PushBack( "My name is jeff" );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / Iterations << "ns" << std::endl;
+            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
         }
     }
 #endif
@@ -270,12 +300,12 @@ void TArray_Benchmark()
         const uint32 Iterations = 10000;
         std::cout << std::endl << "EmplaceBack (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 std::vector<std::string> Strings0;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Strings0.emplace_back( "My name is jeff" );
@@ -286,18 +316,18 @@ void TArray_Benchmark()
         }
 
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 TArray<std::string> Strings1;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Strings1.EmplaceBack( "My name is jeff" );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / Iterations << "ns" << std::endl;
+            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
         }
     }
 #endif
@@ -310,12 +340,12 @@ void TArray_Benchmark()
         const uint32 Iterations = 10000;
         std::cout << std::endl << "Insert (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 std::vector<Vec3> Vectors0;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Vectors0.insert( Vectors0.begin(), Vec3( 3.0, 5.0, -6.0 ) );
@@ -326,18 +356,18 @@ void TArray_Benchmark()
         }
 
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 TArray<Vec3> Vectors1;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Vectors1.InsertAt( 0, Vec3( 3.0, 5.0, -6.0 ) );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / Iterations << "ns" << std::endl;
+            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
         }
     }
 #endif
@@ -348,12 +378,12 @@ void TArray_Benchmark()
         const uint32 Iterations = 10000;
         std::cout << std::endl << "Emplace (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 std::vector<Vec3> Vectors0;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Vectors0.emplace( Vectors0.begin(), 3.0, 5.0, -6.0 );
@@ -364,18 +394,18 @@ void TArray_Benchmark()
         }
 
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 TArray<Vec3> Vectors1;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Vectors1.EmplaceAt( 0, double( j + 1 ), 5.0, -6.0 );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / Iterations << "ns" << std::endl;
+            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
         }
     }
 #endif
@@ -386,12 +416,12 @@ void TArray_Benchmark()
         const uint32 Iterations = 10000;
         std::cout << std::endl << "PushBack (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 std::vector<Vec3> Vectors0;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Vectors0.push_back( Vec3( 3.0, 5.0, -6.0 ) );
@@ -402,18 +432,18 @@ void TArray_Benchmark()
         }
 
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 TArray<Vec3> Vectors1;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Vectors1.PushBack( Vec3( 3.0, 5.0, -6.0 ) );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / Iterations << "ns" << std::endl;
+            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
         }
     }
 #endif
@@ -424,12 +454,12 @@ void TArray_Benchmark()
         const uint32 Iterations = 10000;
         std::cout << std::endl << "EmplaceBack (Iterations=" << Iterations << ", TestCount=" << TestCount << ")" << std::endl;
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 std::vector<Vec3> Vectors0;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Vectors0.emplace_back( 3.0, 5.0, -6.0 );
@@ -440,20 +470,49 @@ void TArray_Benchmark()
         }
 
         {
-            Clock Clock;
+            SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
                 TArray<Vec3> Vectors1;
 
-                ScopedClock ScopedClock( Clock );
+                SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
                     Vectors1.EmplaceBack( 3.0, 5.0, -6.0 );
                 }
             }
 
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / Iterations << "ns" << std::endl;
+            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
         }
+    }
+#endif
+
+#if 1
+    {
+        const uint32 SortTestCount = 100;
+        const uint32 NumNumbers    = 1000000;
+        std::cout << std::endl << "MaxHeapSort (NumNumbers=" << NumNumbers << ", SortTestCount=" << SortTestCount << ")" << std::endl;
+
+        srand( (unsigned int)time(0) );
+
+        SClock Clock;
+        for ( uint32 i = 0; i < SortTestCount; i++ )
+        {
+            TArray<int32> Heap;
+            for ( uint32 n = 0; n < NumNumbers; n++ )
+            {
+                Heap.EmplaceBack( rand() );
+            }
+
+            {
+                SScopedClock SScopedClock( Clock );
+                Heap.MaxHeapSort();
+            }
+        }
+
+        auto Duration = Clock.GetTotalDuration() / SortTestCount;
+        std::cout << "Sorting time: " << Duration << "ns" << std::endl;
+        std::cout << "Sorting time: " << Duration / (1000 * 1000) << "ms" << std::endl;
     }
 #endif
 }
@@ -511,8 +570,8 @@ void TArray_Test( int32 Argc, const char** Argv )
             PrintArr( Strings6 );
         }
 
-        // Assign
-        std::cout << std::endl << "Testing Assign" << std::endl << std::endl;
+        // Reset
+        std::cout << std::endl << "Testing Reset" << std::endl << std::endl;
         Strings0.Reset( 7, "This is a teststring" );
         PrintArr( Strings0 );
 
@@ -534,7 +593,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         PrintArr( Strings1 );
 
         Strings4.Resize( 10, "New String" );
-        Strings3.Resize( 0, "Hi, hi" );
+        Strings3.Resize( 4, "Hi, hi" );
         Strings1.Resize( 6, "Hello World" );
 
         std::cout << "After Resize" << std::endl << std::endl;
@@ -546,6 +605,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         Strings4.Resize( 2, "New String" );
         PrintArr( Strings4 );
 
+        std::cout << "Testing Growing Resize" << std::endl << std::endl;
         Strings4.Resize( 15, "New String" );
         PrintArr( Strings4 );
 
@@ -646,6 +706,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         }
         PrintArr( Strings2 );
 
+
         // Insert
         std::cout << std::endl << "Testing Insert" << std::endl << std::endl;
 
@@ -659,7 +720,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         PrintArr( Strings2 );
         Strings2.InsertAt( 0, { "Inserted String #1", "Inserted String #2" } );
         PrintArr( Strings2 );
-
+        
         std::cout << "At Arbitrary" << std::endl << std::endl;
         Strings2.InsertAt( 2, ArgvStr );
         PrintArr( Strings2 );
@@ -796,6 +857,25 @@ void TArray_Test( int32 Argc, const char** Argv )
         {
             std::cout << (*It) << std::endl;
         }
+
+        // Fill 
+        std::cout << std::endl << "Testing Fill" << std::endl;
+        Strings2.Fill("Fill Value");
+        PrintArr( Strings2 );
+
+        // Append
+        std::cout << std::endl << "Testing Append" << std::endl;
+        Strings2.Append( { "Append #1", "Append #2", "Append #3", "Append #4", "Append #5", "Append #6" } );
+        PrintArr( Strings2 );
+
+        // PopBackRange
+        std::cout << std::endl << "Testing PopBackRange" << std::endl;
+        Strings2.PopBackRange(3);
+        PrintArr( Strings2 );
+
+        std::cout << std::endl << "Testing Equal operator" << std::endl;
+        TArray<std::string> EqualArray = Strings2;
+        std::cout << "operator==" << std::boolalpha << (EqualArray == Strings2) << std::endl;
     }
 #endif
 
@@ -1058,6 +1138,101 @@ void TArray_Test( int32 Argc, const char** Argv )
         std::cout << "After" << std::endl << std::endl;
         PrintArr( Vectors0 );
         PrintArr( Vectors2 );
+
+        // Fill 
+        std::cout << std::endl << "Testing Fill" << std::endl;
+        Vectors0.Fill( Vec3( 63.0f, 63.0f, 63.0f ) );
+        PrintArr( Vectors0 );
+
+        // Append
+        std::cout << std::endl << "Testing Append" << std::endl;
+        Vectors0.Append( 
+            { 
+                Vec3( 103.0f, 103.0f, 103.0f ),
+                Vec3( 113.0f, 113.0f, 113.0f ),
+                Vec3( 123.0f, 123.0f, 123.0f ),
+                Vec3( 133.0f, 133.0f, 133.0f ),
+                Vec3( 143.0f, 143.0f, 143.0f ),
+                Vec3( 153.0f, 153.0f, 153.0f )
+            } );
+        PrintArr( Vectors0 );
+
+        // PopBackRange
+        std::cout << std::endl << "Testing PopBackRange" << std::endl;
+        Vectors0.PopBackRange( 3 );
+        PrintArr( Vectors0 );
+
+        std::cout << std::endl << "Testing Equal operator" << std::endl;
+        TArray<Vec3> EqualArray = Vectors0;
+        std::cout << "operator==" << std::boolalpha << (EqualArray == Vectors0) << std::endl;
     }
 #endif
+
+    // Test Heapify
+    {
+        std::cout << std::endl << "Testing MinHeapify" << std::endl;
+
+        {
+            TArray<int32> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
+
+            std::cout << std::endl << "Before" << std::endl;
+            PrintArr( Heap );
+            Heap.MinHeapify();
+
+            std::cout << std::endl << "After" << std::endl;
+            PrintArr( Heap );
+
+            std::cout << std::endl << "Testing MinHeapPush" << std::endl;
+            Heap.MinHeapPush( 19 );
+            PrintArr( Heap );
+
+            Heap.MinHeapPush( 0 );
+            PrintArr( Heap );
+
+            Heap.MinHeapPop();
+            PrintArr( Heap );
+        }
+
+        std::cout << std::endl << "Testing MaxHeapify" << std::endl;
+
+        {
+            TArray<int32> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
+
+            std::cout << std::endl << "Before" << std::endl;
+            PrintArr( Heap );
+            Heap.MaxHeapify();
+
+            std::cout << std::endl << "After" << std::endl;
+            PrintArr( Heap );
+
+            std::cout << std::endl << "Testing MaxHeapPush" << std::endl;
+            Heap.MaxHeapPush( 19 );
+            PrintArr( Heap );
+
+            Heap.MaxHeapPush( 0 );
+            PrintArr( Heap );
+
+            std::cout << std::endl << "Testing MaxHeapPop" << std::endl;
+            Heap.MaxHeapPop();
+            PrintArr( Heap );
+        }
+
+        std::cout << std::endl << "Testing MinHeapSort" << std::endl;
+        {
+            TArray<int32> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
+            PrintArr( Heap );
+            Heap.MinHeapSort();
+            PrintArr( Heap );
+        }
+
+        std::cout << std::endl << "Testing MaxHeapSort" << std::endl;
+        {
+            TArray<int32> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
+            PrintArr( Heap );
+            Heap.MaxHeapSort();
+            PrintArr( Heap );
+        }
+    }
 }
+
+#endif

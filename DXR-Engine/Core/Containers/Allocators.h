@@ -34,7 +34,8 @@ public:
     /* Allocates memory if needed, uses Memory::Realloc */
     FORCEINLINE ElementType* Allocate( SizeType Count ) noexcept
     {
-        return Memory::Realloc<ElementType>( Allocation, Count );
+        Allocation = Memory::Realloc<ElementType>( Allocation, Count );
+        return Allocation;
     }
 
     FORCEINLINE void Free() noexcept
@@ -111,10 +112,9 @@ public:
     /* Allocates memory if needed, uses Memory::Realloc */
     FORCEINLINE ElementType* Allocate( SizeType Count ) noexcept
     {
-        Size = Count * sizeof( ElementType );
         if ( Size > InlineBytes )
         {
-            Pointer = Memory::Realloc( Pointer, Size );
+            Pointer = Memory::Realloc<ElementType>( Pointer, Count );
             return Pointer;
         }
         else

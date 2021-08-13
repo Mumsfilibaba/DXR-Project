@@ -1,28 +1,18 @@
 #include <CoreTypes.h>
 
-#include "TArray_Test.h"
-#include "TSharedPtr_Test.h"
-#include "TFunction_Test.h"
-#include "TFixedArray_Test.h"
-#include "TArrayView_Test.h"
-
-/* Defines */
-#define RUN_TESTS     1
-#define RUN_BENCHMARK 1
-
-/* Test Specific defines */
-#define RUN_TARRAY_TEST      1
-#define RUN_TSHAREDPTR_TEST  1
-#define RUN_TFUNCTION_TEST   1
-#define RUN_TFIXEDARRAY_TEST 1
-#define RUN_TARRAYVIEW_TEST  1
-
-/* Benchmark Specific defines */
-#define RUN_TARRAY_BENCHMARKS 1
+#include "Array_Test.h"
+#include "SharedPtr_Test.h"
+#include "Function_Test.h"
+#include "FixedArray_Test.h"
+#include "ArrayView_Test.h"
 
 /* Check for memory leaks */
 #ifdef PLATFORM_WINDOWS
 #include <crtdbg.h>
+
+#pragma warning(push)
+#pragma warning( disable : 4100) // Disable "unreferenced formal parameter"
+
 #endif
 
 /*
@@ -55,7 +45,7 @@ void Tests( int32 Argc, const char* Argv[] )
 #endif
 
 #if RUN_TFIXEDARRAY_TEST
-    TStaticArray_Test();
+    TFixedArray_Test();
 #endif
 
 #if RUN_TARRAYVIEW_TEST
@@ -83,3 +73,7 @@ int main( int Argc, const char* Argv[] )
 
     return 0;
 }
+
+#ifdef PLATFORM_WINDOWS
+#pragma warning(pop)
+#endif

@@ -82,6 +82,8 @@ workspace "DXR-Engine-Tests"
 			"%{prj.name}/**.inl",
 			"%{prj.name}/**.c",
 			"%{prj.name}/**.cpp",
+			
+			"../DXR-Engine/Core/Memory/Memory.cpp",
         }
 			
 		-- In visual studio show natvis files

@@ -41,7 +41,7 @@ public:
     }
 
     /* Create a view from a pointer and count */
-    FORCEINLINE explicit TArrayView( const ElementType* InArray, SizeType Count ) noexcept
+    FORCEINLINE explicit TArrayView( ElementType* InArray, SizeType Count ) noexcept
         : View( InArray )
         , ViewSize( Count )
     {
@@ -66,7 +66,7 @@ public:
     /* Check if the size is zero or not */
     FORCEINLINE bool IsEmpty() const noexcept
     {
-        return (ViewSize == 0) && (Data() != nullptr);
+        return (ViewSize == 0);
     }
 
     /* Retrive the first element */
@@ -122,7 +122,7 @@ public:
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
-        return IteratorType( Data() );
+        return IteratorType( *this, 0 );
     }
 
     /* Returns an iterator to the end of the container */
@@ -168,22 +168,11 @@ public:
     }
 
     /* Fills the container with the specified value */
-    template<typename FillType>
-    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddLeftReference<const FillType>::Type>::Value>::Type Fill( const FillType& InputElement ) noexcept
+    FORCEINLINE void Fill( const ElementType& InputElement ) noexcept
     {
         for ( ElementType& Element : *this )
         {
             Element = InputElement;
-        }
-    }
-
-    /* Fills the container with the specified value */
-    template<typename FillType>
-    FORCEINLINE typename TEnableIf<TIsAssignable<T, typename TAddRightReference<FillType>::Type>::Value>::Type Fill( FillType&& InputElement ) noexcept
-    {
-        for ( ElementType& Element : *this )
-        {
-            Element = Move( InputElement );
         }
     }
 
