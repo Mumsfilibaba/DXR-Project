@@ -30,6 +30,32 @@ struct A
     }
 };
 
+struct CFirst
+{
+    virtual void Func( int32 In ) = 0;
+};
+
+struct CSecond : public CFirst
+{
+    virtual void Func( int32 In )
+    {
+        std::cout << "Virtual MemberCall " << In << std::endl;
+    }
+};
+
+struct CThird
+{
+    virtual void SecondFunc( int32 In ) = 0;
+};
+
+struct CFourth : public CThird, public CSecond
+{
+    virtual void SecondFunc( int32 In )
+    {
+        std::cout << "Second Virtual MemberCall " << In << std::endl;
+    }
+};
+
 static bool Func( int32 In )
 {
     std::cout << "FunctionCall " << In << std::endl;
@@ -48,22 +74,36 @@ static bool Func2( int32 In )
 
 void TFunction_Test()
 {
-    std::cout << std::endl << "-------TMemberFunction-------" << std::endl << std::endl;
+    std::cout << std::endl << "-------TMemberFunction and TConstMemberFunction-------" << std::endl << std::endl;
     std::cout << "Testing constructor and Invoke" << std::endl;
 
     A a;
-    TMemberFunction A_Func = TMemberFunction<A, bool( int32 )>( &a, &A::Func );
+    TMemberFunction A_Func = TMemberFunction( &a, &A::Func );
     A_Func( 32 );
 
-    TConstMemberFunction A_ConstFunc = TConstMemberFunction<A, bool( int32 )>( &a, &A::ConstFunc );
+    TConstMemberFunction A_ConstFunc = TConstMemberFunction( &a, &A::ConstFunc );
     A_ConstFunc( 32 );
+
+    std::cout << "Testing virtual functions" << std::endl;
+    CSecond Second;
+
+    TMemberFunction SecondFunc = TMemberFunction( &Second, &CSecond::Func );
+    SecondFunc( 42 );
+
+    CFourth Fourth;
+
+    TMemberFunction FourthFunc = TMemberFunction( &Fourth, &CFourth::Func );
+    FourthFunc( 42 );
+
+    TFunction<void(int32)> FourthFuncWrapper = Bind( &Fourth, &CFourth::Func );
+    FourthFuncWrapper( 555 );
 
     std::cout << std::endl << "----------TFunction----------" << std::endl << std::endl;
     std::cout << "Testing constructors" << std::endl;
 
     struct Functor
     {
-        bool operator()( int32 In )
+        bool operator()( int32 In ) const
         {
             std::cout << "Functor " << In << std::endl;
             return true;
@@ -73,10 +113,10 @@ void TFunction_Test()
     TFunction<bool( int32 )> NormalFunc = Func;
     NormalFunc( 5 );
 
-    TFunction<bool( int32 )> MemberFunc = BindFunction( &a, &A::Func );
+    TFunction<bool( int32 )> MemberFunc = Bind( &a, &A::Func );
     MemberFunc( 10 );
 
-    TFunction<bool( int32 )> MemberFunc1 = BindFunction( &a, &A::ConstFunc );
+    TFunction<bool( int32 )> MemberFunc1 = Bind( &a, &A::ConstFunc );
     MemberFunc1( 666 );
 
     TFunction<bool( int32 )> FunctorFunc = Fun;
@@ -100,32 +140,38 @@ void TFunction_Test()
     };
     LambdaMemberFunc( 20 );
 
-    std::cout << "Test copy constructor" << std::endl;
+    std::cout << std::endl << "-------Test copy constructor-------" << std::endl << std::endl;
 
     TFunction<bool( int32 )> CopyFunc( MemberFunc );
     CopyFunc( 30 );
     MemberFunc( 40 );
 
-    std::cout << "Test move constructor" << std::endl;
-    TFunction<bool( int32 )> MoveFunc( ::Move( LambdaFunc ) );
+    std::cout << std::endl << "-------Test Move constructor-------" << std::endl << std::endl;
+    TFunction<bool( int32 )> MoveFunc( Move( LambdaFunc ) );
     MoveFunc( 50 );
     if ( LambdaFunc )
     {
         LambdaFunc( 60 );
     }
 
-    std::cout << "Testing Assign" << std::endl;
+    std::cout << std::endl << "-------Test Assign-------" << std::endl << std::endl;
     NormalFunc.Assign( Func2 );
-    MemberFunc.Assign( BindFunction( &a, &A::Func2 ) );
+    MemberFunc.Assign( Bind( &a, &A::Func2 ) );
 
     NormalFunc( 70 );
     MemberFunc( 80 );
 
-    std::cout << "Testing Swap" << std::endl;
+    std::cout << std::endl << "-------Test Swap-------" << std::endl << std::endl;
     NormalFunc.Swap( MemberFunc );
 
     NormalFunc( 90 );
     MemberFunc( 100 );
+
+    std::cout << std::endl << "-------Test IsValid-------" << std::endl << std::endl;
+    std::cout << "NormalFunc=" << std::boolalpha << NormalFunc.IsValid() << std::endl;
+
+    TFunction<void(int)> EmptyFunc;
+    std::cout << "EmptyFunc=" << std::boolalpha << EmptyFunc.IsValid() << std::endl;
 }
 
 #endif

@@ -5,81 +5,90 @@
 #include "Core/Templates/Move.h"
 #include "Core/Templates/IsPointer.h"
 #include "Core/Templates/IsNullptr.h"
+#include "Core/Templates/IsInvokable.h"
 
 /* TMemberFunction - Encapsulates a member function */
-template<typename T, typename InvokableType>
-class TMemberFunction;
-
-template<typename T, typename ReturnType, typename... ArgTypes>
-class TMemberFunction<T, ReturnType( ArgTypes... )>
+template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
+class TMemberFunction
 {
 public:
-    typedef ReturnType( T::* TFunctionType )(ArgTypes...);
+    typedef ReturnType( ClassType::* TFunctionType )(ArgTypes...);
 
-    TMemberFunction( T* InThis, TFunctionType InFunc ) noexcept
+    FORCEINLINE TMemberFunction( InstanceType* InThis, TFunctionType InFunc ) noexcept
         : This( InThis )
         , Func( InFunc )
     {
     }
 
-    FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) noexcept
+    FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) const noexcept
     {
         return ((*This).*Func)(Forward<ArgTypes>( Args )...);
     }
 
-    FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) noexcept
+    FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) const noexcept
     {
         return Invoke( Forward<ArgTypes>( Args )... );
     }
 
 private:
-    T* This;
+    InstanceType* This;
     TFunctionType Func;
 };
 
 /* TConstMemberFunction - Encapsulates a const member function */
-template<typename T, typename InvokableType>
-class TConstMemberFunction;
-
-template<typename T, typename ReturnType, typename... ArgTypes>
-class TConstMemberFunction<T, ReturnType( ArgTypes... )>
+template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
+class TConstMemberFunction
 {
 public:
-    typedef ReturnType( T::* TFunctionType )(ArgTypes...) const;
+    typedef ReturnType( ClassType::* TFunctionType )(ArgTypes...) const;
 
-    TConstMemberFunction( const T* InThis, TFunctionType InFunc ) noexcept
+    FORCEINLINE TConstMemberFunction( const InstanceType* InThis, TFunctionType InFunc ) noexcept
         : This( InThis )
         , Func( InFunc )
     {
     }
 
-    FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) noexcept
+    FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) const noexcept
     {
         return ((*This).*Func)(Forward<ArgTypes>( Args )...);
     }
 
-    FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) noexcept
+    FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) const noexcept
     {
         return Invoke( Forward<ArgTypes>( Args )... );
     }
 
 private:
-    const T* This;
+    const InstanceType* This;
     TFunctionType Func;
 };
 
 /* Bind member function */
-template<typename T, typename ReturnType, typename... ArgTypes>
-FORCEINLINE TMemberFunction<T, ReturnType( ArgTypes... )> BindFunction( T* This, ReturnType( T::* Func )(ArgTypes...) ) noexcept
+template<typename InstanceType, typename ReturnType, typename... ArgTypes>
+FORCEINLINE TMemberFunction<InstanceType, InstanceType, ReturnType, ArgTypes...> Bind( InstanceType* This, ReturnType( InstanceType::* Func )(ArgTypes...) ) noexcept
 {
-    return TMemberFunction<T, ReturnType( ArgTypes... )>( This, Func );
+    return TMemberFunction<InstanceType, InstanceType, ReturnType, ArgTypes...>( This, Func );
+}
+
+/* Bind member function from parent class */
+template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
+FORCEINLINE TMemberFunction<InstanceType, ClassType, ReturnType, ArgTypes...> Bind( InstanceType* This, ReturnType( ClassType::* Func )(ArgTypes...) ) noexcept
+{
+    return TMemberFunction<InstanceType, ClassType, ReturnType, ArgTypes...>( This, Func );
 }
 
 /* Bind const member function */
-template<typename T, typename ReturnType, typename... ArgTypes>
-FORCEINLINE TConstMemberFunction<T, ReturnType( ArgTypes... )> BindFunction( const T* This, ReturnType( T::* Func )(ArgTypes...) const ) noexcept
+template<typename InstanceType, typename ReturnType, typename... ArgTypes>
+FORCEINLINE TConstMemberFunction<InstanceType, InstanceType, ReturnType, ArgTypes...> Bind( const InstanceType* This, ReturnType( InstanceType::* Func )(ArgTypes...) const ) noexcept
 {
-    return TConstMemberFunction<T, ReturnType( ArgTypes... )>( This, Func ) );
+    return TConstMemberFunction<InstanceType, InstanceType, ReturnType, ArgTypes...>( This, Func );
+}
+
+/* Bind const member function from parent class */
+template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
+FORCEINLINE TConstMemberFunction<InstanceType, ClassType, ReturnType, ArgTypes...> Bind( const InstanceType* This, ReturnType( ClassType::* Func )(ArgTypes...) const ) noexcept
+{
+    return TConstMemberFunction<InstanceType, ClassType, ReturnType, ArgTypes...>( This, Func );
 }
 
 /* TFunction - Encapsulates callables similar to std::function */
@@ -92,7 +101,8 @@ class TFunction<ReturnType( ArgTypes... )>
 private:
     enum
     {
-        InlineBytes = 32
+        // TODO: Look into padding so we can use larger structs?
+        InlineBytes = 24
     };
 
     /* Generic functor interface */
@@ -101,8 +111,8 @@ private:
     public:
         virtual ~IFunctor() = default;
 
-        virtual ReturnType Invoke( ArgTypes&&... Args ) noexcept = 0;
-        virtual IFunctor* Clone( void* Memory ) noexcept = 0;
+        virtual ReturnType Invoke( ArgTypes&&... Args ) const noexcept = 0;
+        virtual IFunctor* Clone( void* Memory ) const noexcept = 0;
     };
 
     /* Generic functor implementation */
@@ -134,13 +144,13 @@ private:
         }
 
         /* Invoke the functor */
-        inline virtual ReturnType Invoke( ArgTypes&&... Args ) noexcept override final
+        virtual ReturnType Invoke( ArgTypes&&... Args ) const noexcept override final
         {
             return Functor( Forward<ArgTypes>( Args )... );
         }
 
         /* Copy construct a clone with memory provided to the function */
-        inline virtual IFunctor* Clone( void* Memory ) noexcept override final
+        virtual IFunctor* Clone( void* Memory ) const noexcept override final
         {
             return new(Memory) TGenericFunctor( *this );
         }
@@ -168,7 +178,7 @@ public:
     FORCEINLINE TFunction( FunctorType Functor ) noexcept
         : Storage()
     {
-        ConstructFrom( Forward<FunctorType>( Functor ) );
+        ConstructFrom<FunctorType>( Forward<FunctorType>( Functor ) );
     }
 
     /* Copy constructor */
@@ -192,7 +202,7 @@ public:
     /* Cheacks weather the function is valid or not */
     FORCEINLINE bool IsValid() const noexcept
     {
-        return Storage.HasAllocation() && (GetFunctor() != nullptr);
+        return Storage.GetSize() > 0;
     }
 
     /* Swap this and another function */
@@ -205,20 +215,21 @@ public:
 
     /* Assign a new functor */
     template<typename FunctorType >
-    FORCEINLINE void Assign( FunctorType&& Functor ) noexcept
+    FORCEINLINE typename TEnableIf<TIsInvokable<FunctorType, ArgTypes...>::Value>::Type Assign( FunctorType&& Functor ) noexcept
     {
         Release();
-        ConstructFrom( Forward<FunctorType>( Functor ) );
+        ConstructFrom<FunctorType>( Forward<FunctorType>( Functor ) );
     }
 
     /* Invoke the function */
-    FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) noexcept
+    FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) const noexcept
     {
+        IsValid();
         return GetFunctor()->Invoke( Forward<ArgTypes>( Args )... );
     }
 
     /* Invoke the function */
-    FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) noexcept
+    FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) const noexcept
     {
         return Invoke( Forward<ArgTypes>( Args )... );
     }
@@ -272,30 +283,31 @@ private:
 
     /* Construct a new functor */
     template<typename FunctorType>
-    FORCEINLINE typename TEnableIf<std::is_invocable_v<F, TArgs...>>::Type ConstructFrom( FunctorType&& Functor ) noexcept
+    FORCEINLINE typename TEnableIf<TIsInvokable<FunctorType, ArgTypes...>::Value>::Type ConstructFrom( FunctorType&& Functor ) noexcept
     {
-        Storage.Allocate( sizeof( FunctorType ) );
+        Storage.Allocate( sizeof( TGenericFunctor<FunctorType> ) );
         new(Storage.Raw()) TGenericFunctor<FunctorType>( Forward<FunctorType>( Functor ) );
     }
 
     /* Copy from another function */
     FORCEINLINE void CopyFrom( const TFunction& Other ) noexcept
     {
-        Storage.Allocate( Other.Storage.GetSize() );
-        Other.Func->Clone( Storage.Raw() ) );
+        if ( Other.IsValid() )
+        {
+            Storage.Allocate( Other.Storage.GetSize() );
+            Other.GetFunctor()->Clone( Storage.Raw() );
+        }
     }
 
     /* Internal function that is used to retrive the functor pointer */
     FORCEINLINE IFunctor* GetFunctor() noexcept
     {
-        Assert( IsValid() );
         return reinterpret_cast<IFunctor*>(Storage.Raw());
     }
 
     /* Internal function that is used to retrive the functor pointer */
     FORCEINLINE const IFunctor* GetFunctor() const noexcept
     {
-        Assert( IsValid() );
         return reinterpret_cast<const IFunctor*>(Storage.Raw());
     }
 

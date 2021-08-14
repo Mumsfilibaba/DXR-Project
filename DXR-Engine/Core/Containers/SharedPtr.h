@@ -74,6 +74,9 @@ public:
     TPointerReferencedStorage( const TPointerReferencedStorage& ) = delete;
     TPointerReferencedStorage& operator=( const TPointerReferencedStorage& ) = delete;
 
+    template<typename OtherType, typename OtherDeleterType>
+    friend class TPointerReferencedStorage;
+
     /* Default constructor that init both counter and pointer to nullptr */
     FORCEINLINE TPointerReferencedStorage() noexcept
         : DeleterType()
@@ -101,7 +104,7 @@ public:
         , Ptr( nullptr )
         , Counter( nullptr )
     {
-        InitMove( static_cast<ElementType*>(Other.Ptr), Other.Counter );
+        InitMove( Other.Ptr, Other.Counter );
 
         Other.Ptr = nullptr;
         Other.Counter = nullptr;
@@ -1030,77 +1033,77 @@ FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShar
 /* Casting functions */
 
 /* static_cast*/
-template<typename T0, typename T1>
-FORCEINLINE typename TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>>::Type StaticCast( const TSharedPtr<T1>& Pointer ) noexcept
+template<typename ToType, typename FromType>
+FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type StaticCast( const TSharedPtr<FromType>& Pointer ) noexcept
 {
-    typedef typename TRemoveExtent<T0>::Type Type;
+    typedef typename TRemoveExtent<ToType>::Type Type;
 
     Type* RawPointer = static_cast<Type*>(Pointer.Get());
-    return TSharedPtr<T0>( Pointer, RawPointer );
+    return TSharedPtr<ToType>( Pointer, RawPointer );
 }
 
-template<typename T0, typename T1>
-FORCEINLINE typename TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>>::Type StaticCast( TSharedPtr<T1>&& Pointer ) noexcept
+template<typename ToType, typename FromType>
+FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type StaticCast( TSharedPtr<FromType>&& Pointer ) noexcept
 {
-    typedef typename TRemoveExtent<T0>::Type Type;
+    typedef typename TRemoveExtent<ToType>::Type Type;
 
     Type* RawPointer = static_cast<Type*>(Pointer.Get());
-    return TSharedPtr<T0>( Move( Pointer ), RawPointer );
+    return TSharedPtr<ToType>( Move( Pointer ), RawPointer );
 }
 
 /* const_cast */
-template<typename T0, typename T1>
-FORCEINLINE typename TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>>::Type ConstCast( const TSharedPtr<T1>& Pointer ) noexcept
+template<typename ToType, typename FromType>
+FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ConstCast( const TSharedPtr<FromType>& Pointer ) noexcept
 {
-    typedef typename TRemoveExtent<T0>::Type Type;
+    typedef typename TRemoveExtent<ToType>::Type Type;
 
     Type* RawPointer = const_cast<Type*>(Pointer.Get());
-    return TSharedPtr<T0>( Move( Pointer ), RawPointer );
+    return TSharedPtr<ToType>( Pointer , RawPointer );
 }
 
-template<typename T0, typename T1>
-FORCEINLINE typename TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>>::Type ConstCast( TSharedPtr<T1>&& Pointer ) noexcept
+template<typename ToType, typename FromType>
+FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ConstCast( TSharedPtr<FromType>&& Pointer ) noexcept
 {
-    typedef typename TRemoveExtent<T0>::Type Type;
+    typedef typename TRemoveExtent<ToType>::Type Type;
 
     Type* RawPointer = const_cast<Type*>(Pointer.Get());
-    return TSharedPtr<T0>( Move( Pointer ), RawPointer );
+    return TSharedPtr<ToType>( Move( Pointer ), RawPointer );
 }
 
 /* reinterpret_cast */
-template<typename T0, typename T1>
-FORCEINLINE typename TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>>::Type ReinterpretCast( const TSharedPtr<T1>& Pointer ) noexcept
+template<typename ToType, typename FromType>
+FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ReinterpretCast( const TSharedPtr<FromType>& Pointer ) noexcept
 {
-    typedef typename TRemoveExtent<T0>::Type Type;
+    typedef typename TRemoveExtent<ToType>::Type Type;
 
     Type* RawPointer = reinterpret_cast<Type*>(Pointer.Get());
-    return TSharedPtr<T0>( Move( Pointer ), RawPointer );
+    return TSharedPtr<ToType>( Pointer , RawPointer );
 }
 
-template<typename T0, typename T1>
-FORCEINLINE typename TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>>::Type ReinterpretCast( TSharedPtr<T1>&& Pointer ) noexcept
+template<typename ToType, typename FromType>
+FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ReinterpretCast( TSharedPtr<FromType>&& Pointer ) noexcept
 {
-    typedef typename TRemoveExtent<T0>::Type Type;
+    typedef typename TRemoveExtent<ToType>::Type Type;
 
     Type* RawPointer = reinterpret_cast<Type*>(Pointer.Get());
-    return TSharedPtr<T0>( Move( Pointer ), RawPointer );
+    return TSharedPtr<ToType>( Move( Pointer ), RawPointer );
 }
 
 /* dynamic_cast */
-template<typename T0, typename T1>
-FORCEINLINE typename TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>>::Type DynamicCast( const TSharedPtr<T1>& Pointer ) noexcept
+template<typename ToType, typename FromType>
+FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type DynamicCast( const TSharedPtr<FromType>& Pointer ) noexcept
 {
-    typedef typename TRemoveExtent<T0>::Type Type;
+    typedef typename TRemoveExtent<ToType>::Type Type;
 
     Type* RawPointer = dynamic_cast<Type*>(Pointer.Get());
-    return TSharedPtr<T0>( Move( Pointer ), RawPointer );
+    return TSharedPtr<ToType>( Pointer, RawPointer );
 }
 
-template<typename T0, typename T1>
-FORCEINLINE typename TEnableIf<TIsArray<T0>::Value == TIsArray<T1>::Value, TSharedPtr<T0>>::Type DynamicCast( TSharedPtr<T1>&& Pointer ) noexcept
+template<typename ToType, typename FromType>
+FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type DynamicCast( TSharedPtr<FromType>&& Pointer ) noexcept
 {
-    typedef typename TRemoveExtent<T0>::Type Type;
+    typedef typename TRemoveExtent<ToType>::Type Type;
 
     Type* RawPointer = dynamic_cast<Type*>(Pointer.Get());
-    return TSharedPtr<T0>( Move( Pointer ), RawPointer );
+    return TSharedPtr<ToType>( Move( Pointer ), RawPointer );
 }

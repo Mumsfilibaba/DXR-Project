@@ -93,15 +93,18 @@ public:
 
     /* Default constructor */
     FORCEINLINE TInlineAllocator() noexcept
-        : Pointer( nullptr )
+        : Size(0)
+        , Allocation( nullptr )
     {
     }
 
     /* Move constructor */
     FORCEINLINE TInlineAllocator( TInlineAllocator&& Other ) noexcept
-        : Pointer( nullptr )
+        : Size( Other.Size )
+        , Allocation( nullptr )
     {
         Memory::Memexchange( InlineAllocation, Other.InlineAllocation, InlineBytes );
+        Other.Size = 0;
     }
 
     FORCEINLINE ~TInlineAllocator()
@@ -112,10 +115,15 @@ public:
     /* Allocates memory if needed, uses Memory::Realloc */
     FORCEINLINE ElementType* Allocate( SizeType Count ) noexcept
     {
+        // Free exisiting memory
+        Free();
+
+        // Allocate new
+        Size = sizeof( ElementType ) * Count;
         if ( Size > InlineBytes )
         {
-            Pointer = Memory::Realloc<ElementType>( Pointer, Count );
-            return Pointer;
+            Allocation = Memory::Realloc<ElementType>( Allocation, Count );
+            return Allocation;
         }
         else
         {
@@ -128,13 +136,11 @@ public:
     {
         if ( Size > InlineBytes )
         {
-            Memory::Free( Pointer );
-            Pointer = nullptr;
+            Memory::Free( Allocation );
         }
-        else
-        {
-            Memory::Memzero( InlineAllocation, InlineBytes );
-        }
+
+        Memory::Memzero( InlineAllocation, InlineBytes );
+        Size = 0;
     }
 
     /* Move from one allocator to another */
@@ -143,7 +149,10 @@ public:
         if ( this != &Other )
         {
             Free();
+
             Memory::Memexchange( InlineAllocation, Other.InlineAllocation, InlineBytes );
+            Size = Other.Size;
+            Other.Size = 0;
         }
     }
 
@@ -168,13 +177,13 @@ public:
     /* Retrive the allocation */
     FORCEINLINE ElementType* Raw() noexcept
     {
-        return IsStackAllocated() ? GetInlineAllocation() : Pointer;
+        return IsStackAllocated() ? GetInlineAllocation() : Allocation;
     }
 
     /* Retrive the allocation */
     FORCEINLINE const ElementType* Raw() const noexcept
     {
-        return IsStackAllocated() ? GetInlineAllocation() : Pointer;
+        return IsStackAllocated() ? GetInlineAllocation() : Allocation;
     }
 
     /* Move assignment */
@@ -185,16 +194,17 @@ public:
     }
 
 private:
-    FORCEINLINE void* GetInlineAllocation() noexcept
+    FORCEINLINE ElementType* GetInlineAllocation() noexcept
     {
-        return InlineAllocation;
+        return reinterpret_cast<ElementType*>(InlineAllocation);
     }
 
-    FORCEINLINE const void* GetInlineAllocation() const noexcept
+    FORCEINLINE const ElementType* GetInlineAllocation() const noexcept
     {
-        return InlineAllocation;
+        return reinterpret_cast<const ElementType*>(InlineAllocation);
     }
 
+    int32 Size;
     union
     {
         /* Inline bytes */
@@ -204,5 +214,4 @@ private:
         ElementType* Allocation;
     };
 
-    int32 Size;
 };
