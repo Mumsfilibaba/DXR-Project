@@ -4,7 +4,7 @@
 #include <string>
 
 // TODO: Custom string implementation
-using String  = std::string;
+using String = std::string;
 using WString = std::wstring;
 
 #if 0

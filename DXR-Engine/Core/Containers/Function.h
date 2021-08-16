@@ -6,25 +6,29 @@
 #include "Core/Templates/IsPointer.h"
 #include "Core/Templates/IsNullptr.h"
 #include "Core/Templates/IsInvokable.h"
+#include "Core/Templates/FunctionType.h"
 
 /* TMemberFunction - Encapsulates a member function */
 template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
 class TMemberFunction
 {
 public:
-    typedef ReturnType( ClassType::* TFunctionType )(ArgTypes...);
+    typedef ReturnType( ClassType::* FunctionType )(ArgTypes...);
 
-    FORCEINLINE TMemberFunction( InstanceType* InThis, TFunctionType InFunc ) noexcept
+    /* Constructor */
+    FORCEINLINE TMemberFunction( InstanceType* InThis, FunctionType InFunc ) noexcept
         : This( InThis )
         , Func( InFunc )
     {
     }
 
+    /* Invoke function */
     FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) const noexcept
     {
         return ((*This).*Func)(Forward<ArgTypes>( Args )...);
     }
 
+    /* Operator for invoking function */
     FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) const noexcept
     {
         return Invoke( Forward<ArgTypes>( Args )... );
@@ -32,7 +36,7 @@ public:
 
 private:
     InstanceType* This;
-    TFunctionType Func;
+    FunctionType Func;
 };
 
 /* TConstMemberFunction - Encapsulates a const member function */
@@ -40,19 +44,22 @@ template<typename InstanceType, typename ClassType, typename ReturnType, typenam
 class TConstMemberFunction
 {
 public:
-    typedef ReturnType( ClassType::* TFunctionType )(ArgTypes...) const;
+    typedef ReturnType( ClassType::* FunctionType )(ArgTypes...) const;
 
-    FORCEINLINE TConstMemberFunction( const InstanceType* InThis, TFunctionType InFunc ) noexcept
+    /* Constructor */
+    FORCEINLINE TConstMemberFunction( const InstanceType* InThis, FunctionType InFunc ) noexcept
         : This( InThis )
         , Func( InFunc )
     {
     }
 
+    /* Invoke function */
     FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) const noexcept
     {
         return ((*This).*Func)(Forward<ArgTypes>( Args )...);
     }
 
+    /* Operator for invoking function */
     FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) const noexcept
     {
         return Invoke( Forward<ArgTypes>( Args )... );
@@ -60,7 +67,7 @@ public:
 
 private:
     const InstanceType* This;
-    TFunctionType Func;
+    FunctionType Func;
 };
 
 /* Bind member function */
@@ -98,7 +105,6 @@ class TFunction;
 template<typename ReturnType, typename... ArgTypes>
 class TFunction<ReturnType( ArgTypes... )>
 {
-private:
     enum
     {
         // TODO: Look into padding so we can use larger structs?
@@ -202,7 +208,7 @@ public:
     /* Cheacks weather the function is valid or not */
     FORCEINLINE bool IsValid() const noexcept
     {
-        return Storage.GetSize() > 0;
+        return Storage.HasAllocation();
     }
 
     /* Swap this and another function */
@@ -235,7 +241,7 @@ public:
     }
 
     /* Cheak weather the function is valid or not */
-    FORCEINLINE explicit operator bool() const noexcept
+    FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
@@ -272,9 +278,11 @@ public:
     }
 
 private:
+
+    /* Release the function */
     FORCEINLINE void Release() noexcept
     {
-        if ( IsValid() )
+        if ( Storage.HasAllocation() )
         {
             GetFunctor()->~IFunctor();
             Storage.Free();
@@ -285,8 +293,10 @@ private:
     template<typename FunctorType>
     FORCEINLINE typename TEnableIf<TIsInvokable<FunctorType, ArgTypes...>::Value>::Type ConstructFrom( FunctorType&& Functor ) noexcept
     {
-        Storage.Allocate( sizeof( TGenericFunctor<FunctorType> ) );
-        new(Storage.Raw()) TGenericFunctor<FunctorType>( Forward<FunctorType>( Functor ) );
+        Release();
+
+        void* Memory = Storage.Allocate( sizeof( TGenericFunctor<FunctorType> ) );
+        new(Memory) TGenericFunctor<FunctorType>( Forward<FunctorType>( Functor ) );
     }
 
     /* Copy from another function */
@@ -311,5 +321,6 @@ private:
         return reinterpret_cast<const IFunctor*>(Storage.Raw());
     }
 
+    // TODO: Should allocator use the element type at all? 
     TInlineAllocator<int8, InlineBytes> Storage;
 };

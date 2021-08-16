@@ -1,114 +1,38 @@
 #pragma once
 #include "MulticastBase.h"
 
-template<typename... TArgs>
-class TMulticastDelegateBase : public TMulticastBase<TArgs...>
+/* Multicast delegate */
+template<typename... ArgTypes>
+class TMulticastDelegate : public TMulticastBase<ArgTypes...>
 {
-protected:
-    typedef TMulticastBase<TArgs...> Base;
-
-    typedef typename Base::IDelegate IDelegate;
+    typedef typename TMulticastBase<ArgTypes...>    Base;
+    typedef typename TDelegate<void( ArgTypes... )> TDelegateType;
 
 public:
-    TMulticastDelegateBase()
-        : Base()
+
+    using Base::BroadCast;
+
+    /* Broadcast to all bound delegates */
+    FORCEINLINE void Broadcast( ArgTypes&&... Args )
     {
+        Base::Broadcast( Forward<ArgTypes>( Args )... );
     }
 
-    TMulticastDelegateBase( const TMulticastDelegateBase& Other )
-        : Base()
+    /* Unbind all bound delegates */
+    FORCEINLINE void UnbindAll()
     {
-        for ( IDelegate* Delegate : Other.Delegates )
-        {
-            Assert( Delegate != nullptr );
-            Base::Delegates.EmplaceBack( Delegate->Clone() );
-        }
+        Base::UnbindAll();
     }
 
-    TMulticastDelegateBase( TMulticastDelegateBase&& Other )
-        : Base()
+    /* Swap */
+    FORCEINLINE void Swap( TMulticastDelegate& Other )
     {
-        Base::Delegates = Move( Other.Delegates );
+        Base::Swap( Other );
     }
 
-    ~TMulticastDelegateBase()
+    /* Broadcast to all bound delegates */
+    FORCEINLINE void operator()( ArgTypes&&... Args )
     {
-        UnbindAll();
-    }
-
-    void UnbindAll()
-    {
-        for ( IDelegate* Delegate : Base::Delegates )
-        {
-            Assert( Delegate != nullptr );
-            delete Delegate;
-        }
-
-        Base::Delegates.Clear();
-    }
-
-    void Swap( TMulticastDelegateBase& Other )
-    {
-        TMulticastDelegateBase Temp( Move( *this ) );
-        Base::Delegates = Move( Other.Delegates );
-        Other.Delegates = Move( Temp.Delegates );
-    }
-
-    TMulticastDelegateBase& operator=( const TMulticastDelegateBase& RHS )
-    {
-        TMulticastDelegateBase( RHS ).Swap( *this );
-        return *this;
-    }
-
-    TMulticastDelegateBase& operator=( TMulticastDelegateBase&& RHS )
-    {
-        TMulticastDelegateBase( Move( RHS ) ).Swap( *this );
-        return *this;
-    }
-};
-
-template<typename... TArgs>
-class TMulticastDelegate : public TMulticastDelegateBase<TArgs...>
-{
-    typedef TMulticastDelegateBase<TArgs...> Base;
-
-    typedef typename Base::IDelegate IDelegate;
-
-public:
-    void Broadcast( TArgs... Args )
-    {
-        for ( IDelegate* Delegate : Base::Delegates )
-        {
-            Assert( Delegate != nullptr );
-            Delegate->Execute( Forward<TArgs>( Args )... );
-        }
-    }
-
-    void operator()( TArgs... Args )
-    {
-        return Broadcast( Forward<TArgs>( Args )... );
-    }
-};
-
-template<>
-class TMulticastDelegate<void> : public TMulticastDelegateBase<void>
-{
-    typedef TMulticastDelegateBase<void> Base;
-
-    typedef typename Base::IDelegate IDelegate;
-
-public:
-    void Broadcast()
-    {
-        for ( IDelegate* Delegate : Base::Delegates )
-        {
-            Assert( Delegate != nullptr );
-            Delegate->Execute();
-        }
-    }
-
-    void operator()()
-    {
-        return Broadcast();
+        return Broadcast( Forward<ArgTypes>( Args )... );
     }
 };

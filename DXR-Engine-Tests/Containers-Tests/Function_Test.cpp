@@ -122,9 +122,12 @@ void TFunction_Test()
     TFunction<bool( int32 )> FunctorFunc = Fun;
     FunctorFunc( 15 );
 
-    TFunction<bool( int32 )> LambdaFunc = []( int32 Input ) -> bool
+    int64 x = 50;
+    int64 y = 150;
+    int64 z = 250;
+    TFunction<bool( int32 )> LambdaFunc = [=]( int32 Input ) -> bool
     {
-        std::cout << "Lambda " << Input << std::endl;
+        std::cout << "Lambda (x=" << x << ", y=" << y << ", z=" << z << ") =" << Input << std::endl;
         return true;
     };
     LambdaFunc( 20 );

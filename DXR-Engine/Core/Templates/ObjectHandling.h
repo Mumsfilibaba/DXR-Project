@@ -211,7 +211,7 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsMoveConstructable<T>
     if ( (Source < StartAddress) && (StartAddress < Source + Count) )
     {
         StartAddress = reinterpret_cast<T*>(StartAddress) + Count;
-        Source       = Source + Count;
+        Source = Source + Count;
 
         while ( Count )
         {
@@ -247,16 +247,16 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsCopyConstructable<T>
     if ( (Source < StartAddress) && (StartAddress < Source + Count) )
     {
         StartAddress = reinterpret_cast<T*>(StartAddress) + Count;
-        Source       = Source + Count;
+        Source = Source + Count;
 
         while ( Count )
         {
             StartAddress = reinterpret_cast<T*>(StartAddress) - 1;
             Source--;
-            
+
             new(StartAddress) T( *Source );
             Source->~T();
-            
+
             Count--;
         }
     }

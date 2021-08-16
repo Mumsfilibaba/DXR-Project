@@ -13,7 +13,7 @@ template<typename ArrayType, typename ElementType>
 class TArrayIterator
 {
 public:
-    typedef typename ArrayType::SizeType SizeType;
+    using SizeType = typename ArrayType::SizeType;
 
     TArrayIterator( const TArrayIterator& ) = default;
     TArrayIterator( TArrayIterator&& ) = default;
@@ -177,7 +177,7 @@ template<typename ArrayType, typename ElementType>
 class TReverseArrayIterator
 {
 public:
-    typedef typename ArrayType::SizeType SizeType;
+    using SizeType = typename ArrayType::SizeType;
 
     TReverseArrayIterator( const TReverseArrayIterator& ) = default;
     TReverseArrayIterator( TReverseArrayIterator&& ) = default;

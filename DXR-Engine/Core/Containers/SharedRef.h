@@ -9,10 +9,10 @@ template<typename T>
 class TSharedRef
 {
 public:
+    using ElementType = T;
+
     template<typename OtherType>
     friend class TSharedRef;
-
-    typedef T ElementType;
 
     /* Default constructor that set the ptr to nullptr */
     FORCEINLINE TSharedRef() noexcept

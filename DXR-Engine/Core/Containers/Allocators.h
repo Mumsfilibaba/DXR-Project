@@ -8,8 +8,8 @@ template<typename T>
 class TDefaultAllocator
 {
 public:
-    typedef T     ElementType;
-    typedef int32 SizeType;
+    using ElementType = T;
+    using SizeType = int32;
 
     /* Since we do not store the size of the allocation we cannot copy. TODO: See if this is a better approcach */
     TDefaultAllocator( const TDefaultAllocator& ) = delete;
@@ -82,8 +82,8 @@ template<typename T, const int32 InlineBytes = 32>
 class TInlineAllocator
 {
 public:
-    typedef T     ElementType;
-    typedef int32 SizeType;
+    using ElementType = T;
+    using SizeType = int32;
 
     static_assert(InlineBytes > sizeof( void* ), "InlineBytes has to be larger that the size of a void*");
 
@@ -93,7 +93,7 @@ public:
 
     /* Default constructor */
     FORCEINLINE TInlineAllocator() noexcept
-        : Size(0)
+        : Size( 0 )
         , Allocation( nullptr )
     {
     }
@@ -120,7 +120,7 @@ public:
 
         // Allocate new
         Size = sizeof( ElementType ) * Count;
-        if ( Size > InlineBytes )
+        if ( IsHeapAllocated() )
         {
             Allocation = Memory::Realloc<ElementType>( Allocation, Count );
             return Allocation;
@@ -134,12 +134,16 @@ public:
     /* Make sure that the allocation is freed */
     FORCEINLINE void Free() noexcept
     {
-        if ( Size > InlineBytes )
+        if ( IsHeapAllocated() )
         {
             Memory::Free( Allocation );
+            Allocation = nullptr;
+        }
+        else
+        {
+            Memory::Memzero( InlineAllocation, InlineBytes );
         }
 
-        Memory::Memzero( InlineAllocation, InlineBytes );
         Size = 0;
     }
 
@@ -159,13 +163,13 @@ public:
     /* Checks weather there is a valid allocation or not */
     FORCEINLINE bool HasAllocation() const noexcept
     {
-        return (Size > InlineBytes);
+        return (Size > 0);
     }
 
     /* Checks weather there is a heap allocation or not */
-    FORCEINLINE bool IsStackAllocated() const noexcept
+    FORCEINLINE bool IsHeapAllocated() const noexcept
     {
-        return (Size <= InlineBytes);
+        return (Size > InlineBytes);
     }
 
     /* Retrive the size */
@@ -177,13 +181,13 @@ public:
     /* Retrive the allocation */
     FORCEINLINE ElementType* Raw() noexcept
     {
-        return IsStackAllocated() ? GetInlineAllocation() : Allocation;
+        return IsHeapAllocated() ? Allocation : GetInlineAllocation();
     }
 
     /* Retrive the allocation */
     FORCEINLINE const ElementType* Raw() const noexcept
     {
-        return IsStackAllocated() ? GetInlineAllocation() : Allocation;
+        return IsHeapAllocated() ? Allocation : GetInlineAllocation();
     }
 
     /* Move assignment */
@@ -194,11 +198,14 @@ public:
     }
 
 private:
+
+    /* Retrive the inline allocation as pointer */
     FORCEINLINE ElementType* GetInlineAllocation() noexcept
     {
         return reinterpret_cast<ElementType*>(InlineAllocation);
     }
 
+    /* Retrive the inline allocation as pointer */
     FORCEINLINE const ElementType* GetInlineAllocation() const noexcept
     {
         return reinterpret_cast<const ElementType*>(InlineAllocation);
@@ -213,5 +220,4 @@ private:
         /* Dynamic allocation */
         ElementType* Allocation;
     };
-
 };

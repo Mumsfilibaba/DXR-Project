@@ -8,8 +8,8 @@ template<typename T>
 class TArrayView
 {
 public:
-    typedef T     ElementType;
-    typedef int32 SizeType;
+    using ElementType = T;
+    using SizeType = int32;
 
     /* Iterators */
     typedef TArrayIterator<TArrayView, ElementType>                    IteratorType;

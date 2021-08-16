@@ -1,41 +1,40 @@
 #pragma once
 #include "MulticastBase.h"
 
-template<typename... TArgs>
-class TEventBase : public TMulticastBase<TArgs...>
+/* Base type for events */
+template<typename... ArgTypes>
+class TEventBase : public TMulticastBase<ArgTypes...>
 {
+    typedef TMulticastBase<ArgTypes...>    Base;
+    typedef TDelegate<void( ArgTypes... )> TDelegateType;
+
 protected:
-    typedef TMulticastBase<TArgs...> Base;
 
-    typedef typename Base::IDelegate IDelegate;
-
-    TEventBase()
+    /* Empty constructor */
+    FORCEINLINE TEventBase()
         : Base()
     {
     }
 
-    TEventBase( const TEventBase& Other )
-        : Base()
+    /* Copy constructor */
+    FORCEINLINE TEventBase( const TEventBase& Other )
+        : Base( Other )
     {
-        for ( IDelegate* Delegate : Other.Delegates )
-        {
-            Assert( Delegate != nullptr );
-            Base::Delegates.EmplaceBack( Delegate->Clone() );
-        }
     }
 
-    TEventBase( TEventBase&& Other )
-        : Base()
+    /* Move constructor */
+    FORCEINLINE TEventBase( TEventBase&& Other )
+        : Base( Move( Other ) )
     {
-        Base::Delegates = Move( Other.Delegates );
     }
 
-    ~TEventBase()
+    FORCEINLINE ~TEventBase()
     {
         UnbindAll();
     }
 
-    void UnbindAll()
+    /* Unbind all delegates */
+    FORCEINLINE void UnbindAll()
     {
         for ( IDelegate* Delegate : Base::Delegates )
         {
@@ -46,26 +45,28 @@ protected:
         Base::Delegates.Clear();
     }
 
-    void Swap( TEventBase& Other )
+    /* Swaps two events */
+    FORCEINLINE void Swap( TEventBase& Other )
     {
-        TEventBase Temp( Move( *this ) );
-        Base::Delegates = Move( Other.Delegates );
-        Other.Delegates = Move( Temp.Delegates );
+        Base::Swap( Other );
     }
 
-    TEventBase& operator=( const TEventBase& RHS )
+    /* Copy assignment operator */
+    FORCEINLINE TEventBase& operator=( const TEventBase& RHS )
     {
         TEventBase( RHS ).Swap( *this );
         return *this;
     }
 
-    TEventBase& operator=( TEventBase&& RHS )
+    /* Move assignment operator */
+    FORCEINLINE TEventBase& operator=( TEventBase&& RHS )
     {
         TEventBase( Move( RHS ) ).Swap( *this );
         return *this;
     }
 };
 
+/* Default event type */
 template<typename... TArgs>
 class TEvent : public TEventBase<TArgs...>
 {
@@ -89,6 +90,7 @@ protected:
     }
 };
 
+/* Special event type for events with not params */
 template<>
 class TEvent<void> : public TEventBase<void>
 {

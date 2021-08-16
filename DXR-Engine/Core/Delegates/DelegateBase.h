@@ -1,116 +1,173 @@
 #pragma once
+#include "CoreTypes.h"
+#include "CoreDefines.h"
+
 #include "Core/Templates/Move.h"
+#include "Core/Templates/FunctionType.h"
 
-template<typename TInvokable>
-class TDelegateBase;
-
-template<typename TReturn, typename... TArgs>
-class TDelegateBase<TReturn( TArgs... )>
+/* Basetype for delegates */
+class CGenericDelegate
 {
-protected:
-    typedef TReturn( *FunctionType )(TArgs...);
+public:
+    CGenericDelegate() = default;
+    virtual ~CGenericDelegate() noexcept = default;
 
-    template<typename T>
-    using MemberFunctionType = TReturn( T::* )(TArgs...);
-    template<typename T>
-    using ConstMemberFunctionType = TReturn( T::* )(TArgs...) const;
-
-    struct IDelegate
+    /* Retrive the owner of the function, returns nullptr for non-member delegates */
+    virtual const void* GetOwner() const
     {
-        virtual ~IDelegate() = default;
+        return nullptr;
+    }
+};
 
-        virtual TReturn Execute( TArgs... Args ) const = 0;
-        virtual IDelegate* Clone() const = 0;
-    };
+/* Types basetype for delegates */
+template<typename ReturnType, typename... ArgTypes>
+class IDelegate : public CGenericDelegate
+{
+public:
+    /* Executes the delegates and calls the stored function or functor */
+    virtual ReturnType Execute( ArgTypes... Args ) const = 0;
 
-    struct FunctionDelegate : public IDelegate
+    /* Clones the delegate and stores it in the specified memory */
+    virtual IDelegate* Clone( void* Memory ) const = 0;
+};
+
+/* Class for storing a "normal" function in a delegate */
+template<typename ReturnType, typename... ArgTypes>
+class TFunctionDelegate : public IDelegate<ReturnType, ArgTypes...>
+{
+public:
+    typedef ReturnType( *FunctionType )(ArgTypes...);
+    typedef typename IDelegate<ReturnType, ArgTypes...> Base;
+
+    /* Constructor taking a function */
+    FORCEINLINE TFunctionDelegate( FunctionType InFunction )
+        : Base()
+        , Function( InFunction )
     {
-        FunctionDelegate( FunctionType InFn )
-            : IDelegate()
-            , Fn( InFn )
-        {
-        }
+    }
 
-        virtual TReturn Execute( TArgs... Args ) const override
-        {
-            return Fn( ::Forward<TArgs>( Args )... );
-        }
-
-        virtual IDelegate* Clone() const override
-        {
-            return new FunctionDelegate( Fn );
-        }
-
-        FunctionType Fn;
-    };
-
-    template<typename T>
-    struct ObjectDelegate : public IDelegate
+    /* Execute the function */
+    virtual ReturnType Execute( ArgTypes... Args ) const override final
     {
-        ObjectDelegate( T* InThis, MemberFunctionType<T> InFn )
-            : IDelegate()
-            , This( InThis )
-            , Fn( InFn )
-        {
-        }
+        return Function( Forward<ArgTypes>( Args )... );
+    }
 
-        virtual TReturn Execute( TArgs... Args ) const override
-        {
-            return ((*This).*Fn)(::Forward<TArgs>( Args )...);
-        }
-
-        virtual IDelegate* Clone() const override
-        {
-            return new ObjectDelegate( This, Fn );
-        }
-
-        T* This;
-        MemberFunctionType<T> Fn;
-    };
-
-    template<typename T>
-    struct ConstObjectDelegate : public IDelegate
+    /* Clone this instance and store in the memory */
+    virtual Base* Clone( void* Memory ) const override final
     {
-        ConstObjectDelegate( const T* InThis, ConstMemberFunctionType<T> InFn )
-            : IDelegate()
-            , This( InThis )
-            , Fn( InFn )
-        {
-        }
+        return new(Memory) TFunctionDelegate( Function );
+    }
 
-        virtual TReturn Execute( TArgs... Args ) const override
-        {
-            return ((*This).*Fn)(::Forward<TArgs>( Args )...);
-        }
+private:
+    FunctionType Function;
+};
 
-        virtual IDelegate* Clone() const override
-        {
-            return new ConstObjectDelegate( This, Fn );
-        }
+/* Stores a memberfunction as a delegate */
+template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
+class TMemberDelegate : public IDelegate<ReturnType, ArgTypes...>
+{
+public:
+    typedef typename IDelegate<ReturnType, ArgTypes...> Base;
+    typedef typename TMemberFunctionType<ClassType, ReturnType, ArgTypes...>::Type MemberFunctionType;
 
-        const T* This;
-        ConstMemberFunctionType<T> Fn;
-    };
-
-    template<typename F>
-    struct LambdaDelegate : public IDelegate
+    /* Constructor */
+    FORCEINLINE TMemberDelegate( InstanceType* InThis, MemberFunctionType InFunction )
+        : Base()
+        , This( InThis )
+        , Function( InFunction )
     {
-        LambdaDelegate( F InInvokable )
-            : IDelegate()
-            , Invokable( InInvokable )
-        {
-        }
+        Assert( This != nullptr );
+    }
 
-        virtual TReturn Execute( TArgs... Args ) const override
-        {
-            return Invokable( ::Forward<TArgs>( Args )... );
-        }
+    /* Execute function */
+    virtual ReturnType Execute( ArgTypes... Args ) const override final
+    {
+        return ((*This).*Function)(Forward<ArgTypes>( Args )...);
+    }
 
-        virtual IDelegate* Clone() const override
-        {
-            return new LambdaDelegate( Invokable );
-        }
+    /* Clone this instance and store in the memory */
+    virtual Base* Clone( void* Memory ) const override final
+    {
+        return new(Memory) TMemberDelegate( This, Function );
+    }
 
-        F Invokable;
-    };
+    /* Returns this */
+    virtual const void* GetOwner() const
+    {
+        return reinterpret_cast<const void*>(This);
+    }
+
+private:
+    InstanceType* This = nullptr;
+    MemberFunctionType Function;
+};
+
+/* Stores a const memberfunction as a delegate */
+template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
+class TConstMemberDelegate : public IDelegate<ReturnType, ArgTypes...>
+{
+public:
+    typedef typename IDelegate<ReturnType, ArgTypes...> Base;
+    typedef typename TConstMemberFunctionType<ClassType, ReturnType, ArgTypes...>::Type MemberFunctionType;
+
+    /* Constructor */
+    FORCEINLINE TConstMemberDelegate( const InstanceType* InThis, MemberFunctionType InFunction )
+        : Base()
+        , This( InThis )
+        , Function( InFunction )
+    {
+        Assert( This != nullptr );
+    }
+
+    /* Execute function */
+    virtual ReturnType Execute( ArgTypes... Args ) const override
+    {
+        return ((*This).*Function)(Forward<ArgTypes>( Args )...);
+    }
+
+    /* Clone this instance and store in the memory */
+    virtual Base* Clone( void* Memory ) const override
+    {
+        return new(Memory) TConstMemberDelegate( This, Function );
+    }
+
+    /* Returns this */
+    virtual const void* GetOwner() const
+    {
+        return reinterpret_cast<const void*>(This);
+    }
+
+private:
+    const InstanceType* This = nullptr;
+    MemberFunctionType Function;
+};
+
+/* Stores a lambda delegate */
+template<typename FunctorType, typename ReturnType, typename... ArgTypes>
+class TLambdaDelegate : public IDelegate<ReturnType, ArgTypes...>
+{
+public:
+    typedef typename IDelegate<ReturnType, ArgTypes...> Base;
+
+    /* Constructor */
+    FORCEINLINE TLambdaDelegate( FunctorType InInvokable )
+        : Base()
+        , Functor( InInvokable )
+    {
+    }
+
+    /* Execute Functor */
+    virtual ReturnType Execute( ArgTypes... Args ) const override
+    {
+        return Functor( Forward<ArgTypes>( Args )... );
+    }
+
+    /* Clone this instance and store in the memory */
+    virtual Base* Clone( void* Memory ) const override
+    {
+        return new(Memory) TLambdaDelegate( Functor );
+    }
+
+private:
+    FunctorType Functor;
 };

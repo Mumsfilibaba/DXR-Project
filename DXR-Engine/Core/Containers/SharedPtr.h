@@ -12,7 +12,7 @@
 class CPointerReferenceCounter
 {
 public:
-    typedef ThreadSafeInt32::Type CounterType;
+    using CounterType = ThreadSafeInt32::Type;
 
     /* Default constructor setting both counters to zero */
     FORCEINLINE CPointerReferenceCounter() noexcept
@@ -67,8 +67,8 @@ template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TPointerReferencedStorage : private DeleterType
 {
 public:
-    typedef typename TRemoveExtent<T>::Type       ElementType;
-    typedef CPointerReferenceCounter::CounterType CounterType;
+    using ElementType = typename TRemoveExtent<T>::Type;
+    using CounterType = CPointerReferenceCounter::CounterType;
 
     /* Cannot copy the storage */
     TPointerReferencedStorage( const TPointerReferencedStorage& ) = delete;
@@ -200,7 +200,7 @@ public:
         Counter->ReleaseWeakRef();
 
         CounterType NumStrongRefs = Counter->GetStrongRefCount();
-        CounterType NumWeakRefs   = Counter->GetWeakRefCount();
+        CounterType NumWeakRefs = Counter->GetWeakRefCount();
         if ( (NumStrongRefs < 1) && (NumWeakRefs < 1) )
         {
             delete Counter;
@@ -211,7 +211,7 @@ public:
     /* Resets to an empty storage without deleting the pointers. Used for Move pointers of other type. */
     FORCEINLINE void Reset() noexcept
     {
-        Ptr     = nullptr;
+        Ptr = nullptr;
         Counter = nullptr;
     }
 
@@ -290,10 +290,10 @@ template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TSharedPtr
 {
 public:
-    typedef typename TRemoveExtent<T>::Type                     ElementType;
-    typedef TPointerReferencedStorage<ElementType, DeleterType> PointerStorage;
-    typedef typename PointerStorage::CounterType                CounterType;
-    typedef int32                                               SizeType;
+    using ElementType = typename TRemoveExtent<T>::Type;
+    using PointerStorage = TPointerReferencedStorage<ElementType, DeleterType>;
+    using CounterType = typename PointerStorage::CounterType;
+    using SizeType = int32;
 
     /* Enables conversion betweem the two classes */
     template<typename OtherType, typename OtherDeleterType>
@@ -370,7 +370,7 @@ public:
     FORCEINLINE explicit TSharedPtr( TSharedPtr<OtherType, OtherDeleterType>&& Other, ElementType* InPtr ) noexcept
         : Storage()
     {
-        Storage.InitMove(InPtr, Other.GetCounter());
+        Storage.InitMove( InPtr, Other.GetCounter() );
         Other.Storage.Reset();
     }
 
@@ -654,10 +654,10 @@ template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TWeakPtr
 {
 public:
-    typedef typename TRemoveExtent<T>::Type                     ElementType;
-    typedef TPointerReferencedStorage<ElementType, DeleterType> PointerStorage;
-    typedef typename PointerStorage::CounterType                CounterType;
-    typedef int32                                               SizeType;
+    using ElementType = typename TRemoveExtent<T>::Type;
+    using PointerStorage = TPointerReferencedStorage<ElementType, DeleterType>;
+    using CounterType = typename PointerStorage::CounterType;
+    using SizeType = int32;
 
     /* Enables conversion betweem the two classes */
     template<typename OtherType, typename OtherDeleterType>
@@ -1058,7 +1058,7 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     typedef typename TRemoveExtent<ToType>::Type Type;
 
     Type* RawPointer = const_cast<Type*>(Pointer.Get());
-    return TSharedPtr<ToType>( Pointer , RawPointer );
+    return TSharedPtr<ToType>( Pointer, RawPointer );
 }
 
 template<typename ToType, typename FromType>
@@ -1077,7 +1077,7 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     typedef typename TRemoveExtent<ToType>::Type Type;
 
     Type* RawPointer = reinterpret_cast<Type*>(Pointer.Get());
-    return TSharedPtr<ToType>( Pointer , RawPointer );
+    return TSharedPtr<ToType>( Pointer, RawPointer );
 }
 
 template<typename ToType, typename FromType>

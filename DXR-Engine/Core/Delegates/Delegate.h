@@ -1,108 +1,118 @@
 #pragma once
 #include "DelegateBase.h"
 
-template<typename TInvokable>
+#include "Core/Containers/Allocators.h"
+#include "Core/Templates/FunctionType.h"
+
+/* Delegate class, similar to TFunction, but allows direct binding of functions instead of binding a functor type*/
+template<typename InvokableType>
 class TDelegate;
 
-template<typename TReturn, typename... TArgs>
-class TDelegate<TReturn( TArgs... )> : private TDelegateBase<TReturn( TArgs... )>
+template<typename ReturnType, typename... ArgTypes>
+class TDelegate<ReturnType( ArgTypes... )>
 {
-    typedef TDelegateBase<TReturn( TArgs... )> Base;
+    typedef IDelegate<ReturnType, ArgTypes...> IDelegateType;
 
-    typedef typename Base::IDelegate        IDelegate;
-    typedef typename Base::FunctionType     FunctionType;
-    typedef typename Base::FunctionDelegate FunctionDelegate;
+    typedef ReturnType( *FunctionType )(ArgTypes...);
 
-    template<typename T>
-    using MemberFunctionType = typename Base::MemberFunctionType<T>;
-    template<typename T>
-    using ConstMemberFunctionType = typename Base::ConstMemberFunctionType<T>;
-    template<typename T>
-    using ObjectDelegate = typename Base::ObjectDelegate<T>;
-    template<typename T>
-    using ConstObjectDelegate = typename Base::ConstObjectDelegate<T>;
-    template<typename F>
-    using LambdaDelegate = typename Base::LambdaDelegate<F>;
+    template<typename ClassType>
+    using MemberFunctionType = typename TMemberFunctionType<ClassType, ReturnType, ArgTypes...>::Type;
 
-    template<typename... TArgs>
-    friend class TMulticastBase;
+    template<typename ClassType>
+    using ConstMemberFunctionType = typename TConstMemberFunctionType<ClassType, ReturnType, ArgTypes...>::Type;
+
+    enum
+    {
+        // TODO: Look into padding so we can use larger structs?
+        InlineBytes = 24
+    };
 
 public:
-    TDelegate()
-        : Base()
-        , Delegate( nullptr )
+
+    /* Constructor for a empty delegate */
+    FORCEINLINE TDelegate()
+        : Storage()
     {
     }
 
-    TDelegate( const TDelegate& Other )
-        : Base()
-        , Delegate( nullptr )
+    /* Copy constructor */
+    FORCEINLINE TDelegate( const TDelegate& Other )
+        : Storage()
     {
-        if ( Other.IsBound() )
-        {
-            Delegate = Other.Delegate->Clone();
-        }
+        CopyFrom( Other );
     }
 
-    TDelegate( TDelegate&& Other )
-        : Base()
-        , Delegate( Other.Delegate )
+    /* Move constructor */
+    FORCEINLINE TDelegate( TDelegate&& Other )
+        : Storage( Move( Other.Storage ) )
     {
-        Other.Delegate = nullptr;
     }
 
-    ~TDelegate()
+    FORCEINLINE ~TDelegate()
     {
         Unbind();
     }
 
-    void BindFunction( FunctionType Fn )
+    /* Bind "normal" function */
+    FORCEINLINE void BindStatic( FunctionType Function )
     {
-        Unbind();
-        Delegate = new FunctionDelegate( Fn );
+        Bind<typename TFunctionDelegate<ReturnType, ArgTypes...>>( Function );
     }
 
-    template<typename T>
-    void BindObject( T* This, MemberFunctionType<T> Fn )
+    /* Bind member function */
+    template<typename InstanceType>
+    FORCEINLINE void BindRaw( InstanceType* This, MemberFunctionType<InstanceType> Function )
     {
-        Unbind();
-        Delegate = new ObjectDelegate<T>( This, Fn );
+        Bind<typename TMemberDelegate<InstanceType, InstanceType, ReturnType, ArgTypes...>>( This, Function );
     }
 
-    template<typename T>
-    void BindObject( const T* This, ConstMemberFunctionType<T> Fn )
+    /* Bind member function */
+    template<typename InstanceType, typename ClassType>
+    FORCEINLINE void BindRaw( InstanceType* This, MemberFunctionType<ClassType> Function )
     {
-        Unbind();
-        Delegate = new ConstObjectDelegate<T>( This, Fn );
+        Bind<typename TMemberDelegate<InstanceType, ClassType, ReturnType, ArgTypes...>>( This, Function );
     }
 
-    template<typename F>
-    void BindLambda( F Functor )
+    /* Bind const member function */
+    template<typename InstanceType>
+    FORCEINLINE void BindRaw( const InstanceType* This, ConstMemberFunctionType<InstanceType> Function )
     {
-        Unbind();
-        Delegate = new LambdaDelegate<F>( Forward<F>( Functor ) );
+        Bind<typename TConstMemberDelegate<InstanceType, InstanceType, ReturnType, ArgTypes...>>( This, Function );
     }
 
-    void Unbind()
+    /* Bind const member function */
+    template<typename InstanceType, typename ClassType>
+    FORCEINLINE void BindRaw( const InstanceType* This, ConstMemberFunctionType<ClassType> Function )
     {
-        if ( Delegate )
-        {
-            delete Delegate;
-            Delegate = nullptr;
-        }
+        Bind<typename TConstMemberDelegate<InstanceType, ClassType, ReturnType, ArgTypes...>>( This, Function );
     }
 
-    TReturn Execute( TArgs... Args )
+    /* Bind Lambda or other functor */
+    template<typename FunctorType>
+    FORCEINLINE void BindLambda( FunctorType Functor )
     {
-        Assert( Delegate != nullptr );
-        return Delegate->Execute( Forward<TArgs>( Args )... );
+        Bind<typename TLambdaDelegate<FunctorType, ReturnType, ArgTypes...>>( Forward<FunctorType>( Functor ) );
     }
 
-    bool ExecuteIfBound( TArgs... Args )
+    /* Unbinds the delegate */
+    FORCEINLINE void Unbind()
+    {
+        Release();
+    }
+
+    /* Executes the delegate */
+    FORCEINLINE ReturnType Execute( ArgTypes... Args )
+    {
+        Assert( IsBound() );
+        return GetDelegate()->Execute( Forward<ArgTypes>( Args )... );
+    }
+
+    /* Executes the delegate if there is any bound */
+    FORCEINLINE bool ExecuteIfBound( ArgTypes... Args )
     {
         if ( IsBound() )
         {
-            Delegate->Execute( Forward<TArgs>( Args )... );
+            GetDelegate()->Execute( Forward<ArgTypes>( Args )... );
             return true;
         }
         else
@@ -111,41 +121,150 @@ public:
         }
     }
 
-    void Swap( TDelegate& Other )
+    /* Swaps two delegates */
+    FORCEINLINE void Swap( TDelegate& Other )
     {
-        TDelegate Temp( Move( *this ) );
-        Delegate = Other.Delegate;
-        Other.Delegate = Temp.Delegate;
-        Temp.Delegate = nullptr;
+        TInlineAllocator<int8, InlineBytes> TempStorage( Move( Storage ) );
+        Storage = Move( Other.Storage );
+        Other.Storage = Move( TempStorage );
     }
 
-    bool IsBound() const
+    /* Cheacks weather or not there exist any delegate bound */
+    FORCEINLINE bool IsBound() const
     {
-        return Delegate != nullptr;
+        return Storage.HasAllocation();
     }
 
-    TReturn operator()( TArgs... Args )
+    /* Retrive the owner, returns nullptr for non-member delegates */
+    FORCEINLINE const void* GetOwner() const
     {
-        return Execute( Forward<TArgs>( Args )... );
+        Assert( IsBound() );
+        return GetDelegate()->GetOwner();
     }
 
-    TDelegate& operator=( TDelegate&& RHS )
+    /* Execute operator */
+    FORCEINLINE ReturnType operator()( ArgTypes... Args )
+    {
+        return Execute( Forward<ArgTypes>( Args )... );
+    }
+
+    /* Move assignment */
+    FORCEINLINE TDelegate& operator=( TDelegate&& RHS )
     {
         TDelegate( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
-    TDelegate& operator=( const TDelegate& RHS )
+    /* Copy assignment */
+    FORCEINLINE TDelegate& operator=( const TDelegate& RHS )
     {
         TDelegate( RHS ).Swap( *this );
         return *this;
     }
 
-    operator bool() const
+    /* Check if valid */
+    FORCEINLINE operator bool() const
     {
         return IsBound();
     }
 
 private:
-    IDelegate* Delegate;
+
+    /* Release the delegate */
+    FORCEINLINE void Release()
+    {
+        if ( Storage.HasAllocation() )
+        {
+            reinterpret_cast<CGenericDelegate*>(GetDelegate())->~CGenericDelegate();
+            Storage.Free();
+        }
+    }
+
+    /* Copy from another function */
+    FORCEINLINE void CopyFrom( const TDelegate& Other ) noexcept
+    {
+        if ( Other.IsBound() )
+        {
+            Storage.Allocate( Other.Storage.GetSize() );
+            Other.GetDelegate()->Clone( Storage.Raw() );
+        }
+    }
+
+    template<typename DelegateType, typename... ConstructorArgs>
+    FORCEINLINE void Bind( ConstructorArgs&&... args )
+    {
+        Release();
+
+        void* Memory = Storage.Allocate( sizeof( DelegateType ) );
+        new (Memory) DelegateType( Forward<ConstructorArgs>( args )... );
+    }
+
+    /* Internal function that is used to retrive the functor pointer */
+    FORCEINLINE IDelegateType* GetDelegate() noexcept
+    {
+        return reinterpret_cast<IDelegateType*>(Storage.Raw());
+    }
+
+    /* Internal function that is used to retrive the functor pointer */
+    FORCEINLINE const IDelegateType* GetDelegate() const noexcept
+    {
+        return reinterpret_cast<const IDelegateType*>(Storage.Raw());
+    }
+
+    // TODO: Should allocator use the element type at all? 
+    TInlineAllocator<int8, InlineBytes> Storage;
 };
+
+/* Helper for creating a static delegate */
+template<typename ReturnType, typename... ArgTypes>
+inline TDelegate<ReturnType( ArgTypes... )> StaticDelegate( typename TFunctionType<ReturnType, ArgTypes...>::Type Function )
+{
+    TDelegate<ReturnType( ArgTypes... )> Delegate;
+    Delegate.BindStatic( Function );
+    return Delegate;
+}
+
+/* Helper for creating a member delegate */
+template<typename InstanceType, typename ReturnType, typename... ArgTypes>
+inline TDelegate<ReturnType( ArgTypes... )> RawDelegate( InstanceType* This, typename TMemberFunctionType<InstanceType, ReturnType, ArgTypes...>::Type Function )
+{
+    TDelegate<ReturnType( ArgTypes... )> Delegate;
+    Delegate.BindRaw( Function );
+    return Delegate;
+}
+
+/* Helper for creating a member delegate */
+template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
+inline TDelegate<ReturnType( ArgTypes... )> RawDelegate( InstanceType* This, typename TMemberFunctionType<ClassType, ReturnType, ArgTypes...>::Type Function )
+{
+    TDelegate<ReturnType( ArgTypes... )> Delegate;
+    Delegate.BindRaw( This, Function );
+    return Delegate;
+}
+
+/* Helper for creating a const member delegate */
+template<typename InstanceType, typename ReturnType, typename... ArgTypes>
+inline TDelegate<ReturnType( ArgTypes... )> RawDelegate( const InstanceType* This, typename TConstMemberFunctionType<InstanceType, ReturnType, ArgTypes...>::Type Function )
+{
+    TDelegate<ReturnType( ArgTypes... )> Delegate;
+    Delegate.BindRaw( This, Function );
+    return Delegate;
+}
+
+/* Helper for creating a const member delegate */
+template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
+inline TDelegate<ReturnType( ArgTypes... )> RawDelegate( const InstanceType* This, typename TConstMemberFunctionType<ClassType, ReturnType, ArgTypes...>::Type Function )
+{
+    TDelegate<ReturnType( ArgTypes... )> Delegate;
+    Delegate.BindRaw( This, Function );
+    return Delegate;
+}
+
+/* Helper for creating a lambda delegate */
+template<typename FunctorType, typename ReturnType, typename... ArgTypes>
+inline TDelegate<ReturnType( ArgTypes... )> LambdaDelegate( FunctorType Functor )
+{
+    TDelegate<ReturnType( ArgTypes... )> Delegate;
+    Delegate.BindLambda( Functor );
+    return Delegate;
+}

@@ -8,7 +8,7 @@
 #define RUN_TARRAY_TEST      (0)
 #define RUN_TSHAREDPTR_TEST  (0)
 #define RUN_TFUNCTION_TEST   (1)
-#define RUN_TDELEGATE_TEST   (0)
+#define RUN_DELEGATE_TEST    (1)
 #define RUN_TFIXEDARRAY_TEST (0)
 #define RUN_TARRAYVIEW_TEST  (0)
 

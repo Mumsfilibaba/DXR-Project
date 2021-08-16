@@ -13,10 +13,10 @@ class TReferenceWrapper
 public:
     typedef T Type;
 
-    TReferenceWrapper( const TReferenceWrapper& )            = default;
-    TReferenceWrapper( TReferenceWrapper&& )                 = default;
+    TReferenceWrapper( const TReferenceWrapper& ) = default;
+    TReferenceWrapper( TReferenceWrapper&& ) = default;
     TReferenceWrapper& operator=( const TReferenceWrapper& ) = default;
-    TReferenceWrapper& operator=( TReferenceWrapper&& )      = default;
+    TReferenceWrapper& operator=( TReferenceWrapper&& ) = default;
 
     static_assert(TIsObject<T>::Value || TIsFunction<T>::Value, "TReferenceWrapper requires T to be of object or function type");
 
@@ -41,7 +41,7 @@ public:
     }
 
     /* Retrive reference */
-    FORCEINLINE operator Type&() const noexcept
+    FORCEINLINE operator Type& () const noexcept
     {
         return Get();
     }

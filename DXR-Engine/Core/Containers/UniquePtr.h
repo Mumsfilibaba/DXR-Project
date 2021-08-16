@@ -13,10 +13,10 @@ template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TUniquePtr : private DeleterType // Using inheritance instead of composition to avoid extra memory usage
 {
 public:
+    using ElementType = T;
+
     template<typename OtherType, typename OtherDeleterType>
     friend class TUniquePtr;
-
-    typedef T ElementType;
 
     /* Cannot be copied */
     TUniquePtr( const TUniquePtr& Other ) = delete;
@@ -190,11 +190,11 @@ template<typename T, typename DeleterType>
 class TUniquePtr<T[], DeleterType> : private DeleterType
 {
 public:
+    using ElementType = T;
+    using SizeType = int32;
+
     template<typename OtherType, typename OtherDeleterType>
     friend class TUniquePtr;
-
-    typedef T      ElementType;
-    typedef uint32 SizeType;
 
     /* Cannot be copied */
     TUniquePtr( const TUniquePtr& Other ) = delete;

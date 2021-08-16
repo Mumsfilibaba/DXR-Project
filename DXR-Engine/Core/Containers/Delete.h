@@ -8,7 +8,7 @@
 template<typename T>
 struct TDefaultDelete
 {
-    typedef typename TRemoveExtent<T>::Type ElementType;
+    using ElementType = typename TRemoveExtent<T>::Type;
 
     TDefaultDelete() = default;
     TDefaultDelete( const TDefaultDelete& ) = default;

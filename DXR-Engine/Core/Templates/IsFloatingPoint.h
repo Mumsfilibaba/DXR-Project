@@ -10,9 +10,9 @@ struct TIsFloatingPoint
     enum
     {
         Value = (TOr<
-            TIsSame<float, typename TRemoveCV<T>::Type>,
-            TIsSame<double, typename TRemoveCV<T>::Type>,
-            TIsSame<long double, typename TRemoveCV<T>::Type>>::Value)
+        TIsSame<float, typename TRemoveCV<T>::Type>,
+                  TIsSame<double, typename TRemoveCV<T>::Type>,
+                  TIsSame<long double, typename TRemoveCV<T>::Type>>::Value)
     };
 };
 

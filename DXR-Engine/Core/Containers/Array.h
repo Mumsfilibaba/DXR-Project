@@ -16,8 +16,8 @@ template<typename T, typename AllocatorType = TDefaultAllocator<T>>
 class TArray
 {
 public:
-    typedef T     ElementType;
-    typedef int32 SizeType;
+    using ElementType = T;
+    using SizeType = int32;
 
     /* Iterators */
     typedef TArrayIterator<TArray, ElementType>                    IteratorType;
@@ -700,7 +700,7 @@ public:
     FORCEINLINE void MaxHeapSort()
     {
         MaxHeapify();
-        
+
         for ( SizeType Index = ArraySize - 1; Index > 0; Index-- )
         {
             SwapElements( 0, Index );
@@ -718,7 +718,7 @@ public:
     /* Sets the container to another array by moving it */
     FORCEINLINE TArray& operator=( TArray&& Other ) noexcept
     {
-        MoveFrom( Forward<TArray>(Other) );
+        MoveFrom( Forward<TArray>( Other ) );
         return *this;
     }
 
@@ -824,12 +824,12 @@ private:
     {
         /* Since the memory remains the same we should not need to use move-assignment or constructor.
            However, still need to call our destructors */
-        DestructRange<ElementType>(Data(), Size());
-        Allocator.MoveFrom( Move(FromArray.Allocator) );
+        DestructRange<ElementType>( Data(), Size() );
+        Allocator.MoveFrom( Move( FromArray.Allocator ) );
 
-        ArraySize               = FromArray.ArraySize;
-        ArrayCapacity           = FromArray.ArrayCapacity;
-        FromArray.ArraySize     = 0;
+        ArraySize = FromArray.ArraySize;
+        ArrayCapacity = FromArray.ArrayCapacity;
+        FromArray.ArraySize = 0;
         FromArray.ArrayCapacity = 0;
     }
 
@@ -847,9 +847,9 @@ private:
 
                 /* Relocate existing elements */
                 RelocateRange<ElementType>( NewAllocator.Raw(), Data(), ArraySize );
-            
+
                 /* Move allocator */
-                Allocator.MoveFrom( Move(NewAllocator) );
+                Allocator.MoveFrom( Move( NewAllocator ) );
             }
             else
             {
@@ -881,13 +881,13 @@ private:
                    objects has references to themselves or childobjects that references these objects. */
                 AllocatorType NewAllocator;
                 NewAllocator.Allocate( NewCapacity );
-                
+
                 /* Elements before new area */
                 RelocateRange<ElementType>( NewAllocator.Raw(), Data(), InsertAt );
 
                 /* Elements after new area */
                 RelocateRange<ElementType>( NewAllocator.Raw() + InsertAt + ElementCount, Data() + InsertAt, ArraySize - InsertAt );
-                Allocator.MoveFrom( Move(NewAllocator) );
+                Allocator.MoveFrom( Move( NewAllocator ) );
             }
             else
             {
@@ -927,8 +927,8 @@ private:
 
     FORCEINLINE void SwapElements( SizeType FirstIndex, SizeType SecondIndex )
     {
-        ElementType Temp( Move( At(FirstIndex) ) );
-        At( FirstIndex )  = Move( At(SecondIndex) );
+        ElementType Temp( Move( At( FirstIndex ) ) );
+        At( FirstIndex ) = Move( At( SecondIndex ) );
         At( SecondIndex ) = Move( Temp );
     }
 
@@ -938,11 +938,11 @@ private:
     FORCEINLINE void MinHeapify( SizeType Size, SizeType Index ) noexcept
     {
         SizeType StartIndex = Index;
-        SizeType Smallest   = Index;
+        SizeType Smallest = Index;
 
         while ( true )
         {
-            const SizeType Left  = LeftIndex( StartIndex );
+            const SizeType Left = LeftIndex( StartIndex );
             const SizeType Right = RightIndex( StartIndex );
 
             if ( Left < Size && At( Left ) < At( Smallest ) )
@@ -971,11 +971,11 @@ private:
     FORCEINLINE void MaxHeapify( SizeType Size, SizeType Index ) noexcept
     {
         SizeType StartIndex = Index;
-        SizeType Largest    = Index;
+        SizeType Largest = Index;
 
         while ( true )
         {
-            const SizeType Left  = LeftIndex( StartIndex );
+            const SizeType Left = LeftIndex( StartIndex );
             const SizeType Right = RightIndex( StartIndex );
 
             if ( Left < Size && At( Left ) > At( Largest ) )

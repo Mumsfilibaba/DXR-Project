@@ -3,93 +3,170 @@
 
 #include "Core/Containers/Array.h"
 
-class DelegateHandle
+/* Handle type */
+typedef int64 DelegateHandle;
+
+/* A handle for a multicast-delegate */
+class CDelegateHandle
 {
-    template<typename... TArgs>
-    friend class TMulticastBase;
-
 public:
-    DelegateHandle()
-        : Handle( nullptr )
+    enum class EGenerateID
+    {
+        New
+    };
+
+    /* Empty constructor, makes it storable */
+    FORCEINLINE CDelegateHandle()
+        : Handle( -1 )
     {
     }
 
-    bool IsValid() const
+    FORCEINLINE explicit CDelegateHandle( EGenerateID )
+        : Handle( GenerateID() )
     {
-        return Handle != nullptr;
     }
 
-    operator bool() const
+    /* Checks if the handle is equal to nullptr */
+    FORCEINLINE bool IsValid() const
+    {
+        return Handle != -1;
+    }
+
+    /* Retrive the ID */
+    FORCEINLINE DelegateHandle GetHandle() const
+    {
+        return Handle;
+    }
+
+    /* Checks if the handle is equal to nullptr */
+    FORCEINLINE operator bool() const
     {
         return IsValid();
     }
 
-private:
-    DelegateHandle( void* InHandle )
-        : Handle( InHandle )
+    /* Checks equallity between two handles */
+    FORCEINLINE bool operator==( CDelegateHandle RHS ) const
     {
+        return (Handle == RHS.Handle);
     }
 
-    void* Handle;
+    /* Checks equallity between two handles */
+    FORCEINLINE bool operator!=( CDelegateHandle RHS ) const
+    {
+        return !(*this == RHS);
+    }
+
+private:
+    DelegateHandle Handle;
+
+    //TODO: This needs to be exported when using DLLs
+    inline static DelegateHandle NextID = 0;
+
+    /* Generates a new ID */
+    FORCEINLINE static DelegateHandle GenerateID()
+    {
+        return ++NextID;
+    }
 };
 
-template<typename... TArgs>
-class TMulticastBase : public TDelegateBase<void( TArgs... )>
+/* Base of multicast delegate */
+template<typename... ArgTypes>
+class TMulticastBase
 {
-protected:
-    typedef TDelegateBase<void( TArgs... )> Base;
+    using TDelegateType = TDelegate<void( ArgTypes... )>;
+    using FunctionType = typename TFunctionType<void, ArgTypes...>::Type;
 
-    typedef typename Base::FunctionType     FunctionType;
-    typedef typename Base::IDelegate        IDelegate;
-    typedef typename Base::FunctionDelegate FunctionDelegate;
+    template<typename ClassType>
+    using MemberFunctionType = typename TMemberFunctionType<ClassType, void, ArgTypes...>::Type;
+    template<typename ClassType>
+    using ConstMemberFunctionType = typename TConstMemberFunctionType<ClassType, void, ArgTypes...>::Type;
 
-    template<typename T>
-    using MemberFunctionType = typename Base::template MemberFunctionType<T>;
-    template<typename T>
-    using ConstMemberFunctionType = typename Base::template ConstMemberFunctionType<T>;
-    template<typename T>
-    using ObjectDelegate = typename Base::template ObjectDelegate<T>;
-    template<typename T>
-    using ConstObjectDelegate = typename Base::template ConstObjectDelegate<T>;
-    template<typename F>
-    using LambdaDelegate = typename Base::template LambdaDelegate<F>;
+    /* Struct to store delegates in */
+    struct SDelegateAndHandle
+    {
+        TDelegateType   Delegate;
+        CDelegateHandle Handle;
+    };
 
 public:
-    DelegateHandle AddFunction( FunctionType Fn )
+
+    /* Empty constructor */
+    FORCEINLINE TMulticastBase()
+        : Delegates()
     {
-        return InternalAddNewDelegate( new FunctionDelegate( Fn ) );
     }
 
-    template<typename T>
-    DelegateHandle AddObject( T* This, MemberFunctionType<T> Fn )
+    /* Copy constructor */
+    FORCEINLINE TMulticastBase( const TMulticastBase& Other )
+        : Delegates( Other.Delegates )
     {
-        return InternalAddNewDelegate( new ObjectDelegate<T>( This, Fn ) );
     }
 
-    template<typename T>
-    DelegateHandle AddObject( const T* This, ConstMemberFunctionType<T> Fn )
+    /* Move constructor */
+    FORCEINLINE TMulticastBase( TMulticastBase&& Other )
+        : Delegates( Move( Other.Delegates ) )
     {
-        return InternalAddNewDelegate( new ConstObjectDelegate<T>( This, Fn ) );
     }
 
-    template<typename F>
-    DelegateHandle AddLambda( F Functor )
+    /* Destructor Unbind all delegates */
+    FORCEINLINE ~TMulticastBase()
     {
-        return InternalAddNewDelegate( new LambdaDelegate<F>( Forward<F>( Functor ) ) );
+        UnbindAll();
     }
 
-    DelegateHandle AddDelegate( const TDelegate<void( TArgs... )>& Delegate )
+    /* Bind "normal" function */
+    FORCEINLINE CDelegateHandle AddStatic( FunctionType Function )
     {
-        IDelegate* NewDelegate = Delegate.Delegate;
-        return InternalAddNewDelegate( NewDelegate->Clone() );
+        return PushDelegate( StaticDelegate<void, ArgTypes...>( Function ) );
     }
 
-    void Unbind( DelegateHandle Handle )
+    /* Bind member function */
+    template<typename InstanceType>
+    FORCEINLINE CDelegateHandle AddRaw( InstanceType* This, MemberFunctionType<InstanceType> Function )
     {
-        IDelegate* DelegateHandle = reinterpret_cast<IDelegate*>(Handle.Handle);
-        for ( TArray<IDelegate*>::Iterator It = Delegates.Begin(); It != Delegates.End(); It++ )
+        return PushDelegate( RawDelegate<InstanceType, InstanceType, void, ArgTypes...>( This, Function ) );
+    }
+
+    /* Bind member function */
+    template<typename InstanceType, typename ClassType>
+    FORCEINLINE CDelegateHandle AddRaw( InstanceType* This, MemberFunctionType<ClassType> Function )
+    {
+        return PushDelegate( RawDelegate<InstanceType, ClassType, void, ArgTypes...>( This, Function ) );
+    }
+
+    /* Bind const member function */
+    template<typename InstanceType>
+    FORCEINLINE CDelegateHandle AddRaw( const InstanceType* This, ConstMemberFunctionType<InstanceType> Function )
+    {
+        return PushDelegate( RawDelegate<InstanceType, InstanceType, void, ArgTypes...>( This, Function ) );
+    }
+
+    /* Bind const member function */
+    template<typename InstanceType, typename ClassType>
+    FORCEINLINE CDelegateHandle AddRaw( const InstanceType* This, ConstMemberFunctionType<ClassType> Function )
+    {
+        return PushDelegate( RawDelegate<InstanceType, ClassType, void, ArgTypes...>( This, Function ) );
+    }
+
+    /* Bind Lambda or other functor */
+    template<typename FunctorType>
+    FORCEINLINE CDelegateHandle AddLambda( FunctorType Functor )
+    {
+        return PushDelegate( LambdaDelegate<FunctorType, void, ArgTypes...>( Functor ) );
+    }
+
+    /* Add a "standard" delegate to the multicast delegate */
+    FORCEINLINE CDelegateHandle AddDelegate( const TDelegateType& Delegate )
+    {
+        return PushDelegate( Delegate );
+    }
+
+    /* Unbind a handle */
+    FORCEINLINE void Unbind( CDelegateHandle Handle )
+    {
+        for ( auto It = Delegates.StartIterator(); It != Delegates.EndItertator(); It++ )
         {
-            if ( DelegateHandle == *It )
+            if ( Handle == CDelegateHandle( It->Handle ) )
             {
                 Delegates.Erase( It );
                 return;
@@ -97,24 +174,68 @@ public:
         }
     }
 
-    bool IsBound() const
+    /* Checks if a delegate is bound */
+    FORCEINLINE bool IsBound() const
     {
         return !Delegates.IsEmpty();
     }
 
-    operator bool() const
+    /* Checks if a delegate is bound */
+    FORCEINLINE operator bool() const
     {
         return IsBound();
     }
 
-protected:
-    // TODO: Maybe use a list instead?
-    TArray<IDelegate*> Delegates;
-
-private:
-    DelegateHandle InternalAddNewDelegate( IDelegate* NewDelegate )
+    /* Move assignment */
+    FORCEINLINE TMulticastBase& operator=( TMulticastBase&& RHS )
     {
-        Delegates.EmplaceBack( NewDelegate );
-        return DelegateHandle( NewDelegate );
+        TMulticastDelegate( Move( RHS ) ).Swap( *this );
+        return *this;
     }
+
+    /* Copy assignment */
+    FORCEINLINE TMulticastBase& operator=( const TMulticastBase& RHS )
+    {
+        TMulticastBase( RHS ).Swap( *this );
+        return *this;
+    }
+
+protected:
+
+    /* Broadcast to all bound delegates */
+    FORCEINLINE void Broadcast( ArgTypes&&... Args )
+    {
+        for ( SDelegateAndHandle& Pair : Delegates )
+        {
+            Pair.Delegate.Execute( Forward<ArgTypes>( Args )... );
+        }
+    }
+
+    /* Unbind all bound delegates */
+    FORCEINLINE void UnbindAll()
+    {
+        for ( SDelegateAndHandle& Pair : Delegates )
+        {
+            Pair.Delegate.Unbind();
+        }
+
+        Delegates.Clear();
+    }
+
+    /* Swap */
+    FORCEINLINE void Swap( TMulticastBase& Other )
+    {
+        TArray<TDelegateType> TempDelegates( Move( Delegates ) );
+        Delegates = Move( Other.Delegates );
+        Other.Delegates = Move( TempDelegates );
+    }
+
+    /* Add a new delegate to the multicast delegate */
+    FORCEINLINE CDelegateHandle PushDelegate( const TDelegateType& NewDelegate )
+    {
+        SDelegateAndHandle& NewPair = Delegates.PushBack( { NewDelegate, GetNextID() } );
+        return CDelegateHandle( NewPair.Handle );
+    }
+
+    TArray<SDelegateAndHandle> Delegates;
 };

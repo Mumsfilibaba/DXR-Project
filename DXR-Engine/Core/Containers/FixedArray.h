@@ -12,8 +12,8 @@ template<typename T, const int32 ArraySize>
 struct TFixedArray
 {
 public:
-    typedef T     ElementType;
-    typedef int32 SizeType;
+    using ElementType = T;
+    using SizeType = int32;
 
     /* Iterators */
     typedef TArrayIterator<TFixedArray, ElementType>                    IteratorType;
