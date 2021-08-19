@@ -2,9 +2,11 @@
 
 #include <Core/Containers/String.h>
 #include <Core/Containers/UniquePtr.h>
+#include <Core/Templates/IntegerSequence.h>
 
 #include <iostream>
 #include <type_traits>
+#include <utility>
 
 /* Helper classes etc. */
 
@@ -488,6 +490,10 @@ int main()
     /* Is Trivial */
     static_assert(TIsTrivial<SPOD>::Value   == true);
     static_assert(TIsTrivial<CClass>::Value == false);
+
+    /* Integer Sequence */
+    TIntegerSequence Sequence = TMakeIntegerSequence<uint32, 5>();
+    Sequence.Size;
 
     return 0;
 }

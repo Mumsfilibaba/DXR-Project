@@ -1,173 +1,186 @@
 #pragma once
-#include "CoreTypes.h"
-#include "CoreDefines.h"
+#include "DelegateInstance.h"
 
-#include "Core/Templates/Move.h"
-#include "Core/Templates/FunctionType.h"
+#include "Core/Containers/Allocators.h"
 
-/* Basetype for delegates */
-class CGenericDelegate
+/* Base class containing variables that does not require templates */
+class CDelegateBase
 {
+    enum
+    {
+        // TODO: Look into padding so we can use larger structs?
+        InlineBytes = 32
+    };
+
 public:
-    CGenericDelegate() = default;
-    virtual ~CGenericDelegate() noexcept = default;
 
-    /* Retrive the owner of the function, returns nullptr for non-member delegates */
-    virtual const void* GetOwner() const
-    {
-        return nullptr;
-    }
-};
-
-/* Types basetype for delegates */
-template<typename ReturnType, typename... ArgTypes>
-class IDelegate : public CGenericDelegate
-{
-public:
-    /* Executes the delegates and calls the stored function or functor */
-    virtual ReturnType Execute( ArgTypes... Args ) const = 0;
-
-    /* Clones the delegate and stores it in the specified memory */
-    virtual IDelegate* Clone( void* Memory ) const = 0;
-};
-
-/* Class for storing a "normal" function in a delegate */
-template<typename ReturnType, typename... ArgTypes>
-class TFunctionDelegate : public IDelegate<ReturnType, ArgTypes...>
-{
-public:
-    typedef ReturnType( *FunctionType )(ArgTypes...);
-    typedef typename IDelegate<ReturnType, ArgTypes...> Base;
-
-    /* Constructor taking a function */
-    FORCEINLINE TFunctionDelegate( FunctionType InFunction )
-        : Base()
-        , Function( InFunction )
+    /* Constructor for a empty delegate */
+    FORCEINLINE CDelegateBase()
+        : Storage()
     {
     }
 
-    /* Execute the function */
-    virtual ReturnType Execute( ArgTypes... Args ) const override final
+    /* Copy constructor */
+    FORCEINLINE CDelegateBase(const CDelegateBase& Other)
+        : Storage()
     {
-        return Function( Forward<ArgTypes>( Args )... );
+        CopyFrom(Other);
     }
 
-    /* Clone this instance and store in the memory */
-    virtual Base* Clone( void* Memory ) const override final
-    {
-        return new(Memory) TFunctionDelegate( Function );
-    }
-
-private:
-    FunctionType Function;
-};
-
-/* Stores a memberfunction as a delegate */
-template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
-class TMemberDelegate : public IDelegate<ReturnType, ArgTypes...>
-{
-public:
-    typedef typename IDelegate<ReturnType, ArgTypes...> Base;
-    typedef typename TMemberFunctionType<ClassType, ReturnType, ArgTypes...>::Type MemberFunctionType;
-
-    /* Constructor */
-    FORCEINLINE TMemberDelegate( InstanceType* InThis, MemberFunctionType InFunction )
-        : Base()
-        , This( InThis )
-        , Function( InFunction )
-    {
-        Assert( This != nullptr );
-    }
-
-    /* Execute function */
-    virtual ReturnType Execute( ArgTypes... Args ) const override final
-    {
-        return ((*This).*Function)(Forward<ArgTypes>( Args )...);
-    }
-
-    /* Clone this instance and store in the memory */
-    virtual Base* Clone( void* Memory ) const override final
-    {
-        return new(Memory) TMemberDelegate( This, Function );
-    }
-
-    /* Returns this */
-    virtual const void* GetOwner() const
-    {
-        return reinterpret_cast<const void*>(This);
-    }
-
-private:
-    InstanceType* This = nullptr;
-    MemberFunctionType Function;
-};
-
-/* Stores a const memberfunction as a delegate */
-template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
-class TConstMemberDelegate : public IDelegate<ReturnType, ArgTypes...>
-{
-public:
-    typedef typename IDelegate<ReturnType, ArgTypes...> Base;
-    typedef typename TConstMemberFunctionType<ClassType, ReturnType, ArgTypes...>::Type MemberFunctionType;
-
-    /* Constructor */
-    FORCEINLINE TConstMemberDelegate( const InstanceType* InThis, MemberFunctionType InFunction )
-        : Base()
-        , This( InThis )
-        , Function( InFunction )
-    {
-        Assert( This != nullptr );
-    }
-
-    /* Execute function */
-    virtual ReturnType Execute( ArgTypes... Args ) const override
-    {
-        return ((*This).*Function)(Forward<ArgTypes>( Args )...);
-    }
-
-    /* Clone this instance and store in the memory */
-    virtual Base* Clone( void* Memory ) const override
-    {
-        return new(Memory) TConstMemberDelegate( This, Function );
-    }
-
-    /* Returns this */
-    virtual const void* GetOwner() const
-    {
-        return reinterpret_cast<const void*>(This);
-    }
-
-private:
-    const InstanceType* This = nullptr;
-    MemberFunctionType Function;
-};
-
-/* Stores a lambda delegate */
-template<typename FunctorType, typename ReturnType, typename... ArgTypes>
-class TLambdaDelegate : public IDelegate<ReturnType, ArgTypes...>
-{
-public:
-    typedef typename IDelegate<ReturnType, ArgTypes...> Base;
-
-    /* Constructor */
-    FORCEINLINE TLambdaDelegate( FunctorType InInvokable )
-        : Base()
-        , Functor( InInvokable )
+    /* Move constructor */
+    FORCEINLINE CDelegateBase(CDelegateBase&& Other)
+        : Storage( Move(Other.Storage) )
     {
     }
 
-    /* Execute Functor */
-    virtual ReturnType Execute( ArgTypes... Args ) const override
+    /* Destructor unbinding the delegate */
+    FORCEINLINE ~CDelegateBase()
     {
-        return Functor( Forward<ArgTypes>( Args )... );
+        Unbind();
     }
 
-    /* Clone this instance and store in the memory */
-    virtual Base* Clone( void* Memory ) const override
+    /* Unbinds the delegate */
+    FORCEINLINE void Unbind()
     {
-        return new(Memory) TLambdaDelegate( Functor );
+        Release();
     }
 
-private:
-    FunctorType Functor;
+    /* Swaps two delegates */
+    FORCEINLINE void Swap(CDelegateBase& Other)
+    {
+        AllocatorType TempStorage(Move(Storage));
+        Storage = Move(Other.Storage);
+        Other.Storage = Move(TempStorage);
+    }
+
+    /* Cheacks weather or not there exist any delegate bound */
+    FORCEINLINE bool IsBound() const
+    {
+        return Storage.HasAllocation();
+    }
+
+    /* Check if object is bound to this delegate */
+    FORCEINLINE bool IsObjectBound(const void* Object) const
+    {
+        if (Object != nullptr && IsBound())
+        {
+            return GetDelegate()->IsObjectBound(Object);
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+    /* Check if object is bound to this delegate */
+    FORCEINLINE bool UnbindIfBound(const void* Object)
+    {
+        if (IsObjectBound(Object))
+        {
+            Unbind();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /* Retrive the bound object, returns nullptr for non-member delegates */
+    FORCEINLINE const void* GetBoundObject() const
+    {
+        if (IsBound())
+        {
+            return GetDelegate()->GetBoundObject();
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+    /* Retrive the delegate handle for this object */
+    FORCEINLINE CDelegateHandle GetHandle() const
+    {
+        if (IsBound())
+        {
+            return GetDelegate()->GetHandle();
+        }
+        else
+        {
+            return CDelegateHandle();
+        }
+    }
+
+    /* Move assignment */
+    FORCEINLINE CDelegateBase& operator=(CDelegateBase&& RHS)
+    {
+        CDelegateBase( Move(RHS) ).Swap(*this);
+        return *this;
+    }
+
+    /* Copy assignment */
+    FORCEINLINE CDelegateBase& operator=(const CDelegateBase& RHS)
+    {
+        CDelegateBase( RHS ).Swap(*this);
+        return *this;
+    }
+
+    /* Check if valid */
+    FORCEINLINE operator bool() const
+    {
+        return IsBound();
+    }
+
+protected:
+
+    // TODO: Should allocator use the element type at all? 
+    using AllocatorType = TInlineAllocator<int8, InlineBytes>;
+
+    /* Release the delegate */
+    FORCEINLINE void Release()
+    {
+        if (Storage.HasAllocation())
+        {
+            GetDelegate()->~IDelegateInstance();
+            Storage.Free();
+        }
+    }
+
+    /* Copy from another function */
+    FORCEINLINE void CopyFrom(const CDelegateBase& Other) noexcept
+    {
+        if (Other.IsBound())
+        {
+            Storage.Allocate(Other.Storage.GetSize());
+            Other.GetDelegate()->Clone(Storage.Raw());
+        }
+    }
+
+    /* Internal function that is used to retrive the functor pointer */
+    FORCEINLINE IDelegateInstance* GetDelegate() noexcept
+    {
+        return reinterpret_cast<IDelegateInstance*>(GetStorage().Raw());
+    }
+
+    /* Internal function that is used to retrive the functor pointer */
+    FORCEINLINE const IDelegateInstance* GetDelegate() const noexcept
+    {
+        return reinterpret_cast<const IDelegateInstance*>(GetStorage().Raw());
+    }
+
+    /* Retrive the storage */
+    FORCEINLINE AllocatorType& GetStorage()
+    {
+        return Storage;
+    }
+
+    /* Retrive the storage */
+    FORCEINLINE const AllocatorType& GetStorage() const
+    {
+        return Storage;
+    }
+
+    /* Storage for the delegate instance */
+    AllocatorType Storage;
 };

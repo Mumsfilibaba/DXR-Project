@@ -68,6 +68,13 @@ static bool Func2( int32 In )
     return true;
 }
 
+/* Tuple func */
+int32 TupleFunc( int32 Num0, int32 Num1, int32 Num2, int32 Num3 )
+{
+    std::cout << "Tuple func Num0=" << Num0 << ", Num1=" << Num1 << ", Num2=" << Num2 << ", Num3=" << Num3 << std::endl;
+    return Num0 + 1;
+}
+
 /*
  * Test
  */
@@ -78,24 +85,24 @@ void TFunction_Test()
     std::cout << "Testing constructor and Invoke" << std::endl;
 
     A a;
-    TMemberFunction A_Func = TMemberFunction( &a, &A::Func );
+    auto A_Func = Bind( &A::Func, &a );
     A_Func( 32 );
 
-    TConstMemberFunction A_ConstFunc = TConstMemberFunction( &a, &A::ConstFunc );
+    auto A_ConstFunc = Bind( &A::ConstFunc, &a );
     A_ConstFunc( 32 );
 
     std::cout << "Testing virtual functions" << std::endl;
     CSecond Second;
 
-    TMemberFunction SecondFunc = TMemberFunction( &Second, &CSecond::Func );
+    auto SecondFunc = Bind( &CSecond::Func, &Second );
     SecondFunc( 42 );
 
     CFourth Fourth;
 
-    TMemberFunction FourthFunc = TMemberFunction( &Fourth, &CFourth::Func );
+    auto FourthFunc = Bind( &CFourth::Func, &Fourth );
     FourthFunc( 42 );
 
-    TFunction<void(int32)> FourthFuncWrapper = Bind( &Fourth, &CFourth::Func );
+    TFunction<void(int32)> FourthFuncWrapper = Bind( &CFourth::Func, &Fourth );
     FourthFuncWrapper( 555 );
 
     std::cout << std::endl << "----------TFunction----------" << std::endl << std::endl;
@@ -113,10 +120,10 @@ void TFunction_Test()
     TFunction<bool( int32 )> NormalFunc = Func;
     NormalFunc( 5 );
 
-    TFunction<bool( int32 )> MemberFunc = Bind( &a, &A::Func );
+    TFunction<bool( int32 )> MemberFunc = Bind( &A::Func, &a );
     MemberFunc( 10 );
 
-    TFunction<bool( int32 )> MemberFunc1 = Bind( &a, &A::ConstFunc );
+    TFunction<bool( int32 )> MemberFunc1 = Bind( &A::ConstFunc, &a );
     MemberFunc1( 666 );
 
     TFunction<bool( int32 )> FunctorFunc = Fun;
@@ -159,7 +166,7 @@ void TFunction_Test()
 
     std::cout << std::endl << "-------Test Assign-------" << std::endl << std::endl;
     NormalFunc.Assign( Func2 );
-    MemberFunc.Assign( Bind( &a, &A::Func2 ) );
+    MemberFunc.Assign( Bind( &A::Func2, &a ) );
 
     NormalFunc( 70 );
     MemberFunc( 80 );
@@ -175,6 +182,37 @@ void TFunction_Test()
 
     TFunction<void(int)> EmptyFunc;
     std::cout << "EmptyFunc=" << std::boolalpha << EmptyFunc.IsValid() << std::endl;
+
+    std::cout << std::endl << "-------Test Bind-------" << std::endl << std::endl;
+    int32 Num0 = 50;
+    int32 Num1 = 100;
+
+    TFunction<int(int, int )> Payload = Bind( TupleFunc, Num0, Num1 );
+    Payload(150, 200);
+
+    auto Payload2 = Bind( Func, 42 );
+    Payload2();
+
+    // Lambda
+    auto Lambda = [=]( int32 Num ) -> int32
+    {
+        std::cout << "Lambda (x=" << x << ", y=" << y << ", z=" << z << ") =" << Num << std::endl;
+        return Num + 1;
+    };
+
+    auto Payload3 = Bind( Lambda, 42 );
+    Payload3();
+
+    auto Payload4 = Bind( &CSecond::Func, &Second, 42 );
+    Payload4();
+
+    Invoke( &CSecond::Func, &Second, 42 );
+
+    auto Payload5 = Bind( Func );
+    Payload5( 42 );
+
+    auto Payload6 = Bind( &CSecond::Func );
+    Payload6( &Second, 42 );
 }
 
 #endif

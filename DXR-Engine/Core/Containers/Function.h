@@ -1,101 +1,90 @@
 #pragma once
 #include "CoreTypes.h"
 #include "Allocators.h"
+#include "Tuple.h"
 
 #include "Core/Templates/Move.h"
 #include "Core/Templates/IsPointer.h"
 #include "Core/Templates/IsNullptr.h"
 #include "Core/Templates/IsInvokable.h"
 #include "Core/Templates/FunctionType.h"
+#include "Core/Templates/Identity.h"
+#include "Core/Templates/Decay.h"
 
-/* TMemberFunction - Encapsulates a member function */
-template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
-class TMemberFunction
+/* A payloaded function */
+template<typename FunctionType, typename... PayloadTypes>
+class TBindPayload
 {
 public:
-    typedef ReturnType( ClassType::* FunctionType )(ArgTypes...);
 
     /* Constructor */
-    FORCEINLINE TMemberFunction( InstanceType* InThis, FunctionType InFunc ) noexcept
-        : This( InThis )
-        , Func( InFunc )
+    FORCEINLINE TBindPayload( FunctionType InFunc, PayloadTypes&&... PayloadArgs ) noexcept
+        : Payload( Forward<PayloadTypes>( PayloadArgs )... )
+        , Func( Move( InFunc ) )
     {
     }
 
     /* Invoke function */
-    FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) const noexcept
+    template<typename... ArgTypes>
+    FORCEINLINE auto Execute( ArgTypes&&... Args ) noexcept
     {
-        return ((*This).*Func)(Forward<ArgTypes>( Args )...);
+        return Payload.ApplyBefore( Func, Forward<ArgTypes>( Args )... );
     }
 
     /* Operator for invoking function */
-    FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) const noexcept
+    template<typename... ArgTypes>
+    FORCEINLINE auto operator()( ArgTypes&&... Args ) noexcept
     {
-        return Invoke( Forward<ArgTypes>( Args )... );
+        return Execute( Forward<ArgTypes>( Args )... );
     }
 
 private:
-    InstanceType* This;
+
+    /* Arguments stored when calling bind and then applied to the function when invoked */
+    TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
+
+    /* Function pointer */
     FunctionType Func;
 };
 
-/* TConstMemberFunction - Encapsulates a const member function */
-template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
-class TConstMemberFunction
+/* Empty payloaded function */
+template<typename FunctionType>
+class TBindPayload<FunctionType>
 {
 public:
-    typedef ReturnType( ClassType::* FunctionType )(ArgTypes...) const;
 
     /* Constructor */
-    FORCEINLINE TConstMemberFunction( const InstanceType* InThis, FunctionType InFunc ) noexcept
-        : This( InThis )
-        , Func( InFunc )
+    FORCEINLINE TBindPayload( FunctionType InFunc ) noexcept
+        : Func( Move( InFunc ) )
     {
     }
 
     /* Invoke function */
-    FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) const noexcept
+    template<typename... ArgTypes>
+    FORCEINLINE auto Execute( ArgTypes&&... Args ) noexcept
     {
-        return ((*This).*Func)(Forward<ArgTypes>( Args )...);
+        return Invoke( Func, Forward<ArgTypes>( Args )... );
     }
 
     /* Operator for invoking function */
-    FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) const noexcept
+    template<typename... ArgTypes>
+    FORCEINLINE auto operator()( ArgTypes&&... Args ) noexcept
     {
-        return Invoke( Forward<ArgTypes>( Args )... );
+        return Execute( Forward<ArgTypes>( Args )... );
     }
 
 private:
-    const InstanceType* This;
+
+    /* Function pointer */
     FunctionType Func;
 };
 
-/* Bind member function */
-template<typename InstanceType, typename ReturnType, typename... ArgTypes>
-FORCEINLINE TMemberFunction<InstanceType, InstanceType, ReturnType, ArgTypes...> Bind( InstanceType* This, ReturnType( InstanceType::* Func )(ArgTypes...) ) noexcept
-{
-    return TMemberFunction<InstanceType, InstanceType, ReturnType, ArgTypes...>( This, Func );
-}
 
-/* Bind member function from parent class */
-template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
-FORCEINLINE TMemberFunction<InstanceType, ClassType, ReturnType, ArgTypes...> Bind( InstanceType* This, ReturnType( ClassType::* Func )(ArgTypes...) ) noexcept
+/* Bind a function with payload */
+template<typename FunctionType, typename... ArgTypes>
+FORCEINLINE auto Bind( FunctionType Function, ArgTypes&&... Args )
 {
-    return TMemberFunction<InstanceType, ClassType, ReturnType, ArgTypes...>( This, Func );
-}
-
-/* Bind const member function */
-template<typename InstanceType, typename ReturnType, typename... ArgTypes>
-FORCEINLINE TConstMemberFunction<InstanceType, InstanceType, ReturnType, ArgTypes...> Bind( const InstanceType* This, ReturnType( InstanceType::* Func )(ArgTypes...) const ) noexcept
-{
-    return TConstMemberFunction<InstanceType, InstanceType, ReturnType, ArgTypes...>( This, Func );
-}
-
-/* Bind const member function from parent class */
-template<typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
-FORCEINLINE TConstMemberFunction<InstanceType, ClassType, ReturnType, ArgTypes...> Bind( const InstanceType* This, ReturnType( ClassType::* Func )(ArgTypes...) const ) noexcept
-{
-    return TConstMemberFunction<InstanceType, ClassType, ReturnType, ArgTypes...>( This, Func );
+    return TBindPayload<FunctionType, ArgTypes...>( Function, Forward<ArgTypes>( Args )... );
 }
 
 /* TFunction - Encapsulates callables similar to std::function */
@@ -111,13 +100,16 @@ class TFunction<ReturnType( ArgTypes... )>
         InlineBytes = 24
     };
 
+    // TODO: Should allocator use the element type at all? 
+    using AllocatorType = TInlineAllocator<int8, InlineBytes>;
+
     /* Generic functor interface */
     class IFunctor
     {
     public:
         virtual ~IFunctor() = default;
 
-        virtual ReturnType Invoke( ArgTypes&&... Args ) const noexcept = 0;
+        virtual ReturnType Invoke( ArgTypes&&... Args ) noexcept = 0;
         virtual IFunctor* Clone( void* Memory ) const noexcept = 0;
     };
 
@@ -150,7 +142,7 @@ class TFunction<ReturnType( ArgTypes... )>
         }
 
         /* Invoke the functor */
-        virtual ReturnType Invoke( ArgTypes&&... Args ) const noexcept override final
+        virtual ReturnType Invoke( ArgTypes&&... Args ) noexcept override final
         {
             return Functor( Forward<ArgTypes>( Args )... );
         }
@@ -228,14 +220,14 @@ public:
     }
 
     /* Invoke the function */
-    FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) const noexcept
+    FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) noexcept
     {
         IsValid();
         return GetFunctor()->Invoke( Forward<ArgTypes>( Args )... );
     }
 
     /* Invoke the function */
-    FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) const noexcept
+    FORCEINLINE ReturnType operator()( ArgTypes&&... Args ) noexcept
     {
         return Invoke( Forward<ArgTypes>( Args )... );
     }
@@ -321,6 +313,5 @@ private:
         return reinterpret_cast<const IFunctor*>(Storage.Raw());
     }
 
-    // TODO: Should allocator use the element type at all? 
-    TInlineAllocator<int8, InlineBytes> Storage;
+    AllocatorType Storage;
 };

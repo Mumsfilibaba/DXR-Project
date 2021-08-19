@@ -211,7 +211,6 @@ private:
         return reinterpret_cast<const ElementType*>(InlineAllocation);
     }
 
-    int32 Size;
     union
     {
         /* Inline bytes */
@@ -220,4 +219,6 @@ private:
         /* Dynamic allocation */
         ElementType* Allocation;
     };
+
+    int32 Size;
 };

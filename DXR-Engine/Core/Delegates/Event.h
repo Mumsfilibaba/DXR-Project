@@ -1,5 +1,5 @@
 #pragma once
-#include "MulticastBase.h"
+#include "MulticastDelegate.h"
 
 /* Base type for events */
 template<typename... ArgTypes>
