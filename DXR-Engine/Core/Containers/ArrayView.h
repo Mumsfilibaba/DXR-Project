@@ -206,6 +206,13 @@ public:
         return View;
     }
 
+    /* Create a subview */
+    FORCEINLINE const ElementType* SubView( SizeType Offset, SizeType Count ) const noexcept
+    {
+        Assert((Count < ViewSize) && (Offset + Count < ViewSize) );
+        return TArrayView(View + Offset, Count);
+    }
+
     /* Compares two containers by comparing each element, returns true if all is equal */
     template<typename ArrayType>
     FORCEINLINE bool operator==( const ArrayType& Other ) const noexcept

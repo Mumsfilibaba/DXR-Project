@@ -1,5 +1,6 @@
 #pragma once
-#include "Core.h"
+#include "CoreTypes.h"
+#include "CoreDefines.h"
 
 /* Class handling memory */
 class Memory
