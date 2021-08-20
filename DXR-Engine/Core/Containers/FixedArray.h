@@ -6,6 +6,7 @@
 #include "Core/Templates/IsMovable.h"
 #include "Core/Templates/AddReference.h"
 #include "Core/Templates/ObjectHandling.h"
+#include "Core/Templates/Not.h"
 
 /* A fixed size array similar to std::array */
 template<typename T, const int32 ArraySize>

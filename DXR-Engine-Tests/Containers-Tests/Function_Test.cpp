@@ -102,7 +102,7 @@ void TFunction_Test()
     auto FourthFunc = Bind( &CFourth::Func, &Fourth );
     FourthFunc( 42 );
 
-    TFunction<void(int32)> FourthFuncWrapper = Bind( &CFourth::Func, &Fourth );
+    TFunction<void( int32 )> FourthFuncWrapper = Bind( &CFourth::Func, &Fourth );
     FourthFuncWrapper( 555 );
 
     std::cout << std::endl << "----------TFunction----------" << std::endl << std::endl;
@@ -180,15 +180,15 @@ void TFunction_Test()
     std::cout << std::endl << "-------Test IsValid-------" << std::endl << std::endl;
     std::cout << "NormalFunc=" << std::boolalpha << NormalFunc.IsValid() << std::endl;
 
-    TFunction<void(int)> EmptyFunc;
+    TFunction<void( int )> EmptyFunc;
     std::cout << "EmptyFunc=" << std::boolalpha << EmptyFunc.IsValid() << std::endl;
 
     std::cout << std::endl << "-------Test Bind-------" << std::endl << std::endl;
     int32 Num0 = 50;
     int32 Num1 = 100;
 
-    TFunction<int(int, int )> Payload = Bind( TupleFunc, Num0, Num1 );
-    Payload(150, 200);
+    TFunction<int( int, int )> Payload = Bind( TupleFunc, Num0, Num1 );
+    Payload( 150, 200 );
 
     auto Payload2 = Bind( Func, 42 );
     Payload2();

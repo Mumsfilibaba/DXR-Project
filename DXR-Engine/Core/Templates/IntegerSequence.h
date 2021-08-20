@@ -7,7 +7,7 @@ template <typename T, T... Sequence>
 struct TIntegerSequence
 {
     typedef T Type;
-    
+
     static_assert(TIsInteger<T>::Value, "TIntegerSequence must an integral type");
 
     enum
@@ -34,7 +34,7 @@ namespace Internal
     struct TSequenceHelper;
 
     template<uint32 N, typename T, T... First, T... Second>
-    struct TSequenceHelper<N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> : TIntegerSequence<T, First..., (T(N + Second))...>
+    struct TSequenceHelper<N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> : TIntegerSequence<T, First..., (T( N + Second ))...>
     {
         using Type = TIntegerSequence<T, First..., (T( N + Second ))...>;
     };

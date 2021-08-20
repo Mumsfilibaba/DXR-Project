@@ -57,47 +57,47 @@ public:
     static FORCEINLINE TDelegate CreateStatic( FunctionType<PayloadTypes...> Function, PayloadTypes... Payload )
     {
         TDelegate Delegate;
-        Delegate.BindStatic<PayloadTypes...>( Function, Forward<PayloadTypes>(Payload)... );
+        Delegate.BindStatic<PayloadTypes...>( Function, Forward<PayloadTypes>( Payload )... );
         return Delegate;
     }
 
     /* Helper for creating a member delegate */
     template<typename InstanceType, typename... PayloadTypes>
-    static FORCEINLINE TDelegate CreateRaw(InstanceType* This, MemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
+    static FORCEINLINE TDelegate CreateRaw( InstanceType* This, MemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload )
     {
         static_assert(!TIsConst<InstanceType>::Value, "Cannot bind a non-const function to a const instance");
 
-        TDelegate<ReturnType(ArgTypes...)> Delegate;
-        Delegate.BindRaw<InstanceType, InstanceType, PayloadTypes...>( This, Function, Forward<PayloadTypes>(Payload)... );
+        TDelegate<ReturnType( ArgTypes... )> Delegate;
+        Delegate.BindRaw<InstanceType, InstanceType, PayloadTypes...>( This, Function, Forward<PayloadTypes>( Payload )... );
         return Delegate;
     }
 
     /* Helper for creating a member delegate */
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
-    static FORCEINLINE TDelegate CreateRaw(InstanceType* This, MemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
+    static FORCEINLINE TDelegate CreateRaw( InstanceType* This, MemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload )
     {
         static_assert(!TIsConst<InstanceType>::Value, "Cannot bind a non-const function to a const instance");
 
         TDelegate Delegate;
-        Delegate.BindRaw<InstanceType, ClassType, PayloadTypes...>( This, Function, Forward<PayloadTypes>(Payload)... );
+        Delegate.BindRaw<InstanceType, ClassType, PayloadTypes...>( This, Function, Forward<PayloadTypes>( Payload )... );
         return Delegate;
     }
 
     /* Helper for creating a const member delegate */
     template<typename InstanceType, typename... PayloadTypes>
-    static FORCEINLINE TDelegate CreateRaw(InstanceType* This, ConstMemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
+    static FORCEINLINE TDelegate CreateRaw( InstanceType* This, ConstMemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload )
     {
         TDelegate Delegate;
-        Delegate.BindRaw<InstanceType, InstanceType, PayloadTypes...>( This, Function, Forward<PayloadTypes>(Payload)... );
+        Delegate.BindRaw<InstanceType, InstanceType, PayloadTypes...>( This, Function, Forward<PayloadTypes>( Payload )... );
         return Delegate;
     }
 
     /* Helper for creating a const member delegate */
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
-    static FORCEINLINE TDelegate CreateRaw(InstanceType* This, ConstMemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
+    static FORCEINLINE TDelegate CreateRaw( InstanceType* This, ConstMemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload )
     {
         TDelegate Delegate;
-        Delegate.BindRaw<InstanceType, ClassType, PayloadTypes...>( This, Function, Forward<PayloadTypes>(Payload)... );
+        Delegate.BindRaw<InstanceType, ClassType, PayloadTypes...>( This, Function, Forward<PayloadTypes>( Payload )... );
         return Delegate;
     }
 
@@ -106,17 +106,23 @@ public:
     static FORCEINLINE TDelegate CreateLambda( FunctorType Functor, PayloadTypes... Payload )
     {
         TDelegate Delegate;
-        Delegate.BindLambda<FunctorType, PayloadTypes...>( Forward<FunctorType>(Functor), Forward<PayloadTypes>(Payload)... );
+        Delegate.BindLambda<FunctorType, PayloadTypes...>( Forward<FunctorType>( Functor ), Forward<PayloadTypes>( Payload )... );
         return Delegate;
     }
 
 public:
 
+    /* Constructor for a empty delegate */
+    FORCEINLINE explicit TDelegate()
+        : Super()
+    {
+    }
+
     /* Bind "normal" function */
     template<typename... PayloadTypes>
     FORCEINLINE void BindStatic( FunctionType<PayloadTypes...> Function, PayloadTypes... Payload )
     {
-        Bind<TFunctionDelegateInstance<ReturnType(ArgTypes...), PayloadTypes...>>( Function, Forward<PayloadTypes>( Payload )... );
+        Bind<TFunctionDelegateInstance<ReturnType( ArgTypes... ), PayloadTypes...>>( Function, Forward<PayloadTypes>( Payload )... );
     }
 
     /* Bind member function */
@@ -124,7 +130,7 @@ public:
     FORCEINLINE void BindRaw( InstanceType* This, MemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload )
     {
         static_assert(!TIsConst<InstanceType>::Value, "Cannot bind a non-const function to a const instance");
-        Bind<TMemberDelegateInstance<false, InstanceType, InstanceType, ReturnType(ArgTypes...), PayloadTypes...>>( This, Function, Forward<PayloadTypes>(Payload)... );
+        Bind<TMemberDelegateInstance<false, InstanceType, InstanceType, ReturnType( ArgTypes... ), PayloadTypes...>>( This, Function, Forward<PayloadTypes>( Payload )... );
     }
 
     /* Bind member function */
@@ -132,28 +138,28 @@ public:
     FORCEINLINE void BindRaw( InstanceType* This, MemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload )
     {
         static_assert(!TIsConst<InstanceType>::Value, "Cannot bind a non-const function to a const instance");
-        Bind<TMemberDelegateInstance<false, InstanceType, ClassType, ReturnType(ArgTypes...), PayloadTypes...>>( This, Function, Forward<PayloadTypes>(Payload)... );
+        Bind<TMemberDelegateInstance<false, InstanceType, ClassType, ReturnType( ArgTypes... ), PayloadTypes...>>( This, Function, Forward<PayloadTypes>( Payload )... );
     }
 
     /* Bind const member function */
     template<typename InstanceType, typename... PayloadTypes>
     FORCEINLINE void BindRaw( InstanceType* This, ConstMemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload )
     {
-        Bind<TMemberDelegateInstance<true, InstanceType, InstanceType, ReturnType(ArgTypes...), PayloadTypes...>>( This, Function, Forward<PayloadTypes>(Payload)... );
+        Bind<TMemberDelegateInstance<true, InstanceType, InstanceType, ReturnType( ArgTypes... ), PayloadTypes...>>( This, Function, Forward<PayloadTypes>( Payload )... );
     }
 
     /* Bind const member function */
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
     FORCEINLINE void BindRaw( InstanceType* This, ConstMemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload )
     {
-        Bind<TMemberDelegateInstance<true, InstanceType, ClassType, ReturnType(ArgTypes...), PayloadTypes...>>( This, Function, Forward<PayloadTypes>(Payload)... );
+        Bind<TMemberDelegateInstance<true, InstanceType, ClassType, ReturnType( ArgTypes... ), PayloadTypes...>>( This, Function, Forward<PayloadTypes>( Payload )... );
     }
 
     /* Bind Lambda or other functor */
     template<typename FunctorType, typename... PayloadTypes>
-    FORCEINLINE void BindLambda( FunctorType Functor, PayloadTypes... Payload)
+    FORCEINLINE void BindLambda( FunctorType Functor, PayloadTypes... Payload )
     {
-        Bind<TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...), PayloadTypes...>>( Forward<FunctorType>( Functor ), Forward<PayloadTypes>(Payload)... );
+        Bind<TLambdaDelegateInstance<FunctorType, ReturnType( ArgTypes... ), PayloadTypes...>>( Forward<FunctorType>( Functor ), Forward<PayloadTypes>( Payload )... );
     }
 
     /* Executes the delegate */
@@ -177,22 +183,16 @@ public:
         }
     }
 
-    /* Execute operator */
-    FORCEINLINE ReturnType operator()( ArgTypes... Args )
-    {
-        return Execute( Forward<ArgTypes>( Args )... );
-    }
-
 private:
 
     /* Binding and allocating storage */
     template<typename DelegateType, typename... ConstructorArgs>
-    FORCEINLINE void Bind(ConstructorArgs&&... Args)
+    FORCEINLINE void Bind( ConstructorArgs&&... Args )
     {
         Release();
 
-        void* Memory = GetStorage().Allocate(sizeof(DelegateType));
-        new (Memory) DelegateType(Forward<ConstructorArgs>(Args)...);
+        void* Memory = GetStorage().Allocate( sizeof( DelegateType ) );
+        new (Memory) DelegateType( Forward<ConstructorArgs>( Args )... );
     }
 
     /* Internal function that is used to retrive the functor pointer */

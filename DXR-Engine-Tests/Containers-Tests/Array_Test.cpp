@@ -490,10 +490,10 @@ void TArray_Benchmark()
 #if 1
     {
         const uint32 SortTestCount = 100;
-        const uint32 NumNumbers    = 1000000;
+        const uint32 NumNumbers = 1000000;
         std::cout << std::endl << "MaxHeapSort (NumNumbers=" << NumNumbers << ", SortTestCount=" << SortTestCount << ")" << std::endl;
 
-        srand( (unsigned int)time(0) );
+        srand( (unsigned int)time( 0 ) );
 
         SClock Clock;
         for ( uint32 i = 0; i < SortTestCount; i++ )
@@ -720,7 +720,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         PrintArr( Strings2 );
         Strings2.InsertAt( 0, { "Inserted String #1", "Inserted String #2" } );
         PrintArr( Strings2 );
-        
+
         std::cout << "At Arbitrary" << std::endl << std::endl;
         Strings2.InsertAt( 2, ArgvStr );
         PrintArr( Strings2 );
@@ -840,7 +840,13 @@ void TArray_Test( int32 Argc, const char** Argv )
         std::cout << std::endl << "Testing Iterators" << std::endl;
 
         std::cout << std::endl << "Iterators" << std::endl << std::endl;
-        for ( auto It = Strings2.begin(); It != Strings2.end(); It++ )
+        for ( auto It = Strings2.StartIterator(); It != Strings2.EndIterator(); It++ )
+        {
+            std::cout << (*It) << std::endl;
+        }
+
+        TArray<std::string> EmptyArray;
+        for ( auto It = EmptyArray.StartIterator(); It != EmptyArray.EndIterator(); It++ )
         {
             std::cout << (*It) << std::endl;
         }
@@ -860,7 +866,7 @@ void TArray_Test( int32 Argc, const char** Argv )
 
         // Fill 
         std::cout << std::endl << "Testing Fill" << std::endl;
-        Strings2.Fill("Fill Value");
+        Strings2.Fill( "Fill Value" );
         PrintArr( Strings2 );
 
         // Append
@@ -870,7 +876,7 @@ void TArray_Test( int32 Argc, const char** Argv )
 
         // PopBackRange
         std::cout << std::endl << "Testing PopBackRange" << std::endl;
-        Strings2.PopBackRange(3);
+        Strings2.PopBackRange( 3 );
         PrintArr( Strings2 );
 
         std::cout << std::endl << "Testing Equal operator" << std::endl;
@@ -1146,8 +1152,8 @@ void TArray_Test( int32 Argc, const char** Argv )
 
         // Append
         std::cout << std::endl << "Testing Append" << std::endl;
-        Vectors0.Append( 
-            { 
+        Vectors0.Append(
+            {
                 Vec3( 103.0f, 103.0f, 103.0f ),
                 Vec3( 113.0f, 113.0f, 113.0f ),
                 Vec3( 123.0f, 123.0f, 123.0f ),

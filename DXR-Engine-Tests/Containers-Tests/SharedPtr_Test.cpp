@@ -56,7 +56,7 @@ void TSharedPtr_Test()
     std::cout << std::endl << "----Testing Constructors----" << std::endl << std::endl;
     TSharedPtr<uint32> Null;
     Null = Ptr0; // Takes ownership of Ptr0
-    
+
     TSharedPtr<uint32> SharedNullPtr = nullptr;
 
     TSharedPtr<uint32> UintPtr0 = MakeShared<uint32>( 5 );
@@ -144,16 +144,16 @@ void TSharedPtr_Test()
     PrintRefCount( WeakBase1 );
 
     std::cout << std::endl << "----Testing Equallity----" << std::endl << std::endl;
-    std::cout << "operator==(Weak, WeaK): " << std::boolalpha << (WeakBase0       == WeakBase1) << std::endl;
-    std::cout << "operator==(Weak, Raw): "  << std::boolalpha << (WeakBase0       == WeakBase0.Get()) << std::endl;
-    std::cout << "operator==(Raw, Weak): "  << std::boolalpha << (WeakBase0.Get() == WeakBase0) << std::endl;
+    std::cout << "operator==(Weak, WeaK): " << std::boolalpha << (WeakBase0 == WeakBase1) << std::endl;
+    std::cout << "operator==(Weak, Raw): " << std::boolalpha << (WeakBase0 == WeakBase0.Get()) << std::endl;
+    std::cout << "operator==(Raw, Weak): " << std::boolalpha << (WeakBase0.Get() == WeakBase0) << std::endl;
 
-    std::cout << "operator==(Shared, Shared): " << std::boolalpha << (BasePtr == BasePtr)       << std::endl;
-    std::cout << "operator==(Shared, Raw): "    << std::boolalpha << (BasePtr == BasePtr.Get()) << std::endl;
-    std::cout << "operator==(Raw, Shared): "    << std::boolalpha << (BasePtr.Get() == BasePtr) << std::endl;
+    std::cout << "operator==(Shared, Shared): " << std::boolalpha << (BasePtr == BasePtr) << std::endl;
+    std::cout << "operator==(Shared, Raw): " << std::boolalpha << (BasePtr == BasePtr.Get()) << std::endl;
+    std::cout << "operator==(Raw, Shared): " << std::boolalpha << (BasePtr.Get() == BasePtr) << std::endl;
 
     std::cout << "operator==(Weak, Shared): " << std::boolalpha << (WeakBase0 == BasePtr) << std::endl;
-    std::cout << "operator==(Shared, Weak): " << std::boolalpha << (BasePtr   == WeakBase0) << std::endl;
+    std::cout << "operator==(Shared, Weak): " << std::boolalpha << (BasePtr == WeakBase0) << std::endl;
 
     std::cout << std::endl << "----Testing Move----" << std::endl << std::endl;
     {
@@ -201,7 +201,7 @@ void TSharedPtr_Test()
 
         std::cout << "----Testing bool operators----" << std::endl;
         std::cout << std::boolalpha << (WeakBase0 == WeakBase1) << std::endl;
-        std::cout << std::boolalpha << (UintPtr0  == UintPtr1) << std::endl;
+        std::cout << std::boolalpha << (UintPtr0 == UintPtr1) << std::endl;
     }
 
     std::cout << "----Testing Unique to Shared----" << std::endl;
@@ -212,10 +212,10 @@ void TSharedPtr_Test()
 
     std::cout << "----Testing UniquePtr (Scalar)----" << std::endl;
     {
-        TUniquePtr<uint32> Unique0 = MakeUnique<uint32>(5);
+        TUniquePtr<uint32> Unique0 = MakeUnique<uint32>( 5 );
         TUniquePtr<uint32> Unique1 = nullptr;
-        TUniquePtr<uint32> Unique2 = TUniquePtr( new uint32(5) );
-        Unique2.Reset( new uint32(15) );
+        TUniquePtr<uint32> Unique2 = TUniquePtr( new uint32( 5 ) );
+        Unique2.Reset( new uint32( 15 ) );
 
         std::cout << std::boolalpha << Unique0.IsValid() << std::endl;
         std::cout << "Unique0=" << *Unique0 << std::endl;
@@ -235,7 +235,7 @@ void TSharedPtr_Test()
 
         std::cout << std::boolalpha << Unique0.IsValid() << std::endl;
 
-        std::cout << "Unique0=" << std::endl; 
+        std::cout << "Unique0=" << std::endl;
         for ( uint32 i = 0; i < 5; i++ )
         {
             std::cout << Unique0[i] << std::endl;

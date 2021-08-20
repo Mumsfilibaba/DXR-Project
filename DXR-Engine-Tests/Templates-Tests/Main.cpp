@@ -72,7 +72,7 @@ struct SStruct
     {
     }
 
-    SStruct(const SStruct& ) = default;
+    SStruct( const SStruct& ) = default;
     SStruct& operator=( const SStruct& ) = default;
 
     int x;
@@ -474,21 +474,21 @@ int main()
     static_assert(TIsUnsigned<EEnumClass>::Value == false);
 
     /* Is Trivially Copyable */
-    static_assert(TIsTriviallyCopyable<CClass>::Value          == true);
+    static_assert(TIsTriviallyCopyable<CClass>::Value == true);
     static_assert(TIsTriviallyCopyable<CNotTrivialCopy>::Value == false);
-    static_assert(TIsTriviallyCopyable<CPolyClass>::Value      == false);
-    static_assert(TIsTriviallyCopyable<SStruct>::Value         == true);
+    static_assert(TIsTriviallyCopyable<CPolyClass>::Value == false);
+    static_assert(TIsTriviallyCopyable<SStruct>::Value == true);
 
     /* Is Trivially Constructable */
     static_assert(TIsTriviallyConstructable<CClass, const CClass&>::Value == true);
-    static_assert(TIsTriviallyConstructable<CClass, int>::Value           == false);
+    static_assert(TIsTriviallyConstructable<CClass, int>::Value == false);
 
     /* Is Trivially Destructable */
     static_assert(TIsTriviallyDestructable<CVirtualDestructor>::Value == false);
-    static_assert(TIsTriviallyDestructable<SPOD>::Value               == true);
+    static_assert(TIsTriviallyDestructable<SPOD>::Value == true);
 
     /* Is Trivial */
-    static_assert(TIsTrivial<SPOD>::Value   == true);
+    static_assert(TIsTrivial<SPOD>::Value == true);
     static_assert(TIsTrivial<CClass>::Value == false);
 
     /* Integer Sequence */

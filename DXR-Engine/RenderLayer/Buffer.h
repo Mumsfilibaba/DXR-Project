@@ -12,9 +12,9 @@ inline const char* ToString( EIndexFormat IndexFormat )
 {
     switch ( IndexFormat )
     {
-    case EIndexFormat::uint16: return "uint16";
-    case EIndexFormat::uint32: return "uint32";
-    default: return "Unknown";
+        case EIndexFormat::uint16: return "uint16";
+        case EIndexFormat::uint32: return "uint32";
+        default: return "Unknown";
     }
 }
 

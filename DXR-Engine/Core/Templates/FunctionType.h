@@ -15,7 +15,7 @@ template<bool IsConst, typename ClassType, typename FunctionType>
 struct TMemberFunctionType;
 
 template<typename ClassType, typename ReturnType, typename... ArgTypes>
-struct TMemberFunctionType<false, ClassType, ReturnType(ArgTypes...)>
+struct TMemberFunctionType<false, ClassType, ReturnType( ArgTypes... )>
 {
     typedef ReturnType( ClassType::* Type )(ArgTypes...);
 };

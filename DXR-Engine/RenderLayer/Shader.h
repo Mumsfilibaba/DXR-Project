@@ -187,21 +187,21 @@ inline bool ShaderStageIsGraphics( EShaderStage ShaderStage )
 {
     switch ( ShaderStage )
     {
-    case EShaderStage::Vertex:
-    case EShaderStage::Hull:
-    case EShaderStage::Domain:
-    case EShaderStage::Geometry:
-    case EShaderStage::Pixel:
-    case EShaderStage::Mesh:
-    case EShaderStage::Amplification:
-    {
-        return true;
-    }
+        case EShaderStage::Vertex:
+        case EShaderStage::Hull:
+        case EShaderStage::Domain:
+        case EShaderStage::Geometry:
+        case EShaderStage::Pixel:
+        case EShaderStage::Mesh:
+        case EShaderStage::Amplification:
+        {
+            return true;
+        }
 
-    default:
-    {
-        return false;
-    }
+        default:
+        {
+            return false;
+        }
     }
 }
 
@@ -209,19 +209,19 @@ inline bool ShaderStageIsCompute( EShaderStage ShaderStage )
 {
     switch ( ShaderStage )
     {
-    case EShaderStage::Compute:
-    case EShaderStage::RayGen:
-    case EShaderStage::RayClosestHit:
-    case EShaderStage::RayAnyHit:
-    case EShaderStage::RayMiss:
-    {
-        return true;
-    }
+        case EShaderStage::Compute:
+        case EShaderStage::RayGen:
+        case EShaderStage::RayClosestHit:
+        case EShaderStage::RayAnyHit:
+        case EShaderStage::RayMiss:
+        {
+            return true;
+        }
 
-    default:
-    {
-        return false;
-    }
+        default:
+        {
+            return false;
+        }
     }
 }
 
@@ -229,17 +229,17 @@ inline bool ShaderStageIsRayTracing( EShaderStage ShaderStage )
 {
     switch ( ShaderStage )
     {
-    case EShaderStage::RayGen:
-    case EShaderStage::RayClosestHit:
-    case EShaderStage::RayAnyHit:
-    case EShaderStage::RayMiss:
-    {
-        return true;
-    }
+        case EShaderStage::RayGen:
+        case EShaderStage::RayClosestHit:
+        case EShaderStage::RayAnyHit:
+        case EShaderStage::RayMiss:
+        {
+            return true;
+        }
 
-    default:
-    {
-        return false;
-    }
+        default:
+        {
+            return false;
+        }
     }
 }

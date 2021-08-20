@@ -50,12 +50,12 @@ static uint32 GetMouseButtonIndex( EMouseButton Button )
 {
     switch ( Button )
     {
-    case MouseButton_Left:    return 0;
-    case MouseButton_Right:   return 1;
-    case MouseButton_Middle:  return 2;
-    case MouseButton_Back:    return 3;
-    case MouseButton_Forward: return 4;
-    default:                  return static_cast<uint32>(-1);
+        case MouseButton_Left:    return 0;
+        case MouseButton_Right:   return 1;
+        case MouseButton_Middle:  return 2;
+        case MouseButton_Back:    return 3;
+        case MouseButton_Forward: return 4;
+        default:                  return static_cast<uint32>(-1);
     }
 }
 
@@ -559,15 +559,15 @@ void DebugUI::Render( CommandList& CmdList )
             TSharedRef<GenericCursor> Cursor = Platform::GetCursor();
             switch ( ImguiCursor )
             {
-            case ImGuiMouseCursor_Arrow:      Cursor = GenericCursor::Arrow;      break;
-            case ImGuiMouseCursor_TextInput:  Cursor = GenericCursor::TextInput;  break;
-            case ImGuiMouseCursor_ResizeAll:  Cursor = GenericCursor::ResizeAll;  break;
-            case ImGuiMouseCursor_ResizeEW:   Cursor = GenericCursor::ResizeEW;   break;
-            case ImGuiMouseCursor_ResizeNS:   Cursor = GenericCursor::ResizeNS;   break;
-            case ImGuiMouseCursor_ResizeNESW: Cursor = GenericCursor::ResizeNESW; break;
-            case ImGuiMouseCursor_ResizeNWSE: Cursor = GenericCursor::ResizeNWSE; break;
-            case ImGuiMouseCursor_Hand:       Cursor = GenericCursor::Hand;       break;
-            case ImGuiMouseCursor_NotAllowed: Cursor = GenericCursor::NotAllowed; break;
+                case ImGuiMouseCursor_Arrow:      Cursor = GenericCursor::Arrow;      break;
+                case ImGuiMouseCursor_TextInput:  Cursor = GenericCursor::TextInput;  break;
+                case ImGuiMouseCursor_ResizeAll:  Cursor = GenericCursor::ResizeAll;  break;
+                case ImGuiMouseCursor_ResizeEW:   Cursor = GenericCursor::ResizeEW;   break;
+                case ImGuiMouseCursor_ResizeNS:   Cursor = GenericCursor::ResizeNS;   break;
+                case ImGuiMouseCursor_ResizeNESW: Cursor = GenericCursor::ResizeNESW; break;
+                case ImGuiMouseCursor_ResizeNWSE: Cursor = GenericCursor::ResizeNWSE; break;
+                case ImGuiMouseCursor_Hand:       Cursor = GenericCursor::Hand;       break;
+                case ImGuiMouseCursor_NotAllowed: Cursor = GenericCursor::NotAllowed; break;
             }
 
             Platform::SetCursor( Cursor.Get() );

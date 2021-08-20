@@ -7,7 +7,7 @@
       <Item Name="[Capacity]">ArrayCapacity</Item>
       <ArrayItems>
         <Size>ArraySize</Size>
-        <ValuePointer>Array</ValuePointer>
+        <ValuePointer>Allocator.Allocation</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>

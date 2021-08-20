@@ -93,6 +93,8 @@ workspace "DXR-Engine-Tests"
 			files 
 			{
 				"%{prj.name}/**.natvis",
+				"../DXR-Engine/Core/Containers/**.natvis",
+				"../DXR-Engine/Core/Templates/**.natvis",
 			}
 		filter {}
 

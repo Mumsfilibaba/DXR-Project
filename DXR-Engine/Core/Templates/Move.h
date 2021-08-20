@@ -1,5 +1,7 @@
 #pragma once
 #include "RemoveReference.h"
+#include "EnableIf.h"
+#include "IsConst.h"
 
 /* Move an object by converting it into a rvalue */
 template<typename T>
@@ -20,4 +22,12 @@ template<typename T>
 constexpr T&& Forward( typename TRemoveReference<T>::Type&& Arg ) noexcept
 {
     return static_cast<T&&>(Arg);
+}
+
+template<typename T>
+FORCEINLINE typename TEnableIf<!TIsConst<T>::Value>::Type Swap( T& LHS, T& RHS ) noexcept
+{
+    T Temp = Move( LHS );
+    LHS = Move( RHS );
+    RHS = Move( Temp );
 }

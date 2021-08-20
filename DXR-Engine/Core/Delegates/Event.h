@@ -1,121 +1,49 @@
 #pragma once
 #include "MulticastDelegate.h"
 
-/* Base type for events */
+/* Macros for delcaring event types */
+
+#define DECLARE_EVENT( NewEvent, OwnerType, ... )       \
+    class NewEvent : public TEvent<__VA_ARGS__>         \
+    {                                                   \
+        friend class OwnerType;                         \
+                                                        \
+        NewEvent(const NewEvent&) = default;            \
+        NewEvent(NewEvent&&) = default;                 \
+                                                        \
+        NewEvent& operator=(const NewEvent&) = default; \
+        NewEvent& operator=(NewEvent&&) = default;      \
+                                                        \
+    public:                                             \
+        NewEvent() = default;                           \
+    };
+
+/* Event */
 template<typename... ArgTypes>
-class TEventBase : public TMulticastBase<ArgTypes...>
+class TEvent : public TMulticastDelegate<ArgTypes...>
 {
-    typedef TMulticastBase<ArgTypes...>    Base;
-    typedef TDelegate<void( ArgTypes... )> TDelegateType;
+    using Super = TMulticastDelegate<ArgTypes...>;
+
+public:
+    using Super::Unbind;
+    using Super::UnbindIfBound;
+    using Super::IsBound;
+    using Super::IsObjectBound;
+    using Super::GetCount;
+    using Super::AddStatic;
+    using Super::AddRaw;
+    using Super::AddLambda;
+    using Super::Add;
 
 protected:
-
-    /* Empty constructor */
-    FORCEINLINE TEventBase()
-        : Base()
-    {
-    }
-
-    /* Copy constructor */
-    FORCEINLINE TEventBase( const TEventBase& Other )
-        : Base( Other )
-    {
-    }
-
-    /* Move constructor */
-    FORCEINLINE TEventBase( TEventBase&& Other )
-        : Base( Move( Other ) )
-    {
-    }
-
-    FORCEINLINE ~TEventBase()
-    {
-        UnbindAll();
-    }
-
-    /* Unbind all delegates */
-    FORCEINLINE void UnbindAll()
-    {
-        for ( IDelegate* Delegate : Base::Delegates )
-        {
-            Assert( Delegate != nullptr );
-            delete Delegate;
-        }
-
-        Base::Delegates.Clear();
-    }
-
-    /* Swaps two events */
-    FORCEINLINE void Swap( TEventBase& Other )
-    {
-        Base::Swap( Other );
-    }
-
-    /* Copy assignment operator */
-    FORCEINLINE TEventBase& operator=( const TEventBase& RHS )
-    {
-        TEventBase( RHS ).Swap( *this );
-        return *this;
-    }
-
-    /* Move assignment operator */
-    FORCEINLINE TEventBase& operator=( TEventBase&& RHS )
-    {
-        TEventBase( Move( RHS ) ).Swap( *this );
-        return *this;
-    }
+    using Super::UnbindAll;
+    using Super::Swap;
+    using Super::AddDelegate;
+    using Super::CopyFrom;
+    using Super::MoveFrom;
+    using Super::CompactArray;
+    using Super::Lock;
+    using Super::Unlock;
+    using Super::IsLocked;
+    using Super::Broadcast;
 };
-
-/* Default event type */
-template<typename... TArgs>
-class TEvent : public TEventBase<TArgs...>
-{
-protected:
-    typedef TEventBase<TArgs...> Base;
-
-    typedef typename Base::IDelegate IDelegate;
-
-    void Broadcast( TArgs... Args )
-    {
-        for ( IDelegate* Delegate : Base::Delegates )
-        {
-            Assert( Delegate != nullptr );
-            Delegate->Execute( Forward<TArgs>( Args )... );
-        }
-    }
-
-    void operator()( TArgs... Args )
-    {
-        return Broadcast( Forward<TArgs>( Args )... );
-    }
-};
-
-/* Special event type for events with not params */
-template<>
-class TEvent<void> : public TEventBase<void>
-{
-protected:
-    typedef TEventBase<void> Base;
-
-    typedef typename Base::IDelegate IDelegate;
-
-    void Broadcast()
-    {
-        for ( IDelegate* Delegate : Base::Delegates )
-        {
-            Assert( Delegate != nullptr );
-            Delegate->Execute();
-        }
-    }
-
-    void operator()()
-    {
-        return Broadcast();
-    }
-};
-
-#define DECLARE_EVENT(EventType, EventDispatcherType, ...) \
-    class EventType : public TEvent<__VA_ARGS__> \
-    { \
-        friend class EventDispatcherType; \
-    }; \

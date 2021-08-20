@@ -14,22 +14,16 @@ class CDelegateBase
 
 public:
 
-    /* Constructor for a empty delegate */
-    FORCEINLINE CDelegateBase()
-        : Storage()
-    {
-    }
-
     /* Copy constructor */
-    FORCEINLINE CDelegateBase(const CDelegateBase& Other)
+    FORCEINLINE CDelegateBase( const CDelegateBase& Other )
         : Storage()
     {
-        CopyFrom(Other);
+        CopyFrom( Other );
     }
 
     /* Move constructor */
-    FORCEINLINE CDelegateBase(CDelegateBase&& Other)
-        : Storage( Move(Other.Storage) )
+    FORCEINLINE CDelegateBase( CDelegateBase&& Other )
+        : Storage( Move( Other.Storage ) )
     {
     }
 
@@ -46,11 +40,11 @@ public:
     }
 
     /* Swaps two delegates */
-    FORCEINLINE void Swap(CDelegateBase& Other)
+    FORCEINLINE void Swap( CDelegateBase& Other )
     {
-        AllocatorType TempStorage(Move(Storage));
-        Storage = Move(Other.Storage);
-        Other.Storage = Move(TempStorage);
+        AllocatorType TempStorage( Move( Storage ) );
+        Storage = Move( Other.Storage );
+        Other.Storage = Move( TempStorage );
     }
 
     /* Cheacks weather or not there exist any delegate bound */
@@ -60,11 +54,11 @@ public:
     }
 
     /* Check if object is bound to this delegate */
-    FORCEINLINE bool IsObjectBound(const void* Object) const
+    FORCEINLINE bool IsObjectBound( const void* Object ) const
     {
-        if (Object != nullptr && IsBound())
+        if ( Object != nullptr && IsBound() )
         {
-            return GetDelegate()->IsObjectBound(Object);
+            return GetDelegate()->IsObjectBound( Object );
         }
         else
         {
@@ -73,9 +67,9 @@ public:
     }
 
     /* Check if object is bound to this delegate */
-    FORCEINLINE bool UnbindIfBound(const void* Object)
+    FORCEINLINE bool UnbindIfBound( const void* Object )
     {
-        if (IsObjectBound(Object))
+        if ( IsObjectBound( Object ) )
         {
             Unbind();
             return true;
@@ -89,7 +83,7 @@ public:
     /* Retrive the bound object, returns nullptr for non-member delegates */
     FORCEINLINE const void* GetBoundObject() const
     {
-        if (IsBound())
+        if ( IsBound() )
         {
             return GetDelegate()->GetBoundObject();
         }
@@ -102,7 +96,7 @@ public:
     /* Retrive the delegate handle for this object */
     FORCEINLINE CDelegateHandle GetHandle() const
     {
-        if (IsBound())
+        if ( IsBound() )
         {
             return GetDelegate()->GetHandle();
         }
@@ -113,23 +107,17 @@ public:
     }
 
     /* Move assignment */
-    FORCEINLINE CDelegateBase& operator=(CDelegateBase&& RHS)
+    FORCEINLINE CDelegateBase& operator=( CDelegateBase&& RHS )
     {
-        CDelegateBase( Move(RHS) ).Swap(*this);
+        CDelegateBase( Move( RHS ) ).Swap( *this );
         return *this;
     }
 
     /* Copy assignment */
-    FORCEINLINE CDelegateBase& operator=(const CDelegateBase& RHS)
+    FORCEINLINE CDelegateBase& operator=( const CDelegateBase& RHS )
     {
-        CDelegateBase( RHS ).Swap(*this);
+        CDelegateBase( RHS ).Swap( *this );
         return *this;
-    }
-
-    /* Check if valid */
-    FORCEINLINE operator bool() const
-    {
-        return IsBound();
     }
 
 protected:
@@ -137,10 +125,16 @@ protected:
     // TODO: Should allocator use the element type at all? 
     using AllocatorType = TInlineAllocator<int8, InlineBytes>;
 
+    /* Constructor for a empty delegate */
+    FORCEINLINE explicit CDelegateBase()
+        : Storage()
+    {
+    }
+
     /* Release the delegate */
     FORCEINLINE void Release()
     {
-        if (Storage.HasAllocation())
+        if ( Storage.HasAllocation() )
         {
             GetDelegate()->~IDelegateInstance();
             Storage.Free();
@@ -148,12 +142,12 @@ protected:
     }
 
     /* Copy from another function */
-    FORCEINLINE void CopyFrom(const CDelegateBase& Other) noexcept
+    FORCEINLINE void CopyFrom( const CDelegateBase& Other ) noexcept
     {
-        if (Other.IsBound())
+        if ( Other.IsBound() )
         {
-            Storage.Allocate(Other.Storage.GetSize());
-            Other.GetDelegate()->Clone(Storage.Raw());
+            Storage.Allocate( Other.Storage.GetSize() );
+            Other.GetDelegate()->Clone( Storage.Raw() );
         }
     }
 

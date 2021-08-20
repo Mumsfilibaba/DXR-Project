@@ -8,6 +8,7 @@
 #include "Core/Templates/IsSame.h"
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/IsArray.h"
+#include "Core/Templates/Not.h"
 
 #include <initializer_list>
 
@@ -439,7 +440,7 @@ public:
     /* Swaps container with another */
     FORCEINLINE void Swap( TArray& Other ) noexcept
     {
-        TArray Temp( Move( *this ) );
+        TArray Temp = Move( *this );
         *this = Move( Other );
         Other = Move( Temp );
     }
@@ -453,7 +454,7 @@ public:
     /* Checks if there are any elements */
     FORCEINLINE bool IsEmpty() const noexcept
     {
-        return (ArraySize == 0) && (Data() != nullptr);
+        return (ArraySize == 0);
     }
 
     /* Returns an iterator to the beginning of the container */
@@ -547,7 +548,7 @@ public:
     /* Returns the last valid index the container */
     FORCEINLINE SizeType LastIndex() const noexcept
     {
-        return ArraySize > 0 ? ArraySize - 1 : 0;
+        return (ArraySize > 0) ? (ArraySize - 1) : 0;
     }
 
     /* Returns the size of the container */

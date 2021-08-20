@@ -304,5 +304,5 @@ inline bool operator==( const TTuple<FirstTypes...>& LHS, const TTuple<SecondTyp
 template <typename... FirstTypes, typename... SecondTypes>
 inline bool operator!=( const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS )
 {
-    return !( LHS == RHS );
+    return !(LHS == RHS);
 }

@@ -73,7 +73,7 @@ void TArrayView_Test()
 
     std::cout << "Testing IsEmpty" << std::endl;
     std::cout << "EmptyView=" << std::boolalpha << EmptyView.IsEmpty() << std::endl;
-    std::cout << "ArrView0="  << std::boolalpha << ArrView5.IsEmpty() << std::endl;
+    std::cout << "ArrView0=" << std::boolalpha << ArrView5.IsEmpty() << std::endl;
 
     std::cout << "Testing Size/SizeInBytes" << std::endl;
     std::cout << "Size: " << ArrView4.Size() << std::endl;
