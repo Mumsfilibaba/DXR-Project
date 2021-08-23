@@ -1,36 +1,5 @@
 #pragma once
-#include "CoreTypes.h"
-#include "CoreDefines.h"
-
-#include "Core/Memory/Memory.h"
-#include "Core/Math/Math.h"
-
-#include <cstring>
-#include <cwchar>
-
-/* Wrapper for strlen */
-inline int32 StrLen( const char* Str )
-{
-    return (Str != nullptr) ? static_cast<int32>(strlen( Str )) : 0;
-}
-
-/* Wrapper for strlen */
-inline int32 StrLen( const wchar_t* Str )
-{
-    return (Str != nullptr) ? static_cast<int32>(wcslen( Str )) : 0;
-}
-
-/* Wrapper for vsnprintf */
-inline int32 VSNPrintF( char* Data, int32 Len, const char* Format, va_list Args )
-{
-    return vsnprintf( Data, Len, Format, Args );
-}
-
-/* Wrapper for vsnprintf */
-inline int32 VSNPrintF( wchar_t* Data, int32 Len, const wchar_t* Format, va_list Args )
-{
-    return vswprintf( Data, Len, Format, Args );
-}
+#include "StringView.h"
 
 /* String class with a fixed allocated number of characters */
 template<typename CharType, uint32 NumChars>
@@ -46,6 +15,7 @@ public:
     typedef TReverseArrayIterator<TFixedString, CharType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TFixedString, const CharType> ReverseConstIteratorType;
 
+    static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
     static_assert(NumChars > 0, "The number of chars has to be more than zero");
 
     /* Empty constructor */
@@ -128,39 +98,79 @@ public:
     template<typename StringType>
     FORCEINLINE void Format(const StringType& Format, va_list Args
     {
-        Format(Format.RawString(), List);
+        Format(Format.CStr(), List);
     }
 
     /* Returns this string in lowercase */
     FORCEINLINE void ToLowerInline()
     {
+        for (SizeType Index = 0; Index < NumChars; Index++)
+        {
+            Elements[Index] = ToLowerSingle(Elements[Index]);
+        }
     }
 
     /* Returns this string in lowercase */
     FORCEINLINE TFixedString ToLower() const 
     {
+        TFixedString Result = *this;
+        Result.ToLowerInline();
+        return Result;
     }
 
     /* Converts this string in uppercase */
     FORCEINLINE void ToUpperInline()
     {
+        for (SizeType Index = 0; Index < NumChars; Index++)
+        {
+            Elements[Index] = ToUpperSingle(Elements[Index]);
+        }
     }
 
     /* Returns this string in uppercase */
     FORCEINLINE TFixedString ToUpper() const 
     {
+        TFixedString Result = *this;
+        Result.ToUpperInline();
+        return Result;
     }
 
     /* Return a null terminated string */
-    FORCEINLINE CharType* RawString()
+    FORCEINLINE CharType* Data()
     {
         return Elements;
     }
 
     /* Return a null terminated string */
-    FORCEINLINE const CharType* RawString() const
+    FORCEINLINE const CharType* Data() const
     {
         return Elements;
+    }
+
+    /* Return a null terminated string */
+    FORCEINLINE const CharType* CStr() const
+    {
+        return Elements;
+    }
+
+    /* Return the length of the string */
+    FORCEINLINE SizeType Size() const
+    {
+        return Length;
+    }
+
+    /* Returns a sub-string of this string */
+    FORCEINLINE TFixedString SubString( SizeType Offset, SizeType Count ) const
+    {
+        Assert((Offset < Length) && (Offset + Count < Length));
+        return TFixedString(Elements + Offset, Count);
+    }
+
+    /* Returns a sub-stringview of this string */
+    FORCEINLINE TStringView<CharType> SubStringView( SizeType Offset, SizeType Count ) const
+    {
+        Assert((Offset < Length) && (Offset + Count < Length));
+        return TStringView<CharType>(Elements + Offset, Count);
     }
 
     /* Return the length of the string */
@@ -179,6 +189,79 @@ public:
     FORCEINLINE bool IsEmpty() const
     {
         return (Length == 0);
+    }
+
+public:
+
+    /* Returns an iterator to the beginning of the container */
+    FORCEINLINE IteratorType StartIterator() noexcept
+    {
+        return IteratorType( *this, 0 );
+    }
+
+    /* Returns an iterator to the end of the container */
+    FORCEINLINE IteratorType EndIterator() noexcept
+    {
+        return IteratorType( *this, Size() );
+    }
+
+    /* Returns an iterator to the beginning of the container */
+    FORCEINLINE ConstIteratorType StartIterator() const noexcept
+    {
+        return ConstIteratorType( *this, 0 );
+    }
+
+    /* Returns an iterator to the end of the container */
+    FORCEINLINE ConstIteratorType EndIterator() const noexcept
+    {
+        return ConstIteratorType( *this, Size() );
+    }
+
+    /* Returns an reverse iterator to the end of the container */
+    FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
+    {
+        return ReverseIteratorType( *this, Size() );
+    }
+
+    /* Returns an reverse iterator to the beginning of the container */
+    FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
+    {
+        return ReverseIteratorType( *this, 0 );
+    }
+
+    /* Returns an reverse iterator to the end of the container */
+    FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
+    {
+        return ReverseConstIteratorType( *this, Size() );
+    }
+
+    /* Returns an reverse iterator to the beginning of the container */
+    FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
+    {
+        return ReverseConstIteratorType( *this, 0 );
+    }
+
+public:
+
+    /* STL iterator functions - Enables Range-based for-loops */
+    FORCEINLINE IteratorType begin() noexcept
+    {
+        return StartIterator();
+    }
+
+    FORCEINLINE IteratorType end() noexcept
+    {
+        return EndIterator();
+    }
+
+    FORCEINLINE ConstIteratorType begin() const noexcept
+    {
+        return StartIterator();
+    }
+
+    FORCEINLINE ConstIteratorType end() const noexcept
+    {
+        return EndIterator();
     }
 
 private:

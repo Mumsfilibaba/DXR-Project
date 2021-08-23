@@ -33,7 +33,7 @@ public:
     }
 
     /* Create a view from a bounded array */
-    template<const SizeType N>
+    template<SizeType N>
     FORCEINLINE explicit TArrayView( ElementType( &InArray )[N] ) noexcept
         : View( InArray )
         , ViewSize( N )
@@ -117,54 +117,6 @@ public:
         TArrayView Temp( Move( *this ) );
         *this = Move( Other );
         Other = Move( Temp );
-    }
-
-    /* Returns an iterator to the beginning of the container */
-    FORCEINLINE IteratorType StartIterator() noexcept
-    {
-        return IteratorType( *this, 0 );
-    }
-
-    /* Returns an iterator to the end of the container */
-    FORCEINLINE IteratorType EndIterator() noexcept
-    {
-        return IteratorType( *this, Size() );
-    }
-
-    /* Returns an iterator to the beginning of the container */
-    FORCEINLINE ConstIteratorType StartIterator() const noexcept
-    {
-        return ConstIteratorType( *this, 0 );
-    }
-
-    /* Returns an iterator to the end of the container */
-    FORCEINLINE ConstIteratorType EndIterator() const noexcept
-    {
-        return ConstIteratorType( *this, Size() );
-    }
-
-    /* Returns an reverse iterator to the end of the container */
-    FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
-    {
-        return ReverseIteratorType( *this, Size() );
-    }
-
-    /* Returns an reverse iterator to the beginning of the container */
-    FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
-    {
-        return ReverseIteratorType( *this, 0 );
-    }
-
-    /* Returns an reverse iterator to the end of the container */
-    FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
-    {
-        return ReverseConstIteratorType( *this, Size() );
-    }
-
-    /* Returns an reverse iterator to the beginning of the container */
-    FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
-    {
-        return ReverseConstIteratorType( *this, 0 );
     }
 
     /* Fills the container with the specified value */
@@ -268,8 +220,57 @@ public:
 
 public:
 
-    /* STL iterator functions - Enables Range-based for-loops */
+    /* Returns an iterator to the beginning of the container */
+    FORCEINLINE IteratorType StartIterator() noexcept
+    {
+        return IteratorType( *this, 0 );
+    }
 
+    /* Returns an iterator to the end of the container */
+    FORCEINLINE IteratorType EndIterator() noexcept
+    {
+        return IteratorType( *this, Size() );
+    }
+
+    /* Returns an iterator to the beginning of the container */
+    FORCEINLINE ConstIteratorType StartIterator() const noexcept
+    {
+        return ConstIteratorType( *this, 0 );
+    }
+
+    /* Returns an iterator to the end of the container */
+    FORCEINLINE ConstIteratorType EndIterator() const noexcept
+    {
+        return ConstIteratorType( *this, Size() );
+    }
+
+    /* Returns an reverse iterator to the end of the container */
+    FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
+    {
+        return ReverseIteratorType( *this, Size() );
+    }
+
+    /* Returns an reverse iterator to the beginning of the container */
+    FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
+    {
+        return ReverseIteratorType( *this, 0 );
+    }
+
+    /* Returns an reverse iterator to the end of the container */
+    FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
+    {
+        return ReverseConstIteratorType( *this, Size() );
+    }
+
+    /* Returns an reverse iterator to the beginning of the container */
+    FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
+    {
+        return ReverseConstIteratorType( *this, 0 );
+    }
+
+public:
+
+    /* STL iterator functions - Enables Range-based for-loops */
     FORCEINLINE IteratorType begin() noexcept
     {
         return StartIterator();
