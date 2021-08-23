@@ -66,8 +66,14 @@ template<typename CharType>
 class TStringView
 {
 public:
+
     using ElementType = CharType;
     using SizeType    = int32;
+
+    enum
+    {
+        InvalidPosition = SizeType(-1)
+    }
 
     /* Iterators */
     typedef TArrayIterator<const TFixedString, const CharType>        ConstIteratorType;

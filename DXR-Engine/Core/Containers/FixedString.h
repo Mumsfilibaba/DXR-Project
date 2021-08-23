@@ -1,13 +1,22 @@
 #pragma once
 #include "StringView.h"
 
+#include "Core/Templates/EnableIf.h"
+#include "Core/Templates/Identity.h"
+
 /* String class with a fixed allocated number of characters */
 template<typename CharType, uint32 NumChars>
 class TFixedString
 {
 public:
+
     using ElementType = CharType;
     using SizeType    = int32;
+
+    enum
+    {
+        InvalidPosition = SizeType(-1)
+    }
 
     /* Iterators */
     typedef TArrayIterator<TFixedString, CharType>                    IteratorType;
@@ -19,90 +28,189 @@ public:
     static_assert(NumChars > 0, "The number of chars has to be more than zero");
 
     /* Empty constructor */
-    FORCEINLINE TFixedString()
-        : Elements()
-        , Length(0)
+    FORCEINLINE TFixedString() noexcept
+        : String()
+        , Length( 0 )
     {
-        Memory::Memzero( Elements, sizeof(CharType) * NumChars );
+        Memory::Memzero( String, CapacityInBytes() );
     }
 
     /* Create a fixed string from a raw array. If the string is longer than 
        the allocators the string will be shortened to fit. */ 
-    FORCEINLINE TFixedString( const CharType* InString )
-        : Elements()
-        , Length( NMath::Min( StrLen( InString ), NumChars) )
+    FORCEINLINE TFixedString( const CharType* InString ) noexcept
+        : String()
+        , Length( 0 )
     {
         if (InString)
         {
-            Memory::Memcpy( Elements, InString, SizeInBytes() );
+            CopyFrom( InString, StrLen(InString) );
         }
     }
 
     /* Create a fixed string from a raw array and the length. If the string is 
        longer than the allocators the string will be shortened to fit. */ 
-    FORCEINLINE explicit TFixedString( const CharType* InString, uint32 InLength )
-        : Elements()
-        , Length( NMath::Min(InLength, NumChars) )
+    FORCEINLINE explicit TFixedString( const CharType* InString, uint32 InLength ) noexcept
+        : String()
+        , Length( 0 )
     {
         if (InString)
         {
-            Memory::Memcpy( Elements, InString, SizeInBytes() );
+            CopyFrom( InString, InLength );
         }
     }
 
     /* Create a string from a bounded array */
-    template<const SizeType N>
+    template<SizeType N, typename = typename TEnableIf<TValue<(N < NumChars)>::Value>::Type>
     FORCEINLINE explicit TFixedString( CharType( &InString )[N] ) noexcept
-        : Elements( InArray )
-        , Length( NMath::Min(N, NumChars) )
+        : String( InArray )
+        , Length( 0 )
     {
-        Memory::Memcpy( Elements, InString, SizeInBytes() );
+        CopyFrom( InString, N );
     }
 
     /* Create a new string from another string type with similar interface. If the
        string is longer than the allocators the string will be shortened to fit. */ 
     template<typename StringType>
-    FORCEINLINE explicit TFixedString( const StringType& InString )
-        : Elements()
-        , Length( NMath::Min(InString.Length(), NumChars) )
+    FORCEINLINE explicit TFixedString( const StringType& InString ) noexcept
+        : String()
+        , Length( 0 )
     {
-        Memory::Memcpy( Elements, InString.RawString(), SizeInBytes() );
+        CopyFrom( InString.CStr(), InString.Length() );
+    }
+
+    /* Retrive the character at Index */
+    FORCEINLINE CharType& At( SizeType Index ) noexcept
+    {
+        return String[Index];
+    }
+
+    /* Retrive the character at Index */
+    FORCEINLINE const CharType& At( SizeType Index ) const noexcept
+    {
+        return String[Index];
+    }
+
+    /* Appends a string to this string */
+    FORCEINLINE void Append( const CharType* InString ) noexcept
+    {
+        Append( InString, StrLen(InString) );
+    }
+
+    /* Appends a string to this string */
+    template<typename StringType>
+    FORCEINLINE void Append( const StringType& InString ) noexcept
+    {
+        Append( InString.CStr(), InString.Length() );
+    }
+
+    /* Appends a string to this string */
+    FORCEINLINE void Append( const CharType* InString, SizeType InLength ) noexcept
+    {
+        Assert( InString != nullptr );
+        Assert( Length + InLength < Capacity() );
+
+        for (SizeType Index = 0; Index < InLength; Index++)
+        {
+            String[Length + Index] = InString[Index]; 
+        }
+
+        Length = Length + InLength;
+        String[Length] = '\0';
     }
 
     /* Format string (similar to snprintf) */
-    FORCEINLINE void Format(const CharType* Format, ...)
+    FORCEINLINE void Format(const CharType* Format, ...) noexcept
     {
-        va_list List;
-        va_start(List, Format);
-        Format(Format, List);
-        va_end(List);
+        va_list ArgList;
+        va_start(ArgList, Format);
+        FormatV(Format, ArgList);
+        va_end(ArgList);
     }
 
     /* Format string (similar to snprintf) */
     template<typename StringType>
-    FORCEINLINE void Format(const StringType& Format, ...)
+    FORCEINLINE void Format(const StringType& Format, ...) noexcept
     {
-        va_list List;
-        va_start(List, Format);
-        Format(Format.RawString(), List);
-        va_end(List);
+        va_list ArgList;
+        va_start(ArgList, Format);
+        FormatV(Format.CStr(), ArgList);
+        va_end(ArgList);
     }
 
     /* Format string with a va_list (similar to snprintf) */
-    FORCEINLINE void Format(const CharType* Format, va_list Args)
+    FORCEINLINE void FormatV(const CharType* Format, va_list ArgList) noexcept
     {
-        VSNPrintF(ElementType, NumChars, Format, Args);
+        const int32 WrittenChars = VSNPrintF(String, NumChars, Format, ArgList);
+        if ( Length + WrittenChars < NumChars )
+        {
+            Length = WrittenChars;
+        }
+        else
+        {
+            Length = NumChars - 1;
+        }
+
+        String[Length] = '\0';
     }
 
     /* Format string with a va_list (similar to snprintf) */    
     template<typename StringType>
-    FORCEINLINE void Format(const StringType& Format, va_list Args
+    FORCEINLINE void FormatV(const StringType& Format, va_list ArgList) noexcept
     {
-        Format(Format.CStr(), List);
+        FormatV(Format.CStr(), ArgList);
+    }
+
+    /* Same as Format, but appends the result to the current string */
+    FORCEINLINE AppendFormat( const CharType* Format, ... ) noexcept
+    {
+        va_list ArgList;
+        va_start(ArgList, Format);
+        AppendFormatV( Format, ArgList );
+        va_end(ArgList);
+    }
+
+    /* Same as Format, but appends the result to the current string */
+        template<typename StringType>
+    FORCEINLINE AppendFormat( const StringType& Format, ... ) noexcept
+    {
+        va_list ArgList;
+        va_start(ArgList, Format);
+        AppendFormatV( Format.CStr(), ArgList );
+        va_end(ArgList);
+    }
+
+    /* Same as FormatV, but appends the result to the current string */
+    FORCEINLINE AppendFormatV( const CharType* Format, va_list ArgList ) noexcept
+    {
+        const int32 WrittenChars = VSNPrintF( String + Length, NumChars, Format, ArgList );
+        if ( Length + WrittenChars < NumChars )
+        {
+            Length = WrittenChars;
+        }
+        else
+        {
+            Length = NumChars - 1;
+        }
+        
+        String[Length] = '\0';
+    }
+
+    /* Same as FormatV, but appends the result to the current string */
+    template<typename StringType>
+    FORCEINLINE AppendFormatV( const StringType& Format, va_list ArgList ) noexcept
+    {
+        AppendFormatV( Format.CStr(), ArgList );
+    }
+
+    /* Clears the string */
+    FORCEINLINE void Clear() noexcept
+    {
+        Length = 0;
+        String[Length] = '\0';
     }
 
     /* Returns this string in lowercase */
-    FORCEINLINE void ToLowerInline()
+    FORCEINLINE void ToLowerInline() noexcept
     {
         for (SizeType Index = 0; Index < NumChars; Index++)
         {
@@ -111,7 +219,7 @@ public:
     }
 
     /* Returns this string in lowercase */
-    FORCEINLINE TFixedString ToLower() const 
+    FORCEINLINE TFixedString ToLower() const noexcept
     {
         TFixedString Result = *this;
         Result.ToLowerInline();
@@ -119,7 +227,7 @@ public:
     }
 
     /* Converts this string in uppercase */
-    FORCEINLINE void ToUpperInline()
+    FORCEINLINE void ToUpperInline() noexcept
     {
         for (SizeType Index = 0; Index < NumChars; Index++)
         {
@@ -128,79 +236,281 @@ public:
     }
 
     /* Returns this string in uppercase */
-    FORCEINLINE TFixedString ToUpper() const 
+    FORCEINLINE TFixedString ToUpper() const noexcept
     {
         TFixedString Result = *this;
         Result.ToUpperInline();
         return Result;
     }
 
+    /* Removes whitespace from the beginning and end of the string */
+    FORCEINLINE TFixedString Trim() noexcept
+    {
+        TFixedString Result = *this;
+        Result.TrimInline();
+        return Result;
+    }
+
+    /* Removes whitespace from the beginning and end of the string */
+    FORCEINLINE void TrimInline() noexcept
+    {
+        TrimStartInline();
+        TrimEndInline();
+    }
+
+    /* Removes whitespace from the beginning of the string */
+    FORCEINLINE TFixedString TrimStart() noexcept
+    {
+
+    }
+
+    /* Removes whitespace from the beginning of the string */
+    FORCEINLINE void TrimStartInline() noexcept
+    {
+
+    }
+
+    /* Removes whitespace from the end of the string */
+    FORCEINLINE TFixedString TrimEnd() noexcept
+    {
+
+    }
+
+    /* Removes whitespace from the end of the string */
+    FORCEINLINE void TrimEndInline() noexcept
+    {
+
+    }
+
+    /* Removes whitespace from the end of the string */
+    FORCEINLINE TFixedString Reverse() noexcept
+    {
+
+    }
+
+    /* Removes whitespace from the end of the string */
+    FORCEINLINE TFixedString ReverseInline() noexcept
+    {
+
+    }
+
+    /* Compares two strings and checks if they are equal */
+    template<typename StringType>
+    FORCEINLINE bool Compare( const StringType& InString ) const noexcept
+    {
+        Compare( InString.CStr(), InString.Length() );
+    }
+
+    /* Compares two strings and checks if they are equal */
+    FORCEINLINE bool Compare( const CharType* InString ) const noexcept
+    {
+        Compare( InString, StrLen(InString) );
+    }
+
+    /* Compares two strings and checks if they are equal */
+    FORCEINLINE bool Compare( const CharType* InString, SizeType InLength )
+    {
+        if (Length != InLength)
+        {
+            return false;
+        }
+
+        for (SizeType Index = 0; Index < Length; Index++)
+        {
+            if (String[Index] != InString[Index])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /* Compares two strings and checks if they are equal, without taking casing into account */
+    template<typename StringType>
+    FORCEINLINE bool CompareNoCase( const StringType& InString ) const noexcept
+    {
+        CompareNoCase( InString.CStr(), InString.Length() );
+    }
+
+    /* Compares two strings and checks if they are equal, without taking casing into account */
+    FORCEINLINE bool CompareNoCase( const CharType* InString ) const noexcept
+    {
+        CompareNoCase( InString, StrLen(InString) );
+    }
+
+    /* Compares two strings and checks if they are equal, without taking casing into account */
+    FORCEINLINE bool CompareNoCase( const CharType* InString, SizeType InLength )
+    {
+        if (Length != InLength)
+        {
+            return false;
+        }
+
+        for (SizeType Index = 0; Index < Length; Index++)
+        {
+            if (ToLowerSingle(String[Index]) != ToLowerSingle(InString[Index]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /* Returns the position of the start of the searchstring */
+    FORCEINLINE SizeType Find( const CharType* SearchString, SizeType Offset = 0 ) const noexcept
+    {
+    }
+
+    /* Returns the position of the the first found character in the searchstring */
+    FORCEINLINE SizeType FindOneOf( const CharType* SearchString, SizeType Offset = 0 ) const noexcept
+    {
+    }
+
+     /* Returns true if the searchstring exists withing the string */
+    FORCEINLINE bool Contains( const CharType* SearchString, SizeType Offset = 0 ) const noexcept
+    {
+        return (Find( SearchString, Offset ) != InvalidPosition);
+    }
+
+    /* Returns the position of the the first found character in the searchstring */
+    FORCEINLINE bool Contains( const CharType* SearchString, SizeType Offset = 0 ) const noexcept
+    {
+        return (FindOneOf( SearchString, Offset ) != InvalidPosition);
+    }
+
     /* Return a null terminated string */
-    FORCEINLINE CharType* Data()
+    FORCEINLINE CharType* Data() noexcept
     {
         return Elements;
     }
 
     /* Return a null terminated string */
-    FORCEINLINE const CharType* Data() const
+    FORCEINLINE const CharType* Data() const noexcept
     {
         return Elements;
     }
 
     /* Return a null terminated string */
-    FORCEINLINE const CharType* CStr() const
+    FORCEINLINE const CharType* CStr() const noexcept
     {
         return Elements;
     }
 
     /* Return the length of the string */
-    FORCEINLINE SizeType Size() const
+    FORCEINLINE SizeType Size() const noexcept
     {
         return Length;
     }
 
     /* Returns a sub-string of this string */
-    FORCEINLINE TFixedString SubString( SizeType Offset, SizeType Count ) const
+    FORCEINLINE TFixedString SubString( SizeType Offset, SizeType Count ) const noexcept
     {
         Assert((Offset < Length) && (Offset + Count < Length));
         return TFixedString(Elements + Offset, Count);
     }
 
     /* Returns a sub-stringview of this string */
-    FORCEINLINE TStringView<CharType> SubStringView( SizeType Offset, SizeType Count ) const
+    FORCEINLINE TStringView<CharType> SubStringView( SizeType Offset, SizeType Count ) const noexcept
     {
         Assert((Offset < Length) && (Offset + Count < Length));
         return TStringView<CharType>(Elements + Offset, Count);
     }
 
     /* Return the length of the string */
-    FORCEINLINE SizeType Length() const
+    FORCEINLINE SizeType Length() const noexcept
     {
         return Length;
     }
 
+    constexpr SizeType Capacity() const noexcept
+    {
+        return NumChars;
+    }
+
+    constexpr SizeType CapacityInBytes() const noexcept
+    {
+        return NumChars * sizeof(CharType);
+    }
+
     /* Retrive the size of the string in bytes */
-    FORCEINLINE SizeType SizeInBytes() const 
+    FORCEINLINE SizeType SizeInBytes() const noexcept
     {
         return Length * sizeof(CharType);
     }
 
     /* Checks if the string is empty */
-    FORCEINLINE bool IsEmpty() const
+    FORCEINLINE bool IsEmpty() const noexcept
     {
         return (Length == 0);
+    }
+
+    /* Compares two containers by comparing each element, returns true if all is equal */
+    template<typename StringType>
+    FORCEINLINE bool operator==( const StringType& Other ) const noexcept
+    {
+        return Compare<StringType>(Other);
+    }
+
+    /* Compares two containers by comparing each element, returns false if all elements are equal */
+    template<typename StringType>
+    FORCEINLINE bool operator!=( const StringType& Other ) const noexcept
+    {
+        return !(*this == Other);
+    }
+
+    /* Appends a string to this string */
+    FORCEINLINE TFixedString& operator+=( const CharType* InString ) const noexcept
+    {
+        Append<StringType>( InString );
+        return *this;
+    }
+
+    /* Appends a string to this string */
+    template<typename StringType>
+    FORCEINLINE TFixedString& operator+=( const StringType& InString ) const noexcept
+    {
+        Append<StringType>( InString );
+        return *this;
+    }
+
+    /* Retrive an element at a certain position */
+    FORCEINLINE CharType& operator[]( SizeType Index ) noexcept
+    {
+        return At( Index );
+    }
+
+    /* Retrive an element at a certain position */
+    FORCEINLINE const CharType& operator[]( SizeType Index ) const noexcept
+    {
+        return At( Index );
+    }
+
+    /* Assign from another view */
+    FORCEINLINE TStringView& operator=( const TStringView& Other ) noexcept
+    {
+        TStringView( Other ).Swap( *this );
+        return *this;
+    }
+
+    /* Move-assign from another view */
+    FORCEINLINE TStringView& operator=( TStringView&& Other ) noexcept
+    {
+        TStringView( Move( Other ) ).Swap( *this );
+        return *this;
     }
 
 public:
 
     /* Returns an iterator to the beginning of the container */
-    FORCEINLINE IteratorType StartIterator() noexcept
+    FORCEINLINE IteratorType StartIterator() noexcept noexcept
     {
         return IteratorType( *this, 0 );
     }
 
     /* Returns an iterator to the end of the container */
-    FORCEINLINE IteratorType EndIterator() noexcept
+    FORCEINLINE IteratorType EndIterator() noexcept noexcept
     {
         return IteratorType( *this, Size() );
     }
@@ -265,7 +575,18 @@ public:
     }
 
 private:
-    CharType Elements[NumChars];
+
+    /* Initializing this string by copying from InString */
+    FORCEINLINE void CopyFrom( const CharType* InString, SizeType InLength ) noexcept
+    {
+        Assert( InLength < Capacity() );
+
+        Memory::Memcpy( String, InString, InLength * sizeof(CharType) );
+        Length = InLength;
+        String[Length] = '\0';
+    }
+
+    CharType String[NumChars];
     SizeType Length;
 };
 
@@ -275,3 +596,12 @@ using FixedString = TFixedString<char, NumChars>;
 
 template<uint32 NumChars>
 using WFixedString = TFixedString<wchar_t, NumChars>;
+
+/* Operators */
+template<typename CharType, int32 FirstNumChars, int32 SecondNumChars>
+inline TFixedString<CharType, FirstNumChars> operator+( const TFixedString<CharType, FirstNumChars>& LHS, const TFixedString<CharType, FirstNumChars>& RHS )
+{
+    TFixedString<CharType, FirstNumChars> Result = LHS;
+    Result.Append(RHS);
+    return Result;
+}
