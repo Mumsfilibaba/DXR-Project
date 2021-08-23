@@ -7,9 +7,10 @@
 #include "Core/Templates/AddReference.h"
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/Not.h"
+#include "Core/Templates/IsTArrayType.h"
 
 /* A fixed size array similar to std::array */
-template<typename T, const int32 ArraySize>
+template<typename T, int32 NumElements>
 struct TFixedArray
 {
 public:
@@ -22,7 +23,7 @@ public:
     typedef TReverseArrayIterator<TFixedArray, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TFixedArray, const ElementType> ReverseConstIteratorType;
 
-    static_assert(ArraySize > 0, "The number of elements has to be more than zero");
+    static_assert(NumElements > 0, "The number of elements has to be more than zero");
 
     /* Retrive the first element */
     FORCEINLINE ElementType& FirstElement() noexcept
@@ -39,26 +40,26 @@ public:
     /* Retrive the last element */
     FORCEINLINE ElementType& LastElement() noexcept
     {
-        return Elements[ArraySize - 1];
+        return Elements[NumElements - 1];
     }
 
     /* Retrive the last element */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
-        return Elements[ArraySize - 1];
+        return Elements[NumElements - 1];
     }
 
     /* Retrive the element at a certain position */
     FORCEINLINE ElementType& At( SizeType Index ) noexcept
     {
-        Assert( Index < ArraySize );
+        Assert( Index < NumElements );
         return Elements[Index];
     }
 
     /* Retrive the element at a certain position */
     FORCEINLINE const ElementType& At( SizeType Index ) const noexcept
     {
-        Assert( Index < ArraySize );
+        Assert( Index < NumElements );
         return Elements[Index];
     }
 
@@ -130,19 +131,19 @@ public:
     /* Retrive the last valid index */
     constexpr SizeType LastIndex() const noexcept
     {
-        return ArraySize - 1;
+        return NumElements - 1;
     }
 
     /* Retrive the size of the array */
     constexpr SizeType Size() const noexcept
     {
-        return ArraySize;
+        return NumElements;
     }
 
     /* Retrive the size of the array in bytes */
     constexpr SizeType SizeInBytes() const noexcept
     {
-        return ArraySize * sizeof( ElementType );
+        return NumElements * sizeof( ElementType );
     }
 
     /* Retrive the data of the array */
@@ -213,5 +214,15 @@ public:
     }
 
 public:
-    ElementType Elements[ArraySize];
+    ElementType Elements[NumElements];
+};
+
+/* Enable TArrayType */
+template<typename T, int32 NumElements>
+struct TIsTArrayType<TFixedArray<T, NumElements>>
+{
+    enum
+    {
+        Value = true;
+    };
 };

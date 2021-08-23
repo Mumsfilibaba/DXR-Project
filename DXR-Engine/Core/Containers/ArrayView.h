@@ -2,6 +2,7 @@
 #include "Iterator.h"
 
 #include "Core/Templates/Move.h"
+#include "Core/Templates/IsTArrayType.h"
 
 /* TArrayView - View of an array similar to std::span */
 template<typename T>
@@ -293,4 +294,14 @@ public:
 private:
     ElementType* View;
     SizeType ViewSize;
+};
+
+/* Enable TArrayType */
+template<typename T>
+struct TIsTArrayType<TArrayView<T>>
+{
+    enum
+    {
+        Value = true;
+    };
 };

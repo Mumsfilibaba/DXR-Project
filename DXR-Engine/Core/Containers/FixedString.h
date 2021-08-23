@@ -4,6 +4,7 @@
 
 #include "Core/Memory/Memory.h"
 #include "Core/Math/Math.h"
+#include "Core/Templates/IsTStringType.h"
 
 #include <cstring>
 #include <cwchar>
@@ -192,3 +193,13 @@ using FixedString = TFixedString<char, NumChars>;
 
 template<uint32 NumChars>
 using WFixedString = TFixedString<wchar_t, NumChars>;
+
+// Add TFixedString to be a string-type
+template<typename CharType, int32 NumChars>
+struct TIsTStringType<TFixedString<CharType, NumChars>>
+{
+    enum
+    {
+        Value = true;
+    };
+};

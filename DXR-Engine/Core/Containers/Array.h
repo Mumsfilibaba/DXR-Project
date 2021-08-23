@@ -9,6 +9,7 @@
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/IsArray.h"
 #include "Core/Templates/Not.h"
+#include "Core/Templates/IsTArrayType.h"
 
 #include <initializer_list>
 
@@ -1010,4 +1011,14 @@ private:
     AllocatorType Allocator;
     SizeType      ArraySize;
     SizeType      ArrayCapacity;
+};
+
+/* Enable TArrayType */
+template<typename T, typename AllocatorType>
+struct TIsTArrayType<TArray<T, AllocatorType>>
+{
+    enum
+    {
+        Value = true;
+    };
 };
