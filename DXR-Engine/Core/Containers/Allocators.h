@@ -5,28 +5,28 @@
 
 /* Default allocator that allocates from malloc */
 template<typename T>
-class TDefaultAllocator
+class TDefaultArrayAllocator
 {
 public:
     using ElementType = T;
     using SizeType = int32;
 
     /* Since we do not store the size of the allocation we cannot copy. TODO: See if this is a better approcach */
-    TDefaultAllocator( const TDefaultAllocator& ) = delete;
-    TDefaultAllocator& operator=( const TDefaultAllocator& ) = delete;
+    TDefaultArrayAllocator( const TDefaultArrayAllocator& ) = delete;
+    TDefaultArrayAllocator& operator=( const TDefaultArrayAllocator& ) = delete;
 
-    FORCEINLINE TDefaultAllocator() noexcept
+    FORCEINLINE TDefaultArrayAllocator() noexcept
         : Allocation( nullptr )
     {
     }
 
-    FORCEINLINE TDefaultAllocator( TDefaultAllocator&& Other ) noexcept
+    FORCEINLINE TDefaultArrayAllocator( TDefaultArrayAllocator&& Other ) noexcept
         : Allocation( Other.Allocation )
     {
         Other.Allocation = nullptr;
     }
 
-    FORCEINLINE ~TDefaultAllocator()
+    FORCEINLINE ~TDefaultArrayAllocator()
     {
         Free();
     }
@@ -44,7 +44,7 @@ public:
         Allocation = nullptr;
     }
 
-    FORCEINLINE void MoveFrom( TDefaultAllocator&& Other )
+    FORCEINLINE void MoveFrom( TDefaultArrayAllocator&& Other )
     {
         if ( this != &Other )
         {
@@ -67,9 +67,9 @@ public:
         return Allocation;
     }
 
-    FORCEINLINE TDefaultAllocator& operator=( TDefaultAllocator&& Other )
+    FORCEINLINE TDefaultArrayAllocator& operator=( TDefaultArrayAllocator&& Other )
     {
-        MoveFrom( Forward<TDefaultAllocator>( Other ) );
+        MoveFrom( Forward<TDefaultArrayAllocator>( Other ) );
         return *this;
     }
 
@@ -79,7 +79,7 @@ private:
 
 /* InlineAllocator allocator that has a small fixed size memory, then allocates from malloc */
 template<typename T, const int32 InlineBytes = 32>
-class TInlineAllocator
+class TInlineArrayAllocator
 {
 public:
     using ElementType = T;
@@ -88,18 +88,18 @@ public:
     static_assert(InlineBytes > sizeof( void* ), "InlineBytes has to be larger that the size of a void*");
 
     /* Since we do not store the size of the allocation we cannot copy. TODO: See if this is a better approcach */
-    TInlineAllocator( const TInlineAllocator& ) = delete;
-    TInlineAllocator& operator=( const TInlineAllocator& ) = delete;
+    TInlineArrayAllocator( const TInlineArrayAllocator& ) = delete;
+    TInlineArrayAllocator& operator=( const TInlineArrayAllocator& ) = delete;
 
     /* Default constructor */
-    FORCEINLINE TInlineAllocator() noexcept
+    FORCEINLINE TInlineArrayAllocator() noexcept
         : Size( 0 )
         , Allocation( nullptr )
     {
     }
 
     /* Move constructor */
-    FORCEINLINE TInlineAllocator( TInlineAllocator&& Other ) noexcept
+    FORCEINLINE TInlineArrayAllocator( TInlineArrayAllocator&& Other ) noexcept
         : Size( Other.Size )
         , Allocation( nullptr )
     {
@@ -107,7 +107,7 @@ public:
         Other.Size = 0;
     }
 
-    FORCEINLINE ~TInlineAllocator()
+    FORCEINLINE ~TInlineArrayAllocator()
     {
         Free();
     }
@@ -148,7 +148,7 @@ public:
     }
 
     /* Move from one allocator to another */
-    FORCEINLINE void MoveFrom( TInlineAllocator&& Other )
+    FORCEINLINE void MoveFrom( TInlineArrayAllocator&& Other )
     {
         if ( this != &Other )
         {
@@ -191,9 +191,9 @@ public:
     }
 
     /* Move assignment */
-    FORCEINLINE TInlineAllocator& operator=( TInlineAllocator&& Other )
+    FORCEINLINE TInlineArrayAllocator& operator=( TInlineArrayAllocator&& Other )
     {
-        MoveFrom( Forward<TInlineAllocator>( Other ) );
+        MoveFrom( Forward<TInlineArrayAllocator>( Other ) );
         return *this;
     }
 

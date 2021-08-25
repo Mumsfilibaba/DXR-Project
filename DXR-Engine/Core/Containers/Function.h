@@ -101,7 +101,7 @@ class TFunction<ReturnType( ArgTypes... )>
     };
 
     // TODO: Should allocator use the element type at all? 
-    using AllocatorType = TInlineAllocator<int8, InlineBytes>;
+    using AllocatorType = TInlineArrayAllocator<int8, InlineBytes>;
 
     /* Generic functor interface */
     class IFunctor

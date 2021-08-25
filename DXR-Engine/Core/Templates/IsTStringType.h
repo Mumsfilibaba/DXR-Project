@@ -6,6 +6,6 @@ struct TIsTStringType
 {
     enum
     {
-        Value = false;
+        Value = false
     };
 };

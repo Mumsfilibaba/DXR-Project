@@ -123,7 +123,7 @@ public:
 protected:
 
     // TODO: Should allocator use the element type at all? 
-    using AllocatorType = TInlineAllocator<int8, InlineBytes>;
+    using AllocatorType = TInlineArrayAllocator<int8, InlineBytes>;
 
     /* Constructor for a empty delegate */
     FORCEINLINE explicit CDelegateBase()

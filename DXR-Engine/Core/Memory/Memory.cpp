@@ -2,7 +2,8 @@
 
 #include <cstdlib>
 #include <cstring>
-#ifdef _WIN32
+
+#ifdef PLATFORM_WINDOWS
 #include <crtdbg.h>
 #endif
 
@@ -32,11 +33,6 @@ void Memory::Free( void* Ptr ) noexcept
     free( Ptr );
 }
 
-char* Memory::Strcpy( char* Destination, const char* Source ) noexcept
-{
-    return strcpy( Destination, Source );
-}
-
 void* Memory::Memset( void* Destination, uint8 Value, uint64 Size ) noexcept
 {
     return memset( Destination, static_cast<int>(Value), Size );
@@ -60,4 +56,41 @@ void* Memory::Memmove( void* Destination, const void* Source, uint64 Size ) noex
 bool Memory::Memcmp( const void* LHS, const void* RHS, uint64 Size )  noexcept
 {
     return (memcmp( LHS, RHS, Size ) == 0);
+}
+
+void Memory::Memswap( void* LHS, void* RHS, uint64 SizeInBytes ) noexcept
+{
+    Assert(LHS != nullptr && RHS != nullptr);
+
+    // Move 8 bytes at a time 
+    uint64* Left  = reinterpret_cast<uint64*>(LHS);
+    uint64* Right = reinterpret_cast<uint64*>(RHS);
+
+    while ( SizeInBytes >= 8 )
+    {
+        uint64 Temp = *Left;
+        *Left  = *Right;
+        *Right = Temp;
+
+        Left++;
+        Right++;
+
+        SizeInBytes -= 8;
+    }
+
+    // Move remaining bytes
+    uint8* LeftBytes  = reinterpret_cast<uint8*>(LHS);
+    uint8* RightBytes = reinterpret_cast<uint8*>(RHS);
+
+    while ( SizeInBytes )
+    {
+        uint8 Temp  = *LeftBytes;
+        *LeftBytes  = *RightBytes;
+        *RightBytes = Temp;
+
+        LeftBytes++;
+        RightBytes++;
+
+        SizeInBytes--;
+    }
 }

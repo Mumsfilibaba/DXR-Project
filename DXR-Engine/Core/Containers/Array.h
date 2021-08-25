@@ -14,7 +14,7 @@
 #include <initializer_list>
 
 /* Dynamic Array similar to std::vector */
-template<typename T, typename AllocatorType = TDefaultAllocator<T>>
+template<typename T, typename AllocatorType = TDefaultArrayAllocator<T>>
 class TArray
 {
 public:

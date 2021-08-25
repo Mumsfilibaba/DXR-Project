@@ -6,6 +6,7 @@
 #include "FixedArray_Test.h"
 #include "ArrayView_Test.h"
 #include "Delegate_Test.h"
+#include "String_Test.h"
 
 /* Check for memory leaks */
 #ifdef PLATFORM_WINDOWS
@@ -55,6 +56,10 @@ void Tests( int32 Argc, const char* Argv[] )
 
 #if RUN_DELEGATE_TEST
     Delegate_Test();
+#endif
+
+#if RUN_TSTRING_TEST
+    TString_Test( Argv[0] );
 #endif
 }
 
