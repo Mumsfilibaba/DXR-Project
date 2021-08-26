@@ -6,13 +6,13 @@
 #include "Core/Templates/AddReference.h"
 
 /* Storage class with a fixed allocated number of characters */
-template<typename CharType, uint32 NumChars>
+template<typename CharType, uint32 CharCount>
 class TFixedString
 {
 public:
 
     static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
-    static_assert(NumChars > 0, "The number of chars has to be more than zero");
+    static_assert(CharCount > 0, "The number of chars has to be more than zero");
 
     /* Types */
     using ElementType  = CharType;
@@ -133,6 +133,36 @@ public:
         Storage[StrLength] = StringTraits::Terminator;
     }
 
+    /* Resize the string */
+    FORCEINLINE void Resize( SizeType NewSize ) noexcept
+    {
+        Resize( NewSize, CharType() );
+    }
+
+    /* Resize the string and fill with Char */
+    FORCEINLINE void Resize( SizeType NewSize, CharType FillElement ) noexcept
+    {
+        Assert( NewSize < CharCount );
+        
+        for (SizeType Index = StrLength; Index < NewSize; Index++)
+        {
+            Storage[Index] = FillElement;
+        }
+
+        StrLength = NewSize;
+        Storage[StrLength] = StringTraits::Terminator;
+    }
+
+    /* Copy this string into buffer */
+    FORCEINLINE void Copy( CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const noexcept
+    {
+        Assert( Buffer != nullptr);
+        Assert( Position < StrLength );
+
+        SizeType CopySize = NMath::Min(BufferSize, StrLength - Position);
+        StringTraits::Copy( Buffer, Storage + Position, CopySize);
+    }
+
     /* Format string (similar to snprintf) */
     FORCEINLINE void Format(const CharType* Format, ...) noexcept
     {
@@ -145,14 +175,14 @@ public:
     /* Format string with a va_list (similar to snprintf) */
     FORCEINLINE void FormatV(const CharType* Format, va_list ArgList) noexcept
     {
-        const SizeType WrittenChars = StringTraits::PrintVA(Storage, NumChars, Format, ArgList);
-        if ( WrittenChars < NumChars )
+        const SizeType WrittenChars = StringTraits::PrintVA(Storage, CharCount, Format, ArgList);
+        if ( WrittenChars < CharCount )
         {
             StrLength = WrittenChars;
         }
         else
         {
-            StrLength = NumChars - 1;
+            StrLength = CharCount - 1;
         }
 
         Storage[StrLength] = StringTraits::Terminator;
@@ -170,15 +200,15 @@ public:
     /* Same as FormatV, but appends the result to the current string */
     FORCEINLINE void AppendFormatV( const CharType* Format, va_list ArgList ) noexcept
     {
-        const SizeType WrittenChars = StringTraits::PrintVA( Storage + StrLength, NumChars, Format, ArgList );
+        const SizeType WrittenChars = StringTraits::PrintVA( Storage + StrLength, CharCount, Format, ArgList );
         const SizeType NewLength    = StrLength + WrittenChars;
-        if ( NewLength < NumChars )
+        if ( NewLength < CharCount )
         {
             StrLength = NewLength;
         }
         else
         {
-            StrLength = NumChars - 1;
+            StrLength = CharCount - 1;
         }
         
         Storage[StrLength] = StringTraits::Terminator;
@@ -316,7 +346,7 @@ public:
     /* Compares two strings and checks if they are equal */
     FORCEINLINE bool Compare( const CharType* InString ) const noexcept
     {
-        Compare( InString, StrLen(InString) );
+        Compare( InString, StringTraits::Length(InString) );
     }
 
     /* Compares two strings and checks if they are equal */
@@ -447,10 +477,10 @@ public:
         }
 
         // Calculate the offset to the end
-        const CharType* Start = CStr();
-        SizeType Length = (InOffset == 0) ? StringTraits::Length( Start ) : InOffset;
+        SizeType Length = (InOffset == 0) ? StrLength : NMath::Min(InOffset, StrLength);
         
-        const CharType* End = Start + Length;
+        const CharType* Start = CStr();
+        const CharType* End   = Start + Length;
         while ( End != Start )
         {
             End--;
@@ -618,8 +648,8 @@ public:
         return (FindOneOf( InString, InLength, InOffset ) != InvalidPosition);
     }
 
-    /* Erases count characters from position and forward */
-    FORCEINLINE void Erase(SizeType Position, SizeType Count ) noexcept
+    /* Removes count characters from position and forward */
+    FORCEINLINE void Remove( SizeType Position, SizeType Count ) noexcept
     {
         Assert( (Position < StrLength) && (Position + Count < StrLength) );
         
@@ -646,7 +676,7 @@ public:
     /* Insert a string at position */
     FORCEINLINE void Insert( const CharType* InString, SizeType InLength, SizeType Position ) noexcept
     {
-        Assert( (Position < StrLength) && (StrLength + InLength < NumChars) );
+        Assert( (Position < StrLength) && (StrLength + InLength < CharCount) );
 
         const uint64 Size = InLength * sizeof( CharType );
 
@@ -685,7 +715,7 @@ public:
     FORCEINLINE void Replace( const CharType* InString, SizeType InLength, SizeType Position ) noexcept
     {
         Assert( (Position < StrLength) && (Position + InLength < StrLength) );
-        Memory::Memcpy( Data() + Position, InString, InLength * sizeof( CharType ) );
+        StringTraits::Copy( Data() + Position, InString, InLength );
     }
 
     /* Replace a character */
@@ -709,9 +739,23 @@ public:
     /* Swaps two fixed strings with eachother */
     FORCEINLINE void Swap( TFixedString& Other )
     {
-        TFixedString Temp( Move( *this ) );
+        TFixedString TempString( Move( *this ) );
         MoveFrom( Move( Other ) );
-        Other.MoveFrom( Move( Temp ) );
+        Other.MoveFrom( Move( TempString ) );
+    }
+
+    /* Returns a sub-string of this string */
+    FORCEINLINE TFixedString SubString( SizeType Offset, SizeType Count ) const noexcept
+    {
+        Assert((Offset < StrLength) && (Offset + Count < StrLength));
+        return TFixedString( Storage + Offset, Count);
+    }
+
+    /* Returns a sub-stringview of this string */
+    FORCEINLINE TStringView<CharType> SubStringView( SizeType Offset, SizeType Count ) const noexcept
+    {
+        Assert((Offset < StrLength) && (Offset + Count < StrLength));
+        return TStringView<CharType>( Storage + Offset, Count );
     }
 
     /* Retrive the character at Index */
@@ -752,20 +796,6 @@ public:
         return StrLength;
     }
 
-    /* Returns a sub-string of this string */
-    FORCEINLINE TFixedString SubString( SizeType Offset, SizeType Count ) const noexcept
-    {
-        Assert((Offset < StrLength) && (Offset + Count < StrLength));
-        return TFixedString( Storage + Offset, Count);
-    }
-
-    /* Returns a sub-stringview of this string */
-    FORCEINLINE TStringView<CharType> SubStringView( SizeType Offset, SizeType Count ) const noexcept
-    {
-        Assert((Offset < StrLength) && (Offset + Count < StrLength));
-        return TStringView<CharType>( Storage + Offset, Count );
-    }
-
     /* Return the length of the string */
     FORCEINLINE SizeType Length() const noexcept
     {
@@ -774,12 +804,12 @@ public:
 
     constexpr SizeType Capacity() const noexcept
     {
-        return NumChars;
+        return CharCount;
     }
 
     constexpr SizeType CapacityInBytes() const noexcept
     {
-        return NumChars * sizeof(CharType);
+        return CharCount * sizeof(CharType);
     }
 
     /* Retrive the size of the string in bytes */
@@ -951,7 +981,7 @@ private:
     {
         Assert( InLength < Capacity() );
 
-        Memory::Memcpy( Storage, InString, InLength * sizeof(CharType) );
+        StringTraits::Copy( Storage, InString, InLength );
         StrLength = InLength;
         Storage[StrLength] = StringTraits::Terminator;
     }
@@ -967,29 +997,61 @@ private:
     }
 
     /* Storage for characters */
-    CharType Storage[NumChars];
+    CharType Storage[CharCount];
     SizeType StrLength;
 };
 
 /* Predefined types */
-template<uint32 NumChars>
-using CFixedString = TFixedString<char, NumChars>;
+template<uint32 CharCount>
+using CFixedString = TFixedString<char, CharCount>;
 
-template<uint32 NumChars>
-using WFixedString = TFixedString<wchar_t, NumChars>;
+template<uint32 CharCount>
+using WFixedString = TFixedString<wchar_t, CharCount>;
 
 /* Operators */
-template<typename CharType, int32 FirstNumChars, int32 SecondNumChars>
-inline TFixedString<CharType, FirstNumChars> operator+( const TFixedString<CharType, FirstNumChars>& LHS, const TFixedString<CharType, FirstNumChars>& RHS )
+template<typename CharType, int32 CharCount>
+inline TFixedString<CharType, CharCount> operator+( const TFixedString<CharType, CharCount>& LHS, const TFixedString<CharType, CharCount>& RHS )
 {
-    TFixedString<CharType, FirstNumChars> Result = LHS;
-    Result.Append(RHS);
-    return Result;
+    TFixedString<CharType, CharCount> NewString = LHS;
+    NewString.Append(RHS);
+    return NewString;
+}
+
+template<typename CharType, int32 CharCount>
+inline TFixedString<CharType, CharCount> operator+( const CharType* LHS, const TFixedString<CharType, CharCount>& RHS )
+{
+    TFixedString<CharType, CharCount> NewString = LHS;
+    NewString.Append(RHS);
+    return NewString;
+}
+
+template<typename CharType, int32 CharCount>
+inline TFixedString<CharType, CharCount> operator+( const TFixedString<CharType, CharCount>& LHS, const CharType* RHS )
+{
+    TFixedString<CharType, CharCount> NewString = LHS;
+    NewString.Append(RHS);
+    return NewString;
+}
+
+template<typename CharType, int32 CharCount>
+inline TFixedString<CharType, CharCount> operator+( CharType LHS, const TFixedString<CharType, CharCount>& RHS )
+{
+    TFixedString<CharType, CharCount> NewString = LHS;
+    NewString.Append(RHS);
+    return NewString;
+}
+
+template<typename CharType, int32 CharCount>
+inline TFixedString<CharType, CharCount> operator+( const TFixedString<CharType, CharCount>& LHS, CharType RHS )
+{
+    TFixedString<CharType, CharCount> NewString = LHS;
+    NewString.Append(RHS);
+    return NewString;
 }
 
 /* Add TFixedString to be a string-type */
-template<typename CharType, int32 NumChars>
-struct TIsTStringType<TFixedString<CharType, NumChars>>
+template<typename CharType, int32 CharCount>
+struct TIsTStringType<TFixedString<CharType, CharCount>>
 {
     enum
     {

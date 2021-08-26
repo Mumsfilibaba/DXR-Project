@@ -95,6 +95,12 @@ public:
     {
         return static_cast<CharType>(toupper( static_cast<int>(Char) ));
     }
+
+    /* Copy two strings */ 
+    static FORCEINLINE CharType* Copy( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
+    {
+        return reinterpret_cast<CharType*>(Memory::Memcpy(Destination, Source, Length * sizeof(CharType)));
+    }
 };
 
 template<>
@@ -179,6 +185,12 @@ public:
     static FORCEINLINE CharType ToUpper( CharType Char ) noexcept
     {
         return static_cast<CharType>(towupper( static_cast<wint_t>(Char) ));
+    }
+
+    /* Copy two strings */ 
+    static FORCEINLINE CharType* Copy( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
+    {
+        return reinterpret_cast<CharType*>(Memory::Memcpy(Destination, Source, Length * sizeof(CharType)));
     }
 };
 
