@@ -13,6 +13,7 @@ template<typename ArrayType, typename ElementType>
 class TArrayIterator
 {
 public:
+
     using SizeType = typename ArrayType::SizeType;
 
     TArrayIterator( const TArrayIterator& ) = default;
@@ -177,6 +178,7 @@ template<typename ArrayType, typename ElementType>
 class TReverseArrayIterator
 {
 public:
+
     using SizeType = typename ArrayType::SizeType;
 
     TReverseArrayIterator( const TReverseArrayIterator& ) = default;
@@ -335,3 +337,108 @@ FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+( typename TR
     TReverseArrayIterator Temp = RHS;
     return Temp += LHS;
 }
+
+/* Iterator for tree-structurs such as TSet */
+template<typename NodeType, typename ElementType>
+class TTreeIterator
+{
+public:
+
+    using SizeType = int32;
+
+    TTreeIterator( const TTreeIterator& ) = default;
+    TTreeIterator( TTreeIterator&& ) = default;
+    ~TTreeIterator() = default;
+    TTreeIterator& operator=( const TTreeIterator& ) = default;
+    TTreeIterator& operator=( TTreeIterator&& ) = default;
+
+    /* Constructor creating a new iterator by taking in the array and pointer */
+    FORCEINLINE TTreeIterator( NodeType* InNode ) noexcept
+        : Node( InNode )
+    {
+        Assert( IsValid() );
+    }
+
+    /* Ensure that the pointer is in the range of the array */
+    FORCEINLINE bool IsValid() const noexcept
+    {
+        return (Node != nullptr) && (Node->GetPointer() != nullptr);
+    }
+
+    /* Retrive the raw pointer */
+    FORCEINLINE ElementType* Raw() const noexcept
+    {
+        Assert( IsValid() );
+        return Node->GetPointer();
+    }
+
+    /* Retrive the raw pointer */
+    FORCEINLINE ElementType* operator->() const noexcept
+    {
+        return Raw();
+    }
+
+    /* Dereference the raw pointer */
+    FORCEINLINE ElementType& operator*() const noexcept
+    {
+        return *Raw();
+    }
+
+    /* Add to the iterator */
+    FORCEINLINE TTreeIterator operator++() noexcept
+    {
+        Assert( IsValid() );
+        Node = Node->GetNext();
+        return *this;
+    }
+
+    /* Add to the iterator */
+    FORCEINLINE TTreeIterator operator++( int ) noexcept
+    {
+        TTreeIterator TempIterator = *this;
+        Node = Node->GetNext();
+
+        Assert( IsValid() );
+        return TempIterator;
+    }
+
+    /* Subtract the iterator */
+    FORCEINLINE TTreeIterator operator--() noexcept
+    {
+        Assert( IsValid() );
+        Node = Node->GetPrevious();
+        return *this;
+    }
+
+    /* Subtract the iterator */
+    FORCEINLINE TTreeIterator operator--( int ) noexcept
+    {
+        TTreeIterator TempIterator = *this;
+        Node = Node->GetPrevious();
+
+        Assert( IsValid() );
+        return TempIterator;
+    }
+
+    /* Compare equality two iterators */
+    FORCEINLINE bool operator==( const TTreeIterator& RHS ) const noexcept
+    {
+        return (Node == RHS.Node);
+    }
+
+    /* Compare equality two iterators */
+    FORCEINLINE bool operator!=( const TTreeIterator& RHS ) const noexcept
+    {
+        return !(*this == RHS);
+    }
+
+    /* Convert into a const iterator */
+    FORCEINLINE operator TTreeIterator<const NodeType, const ElementType>() const noexcept
+    {
+        /* The arraytype must be const here in order to make the dereference work properly */
+        return TTreeIterator<const NodeType, const ElementType>( Node );
+    }
+
+private:
+    NodeType* Node;
+};

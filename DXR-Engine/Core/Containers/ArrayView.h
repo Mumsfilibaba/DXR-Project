@@ -26,7 +26,7 @@ public:
     }
 
     /* Create a view from a templated array type */
-    template<typename ArrayType>
+    template<typename ArrayType, typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
     FORCEINLINE explicit TArrayView( ArrayType& InArray ) noexcept
         : View( InArray.Data() )
         , ViewSize( InArray.Size() )
@@ -130,7 +130,7 @@ public:
     }
 
     /* Retrive the last valid index for the view */
-    FORCEINLINE SizeType LastIndex() const noexcept
+    FORCEINLINE SizeType LastElementIndex() const noexcept
     {
         return ViewSize > 0 ? ViewSize - 1 : 0;
     }
@@ -147,6 +147,18 @@ public:
         return Size() * sizeof( ElementType );
     }
 
+    /* Returns the capacity of the container */
+    FORCEINLINE SizeType Capacity() const noexcept
+    {
+        return ArrayCapacity;
+    }
+
+    /* Returns the capacity of the container in bytes */
+    FORCEINLINE SizeType CapacityInBytes() const noexcept
+    {
+        return Capacity() * sizeof( ElementType );
+    }
+
     /* Retrive the data of the view */
     FORCEINLINE ElementType* Data() noexcept
     {
@@ -160,15 +172,15 @@ public:
     }
 
     /* Create a subview */
-    FORCEINLINE const ElementType* SubView( SizeType Offset, SizeType Count ) const noexcept
+    FORCEINLINE TArrayView SubView( SizeType Offset, SizeType Count ) const noexcept
     {
-        Assert((Count < ViewSize) && (Offset + Count < ViewSize) );
-        return TArrayView(View + Offset, Count);
+        Assert( (Count < ViewSize) && (Offset + Count < ViewSize) );
+        return TArrayView( View + Offset, Count );
     }
 
     /* Compares two containers by comparing each element, returns true if all is equal */
     template<typename ArrayType>
-    FORCEINLINE bool operator==( const ArrayType& Other ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==( const ArrayType& Other ) const noexcept
     {
         if ( Size() != Other.Size() )
         {
@@ -180,7 +192,7 @@ public:
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */
     template<typename ArrayType>
-    FORCEINLINE bool operator!=( const ArrayType& Other ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=( const ArrayType& Other ) const noexcept
     {
         return !(*this == Other);
     }

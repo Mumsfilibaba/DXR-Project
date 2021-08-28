@@ -1,10 +1,13 @@
 #pragma once
+#if 0
+
 #include "Array.h"
 #include "StringView.h"
 
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/AddReference.h"
+
 
 #define STRING_USE_INLINE_ALLOCATOR (0)
 
@@ -25,10 +28,10 @@ class TString
 public:
 
     static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
-    
+
     /* Types */
-    using ElementType  = CharType;
-    using SizeType     = int32;
+    using ElementType = CharType;
+    using SizeType = int32;
     using StringTraits = TStringTraits<CharType>;
 
     /* Constants */
@@ -1005,3 +1008,5 @@ struct TIsTStringType<TString<CharType>>
         Value = true
     };
 };
+
+#endif

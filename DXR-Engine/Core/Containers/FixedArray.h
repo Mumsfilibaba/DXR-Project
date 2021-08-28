@@ -80,6 +80,83 @@ public:
         Other = Move( Temp );
     }
 
+    /* Retrive the data of the array */
+    FORCEINLINE ElementType* Data() noexcept
+    {
+        return Elements;
+    }
+
+    /* Retrive the data of the array */
+    FORCEINLINE const ElementType* Data() const noexcept
+    {
+        return Elements;
+    }
+
+    /* Retrive the element at a certain position */
+    FORCEINLINE ElementType& operator[]( SizeType Index ) noexcept
+    {
+        return At( Index );
+    }
+
+    /* Retrive the element at a certain position */
+    FORCEINLINE const ElementType& operator[]( SizeType Index ) const noexcept
+    {
+        return At( Index );
+    }
+
+    /* Compares two containers by comparing each element, returns true if all is equal */
+    template<typename ArrayType>
+    FORCEINLINE bool operator==( const ArrayType& Other ) const noexcept
+    {
+        if ( Size() != Other.Size() )
+        {
+            return false;
+        }
+
+        return CompareRange<ElementType>( Data(), Other.Data(), Size() );
+    }
+
+    /* Compares two containers by comparing each element, returns false if all elements are equal */
+    template<typename ArrayType>
+    FORCEINLINE bool operator!=( const ArrayType& Other ) const noexcept
+    {
+        return !(*this == Other);
+    }
+
+public:
+
+    /* Retrive the last valid index */
+    constexpr SizeType LastElementIndex() const noexcept
+    {
+        return NumElements - 1;
+    }
+
+    /* Retrive the size of the array */
+    constexpr SizeType Size() const noexcept
+    {
+        return NumElements;
+    }
+
+    /* Retrive the size of the array in bytes */
+    constexpr SizeType SizeInBytes() const noexcept
+    {
+        return Size() * sizeof( ElementType );
+    }
+
+    /* Returns the capacity of the container */
+    constexpr SizeType Capacity() const noexcept
+    {
+        return NumElements;
+    }
+
+    /* Returns the capacity of the container in bytes */
+    constexpr SizeType CapacityInBytes() const noexcept
+    {
+        return Capacity() * sizeof( ElementType );
+    }
+
+public:
+    
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
@@ -128,67 +205,6 @@ public:
         return ReverseConstIteratorType( *this, 0 );
     }
 
-    /* Retrive the last valid index */
-    constexpr SizeType LastIndex() const noexcept
-    {
-        return NumElements - 1;
-    }
-
-    /* Retrive the size of the array */
-    constexpr SizeType Size() const noexcept
-    {
-        return NumElements;
-    }
-
-    /* Retrive the size of the array in bytes */
-    constexpr SizeType SizeInBytes() const noexcept
-    {
-        return NumElements * sizeof( ElementType );
-    }
-
-    /* Retrive the data of the array */
-    FORCEINLINE ElementType* Data() noexcept
-    {
-        return Elements;
-    }
-
-    /* Retrive the data of the array */
-    FORCEINLINE const ElementType* Data() const noexcept
-    {
-        return Elements;
-    }
-
-    /* Retrive the element at a certain position */
-    FORCEINLINE ElementType& operator[]( SizeType Index ) noexcept
-    {
-        return At( Index );
-    }
-
-    /* Retrive the element at a certain position */
-    FORCEINLINE const ElementType& operator[]( SizeType Index ) const noexcept
-    {
-        return At( Index );
-    }
-
-    /* Compares two containers by comparing each element, returns true if all is equal */
-    template<typename ArrayType>
-    FORCEINLINE bool operator==( const ArrayType& Other ) const noexcept
-    {
-        if ( Size() != Other.Size() )
-        {
-            return false;
-        }
-
-        return CompareRange<ElementType>( Data(), Other.Data(), Size() );
-    }
-
-    /* Compares two containers by comparing each element, returns false if all elements are equal */
-    template<typename ArrayType>
-    FORCEINLINE bool operator!=( const ArrayType& Other ) const noexcept
-    {
-        return !(*this == Other);
-    }
-
 public:
 
     /* STL iterator functions - Enables Range-based for-loops */
@@ -223,6 +239,6 @@ struct TIsTArrayType<TFixedArray<T, NumElements>>
 {
     enum
     {
-        Value = true;
+        Value = true
     };
 };

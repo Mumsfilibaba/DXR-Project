@@ -2,6 +2,7 @@
 #include "Iterator.h"
 #include "Allocators.h"
 #include "UniquePtr.h"
+#include "ArrayView.h"
 
 #include "Core/Templates/Move.h"
 #include "Core/Templates/IsPointer.h"
@@ -10,6 +11,7 @@
 #include "Core/Templates/IsArray.h"
 #include "Core/Templates/Not.h"
 #include "Core/Templates/IsTArrayType.h"
+#include "Core/Templates/IsReallocatable.h"
 
 #include <initializer_list>
 
@@ -81,7 +83,7 @@ public:
     }
 
     /* Copy-constructs an array from another array */
-    template<typename ArrayType>
+    template<typename ArrayType, typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
     FORCEINLINE TArray( const ArrayType& Other ) noexcept
         : Allocator()
         , ArraySize( 0 )
@@ -157,38 +159,34 @@ public:
     /* Resets the container, but does not deallocate the memory */
     FORCEINLINE void Reset( const ElementType* InputArray, SizeType Count ) noexcept
     {
-        Assert( (InputArray != nullptr) && Count );
+        Assert( (InputArray != nullptr) && (Count > 0) );
 
-        DestructRange<ElementType>( Data(), ArraySize );
+        if ( InputArray != Data() )
+        {
+            DestructRange<ElementType>( Data(), ArraySize );
 
-        if ( Count )
-        {
-            EmptyCopyFrom( InputArray, Count );
-        }
-        else
-        {
-            ArraySize = 0;
+            if ( Count )
+            {
+                EmptyCopyFrom( InputArray, Count );
+            }
+            else
+            {
+                ArraySize = 0;
+            }
         }
     }
 
     /* Resets the container, but does not deallocate the memory */
     template<typename ArrayType>
-    FORCEINLINE void Reset( const ArrayType& InputArray ) noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Reset( const ArrayType& InputArray ) noexcept
     {
-        if ( this != &InputArray )
-        {
-            Reset( InputArray.Data(), InputArray.Size() );
-        }
+        Reset( InputArray.Data(), InputArray.Size() );
     }
 
     /* Resets the container, but does not deallocate the memory */
     FORCEINLINE void Reset( TArray&& InputArray ) noexcept
     {
-        if ( this != &InputArray )
-        {
-            DestructRange<ElementType>( Data(), ArraySize );
-            MoveFrom( InputArray );
-        }
+        MoveFrom( Forward<TArray>( InputArray ) );
     }
 
     /* Resets the container, but does not deallocate the memory */
@@ -221,7 +219,7 @@ public:
         }
         else if ( NewSize < ArraySize )
         {
-            RemoveFromEnd( ArraySize - NewSize );
+            InternalPopRange( ArraySize - NewSize );
         }
     }
 
@@ -240,7 +238,7 @@ public:
         }
         else if ( NewSize < ArraySize )
         {
-            RemoveFromEnd( ArraySize - NewSize );
+            InternalPopRange( ArraySize - NewSize );
         }
     }
 
@@ -261,7 +259,7 @@ public:
 
     /* Constructs a new element at the end */
     template<typename... ArgTypes>
-    inline ElementType& EmplaceBack( ArgTypes&&... Args ) noexcept
+    inline ElementType& Emplace( ArgTypes&&... Args ) noexcept
     {
         if ( ArraySize == ArrayCapacity )
         {
@@ -274,15 +272,15 @@ public:
     }
 
     /* Inserts a new element at the end */
-    FORCEINLINE ElementType& PushBack( const ElementType& Element ) noexcept
+    FORCEINLINE ElementType& Push( const ElementType& Element ) noexcept
     {
-        return EmplaceBack( Element );
+        return Emplace( Element );
     }
 
     /* Inserts a new element at the end */
-    FORCEINLINE ElementType& PushBack( ElementType&& Element ) noexcept
+    FORCEINLINE ElementType& Push( ElementType&& Element ) noexcept
     {
-        return EmplaceBack( Forward<ElementType>( Element ) );
+        return Emplace( Forward<ElementType>( Element ) );
     }
 
     /* Constructs a new element at specified position */
@@ -294,7 +292,7 @@ public:
         /* Simple path if position is last */
         if ( Position == ArraySize )
         {
-            EmplaceBack( Forward<ArgTypes>( Args )... );
+            Emplace( Forward<ArgTypes>( Args )... );
         }
         else
         {
@@ -350,7 +348,7 @@ public:
 
     /* Insert an array into the container at the position */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TNot<TIsArray<ArrayType>>::Value>::Type InsertAt( SizeType Position, const ArrayType& InArray ) noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type InsertAt( SizeType Position, const ArrayType& InArray ) noexcept
     {
         InsertAt( Position, InArray.Data(), InArray.Size() );
     }
@@ -373,7 +371,7 @@ public:
 
     /* Inserts an array at the end */
     template<typename ArrayType>
-    FORCEINLINE void Append( const ArrayType& Other ) noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Append( const ArrayType& Other ) noexcept
     {
         Append( Other.Data(), Other.Size() );
     }
@@ -385,18 +383,18 @@ public:
     }
 
     /* Removes a number of elments from the back */
-    FORCEINLINE void PopBackRange( SizeType Count ) noexcept
+    FORCEINLINE void PopRange( SizeType Count ) noexcept
     {
         if ( !IsEmpty() )
         {
-            RemoveFromEnd( Count );
+            InternalPopRange( Count );
         }
     }
 
     /* Removes the last element */
-    FORCEINLINE void PopBack() noexcept
+    FORCEINLINE void Pop() noexcept
     {
-        PopBackRange( 1 );
+        PopRange( 1 );
     }
 
     /* Remove a range starting at position and containg count number of elements */
@@ -406,7 +404,7 @@ public:
 
         if ( Position + Count == ArraySize )
         {
-            RemoveFromEnd( Count );
+            InternalPopRange( Count );
         }
         else
         {
@@ -441,9 +439,9 @@ public:
     /* Swaps container with another */
     FORCEINLINE void Swap( TArray& Other ) noexcept
     {
-        TArray Temp = Move( *this );
-        *this = Move( Other );
-        Other = Move( Temp );
+        TArray TempArray( Move( *this ) );
+        MoveFrom( Move( Other ) );
+        Other.MoveFrom( Move( TempArray ) );
     }
 
     /* Shrinks the allocation to be the same as the size */
@@ -456,54 +454,6 @@ public:
     FORCEINLINE bool IsEmpty() const noexcept
     {
         return (ArraySize == 0);
-    }
-
-    /* Returns an iterator to the beginning of the container */
-    FORCEINLINE IteratorType StartIterator() noexcept
-    {
-        return IteratorType( *this, 0 );
-    }
-
-    /* Returns an iterator to the end of the container */
-    FORCEINLINE IteratorType EndIterator() noexcept
-    {
-        return IteratorType( *this, Size() );
-    }
-
-    /* Returns an iterator to the beginning of the container */
-    FORCEINLINE ConstIteratorType StartIterator() const noexcept
-    {
-        return ConstIteratorType( *this, 0 );
-    }
-
-    /* Returns an iterator to the end of the container */
-    FORCEINLINE ConstIteratorType EndIterator() const noexcept
-    {
-        return ConstIteratorType( *this, Size() );
-    }
-
-    /* Returns an reverse iterator to the end of the container */
-    FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
-    {
-        return ReverseIteratorType( *this, Size() );
-    }
-
-    /* Returns an reverse iterator to the beginning of the container */
-    FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
-    {
-        return ReverseIteratorType( *this, 0 );
-    }
-
-    /* Returns an reverse iterator to the end of the container */
-    FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
-    {
-        return ReverseConstIteratorType( *this, Size() );
-    }
-
-    /* Returns an reverse iterator to the beginning of the container */
-    FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
-    {
-        return ReverseConstIteratorType( *this, 0 );
     }
 
     /* Returns the first element of the container */
@@ -547,7 +497,7 @@ public:
     }
 
     /* Returns the last valid index the container */
-    FORCEINLINE SizeType LastIndex() const noexcept
+    FORCEINLINE SizeType LastElementIndex() const noexcept
     {
         return (ArraySize > 0) ? (ArraySize - 1) : 0;
     }
@@ -588,6 +538,13 @@ public:
     {
         Assert( Index < ArraySize );
         return Data()[Index];
+    }
+
+    /* Create a view of array */
+    FORCEINLINE TArrayView<ElementType> CreateView( SizeType Offset, SizeType Count ) const noexcept
+    {
+        Assert( (Count < ArraySize) && (Offset + Count < ArraySize) );
+        return TArrayView<ElementType>( Data() + Offset, Count );
     }
 
     /* Allocate and copy the contents into a uniqueptr */
@@ -665,7 +622,7 @@ public:
 
         for ( SizeType Index = ArraySize - 1; Index > 0; Index-- )
         {
-            SwapElements( 0, Index );
+            ::Swap<ElementType>( At( 0 ), At( Index ) );
             MinHeapify( Index, 0 );
         }
     }
@@ -705,7 +662,7 @@ public:
 
         for ( SizeType Index = ArraySize - 1; Index > 0; Index-- )
         {
-            SwapElements( 0, Index );
+            ::Swap<ElementType>( At( 0 ), At( Index ) );
             MaxHeapify( Index, 0 );
         }
     }
@@ -733,7 +690,7 @@ public:
 
     /* Compares two containers by comparing each element, returns true if all is equal */
     template<typename ArrayType>
-    FORCEINLINE bool operator==( const ArrayType& RHS ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==( const ArrayType& RHS ) const noexcept
     {
         if ( Size() != RHS.Size() )
         {
@@ -745,7 +702,7 @@ public:
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */
     template<typename ArrayType>
-    FORCEINLINE bool operator!=( const ArrayType& RHS ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=( const ArrayType& RHS ) const noexcept
     {
         return !(*this == RHS);
     }
@@ -760,6 +717,56 @@ public:
     FORCEINLINE const ElementType& operator[]( SizeType Index ) const noexcept
     {
         return At( Index );
+    }
+
+public:
+
+    /* Returns an iterator to the beginning of the container */
+    FORCEINLINE IteratorType StartIterator() noexcept
+    {
+        return IteratorType( *this, 0 );
+    }
+
+    /* Returns an iterator to the end of the container */
+    FORCEINLINE IteratorType EndIterator() noexcept
+    {
+        return IteratorType( *this, Size() );
+    }
+
+    /* Returns an iterator to the beginning of the container */
+    FORCEINLINE ConstIteratorType StartIterator() const noexcept
+    {
+        return ConstIteratorType( *this, 0 );
+    }
+
+    /* Returns an iterator to the end of the container */
+    FORCEINLINE ConstIteratorType EndIterator() const noexcept
+    {
+        return ConstIteratorType( *this, Size() );
+    }
+
+    /* Returns an reverse iterator to the end of the container */
+    FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
+    {
+        return ReverseIteratorType( *this, Size() );
+    }
+
+    /* Returns an reverse iterator to the beginning of the container */
+    FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
+    {
+        return ReverseIteratorType( *this, 0 );
+    }
+
+    /* Returns an reverse iterator to the end of the container */
+    FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
+    {
+        return ReverseConstIteratorType( *this, Size() );
+    }
+
+    /* Returns an reverse iterator to the beginning of the container */
+    FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
+    {
+        return ReverseConstIteratorType( *this, 0 );
     }
 
 public:
@@ -824,21 +831,24 @@ private:
 
     FORCEINLINE void MoveFrom( TArray&& FromArray )
     {
-        /* Since the memory remains the same we should not need to use move-assignment or constructor.
-           However, still need to call our destructors */
-        DestructRange<ElementType>( Data(), Size() );
-        Allocator.MoveFrom( Move( FromArray.Allocator ) );
+        if ( FromArray.Data() != Data() )
+        {
+            /* Since the memory remains the same we should not need to use move-assignment or constructor.
+               However, still need to call our destructors */
+            DestructRange<ElementType>( Data(), Size() );
+            Allocator.MoveFrom( Move( FromArray.Allocator ) );
 
-        ArraySize = FromArray.ArraySize;
-        ArrayCapacity = FromArray.ArrayCapacity;
-        FromArray.ArraySize = 0;
-        FromArray.ArrayCapacity = 0;
+            ArraySize = FromArray.ArraySize;
+            ArrayCapacity = FromArray.ArrayCapacity;
+            FromArray.ArraySize = 0;
+            FromArray.ArrayCapacity = 0;
+        }
     }
 
     FORCEINLINE void ReserveStorage( const SizeType NewCapacity ) noexcept
     {
         /* Simple Memory::Realloc for trivial elements */
-        if constexpr ( !TIsTrivial<ElementType>::Value )
+        if constexpr ( !TIsReallocatable<ElementType>::Value )
         {
             if ( ArrayCapacity )
             {
@@ -877,7 +887,7 @@ private:
             Assert( NewCapacity >= ArrayCapacity );
 
             /* Simpler path for trivial elements */
-            if constexpr ( !TIsTrivial<ElementType>::Value )
+            if constexpr ( !TIsReallocatable<ElementType>::Value )
             {
                 /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
                    objects has references to themselves or childobjects that references these objects. */
@@ -909,7 +919,7 @@ private:
         }
     }
 
-    FORCEINLINE void RemoveFromEnd( SizeType Count ) noexcept
+    FORCEINLINE void InternalPopRange( SizeType Count ) noexcept
     {
         ArraySize = ArraySize - Count;
         DestructRange<ElementType>( Data() + ArraySize, Count );
@@ -925,13 +935,6 @@ private:
     static FORCEINLINE SizeType RightIndex( SizeType Index )
     {
         return (2 * Index + 2);
-    }
-
-    FORCEINLINE void SwapElements( SizeType FirstIndex, SizeType SecondIndex )
-    {
-        ElementType Temp( Move( At( FirstIndex ) ) );
-        At( FirstIndex ) = Move( At( SecondIndex ) );
-        At( SecondIndex ) = Move( Temp );
     }
 
     // TODO: Better to have top in back? Better to do recursive?
@@ -959,7 +962,7 @@ private:
 
             if ( Smallest != StartIndex )
             {
-                SwapElements( StartIndex, Smallest );
+                ::Swap<ElementType>( At( StartIndex ), At( Smallest ) );
                 StartIndex = Smallest;
             }
             else
@@ -977,7 +980,7 @@ private:
 
         while ( true )
         {
-            const SizeType Left = LeftIndex( StartIndex );
+            const SizeType Left  = LeftIndex( StartIndex );
             const SizeType Right = RightIndex( StartIndex );
 
             if ( Left < Size && At( Left ) > At( Largest ) )
@@ -992,7 +995,7 @@ private:
 
             if ( Largest != StartIndex )
             {
-                SwapElements( StartIndex, Largest );
+                ::Swap<ElementType>( At( StartIndex ), At( Largest ) );
                 StartIndex = Largest;
             }
             else
@@ -1004,7 +1007,7 @@ private:
 
     static FORCEINLINE SizeType GetGrowCapacity( SizeType NewSize, SizeType CurrentCapacity ) noexcept
     {
-        return NewSize + (CurrentCapacity);
+        return NewSize + SizeType(CurrentCapacity * 0.5f);
     }
 
     /* Allocator contains the pointer */
@@ -1019,6 +1022,6 @@ struct TIsTArrayType<TArray<T, AllocatorType>>
 {
     enum
     {
-        Value = true;
+        Value = true
     };
 };

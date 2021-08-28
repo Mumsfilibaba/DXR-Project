@@ -101,6 +101,15 @@ struct Vec3
     }
 };
 
+template<>
+struct TIsReallocatable<std::string>
+{
+    enum
+    {
+        Value = true
+    };
+};
+
 /*
  * PrintArr
  */
@@ -214,7 +223,7 @@ void TArray_Benchmark()
     }
 #endif
 
-#if 1
+#if 0
     // Emplace
     {
     #ifdef DEBUG_BUILD
@@ -256,7 +265,7 @@ void TArray_Benchmark()
     }
 #endif
 
-#if 1
+#if 0
     // PushBack
     {
         const uint32 Iterations = 10000;
@@ -286,7 +295,7 @@ void TArray_Benchmark()
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
-                    Strings1.PushBack( "My name is jeff" );
+                    Strings1.Push( "My name is jeff" );
                 }
             }
             std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
@@ -294,7 +303,7 @@ void TArray_Benchmark()
     }
 #endif
 
-#if 1
+#if 0
     // EmplaceBack
     {
         const uint32 Iterations = 10000;
@@ -324,7 +333,7 @@ void TArray_Benchmark()
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
-                    Strings1.EmplaceBack( "My name is jeff" );
+                    Strings1.Emplace( "My name is jeff" );
                 }
             }
             std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
@@ -372,7 +381,7 @@ void TArray_Benchmark()
     }
 #endif
 
-#if 1
+#if 0
     // Emplace
     {
         const uint32 Iterations = 10000;
@@ -410,7 +419,7 @@ void TArray_Benchmark()
     }
 #endif
 
-#if 1
+#if 0
     // PushBack
     {
         const uint32 Iterations = 10000;
@@ -440,7 +449,7 @@ void TArray_Benchmark()
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
-                    Vectors1.PushBack( Vec3( 3.0, 5.0, -6.0 ) );
+                    Vectors1.Push( Vec3( 3.0, 5.0, -6.0 ) );
                 }
             }
             std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
@@ -448,7 +457,7 @@ void TArray_Benchmark()
     }
 #endif
 
-#if 1
+#if 0
     // EmplaceBack
     {
         const uint32 Iterations = 10000;
@@ -478,7 +487,7 @@ void TArray_Benchmark()
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
-                    Vectors1.EmplaceBack( 3.0, 5.0, -6.0 );
+                    Vectors1.Emplace( 3.0, 5.0, -6.0 );
                 }
             }
 
@@ -487,7 +496,7 @@ void TArray_Benchmark()
     }
 #endif
 
-#if 1
+#if 0
     {
         const uint32 SortTestCount = 100;
         const uint32 NumNumbers = 1000000;
@@ -501,7 +510,7 @@ void TArray_Benchmark()
             TArray<int32> Heap;
             for ( uint32 n = 0; n < NumNumbers; n++ )
             {
-                Heap.EmplaceBack( rand() );
+                Heap.Emplace( rand() );
             }
 
             {
@@ -679,14 +688,14 @@ void TArray_Test( int32 Argc, const char** Argv )
         std::cout << std::endl << "Testing PushBack" << std::endl << std::endl;
         for ( uint32 i = 0; i < 6; i++ )
         {
-            Strings2.PushBack( "This is Pushed String #" + std::to_string( i ) );
+            Strings2.Push( "This is Pushed String #" + std::to_string( i ) );
         }
         PrintArr( Strings2 );
 
         std::cout << std::endl << "Testing PushBack" << std::endl << std::endl;
         for ( uint32 i = 0; i < 6; i++ )
         {
-            Strings2.PushBack( ArgvStr );
+            Strings2.Push( ArgvStr );
         }
         PrintArr( Strings2 );
 
@@ -694,7 +703,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         std::cout << std::endl << "Testing EmplaceBack" << std::endl << std::endl;
         for ( uint32 i = 0; i < 6; i++ )
         {
-            Strings2.EmplaceBack( "This is an Emplaced String #" + std::to_string( i ) );
+            Strings2.Emplace( "This is an Emplaced String #" + std::to_string( i ) );
         }
         PrintArr( Strings2 );
 
@@ -702,7 +711,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         std::cout << std::endl << "Testing PopBack" << std::endl << std::endl;
         for ( uint32 i = 0; i < 3; i++ )
         {
-            Strings2.PopBack();
+            Strings2.Pop();
         }
         PrintArr( Strings2 );
 
@@ -876,7 +885,7 @@ void TArray_Test( int32 Argc, const char** Argv )
 
         // PopBackRange
         std::cout << std::endl << "Testing PopBackRange" << std::endl;
-        Strings2.PopBackRange( 3 );
+        Strings2.PopRange( 3 );
         PrintArr( Strings2 );
 
         std::cout << std::endl << "Testing Equal operator" << std::endl;
@@ -1033,7 +1042,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         std::cout << std::endl << "Testing PushBack" << std::endl << std::endl;
         for ( uint32 i = 0; i < 6; i++ )
         {
-            Vectors2.PushBack( Vec3( 7.0, 7.0, 7.0 ) );
+            Vectors2.Push( Vec3( 7.0, 7.0, 7.0 ) );
         }
         PrintArr( Vectors2 );
 
@@ -1041,7 +1050,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         std::cout << std::endl << "Testing PushBack" << std::endl << std::endl;
         for ( uint32 i = 0; i < 6; i++ )
         {
-            Vectors2.PushBack( Vector );
+            Vectors2.Push( Vector );
         }
         PrintArr( Vectors2 );
 
@@ -1049,7 +1058,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         std::cout << std::endl << "Testing EmplaceBack" << std::endl << std::endl;
         for ( uint32 i = 0; i < 6; i++ )
         {
-            Vectors2.EmplaceBack( 1.0, 0.0, 1.0 );
+            Vectors2.Emplace( 1.0, 0.0, 1.0 );
         }
         PrintArr( Vectors2 );
 
@@ -1057,7 +1066,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         std::cout << std::endl << "Testing PopBack" << std::endl << std::endl;
         for ( uint32 i = 0; i < 3; i++ )
         {
-            Vectors2.PopBack();
+            Vectors2.Pop();
         }
         PrintArr( Vectors2 );
 
@@ -1165,7 +1174,7 @@ void TArray_Test( int32 Argc, const char** Argv )
 
         // PopBackRange
         std::cout << std::endl << "Testing PopBackRange" << std::endl;
-        Vectors0.PopBackRange( 3 );
+        Vectors0.PopRange( 3 );
         PrintArr( Vectors0 );
 
         std::cout << std::endl << "Testing Equal operator" << std::endl;

@@ -7,6 +7,7 @@
 #include "And.h"
 #include "IsMovable.h"
 #include "IsCopyable.h"
+#include "IsReallocatable.h"
 
 #include "Core/Memory/Memory.h"
 
@@ -116,7 +117,7 @@ FORCEINLINE void CopyConstruct( T* Destination, const T* Source ) noexcept
 
 /* Construct the objects in the range by calling the move contructor */
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type MoveConstructRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<!TIsReallocatable<T>::Value>::Type MoveConstructRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
     while ( Count )
     {
@@ -129,10 +130,9 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type MoveConstructRange( 
 
 /* For trivial objects, construct the objects in the range by calling Memory::Memcpy and then Memory::Memzero on the source */
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type MoveConstructRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type MoveConstructRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
-    Memory::Memcpy( StartAddress, Source, sizeof( T ) * Count );
-    Memory::Memzero( Source, sizeof( T ) * Count );
+    Memory::Memexchange( StartAddress, Source, sizeof( T ) * Count );
 }
 
 /* Move-construct a single object */
@@ -144,7 +144,7 @@ FORCEINLINE void MoveConstruct( void* const StartAddress, const T* Source ) noex
 
 /* Move assign objects in range with the move assignment operator */
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type MoveAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<!TIsReallocatable<T>::Value>::Type MoveAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
 {
     while ( Count )
     {
@@ -157,10 +157,9 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type MoveAssignRange( T* 
 
 /* For trivial objects, move assign objects in range with Memory::Memcpy and Memory::Memzero */
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type MoveAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type MoveAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
 {
-    Memory::Memcpy( Destination, Source, sizeof( T ) * Count );
-    Memory::Memzero( Source, sizeof( T ) * Count )
+    Memory::Memexchange( Destination, Source, sizeof( T ) * Count );
 }
 
 /* Move-assign a single object */
@@ -205,7 +204,7 @@ FORCEINLINE void Destruct( const T* const Object ) noexcept
 
 /* Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty */
 template<typename T>
-FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsMoveConstructable<T>>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsMoveConstructable<T>>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
     // Ensures that the function works for overlapping ranges
     if ( (Source < StartAddress) && (StartAddress < Source + Count) )
@@ -241,7 +240,7 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsMoveConstructable<T>
 
 /* Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty */
 template<typename T>
-FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsCopyConstructable<T>, TNot<TIsMoveConstructable<T>>>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsCopyConstructable<T>, TNot<TIsMoveConstructable<T>>>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
     // Ensures that the function works for overlapping ranges
     if ( (Source < StartAddress) && (StartAddress < Source + Count) )
@@ -277,7 +276,7 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsTrivial<T>>, TIsCopyConstructable<T>
 
 /* Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty */
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
     Memory::Memmove( StartAddress, reinterpret_cast<const void*>(Source), sizeof( T ) * Count );
 }

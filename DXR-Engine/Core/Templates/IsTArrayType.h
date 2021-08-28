@@ -6,6 +6,6 @@ struct TIsTArrayType
 {
     enum
     {
-        Value = false;
+        Value = false
     };
 };

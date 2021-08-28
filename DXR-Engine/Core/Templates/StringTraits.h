@@ -27,7 +27,7 @@ public:
     /* Is space */
     static FORCEINLINE bool IsSpace( CharType Char ) noexcept
     {
-        return !!isspace( static_cast<wint_t>(Char) );
+        return !!isspace( static_cast<int>(Char) );
     }
 
     /* Is Nullterminator */
@@ -96,10 +96,16 @@ public:
         return static_cast<CharType>(toupper( static_cast<int>(Char) ));
     }
 
-    /* Copy two strings */ 
+    /* Copy two strings */
     static FORCEINLINE CharType* Copy( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
     {
-        return reinterpret_cast<CharType*>(Memory::Memcpy(Destination, Source, Length * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(Memory::Memcpy( Destination, Source, Length * sizeof( CharType ) ));
+    }
+
+    /* Compare two strings */
+    static FORCEINLINE int32 Compare( const CharType* LHS, const CharType* RHS ) noexcept
+    {
+        return static_cast<int32>(strcmp( LHS, RHS ));
     }
 };
 
@@ -187,10 +193,16 @@ public:
         return static_cast<CharType>(towupper( static_cast<wint_t>(Char) ));
     }
 
-    /* Copy two strings */ 
+    /* Copy two strings */
     static FORCEINLINE CharType* Copy( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
     {
-        return reinterpret_cast<CharType*>(Memory::Memcpy(Destination, Source, Length * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(Memory::Memcpy( Destination, Source, Length * sizeof( CharType ) ));
+    }
+
+    /* Compare two strings */
+    static FORCEINLINE int32 Compare( const CharType* LHS, const CharType* RHS ) noexcept
+    {
+        return static_cast<int32>(wcscmp( LHS, RHS ));
     }
 };
 

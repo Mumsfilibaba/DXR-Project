@@ -17,10 +17,10 @@ class TStringView
 public:
 
     static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
-    
+
     /* Types */
-    using ElementType  = CharType;
-    using SizeType     = int32;
+    using ElementType = CharType;
+    using SizeType = int32;
     using StringTraits = TStringTraits<CharType>;
 
     /* Constants */
@@ -43,7 +43,7 @@ public:
     /* Create a view from a pointer and count */
     FORCEINLINE TStringView( const CharType* InString ) noexcept
         : ViewStart( InString )
-        , ViewEnd( InString + StringTraits::Length(InString) )
+        , ViewEnd( InString + StringTraits::Length( InString ) )
     {
     }
 
@@ -79,93 +79,102 @@ public:
     }
 
     /* Copy this string into buffer */
-    FORCEINLINE void Copy( CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const noexcept
+    FORCEINLINE void Copy( CharType* Buffer, SizeType BufferSize, SizeType Position = 0 ) const noexcept
     {
-        Assert( Buffer != nullptr);
+        Assert( Buffer != nullptr );
         Assert( Position < Length() );
 
-        SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
-        StringTraits::Copy( Buffer, ViewStart + Position, CopySize);
-    }
-
-        /* Compares two strings and checks if they are equal */
-    template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Compare( const StringType& InString ) const noexcept
-    {
-        Compare( InString.CStr(), InString.Length() );
+        SizeType CopySize = NMath::Min( BufferSize, Length() - Position );
+        StringTraits::Copy( Buffer, ViewStart + Position, CopySize );
     }
 
     /* Compares two strings and checks if they are equal */
-    FORCEINLINE bool Compare( const CharType* InString ) const noexcept
+    template<typename StringType>
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type Compare( const StringType& InString ) const noexcept
     {
-        Compare( InString, StringTraits::Length(InString) );
+        return Compare( InString.CStr(), InString.Length() );
     }
 
     /* Compares two strings and checks if they are equal */
-    FORCEINLINE bool Compare( const CharType* InString, SizeType InLength )
+    FORCEINLINE int32 Compare( const CharType* InString ) const noexcept
     {
-        SizeType ThisLength = Length();
-        if ( ThisLength != InLength)
-        {
-            // Lengths are not equal so the strings cannot be equal
-            return false;
-        }
-        else if ( (ThisLength == 0) )
-        {
-            // Lengths are equal, length of view is zero, so they must be equal
-            return true;
-        }
-
-        const CharType* Start = ViewStart;
-        while (Start != ViewEnd)
-        {
-            if (*(Start++) != *(InString++))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return Compare( InString, StringTraits::Length( InString ) );
     }
 
-    /* Compares two strings and checks if they are equal, without taking casing into account */
-    template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type CompareNoCase( const StringType& InString ) const noexcept
-    {
-        CompareNoCase( InString.CStr(), InString.Length() );
-    }
-
-    /* Compares two strings and checks if they are equal, without taking casing into account */
-    FORCEINLINE bool CompareNoCase( const CharType* InString ) const noexcept
-    {
-        CompareNoCase( InString, StringTraits::Length(InString) );
-    }
-
-    /* Compares two strings and checks if they are equal, without taking casing into account */
-    FORCEINLINE bool CompareNoCase( const CharType* InString, SizeType InLength )
+    /* Compares two strings and checks if they are equal */
+    FORCEINLINE int32 Compare( const CharType* InString, SizeType InLength )
     {
         SizeType ThisLength = Length();
         if ( ThisLength != InLength )
         {
             // Lengths are not equal so the strings cannot be equal
-            return false;
+            return -1;
         }
         else if ( (ThisLength == 0) )
         {
             // Lengths are equal, length of view is zero, so they must be equal
-            return true;
+            return 0;
         }
 
         const CharType* Start = ViewStart;
         while ( Start != ViewEnd )
         {
-            if ( StringTraits::ToLower(*(Start++)) != StringTraits::ToLower(*(InString++)) )
+            if ( *Start != *InString )
             {
-                return false;
+                return *Start - *InString;
             }
+
+            Start++;
+            InString++;
         }
 
-        return true;
+        return 0;
+    }
+
+    /* Compares two strings and checks if they are equal, without taking casing into account */
+    template<typename StringType>
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type CompareNoCase( const StringType& InString ) const noexcept
+    {
+        return CompareNoCase( InString.CStr(), InString.Length() );
+    }
+
+    /* Compares two strings and checks if they are equal, without taking casing into account */
+    FORCEINLINE int32 CompareNoCase( const CharType* InString ) const noexcept
+    {
+        return CompareNoCase( InString, StringTraits::Length( InString ) );
+    }
+
+    /* Compares two strings and checks if they are equal, without taking casing into account */
+    FORCEINLINE int32 CompareNoCase( const CharType* InString, SizeType InLength )
+    {
+        SizeType ThisLength = Length();
+        if ( ThisLength != InLength )
+        {
+            // Lengths are not equal so the strings cannot be equal
+            return -1;
+        }
+        else if ( (ThisLength == 0) )
+        {
+            // Lengths are equal, length of view is zero, so they must be equal
+            return 0;
+        }
+
+        const CharType* Start = ViewStart;
+        while ( Start != ViewEnd )
+        {
+            const CharType TempChar0 = StringTraits::ToLower( *Start );
+            const CharType TempChar1 = StringTraits::ToLower( *InString );
+
+            if ( TempChar0 != TempChar1 )
+            {
+                return TempChar0 - TempChar1;
+            }
+
+            Start++;
+            InString++;
+        }
+
+        return 0;
     }
 
     /* Returns the position of the first occurance of the start of the searchstring */
@@ -191,9 +200,9 @@ public:
             return 0;
         }
 
-        const CharType* Start  = CStr() + InOffset;
+        const CharType* Start = CStr() + InOffset;
         const CharType* Result = StringTraits::Find( Start, InString );
-        if (!Result)
+        if ( !Result )
         {
             return InvalidPosition;
         }
@@ -211,7 +220,7 @@ public:
             return 0;
         }
 
-        const CharType* Start  = CStr() + InOffset;
+        const CharType* Start = CStr() + InOffset;
         const CharType* Result = StringTraits::FindChar( Start, InChar );
         if ( !Result )
         {
@@ -248,7 +257,7 @@ public:
         // Calculate the offset to the end
         if ( InOffset != 0 )
         {
-            ThisLength = NMath::Min(InOffset, ThisLength);
+            ThisLength = NMath::Min( InOffset, ThisLength );
         }
 
         const CharType* End = ViewStart + Length;
@@ -264,7 +273,7 @@ public:
                 {
                     break;
                 }
-                else if ( StringTraits::IsTerminator(*SubstringIt) )
+                else if ( StringTraits::IsTerminator( *SubstringIt ) )
                 {
                     // If terminator is reached we have found the full substring in out string
                     return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
@@ -289,7 +298,7 @@ public:
         // Calculate the offset to the end
         if ( InOffset != 0 )
         {
-            ThisLength = NMath::Min(InOffset, ThisLength);
+            ThisLength = NMath::Min( InOffset, ThisLength );
         }
 
         const CharType* End = ViewStart + ThisLength;
@@ -308,7 +317,7 @@ public:
     /* Returns the position of the the first found character in the searchstring */
     FORCEINLINE SizeType FindOneOf( const CharType* InString, SizeType InOffset = 0 ) const noexcept
     {
-        return FindOneOf( InString, StringTraits::Length( InString ), InOffset);
+        return FindOneOf( InString, StringTraits::Length( InString ), InOffset );
     }
 
     /* Returns the position of the the first found character in the searchstring */
@@ -328,7 +337,7 @@ public:
             return 0;
         }
 
-        const CharType* Start  = CStr() + InOffset;
+        const CharType* Start = CStr() + InOffset;
         const CharType* Result = StringTraits::FindOneOf( Start, InString );
         if ( !Result )
         {
@@ -367,11 +376,11 @@ public:
         {
             return InvalidPosition;
         }
-        
+
         return Ret;
     }
 
-     /* Returns true if the searchstring exists withing the string */
+    /* Returns true if the searchstring exists withing the string */
     FORCEINLINE bool Contains( const CharType* InString, SizeType InOffset = 0 ) const noexcept
     {
         return (Find( InString, InOffset ) != InvalidPosition);
@@ -418,7 +427,7 @@ public:
     /* Check if the size is zero or not */
     FORCEINLINE bool IsEmpty() const noexcept
     {
-        return (ViewLength == 0);
+        return (Length() == 0);
     }
 
     /* Retrive the first element */
@@ -445,26 +454,26 @@ public:
     /* Swap two views */
     FORCEINLINE void Swap( TStringView& Other ) noexcept
     {
-        Swap<const CharType*>( ViewStart, Other.ViewStart );
-        Swap<SizeType>( ViewLength, Other.ViewLength );
+        ::Swap<const CharType*>( ViewStart, Other.ViewStart );
+        ::Swap<const CharType*>( ViewEnd, Other.ViewEnd );
     }
 
     /* Retrive the last valid index for the view */
     FORCEINLINE SizeType LastIndex() const noexcept
     {
-        return ViewLength > 0 ? ViewLength - 1 : 0;
+        return Length() > 0 ? Length() - 1 : 0;
     }
 
     /* Retrive the size of the view */
     FORCEINLINE SizeType Size() const noexcept
     {
-        return ViewLength;
+        return Length();
     }
 
     /* Retrive the length of the view */
     FORCEINLINE SizeType Length() const noexcept
     {
-        return ViewLength;
+        return static_cast<SizeType>(static_cast<intptr_t>(ViewEnd - ViewStart));
     }
 
     /* Retrive the size of the view in bytes */
@@ -488,7 +497,7 @@ public:
     /* Create a sub-stringview */
     FORCEINLINE TStringView SubStringView( SizeType Offset, SizeType Count ) const noexcept
     {
-        Assert((Count < ViewLength) && (Offset + Count < ViewLength) );
+        Assert( (Count < ViewLength) && (Offset + Count < ViewLength) );
         return TStringView( Data() + Offset, Count );
     }
 
