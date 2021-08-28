@@ -75,7 +75,7 @@ void TFixedArray_Test()
 
     Numbers1.Swap( Numbers2 );
 
-    std::cout << "LastIndex=" << Numbers1.LastIndex();
+    std::cout << "LastIndex=" << Numbers1.LastElementIndex();
     std::cout << "Size=" << Numbers1.Size();
     std::cout << "SizeInBytes=" << Numbers1.SizeInBytes();
 
