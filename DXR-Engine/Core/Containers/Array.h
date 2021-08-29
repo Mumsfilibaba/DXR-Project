@@ -308,19 +308,19 @@ public:
     }
 
     /* Inserts an element at the specified position */
-    FORCEINLINE void InsertAt( SizeType Position, const ElementType& Element ) noexcept
+    FORCEINLINE void Insert( SizeType Position, const ElementType& Element ) noexcept
     {
         EmplaceAt( Position, Element );
     }
 
     /* Inserts an element at the specified position */
-    FORCEINLINE void InsertAt( SizeType Position, ElementType&& Element ) noexcept
+    FORCEINLINE void Insert( SizeType Position, ElementType&& Element ) noexcept
     {
         EmplaceAt( Position, Forward<ElementType>( Element ) );
     }
 
     /* Insert an array into the container at the position */
-    inline void InsertAt( SizeType Position, const ElementType* InputArray, SizeType Count ) noexcept
+    inline void Insert( SizeType Position, const ElementType* InputArray, SizeType Count ) noexcept
     {
         Assert( Position <= ArraySize );
 
@@ -343,16 +343,16 @@ public:
     }
 
     /* Insert an std::initializer_list into the container at the position */
-    FORCEINLINE void InsertAt( SizeType Position, std::initializer_list<ElementType> InitList ) noexcept
+    FORCEINLINE void Insert( SizeType Position, std::initializer_list<ElementType> InitList ) noexcept
     {
-        InsertAt( Position, InitList.begin(), static_cast<SizeType>(InitList.size()) );
+        Insert( Position, InitList.begin(), static_cast<SizeType>(InitList.size()) );
     }
 
     /* Insert an array into the container at the position */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type InsertAt( SizeType Position, const ArrayType& InArray ) noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Insert( SizeType Position, const ArrayType& InArray ) noexcept
     {
-        InsertAt( Position, InArray.Data(), InArray.Size() );
+        Insert( Position, InArray.Data(), InArray.Size() );
     }
 
     /* Inserts an array at the end */
@@ -582,14 +582,14 @@ public:
     /* Inserts a new element at the top of the heap */
     FORCEINLINE void HeapPush( const ElementType& Element ) noexcept
     {
-        InsertAt( 0, Element );
+        Insert( 0, Element );
         Heapify( ArraySize, 0 );
     }
 
     /* Inserts a new element at the top of the heap */
     FORCEINLINE void HeapPush( ElementType&& Element ) noexcept
     {
-        InsertAt( 0, Forward<ElementType>( Element ) );
+        Insert( 0, Forward<ElementType>( Element ) );
         Heapify( ArraySize, 0 );
     }
 
@@ -833,7 +833,7 @@ private:
     }
 
     /* Reserves room and not necessarily new memory */
-    FORCEINLINE void ReserveForInsertion( const SizeType InsertAt, const SizeType ElementCount ) noexcept
+    FORCEINLINE void ReserveForInsertion( const SizeType Position, const SizeType ElementCount ) noexcept
     {
         const SizeType NewSize = ArraySize + ElementCount;
         if ( NewSize >= ArrayCapacity )
@@ -850,10 +850,10 @@ private:
                 NewAllocator.Allocate( NewCapacity );
 
                 /* Elements before new area */
-                RelocateRange<ElementType>( NewAllocator.Raw(), Data(), InsertAt );
+                RelocateRange<ElementType>( NewAllocator.Raw(), Data(), Position );
 
                 /* Elements after new area */
-                RelocateRange<ElementType>( NewAllocator.Raw() + InsertAt + ElementCount, Data() + InsertAt, ArraySize - InsertAt );
+                RelocateRange<ElementType>( NewAllocator.Raw() + Position + ElementCount, Data() + Position, ArraySize - Position );
                 Allocator.MoveFrom( Move( NewAllocator ) );
             }
             else
@@ -861,7 +861,7 @@ private:
                 Allocator.Allocate( NewCapacity );
 
                 /* Elements after new area */
-                RelocateRange<ElementType>( Data() + InsertAt + ElementCount, Data() + InsertAt, ArraySize - InsertAt );
+                RelocateRange<ElementType>( Data() + Position + ElementCount, Data() + Position, ArraySize - Position );
             }
 
             /* Update capacity */
@@ -870,7 +870,7 @@ private:
         else
         {
             /* Elements after new area */
-            RelocateRange<ElementType>( Data() + InsertAt + ElementCount, Data() + InsertAt, ArraySize - InsertAt );
+            RelocateRange<ElementType>( Data() + Position + ElementCount, Data() + Position, ArraySize - Position );
         }
     }
 
