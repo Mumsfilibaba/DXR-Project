@@ -11,7 +11,7 @@
 
 /* A fixed size array similar to std::array */
 template<typename T, int32 NumElements>
-struct TFixedArray
+struct TStaticString
 {
 public:
 
@@ -19,10 +19,10 @@ public:
     using SizeType = int32;
 
     /* Iterators */
-    typedef TArrayIterator<TFixedArray, ElementType>                    IteratorType;
-    typedef TArrayIterator<const TFixedArray, const ElementType>        ConstIteratorType;
-    typedef TReverseArrayIterator<TFixedArray, ElementType>             ReverseIteratorType;
-    typedef TReverseArrayIterator<const TFixedArray, const ElementType> ReverseConstIteratorType;
+    typedef TArrayIterator<TStaticString, ElementType>                    IteratorType;
+    typedef TArrayIterator<const TStaticString, const ElementType>        ConstIteratorType;
+    typedef TReverseArrayIterator<TStaticString, ElementType>             ReverseIteratorType;
+    typedef TReverseArrayIterator<const TStaticString, const ElementType> ReverseConstIteratorType;
 
     static_assert(NumElements > 0, "The number of elements has to be more than zero");
 
@@ -74,9 +74,9 @@ public:
     }
 
     /* Swaps this array with another */
-    FORCEINLINE void Swap( TFixedArray& Other ) noexcept
+    FORCEINLINE void Swap( TStaticString& Other ) noexcept
     {
-        TFixedArray Temp( Move( *this ) );
+        TStaticString Temp( Move( *this ) );
         *this = Move( Other );
         Other = Move( Temp );
     }
@@ -236,7 +236,7 @@ public:
 
 /* Enable TArrayType */
 template<typename T, int32 NumElements>
-struct TIsTArrayType<TFixedArray<T, NumElements>>
+struct TIsTArrayType<TStaticString<T, NumElements>>
 {
     enum
     {
