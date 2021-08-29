@@ -14,6 +14,7 @@ template<typename T, int32 NumElements>
 struct TFixedArray
 {
 public:
+
     using ElementType = T;
     using SizeType = int32;
 

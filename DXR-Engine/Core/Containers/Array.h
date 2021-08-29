@@ -20,6 +20,7 @@ template<typename T, typename AllocatorType = TDefaultArrayAllocator<T>>
 class TArray
 {
 public:
+
     using ElementType = T;
     using SizeType = int32;
 
@@ -101,6 +102,7 @@ public:
         MoveFrom( Forward<TArray>( Other ) );
     }
 
+    /* Destructor deleting the array */
     FORCEINLINE ~TArray()
     {
         Empty();
@@ -421,7 +423,7 @@ public:
     }
 
     /* Removes the element pointed to by a iterator at the position */
-    FORCEINLINE IteratorType Remove( IteratorType Iterator ) noexcept
+    FORCEINLINE IteratorType RemoveAt( IteratorType Iterator ) noexcept
     {
         Assert( Iterator.IsFrom( *this ) );
         RemoveAt( Iterator.GetIndex() );
@@ -429,7 +431,7 @@ public:
     }
 
     /* Removes the element pointed to by a iterator at the position */
-    FORCEINLINE ConstIteratorType Remove( ConstIteratorType Iterator ) noexcept
+    FORCEINLINE ConstIteratorType RemoveAt( ConstIteratorType Iterator ) noexcept
     {
         Assert( Iterator.IsFrom( *this ) );
         RemoveAt( Iterator.GetIndex() );
@@ -555,23 +557,13 @@ public:
         return TUniquePtr<ElementType[]>( Memory );
     }
 
-    /* Create a min-heap of the array */
-    inline void MinHeapify() noexcept
+    /* Create a heap of the array */
+    inline void Heapify() noexcept
     {
         const SizeType StartIndex = (ArraySize / 2) - 1;
         for ( SizeType i = StartIndex; i >= 0; i-- )
         {
-            MinHeapify( ArraySize, i );
-        }
-    }
-
-    /* Create a max-heap of the array */
-    inline void MaxHeapify() noexcept
-    {
-        const SizeType StartIndex = (ArraySize / 2) - 1;
-        for ( SizeType i = StartIndex; i >= 0; i-- )
-        {
-            MaxHeapify( ArraySize, i );
+            Heapify( ArraySize, i );
         }
     }
 
@@ -587,83 +579,43 @@ public:
         return Data()[0];
     }
 
-    /* Inserts a new element at the top of the min-heap */
-    FORCEINLINE void MinHeapPush( const ElementType& Element ) noexcept
+    /* Inserts a new element at the top of the heap */
+    FORCEINLINE void HeapPush( const ElementType& Element ) noexcept
     {
         InsertAt( 0, Element );
-        MinHeapify( ArraySize, 0 );
+        Heapify( ArraySize, 0 );
     }
 
-    /* Inserts a new element at the top of the min-heap */
-    FORCEINLINE void MinHeapPush( ElementType&& Element ) noexcept
+    /* Inserts a new element at the top of the heap */
+    FORCEINLINE void HeapPush( ElementType&& Element ) noexcept
     {
         InsertAt( 0, Forward<ElementType>( Element ) );
-        MinHeapify( ArraySize, 0 );
+        Heapify( ArraySize, 0 );
     }
 
-    /* Removes the top of the min-heap */
-    FORCEINLINE void MinHeapPop( ElementType& OutElement ) noexcept
+    /* Removes the top of the heap */
+    FORCEINLINE void HeapPop( ElementType& OutElement ) noexcept
     {
         OutElement = HeapTop();
-        MinHeapPop();
+        HeapPop();
     }
 
-    /* Removes the top of the min-heap */
-    FORCEINLINE void MinHeapPop() noexcept
+    /* Removes the top of the heap */
+    FORCEINLINE void HeapPop() noexcept
     {
         RemoveAt( 0 );
-        MinHeapify();
-    }
-
-    /* Performs heap sort on the array ( assuming < operator )*/
-    FORCEINLINE void MinHeapSort()
-    {
-        MinHeapify();
-
-        for ( SizeType Index = ArraySize - 1; Index > 0; Index-- )
-        {
-            ::Swap<ElementType>( At( 0 ), At( Index ) );
-            MinHeapify( Index, 0 );
-        }
-    }
-
-    /* Inserts a new element at the top of the max-heap */
-    FORCEINLINE void MaxHeapPush( const ElementType& Element ) noexcept
-    {
-        InsertAt( 0, Element );
-        MaxHeapify( ArraySize, 0 );
-    }
-
-    /* Inserts a new element at the top of the max-heap */
-    FORCEINLINE void MaxHeapPush( ElementType&& Element ) noexcept
-    {
-        InsertAt( 0, Forward<ElementType>( Element ) );
-        MaxHeapify( ArraySize, 0 );
-    }
-
-    /* Removes the top of the max-heap */
-    FORCEINLINE void MaxHeapPop( ElementType& OutElement ) noexcept
-    {
-        OutElement = HeapTop();
-        MaxHeapPop();
-    }
-
-    /* Removes the top of the max-heap */
-    FORCEINLINE void MaxHeapPop() noexcept
-    {
-        RemoveAt( 0 );
-        MaxHeapify();
+        Heapify();
     }
 
     /* Performs heap sort on the array ( assuming > operator )*/
-    FORCEINLINE void MaxHeapSort()
+    FORCEINLINE void HeapSort()
     {
-        MaxHeapify();
+        Heapify();
 
         for ( SizeType Index = ArraySize - 1; Index > 0; Index-- )
         {
             ::Swap<ElementType>( At( 0 ), At( Index ) );
-            MaxHeapify( Index, 0 );
+            Heapify( Index, 0 );
         }
     }
 
@@ -797,6 +749,7 @@ private:
 
     /* Internal functions */
 
+    /* Adds uninitialized elements */
     FORCEINLINE void InitUnitialized( SizeType Count )
     {
         if ( ArrayCapacity < Count )
@@ -829,6 +782,7 @@ private:
         CopyConstructRange<ElementType>( Data(), From, Count );
     }
 
+    /* Moves from one array to another */
     FORCEINLINE void MoveFrom( TArray&& FromArray )
     {
         if ( FromArray.Data() != Data() )
@@ -845,6 +799,7 @@ private:
         }
     }
 
+    /* Reserves storage */
     FORCEINLINE void ReserveStorage( const SizeType NewCapacity ) noexcept
     {
         /* Simple Memory::Realloc for trivial elements */
@@ -939,41 +894,8 @@ private:
 
     // TODO: Better to have top in back? Better to do recursive?
 
-    /* Internal create a min-heap of the array */
-    FORCEINLINE void MinHeapify( SizeType Size, SizeType Index ) noexcept
-    {
-        SizeType StartIndex = Index;
-        SizeType Smallest = Index;
-
-        while ( true )
-        {
-            const SizeType Left = LeftIndex( StartIndex );
-            const SizeType Right = RightIndex( StartIndex );
-
-            if ( Left < Size && At( Left ) < At( Smallest ) )
-            {
-                Smallest = Left;
-            }
-
-            if ( Right < Size && At( Right ) < At( Smallest ) )
-            {
-                Smallest = Right;
-            }
-
-            if ( Smallest != StartIndex )
-            {
-                ::Swap<ElementType>( At( StartIndex ), At( Smallest ) );
-                StartIndex = Smallest;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
     /* Internal create a max-heap of the array */
-    FORCEINLINE void MaxHeapify( SizeType Size, SizeType Index ) noexcept
+    FORCEINLINE void Heapify( SizeType Size, SizeType Index ) noexcept
     {
         SizeType StartIndex = Index;
         SizeType Largest = Index;

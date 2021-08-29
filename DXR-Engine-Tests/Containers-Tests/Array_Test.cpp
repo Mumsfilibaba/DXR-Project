@@ -820,7 +820,7 @@ void TArray_Test( int32 Argc, const char** Argv )
         {
             if ( Index > 1 )
             {
-                It = LoopStrings.Remove( It );
+                It = LoopStrings.RemoveAt( It );
             }
             else
             {
@@ -1185,66 +1185,35 @@ void TArray_Test( int32 Argc, const char** Argv )
 
     // Test Heapify
     {
-        std::cout << std::endl << "Testing MinHeapify" << std::endl;
+        std::cout << std::endl << "Testing Heapify" << std::endl;
 
         {
             TArray<int32> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
 
             std::cout << std::endl << "Before" << std::endl;
             PrintArr( Heap );
-            Heap.MinHeapify();
+            Heap.Heapify();
 
             std::cout << std::endl << "After" << std::endl;
             PrintArr( Heap );
 
-            std::cout << std::endl << "Testing MinHeapPush" << std::endl;
-            Heap.MinHeapPush( 19 );
+            std::cout << std::endl << "Testing HeapPush" << std::endl;
+            Heap.HeapPush( 19 );
             PrintArr( Heap );
 
-            Heap.MinHeapPush( 0 );
+            Heap.HeapPush( 0 );
             PrintArr( Heap );
 
-            Heap.MinHeapPop();
-            PrintArr( Heap );
-        }
-
-        std::cout << std::endl << "Testing MaxHeapify" << std::endl;
-
-        {
-            TArray<int32> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
-
-            std::cout << std::endl << "Before" << std::endl;
-            PrintArr( Heap );
-            Heap.MaxHeapify();
-
-            std::cout << std::endl << "After" << std::endl;
-            PrintArr( Heap );
-
-            std::cout << std::endl << "Testing MaxHeapPush" << std::endl;
-            Heap.MaxHeapPush( 19 );
-            PrintArr( Heap );
-
-            Heap.MaxHeapPush( 0 );
-            PrintArr( Heap );
-
-            std::cout << std::endl << "Testing MaxHeapPop" << std::endl;
-            Heap.MaxHeapPop();
+            std::cout << std::endl << "Testing HeapPop" << std::endl;
+            Heap.HeapPop();
             PrintArr( Heap );
         }
 
-        std::cout << std::endl << "Testing MinHeapSort" << std::endl;
+        std::cout << std::endl << "Testing HeapSort" << std::endl;
         {
             TArray<int32> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
             PrintArr( Heap );
-            Heap.MinHeapSort();
-            PrintArr( Heap );
-        }
-
-        std::cout << std::endl << "Testing MaxHeapSort" << std::endl;
-        {
-            TArray<int32> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
-            PrintArr( Heap );
-            Heap.MaxHeapSort();
+            Heap.HeapSort();
             PrintArr( Heap );
         }
     }
