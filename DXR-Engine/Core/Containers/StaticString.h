@@ -65,7 +65,7 @@ public:
 
     /* Create a new string from another string type with similar interface. If the
        string is longer than the allocators the string will be shortened to fit. */
-    template<typename StringType>
+    template<typename StringType, typename = typename TEnableIf<TIsTStringType<StringType>::Value>::Type>
     FORCEINLINE explicit TStaticString( const StringType& InString ) noexcept
         : Characters()
         , Len( 0 )
@@ -682,15 +682,15 @@ public:
     {
         Assert( (Position < Len) && (Len + InLength < CharCount) );
 
-        const uint64 Size = InLength * sizeof( CharType );
+        const uint64 LengthInBytes = InLength * sizeof( CharType );
 
         // Make room for string
         CharType* Src = Data() + Position;
         CharType* Dst = Src + InLength;
-        Memory::Memmove( Dst, Src, Size );
+        Memory::Memmove( Dst, Src, LengthInBytes );
 
         // Copy String
-        Memory::Memcpy( Src, InString, Size );
+        Memory::Memcpy( Src, InString, LengthInBytes );
 
         Len += InLength;
         Characters[Len] = StringTraits::Terminator;
@@ -798,6 +798,12 @@ public:
     FORCEINLINE SizeType Size() const noexcept
     {
         return Len;
+    }
+
+    /* Return the last usable index of the string */
+    FORCEINLINE SizeType LastElementIndex() const noexcept
+    {
+        return (Len > 0) ? (Len - 1) : 0;
     }
 
     /* Return the length of the string */

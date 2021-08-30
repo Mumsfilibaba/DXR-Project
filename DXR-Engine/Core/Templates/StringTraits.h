@@ -17,7 +17,9 @@ class TStringTraits<char>
 {
 public:
 
-    using CharType = char;
+    using CharType     = char;
+    using Pointer      = CharType*;
+    using ConstPointer = const Pointer;
 
     enum
     {
@@ -114,7 +116,9 @@ class TStringTraits<wchar_t>
 {
 public:
 
-    using CharType = wchar_t;
+    using CharType     = wchar_t;
+    using Pointer      = CharType*;
+    using ConstPointer = const Pointer;
 
     enum
     {

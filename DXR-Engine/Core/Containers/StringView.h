@@ -55,7 +55,7 @@ public:
     }
 
     /* Create a view from a templated string type */
-    template<typename StringType>
+    template<typename StringType, typename = typename TEnableIf<TIsTStringType<StringType>::Value>::Type>
     FORCEINLINE explicit TStringView( const StringType& InString ) noexcept
         : ViewStart( InString.CStr() )
         , ViewEnd( InString.CStr() + InString.Length() )
@@ -214,7 +214,7 @@ public:
                 else if ( StringTraits::IsTerminator( *SubstringIt ) )
                 {
                     // If terminator is reached we have found the full substring in out string
-                    return static_cast<SizeType>(static_cast<intptr_t>(ViewEnd - Start));
+                    return static_cast<SizeType>(static_cast<intptr_t>(Start - ViewStart));
                 }
             }
 
@@ -237,22 +237,11 @@ public:
         const CharType* Start = ViewStart + Position;
         while ( Start != ViewEnd )
         {
-            // Loop each character in substring
-            for ( const CharType* It = Start, const CharType* SubstringIt = InString; ; )
+            if ( *(Start++) == Char )
             {
-                // If not found we end loop and start over
-                if ( *(It++) != *(SubstringIt++) )
-                {
-                    break;
-                }
-                else if ( StringTraits::IsTerminator( *SubstringIt ) )
-                {
-                    // If terminator is reached we have found the full substring in out string
-                    return static_cast<SizeType>(static_cast<intptr_t>(ViewEnd - Start));
-                }
+                // If terminator is reached we have found the full substring in out string
+                return static_cast<SizeType>(static_cast<intptr_t>(Start - ViewStart));
             }
-
-            Start++;
         }
 
         return InvalidPosition;
@@ -332,8 +321,7 @@ public:
         const CharType* End = ViewStart + ThisLength;
         while ( End != ViewStart )
         {
-            End--;
-            if ( *End == Char )
+            if ( *(--End) == Char )
             {
                 return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
             }
@@ -365,14 +353,23 @@ public:
             return 0;
         }
 
-        const CharType* Start = CStr() + Position;
-        const CharType* Result = StringTraits::FindOneOf( Start, InString );
-        if ( !Result )
+        const CharType* Start = ViewStart + Position;
+        while ( Start != ViewEnd )
         {
-            return InvalidPosition;
+            // Loop each character in substring
+            for ( const CharType* SubstringStart = InString, const CharType* SubstringEnd = InString + InLength; SubstringStart != SubstringEnd; )
+            {
+                // If not found we end loop and start over
+                if ( *(SubstringStart++) == *Start )
+                {
+                    return static_cast<SizeType>(static_cast<intptr_t>(Start - ViewStart));
+                }
+            }
+
+            Start++;
         }
 
-        return static_cast<SizeType>(static_cast<intptr_t>(Result - Start));
+        return InvalidPosition;
     }
 
     /* Returns the position of the the first character not a part of the searchstring */
@@ -398,14 +395,28 @@ public:
             return 0;
         }
 
-        SizeType Pos = static_cast<SizeType>(StringTraits::Span( CStr() + Position, InString ));
-        SizeType Ret = Position + Position;
-        if ( Ret >= ViewLength )
+        const CharType* Start = ViewStart + Position;
+        while ( Start != ViewEnd )
         {
-            return InvalidPosition;
+            // Loop each character in substring
+            for ( const CharType* SubstringStart = InString, const CharType* SubstringEnd = InString + InLength; SubstringStart != SubstringEnd; )
+            {
+                // If not found we end loop and start over
+                if ( *(SubstringStart++) == *Start )
+                {
+                    break;
+                }
+                else if ( StringTraits::IsTerminator( *SubstringStart ) )
+                {
+                    // If terminator is reached we have found the full substring in out string
+                    return static_cast<SizeType>(static_cast<intptr_t>(Start - ViewStart));
+                }
+            }
+
+            Start++;
         }
 
-        return Ret;
+        return InvalidPosition;
     }
 
     /* Returns true if the searchstring exists withing the string */
@@ -487,9 +498,9 @@ public:
     }
 
     /* Retrive the last valid index for the view */
-    FORCEINLINE SizeType LastIndex() const noexcept
+    FORCEINLINE SizeType LastElementIndex() const noexcept
     {
-        return Length() > 0 ? Length() - 1 : 0;
+        return (Length() > 0) ? (Length() - 1) : 0;
     }
 
     /* Retrive the size of the view */
