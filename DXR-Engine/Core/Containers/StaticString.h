@@ -174,7 +174,7 @@ public:
     /* Format string with a va_list (similar to snprintf) */
     FORCEINLINE void FormatV( const CharType* Format, va_list ArgList ) noexcept
     {
-        SizeType WrittenChars = StringTraits::PrintVA( Characters, CharCount, Format, ArgList );
+        SizeType WrittenChars = StringTraits::PrintVA( Characters, CharCount-1, Format, ArgList );
         if ( WrittenChars < CharCount )
         {
             Len = WrittenChars;
@@ -228,9 +228,9 @@ public:
     /* Returns this string in lowercase */
     FORCEINLINE TStaticString ToLower() const noexcept
     {
-        TStaticString Result = *this;
-        Result.ToLowerInline();
-        return Result;
+        TStaticString NewString( *this );
+        NewString.ToLowerInline();
+        return NewString;
     }
 
     /* Converts this string in uppercase */
@@ -248,17 +248,17 @@ public:
     /* Returns this string in uppercase */
     FORCEINLINE TStaticString ToUpper() const noexcept
     {
-        TStaticString Result = *this;
-        Result.ToUpperInline();
-        return Result;
+        TStaticString NewString( *this );
+        NewString.ToUpperInline();
+        return NewString;
     }
 
     /* Removes whitespace from the beginning and end of the string */
     FORCEINLINE TStaticString Trim() noexcept
     {
-        TStaticString Result = *this;
-        Result.TrimInline();
-        return Result;
+        TStaticString NewString( *this );
+        NewString.TrimInline();
+        return NewString;
     }
 
     /* Removes whitespace from the beginning and end of the string */
@@ -271,9 +271,9 @@ public:
     /* Removes whitespace from the beginning of the string */
     FORCEINLINE TStaticString TrimStart() noexcept
     {
-        TStaticString Result = *this;
-        Result.TrimStartInline();
-        return Result;
+        TStaticString NewString( *this );
+        NewString.TrimStartInline();
+        return NewString;
     }
 
     /* Removes whitespace from the beginning of the string */
@@ -298,9 +298,9 @@ public:
     /* Removes whitespace from the end of the string */
     FORCEINLINE TStaticString TrimEnd() noexcept
     {
-        TStaticString Result = *this;
-        Result.TrimEndInline();
-        return Result;
+        TStaticString NewString( *this );
+        NewString.TrimEndInline();
+        return NewString;
     }
 
     /* Removes whitespace from the end of the string */
@@ -324,19 +324,19 @@ public:
     /* Removes whitespace from the end of the string */
     FORCEINLINE TStaticString Reverse() noexcept
     {
-        TStaticString Result = *this;
-        Result.ReverseInline();
-        return Result;
+        TStaticString NewString( *this );
+        NewString.ReverseInline();
+        return NewString;
     }
 
     /* Removes whitespace from the end of the string */
     FORCEINLINE void ReverseInline() noexcept
     {
-        SizeType ReverseIndex = Len - 1;
-        for ( SizeType Index = 0; Index < ReverseIndex; Index++ )
+        CharType* Start = Characters.Data();
+        CharType* End   = Characters.Data() + Characters.Size();
+        while ( Start != End )
         {
-            ::Swap<CharType>( Characters[Index], Characters[ReverseIndex] );
-            ReverseIndex--;
+            ::Swap<CharType>( *(Start++), *(--End) );
         }
     }
 

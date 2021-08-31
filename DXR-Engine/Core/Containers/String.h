@@ -8,6 +8,7 @@
 #include "Core/Templates/AddReference.h"
 
 #define STRING_USE_INLINE_ALLOCATOR (0)
+#define STRING_FORMAT_BUFFER_SIZE   (128)
 
 #if STRING_USE_INLINE_ALLOCATOR 
 #define STRING_ALLOCATOR_INLINE_BYTES (24)
@@ -105,7 +106,7 @@ public:
     /* Appends a string to this string */
     FORCEINLINE void Append( CharType Char ) noexcept
     {
-        SizeType Len = Characters.Size();
+        SizeType Len = Length();
         Characters[Len] = Char;
         Characters.Emplace(StringTraits::Terminator);
     }
@@ -128,7 +129,7 @@ public:
     {
         Assert( InString != nullptr );
 
-        SizeType Len = Characters.Size();
+        SizeType Len = Length();
         Characters.Resize( Len + InLength );
 
         StringTraits::Copy( Characters.Data() + Len, InString, InLength );
@@ -155,8 +156,9 @@ public:
         Assert( Buffer != nullptr );
         Assert( (Position < Length()) || (Position == 0) );
 
+        SizeType Len = Length();
         SizeType CopySize = NMath::Min( BufferSize, Len - Position );
-        StringTraits::Copy( Buffer, Characters + Position, CopySize );
+        StringTraits::Copy( Buffer, Characters.Data() + Position, CopySize );
     }
 
     /* Format string (similar to snprintf) */
@@ -169,19 +171,41 @@ public:
     }
 
     /* Format string with a va_list (similar to snprintf) */
-    FORCEINLINE void FormatV( const CharType* Format, va_list ArgList ) noexcept
+    FORCEINLINE void FormatV( const CharType* Format, va_list ArgsList ) noexcept
     {
-        SizeType WrittenChars = StringTraits::PrintVA( Characters, CharCount-1, Format, ArgList );
-        if ( WrittenChars < CharCount )
+        CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
+        SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
+
+        CharType* DynamicBuffer = nullptr;
+        CharType* WrittenString = Buffer;
+
+        // Try print to buffer
+        SizeType WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
+        while ( (WrittenChars > BufferSize) || (WrittenChars == -1) )
         {
-            Len = WrittenChars;
-        }
-        else
-        {
-            Len = CharCount - 1;
+            // Double size of buffer
+            BufferSize += BufferSize;
+
+            // Allocate more memory
+            DynamicMemory = reinterpret_cast<CharType*>(Memory::Realloc( DynamicBuffer, BufferSize * sizeof(CharType) ));
+            WrittenString = DynamicMemory;
+
+            // Try print again
+            WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
         }
 
-        Characters[Len] = StringTraits::Terminator;
+        // Resize to make sure there is enough room in the string
+        int32 WrittenLength = StringTraits::Length( WrittenString );
+        Characters.Resize(WrittenLength);
+
+        StringTraits::Copy( Characters, WrittenString, WrittenLength );
+
+        if ( DynamicBuffer )
+        {
+            Memory::Free( DynamicBuffer );
+        }
+
+        Characters.Emplace( StringTraits::Terminator );
     }
 
     /* Same as Format, but appends the result to the current string */
@@ -196,25 +220,44 @@ public:
     /* Same as FormatV, but appends the result to the current string */
     FORCEINLINE void AppendFormatV( const CharType* Format, va_list ArgList ) noexcept
     {
-        const SizeType WrittenChars = StringTraits::PrintVA( Characters + Len, Format, ArgList );
-        const SizeType NewLength = Len + WrittenChars;
-        if ( NewLength < CharCount )
+        CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
+        SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
+
+        CharType* DynamicBuffer = nullptr;
+        CharType* WrittenString = Buffer;
+
+        // Try print to buffer
+        SizeType WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
+        while ( (WrittenChars > BufferSize) || (WrittenChars == -1) )
         {
-            Len = NewLength;
-        }
-        else
-        {
-            Len = CharCount - 1;
+            // Double size of buffer
+            BufferSize += BufferSize;
+
+            // Allocate more memory
+            DynamicMemory = reinterpret_cast<CharType*>(Memory::Realloc( DynamicBuffer, BufferSize * sizeof(CharType) ));
+            WrittenString = DynamicMemory;
+
+            // Try print again
+            WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
         }
 
-        Characters[Len] = StringTraits::Terminator;
+        // Append the written buffer 
+        int32 WrittenLength = StringTraits::Length( WrittenString );
+        Characters.Append( WrittenString, WrittenLength );
+
+        if ( DynamicBuffer )
+        {
+            Memory::Free( DynamicBuffer );
+        }
+
+        Characters.Emplace( StringTraits::Terminator );
     }
 
     /* Returns this string in lowercase */
     FORCEINLINE void ToLowerInline() noexcept
     {
-        CharType* It = Characters;
-        CharType* End = Characters + Len;
+        CharType* It = Characters.Data();
+        CharType* End = It + Characters.Size();
         while ( It != End )
         {
             *It = StringTraits::ToLower( *It );
@@ -225,16 +268,16 @@ public:
     /* Returns this string in lowercase */
     FORCEINLINE TString ToLower() const noexcept
     {
-        TString Result = *this;
-        Result.ToLowerInline();
-        return Result;
+        TString NewString(*this);
+        NewString.ToLowerInline();
+        return NewString;
     }
 
     /* Converts this string in uppercase */
     FORCEINLINE void ToUpperInline() noexcept
     {
-        CharType* It = Characters;
-        CharType* End = Characters + Len;
+        CharType* It = Characters.Data();
+        CharType* End = It + Characters.Size();
         while ( It != End )
         {
             *It = StringTraits::ToUpper( *It );
@@ -245,17 +288,17 @@ public:
     /* Returns this string in uppercase */
     FORCEINLINE TString ToUpper() const noexcept
     {
-        TString Result = *this;
-        Result.ToUpperInline();
-        return Result;
+        TString NewString(*this);
+        NewString.ToUpperInline();
+        return NewString;
     }
 
     /* Removes whitespace from the beginning and end of the string */
     FORCEINLINE TString Trim() noexcept
     {
-        TString Result = *this;
-        Result.TrimInline();
-        return Result;
+        TString NewString(*this);
+        NewString.TrimInline();
+        return NewString;
     }
 
     /* Removes whitespace from the beginning and end of the string */
@@ -268,46 +311,20 @@ public:
     /* Removes whitespace from the beginning of the string */
     FORCEINLINE TString TrimStart() noexcept
     {
-        TString Result = *this;
-        Result.TrimStartInline();
-        return Result;
+        TString NewString(*this);
+        NewString.TrimStartInline();
+        return NewString;
     }
 
     /* Removes whitespace from the beginning of the string */
     FORCEINLINE void TrimStartInline() noexcept
     {
-        SizeType Index = 0;
-        for ( ; Index < Len; Index++ )
+        SizeType Count = 0;
+        for ( CharType Char : Characters )
         {
-            if ( !StringTraits::IsWhiteSpace( Characters[Index] ) )
+            if ( StringTraits::IsWhiteSpace( Char ) )
             {
-                break;
-            }
-        }
-
-        if ( Index > 0 )
-        {
-            Len -= Index;
-            Memory::Memmove( Characters, Characters + Index, SizeInBytes() );
-        }
-    }
-
-    /* Removes whitespace from the end of the string */
-    FORCEINLINE TString TrimEnd() noexcept
-    {
-        TString Result = *this;
-        Result.TrimEndInline();
-        return Result;
-    }
-
-    /* Removes whitespace from the end of the string */
-    FORCEINLINE void TrimEndInline() noexcept
-    {
-        for ( SizeType Index = Len - 1; Index >= 0; Index-- )
-        {
-            if ( StringTraits::IsWhiteSpace( Characters[Index] ) )
-            {
-                Len--;
+                Count++;
             }
             else
             {
@@ -315,25 +332,57 @@ public:
             }
         }
 
-        Characters[Len] = StringTraits::Terminator;
+        if ( Count > 0 )
+        {
+            Characters.RemoveRangeAt( Count - 1, Count );
+        }
+    }
+
+    /* Removes whitespace from the end of the string */
+    FORCEINLINE TString TrimEnd() noexcept
+    {
+        TString NewString(*this);
+        NewString.TrimEndInline();
+        return NewString;
+    }
+
+    /* Removes whitespace from the end of the string */
+    FORCEINLINE void TrimEndInline() noexcept
+    {
+        SizeType LastIndex = Length() - 1;
+        SizeType Index = LastIndex;
+        for ( ; Index >= 0; Index-- )
+        {
+            if ( !StringTraits::IsWhiteSpace( Characters[Index] ) )
+            {
+                break;
+            }
+        }
+
+        SizeType Count = LastIndex - Index;
+        if (Count > 0)
+        {
+            Characters.PopRange( Count );
+            Characters.Emplace( StringTraits::Terminator );
+        }
     }
 
     /* Removes whitespace from the end of the string */
     FORCEINLINE TString Reverse() noexcept
     {
-        TString Result = *this;
-        Result.ReverseInline();
-        return Result;
+        TString NewString(*this);
+        NewString.ReverseInline();
+        return NewString;
     }
 
     /* Removes whitespace from the end of the string */
     FORCEINLINE void ReverseInline() noexcept
     {
-        SizeType ReverseIndex = Len - 1;
-        for ( SizeType Index = 0; Index < ReverseIndex; Index++ )
+        CharType* Start = Characters.Data();
+        CharType* End   = Characters.Data() + Characters.Size();
+        while ( Start != End )
         {
-            ::Swap<CharType>( Characters[Index], Characters[ReverseIndex] );
-            ReverseIndex--;
+            ::Swap<CharType>( *(Start++), *(--End) );
         }
     }
 
@@ -372,15 +421,20 @@ public:
     /* Compares two strings and checks if they are equal, without taking casing into account */
     FORCEINLINE int32 CompareNoCase( const CharType* InString, SizeType InLength )
     {
+        Assert(InString != nullptr);
+
+        SizeType Len = Length();
         if ( Len != InLength )
         {
             return -1;
         }
 
-        for ( SizeType Index = 0; Index < Len; Index++ )
+        CharType* Start = Characters.Data();
+        CharType* End = Start + Len;
+        while ( Start != End )
         {
-            const CharType TempChar0 = StringTraits::ToLower( Characters[Index] );
-            const CharType TempChar1 = StringTraits::ToLower( InString[Index] );
+            const CharType TempChar0 = StringTraits::ToLower( *(Start++) );
+            const CharType TempChar1 = StringTraits::ToLower( *(InString++) );
 
             if ( TempChar0 != TempChar1 )
             {
@@ -407,9 +461,9 @@ public:
     /* Returns the position of the first occurance of the start of the searchstring */
     FORCEINLINE SizeType Find( const CharType* InString, SizeType InLength, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
 
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Len == 0) )
+        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Length() == 0) )
         {
             return 0;
         }
@@ -429,9 +483,9 @@ public:
     /* Returns the position of the first occurance of char */
     FORCEINLINE SizeType Find( CharType Char, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
 
-        if ( StringTraits::IsTerminator( Char ) || (Len == 0) )
+        if ( StringTraits::IsTerminator( Char ) || (Length() == 0) )
         {
             return 0;
         }
@@ -464,8 +518,10 @@ public:
     /* Returns the position of the first occurance of the start of the searchstring by searching in reverse. Offset is the end, instead of the start as with normal Find*/
     FORCEINLINE SizeType ReverseFind( const CharType* InString, SizeType InLength, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
+        Assert( InString != nullptr );
 
+        SizeType Len = Length();
         if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Len == 0) )
         {
             return Len;
@@ -502,8 +558,9 @@ public:
     /* Returns the position of the first occurance of char by searching from the end */
     FORCEINLINE SizeType ReverseFind( CharType Char, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
         
+        SizeType Len = Length();
         if ( StringTraits::IsTerminator( Char ) || (Len == 0) )
         {
             return Len;
@@ -551,8 +608,9 @@ public:
     /* Returns the position of the the first found character in the searchstring */
     FORCEINLINE SizeType FindOneOf( const CharType* InString, SizeType InLength, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
 
+        SizeType Len = Length();
         if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Len == 0) )
         {
             return 0;
@@ -586,8 +644,9 @@ public:
     /* Returns the position of the the first character not a part of the searchstring */
     FORCEINLINE SizeType FindOneNotOf( const CharType* InString, SizeType InLength, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
 
+        SizeType Len = Length();
         if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Len == 0) )
         {
             return 0;
@@ -652,13 +711,8 @@ public:
     /* Removes count characters from position and forward */
     FORCEINLINE void Remove( SizeType Position, SizeType Count ) noexcept
     {
-        Assert( (Position < Len) && (Position + Count < Len) );
-
-        CharType* Dst = Data() + Position;
-        CharType* Src = Dst + Count;
-
-        SizeType Num = Len - (Position + Count);
-        Memory::Memmove( Dst, Src, Num * sizeof( CharType ) );
+        Assert( (Position < Length()) && (Position + Count < Length()) );
+        Characters.RemoveRangeAt( Position, Count );
     }
 
     /* Insert a string at position */
@@ -679,18 +733,8 @@ public:
     {
         Assert( (Position < Len) && (Len + InLength < CharCount) );
 
-        const uint64 LengthInBytes = InLength * sizeof( CharType );
-
-        // Make room for string
-        CharType* Src = Data() + Position;
-        CharType* Dst = Src + InLength;
-        Memory::Memmove( Dst, Src, LengthInBytes );
-
-        // Copy String
-        Memory::Memcpy( Src, InString, LengthInBytes );
-
-        Len += InLength;
-        Characters[Len] = StringTraits::Terminator;
+        Characters.Insert( Position, InString, InLength );
+        Characters.Emplace( StringTraits::Terminator );
     }
 
     /* Insert a character at position */
@@ -734,7 +778,9 @@ public:
     /* Pop a character from the end of the string */
     FORCEINLINE void Pop() noexcept
     {
-        Characters[--Len] = StringTraits::Terminator;
+        SizeType Len = Length();
+        Characters.Pop();
+        Characters[Len] = StringTraits::Terminator;
     }
 
     /* Swaps two fixed strings with eachother */
@@ -776,59 +822,61 @@ public:
     /* Return a null terminated string */
     FORCEINLINE CharType* Data() noexcept
     {
-        return Characters;
+        return Characters.Data();
     }
 
     /* Return a null terminated string */
     FORCEINLINE const CharType* Data() const noexcept
     {
-        return Characters;
+        return Characters.Data();
     }
 
     /* Return a null terminated string */
     FORCEINLINE const CharType* CStr() const noexcept
     {
-        return Characters;
+        return Characters.Data();
     }
 
     /* Return the length of the string */
     FORCEINLINE SizeType Size() const noexcept
     {
-        return Len;
+        SizeType Len = Characters.Size();
+        return (Len > 0) ? Len - 1 : 0; // Characters contains null-terminator
     }
 
     /* Return the last usable index of the string */
     FORCEINLINE SizeType LastElementIndex() const noexcept
     {
-        return (Len > 0) ? (Len - 1) : 0;
+        SizeType Len = Size();
+        return (Len > 0) ? (Len - 1) : 0; 
     }
 
     /* Return the length of the string */
     FORCEINLINE SizeType Length() const noexcept
     {
-        return Len;
+        return Size();
     }
 
     constexpr SizeType Capacity() const noexcept
     {
-        return CharCount;
+        return Characters.Capacity();
     }
 
     constexpr SizeType CapacityInBytes() const noexcept
     {
-        return CharCount * sizeof( CharType );
+        return Characters.Capacity() * sizeof( CharType );
     }
 
     /* Retrive the size of the string in bytes */
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return Len * sizeof( CharType );
+        return Length() * sizeof( CharType );
     }
 
     /* Checks if the string is empty */
     FORCEINLINE bool IsEmpty() const noexcept
     {
-        return (Len == 0);
+        return (Length() == 0);
     }
 
     /* Appends a string to this string */
@@ -972,21 +1020,15 @@ private:
     /* Initializing this string by copying from InString */
     FORCEINLINE void CopyFrom( const CharType* InString, SizeType InLength ) noexcept
     {
-        Assert( InLength < Capacity() );
-
-        StringTraits::Copy( Characters, InString, InLength );
-        Len = InLength;
-        Characters[Len] = StringTraits::Terminator;
+        Characters.Resize( InLength );
+        StringTraits::Copy( Characters.Data(), InString, InLength );
+        Characters.Emplace( StringTraits::Terminator );
     }
 
     /* Initializing this string by moving from InString */
     FORCEINLINE void MoveFrom( TString&& Other ) noexcept
     {
-        Len = Other.Len;
-        Other.Len = 0;
-
-        Memory::Memexchange( Characters, Other.Characters, SizeInBytes() );
-        Characters[Len] = StringTraits::Terminator;
+        Characters = Move( Other.Characters );
     }
 
     /* Characters for characters */
