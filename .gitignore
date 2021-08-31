@@ -23,3 +23,8 @@ packages/
 # macos files
 *.DS_Store
 *.txt
+
+# XCode project files
+*.pbxproj
+*.xcworkspace
+*.xcodeproj
