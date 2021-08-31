@@ -1,19 +1,20 @@
 ## Code Standard
 
 #### Contents
-* [**If Statements**](#if-statements)
-* [**Loops**](#loops)
-* [**Templates**](#templates)
-* [**Classes**](#classes)
-* [**Interfaces**](#interfaces)
-* [**Structs**](#structs)
-* [**Listeners vs Callbacks**](#listeners-vs-callbacks)
-* [**Encapsulation**](#encapsulation)
-* [**Virtual**](#virtual)
-* [**Documentation**](#documentation)
-* [**Naming Conventions**](#naming-conventions)
-* [**Platform Specific Code**](#platform-specific-code)
-* [**FORCEINLINE macro**](#forceinline-macro)
+- [Code Standard](#code-standard)
+    - [Contents](#contents)
+  - [If Statements](#if-statements)
+  - [Loops](#loops)
+  - [Templates](#templates)
+  - [Classes](#classes)
+  - [Interfaces](#interfaces)
+  - [Enums](#enums)
+  - [Structs](#structs)
+  - [Union](#union)
+  - [Virtual](#virtual)
+  - [Naming Conventions](#naming-conventions)
+  - [Platform Specific Code](#platform-specific-code)
+  - [FORCEINLINE macro](#forceinline-macro)
 
 ### If Statements
 * If statements should be written using the following style:
@@ -94,7 +95,7 @@ private:
 * Note the order of the access modifers
 
 * Header files should be included in compilation units (.cpp). Only reason to include in the header is when a class/struct is 
-using the type not as a pointer or reference. This means that forward declarations has to be used.
+using the type more than just a pointer or reference, such as calling a function, accessing a variable or declaring the type directly. This means that forward declarations has to and should be used.
 
 * Classes that are meant to be used outside the engine- project, and are not header-only should use the export macro before the class-name
 ```
@@ -126,6 +127,7 @@ class IMyInterface
 {
 public:
   virtual ~IMyInterface() = default;
+  
   virtual void Func() = 0;
 }
 ```
