@@ -2,8 +2,6 @@
 #include "Core.h"
 #include "SceneData.h"
 
-#include "Core/Containers/String.h"
-
 class CMeshFactory
 {
 public:

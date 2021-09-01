@@ -3,13 +3,8 @@
 #include "Array.h"
 #include "StringView.h"
 
-#include "Core/Templates/EnableIf.h"
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/AddReference.h"
-#include "Core/Templates/StringTraits.h"
-#include "Core/Templates/IsTStringType.h"
-
-#include "Core/Math/Math.h"
 
 #define STRING_USE_INLINE_ALLOCATOR (0)
 #define STRING_FORMAT_BUFFER_SIZE   (128)
@@ -189,7 +184,7 @@ public:
 
         // Try print to buffer
         SizeType WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
-        while ( (WrittenChars > BufferSize) || (WrittenChars == -1) )
+        while ( (WrittenChars > BufferSize) || (WrittenChars == -1) )
         {
             // Double size of buffer
             BufferSize += BufferSize;
@@ -236,7 +231,7 @@ public:
 
         // Try print to buffer
         SizeType WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
-        while ( (WrittenChars > BufferSize) || (WrittenChars == -1) )
+        while ( (WrittenChars > BufferSize) || (WrittenChars == -1) )
         {
             // Double size of buffer
             BufferSize += BufferSize;
@@ -1041,8 +1036,8 @@ private:
     }
 
     /* Characters for characters */
-    using AllocatorType = TStringAllocator<CharType>;
-    TArray<CharType, AllocatorType> Characters;
+    using StringStorageType = TArray<CharType, TStringAllocator<CharType>>;
+    StringStorageType Characters;
 };
 
 /* Predefined types */

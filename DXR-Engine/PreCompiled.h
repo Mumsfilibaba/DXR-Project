@@ -30,10 +30,12 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
-#include "Core/Containers/FixedArray.h"
+#include "Core/Containers/StaticArray.h"
 #include "Core/Containers/Function.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/UniquePtr.h"
+#include "Core/Containers/String.h"
+#include "Core/Containers/StringView.h"
 
 /* Templates */
 #include "Core/Templates/TypeTraits.h"

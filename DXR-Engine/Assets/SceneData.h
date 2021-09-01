@@ -22,7 +22,7 @@ struct SMeshData
 struct SModelData
 {
     /* Name of the mesh specified in the model-file */
-    String Name;
+    CString Name;
 
     /* Model mesh data */
     SMeshData Mesh;
@@ -36,7 +36,7 @@ struct SImage2D
 {
     SImage2D() = default;
 
-    SImage2D( const String& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat )
+    SImage2D( const CString& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat )
         : Path( InPath )
         , Image()
         , Width( InWidth )
@@ -46,7 +46,7 @@ struct SImage2D
     }
 
     /* Relative path to the image specified in the model-file */
-    String Path;
+    CString Path;
 
     /* Pointer to image data */
     TSharedPtr<uint8[]> Image;

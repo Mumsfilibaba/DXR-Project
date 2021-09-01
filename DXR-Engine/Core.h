@@ -5,7 +5,6 @@
 #include "Core/Memory/New.h"
 
 #include "Core/Engine/EngineGlobals.h"
-#include "Core/Containers/String.h"
 
 //<--
 // TODO: Move to templates

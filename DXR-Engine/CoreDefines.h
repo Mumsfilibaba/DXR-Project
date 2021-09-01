@@ -20,7 +20,7 @@
 #endif
 
 /* Undefined compiler */
-#if !COMPILER_MSVC || !COMPILER_CLANG || !COMPILER_GCC
+#if (!COMPILER_MSVC) || (!COMPILER_CLANG) || (!COMPILER_GCC)
 #ifndef COMPILER_UNDEFINED
 #define COMPILER_UNDEFINED
 #endif

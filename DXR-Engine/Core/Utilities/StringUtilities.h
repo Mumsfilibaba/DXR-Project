@@ -1,4 +1,6 @@
 #pragma once
+#if 0
+
 #include <string>
 #include <codecvt>
 #include <locale>
@@ -68,3 +70,5 @@ inline WString ToLower( const WString& InString )
 
     return Result;
 }
+
+#endif
