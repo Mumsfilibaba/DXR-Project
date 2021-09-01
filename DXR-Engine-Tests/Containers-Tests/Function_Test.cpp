@@ -69,7 +69,7 @@ static bool Func2( int32 In )
 }
 
 /* Tuple func */
-int32 TupleFunc( int32 Num0, int32 Num1, int32 Num2, int32 Num3 )
+static int32 TupleFunc( int32 Num0, int32 Num1, int32 Num2, int32 Num3 )
 {
     std::cout << "Tuple func Num0=" << Num0 << ", Num1=" << Num1 << ", Num2=" << Num2 << ", Num3=" << Num3 << std::endl;
     return Num0 + 1;

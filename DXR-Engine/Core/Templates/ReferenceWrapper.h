@@ -4,8 +4,6 @@
 #include "Invoke.h"
 #include "AddressOf.h"
 
-#include <type_traits>
-
 /* Wrapper for a reference making them copyable */
 template<typename T>
 class TReferenceWrapper
@@ -49,9 +47,9 @@ public:
     /* Invoke if type is invokable */
     template<typename... ArgTypes>
     FORCEINLINE auto operator()( ArgTypes&&... Args ) const noexcept
-        -> decltype(Invoke( *Pointer, Forward<ArgTypes>( Args )... ))
+        -> decltype(Invoke( this->Get(), Forward<ArgTypes>( Args )... ))
     {
-        return Invoke( *Pointer, Forward<ArgTypes>( Args )... );
+        return Invoke( this->Get(), Forward<ArgTypes>( Args )... );
     }
 
 private:

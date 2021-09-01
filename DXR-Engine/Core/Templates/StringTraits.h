@@ -2,6 +2,8 @@
 #include "CoreDefines.h"
 #include "CoreTypes.h"
 
+#include "Core/Memory/Memory.h"
+
 #include <cstring>
 #include <cwchar>
 #include <cctype>

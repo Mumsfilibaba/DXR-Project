@@ -65,7 +65,7 @@ public:
                     }
                     else
                     {
-                        Delegates.Remove( It );
+                        Delegates.RemoveAt( It );
                     }
 
                     return true;
@@ -96,9 +96,9 @@ public:
                     }
                     else
                     {
-                        int32 LastIndex = Delegates.LastIndex();
+                        int32 LastIndex = Delegates.LastElementIndex();
                         ::Swap( Delegate, Delegates[LastIndex] );
-                        Delegates.PopBack();
+                        Delegates.Pop();
                     }
 
                     Result = true;
@@ -205,7 +205,7 @@ protected:
         CompactArray();
 
         /* If not pushback */
-        Delegates.PushBack( NewDelegate );
+        Delegates.Push( NewDelegate );
         return NewHandle;
     }
 
@@ -229,7 +229,7 @@ protected:
     {
         if ( !IsLocked() && !Delegates.IsEmpty() )
         {
-            int32 Next = Delegates.LastIndex();
+            int32 Next = Delegates.LastElementIndex();
             for ( int32 Index = Next; Index >= 0; Index-- )
             {
                 CDelegateBase& Delegate = Delegates[Index];
@@ -243,10 +243,10 @@ protected:
                 }
             }
 
-            int32 NumEmptyElements = Delegates.LastIndex() - Next;
+            int32 NumEmptyElements = Delegates.LastElementIndex() - Next;
             if ( NumEmptyElements > 0 )
             {
-                Delegates.PopBackRange( NumEmptyElements );
+                Delegates.PopRange( NumEmptyElements );
             }
         }
     }

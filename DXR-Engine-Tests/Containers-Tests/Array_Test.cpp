@@ -214,7 +214,7 @@ void TArray_Benchmark()
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
-                    Strings1.InsertAt( 0, "My name is jeff" );
+                    Strings1.Insert( 0, "My name is jeff" );
                 }
             }
 
@@ -373,7 +373,7 @@ void TArray_Benchmark()
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
                 {
-                    Vectors1.InsertAt( 0, Vec3( 3.0, 5.0, -6.0 ) );
+                    Vectors1.Insert( 0, Vec3( 3.0, 5.0, -6.0 ) );
                 }
             }
             std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
@@ -723,57 +723,57 @@ void TArray_Test( int32 Argc, const char** Argv )
         PrintArr( Strings2 );
 
         std::cout << "At front" << std::endl << std::endl;
-        Strings2.InsertAt( 0, ArgvStr );
+        Strings2.Insert( 0, ArgvStr );
         PrintArr( Strings2 );
-        Strings2.InsertAt( 0, "Inserted String" );
+        Strings2.Insert( 0, "Inserted String" );
         PrintArr( Strings2 );
-        Strings2.InsertAt( 0, { "Inserted String #1", "Inserted String #2" } );
+        Strings2.Insert( 0, { "Inserted String #1", "Inserted String #2" } );
         PrintArr( Strings2 );
 
         std::cout << "At Arbitrary" << std::endl << std::endl;
-        Strings2.InsertAt( 2, ArgvStr );
+        Strings2.Insert( 2, ArgvStr );
         PrintArr( Strings2 );
-        Strings2.InsertAt( 2, "Inserted String Again" );
+        Strings2.Insert( 2, "Inserted String Again" );
         PrintArr( Strings2 );
-        Strings2.InsertAt( 2, { "Inserted String Again #1", "Inserted String Again #2" } );
+        Strings2.Insert( 2, { "Inserted String Again #1", "Inserted String Again #2" } );
         PrintArr( Strings2 );
 
         std::cout << "At End" << std::endl << std::endl;
-        Strings2.InsertAt( Strings2.Size(), { "Inserted String At End #1", "Inserted String At End #2" } );
+        Strings2.Insert( Strings2.Size(), { "Inserted String At End #1", "Inserted String At End #2" } );
         PrintArr( Strings2 );
 
         std::cout << "At front after reallocation" << std::endl << std::endl;
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.InsertAt( 0, ArgvStr );
+        Strings2.Insert( 0, ArgvStr );
         PrintArr( Strings2 );
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.InsertAt( 0, "Inserted String Reallocated" );
+        Strings2.Insert( 0, "Inserted String Reallocated" );
         PrintArr( Strings2 );
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.InsertAt( 0, { "Inserted String Reallocated #1", "Inserted String Reallocated #2" } );
+        Strings2.Insert( 0, { "Inserted String Reallocated #1", "Inserted String Reallocated #2" } );
         PrintArr( Strings2 );
 
         std::cout << "At Arbitrary after reallocation" << std::endl << std::endl;
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.InsertAt( 2, ArgvStr );
+        Strings2.Insert( 2, ArgvStr );
         PrintArr( Strings2 );
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.InsertAt( 2, "Inserted String Again Reallocated" );
+        Strings2.Insert( 2, "Inserted String Again Reallocated" );
         PrintArr( Strings2 );
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.InsertAt( 2, { "Inserted String Again Reallocated #1", "Inserted String Again Reallocated #2" } );
+        Strings2.Insert( 2, { "Inserted String Again Reallocated #1", "Inserted String Again Reallocated #2" } );
         PrintArr( Strings2 );
 
         std::cout << "At End after reallocation" << std::endl << std::endl;
         // Add a shrink to fit to force reallocation
         Strings2.ShrinkToFit();
-        Strings2.InsertAt( Strings2.Size(), { "Inserted String At End Reallocated #1", "Inserted String At End Reallocated #2" } );
+        Strings2.Insert( Strings2.Size(), { "Inserted String At End Reallocated #1", "Inserted String At End Reallocated #2" } );
         PrintArr( Strings2 );
 
         // Erase
@@ -1073,49 +1073,49 @@ void TArray_Test( int32 Argc, const char** Argv )
         // Insert
         std::cout << std::endl << "Testing Insert" << std::endl << std::endl;
         std::cout << "At front" << std::endl << std::endl;
-        Vectors2.InsertAt( 0, Vector );
-        Vectors2.InsertAt( 0, Vec3( -1.0, -1.0, -1.0 ) );
-        Vectors2.InsertAt( 0, { Vec3( 1.0f, 1.0f, 1.0f ), Vec3( 2.0f, 2.0f, 2.0f ) } );
+        Vectors2.Insert( 0, Vector );
+        Vectors2.Insert( 0, Vec3( -1.0, -1.0, -1.0 ) );
+        Vectors2.Insert( 0, { Vec3( 1.0f, 1.0f, 1.0f ), Vec3( 2.0f, 2.0f, 2.0f ) } );
         PrintArr( Vectors2 );
 
         std::cout << "At Arbitrary" << std::endl << std::endl;
-        Vectors2.InsertAt( 2, Vector );
-        Vectors2.InsertAt( 2, Vec3( -1.0, -1.0, -2.0 ) );
-        Vectors2.InsertAt( 2, { Vec3( 1.0f, 1.0f, 2.0f ), Vec3( 2.0f, 2.0f, 3.0f ) } );
+        Vectors2.Insert( 2, Vector );
+        Vectors2.Insert( 2, Vec3( -1.0, -1.0, -2.0 ) );
+        Vectors2.Insert( 2, { Vec3( 1.0f, 1.0f, 2.0f ), Vec3( 2.0f, 2.0f, 3.0f ) } );
         PrintArr( Vectors2 );
 
         std::cout << "At End" << std::endl << std::endl;
-        Vectors2.InsertAt( Vectors2.Size(), { Vec3( 1.0f, 1.0f, 3.0f ), Vec3( 2.0f, 2.0f, 4.0f ) } );
+        Vectors2.Insert( Vectors2.Size(), { Vec3( 1.0f, 1.0f, 3.0f ), Vec3( 2.0f, 2.0f, 4.0f ) } );
         PrintArr( Vectors2 );
 
         std::cout << "At front after reallocation" << std::endl << std::endl;
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.InsertAt( 0, Vector );
+        Vectors2.Insert( 0, Vector );
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.InsertAt( 0, Vec3( -1.0, -1.0, -3.0 ) );
+        Vectors2.Insert( 0, Vec3( -1.0, -1.0, -3.0 ) );
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.InsertAt( 0, { Vec3( 1.0f, 1.0f, 4.0f ), Vec3( 2.0f, 2.0f, 5.0f ) } );
+        Vectors2.Insert( 0, { Vec3( 1.0f, 1.0f, 4.0f ), Vec3( 2.0f, 2.0f, 5.0f ) } );
         PrintArr( Vectors2 );
 
         std::cout << "At Arbitrary after reallocation" << std::endl << std::endl;
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.InsertAt( 2, Vector );
+        Vectors2.Insert( 2, Vector );
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.InsertAt( 2, Vec3( -1.0, -1.0, -4.0 ) );
+        Vectors2.Insert( 2, Vec3( -1.0, -1.0, -4.0 ) );
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.InsertAt( 2, { Vec3( 1.0f, 1.0f, 5.0f ), Vec3( 2.0f, 2.0f, 6.0f ) } );
+        Vectors2.Insert( 2, { Vec3( 1.0f, 1.0f, 5.0f ), Vec3( 2.0f, 2.0f, 6.0f ) } );
         PrintArr( Vectors2 );
 
         std::cout << "At End after reallocation" << std::endl << std::endl;
         // Add a shrink to fit to force reallocation
         Vectors2.ShrinkToFit();
-        Vectors2.InsertAt( Vectors2.Size(), { Vec3( 6.0f, 6.0f, 6.0f ), Vec3( 2.0f, 2.0f, 7.0f ) } );
+        Vectors2.Insert( Vectors2.Size(), { Vec3( 6.0f, 6.0f, 6.0f ), Vec3( 2.0f, 2.0f, 7.0f ) } );
         PrintArr( Vectors2 );
 
         // Erase

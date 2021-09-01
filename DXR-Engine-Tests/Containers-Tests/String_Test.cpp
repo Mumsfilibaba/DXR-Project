@@ -1,6 +1,7 @@
 #include "String_Test.h"
 
-#include <Core/Containers/FixedString.h>
+#include <Core/Containers/StaticString.h>
+#include <Core/Containers/String.h>
 
 #include <iostream>
 
@@ -9,63 +10,64 @@
 
 void TString_Test( const char* Args )
 {
-    std::cout << std::endl << "----Testing FixedString----" << std::endl << std::endl;
+    std::cout << std::endl << "----Testing StaticString----" << std::endl << std::endl;
+	
     CStringView StringView( "Hello StringView" );
 
-    CFixedString<64> FixedString0;
-    PrintString( FixedString0 );
-    CFixedString<64> FixedString1 = "Hello String";
-    PrintString( FixedString1 );
-    CFixedString<64> FixedString2 = CFixedString<64>( Args, 4 );
-    PrintString( FixedString2 );
-    CFixedString<64> FixedString3 = CFixedString<64>(StringView);
-    PrintString( FixedString3 );
-    CFixedString<64> FixedString4 = FixedString1;
-    PrintString( FixedString4 );
-    CFixedString<64> FixedString5 = Move(FixedString2);
-    PrintString( FixedString5 );
+    CStaticString<64> StaticString0;
+    PrintString( StaticString0 );
+    CStaticString<64> StaticString1 = "Hello String";
+    PrintString( StaticString1 );
+    CStaticString<64> StaticString2 = CStaticString<64>( Args, 4 );
+    PrintString( StaticString2 );
+    CStaticString<64> StaticString3 = CStaticString<64>( StringView );
+    PrintString( StaticString3 );
+    CStaticString<64> StaticString4 = StaticString1;
+    PrintString( StaticString4 );
+    CStaticString<64> StaticString5 = Move(StaticString2);
+    PrintString( StaticString5 );
 
-    FixedString0.Append("Appended String");
-    PrintString( FixedString0 );
-    FixedString5.Append( FixedString0 );
-    PrintString( FixedString5 );
+    StaticString0.Append("Appended String");
+    PrintString( StaticString0 );
+    StaticString5.Append( StaticString0 );
+    PrintString( StaticString5 );
 
-    CFixedString<64> FixedString6;
-    FixedString6.Format( "Formatted String=%.4f", 0.004f );
-    PrintString( FixedString6 );
+    CStaticString<64> StaticString6;
+    StaticString6.Format( "Formatted String=%.4f", 0.004f );
+    PrintString( StaticString6 );
 
-    FixedString6.Append( ' ' );
-    PrintString( FixedString6 );
+    StaticString6.Append( ' ' );
+    PrintString( StaticString6 );
 
-    FixedString6.AppendFormat( "Formatted String=%.4f", 0.0077f );
-    PrintString( FixedString6 );
+    StaticString6.AppendFormat( "Formatted String=%.4f", 0.0077f );
+    PrintString( StaticString6 );
 
-    CFixedString<64> LowerFixedString6 = FixedString6.ToLower();
-    PrintString( LowerFixedString6 );
+    CStaticString<64> LowerStaticString6 = StaticString6.ToLower();
+    PrintString( LowerStaticString6 );
 
-    CFixedString<64> UpperFixedString6 = FixedString6.ToUpper();
-    PrintString( UpperFixedString6 );
+    CStaticString<64> UpperStaticString6 = StaticString6.ToUpper();
+    PrintString( UpperStaticString6 );
 
-    FixedString6.Clear();
-    PrintString( FixedString6 );
+    StaticString6.Clear();
+    PrintString( StaticString6 );
 
-    FixedString6.Append( "    Trimmable String    " );
-    PrintString( FixedString6 );
+    StaticString6.Append( "    Trimmable String    " );
+    PrintString( StaticString6 );
 
-    CFixedString<64> TrimmedFixedString6 = FixedString6.Trim();
-    TrimmedFixedString6.Append( '*' );
-    PrintString( TrimmedFixedString6 );
+    CStaticString<64> TrimmedStaticString6 = StaticString6.Trim();
+    TrimmedStaticString6.Append( '*' );
+    PrintString( TrimmedStaticString6 );
 
-    FixedString6.Clear();
-    PrintString( FixedString6 );
+    StaticString6.Clear();
+    PrintString( StaticString6 );
 
-    FixedString6.Append( "123456789" );
-    PrintString( FixedString6 );
+    StaticString6.Append( "123456789" );
+    PrintString( StaticString6 );
 
-    CFixedString<64> ReversedFixedString6 = FixedString6.Reverse();
-    PrintString( ReversedFixedString6 );
+    CStaticString<64> ReversedStaticString6 = StaticString6.Reverse();
+    PrintString( ReversedStaticString6 );
 
-    CFixedString<64> SearchString = "Search Me";
+    CStaticString<64> SearchString = "Search Me";
     PrintString( SearchString );
 
     std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;

@@ -33,6 +33,7 @@ public:
     {
         return 0;
     }
+
     FORCEINLINE static int64 InterlockedIncrement( volatile int64* Dest )
     {
         return 0;
@@ -42,6 +43,7 @@ public:
     {
         return 0;
     }
+
     FORCEINLINE static int64 InterlockedDecrement( volatile int64* Dest )
     {
         return 0;
@@ -51,6 +53,7 @@ public:
     {
         return 0;
     }
+
     FORCEINLINE static int64 InterlockedAdd( volatile int64* Dest, int64 Value )
     {
         return 0;
@@ -60,6 +63,7 @@ public:
     {
         return 0;
     }
+
     FORCEINLINE static int64 InterlockedSub( volatile int64* Dest, int64 Value )
     {
         return 0;
@@ -69,6 +73,7 @@ public:
     {
         return 0;
     }
+
     FORCEINLINE static int64 InterlockedCompareExchange( volatile int64* Dest, int64 ExChange, int64 Comparand )
     {
         return 0;
@@ -78,6 +83,7 @@ public:
     {
         return 0;
     }
+    
     FORCEINLINE static int64 InterlockedExchange( volatile int64* Dest, int64 ExChange )
     {
         return 0;

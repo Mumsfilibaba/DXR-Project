@@ -90,10 +90,23 @@ struct CDerived2 : public CBase2
 };
 
 /* Tuple func */
-void TupleFunc( int32 Num0, int32 Num1, int32 Num2, int32 Num3 )
+static void TupleFunc( int32 Num0, int32 Num1, int32 Num2, int32 Num3 )
 {
     std::cout << "Tuple func Num0=" << Num0 << ", Num1=" << Num1 << ", Num2=" << Num2 << ", Num3=" << Num3 << std::endl;
 }
+
+/* Declare global event */
+DECLARE_EVENT( CSomeEvent, CEventDispacher, int32 );
+CSomeEvent GSomeEvent;
+
+class CEventDispacher
+{
+public:
+	void Func()
+	{
+		GSomeEvent.Broadcast( 42 );
+	}
+};
 
 /* Test */
 void Delegate_Test()
@@ -296,20 +309,9 @@ void Delegate_Test()
         DECLARE_MULTICAST_DELEGATE( CSomeMulticastDelegate, int32 );
         CSomeMulticastDelegate SomeMulticastDelegate;
 
-        DECLARE_EVENT( CSomeEvent, CEventDispacher, int32 );
-        static CSomeEvent SomeEvent;
+        GSomeEvent.AddStatic( StaticFunc2 );
 
-        SomeEvent.AddStatic( StaticFunc2 );
-
-        class CEventDispacher
-        {
-        public:
-            void Func()
-            {
-                SomeEvent.Broadcast( 42 );
-            }
-        } EventDispacher;
-
+		CEventDispacher EventDispacher;
         EventDispacher.Func();
     }
 }

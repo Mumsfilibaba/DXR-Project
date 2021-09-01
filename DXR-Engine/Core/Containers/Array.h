@@ -1,5 +1,4 @@
 #pragma once
-#include "Iterator.h"
 #include "Allocators.h"
 #include "UniquePtr.h"
 #include "ArrayView.h"
@@ -8,9 +7,7 @@
 #include "Core/Templates/IsPointer.h"
 #include "Core/Templates/IsSame.h"
 #include "Core/Templates/ObjectHandling.h"
-#include "Core/Templates/IsArray.h"
 #include "Core/Templates/Not.h"
-#include "Core/Templates/IsTArrayType.h"
 #include "Core/Templates/IsReallocatable.h"
 
 #include <initializer_list>
@@ -135,7 +132,7 @@ public:
 
         if ( NewSize )
         {
-            Construct( NewSize );
+            EmptyConstruct( NewSize );
         }
         else
         {

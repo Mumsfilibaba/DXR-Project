@@ -1,18 +1,18 @@
 #include "FixedArray_Test.h"
 
 #if RUN_TFIXEDARRAY_TEST
-#include <Core/Containers/FixedArray.h>
+#include <Core/Containers/StaticArray.h>
 
 #include <iostream>
 #include <array>
 
 void TFixedArray_Test()
 {
-    std::cout << std::endl << "----------TFixedArray----------" << std::endl << std::endl;
+    std::cout << std::endl << "----------TStaticArray----------" << std::endl << std::endl;
 
     constexpr uint32 Num = 16;
-    TFixedArray<int32, Num> Numbers;
-    const TFixedArray<int32, Num>& ConstNumbers = Numbers;
+    TStaticArray<int32, Num> Numbers;
+    const TStaticArray<int32, Num>& ConstNumbers = Numbers;
 
     std::cout << "Testing At()" << std::endl;
     for ( uint32 i = 0; i < Num; i++ )
@@ -58,8 +58,8 @@ void TFixedArray_Test()
     std::cout << "Testing Range Based For-Loops" << std::endl;
 
     constexpr uint32 Num2 = 6;
-    TFixedArray<uint32, Num2> Numbers1 = { 5, 6, 7 };
-    TFixedArray<uint32, Num2> Numbers2 = { 15, 16, 17 };
+    TStaticArray<uint32, Num2> Numbers1 = { 5, 6, 7 };
+    TStaticArray<uint32, Num2> Numbers2 = { 15, 16, 17 };
 
     for ( const uint32 Number : Numbers1 )
     {

@@ -42,7 +42,7 @@ template<typename FuncType, typename ReturnType, typename... ArgTypes>
 struct TIsInvokableR
 {
 private:
-    template<typename Fn, typename ReturnType, typename = void, typename... Args>
+    template<typename Fn, typename Ret, typename = void, typename... Args>
     struct TIsInvokableRHelper
     {
         enum
@@ -52,7 +52,7 @@ private:
     };
 
     template<typename Fn, typename Ret, typename... Args>
-    struct TIsInvokableRHelper<Fn, Ret, typename TVoid<decltype(Internal::Invoke( DeclVal<Fn>(), DeclVal<Args>()... )) >::Type, Args...>
+    struct TIsInvokableRHelper<Fn, Ret, typename TVoid<decltype(Internal::Invoke( DeclVal<Fn>(), DeclVal<Args>()... ) )>::Type, Args...>
     {
         enum
         {

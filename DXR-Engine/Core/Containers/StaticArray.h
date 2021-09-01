@@ -11,7 +11,7 @@
 
 /* A fixed size array similar to std::array */
 template<typename T, int32 NumElements>
-struct TStaticString
+struct TStaticArray
 {
 public:
 
@@ -19,10 +19,10 @@ public:
     using SizeType = int32;
 
     /* Iterators */
-    typedef TArrayIterator<TStaticString, ElementType>                    IteratorType;
-    typedef TArrayIterator<const TStaticString, const ElementType>        ConstIteratorType;
-    typedef TReverseArrayIterator<TStaticString, ElementType>             ReverseIteratorType;
-    typedef TReverseArrayIterator<const TStaticString, const ElementType> ReverseConstIteratorType;
+    typedef TArrayIterator<TStaticArray, ElementType>                    IteratorType;
+    typedef TArrayIterator<const TStaticArray, const ElementType>        ConstIteratorType;
+    typedef TReverseArrayIterator<TStaticArray, ElementType>             ReverseIteratorType;
+    typedef TReverseArrayIterator<const TStaticArray, const ElementType> ReverseConstIteratorType;
 
     static_assert(NumElements > 0, "The number of elements has to be more than zero");
 
@@ -74,11 +74,11 @@ public:
     }
 
     /* Swaps this array with another */
-    FORCEINLINE void Swap( TStaticString& Other ) noexcept
+    FORCEINLINE void Swap( TStaticArray& Other ) noexcept
     {
-        TStaticString Temp( Move( *this ) );
+		TStaticArray TempArray( Move( *this ) );
         *this = Move( Other );
-        Other = Move( Temp );
+        Other = Move( TempArray );
     }
 
     /* Retrive the data of the array */
@@ -107,7 +107,7 @@ public:
 
     /* Compares two containers by comparing each element, returns true if all is equal */
     template<typename ArrayType>
-    FORCEINLINE bool operator==( const ArrayType& Other ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==( const ArrayType& Other ) const noexcept
     {
         if ( Size() != Other.Size() )
         {
@@ -119,7 +119,7 @@ public:
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */
     template<typename ArrayType>
-    FORCEINLINE bool operator!=( const ArrayType& Other ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=( const ArrayType& Other ) const noexcept
     {
         return !(*this == Other);
     }
@@ -236,7 +236,7 @@ public:
 
 /* Enable TArrayType */
 template<typename T, int32 NumElements>
-struct TIsTArrayType<TStaticString<T, NumElements>>
+struct TIsTArrayType<TStaticArray<T, NumElements>>
 {
     enum
     {

@@ -332,8 +332,8 @@ public:
     /* Removes whitespace from the end of the string */
     FORCEINLINE void ReverseInline() noexcept
     {
-        CharType* Start = Characters.Data();
-        CharType* End   = Characters.Data() + Characters.Size();
+        CharType* Start = Characters;
+        CharType* End   = Characters + Len;
         while ( Start != End )
         {
             ::Swap<CharType>( *(Start++), *(--End) );
@@ -484,7 +484,8 @@ public:
             End--;
 
             // Loop each character in substring
-            for ( const CharType* EndIt = End, const CharType* SubstringIt = InString; ; )
+            const CharType* SubstringIt = InString;
+            for ( const CharType* EndIt = End; ; )
             {
                 // If not found we end loop and start over
                 if ( *(EndIt++) != *(SubstringIt++) )
@@ -514,7 +515,7 @@ public:
 
         const CharType* Result = nullptr;
         const CharType* Start = CStr();
-        if ( InOffset == 0 )
+        if ( Position == 0 )
         {
             Result = StringTraits::ReverseFindChar( Start, Char );
         }
@@ -597,7 +598,7 @@ public:
         }
 
         SizeType Pos = static_cast<SizeType>(StringTraits::Span( CStr() + Position, InString ));
-        SizeType Ret = Position + InOffset;
+		SizeType Ret = Position + Position;
         if ( Ret >= Len )
         {
             return InvalidPosition;
@@ -886,7 +887,7 @@ public:
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator=( const StringType& Other ) noexcept
     {
-        TStaticString<StringType>( Other ).Swap( *this );
+        TStaticString<StringType, CharCount>( Other ).Swap( *this );
         return *this;
     }
 
@@ -999,10 +1000,10 @@ private:
 
 /* Predefined types */
 template<uint32 CharCount>
-using CFixedString = TStaticString<char, CharCount>;
+using CStaticString = TStaticString<char, CharCount>;
 
 template<uint32 CharCount>
-using WFixedString = TStaticString<wchar_t, CharCount>;
+using WStaticString = TStaticString<wchar_t, CharCount>;
 
 /* Operators */
 template<typename CharType, int32 CharCount>
@@ -1063,7 +1064,7 @@ inline bool operator==( const CharType* LHS, const TStaticString<CharType, CharC
 template<typename CharType, int32 CharCount>
 inline bool operator==( const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) == 0);
+    return (LHS.Compare( RHS ) == 0);
 }
 
 /* Compares with a raw string */
@@ -1082,7 +1083,7 @@ inline bool operator!=( const CharType* LHS, const TStaticString<CharType, CharC
 
 /* Compares two containers by comparing each element, returns true if all is equal */
 template<typename CharType, int32 CharCount>
-inline bool operator==( const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS ) noexcept
+inline bool operator!=( const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS ) noexcept
 {
     return !(LHS == RHS);
 }
@@ -1105,7 +1106,7 @@ inline bool operator<( const CharType* LHS, const TStaticString<CharType, CharCo
 template<typename CharType, int32 CharCount>
 inline bool operator<( const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) < 0);
+    return (LHS.Compare( RHS ) < 0);
 }
 
 template<typename CharType, int32 CharCount>
@@ -1125,7 +1126,7 @@ inline bool operator<=( const CharType* LHS, const TStaticString<CharType, CharC
 template<typename CharType, int32 CharCount>
 inline bool operator<=( const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) <= 0);
+    return (LHS.Compare( RHS ) <= 0);
 }
 
 /* Compares with a raw string */
@@ -1146,7 +1147,7 @@ inline bool operator>( const CharType* LHS, const TStaticString<CharType, CharCo
 template<typename CharType, int32 CharCount>
 inline bool operator>( const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) > 0);
+    return (LHS.Compare( RHS ) > 0);
 }
 
 /* Compares with a raw string */
@@ -1167,7 +1168,7 @@ inline bool operator>=( const CharType* LHS, const TStaticString<CharType, CharC
 template<typename CharType, int32 CharCount>
 inline bool operator>=( const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) >= 0);
+    return (LHS.Compare( RHS ) >= 0);
 }
 
 /* Add TStaticString to be a string-type */
@@ -1182,9 +1183,9 @@ struct TIsTStringType<TStaticString<CharType, CharCount>>
 
 /* Convert between char and wide */
 template<int32 CharCount>
-inline WFixedString<CharCount> CharToWide( const CFixedString<CharCount>& CharString ) noexcept
+inline WStaticString<CharCount> CharToWide( const CStaticString<CharCount>& CharString ) noexcept
 {
-    WFixedString<CharCount> NewString;
+	WStaticString<CharCount> NewString;
     NewString.Resize( CharString.Length() );
 
     mbstowcs( NewString.Data(), CharString.CStr(), CharString.Length() );
@@ -1193,9 +1194,9 @@ inline WFixedString<CharCount> CharToWide( const CFixedString<CharCount>& CharSt
 }
 
 template<int32 CharCount>
-inline CFixedString<CharCount> CharToWide( const WFixedString<CharCount>& WideString ) noexcept
+inline CStaticString<CharCount> CharToWide( const WStaticString<CharCount>& WideString ) noexcept
 {
-    CFixedString<CharCount> NewString;
+	CStaticString<CharCount> NewString;
     NewString.Resize( WideString.Length() );
 
     wcstombs( NewString.Data(), WideString.CStr(), WideString.Length() );

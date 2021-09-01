@@ -94,8 +94,8 @@ FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type CopyAssignRange( T* 
 {
     while ( Count )
     {
-        *StartAddress = *Source;
-        StartAddress++;
+        *Destination = *Source;
+		Destination++;
         Source++;
         Count--;
     }

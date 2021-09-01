@@ -6,7 +6,7 @@
 #include <cmath>
 
 /* Windows specific */
-#if defined(PLATFORM_WINDOWS)
+#if defined(PLATFORM_WINDOWS) || defined(PLATFORM_MACOS)
 #include <xmmintrin.h>
 #else
 #error No platform defined

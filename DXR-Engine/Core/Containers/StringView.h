@@ -1,9 +1,6 @@
 #pragma once
-#include "CoreTypes.h"
-#include "CoreDefines.h"
 #include "Iterator.h"
 
-#include "Core/Memory/Memory.h"
 #include "Core/Math/Math.h"
 #include "Core/Templates/IsSame.h"
 #include "Core/Templates/Move.h"
@@ -82,7 +79,7 @@ public:
     FORCEINLINE void Copy( CharType* Buffer, SizeType BufferSize, SizeType Position = 0 ) const noexcept
     {
         Assert( Buffer != nullptr );
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
 
         SizeType CopySize = NMath::Min( BufferSize, Length() - Position );
         StringTraits::Copy( Buffer, ViewStart + Position, CopySize );
@@ -193,7 +190,7 @@ public:
     /* Returns the position of the first occurance of the start of the searchstring */
     FORCEINLINE SizeType Find( const CharType* InString, SizeType InLength, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
 
         if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Length() == 0) )
         {
@@ -204,7 +201,8 @@ public:
         while ( Start != ViewEnd )
         {
             // Loop each character in substring
-            for ( const CharType* It = Start, const CharType* SubstringIt = InString; ; )
+			const CharType* SubstringIt = InString;
+			for ( const CharType* It = Start; ; )
             {
                 // If not found we end loop and start over
                 if ( *(It++) != *(SubstringIt++) )
@@ -227,9 +225,9 @@ public:
     /* Returns the position of the first occurance of char */
     FORCEINLINE SizeType Find( CharType Char, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
 
-        if ( (InLength == 0) || StringTraits::IsTerminator( Char ) || (Length() == 0) )
+        if ( StringTraits::IsTerminator( Char ) || (Length() == 0) )
         {
             return 0;
         }
@@ -263,7 +261,7 @@ public:
     /* Returns the position of the first occurance of the start of the searchstring by searching in reverse. Offset is the end, instead of the start as with normal Find*/
     FORCEINLINE SizeType ReverseFind( const CharType* InString, SizeType InLength, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
 
         SizeType ThisLength = Length();
         if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (ThisLength == 0) )
@@ -283,7 +281,8 @@ public:
             End--;
 
             // Loop each character in substring
-            for ( const CharType* EndIt = End, const CharType* SubstringIt = InString; ; )
+			const CharType* SubstringIt = InString;
+			for ( const CharType* EndIt = End; ; )
             {
                 // If not found we end loop and start over
                 if ( *(EndIt++) != *(SubstringIt++) )
@@ -293,7 +292,7 @@ public:
                 else if ( StringTraits::IsTerminator( *SubstringIt ) )
                 {
                     // If terminator is reached we have found the full substring in out string
-                    return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
+                    return static_cast<SizeType>(static_cast<intptr_t>(End - ViewStart));
                 }
             }
         }
@@ -304,7 +303,7 @@ public:
     /* Returns the position of the first occurance of char by searching from the end */
     FORCEINLINE SizeType ReverseFind( CharType Char, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
 
         SizeType ThisLength = Length();
         if ( StringTraits::IsTerminator( Char ) || (ThisLength == 0) )
@@ -323,7 +322,7 @@ public:
         {
             if ( *(--End) == Char )
             {
-                return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
+                return static_cast<SizeType>(static_cast<intptr_t>(End - ViewStart));
             }
         }
 
@@ -346,7 +345,7 @@ public:
     /* Returns the position of the the first found character in the searchstring */
     FORCEINLINE SizeType FindOneOf( const CharType* InString, SizeType InLength, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
 
         if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Length() == 0) )
         {
@@ -357,7 +356,9 @@ public:
         while ( Start != ViewEnd )
         {
             // Loop each character in substring
-            for ( const CharType* SubstringStart = InString, const CharType* SubstringEnd = InString + InLength; SubstringStart != SubstringEnd; )
+			const CharType* SubstringStart = InString;
+			const CharType* SubstringEnd   = SubstringStart + InLength;
+            while ( SubstringStart != SubstringEnd )
             {
                 // If not found we end loop and start over
                 if ( *(SubstringStart++) == *Start )
@@ -388,7 +389,7 @@ public:
     /* Returns the position of the the first character not a part of the searchstring */
     FORCEINLINE SizeType FindOneNotOf( const CharType* InString, SizeType InLength, SizeType Position = 0 ) const noexcept
     {
-        Assert( (Position < Len) || (Position == 0) );
+        Assert( (Position < Length()) || (Position == 0) );
 
         if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Length() == 0) )
         {
@@ -399,7 +400,9 @@ public:
         while ( Start != ViewEnd )
         {
             // Loop each character in substring
-            for ( const CharType* SubstringStart = InString, const CharType* SubstringEnd = InString + InLength; SubstringStart != SubstringEnd; )
+			const CharType* SubstringStart = InString;
+			const CharType* SubstringEnd   = SubstringStart + InLength;
+            while ( SubstringStart != SubstringEnd )
             {
                 // If not found we end loop and start over
                 if ( *(SubstringStart++) == *Start )
@@ -480,13 +483,13 @@ public:
     FORCEINLINE const CharType& LastElement() const noexcept
     {
         Assert( IsEmpty() );
-        return Data()[ViewLength - 1];
+        return Data()[LastElementIndex()];
     }
 
     /* Retrive an element at a certain position */
     FORCEINLINE const CharType& At( SizeType Index ) const noexcept
     {
-        Assert( Index < ViewLength );
+        Assert( Index < Length() );
         return Data()[Index];
     }
 
@@ -500,7 +503,8 @@ public:
     /* Retrive the last valid index for the view */
     FORCEINLINE SizeType LastElementIndex() const noexcept
     {
-        return (Length() > 0) ? (Length() - 1) : 0;
+		SizeType Len = Length();
+        return (Len > 0) ? (Len - 1) : 0;
     }
 
     /* Retrive the size of the view */
@@ -536,7 +540,7 @@ public:
     /* Create a sub-stringview */
     FORCEINLINE TStringView SubStringView( SizeType Offset, SizeType Count ) const noexcept
     {
-        Assert( (Count < ViewLength) && (Offset + Count < ViewLength) );
+        Assert( (Count < Length()) && (Offset + Count < Length()) );
         return TStringView( Data() + Offset, Count );
     }
 
@@ -645,7 +649,7 @@ inline bool operator==( const CharType* LHS, const TStringView<CharType>& RHS ) 
 template<typename CharType>
 inline bool operator==( const TStringView<CharType>& LHS, const TStringView<CharType>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) == 0);
+    return (LHS.Compare( RHS ) == 0);
 }
 
 /* Compares with a raw string */
@@ -664,7 +668,7 @@ inline bool operator!=( const CharType* LHS, const TStringView<CharType>& RHS ) 
 
 /* Compares two containers by comparing each element, returns true if all is equal */
 template<typename CharType>
-inline bool operator==( const TStringView<CharType>& LHS, const TStringView<CharType>& RHS ) noexcept
+inline bool operator!=( const TStringView<CharType>& LHS, const TStringView<CharType>& RHS ) noexcept
 {
     return !(LHS == RHS);
 }
@@ -687,7 +691,7 @@ inline bool operator<( const CharType* LHS, const TStringView<CharType>& RHS ) n
 template<typename CharType>
 inline bool operator<( const TStringView<CharType>& LHS, const TStringView<CharType>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) < 0);
+    return (LHS.Compare( RHS ) < 0);
 }
 
 template<typename CharType>
@@ -707,7 +711,7 @@ inline bool operator<=( const CharType* LHS, const TStringView<CharType>& RHS ) 
 template<typename CharType>
 inline bool operator<=( const TStringView<CharType>& LHS, const TStringView<CharType>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) <= 0);
+    return (LHS.Compare( RHS ) <= 0);
 }
 
 /* Compares with a raw string */
@@ -728,7 +732,7 @@ inline bool operator>( const CharType* LHS, const TStringView<CharType>& RHS ) n
 template<typename CharType>
 inline bool operator>( const TStringView<CharType>& LHS, const TStringView<CharType>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) > 0);
+    return (LHS.Compare( RHS ) > 0);
 }
 
 /* Compares with a raw string */
@@ -749,5 +753,15 @@ inline bool operator>=( const CharType* LHS, const TStringView<CharType>& RHS ) 
 template<typename CharType>
 inline bool operator>=( const TStringView<CharType>& LHS, const TStringView<CharType>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) >= 0);
+    return (LHS.Compare( RHS ) >= 0);
 }
+
+/* Add TStringView to be a string-type */
+template<typename CharType>
+struct TIsTStringType<TStringView<CharType>>
+{
+	enum
+	{
+		Value = true
+	};
+};

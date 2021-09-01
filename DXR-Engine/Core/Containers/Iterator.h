@@ -6,8 +6,6 @@
 #include "Core/Templates/AddressOf.h"
 #include "Core/Templates/ReferenceWrapper.h"
 
-#include <functional>
-
 /* Iterator for array types */
 template<typename ArrayType, typename ElementType>
 class TArrayIterator
@@ -81,54 +79,59 @@ public:
     FORCEINLINE TArrayIterator operator++() noexcept
     {
         Index++;
-        Assert( IsValid() );
+       
+		Assert( IsValid() );
         return *this;
     }
 
     /* Increment the iterator */
     FORCEINLINE TArrayIterator operator++( int ) noexcept
     {
-        TArrayIterator Temp = *this;
+		TArrayIterator NewIterator( *this );
         Index++;
+		
         Assert( IsValid() );
-        return Temp;
+        return NewIterator;
     }
 
     /* Decrement the iterator */
     FORCEINLINE TArrayIterator operator--() noexcept
     {
         Index--;
-        Assert( IsValid() );
+        
+		Assert( IsValid() );
         return *this;
     }
 
     /* Decrement the iterator */
     FORCEINLINE TArrayIterator operator--( int ) noexcept
     {
-        TArrayIterator Temp = *this;
+		TArrayIterator NewIterator( *this );
         Index--;
+		
         Assert( IsValid() );
-        return Temp;
+        return NewIterator;
     }
 
     /* Add offset to iterator and return a new */
     FORCEINLINE TArrayIterator operator+( SizeType RHS ) const noexcept
     {
-        TArrayIterator Temp = *this;
-        return Temp += RHS;
+		TArrayIterator NewIterator( *this );
+        return NewIterator += RHS;
     }
 
     /* Subtract offset from iterator and return a new */
     FORCEINLINE TArrayIterator operator-( SizeType RHS ) const noexcept
     {
-        TArrayIterator Temp = *this;
-        return Temp -= RHS;
+        TArrayIterator NewIterator( *this );
+        return NewIterator -= RHS;
     }
 
     /* Add offset to iterator */
     FORCEINLINE TArrayIterator& operator+=( SizeType RHS ) noexcept
     {
         Index += RHS;
+		
         Assert( IsValid() );
         return *this;
     }
@@ -137,6 +140,7 @@ public:
     FORCEINLINE TArrayIterator& operator-=( SizeType RHS ) noexcept
     {
         Index -= RHS;
+		
         Assert( IsValid() );
         return *this;
     }
@@ -169,8 +173,8 @@ private:
 template<typename ArrayType, typename ElementType>
 FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+( typename TArrayIterator<ArrayType, ElementType>::SizeType LHS, const TArrayIterator<ArrayType, ElementType>& RHS ) noexcept
 {
-    TArrayIterator Temp = RHS;
-    return Temp += LHS;
+	TArrayIterator NewIterator( RHS );
+    return NewIterator += LHS;
 }
 
 /* Reverse array iterator */
@@ -253,16 +257,18 @@ public:
     /* Add to the iterator */
     FORCEINLINE TReverseArrayIterator operator++( int ) noexcept
     {
-        TReverseArrayIterator Temp = *this;
+		TReverseArrayIterator NewIterator( *this );
         Index--;
+		
         Assert( IsValid() );
-        return Temp;
+        return NewIterator;
     }
 
     /* Subtract the iterator */
     FORCEINLINE TReverseArrayIterator operator--() noexcept
     {
         Index++;
+		
         Assert( IsValid() );
         return *this;
     }
@@ -270,30 +276,32 @@ public:
     /* Subtract the iterator */
     FORCEINLINE TReverseArrayIterator operator--( int ) noexcept
     {
-        TReverseArrayIterator Temp = *this;
-        Iterator++;
+        TReverseArrayIterator NewIterator( *this );
+		NewIterator++;
+		
         Assert( IsValid() );
-        return Temp;
+        return NewIterator;
     }
 
     /* Add offset to iterator and return a new */
     FORCEINLINE TReverseArrayIterator operator+( SizeType RHS ) const noexcept
     {
-        TReverseArrayIterator Temp = *this;
-        return Temp += RHS; // Uses operator, therefore +=
+		TReverseArrayIterator NewIterator( *this );
+        return NewIterator += RHS; // Uses operator, therefore +=
     }
 
     /* Subtract offset from iterator and return a new */
     FORCEINLINE TReverseArrayIterator operator-( SizeType RHS ) const noexcept
     {
-        TReverseArrayIterator Temp = *this;
-        return Temp -= RHS; // Uses operator, therefore -=
+		TReverseArrayIterator NewIterator( *this );
+        return NewIterator -= RHS; // Uses operator, therefore -=
     }
 
     /* Add offset to iterator */
     FORCEINLINE TReverseArrayIterator& operator+=( SizeType RHS ) noexcept
     {
         Index -= RHS;
+		
         Assert( IsValid() );
         return *this;
     }
@@ -302,6 +310,7 @@ public:
     FORCEINLINE TReverseArrayIterator& operator-=( SizeType RHS ) noexcept
     {
         Index += RHS;
+		
         Assert( IsValid() );
         return *this;
     }
@@ -334,8 +343,8 @@ private:
 template<typename ArrayType, typename ElementType>
 FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+( typename TReverseArrayIterator<ArrayType, ElementType>::SizeType LHS, const TReverseArrayIterator<ArrayType, ElementType>& RHS ) noexcept
 {
-    TReverseArrayIterator Temp = RHS;
-    return Temp += LHS;
+    TReverseArrayIterator NewIterator( RHS );
+    return NewIterator += LHS;
 }
 
 /* Iterator for tree-structurs such as TSet */
@@ -388,6 +397,7 @@ public:
     FORCEINLINE TTreeIterator operator++() noexcept
     {
         Assert( IsValid() );
+		
         Node = Node->GetNext();
         return *this;
     }
@@ -395,17 +405,18 @@ public:
     /* Add to the iterator */
     FORCEINLINE TTreeIterator operator++( int ) noexcept
     {
-        TTreeIterator TempIterator = *this;
+        TTreeIterator NewIterator( *this );
         Node = Node->GetNext();
 
         Assert( IsValid() );
-        return TempIterator;
+        return NewIterator;
     }
 
     /* Subtract the iterator */
     FORCEINLINE TTreeIterator operator--() noexcept
     {
         Assert( IsValid() );
+		
         Node = Node->GetPrevious();
         return *this;
     }
@@ -413,11 +424,11 @@ public:
     /* Subtract the iterator */
     FORCEINLINE TTreeIterator operator--( int ) noexcept
     {
-        TTreeIterator TempIterator = *this;
+        TTreeIterator NewIterator( *this );
         Node = Node->GetPrevious();
 
         Assert( IsValid() );
-        return TempIterator;
+        return NewIterator;
     }
 
     /* Compare equality two iterators */

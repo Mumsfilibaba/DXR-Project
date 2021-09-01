@@ -188,7 +188,7 @@ void TSharedPtr_Test()
     std::cout << std::endl << "----Testing Array types----" << std::endl << std::endl;
     {
         TSharedPtr<uint32[]> UintArr0 = MakeShared<uint32[]>( 5 );
-        TWeakPtr<uint32[]> WeakArr = UintArr0;
+        TWeakPtr<uint32[]>   WeakArr  = UintArr0;
         TSharedPtr<uint32[]> UintArr1 = WeakArr.MakeShared();
 
         TUniquePtr<uint32[]> UniqueUintArr = MakeUnique<uint32[]>( 5 );

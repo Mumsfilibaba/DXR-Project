@@ -38,12 +38,5 @@ public:
 protected:
     using Super::UnbindAll;
     using Super::Swap;
-    using Super::AddDelegate;
-    using Super::CopyFrom;
-    using Super::MoveFrom;
-    using Super::CompactArray;
-    using Super::Lock;
-    using Super::Unlock;
-    using Super::IsLocked;
     using Super::Broadcast;
 };

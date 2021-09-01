@@ -16,6 +16,6 @@ struct TIsPointerConvertible
 {
     enum
     {
-        Value = TIsConvertible<FromType*, ToType*>::Value;
+        Value = TIsConvertible<FromType*, ToType*>::Value
     };
 };

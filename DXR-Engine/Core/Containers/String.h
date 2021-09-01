@@ -6,6 +6,10 @@
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/AddReference.h"
+#include "Core/Templates/StringTraits.h"
+#include "Core/Templates/IsTStringType.h"
+
+#include "Core/Math/Math.h"
 
 #define STRING_USE_INLINE_ALLOCATOR (0)
 #define STRING_FORMAT_BUFFER_SIZE   (128)
@@ -13,9 +17,12 @@
 #if STRING_USE_INLINE_ALLOCATOR 
 #define STRING_ALLOCATOR_INLINE_BYTES (24)
 
+// Use a small static buffer for small strings
 template<typename CharType>
 using TStringAllocator = TInlineArrayAllocator<CharType, STRING_ALLOCATOR_INLINE_BYTES>;
 #else
+
+// No preallocated bytes for strings
 template<typename CharType>
 using TStringAllocator = TDefaultArrayAllocator<CharType>;
 #endif
@@ -29,10 +36,11 @@ public:
     static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
 
     /* Types */
-    using ElementType = CharType;
-    using SizeType = int32;
-    using StringTraits = TStringTraits<CharType>;
-
+    using ElementType  = CharType;
+    using SizeType     = int32;
+    using StringTraits = TStringTraits<ElementType>;
+	using ViewType     = TStringView<ElementType>;
+	
     /* Constants */
     enum
     {
@@ -187,8 +195,8 @@ public:
             BufferSize += BufferSize;
 
             // Allocate more memory
-            DynamicMemory = reinterpret_cast<CharType*>(Memory::Realloc( DynamicBuffer, BufferSize * sizeof(CharType) ));
-            WrittenString = DynamicMemory;
+			DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc( DynamicBuffer, BufferSize * sizeof(CharType) ));
+            WrittenString = DynamicBuffer;
 
             // Try print again
             WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
@@ -218,7 +226,7 @@ public:
     }
 
     /* Same as FormatV, but appends the result to the current string */
-    FORCEINLINE void AppendFormatV( const CharType* Format, va_list ArgList ) noexcept
+    FORCEINLINE void AppendFormatV( const CharType* Format, va_list ArgsList ) noexcept
     {
         CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
         SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
@@ -234,8 +242,8 @@ public:
             BufferSize += BufferSize;
 
             // Allocate more memory
-            DynamicMemory = reinterpret_cast<CharType*>(Memory::Realloc( DynamicBuffer, BufferSize * sizeof(CharType) ));
-            WrittenString = DynamicMemory;
+			DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc( DynamicBuffer, BufferSize * sizeof(CharType) ));
+            WrittenString = DynamicBuffer;
 
             // Try print again
             WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
@@ -537,7 +545,8 @@ public:
             End--;
 
             // Loop each character in substring
-            for ( const CharType* EndIt = End, const CharType* SubstringIt = InString; ; )
+			const CharType* SubstringIt = InString;
+			for ( const CharType* EndIt = End; ; )
             {
                 // If not found we end loop and start over
                 if ( *(EndIt++) != *(SubstringIt++) )
@@ -568,7 +577,7 @@ public:
 
         const CharType* Result = nullptr;
         const CharType* Start = CStr();
-        if ( InOffset == 0 )
+        if ( Position == 0 )
         {
             Result = StringTraits::ReverseFindChar( Start, Char );
         }
@@ -653,7 +662,7 @@ public:
         }
 
         SizeType Pos = static_cast<SizeType>(StringTraits::Span( CStr() + Position, InString ));
-        SizeType Ret = Position + InOffset;
+        SizeType Ret = Position + Position;
         if ( Ret >= Len )
         {
             return InvalidPosition;
@@ -731,7 +740,7 @@ public:
     /* Insert a string at position */
     FORCEINLINE void Insert( const CharType* InString, SizeType InLength, SizeType Position ) noexcept
     {
-        Assert( (Position < Len) && (Len + InLength < CharCount) );
+        Assert( (Position < Length()) );
 
         Characters.Insert( Position, InString, InLength );
         Characters.Emplace( StringTraits::Terminator );
@@ -759,7 +768,7 @@ public:
     /* Replace a part of the string */
     FORCEINLINE void Replace( const CharType* InString, SizeType InLength, SizeType Position ) noexcept
     {
-        Assert( (Position < Len) && (Position + InLength < Len) );
+        Assert( (Position < Length()) );
         StringTraits::Copy( Data() + Position, InString, InLength );
     }
 
@@ -794,14 +803,14 @@ public:
     /* Returns a sub-string of this string */
     FORCEINLINE TString SubString( SizeType Offset, SizeType Count ) const noexcept
     {
-        Assert( (Offset < Len) && (Offset + Count < Len) );
+        Assert( (Offset < Length()) && (Offset + Count < Length()) );
         return TString( Characters + Offset, Count );
     }
 
     /* Returns a sub-stringview of this string */
-    FORCEINLINE TStringView<CharType> SubStringView( SizeType Offset, SizeType Count ) const noexcept
+    FORCEINLINE ViewType SubStringView( SizeType Offset, SizeType Count ) const noexcept
     {
-        Assert( (Offset < Len) && (Offset + Count < Len) );
+        Assert( (Offset < Length()) && (Offset + Count < Length()) );
         return TStringView<CharType>( Characters + Offset, Count );
     }
 
@@ -857,12 +866,12 @@ public:
         return Size();
     }
 
-    constexpr SizeType Capacity() const noexcept
+	FORCEINLINE SizeType Capacity() const noexcept
     {
         return Characters.Capacity();
     }
 
-    constexpr SizeType CapacityInBytes() const noexcept
+	FORCEINLINE SizeType CapacityInBytes() const noexcept
     {
         return Characters.Capacity() * sizeof( CharType );
     }
@@ -1032,7 +1041,8 @@ private:
     }
 
     /* Characters for characters */
-    TArray<CharType, TStringAllocator<CharType>> Characters;
+    using AllocatorType = TStringAllocator<CharType>;
+    TArray<CharType, AllocatorType> Characters;
 };
 
 /* Predefined types */
@@ -1098,7 +1108,7 @@ inline bool operator==( const CharType* LHS, const TString<CharType>& RHS ) noex
 template<typename CharType>
 inline bool operator==( const TString<CharType>& LHS, const TString<CharType>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) == 0);
+    return (LHS.Compare( RHS ) == 0);
 }
 
 /* Compares with a raw string */
@@ -1117,7 +1127,7 @@ inline bool operator!=( const CharType* LHS, const TString<CharType>& RHS ) noex
 
 /* Compares two containers by comparing each element, returns true if all is equal */
 template<typename CharType>
-inline bool operator==( const TString<CharType>& LHS, const TString<CharType>& RHS ) noexcept
+inline bool operator!=( const TString<CharType>& LHS, const TString<CharType>& RHS ) noexcept
 {
     return !(LHS == RHS);
 }
@@ -1140,7 +1150,7 @@ inline bool operator<( const CharType* LHS, const TString<CharType>& RHS ) noexc
 template<typename CharType>
 inline bool operator<( const TString<CharType>& LHS, const TString<CharType>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) < 0);
+    return (LHS.Compare( RHS ) < 0);
 }
 
 template<typename CharType>
@@ -1160,7 +1170,7 @@ inline bool operator<=( const CharType* LHS, const TString<CharType>& RHS ) noex
 template<typename CharType>
 inline bool operator<=( const TString<CharType>& LHS, const TString<CharType>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) <= 0);
+    return (LHS.Compare( RHS ) <= 0);
 }
 
 /* Compares with a raw string */
@@ -1181,7 +1191,7 @@ inline bool operator>( const CharType* LHS, const TString<CharType>& RHS ) noexc
 template<typename CharType>
 inline bool operator>( const TString<CharType>& LHS, const TString<CharType>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) > 0);
+    return (LHS.Compare( RHS ) > 0);
 }
 
 /* Compares with a raw string */
@@ -1202,7 +1212,7 @@ inline bool operator>=( const CharType* LHS, const TString<CharType>& RHS ) noex
 template<typename CharType>
 inline bool operator>=( const TString<CharType>& LHS, const TString<CharType>& RHS ) noexcept
 {
-    return (LHS.Compare<StringType>( RHS ) >= 0);
+    return (LHS.Compare( RHS ) >= 0);
 }
 
 /* Add TString to be a string-type */

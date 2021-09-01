@@ -10,6 +10,8 @@ class TThreadSafeInt
 public:
     typedef T Type;
 
+    TThreadSafeInt( const TThreadSafeInt& ) = delete;
+
     FORCEINLINE TThreadSafeInt() noexcept
         : Value( 0 )
     {
@@ -19,8 +21,6 @@ public:
         : Value( InValue )
     {
     }
-
-    TThreadSafeInt( const TThreadSafeInt& ) = delete;
 
     FORCEINLINE T Increment() noexcept
     {
@@ -51,7 +51,7 @@ public:
 
     FORCEINLINE void Store( T InValue ) noexcept
     {
-        PlatformAtomic::InterlockedExchange( &Value, RHS );
+        PlatformAtomic::InterlockedExchange( &Value, InValue );
     }
 
     TThreadSafeInt& operator=( const TThreadSafeInt& ) = delete;
@@ -63,9 +63,9 @@ public:
 
     FORCEINLINE T operator++( int32 ) noexcept
     {
-        T OldValue = Value;
+        T TempValue = Value;
         Increment();
-        return OldValue;
+        return TempValue;
     }
 
     FORCEINLINE T operator++() noexcept
@@ -75,9 +75,9 @@ public:
 
     FORCEINLINE T operator--( int32 ) noexcept
     {
-        T OldValue = Value;
+        T TempValue = Value;
         Decrement();
-        return OldValue;
+        return TempValue;
     }
 
     FORCEINLINE T operator--() noexcept

@@ -1,54 +1,55 @@
 #pragma once
 #include "Core.h"
+#include <cmath>
 
 struct SFloat64
 {
     FORCEINLINE SFloat64()
-        : FP64( 0.0 )
+        : Float64( 0.0 )
     {
     }
 
-    FORCEINLINE SFloat64( double InFP64 )
-        : FP64( InFP64 )
+    FORCEINLINE SFloat64( double InFloat64 )
+        : Float64( InFloat64 )
     {
     }
 
     FORCEINLINE SFloat64( const SFloat64& Other )
-        : FP64( Other.FP64 )
+        : Float64( Other.Float64 )
     {
     }
 
-    FORCEINLINE void SetFloat( double InFP64 )
+    FORCEINLINE void SetFloat( double InFloat64 )
     {
-        FP64 = InFP64;
+        Float64 = InFloat64;
     }
 
     FORCEINLINE double GetFloat() const
     {
-        return FP64;
+        return Float64;
     }
 
-    FORCEINLINE SFloat64& operator=( double InFP64 )
+    FORCEINLINE SFloat64& operator=( double InFloat64 )
     {
-        FP64 = InFP64;
+        Float64 = InFloat64;
         return *this;
     }
 
     FORCEINLINE SFloat64& operator=( const SFloat64& Other )
     {
-        FP64 = Other.FP64;
+        Float64 = Other.Float64;
         return *this;
     }
 
     union
     {
-        double FP64;
+        double Float64;
         uint64 Encoded;
         struct
         {
             uint64 Mantissa : 52;
             uint64 Exponent : 11;
-            uint64 Sign : 1;
+            uint64 Sign     : 1;
         };
     };
 };
@@ -56,51 +57,51 @@ struct SFloat64
 struct SFloat32
 {
     FORCEINLINE SFloat32()
-        : FP32( 0.0f )
+        : Float32( 0.0f )
     {
     }
 
-    FORCEINLINE SFloat32( float InFP32 )
-        : FP32( InFP32 )
+    FORCEINLINE SFloat32( float InFloat32 )
+        : Float32( InFloat32 )
     {
     }
 
     FORCEINLINE SFloat32( const SFloat32& Other )
-        : FP32( Other.FP32 )
+        : Float32( Other.Float32 )
     {
     }
 
-    FORCEINLINE void SetFloat( float InFP32 )
+    FORCEINLINE void SetFloat( float InFloat32 )
     {
-        FP32 = InFP32;
+        Float32 = InFloat32;
     }
 
     FORCEINLINE float GetFloat() const
     {
-        return FP32;
+        return Float32;
     }
 
-    FORCEINLINE SFloat32& operator=( float InFP32 )
+    FORCEINLINE SFloat32& operator=( float InFloat32 )
     {
-        FP32 = InFP32;
+        Float32 = InFloat32;
         return *this;
     }
 
     FORCEINLINE SFloat32& operator=( const SFloat32& Other )
     {
-        FP32 = Other.FP32;
+        Float32 = Other.Float32;
         return *this;
     }
 
     union
     {
-        float  FP32;
+        float  Float32;
         uint32 Encoded;
         struct
         {
             uint32 Mantissa : 23;
             uint32 Exponent : 8;
-            uint32 Sign : 1;
+            uint32 Sign     : 1;
         };
     };
 };
@@ -112,10 +113,10 @@ struct SFloat16
     {
     }
 
-    FORCEINLINE SFloat16( float Fp32 )
+    FORCEINLINE SFloat16( float Float32 )
         : Encoded( 0 )
     {
-        SetFloat( Fp32 );
+        SetFloat( Float32 );
     }
 
     FORCEINLINE SFloat16( const SFloat16& Other )
@@ -123,7 +124,7 @@ struct SFloat16
     {
     }
 
-    FORCEINLINE void SetFloat( float Fp32 )
+    FORCEINLINE void SetFloat( float Float32 )
     {
         // Constant masks
         constexpr uint32 FP32_HIDDEN_BIT = 0x800000U;
@@ -133,7 +134,7 @@ struct SFloat16
         constexpr uint32 MIN_EXPONENT = DENORM_EXPONENT - 10;
 
         // Convert
-        const SFloat32 In( Fp32 );
+        const SFloat32 In( Float32 );
         Sign = In.Sign;
 
         // This value is to large to be represented with Fp16 (Alt. Infinity or NaN)
@@ -141,7 +142,7 @@ struct SFloat16
         {
             // Set mantissa to NaN if these bit are set otherwise Infinity
             constexpr uint32 SIGN_EXLUDE_MASK = 0x7fffffff;
-            const uint32 InEncoded = In.Encoded & SIGN_EXLUDE_MASK;
+            const uint32 InEncoded = (In.Encoded & SIGN_EXLUDE_MASK);
             Mantissa = (InEncoded > 0x7F800000) ? (0x200 | (In.Mantissa & 0x3ffu)) : 0u;
             Exponent = FP16_MAX_EXPONENT;
         }
@@ -177,11 +178,11 @@ struct SFloat16
         }
     }
 
-    FORCEINLINE void SetFloatFast( float Fp32 )
+    FORCEINLINE void SetFloatFast( float Float32 )
     {
-        SFloat32 In( Fp32 );
+        SFloat32 In( Float32 );
         Exponent = uint16( int32( In.Exponent ) - 127 + 15 ); // Unbias and bias the exponents
-        Mantissa = uint16( In.Mantissa >> 13 );             // Bit-Shift diff in number of mantissa bits
+        Mantissa = uint16( In.Mantissa >> 13 );               // Bit-Shift diff in number of mantissa bits
         Sign = In.Sign;
     }
 
@@ -210,7 +211,7 @@ struct SFloat16
             else
             {
                 // Denormalized
-                const uint32 Shift = 10 - uint32( log2( (float)Mantissa ) );
+                const uint32 Shift = 10 - uint32( std::log2( (float)Mantissa ) );
                 Ret.Exponent = 127 - 14 - Shift;
                 Ret.Mantissa = Mantissa << (Shift + 13);
             }
@@ -225,7 +226,7 @@ struct SFloat16
             Ret.Mantissa = uint32( NewMantissa );
         }
 
-        return Ret.FP32;
+        return Ret.Float32;
     }
 
     FORCEINLINE SFloat16& operator=( float F32 )
@@ -247,7 +248,7 @@ struct SFloat16
         {
             uint16 Mantissa : 10;
             uint16 Exponent : 5;
-            uint16 Sign : 1;
+            uint16 Sign     : 1;
         };
     };
 };

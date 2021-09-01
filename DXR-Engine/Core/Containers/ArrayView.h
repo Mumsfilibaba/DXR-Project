@@ -148,18 +148,6 @@ public:
         return Size() * sizeof( ElementType );
     }
 
-    /* Returns the capacity of the container */
-    FORCEINLINE SizeType Capacity() const noexcept
-    {
-        return ArrayCapacity;
-    }
-
-    /* Returns the capacity of the container in bytes */
-    FORCEINLINE SizeType CapacityInBytes() const noexcept
-    {
-        return Capacity() * sizeof( ElementType );
-    }
-
     /* Retrive the data of the view */
     FORCEINLINE ElementType* Data() noexcept
     {
@@ -316,6 +304,6 @@ struct TIsTArrayType<TArrayView<T>>
 {
     enum
     {
-        Value = true;
+        Value = true
     };
 };

@@ -63,4 +63,6 @@
 #pragma warning(error : 4715) // not all paths return a value
 #pragma warning(error : 4840) // using string in variadic template (When it should be const char)
 
+#else
+#error "MSVC Compiler-file included in non MSVC- compiler"
 #endif

@@ -6,18 +6,18 @@ template<typename T>
 struct TIsSigned
 {
 private:
-    template<typename T, bool = TIsArithmetic<T>::Value>
+    template<typename U, bool = TIsArithmetic<U>::Value>
     struct TIsSignedImpl
     {
         enum
         {
-            Value = T( -1 ) < T( 0 )
+            Value = U( -1 ) < U( 0 )
         };
     };
 
 
-    template<typename T>
-    struct TIsSignedImpl<T, false>
+    template<typename U>
+    struct TIsSignedImpl<U, false>
     {
         enum
         {
@@ -37,18 +37,18 @@ template<typename T>
 struct TIsUnsigned
 {
 private:
-    template<typename T, bool = TIsArithmetic<T>::Value>
+    template<typename U, bool = TIsArithmetic<U>::Value>
     struct TIsUnsignedImpl
     {
         enum
         {
-            Value = T( 0 ) < T( -1 )
+            Value = U( 0 ) < U( -1 )
         };
     };
 
 
-    template<typename T>
-    struct TIsUnsignedImpl<T, false>
+    template<typename U>
+    struct TIsUnsignedImpl<U, false>
     {
         enum
         {

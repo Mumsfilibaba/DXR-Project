@@ -1,7 +1,7 @@
 #pragma once
 #include "Core.h"
 
-template<typename TLock>
+template<typename LockType>
 class TScopedLock
 {
 public:
@@ -11,27 +11,27 @@ public:
     TScopedLock& operator=( TScopedLock&& ) = delete;
     TScopedLock& operator=( const TScopedLock& ) = delete;
 
-    TScopedLock( TLock& InLock )
+    FORCEINLINE TScopedLock( LockType& InLock )
         : Lock( InLock )
     {
         Lock.Lock();
     }
 
-    ~TScopedLock()
+    FORCEINLINE ~TScopedLock()
     {
         Lock.Unlock();
     }
 
-    TLock& GetLock()
+    FORCEINLINE LockType& GetLock()
     {
         return Lock;
     }
 
-    const TLock& GetLock() const
+    FORCEINLINE const LockType& GetLock() const
     {
         return Lock;
     }
 
 private:
-    TLock& Lock;
+    LockType& Lock;
 };

@@ -3,9 +3,8 @@
 #if RUN_TARRAYVIEW_TEST
 
 #include <Core/Containers/Array.h>
-#include <Core/Containers/FixedArray.h>
+#include <Core/Containers/StaticArray.h>
 #include <Core/Containers/ArrayView.h>
-#include <Core/Templates/Move.h>
 
 #include <iostream>
 
@@ -13,7 +12,7 @@ template<typename T>
 static void PrintArrayView( const TArrayView<T>& View )
 {
     std::cout << "------------------------------" << std::endl;
-    for ( TArrayView<T>::SizeType i = 0; i < View.Size(); i++ )
+    for ( typename TArrayView<T>::SizeType i = 0; i < View.Size(); i++ )
     {
         std::cout << View[i] << std::endl;
     }
@@ -40,8 +39,8 @@ void TArrayView_Test()
 
     TArray<uint32> Arr0 = { 1, 2, 3, 4 };
     TArrayView<uint32> ArrView0 = TArrayView<uint32>( Arr0 );
-
-    TFixedArray<uint32, 4> Arr1 = { 11, 12, 13, 14 };
+	
+    TStaticArray<uint32, 4> Arr1 = { 11, 12, 13, 14 };
     TArrayView<uint32> ArrView1 = TArrayView<uint32>( Arr1 );
 
     uint32 Arr2[] = { 21, 22, 23, 24 };
@@ -99,7 +98,7 @@ void TArrayView_Test()
     std::cout << "-----------After-----------" << std::endl;
     PrintArrayViewRangeBased( ArrView4 );
 
-    delete DynamicPtr;
+	delete[] DynamicPtr;
 }
 
 #endif

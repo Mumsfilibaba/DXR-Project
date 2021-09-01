@@ -3,6 +3,8 @@
 
 #include "Core/Templates/RemoveExtent.h"
 #include "Core/Templates/IsConvertible.h"
+#include "Core/Templates/EnableIf.h"
+#include "Core/Templates/Move.h"
 
 /* TDefaultDelete for scalar types */
 template<typename T>
@@ -17,12 +19,12 @@ struct TDefaultDelete
     TDefaultDelete& operator=( const TDefaultDelete& ) = default;
     TDefaultDelete& operator=( TDefaultDelete&& ) = default;
 
-    template<typename U, typename = TEnableIf<TIsConvertible<U*, T*>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete( const TDefaultDelete<U>& ) noexcept
     {
     }
 
-    template<typename U, typename = TEnableIf<TIsConvertible<U*, T*>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete( TDefaultDelete<U>&& ) noexcept
     {
     }
@@ -32,13 +34,13 @@ struct TDefaultDelete
         delete Pointer;
     }
 
-    template<typename U, typename = TEnableIf<TIsConvertible<U*, T*>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete& operator=( const TDefaultDelete<U>& ) noexcept
     {
         return *this;
     }
 
-    template<typename U, typename = TEnableIf<TIsConvertible<U*, T*>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete& operator=( TDefaultDelete<U>&& ) noexcept
     {
         return *this;
@@ -58,12 +60,12 @@ struct TDefaultDelete<T[]>
     TDefaultDelete& operator=( const TDefaultDelete& ) = default;
     TDefaultDelete& operator=( TDefaultDelete&& ) = default;
 
-    template<typename U, typename = TEnableIf<TIsConvertible<U*, T*>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete( const TDefaultDelete<U>& ) noexcept
     {
     }
 
-    template<typename U, typename = TEnableIf<TIsConvertible<U*, T*>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete( TDefaultDelete<U>&& ) noexcept
     {
     }
@@ -73,13 +75,13 @@ struct TDefaultDelete<T[]>
         delete[] Pointer;
     }
 
-    template<typename U, typename = TEnableIf<TIsConvertible<U*, T*>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete& operator=( const TDefaultDelete<U>& ) noexcept
     {
         return *this;
     }
 
-    template<typename U, typename = TEnableIf<TIsConvertible<U*, T*>::Value>>
+    template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete& operator=( TDefaultDelete<U>&& ) noexcept
     {
         return *this;

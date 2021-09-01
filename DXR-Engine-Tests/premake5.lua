@@ -1,7 +1,11 @@
 workspace "DXR-Engine-Tests"
     startproject 	"Container-Tests"
     architecture 	"x64"
-    warnings 		"extra"    
+    warnings 		"extra"
+	language 		"C++"
+	cppdialect 		"C++17"
+	systemversion 	"latest"
+	characterset 	"Ascii"
 	flags { "MultiProcessorCompile" }
     
 	-- Set output dir
@@ -57,18 +61,14 @@ workspace "DXR-Engine-Tests"
 	filter "System:macosx"
 		defines
 		{
-			"PLATFORM_MACOS"
+			"PLATFORM_MACOS",
 		}
     filter {}
 
     -- Container Tests
     project "Containers-Tests"
-        language 		"C++"
-        cppdialect 		"C++17"
-        systemversion 	"latest"
-        location 		"Containers-Tests"
-        kind 			"ConsoleApp"
-		characterset 	"Ascii"
+        location 	"Containers-Tests"
+        kind 		"ConsoleApp"
 
         -- Targets
 		targetdir 	("Build/bin/" .. outputdir .. "/%{prj.name}")
@@ -114,12 +114,8 @@ workspace "DXR-Engine-Tests"
 	
 	-- Math Tests
     project "MathLib-Tests"
-        language 		"C++"
-        cppdialect 		"C++17"
-        systemversion 	"latest"
-        location 		"MathLib-Tests"
-        kind 			"ConsoleApp"
-		characterset 	"Ascii"
+        location 	"MathLib-Tests"
+        kind 		"ConsoleApp"
 
         -- Targets
 		targetdir 	("Build/bin/" .. outputdir .. "/%{prj.name}")
@@ -161,12 +157,8 @@ workspace "DXR-Engine-Tests"
 	
 	-- Templates Tests
     project "Templates-Tests"
-        language 		"C++"
-        cppdialect 		"C++17"
-        systemversion 	"latest"
-        location 		"Templates-Tests"
-        kind 			"ConsoleApp"
-		characterset 	"Ascii"
+        location 	"Templates-Tests"
+        kind 		"ConsoleApp"
 
         -- Targets
 		targetdir 	("Build/bin/" .. outputdir .. "/%{prj.name}")

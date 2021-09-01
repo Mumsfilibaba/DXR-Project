@@ -149,7 +149,7 @@ class TFunctionDelegateInstance;
 template<typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
 class TFunctionDelegateInstance<ReturnType( ArgTypes... ), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
-    using Super = typename TDelegateInstance<ReturnType, ArgTypes...>;
+    using Super = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TFunctionType<ReturnType( ArgTypes..., PayloadTypes... )>::Type;
 
 public:
@@ -188,7 +188,7 @@ private:
 template<typename ReturnType, typename... ArgTypes>
 class TFunctionDelegateInstance<ReturnType( ArgTypes... )> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
-    using Super = typename TDelegateInstance<ReturnType, ArgTypes...>;
+    using Super = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TFunctionType<ReturnType( ArgTypes... )>::Type;
 
 public:
@@ -227,7 +227,7 @@ class TMemberDelegateInstance;
 template<bool IsConst, typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
 class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType( ArgTypes... ), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
-    using Super = typename TDelegateInstance<ReturnType, ArgTypes...>;
+    using Super = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TMemberFunctionType<IsConst, ClassType, ReturnType( ArgTypes..., PayloadTypes... )>::Type;
 
 public:
@@ -283,7 +283,7 @@ private:
 template<bool IsConst, typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
 class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType( ArgTypes... )> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
-    using Super = typename TDelegateInstance<ReturnType, ArgTypes...>;
+    using Super = TDelegateInstance<ReturnType, ArgTypes...>;
     using FunctionType = typename TMemberFunctionType<IsConst, ClassType, ReturnType( ArgTypes... )>::Type;
 
 public:
@@ -339,7 +339,7 @@ class TLambdaDelegateInstance;
 template<typename FunctorType, typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
 class TLambdaDelegateInstance<FunctorType, ReturnType( ArgTypes... ), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
-    using Super = typename TDelegateInstance<ReturnType, ArgTypes...>;
+    using Super = TDelegateInstance<ReturnType, ArgTypes...>;
 
 public:
 
@@ -377,7 +377,7 @@ private:
 template<typename FunctorType, typename ReturnType, typename... ArgTypes>
 class TLambdaDelegateInstance<FunctorType, ReturnType( ArgTypes... )> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
-    using Super = typename TDelegateInstance<ReturnType, ArgTypes...>;
+    using Super = TDelegateInstance<ReturnType, ArgTypes...>;
 
 public:
 

@@ -7,11 +7,28 @@
 #endif
 #endif
 
+#ifdef __clang__
+#ifndef COMPILER_CLANG
+#define COMPILER_CLANG (1)
+#endif
+#endif
+
+#ifdef __GNUC__
+#ifndef COMPILER_GCC
+#define COMPILER_GCC (1)
+#endif
+#endif
+
 /* Undefined compiler */
-#if !defined(COMPILER_MSVC)
+#if !COMPILER_MSVC || !COMPILER_CLANG || !COMPILER_GCC
 #ifndef COMPILER_UNDEFINED
 #define COMPILER_UNDEFINED
 #endif
+#endif
+
+/* Check that a platform is defined */
+#if (!defined(PLATFORM_WINDOWS)) && (!defined(PLATFORM_MACOS))
+#error No platform defined
 #endif
 
 // TODO: Move asserts to seperate module/header
@@ -99,6 +116,11 @@
 /* Compiler Specific */
 #if COMPILER_MSVC
 #include "Compiler/CompilerMSVC.h"
+#elif COMPILER_CLANG
+#include "Compiler/CompilerClang.h" 
+#elif COMPILER_GCC 
+#include "Compiler/CompilerGCC.h"
 #elif COMPILER_UNDEFINED 
 #include "Compiler/CompilerDefault.h"
+#error "Unknown Compiler"
 #endif

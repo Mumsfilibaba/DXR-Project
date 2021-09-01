@@ -8,10 +8,14 @@
 #include "Core/Templates/IntegerSequence.h"
 #include "Core/Templates/Invoke.h"
 #include "Core/Templates/Identity.h"
+#include "Core/Templates/And.h"
 
 /* Forward delcarations */
 template <uint32 SearchForIndex, typename... Types>
-struct TTupleGet;
+struct TTupleGetByIndex;
+
+template <typename WantedType, typename... Types>
+struct TTupleGetByElement;
 
 /* Tuple impl */
 namespace Internal
@@ -179,7 +183,7 @@ namespace Internal
         template<typename ElementType>
         FORCEINLINE auto& Get()
         {
-            typedef typename TTupleGetByElement<ElementType, Types...> Type;
+            typedef TTupleGetByElement<ElementType, Types...> Type;
             return Type::Get( *this );
         }
 
@@ -187,7 +191,7 @@ namespace Internal
         template<typename ElementType>
         FORCEINLINE const auto& Get() const
         {
-            typedef typename TTupleGetByElement<ElementType, Types...> Type;
+            typedef TTupleGetByElement<ElementType, Types...> Type;
             return Type::Get( *this );
         }
 
@@ -195,7 +199,7 @@ namespace Internal
         template<uint32 Index>
         FORCEINLINE auto& GetByIndex()
         {
-            typedef typename TTupleGetByIndex<Index, Types...> IndexType;
+            typedef TTupleGetByIndex<Index, Types...> IndexType;
             return IndexType::Get( *this );
         }
 
@@ -203,7 +207,7 @@ namespace Internal
         template<uint32 Index>
         FORCEINLINE const auto& GetByIndex() const
         {
-            typedef typename TTupleGetByIndex<Index, Types...> IndexType;
+            typedef TTupleGetByIndex<Index, Types...> IndexType;
             return IndexType::Get( *this );
         }
 
@@ -230,7 +234,7 @@ namespace Internal
         FORCEINLINE static bool IsEqual( const FirstTupleType& LHS, const SecondTupleType& RHS )
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
-            return TTupleEquallityHelper<Index - 1>::IsEqual( LHS, RHS ) && (LHS.GetByIndex<Index - 1>() == RHS.GetByIndex<Index - 1>());
+            return TTupleEquallityHelper<Index - 1>::IsEqual( LHS, RHS ) && (LHS.template GetByIndex<Index - 1>() == RHS.template GetByIndex<Index - 1>());
         }
     };
 
