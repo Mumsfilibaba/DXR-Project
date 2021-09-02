@@ -103,6 +103,12 @@ public:
         return reinterpret_cast<CharType*>(Memory::Memcpy( Destination, Source, Length * sizeof( CharType ) ));
     }
 
+    /* Move two strings */
+    static FORCEINLINE CharType* Move( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
+    {
+        return reinterpret_cast<CharType*>(Memory::Memmove( Destination, Source, Length * sizeof( CharType ) ));
+    }
+
     /* Compare two strings */
     static FORCEINLINE int32 Compare( const CharType* LHS, const CharType* RHS ) noexcept
     {
@@ -200,6 +206,12 @@ public:
     static FORCEINLINE CharType* Copy( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
     {
         return reinterpret_cast<CharType*>(Memory::Memcpy( Destination, Source, Length * sizeof( CharType ) ));
+    }
+
+    /* Move two strings */
+    static FORCEINLINE CharType* Move( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
+    {
+        return reinterpret_cast<CharType*>(Memory::Memmove( Destination, Source, Length * sizeof( CharType ) ));
     }
 
     /* Compare two strings */

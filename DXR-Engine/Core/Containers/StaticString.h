@@ -5,7 +5,7 @@
 #include "Core/Templates/AddReference.h"
 
 /* Characters class with a fixed allocated number of characters */
-template<typename CharType, uint32 CharCount>
+template<typename CharType, int32 CharCount>
 class TStaticString
 {
 public:
@@ -140,8 +140,8 @@ public:
     {
         Assert( NewSize < CharCount );
 
-        const CharType* It = Characters + Len;
-        const CharType* End = Characters + NewSize;
+        CharType* It = Characters + Len;
+        CharType* End = Characters + NewSize;
         while ( It != End )
         {
             *(It++) = FillElement;
@@ -333,9 +333,11 @@ public:
     {
         CharType* Start = Characters;
         CharType* End   = Characters + Len;
-        while ( Start != End )
+        while ( Start < End )
         {
-            ::Swap<CharType>( *(Start++), *(--End) );
+			End--;
+            ::Swap<CharType>( *Start, *End );
+			Start++;
         }
     }
 
@@ -353,7 +355,7 @@ public:
     }
 
     /* Compares two strings and checks if they are equal */
-    FORCEINLINE int32 Compare( const CharType* InString, SizeType InLength )
+    FORCEINLINE int32 Compare( const CharType* InString, SizeType InLength ) const noexcept
     {
         return StringTraits::Compare( Characters, InString );
     }
@@ -372,7 +374,7 @@ public:
     }
 
     /* Compares two strings and checks if they are equal, without taking casing into account */
-    FORCEINLINE int32 CompareNoCase( const CharType* InString, SizeType InLength )
+    FORCEINLINE int32 CompareNoCase( const CharType* InString, SizeType InLength ) const noexcept
     {
         if ( Len != InLength )
         {
@@ -597,7 +599,7 @@ public:
         }
 
         SizeType Pos = static_cast<SizeType>(StringTraits::Span( CStr() + Position, InString ));
-		SizeType Ret = Position + Position;
+		SizeType Ret = Pos + Position;
         if ( Ret >= Len )
         {
             return InvalidPosition;
@@ -682,15 +684,15 @@ public:
     {
         Assert( (Position < Len) && (Len + InLength < CharCount) );
 
-        const uint64 LengthInBytes = InLength * sizeof( CharType );
-
         // Make room for string
         CharType* Src = Data() + Position;
         CharType* Dst = Src + InLength;
-        Memory::Memmove( Dst, Src, LengthInBytes );
+		
+		const uint64 MoveSize = Len - Position;
+		StringTraits::Move( Dst, Src, MoveSize );
 
         // Copy String
-        Memory::Memcpy( Src, InString, LengthInBytes );
+		StringTraits::Copy( Src, InString, InLength );
 
         Len += InLength;
         Characters[Len] = StringTraits::Terminator;
@@ -699,7 +701,19 @@ public:
     /* Insert a character at position */
     FORCEINLINE void Insert( CharType Char, SizeType Position ) noexcept
     {
-        Insert( &Char, 1, Position );
+		Assert( (Position < Len) && (Len + 1 < CharCount) );
+
+		// Make room for string
+		CharType* Src = Data() + Position;
+		CharType* Dst = Src + 1;
+		
+		const uint64 MoveSize = Len - Position;
+		StringTraits::Move( Dst, Src, MoveSize );
+
+		// Copy String
+		*Src = Char;
+
+		Characters[++Len] = StringTraits::Terminator;
     }
 
     /* Replace a part of the string */
@@ -725,7 +739,10 @@ public:
     /* Replace a character */
     FORCEINLINE void Replace( CharType Char, SizeType Position ) noexcept
     {
-        Replace( &Char, 1, Position );
+        Assert( (Position < Len) );
+        
+        CharType* Dest = Data() + Position;
+        *Dest = Char;
     }
 
     /* Replace push a character to the end of the string */
@@ -812,16 +829,6 @@ public:
         return Len;
     }
 
-    constexpr SizeType Capacity() const noexcept
-    {
-        return CharCount;
-    }
-
-    constexpr SizeType CapacityInBytes() const noexcept
-    {
-        return CharCount * sizeof( CharType );
-    }
-
     /* Retrive the size of the string in bytes */
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
@@ -895,6 +902,17 @@ public:
     {
         TStaticString( Move( Other ) ).Swap( *this );
         return *this;
+    }
+
+public:
+    constexpr SizeType Capacity() const noexcept
+    {
+        return CharCount;
+    }
+
+    constexpr SizeType CapacityInBytes() const noexcept
+    {
+        return CharCount * sizeof( CharType );
     }
 
 public:
@@ -1032,8 +1050,8 @@ inline TStaticString<CharType, CharCount> operator+( const TStaticString<CharTyp
 template<typename CharType, int32 CharCount>
 inline TStaticString<CharType, CharCount> operator+( CharType LHS, const TStaticString<CharType, CharCount>& RHS )
 {
-    TStaticString<CharType, CharCount> NewString = LHS;
-    NewString.Append( RHS );
+    TStaticString<CharType, CharCount> NewString = RHS;
+    NewString.Insert( LHS, 0 );
     return NewString;
 }
 
@@ -1193,7 +1211,7 @@ inline WStaticString<CharCount> CharToWide( const CStaticString<CharCount>& Char
 }
 
 template<int32 CharCount>
-inline CStaticString<CharCount> CharToWide( const WStaticString<CharCount>& WideString ) noexcept
+inline CStaticString<CharCount> WideToChar( const WStaticString<CharCount>& WideString ) noexcept
 {
 	CStaticString<CharCount> NewString;
     NewString.Resize( WideString.Length() );

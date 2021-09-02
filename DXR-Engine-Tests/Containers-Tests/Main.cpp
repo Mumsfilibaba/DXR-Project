@@ -1,4 +1,5 @@
 #include <CoreTypes.h>
+#include <CoreDefines.h>
 
 #include "Array_Test.h"
 #include "SharedPtr_Test.h"
@@ -11,10 +12,6 @@
 /* Check for memory leaks */
 #ifdef PLATFORM_WINDOWS
 #include <crtdbg.h>
-
-#pragma warning(push)
-#pragma warning( disable : 4100) // Disable "unreferenced formal parameter"
-
 #endif
 
 /*
@@ -34,6 +31,9 @@ void BenchMarks()
 
 void Tests( int32 Argc, const char* Argv[] )
 {
+	UNREFERENCED_VARIABLE(Argc);
+	UNREFERENCED_VARIABLE(Argv);
+	
 #if RUN_TARRAY_TEST
     TArray_Test( Argc, Argv );
 #endif
@@ -83,7 +83,3 @@ int main( int Argc, const char* Argv[] )
 
     return 0;
 }
-
-#ifdef PLATFORM_WINDOWS
-#pragma warning(pop)
-#endif
