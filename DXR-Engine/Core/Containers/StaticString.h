@@ -35,7 +35,7 @@ public:
         : Characters()
         , Len( 0 )
     {
-        Characters[Len] = StringTraits::Terminator;
+        Characters[Len] = StringTraits::Null;
     }
 
     /* Create a fixed string from a raw array. If the string is longer than
@@ -92,7 +92,7 @@ public:
     FORCEINLINE void Clear() noexcept
     {
         Len = 0;
-        Characters[Len] = StringTraits::Terminator;
+        Characters[Len] = StringTraits::Null;
     }
 
     /* Appends a string to this string */
@@ -101,7 +101,7 @@ public:
         Assert( Len + 1 < Capacity() );
 
         Characters[Len] = Char;
-        Characters[++Len] = StringTraits::Terminator;
+        Characters[++Len] = StringTraits::Null;
     }
 
     /* Appends a string to this string */
@@ -126,7 +126,7 @@ public:
         StringTraits::Copy( Characters + Len, InString, InLength );
 
         Len = Len + InLength;
-        Characters[Len] = StringTraits::Terminator;
+        Characters[Len] = StringTraits::Null;
     }
 
     /* Resize the string */
@@ -148,7 +148,7 @@ public:
         }
 
         Len = NewSize;
-        Characters[Len] = StringTraits::Terminator;
+        Characters[Len] = StringTraits::Null;
     }
 
     /* Copy this string into buffer */
@@ -162,7 +162,7 @@ public:
     }
 
     /* Format string (similar to snprintf) */
-    void Format( const CharType* Format, ... ) noexcept
+    NOINLINE void Format( const CharType* Format, ... ) noexcept
     {
         va_list ArgList;
         va_start( ArgList, Format );
@@ -183,11 +183,11 @@ public:
             Len = CharCount - 1;
         }
 
-        Characters[Len] = StringTraits::Terminator;
+        Characters[Len] = StringTraits::Null;
     }
 
     /* Same as Format, but appends the result to the current string */
-    void AppendFormat( const CharType* Format, ... ) noexcept
+    NOINLINE void AppendFormat( const CharType* Format, ... ) noexcept
     {
         va_list ArgList;
         va_start( ArgList, Format );
@@ -209,7 +209,7 @@ public:
             Len = CharCount - 1;
         }
 
-        Characters[Len] = StringTraits::Terminator;
+        Characters[Len] = StringTraits::Null;
     }
 
     /* Returns this string in lowercase */
@@ -317,7 +317,7 @@ public:
             }
         }
 
-        Characters[Len] = StringTraits::Terminator;
+        Characters[Len] = StringTraits::Null;
     }
 
     /* Removes whitespace from the end of the string */
@@ -332,7 +332,7 @@ public:
     FORCEINLINE void ReverseInline() noexcept
     {
         CharType* Start = Characters;
-        CharType* End   = Characters + Len;
+        CharType* End   = Start + Len;
         while ( Start < End )
         {
 			End--;
@@ -345,19 +345,19 @@ public:
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type Compare( const StringType& InString ) const noexcept
     {
-        return Compare( InString.CStr(), InString.Length() );
+        return Compare( InString.CStr() );
     }
 
     /* Compares two strings and checks if they are equal */
     FORCEINLINE int32 Compare( const CharType* InString ) const noexcept
     {
-        return Compare( InString, StringTraits::Length( InString ) );
+        return StringTraits::Compare( Characters, InString );
     }
 
     /* Compares two strings and checks if they are equal */
     FORCEINLINE int32 Compare( const CharType* InString, SizeType InLength ) const noexcept
     {
-        return StringTraits::Compare( Characters, InString );
+        return StringTraits::Compare( Characters, InString, InLength );
     }
 
     /* Compares two strings and checks if they are equal, without taking casing into account */
@@ -523,7 +523,7 @@ public:
         else
         {
             CharType TempChar = Characters[Position + 1];
-            Characters[Position + 1] = StringTraits::Terminator;
+            Characters[Position + 1] = StringTraits::Null;
 
             Result = StringTraits::ReverseFindChar( Start, Char );
 
@@ -695,7 +695,7 @@ public:
 		StringTraits::Copy( Src, InString, InLength );
 
         Len += InLength;
-        Characters[Len] = StringTraits::Terminator;
+        Characters[Len] = StringTraits::Null;
     }
 
     /* Insert a character at position */
@@ -713,7 +713,7 @@ public:
 		// Copy String
 		*Src = Char;
 
-		Characters[++Len] = StringTraits::Terminator;
+		Characters[++Len] = StringTraits::Null;
     }
 
     /* Replace a part of the string */
@@ -754,7 +754,7 @@ public:
     /* Pop a character from the end of the string */
     FORCEINLINE void Pop() noexcept
     {
-        Characters[--Len] = StringTraits::Terminator;
+        Characters[--Len] = StringTraits::Null;
     }
 
     /* Swaps two fixed strings with eachother */
@@ -997,7 +997,7 @@ private:
 
         StringTraits::Copy( Characters, InString, InLength );
         Len = InLength;
-        Characters[Len] = StringTraits::Terminator;
+        Characters[Len] = StringTraits::Null;
     }
 
     /* Initializing this string by moving from InString */
@@ -1007,7 +1007,7 @@ private:
         Other.Len = 0;
 
         Memory::Memexchange( Characters, Other.Characters, SizeInBytes() );
-        Characters[Len] = StringTraits::Terminator;
+        Characters[Len] = StringTraits::Null;
     }
 
     /* Characters for characters */
@@ -1024,7 +1024,7 @@ using WStaticString = TStaticString<wchar_t, CharCount>;
 
 /* Operators */
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+( const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS )
+inline TStaticString<CharType, CharCount> operator+( const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS ) noexcept
 {
     TStaticString<CharType, CharCount> NewString = LHS;
     NewString.Append( RHS );
@@ -1032,7 +1032,7 @@ inline TStaticString<CharType, CharCount> operator+( const TStaticString<CharTyp
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+( const CharType* LHS, const TStaticString<CharType, CharCount>& RHS )
+inline TStaticString<CharType, CharCount> operator+( const CharType* LHS, const TStaticString<CharType, CharCount>& RHS ) noexcept
 {
     TStaticString<CharType, CharCount> NewString = LHS;
     NewString.Append( RHS );
@@ -1040,7 +1040,7 @@ inline TStaticString<CharType, CharCount> operator+( const CharType* LHS, const 
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+( const TStaticString<CharType, CharCount>& LHS, const CharType* RHS )
+inline TStaticString<CharType, CharCount> operator+( const TStaticString<CharType, CharCount>& LHS, const CharType* RHS ) noexcept
 {
     TStaticString<CharType, CharCount> NewString = LHS;
     NewString.Append( RHS );
@@ -1048,15 +1048,16 @@ inline TStaticString<CharType, CharCount> operator+( const TStaticString<CharTyp
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+( CharType LHS, const TStaticString<CharType, CharCount>& RHS )
+inline TStaticString<CharType, CharCount> operator+( CharType LHS, const TStaticString<CharType, CharCount>& RHS ) noexcept
 {
-    TStaticString<CharType, CharCount> NewString = RHS;
-    NewString.Insert( LHS, 0 );
+    TStaticString<CharType, CharCount> NewString;
+    NewString.Append( LHS );
+    NewString.Append( RHS );
     return NewString;
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+( const TStaticString<CharType, CharCount>& LHS, CharType RHS )
+inline TStaticString<CharType, CharCount> operator+( const TStaticString<CharType, CharCount>& LHS, CharType RHS ) noexcept
 {
     TStaticString<CharType, CharCount> NewString = LHS;
     NewString.Append( RHS );

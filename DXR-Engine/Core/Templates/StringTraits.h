@@ -20,10 +20,7 @@ public:
     using Pointer      = CharType*;
     using ConstPointer = const Pointer;
 
-    enum
-    {
-        Terminator = '\0'
-    };
+    static constexpr CharType Null = '\0';
 
     /* Is space */
     static FORCEINLINE bool IsSpace( CharType Char ) noexcept
@@ -34,7 +31,7 @@ public:
     /* Is Nullterminator */
     static FORCEINLINE bool IsTerminator( CharType Char ) noexcept
     {
-        return (Char == Terminator);
+        return (Char == Null);
     }
 
     /* Is space or null terminator */
@@ -114,6 +111,18 @@ public:
     {
         return static_cast<int32>(strcmp( LHS, RHS ));
     }
+
+    /* Compare two strings */
+    static FORCEINLINE int32 Compare( const CharType* LHS, const CharType* RHS, uint64 InLength ) noexcept
+    {
+        return static_cast<int32>(strncmp( LHS, RHS, InLength ));
+    }
+
+    /* Returns the empty string */
+    static FORCEINLINE const CharType* Empty() noexcept
+    {
+        return "";
+    }
 };
 
 template<>
@@ -125,10 +134,7 @@ public:
     using Pointer      = CharType*;
     using ConstPointer = const Pointer;
 
-    enum
-    {
-        Terminator = L'\0'
-    };
+    static constexpr CharType Null = L'\0';
 
     /* Is space */
     static FORCEINLINE bool IsSpace( CharType Char ) noexcept
@@ -139,7 +145,7 @@ public:
     /* Is Nullterminator */
     static FORCEINLINE bool IsTerminator( CharType Char ) noexcept
     {
-        return (Char == Terminator);
+        return (Char == Null);
     }
 
     /* Is space or null terminator */
@@ -218,6 +224,18 @@ public:
     static FORCEINLINE int32 Compare( const CharType* LHS, const CharType* RHS ) noexcept
     {
         return static_cast<int32>(wcscmp( LHS, RHS ));
+    }
+
+    /* Compare two strings */
+    static FORCEINLINE int32 Compare( const CharType* LHS, const CharType* RHS, uint64 InLength ) noexcept
+    {
+        return static_cast<int32>(wcsncmp( LHS, RHS, InLength ));
+    }
+
+    /* Returns the empty string */
+    static FORCEINLINE const CharType* Empty() noexcept
+    {
+        return L"";
     }
 };
 

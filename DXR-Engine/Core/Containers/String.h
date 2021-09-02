@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Array.h"
 #include "StringView.h"
 
@@ -35,6 +34,7 @@ public:
     using SizeType     = int32;
     using StringTraits = TStringTraits<ElementType>;
 	using ViewType     = TStringView<ElementType>;
+    using StorageType  = TArray<CharType, TStringAllocator<CharType>>;
 	
     /* Constants */
     enum
@@ -50,7 +50,7 @@ public:
 
     /* Empty constructor */
     FORCEINLINE TString() noexcept
-        : Characters( 1, StringTraits::Terminator )
+        : Characters()
     {
     }
 
@@ -102,16 +102,27 @@ public:
     /* Clears the string */
     FORCEINLINE void Clear() noexcept
     {
-        Characters.Resize(1);
-        Characters[0] = StringTraits::Terminator;
+        if ( !Characters.IsEmpty() )
+        {
+            Characters.Resize( 1 );
+            Characters[0] = StringTraits::Null;
+        }
     }
 
     /* Appends a string to this string */
     FORCEINLINE void Append( CharType Char ) noexcept
     {
-        SizeType Len = Length();
-        Characters[Len] = Char;
-        Characters.Emplace(StringTraits::Terminator);
+        if ( Characters.IsEmpty() )
+        {
+            Characters.Emplace( Char );
+        }
+        else
+        {
+            SizeType Len = Length();
+            Characters[Len] = Char;
+        }
+
+        Characters.Emplace(StringTraits::Null);
     }
 
     /* Appends a string to this string */
@@ -137,7 +148,7 @@ public:
 
         StringTraits::Copy( Characters.Data() + Len, InString, InLength );
 
-        Characters.Emplace( StringTraits::Terminator );
+        Characters.Emplace( StringTraits::Null );
     }
 
     /* Resize the string */
@@ -150,22 +161,29 @@ public:
     FORCEINLINE void Resize( SizeType NewSize, CharType FillElement ) noexcept
     {
         Characters.Resize( NewSize, FillElement );
-        Characters.Emplace( StringTraits::Terminator );
+        Characters.Emplace( StringTraits::Null );
+    }
+
+    /* Reserve storage space */
+    FORCEINLINE void Reserve( SizeType NewSize ) noexcept
+    {
+        Characters.Reserve( NewSize );
     }
 
     /* Copy this string into buffer */
     FORCEINLINE void Copy( CharType* Buffer, SizeType BufferSize, SizeType Position = 0 ) const noexcept
     {
-        Assert( Buffer != nullptr );
         Assert( (Position < Length()) || (Position == 0) );
 
-        SizeType Len = Length();
-        SizeType CopySize = NMath::Min( BufferSize, Len - Position );
-        StringTraits::Copy( Buffer, Characters.Data() + Position, CopySize );
+        if ( Buffer && (BufferSize > 0) )
+        {
+            SizeType CopySize = NMath::Min( BufferSize, Length() - Position );
+            StringTraits::Copy( Buffer, Characters.Data() + Position, CopySize );
+        }
     }
 
     /* Format string (similar to snprintf) */
-    void Format( const CharType* Format, ... ) noexcept
+    NOINLINE void Format( const CharType* Format, ... ) noexcept
     {
         va_list ArgList;
         va_start( ArgList, Format );
@@ -201,18 +219,18 @@ public:
         int32 WrittenLength = StringTraits::Length( WrittenString );
         Characters.Resize(WrittenLength);
 
-        StringTraits::Copy( Characters, WrittenString, WrittenLength );
+        StringTraits::Copy( Characters.Data(), WrittenString, WrittenLength );
 
         if ( DynamicBuffer )
         {
             Memory::Free( DynamicBuffer );
         }
 
-        Characters.Emplace( StringTraits::Terminator );
+        Characters.Emplace( StringTraits::Null );
     }
 
     /* Same as Format, but appends the result to the current string */
-    void AppendFormat( const CharType* Format, ... ) noexcept
+    NOINLINE void AppendFormat( const CharType* Format, ... ) noexcept
     {
         va_list ArgList;
         va_start( ArgList, Format );
@@ -253,7 +271,7 @@ public:
             Memory::Free( DynamicBuffer );
         }
 
-        Characters.Emplace( StringTraits::Terminator );
+        Characters.Emplace( StringTraits::Null );
     }
 
     /* Returns this string in lowercase */
@@ -323,9 +341,12 @@ public:
     FORCEINLINE void TrimStartInline() noexcept
     {
         SizeType Count = 0;
-        for ( CharType Char : Characters )
+        
+        CharType* Start = Characters.Data();
+        CharType* End   = Start + Characters.Size();
+        while ( Start != End )
         {
-            if ( StringTraits::IsWhiteSpace( Char ) )
+            if ( StringTraits::IsWhiteSpace( *(Start++) ) )
             {
                 Count++;
             }
@@ -337,7 +358,7 @@ public:
 
         if ( Count > 0 )
         {
-            Characters.RemoveRangeAt( Count - 1, Count );
+            Characters.RemoveRangeAt( 0, Count );
         }
     }
 
@@ -366,7 +387,7 @@ public:
         if (Count > 0)
         {
             Characters.PopRange( Count );
-            Characters.Emplace( StringTraits::Terminator );
+            Characters.Emplace( StringTraits::Null );
         }
     }
 
@@ -382,10 +403,12 @@ public:
     FORCEINLINE void ReverseInline() noexcept
     {
         CharType* Start = Characters.Data();
-        CharType* End   = Characters.Data() + Characters.Size();
-        while ( Start != End )
+        CharType* End   = Start + Length();
+        while ( Start < End )
         {
-            ::Swap<CharType>( *(Start++), *(--End) );
+            End--;
+            ::Swap<CharType>( *Start, *End );
+            Start++;
         }
     }
 
@@ -399,13 +422,13 @@ public:
     /* Compares two strings and checks if they are equal */
     FORCEINLINE int32 Compare( const CharType* InString ) const noexcept
     {
-        return Compare( InString, StringTraits::Length( InString ) );
+        return StringTraits::Compare( Characters.Data(), InString );
     }
 
     /* Compares two strings and checks if they are equal */
-    FORCEINLINE int32 Compare( const CharType* InString, SizeType InLength )
+    FORCEINLINE int32 Compare( const CharType* InString, SizeType InLength ) const noexcept
     {
-        return StringTraits::Compare( Characters, InString );
+        return StringTraits::Compare( Characters.Data(), InString, InLength );
     }
 
     /* Compares two strings and checks if they are equal, without taking casing into account */
@@ -422,7 +445,7 @@ public:
     }
 
     /* Compares two strings and checks if they are equal, without taking casing into account */
-    FORCEINLINE int32 CompareNoCase( const CharType* InString, SizeType InLength )
+    FORCEINLINE int32 CompareNoCase( const CharType* InString, SizeType InLength ) const noexcept
     {
         Assert(InString != nullptr);
 
@@ -432,8 +455,8 @@ public:
             return -1;
         }
 
-        CharType* Start = Characters.Data();
-        CharType* End = Start + Len;
+        const CharType* Start = Characters.Data();
+        const CharType* End = Start + Len;
         while ( Start != End )
         {
             const CharType TempChar0 = StringTraits::ToLower( *(Start++) );
@@ -579,7 +602,7 @@ public:
         else
         {
             CharType TempChar = Characters[Position + 1];
-            Characters[Position + 1] = StringTraits::Terminator;
+            Characters[Position + 1] = StringTraits::Null;
 
             Result = StringTraits::ReverseFindChar( Start, Char );
 
@@ -657,7 +680,7 @@ public:
         }
 
         SizeType Pos = static_cast<SizeType>(StringTraits::Span( CStr() + Position, InString ));
-        SizeType Ret = Position + Position;
+        SizeType Ret = Pos + Position;
         if ( Ret >= Len )
         {
             return InvalidPosition;
@@ -738,7 +761,7 @@ public:
         Assert( (Position < Length()) );
 
         Characters.Insert( Position, InString, InLength );
-        Characters.Emplace( StringTraits::Terminator );
+        Characters.Emplace( StringTraits::Null );
     }
 
     /* Insert a character at position */
@@ -784,7 +807,7 @@ public:
     {
         SizeType Len = Length();
         Characters.Pop();
-        Characters[Len] = StringTraits::Terminator;
+        Characters[Len] = StringTraits::Null;
     }
 
     /* Swaps two fixed strings with eachother */
@@ -1026,7 +1049,7 @@ private:
     {
         Characters.Resize( InLength );
         StringTraits::Copy( Characters.Data(), InString, InLength );
-        Characters.Emplace( StringTraits::Terminator );
+        Characters.Emplace( StringTraits::Null );
     }
 
     /* Initializing this string by moving from InString */
@@ -1035,9 +1058,8 @@ private:
         Characters = Move( Other.Characters );
     }
 
-    /* Characters for characters */
-    using StringStorageType = TArray<CharType, TStringAllocator<CharType>>;
-    StringStorageType Characters;
+    /* Using an TArray for storing the characters */
+    StorageType Characters;
 };
 
 /* Predefined types */
@@ -1046,41 +1068,61 @@ using WString = TString<wchar_t>;
 
 /* Operators */
 template<typename CharType>
-inline TString<CharType> operator+( const TString<CharType>& LHS, const TString<CharType>& RHS )
+inline TString<CharType> operator+( const TString<CharType>& LHS, const TString<CharType>& RHS ) noexcept
 {
-    TString<CharType> NewString = LHS;
+    const typename TString<CharType>::SizeType CombinedSize = LHS.Size() + RHS.Size();
+
+    TString<CharType> NewString;
+    NewString.Reserve( CombinedSize );
+    NewString.Append( LHS );
     NewString.Append( RHS );
     return NewString;
 }
 
 template<typename CharType>
-inline TString<CharType> operator+( const CharType* LHS, const TString<CharType>& RHS )
+inline TString<CharType> operator+( const CharType* LHS, const TString<CharType>& RHS ) noexcept
 {
-    TString<CharType> NewString = LHS;
+    const typename TString<CharType>::SizeType CombinedSize = TStringTraits<CharType>::Length(LHS) + RHS.Size();
+
+    TString<CharType> NewString;
+    NewString.Reserve( CombinedSize );
+    NewString.Append( LHS );
     NewString.Append( RHS );
     return NewString;
 }
 
 template<typename CharType>
-inline TString<CharType> operator+( const TString<CharType>& LHS, const CharType* RHS )
+inline TString<CharType> operator+( const TString<CharType>& LHS, const CharType* RHS ) noexcept
 {
-    TString<CharType> NewString = LHS;
+    const typename TString<CharType>::SizeType CombinedSize = LHS.Size() + TStringTraits<CharType>::Length( RHS );
+
+    TString<CharType> NewString;
+    NewString.Reserve( CombinedSize );
+    NewString.Append( LHS );
     NewString.Append( RHS );
     return NewString;
 }
 
 template<typename CharType>
-inline TString<CharType> operator+( CharType LHS, const TString<CharType>& RHS )
+inline TString<CharType> operator+( CharType LHS, const TString<CharType>& RHS ) noexcept
 {
-    TString<CharType> NewString = LHS;
+    const typename TString<CharType>::SizeType CombinedSize = RHS.Size() + 1;
+
+    TString<CharType> NewString;
+    NewString.Reserve( CombinedSize );
+    NewString.Append( LHS );
     NewString.Append( RHS );
     return NewString;
 }
 
 template<typename CharType>
-inline TString<CharType> operator+( const TString<CharType>& LHS, CharType RHS )
+inline TString<CharType> operator+( const TString<CharType>& LHS, CharType RHS ) noexcept
 {
-    TString<CharType> NewString = LHS;
+    const typename TString<CharType>::SizeType CombinedSize = LHS.Size() + 1;
+
+    TString<CharType> NewString;
+    NewString.Reserve( CombinedSize );
+    NewString.Append( LHS );
     NewString.Append( RHS );
     return NewString;
 }

@@ -297,17 +297,165 @@ void TString_Test( const char* Args )
 		std::cout << "operator> : "  << std::boolalpha << (TestString     >  L"Test" )       << std::endl;
 		std::cout << "operator> : "  << std::boolalpha << (CombinedString >  CombinedString) << std::endl;
 		
-		for (char C : TestString)
+		for (wchar_t C : TestString)
 		{
-			std::cout << C << std::endl;
+			std::wcout << C << std::endl;
 		}
 		
 		for (int32 Index = 0; Index < TestString.Length(); Index++)
 		{
-			std::cout << Index << '=' << TestString[Index] << std::endl;
+			std::wcout << Index << '=' << TestString[Index] << std::endl;
 		}
 		
 		CStaticString<64> CharCompareString = WideToChar<64>(CompareString0);
 		PrintString(CharCompareString);
+	}
+
+		{
+		std::cout << std::endl << "----Testing CString----" << std::endl << std::endl;
+
+		CStringView StringView( "Hello StringView" );
+
+		CString String0;
+		PrintString( String0 );
+		CString String1 = "Hello String";
+		PrintString( String1 );
+		CString String2 = CString( Args, 7 );
+		PrintString( String2 );
+		CString String3 = CString( StringView );
+		PrintString( String3 );
+		CString String4 = String1;
+		PrintString( String4 );
+		CString String5 = Move( String2 );
+		PrintString( String5 );
+
+		String0.Append( "Appended String" );
+		PrintString( String0 );
+		String5.Append( String0 );
+		PrintString( String5 );
+
+		CString String6;
+		String6.Format( "Formatted String=%.4f", 0.004f );
+		PrintString( String6 );
+
+		String6.Append( ' ' );
+		PrintString( String6 );
+
+		String6.AppendFormat( "Formatted String=%.4f", 0.0077f );
+		PrintString( String6 );
+
+		CString LowerString6 = String6.ToLower();
+		PrintString( LowerString6 );
+
+		CString UpperString6 = String6.ToUpper();
+		PrintString( UpperString6 );
+
+		String6.Clear();
+		PrintString( String6 );
+
+		String6.Append( "    Trimmable String    " );
+		PrintString( String6 );
+
+		CString TrimmedString6 = String6.Trim();
+		TrimmedString6.Append( '*' );
+		PrintString( TrimmedString6 );
+
+		String6.Clear();
+		PrintString( String6 );
+
+		String6.Append( "123456789" );
+		PrintString( String6 );
+
+		CString ReversedString6 = String6.Reverse();
+		PrintString( ReversedString6 );
+
+		CString SearchString = "0123Search89Me";
+		PrintString( SearchString );
+
+		std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;
+		std::cout << "Position=" << SearchString.Find( 'M' ) << std::endl;
+
+		std::cout << "Position=" << SearchString.FindOneOf( "ec" ) << std::endl;
+		std::cout << "Position=" << SearchString.FindOneOf( "Mc" ) << std::endl;
+
+		std::cout << "Position=" << SearchString.FindOneNotOf( "0123456789" ) << std::endl;
+
+		CString CompareString0 = "COMPARE";
+		PrintString( CompareString0 );
+
+		CString CompareString1 = "compare";
+		PrintString( CompareString1 );
+
+		std::cout << "Compare=" << CompareString0.Compare( CompareString1 ) << std::endl;
+		std::cout << "CompareNoCase=" << CompareString0.CompareNoCase( CompareString1 ) << std::endl;
+
+		CompareString1.Resize( 20, 'A' );
+		PrintString( CompareString1 );
+
+		char Buffer[6];
+		Buffer[5] = 0;
+		CompareString1.Copy( Buffer, 5, 3 );
+		std::cout << "Buffer=" << Buffer << std::endl;
+
+		CompareString0.Insert( "lower", 4 );
+		PrintString( CompareString0 );
+
+		CompareString0.Replace( "upper", 4 );
+		PrintString( CompareString0 );
+
+		CString CombinedString = CompareString0 + '5';
+		PrintString( CombinedString );
+
+		CombinedString = '5' + CombinedString;
+		PrintString( CombinedString );
+
+		CombinedString = CombinedString + "Appended";
+		PrintString( CombinedString );
+
+		CombinedString = "Inserted" + CombinedString;
+		PrintString( CombinedString );
+
+		CombinedString = CombinedString + CombinedString;
+		PrintString( CombinedString );
+
+		CString TestString = "Test";
+		PrintString( TestString );
+
+		std::cout << "operator== : " << std::boolalpha << ("Test" == TestString) << std::endl;
+		std::cout << "operator== : " << std::boolalpha << (TestString == "Test") << std::endl;
+		std::cout << "operator== : " << std::boolalpha << (CombinedString == CombinedString) << std::endl;
+
+		std::cout << "operator!= : " << std::boolalpha << ("Test" != TestString) << std::endl;
+		std::cout << "operator!= : " << std::boolalpha << (TestString != "Test") << std::endl;
+		std::cout << "operator!= : " << std::boolalpha << (CombinedString != CombinedString) << std::endl;
+
+		std::cout << "operator<= : " << std::boolalpha << ("Test" <= TestString) << std::endl;
+		std::cout << "operator<= : " << std::boolalpha << (TestString <= "Test") << std::endl;
+		std::cout << "operator<= : " << std::boolalpha << (CombinedString <= CombinedString) << std::endl;
+
+		std::cout << "operator< : " << std::boolalpha << ("Test" < TestString) << std::endl;
+		std::cout << "operator< : " << std::boolalpha << (TestString < "Test") << std::endl;
+		std::cout << "operator< : " << std::boolalpha << (CombinedString < CombinedString) << std::endl;
+
+		std::cout << "operator>= : " << std::boolalpha << ("Test" >= TestString) << std::endl;
+		std::cout << "operator>= : " << std::boolalpha << (TestString >= "Test") << std::endl;
+		std::cout << "operator>= : " << std::boolalpha << (CombinedString >= CombinedString) << std::endl;
+
+		std::cout << "operator> : " << std::boolalpha << ("Test" > TestString) << std::endl;
+		std::cout << "operator> : " << std::boolalpha << (TestString > "Test") << std::endl;
+		std::cout << "operator> : " << std::boolalpha << (CombinedString > CombinedString) << std::endl;
+
+		for ( char C : TestString )
+		{
+			std::cout << C << std::endl;
+		}
+
+		for ( int32 Index = 0; Index < TestString.Length(); Index++ )
+		{
+			std::cout << Index << '=' << TestString[Index] << std::endl;
+		}
+
+		WString WideCompareString = CharToWide( CompareString0 );
+		PrintWideString( WideCompareString );
 	}
 }
