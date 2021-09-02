@@ -212,13 +212,23 @@ public:
             {
                 ReserveStorage( NewSize );
             }
+			
+			// NewSize is always larger than arraysize...
+			SizeType NumElementsToConstruct = NewSize - ArraySize;
+			ElementType* LastElementPtr     = Data()  + ArraySize;
 
-            DefaultConstructRange<ElementType>( Data() + ArraySize, ArraySize - NewSize );
+			// ...However, assert just in case
+			Assert( NumElementsToConstruct > 0 );
+			
+			DefaultConstructRange<ElementType>( LastElementPtr, NumElementsToConstruct );
             ArraySize = NewSize;
         }
         else if ( NewSize < ArraySize )
         {
-            InternalPopRange( ArraySize - NewSize );
+			SizeType NumElementsToDestruct = ArraySize - NewSize;
+			Assert( NumElementsToDestruct > 0);
+			
+            InternalPopRange( NumElementsToDestruct );
         }
     }
 
@@ -232,12 +242,22 @@ public:
                 ReserveStorage( NewSize );
             }
 
-            ConstructRangeFrom<ElementType>( Data() + ArraySize, NewSize - ArraySize, Element );
+			// NewSize is always larger than arraysize...
+			SizeType NumElementsToConstruct = NewSize - ArraySize;
+			ElementType* LastElementPtr     = Data()  + ArraySize;
+
+			// ...However, assert just in case
+			Assert( NumElementsToConstruct > 0 );
+			
+            ConstructRangeFrom<ElementType>( LastElementPtr, NumElementsToConstruct, Element );
             ArraySize = NewSize;
         }
         else if ( NewSize < ArraySize )
         {
-            InternalPopRange( ArraySize - NewSize );
+			SizeType NumElementsToDestruct = ArraySize - NewSize;
+			Assert( NumElementsToDestruct > 0);
+			
+			InternalPopRange( NumElementsToDestruct );
         }
     }
 

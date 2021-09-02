@@ -861,7 +861,7 @@ public:
     /* Return a null terminated string */
     FORCEINLINE const CharType* CStr() const noexcept
     {
-        return Characters.Data();
+        return (!Characters.IsEmpty()) ? Characters.Data() : StringTraits::Empty();
     }
 
     /* Return the length of the string */
