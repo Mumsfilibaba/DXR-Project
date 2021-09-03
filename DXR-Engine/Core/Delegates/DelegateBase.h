@@ -17,14 +17,18 @@ public:
     /* Copy constructor */
     FORCEINLINE CDelegateBase( const CDelegateBase& Other )
         : Storage()
+        , Size()
     {
         CopyFrom( Other );
     }
 
     /* Move constructor */
     FORCEINLINE CDelegateBase( CDelegateBase&& Other )
-        : Storage( Move( Other.Storage ) )
+        : Storage()
+        , Size( Other.Size )
     {
+        Storage.MoveFrom( Move( Other.Storage ) );
+        Other.Size = 0;
     }
 
     /* Destructor unbinding the delegate */
@@ -42,15 +46,18 @@ public:
     /* Swaps two delegates */
     FORCEINLINE void Swap( CDelegateBase& Other )
     {
-        AllocatorType TempStorage( Move( Storage ) );
-        Storage = Move( Other.Storage );
-        Other.Storage = Move( TempStorage );
+        AllocatorType TempStorage;
+        TempStorage.MoveFrom( Move( Storage ) );
+        Storage.MoveFrom( Move( Other.Storage ) );
+        Other.Storage.MoveFrom( Move( TempStorage ) );
+
+        ::Swap<int32>( Size, Other.Size );
     }
 
     /* Cheacks weather or not there exist any delegate bound */
     FORCEINLINE bool IsBound() const
     {
-        return Storage.HasAllocation();
+        return (Size > 0);
     }
 
     /* Check if object is bound to this delegate */
@@ -128,16 +135,16 @@ protected:
     /* Constructor for a empty delegate */
     FORCEINLINE explicit CDelegateBase()
         : Storage()
+        , Size( 0 )
     {
     }
 
     /* Release the delegate */
     FORCEINLINE void Release()
     {
-        if ( Storage.HasAllocation() )
+        if ( IsBound() )
         {
             GetDelegate()->~IDelegateInstance();
-            Storage.Free();
         }
     }
 
@@ -146,21 +153,35 @@ protected:
     {
         if ( Other.IsBound() )
         {
-            Storage.Allocate( Other.Storage.GetSize() );
-            Other.GetDelegate()->Clone( Storage.Raw() );
+            Storage.Realloc( Other.Size );
+            Other.GetDelegate()->Clone( Storage.GetAllocation() );
+
+            Size = Other.Size;
         }
+        else
+        {
+            Size = 0;
+            Storage.Free();
+        }
+    }
+
+    /* Allocate from storage, set size, and return the memory */
+    FORCEINLINE void* AllocateStorage( int32 NewSize )
+    {
+        Size = NewSize;
+        return Storage.Realloc( Size );
     }
 
     /* Internal function that is used to retrive the functor pointer */
     FORCEINLINE IDelegateInstance* GetDelegate() noexcept
     {
-        return reinterpret_cast<IDelegateInstance*>(GetStorage().Raw());
+        return reinterpret_cast<IDelegateInstance*>(Storage.GetAllocation());
     }
 
     /* Internal function that is used to retrive the functor pointer */
     FORCEINLINE const IDelegateInstance* GetDelegate() const noexcept
     {
-        return reinterpret_cast<const IDelegateInstance*>(GetStorage().Raw());
+        return reinterpret_cast<const IDelegateInstance*>(Storage.GetAllocation());
     }
 
     /* Retrive the storage */
@@ -177,4 +198,5 @@ protected:
 
     /* Storage for the delegate instance */
     AllocatorType Storage;
+    int32 Size;
 };

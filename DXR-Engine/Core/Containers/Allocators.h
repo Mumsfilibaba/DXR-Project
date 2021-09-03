@@ -148,14 +148,31 @@ public:
     /* Allocates memory if needed */
     FORCEINLINE ElementType* Realloc( SizeType NewCount ) noexcept
     {
-        // Allocate new
+        // If allocation is larger than inline-storage, allocate on the heap
         if ( NewCount > NumInlineElements )
         {
-            return DynamicAllocator.Realloc( NewCount );
+            /* If we did not have a allocation then the inline storage was proably used, copy it into dynamic memory */
+            if ( !DynamicAllocator.HasAllocation() )
+            {
+                DynamicAllocator.Realloc( NewCount );
+                RelocateRange<ElementType>( DynamicAllocator.GetAllocation(), InlineAllocation.GetElements(), NumInlineElements );
+            }
+            else
+            {
+                DynamicAllocator.Realloc( NewCount );
+            }
+
+            return DynamicAllocator.GetAllocation();
         }
         else
         {
-            Free();
+            /* Copy the old allocation over to the inlineallocation */
+            if ( DynamicAllocator.HasAllocation() )
+            {
+                RelocateRange<ElementType>( InlineAllocation.GetElements(), DynamicAllocator.GetAllocation(), NumInlineElements );
+                Free();
+            }
+
             return InlineAllocation.GetElements();
         }
     }
@@ -177,7 +194,7 @@ public:
 			RelocateRange<ElementType>( InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements );
         }
 
-        DynamicAllocator.MoveFrom( Other );
+        DynamicAllocator.MoveFrom( Move( Other.DynamicAllocator ) );
     }
 
     /* Checks weather there is a valid allocation or not */

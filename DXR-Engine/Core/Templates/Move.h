@@ -2,6 +2,7 @@
 #include "RemoveReference.h"
 #include "EnableIf.h"
 #include "IsConst.h"
+#include "Not.h"
 
 /* Move an object by converting it into a rvalue */
 template<typename T>
@@ -25,7 +26,7 @@ constexpr T&& Forward( typename TRemoveReference<T>::Type&& Arg ) noexcept
 }
 
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsConst<T>::Value>::Type Swap( T& LHS, T& RHS ) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsConst<T>>::Value>::Type Swap( T& LHS, T& RHS ) noexcept
 {
     T TempElement = Move( LHS );
     LHS = Move( RHS );

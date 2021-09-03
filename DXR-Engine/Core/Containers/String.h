@@ -5,15 +5,15 @@
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/AddReference.h"
 
-#define STRING_USE_INLINE_ALLOCATOR (0)
+#define STRING_USE_INLINE_ALLOCATOR (1)
 #define STRING_FORMAT_BUFFER_SIZE   (128)
 
 #if STRING_USE_INLINE_ALLOCATOR 
-#define STRING_ALLOCATOR_INLINE_BYTES (24)
+#define STRING_ALLOCATOR_INLINE_ELEMENTS (16)
 
 // Use a small static buffer for small strings
 template<typename CharType>
-using TStringAllocator = TInlineArrayAllocator<CharType, STRING_ALLOCATOR_INLINE_BYTES>;
+using TStringAllocator = TInlineArrayAllocator<CharType, STRING_ALLOCATOR_INLINE_ELEMENTS>;
 #else
 
 // No preallocated bytes for strings
@@ -774,7 +774,7 @@ public:
         Assert( (Position <= Length()) );
 
 		SizeType ThisLength = Length();
-		if ( Position == ThisLength || Characters.IsEmpty() )
+		if ( Position == ThisLength || Characters.IsEmpty() )
 		{
 			Append( InString, InLength );
 		}

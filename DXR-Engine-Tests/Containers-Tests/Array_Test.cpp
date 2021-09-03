@@ -9,11 +9,11 @@
 #include <chrono>
 #include <algorithm>
 
-#define ENABLE_INLINE_ALLOCATOR (1)
+#define ENABLE_INLINE_ALLOCATOR (0)
 
 #if ENABLE_INLINE_ALLOCATOR
 template<typename T>
-using TArrayAllocator = TInlineArrayAllocator<T, 128>;
+using TArrayAllocator = TInlineArrayAllocator<T, 1024>;
 #else
 template<typename T>
 using TArrayAllocator = TDefaultArrayAllocator<T>;
@@ -175,7 +175,10 @@ void PrintArr( const std::vector<T>& Arr, const std::string& Name = "" )
 
     std::cout << "--------------------------------" << std::endl << std::endl;
 }
+
 #define PrintArr(Arr) PrintArr(Arr, #Arr)
+
+#if RUN_TARRAY_BENCHMARKS
 
 /*
  * Benchmark
@@ -566,6 +569,10 @@ void TArray_Benchmark()
 #endif
 }
 
+#endif // RUN_TARRAY_BENCHMARKS
+
+#if RUN_TARRAY_TEST
+
 /*
  * Test
  */
@@ -937,7 +944,7 @@ void TArray_Test( int32 Argc, const char** Argv )
     // TArray<vec3>
 #if 1
     {
-        std::cout << std::endl << "Testing TArray<Vec3, TArrayAllocator<Vec3>>" << std::endl;
+        std::cout << std::endl << "Testing TArray<Vec3>" << std::endl;
         std::cout << std::endl << "Testing Constructors" << std::endl;
         // Test constructors
         TArray<Vec3, TArrayAllocator<Vec3>> Vectors0;
@@ -1259,4 +1266,6 @@ void TArray_Test( int32 Argc, const char** Argv )
     }
 }
 
-#endif
+#endif // RUN_TARRAY_TEST
+
+#endif // RUN_TARRAY_TEST || RUN_TARRAY_BENCHMARKS

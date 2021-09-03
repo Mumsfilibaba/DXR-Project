@@ -615,9 +615,9 @@ void TString_Test( const char* Args )
 		std::cout << "operator> : " << std::boolalpha << (TestString     > L"Test")        << std::endl;
 		std::cout << "operator> : " << std::boolalpha << (CombinedString > CombinedString) << std::endl;
 
-		for ( char C : TestString )
+		for ( wchar_t C : TestString )
 		{
-			std::cout << C << std::endl;
+			std::wcout << C << std::endl;
 		}
 
 		for ( int32 Index = 0; Index < TestString.Length(); Index++ )

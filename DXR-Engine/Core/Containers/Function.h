@@ -79,7 +79,6 @@ private:
     FunctionType Func;
 };
 
-
 /* Bind a function with payload */
 template<typename FunctionType, typename... ArgTypes>
 FORCEINLINE auto Bind( FunctionType Function, ArgTypes&&... Args )
@@ -162,12 +161,14 @@ public:
     /* Default constructor */
     FORCEINLINE TFunction() noexcept
         : Storage()
+        , Size( 0 )
     {
     }
 
     /* Create from nullptr */
     FORCEINLINE TFunction( NullptrType ) noexcept
         : Storage()
+        , Size( 0 )
     {
     }
 
@@ -175,6 +176,7 @@ public:
     template<typename FunctorType>
     FORCEINLINE TFunction( FunctorType Functor ) noexcept
         : Storage()
+        , Size( 0 )
     {
         ConstructFrom<FunctorType>( Forward<FunctorType>( Functor ) );
     }
@@ -182,14 +184,17 @@ public:
     /* Copy constructor */
     FORCEINLINE TFunction( const TFunction& Other ) noexcept
         : Storage()
+        , Size( 0 )
     {
         CopyFrom( Other );
     }
 
     /* Move constructor */
     FORCEINLINE TFunction( TFunction&& Other ) noexcept
-        : Storage( Move( Other.Storage ) )
+        : Storage()
+        , Size( 0 )
     {
+        MoveFrom( Move( Other ) );
     }
 
     FORCEINLINE ~TFunction()
@@ -200,15 +205,16 @@ public:
     /* Cheacks weather the function is valid or not */
     FORCEINLINE bool IsValid() const noexcept
     {
-        return Storage.HasAllocation();
+        return (Size > 0);
     }
 
     /* Swap this and another function */
     FORCEINLINE void Swap( TFunction& Other ) noexcept
     {
-        TFunction Temp( Move( *this ) );
-        *this = Move( Other );
-        Other = Move( Temp );
+        TFunction TempFunction;
+        TempFunction.MoveFrom( Move( *this ) );
+        MoveFrom( Move( Other ) );
+        Other.MoveFrom( Move( TempFunction ) );
     }
 
     /* Assign a new functor */
@@ -222,7 +228,7 @@ public:
     /* Invoke the function */
     FORCEINLINE ReturnType Invoke( ArgTypes&&... Args ) noexcept
     {
-        IsValid();
+        Assert( IsValid() );
         return GetFunctor()->Invoke( Forward<ArgTypes>( Args )... );
     }
 
@@ -241,24 +247,14 @@ public:
     /* Copy assignment */
     FORCEINLINE TFunction& operator=( const TFunction& Other ) noexcept
     {
-        if ( this != &Other )
-        {
-            Release();
-            CopyFrom( Other );
-        }
-
+        TFunction( Other ).Swap( *this );
         return *this;
     }
 
     /* Move assignment */
     FORCEINLINE TFunction& operator=( TFunction&& Other ) noexcept
     {
-        if ( this != &Other )
-        {
-            Release();
-            Storage = Move( Other.Storage );
-        }
-
+        TFunction( Move( Other ) ).Swap( *this );
         return *this;
     }
 
@@ -274,10 +270,9 @@ private:
     /* Release the function */
     FORCEINLINE void Release() noexcept
     {
-        if ( Storage.HasAllocation() )
+        if ( IsValid() )
         {
             GetFunctor()->~IFunctor();
-            Storage.Free();
         }
     }
 
@@ -287,7 +282,9 @@ private:
     {
         Release();
 
-        void* Memory = Storage.Allocate( sizeof( TGenericFunctor<FunctorType> ) );
+        Size = sizeof( TGenericFunctor<FunctorType> );
+
+        void* Memory = Storage.Realloc( Size );
         new(Memory) TGenericFunctor<FunctorType>( Forward<FunctorType>( Functor ) );
     }
 
@@ -296,22 +293,37 @@ private:
     {
         if ( Other.IsValid() )
         {
-            Storage.Allocate( Other.Storage.GetSize() );
-            Other.GetFunctor()->Clone( Storage.Raw() );
+            Storage.Realloc( Other.Size );
+            Other.GetFunctor()->Clone( Storage.GetAllocation() );
+
+            Size = Other.Size;
         }
+        else
+        {
+            Size = 0;
+            Storage.Free();
+        }
+    }
+
+    FORCEINLINE void MoveFrom( TFunction&& Other )
+    {
+        Storage.MoveFrom( Move( Other.Storage ) );
+        Size = Other.Size;
+        Other.Size = 0;
     }
 
     /* Internal function that is used to retrive the functor pointer */
     FORCEINLINE IFunctor* GetFunctor() noexcept
     {
-        return reinterpret_cast<IFunctor*>(Storage.Raw());
+        return reinterpret_cast<IFunctor*>(Storage.GetAllocation());
     }
 
     /* Internal function that is used to retrive the functor pointer */
     FORCEINLINE const IFunctor* GetFunctor() const noexcept
     {
-        return reinterpret_cast<const IFunctor*>(Storage.Raw());
+        return reinterpret_cast<const IFunctor*>(Storage.GetAllocation());
     }
 
     AllocatorType Storage;
+    int32 Size;
 };

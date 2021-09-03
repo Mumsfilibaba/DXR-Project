@@ -191,7 +191,7 @@ private:
     {
         Release();
 
-        void* Memory = GetStorage().Allocate( sizeof( DelegateType ) );
+        void* Memory = AllocateStorage( sizeof( DelegateType ) );
         new (Memory) DelegateType( Forward<ConstructorArgs>( Args )... );
     }
 

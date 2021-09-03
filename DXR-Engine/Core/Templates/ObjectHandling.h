@@ -13,7 +13,7 @@
 
 /* Construct the objects in the range by calling the default contructor */
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type DefaultConstructRange( void* StartAddress, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type DefaultConstructRange( void* StartAddress, uint32 Count ) noexcept
 {
     while ( Count )
     {
@@ -63,7 +63,7 @@ FORCEINLINE void ConstructRangeFrom( void* StartAddress, uint32 Count, T&& Eleme
 
 /* Construct the objects in the range by calling the copy contructor */
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type CopyConstructRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyConstructRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
     while ( Count )
     {
@@ -90,7 +90,7 @@ FORCEINLINE void CopyConstruct( void* const Address, const T* Source ) noexcept
 
 /* Copy assign objects in range with the copy assignment operator */
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type CopyAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
 {
     while ( Count )
     {
@@ -117,7 +117,7 @@ FORCEINLINE void CopyConstruct( T* Destination, const T* Source ) noexcept
 
 /* Construct the objects in the range by calling the move contructor */
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsReallocatable<T>::Value>::Type MoveConstructRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<T>>::Value>::Type MoveConstructRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
     while ( Count )
     {
@@ -144,7 +144,7 @@ FORCEINLINE void MoveConstruct( void* const StartAddress, const T* Source ) noex
 
 /* Move assign objects in range with the move assignment operator */
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsReallocatable<T>::Value>::Type MoveAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<T>>::Value>::Type MoveAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
 {
     while ( Count )
     {
@@ -171,7 +171,7 @@ FORCEINLINE void MoveAssign( T* Destination, const T* Source ) noexcept
 
 /* Destruct the objects in the range by calling the destructor */
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value>::Type DestructRange( const T* StartObject, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type DestructRange( const T* StartObject, uint32 Count ) noexcept
 {
     while ( Count )
     {
@@ -283,7 +283,7 @@ FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type RelocateRange( 
 
 /* Compares elements in the range if they are equal or not */
 template<typename T>
-FORCEINLINE typename TEnableIf<!TIsTrivial<T>::Value, bool>::Type CompareRange( const T* LHS, const T* RHS, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value, bool>::Type CompareRange( const T* LHS, const T* RHS, uint32 Count ) noexcept
 {
     while ( Count )
     {

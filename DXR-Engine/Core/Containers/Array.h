@@ -816,10 +816,10 @@ private:
             /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
                 objects has references to themselves or childobjects that references these objects. */
             AllocatorType NewAllocator;
-            NewAllocator.Allocate( NewCapacity );
+            NewAllocator.Realloc( NewCapacity );
 
             /* Relocate existing elements */
-            RelocateRange<ElementType>( NewAllocator.Raw(), Data(), ArraySize );
+            RelocateRange<ElementType>( NewAllocator.GetAllocation(), Data(), ArraySize );
 
             /* Move allocator */
             Allocator.MoveFrom( Move( NewAllocator ) );
