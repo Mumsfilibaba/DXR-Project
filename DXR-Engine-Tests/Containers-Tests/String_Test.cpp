@@ -31,7 +31,9 @@ void TString_Test( const char* Args )
 		CStaticString<64> StaticString5 = Move(StaticString2);
 		PrintString( StaticString5 );
 
-		StaticString0.Append("Appended String");
+		StaticString0.Append( "Appended String" );
+		PrintString( StaticString0 );
+		StaticString0.Append( '_' );
 		PrintString( StaticString0 );
 		StaticString5.Append( StaticString0 );
 		PrintString( StaticString5 );
@@ -40,7 +42,7 @@ void TString_Test( const char* Args )
 		StaticString6.Format( "Formatted String=%.4f", 0.004f );
 		PrintString( StaticString6 );
 
-		StaticString6.Append( ' ' );
+		StaticString6.Append( '_' );
 		PrintString( StaticString6 );
 
 		StaticString6.AppendFormat( "Formatted String=%.4f", 0.0077f );
@@ -103,6 +105,9 @@ void TString_Test( const char* Args )
 		PrintString( CompareString0 );
 		
 		CompareString0.Replace( "upper", 4 );
+		PrintString( CompareString0 );
+		
+		CompareString0.Replace( 'X', 0 );
 		PrintString( CompareString0 );
 		
 		CStaticString<64> CombinedString = CompareString0 + '5';
@@ -183,6 +188,8 @@ void TString_Test( const char* Args )
 
 		StaticString0.Append(L"Appended String");
 		PrintWideString( StaticString0 );
+		StaticString0.Append( L'_' );
+		PrintWideString( StaticString0 );
 		StaticString5.Append( StaticString0 );
 		PrintWideString( StaticString5 );
 
@@ -190,7 +197,7 @@ void TString_Test( const char* Args )
 		StaticString6.Format( L"Formatted String=%.4f", 0.004f );
 		PrintWideString( StaticString6 );
 
-		StaticString6.Append( ' ' );
+		StaticString6.Append( '_' );
 		PrintWideString( StaticString6 );
 
 		StaticString6.AppendFormat( L"Formatted String=%.4f", 0.0077f );
@@ -255,6 +262,9 @@ void TString_Test( const char* Args )
 		CompareString0.Replace( L"upper", 4 );
 		PrintWideString( CompareString0 );
 		
+		CompareString0.Replace( L'X', 0 );
+		PrintWideString( CompareString0 );
+		
 		WStaticString<64> CombinedString = CompareString0 + L'5';
 		PrintWideString( CombinedString );
 		
@@ -304,14 +314,14 @@ void TString_Test( const char* Args )
 		
 		for (int32 Index = 0; Index < TestString.Length(); Index++)
 		{
-			std::wcout << Index << '=' << TestString[Index] << std::endl;
+			std::wcout << Index << L'=' << TestString[Index] << std::endl;
 		}
 		
 		CStaticString<64> CharCompareString = WideToChar<64>(CompareString0);
 		PrintString(CharCompareString);
 	}
 
-		{
+	{
 		std::cout << std::endl << "----Testing CString----" << std::endl << std::endl;
 
 		CStringView StringView( "Hello StringView" );
@@ -331,6 +341,8 @@ void TString_Test( const char* Args )
 
 		String0.Append( "Appended String" );
 		PrintString( String0 );
+		String0.Append( '_' );
+		PrintString( String0 );
 		String5.Append( String0 );
 		PrintString( String5 );
 
@@ -338,7 +350,7 @@ void TString_Test( const char* Args )
 		String6.Format( "Formatted String=%.4f", 0.004f );
 		PrintString( String6 );
 
-		String6.Append( ' ' );
+		String6.Append( '_' );
 		PrintString( String6 );
 
 		String6.AppendFormat( "Formatted String=%.4f", 0.0077f );
@@ -386,7 +398,7 @@ void TString_Test( const char* Args )
 		CString CompareString1 = "compare";
 		PrintString( CompareString1 );
 
-		std::cout << "Compare=" << CompareString0.Compare( CompareString1 ) << std::endl;
+		std::cout << "Compare="       << CompareString0.Compare( CompareString1 )       << std::endl;
 		std::cout << "CompareNoCase=" << CompareString0.CompareNoCase( CompareString1 ) << std::endl;
 
 		CompareString1.Resize( 20, 'A' );
@@ -401,6 +413,9 @@ void TString_Test( const char* Args )
 		PrintString( CompareString0 );
 
 		CompareString0.Replace( "upper", 4 );
+		PrintString( CompareString0 );
+			
+		CompareString0.Replace( 'X', 0 );
 		PrintString( CompareString0 );
 
 		CString CombinedString = CompareString0 + '5';
@@ -457,5 +472,160 @@ void TString_Test( const char* Args )
 
 		WString WideCompareString = CharToWide( CompareString0 );
 		PrintWideString( WideCompareString );
+	}
+	
+	{
+		std::cout << std::endl << "----Testing WString----" << std::endl << std::endl;
+
+		WStringView StringView( L"Hello StringView" );
+
+		const wchar_t* SomeWideStringInsteadOfArgs = L"/Users/SomeFolder/Blabla/BlaBla";
+		
+		WString String0;
+		PrintWideString( String0 );
+		WString String1 = L"Hello String";
+		PrintWideString( String1 );
+		WString String2 = WString( SomeWideStringInsteadOfArgs, 7 );
+		PrintWideString( String2 );
+		WString String3 = WString( StringView );
+		PrintWideString( String3 );
+		WString String4 = String1;
+		PrintWideString( String4 );
+		WString String5 = Move( String2 );
+		PrintWideString( String5 );
+
+		String0.Append( L"Appended String" );
+		PrintWideString( String0 );
+		String0.Append( L'_' );
+		PrintWideString( String0 );
+		String5.Append( String0 );
+		PrintWideString( String5 );
+
+		WString String6;
+		String6.Format( L"Formatted String=%.4f", 0.004f );
+		PrintWideString( String6 );
+
+		String6.Append( '_' );
+		PrintWideString( String6 );
+
+		String6.AppendFormat( L"Formatted String=%.4f", 0.0077f );
+		PrintWideString( String6 );
+
+		WString LowerString6 = String6.ToLower();
+		PrintWideString( LowerString6 );
+
+		WString UpperString6 = String6.ToUpper();
+		PrintWideString( UpperString6 );
+
+		String6.Clear();
+		PrintWideString( String6 );
+
+		String6.Append( L"    Trimmable String    " );
+		PrintWideString( String6 );
+
+		WString TrimmedString6 = String6.Trim();
+		TrimmedString6.Append( L'*' );
+		PrintWideString( TrimmedString6 );
+
+		String6.Clear();
+		PrintWideString( String6 );
+
+		String6.Append( L"123456789" );
+		PrintWideString( String6 );
+
+		WString ReversedString6 = String6.Reverse();
+		PrintWideString( ReversedString6 );
+
+		WString SearchString = L"0123Search89Me";
+		PrintWideString( SearchString );
+
+		std::cout << "Position=" << SearchString.Find( L"Me" ) << std::endl;
+		std::cout << "Position=" << SearchString.Find( L'M' ) << std::endl;
+
+		std::cout << "Position=" << SearchString.FindOneOf( L"ec" ) << std::endl;
+		std::cout << "Position=" << SearchString.FindOneOf( L"Mc" ) << std::endl;
+
+		std::cout << "Position=" << SearchString.FindOneNotOf( L"0123456789" ) << std::endl;
+
+		WString CompareString0 = L"COMPARE";
+		PrintWideString( CompareString0 );
+
+		WString CompareString1 = L"compare";
+		PrintWideString( CompareString1 );
+
+		std::cout << "Compare="       << CompareString0.Compare( CompareString1 )       << std::endl;
+		std::cout << "CompareNoCase=" << CompareString0.CompareNoCase( CompareString1 ) << std::endl;
+
+		CompareString1.Resize( 20, 'A' );
+		PrintWideString( CompareString1 );
+
+		wchar_t Buffer[6];
+		Buffer[5] = 0;
+		CompareString1.Copy( Buffer, 5, 3 );
+		std::wcout << "Buffer=" << Buffer << std::endl;
+
+		CompareString0.Insert( L"lower", 4 );
+		PrintWideString( CompareString0 );
+
+		CompareString0.Replace( L"upper", 4 );
+		PrintWideString( CompareString0 );
+			
+		CompareString0.Replace( 'X', 0 );
+		PrintWideString( CompareString0 );
+
+		WString CombinedString = CompareString0 + L'5';
+		PrintWideString( CombinedString );
+
+		CombinedString = L'5' + CombinedString;
+		PrintWideString( CombinedString );
+
+		CombinedString = CombinedString + L"Appended";
+		PrintWideString( CombinedString );
+
+		CombinedString = L"Inserted" + CombinedString;
+		PrintWideString( CombinedString );
+
+		CombinedString = CombinedString + CombinedString;
+		PrintWideString( CombinedString );
+
+		WString TestString = L"Test";
+		PrintWideString( TestString );
+
+		std::cout << "operator== : " << std::boolalpha << (L"Test"        == TestString)     << std::endl;
+		std::cout << "operator== : " << std::boolalpha << (TestString     == L"Test")        << std::endl;
+		std::cout << "operator== : " << std::boolalpha << (CombinedString == CombinedString) << std::endl;
+
+		std::cout << "operator!= : " << std::boolalpha << (L"Test"        != TestString)     << std::endl;
+		std::cout << "operator!= : " << std::boolalpha << (TestString     != L"Test")        << std::endl;
+		std::cout << "operator!= : " << std::boolalpha << (CombinedString != CombinedString) << std::endl;
+
+		std::cout << "operator<= : " << std::boolalpha << (L"Test"        <= TestString)     << std::endl;
+		std::cout << "operator<= : " << std::boolalpha << (TestString     <= L"Test")        << std::endl;
+		std::cout << "operator<= : " << std::boolalpha << (CombinedString <= CombinedString) << std::endl;
+
+		std::cout << "operator< : " << std::boolalpha << (L"Test"        < TestString)     << std::endl;
+		std::cout << "operator< : " << std::boolalpha << (TestString     < L"Test")        << std::endl;
+		std::cout << "operator< : " << std::boolalpha << (CombinedString < CombinedString) << std::endl;
+
+		std::cout << "operator>= : " << std::boolalpha << (L"Test"        >= TestString)     << std::endl;
+		std::cout << "operator>= : " << std::boolalpha << (TestString     >= L"Test")        << std::endl;
+		std::cout << "operator>= : " << std::boolalpha << (CombinedString >= CombinedString) << std::endl;
+
+		std::cout << "operator> : " << std::boolalpha << (L"Test"        > TestString)     << std::endl;
+		std::cout << "operator> : " << std::boolalpha << (TestString     > L"Test")        << std::endl;
+		std::cout << "operator> : " << std::boolalpha << (CombinedString > CombinedString) << std::endl;
+
+		for ( char C : TestString )
+		{
+			std::cout << C << std::endl;
+		}
+
+		for ( int32 Index = 0; Index < TestString.Length(); Index++ )
+		{
+			std::wcout << Index << L'=' << TestString[Index] << std::endl;
+		}
+
+		CString CharCompareString = WideToChar( CompareString0 );
+		PrintString( CharCompareString );
 	}
 }

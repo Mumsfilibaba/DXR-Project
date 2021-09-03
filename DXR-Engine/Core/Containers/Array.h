@@ -82,7 +82,7 @@ public:
 
     /* Copy-constructs an array from another array */
     template<typename ArrayType, typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
-    FORCEINLINE TArray( const ArrayType& Other ) noexcept
+    FORCEINLINE explicit TArray( const ArrayType& Other ) noexcept
         : Allocator()
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
@@ -280,11 +280,7 @@ public:
     template<typename... ArgTypes>
     inline ElementType& Emplace( ArgTypes&&... Args ) noexcept
     {
-        if ( ArraySize == ArrayCapacity )
-        {
-            const SizeType NewCapacity = GetGrowCapacity( ArraySize + 1, ArrayCapacity );
-            ReserveStorage( NewCapacity );
-        }
+        GrowIfNeeded();
 
         new(Data() + (ArraySize++)) ElementType( Forward<ArgTypes>( Args )... );
         return LastElement();
@@ -340,6 +336,7 @@ public:
     inline void Insert( SizeType Position, const ElementType* InputArray, SizeType Count ) noexcept
     {
         Assert( Position <= ArraySize );
+        Assert( InputArray != nullptr );
 
         /* Special case if at the end */
         if ( Position == ArraySize )
@@ -348,8 +345,6 @@ public:
         }
         else
         {
-            Assert( InputArray != nullptr );
-
             /* Make room within array and allocate if necessary */
             ReserveForInsertion( Position, Count );
             CopyConstructRange<ElementType>( Data() + Position, InputArray, Count );
@@ -373,18 +368,14 @@ public:
     }
 
     /* Inserts an array at the end */
-    inline void Append( const ElementType* InputArray, SizeType Count ) noexcept
+    inline void Append( const ElementType* InputArray, SizeType NumElements ) noexcept
     {
         Assert( InputArray != nullptr );
 
-        const SizeType NewSize = ArraySize + Count;
-        if ( NewSize >= ArrayCapacity )
-        {
-            const SizeType NewCapacity = GetGrowCapacity( ArraySize + Count, ArrayCapacity );
-            ReserveStorage( NewCapacity );
-        }
+        const SizeType NewSize = ArraySize + NumElements;
+        GrowIfNeeded( NewSize );
 
-        CopyConstructRange<ElementType>( Data() + ArraySize, InputArray, Count );
+        CopyConstructRange<ElementType>( Data() + ArraySize, InputArray, NumElements );
         ArraySize = NewSize;
     }
 
@@ -429,7 +420,7 @@ public:
         {
             DestructRange<ElementType>( Data() + Position, Count );
             RelocateRange<ElementType>( Data() + Position, Data() + Position + Count, ArraySize - (Position + Count) );
-            ArraySize = ArraySize - Count;
+            ArraySize -= Count;
         }
     }
 
@@ -506,13 +497,13 @@ public:
     /* Returns the data of the container */
     FORCEINLINE ElementType* Data() noexcept
     {
-        return Allocator.Raw();
+        return Allocator.GetAllocation();
     }
 
     /* Returns the data of the container */
     FORCEINLINE const ElementType* Data() const noexcept
     {
-        return Allocator.Raw();
+        return Allocator.GetAllocation();
     }
 
     /* Returns the last valid index the container */
@@ -564,14 +555,6 @@ public:
     {
         Assert( (Count < ArraySize) && (Offset + Count < ArraySize) );
         return TArrayView<ElementType>( Data() + Offset, Count );
-    }
-
-    /* Allocate and copy the contents into a uniqueptr */
-    FORCEINLINE TUniquePtr<ElementType[]> GetUniquePtr() const noexcept
-    {
-        ElementType* Memory = Memory::Malloc<ElementType>( Size() );
-        CopyConstructRange<ElementType>( Memory, Data(), Size() );
-        return TUniquePtr<ElementType[]>( Memory );
     }
 
     /* Create a heap of the array */
@@ -771,7 +754,7 @@ private:
     {
         if ( ArrayCapacity < Count )
         {
-            Allocator.Allocate( Count );
+            Allocator.Realloc( Count );
             ArrayCapacity = Count;
         }
 
@@ -804,8 +787,7 @@ private:
     {
         if ( FromArray.Data() != Data() )
         {
-            /* Since the memory remains the same we should not need to use move-assignment or constructor.
-               However, still need to call our destructors */
+            /* Since the memory remains the same we should not need to use move-assignment or constructor. However, still need to call our destructors */
             DestructRange<ElementType>( Data(), Size() );
             Allocator.MoveFrom( Move( FromArray.Allocator ) );
 
@@ -817,33 +799,35 @@ private:
     }
 
     /* Reserves storage */
-    FORCEINLINE void ReserveStorage( const SizeType NewCapacity ) noexcept
+    template<typename U = T>
+    FORCEINLINE typename TEnableIf<TIsReallocatable<U>::Value>::Type ReserveStorage( const SizeType NewCapacity ) noexcept
     {
         /* Simple Memory::Realloc for trivial elements */
-        if constexpr ( !TIsReallocatable<ElementType>::Value )
+        Allocator.Realloc( NewCapacity );
+        ArrayCapacity = NewCapacity;
+    }
+
+    /* Reserves storage */
+    template<typename U = T>
+    FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<U>>::Value>::Type ReserveStorage( const SizeType NewCapacity ) noexcept
+    {
+        if ( ArrayCapacity )
         {
-            if ( ArrayCapacity )
-            {
-                /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
-                    objects has references to themselves or childobjects that references these objects. */
-                AllocatorType NewAllocator;
-                NewAllocator.Allocate( NewCapacity );
+            /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
+                objects has references to themselves or childobjects that references these objects. */
+            AllocatorType NewAllocator;
+            NewAllocator.Allocate( NewCapacity );
 
-                /* Relocate existing elements */
-                RelocateRange<ElementType>( NewAllocator.Raw(), Data(), ArraySize );
+            /* Relocate existing elements */
+            RelocateRange<ElementType>( NewAllocator.Raw(), Data(), ArraySize );
 
-                /* Move allocator */
-                Allocator.MoveFrom( Move( NewAllocator ) );
-            }
-            else
-            {
-                /* Allocate new memory */
-                Allocator.Allocate( NewCapacity );
-            }
+            /* Move allocator */
+            Allocator.MoveFrom( Move( NewAllocator ) );
         }
         else
         {
-            Allocator.Allocate( NewCapacity );
+            /* Allocate new memory */
+            Allocator.Realloc( NewCapacity );
         }
 
         ArrayCapacity = NewCapacity;
@@ -856,30 +840,10 @@ private:
         if ( NewSize >= ArrayCapacity )
         {
             const SizeType NewCapacity = GetGrowCapacity( NewSize, ArrayCapacity );
-            Assert( NewCapacity >= ArrayCapacity );
+            ReserveStorage(NewCapacity);
 
-            /* Simpler path for trivial elements */
-            if constexpr ( !TIsReallocatable<ElementType>::Value )
-            {
-                /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
-                   objects has references to themselves or childobjects that references these objects. */
-                AllocatorType NewAllocator;
-                NewAllocator.Allocate( NewCapacity );
-
-                /* Elements before new area */
-                RelocateRange<ElementType>( NewAllocator.Raw(), Data(), Position );
-
-                /* Elements after new area */
-                RelocateRange<ElementType>( NewAllocator.Raw() + Position + ElementCount, Data() + Position, ArraySize - Position );
-                Allocator.MoveFrom( Move( NewAllocator ) );
-            }
-            else
-            {
-                Allocator.Allocate( NewCapacity );
-
-                /* Elements after new area */
-                RelocateRange<ElementType>( Data() + Position + ElementCount, Data() + Position, ArraySize - Position );
-            }
+            /* Elements after new area */
+            RelocateRange<ElementType>( Data() + Position + ElementCount, Data() + Position, ArraySize - Position );
 
             /* Update capacity */
             ArrayCapacity = NewCapacity;
@@ -891,10 +855,27 @@ private:
         }
     }
 
+    /* Pop range internally, avoids branches when not needed */
     FORCEINLINE void InternalPopRange( SizeType Count ) noexcept
     {
         ArraySize = ArraySize - Count;
         DestructRange<ElementType>( Data() + ArraySize, Count );
+    }
+
+    /* Grows the array if the size is too small */
+    FORCEINLINE void GrowIfNeeded() noexcept
+    {
+        GrowIfNeeded( ArraySize );
+    }
+
+    /* Grows the array if the size is too small */
+    FORCEINLINE void GrowIfNeeded( SizeType NewSize ) noexcept
+    {
+        if ( NewSize >= ArrayCapacity )
+        {
+            const SizeType NewCapacity = GetGrowCapacity( NewSize + 1, ArrayCapacity );
+            ReserveStorage( NewCapacity );
+        }
     }
 
     // Get index of left child of node at index
@@ -964,3 +945,12 @@ struct TIsTArrayType<TArray<T, AllocatorType>>
         Value = true
     };
 };
+
+/* Allocate and copy the contents into a uniqueptr */
+template<typename T, typename AllocatorType>
+inline TUniquePtr<T[]> MakeUniquePtr( const TArray<T, AllocatorType>& Array ) noexcept
+{
+    T* Memory = Memory::Malloc<T>( Array.Size() );
+    CopyConstructRange<T>( Memory, Array.Data(), Array.Size() );
+    return TUniquePtr<T[]>( Memory );
+}
