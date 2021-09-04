@@ -76,7 +76,7 @@ public:
     /* Swaps this array with another */
     FORCEINLINE void Swap( TStaticArray& Other ) noexcept
     {
-		TStaticArray TempArray( Move( *this ) );
+        TStaticArray TempArray( Move( *this ) );
         *this = Move( Other );
         Other = Move( TempArray );
     }
@@ -157,7 +157,7 @@ public:
     }
 
 public:
-    
+
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE IteratorType StartIterator() noexcept
     {

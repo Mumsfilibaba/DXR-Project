@@ -68,7 +68,7 @@ private:
 template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TPointerReferencedStorage : private DeleterType
 {
-    using Super = DeleterType; 
+    using Super = DeleterType;
 
 public:
     using ElementType = typename TRemoveExtent<T>::Type;
@@ -488,7 +488,7 @@ public:
 
     /* Retrive element at a certain index */
     template<typename U = T>
-    FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type 
+    FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[]( SizeType Index ) const noexcept
     {
         Assert( IsValid() );
@@ -825,7 +825,7 @@ public:
 
     /* Retrive element at a certain index */
     template<typename U = T>
-    FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type 
+    FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[]( SizeType Index ) const noexcept
     {
         Assert( IsValid() );
@@ -854,7 +854,7 @@ public:
 
     /* Copy assignment */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddReference<TWeakPtr>::LValue>::Type 
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddReference<TWeakPtr>::LValue>::Type
         operator=( const TWeakPtr<OtherType, OtherDeleterType>& RHS ) noexcept
     {
         TWeakPtr( RHS ).Swap( *this );
@@ -863,7 +863,7 @@ public:
 
     /* Move assignment */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddReference<TWeakPtr>::LValue>::Type 
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddReference<TWeakPtr>::LValue>::Type
         operator=( TWeakPtr<OtherType, OtherDeleterType>&& RHS ) noexcept
     {
         TWeakPtr( Move( RHS ) ).Swap( *this );

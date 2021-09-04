@@ -70,7 +70,7 @@ public:
         return (Allocation != nullptr);
     }
 
-        /* Checks weather there is a heap allocation or not */
+    /* Checks weather there is a heap allocation or not */
     FORCEINLINE bool IsHeapAllocated() const noexcept
     {
         return true;
@@ -79,7 +79,7 @@ public:
     /* Calculates size for a certain number of elements */
     static FORCEINLINE SizeType CalculateSize( SizeType NumElements ) noexcept
     {
-        return sizeof(ElementType) * NumElements;
+        return sizeof( ElementType ) * NumElements;
     }
 
 private:
@@ -91,7 +91,7 @@ template<typename InlineType, int32 NumElements>
 class TInlineAllocation
 {
 public:
-    
+
     using SizeType = int32;
 
     TInlineAllocation() = default;
@@ -117,7 +117,7 @@ private:
 
     enum
     {
-        InlineBytes = NumElements * sizeof(InlineType)
+        InlineBytes = NumElements * sizeof( InlineType )
     };
 
     int8 InlineAllocation[InlineBytes];
@@ -130,7 +130,7 @@ class TInlineArrayAllocator
 public:
 
     using ElementType = T;
-    using SizeType    = int32;
+    using SizeType = int32;
 
     /* Default constructor */
     FORCEINLINE TInlineArrayAllocator() noexcept
@@ -191,7 +191,7 @@ public:
         // Relocate static storage if necessary
         if ( !Other.DynamicAllocator.HasAllocation() )
         {
-			RelocateRange<ElementType>( InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements );
+            RelocateRange<ElementType>( InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements );
         }
 
         DynamicAllocator.MoveFrom( Move( Other.DynamicAllocator ) );
@@ -212,7 +212,7 @@ public:
     /* Calculates size for a certain number of elements */
     static FORCEINLINE SizeType CalculateSize( SizeType NumElements ) noexcept
     {
-        return sizeof(ElementType) * NumElements;
+        return sizeof( ElementType ) * NumElements;
     }
 
     /* Retrive the allocation */

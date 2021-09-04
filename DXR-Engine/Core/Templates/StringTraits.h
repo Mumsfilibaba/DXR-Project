@@ -16,8 +16,8 @@ class TStringTraits<char>
 {
 public:
 
-    using CharType     = char;
-    using Pointer      = CharType*;
+    using CharType = char;
+    using Pointer = CharType*;
     using ConstPointer = const Pointer;
 
     static constexpr CharType Null = '\0';
@@ -130,8 +130,8 @@ class TStringTraits<wchar_t>
 {
 public:
 
-    using CharType     = wchar_t;
-    using Pointer      = CharType*;
+    using CharType = wchar_t;
+    using Pointer = CharType*;
     using ConstPointer = const Pointer;
 
     static constexpr CharType Null = L'\0';

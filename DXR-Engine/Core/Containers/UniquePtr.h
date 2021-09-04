@@ -83,7 +83,7 @@ public:
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset( OtherType* NewPtr ) noexcept
     {
-		Reset( static_cast<ElementType*>(NewPtr) );
+        Reset( static_cast<ElementType*>(NewPtr) );
     }
 
     /* Swaps two unique pointers */
@@ -261,7 +261,7 @@ public:
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset( OtherType* NewPtr ) noexcept
     {
-		Reset( static_cast<ElementType*>(NewPtr) );
+        Reset( static_cast<ElementType*>(NewPtr) );
     }
 
     /* Swaps two unique pointers */

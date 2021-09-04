@@ -83,7 +83,7 @@ public:
     {
         return 0;
     }
-    
+
     FORCEINLINE static int64 InterlockedExchange( volatile int64* Dest, int64 ExChange )
     {
         return 0;

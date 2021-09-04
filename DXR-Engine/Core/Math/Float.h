@@ -49,7 +49,7 @@ struct SFloat64
         {
             uint64 Mantissa : 52;
             uint64 Exponent : 11;
-            uint64 Sign     : 1;
+            uint64 Sign : 1;
         };
     };
 };
@@ -101,7 +101,7 @@ struct SFloat32
         {
             uint32 Mantissa : 23;
             uint32 Exponent : 8;
-            uint32 Sign     : 1;
+            uint32 Sign : 1;
         };
     };
 };
@@ -248,7 +248,7 @@ struct SFloat16
         {
             uint16 Mantissa : 10;
             uint16 Exponent : 5;
-            uint16 Sign     : 1;
+            uint16 Sign : 1;
         };
     };
 };

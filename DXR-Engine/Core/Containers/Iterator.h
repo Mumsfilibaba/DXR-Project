@@ -79,17 +79,17 @@ public:
     FORCEINLINE TArrayIterator operator++() noexcept
     {
         Index++;
-       
-		Assert( IsValid() );
+
+        Assert( IsValid() );
         return *this;
     }
 
     /* Increment the iterator */
     FORCEINLINE TArrayIterator operator++( int ) noexcept
     {
-		TArrayIterator NewIterator( *this );
+        TArrayIterator NewIterator( *this );
         Index++;
-		
+
         Assert( IsValid() );
         return NewIterator;
     }
@@ -98,17 +98,17 @@ public:
     FORCEINLINE TArrayIterator operator--() noexcept
     {
         Index--;
-        
-		Assert( IsValid() );
+
+        Assert( IsValid() );
         return *this;
     }
 
     /* Decrement the iterator */
     FORCEINLINE TArrayIterator operator--( int ) noexcept
     {
-		TArrayIterator NewIterator( *this );
+        TArrayIterator NewIterator( *this );
         Index--;
-		
+
         Assert( IsValid() );
         return NewIterator;
     }
@@ -116,7 +116,7 @@ public:
     /* Add offset to iterator and return a new */
     FORCEINLINE TArrayIterator operator+( SizeType RHS ) const noexcept
     {
-		TArrayIterator NewIterator( *this );
+        TArrayIterator NewIterator( *this );
         return NewIterator += RHS;
     }
 
@@ -131,7 +131,7 @@ public:
     FORCEINLINE TArrayIterator& operator+=( SizeType RHS ) noexcept
     {
         Index += RHS;
-		
+
         Assert( IsValid() );
         return *this;
     }
@@ -140,7 +140,7 @@ public:
     FORCEINLINE TArrayIterator& operator-=( SizeType RHS ) noexcept
     {
         Index -= RHS;
-		
+
         Assert( IsValid() );
         return *this;
     }
@@ -173,7 +173,7 @@ private:
 template<typename ArrayType, typename ElementType>
 FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+( typename TArrayIterator<ArrayType, ElementType>::SizeType LHS, const TArrayIterator<ArrayType, ElementType>& RHS ) noexcept
 {
-	TArrayIterator NewIterator( RHS );
+    TArrayIterator NewIterator( RHS );
     return NewIterator += LHS;
 }
 
@@ -257,9 +257,9 @@ public:
     /* Add to the iterator */
     FORCEINLINE TReverseArrayIterator operator++( int ) noexcept
     {
-		TReverseArrayIterator NewIterator( *this );
+        TReverseArrayIterator NewIterator( *this );
         Index--;
-		
+
         Assert( IsValid() );
         return NewIterator;
     }
@@ -268,7 +268,7 @@ public:
     FORCEINLINE TReverseArrayIterator operator--() noexcept
     {
         Index++;
-		
+
         Assert( IsValid() );
         return *this;
     }
@@ -277,8 +277,8 @@ public:
     FORCEINLINE TReverseArrayIterator operator--( int ) noexcept
     {
         TReverseArrayIterator NewIterator( *this );
-		NewIterator++;
-		
+        NewIterator++;
+
         Assert( IsValid() );
         return NewIterator;
     }
@@ -286,14 +286,14 @@ public:
     /* Add offset to iterator and return a new */
     FORCEINLINE TReverseArrayIterator operator+( SizeType RHS ) const noexcept
     {
-		TReverseArrayIterator NewIterator( *this );
+        TReverseArrayIterator NewIterator( *this );
         return NewIterator += RHS; // Uses operator, therefore +=
     }
 
     /* Subtract offset from iterator and return a new */
     FORCEINLINE TReverseArrayIterator operator-( SizeType RHS ) const noexcept
     {
-		TReverseArrayIterator NewIterator( *this );
+        TReverseArrayIterator NewIterator( *this );
         return NewIterator -= RHS; // Uses operator, therefore -=
     }
 
@@ -301,7 +301,7 @@ public:
     FORCEINLINE TReverseArrayIterator& operator+=( SizeType RHS ) noexcept
     {
         Index -= RHS;
-		
+
         Assert( IsValid() );
         return *this;
     }
@@ -310,7 +310,7 @@ public:
     FORCEINLINE TReverseArrayIterator& operator-=( SizeType RHS ) noexcept
     {
         Index += RHS;
-		
+
         Assert( IsValid() );
         return *this;
     }
@@ -397,7 +397,7 @@ public:
     FORCEINLINE TTreeIterator operator++() noexcept
     {
         Assert( IsValid() );
-		
+
         Node = Node->GetNext();
         return *this;
     }
@@ -416,7 +416,7 @@ public:
     FORCEINLINE TTreeIterator operator--() noexcept
     {
         Assert( IsValid() );
-		
+
         Node = Node->GetPrevious();
         return *this;
     }

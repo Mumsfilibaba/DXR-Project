@@ -212,22 +212,22 @@ public:
             {
                 ReserveStorage( NewSize );
             }
-			
-			// NewSize is always larger than arraysize...
-			SizeType NumElementsToConstruct = NewSize - ArraySize;
-			ElementType* LastElementPtr     = Data()  + ArraySize;
 
-			// ...However, assert just in case
-			Assert( NumElementsToConstruct > 0 );
-			
-			DefaultConstructRange<ElementType>( LastElementPtr, NumElementsToConstruct );
+            // NewSize is always larger than arraysize...
+            SizeType NumElementsToConstruct = NewSize - ArraySize;
+            ElementType* LastElementPtr = Data() + ArraySize;
+
+            // ...However, assert just in case
+            Assert( NumElementsToConstruct > 0 );
+
+            DefaultConstructRange<ElementType>( LastElementPtr, NumElementsToConstruct );
             ArraySize = NewSize;
         }
         else if ( NewSize < ArraySize )
         {
-			SizeType NumElementsToDestruct = ArraySize - NewSize;
-			Assert( NumElementsToDestruct > 0);
-			
+            SizeType NumElementsToDestruct = ArraySize - NewSize;
+            Assert( NumElementsToDestruct > 0 );
+
             InternalPopRange( NumElementsToDestruct );
         }
     }
@@ -242,22 +242,22 @@ public:
                 ReserveStorage( NewSize );
             }
 
-			// NewSize is always larger than arraysize...
-			SizeType NumElementsToConstruct = NewSize - ArraySize;
-			ElementType* LastElementPtr     = Data()  + ArraySize;
+            // NewSize is always larger than arraysize...
+            SizeType NumElementsToConstruct = NewSize - ArraySize;
+            ElementType* LastElementPtr = Data() + ArraySize;
 
-			// ...However, assert just in case
-			Assert( NumElementsToConstruct > 0 );
-			
+            // ...However, assert just in case
+            Assert( NumElementsToConstruct > 0 );
+
             ConstructRangeFrom<ElementType>( LastElementPtr, NumElementsToConstruct, Element );
             ArraySize = NewSize;
         }
         else if ( NewSize < ArraySize )
         {
-			SizeType NumElementsToDestruct = ArraySize - NewSize;
-			Assert( NumElementsToDestruct > 0);
-			
-			InternalPopRange( NumElementsToDestruct );
+            SizeType NumElementsToDestruct = ArraySize - NewSize;
+            Assert( NumElementsToDestruct > 0 );
+
+            InternalPopRange( NumElementsToDestruct );
         }
     }
 
@@ -840,7 +840,7 @@ private:
         if ( NewSize >= ArrayCapacity )
         {
             const SizeType NewCapacity = GetGrowCapacity( NewSize, ArrayCapacity );
-            ReserveStorage(NewCapacity);
+            ReserveStorage( NewCapacity );
 
             /* Elements after new area */
             RelocateRange<ElementType>( Data() + Position + ElementCount, Data() + Position, ArraySize - Position );
@@ -900,7 +900,7 @@ private:
 
         while ( true )
         {
-            const SizeType Left  = LeftIndex( StartIndex );
+            const SizeType Left = LeftIndex( StartIndex );
             const SizeType Right = RightIndex( StartIndex );
 
             if ( Left < Size && At( Left ) > At( Largest ) )
@@ -927,7 +927,7 @@ private:
 
     static FORCEINLINE SizeType GetGrowCapacity( SizeType NewSize, SizeType CurrentCapacity ) noexcept
     {
-        return NewSize + SizeType(CurrentCapacity * 0.5f);
+        return NewSize + SizeType( CurrentCapacity * 0.5f );
     }
 
     /* Allocator contains the pointer */

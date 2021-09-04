@@ -173,7 +173,7 @@ public:
     /* Format string with a va_list (similar to snprintf) */
     FORCEINLINE void FormatV( const CharType* Format, va_list ArgList ) noexcept
     {
-        SizeType WrittenChars = StringTraits::PrintVA( Characters, CharCount-1, Format, ArgList );
+        SizeType WrittenChars = StringTraits::PrintVA( Characters, CharCount - 1, Format, ArgList );
         if ( WrittenChars < CharCount )
         {
             Len = WrittenChars;
@@ -332,12 +332,12 @@ public:
     FORCEINLINE void ReverseInline() noexcept
     {
         CharType* Start = Characters;
-        CharType* End   = Start + Len;
+        CharType* End = Start + Len;
         while ( Start < End )
         {
-			End--;
+            End--;
             ::Swap<CharType>( *Start, *End );
-			Start++;
+            Start++;
         }
     }
 
@@ -477,7 +477,7 @@ public:
 
         // Calculate the offset to the end
         SizeType Length = (Position == 0) ? Len : NMath::Min( Position, Len );
-        
+
         const CharType* Start = CStr();
         const CharType* End = Start + Length;
         while ( End != Start )
@@ -508,7 +508,7 @@ public:
     FORCEINLINE SizeType ReverseFind( CharType Char, SizeType Position = 0 ) const noexcept
     {
         Assert( (Position < Len) || (Position == 0) );
-        
+
         if ( StringTraits::IsTerminator( Char ) || (Len == 0) )
         {
             return Len;
@@ -599,7 +599,7 @@ public:
         }
 
         SizeType Pos = static_cast<SizeType>(StringTraits::Span( CStr() + Position, InString ));
-		SizeType Ret = Pos + Position;
+        SizeType Ret = Pos + Position;
         if ( Ret >= Len )
         {
             return InvalidPosition;
@@ -687,12 +687,12 @@ public:
         // Make room for string
         CharType* Src = Data() + Position;
         CharType* Dst = Src + InLength;
-		
-		const uint64 MoveSize = Len - Position;
-		StringTraits::Move( Dst, Src, MoveSize );
+
+        const uint64 MoveSize = Len - Position;
+        StringTraits::Move( Dst, Src, MoveSize );
 
         // Copy String
-		StringTraits::Copy( Src, InString, InLength );
+        StringTraits::Copy( Src, InString, InLength );
 
         Len += InLength;
         Characters[Len] = StringTraits::Null;
@@ -701,19 +701,19 @@ public:
     /* Insert a character at position */
     FORCEINLINE void Insert( CharType Char, SizeType Position ) noexcept
     {
-		Assert( (Position < Len) && (Len + 1 < CharCount) );
+        Assert( (Position < Len) && (Len + 1 < CharCount) );
 
-		// Make room for string
-		CharType* Src = Data() + Position;
-		CharType* Dst = Src + 1;
-		
-		const uint64 MoveSize = Len - Position;
-		StringTraits::Move( Dst, Src, MoveSize );
+        // Make room for string
+        CharType* Src = Data() + Position;
+        CharType* Dst = Src + 1;
 
-		// Copy String
-		*Src = Char;
+        const uint64 MoveSize = Len - Position;
+        StringTraits::Move( Dst, Src, MoveSize );
 
-		Characters[++Len] = StringTraits::Null;
+        // Copy String
+        *Src = Char;
+
+        Characters[++Len] = StringTraits::Null;
     }
 
     /* Replace a part of the string */
@@ -740,7 +740,7 @@ public:
     FORCEINLINE void Replace( CharType Char, SizeType Position ) noexcept
     {
         Assert( (Position < Len) );
-        
+
         CharType* Dest = Data() + Position;
         *Dest = Char;
     }
@@ -1203,7 +1203,7 @@ struct TIsTStringType<TStaticString<CharType, CharCount>>
 template<int32 CharCount>
 inline WStaticString<CharCount> CharToWide( const CStaticString<CharCount>& CharString ) noexcept
 {
-	WStaticString<CharCount> NewString;
+    WStaticString<CharCount> NewString;
     NewString.Resize( CharString.Length() );
 
     mbstowcs( NewString.Data(), CharString.CStr(), CharString.Length() );
@@ -1214,7 +1214,7 @@ inline WStaticString<CharCount> CharToWide( const CStaticString<CharCount>& Char
 template<int32 CharCount>
 inline CStaticString<CharCount> WideToChar( const WStaticString<CharCount>& WideString ) noexcept
 {
-	CStaticString<CharCount> NewString;
+    CStaticString<CharCount> NewString;
     NewString.Resize( WideString.Length() );
 
     wcstombs( NewString.Data(), WideString.CStr(), WideString.Length() );

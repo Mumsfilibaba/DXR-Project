@@ -95,7 +95,7 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyAssignRange
     while ( Count )
     {
         *Destination = *Source;
-		Destination++;
+        Destination++;
         Source++;
         Count--;
     }

@@ -202,8 +202,8 @@ public:
         while ( Start != ViewEnd )
         {
             // Loop each character in substring
-			const CharType* SubstringIt = InString;
-			for ( const CharType* It = Start; ; )
+            const CharType* SubstringIt = InString;
+            for ( const CharType* It = Start; ; )
             {
                 // If not found we end loop and start over
                 if ( *(It++) != *(SubstringIt++) )
@@ -282,8 +282,8 @@ public:
             End--;
 
             // Loop each character in substring
-			const CharType* SubstringIt = InString;
-			for ( const CharType* EndIt = End; ; )
+            const CharType* SubstringIt = InString;
+            for ( const CharType* EndIt = End; ; )
             {
                 // If not found we end loop and start over
                 if ( *(EndIt++) != *(SubstringIt++) )
@@ -357,8 +357,8 @@ public:
         while ( Start != ViewEnd )
         {
             // Loop each character in substring
-			const CharType* SubstringStart = InString;
-			const CharType* SubstringEnd   = SubstringStart + InLength;
+            const CharType* SubstringStart = InString;
+            const CharType* SubstringEnd = SubstringStart + InLength;
             while ( SubstringStart != SubstringEnd )
             {
                 // If not found we end loop and start over
@@ -401,8 +401,8 @@ public:
         while ( Start != ViewEnd )
         {
             // Loop each character in substring
-			const CharType* SubstringStart = InString;
-			const CharType* SubstringEnd   = SubstringStart + InLength;
+            const CharType* SubstringStart = InString;
+            const CharType* SubstringEnd = SubstringStart + InLength;
             while ( SubstringStart != SubstringEnd )
             {
                 // If not found we end loop and start over
@@ -504,7 +504,7 @@ public:
     /* Retrive the last valid index for the view */
     FORCEINLINE SizeType LastElementIndex() const noexcept
     {
-		SizeType Len = Length();
+        SizeType Len = Length();
         return (Len > 0) ? (Len - 1) : 0;
     }
 
@@ -761,8 +761,8 @@ inline bool operator>=( const TStringView<CharType>& LHS, const TStringView<Char
 template<typename CharType>
 struct TIsTStringType<TStringView<CharType>>
 {
-	enum
-	{
-		Value = true
-	};
+    enum
+    {
+        Value = true
+    };
 };
