@@ -614,12 +614,14 @@ public:
         }
         else
         {
-            CharType TempChar = Characters[Position + 1];
-            Characters[Position + 1] = StringTraits::Null;
+            // TODO: Get rid of const_cast
+            CharType* TempCharacters = const_cast<CharType*>(Characters.Data());
+            CharType TempChar = TempCharacters[Position + 1];
+            TempCharacters[Position + 1] = StringTraits::Null;
 
-            Result = StringTraits::ReverseFindChar( Start, Char );
+            Result = StringTraits::ReverseFindChar( TempCharacters, Char );
 
-            Characters[Position + 1] = TempChar;
+            TempCharacters[Position + 1] = TempChar;
         }
 
         if ( !Result )
@@ -668,6 +670,58 @@ public:
         }
     }
 
+        /* Returns the position of the last occurance of one of the characters in the searchstring */
+    FORCEINLINE SizeType ReverseFindOneOf( const CharType* InString, SizeType Position = 0 ) const noexcept
+    {
+        return ReverseFindOneOf( InString, StringTraits::Length( InString ), Position );
+    }
+
+    /* Returns the position of the last occurance of one of the characters in the searchstring */
+    template<typename StringType>
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneOf( const StringType& InString, SizeType Position = 0 ) const noexcept
+    {
+        return ReverseFindOneOf( InString, InString.Length(), Position );
+    }
+
+    /* Returns the position of the last occurance of one of the characters in the searchstring */
+    FORCEINLINE SizeType ReverseFindOneOf( const CharType* InString, SizeType InLength, SizeType Position = 0 ) const noexcept
+    {
+        Assert( (Position < Length()) || (Position == 0) );
+
+        SizeType ThisLength = Length();
+        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (ThisLength == 0) )
+        {
+            return ThisLength;
+        }
+
+        // Calculate the offset to the end
+        if ( Position != 0 )
+        {
+            ThisLength = NMath::Min( Position, ThisLength );
+        }
+
+        const CharType* Start = CStr();
+        const CharType* End = Start + ThisLength;
+        while ( End != Start )
+        {
+            End--;
+
+            // Loop each character in substring
+            const CharType* SubstringStart = InString;
+            const CharType* SubstringEnd   = SubstringStart + StringTraits::Length( InString );
+            while ( SubstringStart != SubstringEnd )
+            {
+                // If character is found then return the position
+                if ( *End == *(SubstringStart++) )
+                {
+                    return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
+                }
+            }
+        }
+
+        return InvalidPosition;
+    }
+
     /* Returns the position of the the first character not a part of the searchstring */
     FORCEINLINE SizeType FindOneNotOf( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
@@ -702,6 +756,62 @@ public:
         {
             return Ret;
         }
+    }
+
+    /* Returns the position of the last occurance of one of the characters in the searchstring */
+    FORCEINLINE SizeType ReverseFindOneNotOf( const CharType* InString, SizeType Position = 0 ) const noexcept
+    {
+        return ReverseFindOneNotOf( InString, StringTraits::Length( InString ), Position );
+    }
+
+    /* Returns the position of the last occurance of one of the characters in the searchstring */
+    template<typename StringType>
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneNotOf( const StringType& InString, SizeType Position = 0 ) const noexcept
+    {
+        return ReverseFindOneNotOf( InString, InString.Length(), Position );
+    }
+
+    /* Returns the position of the last occurance of one of the characters in the searchstring */
+    FORCEINLINE SizeType ReverseFindOneNotOf( const CharType* InString, SizeType InLength, SizeType Position = 0 ) const noexcept
+    {
+        Assert( (Position < Length()) || (Position == 0) );
+
+        SizeType ThisLength = Length();
+        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (ThisLength == 0) )
+        {
+            return ThisLength;
+        }
+
+        // Calculate the offset to the end
+        if ( Position != 0 )
+        {
+            ThisLength = NMath::Min( Position, ThisLength );
+        }
+
+        const CharType* Start = CStr();
+        const CharType* End = Start + ThisLength;
+        while ( End != Start )
+        {
+            End--;
+
+            // Loop each character in substring
+            const CharType* SubstringStart = InString;
+            const CharType* SubstringEnd   = SubstringStart + StringTraits::Length( InString );
+            while ( SubstringStart != SubstringEnd )
+            {
+                // If character is found then return the position
+                if ( *End == *(SubstringStart++) )
+                {
+                    break;
+                }
+                else if ( StringTraits::IsTerminator( *SubstringStart ) )
+                {
+                    return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
+                }
+            }
+        }
+
+        return InvalidPosition;
     }
 
     /* Returns true if the searchstring exists withing the string */
@@ -1285,7 +1395,7 @@ struct TIsTStringType<TString<CharType>>
     };
 };
 
-/* Convert between char and wide */
+/* Convert between char to wide */
 inline WString CharToWide( const CString& CharString ) noexcept
 {
     WString NewString;
@@ -1296,6 +1406,7 @@ inline WString CharToWide( const CString& CharString ) noexcept
     return NewString;
 }
 
+/* Convert between wide to char */
 inline CString WideToChar( const WString& WideString ) noexcept
 {
     CString NewString;

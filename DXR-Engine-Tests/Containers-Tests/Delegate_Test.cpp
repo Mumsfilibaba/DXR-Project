@@ -189,8 +189,6 @@ void Delegate_Test()
         std::cout << "IsObjectBound=" << std::boolalpha << Delegate.IsObjectBound( Base ) << std::endl;
         std::cout << "UnbindIfBound=" << std::boolalpha << Delegate.UnbindIfBound( Base ) << std::endl;
 
-        delete Base;
-
         // Copy
         Delegate.BindLambda( Lambda );
         Delegate.Execute( 0 );
@@ -254,6 +252,8 @@ void Delegate_Test()
 
         TDelegate<int32()> Member31 = TDelegate<int32()>::CreateRaw( Base, &CDerived::ConstFunc, 200 );
         Member31.Execute();
+		
+		delete Base;
     }
 #endif
 

@@ -32,7 +32,7 @@
 
 /* Align */
 #ifndef ALIGN
-#define ALIGN(Alignment) __attribute__((aligned(bytes)))
+#define ALIGN(Alignment) __attribute__((aligned(Alignment)))
 #endif
 
 /* No inlining at all */

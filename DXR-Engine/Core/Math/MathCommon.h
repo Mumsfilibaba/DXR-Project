@@ -6,9 +6,15 @@
 #include <cmath>
 
 /* Windows specific */
-#if defined(PLATFORM_WINDOWS) || defined(PLATFORM_MACOS)
+#if defined(PLATFORM_WINDOWS)
 #include <xmmintrin.h>
+
+/* MacOS specific */
+#elif defined(PLATFORM_MACOS)
+#include <immintrin.h>
 #else
+
+/* No defined platform */
 #error No platform defined
 #endif
 

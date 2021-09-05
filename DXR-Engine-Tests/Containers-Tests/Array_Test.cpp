@@ -216,7 +216,9 @@ void TArray_Benchmark()
                 }
             }
 
-            std::cout << "std::vector:" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
+			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
@@ -232,7 +234,9 @@ void TArray_Benchmark()
                 }
             }
 
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
+			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -259,7 +263,9 @@ void TArray_Benchmark()
                 }
             }
 
-            std::cout << "std::vector:" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
+			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
@@ -274,7 +280,10 @@ void TArray_Benchmark()
                     Strings1.EmplaceAt( 0, "My name is jeff" );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
+			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -297,7 +306,9 @@ void TArray_Benchmark()
                 }
             }
 
-            std::cout << "std::vector:" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
+			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
@@ -312,7 +323,10 @@ void TArray_Benchmark()
                     Strings1.Push( "My name is jeff" );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
+			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -335,7 +349,9 @@ void TArray_Benchmark()
                 }
             }
 
-            std::cout << "std::vector:" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
+			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
@@ -350,7 +366,10 @@ void TArray_Benchmark()
                     Strings1.Emplace( "My name is jeff" );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
+			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -375,7 +394,9 @@ void TArray_Benchmark()
                 }
             }
 
-            std::cout << "std::vector:" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
+			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
@@ -390,7 +411,10 @@ void TArray_Benchmark()
                     Vectors1.Insert( 0, Vec3( 3.0, 5.0, -6.0 ) );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
+			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -413,7 +437,9 @@ void TArray_Benchmark()
                 }
             }
 
-            std::cout << "std::vector:" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
+			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
@@ -428,7 +454,10 @@ void TArray_Benchmark()
                     Vectors1.EmplaceAt( 0, double( j + 1 ), 5.0, -6.0 );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
+			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -451,7 +480,9 @@ void TArray_Benchmark()
                 }
             }
 
-            std::cout << "std::vector:" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
+			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
@@ -466,7 +497,10 @@ void TArray_Benchmark()
                     Vectors1.Push( Vec3( 3.0, 5.0, -6.0 ) );
                 }
             }
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
+			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -489,7 +523,9 @@ void TArray_Benchmark()
                 }
             }
 
-            std::cout << "std::vector:" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
+			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
@@ -505,7 +541,9 @@ void TArray_Benchmark()
                 }
             }
 
-            std::cout << "TArray     :" << Clock.GetTotalDuration() / TestCount << "ns" << std::endl;
+			auto Duration = Clock.GetTotalDuration() / TestCount;
+			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
+			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -540,7 +578,7 @@ void TArray_Benchmark()
 			}
 
 			auto Duration = Clock.GetTotalDuration() / SortTestCount;
-			std::cout << "TArray      Sorting time: " << Duration << "ns" << std::endl;
+			std::cout << "TArray      Sorting time: " << Duration                 << "ns" << std::endl;
 			std::cout << "TArray      Sorting time: " << Duration / (1000 * 1000) << "ms" << std::endl;
 		}
 		
@@ -562,7 +600,7 @@ void TArray_Benchmark()
 			}
 
 			auto Duration = Clock.GetTotalDuration() / SortTestCount;
-			std::cout << "std::vector Sorting time: " << Duration << "ns" << std::endl;
+			std::cout << "std::vector Sorting time: " << Duration                 << "ns" << std::endl;
 			std::cout << "std::vector Sorting time: " << Duration / (1000 * 1000) << "ms" << std::endl;
 		}
     }

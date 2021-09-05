@@ -73,7 +73,7 @@ void TString_Test( const char* Args )
 		CStaticString<64> ReversedStaticString6 = StaticString6.Reverse();
 		PrintString( ReversedStaticString6 );
 
-		CStaticString<64> SearchString = "0123Search89Me";
+		CStaticString<64> SearchString = "0123MeSearch89Me89";
 		PrintString( SearchString );
 
 		std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;
@@ -83,6 +83,13 @@ void TString_Test( const char* Args )
 		std::cout << "Position=" << SearchString.FindOneOf( "Mc" ) << std::endl;
 		
 		std::cout << "Position=" << SearchString.FindOneNotOf( "0123456789" ) << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFind( "Me" ) << std::endl;
+		std::cout << "Position=" << SearchString.ReverseFind( 'M' ) << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFindOneOf("hMc") << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFindOneNotOf( "0123456789" ) << std::endl;
 		
 		CStaticString<64> CompareString0 = "COMPARE";
 		PrintString( CompareString0 );
@@ -228,7 +235,7 @@ void TString_Test( const char* Args )
 		WStaticString<64> ReversedStaticString6 = StaticString6.Reverse();
 		PrintWideString( ReversedStaticString6 );
 
-		WStaticString<64> SearchString = L"0123Search89Me";
+		WStaticString<64> SearchString = L"0123MeSearch89Me89";
 		PrintWideString( SearchString );
 
 		std::cout << "Position=" << SearchString.Find( L"Me" ) << std::endl;
@@ -238,6 +245,13 @@ void TString_Test( const char* Args )
 		std::cout << "Position=" << SearchString.FindOneOf( L"Mc" ) << std::endl;
 		
 		std::cout << "Position=" << SearchString.FindOneNotOf( L"0123456789" ) << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFind( L"Me" ) << std::endl;
+		std::cout << "Position=" << SearchString.ReverseFind( L'M' ) << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFindOneOf(L"hMc") << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFindOneNotOf( L"0123456789" ) << std::endl;
 		
 		WStaticString<64> CompareString0 = L"COMPARE";
 		PrintWideString( CompareString0 );
@@ -381,7 +395,7 @@ void TString_Test( const char* Args )
 		CString ReversedString6 = String6.Reverse();
 		PrintString( ReversedString6 );
 
-		CString SearchString = "0123Search89Me";
+		CString SearchString = "0123MeSearch89Me89";
 		PrintString( SearchString );
 
 		std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;
@@ -389,8 +403,15 @@ void TString_Test( const char* Args )
 
 		std::cout << "Position=" << SearchString.FindOneOf( "ec" ) << std::endl;
 		std::cout << "Position=" << SearchString.FindOneOf( "Mc" ) << std::endl;
-
+		
 		std::cout << "Position=" << SearchString.FindOneNotOf( "0123456789" ) << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFind( "Me" ) << std::endl;
+		std::cout << "Position=" << SearchString.ReverseFind( 'M' ) << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFindOneOf("hMc") << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFindOneNotOf( "0123456789" ) << std::endl;
 
 		CString CompareString0 = "COMPARE";
 		PrintString( CompareString0 );
@@ -536,7 +557,7 @@ void TString_Test( const char* Args )
 		WString ReversedString6 = String6.Reverse();
 		PrintWideString( ReversedString6 );
 
-		WString SearchString = L"0123Search89Me";
+		WString SearchString = L"0123MeSearch89Me89";
 		PrintWideString( SearchString );
 
 		std::cout << "Position=" << SearchString.Find( L"Me" ) << std::endl;
@@ -544,8 +565,15 @@ void TString_Test( const char* Args )
 
 		std::cout << "Position=" << SearchString.FindOneOf( L"ec" ) << std::endl;
 		std::cout << "Position=" << SearchString.FindOneOf( L"Mc" ) << std::endl;
-
+		
 		std::cout << "Position=" << SearchString.FindOneNotOf( L"0123456789" ) << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFind( L"Me" ) << std::endl;
+		std::cout << "Position=" << SearchString.ReverseFind( L'M' ) << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFindOneOf(L"hMc") << std::endl;
+		
+		std::cout << "Position=" << SearchString.ReverseFindOneNotOf( L"0123456789" ) << std::endl;
 
 		WString CompareString0 = L"COMPARE";
 		PrintWideString( CompareString0 );

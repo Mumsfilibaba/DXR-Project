@@ -25,9 +25,11 @@ public:
     }
 
     /* Allocates memory if needed, uses Memory::Realloc */
-    FORCEINLINE ElementType* Realloc( SizeType Count ) noexcept
+    FORCEINLINE ElementType* Realloc( SizeType CurrentCount, SizeType NewCount ) noexcept
     {
-        Allocation = Memory::Realloc<ElementType>( Allocation, Count );
+        UNREFERENCED_VARIABLE( CurrentCount );
+
+        Allocation = Memory::Realloc<ElementType>( Allocation, NewCount );
         return Allocation;
     }
 
@@ -146,7 +148,7 @@ public:
     }
 
     /* Allocates memory if needed */
-    FORCEINLINE ElementType* Realloc( SizeType NewCount ) noexcept
+    FORCEINLINE ElementType* Realloc( SizeType CurrentCount, SizeType NewCount ) noexcept
     {
         // If allocation is larger than inline-storage, allocate on the heap
         if ( NewCount > NumInlineElements )
@@ -154,12 +156,12 @@ public:
             /* If we did not have a allocation then the inline storage was proably used, copy it into dynamic memory */
             if ( !DynamicAllocator.HasAllocation() )
             {
-                DynamicAllocator.Realloc( NewCount );
-                RelocateRange<ElementType>( DynamicAllocator.GetAllocation(), InlineAllocation.GetElements(), NumInlineElements );
+                DynamicAllocator.Realloc( CurrentCount, NewCount );
+                RelocateRange<ElementType>( DynamicAllocator.GetAllocation(), InlineAllocation.GetElements(), CurrentCount );
             }
             else
             {
-                DynamicAllocator.Realloc( NewCount );
+                DynamicAllocator.Realloc( CurrentCount, NewCount );
             }
 
             return DynamicAllocator.GetAllocation();
@@ -169,7 +171,7 @@ public:
             /* Copy the old allocation over to the inlineallocation */
             if ( DynamicAllocator.HasAllocation() )
             {
-                RelocateRange<ElementType>( InlineAllocation.GetElements(), DynamicAllocator.GetAllocation(), NumInlineElements );
+                RelocateRange<ElementType>( InlineAllocation.GetElements(), DynamicAllocator.GetAllocation(), CurrentCount );
                 Free();
             }
 

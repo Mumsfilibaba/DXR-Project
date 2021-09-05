@@ -38,7 +38,8 @@ public:
     template<typename T>
     static FORCEINLINE T* Realloc( T* Pointer, uint64 Count ) noexcept
     {
-        return reinterpret_cast<T*>(Realloc( reinterpret_cast<void*>(Pointer), sizeof( T ) * Count ));
+		const uint64 NumBytes = Count * sizeof( T );
+        return reinterpret_cast<T*>(Realloc( reinterpret_cast<void*>(Pointer), NumBytes ));
     }
 
     template<typename T>

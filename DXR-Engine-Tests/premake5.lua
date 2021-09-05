@@ -51,6 +51,11 @@ workspace "DXR-Engine-Tests"
             "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING",
             "_CRT_SECURE_NO_WARNINGS",
         }
+	filter "action:xcode"
+		defines
+		{
+            "IDE_XCODE",
+		}
 
     -- OS
     filter "system:windows"

@@ -153,7 +153,8 @@ protected:
     {
         if ( Other.IsBound() )
         {
-            Storage.Realloc( Other.Size );
+            int32 CurrentSize = Size;
+            Storage.Realloc( CurrentSize, Other.Size );
             Other.GetDelegate()->Clone( Storage.GetAllocation() );
 
             Size = Other.Size;
@@ -168,8 +169,9 @@ protected:
     /* Allocate from storage, set size, and return the memory */
     FORCEINLINE void* AllocateStorage( int32 NewSize )
     {
+        int32 PreviousSize = Size;
         Size = NewSize;
-        return Storage.Realloc( Size );
+        return Storage.Realloc( PreviousSize, Size );
     }
 
     /* Internal function that is used to retrive the functor pointer */

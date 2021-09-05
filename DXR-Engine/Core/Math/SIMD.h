@@ -6,6 +6,12 @@
 #if defined(PLATFORM_WINDOWS)
 #include <xmmintrin.h>
 #include <immintrin.h>
+
+/* MacOS Specific */
+#elif defined(PLATFORM_MACOS)
+#include <immintrin.h>
+
+/* No platform defined */
 #else
 #error No valid platform
 #endif

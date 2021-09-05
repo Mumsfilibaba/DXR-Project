@@ -281,7 +281,7 @@ public:
     inline ElementType& Emplace( ArgTypes&&... Args ) noexcept
     {
         GrowIfNeeded();
-
+		
         new(Data() + (ArraySize++)) ElementType( Forward<ArgTypes>( Args )... );
         return LastElement();
     }
@@ -390,6 +390,13 @@ public:
     FORCEINLINE void Append( std::initializer_list<ElementType> InitList ) noexcept
     {
         Append( InitList.begin(), static_cast<SizeType>(InitList.size()) );
+    }
+
+    /* Append unintialized, this modifies the size of the array and does not call any constructor */
+    FORCEINLINE void AppendUninitialized( SizeType NewSize ) noexcept
+    {
+        GrowIfNeeded( NewSize );
+        ArraySize = NewSize;
     }
 
     /* Removes a number of elments from the back */
@@ -754,7 +761,7 @@ private:
     {
         if ( ArrayCapacity < Count )
         {
-            Allocator.Realloc( Count );
+            Allocator.Realloc( ArrayCapacity, Count );
             ArrayCapacity = Count;
         }
 
@@ -803,7 +810,7 @@ private:
     FORCEINLINE typename TEnableIf<TIsReallocatable<U>::Value>::Type ReserveStorage( const SizeType NewCapacity ) noexcept
     {
         /* Simple Memory::Realloc for trivial elements */
-        Allocator.Realloc( NewCapacity );
+        Allocator.Realloc( ArrayCapacity, NewCapacity );
         ArrayCapacity = NewCapacity;
     }
 
@@ -816,7 +823,7 @@ private:
             /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
                 objects has references to themselves or childobjects that references these objects. */
             AllocatorType NewAllocator;
-            NewAllocator.Realloc( NewCapacity );
+            NewAllocator.Realloc( ArrayCapacity, NewCapacity );
 
             /* Relocate existing elements */
             RelocateRange<ElementType>( NewAllocator.GetAllocation(), Data(), ArraySize );
@@ -827,7 +834,7 @@ private:
         else
         {
             /* Allocate new memory */
-            Allocator.Realloc( NewCapacity );
+            Allocator.Realloc( ArrayCapacity, NewCapacity );
         }
 
         ArrayCapacity = NewCapacity;
@@ -837,22 +844,10 @@ private:
     FORCEINLINE void ReserveForInsertion( const SizeType Position, const SizeType ElementCount ) noexcept
     {
         const SizeType NewSize = ArraySize + ElementCount;
-        if ( NewSize >= ArrayCapacity )
-        {
-            const SizeType NewCapacity = GetGrowCapacity( NewSize, ArrayCapacity );
-            ReserveStorage( NewCapacity );
+        GrowIfNeeded( NewSize );
 
-            /* Elements after new area */
-            RelocateRange<ElementType>( Data() + Position + ElementCount, Data() + Position, ArraySize - Position );
-
-            /* Update capacity */
-            ArrayCapacity = NewCapacity;
-        }
-        else
-        {
-            /* Elements after new area */
-            RelocateRange<ElementType>( Data() + Position + ElementCount, Data() + Position, ArraySize - Position );
-        }
+        /* Elements after new area */
+        RelocateRange<ElementType>( Data() + Position + ElementCount, Data() + Position, ArraySize - Position );
     }
 
     /* Pop range internally, avoids branches when not needed */
@@ -865,15 +860,15 @@ private:
     /* Grows the array if the size is too small */
     FORCEINLINE void GrowIfNeeded() noexcept
     {
-        GrowIfNeeded( ArraySize );
+        GrowIfNeeded( ArraySize + 1 );
     }
 
-    /* Grows the array if the size is too small */
+    /* Grows the array if the requested size is too small */
     FORCEINLINE void GrowIfNeeded( SizeType NewSize ) noexcept
     {
-        if ( NewSize >= ArrayCapacity )
+        if ( NewSize > ArrayCapacity )
         {
-            const SizeType NewCapacity = GetGrowCapacity( NewSize + 1, ArrayCapacity );
+            const SizeType NewCapacity = GetGrowCapacity( NewSize, ArrayCapacity );
             ReserveStorage( NewCapacity );
         }
     }
@@ -925,9 +920,11 @@ private:
         }
     }
 
+    /* Calculate how much the array should grow, will always be at least one */
     static FORCEINLINE SizeType GetGrowCapacity( SizeType NewSize, SizeType CurrentCapacity ) noexcept
     {
-        return NewSize + SizeType( CurrentCapacity * 0.5f );
+        SizeType NewCapacity = NewSize + SizeType( float(CurrentCapacity) * 0.5f );
+        return (NewCapacity >= 0) ? NewCapacity : 1;
     }
 
     /* Allocator contains the pointer */

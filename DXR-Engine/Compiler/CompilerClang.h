@@ -8,7 +8,7 @@
 #if COMPILER_CLANG
 
 /* Architecture */
-#if defined(_M_IX86) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__i386__)
 #ifndef ARCH_X86_X64
 #define ARCH_X86_X64 (1)
 #endif
@@ -32,7 +32,7 @@
 
 /* Align */
 #ifndef ALIGN
-#define ALIGN(Alignment) __attribute__((aligned(bytes)))
+#define ALIGN(Alignment) __attribute__((aligned(Alignment)))
 #endif
 
 /* No inlining at all */

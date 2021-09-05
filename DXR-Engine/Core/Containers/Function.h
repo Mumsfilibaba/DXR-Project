@@ -282,9 +282,10 @@ private:
     {
         Release();
 
+        int32 PreviousSize = Size;
         Size = sizeof( TGenericFunctor<FunctorType> );
 
-        void* Memory = Storage.Realloc( Size );
+        void* Memory = Storage.Realloc( PreviousSize, Size );
         new(Memory) TGenericFunctor<FunctorType>( Forward<FunctorType>( Functor ) );
     }
 
@@ -293,7 +294,9 @@ private:
     {
         if ( Other.IsValid() )
         {
-            Storage.Realloc( Other.Size );
+            int32 CurrentSize = Size;
+            Storage.Realloc( CurrentSize, Other.Size );
+
             Other.GetFunctor()->Clone( Storage.GetAllocation() );
 
             Size = Other.Size;
